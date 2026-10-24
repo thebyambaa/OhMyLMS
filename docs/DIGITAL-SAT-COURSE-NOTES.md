@@ -53,6 +53,8 @@ One chain handles every quiz, exam, practice session and lesson check, so there 
 
 ## What was changed in response (2026-10-21)
 
+The unified course outline editor has since replaced this builder (see [UNIFIED-COURSE-OUTLINE.md](UNIFIED-COURSE-OUTLINE.md)). The outline saves explicitly with **Save outline draft**, and the "Add existing content or import a quiz" panel in item 2 was removed; the outline's Add activity picker places existing content. Items 1 and 2 and the closing "Still open" note describe the earlier builder.
+
 1. **Unsaved work.** The course builder now saves a draft by itself 0.8 seconds after an edit, shows "Saving…", "You have unsaved changes" or "All changes saved at …" under the toolbar with a Save draft button (a live course shows Update course and is never changed silently), and warns before a tab close or full-page jump while edits are unsaved. The slug follows the title because the title now saves early.
 2. **Existing content.** A panel above the units, "Add existing content or import a quiz", adds existing lessons, quizzes and assignments to a chosen unit and imports a quiz file straight into it. The Attach content window used from syllabus screens also gained quiz import.
 3. **Readiness.** A panel in the builder shows whether the course is ready for learners: unpublished resources, completion rules, and for each required skill its approved questions and families against what it needs, with an Add questions button that opens the import dialog with that skill chosen. The server report is `readiness_report()` and is returned with the catalog and with a failed publish.

@@ -24,10 +24,5 @@ This versions outline metadata and the existing program. Shared lesson bodies, q
 
 ## Verification
 
-- Shared structure integration: 61 checks, including draft isolation across the learner hub and legacy getters/lists, preview, stale publication, immutable prior versions, enrollment pinning/upgrades, completed learner protection, readiness failures and anonymous access denial.
-- Existing learning-model tests: 37 checks; structure tools: 295; syllabus: 56; unit-number rules: 17.
+- Shared structure integration (`tests/php/course-structure-integration.php`): draft isolation across the learner hub and legacy getters/lists, preview, stale publication, immutable prior versions, enrollment pinning/upgrades, completed learner protection, readiness failures and anonymous access denial.
 - Browser: existing dashboard saves, two-tab conflict, draft preview and explicit publish.
-- JavaScript suite: 584 passed, one skipped. Build succeeded with the existing two webpack size warnings.
-- New PHP services/controller/tests and the new React component pass targeted WordPress standards checks. Repository-wide PHP/JavaScript/CSS/formatting findings remain visible in the normal checks; no blanket baseline was introduced.
-
-The next architecture step is subjects and course browsing, followed by a more coherent unit/lesson authoring presentation.

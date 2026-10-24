@@ -41,9 +41,7 @@ The shared program validator enforces these rules for other program writers too.
 
 The browser test covers adding a unit/lesson/resource, course-specific naming, reordering, unsaved navigation, explicit saving, metadata isolation, preview, publication, saving after publication and a conflicting edit in another tab. PHP integration covers temporary unit mapping, rollback, stale revisions, resource preservation, checkpoint placement and published learner output. Pure tests cover ordering and lesson removal.
 
-Local verification on October 24, 2026: browser workflow passed; unified outline integration 22 checks, shared structure integration 61 checks, subjects integration 33 checks, learning model 37 checks and structure tools 295 checks passed. JavaScript: 588 passed, one skipped. Source contracts, PHP syntax, new editor ESLint/CSS checks and targeted new PHP standards checks passed. The build succeeded with two existing webpack size warnings. Temporary browser records and the authentication session were removed.
-
-Repository-wide standards still contain pre-existing findings: PHP violations, 316 JavaScript errors and 37 warnings, 125 CSS errors, and formatting findings in five unrelated files. Modified legacy course orchestration/hooks also retain six React dependency warnings. No blanket baseline or disabled rule was added.
+Run the PHP integration with `OHMYLMS_STRUCTURE_INTEGRATION=1 php tests/php/course-outline-integration.php` against local WordPress, and the browser workflow with the fixture and `tests/course-structure.config.cjs` described in [the structure contract](COURSE-STRUCTURE-CONTRACT.md).
 
 ## Editor layout (October 24, 2026)
 

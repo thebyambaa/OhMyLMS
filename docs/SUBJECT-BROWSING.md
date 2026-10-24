@@ -28,10 +28,8 @@ Existing course/curriculum route names, fields, hooks and assessment contracts a
 
 ## Verification
 
-- 33 local subject integration checks cover ordering, subgroup placements, independent subjects, privacy, publication isolation, Start/Continue actions, stale/invalid writes, permissions, new/removable placements and option cleanup.
+- The local subject integration checks cover ordering, subgroup placements, independent subjects, privacy, publication isolation, Start/Continue actions, stale/invalid writes, permissions, new/removable placements and option cleanup.
 - Two browser tests cover anonymous discovery, published outline preview, course breadcrumb navigation, 390px layout, unavailable subjects, author ordering and enrolled learner continuation.
-- JavaScript suite: 584 passed, one skipped. Source-contract checks and build pass; build retains two existing webpack size warnings. New PHP/React/CSS pass targeted WordPress standards checks.
-- Repository-wide checks still report pre-existing PHP findings, 316 JavaScript errors/37 warnings, 125 CSS errors, and formatting issues in five unrelated files.
 - The existing global SDK makes an unauthenticated `/wp/v2/users/me` preferences request on guest pages, including the ordinary homepage. The visitor browser test tolerates only its verified `rest_not_logged_in`/401 rejection; other browser errors still fail. The subject browser itself issues no client REST requests.
 
 For repeatable local checks, explicitly set `OHMYLMS_SUBJECTS_INTEGRATION=1` and run `tests/php/subjects-integration.php`. Its `browser` mode creates temporary content and an expiring session in an ignored JSON file for `tests/subjects.config.cjs`; run its `cleanup` mode afterwards. No schema or data migration is required.
