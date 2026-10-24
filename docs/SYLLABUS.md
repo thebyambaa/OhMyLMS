@@ -25,12 +25,11 @@ The two references this was designed from fit this shape: a Cambridge IGCSE syll
 
 ## The syllabus editor
 
-### Spreadsheet view and row actions
+### Bulk edit spreadsheet and row actions
 
-The header offers **Outline**, **Mind map**, and **Spreadsheet** views of the same
-syllabus. Spreadsheet fills the workspace with the existing №, Unit, Chapter and
-Topic columns, retaining the original folder, group and skill placement IDs.
-It opens in the page, without a modal or a second syllabus.
+**Bulk edit** in the header opens the syllabus as a full-screen spreadsheet with the
+existing №, Unit, Chapter and Topic columns, retaining the original folder, group and
+skill placement IDs. It edits the same syllabus, not a copy.
 
 Edit cells, add draft rows or paste rows, then **Save changes**. **Discard changes**
 restores the last saved values. Save or discard before switching views or running
@@ -44,48 +43,11 @@ other placements. **Close details** returns the spreadsheet to full width. Struc
 actions use the workspace's existing save operations and refresh the sheet from the
 returned outline. Unsaved new rows have a local remove action instead.
 
-`tests/browser/syllabus-spreadsheet.spec.cjs` covers the actual view switcher, sheet
-and row-action components with fixture controls and persistence. It checks shared
+`tests/browser/syllabus-spreadsheet.spec.cjs` covers the sheet and row-action
+components with fixture controls and persistence. Its fixture still renders the
+former Outline/Mind map/Spreadsheet switch, which the workspace no longer has. It checks shared
 skill edits, failed-save recovery, draft guards, branch-aware additions, removal of
 one placement, details beside the sheet, and mobile scrolling.
-
-### Mind map
-
-Open a syllabus and choose **Mind map** in its header. The map lays out the existing
-folders, skill groups and skill placements from left to right. Select a card to edit
-its details, learning resources and assessment connections in the existing right pane.
-**Outline view** returns to the standard outline with the same selection.
-
-- Use **+ Folder** or **+ Skill** on a card to add inside that branch. Changes use the
-  existing authenticated syllabus actions; failed saves retain the entered text.
-- Search by displayed name or code. Matching paths open temporarily, including branches
-  that were collapsed. Clear search to restore the collapsed state.
-- Expand or collapse individual branches, use **Expand all** or **Collapse all**, and
-  adjust zoom. Selecting a node or searching brings it into the scrollable viewport.
-- Drag blank canvas with a mouse or a finger to pan; a middle-button drag also pans.
-  Normal wheel/two-finger scrolling moves the canvas. Ctrl/Cmd + wheel and trackpad
-  pinch zoom around the pointer; toolbar zoom preserves the viewport center. With
-  the canvas focused, `+`, `-` and `0` zoom in, zoom out and reset the scale.
-  **Fit map** shows the visible branches; **Find selected** clears search, opens the
-  path to the selection and brings it back into view. Zooming no longer recenters
-  the map on the selected node.
-- Drop a folder onto the middle of another folder to nest it; drop near the top or
-  bottom to reorder compatible siblings. Skills can be reordered against other skills
-  within the same topic. Drag from the labeled **Move** handle, using either a mouse
-  or touch; highlights indicate whether a drop goes inside, before or after a node.
-  The viewport scrolls when the dragged pointer approaches an edge. Click the handle
-  or use **Move selected** to choose a placement and destination without dragging.
-  Failed moves keep the picker open. Existing editor move controls provide additional
-  destinations. Every move uses the existing validator, which rejects cycles.
-- On narrow screens, the details editor stacks below the map. Canvas scrolling stays
-  inside its own region. Map position, zoom, search and collapsed branches are local UI
-  state; the map does not add another syllabus structure or change learner evidence.
-
-Verification: `node --test tests/js/syllabus-map.test.mjs tests/js/workspace.test.mjs`
-and `playwright test tests/browser/syllabus-mindmap.spec.cjs`. The browser suite runs
-the authored map and QuickAdd components with local WordPress React scripts and a
-workspace fixture recording writes; database persistence still requires the existing
-isolated WordPress syllabus integration suite.
 
 ### Outline and detail editor
 
@@ -229,7 +191,7 @@ Skills created here get a short slug of their own. WordPress derives one from th
 ## Source
 
 - PHP: `includes/Curriculum/Syllabus.php` (outline, groups, skills, import), `SyllabusCourse.php` (the course a syllabus is: creating it and mirroring chapters and skills, with the planning kept pure), `SyllabusRows.php` (cleans and checks rows), `SyllabusPlan.php` (matches rows against the syllabus and plans the operations; shared by the dry run and the import), controller `includes/Rest/V1/SyllabusController.php`. `Links::object_ids()` and `Links::memberships()` include syllabus skills. `CourseProgram::too_many_outcomes()` lifts the 200-skill limit for a syllabus's course.
-- Admin UI: `assets/src/features/curriculum/`. The editor is `SyllabusWorkspace.jsx` (the page and its route component), `WorkspaceSidebar.jsx` (the outline), `TopicPane.jsx`, `ChapterPane.jsx`, `SkillPane.jsx` and `SkillResources.jsx` (the panes), `CoursePanel.jsx`, `WorkspaceParts.jsx` (autosaving fields, quick add, rows, menus), `WorkspaceDialogs.jsx`, `AddContentMenu.jsx`, `useSyllabusWorkspace.js` (loading and guarded changes), `useCourseCatalog.js` (the course's attachments), `workspaceActions.js` (every change), `workspace.mjs` (the pure model: nested outline, selection, ordering). `SyllabusSummary.jsx` is what the item panel shows, `ImportDialog.jsx`, `csv.mjs` (parser, column detection, export), `syllabus.mjs` (helpers) and `download.mjs` are shared. The route is `SYLLABUS_ROUTE` in `assets/src/features/content-hub/hubRoutes.mjs`, wired in `assets/src/extensions/index.jsx`; the page loads lazily from the `curriculum` chunk. Styles are `.ohmylms-ws-*` in `assets/css/admin-ui.css`.
+- Admin UI: `assets/src/features/curriculum/`. The editor is `SyllabusWorkspace.jsx` (the page and its route component), `WorkspaceSidebar.jsx` (the outline), `TopicPane.jsx`, `ChapterPane.jsx`, `SkillPane.jsx` and `SkillResources.jsx` (the panes), `WorkspaceParts.jsx` (autosaving fields, quick add, rows, menus), `WorkspaceDialogs.jsx`, `AddContentMenu.jsx`, `useSyllabusWorkspace.js` (loading and guarded changes), `useCourseCatalog.js` (the course's attachments), `workspaceActions.js` (every change), `workspace.mjs` (the pure model: nested outline, selection, ordering). `SyllabusSummary.jsx` is what the item panel shows, `ImportDialog.jsx`, `csv.mjs` (parser, column detection, export), `syllabus.mjs` (helpers) and `download.mjs` are shared. The route is `SYLLABUS_ROUTE` in `assets/src/features/content-hub/hubRoutes.mjs`, wired in `assets/src/extensions/index.jsx`; the page loads lazily from the `curriculum` chunk. Styles are `.ohmylms-ws-*` in `assets/css/admin-ui.css`.
 
 ## Validation
 
@@ -262,4 +224,4 @@ Syllabuses and roadmaps use one outline and detail workspace. Compact skill name
 
 Roadmap connections are edited in the selected skill pane with source names, directional types and notes together. Connect skill searches the configured source syllabuses with pagination. Individual edits and removals include the saved pair revision; stale writes are rejected. Required-together creation selects at least two objectives from one source; existing groups use the complete-group editor. Unsaved connection forms block skill selection and bulk-tool navigation until saved or discarded. The optional focused diagram opens connection editing directly.
 
-Bulk edit opens the existing spreadsheet as a secondary full-screen tool, preserving paste/import and save/discard behavior. The former Outline/Mind map/Spreadsheet switch and separate visual-editor entry have been removed from the workspace. Existing map and studio modules remain available to other consumers. These changes do not alter skill IDs, source evidence or completion rules.
+Bulk edit opens the existing spreadsheet as a secondary full-screen tool, preserving paste/import and save/discard behavior. The former Outline/Mind map/Spreadsheet switch and separate visual-editor entry have been removed from the workspace, and the unused mind map and Skill Studio modules were deleted on 24 October 2026. These changes do not alter skill IDs, source evidence or completion rules.
