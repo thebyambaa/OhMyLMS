@@ -9553,27 +9553,9 @@
           for (var n = 0, r = Array(t); n < t; n++) r[n] = e[n];
           return r;
         }
-        const Xl = window.ohmylms.extensions.courseComponents.CourseChapter(() => ({
-          $l,
-          Al,
-          E,
-          Jl,
-          Kl,
-          React,
-          T,
-          Ul,
-          Zl,
-          _,
-          f,
-          g,
-          ga,
-          ie,
-          oo,
-          ot,
-          ql,
-          wt,
-          y
-        }));
+        const Xl = function () {
+          return null;
+        };
         var ec = function (e) {
             var t = document.getElementById("ohmylms-chapter-name-".concat(e));
             t && t.focus();
@@ -10645,21 +10627,9 @@
           for (var n = 0, r = Array(t); n < t; n++) r[n] = e[n];
           return r;
         }
-        var qc = window.ohmylms.extensions.quizComponents.QuestionList(() => ({
-          Bc,
-          Ec,
-          Gc,
-          I,
-          Lc,
-          React,
-          T,
-          Uc,
-          Vc,
-          b,
-          g,
-          uc,
-          y
-        }));
+        var qc = function () {
+          return null;
+        };
         const Yc = (0, g.memo)(qc);
         // Reconstructed application fragment. Assembled in manifest order within factory 1841.
         var Qc = function () {
@@ -11615,31 +11585,9 @@
           for (var n = 0, r = Array(t); n < t; n++) r[n] = e[n];
           return r;
         }
-        var Fu = window.ohmylms.extensions.quizComponents.QuestionCanvas(() => ({
-          Au,
-          Eu,
-          I,
-          Ie,
-          Iu,
-          L,
-          Lc,
-          Pu,
-          React,
-          Ru,
-          T,
-          Tu,
-          b,
-          du,
-          fc,
-          g,
-          ju,
-          lu,
-          nu,
-          ou,
-          tu,
-          wu,
-          y
-        }));
+        var Fu = function () {
+          return null;
+        };
         const Nu = (0, g.memo)(Fu);
         var Du = function (e) {
           var t = true,
@@ -12523,13 +12471,9 @@
           }))) : null;
         };
         const ys = (0, g.memo)(hs);
-        var bs = window.ohmylms.extensions.quizComponents.QuestionSettings(() => ({
-          Ku,
-          React,
-          T,
-          y,
-          ys
-        }));
+        var bs = function () {
+          return null;
+        };
         const _s = (0, g.memo)(bs);
         var ws = function (e) {
           var t = e.isHover,
@@ -12893,23 +12837,13 @@
           for (var n = 0, r = Array(t); n < t; n++) r[n] = e[n];
           return r;
         }
-        var Bs = window.ohmylms.extensions.quizComponents.ChoiceOptionsEditor(() => ({
-          As,
-          Ds,
-          Fs,
-          React,
-          T,
-          Ts,
-          b,
-          g,
-          xs,
-          y
-        }));
+        var Bs = function () {
+          return null;
+        };
         const Ls = (0, g.memo)(Bs);
-        var Vs = window.ohmylms.extensions.quizComponents.MultipleChoiceEditor(() => ({
-          Ls,
-          React
-        }));
+        var Vs = function () {
+          return null;
+        };
         const Hs = (0, g.memo)(Vs),
           Gs = {
             name: (0, b.__)("Multiple Choice", "ohmylms"),
@@ -12983,10 +12917,9 @@
               d: "M5.858 52l.234-1.116h-.858v-.57h.984l.198-.924h-.894v-.57h1.014l.24-1.104h.6l-.24 1.104h1.212l.24-1.104h.6l-.234 1.104h.804v.57h-.93l-.198.924h.84v.57h-.96L8.27 52h-.6l.24-1.116H6.698L6.458 52h-.6zm.96-1.686H8.03l.198-.924H7.016l-.198.924zm6.485 1.758a1.87 1.87 0 01-.744-.144 1.23 1.23 0 01-.528-.45c-.132-.2-.202-.45-.21-.75h.63a.857.857 0 00.228.57c.148.152.356.228.624.228.256 0 .452-.07.588-.21a.748.748 0 00.204-.534c0-.256-.092-.446-.276-.57a1.146 1.146 0 00-.666-.186h-.312v-.528h.318c.236 0 .426-.056.57-.168a.56.56 0 00.222-.474.548.548 0 00-.174-.42c-.112-.108-.272-.162-.48-.162-.216 0-.386.064-.51.192a.701.701 0 00-.204.468h-.63a1.26 1.26 0 01.18-.636c.116-.18.274-.32.474-.42.2-.1.43-.15.69-.15.28 0 .514.05.702.15a.992.992 0 01.432.396c.1.164.15.344.15.54 0 .224-.062.42-.186.588a.887.887 0 01-.498.336c.24.052.438.17.594.354.156.18.234.414.234.702 0 .232-.054.446-.162.642a1.19 1.19 0 01-.48.462c-.212.116-.472.174-.78.174z"
             })));
           },
-          Ys = window.ohmylms.extensions.quizComponents.SingleChoiceEditor(() => ({
-            Ls,
-            React
-          }));
+          Ys = function () {
+            return null;
+          };
         const Qs = {
           name: "Single Choice",
           type: "single-choice",
@@ -13136,15 +13069,9 @@
             writable: !0
           }) : e[t] = n, e;
         }
-        var td = window.ohmylms.extensions.quizComponents.TrueFalseEditor(() => ({
-          I,
-          React,
-          T,
-          V,
-          Xs,
-          b,
-          y
-        }));
+        var td = function () {
+          return null;
+        };
         const nd = {
           name: "True / False",
           type: "true-false",
@@ -13202,16 +13129,13 @@
         };
         const id = (0, g.memo)(od);
         var ld = n(75809),
-          cd = window.ohmylms.extensions.quizComponents.TextAnswerEditor(() => ({
-            React,
-            b,
-            ld
-          }));
+          cd = function () {
+            return null;
+          };
         const ud = (0, g.memo)(cd);
-        var sd = window.ohmylms.extensions.quizComponents.ShortTextEditor(() => ({
-          React,
-          ud
-        }));
+        var sd = function () {
+          return null;
+        };
         const dd = (0, g.memo)(sd);
         var md = ["value", "onChange", "placeholder", "className"];
         function pd() {
@@ -13363,10 +13287,9 @@
               rx: "2"
             })));
           },
-          wd = window.ohmylms.extensions.quizComponents.LongTextEditor(() => ({
-            React,
-            ud
-          }));
+          wd = function () {
+            return null;
+          };
         function Ed(e) {
           return Ed = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (e) {
             return typeof e;
@@ -13473,12 +13396,9 @@
               d: "M18.448 1h9.79c.421 0 .762.341.762.762v9.79c0 .421-.34.762-.762.762h-4.133v6.582c0 .42-.341.761-.762.761h-2.448a.762.762 0 01-.722-.52l-2.448-7.344a.76.76 0 01-.04-.24V1.761c0-.421.342-.762.763-.762zm.761 10.429l2.235 6.705h1.137v-6.582c0-.42.341-.761.762-.761h4.134V2.523h-8.268v8.906zM3.762 1h9.79c.421 0 .762.341.762.762v9.79a.76.76 0 01-.761.762H9.418v6.582c0 .42-.341.761-.762.761H6.209a.762.762 0 01-.722-.52l-2.448-7.344a.765.765 0 01-.039-.24V1.761A.76.76 0 013.762 1zm.761 10.429l2.235 6.705h1.137v-6.582c0-.42.341-.761.762-.761h4.134V2.523H4.523v8.906z"
             })));
           },
-          Pd = window.ohmylms.extensions.quizComponents.StatementEditor(() => ({
-            L,
-            React,
-            T,
-            y
-          }));
+          Pd = function () {
+            return null;
+          };
         const Od = {
           name: "Statement",
           type: "statement",
@@ -13603,15 +13523,9 @@
           }) : e[t] = n, e;
         }
         // Reconstructed application fragment. Assembled in manifest order within factory 1841.
-        var Dd = window.ohmylms.extensions.quizComponents.FillInTheBlankEditor(() => ({
-          Fd,
-          I,
-          L,
-          React,
-          T,
-          b,
-          y
-        }));
+        var Dd = function () {
+          return null;
+        };
         const Wd = (0, g.memo)(Dd),
           zd = {
             name: "Fill In The Blank",
@@ -13921,23 +13835,9 @@
           for (var n = 0, r = Array(t); n < t; n++) r[n] = e[n];
           return r;
         }
-        var tm = window.ohmylms.extensions.quizComponents.ReorderEditor(() => ({
-          $d,
-          $e,
-          I,
-          Jd,
-          Qd,
-          React,
-          T,
-          We,
-          b,
-          g,
-          gc,
-          q,
-          qd,
-          xs,
-          y
-        }));
+        var tm = function () {
+          return null;
+        };
         const nm = (0, g.memo)(tm),
           rm = {
             name: "Reorder",
@@ -14116,23 +14016,9 @@
           return r;
         }
         // Reconstructed application fragment. Assembled in manifest order within factory 1841.
-        var gm = window.ohmylms.extensions.quizComponents.MatchingEditor(() => ({
-          $e,
-          I,
-          React,
-          T,
-          We,
-          b,
-          dm,
-          g,
-          gc,
-          pm,
-          q,
-          qd,
-          um,
-          xs,
-          y
-        }));
+        var gm = function () {
+          return null;
+        };
         const hm = (0, g.memo)(gm),
           ym = {
             name: "Matching",
@@ -14858,36 +14744,14 @@
             value: "number_of_questions_per_page",
             label: (0, b.__)("Number of questions per page", "ohmylms")
           }],
-          Jm = window.ohmylms.extensions.quizComponents.QuizSettingsFields(() => ({
-            $m,
-            Bt,
-            He,
-            I,
-            Km,
-            L,
-            Pn,
-            React,
-            T,
-            Um,
-            Vm,
-            Ym,
-            Zm,
-            b,
-            g,
-            qm,
-            sn,
-            vn,
-            y,
-            zm
-          }));
+          Jm = function () {
+            return null;
+          };
         const Xm = (0, g.memo)(Jm);
         var ep = n(12278),
-          tp = window.ohmylms.extensions.quizComponents.QuizSettings(() => ({
-            I,
-            React,
-            Xm,
-            b
-          }));
+          tp = function () {
+            return null;
+          };
         const np = (0, g.memo)(tp);
         function rp(e) {
           return rp = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (e) {
@@ -16386,31 +16250,9 @@
           return r;
         }
         // Reconstructed application fragment. Assembled in manifest order within factory 1841.
-        const Sf = window.ohmylms.extensions.courseComponents.CourseCurriculum(() => ({
-          $p,
-          Cp,
-          D,
-          I,
-          Ip,
-          Jp,
-          React,
-          T,
-          Xl,
-          _,
-          _f,
-          b,
-          bf,
-          df,
-          ef,
-          f,
-          ff,
-          g,
-          gf,
-          hf,
-          lc,
-          uf,
-          y
-        }));
+        const Sf = function () {
+          return null;
+        };
         var Rf = ["title", "description", "isItProFeature", "inputType", "tooltip", "value", "onChange", "isDescriptionHTML", "spacerPadding", "spacerMarginBottom", "showProTag", "error", "required", "headerFontSize"];
         function xf() {
           return xf = Object.assign ? Object.assign.bind() : function (e) {
@@ -67810,7 +67652,6 @@
             L,
             MH,
             React,
-            Sf,
             T,
             TW,
             ZD,
