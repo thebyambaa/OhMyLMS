@@ -4,7 +4,7 @@ import {
 	newQuestionCard,
 	prepareQuizPayload,
 	moveOption,
-} from '../../assets/src/features/quizzes/model.mjs';
+} from '../../assets/src/features/quiz-editor/model.mjs';
 
 test( 'new form question has a usable choice type and independent answer rows', () => {
 	const card = newQuestionCard( {}, 100 );

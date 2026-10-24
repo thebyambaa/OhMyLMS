@@ -1,5 +1,5 @@
 import { createComponentAdapter } from './component-adapter.mjs';
-const adapters = [ 'quiz-editor', 'question-editor' ].map( ( feature ) =>
+const adapters = [ 'quiz-editor' ].map( ( feature ) =>
 	createComponentAdapter( {
 		manifest: new URL(
 			'../assets/src/features/' + feature + '/components.json',

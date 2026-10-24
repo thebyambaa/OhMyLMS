@@ -8,7 +8,7 @@ import {
 	questionTypePatch,
 	questionPreviewModel,
 	questionPreviewIssues,
-} from '../../assets/src/features/question-bank/questionBlocks.mjs';
+} from '../../assets/src/features/question-editor/questionBlocks.mjs';
 
 test( 'each question type creates the existing assessment data schema', () => {
 	for ( const [ type ] of QUESTION_BLOCK_TYPES ) {

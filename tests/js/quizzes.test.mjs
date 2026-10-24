@@ -4,7 +4,7 @@ import {
 	prepareQuizPayload,
 	canLeaveQuestion,
 	moveOption,
-} from '../../assets/src/features/quizzes/model.mjs';
+} from '../../assets/src/features/quiz-editor/model.mjs';
 test( 'quiz save preserves persisted IDs and extension data without mutating editor state', () => {
 	const quiz = { id: 4, settings: { allow_attempts: 3 } };
 	const questions = [
@@ -56,8 +56,8 @@ import {
 	mergeSavedQuiz,
 	mergeSavedQuestions,
 	failedQuestion,
-} from '../../assets/src/features/quizzes/model.mjs';
-import { removeQuestionFromQuiz } from '../../assets/src/features/quizzes/api.mjs';
+} from '../../assets/src/features/quiz-editor/model.mjs';
+import { removeQuestionFromQuiz } from '../../assets/src/features/quiz-editor/api.mjs';
 test( 'duplicated questions never send option IDs that belong to the original question', () => {
 	const payload = prepareQuizPayload(
 		{ id: 4, modified: '2026-10-01 10:00:00' },

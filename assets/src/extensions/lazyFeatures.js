@@ -1,6 +1,5 @@
 import { lazyFactories, lazyComponents } from './LazyFeature';
 import quizEditors from '../features/quiz-editor/components.json';
-import questionEditors from '../features/question-editor/components.json';
 import courses from '../features/courses/components.json';
 import students from '../features/students/components.json';
 import gamification from '../features/gamification/components.json';
@@ -26,14 +25,9 @@ export const quizEditorComponents = lazyFactories(
 		),
 	'quizEditorComponents'
 );
-export const questionEditorComponents = lazyFactories(
-	questionEditors,
-	() =>
-		import(
-			/* webpackChunkName: "question-editor" */ '../features/question-editor'
-		),
-	'questionEditorComponents'
-);
+// The form-based question editors were retired with the form quiz editor; the
+// public namespace remains, empty, for extensions that still read it.
+export const questionEditorComponents = Object.freeze( {} );
 // Existing runtime adapters retain their public namespace.
 export const quizComponents = {
 	...quizEditorComponents,

@@ -1,5 +1,7 @@
 # Question editor comparison and verification
 
+Historical record. The form-based quiz editor verified here was replaced by Gutenberg authoring on 21 October 2026, and its remaining components were removed on 24 October 2026. See [GUTENBERG-AUTHORING.md](GUTENBERG-AUTHORING.md) for current authoring.
+
 Verified 9 October 2026. The shared quiz and question-bank editor provides a searchable type chooser, rich prompt, type-specific answer controls, collapsed settings and learner preview. All 38 native formats can be inserted. Fourteen formats were added while retaining immutable question versions, private grading keys and native automatic/manual assessment behavior.
 
 ## Saved browser examples
