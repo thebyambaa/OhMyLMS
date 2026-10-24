@@ -1,6 +1,5 @@
 import { createCourseEditor } from './CourseEditor';
 import { createCourseToolbar } from './CourseToolbar';
-import { createCourseCurriculum } from './CourseCurriculum';
 import { createCourseInfoHeader } from './CourseInfoHeader';
 import { createCourseMedia } from './CourseMedia';
 import { createCourseSettings } from './CourseSettings';
@@ -22,11 +21,9 @@ import { createCourseCommunity } from './CourseCommunity';
 import { createCourseList } from './CourseList';
 import { createCourseListItem } from './CourseListItem';
 import { createCourseCreateDialog } from './CourseCreateDialog';
-import { createCourseChapter } from './CourseChapter';
 export const courseComponents = {
 	CourseEditor: createCourseEditor,
 	CourseToolbar: createCourseToolbar,
-	CourseCurriculum: createCourseCurriculum,
 	CourseInfoHeader: createCourseInfoHeader,
 	CourseMedia: createCourseMedia,
 	CourseSettings: createCourseSettings,
@@ -48,5 +45,4 @@ export const courseComponents = {
 	CourseList: createCourseList,
 	CourseListItem: createCourseListItem,
 	CourseCreateDialog: createCourseCreateDialog,
-	CourseChapter: createCourseChapter,
 };

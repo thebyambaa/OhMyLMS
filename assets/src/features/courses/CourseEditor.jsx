@@ -81,7 +81,6 @@ export function createCourseEditor( readRuntime ) {
 			store: r.T.default,
 			courseId,
 			enableSpin,
-			manageStructure: true,
 		} );
 		const dialogs = useCourseIntegrations( {
 			actions: editor.actions,

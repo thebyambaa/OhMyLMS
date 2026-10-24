@@ -1,19 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from '@wordpress/element';
 import { useSelect, useDispatch } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
-import { loadCourse, saveCourseWithChapters, updateCourse } from './api.mjs';
+import { loadCourse, updateCourse } from './api.mjs';
 import {
 	prepareCoursePayload,
 	orderedChapters,
 	completedCourseSteps,
 	mergeSavedCourse,
 } from './model.mjs';
-export function useCourseEditor( {
-	store,
-	courseId,
-	enableSpin,
-	manageStructure = false,
-} ) {
+export function useCourseEditor( { store, courseId, enableSpin } ) {
 	const state = useSelect(
 		( select ) => {
 			const data = select( store );
@@ -38,20 +33,11 @@ export function useCourseEditor( {
 	const [ savedAt, setSavedAt ] = useState( null );
 	const inFlight = useRef( false );
 	const generation = useRef( 0 );
-	// What a save would write: the title, the description and the units with their content.
+	// What a save would write: the title and the description. The outline editor saves the units.
 	const currentKey = useMemo(
 		() =>
-			JSON.stringify( [
-				state.course?.name,
-				state.course?.description,
-				manageStructure ? null : orderedChapters( state.chapters ),
-			] ),
-		[
-			state.course?.name,
-			state.course?.description,
-			state.chapters,
-			manageStructure,
-		]
+			JSON.stringify( [ state.course?.name, state.course?.description ] ),
+		[ state.course?.name, state.course?.description ]
 	);
 	const dirty = ! loading && savedKey !== null && savedKey !== currentKey;
 	const latestKey = useRef( currentKey );
@@ -116,19 +102,10 @@ export function useCourseEditor( {
 		setSaving( true );
 		setError( null );
 		try {
-			const saved = manageStructure
-				? await updateCourse(
-						courseId,
-						prepareCoursePayload( state.course, { status, date } )
-					)
-				: await saveCourseWithChapters(
-						courseId,
-						prepareCoursePayload( state.course, {
-							status,
-							date,
-						} ),
-						orderedChapters( state.chapters )
-					);
+			const saved = await updateCourse(
+				courseId,
+				prepareCoursePayload( state.course, { status, date } )
+			);
 			if ( current !== generation.current ) {
 				return false;
 			}

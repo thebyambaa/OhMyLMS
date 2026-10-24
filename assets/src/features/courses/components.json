@@ -13,7 +13,6 @@
 			"L",
 			"MH",
 			"React",
-			"Sf",
 			"T",
 			"TW",
 			"ZD",
@@ -55,36 +54,6 @@
 			"q",
 			"rz",
 			"tz",
-			"y"
-		]
-	},
-	{
-		"binding": "Sf",
-		"name": "CourseCurriculum",
-		"file": "CourseCurriculum.jsx",
-		"dependencies": [
-			"$p",
-			"Cp",
-			"D",
-			"I",
-			"Ip",
-			"Jp",
-			"React",
-			"T",
-			"Xl",
-			"_",
-			"_f",
-			"b",
-			"bf",
-			"df",
-			"ef",
-			"f",
-			"ff",
-			"g",
-			"gf",
-			"hf",
-			"lc",
-			"uf",
 			"y"
 		]
 	},
@@ -399,32 +368,6 @@
 			"nU",
 			"oU",
 			"tU",
-			"y"
-		]
-	},
-	{
-		"binding": "Xl",
-		"name": "CourseChapter",
-		"file": "CourseChapter.jsx",
-		"dependencies": [
-			"$l",
-			"Al",
-			"E",
-			"Jl",
-			"Kl",
-			"React",
-			"T",
-			"Ul",
-			"Zl",
-			"_",
-			"f",
-			"g",
-			"ga",
-			"ie",
-			"oo",
-			"ot",
-			"ql",
-			"wt",
 			"y"
 		]
 	}

@@ -1,13 +1,13 @@
 # Course source — 2026-09-24
 
-The source build now loads 25 named course React components from `assets/src/features/courses/`. They run in the isolated WordPress installation. The working math site still uses the shipped JavaScript.
+The source build loads 23 named course React components from `assets/src/features/courses/`. The Content step is the [unified course outline editor](UNIFIED-COURSE-OUTLINE.md); the original chapter builder components (CourseCurriculum, CourseChapter) and its bulk chapter save were removed on 24 October 2026.
 
 ## Source inventory
 
 | Area | Components |
 | --- | --- |
 | Course library and creation | CourseList, CourseListItem, CourseCreateDialog |
-| Builder and curriculum | CourseEditor, CourseToolbar, CourseCurriculum, CourseChapter, CourseInfoHeader, CourseMedia |
+| Builder and course information | CourseEditor, CourseToolbar, CourseInfoHeader, CourseMedia |
 | Settings | CourseSettings, CourseBasics, CoursePricing, CourseCapacity, CourseAccess, CourseAvailability, CourseLevel, CourseSlug, CourseReviews |
 | Additional tabs | CourseResources, CourseOrganization, CourseEngagement, CourseCohortSettings, CourseCommunity, CourseFunnel |
 | Publishing review | CoursePreview |
@@ -16,12 +16,11 @@ CourseEditor, CourseCreateDialog, CourseInfoHeader and CourseSettings have autho
 
 Other component files contain reconstructed JSX with runtime dependencies recorded in `components.json`. They retain some original minified locals, shared controls, store actions, and transpiler helpers. They are editable source, but this is not a claim that every course dependency is independently modularized. Student course templates, reporting, import/export, and external integration behavior have not been rewritten in this increment.
 
-`tools/course-adapters.mjs` checks all 25 original factory-1841 bindings and connects them to the native module factories. The one-time extraction utility has been retired; edit the checked-in components directly. Production builds consume checked-in source, not the previous compiled application. The native files compile with WordPress-provided React and source maps into the SDK.
+`tools/course-adapters.mjs` checks all 23 adapted factory-1841 bindings and connects them to the native module factories. The one-time extraction utility has been retired; edit the checked-in components directly. Production builds consume checked-in source, not the previous compiled application. The native files compile with WordPress-provided React and source maps into the SDK.
 
 ## Behavior repaired
 
-- Save waits for both course details and chapter writes. Previously the chapter request was not awaited and its failures were swallowed by the shared action.
-- A chapter failure explicitly reports that course details were already saved, retains editor data, and permits retry. The two REST operations are not a database transaction.
+- Course details save through `POST /courses/{id}` only. Units, lessons and activity placements save through the outline editor's `PUT /courses/{id}/structure`, which is transactional.
 - Failed course creation leaves the dialog open with an error and retry rather than closing after a console-only failure.
 - Save does not mutate the original course object. A late response preserves newer field edits made during the request.
 - Blank descriptions remain blank; completion checks no longer restore an older description or dispatch store changes as a side effect.
@@ -29,11 +28,7 @@ Other component files contain reconstructed JSX with runtime dependencies record
 
 ## Verification
 
-- Browser creation through the course-list dialog, simulated creation failure and retry, adding a second chapter, draft saving and reopening.
-- Browser editing of course title, rich-text description and chapter name; existing lesson relationships preserved after reopening.
-- Browser paid pricing (120 regular / 90 sale), Basics/Resources/Organize/Engagement tab navigation, preview, publishing and persisted price/status checks.
-- Simulated chapter-write failure followed by successful retry. No unexpected page errors in the course scenarios.
-- Four focused model/API tests cover immutable payloads, relationship order, awaited chapter writes, partial failures, stopping after a failed course request, and keeping edits newer than a save request.
+`tests/browser/courses.spec.cjs` covers creation through the course-list dialog (with a simulated failure and retry), adding a unit and saving the outline draft, editing the course title, description and a unit name, paid pricing (120 regular / 90 sale), the Basics/Resources/Organize/Engagement tabs, a simulated course-write failure, preview and publishing. It also asserts that the editor never sends the bulk `POST /courses/{id}/chapters`. It signs in with `OHMYLMS_TEST_CREDENTIALS` or reuses the local outline fixture session from `tests/php/course-structure-browser-fixture.php`. `tests/js/courses.test.mjs` covers immutable payloads, relationship order, the course-only save request and keeping edits newer than a save request.
 - Existing quiz, lesson, membership, extension and student smoke scenarios run in the same isolated suite. PHP integration checks continue to cover enrollment, grading, timers, progress and mocked checkout.
 
 A pre-conversion course screenshot was saved outside Git. Course content and settings screenshots are emitted by the browser tests. The fixture was corrected to use the course's automatically created chapter; these screenshots are not a claim of exhaustive pixel-identical comparison.

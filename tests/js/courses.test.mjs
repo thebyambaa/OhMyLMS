@@ -6,7 +6,7 @@ import {
 	completedCourseSteps,
 	mergeSavedCourse,
 } from '../../assets/src/features/courses/model.mjs';
-import { saveCourseWithChapters } from '../../assets/src/features/courses/api.mjs';
+import { updateCourse } from '../../assets/src/features/courses/api.mjs';
 import { courseEditPath } from '../../assets/src/features/courses/model.mjs';
 test( 'course editing uses the syllabus workspace only for a linked syllabus', () => {
 	assert.equal(
@@ -63,50 +63,13 @@ test( 'course payload preserves extension fields and does not mutate publication
 		[ 0, 1 ]
 	);
 } );
-test( 'course save awaits chapters and surfaces a partial save without declaring success', async () => {
-	let finish;
-	let settled = false;
-	const waiting = new Promise( ( resolve ) => {
-		finish = resolve;
-	} );
-	const saving = saveCourseWithChapters(
-		5,
-		{ name: 'New' },
-		[],
-		async ( options ) =>
-			options.path.endsWith( '/chapters' )
-				? waiting
-				: { id: 5, name: 'New' }
-	).then( ( value ) => {
-		settled = true;
-		return value;
-	} );
-	await Promise.resolve();
-	await Promise.resolve();
-	assert.equal( settled, false );
-	finish( { status: 'success' } );
-	assert.equal( ( await saving ).id, 5 );
-	await assert.rejects(
-		saveCourseWithChapters( 5, { name: 'New' }, [], async ( options ) => {
-			if ( options.path.endsWith( '/chapters' ) )
-				throw Error( 'Network failure' );
-			return { id: 5 };
-		} ),
-		( error ) =>
-			error.partialCourse.id === 5 &&
-			error.message.includes( 'chapters could not be saved' )
-	);
-} );
-test( 'a failed course request does not write chapter data', async () => {
+test( 'a course save writes only the course record; the outline editor saves units', async () => {
 	const calls = [];
-	await assert.rejects(
-		saveCourseWithChapters( 5, {}, [], async ( options ) => {
-			calls.push( options.path );
-			throw Error( 'Forbidden' );
-		} ),
-		/Forbidden/
-	);
-	assert.deepEqual( calls, [ '/ohmylms/v1/courses/5' ] );
+	await updateCourse( 5, { name: 'New' }, async ( options ) => {
+		calls.push( [ options.path, options.method ] );
+		return { id: 5 };
+	} );
+	assert.deepEqual( calls, [ [ '/ohmylms/v1/courses/5', 'POST' ] ] );
 } );
 test( 'save response keeps newer editor changes while accepting server publication state', () => {
 	const before = { name: 'First name', status: 'draft', description: 'Text' };
