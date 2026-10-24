@@ -24,6 +24,7 @@ import { adaptWebhooks } from './webhook-adapters.mjs';
 import { adaptTaxonomies } from './taxonomy-adapters.mjs';
 import { adaptSetup } from './setup-adapters.mjs';
 import { adaptSlashCommands } from './slash-adapters.mjs';
+import { adaptRetired } from './retired-adapters.mjs';
 const traverse = traverseModule.default || traverseModule;
 const generate = generatorModule.default || generatorModule;
 const root = path.resolve( import.meta.dirname, '..' );
@@ -199,6 +200,12 @@ for ( const asset of manifest.assets ) {
 			asset.output === 'assets/dist/admin/ohmylms.js'
 		)
 			console.log( 'Slash command adapter:', adaptSlashCommands( ast ) );
+		// Runs last: every other adapter must have dropped its references first.
+		if (
+			process.argv.includes( '--extensions' ) &&
+			asset.output === 'assets/dist/admin/ohmylms.js'
+		)
+			console.log( 'Retired components:', adaptRetired( ast ) );
 		const result = generate(
 			ast,
 			{ sourceMaps: true, comments: true, compact: false },
