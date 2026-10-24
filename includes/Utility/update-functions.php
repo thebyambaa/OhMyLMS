@@ -138,6 +138,29 @@ function ohmylms_update_1212_db_version() {
 }
 
 /**
+ * Delete the options of the retired development coding worker.
+ *
+ * Its REST routes were never registered and its class was removed, so nothing reads them.
+ *
+ * @return void
+ * @since 1.2.21
+ */
+function ohmylms_update_1221_delete_coding_worker_options() {
+	delete_option( 'ohmylms_coding_worker' );
+	delete_option( 'ohmylms_coding_jobs' );
+}
+
+/**
+ * Update database version to 1.2.21
+ *
+ * @return void
+ * @since 1.2.21
+ */
+function ohmylms_update_1221_db_version() {
+	\OhMyLMS\Install::update_db_version( '1.2.21' );
+}
+
+/**
  * Process one batch of the 'subscriber' -> 'ohmylms_student' migration.
  *
  * Scoped to users who have an actual course enrollment record (not every

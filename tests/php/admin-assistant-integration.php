@@ -11,20 +11,18 @@ if ( ! defined( 'OHMYLMS_TEST_SITE' ) || ! OHMYLMS_TEST_SITE || 'ohmylms_source_
 use OhMyLMS\AI\AssistantSettings;
 use OhMyLMS\AI\AssistantTools;
 use OhMyLMS\AI\AssistantMcpClient;
-use OhMyLMS\AI\CodingJobs;
 use OhMyLMS\MCP\Server;
 $owner = get_user_by( 'login', $config['username'] );
 $saved = array();
-foreach ( array( AssistantSettings::OPTION, CodingJobs::OPTION, CodingJobs::JOBS, 'ohmylms_integrations' ) as $option ) { $saved[ $option ] = get_option( $option, null ); }
+foreach ( array( AssistantSettings::OPTION, 'ohmylms_integrations' ) as $option ) { $saved[ $option ] = get_option( $option, null ); }
 $checks = 0;
 $created = array();
 $conversations = array();
 $student = 0;
 function assistant_check( $condition, $message ) { global $checks; if ( ! $condition ) { throw new RuntimeException( $message ); } ++$checks; }
-function assistant_request( $suffix, $data = null, $nonce = true, $worker = '' ) {
+function assistant_request( $suffix, $data = null, $nonce = true ) {
     $request = new WP_REST_Request( null === $data ? 'GET' : 'POST', '/ohmylms/v1/admin-assistant' . $suffix );
     if ( $nonce ) { $request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) ); }
-    if ( $worker ) { $request->set_header( 'Authorization', 'Bearer ' . $worker ); }
     if ( null !== $data ) { $request->set_header( 'Content-Type', 'application/json' ); $request->set_body( wp_json_encode( $data ) ); }
     return rest_do_request( $request );
 }
@@ -40,7 +38,6 @@ $mock = static function ( $preempt, $args, $url ) use ( &$outputs, &$inputs ) {
 $text = static function ( $value ) { return array( array( 'type' => 'message', 'role' => 'assistant', 'content' => array( array( 'type' => 'output_text', 'text' => $value ) ) ) ); };
 $call = static function ( $name, $arguments ) { return array( array( 'type' => 'function_call', 'call_id' => wp_generate_uuid4(), 'name' => $name, 'arguments' => wp_json_encode( (object) $arguments ) ) ); };
 try {
-    update_option( CodingJobs::JOBS, array(), false );
     wp_set_current_user( $owner->ID );
     $integrations = (array) $saved['ohmylms_integrations']; $integrations['mcp'] = array( 'is_enable' => 1 );
     $enabled = Server::enabled(); update_option( 'ohmylms_integrations', $integrations );

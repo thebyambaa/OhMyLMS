@@ -24,9 +24,6 @@ final class Comparison {
 	const DOMAIN_META     = '_ohmylms_shared_domain';
 	const GRADE_FROM_META = '_ohmylms_shared_grade_from';
 	const GRADE_TO_META   = '_ohmylms_shared_grade_to';
-	// Highest level of the built-in Mathematics scale (grades 1 to 12, then 13 for beyond grade 12).
-	// Other subjects' scales come from their profiles: use max_level().
-	const MAX_GRADE = 13;
 
 	/**
 	 * Domains a skill of a subject can belong to, keyed by id, from the subject's profile.

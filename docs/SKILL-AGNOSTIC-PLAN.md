@@ -7,7 +7,7 @@ Status: all four phases are built: subject profiles, prompts from profiles, skil
 | Assumption | Where |
 | --- | --- |
 | Domains are a fixed maths list (number … calculus, mechanics, discrete) | `Curriculum/Comparison::domains()`, used by AI analysis, the skill map, guidance, placement and the comparison API |
-| Levels are school grades 1–12 plus 13 ("Beyond grade 12") | `Comparison::MAX_GRADE`, `grade_label()`, the `_ohmylms_shared_grade_from/to` meta, guidance and placement ordering |
+| Levels are school grades 1–12 plus 13 ("Beyond grade 12") | `Comparison::MAX_GRADE` (since removed; use `max_level()`), `grade_label()`, the `_ohmylms_shared_grade_from/to` meta, guidance and placement ordering |
 | The AI is "an expert mathematics curriculum analyst" and maps onto "shared mathematics skills"; exam level hints (IGCSE 9–10, A level 12–13, Digital SAT) are in the prompt | `Curriculum/AiAnalysisModel::classify_prompt`, `match_prompt`, `links_prompt` |
 | AI can only start from a syllabus's objectives, not from a course | `Curriculum/AiAnalysis::KINDS` (`syllabus`, `placement`, `links`) |
 | Skills are created in four places with different rules and no record of origin | `Comparison` (shared skills), `Syllabus` (objectives), `Importers/CourseImporter`, `Rest/V1/SkillController` |

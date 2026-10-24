@@ -62,7 +62,7 @@ All routes require administrator access and send the current `expected_revision`
 - `GET …/skill-placement?subject=…` now answers per subject and adds `levels` and `profile`. `grades` keeps its name and holds the same levels for existing clients.
 - MCP tools: `list_subject_profiles`, `save_subject_profile`, `remove_subject_profile` and `set_default_subject_profile`. `get_skill_placement_options` accepts `subject`.
 
-`Comparison::domains()`, `grade_label()` and `placement()` take an optional subject. The `ohmylms_skill_domains` filter receives the subject as a second argument. `Comparison::MAX_GRADE` remains, now documented as the built-in Mathematics scale; use `Comparison::max_level( $subject )` instead.
+`Comparison::domains()`, `grade_label()` and `placement()` take an optional subject. The `ohmylms_skill_domains` filter receives the subject as a second argument. `Comparison::MAX_GRADE` was removed on 24 October 2026 after its last caller moved to profiles; use `Comparison::max_level( $subject )`.
 
 Profiles are site settings, not plugin code. Profiles for languages, sciences, the Mongolian curriculum and international exams are meant to be imported and reviewed per site.
 

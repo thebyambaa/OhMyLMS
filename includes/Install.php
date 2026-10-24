@@ -45,6 +45,10 @@ class Install {
 			'ohmylms_update_1212_schedule_student_migration',
 			'ohmylms_update_1212_db_version',
 		),
+		'1.2.21' => array(
+			'ohmylms_update_1221_delete_coding_worker_options',
+			'ohmylms_update_1221_db_version',
+		),
 	);
 
 
