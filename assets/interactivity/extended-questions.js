@@ -407,7 +407,8 @@
 			if ( board || ! window.JXG ) {
 				return;
 			}
-			board = window.JXG.JSXGraph.initBoard( box.id, {
+			board = window.JXG.JSXGraph.initBoard( box, {
+				document: box.ownerDocument,
 				boundingbox: [ min, max, max, min ],
 				axis: true,
 				grid: true,

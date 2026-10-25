@@ -16,6 +16,7 @@ import { examEditorHref } from './examEditor.mjs';
 import { ExamPaperDialog } from './ExamPaperDialog.jsx';
 import { ImportDialog } from './ImportDialog.jsx';
 import { useHubAction } from './useHubAction.js';
+import { ImportFigures } from './ImportFigures.jsx';
 
 /**
  * Associate each repeated question/part control with its own accessible label.
@@ -280,6 +281,11 @@ export function ExamsPage( {
 					? {
 							...question,
 							[ field ]: value,
+							...( ! [ 'reviewed', 'figures_complete' ].includes(
+								field
+							)
+								? { figures_complete: false }
+								: {} ),
 							...( field !== 'reviewed'
 								? { reviewed: false }
 								: {} ),
@@ -633,6 +639,12 @@ export function ExamsPage( {
 														.join( ';' )
 												)
 											}
+										/>
+										<ImportFigures
+											key={ current.number }
+											jobId={ job.id }
+											question={ current }
+											onChange={ change }
 										/>
 										{ current.requires_source && (
 											<p>

@@ -31,6 +31,7 @@ final class NativeLessonEditor {
 	public static function init() {
 		NativeQuizEditor::init();
 		NativeQuestionEditor::init();
+		\OhMyLMS\Assessment\QuestionPreview::init();
 		add_action( 'init', array( __CLASS__, 'register_question_block' ) );
 		add_action( 'rest_api_init', array( __CLASS__, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue' ), 20 );
@@ -90,6 +91,8 @@ final class NativeLessonEditor {
 			return;
 		}
 		wp_enqueue_style( 'ohmylms-question-editor', plugins_url( 'assets/css/question-editor.css', OHMYLMS_FILE ), array( 'wp-components', 'dashicons' ), OHMYLMS_VERSION );
+		// The canvas is an iframe: enqueue the learner widget styles as block assets too.
+		\OhMyLMS\Assessment\Interactive::enqueue();
 		if ( 'ohmylms-quiz' === $screen->post_type ) {
 			// The printable paper canvas; inert until Paper view is switched on.
 			wp_enqueue_style( 'ohmylms-paper', plugins_url( 'assets/css/paper.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/paper.css' ) );
@@ -354,7 +357,9 @@ final class NativeLessonEditor {
 			return;
 		}
 		$asset = require $asset_path;
-		wp_enqueue_script( 'ohmylms-native-lesson-settings', plugins_url( 'assets/dist/admin/native-lesson-editor.js', OHMYLMS_FILE ), $asset['dependencies'], $asset['version'], true );
+		\OhMyLMS\Assessment\Interactive::enqueue();
+		$dependencies = array_merge( $asset['dependencies'], array( 'ohmylms-interactive-visual', 'ohmylms-extended-questions', 'ohmylms-puzzle-loader' ) );
+		wp_enqueue_script( 'ohmylms-native-lesson-settings', plugins_url( 'assets/dist/admin/native-lesson-editor.js', OHMYLMS_FILE ), $dependencies, $asset['version'], true );
 		wp_localize_script( 'ohmylms-native-lesson-settings', 'ohmylmsPlayerTemplates', \OhMyLMS\Quiz\PlayerTemplates::choices() );
 		do_action( 'ohmylms_enqueue_extension_scripts', 'ohmylms-native-lesson-settings' );
 		// Reuse the lazy MathLive configuration on the native lesson screen as well as the LMS app.

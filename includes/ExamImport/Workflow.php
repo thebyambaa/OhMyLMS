@@ -221,7 +221,16 @@ final class Workflow {
 				} else {
 					// AI output cannot mark its own work as reviewed.
 					foreach ( $valid as &$question ) {
-						$question['reviewed'] = false;
+						$question['reviewed']         = false;
+						$question['figures_complete'] = false;
+						foreach ( $question['figures'] as &$figure ) {
+							$figure['approved'] = false;
+							$figure['selected'] = 'original';
+							unset( $figure['spec'] );
+							$asset              = Figures::enqueue_crop( $id, $figure['page'], $figure['bounds'], (int) $post->post_author );
+							$figure['asset_id'] = is_wp_error( $asset ) ? '' : $asset['id'];
+						}
+						unset( $figure );
 					}
 					unset( $question );
 					$job['suggestions'] = array_merge( $job['suggestions'], $valid );
@@ -308,6 +317,25 @@ final class Workflow {
 				}
 				$rows = array();
 				foreach ( $job['draft'] as $row ) {
+					$figure_settings = array(
+						'figures'       => $row['figures'] ?? array(),
+						'figure_review' => array(
+							'complete' => ! empty( $row['figures_complete'] ),
+							'required' => ! empty( $row['requires_source'] ),
+						),
+						'parts'         => $row['parts'],
+					);
+					$figure_settings = FigureContent::seal( $figure_settings );
+					if ( is_wp_error( $figure_settings ) ) {
+						return $figure_settings;
+					}
+					foreach ( $figure_settings['figures'] as $figure ) {
+						$asset = Figures::asset( $figure['asset_id'] );
+						if ( ! $asset || get_current_user_id() !== (int) $asset['owner'] ) {
+							return self::denied();
+						}
+					}
+					unset( $figure_settings['parts'] );
 					foreach ( $row['parts'] as &$part ) {
 						if ( '' === trim( $part['skills'] ?? '' ) ) {
 							unset( $part['skills'] );
@@ -323,6 +351,7 @@ final class Workflow {
 						'question' => $row['question'],
 						'skills'   => '' !== trim( (string) $row['skills'] ) ? $row['skills'] : (string) ( $job['skills'] ?? '' ),
 						'parts'    => $row['parts'],
+						'settings' => $figure_settings,
 					);
 				}
 				$dry = BulkImport::run( $rows );

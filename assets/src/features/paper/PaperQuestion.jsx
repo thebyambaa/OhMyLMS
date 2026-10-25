@@ -200,7 +200,12 @@ export function PaperQuestion( {
 									{ part.label && `(${ part.label })` }
 								</span>
 								<div className="ohmylms-print-prompt">
-									{ part.prompt }
+									{ question.public ||
+									question.figure_part_html ? (
+										<RawHTML>{ part.prompt }</RawHTML>
+									) : (
+										part.prompt
+									) }
 								</div>
 								{ marks && <Marks marks={ part.marks } /> }
 							</div>

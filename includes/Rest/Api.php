@@ -63,6 +63,7 @@ class Api {
 			\OhMyLMS\Rest\V1\SkillReportController::class,
 			\OhMyLMS\Rest\V1\CurriculumController::class,
 			\OhMyLMS\Rest\V1\SubjectController::class,
+			\OhMyLMS\Rest\V1\SiteSetupController::class,
 			\OhMyLMS\Rest\V1\SyllabusController::class,
 			\OhMyLMS\Rest\V1\CourseOrganizationController::class,
 			\OhMyLMS\Rest\V1\SkillMappingController::class,

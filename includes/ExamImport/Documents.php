@@ -17,9 +17,10 @@ final class Documents {
 	/**
 	 * Resolve the explicitly configured, existing directory outside served roots.
 	 *
+	 * @internal Shared by private import derivatives; never expose through REST.
 	 * @return string|\WP_Error Canonical private directory.
 	 */
-	private static function root() {
+	public static function root() {
 		$root = defined( 'OHMYLMS_IMPORT_PRIVATE_DIR' ) ? realpath( OHMYLMS_IMPORT_PRIVATE_DIR ) : false;
 		if ( ! $root || ! is_dir( $root ) || ! is_writable( $root ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- Check the explicitly configured local storage before exclusive creation.
 			return new \WP_Error( 'exam_storage', __( 'Configure a writable private import directory outside the web root.', 'ohmylms' ), array( 'status' => 503 ) );

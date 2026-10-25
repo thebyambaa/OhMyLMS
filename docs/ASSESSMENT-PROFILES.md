@@ -134,3 +134,12 @@ content for question player blocks, inline question blocks and `[ohmylms_questio
 lists them as `warnings`, and publishing answers with HTTP 409 `exam_overlap` until the request repeats with
 `confirm_overlap`; the editor's Exam panel shows a **Publish anyway** button. Use a separate copy of a question for
 the exam to keep the original playable in practice.
+
+
+### Inline student question previews
+
+Unselected native question blocks open an author-only frame through `POST /ohmylms/v1/question-preview`. The frame uses `single-lesson/quiz-form.php`, the registered question renderer, the learner-safe `QuestionSnapshot::student_view()` contract, and normal frontend asset hooks. It consumes the current unsaved draft. It creates no learner attempt and disables assessment timing and submission controls.
+
+The edited quiz's `settings.presentation` selects Paper View or the standard student player. The current assessment profile and player design apply to standard previews. Paper previews run the same `paper-student` document renderer with one public question item. Switching presentation refreshes the frames; the editor's Paper view toggle remains an authoring layout control.
+
+Extensions do not register a second inline preview component. Register their normal question renderer and public settings/view, and enqueue their student assets as usual. Their markup and assets are used by the isolated preview document, including theme template overrides. Preview sessions contain only the public question view, are bound to the author and parent document, and expire after 15 minutes.

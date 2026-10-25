@@ -1,0 +1,23 @@
+/* Keep the student's question presentation; omit assessment navigation in an inline frame. */
+html:has(body.ohmylms-page.ohmylms-question-frame) {
+	margin-top: 0;
+}
+
+body.ohmylms-page.ohmylms-question-frame {
+	margin: 0;
+	padding: 0;
+}
+
+body.ohmylms-page.ohmylms-question-frame .ohmylms-quiz[data-player-template] {
+	min-height: 0;
+	padding-bottom: 0;
+}
+
+body.ohmylms-page.ohmylms-question-frame .ohmylms-quiz[data-player-template] :is(.ohmylms-quiz-header, .ohmylms-quiz-footer, .ohmylms-player-progress, .ohmylms-paper-progress, .ohmylms-quiz-timer, .ohmylms-quiz-alert, .required-question) {
+	display: none;
+}
+
+body.ohmylms-page.ohmylms-question-frame .ohmylms-quiz[data-player-template] .ohmylms-quiz-form {
+	padding-top: 0;
+	padding-bottom: 0;
+}

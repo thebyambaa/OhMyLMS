@@ -7,7 +7,6 @@
 
 use OhMyLMS\Student\CourseOutline;
 use OhMyLMS\Student\Hub;
-use OhMyLMS\Student\Subjects;
 
 defined( 'ABSPATH' ) || exit;
 ?>
@@ -35,6 +34,11 @@ defined( 'ABSPATH' ) || exit;
 				if ( ! $subject_outline['enrolled'] ) {
 					$subject_action['url'] = $subject_overview . '#oml-course-enroll';
 				}
+				// A visitor is sent to register (or sign in when registration is closed); browsing creates no account.
+				$subject_visitor = ! is_user_logged_in();
+				if ( $subject_visitor ) {
+					$subject_action['url'] = apply_filters( 'ohmylms_subject_signup_url', get_option( 'users_can_register' ) ? wp_registration_url() : wp_login_url( $subject_overview ), $subject_course_id );
+				}
 				?>
 				<li class="oml-subject-course">
 					<article>
@@ -50,7 +54,10 @@ defined( 'ABSPATH' ) || exit;
 									<li><?php echo esc_html( $subject_unit['title'] ); ?></li><?php endforeach; ?></ol></details>
 							<?php endif; ?>
 						<?php endif; ?>
-						<a class="oml-subject-action" href="<?php echo esc_url( $subject_action['url'] ); ?>"><?php echo esc_html( $subject_outline['enrolled'] ? $subject_action['label'] : __( 'Start course', 'ohmylms' ) ); ?></a>
+						<a class="oml-subject-action" href="<?php echo esc_url( $subject_action['url'] ); ?>"><?php echo esc_html( $subject_outline['enrolled'] ? $subject_action['label'] : ( $subject_visitor ? __( 'Sign up to enroll', 'ohmylms' ) : __( 'Start course', 'ohmylms' ) ) ); ?></a>
+						<?php if ( $subject_visitor ) : ?>
+							<a class="oml-subject-secondary" href="<?php echo esc_url( $subject_overview ); ?>"><?php esc_html_e( 'View course', 'ohmylms' ); ?></a>
+						<?php endif; ?>
 					</article>
 				</li>
 			<?php endforeach; ?>
@@ -64,7 +71,7 @@ defined( 'ABSPATH' ) || exit;
 			<p><?php esc_html_e( 'No subjects yet. Subjects appear when courses are published and assigned to them.', 'ohmylms' ); ?></p><?php endif; ?>
 		<ul class="oml-subject-courses">
 			<?php foreach ( $subjects as $subject_node ) : ?>
-				<li class="oml-subject-course"><h2><a href="<?php echo esc_url( Subjects::url( $subject_node['id'], $workspace ) ); ?>"><?php echo esc_html( $subject_node['name'] ); ?></a></h2><p><?php /* translators: %d: number of courses. */ echo esc_html( sprintf( _n( '%d course', '%d courses', $subject_node['total'], 'ohmylms' ), $subject_node['total'] ) ); ?></p></li>
+				<li class="oml-subject-course"><h2><a href="<?php echo esc_url( $subject_link( $subject_node['id'] ) ); ?>"><?php echo esc_html( $subject_node['name'] ); ?></a></h2><p><?php /* translators: %d: number of courses. */ echo esc_html( sprintf( _n( '%d course', '%d courses', $subject_node['total'], 'ohmylms' ), $subject_node['total'] ) ); ?></p></li>
 			<?php endforeach; ?>
 		</ul>
 	<?php endif; ?>

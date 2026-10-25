@@ -161,7 +161,9 @@ function Item( { item, context } ) {
 			<PaperQuestion
 				question={ item.question }
 				prompt={ questionPrompt( item.question ) }
-				label={ context.derived.labels.get( item ) }
+				label={
+					item.preview_label ?? context.derived.labels.get( item )
+				}
 				settings={ context.settings }
 				showAnswers={ context.showAnswers }
 				version={ context.version }

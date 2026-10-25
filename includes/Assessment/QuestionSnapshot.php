@@ -288,6 +288,10 @@ class QuestionSnapshot {
 			$body = ''; }
 		if ( function_exists( 'has_blocks' ) && has_blocks( $body ) ) {
 			$body = apply_filters( 'the_content', $body ); }
+		$body .= \OhMyLMS\ExamImport\FigureContent::html( $this, (string) $scope );
+		foreach ( $settings['parts'] ?? array() as $index => $part ) {
+			$settings['parts'][ $index ]['prompt'] .= \OhMyLMS\ExamImport\FigureContent::html( $this, (string) $scope, $part['id'] );
+		}
 		return InlineBlanks::public_view(
 			array(
 				'id'          => $this->get_id(),

@@ -90,6 +90,22 @@ function native_quiz_practice_count() {
 $practice_before = native_quiz_practice_count();
 
 try {
+	if ( ! class_exists( 'WP_Screen' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/class-wp-screen.php';
+		require_once ABSPATH . 'wp-admin/includes/screen.php';
+	}
+	set_current_screen( 'ohmylms-quiz' );
+	get_current_screen()->is_block_editor( true );
+	\OhMyLMS\Learning\NativeLessonEditor::enqueue();
+	$preview_dependencies = wp_scripts()->registered['ohmylms-native-lesson-settings']->deps;
+	foreach ( array( 'ohmylms-interactive-visual', 'ohmylms-extended-questions', 'ohmylms-puzzle-loader' ) as $preview_handle ) {
+		native_quiz_check( in_array( $preview_handle, $preview_dependencies, true ), 'Native question preview can mount before its widget renderer is loaded.' );
+	}
+	\OhMyLMS\Learning\NativeLessonEditor::question_block_styles();
+	foreach ( array( 'ohmylms-interactive', 'ohmylms-extended-questions', 'ohmylms-jsxgraph', 'ohmylms-puzzles' ) as $preview_style ) {
+		native_quiz_check( wp_style_is( $preview_style, 'enqueued' ), 'The native question canvas is missing a visual widget stylesheet.' );
+	}
+	set_current_screen( '' );
 	$quiz_post_type = get_post_type_object( 'ohmylms-quiz' );
 	native_quiz_check( $quiz_post_type->show_ui && $quiz_post_type->show_in_rest && use_block_editor_for_post_type( 'ohmylms-quiz' ), 'Gutenberg is not enabled for quizzes.' );
 	$quiz_type = native_quiz_request( 'GET', '/wp/v2/types/ohmylms-quiz', array( 'context' => 'edit' ) );
@@ -111,6 +127,93 @@ try {
 	native_quiz_check( str_contains( PreviewPlayer::editor_url( $quiz_id ), '#/quiz-edit/' . $quiz_id ), 'Original editor previews lost their return path.' );
 	native_quiz_check( PreviewPlayer::editor_url( $quiz_id ) === PreviewPlayer::editor_url( $quiz_id, 'https://example.com' ), 'An arbitrary preview return destination was accepted.' );
 	$native_posts[] = $quiz_id;
+	$preview_draft  = array(
+		'name'        => 'Unsaved exact preview',
+		'description' => '<p>Current draft body</p>',
+		'settings'    => array(
+			'type'   => 'single-choice',
+			'answer' => 'PRIVATE_EXPECTED',
+			'rubric' => 'PRIVATE_RUBRIC',
+		),
+		'questions'   => array(
+			array(
+				'id'         => 1,
+				'answer'     => 'Option one',
+				'is_correct' => true,
+			),
+			array(
+				'id'         => 2,
+				'answer'     => 'Option two',
+				'is_correct' => false,
+			),
+		),
+	);
+	$exact_preview  = native_quiz_request(
+		'POST',
+		'/ohmylms/v1/question-preview',
+		array(
+			'post_id'  => $quiz_id,
+			'question' => $preview_draft,
+			'kind'     => 'exam',
+			'settings' => array( 'presentation' => 'paper' ),
+		)
+	);
+	native_quiz_check( 200 === $exact_preview->get_status(), 'An unsaved question cannot use the student preview route.' );
+	parse_str( wp_parse_url( $exact_preview->get_data()['url'], PHP_URL_QUERY ), $preview_query );
+	$preview_token = $preview_query['ohmylms_question_preview'];
+	$preview_saved = get_transient( 'ohmylms_question_preview_' . $preview_token );
+	native_quiz_check( get_current_user_id() === $preview_saved['user'] && 'paper' === $preview_saved['settings']['presentation'] && 'exam' === $preview_saved['kind'], 'The student preview lost its owner or unsaved presentation selection.' );
+	native_quiz_check( ! str_contains( wp_json_encode( $preview_saved ), 'PRIVATE_' ) && ! str_contains( wp_json_encode( $preview_saved ), 'is_correct' ), 'The student frame received private answer settings.' );
+	delete_transient( 'ohmylms_question_preview_' . $preview_token );
+	\OhMyLMS\Extensions\Registry::register(
+		'question',
+		'preview-future-type',
+		array(
+			'label'           => 'Preview future extension',
+			'public_settings' => array( 'caption' ),
+			'render'          => static function ( $view ) {
+				echo '<div data-future-preview="true">' . esc_html( $view['settings']['caption'] ) . '</div>'; },
+			'validate'        => '__return_true',
+			'grade'           => '__return_empty_array',
+		)
+	);
+	$future_view = \OhMyLMS\Assessment\QuestionPreview::view(
+		array(
+			'name'     => 'Extension',
+			'settings' => array(
+				'type'    => 'preview-future-type',
+				'caption' => 'Future student markup',
+				'secret'  => 'PRIVATE_EXTENSION',
+			),
+		),
+		1
+	);
+	ob_start();
+	\OhMyLMS\Extensions\QuestionTypes::render( $future_view, array( 'id' => 0 ) );
+	$future_html = ob_get_clean();
+	native_quiz_check( str_contains( $future_html, 'data-future-preview="true"' ) && str_contains( $future_html, 'Future student markup' ), 'A newly registered type needs a separate editor preview implementation.' );
+	native_quiz_check( ! isset( $future_view['settings']['secret'] ), 'Extension settings bypassed the student public view.' );
+	$bad_preview = native_quiz_request(
+		'POST',
+		'/ohmylms/v1/question-preview',
+		array(
+			'post_id'  => $quiz_id,
+			'question' => array( 'settings' => array( 'type' => 'missing-preview-extension' ) ),
+		)
+	);
+	native_quiz_check( 400 === $bad_preview->get_status(), 'An unavailable extension type did not return a preview error.' );
+	wp_set_current_user( 0 );
+	$denied_preview = native_quiz_request(
+		'POST',
+		'/ohmylms/v1/question-preview',
+		array(
+			'post_id'  => $quiz_id,
+			'question' => $preview_draft,
+		)
+	);
+	native_quiz_check( 401 === $denied_preview->get_status(), 'Anonymous users can create a private student preview.' );
+	wp_set_current_user( $native_admin->ID );
+
 	native_quiz_check( str_contains( $created->get_data()['native_editor_url'] ?? '', 'post.php?post=' . $quiz_id ), 'The new draft did not expose its native editor URL.' );
 	$question_ids = array();
 	foreach ( array( 'single-choice', 'multiple-choice', 'true-false' ) as $index => $format ) {

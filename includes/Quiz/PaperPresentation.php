@@ -37,11 +37,12 @@ final class PaperPresentation {
 	 * The paper document the editor's Paper view shows, for the student's continuous paper, with
 	 * its script and styles. Questions carry no answer keys.
 	 *
-	 * @param int   $quiz_id  Quiz ID.
-	 * @param array $settings Quiz settings in effect for this delivery.
+	 * @param int        $quiz_id  Quiz ID.
+	 * @param array      $settings Quiz settings in effect for this delivery.
+	 * @param array|null $items Optional learner-safe items for a single question preview.
 	 * @return array|null Paper data, or null when the paper script is not built.
 	 */
-	public static function student( $quiz_id, array $settings ) {
+	public static function student( $quiz_id, array $settings, $items = null ) {
 		$asset = OHMYLMS_DIR . '/assets/dist/admin/paper-student.asset.php';
 		if ( ! file_exists( $asset ) ) {
 			return null;
@@ -50,11 +51,36 @@ final class PaperPresentation {
 		wp_enqueue_style( PrintPaper::STYLE, plugins_url( 'assets/css/paper.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/paper.css' ) );
 		\OhMyLMS\Assessment\MathLive::enqueue_loader();
 		wp_enqueue_script( 'ohmylms-paper-student', plugins_url( 'assets/dist/admin/paper-student.js', OHMYLMS_FILE ), $asset['dependencies'], $asset['version'], true );
+		if ( null === $items ) {
+			$attempt  = ohmylms_get_quiz( $quiz_id )->get_quiz_attempt( get_current_user_id() );
+			$delivery = $attempt ? \OhMyLMS\Assessment\AttemptItems::delivery( $attempt['id'] ) : array();
+			$items    = PrintPaper::items( $quiz_id, false );
+			if ( $delivery ) {
+				$by_id  = array_column( $delivery, null, 'id' );
+				$freeze = static function ( array $entries ) use ( &$freeze, $by_id ) {
+					$result = array();
+					foreach ( $entries as $entry ) {
+						if ( 'question' === ( $entry['kind'] ?? '' ) ) {
+							$id = $entry['question']['id'];
+							if ( ! isset( $by_id[ $id ] ) ) {
+								continue;
+							}
+							$entry['question'] = $by_id[ $id ] + array( 'public' => true );
+						} elseif ( isset( $entry['items'] ) ) {
+							$entry['items'] = $freeze( $entry['items'] );
+						}
+						$result[] = $entry;
+					}
+					return $result;
+				};
+				$items  = $freeze( $items );
+			}
+		}
 		wp_set_script_translations( 'ohmylms-paper-student', 'ohmylms' );
 		return array(
 			'title'     => get_the_title( $quiz_id ),
 			'settings'  => PaperSettings::sanitize( $settings['paper'] ?? array() ),
-			'items'     => PrintPaper::items( $quiz_id, false ),
+			'items'     => null === $items ? PrintPaper::items( $quiz_id, false ) : $items,
 			'timeLimit' => array(
 				'value' => (float) ( $settings['time_limit']['value'] ?? 0 ),
 				'type'  => sanitize_key( (string) ( $settings['time_limit']['type'] ?? 'minutes' ) ),

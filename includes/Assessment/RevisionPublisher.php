@@ -72,8 +72,12 @@ final class RevisionPublisher {
 			if ( is_wp_error( $version ) ) {
 				return $version; }
 			$question_settings = json_decode( $version['settings'], true ) ?: array();
-			$marks             = ! empty( $question_settings['score']['enabled'] ) ? max( 0, (float) ( $question_settings['score']['value'] ?? 0 ) ) : 0.0;
-			$slot_marks        = $sections['marks'][ (int) $link['id'] ] ?? null;
+			$figure_check      = \OhMyLMS\ExamImport\FigureContent::publishable( $question_settings );
+			if ( is_wp_error( $figure_check ) ) {
+				return $figure_check;
+			}
+			$marks      = ! empty( $question_settings['score']['enabled'] ) ? max( 0, (float) ( $question_settings['score']['value'] ?? 0 ) ) : 0.0;
+			$slot_marks = $sections['marks'][ (int) $link['id'] ] ?? null;
 			if ( null !== $slot_marks ) {
 				$marks = max( 0, (float) $slot_marks ); }
 			$slots[] = array(

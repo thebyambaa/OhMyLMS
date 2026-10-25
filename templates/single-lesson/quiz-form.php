@@ -52,13 +52,18 @@ if ( $attempt_context ) {
 	$is_timer = $quiz->get_timer() > 0 ? true : false;
 }
 
+if ( ! empty( $ohmylms_player_preview['single_question'] ) ) {
+	$is_timer = false;
+	$timer    = 0;
+}
+
 $paper_content      = $settings['paper_content'] ?? ( $attempt_context ? array() : \OhMyLMS\Quiz\PaperPresentation::content( get_the_ID() ) );
 $paper_presentation = 'paper' === ( $settings['presentation'] ?? '' );
 $paper_settings     = $paper_presentation ? \OhMyLMS\Exams\PaperSettings::sanitize( $settings['paper'] ?? array() ) : null;
 $player_template    = \OhMyLMS\Quiz\PlayerTemplates::resolve( $settings['player_template'] ?? \OhMyLMS\Quiz\PlayerTemplates::DEFAULT_TEMPLATE );
 $player_template    = \OhMyLMS\Student\PlayerContext::quiz_template( $player_template );
 // The assessment kind's profile can fix the design and the layout (an exam always uses the exam dashboard).
-$assessment_profile = \OhMyLMS\Assessment\Profiles::of( get_the_ID() );
+$assessment_profile = isset( $ohmylms_player_preview['profile_kind'] ) ? \OhMyLMS\Assessment\Profiles::get( $ohmylms_player_preview['profile_kind'] ) : \OhMyLMS\Assessment\Profiles::of( get_the_ID() );
 if ( '' !== $assessment_profile['player_template'] ) {
 	$player_template = \OhMyLMS\Quiz\PlayerTemplates::resolve( $assessment_profile['player_template'] );
 }
@@ -73,7 +78,7 @@ if ( ! in_array( $quiz_layout, array( 'one_question_per_page', 'all_questions_in
 if ( '' !== $assessment_profile['layout'] ) {
 	$quiz_layout = $assessment_profile['layout'];
 }
-if ( $paper_presentation ) {
+if ( $paper_presentation || ! empty( $ohmylms_player_preview['single_question'] ) ) {
 	$quiz_layout = 'all_questions_in_one_page';
 }
 $layout_class             = '';
@@ -144,7 +149,7 @@ $questions                = array_values(
 );
 $supported_question_count = count( $questions );
 // Paper View shows the editor's paper; the questions follow its order so the player's numbers match it.
-$paper_student = $paper_presentation ? \OhMyLMS\Quiz\PaperPresentation::student( get_the_ID(), (array) $settings ) : null;
+$paper_student = $paper_presentation ? \OhMyLMS\Quiz\PaperPresentation::student( get_the_ID(), (array) $settings, $ohmylms_player_preview['paper_items'] ?? null ) : null;
 if ( $paper_student ) {
 	$paper_order = array_flip( \OhMyLMS\Quiz\PaperPresentation::order( $paper_student['items'] ) );
 	usort(
@@ -412,8 +417,8 @@ if ( $attempt_context ) {
 								'question-meta',
 								$player_template,
 								array(
-									'ordinal'        => $count,
-									'question_count' => $supported_question_count,
+									'ordinal'        => $ohmylms_player_preview['ordinal'] ?? $count,
+									'question_count' => $ohmylms_player_preview['question_count'] ?? $supported_question_count,
 									'marks'          => max( 0, (float) ( $question['settings']['score']['value'] ?? 0 ) ),
 									'section'        => (string) ( $question['section'] ?? '' ),
 									'paper'          => $paper_settings,

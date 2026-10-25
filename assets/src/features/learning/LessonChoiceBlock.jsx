@@ -49,6 +49,7 @@ import {
 import { questionPrompt } from '../question-editor/questionPrompt.mjs';
 import { PaperQuestion } from '../paper/PaperQuestion';
 import { usePaperQuestion } from '../paper/PaperCanvas';
+import { QuestionBlockPreview } from './QuestionBlockPreview';
 
 /**
  * Question fields stay on the canvas, except on the printable paper, where the sheet shows the
@@ -79,12 +80,14 @@ function QuestionFieldsSlot( { paper, children } ) {
  * @param root0.setAttributes
  * @param root0.clientId
  * @param root0.context
+ * @param root0.isSelected
  */
 function LessonChoiceEdit( {
 	attributes,
 	setAttributes,
 	clientId,
 	context = {},
+	isSelected = false,
 } ) {
 	const standalone = context.postType === 'ohmylms-question';
 	const quiz = context.postType === 'ohmylms-quiz' || standalone;
@@ -108,6 +111,7 @@ function LessonChoiceEdit( {
 	const { lockPostSaving, unlockPostSaving } = useDispatch( 'core/editor' );
 	const printed = usePaperQuestion( clientId, question );
 	const paper = printed.view && ! standalone;
+	const preview = ! isSelected && ! standalone;
 	useEffect( () => {
 		if ( context.postType ) {
 			let delivery = quiz ? 'quiz' : 'inline';
@@ -562,7 +566,7 @@ function LessonChoiceEdit( {
 					{ error }
 				</Notice>
 			) }
-			{ paper && (
+			{ paper && ! preview && (
 				<PaperQuestion
 					question={ question }
 					prompt={ questionPrompt( question ) }
@@ -577,17 +581,28 @@ function LessonChoiceEdit( {
 					{ incompleteMessage }
 				</p>
 			) }
-			<QuestionFieldsSlot paper={ paper }>
-				{ dirty &&
-					! busy &&
-					supported &&
-					! choiceReadyToSave( question ) && (
-						<p className="ohmylms-choice-validation" role="status">
-							{ incompleteMessage }
-						</p>
-					) }
-				{ answerFields }
-			</QuestionFieldsSlot>
+			{ preview && (
+				<QuestionBlockPreview
+					question={ question }
+					clientId={ clientId }
+				/>
+			) }
+			{ ! preview && (
+				<QuestionFieldsSlot paper={ paper }>
+					{ dirty &&
+						! busy &&
+						supported &&
+						! choiceReadyToSave( question ) && (
+							<p
+								className="ohmylms-choice-validation"
+								role="status"
+							>
+								{ incompleteMessage }
+							</p>
+						) }
+					{ answerFields }
+				</QuestionFieldsSlot>
+			) }
 			{ attributes.questionId > 0 && (
 				<NativeQuestionDetails
 					id={ attributes.questionId }
