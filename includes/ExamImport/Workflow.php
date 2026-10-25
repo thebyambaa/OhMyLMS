@@ -202,7 +202,7 @@ final class Workflow {
 					foreach ( array( 'input_tokens', 'output_tokens' ) as $field ) {
 						$job['usage'][ $field ] = ( $job['usage'][ $field ] ?? 0 ) + $reply[ $field ];
 					}
-					$valid = -1 === (int) $cursor ? Extraction::inventory( $reply['data'] ) : Extraction::questions( $reply['data']['questions'] ?? null, array_slice( $job['inventory']['question_numbers'], $cursor, Extraction::BATCH ), $job['inventory']['page_count'] );
+					$valid = -1 === (int) $cursor ? Extraction::inventory( $reply['data'] ) : Extraction::questions( $reply['data']['questions'] ?? null, array_slice( $job['inventory']['question_numbers'], $cursor, Extraction::BATCH ), $job['inventory']['page_count'], true );
 				} else {
 					$valid = $reply;
 				}

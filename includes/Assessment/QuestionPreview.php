@@ -221,6 +221,10 @@ final class QuestionPreview {
 		wp_enqueue_style( 'ohmylms-frontend' );
 		wp_enqueue_script( 'ohmylms-frontend' );
 		MathLive::enqueue();
+		$figure_markup = (string) ( $saved['question']['description'] ?? '' ) . implode( ' ', array_column( $saved['question']['settings']['parts'] ?? array(), 'prompt' ) );
+		if ( false !== strpos( $figure_markup, 'ohmylms-import-figure' ) ) {
+			\OhMyLMS\ExamImport\FigureContent::enqueue();
+		}
 		wp_enqueue_style( 'ohmylms-question-frame', plugins_url( 'assets/css/question-preview.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/question-preview.css' ) );
 		$question                           = $saved['question'];
 		$saved['settings']['paper_content'] = array();

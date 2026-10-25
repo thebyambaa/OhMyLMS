@@ -62,7 +62,7 @@ require dirname( __DIR__ ) . '/fixtures/class-wp-error.php';
 function is_wp_error( $value ) {
 	return $value instanceof WP_Error; }
 $root = dirname( __DIR__, 2 );
-foreach ( array( 'Assessment/NumericAnswer', 'Assessment/Structured', 'AI/Providers/Provider', 'AI/Providers/OpenAI', 'AI/Providers/Anthropic', 'AI/Providers/Gemini', 'AI/Client', 'ExamImport/Extraction' ) as $file ) {
+foreach ( array( 'Assessment/NumericAnswer', 'Assessment/Structured', 'AI/Providers/Provider', 'AI/Providers/OpenAI', 'AI/Providers/Anthropic', 'AI/Providers/Gemini', 'AI/Client', 'ExamImport/PageRenderer', 'ExamImport/FigureSpec', 'ExamImport/FigureContent', 'ExamImport/Extraction' ) as $file ) {
 	require $root . '/includes/' . $file . '.php'; }
 use OhMyLMS\ExamImport\Extraction;
 $checks    = 0;
@@ -96,6 +96,19 @@ foreach ( array( array( 'question_numbers' => array( '1', '1' ) ), array( 'quest
 	$check( is_wp_error( Extraction::inventory( array_replace( $inventory, $change ) ) ), 'Malformed or unbounded inventory rejected' );
 }
 $check( ! is_wp_error( Extraction::questions( array( $row ), array( '1' ), 2 ) ), 'Valid source question' );
+$bad_figure_row = $row + array(
+	'figures' => array(
+		array(
+			'id'     => 'f1',
+			'page'   => 1,
+			'bounds' => array( 0, 0, 2, 1 ),
+			'alt'    => 'Uncertain diagram',
+		),
+	),
+);
+$check( is_wp_error( Extraction::questions( array( $bad_figure_row ), array( '1' ), 2 ) ), 'Invalid teacher figure edits remain rejected' );
+$manual_crop = Extraction::questions( array( $bad_figure_row ), array( '1' ), 2, true );
+$check( ! is_wp_error( $manual_crop ) && $manual_crop[0]['requires_source'] && array() === $manual_crop[0]['figures'] && false !== strpos( $manual_crop[0]['notes'], 'manual crop' ), 'Bad AI bounds remain visible and manually recoverable without losing question text' );
 $check( is_wp_error( Extraction::questions( array(), array( '1' ), 2 ) ), 'Missing inventoried question rejected' );
 $check( is_wp_error( Extraction::questions( array( $row, $row ), array( '1' ), 2 ) ), 'Duplicate question rejected' );
 foreach ( array(
@@ -152,5 +165,21 @@ foreach ( array( 'openai', 'anthropic', 'gemini' ) as $provider ) {
 	);
 	$check( ! is_wp_error( $request ) && false !== strpos( wp_json_encode( $request['body'] ), base64_encode( '%PDF-synthetic' ) ), 'Provider receives native PDF bytes' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Verify native provider PDF wire encoding.
 	$check( false === strpos( $request['url'], 'not-a-real-key' ), 'Key never enters provider URL' );
+	$image_request = Extraction::request(
+		array(
+			'provider' => $provider,
+			'model'    => 'fixture',
+		),
+		'not-a-real-key',
+		'reconstruct',
+		array(
+			array(
+				'name'  => 'figure.png',
+				'mime'  => 'image/png',
+				'bytes' => 'PNG-fixture',
+			),
+		)
+	);
+	$check( ! is_wp_error( $image_request ) && false !== strpos( str_replace( '\\/', '/', wp_json_encode( $image_request['body'] ) ), 'image/png' ), 'Provider receives a native PNG reconstruction input' );
 }
 echo (int) $checks . " PDF extraction unit checks passed.\n";

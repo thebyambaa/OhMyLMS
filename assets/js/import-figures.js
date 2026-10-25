@@ -2,6 +2,13 @@
 ( function () {
 	let counter = 0;
 	const mounted = new Map();
+	const release = ( figure, state ) => {
+		window.JXG.JSXGraph.freeBoard( state.board );
+		state.node.remove();
+		state.printed.remove();
+		state.image.classList.remove( 'ohmylms-figure-original' );
+		mounted.delete( figure );
+	};
 	const unary = {
 		sin: Math.sin,
 		cos: Math.cos,
@@ -63,22 +70,27 @@
 				pan: { enabled: false },
 				zoom: { enabled: false, wheel: false, pinch: false },
 				keyboard: { enabled: false },
+				showInfobox: false,
 			} );
 			const points = new Map();
 			for ( const object of spec.objects ) {
+				const color = object.color || '#202020';
 				const options = {
 					fixed: true,
 					name: object.label || '',
 					withLabel: !! object.label,
-					strokeColor: object.color,
-					fillColor: object.color,
+					strokeColor: color,
+					fillColor: color,
 					fillOpacity: 0,
 					dash: object.dashed ? 2 : 0,
 					highlight: false,
-					label: { display: 'internal', parse: false },
+					showInfobox: false,
+					borders: { strokeColor: color, highlight: false, fixed: true },
+					arc: { strokeColor: color, highlight: false, fixed: true },
+					label: { display: 'internal', parse: false, strokeColor: color, fixed: true, highlight: false },
 				};
 				if ( object.type === 'point' ) {
-					points.set( object.id, board.create( 'point', [ object.x, object.y ], { ...options, size: 2 } ) );
+					points.set( object.id, board.create( 'point', [ object.x, object.y ], { ...options, size: object.marker ? 2 : 0 } ) );
 				} else if ( [ 'segment', 'polygon', 'angle' ].includes( object.type ) ) {
 					board.create( object.type, object.points.map( ( id ) => {
 						if ( ! points.has( id ) ) {
@@ -104,10 +116,15 @@
 			}
 			const printed = document.createElement( 'div' );
 			printed.className = 'ohmylms-figure-static';
-			printed.append( svg.cloneNode( true ) );
+			const copy = svg.cloneNode( true );
+			const rect = svg.getBoundingClientRect();
+			copy.setAttribute( 'viewBox', `0 0 ${ rect.width } ${ rect.height }` );
+			copy.setAttribute( 'width', rect.width );
+			copy.setAttribute( 'height', rect.height );
+			printed.append( copy );
 			figure.append( printed );
 			image.classList.add( 'ohmylms-figure-original' );
-			mounted.set( figure, { board, node, image } );
+			mounted.set( figure, { board, node, image, printed } );
 		} catch {
 			if ( board ) {
 				window.JXG.JSXGraph.freeBoard( board );
@@ -120,8 +137,7 @@
 	const scan = () => {
 		for ( const [ figure, state ] of mounted ) {
 			if ( ! figure.isConnected ) {
-				window.JXG.JSXGraph.freeBoard( state.board );
-				mounted.delete( figure );
+				release( figure, state );
 			}
 		}
 		if ( ! window.JXG ) {
@@ -139,9 +155,13 @@
 	scan();
 	window.addEventListener( 'pagehide', () => {
 		observer.disconnect();
-		for ( const state of mounted.values() ) {
-			window.JXG.JSXGraph.freeBoard( state.board );
+		for ( const [ figure, state ] of mounted ) {
+			release( figure, state );
 		}
-		mounted.clear();
 	} );
+	window.addEventListener( 'pageshow', () => {
+		observer.observe( document.documentElement, { childList: true, subtree: true } );
+		scan();
+	} );
+	window.addEventListener( 'beforeprint', scan );
 } )();

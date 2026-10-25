@@ -25,9 +25,12 @@ final class FigureSpec {
 		if ( $bounds[0] >= $bounds[2] || $bounds[1] <= $bounds[3] ) {
 			return self::error();
 		}
-		$objects = array();
-		$points  = array();
-		$ids     = array();
+		$objects           = array();
+		$points            = array();
+		$ids               = array();
+		$expression_budget = 200;
+		$functions         = 0;
+		$axes              = 0;
 		foreach ( $value['objects'] as $object ) {
 			if ( ! is_array( $object ) || ! is_string( $object['id'] ?? null ) || ! preg_match( '/^[a-zA-Z][a-zA-Z0-9_-]{0,39}$/D', $object['id'] ) || isset( $ids[ $object['id'] ] ) ) {
 				return self::error();
@@ -40,7 +43,11 @@ final class FigureSpec {
 			);
 			switch ( $type ) {
 				case 'point':
-					$allowed = array_merge( $allowed, array( 'x', 'y' ) );
+					$allowed = array_merge( $allowed, array( 'x', 'y', 'marker' ) );
+					if ( isset( $object['marker'] ) && ! is_bool( $object['marker'] ) ) {
+						return self::error();
+					}
+					$clean['marker'] = $object['marker'] ?? false;
 					if ( ! self::numbers( array( $object['x'] ?? null, $object['y'] ?? null ), 2 ) ) {
 						return self::error();
 					}
@@ -74,11 +81,13 @@ final class FigureSpec {
 					$clean['radius'] = $object['radius'];
 					break;
 				case 'axes':
+					if ( ++$axes > 1 ) {
+						return self::error();
+					}
 					break;
 				case 'function':
 					$allowed[] = 'expression';
-					$budget    = 200;
-					if ( ! self::expression( $object['expression'] ?? null, 0, $budget ) ) {
+					if ( ++$functions > 8 || ! self::expression( $object['expression'] ?? null, 0, $expression_budget ) ) {
 						return self::error();
 					}
 					$clean['expression'] = $object['expression'];

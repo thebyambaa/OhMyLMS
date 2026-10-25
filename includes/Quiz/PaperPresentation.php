@@ -57,7 +57,8 @@ final class PaperPresentation {
 			$items    = PrintPaper::items( $quiz_id, false );
 			if ( $delivery ) {
 				$by_id  = array_column( $delivery, null, 'id' );
-				$freeze = static function ( array $entries ) use ( &$freeze, $by_id ) {
+				$seen   = array();
+				$freeze = static function ( array $entries ) use ( &$freeze, $by_id, &$seen ) {
 					$result = array();
 					foreach ( $entries as $entry ) {
 						if ( 'question' === ( $entry['kind'] ?? '' ) ) {
@@ -66,6 +67,7 @@ final class PaperPresentation {
 								continue;
 							}
 							$entry['question'] = $by_id[ $id ] + array( 'public' => true );
+							$seen[ $id ]       = true;
 						} elseif ( isset( $entry['items'] ) ) {
 							$entry['items'] = $freeze( $entry['items'] );
 						}
@@ -74,6 +76,15 @@ final class PaperPresentation {
 					return $result;
 				};
 				$items  = $freeze( $items );
+				// A later edit may remove a live question; the existing attempt still owns it.
+				foreach ( $delivery as $question ) {
+					if ( ! isset( $seen[ $question['id'] ] ) ) {
+						$items[] = array(
+							'kind'     => 'question',
+							'question' => $question + array( 'public' => true ),
+						);
+					}
+				}
 			}
 		}
 		wp_set_script_translations( 'ohmylms-paper-student', 'ohmylms' );

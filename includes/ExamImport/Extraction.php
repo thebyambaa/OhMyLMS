@@ -231,9 +231,10 @@ final class Extraction {
 	 * @param mixed $rows Candidate question list.
 	 * @param array $numbers Expected numbers, in order.
 	 * @param int   $pages Source page count.
+	 * @param bool  $from_provider Keep invalid AI figure detections as explicit manual-crop warnings.
 	 * @return array|\WP_Error Sanitized candidates, never executable markup.
 	 */
-	public static function questions( $rows, array $numbers, $pages ) {
+	public static function questions( $rows, array $numbers, $pages, $from_provider = false ) {
 		if ( ! is_array( $rows ) || count( $rows ) !== count( $numbers ) || array_column( $rows, 'number' ) !== $numbers || strlen( wp_json_encode( $rows ) ) > 1048576 ) {
 			return self::error( 'questions', __( 'Every inventoried question must be present once and in order.', 'ohmylms' ) );
 		}
@@ -274,15 +275,21 @@ final class Extraction {
 			if ( isset( $row['skills'] ) && ! is_string( $row['skills'] ) ) {
 				return self::error( 'questions', __( 'Question skills must be text.', 'ohmylms' ) );
 			}
-			$figures = FigureContent::validate( $row['figures'] ?? array(), array_column( $parts, 'id' ), $pages );
+			$figures        = FigureContent::validate( $row['figures'] ?? array(), array_column( $parts, 'id' ), $pages );
+			$figure_failure = false;
 			if ( is_wp_error( $figures ) ) {
-				return $figures;
+				if ( ! $from_provider ) {
+					return $figures;
+				}
+				$figures        = array();
+				$figure_failure = true;
+				$row['notes']   = ( is_string( $row['notes'] ?? null ) ? $row['notes'] . "\n" : '' ) . __( 'Figure detection needs manual crop correction. Check the source page before approval.', 'ohmylms' );
 			}
 			$clean[] = array(
 				'number'           => $row['number'],
 				'question'         => sanitize_textarea_field( $row['question'] ),
 				'page'             => $row['page'],
-				'requires_source'  => ! empty( $row['requires_source'] ),
+				'requires_source'  => $figure_failure || ! empty( $row['requires_source'] ),
 				'notes'            => is_string( $row['notes'] ?? null ) ? sanitize_textarea_field( $row['notes'] ) : '',
 				'skills'           => sanitize_text_field( $row['skills'] ?? '' ),
 				'parts'            => $parts,

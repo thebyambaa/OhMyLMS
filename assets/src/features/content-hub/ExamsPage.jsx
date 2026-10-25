@@ -295,6 +295,43 @@ export function ExamsPage( {
 		);
 		setDirty( true );
 	};
+	const moveFigure = ( index, destination ) => {
+		const source = questions[ selected ];
+		const figure = source.figures[ index ];
+		setQuestions( ( previous ) =>
+			previous.map( ( question ) => {
+				if ( question.number === source.number ) {
+					return {
+						...question,
+						figures: question.figures.filter(
+							( item ) => item.id !== figure.id
+						),
+						reviewed: false,
+						figures_complete: false,
+					};
+				}
+				if ( question.number === destination ) {
+					return {
+						...question,
+						figures: [
+							...( question.figures || [] ),
+							{
+								...figure,
+								id: `f_${ Date.now() }`,
+								part_ids: [],
+								approved: false,
+							},
+						],
+						requires_source: true,
+						reviewed: false,
+						figures_complete: false,
+					};
+				}
+				return question;
+			} )
+		);
+		setDirty( true );
+	};
 	const changePart = ( index, field, value ) =>
 		change(
 			'parts',
@@ -644,6 +681,17 @@ export function ExamsPage( {
 											key={ current.number }
 											jobId={ job.id }
 											question={ current }
+											destinations={ questions.map(
+												( question ) => question.number
+											) }
+											onMove={ moveFigure }
+											candidates={
+												job.suggestions?.find(
+													( item ) =>
+														item.number ===
+														current.number
+												)?.figures || []
+											}
 											onChange={ change }
 										/>
 										{ current.requires_source && (

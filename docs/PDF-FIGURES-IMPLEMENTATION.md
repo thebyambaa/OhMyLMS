@@ -2,9 +2,10 @@
 
 Status: implementation started; October 25, 2026. The milestones below include outstanding work.
 
-Implementation update: the first private rendering/asset slice is now implemented; see
-[PRIVATE-FIGURE-ASSETS.md](PRIVATE-FIGURE-ASSETS.md) for its API, setup, verification,
-and explicit remaining work. This does not complete milestone 1 or enable student figures.
+Implementation update: preservation, review, native version bindings, protected attempt delivery,
+printing and bounded JSXGraph reconstruction are implemented. See
+[PRIVATE-FIGURE-ASSETS.md](PRIVATE-FIGURE-ASSETS.md) for the shipped contracts, checks,
+and remaining release limits. Additional exam programs and interaction types remain separate releases.
 
 This plan supersedes the figure release sequence and renderer proposals in
 [EXAM-PAPERS-AND-FIGURES.md](EXAM-PAPERS-AND-FIGURES.md). Existing import and assessment contracts remain compatible.

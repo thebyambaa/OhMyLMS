@@ -17,13 +17,23 @@ const api = ( path, data ) =>
 /**
  * Correct, assign and approve original crops or declarative reconstructions.
  *
- * @param {Object}                                                         props          Component properties.
- * @param {number}                                                         props.jobId    Source job.
- * @param {Object}                                                         props.question Current review draft.
- * @param {(field: string, value: boolean|string|number|Object[]) => void} props.onChange Draft field update.
+ * @param {Object}                                                         props              Component properties.
+ * @param {number}                                                         props.jobId        Source job.
+ * @param {Object}                                                         props.question     Current review draft.
+ * @param {(field: string, value: boolean|string|number|Object[]) => void} props.onChange     Draft field update.
+ * @param {Object[]}                                                       props.candidates   New detections that have not replaced teacher edits.
+ * @param {string[]}                                                       props.destinations Question numbers in the import.
+ * @param {(index: number, question: string) => void}                      props.onMove       Reassign a placement.
  * @return {Element} Figure review controls.
  */
-export function ImportFigures( { jobId, question, onChange } ) {
+export function ImportFigures( {
+	jobId,
+	question,
+	onChange,
+	candidates = [],
+	destinations = [],
+	onMove = null,
+} ) {
 	const [ assets, setAssets ] = useState( [] );
 	const [ error, setError ] = useState( '' );
 	const [ busy, setBusy ] = useState( false );
@@ -110,6 +120,54 @@ export function ImportFigures( { jobId, question, onChange } ) {
 		<section className="ohmylms-import-figures">
 			<fieldset disabled={ busy }>
 				<h3>{ __( 'Figures', 'ohmylms' ) }</h3>
+				<p>
+					{ __(
+						'For measurement tasks, use the original crop and print at actual size.',
+						'ohmylms'
+					) }
+				</p>
+				{ candidates
+					.filter(
+						( candidate ) =>
+							! figures.some(
+								( figure ) =>
+									figure.asset_id &&
+									figure.asset_id === candidate.asset_id
+							)
+					)
+					.map( ( candidate ) => (
+						<Button
+							key={ candidate.id }
+							variant="secondary"
+							disabled={ figures.length >= 20 }
+							onClick={ () =>
+								onChange( 'figures', [
+									...figures,
+									{
+										...candidate,
+										id: figures.some(
+											( figure ) =>
+												figure.id === candidate.id
+										)
+											? `f_${ Date.now() }`
+											: candidate.id,
+										approved: false,
+										part_ids: (
+											candidate.part_ids || []
+										).filter( ( id ) =>
+											question.parts.some(
+												( part ) => part.id === id
+											)
+										),
+									},
+								] )
+							}
+						>
+							{ __( 'Use detected figure', 'ohmylms' ) }{ ' ' }
+							{ candidate.id }
+						</Button>
+					) ) }
+
 				{ error && (
 					<Notice status="error" isDismissible={ false }>
 						{ error }
@@ -162,16 +220,13 @@ export function ImportFigures( { jobId, question, onChange } ) {
 					{ __( 'Render full page for crop reference', 'ohmylms' ) }
 				</Button>
 				{ assets.find( ( asset ) => asset.id === pageImage )?.url && (
-					<img
-						className="ohmylms-import-page"
-						src={
+					<CropReference
+						url={
 							assets.find( ( asset ) => asset.id === pageImage )
 								.url
 						}
-						alt={ __(
-							'Original PDF page for selecting crop bounds',
-							'ohmylms'
-						) }
+						bounds={ bounds }
+						onBounds={ setBounds }
 					/>
 				) }
 				<Button
@@ -188,8 +243,38 @@ export function ImportFigures( { jobId, question, onChange } ) {
 					return (
 						<fieldset key={ figure.id }>
 							<legend>{ figure.id }</legend>
+							{ onMove && (
+								<SelectControl
+									label={ __(
+										'Move figure to question',
+										'ohmylms'
+									) }
+									value={ question.number }
+									options={ destinations.map(
+										( number ) => ( {
+											label: number,
+											value: number,
+										} )
+									) }
+									onChange={ ( number ) => {
+										if ( number !== question.number ) {
+											onMove( index, number );
+										}
+									} }
+								/>
+							) }
 							{ asset?.url ? (
-								<img src={ asset.url } alt={ figure.alt } />
+								<div className="ohmylms-figure-comparison">
+									<img src={ asset.url } alt={ figure.alt } />
+									{ figure.spec && (
+										<ReconstructionPreview
+											spec={ figure.spec }
+											url={ asset.url }
+											alt={ figure.alt }
+											notToScale={ figure.not_to_scale }
+										/>
+									) }
+								</div>
 							) : (
 								<p role="status">
 									{ asset?.error ||
@@ -232,6 +317,14 @@ export function ImportFigures( { jobId, question, onChange } ) {
 									update( index, { part_ids: partIds } )
 								}
 							/>
+							<Button
+								onClick={ () => {
+									setPage( figure.page );
+									setBounds( figure.bounds );
+								} }
+							>
+								{ __( 'Edit crop bounds', 'ohmylms' ) }
+							</Button>
 							<Button
 								disabled={ busy }
 								onClick={ () => run( () => crop( index ) ) }
@@ -297,11 +390,6 @@ export function ImportFigures( { jobId, question, onChange } ) {
 										onChange={ ( selected ) =>
 											update( index, { selected } )
 										}
-									/>
-									<ReconstructionPreview
-										spec={ figure.spec }
-										url={ asset?.url }
-										alt={ figure.alt }
 									/>
 									{ figure.spec.objects.map(
 										( object, objectIndex ) => (
@@ -404,15 +492,84 @@ export function ImportFigures( { jobId, question, onChange } ) {
 }
 
 /**
+ * Select normalized crop bounds with a pointer; the numeric controls also support keyboards.
+ *
+ * @param {Object}                     props          Component properties.
+ * @param {string}                     props.url      Protected full-page image.
+ * @param {number[]}                   props.bounds   Normalized bounds.
+ * @param {(bounds: number[]) => void} props.onBounds Selection callback.
+ * @return {Element} Page with selection overlay.
+ */
+function CropReference( { url, bounds, onBounds } ) {
+	const [ anchor, setAnchor ] = useState( null );
+	const position = ( event ) => {
+		const rect = event.currentTarget.getBoundingClientRect();
+		return [
+			Math.max(
+				0,
+				Math.min( 1, ( event.clientX - rect.left ) / rect.width )
+			),
+			Math.max(
+				0,
+				Math.min( 1, ( event.clientY - rect.top ) / rect.height )
+			),
+		];
+	};
+	const select = ( event ) => {
+		if ( anchor ) {
+			const end = position( event );
+			onBounds( [
+				Math.min( anchor[ 0 ], end[ 0 ] ),
+				Math.min( anchor[ 1 ], end[ 1 ] ),
+				Math.max( anchor[ 0 ], end[ 0 ] ),
+				Math.max( anchor[ 1 ], end[ 1 ] ),
+			] );
+		}
+	};
+	return (
+		<button
+			type="button"
+			className="ohmylms-crop-reference"
+			aria-label={ __(
+				'Drag to select a crop, or use the percentage fields',
+				'ohmylms'
+			) }
+			onPointerDown={ ( event ) => {
+				event.currentTarget.setPointerCapture( event.pointerId );
+				setAnchor( position( event ) );
+			} }
+			onPointerMove={ select }
+			onPointerUp={ ( event ) => {
+				select( event );
+				setAnchor( null );
+			} }
+			onPointerCancel={ () => setAnchor( null ) }
+		>
+			<img src={ url } alt="" draggable={ false } />
+			<span
+				aria-hidden="true"
+				style={ {
+					left: `${ bounds[ 0 ] * 100 }%`,
+					top: `${ bounds[ 1 ] * 100 }%`,
+					width: `${ ( bounds[ 2 ] - bounds[ 0 ] ) * 100 }%`,
+					height: `${ ( bounds[ 3 ] - bounds[ 1 ] ) * 100 }%`,
+				} }
+			/>
+		</button>
+	);
+}
+
+/**
  * Mount a disposable comparison using the same fixed renderer as the student.
  *
- * @param {Object} props      Preview properties.
- * @param {Object} props.spec Validated proposal.
- * @param {string} props.url  Protected original.
- * @param {string} props.alt  Accessible description.
+ * @param {Object}  props            Preview properties.
+ * @param {Object}  props.spec       Validated proposal.
+ * @param {string}  props.url        Protected original.
+ * @param {string}  props.alt        Accessible description.
+ * @param {boolean} props.notToScale Whether a scale warning is printed.
  * @return {Element} Preview.
  */
-function ReconstructionPreview( { spec, url, alt } ) {
+function ReconstructionPreview( { spec, url, alt, notToScale = false } ) {
 	useEffect( () => {
 		window.OhMyLMSFigures?.scan();
 	}, [ spec, url, alt ] );
@@ -423,6 +580,9 @@ function ReconstructionPreview( { spec, url, alt } ) {
 			data-figure-spec={ JSON.stringify( spec ) }
 		>
 			<img src={ url } alt={ alt } />
+			{ notToScale && (
+				<figcaption>{ __( 'Not to scale', 'ohmylms' ) }</figcaption>
+			) }
 		</figure>
 	);
 }

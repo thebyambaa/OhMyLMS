@@ -34,9 +34,20 @@ test( 'fixed JSXGraph geometry renders with scale note and printable selected SV
 	await expect( page.locator( 'figcaption' ) ).toHaveText( 'Not to scale' );
 	await expect( page.locator( 'img' ) ).toBeHidden();
 	await expect( page.locator( '.ohmylms-figure-static svg' ) ).toHaveCount( 1 );
+	await expect( page.locator( '.ohmylms-figure-static svg' ) ).toHaveAttribute( 'viewBox', /^0 0 / );
 	await page.emulateMedia( { media: 'print' } );
 	await expect( page.locator( '.ohmylms-figure-static' ) ).toBeVisible();
 	await expect( page.locator( '.ohmylms-figure-board' ) ).toBeHidden();
+} );
+
+test( 'navigation restores the original and remounts after browser history restoration', async ( { page } ) => {
+	await setup( page );
+	await expect( page.locator( '.ohmylms-figure-board svg' ) ).toBeVisible();
+	await page.evaluate( () => window.dispatchEvent( new Event( 'pagehide' ) ) );
+	await expect( page.locator( 'img' ) ).toBeVisible();
+	await page.evaluate( () => window.dispatchEvent( new Event( 'pageshow' ) ) );
+	await expect( page.locator( '.ohmylms-figure-board svg' ) ).toBeVisible();
+	await expect( page.locator( '.ohmylms-figure-static' ) ).toHaveCount( 1 );
 } );
 
 test( 'renderer failure keeps the original accessible image', async ( { page } ) => {

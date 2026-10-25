@@ -1,124 +1,75 @@
-# Private figure assets: first implementation slice
+# PDF diagrams and native figures
 
-Implemented October 25, 2026: author-only, manually specified PDF crops using bounded
-Action Scheduler work and an explicitly configured local Poppler renderer. This is the
-storage/rendering foundation of [the implementation plan](PDF-FIGURES-IMPLEMENTATION.md).
-Automatic detection, teacher crop UI, placements, question-version bindings, publication
-gates, student delivery, JSXGraph reconstruction, and reference-aware garbage collection
-are not implemented by this slice.
+Status: Cambridge diagram workflow implemented, October 25, 2026. This extends the existing PDF importer; imports still require teacher review and never publish automatically. See [the implementation plan](PDF-FIGURES-IMPLEMENTATION.md) for the broader release sequence.
 
-## Deployment requirements
+## Workflow
 
-Use the existing `OHMYLMS_IMPORT_PRIVATE_DIR` outside all served directories and aliases.
-Back up figure records and private files with the database. The PHP worker needs write
-access to that directory and permission to execute a maintained Poppler `pdftoppm` binary.
-Set its absolute path in site configuration, for example:
+1. Explicit PDF extraction requests bounded figure candidates: source page, normalized crop bounds, stable figure/part IDs, description, and a not-to-scale flag. Only question-paper figures are eligible. Mark schemes remain separate and optional.
+2. Existing Action Scheduler checkpoints queue private original crops. Identical requests reuse assets; corrected bounds create new immutable assets. Failed or uncertain crops stay visible for correction. Invalid AI crop bounds retain the question text with a required manual-crop warning; invalid teacher edits are rejected.
+3. Review provides a full-page drag selection with keyboard-accessible percentage fields, crop replacement, ordering, part assignment, reassignment between questions, and original/reconstruction comparison. New detections from re-extraction are offered separately from saved teacher edits.
+4. Teachers may request a JSXGraph proposal using the configured exam converter. They can edit labels, regenerate structural changes, select the original, and explicitly approve each selected figure. Every question also requires figure-completeness confirmation.
+5. Commitment seals the exact reviewed content and creates native structured questions. Question approval and quiz revision publication reject incomplete, changed, missing, or unattested figure content.
+6. Frozen question settings retain placements, selections and specs. Existing continuous papers retain their frozen questions and figures even after a later live placement is removed. Student delivery builds protected URLs for the exact attempt/version. Shared-stem and part figures render in players and previews. Printing uses a static SVG of the selected reconstruction or the original image on failure.
+
+Not-to-scale figures are supported reconstructions and retain a visible note. Points, segments, polygons, circles, angle markings, axes, and bounded function-expression trees form spec version 1. Unsupported or uncertain figures use the approved original. Generated JavaScript, HTML, URLs, invalid references, nonfinite values, and oversized specs are rejected. Boards are fixed, with navigation, dragging, zoom controls and coordinate infoboxes disabled. Native crop resolution metadata preserves original physical dimensions in print; exact measurement tasks should use the original crop and actual-size printing.
+
+## Deployment
+
+`OHMYLMS_IMPORT_PRIVATE_DIR` must be writable by PHP and outside all served directories and aliases. Configure an absolute path to an installed Poppler executable:
 
 ```php
 define( 'OHMYLMS_PDFTOPPM_BINARY', '/usr/bin/pdftoppm' );
 ```
 
-Use the host's installed executable, not a development-tool runtime path. Windows absolute
-paths are supported. No renderer is downloaded or guessed from PATH. `proc_open`,
-`proc_get_status`, `proc_terminate`, and `proc_close` must be enabled. GD and Imagick are
-not required by this renderer. The capability endpoint exercises the binary and private
-temporary storage under the requesting PHP runtime; scheduler workers must also have those
-permissions. CLI success alone does not certify the production web or cron worker.
+Windows paths are supported. The local site was configured to use its existing MiKTeX Poppler installation; the web PHP capability probe succeeded. No development-runtime path is embedded in the plugin. Other deployments need their own configured binary and worker capability check.
 
-Each crop is limited to page 1–500, a 2400-pixel maximum raster side, 10 MiB stdout,
-64 KiB stderr, and a shared 20-second rendering deadline. Output growth is monitored
-every 20 milliseconds; these are application watchdogs, not operating-system memory or
-disk quotas. Rasterizing hostile PDFs still requires host-level process isolation and
-resource policy appropriate to the deployment. Private temporary files are removed after
-normal completion and handled failures; a killed PHP worker can leave a workspace for
-later operator cleanup. No automatic cleanup scans are introduced here.
+`proc_open`, `proc_get_status`, `proc_terminate`, and `proc_close` must be enabled. GD and Imagick are not renderer requirements. Application watchdogs bound rendering to 20 seconds, a 2400-pixel maximum side, 10 MiB stdout and 64 KiB stderr. These do not replace host-level process resource controls. A killed PHP process can leave a private temporary workspace; normal completion and handled failures remove it.
 
-## Author API
+Back up private sources/crops and WordPress together, including `_ohmylms_figure_review_key`. This private, nonautoloaded key binds approvals to exact content independently of WordPress login-salt rotation. It is never included in learner projections.
 
-Core WordPress REST authentication and cookie nonce verification apply. Job operations
-require the import owner to retain `edit_posts` and `upload_files`; another administrator
-does not acquire access to the owner's sources.
+## APIs and contracts
+
+Core WordPress REST authentication and cookie nonces remain in force.
 
 | Request | Behavior |
 | --- | --- |
-| `GET /wp-json/ohmylms/v1/exam-import-renderer` | Run a capability probe; return safe engine/version/limit metadata or an explicit error. |
-| `POST /wp-json/ohmylms/v1/exam-imports/{id}/figures` | Queue a crop from the validated question-paper source. |
-| `GET /wp-json/ohmylms/v1/exam-imports/{id}/figures` | List the job's crop states and safe author-preview metadata. |
+| `GET /wp-json/ohmylms/v1/exam-import-renderer` | Exercise the configured renderer and private temporary storage; return safe capability metadata. |
+| `POST /wp-json/ohmylms/v1/exam-imports/{id}/figures` | Queue a crop from an owned, validated question-paper source. |
+| `GET /wp-json/ohmylms/v1/exam-imports/{id}/figures` | List safe crop status and owner-preview URLs. |
+| `POST /wp-json/ohmylms/v1/exam-imports/{id}/reconstruct` | Explicitly analyze a ready owned crop and question context; return an unapproved validated spec. |
 
-POST a JSON body such as:
+Crop body:
 
 ```json
-{
-  "page": 2,
-  "bounds": [0.1, 0.2, 0.9, 0.65]
-}
+{"page":2,"bounds":[0.1,0.2,0.9,0.65]}
 ```
 
-Bounds are `[left, top, right, bottom]` in the range 0–1, measured from the top-left of
-the rotated visible PDF CropBox. Poppler first renders the full visible page to establish
-actual dimensions, then crops with floor/ceil pixel bounds using the same rendering flags.
-The result retains normalized bounds, actual page raster dimensions, pixel bounds, and the
-renderer contract version. Source checksums are verified before rendering.
+Bounds are `[left, top, right, bottom]`, normalized to the top-left of the rotated visible PDF CropBox. Metadata retains actual page raster dimensions, pixel bounds, source checksum, renderer contract version, and physical dimensions when supplied by Poppler. Each import permits 100 retained assets and each question 20 placements. Rendering permits three attempts per asset. Interrupted work can be resumed by repeating the same request, within that budget.
 
-Creation returns an asset UUID and `queued` state. Poll the listing through `rendering` to `ready` or `failed`.
-A ready asset has a protected author-preview URL. Failed assets have a safe error category,
-never raw renderer diagnostics. Repeating a POST with the same source checksum, page,
-canonical bounds, and renderer settings reuses the asset and resumes eligible work.
-Changed bounds create a new asset; ready PNG bytes are never overwritten.
+Reconstruction body includes `asset_id` and `question` text. Native PNG adapters support the existing OpenAI, Anthropic and Gemini provider selection. The existing import request budget is reserved before an outbound call; tokens and failures are recorded. Reconstruction never reads mark-scheme assets or marking rubrics. Raw responses, private paths and provider credentials are not returned or retained in student content.
 
-There are at most 100 assets per import and three rendering attempts per asset. Repeated
-deliveries of ready assets are no-ops. Failed scheduling returns an explicit error; retrying
-the same POST can recover it. There is no automatic infinite retry loop.
-An interrupted worker can leave `rendering` state; repeating the same POST after its lock
-is released resumes within the attempt budget or exposes an exhausted-attempt failure.
+Editable settings use `figures` and `figure_review`; the existing immutable version settings column includes them in its content hash. Figure-spec versioning is independent of grader/version contracts. Learner projections contain rendered selected figures and protected original URLs, not approval attestations, source handles or rubrics.
 
-## Storage, retention, and access
+## Access and retention
 
-Assets use the nonpublic `ohmylms-figure` post type and private metadata. Files are named
-`figure-{uuid}.png` within private storage. They are not Media Library attachments and
-never pass through the public-upload media freezer. Metadata is persisted before rendering;
-exclusive file creation prevents overwrites. A complete identical file left by an interrupted
-worker can be recovered; a conflicting or damaged file fails visibly.
+Originals are nonpublic `ohmylms-figure` records with private `figure-{uuid}.png` files. They are never public Media Library attachments and never enter the public media freezer. Serving checks file integrity as well as current authorization.
 
-Only question-paper crops are supported here. Client-selected document paths and mark-scheme
-sources are not accepted. Creation does not imply teacher review or approval.
+Source owners can preview their own assets. Authorized question users can preview assets belonging to reviewed question content. Students need their own actual attempt containing that exact version and current quiz/course access. Guessed attempt IDs, unrelated versions, guests, and direct access to another import owner's asset are denied. Image responses are private and no-store.
 
-`?ohmylms_figure={uuid}` streams a checksum-verified PNG only to its originating author
-while that author retains the required capabilities. Responses use private no-store headers.
-Guests and other administrators are denied. No student route is enabled before exact
-question-version membership and delivery authorization are implemented.
+Crops survive source-job deletion and later question edits. Retention is conservative: unreferenced assets are also retained; automatic garbage collection is intentionally not enabled. Existing source-only imports remain readable with their existing PDF fallback. Imports still under review can adopt new detections or manually add crops without replacing teacher edits.
 
-Deleting an import removes the source PDF through existing cleanup but does not delete
-its independent figure assets. This slice deliberately retains all crops, including
-unreferenced ones. Reference-aware collection and immutable question-version associations
-must land before deletion or collection of committed assets is enabled.
+## Verification and limits
 
-## Verification
+Verification includes real Poppler/WordPress integration, actual native review/commit, immutable version delivery, ownership and attempt checks, duplicate delivery, bounded retries, renderer failures, scanned raster-only PDFs, rotation, CropBox handling, original physical dimensions, provider PNG adapters, and invalid-spec rejection. Reconstruction endpoint tests intercept transport, exercise successful and invalid proposals, and confirm the original survives failure.
 
-`tests/php/figure-assets-integration.php` runs against this checkout's explicit Local site
-with transactional fixture writes and a synthetic three-page PDF. It checks normal,
-rotated, and CropBox pages; actual PNG dimensions; invalid bounds/pages; source integrity;
-REST ownership; scheduler registration; idempotence; bounded retries; permissions;
-retention after source deletion; byte-integrity enforcement; and process cleanup.
+Browser tests exercise fixed JSXGraph geometry/functions, original fallback, unknown spec versions, mobile width, and selected print SVGs. A separate built WordPress UI rehearsal verified protected original/reconstruction comparison, label edits, per-figure approval, saved completeness, the web renderer probe and guest denial using a temporary QA import. The QA import is not an approved or published real exam.
 
-Set `OHMYLMS_TEST_PDFTOPPM` to an absolute binary path, then run with the Local PHP
-configuration and MySQL port:
+Real 0580/43 October/November 2025 pages were rendered and manually inspected for stem-and-leaf data/key, a scale map, a decagon, and a labelled geometry figure. A crop omitting a not-to-scale note was corrected and rechecked. These checks establish crop behavior, not automatic detection or model accuracy across the full paper. Every proposed reconstruction still needs teacher approval; no live paid-provider accuracy claim is made.
 
-```sh
-php tests/php/figure-assets-integration.php --local
-```
+Verification on October 26, 2026: 89 figure integration checks, 28 extraction checks, 22 existing import checks, and 16 standalone grading/registry checks passed. JavaScript tests passed 649 with one skipped; all four figure browser tests passed. Scoped PHP standards/syntax and full JavaScript/CSS lint passed; the asset build succeeded with existing webpack performance warnings. The full repository check stopped at existing PHP standards failures. Local PHP retains its existing missing Imagick DLL startup warning; the renderer does not need Imagick.
 
-It calls the crop worker within a rollback transaction; it does not establish live scheduler
-throughput, browser rendering, production isolation, real-paper detection accuracy, or
-question-version/player integration. Real exam PDFs and crops remain outside Git.
+The fresh-request native player preview was also exercised in WordPress, including its runtime assets, protected original and physical print dimensions. Temporary QA users, preview sessions, imports, source copies and render files were removed afterward; original papers and teacher drafts were not published or changed.
 
-Verification on October 25, 2026:
+Run `tests/php/figure-assets-integration.php --local` with the Local PHP configuration and `OHMYLMS_TEST_PDFTOPPM` set to a configured binary. Fixture writes roll back and recorded private fixture files are removed. Run the extraction unit tests, existing import rehearsal, browser figure tests, source tests, standards checks and asset build as well. Repository-wide pre-existing PHP standards findings remain visible.
 
-- 46 crop integration checks passed with real Poppler and WordPress; database fixture writes rolled back and recorded fixture files removed.
-- The existing exam-import integration rehearsal passed 22 checks; standalone registry/grading tests passed 16 checks.
-- Scoped WordPress PHP standards and syntax checks passed for the changed services and new rehearsal.
-- `npm test` passed 649 tests, with one skipped; formatting, source-contract checks, JavaScript lint, and CSS lint passed.
-- `npm run check` stopped at repository-wide PHP standards failures outside these scoped files. Those failures were not suppressed.
-- Composer was unavailable on PATH; its configured `php tests/unit.php` command was executed directly.
-- Local PHP reports its existing missing Imagick DLL startup warning. Rendering succeeded without Imagick.
-- The renderer was configured only for the rehearsal process. Site configuration and production worker capability remain unchanged and unverified.
+Additional chart/3D types, interactive answering, the full adaptive Digital SAT workflow, and IELTS Academic-specific delivery/marking are separate later releases. They are not silently approximated by this figure renderer.

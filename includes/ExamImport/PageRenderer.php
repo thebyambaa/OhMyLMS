@@ -129,7 +129,37 @@ final class PageRenderer {
 			'pixel_bounds' => array( $left, $top, $left + $width, $top + $height ),
 			'bounds'       => $bounds,
 			'engine'       => self::VERSION,
-		);
+		) + self::physical_size( $result['output'], $width, $height );
+	}
+
+	/**
+	 * Preserve Poppler's PNG physical resolution for scale-sensitive printed crops.
+	 *
+	 * @param string $bytes Bounded verified PNG.
+	 * @param int    $width Raster width.
+	 * @param int    $height Raster height.
+	 * @return array Physical crop dimensions when the renderer supplies them.
+	 */
+	private static function physical_size( $bytes, $width, $height ) {
+		$offset = 8;
+		$length = strlen( $bytes );
+		while ( $offset + 12 <= $length ) {
+			$size = unpack( 'Nsize', substr( $bytes, $offset, 4 ) )['size'];
+			if ( $size > $length - $offset - 12 ) {
+				break;
+			}
+			if ( 9 === $size && 'pHYs' === substr( $bytes, $offset + 4, 4 ) ) {
+				$density = unpack( 'Nx/Ny/Cunit', substr( $bytes, $offset + 8, 9 ) );
+				if ( 1 === $density['unit'] && $density['x'] > 0 && $density['y'] > 0 ) {
+					return array(
+						'width_mm'  => round( 1000 * $width / $density['x'], 3 ),
+						'height_mm' => round( 1000 * $height / $density['y'], 3 ),
+					);
+				}
+			}
+			$offset += $size + 12;
+		}
+		return array();
 	}
 
 	/**

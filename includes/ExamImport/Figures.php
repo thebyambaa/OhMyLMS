@@ -315,14 +315,14 @@ final class Figures {
 	 */
 	public static function view( $post ) {
 		$data = get_post_meta( $post->ID, self::META, true );
-		return array_intersect_key( $data, array_flip( array( 'state', 'attempts', 'error', 'page', 'bounds', 'width', 'height', 'page_width', 'page_height', 'pixel_bounds', 'engine' ) ) ) + array(
+		return array_intersect_key( $data, array_flip( array( 'state', 'attempts', 'error', 'page', 'bounds', 'width', 'height', 'page_width', 'page_height', 'width_mm', 'height_mm', 'pixel_bounds', 'engine' ) ) ) + array(
 			'id'  => $data['uuid'],
 			'url' => 'ready' === $data['state'] ? add_query_arg( 'ohmylms_figure', $data['uuid'], home_url( '/' ) ) : '',
 		);
 	}
 
 	/**
-	 * Resolve an asset only for its author; learner version bindings come later.
+	 * Resolve the owner preview independently of learner version authorization.
 	 *
 	 * @param string $uuid Opaque asset ID.
 	 * @return string|\WP_Error Authorized private PNG path.
@@ -389,10 +389,11 @@ final class Figures {
 		}
 		nocache_headers();
 		header( 'Cache-Control: private, no-store, max-age=0' );
-		$uuid    = is_string( $_GET['ohmylms_figure'] ) ? sanitize_text_field( wp_unslash( $_GET['ohmylms_figure'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only, independently owner-authorized stream.
-		$version = isset( $_GET['figure_version'] ) && is_scalar( $_GET['figure_version'] ) ? absint( $_GET['figure_version'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only version navigation.
-		$scope   = isset( $_GET['figure_scope'] ) && is_string( $_GET['figure_scope'] ) ? sanitize_text_field( wp_unslash( $_GET['figure_scope'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Live attempt authorization follows.
-		$path    = FigureContent::path( $uuid, $version, $scope );
+		$uuid        = is_string( $_GET['ohmylms_figure'] ) ? sanitize_text_field( wp_unslash( $_GET['ohmylms_figure'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only, independently owner-authorized stream.
+		$version     = isset( $_GET['figure_version'] ) && is_scalar( $_GET['figure_version'] ) ? absint( $_GET['figure_version'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only version navigation.
+		$scope       = isset( $_GET['figure_scope'] ) && is_string( $_GET['figure_scope'] ) ? sanitize_text_field( wp_unslash( $_GET['figure_scope'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Live attempt authorization follows.
+		$question_id = isset( $_GET['figure_question'] ) && is_scalar( $_GET['figure_question'] ) ? absint( $_GET['figure_question'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only author preview; access and membership checked below.
+		$path        = FigureContent::path( $uuid, $version, $scope, $question_id );
 		if ( is_wp_error( $path ) ) {
 			wp_die( esc_html__( 'Figure unavailable.', 'ohmylms' ), '', array( 'response' => 403 ) );
 		}

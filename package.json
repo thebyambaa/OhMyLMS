@@ -24,7 +24,7 @@
 		"check": "npm run format:check && npm run lint && npm test && npm run build",
 		"lint:php": "node tools/wp-standards.mjs",
 		"lint:php:fix": "node tools/wp-standards.mjs fix",
-		"lint:js": "eslint assets/src/features assets/src/extensions assets/src/blocks assets/interactivity assets/js/student-hub.js assets/js/player-context.js assets/js/practice-guidance.js",
+		"lint:js": "eslint assets/src/features assets/src/extensions assets/src/blocks assets/interactivity assets/js/student-hub.js assets/js/player-context.js assets/js/practice-guidance.js assets/js/import-figures.js",
 		"lint:js:fix": "npm run lint:js -- --fix",
 		"lint:css": "stylelint \"assets/css/*.css\" \"assets/src/frontend/scss/**/*.scss\"",
 		"lint:css:fix": "npm run lint:css -- --fix",

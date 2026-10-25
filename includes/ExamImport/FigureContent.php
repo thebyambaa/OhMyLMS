@@ -81,7 +81,7 @@ final class FigureContent {
 		if ( is_wp_error( $figures ) || true !== ( $review['complete'] ?? false ) || ( ! empty( $review['required'] ) && ! $figures ) ) {
 			return self::error();
 		}
-		if ( ! $checking_author_review && ( ! is_string( $review['signature'] ?? null ) || ! hash_equals( self::signature( $settings ), $review['signature'] ) ) ) {
+		if ( ! $checking_author_review && ! self::attested( $settings ) ) {
 			return self::error();
 		}
 		foreach ( $figures as $figure ) {
@@ -109,18 +109,39 @@ final class FigureContent {
 				return self::error();
 			}
 		}
-		$settings['figure_review']['signature'] = self::signature( $settings );
-		return $settings;
+		$settings['figure_review']['signature'] = self::signature( $settings, true );
+		return self::attested( $settings ) ? $settings : self::error();
 	}
 
 	/**
 	 * Bind review to exact placements, selection, specs and part identities.
 	 *
 	 * @param array $settings Frozen settings.
+	 * @param bool  $create Initialize a persistent review key on explicit author approval.
 	 * @return string Server attestation, never sent to learners.
 	 */
-	private static function signature( array $settings ) {
-		return wp_hash( wp_json_encode( array( $settings['figures'] ?? array(), ! empty( $settings['figure_review']['complete'] ), ! empty( $settings['figure_review']['required'] ), array_column( $settings['parts'] ?? array(), 'id' ) ) ), 'auth' );
+	private static function signature( array $settings, $create = false ) {
+		$key = get_option( '_ohmylms_figure_review_key', '' );
+		if ( ! $key && $create ) {
+			add_option( '_ohmylms_figure_review_key', wp_generate_password( 64, true, true ), '', false );
+			$key = get_option( '_ohmylms_figure_review_key', '' );
+		}
+		if ( ! is_string( $key ) || strlen( $key ) < 32 ) {
+			return '';
+		}
+		return hash_hmac( 'sha256', wp_json_encode( array( $settings['figures'] ?? array(), ! empty( $settings['figure_review']['complete'] ), ! empty( $settings['figure_review']['required'] ), array_column( $settings['parts'] ?? array(), 'id' ) ) ), $key );
+	}
+
+	/**
+	 * Verify provenance without reading unrelated asset files on every image request.
+	 *
+	 * @param array $settings Frozen settings.
+	 * @return bool Exact reviewed content.
+	 */
+	private static function attested( array $settings ) {
+		$signature = $settings['figure_review']['signature'] ?? '';
+		$expected  = self::signature( $settings );
+		return is_string( $signature ) && 64 === strlen( $signature ) && 64 === strlen( $expected ) && hash_equals( $expected, $signature );
 	}
 
 	/**
@@ -144,14 +165,17 @@ final class FigureContent {
 			}
 			$url   = add_query_arg(
 				array(
-					'ohmylms_figure' => $figure['asset_id'],
-					'figure_version' => $snapshot->get_version_id(),
-					'figure_scope'   => (string) $scope,
+					'ohmylms_figure'  => $figure['asset_id'],
+					'figure_version'  => $snapshot->get_version_id(),
+					'figure_question' => $snapshot->get_id(),
+					'figure_scope'    => (string) $scope,
 				),
 				home_url( '/' )
 			);
 			$spec  = 'jsxgraph' === $figure['selected'] ? ( $figure['spec'] ?? null ) : null;
-			$html .= '<figure class="ohmylms-import-figure" data-figure-spec="' . esc_attr( $spec ? wp_json_encode( $spec ) : '' ) . '"><img src="' . esc_url( $url ) . '" alt="' . esc_attr( $figure['alt'] ) . '">';
+			$asset = Figures::asset( $figure['asset_id'] );
+			$width = isset( $asset['width_mm'] ) ? '--ohmylms-figure-width:' . (float) $asset['width_mm'] . 'mm' : '';
+			$html .= '<figure class="ohmylms-import-figure" style="' . esc_attr( $width ) . '" data-figure-spec="' . esc_attr( $spec ? wp_json_encode( $spec ) : '' ) . '"><img src="' . esc_url( $url ) . '" alt="' . esc_attr( $figure['alt'] ) . '">';
 			if ( ! empty( $figure['not_to_scale'] ) ) {
 				$html .= '<figcaption>' . esc_html__( 'Not to scale', 'ohmylms' ) . '</figcaption>';
 			}
@@ -163,8 +187,8 @@ final class FigureContent {
 	/** Enqueue one trusted figure runtime, with original images available on failure. */
 	public static function enqueue() {
 		\OhMyLMS\Assessment\Interactive::register_jsxgraph();
-		wp_enqueue_style( 'ohmylms-figures', plugins_url( 'assets/css/import-figures.css', OHMYLMS_FILE ), array( 'ohmylms-jsxgraph' ), '1' );
-		wp_enqueue_script( 'ohmylms-figures', plugins_url( 'assets/js/import-figures.js', OHMYLMS_FILE ), array( 'ohmylms-jsxgraph' ), '1', true );
+		wp_enqueue_style( 'ohmylms-figures', plugins_url( 'assets/css/import-figures.css', OHMYLMS_FILE ), array( 'ohmylms-jsxgraph' ), (string) filemtime( OHMYLMS_DIR . '/assets/css/import-figures.css' ) );
+		wp_enqueue_script( 'ohmylms-figures', plugins_url( 'assets/js/import-figures.js', OHMYLMS_FILE ), array( 'ohmylms-jsxgraph' ), (string) filemtime( OHMYLMS_DIR . '/assets/js/import-figures.js' ), true );
 	}
 
 	/**
@@ -173,12 +197,27 @@ final class FigureContent {
 	 * @param string $uuid Asset UUID.
 	 * @param int    $version_id Frozen version.
 	 * @param string $scope Attempt ID or author-preview scope.
+	 * @param int    $question_id Editable question for author previews.
 	 * @return string|\WP_Error Protected path.
 	 */
-	public static function path( $uuid, $version_id, $scope ) {
+	public static function path( $uuid, $version_id, $scope, $question_id = 0 ) {
+		if ( ! is_user_logged_in() ) {
+			return self::error();
+		}
 		$snapshot = $version_id ? VersionPublisher::snapshot( $version_id ) : null;
 		if ( ! $snapshot ) {
+			if ( $question_id && AccessPolicy::can_use_question( $question_id ) ) {
+				$current = VersionPublisher::content( $question_id )['settings'] ?? array();
+				foreach ( self::attested( $current ) ? ( $current['figures'] ?? array() ) : array() as $figure ) {
+					if ( ( $figure['asset_id'] ?? '' ) === $uuid && ! empty( $figure['approved'] ) ) {
+						return Figures::verified_path( $uuid );
+					}
+				}
+			}
 			return Figures::author_path( $uuid );
+		}
+		if ( ! self::attested( $snapshot->get_settings() ) ) {
+			return self::error();
 		}
 		$member = false;
 		foreach ( $snapshot->get_settings()['figures'] ?? array() as $figure ) {
