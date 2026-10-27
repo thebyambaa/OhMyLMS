@@ -236,13 +236,14 @@ test( 'adding practice links the skill to the lesson in the same step', () => {
 		items: [],
 	};
 	const place = { unitId: 5, groupId: 'a' };
-	assert.equal( practicePlacement( program, 1, place ), 'elsewhere' );
-	assert.equal( practicePlacement( program, 2, place ), 'move' );
+	assert.equal( practicePlacement( program, 1, place ), 'new' );
+	assert.equal( practicePlacement( program, 2, place ), 'new' );
 	assert.equal( practicePlacement( program, 3, place ), 'linked' );
 	assert.equal( practicePlacement( program, 4, place ), 'new' );
 	assert.equal(
-		addOutlinePractice( program, { termId: 1, ...place, id: 'x' } ),
-		null
+		addOutlinePractice( program, { termId: 1, ...place, id: 'x' } ).outcomes
+			.length,
+		3
 	);
 	const fresh = addOutlinePractice( program, {
 		termId: 4,
@@ -279,7 +280,10 @@ test( 'unit summary counts lessons, skills and activities in that unit', () => {
 		outlineUnitSummary(
 			{
 				groups: [ { chapter_id: 5 }, { chapter_id: 6 } ],
-				outcomes: [ { chapter_id: 5 }, { chapter_id: 5 } ],
+				outcomes: [
+					{ term_id: 1, chapter_id: 5 },
+					{ term_id: 2, chapter_id: 5 },
+				],
 				items: [ { chapter_id: 5 }, { chapter_id: 0 } ],
 			},
 			5

@@ -216,6 +216,7 @@ final class CourseFromSyllabus {
 							'id'         => $lesson_id,
 							'chapter_id' => $unit['id'],
 							'title'      => \OhMyLMS\Learning\ProgramGroups::title( SyllabusCourse::chapter_title( $group ) ),
+							'skill_ids'  => array_values( array_unique( array_map( 'intval', array_column( $group['skills'], 'term_id' ) ) ) ),
 						);
 						foreach ( $group['skills'] as $skill ) {
 							$term_id = (int) $skill['term_id'];

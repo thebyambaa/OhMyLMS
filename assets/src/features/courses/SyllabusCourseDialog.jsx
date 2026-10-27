@@ -139,7 +139,7 @@ export function SyllabusCourseDialog( { syllabusId, onClose, onCreated } ) {
 						<>
 							<p>
 								{ __(
-									'Choose up to 200 skills. A skill used in several lessons is linked once, in its first lesson.',
+									'Choose up to 200 skills. Skills used in several lessons remain linked to every lesson. Each skill has one course completion target.',
 									'ohmylms'
 								) }
 							</p>

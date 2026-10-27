@@ -2,6 +2,7 @@
 import { createElement, useState } from '@wordpress/element';
 import { Button } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
+import { lessonSkillIds } from './lessonSkills.mjs';
 import { outlineUnitSummary } from './outline.mjs';
 import { provenanceBadge } from './provenance.mjs';
 import { badgeLabel } from './SkillProvenance';
@@ -450,9 +451,10 @@ export function CourseOutlineTree( {
 										const lessonSkills =
 											draft.program.outcomes.filter(
 												( row ) =>
-													row.group_id ===
-														lesson.id &&
-													! practised( row.term_id )
+													lessonSkillIds(
+														draft.program,
+														lesson.id
+													).includes( row.term_id )
 											);
 										return (
 											<li

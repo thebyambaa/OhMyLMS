@@ -45,12 +45,62 @@ final class ProgramGroups {
 			$title = self::title( $group['title'] ?? '' );
 			if ( '' === $title ) {
 				return 'title'; }
-			$groups[] = array(
+			$entry = array(
 				'id'         => $id,
 				'chapter_id' => $chapter,
 				'title'      => $title,
 			);
+			if ( array_key_exists( 'skill_ids', $group ) ) {
+				if ( ! is_array( $group['skill_ids'] ) || count( $group['skill_ids'] ) > 200 ) {
+					return 'skills';
+				}
+				foreach ( $group['skill_ids'] as $skill_id ) {
+					if ( ! is_int( $skill_id ) || $skill_id <= 0 ) {
+						return 'skills';
+					}
+				}
+				$entry['skill_ids'] = array_values( array_unique( $group['skill_ids'] ) );
+			}
+			$groups[] = $entry;
 		}
+		return $groups;
+	}
+
+	/**
+	 * Resolve explicit lesson links, falling back to the legacy single placement.
+	 *
+	 * @param array $program Course program.
+	 * @param array $group Lesson group.
+	 * @return int[] Skill identifiers.
+	 */
+	public static function skill_ids( array $program, array $group ) {
+		if ( isset( $group['skill_ids'] ) ) {
+			return $group['skill_ids'];
+		}
+		$ids = array();
+		foreach ( $program['outcomes'] ?? array() as $outcome ) {
+			if ( ( $outcome['group_id'] ?? '' ) === $group['id'] ) {
+				$ids[] = (int) $outcome['term_id'];
+			}
+		}
+		return $ids;
+	}
+
+	/**
+	 * Preserve explicit skill links when an older editor sends only lesson titles.
+	 *
+	 * @param array $groups Submitted groups.
+	 * @param array $stored Stored groups.
+	 * @return array Groups retaining omitted links; an explicit empty list clears them.
+	 */
+	public static function carry_skills( array $groups, array $stored ) {
+		$previous = array_column( $stored, null, 'id' );
+		foreach ( $groups as &$group ) {
+			if ( is_array( $group ) && ! array_key_exists( 'skill_ids', $group ) && isset( $previous[ $group['id'] ?? '' ]['skill_ids'] ) ) {
+				$group['skill_ids'] = $previous[ $group['id'] ]['skill_ids'];
+			}
+		}
+		unset( $group );
 		return $groups;
 	}
 
@@ -156,8 +206,7 @@ final class ProgramGroups {
 				$items[ (string) $item['id'] ] = true; }
 		}
 		foreach ( (array) ( $program['outcomes'] ?? array() ) as $outcome ) {
-			if ( (int) ( $outcome['chapter_id'] ?? 0 ) === $chapter ) {
-				$skills[ (int) $outcome['term_id'] ] = true; }
+			$skills[ (int) $outcome['term_id'] ] = true;
 		}
 		$seen        = array();
 		$item_group  = array();
@@ -187,11 +236,10 @@ final class ProgramGroups {
 			foreach ( (array) ( $row['skill_ids'] ?? array() ) as $term_id ) {
 				if ( ! is_int( $term_id ) || ! isset( $skills[ $term_id ] ) ) {
 					return 'item'; }
-				if ( isset( $skill_group[ $term_id ] ) ) {
-					return 'duplicate'; }
-				$skill_group[ $term_id ] = $id;
+				$skill_group[ $term_id ] = $skill_group[ $term_id ] ?? $id;
 			}
 			$created[] = array(
+				'skill_ids'  => array_values( array_unique( $row['skill_ids'] ?? array() ) ),
 				'id'         => $id,
 				'chapter_id' => $chapter,
 				'title'      => $title,

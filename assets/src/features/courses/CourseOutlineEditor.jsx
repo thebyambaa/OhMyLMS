@@ -23,6 +23,17 @@ import { CourseReadiness } from './CourseReadiness';
 import { CourseOutlineTree, outlineSkillName } from './CourseOutlineTree';
 import { CourseSkillSuggestions } from './CourseSkillSuggestions';
 import { SkillProvenance } from './SkillProvenance';
+import {
+	lessonSkillIds,
+	linkLessonSkill,
+	setLessonSkills,
+	unlinkLessonSkill,
+} from './lessonSkills.mjs';
+import {
+	CourseSkillCoverage,
+	LessonSkillConnections,
+	ActivitySkillConnections,
+} from './CourseSkillConnections';
 import { placeSaved } from './provenance.mjs';
 import {
 	addOutlinePractice,
@@ -146,7 +157,11 @@ export function CourseOutlineEditor( {
 		const linked = draft.program.outcomes
 			.filter(
 				( row ) =>
-					( ! picker.groupId || row.group_id === picker.groupId ) &&
+					( ! picker.groupId ||
+						lessonSkillIds(
+							draft.program,
+							picker.groupId
+						).includes( row.term_id ) ) &&
 					( draft.skill_names?.[ row.term_id ] || '' )
 						.toLowerCase()
 						.includes( search.toLowerCase() )
@@ -211,7 +226,7 @@ export function CourseOutlineEditor( {
 		search,
 		resourcePage,
 		courseId,
-		draft?.program.outcomes,
+		draft?.program,
 		draft?.skill_names,
 	] );
 	function change( patch ) {
@@ -340,7 +355,7 @@ export function CourseOutlineEditor( {
 		if ( ! next ) {
 			setError(
 				__(
-					'This skill is already placed in another lesson of this course.',
+					'This lesson already has practice for this skill.',
 					'ohmylms'
 				)
 			);
@@ -484,23 +499,12 @@ export function CourseOutlineEditor( {
 				...draft.skill_codes,
 				...( resource.code ? { [ resource.id ]: resource.code } : {} ),
 			},
-			program: {
-				...draft.program,
-				outcomes: [
-					...draft.program.outcomes.filter(
-						( row ) => row.term_id !== resource.id
-					),
-					{
-						...( existing || {
-							term_id: resource.id,
-							required: false,
-							target: 'proficient',
-						} ),
-						chapter_id: picker.unitId,
-						group_id: picker.groupId,
-					},
-				],
-			},
+			program: linkLessonSkill(
+				draft.program,
+				resource.id,
+				picker.unitId,
+				picker.groupId
+			),
 		} );
 		setPicker( null );
 	}
@@ -611,6 +615,7 @@ export function CourseOutlineEditor( {
 	}[ status ];
 	const tabs = [
 		[ 'outline', __( 'Outline', 'ohmylms' ) ],
+		[ 'skills', __( 'Skill connections', 'ohmylms' ) ],
 		[
 			'readiness',
 			__( 'Readiness', 'ohmylms' ),
@@ -638,26 +643,31 @@ export function CourseOutlineEditor( {
 	};
 	const visible = ! picker
 		? []
-		: results
-				.filter(
+		: results.filter( ( resource ) => {
+				if ( picker.skills ) {
+					return ! lessonSkillIds(
+						draft.program,
+						picker.groupId
+					).includes( resource.id );
+				}
+				if ( picker.style && resource.style !== picker.style ) {
+					return false;
+				}
+				if ( kind === 'practice' ) {
+					return (
+						practicePlacement(
+							draft.program,
+							resource.id,
+							picker
+						) !== 'placed'
+					);
+				}
+				return ! draft.program.items.some(
 					( row ) =>
-						! picker.skills ||
-						! draft.program.outcomes.some(
-							( outcome ) =>
-								outcome.term_id === row.id && outcome.group_id
-						)
-				)
-				.filter(
-					( row ) => ! picker.style || row.style === picker.style
-				)
-				.filter(
-					( resource ) =>
-						! draft.program.items.some(
-							( row ) =>
-								row.type === resource.type &&
-								row.content_id === resource.id
-						)
+						row.type === resource.type &&
+						row.content_id === resource.id
 				);
+			} );
 	const moveButtons = ( rows, row, update ) => (
 		<span className="ohmylms-outline-move">
 			<Button
@@ -844,6 +854,20 @@ export function CourseOutlineEditor( {
 						) }
 					</button>
 				) ) }
+			</div>
+			<div
+				role="tabpanel"
+				id="ohmylms-outline-panel-skills"
+				aria-labelledby="ohmylms-outline-tab-skills"
+				hidden={ tab !== 'skills' }
+			>
+				<CourseSkillCoverage
+					draft={ draft }
+					onSelect={ ( type, id ) => {
+						setTab( 'outline' );
+						select( type, id );
+					} }
+				/>
 			</div>
 			<div
 				role="tabpanel"
@@ -1068,61 +1092,52 @@ export function CourseOutlineEditor( {
 										} )
 									}
 								/>
-								<SelectControl
-									label={ __(
-										'Lesson for skill',
-										'ohmylms'
-									) }
-									value={ skill.group_id || '' }
-									disabled={ busy }
-									options={ [
-										{
-											label: __(
-												'Not in a lesson',
-												'ohmylms'
-											),
-											value: '',
-										},
-										...groups
-											.filter( ( row ) =>
-												same(
-													row.chapter_id,
-													skill.chapter_id
+								<fieldset>
+									<legend>
+										{ __(
+											'Lessons using this skill',
+											'ohmylms'
+										) }
+									</legend>
+									<p>
+										{ __(
+											'Use the same skill in several lessons. Its completion target is counted once for this course.',
+											'ohmylms'
+										) }
+									</p>
+									{ groups.map( ( group ) => (
+										<CheckboxControl
+											key={ group.id }
+											label={ `${ draft.units.find( ( row ) => same( row.id, group.chapter_id ) )?.title || '' } / ${ group.title }` }
+											checked={ lessonSkillIds(
+												draft.program,
+												group.id
+											).includes( skill.term_id ) }
+											disabled={ busy }
+											onChange={ ( checked ) =>
+												program(
+													checked
+														? setLessonSkills(
+																draft.program,
+																group.id,
+																[
+																	...lessonSkillIds(
+																		draft.program,
+																		group.id
+																	),
+																	skill.term_id,
+																]
+															)
+														: unlinkLessonSkill(
+																draft.program,
+																group.id,
+																skill.term_id
+															)
 												)
-											)
-											.map( ( row ) => ( {
-												label: row.title,
-												value: row.id,
-											} ) ),
-									] }
-									onChange={ ( groupId ) =>
-										program( {
-											outcomes:
-												draft.program.outcomes.map(
-													( row ) =>
-														row.term_id ===
-														skill.term_id
-															? {
-																	...row,
-																	group_id:
-																		groupId,
-																}
-															: row
-												),
-											items: draft.program.items.map(
-												( item ) =>
-													item.id ===
-													skillPractice?.id
-														? {
-																...item,
-																group_id:
-																	groupId,
-															}
-														: item
-											),
-										} )
-									}
-								/>
+											}
+										/>
+									) ) }
+								</fieldset>
 								{ ! skillPractice &&
 									draft.skill_names?.[ skill.term_id ] && (
 										<Button
@@ -1392,30 +1407,22 @@ export function CourseOutlineEditor( {
 										)
 									}
 								/>
-								{ draft.program.outcomes.some(
-									( row ) => row.group_id === lesson.id
-								) && (
-									<>
-										<h3>
-											{ __( 'Linked skills', 'ohmylms' ) }
-										</h3>
-										<ul>
-											{ draft.program.outcomes
-												.filter(
-													( row ) =>
-														row.group_id ===
-														lesson.id
-												)
-												.map( ( row ) => (
-													<li key={ row.term_id }>
-														{ draft.skill_names?.[
-															row.term_id
-														] || row.term_id }
-													</li>
-												) ) }
-										</ul>
-									</>
-								) }
+								<LessonSkillConnections
+									draft={ draft }
+									lesson={ lesson }
+									busy={ busy }
+									onSelect={ select }
+									onAdd={ openPicker }
+									onUnlink={ ( termId ) =>
+										program(
+											unlinkLessonSkill(
+												draft.program,
+												lesson.id,
+												termId
+											)
+										)
+									}
+								/>
 								<TextControl
 									label={ __( 'Lesson title', 'ohmylms' ) }
 									value={ lesson.title }
@@ -1586,101 +1593,26 @@ export function CourseOutlineEditor( {
 										) }
 									</>
 								) : (
-									<fieldset>
-										<legend>
-											{ [ 'quiz', 'assignment' ].includes(
-												activity.type
-											)
-												? __(
-														'Skills assessed by this activity',
-														'ohmylms'
-													)
-												: __(
-														'Skills taught by this activity',
-														'ohmylms'
-													) }
-										</legend>
-										{ draft.program.outcomes
-											.filter(
-												( row ) =>
-													! activity.group_id ||
-													row.group_id ===
-														activity.group_id ||
-													activity.skill_ids?.includes(
-														row.term_id
-													)
-											)
-											.map( ( row ) => (
-												<CheckboxControl
-													key={ row.term_id }
-													label={
-														draft.skill_names?.[
-															row.term_id
-														] ||
-														String( row.term_id )
-													}
-													help={
-														activity.group_id &&
-														row.group_id !==
-															activity.group_id
-															? __(
-																	'This skill is linked outside the selected lesson.',
-																	'ohmylms'
-																)
-															: undefined
-													}
-													disabled={ busy }
-													checked={
-														!! activity.skill_ids?.includes(
-															row.term_id
-														)
-													}
-													onChange={ ( checked ) =>
-														program( {
-															items: draft.program.items.map(
-																( item ) =>
-																	item.id ===
-																	activity.id
-																		? {
-																				...item,
-																				skill_ids:
-																					checked
-																						? [
-																								...( item.skill_ids ||
-																									[] ),
-																								row.term_id,
-																							]
-																						: (
-																								item.skill_ids ||
-																								[]
-																							).filter(
-																								(
-																									id
-																								) =>
-																									id !==
-																									row.term_id
-																							),
-																			}
-																		: item
-															),
-														} )
-													}
-												/>
-											) ) }
-										{ ! draft.program.outcomes.some(
-											( row ) =>
-												! activity.group_id ||
-												row.group_id ===
-													activity.group_id
-										) && (
-											<p>
-												{ __(
-													'Link skills to this lesson to choose its teaching or assessment coverage.',
-													'ohmylms'
-												) }
-											</p>
-										) }
-									</fieldset>
+									<ActivitySkillConnections
+										draft={ draft }
+										activity={ activity }
+										busy={ busy }
+										onSelect={ select }
+										onChange={ ( skillIds ) =>
+											program( {
+												items: draft.program.items.map(
+													( item ) =>
+														item.id === activity.id
+															? {
+																	...item,
+																	skill_ids:
+																		skillIds,
+																}
+															: item
+												),
+											} )
+										}
+									/>
 								) }
 								<TextControl
 									label={ __(
@@ -2000,7 +1932,7 @@ export function CourseOutlineEditor( {
 							{ picker.skills && (
 								<p>
 									{ __(
-										'Choose an existing skill. Skills already linked to a lesson are excluded. New course skills begin optional for completion.',
+										'Choose a skill from the library. The same skill can be linked to several lessons. New course skills begin optional for completion.',
 										'ohmylms'
 									) }
 								</p>

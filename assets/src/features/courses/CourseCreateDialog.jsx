@@ -25,7 +25,7 @@ export function createCourseCreateDialog( readRuntime ) {
 		const [ loading, setLoading ] = useState( false );
 		const [ error, setError ] = useState( null );
 		const creating = useRef( false );
-		async function create( enableCommunity ) {
+		async function create( enableCommunity, courseTitle ) {
 			if (
 				creating.current ||
 				( courseType === 'cohort-based' && ! canCreateCohort )
@@ -37,7 +37,7 @@ export function createCourseCreateDialog( readRuntime ) {
 			setError( null );
 			try {
 				const course = await createCourse( {
-					title: 'Untitled Course',
+					title: courseTitle?.trim() || 'Untitled Course',
 					status: 'draft',
 					course_type: hasCohort ? courseType : 'self-paced',
 					creation_method: '',
@@ -106,7 +106,7 @@ export function createCourseCreateDialog( readRuntime ) {
 					>
 						2
 					</Controls.BadgeWP>
-					{ __( 'Build Type', 'ohmylms' ) }
+					{ __( 'Starting content', 'ohmylms' ) }
 				</Controls.ButtonWP>
 			</Controls.FlexWP>
 		) : (

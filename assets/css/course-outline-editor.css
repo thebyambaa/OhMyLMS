@@ -196,7 +196,9 @@
 }
 
 /* Beat the design system's general button padding inside the tree. */
-.ohmylms-outline-editor .ohmylms-outline-tree .components-button.ohmylms-outline-row-button {
+.ohmylms-outline-editor
+	.ohmylms-outline-tree
+	.components-button.ohmylms-outline-row-button {
 	height: auto;
 	min-height: 32px;
 	padding: 4px 6px;
@@ -206,7 +208,9 @@
 	white-space: normal;
 }
 
-.ohmylms-outline-editor .ohmylms-outline-unit-title .components-button.ohmylms-outline-row-button {
+.ohmylms-outline-editor
+	.ohmylms-outline-unit-title
+	.components-button.ohmylms-outline-row-button {
 	padding-left: 0;
 	font-size: 15px;
 }
@@ -255,7 +259,9 @@
 	min-width: 0;
 }
 
-.ohmylms-outline-tree .ohmylms-outline-row.is-skill .ohmylms-outline-row-button {
+.ohmylms-outline-tree
+	.ohmylms-outline-row.is-skill
+	.ohmylms-outline-row-button {
 	color: var(--oml-muted, #50575e);
 }
 
@@ -506,7 +512,6 @@
 }
 
 @media (max-width: 960px) {
-
 	.ohmylms-outline-columns {
 		grid-template-columns: minmax(0, 1fr);
 	}
@@ -517,7 +522,6 @@
 }
 
 @media (max-width: 782px) {
-
 	.ohmylms-outline-frame {
 		padding: 12px;
 	}
@@ -573,4 +577,63 @@
 
 .ohmylms-syllabus-course-dialog .components-button + .components-button {
 	margin-left: 8px;
+}
+
+/* Explicit teaching, practice and assessment connections. */
+.ohmylms-course-start-options {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin: 16px 0;
+}
+
+.ohmylms-build-choices section[hidden] {
+	display: none;
+}
+
+.ohmylms-connections-table-wrap {
+	overflow-x: auto;
+}
+
+.ohmylms-connections-table {
+	width: 100%;
+	border-collapse: collapse;
+	text-align: start;
+}
+
+.ohmylms-connections-table th,
+.ohmylms-connections-table td {
+	min-width: 140px;
+	padding: 16px;
+	border-bottom: 1px solid #dcdcde;
+	vertical-align: top;
+}
+
+.ohmylms-connections-table thead {
+	background: #f6f7f7;
+}
+
+.ohmylms-connections-table .components-button,
+.ohmylms-connections-table small {
+	display: block;
+	height: auto;
+	margin-bottom: 8px;
+	text-align: start;
+}
+
+.ohmylms-connection-card {
+	margin: 12px 0;
+	padding: 16px;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	background: #f8fafc;
+}
+
+.ohmylms-connection-empty {
+	color: #765300;
+}
+
+.ohmylms-lesson-connections p,
+.ohmylms-activity-connections p {
+	line-height: 1.5;
 }
