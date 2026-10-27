@@ -289,13 +289,12 @@ export function outlineUnitSummary( program, unitId ) {
 	const inUnit = ( row ) =>
 		String( row.chapter_id || 0 ) === String( unitId );
 	return {
-		lessons: ( program.groups || [] ).filter( inUnit ).length,
-		skills: new Set( [
-			...program.outcomes.filter( inUnit ).map( ( row ) => row.term_id ),
-			...( program.groups || [] )
-				.filter( inUnit )
-				.flatMap( ( group ) => lessonSkillIds( program, group.id ) ),
-		] ).size,
+		lessons: program.items.filter(
+			( row ) => inUnit( row ) && 'lesson' === row.type
+		).length,
+		skills: new Set(
+			program.outcomes.filter( inUnit ).map( ( row ) => row.term_id )
+		).size,
 		activities: program.items.filter( inUnit ).length,
 	};
 }

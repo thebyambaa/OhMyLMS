@@ -180,7 +180,7 @@ final class CourseOutline {
 			$unit['done']  = count( array_filter( array_column( $unit['items'], 'complete' ) ) );
 			$unit['total'] = count( $unit['items'] );
 			// Lesson groups: 'items' stays the flat list; groups and what sits outside them are extra views of it.
-			$arranged       = ProgramGroups::arrange( (array) ( $program['groups'] ?? array() ), $unit['items'], $unit['id'] );
+			$arranged       = ProgramGroups::arrange( array(), $unit['items'], $unit['id'] );
 			$unit['groups'] = $arranged['groups'];
 			foreach ( $unit['groups'] as &$lesson ) {
 				$lesson += LessonJourney::progress( $lesson['items'] );

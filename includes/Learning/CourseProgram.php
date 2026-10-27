@@ -243,9 +243,15 @@ final class CourseProgram {
 		$chapters            = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT chapter_id FROM %i WHERE course_id=%d ORDER BY order_number,id', $wpdb->prefix . 'ohmylms_chapter_relationship', $course_id ) ) );
 		$chapter_set         = array_flip( $chapters );
 		$known               = self::known_skills( $data['outcomes'] );
-		$groups              = ProgramGroups::normalize( $data['groups'] ?? null, $chapters );
-		if ( is_string( $groups ) ) {
-			return self::group_error( $groups ); }
+		// A lesson is a block lesson item, not a folder: stored groups are flattened into their unit.
+		$groups = array();
+		foreach ( array( 'outcomes', 'items' ) as $list ) {
+			foreach ( $data[ $list ] as $index => $row ) {
+				if ( is_array( $row ) ) {
+					unset( $data[ $list ][ $index ]['group_id'] );
+				}
+			}
+		}
 		foreach ( $data['outcomes'] as $outcome ) {
 			if ( ! is_array( $outcome ) ) {
 				return self::error( __( 'Invalid outcome.', 'ohmylms' ) ); }

@@ -21,32 +21,22 @@ import { CourseStructurePublish } from './CourseStructurePublish';
 import { ActivityCreateForm } from './ActivityCreateForm';
 import { CourseReadiness } from './CourseReadiness';
 import { CourseOutlineTree, outlineSkillName } from './CourseOutlineTree';
-import { CourseSkillSuggestions } from './CourseSkillSuggestions';
 import { SkillProvenance } from './SkillProvenance';
-import {
-	lessonSkillIds,
-	linkLessonSkill,
-	setLessonSkills,
-	unlinkLessonSkill,
-} from './lessonSkills.mjs';
+import { lessonSkillIds, linkLessonSkill } from './lessonSkills.mjs';
 import {
 	CourseSkillCoverage,
-	LessonSkillConnections,
 	ActivitySkillConnections,
 } from './CourseSkillConnections';
-import { placeSaved } from './provenance.mjs';
 import {
 	addOutlinePractice,
 	dropOutlineActivity,
 	dropOutlineLesson,
 	dropOutlineUnit,
-	lessonsFromSkills,
 	missingOutlineSkills,
 	moveOutlineRow,
 	orderedOutlineItems,
 	outlineStatus,
 	practicePlacement,
-	removeOutlineLesson,
 	removeOutlineSkills,
 } from './outline.mjs';
 
@@ -306,20 +296,6 @@ export function CourseOutlineEditor( {
 		} );
 		select( 'unit', id );
 	}
-	function addLesson( unitId ) {
-		const id = uuid();
-		program( {
-			groups: [
-				...( draft.program.groups || [] ),
-				{
-					id,
-					chapter_id: unitId,
-					title: __( 'New lesson', 'ohmylms' ),
-				},
-			],
-		} );
-		select( 'lesson', id );
-	}
 	function openPicker( unitId, groupId = '', initialKind = '' ) {
 		const checkpoint = [ 'unit-test', 'course-challenge' ].includes(
 			initialKind
@@ -339,6 +315,7 @@ export function CourseOutlineEditor( {
 			groupId,
 			initialKind,
 			style: checkpoint ? initialKind : '',
+			lesson: 'lesson' === initialKind,
 			create:
 				!! initialKind && initialKind !== 'practice' && ! checkpoint,
 			requestId: uuid(),
@@ -390,50 +367,6 @@ export function CourseOutlineEditor( {
 		} else {
 			program( dropOutlineActivity( draft.program, id, target ) );
 		}
-	}
-	function addSuggestedSkills( place, skills ) {
-		const linked = [];
-		setDraft( ( current ) => {
-			let next = current;
-			for ( const skill of skills ) {
-				const placed = addOutlinePractice( next.program, {
-					termId: skill.termId,
-					unitId: place.unitId,
-					groupId: place.groupId,
-					id: uuid(),
-				} );
-				next = {
-					...next,
-					skill_names: {
-						...next.skill_names,
-						[ skill.termId ]: skill.name,
-					},
-					skill_meta: {
-						...next.skill_meta,
-						[ skill.termId ]:
-							next.skill_meta?.[ skill.termId ] || skill.meta,
-					},
-					program: placed || next.program,
-				};
-				if ( placed ) {
-					linked.push( skill.termId );
-				}
-			}
-			return next;
-		} );
-		setNotice(
-			sprintf(
-				/* translators: %d: number of skills. */
-				_n(
-					'%d skill added. Save the outline draft to keep it.',
-					'%d skills added. Save the outline draft to keep them.',
-					skills.length,
-					'ohmylms'
-				),
-				skills.length
-			)
-		);
-		return linked;
 	}
 	function updateSkillMeta( termId, patch ) {
 		setDraft( ( current ) => ( {
@@ -558,14 +491,9 @@ export function CourseOutlineEditor( {
 			</section>
 		);
 	}
-	const groups = draft.program.groups || [];
 	const unit =
 		selected?.type === 'unit'
 			? draft.units.find( ( row ) => row.id === selected.id )
-			: null;
-	const lesson =
-		selected?.type === 'lesson'
-			? groups.find( ( row ) => row.id === selected.id )
 			: null;
 	const activity =
 		selected?.type === 'activity'
@@ -584,19 +512,9 @@ export function CourseOutlineEditor( {
 					item.content_id === skill.term_id
 			)
 		: null;
-	const looseSkills = unit
-		? draft.program.outcomes.filter(
-				( row ) =>
-					same( row.chapter_id, unit.id ) &&
-					! row.group_id &&
-					draft.skill_names?.[ row.term_id ]
-			).length
-		: 0;
-	const rowsIn = ( unitId, groupId = '' ) =>
-		draft.program.items.filter(
-			( item ) =>
-				same( item.chapter_id, unitId ) &&
-				( item.group_id || '' ) === groupId
+	const rowsIn = ( unitId ) =>
+		draft.program.items.filter( ( item ) =>
+			same( item.chapter_id, unitId )
 		);
 	const missing = missingOutlineSkills( draft.program, draft.skill_names );
 	const status = outlineStatus( {
@@ -927,45 +845,15 @@ export function CourseOutlineEditor( {
 						busy={ busy }
 						onSelect={ select }
 						onAddUnit={ addUnit }
-						onAddLesson={ addLesson }
 						onAdd={ openPicker }
 						onMove={ move }
 					/>
 					<div className="ohmylms-outline-inspector" tabIndex={ -1 }>
-						{ ! unit && ! lesson && ! activity && ! skill && (
+						{ ! unit && ! activity && ! skill && (
 							<div>
 								<h2>
 									{ __( 'Course completion', 'ohmylms' ) }
 								</h2>
-								<SelectControl
-									label={ __( 'Learning mode', 'ohmylms' ) }
-									value={ draft.program.mode }
-									disabled={ busy }
-									options={ [
-										{
-											value: 'traditional',
-											label: __(
-												'Activity completion',
-												'ohmylms'
-											),
-										},
-										{
-											value: 'skill-based',
-											label: __(
-												'Skill proficiency',
-												'ohmylms'
-											),
-										},
-										{
-											value: 'blended',
-											label: __(
-												'Activities and skills',
-												'ohmylms'
-											),
-										},
-									] }
-									onChange={ ( mode ) => program( { mode } ) }
-								/>
 								<p>
 									{ __(
 										'Select an activity in the outline to require its completion. Required skills also need enough approved questions for their target.',
@@ -1025,7 +913,7 @@ export function CourseOutlineEditor( {
 								) : (
 									<p className="ohmylms-outline-hint">
 										{ __(
-											'Each unit holds lessons; each lesson holds videos, readings, practice and quizzes. Select anything in the outline to edit it.',
+											'Each unit holds lessons, practice, quizzes and assignments. Select anything in the outline to edit it.',
 											'ohmylms'
 										) }
 									</p>
@@ -1092,52 +980,6 @@ export function CourseOutlineEditor( {
 										} )
 									}
 								/>
-								<fieldset>
-									<legend>
-										{ __(
-											'Lessons using this skill',
-											'ohmylms'
-										) }
-									</legend>
-									<p>
-										{ __(
-											'Use the same skill in several lessons. Its completion target is counted once for this course.',
-											'ohmylms'
-										) }
-									</p>
-									{ groups.map( ( group ) => (
-										<CheckboxControl
-											key={ group.id }
-											label={ `${ draft.units.find( ( row ) => same( row.id, group.chapter_id ) )?.title || '' } / ${ group.title }` }
-											checked={ lessonSkillIds(
-												draft.program,
-												group.id
-											).includes( skill.term_id ) }
-											disabled={ busy }
-											onChange={ ( checked ) =>
-												program(
-													checked
-														? setLessonSkills(
-																draft.program,
-																group.id,
-																[
-																	...lessonSkillIds(
-																		draft.program,
-																		group.id
-																	),
-																	skill.term_id,
-																]
-															)
-														: unlinkLessonSkill(
-																draft.program,
-																group.id,
-																skill.term_id
-															)
-												)
-											}
-										/>
-									) ) }
-								</fieldset>
 								{ ! skillPractice &&
 									draft.skill_names?.[ skill.term_id ] && (
 										<Button
@@ -1232,77 +1074,15 @@ export function CourseOutlineEditor( {
 										} )
 									}
 								/>
-								{ looseSkills > 0 && (
-									<div className="ohmylms-outline-group-skills">
-										<h3>
-											{ __(
-												'Skills not in a lesson',
-												'ohmylms'
-											) }
-										</h3>
-										<p>
-											{ sprintf(
-												/* translators: %d: number of skills. */ _n(
-													'%d skill in this unit is not in a lesson yet. Each lesson holds its skills as practice, so learners can work through them in order.',
-													'%d skills in this unit are not in a lesson yet. Each lesson holds its skills as practice, so learners can work through them in order.',
-													looseSkills,
-													'ohmylms'
-												),
-												looseSkills
-											) }
-										</p>
-										<Button
-											variant="secondary"
-											disabled={ busy }
-											onClick={ () =>
-												program(
-													lessonsFromSkills(
-														draft.program,
-														{
-															unitId: unit.id,
-															names: draft.skill_names,
-															title: '',
-															newId: uuid,
-														}
-													)
-												)
-											}
-										>
-											{ __(
-												'Make a lesson for each skill',
-												'ohmylms'
-											) }
-										</Button>
-										<Button
-											disabled={ busy }
-											onClick={ () =>
-												program(
-													lessonsFromSkills(
-														draft.program,
-														{
-															unitId: unit.id,
-															names: draft.skill_names,
-															title: unit.title,
-															newId: uuid,
-														}
-													)
-												)
-											}
-										>
-											{ __(
-												'Put them in one lesson',
-												'ohmylms'
-											) }
-										</Button>
-									</div>
-								) }
 								{ moveButtons( draft.units, unit, ( units ) =>
 									change( { units } )
 								) }
 								<Button
 									variant="secondary"
 									disabled={ busy }
-									onClick={ () => addLesson( unit.id ) }
+									onClick={ () =>
+										openPicker( unit.id, '', 'lesson' )
+									}
 								>
 									{ __( 'Add lesson', 'ohmylms' ) }
 								</Button>
@@ -1319,9 +1099,6 @@ export function CourseOutlineEditor( {
 										draft.program.items.some( ( row ) =>
 											same( row.chapter_id, unit.id )
 										) ||
-										groups.some( ( row ) =>
-											same( row.chapter_id, unit.id )
-										) ||
 										draft.program.outcomes.some( ( row ) =>
 											same( row.chapter_id, unit.id )
 										)
@@ -1329,215 +1106,6 @@ export function CourseOutlineEditor( {
 									onClick={ () => removeUnit( unit ) }
 								>
 									{ __( 'Remove empty unit', 'ohmylms' ) }
-								</Button>
-							</div>
-						) }
-						{ lesson && (
-							<div>
-								<h2>{ __( 'Lesson', 'ohmylms' ) }</h2>
-								<Button
-									disabled={ busy }
-									onClick={ () => {
-										openPicker(
-											lesson.chapter_id,
-											lesson.id
-										);
-										setKind( 'skill' );
-										setPicker( {
-											unitId: lesson.chapter_id,
-											groupId: lesson.id,
-											skills: true,
-											create: false,
-										} );
-									} }
-								>
-									{ __( 'Link skills to lesson', 'ohmylms' ) }
-								</Button>
-								<div className="ohmylms-outline-activity-actions">
-									{ [
-										[
-											'video',
-											__( 'Add video', 'ohmylms' ),
-										],
-										[
-											'reading',
-											__( 'Add reading', 'ohmylms' ),
-										],
-										[
-											'practice',
-											__( 'Add practice', 'ohmylms' ),
-										],
-										[ 'quiz', __( 'Add quiz', 'ohmylms' ) ],
-									].map( ( [ value, label ] ) => (
-										<Button
-											key={ value }
-											variant="secondary"
-											disabled={ busy }
-											onClick={ () =>
-												openPicker(
-													lesson.chapter_id,
-													lesson.id,
-													value
-												)
-											}
-										>
-											{ label }
-										</Button>
-									) ) }
-								</div>
-								<CourseSkillSuggestions
-									courseId={ courseId }
-									place={ {
-										unitId: lesson.chapter_id,
-										groupId: lesson.id,
-									} }
-									saved={ placeSaved( baseline, {
-										unitId: lesson.chapter_id,
-										groupId: lesson.id,
-									} ) }
-									subject={ draft.subject || '' }
-									busy={ busy }
-									onAdd={ ( skills ) =>
-										addSuggestedSkills(
-											{
-												unitId: lesson.chapter_id,
-												groupId: lesson.id,
-											},
-											skills
-										)
-									}
-								/>
-								<LessonSkillConnections
-									draft={ draft }
-									lesson={ lesson }
-									busy={ busy }
-									onSelect={ select }
-									onAdd={ openPicker }
-									onUnlink={ ( termId ) =>
-										program(
-											unlinkLessonSkill(
-												draft.program,
-												lesson.id,
-												termId
-											)
-										)
-									}
-								/>
-								<TextControl
-									label={ __( 'Lesson title', 'ohmylms' ) }
-									value={ lesson.title }
-									disabled={ busy }
-									onChange={ ( title ) =>
-										program( {
-											groups: groups.map( ( row ) =>
-												row.id === lesson.id
-													? { ...row, title }
-													: row
-											),
-										} )
-									}
-								/>
-								<SelectControl
-									label={ __( 'Unit for lesson', 'ohmylms' ) }
-									value={ String( lesson.chapter_id ) }
-									disabled={ busy }
-									options={ draft.units.map( ( row ) => ( {
-										label: row.title,
-										value: String( row.id ),
-									} ) ) }
-									onChange={ ( value ) => {
-										const target = draft.units.find(
-											( row ) => same( row.id, value )
-										);
-										if ( target ) {
-											program( {
-												groups: groups.map( ( row ) =>
-													row.id === lesson.id
-														? {
-																...row,
-																chapter_id:
-																	target.id,
-															}
-														: row
-												),
-												items: draft.program.items.map(
-													( row ) =>
-														row.group_id ===
-														lesson.id
-															? {
-																	...row,
-																	chapter_id:
-																		target.id,
-																}
-															: row
-												),
-												outcomes:
-													draft.program.outcomes.map(
-														( row ) =>
-															row.group_id ===
-															lesson.id
-																? {
-																		...row,
-																		chapter_id:
-																			target.id,
-																	}
-																: row
-													),
-											} );
-										}
-									} }
-								/>
-								{ moveButtons(
-									groups.filter( ( row ) =>
-										same(
-											row.chapter_id,
-											lesson.chapter_id
-										)
-									),
-									lesson,
-									( next ) =>
-										program( {
-											groups: [
-												...groups.filter(
-													( row ) =>
-														! same(
-															row.chapter_id,
-															lesson.chapter_id
-														)
-												),
-												...next,
-											],
-										} )
-								) }
-								<Button
-									variant="secondary"
-									disabled={ busy }
-									onClick={ () =>
-										openPicker(
-											lesson.chapter_id,
-											lesson.id
-										)
-									}
-								>
-									{ __( 'Add activity', 'ohmylms' ) }
-								</Button>
-								<Button
-									isDestructive
-									disabled={ busy }
-									onClick={ () => {
-										change( {
-											program: removeOutlineLesson(
-												draft.program,
-												lesson.id
-											),
-										} );
-										setSelected( null );
-									} }
-								>
-									{ __(
-										'Remove lesson and keep activities',
-										'ohmylms'
-									) }
 								</Button>
 							</div>
 						) }
@@ -1676,48 +1244,6 @@ export function CourseOutlineEditor( {
 										} );
 									} }
 								/>
-								<SelectControl
-									label={ __(
-										'Lesson for activity',
-										'ohmylms'
-									) }
-									value={ activity.group_id || '' }
-									disabled={ busy || special( activity ) }
-									options={ [
-										{
-											label: __(
-												'Outside lessons',
-												'ohmylms'
-											),
-											value: '',
-										},
-										...groups
-											.filter( ( row ) =>
-												same(
-													row.chapter_id,
-													activity.chapter_id
-												)
-											)
-											.map( ( row ) => ( {
-												label: row.title,
-												value: row.id,
-											} ) ),
-									] }
-									onChange={ ( groupId ) =>
-										program( {
-											items: draft.program.items.map(
-												( row ) =>
-													row.id === activity.id
-														? {
-																...row,
-																group_id:
-																	groupId,
-															}
-														: row
-											),
-										} )
-									}
-								/>
 								{ special( activity ) ? (
 									<p>
 										{ activity.style === 'unit-test'
@@ -1819,8 +1345,10 @@ export function CourseOutlineEditor( {
 								'ohmylms'
 							),
 						}[ picker.style ] ||
-						( picker.skills
-							? __( 'Link skills to lesson', 'ohmylms' )
+						( picker.skills &&
+							__( 'Link skills to lesson', 'ohmylms' ) ) ||
+						( picker.lesson
+							? __( 'Add lesson', 'ohmylms' )
 							: __( 'Add activity', 'ohmylms' ) )
 					}
 					onRequestClose={
@@ -1838,7 +1366,9 @@ export function CourseOutlineEditor( {
 									setPicker( { ...picker, create: false } )
 								}
 							>
-								{ __( 'Use existing activity', 'ohmylms' ) }
+								{ picker.lesson
+									? __( 'Choose existing lesson', 'ohmylms' )
+									: __( 'Use existing activity', 'ohmylms' ) }
 							</Button>
 							<Button
 								variant={
@@ -1849,7 +1379,9 @@ export function CourseOutlineEditor( {
 									setPicker( { ...picker, create: true } )
 								}
 							>
-								{ __( 'Create new activity', 'ohmylms' ) }
+								{ picker.lesson
+									? __( 'Create new lesson', 'ohmylms' )
+									: __( 'Create new activity', 'ohmylms' ) }
 							</Button>
 						</div>
 					) }
@@ -1867,6 +1399,7 @@ export function CourseOutlineEditor( {
 							}
 							onBusy={ setPickerBusy }
 							onCreated={ addActivity }
+							lessonOnly={ !! picker.lesson }
 							style={ picker.style }
 						/>
 					) : (
@@ -1888,47 +1421,52 @@ export function CourseOutlineEditor( {
 									) }
 								</p>
 							) }
-							{ ! picker.skills && ! picker.style && (
-								<SelectControl
-									label={ __( 'Activity type', 'ohmylms' ) }
-									value={ kind }
-									options={ [
-										{
-											value: 'lesson',
-											label: __(
-												'Reading, video or audio',
-												'ohmylms'
-											),
-										},
-										{
-											value: 'quiz',
-											label: __(
-												'Quiz, unit test or course challenge',
-												'ohmylms'
-											),
-										},
-										{
-											value: 'assignment',
-											label: __(
-												'Assignment',
-												'ohmylms'
-											),
-										},
-										{
-											value: 'practice',
-											label: __(
-												'Practice a skill',
-												'ohmylms'
-											),
-										},
-									] }
-									onChange={ ( value ) => {
-										setKind( value );
-										setResourcePage( 1 );
-										setResults( [] );
-									} }
-								/>
-							) }
+							{ ! picker.skills &&
+								! picker.style &&
+								! picker.lesson && (
+									<SelectControl
+										label={ __(
+											'Activity type',
+											'ohmylms'
+										) }
+										value={ kind }
+										options={ [
+											{
+												value: 'lesson',
+												label: __(
+													'Reading, video or audio',
+													'ohmylms'
+												),
+											},
+											{
+												value: 'quiz',
+												label: __(
+													'Quiz, unit test or course challenge',
+													'ohmylms'
+												),
+											},
+											{
+												value: 'assignment',
+												label: __(
+													'Assignment',
+													'ohmylms'
+												),
+											},
+											{
+												value: 'practice',
+												label: __(
+													'Practice a skill',
+													'ohmylms'
+												),
+											},
+										] }
+										onChange={ ( value ) => {
+											setKind( value );
+											setResourcePage( 1 );
+											setResults( [] );
+										} }
+									/>
+								) }
 							{ picker.skills && (
 								<p>
 									{ __(
@@ -1943,6 +1481,8 @@ export function CourseOutlineEditor( {
 										__( 'Find a skill', 'ohmylms' ) ) ||
 									( picker.style &&
 										__( 'Find a quiz', 'ohmylms' ) ) ||
+									( picker.lesson &&
+										__( 'Find a lesson', 'ohmylms' ) ) ||
 									__( 'Find an activity', 'ohmylms' )
 								}
 								value={ search }
@@ -2046,18 +1586,19 @@ export function CourseOutlineEditor( {
 							>
 								{ __( 'Next', 'ohmylms' ) }
 							</Button>
-							{ draft.create_urls?.[ kind ] && (
-								<Button
-									href={ draft.create_urls[ kind ] }
-									target="_blank"
-									rel="noreferrer"
-								>
-									{ __(
-										'Create a new resource in its editor',
-										'ohmylms'
-									) }
-								</Button>
-							) }
+							{ ! picker.lesson &&
+								draft.create_urls?.[ kind ] && (
+									<Button
+										href={ draft.create_urls[ kind ] }
+										target="_blank"
+										rel="noreferrer"
+									>
+										{ __(
+											'Create a new resource in its editor',
+											'ohmylms'
+										) }
+									</Button>
+								) }
 						</>
 					) }
 				</Modal>

@@ -101,28 +101,18 @@ check(is_wp_error($denied) && ($denied->data['status'] ?? 0) === 403, 'content t
 $GLOBALS['can_edit'] = true;
 $wrongType = $base(['items' => [['type' => 'lesson', 'content_id' => 201]]]);
 check(is_wp_error($normalize($wrongType)), 'a quiz cannot be placed as a lesson');
-// ---- Lesson groups (optional; a program without them is unchanged) ----
-$g1 = '11111111-1111-4111-8111-111111111111'; $g2 = '22222222-2222-4222-8222-222222222222';
+// ---- Lesson groups are flattened: a lesson is a block lesson item, never a folder ----
+$g1 = '11111111-1111-4111-8111-111111111111';
 $none = $normalize($withItems);
 check(!isset($none['groups']), 'no groups stores no groups key');
-$grouped = $normalize($base([
-    'groups' => [['id' => $g1, 'chapter_id' => 7001, 'title' => "  Intro <b>basics</b>\n  and more  "], ['id' => $g2, 'chapter_id' => 7002, 'title' => 'Wrap up']],
+$flat = $normalize($base([
+    'groups' => [['id' => $g1, 'chapter_id' => 7001, 'title' => 'Intro basics']],
     'items' => [
         ['type' => 'lesson', 'content_id' => 101, 'chapter_id' => 7001, 'group_id' => $g1],
         ['type' => 'lesson', 'content_id' => 102, 'chapter_id' => 7001],
     ],
 ]));
-check(!is_wp_error($grouped) && count($grouped['groups']) === 2, 'valid groups are kept');
-check($grouped['groups'][0]['title'] === 'Intro basics and more', 'titles are plain single-line text');
-check($grouped['items'][0]['group_id'] === $g1 && !isset($grouped['items'][1]['group_id']), 'items keep an optional group_id');
-check(array_column($grouped['groups'], 'id') === [$g1, $g2], 'group order is preserved');
-check(is_wp_error($normalize($base(['groups' => [['id' => $g1, 'chapter_id' => 9999, 'title' => 'X']]]))), 'a group in a unit of another course is rejected');
-check(is_wp_error($normalize($base(['groups' => [['id' => $g1, 'chapter_id' => 7001, 'title' => 'A'], ['id' => $g1, 'chapter_id' => 7002, 'title' => 'B']]]))), 'duplicate group ids are rejected');
-check(is_wp_error($normalize($base(['groups' => [['id' => 'nope', 'chapter_id' => 7001, 'title' => 'A']]]))), 'a malformed group id is rejected');
-check(is_wp_error($normalize($base(['groups' => [['id' => $g1, 'chapter_id' => 7001, 'title' => '   ']]]))), 'an empty title is rejected');
-check(is_wp_error($normalize($base(['items' => [['type' => 'lesson', 'content_id' => 101, 'chapter_id' => 7001, 'group_id' => $g1]]]))), 'an item cannot name a group that does not exist');
-check(is_wp_error($normalize($base(['groups' => [['id' => $g2, 'chapter_id' => 7002, 'title' => 'W']], 'items' => [['type' => 'lesson', 'content_id' => 101, 'chapter_id' => 7001, 'group_id' => $g2]]]))), 'an item cannot join a group of another unit');
-$tooMany = [];
-for ($i = 0; $i < 201; $i++) { $tooMany[] = ['id' => sprintf('00000000-0000-4000-8000-%012d', $i), 'chapter_id' => 7001, 'title' => 'G']; }
-check(is_wp_error($normalize($base(['groups' => $tooMany]))), 'more than 200 groups are rejected');
+check(!is_wp_error($flat) && !isset($flat['groups']), 'submitted groups are not stored');
+check(!isset($flat['items'][0]['group_id']) && count($flat['items']) === 2, 'items lose their group_id and stay in their unit');
+check(!is_wp_error($normalize($base(['items' => [['type' => 'lesson', 'content_id' => 101, 'chapter_id' => 7001, 'group_id' => $g1]]]))), 'a stale group_id no longer rejects an item');
 echo "Learning model checks passed: $checks\n";
