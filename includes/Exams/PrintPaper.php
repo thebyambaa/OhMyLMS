@@ -117,6 +117,24 @@ final class PrintPaper {
 					'attrs' => self::paper_attributes( $block['attrs'] ?? array() ),
 					'items' => self::walk( $block['innerBlocks'] ?? array(), $id, $answers, $questions, $version ),
 				);
+			} elseif ( 'core/columns' === $name && self::has_question( $block['innerBlocks'] ?? array() ) ) {
+				// Columns keep their layout on the paper, as the editor's Paper view shows them.
+				$columns = array();
+				foreach ( $block['innerBlocks'] as $column ) {
+					$width     = (string) ( $column['attrs']['width'] ?? '' );
+					$columns[] = array(
+						'kind'  => 'layout',
+						'name'  => 'core/column',
+						'attrs' => array( 'width' => preg_match( '/^\d+(\.\d+)?(%|px|em|rem)$/', $width ) ? $width : '' ),
+						'items' => self::walk( $column['innerBlocks'] ?? array(), $id, $answers, $questions, $version ),
+					);
+				}
+				$item = array(
+					'kind'  => 'layout',
+					'name'  => 'core/columns',
+					'attrs' => array(),
+					'items' => $columns,
+				);
 			} elseif ( '' !== $name && self::has_question( $block['innerBlocks'] ?? array() ) ) {
 				$items = array_merge( $items, self::walk( $block['innerBlocks'], $id, $answers, $questions, $version ) );
 			} elseif ( '' !== $name ) {
@@ -222,11 +240,16 @@ final class PrintPaper {
 			}
 		);
 		if ( $answers && AccessPolicy::can_use_question( $question_id ) ) {
+			$private_settings = $snapshot->get_settings();
+			foreach ( $private_settings['parts'] ?? array() as $index => $part ) {
+				$private_settings['parts'][ $index ]['prompt'] = wp_kses_post( $part['prompt'] ?? '' ) . \OhMyLMS\ExamImport\FigureContent::html( $snapshot, 'print:' . $quiz_id, $part['id'] );
+			}
 			return array(
+				'figure_part_html' => true,
 				'id'          => $question_id,
 				'name'        => $snapshot->get_name(),
-				'description' => $snapshot->get_description(),
-				'settings'    => $snapshot->get_settings(),
+				'description' => $snapshot->get_description() . \OhMyLMS\ExamImport\FigureContent::html( $snapshot, 'print:' . $quiz_id ),
+				'settings'    => $private_settings,
 				'questions'   => $options,
 			);
 		}
@@ -418,7 +441,7 @@ final class PrintPaper {
 <meta name="robots" content="noindex,nofollow">
 <title><?php echo esc_html( $title ); ?></title>
 		<?php
-		wp_print_styles( array( self::STYLE, 'ohmylms-mathlive' ) );
+		wp_print_styles( array( self::STYLE, 'ohmylms-mathlive', 'ohmylms-figures' ) );
 		// The CSS is built only from sanitized enumerations, integers and an escaped CSS string.
 		printf( '<style id="ohmylms-print-page">%s</style>', self::page_css( $paper ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- See above.
 		?>
@@ -433,7 +456,7 @@ final class PrintPaper {
 <main id="ohmylms-print-root" class="ohmylms-print-sheet"></main>
 <script type="application/json" id="ohmylms-print-data"><?php echo wp_json_encode( $data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE ); ?></script>
 		<?php
-		wp_print_scripts( array( self::SCRIPT ) );
+		wp_print_scripts( array( self::SCRIPT, 'ohmylms-figures' ) );
 		?>
 </body>
 </html>

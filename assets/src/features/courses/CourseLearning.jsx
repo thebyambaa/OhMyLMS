@@ -8,7 +8,6 @@ import {
 	Button,
 	CheckboxControl,
 	Notice,
-	RadioControl,
 	SelectControl,
 	Spinner,
 	TextControl,
@@ -262,29 +261,6 @@ export function CourseLearning( { courseId } ) {
 				</Notice>
 			) }
 			<section>
-				<RadioControl
-					label={ __( 'Learning mode', 'ohmylms' ) }
-					selected={ program.mode }
-					options={ [
-						{
-							label: __( 'Traditional', 'ohmylms' ),
-							value: 'traditional',
-						},
-						{
-							label: __( 'Skill-based', 'ohmylms' ),
-							value: 'skill-based',
-						},
-						{
-							label: __( 'Blended', 'ohmylms' ),
-							value: 'blended',
-						},
-					] }
-					onChange={ ( mode ) =>
-						update( {
-							mode,
-						} )
-					}
-				/>
 				<CheckboxControl
 					label={ __(
 						'Apply this publication to currently enrolled learners who have not completed the course',

@@ -112,6 +112,15 @@ for ( const [ source, target ] of [
 		'build/sdk/paper-print.asset.php',
 		'assets/dist/admin/paper-print.asset.php',
 	],
+	[ 'build/sdk/paper-student.js', 'assets/dist/admin/paper-student.js' ],
+	[
+		'build/sdk/paper-student.js.map',
+		'assets/dist/admin/paper-student.js.map',
+	],
+	[
+		'build/sdk/paper-student.asset.php',
+		'assets/dist/admin/paper-student.asset.php',
+	],
 	[ 'build/sdk/math-runtime.js', 'assets/dist/admin/math-runtime.js' ],
 	[
 		'build/sdk/math-runtime.js.map',

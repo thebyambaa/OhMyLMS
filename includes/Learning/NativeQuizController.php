@@ -91,9 +91,15 @@ class NativeQuizController extends NativeLessonController {
 					$response = ErrorException::raise( $post ? parent::update_item( $request ) : parent::create_item( $request ) );
 					$post_id  = (int) $response->get_data()['id'];
 					NativeQuizEditor::sync( $post_id, $plan['ids'] );
+					if ( $request->has_param( 'ohmylms_quiz' ) ) {
+						ErrorException::raise( NativeQuizEditor::save_assessment( $post_id, (array) $request['ohmylms_quiz'] ) );
+					}
 					if ( 'publish' === get_post_status( $post_id ) && Schema::ready() && Engine::versioned() ) {
 						ErrorException::raise( RevisionPublisher::publish( $post_id ) );
 					}
+					$data                 = $response->get_data();
+					$data['ohmylms_quiz'] = NativeQuizEditor::read_settings( array( 'id' => $post_id ) );
+					$response->set_data( $data );
 					return $response;
 				}
 			);

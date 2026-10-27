@@ -243,9 +243,15 @@ final class CourseProgram {
 		$chapters            = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT chapter_id FROM %i WHERE course_id=%d ORDER BY order_number,id', $wpdb->prefix . 'ohmylms_chapter_relationship', $course_id ) ) );
 		$chapter_set         = array_flip( $chapters );
 		$known               = self::known_skills( $data['outcomes'] );
-		$groups              = ProgramGroups::normalize( $data['groups'] ?? null, $chapters );
-		if ( is_string( $groups ) ) {
-			return self::group_error( $groups ); }
+		// A lesson is a block lesson item, not a folder: stored groups are flattened into their unit.
+		$groups = array();
+		foreach ( array( 'outcomes', 'items' ) as $list ) {
+			foreach ( $data[ $list ] as $index => $row ) {
+				if ( is_array( $row ) ) {
+					unset( $data[ $list ][ $index ]['group_id'] );
+				}
+			}
+		}
 		foreach ( $data['outcomes'] as $outcome ) {
 			if ( ! is_array( $outcome ) ) {
 				return self::error( __( 'Invalid outcome.', 'ohmylms' ) ); }
@@ -270,6 +276,11 @@ final class CourseProgram {
 			if ( ! empty( $outcome['group_id'] ) ) {
 				$entry['group_id'] = $outcome['group_id']; }
 			$program['outcomes'][] = $entry;
+		}
+		foreach ( $groups as $group ) {
+			if ( array_diff( $group['skill_ids'] ?? array(), array_keys( $skills ) ) ) {
+				return self::error( __( 'Lessons can only link skills selected for this course.', 'ohmylms' ) );
+			}
 		}
 		$ids       = array();
 		$resources = array();
@@ -450,6 +461,7 @@ final class CourseProgram {
 		$messages = array(
 			'oversized'     => __( 'Too many lesson groups.', 'ohmylms' ),
 			'invalid'       => __( 'Invalid lesson group.', 'ohmylms' ),
+			'skills'        => __( 'Lesson skills must be a list of up to 200 positive skill identifiers.', 'ohmylms' ),
 			'id'            => __( 'Lesson group identifiers must be unique.', 'ohmylms' ),
 			'chapter'       => __( 'The unit does not belong to this course.', 'ohmylms' ),
 			'title'         => __( 'Name each lesson group.', 'ohmylms' ),
@@ -529,7 +541,9 @@ final class CourseProgram {
 		foreach ( $program['items'] as $item ) {
 			if ( 'practice' !== $item['type'] && get_post_status( $item['content_id'] ) !== 'publish' ) {
 				$errors[] = sprintf( /* translators: %s: text value. */
-				__( 'Publish the learning resource %s first.', 'ohmylms' ), get_the_title( $item['content_id'] ) ); }
+					__( 'Publish the learning resource %s first.', 'ohmylms' ),
+					get_the_title( $item['content_id'] )
+				); }
 		}
 		foreach ( $required_outcomes as $outcome ) {
 			$pool     = self::pool( $program, $outcome['term_id'] );
@@ -545,7 +559,11 @@ final class CourseProgram {
 			if ( count( array_unique( array_column( $pool, 'question_id' ) ) ) < $minimum || count( $families ) < $rules[ $outcome['target'] . '_families' ] ) {
 				$term     = get_term( $outcome['term_id'], Taxonomy::NAME );
 				$errors[] = sprintf( /* translators: %1$s: text value; %2$d: number; %3$d: number. */
-				__( 'Skill %1$s needs at least %2$d approved questions and %3$d question families in its allowed pool.', 'ohmylms' ), $term->name, $minimum, $rules[ $outcome['target'] . '_families' ] );
+					__( 'Skill %1$s needs at least %2$d approved questions and %3$d question families in its allowed pool.', 'ohmylms' ),
+					$term->name,
+					$minimum,
+					$rules[ $outcome['target'] . '_families' ]
+				);
 			}
 		}
 		return $errors;
@@ -661,6 +679,10 @@ final class CourseProgram {
 			return self::error( __( 'Learning storage is unavailable.', 'ohmylms' ), 503 ); }
 		if ( get_post_type( $course_id ) !== OHMYLMS_COURSE_CPT || ! current_user_can( 'edit_post', $course_id ) ) {
 			return AccessPolicy::denied(); }
+		if ( is_array( $data['groups'] ?? null ) ) {
+			$stored         = self::editor( $course_id )['draft'];
+			$data['groups'] = ProgramGroups::carry_skills( $data['groups'], $stored['groups'] ?? array() );
+		}
 		$program = self::normalize( $course_id, $data );
 		if ( is_wp_error( $program ) ) {
 			return $program; }

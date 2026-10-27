@@ -24,6 +24,7 @@ final class Jobs {
 		add_action( self::HOOK, array( __CLASS__, 'process' ) );
 		add_action( 'before_delete_post', array( __CLASS__, 'cleanup' ) );
 		Workflow::init();
+		Figures::init();
 	}
 
 	/** Register the nonpublic persistence record, separate from the future Exam type. */

@@ -32,9 +32,11 @@
 		status.setAttribute( 'role', 'status' );
 		status.setAttribute( 'aria-live', 'polite' );
 		var footer =
+			root.querySelector( '.ohmylms-paper-progress' ) ||
 			root.querySelector(
 				'.ohmylms-quiz-footer .ohmylms-footer-wrapper'
-			) || form;
+			) ||
+			form;
 		footer.appendChild( status );
 
 		function setStatus( text ) {

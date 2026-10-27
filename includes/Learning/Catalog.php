@@ -450,7 +450,7 @@ final class Catalog {
 		if ( array_key_exists( 'groups', $data ) ) {
 			if ( ! is_array( $data['groups'] ) ) {
 				return self::error( __( 'Lesson groups must be a list.', 'ohmylms' ) ); }
-			$draft['groups'] = array_values( $data['groups'] );
+			$draft['groups'] = ProgramGroups::carry_skills( array_values( $data['groups'] ), $existing['groups'] ?? array() );
 		}
 		$kept     = array_column( $draft['outcomes'], 'term_id' );
 		$kept     = array_map( 'intval', $kept );

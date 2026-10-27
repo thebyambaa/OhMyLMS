@@ -13,13 +13,19 @@ const labels = () => ( {
  * The one choice of where a question comes from, shown by both the Question block and the Question Player
  * block so they read as a single block.
  *
- * @param {Object}                   root0          Component properties.
- * @param {string}                   root0.source   write, bank or skills.
- * @param {string[]}                 root0.allowed  Sources offered here.
- * @param {(source: string) => void} root0.onChange Called with the chosen source.
+ * @param {Object}                   root0               Component properties.
+ * @param {string}                   root0.source        write, bank or skills.
+ * @param {string[]}                 root0.allowed       Sources offered here.
+ * @param {(source: string) => void} root0.onChange      Called with the chosen source.
+ * @param {boolean}                  root0.allowReselect Call onChange for the active source too.
  * @return {Element|null} Switch, or nothing when there is only one source.
  */
-export function QuestionSourceSwitch( { source, allowed, onChange } ) {
+export function QuestionSourceSwitch( {
+	source,
+	allowed,
+	onChange,
+	allowReselect = false,
+} ) {
 	if ( allowed.length < 2 ) {
 		return null;
 	}
@@ -35,7 +41,10 @@ export function QuestionSourceSwitch( { source, allowed, onChange } ) {
 					key={ option }
 					variant={ source === option ? 'primary' : 'secondary' }
 					isPressed={ source === option }
-					onClick={ () => source !== option && onChange( option ) }
+					onClick={ () =>
+						( allowReselect || source !== option ) &&
+						onChange( option )
+					}
 				>
 					{ text[ option ] }
 				</Button>

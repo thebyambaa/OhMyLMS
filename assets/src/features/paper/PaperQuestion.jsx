@@ -172,10 +172,6 @@ export function PaperQuestion( {
 							key={ option.letter }
 							className={ option.correct ? 'is-correct' : '' }
 						>
-							<span
-								className="ohmylms-print-bubble"
-								aria-hidden="true"
-							/>
 							<span className="ohmylms-print-letter">
 								{ option.letter }
 							</span>
@@ -204,7 +200,12 @@ export function PaperQuestion( {
 									{ part.label && `(${ part.label })` }
 								</span>
 								<div className="ohmylms-print-prompt">
-									{ part.prompt }
+									{ question.public ||
+									question.figure_part_html ? (
+										<RawHTML>{ part.prompt }</RawHTML>
+									) : (
+										part.prompt
+									) }
 								</div>
 								{ marks && <Marks marks={ part.marks } /> }
 							</div>

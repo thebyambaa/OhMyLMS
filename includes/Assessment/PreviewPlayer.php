@@ -110,7 +110,7 @@ final class PreviewPlayer {
 				'quiz'      => $id,
 				'editor'    => isset( $_GET['quiz_editor'] ) && is_string( $_GET['quiz_editor'] ) && 'gutenberg' === sanitize_key( wp_unslash( $_GET['quiz_editor'] ) ) ? 'gutenberg' : '',
 				'snapshots' => $snapshots,
-				'settings'  => $quiz->get_settings(),
+				'settings'  => array_merge( (array) $quiz->get_settings(), array( 'paper_content' => \OhMyLMS\Quiz\PaperPresentation::content( $id ) ) ),
 			);
 			set_transient( 'ohmylms_quiz_preview_' . $session, $saved, HOUR_IN_SECONDS );
 		}

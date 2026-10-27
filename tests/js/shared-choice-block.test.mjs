@@ -44,6 +44,7 @@ function compile( file, scope, expression ) {
 			QUESTION_BLOCK_TYPES,
 			NativeQuestionDetails: 'details',
 			NativeSaveGuard: 'guard',
+			QuestionBlockPreview: 'student-frame',
 			BlockControls: 'block-controls',
 			ToolbarGroup: 'toolbar',
 			ToolbarButton: 'toolbar-button',
@@ -64,6 +65,7 @@ function compile( file, scope, expression ) {
 			QUESTION_BLOCK_TYPES,
 			NativeQuestionDetails: 'details',
 			NativeSaveGuard: 'guard',
+			QuestionBlockPreview: 'student-frame',
 			BlockControls: 'block-controls',
 			ToolbarGroup: 'toolbar',
 			ToolbarButton: 'toolbar-button',
@@ -369,12 +371,13 @@ function lessonHarness( {
 		scope,
 		'LessonChoiceEdit'
 	);
-	const render = () => {
+	const render = ( isSelected = true ) => {
 		cursor = 0;
 		refCursor = 0;
 		return Edit( {
 			attributes,
 			clientId: 'placement-a',
+			isSelected,
 			context,
 			setAttributes: ( patch ) => Object.assign( attributes, patch ),
 		} );
@@ -566,4 +569,21 @@ test( 'native mathematics questions reopen and save through the existing private
 		assert.deepEqual( payload.questions, [] );
 		assert.equal( 'settings' in harness.attributes, false );
 	}
+} );
+
+test( 'leaving a question previews the latest unsaved state and returning preserves authoring data', () => {
+	const harness = lessonHarness();
+	const blurred = nodes( harness.render( false ) );
+	assert.equal(
+		blurred.some( ( node ) => node.type === 'fields' ),
+		false
+	);
+	const frame = blurred.find( ( node ) => node.type === 'student-frame' );
+	assert.equal( frame.props.question.questions[ 0 ].answer, marker );
+	assert.equal( frame.props.question.description, `<p>${ marker }</p>` );
+	const fields = nodes( harness.render( true ) ).find(
+		( node ) => node.type === 'fields'
+	);
+	assert.equal( fields.props.question, frame.props.question );
+	assert.equal( harness.state[ 2 ], true );
 } );

@@ -1,7 +1,13 @@
 /** @jsx createElement */
 import { createElement, useEffect, useId, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { Button, Notice, SelectControl, Spinner } from '@wordpress/components';
+import {
+	Button,
+	Notice,
+	SelectControl,
+	Spinner,
+	TextControl,
+} from '@wordpress/components';
 import { importQuiz } from '../content-hub/api.mjs';
 import { problemLines } from '../content-hub/quizExchange.mjs';
 import { syllabusLabel } from './objectives.mjs';
@@ -26,6 +32,8 @@ export function CourseBuildChoices( { onScratch, onCreated, loading } ) {
 	const [ error, setError ] = useState( '' );
 	const [ file, setFile ] = useState( null );
 	const [ selecting, setSelecting ] = useState( false );
+	const [ method, setMethod ] = useState( 'empty' );
+	const [ title, setTitle ] = useState( '' );
 	const fileId = useId();
 
 	useEffect( () => {
@@ -98,33 +106,66 @@ export function CourseBuildChoices( { onScratch, onCreated, loading } ) {
 					onCreated={ onCreated }
 				/>
 			) }
-			<h3>{ __( 'How would you like to start?', 'ohmylms' ) }</h3>
+			<h3>{ __( 'Create a course', 'ohmylms' ) }</h3>
+			<p>
+				{ __(
+					'Every course uses the same builder: units contain lessons, and lessons contain teaching activities, practice, and quizzes.',
+					'ohmylms'
+				) }
+			</p>
+			<div
+				className="ohmylms-course-start-options"
+				role="group"
+				aria-label={ __( 'Starting content', 'ohmylms' ) }
+			>
+				{ [
+					[ 'empty', __( 'Empty course', 'ohmylms' ) ],
+					[ 'syllabus', __( 'From syllabus', 'ohmylms' ) ],
+					[ 'file', __( 'From quiz file', 'ohmylms' ) ],
+				].map( ( [ value, label ] ) => (
+					<Button
+						key={ value }
+						variant={ method === value ? 'primary' : 'secondary' }
+						aria-pressed={ method === value }
+						disabled={ busy || loading }
+						onClick={ () => setMethod( value ) }
+					>
+						{ label }
+					</Button>
+				) ) }
+			</div>
 			{ error && (
 				<Notice status="error" isDismissible={ false }>
 					{ error }
 				</Notice>
 			) }
-			<section>
+			<section hidden={ method !== 'empty' }>
 				<h4>{ __( 'Start from scratch', 'ohmylms' ) }</h4>
 				<p>
 					{ __(
-						'An empty course: you add the units and the content.',
+						'Name your course, then add units, lessons, skills, and activities in the builder.',
 						'ohmylms'
 					) }
 				</p>
+				<TextControl
+					label={ __( 'Course title', 'ohmylms' ) }
+					value={ title }
+					onChange={ setTitle }
+					disabled={ busy || loading }
+				/>
 				<Button
 					variant="secondary"
-					disabled={ busy || loading }
-					onClick={ () => onScratch( false ) }
+					disabled={ busy || loading || ! title.trim() }
+					onClick={ () => onScratch( false, title ) }
 				>
 					{ __( 'Start an empty course', 'ohmylms' ) }
 				</Button>
 			</section>
-			<section>
+			<section hidden={ method !== 'syllabus' }>
 				<h4>{ __( 'From a syllabus', 'ohmylms' ) }</h4>
 				<p>
 					{ __(
-						'Choose topics and skills, review the units and lessons, then add activities in your independent course.',
+						'Prefill the same builder with syllabus units, lessons, and skills. Your course is an independent draft; later syllabus edits are not applied automatically.',
 						'ohmylms'
 					) }
 				</p>
@@ -161,7 +202,7 @@ export function CourseBuildChoices( { onScratch, onCreated, loading } ) {
 					</>
 				) }
 			</section>
-			<section>
+			<section hidden={ method !== 'file' }>
 				<h4>{ __( 'From a quiz file', 'ohmylms' ) }</h4>
 				<p>
 					{ __(

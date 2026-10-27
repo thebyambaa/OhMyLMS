@@ -112,7 +112,7 @@ final class CourseStructure {
 			$units[ $id ]['items'][] = $item;
 		}
 		foreach ( $units as &$unit ) {
-			$arranged          = ProgramGroups::arrange( $program['groups'] ?? array(), $unit['items'], $unit['id'] );
+			$arranged          = ProgramGroups::arrange( array(), $unit['items'], $unit['id'] );
 			$unit['groups']    = $arranged['groups'];
 			$unit['ungrouped'] = $arranged['ungrouped'];
 		}

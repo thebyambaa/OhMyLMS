@@ -296,16 +296,25 @@ export function ImportDialog( {
 				} );
 				onJob( job.id );
 			} else {
-				setReport(
-					await api( 'question-bank/import', {
-						text,
-						format,
-						dry_run: false,
-						approve,
-						skip_invalid: skipInvalid,
-						default_skills: defaultSkills,
-					} )
-				);
+				const imported = await api( 'question-bank/import', {
+					text,
+					format,
+					dry_run: false,
+					approve,
+					skip_invalid: skipInvalid,
+					default_skills: defaultSkills,
+				} );
+				setReport( imported );
+				if ( onQuestions ) {
+					await onQuestions(
+						( imported.rows || [] )
+							.filter(
+								( row ) => row.status !== 'error' && row.id
+							)
+							.map( ( row ) => row.id )
+					);
+					onClose();
+				}
 				setFinished( true );
 			}
 		} catch ( failure ) {

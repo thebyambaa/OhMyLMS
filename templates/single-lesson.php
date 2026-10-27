@@ -69,13 +69,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 		$attempt = $quiz->get_quiz_attempt( get_current_user_id() );
 	}
 
-	$ohmylms_focused_player = \OhMyLMS\Student\PlayerContext::open( ! empty( $attempt ) && 'ohmylms-quiz' === $current_post_type );
-	if ( empty( $attempt ) && ! $ohmylms_focused_player ) {
-		ohmylms_account_student_dashboard_header();
-		ohmylms_breadcrumb();
-		ohmylms_get_template( 'single-lesson/lesson-progress.php' );
+	// One player for every lesson, quiz, assignment and session; the classic header, breadcrumb and progress strip are gone.
+	if ( ! \OhMyLMS\Student\PlayerContext::open( ! empty( $attempt ) && 'ohmylms-quiz' === $current_post_type ) ) {
+		\OhMyLMS\Student\PlayerContext::open_standalone();
 	}
-
 
 	?>
 

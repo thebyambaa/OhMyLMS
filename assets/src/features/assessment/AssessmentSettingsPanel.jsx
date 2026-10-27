@@ -2,6 +2,7 @@ import {
 	createElement,
 	Fragment,
 	useEffect,
+	useRef,
 	useState,
 } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -30,11 +31,8 @@ import {
 	setSlotMarks,
 	utcToLocalInput,
 } from './model.mjs';
-import {
-	NativeSaveGuard,
-	markNativeQuizDirty,
-} from '../learning/NativeSaveGuard';
 import { PoolsEditor } from './PoolsEditor';
+import { useNativeAssessmentSettings } from '../learning/NativeAssessmentSettings';
 
 /**
  * Assessment settings for the quiz editor: quiz/exam preset, feedback release,
@@ -45,11 +43,41 @@ import { PoolsEditor } from './PoolsEditor';
 export function AssessmentSettingsPanel( props ) {
 	const quizId =
 		props.quizId || quizIdFromHash( props.hash || window.location.hash );
-	const [ savedState, setSavedState ] = useState( null );
-	const [ settings, setSettings ] = useState( null );
+	const [ localSettings, setLocalSettings ] = useState( null );
+	const native = useNativeAssessmentSettings( Boolean( props.native ) );
+	const settings = props.native ? native.settings : localSettings;
+	const setSettings = props.native ? native.setSettings : setLocalSettings;
 	const [ questions, setQuestions ] = useState( [] );
 	const [ revisions, setRevisions ] = useState( [] );
-	const [ accommodations, setAccommodations ] = useState( [] );
+	const [ accommodations, updateAccommodations ] = useState( () =>
+		accommodationRows( native.settings?.accommodations || {} )
+	);
+	const accommodationSource = JSON.stringify(
+		native.settings?.accommodations || {}
+	);
+	const lastAccommodations = useRef( accommodationSource );
+	useEffect( () => {
+		if (
+			props.native &&
+			accommodationSource !== lastAccommodations.current
+		) {
+			lastAccommodations.current = accommodationSource;
+			updateAccommodations(
+				accommodationRows( JSON.parse( accommodationSource ) )
+			);
+		}
+	}, [ props.native, accommodationSource ] );
+	const setAccommodations = ( rows ) => {
+		updateAccommodations( rows );
+		if ( props.native ) {
+			const next = accommodationMap( rows );
+			lastAccommodations.current = JSON.stringify( next );
+			setSettings( {
+				...settings,
+				accommodations: next,
+			} );
+		}
+	};
 	const [ saving, setSaving ] = useState( false );
 	const [ message, setMessage ] = useState( null );
 	useEffect( () => {
@@ -58,7 +86,9 @@ export function AssessmentSettingsPanel( props ) {
 		}
 		let active = true;
 		Promise.all( [
-			loadAssessmentSettings( quizId ),
+			props.native
+				? Promise.resolve( null )
+				: loadAssessmentSettings( quizId ),
 			loadQuizQuestions( quizId ),
 			loadRevisions( quizId ),
 		] )
@@ -66,16 +96,12 @@ export function AssessmentSettingsPanel( props ) {
 				if ( ! active ) {
 					return;
 				}
-				setSettings( loaded.settings );
-				setAccommodations(
-					accommodationRows( loaded.settings.accommodations )
-				);
-				setSavedState(
-					JSON.stringify( [
-						loaded.settings,
-						accommodationRows( loaded.settings.accommodations ),
-					] )
-				);
+				if ( loaded ) {
+					setLocalSettings( loaded.settings );
+					updateAccommodations(
+						accommodationRows( loaded.settings.accommodations )
+					);
+				}
 				setQuestions( content.data || [] );
 				setRevisions( history.revisions || [] );
 			} )
@@ -90,7 +116,7 @@ export function AssessmentSettingsPanel( props ) {
 		return () => {
 			active = false;
 		};
-	}, [ quizId ] );
+	}, [ quizId, props.native ] );
 	if ( ! quizId ) {
 		return null;
 	}
@@ -109,15 +135,7 @@ export function AssessmentSettingsPanel( props ) {
 				...extra,
 			} );
 			setSettings( saved.settings );
-			if ( props.native ) {
-				markNativeQuizDirty();
-			}
-			setSavedState(
-				JSON.stringify( [
-					saved.settings,
-					accommodationRows( saved.settings.accommodations ),
-				] )
-			);
+
 			setAccommodations(
 				accommodationRows( saved.settings.accommodations )
 			);
@@ -140,28 +158,19 @@ export function AssessmentSettingsPanel( props ) {
 	return (
 		<div
 			className="ohmylms-assessment-settings"
-			style={ {
-				margin: '16px 24px',
-				background: '#fff',
-			} }
+			style={
+				props.native
+					? undefined
+					: {
+							margin: '16px 24px',
+							background: '#fff',
+						}
+			}
 		>
-			{ props.native && (
-				<NativeSaveGuard
-					dirty={
-						savedState !== null &&
-						savedState !==
-							JSON.stringify( [ settings, accommodations ] )
-					}
-					busy={ saving }
-				/>
-			) }
 			<fieldset disabled={ saving }>
 				<PanelBody
-					title={ __(
-						'Assessment settings (exam, sections, timing)',
-						'ohmylms'
-					) }
-					initialOpen={ false }
+					title={ __( 'Schedule, results and sections', 'ohmylms' ) }
+					initialOpen={ Boolean( props.native ) }
 				>
 					{ message && (
 						<Notice
@@ -183,39 +192,46 @@ export function AssessmentSettingsPanel( props ) {
 									alignItems: 'end',
 								} }
 							>
-								<SelectControl
-									label={ __( 'Kind', 'ohmylms' ) }
-									value={ settings.kind }
-									options={ [
-										{
-											value: 'quiz',
-											label: __( 'Quiz', 'ohmylms' ),
-										},
-										{
-											value: 'exam',
-											label: __(
-												'Exam (fixed paper)',
-												'ohmylms'
-											),
-										},
-										{
-											value: 'practice',
-											label: __( 'Practice', 'ohmylms' ),
-										},
-									] }
-									onChange={ set( 'kind' ) }
-								/>
-								<Button
-									variant="secondary"
-									onClick={ () =>
-										save( {
-											preset: 'exam',
-										} )
-									}
-									disabled={ saving }
-								>
-									{ __( 'Apply exam preset', 'ohmylms' ) }
-								</Button>
+								{ ! props.native && (
+									<SelectControl
+										label={ __( 'Kind', 'ohmylms' ) }
+										value={ settings.kind }
+										options={ [
+											{
+												value: 'quiz',
+												label: __( 'Quiz', 'ohmylms' ),
+											},
+											{
+												value: 'exam',
+												label: __(
+													'Exam (fixed paper)',
+													'ohmylms'
+												),
+											},
+											{
+												value: 'practice',
+												label: __(
+													'Practice',
+													'ohmylms'
+												),
+											},
+										] }
+										onChange={ set( 'kind' ) }
+									/>
+								) }
+								{ ! props.native && (
+									<Button
+										variant="secondary"
+										onClick={ () =>
+											save( {
+												preset: 'exam',
+											} )
+										}
+										disabled={ saving }
+									>
+										{ __( 'Apply exam preset', 'ohmylms' ) }
+									</Button>
+								) }
 								<SelectControl
 									label={ __(
 										'Show results to learners',
@@ -625,16 +641,18 @@ export function AssessmentSettingsPanel( props ) {
 									marginTop: 16,
 								} }
 							>
-								<Button
-									variant="primary"
-									isBusy={ saving }
-									onClick={ () => save() }
-								>
-									{ __(
-										'Save assessment settings',
-										'ohmylms'
-									) }
-								</Button>
+								{ ! props.native && (
+									<Button
+										variant="primary"
+										isBusy={ saving }
+										onClick={ () => save() }
+									>
+										{ __(
+											'Save assessment settings',
+											'ohmylms'
+										) }
+									</Button>
+								) }
 							</div>
 							<PoolsEditor
 								quizId={ quizId }

@@ -12,14 +12,15 @@ import apiFetch from '@wordpress/api-fetch';
 
 /**
  * Create a reusable draft, then add its placement to the local outline.
- * @param {Object}                     root0             Properties.
- * @param {number}                     root0.courseId    Course ID.
- * @param {string}                     root0.revision    Saved course revision.
- * @param {string}                     root0.requestId   Stable creation UUID.
- * @param {string}                     root0.initialKind Initial reading, video or quiz choice.
- * @param {(resource: Object) => void} root0.onCreated   Place the draft locally.
- * @param {(busy: boolean) => void}    root0.onBusy      Disable dialog dismissal during creation.
- * @param {string}                     [root0.style]     Assessment style for a unit test or course challenge slot.
+ * @param {Object}                     root0              Properties.
+ * @param {number}                     root0.courseId     Course ID.
+ * @param {string}                     root0.revision     Saved course revision.
+ * @param {string}                     root0.requestId    Stable creation UUID.
+ * @param {string}                     root0.initialKind  Initial reading, video or quiz choice.
+ * @param {(resource: Object) => void} root0.onCreated    Place the draft locally.
+ * @param {(busy: boolean) => void}    root0.onBusy       Disable dialog dismissal during creation.
+ * @param {string}                     [root0.style]      Assessment style for a unit test or course challenge slot.
+ * @param {boolean}                    [root0.lessonOnly] Create a text lesson from a title alone, for the block editor.
  */
 export function ActivityCreateForm( {
 	courseId,
@@ -29,9 +30,10 @@ export function ActivityCreateForm( {
 	onCreated,
 	onBusy,
 	style = '',
+	lessonOnly = false,
 } ) {
 	const [ kind, setKind ] = useState(
-		style ? 'quiz' : initialKind || 'reading'
+		style ? 'quiz' : ( lessonOnly && 'reading' ) || initialKind || 'reading'
 	);
 	const [ title, setTitle ] = useState( '' );
 	const [ content, setContent ] = useState( '' );
@@ -67,17 +69,22 @@ export function ActivityCreateForm( {
 	return (
 		<div>
 			<p>
-				{ __(
-					'Create a draft resource here, then save the outline to keep its placement. Finish and publish the resource in its content editor.',
-					'ohmylms'
-				) }
+				{ lessonOnly
+					? __(
+							'Name the lesson. It is created as a block lesson; write its content in the block editor, then save the outline to keep its place.',
+							'ohmylms'
+						)
+					: __(
+							'Create a draft resource here, then save the outline to keep its placement. Finish and publish the resource in its content editor.',
+							'ohmylms'
+						) }
 			</p>
 			{ error && (
 				<Notice status="error" isDismissible={ false }>
 					{ error }
 				</Notice>
 			) }
-			{ ! style && (
+			{ ! style && ! lessonOnly && (
 				<SelectControl
 					label={ __( 'New activity type', 'ohmylms' ) }
 					value={ kind }
@@ -91,7 +98,11 @@ export function ActivityCreateForm( {
 				/>
 			) }
 			<TextControl
-				label={ __( 'New activity title', 'ohmylms' ) }
+				label={
+					lessonOnly
+						? __( 'Lesson title', 'ohmylms' )
+						: __( 'New activity title', 'ohmylms' )
+				}
 				value={ title }
 				maxLength={ 200 }
 				disabled={ busy }
@@ -106,7 +117,7 @@ export function ActivityCreateForm( {
 					disabled={ busy }
 				/>
 			) }
-			{ kind !== 'quiz' && (
+			{ kind !== 'quiz' && ! lessonOnly && (
 				<TextareaControl
 					label={
 						kind === 'reading'
@@ -140,7 +151,9 @@ export function ActivityCreateForm( {
 				}
 				onClick={ create }
 			>
-				{ __( 'Create draft activity', 'ohmylms' ) }
+				{ lessonOnly
+					? __( 'Create lesson', 'ohmylms' )
+					: __( 'Create draft activity', 'ohmylms' ) }
 			</Button>
 		</div>
 	);

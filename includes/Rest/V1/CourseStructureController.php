@@ -345,7 +345,7 @@ class CourseStructureController extends RestController {
 				$item['name'] = $item['title'] ?? $item['name'];
 			}
 			unset( $item );
-			$arranged          = \OhMyLMS\Learning\ProgramGroups::arrange( $program['groups'] ?? array(), $unit['items'], $unit['id'] );
+			$arranged          = \OhMyLMS\Learning\ProgramGroups::arrange( array(), $unit['items'], $unit['id'] );
 			$unit['groups']    = $arranged['groups'];
 			$unit['ungrouped'] = $arranged['ungrouped'];
 		}

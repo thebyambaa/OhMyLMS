@@ -16,6 +16,7 @@ import { examEditorHref } from './examEditor.mjs';
 import { ExamPaperDialog } from './ExamPaperDialog.jsx';
 import { ImportDialog } from './ImportDialog.jsx';
 import { useHubAction } from './useHubAction.js';
+import { ImportFigures } from './ImportFigures.jsx';
 
 /**
  * Associate each repeated question/part control with its own accessible label.
@@ -281,12 +282,54 @@ export function ExamsPage( {
 					? {
 							...question,
 							[ field ]: value,
+							...( ! [ 'reviewed', 'figures_complete' ].includes(
+								field
+							)
+								? { figures_complete: false }
+								: {} ),
 							...( field !== 'reviewed'
 								? { reviewed: false }
 								: {} ),
 						}
 					: question
 			)
+		);
+		setDirty( true );
+	};
+	const moveFigure = ( index, destination ) => {
+		const source = questions[ selected ];
+		const figure = source.figures[ index ];
+		setQuestions( ( previous ) =>
+			previous.map( ( question ) => {
+				if ( question.number === source.number ) {
+					return {
+						...question,
+						figures: question.figures.filter(
+							( item ) => item.id !== figure.id
+						),
+						reviewed: false,
+						figures_complete: false,
+					};
+				}
+				if ( question.number === destination ) {
+					return {
+						...question,
+						figures: [
+							...( question.figures || [] ),
+							{
+								...figure,
+								id: `f_${ Date.now() }`,
+								part_ids: [],
+								approved: false,
+							},
+						],
+						requires_source: true,
+						reviewed: false,
+						figures_complete: false,
+					};
+				}
+				return question;
+			} )
 		);
 		setDirty( true );
 	};
@@ -634,6 +677,23 @@ export function ExamsPage( {
 														.join( ';' )
 												)
 											}
+										/>
+										<ImportFigures
+											key={ current.number }
+											jobId={ job.id }
+											question={ current }
+											destinations={ questions.map(
+												( question ) => question.number
+											) }
+											onMove={ moveFigure }
+											candidates={
+												job.suggestions?.find(
+													( item ) =>
+														item.number ===
+														current.number
+												)?.figures || []
+											}
+											onChange={ change }
 										/>
 										{ current.requires_source && (
 											<p>
@@ -1089,6 +1149,25 @@ export function ExamsPage( {
 						) }
 						{ job.state === 'committed' && (
 							<>
+								{ onQuestions && (
+									<Button
+										variant="primary"
+										disabled={ busy }
+										onClick={ () =>
+											run( async () => {
+												await onQuestions(
+													job.question_ids
+												);
+												setJob( null );
+											} )
+										}
+									>
+										{ __(
+											'Insert questions into this assessment',
+											'ohmylms'
+										) }
+									</Button>
+								) }
 								<p>
 									{ __(
 										'Questions are saved as bank drafts. Approval and exam publication are separate actions.',

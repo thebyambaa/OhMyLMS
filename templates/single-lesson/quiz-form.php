@@ -36,10 +36,11 @@ if ( ! empty( $ohmylms_player_preview ) ) {
 // Versioned attempts render the frozen items issued at start, in their stored order.
 $attempt_context = ! empty( $attempt['id'] ) && \OhMyLMS\Assessment\Schema::ready() ? \OhMyLMS\Assessment\AttemptItems::context( $attempt['id'] ) : null;
 if ( $attempt_context ) {
-	$questions         = \OhMyLMS\Assessment\AttemptItems::delivery( $attempt['id'] );
-	$revision          = \OhMyLMS\Assessment\RevisionPublisher::revision( $attempt_context['revision_id'] );
-	$settings          = array_merge( is_array( $settings ) ? $settings : array(), $revision ? $revision['settings'] : array() );
-	$remaining_seconds = \OhMyLMS\Assessment\Deadlines::remaining( $attempt_context );
+	$questions                = \OhMyLMS\Assessment\AttemptItems::delivery( $attempt['id'] );
+	$revision                 = \OhMyLMS\Assessment\RevisionPublisher::revision( $attempt_context['revision_id'] );
+	$settings                 = array_merge( is_array( $settings ) ? $settings : array(), $revision ? $revision['settings'] : array() );
+	$settings['presentation'] = $revision['settings']['presentation'] ?? 'standard';
+	$remaining_seconds        = \OhMyLMS\Assessment\Deadlines::remaining( $attempt_context );
 	\OhMyLMS\Assessment\Delivery::require_script();
 	$is_timer = null !== $remaining_seconds;
 	$timer    = $is_timer ? $remaining_seconds / 60 : 0;
@@ -51,12 +52,23 @@ if ( $attempt_context ) {
 	$is_timer = $quiz->get_timer() > 0 ? true : false;
 }
 
-$player_template = \OhMyLMS\Quiz\PlayerTemplates::resolve( $settings['player_template'] ?? \OhMyLMS\Quiz\PlayerTemplates::DEFAULT_TEMPLATE );
-$player_template = \OhMyLMS\Student\PlayerContext::quiz_template( $player_template );
+if ( ! empty( $ohmylms_player_preview['single_question'] ) ) {
+	$is_timer = false;
+	$timer    = 0;
+}
+
+$paper_content      = $settings['paper_content'] ?? ( $attempt_context ? array() : \OhMyLMS\Quiz\PaperPresentation::content( get_the_ID() ) );
+$paper_presentation = 'paper' === ( $settings['presentation'] ?? '' );
+$paper_settings     = $paper_presentation ? \OhMyLMS\Exams\PaperSettings::sanitize( $settings['paper'] ?? array() ) : null;
+$player_template    = \OhMyLMS\Quiz\PlayerTemplates::resolve( $settings['player_template'] ?? \OhMyLMS\Quiz\PlayerTemplates::DEFAULT_TEMPLATE );
+$player_template    = \OhMyLMS\Student\PlayerContext::quiz_template( $player_template );
 // The assessment kind's profile can fix the design and the layout (an exam always uses the exam dashboard).
-$assessment_profile = \OhMyLMS\Assessment\Profiles::of( get_the_ID() );
+$assessment_profile = isset( $ohmylms_player_preview['profile_kind'] ) ? \OhMyLMS\Assessment\Profiles::get( $ohmylms_player_preview['profile_kind'] ) : \OhMyLMS\Assessment\Profiles::of( get_the_ID() );
 if ( '' !== $assessment_profile['player_template'] ) {
 	$player_template = \OhMyLMS\Quiz\PlayerTemplates::resolve( $assessment_profile['player_template'] );
+}
+if ( $paper_presentation ) {
+	$player_template = 'paper';
 }
 \OhMyLMS\Quiz\PlayerTemplates::enqueue( $player_template );
 $quiz_layout = is_array( $settings ) && isset( $settings['layout'] ) ? $settings['layout'] : 'one_question_per_page';
@@ -65,6 +77,9 @@ if ( ! in_array( $quiz_layout, array( 'one_question_per_page', 'all_questions_in
 }
 if ( '' !== $assessment_profile['layout'] ) {
 	$quiz_layout = $assessment_profile['layout'];
+}
+if ( $paper_presentation || ! empty( $ohmylms_player_preview['single_question'] ) ) {
+	$quiz_layout = 'all_questions_in_one_page';
 }
 $layout_class             = '';
 $questions_per_group      = '';
@@ -88,7 +103,7 @@ foreach ( $questions as $question ) {
 	if ( ! empty( $question['page'] ) && 1 < $question['page'] ) {
 		$has_page_breaks = true; }
 }
-if ( $has_page_breaks && 'all_questions_in_one_page' === $quiz_layout ) {
+if ( ! $paper_presentation && $has_page_breaks && 'all_questions_in_one_page' === $quiz_layout ) {
 	$quiz_layout                      = 'number_of_questions_per_page';
 	$settings['question_in_one_page'] = PHP_INT_MAX;
 }
@@ -133,6 +148,17 @@ $questions                = array_values(
 	)
 );
 $supported_question_count = count( $questions );
+// Paper View shows the editor's paper; the questions follow its order so the player's numbers match it.
+$paper_student = $paper_presentation ? \OhMyLMS\Quiz\PaperPresentation::student( get_the_ID(), (array) $settings, $ohmylms_player_preview['paper_items'] ?? null ) : null;
+if ( $paper_student ) {
+	$paper_order = array_flip( \OhMyLMS\Quiz\PaperPresentation::order( $paper_student['items'] ) );
+	usort(
+		$questions,
+		static function ( $a, $b ) use ( $paper_order ) {
+			return ( $paper_order[ (int) $a['id'] ] ?? PHP_INT_MAX ) <=> ( $paper_order[ (int) $b['id'] ] ?? PHP_INT_MAX );
+		}
+	);
+}
 if ( 'number_of_questions_per_page' === $quiz_layout ) {
 	$totalGroups = count( $page_starts );
 }
@@ -144,7 +170,7 @@ ob_start();
 <input type="hidden" class="ohmylms_quiz_id" value="<?php echo esc_attr( get_the_ID() ); ?>">
 <input type="hidden" class="quiz_attempt_id" value="<?php echo esc_attr( $attempt['id'] ); ?>">
 
-<section class="ohmylms-quiz ohmylms-player-template-<?php echo esc_attr( $player_template ); ?> <?php echo esc_attr( $layout_class ); ?>" data-player-template="<?php echo esc_attr( $player_template ); ?>"
+<section class="ohmylms-quiz ohmylms-player-template-<?php echo esc_attr( $player_template ); ?> <?php echo esc_attr( $layout_class ); ?><?php echo $paper_presentation ? ' ohmylms-paper-form is-font-' . esc_attr( $paper_settings['font'] ) : ''; ?>" data-player-template="<?php echo esc_attr( $player_template ); ?>"
 <?php
 if ( $attempt_context ) {
 	?>
@@ -212,8 +238,17 @@ if ( $attempt_context ) {
 			<div class="ohmylms-quiz-result">
 				<h2><?php esc_html_e( 'Preview result', 'ohmylms' ); ?></h2>
 				<?php if ( empty( $preview_result['entries'] ) ) { ?>
-					<p><?php echo esc_html( sprintf( /* translators: %1$s: text value; %2$s: text value. */
-					__( 'Score: %1$s / %2$s', 'ohmylms' ), $preview_result['earned'], $preview_result['total'] ) ); ?></p>
+					<p>
+					<?php
+					echo esc_html(
+						sprintf( /* translators: %1$s: text value; %2$s: text value. */
+							__( 'Score: %1$s / %2$s', 'ohmylms' ),
+							$preview_result['earned'],
+							$preview_result['total']
+						)
+					);
+					?>
+					</p>
 				<?php } ?>
 				<?php
 				if ( $preview_result['pending'] ) {
@@ -308,9 +343,11 @@ if ( $attempt_context ) {
 			'progress',
 			$player_template,
 			array(
-				'total_pages' => $player_total_pages,
-				'layout'      => $quiz_layout,
-				'sections'    => $player_sections,
+				'total_pages'        => $player_total_pages,
+				'layout'             => $quiz_layout,
+				'sections'           => $player_sections,
+				'paper_presentation' => $paper_presentation,
+				'question_count'     => $supported_question_count,
 			)
 		);
 		?>
@@ -325,6 +362,9 @@ if ( $attempt_context ) {
 		);
 		?>
 		<div class="ohmylms-quiz-form">
+			<?php if ( $paper_student ) { ?>
+				<script type="application/json" class="ohmylms-paper-student-data"><?php echo wp_json_encode( $paper_student, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE ); ?></script>
+			<?php } ?>
 			<input type="hidden" name="quiz_attempt_id" value="<?php echo esc_attr( $attempt['id'] ); ?>">
 			<div class="ohmylms-container">
 				<div class="ohmylms-quiz-form-wrapper">
@@ -348,6 +388,10 @@ if ( $attempt_context ) {
 						}
 
 						++$count;
+						if ( $paper_presentation ) {
+							echo wp_kses_post( $paper_content[ $question['id'] ] ?? '' );
+						}
+
 
 						// Check if layout grouped question and we're at the start of a new group.
 						if ( 'number_of_questions_per_page' === $quiz_layout && isset( $page_starts[ $count - 1 ] ) ) {
@@ -367,16 +411,17 @@ if ( $attempt_context ) {
 							?>
 							<h2 class="ohmylms-quiz-section-title"><?php echo esc_html( $question['section'] ); ?></h2>
 						<?php } ?>
-						<div class="ohmylms-quiz-box question-<?php echo esc_attr( $count ); ?> <?php echo esc_attr( ( 'one_question_per_page' === $quiz_layout && 1 == $count ) ? 'active' : '' ); ?>">
+						<div data-question-id="<?php echo esc_attr( $question['id'] ); ?>" class="ohmylms-quiz-box question-<?php echo esc_attr( $count ); ?> <?php echo esc_attr( ( 'one_question_per_page' === $quiz_layout && 1 == $count ) ? 'active' : '' ); ?>">
 							<?php
 							\OhMyLMS\Quiz\PlayerTemplates::part(
 								'question-meta',
 								$player_template,
 								array(
-									'ordinal'        => $count,
-									'question_count' => $supported_question_count,
+									'ordinal'        => $ohmylms_player_preview['ordinal'] ?? $count,
+									'question_count' => $ohmylms_player_preview['question_count'] ?? $supported_question_count,
 									'marks'          => max( 0, (float) ( $question['settings']['score']['value'] ?? 0 ) ),
 									'section'        => (string) ( $question['section'] ?? '' ),
+									'paper'          => $paper_settings,
 								)
 							);
 							?>
@@ -415,6 +460,9 @@ if ( $attempt_context ) {
 								shuffle( $question['questions'] );
 							}
 
+							if ( $paper_presentation && 'multiple-choice' === $question['settings']['type'] ) {
+								echo '<p>' . esc_html__( 'Select all that apply.', 'ohmylms' ) . '</p>';
+							}
 							\OhMyLMS\Extensions\QuestionTypes::render( $question, $attempt );
 							?>
 							<?php if ( ! empty( $question['settings']['required'] ) ) : ?>
@@ -427,6 +475,9 @@ if ( $attempt_context ) {
 						if ( 'number_of_questions_per_page' === $quiz_layout && $count === $supported_question_count ) {
 							echo '</div>';
 						}
+					}
+					if ( $paper_presentation ) {
+						echo wp_kses_post( $paper_content['end'] ?? '' );
 					}
 					?>
 
@@ -547,27 +598,30 @@ $duration = max( 0, (int) round( $timer * 60 ) );
 echo \OhMyLMS\Extensions\Interactivity::quiz(
 	ob_get_clean(),
 	array(
-		'quizId'          => (int) get_the_ID(),
-		'attemptId'       => (int) $attempt['id'],
-		'layout'          => $quiz_layout,
-		'page'            => 1,
-		'perPage'         => max( 1, (int) $questions_per_group ),
-		'totalPages'      => max( 1, 'all_questions_in_one_page' === $quiz_layout ? 1 : ( 'number_of_questions_per_page' === $quiz_layout ? $totalGroups : $supported_question_count ) ),
-		'errors'          => (object) array(),
-		'answered'        => (object) array(),
-		'questionOfLabel' => /* translators: %1$d: number; %2$d: number. */
+		'quizId'            => (int) get_the_ID(),
+		'paperPresentation' => $paper_presentation,
+		'questionCount'     => $supported_question_count,
+		'confirmSubmit'     => /* translators: %d: unanswered questions. */ __( '%d questions have no answer yet. Submit anyway?', 'ohmylms' ),
+		'attemptId'         => (int) $attempt['id'],
+		'layout'            => $quiz_layout,
+		'page'              => 1,
+		'perPage'           => max( 1, (int) $questions_per_group ),
+		'totalPages'        => max( 1, 'all_questions_in_one_page' === $quiz_layout ? 1 : ( 'number_of_questions_per_page' === $quiz_layout ? $totalGroups : $supported_question_count ) ),
+		'errors'            => (object) array(),
+		'answered'          => (object) array(),
+		'questionOfLabel'   => /* translators: %1$d: number; %2$d: number. */
 		__( 'Question %1$d of %2$d', 'ohmylms' ),
-		'skipText'        => __( 'Skip', 'ohmylms' ),
-		'nextText'        => __( 'Next', 'ohmylms' ),
-		'submitting'      => false,
-		'exitOpen'        => false,
-		'error'           => '',
-		'preview'         => ! empty( $ohmylms_player_preview ),
-		'timed'           => $is_timer && empty( $ohmylms_player_preview['result'] ),
-		'duration'        => $duration,
-		'remaining'       => $duration,
-		'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
-		'expiryNonce'     => wp_create_nonce( 'quiz_exit_submission' ),
-		'submissionError' => __( 'Submission failed. Your answers remain on this page. Please press Submit to retry.', 'ohmylms' ),
+		'skipText'          => __( 'Skip', 'ohmylms' ),
+		'nextText'          => __( 'Next', 'ohmylms' ),
+		'submitting'        => false,
+		'exitOpen'          => false,
+		'error'             => '',
+		'preview'           => ! empty( $ohmylms_player_preview ),
+		'timed'             => $is_timer && empty( $ohmylms_player_preview['result'] ),
+		'duration'          => $duration,
+		'remaining'         => $duration,
+		'ajaxUrl'           => admin_url( 'admin-ajax.php' ),
+		'expiryNonce'       => wp_create_nonce( 'quiz_exit_submission' ),
+		'submissionError'   => __( 'Submission failed. Your answers remain on this page. Please press Submit to retry.', 'ohmylms' ),
 	)
 ); // phpcs:ignore WordPress.Security.EscapeOutput -- templates escape their own fields.

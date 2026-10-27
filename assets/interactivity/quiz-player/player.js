@@ -33,7 +33,7 @@ export function createQuizPlayer( {
 		return type ? isAnswered( box, type ) : false;
 	};
 	const tracksAnswers = ( context ) =>
-		context.layout === 'one_question_per_page';
+		context.layout === 'one_question_per_page' || context.paperPresentation;
 	// Every question once, when the quiz mounts.
 	const scanAnswered = ( root, context ) => {
 		if ( ! tracksAnswers( context ) ) {
@@ -75,6 +75,27 @@ export function createQuizPlayer( {
 	return {
 		state: createPlayerState( getContext ),
 		actions: {
+			reviewPaper: withSyncEvent( ( event ) => {
+				event.preventDefault();
+				const root = rootOf();
+				const c = getContext();
+				scanAnswered( root, c );
+				const boxes = Array.from(
+					root.querySelectorAll( '.ohmylms-quiz-box' )
+				);
+				const box = boxes.find(
+					( item, index ) => ! c.answered[ index + 1 ]
+				);
+				const target = box || root.querySelector( '.quiz-submit' );
+				if ( target ) {
+					target.setAttribute( 'tabindex', '-1' );
+					target.focus();
+					target.scrollIntoView( {
+						block: 'center',
+						behavior: 'smooth',
+					} );
+				}
+			} ),
 			next: withSyncEvent( ( event ) => {
 				event.preventDefault();
 				event.stopPropagation();
@@ -273,6 +294,24 @@ export function createQuizPlayer( {
 					event.preventDefault();
 					return;
 				}
+				if ( ! exit && c.paperPresentation ) {
+					scanAnswered( root, c );
+					const blank = Math.max(
+						0,
+						c.questionCount -
+							Object.values( c.answered ).filter( Boolean ).length
+					);
+					if (
+						blank &&
+						// eslint-disable-next-line no-alert -- Confirm final submission with unanswered questions.
+						! window.confirm(
+							c.confirmSubmit.replace( '%d', String( blank ) )
+						)
+					) {
+						event.preventDefault();
+						return;
+					}
+				}
 				c.submitting = true;
 				if ( c.inlineEndpoint ) {
 					event.preventDefault();
@@ -416,12 +455,23 @@ export function createQuizPlayer( {
 					}, 250 );
 				}
 				scanAnswered( root, c );
+				const restored = withScope( () => scanAnswered( root, c ) );
+				root.addEventListener?.(
+					'ohmylms:answer-restored',
+					restored,
+					true
+				);
 				roots.set( root, true );
 				emit( root, 'quiz-mounted', {
 					quizId: c.quizId,
 				} );
 				return () => {
 					clearInterval( timer );
+					root.removeEventListener?.(
+						'ohmylms:answer-restored',
+						restored,
+						true
+					);
 					roots.delete( root );
 					emit( root, 'quiz-unmounted', {
 						quizId: c.quizId,

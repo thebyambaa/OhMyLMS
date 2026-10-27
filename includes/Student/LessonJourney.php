@@ -73,7 +73,7 @@ final class LessonJourney {
 							array_filter(
 								$outline['skills'] ?? array(),
 								static function ( $skill ) use ( $lesson_id ) {
-									return $skill['group_id'] === $lesson_id;
+									return in_array( $lesson_id, $skill['group_ids'] ?? array( $skill['group_id'] ), true );
 								}
 							)
 						),

@@ -10,6 +10,7 @@ import { useDispatch } from '@wordpress/data';
 import {
 	Button,
 	ComboboxControl,
+	Modal,
 	Notice,
 	Placeholder,
 	RangeControl,
@@ -80,6 +81,7 @@ if ( ! window.ohmylmsNativeLesson ) {
  * @param {Object}                props               Block properties.
  * @param {Object}                props.attributes    Saved selection and outcome settings.
  * @param {function(Object):void} props.setAttributes Update block attributes.
+ * @param {boolean}               props.isSelected    Whether this block is selected.
  * @param {string}                props.clientId      Block identity in the editor.
  * @param {Object}                props.context       Post type and ID of the document.
  * @return {Element} Bank picker and settings.
@@ -88,6 +90,7 @@ export function QuestionPlayerEdit( {
 	attributes,
 	setAttributes,
 	clientId,
+	isSelected,
 	context = {},
 } ) {
 	const {
@@ -112,6 +115,9 @@ export function QuestionPlayerEdit( {
 	const ids = source === 'random' ? skillIds : questionIds;
 	const key = source === 'random' ? 'skillIds' : 'questionIds';
 	const kind = source === 'random' ? 'skills' : 'questions';
+	const [ picking, setPicking ] = useState(
+		Boolean( isSelected ) && ids.length === 0
+	);
 	const selection = ids.join( ',' );
 	useEffect( () => {
 		let active = true;
@@ -164,6 +170,7 @@ export function QuestionPlayerEdit( {
 			>
 				<div style={ { width: '100%' } }>
 					<QuestionSourceSwitch
+						allowReselect
 						source={ playerSource( attributes ) }
 						allowed={ allowedSources( {
 							postType: context.postType,
@@ -179,6 +186,7 @@ export function QuestionPlayerEdit( {
 									)
 								);
 							} else {
+								setPicking( true );
 								setSearch( '' );
 								setAttributes( step.attributes );
 							}
@@ -190,11 +198,6 @@ export function QuestionPlayerEdit( {
 							'ohmylms'
 						) }
 					</p>
-					{ error && (
-						<Notice status="error" isDismissible={ false }>
-							{ error }
-						</Notice>
-					) }
 					<SelectControl
 						label={ __( 'Play mode', 'ohmylms' ) }
 						value={ activityMode }
@@ -357,118 +360,169 @@ export function QuestionPlayerEdit( {
 										) }
 							</p>
 						) }
-					<ComboboxControl
-						label={
-							source === 'random'
-								? __( 'Add a skill', 'ohmylms' )
-								: __(
-										'Add a question from the bank',
-										'ohmylms'
-									)
-						}
-						value={ null }
-						options={ items
-							.filter( ( item ) => ! ids.includes( item.id ) )
-							.map( ( item ) => ( {
-								value: String( item.id ),
-								label: item.title,
-							} ) ) }
-						onFilterValueChange={ setSearch }
-						onChange={ ( value ) =>
-							setAttributes( {
-								[ key ]: addSelection( ids, value ),
-							} )
-						}
-					/>
-					{ loading && <Spinner /> }
-					{ ! loading && ! items.length && (
-						<p>{ __( 'No eligible items found.', 'ohmylms' ) }</p>
-					) }
-					<ol>
-						{ ids.map( ( id, index ) => (
-							<li key={ id }>
-								{ labels[ id ] ||
-									sprintf(
-										/* translators: %d: saved question or skill ID. */ __(
-											'Item %d (unavailable)',
-											'ohmylms'
-										),
-										id
-									) }
-								{ source === 'selected' && (
-									<>
-										<Button
-											icon="arrow-up-alt2"
-											label={ __(
-												'Move question up',
-												'ohmylms'
-											) }
-											disabled={ index === 0 }
-											onClick={ () =>
-												setAttributes( {
-													questionIds: moveSelection(
-														ids,
-														index,
-														-1
-													),
-												} )
-											}
-										/>
-										<Button
-											icon="arrow-down-alt2"
-											label={ __(
-												'Move question down',
-												'ohmylms'
-											) }
-											disabled={
-												index === ids.length - 1
-											}
-											onClick={ () =>
-												setAttributes( {
-													questionIds: moveSelection(
-														ids,
-														index,
-														1
-													),
-												} )
-											}
-										/>
-									</>
+					<p>
+						{ source === 'random'
+							? sprintf(
+									/* translators: %d: number of selected skills. */
+									__( 'Selected skills: %d', 'ohmylms' ),
+									ids.length
+								)
+							: sprintf(
+									/* translators: %d: number of selected questions. */
+									__( 'Selected questions: %d', 'ohmylms' ),
+									ids.length
 								) }
-								<Button
-									icon="no-alt"
-									label={ __(
-										'Remove selection',
+					</p>
+					<Button
+						variant="secondary"
+						onClick={ () => setPicking( true ) }
+					>
+						{ __( 'Edit selection', 'ohmylms' ) }
+					</Button>
+					{ picking && (
+						<Modal
+							title={
+								source === 'random'
+									? __( 'From skills', 'ohmylms' )
+									: __( 'Pick from bank', 'ohmylms' )
+							}
+							onRequestClose={ () => setPicking( false ) }
+							size="large"
+						>
+							{ error && (
+								<Notice status="error" isDismissible={ false }>
+									{ error }
+								</Notice>
+							) }
+							<ComboboxControl
+								label={
+									source === 'random'
+										? __( 'Add a skill', 'ohmylms' )
+										: __(
+												'Add a question from the bank',
+												'ohmylms'
+											)
+								}
+								value={ null }
+								options={ items
+									.filter(
+										( item ) => ! ids.includes( item.id )
+									)
+									.map( ( item ) => ( {
+										value: String( item.id ),
+										label: item.title,
+									} ) ) }
+								onFilterValueChange={ setSearch }
+								onChange={ ( value ) =>
+									setAttributes( {
+										[ key ]: addSelection( ids, value ),
+									} )
+								}
+							/>
+							{ loading && <Spinner /> }
+							{ ! loading && ! items.length && (
+								<p>
+									{ __(
+										'No eligible items found.',
 										'ohmylms'
 									) }
-									onClick={ () =>
-										setAttributes( {
-											[ key ]: ids.filter(
-												( item ) => item !== id
-											),
-										} )
+								</p>
+							) }
+							<ol>
+								{ ids.map( ( id, index ) => (
+									<li key={ id }>
+										{ labels[ id ] ||
+											sprintf(
+												/* translators: %d: saved question or skill ID. */ __(
+													'Item %d (unavailable)',
+													'ohmylms'
+												),
+												id
+											) }
+										{ source === 'selected' && (
+											<>
+												<Button
+													icon="arrow-up-alt2"
+													label={ __(
+														'Move question up',
+														'ohmylms'
+													) }
+													disabled={ index === 0 }
+													onClick={ () =>
+														setAttributes( {
+															questionIds:
+																moveSelection(
+																	ids,
+																	index,
+																	-1
+																),
+														} )
+													}
+												/>
+												<Button
+													icon="arrow-down-alt2"
+													label={ __(
+														'Move question down',
+														'ohmylms'
+													) }
+													disabled={
+														index === ids.length - 1
+													}
+													onClick={ () =>
+														setAttributes( {
+															questionIds:
+																moveSelection(
+																	ids,
+																	index,
+																	1
+																),
+														} )
+													}
+												/>
+											</>
+										) }
+										<Button
+											icon="no-alt"
+											label={ __(
+												'Remove selection',
+												'ohmylms'
+											) }
+											onClick={ () =>
+												setAttributes( {
+													[ key ]: ids.filter(
+														( item ) => item !== id
+													),
+												} )
+											}
+										/>
+									</li>
+								) ) }
+							</ol>
+							{ source === 'random' && (
+								<RangeControl
+									label={ __(
+										'Maximum questions per play',
+										'ohmylms'
+									) }
+									help={ __(
+										'Draws a fresh set without duplicates from the selected skills and their subskills. A smaller pool uses all available questions.',
+										'ohmylms'
+									) }
+									min={ 1 }
+									max={ 30 }
+									value={ count }
+									onChange={ ( value ) =>
+										setAttributes( { count: value } )
 									}
 								/>
-							</li>
-						) ) }
-					</ol>
-					{ source === 'random' && (
-						<RangeControl
-							label={ __(
-								'Maximum questions per play',
-								'ohmylms'
 							) }
-							help={ __(
-								'Draws a fresh set without duplicates from the selected skills and their subskills. A smaller pool uses all available questions.',
-								'ohmylms'
-							) }
-							min={ 1 }
-							max={ 30 }
-							value={ count }
-							onChange={ ( value ) =>
-								setAttributes( { count: value } )
-							}
-						/>
+							<Button
+								variant="primary"
+								onClick={ () => setPicking( false ) }
+							>
+								{ __( 'Done', 'ohmylms' ) }
+							</Button>
+						</Modal>
 					) }
 					<ToggleControl
 						label={ __( 'Grade responses', 'ohmylms' ) }

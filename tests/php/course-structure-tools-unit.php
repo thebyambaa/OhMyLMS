@@ -129,9 +129,9 @@ check(ProgramGroups::replace_unit($program, 10, [['id' => $A, 'title' => 'One'],
 check(ProgramGroups::replace_unit($program, 10, [['title' => 'G', 'item_ids' => [$I3]]], $ids) === 'item', 'an item of another unit cannot join');
 check(ProgramGroups::replace_unit($program, 10, [['title' => 'G', 'item_ids' => [$I4]]], $ids) === 'item', 'an unplaced item cannot join');
 check(ProgramGroups::replace_unit($program, 10, [['title' => 'G', 'item_ids' => ['nope']]], $ids) === 'item', 'an unknown item is refused');
-check(ProgramGroups::replace_unit($program, 10, [['title' => 'G', 'skill_ids' => [8]]], $ids) === 'item', 'a skill of another unit cannot join');
+check(is_array(ProgramGroups::replace_unit($program, 10, [['title' => 'G', 'skill_ids' => [8]]], $ids)), 'a course skill can also join a lesson in another unit');
 check(ProgramGroups::replace_unit($program, 10, [['title' => 'G', 'skill_ids' => ['7']]], $ids) === 'item', 'skill ids must be integers');
 check(ProgramGroups::replace_unit($program, 10, [['title' => 'G', 'item_ids' => [$I1]], ['title' => 'H', 'item_ids' => [$I1]]], $ids) === 'duplicate', 'an item sits in one group only');
-check(ProgramGroups::replace_unit($program, 10, [['title' => 'G', 'skill_ids' => [7]], ['title' => 'H', 'skill_ids' => [7]]], $ids) === 'duplicate', 'a skill sits in one group only');
+check(is_array(ProgramGroups::replace_unit($program, 10, [['title' => 'G', 'skill_ids' => [7]], ['title' => 'H', 'skill_ids' => [7]]], $ids)), 'a skill can be taught in several lessons');
 
 echo "Course structure tool checks passed: $checks\n";

@@ -2,6 +2,7 @@ import { createElement, useEffect, useState } from '@wordpress/element';
 import { useDispatch, useSelect } from '@wordpress/data';
 import {
 	CheckboxControl,
+	PanelBody,
 	SelectControl,
 	TextControl,
 	ToggleControl,
@@ -10,8 +11,14 @@ import { __ } from '@wordpress/i18n';
 import { listSkills } from '../question-bank/api.mjs';
 import apiFetch from '@wordpress/api-fetch';
 
-/** Quiz configuration participates in Gutenberg's normal save and publishing transaction. */
-export function NativeQuizConfiguration() {
+/**
+ * Shared configuration in Gutenberg's normal save and publishing transaction.
+ *
+ * @param {Object}  props      Component properties.
+ * @param {boolean} props.exam Whether the exam profile controls the player design.
+ * @return {Element} Timing, grading and player settings.
+ */
+export function NativeQuizConfiguration( { exam = false } ) {
 	const value = useSelect(
 		( getStore ) =>
 			getStore( 'core/editor' ).getEditedPostAttribute(
@@ -32,6 +39,7 @@ export function NativeQuizConfiguration() {
 	}, [] );
 	const settings = value.settings || {};
 	const drip = value.drip_settings || {};
+	const paper = settings.presentation === 'paper';
 	const change = ( patch ) =>
 		editPost( { ohmylms_quiz: { ...value, ...patch } } );
 	const set = ( key, next ) =>
@@ -47,8 +55,42 @@ export function NativeQuizConfiguration() {
 	];
 	return (
 		<>
+			<SelectControl
+				label={ __( 'Student presentation', 'ohmylms' ) }
+				value={ paper ? 'paper' : 'standard' }
+				options={ [
+					{
+						value: 'standard',
+						label: __( 'Standard player', 'ohmylms' ),
+					},
+					{
+						value: 'paper',
+						label: __(
+							'Paper View — all questions on one page',
+							'ohmylms'
+						),
+					},
+				] }
+				help={ __(
+					'Presentation does not change timing, attempts or result release. Use Student preview to try it.',
+					'ohmylms'
+				) }
+				onChange={ ( next ) => set( 'presentation', next ) }
+			/>
 			<TextControl
-				label={ __( 'Time allowed (0 for no limit)', 'ohmylms' ) }
+				label={
+					exam
+						? __( 'Exam duration', 'ohmylms' )
+						: __( 'Time allowed (0 for no limit)', 'ohmylms' )
+				}
+				help={
+					exam
+						? __(
+								'Set a time limit for each student attempt.',
+								'ohmylms'
+							)
+						: undefined
+				}
 				type="number"
 				min="0"
 				value={ settings.time_limit?.value ?? 0 }
@@ -125,39 +167,43 @@ export function NativeQuizConfiguration() {
 					onChange={ ( next ) => set( key, next ) }
 				/>
 			) ) }
-			<SelectControl
-				label={ __( 'Question layout', 'ohmylms' ) }
-				value={ settings.layout || 'one_question_per_page' }
-				options={ [
-					{
-						value: 'one_question_per_page',
-						label: __( 'One question per page', 'ohmylms' ),
-					},
-					{
-						value: 'all_questions_in_one_page',
-						label: __( 'All questions', 'ohmylms' ),
-					},
-					{
-						value: 'number_of_questions_per_page',
-						label: __( 'Questions per page', 'ohmylms' ),
-					},
-				] }
-				onChange={ ( next ) => set( 'layout', next ) }
-			/>
-			{ settings.layout === 'number_of_questions_per_page' && (
-				<TextControl
-					label={ __( 'Questions per page', 'ohmylms' ) }
-					type="number"
-					min="1"
-					value={ settings.question_in_one_page || 1 }
-					onChange={ ( next ) =>
-						set(
-							'question_in_one_page',
-							Math.max( 1, Number( next ) )
-						)
-					}
+			{ ! exam && ! paper && (
+				<SelectControl
+					label={ __( 'Question layout', 'ohmylms' ) }
+					value={ settings.layout || 'one_question_per_page' }
+					options={ [
+						{
+							value: 'one_question_per_page',
+							label: __( 'One question per page', 'ohmylms' ),
+						},
+						{
+							value: 'all_questions_in_one_page',
+							label: __( 'All questions', 'ohmylms' ),
+						},
+						{
+							value: 'number_of_questions_per_page',
+							label: __( 'Questions per page', 'ohmylms' ),
+						},
+					] }
+					onChange={ ( next ) => set( 'layout', next ) }
 				/>
 			) }
+			{ ! exam &&
+				! paper &&
+				settings.layout === 'number_of_questions_per_page' && (
+					<TextControl
+						label={ __( 'Questions per page', 'ohmylms' ) }
+						type="number"
+						min="1"
+						value={ settings.question_in_one_page || 1 }
+						onChange={ ( next ) =>
+							set(
+								'question_in_one_page',
+								Math.max( 1, Number( next ) )
+							)
+						}
+					/>
+				) }
 			{ [
 				[
 					'short_text_limit',
@@ -179,16 +225,29 @@ export function NativeQuizConfiguration() {
 					}
 				/>
 			) ) }
-			<SelectControl
-				label={ __( 'Player design', 'ohmylms' ) }
-				value={ settings.player_template || 'classic' }
-				options={
-					window.ohmylmsPlayerTemplates || [
-						{ value: 'classic', label: __( 'Classic', 'ohmylms' ) },
-					]
-				}
-				onChange={ ( next ) => set( 'player_template', next ) }
-			/>
+			{ ! exam && ! paper && (
+				<SelectControl
+					label={ __( 'Player design', 'ohmylms' ) }
+					value={ settings.player_template || 'classic' }
+					options={
+						window.ohmylmsPlayerTemplates || [
+							{
+								value: 'classic',
+								label: __( 'Classic', 'ohmylms' ),
+							},
+						]
+					}
+					onChange={ ( next ) => set( 'player_template', next ) }
+				/>
+			) }
+			{ exam && ! paper && (
+				<p>
+					{ __(
+						'Exams use the student dashboard with a timer, question palette and review controls.',
+						'ohmylms'
+					) }
+				</p>
+			) }
 			<ToggleControl
 				label={ __( 'Scheduled course release', 'ohmylms' ) }
 				checked={ Boolean( drip.enable ) }
@@ -271,27 +330,35 @@ export function NativeQuizConfiguration() {
 					) }
 				</>
 			) }
-			<fieldset>
-				<legend>{ __( 'Quiz skills', 'ohmylms' ) }</legend>
-				{ skills.map( ( skill ) => (
-					<CheckboxControl
-						key={ skill.id }
-						label={ skill.name }
-						checked={ ( value.skill_ids || [] ).includes(
-							skill.id
-						) }
-						onChange={ ( checked ) =>
-							change( {
-								skill_ids: checked
-									? [ ...( value.skill_ids || [] ), skill.id ]
-									: ( value.skill_ids || [] ).filter(
-											( id ) => id !== skill.id
-										),
-							} )
-						}
-					/>
-				) ) }
-			</fieldset>
+			<PanelBody
+				title={ __( 'Skills', 'ohmylms' ) }
+				initialOpen={ false }
+			>
+				<fieldset>
+					<legend>{ __( 'Assessment skills', 'ohmylms' ) }</legend>
+					{ skills.map( ( skill ) => (
+						<CheckboxControl
+							key={ skill.id }
+							label={ skill.name }
+							checked={ ( value.skill_ids || [] ).includes(
+								skill.id
+							) }
+							onChange={ ( checked ) =>
+								change( {
+									skill_ids: checked
+										? [
+												...( value.skill_ids || [] ),
+												skill.id,
+											]
+										: ( value.skill_ids || [] ).filter(
+												( id ) => id !== skill.id
+											),
+								} )
+							}
+						/>
+					) ) }
+				</fieldset>
+			</PanelBody>
 		</>
 	);
 }

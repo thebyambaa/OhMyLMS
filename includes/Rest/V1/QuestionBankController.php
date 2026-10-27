@@ -456,7 +456,11 @@ class QuestionBankController extends RestController {
 					$version = $request['version_id'] ? VersionPublisher::version( (int) $request['version_id'] ) : VersionPublisher::capture( $question_id );
 					if ( ! $version || (int) $version['question_id'] !== $question_id ) {
 						throw new \OhMyLMS\Assessment\ErrorException( new WP_Error( 'ohmylms_version_missing', __( 'Version not found for this question.', 'ohmylms' ), array( 'status' => 404 ) ) ); }
-					$type = (string) $version['type'];
+					$type         = (string) $version['type'];
+					$figure_check = \OhMyLMS\ExamImport\FigureContent::publishable( json_decode( $version['settings'], true ) ?: array() );
+					if ( is_wp_error( $figure_check ) ) {
+						throw new \OhMyLMS\Assessment\ErrorException( $figure_check );
+					}
 					if ( ! VersionPublisher::supports_snapshots( $type ) ) {
 						throw new \OhMyLMS\Assessment\ErrorException( new WP_Error( 'quiz_type_unversioned', __( 'This question type cannot be approved for versioned use.', 'ohmylms' ), array( 'status' => 409 ) ) ); }
 					return $version;

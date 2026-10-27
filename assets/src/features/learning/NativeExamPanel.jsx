@@ -104,7 +104,7 @@ export function NativeExamPanel( { data: exam } ) {
 	return (
 		<PluginDocumentSettingPanel
 			name="ohmylms-native-exam"
-			title={ __( 'Exam', 'ohmylms' ) }
+			title={ __( 'Exam publication', 'ohmylms' ) }
 			initialOpen
 		>
 			<p>
@@ -114,7 +114,7 @@ export function NativeExamPanel( { data: exam } ) {
 							'ohmylms'
 						)
 					: __(
-							'Write the questions as OhMyLMS Question blocks. Set the time limit in Quiz settings and group questions into sections under Assessment and pools. Publish the exam with the button below, not the editor’s Publish button. Learners see the exam in a timed dashboard with a question palette.',
+							'Write questions in the shared editor and configure duration, results and sections under Exam settings. Save your changes, then publish the exam below.',
 							'ohmylms'
 						) }
 			</p>

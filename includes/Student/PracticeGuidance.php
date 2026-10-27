@@ -8,6 +8,7 @@
 namespace OhMyLMS\Student;
 
 use OhMyLMS\Learning\CompletionPolicy;
+use OhMyLMS\Learning\ProgramGroups;
 use OhMyLMS\Learning\PracticeAccessPolicy;
 use OhMyLMS\Performance\Levels;
 use OhMyLMS\Practice\Presentation;
@@ -33,7 +34,9 @@ final class PracticeGuidance {
 		if ( is_wp_error( $outline ) || ! $outline['enrolled'] || $outline['locked'] || ! is_string( $lesson_id ) ) {
 			return new \WP_Error( 'ohmylms_practice_guidance_denied', __( 'This practice guidance is not available.', 'ohmylms' ), array( 'status' => 403 ) );
 		}
-		$outcomes = $state['program']['outcomes'];
+		$outcomes      = $state['program']['outcomes'];
+		$groups        = array_column( $state['program']['groups'] ?? array(), null, 'id' );
+		$lesson_skills = isset( $groups[ $lesson_id ] ) ? ProgramGroups::skill_ids( $state['program'], $groups[ $lesson_id ] ) : array();
 		if ( $skill_id ) {
 			$matches = array_values(
 				array_filter(
@@ -43,10 +46,11 @@ final class PracticeGuidance {
 					}
 				)
 			);
-			if ( ! $matches || ( $lesson_id && ( $matches[0]['group_id'] ?? '' ) !== $lesson_id ) ) {
+			if ( ! $matches || ( $lesson_id && ! in_array( (int) $skill_id, $lesson_skills, true ) ) ) {
 				return new \WP_Error( 'ohmylms_practice_guidance_skill', __( 'This skill is not in your lesson.', 'ohmylms' ), array( 'status' => 403 ) );
 			}
-			$lesson_id = $matches[0]['group_id'] ?? '';
+			$lesson_id     = $lesson_id ? $lesson_id : ( $matches[0]['group_id'] ?? '' );
+			$lesson_skills = isset( $groups[ $lesson_id ] ) ? ProgramGroups::skill_ids( $state['program'], $groups[ $lesson_id ] ) : array();
 		}
 		$lesson = $lesson_id ? LessonJourney::find( $outline, $lesson_id ) : null;
 		if ( is_wp_error( $lesson ) || ( ! $lesson && ! $skill_id ) ) {
@@ -55,7 +59,7 @@ final class PracticeGuidance {
 		$labels = array_column( $outline['skills'], null, 'term_id' );
 		$skills = array();
 		foreach ( $outcomes as $outcome ) {
-			if ( $lesson_id ? ( $outcome['group_id'] ?? '' ) !== $lesson_id : (int) $outcome['term_id'] !== (int) $skill_id ) {
+			if ( $lesson_id ? ! in_array( (int) $outcome['term_id'], $lesson_skills, true ) : (int) $outcome['term_id'] !== (int) $skill_id ) {
 				continue;
 			}
 			$id       = (int) $outcome['term_id'];

@@ -147,6 +147,31 @@ final class PlayerContext {
 		return true;
 	}
 
+	/**
+	 * Open the same shell without a course outline.
+	 *
+	 * Used after the access gate has passed for content that no course program places for this
+	 * user, such as an author or administrator previewing an unplaced lesson.
+	 *
+	 * @return bool Always true; close() must follow.
+	 */
+	public static function open_standalone() {
+		wp_enqueue_style( 'ohmylms-player-context', plugins_url( 'assets/css/player-context.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/player-context.css' ) );
+		self::$active     = true;
+		self::$navigation = array();
+		?>
+		<div class="oml-player" data-theme="light">
+			<header class="oml-player-context">
+				<a class="oml-player-exit" href="<?php echo esc_url( home_url( '/' ) ); ?>">&larr; <?php esc_html_e( 'Back to site', 'ohmylms' ); ?></a>
+				<span class="oml-player-course"><?php echo esc_html( get_the_title() ); ?></span>
+				<a class="oml-player-skip" href="#oml-player-main"><?php esc_html_e( 'Skip to activity', 'ohmylms' ); ?></a>
+			</header>
+			<div class="oml-player-layout">
+				<main class="oml-player-main" id="oml-player-main" tabindex="-1">
+		<?php
+		return true;
+	}
+
 	/** Close a shell opened by open(). */
 	public static function close() {
 		if ( self::$active ) {

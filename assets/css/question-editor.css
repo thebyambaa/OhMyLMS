@@ -827,3 +827,79 @@
 	.ohmylms-shared-answer-row:nth-of-type(4n + 4) {
 	background: #984167;
 }
+
+.ohmylms-assessment-preview.components-modal__frame {
+	width: min(1400px, 96vw);
+	max-width: 96vw;
+	height: 94vh;
+	max-height: 94vh;
+}
+
+.ohmylms-assessment-preview .components-modal__content {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.ohmylms-assessment-preview .components-modal__content > :last-child {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-height: 0;
+}
+
+.ohmylms-assessment-preview-toolbar {
+	display: flex;
+	flex: none;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding-bottom: 12px;
+}
+
+.ohmylms-assessment-preview-toolbar p {
+	margin: 0;
+}
+
+.ohmylms-assessment-preview-frame {
+	display: block;
+	flex: 1;
+	width: 100%;
+	min-height: 0;
+	border: 1px solid #ddd;
+	background: #fff;
+}
+
+.ohmylms-question-block-preview {
+	position: relative;
+}
+
+.ohmylms-question-student-frame {
+    display: block;
+    width: 100%;
+    border: 0;
+    pointer-events: none;
+}
+
+.ohmylms-question-block-edit {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	cursor: text;
+}
+
+.ohmylms-question-block-edit-label {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+}
+
+.ohmylms-question-block-edit:focus-visible {
+	outline: 2px solid #3858e9;
+	outline-offset: 4px;
+}

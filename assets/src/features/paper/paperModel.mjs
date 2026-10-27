@@ -482,7 +482,8 @@ export function versionItems( items, version ) {
 			}
 			flush();
 			out.push(
-				item.kind === 'paper' && item.items?.length
+				[ 'paper', 'layout' ].includes( item.kind ) &&
+					item.items?.length
 					? { ...item, items: visit( item.items ) }
 					: item
 			);

@@ -31,6 +31,7 @@ final class NativeLessonEditor {
 	public static function init() {
 		NativeQuizEditor::init();
 		NativeQuestionEditor::init();
+		\OhMyLMS\Assessment\QuestionPreview::init();
 		add_action( 'init', array( __CLASS__, 'register_question_block' ) );
 		add_action( 'rest_api_init', array( __CLASS__, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue' ), 20 );
@@ -90,6 +91,8 @@ final class NativeLessonEditor {
 			return;
 		}
 		wp_enqueue_style( 'ohmylms-question-editor', plugins_url( 'assets/css/question-editor.css', OHMYLMS_FILE ), array( 'wp-components', 'dashicons' ), OHMYLMS_VERSION );
+		// The canvas is an iframe: enqueue the learner widget styles as block assets too.
+		\OhMyLMS\Assessment\Interactive::enqueue();
 		if ( 'ohmylms-quiz' === $screen->post_type ) {
 			// The printable paper canvas; inert until Paper view is switched on.
 			wp_enqueue_style( 'ohmylms-paper', plugins_url( 'assets/css/paper.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/paper.css' ) );
@@ -354,7 +357,9 @@ final class NativeLessonEditor {
 			return;
 		}
 		$asset = require $asset_path;
-		wp_enqueue_script( 'ohmylms-native-lesson-settings', plugins_url( 'assets/dist/admin/native-lesson-editor.js', OHMYLMS_FILE ), $asset['dependencies'], $asset['version'], true );
+		\OhMyLMS\Assessment\Interactive::enqueue();
+		$dependencies = array_merge( $asset['dependencies'], array( 'ohmylms-interactive-visual', 'ohmylms-extended-questions', 'ohmylms-puzzle-loader' ) );
+		wp_enqueue_script( 'ohmylms-native-lesson-settings', plugins_url( 'assets/dist/admin/native-lesson-editor.js', OHMYLMS_FILE ), $dependencies, $asset['version'], true );
 		wp_localize_script( 'ohmylms-native-lesson-settings', 'ohmylmsPlayerTemplates', \OhMyLMS\Quiz\PlayerTemplates::choices() );
 		do_action( 'ohmylms_enqueue_extension_scripts', 'ohmylms-native-lesson-settings' );
 		// Reuse the lazy MathLive configuration on the native lesson screen as well as the LMS app.
@@ -364,18 +369,29 @@ final class NativeLessonEditor {
 			'ohmylms-native-lesson-settings',
 			'ohmylmsNativeLesson',
 			array(
-				'returnUrl'      => self::return_url(),
-				'previewUrl'     => 'ohmylms-quiz' === $screen->post_type ? \OhMyLMS\Assessment\PreviewPlayer::url( get_the_ID(), 'gutenberg' ) : '',
+				'returnUrl'       => self::return_url(),
+				'previewUrl'      => 'ohmylms-quiz' === $screen->post_type ? \OhMyLMS\Assessment\PreviewPlayer::url( get_the_ID(), 'gutenberg' ) : '',
 				// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Presence flag for read-only navigation, not a submitted value.
-				'hasReturn'      => isset( $_GET['ohmylms_return'] ),
+				'hasReturn'       => isset( $_GET['ohmylms_return'] ),
 				// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only initial skill selection; the question writer validates it on save.
-				'initialSkillId' => isset( $_GET['ohmylms_skill'] ) ? absint( $_GET['ohmylms_skill'] ) : 0,
-				'questionTypes'  => \OhMyLMS\Extensions\Registry::manifest()['question'] ?? array(),
-				'newQuestionUrl' => admin_url( 'post-new.php?post_type=ohmylms-question' ),
-				'bankUrl'        => admin_url( 'admin.php?page=ohmylms' ) . '#/question-bank',
-				'chapterId'      => ohmylms_get_chapter_id_by_content_id( get_the_ID() ),
-				'profile'        => 'ohmylms-quiz' === $screen->post_type ? \OhMyLMS\Assessment\Profiles::editor( get_the_ID() ) : null,
-				'printUrls'      => 'ohmylms-quiz' === $screen->post_type ? array(
+				'initialSkillId'  => isset( $_GET['ohmylms_skill'] ) ? absint( $_GET['ohmylms_skill'] ) : 0,
+				'questionTypes'   => \OhMyLMS\Extensions\Registry::manifest()['question'] ?? array(),
+				'newQuestionUrl'  => admin_url( 'post-new.php?post_type=ohmylms-question' ),
+				'bankUrl'         => admin_url( 'admin.php?page=ohmylms' ) . '#/question-bank',
+				'chapterId'       => ohmylms_get_chapter_id_by_content_id( get_the_ID() ),
+				'profile'         => 'ohmylms-quiz' === $screen->post_type ? \OhMyLMS\Assessment\Profiles::editor( get_the_ID() ) : null,
+				'assessmentTypes' => array_values(
+					array_map(
+						static function ( $profile ) {
+							return array(
+								'value' => $profile['kind'],
+								'label' => $profile['label'],
+							);
+						},
+						\OhMyLMS\Assessment\Profiles::all()
+					)
+				),
+				'printUrls'       => 'ohmylms-quiz' === $screen->post_type ? array(
 					'paper' => \OhMyLMS\Exams\PrintPaper::url( get_the_ID(), 'paper' ),
 					'key'   => \OhMyLMS\Exams\PrintPaper::url( get_the_ID(), 'key' ),
 				) : null,

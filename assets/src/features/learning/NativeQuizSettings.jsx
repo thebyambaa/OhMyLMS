@@ -12,7 +12,16 @@ import { BankPicker } from '../question-bank/BankPicker';
 import { AssessmentSettingsPanel } from '../assessment/AssessmentSettingsPanel';
 import { NativeExtensionPanels } from './NativeExtensionPanels';
 import { NativeQuizConfiguration } from './NativeQuizConfiguration';
+import {
+	NativeAssessmentType,
+	useNativeAssessmentSettings,
+} from './NativeAssessmentSettings';
+import {
+	AssessmentPreviewProvider,
+	AssessmentPreviewButton as QuizPreviewButton,
+} from './AssessmentPreview';
 import './NativeExamPanel';
+import { PaperInserter } from '../paper/PaperInserter';
 import { ProfilePanel } from './ProfilePanel';
 import { ExportRowsButtons } from '../content-hub/ExportRowsButtons';
 import { ImportDialog } from '../content-hub/ImportDialog';
@@ -29,103 +38,6 @@ import {
 	PaperSettingsPanel,
 	PaperViewToggle,
 } from '../paper/PaperCanvas';
-
-/**
- * Open a fresh player session after the native document and bank edits are saved.
- *
- * @return {Element} Preview control.
- */
-function QuizPreviewButton() {
-	const { locked, saving, dirty } = useSelect( ( getStore ) => {
-		const editor = getStore( 'core/editor' );
-		return {
-			locked: editor.isPostSavingLocked(),
-			saving: editor.isSavingPost(),
-			dirty: editor.isEditedPostDirty(),
-		};
-	}, [] );
-	const { savePost } = useDispatch( 'core/editor' );
-	const [ opening, setOpening ] = useState( false );
-	const [ error, setError ] = useState( '' );
-	const blocked = locked || saving || opening;
-	let label = __( 'Preview quiz', 'ohmylms' );
-	if ( locked ) {
-		label = __( 'Complete question to preview', 'ohmylms' );
-	} else if ( opening || saving ) {
-		label = __( 'Saving…', 'ohmylms' );
-	}
-	return (
-		<>
-			<Button
-				variant="secondary"
-				href={
-					blocked ? undefined : window.ohmylmsNativeLesson.previewUrl
-				}
-				target="_blank"
-				rel="noopener noreferrer"
-				disabled={ blocked }
-				title={
-					locked
-						? __(
-								'Complete the question and its answer key before previewing.',
-								'ohmylms'
-							)
-						: __(
-								'Preview the latest saved quiz in a fresh player session',
-								'ohmylms'
-							)
-				}
-				onClick={ async ( event ) => {
-					if ( ! dirty ) {
-						return;
-					}
-					event.preventDefault();
-					const preview = window.open( 'about:blank', '_blank' );
-					if ( preview ) {
-						preview.opener = null;
-					}
-					setOpening( true );
-					setError( '' );
-					try {
-						const ready = await saveQuizForPreview( {
-							editor: select( 'core/editor' ),
-							savePost,
-						} );
-						if ( ! ready ) {
-							throw new Error( 'quiz-preview-not-ready' );
-						}
-						if ( preview ) {
-							preview.location.replace(
-								window.ohmylmsNativeLesson.previewUrl
-							);
-						} else {
-							window.location.assign(
-								window.ohmylmsNativeLesson.previewUrl
-							);
-						}
-					} catch {
-						preview?.close();
-						setError(
-							__(
-								'The quiz could not be saved for preview. Complete any unfinished questions and try again.',
-								'ohmylms'
-							)
-						);
-					} finally {
-						setOpening( false );
-					}
-				} }
-			>
-				{ label }
-			</Button>
-			{ error && (
-				<Notice status="error" onRemove={ () => setError( '' ) }>
-					{ error }
-				</Notice>
-			) }
-		</>
-	);
-}
 
 /**
  * Keep the player preview visible when the document sidebar is closed.
@@ -186,6 +98,10 @@ function NativeQuizSettings() {
 	const [ importOpen, setImportOpen ] = useState( false );
 	const [ importJob, setImportJob ] = useState( 0 );
 	const [ error, setError ] = useState( '' );
+	const { settings: assessment } = useNativeAssessmentSettings(
+		postType === 'ohmylms-quiz'
+	);
+	const exam = assessment?.kind === 'exam';
 	if ( postType !== 'ohmylms-quiz' ) {
 		return null;
 	}
@@ -200,27 +116,24 @@ function NativeQuizSettings() {
 			)
 		);
 	return (
-		<>
+		<AssessmentPreviewProvider>
 			<QuizPreviewAction />
 			<PaperCanvas />
 			<ProfilePanel />
 			<PluginDocumentSettingPanel
 				name="ohmylms-native-quiz"
-				title={ __( 'Quiz authoring', 'ohmylms' ) }
+				title={ __( 'Quiz and exam', 'ohmylms' ) }
 				initialOpen
 			>
+				<NativeAssessmentType />
+				<PaperInserter />
 				<p>
 					{ __(
-						'Use the block inserter to add paragraphs, headings, images and OhMyLMS Question blocks. Question edits save automatically. Use Gutenberg’s Save button to save the quiz. Drag question blocks or use Gutenberg’s move controls to set their order.',
+						'Add questions, arrange sections and use Student preview to try the assessment. Save applies your questions and assessment settings together.',
 						'ohmylms'
 					) }
 				</p>
-				<p>
-					{ __(
-						'Publishing uses the existing versioned quiz engine. Learner attempts and skill evidence stay with the quiz.',
-						'ohmylms'
-					) }
-				</p>
+
 				<QuizPreviewButton />
 				<Button
 					variant="secondary"
@@ -292,16 +205,21 @@ function NativeQuizSettings() {
 						variant="link"
 						href={ window.ohmylmsNativeLesson.returnUrl }
 					>
-						{ __( 'Back to quizzes', 'ohmylms' ) }
+						{ __( 'Back to assessments', 'ohmylms' ) }
 					</Button>
 				</p>
 			</PluginDocumentSettingPanel>
 			<PluginDocumentSettingPanel
 				name="ohmylms-native-quiz-settings"
-				title={ __( 'Quiz settings', 'ohmylms' ) }
-				initialOpen={ false }
+				title={
+					exam
+						? __( 'Exam settings', 'ohmylms' )
+						: __( 'Quiz settings', 'ohmylms' )
+				}
+				initialOpen
 			>
-				<NativeQuizConfiguration />
+				<NativeQuizConfiguration exam={ exam } />
+				<AssessmentSettingsPanel quizId={ postId } native />
 			</PluginDocumentSettingPanel>
 			<PluginDocumentSettingPanel
 				name="ohmylms-native-paper"
@@ -310,13 +228,7 @@ function NativeQuizSettings() {
 			>
 				<PaperSettingsPanel />
 			</PluginDocumentSettingPanel>
-			<PluginDocumentSettingPanel
-				name="ohmylms-native-assessment"
-				title={ __( 'Assessment and pools', 'ohmylms' ) }
-				initialOpen={ false }
-			>
-				<AssessmentSettingsPanel quizId={ postId } native />
-			</PluginDocumentSettingPanel>
+
 			<NativeExtensionPanels quizId={ postId } />
 			{ pickerOpen && (
 				<BankPicker
@@ -356,7 +268,7 @@ function NativeQuizSettings() {
 					onClosed={ () => setImportJob( 0 ) }
 				/>
 			) }
-		</>
+		</AssessmentPreviewProvider>
 	);
 }
 

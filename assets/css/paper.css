@@ -142,6 +142,22 @@
 	break-inside: avoid;
 }
 
+/* Gutenberg columns that hold questions keep their columns on the sheet. */
+.ohmylms-print-columns {
+	display: flex;
+	gap: 2em;
+	align-items: flex-start;
+}
+
+.ohmylms-print-column {
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+.ohmylms-print-column > .ohmylms-print-block + .ohmylms-print-block {
+	margin-top: 1.25em;
+}
+
 .ohmylms-paper-columns .ohmylms-paper-columns-body > .is-ohmylms-paper-span {
 	column-span: all;
 }
@@ -357,11 +373,6 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 	transform: translateY(0.12em);
 }
 
-.ohmylms-print-options.is-multiple .ohmylms-print-bubble {
-	border-radius: 2px;
-}
-
-.ohmylms-print-options li.is-correct .ohmylms-print-bubble,
 .ohmylms-print-bubble.is-filled {
 	background: currentcolor;
 }
@@ -369,6 +380,26 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 .ohmylms-print-letter {
 	flex: none;
 	font-weight: 700;
+}
+
+.ohmylms-print-question.is-choice .ohmylms-print-letter {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	width: 1.6em;
+	height: 1.6em;
+	border: 1px solid currentcolor;
+	border-radius: 50%;
+	line-height: 1;
+	-webkit-print-color-adjust: exact;
+	print-color-adjust: exact;
+}
+
+.ohmylms-print-question.is-choice li.is-correct .ohmylms-print-letter {
+	border-color: #222;
+	background: #222;
+	color: #fff;
 }
 
 .ohmylms-print-option > :first-child {

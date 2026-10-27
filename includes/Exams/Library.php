@@ -35,6 +35,7 @@ final class Library {
 	public static function styles() {
 		$screen = get_current_screen();
 		if ( $screen && 'toplevel_page_ohmylms' === $screen->id ) {
+			\OhMyLMS\ExamImport\FigureContent::enqueue();
 			wp_enqueue_style( 'ohmylms-exam-import', plugins_url( 'assets/css/exam-import.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/exam-import.css' ) );
 		}
 	}

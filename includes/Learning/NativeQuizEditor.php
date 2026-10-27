@@ -89,6 +89,10 @@ final class NativeQuizEditor {
 					'type'                 => 'object',
 					'context'              => array( 'edit' ),
 					'properties'           => array(
+						'assessment'    => array(
+							'type'                 => 'object',
+							'additionalProperties' => true,
+						),
 						'settings'      => array(
 							'type'                 => 'object',
 							'additionalProperties' => true,
@@ -120,6 +124,7 @@ final class NativeQuizEditor {
 	public static function read_settings( $data ) {
 		$id = (int) $data['id'];
 		return array(
+			'assessment'    => \OhMyLMS\Assessment\AssessmentSettings::get( $id ),
 			'settings'      => (object) (array) get_post_meta( $id, '_quiz_settings', true ),
 			'drip_settings' => (object) (array) get_post_meta( $id, '_drip_settings', true ),
 			'skill_ids'     => \OhMyLMS\Assessment\Schema::ready() ? \OhMyLMS\Quiz\QuizSkills::get( $id ) : array(),
@@ -137,6 +142,9 @@ final class NativeQuizEditor {
 	public static function save_settings( $value, $post ) {
 		if ( ! AccessPolicy::can_edit_quiz( $post->ID ) ) {
 			return AccessPolicy::denied();
+		}
+		if ( isset( $value['settings']['presentation'] ) && ! in_array( $value['settings']['presentation'], array( 'standard', 'paper' ), true ) ) {
+			return new \WP_Error( 'ohmylms_presentation_invalid', __( 'Choose a valid student presentation.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
 		$value = NativeLessonEditor::sanitize_setting( $value );
 		if ( isset( $value['settings']['paper'] ) ) {
@@ -157,6 +165,31 @@ final class NativeQuizEditor {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Save assessment rules after the document's question placements are synchronized.
+	 *
+	 * @param int   $quiz_id Quiz ID.
+	 * @param array $value Native quiz configuration.
+	 * @return true|\WP_Error Save result.
+	 */
+	public static function save_assessment( $quiz_id, array $value ) {
+		if ( ! isset( $value['assessment'] ) ) {
+			return true;
+		}
+		if ( ! AccessPolicy::can_edit_quiz( $quiz_id ) ) {
+			return AccessPolicy::denied();
+		}
+		$assessment = $value['assessment'];
+		if ( ! is_array( $assessment ) ) {
+			return new \WP_Error( 'ohmylms_assessment_settings_invalid', __( 'Assessment settings must be an object.', 'ohmylms' ), array( 'status' => 400 ) );
+		}
+		if ( \OhMyLMS\Exams\Composer::exam_for_quiz( $quiz_id ) && isset( $assessment['kind'] ) && 'exam' !== $assessment['kind'] ) {
+			return new \WP_Error( 'ohmylms_exam_kind', __( 'This assessment belongs to an exam. Its assessment type must remain Exam.', 'ohmylms' ), array( 'status' => 409 ) );
+		}
+		$result = \OhMyLMS\Assessment\AssessmentSettings::save( $quiz_id, $assessment );
+		return is_wp_error( $result ) ? $result : true;
 	}
 
 	/**

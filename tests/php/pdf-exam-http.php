@@ -87,7 +87,7 @@ add_filter(
 							'question'        => 'Find 2 + 3.',
 							'page'            => 1,
 							'skills'          => $skill_token,
-							'requires_source' => true,
+							'requires_source' => false,
 							'reviewed'        => true,
 							'parts'           => array(
 								array(
@@ -221,6 +221,7 @@ try {
 			$draft = $job['draft'];
 			foreach ( $draft as &$row ) {
 				$row['reviewed'] = true;
+				$row['figures_complete'] = true;
 			} unset( $row );
 			$draft[0]['question']           = 'TEACHER EDIT: find 2 + 3.';
 			$draft[0]['parts'][0]['prompt'] = 'Find $\\frac{10}{2}$. Keep \\(x\\) unchanged.';

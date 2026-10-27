@@ -11,7 +11,9 @@ test( 'expiry preserves embedded navigation and retains standalone redirects', a
 	const originalFormData = globalThis.FormData;
 	const originalWindow = globalThis.window;
 	globalThis.FormData = class extends URLSearchParams {};
-	globalThis.window = { location: { assign: ( url ) => destinations.push( url ) } };
+	globalThis.window = {
+		location: { assign: ( url ) => destinations.push( url ) },
+	};
 	t.after( () => {
 		globalThis.FormData = originalFormData;
 		if ( originalWindow === undefined ) {
@@ -21,7 +23,12 @@ test( 'expiry preserves embedded navigation and retains standalone redirects', a
 		}
 	} );
 	for ( const returnUrl of [ '/?ohmylms_quiz_embed=7', undefined ] ) {
-		const context = { quizId: 7, returnUrl, ajaxUrl: '/ajax', attemptId: 12 };
+		const context = {
+			quizId: 7,
+			returnUrl,
+			ajaxUrl: '/ajax',
+			attemptId: 12,
+		};
 		const root = { querySelector: () => ( { closest: () => undefined } ) };
 		const player = createQuizPlayer( {
 			getContext: () => context,
@@ -38,7 +45,10 @@ test( 'expiry preserves embedded navigation and retains standalone redirects', a
 		}
 		assert.equal( context.submitting, true );
 	}
-	assert.deepEqual( destinations, [ '/?ohmylms_quiz_embed=7', '/quiz/results' ] );
+	assert.deepEqual( destinations, [
+		'/?ohmylms_quiz_embed=7',
+		'/quiz/results',
+	] );
 } );
 
 function fixture( overrides = {} ) {
@@ -99,7 +109,9 @@ function fixture( overrides = {} ) {
 }
 
 test( 'inline submit preserves validation and exit uses the inline engine transport', () => {
-	const { boxes, player, event, inlineCalls } = fixture( { inlineEndpoint: '/attempt' } );
+	const { boxes, player, event, inlineCalls } = fixture( {
+		inlineEndpoint: '/attempt',
+	} );
 	player.actions.submit( event );
 	assert.equal( inlineCalls.length, 0 );
 	boxes[ 1 ].answered = true;
@@ -107,13 +119,17 @@ test( 'inline submit preserves validation and exit uses the inline engine transp
 	assert.equal( inlineCalls[ 0 ].operation, 'submit' );
 	assert.equal( event.prevented, true );
 	const exited = fixture( { inlineEndpoint: '/attempt' } );
-	exited.event.target.querySelector = () => ( { value: 'ohmylms-quiz-exit-submission' } );
+	exited.event.target.querySelector = () => ( {
+		value: 'ohmylms-quiz-exit-submission',
+	} );
 	exited.player.actions.submit( exited.event );
 	assert.equal( exited.inlineCalls[ 0 ].operation, 'exit' );
 } );
 
 test( 'inline expiry uses the same transport without a page redirect', async () => {
-	const { player, root, inlineCalls } = fixture( { inlineEndpoint: '/attempt' } );
+	const { player, root, inlineCalls } = fixture( {
+		inlineEndpoint: '/attempt',
+	} );
 	const form = {};
 	root.querySelector = () => ( { closest: () => form } );
 	const expiry = player.actions.expire();
@@ -186,7 +202,9 @@ test( 'timer mount uses the injected scoped expiry and cleanup allows remounting
 		quizId: 9,
 		layout: 'one_question_per_page',
 	};
-	const box = { querySelector: () => ( { getAttribute: () => 'single-choice' } ) };
+	const box = {
+		querySelector: () => ( { getAttribute: () => 'single-choice' } ),
+	};
 	const root = { querySelectorAll: () => [ box ] };
 	let expired = 0;
 	const player = createQuizPlayer( {
@@ -292,4 +310,60 @@ test( 'an answer change re-reads only its own question, and only in the one-ques
 	plain.actions.answerChanged( event( input( boxes[ 0 ] ) ) );
 	assert.deepEqual( reads, [], 'other layouts never read answers' );
 	assert.equal( other.answered, undefined );
+} );
+
+test( 'paper review counts answers on a single page and focuses the first blank', () => {
+	const { context, boxes, player, event } = fixture( {
+		layout: 'all_questions_in_one_page',
+		totalPages: 1,
+		questionCount: 2,
+		paperPresentation: true,
+	} );
+	boxes.forEach( ( box ) => {
+		box.setAttribute = () => {};
+		box.focus = () => {
+			box.focused = true;
+		};
+		box.scrollIntoView = () => {};
+	} );
+	player.actions.reviewPaper( event );
+	assert.equal( player.state.answeredCount, 1 );
+	assert.equal( boxes[ 1 ].focused, true );
+	assert.equal( context.page, 1 );
+} );
+
+test( 'paper submission confirms optional blanks and cancellation preserves answers', ( t ) => {
+	const { context, boxes, player, event } = fixture( {
+		layout: 'all_questions_in_one_page',
+		totalPages: 1,
+		questionCount: 2,
+		paperPresentation: true,
+		confirmSubmit: '%d unanswered',
+	} );
+	boxes.forEach( ( box ) => {
+		const original = box.querySelector;
+		box.querySelector = ( selector ) =>
+			selector === '.is-required'
+				? { value: '0', getAttribute: () => 'custom-type' }
+				: original.call( box, selector );
+	} );
+	const oldWindow = globalThis.window;
+	const messages = [];
+	globalThis.window = {
+		confirm: ( message ) => {
+			messages.push( message );
+			return false;
+		},
+	};
+	t.after( () => {
+		globalThis.window = oldWindow;
+	} );
+	player.actions.submit( event );
+	assert.deepEqual( messages, [ '1 unanswered' ] );
+	assert.equal( event.prevented, true );
+	assert.equal( context.submitting, undefined );
+	assert.equal( boxes[ 0 ].answered, true );
+	globalThis.window.confirm = () => true;
+	player.actions.submit( event );
+	assert.equal( context.submitting, true );
 } );

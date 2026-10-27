@@ -151,13 +151,20 @@ final class CourseOutline {
 		foreach ( $state ? $program['outcomes'] : array() as $outcome ) {
 			$skills[ (int) $outcome['term_id'] ] = $display[ (int) $outcome['term_id'] ]['key'] ?? 'not-started';
 			$term                                = get_term( $outcome['term_id'], Taxonomy::NAME );
-			$lesson_skills[]                     = array(
-				'term_id'  => (int) $outcome['term_id'],
-				'group_id' => $outcome['group_id'] ?? '',
-				'name'     => $term && ! is_wp_error( $term ) ? $term->name : __( 'Unavailable skill', 'ohmylms' ),
-				'label'    => $display[ (int) $outcome['term_id'] ]['label'] ?? Levels::label( 'not-started' ),
-				'level'    => $display[ (int) $outcome['term_id'] ]['key'] ?? 'not-started',
-				'met'      => ! empty( $outcome['met'] ),
+			$linked_groups                       = array();
+			foreach ( $program['groups'] ?? array() as $group ) {
+				if ( in_array( (int) $outcome['term_id'], ProgramGroups::skill_ids( $program, $group ), true ) ) {
+					$linked_groups[] = $group['id'];
+				}
+			}
+			$lesson_skills[] = array(
+				'term_id'   => (int) $outcome['term_id'],
+				'group_id'  => $outcome['group_id'] ?? '',
+				'group_ids' => $linked_groups,
+				'name'      => $term && ! is_wp_error( $term ) ? $term->name : __( 'Unavailable skill', 'ohmylms' ),
+				'label'     => $display[ (int) $outcome['term_id'] ]['label'] ?? Levels::label( 'not-started' ),
+				'level'     => $display[ (int) $outcome['term_id'] ]['key'] ?? 'not-started',
+				'met'       => ! empty( $outcome['met'] ),
 			);
 		}
 		$units = \OhMyLMS\Learning\StructurePlan::order_units( $units, $program['units'] );
@@ -173,7 +180,7 @@ final class CourseOutline {
 			$unit['done']  = count( array_filter( array_column( $unit['items'], 'complete' ) ) );
 			$unit['total'] = count( $unit['items'] );
 			// Lesson groups: 'items' stays the flat list; groups and what sits outside them are extra views of it.
-			$arranged       = ProgramGroups::arrange( (array) ( $program['groups'] ?? array() ), $unit['items'], $unit['id'] );
+			$arranged       = ProgramGroups::arrange( array(), $unit['items'], $unit['id'] );
 			$unit['groups'] = $arranged['groups'];
 			foreach ( $unit['groups'] as &$lesson ) {
 				$lesson += LessonJourney::progress( $lesson['items'] );
