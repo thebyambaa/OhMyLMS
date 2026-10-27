@@ -211,10 +211,24 @@ final class CourseFromSyllabus {
 						if ( ! $group['skills'] ) {
 							continue;
 						}
-						$lesson_id = wp_generate_uuid4();
+						$lesson_id = wp_insert_post(
+							array(
+								'post_type'   => OHMYLMS_LESSON_CPT,
+								'post_title'  => SyllabusCourse::chapter_title( $group ),
+								'post_status' => 'draft',
+								'post_author' => get_current_user_id(),
+							),
+							true
+						);
+						if ( is_wp_error( $lesson_id ) || ! $lesson_id ) {
+							throw new \RuntimeException( 'Lesson creation failed.' );
+						}
 						$lessons[] = array(
-							'id'         => $lesson_id,
+							'id'         => wp_generate_uuid4(),
+							'type'       => 'lesson',
+							'content_id' => (int) $lesson_id,
 							'chapter_id' => $unit['id'],
+							'required'   => false,
 							'title'      => \OhMyLMS\Learning\ProgramGroups::title( SyllabusCourse::chapter_title( $group ) ),
 							'skill_ids'  => array_values( array_unique( array_map( 'intval', array_column( $group['skills'], 'term_id' ) ) ) ),
 						);
@@ -232,7 +246,6 @@ final class CourseFromSyllabus {
 								'target'     => 'proficient',
 								'required'   => false,
 								'chapter_id' => $unit['id'],
-								'group_id'   => $lesson_id,
 							);
 						}
 					}
@@ -250,9 +263,9 @@ final class CourseFromSyllabus {
 				$draft = Catalog::save_draft(
 					$course,
 					array(
-						'mode'     => 'traditional',
-						'outcomes' => $outcomes,
-						'groups'   => $lessons,
+						'mode'        => 'traditional',
+						'outcomes'    => $outcomes,
+						'attachments' => $lessons,
 					)
 				);
 				if ( is_wp_error( $draft ) ) {

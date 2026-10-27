@@ -373,6 +373,14 @@
 	margin: 4px;
 }
 
+.ohmylms-connections-table .components-button,
+.ohmylms-connections-table small {
+	display: block;
+	height: auto;
+	margin-bottom: 8px;
+	text-align: start;
+}
+
 .ohmylms-outline-editor > .components-notice .components-button {
 	margin-left: 8px;
 }
@@ -515,6 +523,7 @@
 }
 
 @media (max-width: 960px) {
+
 	.ohmylms-outline-columns {
 		grid-template-columns: minmax(0, 1fr);
 	}
@@ -525,6 +534,7 @@
 }
 
 @media (max-width: 782px) {
+
 	.ohmylms-outline-frame {
 		padding: 12px;
 	}
@@ -616,13 +626,6 @@
 	background: #f6f7f7;
 }
 
-.ohmylms-connections-table .components-button,
-.ohmylms-connections-table small {
-	display: block;
-	height: auto;
-	margin-bottom: 8px;
-	text-align: start;
-}
 
 .ohmylms-connection-card {
 	margin: 12px 0;

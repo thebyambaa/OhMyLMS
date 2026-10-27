@@ -64,14 +64,14 @@ export function CourseSkillCoverage( { draft, onSelect } ) {
 			</h2>
 			<p>
 				{ __(
-					'A skill can appear in several lessons. Teaching and assessment links below describe your plan; open a quiz to check its question mappings. Completion counts each skill once.',
+					'A skill can be taught in several block lessons and assessed in several quizzes. These links describe your plan; open a quiz to check its question mappings. Completion counts each skill once.',
 					'ohmylms'
 				) }
 			</p>
 			{ ! program.outcomes.length ? (
 				<p>
 					{ __(
-						'Select a lesson in the outline and choose Link skills to lesson to get started.',
+						'Select a unit and choose Link course skills to get started. Then select a lesson or quiz to connect its skills.',
 						'ohmylms'
 					) }
 				</p>
@@ -82,7 +82,6 @@ export function CourseSkillCoverage( { draft, onSelect } ) {
 							<tr>
 								{ [
 									__( 'Skill', 'ohmylms' ),
-									__( 'Lessons', 'ohmylms' ),
 									__( 'Teaching activities', 'ohmylms' ),
 									__( 'Practice', 'ohmylms' ),
 									__( 'Planned assessments', 'ohmylms' ),
@@ -127,20 +126,6 @@ export function CourseSkillCoverage( { draft, onSelect } ) {
 														) }
 											</small>
 										</th>
-										<td>
-											{ links(
-												( program.groups || [] ).filter(
-													( group ) =>
-														lessonSkillIds(
-															program,
-															group.id
-														).includes(
-															skill.term_id
-														)
-												),
-												'lesson'
-											) }
-										</td>
 										<td>
 											{ links(
 												items.filter( teaches ),
@@ -379,7 +364,7 @@ export function ActivitySkillConnections( {
 				{ ! skills.length && (
 					<p>
 						{ __(
-							'Link skills to the lesson first, then choose which ones this activity covers.',
+							'Select a unit and choose Link course skills, then return here to choose the skills this activity covers.',
 							'ohmylms'
 						) }
 					</p>

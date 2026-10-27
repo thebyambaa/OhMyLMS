@@ -27,6 +27,9 @@ if ( 'cleanup' === ( $argv[1] ?? '' ) ) {
 	foreach ( $structure_fixture['contents'] ?? array() as $structure_content ) {
 		wp_delete_post( $structure_content, true );
 	}
+	foreach ( $structure_fixture['skills'] ?? array() as $structure_skill ) {
+		wp_delete_term( $structure_skill, \OhMyLMS\Skills\Taxonomy::NAME );
+	}
 	wp_delete_post( $structure_fixture['course'], true );
 	wp_delete_file( $structure_path );
 	exit;
@@ -67,6 +70,22 @@ $structure_library_lesson = wp_insert_post(
 		'post_status'  => 'publish',
 	)
 );
+$structure_extra_lesson   = wp_insert_post(
+	array(
+		'post_type'    => OHMYLMS_LESSON_CPT,
+		'post_title'   => 'Outline lesson library',
+		'post_content' => 'A reusable block lesson.',
+		'post_status'  => 'publish',
+	)
+);
+$structure_skill          = wp_insert_term( 'Outline connection skill ' . wp_generate_uuid4(), \OhMyLMS\Skills\Taxonomy::NAME );
+$structure_quiz           = wp_insert_post(
+	array(
+		'post_type'   => OHMYLMS_QUIZ_CPT,
+		'post_title'  => 'Outline connection quiz',
+		'post_status' => 'publish',
+	)
+);
 global $wpdb;
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Native activity used only by this browser fixture.
 $wpdb->insert(
@@ -103,7 +122,8 @@ $structure_fixture = array(
 	'cookies'  => $structure_cookies,
 	'base'     => home_url(),
 	'units'    => Catalog::chapters( $structure_course ),
-	'contents' => array( $structure_lesson, $structure_library_lesson ),
+	'contents' => array( $structure_lesson, $structure_library_lesson, $structure_extra_lesson, $structure_quiz ),
+	'skills'   => array( (int) $structure_skill['term_id'] ),
 );
 file_put_contents( $structure_path, wp_json_encode( $structure_fixture ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Ephemeral fixture removed during cleanup.
 echo "Structure browser fixture ready.\n";

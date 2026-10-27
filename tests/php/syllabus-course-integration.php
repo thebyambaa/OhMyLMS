@@ -155,17 +155,35 @@ try {
 	$seed_course             = (int) $seed_made->get_data()['id'];
 	$seed_state['courses'][] = $seed_course;
 	$seed_draft              = CourseProgram::editor( $seed_course )['draft'];
+	$seed_state['resources'] = array_merge( $seed_state['resources'] ?? array(), array_column( $seed_draft['items'], 'content_id' ) );
 	seed_check( 'draft' === get_post_status( $seed_course ) && ! get_post_meta( $seed_course, SyllabusCourse::ITEM_META, true ), 'The course is independent and unpublished.' );
 	seed_check( 1 === count( Catalog::chapters( $seed_course ) ) && 'Number' === Catalog::chapters( $seed_course )[0]['name'], 'Only the selected topic becomes a unit.' );
-	seed_check( 1 === count( $seed_draft['groups'] ) && 'Number foundations' === $seed_draft['groups'][0]['title'], 'The source skill group becomes a lesson.' );
-	seed_check( $seed_draft['outcomes'][0]['term_id'] === $seed_state['terms'][1] && $seed_draft['outcomes'][0]['group_id'] === $seed_draft['groups'][0]['id'], 'The selected existing skill is linked to its lesson.' );
-	seed_check( false === $seed_draft['outcomes'][0]['required'] && array() === $seed_draft['items'] && ! CourseProgram::current( $seed_course ), 'No activities or publication are invented; skills begin optional.' );
+	seed_check( 1 === count( $seed_draft['items'] ) && 'Number foundations' === $seed_draft['items'][0]['title'], 'The source skill group becomes a block lesson.' );
+	seed_check( $seed_draft['outcomes'][0]['term_id'] === $seed_state['terms'][1] && array( $seed_state['terms'][1] ) === $seed_draft['items'][0]['skill_ids'], 'The selected existing skill is linked to its lesson.' );
+	seed_check( false === $seed_draft['outcomes'][0]['required'] && 'draft' === get_post_status( $seed_draft['items'][0]['content_id'] ) && ! CourseProgram::current( $seed_course ), 'Lessons remain unpublished drafts and skills begin optional.' );
 	seed_check( 1 === count( CourseObjectives::references( $seed_course ) ), 'Course objective mappings retain the syllabus reference.' );
 	$seed_after = CourseFromSyllabus::preview( $seed_syllabus['id'] );
 	seed_check( $seed_source['revision'] === $seed_after['revision'], 'Course generation leaves the source unchanged.' );
 	$seed_legacy = seed_api( 'POST', '', array( 'syllabus_id' => (int) $seed_syllabus['id'] ) );
 	seed_check( 201 === $seed_legacy->get_status(), 'Older clients may still create from the whole syllabus.' );
-	$seed_state['courses'][] = (int) $seed_legacy->get_data()['id'];
+	$seed_state['courses'][]                = (int) $seed_legacy->get_data()['id'];
+	$seed_shared                            = CourseProgram::editor( (int) $seed_legacy->get_data()['id'] )['draft'];
+	$seed_state['resources']                = array_merge( $seed_state['resources'], array_column( $seed_shared['items'], 'content_id' ) );
+	$seed_shared['items'][1]['skill_ids'][] = $seed_state['terms'][1];
+	seed_check(
+		4 === count( $seed_shared['outcomes'] ) && 2 === count(
+			array_filter(
+				$seed_shared['items'],
+				static function ( $item ) use ( $seed_state ) {
+					return in_array( $seed_state['terms'][1], $item['skill_ids'], true );
+				}
+			)
+		),
+		'Both block lessons retain the shared skill while completion counts it once.'
+	);
+	$seed_saved = CourseProgram::save( (int) $seed_legacy->get_data()['id'], $seed_shared );
+	seed_check( ! is_wp_error( $seed_saved ) && CourseProgram::editor( (int) $seed_legacy->get_data()['id'] )['draft']['items'] === $seed_shared['items'], 'Lesson skill connections survive a save and reload.' );
+	$seed_body['revision'] = CourseFromSyllabus::preview( $seed_syllabus['id'] )['revision'];
 	seed_check( 2 === $seed_legacy->get_data()['lessons'] && 4 === $seed_legacy->get_data()['objectives'], 'Whole-syllabus creation now also seeds lessons.' );
 	$seed_fail = static function ( $response, $handler, $request ) {
 		return '/ohmylms/v1/courses' === $request->get_route() && 'POST' === $request->get_method() ? new WP_Error( 'fixture_failure', 'Injected failure after inserting the course.', array( 'status' => 500 ) ) : $response;

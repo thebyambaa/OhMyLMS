@@ -109,7 +109,7 @@ export function CourseBuildChoices( { onScratch, onCreated, loading } ) {
 			<h3>{ __( 'Create a course', 'ohmylms' ) }</h3>
 			<p>
 				{ __(
-					'Every course uses the same builder: units contain lessons, and lessons contain teaching activities, practice, and quizzes.',
+					'Every course uses the same builder: organize block lessons, practice, and quizzes in units, then connect them through shared skills.',
 					'ohmylms'
 				) }
 			</p>
