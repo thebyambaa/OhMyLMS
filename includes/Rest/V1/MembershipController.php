@@ -617,7 +617,37 @@ class MembershipController extends RestController {
 	 */
 	public function save_membership( $request ) {
 		$membership = $this->prepare_item_for_database( $request );
+		$this->validate_sale_schedule( $request, $membership );
 		return $membership->save();
+	}
+
+	/**
+	 * Validate calendar sale fields before creating or changing a plan.
+	 *
+	 * @param WP_REST_Request $request Submitted fields.
+	 * @param Membership $membership Existing membership values.
+	 * @throws DataException When the date range or free-access end is invalid.
+	 */
+	private function validate_sale_schedule( $request, $membership ) {
+		$sale = isset( $request['sale_price'] ) ? $request['sale_price'] : $membership->get_sale_price( 'edit' );
+		$dates = array();
+		foreach ( array( 'from', 'to' ) as $side ) {
+			$field = 'sale_price_dates_' . $side;
+			$value = isset( $request[ $field ] ) ? $request[ $field ] : $membership->{'get_' . $field}();
+			$dates[ $side ] = \OhMyLMS\Membership\FreeSale::date( $value );
+			if ( ! empty( $value ) && ! $dates[ $side ] ) {
+				throw new DataException( 'membership_sale_date', __( 'Choose a valid sale date from the calendar.', 'ohmylms' ), 400 );
+			}
+		}
+		if ( $dates['from'] && $dates['to'] && $dates['from'] > $dates['to'] ) {
+			throw new DataException( 'membership_sale_date', __( 'The sale end date must be on or after its start date.', 'ohmylms' ), 400 );
+		}
+		if ( '' !== (string) $sale && ( ! is_numeric( $sale ) || 0 > (float) $sale ) ) {
+			throw new DataException( 'membership_sale_price', __( 'Sale price must be zero or greater.', 'ohmylms' ), 400 );
+		}
+		if ( '' !== (string) $sale && is_numeric( $sale ) && 0.0 === (float) $sale && ! $dates['to'] ) {
+			throw new DataException( 'membership_free_until', __( 'Choose a Free until date for a zero-price sale.', 'ohmylms' ), 400 );
+		}
 	}
 
 
@@ -673,11 +703,11 @@ class MembershipController extends RestController {
 		if ( isset( $request['sale_price'] ) ) {
 			$membership->set_sale_price( $request['sale_price'] );
 		}
-		if ( isset( $request['sale_price_dates_from'] ) && ! empty( $request['sale_price_dates_from'] ) ) {
-			$membership->set_sale_price_dates_from( $request['sale_price_dates_from']['date'] );
+		if ( isset( $request['sale_price_dates_from'] ) ) {
+			$membership->set_sale_price_dates_from( \OhMyLMS\Membership\FreeSale::date( $request['sale_price_dates_from'] ) ?: null );
 		}
-		if ( isset( $request['sale_price_dates_to'] ) && ! empty( $request['sale_price_dates_to'] ) ) {
-			$membership->set_sale_price_dates_to( $request['sale_price_dates_to']['date'] );
+		if ( isset( $request['sale_price_dates_to'] ) ) {
+			$membership->set_sale_price_dates_to( \OhMyLMS\Membership\FreeSale::date( $request['sale_price_dates_to'] ) ?: null );
 		}
 		if ( isset( $request['subscription_length'] ) ) {
 			$membership->set_subscription_length( $request['subscription_length'] );

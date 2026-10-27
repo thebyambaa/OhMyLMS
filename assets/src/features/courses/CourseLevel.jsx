@@ -1,68 +1,119 @@
-/** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { restUrl } from '../restUrl.mjs';
+
+/**
+ * Course levels are a read-only view of curriculum placement and saved skill bands.
+ * @param {() => Object} readRuntime Course feature runtime.
+ * @return {() => Object} Course level summary component.
+ */
 export function createCourseLevel( readRuntime ) {
-	return function CourseLevel( props ) {
-		const { I: Controls, React, b: I18n } = readRuntime();
-		var experienceLevel = props.experienceLevel,
-			handleExperienceLevelChange = props.handleExperienceLevelChange,
-			r = [
-				{
-					value: 'all',
-					label: ( 0, I18n.__ )( 'All levels', 'ohmylms' ),
-				},
-				{
-					value: 'beginner',
-					label: ( 0, I18n.__ )( 'Beginner', 'ohmylms' ),
-				},
-				{
-					value: 'experience',
-					label: ( 0, I18n.__ )( 'Experience', 'ohmylms' ),
-				},
-				{
-					value: 'expert',
-					label: ( 0, I18n.__ )( ' Expert', 'ohmylms' ),
-				},
-			];
+	return function CourseLevel() {
+		const {
+			I: Controls,
+			b: I18n,
+			f: Router,
+			g: Hooks,
+			l: apiFetch,
+		} = readRuntime();
+		const { id } = Router.g();
+		const [ summary, setSummary ] = Hooks.useState( null );
+		const [ error, setError ] = Hooks.useState( '' );
+		const [ attempt, setAttempt ] = Hooks.useState( 0 );
+		Hooks.useEffect( () => {
+			let active = true;
+			setSummary( null );
+			setError( '' );
+			if ( ! Number( id ) ) {
+				setSummary( {
+					curriculum: [],
+					skills: [],
+					unplaced_skills: 0,
+				} );
+				return undefined;
+			}
+			const path = `/ohmylms/v1/courses/${ Number( id ) }/organization`;
+			const root = window.ohmylms_params?.api_url;
+			apiFetch()( root ? { url: restUrl( root, path ) } : { path } )
+				.then( ( data ) => active && setSummary( data.level_summary ) )
+				.catch(
+					( cause ) =>
+						active &&
+						setError(
+							cause.message ||
+								I18n.__(
+									'Could not load course levels.',
+									'ohmylms'
+								)
+						)
+				);
+			return () => {
+				active = false;
+			};
+		}, [ id, attempt ] );
 		return (
-			<React.Fragment>
-				<Controls.FlexWP
-					justify={ 'space-between' }
-					align={ 'flex-start' }
-				>
-					<Controls.FlexItemWP
-						style={ {
-							flex: '5',
-						} }
-					>
-						<Controls.HeadingWP level={ 4 }>
-							{ ( 0, I18n.__ )( 'Level', 'ohmylms' ) }
-						</Controls.HeadingWP>
-						<Controls.SpacerWP marginBottom={ 1 } />
-						<Controls.TextWP>
-							{ ( 0, I18n.__ )(
-								'Select the required level of knowledge and skills expected of the student.',
-								'ohmylms'
+			<div>
+				<Controls.HeadingWP level={ 4 }>
+					{ I18n.__( 'Level', 'ohmylms' ) }
+				</Controls.HeadingWP>
+				<p>
+					{ I18n.__(
+						'Determined by the saved curriculum placement and skill levels.',
+						'ohmylms'
+					) }
+				</p>
+				{ error && (
+					<p role="alert">
+						{ error }{ ' ' }
+						<button
+							type="button"
+							onClick={ () => setAttempt( attempt + 1 ) }
+						>
+							{ I18n.__( 'Try again', 'ohmylms' ) }
+						</button>
+					</p>
+				) }
+				{ ! error && summary && (
+					<div>
+						{ summary.curriculum.length > 0 && (
+							<p>
+								<strong>
+									{ I18n.__( 'Curriculum:', 'ohmylms' ) }
+								</strong>{ ' ' }
+								{ summary.curriculum.join( ', ' ) }
+							</p>
+						) }
+						{ summary.skills.map( ( range ) => (
+							<p key={ range.subject }>
+								<strong>{ range.subject }:</strong>{ ' ' }
+								{ range.label }
+							</p>
+						) ) }
+						{ ! summary.curriculum.length &&
+							! summary.skills.length && (
+								<p>
+									{ I18n.__(
+										'Not yet determined. Assign a curriculum grade or level, or add skills with level bands.',
+										'ohmylms'
+									) }
+								</p>
 							) }
-						</Controls.TextWP>
-					</Controls.FlexItemWP>
-					<Controls.FlexItemWP
-						style={ {
-							flex: '3',
-						} }
-					>
-						<Controls.FlexWP justify={ 'flex-end' }>
-							<Controls.RadioGroupWP
-								isBlock={ ! 0 }
-								options={ r }
-								value={ experienceLevel }
-								onChange={ handleExperienceLevelChange }
-								optionType={ 'button' }
-								buttonStyle={ 'solid' }
-							/>
-						</Controls.FlexWP>
-					</Controls.FlexItemWP>
-				</Controls.FlexWP>
-			</React.Fragment>
+						{ summary.unplaced_skills > 0 && (
+							<p>
+								{ I18n.__(
+									'Some skills do not have valid level bands yet.',
+									'ohmylms'
+								) }
+							</p>
+						) }
+					</div>
+				) }
+				{ ! error && ! summary && (
+					<p>{ I18n.__( 'Loading levels…', 'ohmylms' ) }</p>
+				) }
+				<a href={ `#/course-edit/${ Number( id ) }/settings/organize` }>
+					{ I18n.__( 'Manage curriculum placement', 'ohmylms' ) }
+				</a>
+			</div>
 		);
 	};
 }

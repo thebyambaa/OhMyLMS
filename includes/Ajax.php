@@ -138,6 +138,9 @@ class Ajax {
 		}
 
 		$membership_id = ohmylms_clean( wp_unslash( $_POST['membership_id'] ?? '' ) );
+		if ( \OhMyLMS\Membership\FreeSale::active( ohmylms_get_membership( absint( $membership_id ) ) ) ) {
+			wp_send_json( array( 'status' => 'success', 'redirect_url' => \OhMyLMS\Student\Hub::url( 'membership', 'plans' ) ) );
+		}
 		ecommerce()->membership()->request_membership( $membership_id );
 		die();
 	}
@@ -1264,6 +1267,9 @@ class Ajax {
 		$membership_id     = absint( $_POST['membership_id'] ?? 0 );
 		$quantity          = empty( $_POST['quantity'] ) ? 1 : absint( $_POST['quantity'] );
 		$membership_status = get_post_status( $membership_id );
+		if ( \OhMyLMS\Membership\FreeSale::active( ohmylms_get_membership( $membership_id ) ) ) {
+			wp_send_json( array( 'status' => 'success', 'redirect_url' => \OhMyLMS\Student\Hub::url( 'membership', 'plans' ) ) );
+		}
 
 		$membership = ohmylms_get_membership( $membership_id );
 		if ( ! $membership || ! $membership->is_purchasable() ) {

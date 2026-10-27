@@ -139,7 +139,12 @@ export function createCourseOrganization( readRuntime ) {
 		// Curriculum and Course Bundles are tabs of the Content Hub.
 		const adminHref = ( page ) =>
 			window.location.href.split( '#' )[ 0 ] + '#/content-hub/' + page;
-		const visibleItems = filterItems( items, search );
+		const subjects = items.filter(
+			( item ) => item.item_type === 'subject'
+		);
+		const visibleItems = filterItems( items, search ).filter(
+			( item ) => item.item_type !== 'subject'
+		);
 
 		if ( ! courseId ) {
 			return (
@@ -197,6 +202,53 @@ export function createCourseOrganization( readRuntime ) {
 							{ error }
 						</Notice>
 					) }
+					<Controls.HeadingWP level={ 4 }>
+						{ I18n.__( 'Subject', 'ohmylms' ) }
+					</Controls.HeadingWP>
+					<p>
+						{ I18n.__(
+							'Choose the subjects for this course. Published courses appear under their subjects in the Library and Explore.',
+							'ohmylms'
+						) }
+					</p>
+					<div
+						role="group"
+						aria-label={ I18n.__( 'Subject', 'ohmylms' ) }
+					>
+						{ subjects.map( ( subject ) => (
+							<CheckboxControl
+								key={ subject.id }
+								label={ subject.name }
+								checked={ curriculumIds.includes( subject.id ) }
+								disabled={ busy }
+								onChange={ ( checked ) =>
+									save(
+										'curriculum_ids',
+										toggleId(
+											curriculumIds,
+											subject.id,
+											checked
+										),
+										curriculumIds,
+										setCurriculumIds
+									)
+								}
+								__nextHasNoMarginBottom
+							/>
+						) ) }
+					</div>
+					<p>
+						<a
+							href={ adminHref( 'curriculum/subjects' ) }
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							{ I18n.__(
+								'Create or edit subject profiles',
+								'ohmylms'
+							) }
+						</a>
+					</p>
 					<Controls.FlexWP gap={ 6 } align={ 'stretch' }>
 						<Controls.FlexItemWP flex={ 1 }>
 							<Controls.CardWP

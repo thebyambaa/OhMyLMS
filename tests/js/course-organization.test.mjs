@@ -234,6 +234,7 @@ const outline = {
 			parent_id: 0,
 			position: 0,
 			name: 'Mathematics',
+			item_type: 'subject',
 			code: '',
 			version: '',
 		},
@@ -290,6 +291,18 @@ test( 'the panel loads the outline and the course placement, then saves each cha
 		);
 		await panel.flush();
 		const nodes = panel.render();
+		const subjectGroup = nodes.find(
+			( node ) =>
+				node.props.role === 'group' &&
+				node.props[ 'aria-label' ] === 'Subject'
+		);
+		assert.ok( subjectGroup, 'subjects have their own field in Organize' );
+		assert.deepEqual(
+			flatten( subjectGroup )
+				.filter( ( node ) => node.type === 'CheckboxControl' )
+				.map( ( node ) => node.props.label ),
+			[ 'Mathematics' ]
+		);
 		const boxes = nodes.filter(
 			( node ) => node.type === 'CheckboxControl'
 		);

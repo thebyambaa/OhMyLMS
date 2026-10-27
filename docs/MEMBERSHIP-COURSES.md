@@ -1,5 +1,12 @@
 # Membership course selection
 
+The learner course overview does not show individual course prices or an Enroll now action.
+An active membership automatically supplies its included course access records through the
+existing synchronization below; no additional enrollment click is needed. Learners without
+access see a link to membership plans. Lesson/quiz permissions and progress continue to use
+those automatically created records. The legacy `#oml-course-enroll` anchor is retained for
+existing subject and activity links, and now points to the membership access explanation.
+
 Membership plans combine individual courses, curriculum items (including everything below them) and Course Bundles (a bundle's courses plus the courses under its curriculum members). A match through any inclusion is sufficient. Explicit course exclusions take priority over every inclusion. Only published courses enter the resolved set; future matching publications are included automatically.
 
 The Courses step restores all saved selections and previews the currently included courses with their matching sources. POST `/ohmylms/v1/membership/course-preview` computes unsaved selections without changing enrollments and requires the existing membership-editor permission.

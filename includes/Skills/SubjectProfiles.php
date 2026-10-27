@@ -9,6 +9,8 @@ namespace OhMyLMS\Skills;
 
 use OhMyLMS\Curriculum\Access;
 use OhMyLMS\Curriculum\Comparison;
+use OhMyLMS\Curriculum\Items;
+use OhMyLMS\Curriculum\Schema;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -107,8 +109,9 @@ final class SubjectProfiles {
 		$stored = get_option( self::OPTION, array() );
 		$stored = is_array( $stored ) ? $stored : array();
 		return array(
-			'profiles' => is_array( $stored['profiles'] ?? null ) ? $stored['profiles'] : array(),
-			'default'  => is_string( $stored['default'] ?? null ) ? $stored['default'] : '',
+			'profiles'   => is_array( $stored['profiles'] ?? null ) ? $stored['profiles'] : array(),
+			'default'    => is_string( $stored['default'] ?? null ) ? $stored['default'] : '',
+			'curriculum' => is_array( $stored['curriculum'] ?? null ) ? $stored['curriculum'] : array(),
 		);
 	}
 
@@ -137,7 +140,97 @@ final class SubjectProfiles {
 				);
 			}
 		}
+		foreach ( $result as $key => &$profile ) {
+			$profile['curriculum_id'] = (int) ( self::stored()['curriculum'][ $key ] ?? 0 );
+		}
+		unset( $profile );
 		return $result;
+	}
+
+	/**
+	 * Connect existing profiles to subjects when an administrator opens the plugin.
+	 * Generic remains a fallback skill scheme rather than a browseable subject.
+	 */
+	public static function upgrade_subjects() {
+		if ( ! Schema::ready() || ! Access::can_manage() ) {
+			return;
+		}
+		$stored   = self::stored();
+		$profiles = self::all();
+		$items    = array_column( Items::all(), null, 'id' );
+		foreach ( $profiles as $key => $profile ) {
+			if ( self::GENERIC === $key ) {
+				continue;
+			}
+			$item = $items[ $stored['curriculum'][ $key ] ?? 0 ] ?? null;
+			if ( ! $item || 'subject' !== $item['item_type'] || sanitize_text_field( $profile['label'] ) !== $item['name'] ) {
+				Items::exclusive(
+					static function () {
+						return self::write(
+							self::revision(),
+							static function ( array $current ) {
+								foreach ( self::all() as $profile_key => $subject_profile ) {
+									$id = self::subject_id( $profile_key, $subject_profile, $current );
+									if ( is_wp_error( $id ) ) {
+										throw new \RuntimeException( 'Subject migration failed.' );
+									}
+									$current['curriculum'][ $profile_key ] = $id;
+								}
+								return $current;
+							}
+						);
+					}
+				);
+				return;
+			}
+		}
+	}
+
+	/**
+	 * Reuse or create a subject while the caller holds the curriculum write lock.
+	 *
+	 * @param string $key Profile key.
+	 * @param array  $profile Normalized profile.
+	 * @param array  $stored Stored profiles and subject identities.
+	 * @return int|\WP_Error Curriculum subject ID; zero for the Generic fallback.
+	 * @throws \RuntimeException When a subject name cannot be updated.
+	 */
+	private static function subject_id( $key, array $profile, array $stored ) {
+		global $wpdb;
+		if ( self::GENERIC === $key ) {
+			return 0;
+		}
+		$item = Items::get( (int) ( $stored['curriculum'][ $key ] ?? 0 ) );
+		if ( ! $item || 'subject' !== $item['item_type'] ) {
+			$item = null;
+			foreach ( Items::all() as $candidate ) {
+				if ( 'subject' === $candidate['item_type'] && in_array( SubjectProfileModel::key( $candidate['name'] ), array( $key, SubjectProfileModel::key( $profile['label'] ) ), true ) ) {
+					$item = $candidate;
+					break;
+				}
+			}
+		}
+		$name = sanitize_text_field( $profile['label'] );
+		if ( $item ) {
+			if ( $name !== $item['name'] && false === $wpdb->update(
+				Items::table(),
+				array(
+					'name'       => $name,
+					'updated_at' => current_time( 'mysql', true ),
+				),
+				array( 'id' => (int) $item['id'] )
+			) ) {
+				throw new \RuntimeException( 'Subject name update failed.' );
+			}
+			return (int) $item['id'];
+		}
+		$fields = Items::clean(
+			array(
+				'name'      => $name,
+				'item_type' => 'subject',
+			)
+		);
+		return is_wp_error( $fields ) ? $fields : Items::insert_locked( $fields, 0 );
 	}
 
 	/**
@@ -241,19 +334,29 @@ final class SubjectProfiles {
 	 * @return array|\WP_Error The new payload.
 	 */
 	public static function save( array $input, $expected ) {
-		$profile = SubjectProfileModel::normalize( $input );
+		$input['label'] = sanitize_text_field( (string) ( $input['label'] ?? '' ) );
+		$profile        = SubjectProfileModel::normalize( $input );
 		if ( is_string( $profile ) ) {
 			return self::invalid( $profile );
 		}
 		$key = SubjectProfileModel::key( '' !== (string) ( $input['key'] ?? '' ) ? $input['key'] : $profile['label'] );
-		return self::write(
-			$expected,
-			static function ( array $stored ) use ( $key, $profile ) {
-				if ( ! isset( $stored['profiles'][ $key ] ) && count( $stored['profiles'] ) >= self::MAX_STORED ) {
-					return self::invalid( 'count' );
-				}
-				$stored['profiles'][ $key ] = $profile;
-				return $stored;
+		return Items::exclusive(
+			static function () use ( $expected, $key, $profile ) {
+				return self::write(
+					$expected,
+					static function ( array $stored ) use ( $key, $profile ) {
+						if ( ! isset( $stored['profiles'][ $key ] ) && count( $stored['profiles'] ) >= self::MAX_STORED ) {
+							return self::invalid( 'count' );
+						}
+						$id = self::subject_id( $key, $profile, $stored );
+						if ( is_wp_error( $id ) ) {
+							return $id;
+						}
+						$stored['curriculum'][ $key ] = $id;
+						$stored['profiles'][ $key ]   = $profile;
+						return $stored;
+					}
+				);
 			}
 		);
 	}
@@ -309,6 +412,7 @@ final class SubjectProfiles {
 	 * @param string   $expected Revision the change was made against.
 	 * @param callable $change   Receives and returns the stored array, or a WP_Error.
 	 * @return array|\WP_Error The new payload.
+	 * @throws \RuntimeException When the profile option cannot be saved.
 	 */
 	private static function write( $expected, callable $change ) {
 		if ( ! hash_equals( self::revision(), (string) $expected ) ) {
@@ -318,7 +422,9 @@ final class SubjectProfiles {
 		if ( is_wp_error( $stored ) ) {
 			return $stored;
 		}
-		update_option( self::OPTION, $stored, false );
+		if ( ! update_option( self::OPTION, $stored, false ) && get_option( self::OPTION ) !== $stored ) {
+			throw new \RuntimeException( 'Subject profile save failed.' );
+		}
 		self::$default = null;
 		return self::payload();
 	}

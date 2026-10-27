@@ -112,7 +112,7 @@ export function SubjectProfilesPage() {
 			className="ohmylms-subject-profiles-page"
 			title={ __( 'Subject profiles', 'ohmylms' ) }
 			description={ __(
-				'Each subject organises its skills in its own domains and levels (school grades, CEFR levels, exam bands …). AI analysis uses the profile to place and propose skills. Shared skills use the profile whose name matches their subject; other subjects use the default profile.',
+				'Create a subject here to make it available in the Library and in course Settings → Organize → Subject. Domains, levels and AI guidance describe how its skills are organised. Generic is the fallback skill profile.',
 				'ohmylms'
 			) }
 			actions={
@@ -206,7 +206,7 @@ export function SubjectProfilesPage() {
 								variant="secondary"
 								onClick={ () => open( null ) }
 							>
-								{ __( 'Add profile', 'ohmylms' ) }
+								{ __( 'Add subject', 'ohmylms' ) }
 							</Button>
 						</AdminCard>
 						<AdminCard title={ __( 'Default profile', 'ohmylms' ) }>

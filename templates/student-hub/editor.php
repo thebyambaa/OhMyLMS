@@ -69,9 +69,9 @@ defined( 'ABSPATH' ) || exit;
 			</section>
 			<section class="oml-hub-editor-panel">
 				<h2><?php esc_html_e( 'Browse subjects', 'ohmylms' ); ?></h2>
-				<p><?php esc_html_e( 'Choose which curriculum levels appear as subject tiles. Courses and deeper levels sit inside the tile. Leave all unchecked to use every top-level curriculum item.', 'ohmylms' ); ?></p>
+				<p><?php esc_html_e( 'Subjects created in Subject profiles always appear in the Library. Choose any additional curriculum levels to show as tiles. Courses and deeper levels sit inside each tile.', 'ohmylms' ); ?></p>
 				<?php
-				$hub_types = array_diff( array_unique( array_merge( \OhMyLMS\Curriculum\Items::types(), array_column( \OhMyLMS\Curriculum\Items::all(), 'item_type' ), $config['library_types'] ) ), array( 'roadmap' ) );
+				$hub_types = array_diff( array_unique( array_merge( \OhMyLMS\Curriculum\Items::types(), array_column( \OhMyLMS\Curriculum\Items::all(), 'item_type' ), $config['library_types'] ) ), array( 'roadmap', 'subject' ) );
 				?>
 				<ul class="oml-hub-checklist">
 					<?php foreach ( $hub_types as $hub_type ) : ?>

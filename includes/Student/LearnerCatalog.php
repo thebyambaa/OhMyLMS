@@ -13,6 +13,8 @@ namespace OhMyLMS\Student;
 use OhMyLMS\Curriculum\Items;
 use OhMyLMS\Curriculum\Placement;
 use OhMyLMS\Curriculum\Roadmaps;
+use OhMyLMS\Curriculum\Tree;
+use OhMyLMS\Curriculum\Schema;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -38,12 +40,33 @@ final class LearnerCatalog {
 	 * @param string[] $types Curriculum item types that count as a subject. Empty means
 	 *                        every top-level item. The outermost matching item wins and
 	 *                        deeper items become groups inside it.
+	 * @param bool     $include_empty Include subjects created from profiles before courses are added.
 	 * @return array<int,array> Subject nodes: id, name, courses, children, total.
 	 */
-	public static function subjects( $search = '', array $types = array() ) {
-		$items = Placement::public_items();
+	public static function subjects( $search = '', array $types = array(), $include_empty = false ) {
+		$keep = array();
+		if ( $include_empty && '' === trim( (string) $search ) && Schema::ready() ) {
+			foreach ( \OhMyLMS\Skills\SubjectProfiles::all() as $profile ) {
+				if ( ! empty( $profile['curriculum_id'] ) ) {
+					$keep[] = (int) $profile['curriculum_id'];
+				}
+			}
+		}
+		$items = $keep ? Items::all() : Placement::public_items();
 		if ( ! $items ) {
 			return array();
+		}
+		if ( $keep ) {
+			// Raw rows are ordered by parent ID, which can change when a branch moves.
+			$parents = array_column( $items, 'parent_id', 'id' );
+			$order   = array_flip( array_column( $items, 'id' ) );
+			usort(
+				$items,
+				static function ( $left, $right ) use ( $parents, $order ) {
+					$depth = Tree::depth( $parents, $left['id'] ) <=> Tree::depth( $parents, $right['id'] );
+					return 0 !== $depth ? $depth : $order[ $left['id'] ] <=> $order[ $right['id'] ];
+				}
+			);
 		}
 		$by_item = Placement::published_courses_by_item();
 		$search  = trim( (string) $search );
@@ -63,9 +86,9 @@ final class LearnerCatalog {
 				);
 			}
 			$nodes[ $item['id'] ] = array(
-				'id'        => $item['id'],
+				'id'        => (int) $item['id'],
 				'name'      => $item['name'],
-				'parent_id' => $item['parent_id'],
+				'parent_id' => (int) $item['parent_id'],
 				'courses'   => array_values( $courses ),
 				'children'  => array(),
 			);
@@ -94,7 +117,16 @@ final class LearnerCatalog {
 			}
 			$roots = $flat;
 		}
-		return array_values( array_filter( array_map( array( __CLASS__, 'prune' ), $roots ) ) );
+		return array_values(
+			array_filter(
+				array_map(
+					static function ( $node ) use ( $keep ) {
+						return self::prune( $node, $keep );
+					},
+					$roots
+				)
+			)
+		);
 	}
 
 	/**
@@ -141,6 +173,7 @@ final class LearnerCatalog {
 	/** Register the front-end guard that keeps roadmap courses out of every course list. */
 	public static function init() {
 		Subjects::init();
+		add_action( 'admin_init', array( \OhMyLMS\Skills\SubjectProfiles::class, 'upgrade_subjects' ) );
 		add_action( 'pre_get_posts', array( __CLASS__, 'hide_roadmaps' ) );
 	}
 
@@ -256,11 +289,21 @@ final class LearnerCatalog {
 	 * Drop branches with no matching course, so a search shows only relevant groups.
 	 *
 	 * @param array $node Subject node.
+	 * @param int[] $keep Profile subject IDs that may be empty.
 	 * @return array|null Pruned node, or null when empty.
 	 */
-	private static function prune( array $node ) {
-		$node['children'] = array_values( array_filter( array_map( array( __CLASS__, 'prune' ), $node['children'] ) ) );
-		return $node['total'] > 0 ? $node : null;
+	private static function prune( array $node, array $keep = array() ) {
+		$node['children'] = array_values(
+			array_filter(
+				array_map(
+					static function ( $child ) use ( $keep ) {
+						return self::prune( $child, $keep );
+					},
+					$node['children']
+				)
+			)
+		);
+		return $node['total'] > 0 || $node['children'] || in_array( $node['id'], $keep, true ) ? $node : null;
 	}
 
 	/**

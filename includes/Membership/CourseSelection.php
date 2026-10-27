@@ -98,6 +98,7 @@ final class CourseSelection {
 	 * Init for Course selection.
 	 */
 	public static function init() {
+		FreeSale::init();
 		add_action( 'save_post', array( __CLASS__, 'post_changed' ), 20, 2 );
 		add_action( 'before_delete_post', array( __CLASS__, 'post_changed' ), 20, 2 );
 		add_action( 'set_object_terms', array( __CLASS__, 'terms_changed' ), 20, 4 );

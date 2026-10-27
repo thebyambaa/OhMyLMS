@@ -1,5 +1,22 @@
 # Subject profiles
 
+Create subjects in **Content Hub → Curriculum → Subject profiles → Add subject**.
+Saving a profile creates its curriculum subject, or reuses an existing subject with the same name.
+Existing profiles are connected when an administrator opens the plugin; Generic remains a fallback
+skill scheme and is not created as a subject. Profile edits keep the curriculum ID, hierarchy and
+course placements. Removing a profile removes its skill configuration, not the curriculum item or courses.
+
+In a saved course, use **Settings → Organize → Subject** to assign one or more subjects. Changes save
+immediately and preserve other curriculum placements and course bundles. The profile screen is linked
+from that section, so subjects need not be created separately in the curriculum tree.
+
+The learner **Library / Browse subjects** always includes subjects, regardless of additional saved
+curriculum-level filters. Subjects created from profiles also appear before they have courses, with
+a zero course count and an explanation. Course search still shows only matching published courses.
+The public **Explore** menu continues to show subjects only after they contain published courses.
+Draft/private courses and roadmap infrastructure remain excluded. The existing REST fields and
+profile keys remain compatible; profile payloads now also expose `curriculum_id`.
+
 Skills are no longer tied to mathematics. Each subject has a **profile** that defines how its skills are organised:
 
 - **Domains:** the areas the subject is divided into, such as Algebra, or Reading and Writing.
@@ -67,6 +84,11 @@ All routes require administrator access and send the current `expected_revision`
 Profiles are site settings, not plugin code. Profiles for languages, sciences, the Mongolian curriculum and international exams are meant to be imported and reviewed per site.
 
 ## Verification
+
+- `tests/php/subject-profile-subjects-integration.php` checks subject creation/reuse, stable IDs on
+  rename, stale-save rejection, empty Library subjects, Explore filtering and non-destructive profile
+  removal against an isolated WordPress copy. It requires `OHMYLMS_STRUCTURE_INTEGRATION=1` and
+  transactional tables, rolls fixture rows back and clears option caches afterwards.
 
 - `php tests/php/subject-profiles-unit.php`: 22 pure checks covering keys, validation, ordinals and labels.
 - With `OHMYLMS_STRUCTURE_INTEGRATION=1`, `tests/php/subject-profiles-integration.php`: 22 checks. They cover the built-in defaults, unchanged Mathematics behaviour, per-subject domains, levels and placement, guarded saves, the default profile, customising and restoring a built-in profile, MCP tool definitions and anonymous denial. The stored option is restored afterwards.

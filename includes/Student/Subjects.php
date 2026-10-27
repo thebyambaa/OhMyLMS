@@ -79,7 +79,7 @@ final class Subjects {
 	 */
 	public static function get( $subject_id ) {
 		$item = Items::get( $subject_id );
-		$node = $item && 'subject' === $item['item_type'] ? self::find( $subject_id, self::all() ) : null;
+		$node = $item && 'subject' === $item['item_type'] ? self::find( $subject_id, LearnerCatalog::subjects( '', array( 'subject' ), true ) ) : null;
 		if ( ! $node ) {
 			return new \WP_Error( 'ohmylms_subject_missing', __( 'Subject not available.', 'ohmylms' ), array( 'status' => 404 ) );
 		}

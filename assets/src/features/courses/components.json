@@ -209,7 +209,7 @@
 		"binding": "Oz",
 		"name": "CourseLevel",
 		"file": "CourseLevel.jsx",
-		"dependencies": [ "I", "React", "b" ]
+		"dependencies": [ "I", "b", "f", "g", "l" ]
 	},
 	{
 		"binding": "Tz",

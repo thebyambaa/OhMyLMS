@@ -16,6 +16,10 @@ global $membership;
 if ( null == $membership ) {
 	return;
 }
+if ( \OhMyLMS\Membership\FreeSale::active( $membership ) ) {
+	\OhMyLMS\Membership\FreeSale::form( $membership );
+	return;
+}
 $args = array(
 	'attributes' => array(
 		'data-membership_id'   => $membership->get_id(),

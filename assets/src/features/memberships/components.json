@@ -103,19 +103,7 @@
 		"binding": "o8",
 		"name": "MembershipSaleSchedule",
 		"file": "MembershipSaleSchedule.jsx",
-		"dependencies": [
-			"I",
-			"React",
-			"T",
-			"b",
-			"g",
-			"n8",
-			"qt",
-			"r8",
-			"sn",
-			"t8",
-			"y"
-		]
+		"dependencies": [ "I", "T", "b", "y" ]
 	},
 	{
 		"binding": "T8",

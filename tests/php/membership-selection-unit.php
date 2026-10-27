@@ -58,7 +58,7 @@ class SelectionDatabase {
     ];
     public function prepare($sql, ...$args) { return [$sql, $args]; }
     public function get_results($query, $format) {
-        if (str_contains($query[0], 'ohmylms_user_membership')) return $this->members;
+        if (str_contains($query[0], 'ohmylms_user_membership') || in_array('wp_ohmylms_user_membership', $query[1], true)) return $this->members;
         return array_values(array_filter($this->rows, fn($row) => $row['membership_id'] === 100));
     }
     public function query($query) { check(str_contains($query[0], 'order_id=%d') && str_contains($query[0], 'membership_id IS NULL'), 'Legacy adoption is scoped to membership orders'); }
@@ -67,6 +67,17 @@ class SelectionDatabase {
 }
 $wpdb = new SelectionDatabase();
 CourseSelection::sync(100);
+check(
+	2 === count(
+		array_filter(
+			$wpdb->rows,
+			static function ( $row ) {
+				return 100 === $row['membership_id'] && 7 === $row['user_id'] && 'enrolled' === $row['status'];
+			}
+		)
+	),
+	'An active membership automatically grants every included course without a separate enrollment action'
+);
 check($wpdb->rows[0]['progress'] === 'completed', 'Synchronization preserves course progress');
 check($wpdb->rows[1]['status'] === 'cancelled', 'Losing a match revokes a started membership course');
 check($wpdb->rows[2]['status'] === 'cancelled', 'Inactive members gain no access');

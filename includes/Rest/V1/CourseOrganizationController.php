@@ -103,6 +103,7 @@ class CourseOrganizationController extends RestController {
 				'curriculum'         => Placement::items( $course_id ),
 				'bundles'            => Placement::bundles( $course_id ),
 				'can_manage_bundles' => Access::can_manage(),
+				'level_summary'      => \OhMyLMS\Skills\CourseLevels::get( $course_id ),
 			)
 		);
 	}

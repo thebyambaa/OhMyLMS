@@ -21,6 +21,9 @@ defined( 'ABSPATH' ) || exit;
 		if ( $subject['description'] ) :
 			?>
 			<p><?php echo esc_html( $subject['description'] ); ?></p><?php endif; ?>
+		<?php if ( ! $subject['course_ids'] ) : ?>
+			<p><?php esc_html_e( 'Courses will appear here when they are published and assigned to this subject.', 'ohmylms' ); ?></p>
+		<?php endif; ?>
 		<ol class="oml-subject-courses">
 			<?php foreach ( $subject['course_ids'] as $subject_course_id ) : ?>
 				<?php

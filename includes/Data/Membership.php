@@ -250,6 +250,11 @@ class Membership extends Data {
 	 * @since 1.0.0
 	 */
 	public function get_price_html() {
+		$free_end = \OhMyLMS\Membership\FreeSale::active( $this );
+		if ( $free_end ) {
+			/* translators: %s: the last day of free membership access. */
+			return '<span class="free">' . esc_html( sprintf( __( 'Free until %s', 'ohmylms' ), wp_date( get_option( 'date_format' ), $free_end - 1 ) ) ) . '</span>';
+		}
 		$price_html = '';
 
 		if ( $this->is_free() ) {
@@ -359,6 +364,9 @@ class Membership extends Data {
 	 * @since 1.0.0
 	 */
 	public function add_to_cart_text() {
+		if ( \OhMyLMS\Membership\FreeSale::active( $this ) ) {
+			return __( 'Start free access', 'ohmylms' );
+		}
 		if ( $this->is_purchasable() && $this->is_in_stock() ) {
 			if ( ! $this->is_already_purchased() ) {
 				$price      = $this->validate_on_sale() ? $this->get_price() : $this->get_regular_price();

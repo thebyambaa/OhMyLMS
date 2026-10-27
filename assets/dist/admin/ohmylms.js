@@ -61716,8 +61716,10 @@
         const Pz = (0, g.memo)(Cz);
         var Oz = window.ohmylms.extensions.courseComponents.CourseLevel(() => ({
           I,
-          React,
-          b
+          b,
+          f,
+          g,
+          l
         }));
         const kz = (0, g.memo)(Oz);
         var jz = window.ohmylms.extensions.courseComponents.CourseReviews(() => ({
