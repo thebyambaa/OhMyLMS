@@ -172,6 +172,9 @@ function LessonSettings() {
 	const [ returnUrl, setReturnUrl ] = useState(
 		window.ohmylmsNativeLesson.returnUrl
 	);
+	const backLabel = returnUrl.includes( '#/course-edit' )
+		? __( 'Back to course', 'ohmylms' )
+		: __( 'Back to Content Hub', 'ohmylms' );
 	useEffect( () => {
 		if ( ! postId ) {
 			return;
@@ -249,7 +252,7 @@ function LessonSettings() {
 				<EditorBackButton>
 					<Button
 						href={ returnUrl }
-						label={ __( 'Back to Content Hub', 'ohmylms' ) }
+						label={ backLabel }
 						icon={
 							<SVG viewBox="0 0 24 24">
 								<Path d="m12 6-6 6 6 6 1-1-4.5-4.5H18V11H8.5L13 7l-1-1Z" />
@@ -263,7 +266,7 @@ function LessonSettings() {
 				title={ __( 'Lesson settings', 'ohmylms' ) }
 			>
 				<Button variant="link" href={ returnUrl }>
-					{ __( 'Back to Content Hub', 'ohmylms' ) }
+					{ backLabel }
 				</Button>
 				<ToggleControl
 					label={ __( 'Allow lesson preview', 'ohmylms' ) }

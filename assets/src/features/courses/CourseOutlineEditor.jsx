@@ -17,6 +17,7 @@ import {
 } from '@wordpress/components';
 import apiFetch from '@wordpress/api-fetch';
 import { __, _n, sprintf } from '@wordpress/i18n';
+import { withNativeReturn } from '../content-hub/editorNavigation.mjs';
 import { CourseStructurePublish } from './CourseStructurePublish';
 import { ActivityCreateForm } from './ActivityCreateForm';
 import { CourseReadiness } from './CourseReadiness';
@@ -1302,7 +1303,10 @@ export function CourseOutlineEditor( {
 								{ activity.edit_url && (
 									<Button
 										variant="secondary"
-										href={ activity.edit_url }
+										href={ withNativeReturn(
+											activity.edit_url,
+											window.location.hash.slice( 1 )
+										) }
 										target="_blank"
 										rel="noreferrer"
 									>
@@ -1589,7 +1593,10 @@ export function CourseOutlineEditor( {
 							{ ! picker.lesson &&
 								draft.create_urls?.[ kind ] && (
 									<Button
-										href={ draft.create_urls[ kind ] }
+										href={ withNativeReturn(
+											draft.create_urls[ kind ],
+											window.location.hash.slice( 1 )
+										) }
 										target="_blank"
 										rel="noreferrer"
 									>
