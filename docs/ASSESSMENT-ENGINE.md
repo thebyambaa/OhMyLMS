@@ -75,7 +75,9 @@ scoring policy they started with: `legacy-int` (whole points, as before) or `dec
   stored seed. Option values are per-attempt HMAC tokens (matching definitions use a
   separate token kind), so markup never reveals correctness, pairings or order. Text-answer
   option text, `is_correct`, rubrics, tolerances and answer settings are never output.
-- **Deadlines.** UTC deadline = start + time limit + extra time. Answers within the grace
+- **Deadlines.** UTC deadline = start + time limit + extra time, capped at the assessment's
+  closing time (`available_until`): the closing time is a hard deadline, so a learner who starts
+  30 minutes before the close gets 30 minutes, and an untimed attempt ends at the close. Answers within the grace
   period count; after it, only autosaved, server-received answers are graded. A cron job
   (every five minutes) and the next start finalize abandoned attempts.
 - **Question types** must declare `'snapshot' => true` (grade only the object passed in);

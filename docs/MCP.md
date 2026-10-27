@@ -44,6 +44,7 @@ run on every tool call. No API keys for model providers are stored by WordPress.
 | `get_skill_map`, `compare_syllabuses`, `get_student_skill_map` | A subject's coherence map (skills by domain and grade, links and issues, with a syllabus or learner laid over it), two syllabuses compared through shared skills, and a learner's own skill map. Read only. See [skill map](SKILL-MAP.md) |
 | `get_student_placement` | A learner's latest adaptive placement test per subject: working grade per domain and the skills to start with. Read only. See [placement test](PLACEMENT-TEST.md) |
 | `get_skill_placement_options`, `start_syllabus_analysis`, `advance_syllabus_analysis`, `list_skill_suggestions`, `review_skill_suggestions`, `get_skill_links`, `save_skill_link` | AI analysis of syllabuses, links between shared skills, and the review queue. See [AI skill analysis](AI-SKILL-ANALYSIS.md) |
+| `list_navigation_menus`, `setup_subjects_page`, `setup_explore_menu` | Set up public subject browsing: list the block navigation menus, find or create the published All subjects page, and add the Explore item to a menu. Both setup tools only describe the change unless `confirm` is `true`, and repeating a call changes nothing. See [subject browsing](SUBJECT-BROWSING.md#set-up-with-mcp) |
 | `list_courses`, `list_lessons`, `list_quizzes`, `list_questions` | Optional `page` (>=1), `per_page` (1–20), `search` (<=200 characters) |
 | `get_course`, `get_lesson`, `get_quiz`, `get_question` | Required positive integer `id` |
 | `get_course_chapters` | Required positive integer course `id` |

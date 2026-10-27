@@ -191,6 +191,18 @@ final class AssessmentSettings {
 		return true;
 	}
 
+	/** When the assessment closes, as a UTC timestamp; null when it never closes.
+	 *
+	 * The closing time is a hard deadline: an attempt started late ends at the close,
+	 * not after its full time limit.
+	 *
+	 * @param mixed $quiz_id Quiz identifier.
+	 */
+	public static function closes_ts( $quiz_id ) {
+		$settings = self::get( $quiz_id );
+		return $settings['available_until'] ? strtotime( $settings['available_until'] . ' UTC' ) : null;
+	}
+
 	/** Extra time for the learner of a new attempt (filter: ohmylms_attempt_extra_seconds).
 	 *
 	 * @param mixed $seconds Seconds.

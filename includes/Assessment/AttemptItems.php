@@ -50,6 +50,11 @@ final class AttemptItems {
 		if ( $context['extra_seconds'] > 0 && $context['deadline_at'] ) {
 			$context['deadline_at'] = gmdate( 'Y-m-d H:i:s', strtotime( $context['deadline_at'] . ' UTC' ) + $context['extra_seconds'] );
 		}
+		// The closing time ends every attempt, timed or not, even one started too late for its full time limit.
+		$closes_ts = AssessmentSettings::closes_ts( (int) ( $revision['quiz_id'] ?? 0 ) );
+		if ( $closes_ts && ( ! $context['deadline_at'] || $closes_ts < strtotime( $context['deadline_at'] . ' UTC' ) ) ) {
+			$context['deadline_at'] = gmdate( 'Y-m-d H:i:s', $closes_ts );
+		}
 		if ( ! $wpdb->insert( Schema::table( 'attempt_context' ), $context ) ) {
 			throw new \RuntimeException( 'Attempt context write failed' ); }
 

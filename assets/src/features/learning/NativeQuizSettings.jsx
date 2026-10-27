@@ -15,6 +15,8 @@ import { NativeQuizConfiguration } from './NativeQuizConfiguration';
 import './NativeExamPanel';
 import { ProfilePanel } from './ProfilePanel';
 import { ExportRowsButtons } from '../content-hub/ExportRowsButtons';
+import { ImportDialog } from '../content-hub/ImportDialog';
+import { ExamsPage } from '../content-hub/ExamsPage';
 import { createBlock } from '@wordpress/blocks';
 import { exportQuiz } from '../content-hub/api.mjs';
 import { downloadText } from '../content-hub/quizExchange.mjs';
@@ -181,10 +183,22 @@ function NativeQuizSettings() {
 	const { insertBlocks } = useDispatch( 'core/block-editor' );
 	const { savePost } = useDispatch( 'core/editor' );
 	const [ pickerOpen, setPickerOpen ] = useState( false );
+	const [ importOpen, setImportOpen ] = useState( false );
+	const [ importJob, setImportJob ] = useState( 0 );
 	const [ error, setError ] = useState( '' );
 	if ( postType !== 'ohmylms-quiz' ) {
 		return null;
 	}
+	// Imported questions are appended as question blocks; saving the quiz links them, as with the bank picker.
+	const addQuestions = ( ids ) =>
+		insertBlocks(
+			ids.map( ( questionId ) =>
+				createBlock( 'ohmylms/shared-multiple-choice', {
+					questionId,
+					delivery: 'quiz',
+				} )
+			)
+		);
 	return (
 		<>
 			<QuizPreviewAction />
@@ -213,6 +227,12 @@ function NativeQuizSettings() {
 					onClick={ () => setPickerOpen( true ) }
 				>
 					{ __( 'Add from question bank', 'ohmylms' ) }
+				</Button>
+				<Button
+					variant="secondary"
+					onClick={ () => setImportOpen( true ) }
+				>
+					{ __( 'Import questions', 'ohmylms' ) }
 				</Button>
 				<Button
 					variant="tertiary"
@@ -311,16 +331,29 @@ function NativeQuizSettings() {
 									);
 						} ) }
 					onClose={ () => setPickerOpen( false ) }
-					onPick={ ( ids ) =>
-						insertBlocks(
-							ids.map( ( questionId ) =>
-								createBlock( 'ohmylms/shared-multiple-choice', {
-									questionId,
-									delivery: 'quiz',
-								} )
-							)
-						)
+					onPick={ addQuestions }
+				/>
+			) }
+			{ importOpen && (
+				<ImportDialog
+					withSkills
+					secure={
+						window.ohmylmsNativeLesson?.profile?.id === 'exam'
 					}
+					onQuestions={ addQuestions }
+					onClose={ () => setImportOpen( false ) }
+					onJob={ ( id ) => {
+						setImportOpen( false );
+						setImportJob( id );
+					} }
+				/>
+			) }
+			{ importJob > 0 && (
+				<ExamsPage
+					reviewOnly
+					jobId={ importJob }
+					onQuestions={ addQuestions }
+					onClosed={ () => setImportJob( 0 ) }
 				/>
 			) }
 		</>

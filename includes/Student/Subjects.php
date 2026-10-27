@@ -103,17 +103,70 @@ final class Subjects {
 	/**
 	 * Render the index or one subject, reusing the same template in the learner hub.
 	 *
-	 * @param int  $subject_id Subject ID, zero for index.
-	 * @param bool $workspace Keep subject links inside the hub.
+	 * @param int    $subject_id Subject ID, zero for index.
+	 * @param bool   $workspace Keep subject links inside the hub.
+	 * @param string $base_url Page that embeds the browser; subject links then stay on it with `oml_subject`.
 	 * @return string
 	 */
-	public static function render( $subject_id = 0, $workspace = false ) {
+	public static function render( $subject_id = 0, $workspace = false, $base_url = '' ) {
 		self::enqueue();
 		$subject           = $subject_id ? self::get( $subject_id ) : null;
 		$subjects          = self::all();
-		$subject_index_url = self::url( 0, $workspace );
+		$subject_index_url = $base_url ? remove_query_arg( 'oml_subject', $base_url ) : self::url( 0, $workspace );
+		$subject_link      = static function ( $id ) use ( $workspace, $base_url, $subject_index_url ) {
+			return $base_url ? add_query_arg( 'oml_subject', absint( $id ), $subject_index_url ) : self::url( $id, $workspace );
+		};
 		ob_start();
 		include OHMYLMS_DIR . '/templates/subjects/browser.php';
+		return ob_get_clean();
+	}
+
+	/**
+	 * Render the Explore menu: one column per subject, listing its nested subjects (or first courses).
+	 *
+	 * @param string $base_url Page that embeds the menu; subject links stay on it with `oml_subject`.
+	 * @param bool   $dropdown Put the columns behind an Explore button.
+	 * @param array  $options  `full` opens the dropdown across the whole browser width; `label` is the button text.
+	 * @return string
+	 */
+	public static function explore( $base_url = '', $dropdown = false, array $options = array() ) {
+		self::enqueue();
+		$full  = $dropdown && ! empty( $options['full'] );
+		$label = isset( $options['label'] ) && '' !== $options['label'] ? $options['label'] : __( 'Explore', 'ohmylms' );
+		if ( $dropdown ) {
+			wp_enqueue_script( 'ohmylms-explore-menu', plugins_url( 'assets/js/explore-menu.js', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/js/explore-menu.js' ), true );
+		}
+		$index_url    = $base_url ? remove_query_arg( 'oml_subject', $base_url ) : self::url();
+		$subject_link = static function ( $id ) use ( $base_url, $index_url ) {
+			return $base_url ? add_query_arg( 'oml_subject', absint( $id ), $index_url ) : self::url( $id );
+		};
+		$columns      = array();
+		foreach ( self::all() as $node ) {
+			$links = array();
+			foreach ( $node['children'] as $child ) {
+				$links[] = array(
+					'label' => $child['name'],
+					'url'   => $subject_link( $child['id'] ),
+				);
+			}
+			if ( ! $links ) {
+				foreach ( $node['courses'] as $course ) {
+					$links[] = array(
+						'label' => $course['title'],
+						'url'   => add_query_arg( 'hub_subject', $node['id'], get_permalink( $course['id'] ) ),
+					);
+				}
+			}
+			$columns[] = array(
+				'id'    => $node['id'],
+				'name'  => $node['name'],
+				'url'   => $subject_link( $node['id'] ),
+				'links' => array_slice( $links, 0, 8 ),
+				'total' => (int) $node['total'],
+			);
+		}
+		ob_start();
+		include OHMYLMS_DIR . '/templates/subjects/explore.php';
 		return ob_get_clean();
 	}
 

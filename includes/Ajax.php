@@ -171,6 +171,15 @@ class Ajax {
 		$course_status = get_post_status( $course_id );
 
 		$course = ohmylms_get_course( $course_id );
+		if ( 'publish' !== $course_status ) {
+			wp_send_json(
+				array(
+					'status'  => 'error',
+					'message' => __( 'This course is not published yet, so it cannot be enrolled in.', 'ohmylms' ),
+				)
+			);
+		}
+
 		if ( ! $course->is_purchasable() ) {
 			$response = array(
 				'status'  => 'error',

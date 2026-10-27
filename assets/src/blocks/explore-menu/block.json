@@ -1,0 +1,15 @@
+{
+	"apiVersion": 3,
+	"name": "ohmylms/explore-menu",
+	"title": "OhMyLMS Explore Menu",
+	"category": "widgets",
+	"icon": "menu",
+	"description": "An Explore item for the site navigation that opens every subject across the full width of the screen.",
+	"textdomain": "ohmylms",
+	"parent": [ "core/navigation" ],
+	"attributes": {
+		"label": { "type": "string", "default": "Explore" }
+	},
+	"supports": { "html": false },
+	"editorScript": "ohmylms-browse-subjects-block"
+}

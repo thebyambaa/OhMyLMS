@@ -59,6 +59,18 @@ for ( const [ source, target ] of [
 		'assets/dist/admin/quiz-player-block.asset.php',
 	],
 	[
+		'build/sdk/browse-subjects-block.js',
+		'assets/dist/admin/browse-subjects-block.js',
+	],
+	[
+		'build/sdk/browse-subjects-block.js.map',
+		'assets/dist/admin/browse-subjects-block.js.map',
+	],
+	[
+		'build/sdk/browse-subjects-block.asset.php',
+		'assets/dist/admin/browse-subjects-block.asset.php',
+	],
+	[
 		'build/sdk/interactive-activity-block.js',
 		'assets/dist/admin/interactive-activity-block.js',
 	],

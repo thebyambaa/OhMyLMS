@@ -365,6 +365,6 @@ class Server {
 			),
 			'required'    => array( 'id' ),
 		);
-		return array_merge( $tools, ComparisonTools::definitions(), CourseObjectiveTools::definitions(), CourseStructureTools::definitions(), AuthoringTools::definitions(), QuestionBankTools::definitions(), SkillAssessmentTools::definitions(), ExamTools::definitions(), PerformanceTools::definitions(), CurriculumAiTools::definitions() );
+		return array_merge( $tools, ComparisonTools::definitions(), CourseObjectiveTools::definitions(), CourseStructureTools::definitions(), AuthoringTools::definitions(), QuestionBankTools::definitions(), SkillAssessmentTools::definitions(), ExamTools::definitions(), PerformanceTools::definitions(), CurriculumAiTools::definitions(), SiteSetupTools::definitions() );
 	}
 }
