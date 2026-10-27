@@ -1,9 +1,15 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 namespace OhMyLMS\Emails;
 
+/**
+ * Plugin emails implementation.
+ */
 class Emails {
 
 
+	/**
+	 * Get emails for Emails.
+	 */
 	public function get_emails() {
 		$emails = array(
 			\OhMyLMS\Emails\CreatorsEmail\NewOrder::class,
@@ -22,6 +28,9 @@ class Emails {
 		return $emails;
 	}
 
+	/**
+	 * Register email for Emails.
+	 */
 	public function register_email() {
 		$emails = $this->get_emails();
 		foreach ( $emails as $email ) {
@@ -30,6 +39,9 @@ class Emails {
 		$this->register_digest_cron();
 	}
 
+	/**
+	 * Register digest cron for Emails.
+	 */
 	public function register_digest_cron() {
 		if ( ! wp_next_scheduled( 'ohmylms_send_assignment_submission_digest' ) ) {
 			wp_schedule_event( time(), 'daily', 'ohmylms_send_assignment_submission_digest' );
@@ -39,6 +51,13 @@ class Emails {
 		}
 	}
 
+	/**
+	 * Replace merge tags for Emails.
+	 *
+	 * @param mixed $email Email.
+	 * @param mixed $order Order.
+	 * @param mixed $course Course.
+	 */
 	public static function replace_merge_tags( $email, $order, $course = null ) {
 
 		$replacements = array(
@@ -65,17 +84,20 @@ class Emails {
 			'[email@example.com]'          => get_option( 'admin_email' ),
 		);
 
-		// Ensure the input is valid
+		// Ensure the input is valid.
 		if ( ! is_string( $email ) || ! is_array( $replacements ) ) {
-			return false; // Return false for invalid input
+			return false; // Return false for invalid input.
 		}
 
-		// Replace all occurrences in the HTML
+		// Replace all occurrences in the HTML.
 		$updated_email = strtr( $email, $replacements );
 
 		return $updated_email;
 	}
 
+	/**
+	 * Get email settings for Emails.
+	 */
 	public static function get_email_settings() {
 		$settings = array();
 		$keys     = array(

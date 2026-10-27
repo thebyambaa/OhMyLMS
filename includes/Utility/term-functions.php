@@ -1,11 +1,17 @@
 <?php
+/**
+ * Term functions.
+ *
+ * @package OhMyLMS
+ */
+
 
 /**
  * Retrieve product terms for a given course.
  *
  * @param int    $course_id The ID of the course.
- * @param string $taxonomy  The taxonomy to retrieve terms from.
- * @param array  $args      Optional. Array of arguments to retrieve terms.
+ * @param string $taxonomy The taxonomy to retrieve terms from.
+ * @param array  $args Optional. Array of arguments to retrieve terms.
  *
  * @return array The terms associated with the course.
  *
@@ -35,10 +41,10 @@ function ohmylms_get_course_terms( $course_id, $taxonomy, $args = array() ) {
 /**
  * Retrieve terms for a given object.
  *
- * @param int    $object_id  The ID of the object.
- * @param string $taxonomy   The taxonomy to retrieve terms from.
- * @param string $field      Optional. The field to retrieve. Default null.
- * @param string $index_key  Optional. The key to index the terms by. Default null.
+ * @param int    $object_id The ID of the object.
+ * @param string $taxonomy The taxonomy to retrieve terms from.
+ * @param string $field Optional. The field to retrieve. Default null.
+ * @param string $index_key Optional. The key to index the terms by. Default null.
  *
  * @return array The terms associated with the object.
  *

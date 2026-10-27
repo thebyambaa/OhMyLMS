@@ -14,7 +14,10 @@ namespace OhMyLMS\Schools {
 namespace {
     define('ABSPATH', __DIR__); define('COOKIEHASH', 'test'); define('HOUR_IN_SECONDS', 3600); define('OHMYLMS_COURSE_CPT', 'course'); define('OHMYLMS_SLUG', 'ohmylms');
     $current = 1; $session_token = 'admin-session'; $cookie_writes = []; $transients = []; $audit = []; $clears = 0; $auth = null; $routes = [];
-    $users = [1 => (object) ['ID' => 1, 'display_name' => 'Admin', 'user_email' => 'admin@example.test', 'roles' => ['administrator']], 2 => (object) ['ID' => 2, 'display_name' => 'Student', 'user_email' => 'student@example.test', 'roles' => ['subscriber']], 3 => (object) ['ID' => 3, 'display_name' => 'Teacher', 'user_email' => 'teacher@example.test', 'roles' => ['ohmylms_teacher']], 4 => (object) ['ID' => 4, 'display_name' => 'Parent', 'user_email' => 'parent@example.test', 'roles' => ['ohmylms_parent']]];
+    $users = [1 => (object) ['ID' => 1, 'display_name' => 'Admin', 'user_email' => 'admin@example.test', 'roles' => ['administrator']], 2 => (object) ['ID' => 2, 'display_name' => 'Student', 'user_email' => 'student@example.test', 'roles' => ['subscriber']], 3 => (object) ['ID' => 3, 'display_name' => 'Teacher', 'user_email' => 'teacher@example.test', 'roles' => ['ohmylms_teacher']], 4 => (object) ['ID' => 4, 'display_name' => 'Parent', 'user_email' => 'parent@example.test', 'roles' => ['ohmylms_parent']], 5 => (object) ['ID' => 5, 'display_name' => 'School admin', 'user_email' => 'school@example.test', 'roles' => ['ohmylms_school_admin']], 6 => (object) ['ID' => 6, 'display_name' => 'Newer student', 'user_email' => 'student2@example.test', 'roles' => ['subscriber']]];
+    $usermeta = [6 => ['_ohmylms_last_login' => '2026-01-02 10:00:00'], 2 => ['_ohmylms_last_login' => '2026-03-01 09:00:00']];
+    function get_user_meta($id, $key, $single = false) { return $GLOBALS['usermeta'][$id][$key] ?? ''; }
+    function update_user_meta($id, $key, $value) { $GLOBALS['usermeta'][$id][$key] = $value; return true; }
     function get_current_user_id() { return $GLOBALS['current']; }
     function wp_get_session_token() { return $GLOBALS['session_token']; }
     function wp_set_current_user($id) { $GLOBALS['current'] = $id; }
@@ -97,5 +100,21 @@ namespace {
     check($current === 1 && $auth === [1, 'admin-session'] && $clears === 2, 'Original admin session not restored');
     check(!WP_Session_Tokens::get_instance(2)->verify('target-session') && !$transients, 'Target session or return token survived return');
     check($audit === [[1, 'view_as_started', 2], [1, 'view_as_returned', 2]], 'Switch audit attribution incorrect');
+    // One-click previews: school admins are a previewable role and the default person is chosen safely.
+    check(array_column(ViewAs::candidates('school'), 'id') === [5], 'School administrators are not offered');
+    check(ViewAs::default(['role' => 'student'])['person']['id'] === 2 && ViewAs::default(['role' => 'student'])['source'] === 'recent', 'The most recently signed-in student is not the default');
+    check(ViewAs::default(['role' => 'parent'])['person']['id'] === 4 && ViewAs::default(['role' => 'school'])['person']['id'] === 5, 'Parent or school default missing');
+    $usermeta[1][ViewAs::LAST_META . 'student'] = 6;
+    check(ViewAs::default(['role' => 'student']) === ['role' => 'student', 'person' => ['id' => 6, 'name' => 'Newer student', 'email' => 'student2@example.test'], 'source' => 'remembered'], 'The remembered student is not preferred');
+    $usermeta[1][ViewAs::LAST_META . 'student'] = 3;
+    check(ViewAs::default(['role' => 'student'])['source'] === 'recent', 'A remembered person who no longer holds the role was kept');
+    denied(fn() => ViewAs::default(['role' => 'instructor']), 'An unsupported default role was accepted');
+    check(isset($routes['/school/view-as/default']) && $routes['/school/view-as/default']['methods'] === 'GET', 'The default route is missing');
+    $request->nonce = 'valid';
+    check($routes['/school/view-as/default']['permission_callback']($request) === true, 'Admin cannot read the default person');
+    $session_token = 'admin-session';
+    ViewAs::start(['role' => 'teacher', 'user_id' => 3, 'class_id' => 0, 'course_id' => 0]);
+    check($usermeta[1][ViewAs::LAST_META . 'teacher'] === 3, 'The previewed person was not remembered');
+    check(ViewAs::pick_default([], [], []) === ['person' => null, 'source' => ''], 'An empty role must have no default');
     echo "View-as scope, nonce, session binding, revocation, cookie and return checks passed.\n";
 }

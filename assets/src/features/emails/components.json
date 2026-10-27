@@ -1,90 +1,164 @@
 [
-  {
-    "binding": "C4",
-    "name": "EmailSettingsPage",
-    "file": "EmailSettingsPage.jsx",
-    "dependencies": ["D", "HG", "I", "R4", "React", "T", "b", "g", "u4", "x4", "y", "z"]
-  },
-  {
-    "binding": "c4",
-    "name": "EmailTemplateList",
-    "file": "EmailTemplateList.jsx",
-    "dependencies": ["Bt", "D", "I", "React", "T", "b", "f", "g", "i4", "y"]
-  },
-  {
-    "binding": "f4",
-    "name": "EmailButtonPosition",
-    "file": "EmailButtonPosition.jsx",
-    "dependencies": ["I", "React", "T", "Tt", "b", "d4", "m4", "p4", "q", "s4", "y"]
-  },
-  {
-    "binding": "h4",
-    "name": "EmailSenderOptions",
-    "file": "EmailSenderOptions.jsx",
-    "dependencies": ["I", "Mt", "React", "T", "W", "b", "g4", "y"]
-  },
-  {
-    "binding": "S4",
-    "name": "EmailPersonalization",
-    "file": "EmailPersonalization.jsx",
-    "dependencies": ["E4", "I", "L2", "React", "T", "_4", "b", "b4", "v4", "y", "y4", "z"]
-  },
-  {
-    "binding": "Yee",
-    "name": "EmailEditorPage",
-    "file": "EmailEditorPage.jsx",
-    "dependencies": ["Ea", "I", "Nr", "React", "T", "b", "f", "g", "qee", "v", "y"]
-  },
-  {
-    "binding": "Uee",
-    "name": "EmailEditor",
-    "file": "EmailEditor.jsx",
-    "dependencies": [
-      "Bee",
-      "Dee",
-      "Ea",
-      "Fee",
-      "Hee",
-      "I",
-      "Oee",
-      "React",
-      "Ree",
-      "T",
-      "Vee",
-      "b",
-      "g",
-      "y",
-      "z"
-    ]
-  },
-  {
-    "binding": "See",
-    "name": "EmailEditorHeader",
-    "file": "EmailEditorHeader.jsx",
-    "dependencies": ["Eee", "I", "React", "_ee", "b"]
-  },
-  {
-    "binding": "bee",
-    "name": "EmailDesktopIcon",
-    "file": "EmailDesktopIcon.jsx",
-    "dependencies": ["React"]
-  },
-  {
-    "binding": "wee",
-    "name": "EmailMobileIcon",
-    "file": "EmailMobileIcon.jsx",
-    "dependencies": ["React"]
-  },
-  {
-    "binding": "Pee",
-    "name": "EmailPreview",
-    "file": "EmailPreview.jsx",
-    "dependencies": ["Cee", "Ea", "I", "React", "T", "b", "g", "y"]
-  },
-  {
-    "binding": "Iee",
-    "name": "EmailFields",
-    "file": "EmailFields.jsx",
-    "dependencies": ["Aee", "I", "Mee", "Mt", "React", "T", "W", "b", "g", "jee", "ne", "y"]
-  }
+	{
+		"binding": "C4",
+		"name": "EmailSettingsPage",
+		"file": "EmailSettingsPage.jsx",
+		"dependencies": [
+			"D",
+			"HG",
+			"I",
+			"R4",
+			"React",
+			"T",
+			"b",
+			"g",
+			"u4",
+			"x4",
+			"y",
+			"z"
+		]
+	},
+	{
+		"binding": "c4",
+		"name": "EmailTemplateList",
+		"file": "EmailTemplateList.jsx",
+		"dependencies": [
+			"Bt",
+			"D",
+			"I",
+			"React",
+			"T",
+			"b",
+			"f",
+			"g",
+			"i4",
+			"y"
+		]
+	},
+	{
+		"binding": "f4",
+		"name": "EmailButtonPosition",
+		"file": "EmailButtonPosition.jsx",
+		"dependencies": [
+			"I",
+			"React",
+			"T",
+			"Tt",
+			"b",
+			"d4",
+			"m4",
+			"p4",
+			"q",
+			"s4",
+			"y"
+		]
+	},
+	{
+		"binding": "h4",
+		"name": "EmailSenderOptions",
+		"file": "EmailSenderOptions.jsx",
+		"dependencies": [ "I", "Mt", "React", "T", "W", "b", "g4", "y" ]
+	},
+	{
+		"binding": "S4",
+		"name": "EmailPersonalization",
+		"file": "EmailPersonalization.jsx",
+		"dependencies": [
+			"E4",
+			"I",
+			"L2",
+			"React",
+			"T",
+			"_4",
+			"b",
+			"b4",
+			"v4",
+			"y",
+			"y4",
+			"z"
+		]
+	},
+	{
+		"binding": "Yee",
+		"name": "EmailEditorPage",
+		"file": "EmailEditorPage.jsx",
+		"dependencies": [
+			"Ea",
+			"I",
+			"Nr",
+			"React",
+			"T",
+			"b",
+			"f",
+			"g",
+			"qee",
+			"v",
+			"y"
+		]
+	},
+	{
+		"binding": "Uee",
+		"name": "EmailEditor",
+		"file": "EmailEditor.jsx",
+		"dependencies": [
+			"Bee",
+			"Dee",
+			"Ea",
+			"Fee",
+			"Hee",
+			"I",
+			"Oee",
+			"React",
+			"Ree",
+			"T",
+			"Vee",
+			"b",
+			"g",
+			"y",
+			"z"
+		]
+	},
+	{
+		"binding": "See",
+		"name": "EmailEditorHeader",
+		"file": "EmailEditorHeader.jsx",
+		"dependencies": [ "Eee", "I", "React", "_ee", "b" ]
+	},
+	{
+		"binding": "bee",
+		"name": "EmailDesktopIcon",
+		"file": "EmailDesktopIcon.jsx",
+		"dependencies": [ "React" ]
+	},
+	{
+		"binding": "wee",
+		"name": "EmailMobileIcon",
+		"file": "EmailMobileIcon.jsx",
+		"dependencies": [ "React" ]
+	},
+	{
+		"binding": "Pee",
+		"name": "EmailPreview",
+		"file": "EmailPreview.jsx",
+		"dependencies": [ "Cee", "Ea", "I", "React", "T", "b", "g", "y" ]
+	},
+	{
+		"binding": "Iee",
+		"name": "EmailFields",
+		"file": "EmailFields.jsx",
+		"dependencies": [
+			"Aee",
+			"I",
+			"Mee",
+			"Mt",
+			"React",
+			"T",
+			"W",
+			"b",
+			"g",
+			"jee",
+			"ne",
+			"y"
+		]
+	}
 ]

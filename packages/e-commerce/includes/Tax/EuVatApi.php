@@ -1,170 +1,172 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Retains the established public include path and Composer class mapping.
 
-use CodeRex\Ecommerce\Includes\Tax\TaxService;
+use OhMyLMS\Commerce\Includes\Tax\TaxService;
 
-class EuVatApi
-{
-    const API_URL = 'https://ec.europa.eu/taxation_customs/vies/checkVatService.wsdl';
+/**
+ * Plugin oh my lms_eu_vat_api implementation.
+ */
+class OhMyLMS_EU_VAT_API {
 
-    /**
-     * Check a VAT number against the supplied country code.
-     *
-     * @param string $vat_number The VAT number to check.
-     * @param string $country_code The country code.
-     *
-     * @return  EUVATAPIResponse
-     */
-    public static function check_vat($vat_number, $country_code)
-    {
-        $result = new EuVatApiResponse($vat_number, $country_code);
+	const API_URL = 'https://ec.europa.eu/taxation_customs/vies/checkVatService.wsdl';
 
-        if (! $vat_number) {
-            $result->error = EuVatApiResponse::NO_VAT_NUMBER;
+	/**
+	 * Check a VAT number against the supplied country code.
+	 *
+	 * @param string $vat_number The VAT number to check.
+	 * @param string $country_code The country code.
+	 *
+	 * @return  EUVATAPIResponse
+	 */
+	public static function check_vat( $vat_number, $country_code ) {
+		$result = new OhMyLMS_EU_VAT_API_Response( $vat_number, $country_code );
 
-            return $result;
-        }
+		if ( ! $vat_number ) {
+			$result->error = OhMyLMS_EU_VAT_API_Response::NO_VAT_NUMBER;
 
-        if (! $country_code) {
+			return $result;
+		}
 
-            $result->error = EuVatApiResponse::NO_COUNTRY_CODE;
+		if ( ! $country_code ) {
 
-            return $result;
-        }
+			$result->error = OhMyLMS_EU_VAT_API_Response::NO_COUNTRY_CODE;
 
-        // Check country is in the EU.
-        if (! in_array($country_code, self::get_eu_countries(), true)) {
-            $result->error = EuVatApiResponse::INVALID_COUNTRY_CODE;
+			return $result;
+		}
 
-            return $result;
-        }
+		// Check country is in the EU.
+		if ( ! in_array( $country_code, self::get_eu_countries(), true ) ) {
+			$result->error = OhMyLMS_EU_VAT_API_Response::INVALID_COUNTRY_CODE;
 
-        // Sanitize VAT number (remove white space, etc).
-        $vat_number = str_replace([' ', '.', '-'], '', strtoupper($vat_number));
+			return $result;
+		}
 
-        // Check prefix.
-        $vat_prefix_for_country = self::get_vat_number_prefix($country_code);
-        $vat_number_prefix      = substr($vat_number, 0, 2);
+		// Sanitize VAT number (remove white space, etc).
+		$vat_number = str_replace( array( ' ', '.', '-' ), '', strtoupper( $vat_number ) );
 
-        // If prefix is a valid VAT prefix but doesn't match selected country, return an error.
-        if ($vat_prefix_for_country !== $vat_number_prefix) {
-            $result->error = EuVatApiResponse::VAT_NUMBER_INVALID_FOR_COUNTRY;
+		// Check prefix.
+		$vat_prefix_for_country = self::get_vat_number_prefix( $country_code );
+		$vat_number_prefix      = substr( $vat_number, 0, 2 );
 
-            return $result;
-        }
+		// If prefix is a valid VAT prefix but doesn't match selected country, return an error.
+		if ( $vat_prefix_for_country !== $vat_number_prefix ) {
+			$result->error = OhMyLMS_EU_VAT_API_Response::VAT_NUMBER_INVALID_FOR_COUNTRY;
 
-        // Strip country code if VAT number starts with it.
-        if ($vat_prefix_for_country === $vat_number_prefix) {
-            $vat_number = substr($vat_number, 2);
-        }
+			return $result;
+		}
 
-        $result = self::vies_request($result, $vat_number, $country_code, $vat_prefix_for_country);
+		// Strip country code if VAT number starts with it.
+		if ( $vat_prefix_for_country === $vat_number_prefix ) {
+			$vat_number = substr( $vat_number, 2 );
+		}
 
-        // Catch all for invalid VAT number if no error set.
-        if (! $result->is_valid() && empty($result->error)) {
-            $result->error = EuVatApiResponse::INVALID_VAT_NUMBER;
-        }
+		$result = self::vies_request( $result, $vat_number, $country_code, $vat_prefix_for_country );
 
-        return $result;
-    }
+		// Catch all for invalid VAT number if no error set.
+		if ( ! $result->is_valid() && empty( $result->error ) ) {
+			$result->error = OhMyLMS_EU_VAT_API_Response::INVALID_VAT_NUMBER;
+		}
 
-    /**
-     * Makes a request to the VIES API
-     *
-     * @param EuVatApiResponse $result
-     * @param string $vat_number
-     * @param string $country_code
-     * @param string $vat_prefix_for_country
-     *
-     * @return EuVatApiResponse
-     */
-    private static function vies_request($result, $vat_number, $country_code, $vat_prefix_for_country)
-    {
-        try {
+		return $result;
+	}
 
-            $cache_key = md5('ohmylms_eu_vat_vies_' . $country_code . '_' . $vat_number . '_' . $vat_prefix_for_country);
+	/**
+	 * Makes a request to the VIES API
+	 *
+	 * @param OhMyLMS_EU_VAT_API_Response $result Result.
+	 * @param string                      $vat_number Vat number.
+	 * @param string                      $country_code Country code.
+	 * @param string                      $vat_prefix_for_country Vat prefix for country.
+	 *
+	 * @return OhMyLMS_EU_VAT_API_Response
+	 */
+	private static function vies_request( $result, $vat_number, $country_code, $vat_prefix_for_country ) {
+		try {
 
-            $response = get_transient($cache_key);
+			$cache_key = md5( 'ohmylms_eu_vat_vies_' . $country_code . '_' . $vat_number . '_' . $vat_prefix_for_country );
 
-            if (empty($response) || false === $response) {
+			$response = get_transient( $cache_key );
 
-                // Create the SOAP client for VIES API call.
-                $client = new \SoapClient(self::API_URL);
+			if ( empty( $response ) || false === $response ) {
 
-                // API parameters.
-                $parameters = [
-                    'countryCode' => $vat_prefix_for_country,
-                    'vatNumber'   => $vat_number,
-                ];
+				// Create the SOAP client for VIES API call.
+				$client = new \SoapClient( self::API_URL );
 
-                // Fetch response.
-                $response = $client->checkVat($parameters);
+				// API parameters.
+				$parameters = array(
+					'countryCode' => $vat_prefix_for_country,
+					'vatNumber'   => $vat_number,
+				);
 
-                // Save response for a day
-                set_transient($cache_key, $response, DAY_IN_SECONDS);
-            }
+				// Fetch response.
+				$response = $client->checkVat( $parameters );
 
-            $result->valid = filter_var($response->valid, FILTER_VALIDATE_BOOLEAN);
+				// Save response for a day.
+				set_transient( $cache_key, $response, DAY_IN_SECONDS );
+			}
 
-            // 3 dashes are returned in name and address field if not found
-            if ($response->name && '---' !== $response->name) {
-                $result->name = $response->name;
-            }
+			$result->valid = filter_var( $response->valid, FILTER_VALIDATE_BOOLEAN );
 
-            if ($response->address && '---' !== $response->address) {
-                $address = explode("\n", $response->address);
+			// 3 dashes are returned in name and address field if not found
+			if ( $response->name && '---' !== $response->name ) {
+				$result->name = $response->name;
+			}
 
-                // Add country code to address
-                $address[] = $country_code;
+			if ( $response->address && '---' !== $response->address ) {
+				$address = explode( "\n", $response->address );
 
-                $result->address = implode(', ', array_filter($address));
-            }
-        } catch (\Exception $exception) {
-            // Handle error.
-            $result->error = $exception->getMessage();
-        }
+				// Add country code to address.
+				$address[] = $country_code;
 
-        // Translate common errors.
-        if ('MS_UNAVAILABLE' === $result->error) {
-            $result->error = EuVatApiResponse::API_ERROR;
-        } elseif ('INVALID_INPUT' === $result->error) {
-            $result->error = EuVatApiResponse::INVALID_INPUT;
-        }
+				$result->address = implode( ', ', array_filter( $address ) );
+			}
+		} catch ( \Exception $exception ) {
+			// Handle error.
+			$result->error = $exception->getMessage();
+		}
 
-        return $result;
-    }
+		// Translate common errors.
+		if ( 'MS_UNAVAILABLE' === $result->error ) {
+			$result->error = OhMyLMS_EU_VAT_API_Response::API_ERROR;
+		} elseif ( 'INVALID_INPUT' === $result->error ) {
+			$result->error = OhMyLMS_EU_VAT_API_Response::INVALID_INPUT;
+		}
 
-    /**
-     * Return the vat number prefix.
-     *
-     * @param string $country
-     *
-     * @return string
-     */
-    private static function get_vat_number_prefix($country)
-    {
-        switch ($country) {
-            // Greek VAT numbers begin with EL, not GR.
-            case 'GR':
-                $vat_prefix = 'EL';
-                break;
-            // makes monaco use france's tax rate
-            case 'MC':
-                $vat_prefix = 'FR';
-                break;
-            // makes UK use Northern ireland's tax rate
-            case 'GB':
-                $vat_prefix = 'XI';
-                break;
-            default:
-                $vat_prefix = $country;
-                break;
-        }
+		return $result;
+	}
 
-        return $vat_prefix;
-    }
+	/**
+	 * Return the vat number prefix.
+	 *
+	 * @param string $country Country.
+	 *
+	 * @return string
+	 */
+	private static function get_vat_number_prefix( $country ) {
+		switch ( $country ) {
+			// Greek VAT numbers begin with EL, not GR.
+			case 'GR':
+				$vat_prefix = 'EL';
+				break;
+			// makes monaco use france's tax rate.
+			case 'MC':
+				$vat_prefix = 'FR';
+				break;
+			// makes UK use Northern ireland's tax rate.
+			case 'GB':
+				$vat_prefix = 'XI';
+				break;
+			default:
+				$vat_prefix = $country;
+				break;
+		}
 
-    private static function get_eu_countries()
-    {
-        return TaxService::get_instance()->get_eu_countries();
-    }
+		return $vat_prefix;
+	}
+
+	/**
+	 * Get eu countries for Eu vat api.
+	 */
+	private static function get_eu_countries() {
+		return TaxService::get_instance()->get_eu_countries();
+	}
 }

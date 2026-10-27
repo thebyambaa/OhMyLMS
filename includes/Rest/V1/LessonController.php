@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Controller for handling lesson REST API endpoints.
+ *
+ * @package OhMyLMS
+ */
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
@@ -183,7 +188,7 @@ class LessonController extends RestController {
 		$page        = (int) $query_args['paged'];
 		$total_posts = $posts_query->found_posts;
 
-		if ( $total_posts < 1 && $page > 1 ) {
+		if ( 1 > $total_posts && 1 < $page ) {
 			unset( $query_args['paged'] );
 			$count_query = new WP_Query();
 			$count_query->query( $query_args );
@@ -203,7 +208,7 @@ class LessonController extends RestController {
 		}
 		$base = add_query_arg( $request_params, rest_url( sprintf( '/%s/%s', $this->namespace, $this->rest_base ) ) );
 
-		if ( $page > 1 ) {
+		if ( 1 < $page ) {
 			$prev_page = $page - 1;
 			if ( $prev_page > $max_pages ) {
 				$prev_page = $max_pages;
@@ -222,11 +227,11 @@ class LessonController extends RestController {
 	/**
 	 * Add lesson
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
 	 * @since 1.0.0
 	 */
-	public function create_item( $request ){
+	public function create_item( $request ) {
 		if ( ! empty( $request['id'] ) ) {
 			// Translators: %s is replaced with object name.
 			return new WP_Error( 'ohmylms_rest_lesson_exists', sprintf( __( 'Cannot create existing %s.', 'ohmylms' ), 'Lesson' ), array( 'status' => 400 ) );
@@ -261,7 +266,7 @@ class LessonController extends RestController {
 	/**
 	 * Update lesson settings
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
 	 * @since 1.0.0
 	 */
@@ -327,7 +332,7 @@ class LessonController extends RestController {
 	 * @param \WP_REST_Request $request The REST request object containing the meta data.
 	 * @return bool True on success, false on failure.
 	 *
-	 * @throws DataException
+	 * @throws DataException When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	protected function update_post_meta_fields( $post, $request ) {
@@ -499,7 +504,7 @@ class LessonController extends RestController {
 	/**
 	 * Save lesson settings
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
 	 * @since 1.0.0
 	 */
@@ -515,14 +520,14 @@ class LessonController extends RestController {
 	/**
 	 * Get lesson content
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
 	 * @since 1.0.0
 	 */
 	public function get_item( $request ) {
 		$id   = (int) $request['id'];
 		$post = get_post( $id );
-		if ( empty( $id ) || empty( $post->ID ) || $post->post_type !== OHMYLMS_LESSON_CPT ) {
+		if ( empty( $id ) || empty( $post->ID ) || OHMYLMS_LESSON_CPT !== $post->post_type ) {
 			return new WP_Error( 'ohmylms_rest_invalid_lesson_id', __( 'Invalid ID.', 'ohmylms' ), array( 'status' => 404 ) );
 		}
 
@@ -539,7 +544,7 @@ class LessonController extends RestController {
 	/**
 	 * Delete a single lesson.
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
 	 *
 	 * @since 1.0.0
@@ -578,7 +583,7 @@ class LessonController extends RestController {
 	/**
 	 * Save lesson
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return bool
 	 * @since 1.0.0
 	 */
@@ -590,7 +595,7 @@ class LessonController extends RestController {
 	/**
 	 * Prepare a lesson for database.
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return Lesson
 	 *
 	 * @since 1.0.0
@@ -611,7 +616,7 @@ class LessonController extends RestController {
 			$lesson->set_type( $request['type'] );
 		}
 		if ( isset( $request['description'] ) ) {
-			$lesson->set_description( $request['description']);
+			$lesson->set_description( $request['description'] );
 		}
 		if ( isset( $request['slug'] ) ) {
 			$lesson->set_slug( wp_filter_post_kses( $request['slug'] ) );
@@ -626,14 +631,15 @@ class LessonController extends RestController {
 	/**
 	 * Get lesson data.
 	 *
-	 * @param Lesson $lesson
+	 * @param Lesson $lesson Lesson.
 	 * @return array
 	 *
 	 * @since 1.0.0
+	 * @param mixed  $request REST request.
 	 */
 	protected function get_lesson_data( $lesson, $request = null ) {
 		if ( $request instanceof WP_REST_Request ) {
-			if (isset($request['order_number'])) {
+			if ( isset( $request['order_number'] ) ) {
 				$order_number = intval( $request['order_number'] );
 			} else {
 				$order_number = $lesson->get_order_number();
@@ -644,7 +650,7 @@ class LessonController extends RestController {
 
 		$data = array(
 			'id'                => $lesson->get_id(),
-			'name'              => html_entity_decode($lesson->get_name()),
+			'name'              => html_entity_decode( $lesson->get_name() ),
 			'slug'              => $lesson->get_slug(),
 			'status'            => $lesson->get_status(),
 			'type'              => $lesson->get_type(),
@@ -678,7 +684,7 @@ class LessonController extends RestController {
 	 * Prepare a single lesson for response.
 	 *
 	 * @param \WP_Post         $post The post object.
-	 * @param \WP_REST_Request $request
+	 * @param \WP_REST_Request $request REST request.
 	 * @return WP_REST_Response
 	 *
 	 * @since 1.0.0
@@ -707,8 +713,8 @@ class LessonController extends RestController {
 	/**
 	 * Prepare links for the request.
 	 *
-	 * @param $product
-	 * @param $request
+	 * @param mixed $product Product.
+	 * @param mixed $request REST request.
 	 * @return array[]
 	 *
 	 * @since 1.0.0

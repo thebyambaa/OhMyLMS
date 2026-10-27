@@ -11,16 +11,16 @@ import { createEmailMobileIcon } from './EmailMobileIcon';
 import { createEmailPreview } from './EmailPreview';
 import { createEmailFields } from './EmailFields';
 export const emailComponents = {
-  EmailSettingsPage: createEmailSettingsPage,
-  EmailTemplateList: createEmailTemplateList,
-  EmailButtonPosition: createEmailButtonPosition,
-  EmailSenderOptions: createEmailSenderOptions,
-  EmailPersonalization: createEmailPersonalization,
-  EmailEditorPage: createEmailEditorPage,
-  EmailEditor: createEmailEditor,
-  EmailEditorHeader: createEmailEditorHeader,
-  EmailDesktopIcon: createEmailDesktopIcon,
-  EmailMobileIcon: createEmailMobileIcon,
-  EmailPreview: createEmailPreview,
-  EmailFields: createEmailFields,
+	EmailSettingsPage: createEmailSettingsPage,
+	EmailTemplateList: createEmailTemplateList,
+	EmailButtonPosition: createEmailButtonPosition,
+	EmailSenderOptions: createEmailSenderOptions,
+	EmailPersonalization: createEmailPersonalization,
+	EmailEditorPage: createEmailEditorPage,
+	EmailEditor: createEmailEditor,
+	EmailEditorHeader: createEmailEditorHeader,
+	EmailDesktopIcon: createEmailDesktopIcon,
+	EmailMobileIcon: createEmailMobileIcon,
+	EmailPreview: createEmailPreview,
+	EmailFields: createEmailFields,
 };

@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * OhMyLMS Dashboard Element for Bricks Builder
  *
@@ -13,20 +13,55 @@ namespace OhMyLMS\Bricks\Elements;
 
 use OhMyLMS\Shortcodes\ShortCodeDashboard;
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * DashboardElement class
  */
 class DashboardElement extends \Bricks\Element {
 
+	/**
+	 * Category.
+	 *
+	 * @var mixed
+	 */
 	public $category = 'ohmylms';
-	public $name     = 'ohmylms-dashboard';
-	public $icon     = 'ti-dashboard';
+	/**
+	 * Name.
+	 *
+	 * @var mixed
+	 */
+	public $name = 'ohmylms-dashboard';
+	/**
+	 * Icon.
+	 *
+	 * @var mixed
+	 */
+	public $icon = 'ti-dashboard';
+	/**
+	 * Keywords.
+	 *
+	 * @var mixed
+	 */
 	public $keywords = array( 'dashboard', 'student', 'creator', 'lms' );
-	public $scripts  = array( 'ohmylms-frontend' );
-	public $styles   = array( 'ohmylms-frontend' );
+	/**
+	 * Scripts.
+	 *
+	 * @var mixed
+	 */
+	public $scripts = array( 'ohmylms-frontend' );
+	/**
+	 * Styles.
+	 *
+	 * @var mixed
+	 */
+	public $styles = array( 'ohmylms-frontend' );
 
+	/**
+	 * Get label for Dashboard element.
+	 */
 	public function get_label() {
 		return esc_html__( 'OhMyLMS Dashboard', 'ohmylms' );
 	}
@@ -35,6 +70,9 @@ class DashboardElement extends \Bricks\Element {
 	// Controls
 	// -------------------------------------------------------------------------
 
+	/**
+	 * Set controls for Dashboard element.
+	 */
 	public function set_controls() {
 		$this->controls       = array();
 		$this->control_groups = array();
@@ -42,6 +80,9 @@ class DashboardElement extends \Bricks\Element {
 		$this->set_style_controls();
 	}
 
+	/**
+	 * Set content controls for Dashboard element.
+	 */
 	private function set_content_controls() {
 		$this->controls['show_header'] = array(
 			'tab'     => 'content',
@@ -65,18 +106,21 @@ class DashboardElement extends \Bricks\Element {
 		);
 	}
 
+	/**
+	 * Set style controls for Dashboard element.
+	 */
 	private function set_style_controls() {
 
-		$this->control_groups['header_style'] = array(
+		$this->control_groups['header_style']        = array(
 			'title'    => esc_html__( 'Header Style', 'ohmylms' ),
 			'tab'      => 'style',
 			'required' => array( array( 'show_header', '=', true ) ),
 		);
-		$this->control_groups['user_menu_style'] = array(
+		$this->control_groups['user_menu_style']     = array(
 			'title' => esc_html__( 'User Menu Style', 'ohmylms' ),
 			'tab'   => 'style',
 		);
-		$this->control_groups['dashboard_style'] = array(
+		$this->control_groups['dashboard_style']     = array(
 			'title' => esc_html__( 'Dashboard Style', 'ohmylms' ),
 			'tab'   => 'style',
 		);
@@ -84,11 +128,11 @@ class DashboardElement extends \Bricks\Element {
 			'title' => esc_html__( 'Course Button Style', 'ohmylms' ),
 			'tab'   => 'style',
 		);
-		$this->control_groups['card_style'] = array(
+		$this->control_groups['card_style']          = array(
 			'title' => esc_html__( 'Card Style', 'ohmylms' ),
 			'tab'   => 'style',
 		);
-		$this->control_groups['title_typography'] = array(
+		$this->control_groups['title_typography']    = array(
 			'title' => esc_html__( 'Title Typography', 'ohmylms' ),
 			'tab'   => 'style',
 		);
@@ -101,21 +145,21 @@ class DashboardElement extends \Bricks\Element {
 			'default' => array( 'hex' => '#000D2C' ),
 		);
 
-		$this->controls['user_menu_color'] = array(
+		$this->controls['user_menu_color']            = array(
 			'tab'     => 'style',
 			'group'   => 'user_menu_style',
 			'label'   => esc_html__( 'Text Color', 'ohmylms' ),
 			'type'    => 'color',
 			'default' => array( 'hex' => '#000000' ),
 		);
-		$this->controls['user_menu_bg_color'] = array(
+		$this->controls['user_menu_bg_color']         = array(
 			'tab'     => 'style',
 			'group'   => 'user_menu_style',
 			'label'   => esc_html__( 'Background Color', 'ohmylms' ),
 			'type'    => 'color',
 			'default' => array( 'hex' => '#FFFFFF' ),
 		);
-		$this->controls['user_menu_font_size'] = array(
+		$this->controls['user_menu_font_size']        = array(
 			'tab'     => 'style',
 			'group'   => 'user_menu_style',
 			'label'   => esc_html__( 'Font Size (px)', 'ohmylms' ),
@@ -124,7 +168,7 @@ class DashboardElement extends \Bricks\Element {
 			'min'     => 1,
 			'max'     => 200,
 		);
-		$this->controls['user_menu_font_weight'] = array(
+		$this->controls['user_menu_font_weight']      = array(
 			'tab'     => 'style',
 			'group'   => 'user_menu_style',
 			'label'   => esc_html__( 'Font Weight', 'ohmylms' ),
@@ -133,21 +177,21 @@ class DashboardElement extends \Bricks\Element {
 			'min'     => 100,
 			'max'     => 900,
 		);
-		$this->controls['user_menu_hover_color'] = array(
+		$this->controls['user_menu_hover_color']      = array(
 			'tab'     => 'style',
 			'group'   => 'user_menu_style',
 			'label'   => esc_html__( 'Hover Text Color', 'ohmylms' ),
 			'type'    => 'color',
 			'default' => array( 'hex' => '#000000' ),
 		);
-		$this->controls['user_menu_hover_bg_color'] = array(
+		$this->controls['user_menu_hover_bg_color']   = array(
 			'tab'     => 'style',
 			'group'   => 'user_menu_style',
 			'label'   => esc_html__( 'Hover Background Color', 'ohmylms' ),
 			'type'    => 'color',
 			'default' => array( 'hex' => '#F5F5F5' ),
 		);
-		$this->controls['user_menu_icon_color'] = array(
+		$this->controls['user_menu_icon_color']       = array(
 			'tab'     => 'style',
 			'group'   => 'user_menu_style',
 			'label'   => esc_html__( 'Icon Color', 'ohmylms' ),
@@ -170,21 +214,21 @@ class DashboardElement extends \Bricks\Element {
 			'default' => array( 'hex' => '#F9FAFD' ),
 		);
 
-		$this->controls['course_button_text_color'] = array(
+		$this->controls['course_button_text_color']       = array(
 			'tab'     => 'style',
 			'group'   => 'course_button_style',
 			'label'   => esc_html__( 'Text Color', 'ohmylms' ),
 			'type'    => 'color',
 			'default' => array( 'hex' => '#FFFFFF' ),
 		);
-		$this->controls['course_button_bg_color'] = array(
+		$this->controls['course_button_bg_color']         = array(
 			'tab'     => 'style',
 			'group'   => 'course_button_style',
 			'label'   => esc_html__( 'Background Color', 'ohmylms' ),
 			'type'    => 'color',
 			'default' => array( 'hex' => '#4361EE' ),
 		);
-		$this->controls['course_button_font_size'] = array(
+		$this->controls['course_button_font_size']        = array(
 			'tab'     => 'style',
 			'group'   => 'course_button_style',
 			'label'   => esc_html__( 'Font Size (px)', 'ohmylms' ),
@@ -193,7 +237,7 @@ class DashboardElement extends \Bricks\Element {
 			'min'     => 1,
 			'max'     => 200,
 		);
-		$this->controls['course_button_font_weight'] = array(
+		$this->controls['course_button_font_weight']      = array(
 			'tab'     => 'style',
 			'group'   => 'course_button_style',
 			'label'   => esc_html__( 'Font Weight', 'ohmylms' ),
@@ -202,7 +246,7 @@ class DashboardElement extends \Bricks\Element {
 			'min'     => 100,
 			'max'     => 900,
 		);
-		$this->controls['course_button_border_radius'] = array(
+		$this->controls['course_button_border_radius']    = array(
 			'tab'     => 'style',
 			'group'   => 'course_button_style',
 			'label'   => esc_html__( 'Border Radius (px)', 'ohmylms' ),
@@ -218,7 +262,7 @@ class DashboardElement extends \Bricks\Element {
 			'type'    => 'color',
 			'default' => array( 'hex' => '#4361EE' ),
 		);
-		$this->controls['course_button_hover_bg_color'] = array(
+		$this->controls['course_button_hover_bg_color']   = array(
 			'tab'     => 'style',
 			'group'   => 'course_button_style',
 			'label'   => esc_html__( 'Hover Background Color', 'ohmylms' ),
@@ -226,21 +270,21 @@ class DashboardElement extends \Bricks\Element {
 			'default' => array( 'hex' => 'transparent' ),
 		);
 
-		$this->controls['card_bg_color'] = array(
+		$this->controls['card_bg_color']           = array(
 			'tab'     => 'style',
 			'group'   => 'card_style',
 			'label'   => esc_html__( 'Background Color', 'ohmylms' ),
 			'type'    => 'color',
 			'default' => array( 'hex' => '#FFFFFF' ),
 		);
-		$this->controls['card_text_color'] = array(
+		$this->controls['card_text_color']         = array(
 			'tab'     => 'style',
 			'group'   => 'card_style',
 			'label'   => esc_html__( 'Text Color', 'ohmylms' ),
 			'type'    => 'color',
 			'default' => array( 'hex' => '#52525B' ),
 		);
-		$this->controls['card_text_font_size'] = array(
+		$this->controls['card_text_font_size']     = array(
 			'tab'     => 'style',
 			'group'   => 'card_style',
 			'label'   => esc_html__( 'Text Font Size (px)', 'ohmylms' ),
@@ -249,7 +293,7 @@ class DashboardElement extends \Bricks\Element {
 			'min'     => 1,
 			'max'     => 200,
 		);
-		$this->controls['card_text_font_weight'] = array(
+		$this->controls['card_text_font_weight']   = array(
 			'tab'     => 'style',
 			'group'   => 'card_style',
 			'label'   => esc_html__( 'Text Font Weight', 'ohmylms' ),
@@ -258,14 +302,14 @@ class DashboardElement extends \Bricks\Element {
 			'min'     => 100,
 			'max'     => 900,
 		);
-		$this->controls['card_number_color'] = array(
+		$this->controls['card_number_color']       = array(
 			'tab'     => 'style',
 			'group'   => 'card_style',
 			'label'   => esc_html__( 'Number Color', 'ohmylms' ),
 			'type'    => 'color',
 			'default' => array( 'hex' => '#1E1E1E' ),
 		);
-		$this->controls['card_number_font_size'] = array(
+		$this->controls['card_number_font_size']   = array(
 			'tab'     => 'style',
 			'group'   => 'card_style',
 			'label'   => esc_html__( 'Number Font Size (px)', 'ohmylms' ),
@@ -284,14 +328,14 @@ class DashboardElement extends \Bricks\Element {
 			'max'     => 900,
 		);
 
-		$this->controls['title_color'] = array(
+		$this->controls['title_color']       = array(
 			'tab'     => 'style',
 			'group'   => 'title_typography',
 			'label'   => esc_html__( 'Color', 'ohmylms' ),
 			'type'    => 'color',
 			'default' => array( 'hex' => '#1E1E1E' ),
 		);
-		$this->controls['title_font_size'] = array(
+		$this->controls['title_font_size']   = array(
 			'tab'     => 'style',
 			'group'   => 'title_typography',
 			'label'   => esc_html__( 'Font Size (px)', 'ohmylms' ),
@@ -315,6 +359,9 @@ class DashboardElement extends \Bricks\Element {
 	// Helpers
 	// -------------------------------------------------------------------------
 
+	/**
+	 * Is bricks edit mode for Dashboard element.
+	 */
 	private function is_bricks_edit_mode() {
 		if ( function_exists( 'bricks_is_builder' ) && bricks_is_builder() ) {
 			return true;
@@ -328,6 +375,11 @@ class DashboardElement extends \Bricks\Element {
 		return false;
 	}
 
+	/**
+	 * Extract color for Dashboard element.
+	 *
+	 * @param mixed $color Color.
+	 */
 	private function extract_color( $color ) {
 		if ( is_array( $color ) ) {
 			if ( ! empty( $color['hex'] ) ) {
@@ -341,9 +393,14 @@ class DashboardElement extends \Bricks\Element {
 		return is_string( $color ) ? $color : '';
 	}
 
+	/**
+	 * Build shortcode attrs for Dashboard element.
+	 *
+	 * @param mixed $settings Configuration settings.
+	 */
 	private function build_shortcode_attrs( $settings ) {
 		$attrs = array(
-			'show_header'    => ( isset( $settings['show_header'] ) && $settings['show_header'] === true ) ? 'yes' : 'no',
+			'show_header'    => ( isset( $settings['show_header'] ) && true === $settings['show_header'] ) ? 'yes' : 'no',
 			'my_profile_url' => isset( $settings['my_profile_url'] ) ? $settings['my_profile_url'] : '',
 			'my_courses_url' => isset( $settings['my_courses_url'] ) ? $settings['my_courses_url'] : '',
 		);
@@ -403,6 +460,9 @@ class DashboardElement extends \Bricks\Element {
 	// Render
 	// -------------------------------------------------------------------------
 
+	/**
+	 * Render for Dashboard element.
+	 */
 	public function render() {
 		$settings        = $this->settings;
 		$is_edit_mode    = $this->is_bricks_edit_mode();

@@ -1,11 +1,17 @@
 <?php
+/**
+ * Question function.
+ *
+ * @package OhMyLMS
+ */
+
 
 /**
  * Get quiz object
  *
- * @param int $quiz_id
+ * @param int $quiz_id Quiz identifier.
  * @return bool|\OhMyLMS\Data\Quiz
- * @throws Exception
+ * @throws Exception When the operation cannot be completed.
  * @since 1.0.0
  */
 function ohmylms_get_question( $quiz_id ) {

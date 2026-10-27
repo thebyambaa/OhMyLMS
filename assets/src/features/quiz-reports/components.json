@@ -1,101 +1,113 @@
 [
-  {
-    "binding": "e$",
-    "name": "QuizReport",
-    "file": "QuizReport.jsx",
-    "dependencies": [
-      "Cm",
-      "HG",
-      "I",
-      "JZ",
-      "KZ",
-      "QZ",
-      "React",
-      "ZZ",
-      "b",
-      "df",
-      "f",
-      "fN",
-      "g",
-      "l",
-      "sN",
-      "sn",
-      "uf",
-      "v"
-    ]
-  },
-  {
-    "binding": "H$",
-    "name": "QuizGrading",
-    "file": "QuizGrading.jsx",
-    "dependencies": [
-      "B$",
-      "D$",
-      "Ge",
-      "HG",
-      "I",
-      "I$",
-      "L$",
-      "N$",
-      "QZ",
-      "R$",
-      "React",
-      "b",
-      "f",
-      "g",
-      "j$",
-      "l",
-      "r$",
-      "sn",
-      "v"
-    ]
-  },
-  {
-    "binding": "m$",
-    "name": "QuizQuestionHeader",
-    "file": "QuizQuestionHeader.jsx",
-    "dependencies": ["Ge", "I", "Mt", "React", "V", "b", "f", "l$", "o$", "s$", "wn"]
-  },
-  {
-    "binding": "f$",
-    "name": "SingleChoiceResult",
-    "file": "SingleChoiceResult.jsx",
-    "dependencies": ["I", "React", "b", "p$"]
-  },
-  {
-    "binding": "g$",
-    "name": "MultipleChoiceResult",
-    "file": "MultipleChoiceResult.jsx",
-    "dependencies": ["I", "React", "b", "p$"]
-  },
-  {
-    "binding": "w$",
-    "name": "TextAnswerResult",
-    "file": "TextAnswerResult.jsx",
-    "dependencies": ["I", "React", "V", "_$", "b", "b$", "g", "p$"]
-  },
-  {
-    "binding": "x$",
-    "name": "ReorderResult",
-    "file": "ReorderResult.jsx",
-    "dependencies": ["I", "R$", "React", "b", "g", "p$"]
-  },
-  {
-    "binding": "A$",
-    "name": "MatchingResult",
-    "file": "MatchingResult.jsx",
-    "dependencies": ["I", "React", "b", "g", "j$", "p$"]
-  },
-  {
-    "binding": "T$",
-    "name": "QuizQuestionResults",
-    "file": "QuizQuestionResults.jsx",
-    "dependencies": ["C$", "E$", "I", "M$", "React", "h$", "p$", "v$"]
-  },
-  {
-    "binding": "F$",
-    "name": "QuizResultSummary",
-    "file": "QuizResultSummary.jsx",
-    "dependencies": ["I", "React", "b"]
-  }
+	{
+		"binding": "e$",
+		"name": "QuizReport",
+		"file": "QuizReport.jsx",
+		"dependencies": [
+			"Cm",
+			"HG",
+			"I",
+			"JZ",
+			"KZ",
+			"QZ",
+			"React",
+			"ZZ",
+			"b",
+			"df",
+			"f",
+			"fN",
+			"g",
+			"l",
+			"sN",
+			"sn",
+			"uf",
+			"v"
+		]
+	},
+	{
+		"binding": "H$",
+		"name": "QuizGrading",
+		"file": "QuizGrading.jsx",
+		"dependencies": [
+			"B$",
+			"D$",
+			"Ge",
+			"HG",
+			"I",
+			"I$",
+			"L$",
+			"N$",
+			"QZ",
+			"R$",
+			"React",
+			"b",
+			"f",
+			"g",
+			"j$",
+			"l",
+			"r$",
+			"sn",
+			"v"
+		]
+	},
+	{
+		"binding": "m$",
+		"name": "QuizQuestionHeader",
+		"file": "QuizQuestionHeader.jsx",
+		"dependencies": [
+			"Ge",
+			"I",
+			"Mt",
+			"React",
+			"V",
+			"b",
+			"f",
+			"l$",
+			"o$",
+			"s$",
+			"wn"
+		]
+	},
+	{
+		"binding": "f$",
+		"name": "SingleChoiceResult",
+		"file": "SingleChoiceResult.jsx",
+		"dependencies": [ "I", "React", "b", "p$" ]
+	},
+	{
+		"binding": "g$",
+		"name": "MultipleChoiceResult",
+		"file": "MultipleChoiceResult.jsx",
+		"dependencies": [ "I", "React", "b", "p$" ]
+	},
+	{
+		"binding": "w$",
+		"name": "TextAnswerResult",
+		"file": "TextAnswerResult.jsx",
+		"dependencies": [ "I", "React", "V", "_$", "b", "b$", "g", "p$" ]
+	},
+	{
+		"binding": "x$",
+		"name": "ReorderResult",
+		"file": "ReorderResult.jsx",
+		"dependencies": [ "I", "R$", "React", "b", "g", "p$" ]
+	},
+	{
+		"binding": "A$",
+		"name": "MatchingResult",
+		"file": "MatchingResult.jsx",
+		"dependencies": [ "I", "React", "b", "g", "j$", "p$" ]
+	},
+	{
+		"binding": "T$",
+		"name": "QuizQuestionResults",
+		"file": "QuizQuestionResults.jsx",
+		"dependencies": [ "C$", "E$", "I", "M$", "React", "h$", "p$", "v$" ]
+	},
+	{
+		"binding": "F$",
+		"name": "QuizResultSummary",
+		"file": "QuizResultSummary.jsx",
+		"dependencies": [ "I", "React", "b" ]
+	}
 ]

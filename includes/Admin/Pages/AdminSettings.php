@@ -1,9 +1,17 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 
 namespace OhMyLMS\Admin\Pages;
 
+/**
+ * Plugin admin settings implementation.
+ */
 class AdminSettings {
 
+	/**
+	 * Settings.
+	 *
+	 * @var mixed
+	 */
 	private static $settings = array();
 
 
@@ -28,7 +36,7 @@ class AdminSettings {
 	/**
 	 * Output admin settings fields
 	 *
-	 * @param $options
+	 * @param mixed $options Operation options.
 	 */
 	public static function output_fields( $options ) {
 		foreach ( $options as $value ) {
@@ -148,7 +156,7 @@ class AdminSettings {
 					?>
 					<tr class="<?php echo esc_attr( $value['row_class'] ); ?>">
 						<th scope="row" class="titledesc">
-							<label for="<?php echo esc_attr( $value['id'] ); ?>"><?php echo esc_html( $value['title'] ); ?> <?php echo $tooltip_html; // WPCS: XSS ok. ?></label>
+							<label for="<?php echo esc_attr( $value['id'] ); ?>"><?php echo esc_html( $value['title'] ); ?> <?php echo wp_kses_post( $tooltip_html ); // WPCS: XSS ok. ?></label>
 						</th>
 						<td class="forminp forminp-<?php echo esc_attr( sanitize_title( $value['type'] ) ); ?>">
 							<input
@@ -160,7 +168,7 @@ class AdminSettings {
 								class="<?php echo esc_attr( $value['class'] ); ?>"
 								placeholder="<?php echo esc_attr( $value['placeholder'] ); ?>"
 								<?php echo implode( ' ', $custom_attributes ); // WPCS: XSS ok. ?>
-								/><?php echo esc_html( $value['suffix'] ); ?> <?php echo $description; // WPCS: XSS ok. ?>
+								/><?php echo esc_html( $value['suffix'] ); ?> <?php echo wp_kses_post( $description ); // WPCS: XSS ok. ?>
 						</td>
 					</tr>
 					<?php
@@ -173,10 +181,10 @@ class AdminSettings {
 					?>
 					<tr class="<?php echo esc_attr( $value['row_class'] ); ?>">
 						<th scope="row" class="titledesc">
-							<label for="<?php echo esc_attr( $value['id'] ); ?>"><?php echo esc_html( $value['title'] ); ?> <?php echo $tooltip_html; // WPCS: XSS ok. ?></label>
+							<label for="<?php echo esc_attr( $value['id'] ); ?>"><?php echo esc_html( $value['title'] ); ?> <?php echo wp_kses_post( $tooltip_html ); // WPCS: XSS ok. ?></label>
 						</th>
 						<td class="forminp forminp-<?php echo esc_attr( sanitize_title( $value['type'] ) ); ?>">
-							<?php echo $description; // WPCS: XSS ok. ?>
+							<?php echo wp_kses_post( $description ); // WPCS: XSS ok. ?>
 
 							<textarea
 								name="<?php echo esc_attr( $value['field_name'] ); ?>"
@@ -199,7 +207,7 @@ class AdminSettings {
 					?>
 					<tr class="<?php echo esc_attr( $value['row_class'] ); ?>">
 						<th scope="row" class="titledesc">
-							<label for="<?php echo esc_attr( $value['id'] ); ?>"><?php echo esc_html( $value['title'] ); ?> <?php echo $tooltip_html; // WPCS: XSS ok. ?></label>
+							<label for="<?php echo esc_attr( $value['id'] ); ?>"><?php echo esc_html( $value['title'] ); ?> <?php echo wp_kses_post( $tooltip_html ); // WPCS: XSS ok. ?></label>
 						</th>
 						<td class="forminp forminp-<?php echo esc_attr( sanitize_title( $value['type'] ) ); ?>">
 							<select
@@ -227,7 +235,7 @@ class AdminSettings {
 									<?php
 								}
 								?>
-							</select> <?php echo $description; // WPCS: XSS ok. ?>
+							</select> <?php echo wp_kses_post( $description ); // WPCS: XSS ok. ?>
 						</td>
 					</tr>
 					<?php
@@ -242,7 +250,7 @@ class AdminSettings {
 					?>
 					<tr class="<?php echo esc_attr( $value['row_class'] ); ?>">
 						<th scope="row" class="titledesc">
-							<label for="<?php echo esc_attr( $value['id'] ); ?>"><?php echo esc_html( $value['title'] ); ?> <?php echo $tooltip_html; // WPCS: XSS ok. ?></label>
+							<label for="<?php echo esc_attr( $value['id'] ); ?>"><?php echo esc_html( $value['title'] ); ?> <?php echo wp_kses_post( $tooltip_html ); // WPCS: XSS ok. ?></label>
 						</th>
 						<td class="forminp forminp-<?php echo esc_attr( sanitize_title( $value['type'] ) ); ?>">
 							<fieldset>
@@ -344,8 +352,8 @@ class AdminSettings {
 								<?php disabled( $value['disabled'] ?? false ); ?>
 								<?php checked( $option_value, 'yes' ); ?>
 								<?php echo implode( ' ', $custom_attributes ); // WPCS: XSS ok. ?>
-							/> <?php echo $description; // WPCS: XSS ok. ?>
-						</label> <?php echo $tooltip_html; // WPCS: XSS ok. ?>
+							/> <?php echo wp_kses_post( $description ); // WPCS: XSS ok. ?>
+						</label> <?php echo wp_kses_post( $tooltip_html ); // WPCS: XSS ok. ?>
 					<?php
 
 					if ( ! isset( $value['checkboxgroup'] ) || 'end' === $value['checkboxgroup'] ) {
@@ -381,10 +389,10 @@ class AdminSettings {
 					?>
 						<tr class="single_select_page <?php echo esc_attr( $value['row_class'] ); ?>">
 							<th scope="row" class="titledesc">
-								<label><?php echo esc_html( $value['title'] ); ?> <?php echo $tooltip_html; // WPCS: XSS ok. ?></label>
+								<label><?php echo esc_html( $value['title'] ); ?> <?php echo wp_kses_post( $tooltip_html ); // WPCS: XSS ok. ?></label>
 							</th>
 							<td class="forminp">
-							<?php echo str_replace( ' id=', " data-placeholder='" . esc_attr__( 'Select a page&hellip;', 'ohmylms' ) . "' style='" . $value['css'] . "' class='" . $value['class'] . "' id=", wp_dropdown_pages( $args ) ); // WPCS: XSS ok. ?> <?php echo $description; // WPCS: XSS ok. ?>
+							<?php echo str_replace( ' id=', " data-placeholder='" . esc_attr__( 'Select a page&hellip;', 'ohmylms' ) . "' style='" . esc_attr( $value['css'] ) . "' class='" . esc_attr( $value['class'] ) . "' id=", wp_dropdown_pages( $args ) ); // WPCS: XSS ok. ?> <?php echo wp_kses_post( $description ); // WPCS: XSS ok. ?>
 							</td>
 						</tr>
 						<?php
@@ -406,7 +414,7 @@ class AdminSettings {
 					?>
 						<tr class="single_select_page <?php echo esc_attr( $value['row_class'] ); ?>">
 							<th scope="row" class="titledesc">
-								<label for="<?php echo esc_attr( $value['id'] ); ?>"><?php echo esc_html( $value['title'] ); ?> <?php echo $tooltip_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></label>
+								<label for="<?php echo esc_attr( $value['id'] ); ?>"><?php echo esc_html( $value['title'] ); ?> <?php echo wp_kses_post( $tooltip_html ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></label>
 							</th>
 							<td class="forminp forminp-<?php echo esc_attr( sanitize_title( $value['type'] ) ); ?>">
 								<select
@@ -417,15 +425,15 @@ class AdminSettings {
 								<?php echo implode( ' ', $custom_attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 									data-placeholder="<?php esc_attr_e( 'Search for a page&hellip;', 'ohmylms' ); ?>"
 									data-allow_clear="true"
-									data-exclude="<?php echo wp_json_encode( $value['args']['exclude'] ); ?>"
+									data-exclude="<?php echo esc_attr( wp_json_encode( $value['args']['exclude'] ) ); ?>"
 									>
 									<option value=""></option>
 								<?php if ( ! is_null( $page ) ) { ?>
 										<option value="<?php echo esc_attr( $option_value ); ?>" selected="selected">
-										<?php echo wp_strip_all_tags( $option_display_name ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+										<?php echo esc_html( wp_strip_all_tags( $option_display_name ) ); ?>
 										</option>
 									<?php } ?>
-								</select> <?php echo $description; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+								</select> <?php echo wp_kses_post( $description ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 							</td>
 						</tr>
 						<?php
@@ -440,10 +448,10 @@ class AdminSettings {
 					?>
 					<tr class="<?php echo esc_attr( $value['row_class'] ); ?>">
 						<th scope="row" class="titledesc">
-							<label for="<?php echo esc_attr( $value['id'] ); ?>"><?php echo esc_html( $value['title'] ); ?> <?php echo $tooltip_html; // WPCS: XSS ok. ?></label>
+							<label for="<?php echo esc_attr( $value['id'] ); ?>"><?php echo esc_html( $value['title'] ); ?> <?php echo wp_kses_post( $tooltip_html ); // WPCS: XSS ok. ?></label>
 						</th>
 						<td class="forminp forminp-<?php echo esc_attr( sanitize_title( $value['type'] ) ); ?>">
-							<?php echo $description; // WPCS: XSS ok. ?>
+							<?php echo wp_kses_post( $description ); // WPCS: XSS ok. ?>
 							<button type="button" class="button button-secondary ohmylms-delete-cache-btn" id="<?php echo esc_attr( $value['id'] ); ?>">
 								<?php esc_html_e( 'Delete Cache', 'ohmylms' ); ?>
 							</button>
@@ -466,7 +474,7 @@ class AdminSettings {
 	 * Get a setting from the settings API.
 	 *
 	 * @param string $option_name Option name.
-	 * @param mixed  $default     Default value.
+	 * @param mixed  $default Default value.
 	 * @return mixed
 	 */
 	public static function get_option( $option_name, $default = '' ) {
@@ -512,7 +520,7 @@ class AdminSettings {
 	 * given form field. Plugins can call this when implementing their own custom
 	 * settings types.
 	 *
-	 * @param  array $value The form field value array.
+	 * @param array $value The form field value array.
 	 * @return array The description and tip as a 2 element array.
 	 */
 	public static function get_field_description( $value ) {
@@ -570,7 +578,7 @@ class AdminSettings {
 	 * Loops through the OhMyLMS options array and outputs each field.
 	 *
 	 * @param array $options Options array to output.
-	 * @param array $data    Optional. Data to use for saving. Defaults to $_POST.
+	 * @param array $data Optional. Data to use for saving. Defaults to $_POST.
 	 * @return bool
 	 * @since 1.0.0
 	 */

@@ -1,6 +1,7 @@
 .ohmylms-page {
     //-----when layout style-2----
     .grid-style2 {
+
         .ohmylms-course-cards .course-card .course-info {
             justify-content: flex-start;
 
@@ -8,7 +9,7 @@
                 justify-content: space-between;
                 margin: 0 0 12px!important;
 
-                & > li {
+                > li {
                     display: none;
 
                     &.total-duration,
@@ -41,6 +42,7 @@
             }
 
             &.is-cohort-based {
+
                 .course-meta {
                     margin: 0 0 10px !important;
                 }

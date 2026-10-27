@@ -1,10 +1,11 @@
 .ohmylms-page {
+
   .ohmylms-lesson-content-body.content-type-session {
 
     .creator-zoom-meeting-container, .creator-googlemeet-meeting-container {
         border-radius: 10px;
         background: #FFF;
-        box-shadow: 0px 1px 2px 0px #DBDDE1;
+        box-shadow: 0 1px 2px 0 #DBDDE1;
         padding: 23px 24px;
 
         .meeting-agenda {
@@ -21,12 +22,14 @@
             border: 1px solid #e0e0e0;
             border-radius: 8px;
             padding: 15px;
-            box-shadow: 0px 1px 2px 0px #DBDDE1;
+            box-shadow: 0 1px 2px 0 #DBDDE1;
 
             span {
+
                 &.copy-btn {
                     cursor: pointer;
                 }
+
                 strong {
                     font-weight: 700;
                 }
@@ -52,7 +55,7 @@
 
             .copied-message {
                 display: none;
-                color: green;
+                color: #008000;
                 font-size: 12px;
                 margin-left: 6px;
             }
@@ -94,7 +97,7 @@
 
         .zoom-countdown, .meet-countdown {
             font-size: 2.5rem;
-            font-weight: bold;
+            font-weight: 700;
             color: var(--ohmylms-primary-color);
             text-align: center;
             margin-bottom: 1.5rem;
@@ -143,20 +146,23 @@
         }
 
         .meeting-status {
+
             &.ongoing {
+
                 .meeting-live-notice {
                     font-size: 1.2rem;
                     color: #28a745;
-                    font-weight: bold;
+                    font-weight: 700;
                     margin-bottom: 1rem;
                 }
             }
 
             &.ended {
+
                 .meeting-ended-notice {
                     font-size: 1.2rem;
                     color: #dc3545;
-                    font-weight: bold;
+                    font-weight: 700;
                     text-align: center;
                 }
             }
@@ -169,6 +175,7 @@
             margin-top: 20px;
             font-family: 'Segoe UI', sans-serif;
         }
+
         .countdown-item {
             display: flex;
             flex-direction: column;
@@ -177,16 +184,19 @@
             min-width: 60px;
             gap: 4px;
         }
+
         .countdown-item .num {
             display: inline-block;
             font-size: 2rem;
-            font-weight: bold;
+            font-weight: 700;
             color: var(--ohmylms-primary-color);
             transition: transform 0.3s ease;
         }
+
         .countdown-item.animate .num {
             transform: scale(1.2);
         }
+
         .countdown-item .label {
             font-size: 0.9rem;
             color: var(--ohmylms-body-text-color);

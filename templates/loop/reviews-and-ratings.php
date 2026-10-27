@@ -9,10 +9,9 @@
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
+	exit; // Exit if accessed directly.
 }
 
 global $course;
 $average_rating = $course->get_average_rating();
-$total_review = $course->get_review_count();
-?>
+$total_review   = $course->get_review_count();

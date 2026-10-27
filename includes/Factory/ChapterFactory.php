@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Factory class to retrieve and validate Chapter objects.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Factory;
 
@@ -48,28 +53,28 @@ class ChapterFactory {
 	private function get_chapter_id( $chapter ) {
 		global $post;
 
-		// Check if input is false and post is set
+		// Check if input is false and post is set.
 		if ( false === $chapter && isset( $post, $post->ID ) && OHMYLMS_CHAPTER_CPT === get_post_type( $post->ID ) ) {
 			return absint( $post->ID );
 		}
 
-		// If input is numeric, check if chapter exists
+		// If input is numeric, check if chapter exists.
 		elseif ( is_numeric( $chapter ) ) {
 			return $this->is_chapter_exist( $chapter ) ? $chapter : false;
 		}
 
-		// If input is an instance of Chapter
+		// If input is an instance of Chapter.
 		elseif ( $chapter instanceof Chapter ) {
 			$id = $chapter->get_id();
 			return $this->is_chapter_exist( $id ) ? $id : false;
 		}
 
-		// If input contains a valid ID property
+		// If input contains a valid ID property.
 		elseif ( ! empty( $chapter->ID ) ) {
 			return $this->is_chapter_exist( $chapter->ID ) ? $chapter->ID : false;
 		}
 
-		// Otherwise, return false
+		// Otherwise, return false.
 		else {
 			return false;
 		}
@@ -92,7 +97,7 @@ class ChapterFactory {
 
 		$chapter = get_post( $chapter_id );
 
-		// Check if the post exists and the post type matches
+		// Check if the post exists and the post type matches.
 		if ( $chapter && OHMYLMS_CHAPTER_CPT === get_post_type( $chapter_id ) ) {
 			return true;
 		} else {

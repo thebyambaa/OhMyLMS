@@ -1,0 +1,18 @@
+{
+	"apiVersion": 2,
+	"name": "ohmylms/interactive-activity",
+	"title": "OhMyLMS Interactive Activity",
+	"category": "widgets",
+	"icon": "chart-line",
+	"description": "A try-and-learn activity: type an equation with the math editor and watch it graph in real time.",
+	"keywords": [ "graph", "function", "math", "jsxgraph", "interactive" ],
+	"textdomain": "ohmylms",
+	"attributes": {
+		"activity": { "type": "string", "default": "function-graph" },
+		"config": { "type": "object", "default": {} }
+	},
+	"supports": { "html": false, "align": [ "wide", "full" ] },
+	"editorScript": "ohmylms-interactive-activity-block",
+	"viewScript": "ohmylms-interactive-activity-view",
+	"style": "ohmylms-interactive-activity"
+}

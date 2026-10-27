@@ -1,4 +1,5 @@
 .ohmylms-page {
+
     .ohmylms-checkout-customer-details {
         margin-bottom: 30px;
         
@@ -27,12 +28,14 @@
 }
 
 @media screen and (max-width: 991px) {
+
     .ohmylms-page .ohmylms-checkout-customer-details {
         margin-bottom: 22px;
     }
 }
 
 @media screen and (max-width: 575px) {
+
     .ohmylms-page .ohmylms-checkout-customer-details #country_field,
     .ohmylms-page .ohmylms-checkout-customer-details #state_field,
     .ohmylms-page .ohmylms-checkout-customer-details #city_field,

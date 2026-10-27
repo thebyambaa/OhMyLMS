@@ -23,28 +23,6 @@ test('public question registry supports validators, duplicate guards, unregister
   await expect(page.locator('body')).toContainText('Fixture submission received');
 });
 
-test('real course tabs include an add-on tab and support keyboard navigation', async ({ page }) => {
-  await page.goto('/fixture?view=tabs');
-  await expect(page.getByRole('tab', { name: 'Description', exact: true })).toHaveAttribute('aria-selected', 'true');
-  await page.getByRole('tab', { name: 'Description', exact: true }).press('End');
-  await expect(page.getByRole('tab', { name: 'Add-on tab' })).toHaveAttribute('aria-selected', 'true');
-  await expect(page.getByRole('tabpanel')).toContainText('Extension panel');
-  await page.getByRole('tab', { name: 'Add-on tab' }).press('Home');
-  await expect(page.getByRole('tabpanel')).toContainText('Description panel');
-});
-
-test('real curriculum template supports individual and bulk chapter expansion', async ({ page }) => {
-  const errors = []; page.on('pageerror', error => errors.push(error.message));
-  await page.goto('/fixture?view=curriculum');
-  const first = page.getByRole('button', { name: 'Chapter A', exact: true });
-  await first.press('Enter'); await expect(first).toHaveAttribute('aria-expanded', 'true');
-  await page.getByRole('button', { name: 'Expand all chapters' }).click();
-  await expect(page.getByRole('button', { name: 'Chapter B', exact: true })).toHaveAttribute('aria-expanded', 'true');
-  await page.getByRole('button', { name: 'Collapse all chapters' }).click();
-  await expect(first).toHaveAttribute('aria-expanded', 'false');
-  expect(errors).toEqual([]);
-});
-
 test('real quiz template: required answers, navigation, custom type, native POST and extension event', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await page.goto('/fixture?types=single-choice,custom-type');

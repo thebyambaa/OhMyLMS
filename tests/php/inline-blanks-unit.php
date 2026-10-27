@@ -52,6 +52,27 @@ $public = $snapshot->student_view();
 check(strpos(json_encode($public), 'Paris') === false, 'Frozen delivery strips expected answer from title');
 check($public['inline_blanks'][1]['length'] === 5, 'Frozen delivery preserves blank width');
 check(Q::grade_builtin('fill-in-the-blank', ['Paris'], $snapshot)['correct'], 'Frozen title remains authoritative for grading');
+$all_or_nothing = new \OhMyLMS\Assessment\QuestionSnapshot([
+    'id' => 3, 'question_id' => 7, 'question_uuid' => 'partial-test', 'version_no' => 3,
+    'type' => 'fill-in-the-blank', 'title' => '{Paris} and {France}', 'body' => '',
+    'settings' => ['type' => 'fill-in-the-blank', 'partial_credit' => false], 'options' => [], 'media' => [],
+]);
+check(Q::grade_builtin('fill-in-the-blank', ['Paris', 'wrong'], $all_or_nothing)['fraction'] === 0, 'Disabled partial grading awards zero for one wrong blank');
+check(Q::grade_builtin('fill-in-the-blank', ['Paris', 'France'], $all_or_nothing)['fraction'] === 1, 'Disabled partial grading awards full credit for every correct blank');
+$partial_version = new \OhMyLMS\Assessment\QuestionSnapshot([
+    'id' => 4, 'question_id' => 7, 'question_uuid' => 'partial-test', 'version_no' => 4,
+    'type' => 'fill-in-the-blank', 'title' => '{Paris} and {France}', 'body' => '',
+    'settings' => ['type' => 'fill-in-the-blank', 'partial_credit' => true], 'options' => [], 'media' => [],
+]);
+check(Q::grade_builtin('fill-in-the-blank', ['Paris', 'wrong'], $partial_version)['fraction'] === 0.5, 'Enabled partial grading awards equal shares against its frozen version');
+check(Q::grade_builtin('fill-in-the-blank', ['Paris', 'France', 'extra'], $partial_version)['fraction'] === 0, 'Extra answers do not earn partial credit');
+check(Q::grade_builtin('fill-in-the-blank', ['Paris', 'wrong'], $all_or_nothing)['fraction'] === 0, 'A later version does not change an old version grading flag');
+$legacy_partial = new class {
+    function get_name() { return 'Legacy question'; }
+    function get_settings() { return ['partial_credit' => true]; }
+    function get_questions() { return [['answer' => 'Paris', 'is_correct' => 1], ['answer' => 'France', 'is_correct' => 1]]; }
+};
+check(Q::grade_builtin('fill-in-the-blank', ['Paris', 'wrong'], $legacy_partial)['fraction'] === 0.5, 'Legacy answer rows support explicitly enabled partial grading');
 $insensitive = new \OhMyLMS\Assessment\QuestionSnapshot([
     'id' => 2, 'question_id' => 7, 'question_uuid' => 'test', 'version_no' => 2,
     'type' => 'fill-in-the-blank', 'title' => '{Paris} and {Өдөр}', 'body' => '',
@@ -68,3 +89,17 @@ $legacyInsensitive = new class {
 check(Q::grade_builtin('fill-in-the-blank', ['PARIS'], $legacyInsensitive)['correct'], 'Legacy blanks honor case setting');
 check(!B::matches('axb', 'a.b', $legacyInsensitive), 'Expected answers are literal, not regex');
 echo "Inline blank parsing, rendering, privacy and grading checks passed.\n";
+$dragSnapshot = new \OhMyLMS\Assessment\QuestionSnapshot([
+    'id' => 2, 'question_id' => 8, 'question_uuid' => 'drag-test', 'version_no' => 1,
+    'type' => 'fill-in-the-blank', 'title' => 'Use {one} and {one}.', 'body' => '<p>Use {one} and {one}.</p>',
+    'settings' => ['type' => 'fill-in-the-blank', 'blank_mode' => 'drag', 'question_code' => 'Q-8'], 'options' => [], 'media' => [],
+]);
+$dragView = $dragSnapshot->student_view();
+check($dragView['blank_bank'] === ['one', 'one'], 'Repeated answers have independent bank entries');
+check($dragView['description'] === '', 'Question body does not duplicate the authored answer positions');
+check(strpos($dragView['name'], '{one}') === false, 'Drag delivery hides the positional answer key');
+$dragHtml = B::render($dragView, ['id' => 9]);
+check(substr_count($dragHtml, 'draggable="true"') === 2, 'Two draggable answer tokens');
+check(substr_count($dragHtml, 'type="text" readonly') === 2, 'Drag targets submit ordered answers');
+check(Q::grade_builtin('fill-in-the-blank', ['one', 'one'], $dragSnapshot)['correct'], 'Drag answers retain frozen grading');
+echo "Drag blank bank, rendering and frozen grading checks passed.\n";

@@ -1,10 +1,13 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 
 namespace OhMyLMS\Abstracts;
 
 use OhMyLMS\OhMyLmsDateTime;
 use OhMyLMS\DataException;
 
+/**
+ * Plugin data implementation.
+ */
 abstract class Data {
 
 	/**
@@ -123,7 +126,7 @@ abstract class Data {
 	/**
 	 * Set ID of object
 	 *
-	 * @param $id
+	 * @param mixed $id Id.
 	 */
 	public function set_id( $id ) {
 		$this->id = $id;
@@ -133,7 +136,7 @@ abstract class Data {
 	/**
 	 * Set collection of params to the object
 	 *
-	 * @param $props
+	 * @param mixed $props Props.
 	 * @return bool|\WP_Error
 	 */
 	public function set_props( $props ) {
@@ -163,8 +166,8 @@ abstract class Data {
 	/**
 	 * Set prop
 	 *
-	 * @param $prop
-	 * @param $value
+	 * @param mixed $prop Prop.
+	 * @param mixed $value Value to process.
 	 * @since 1.0.0
 	 */
 	protected function set_prop( $prop, $value ) {
@@ -209,7 +212,7 @@ abstract class Data {
 	 * Set a date property.
 	 *
 	 * @param string $prop The name of the property to set.
-	 * @param string  $value The value to set for the property. Can be a string, timestamp, or OhMyLmsDateTime object.
+	 * @param string $value The value to set for the property. Can be a string, timestamp, or OhMyLmsDateTime object.
 	 *
 	 * @link https://github.com/woocommerce/woocommerce/blob/5907114d6eabae41edf39c593a36345b92990b38/plugins/woocommerce/includes/abstracts/abstract-wc-data.php#L898
 	 * @since 1.0.0
@@ -268,7 +271,7 @@ abstract class Data {
 	 * @param string $message The error message.
 	 * @param int    $http_status_code The HTTP status code (default is 400).
 	 * @param array  $data Additional data to pass with the exception.
-	 * @throws \OhMyLMS\DataException
+	 * @throws \OhMyLMS\DataException When the operation cannot be completed.
 	 *
 	 * @since 1.0.0
 	 */

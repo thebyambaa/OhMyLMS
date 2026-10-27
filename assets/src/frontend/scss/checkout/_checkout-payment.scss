@@ -1,5 +1,7 @@
 .ohmylms-page {
+
     .ohmylms-checkout-payment {
+
         .ohmylms-payment-methods {
             list-style: none;
             padding: 0;
@@ -29,6 +31,7 @@
             }
 
             .ohmylms-radiobtn {
+
                 .ohmylms-radiobtn-text {
                     color: var(--ohmylms-heading-color);
                     font-size: 16px;
@@ -56,14 +59,14 @@
                             height: auto;
                         }
 
-                        &:before {
+                        &::before {
                             top: calc(50% - 3px);
                             display: none;
                         }
                     }
                 }
 
-                input[type=radio]:checked + .ohmylms-radiobtn-text .radiobox svg {
+                input[type="radio"]:checked + .ohmylms-radiobtn-text .radiobox svg {
                     opacity: 1;
                 }
             }
@@ -113,7 +116,7 @@
             .ohmylms-checkbox-text {
                 padding-left: 0;
 
-                .checkedbox:before {
+                .checkedbox::before {
                     height: 14px;
                 }
 
@@ -159,7 +162,7 @@
             }
 
             .ohmylms-loader {
-                border-color: #ffffff;
+                border-color: #fff;
                 border-top-color: var(--ohmylms-primary-color);
                 width: 14px;
                 height: 14px;
@@ -172,7 +175,7 @@
 
                 .ohmylms-loader {
                     border-color: var(--ohmylms-primary-color);
-                    border-top-color: #ffffff;
+                    border-top-color: #fff;
                     width: 14px;
                     height: 14px;
                 }
@@ -182,10 +185,12 @@
 }
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .ohmylms-checkout-payment .ohmylms-place-order-button {
         font-size: 15px;
         padding: 14px 18px;
     }
+
     .ohmylms-page .ohmylms-checkout-payment .ohmylms-place-order-button .ohmylms-loader {
         width: 12px;
         height: 12px;
@@ -200,7 +205,7 @@
         font-size: 14px;
     }
 
-    .ohmylms-page .ohmylms-checkout-payment .ohmylms-single-payment .ohmylms-radiobtn .ohmylms-radiobtn-text .radiobox:before {
+    .ohmylms-page .ohmylms-checkout-payment .ohmylms-single-payment .ohmylms-radiobtn .ohmylms-radiobtn-text .radiobox::before {
         top: calc(50% - 2px);
     }
 }

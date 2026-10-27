@@ -1,18 +1,37 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
 
-namespace CodeRex\Ecommerce;
+namespace OhMyLMS\Commerce;
 
+/**
+ * Plugin discounts implementation.
+ */
 class Discounts {
 
+	/**
+	 * Items.
+	 *
+	 * @var mixed
+	 */
 	public $items = array();
 
+	/**
+	 * Discounts.
+	 *
+	 * @var mixed
+	 */
 	public $discounts = array();
 
+	/**
+	 * Object.
+	 *
+	 * @var mixed
+	 */
 	public $object;
 
 	/**
 	 * Constructor for the Discount class.
 	 *
+	 * @param mixed $object Object.
 	 */
 	public function __construct( $object = null ) {
 		$this->set_items_from_cart( $object );
@@ -21,7 +40,7 @@ class Discounts {
 	/**
 	 * Set items from the cart.
 	 *
-	 * @param  $cart
+	 * @param mixed $cart Cart.
 	 */
 	public function set_items_from_cart( $cart ) {
 		$this->items     = array();
@@ -33,12 +52,12 @@ class Discounts {
 			if ( empty( $cart_item['data'] ) || ! is_object( $cart_item['data'] ) ) {
 				continue;
 			}
-			
-			// Additional check to ensure the course object has the get_price method
+
+			// Additional check to ensure the course object has the get_price method.
 			if ( ! method_exists( $cart_item['data'], 'get_price' ) ) {
 				continue;
 			}
-			
+
 			$item                = new \stdClass();
 			$item->key           = $key;
 			$item->object        = $cart_item;
@@ -49,6 +68,11 @@ class Discounts {
 		}
 	}
 
+	/**
+	 * Apply coupon for Discounts.
+	 *
+	 * @param mixed $coupon Coupon.
+	 */
 	public function apply_coupon( $coupon ) {
 
 		$coupon_code = $coupon->get_code();
@@ -57,7 +81,7 @@ class Discounts {
 		}
 		$items_to_apply = $this->get_items_to_apply_coupon( $coupon );
 
-		if( ! $this->validate_coupon( $coupon, $items_to_apply ) ) {
+		if ( ! $this->validate_coupon( $coupon, $items_to_apply ) ) {
 			return false;
 		}
 
@@ -79,6 +103,11 @@ class Discounts {
 		return true;
 	}
 
+	/**
+	 * Get items to apply coupon for Discounts.
+	 *
+	 * @param mixed $coupon Coupon.
+	 */
 	protected function get_items_to_apply_coupon( $coupon ) {
 		$items_to_apply = array();
 
@@ -93,15 +122,31 @@ class Discounts {
 		return $items_to_apply;
 	}
 
+	/**
+	 * Get discounted price in cents for Discounts.
+	 *
+	 * @param mixed $item Item.
+	 */
 	protected function get_discounted_price_in_cents( $item ) {
 		return absint( round( $item->price - $this->get_discount( $item->key, true ) ) );
 	}
 
+	/**
+	 * Get discount for Discounts.
+	 *
+	 * @param mixed $key Lookup key.
+	 * @param bool  $in_cents In cents.
+	 */
 	public function get_discount( $key, $in_cents = false ) {
 		$item_discount_totals = $this->get_discounts_by_item( $in_cents );
 		return isset( $item_discount_totals[ $key ] ) ? $item_discount_totals[ $key ] : 0;
 	}
 
+	/**
+	 * Get discounts by item for Discounts.
+	 *
+	 * @param bool $in_cents In cents.
+	 */
 	public function get_discounts_by_item( $in_cents = false ) {
 		$discounts            = $this->discounts;
 		$item_discount_totals = (array) array_shift( $discounts );
@@ -113,29 +158,46 @@ class Discounts {
 		return $item_discount_totals;
 	}
 
+	/**
+	 * Apply coupon percent for Discounts.
+	 *
+	 * @param mixed $coupon Coupon.
+	 * @param mixed $items_to_apply Items to apply.
+	 */
 	private function apply_coupon_percent( $coupon, $items_to_apply ) {
 		$total_discount = 0;
 		$cart_total     = 0;
 		$applied_count  = 0;
 		$coupon_amount  = $coupon->get_amount();
 
-	
 		foreach ( $items_to_apply as $item ) {
 			$price_to_discount = round( $item->price );
-			
+
 			$apply_quantity    = $item->quantity;
 			$price_to_discount = ( $price_to_discount ) * $apply_quantity;
-			$discount       = ( $price_to_discount * ( $coupon_amount / 100 ) );
-			$cart_total     = $cart_total + $price_to_discount;
-			$total_discount = $total_discount + $discount;
-			$applied_count  = $applied_count + $apply_quantity;
+			$discount          = ( $price_to_discount * ( $coupon_amount / 100 ) );
+			$cart_total        = $cart_total + $price_to_discount;
+			$total_discount    = $total_discount + $discount;
+			$applied_count     = $applied_count + $apply_quantity;
 			$this->discounts[ $coupon->get_code() ][ $item->key ] += $discount;
 		}
 		return $total_discount;
 	}
 
+	/**
+	 * Apply coupon fixed product for Discounts.
+	 *
+	 * @param mixed $coupon Coupon.
+	 * @param array $items_to_apply Items to apply.
+	 */
 	private function apply_coupon_fixed_product( $coupon, array $items_to_apply ) {}
 
+	/**
+	 * Apply coupon fixed cart for Discounts.
+	 *
+	 * @param mixed $coupon Coupon.
+	 * @param array $items_to_apply Items to apply.
+	 */
 	private function apply_coupon_fixed_cart( $coupon, array $items_to_apply ) {
 		$total_discount = 0;
 		$cart_total     = 0;
@@ -160,13 +222,19 @@ class Discounts {
 		return $cart_total_discount;
 	}
 
+	/**
+	 * Apply coupon custom for Discounts.
+	 *
+	 * @param mixed $coupon Coupon.
+	 * @param array $items_to_apply Items to apply.
+	 */
 	private function apply_coupon_custom( $coupon, array $items_to_apply ) {}
 
 	/**
 	 * Validate coupon
 	 *
-	 * @param object $coupon
-	 * @param array $items_to_apply
+	 * @param object $coupon Coupon.
+	 * @param array  $items_to_apply Items to apply.
 	 *
 	 * @return array
 	 *
@@ -174,7 +242,7 @@ class Discounts {
 	 */
 	private function validate_coupon( $coupon, $items_to_apply ) {
 
-		if ( ! $coupon instanceof \CodeRex\Ecommerce\Data\Coupon ) {
+		if ( ! $coupon instanceof \OhMyLMS\Commerce\Data\Coupon ) {
 			return false;
 		}
 
@@ -184,17 +252,17 @@ class Discounts {
 
 		$date_expires = $coupon->get_date_expires();
 		if ( $date_expires ) {
-			// Get current time in the coupon's timezone
+			// Get current time in the coupon's timezone.
 			$current_time = new \DateTime( 'now', $date_expires->getTimezone() );
 			if ( $current_time > $date_expires ) {
-				// Coupon is expired
+				// Coupon is expired.
 				return false;
 			}
 		}
 
 		$date_start = $coupon->get_date_start();
 		if ( $date_start ) {
-			// Get current time in the coupon's timezone
+			// Get current time in the coupon's timezone.
 			$current_time = new \DateTime( 'now', $date_start->getTimezone() );
 			if ( $current_time < $date_start ) {
 				return false;
@@ -204,28 +272,28 @@ class Discounts {
 		$uses_count = $coupon->get_usage_count();
 		$uses_limit = $coupon->get_usage_limit();
 
-		// Check uses limit
-		if( $uses_limit && $uses_limit <= $uses_count ){
+		// Check uses limit.
+		if ( $uses_limit && $uses_limit <= $uses_count ) {
 			return false;
 		}
 
 		$uses_limit_per_user = $coupon->get_usage_limit_per_user();
-		if( $uses_limit_per_user && is_user_logged_in()) {
-			$current_user_id = get_current_user_id();
+		if ( $uses_limit_per_user && is_user_logged_in() ) {
+			$current_user_id       = get_current_user_id();
 			$current_uses_per_user = get_post_meta( $coupon->get_id(), 'usage_count_' . $current_user_id, true );
-			if( $uses_limit_per_user <= $current_uses_per_user ) {
+			if ( $uses_limit_per_user <= $current_uses_per_user ) {
 				return false;
 			}
 		}
 
 		// Check course ids are in checkout or not.
 		$course_id_type = $coupon->get_course_id_type();
-		if( 'selected_course' === $course_id_type ) {
+		if ( 'selected_course' === $course_id_type ) {
 			$course_ids = $coupon->get_course_ids();
-			if( is_array( $course_ids ) && !empty( $course_ids ) ) {
+			if ( is_array( $course_ids ) && ! empty( $course_ids ) ) {
 				$should_apply = true;
 				foreach ( $items_to_apply as $item ) {
-					if( ! in_array( $item->object['course_id'], $course_ids, true ) ) {
+					if ( ! in_array( $item->object['course_id'], $course_ids, true ) ) {
 						$should_apply = false;
 						break;
 					}

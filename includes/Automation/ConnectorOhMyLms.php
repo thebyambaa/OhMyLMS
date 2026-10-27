@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * OhMyLMS Connector class for MRM Automation
  *
@@ -53,7 +53,7 @@ class ConnectorOhMyLms extends Automation_Connector {
 	 * @since 1.0.0
 	 */
 	public function maybe_connected() {
-		return defined('MAILMINT');
+		return defined( 'MAILMINT' );
 	}
 
 	/**

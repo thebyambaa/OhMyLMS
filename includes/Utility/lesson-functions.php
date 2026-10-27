@@ -1,11 +1,17 @@
 <?php
+/**
+ * Lesson functions.
+ *
+ * @package OhMyLMS
+ */
+
 
 /**
  * Get lesson object
  *
- * @param $lesson_id
+ * @param mixed $lesson_id Lesson identifier.
  * @return bool|\OhMyLMS\Data\Lesson
- * @throws Exception
+ * @throws Exception When the operation cannot be completed.
  * @since 1.0.0
  */
 function ohmylms_get_lesson( $lesson_id ) {

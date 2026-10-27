@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Class LessonStore.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\DataStores;
 
@@ -19,7 +24,7 @@ class LessonStore extends DataStore {
 	/**
 	 * Create lesson
 	 *
-	 * @param Lesson $lesson
+	 * @param Lesson $lesson Lesson.
 	 * @return mixed|void
 	 * @since 1.0.0
 	 */
@@ -35,7 +40,7 @@ class LessonStore extends DataStore {
 		}
 
 		$original_slug = $slug;
-		$slug = $this->generate_unique_slug( $slug, OHMYLMS_LESSON_CPT );
+		$slug          = $this->generate_unique_slug( $slug, OHMYLMS_LESSON_CPT );
 
 		$id = wp_insert_post(
 			apply_filters(
@@ -56,7 +61,7 @@ class LessonStore extends DataStore {
 
 		if ( $id && ! is_wp_error( $id ) ) {
 			$lesson->set_id( $id );
-			flush_rewrite_rules(true);
+			flush_rewrite_rules( true );
 			$this->update_lesson_meta( $lesson );
 
 			/**
@@ -80,9 +85,9 @@ class LessonStore extends DataStore {
 	/**
 	 * Read data
 	 *
-	 * @param Lesson $lesson
+	 * @param Lesson $lesson Lesson.
 	 * @return mixed|void
-	 * @throws \Exception
+	 * @throws \Exception When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	public function read( &$lesson ) {
@@ -116,8 +121,8 @@ class LessonStore extends DataStore {
 	 * @since 1.0.0
 	 */
 	public function update( &$lesson ) {
-		$slug = $lesson->get_slug( 'edit' );
-		$slug = $this->generate_unique_slug( $slug, OHMYLMS_LESSON_CPT );
+		$slug      = $lesson->get_slug( 'edit' );
+		$slug      = $this->generate_unique_slug( $slug, OHMYLMS_LESSON_CPT );
 		$post_data = array(
 			'post_content' => $lesson->get_description( 'edit' ),
 			'post_excerpt' => $lesson->get_short_description( 'edit' ),
@@ -148,7 +153,7 @@ class LessonStore extends DataStore {
 		do_action( 'ohmylms_after_updating_lesson', $lesson->get_id(), $lesson );
 	}
 
-	
+
 	/**
 	 * Update post meta for the lesson.
 	 *
@@ -171,7 +176,7 @@ class LessonStore extends DataStore {
 			'_video_id'          => 'video_id',
 			'_audio_id'          => 'audio_id',
 			'_external_url'      => 'external_url',
-			'_video_settings'      => 'video_settings',
+			'_video_settings'    => 'video_settings',
 		);
 
 		$props_to_update = $meta_key_to_props;
@@ -190,7 +195,7 @@ class LessonStore extends DataStore {
 	 * This function deletes a lesson by its ID and triggers the 'ohmylms_after_deleting_a_lesson' action hook.
 	 *
 	 * @param Lesson $lesson The lesson object to be deleted.
-	 * @param array  $args   Optional. Additional arguments for the delete operation. Default empty array.
+	 * @param array  $args Optional. Additional arguments for the delete operation. Default empty array.
 	 *
 	 * @since 1.0.0
 	 */
@@ -215,7 +220,7 @@ class LessonStore extends DataStore {
 	/**
 	 * Helper function that reads lesson data
 	 *
-	 * @param Lesson $lesson
+	 * @param Lesson $lesson Lesson.
 	 * @return void
 	 *
 	 * @since 1.0.0
@@ -252,8 +257,8 @@ class LessonStore extends DataStore {
 	/**
 	 * Helper function that updates lesson meta
 	 *
-	 * @param Lesson $lesson
-	 * @param bool   $force
+	 * @param Lesson $lesson Lesson.
+	 * @param bool   $force Force.
 	 * @return void
 	 *
 	 * @since 1.0.0
@@ -307,18 +312,12 @@ class LessonStore extends DataStore {
 	 */
 	public function get_order_number( &$lesson ) {
 		global $wpdb;
-		$lesson_id  = $lesson->get_id();
-		$chapter_id = ohmylms_get_chapter_id_by_content_id( $lesson_id );
+		$lesson_id    = $lesson->get_id();
+		$chapter_id   = ohmylms_get_chapter_id_by_content_id( $lesson_id );
 		$table_name   = $wpdb->prefix . 'ohmylms_content_relationship';
 		$order_number = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT order_number FROM {$table_name} WHERE chapter_id = %d AND content_id = %d",
-				$chapter_id,
-				$lesson_id
-			)
+			$wpdb->prepare( 'SELECT order_number FROM %i WHERE chapter_id = %d AND content_id = %d', $table_name, $chapter_id, $lesson_id )
 		);
 		return $order_number;
 	}
-
-
 }

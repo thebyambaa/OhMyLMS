@@ -28,8 +28,9 @@ building does not enable source assets on a site.
 Validation: `npm run build`, `npm run lint`, and `npm test`. The quiz report tests compare
 rendered element trees with the baseline for all nine question types and check report
 filtering/pagination, navigation, API paths, immutable marks edits, save payloads and
-success/failed-response reload behavior. They use mocked controls and API requests;
-Live WordPress rendering and backend persistence were subsequently tested on xyz.local;
-see `docs/QUIZ-REPORT-INTEGRATION.md` for the results and repeatable fixture workflow.
-That integration found and fixed search pagination, missing attempt status, and mixed
-numeric/string answer IDs (`model.mjs`). Do not regenerate over these fixes.
+success/failed-response reload behavior. They use mocked controls and API requests.
+A one-time live WordPress check on a different local site (September 24, 2026; manual marks
+saved through the real REST route, guest and subscriber requests refused) found and fixed
+search pagination, missing attempt status, and mixed numeric/string answer IDs (`model.mjs`).
+Do not regenerate over these fixes. The live fixture helper `tools/quiz-reports-live-fixture.php`
+only runs on a Local site folder named `xyz`, so it does not work on the current site.

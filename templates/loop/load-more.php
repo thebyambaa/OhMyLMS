@@ -32,9 +32,9 @@ $loadmor_text = apply_filters( 'ohmylms_course_loadmore_text', 'See More Courses
 		aria-label="<?php echo esc_attr( $loadmor_text ); ?>"
 		data-paged="<?php echo absint( $paged ); ?>"
 		data-posts-per-page="<?php echo absint( $posts_per_page ); ?>"
-		data-total="<?php echo $total; ?>"
+		data-total="<?php echo esc_attr( $total ); ?>"
 	>
-		<?php echo $loadmor_text; ?>
+		<?php echo esc_html( $loadmor_text ); ?>
 		<span class="ohmylms-loader"></span>
 	</button>
 </div>

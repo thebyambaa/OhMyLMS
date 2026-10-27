@@ -8,3 +8,4 @@ coverage/
 *.log
 
 .wp-dev/
+tools/coding-standards/vendor/

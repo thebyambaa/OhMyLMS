@@ -9,10 +9,8 @@
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
+	exit; // Exit if accessed directly.
 }
 
 global $course;
 $description = $course->get_description();
-?>
-

@@ -1,9 +1,12 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 
 namespace OhMyLMS\Abstracts;
 
 defined( 'ABSPATH' ) || exit();
 
+/**
+ * Plugin post type implementation.
+ */
 abstract class PostType {
 
 	/**
@@ -33,6 +36,9 @@ abstract class PostType {
 	public array $labels = array();
 
 
+	/**
+	 * Initialize Post type.
+	 */
 	public function __construct() {
 		add_action( 'init', array( $this, 'register_post_type' ) );
 	}
@@ -49,6 +55,9 @@ abstract class PostType {
 	}
 
 
+	/**
+	 * Register post type for Post type.
+	 */
 	public function register_post_type() {
 		if ( ! $this->post_type ) {
 			return;

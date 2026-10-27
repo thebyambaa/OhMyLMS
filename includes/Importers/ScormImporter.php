@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Class ScormImporter.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Importers;
 
@@ -67,28 +72,27 @@ class ScormImporter {
 	 * ScormImporter constructor.
 	 *
 	 * @param array $file Uploaded file data from $_FILES.
-	 * @throws \Exception
-	 */
+	 * @throws \Exception When the operation cannot be completed.*/
 	public function __construct( $file ) {
 		if ( ! isset( $file['tmp_name'] ) || empty( $file['tmp_name'] ) ) {
 			throw new \Exception( __( 'No file uploaded.', 'ohmylms' ) );
 		}
 
-		$this->file       = $file;
-		$this->media_map  = [];
-		$this->import_report = [
-			'success'              => true,
-			'course_ids'           => [],
-			'courses_created'      => 0,
-			'chapters_created'     => 0,
-			'lessons_created'      => 0,
-			'quizzes_created'      => 0,
-			'assignments_created'  => 0,
-			'media_imported'       => 0,
-			'skipped_items'        => [],
-			'errors'               => [],
-			'warnings'             => [],
-		];
+		$this->file          = $file;
+		$this->media_map     = array();
+		$this->import_report = array(
+			'success'             => true,
+			'course_ids'          => array(),
+			'courses_created'     => 0,
+			'chapters_created'    => 0,
+			'lessons_created'     => 0,
+			'quizzes_created'     => 0,
+			'assignments_created' => 0,
+			'media_imported'      => 0,
+			'skipped_items'       => array(),
+			'errors'              => array(),
+			'warnings'            => array(),
+		);
 
 		// Create temporary directory.
 		$upload_dir     = wp_upload_dir();
@@ -98,18 +102,21 @@ class ScormImporter {
 			throw new \Exception( __( 'Failed to create temporary directory for SCORM import.', 'ohmylms' ) );
 		}
 
-		ScormHelper::log( 'SCORM import initialized', 'info', [
-			'filename' => $file['name'],
-			'size'     => size_format( $file['size'] ),
-		] );
+		ScormHelper::log(
+			'SCORM import initialized',
+			'info',
+			array(
+				'filename' => $file['name'],
+				'size'     => size_format( $file['size'] ),
+			)
+		);
 	}
 
 	/**
 	 * Import SCORM package and create course.
 	 *
 	 * @return array Import report with course ID and statistics.
-	 * @throws \Exception
-	 */
+	 * @throws \Exception When the operation cannot be completed.*/
 	public function import_scorm_package() {
 		try {
 			ScormHelper::log( 'Starting SCORM import', 'info' );
@@ -129,9 +136,9 @@ class ScormImporter {
 			}
 
 			foreach ( $this->manifest_data['organizations'] as $organization ) {
-				$course_id = $this->create_course( $organization );
-				$this->import_report['course_ids'][]  = $course_id;
-				$this->import_report['courses_created']++;
+				$course_id                           = $this->create_course( $organization );
+				$this->import_report['course_ids'][] = $course_id;
+				++$this->import_report['courses_created'];
 
 				$this->import_course_structure( $course_id, $organization );
 				$this->default_chapter_id = null;
@@ -144,10 +151,10 @@ class ScormImporter {
 			return $this->import_report;
 
 		} catch ( \Exception $e ) {
-			ScormHelper::log( 'SCORM import failed', 'error', [ 'error' => $e->getMessage() ] );
+			ScormHelper::log( 'SCORM import failed', 'error', array( 'error' => $e->getMessage() ) );
 			$this->cleanup();
-			$this->import_report['success']   = false;
-			$this->import_report['errors'][]  = $e->getMessage();
+			$this->import_report['success']  = false;
+			$this->import_report['errors'][] = $e->getMessage();
 			throw $e;
 		}
 	}
@@ -155,28 +162,28 @@ class ScormImporter {
 	/**
 	 * Validate uploaded file.
 	 *
-	 * @throws \Exception
-	 */
+	 * @throws \Exception When the operation cannot be completed.*/
 	private function validate_file() {
 		$max_size = wp_max_upload_size();
 		if ( $this->file['size'] > $max_size ) {
 			throw new \Exception(
 				sprintf(
+					/* translators: %s: text value. */
 					__( 'File size exceeds maximum upload size of %s.', 'ohmylms' ),
 					size_format( $max_size )
 				)
 			);
 		}
 
-		$allowed_types = [ 'application/zip', 'application/x-zip-compressed', 'multipart/x-zip' ];
+		$allowed_types = array( 'application/zip', 'application/x-zip-compressed', 'multipart/x-zip' );
 		$file_type     = $this->file['type'];
 		$file_ext      = strtolower( pathinfo( $this->file['name'], PATHINFO_EXTENSION ) );
 
-		if ( ! in_array( $file_type, $allowed_types ) && $file_ext !== 'zip' ) {
+		if ( ! in_array( $file_type, $allowed_types ) && 'zip' !== $file_ext ) {
 			throw new \Exception( __( 'Invalid file type. Please upload a ZIP file containing a SCORM package.', 'ohmylms' ) );
 		}
 
-		if ( $this->file['error'] !== UPLOAD_ERR_OK ) {
+		if ( UPLOAD_ERR_OK !== $this->file['error'] ) {
 			throw new \Exception( __( 'File upload error. Please try again.', 'ohmylms' ) );
 		}
 	}
@@ -184,8 +191,7 @@ class ScormImporter {
 	/**
 	 * Extract SCORM ZIP package.
 	 *
-	 * @throws \Exception
-	 */
+	 * @throws \Exception When the operation cannot be completed.*/
 	private function extract_package() {
 		if ( ! class_exists( 'ZipArchive' ) ) {
 			throw new \Exception( __( 'ZipArchive class is not available. Please enable the ZIP extension in PHP.', 'ohmylms' ) );
@@ -194,21 +200,20 @@ class ScormImporter {
 		$zip    = new \ZipArchive();
 		$result = $zip->open( $this->file['tmp_name'] );
 
-		if ( $result !== true ) {
+		if ( true !== $result ) {
 			throw new \Exception( __( 'Failed to open SCORM package. The ZIP file may be corrupted.', 'ohmylms' ) );
 		}
 
 		$zip->extractTo( $this->temp_dir );
 		$zip->close();
 
-		ScormHelper::log( 'SCORM package extracted', 'info', [ 'temp_dir' => $this->temp_dir ] );
+		ScormHelper::log( 'SCORM package extracted', 'info', array( 'temp_dir' => $this->temp_dir ) );
 	}
 
 	/**
 	 * Parse imsmanifest.xml file.
 	 *
-	 * @throws \Exception
-	 */
+	 * @throws \Exception When the operation cannot be completed.*/
 	private function parse_manifest() {
 		$manifest_path = $this->find_manifest_file();
 
@@ -219,14 +224,14 @@ class ScormImporter {
 		libxml_use_internal_errors( true );
 		$xml = simplexml_load_file( $manifest_path );
 
-		if ( $xml === false ) {
+		if ( false === $xml ) {
 			libxml_clear_errors();
 			throw new \Exception( __( 'Failed to parse imsmanifest.xml. The file may be corrupted or invalid.', 'ohmylms' ) );
 		}
 
 		$namespaces = $xml->getNamespaces( true );
 		foreach ( $namespaces as $prefix => $namespace ) {
-			if ( $prefix === '' ) {
+			if ( '' === $prefix ) {
 				$xml->registerXPathNamespace( 'default', $namespace );
 			}
 		}
@@ -234,10 +239,14 @@ class ScormImporter {
 		$this->detect_scorm_version( $xml );
 		$this->manifest_data = $this->parse_manifest_data( $xml );
 
-		ScormHelper::log( 'Manifest parsed', 'info', [
-			'version' => $this->scorm_version,
-			'title'   => $this->manifest_data['title'],
-		] );
+		ScormHelper::log(
+			'Manifest parsed',
+			'info',
+			array(
+				'version' => $this->scorm_version,
+				'title'   => $this->manifest_data['title'],
+			)
+		);
 	}
 
 	/**
@@ -286,7 +295,7 @@ class ScormImporter {
 		}
 
 		if ( ! $this->scorm_version ) {
-			$this->scorm_version        = '1.2';
+			$this->scorm_version               = '1.2';
 			$this->import_report['warnings'][] = __( 'SCORM version could not be detected. Assuming SCORM 1.2.', 'ohmylms' );
 		}
 	}
@@ -298,12 +307,12 @@ class ScormImporter {
 	 * @return array Parsed manifest data.
 	 */
 	private function parse_manifest_data( $xml ) {
-		$data = [
+		$data = array(
 			'title'         => '',
 			'description'   => '',
-			'metadata'      => [],
-			'organizations' => [],
-		];
+			'metadata'      => array(),
+			'organizations' => array(),
+		);
 
 		$data['metadata']    = $this->parse_metadata( $xml );
 		$data['title']       = $data['metadata']['title'] ?? __( 'Imported SCORM Course', 'ohmylms' );
@@ -328,7 +337,7 @@ class ScormImporter {
 	 * @return array Metadata.
 	 */
 	private function parse_metadata( $xml ) {
-		$metadata = [];
+		$metadata = array();
 
 		if ( isset( $xml->metadata ) ) {
 			$lom = $xml->metadata->children( 'http://www.imsglobal.org/xsd/imsmd_v1p2' );
@@ -337,7 +346,7 @@ class ScormImporter {
 				$metadata['title']       = (string) $lom->general->title->langstring;
 				$metadata['description'] = (string) $lom->general->description->langstring;
 				$metadata['language']    = (string) $lom->general->language;
-				$metadata['keywords']    = [];
+				$metadata['keywords']    = array();
 
 				if ( $lom->general->keyword ) {
 					foreach ( $lom->general->keyword as $keyword ) {
@@ -357,12 +366,12 @@ class ScormImporter {
 	 * @return array Organization data.
 	 */
 	private function parse_organization( $org ) {
-		$organization = [
+		$organization = array(
 			'identifier'  => (string) $org['identifier'],
 			'title'       => (string) $org->title,
 			'description' => '',
-			'items'       => [],
-		];
+			'items'       => array(),
+		);
 
 		if ( isset( $org->metadata ) ) {
 			$lom = $org->metadata->children( 'http://www.imsglobal.org/xsd/imsmd_v1p2' );
@@ -383,20 +392,20 @@ class ScormImporter {
 	/**
 	 * Parse item element (chapter/lesson).
 	 *
-	 * @param \SimpleXMLElement $item  Item element.
+	 * @param \SimpleXMLElement $item Item element.
 	 * @param int               $depth Nesting depth.
 	 * @return array Item data.
 	 */
 	private function parse_item( $item, $depth = 0 ) {
-		$item_data = [
+		$item_data = array(
 			'identifier'    => (string) $item['identifier'],
 			'identifierref' => (string) $item['identifierref'],
 			'title'         => (string) $item->title,
 			'description'   => '',
 			'content_type'  => '',
 			'type'          => $this->determine_item_type( $item, $depth ),
-			'children'      => [],
-		];
+			'children'      => array(),
+		);
 
 		if ( isset( $item->metadata ) ) {
 			$lom = $item->metadata->children( 'http://www.imsglobal.org/xsd/imsmd_v1p2' );
@@ -410,11 +419,11 @@ class ScormImporter {
 					if ( strpos( $keyword_text, 'content-type:' ) === 0 ) {
 						$item_data['content_type'] = str_replace( 'content-type:', '', $keyword_text );
 
-						if ( $item_data['content_type'] === 'ohmylms-assignment' ) {
+						if ( 'ohmylms-assignment' === $item_data['content_type'] ) {
 							$item_data['type'] = 'assignment';
-						} elseif ( $item_data['content_type'] === 'ohmylms-quiz' ) {
+						} elseif ( 'ohmylms-quiz' === $item_data['content_type'] ) {
 							$item_data['type'] = 'quiz';
-						} elseif ( $item_data['content_type'] === 'ohmylms-lesson' ) {
+						} elseif ( 'ohmylms-lesson' === $item_data['content_type'] ) {
 							$item_data['type'] = 'lesson';
 						}
 						break;
@@ -435,7 +444,7 @@ class ScormImporter {
 	/**
 	 * Determine item type (chapter, lesson, quiz, etc.).
 	 *
-	 * @param \SimpleXMLElement $item  Item element.
+	 * @param \SimpleXMLElement $item Item element.
 	 * @param int               $depth Nesting depth.
 	 * @return string Item type.
 	 */
@@ -451,14 +460,14 @@ class ScormImporter {
 
 		$title = strtolower( (string) $item->title );
 
-		$quiz_patterns = [ 'quiz', 'test', 'exam', 'assessment', 'evaluation' ];
+		$quiz_patterns = array( 'quiz', 'test', 'exam', 'assessment', 'evaluation' );
 		foreach ( $quiz_patterns as $pattern ) {
 			if ( strpos( $title, $pattern ) !== false ) {
 				return 'quiz';
 			}
 		}
 
-		$assignment_patterns = [ 'assignment', 'homework', 'task', 'exercise', 'project' ];
+		$assignment_patterns = array( 'assignment', 'homework', 'task', 'exercise', 'project' );
 		foreach ( $assignment_patterns as $pattern ) {
 			if ( strpos( $title, $pattern ) !== false ) {
 				return 'assignment';
@@ -468,7 +477,7 @@ class ScormImporter {
 		if ( $identifierref && isset( $this->manifest_data['resources'][ $identifierref ] ) ) {
 			$resource = $this->manifest_data['resources'][ $identifierref ];
 
-			if ( isset( $resource['adlcp:scormtype'] ) && $resource['adlcp:scormtype'] === 'assessment' ) {
+			if ( isset( $resource['adlcp:scormtype'] ) && 'assessment' === $resource['adlcp:scormtype'] ) {
 				return 'quiz';
 			}
 
@@ -479,7 +488,7 @@ class ScormImporter {
 
 					if ( preg_match( '/<form[^>]*>/i', $content ) &&
 						( preg_match( '/<input[^>]*type=["\']radio["\'][^>]*>/i', $content ) ||
-						  preg_match( '/<input[^>]*type=["\']checkbox["\'][^>]*>/i', $content ) ) ) {
+							preg_match( '/<input[^>]*type=["\']checkbox["\'][^>]*>/i', $content ) ) ) {
 						return 'quiz';
 					}
 				}
@@ -496,18 +505,18 @@ class ScormImporter {
 	 * @return array Resources indexed by identifier.
 	 */
 	private function parse_resources( $xml ) {
-		$resources = [];
+		$resources = array();
 
 		if ( $xml->resources->resource ) {
 			foreach ( $xml->resources->resource as $resource ) {
 				$identifier               = (string) $resource['identifier'];
-				$resources[ $identifier ] = [
-					'identifier'         => $identifier,
-					'type'               => (string) $resource['type'],
-					'href'               => (string) $resource['href'],
-					'adlcp:scormtype'    => (string) $resource['adlcp:scormtype'],
-					'files'              => [],
-				];
+				$resources[ $identifier ] = array(
+					'identifier'      => $identifier,
+					'type'            => (string) $resource['type'],
+					'href'            => (string) $resource['href'],
+					'adlcp:scormtype' => (string) $resource['adlcp:scormtype'],
+					'files'           => array(),
+				);
 
 				if ( $resource->file ) {
 					foreach ( $resource->file as $file ) {
@@ -523,8 +532,7 @@ class ScormImporter {
 	/**
 	 * Validate SCORM structure.
 	 *
-	 * @throws \Exception
-	 */
+	 * @throws \Exception When the operation cannot be completed.*/
 	private function validate_scorm_structure() {
 		if ( empty( $this->manifest_data['organizations'] ) ) {
 			throw new \Exception( __( 'No content organization found in SCORM package.', 'ohmylms' ) );
@@ -540,18 +548,19 @@ class ScormImporter {
 	 *
 	 * @param array $organization Organization data from manifest.
 	 * @return int Course ID.
-	 * @throws \Exception
-	 */
+	 * @throws \Exception When the operation cannot be completed.*/
 	private function create_course( $organization ) {
 		$title       = ! empty( $organization['title'] ) ? $organization['title'] : $this->manifest_data['title'];
 		$description = ! empty( $organization['description'] ) ? $organization['description'] : $this->manifest_data['description'];
 
-		$course_id = wp_insert_post( [
-			'post_title'   => $title,
-			'post_content' => $description,
-			'post_status'  => 'draft',
-			'post_type'    => OHMYLMS_COURSE_CPT,
-		] );
+		$course_id = wp_insert_post(
+			array(
+				'post_title'   => $title,
+				'post_content' => $description,
+				'post_status'  => 'draft',
+				'post_type'    => OHMYLMS_COURSE_CPT,
+			)
+		);
 
 		if ( is_wp_error( $course_id ) ) {
 			throw new \Exception( __( 'Failed to create course: ', 'ohmylms' ) . $course_id->get_error_message() );
@@ -566,11 +575,15 @@ class ScormImporter {
 			wp_set_object_terms( $course_id, $this->manifest_data['metadata']['keywords'], 'course-tag' );
 		}
 
-		ScormHelper::log( 'Course created', 'info', [
-			'course_id'      => $course_id,
-			'title'          => $title,
-			'org_identifier' => $organization['identifier'],
-		] );
+		ScormHelper::log(
+			'Course created',
+			'info',
+			array(
+				'course_id'      => $course_id,
+				'title'          => $title,
+				'org_identifier' => $organization['identifier'],
+			)
+		);
 
 		return $course_id;
 	}
@@ -578,13 +591,13 @@ class ScormImporter {
 	/**
 	 * Import course structure (chapters, lessons, quizzes).
 	 *
-	 * @param int   $course_id    Course ID.
+	 * @param int   $course_id Course ID.
 	 * @param array $organization Organization data.
 	 */
 	private function import_course_structure( $course_id, $organization ) {
 		$has_chapters = false;
 		foreach ( $organization['items'] as $item ) {
-			if ( $item['type'] === 'chapter' || ! empty( $item['children'] ) ) {
+			if ( 'chapter' === $item['type'] || ! empty( $item['children'] ) ) {
 				$has_chapters = true;
 				break;
 			}
@@ -595,13 +608,13 @@ class ScormImporter {
 			$content_order      = 1;
 			foreach ( $organization['items'] as $item ) {
 				$this->import_content( $item, $course_id, $default_chapter_id, $content_order );
-				$content_order++;
+				++$content_order;
 			}
 		} else {
 			$chapter_order = 1;
 			foreach ( $organization['items'] as $item ) {
 				$this->import_item( $item, $course_id, null, $chapter_order );
-				$chapter_order++;
+				++$chapter_order;
 			}
 		}
 	}
@@ -611,18 +624,19 @@ class ScormImporter {
 	 *
 	 * @param int $course_id Course ID.
 	 * @return int Chapter ID.
-	 * @throws \Exception
-	 */
+	 * @throws \Exception When the operation cannot be completed.*/
 	private function create_default_chapter( $course_id ) {
 		if ( $this->default_chapter_id ) {
 			return $this->default_chapter_id;
 		}
 
-		$chapter_id = wp_insert_post( [
-			'post_title'  => __( 'Course Content', 'ohmylms' ),
-			'post_status' => 'publish',
-			'post_type'   => OHMYLMS_CHAPTER_CPT,
-		] );
+		$chapter_id = wp_insert_post(
+			array(
+				'post_title'  => __( 'Course Content', 'ohmylms' ),
+				'post_status' => 'publish',
+				'post_type'   => OHMYLMS_CHAPTER_CPT,
+			)
+		);
 
 		if ( is_wp_error( $chapter_id ) ) {
 			throw new \Exception( __( 'Failed to create default chapter.', 'ohmylms' ) );
@@ -631,17 +645,17 @@ class ScormImporter {
 		global $wpdb;
 		$wpdb->insert(
 			"{$wpdb->prefix}ohmylms_chapter_relationship",
-			[
+			array(
 				'course_id'    => $course_id,
 				'chapter_id'   => $chapter_id,
 				'order_number' => 1,
-			]
+			)
 		);
 
-		$this->import_report['chapters_created']++;
+		++$this->import_report['chapters_created'];
 		$this->default_chapter_id = $chapter_id;
 
-		ScormHelper::log( 'Default chapter created', 'info', [ 'chapter_id' => $chapter_id ] );
+		ScormHelper::log( 'Default chapter created', 'info', array( 'chapter_id' => $chapter_id ) );
 
 		return $chapter_id;
 	}
@@ -649,13 +663,13 @@ class ScormImporter {
 	/**
 	 * Import a single item (chapter or content).
 	 *
-	 * @param array    $item              Item data.
-	 * @param int      $course_id         Course ID.
+	 * @param array    $item Item data.
+	 * @param int      $course_id Course ID.
 	 * @param int|null $parent_chapter_id Parent chapter ID.
-	 * @param int      $order             Order number.
+	 * @param int      $order Order number.
 	 */
 	private function import_item( $item, $course_id, $parent_chapter_id, $order ) {
-		if ( $item['type'] === 'chapter' ) {
+		if ( 'chapter' === $item['type'] ) {
 			$this->import_chapter( $item, $course_id, $order );
 		} else {
 			if ( ! $parent_chapter_id ) {
@@ -668,20 +682,23 @@ class ScormImporter {
 	/**
 	 * Import chapter with contents.
 	 *
-	 * @param array $item      Chapter data.
+	 * @param array $item Chapter data.
 	 * @param int   $course_id Course ID.
-	 * @param int   $order     Order number.
+	 * @param int   $order Order number.
 	 */
 	private function import_chapter( $item, $course_id, $order ) {
-		$chapter_id = wp_insert_post( [
-			'post_title'   => $item['title'],
-			'post_content' => $item['description'] ?? '',
-			'post_status'  => 'publish',
-			'post_type'    => OHMYLMS_CHAPTER_CPT,
-		] );
+		$chapter_id = wp_insert_post(
+			array(
+				'post_title'   => $item['title'],
+				'post_content' => $item['description'] ?? '',
+				'post_status'  => 'publish',
+				'post_type'    => OHMYLMS_CHAPTER_CPT,
+			)
+		);
 
 		if ( is_wp_error( $chapter_id ) ) {
 			$this->import_report['errors'][] = sprintf(
+				/* translators: %s: text value. */
 				__( 'Failed to create chapter: %s', 'ohmylms' ),
 				$item['title']
 			);
@@ -691,29 +708,29 @@ class ScormImporter {
 		global $wpdb;
 		$wpdb->insert(
 			"{$wpdb->prefix}ohmylms_chapter_relationship",
-			[
+			array(
 				'course_id'    => $course_id,
 				'chapter_id'   => $chapter_id,
 				'order_number' => $order,
-			]
+			)
 		);
 
-		$this->import_report['chapters_created']++;
+		++$this->import_report['chapters_created'];
 
 		$content_order = 1;
 		foreach ( $item['children'] as $child_item ) {
 			$this->import_content( $child_item, $course_id, $chapter_id, $content_order );
-			$content_order++;
+			++$content_order;
 		}
 	}
 
 	/**
 	 * Import content (lesson, quiz, or assignment).
 	 *
-	 * @param array $item       Content data.
-	 * @param int   $course_id  Course ID.
+	 * @param array $item Content data.
+	 * @param int   $course_id Course ID.
 	 * @param int   $chapter_id Chapter ID.
-	 * @param int   $order      Order number.
+	 * @param int   $order Order number.
 	 */
 	private function import_content( $item, $course_id, $chapter_id, $order ) {
 		$resource = null;
@@ -723,15 +740,16 @@ class ScormImporter {
 
 		if ( ! $resource ) {
 			$this->import_report['skipped_items'][] = sprintf(
+				/* translators: %s: text value. */
 				__( 'No resource found for item: %s', 'ohmylms' ),
 				$item['title']
 			);
 			return;
 		}
 
-		if ( $item['type'] === 'quiz' ) {
+		if ( 'quiz' === $item['type'] ) {
 			$this->import_quiz( $item, $resource, $course_id, $chapter_id, $order );
-		} elseif ( $item['type'] === 'assignment' ) {
+		} elseif ( 'assignment' === $item['type'] ) {
 			$this->import_assignment( $item, $resource, $course_id, $chapter_id, $order );
 		} else {
 			$this->import_lesson( $item, $resource, $course_id, $chapter_id, $order );
@@ -741,15 +759,15 @@ class ScormImporter {
 	/**
 	 * Import lesson from SCORM content.
 	 *
-	 * @param array $item       Item data.
-	 * @param array $resource   Resource data.
-	 * @param int   $course_id  Course ID.
+	 * @param array $item Item data.
+	 * @param array $resource Resource data.
+	 * @param int   $course_id Course ID.
 	 * @param int   $chapter_id Chapter ID.
-	 * @param int   $order      Order number.
+	 * @param int   $order Order number.
 	 */
 	private function import_lesson( $item, $resource, $course_id, $chapter_id, $order ) {
-		$html_file  = $this->temp_dir . '/' . $resource['href'];
-		$content    = '';
+		$html_file   = $this->temp_dir . '/' . $resource['href'];
+		$content     = '';
 		$raw_content = '';
 
 		if ( file_exists( $html_file ) ) {
@@ -758,87 +776,104 @@ class ScormImporter {
 			$content          = $this->process_scorm_html( $raw_content, $item['title'] );
 		} else {
 			$this->import_report['warnings'][] = sprintf(
+				/* translators: %s: text value. */
 				__( 'Content file not found for lesson: %s', 'ohmylms' ),
 				$item['title']
 			);
-			$lesson_type_info = [ 'type' => 'text' ];
+			$lesson_type_info                  = array( 'type' => 'text' );
 		}
 
-		$lesson_id = wp_insert_post( [
-			'post_title'   => $item['title'],
-			'post_content' => $content,
-			'post_status'  => 'publish',
-			'post_type'    => 'ohmylms-lesson',
-		] );
+		$lesson_id = wp_insert_post(
+			array(
+				'post_title'   => $item['title'],
+				'post_content' => $content,
+				'post_status'  => 'publish',
+				'post_type'    => 'ohmylms-lesson',
+			)
+		);
 
 		if ( is_wp_error( $lesson_id ) ) {
 			$this->import_report['errors'][] = sprintf(
-				__( 'Failed to create lesson: %s - %s', 'ohmylms' ),
+				/* translators: %1$s: text value; %2$s: text value. */
+				__( 'Failed to create lesson: %1$s - %2$s', 'ohmylms' ),
 				$item['title'],
 				$lesson_id->get_error_message()
 			);
-			ScormHelper::log( 'Failed to create lesson', 'error', [
-				'title' => $item['title'],
-				'error' => $lesson_id->get_error_message(),
-			] );
+			ScormHelper::log(
+				'Failed to create lesson',
+				'error',
+				array(
+					'title' => $item['title'],
+					'error' => $lesson_id->get_error_message(),
+				)
+			);
 			return;
 		}
 
 		update_post_meta( $lesson_id, '_type', $lesson_type_info['type'] );
 
-		if ( $lesson_type_info['type'] === 'video' && ! empty( $lesson_type_info['video_id'] ) ) {
+		if ( 'video' === $lesson_type_info['type'] && ! empty( $lesson_type_info['video_id'] ) ) {
 			update_post_meta( $lesson_id, '_video_id', $lesson_type_info['video_id'] );
-		} elseif ( $lesson_type_info['type'] === 'video' && ! empty( $lesson_type_info['external_url'] ) ) {
+		} elseif ( 'video' === $lesson_type_info['type'] && ! empty( $lesson_type_info['external_url'] ) ) {
 			update_post_meta( $lesson_id, '_external_url', $lesson_type_info['external_url'] );
-		} elseif ( $lesson_type_info['type'] === 'audio' && ! empty( $lesson_type_info['audio_id'] ) ) {
+		} elseif ( 'audio' === $lesson_type_info['type'] && ! empty( $lesson_type_info['audio_id'] ) ) {
 			update_post_meta( $lesson_id, '_audio_id', $lesson_type_info['audio_id'] );
 		}
 
 		global $wpdb;
 		$result = $wpdb->insert(
 			"{$wpdb->prefix}ohmylms_content_relationship",
-			[
+			array(
 				'chapter_id'   => $chapter_id,
 				'content_id'   => $lesson_id,
 				'content_type' => $lesson_type_info['type'],
 				'order_number' => $order,
-			],
-			[ '%d', '%d', '%s', '%d' ]
+			),
+			array( '%d', '%d', '%s', '%d' )
 		);
 
-		if ( $result === false ) {
-			$error_msg                        = $wpdb->last_error ? $wpdb->last_error : 'Unknown database error';
+		if ( false === $result ) {
+			$error_msg                       = $wpdb->last_error ? $wpdb->last_error : 'Unknown database error';
 			$this->import_report['errors'][] = sprintf(
-				__( 'Failed to link lesson to chapter: %s - %s', 'ohmylms' ),
+				/* translators: %1$s: text value; %2$s: text value. */
+				__( 'Failed to link lesson to chapter: %1$s - %2$s', 'ohmylms' ),
 				$item['title'],
 				$error_msg
 			);
-			ScormHelper::log( 'Failed to link lesson to chapter', 'error', [
-				'lesson_id'  => $lesson_id,
-				'chapter_id' => $chapter_id,
-				'error'      => $error_msg,
-			] );
+			ScormHelper::log(
+				'Failed to link lesson to chapter',
+				'error',
+				array(
+					'lesson_id'  => $lesson_id,
+					'chapter_id' => $chapter_id,
+					'error'      => $error_msg,
+				)
+			);
 		} else {
-			$this->import_report['lessons_created']++;
-			ScormHelper::log( 'Lesson imported', 'info', [
-				'lesson_id'       => $lesson_id,
-				'title'           => $item['title'],
-				'type'            => $lesson_type_info['type'],
-				'chapter_id'      => $chapter_id,
-				'relationship_id' => $wpdb->insert_id,
-			] );
+			++$this->import_report['lessons_created'];
+			ScormHelper::log(
+				'Lesson imported',
+				'info',
+				array(
+					'lesson_id'       => $lesson_id,
+					'title'           => $item['title'],
+					'type'            => $lesson_type_info['type'],
+					'chapter_id'      => $chapter_id,
+					'relationship_id' => $wpdb->insert_id,
+				)
+			);
 		}
 	}
 
 	/**
 	 * Detect lesson type from HTML content and resources.
 	 *
-	 * @param string $html     HTML content.
+	 * @param string $html HTML content.
 	 * @param array  $resource Resource data.
 	 * @return array Lesson type information.
 	 */
 	private function detect_lesson_type_from_content( $html, $resource ) {
-		$result = [ 'type' => 'text' ];
+		$result = array( 'type' => 'text' );
 
 		$video_found = $this->detect_video_in_content( $html, $resource );
 		if ( $video_found ) {
@@ -867,7 +902,7 @@ class ScormImporter {
 	/**
 	 * Detect video content in HTML.
 	 *
-	 * @param string $html     HTML content.
+	 * @param string $html HTML content.
 	 * @param array  $resource Resource data.
 	 * @return array|false Video information or false.
 	 */
@@ -876,7 +911,7 @@ class ScormImporter {
 			if ( preg_match( '/<source[^>]+src=["\']([^"\']+\.(?:mp4|webm|ogg))["\'][^>]*>/i', $html, $matches ) ) {
 				$video_id = $this->import_media_file( $matches[1] );
 				if ( $video_id ) {
-					return [ 'video_id' => $video_id ];
+					return array( 'video_id' => $video_id );
 				}
 			}
 		}
@@ -884,7 +919,7 @@ class ScormImporter {
 		if ( preg_match( '/<iframe[^>]+src=["\']([^"\']+)["\'][^>]*>/i', $html, $matches ) ) {
 			$iframe_url = $matches[1];
 			if ( preg_match( '/(?:youtube\.com|youtu\.be|vimeo\.com|dailymotion\.com)/i', $iframe_url ) ) {
-				return [ 'external_url' => $iframe_url ];
+				return array( 'external_url' => $iframe_url );
 			}
 		}
 
@@ -893,7 +928,7 @@ class ScormImporter {
 				if ( preg_match( '/\.(?:mp4|webm|ogg|avi|mov)$/i', $file ) ) {
 					$video_id = $this->import_media_file( $file );
 					if ( $video_id ) {
-						return [ 'video_id' => $video_id ];
+						return array( 'video_id' => $video_id );
 					}
 				}
 			}
@@ -905,7 +940,7 @@ class ScormImporter {
 	/**
 	 * Detect audio content in HTML.
 	 *
-	 * @param string $html     HTML content.
+	 * @param string $html HTML content.
 	 * @param array  $resource Resource data.
 	 * @return array|false Audio information or false.
 	 */
@@ -914,7 +949,7 @@ class ScormImporter {
 			if ( preg_match( '/<source[^>]+src=["\']([^"\']+\.(?:mp3|wav|ogg|m4a))["\'][^>]*>/i', $html, $matches ) ) {
 				$audio_id = $this->import_media_file( $matches[1] );
 				if ( $audio_id ) {
-					return [ 'audio_id' => $audio_id ];
+					return array( 'audio_id' => $audio_id );
 				}
 			}
 		}
@@ -924,7 +959,7 @@ class ScormImporter {
 				if ( preg_match( '/\.(?:mp3|wav|ogg|m4a|aac|flac)$/i', $file ) ) {
 					$audio_id = $this->import_media_file( $file );
 					if ( $audio_id ) {
-						return [ 'audio_id' => $audio_id ];
+						return array( 'audio_id' => $audio_id );
 					}
 				}
 			}
@@ -936,17 +971,18 @@ class ScormImporter {
 	/**
 	 * Import quiz from SCORM assessment.
 	 *
-	 * @param array $item       Item data.
-	 * @param array $resource   Resource data.
-	 * @param int   $course_id  Course ID.
+	 * @param array $item Item data.
+	 * @param array $resource Resource data.
+	 * @param int   $course_id Course ID.
 	 * @param int   $chapter_id Chapter ID.
-	 * @param int   $order      Order number.
+	 * @param int   $order Order number.
 	 */
 	private function import_quiz( $item, $resource, $course_id, $chapter_id, $order ) {
 		$html_file = $this->temp_dir . '/' . $resource['href'];
 
 		if ( ! file_exists( $html_file ) ) {
 			$this->import_report['skipped_items'][] = sprintf(
+				/* translators: %s: text value. */
 				__( 'Quiz content file not found: %s', 'ohmylms' ),
 				$item['title']
 			);
@@ -958,6 +994,7 @@ class ScormImporter {
 
 		if ( empty( $questions ) ) {
 			$this->import_report['warnings'][] = sprintf(
+				/* translators: %s: text value. */
 				__( 'No questions found in quiz: %s. Creating as lesson instead.', 'ohmylms' ),
 				$item['title']
 			);
@@ -967,75 +1004,91 @@ class ScormImporter {
 
 		$quiz_description = $this->extract_quiz_description( $html_content, $item['title'] );
 
-		$quiz_id = wp_insert_post( [
-			'post_title'   => $item['title'],
-			'post_content' => $quiz_description,
-			'post_status'  => 'publish',
-			'post_type'    => 'ohmylms-quiz',
-		] );
+		$quiz_id = wp_insert_post(
+			array(
+				'post_title'   => $item['title'],
+				'post_content' => $quiz_description,
+				'post_status'  => 'publish',
+				'post_type'    => 'ohmylms-quiz',
+			)
+		);
 
 		if ( is_wp_error( $quiz_id ) ) {
 			$this->import_report['errors'][] = sprintf(
+				/* translators: %s: text value. */
 				__( 'Failed to create quiz: %s', 'ohmylms' ),
 				$item['title']
 			);
 			return;
 		}
 
-		update_post_meta( $quiz_id, '_quiz_settings', [
-			'layout'        => 'one_question_per_page',
-			'passing_grade' => [
-				'enabled' => false,
-				'value'   => 70,
-			],
-		] );
+		update_post_meta(
+			$quiz_id,
+			'_quiz_settings',
+			array(
+				'layout'        => 'one_question_per_page',
+				'passing_grade' => array(
+					'enabled' => false,
+					'value'   => 70,
+				),
+			)
+		);
 
 		$this->import_quiz_questions_to_db( $quiz_id, $questions );
 
 		global $wpdb;
 		$result = $wpdb->insert(
 			"{$wpdb->prefix}ohmylms_content_relationship",
-			[
+			array(
 				'chapter_id'   => $chapter_id,
 				'content_id'   => $quiz_id,
 				'content_type' => 'quiz',
 				'order_number' => $order,
-			],
-			[ '%d', '%d', '%s', '%d' ]
+			),
+			array( '%d', '%d', '%s', '%d' )
 		);
 
-		if ( $result === false ) {
-			$error_msg                        = $wpdb->last_error ? $wpdb->last_error : 'Unknown database error';
+		if ( false === $result ) {
+			$error_msg                       = $wpdb->last_error ? $wpdb->last_error : 'Unknown database error';
 			$this->import_report['errors'][] = sprintf(
-				__( 'Failed to link quiz to chapter: %s - %s', 'ohmylms' ),
+				/* translators: %1$s: text value; %2$s: text value. */
+				__( 'Failed to link quiz to chapter: %1$s - %2$s', 'ohmylms' ),
 				$item['title'],
 				$error_msg
 			);
-			ScormHelper::log( 'Failed to link quiz to chapter', 'error', [
-				'quiz_id'    => $quiz_id,
-				'chapter_id' => $chapter_id,
-				'error'      => $error_msg,
-			] );
+			ScormHelper::log(
+				'Failed to link quiz to chapter',
+				'error',
+				array(
+					'quiz_id'    => $quiz_id,
+					'chapter_id' => $chapter_id,
+					'error'      => $error_msg,
+				)
+			);
 		} else {
-			$this->import_report['quizzes_created']++;
-			ScormHelper::log( 'Quiz imported', 'info', [
-				'quiz_id'         => $quiz_id,
-				'title'           => $item['title'],
-				'questions_count' => count( $questions ),
-				'chapter_id'      => $chapter_id,
-				'relationship_id' => $wpdb->insert_id,
-			] );
+			++$this->import_report['quizzes_created'];
+			ScormHelper::log(
+				'Quiz imported',
+				'info',
+				array(
+					'quiz_id'         => $quiz_id,
+					'title'           => $item['title'],
+					'questions_count' => count( $questions ),
+					'chapter_id'      => $chapter_id,
+					'relationship_id' => $wpdb->insert_id,
+				)
+			);
 		}
 	}
 
 	/**
 	 * Import assignment from SCORM content.
 	 *
-	 * @param array $item       Item data.
-	 * @param array $resource   Resource data.
-	 * @param int   $course_id  Course ID.
+	 * @param array $item Item data.
+	 * @param array $resource Resource data.
+	 * @param int   $course_id Course ID.
 	 * @param int   $chapter_id Chapter ID.
-	 * @param int   $order      Order number.
+	 * @param int   $order Order number.
 	 */
 	private function import_assignment( $item, $resource, $course_id, $chapter_id, $order ) {
 		$html_file = $this->temp_dir . '/' . $resource['href'];
@@ -1046,57 +1099,69 @@ class ScormImporter {
 			$content = $this->process_scorm_html( $content, $item['title'] );
 		} else {
 			$this->import_report['warnings'][] = sprintf(
+				/* translators: %s: text value. */
 				__( 'Content file not found for assignment: %s', 'ohmylms' ),
 				$item['title']
 			);
 		}
 
-		$assignment_id = wp_insert_post( [
-			'post_title'   => $item['title'],
-			'post_content' => $content,
-			'post_status'  => 'publish',
-			'post_type'    => 'ohmylms-assignment',
-		] );
+		$assignment_id = wp_insert_post(
+			array(
+				'post_title'   => $item['title'],
+				'post_content' => $content,
+				'post_status'  => 'publish',
+				'post_type'    => 'ohmylms-assignment',
+			)
+		);
 
 		if ( is_wp_error( $assignment_id ) ) {
 			$this->import_report['errors'][] = sprintf(
+				/* translators: %s: text value. */
 				__( 'Failed to create assignment: %s', 'ohmylms' ),
 				$item['title']
 			);
 			return;
 		}
 
-		update_post_meta( $assignment_id, '_assignment_settings', [
-			'upload_limit'        => 1,
-			'attachment_limit'    => 10,
-			'allowed_extensions'  => [ 'pdf', 'doc', 'docx', 'txt', 'zip' ],
-			'auto_evaluate'       => false,
-			'passing_grade'       => 70,
-		] );
+		update_post_meta(
+			$assignment_id,
+			'_assignment_settings',
+			array(
+				'upload_limit'       => 1,
+				'attachment_limit'   => 10,
+				'allowed_extensions' => array( 'pdf', 'doc', 'docx', 'txt', 'zip' ),
+				'auto_evaluate'      => false,
+				'passing_grade'      => 70,
+			)
+		);
 
 		global $wpdb;
 		$wpdb->insert(
 			"{$wpdb->prefix}ohmylms_content_relationship",
-			[
+			array(
 				'chapter_id'   => $chapter_id,
 				'content_id'   => $assignment_id,
 				'content_type' => 'assignment',
 				'order_number' => $order,
-			]
+			)
 		);
 
-		$this->import_report['assignments_created']++;
+		++$this->import_report['assignments_created'];
 
-		ScormHelper::log( 'Assignment imported', 'info', [
-			'assignment_id' => $assignment_id,
-			'title'         => $item['title'],
-		] );
+		ScormHelper::log(
+			'Assignment imported',
+			'info',
+			array(
+				'assignment_id' => $assignment_id,
+				'title'         => $item['title'],
+			)
+		);
 	}
 
 	/**
 	 * Extract quiz description from HTML content.
 	 *
-	 * @param string $html  HTML content.
+	 * @param string $html HTML content.
 	 * @param string $title Quiz title to exclude from description.
 	 * @return string Quiz description.
 	 */
@@ -1110,10 +1175,10 @@ class ScormImporter {
 
 		$description_elements = $xpath->query( '//div[contains(@class, "description")] | //div[contains(@class, "introduction")] | //div[contains(@class, "intro")] | //p[1]' );
 
-		if ( $description_elements->length > 0 ) {
+		if ( 0 < $description_elements->length ) {
 			$description_text = '';
 			foreach ( $description_elements as $elem ) {
-				if ( $elem->nodeName === 'form' ||
+				if ( 'form' === $elem->nodeName ||
 					strpos( $elem->getAttribute( 'class' ), 'question' ) !== false ) {
 					break;
 				}
@@ -1134,7 +1199,7 @@ class ScormImporter {
 		}
 
 		if ( preg_match( '/<p[^>]*>(.*?)<\/p>/is', $html, $matches ) ) {
-			$first_para = strip_tags( $matches[1] );
+			$first_para = wp_strip_all_tags( $matches[1] );
 
 			if ( ! empty( $title ) && stripos( $first_para, $title ) !== false && strlen( $first_para ) < strlen( $title ) + 50 ) {
 				return '';
@@ -1155,8 +1220,8 @@ class ScormImporter {
 	 * @return array Array of questions.
 	 */
 	private function parse_quiz_questions( $html ) {
-		$questions              = [];
-		$processed_identifiers  = [];
+		$questions             = array();
+		$processed_identifiers = array();
 
 		libxml_use_internal_errors( true );
 		$dom = new \DOMDocument();
@@ -1175,7 +1240,7 @@ class ScormImporter {
 
 		foreach ( $question_containers as $container ) {
 			$selects = $xpath->query( './/select', $container );
-			if ( $selects->length >= 2 ) {
+			if ( 2 <= $selects->length ) {
 				$parsed_matching = $this->parse_matching_question( $container, $xpath );
 				if ( $parsed_matching ) {
 					$questions[]             = $parsed_matching;
@@ -1200,7 +1265,7 @@ class ScormImporter {
 
 			$inputs = $xpath->query( './/input[@type="radio" or @type="checkbox"]', $container );
 
-			if ( $inputs->length > 0 ) {
+			if ( 0 < $inputs->length ) {
 				$first_input = $inputs->item( 0 );
 				$input_name  = $first_input->getAttribute( 'name' );
 
@@ -1217,7 +1282,7 @@ class ScormImporter {
 			}
 
 			$text_inputs = $xpath->query( './/input[@type="text"] | .//textarea', $container );
-			if ( $text_inputs->length > 0 ) {
+			if ( 0 < $text_inputs->length ) {
 				$first_text_input = $text_inputs->item( 0 );
 				$input_name       = $first_text_input->getAttribute( 'name' );
 
@@ -1233,9 +1298,9 @@ class ScormImporter {
 				continue;
 			}
 
-			if ( $text_inputs->length === 0 && $inputs->length === 0 ) {
+			if ( 0 === $text_inputs->length && 0 === $inputs->length ) {
 				$parsed_statement = $this->parse_text_question( $container, $xpath );
-				if ( $parsed_statement && $parsed_statement['type'] === 'statement' ) {
+				if ( $parsed_statement && 'statement' === $parsed_statement['type'] ) {
 					$questions[]             = $parsed_statement;
 					$processed_identifiers[] = 'statement_' . count( $questions );
 				}
@@ -1243,13 +1308,13 @@ class ScormImporter {
 		}
 
 		if ( empty( $questions ) ) {
-			$all_radios     = $xpath->query( '//input[@type="radio"]' );
-			$grouped_by_name = [];
+			$all_radios      = $xpath->query( '//input[@type="radio"]' );
+			$grouped_by_name = array();
 
 			foreach ( $all_radios as $radio ) {
 				$name = $radio->getAttribute( 'name' );
 				if ( ! isset( $grouped_by_name[ $name ] ) ) {
-					$grouped_by_name[ $name ] = [];
+					$grouped_by_name[ $name ] = array();
 				}
 				$grouped_by_name[ $name ][] = $radio;
 			}
@@ -1257,7 +1322,7 @@ class ScormImporter {
 			foreach ( $grouped_by_name as $name => $radios ) {
 				if ( count( $radios ) > 0 ) {
 					$parent = $radios[0]->parentNode;
-					while ( $parent && $parent->nodeName !== 'form' && $parent->nodeName !== 'div' ) {
+					while ( $parent && 'form' !== $parent->nodeName && 'div' !== $parent->nodeName ) {
 						$parent = $parent->parentNode;
 					}
 
@@ -1278,16 +1343,16 @@ class ScormImporter {
 	/**
 	 * Parse a single question from HTML element (radio/checkbox types).
 	 *
-	 * @param \DOMElement      $element Question element.
-	 * @param \DOMXPath        $xpath   XPath object.
-	 * @param \DOMNodeList|null $inputs  Optional pre-fetched input elements.
+	 * @param \DOMElement       $element Question element.
+	 * @param \DOMXPath         $xpath XPath object.
+	 * @param \DOMNodeList|null $inputs Optional pre-fetched input elements.
 	 * @return array|null Question data or null.
 	 */
 	private function parse_html_question( $element, $xpath, $inputs = null ) {
 		$question_text = '';
 		$labels        = $xpath->query( './/legend | .//h1 | .//h2 | .//h3 | .//h4 | .//p[not(.//input)]', $element );
 
-		if ( $labels->length > 0 ) {
+		if ( 0 < $labels->length ) {
 			foreach ( $labels as $label ) {
 				$text = trim( $label->textContent );
 				if ( strlen( $text ) > 3 && ! preg_match( '/^\d+\.?$/', $text ) ) {
@@ -1301,37 +1366,41 @@ class ScormImporter {
 			return null;
 		}
 
-		if ( $inputs === null ) {
+		if ( null === $inputs ) {
 			$inputs = $xpath->query( './/input[@type="radio"] | .//input[@type="checkbox"]', $element );
 		}
 
-		if ( $inputs->length === 0 ) {
+		if ( 0 === $inputs->length ) {
 			return null;
 		}
 
-		$input_groups = [];
+		$input_groups = array();
 		foreach ( $inputs as $input ) {
 			$name = $input->getAttribute( 'name' );
 			if ( ! isset( $input_groups[ $name ] ) ) {
-				$input_groups[ $name ] = [];
+				$input_groups[ $name ] = array();
 			}
 			$input_groups[ $name ][] = $input;
 		}
 
-		$main_group = array_reduce( $input_groups, function ( $carry, $item ) {
-			return ( count( $item ) > count( $carry ) ) ? $item : $carry;
-		}, [] );
+		$main_group = array_reduce(
+			$input_groups,
+			function ( $carry, $item ) {
+				return ( count( $item ) > count( $carry ) ) ? $item : $carry;
+			},
+			array()
+		);
 
 		if ( empty( $main_group ) ) {
 			return null;
 		}
 
-		$first_input  = $main_group[0];
-		$input_type   = $first_input->getAttribute( 'type' );
+		$first_input   = $main_group[0];
+		$input_type    = $first_input->getAttribute( 'type' );
 		$is_true_false = false;
 
-		if ( count( $main_group ) === 2 && $input_type === 'radio' ) {
-			$answers_text = [];
+		if ( count( $main_group ) === 2 && 'radio' === $input_type ) {
+			$answers_text = array();
 			foreach ( $main_group as $input ) {
 				$answers_text[] = strtolower( trim( $this->get_input_label( $input, $xpath ) ) );
 			}
@@ -1345,22 +1414,22 @@ class ScormImporter {
 
 		if ( $is_true_false ) {
 			$question_type = 'true-false';
-		} elseif ( $input_type === 'checkbox' ) {
+		} elseif ( 'checkbox' === $input_type ) {
 			$question_type = 'multiple-choice';
 		} else {
 			$question_type = 'single-choice';
 		}
 
-		$answers = [];
+		$answers = array();
 		foreach ( $main_group as $input ) {
 			$label_text = $this->get_input_label( $input, $xpath );
 
 			if ( $label_text ) {
 				$is_correct = $this->is_answer_correct( $input, $xpath );
-				$answers[]  = [
+				$answers[]  = array(
 					'answer'     => $label_text,
 					'is_correct' => $is_correct ? 1 : 0,
-				];
+				);
 			}
 		}
 
@@ -1373,25 +1442,25 @@ class ScormImporter {
 		}
 		$question_text = trim( preg_replace( '/\s+/', ' ', $question_text ) );
 
-		return [
+		return array(
 			'title'   => $question_text,
 			'type'    => $question_type,
 			'answers' => $answers,
-		];
+		);
 	}
 
 	/**
 	 * Parse text-based question (short-text, long-text, fill-in-the-blank, statement).
 	 *
 	 * @param \DOMElement $element Question element.
-	 * @param \DOMXPath   $xpath   XPath object.
+	 * @param \DOMXPath   $xpath XPath object.
 	 * @return array|null Question data or null.
 	 */
 	private function parse_text_question( $element, $xpath ) {
 		$question_text = '';
 		$labels        = $xpath->query( './/h1 | .//h2 | .//h3 | .//h4 | .//p[1] | .//label[1] | .//legend', $element );
 
-		if ( $labels->length > 0 ) {
+		if ( 0 < $labels->length ) {
 			$question_text = trim( $labels->item( 0 )->textContent );
 		}
 
@@ -1402,7 +1471,7 @@ class ScormImporter {
 		$text_inputs = $xpath->query( './/input[@type="text"]', $element );
 		$textareas   = $xpath->query( './/textarea', $element );
 
-		if ( $text_inputs->length === 0 && $textareas->length === 0 ) {
+		if ( 0 === $text_inputs->length && 0 === $textareas->length ) {
 			$lower_text = strtolower( $question_text );
 			if ( strpos( $lower_text, 'note:' ) !== false ||
 				strpos( $lower_text, 'information:' ) !== false ||
@@ -1410,11 +1479,16 @@ class ScormImporter {
 				strpos( $lower_text, 'important:' ) !== false ||
 				strlen( $question_text ) > 200 ) {
 
-				return [
+				return array(
 					'title'   => $question_text,
 					'type'    => 'statement',
-					'answers' => [ [ 'answer' => '', 'is_correct' => 1 ] ],
-				];
+					'answers' => array(
+						array(
+							'answer'     => '',
+							'is_correct' => 1,
+						),
+					),
+				);
 			}
 			return null;
 		}
@@ -1422,7 +1496,7 @@ class ScormImporter {
 		$question_type = 'short-text';
 		$answer_text   = '';
 
-		if ( $textareas->length > 0 ) {
+		if ( 0 < $textareas->length ) {
 			$question_type  = 'long-text';
 			$first_textarea = $textareas->item( 0 );
 			$answer_text    = $first_textarea->getAttribute( 'value' );
@@ -1432,7 +1506,7 @@ class ScormImporter {
 			if ( empty( $answer_text ) ) {
 				$answer_text = trim( $first_textarea->textContent );
 			}
-		} elseif ( $text_inputs->length > 0 ) {
+		} elseif ( 0 < $text_inputs->length ) {
 			$is_fill_blank = strpos( $question_text, '___' ) !== false ||
 				strpos( $question_text, '[blank]' ) !== false ||
 				strpos( $question_text, '____' ) !== false;
@@ -1483,7 +1557,7 @@ class ScormImporter {
 
 			if ( empty( $answer_text ) ) {
 				$answer_labels = $xpath->query( './/*[contains(text(), "Correct answer") or contains(text(), "Answer:")]', $element );
-				if ( $answer_labels->length > 0 ) {
+				if ( 0 < $answer_labels->length ) {
 					$full_text = $answer_labels->item( 0 )->textContent;
 					if ( preg_match( '/(?:Correct answer|Answer)\s*:\s*(.+)/i', $full_text, $matches ) ) {
 						$answer_text = trim( $matches[1] );
@@ -1492,25 +1566,30 @@ class ScormImporter {
 			}
 		}
 
-		return [
+		return array(
 			'title'   => $question_text,
 			'type'    => $question_type,
-			'answers' => [ [ 'answer' => $answer_text, 'is_correct' => 1 ] ],
-		];
+			'answers' => array(
+				array(
+					'answer'     => $answer_text,
+					'is_correct' => 1,
+				),
+			),
+		);
 	}
 
 	/**
 	 * Parse matching question.
 	 *
 	 * @param \DOMElement $element Question element.
-	 * @param \DOMXPath   $xpath   XPath object.
+	 * @param \DOMXPath   $xpath XPath object.
 	 * @return array|null Question data or null.
 	 */
 	private function parse_matching_question( $element, $xpath ) {
 		$question_text = '';
 		$labels        = $xpath->query( './/h1 | .//h2 | .//h3 | .//h4 | .//p[1] | .//legend', $element );
 
-		if ( $labels->length > 0 ) {
+		if ( 0 < $labels->length ) {
 			$question_text = trim( $labels->item( 0 )->textContent );
 		}
 
@@ -1519,11 +1598,11 @@ class ScormImporter {
 		}
 
 		$selects = $xpath->query( './/select', $element );
-		if ( $selects->length < 2 ) {
+		if ( 2 > $selects->length ) {
 			return null;
 		}
 
-		$answers = [];
+		$answers = array();
 
 		foreach ( $selects as $select ) {
 			$select_label = '';
@@ -1531,7 +1610,7 @@ class ScormImporter {
 
 			if ( $select_id ) {
 				$label_elements = $xpath->query( "//label[@for='{$select_id}']" );
-				if ( $label_elements->length > 0 ) {
+				if ( 0 < $label_elements->length ) {
 					$select_label = trim( $label_elements->item( 0 )->textContent );
 				}
 			}
@@ -1539,13 +1618,13 @@ class ScormImporter {
 			if ( empty( $select_label ) ) {
 				$prev = $select->previousSibling;
 				while ( $prev ) {
-					if ( $prev->nodeType === XML_TEXT_NODE ) {
+					if ( XML_TEXT_NODE === $prev->nodeType ) {
 						$text = trim( $prev->textContent );
 						if ( ! empty( $text ) ) {
 							$select_label = $text;
 							break;
 						}
-					} elseif ( $prev->nodeType === XML_ELEMENT_NODE ) {
+					} elseif ( XML_ELEMENT_NODE === $prev->nodeType ) {
 						$select_label = trim( $prev->textContent );
 						break;
 					}
@@ -1565,10 +1644,10 @@ class ScormImporter {
 			}
 
 			if ( ! empty( $select_label ) ) {
-				$answers[] = [
+				$answers[] = array(
 					'answer'     => $select_label . ' → ' . $correct_option,
 					'is_correct' => 1,
-				];
+				);
 			}
 		}
 
@@ -1576,25 +1655,25 @@ class ScormImporter {
 			return null;
 		}
 
-		return [
+		return array(
 			'title'   => $question_text,
 			'type'    => 'matching',
 			'answers' => $answers,
-		];
+		);
 	}
 
 	/**
 	 * Parse reorder/sequence question.
 	 *
 	 * @param \DOMElement $element Question element.
-	 * @param \DOMXPath   $xpath   XPath object.
+	 * @param \DOMXPath   $xpath XPath object.
 	 * @return array|null Question data or null.
 	 */
 	private function parse_reorder_question( $element, $xpath ) {
 		$question_text = '';
 		$labels        = $xpath->query( './/h1 | .//h2 | .//h3 | .//h4 | .//p[1] | .//legend', $element );
 
-		if ( $labels->length > 0 ) {
+		if ( 0 < $labels->length ) {
 			$question_text = trim( $labels->item( 0 )->textContent );
 		}
 
@@ -1604,11 +1683,11 @@ class ScormImporter {
 
 		$items = $xpath->query( './/li | .//*[@data-order] | .//*[@data-position]', $element );
 
-		if ( $items->length < 2 ) {
+		if ( 2 > $items->length ) {
 			return null;
 		}
 
-		$answers = [];
+		$answers = array();
 
 		foreach ( $items as $index => $item ) {
 			$item_text = trim( $item->textContent );
@@ -1625,16 +1704,19 @@ class ScormImporter {
 				$order = $index + 1;
 			}
 
-			$answers[] = [
+			$answers[] = array(
 				'answer'     => $item_text,
 				'is_correct' => 1,
 				'order'      => (int) $order,
-			];
+			);
 		}
 
-		usort( $answers, function ( $a, $b ) {
-			return ( $a['order'] ?? 0 ) - ( $b['order'] ?? 0 );
-		} );
+		usort(
+			$answers,
+			function ( $a, $b ) {
+				return ( $a['order'] ?? 0 ) - ( $b['order'] ?? 0 );
+			}
+		);
 
 		foreach ( $answers as &$answer ) {
 			unset( $answer['order'] );
@@ -1644,11 +1726,11 @@ class ScormImporter {
 			return null;
 		}
 
-		return [
+		return array(
 			'title'   => $question_text,
 			'type'    => 'reorder',
 			'answers' => $answers,
-		];
+		);
 	}
 
 	/**
@@ -1659,19 +1741,19 @@ class ScormImporter {
 	 * @return bool True if correct.
 	 */
 	private function is_answer_correct( $input, $xpath ) {
-		$input_id      = $input->getAttribute( 'id' );
+		$input_id       = $input->getAttribute( 'id' );
 		$raw_label_text = '';
 
 		if ( $input_id ) {
 			$labels = $xpath->query( "//label[@for='{$input_id}']" );
-			if ( $labels->length > 0 ) {
+			if ( 0 < $labels->length ) {
 				$raw_label_text = $labels->item( 0 )->textContent;
 			}
 		}
 
 		if ( empty( $raw_label_text ) ) {
 			$parent = $input->parentNode;
-			if ( $parent && $parent->nodeName === 'label' ) {
+			if ( $parent && 'label' === $parent->nodeName ) {
 				$raw_label_text = $parent->textContent;
 			}
 		}
@@ -1709,18 +1791,18 @@ class ScormImporter {
 		}
 
 		$data_correct = $input->getAttribute( 'data-correct' );
-		if ( in_array( strtolower( $data_correct ), [ 'true', '1', 'yes', 'correct' ] ) ) {
+		if ( in_array( strtolower( $data_correct ), array( 'true', '1', 'yes', 'correct' ) ) ) {
 			return true;
 		}
 
 		$data_answer = $input->getAttribute( 'data-answer' );
-		if ( in_array( strtolower( $data_answer ), [ 'true', '1', 'yes', 'correct' ] ) ) {
+		if ( in_array( strtolower( $data_answer ), array( 'true', '1', 'yes', 'correct' ) ) ) {
 			return true;
 		}
 
 		$value = $input->getAttribute( 'value' );
 		$name  = $input->getAttribute( 'name' );
-		if ( stripos( $name, 'correct' ) !== false && in_array( strtolower( $value ), [ '1', 'true', 'yes' ] ) ) {
+		if ( stripos( $name, 'correct' ) !== false && in_array( strtolower( $value ), array( '1', 'true', 'yes' ) ) ) {
 			return true;
 		}
 
@@ -1736,7 +1818,7 @@ class ScormImporter {
 				}
 
 				if ( stripos( $hidden_name, $input_name ) !== false ) {
-					if ( in_array( strtolower( $hidden_value ), [ '1', 'true', 'yes', $value ] ) ) {
+					if ( in_array( strtolower( $hidden_value ), array( '1', 'true', 'yes', $value ) ) ) {
 						return true;
 					}
 				}
@@ -1745,7 +1827,7 @@ class ScormImporter {
 
 		if ( $input_id ) {
 			$labels = $xpath->query( "//label[@for='{$input_id}']" );
-			if ( $labels->length > 0 ) {
+			if ( 0 < $labels->length ) {
 				$label_class = $labels->item( 0 )->getAttribute( 'class' );
 				if ( stripos( $label_class, 'correct' ) !== false ) {
 					return true;
@@ -1768,22 +1850,22 @@ class ScormImporter {
 
 		if ( $input_id ) {
 			$labels = $xpath->query( "//label[@for='{$input_id}']" );
-			if ( $labels->length > 0 ) {
+			if ( 0 < $labels->length ) {
 				return trim( $this->get_text_without_input( $labels->item( 0 ) ) );
 			}
 		}
 
 		$parent = $input->parentNode;
-		if ( $parent && $parent->nodeName === 'label' ) {
+		if ( $parent && 'label' === $parent->nodeName ) {
 			return trim( $this->get_text_without_input( $parent ) );
 		}
 
 		$next = $input->nextSibling;
 		while ( $next ) {
-			if ( $next->nodeType === XML_TEXT_NODE && trim( $next->textContent ) ) {
+			if ( XML_TEXT_NODE === $next->nodeType && trim( $next->textContent ) ) {
 				return trim( $next->textContent );
 			}
-			if ( $next->nodeType === XML_ELEMENT_NODE && $next->nodeName !== 'input' ) {
+			if ( XML_ELEMENT_NODE === $next->nodeType && 'input' !== $next->nodeName ) {
 				return trim( $next->textContent );
 			}
 			$next = $next->nextSibling;
@@ -1791,10 +1873,10 @@ class ScormImporter {
 
 		$prev = $input->previousSibling;
 		while ( $prev ) {
-			if ( $prev->nodeType === XML_TEXT_NODE && trim( $prev->textContent ) ) {
+			if ( XML_TEXT_NODE === $prev->nodeType && trim( $prev->textContent ) ) {
 				return trim( $prev->textContent );
 			}
-			if ( $prev->nodeType === XML_ELEMENT_NODE && $prev->nodeName !== 'input' ) {
+			if ( XML_ELEMENT_NODE === $prev->nodeType && 'input' !== $prev->nodeName ) {
 				return trim( $prev->textContent );
 			}
 			$prev = $prev->previousSibling;
@@ -1812,9 +1894,9 @@ class ScormImporter {
 	private function get_text_without_input( $element ) {
 		$text = '';
 		foreach ( $element->childNodes as $node ) {
-			if ( $node->nodeType === XML_TEXT_NODE ) {
+			if ( XML_TEXT_NODE === $node->nodeType ) {
 				$text .= $node->textContent;
-			} elseif ( $node->nodeType === XML_ELEMENT_NODE && $node->nodeName !== 'input' ) {
+			} elseif ( XML_ELEMENT_NODE === $node->nodeType && 'input' !== $node->nodeName ) {
 				$text .= $node->textContent;
 			}
 		}
@@ -1832,45 +1914,55 @@ class ScormImporter {
 	/**
 	 * Import questions to database.
 	 *
-	 * @param int   $quiz_id   Quiz ID.
+	 * @param int   $quiz_id Quiz ID.
 	 * @param array $questions Questions array.
 	 */
 	private function import_quiz_questions_to_db( $quiz_id, $questions ) {
 		global $wpdb;
 
-		ScormHelper::log( 'Starting quiz questions import', 'info', [
-			'quiz_id'         => $quiz_id,
-			'total_questions' => count( $questions ),
-		] );
+		ScormHelper::log(
+			'Starting quiz questions import',
+			'info',
+			array(
+				'quiz_id'         => $quiz_id,
+				'total_questions' => count( $questions ),
+			)
+		);
 
 		foreach ( $questions as $index => $question ) {
 			$question_title = preg_replace( '/^Question\s+\d+\s*:\s*/i', '', $question['title'] );
 			$question_title = trim( $question_title );
 
-			$question_id = wp_insert_post( [
-				'post_title'  => $question_title,
-				'post_status' => 'publish',
-				'post_type'   => 'ohmylms-question',
-			] );
+			$question_id = wp_insert_post(
+				array(
+					'post_title'  => $question_title,
+					'post_status' => 'publish',
+					'post_type'   => 'ohmylms-question',
+				)
+			);
 
 			if ( is_wp_error( $question_id ) ) {
-				ScormHelper::log( 'Failed to create question', 'error', [
-					'title' => $question_title,
-					'error' => $question_id->get_error_message(),
-				] );
+				ScormHelper::log(
+					'Failed to create question',
+					'error',
+					array(
+						'title' => $question_title,
+						'error' => $question_id->get_error_message(),
+					)
+				);
 				continue;
 			}
 
-			$question_settings = [
+			$question_settings = array(
 				'type'     => $question['type'],
 				'required' => true,
-				'score'    => [
+				'score'    => array(
 					'enabled' => true,
 					'value'   => 1,
-				],
-			];
+				),
+			);
 
-			$randomizable_types = [ 'single-choice', 'multiple-choice', 'true-false' ];
+			$randomizable_types = array( 'single-choice', 'multiple-choice', 'true-false' );
 			if ( in_array( $question['type'], $randomizable_types ) ) {
 				$question_settings['randomize'] = false;
 			}
@@ -1884,60 +1976,72 @@ class ScormImporter {
 			foreach ( $question['answers'] as $answer ) {
 				$insert_result = $wpdb->insert(
 					"{$wpdb->prefix}ohmylms_question_answers",
-					[
+					array(
 						'question_id'  => $question_id,
 						'answer'       => $answer['answer'],
 						'is_correct'   => $answer['is_correct'],
 						'order_number' => $answer_order++,
-					]
+					)
 				);
 
 				if ( $insert_result ) {
-					$answers_inserted++;
+					++$answers_inserted;
 					if ( $answer['is_correct'] ) {
-						$correct_answers++;
+						++$correct_answers;
 					}
 				} else {
-					ScormHelper::log( 'Failed to insert answer', 'error', [
-						'question_id' => $question_id,
-						'answer'      => $answer['answer'],
-						'error'       => $wpdb->last_error,
-					] );
+					ScormHelper::log(
+						'Failed to insert answer',
+						'error',
+						array(
+							'question_id' => $question_id,
+							'answer'      => $answer['answer'],
+							'error'       => $wpdb->last_error,
+						)
+					);
 				}
 			}
 
 			$link_result = $wpdb->insert(
 				"{$wpdb->prefix}ohmylms_quiz_questions_relationship",
-				[
+				array(
 					'quiz_id'      => $quiz_id,
 					'question_id'  => $question_id,
 					'order_number' => $index + 1,
-				]
+				)
 			);
 
 			if ( ! $link_result ) {
-				ScormHelper::log( 'Failed to link question to quiz', 'error', [
-					'quiz_id'     => $quiz_id,
-					'question_id' => $question_id,
-					'error'       => $wpdb->last_error,
-				] );
+				ScormHelper::log(
+					'Failed to link question to quiz',
+					'error',
+					array(
+						'quiz_id'     => $quiz_id,
+						'question_id' => $question_id,
+						'error'       => $wpdb->last_error,
+					)
+				);
 			}
 
-			ScormHelper::log( 'Question imported', 'info', [
-				'question_id'    => $question_id,
-				'question_number' => $index + 1,
-				'title'          => $question_title,
-				'type'           => $question['type'],
-				'total_answers'  => $answers_inserted,
-				'correct_answers' => $correct_answers,
-			] );
+			ScormHelper::log(
+				'Question imported',
+				'info',
+				array(
+					'question_id'     => $question_id,
+					'question_number' => $index + 1,
+					'title'           => $question_title,
+					'type'            => $question['type'],
+					'total_answers'   => $answers_inserted,
+					'correct_answers' => $correct_answers,
+				)
+			);
 		}
 	}
 
 	/**
 	 * Process SCORM HTML content.
 	 *
-	 * @param string $html  HTML content.
+	 * @param string $html HTML content.
 	 * @param string $title Optional title to remove from content.
 	 * @return string Processed HTML.
 	 */
@@ -2023,13 +2127,13 @@ class ScormImporter {
 
 		copy( $full_path, $target_file );
 
-		$attachment = [
+		$attachment = array(
 			'guid'           => $upload_dir['url'] . '/' . $filename,
 			'post_mime_type' => mime_content_type( $target_file ),
 			'post_title'     => preg_replace( '/\.[^.]+$/', '', $filename ),
 			'post_content'   => '',
 			'post_status'    => 'inherit',
-		];
+		);
 
 		$attachment_id = wp_insert_attachment( $attachment, $target_file );
 
@@ -2038,7 +2142,7 @@ class ScormImporter {
 			wp_update_attachment_metadata( $attachment_id, $attach_data );
 
 			$this->media_map[ $file_path ] = $attachment_id;
-			$this->import_report['media_imported']++;
+			++$this->import_report['media_imported'];
 
 			return $attachment_id;
 		}
@@ -2065,7 +2169,7 @@ class ScormImporter {
 			return;
 		}
 
-		$files = array_diff( scandir( $dir ), [ '.', '..' ] );
+		$files = array_diff( scandir( $dir ), array( '.', '..' ) );
 
 		foreach ( $files as $file ) {
 			$path = $dir . '/' . $file;

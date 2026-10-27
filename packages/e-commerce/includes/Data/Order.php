@@ -1,14 +1,17 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
 
-namespace CodeRex\Ecommerce\Data;
+namespace OhMyLMS\Commerce\Data;
 
-use CodeRex\Ecommerce\Abstracts\Data;
-use CodeRex\Ecommerce\DataStores;
-use CodeRex\Ecommerce\EcommerceDateTime;
-use CodeRex\Ecommerce\Includes\Tax\TaxService;
+use OhMyLMS\Commerce\Abstracts\Data;
+use OhMyLMS\Commerce\DataStores;
+use OhMyLMS\Commerce\EcommerceDateTime;
+use OhMyLMS\Commerce\Includes\Tax\TaxService;
 
-use function CodeRex\Ecommerce\ecommerce;
+use function OhMyLMS\Commerce\ecommerce;
 
+/**
+ * Plugin order implementation.
+ */
 class Order extends Data {
 
 	/**
@@ -28,6 +31,11 @@ class Order extends Data {
 	protected string $data_store_name = 'order';
 
 
+	/**
+	 * Status transition.
+	 *
+	 * @var mixed
+	 */
 	public $status_transition = array();
 
 
@@ -73,10 +81,10 @@ class Order extends Data {
 		'parent_id'            => 0,
 		'related_orders'       => array(),
 		'order_version'        => OHMYLMS_VERSION,
-		'subscription_id'	   => 0,
-		'line_items'		   => array(),
+		'subscription_id'      => 0,
+		'line_items'           => array(),
 		'tax_amount'           => 0,
-		'tax_rate'             => 0
+		'tax_rate'             => 0,
 	);
 
 	/**
@@ -98,7 +106,7 @@ class Order extends Data {
 			$this->set_id( absint( $order->ID ) );
 		}
 
-		// load the data store
+		// load the data store.
 		$this->data_store = DataStores::load( $this->data_store_name );
 
 		if ( $this->get_id() > 0 ) {
@@ -152,21 +160,22 @@ class Order extends Data {
 	 * @since 1.0.0
 	 */
 	protected function status_transition() {
-		$status_transition 			= $this->status_transition;
-		$this->status_transition 	= false;
-		if ( !$this->get_status() || !$status_transition ) {
+		$status_transition       = $this->status_transition;
+		$this->status_transition = false;
+		if ( ! $this->get_status() || ! $status_transition ) {
 			return;
 		}
 		try {
 			do_action( 'ohmylms_order_status_' . $status_transition['to'], $this->get_id(), $this, $status_transition );
 			if ( ! empty( $status_transition['from'] ) ) {
-				$transition_note = sprintf( __( 'Order status changed from %1$s to %2$s.', 'ohmylms' ), $status_transition['from'], $status_transition['to'] );
+				$transition_note = sprintf( /* translators: %1$s: text value; %2$s: text value. */
+				__( 'Order status changed from %1$s to %2$s.', 'ohmylms' ), $status_transition['from'], $status_transition['to'] );
 				$this->add_order_note( $transition_note );
 				do_action( 'ohmylms_order_status_' . $status_transition['from'] . '_to_' . $status_transition['to'], $this->get_id(), $this );
 				do_action( 'ohmylms_order_status_changed', $this->get_id(), $status_transition['from'], $status_transition['to'], $this );
-			}
-			else {
-				$transition_note = sprintf( __( 'Order status set to %s.', 'ohmylms' ), $status_transition['to'] );
+			} else {
+				$transition_note = sprintf( /* translators: %s: text value. */
+				__( 'Order status set to %s.', 'ohmylms' ), $status_transition['to'] );
 				$this->add_order_note( $transition_note );
 			}
 		} catch ( \Exception $e ) {
@@ -183,7 +192,7 @@ class Order extends Data {
 	 * @since 1.0.0
 	 */
 	public function needs_payment() {
-		// if the total is greater than 0, then payment is needed
+		// if the total is greater than 0, then payment is needed.
 		if ( $this->get_total() > 0 ) {
 			return true;
 		}
@@ -198,6 +207,7 @@ class Order extends Data {
 	 *
 	 * @return bool True if the payment is successfully marked as complete, false otherwise.
 	 * @since 1.0.0
+	 * @param string $transaction_id Transaction identifier.
 	 */
 	public function payment_complete( $transaction_id = '' ) {
 		if ( ! $this->get_id() ) { // Order must exist.
@@ -210,7 +220,8 @@ class Order extends Data {
 			}
 
 			if ( ! $this->get_date_paid( 'edit' ) ) {
-				$this->set_date_paid( current_time( 'mysql' ) );;
+				$this->set_date_paid( current_time( 'mysql' ) );
+
 			}
 
 			$this->set_status( 'completed' );
@@ -221,7 +232,7 @@ class Order extends Data {
 			do_action( 'ohmylms_payment_completed', $this->get_id() );
 		} catch ( \Exception $e ) {
 			// TODO: Add the error at Log file
-			// TODO: Add order note with the error message
+			// TODO: Add order note with the error message.
 			return false;
 		}
 		return true;
@@ -240,6 +251,7 @@ class Order extends Data {
 	 *
 	 * @return float The total amount of the order.
 	 * @since 1.0.0
+	 * @param string $context Context.
 	 */
 	public function get_total( $context = 'view' ) {
 		return $this->get_prop( 'total', $context );
@@ -263,6 +275,7 @@ class Order extends Data {
 	 *
 	 * @return float The total discount amount.
 	 * @since 1.0.0
+	 * @param string $context Context.
 	 */
 	public function get_cart_discount( $context = 'view' ) {
 		return $this->get_prop( 'cart_discount', $context );
@@ -306,6 +319,9 @@ class Order extends Data {
 		return $this->get_id();
 	}
 
+	/**
+	 * Get related orders for Order.
+	 */
 	public function get_related_orders() {
 		return $this->data_store->get_related_orders( $this );
 	}
@@ -320,7 +336,7 @@ class Order extends Data {
 	public function get_checkout_redirect_url() {
 		$checkout_page_id   = get_option( 'ohmylms_checkout_page_id' );
 		$checkout_page_url  = get_permalink( $checkout_page_id );
-		$order_received_url = ecommerce_get_endpoint_url( 'ohmylms-order-received', $this->get_id(), $checkout_page_url );
+		$order_received_url = ohmylms_ecommerce_get_endpoint_url( 'ohmylms-order-received', $this->get_id(), $checkout_page_url );
 		$order_received_url = add_query_arg( 'key', $this->get_order_key(), $order_received_url );
 		return $order_received_url;
 	}
@@ -399,7 +415,7 @@ class Order extends Data {
 		$formatted_total = ohmylms_price( $order_total, array( 'currency' => $this->get_currency() ) );
 
 		if ( $total_refunded ) {
-			$formatted_total = '<del aria-hidden="true">' . wp_strip_all_tags( $formatted_total ) . '</del> <ins>' . ohmylms_price( $order_total - $total_refunded, array( 'currency' => $this->get_currency() ) )  . '</ins>';
+			$formatted_total = '<del aria-hidden="true">' . wp_strip_all_tags( $formatted_total ) . '</del> <ins>' . ohmylms_price( $order_total - $total_refunded, array( 'currency' => $this->get_currency() ) ) . '</ins>';
 		}
 
 		return $formatted_total;
@@ -441,8 +457,13 @@ class Order extends Data {
 		return $this->get_prop( 'cart_hash' );
 	}
 
-	public function get_order_version($context = 'view') {
-		return $this->get_prop('order_version', $context);
+	/**
+	 * Get order version for Order.
+	 *
+	 * @param string $context Context.
+	 */
+	public function get_order_version( $context = 'view' ) {
+		return $this->get_prop( 'order_version', $context );
 	}
 
 	/**
@@ -490,6 +511,7 @@ class Order extends Data {
 	 * Get the URL to the student's profile page.
 	 *
 	 * This function constructs the URL to the student's profile page in the admin area.
+	 *
 	 * @since 1.0.0
 	 */
 	public function get_student_profile_url() {
@@ -961,7 +983,7 @@ class Order extends Data {
 	 * This function sets the date the order was paid.
 	 *
 	 * @param string|null $date The date to set as the payment date. Default is null.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function set_date_paid( $date = null ) {
@@ -972,7 +994,7 @@ class Order extends Data {
 	 * Set the date the order was completed.
 	 *
 	 * @param string|null $date The date to set as the completion date. Default is null.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function set_date_completed( $date = null ) {
@@ -985,6 +1007,9 @@ class Order extends Data {
 	 * This function sets the status of the order to 'completed'.
 	 *
 	 * @since 1.0.0
+	 * @param mixed  $new_status New status.
+	 * @param string $note Note.
+	 * @param bool   $manual_update Manual update.
 	 */
 	public function set_status( $new_status, $note = '', $manual_update = false ) {
 		$old_status = $this->get_status();
@@ -999,12 +1024,13 @@ class Order extends Data {
 		$this->maybe_set_date_paid();
 		$this->maybe_set_date_completed();
 
-		if ($old_status) {
-			$transition_note = sprintf( __( 'Order status changed from %s to %s.', 'ohmylms' ), $old_status, $new_status );
+		if ( $old_status ) {
+			$transition_note         = sprintf( /* translators: %1$s: text value; %2$s: text value. */
+			__( 'Order status changed from %1$s to %2$s.', 'ohmylms' ), $old_status, $new_status );
 			$this->status_transition = array(
-				'from'   => ! empty( $this->status_transition['from'] ) ? $this->status_transition['from'] : $old_status,
-				'to'     => $new_status,
-				'note'   => $transition_note
+				'from' => ! empty( $this->status_transition['from'] ) ? $this->status_transition['from'] : $old_status,
+				'to'   => $new_status,
+				'note' => $transition_note,
 			);
 		}
 	}
@@ -1019,8 +1045,13 @@ class Order extends Data {
 		$this->set_date_prop( 'date_created', $value );
 	}
 
-	public function set_order_version($value) {
-		$this->set_prop('order_version', $value);
+	/**
+	 * Set order version for Order.
+	 *
+	 * @param mixed $value Value to process.
+	 */
+	public function set_order_version( $value ) {
+		$this->set_prop( 'order_version', $value );
 	}
 
 	/**
@@ -1095,7 +1126,7 @@ class Order extends Data {
 	 * This function sets the email for the order if the provided value is a valid email address.
 	 *
 	 * @param string $value The email address to set.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function set_email( $value ) {
@@ -1104,18 +1135,24 @@ class Order extends Data {
 		}
 	}
 
-	/* Get the key for the items array based on the item type.
+	/*
+	Get the key for the items array based on the item type.
 	 *
 	 * This function determines the key to use for storing items in the order based on the type of the item.
 	 *
-	 * @param \CodeRex\Ecommerce\Data\OrderItem $item The item to get the key for.
+	 * @param \OhMyLMS\Commerce\Data\OrderItem $item The item to get the key for.
 	 * @return string The key for the items array.
 	 * @since 1.0.0
 	 */
+	/**
+	 * Get items key for Order.
+	 *
+	 * @param mixed $item Item.
+	 */
 	protected function get_items_key( $item ) {
-		if ( is_a( $item, 'CodeRex\Ecommerce\Data\OrderItemCourse' ) ) {
+		if ( is_a( $item, 'OhMyLMS\Commerce\Data\OrderItemCourse' ) ) {
 			return 'line_items';
-		} elseif ( is_a( $item, 'CodeRex\Ecommerce\Data\OrderItemCoupon' ) ) {
+		} elseif ( is_a( $item, 'OhMyLMS\Commerce\Data\OrderItemCoupon' ) ) {
 			return 'coupon_lines';
 		}
 		return '';
@@ -1127,7 +1164,7 @@ class Order extends Data {
 	 * This function adds an item to the order by generating a temporary ID if the item does not have one.
 	 * It ensures that existing items are loaded before appending the new item.
 	 *
-	 * @param \CodeRex\Ecommerce\Data\OrderItem $item The item to add to the order.
+	 * @param \OhMyLMS\Commerce\Data\OrderItem $item The item to add to the order.
 	 * @return bool True if the item was successfully added, false otherwise.
 	 * @since 1.0.0
 	 */
@@ -1155,7 +1192,7 @@ class Order extends Data {
 	 * Set the first name for the order.
 	 *
 	 * @param string $value The first name to set.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function set_first_name( $value ) {
@@ -1166,7 +1203,7 @@ class Order extends Data {
 	 * Set the last name for the order.
 	 *
 	 * @param string $value The last name to set.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function set_last_name( $value ) {
@@ -1177,6 +1214,7 @@ class Order extends Data {
 	 * Set order items
 	 *
 	 * @since 1.0.0
+	 * @param mixed $items Items.
 	 */
 	public function set_items( $items ) {
 		$this->items = $items;
@@ -1186,7 +1224,7 @@ class Order extends Data {
 	 * Set the address for the order.
 	 *
 	 * @param string $value The address to set.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function set_address( $value ) {
@@ -1198,7 +1236,7 @@ class Order extends Data {
 	 * Set the country for the order.
 	 *
 	 * @param string $value The country to set.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function set_country( $value ) {
@@ -1209,7 +1247,7 @@ class Order extends Data {
 	 * Set the city for the order.
 	 *
 	 * @param string $value The city to set.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function set_city( $value ) {
@@ -1220,7 +1258,7 @@ class Order extends Data {
 	 * Set the postcode for the order.
 	 *
 	 * @param string $value The postcode to set.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function set_postcode( $value ) {
@@ -1232,7 +1270,7 @@ class Order extends Data {
 	 * Set the state for the order.
 	 *
 	 * @param string $value The state to set.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function set_state( $value ) {
@@ -1243,7 +1281,7 @@ class Order extends Data {
 	 * Set the billing phone number for the order.
 	 *
 	 * @param string $value The phone number to set.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function set_phone( $value ) {
@@ -1254,7 +1292,7 @@ class Order extends Data {
 	 * Alias of set_phone() for gateways that expect the billing_ prefix.
 	 *
 	 * @param string $value The phone number to set.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function set_billing_phone( $value ) {
@@ -1265,7 +1303,7 @@ class Order extends Data {
 	 * Set the VAT number for the order.
 	 *
 	 * @param string $value The VAT number to set.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function set_vat_number( $value ) {
@@ -1278,7 +1316,7 @@ class Order extends Data {
 	 * This function sets the total discount amount for the order.
 	 *
 	 * @param float $value The total discount amount to set.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function set_cart_discount( $value ) {
@@ -1291,7 +1329,7 @@ class Order extends Data {
 	 * This function sets the tax amount for the order.
 	 *
 	 * @param float $value The tax amount to set.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function set_tax_amount( $value ) {
@@ -1304,7 +1342,7 @@ class Order extends Data {
 	 * This function sets the tax rate for the order.
 	 *
 	 * @param float $value The tax rate to set.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function set_tax_rate( $value ) {
@@ -1349,12 +1387,18 @@ class Order extends Data {
 		return $this->get_status() === $status;
 	}
 
-	/* Get items of specified types from the order.
+	/*
+	Get items of specified types from the order.
 	 *
 	 * @param array $types The types of items to retrieve. Default is ['line_item'].
 	 * @return array The items of the specified types.
 	 *
 	 * @since 1.0.0
+	 */
+	/**
+	 * Get items for Order.
+	 *
+	 * @param string $types Types.
 	 */
 	public function get_items( $types = 'line_item' ) {
 		$items  = array();
@@ -1381,8 +1425,8 @@ class Order extends Data {
 	 *
 	 * This function retrieves the formatted line subtotal for the specified order item.
 	 *
-	 * @param \CodeRex\Ecommerce\Data\OrderItem $item The order item to get the subtotal for.
-	 * @param string $tax_display The tax display mode. Default is an empty string.
+	 * @param \OhMyLMS\Commerce\Data\OrderItem $item The order item to get the subtotal for.
+	 * @param string                           $tax_display The tax display mode. Default is an empty string.
 	 * @return string The formatted line subtotal.
 	 *
 	 * @since 1.0.0
@@ -1396,9 +1440,9 @@ class Order extends Data {
 	 *
 	 * This function calculates the line subtotal for the specified order item.
 	 *
-	 * @param \CodeRex\Ecommerce\Data\OrderItem $item The order item to calculate the subtotal for.
-	 * @param bool $inc_tax Whether to include tax in the subtotal calculation. Default is false.
-	 * @param bool $round Whether to round the subtotal. Default is true.
+	 * @param \OhMyLMS\Commerce\Data\OrderItem $item The order item to calculate the subtotal for.
+	 * @param bool                             $inc_tax Whether to include tax in the subtotal calculation. Default is false.
+	 * @param bool                             $round Whether to round the subtotal. Default is true.
 	 * @return float The line subtotal for the order item.
 	 *
 	 * @since 1.0.0
@@ -1413,6 +1457,9 @@ class Order extends Data {
 	}
 
 
+	/**
+	 * Get cart subtotal for Order.
+	 */
 	public function get_cart_subtotal() {
 		$items    = $this->get_items();
 		$subtotal = 0;
@@ -1453,9 +1500,9 @@ class Order extends Data {
 	 * @since 1.0.0
 	 */
 	protected function add_order_items_totals_total_row( &$total_rows ) {
-		$tax_amount = $this->get_tax_amount();
+		$tax_amount                = $this->get_tax_amount();
 		$total_rows['order_total'] = array(
-			'label' => \CodeRex\Ecommerce\Includes\Tax\TaxService::get_instance()->prices_include_tax() ? esc_html(sprintf('Total ( Including tax : %s )', number_format($tax_amount, 2))) : __( 'Total:', 'ohmylms' ),
+			'label' => \OhMyLMS\Commerce\Includes\Tax\TaxService::get_instance()->prices_include_tax() ? esc_html( sprintf( 'Total ( Including tax : %s )', number_format( $tax_amount, 2 ) ) ) : __( 'Total:', 'ohmylms' ),
 			'value' => ohmylms_price( $this->get_formatted_order_total(), array( 'currency' => $this->get_currency() ) ),
 		);
 	}
@@ -1466,7 +1513,7 @@ class Order extends Data {
 	 * This function adds the payment method row to the array of total rows for the order.
 	 *
 	 * @param array $total_rows The array of total rows to which the payment method row will be added.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	protected function add_order_items_payment_method_row( &$total_rows ) {
@@ -1482,9 +1529,7 @@ class Order extends Data {
 	/**
 	 * Add total row for discounts.
 	 *
-	 * @param array  $total_rows Reference to total rows array.
-	 * @param string $tax_display Excl or incl tax display mode.
-	 *
+	 * @param array $total_rows Reference to total rows array.
 	 * @since 1.0.0
 	 */
 	protected function add_order_item_totals_discount_row( &$total_rows ) {
@@ -1502,16 +1547,16 @@ class Order extends Data {
 	 * This function adds a tax row to the array of total rows for the order.
 	 *
 	 * @param array $total_rows The array of total rows to which the tax row will be added.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	protected function add_order_items_tax_row( &$total_rows ) {
 		$tax_amount = $this->get_tax_amount();
 		if ( $tax_amount ) {
-			$tax_rate = $this->get_tax_rate();
+			$tax_rate  = $this->get_tax_rate();
 			$tax_label = TaxService::get_instance()->get_tax_label();
 
-			// Add tax rate span if tax rate exists
+			// Add tax rate span if tax rate exists.
 			if ( $tax_rate > 0 ) {
 				$tax_label .= ' <span class="tax-rate">' . ( $tax_rate ) . '%</span>';
 			}
@@ -1535,7 +1580,7 @@ class Order extends Data {
 		$total_rows = array();
 		$this->add_order_items_subtotal_row( $total_rows );
 		$this->add_order_item_totals_discount_row( $total_rows );
-		$this->add_order_items_tax_row($total_rows);
+		$this->add_order_items_tax_row( $total_rows );
 		$this->add_order_items_totals_total_row( $total_rows );
 		$this->add_order_item_order_id_row( $total_rows );
 		$this->add_order_item_purchase_date_row( $total_rows );
@@ -1543,7 +1588,12 @@ class Order extends Data {
 		return $total_rows;
 	}
 
-	public function add_order_item_order_id_row( &$total_rows ){
+	/**
+	 * Add order item order id row for Order.
+	 *
+	 * @param mixed $total_rows Total rows.
+	 */
+	public function add_order_item_order_id_row( &$total_rows ) {
 		$total_rows['order_id'] = array(
 			'label' => __( 'Order ID', 'ohmylms' ),
 			'value' => $this->get_id(),
@@ -1551,10 +1601,15 @@ class Order extends Data {
 	}
 
 
-	public function add_order_item_purchase_date_row( &$total_rows ){
+	/**
+	 * Add order item purchase date row for Order.
+	 *
+	 * @param mixed $total_rows Total rows.
+	 */
+	public function add_order_item_purchase_date_row( &$total_rows ) {
 		$total_rows['purchase_date'] = array(
 			'label' => __( 'Purchase date', 'ohmylms' ),
-			'value' => (new \DateTime($this->get_date_paid( 'edit' )))->format('d/m/Y'),
+			'value' => ( new \DateTime( $this->get_date_paid( 'edit' ) ) )->format( 'd/m/Y' ),
 		);
 	}
 
@@ -1565,9 +1620,9 @@ class Order extends Data {
 	 * and can indicate if it was added by a user.
 	 *
 	 * @param string $note The content of the note to add.
-	 * @param int $is_customer_note Whether the note is a customer note. Default is 0.
-	 * @param bool $added_by_user Whether the note was added by a user. Default is false.
-	 *
+	 * @param int    $is_customer_note Whether the note is a customer note. Default is 0.
+	 * @param bool   $added_by_user Whether the note was added by a user. Default is false.
+	 * .
 	 * @since 1.0.0
 	 */
 	public function add_order_note( $note, $is_customer_note = 0, $added_by_user = false ) {
@@ -1575,7 +1630,7 @@ class Order extends Data {
 			return 0;
 		}
 		$user_id = 0;
-		if ( is_user_logged_in() && current_user_can( 'edit_shop_orders', $this->get_id() ) && $added_by_user ) {
+		if ( is_user_logged_in() && current_user_can( 'edit_post', $this->get_id() ) && $added_by_user ) {
 			$user                 = get_user_by( 'id', get_current_user_id() );
 			$comment_author       = $user->display_name;
 			$comment_author_email = $user->user_email;
@@ -1622,7 +1677,7 @@ class Order extends Data {
 			'type'    => '',
 		);
 
-		remove_filter( 'comments_clauses', array( 'CodeRex\Ecommerce\Comments', 'exclude_order_comments' ) );
+		remove_filter( 'comments_clauses', array( 'OhMyLMS\Commerce\Comments', 'exclude_order_comments' ) );
 
 		$comments = get_comments( $args );
 
@@ -1634,7 +1689,7 @@ class Order extends Data {
 			$notes[]                  = $comment;
 		}
 
-		add_filter( 'comments_clauses', array( 'CodeRex\Ecommerce\Comments', 'exclude_order_comments' ) );
+		add_filter( 'comments_clauses', array( 'OhMyLMS\Commerce\Comments', 'exclude_order_comments' ) );
 
 		return $notes;
 	}
@@ -1644,7 +1699,7 @@ class Order extends Data {
 	 *
 	 * @param string $new_status The new status to set for the order.
 	 * @param string $note Optional. A note to add to the order. Default is an empty string.
-	 * @param bool $manual Optional. Whether the status change is manual. Default is false.
+	 * @param bool   $manual Optional. Whether the status change is manual. Default is false.
 	 * @return bool True if the status was successfully updated, false otherwise.
 	 *
 	 * @since 1.0.0
@@ -1657,13 +1712,18 @@ class Order extends Data {
 			$this->set_status( $new_status );
 			$this->save();
 		} catch ( \Exception $e ) {
-			// Todo: Add the error at Log file
+			// Todo: Add the error at Log file.
 			return false;
 		}
 		return true;
 	}
 
 
+	/**
+	 * Set related orders for Order.
+	 *
+	 * @param mixed $related_orders Related orders.
+	 */
 	public function set_related_orders( $related_orders ) {
 		$this->set_prop( 'related_orders', $related_orders );
 	}

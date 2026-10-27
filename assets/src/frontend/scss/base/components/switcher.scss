@@ -1,5 +1,7 @@
 .ohmylms-page {
+
     .ohmylms-switcher {
+
         input[type="checkbox"] {
             display: none;
         }
@@ -15,7 +17,7 @@
             transition: all 0.3s ease;
             cursor: pointer;
 
-            &:before {
+            &::before {
                 content: "";
                 position: absolute;
                 top: 2px;
@@ -32,26 +34,28 @@
             background-color: var(--ohmylms-primary-color);
             border-color: var(--ohmylms-primary-color);
         }
-        input[type="checkbox"]:checked + .switcher-slider:before {
-            background-color: #ffffff;
+
+        input[type="checkbox"]:checked + .switcher-slider::before {
+            background-color: #fff;
             left: 18px;
-            box-shadow: 0px 1px 1px 0px #2C49C0;
+            box-shadow: 0 1px 1px 0 #2C49C0;
         }
     }
 }
 
 @media screen and (max-width: 991px) {
+
     .ohmylms-page .ohmylms-switcher .switcher-slider {
         height: 20px;
         width: 32px;
     }
 
-    .ohmylms-page .ohmylms-switcher .switcher-slider:before {
+    .ohmylms-page .ohmylms-switcher .switcher-slider::before {
         width: 14px;
         height: 14px;
     }
 
-    .ohmylms-page .ohmylms-switcher input[type=checkbox]:checked + .switcher-slider:before {
+    .ohmylms-page .ohmylms-switcher input[type="checkbox"]:checked + .switcher-slider::before {
         left: 15px;
     }
 

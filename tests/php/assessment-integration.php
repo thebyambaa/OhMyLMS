@@ -72,7 +72,6 @@ $phases = array_slice($argv, 1) ?: ['authoring'];
 $previous_integrations = get_option('ohmylms_integrations', []);
 
 try {
-    update_option('ohmylms_integrations', array_merge((array) $previous_integrations, ['skills' => ['is_enable' => 1]]));
     if (in_array('authoring', $phases, true)) {
         // ---- A02: object-level authorization and option ownership ----
         $author_a = make_user('author');

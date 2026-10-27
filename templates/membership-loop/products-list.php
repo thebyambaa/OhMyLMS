@@ -9,34 +9,35 @@
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
+	exit; // Exit if accessed directly.
 }
 
 global $membership;
-if( $membership == null ) {
+if ( null == $membership ) {
 	return;
 }
 $courses = $membership->get_products();
-if(empty($courses) && !is_array($courses)){
+if ( empty( $courses ) && ! is_array( $courses ) ) {
 	return;
 }
 ?>
 
 <ul class="membership-courses" >
 	<?php
-	foreach ($courses as $single_course) {
-		$course = ohmylms_get_course($single_course['id']);
-		if(empty($course)){
+	foreach ( $courses as $single_course ) {
+		$course = ohmylms_get_course( $single_course['id'] );
+		if ( empty( $course ) ) {
 			continue;
 		}
 		?>
 		<li>
-			<a href="<?php echo $course->get_permalink()?>">
-				<?php echo $course->get_name() ?>
+			<a href="<?php echo esc_url( $course->get_permalink() ); ?>">
+				<?php echo esc_html( $course->get_name() ); ?>
 			</a>
 		</li>
 		<?php
-	} ?>
+	}
+	?>
 </ul>
 
 

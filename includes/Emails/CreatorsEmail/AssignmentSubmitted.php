@@ -1,16 +1,25 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 
 namespace OhMyLMS\Emails\CreatorsEmail;
 
 use OhMyLMS\Emails\Emails;
 
+/**
+ * Plugin assignment submitted implementation.
+ */
 class AssignmentSubmitted {
 
+	/**
+	 * Initialize Assignment submitted.
+	 */
 	public function __construct() {
 		add_action( 'ohmylms_after_assignment_submitted', array( $this, 'trigger' ), 10, 3 );
 		add_action( 'ohmylms_send_assignment_submission_digest', array( $this, 'send_digest' ) );
 	}
 
+	/**
+	 * Basic settings for Assignment submitted.
+	 */
 	public function basic_settings(): array {
 		return array(
 			'id'             => 'instructor_assignment_submitted',
@@ -22,6 +31,9 @@ class AssignmentSubmitted {
 		);
 	}
 
+	/**
+	 * Default settings for Assignment submitted.
+	 */
 	public function default_settings(): array {
 		return array(
 			'enable'             => true,
@@ -36,6 +48,13 @@ class AssignmentSubmitted {
 		);
 	}
 
+	/**
+	 * Trigger for Assignment submitted.
+	 *
+	 * @param mixed $assignment_id Assignment identifier.
+	 * @param mixed $course_id Course identifier.
+	 * @param mixed $student_id Student identifier.
+	 */
 	public function trigger( $assignment_id, $course_id, $student_id ) {
 		$settings = get_option( 'create_lms_email_instructor_assignment_submitted', $this->default_settings() );
 
@@ -58,6 +77,9 @@ class AssignmentSubmitted {
 		$this->send_single( $assignment_id, $course_id, $student_id, $settings );
 	}
 
+	/**
+	 * Send digest for Assignment submitted.
+	 */
 	public function send_digest() {
 		$settings = get_option( 'create_lms_email_instructor_assignment_submitted', $this->default_settings() );
 
@@ -82,6 +104,14 @@ class AssignmentSubmitted {
 		}
 	}
 
+	/**
+	 * Send single for Assignment submitted.
+	 *
+	 * @param mixed $assignment_id Assignment identifier.
+	 * @param mixed $course_id Course identifier.
+	 * @param mixed $student_id Student identifier.
+	 * @param mixed $settings Configuration settings.
+	 */
 	private function send_single( $assignment_id, $course_id, $student_id, $settings ) {
 		$student = get_userdata( $student_id );
 		if ( ! $student ) {
@@ -126,6 +156,13 @@ class AssignmentSubmitted {
 		$this->send_email( $to, $subject, $html_body, $email_settings );
 	}
 
+	/**
+	 * Send digest for course for Assignment submitted.
+	 *
+	 * @param mixed $course_id Course identifier.
+	 * @param mixed $items Items.
+	 * @param mixed $settings Configuration settings.
+	 */
 	private function send_digest_for_course( $course_id, $items, $settings ) {
 		$course = ohmylms_get_course( $course_id );
 		if ( ! $course ) {
@@ -141,6 +178,7 @@ class AssignmentSubmitted {
 
 		/* translators: 1: submission count, 2: course name */
 		$subject = sprintf(
+			/* translators: %1$d: number; %2$s: text value. */
 			__( 'Daily Digest: %1$d New Assignment Submission(s) in %2$s', 'ohmylms' ),
 			count( $items ),
 			$course->get_name()
@@ -148,8 +186,8 @@ class AssignmentSubmitted {
 
 		$digest_items = array();
 		foreach ( $items as $item ) {
-			$s          = get_userdata( $item['student_id'] );
-			$a          = get_post( $item['assignment_id'] );
+			$s              = get_userdata( $item['student_id'] );
+			$a              = get_post( $item['assignment_id'] );
 			$digest_items[] = array(
 				'student_name'     => $s ? $s->display_name : __( 'Unknown Student', 'ohmylms' ),
 				'assignment_title' => $a ? $a->post_title : __( 'Unknown Assignment', 'ohmylms' ),
@@ -158,7 +196,7 @@ class AssignmentSubmitted {
 			);
 		}
 
-		$digest_settings = $settings;
+		$digest_settings                = $settings;
 		$digest_settings['button_link'] = admin_url( 'admin.php?page=ohmylms#/assignment-report' );
 
 		ob_start();
@@ -179,6 +217,12 @@ class AssignmentSubmitted {
 		$this->send_email( $to, $subject, $html_body, $email_settings );
 	}
 
+	/**
+	 * Get instructor email for Assignment submitted.
+	 *
+	 * @param mixed $course_id Course identifier.
+	 * @param mixed $settings Configuration settings.
+	 */
 	private function get_instructor_email( $course_id, $settings ) {
 		if ( ! empty( $settings['recipient_email'] ) ) {
 			return $settings['recipient_email'];
@@ -193,6 +237,14 @@ class AssignmentSubmitted {
 		return get_option( 'admin_email' );
 	}
 
+	/**
+	 * Replace tags for Assignment submitted.
+	 *
+	 * @param mixed $content Content.
+	 * @param mixed $student_name Student name.
+	 * @param mixed $course_name Course name.
+	 * @param mixed $assignment_name Assignment name.
+	 */
 	private function replace_tags( $content, $student_name, $course_name, $assignment_name ) {
 		return str_replace(
 			array( '{student_name}', '{course_name}', '{assignment_name}' ),
@@ -201,6 +253,14 @@ class AssignmentSubmitted {
 		);
 	}
 
+	/**
+	 * Send email for Assignment submitted.
+	 *
+	 * @param mixed $to To.
+	 * @param mixed $subject Subject.
+	 * @param mixed $body Body.
+	 * @param mixed $email_settings Email settings.
+	 */
 	private function send_email( $to, $subject, $body, $email_settings ) {
 		$headers      = array( 'MIME-Version: 1.0', 'Content-Type: text/html; charset=UTF-8' );
 		$sender_name  = $email_settings['ohmylms_email_sender_name'];

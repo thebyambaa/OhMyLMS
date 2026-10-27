@@ -1,19 +1,33 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
 
-namespace CodeRex\Ecommerce\Rest\V1;
+namespace OhMyLMS\Commerce\Rest\V1;
 
-use CodeRex\Ecommerce\Abstracts\RestController;
-use CodeRex\Ecommerce\Data\Coupon;
-use CodeRex\Ecommerce\EcommerceDateTime;
+use OhMyLMS\Commerce\Abstracts\RestController;
+use OhMyLMS\Commerce\Data\Coupon;
+use OhMyLMS\Commerce\EcommerceDateTime;
 
+/**
+ * Plugin coupon controller implementation.
+ */
 class CouponController extends RestController {
 
+	/**
+	 * Base.
+	 *
+	 * @var mixed
+	 */
 	protected $base = 'coupons';
 
+	/**
+	 * Check coupon permission for Coupon controller.
+	 */
 	public function check_coupon_permission() {
 		return current_user_can( 'edit_posts' );
 	}
 
+	/**
+	 * Register routes for Coupon controller.
+	 */
 	public function register_routes() {
 		register_rest_route(
 			$this->namespace,
@@ -85,20 +99,25 @@ class CouponController extends RestController {
 		);
 	}
 
+	/**
+	 * Get items for Coupon controller.
+	 *
+	 * @param mixed $request REST request.
+	 */
 	public function get_items( $request ) {
 		$args = array(
 			'post_type'      => 'ohmylms_coupon',
-			'posts_per_page' => !empty( $request['per_page'] ) ? intval( $request['per_page'] ) : -1,
-			'paged'          => !empty( $request['page'] ) ? intval( $request['page'] ) : 1,
-			'post_status'    => array( 'draft', 'publish' )
+			'posts_per_page' => ! empty( $request['per_page'] ) ? intval( $request['per_page'] ) : -1,
+			'paged'          => ! empty( $request['page'] ) ? intval( $request['page'] ) : 1,
+			'post_status'    => array( 'draft', 'publish' ),
 		);
 
-		// Add meta_query for title search if provided
+		// Add meta_query for title search if provided.
 		if ( ! empty( $request['search'] ) ) {
 			$args['meta_query'] = array(
 				array(
 					'key'     => 'title',
-					'value'   => esc_html($request['search']),
+					'value'   => esc_html( $request['search'] ),
 					'compare' => 'LIKE',
 				),
 			);
@@ -108,13 +127,13 @@ class CouponController extends RestController {
 		$coupons = array();
 
 		foreach ( $query->posts as $post ) {
-			$response = $this->prepare_item_for_response( $post, $request );
+			$response  = $this->prepare_item_for_response( $post, $request );
 			$coupons[] = $response->get_data();
 		}
 
 		$rest_response = rest_ensure_response( $coupons );
 
-		// Add the total found posts header
+		// Add the total found posts header.
 		$rest_response->header( 'X-WP-Total', (int) $query->found_posts );
 
 		return $rest_response;
@@ -152,8 +171,13 @@ class CouponController extends RestController {
 		return $response;
 	}
 
+	/**
+	 * Update item status for Coupon controller.
+	 *
+	 * @param mixed $request REST request.
+	 */
 	public function update_item_status( $request ) {
-		$id = isset( $request['id'] ) ? absint( $request['id'] ) : 0;
+		$id     = isset( $request['id'] ) ? absint( $request['id'] ) : 0;
 		$status = isset( $request['status'] ) ? sanitize_key( $request['status'] ) : 'publish';
 
 		if ( ! $id || empty( $status ) ) {
@@ -161,21 +185,24 @@ class CouponController extends RestController {
 		}
 
 		$post = get_post( $id );
-		if ( ! $post || $post->post_type !== 'ohmylms_coupon' ) {
+		if ( ! $post || 'ohmylms_coupon' !== $post->post_type ) {
 			return new \WP_Error( 'ohmylms_rest_coupon_not_found', __( 'Coupon not found.', 'ohmylms' ), array( 'status' => 404 ) );
 		}
 
-		$updated = wp_update_post( array(
-			'ID'     => $id,
-			'post_status' => $status,
-		), true );
+		$updated = wp_update_post(
+			array(
+				'ID'          => $id,
+				'post_status' => $status,
+			),
+			true
+		);
 
 		if ( is_wp_error( $updated ) ) {
 			return $updated;
 		}
 
-		// Return the updated coupon data
-		$post = get_post( $id );
+		// Return the updated coupon data.
+		$post     = get_post( $id );
 		$response = $this->prepare_item_for_response( $post, $request );
 		return rest_ensure_response( $response );
 	}
@@ -228,7 +255,7 @@ class CouponController extends RestController {
 		}
 
 		$post = get_post( $id );
-		if ( ! $post || $post->post_type !== 'ohmylms_coupon' ) {
+		if ( ! $post || 'ohmylms_coupon' !== $post->post_type ) {
 			return new \WP_Error( 'ohmylms_rest_coupon_not_found', __( 'Coupon not found.', 'ohmylms' ), array( 'status' => 404 ) );
 		}
 
@@ -245,14 +272,14 @@ class CouponController extends RestController {
 	 * @since 1.0.0
 	 */
 	public function delete_item( $request ) {
-		$ids = isset( $request['ids'] ) ? $request['ids'] : [];
+		$ids = isset( $request['ids'] ) ? $request['ids'] : array();
 		if ( ! $ids ) {
 			return new \WP_Error( 'ohmylms_rest_invalid_id', __( 'Invalid coupon ID.', 'ohmylms' ), array( 'status' => 404 ) );
 		}
 
 		foreach ( $ids as $id ) {
 			$post = get_post( $id );
-			if ( ! $post || $post->post_type !== 'ohmylms_coupon' ) {
+			if ( ! $post || 'ohmylms_coupon' !== $post->post_type ) {
 				return new \WP_Error( 'ohmylms_rest_coupon_not_found', __( 'Coupon not found.', 'ohmylms' ), array( 'status' => 404 ) );
 			}
 
@@ -262,9 +289,11 @@ class CouponController extends RestController {
 			}
 		}
 
-		return rest_ensure_response( array(
-			'deleted' => true,
-		) );
+		return rest_ensure_response(
+			array(
+				'deleted' => true,
+			)
+		);
 	}
 
 	/**
@@ -292,7 +321,7 @@ class CouponController extends RestController {
 	 * Prepare a coupon item for the database.
 	 *
 	 * @param \WP_REST_Request $request The REST request object containing the coupon data.
-	 * @return \CodeRex\Ecommerce\Data\Coupon|\WP_Error The coupon object or a WP_Error object on failure.
+	 * @return \OhMyLMS\Commerce\Data\Coupon|\WP_Error The coupon object or a WP_Error object on failure.
 	 *
 	 * @since 1.0.0
 	 */
@@ -308,9 +337,9 @@ class CouponController extends RestController {
 			if ( ! is_null( $value ) ) {
 				switch ( $key ) {
 					case 'code':
-						$coupon_code  = ecommerce_format_coupon_code( $value );
+						$coupon_code  = ohmylms_ecommerce_format_coupon_code( $value );
 						$id           = $coupon->get_id() ? $coupon->get_id() : 0;
-						$id_from_code = ecommerce_get_coupon_id_by_code( $coupon_code, $id );
+						$id_from_code = ohmylms_ecommerce_get_coupon_id_by_code( $coupon_code, $id );
 
 						if ( $id_from_code ) {
 							return new \WP_Error( 'ohmylms_rest_coupon_code_already_exists', __( 'The coupon code already exists', 'ohmylms' ), array( 'status' => 400 ) );
@@ -327,7 +356,7 @@ class CouponController extends RestController {
 						$coupon->set_course_id_type( esc_html( $value ) );
 						break;
 					case 'date_expires':
-						// Handle DateTime array format
+						// Handle DateTime array format.
 						if ( is_array( $value ) && isset( $value['date'] ) ) {
 							$coupon->set_date_expires( $value['date'] );
 						} else {
@@ -335,7 +364,7 @@ class CouponController extends RestController {
 						}
 						break;
 					case 'date_start':
-						// Handle DateTime array format
+						// Handle DateTime array format.
 						if ( is_array( $value ) && isset( $value['date'] ) ) {
 							$coupon->set_date_start( $value['date'] );
 						} else {
@@ -357,7 +386,7 @@ class CouponController extends RestController {
 	/**
 	 * Prepare a coupon item for the REST API response.
 	 *
-	 * @param \WP_Post $post The post object.
+	 * @param \WP_Post         $post The post object.
 	 * @param \WP_REST_Request $request The REST request object.
 	 * @return \WP_REST_Response The response object containing the coupon data.
 	 *
@@ -380,7 +409,7 @@ class CouponController extends RestController {
 		foreach ( $format_null as $key ) {
 			$_data[ $key ] = $_data[ $key ] ? $_data[ $key ] : null;
 		}
-		
+
 		$data = array(
 			'id'                   => $_data['id'],
 			'title'                => isset( $_data['title'] ) ? $_data['title'] : '',
@@ -402,7 +431,7 @@ class CouponController extends RestController {
 			'exclude_sale_items'   => $_data['exclude_sale_items'],
 			'minimum_amount'       => $_data['minimum_amount'],
 			'maximum_amount'       => $_data['maximum_amount'],
-			'email_restrictions'   => isset( $_data['email_restrictions'] ) ? ($_data['email_restrictions']) : array(),
+			'email_restrictions'   => isset( $_data['email_restrictions'] ) ? ( $_data['email_restrictions'] ) : array(),
 			'used_by'              => $_data['used_by'],
 			'status'               => $_data['status'],
 		);
@@ -419,7 +448,7 @@ class CouponController extends RestController {
 	/**
 	 * Prepare links for the REST API response.
 	 *
-	 * @param \WP_Post $post The post object.
+	 * @param \WP_Post         $post The post object.
 	 * @param \WP_REST_Request $request The REST request object.
 	 * @return array The prepared links.
 	 */
@@ -461,7 +490,7 @@ class CouponController extends RestController {
 					'default'     => '',
 					'context'     => array( 'view', 'edit' ),
 				),
-				'title'           => array(
+				'title'                => array(
 					'description' => __( 'Coupon title.', 'ohmylms' ),
 					'type'        => 'string',
 					'default'     => '',

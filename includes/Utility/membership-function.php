@@ -1,11 +1,17 @@
 <?php
+/**
+ * Membership function.
+ *
+ * @package OhMyLMS
+ */
+
 
 /**
  * Get membership object
  *
- * @param $membership_id
+ * @param mixed $membership_id Membership identifier.
  * @return bool|\OhMyLMS\Data\Membership
- * @throws Exception
+ * @throws Exception When the operation cannot be completed.
  * @since 1.0.0
  */
 function ohmylms_get_membership( $membership_id ) {

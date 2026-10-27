@@ -12,9 +12,10 @@
 }
 
 .ohmylms-page {
+
     .ohmylms-single-course {
 
-        & > .ohmylms-widget-pricebox {
+        > .ohmylms-widget-pricebox {
             padding: 16px;
             position: fixed;
             bottom: -86px;
@@ -22,7 +23,7 @@
             left: 0;
             border-radius: 0;
             background-color: #fff !important;
-            box-shadow: 0px -4px 10px 0px #dbdee77a;
+            box-shadow: 0 -4px 10px 0 #dbdee77a;
             transition: all 0.5s ease;
             visibility: hidden;
             z-index: 99;
@@ -59,6 +60,7 @@
 }
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .ohmylms-content-wrapper {
         gap: 30px;
     }
@@ -74,6 +76,7 @@
 }
 
 @media screen and (max-width: 991px) {
+
     .single.ohmylms-page .ohmylms-courses {
         padding: 0 0 50px !important;
     }
@@ -97,27 +100,36 @@
     .ohmylms-page .ohmylms-single-course.show-sticky-price > .ohmylms-widget-pricebox {
         bottom: 0;
         visibility: visible;
-        box-shadow: 0px -4px 10px 0px rgba(219, 222, 231, 0.4784313725);
+        box-shadow: 0 -4px 10px 0 rgba(219, 222, 231, 0.4784313725);
     }
     
 
 }
 
+/*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import 'course-single-header';
+/*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import 'course-single-content-tab';
+/*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import 'course-single-chapters';
+/*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import 'course-single-assignment';
+/*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import 'course-single-reviews';
-
+/*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import 'course-single-sidebar';
-
+/*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import 'course-assignment-details';
+/*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import 'sticky-price-bar';
+/*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import 'password-protected';
 
 
 //-----layout-2------
+/*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import './layout-2/course-single-layout-2';
 
 //-----layout-3------
+/*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import './layout-3/course-single-layout-3';

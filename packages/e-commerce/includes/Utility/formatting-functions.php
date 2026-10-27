@@ -1,10 +1,16 @@
 <?php
+/**
+ * Formatting functions.
+ *
+ * @package OhMyLMS
+ */
+
 
 
 /**
  * Convert a string representation of a date/time into a Unix timestamp.
  *
- * @param string $time_string The date/time string to convert.
+ * @param string   $time_string The date/time string to convert.
  * @param int|null $from_timestamp Optional. The timestamp to use as a base for relative date/time strings. Default is null.
  * @return int|false The Unix timestamp on success, or false on failure.
  *
@@ -13,7 +19,7 @@
  *
  * @since 1.0.0
  */
-function ecommerce_string_to_timestamp( $time_string, $from_timestamp = null ) {
+function ohmylms_ecommerce_string_to_timestamp( $time_string, $from_timestamp = null ) {
 	$time_string = $time_string ?? '';
 
 	$original_timezone = date_default_timezone_get();
@@ -40,7 +46,7 @@ function ecommerce_string_to_timestamp( $time_string, $from_timestamp = null ) {
  * @see wc_timezone_offset()
  * @since 1.0.0
  */
-function ecommerce_timezone_offset() {
+function ohmylms_ecommerce_timezone_offset() {
 	$timezone = get_option( 'timezone_string' );
 
 	if ( $timezone ) {
@@ -58,7 +64,7 @@ function ecommerce_timezone_offset() {
  * @return string The timezone string.
  * @since 1.0.0
  */
-function ecommerce_timezone_string() {
+function ohmylms_ecommerce_timezone_string() {
 	// Added in WordPress 5.3 Ref https://developer.wordpress.org/reference/functions/wp_timezone_string/.
 	if ( function_exists( 'wp_timezone_string' ) ) {
 		return wp_timezone_string();
@@ -107,7 +113,7 @@ function ecommerce_timezone_string() {
  *
  * @since 1.0.0
  */
-function ecommerce_format_refund_total( $amount ) {
+function ohmylms_ecommerce_format_refund_total( $amount ) {
 	return $amount * -1;
 }
 
@@ -119,14 +125,19 @@ function ecommerce_format_refund_total( $amount ) {
  * @return string The formatted coupon code.
  * @since 1.0.0
  */
-function ecommerce_format_coupon_code( $code ) {
+function ohmylms_ecommerce_format_coupon_code( $code ) {
 	$code = html_entity_decode( $code );
 	$code = wp_kses( sanitize_post_field( 'post_title', $code ?? '', 0, 'db' ), 'entities' );
 	return $code;
 }
 
 
-function ecommerce_string_to_datetime( $time_string ) {
+/**
+ * Ohmylms ecommerce string to datetime for Formatting-functions.
+ *
+ * @param mixed $time_string Time string.
+ */
+function ohmylms_ecommerce_string_to_datetime( $time_string ) {
 	// Strings are defined in local WP timezone. Convert to UTC.
 	if ( 1 === preg_match( '/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(Z|((-|\+)\d{2}:\d{2}))$/', $time_string, $date_bits ) ) {
 		$offset    = ! empty( $date_bits[7] ) ? iso8601_timezone_to_offset( $date_bits[7] ) : ohmylms_timezone_offset();
@@ -134,7 +145,7 @@ function ecommerce_string_to_datetime( $time_string ) {
 	} else {
 		$timestamp = ohmylms_string_to_timestamp( get_gmt_from_date( gmdate( 'Y-m-d H:i:s', ohmylms_string_to_timestamp( $time_string ) ) ) );
 	}
-	$datetime = new \CodeRex\Ecommerce\EcommerceDateTime( "@{$timestamp}", new DateTimeZone( 'UTC' ) );
+	$datetime = new \OhMyLMS\Commerce\EcommerceDateTime( "@{$timestamp}", new DateTimeZone( 'UTC' ) );
 
 	// Set local timezone or offset.
 	$timezone_string = get_option( 'timezone_string' );

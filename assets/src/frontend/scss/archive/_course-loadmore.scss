@@ -1,4 +1,5 @@
 .ohmylms-page {
+
     .ohmylms-course-loadmore-area {
         text-align: center;
         margin-top: 40px;
@@ -17,13 +18,14 @@
                 position: relative;
                 top: 1px;
                 border-color: #5d8eff;
-                border-top-color: #ffffff;
+                border-top-color: #fff;
             }
 
             &:hover {
+
                 .ohmylms-loader {
                     border-color: var(--ohmylms-primary-color);
-                    border-top-color: #ffffff;
+                    border-top-color: #fff;
                 }
             }
 
@@ -39,15 +41,18 @@
 }
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .ohmylms-filter-enabled + .ohmylms-course-loadmore-area {
 		width: calc(100% - 291px);
 	}
 }
 
 @media screen and (max-width: 991px) {
+
 	.ohmylms-page .ohmylms-courses .ohmylms-course-loadmore-area {
         margin-top: 30px;
     }
+
 	.ohmylms-page .ohmylms-courses .ohmylms-course-loadmore-area .ohmylms-button {
 		font-size: 15px;
 		padding: 13px 20px;

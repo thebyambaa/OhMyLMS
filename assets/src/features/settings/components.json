@@ -1,255 +1,351 @@
 [
-  {
-    "binding": "A6",
-    "name": "SettingsPage",
-    "file": "SettingsPage.jsx",
-    "dependencies": [
-      "C5",
-      "E6",
-      "HG",
-      "I",
-      "J1",
-      "JK",
-      "L",
-      "O6",
-      "P4",
-      "P6",
-      "R6",
-      "React",
-      "S6",
-      "T",
-      "V0",
-      "YG",
-      "b",
-      "ep",
-      "f",
-      "g",
-      "jK",
-      "l",
-      "lJ",
-      "o4",
-      "qK",
-      "vJ",
-      "y",
-      "z"
-    ]
-  },
-  {
-    "binding": "kK",
-    "name": "GeneralSettings",
-    "file": "GeneralSettings.jsx",
-    "dependencies": ["CK", "I", "PK", "RK", "React", "SK", "T", "g", "l", "wK", "y"]
-  },
-  {
-    "binding": "_K",
-    "name": "GeneralSettingsFields",
-    "file": "GeneralSettingsFields.jsx",
-    "dependencies": ["I", "Nm", "React", "T", "b", "bK", "gK", "hK", "y"]
-  },
-  {
-    "binding": "EK",
-    "name": "SettingsActionBar",
-    "file": "SettingsActionBar.jsx",
-    "dependencies": ["D", "I", "React", "b"]
-  },
-  {
-    "binding": "UK",
-    "name": "BrandingSettings",
-    "file": "BrandingSettings.jsx",
-    "dependencies": [
-      "BK",
-      "GK",
-      "HK",
-      "I",
-      "M",
-      "Nm",
-      "React",
-      "SK",
-      "T",
-      "VK",
-      "b",
-      "g",
-      "hu",
-      "l",
-      "y",
-      "zK"
-    ]
-  },
-  {
-    "binding": "KK",
-    "name": "AccountPrivacySettings",
-    "file": "AccountPrivacySettings.jsx",
-    "dependencies": [
-      "$K",
-      "Ea",
-      "Ge",
-      "He",
-      "I",
-      "L",
-      "Pf",
-      "React",
-      "SK",
-      "T",
-      "YK",
-      "ZK",
-      "b",
-      "g",
-      "l",
-      "y",
-      "zm"
-    ]
-  },
-  {
-    "binding": "iJ",
-    "name": "PermalinkSettings",
-    "file": "PermalinkSettings.jsx",
-    "dependencies": ["I", "Pf", "React", "SK", "T", "aJ", "b", "eJ", "g", "l", "nJ", "oJ", "y"]
-  },
-  {
-    "binding": "fJ",
-    "name": "AdvancedSettings",
-    "file": "AdvancedSettings.jsx",
-    "dependencies": ["Ea", "I", "React", "SK", "T", "b", "cJ", "dJ", "g", "l", "mJ", "y", "z"]
-  },
-  {
-    "binding": "L0",
-    "name": "DesignSettings",
-    "file": "DesignSettings.jsx",
-    "dependencies": [
-      "B0",
-      "D0",
-      "GK",
-      "I",
-      "JJ",
-      "React",
-      "SK",
-      "T",
-      "W0",
-      "b",
-      "ep",
-      "f",
-      "g",
-      "k0",
-      "l",
-      "y",
-      "zK"
-    ]
-  },
-  {
-    "binding": "K1",
-    "name": "PaymentSettings",
-    "file": "PaymentSettings.jsx",
-    "dependencies": [
-      "B1",
-      "G1",
-      "I",
-      "P1",
-      "Q1",
-      "React",
-      "SK",
-      "T",
-      "V1",
-      "Y1",
-      "Z1",
-      "b",
-      "ep",
-      "f",
-      "g",
-      "l",
-      "y",
-      "y1",
-      "z"
-    ]
-  },
-  {
-    "binding": "h1",
-    "name": "PaymentGatewaysSettings",
-    "file": "PaymentGatewaysSettings.jsx",
-    "dependencies": ["I", "J0", "React", "T", "b", "d1", "f1", "g", "l", "s1", "u1", "v1", "y"]
-  },
-  {
-    "binding": "C1",
-    "name": "CurrencySettings",
-    "file": "CurrencySettings.jsx",
-    "dependencies": ["I", "Nm", "Pf", "R1", "React", "S1", "T", "_1", "b", "b1", "g", "l", "y", "z"]
-  },
-  {
-    "binding": "z1",
-    "name": "TaxSettings",
-    "file": "TaxSettings.jsx",
-    "dependencies": [
-      "D1",
-      "F1",
-      "I",
-      "I1",
-      "Kt",
-      "M1",
-      "N1",
-      "Nm",
-      "Pf",
-      "React",
-      "T",
-      "W1",
-      "b",
-      "g",
-      "k1",
-      "l",
-      "nf",
-      "y",
-      "z"
-    ]
-  },
-  {
-    "binding": "w6",
-    "name": "MigrationSettings",
-    "file": "MigrationSettings.jsx",
-    "dependencies": ["I", "React", "X4", "_6", "d6", "k4"]
-  },
-  {
-    "binding": "J4",
-    "name": "MigrationPlatformSelector",
-    "file": "MigrationPlatformSelector.jsx",
-    "dependencies": [
-      "$4",
-      "B4",
-      "G4",
-      "H4",
-      "I",
-      "K4",
-      "React",
-      "T",
-      "U4",
-      "V4",
-      "W4",
-      "_6",
-      "b",
-      "g",
-      "l",
-      "y"
-    ]
-  },
-  {
-    "binding": "s6",
-    "name": "MigrationImport",
-    "file": "MigrationImport.jsx",
-    "dependencies": ["He", "I", "L", "React", "T", "a6", "b", "f", "g", "i6", "l6", "r6", "u6", "y"]
-  },
-  {
-    "binding": "n6",
-    "name": "MigrationFileDropzone",
-    "file": "MigrationFileDropzone.jsx",
-    "dependencies": ["I", "React", "b", "e6", "g"]
-  },
-  {
-    "binding": "O4",
-    "name": "MigrationResources",
-    "file": "MigrationResources.jsx",
-    "dependencies": ["I", "React", "b", "v"]
-  },
-  {
-    "binding": "D4",
-    "name": "MigrationProgressModal",
-    "file": "MigrationProgressModal.jsx",
-    "dependencies": ["I", "M4", "N4", "React", "T", "T4", "b", "f", "g", "j4", "y"]
-  }
+	{
+		"binding": "A6",
+		"name": "SettingsPage",
+		"file": "SettingsPage.jsx",
+		"dependencies": [
+			"C5",
+			"E6",
+			"HG",
+			"I",
+			"J1",
+			"JK",
+			"L",
+			"O6",
+			"P4",
+			"P6",
+			"R6",
+			"React",
+			"S6",
+			"T",
+			"V0",
+			"YG",
+			"b",
+			"ep",
+			"f",
+			"g",
+			"jK",
+			"l",
+			"lJ",
+			"o4",
+			"qK",
+			"vJ",
+			"y",
+			"z"
+		]
+	},
+	{
+		"binding": "kK",
+		"name": "GeneralSettings",
+		"file": "GeneralSettings.jsx",
+		"dependencies": [
+			"CK",
+			"I",
+			"PK",
+			"RK",
+			"React",
+			"SK",
+			"T",
+			"g",
+			"l",
+			"wK",
+			"y"
+		]
+	},
+	{
+		"binding": "_K",
+		"name": "GeneralSettingsFields",
+		"file": "GeneralSettingsFields.jsx",
+		"dependencies": [ "I", "Nm", "React", "T", "b", "bK", "gK", "hK", "y" ]
+	},
+	{
+		"binding": "EK",
+		"name": "SettingsActionBar",
+		"file": "SettingsActionBar.jsx",
+		"dependencies": [ "D", "I", "React", "b" ]
+	},
+	{
+		"binding": "UK",
+		"name": "BrandingSettings",
+		"file": "BrandingSettings.jsx",
+		"dependencies": [
+			"BK",
+			"GK",
+			"HK",
+			"I",
+			"M",
+			"Nm",
+			"React",
+			"SK",
+			"T",
+			"VK",
+			"b",
+			"g",
+			"hu",
+			"l",
+			"y",
+			"zK"
+		]
+	},
+	{
+		"binding": "KK",
+		"name": "AccountPrivacySettings",
+		"file": "AccountPrivacySettings.jsx",
+		"dependencies": [
+			"$K",
+			"Ea",
+			"Ge",
+			"He",
+			"I",
+			"L",
+			"Pf",
+			"React",
+			"SK",
+			"T",
+			"YK",
+			"ZK",
+			"b",
+			"g",
+			"l",
+			"y",
+			"zm"
+		]
+	},
+	{
+		"binding": "iJ",
+		"name": "PermalinkSettings",
+		"file": "PermalinkSettings.jsx",
+		"dependencies": [
+			"I",
+			"Pf",
+			"React",
+			"SK",
+			"T",
+			"aJ",
+			"b",
+			"eJ",
+			"g",
+			"l",
+			"nJ",
+			"oJ",
+			"y"
+		]
+	},
+	{
+		"binding": "fJ",
+		"name": "AdvancedSettings",
+		"file": "AdvancedSettings.jsx",
+		"dependencies": [
+			"Ea",
+			"I",
+			"React",
+			"SK",
+			"T",
+			"b",
+			"cJ",
+			"dJ",
+			"g",
+			"l",
+			"mJ",
+			"y",
+			"z"
+		]
+	},
+	{
+		"binding": "L0",
+		"name": "DesignSettings",
+		"file": "DesignSettings.jsx",
+		"dependencies": [
+			"B0",
+			"D0",
+			"GK",
+			"I",
+			"JJ",
+			"React",
+			"SK",
+			"T",
+			"W0",
+			"b",
+			"ep",
+			"f",
+			"g",
+			"k0",
+			"l",
+			"y",
+			"zK"
+		]
+	},
+	{
+		"binding": "K1",
+		"name": "PaymentSettings",
+		"file": "PaymentSettings.jsx",
+		"dependencies": [
+			"B1",
+			"G1",
+			"I",
+			"P1",
+			"Q1",
+			"React",
+			"SK",
+			"T",
+			"V1",
+			"Y1",
+			"Z1",
+			"b",
+			"ep",
+			"f",
+			"g",
+			"l",
+			"y",
+			"y1",
+			"z"
+		]
+	},
+	{
+		"binding": "h1",
+		"name": "PaymentGatewaysSettings",
+		"file": "PaymentGatewaysSettings.jsx",
+		"dependencies": [
+			"I",
+			"J0",
+			"React",
+			"T",
+			"b",
+			"d1",
+			"f1",
+			"g",
+			"l",
+			"s1",
+			"u1",
+			"v1",
+			"y"
+		]
+	},
+	{
+		"binding": "C1",
+		"name": "CurrencySettings",
+		"file": "CurrencySettings.jsx",
+		"dependencies": [
+			"I",
+			"Nm",
+			"Pf",
+			"R1",
+			"React",
+			"S1",
+			"T",
+			"_1",
+			"b",
+			"b1",
+			"g",
+			"l",
+			"y",
+			"z"
+		]
+	},
+	{
+		"binding": "z1",
+		"name": "TaxSettings",
+		"file": "TaxSettings.jsx",
+		"dependencies": [
+			"D1",
+			"F1",
+			"I",
+			"I1",
+			"Kt",
+			"M1",
+			"N1",
+			"Nm",
+			"Pf",
+			"React",
+			"T",
+			"W1",
+			"b",
+			"g",
+			"k1",
+			"l",
+			"nf",
+			"y",
+			"z"
+		]
+	},
+	{
+		"binding": "w6",
+		"name": "MigrationSettings",
+		"file": "MigrationSettings.jsx",
+		"dependencies": [ "I", "React", "X4", "_6", "d6", "k4" ]
+	},
+	{
+		"binding": "J4",
+		"name": "MigrationPlatformSelector",
+		"file": "MigrationPlatformSelector.jsx",
+		"dependencies": [
+			"$4",
+			"B4",
+			"G4",
+			"H4",
+			"I",
+			"K4",
+			"React",
+			"T",
+			"U4",
+			"V4",
+			"W4",
+			"_6",
+			"b",
+			"g",
+			"l",
+			"y"
+		]
+	},
+	{
+		"binding": "s6",
+		"name": "MigrationImport",
+		"file": "MigrationImport.jsx",
+		"dependencies": [
+			"He",
+			"I",
+			"L",
+			"React",
+			"T",
+			"a6",
+			"b",
+			"f",
+			"g",
+			"i6",
+			"l6",
+			"r6",
+			"u6",
+			"y"
+		]
+	},
+	{
+		"binding": "n6",
+		"name": "MigrationFileDropzone",
+		"file": "MigrationFileDropzone.jsx",
+		"dependencies": [ "I", "React", "b", "e6", "g" ]
+	},
+	{
+		"binding": "O4",
+		"name": "MigrationResources",
+		"file": "MigrationResources.jsx",
+		"dependencies": [ "I", "React", "b", "v" ]
+	},
+	{
+		"binding": "D4",
+		"name": "MigrationProgressModal",
+		"file": "MigrationProgressModal.jsx",
+		"dependencies": [
+			"I",
+			"M4",
+			"N4",
+			"React",
+			"T",
+			"T4",
+			"b",
+			"f",
+			"g",
+			"j4",
+			"y"
+		]
+	}
 ]

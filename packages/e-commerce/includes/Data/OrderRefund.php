@@ -1,7 +1,10 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
 
-namespace CodeRex\Ecommerce\Data;
+namespace OhMyLMS\Commerce\Data;
 
+/**
+ * Plugin order refund implementation.
+ */
 class OrderRefund extends Order {
 
 	/**
@@ -38,7 +41,7 @@ class OrderRefund extends Order {
 	/**
 	 * Set the amount.
 	 *
-	 * @param string $amount
+	 * @param string $amount Amount.
 	 * @since 1.0.0
 	 */
 	public function set_amount( $amount ) {
@@ -58,7 +61,7 @@ class OrderRefund extends Order {
 	/**
 	 * Set the reason.
 	 *
-	 * @param string $reason
+	 * @param string $reason Reason.
 	 * @since 1.0.0
 	 */
 	public function set_reason( $reason ) {
@@ -69,7 +72,7 @@ class OrderRefund extends Order {
 	/**
 	 * Set the refunded by.
 	 *
-	 * @param int $refunded_by
+	 * @param int $refunded_by Refunded by.
 	 * @since 1.0.0
 	 */
 	public function set_refunded_by( $refunded_by ) {
@@ -92,6 +95,7 @@ class OrderRefund extends Order {
 	 *
 	 * @return string
 	 * @since 1.0.0
+	 * @param string $context Context.
 	 */
 	public function get_amount( $context = 'view' ) {
 		return $this->get_prop( 'amount', $context );
@@ -114,6 +118,7 @@ class OrderRefund extends Order {
 	 *
 	 * @return string
 	 * @since 1.0.0
+	 * @param string $context Context.
 	 */
 	public function get_reason( $context = 'view' ) {
 		return $this->get_prop( 'reason', $context );
@@ -126,6 +131,7 @@ class OrderRefund extends Order {
 	 *
 	 * @return int
 	 * @since 1.0.0
+	 * @param string $context Context.
 	 */
 	public function get_refunded_by( $context = 'view' ) {
 		return $this->get_prop( 'refunded_by', $context );
@@ -169,7 +175,7 @@ class OrderRefund extends Order {
 	/**
 	 * Cancel the student enrollment for the given order.
 	 *
-	 * @param \CodeRex\Ecommerce\Data\Order $order The order object.
+	 * @param \OhMyLMS\Commerce\Data\Order $order The order object.
 	 * @return void
 	 * @since 1.0.0
 	 */

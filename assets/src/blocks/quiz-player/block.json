@@ -1,0 +1,15 @@
+{
+	"apiVersion": 3,
+	"name": "ohmylms/quiz-player",
+	"title": "OhMyLMS Quiz Player",
+	"category": "widgets",
+	"icon": "welcome-learn-more",
+	"description": "Embed an existing OhMyLMS quiz in a lesson or WordPress page.",
+	"textdomain": "ohmylms",
+	"attributes": {
+		"quizId": { "type": "integer", "default": 0 },
+		"height": { "type": "integer", "default": 720 }
+	},
+	"supports": { "html": false, "interactivity": true },
+	"editorScript": "ohmylms-quiz-player-block"
+}

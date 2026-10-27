@@ -1,7 +1,16 @@
 <?php
+/**
+ * Conditional functions.
+ *
+ * @package OhMyLMS
+ */
 
+
+/**
+ * Is ohmylms for Conditional-functions.
+ */
 function is_ohmylms() {
-	// add a apply filters here if needed in future
+	// add a apply filters here if needed in future.
 	$maybe_yes = ohmylms_is_courses_page() || ohmylms_is_single_course_page() || ohmylms_is_course_taxonomy() || ohmylms_is_course_category() || is_ohmylms_profile() || ohmylms_is_content_page() || ohmylms_is_membership_page() || ohmylms_is_membership_plan_shortcode() || ohmylms_is_course_list_shortcode() || is_ohmylms_buy_now() || is_ohmylms_dashboard() || is_ohmylms_profile_shortcode() || is_ohmylms_my_courses_shortcode();
 	return apply_filters( 'is_ohmylms_page', $maybe_yes );
 }
@@ -23,49 +32,52 @@ function is_ohmylms_profile() {
  * @since 1.0.0
  */
 function is_ohmylms_checkout() {
-	
-    $page_id = get_option( 'ohmylms_checkout_page_id' );
-	
-    $is_checkout = false;
-    if ( ! $page_id ) {
-        $is_checkout = false;
-    }
 
-    // Alternative 1: Using get_queried_object_id()
-    $current_page_id = get_queried_object_id();
-    
-    // Alternative 2: Fallback to get_the_ID() if queried object ID is empty
-    if ( ! $current_page_id ) {
-        $current_page_id = get_the_ID();
-    }
-    
-    // Alternative 3: Use global $post as final fallback
-    if ( ! $current_page_id ) {
-        global $post;
-        $current_page_id = isset( $post->ID ) ? $post->ID : 0;
-    }
+	$page_id = get_option( 'ohmylms_checkout_page_id' );
 
-    if ( $current_page_id != $page_id ) {
-        // Check for shortcode, Elementor widget, Gutenberg block, Bricks element, or WPBakery element
-        $is_checkout = ohmylms_post_content_has_shortcode( 'ohmylms_checkout' ) || 
-               ohmylms_page_has_checkout_widget( $current_page_id ) ||
-               ohmylms_page_has_checkout_block( $current_page_id ) ||
-               ohmylms_page_has_checkout_bricks_element( $current_page_id ) ||
-               ohmylms_page_has_checkout_wpbakery_element( $current_page_id );
-    }
+	$is_checkout = false;
+	if ( ! $page_id ) {
+		$is_checkout = false;
+	}
 
-    $is_checkout = $current_page_id == $page_id || $is_checkout;
+	// Alternative 1: Using get_queried_object_id().
+	$current_page_id = get_queried_object_id();
 
-    return apply_filters( 'is_ohmylms_checkout_page', $is_checkout );
+	// Alternative 2: Fallback to get_the_ID() if queried object ID is empty.
+	if ( ! $current_page_id ) {
+		$current_page_id = get_the_ID();
+	}
+
+	// Alternative 3: Use global $post as final fallback.
+	if ( ! $current_page_id ) {
+		global $post;
+		$current_page_id = isset( $post->ID ) ? $post->ID : 0;
+	}
+
+	if ( $current_page_id != $page_id ) {
+		// Check for shortcode, Elementor widget, Gutenberg block, Bricks element, or WPBakery element.
+		$is_checkout = ohmylms_post_content_has_shortcode( 'ohmylms_checkout' ) ||
+				ohmylms_page_has_checkout_widget( $current_page_id ) ||
+				ohmylms_page_has_checkout_block( $current_page_id ) ||
+				ohmylms_page_has_checkout_bricks_element( $current_page_id ) ||
+				ohmylms_page_has_checkout_wpbakery_element( $current_page_id );
+	}
+
+	$is_checkout = $current_page_id == $page_id || $is_checkout;
+
+	return apply_filters( 'is_ohmylms_checkout_page', $is_checkout );
 }
 
 
+/**
+ * Is ohmylms buy now for Conditional-functions.
+ */
 function is_ohmylms_buy_now() {
-	return ohmylms_post_content_has_shortcode( 'ohmylms_buy_now' ) || 
-	       ohmylms_page_has_buy_now_widget() ||
-	       ohmylms_page_has_buy_now_block() ||
-	       ohmylms_page_has_buy_now_bricks_element() ||
-	       ohmylms_page_has_buy_now_wpbakery_element();
+	return ohmylms_post_content_has_shortcode( 'ohmylms_buy_now' ) ||
+			ohmylms_page_has_buy_now_widget() ||
+			ohmylms_page_has_buy_now_block() ||
+			ohmylms_page_has_buy_now_bricks_element() ||
+			ohmylms_page_has_buy_now_wpbakery_element();
 }
 
 /**
@@ -95,7 +107,7 @@ function is_ohmylms_profile_shortcode() {
  * @since 1.0.0
  */
 function is_ohmylms_my_courses_shortcode() {
-	return ohmylms_post_content_has_shortcode( 'ohmylms_my_courses' ) || ohmylms_page_has_my_courses_block();
+	return ohmylms_post_content_has_shortcode( 'ohmylms_my_courses' );
 }
 
 /**
@@ -105,7 +117,7 @@ function is_ohmylms_my_courses_shortcode() {
  * @since 1.0.0
  */
 function is_ohmylms_order_received_page() {
-	if( is_ohmylms_checkout() ) {
+	if ( is_ohmylms_checkout() ) {
 		global $wp;
 		if ( isset( $wp->query_vars['ohmylms-order-received'] ) && ! empty( $wp->query_vars['ohmylms-order-received'] ) ) {
 			return true;
@@ -138,7 +150,7 @@ function is_ohmylms_endpoint_url( $endpoint = '' ) {
  */
 function ohmylms_post_content_has_shortcode( $tag = '' ) {
 	global $post;
-	return is_singular() && is_a( $post, 'WP_Post' ) && ( has_shortcode( $post->post_content, $tag ) || str_contains( $post->post_content, 'ohmylms_checkout' ) ) ;
+	return is_singular() && is_a( $post, 'WP_Post' ) && ( has_shortcode( $post->post_content, $tag ) || str_contains( $post->post_content, 'ohmylms_checkout' ) );
 }
 
 /**
@@ -149,31 +161,31 @@ function ohmylms_post_content_has_shortcode( $tag = '' ) {
  * @since 1.0.0
  */
 function ohmylms_page_has_checkout_widget( $page_id = 0 ) {
-	// If no page ID provided, get current page ID
+	// If no page ID provided, get current page ID.
 	if ( ! $page_id ) {
 		$page_id = get_the_ID();
 	}
-	
-	// Check if Elementor is active
+
+	// Check if Elementor is active.
 	if ( ! class_exists( '\Elementor\Plugin' ) ) {
 		return false;
 	}
-	
-	// Get Elementor data for this page
+
+	// Get Elementor data for this page.
 	$elementor_data = get_post_meta( $page_id, '_elementor_data', true );
-	
+
 	if ( empty( $elementor_data ) ) {
 		return false;
 	}
-	
-	// Decode JSON data
+
+	// Decode JSON data.
 	$data = is_string( $elementor_data ) ? json_decode( $elementor_data, true ) : $elementor_data;
-	
+
 	if ( ! is_array( $data ) ) {
 		return false;
 	}
-	
-	// Recursively search for the checkout widget
+
+	// Recursively search for the checkout widget.
 	return ohmylms_search_elementor_data_for_widget( $data, 'ohmylms-checkout' );
 }
 
@@ -187,39 +199,39 @@ function ohmylms_page_has_checkout_widget( $page_id = 0 ) {
  * @since 1.0.0
  */
 function ohmylms_page_has_buy_now_widget( $page_id = 0 ) {
-	// If no page ID provided, get current page ID
+	// If no page ID provided, get current page ID.
 	if ( ! $page_id ) {
 		$page_id = get_the_ID();
 	}
-	
-	// Check if Elementor is active
+
+	// Check if Elementor is active.
 	if ( ! class_exists( '\Elementor\Plugin' ) ) {
 		return false;
 	}
-	
-	// Get Elementor data for this page
+
+	// Get Elementor data for this page.
 	$elementor_data = get_post_meta( $page_id, '_elementor_data', true );
-	
+
 	if ( empty( $elementor_data ) ) {
 		return false;
 	}
-	
-	// Decode JSON data
+
+	// Decode JSON data.
 	$data = is_string( $elementor_data ) ? json_decode( $elementor_data, true ) : $elementor_data;
-	
+
 	if ( ! is_array( $data ) ) {
 		return false;
 	}
-	
-	// Recursively search for the buy now widget
+
+	// Recursively search for the buy now widget.
 	return ohmylms_search_elementor_data_for_widget( $data, 'ohmylms-buy-now' );
 }
 
 /**
  * Recursively search Elementor data for a specific widget type.
  *
- * @param array $data Elementor data array
- * @param string $widget_type Widget type to search for
+ * @param array  $data Elementor data array.
+ * @param string $widget_type Widget type to search for.
  * @return bool True if widget is found, false otherwise.
  * @since 1.0.0
  */
@@ -227,21 +239,21 @@ function ohmylms_search_elementor_data_for_widget( $data, $widget_type ) {
 	if ( ! is_array( $data ) ) {
 		return false;
 	}
-	
+
 	foreach ( $data as $element ) {
-		// Check if this element is the widget we're looking for
+		// Check if this element is the widget we're looking for.
 		if ( isset( $element['widgetType'] ) && $element['widgetType'] === $widget_type ) {
 			return true;
 		}
-		
-		// Check nested elements (sections, columns, etc.)
+
+		// Check nested elements (sections, columns, etc.).
 		if ( isset( $element['elements'] ) && is_array( $element['elements'] ) ) {
 			if ( ohmylms_search_elementor_data_for_widget( $element['elements'], $widget_type ) ) {
 				return true;
 			}
 		}
 	}
-	
+
 	return false;
 }
 
@@ -253,17 +265,17 @@ function ohmylms_search_elementor_data_for_widget( $data, $widget_type ) {
  * @since 1.0.0
  */
 function ohmylms_page_has_checkout_block( $page_id = 0 ) {
-	// If no page ID provided, get current page ID
+	// If no page ID provided, get current page ID.
 	if ( ! $page_id ) {
 		$page_id = get_the_ID();
 	}
-	
-	// Check if block editor functions are available
+
+	// Check if block editor functions are available.
 	if ( ! function_exists( 'has_block' ) ) {
 		return false;
 	}
-	
-	// Check if the page has the checkout block
+
+	// Check if the page has the checkout block.
 	return has_block( 'ohmylms/checkout', $page_id );
 }
 
@@ -277,17 +289,17 @@ function ohmylms_page_has_checkout_block( $page_id = 0 ) {
  * @since 1.0.0
  */
 function ohmylms_page_has_buy_now_block( $page_id = 0 ) {
-	// If no page ID provided, get current page ID
+	// If no page ID provided, get current page ID.
 	if ( ! $page_id ) {
 		$page_id = get_the_ID();
 	}
-	
-	// Check if block editor functions are available
+
+	// Check if block editor functions are available.
 	if ( ! function_exists( 'has_block' ) ) {
 		return false;
 	}
 
-	// Check if the page has the buy now block
+	// Check if the page has the buy now block.
 	return has_block( 'ohmylms/buy-now', $page_id );
 }
 
@@ -299,52 +311,42 @@ function ohmylms_page_has_buy_now_block( $page_id = 0 ) {
  * @since 1.0.0
  */
 function ohmylms_page_has_course_list_widget( $page_id = 0 ) {
-	// If no page ID provided, get current page ID
+	// If no page ID provided, get current page ID.
 	if ( ! $page_id ) {
 		$page_id = get_the_ID();
 	}
 
-	// Check if Elementor is active
+	// Check if Elementor is active.
 	if ( ! class_exists( '\Elementor\Plugin' ) ) {
 		return false;
 	}
 
-	// Get Elementor data for this page
+	// Get Elementor data for this page.
 	$elementor_data = get_post_meta( $page_id, '_elementor_data', true );
 	if ( empty( $elementor_data ) ) {
 		return false;
 	}
 
-	// Parse the JSON data
+	// Parse the JSON data.
 	$data = is_string( $elementor_data ) ? json_decode( $elementor_data, true ) : $elementor_data;
 	if ( ! is_array( $data ) ) {
 		return false;
 	}
 
-	// Recursively search for the course list widget
+	// Recursively search for the course list widget.
 	return ohmylms_search_elementor_data_for_widget( $data, 'ohmylms-course-list' );
 }
 
 /**
- * Check if a page has the OhMyLMS course list Gutenberg block.
+ * Compatibility helper for the removed Course List Gutenberg block.
  *
  * @param int $page_id The page ID to check. If not provided, uses current page.
- * @return bool True if the page has the course list block, false otherwise.
+ * @return bool Always false; the block is no longer registered.
  * @since 1.0.0
  */
 function ohmylms_page_has_course_list_block( $page_id = 0 ) {
-	// If no page ID provided, get current page ID
-	if ( ! $page_id ) {
-		$page_id = get_the_ID();
-	}
-	
-	// Check if block editor functions are available
-	if ( ! function_exists( 'has_block' ) ) {
-		return false;
-	}
-	
-	// Check if the page has the course list block
-	return has_block( 'ohmylms/course-list', $page_id );
+	// Compatibility for add-ons calling this public helper after the block's removal.
+	return false;
 }
 
 /**
@@ -355,17 +357,17 @@ function ohmylms_page_has_course_list_block( $page_id = 0 ) {
  * @since 1.0.0
  */
 function ohmylms_page_has_dashboard_block( $page_id = 0 ) {
-	// If no page ID provided, get current page ID
+	// If no page ID provided, get current page ID.
 	if ( ! $page_id ) {
 		$page_id = get_the_ID();
 	}
-	
-	// Check if block editor functions are available
+
+	// Check if block editor functions are available.
 	if ( ! function_exists( 'has_block' ) ) {
 		return false;
 	}
-	
-	// Check if the page has the dashboard block
+
+	// Check if the page has the dashboard block.
 	return has_block( 'ohmylms/dashboard', $page_id );
 }
 
@@ -377,40 +379,30 @@ function ohmylms_page_has_dashboard_block( $page_id = 0 ) {
  * @since 1.2.5
  */
 function ohmylms_page_has_profile_block( $page_id = 0 ) {
-	// If no page ID provided, get current page ID
+	// If no page ID provided, get current page ID.
 	if ( ! $page_id ) {
 		$page_id = get_the_ID();
 	}
-	
-	// Check if block editor functions are available
+
+	// Check if block editor functions are available.
 	if ( ! function_exists( 'has_block' ) ) {
 		return false;
 	}
-	
-	// Check if the page has the profile block
+
+	// Check if the page has the profile block.
 	return has_block( 'ohmylms/profile', $page_id );
 }
 
 /**
- * Check if a page has the OhMyLMS my courses Gutenberg block.
+ * Compatibility helper for the removed My Courses Gutenberg block.
  *
  * @param int $page_id The page ID to check. If not provided, uses current page.
- * @return bool True if the page has the my courses block, false otherwise.
+ * @return bool Always false; the block is no longer registered.
  * @since 1.2.5
  */
 function ohmylms_page_has_my_courses_block( $page_id = 0 ) {
-	// If no page ID provided, get current page ID
-	if ( ! $page_id ) {
-		$page_id = get_the_ID();
-	}
-	
-	// Check if block editor functions are available
-	if ( ! function_exists( 'has_block' ) ) {
-		return false;
-	}
-	
-	// Check if the page has the my courses block
-	return has_block( 'ohmylms/my-courses', $page_id );
+	// Compatibility for add-ons calling this public helper after the block's removal.
+	return false;
 }
 
 // === BRICKS ELEMENT DETECTION FUNCTIONS ===
@@ -463,42 +455,42 @@ function ohmylms_page_has_offer_button_bricks_element( $page_id = 0 ) {
  * Generic function to check if a page has a specific Bricks element.
  *
  * @param string $element_name The Bricks element name to search for.
- * @param int $page_id The page ID to check. If not provided, uses current page.
+ * @param int    $page_id The page ID to check. If not provided, uses current page.
  * @return bool True if the page has the element, false otherwise.
  * @since 1.0.0
  */
 function ohmylms_page_has_bricks_element( $element_name, $page_id = 0 ) {
-	// If no page ID provided, get current page ID
+	// If no page ID provided, get current page ID.
 	if ( ! $page_id ) {
 		$page_id = get_the_ID();
 	}
-	
-	// Check if Bricks is active
+
+	// Check if Bricks is active.
 	if ( ! class_exists( '\Bricks\Database' ) ) {
 		return false;
 	}
-	
-	// Get Bricks data for this page
+
+	// Get Bricks data for this page.
 	$bricks_data = get_post_meta( $page_id, BRICKS_DB_PAGE_CONTENT, true );
-	
+
 	if ( empty( $bricks_data ) ) {
 		return false;
 	}
-	
-	// Bricks stores data as an array of elements
+
+	// Bricks stores data as an array of elements.
 	if ( ! is_array( $bricks_data ) ) {
 		return false;
 	}
-	
-	// Recursively search for the element
+
+	// Recursively search for the element.
 	return ohmylms_search_bricks_data_for_element( $bricks_data, $element_name );
 }
 
 /**
  * Recursively search Bricks data for a specific element type.
  *
- * @param array $data Bricks data array
- * @param string $element_name Element name to search for
+ * @param array  $data Bricks data array.
+ * @param string $element_name Element name to search for.
  * @return bool True if element is found, false otherwise.
  * @since 1.0.0
  */
@@ -506,44 +498,55 @@ function ohmylms_search_bricks_data_for_element( $data, $element_name ) {
 	if ( ! is_array( $data ) ) {
 		return false;
 	}
-	
+
 	foreach ( $data as $element ) {
-		// Check if this element is the one we're looking for
+		// Check if this element is the one we're looking for.
 		if ( isset( $element['name'] ) && $element['name'] === $element_name ) {
 			return true;
 		}
-		
-		// Check nested elements (containers, sections, etc.)
+
+		// Check nested elements (containers, sections, etc.).
 		if ( isset( $element['children'] ) && is_array( $element['children'] ) ) {
 			if ( ohmylms_search_bricks_data_for_element( $element['children'], $element_name ) ) {
 				return true;
 			}
 		}
 	}
-	
+
 	return false;
 }
 
+/**
+ * Ohmylms is courses page for Conditional-functions.
+ */
 function ohmylms_is_courses_page() {
 	return ( is_post_type_archive( OHMYLMS_COURSE_CPT ) || is_page( ohmylms_get_page_id( 'course' ) ) );
 }
 
+/**
+ * Ohmylms is course list shortcode for Conditional-functions.
+ */
 function ohmylms_is_course_list_shortcode() {
-	// Check for shortcode, Elementor widget, Gutenberg block, Bricks element, or WPBakery element
-	return ohmylms_post_content_has_shortcode( 'ohmylms_course_list' ) || 
-		   ohmylms_page_has_course_list_widget() || 
-		   ohmylms_page_has_course_list_block() ||
-		   ohmylms_page_has_course_list_bricks_element() ||
-		   ohmylms_page_has_course_list_wpbakery_element();
+	// Check for shortcode, Elementor widget, Bricks element, or WPBakery element.
+	return ohmylms_post_content_has_shortcode( 'ohmylms_course_list' ) ||
+			ohmylms_page_has_course_list_widget() ||
+			ohmylms_page_has_course_list_bricks_element() ||
+			ohmylms_page_has_course_list_wpbakery_element();
 }
 
+/**
+ * Ohmylms is membership page for Conditional-functions.
+ */
 function ohmylms_is_membership_page() {
 	return ( is_post_type_archive( OHMYLMS_MEMBERSHIP_CPT ) || is_page( ohmylms_get_page_id( 'membership' ) ) );
 }
 
+/**
+ * Ohmylms is membership plan shortcode for Conditional-functions.
+ */
 function ohmylms_is_membership_plan_shortcode() {
 	return ohmylms_post_content_has_shortcode( 'ohmylms_membership_plan' ) ||
-		   ohmylms_page_has_membership_list_block();
+			ohmylms_page_has_membership_list_block();
 }
 
 /**
@@ -565,6 +568,9 @@ function ohmylms_page_has_membership_list_block( $page_id = 0 ) {
 	return has_block( 'ohmylms/membership-list', $page_id );
 }
 
+/**
+ * Ohmylms is single course page for Conditional-functions.
+ */
 function ohmylms_is_single_course_page() {
 	return is_singular( OHMYLMS_COURSE_CPT );
 }
@@ -587,22 +593,39 @@ function ohmylms_is_single_assignment_page() {
 	return is_singular( OHMYLMS_ASSIGNMENT_CPT );
 }
 
+/**
+ * Ohmylms is single quiz page for Conditional-functions.
+ */
 function ohmylms_is_single_quiz_page() {
 	return is_singular( OHMYLMS_QUIZ_CPT );
 }
+/**
+ * Ohmylms is single session for Conditional-functions.
+ */
 function ohmylms_is_single_session() {
 	return is_singular( 'ohmylms-session' );
 }
+/**
+ * Ohmylms is content page for Conditional-functions.
+ */
 function ohmylms_is_content_page() {
 	return ohmylms_is_single_lesson_page() || ohmylms_is_single_assignment_page() || ohmylms_is_single_quiz_page() || ohmylms_is_single_session();
 }
 
 
+/**
+ * Ohmylms is course taxonomy for Conditional-functions.
+ */
 function ohmylms_is_course_taxonomy() {
 	return is_tax( get_object_taxonomies( OHMYLMS_COURSE_CPT ) );
 }
 
 
+/**
+ * Ohmylms is course category for Conditional-functions.
+ *
+ * @param string $term Term.
+ */
 function ohmylms_is_course_category( $term = '' ) {
 	return is_tax( 'course_category', $term );
 }
@@ -624,11 +647,11 @@ function is_ohmylms_archive() {
  * @since 1.0.0
  */
 function is_ohmylms_offer_button() {
-	return ohmylms_post_content_has_shortcode( 'ohmylms_offer_button' ) || 
-	       ohmylms_page_has_offer_button_widget() ||
-	       ohmylms_page_has_offer_button_block() ||
-	       ohmylms_page_has_offer_button_bricks_element() ||
-	       ohmylms_page_has_offer_button_wpbakery_element();
+	return ohmylms_post_content_has_shortcode( 'ohmylms_offer_button' ) ||
+			ohmylms_page_has_offer_button_widget() ||
+			ohmylms_page_has_offer_button_block() ||
+			ohmylms_page_has_offer_button_bricks_element() ||
+			ohmylms_page_has_offer_button_wpbakery_element();
 }
 
 /**
@@ -639,31 +662,31 @@ function is_ohmylms_offer_button() {
  * @since 1.0.0
  */
 function ohmylms_page_has_offer_button_widget( $page_id = 0 ) {
-	// If no page ID provided, get current page ID
+	// If no page ID provided, get current page ID.
 	if ( ! $page_id ) {
 		$page_id = get_the_ID();
 	}
-	
-	// Check if Elementor is active
+
+	// Check if Elementor is active.
 	if ( ! class_exists( '\Elementor\Plugin' ) ) {
 		return false;
 	}
-	
-	// Get Elementor data for this page
+
+	// Get Elementor data for this page.
 	$elementor_data = get_post_meta( $page_id, '_elementor_data', true );
-	
+
 	if ( empty( $elementor_data ) ) {
 		return false;
 	}
-	
-	// Decode JSON data
+
+	// Decode JSON data.
 	$data = is_string( $elementor_data ) ? json_decode( $elementor_data, true ) : $elementor_data;
-	
+
 	if ( ! is_array( $data ) ) {
 		return false;
 	}
-	
-	// Recursively search for the offer button widget
+
+	// Recursively search for the offer button widget.
 	return ohmylms_search_elementor_data_for_widget( $data, 'ohmylms-offer-button' );
 }
 
@@ -675,17 +698,17 @@ function ohmylms_page_has_offer_button_widget( $page_id = 0 ) {
  * @since 1.0.0
  */
 function ohmylms_page_has_offer_button_block( $page_id = 0 ) {
-	// If no page ID provided, get current page ID
+	// If no page ID provided, get current page ID.
 	if ( ! $page_id ) {
 		$page_id = get_the_ID();
 	}
-	
-	// Check if block editor functions are available
+
+	// Check if block editor functions are available.
 	if ( ! function_exists( 'has_block' ) ) {
 		return false;
 	}
-	
-	// Check if the page has the offer button block
+
+	// Check if the page has the offer button block.
 	return has_block( 'ohmylms/offer-button', $page_id );
 }
 
@@ -740,29 +763,28 @@ function ohmylms_page_has_offer_button_wpbakery_element( $page_id = 0 ) {
  * WPBakery stores content as shortcodes in post_content.
  *
  * @param string $shortcode_tag The shortcode tag to search for (e.g., 'ohmylms_checkout').
- * @param int $page_id The page ID to check. If not provided, uses current page.
+ * @param int    $page_id The page ID to check. If not provided, uses current page.
  * @return bool True if the page has the element, false otherwise.
  * @since 1.0.0
  */
 function ohmylms_page_has_wpbakery_element( $shortcode_tag, $page_id = 0 ) {
-	// If no page ID provided, get current page ID
+	// If no page ID provided, get current page ID.
 	if ( ! $page_id ) {
 		$page_id = get_the_ID();
 	}
-	
-	// Check if WPBakery is active
+
+	// Check if WPBakery is active.
 	if ( ! class_exists( 'Vc_Manager' ) ) {
 		return false;
 	}
-	
-	// Get the post content
+
+	// Get the post content.
 	$post = get_post( $page_id );
-	
+
 	if ( ! $post || empty( $post->post_content ) ) {
 		return false;
 	}
-	
-	// Check if the shortcode exists in the post content
+
+	// Check if the shortcode exists in the post content.
 	return has_shortcode( $post->post_content, $shortcode_tag );
 }
-

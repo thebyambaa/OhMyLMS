@@ -1,6 +1,11 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
+/**
+ * Helper class for Stripe gateway related functions.
+ *
+ * @package OhMyLMS
+ */
 
-namespace CodeRex\Ecommerce\Gateways\Stripe;
+namespace OhMyLMS\Commerce\Gateways\Stripe;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -28,7 +33,7 @@ class Helper {
 		} elseif ( in_array( $currency, self::three_decimal_currencies(), true ) ) {
 			$price_decimals = ohmylms_get_price_decimals();
 			$amount         = absint( ohmylms_format_decimal( ( (float) $total * 1000 ), $price_decimals ) ); // For tree decimal currencies.
-			return $amount - ( $amount % 10 ); // Round the last digit down. See https://docs.stripe.com/currencies?presentment-currency=AE#three-decimal
+			return $amount - ( $amount % 10 ); // Round the last digit down. See https://docs.stripe.com/currencies?presentment-currency=AE#three-decimal.
 		} else {
 			return absint( ohmylms_format_decimal( ( (float) $total * 100 ), ohmylms_get_price_decimals() ) ); // In cents.
 		}
@@ -193,21 +198,21 @@ class Helper {
 	 */
 	public static function no_decimal_currencies() {
 		return array(
-			'bif', // Burundian Franc
-			'clp', // Chilean Peso
-			'djf', // Djiboutian Franc
-			'gnf', // Guinean Franc
-			'jpy', // Japanese Yen
-			'kmf', // Comorian Franc
-			'krw', // South Korean Won
-			'mga', // Malagasy Ariary
-			'pyg', // Paraguayan Guaraní
-			'rwf', // Rwandan Franc
-			'vnd', // Vietnamese Đồng
-			'vuv', // Vanuatu Vatu
-			'xaf', // Central African Cfa Franc
-			'xof', // West African Cfa Franc
-			'xpf', // Cfp Franc
+			'bif', // Burundian Franc.
+			'clp', // Chilean Peso.
+			'djf', // Djiboutian Franc.
+			'gnf', // Guinean Franc.
+			'jpy', // Japanese Yen.
+			'kmf', // Comorian Franc.
+			'krw', // South Korean Won.
+			'mga', // Malagasy Ariary.
+			'pyg', // Paraguayan Guaraní.
+			'rwf', // Rwandan Franc.
+			'vnd', // Vietnamese Đồng.
+			'vuv', // Vanuatu Vatu.
+			'xaf', // Central African Cfa Franc.
+			'xof', // West African Cfa Franc.
+			'xpf', // Cfp Franc.
 		);
 	}
 
@@ -221,11 +226,11 @@ class Helper {
 	 */
 	private static function three_decimal_currencies() {
 		return array(
-			'bhd', // Bahraini Dinar
-			'jod', // Jordanian Dinar
-			'kwd', // Kuwaiti Dinar
-			'omr', // Omani Rial
-			'tnd', // Tunisian Dinar
+			'bhd', // Bahraini Dinar.
+			'jod', // Jordanian Dinar.
+			'kwd', // Kuwaiti Dinar.
+			'omr', // Omani Rial.
+			'tnd', // Tunisian Dinar.
 		);
 	}
 
@@ -246,10 +251,10 @@ class Helper {
 
 	/**
 	 * Format the balance transaction fee or net amount.
-	 * 
+	 *
 	 * @param object $balance_transaction The balance transaction object.
 	 * @param string $type The type of amount to format ('fee' or 'net').
-	 * 
+	 *
 	 * @return string|null The formatted amount or null if the input is not valid.
 	 * @since 1.0.0
 	 */

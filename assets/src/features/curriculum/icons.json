@@ -1,0 +1,18 @@
+[
+	{ "id": "category", "label": "Folder" },
+	{ "id": "open-folder", "label": "Open folder" },
+	{ "id": "book-alt", "label": "Textbook" },
+	{ "id": "book", "label": "Book" },
+	{ "id": "welcome-learn-more", "label": "Graduation cap" },
+	{ "id": "calculator", "label": "Calculator" },
+	{ "id": "chart-bar", "label": "Bar chart" },
+	{ "id": "chart-pie", "label": "Pie chart" },
+	{ "id": "chart-line", "label": "Line chart" },
+	{ "id": "admin-site-alt3", "label": "Globe" },
+	{ "id": "star-filled", "label": "Star" },
+	{ "id": "lightbulb", "label": "Light bulb" },
+	{ "id": "awards", "label": "Award" },
+	{ "id": "admin-tools", "label": "Tools" },
+	{ "id": "media-document", "label": "Document" },
+	{ "id": "screenoptions", "label": "Grid" }
+]

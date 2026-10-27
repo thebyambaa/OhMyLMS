@@ -1,130 +1,209 @@
 [
-  {
-    "binding": "hte",
-    "name": "CertificatesPage",
-    "file": "CertificatesPage.jsx",
-    "dependencies": ["HG", "React", "gte"]
-  },
-  {
-    "binding": "vte",
-    "name": "CertificateList",
-    "file": "CertificateList.jsx",
-    "dependencies": [
-      "$ee",
-      "Ea",
-      "Ge",
-      "I",
-      "Ie",
-      "Ne",
-      "React",
-      "T",
-      "We",
-      "YG",
-      "aY",
-      "b",
-      "cte",
-      "df",
-      "dte",
-      "f",
-      "fN",
-      "fte",
-      "g",
-      "hN",
-      "l",
-      "lte",
-      "mte",
-      "pG",
-      "pZ",
-      "pte",
-      "q",
-      "sN",
-      "sn",
-      "uf",
-      "y",
-      "z"
-    ]
-  },
-  {
-    "binding": "Zee",
-    "name": "CertificateNameCell",
-    "file": "CertificateNameCell.jsx",
-    "dependencies": ["Ge", "I", "React", "b", "f", "g", "gG", "pG", "v"]
-  },
-  {
-    "binding": "nte",
-    "name": "CertificateTemplateCard",
-    "file": "CertificateTemplateCard.jsx",
-    "dependencies": ["CB", "I", "Kee", "L", "React", "T", "Xee", "b", "ete", "f", "g", "l", "y"]
-  },
-  {
-    "binding": "ite",
-    "name": "CertificateTemplateDialog",
-    "file": "CertificateTemplateDialog.jsx",
-    "dependencies": ["I", "React", "_", "ate", "b", "f", "g", "hB", "rte"]
-  },
-  {
-    "binding": "Ste",
-    "name": "CertificateEditPage",
-    "file": "CertificateEditPage.jsx",
-    "dependencies": ["Ete", "HG", "React", "T", "_", "bte", "f", "g", "uV", "wte", "y", "z"]
-  },
-  {
-    "binding": "cV",
-    "name": "CertificateEditor",
-    "file": "CertificateEditor.jsx",
-    "dependencies": ["DL", "I", "React", "T", "YL", "_L", "b", "g", "iV", "oL", "oV", "y", "z"]
-  },
-  {
-    "binding": "bL",
-    "name": "CertificateEditorHeader",
-    "file": "CertificateEditorHeader.jsx",
-    "dependencies": [
-      "Ge",
-      "I",
-      "Nr",
-      "Re",
-      "React",
-      "T",
-      "b",
-      "dL",
-      "f",
-      "g",
-      "gL",
-      "hL",
-      "mL",
-      "pL",
-      "sL",
-      "y"
-    ]
-  },
-  {
-    "binding": "NL",
-    "name": "CertificateControls",
-    "file": "CertificateControls.jsx",
-    "dependencies": ["He", "I", "IL", "L", "ML", "React", "T", "TL", "b", "g", "kL", "y"]
-  },
-  {
-    "binding": "qL",
-    "name": "CertificatePreview",
-    "file": "CertificatePreview.jsx",
-    "dependencies": ["GL", "I", "React", "T", "UL", "g", "y"]
-  },
-  {
-    "binding": "aV",
-    "name": "CertificateCourseSelector",
-    "file": "CertificateCourseSelector.jsx",
-    "dependencies": ["Ge", "I", "JL", "React", "T", "ZL", "b", "g", "l", "nV", "tV", "tn", "y"]
-  },
-  {
-    "binding": "OL",
-    "name": "CertificateTextField",
-    "file": "CertificateTextField.jsx",
-    "dependencies": ["EL", "I", "L", "Mt", "PL", "React", "SL", "b", "g", "xL"]
-  },
-  {
-    "binding": "AL",
-    "name": "CertificateImageField",
-    "file": "CertificateImageField.jsx",
-    "dependencies": ["I", "M", "Mt", "React", "V", "b", "g", "hu", "jL"]
-  }
+	{
+		"binding": "hte",
+		"name": "CertificatesPage",
+		"file": "CertificatesPage.jsx",
+		"dependencies": [ "HG", "React", "gte" ]
+	},
+	{
+		"binding": "vte",
+		"name": "CertificateList",
+		"file": "CertificateList.jsx",
+		"dependencies": [
+			"$ee",
+			"Ea",
+			"Ge",
+			"I",
+			"Ie",
+			"Ne",
+			"React",
+			"T",
+			"We",
+			"YG",
+			"aY",
+			"b",
+			"cte",
+			"df",
+			"dte",
+			"f",
+			"fN",
+			"fte",
+			"g",
+			"hN",
+			"l",
+			"lte",
+			"mte",
+			"pG",
+			"pZ",
+			"pte",
+			"q",
+			"sN",
+			"sn",
+			"uf",
+			"y",
+			"z"
+		]
+	},
+	{
+		"binding": "Zee",
+		"name": "CertificateNameCell",
+		"file": "CertificateNameCell.jsx",
+		"dependencies": [ "Ge", "I", "React", "b", "f", "g", "gG", "pG", "v" ]
+	},
+	{
+		"binding": "nte",
+		"name": "CertificateTemplateCard",
+		"file": "CertificateTemplateCard.jsx",
+		"dependencies": [
+			"CB",
+			"I",
+			"Kee",
+			"L",
+			"React",
+			"T",
+			"Xee",
+			"b",
+			"ete",
+			"f",
+			"g",
+			"l",
+			"y"
+		]
+	},
+	{
+		"binding": "ite",
+		"name": "CertificateTemplateDialog",
+		"file": "CertificateTemplateDialog.jsx",
+		"dependencies": [ "I", "React", "_", "ate", "b", "f", "g", "hB", "rte" ]
+	},
+	{
+		"binding": "Ste",
+		"name": "CertificateEditPage",
+		"file": "CertificateEditPage.jsx",
+		"dependencies": [
+			"Ete",
+			"HG",
+			"React",
+			"T",
+			"_",
+			"bte",
+			"f",
+			"g",
+			"uV",
+			"wte",
+			"y",
+			"z"
+		]
+	},
+	{
+		"binding": "cV",
+		"name": "CertificateEditor",
+		"file": "CertificateEditor.jsx",
+		"dependencies": [
+			"DL",
+			"I",
+			"React",
+			"T",
+			"YL",
+			"_L",
+			"b",
+			"g",
+			"iV",
+			"oL",
+			"oV",
+			"y",
+			"z"
+		]
+	},
+	{
+		"binding": "bL",
+		"name": "CertificateEditorHeader",
+		"file": "CertificateEditorHeader.jsx",
+		"dependencies": [
+			"Ge",
+			"I",
+			"Nr",
+			"Re",
+			"React",
+			"T",
+			"b",
+			"dL",
+			"f",
+			"g",
+			"gL",
+			"hL",
+			"mL",
+			"pL",
+			"sL",
+			"y"
+		]
+	},
+	{
+		"binding": "NL",
+		"name": "CertificateControls",
+		"file": "CertificateControls.jsx",
+		"dependencies": [
+			"He",
+			"I",
+			"IL",
+			"L",
+			"ML",
+			"React",
+			"T",
+			"TL",
+			"b",
+			"g",
+			"kL",
+			"y"
+		]
+	},
+	{
+		"binding": "qL",
+		"name": "CertificatePreview",
+		"file": "CertificatePreview.jsx",
+		"dependencies": [ "GL", "I", "React", "T", "UL", "g", "y" ]
+	},
+	{
+		"binding": "aV",
+		"name": "CertificateCourseSelector",
+		"file": "CertificateCourseSelector.jsx",
+		"dependencies": [
+			"Ge",
+			"I",
+			"JL",
+			"React",
+			"T",
+			"ZL",
+			"b",
+			"g",
+			"l",
+			"nV",
+			"tV",
+			"tn",
+			"y"
+		]
+	},
+	{
+		"binding": "OL",
+		"name": "CertificateTextField",
+		"file": "CertificateTextField.jsx",
+		"dependencies": [
+			"EL",
+			"I",
+			"L",
+			"Mt",
+			"PL",
+			"React",
+			"SL",
+			"b",
+			"g",
+			"xL"
+		]
+	},
+	{
+		"binding": "AL",
+		"name": "CertificateImageField",
+		"file": "CertificateImageField.jsx",
+		"dependencies": [ "I", "M", "Mt", "React", "V", "b", "g", "hu", "jL" ]
+	}
 ]

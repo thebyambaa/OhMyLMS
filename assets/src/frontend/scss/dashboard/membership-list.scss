@@ -1,13 +1,19 @@
 .ohmylms-page {
+
     .ohmylms-student-profile {
+
         .student-membership {
+
             @media screen and (min-width: 1400px) {
                 padding: 40px 55px;
             }
 
             .ohmylms-dashboard-table {
+
                 .dashboard-table-tr {
+
                     .dashboard-table-td {
+
                         &.membership-id {
                             width: 65px;
                         }
@@ -54,13 +60,16 @@
                 }
 
                 .dashboard-table-body {
+
                     .dashboard-table-tr {
+
                         &:last-child {
                             border-bottom: 0;
                             padding-bottom: 8px;
                         }
 
                         .dashboard-table-td {
+
                             &.membership-id {
                                 color: var(--ohmylms-primary-color);
                             }
@@ -83,15 +92,19 @@
             }
 
             .past-invoice-table {
+
                 .dashboard-table-tr .dashboard-table-td.method {
                     width: 160px;
                 }
+
                 .dashboard-table-tr .dashboard-table-td.price {
                     width: 99px;
                 }
+
                 .dashboard-table-tr .dashboard-table-td.status {
                     width: 95px;
                 }
+
                 .dashboard-table-tr .dashboard-table-td.action {
                     width: 44px;
                 }
@@ -108,6 +121,7 @@
 }
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .ohmylms-student-profile .student-membership .ohmylms-dashboard-table .dashboard-table-tr .dashboard-table-td.membership-plan {
         max-width: 140px;
         width: 50%;
@@ -115,6 +129,7 @@
 }
 
 @media screen and (max-width: 767px) {
+
     .ohmylms-page .past-invoice-table .dashboard-table-tr > .dashboard-table-td.status,
     .ohmylms-page .past-invoice-table .dashboard-table-tr > .dashboard-table-td.price,
     .ohmylms-page .past-invoice-table .dashboard-table-tr > .dashboard-table-td.date,
@@ -156,6 +171,7 @@
 }
 
 @media screen and (max-width: 424px) {
+
     .ohmylms-page .ohmylms-student-profile .student-membership .ohmylms-dashboard-table .dashboard-table-tr .dashboard-table-td.membership-plan {
         max-width: 140px;
         width: 44%;

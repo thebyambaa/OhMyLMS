@@ -1,0 +1,147 @@
+[
+	{
+		"binding": "Fu",
+		"name": "QuestionCanvas",
+		"file": "QuestionCanvas.jsx",
+		"dependencies": [
+			"Au",
+			"Eu",
+			"I",
+			"Ie",
+			"Iu",
+			"L",
+			"Lc",
+			"Pu",
+			"React",
+			"Ru",
+			"T",
+			"Tu",
+			"b",
+			"du",
+			"fc",
+			"g",
+			"ju",
+			"lu",
+			"nu",
+			"ou",
+			"tu",
+			"wu",
+			"y"
+		]
+	},
+	{
+		"binding": "bs",
+		"name": "QuestionSettings",
+		"file": "QuestionSettings.jsx",
+		"dependencies": [ "Ku", "React", "T", "y", "ys" ]
+	},
+	{
+		"binding": "Bs",
+		"name": "ChoiceOptionsEditor",
+		"file": "ChoiceOptionsEditor.jsx",
+		"dependencies": [
+			"As",
+			"Ds",
+			"Fs",
+			"React",
+			"T",
+			"Ts",
+			"b",
+			"g",
+			"xs",
+			"y"
+		]
+	},
+	{
+		"binding": "cd",
+		"name": "TextAnswerEditor",
+		"file": "TextAnswerEditor.jsx",
+		"dependencies": [ "React", "b", "ld" ]
+	},
+	{
+		"binding": "Vs",
+		"name": "MultipleChoiceEditor",
+		"file": "MultipleChoiceEditor.jsx",
+		"dependencies": [ "Ls", "React" ]
+	},
+	{
+		"binding": "Ys",
+		"name": "SingleChoiceEditor",
+		"file": "SingleChoiceEditor.jsx",
+		"dependencies": [ "Ls", "React" ]
+	},
+	{
+		"binding": "td",
+		"name": "TrueFalseEditor",
+		"file": "TrueFalseEditor.jsx",
+		"dependencies": [ "I", "React", "T", "V", "Xs", "b", "y" ]
+	},
+	{
+		"binding": "sd",
+		"name": "ShortTextEditor",
+		"file": "ShortTextEditor.jsx",
+		"dependencies": [ "React", "ud" ]
+	},
+	{
+		"binding": "wd",
+		"name": "LongTextEditor",
+		"file": "LongTextEditor.jsx",
+		"dependencies": [ "React", "ud" ]
+	},
+	{
+		"binding": "Pd",
+		"name": "StatementEditor",
+		"file": "StatementEditor.jsx",
+		"dependencies": [ "L", "React", "T", "y" ]
+	},
+	{
+		"binding": "Dd",
+		"name": "FillInTheBlankEditor",
+		"file": "FillInTheBlankEditor.jsx",
+		"dependencies": [ "Fd", "I", "L", "React", "T", "b", "y" ]
+	},
+	{
+		"binding": "tm",
+		"name": "ReorderEditor",
+		"file": "ReorderEditor.jsx",
+		"dependencies": [
+			"$d",
+			"$e",
+			"I",
+			"Jd",
+			"Qd",
+			"React",
+			"T",
+			"We",
+			"b",
+			"g",
+			"gc",
+			"q",
+			"qd",
+			"xs",
+			"y"
+		]
+	},
+	{
+		"binding": "gm",
+		"name": "MatchingEditor",
+		"file": "MatchingEditor.jsx",
+		"dependencies": [
+			"$e",
+			"I",
+			"React",
+			"T",
+			"We",
+			"b",
+			"dm",
+			"g",
+			"gc",
+			"pm",
+			"q",
+			"qd",
+			"um",
+			"xs",
+			"y"
+		]
+	}
+]

@@ -1,13 +1,17 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
 
-namespace CodeRex\Ecommerce;
+namespace OhMyLMS\Commerce;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Plugin order implementation.
+ */
 class Order {
 
 	/**
 	 * Order id
+	 *
 	 * @var int
 	 * @since 1.0.0
 	 */
@@ -15,6 +19,7 @@ class Order {
 
 	/**
 	 * Allowed statuses
+	 *
 	 * @var array
 	 * @since 1.0.0
 	 */
@@ -22,6 +27,7 @@ class Order {
 
 	/**
 	 * Order items
+	 *
 	 * @var array
 	 * @since 1.0.0
 	 */
@@ -29,6 +35,7 @@ class Order {
 
 	/**
 	 * Order amount
+	 *
 	 * @var float
 	 * @since 1.0.0
 	 */
@@ -36,6 +43,7 @@ class Order {
 
 	/**
 	 * Order source
+	 *
 	 * @var string
 	 * @since 1.0.0
 	 */
@@ -43,6 +51,7 @@ class Order {
 
 	/**
 	 * Order status
+	 *
 	 * @var string
 	 * @since 1.0.0
 	 */
@@ -50,11 +59,17 @@ class Order {
 
 	/**
 	 * Order payment method
+	 *
 	 * @var string
 	 * @since 1.0.0
 	 */
 	public string $payment_method;
 
+	/**
+	 * Initialize Order.
+	 *
+	 * @param mixed $id Id.
+	 */
 	public function __construct( $id = null ) {
 		if ( $id ) {
 			$this->id             = $id;
@@ -67,10 +82,12 @@ class Order {
 	}
 
 	/**
+	 * Get order items.
+	 *
 	 * @return array|string
 	 * @since 1.0.0
 	 */
-	public function get_order_items(){
+	public function get_order_items() {
 		$items = get_post_meta( $this->id, 'ohmylms_order_items', true );
 		if ( is_array( $items ) ) {
 			return $items;
@@ -81,12 +98,13 @@ class Order {
 
 	/**
 	 * Get order amount
+	 *
 	 * @return float
 	 * @since 1.0.0
 	 */
 	public function get_order_amount(): float {
 
-		if ( $this->source === 'membership' ) {
+		if ( 'membership' === $this->source ) {
 			return number_format( $this->items['price'], 2 );
 		}
 
@@ -96,6 +114,7 @@ class Order {
 
 	/**
 	 * Get order source
+	 *
 	 * @return string
 	 * @since 1.0.0
 	 */
@@ -110,6 +129,7 @@ class Order {
 
 	/**
 	 * Get order discount
+	 *
 	 * @return float
 	 * @since 1.0.0
 	 */
@@ -119,8 +139,9 @@ class Order {
 
 	/**
 	 * Create new order
-	 * @param $cart_data
-	 * @param $posted_data
+	 *
+	 * @param mixed $cart_data Cart data.
+	 * @param mixed $posted_data Posted data.
 	 * @return int
 	 * @since 1.0.0
 	 */
@@ -163,7 +184,8 @@ class Order {
 	/**
 	 *
 	 * Save billing details
-	 * @param $posted_data
+	 *
+	 * @param mixed $posted_data Posted data.
 	 * @return void
 	 * @since 1.0.0
 	 */
@@ -175,7 +197,8 @@ class Order {
 
 	/**
 	 * Change order status
-	 * @param $status
+	 *
+	 * @param mixed $status Status.
 	 * @return array|null
 	 * @since 1.0.0
 	 */
@@ -196,6 +219,7 @@ class Order {
 
 	/**
 	 * Get order status
+	 *
 	 * @return string
 	 * @since 1.0.0
 	 */
@@ -205,6 +229,7 @@ class Order {
 
 	/**
 	 * Get order payment method
+	 *
 	 * @return string
 	 * @since 1.0.0
 	 */
@@ -214,8 +239,9 @@ class Order {
 
 	/**
 	 * Update order meta
-	 * @param $key
-	 * @param $value
+	 *
+	 * @param mixed $key Lookup key.
+	 * @param mixed $value Value to process.
 	 * @return void
 	 * @since 1.0.0
 	 */
@@ -225,8 +251,9 @@ class Order {
 
 	/**
 	 * Get order meta
-	 * @param $key
-	 * @param bool $single
+	 *
+	 * @param mixed $key Lookup key.
+	 * @param bool  $single Single.
 	 * @return mixed
 	 * @since 1.0.0
 	 */
@@ -236,9 +263,10 @@ class Order {
 
 	/**
 	 * Save payment details after order completion
-	 * @param $payment_method
-	 * @param $payment_type
-	 * @param $payment_details
+	 *
+	 * @param mixed $payment_method Payment method.
+	 * @param mixed $payment_type Payment type.
+	 * @param mixed $payment_details Payment details.
 	 * @return void
 	 * @since 1.0.0
 	 */

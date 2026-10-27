@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Controller for handling certificate REST API endpoints.
+ *
+ * @package OhMyLMS
+ */
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
@@ -28,6 +33,9 @@ class CertificateController extends RestController {
 	 */
 	protected $base = 'certificates';
 
+	/**
+	 * Check certificate permission for Certificate controller.
+	 */
 	public function check_certificate_permission() {
 		return current_user_can( 'edit_posts' );
 	}
@@ -102,7 +110,7 @@ class CertificateController extends RestController {
 	/**
 	 * Check if a given request has access to read an item.
 	 *
-	 * @param  WP_REST_Request $request Full details about the request.
+	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_Error|boolean
 	 *
 	 * @since 1.0.0
@@ -144,12 +152,12 @@ class CertificateController extends RestController {
 			'meta_query'          => array(),
 		);
 
-		// Correct post_status
+		// Correct post_status.
 		if ( 'any' === $args['post_status'] || ! in_array( $args['post_status'], array( 'draft', 'publish', 'future' ), true ) ) {
 			$args['post_status'] = array( 'draft', 'publish', 'future' );
 		}
 
-		// Date query
+		// Date query.
 		if ( isset( $request['before'] ) || isset( $request['after'] ) ) {
 			$date_query = array();
 			if ( isset( $request['before'] ) ) {
@@ -161,7 +169,7 @@ class CertificateController extends RestController {
 			$args['date_query'][] = $date_query;
 		}
 
-		// Meta query
+		// Meta query.
 		if ( isset( $request['meta_key'], $request['meta_value'] ) ) {
 			$args['meta_query'][] = array(
 				'key'     => sanitize_text_field( $request['meta_key'] ),
@@ -172,16 +180,16 @@ class CertificateController extends RestController {
 
 		// Filter by course_id if passed
 		// if ( ! empty( $request['course_id'] ) ) {
-		//  $course_id = intval( $request['course_id'] );
+		// $course_id = intval( $request['course_id'] );.
 
-		//  $args['meta_query'][] = array(
-		//      'key'     => 'course_ids', // Adjust the meta key if needed
-		//      'value'   => '"' . $course_id . '"',
-		//      'compare' => 'LIKE',
-		//  );
+		// $args['meta_query'][] = array(
+		// 'key'     => 'course_ids', // Adjust the meta key if needed
+		// 'value'   => '"' . $course_id . '"',
+		// 'compare' => 'LIKE',
+		// );
 		// }
 
-		// Allow further filters
+		// Allow further filters.
 		$args       = apply_filters( 'ohmylms_rest_ohmylms_certificate_query', $args, $request );
 		$query_args = $this->prepare_items_query( $args, $request );
 
@@ -209,10 +217,10 @@ class CertificateController extends RestController {
 			}
 		}
 
-		$total_posts = $posts_query->found_posts;
-		$posts_per_page = (int) ( $query_args['posts_per_page'] > 0 ? $query_args['posts_per_page'] : $total_posts );
+		$total_posts    = $posts_query->found_posts;
+		$posts_per_page = (int) ( 0 < $query_args['posts_per_page'] ? $query_args['posts_per_page'] : $total_posts );
 		$max_pages      = ceil( $total_posts / $posts_per_page );
-		
+
 		$response = rest_ensure_response( $filter_posts );
 		$response->header( 'X-WP-Total', $total_posts );
 		$response->header( 'X-WP-TotalCertificates', (int) $total_posts );
@@ -226,7 +234,7 @@ class CertificateController extends RestController {
 	/**
 	 * Create a single certificate
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
 	 *
 	 * @since 1.0.0
@@ -274,7 +282,7 @@ class CertificateController extends RestController {
 	public function get_item( $request ) {
 		$id   = (int) $request['id'];
 		$post = get_post( $id );
-		if ( empty( $id ) || empty( $post->ID ) || $post->post_type !== OHMYLMS_CERTIFICATE_CPT ) {
+		if ( empty( $id ) || empty( $post->ID ) || OHMYLMS_CERTIFICATE_CPT !== $post->post_type ) {
 			return new WP_Error( 'ohmylms_rest_invalid_certificate_id', __( 'Invalid ID.', 'ohmylms' ), array( 'status' => 404 ) );
 		}
 
@@ -318,20 +326,20 @@ class CertificateController extends RestController {
 	/**
 	 * Delete certificate
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
 	 * @since 1.0.0
 	 */
 	public function delete_item( $request ) {
-		// Get certificate id
+		// Get certificate id.
 		$certificate_id = isset( $request['id'] ) ? (int) $request['id'] : 0;
 
-		// Check the certificate id exist or not
+		// Check the certificate id exist or not.
 		if ( ! $certificate_id ) {
 			return new WP_Error( 'ohmylms_rest_certificate_empty_id', __( 'ID is required.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
 
-		// Get existing certificate by certificate id
+		// Get existing certificate by certificate id.
 		$certificate = ohmylms_get_certificate( $certificate_id );
 
 		// Check the certificate exist or not.
@@ -339,7 +347,7 @@ class CertificateController extends RestController {
 			return new WP_Error( 'ohmylms_rest_certificate_invalid_id', __( 'ID is invalid.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
 
-		// Delete the certificate
+		// Delete the certificate.
 		$certificate->delete();
 
 		/**
@@ -368,7 +376,7 @@ class CertificateController extends RestController {
 	 * @param \WP_REST_Request $request The REST request object containing the meta data.
 	 * @return bool True on success, false on failure.
 	 *
-	 * @throws DataException
+	 * @throws DataException When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	protected function update_post_meta_fields( $post, $request ) {
@@ -405,7 +413,7 @@ class CertificateController extends RestController {
 			$certificate->set_courses( $request['courses'] );
 		}
 
-		// Handle template thumbnail from setup wizard
+		// Handle template thumbnail from setup wizard.
 		if ( isset( $request['template_thumbnail'] ) && ! empty( $request['template_thumbnail'] ) ) {
 			$thumbnail_id = $this->upload_template_thumbnail( $request['template_thumbnail'], $certificate->get_id() );
 			if ( $thumbnail_id ) {
@@ -419,45 +427,45 @@ class CertificateController extends RestController {
 	/**
 	 * Upload template thumbnail from URL to media library
 	 *
-	 * @param string $image_url The URL of the template thumbnail
-	 * @param int    $post_id   The certificate post ID
+	 * @param string $image_url The URL of the template thumbnail.
+	 * @param int    $post_id The certificate post ID.
 	 * @return int|false The attachment ID or false on failure
 	 */
 	private function upload_template_thumbnail( $image_url, $post_id ) {
-		// Load required WordPress admin files
+		// Load required WordPress admin files.
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		require_once ABSPATH . 'wp-admin/includes/media.php';
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 
-		// Check if image URL is valid
+		// Check if image URL is valid.
 		if ( empty( $image_url ) ) {
 			return false;
 		}
 
-		// Convert relative URL to absolute if needed
+		// Convert relative URL to absolute if needed.
 		if ( strpos( $image_url, 'http' ) !== 0 ) {
 			$image_url = site_url( $image_url );
 		}
 
-		// Get the file name from URL
+		// Get the file name from URL.
 		$filename = basename( $image_url );
 
-		// Download the image
+		// Download the image.
 		$tmp = download_url( $image_url );
 		if ( is_wp_error( $tmp ) ) {
 			return false;
 		}
 
-		// Set up the array of supported file types
+		// Set up the array of supported file types.
 		$file_array = array(
 			'name'     => $filename,
 			'tmp_name' => $tmp,
 		);
 
-		// Do the validation and storage
+		// Do the validation and storage.
 		$attachment_id = media_handle_sideload( $file_array, $post_id );
 
-		// If error storing permanently, unlink
+		// If error storing permanently, unlink.
 		if ( is_wp_error( $attachment_id ) ) {
 			@unlink( $file_array['tmp_name'] );
 			return false;
@@ -484,15 +492,15 @@ class CertificateController extends RestController {
 	/**
 	 * Prepare a single certificate for create or update.
 	 *
-	 * @param $request
+	 * @param mixed $request REST request.
 	 * @return bool|Certificate|object|WP_Error
-	 * @throws \Exception
+	 * @throws \Exception When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	protected function prepare_item_for_database( $request ) {
 		$id = isset( $request['id'] ) ? absint( $request['id'] ) : 0;
 
-		if ( $id > 0 ) {
+		if ( 0 < $id ) {
 			$certificate = ohmylms_get_certificate( $id );
 		} else {
 			$certificate = new Certificate();
@@ -521,7 +529,7 @@ class CertificateController extends RestController {
 	 *
 	 * @param array                $prepared_args The prepared arguments for the query.
 	 * @param WP_REST_Request|null $request The REST request object.
-	 *
+	 * .
 	 * @return array The filtered and prepared query arguments.
 	 * @since 1.0.0
 	 */
@@ -643,7 +651,7 @@ class CertificateController extends RestController {
 	 * Prepare a single certificate for response.
 	 *
 	 * @param \WP_Post         $post The post object.
-	 * @param \WP_REST_Request $request
+	 * @param \WP_REST_Request $request REST request.
 	 * @return WP_REST_Response
 	 *
 	 * @since 1.0.0
@@ -674,7 +682,7 @@ class CertificateController extends RestController {
 	 * Prepare a single certificate for response.
 	 *
 	 * @param \WP_Post         $post The post object.
-	 * @param \WP_REST_Request $request
+	 * @param \WP_REST_Request $request REST request.
 	 * @return WP_REST_Response
 	 *
 	 * @since 1.0.0
@@ -704,8 +712,8 @@ class CertificateController extends RestController {
 	/**
 	 * Prepare links for the request.
 	 *
-	 * @param $certificate
-	 * @param $request
+	 * @param mixed $certificate Certificate.
+	 * @param mixed $request REST request.
 	 * @return array[]
 	 *
 	 * @since 1.0.0
@@ -727,7 +735,7 @@ class CertificateController extends RestController {
 	/**
 	 * Get certificate data.
 	 *
-	 * @param Certificate $certificate
+	 * @param Certificate $certificate Certificate.
 	 * @return array
 	 *
 	 * @since 1.0.0

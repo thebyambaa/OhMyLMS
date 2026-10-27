@@ -4,6 +4,7 @@
 }
 
 .ohmylms-page {
+
     .ohmylms-lesson-details {
         padding: 60px 0;
         min-height: calc(100vh - 220px);
@@ -11,7 +12,7 @@
         position: relative;
         margin: 0;
 
-        &:before {
+        &::before {
             content: "";
             position: fixed;
             left: 0;
@@ -57,13 +58,14 @@
             max-width: 100%;
             border-radius: 10px;
             background-color: #FFF;
-            box-shadow: 0px 1px 2px 0px #DBDDE1;
+            box-shadow: 0 1px 2px 0 #DBDDE1;
             padding: 12px;
         }
     }
 }
 
 @media screen and (max-width: 1399px) {
+
     .ohmylms-page .ohmylms-lesson-details .ohmylms-lesson-content {
         width: calc(100% - 470px);
     }
@@ -74,6 +76,7 @@
 }
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .ohmylms-lesson-details .ohmylms-lesson-content-wrapper {
         gap: 24px;
     }
@@ -88,10 +91,12 @@
 }
 
 @media screen and (max-width: 991px) {
+
     .ohmylms-page .ohmylms-lesson-details {
         padding: 50px 0;
     }
-    .ohmylms-page .ohmylms-lesson-details.open-sidebar:before {
+
+    .ohmylms-page .ohmylms-lesson-details.open-sidebar::before {
         opacity: 1;
         visibility: visible;
     }
@@ -132,6 +137,7 @@
 }
 
 @media screen and (max-width: 425px) {
+
     .ohmylms-page .ohmylms-lesson-details .ohmylms-lesson-sidebar {
         width: calc(100% - 50px);
         height: calc(100% - 20px);
@@ -156,12 +162,21 @@
     pointer-events: none;
 }
 
+/* stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade. */
 @import 'lesson-progressbar';
+/* stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade. */
 @import 'lesson-content';
+/* stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade. */
 @import 'lesson-sidebar';
+/* stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade. */
 @import 'lesson-comment';
+/* stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade. */
 @import 'lesson-assignment';
+/* stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade. */
 @import 'lesson-quiz';
+/* stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade. */
 @import 'lesson-navigation';
+/* stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade. */
 @import 'content-session';
+/* stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade. */
 @import 'video-player';

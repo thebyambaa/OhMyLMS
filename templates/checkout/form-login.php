@@ -6,7 +6,7 @@
  *
  * @package OhMyLMS\Templates
  * @version  1.0.0
- * @global \CodeRex\Ecommerce\Checkout $checkout
+ * @global \OhMyLMS\Commerce\Checkout $checkout
  */
 
 defined( 'ABSPATH' ) || exit;

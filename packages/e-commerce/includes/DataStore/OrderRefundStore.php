@@ -1,13 +1,16 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
 
-namespace CodeRex\Ecommerce\DataStore;
+namespace OhMyLMS\Commerce\DataStore;
 
+/**
+ * Plugin order refund store implementation.
+ */
 class OrderRefundStore extends OrderStore {
 
 	/**
 	 * Update the post meta for the order.
 	 *
-	 * @param \CodeRex\Ecommerce\Data\OrderRefund $order The order object.
+	 * @param \OhMyLMS\Commerce\Data\OrderRefund $order The order object.
 	 */
 	protected function update_post_meta( &$order ) {
 		parent::update_post_meta( $order );
@@ -29,25 +32,26 @@ class OrderRefundStore extends OrderStore {
 	 * @since 1.0.0
 	 */
 	protected function get_post_title() {
-		return sprintf( __( 'Refund &ndash; %s', 'ohmylms' ), ( new \DateTime( 'now' ) )->format( _x( 'M d, Y @ h:i A', 'Order date', 'ohmylms' ) ) );
+		return sprintf( /* translators: %s: text value. */
+		__( 'Refund &ndash; %s', 'ohmylms' ), ( new \DateTime( 'now' ) )->format( _x( 'M d, Y @ h:i A', 'Order date', 'ohmylms' ) ) );
 	}
 
 	/**
 	 * Cancel the student enrollment for a given refund and order.
 	 *
-	 * @param \CodeRex\Ecommerce\Data\OrderRefund $refund The refund object.
-	 * @param \CodeRex\Ecommerce\Data\Order $order The order object.
+	 * @param \OhMyLMS\Commerce\Data\OrderRefund $refund The refund object.
+	 * @param \OhMyLMS\Commerce\Data\Order       $order The order object.
 	 *
 	 * @since 1.0.0
 	 */
 	public function cancel_student_enrollment( $refund, $order ) {
 		global $wpdb;
-		$order_id = $order->get_id();
+		$order_id        = $order->get_id();
 		$parent_order_id = wp_get_post_parent_id( $order_id );
 		if ( $parent_order_id ) {
 			$order_id = $parent_order_id;
 		}
-		
+
 		$table_name = $wpdb->prefix . 'ohmylms_user_enrollment';
 		$wpdb->update(
 			$table_name,

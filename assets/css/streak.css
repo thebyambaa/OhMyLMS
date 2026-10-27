@@ -1,0 +1,35 @@
+.ohmylms-streak-card { margin-block: 24px; padding: clamp(16px, 3vw, 28px); border: 1px solid var(--ohmylms-outline-color, #ddd); border-radius: 12px; background: var(--ohmylms-primary-soft-color, #f7f8fa); color: var(--ohmylms-body-text-color, #263238); }
+
+.ohmylms-streak-card h2 { color: var(--ohmylms-heading-color, #17212b); }
+
+.ohmylms-streak-totals { display: flex; flex-wrap: wrap; gap: 24px; }
+
+.ohmylms-streak-totals dd { margin: 0; font-size: 1.6rem; font-weight: 700; }
+
+.ohmylms-streak-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); list-style: none; padding: 0; gap: 8px; }
+
+.ohmylms-streak-day { display: flex; flex-direction: column; align-items: center; justify-content: start; gap: 4px; padding: 12px 4px; border: 1px solid var(--ohmylms-outline-color, #ddd); border-radius: 8px; text-align: center; background: #fff; }
+
+.ohmylms-streak-day span { font-size: 1.5rem; }
+
+.ohmylms-streak-day.is-practiced { border: 2px solid var(--ohmylms-primary-color, #387f58); }
+
+.ohmylms-streak-day.is-protected { border: 2px dashed var(--ohmylms-primary-color, #3975b6); }
+
+.ohmylms-streak-day.is-future { opacity: .65; }
+
+.ohmylms-streak-day[aria-current] time { font-weight: 700; text-decoration: underline; }
+
+.ohmylms-streak-card details { margin-top: 20px; }
+
+.ohmylms-streak-card > .ohmylms-button { display: inline-block; padding: 10px 18px; border-radius: 6px; background: var(--ohmylms-primary-color, #365dbe); color: #fff; text-decoration: none; }
+
+.ohmylms-streak-card > .ohmylms-button:focus-visible { outline: 3px solid var(--ohmylms-primary-color, #365dbe); outline-offset: 3px; }
+
+.ohmylms-streak-card select { max-width: 100%; }
+
+@media (max-width: 600px) {
+
+ .ohmylms-streak-week { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+ .ohmylms-streak-day { font-size: .85rem; } }

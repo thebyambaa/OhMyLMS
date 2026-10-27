@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * Comments
  *
@@ -40,8 +40,8 @@ class CourseComment {
 	 * See if comments are open.
 	 *
 	 * @since  3.1.0
-	 * @param  bool $open    Whether the current post is open for comments.
-	 * @param  int  $post_id Post ID.
+	 * @param bool $open Whether the current post is open for comments.
+	 * @param int  $post_id Post ID.
 	 * @return bool
 	 */
 	public static function comments_open( $open, $post_id ) {
@@ -74,7 +74,7 @@ class CourseComment {
 	/**
 	 * Modify recipient of review email.
 	 *
-	 * @param array $emails     Emails.
+	 * @param array $emails Emails.
 	 * @param int   $comment_id Comment ID.
 	 * @return array
 	 */
@@ -92,8 +92,7 @@ class CourseComment {
 	 * Ensure product average rating and review count is kept up to date.
 	 *
 	 * @param int $post_id Post ID.
-	 * @throws \Exception
-	 */
+	 * @throws \Exception When the operation cannot be completed.*/
 	public static function clear_transients( $post_id ) {
 		if ( OHMYLMS_COURSE_CPT === get_post_type( $post_id ) ) {
 			$course = ohmylms_get_course( $post_id );
@@ -118,8 +117,8 @@ class CourseComment {
 	 * Remove order notes, webhook delivery logs, and product reviews from wp_count_comments().
 	 *
 	 * @since  2.2
-	 * @param  object $stats   Comment stats.
-	 * @param  int    $post_id Post ID.
+	 * @param object $stats Comment stats.
+	 * @param int    $post_id Post ID.
 	 * @return object
 	 */
 	public static function wp_count_comments( $stats, $post_id ) {
@@ -184,7 +183,7 @@ class CourseComment {
 	 * Make sure WP displays avatars for comments with the `review` type.
 	 *
 	 * @since  2.3
-	 * @param  array $comment_types Comment types.
+	 * @param array $comment_types Comment types.
 	 * @return array
 	 */
 	public static function add_avatar_for_review_comment_type( $comment_types ) {
@@ -226,6 +225,7 @@ class CourseComment {
 	 *
 	 * @since 3.0.0
 	 * @return float
+	 * @param mixed $course Course.
 	 */
 	public static function get_average_rating_for_product( &$course ) {
 		global $wpdb;
@@ -314,7 +314,7 @@ class CourseComment {
 	 * Get product rating count for a product. Please note this is not cached.
 	 *
 	 * @since 3.0.0
-	 * @param Course $course  Product instance.
+	 * @param Course $course Product instance.
 	 * @return int[]
 	 */
 	public static function get_rating_counts_for_product( &$course ) {

@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * GoogleMeetApiHelper class.
  *
@@ -26,32 +26,32 @@ class GoogleMeetApiHelper {
 	 */
 	public static function format_meeting_data( $meeting_data ) {
 		$formatted = array(
-			'id'          => $meeting_data['id'] ?? '',
-			'topic'       => $meeting_data['summary'] ?? '',
-			'agenda'      => $meeting_data['description'] ?? '',
-			'start_time'  => $meeting_data['start']['dateTime'] ?? '',
-			'end_time'    => $meeting_data['end']['dateTime'] ?? '',
-			'timezone'    => $meeting_data['start']['timeZone'] ?? 'UTC',
-			'meet_link'   => '',
-			'html_link'   => $meeting_data['htmlLink'] ?? '',
-			'status'      => $meeting_data['status'] ?? '',
+			'id'         => $meeting_data['id'] ?? '',
+			'topic'      => $meeting_data['summary'] ?? '',
+			'agenda'     => $meeting_data['description'] ?? '',
+			'start_time' => $meeting_data['start']['dateTime'] ?? '',
+			'end_time'   => $meeting_data['end']['dateTime'] ?? '',
+			'timezone'   => $meeting_data['start']['timeZone'] ?? 'UTC',
+			'meet_link'  => '',
+			'html_link'  => $meeting_data['htmlLink'] ?? '',
+			'status'     => $meeting_data['status'] ?? '',
 		);
 
-		// Extract Google Meet link
+		// Extract Google Meet link.
 		if ( isset( $meeting_data['conferenceData']['entryPoints'] ) ) {
 			foreach ( $meeting_data['conferenceData']['entryPoints'] as $entry ) {
-				if ( $entry['entryPointType'] === 'video' ) {
+				if ( 'video' === $entry['entryPointType'] ) {
 					$formatted['meet_link'] = $entry['uri'];
 					break;
 				}
 			}
 		}
 
-		// Calculate duration in minutes
+		// Calculate duration in minutes.
 		if ( $formatted['start_time'] && $formatted['end_time'] ) {
-			$start = new \DateTime( $formatted['start_time'] );
-			$end = new \DateTime( $formatted['end_time'] );
-			$interval = $start->diff( $end );
+			$start                 = new \DateTime( $formatted['start_time'] );
+			$end                   = new \DateTime( $formatted['end_time'] );
+			$interval              = $start->diff( $end );
 			$formatted['duration'] = $interval->h * 60 + $interval->i;
 		}
 
@@ -135,7 +135,7 @@ class GoogleMeetApiHelper {
 	 * @return bool True if upcoming, false otherwise.
 	 */
 	public static function is_upcoming( $start_time ) {
-		$now = new \DateTime();
+		$now          = new \DateTime();
 		$meeting_time = new \DateTime( $start_time );
 		return $meeting_time > $now;
 	}
@@ -151,9 +151,9 @@ class GoogleMeetApiHelper {
 	 * @return bool True if in progress, false otherwise.
 	 */
 	public static function is_in_progress( $start_time, $end_time ) {
-		$now = new \DateTime();
+		$now   = new \DateTime();
 		$start = new \DateTime( $start_time );
-		$end = new \DateTime( $end_time );
+		$end   = new \DateTime( $end_time );
 		return $now >= $start && $now <= $end;
 	}
 

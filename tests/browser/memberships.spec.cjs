@@ -26,7 +26,8 @@ test('membership React editor validates, retries failed saves, and persists exte
  await expect(page.getByRole('button',{name:'Save',exact:true})).toBeEnabled();
  await expect(page.getByRole('dialog')).toBeVisible();
  await page.unroute(endpoint);
- const saved=page.waitForResponse(r=>r.url().includes('/membership')&&r.request().method()==='POST');
+ // The course preview is also a POST under /membership and can finish after Save is clicked; only the save counts.
+ const saved=page.waitForResponse(r=>r.url().includes('/membership')&&!r.url().includes('course-preview')&&r.request().method()==='POST');
  await page.getByRole('button',{name:'Save',exact:true}).click();
  const response=await saved;expect(response.status()).toBe(201);const plan=await response.json();
  try{

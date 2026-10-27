@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Class CustomEndpoints.
+ *
+ * @package OhMyLMS
+ */
 namespace OhMyLMS;
 
 /**
@@ -9,6 +14,8 @@ namespace OhMyLMS;
 class OhMyLmsEndpoint {
 
 	/**
+	 * Query variables for custom endpoints.
+	 *
 	 * @var array $query_vars Query variables for custom endpoints.
 	 */
 	public $query_vars = array();
@@ -35,17 +42,17 @@ class OhMyLmsEndpoint {
 	 */
 	public function init_query_vars() {
 		$this->query_vars = array(
-			'profile'              => get_option( 'ohmylms_myprofile_profile_endpoint', 'profile' ),
-			'profile-edit'         => get_option( 'ohmylms_myprofile_profile_edit_endpoint', 'profile-edit' ),
-			'my-courses'           => get_option( 'ohmylms_myprofile_course_endpoint', 'my-courses' ),
-			'settings'             => get_option( 'ohmylms_myprofile_settings_endpoint', 'settings' ),
-			'notification'         => get_option( 'ohmylms_myprofile_notification_endpoint', 'notification' ),
-			'transactions-history' => get_option( 'ohmylms_myprofile_transactions_history_endpoint', 'transactions-history' ),
-			'membership'           => get_option( 'ohmylms_myprofile_membership_endpoint', 'membership' ),
-			'invoice-details'      => get_option( 'ohmylms_myprofile_invoice_details_endpoint', 'invoice-details' ),
-			'billing-information'  => get_option( 'ohmylms_myprofile_edit_account_endpoint', 'billing-information' ),
-			'customer-logout'      => get_option( 'ohmylms_logout_endpoint', 'customer-logout' ),
-			'ohmylms-order-received'  	   => 'ohmylms-order-received'
+			'profile'                => get_option( 'ohmylms_myprofile_profile_endpoint', 'profile' ),
+			'profile-edit'           => get_option( 'ohmylms_myprofile_profile_edit_endpoint', 'profile-edit' ),
+			'my-courses'             => get_option( 'ohmylms_myprofile_course_endpoint', 'my-courses' ),
+			'settings'               => get_option( 'ohmylms_myprofile_settings_endpoint', 'settings' ),
+			'notification'           => get_option( 'ohmylms_myprofile_notification_endpoint', 'notification' ),
+			'transactions-history'   => get_option( 'ohmylms_myprofile_transactions_history_endpoint', 'transactions-history' ),
+			'membership'             => get_option( 'ohmylms_myprofile_membership_endpoint', 'membership' ),
+			'invoice-details'        => get_option( 'ohmylms_myprofile_invoice_details_endpoint', 'invoice-details' ),
+			'billing-information'    => get_option( 'ohmylms_myprofile_edit_account_endpoint', 'billing-information' ),
+			'customer-logout'        => get_option( 'ohmylms_logout_endpoint', 'customer-logout' ),
+			'ohmylms-order-received' => 'ohmylms-order-received',
 		);
 	}
 
@@ -130,6 +137,9 @@ class OhMyLmsEndpoint {
 		return $title;
 	}
 
+	/**
+	 * Parse request for Oh my lms endpoint.
+	 */
 	public function parse_request() {
 		global $wp;
 

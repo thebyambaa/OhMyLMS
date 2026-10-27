@@ -1,8 +1,8 @@
 /**
  * OhMyLMS Gutenberg Blocks Main File
- * 
+ *
  * This file loads all individual block scripts
- * 
+ *
  * @package OhMyLMS
  */
 
@@ -46,9 +46,6 @@
     body.classList.add('ohmylms-page');
     if (editorDoc.querySelector('.wp-block-ohmylms-checkout')) {
       body.classList.add('ohmylms-checkout');
-    }
-    if (editorDoc.querySelector('.wp-block-ohmylms-course-list')) {
-      body.classList.add('ohmylms-course-archive', 'ohmylms-course-list-shortcode');
     }
   }
 

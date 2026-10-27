@@ -16,23 +16,23 @@ defined( 'ABSPATH' ) || exit();
 <?php
 
 $args = array(
-	'post_type'      => 'ohmylms-membership', // Specify the custom post type
-	'posts_per_page' => -1,                 // Get all posts
-	'fields'         => 'ids'               // Only retrieve post IDs
+	'post_type'      => 'ohmylms-membership', // Specify the custom post type.
+	'posts_per_page' => -1,                 // Get all posts.
+	'fields'         => 'ids',               // Only retrieve post IDs.
 );
 
-$membership_plans = get_posts($args);
+$membership_plans = get_posts( $args );
 
 
-if (empty($membership_plans) || !is_array($membership_plans)) {
-	echo apply_filters('ohmylms_membership_plans_no_plans_message', __('No membership plans found.', 'ohmylms'));
+if ( empty( $membership_plans ) || ! is_array( $membership_plans ) ) {
+	echo apply_filters( 'ohmylms_membership_plans_no_plans_message', __( 'No membership plans found.', 'ohmylms' ) );
 }
 
-// Apply filter before displaying plans
-echo apply_filters('ohmylms_before_display_membership_plans', '', $membership_id);
+// Apply filter before displaying plans.
+echo apply_filters( 'ohmylms_before_display_membership_plans', '', $membership_id );
 
-// Change buy now button text
-$buy_now_text = apply_filters('ohmylms_membership_plans_buy_button_text', __('Buy Now', 'ohmylms'));
+// Change buy now button text.
+$buy_now_text = apply_filters( 'ohmylms_membership_plans_buy_button_text', __( 'Buy Now', 'ohmylms' ) );
 
 ob_start();
 ?>
@@ -41,30 +41,33 @@ ob_start();
 		<div class="membership-plan">
 			<h3>
 				<?php
-					echo $title = get_the_title($plan_id);
+					$title = get_the_title( $plan_id );
+					echo esc_html( $title );
 				?>
 			</h3>
 			<p>
 				<?php
-				$pricing_type = get_post_meta($plan_id, 'ohmylms_membership_pricing_type', true);
-				if($pricing_type == 'Paid') {
-					$price = get_post_meta($plan_id, 'ohmylms_membership_regular_price', true);
-					echo __('Price: ', 'ohmylms') .'$'. number_format( (float) $price, 2, '.', '' );
-				}
-				else {
-					echo __('Price: ', 'ohmylms') .'Free';
+				$pricing_type = get_post_meta( $plan_id, 'ohmylms_membership_pricing_type', true );
+				if ( 'Paid' == $pricing_type ) {
+					$price = get_post_meta( $plan_id, 'ohmylms_membership_regular_price', true );
+					echo esc_html__( 'Price: ', 'ohmylms' ) . '$' . number_format( (float) $price, 2, '.', '' );
+				} else {
+					echo esc_html__( 'Price: ', 'ohmylms' ) . 'Free';
 				}
 				?>
 			</p>
-			<p><?php
-				$billing_period = get_post_meta($plan_id, 'ohmylms_membership_billing_period', true);
-				echo __('Subscription: ', 'ohmylms') .  $billing_period
-				?></p>
-			<button class="buy-now-button crlm_purchase" data-membership="<?php echo $plan_id; ?>" data-plan="<?php echo $plan['plan_id'] ?>" ><?php echo $buy_now_text; ?></button>
+			<p>
 			<?php
-			$courses = unserialize(get_post_meta($plan_id, 'ohmylms_membership_selected_products', true));
-			if ( ! empty( $courses ) && is_array( $courses ) ) : ?>
-				<p><?php __('Courses: ', 'ohmylms'); ?></p>
+				$billing_period = get_post_meta( $plan_id, 'ohmylms_membership_billing_period', true );
+				echo esc_html__( 'Subscription: ', 'ohmylms' ) . esc_html( $billing_period )
+			?>
+			</p>
+			<button class="buy-now-button crlm_purchase" data-membership="<?php echo esc_attr( $plan_id ); ?>" data-plan="<?php echo esc_attr( $plan['plan_id'] ); ?>" ><?php echo esc_html( $buy_now_text ); ?></button>
+			<?php
+			$courses = unserialize( get_post_meta( $plan_id, 'ohmylms_membership_selected_products', true ) );
+			if ( ! empty( $courses ) && is_array( $courses ) ) :
+				?>
+				<p><?php __( 'Courses: ', 'ohmylms' ); ?></p>
 				<ul>
 					<?php foreach ( $courses as $course ) : ?>
 						<li><?php echo esc_html( get_the_title( $course['id'] ) ); ?></li>
@@ -109,9 +112,8 @@ ob_start();
 </style>
 <?php
 
-// Apply filter after displaying plans
-echo apply_filters('ohmylms_after_display_membership_plans', '', $membership_id);
+// Apply filter after displaying plans.
+echo apply_filters( 'ohmylms_after_display_membership_plans', '', $membership_id );
 
 echo ob_get_clean();
 ?>
-

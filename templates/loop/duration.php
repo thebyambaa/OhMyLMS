@@ -9,12 +9,12 @@
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
+	exit; // Exit if accessed directly.
 }
 
 global $course;
-$course_settings = get_post_meta( $course->get_id(),'ohmylms_course_settings',true );
+$course_settings = get_post_meta( $course->get_id(), 'ohmylms_course_settings', true );
 ?>
-<?php if ( is_array($course_settings) && isset($course_settings['duration'] ) ) : ?>
-    <div class="duration"><?php echo __('Duration: ','ohmylms'). $course_settings['duration'].__(' Weeks','ohmylms'); ?></div>
+<?php if ( is_array( $course_settings ) && isset( $course_settings['duration'] ) ) : ?>
+	<div class="duration"><?php echo esc_html__( 'Duration: ', 'ohmylms' ) . $course_settings['duration'] . __( ' Weeks', 'ohmylms' ); ?></div>
 <?php endif; ?>

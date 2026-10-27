@@ -1,9 +1,12 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
 
-namespace CodeRex\Ecommerce;
+namespace OhMyLMS\Commerce;
 
 use OhMyLMS\Abstracts\Session;
 
+/**
+ * Plugin session handler implementation.
+ */
 class SessionHandler extends Session {
 
 	/**
@@ -387,6 +390,12 @@ class SessionHandler extends Session {
 	}
 
 
+	/**
+	 * Maybe update nonce user logged out for Session handler.
+	 *
+	 * @param mixed $uid Uid.
+	 * @param mixed $action Action.
+	 */
 	public function maybe_update_nonce_user_logged_out( $uid, $action ) {
 		return $uid;
 	}

@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Class Webhook.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Data;
 
@@ -269,16 +274,19 @@ class Webhook extends Data {
 	 * @return array
 	 */
 	public static function get_available_triggers() {
-		return apply_filters( 'ohmylms_webhook_triggers', array(
-			'course_purchase'      => __( 'Course Purchase', 'ohmylms' ),
-			'course_enrollment'    => __( 'Course Enrollment', 'ohmylms' ),
-			'course_completion'    => __( 'Course Completion', 'ohmylms' ),
-			'lesson_completion'    => __( 'Lesson Completion', 'ohmylms' ),
-			'quiz_submission'      => __( 'Quiz Submission', 'ohmylms' ),
-			'quiz_achievement'     => __( 'Quiz Achievement', 'ohmylms' ),
-			'assignment_submission' => __( 'Assignment Submission', 'ohmylms' ),
-			'assignment_achievement'=> __( 'Assignment Achievement', 'ohmylms' ),
-		) );
+		return apply_filters(
+			'ohmylms_webhook_triggers',
+			array(
+				'course_purchase'        => __( 'Course Purchase', 'ohmylms' ),
+				'course_enrollment'      => __( 'Course Enrollment', 'ohmylms' ),
+				'course_completion'      => __( 'Course Completion', 'ohmylms' ),
+				'lesson_completion'      => __( 'Lesson Completion', 'ohmylms' ),
+				'quiz_submission'        => __( 'Quiz Submission', 'ohmylms' ),
+				'quiz_achievement'       => __( 'Quiz Achievement', 'ohmylms' ),
+				'assignment_submission'  => __( 'Assignment Submission', 'ohmylms' ),
+				'assignment_achievement' => __( 'Assignment Achievement', 'ohmylms' ),
+			)
+		);
 	}
 
 	/**
@@ -321,32 +329,32 @@ class Webhook extends Data {
 		}
 
 		$webhook_data = $this->prepare_webhook_data( $data );
-		
+
 		$args = array(
 			'method'  => $this->get_http_method(),
 			'timeout' => 30,
 			'headers' => array(),
 		);
 
-		// Set content type based on data type
+		// Set content type based on data type.
 		switch ( $this->get_data_type() ) {
 			case 'json':
 				$args['headers']['Content-Type'] = 'application/json';
-				$args['body'] = wp_json_encode( $webhook_data );
+				$args['body']                    = wp_json_encode( $webhook_data );
 				break;
 			case 'xml':
 				$args['headers']['Content-Type'] = 'application/xml';
-				$args['body'] = $this->array_to_xml( $webhook_data );
+				$args['body']                    = $this->array_to_xml( $webhook_data );
 				break;
 			case 'form':
 				$args['headers']['Content-Type'] = 'application/x-www-form-urlencoded';
-				$args['body'] = http_build_query( $webhook_data );
+				$args['body']                    = http_build_query( $webhook_data );
 				break;
 		}
 
-		// Add webhook signature for security
+		// Add webhook signature for security.
 		$args['headers']['X-OhMyLMS-Signature'] = hash_hmac( 'sha256', $args['body'], wp_hash( 'ohmylms_webhook_' . $this->get_id() ) );
-		$args['headers']['X-OhMyLMS-Event'] = $this->get_trigger_event();
+		$args['headers']['X-OhMyLMS-Event']     = $this->get_trigger_event();
 
 		$response = wp_remote_request( $this->get_webhook_url(), $args );
 
@@ -395,7 +403,7 @@ class Webhook extends Data {
 	/**
 	 * Recursively convert array to XML
 	 *
-	 * @param array $data Data to convert.
+	 * @param array             $data Data to convert.
 	 * @param \SimpleXMLElement $xml XML element.
 	 */
 	private function array_to_xml_recursive( $data, &$xml ) {

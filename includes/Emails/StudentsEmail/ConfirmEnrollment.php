@@ -1,16 +1,25 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 
 namespace OhMyLMS\Emails\StudentsEmail;
 
 use OhMyLMS\Emails\Emails;
-use function CodeRex\Ecommerce\ecommerce;
+use function OhMyLMS\Commerce\ecommerce;
 
+/**
+ * Plugin confirm enrollment implementation.
+ */
 class ConfirmEnrollment {
 
+	/**
+	 * Initialize Confirm enrollment.
+	 */
 	public function __construct() {
 		add_action( 'ohmylms_after_enrolled_student', array( $this, 'trigger' ), 10 );
 	}
 
+	/**
+	 * Basic settings for Confirm enrollment.
+	 */
 	public function basic_settings(): array {
 		$basic = array(
 			'id'             => 'student_confirm_enrollment',
@@ -23,6 +32,9 @@ class ConfirmEnrollment {
 		return $basic;
 	}
 
+	/**
+	 * Default settings for Confirm enrollment.
+	 */
 	public function default_settings(): array {
 		$default_settings = array(
 			'enable'             => false,
@@ -37,11 +49,16 @@ class ConfirmEnrollment {
 		return $default_settings;
 	}
 
+	/**
+	 * Trigger for Confirm enrollment.
+	 *
+	 * @param mixed $order Order.
+	 */
 	public function trigger( $order ) {
 
 		if ( ! is_object( $order ) ) {
 			$order_id = absint( $order );
-			$order    = ecommerce_get_order( $order_id );
+			$order    = ohmylms_ecommerce_get_order( $order_id );
 		}
 
 		if ( ! is_object( $order ) ) {
@@ -66,7 +83,7 @@ class ConfirmEnrollment {
 
 		global $wpdb;
 		$table_name  = $wpdb->prefix . 'ohmylms_user_enrollment';
-		$enroll_data = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_name WHERE user_id = %d AND order_id = %d", $student_id, $order->get_id() ), ARRAY_A );
+		$enroll_data = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE user_id = %d AND order_id = %d', $table_name, $student_id, $order->get_id() ), ARRAY_A );
 		$course      = false;
 
 		if ( empty( $enroll_data['course_id'] ) ) {
@@ -77,10 +94,10 @@ class ConfirmEnrollment {
 
 		$email_settings = Emails::get_email_settings();
 		if ( $order && is_array( $email_settings ) && is_array( $enroll_data ) && is_array( $settings ) && $course ) {
-			// Use ohmylms_get_template to get the email body
+			// Use ohmylms_get_template to get the email body.
 			ob_start();
 			ohmylms_get_template(
-				'emails/confirm-enrollment', // Template file name (without .php)
+				'emails/confirm-enrollment', // Template file name (without .php).
 				array(
 					'order'          => $order,
 					'student_name'   => $name,

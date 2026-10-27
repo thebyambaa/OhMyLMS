@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * Class Shortcodes
  *
@@ -10,14 +10,25 @@ namespace OhMyLMS\Shortcodes;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Plugin shortcodes implementation.
+ */
 class Shortcodes {
 
 	/**
 	 * Init shortcodes
 	 */
 	public static function init() {
+		\OhMyLMS\Student\Hub::init();
+		\OhMyLMS\Student\LoginExperience::init();
+		\OhMyLMS\Utility\Terminology::init();
+		\OhMyLMS\QuestionBank\ImportPage::init();
+		\OhMyLMS\Assessment\SkillAssessmentPage::init();
+		\OhMyLMS\Student\LearnerCatalog::init();
+		\OhMyLMS\Student\SettingsSave::init();
+		\OhMyLMS\Student\PlayerContext::init();
 		$shortcodes = array(
- 'ohmylms_offer_button' => __CLASS__ . '::offer_button',
+			'ohmylms_offer_button'    => __CLASS__ . '::offer_button',
 			'ohmylms_checkout'        => __CLASS__ . '::checkout',
 			'ohmylms_membership_plan' => __CLASS__ . '::membership_plan',
 			'ohmylms_course_list'     => __CLASS__ . '::course_list',
@@ -35,7 +46,7 @@ class Shortcodes {
 	/**
 	 * Buy Now button shortcode
 	 *
-	 * @param $atts
+	 * @param mixed $atts Atts.
 	 * @return false|string
 	 */
 	public static function buy_now( $atts ) {
@@ -45,9 +56,9 @@ class Shortcodes {
 	/**
 	 * Shortcode wrapper
 	 *
-	 * @param callable $callback The callback function to execute
-	 * @param array    $atts     Shortcode attributes
-	 * @param array    $wrapper  Wrapper configuration
+	 * @param callable $callback The callback function to execute.
+	 * @param array    $atts Shortcode attributes.
+	 * @param array    $wrapper Wrapper configuration.
 	 * @return false|string
 	 * @since 1.0.0
 	 */
@@ -72,7 +83,7 @@ class Shortcodes {
 	/**
 	 * Checkout page shortcode.
 	 *
-	 * @param $atts
+	 * @param mixed $atts Atts.
 	 * @return false|string
 	 * @since 1.0.0
 	 */
@@ -87,7 +98,7 @@ class Shortcodes {
 	/**
 	 * Membership plan shortcode
 	 *
-	 * @param $atts
+	 * @param mixed $atts Atts.
 	 * @return false|string
 	 * @since 1.0.0
 	 */
@@ -98,7 +109,7 @@ class Shortcodes {
 	/**
 	 * Course list shortcode
 	 *
-	 * @param $atts
+	 * @param mixed $atts Atts.
 	 * @return false|string
 	 * @since 1.0.0
 	 */
@@ -110,48 +121,69 @@ class Shortcodes {
 	/**
 	 * Dashboard page shortcode.
 	 *
-	 * @param array $atts
+	 * @param array $atts Atts.
 	 * @return false|string
 	 * @since 1.0.0
 	 */
 	public static function my_profile( $atts ) {
+		$link = \OhMyLMS\Student\LegacyPages::link( 'profile' );
+		if ( $link ) {
+			return $link;
+		}
 		return self::shortcode_wrapper( array( 'OhMyLMS\Shortcodes\ShortCodeMyProfile', 'output' ), $atts );
 	}
 
 	/**
 	 * Student dashboard shortcode.
 	 *
-	 * @param array $atts
+	 * @param array $atts Atts.
 	 * @return false|string
 	 * @since 1.0.0
 	 */
 	public static function dashboard( $atts ) {
+		$link = \OhMyLMS\Student\LegacyPages::link( 'dashboard' );
+		if ( $link ) {
+			return $link;
+		}
 		return self::shortcode_wrapper( array( 'OhMyLMS\Shortcodes\ShortCodeDashboard', 'output' ), $atts );
 	}
 
 	/**
 	 * Student profile shortcode.
 	 *
-	 * @param array $atts
+	 * @param array $atts Atts.
 	 * @return false|string
 	 * @since 1.0.0
 	 */
 	public static function profile( $atts ) {
+		$link = \OhMyLMS\Student\LegacyPages::link( 'profile' );
+		if ( $link ) {
+			return $link;
+		}
 		return self::shortcode_wrapper( array( 'OhMyLMS\Shortcodes\ShortCodeProfile', 'output' ), $atts );
 	}
 
 	/**
 	 * Student my courses shortcode.
 	 *
-	 * @param array $atts
+	 * @param array $atts Atts.
 	 * @return false|string
 	 * @since 1.0.0
 	 */
 	public static function my_courses( $atts ) {
+		$link = \OhMyLMS\Student\LegacyPages::link( 'my-courses' );
+		if ( $link ) {
+			return $link;
+		}
 		return self::shortcode_wrapper( array( 'OhMyLMS\Shortcodes\ShortCodeMyCourses', 'output' ), $atts );
 	}
 
-public static function offer_button( $atts ) {
+	/**
+	 * Offer button for Shortcodes.
+	 *
+	 * @param mixed $atts Atts.
+	 */
+	public static function offer_button( $atts ) {
 		return self::shortcode_wrapper( array( 'OhMyLMS\Shortcodes\ShortCodeOfferButton', 'output' ), $atts );
 	}
 }

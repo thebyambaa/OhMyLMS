@@ -4,12 +4,13 @@
 }
 
 .ohmylms-page {
+
     .ohmylms-student-profile {
         position: relative;
         margin: 0;
         padding: 0;
 
-        &:before {
+        &::before {
             content: "";
             position: absolute;
             left: 0;
@@ -49,7 +50,7 @@
             border-radius: 14px;
             border: 1px solid #EBECEF;
             background: #F8F8F8;
-            box-shadow: 0px 2px 8px 0px #ECECEC;
+            box-shadow: 0 2px 8px 0 #ECECEC;
             padding: 16px 16px 24px;
             display: flex;
             flex-flow: row wrap;
@@ -60,11 +61,12 @@
             padding: 14px;
             width: 218px;
         }
+
         .ohmylms-student-profile-sidebar-content {
             width: calc(100% - 248px);
             border-radius: 14px;
             background: #FFF;
-            box-shadow: 0px 1px 2px 0px #DBDDE1;
+            box-shadow: 0 1px 2px 0 #DBDDE1;
         }
 
         .ohmylms-student-profile-tab {
@@ -120,12 +122,13 @@
                 &.active a {
                     color: var(--ohmylms-primary-color);
                     background-color: #FFF;
-                    box-shadow: 0px 1px 2px 0px #DBDDE1;
+                    box-shadow: 0 1px 2px 0 #DBDDE1;
 
                     .icon-regular {
                         opacity: 0;
                         visibility: hidden;
                     }
+
                     .icon-active {
                         opacity: 1;
                         visibility: visible;
@@ -150,13 +153,14 @@
 
         // ------profile tab content------
         .student-profile {
+
             .ohmylms-profile-cover {
                 height: 228px;
                 background-color: #B3B3B3;
                 border-radius: 14px;
                 position: relative;
 
-                & > figure {
+                > figure {
                     width: 100%;
                     height: 100%;
                     overflow: hidden;
@@ -179,7 +183,7 @@
                 border-radius: 100%;
                 border: 4px solid #FFF;
                 background-color: #27B0E7;
-                box-shadow: 0px 2px 2px 0px rgba(164, 169, 180, 0.24);
+                box-shadow: 0 2px 2px 0 rgba(164, 169, 180, 0.24);
                 display: flex;
                 flex-flow: column;
                 align-items: center;
@@ -219,7 +223,6 @@
                     border-radius: 8px;
                     border: 1px solid #EBEBEF;
                     background: #FFF;
-                    display: inline-block;
                     color: var(--ohmylms-heading-color);
                     font-size: 14px;
                     font-weight: 500;
@@ -263,7 +266,7 @@
                     display: flex;
                     flex-direction: column;
                     align-items: flex-end;
-                    gap: 0px;
+                    gap: 0;
 
                     .ohmylms-xp-label {
                         font-size: 0.875rem;
@@ -367,13 +370,18 @@
                         }
 
                         &.earned {
+
                             &.green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+
                             &.orange { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+
                             &.yellow { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); }
+
                             &.blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
                         }
 
                         &.locked {
+
                             &.purple,
                             &.pink {
                                 background: #e5e7eb;
@@ -399,7 +407,7 @@
                                 .ohmylms-lock-icon {
                                     width: 1.5rem;
                                     height: 1.5rem;
-                                    color: white;
+                                    color: #fff;
                                 }
                             }
                         }
@@ -407,7 +415,7 @@
                         .ohmylms-badge-icon {
                             width: 2rem;
                             height: 2rem;
-                            color: white;
+                            color: #fff;
                             margin-bottom: 0.5rem;
                         }
 
@@ -415,7 +423,7 @@
                             font-size: 0.75rem;
                             font-weight: 600;
                             text-align: center;
-                            color: white;
+                            color: #fff;
                         }
 
                         &[data-tooltip]:hover::before {
@@ -425,7 +433,7 @@
                             left: 50%;
                             transform: translateX(-50%);
                             background: #1f2937;
-                            color: white;
+                            color: #fff;
                             padding: 0.5rem 0.75rem;
                             border-radius: 0.5rem;
                             font-size: 0.75rem;
@@ -461,9 +469,11 @@
 
             // Keyframe animation
             @keyframes ohmylms-fill-progress {
+
                 from {
                     width: 0%;
                 }
+
                 to {
                     width: var(--fill-width);
                 }
@@ -607,7 +617,7 @@
                 flex-flow: column;
                 gap: 15px;
                 background-color: #FFF;
-                box-shadow: 0px 1px 4px #D3D6DD;
+                box-shadow: 0 1px 4px #D3D6DD;
                 border-radius: 8px;
                 padding: 20px;
 
@@ -656,7 +666,7 @@
                     min-width: 44px;
                     text-align: center;
 
-                    &:before {
+                    &::before {
                         content: "";
                         position: absolute;
                         left: 50%;
@@ -691,7 +701,9 @@
             }
 
             .profile-info-list:hover {
+
                 .level-progressbar {
+
                     .level-point {
                         opacity: 1;
                         visibility: visible;
@@ -724,6 +736,7 @@
             }
 
             .ohmylms-link-row {
+
                 .ohmylms-link-label {
                     flex: 0 0 30% !important;
                 }
@@ -751,7 +764,7 @@
 
                 &:hover {
                     background: #e74c3c;
-                    color: white;
+                    color: #fff;
                     border-color: #e74c3c;
                 }
             }
@@ -762,6 +775,7 @@
 
             .skills-section,
             .links-section {
+
                 .ohmylms-input-wrapper {
                     flex: 1;
                 }
@@ -784,7 +798,7 @@
 
             .no-achivement {
                 background-color: #FFF;
-                box-shadow: 0px 1px 4px #D3D6DD;
+                box-shadow: 0 1px 4px #D3D6DD;
                 height: 340px;
                 border-radius: 8px;
                 padding: 20px;
@@ -794,6 +808,7 @@
                 justify-content: center;
                 gap: 23px;
             }
+
             .no-achivement-text {
                 color: var(--ohmylms-body-text-color);
                 font-size: 14px;
@@ -916,6 +931,7 @@
                 }
 
                 figure:hover {
+
                     .certificate-download {
                         opacity: 1;
                         visibility: visible;
@@ -928,6 +944,7 @@
 }
 
 @media screen and (max-width: 1399px) {
+
     .ohmylms-page .ohmylms-student-profile .ohmylms-student-profile-tab-content {
         padding: 40px 50px;
     }
@@ -935,6 +952,7 @@
 
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .ohmylms-student-profile .ohmylms-student-profile-wrapper {
         gap: 20px;
     }
@@ -956,6 +974,7 @@
         height: 188px;
         border-radius: 10px;
     }
+
     .ohmylms-page .ohmylms-student-profile .student-profile .ohmylms-profile-cover > figure {
         border-radius: 10px;
     }
@@ -988,9 +1007,11 @@
 
 
 @media screen and (max-width: 991px) {
+
     .ohmylms-page .ohmylms-student-profile .ohmylms-hamburger {
         display: flex;
     }
+
     .ohmylms-page .ohmylms-student-profile.open-sidebar .ohmylms-hamburger {
         opacity: 0;
         visibility: hidden;
@@ -1031,7 +1052,7 @@
     }
 
     .ohmylms-page .ohmylms-student-profile.open-sidebar .ohmylms-student-profile-sidebar {
-        left: 0px;
+        left: 0;
         opacity: 1;
         visibility: visible;
     }
@@ -1051,6 +1072,7 @@
         left: -20px;
         width: calc(100% + 40px);
     }
+
     .ohmylms-page .ohmylms-student-profile .student-profile .ohmylms-profile-cover > figure {
         border-radius: 0;
     }
@@ -1066,6 +1088,7 @@
     .ohmylms-page .ohmylms-student-profile .student-profile .ohmylms-profile-info {
         margin-top: 6px;
     }
+
     .ohmylms-page .ohmylms-student-profile .student-profile .ohmylms-profile-name {
         font-size: 18px;
     }
@@ -1086,6 +1109,7 @@
     .ohmylms-page .ohmylms-student-profile .ohmylms-achivement-box .achivement-certificate-list li {
         width: calc(100% / 3 - 14px);
     }
+
     .ohmylms-page .ohmylms-student-profile .ohmylms-achivement-box .achivement-certificate-list figure {
         height: 130px;
     }
@@ -1093,9 +1117,11 @@
 }
 
 @media screen and (max-width: 767px) {
+
     .ohmylms-page .ohmylms-dashboard {
         padding: 16px 0 46px;
     }
+
     .ohmylms-page .ohmylms-student-profile .student-profile .ohmylms-profile-actions .profile-edit {
         font-size: 13px;
     }
@@ -1103,9 +1129,11 @@
     .ohmylms-page .ohmylms-student-profile .ohmylms-achivement-box .achivement-certificate-list figure {
         height: 100px;
     }
+
     .ohmylms-page .ohmylms-student-profile .ohmylms-achivement-box .achivement-certificate-list {
         gap: 10px;
     }
+
     .ohmylms-page .ohmylms-student-profile .ohmylms-achivement-box .achivement-certificate-list li {
         width: calc(100% / 3 - 7px);
     }
@@ -1113,6 +1141,7 @@
 }
 
 @media screen and (max-width: 575px) {
+
     .ohmylms-page .ohmylms-student-profile .ohmylms-hamburger {
         position: fixed;
         bottom: 6px;

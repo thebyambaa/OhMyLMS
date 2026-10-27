@@ -92,6 +92,7 @@
 
 /* Responsive adjustments for Elementor */
 @media (max-width: 768px) {
+
 	.elementor-widget-ohmylms-checkout .ohmylms-checkout-form-wrapper {
 		flex-direction: column;
 	}
@@ -130,6 +131,7 @@
 .elementor-widget-ohmylms-profile {
     width: 100%;
 }
+
 .elementor-widget-ohmylms-profile .ohmylms {
     max-width: none;
     width: 100%;

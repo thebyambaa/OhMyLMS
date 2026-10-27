@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Controller for handling chapter REST API endpoints.
+ *
+ * @package OhMyLMS
+ */
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
@@ -33,11 +38,17 @@ class ChapterController extends RestController {
 	 */
 	protected $base = 'chapters';
 
+	/**
+	 * Check chapter permission for Chapter controller.
+	 */
 	public function check_chapter_permission() {
 		return current_user_can( 'edit_posts' );
 	}
 
 
+	/**
+	 * Check content delete permission for Chapter controller.
+	 */
 	public function check_content_delete_permission() {
 		return current_user_can( 'edit_posts' );
 	}
@@ -140,7 +151,7 @@ class ChapterController extends RestController {
 	/**
 	 * Check if a given request has access to read an item.
 	 *
-	 * @param  WP_REST_Request $request Full details about the request.
+	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_Error|boolean
 	 *
 	 * @since 1.0.0
@@ -158,7 +169,7 @@ class ChapterController extends RestController {
 	/**
 	 * Create a single chapter
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
 	 *
 	 * @since 1.0.0
@@ -238,20 +249,20 @@ class ChapterController extends RestController {
 	/**
 	 * Delete chapter
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
 	 * @since 1.0.0
 	 */
 	public function delete_item( $request ) {
-		// Get chapter id
+		// Get chapter id.
 		$chapter_id = isset( $request['id'] ) ? (int) $request['id'] : 0;
 
-		// Check the chapter id exist or not
+		// Check the chapter id exist or not.
 		if ( ! $chapter_id ) {
 			return new WP_Error( 'ohmylms_rest_chapter_empty_id', __( 'ID is required.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
 
-		// Get exisiting chapter by chapter id
+		// Get exisiting chapter by chapter id.
 		$chapter = ohmylms_get_chapter( $chapter_id );
 
 		// Check the chapter exist or not.
@@ -259,7 +270,7 @@ class ChapterController extends RestController {
 			return new WP_Error( 'ohmylms_rest_chapter_invalid_id', __( 'ID is invalid.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
 
-		// Delete the chapter
+		// Delete the chapter.
 		$chapter->delete();
 
 		/**
@@ -308,12 +319,12 @@ class ChapterController extends RestController {
 	 */
 	public function get_lessons( $request ) {
 		$chapter_id = isset( $request['id'] ) ? (int) $request['id'] : 0;
-		// Check the chapter id exist or not
+		// Check the chapter id exist or not.
 		if ( ! $chapter_id ) {
 			return new WP_Error( 'ohmylms_rest_chapter_empty_id', __( 'ID is required.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
 
-		// Get existing chapter by chapter id
+		// Get existing chapter by chapter id.
 		$chapter = ohmylms_get_chapter( $chapter_id );
 
 		// Check the chapter exist or not.
@@ -346,12 +357,12 @@ class ChapterController extends RestController {
 	public function update_contents( $request ) {
 		$chapter_id = (int) $request['id'];
 
-		// Check the chapter id exist or not
+		// Check the chapter id exist or not.
 		if ( ! $chapter_id ) {
 			return new WP_Error( 'ohmylms_rest_chapter_empty_id', __( 'ID is required.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
 
-		// Get existing chapter by chapter id
+		// Get existing chapter by chapter id.
 		$chapter = ohmylms_get_chapter( $chapter_id );
 
 		// Check the chapter exist or not.
@@ -362,19 +373,19 @@ class ChapterController extends RestController {
 		$order_number = 0;
 
 		foreach ( $request->get_json_params() as $lesson ) {
-			if (( isset( $lesson['content_type'] ) && $lesson['content_type'] == 'session' ) || ( isset( $lesson['type'] ) && $lesson['type'] == 'session' )) {
+			if ( ( isset( $lesson['content_type'] ) && 'session' == $lesson['content_type'] ) || ( isset( $lesson['type'] ) && 'session' == $lesson['type'] ) ) {
 				++$order_number;
 				$lesson['order_number'] = ! empty( $lesson['order_number'] ) ? intval( $lesson['order_number'] ) : $order_number;
-				$chapter->get_data_store()->set_session( $chapter, $lesson);
+				$chapter->get_data_store()->set_session( $chapter, $lesson );
 				$lessons[] = $lesson;
 			} else {
-				if ( isset( $lesson['type'] ) && $lesson['type'] == 'quiz' ) {
+				if ( isset( $lesson['type'] ) && 'quiz' == $lesson['type'] ) {
 					if ( isset( $lesson['id'] ) ) {
 						$lesson_obj = ohmylms_get_quiz( $lesson['id'] );
 					} else {
 						$lesson_obj = new Quiz( $chapter );
 					}
-				} elseif ( isset( $lesson['type'] ) && $lesson['type'] == 'assignment' ) {
+				} elseif ( isset( $lesson['type'] ) && 'assignment' == $lesson['type'] ) {
 					if ( isset( $lesson['id'] ) ) {
 						$lesson_obj = ohmylms_get_assignment( $lesson['id'] );
 					} else {
@@ -394,7 +405,7 @@ class ChapterController extends RestController {
 				++$order_number;
 				$lesson['order_number'] = ! empty( $lesson['order_number'] ) ? intval( $lesson['order_number'] ) : $order_number;
 
-				// Handle Prerequisites
+				// Handle Prerequisites.
 				if ( isset( $lesson['prerequisites'] ) && 'quiz' != $lesson['type'] ) {
 					$lesson_obj->set_prerequisites( $lesson['prerequisites'] );
 				}
@@ -465,19 +476,19 @@ class ChapterController extends RestController {
 	/**
 	 * Get search content
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_Error|\WP_HTTP_Response|\WP_REST_Response
 	 * @since 1.0.0
 	 */
 	public function get_search_content( $request ) {
 		$chapter_id = isset( $request['id'] ) ? (int) $request['id'] : 0;
 		$term       = isset( $request['term'] ) ? sanitize_text_field( $request['term'] ) : '';
-		// Check the chapter id exist or not
+		// Check the chapter id exist or not.
 		if ( ! $chapter_id ) {
 			return new WP_Error( 'ohmylms_rest_chapter_empty_id', __( 'ID is required.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
 
-		// Get existing chapter by chapter id
+		// Get existing chapter by chapter id.
 		$chapter = ohmylms_get_chapter( $chapter_id );
 
 		// Check the chapter exist or not.
@@ -504,9 +515,9 @@ class ChapterController extends RestController {
 	/**
 	 * Prepare a single chapter for create or update.
 	 *
-	 * @param $request
+	 * @param mixed $request REST request.
 	 * @return bool|Chapter|object|WP_Error
-	 * @throws \Exception
+	 * @throws \Exception When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	protected function prepare_item_for_database( $request ) {
@@ -538,7 +549,7 @@ class ChapterController extends RestController {
 	 * Prepare a single chapter for response.
 	 *
 	 * @param \WP_Post         $post The post object.
-	 * @param \WP_REST_Request $request
+	 * @param \WP_REST_Request $request REST request.
 	 * @return WP_REST_Response
 	 *
 	 * @since 1.0.0
@@ -567,8 +578,8 @@ class ChapterController extends RestController {
 	/**
 	 * Prepare links for the request.
 	 *
-	 * @param $product
-	 * @param $request
+	 * @param mixed $product Product.
+	 * @param mixed $request REST request.
 	 * @return array[]
 	 *
 	 * @since 1.0.0
@@ -590,7 +601,7 @@ class ChapterController extends RestController {
 	/**
 	 * Get chapter data.
 	 *
-	 * @param Chapter $chapter
+	 * @param Chapter $chapter Chapter.
 	 * @return array
 	 *
 	 * @since 1.0.0

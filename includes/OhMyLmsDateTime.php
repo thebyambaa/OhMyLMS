@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 
 /**
  * Class OhMyLmsDateTime
@@ -14,6 +14,9 @@ namespace OhMyLMS;
 use DateTime;
 use DateTimeZone;
 
+/**
+ * Plugin oh my lms date time implementation.
+ */
 class OhMyLmsDateTime extends DateTime {
 
 	/**
@@ -47,6 +50,9 @@ class OhMyLmsDateTime extends DateTime {
 	 * Get UTC offset if set, or default to the DateTime object's offset.
 	 */
 	#[\ReturnTypeWillChange]
+	/**
+	 * Get offset for Oh my lms date time.
+	 */
 	public function getOffset() {
 		return ! empty( $this->utc_offset ) ? $this->utc_offset : parent::getOffset();
 	}
@@ -58,6 +64,11 @@ class OhMyLmsDateTime extends DateTime {
 	 * @return DateTime
 	 */
 	#[\ReturnTypeWillChange]
+	/**
+	 * Set timezone for Oh my lms date time.
+	 *
+	 * @param mixed $timezone Timezone.
+	 */
 	public function setTimezone( $timezone ) {
 		$this->utc_offset = 0;
 		return parent::setTimezone( $timezone );
@@ -70,6 +81,9 @@ class OhMyLmsDateTime extends DateTime {
 	 * @return int
 	 */
 	#[\ReturnTypeWillChange]
+	/**
+	 * Get timestamp for Oh my lms date time.
+	 */
 	public function getTimestamp() {
 		return method_exists( 'DateTime', 'getTimestamp' ) ? parent::getTimestamp() : $this->format( 'U' );
 	}
@@ -88,7 +102,7 @@ class OhMyLmsDateTime extends DateTime {
 	 * Format a date based on the offset timestamp.
 	 *
 	 * @since  1.0.0
-	 * @param  string $format Date format.
+	 * @param string $format Date format.
 	 * @return string
 	 */
 	public function date( $format ) {
@@ -99,7 +113,7 @@ class OhMyLmsDateTime extends DateTime {
 	 * Return a localised date based on offset timestamp. Wrapper for date_i18n function.
 	 *
 	 * @since  1.0.0
-	 * @param  string $format Date format.
+	 * @param string $format Date format.
 	 * @return string
 	 */
 	public function date_i18n( $format = 'Y-m-d' ) {

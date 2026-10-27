@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Class CertificateStore.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\DataStores;
 
@@ -19,7 +24,7 @@ class CertificateStore extends DataStore {
 	/**
 	 * Create certificate
 	 *
-	 * @param Certificate $certificate
+	 * @param Certificate $certificate Certificate.
 	 * @return mixed|void
 	 * @since 1.0.0
 	 */
@@ -46,7 +51,7 @@ class CertificateStore extends DataStore {
 
 		if ( $id && ! is_wp_error( $id ) ) {
 			$certificate->set_id( $id );
-			flush_rewrite_rules(true);
+			flush_rewrite_rules( true );
 
 			/**
 			 * Fires after a new certificate is created.
@@ -66,9 +71,9 @@ class CertificateStore extends DataStore {
 	/**
 	 * Read data
 	 *
-	 * @param Certificate $certificate
+	 * @param Certificate $certificate Certificate.
 	 * @return mixed|void
-	 * @throws \Exception
+	 * @throws \Exception When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	public function read( &$certificate ) {
@@ -94,7 +99,7 @@ class CertificateStore extends DataStore {
 	/**
 	 * Helper function that reads certificate data
 	 *
-	 * @param Certificate $certificate
+	 * @param Certificate $certificate Certificate.
 	 * @return void
 	 *
 	 * @since 1.0.0
@@ -183,8 +188,8 @@ class CertificateStore extends DataStore {
 	/**
 	 * Delete the certificate
 	 *
-	 * @param $certificate
-	 * @param array       $args
+	 * @param mixed $certificate Certificate.
+	 * @param array $args Operation arguments.
 	 * @return mixed|void
 	 * @since 1.0.0
 	 */
@@ -234,6 +239,12 @@ class CertificateStore extends DataStore {
 		return true;
 	}
 
+	/**
+	 * Set thumbnail image for Certificate store.
+	 *
+	 * @param mixed $certificate Certificate.
+	 * @param mixed $thumbnail_id Thumbnail identifier.
+	 */
 	public function set_thumbnail_image( $certificate, $thumbnail_id ) {
 		$result = set_post_thumbnail( $certificate->get_id(), $thumbnail_id );
 		if ( is_wp_error( $result ) ) {
@@ -247,7 +258,6 @@ class CertificateStore extends DataStore {
 	 * Get the contents of the certificate.
 	 *
 	 * @param Certificate $certificate The certificate object.
-	 * @param array       $content The content to set for the certificate.
 	 * @return bool True on success, false on failure.
 	 *
 	 * @since 1.0.0
@@ -260,7 +270,6 @@ class CertificateStore extends DataStore {
 	 * Get the contents of the certificate.
 	 *
 	 * @param Certificate $certificate The certificate object.
-	 * @param array       $content The content to set for the certificate.
 	 * @return bool True on success, false on failure.
 	 *
 	 * @since 1.0.0
@@ -272,20 +281,19 @@ class CertificateStore extends DataStore {
 
 	/**
 	 * Get courses
+	 *
+	 * @param mixed $certificate Certificate.
 	 */
 	public function get_courses( $certificate ) {
 		global $wpdb;
 
-		// Get the certificate ID
+		// Get the certificate ID.
 		$certificate_id = $certificate->get_id();
 
-		// Query to get all course IDs associated with the certificate
-		$query = $wpdb->prepare(
-			"SELECT course_id FROM {$wpdb->prefix}ohmylms_certificate_relationship WHERE certificate_id = %d",
-			$certificate_id
-		);
+		// Query to get all course IDs associated with the certificate.
+		$query = $wpdb->prepare( 'SELECT course_id FROM %i WHERE certificate_id = %d', $wpdb->prefix . 'ohmylms_certificate_relationship', $certificate_id );
 
-		// Execute the query and get the results
+		// Execute the query and get the results.
 		$results = $wpdb->get_col( $query );
 
 		if ( ! empty( $results ) ) {
@@ -305,30 +313,36 @@ class CertificateStore extends DataStore {
 			return $courses;
 		}
 
-		// Return the list of course IDs
+		// Return the list of course IDs.
 		return array();
 	}
 
+	/**
+	 * Set courses for Certificate store.
+	 *
+	 * @param mixed $certificate Certificate.
+	 * @param mixed $courses Courses.
+	 */
 	public function set_courses( $certificate, $courses ) {
 		global $wpdb;
 
-		// Get the certificate ID
+		// Get the certificate ID.
 		$certificate_id = $certificate->get_id();
 
-		// Prepare the table name
+		// Prepare the table name.
 		$table_name = $wpdb->prefix . 'ohmylms_certificate_relationship';
 
-		// Delete all existing relationships
+		// Delete all existing relationships.
 		$wpdb->delete(
 			$table_name,
 			array( 'certificate_id' => $certificate_id ),
 			array( '%d' )
 		);
 
-		// Insert new relationships
+		// Insert new relationships.
 		foreach ( $courses as $course ) {
 			if ( isset( $course['id'] ) ) {
-				// Delete all existing relationships
+				// Delete all existing relationships.
 				$wpdb->delete(
 					$table_name,
 					array( 'course_id' => $course['id'] ),

@@ -1,4 +1,10 @@
 <?php
+/**
+ * Tools.
+ *
+ * @package OhMyLMS
+ */
+
 defined( 'ABSPATH' ) || exit;
 
 ?>

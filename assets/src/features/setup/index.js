@@ -10,15 +10,15 @@ import { createSetupWizardController } from './SetupWizardController';
 import { createSetupWizard } from './SetupWizard';
 import { createSetupWizardPage } from './SetupWizardPage';
 export const setupComponents = {
-  SetupWelcome: createSetupWelcome,
-  SetupLevelSelection: createSetupLevelSelection,
-  SetupPreferences: createSetupPreferences,
-  SetupNiche: createSetupNiche,
-  CourseMigration: createCourseMigration,
-  ScormImport: createScormImport,
-  CourseImport: createCourseImport,
-  SetupCompletion: createSetupCompletion,
-  SetupWizardController: createSetupWizardController,
-  SetupWizard: createSetupWizard,
-  SetupWizardPage: createSetupWizardPage,
+	SetupWelcome: createSetupWelcome,
+	SetupLevelSelection: createSetupLevelSelection,
+	SetupPreferences: createSetupPreferences,
+	SetupNiche: createSetupNiche,
+	CourseMigration: createCourseMigration,
+	ScormImport: createScormImport,
+	CourseImport: createCourseImport,
+	SetupCompletion: createSetupCompletion,
+	SetupWizardController: createSetupWizardController,
+	SetupWizard: createSetupWizard,
+	SetupWizardPage: createSetupWizardPage,
 };

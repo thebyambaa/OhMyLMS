@@ -1,217 +1,468 @@
-/** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
-export function createCourseOrganization(readRuntime) {
-  return function CourseOrganization() {
-    const {
-      $V,
-      I: Controls,
-      React,
-      T: StoreModule,
-      XV,
-      aH,
-      b: I18n,
-      g: ReactHooks,
-      tH,
-      y: WordPressData,
-    } = readRuntime();
-    var e = (0, WordPressData.useDispatch)(StoreModule.default),
-      t = (0, WordPressData.useSelect)(function (e) {
-        return e(StoreModule.default).getAllCategories();
-      }, []),
-      n = (0, WordPressData.useSelect)(function (e) {
-        return e(StoreModule.default).getTags();
-      }, []),
-      r = (0, WordPressData.useSelect)(function (e) {
-        return e(StoreModule.default).getCourseCategories();
-      }, []),
-      a = (0, WordPressData.useSelect)(function (e) {
-        return e(StoreModule.default).getCourseTags();
-      }, []),
-      o = (0, ReactHooks.useCallback)(
-        function (t, n) {
-          e.setCourseCategories(t, n);
-        },
-        [e],
-      ),
-      i = (function () {
-        var t = aH(
-          tH().m(function t(n) {
-            var r;
-            return tH().w(function (t) {
-              for (;;)
-                switch (t.n) {
-                  case 0:
-                    return (
-                      (r = {
-                        name: null == n ? void 0 : n.name,
-                        parent: null == n ? void 0 : n.parent,
-                      }),
-                      (t.n = 1),
-                      e.saveCourseCategory(r)
-                    );
-                  case 1:
-                    return (t.v, t.a(2, !0));
-                }
-            }, t);
-          }),
-        );
-        return function (e) {
-          return t.apply(this, arguments);
-        };
-      })(),
-      l = (function () {
-        var t = aH(
-          tH().m(function t(n) {
-            var r, a;
-            return tH().w(function (t) {
-              for (;;)
-                switch (t.n) {
-                  case 0:
-                    ((a = XV(
-                      XV({}, n),
-                      {},
-                      {
-                        id: null !== (r = n.id) && void 0 !== r ? r : n.term_id,
-                      },
-                    )),
-                      e.setCourseCategories(a, !1),
-                      e.deleteCourseCategory(a));
-                  case 1:
-                    return t.a(2);
-                }
-            }, t);
-          }),
-        );
-        return function (e) {
-          return t.apply(this, arguments);
-        };
-      })(),
-      c = (0, ReactHooks.useCallback)(
-        function (t, n) {
-          n ? e.setCourseTags(t) : e.removeCourseTag(t);
-        },
-        [e],
-      ),
-      u = (function () {
-        var t = aH(
-          tH().m(function t(n) {
-            var r, a;
-            return tH().w(function (t) {
-              for (;;)
-                switch (t.n) {
-                  case 0:
-                    return (
-                      (r = {
-                        name: null == n ? void 0 : n.name,
-                      }),
-                      (t.n = 1),
-                      e.saveCourseTag(r)
-                    );
-                  case 1:
-                    ((a = t.v),
-                      c(
-                        {
-                          id: null == a ? void 0 : a.term_id,
-                          name: null == a ? void 0 : a.name,
-                          children: [],
-                        },
-                        !0,
-                      ));
-                  case 2:
-                    return t.a(2);
-                }
-            }, t);
-          }),
-        );
-        return function (e) {
-          return t.apply(this, arguments);
-        };
-      })(),
-      s = (function () {
-        var t = aH(
-          tH().m(function t(n) {
-            var r, a;
-            return tH().w(function (t) {
-              for (;;)
-                switch (t.n) {
-                  case 0:
-                    ((a = XV(
-                      XV({}, n),
-                      {},
-                      {
-                        id: null !== (r = n.id) && void 0 !== r ? r : n.term_id,
-                      },
-                    )),
-                      e.removeCourseTag(a),
-                      e.deleteCourseTag(a));
-                  case 1:
-                    return t.a(2);
-                }
-            }, t);
-          }),
-        );
-        return function (e) {
-          return t.apply(this, arguments);
-        };
-      })();
-    return (
-      <React.Fragment>
-        <Controls.CardWP isBorderless={!0}>
-          <Controls.SpacerWP padding={6} marginTop={6} marginBottom={6}>
-            <Controls.FlexWP gap={6} align={'stretch'}>
-              <Controls.FlexItemWP flex={1}>
-                <Controls.CardWP isBorderless={!0} variant={'secondary'} fullHeight={!0}>
-                  <Controls.SpacerWP marginBottom={0} padding={5}>
-                    <$V
-                      termFor={'category'}
-                      items={t}
-                      availableTerms={r}
-                      handleToggle={o}
-                      handleAdd={i}
-                      handleDelete={l}
-                      title={(0, I18n.__)('Categories', 'ohmylms')}
-                      description={(0, I18n.__)(
-                        'Organize your courses in categories. Type the name of the category and press enter.',
-                        'ohmylms',
-                      )}
-                      deleteTitle={(0, I18n.__)('Delete Category', 'ohmylms')}
-                      deleteDescription={(0, I18n.__)(
-                        'Are you sure you want to delete this category?',
-                        'ohmylms',
-                      )}
-                      showParent={!0}
-                    />
-                  </Controls.SpacerWP>
-                </Controls.CardWP>
-              </Controls.FlexItemWP>
-              <Controls.FlexItemWP flex={1}>
-                <Controls.CardWP isBorderless={!0} variant={'secondary'} fullHeight={!0}>
-                  <Controls.SpacerWP marginBottom={0} padding={5}>
-                    <$V
-                      termFor={'tag'}
-                      items={n}
-                      availableTerms={a}
-                      handleToggle={c}
-                      handleAdd={u}
-                      handleDelete={s}
-                      title={(0, I18n.__)('Tags', 'ohmylms')}
-                      description={(0, I18n.__)(
-                        'Use a unique tag to identify your courses easily.',
-                        'ohmylms',
-                      )}
-                      deleteTitle={(0, I18n.__)('Delete Tag', 'ohmylms')}
-                      deleteDescription={(0, I18n.__)(
-                        'Are you sure you want to delete this tag?',
-                        'ohmylms',
-                      )}
-                    />
-                  </Controls.SpacerWP>
-                </Controls.CardWP>
-              </Controls.FlexItemWP>
-            </Controls.FlexWP>
-          </Controls.SpacerWP>
-        </Controls.CardWP>
-      </React.Fragment>
-    );
-  };
+import {
+	Button,
+	CheckboxControl,
+	Notice,
+	Spinner,
+	TextControl,
+} from '@wordpress/components';
+import {
+	filterItems,
+	orderItems,
+	orderBundles,
+	sameIds,
+	toggleId,
+} from './organization.mjs';
+import { restUrl } from '../restUrl.mjs';
+
+/**
+ * Where a course sits: the curriculum items it is placed under and the Course Bundles it belongs to.
+ * These replace course categories and tags. Changes are saved as soon as they are made, because the
+ * course editor's Save button only covers the course itself.
+ * @param readRuntime
+ */
+export function createCourseOrganization( readRuntime ) {
+	return function CourseOrganization() {
+		const {
+			I: Controls,
+			b: I18n,
+			f: Router,
+			g: Hooks,
+			l: apiFetch,
+		} = readRuntime();
+		const { id } = Router.g();
+		const courseId = Number( id ) || 0;
+		const [ load, setLoad ] = Hooks.useState( {
+			status: 'loading',
+			error: '',
+		} );
+		const [ items, setItems ] = Hooks.useState( [] );
+		const [ bundles, setBundles ] = Hooks.useState( [] );
+		const [ curriculumIds, setCurriculumIds ] = Hooks.useState( [] );
+		const [ bundleIds, setBundleIds ] = Hooks.useState( [] );
+		const [ canManageBundles, setCanManageBundles ] =
+			Hooks.useState( false );
+		const [ search, setSearch ] = Hooks.useState( '' );
+		const [ busy, setBusy ] = Hooks.useState( false );
+		const [ error, setError ] = Hooks.useState( '' );
+		const [ attempt, setAttempt ] = Hooks.useState( 0 );
+
+		// Resolve against WordPress's localized REST root, not the admin page URL.
+		const request = ( { path, ...settings } ) => {
+			const root = window.ohmylms_params?.api_url;
+			return apiFetch()( {
+				...settings,
+				...( root ? { url: restUrl( root, path ) } : { path } ),
+			} );
+		};
+		const messageOf = ( cause, fallback ) =>
+			( cause && cause.message ) || fallback;
+		const idsOf = ( list ) =>
+			( list || [] ).map( ( entry ) => Number( entry.id ) );
+
+		Hooks.useEffect( () => {
+			let active = true;
+			if ( ! courseId ) {
+				return undefined;
+			}
+			setLoad( { status: 'loading', error: '' } );
+			Promise.all( [
+				request( { path: '/ohmylms/v1/curriculum/outline' } ),
+				request( { path: '/ohmylms/v1/bundles/outline' } ),
+				request( {
+					path: `/ohmylms/v1/courses/${ courseId }/organization`,
+				} ),
+			] )
+				.then( ( [ outline, bundleOutline, organization ] ) => {
+					if ( ! active ) {
+						return;
+					}
+					setItems( orderItems( outline.items ) );
+					setBundles( orderBundles( bundleOutline.bundles ) );
+					setCurriculumIds( idsOf( organization.curriculum ) );
+					setBundleIds( idsOf( organization.bundles ) );
+					setCanManageBundles( !! organization.can_manage_bundles );
+					setLoad( { status: 'ready', error: '' } );
+				} )
+				.catch( ( cause ) => {
+					if ( active ) {
+						setLoad( {
+							status: 'error',
+							error: messageOf(
+								cause,
+								I18n.__(
+									'Could not load the curriculum and course bundles.',
+									'ohmylms'
+								)
+							),
+						} );
+					}
+				} );
+			return () => {
+				active = false;
+			};
+		}, [ courseId, attempt ] );
+
+		/**
+		 * Save one list; on failure show the server's reason and put the checkbox back.
+		 * @param field
+		 * @param next
+		 * @param previous
+		 * @param apply
+		 */
+		async function save( field, next, previous, apply ) {
+			setError( '' );
+			setBusy( true );
+			apply( next );
+			try {
+				const saved = await request( {
+					path: `/ohmylms/v1/courses/${ courseId }/organization`,
+					method: 'PUT',
+					data: { [ field ]: next },
+				} );
+				setCurriculumIds( idsOf( saved.curriculum ) );
+				setBundleIds( idsOf( saved.bundles ) );
+				setCanManageBundles( !! saved.can_manage_bundles );
+			} catch ( cause ) {
+				apply( previous );
+				setError(
+					messageOf(
+						cause,
+						I18n.__( 'The change could not be saved.', 'ohmylms' )
+					)
+				);
+			} finally {
+				setBusy( false );
+			}
+		}
+
+		// Curriculum and Course Bundles are tabs of the Content Hub.
+		const adminHref = ( page ) =>
+			window.location.href.split( '#' )[ 0 ] + '#/content-hub/' + page;
+		const visibleItems = filterItems( items, search );
+
+		if ( ! courseId ) {
+			return (
+				<Controls.CardWP isBorderless>
+					<Controls.SpacerWP padding={ 6 }>
+						<p>
+							{ I18n.__(
+								'Save the course first to place it in the curriculum.',
+								'ohmylms'
+							) }
+						</p>
+					</Controls.SpacerWP>
+				</Controls.CardWP>
+			);
+		}
+		if ( load.status === 'loading' ) {
+			return (
+				<Controls.CardWP isBorderless>
+					<Controls.SpacerWP padding={ 6 }>
+						<Spinner />
+					</Controls.SpacerWP>
+				</Controls.CardWP>
+			);
+		}
+		if ( load.status === 'error' ) {
+			return (
+				<Controls.CardWP isBorderless>
+					<Controls.SpacerWP padding={ 6 }>
+						<Notice status="error" isDismissible={ false }>
+							{ load.error }
+						</Notice>
+						<Button
+							variant="secondary"
+							onClick={ () => setAttempt( attempt + 1 ) }
+						>
+							{ I18n.__( 'Try again', 'ohmylms' ) }
+						</Button>
+					</Controls.SpacerWP>
+				</Controls.CardWP>
+			);
+		}
+
+		return (
+			<Controls.CardWP isBorderless>
+				<Controls.SpacerWP
+					padding={ 6 }
+					marginTop={ 6 }
+					marginBottom={ 6 }
+				>
+					{ error && (
+						<Notice
+							status="error"
+							onRemove={ () => setError( '' ) }
+						>
+							{ error }
+						</Notice>
+					) }
+					<Controls.FlexWP gap={ 6 } align={ 'stretch' }>
+						<Controls.FlexItemWP flex={ 1 }>
+							<Controls.CardWP
+								isBorderless
+								variant={ 'secondary' }
+								fullHeight
+							>
+								<Controls.SpacerWP
+									marginBottom={ 0 }
+									padding={ 5 }
+								>
+									<Controls.HeadingWP level={ 4 }>
+										{ I18n.__( 'Curriculum', 'ohmylms' ) }
+									</Controls.HeadingWP>
+									<p>
+										{ I18n.__(
+											'Place this course where it belongs in your curriculum. A course filter for an item also includes everything below it.',
+											'ohmylms'
+										) }
+									</p>
+									{ items.length === 0 ? (
+										<p>
+											{ I18n.__(
+												'There are no curriculum items yet.',
+												'ohmylms'
+											) }{ ' ' }
+											<a
+												href={ adminHref(
+													'curriculum'
+												) }
+												target="_blank"
+												rel="noopener noreferrer"
+											>
+												{ I18n.__(
+													'Create curriculum items',
+													'ohmylms'
+												) }
+											</a>
+										</p>
+									) : (
+										<div>
+											<TextControl
+												label={ I18n.__(
+													'Find a curriculum item',
+													'ohmylms'
+												) }
+												value={ search }
+												onChange={ setSearch }
+												__nextHasNoMarginBottom
+											/>
+											<div
+												role="group"
+												aria-label={ I18n.__(
+													'Curriculum items',
+													'ohmylms'
+												) }
+												style={ {
+													maxHeight: 320,
+													overflowY: 'auto',
+												} }
+											>
+												{ visibleItems.map(
+													( item ) => (
+														<div
+															key={ item.id }
+															style={ {
+																paddingLeft:
+																	item.depth *
+																	20,
+																margin: '6px 0',
+															} }
+														>
+															<CheckboxControl
+																__nextHasNoMarginBottom
+																label={
+																	item.code
+																		? `${ item.name } (${ item.code })`
+																		: item.name
+																}
+																checked={ curriculumIds.includes(
+																	item.id
+																) }
+																disabled={
+																	busy
+																}
+																onChange={ (
+																	checked
+																) =>
+																	save(
+																		'curriculum_ids',
+																		toggleId(
+																			curriculumIds,
+																			item.id,
+																			checked
+																		),
+																		curriculumIds,
+																		setCurriculumIds
+																	)
+																}
+															/>
+														</div>
+													)
+												) }
+												{ search &&
+													visibleItems.length ===
+														0 && (
+														<p>
+															{ I18n.__(
+																'No curriculum items match your search.',
+																'ohmylms'
+															) }
+														</p>
+													) }
+											</div>
+											<p>
+												<a
+													href={ adminHref(
+														'curriculum'
+													) }
+													target="_blank"
+													rel="noopener noreferrer"
+												>
+													{ I18n.__(
+														'Manage the curriculum',
+														'ohmylms'
+													) }
+												</a>
+											</p>
+										</div>
+									) }
+								</Controls.SpacerWP>
+							</Controls.CardWP>
+						</Controls.FlexItemWP>
+						<Controls.FlexItemWP flex={ 1 }>
+							<Controls.CardWP
+								isBorderless
+								variant={ 'secondary' }
+								fullHeight
+							>
+								<Controls.SpacerWP
+									marginBottom={ 0 }
+									padding={ 5 }
+								>
+									<Controls.HeadingWP level={ 4 }>
+										{ I18n.__(
+											'Course bundles',
+											'ohmylms'
+										) }
+									</Controls.HeadingWP>
+									<p>
+										{ I18n.__(
+											'Course bundles are curated paths that learners can follow. Only published bundles are shown to learners.',
+											'ohmylms'
+										) }
+									</p>
+									{ bundles.length === 0 ? (
+										<p>
+											{ I18n.__(
+												'There are no course bundles yet.',
+												'ohmylms'
+											) }{ ' ' }
+											{ canManageBundles && (
+												<a
+													href={ adminHref(
+														'bundles'
+													) }
+													target="_blank"
+													rel="noopener noreferrer"
+												>
+													{ I18n.__(
+														'Create a course bundle',
+														'ohmylms'
+													) }
+												</a>
+											) }
+										</p>
+									) : (
+										<div
+											role="group"
+											aria-label={ I18n.__(
+												'Course bundles',
+												'ohmylms'
+											) }
+										>
+											{ bundles.map( ( bundle ) => (
+												<div
+													key={ bundle.id }
+													style={ {
+														margin: '6px 0',
+													} }
+												>
+													<CheckboxControl
+														__nextHasNoMarginBottom
+														label={
+															bundle.status ===
+															'published'
+																? bundle.title
+																: `${ bundle.title } (${ I18n.__( 'draft', 'ohmylms' ) })`
+														}
+														checked={ bundleIds.includes(
+															bundle.id
+														) }
+														disabled={
+															busy ||
+															! canManageBundles
+														}
+														onChange={ (
+															checked
+														) => {
+															const next =
+																toggleId(
+																	bundleIds,
+																	bundle.id,
+																	checked
+																);
+															if (
+																! sameIds(
+																	next,
+																	bundleIds
+																)
+															) {
+																save(
+																	'bundle_ids',
+																	next,
+																	bundleIds,
+																	setBundleIds
+																);
+															}
+														} }
+													/>
+												</div>
+											) ) }
+										</div>
+									) }
+									{ ! canManageBundles &&
+										bundles.length > 0 && (
+											<p>
+												{ I18n.__(
+													'Only administrators can change which course bundles a course is in.',
+													'ohmylms'
+												) }
+											</p>
+										) }
+									{ canManageBundles &&
+										bundles.length > 0 && (
+											<p>
+												<a
+													href={ adminHref(
+														'bundles'
+													) }
+													target="_blank"
+													rel="noopener noreferrer"
+												>
+													{ I18n.__(
+														'Manage course bundles',
+														'ohmylms'
+													) }
+												</a>
+											</p>
+										) }
+								</Controls.SpacerWP>
+							</Controls.CardWP>
+						</Controls.FlexItemWP>
+					</Controls.FlexWP>
+				</Controls.SpacerWP>
+			</Controls.CardWP>
+		);
+	};
 }

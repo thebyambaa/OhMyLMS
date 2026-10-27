@@ -1,5 +1,7 @@
 .ohmylms-page {
+
     .ohmylms-single-course-layout-2 {
+
         .ohmylms-course-chapters {
             margin-top: 40px;
 
@@ -29,6 +31,7 @@
 
                 .ohmylms-chapter-toggle {
                     line-height: 1;
+
                     button {
                         color: var(--ohmylms-primary-color);
                         font-size: 14px;
@@ -124,6 +127,7 @@
                     &:first-child {
                         margin-top: 10px;
                     }
+
                     &:last-child {
                         padding-bottom: 0;
                     }
@@ -192,14 +196,12 @@
                 border-radius: 8px;
                 border: 1px solid #EBECED;
                 background: transparent;
-                display: block;
                 cursor: pointer;
                 height: 40px;
                 padding: 10px;
                 color: var(--ohmylms-primary-color);
                 font-size: 14px;
                 font-weight: 500;
-                line-height: 1;
                 margin-top: 20px;
                 line-height: 1;
                 display: flex;
@@ -219,6 +221,7 @@
 }
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-course-chapters .ohmylms-single-chapter .chapter-title {
         font-size: 14px;
     }
@@ -231,15 +234,18 @@
 
 
 @media screen and (max-width: 767px) {
-    .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-table .ohmylms-tr .ohmylms-mobile-td .time:before {
+
+    .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-table .ohmylms-tr .ohmylms-mobile-td .time::before {
         width: 36px;
     }
 }
 
 @media screen and (max-width: 575px) {
+
     .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-course-chapters .chapters-header .chapters-header-left {
         width: 100%;
     }
+
     .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-course-chapters .chapters-header {
         margin-bottom: 12px;
         flex-flow: column;
@@ -251,17 +257,20 @@
     .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-course-chapters .ohmylms-single-chapter {
         padding: 12px 12px;
     }
+
     .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-course-chapters .ohmylms-single-chapter .chapter-title {
-        row-gap: 5px;
         gap: 9px;
     }
+
     .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-course-chapters .ohmylms-single-chapter .chapter-title .arrow {
         order: 3;
     }
+
     .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-course-chapters .ohmylms-single-chapter .chapter-title-text {
         width: calc(100% - 24px);
         order: 2;
     }
+
     .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-course-chapters .ohmylms-single-chapter .chapter-info {
         order: 1;
         margin: 0;

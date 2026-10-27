@@ -1,9 +1,12 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
 
-namespace CodeRex\Ecommerce\Gateways;
+namespace OhMyLMS\Commerce\Gateways;
 
 use OhMyLMS\Abstracts\SettingsPage;
 
+/**
+ * Plugin gateways implementation.
+ */
 class Gateways extends SettingsPage {
 
 	/**
@@ -25,6 +28,8 @@ class Gateways extends SettingsPage {
 
 
 	/**
+	 * Instance.
+	 *
 	 * @return Gateways
 	 * @since 1.0.0
 	 */
@@ -51,10 +56,10 @@ class Gateways extends SettingsPage {
 	 */
 	public function init() {
 		$load_gateways = array(
-			'GatewayOffline',
-			'GatewayStripeIntents',
+			'OhMyLMS_Gateway_Offline',
+			'OhMyLMS_Gateway_Stripe_Intents',
 			'GatewayPaypal',
-			\CodeRex\Ecommerce\Gateways\QPay\GatewayQPay::class,
+			\OhMyLMS\Commerce\Gateways\QPay\GatewayQPay::class,
 		);
 
 		$load_gateways = apply_filters( 'ohmylms_payment_gateways', $load_gateways );
@@ -63,7 +68,7 @@ class Gateways extends SettingsPage {
 		$order_end = 999;
 
 		foreach ( $load_gateways as $gateway ) {
-			
+
 			if ( is_string( $gateway ) && class_exists( $gateway ) ) {
 				$gateway = new $gateway();
 				if ( isset( $ordering[ $gateway->id ] ) && is_numeric( $ordering[ $gateway->id ] ) ) {
@@ -80,6 +85,7 @@ class Gateways extends SettingsPage {
 
 	/**
 	 * Initialize paypal
+	 *
 	 * @return \PaypalGateway
 	 * @since 1.0.0
 	 */
@@ -129,7 +135,7 @@ class Gateways extends SettingsPage {
 	 */
 	public function get_payment_gateway_settings() {
 		$payment_gateways = $this->get_payment_gateways();
-		$settings = array();
+		$settings         = array();
 		foreach ( $payment_gateways as $gateway ) {
 			$settings[ $gateway->id ] = $gateway->get_settings();
 		}
@@ -189,6 +195,9 @@ class Gateways extends SettingsPage {
 	}
 
 
+	/**
+	 * Output for Gateways.
+	 */
 	public function output() {
 		echo '<h1>' . esc_html__( 'Payment Gateways', 'ohmylms' ) . '</h1>';
 	}

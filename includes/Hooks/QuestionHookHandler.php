@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Handles hooks related to lessons in the OhMyLMS plugin.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Hooks;
 
@@ -24,6 +29,9 @@ class QuestionHookHandler extends HookHandler {
 	/**
 	 * Link lesson with chapter.
 	 * Update
+	 *
+	 * @param mixed $question Question.
+	 * @param mixed $request REST request.
 	 */
 	public function link_question_with_quiz( $question, $request ) {
 
@@ -46,10 +54,10 @@ class QuestionHookHandler extends HookHandler {
 	/**
 	 * Update the relationship between a chapter and a lesson.
 	 *
-	 * @param int $chapter_id The ID of the chapter.
-	 * @param int $lesson_id The ID of the lesson.
-	 * @param int $order_number The order number of the lesson in the chapter.
-	 *
+	 * @param mixed $quiz_id Quiz identifier.
+	 * @param mixed $question_id Question identifier.
+	 * @param int   $order_number The order number of the lesson in the chapter.
+	 * .
 	 * @return void
 	 *
 	 * @since 1.0.0
@@ -62,16 +70,12 @@ class QuestionHookHandler extends HookHandler {
 		global $wpdb;
 		$table_name = $wpdb->prefix . OHMYLMS_QUIZ_QUESTION_RELATIONSHIP;
 
-		// Check if the relationship already exists
+		// Check if the relationship already exists.
 		$exists = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT ID FROM $table_name WHERE quiz_id = %d AND question_id = %d LIMIT 1",
-				$quiz_id,
-				$question_id
-			)
+			$wpdb->prepare( 'SELECT ID FROM %i WHERE quiz_id = %d AND question_id = %d LIMIT 1', $table_name, $quiz_id, $question_id )
 		);
 
-		// If exists, update the relationship, otherwise insert a new one
+		// If exists, update the relationship, otherwise insert a new one.
 		if ( $exists ) {
 			$wpdb->update(
 				$table_name,
@@ -112,8 +116,7 @@ class QuestionHookHandler extends HookHandler {
 	/**
 	 * Unlink a lesson from a chapter.
 	 *
-	 * @param \WP_Post $lesson The lesson post object.
-	 *
+	 * @param mixed $request REST request.
 	 * @return void
 	 *
 	 * @since 1.0.0
@@ -140,21 +143,32 @@ class QuestionHookHandler extends HookHandler {
 		);
 	}
 
+	/**
+	 * Save or update question answer for Question hook handler.
+	 *
+	 * @param mixed $question Question.
+	 * @param mixed $request REST request.
+	 */
 	public function save_or_update_question_answer( $question, $request ) {
 		$answers = ! empty( $request['questions'] ) ? $request['questions'] : array();
 		if ( empty( $answers ) || ! is_a( $question, 'WP_Post' ) ) {
 			return;
 		}
 		// Delegate to the ownership-checked writer; foreign option IDs are rejected.
-		\OhMyLMS\QuestionBank\DraftWriter::save( array( 'id' => $question->ID, 'questions' => $answers ) );
+		\OhMyLMS\QuestionBank\DraftWriter::save(
+			array(
+				'id'        => $question->ID,
+				'questions' => $answers,
+			)
+		);
 	}
 
 	/**
 	 * Update question answer meta data.
 	 *
-	 * @param int   $answer_id   The ID of the answer.
+	 * @param int   $answer_id The ID of the answer.
 	 * @param array $answer_data The answer data.
-	 *
+	 * .
 	 * @return void
 	 *
 	 * @since 1.0.0
@@ -164,48 +178,44 @@ class QuestionHookHandler extends HookHandler {
 
 		$table = $wpdb->prefix . 'ohmylms_question_answermeta';
 
-		// Define allowed meta keys
-		$allowed_keys = [
+		// Define allowed meta keys.
+		$allowed_keys = array(
 			'thumbnail_id'  => '_thumbnail_id',
-			'image_url'  	=> '_image_url',
+			'image_url'     => '_image_url',
 			'matching_data' => '_matching_data',
-		];
+		);
 
-		foreach ( $allowed_keys as $key=>$meta_key ) {
+		foreach ( $allowed_keys as $key => $meta_key ) {
 			if ( isset( $answer_data[ $key ] ) ) {
 				$meta_value = maybe_serialize( $answer_data[ $key ] );
 
-				// Check if the meta already exists
+				// Check if the meta already exists.
 				$existing = $wpdb->get_var(
-					$wpdb->prepare(
-						"SELECT meta_value FROM $table WHERE answer_id = %d AND meta_key = %s",
-						$answer_id,
-						$meta_key
-					)
+					$wpdb->prepare( 'SELECT meta_value FROM %i WHERE answer_id = %d AND meta_key = %s', $table, $answer_id, $meta_key )
 				);
 
 				if ( null !== $existing ) {
-					// Update existing meta
+					// Update existing meta.
 					$wpdb->update(
 						$table,
-						[ 'meta_value' => $meta_value ],
-						[
+						array( 'meta_value' => $meta_value ),
+						array(
 							'answer_id' => $answer_id,
 							'meta_key'  => $meta_key,
-						],
-						[ '%s' ],
-						[ '%d', '%s' ]
+						),
+						array( '%s' ),
+						array( '%d', '%s' )
 					);
 				} else {
-					// Insert new meta
+					// Insert new meta.
 					$wpdb->insert(
 						$table,
-						[
+						array(
 							'answer_id'  => $answer_id,
 							'meta_key'   => $meta_key,
 							'meta_value' => $meta_value,
-						],
-						[ '%d', '%s', '%s' ]
+						),
+						array( '%d', '%s', '%s' )
 					);
 				}
 			}
@@ -216,8 +226,8 @@ class QuestionHookHandler extends HookHandler {
 	/**
 	 * Update or add meta data for a question answer.
 	 *
-	 * @param int    $answer_id  The ID of the answer.
-	 * @param string $meta_key   The meta key.
+	 * @param int    $answer_id The ID of the answer.
+	 * @param string $meta_key The meta key.
 	 * @param mixed  $meta_value The meta value.
 	 * @return void
 	 */
@@ -227,8 +237,8 @@ class QuestionHookHandler extends HookHandler {
 
 		$value = maybe_serialize( $meta_value );
 
-		// Check if the meta key already exists for the given answer_id
-		$existing_meta = $wpdb->get_var( $wpdb->prepare( "SELECT meta_key FROM $table_name WHERE answer_id = %d AND meta_key = %s", $answer_id, $meta_key ) );
+		// Check if the meta key already exists for the given answer_id.
+		$existing_meta = $wpdb->get_var( $wpdb->prepare( 'SELECT meta_key FROM %i WHERE answer_id = %d AND meta_key = %s', $table_name, $answer_id, $meta_key ) );
 
 		if ( empty( $meta_value ) ) {
 			if ( null !== $existing_meta ) {
@@ -246,7 +256,7 @@ class QuestionHookHandler extends HookHandler {
 		}
 
 		if ( null !== $existing_meta ) {
-			// Update existing meta
+			// Update existing meta.
 			$wpdb->update(
 				$table_name,
 				array( 'meta_value' => $value ),
@@ -258,7 +268,7 @@ class QuestionHookHandler extends HookHandler {
 				array( '%d', '%s' )
 			);
 		} else {
-			// Insert new meta
+			// Insert new meta.
 			$wpdb->insert(
 				$table_name,
 				array(

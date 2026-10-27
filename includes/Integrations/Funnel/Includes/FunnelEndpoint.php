@@ -1,16 +1,21 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * FunnelEndpoint Class.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Integrations\Funnel\Includes;
 
-use CodeRex\Ecommerce\SubscriptionManager;
+use OhMyLMS\Commerce\SubscriptionManager;
 
-use function CodeRex\Ecommerce\ecommerce;
+use function OhMyLMS\Commerce\ecommerce;
 
 /**
  * FunnelEndpoint Class
- * 
+ *
  * Handles funnel step endpoints and URL processing.
- * 
+ *
  * @since 1.0.0
  */
 class FunnelEndpoint {
@@ -22,8 +27,8 @@ class FunnelEndpoint {
 	 * @since 1.0.0
 	 */
 	private $new_tax_amount;
-	
-	
+
+
 	/**
 	 * New discount amount after upsell/downsell purchase.
 	 *
@@ -49,14 +54,14 @@ class FunnelEndpoint {
 	 * @since 1.0.0
 	 */
 	public function add_funnel_endpoint() {
-		// Add rewrite rule for new URL format: /post-checkout-funnel/order/{order_id}/step/{step_number}
+		// Add rewrite rule for new URL format: /post-checkout-funnel/order/{order_id}/step/{step_number}.
 		add_rewrite_rule(
 			'^post-checkout-funnel/order/([0-9]+)/step/([^/]+)/?$',
 			'index.php?funnel_step=1&order_id=$matches[1]&step=$matches[2]',
 			'top'
 		);
-		
-		// Add rewrite rule for funnel actions: /post-checkout-funnel/order/{order_id}/step/{step_number}/action/{action}
+
+		// Add rewrite rule for funnel actions: /post-checkout-funnel/order/{order_id}/step/{step_number}/action/{action}.
 		add_rewrite_rule(
 			'^post-checkout-funnel/order/([0-9]+)/step/([^/]+)/action/([^/]+)/?$',
 			'index.php?funnel_step=1&order_id=$matches[1]&step=$matches[2]&action=$matches[3]',
@@ -86,74 +91,74 @@ class FunnelEndpoint {
 	 */
 	public function handle_funnel_endpoint() {
 		global $wp_query;
-		// Check if this is a funnel step request
+		// Check if this is a funnel step request.
 		if ( ! isset( $wp_query->query_vars['funnel_step'] ) && ! get_query_var( 'funnel-step' ) ) {
 			return;
 		}
-		
-		// Get query parameters
-		$order_id = get_query_var( 'order_id' );
-		$step = get_query_var( 'step' );
-		$action = get_query_var( 'action' );
 
-		// Validate required parameters
+		// Get query parameters.
+		$order_id = get_query_var( 'order_id' );
+		$step     = get_query_var( 'step' );
+		$action   = get_query_var( 'action' );
+
+		// Validate required parameters.
 		if ( empty( $order_id ) || empty( $step ) ) {
-			wp_die( __( 'Invalid funnel request.', 'ohmylms' ), __( 'Error', 'ohmylms' ), array( 'response' => 400 ) );
+			wp_die( esc_html__( 'Invalid funnel request.', 'ohmylms' ), esc_html__( 'Error', 'ohmylms' ), array( 'response' => 400 ) );
 		}
 
-		// Handle funnel actions (accept/decline)
+		// Handle funnel actions (accept/decline).
 		if ( ! empty( $action ) ) {
 			$this->handle_funnel_action( $order_id, $step, $action );
 			return;
 		}
-		// Display funnel step
+		// Display funnel step.
 		$this->display_funnel_step( $order_id, $step );
 	}
 
 	/**
 	 * Handle funnel step actions (accept/decline).
 	 *
-	 * @param int $order_id The order ID.
+	 * @param int    $order_id The order ID.
 	 * @param string $step The current step.
 	 * @param string $action The action (accept/decline).
 	 * @since 1.0.0
 	 */
 	private function handle_funnel_action( $order_id, $step, $action ) {
-		// Verify nonce for security
+		// Verify nonce for security.
 		if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'] ?? '', 'funnel_action_' . $order_id . '_' . $step ) ) {
-			wp_die( __( 'Security check failed.', 'ohmylms' ), __( 'Error', 'ohmylms' ), array( 'response' => 403 ) );
+			wp_die( esc_html__( 'Security check failed.', 'ohmylms' ), esc_html__( 'Error', 'ohmylms' ), array( 'response' => 403 ) );
 		}
 
-		// Get funnel session data
+		// Get funnel session data.
 		$funnel_data = FunnelManager::get_funnel_session();
 
 		if ( ! $funnel_data || $funnel_data['order_id'] != $order_id ) {
-			wp_die( __( 'Invalid funnel session.', 'ohmylms' ), __( 'Error', 'ohmylms' ), array( 'response' => 400 ) );
+			wp_die( esc_html__( 'Invalid funnel session.', 'ohmylms' ), esc_html__( 'Error', 'ohmylms' ), array( 'response' => 400 ) );
 		}
 
-		// Process the action
-		if ( $action === 'accept' ) {
+		// Process the action.
+		if ( 'accept' === $action ) {
 			$this->process_funnel_accept( $order_id, $step, $funnel_data );
-		} elseif ( $action === 'decline' ) {
+		} elseif ( 'decline' === $action ) {
 			$this->process_funnel_decline( $order_id, $step, $funnel_data );
 		} else {
-			wp_die( __( 'Invalid action.', 'ohmylms' ), __( 'Error', 'ohmylms' ), array( 'response' => 400 ) );
+			wp_die( esc_html__( 'Invalid action.', 'ohmylms' ), esc_html__( 'Error', 'ohmylms' ), array( 'response' => 400 ) );
 		}
 	}
 
 	/**
 	 * Process funnel offer acceptance.
 	 *
-	 * @param int $order_id The order ID.
+	 * @param int    $order_id The order ID.
 	 * @param string $step The current step.
-	 * @param array $funnel_data The funnel session data.
+	 * @param array  $funnel_data The funnel session data.
 	 * @since 1.0.0
 	 */
 	private function process_funnel_accept( $order_id, $step, $funnel_data ) {
-		// Get the current funnel step data
-		$course_id = $funnel_data['course_id'];
+		// Get the current funnel step data.
+		$course_id    = $funnel_data['course_id'];
 		$funnel_steps = get_post_meta( $course_id, '_funnel_steps', true );
-		
+
 		$current_step_data = null;
 		foreach ( $funnel_steps as $funnel_step ) {
 			if ( $funnel_step['step_id'] === 'step_' . $step ) {
@@ -163,33 +168,33 @@ class FunnelEndpoint {
 		}
 
 		if ( ! $current_step_data ) {
-			wp_die( __( 'Invalid funnel step.', 'ohmylms' ), __( 'Error', 'ohmylms' ), array( 'response' => 400 ) );
+			wp_die( esc_html__( 'Invalid funnel step.', 'ohmylms' ), esc_html__( 'Error', 'ohmylms' ), array( 'response' => 400 ) );
 		}
 
-		// Process the upsell/downsell purchase first
+		// Process the upsell/downsell purchase first.
 		$purchase_result = $this->process_upsell_downsell_purchase( $order_id, $current_step_data );
-		
-		// Check if purchase failed
+
+		// Check if purchase failed.
 		if ( is_wp_error( $purchase_result ) ) {
-			wp_die( $purchase_result->get_error_message(), __( 'Payment Error', 'ohmylms' ), array( 'response' => 400 ) );
+			wp_die( $purchase_result->get_error_message(), esc_html__( 'Payment Error', 'ohmylms' ), array( 'response' => 400 ) );
 		}
 
-		// Check accepted action from condition configuration
+		// Check accepted action from condition configuration.
 		$accepted_action = $current_step_data['condition']['accepted']['action'] ?? 'next_step';
 
-		if ( $accepted_action === 'thank_you_page' ) {
-			// Redirect directly to thank you page using payment gateway's return URL
+		if ( 'thank_you_page' === $accepted_action ) {
+			// Redirect directly to thank you page using payment gateway's return URL.
 			$thank_you_url = $this->get_gateway_return_url( $order_id );
 
-			// Clear funnel session since we're ending the funnel
+			// Clear funnel session since we're ending the funnel.
 			FunnelManager::clear_funnel_session();
 			wp_redirect( $thank_you_url );
-		} elseif ( $accepted_action === 'next_step' ) {
-			// Continue to next step
+		} elseif ( 'next_step' === $accepted_action ) {
+			// Continue to next step.
 			$next_step = $this->get_next_funnel_step( $funnel_steps, $step );
-			
+
 			if ( $next_step ) {
-				// Redirect to next step using new URL format
+				// Redirect to next step using new URL format.
 				$next_step_number = $next_step['step_id'];
 				if ( strpos( $next_step_number, 'step_' ) === 0 ) {
 					$next_step_number = substr( $next_step_number, 5 );
@@ -197,21 +202,21 @@ class FunnelEndpoint {
 				$next_url = home_url( sprintf( '/post-checkout-funnel/order/%d/step/%s', $order_id, $next_step_number ) );
 				wp_redirect( $next_url );
 			} else {
-				// No more steps, redirect to thank you page
+				// No more steps, redirect to thank you page.
 				$thank_you_url = $this->get_gateway_return_url( $order_id );
-				
-				// Clear funnel session
+
+				// Clear funnel session.
 				FunnelManager::clear_funnel_session();
-				
+
 				wp_redirect( $thank_you_url );
 			}
 		} else {
-			// Default fallback - go to thank you page
+			// Default fallback - go to thank you page.
 			$thank_you_url = $this->get_gateway_return_url( $order_id );
-			
-			// Clear funnel session
+
+			// Clear funnel session.
 			FunnelManager::clear_funnel_session();
-			
+
 			wp_redirect( $thank_you_url );
 		}
 		exit;
@@ -220,16 +225,16 @@ class FunnelEndpoint {
 	/**
 	 * Process funnel offer decline.
 	 *
-	 * @param int $order_id The order ID.
+	 * @param int    $order_id The order ID.
 	 * @param string $step The current step.
-	 * @param array $funnel_data The funnel session data.
+	 * @param array  $funnel_data The funnel session data.
 	 * @since 1.0.0
 	 */
 	private function process_funnel_decline( $order_id, $step, $funnel_data ) {
-		// Get the current funnel step data to check decline action
-		$course_id = $funnel_data['course_id'];
+		// Get the current funnel step data to check decline action.
+		$course_id    = $funnel_data['course_id'];
 		$funnel_steps = get_post_meta( $course_id, '_funnel_steps', true );
-		
+
 		$current_step_data = null;
 		foreach ( $funnel_steps as $funnel_step ) {
 			if ( $funnel_step['step_id'] === 'step_' . $step ) {
@@ -239,40 +244,40 @@ class FunnelEndpoint {
 		}
 
 		if ( ! $current_step_data ) {
-			wp_die( __( 'Invalid funnel step.', 'ohmylms' ), __( 'Error', 'ohmylms' ), array( 'response' => 400 ) );
+			wp_die( esc_html__( 'Invalid funnel step.', 'ohmylms' ), esc_html__( 'Error', 'ohmylms' ), array( 'response' => 400 ) );
 		}
 
-		// Check decline action - for now, just go to next step or thank you page
+		// Check decline action - for now, just go to next step or thank you page.
 		$decline_action = $current_step_data['condition']['declined']['action'] ?? 'next_step';
-		
-		if ( $decline_action === 'next_step' ) {
+
+		if ( 'next_step' === $decline_action ) {
 			$next_step = $this->get_next_funnel_step( $funnel_steps, $step );
 
 			if ( $next_step ) {
-				// Redirect to next step using new URL format
+				// Redirect to next step using new URL format.
 				$next_step_number = $next_step['step_id'];
 				if ( strpos( $next_step_number, 'step_' ) === 0 ) {
 					$next_step_number = substr( $next_step_number, 5 );
 				}
-				
+
 				$next_url = home_url( sprintf( '/post-checkout-funnel/order/%d/step/%s', $order_id, $next_step_number ) );
 				wp_redirect( $next_url );
 			} else {
-				// No more steps, redirect to thank you page
+				// No more steps, redirect to thank you page.
 				$thank_you_url = $this->get_gateway_return_url( $order_id );
-				
-				// Clear funnel session
+
+				// Clear funnel session.
 				FunnelManager::clear_funnel_session();
-				
+
 				wp_redirect( $thank_you_url );
 			}
 		} else {
-			// End funnel, redirect to thank you page
+			// End funnel, redirect to thank you page.
 			$thank_you_url = $this->get_gateway_return_url( $order_id );
-			
-			// Clear funnel session
+
+			// Clear funnel session.
 			FunnelManager::clear_funnel_session();
-			
+
 			wp_redirect( $thank_you_url );
 		}
 		exit;
@@ -281,14 +286,14 @@ class FunnelEndpoint {
 	/**
 	 * Get the next funnel step after the current one.
 	 *
-	 * @param array $funnel_steps All funnel steps.
+	 * @param array  $funnel_steps All funnel steps.
 	 * @param string $current_step_id Current step ID.
 	 * @return array|null Next step data or null if no next step.
 	 * @since 1.0.0
 	 */
 	private function get_next_funnel_step( $funnel_steps, $current_step_id ) {
 		$found_current = false;
-		
+
 		foreach ( $funnel_steps as $step ) {
 			if ( $found_current ) {
 				return $step;
@@ -298,28 +303,28 @@ class FunnelEndpoint {
 				$found_current = true;
 			}
 		}
-		
+
 		return null;
 	}
 
 	/**
 	 * Display funnel step page.
 	 *
-	 * @param int $order_id The order ID.
+	 * @param int    $order_id The order ID.
 	 * @param string $step The step to display.
 	 * @since 1.0.0
 	 */
 	private function display_funnel_step( $order_id, $step ) {
-		// Get funnel session data
+		// Get funnel session data.
 		$funnel_data = FunnelManager::get_funnel_session();
 		if ( ! $funnel_data || $funnel_data['order_id'] != $order_id ) {
-			wp_die( __( 'Invalid funnel session.', 'ohmylms' ), __( 'Error', 'ohmylms' ), array( 'response' => 400 ) );
+			wp_die( esc_html__( 'Invalid funnel session.', 'ohmylms' ), esc_html__( 'Error', 'ohmylms' ), array( 'response' => 400 ) );
 		}
 
-		// Get the funnel step data
-		$course_id = $funnel_data['course_id'];
+		// Get the funnel step data.
+		$course_id    = $funnel_data['course_id'];
 		$funnel_steps = get_post_meta( $course_id, '_funnel_steps', true );
-		
+
 		$step_data = null;
 		foreach ( $funnel_steps as $funnel_step ) {
 			if ( $funnel_step['step_id'] === 'step_' . $step ) {
@@ -329,32 +334,32 @@ class FunnelEndpoint {
 		}
 
 		if ( ! $step_data ) {
-			wp_die( __( 'Invalid funnel step.', 'ohmylms' ), __( 'Error', 'ohmylms' ), array( 'response' => 404 ) );
+			wp_die( esc_html__( 'Invalid funnel step.', 'ohmylms' ), esc_html__( 'Error', 'ohmylms' ), array( 'response' => 404 ) );
 		}
 
-		// Check if this step has an offer page ID - if so, redirect to that page
+		// Check if this step has an offer page ID - if so, redirect to that page.
 		if ( ! empty( $step_data['offer_page_id'] ) ) {
 			$offer_page_url = get_permalink( $step_data['offer_page_id'] );
-			
+
 			if ( $offer_page_url ) {
-				$order          = ecommerce_get_order( $order_id );
+				$order          = ohmylms_ecommerce_get_order( $order_id );
 				$payment_method = $order->get_payment_method();
 
 				// Initialize query arguments.
 				$query_args = array(
-					'order_id' => $order_id,
-					'step' => $step,
+					'order_id'     => $order_id,
+					'step'         => $step,
 					'funnel_nonce' => wp_create_nonce( 'funnel_action_' . $order_id . '_' . $step ),
 				);
-			
+
 				// Add token if payment method is PayPal.
-				if ( $payment_method === 'paypal' ) {
+				if ( 'paypal' === $payment_method ) {
 					$query_args['token'] = get_post_meta( $order_id, '_paypal_order_id', true );
 				}
-			
-				// Add funnel parameters to the offer page URL
+
+				// Add funnel parameters to the offer page URL.
 				$offer_page_url = add_query_arg( $query_args, $offer_page_url );
-			
+
 				wp_redirect( $offer_page_url );
 				exit;
 			}
@@ -364,24 +369,24 @@ class FunnelEndpoint {
 	/**
 	 * Process upsell/downsell purchase when user accepts the offer.
 	 *
-	 * @param int $order_id The original order ID.
+	 * @param int   $order_id The original order ID.
 	 * @param array $step_data The current funnel step data.
 	 * @return bool|WP_Error True on success, WP_Error on failure.
 	 * @since 1.0.0
 	 */
 	private function process_upsell_downsell_purchase( $order_id, $step_data ) {
-		// Get the original order
-		$original_order = ecommerce_get_order( $order_id );
+		// Get the original order.
+		$original_order = ohmylms_ecommerce_get_order( $order_id );
 		if ( ! $original_order ) {
 			return new \WP_Error( 'invalid_order', __( 'Original order not found.', 'ohmylms' ) );
 		}
 
-		// Determine offer type and get the appropriate product
+		// Determine offer type and get the appropriate product.
 		$offer_type = $step_data['offer_type'] ?? 'course';
-		$product = null;
+		$product    = null;
 		$product_id = null;
 
-		if ( $offer_type === 'course' ) {
+		if ( 'course' === $offer_type ) {
 			$product_id = $step_data['course_id'];
 			if ( empty( $product_id ) ) {
 				return new \WP_Error( 'invalid_course', __( 'Course not specified for upsell/downsell.', 'ohmylms' ) );
@@ -390,7 +395,7 @@ class FunnelEndpoint {
 			if ( ! $product ) {
 				return new \WP_Error( 'course_not_found', __( 'Course not found.', 'ohmylms' ) );
 			}
-		} elseif ( $offer_type === 'membership' ) {
+		} elseif ( 'membership' === $offer_type ) {
 			$product_id = $step_data['membership_id'];
 			if ( empty( $product_id ) ) {
 				return new \WP_Error( 'invalid_membership', __( 'Membership not specified for upsell/downsell.', 'ohmylms' ) );
@@ -409,21 +414,21 @@ class FunnelEndpoint {
 		$this->calculate_discount_amount( $product, $step_data );
 		// Apply tax to the final price and update order tax amount.
 		$final_price = $this->apply_tax_to_upsell_price( $final_price, $order_id );
-		
+
 		// Get payment method from original order.
 		$payment_method     = $original_order->get_payment_method();
 		$available_gateways = ecommerce()->gateways()->get_available_payment_gateways();
-		if (! isset($available_gateways[$payment_method])) {
+		if ( ! isset( $available_gateways[ $payment_method ] ) ) {
 			return new \WP_Error( 'unsupported_gateway', __( 'Upsell/downsell currently only supported for Stripe and Paypal payments.', 'ohmylms' ) );
 		}
 
-		$payment_result = $available_gateways[$payment_method]->process_offer_payment( $original_order, $product, $final_price, $step_data );
+		$payment_result = $available_gateways[ $payment_method ]->process_offer_payment( $original_order, $product, $final_price, $step_data );
 
 		if ( is_wp_error( $payment_result ) ) {
 			return $payment_result;
 		}
 
-		// Add the product to the original order
+		// Add the product to the original order.
 		$this->add_product_to_order( $original_order, $product, $final_price, $step_data, $offer_type );
 
 		return true;
@@ -433,71 +438,77 @@ class FunnelEndpoint {
 	 * Calculate the final price for upsell/downsell based on discount configuration.
 	 *
 	 * @param object $product The product object (course or membership).
-	 * @param array $step_data The funnel step data.
+	 * @param array  $step_data The funnel step data.
 	 * @return float The calculated final price.
 	 * @since 1.0.0
 	 */
 	private function calculate_upsell_price( $product, $step_data ) {
-		// Get the original product price
-		$original_price = is_callable( array( $product, 'get_price' ) ) ? $product->get_price() : $product->price;
-        $signup_fee = method_exists($product, 'get_sign_up_fee') ? floatval($product->get_sign_up_fee()) : 0;
+		// Get the original product price.
+		$original_price  = is_callable( array( $product, 'get_price' ) ) ? $product->get_price() : $product->price;
+		$signup_fee      = method_exists( $product, 'get_sign_up_fee' ) ? floatval( $product->get_sign_up_fee() ) : 0;
 		$original_price += $signup_fee;
-		
-		// Get discount configuration
-		$discount_type = $step_data['discount_type'] ?? 'no_discount';
+
+		// Get discount configuration.
+		$discount_type  = $step_data['discount_type'] ?? 'no_discount';
 		$discount_value = floatval( $step_data['discount_value'] ?? 0 );
 
 		$final_price = $original_price;
 
 		switch ( $discount_type ) {
 			case 'percentage':
-				// Apply percentage discount
+				// Apply percentage discount.
 				$discount_amount = ( $original_price * $discount_value ) / 100;
-				$final_price = $original_price - $discount_amount;
+				$final_price     = $original_price - $discount_amount;
 				break;
 
 			case 'amount':
-				// Apply fixed amount discount
+				// Apply fixed amount discount.
 				$final_price = $original_price - $discount_value;
 				break;
 
 			case 'no_discount':
 			default:
-				// No discount, use original price
+				// No discount, use original price.
 				$final_price = $original_price;
 				break;
 		}
 
-		// Ensure final price is not negative
+		// Ensure final price is not negative.
 		$final_price = max( 0, $final_price );
 
 		return $final_price;
 	}
 
 
+	/**
+	 * Calculate discount amount for Funnel endpoint.
+	 *
+	 * @param mixed $product Product.
+	 * @param mixed $step_data Step data.
+	 */
 	private function calculate_discount_amount( $product, $step_data ) {
-		// Get discount configuration
-		$original_price = is_callable( array( $product, 'get_price' ) ) ? $product->get_price() : $product->price;
-		$signup_fee = method_exists($product, 'get_sign_up_fee') ? floatval($product->get_sign_up_fee()) : 0;
+		// Get discount configuration.
+		$original_price  = is_callable( array( $product, 'get_price' ) ) ? $product->get_price() : $product->price;
+		$signup_fee      = method_exists( $product, 'get_sign_up_fee' ) ? floatval( $product->get_sign_up_fee() ) : 0;
 		$original_price += $signup_fee;
-		$discount_type = $step_data['discount_type'] ?? 'no_discount';
-		$discount_value = floatval( $step_data['discount_value'] ?? 0 );
+		$discount_type   = $step_data['discount_type'] ?? 'no_discount';
+		$discount_value  = floatval( $step_data['discount_value'] ?? 0 );
 
 		$this->new_discount_amount = 0;
 		switch ( $discount_type ) {
 			case 'percentage':
-				// Apply percentage discount
+				// Apply percentage discount.
 				$this->new_discount_amount = ( $original_price * $discount_value ) / 100;
 				break;
 
 			case 'amount':
-				// Apply fixed amount discount
-				$this->new_discount_amount =$discount_value;
+				// Apply fixed amount discount.
+				$this->new_discount_amount = $discount_value;
 				break;
 
 			case 'no_discount':
 			default:
-				// No discount, use original price
+				// No discount, use original price.
 				$this->new_discount_amount = 0;
 				break;
 		}
@@ -507,20 +518,20 @@ class FunnelEndpoint {
 	 * Apply tax to upsell price and update order tax amount.
 	 *
 	 * @param float $price The price before tax.
-	 * @param int $order_id The order ID.
+	 * @param int   $order_id The order ID.
 	 * @return float The price including tax.
 	 * @since 1.0.0
 	 */
-	private function apply_tax_to_upsell_price( $price, $order_id ){
-		// Check if tax is enabled globally (you may need to adjust this based on your tax settings)
-		$tax_enabled = get_option( 'ohmylms_tax_enabled', 'no') === 'yes';
-		if (! $tax_enabled) {
+	private function apply_tax_to_upsell_price( $price, $order_id ) {
+		// Check if tax is enabled globally (you may need to adjust this based on your tax settings).
+		$tax_enabled = get_option( 'ohmylms_tax_enabled', 'no' ) === 'yes';
+		if ( ! $tax_enabled ) {
 			return $price;
 		}
 
-		// Get tax rate from order meta
+		// Get tax rate from order meta.
 		$tax_rate = get_post_meta( $order_id, '_tax_rate', true );
-		if (empty($tax_rate) || ! is_numeric($tax_rate)) {
+		if ( empty( $tax_rate ) || ! is_numeric( $tax_rate ) ) {
 			return $price;
 		}
 
@@ -533,15 +544,15 @@ class FunnelEndpoint {
 		// Get current tax amount from order.
 		$current_tax_amount = get_post_meta( $order_id, '_tax_amount', true );
 		$current_tax_amount = is_numeric( $current_tax_amount ) ? floatval( $current_tax_amount ) : 0;
-		
+
 		// Add the new tax amount to the existing tax amount.
 		$this->new_tax_amount = $current_tax_amount + $tax_amount;
-		
-		if( !\CodeRex\Ecommerce\Includes\Tax\TaxService::get_instance()->prices_include_tax() ) {
+
+		if ( ! \OhMyLMS\Commerce\Includes\Tax\TaxService::get_instance()->prices_include_tax() ) {
 			// If prices include tax, add tax to the price.
 			$price += $tax_amount;
 		}
-		
+
 		// Return price including tax.
 		return $price;
 	}
@@ -551,78 +562,85 @@ class FunnelEndpoint {
 	 *
 	 * @param object $original_order The original order.
 	 * @param object $product The product to add (course or membership).
-	 * @param float $final_price The final price after discount.
-	 * @param array $step_data The funnel step data.
+	 * @param float  $final_price The final price after discount.
+	 * @param array  $step_data The funnel step data.
 	 * @param string $offer_type The offer type ('course' or 'membership').
 	 * @return void
 	 * @since 1.0.0
 	 */
 	private function add_product_to_order( $original_order, $product, $final_price, $step_data, $offer_type ) {
-		// Create appropriate order item based on offer type
-		$signup_fee = method_exists($product, 'get_sign_up_fee') ? floatval($product->get_sign_up_fee()) : 0;
-		if ( $offer_type === 'course' ) {
-			$item = new \CodeRex\Ecommerce\Data\OrderItemCourse();
-			
-			$item->set_props( array(
-				'name' => $product->get_name(),
-				'course_id' => $product->get_id(),
-				'quantity' => 1,
-				'subtotal' => $product->get_price() + $signup_fee, // Original price
-				'total' => $product->get_price() + $signup_fee, // Price after discount
-			) );
-		} elseif ( $offer_type === 'membership' ) {
-			// Check if OrderItemMembership class exists, otherwise use generic order item
-			if ( class_exists( '\CodeRex\Ecommerce\Data\OrderItemMembership' ) ) {
-				$item = new \CodeRex\Ecommerce\Data\OrderItemMembership();
-				$item->set_props( array(
-					'name' => $product->get_name(),
+		// Create appropriate order item based on offer type.
+		$signup_fee = method_exists( $product, 'get_sign_up_fee' ) ? floatval( $product->get_sign_up_fee() ) : 0;
+		if ( 'course' === $offer_type ) {
+			$item = new \OhMyLMS\Commerce\Data\OrderItemCourse();
+
+			$item->set_props(
+				array(
+					'name'      => $product->get_name(),
 					'course_id' => $product->get_id(),
-					'quantity' => 1,
-					'subtotal' => $product->get_price() + $signup_fee, // Original price
-					'total' => $product->get_price() + $signup_fee, // Price after discount
-				) );
+					'quantity'  => 1,
+					'subtotal'  => $product->get_price() + $signup_fee, // Original price.
+					'total'     => $product->get_price() + $signup_fee, // Price after discount.
+				)
+			);
+		} elseif ( 'membership' === $offer_type ) {
+			// Check if OrderItemMembership class exists, otherwise use generic order item.
+			if ( class_exists( '\OhMyLMS\Commerce\Data\OrderItemMembership' ) ) {
+				$item = new \OhMyLMS\Commerce\Data\OrderItemMembership();
+				$item->set_props(
+					array(
+						'name'      => $product->get_name(),
+						'course_id' => $product->get_id(),
+						'quantity'  => 1,
+						'subtotal'  => $product->get_price() + $signup_fee, // Original price.
+						'total'     => $product->get_price() + $signup_fee, // Price after discount.
+					)
+				);
 			} else {
-				$item = new \CodeRex\Ecommerce\Data\OrderItemMembership();
-				// Fallback to generic order item
-				$item = new \CodeRex\Ecommerce\Data\OrderItem();
-				$item->set_props( array(
-					'name' => $product->get_name(),
-					'quantity' => 1,
-					'subtotal' => $product->get_price() + $signup_fee, // Original price
-					'total' => $product->get_price() + $signup_fee, // Price after discount
-				) );
+				$item = new \OhMyLMS\Commerce\Data\OrderItemMembership();
+				// Fallback to generic order item.
+				$item = new \OhMyLMS\Commerce\Data\OrderItem();
+				$item->set_props(
+					array(
+						'name'     => $product->get_name(),
+						'quantity' => 1,
+						'subtotal' => $product->get_price() + $signup_fee, // Original price.
+						'total'    => $product->get_price() + $signup_fee, // Price after discount.
+					)
+				);
 				$item->update_meta_data( 'membership_id', $product->get_id() );
 			}
 		}
 
-		// Set the order ID on the item BEFORE saving
+		// Set the order ID on the item BEFORE saving.
 		$item->set_order_id( $original_order->get_id() );
 
-		// Add meta data for tracking
+		// Add meta data for tracking.
 		$item->update_meta_data( 'funnel_step', $step_data['step_id'] );
 		$item->update_meta_data( 'step_type', $step_data['step_type'] );
 		$item->update_meta_data( 'offer_type', $offer_type );
 		$item->update_meta_data( 'discount_type', $step_data['discount_type'] ?? 'no_discount' );
 		$item->update_meta_data( 'discount_value', $step_data['discount_value'] ?? 0 );
-		$item->update_meta_data( 'original_price', $product->get_price() + $signup_fee ); // Store original price
-		
-		// Add item to order first
+		$item->update_meta_data( 'original_price', $product->get_price() + $signup_fee ); // Store original price.
+
+		// Add item to order first.
 		$original_order->add_item( $item );
-		// Save the item to ensure meta data is stored with correct order_id
+		// Save the item to ensure meta data is stored with correct order_id.
 		$item->save();
 
-		// Update order totals
+		// Update order totals.
 		$current_total = $original_order->get_total();
-		$new_total = $current_total + $final_price;
-		$discount = $original_order->get_cart_discount();
-		$discount += $this->new_discount_amount;
+		$new_total     = $current_total + $final_price;
+		$discount      = $original_order->get_cart_discount();
+		$discount     += $this->new_discount_amount;
 		$original_order->set_cart_discount( $discount );
 		$original_order->set_total( $new_total );
 		$original_order->set_tax_amount( $this->new_tax_amount );
 
-		// Add order note
+		// Add order note.
 		$note = sprintf(
-			__( '%s (%s) added via funnel step %s. Original price: %s, Final price: %s', 'ohmylms' ),
+			/* translators: %1$s: text value; %2$s: text value; %3$s: text value; %4$s: text value; %5$s: text value. */
+			__( '%1$s (%2$s) added via funnel step %3$s. Original price: %4$s, Final price: %5$s', 'ohmylms' ),
 			$product->get_name(),
 			$offer_type,
 			$step_data['step_id'],
@@ -631,21 +649,23 @@ class FunnelEndpoint {
 		);
 		$original_order->add_order_note( $note );
 
-		// Save the order
+		// Save the order.
 		$original_order->save();
-		// Process enrollment for the new product
-		if ( $offer_type === 'course' ) {
+		// Process enrollment for the new product.
+		if ( 'course' === $offer_type ) {
 			$this->process_upsell_enrollment( $original_order->get_student_id(), $product->get_id(), $original_order );
-		} elseif ( $offer_type === 'membership' ) {
+		} elseif ( 'membership' === $offer_type ) {
 			$this->process_upsell_membership_enrollment( $original_order->get_student_id(), $product->get_id(), $original_order );
 			$membership = ohmylms_get_membership( $product->get_id() );
-			if( $membership && 'one_time' !== $membership->get_subscription_period() ) {
+			if ( $membership && 'one_time' !== $membership->get_subscription_period() ) {
 				$subscription_id = SubscriptionManager::create_subscription( $original_order, $product->get_id() );
 				if ( is_wp_error( $subscription_id ) ) {
-					$original_order->add_order_note( sprintf( __( 'Automated subscription creation failed. Error: %s', 'ohmylms' ), $subscription_id->get_error_message() ) );
+					$original_order->add_order_note( sprintf( /* translators: %s: text value. */
+					__( 'Automated subscription creation failed. Error: %s', 'ohmylms' ), $subscription_id->get_error_message() ) );
 				} elseif ( $subscription_id ) {
 					SubscriptionManager::mark_subscription_active( $subscription_id );
-					$original_order->add_order_note( sprintf( __( 'Subscription #%1$d created and activated for membership: %2$s.', 'ohmylms' ), $subscription_id, get_the_title($product->get_id()) ) );
+					$original_order->add_order_note( sprintf( /* translators: %1$d: number; %2$s: text value. */
+					__( 'Subscription #%1$d created and activated for membership: %2$s.', 'ohmylms' ), $subscription_id, get_the_title( $product->get_id() ) ) );
 				}
 			}
 		}
@@ -654,8 +674,8 @@ class FunnelEndpoint {
 	/**
 	 * Process enrollment for upsell/downsell course.
 	 *
-	 * @param int $student_id The student ID.
-	 * @param int $course_id The course ID.
+	 * @param int    $student_id The student ID.
+	 * @param int    $course_id The course ID.
 	 * @param object $order The order object.
 	 * @return void
 	 * @since 1.0.0
@@ -677,17 +697,13 @@ class FunnelEndpoint {
 
 		$student = new \OhMyLMS\Data\Student( get_current_user_id() );
 		if ( $course_id && $student && ! $student->maybe_enrolled( $course_id ) ) {
-			// Check if the record exists
+			// Check if the record exists.
 			$existing_record = $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COUNT(*) FROM $enrollment_table WHERE user_id = %d AND course_id = %d",
-					$student_id,
-					$course_id
-				)
+				$wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE user_id = %d AND course_id = %d', $enrollment_table, $student_id, $course_id )
 			);
 
 			if ( $existing_record ) {
-				// Update the existing record
+				// Update the existing record.
 				$wpdb->update(
 					$enrollment_table,
 					array(
@@ -717,8 +733,8 @@ class FunnelEndpoint {
 	/**
 	 * Process membership enrollment for upsell/downsell membership.
 	 *
-	 * @param int $student_id The student ID.
-	 * @param int $membership_id The membership ID.
+	 * @param int    $student_id The student ID.
+	 * @param int    $membership_id The membership ID.
 	 * @param object $order The order object.
 	 * @return void
 	 * @since 1.0.0
@@ -738,17 +754,13 @@ class FunnelEndpoint {
 			'start_date'    => current_time( 'mysql' ),
 		);
 
-		// Check if the record exists
+		// Check if the record exists.
 		$existing_record = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM $membership_table WHERE user_id = %d AND membership_id = %d",
-				$student_id,
-				$membership_id
-			)
+			$wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE user_id = %d AND membership_id = %d', $membership_table, $student_id, $membership_id )
 		);
 
 		if ( $existing_record ) {
-			// Update the existing record
+			// Update the existing record.
 			$wpdb->update(
 				$membership_table,
 				array(
@@ -767,13 +779,13 @@ class FunnelEndpoint {
 				$membership_table,
 				$membership_data
 			);
-			do_action('ohmylms_after_enrolled_student', $order->get_id());
+			do_action( 'ohmylms_after_enrolled_student', $order->get_id() );
 		}
 
 		$membership_details = ohmylms_get_membership( $membership_id )->get_products();
 		if ( ! empty( $membership_details ) && is_array( $membership_details ) ) {
 			foreach ( $membership_details as $membership_detail ) {
-				$this->process_upsell_enrollment($student_id, $membership_detail['id'], $order);
+				$this->process_upsell_enrollment( $student_id, $membership_detail['id'], $order );
 			}
 		}
 	}
@@ -786,15 +798,15 @@ class FunnelEndpoint {
 	 * @since 1.0.0
 	 */
 	private function get_gateway_return_url( $order_id ) {
-		// Get order object
-		$order = ecommerce_get_order( $order_id );
-		if (! $order) {
-			$order_id = absint(get_query_var('order-pay'));
-			if (0 < $order_id) {
-				$order = ecommerce_get_order($order_id);
+		// Get order object.
+		$order = ohmylms_ecommerce_get_order( $order_id );
+		if ( ! $order ) {
+			$order_id = absint( get_query_var( 'order-pay' ) );
+			if ( 0 < $order_id ) {
+				$order = ohmylms_ecommerce_get_order( $order_id );
 			}
 		}
-		if (! $order || ! is_a($order, '\CodeRex\Ecommerce\Data\Order')) {
+		if ( ! $order || ! is_a( $order, '\OhMyLMS\Commerce\Data\Order' ) ) {
 			return '';
 		}
 		return $order->get_checkout_redirect_url();

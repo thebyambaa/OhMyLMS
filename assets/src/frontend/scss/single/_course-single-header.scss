@@ -1,11 +1,14 @@
 .ohmylms-page {
+
     .ohmylms-course-header {
+
         .ohmylms-course-title {
             color: var(--ohmylms-heading-color);
             font-size: 32px;
             font-weight: 700;
             line-height: 1.31;
         }
+
         .ohmylms-btn-area {
             margin-top: 25px;
         }
@@ -39,6 +42,7 @@
 
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .ohmylms-course-header .ohmylms-course-title {
         font-size: 26px;
         line-height: 1.2;

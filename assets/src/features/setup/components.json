@@ -1,155 +1,178 @@
 [
-  {
-    "binding": "Qte",
-    "name": "SetupWelcome",
-    "file": "SetupWelcome.jsx",
-    "dependencies": ["I", "React", "T", "Wte", "Yte", "b", "g", "qte", "y"]
-  },
-  {
-    "binding": "rne",
-    "name": "SetupLevelSelection",
-    "file": "SetupLevelSelection.jsx",
-    "dependencies": ["Gte", "I", "React", "T", "b", "nne", "y"]
-  },
-  {
-    "binding": "gne",
-    "name": "SetupPreferences",
-    "file": "SetupPreferences.jsx",
-    "dependencies": [
-      "Gte",
-      "I",
-      "React",
-      "T",
-      "b",
-      "cne",
-      "fne",
-      "g",
-      "hB",
-      "ine",
-      "m",
-      "pne",
-      "sne",
-      "une",
-      "y"
-    ]
-  },
-  {
-    "binding": "kne",
-    "name": "SetupNiche",
-    "file": "SetupNiche.jsx",
-    "dependencies": [
-      "Cne",
-      "Ene",
-      "Gte",
-      "I",
-      "Pne",
-      "React",
-      "T",
-      "X0",
-      "_ne",
-      "b",
-      "g",
-      "hB",
-      "m",
-      "une",
-      "wne",
-      "xne",
-      "y"
-    ]
-  },
-  {
-    "binding": "Une",
-    "name": "CourseMigration",
-    "file": "CourseMigration.jsx",
-    "dependencies": [
-      "Dne",
-      "Gne",
-      "Gte",
-      "Hne",
-      "I",
-      "Lne",
-      "React",
-      "T",
-      "Vne",
-      "Wne",
-      "b",
-      "g",
-      "hB",
-      "l",
-      "qne",
-      "une",
-      "y"
-    ]
-  },
-  {
-    "binding": "$ne",
-    "name": "ScormImport",
-    "file": "ScormImport.jsx",
-    "dependencies": ["Gte", "I", "Qne", "React", "T", "b", "g", "y"]
-  },
-  {
-    "binding": "lre",
-    "name": "CourseImport",
-    "file": "CourseImport.jsx",
-    "dependencies": [
-      "Gte",
-      "I",
-      "Kne",
-      "React",
-      "T",
-      "X0",
-      "Xne",
-      "Yne",
-      "b",
-      "ere",
-      "g",
-      "ire",
-      "nre",
-      "rre",
-      "y"
-    ]
-  },
-  {
-    "binding": "Ine",
-    "name": "SetupCompletion",
-    "file": "SetupCompletion.jsx",
-    "dependencies": ["Ane", "I", "Nte", "React", "T", "Tne", "Wte", "b", "f", "g", "v", "y"]
-  },
-  {
-    "binding": "gre",
-    "name": "SetupWizardController",
-    "file": "SetupWizardController.jsx",
-    "dependencies": [
-      "Fne",
-      "Nte",
-      "React",
-      "T",
-      "Zte",
-      "ane",
-      "b",
-      "cre",
-      "f",
-      "g",
-      "hne",
-      "jne",
-      "m",
-      "mre",
-      "pre",
-      "ure",
-      "vre",
-      "y"
-    ]
-  },
-  {
-    "binding": "yre",
-    "name": "SetupWizard",
-    "file": "SetupWizard.jsx",
-    "dependencies": ["React", "hre"]
-  },
-  {
-    "binding": "_re",
-    "name": "SetupWizardPage",
-    "file": "SetupWizardPage.jsx",
-    "dependencies": ["React", "b", "bre", "g"]
-  }
+	{
+		"binding": "Qte",
+		"name": "SetupWelcome",
+		"file": "SetupWelcome.jsx",
+		"dependencies": [
+			"I",
+			"React",
+			"T",
+			"Wte",
+			"Yte",
+			"b",
+			"g",
+			"qte",
+			"y"
+		]
+	},
+	{
+		"binding": "rne",
+		"name": "SetupLevelSelection",
+		"file": "SetupLevelSelection.jsx",
+		"dependencies": [ "Gte", "I", "React", "T", "b", "nne", "y" ]
+	},
+	{
+		"binding": "gne",
+		"name": "SetupPreferences",
+		"file": "SetupPreferences.jsx",
+		"dependencies": [
+			"Gte",
+			"I",
+			"React",
+			"T",
+			"b",
+			"cne",
+			"fne",
+			"g",
+			"hB",
+			"ine",
+			"m",
+			"pne",
+			"sne",
+			"une",
+			"y"
+		]
+	},
+	{
+		"binding": "kne",
+		"name": "SetupNiche",
+		"file": "SetupNiche.jsx",
+		"dependencies": [
+			"Cne",
+			"Ene",
+			"Gte",
+			"I",
+			"Pne",
+			"React",
+			"T",
+			"X0",
+			"_ne",
+			"b",
+			"g",
+			"hB",
+			"m",
+			"une",
+			"wne",
+			"xne",
+			"y"
+		]
+	},
+	{
+		"binding": "Une",
+		"name": "CourseMigration",
+		"file": "CourseMigration.jsx",
+		"dependencies": [
+			"Dne",
+			"Gne",
+			"Gte",
+			"Hne",
+			"I",
+			"Lne",
+			"React",
+			"T",
+			"Vne",
+			"Wne",
+			"b",
+			"g",
+			"hB",
+			"l",
+			"qne",
+			"une",
+			"y"
+		]
+	},
+	{
+		"binding": "$ne",
+		"name": "ScormImport",
+		"file": "ScormImport.jsx",
+		"dependencies": [ "Gte", "I", "Qne", "React", "T", "b", "g", "y" ]
+	},
+	{
+		"binding": "lre",
+		"name": "CourseImport",
+		"file": "CourseImport.jsx",
+		"dependencies": [
+			"Gte",
+			"I",
+			"Kne",
+			"React",
+			"T",
+			"X0",
+			"Xne",
+			"Yne",
+			"b",
+			"ere",
+			"g",
+			"ire",
+			"nre",
+			"rre",
+			"y"
+		]
+	},
+	{
+		"binding": "Ine",
+		"name": "SetupCompletion",
+		"file": "SetupCompletion.jsx",
+		"dependencies": [
+			"Ane",
+			"I",
+			"Nte",
+			"React",
+			"T",
+			"Tne",
+			"Wte",
+			"b",
+			"f",
+			"g",
+			"v",
+			"y"
+		]
+	},
+	{
+		"binding": "gre",
+		"name": "SetupWizardController",
+		"file": "SetupWizardController.jsx",
+		"dependencies": [
+			"Fne",
+			"Nte",
+			"React",
+			"T",
+			"Zte",
+			"ane",
+			"b",
+			"cre",
+			"f",
+			"g",
+			"hne",
+			"jne",
+			"m",
+			"mre",
+			"pre",
+			"ure",
+			"vre",
+			"y"
+		]
+	},
+	{
+		"binding": "yre",
+		"name": "SetupWizard",
+		"file": "SetupWizard.jsx",
+		"dependencies": [ "React", "hre" ]
+	},
+	{
+		"binding": "_re",
+		"name": "SetupWizardPage",
+		"file": "SetupWizardPage.jsx",
+		"dependencies": [ "React", "b", "bre", "g" ]
+	}
 ]

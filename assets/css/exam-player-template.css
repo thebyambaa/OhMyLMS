@@ -1,0 +1,477 @@
+/*
+ * Exam player design: top bar, question palette, question card and timer / overview panels laid out
+ * as one dashboard on the shared quiz delivery engine. Scoped to the "exam" player template.
+ */
+
+.ohmylms-exam-bar-name {
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.ohmylms-exam-bar-actions {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+}
+
+/* Top bar. */
+
+.ohmylms-exam-palette-title {
+	margin: 0 0 10px;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.ohmylms-exam-palette-grid {
+	display: grid;
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	gap: 8px;
+}
+
+.ohmylms-exam-palette-item {
+	aspect-ratio: 1;
+	min-height: 36px;
+	padding: 0;
+	border: 1px solid var(--exam-field);
+	border-radius: 6px;
+	background: #fff;
+	color: var(--exam-ink);
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.ohmylms-exam-legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 14px;
+	margin: 0;
+	padding: 12px 0 0;
+	border-top: 1px solid var(--exam-line);
+	color: var(--exam-muted);
+	font-size: 12px;
+	list-style: none;
+}
+
+.ohmylms-exam-mark {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 44px;
+	padding: 0 14px;
+	border: 1px solid transparent;
+	border-radius: 8px;
+	background: transparent;
+	color: var(--exam-muted);
+	font-size: 14px;
+	cursor: pointer;
+}
+
+.ohmylms-exam-clear {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 44px;
+	padding: 0 14px;
+	border: 1px solid transparent;
+	border-radius: 8px;
+	font-size: 14px;
+	cursor: pointer;
+	border-color: var(--exam-field);
+	background: var(--exam-surface);
+	color: var(--exam-ink);
+}
+
+.ohmylms-exam-overview {
+	padding: 20px;
+	border: 1px solid var(--exam-line);
+	border-radius: 12px;
+	background: var(--exam-surface);
+}
+
+/* Question palette. */
+
+.ohmylms-exam-clock {
+	padding: 20px;
+	border: 1px solid var(--exam-line);
+	border-radius: 12px;
+	background: var(--exam-surface);
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	gap: 6px;
+	font-variant-numeric: tabular-nums;
+}
+
+.ohmylms-exam-overview-title {
+	margin: 0 0 12px;
+	font-size: 14px;
+	font-weight: 700;
+}
+
+.ohmylms-exam-bar-title small {
+	display: block;
+	color: var(--exam-muted);
+}
+
+.ohmylms-exam-legend li {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin: 0;
+}
+
+.ohmylms-exam-clock strong {
+	font-size: 38px;
+	line-height: 1.2;
+}
+
+.ohmylms-exam-clock small {
+	color: var(--exam-muted);
+	font-size: 11px;
+}
+
+.ohmylms-exam-overview dl {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 10px 12px;
+	margin: 0;
+	color: var(--exam-muted);
+	font-size: 14px;
+}
+
+.ohmylms-exam-overview dd {
+	margin: 0;
+	color: var(--exam-ink);
+	font-weight: 600;
+}
+
+.ohmylms-exam-review:disabled {
+	opacity: 0.6;
+}
+
+.ohmylms-exam-palette-item.is-visited {
+	border-color: #e8b960;
+	background: #fff1d6;
+	color: #7a4a00;
+}
+
+.ohmylms-exam-palette-item.is-answered {
+	border-color: #8fd3a5;
+	background: #dff5e6;
+	color: #14532d;
+}
+
+.ohmylms-exam-palette-item.is-marked {
+	border-color: #b7a2ef;
+	background: #e9e1fb;
+	color: #3b1f8a;
+}
+
+.ohmylms-exam-palette-item.is-current {
+	border: 2px solid var(--exam-primary);
+}
+
+.ohmylms-exam-palette-item:focus-visible {
+	outline: 2px solid var(--exam-primary);
+	outline-offset: 2px;
+}
+
+.ohmylms-exam-mark:focus-visible {
+	outline: 2px solid var(--exam-primary);
+	outline-offset: 2px;
+}
+
+.ohmylms-exam-clear:focus-visible {
+	outline: 2px solid var(--exam-primary);
+	outline-offset: 2px;
+}
+
+.ohmylms-exam-review:focus-visible {
+	outline: 2px solid var(--exam-primary);
+	outline-offset: 2px;
+}
+
+.ohmylms-exam-legend .swatch {
+	width: 12px;
+	height: 12px;
+	border: 1px solid var(--exam-field);
+	border-radius: 3px;
+	background: #fff;
+}
+
+/* Question column. */
+
+.ohmylms-exam-question-head .question-number {
+	color: var(--exam-ink);
+	font-weight: 700;
+}
+
+.ohmylms-exam-question-head .ohmylms-player-marks {
+	margin-left: auto;
+}
+
+.ohmylms-exam-mark.is-on {
+	background: #e9e1fb;
+	color: #3b1f8a;
+}
+
+.ohmylms-exam-clock[hidden] {
+	display: none;
+}
+
+.ohmylms-exam-clock .clock-unit {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.ohmylms-exam-clock .clock-sep {
+	font-size: 38px;
+	font-weight: 700;
+	line-height: 1.2;
+}
+
+.ohmylms-exam-legend .swatch.is-visited {
+	border-color: #e8b960;
+	background: #fff1d6;
+	color: #7a4a00;
+}
+
+.ohmylms-exam-legend .swatch.is-answered {
+	border-color: #8fd3a5;
+	background: #dff5e6;
+	color: #14532d;
+}
+
+/* Footer row stays with the question instead of floating over the page. */
+
+.ohmylms-exam-legend .swatch.is-marked {
+	border-color: #b7a2ef;
+	background: #e9e1fb;
+	color: #3b1f8a;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-exam {
+	--exam-ink: #1b1f3b;
+	--exam-muted: #5a6080;
+	--exam-line: #dfe2f0;
+	--exam-field: #c3c8de;
+	--exam-primary: var(--ohmylms-quiz-accent, #1e2a78);
+	--exam-surface: #fff;
+	--exam-ground: #f3f4fb;
+	--player-stage: #f3f4fb;
+	--player-canvas: #f3f4fb;
+	--player-toolbar: #fff;
+	--player-toolbar-text: #1b1f3b;
+	--player-grid: none;
+	--player-card-gradient: none;
+	--player-prompt: #fff;
+	--player-text: #1b1f3b;
+	--player-accent: var(--ohmylms-quiz-accent, #1e2a78);
+	--player-answer-1: #fff;
+	--player-answer-2: #fff;
+	--player-answer-3: #fff;
+	--player-answer-4: #fff;
+	display: grid;
+	grid-template-columns: 280px minmax(0, 1fr) 300px;
+	grid-template-areas:
+		"bar bar bar"
+		"palette form side";
+	align-content: start;
+	gap: 24px;
+	min-height: 100vh;
+	padding: 0 0 48px;
+	background: var(--exam-ground);
+	color: var(--exam-ink);
+	font-family: var(--ohmylms-font-family, "Inter", system-ui, sans-serif);
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-exam > * {
+	grid-column: 1 / -1;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-exam > form {
+	grid-area: form;
+	min-width: 0;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-exam .ohmylms-exam-bar {
+	grid-area: bar;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 14px 32px;
+	border-bottom: 1px solid var(--exam-line);
+	background: var(--exam-surface);
+	color: var(--exam-ink);
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-exam .ohmylms-exam-exit {
+	display: inline-flex;
+	align-items: center;
+	width: auto;
+	height: auto;
+	min-height: 44px;
+	padding: 0 8px;
+	border: 0;
+	border-radius: 0;
+	color: var(--exam-primary);
+	font-size: 14px;
+	text-decoration: underline;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-exam .ohmylms-exam-review {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 44px;
+	padding: 0 20px;
+	border: 0;
+	border-radius: 8px;
+	background: var(--exam-primary);
+	color: #fff;
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+/* The engine's own banner timer is replaced by the clock panel. */
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-exam .ohmylms-exam-palette {
+	grid-area: palette;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	margin-left: 32px;
+	padding: 16px;
+	border: 1px solid var(--exam-line);
+	border-radius: 12px;
+	background: var(--exam-surface);
+}
+
+/* Timer and overview. */
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-exam .ohmylms-container {
+	width: auto;
+	margin: 0;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-exam .ohmylms-quiz-section-title {
+	display: none;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-exam .ohmylms-exam-question-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 16px;
+	margin-bottom: 16px;
+	color: var(--exam-muted);
+	font-size: 14px;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-exam .question-box {
+	padding: 24px;
+	border: 1px solid var(--exam-line);
+	border-radius: 12px;
+	background: var(--exam-surface);
+	color: var(--exam-ink);
+	font-size: 17px;
+	line-height: 1.6;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-exam .ohmylms-footer-wrapper {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-exam .ohmylms-quiz-footer-left {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-exam .ohmylms-quiz-timer {
+	display: none;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-exam .ohmylms-exam-side {
+	grid-area: side;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	margin-right: 32px;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-exam :is(.ohmylms-exam-palette, .ohmylms-exam-side) {
+	align-self: start;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-exam .ohmylms-quiz-footer {
+	position: static;
+	margin-top: 16px;
+	padding: 0;
+	background: transparent;
+	color: var(--exam-ink);
+	border-top: 0;
+	box-shadow: none;
+}
+
+/* Phones and tablets: the palette and overview stack above and below the question. */
+@media (max-width: 1100px) {
+
+	.ohmylms-exam-palette-grid {
+		grid-template-columns: repeat(8, minmax(0, 1fr));
+	}
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-exam {
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-areas:
+			"bar"
+			"side"
+			"form"
+			"palette";
+		gap: 16px;
+	}
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-exam :is(.ohmylms-exam-palette, .ohmylms-exam-side, form) {
+		margin-right: 16px;
+		margin-left: 16px;
+	}
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-exam .ohmylms-exam-bar {
+		padding: 12px 16px;
+	}
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-exam .ohmylms-quiz-form {
+	padding: 0;
+	min-height: 0;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-exam .ohmylms-quiz-footer .ohmylms-button {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 44px;
+	padding: 0 20px;
+	border: 0;
+	border-radius: 8px;
+	background: var(--exam-primary);
+	color: #fff;
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-exam .ohmylms-quiz-footer .ohmylms-button.outline {
+	border: 1px solid var(--exam-field);
+	background: var(--exam-surface);
+	color: var(--exam-ink);
+}

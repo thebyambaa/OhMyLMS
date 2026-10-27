@@ -1,0 +1,699 @@
+/*
+ * OhMyLMS backend design system.
+ *
+ * One look for every plugin admin screen: the React app, the Content Hub, the editors and the PHP pages
+ * (Skill assessments, Import questions, Schools...). Every value is a --oml-* variable written by
+ * includes/Design/DesignSystem.php from Settings > Design system. All rules are scoped to
+ * body.oml-ds, a class added only on this plugin's screens, so other wp-admin pages are untouched.
+ */
+
+body.oml-ds {
+	background: var(--oml-background);
+	color: var(--oml-text);
+}
+
+body.oml-ds #wpcontent {
+	background: var(--oml-background);
+}
+
+/* Page rhythm: the same padding, heading scale and gaps on native pages. */
+body.oml-ds .wrap {
+	margin: var(--oml-space-5) var(--oml-page-pad) 0;
+}
+
+body.oml-ds .wrap > h1,
+body.oml-ds .wrap > h2,
+body.oml-ds .wrap h1.wp-heading-inline {
+	color: var(--oml-heading);
+	font-size: 24px;
+	font-weight: 700;
+	line-height: 1.3;
+	margin: 0 0 var(--oml-space-4);
+}
+
+body.oml-ds .wrap h2,
+body.oml-ds .wrap h3 {
+	color: var(--oml-heading);
+}
+
+body.oml-ds .wrap h2 {
+	font-size: 18px;
+	margin: var(--oml-space-5) 0 var(--oml-space-3);
+}
+
+body.oml-ds .wrap p,
+body.oml-ds .wrap .description {
+	color: var(--oml-text);
+}
+
+body.oml-ds .wrap .description,
+body.oml-ds .wrap p.description {
+	color: var(--oml-muted);
+}
+
+body.oml-ds a {
+	color: var(--oml-link);
+}
+
+body.oml-ds a:hover,
+body.oml-ds a:active {
+	color: var(--oml-link-hover);
+}
+
+/* ---- Buttons: native WordPress ---- */
+body.oml-ds .button,
+body.oml-ds .button-secondary,
+body.oml-ds .button-primary,
+body.oml-ds .button-small,
+body.oml-ds .button-large,
+body.oml-ds input[type="submit"].button,
+body.oml-ds .page-title-action {
+	align-items: center;
+	border-radius: var(--oml-radius-button);
+	border-style: solid;
+	border-width: 1px;
+	box-shadow: none;
+	box-sizing: border-box;
+	cursor: pointer;
+	display: inline-flex;
+	font-size: 14px;
+	font-weight: 600;
+	gap: var(--oml-space-2);
+	justify-content: center;
+	line-height: 1.2;
+	margin: 0;
+	min-height: var(--oml-button-height-md);
+	padding: 0 var(--oml-button-pad-md);
+	text-decoration: none;
+	text-shadow: none;
+	transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+	vertical-align: middle;
+}
+
+body.oml-ds .button-small {
+	min-height: var(--oml-button-height-sm);
+	padding: 0 var(--oml-button-pad-sm);
+}
+
+body.oml-ds .button-large {
+	min-height: var(--oml-button-height-lg);
+	padding: 0 var(--oml-button-pad-lg);
+}
+
+body.oml-ds .button,
+body.oml-ds .button-secondary,
+body.oml-ds .page-title-action {
+	background: var(--oml-surface);
+	border-color: var(--oml-secondary);
+	color: var(--oml-primary);
+}
+
+body.oml-ds .button:hover,
+body.oml-ds .button-secondary:hover,
+body.oml-ds .page-title-action:hover {
+	background: var(--oml-primary-soft);
+	border-color: var(--oml-secondary-hover);
+	color: var(--oml-primary-hover);
+}
+
+body.oml-ds .button:active,
+body.oml-ds .button-secondary:active {
+	background: var(--oml-primary-soft);
+	color: var(--oml-primary-active);
+}
+
+body.oml-ds .button-primary,
+body.oml-ds .button.button-primary {
+	background: var(--oml-primary);
+	border-color: var(--oml-primary);
+	color: var(--oml-on-primary);
+}
+
+body.oml-ds .button-primary:hover,
+body.oml-ds .button-primary:focus,
+body.oml-ds .button.button-primary:hover {
+	background: var(--oml-primary-hover);
+	border-color: var(--oml-primary-hover);
+	color: var(--oml-on-primary);
+}
+
+body.oml-ds .button-primary:active,
+body.oml-ds .button.button-primary:active {
+	background: var(--oml-primary-active);
+	border-color: var(--oml-primary-active);
+	color: var(--oml-on-primary);
+}
+
+body.oml-ds .button-link,
+body.oml-ds .button-link-delete {
+	background: transparent;
+	border: 0;
+	border-radius: var(--oml-radius-button);
+	box-shadow: none;
+	color: var(--oml-link);
+	cursor: pointer;
+	padding: 0;
+	text-decoration: underline;
+}
+
+body.oml-ds .button-link-delete,
+body.oml-ds .submitdelete,
+body.oml-ds a.delete {
+	color: var(--oml-danger);
+}
+
+body.oml-ds .button-link-delete:hover,
+body.oml-ds .submitdelete:hover {
+	color: var(--oml-danger-hover);
+}
+
+body.oml-ds .button[disabled],
+body.oml-ds .button.disabled,
+body.oml-ds .button-primary[disabled],
+body.oml-ds .button-primary.disabled,
+body.oml-ds .button:disabled {
+	background: var(--oml-subtle);
+	border-color: var(--oml-border);
+	color: var(--oml-muted);
+	cursor: not-allowed;
+	opacity: 0.7;
+}
+
+/* ---- Buttons: @wordpress/components (not inside the block editor, which keeps its own sizing) ---- */
+body.oml-ds:not(.block-editor-page) .components-button {
+	align-items: center;
+	border-radius: var(--oml-radius-button);
+	font-size: 14px;
+	font-weight: 600;
+	gap: var(--oml-space-2);
+	height: auto;
+	min-height: var(--oml-button-height-md);
+	padding: 0 var(--oml-button-pad-md);
+	transition: background-color 0.12s ease, box-shadow 0.12s ease, color 0.12s ease;
+}
+
+body.oml-ds:not(.block-editor-page) .components-button.is-small {
+	min-height: var(--oml-button-height-sm);
+	padding: 0 var(--oml-button-pad-sm);
+}
+
+body.oml-ds:not(.block-editor-page) .components-button.is-large {
+	min-height: var(--oml-button-height-lg);
+	padding: 0 var(--oml-button-pad-lg);
+}
+
+body.oml-ds:not(.block-editor-page) .components-button.has-icon:not(.has-text) {
+	min-width: var(--oml-button-height-md);
+	padding: 0;
+}
+
+body.oml-ds:not(.block-editor-page) .components-button.has-icon.is-small:not(.has-text) {
+	min-width: var(--oml-button-height-sm);
+}
+
+body.oml-ds:not(.block-editor-page) .components-button.is-primary {
+	background: var(--oml-primary);
+	color: var(--oml-on-primary);
+}
+
+body.oml-ds:not(.block-editor-page) .components-button.is-primary:disabled,
+body.oml-ds:not(.block-editor-page) .components-button.is-primary[aria-disabled="true"] {
+	background: var(--oml-subtle);
+	color: var(--oml-muted);
+	opacity: 0.8;
+}
+
+body.oml-ds:not(.block-editor-page) .components-button.is-primary:hover:not(:disabled),
+body.oml-ds:not(.block-editor-page) .components-button.is-primary:focus:not(:disabled) {
+	background: var(--oml-primary-hover);
+	color: var(--oml-on-primary);
+}
+
+body.oml-ds:not(.block-editor-page) .components-button.is-primary:active:not(:disabled) {
+	background: var(--oml-primary-active);
+	color: var(--oml-on-primary);
+}
+
+body.oml-ds:not(.block-editor-page) .components-button.is-secondary {
+	background: var(--oml-surface);
+	box-shadow: inset 0 0 0 1px var(--oml-secondary);
+	color: var(--oml-primary);
+}
+
+body.oml-ds:not(.block-editor-page) .components-button.is-secondary:hover:not(:disabled) {
+	background: var(--oml-primary-soft);
+	box-shadow: inset 0 0 0 1px var(--oml-secondary-hover);
+	color: var(--oml-primary-hover);
+}
+
+body.oml-ds:not(.block-editor-page) .components-button.is-tertiary {
+	background: transparent;
+	color: var(--oml-primary);
+}
+
+body.oml-ds:not(.block-editor-page) .components-button.is-tertiary:hover:not(:disabled) {
+	background: var(--oml-primary-soft);
+	color: var(--oml-primary-hover);
+}
+
+body.oml-ds:not(.block-editor-page) .components-button.is-link {
+	color: var(--oml-link);
+	font-weight: 600;
+	min-height: 0;
+	padding: 0;
+}
+
+body.oml-ds:not(.block-editor-page) .components-button.is-link:hover:not(:disabled) {
+	color: var(--oml-link-hover);
+}
+
+body.oml-ds:not(.block-editor-page) .components-button.is-destructive:not(.is-link):not(.is-primary) {
+	color: var(--oml-danger);
+}
+
+body.oml-ds:not(.block-editor-page) .components-button.is-destructive.is-primary {
+	background: var(--oml-danger);
+	color: var(--oml-on-danger);
+}
+
+body.oml-ds:not(.block-editor-page) .components-button.is-destructive.is-primary:hover:not(:disabled) {
+	background: var(--oml-danger-hover);
+	color: var(--oml-on-danger);
+}
+
+body.oml-ds:not(.block-editor-page) .components-button.is-destructive.is-secondary {
+	box-shadow: inset 0 0 0 1px var(--oml-danger);
+}
+
+body.oml-ds:not(.block-editor-page) .components-button.is-destructive.is-secondary:hover:not(:disabled),
+body.oml-ds:not(.block-editor-page) .components-button.is-destructive.is-tertiary:hover:not(:disabled) {
+	background: var(--oml-danger-soft);
+	color: var(--oml-danger-hover);
+}
+
+body.oml-ds:not(.block-editor-page) .components-button.is-destructive.is-link {
+	color: var(--oml-danger);
+}
+
+body.oml-ds:not(.block-editor-page) .components-button:disabled,
+body.oml-ds:not(.block-editor-page) .components-button[aria-disabled="true"] {
+	cursor: not-allowed;
+	opacity: 0.55;
+}
+
+/* ---- Buttons: Arco (the React app) ---- */
+body.oml-ds .arco-btn {
+	border-radius: var(--oml-radius-button);
+	font-weight: 600;
+	min-height: var(--oml-button-height-md);
+	padding: 0 var(--oml-button-pad-md);
+}
+
+body.oml-ds .arco-btn-size-small {
+	min-height: var(--oml-button-height-sm);
+	padding: 0 var(--oml-button-pad-sm);
+}
+
+body.oml-ds .arco-btn-size-large {
+	min-height: var(--oml-button-height-lg);
+	padding: 0 var(--oml-button-pad-lg);
+}
+
+body.oml-ds .arco-btn-primary:not(.arco-btn-disabled) {
+	background-color: var(--oml-primary);
+	color: var(--oml-on-primary);
+}
+
+body.oml-ds .arco-btn-primary:not(.arco-btn-disabled):hover {
+	background-color: var(--oml-primary-hover);
+}
+
+body.oml-ds .arco-btn-primary:not(.arco-btn-disabled):active {
+	background-color: var(--oml-primary-active);
+}
+
+body.oml-ds .arco-btn-secondary:not(.arco-btn-disabled),
+body.oml-ds .arco-btn-outline:not(.arco-btn-disabled) {
+	background-color: var(--oml-surface);
+	border: 1px solid var(--oml-secondary);
+	color: var(--oml-primary);
+}
+
+body.oml-ds .arco-btn-text:not(.arco-btn-disabled) {
+	color: var(--oml-primary);
+}
+
+body.oml-ds .arco-btn-status-danger.arco-btn-primary:not(.arco-btn-disabled) {
+	background-color: var(--oml-danger);
+	color: var(--oml-on-danger);
+}
+
+body.oml-ds .arco-btn-status-danger:not(.arco-btn-primary):not(.arco-btn-disabled) {
+	color: var(--oml-danger);
+}
+
+body.oml-ds .arco-btn-disabled {
+	cursor: not-allowed;
+	opacity: 0.55;
+}
+
+/* ---- Form controls ---- */
+body.oml-ds input[type="text"],
+body.oml-ds input[type="search"],
+body.oml-ds input[type="email"],
+body.oml-ds input[type="url"],
+body.oml-ds input[type="number"],
+body.oml-ds input[type="password"],
+body.oml-ds input[type="date"],
+body.oml-ds select,
+body.oml-ds textarea,
+body.oml-ds .components-text-control__input,
+body.oml-ds .components-select-control__input,
+body.oml-ds .arco-input,
+body.oml-ds .arco-input-wrapper,
+body.oml-ds .arco-select-view {
+	background-color: var(--oml-surface);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
+	box-shadow: none;
+	color: var(--oml-text);
+}
+
+body.oml-ds input[type="text"],
+body.oml-ds input[type="search"],
+body.oml-ds input[type="email"],
+body.oml-ds input[type="url"],
+body.oml-ds input[type="number"],
+body.oml-ds input[type="password"],
+body.oml-ds select,
+body.oml-ds .components-text-control__input,
+body.oml-ds .components-select-control__input {
+	min-height: var(--oml-button-height-md);
+	padding: 0 var(--oml-space-3);
+}
+
+body.oml-ds textarea {
+	padding: var(--oml-space-2) var(--oml-space-3);
+}
+
+body.oml-ds input:focus,
+body.oml-ds select:focus,
+body.oml-ds textarea:focus,
+body.oml-ds .components-text-control__input:focus,
+body.oml-ds .arco-input-focus,
+body.oml-ds .arco-input-wrapper:focus-within {
+	border-color: var(--oml-primary);
+	box-shadow: 0 0 0 1px var(--oml-primary);
+	outline: 2px solid transparent;
+}
+
+body.oml-ds input::placeholder,
+body.oml-ds textarea::placeholder {
+	color: var(--oml-muted);
+}
+
+body.oml-ds input:disabled,
+body.oml-ds select:disabled,
+body.oml-ds textarea:disabled {
+	background-color: var(--oml-subtle);
+	color: var(--oml-muted);
+}
+
+body.oml-ds input[type="checkbox"]:checked,
+body.oml-ds input[type="radio"]:checked {
+	accent-color: var(--oml-primary);
+}
+
+body.oml-ds .form-table th {
+	color: var(--oml-heading);
+	font-weight: 600;
+	padding: var(--oml-space-4);
+	padding-inline-start: 0;
+}
+
+body.oml-ds .form-table td {
+	padding: var(--oml-space-3);
+	padding-inline-start: 0;
+}
+
+/* ---- Cards, notices, tables ---- */
+body.oml-ds .card,
+body.oml-ds .postbox,
+body.oml-ds .components-card,
+body.oml-ds .arco-card {
+	background: var(--oml-surface);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card);
+	box-shadow: none;
+}
+
+body.oml-ds .card {
+	max-width: none;
+	padding: var(--oml-space-4) var(--oml-space-5);
+}
+
+body.oml-ds .notice,
+body.oml-ds div.updated,
+body.oml-ds div.error,
+body.oml-ds .components-notice {
+	background: var(--oml-surface);
+	border: 1px solid var(--oml-border);
+	border-inline-start-width: 4px;
+	border-radius: var(--oml-radius-control);
+	box-shadow: none;
+	color: var(--oml-text);
+	margin: var(--oml-space-3) 0;
+	padding: var(--oml-space-2) var(--oml-space-3);
+}
+
+body.oml-ds .notice-success,
+body.oml-ds div.updated,
+body.oml-ds .components-notice.is-success {
+	background: var(--oml-success-soft);
+	border-inline-start-color: var(--oml-success);
+}
+
+body.oml-ds .notice-warning,
+body.oml-ds .components-notice.is-warning {
+	background: var(--oml-warning-soft);
+	border-inline-start-color: var(--oml-warning);
+}
+
+body.oml-ds .notice-error,
+body.oml-ds div.error,
+body.oml-ds .components-notice.is-error {
+	background: var(--oml-danger-soft);
+	border-inline-start-color: var(--oml-danger);
+}
+
+body.oml-ds .notice-info,
+body.oml-ds .components-notice.is-info {
+	background: var(--oml-info-soft);
+	border-inline-start-color: var(--oml-info);
+}
+
+body.oml-ds .widefat,
+body.oml-ds .wp-list-table {
+	background: var(--oml-surface);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card);
+	border-collapse: separate;
+	border-spacing: 0;
+	box-shadow: none;
+	overflow: hidden;
+}
+
+body.oml-ds .widefat th,
+body.oml-ds .widefat td {
+	border-bottom: 1px solid var(--oml-border);
+	color: var(--oml-text);
+	padding: var(--oml-space-3);
+}
+
+body.oml-ds .widefat thead th {
+	background: var(--oml-subtle);
+	color: var(--oml-heading);
+	font-weight: 600;
+}
+
+body.oml-ds .widefat.striped > tbody > :nth-child(odd) {
+	background-color: var(--oml-subtle);
+}
+
+body.oml-ds .widefat tr:last-child td {
+	border-bottom: 0;
+}
+
+/* Status colors reused by badges and tags. */
+body.oml-ds .arco-tag-green,
+body.oml-ds .arco-tag-arcoblue {
+	border-radius: var(--oml-radius-control);
+}
+
+/* ---- Focus: one accessible ring everywhere ---- */
+body.oml-ds .button:focus-visible,
+body.oml-ds .button-link:focus-visible,
+body.oml-ds:not(.block-editor-page) .components-button:focus-visible,
+body.oml-ds .arco-btn:focus-visible,
+body.oml-ds a:focus-visible,
+body.oml-ds input:focus-visible,
+body.oml-ds select:focus-visible,
+body.oml-ds textarea:focus-visible,
+body.oml-ds [role="tab"]:focus-visible {
+	box-shadow: none;
+	outline: 2px solid var(--oml-focus);
+	outline-offset: 2px;
+}
+
+/* Settings > Design system */
+.ohmylms-ds-layout {
+	align-items: start;
+	display: grid;
+	gap: var(--oml-space-5, 24px);
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.ohmylms-ds-controls {
+	display: grid;
+	gap: var(--oml-space-4, 16px);
+}
+
+.ohmylms-ds-colors {
+	display: grid;
+	gap: var(--oml-space-3, 12px) var(--oml-space-4, 16px);
+	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+.ohmylms-ds-color {
+	display: grid;
+	gap: var(--oml-space-1, 4px);
+}
+
+.ohmylms-ds-color-inputs {
+	align-items: center;
+	display: flex;
+	gap: var(--oml-space-2, 8px);
+}
+
+.ohmylms-ds-color-inputs input[type="color"] {
+	block-size: 36px;
+	cursor: pointer;
+	inline-size: 48px;
+	padding: 2px;
+}
+
+body.oml-ds .ohmylms-ds-color-inputs input[type="text"] {
+	flex: 1;
+	font-family: monospace;
+	min-inline-size: 0;
+}
+
+.ohmylms-ds-choices {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-2, 8px);
+	margin-block-end: var(--oml-space-3, 12px);
+}
+
+.ohmylms-ds-preview {
+	background: var(--oml-background);
+	border: 1px dashed var(--oml-border);
+	border-radius: var(--oml-radius-card);
+	color: var(--oml-text);
+	display: grid;
+	gap: var(--oml-space-4);
+	padding: var(--oml-space-5);
+	position: sticky;
+	top: 48px;
+}
+
+body.oml-ds .ohmylms-ds-preview h3 {
+	color: var(--oml-heading);
+	margin: 0;
+}
+
+.ohmylms-ds-preview-row {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-3);
+}
+
+@media (max-width: 1100px) {
+
+	.ohmylms-ds-layout {
+		grid-template-columns: 1fr;
+	}
+
+	.ohmylms-ds-preview {
+		position: static;
+	}
+}
+
+@media (max-width: 782px) {
+
+	body.oml-ds .wrap {
+		margin-left: var(--oml-space-3);
+		margin-right: var(--oml-space-3);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	body.oml-ds .button,
+	body.oml-ds .components-button {
+		transition: none;
+	}
+}
+
+/*
+ * A recovered stylesheet forces the admin bar visible on every plugin screen, which
+ * overlaps the block editor header. Keep the core fullscreen behaviour on lessons.
+ */
+html body.block-editor-page.is-fullscreen-mode #wpadminbar {
+	display: none !important;
+}
+
+/* Settings > Design system > Learner hub icons */
+.ohmylms-hub-icons {
+	margin-top: var(--oml-space-6, 32px);
+}
+
+.ohmylms-hub-icons-list {
+	display: grid;
+	gap: var(--oml-space-3, 12px);
+	margin: var(--oml-space-3, 12px) 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.ohmylms-hub-icons-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--oml-space-3, 12px);
+	margin: 0;
+}
+
+.ohmylms-hub-icons-row strong {
+	min-width: 96px;
+}
+
+.ohmylms-hub-icons-preview {
+	display: grid;
+	width: 44px;
+	height: 44px;
+	border: 1px solid var(--oml-border, #dcdcde);
+	border-radius: 8px;
+	background: #fff;
+	color: var(--oml-muted, #50575e);
+	font-size: 11px;
+	place-items: center;
+}
+
+.ohmylms-hub-icons-preview img {
+	display: block;
+	max-width: 28px;
+	max-height: 28px;
+	object-fit: contain;
+}

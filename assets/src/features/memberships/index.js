@@ -6,11 +6,11 @@ import { createMembershipPricing } from './MembershipPricing';
 import { createMembershipSaleSchedule } from './MembershipSaleSchedule';
 import { createMembershipCourses } from './MembershipCourses';
 export const membershipComponents = {
-  MembershipsPage: createMembershipsPage,
-  MembershipList: createMembershipList,
-  MembershipEditor: createMembershipEditor,
-  MembershipDetails: createMembershipDetails,
-  MembershipPricing: createMembershipPricing,
-  MembershipSaleSchedule: createMembershipSaleSchedule,
-  MembershipCourses: createMembershipCourses,
+	MembershipsPage: createMembershipsPage,
+	MembershipList: createMembershipList,
+	MembershipEditor: createMembershipEditor,
+	MembershipDetails: createMembershipDetails,
+	MembershipPricing: createMembershipPricing,
+	MembershipSaleSchedule: createMembershipSaleSchedule,
+	MembershipCourses: createMembershipCourses,
 };

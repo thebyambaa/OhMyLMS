@@ -1,4 +1,5 @@
 .ohmylms-single-course-layout3 {
+
     .ohmylms-single-course-layout3-content-nav {
         margin-top: 40px;
         transition: all .3s ease;
@@ -27,6 +28,7 @@
             }
 
             li.active {
+
                 a {
                     color: var(--ohmylms-primary-color);
                 }
@@ -60,7 +62,7 @@
                 background: #f4f5f7;
 
                 .no-course-data {
-                    box-shadow: 0px 1px 4px 0px #D3D6DD;
+                    box-shadow: 0 1px 4px 0 #D3D6DD;
                 }
             }
         }
@@ -151,6 +153,7 @@
 
         //-----start chapter content style-----
         .layout3-chapters {
+
             .chapters-header {
                 display: flex;
                 flex-flow: row wrap;
@@ -298,7 +301,9 @@
             }
 
             .ohmylms-single-chapter {
+
                 &.no-description {
+
                     .chapter-title-wrapper {
                         align-items: center;
                     }
@@ -306,6 +311,7 @@
             }
 
             .ohmylms-chapter-content-list {
+
                 &.ohmylms-expandable {
                     padding-bottom: 8px;
                     transition: none;
@@ -324,6 +330,7 @@
                     }
 
                     &.show-all {
+
                         .ohmylms-chapter-content-list-item {
                             display: flex;
                         }
@@ -331,6 +338,7 @@
                 }
 
                 &.show-all {
+
                     .ohmylms-chapter-content-list-item {
                         border-bottom: 1px solid rgba(200, 210, 233, 0.3);
                         padding-bottom: 12px;
@@ -402,7 +410,7 @@
                 align-items: center;
                 gap: 12px;
 
-                & > span {
+                > span {
                     width: calc(100% - 45px);
                 }
             }
@@ -446,6 +454,7 @@
 
         //-----start resource content style-----
         .layout3-resources {
+
             .ohmylms-table {
                 border-radius: 16px;
                 background-color: #FFF;
@@ -461,6 +470,7 @@
                 }
 
                 .ohmylms-tr {
+
                     .ohmylms-td-handle + .ohmylms-td {
                         padding-left: 10px;
                     }
@@ -476,6 +486,7 @@
         
         //-----start review content style-----
         .layout3-reviews {
+
             .ohmylms-course-reviews {
                 background: #fff;
                 border-radius: 16px;
@@ -510,6 +521,7 @@
                 }
 
                 &.ohmylms-expandable {
+
                     .ohmylms-course-single-review {
                         display: none;
 
@@ -525,9 +537,11 @@
             .comment-form .comment-form-comment textarea {
                 border: none;
             }
+
             .ohmylms-reviews-title {
                 font-size: 24px;
             }
+
             .comment-form .form-submit #submit {
                 font-size: 18px;
                 height: 55px;
@@ -539,7 +553,9 @@
 }
 
 body.admin-bar {
+
     .ohmylms-single-course-layout3 {
+
         .ohmylms-single-course-layout3-content-nav {
             top: 32px;
         }
@@ -547,12 +563,15 @@ body.admin-bar {
 }
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-single-course-layout3 .ohmylms-single-course-layout3-content .layout3-content-box .content-box-title {
         font-size: 22px;
     }
+
     .ohmylms-single-course-layout3 .ohmylms-single-course-layout3-content .layout3-reviews .ohmylms-reviews-title {
         font-size: 22px;
     }
+
     .ohmylms-single-course-layout3 .ohmylms-single-course-layout3-content .layout3-reviews .comment-form .form-submit #submit {
         font-size: 15px;
         height: 44px;
@@ -563,9 +582,11 @@ body.admin-bar {
 }
 
 @media screen and (max-width: 991px) {
+
     .ohmylms-single-course-layout3 .ohmylms-single-course-layout3-content .layout3-content-box {
         border-radius: 12px;
     }
+
     .ohmylms-single-course-layout3 .ohmylms-single-course-layout3-content-nav {
         margin-top: 30px;
     }
@@ -573,6 +594,7 @@ body.admin-bar {
 }
 
 @media screen and (max-width: 767px) {
+
     .ohmylms-single-course-layout3 .ohmylms-single-course-layout3-content-nav ul a {
         padding: 6px 10px;
         font-size: 13px;
@@ -611,15 +633,18 @@ body.admin-bar {
 
     .ohmylms-single-course-layout3 .ohmylms-single-course-layout3-content .ohmylms-table .ohmylms-td-handle {
         border-radius: 3px;
-        left: 0px;
+        left: 0;
         top: 14px;
     }
+
     .ohmylms-single-course-layout3 .ohmylms-single-course-layout3-content .ohmylms-layout3-assignments .ohmylms-table .ohmylms-td.title {
         padding-left: 30px;
     }
+
     .ohmylms-single-course-layout3 .ohmylms-single-course-layout3-content .ohmylms-mobile-td {
         padding-left: 16px;
     }
+
     .ohmylms-single-course-layout3 .ohmylms-single-course-layout3-content .ohmylms-layout3-assignments .ohmylms-layout3-single-assignment-title .score {
         font-size: 12px;
     }
@@ -628,12 +653,15 @@ body.admin-bar {
         border-radius: 8px;
         padding: 4px 13px;
     }
+
     .ohmylms-single-course-layout3 .ohmylms-single-course-layout3-content .layout3-resources .ohmylms-table .ohmylms-tr .ohmylms-td-handle {
         display: none;
     }
+
     .ohmylms-single-course-layout3 .ohmylms-single-course-layout3-content .layout3-resources .ohmylms-table .ohmylms-tr .ohmylms-td-handle + .ohmylms-td {
         padding-left: 10px;
     }
+
     .ohmylms-single-course-layout3 .ohmylms-single-course-layout3-content .layout3-resources .ohmylms-mobile-td .submission-date::before {
         width: 66px;
     }
@@ -654,10 +682,12 @@ body.admin-bar {
 }
 
 @media screen and (max-width: 575px) {
+
     .ohmylms-single-course-layout3 .ohmylms-single-course-layout3-content .layout3-chapters .chapters-header {
         flex-direction: column;
         align-items: flex-start;
     }
+
     .ohmylms-single-course-layout3 .ohmylms-single-course-layout3-content .layout3-chapters .chapters-header .chapters-header-left {
         width: 100%;
     }
@@ -665,6 +695,7 @@ body.admin-bar {
     .ohmylms-single-course-layout3 .ohmylms-single-course-layout3-content .ohmylms-layout3-assignments .assignment-title-text {
         width: 100%;
     }
+
     .ohmylms-single-course-layout3 .ohmylms-single-course-layout3-content .ohmylms-layout3-assignments .ohmylms-layout3-single-assignment-title .score {
         margin-left: 0;
     }

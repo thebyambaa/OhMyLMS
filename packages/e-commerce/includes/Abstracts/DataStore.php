@@ -1,22 +1,33 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
+/**
+ * Class DataStore.
+ *
+ * @package OhMyLMS
+ */
 
-namespace CodeRex\Ecommerce\Abstracts;
+namespace OhMyLMS\Commerce\Abstracts;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Class DataStore
+ *
  * @package OhMyLMS\Abstracts
  * @since 1.0.0
  */
 abstract class DataStore {
 
+	/**
+	 * Must exist meta keys.
+	 *
+	 * @var mixed
+	 */
 	protected $must_exist_meta_keys = array();
 
 	/**
 	 * Create new record
 	 *
-	 * @param $data Data
+	 * @param mixed $data Data.
 	 * @return mixed
 	 * @since 1.0.0
 	 */
@@ -25,7 +36,7 @@ abstract class DataStore {
 	/**
 	 * Read new record
 	 *
-	 * @param $data Data
+	 * @param mixed $data Data.
 	 * @return mixed
 	 * @since 1.0.0
 	 */
@@ -35,7 +46,7 @@ abstract class DataStore {
 	/**
 	 * Update new record
 	 *
-	 * @param $data Data
+	 * @param mixed $data Data.
 	 * @return mixed
 	 * @since 1.0.0
 	 */
@@ -45,8 +56,8 @@ abstract class DataStore {
 	/**
 	 * Delete new record
 	 *
-	 * @param $data
-	 * @param array $args
+	 * @param mixed $data Input data.
+	 * @param array $args Operation arguments.
 	 * @return mixed
 	 * @since 1.0.0
 	 */
@@ -54,9 +65,11 @@ abstract class DataStore {
 
 
 	/**
-	 * @param $object
-	 * @param $meta_key
-	 * @param $meta_value
+	 * Update or delete post meta.
+	 *
+	 * @param mixed $object Object.
+	 * @param mixed $meta_key Meta key.
+	 * @param mixed $meta_value Meta value.
 	 * @return bool
 	 */
 	protected function update_or_delete_post_meta( $object, $meta_key, $meta_value ) {
@@ -70,6 +83,11 @@ abstract class DataStore {
 	}
 
 
+	/**
+	 * String to timestamp for Data store.
+	 *
+	 * @param mixed $time_string Time string.
+	 */
 	protected function string_to_timestamp( $time_string ) {
 		return '0000-00-00 00:00:00' !== $time_string ? ohmylms_string_to_timestamp( $time_string ) : null;
 	}

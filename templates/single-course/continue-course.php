@@ -14,10 +14,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 global $course;
-$student 			= new \OhMyLMS\Data\Student( get_current_user_id() );
+$student           = new \OhMyLMS\Data\Student( get_current_user_id() );
 $course_resume_url = $student->get_course_resume_url( $course->get_id() );
 ?>
 
-<a href="<?php echo esc_url($course_resume_url);?>" class="ohmylms-button continue-course">
-	<?php echo __('Continue Course','ohmylms'); ?>
+<a href="<?php echo esc_url( $course_resume_url ); ?>" class="ohmylms-button continue-course">
+	<?php echo esc_html__( 'Continue Course', 'ohmylms' ); ?>
 </a>

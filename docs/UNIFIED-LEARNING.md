@@ -1,8 +1,14 @@
 # Unified Learning: First Usable Release
 
+Status (October 19, 2026): implemented and merged; this is the reference for course learning modes, completion
+rules and learning-program publication. The original planning proposal (UNIFIED-LEARNING-PLAN, October 5, 2026) was removed
+because this release shipped it. Later work adds lesson groups to program drafts, a learner-hub course overview
+and mixed-skill unit tests (see [CONTENT-HUB.md](CONTENT-HUB.md) and
+[learner-experience/KHAN-ACTIVITIES.md](learner-experience/KHAN-ACTIVITIES.md)).
+
 ## Set Up a Course
 
-1. Enable **Skills** in OhMyLMS > Add-ons for skill-based or blended courses. Traditional programs work without it.
+1. Skills are always available. Build a grade, exam or subject from chapters and skills in a syllabus's editor in the [Content Hub](CONTENT-HUB.md), or use the course's Learning tab as described here; both edit the same program draft.
 2. Create skills and approve practice questions in the Question Bank. Assign each question its primary skill and a question family. Secure exam questions and questions needing manual marking are not practice questions.
 3. Open a course > Settings > **Learning**.
 4. Choose Traditional, Skill-based, or Blended. Select required skill outcomes and their Proficient or Mastered targets. Add practice steps, reusable lessons, and checkpoints to the path.
@@ -34,7 +40,7 @@ By default, a course recognizes existing skill evidence from other courses. Turn
 
 Select allowed question banks to narrow course practice. With no explicit selection, the publishing author's personal questions and banks they can use form the pool. Learners cannot choose an arbitrary course ID to unlock questions. Catalog practice exposes only explicitly public pools or questions the learner is entitled to use. Only an administrator can enable a skill's public catalog practice setting. Practice resume is available in the same browser tab and revalidates access on the server.
 
-Quizzes and assignments still belong to one course in this release. Reuse their questions through the Question Bank rather than placing the same assessment in another course. Create assessments in the existing Content editor, then select/configure them in Learning.
+Quizzes and assignments can be placed in several courses; a learner's attempts and a checkpoint's pass status are shared across them (see [CONTENT-HUB.md](CONTENT-HUB.md)). You can still reuse their questions through the Question Bank. Create assessments in the existing Content editor or from the Content Hub, then select/configure them in Learning.
 
 ## Publication and Existing Learners
 
@@ -42,7 +48,7 @@ Each publication creates an immutable program version. New enrollments use the c
 
 The explicit **Apply this publication to currently enrolled learners who have not completed the course** checkbox migrates unfinished enrollments. Completed enrollments and awards are preserved. With course-only evidence enabled, migration resets the evidence start boundary to the new assignment time. A stale publication is rejected when another teacher has published a newer version since the editor loaded.
 
-No existing course is automatically converted. Existing curriculum and completion behavior remain in use until a learning program is published and, where appropriate, existing learners are explicitly migrated. Skills cannot be disabled while published courses or unfinished published enrollments depend on it. Resolve those dependencies first; this protects learners from unreachable requirements.
+No existing course is automatically converted. Existing curriculum and completion behavior remain in use until a learning program is published and, where appropriate, existing learners are explicitly migrated. Skills are a core feature with no switch (see [ADDONS.md](ADDONS.md)), so published skill requirements can never become unreachable because an add-on was turned off.
 
 ## Storage and Rollout
 
@@ -62,3 +68,17 @@ This release provides the authoring workflow, course-scoped learning path, exist
 Do not run database integration or browser fixture suites concurrently against the same disposable site: fixtures temporarily change add-on settings. Never point these tests at a production database.
 
 The existing rich-text editor still has the ProseMirror duplication issue documented in `DEVELOPMENT.md`. The wider course-authoring browser checks detect that error. This release does not replace or migrate that editor; the new Learning settings and learner-path checks are separate from it.
+
+## Design rules kept from the original plan
+
+- A course-to-skill taxonomy link means **association**. A skill becomes a completion requirement only through an explicit course
+  outcome (skill, target level, required or optional).
+- Reuse a skill across grades and courses when the measurable ability is the same; create a new skill when the expected ability
+  changes, not merely because the grade or course does. Grade level, standard and subject are classifications, not skills.
+- Topic parents organise the catalogue; attainment is measured on precise leaf skills. A topic's progress is a transparent rollup of
+  its selected outcomes. Prerequisites form a directed acyclic graph separate from the catalogue hierarchy.
+- Show three separate dimensions (activities, skill outcomes, checkpoint results) and never average them into an unexplained
+  percentage. Completion is an explicit AND of the published required conditions, evaluated by one `CompletionPolicy` service,
+  awarded once, and not revoked by a later review-due flag.
+- Mastering a skill in one course never grants access to another product. Practice access is validated against the real enrollment
+  or an explicitly public pool, never against a client-supplied course ID.

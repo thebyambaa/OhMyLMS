@@ -1,286 +1,297 @@
 [
-  {
-    "binding": "KY",
-    "name": "OrdersPage",
-    "file": "OrdersPage.jsx",
-    "dependencies": ["$Y", "HG", "React"]
-  },
-  {
-    "binding": "ZY",
-    "name": "OrderList",
-    "file": "OrderList.jsx",
-    "dependencies": [
-      "Br",
-      "Cm",
-      "Ea",
-      "I",
-      "Ie",
-      "Ne",
-      "React",
-      "T",
-      "VY",
-      "We",
-      "YG",
-      "YH",
-      "ZU",
-      "b",
-      "df",
-      "f",
-      "fN",
-      "g",
-      "hN",
-      "q",
-      "sN",
-      "sn",
-      "uf",
-      "v",
-      "vn",
-      "xq",
-      "y",
-      "z"
-    ]
-  },
-  {
-    "binding": "XY",
-    "name": "OrderHeader",
-    "file": "OrderHeader.jsx",
-    "dependencies": ["Ge", "I", "JY", "React", "b"]
-  },
-  {
-    "binding": "eQ",
-    "name": "OrderBilling",
-    "file": "OrderBilling.jsx",
-    "dependencies": ["Ge", "I", "React", "b"]
-  },
-  {
-    "binding": "cQ",
-    "name": "OrderItems",
-    "file": "OrderItems.jsx",
-    "dependencies": [
-      "Ge",
-      "I",
-      "Mt",
-      "React",
-      "T",
-      "V",
-      "W",
-      "YH",
-      "b",
-      "g",
-      "iQ",
-      "nQ",
-      "oQ",
-      "rQ",
-      "sN",
-      "tQ",
-      "wn",
-      "y"
-    ]
-  },
-  {
-    "binding": "fQ",
-    "name": "OrderNotes",
-    "file": "OrderNotes.jsx",
-    "dependencies": ["Ge", "I", "JY", "React", "T", "W", "b", "g", "q", "y"]
-  },
-  {
-    "binding": "EQ",
-    "name": "OrderStatus",
-    "file": "OrderStatus.jsx",
-    "dependencies": ["I", "React", "T", "b", "g", "vn", "y"]
-  },
-  {
-    "binding": "CQ",
-    "name": "CustomerProfile",
-    "file": "CustomerProfile.jsx",
-    "dependencies": ["I", "React", "b", "g"]
-  },
-  {
-    "binding": "RQ",
-    "name": "CustomerHistory",
-    "file": "CustomerHistory.jsx",
-    "dependencies": ["I", "React", "b", "g"]
-  },
-  {
-    "binding": "PQ",
-    "name": "OrderGeneral",
-    "file": "OrderGeneral.jsx",
-    "dependencies": ["I", "React", "b"]
-  },
-  {
-    "binding": "kQ",
-    "name": "RelatedOrders",
-    "file": "RelatedOrders.jsx",
-    "dependencies": ["Ge", "I", "OQ", "React", "VY", "b"]
-  },
-  {
-    "binding": "FQ",
-    "name": "OrderDetails",
-    "file": "OrderDetails.jsx",
-    "dependencies": [
-      "CQ",
-      "EQ",
-      "Ge",
-      "I",
-      "Nr",
-      "PQ",
-      "RQ",
-      "React",
-      "T",
-      "XY",
-      "_",
-      "b",
-      "cQ",
-      "eQ",
-      "f",
-      "fQ",
-      "g",
-      "kQ",
-      "y",
-      "z"
-    ]
-  },
-  {
-    "binding": "GQ",
-    "name": "SubscriptionsPage",
-    "file": "SubscriptionsPage.jsx",
-    "dependencies": ["HG", "HQ", "React"]
-  },
-  {
-    "binding": "VQ",
-    "name": "SubscriptionList",
-    "file": "SubscriptionList.jsx",
-    "dependencies": [
-      "Br",
-      "Cm",
-      "Ea",
-      "I",
-      "L",
-      "React",
-      "T",
-      "VY",
-      "YG",
-      "b",
-      "df",
-      "f",
-      "fN",
-      "g",
-      "hN",
-      "uf",
-      "v",
-      "y",
-      "z"
-    ]
-  },
-  {
-    "binding": "KQ",
-    "name": "SubscriptionStatus",
-    "file": "SubscriptionStatus.jsx",
-    "dependencies": ["I", "React", "T", "b", "g", "vn", "y"]
-  },
-  {
-    "binding": "eZ",
-    "name": "SubscriptionNotes",
-    "file": "SubscriptionNotes.jsx",
-    "dependencies": ["I", "JQ", "JY", "React", "b", "g", "q"]
-  },
-  {
-    "binding": "iZ",
-    "name": "SubscriptionDetails",
-    "file": "SubscriptionDetails.jsx",
-    "dependencies": [
-      "I",
-      "KQ",
-      "Nr",
-      "OQ",
-      "React",
-      "T",
-      "aZ",
-      "b",
-      "eZ",
-      "f",
-      "g",
-      "kQ",
-      "rZ",
-      "tZ",
-      "y",
-      "z"
-    ]
-  },
-  {
-    "binding": "lZ",
-    "name": "SubscriptionEditPage",
-    "file": "SubscriptionEditPage.jsx",
-    "dependencies": ["HG", "React", "iZ"]
-  },
-  {
-    "binding": "Ere",
-    "name": "CouponRefreshIcon",
-    "file": "CouponRefreshIcon.jsx",
-    "dependencies": ["React"]
-  },
-  {
-    "binding": "kre",
-    "name": "CouponModal",
-    "file": "CouponModal.jsx",
-    "dependencies": [
-      "Cre",
-      "Ge",
-      "I",
-      "Nm",
-      "Pf",
-      "Pre",
-      "React",
-      "Rre",
-      "Sre",
-      "b",
-      "g",
-      "jf",
-      "sH"
-    ]
-  },
-  {
-    "binding": "Hre",
-    "name": "CouponList",
-    "file": "CouponList.jsx",
-    "dependencies": [
-      "Bre",
-      "Dre",
-      "Fre",
-      "Ge",
-      "I",
-      "Ie",
-      "Mre",
-      "Ne",
-      "OQ",
-      "React",
-      "T",
-      "We",
-      "Wre",
-      "aN",
-      "aY",
-      "b",
-      "df",
-      "fN",
-      "g",
-      "hN",
-      "jre",
-      "l",
-      "lN",
-      "nf",
-      "pG",
-      "q",
-      "uf",
-      "v",
-      "y",
-      "z",
-      "zre"
-    ]
-  },
-  {
-    "binding": "Ure",
-    "name": "CouponsPage",
-    "file": "CouponsPage.jsx",
-    "dependencies": ["Gre", "HG", "I", "React", "YG", "b", "z"]
-  }
+	{
+		"binding": "KY",
+		"name": "OrdersPage",
+		"file": "OrdersPage.jsx",
+		"dependencies": [ "$Y", "HG", "React" ]
+	},
+	{
+		"binding": "ZY",
+		"name": "OrderList",
+		"file": "OrderList.jsx",
+		"dependencies": [
+			"Br",
+			"Cm",
+			"Ea",
+			"I",
+			"Ie",
+			"Ne",
+			"React",
+			"T",
+			"VY",
+			"We",
+			"YG",
+			"YH",
+			"ZU",
+			"b",
+			"df",
+			"f",
+			"fN",
+			"g",
+			"hN",
+			"q",
+			"sN",
+			"sn",
+			"uf",
+			"v",
+			"vn",
+			"xq",
+			"y",
+			"z"
+		]
+	},
+	{
+		"binding": "XY",
+		"name": "OrderHeader",
+		"file": "OrderHeader.jsx",
+		"dependencies": [ "Ge", "I", "JY", "React", "b" ]
+	},
+	{
+		"binding": "eQ",
+		"name": "OrderBilling",
+		"file": "OrderBilling.jsx",
+		"dependencies": [ "Ge", "I", "React", "b" ]
+	},
+	{
+		"binding": "cQ",
+		"name": "OrderItems",
+		"file": "OrderItems.jsx",
+		"dependencies": [
+			"Ge",
+			"I",
+			"Mt",
+			"React",
+			"T",
+			"V",
+			"W",
+			"YH",
+			"b",
+			"g",
+			"iQ",
+			"nQ",
+			"oQ",
+			"rQ",
+			"sN",
+			"tQ",
+			"wn",
+			"y"
+		]
+	},
+	{
+		"binding": "fQ",
+		"name": "OrderNotes",
+		"file": "OrderNotes.jsx",
+		"dependencies": [
+			"Ge",
+			"I",
+			"JY",
+			"React",
+			"T",
+			"W",
+			"b",
+			"g",
+			"q",
+			"y"
+		]
+	},
+	{
+		"binding": "EQ",
+		"name": "OrderStatus",
+		"file": "OrderStatus.jsx",
+		"dependencies": [ "I", "React", "T", "b", "g", "vn", "y" ]
+	},
+	{
+		"binding": "CQ",
+		"name": "CustomerProfile",
+		"file": "CustomerProfile.jsx",
+		"dependencies": [ "I", "React", "b", "g" ]
+	},
+	{
+		"binding": "RQ",
+		"name": "CustomerHistory",
+		"file": "CustomerHistory.jsx",
+		"dependencies": [ "I", "React", "b", "g" ]
+	},
+	{
+		"binding": "PQ",
+		"name": "OrderGeneral",
+		"file": "OrderGeneral.jsx",
+		"dependencies": [ "I", "React", "b" ]
+	},
+	{
+		"binding": "kQ",
+		"name": "RelatedOrders",
+		"file": "RelatedOrders.jsx",
+		"dependencies": [ "Ge", "I", "OQ", "React", "VY", "b" ]
+	},
+	{
+		"binding": "FQ",
+		"name": "OrderDetails",
+		"file": "OrderDetails.jsx",
+		"dependencies": [
+			"CQ",
+			"EQ",
+			"Ge",
+			"I",
+			"Nr",
+			"PQ",
+			"RQ",
+			"React",
+			"T",
+			"XY",
+			"_",
+			"b",
+			"cQ",
+			"eQ",
+			"f",
+			"fQ",
+			"g",
+			"kQ",
+			"y",
+			"z"
+		]
+	},
+	{
+		"binding": "GQ",
+		"name": "SubscriptionsPage",
+		"file": "SubscriptionsPage.jsx",
+		"dependencies": [ "HG", "HQ", "React" ]
+	},
+	{
+		"binding": "VQ",
+		"name": "SubscriptionList",
+		"file": "SubscriptionList.jsx",
+		"dependencies": [
+			"Br",
+			"Cm",
+			"Ea",
+			"I",
+			"L",
+			"React",
+			"T",
+			"VY",
+			"YG",
+			"b",
+			"df",
+			"f",
+			"fN",
+			"g",
+			"hN",
+			"uf",
+			"v",
+			"y",
+			"z"
+		]
+	},
+	{
+		"binding": "KQ",
+		"name": "SubscriptionStatus",
+		"file": "SubscriptionStatus.jsx",
+		"dependencies": [ "I", "React", "T", "b", "g", "vn", "y" ]
+	},
+	{
+		"binding": "eZ",
+		"name": "SubscriptionNotes",
+		"file": "SubscriptionNotes.jsx",
+		"dependencies": [ "I", "JQ", "JY", "React", "b", "g", "q" ]
+	},
+	{
+		"binding": "iZ",
+		"name": "SubscriptionDetails",
+		"file": "SubscriptionDetails.jsx",
+		"dependencies": [
+			"I",
+			"KQ",
+			"Nr",
+			"OQ",
+			"React",
+			"T",
+			"aZ",
+			"b",
+			"eZ",
+			"f",
+			"g",
+			"kQ",
+			"rZ",
+			"tZ",
+			"y",
+			"z"
+		]
+	},
+	{
+		"binding": "lZ",
+		"name": "SubscriptionEditPage",
+		"file": "SubscriptionEditPage.jsx",
+		"dependencies": [ "HG", "React", "iZ" ]
+	},
+	{
+		"binding": "Ere",
+		"name": "CouponRefreshIcon",
+		"file": "CouponRefreshIcon.jsx",
+		"dependencies": [ "React" ]
+	},
+	{
+		"binding": "kre",
+		"name": "CouponModal",
+		"file": "CouponModal.jsx",
+		"dependencies": [
+			"Cre",
+			"Ge",
+			"I",
+			"Nm",
+			"Pf",
+			"Pre",
+			"React",
+			"Rre",
+			"Sre",
+			"b",
+			"g",
+			"jf",
+			"sH"
+		]
+	},
+	{
+		"binding": "Hre",
+		"name": "CouponList",
+		"file": "CouponList.jsx",
+		"dependencies": [
+			"Bre",
+			"Dre",
+			"Fre",
+			"Ge",
+			"I",
+			"Ie",
+			"Mre",
+			"Ne",
+			"OQ",
+			"React",
+			"T",
+			"We",
+			"Wre",
+			"aN",
+			"aY",
+			"b",
+			"df",
+			"fN",
+			"g",
+			"hN",
+			"jre",
+			"l",
+			"lN",
+			"nf",
+			"pG",
+			"q",
+			"uf",
+			"v",
+			"y",
+			"z",
+			"zre"
+		]
+	},
+	{
+		"binding": "Ure",
+		"name": "CouponsPage",
+		"file": "CouponsPage.jsx",
+		"dependencies": [ "Gre", "HG", "I", "React", "YG", "b", "z" ]
+	}
 ]

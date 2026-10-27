@@ -1,9 +1,10 @@
 .ohmylms-page {
+
     .ohmylms-table {
         margin: 0;
         border-radius: 14px;
         background-color: #FFF;
-        box-shadow: 0px 1px 2px 0px #DBDDE1;
+        box-shadow: 0 1px 2px 0 #DBDDE1;
         
         .ohmylms-tr {
             display: flex;
@@ -31,6 +32,7 @@
                 &:first-child {
                     padding-left: 24px;
                 }
+
                 &.action {
                     padding-right: 24px;
                 }
@@ -49,13 +51,15 @@
                 max-width: 300px;
                 width: 42%;
             }
+
             .submission-date {
                 width: 185px;
             }
+
             .status {
                 width: 110px;
         
-                & > span {
+                > span {
                     border-radius: 100px;
                     display: inline-block;
                     font-size: 13px;
@@ -122,7 +126,7 @@
                     padding-right: 24px;
                 }
 
-                &:first-letter {
+                &::first-letter {
                     text-transform: uppercase;
                 }
             }
@@ -160,7 +164,6 @@
             border: none;
             background: transparent !important;
             cursor: pointer;
-            outline: none;
             padding: 5px 6px;
             display: block;
             position: relative;
@@ -172,6 +175,7 @@
             &.first-page {
                 margin-left: 5px;
             }
+
             &.last-page {
                 margin-right: 5px;
             }
@@ -181,6 +185,7 @@
             }
 
             &:hover {
+
                 path {
                     fill: var(--ohmylms-primary-color);
                 }
@@ -194,7 +199,6 @@
             border: 1px solid #EEF0F3!important;
             text-align: center;
             padding: 5px;
-            outline: none;
             box-shadow: none;
             margin: 0 2px;
             outline: none !important;
@@ -222,12 +226,15 @@
 
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .ohmylms-table {
         border-radius: 10px;
     }
+
     .ohmylms-page .ohmylms-table .ohmylms-head {
         border-radius: 10px 10px 0 0;
     }
+
     .ohmylms-page .ohmylms-table .ohmylms-head .ohmylms-th {
         padding: 12px 10px;
     }
@@ -240,9 +247,11 @@
     .ohmylms-page .ohmylms-table .ohmylms-tr .title {
         max-width: 192px;
     }
+
     .ohmylms-page .ohmylms-table .ohmylms-tr .submission-date {
         width: 152px;
     }
+
     .ohmylms-page .ohmylms-table .ohmylms-tr .status > span {
         font-size: 12px;
         padding: 6px 10px;
@@ -269,18 +278,22 @@
 }
 
 @media screen and (max-width: 991px) {
+
     .ohmylms-page .ohmylms-table .ohmylms-tr .ohmylms-td {
         font-size: 14px;
     }
+
     .ohmylms-page .ohmylms-table .ohmylms-tr .title {
         max-width: 275px;
     }
+
     .ohmylms-page .ohmylms-table .ohmylms-tr .submission-date {
         width: 184px;
     }
 }
 
 @media screen and (max-width: 767px) {
+
     .ohmylms-page .ohmylms-table .ohmylms-tr .time,
     .ohmylms-page .ohmylms-table .ohmylms-tr .status,
     .ohmylms-page .ohmylms-table .ohmylms-tr .submission-date {
@@ -298,7 +311,7 @@
     }
 
     .ohmylms-page .ohmylms-table .ohmylms-tr .ohmylms-td-handle {
-        background-color: #ffffff;
+        background-color: #fff;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -326,10 +339,10 @@
 
         svg {
             transform: rotate(-180deg);
-            top: 0px;
+            top: 0;
 
             path {
-                stroke: #ffffff;
+                stroke: #fff;
             }
         }
     }
@@ -353,7 +366,7 @@
             align-items: center;
             font-size: 13px;
 
-            &:before {
+            &::before {
                 content: attr(data-title);
                 display: block;
                 color: var(--ohmylms-heading-color);
@@ -378,13 +391,16 @@
 }
 
 @media screen and (max-width: 425px) {
+
     .ohmylms-page .ohmylms-table-pagination a {
         padding: 5px 4px;
     }
+
     .ohmylms-page .ohmylms-table-pagination a.first-page {
-        margin-left: 0px;
+        margin-left: 0;
     }
+
     .ohmylms-page .ohmylms-table-pagination a.last-page {
-        margin-right: 0px;
+        margin-right: 0;
     }
 }

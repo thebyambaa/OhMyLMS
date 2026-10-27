@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * ZoomWebhookController class.
  *
@@ -110,7 +110,7 @@ class ZoomWebhookController {
 			}
 			return new WP_REST_Response(
 				array(
-					'plainToken'    => $plain_token,
+					'plainToken'     => $plain_token,
 					'encryptedToken' => hash_hmac( 'sha256', $plain_token, $secret_token ),
 				),
 				200
@@ -224,7 +224,7 @@ class ZoomWebhookController {
 			}
 		}
 
-		return $preferred ?: $fallback;
+		return $preferred ? $preferred : $fallback;
 	}
 
 	/**

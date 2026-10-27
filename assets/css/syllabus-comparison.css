@@ -1,0 +1,378 @@
+.ohmylms-comparison {
+	padding: 24px;
+}
+
+.ohmylms-comparison .ohmylms-comparison-selectors,
+.ohmylms-comparison .ohmylms-comparison-pagination {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+	margin: 16px 0;
+}
+
+.ohmylms-comparison .ohmylms-comparison-leave {
+	margin: 12px 0;
+}
+
+.ohmylms-comparison .ohmylms-comparison-leave ul {
+	margin: 4px 0 8px 20px;
+	list-style: disc;
+}
+
+.ohmylms-comparison .ohmylms-comparison-leave-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.ohmylms-comparison .ohmylms-comparison-views {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 16px 0;
+}
+
+.ohmylms-comparison .ohmylms-roadmap-folders {
+	margin: 16px 0;
+	padding: 12px;
+	border: 1px solid var(--oml-border, #dcdcde);
+	border-radius: var(--oml-radius-control, 4px);
+}
+
+.ohmylms-comparison .ohmylms-comparison-grid {
+	position: relative;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(280px, 0.9fr) minmax(0, 1fr);
+	gap: 20px;
+	align-items: start;
+	overflow-x: auto;
+	max-height: calc(100vh - 300px);
+	min-height: 480px;
+}
+
+.ohmylms-comparison .ohmylms-comparison-column,
+.ohmylms-comparison .ohmylms-comparison-center {
+	min-width: 0;
+	padding: 20px;
+	border: 1px solid var(--oml-border, #dcdcde);
+	border-radius: var(--oml-radius-card, 8px);
+	background: #fff;
+	overflow-wrap: anywhere;
+	max-height: calc(100vh - 320px);
+	overflow-y: auto;
+}
+
+.ohmylms-comparison .ohmylms-comparison-objective {
+	padding: 16px 0;
+	border-top: 1px solid var(--oml-border, #dcdcde);
+}
+
+.ohmylms-comparison .ohmylms-comparison-column {
+	display: flex;
+	flex-direction: column;
+	height: max(480px, calc(100vh - 320px));
+	max-height: none;
+	padding: 16px;
+	overflow: hidden;
+}
+
+.ohmylms-comparison .ohmylms-comparison-column-header {
+	flex-shrink: 0;
+}
+
+.ohmylms-comparison .ohmylms-comparison-column-header h2 {
+	margin: 0 0 4px;
+	font-size: 16px;
+	line-height: 1.4;
+}
+
+.ohmylms-comparison .ohmylms-comparison-breadcrumb ol {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	color: #50575e;
+	font-size: 11px;
+	line-height: 1.5;
+}
+
+.ohmylms-comparison .ohmylms-comparison-breadcrumb li + li::before {
+	margin-right: 4px;
+	content: "›";
+}
+
+.ohmylms-comparison .ohmylms-comparison-coverage {
+	margin: 4px 0 8px;
+	color: #50575e;
+	font-size: 11px;
+}
+
+.ohmylms-comparison .ohmylms-comparison-searchbar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.ohmylms-comparison .ohmylms-comparison-searchbar .components-base-control {
+	flex: 1;
+	min-width: 0;
+	margin: 0;
+}
+
+.ohmylms-comparison .ohmylms-comparison-searchbar label {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+.ohmylms-comparison .ohmylms-comparison-column-header .components-base-control > div {
+	margin-bottom: 0;
+}
+
+.ohmylms-comparison .ohmylms-comparison-filter-panel:not([hidden]) {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.ohmylms-comparison .ohmylms-comparison-filter-panel .components-base-control {
+	min-width: 0;
+	margin-bottom: 0;
+}
+
+.ohmylms-comparison .ohmylms-comparison-filter-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin-bottom: 8px;
+}
+
+.ohmylms-comparison .ohmylms-comparison-skills-list {
+	flex: 1;
+	min-height: 100px;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+}
+
+.ohmylms-comparison .ohmylms-comparison-column .ohmylms-comparison-pagination {
+	flex-shrink: 0;
+	justify-content: space-between;
+	gap: 4px;
+	margin: 8px 0 0;
+	font-size: 11px;
+}
+
+.ohmylms-comparison .ohmylms-comparison-center.is-shared-list {
+	display: flex;
+	flex-direction: column;
+	height: max(480px, calc(100vh - 320px));
+	max-height: none;
+	padding: 16px;
+	overflow: hidden;
+}
+
+.ohmylms-comparison .is-shared-list .ohmylms-shared-view,
+.ohmylms-comparison .ohmylms-shared-skill-browser {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-height: 0;
+}
+
+.ohmylms-comparison .ohmylms-shared-skill-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.ohmylms-comparison .ohmylms-shared-skill-row {
+	height: auto;
+	padding: 4px;
+	text-align: left;
+	white-space: normal;
+}
+
+.ohmylms-comparison .ohmylms-shared-skill-row[aria-pressed="true"] {
+	border-radius: var(--oml-radius-control, 4px);
+	color: #4e2b91;
+	background: #f0edff;
+	font-weight: 600;
+}
+
+.ohmylms-comparison .ohmylms-shared-skill-details {
+	flex-shrink: 0;
+	margin-top: 8px;
+}
+
+.ohmylms-comparison .ohmylms-shared-skill-details[open] {
+	max-height: 220px;
+	overflow-y: auto;
+}
+
+.ohmylms-comparison .is-shared-list > div:not([hidden]):not(.ohmylms-shared-view) {
+	max-height: 220px;
+	overflow-y: auto;
+}
+
+.ohmylms-comparison .ohmylms-relationship-badge {
+	display: inline-block;
+	padding: 2px 6px;
+	border: 1px solid currentcolor;
+	border-radius: var(--oml-radius-control, 4px);
+	font-size: 11px;
+	font-weight: 500;
+	line-height: 1.5;
+}
+
+.ohmylms-comparison .ohmylms-relationship-badge.is-equivalent {
+	color: #136039;
+	background: #edf8f0;
+}
+
+.ohmylms-comparison .ohmylms-relationship-badge.is-broader {
+	color: #185b9a;
+	background: #edf5ff;
+}
+
+.ohmylms-comparison .ohmylms-relationship-badge.is-narrower {
+	color: #805600;
+	background: #fff6dc;
+}
+
+.ohmylms-comparison .ohmylms-relationship-badge.is-related {
+	color: #50575e;
+	background: #f0f0f1;
+}
+
+.ohmylms-comparison .ohmylms-relationship-badge.is-combined {
+	color: #65369c;
+	background: #f5eeff;
+}
+
+.ohmylms-comparison .ohmylms-relationship-badge.is-pending {
+	border-style: dashed;
+}
+
+.ohmylms-comparison .ohmylms-comparison-objective.is-unrelated {
+	color: #646970;
+	background: #f6f7f7;
+	filter: grayscale(1);
+}
+
+.ohmylms-comparison .ohmylms-comparison-objective.is-connected {
+	padding-left: 8px;
+	border-left: 3px solid #107c41;
+}
+
+.ohmylms-comparison .ohmylms-comparison-objective.is-broader {
+	border-left-color: #146bc6;
+}
+
+.ohmylms-comparison .ohmylms-comparison-objective.is-narrower {
+	border-left-color: #986300;
+}
+
+.ohmylms-comparison .ohmylms-comparison-objective.is-related {
+	border-left-color: #656c76;
+}
+
+.ohmylms-comparison .ohmylms-comparison-objective.is-combined {
+	border-left-color: #7945b8;
+}
+
+.ohmylms-comparison .ohmylms-mapping-connections {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 2;
+	pointer-events: none;
+}
+
+.ohmylms-comparison .ohmylms-mapping-connections path {
+	fill: none;
+	stroke: #107c41;
+	stroke-width: 1.5;
+	opacity: 0.7;
+}
+
+.ohmylms-comparison .ohmylms-mapping-connections .is-broader {
+	stroke: #146bc6;
+}
+
+.ohmylms-comparison .ohmylms-mapping-connections .is-narrower {
+	stroke: #986300;
+}
+
+.ohmylms-comparison .ohmylms-mapping-connections .is-related {
+	stroke: #656c76;
+	stroke-dasharray: 3 5;
+}
+
+.ohmylms-comparison .ohmylms-mapping-connections .is-combined {
+	stroke: #7945b8;
+}
+
+.ohmylms-comparison .ohmylms-mapping-connections .is-pending {
+	stroke-dasharray: 8 5;
+}
+
+.ohmylms-comparison .ohmylms-shared-focus {
+	margin: 4px 0;
+	padding: 4px 8px;
+	border-radius: var(--oml-radius-control, 4px);
+	background: #f0edff;
+	font-weight: 600;
+}
+
+.ohmylms-comparison .ohmylms-relationship-legend {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin-top: 12px;
+	font-size: 11px;
+}
+
+@media (max-width: 1100px) {
+
+	.ohmylms-comparison .ohmylms-mapping-connections {
+		display: none;
+	}
+
+	.ohmylms-comparison .ohmylms-comparison-grid {
+		display: flex;
+		flex-direction: column;
+		max-height: none;
+	}
+
+	.ohmylms-comparison .ohmylms-comparison-column,
+	.ohmylms-comparison .ohmylms-comparison-center {
+		width: 100%;
+		max-height: none;
+	}
+}
+
+.ohmylms-comparison .ohmylms-roadmap-heading,
+.ohmylms-comparison .ohmylms-roadmap-save {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+}
+
+.ohmylms-comparison .ohmylms-roadmap-heading {
+	margin: 12px 0;
+}
+
+.ohmylms-comparison .ohmylms-roadmap-heading h1 {
+	margin: 0;
+}

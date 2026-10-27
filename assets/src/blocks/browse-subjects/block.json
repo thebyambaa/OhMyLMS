@@ -1,0 +1,19 @@
+{
+	"apiVersion": 3,
+	"name": "ohmylms/browse-subjects",
+	"title": "OhMyLMS Browse Subjects",
+	"category": "widgets",
+	"icon": "category",
+	"description": "Let visitors browse subjects and their published courses, then sign up to enroll.",
+	"textdomain": "ohmylms",
+	"attributes": {
+		"subjectId": { "type": "integer", "default": 0 },
+		"display": {
+			"type": "string",
+			"enum": [ "panel", "dropdown" ],
+			"default": "panel"
+		}
+	},
+	"supports": { "html": false, "align": [ "wide", "full" ] },
+	"editorScript": "ohmylms-browse-subjects-block"
+}

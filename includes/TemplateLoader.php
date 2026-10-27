@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Class TemplateLoader.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS;
 
@@ -9,7 +14,16 @@ namespace OhMyLMS;
  * @since 1.0.0
  */
 class TemplateLoader {
- private static $relocated_templates = ['recurring-totals.php'=>'checkout/', 'recurring-subscription-totals.php'=>'checkout/', 'subscription-info.php'=>'checkout/'];
+	/**
+	 * Relocated templates.
+	 *
+	 * @var mixed
+	 */
+	private static $relocated_templates = array(
+		'recurring-totals.php'              => 'checkout/',
+		'recurring-subscription-totals.php' => 'checkout/',
+		'subscription-info.php'             => 'checkout/',
+	);
 
 	/**
 	 * Course page id
@@ -28,13 +42,13 @@ class TemplateLoader {
 	public static function init(): void {
 		add_action( 'pre_get_posts', array( __CLASS__, 'pre_get_posts' ) );
 		add_filter( 'template_include', array( __CLASS__, 'load_template' ), 999 );
-	add_filter('ohmylms_get_template', [__CLASS__, 'handle_relocated_templates'], 10, 5);
-}
+		add_filter( 'ohmylms_get_template', array( __CLASS__, 'handle_relocated_templates' ), 10, 5 );
+	}
 
 	/**
 	 * Load the template
 	 *
-	 * @param $template
+	 * @param mixed $template Template.
 	 * @return string
 	 * @since 1.0.0
 	 */
@@ -85,7 +99,7 @@ class TemplateLoader {
 	/**
 	 * Get the files to search for the template loader.
 	 *
-	 * @param $default_file
+	 * @param mixed $default_file Default file.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -123,7 +137,9 @@ class TemplateLoader {
 
 
 	/**
-	 * @param \WP_Query $q
+	 * Pre get posts.
+	 *
+	 * @param \WP_Query $q Q.
 	 * @return \WP_Query
 	 */
 	public static function pre_get_posts( \WP_Query $q ): \WP_Query {
@@ -147,17 +163,28 @@ class TemplateLoader {
 		return $q;
 	}
 
-public static function handle_relocated_templates ( $template, $template_name, $args, $template_path, $default_path ) {
-        if ( file_exists( $template ) ) {
-            return $template;
-        }
+	/**
+	 * Handle relocated templates for Template loader.
+	 *
+	 * @param mixed $template Template.
+	 * @param mixed $template_name Template name.
+	 * @param mixed $args Operation arguments.
+	 * @param mixed $template_path Template path.
+	 * @param mixed $default_path Default path.
+	 */
+	public static function handle_relocated_templates( $template, $template_name, $args, $template_path, $default_path ) {
+		if ( file_exists( $template ) ) {
+			return $template;
+		}
 
-        $ohmylms_pro_path     = OHMYLMS_PRO_DIR;
-        $template_file           = basename( $template_name );
+		$ohmylms_pro_path = OHMYLMS_PRO_DIR;
+		$template_file    = basename( $template_name );
 
-        if (!isset(self::$relocated_templates[$template_file])) return $template;
-        return $ohmylms_pro_path . '/templates/' . self::$relocated_templates[ $template_file ] . $template_file;
-    }
+		if ( ! isset( self::$relocated_templates[ $template_file ] ) ) {
+			return $template;
+		}
+		return $ohmylms_pro_path . '/templates/' . self::$relocated_templates[ $template_file ] . $template_file;
+	}
 }
 
 add_action( 'init', array( 'OhMyLMS\TemplateLoader', 'init' ) );

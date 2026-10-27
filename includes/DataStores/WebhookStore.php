@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Class WebhookStore.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\DataStores;
 
@@ -18,7 +23,7 @@ class WebhookStore extends DataStore {
 	/**
 	 * Create webhook
 	 *
-	 * @param Webhook $webhook
+	 * @param Webhook $webhook Webhook.
 	 * @return mixed|void
 	 * @since 1.0.0
 	 */
@@ -59,9 +64,10 @@ class WebhookStore extends DataStore {
 	/**
 	 * Read webhook
 	 *
-	 * @param Webhook $webhook
+	 * @param Webhook $webhook Webhook.
 	 * @return mixed|void
 	 * @since 1.0.0
+	 * @throws \Exception When the operation cannot be completed.
 	 */
 	public function read( &$webhook ) {
 		global $wpdb;
@@ -70,10 +76,7 @@ class WebhookStore extends DataStore {
 		}
 
 		$webhook_data = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT * FROM {$wpdb->prefix}ohmylms_webhooks WHERE id = %d",
-				$webhook->get_id()
-			)
+			$wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $wpdb->prefix . 'ohmylms_webhooks', $webhook->get_id() )
 		);
 
 		if ( ! $webhook_data ) {
@@ -106,7 +109,7 @@ class WebhookStore extends DataStore {
 	/**
 	 * Update webhook
 	 *
-	 * @param Webhook $webhook
+	 * @param Webhook $webhook Webhook.
 	 * @return mixed|void
 	 * @since 1.0.0
 	 */
@@ -146,8 +149,8 @@ class WebhookStore extends DataStore {
 	/**
 	 * Delete webhook
 	 *
-	 * @param Webhook $webhook
-	 * @param array $args
+	 * @param Webhook $webhook Webhook.
+	 * @param array   $args Operation arguments.
 	 * @return mixed|void
 	 * @since 1.0.0
 	 */
@@ -207,7 +210,7 @@ class WebhookStore extends DataStore {
 		);
 
 		$args = wp_parse_args( $args, $defaults );
-		
+
 		$where_clauses = array( '1=1' );
 		$values        = array();
 
@@ -223,15 +226,15 @@ class WebhookStore extends DataStore {
 
 		if ( ! empty( $args['search'] ) ) {
 			$where_clauses[] = '(name LIKE %s OR webhook_url LIKE %s OR trigger_event LIKE %s)';
-			$search_term = '%' . $wpdb->esc_like( $args['search'] ) . '%';
-			$values[] = $search_term;
-			$values[] = $search_term;
-			$values[] = $search_term;
+			$search_term     = '%' . $wpdb->esc_like( $args['search'] ) . '%';
+			$values[]        = $search_term;
+			$values[]        = $search_term;
+			$values[]        = $search_term;
 		}
 
-		$where = implode( ' AND ', $where_clauses );
+		$where   = implode( ' AND ', $where_clauses );
 		$orderby = sanitize_sql_orderby( $args['orderby'] . ' ' . $args['order'] );
-		
+
 		$limit_clause = '';
 		if ( $args['limit'] > 0 ) {
 			$limit_clause = $wpdb->prepare( ' LIMIT %d', $args['limit'] );
@@ -241,11 +244,11 @@ class WebhookStore extends DataStore {
 		}
 
 		$query = "SELECT * FROM {$wpdb->prefix}ohmylms_webhooks WHERE {$where}";
-		
+
 		if ( $orderby ) {
 			$query .= " ORDER BY {$orderby}";
 		}
-		
+
 		$query .= $limit_clause;
 
 		if ( ! empty( $values ) ) {
@@ -288,10 +291,10 @@ class WebhookStore extends DataStore {
 
 		if ( ! empty( $args['search'] ) ) {
 			$where_clauses[] = '(name LIKE %s OR webhook_url LIKE %s OR trigger_event LIKE %s)';
-			$search_term = '%' . $wpdb->esc_like( $args['search'] ) . '%';
-			$values[] = $search_term;
-			$values[] = $search_term;
-			$values[] = $search_term;
+			$search_term     = '%' . $wpdb->esc_like( $args['search'] ) . '%';
+			$values[]        = $search_term;
+			$values[]        = $search_term;
+			$values[]        = $search_term;
 		}
 
 		$where = implode( ' AND ', $where_clauses );

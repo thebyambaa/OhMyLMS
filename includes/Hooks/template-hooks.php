@@ -1,7 +1,13 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+/**
+ * Template hooks.
+ *
+ * @package OhMyLMS
+ */
 
-$single_course_layout = get_option( 'ohmylms_single_course_page_layout', 'layout_1' );
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
 
 add_filter( 'body_class', 'ohmylms_body_class' );
 add_action( 'body_class', 'ohmylms_add_theme_body_class' );
@@ -38,91 +44,6 @@ add_action( 'ohmylms_no_products_found', 'ohmylms_no_products_found', 5 );
 
 add_action( 'ohmylms_course_loop_header', 'ohmylms_course_header', 10 );
 
-
-
-if ( 'layout_1' === $single_course_layout ) {
-	add_action( 'ohmylms_single_course_content', 'ohmylms_single_course_header', 5 );
-	add_action( 'ohmylms_single_course_content', 'ohmylms_single_course_tabs', 10 );
-}
-
-if ( 'layout_2' === $single_course_layout ) {
-	add_action( 'ohmylms_single_course_content', 'ohmylms_single_course_header', 5 );
-	add_action( 'ohmylms_single_course_content', 'ohmylms_course_description_tab', 10 );
-	add_action( 'ohmylms_single_course_content', 'ohmylms_course_information_tab', 15 );
-	add_action( 'ohmylms_single_course_content', 'ohmylms_course_assignments_tab', 20 );
-	add_action( 'ohmylms_single_course_content', 'ohmylms_course_resources_tab', 25 );
-	add_action( 'ohmylms_single_course_content', 'ohmylms_course_reviews_tab', 30 );
-}
-
-if ( 'layout_3' === $single_course_layout ) {
-	add_action( 'ohmylms_single_course_content', 'ohmylms_single_course_layout3_header', 5 );
-	add_action( 'ohmylms_single_course_content', 'ohmylms_single_course_layout3_content', 10 );
-}
-
-// -----course single header's meta hooks-----
-add_action( 'ohmylms_single_course_meta', 'ohmylms_single_course_level', 5 );
-add_action( 'ohmylms_single_course_meta', 'ohmylms_single_course_review', 10 );
-add_action( 'ohmylms_single_course_meta', 'ohmylms_single_course_student_count', 15 );
-add_action( 'ohmylms_single_course_meta', 'ohmylms_single_course_capacity', 20 );
-
-// -----course single sidebar widget's meta hooks-----
-if ( 'layout_1' === $single_course_layout || 'layout_2' === $single_course_layout ) {
-	add_action( 'ohmylms_course_sidebar_widget_meta', 'ohmylms_single_course_review', 5 );
-	add_action( 'ohmylms_course_sidebar_widget_meta', 'ohmylms_single_course_level', 10 );
-	add_action( 'ohmylms_course_sidebar_widget_meta', 'ohmylms_single_course_student_count', 15 );
-	add_action( 'ohmylms_course_sidebar_widget_meta', 'ohmylms_single_course_duration', 20 );
-	add_action( 'ohmylms_course_sidebar_widget_meta', 'ohmylms_single_course_capacity', 25 );
-
-}
-add_action( 'ohmylms_course_sidebar_widget_meta', 'ohmylms_single_course_lesson_count', 30 );
-add_action( 'ohmylms_course_sidebar_widget_meta', 'ohmylms_single_course_additional_resource', 35 );
-
-// ---course sidebar widget's hooks for layout 1-----
-if ( 'layout_1' === $single_course_layout ) {
-	add_action( 'ohmylms_course_sidebar_widget', 'ohmylms_widget_pricebox', 5 );
-	add_action( 'ohmylms_course_sidebar_widget', 'ohmylms_widget_course_membership', 10 );
-	add_action( 'ohmylms_course_sidebar_widget', 'ohmylms_widget_course_progress', 15 );
-	add_action( 'ohmylms_course_sidebar_widget', 'ohmylms_widget_certificate', 20 );
-	add_action( 'ohmylms_course_sidebar_widget', 'ohmylms_widget_course_meta', 25 );
-	add_action( 'ohmylms_course_sidebar_widget', 'ohmylms_widget_course_leaderboard', 30 );
-	add_action( 'ohmylms_course_sidebar_widget', 'ohmylms_widget_course_author', 35 );
-	add_action( 'ohmylms_course_sidebar_widget', 'ohmylms_widget_course_taxonomy', 40 );
-	add_action( 'ohmylms_course_sidebar_widget', 'ohmylms_widget_course_drop', 45 );
-}
-
-// ---course sidebar widget's hooks for layout 2-----
-if ( 'layout_2' === $single_course_layout ) {
-	add_action( 'ohmylms_course_sidebar_widget', 'ohmylms_widget_pricebox', 5 );
-	add_action( 'ohmylms_course_sidebar_widget', 'ohmylms_widget_course_membership', 10 );
-	add_action( 'ohmylms_course_sidebar_widget', 'ohmylms_widget_course_progress', 15 );
-	add_action( 'ohmylms_course_sidebar_widget', 'ohmylms_widget_certificate', 20 );
-	add_action( 'ohmylms_course_sidebar_widget', 'ohmylms_widget_course_meta', 25 );
-	add_action( 'ohmylms_course_sidebar_widget', 'ohmylms_widget_course_leaderboard', 30 );
-	add_action( 'ohmylms_course_sidebar_widget', 'ohmylms_widget_course_taxonomy', 40 );
-	add_action( 'ohmylms_course_sidebar_widget', 'ohmylms_widget_course_drop', 45 );
-}
-
-// ---course sidebar widget's hooks for layout 3-----
-if ( 'layout_3' === $single_course_layout ) {
-	add_action( 'ohmylms_course_sidebar_widget', 'ohmylms_pricebox_and_course_meta', 5 );
-	add_action( 'ohmylms_course_sidebar_widget', 'ohmylms_widget_course_membership', 10 );
-	add_action( 'ohmylms_course_sidebar_widget', 'ohmylms_widget_certificate', 15 );
-	add_action( 'ohmylms_course_sidebar_widget', 'ohmylms_widget_course_leaderboard_layout3', 20 );
-	add_action( 'ohmylms_course_sidebar_widget', 'ohmylms_widget_course_taxonomy', 25 );
-	add_action( 'ohmylms_course_sidebar_widget', 'ohmylms_widget_course_drop', 30 );
-}
-
-
-add_action( 'ohmylms_course_before_sidebar_widget', 'ohmylms_course_feature_image_and_video', 5 );
-add_action( 'ohmylms_course_before_sidebar_widget', 'ohmylms_widget_wrapper_start', 10 );
-add_action( 'ohmylms_course_after_sidebar_widget', 'ohmylms_widget_wrapper_end', 5 );
-
-
-// function hooked after single course content
-add_action( 'ohmylms_after_single_course_content', 'ohmylms_widget_pricebox', 5 );
-
-
-
 /**
  * Course loop items
  *
@@ -136,7 +57,7 @@ add_action( 'ohmylms_after_single_course_content', 'ohmylms_widget_pricebox', 5 
 */
 
 add_action( 'ohmylms_before_courses_loop_item', 'ohmylms_template_loop_product_link_open', 5, 2 );
-add_action( 'ohmylms_after_courses_loop_item', 'ohmylms_template_loop_product_link_close', 5, 2);
+add_action( 'ohmylms_after_courses_loop_item', 'ohmylms_template_loop_product_link_close', 5, 2 );
 
 add_action( 'ohmylms_before_courses_loop_item_content', 'ohmylms_template_loop_course_thumbnail', 5 );
 
@@ -145,7 +66,7 @@ add_action( 'ohmylms_courses_loop_item_title', 'ohmylms_loop_course_title', 5, 2
 add_action( 'ohmylms_courses_loop_item_description', 'ohmylms_loop_course_description', 5 );
 
 
-// add_action( 'ohmylms_courses_loop_item_description', 'ohmylms_loop_course_cohort', 10, 2 );
+// add_action( 'ohmylms_courses_loop_item_description', 'ohmylms_loop_course_cohort', 10, 2 );.
 
 
 add_action( 'ohmylms_courses_loop_item_meta', 'ohmylms_loop_course_meta', 5 );
@@ -320,16 +241,6 @@ add_action( 'ohmylms_course_card_popup', 'ohmylms_loop_course_meta', 15 );
 add_action( 'ohmylms_course_card_popup', 'ohmylms_loop_course_description', 20 );
 add_action( 'ohmylms_course_card_popup', 'ohmylms_loop_course_add_to_cart', 25 );
 
-
-/**
- * course single layout-3 header meta hooks
- *
-*/
-add_action( 'ohmylms_single_course_layout3_header_meta', 'ohmylms_single_course_review', 5 );
-add_action( 'ohmylms_single_course_layout3_header_meta', 'ohmylms_single_course_level', 10 );
-add_action( 'ohmylms_single_course_layout3_header_meta', 'ohmylms_single_course_duration', 15 );
-add_action( 'ohmylms_single_course_layout3_header_meta', 'ohmylms_single_course_student_count', 20 );
-add_action( 'ohmylms_single_course_layout3_header_meta', 'ohmylms_single_course_capacity', 25 );
 
 // ---login page actions----
 add_action( 'ohmylms_login_form_start', 'ohmylms_login_header', 5 );

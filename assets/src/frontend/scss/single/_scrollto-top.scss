@@ -1,4 +1,5 @@
 .ohmylms-page {
+
     .ohmylms-scroll-to-top {
         position: fixed;
         bottom: 50px;
@@ -37,6 +38,7 @@
 
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .ohmylms-scroll-to-top {
         bottom: 20px;
         right: 20px;
@@ -46,6 +48,7 @@
         width: 40px;
         height: 40px;
     }
+
     .ohmylms-page .ohmylms-scroll-to-top button svg {
         width: 18px;
     }
@@ -54,6 +57,7 @@
 
 
 @media screen and (max-width: 991px) {
+
     .ohmylms-page .ohmylms-scroll-to-top {
         bottom: 110px;
     }
@@ -61,6 +65,7 @@
 }
 
 @media screen and (max-width: 575px) {
+
     .ohmylms-page .ohmylms-scroll-to-top {
         bottom: 130px;
     }

@@ -1,15 +1,18 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
 
-namespace CodeRex\Ecommerce\Factory;
+namespace OhMyLMS\Commerce\Factory;
 
-use CodeRex\Ecommerce\Data\OrderItemCourse;
+use OhMyLMS\Commerce\Data\OrderItemCourse;
 
+/**
+ * Plugin order item course factory implementation.
+ */
 class OrderItemCourseFactory {
 
 	/**
 	 * Get order item course
 	 *
-	 * @param bool $order_item_id
+	 * @param bool $order_item_id Order item identifier.
 	 * @return OrderItemCourse|bool
 	 */
 	public function get_order_item_course( $order_item_id = false ) {

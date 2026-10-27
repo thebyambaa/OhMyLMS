@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Class Assignment.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Data;
 
@@ -72,8 +77,8 @@ class Assignment extends PostTypeData {
 	/**
 	 * Assignment constructor.
 	 *
-	 * @param $assignment
-	 * @throws \Exception
+	 * @param string $assignment Assignment.
+	 * @throws \Exception When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	public function __construct( $assignment = '' ) {
@@ -85,7 +90,7 @@ class Assignment extends PostTypeData {
 			$this->set_id( absint( $assignment->ID ) );
 		}
 
-		// load the data store
+		// load the data store.
 		$this->data_store = DataStores::load( $this->data_store_name );
 
 		if ( $this->get_id() > 0 ) {
@@ -108,8 +113,9 @@ class Assignment extends PostTypeData {
 	/**
 	 * Set the assignment type.
 	 *
-	 * @return string
+	 * @return void
 	 * @since 1.0.0
+	 * @param mixed $type Type.
 	 */
 	public function set_type( $type ) {
 		$this->set_prop( 'type', $type );
@@ -148,8 +154,9 @@ class Assignment extends PostTypeData {
 	/**
 	 * Set the assignment type.
 	 *
-	 * @return string
+	 * @return void
 	 * @since 1.0.0
+	 * @param mixed $type Type.
 	 */
 	public function set_audio_id( $type ) {
 		$this->set_prop( 'audio_id', $type );
@@ -159,8 +166,9 @@ class Assignment extends PostTypeData {
 	/**
 	 * Set the assignment type.
 	 *
-	 * @return string
+	 * @return void
 	 * @since 1.0.0
+	 * @param mixed $link Link.
 	 */
 	public function set_external_url( $link ) {
 		$this->set_prop( 'external_url', $link );
@@ -172,7 +180,7 @@ class Assignment extends PostTypeData {
 	/**
 	 * Get average rating
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -184,7 +192,7 @@ class Assignment extends PostTypeData {
 	/**
 	 * Get review count
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -195,7 +203,7 @@ class Assignment extends PostTypeData {
 	/**
 	 * Get rating counts
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -205,7 +213,7 @@ class Assignment extends PostTypeData {
 	/**
 	 * Get Modified counts
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -217,7 +225,7 @@ class Assignment extends PostTypeData {
 	/**
 	 * Get Content counts
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -225,14 +233,29 @@ class Assignment extends PostTypeData {
 		return $this->get_prop( 'content', $context ) ?? '';
 	}
 
-	public function get_assignment_title( ) {
-		return $this->get_prop('name') ?? '';
+	/**
+	 * Get assignment title for Assignment.
+	 */
+	public function get_assignment_title() {
+		return $this->get_prop( 'name' ) ?? '';
 	}
 
+	/**
+	 * Get submission for Assignment.
+	 *
+	 * @param mixed $student_id Student identifier.
+	 */
 	public function get_submission( $student_id ) {
 		return $this->data_store->get_submission( $this, $student_id );
 	}
 
+	/**
+	 * Submit file submission for Assignment.
+	 *
+	 * @param mixed $student_id Student identifier.
+	 * @param mixed $course_id Course identifier.
+	 * @param mixed $data Input data.
+	 */
 	public function submit_file_submission( $student_id, $course_id, $data ) {
 		return $this->data_store->submit_file_submission( $this, $student_id, $course_id, $data );
 	}
@@ -240,7 +263,7 @@ class Assignment extends PostTypeData {
 	/**
 	 * Get Content counts
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -252,7 +275,7 @@ class Assignment extends PostTypeData {
 	/**
 	 * Get Content counts
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -263,7 +286,7 @@ class Assignment extends PostTypeData {
 	/**
 	 * Get Content counts
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -274,7 +297,7 @@ class Assignment extends PostTypeData {
 	/**
 	 * Get Content counts
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -285,7 +308,7 @@ class Assignment extends PostTypeData {
 	/**
 	 * Get drip settings
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -306,7 +329,7 @@ class Assignment extends PostTypeData {
 	/**
 	 * Set prerequisites of the Assignment
 	 *
-	 * @param $price
+	 * @param mixed $price Price.
 	 * @return void
 	 * @since 1.0.0
 	 */
@@ -317,7 +340,7 @@ class Assignment extends PostTypeData {
 	/**
 	 * Set prerequisites of the Assignment
 	 *
-	 * @param $price
+	 * @param mixed $resource Resource.
 	 * @return void
 	 * @since 1.0.0
 	 */
@@ -328,7 +351,7 @@ class Assignment extends PostTypeData {
 	/**
 	 * Set prerequisites of the Assignment
 	 *
-	 * @param $price
+	 * @param mixed $comments_enable Comments enable.
 	 * @return void
 	 * @since 1.0.0
 	 */
@@ -338,7 +361,7 @@ class Assignment extends PostTypeData {
 	/**
 	 * Set drip settings of the Assignment
 	 *
-	 * @param $drip_settings
+	 * @param mixed $drip_settings Drip settings.
 	 * @return void
 	 * @since 1.0.0
 	 */
@@ -348,7 +371,7 @@ class Assignment extends PostTypeData {
 	/**
 	 * Set prerequisites of the Assignment
 	 *
-	 * @param $price
+	 * @param mixed $price Price.
 	 * @return void
 	 * @since 1.0.0
 	 */
@@ -369,17 +392,16 @@ class Assignment extends PostTypeData {
 	/**
 	 * Set the time limit.
 	 *
-	 * @param string $time_limit
+	 * @param string $time_limit Time limit.
 	 * @since 1.0.0
 	 */
 	public function set_time_limit( string $time_limit ) {
-		$exiting_limit = get_post_meta( $this->get_id(), '_time_limit', true);
-		
-		if( $this->get_id() && $exiting_limit != $time_limit ) {
+		$exiting_limit = get_post_meta( $this->get_id(), '_time_limit', true );
+
+		if ( $this->get_id() && (string) $exiting_limit !== $time_limit ) {
 			$this->delete_assignment_deadline();
 		}
 		$this->set_prop( 'time_limit', $time_limit );
-		
 	}
 	/**
 	 * Get the time limit.
@@ -394,7 +416,7 @@ class Assignment extends PostTypeData {
 	/**
 	 * Set the time limit.
 	 *
-	 * @param string $time_limit
+	 * @param string $time_limit Time limit.
 	 * @since 1.0.0
 	 */
 	public function set_enable_time_limit( string $time_limit ) {
@@ -413,14 +435,14 @@ class Assignment extends PostTypeData {
 	/**
 	 * Set the time limit.
 	 *
-	 * @param string $time_limit
+	 * @param string $time_limit_type Time limit type.
 	 * @since 1.0.0
 	 */
 	public function set_time_limit_type( string $time_limit_type ) {
-		$exiting_limit_type = get_post_meta( $this->get_id(), '_time_limit_type', true);
-		if(  $this->get_id() && $exiting_limit_type != $time_limit_type ) {
-            $this->delete_assignment_deadline();
-        }
+		$exiting_limit_type = get_post_meta( $this->get_id(), '_time_limit_type', true );
+		if ( $this->get_id() && (string) $exiting_limit_type !== $time_limit_type ) {
+			$this->delete_assignment_deadline();
+		}
 		$this->set_prop( 'time_limit_type', $time_limit_type );
 	}
 
@@ -437,7 +459,7 @@ class Assignment extends PostTypeData {
 	/**
 	 * Set the total points.
 	 *
-	 * @param string $total_points
+	 * @param string $total_points Total points.
 	 * @since 1.0.0
 	 */
 	public function set_total_points( string $total_points ) {
@@ -457,7 +479,7 @@ class Assignment extends PostTypeData {
 	/**
 	 * Set the maximum pass points.
 	 *
-	 * @param string $maximum_pass_points
+	 * @param string $maximum_pass_points Maximum pass points.
 	 * @since 1.0.0
 	 */
 	public function set_maximum_pass_points( string $maximum_pass_points ) {
@@ -477,7 +499,7 @@ class Assignment extends PostTypeData {
 	/**
 	 * Set the allow upload files status.
 	 *
-	 * @param bool $allow_upload_files
+	 * @param bool $allow_upload_files Allow upload files.
 	 * @since 1.0.0
 	 */
 	public function set_allow_upload_files( bool $allow_upload_files ) {
@@ -497,7 +519,7 @@ class Assignment extends PostTypeData {
 	/**
 	 * Set the number of files.
 	 *
-	 * @param string $number_of_files
+	 * @param string $number_of_files Number of files.
 	 * @since 1.0.0
 	 */
 	public function set_number_of_files( string $number_of_files ) {
@@ -517,7 +539,7 @@ class Assignment extends PostTypeData {
 	/**
 	 * Set the enable file size limit status.
 	 *
-	 * @param string $enable_file_size_limit
+	 * @param string $enable_file_size_limit Enable file size limit.
 	 * @since 1.0.0
 	 */
 	public function set_enable_file_size_limit( string $enable_file_size_limit ) {
@@ -537,7 +559,7 @@ class Assignment extends PostTypeData {
 	/**
 	 * Set the max file size limit.
 	 *
-	 * @param string $max_file_size_limit
+	 * @param string $max_file_size_limit Max file size limit.
 	 * @since 1.0.0
 	 */
 	public function set_max_file_size_limit( string $max_file_size_limit ) {
@@ -626,32 +648,49 @@ class Assignment extends PostTypeData {
 	/**
 	 * Delete assignment data
 	 *
-	 * @param array $args
+	 * @param array $args Operation arguments.
 	 * @since 1.0.0
 	 */
 	public function delete( $args = array() ) {
 		$this->data_store->delete( $this, $args );
 	}
 
+	/**
+	 * Get report for Assignment.
+	 */
 	public function get_report() {
 		return $this->data_store->get_report( $this );
 	}
 
+	/**
+	 * Get assignment attempts for Assignment.
+	 *
+	 * @param mixed $student_id Student identifier.
+	 */
 	public function get_assignment_attempts( $student_id ) {
 		return $this->data_store->get_assignment_attempts( $this, $student_id );
 	}
 
+	/**
+	 * Update assignment attempts for Assignment.
+	 *
+	 * @param mixed $attempt_id Attempt identifier.
+	 * @param mixed $get_data Get data.
+	 */
 	public function update_assignment_attempts( $attempt_id, $get_data ) {
-		return $this->data_store->update_assignment_attempts($this, $attempt_id, $get_data);
+		return $this->data_store->update_assignment_attempts( $this, $attempt_id, $get_data );
 	}
 
+	/**
+	 * Delete assignment deadline for Assignment.
+	 */
 	private function delete_assignment_deadline() {
-		
+
 		global $wpdb;
 		$meta_key_pattern = '_ohmylms_deadline_' . get_current_user_id() . '_%';
-		$wpdb->query( 
-			$wpdb->prepare( 
-				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", 
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
 				$meta_key_pattern
 			)
 		);

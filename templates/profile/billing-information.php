@@ -13,13 +13,13 @@ defined( 'ABSPATH' ) || exit();
 
 <div class="ohmylms-student-profile-tab-content student-billing">
 	<h4 class="profile-tab-title">
-		<?php echo __( 'Billing Information ', 'ohmylms' ); ?>
+		<?php echo esc_html__( 'Billing Information ', 'ohmylms' ); ?>
 	</h4>
 
 	<div class="ohmylms-billing-box">
 		<div class="ohmylms-form-group firstname half-width">
 			<label>
-				<?php echo __( 'First Name', 'ohmylms' ); ?>
+				<?php echo esc_html__( 'First Name', 'ohmylms' ); ?>
 			</label>
 
 			<span class="ohmylms-input-wrapper">
@@ -29,7 +29,7 @@ defined( 'ABSPATH' ) || exit();
 
 		<div class="ohmylms-form-group lastname half-width">
 			<label>
-				<?php echo __( 'Last Name', 'ohmylms' ); ?>
+				<?php echo esc_html__( 'Last Name', 'ohmylms' ); ?>
 			</label>
 
 			<span class="ohmylms-input-wrapper">
@@ -39,7 +39,7 @@ defined( 'ABSPATH' ) || exit();
 
 		<div class="ohmylms-form-group email">
 			<label>
-				<?php echo __( 'Email', 'ohmylms' ); ?>
+				<?php echo esc_html__( 'Email', 'ohmylms' ); ?>
 			</label>
 
 			<span class="ohmylms-input-wrapper">
@@ -49,7 +49,7 @@ defined( 'ABSPATH' ) || exit();
 
 		<div class="ohmylms-form-group address-line1">
 			<label>
-				<?php echo __( 'Address line 1', 'ohmylms' ); ?>
+				<?php echo esc_html__( 'Address line 1', 'ohmylms' ); ?>
 			</label>
 
 			<span class="ohmylms-input-wrapper">
@@ -59,7 +59,7 @@ defined( 'ABSPATH' ) || exit();
 
 		<div class="ohmylms-form-group address-line2">
 			<label>
-				<?php echo __( 'Address line 2 (optional)', 'ohmylms' ); ?>
+				<?php echo esc_html__( 'Address line 2 (optional)', 'ohmylms' ); ?>
 			</label>
 
 			<span class="ohmylms-input-wrapper">
@@ -69,7 +69,7 @@ defined( 'ABSPATH' ) || exit();
 
 		<div class="ohmylms-form-group city half-width">
 			<label>
-				<?php echo __( 'City', 'ohmylms' ); ?>
+				<?php echo esc_html__( 'City', 'ohmylms' ); ?>
 			</label>
 
 			<span class="ohmylms-input-wrapper">
@@ -79,7 +79,7 @@ defined( 'ABSPATH' ) || exit();
 
 		<div class="ohmylms-form-group state half-width">
 			<label>
-				<?php echo __( 'State', 'ohmylms' ); ?>
+				<?php echo esc_html__( 'State', 'ohmylms' ); ?>
 			</label>
 
 			<span class="ohmylms-input-wrapper">
@@ -96,7 +96,7 @@ defined( 'ABSPATH' ) || exit();
 
 		<div class="ohmylms-form-group zip-code half-width">
 			<label>
-				<?php echo __( 'ZIP / Postal code', 'ohmylms' ); ?>
+				<?php echo esc_html__( 'ZIP / Postal code', 'ohmylms' ); ?>
 			</label>
 
 			<span class="ohmylms-input-wrapper">
@@ -106,7 +106,7 @@ defined( 'ABSPATH' ) || exit();
 
 		<div class="ohmylms-form-group country half-width">
 			<label>
-				<?php echo __( 'Country', 'ohmylms' ); ?>
+				<?php echo esc_html__( 'Country', 'ohmylms' ); ?>
 			</label>
 
 			<span class="ohmylms-input-wrapper">

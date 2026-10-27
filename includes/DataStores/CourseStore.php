@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Class CourseStore.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\DataStores;
 
@@ -14,6 +19,19 @@ defined( 'ABSPATH' ) || exit;
  * @since 1.0.0
  */
 class CourseStore extends DataStore {
+	/**
+	 * Invalidate request-local unit projections after an atomic structure change.
+	 *
+	 * @param int $course_id Course ID.
+	 */
+	public static function clear_structure_cache( $course_id ) {
+		unset( self::$raw_chapters_cache[ $course_id ] );
+		foreach ( array_keys( self::$chapters_cache ) as $key ) {
+			if ( 0 === strpos( (string) $key, $course_id . '_' ) ) {
+				unset( self::$chapters_cache[ $key ] );
+			}
+		}
+	}
 
 	/**
 	 * Cache for enrollment counts to prevent duplicate queries.
@@ -74,7 +92,7 @@ class CourseStore extends DataStore {
 	/**
 	 * Create course
 	 *
-	 * @param Course $course
+	 * @param Course $course Course.
 	 * @return mixed|void
 	 * @since 1.0.0
 	 */
@@ -95,12 +113,12 @@ class CourseStore extends DataStore {
 			apply_filters(
 				'ohmylms_new_course_data',
 				array(
-					'post_type'     => OHMYLMS_COURSE_CPT,
-					'post_author'   => get_current_user_id(),
-					'post_status'   => $course->get_status() ? $course->get_status() : 'draft',
-					'post_title'    => $course->get_name() ? $course->get_name() : __( 'Untitled', 'ohmylms' ),
-					'post_name'     => $slug,
-					'post_content'  => $course->get_description(),
+					'post_type'    => OHMYLMS_COURSE_CPT,
+					'post_author'  => get_current_user_id(),
+					'post_status'  => $course->get_status() ? $course->get_status() : 'draft',
+					'post_title'   => $course->get_name() ? $course->get_name() : __( 'Untitled', 'ohmylms' ),
+					'post_name'    => $slug,
+					'post_content' => $course->get_description(),
 					// 'post_date'     => gmdate( 'Y-m-d H:i:s', $course->get_date_created( 'edit' )->getOffsetTimestamp() ),
 					// 'post_date_gmt' => gmdate( 'Y-m-d H:i:s', $course->get_date_created( 'edit' )->getTimestamp() ),
 				)
@@ -134,16 +152,16 @@ class CourseStore extends DataStore {
 	/**
 	 * Read data
 	 *
-	 * @param Course $course
+	 * @param Course $course Course.
 	 * @return mixed|void
-	 * @throws \Exception
+	 * @throws \Exception When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	public function read( &$course ) {
 		$post_object = get_post( $course->get_id() );
 		if ( ! $course->get_id() || ! $post_object || OHMYLMS_COURSE_CPT !== $post_object->post_type ) {
 			return;
-			// throw new \Exception( __( 'Invalid course.', 'ohmylms' ) );
+			// throw new \Exception( __( 'Invalid course.', 'ohmylms' ) );.
 		}
 		$course->set_props(
 			array(
@@ -169,6 +187,7 @@ class CourseStore extends DataStore {
 	 * @return void
 	 *
 	 * @since 1.0.0
+	 * @throws \RuntimeException When the operation cannot be completed.
 	 */
 	public function update( &$course ) {
 		$slug = $course->get_slug( 'edit' );
@@ -176,7 +195,7 @@ class CourseStore extends DataStore {
 			$slug = $course->get_name( 'edit' );
 		}
 
-		$slug = $this->generate_unique_slug( $slug, OHMYLMS_COURSE_CPT, $course->get_id() );
+		$slug      = $this->generate_unique_slug( $slug, OHMYLMS_COURSE_CPT, $course->get_id() );
 		$post_data = array(
 			'post_content' => $course->get_description( 'edit' ),
 			'post_excerpt' => $course->get_short_description( 'edit' ),
@@ -187,7 +206,7 @@ class CourseStore extends DataStore {
 		);
 		if ( $course->get_date_created( 'edit' ) ) {
 			$post_data['post_date_gmt'] = $course->get_post_date() ? gmdate( 'Y-m-d H:i:s', $course->get_post_date( 'edit' )->getTimestamp() ) : gmdate( 'Y-m-d H:i:s', $course->get_date_created( 'edit' )->getTimestamp() );
-			$post_data['post_date'] = get_date_from_gmt( $post_data['post_date_gmt'] );
+			$post_data['post_date']     = get_date_from_gmt( $post_data['post_date_gmt'] );
 		}
 		if ( 'password_protected' == $course->get_access_type() ) {
 			$post_data['post_password'] = $course->get_password_protected();
@@ -233,9 +252,9 @@ class CourseStore extends DataStore {
 			'_sale_price'            => 'sale_price',
 			'_sale_price_dates_from' => 'sale_price_dates_from',
 			'_download_resource'     => 'download_resource',
-			'_point_disabled'  		 => 'point_disabled',
-			'_reward_disabled'  	 => 'reward_disabled',
-			'_purchase_point'  		 => 'purchase_point',
+			'_point_disabled'        => 'point_disabled',
+			'_reward_disabled'       => 'reward_disabled',
+			'_purchase_point'        => 'purchase_point',
 			'_sale_price_dates_to'   => 'sale_price_dates_to',
 			'_thumbnail_id'          => 'thumbnail_id',
 			'_video_id'              => 'video_id',
@@ -253,7 +272,7 @@ class CourseStore extends DataStore {
 			'_benefit_description'   => 'benefit_description',
 			'_benefiter_description' => 'benefiter_description',
 			'_requirement'           => 'requirement',
-			'_type'           		 => 'type',
+			'_type'                  => 'type',
 			'_creation_method'       => 'creation_method',
 			'_has_community'         => 'has_community',
 			'_sequential_mode'       => 'sequential_mode',
@@ -285,7 +304,7 @@ class CourseStore extends DataStore {
 				}
 			}
 			$this->update_or_delete_post_meta( $course, $meta_key, $value );
-			do_action("ohmylms_update_or_delete_course_meta_" . ltrim($meta_key, '_'), $course, ltrim($meta_key, '_'), $value );
+			do_action( 'ohmylms_update_or_delete_course_meta_' . ltrim( $meta_key, '_' ), $course, ltrim( $meta_key, '_' ), $value );
 		}
 	}
 
@@ -293,15 +312,15 @@ class CourseStore extends DataStore {
 	/**
 	 * Delete the course
 	 *
-	 * @param $course
-	 * @param array  $args
+	 * @param mixed $course Course.
+	 * @param array $args Operation arguments.
 	 * @return mixed|void
 	 * @since 1.0.0
 	 */
 	public function delete( &$course, $args = array() ) {
 		if ( $course ) {
 			$course_id = $course->get_id();
-			$args = wp_parse_args(
+			$args      = wp_parse_args(
 				$args,
 				array(
 					'force_delete' => true,
@@ -316,7 +335,7 @@ class CourseStore extends DataStore {
 				do_action( 'ohmylms_delete_course', $course_id );
 			} else {
 				wp_trash_post( $course_id );
-				do_action( 'ohmylms_trash_course' , $course_id );
+				do_action( 'ohmylms_trash_course', $course_id );
 			}
 		}
 	}
@@ -325,7 +344,7 @@ class CourseStore extends DataStore {
 	/**
 	 * Helper function that reads course data
 	 *
-	 * @param Course $course
+	 * @param Course $course Course.
 	 * @return void
 	 *
 	 * @since 1.0.0
@@ -353,16 +372,16 @@ class CourseStore extends DataStore {
 			'_review_count'          => 'review_count',
 			'_rating_counts'         => 'rating_counts',
 			'_leaderboard_disabled'  => 'leaderboard_disabled',
-			'_point_disabled'  		 => 'point_disabled',
-			'_reward_disabled' 	     => 'reward_disabled',
-			'_purchase_point'  		 => 'purchase_point',
+			'_point_disabled'        => 'point_disabled',
+			'_reward_disabled'       => 'reward_disabled',
+			'_purchase_point'        => 'purchase_point',
 			'_average_rating'        => 'average_rating',
 			'_duration'              => 'duration',
 			'_enable_reviews'        => 'enable_reviews',
 			'_benefit_description'   => 'benefit_description',
 			'_benefiter_description' => 'benefiter_description',
 			'_requirement'           => 'requirement',
-			'_type'           		 => 'type',
+			'_type'                  => 'type',
 			'_creation_method'       => 'creation_method',
 			'_has_community'         => 'has_community',
 			'_sequential_mode'       => 'sequential_mode',
@@ -383,27 +402,38 @@ class CourseStore extends DataStore {
 	 * Get the chapters of the course.
 	 *
 	 * @param Course $course The course object.
+	 * @param string $return Return.
 	 * @return array The list of chapters.
 	 *
 	 * @since 1.0.0
 	 */
 	public function get_chapters( $course, $return = 'array' ) {
-		$course_id  = $course->get_id();
+		$course_id = $course->get_id();
+		if ( ! \OhMyLMS\Learning\UnitSnapshots::is_authoring() ) {
+			$published = array();
+			foreach ( \OhMyLMS\Learning\UnitSnapshots::public_units( $course_id ) as $position => $unit ) {
+				$chapter = ohmylms_get_chapter( $unit['id'] );
+				if ( $chapter ) {
+					$published[] = 'objects' === $return ? $chapter : $unit + array( 'order_number' => $position + 1 );
+				}
+			}
+			return $published;
+		}
 		$cache_key = $course_id . '_' . $return;
-		
-		// Check if result is already cached
+
+		// Check if result is already cached.
 		if ( isset( self::$chapters_cache[ $cache_key ] ) ) {
 			return self::$chapters_cache[ $cache_key ];
 		}
-		
-		// Check if raw database results are cached
+
+		// Check if raw database results are cached.
 		if ( ! isset( self::$raw_chapters_cache[ $course_id ] ) ) {
 			global $wpdb;
-			$table_name = $wpdb->prefix . 'ohmylms_chapter_relationship';
-			self::$raw_chapters_cache[ $course_id ] = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table_name WHERE course_id = %d ORDER BY order_number ASC", $course_id ) );
+			$table_name                             = $wpdb->prefix . 'ohmylms_chapter_relationship';
+			self::$raw_chapters_cache[ $course_id ] = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE course_id = %d ORDER BY order_number ASC', $table_name, $course_id ) );
 		}
-		
-		$chapters = self::$raw_chapters_cache[ $course_id ];
+
+		$chapters          = self::$raw_chapters_cache[ $course_id ];
 		$filtered_chapters = array();
 
 		if ( $chapters ) {
@@ -423,10 +453,10 @@ class CourseStore extends DataStore {
 				}
 			}
 		}
-		
-		// Cache the result
+
+		// Cache the result.
 		self::$chapters_cache[ $cache_key ] = $filtered_chapters;
-		
+
 		return $filtered_chapters;
 	}
 
@@ -441,19 +471,19 @@ class CourseStore extends DataStore {
 	 */
 	public function get_total_enrolled_users( $course ) {
 		$course_id = $course->get_id();
-		
-		// Check if result is already cached
+
+		// Check if result is already cached.
 		if ( isset( self::$enrollment_count_cache[ $course_id ] ) ) {
 			return self::$enrollment_count_cache[ $course_id ];
 		}
-		
+
 		global $wpdb;
 		$table_name       = $wpdb->prefix . 'ohmylms_user_enrollment';
-		$enrollment_count = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table_name WHERE course_id = %d AND status = %s", $course_id, 'enrolled' ) );
-		
-		// Cache the result
+		$enrollment_count = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE course_id = %d AND status = %s', $table_name, $course_id, 'enrolled' ) );
+
+		// Cache the result.
 		self::$enrollment_count_cache[ $course_id ] = $enrollment_count;
-		
+
 		return $enrollment_count;
 	}
 
@@ -469,7 +499,7 @@ class CourseStore extends DataStore {
 	public function get_total_in_progress_users( $course ) {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'ohmylms_user_enrollment';
-		$count      = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table_name WHERE course_id = %d AND progress = %s", $course->get_id(), 'running' ) );
+		$count      = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE course_id = %d AND progress = %s', $table_name, $course->get_id(), 'running' ) );
 		return $count;
 	}
 
@@ -485,7 +515,7 @@ class CourseStore extends DataStore {
 	public function get_total_completed_users( $course ) {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'ohmylms_user_enrollment';
-		$count      = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table_name WHERE course_id = %d AND progress = %s", $course->get_id(), 'completed' ) );
+		$count      = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE course_id = %d AND progress = %s', $table_name, $course->get_id(), 'completed' ) );
 		return $count;
 	}
 
@@ -507,17 +537,13 @@ class CourseStore extends DataStore {
 			$chapter_id   = $chapter['id'];
 			$order_number = $chapter['order_number'];
 
-			// Check if the row exists
+			// Check if the row exists.
 			$exists = $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COUNT(*) FROM $table_name WHERE course_id = %d AND chapter_id = %d",
-					$course_id,
-					$chapter_id
-				)
+				$wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE course_id = %d AND chapter_id = %d', $table_name, $course_id, $chapter_id )
 			);
 
 			if ( $exists ) {
-				// Update the existing row
+				// Update the existing row.
 				$wpdb->update(
 					$table_name,
 					array( 'order_number' => $order_number ),
@@ -529,7 +555,7 @@ class CourseStore extends DataStore {
 					array( '%d', '%d' )
 				);
 			} else {
-				// Insert a new row
+				// Insert a new row.
 				$wpdb->insert(
 					$table_name,
 					array(
@@ -555,28 +581,34 @@ class CourseStore extends DataStore {
 	 */
 	public function get_lessons_count( $course ) {
 		$course_id = $course->get_id();
-		
-		// Check if result is already cached
+
+		// Check if result is already cached.
 		if ( isset( self::$lessons_count_cache[ $course_id ] ) ) {
 			return self::$lessons_count_cache[ $course_id ];
 		}
-		
+
 		global $wpdb;
 		$chapter_relationship_table = $wpdb->prefix . 'ohmylms_chapter_relationship';
 		$lessons_relationship_table = $wpdb->prefix . 'ohmylms_content_relationship';
 
-		 $sql = "SELECT COUNT(*) FROM $chapter_relationship_table cr
-            INNER JOIN $lessons_relationship_table lr ON cr.chapter_id = lr.chapter_id
-            INNER JOIN {$wpdb->posts} p ON lr.content_id = p.ID
+		$lessons_count = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM %i cr
+            INNER JOIN %i lr ON cr.chapter_id = lr.chapter_id
+            INNER JOIN %i p ON lr.content_id = p.ID
             WHERE cr.course_id = %d
             AND lr.content_type IN ('text', 'video', 'audio', 'session')
-            AND p.post_status = 'publish'";
+            AND p.post_status = 'publish'",
+				$chapter_relationship_table,
+				$lessons_relationship_table,
+				$wpdb->posts,
+				$course_id
+			)
+		);
 
-		$lessons_count = $wpdb->get_var( $wpdb->prepare( $sql, $course_id ) );
-		
-		// Cache the result
+		// Cache the result.
 		self::$lessons_count_cache[ $course_id ] = $lessons_count;
-		
+
 		return $lessons_count;
 	}
 
@@ -599,14 +631,20 @@ class CourseStore extends DataStore {
 		$chapter_relationship_table = $wpdb->prefix . 'ohmylms_chapter_relationship';
 		$lessons_relationship_table = $wpdb->prefix . 'ohmylms_content_relationship';
 
-		$sql = "SELECT COUNT(*) FROM $chapter_relationship_table cr
-				INNER JOIN $lessons_relationship_table lr ON cr.chapter_id = lr.chapter_id
-				INNER JOIN {$wpdb->posts} p ON lr.content_id = p.ID
+		$lessons_count = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM %i cr
+				INNER JOIN %i lr ON cr.chapter_id = lr.chapter_id
+				INNER JOIN %i p ON lr.content_id = p.ID
 				WHERE cr.course_id = %d
 				AND lr.content_type IN ('quiz')
-				AND p.post_status = 'publish'";
-
-		$lessons_count = $wpdb->get_var( $wpdb->prepare( $sql, $course->get_id() ) );
+				AND p.post_status = 'publish'",
+				$chapter_relationship_table,
+				$lessons_relationship_table,
+				$wpdb->posts,
+				$course->get_id()
+			)
+		);
 
 		self::$quiz_count_cache[ $cache_key ] = $lessons_count;
 		return $lessons_count;
@@ -625,14 +663,20 @@ class CourseStore extends DataStore {
 		$chapter_relationship_table = $wpdb->prefix . 'ohmylms_chapter_relationship';
 		$lessons_relationship_table = $wpdb->prefix . 'ohmylms_content_relationship';
 
-		$sql = "SELECT p.ID FROM $chapter_relationship_table cr
-				INNER JOIN $lessons_relationship_table lr ON cr.chapter_id = lr.chapter_id
-				INNER JOIN {$wpdb->posts} p ON lr.content_id = p.ID
+		$quiz_ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT p.ID FROM %i cr
+				INNER JOIN %i lr ON cr.chapter_id = lr.chapter_id
+				INNER JOIN %i p ON lr.content_id = p.ID
 				WHERE cr.course_id = %d
 				AND lr.content_type IN ('quiz')
-				AND p.post_status = 'publish'";
-
-		$quiz_ids = $wpdb->get_col( $wpdb->prepare( $sql, $course->get_id() ) );
+				AND p.post_status = 'publish'",
+				$chapter_relationship_table,
+				$lessons_relationship_table,
+				$wpdb->posts,
+				$course->get_id()
+			)
+		);
 		return $quiz_ids;
 	}
 
@@ -655,18 +699,29 @@ class CourseStore extends DataStore {
 		$chapter_relationship_table = $wpdb->prefix . 'ohmylms_chapter_relationship';
 		$lessons_relationship_table = $wpdb->prefix . 'ohmylms_content_relationship';
 
-		$sql = "SELECT COUNT(*) FROM $chapter_relationship_table cr
-				INNER JOIN $lessons_relationship_table lr ON cr.chapter_id = lr.chapter_id
-				INNER JOIN {$wpdb->posts} p ON lr.content_id = p.ID
+		$lessons_count = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM %i cr
+				INNER JOIN %i lr ON cr.chapter_id = lr.chapter_id
+				INNER JOIN %i p ON lr.content_id = p.ID
 				WHERE cr.course_id = %d AND lr.content_type IN ('assignment')
-				AND p.post_status = 'publish'";
-
-		$lessons_count = $wpdb->get_var( $wpdb->prepare( $sql, $course->get_id() ) );
+				AND p.post_status = 'publish'",
+				$chapter_relationship_table,
+				$lessons_relationship_table,
+				$wpdb->posts,
+				$course->get_id()
+			)
+		);
 
 		self::$assignment_count_cache[ $cache_key ] = $lessons_count;
 		return $lessons_count;
 	}
 
+	/**
+	 * Get all content count for Course store.
+	 *
+	 * @param mixed $course Course.
+	 */
 	public function get_all_content_count( $course ) {
 		$cache_key = $course->get_id();
 
@@ -678,58 +733,74 @@ class CourseStore extends DataStore {
 		$chapter_relationship_table = $wpdb->prefix . 'ohmylms_chapter_relationship';
 		$lessons_relationship_table = $wpdb->prefix . 'ohmylms_content_relationship';
 
-		$sql = "SELECT COUNT(*) FROM $chapter_relationship_table cr
-				INNER JOIN $lessons_relationship_table lr ON cr.chapter_id = lr.chapter_id
-				INNER JOIN {$wpdb->posts} p ON lr.content_id = p.ID
+		$lessons_count = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM %i cr
+				INNER JOIN %i lr ON cr.chapter_id = lr.chapter_id
+				INNER JOIN %i p ON lr.content_id = p.ID
 				WHERE cr.course_id = %d
 				AND lr.content_type IN ('text', 'video', 'audio','session', 'quiz', 'assignment')
-				AND p.post_status = 'publish'";
-
-		$lessons_count = $wpdb->get_var( $wpdb->prepare( $sql, $course->get_id() ) );
+				AND p.post_status = 'publish'",
+				$chapter_relationship_table,
+				$lessons_relationship_table,
+				$wpdb->posts,
+				$course->get_id()
+			)
+		);
 
 		self::$all_content_count_cache[ $cache_key ] = $lessons_count;
 		return $lessons_count;
 	}
 
 
+	/**
+	 * Check course access for Course store.
+	 *
+	 * @param mixed $course Course.
+	 */
 	public function check_course_access( $course ) {
-		// Get the current user ID
-		$user_id = get_current_user_id();
+		// Get the current user ID.
+		$user_id   = get_current_user_id();
 		$course_id = $course->get_id();
 		$cache_key = $user_id . '_' . $course_id;
-		
-		// Check if result is already cached
+
+		// Check if result is already cached.
 		if ( array_key_exists( $cache_key, self::$course_access_cache ) ) {
 			return self::$course_access_cache[ $cache_key ];
 		}
-		
+
 		global $wpdb;
 
-		// Prepare the query
+		// Prepare the query.
 		$table_name = $wpdb->prefix . 'ohmylms_user_enrollment';
-		$query      = $wpdb->prepare( "SELECT course_id FROM $table_name WHERE user_id = %d AND course_id = %d AND status = %s", $user_id, $course_id, 'enrolled' );
+		$query      = $wpdb->prepare( 'SELECT course_id FROM %i WHERE user_id = %d AND course_id = %d AND status = %s', $table_name, $user_id, $course_id, 'enrolled' );
 
-		// Execute the query and return the result
-		$result = $wpdb->get_row( $query, ARRAY_A );
+		// Execute the query and return the result.
+		$result     = $wpdb->get_row( $query, ARRAY_A );
 		$has_access = ! empty( $result ) ? true : false;
-		
-		// Cache the result
+
+		// Cache the result.
 		self::$course_access_cache[ $cache_key ] = $has_access;
-		
+
 		return $has_access;
 	}
 
 
+	/**
+	 * Get certificate for Course store.
+	 *
+	 * @param mixed $course Course.
+	 */
 	public function get_certificate( &$course ) {
 		global $wpdb;
 
-		// Get the current user ID
+		// Get the current user ID.
 		$user_id = get_current_user_id();
 
-		// Prepare the query
+		// Prepare the query.
 		$table_name = $wpdb->prefix . 'ohmylms_certificate_relationship';
-		$query      = $wpdb->prepare( "SELECT certificate_id FROM $table_name WHERE course_id = %d", $course->get_id() );
-		// Execute the query and return the result
+		$query      = $wpdb->prepare( 'SELECT certificate_id FROM %i WHERE course_id = %d', $table_name, $course->get_id() );
+		// Execute the query and return the result.
 		$result = $wpdb->get_row( $query, ARRAY_A );
 		if ( ! empty( $result ) ) {
 			$certificate = ohmylms_get_certificate( $result['certificate_id'] );
@@ -738,23 +809,29 @@ class CourseStore extends DataStore {
 	}
 
 
+	/**
+	 * Set certificate for Course store.
+	 *
+	 * @param mixed $course Course.
+	 * @param mixed $certificate_id Certificate identifier.
+	 */
 	public function set_certificate( &$course, $certificate_id ) {
 		global $wpdb;
 
-		// Get the current course ID
+		// Get the current course ID.
 		$course_id = $course->get_id();
 
-		// Prepare the table name
+		// Prepare the table name.
 		$table_name = $wpdb->prefix . 'ohmylms_certificate_relationship';
 
-		// Check if a relationship already exists for the course
+		// Check if a relationship already exists for the course.
 		$existing_entry = $wpdb->get_row(
-			$wpdb->prepare( "SELECT * FROM $table_name WHERE course_id = %d", $course_id ),
+			$wpdb->prepare( 'SELECT * FROM %i WHERE course_id = %d', $table_name, $course_id ),
 			ARRAY_A
 		);
 
 		if ( $existing_entry ) {
-			// Update the existing relationship
+			// Update the existing relationship.
 			$updated = $wpdb->update(
 				$table_name,
 				array( 'certificate_id' => $certificate_id ),
@@ -763,9 +840,9 @@ class CourseStore extends DataStore {
 				array( '%d' )
 			);
 
-			return $updated !== false; // Return true if updated successfully
+			return false !== $updated; // Return true if updated successfully.
 		} else {
-			// Insert a new relationship
+			// Insert a new relationship.
 			$inserted = $wpdb->insert(
 				$table_name,
 				array(
@@ -775,7 +852,7 @@ class CourseStore extends DataStore {
 				array( '%d', '%d' )
 			);
 
-			return $inserted !== false; // Return true if inserted successfully
+			return false !== $inserted; // Return true if inserted successfully.
 		}
 	}
 
@@ -794,44 +871,46 @@ class CourseStore extends DataStore {
 	public function search_lessons_in_course( &$course, $term ) {
 		global $wpdb;
 
-		// Table names
+		// Table names.
 		$content_table = $wpdb->prefix . 'ohmylms_content_relationship';
 		$chapter_table = $wpdb->prefix . 'ohmylms_chapter_relationship';
 
-		// Get the course ID
+		// Get the course ID.
 		$course_id = $course->get_id();
 
-		// Base SQL query to get lessons associated with chapters in the course
-		$sql = "
-			SELECT content.*
-			FROM {$content_table} AS content
-			INNER JOIN {$chapter_table} AS chapter
-			ON content.chapter_id = chapter.chapter_id
-			WHERE chapter.course_id = %d
-		";
-
-		// Add search condition if a term is provided
 		if ( ! empty( $term ) ) {
-			$sql    .= " AND content.content_id IN (
-				SELECT ID FROM {$wpdb->posts}
-				WHERE post_type = 'ohmylms-lesson' AND post_title LIKE %s
-			)";
 			$search  = '%' . $wpdb->esc_like( $term ) . '%';
-			$lessons = $wpdb->get_results( $wpdb->prepare( $sql . ' ORDER BY content.order_number ASC', $course_id, $search ) );
+			$lessons = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT content.* FROM %i AS content INNER JOIN %i AS chapter ON content.chapter_id = chapter.chapter_id WHERE chapter.course_id = %d AND content.content_id IN (SELECT ID FROM %i WHERE post_type = 'ohmylms-lesson' AND post_title LIKE %s) ORDER BY content.order_number ASC",
+					$content_table,
+					$chapter_table,
+					$course_id,
+					$wpdb->posts,
+					$search
+				)
+			);
 		} else {
-			$lessons = $wpdb->get_results( $wpdb->prepare( $sql . ' ORDER BY content.order_number ASC', $course_id ) );
+			$lessons = $wpdb->get_results(
+				$wpdb->prepare(
+					'SELECT content.* FROM %i AS content INNER JOIN %i AS chapter ON content.chapter_id = chapter.chapter_id WHERE chapter.course_id = %d ORDER BY content.order_number ASC',
+					$content_table,
+					$chapter_table,
+					$course_id
+				)
+			);
 		}
 
-		// Filter and format the lessons
+		// Filter and format the lessons.
 		$filtered_lessons = array();
 		if ( $lessons ) {
 			foreach ( $lessons as $lesson ) {
 				$post = get_post( $lesson->content_id );
-				if ( ! $post || $post->post_status !== 'publish' ) {
+				if ( ! $post || 'publish' !== $post->post_status ) {
 					continue;
 				}
-				$lesson_obj         = ohmylms_get_lesson( $lesson->content_id );
-				if( ! $lesson_obj ) {
+				$lesson_obj = ohmylms_get_lesson( $lesson->content_id );
+				if ( ! $lesson_obj ) {
 					continue;
 				}
 
@@ -846,27 +925,39 @@ class CourseStore extends DataStore {
 	}
 
 
+	/**
+	 * Get students count for Course store.
+	 *
+	 * @param mixed $course Course.
+	 */
 	public function get_students_count( &$course ) {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'ohmylms_user_enrollment';
 
-		$query = $wpdb->prepare(
-			"SELECT COUNT(*) FROM $table_name WHERE course_id = %d AND status = %s",
-			$course->get_id(),
-			'enrolled'
-		);
+		$query = $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE course_id = %d AND status = %s', $table_name, $course->get_id(), 'enrolled' );
 
 		$count = $wpdb->get_var( $query );
 
 		return $count ? intval( $count ) : 0;
 	}
 
+	/**
+	 * Get students for Course store.
+	 *
+	 * @param mixed  $course Course.
+	 * @param string $filter Filter.
+	 * @param mixed  $sort_by Sort by.
+	 * @param mixed  $start_date Start date.
+	 * @param mixed  $end_date End date.
+	 * @param mixed  $search Search.
+	 * @param mixed  $only_completed Only completed.
+	 */
 	public function get_students( &$course, $filter = 'all', $sort_by = null, $start_date = null, $end_date = null, $search = null, $only_completed = null ) {
 		global $wpdb;
 
 		$where_date_filter = '';
-		// Apply date filters unless it's 'all'
-		if ( $filter !== 'all' ) {
+		// Apply date filters unless it's 'all'.
+		if ( 'all' !== $filter ) {
 			switch ( $filter ) {
 				case 'last_30_days':
 					$start_date = ( new \DateTime( '-30 days' ) )->format( 'Y-m-d' );
@@ -897,7 +988,7 @@ class CourseStore extends DataStore {
 					return new \WP_Error( 'invalid_filter', 'Invalid filter type' );
 			}
 
-			// Build SQL filter for dates
+			// Build SQL filter for dates.
 			$where_date_filter = $wpdb->prepare(
 				' AND DATE(ue.start_date) BETWEEN %s AND %s',
 				$start_date,
@@ -905,7 +996,7 @@ class CourseStore extends DataStore {
 			);
 		}
 
-		// Main query
+		// Main query.
 		$enrollment_query = $wpdb->prepare(
 			"SELECT
 				ue.user_id AS student_id,
@@ -927,7 +1018,7 @@ class CourseStore extends DataStore {
 
 		$chapters = $course->get_chapters();
 
-		// Calculate completion rate and duration for each student
+		// Calculate completion rate and duration for each student.
 		$students = array_map(
 			function ( $student ) use ( $course, $chapters ) {
 
@@ -935,22 +1026,22 @@ class CourseStore extends DataStore {
 				$student['name']  = $user_data ? $user_data->display_name : 'Unknown';
 				$student['email'] = $user_data ? $user_data->user_email : 'Unknown';
 
-				// Fetch profile image (uses Gravatar or a custom user meta field if available)
+				// Fetch profile image (uses Gravatar or a custom user meta field if available).
 				$student['profile_image'] = get_avatar_url( $student['student_id'], array( 'size' => 96 ) );
 
 				$student_obj     = new \OhMyLMS\Data\Student( $student['student_id'] );
 				$completion_rate = $student_obj->get_over_all_completion_rate( $course->get_id() );
 
-				// Calculate duration only if the course is completed
-				$duration = PHP_INT_MAX; // Default for students not completed
-				if ( $student['progress'] === 'completed' && $student['start_date'] !== '0000-00-00 00:00:00' && $student['end_date'] !== '0000-00-00 00:00:00' ) {
+				// Calculate duration only if the course is completed.
+				$duration = PHP_INT_MAX; // Default for students not completed.
+				if ( 'completed' === $student['progress'] && '0000-00-00 00:00:00' !== $student['start_date'] && '0000-00-00 00:00:00' !== $student['end_date'] ) {
 					$start_time = strtotime( $student['start_date'] );
 					$end_time   = strtotime( $student['end_date'] );
 					$duration   = $end_time - $start_time;
 				}
 
 				$student['completion_rate']     = $completion_rate;
-				$student['is_completed']        = (int) $completion_rate == 100 ? true : false;
+				$student['is_completed']        = 100 == (int) $completion_rate ? true : false;
 				$student['completion_duration'] = $duration;
 
 				$contents = array();
@@ -958,14 +1049,14 @@ class CourseStore extends DataStore {
 					$chapter  = ohmylms_get_chapter( $chapter['id'] );
 					$lessons  = $chapter->get_lessons();
 					$contents = array_merge( $contents, $lessons );
-					// array_push( $contents, $lessons[0] )
+					// array_push( $contents, $lessons[0] ).
 
 				}
 				$student['skipped_quizzes']     = array();
 				$student['skipped_assignments'] = array();
 				foreach ( $contents as $index => &$item ) {
 					if ( in_array( $item['type'], array( 'assignment', 'quiz' ) ) && ! $student_obj->maybe_completed( $item['id'] ) ) {
-						// Check next contents for completion
+						// Check next contents for completion.
 						$skipped = false;
 						for ( $j = $index + 1; $j < count( $contents ); $j++ ) {
 							if ( $student_obj->maybe_completed( $contents[ $j ]['id'] ) ) {
@@ -993,8 +1084,7 @@ class CourseStore extends DataStore {
 			$results
 		);
 
-
-		// Sort students by completion rate and then by duration
+		// Sort students by completion rate and then by duration.
 		usort(
 			$students,
 			function ( $a, $b ) {
@@ -1005,7 +1095,7 @@ class CourseStore extends DataStore {
 			}
 		);
 
-		// Add position to each student
+		// Add position to each student.
 		$position = 1;
 		foreach ( $students as &$student ) {
 			$updated_positon             = $position++;
@@ -1013,7 +1103,7 @@ class CourseStore extends DataStore {
 			$student['position_in_text'] = $this->get_position_in_text( $updated_positon );
 		}
 
-		// Sort students based on the $sort_by param
+		// Sort students based on the $sort_by param.
 		usort(
 			$students,
 			function ( $a, $b ) use ( $sort_by ) {
@@ -1027,7 +1117,7 @@ class CourseStore extends DataStore {
 						return $timeA <=> $timeB;
 
 					default:
-						// Default: by completion rate DESC, then duration ASC
+						// Default: by completion rate DESC, then duration ASC.
 						if ( $a['completion_rate'] === $b['completion_rate'] ) {
 							return $a['completion_duration'] <=> $b['completion_duration'];
 						}
@@ -1036,7 +1126,7 @@ class CourseStore extends DataStore {
 			}
 		);
 
-		// If search is provided, filter by name or email
+		// If search is provided, filter by name or email.
 		if ( $search ) {
 			$search_lower = strtolower( $search );
 			$students     = array_filter(
@@ -1046,30 +1136,30 @@ class CourseStore extends DataStore {
 					|| strpos( strtolower( $student['email'] ), $search_lower ) !== false;
 				}
 			);
-			// Reindex array to avoid gaps in keys after filter
+			// Reindex array to avoid gaps in keys after filter.
 			$students = array_values( $students );
 		}
 
 		if ( null !== $only_completed ) {
-			// Filter only completed students if requested
+			// Filter only completed students if requested.
 			if ( $only_completed ) {
 				$students = array_filter(
 					$students,
 					function ( $student ) {
-						return $student['is_completed'] === true;
+						return true === $student['is_completed'];
 					}
 				);
-				$students = array_values( $students ); // Reindex array
+				$students = array_values( $students ); // Reindex array.
 			}
 
 			if ( ! $only_completed ) {
 				$students = array_filter(
 					$students,
 					function ( $student ) {
-						return $student['is_completed'] === false;
+						return false === $student['is_completed'];
 					}
 				);
-				$students = array_values( $students ); // Reindex array
+				$students = array_values( $students ); // Reindex array.
 			}
 		}
 		return $students;
@@ -1079,7 +1169,7 @@ class CourseStore extends DataStore {
 	/**
 	 * Convert a numeric position into ordinal text (e.g., 1 => "1st", 2 => "2nd").
 	 *
-	 * @param int $position
+	 * @param int $position Position.
 	 * @return string
 	 */
 	private function get_position_in_text( $position ) {
@@ -1093,37 +1183,35 @@ class CourseStore extends DataStore {
 	 * Get cohort data
 	 *
 	 * This function retrieves all cohorts associated with a specific course.
+	 *
 	 * @param Course|int $course The course object or ID for which to retrieve cohorts.
 	 * @return array An array of cohorts, each represented as an associative array with cohort details.
 	 * @since 1.0.0
 	 */
 	public function get_cohort( &$course ) {
-		if( 'cohort-based' !== $course->get_type() ) {
-			return array(); // Return empty array if the course is not cohort-based
+		if ( 'cohort-based' !== $course->get_type() ) {
+			return array(); // Return empty array if the course is not cohort-based.
 		}
 		global $wpdb;
-		$table = $wpdb->prefix . 'ohmylms_cohorts';
-		$course_id = is_object($course) && method_exists($course, 'get_id') ? $course->get_id() : (int)$course;
-		$results = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM $table WHERE course_id = %d ORDER BY start_date ASC",
-				$course_id
-			),
+		$table     = $wpdb->prefix . 'ohmylms_cohorts';
+		$course_id = is_object( $course ) && method_exists( $course, 'get_id' ) ? $course->get_id() : (int) $course;
+		$results   = $wpdb->get_results(
+			$wpdb->prepare( 'SELECT * FROM %i WHERE course_id = %d ORDER BY start_date ASC', $table, $course_id ),
 			ARRAY_A
 		);
-		$cohorts = array();
-		foreach ($results as $row) {
+		$cohorts   = array();
+		foreach ( $results as $row ) {
 			$capacity = null;
-			if (isset($row['capacity']) && is_numeric($row['capacity'])) {
-				$capacity = (int)$row['capacity'];
+			if ( isset( $row['capacity'] ) && is_numeric( $row['capacity'] ) ) {
+				$capacity = (int) $row['capacity'];
 			}
 			$cohorts[] = array(
-				'id' => (int)$row['id'],
-				'start_date' => !empty($row['start_date']) ? date('Y-m-d\TH:i:s', strtotime($row['start_date'])) : '',
-				'end_date' => !empty($row['end_date']) ? date('Y-m-d\TH:i:s', strtotime($row['end_date'])) : '',
-				'enrollment_deadline' => !empty($row['enrollment_end']) ? date('Y-m-d\TH:i:s', strtotime($row['enrollment_end'])) : '',
-				'has_capacity' => !empty($row['has_capacity']) ? true : false,
-				'capacity' => $capacity,
+				'id'                  => (int) $row['id'],
+				'start_date'          => ! empty( $row['start_date'] ) ? date( 'Y-m-d\TH:i:s', strtotime( $row['start_date'] ) ) : '',
+				'end_date'            => ! empty( $row['end_date'] ) ? date( 'Y-m-d\TH:i:s', strtotime( $row['end_date'] ) ) : '',
+				'enrollment_deadline' => ! empty( $row['enrollment_end'] ) ? date( 'Y-m-d\TH:i:s', strtotime( $row['enrollment_end'] ) ) : '',
+				'has_capacity'        => ! empty( $row['has_capacity'] ) ? true : false,
+				'capacity'            => $capacity,
 			);
 		}
 		return $cohorts;
@@ -1132,14 +1220,14 @@ class CourseStore extends DataStore {
 	/**
 	 * Get the URL of the community space associated with the course.
 	 *
-	 * @param $course
+	 * @param mixed $course Course.
 	 * @return string|void|null
 	 * @since 1.0.0
 	 */
 	public function get_space_url( &$course ) {
-		if( class_exists('\OhMyLMS\Integrations\Community\Includes\Repository\SpaceRepository') ) {
-            $space_repository = new \OhMyLMS\Integrations\Community\Includes\Repository\SpaceRepository();
-			$space_id = $space_repository->get_space_id_by_course_id( $course->get_id() );
+		if ( class_exists( '\OhMyLMS\Integrations\Community\Includes\Repository\SpaceRepository' ) ) {
+			$space_repository = new \OhMyLMS\Integrations\Community\Includes\Repository\SpaceRepository();
+			$space_id         = $space_repository->get_space_id_by_course_id( $course->get_id() );
 			if ( $space_id ) {
 				$space = $space_repository->get_by_id( $space_id );
 				if ( $space && isset( $space->slug ) ) {
@@ -1149,62 +1237,94 @@ class CourseStore extends DataStore {
 		}
 	}
 
-public function get_resources( &$course ) {
-		$resources = [];
-		// Get course-level resources
-		if (  method_exists( $course, 'get_download_resource' ) && $course_resource = $course->get_download_resource()) {
+	/**
+	 * Get resources for Course store.
+	 *
+	 * @param mixed $course Course.
+	 */
+	public function get_resources( &$course ) {
+		$resources = array();
+		// Get course-level resources.
+		$course_resource = method_exists( $course, 'get_download_resource' ) ? $course->get_download_resource() : null;
+		if ( $course_resource ) {
 			$resources[] = $course_resource;
 		}
-	
-		// Get chapters and return early if none exist
-		$chapters = $this->get_chapters($course, 'objects');
-		if (!$chapters) {
+
+		// Get chapters and return early if none exist.
+		$chapters = $this->get_chapters( $course, 'objects' );
+		if ( ! $chapters ) {
 			return $resources;
 		}
-	
-		// Iterate through chapters and their lessons
-		foreach ($chapters as $chapter) {
-			$lessons = $chapter->get_lessons('objects');
-			if (!$lessons) {
+
+		// Iterate through chapters and their lessons.
+		foreach ( $chapters as $chapter ) {
+			$lessons = $chapter->get_lessons( 'objects' );
+			if ( ! $lessons ) {
 				continue;
 			}
-	
-			// Collect valid lesson resources
-			foreach ($lessons as $lesson) {
-				if (!isset($lesson->object_type) || !in_array($lesson->object_type, ['lesson', 'assignment'])) {
+
+			// Collect valid lesson resources.
+			foreach ( $lessons as $lesson ) {
+				if ( ! isset( $lesson->object_type ) || ! in_array( $lesson->object_type, array( 'lesson', 'assignment' ), true ) ) {
 					continue;
 				}
-				
-				if ( method_exists( $lesson, 'get_download_resource' ) && $resource = $lesson->get_download_resource()) {
+
+				$resource = method_exists( $lesson, 'get_download_resource' ) ? $lesson->get_download_resource() : null;
+				if ( $resource ) {
 					$resources[] = $resource;
 				}
 			}
 		}
-	
+
 		return $resources;
 	}
 
-public function get_leaderboard_disabled( &$course ) {
+	/**
+	 * Get leaderboard disabled for Course store.
+	 *
+	 * @param mixed $course Course.
+	 */
+	public function get_leaderboard_disabled( &$course ) {
 		$leaderboard_disabled = get_post_meta( $course->get_id(), '_leaderboard_disabled', 'no' );
 		return $leaderboard_disabled;
 	}
 
-public function get_funnel_steps( &$course ) {
+	/**
+	 * Get funnel steps for Course store.
+	 *
+	 * @param mixed $course Course.
+	 */
+	public function get_funnel_steps( &$course ) {
 		$funnel_steps = get_post_meta( $course->get_id(), '_funnel_steps', true );
 		return $funnel_steps ? $funnel_steps : array();
 	}
 
-public function get_point_disabled( &$course ) {
+	/**
+	 * Get point disabled for Course store.
+	 *
+	 * @param mixed $course Course.
+	 */
+	public function get_point_disabled( &$course ) {
 		$point_disabled = get_post_meta( $course->get_id(), '_point_disabled', 'no' );
 		return $point_disabled;
 	}
 
-public function get_reward_disabled( &$course ) {
+	/**
+	 * Get reward disabled for Course store.
+	 *
+	 * @param mixed $course Course.
+	 */
+	public function get_reward_disabled( &$course ) {
 		$reward_disabled = get_post_meta( $course->get_id(), '_reward_disabled', 'no' );
 		return $reward_disabled;
 	}
 
-public function get_purchase_point( &$course ) {
+	/**
+	 * Get purchase point for Course store.
+	 *
+	 * @param mixed $course Course.
+	 */
+	public function get_purchase_point( &$course ) {
 		return get_post_meta( $course->get_id(), '_purchase_point', true );
 	}
 }

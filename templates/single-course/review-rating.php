@@ -17,7 +17,7 @@ $rating = intval( get_comment_meta( $comment->comment_ID, 'rating', true ) );
 ?>
 <div class="course-review-rating-area">
 	<?php
-		echo ohmylms_get_rating_html($rating);
-		echo ohmylms_get_review_date_html($comment->comment_date );
+		echo ohmylms_get_rating_html( $rating );
+		echo ohmylms_get_review_date_html( $comment->comment_date );
 	?>
 </div>

@@ -23,14 +23,16 @@ For component conventions, factory contracts and the feature development workflo
 - `tools/course-adapters.mjs`: checked integration of native course components into the recovered runtime.
 - `tools/application-adapters.mjs`: checked AST integration points. Missing/changed patterns fail the build.
 - Adapted application builds strip the retired `/license` and `/free-vs-pro` routes and their component implementations. Their recovered fragments remain untouched solely for parity/provenance checks.
-- `assets/src/features/certificates/`: 13 editable certificate list, template, editor, design-control and preview React components integrated by `tools/certificate-adapters.mjs`.
+- `assets/src/features/certificates/`: 13 editable certificate list, template, editor, design-control and preview React components integrated by `tools/certificate-adapters.mjs`. With the Gamification add-on on, the certificate list is shown as the Certificates tab of the Gamification screen; the recovered components are untouched. See [GAMIFICATION-CERTIFICATES.md](GAMIFICATION-CERTIFICATES.md).
 - `assets/src/features/emails/`: 12 editable notification-template settings, personalization, editor, field and responsive-preview React components integrated by `tools/email-adapters.mjs`.
 - `assets/src/features/settings/`: 19 editable General Settings route, design, account/privacy, permalink, advanced, payment and migration React components integrated by `tools/settings-adapters.mjs`. Email Settings remains in its dedicated feature.
 - `assets/src/features/integrations/`: six editable Add-ons route, card, configuration and provider settings React components integrated by `tools/integration-adapters.mjs`.
 - `assets/src/features/webhooks/`: four editable webhook list, details, field-mapping and editor-modal React components integrated by `tools/webhook-adapters.mjs`.
-- `assets/src/features/taxonomies/`: editable Categories and Tags routes plus their shared taxonomy modal, integrated by `tools/taxonomy-adapters.mjs`.
+- `assets/src/features/taxonomies/`: the former Categories and Tags routes plus their shared taxonomy modal, integrated by `tools/taxonomy-adapters.mjs`. Categories and tags were replaced by the curriculum and Course Bundles, so `assets/src/extensions/index.jsx` sends `#/categories` and `#/tags` to those pages, shown as the Curriculum and Course Bundles tabs of the Content Hub; the converted source is kept because the parity build still expects it.
 - `assets/src/features/setup/`: eleven editable Setup Wizard step, migration/import, controller and route components integrated by `tools/setup-adapters.mjs`.
 - `tools/vendor-adapters.mjs`: makes the two installed ProseMirror state export formats share the editor's existing CommonJS instance. The original duplicated generators caused `Adding different instances of a keyed plugin (plugin$)` in both original and recovered lesson screens. The parity build retains the untouched factories; the adapted build repairs the duplication rather than suppressing its error.
+- `assets/src/features/content-hub/`: the Content Hub frame and routes, the lesson library, the attach and publish dialogs the syllabus editor reuses, and their pure model modules, wired through `assets/src/extensions/index.jsx` and loaded as the lazy `content-hub` chunk (no recovered component is replaced). See [CONTENT-HUB.md](CONTENT-HUB.md).
+- `assets/src/features/curriculum/` and `assets/src/features/bundles/`: authored accordion curriculum editor and Course Bundles manager, registered as SDK admin pages (no recovered component is replaced, so there is no `components.json`). See [CURRICULUM-BUNDLES.md](CURRICULUM-BUNDLES.md). The curriculum editor also hosts syllabuses (skill groups, skills, CSV import), described in [SYLLABUS.md](SYLLABUS.md).
 - `build/`: generated output; never edit it.
 
 Recovered fragments are reconstructed compiled syntax, not original JSX. They retain shared lexical scope, minified names, transpiler helpers and some third-party code. Moving one into an ES module requires identifying its imports/exports. Original comments, names and package versions cannot be recovered reliably. The original readable frontend JS and SCSS remain; this first equivalent build uses recovered runtime/CSS snapshots, not an unverified SCSS recompilation.
@@ -102,43 +104,43 @@ Every extension route gets the gutter even without the component.
 
 ## Known issues
 
-- Source-built vendor bundles break the lesson editor. `tools/vendor-adapters.mjs` redirects the ESM copy of prosemirror-state to the CJS copy, but prosemirror-model and prosemirror-transform stay duplicated (ESM 58903/38262 vs CJS 77712/36553). In the browser, Enter and the `/` block menu throw `Can not convert <paragraph> to a Fragment (looks like multiple versions of prosemirror-model were loaded)`. Removing the state adapter is worse (`Adding different instances of a keyed plugin`). `SourceAssets::url()` therefore keeps `assets/dist/vendors/*` on the shipped files while the app and SDK use the source build. A proper fix must unify all three ProseMirror packages onto one copy, mapping the minified ESM export names; then remove that exception.
+None currently recorded. The source-built vendor bundles used to load duplicate ProseMirror packages, which broke the rich-text editor. `tools/vendor-adapters.mjs` now maps the ESM copies of prosemirror-state, prosemirror-model and prosemirror-transform onto their CJS twins (module ids 42845/37820, 58903/77712, 38262/36553), so each package has a single instance, and the bundled `core/preferences` and `core/keyboard-shortcuts` stores are replaced by the WordPress ones. `SourceAssets::url()` serves `assets/dist/vendors/*` from `build/` like every other asset. If you rebuild after upgrading the shipped vendor bundle, re-check those module ids and export names.
 
-## Block-based Text lessons and the future quiz/question engine
+## Block-based Text lessons and the question engine
 
-Status: an embedded standalone WordPress block editor for Text lessons was tried and rolled back (the editing experience was not what was wanted). Text lessons use the original lesson editor again. Any future custom blocks must be added to that editor, or a new editor approach agreed first. Video and audio lessons are unchanged: the media is played directly from the lesson page. Video/audio lesson design will be discussed separately.
+Current editor: built-in Block lessons (stored as `text`), audio and video lessons open the native WordPress post editor. Course and syllabus links navigate directly to it; old lesson hash routes redirect for bookmark compatibility. The retired embedded Gutenberg workspace, its lesson-only styles and localized settings have been removed. Shared rich-text components remain for assignments and custom lesson types. Add future lesson blocks through native WordPress block registration. See `assets/src/features/learning/README.md` for integration and validation details.
 
 - Instructors author. Students only view and interact.
 - Lessons render through `the_content()`. Lesson navigation uses full page loads today.
 
-### Requirements recorded for the Question Bank and Exam Engine
+### Requirements for the Question Bank and Exam Engine (implemented)
 
-Implemented on branch `assessment-engine`; see [ASSESSMENT-ENGINE.md](ASSESSMENT-ENGINE.md) for the
-design, rollout and limitations. Status per requirement:
+The original requirements for inline quiz performance data, skills, attempt history, immutable versions, server-side answer keys, guest history and untouched completion are all implemented in the question bank and exam engine, not in the Text lesson editor, and are merged into `main`. See [ASSESSMENT-ENGINE.md](ASSESSMENT-ENGINE.md) for the design, rollout and limitations. Status per requirement:
 
 | # | Status |
 |---|---|
 | 1 | Inline checks (`[ohmylms_question uuid="…"]` / `question-check` activity) record practice evidence that feeds the skill dashboard and recommendations. They are inserted as shortcode text from the lesson-editor panel rather than as a native editor node. |
-| 2 | Skills are `ohmylms_skill` terms with UUIDs and prerequisites; questions map skills per part. |
+| 2 | Skills are `ohmylms_skill` terms with UUIDs and prerequisites; questions map skills per part. Skills are a core feature (the old creatorlms-skills plugin was removed and the model rebuilt in ohmylms). |
 | 3 | Attempts record user, context, question UUID, version, response, correctness and time (attempt items, practice items, grade events). |
 | 4 | Immutable question versions; attempts and reports read the version the learner saw. |
 | 5 | Answer keys never reach the page; option values are per-delivery tokens graded by REST/form submission. |
 | 6 | Guests keep history in localStorage with a server credential; results attach after login through a one-time claim. |
 | 7 | Inline checks and practice never call completion hooks. |
 
-Build these into the question bank / exam builder, not into the Text lesson editor.
+## Translations
 
-1. **Inline quiz blocks record performance data.** Quiz blocks inside Text lessons (`ohmylms/quiz` -> `quiz-question` -> `quiz-answer`, core paragraph/group/columns nested inside) feed a Student Performance dashboard used for recommendations and for skills mastered or needing improvement. They are not practice-only.
-2. **Skills.** Each question links to one or more skills (taxonomy terms). The old creatorlms-skills plugin was removed on purpose; build the skills model fresh in ohmylms.
-3. **Record every attempt**: user, lesson, question uuid, chosen option, correct/incorrect, timestamp. Keep a snapshot of correctness on each attempt.
-4. **Edits after attempts exist.** If a teacher changes a quiz after students have taken it, previous scores stay valid and performance is evaluated against what the student saw then. Questions need a persistent `uuid` and a version; attempts store the correctness snapshot.
-5. **Answer key stays server-side.** `isCorrect` is never output to the page. The Interactivity store posts the choice to a REST endpoint that grades and records it.
-6. **Anonymous students.** If a student is not logged in, keep the attempts in the browser (local storage). Ask them to create an account or log in right after the quiz ends, then attach the stored attempts to the account. Design the exam engine and question bank with this in mind.
-7. **Completion is unchanged.** Blocks never gate "Mark Complete".
+Mongolian (`mn`) is the only bundled translation. Files in `languages/`: `ohmylms.pot` (template), `ohmylms-mn.po` (source of truth, machine translation that needs a native review), `ohmylms-mn.mo` and `ohmylms-mn-ohmylms.json` (Jed catalog for the registered `ohmylms` admin script handle). Spanish, Dutch and Bengali were removed. After changing strings, refresh the POT with WP-CLI `wp i18n make-pot` (merge PHP and changed authored JavaScript into the existing catalog; do not drop unchanged entries), then:
+
+```sh
+python -m pip install polib==1.2.0
+python tools/compile-translations.py --locale mn --merge-pot
+```
+
+`tools/compile-translations.py` appends missing entries to the `.po` without rewriting existing translations and compiles the `.mo` and the Jed JSON; recompiling an unchanged catalog is byte-identical. Do not edit generated `.mo` or `.json` files by hand.
 
 ## Interactive items in the lesson editor's "/" menu
 
-The Text lesson editor's slash menu is a fixed list in a recovered module (`0-66427.js`). `tools/slash-adapters.mjs` patches the slash extension (`0-70181.js`) so the menu also reads `window.ohmylms.extensions.slashGroups()`: commands registered with `registerSlashCommand(id, {label, description, aliases, iconName, action(editor)})` appear in an "Interactive" group (`iconName` is any Lucide icon name; unknown names show no icon).
+The legacy rich-text editor's slash menu is a fixed list in a recovered module (`0-66427.js`). `tools/slash-adapters.mjs` patches the slash extension (`0-70181.js`) so the menu also reads `window.ohmylms.extensions.slashGroups()`: commands registered with `registerSlashCommand(id, {label, description, aliases, iconName, action(editor)})` appear in an "Interactive" group (`iconName` is any Lucide icon name; unknown names show no icon).
 
 Interactive content is stored as a shortcode, e.g. `[ohmylms_activity type="reveal" prompt="..." answer="..."]`, and rendered by PHP (`ohmylms_register_activity`, see `includes/Extensions/Activities.php`). Behaviour uses the WordPress Interactivity API (`assets/extensions/reveal.js`, a script module). Only the shortcode is saved, so content filtering never strips markup. Plain shortcode attributes cannot contain double quotes; use a `data='{...}'` JSON attribute for richer data.
 

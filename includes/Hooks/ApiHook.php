@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * Hook for Api
  *
@@ -7,17 +7,25 @@
  */
 namespace OhMyLMS\Hooks;
 
-class ApiHook
-{
-    public function register_hooks(){
-       add_filter('ohmylms_rest_v1_controllers', array( $this, 'add_pro_controllers' ), 10 );
-    }
+/**
+ * Plugin api hook implementation.
+ */
+class ApiHook {
 
-    /**
-     * Add pro controller
-     */
-    public function add_pro_controllers( $controllers ){
-        $pro_controllers = array(
+	/**
+	 * Register hooks for Api hook.
+	 */
+	public function register_hooks() {
+		add_filter( 'ohmylms_rest_v1_controllers', array( $this, 'add_pro_controllers' ), 10 );
+	}
+
+	/**
+	 * Add pro controller
+	 *
+	 * @param mixed $controllers Controllers.
+	 */
+	public function add_pro_controllers( $controllers ) {
+		$pro_controllers = array(
 			\OhMyLMS\Rest\V1\MembershipController::class,
 			\OhMyLMS\Rest\V1\AssignmentController::class,
 			\OhMyLMS\Rest\V1\DashboardProController::class,
@@ -26,14 +34,13 @@ class ApiHook
 			\OhMyLMS\Rest\V1\PluginInstallerController::class,
 			\OhMyLMS\Rest\V1\SessionController::class,
 			\OhMyLMS\Rest\V1\EngagementController::class,
-        );
-        
-        if( defined('MAILMINT') ){
-            array_push($pro_controllers,\OhMyLMS\Rest\V1\MailMintAutomationController::class);
-        }
+		);
 
-        $controllers = array_merge( $controllers, $pro_controllers );
-        return array_values(array_unique($controllers));
-    }
+		if ( defined( 'MAILMINT' ) ) {
+			array_push( $pro_controllers, \OhMyLMS\Rest\V1\MailMintAutomationController::class );
+		}
+
+		$controllers = array_merge( $controllers, $pro_controllers );
+		return array_values( array_unique( $controllers ) );
+	}
 }
-?>

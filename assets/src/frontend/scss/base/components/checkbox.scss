@@ -1,4 +1,5 @@
 .ohmylms-page {
+
     .ohmylms-checkbox {
         position: relative;
         display: block;
@@ -31,8 +32,8 @@
                 background: #fff;
                 transition: all 0.3s ease;
 
-                &:before {
-                    content: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgMTAgNyIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBmaWxsPSIjZmZmIiBkPSJNOC4xNDYuMjRMMy41MTggNC44NjggMS4zOTcgMi43NDdBLjgxOC44MTggMCAwMC4yNCAzLjkwNGwyLjcgMi43YS44MTguODE4IDAgMDAxLjE1NyAwbDUuMjA2LTUuMjA3QS44MTguODE4IDAgMDA4LjE0Ni4yNHoiLz48L3N2Zz4=");
+                &::before {
+                    content: url(data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgMTAgNyIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBmaWxsPSIjZmZmIiBkPSJNOC4xNDYuMjRMMy41MTggNC44NjggMS4zOTcgMi43NDdBLjgxOC44MTggMCAwMC4yNCAzLjkwNGwyLjcgMi43YS44MTguODE4IDAgMDAxLjE1NyAwbDUuMjA2LTUuMjA3QS44MTguODE4IDAgMDA4LjE0Ni4yNHoiLz48L3N2Zz4=);
                     display: block;
                     width: 10px;
                     height: auto;
@@ -52,11 +53,12 @@
             border-color: var(--ohmylms-primary-color);
         }
 
-        input[type="checkbox"]:checked + .ohmylms-checkbox-text .checkedbox:before {
+        input[type="checkbox"]:checked + .ohmylms-checkbox-text .checkedbox::before {
             opacity: 1;
         }
 
         input[type="checkbox"]:focus {
+
             .ohmylms-checkbox-text .checkedbox {
                 border-color: var(--ohmylms-primary-color);
             }

@@ -1,54 +1,90 @@
 [
-  {
-    "binding": "A5",
-    "name": "WebhookDetails",
-    "file": "WebhookDetails.jsx",
-    "dependencies": ["Ge", "I", "Nm", "Pf", "React", "T", "b", "j5", "k5", "y"]
-  },
-  {
-    "binding": "z5",
-    "name": "WebhookDataMapping",
-    "file": "WebhookDataMapping.jsx",
-    "dependencies": ["D5", "I", "I5", "Ps", "React", "T", "W5", "b", "ks", "y"]
-  },
-  {
-    "binding": "$5",
-    "name": "WebhookEditorModal",
-    "file": "WebhookEditorModal.jsx",
-    "dependencies": ["B5", "G5", "I", "M5", "Q5", "React", "T", "V5", "b", "g", "q5", "y", "z"]
-  },
-  {
-    "binding": "a4",
-    "name": "WebhooksPage",
-    "file": "WebhooksPage.jsx",
-    "dependencies": [
-      "Ea",
-      "HG",
-      "He",
-      "I",
-      "Ie",
-      "J5",
-      "K5",
-      "L",
-      "Ne",
-      "React",
-      "T",
-      "We",
-      "YG",
-      "aY",
-      "b",
-      "df",
-      "fN",
-      "g",
-      "hN",
-      "n4",
-      "pG",
-      "q",
-      "t4",
-      "uf",
-      "wq",
-      "y",
-      "z"
-    ]
-  }
+	{
+		"binding": "A5",
+		"name": "WebhookDetails",
+		"file": "WebhookDetails.jsx",
+		"dependencies": [
+			"Ge",
+			"I",
+			"Nm",
+			"Pf",
+			"React",
+			"T",
+			"b",
+			"j5",
+			"k5",
+			"y"
+		]
+	},
+	{
+		"binding": "z5",
+		"name": "WebhookDataMapping",
+		"file": "WebhookDataMapping.jsx",
+		"dependencies": [
+			"D5",
+			"I",
+			"I5",
+			"Ps",
+			"React",
+			"T",
+			"W5",
+			"b",
+			"ks",
+			"y"
+		]
+	},
+	{
+		"binding": "$5",
+		"name": "WebhookEditorModal",
+		"file": "WebhookEditorModal.jsx",
+		"dependencies": [
+			"B5",
+			"G5",
+			"I",
+			"M5",
+			"Q5",
+			"React",
+			"T",
+			"V5",
+			"b",
+			"g",
+			"q5",
+			"y",
+			"z"
+		]
+	},
+	{
+		"binding": "a4",
+		"name": "WebhooksPage",
+		"file": "WebhooksPage.jsx",
+		"dependencies": [
+			"Ea",
+			"HG",
+			"He",
+			"I",
+			"Ie",
+			"J5",
+			"K5",
+			"L",
+			"Ne",
+			"React",
+			"T",
+			"We",
+			"YG",
+			"aY",
+			"b",
+			"df",
+			"fN",
+			"g",
+			"hN",
+			"n4",
+			"pG",
+			"q",
+			"t4",
+			"uf",
+			"wq",
+			"y",
+			"z"
+		]
+	}
 ]

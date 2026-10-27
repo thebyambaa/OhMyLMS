@@ -1,4 +1,5 @@
 .ohmylms-page {
+
     .ohmylms-dashboard {
 
         .ohmylms-my-courses-tab {
@@ -32,7 +33,7 @@
                         transition: all 0.3s ease;
                         padding: 0;
 
-                        &:before {
+                        &::before {
                             content: "";
                             position: absolute;
                             left: 0;
@@ -54,13 +55,14 @@
                             outline: 1px dotted var(--ohmylms-heading-color) !important;
                         }
 
-                        &.active:before {
+                        &.active::before {
                             transform-origin: bottom left;
                             transform: scaleX(1);
                         }
                     }
 
                     &:first-child {
+
                         button {
                             margin-left: 0;
                         }
@@ -95,7 +97,7 @@
         padding: 40px 0 35px;
         border-radius: 8px;
         background: #FFF;
-        box-shadow: 0px 1px 4px 0px #D3D6DD;
+        box-shadow: 0 1px 4px 0 #D3D6DD;
         width: 100%;
 
         svg {
@@ -119,10 +121,12 @@
 }
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .ohmylms-dashboard .ohmylms-my-courses-tab {
         padding-bottom: 13px;
     }
-    .ohmylms-page .ohmylms-dashboard .ohmylms-my-courses-tab ul li:before {
+
+    .ohmylms-page .ohmylms-dashboard .ohmylms-my-courses-tab ul li::before {
         bottom: -13px;
     }
 
@@ -133,10 +137,12 @@
     .ohmylms-page .no-course-data {
         gap: 12px;
     }
+
     .ohmylms-page .no-course-data svg {
         width: 100px;
         height: auto;
     }
+
     .ohmylms-page .no-course-data p {
         font-size: 15px;
     }
@@ -144,12 +150,14 @@
 }
 
 @media screen and (max-width: 991px) {
+
     .ohmylms-page .no-course-data.no-course-section {
         margin-bottom: 20px;
     }
 }
 
 @media screen and (max-width: 767px) {
+
     .ohmylms-page .ohmylms-dashboard .ohmylms-single-tab-content {
         padding-top: 20px;
     }
@@ -158,6 +166,7 @@
         padding: 20px 0 15px;
         gap: 14px;
     }
+
     .ohmylms-page .no-course-data p {
         font-size: 14px;
     }
@@ -165,6 +174,7 @@
 }
 
 @media screen and (max-width: 575px) {
+
     .ohmylms-page .ohmylms-dashboard .ohmylms-my-courses-tab ul li {
         text-align: center;
     }

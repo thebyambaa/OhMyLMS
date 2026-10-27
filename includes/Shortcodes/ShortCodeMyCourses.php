@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * Student My Courses Shortcode
  *
@@ -9,16 +9,19 @@
 namespace OhMyLMS\Shortcodes;
 
 use OhMyLMS\Data\Student;
-use function CodeRex\Ecommerce\ecommerce;
+use function OhMyLMS\Commerce\ecommerce;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Plugin short code my courses implementation.
+ */
 class ShortCodeMyCourses {
 
 	/**
 	 * Render the my courses page
 	 *
-	 * @param array $atts Shortcode attributes
+	 * @param array $atts Shortcode attributes.
 	 * @since 1.0.0
 	 */
 	public static function output( $atts ) {
@@ -48,63 +51,63 @@ class ShortCodeMyCourses {
 	/**
 	 * Display my courses content
 	 *
-	 * @param array $atts Shortcode attributes
+	 * @param array $atts Shortcode attributes.
 	 * @since 1.0.0
 	 */
 	private static function my_courses( $atts ) {
 		$args = shortcode_atts(
 			array(
-				// Header visibility and configuration
-				'show_header' => 'yes',
-				// Header styling
-				'header_bg_color' => '#000D2C',
-				// User menu styling
-				'user_menu_color' => '#7A8B9A',
-				'user_menu_bg_color' => '#FFFFFF',
-				'user_menu_font_size' => 14,
-				'user_menu_font_weight' => 400,
-				// User menu hover styling
-				'user_menu_hover_color' => '#000D25',
-				'user_menu_hover_bg_color' => '#f5f5f5',
-				// User menu icon styling
-				'user_menu_icon_color' => '#7A8B9A',
+				// Header visibility and configuration.
+				'show_header'                => 'yes',
+				// Header styling.
+				'header_bg_color'            => '#000D2C',
+				// User menu styling.
+				'user_menu_color'            => '#7A8B9A',
+				'user_menu_bg_color'         => '#FFFFFF',
+				'user_menu_font_size'        => 14,
+				'user_menu_font_weight'      => 400,
+				// User menu hover styling.
+				'user_menu_hover_color'      => '#000D25',
+				'user_menu_hover_bg_color'   => '#f5f5f5',
+				// User menu icon styling.
+				'user_menu_icon_color'       => '#7A8B9A',
 				'user_menu_icon_hover_color' => '#4361EE',
-				// Section background color
-				'section_bg_color' => '#F9FAFD',
-				// Wrapper styling
-				'wrapper_bg_color' => '#FFFFFF',
-				'wrapper_padding' => 30,
-				// Title typography
-				'title_color' => '#1E1E1E',
-				'title_font_size' => 24,
-				'title_font_weight' => 600,
-				// Text typography
-				'text_color' => '#52525B',
-				'text_font_size' => 14,
-				'text_font_weight' => 400,
-				// Button styling
-				'button_text_color' => '#FFFFFF',
-				'button_bg_color' => '#6E42D3',
-				'button_font_size' => 14,
-				'button_font_weight' => 600,
-				'button_border_width' => 0,
-				'button_border_color' => '#6E42D3',
-				'button_border_radius' => 6,
-				'button_padding' => 12,
-				'button_hover_bg_color' => '#5a32c2',
-				'button_hover_text_color' => '#FFFFFF',
-				// Course card styling
-				'card_bg_color' => '#FFFFFF',
-				'card_padding' => 20,
-				// Progress bar colors
-				'progress_bar_bg_color' => '#E5E7EB',
-				'progress_bar_fill_color' => '#6E42D3',
-				// Tab styling
-				'tab_normal_color' => '#666666',
-				'tab_active_color' => '#6E42D3',
-				// No course data card styling
-				'no_course_card_bg_color' => '#F9FAFB',
-				'no_course_card_padding' => 40,
+				// Section background color.
+				'section_bg_color'           => '#F9FAFD',
+				// Wrapper styling.
+				'wrapper_bg_color'           => '#FFFFFF',
+				'wrapper_padding'            => 30,
+				// Title typography.
+				'title_color'                => '#1E1E1E',
+				'title_font_size'            => 24,
+				'title_font_weight'          => 600,
+				// Text typography.
+				'text_color'                 => '#52525B',
+				'text_font_size'             => 14,
+				'text_font_weight'           => 400,
+				// Button styling.
+				'button_text_color'          => '#FFFFFF',
+				'button_bg_color'            => '#6E42D3',
+				'button_font_size'           => 14,
+				'button_font_weight'         => 600,
+				'button_border_width'        => 0,
+				'button_border_color'        => '#6E42D3',
+				'button_border_radius'       => 6,
+				'button_padding'             => 12,
+				'button_hover_bg_color'      => '#5a32c2',
+				'button_hover_text_color'    => '#FFFFFF',
+				// Course card styling.
+				'card_bg_color'              => '#FFFFFF',
+				'card_padding'               => 20,
+				// Progress bar colors.
+				'progress_bar_bg_color'      => '#E5E7EB',
+				'progress_bar_fill_color'    => '#6E42D3',
+				// Tab styling.
+				'tab_normal_color'           => '#666666',
+				'tab_active_color'           => '#6E42D3',
+				// No course data card styling.
+				'no_course_card_bg_color'    => '#F9FAFB',
+				'no_course_card_padding'     => 40,
 			),
 			$atts,
 			'ohmylms_my_courses'
@@ -112,7 +115,7 @@ class ShortCodeMyCourses {
 
 		$student = new Student( get_current_user_id() );
 
-		// Display header with navigation if enabled
+		// Display header with navigation if enabled.
 		$show_header = filter_var( $args['show_header'], FILTER_VALIDATE_BOOLEAN );
 		if ( $show_header ) {
 			ohmylms_get_template(
@@ -123,21 +126,21 @@ class ShortCodeMyCourses {
 			);
 		}
 
-		// Generate unique ID for this instance
+		// Generate unique ID for this instance.
 		$unique_id = 'ohmylms-my-courses-' . uniqid();
 
-		// Output custom styles
+		// Output custom styles.
 		self::output_custom_styles( $unique_id, $args );
 
 		// Display my courses content.
 		echo '<section class="ohmylms-dashboard ' . esc_attr( $unique_id ) . '">';
 		echo '<div class="ohmylms-container">';
-		
+
 		// Show notices.
 		if ( function_exists( 'ohmylms_show_all_notices' ) ) {
 			ohmylms_show_all_notices();
 		}
-		
+
 		// My courses content.
 		ohmylms_get_template(
 			'profile/my-courses.php',
@@ -145,19 +148,19 @@ class ShortCodeMyCourses {
 				'user' => get_user_by( 'id', get_current_user_id() ),
 			)
 		);
-		
+
 		echo '</div>'; // .ohmylms-container
 		echo '</section>'; // .ohmylms-dashboard
-		
+
 		// Add JavaScript to prevent navigation redirects.
 		self::add_navigation_handler( $args );
 	}
 
 	/**
-	 * Output custom styles for the my courses block
+	 * Output custom styles for the My Courses shortcode.
 	 *
-	 * @param string $unique_id Unique identifier for this instance
-	 * @param array $args Shortcode attributes
+	 * @param string $unique_id Unique identifier for this instance.
+	 * @param array  $args Shortcode attributes.
 	 * @since 1.2.5
 	 */
 	private static function output_custom_styles( $unique_id, $args ) {
@@ -290,14 +293,14 @@ class ShortCodeMyCourses {
 	/**
 	 * Add JavaScript to handle navigation links
 	 *
-	 * @param array $args Shortcode attributes
+	 * @param array $args Shortcode attributes.
 	 * @since 1.0.0
 	 */
 	private static function add_navigation_handler( $args = array() ) {
-		// Get URLs from global settings
+		// Get URLs from global settings.
 		$my_profile_url = ohmylms_get_nav_link_url( 'profile' );
 		$my_courses_url = ohmylms_get_nav_link_url( 'courses' );
-		$dashboard_url = ohmylms_get_page_permalink( 'student_dashboard' );
+		$dashboard_url  = ohmylms_get_page_permalink( 'student_dashboard' );
 		?>
 		<script>
 		document.addEventListener('DOMContentLoaded', function() {

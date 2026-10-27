@@ -1,10 +1,13 @@
 .ohmylms-page {
+
     .ohmylms-student-profile {
+
         .student-billing {
+
             .ohmylms-billing-box {
                 border-radius: 8px;
                 background-color: #FFF;
-                box-shadow: 0px 1px 4px 0px #D3D6DD;
+                box-shadow: 0 1px 4px 0 #D3D6DD;
                 padding: 24px 30px;
 
                 display: flex;
@@ -52,6 +55,7 @@
 
 
 @media screen and (max-width: 767px) {
+
     .ohmylms-page .ohmylms-student-profile .ohmylms-form-submit {
         margin-top: 22px;
     }

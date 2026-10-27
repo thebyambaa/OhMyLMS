@@ -7,6 +7,7 @@
 .quiz-checkbox-radio-options label {
 	position: relative;
 }
+
 .quiz-checkbox-radio-options input[type="radio"],
 .quiz-checkbox-radio-options input[type="checkbox"] {
 	display: block !important;
@@ -16,11 +17,45 @@
 	margin: -1px !important;
 	padding: 0 !important;
 	overflow: hidden !important;
-	clip: rect(0, 0, 0, 0) !important;
+	clip-path: inset(50%) !important;
 	white-space: nowrap;
 	border: 0 !important;
 }
+
 .quiz-checkbox-radio-options input:focus-visible + .option-box {
 	outline: 2px solid var(--ohmylms-outline-color, #2563eb);
 	outline-offset: 2px;
+}
+
+.ohmylms-blank-answer-bank {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 12px 0;
+}
+
+.ohmylms-blank-token {
+	padding: 6px 12px;
+	border: 1px solid #8c8f94;
+	border-radius: 5px;
+	background: #fff;
+	color: #1d2327;
+	cursor: grab;
+	font: inherit;
+}
+
+.ohmylms-blank-token.is-placed {
+	border-style: dashed;
+	background: transparent;
+	color: transparent;
+	cursor: default;
+	opacity: 1;
+}
+
+.ohmylms-blank-token[hidden] {
+	display: none;
+}
+
+.ohmylms-blank-token[aria-pressed="true"] {
+	outline: 2px solid #7149d8;
 }

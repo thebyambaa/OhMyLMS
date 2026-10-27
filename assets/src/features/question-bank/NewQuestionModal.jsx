@@ -1,220 +1,233 @@
-import { createElement, Fragment, useState } from '@wordpress/element';
-import { __, sprintf } from '@wordpress/i18n';
+import { createElement, useEffect, useRef, useState } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
+import { Button, Modal, Notice } from '@wordpress/components';
+import { questionCreator } from './questionCreation.mjs';
 import {
-  Button,
-  CheckboxControl,
-  Modal,
-  Notice,
-  SelectControl,
-  TextControl,
-  TextareaControl,
-} from '@wordpress/components';
-import { createBankQuestion } from './api.mjs';
-import {
-  NEW_QUESTION_TYPES,
-  changeDraftType,
-  draftToPayload,
-  emptyDraft,
-  setOptionCorrect,
-  validateDraft,
+	changeDraftType,
+	draftToPayload,
+	emptyDraft,
+	validateDraft,
 } from './model.mjs';
-import { NumericalEditor, PracticeFeedbackFields, StructuredEditor } from './MathEditors';
-
-const TYPE_LABELS = () => ({
-  'single-choice': __('Single choice', 'ohmylms'),
-  'multiple-choice': __('Multiple choice', 'ohmylms'),
-  'true-false': __('True / false', 'ohmylms'),
-  'short-text': __('Short answer (teacher marked)', 'ohmylms'),
-  'long-text': __('Long answer (teacher marked)', 'ohmylms'),
-  numerical: __('Numerical', 'ohmylms'),
-  structured: __('Structured (multi-part)', 'ohmylms'),
-});
-
-const PROBLEMS = () => ({
-  name: __('Give the question a title.', 'ohmylms'),
-  marks: __('Marks must be zero or more.', 'ohmylms'),
-  'options-count': __('Add at least two answer options.', 'ohmylms'),
-  'options-empty': __('Fill in every answer option.', 'ohmylms'),
-  'options-correct': __('Mark the correct answer.', 'ohmylms'),
-  'numerical-answer': __('Enter the expected number.', 'ohmylms'),
-  parts: __('Add at least one part.', 'ohmylms'),
-});
+import { QuestionTypeChooser } from '../question-editor/QuestionTypeChooser';
+import { QuestionForm } from '../question-editor/QuestionForm';
+import { questionWorkspaceKey } from '../question-editor/choiceModel.mjs';
+import { QUESTION_BLOCK_TYPES } from '../question-editor/questionBlocks.mjs';
+const PROBLEMS = () => ( {
+	name: __( 'Enter the question.', 'ohmylms' ),
+	marks: __( 'Marks must be zero or more.', 'ohmylms' ),
+	'options-count': __( 'Add at least two answer options.', 'ohmylms' ),
+	'options-empty': __( 'Fill in every answer option.', 'ohmylms' ),
+	'options-correct': __( 'Mark the correct answer.', 'ohmylms' ),
+	'numerical-answer': __( 'Enter the expected number.', 'ohmylms' ),
+	parts: __( 'Add at least one part.', 'ohmylms' ),
+	extended: __(
+		'Complete the diagram, video, response controls, and correct answer setup.',
+		'ohmylms'
+	),
+	interactive: __(
+		'Complete the question: every choice, group, blank or tile needs its content and answer.',
+		'ohmylms'
+	),
+} );
 
 /**
  * Write a new question straight into the bank. It is saved without a quiz; afterwards
  * the bank's detail view sets its bank, skills and difficulty and approves it.
+ * @param root0
+ * @param root0.onClose
+ * @param root0.onCreated
+ * @param root0.skillId
  */
-export function NewQuestionModal({ onClose, onCreated }) {
-  const [draft, setDraft] = useState(() => emptyDraft());
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [tried, setTried] = useState(false);
-  const labels = TYPE_LABELS();
-  const problems = validateDraft(draft);
-  const set = (fields) => setDraft({ ...draft, ...fields });
-  const setOption = (index, fields) =>
-    set({
-      options: draft.options.map((option, position) =>
-        position === index ? { ...option, ...fields } : option,
-      ),
-    });
-  const choices = ['single-choice', 'multiple-choice'].includes(draft.type);
+function FormQuestionModal( { onClose, onCreated, skillId } ) {
+	const creator = useRef( null );
+	const [ draft, setDraft ] = useState( () => emptyDraft() );
+	const [ choosingType, setChoosingType ] = useState( true );
+	const [ saving, setSaving ] = useState( false );
+	const [ error, setError ] = useState( '' );
+	const [ tried, setTried ] = useState( false );
+	const problems = validateDraft( draft );
+	const set = ( fields ) =>
+		setDraft( {
+			...draft,
+			...fields,
+		} );
+	async function save() {
+		setTried( true );
+		if ( problems.length ) {
+			return;
+		}
+		setSaving( true );
+		setError( '' );
+		try {
+			if ( ! creator.current ) {
+				creator.current = questionCreator( skillId );
+			}
+			const created = await creator.current( draftToPayload( draft ) );
+			onCreated( created.id );
+		} catch ( cause ) {
+			setError(
+				cause.message || __( 'Could not save the question.', 'ohmylms' )
+			);
+			setSaving( false );
+		}
+	}
+	if ( choosingType ) {
+		return (
+			<QuestionTypeChooser
+				onClose={ onClose }
+				onSelect={ ( type ) => {
+					setDraft( emptyDraft( type ) );
+					setChoosingType( false );
+				} }
+			/>
+		);
+	}
+	return (
+		<Modal
+			title={ __( 'New question', 'ohmylms' ) }
+			onRequestClose={ onClose }
+			size="large"
+			isFullScreen
+			className="ohmylms-question-block-modal ohmylms-question-stage-modal"
+		>
+			<div className="ohmylms-new-question">
+				{ error && (
+					<Notice status="error" onRemove={ () => setError( '' ) }>
+						{ error }
+					</Notice>
+				) }
+				<QuestionForm
+					useModal={ false }
+					key={ questionWorkspaceKey( 'new', draft.type ) }
+					question={ {
+						...draftToPayload( draft ),
+						name: draft.name,
+						questions: draft.options.map( ( option, index ) => ( {
+							...option,
+							id: index + 1,
+							is_correct: option.correct,
+							order_number: index + 1,
+						} ) ),
+					} }
+					onChange={ ( patch ) =>
+						set( {
+							...( 'name' in patch
+								? {
+										name: patch.name,
+									}
+								: {} ),
+							...( 'description' in patch
+								? {
+										description: patch.description,
+									}
+								: {} ),
+							...( patch.questions
+								? {
+										options: patch.questions.map(
+											( option ) => ( {
+												...option,
+												correct: !! option.is_correct,
+											} )
+										),
+									}
+								: {} ),
+							...( patch.settings
+								? {
+										settings: patch.settings,
+										type: patch.settings.type ?? draft.type,
+										marks:
+											patch.settings.score?.value ??
+											draft.marks,
+									}
+								: {} ),
+						} )
+					}
+					toolbarActions={
+						<Button
+							variant="primary"
+							isBusy={ saving }
+							disabled={ saving }
+							onClick={ save }
+						>
+							{ __( 'Save question', 'ohmylms' ) }
+						</Button>
+					}
+					types={ QUESTION_BLOCK_TYPES.map(
+						( [ value, label ] ) => ( {
+							value,
+							label,
+						} )
+					) }
+					onTypeChange={ ( type ) =>
+						setDraft( ( value ) => changeDraftType( value, type ) )
+					}
+				/>
+				{ tried && problems.length > 0 && (
+					<Notice status="warning" isDismissible={ false }>
+						<ul
+							style={ {
+								margin: 0,
+							} }
+						>
+							{ problems.map( ( problem ) => (
+								<li key={ problem }>
+									{ PROBLEMS()[ problem ] }
+								</li>
+							) ) }
+						</ul>
+					</Notice>
+				) }
+				<p>
+					{ skillId
+						? __(
+								'The question is saved to the bank and linked to this skill.',
+								'ohmylms'
+							)
+						: __(
+								'The question is saved to the bank without a quiz. Next you can set its bank, skills and difficulty, and approve it.',
+								'ohmylms'
+							) }
+				</p>
+				<Button
+					variant="primary"
+					isBusy={ saving }
+					disabled={ saving }
+					onClick={ save }
+				>
+					{ __( 'Save question', 'ohmylms' ) }
+				</Button>{ ' ' }
+				<Button variant="tertiary" onClick={ onClose }>
+					{ __( 'Cancel', 'ohmylms' ) }
+				</Button>
+			</div>
+		</Modal>
+	);
+}
 
-  async function save() {
-    setTried(true);
-    if (problems.length) return;
-    setSaving(true);
-    setError('');
-    try {
-      const created = await createBankQuestion(draftToPayload(draft));
-      onCreated(created.id);
-    } catch (cause) {
-      setError(cause.message || __('Could not save the question.', 'ohmylms'));
-      setSaving(false);
-    }
-  }
-
-  return (
-    <Modal title={__('New question', 'ohmylms')} onRequestClose={onClose} size="large">
-      <div className="ohmylms-new-question">
-        {error && (
-          <Notice status="error" onRemove={() => setError('')}>
-            {error}
-          </Notice>
-        )}
-        <SelectControl
-          label={__('Question type', 'ohmylms')}
-          value={draft.type}
-          options={NEW_QUESTION_TYPES.map((type) => ({ value: type, label: labels[type] }))}
-          onChange={(type) => setDraft(changeDraftType(draft, type))}
-          help={__(
-            'Matching, reorder, fill-in-the-blank and statement questions are written inside a quiz; they appear here once saved.',
-            'ohmylms',
-          )}
-        />
-        <TextControl
-          label={__('Title', 'ohmylms')}
-          value={draft.name}
-          onChange={(name) => set({ name })}
-        />
-        <TextareaControl
-          label={__('Question text', 'ohmylms')}
-          help={__('Maths can be written in LaTeX, e.g. \\(\\frac{1}{2}\\).', 'ohmylms')}
-          value={draft.description}
-          onChange={(description) => set({ description })}
-          rows={4}
-        />
-        {draft.type !== 'structured' && (
-          <TextControl
-            label={__('Marks', 'ohmylms')}
-            type="number"
-            min={0}
-            step="0.5"
-            value={String(draft.marks)}
-            onChange={(marks) => set({ marks })}
-          />
-        )}
-        {(choices || draft.type === 'true-false') && (
-          <fieldset className="ohmylms-new-question-options">
-            <legend>
-              {draft.type === 'multiple-choice'
-                ? __('Answers (tick every correct one)', 'ohmylms')
-                : __('Answers (tick the correct one)', 'ohmylms')}
-            </legend>
-            {draft.options.map((option, index) => (
-              <div key={index} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <CheckboxControl
-                  label={sprintf(__('Correct answer %d', 'ohmylms'), index + 1)}
-                  hideLabelFromVision
-                  checked={!!option.correct}
-                  onChange={(correct) => setDraft(setOptionCorrect(draft, index, correct))}
-                />
-                {choices ? (
-                  <TextControl
-                    label={sprintf(__('Answer %d', 'ohmylms'), index + 1)}
-                    hideLabelFromVision
-                    placeholder={sprintf(__('Answer %d', 'ohmylms'), index + 1)}
-                    value={option.answer}
-                    onChange={(answer) => setOption(index, { answer })}
-                  />
-                ) : (
-                  <span>
-                    {option.answer === 'True' ? __('True', 'ohmylms') : __('False', 'ohmylms')}
-                  </span>
-                )}
-                {choices && draft.options.length > 2 && (
-                  <Button
-                    variant="tertiary"
-                    isDestructive
-                    label={sprintf(__('Remove answer %d', 'ohmylms'), index + 1)}
-                    onClick={() =>
-                      set({ options: draft.options.filter((_, position) => position !== index) })
-                    }
-                  >
-                    {__('Remove', 'ohmylms')}
-                  </Button>
-                )}
-              </div>
-            ))}
-            {choices && (
-              <Button
-                variant="secondary"
-                onClick={() => set({ options: [...draft.options, { answer: '', correct: false }] })}
-              >
-                {__('Add answer', 'ohmylms')}
-              </Button>
-            )}
-          </fieldset>
-        )}
-        {draft.type === 'numerical' && (
-          <NumericalEditor
-            value={draft.settings}
-            onChange={(fields) => set({ settings: { ...draft.settings, ...fields } })}
-          />
-        )}
-        {draft.type === 'structured' && (
-          <StructuredEditor
-            value={draft.settings}
-            onChange={(fields) => set({ settings: { ...draft.settings, ...fields } })}
-          />
-        )}
-        {['short-text', 'long-text'].includes(draft.type) && (
-          <p>
-            {__(
-              'Learners type their answer and a teacher marks it in the grading screen.',
-              'ohmylms',
-            )}
-          </p>
-        )}
-        <PracticeFeedbackFields
-          question={{ settings: { ...draft.settings, type: draft.type } }}
-          onChange={({ settings }) => {
-            const { type, ...rest } = settings;
-            set({ settings: rest });
-          }}
-        />
-        {tried && problems.length > 0 && (
-          <Notice status="warning" isDismissible={false}>
-            <ul style={{ margin: 0 }}>
-              {problems.map((problem) => (
-                <li key={problem}>{PROBLEMS()[problem]}</li>
-              ))}
-            </ul>
-          </Notice>
-        )}
-        <p>
-          {__(
-            'The question is saved to the bank without a quiz. Next you can set its bank, skills and difficulty, and approve it.',
-            'ohmylms',
-          )}
-        </p>
-        <Button variant="primary" isBusy={saving} disabled={saving} onClick={save}>
-          {__('Save question', 'ohmylms')}
-        </Button>{' '}
-        <Button variant="tertiary" onClick={onClose}>
-          {__('Cancel', 'ohmylms')}
-        </Button>
-      </div>
-    </Modal>
-  );
+/**
+ * Open the same native question builder from the bank and skill resources.
+ * @param {Object} props Modal context.
+ * @return {Element|null} Rollback form or native navigation.
+ */
+export function NewQuestionModal( props ) {
+	useEffect( () => {
+		if ( window.ohmylmsAssessment?.formAuthoring ) {
+			return;
+		}
+		const url = new URL(
+			'post-new.php?post_type=ohmylms-question',
+			window.location.href
+		);
+		if ( props.skillId ) {
+			url.searchParams.set( 'ohmylms_skill', props.skillId );
+		}
+		const route = window.location.hash.slice( 1 );
+		if ( /^\/(?:content-hub|question-bank)(?:\/|$)/.test( route ) ) {
+			url.searchParams.set( 'ohmylms_return', route );
+		}
+		window.location.assign( url.href );
+	}, [ props.skillId ] );
+	return window.ohmylmsAssessment?.formAuthoring ? (
+		<FormQuestionModal { ...props } />
+	) : null;
 }

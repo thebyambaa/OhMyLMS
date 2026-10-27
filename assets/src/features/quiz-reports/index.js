@@ -9,14 +9,14 @@ import { createMatchingResult } from './MatchingResult';
 import { createQuizQuestionResults } from './QuizQuestionResults';
 import { createQuizResultSummary } from './QuizResultSummary';
 export const quizReportComponents = {
-  QuizReport: createQuizReport,
-  QuizGrading: createQuizGrading,
-  QuizQuestionHeader: createQuizQuestionHeader,
-  SingleChoiceResult: createSingleChoiceResult,
-  MultipleChoiceResult: createMultipleChoiceResult,
-  TextAnswerResult: createTextAnswerResult,
-  ReorderResult: createReorderResult,
-  MatchingResult: createMatchingResult,
-  QuizQuestionResults: createQuizQuestionResults,
-  QuizResultSummary: createQuizResultSummary,
+	QuizReport: createQuizReport,
+	QuizGrading: createQuizGrading,
+	QuizQuestionHeader: createQuizQuestionHeader,
+	SingleChoiceResult: createSingleChoiceResult,
+	MultipleChoiceResult: createMultipleChoiceResult,
+	TextAnswerResult: createTextAnswerResult,
+	ReorderResult: createReorderResult,
+	MatchingResult: createMatchingResult,
+	QuizQuestionResults: createQuizQuestionResults,
+	QuizResultSummary: createQuizResultSummary,
 };

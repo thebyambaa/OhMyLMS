@@ -1,15 +1,24 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 
 namespace OhMyLMS\Emails\StudentsEmail;
 
 use OhMyLMS\Emails\Emails;
 
+/**
+ * Plugin assignment graded implementation.
+ */
 class AssignmentGraded {
 
+	/**
+	 * Initialize Assignment graded.
+	 */
 	public function __construct() {
 		add_action( 'ohmylms_after_assignment_review', array( $this, 'trigger' ), 10, 4 );
 	}
 
+	/**
+	 * Basic settings for Assignment graded.
+	 */
 	public function basic_settings(): array {
 		return array(
 			'id'             => 'student_assignment_graded',
@@ -21,6 +30,9 @@ class AssignmentGraded {
 		);
 	}
 
+	/**
+	 * Default settings for Assignment graded.
+	 */
 	public function default_settings(): array {
 		return array(
 			'enable'             => true,
@@ -34,6 +46,14 @@ class AssignmentGraded {
 		);
 	}
 
+	/**
+	 * Trigger for Assignment graded.
+	 *
+	 * @param mixed $assignment_id Assignment identifier.
+	 * @param mixed $course_id Course identifier.
+	 * @param mixed $student_id Student identifier.
+	 * @param mixed $status Status.
+	 */
 	public function trigger( $assignment_id, $course_id, $student_id, $status ) {
 		$settings = get_option( 'create_lms_email_student_assignment_graded', $this->default_settings() );
 
@@ -96,6 +116,15 @@ class AssignmentGraded {
 		wp_mail( $to, $subject, $html_body, $headers );
 	}
 
+	/**
+	 * Replace tags for Assignment graded.
+	 *
+	 * @param mixed $content Content.
+	 * @param mixed $student_name Student name.
+	 * @param mixed $course_name Course name.
+	 * @param mixed $assignment_name Assignment name.
+	 * @param mixed $status Status.
+	 */
 	private function replace_tags( $content, $student_name, $course_name, $assignment_name, $status ) {
 		$status_label = 'passed' === $status ? __( 'Passed', 'ohmylms' ) : __( 'Failed', 'ohmylms' );
 		return str_replace(

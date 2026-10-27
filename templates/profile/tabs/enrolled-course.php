@@ -12,40 +12,43 @@
 
 defined( 'ABSPATH' ) || exit();
 
-$get_courses = $student->get_courses();
+$get_courses       = $student->get_courses();
 $enrolled_students = 0;
 ?>
 
-<?php if( !empty( $get_courses ) ) { ?>
+<?php if ( ! empty( $get_courses ) ) { ?>
 	<div class="ohmylms-dashboard-courses">
-		<?php foreach ( $get_courses as $course ):
+		<?php
+		foreach ( $get_courses as $course ) :
 			?>
-			<?php if ( $student->maybe_enrolled( $course->get_id() ) ): ?>
-				<?php 
-				$enrolled_students++;
-				ohmylms_get_template('profile/loop/course.php',
+			<?php if ( $student->maybe_enrolled( $course->get_id() ) ) : ?>
+				<?php
+				++$enrolled_students;
+				ohmylms_get_template(
+					'profile/loop/course.php',
 					array(
 						'student' => $student,
-						'course' => $course
+						'course'  => $course,
 					)
-				); ?>
+				);
+				?>
 			<?php endif; ?>
 		<?php endforeach; ?>
 
-		<?php if(!$enrolled_students) : ?>
+		<?php if ( ! $enrolled_students ) : ?>
 			<div class="no-course-data">
-				<?php include(OHMYLMS_DIR . '/assets/images/icon/no-course-found-image.php'); ?>
+				<?php include OHMYLMS_DIR . '/assets/images/icon/no-course-found-image.php'; ?>
 				<p>
-					<?php echo __( 'No Enrolled Courses.', 'ohmylms' ); ?>
+					<?php echo esc_html__( 'No Enrolled Courses.', 'ohmylms' ); ?>
 				</p>
 			</div>
 		<?php endif; ?>
 	</div>
-<?php }else { ?>
+<?php } else { ?>
 	<div class="no-course-data">
-		<?php include(OHMYLMS_DIR . '/assets/images/icon/no-course-found-image.php'); ?>
+		<?php include OHMYLMS_DIR . '/assets/images/icon/no-course-found-image.php'; ?>
 		<p>
-			<?php echo __( 'No Enrolled Courses.', 'ohmylms' ); ?>
+			<?php echo esc_html__( 'No Enrolled Courses.', 'ohmylms' ); ?>
 		</p>
 	</div>
 <?php } ?>

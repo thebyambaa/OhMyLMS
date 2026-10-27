@@ -1,0 +1,122 @@
+.oml-journey-progress {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+	gap: 16px;
+	margin: 24px 0;
+}
+
+.oml-journey-progress > div,
+.oml-lesson-page {
+	border: 1px solid #dcdcde;
+	border-radius: 12px;
+	padding: 24px;
+}
+
+.oml-journey-progress h2 {
+	margin-top: 0;
+	font-size: 18px;
+}
+
+.oml-journey-progress progress,
+.oml-lesson-page progress {
+	width: 100%;
+	height: 12px;
+	accent-color: #3b39c9;
+}
+
+.oml-lesson-activities {
+	margin: 16px 0;
+	padding-left: 24px;
+}
+
+.oml-lesson-activities li {
+	margin: 12px 0;
+	border-bottom: 1px solid #dcdcde;
+	padding: 12px;
+}
+
+.oml-lesson-activities span,
+.oml-lesson-skills strong {
+	display: block;
+	margin-top: 4px;
+}
+
+.oml-lesson-skills {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 16px;
+	padding: 0;
+	list-style: none;
+}
+
+.oml-player-lesson {
+	margin: 16px 0;
+	border-left: 2px solid var(--player-border);
+	padding-left: 8px;
+}
+
+.oml-player-lesson h3 {
+	margin: 8px;
+	font-size: 14px;
+}
+
+.oml-player-lesson p {
+	margin: 8px;
+	color: var(--player-muted);
+	font-size: 12px;
+}
+
+.oml-player-journey {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	margin-top: 32px;
+	border-top: 1px solid var(--player-border);
+	padding-top: 24px;
+}
+
+.oml-player-journey a {
+	border: 1px solid var(--player-border);
+	border-radius: 8px;
+	padding: 12px;
+	color: var(--player-accent);
+}
+
+.oml-practice-guidance {
+	margin: 24px 0;
+	border: 1px solid #dcdcde;
+	border-radius: 12px;
+	padding: 20px;
+	font-size: 16px;
+	line-height: 1.6;
+}
+
+.oml-practice-guidance h3 {
+	margin-top: 0;
+	font-size: 20px;
+}
+
+.oml-practice-guidance p {
+	margin: 8px 0;
+}
+
+.oml-practice-guidance a {
+	color: var(--player-accent, #3b39c9);
+}
+
+.oml-practice-guidance .oml-hub-button,
+.oml-practice-guidance [data-guidance-refresh] {
+	display: inline-block;
+	border: 1px solid var(--player-accent, #3b39c9);
+	border-radius: 8px;
+	padding: 10px 16px;
+	background: transparent;
+	color: var(--player-accent, #3b39c9);
+	font-size: 14px;
+	font-weight: 700;
+}
+
+.oml-practice-guidance li {
+	border-bottom: 1px solid #dcdcde;
+	padding-bottom: 12px;
+}

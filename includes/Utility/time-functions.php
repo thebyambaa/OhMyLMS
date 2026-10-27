@@ -1,11 +1,17 @@
 <?php
+/**
+ * Time functions.
+ *
+ * @package OhMyLMS
+ */
+
 
 /**
  * Convert date string to timestamp
  *
- * @param $date_string
+ * @param mixed $date_string Date string.
  * @return int
- * @throws Exception
+ * @throws Exception When the operation cannot be completed.
  * @since 1.0.0
  */
 function ohmylms_date_to_time( $date_string ) {
@@ -21,9 +27,9 @@ function ohmylms_date_to_time( $date_string ) {
 /**
  * Add time to timestamp
  *
- * @param $number_of_periods
- * @param $period
- * @param $from_timestamp
+ * @param mixed $number_of_periods Number of periods.
+ * @param mixed $period Period.
+ * @param mixed $from_timestamp From timestamp.
  * @return false|int|mixed
  * @since 1.0.0
  */
@@ -41,8 +47,8 @@ function ohmylms_add_time( $number_of_periods, $period, $from_timestamp ) {
 /**
  * Convert date string to timestamp
  *
- * @param $time_string
- * @param $from_timestamp
+ * @param mixed $time_string Time string.
+ * @param mixed $from_timestamp From timestamp.
  * @return false|int
  * @since 1.0.0
  */

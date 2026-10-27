@@ -1,7 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Fleur+De+Leah&family=Quattrocento:wght@400;700&display=swap');
+@import url(https://fonts.googleapis.com/css2?family=Fleur+De+Leah&family=Quattrocento:wght@400;700&display=swap);
 @import 'base/variable';
 @import 'base/default';
-
 @import 'base/components/button';
 @import 'base/components/breadcrumb';
 @import 'base/components/progressbar';
@@ -17,23 +16,17 @@
 @import 'base/components/wysiwyg-content';
 @import 'base/components/skeleton';
 @import 'base/components/alert';
-
-
 @import 'header';
 @import 'login';
-
 @import 'archive/course-archive';
 @import 'single/course-single';
 @import 'single/scrollto-top';
-
 @import 'lesson/lesson-single';
-
 @import 'checkout/checkout';
 @import 'thankyou/thankyou';
 
 //--table's global sytle for dashboard pages---
 @import 'dashboard/dashboard-table';
-
 @import 'dashboard/dashboard';
 @import 'dashboard/my-courses';
 @import 'dashboard/profile';
@@ -44,7 +37,6 @@
 @import 'dashboard/transaction-history';
 @import 'dashboard/membership-list';
 @import 'dashboard/membership-invoice';
-
 @import 'membership/membership';
 
 //-----theme suppport------

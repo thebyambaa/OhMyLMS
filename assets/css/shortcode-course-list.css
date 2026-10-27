@@ -61,6 +61,7 @@
 
 /* Responsive behavior */
 @media (max-width: 1024px) {
+
     .ohmylms-shortcode-courses[data-columns="4"] .course-list,
     .ohmylms-shortcode-courses[data-columns="4"] .courses-grid,
     .ohmylms-shortcode-courses[data-columns="4"] .ohmylms-courses,
@@ -75,6 +76,7 @@
 }
 
 @media (max-width: 768px) {
+
     .ohmylms-shortcode-courses[data-columns="3"] .course-list,
     .ohmylms-shortcode-courses[data-columns="3"] .courses-grid,
     .ohmylms-shortcode-courses[data-columns="3"] .ohmylms-courses,
@@ -92,6 +94,7 @@
 }
 
 @media (max-width: 480px) {
+
     .ohmylms-shortcode-courses .course-list,
     .ohmylms-shortcode-courses .courses-grid,
     .ohmylms-shortcode-courses .ohmylms-courses {
@@ -115,10 +118,15 @@
 }
 
 .ohmylms-shortcode-courses.animation-fadeIn .course-card:nth-child(1) { animation-delay: 0.1s; }
+
 .ohmylms-shortcode-courses.animation-fadeIn .course-card:nth-child(2) { animation-delay: 0.2s; }
+
 .ohmylms-shortcode-courses.animation-fadeIn .course-card:nth-child(3) { animation-delay: 0.3s; }
+
 .ohmylms-shortcode-courses.animation-fadeIn .course-card:nth-child(4) { animation-delay: 0.4s; }
+
 .ohmylms-shortcode-courses.animation-fadeIn .course-card:nth-child(5) { animation-delay: 0.5s; }
+
 .ohmylms-shortcode-courses.animation-fadeIn .course-card:nth-child(6) { animation-delay: 0.6s; }
 
 .ohmylms-shortcode-courses.animation-slideUp .course-card {
@@ -128,10 +136,15 @@
 }
 
 .ohmylms-shortcode-courses.animation-slideUp .course-card:nth-child(1) { animation-delay: 0.1s; }
+
 .ohmylms-shortcode-courses.animation-slideUp .course-card:nth-child(2) { animation-delay: 0.15s; }
+
 .ohmylms-shortcode-courses.animation-slideUp .course-card:nth-child(3) { animation-delay: 0.2s; }
+
 .ohmylms-shortcode-courses.animation-slideUp .course-card:nth-child(4) { animation-delay: 0.25s; }
+
 .ohmylms-shortcode-courses.animation-slideUp .course-card:nth-child(5) { animation-delay: 0.3s; }
+
 .ohmylms-shortcode-courses.animation-slideUp .course-card:nth-child(6) { animation-delay: 0.35s; }
 
 .ohmylms-shortcode-courses.animation-scale .course-card {
@@ -141,10 +154,15 @@
 }
 
 .ohmylms-shortcode-courses.animation-scale .course-card:nth-child(1) { animation-delay: 0.1s; }
+
 .ohmylms-shortcode-courses.animation-scale .course-card:nth-child(2) { animation-delay: 0.2s; }
+
 .ohmylms-shortcode-courses.animation-scale .course-card:nth-child(3) { animation-delay: 0.3s; }
+
 .ohmylms-shortcode-courses.animation-scale .course-card:nth-child(4) { animation-delay: 0.4s; }
+
 .ohmylms-shortcode-courses.animation-scale .course-card:nth-child(5) { animation-delay: 0.5s; }
+
 .ohmylms-shortcode-courses.animation-scale .course-card:nth-child(6) { animation-delay: 0.6s; }
 
 /* Hover effects */
@@ -183,6 +201,7 @@
 
 /* Keyframe animations */
 @keyframes ohmylmsSlideInUp {
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -190,6 +209,7 @@
 }
 
 @keyframes ohmylmsScaleIn {
+
     to {
         opacity: 1;
         transform: scale(1);

@@ -19,4 +19,4 @@ if (PHP_VERSION_ID < 50600) {
 
 require_once __DIR__ . '/composer/autoload_real.php';
 
-return ComposerAutoloaderInit5b54732061010c9d5d546c3e39373072::getLoader();
+return ComposerAutoloaderInitOhMyLMSCommerce::getLoader();

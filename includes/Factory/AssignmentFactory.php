@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Class AssignmentFactory.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Factory;
 
@@ -16,9 +21,9 @@ class AssignmentFactory {
 	/**
 	 * Get assignment object
 	 *
-	 * @param bool $assignment_id
+	 * @param bool $assignment_id Assignment identifier.
 	 * @return bool|Assignment
-	 * @throws \Exception
+	 * @throws \Exception When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	public function get_assignment( $assignment_id = false ) {
@@ -33,35 +38,35 @@ class AssignmentFactory {
 	/**
 	 * Get assignment id
 	 *
-	 * @param $assignment
+	 * @param mixed $assignment Assignment.
 	 * @return bool|int
 	 * @since 1.0.0
 	 */
 	private function get_assignment_id( $assignment ) {
 		global $post;
 
-		// Check if input is false and post is set
+		// Check if input is false and post is set.
 		if ( false === $assignment && isset( $post, $post->ID ) && OHMYLMS_LESSON_CPT === get_post_type( $post->ID ) ) {
 			return absint( $post->ID );
 		}
 
-		// If input is numeric, check if assignment exists
+		// If input is numeric, check if assignment exists.
 		elseif ( is_numeric( $assignment ) ) {
 			return $this->is_assignment_exist( $assignment ) ? $assignment : false;
 		}
 
-		// If input is an instance of Assignment
+		// If input is an instance of Assignment.
 		elseif ( $assignment instanceof Assignment ) {
 			$id = $assignment->get_id();
 			return $this->is_assignment_exist( $id ) ? $id : false;
 		}
 
-		// If input contains a valid ID property
+		// If input contains a valid ID property.
 		elseif ( ! empty( $assignment->ID ) ) {
 			return $this->is_assignment_exist( $assignment->ID ) ? $assignment->ID : false;
 		}
 
-		// Otherwise, return false
+		// Otherwise, return false.
 		else {
 			return false;
 		}
@@ -85,7 +90,7 @@ class AssignmentFactory {
 
 		$assignment = get_post( $assignment_id );
 
-		// Check if the post exists and the post type matches
+		// Check if the post exists and the post type matches.
 		if ( $assignment && OHMYLMS_ASSIGNMENT_CPT === get_post_type( $assignment_id ) ) {
 			return true;
 		} else {

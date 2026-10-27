@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * OhMyLMS My Courses Widget for Elementor
  *
@@ -753,6 +753,7 @@ class MyCoursesWidget extends Widget_Base {
 	 * Render widget output on the frontend
 	 *
 	 * @return void
+	 * @throws \RuntimeException When the operation cannot be completed.
 	 */
 	protected function render() {
 		// Enqueue assets directly here — the most reliable approach for Elementor

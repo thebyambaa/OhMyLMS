@@ -1,0 +1,1339 @@
+{
+  "addition": {
+    "prompt": "{{a}} + {{b}} = ?",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "addition",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "a",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "b",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          }
+        ],
+        "constraints": [],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "a+b"
+          }
+        ]
+      }
+    }
+  },
+  "subtraction": {
+    "prompt": "{{a}} − {{b}} = ?",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "subtraction",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "a",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "b",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          }
+        ],
+        "constraints": [
+          "a>=b"
+        ],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "a-b"
+          }
+        ]
+      }
+    }
+  },
+  "multiplication": {
+    "prompt": "{{a}} × {{b}} = ?",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "multiplication",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "a",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "b",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          }
+        ],
+        "constraints": [],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "a*b"
+          }
+        ]
+      }
+    }
+  },
+  "division": {
+    "prompt": "{{c}} ÷ {{b}} = ?",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "division",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "a",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "b",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "c",
+            "type": "expr",
+            "expr": "a*b",
+            "places": 0
+          }
+        ],
+        "constraints": [],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "a"
+          }
+        ]
+      }
+    }
+  },
+  "percentage": {
+    "prompt": "{{a}}% of {{b}} = ?",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "percentage",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "a",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "b",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          }
+        ],
+        "constraints": [],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "a*b/100"
+          }
+        ]
+      }
+    }
+  },
+  "fractions": {
+    "prompt": "{{a}}/{{d}} + {{b}}/{{d}} = ? (decimal answer)",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "fractions",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "a",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "b",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "d",
+            "type": "int",
+            "min": 2,
+            "max": 12,
+            "step": 1
+          }
+        ],
+        "constraints": [],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "(a+b)/d"
+          }
+        ]
+      }
+    }
+  },
+  "algebra": {
+    "prompt": "{{a}}x + {{b}} = {{a*c+b}}. Find x.",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "algebra",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "a",
+            "type": "int",
+            "min": 1,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "b",
+            "type": "int",
+            "min": 1,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "c",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          }
+        ],
+        "constraints": [],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "c"
+          }
+        ]
+      }
+    }
+  },
+  "pythagorean": {
+    "prompt": "A right-angled triangle has shorter sides {{a}} and {{b}}. Find the hypotenuse.",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "pythagorean",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "m",
+            "type": "int",
+            "min": 3,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "n",
+            "type": "int",
+            "min": 2,
+            "max": 8,
+            "step": 1
+          },
+          {
+            "name": "a",
+            "type": "expr",
+            "expr": "m*m-n*n",
+            "places": 0
+          },
+          {
+            "name": "b",
+            "type": "expr",
+            "expr": "2*m*n",
+            "places": 0
+          },
+          {
+            "name": "c",
+            "type": "expr",
+            "expr": "m*m+n*n",
+            "places": 0
+          }
+        ],
+        "constraints": [
+          "m>n",
+          "gcd(m,n)=1",
+          "mod(m-n,2)=1"
+        ],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "c"
+          }
+        ]
+      }
+    }
+  },
+  "quadratic": {
+    "prompt": "Solve x² {{b:+}}x {{c:+}} = 0. Give the larger solution.",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "quadratic",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "p",
+            "type": "int",
+            "min": -9,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "q",
+            "type": "int",
+            "min": -9,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "b",
+            "type": "expr",
+            "expr": "-(p+q)",
+            "places": 0
+          },
+          {
+            "name": "c",
+            "type": "expr",
+            "expr": "p*q",
+            "places": 0
+          }
+        ],
+        "constraints": [
+          "p!=q",
+          "abs(p)>=2",
+          "abs(q)>=2",
+          "b!=0"
+        ],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "max(p,q)"
+          }
+        ]
+      }
+    }
+  },
+  "quadratic-repeated": {
+    "prompt": "Solve x² {{b:+}}x {{c:+}} = 0. It has one repeated solution; give it.",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "quadratic-repeated",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "p",
+            "type": "int",
+            "min": -9,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "b",
+            "type": "expr",
+            "expr": "-2*p",
+            "places": 0
+          },
+          {
+            "name": "c",
+            "type": "expr",
+            "expr": "p*p",
+            "places": 0
+          }
+        ],
+        "constraints": [
+          "abs(p)>=2"
+        ],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "p"
+          }
+        ]
+      }
+    }
+  },
+  "discriminant": {
+    "prompt": "Find the discriminant of {{a}}x² {{b:+}}x {{c:+}}.",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "discriminant",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "a",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "b",
+            "type": "int",
+            "min": -9,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "c",
+            "type": "int",
+            "min": -9,
+            "max": 9,
+            "step": 1
+          }
+        ],
+        "constraints": [
+          "b!=0",
+          "c!=0"
+        ],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "b*b-4*a*c"
+          }
+        ]
+      }
+    }
+  },
+  "pythagorean-leg": {
+    "prompt": "A right-angled triangle has hypotenuse {{c}} and one shorter side {{a}}. Find the other shorter side.",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "pythagorean-leg",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "m",
+            "type": "int",
+            "min": 3,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "n",
+            "type": "int",
+            "min": 2,
+            "max": 8,
+            "step": 1
+          },
+          {
+            "name": "a",
+            "type": "expr",
+            "expr": "m*m-n*n",
+            "places": 0
+          },
+          {
+            "name": "b",
+            "type": "expr",
+            "expr": "2*m*n",
+            "places": 0
+          },
+          {
+            "name": "c",
+            "type": "expr",
+            "expr": "m*m+n*n",
+            "places": 0
+          }
+        ],
+        "constraints": [
+          "m>n",
+          "gcd(m,n)=1",
+          "mod(m-n,2)=1"
+        ],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "b"
+          }
+        ]
+      }
+    }
+  },
+  "simultaneous": {
+    "prompt": "{{a}}x + {{b}}y = {{p}} and {{c}}x + {{d}}y = {{q}}. Find x.",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "simultaneous",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "x",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "y",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "a",
+            "type": "int",
+            "min": 1,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "b",
+            "type": "int",
+            "min": 1,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "c",
+            "type": "int",
+            "min": 1,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "d",
+            "type": "int",
+            "min": 1,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "p",
+            "type": "expr",
+            "expr": "a*x+b*y",
+            "places": 0
+          },
+          {
+            "name": "q",
+            "type": "expr",
+            "expr": "c*x+d*y",
+            "places": 0
+          }
+        ],
+        "constraints": [
+          "a*d-b*c!=0"
+        ],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "x"
+          }
+        ]
+      }
+    }
+  },
+  "equivalent-fraction": {
+    "prompt": "{{a}}/{{b}} = ?/{{c}}. Find the missing numerator.",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "equivalent-fraction",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "a",
+            "type": "int",
+            "min": 2,
+            "max": 8,
+            "step": 1
+          },
+          {
+            "name": "b",
+            "type": "int",
+            "min": 3,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "k",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "c",
+            "type": "expr",
+            "expr": "b*k",
+            "places": 0
+          }
+        ],
+        "constraints": [
+          "a<b"
+        ],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "a*k"
+          }
+        ]
+      }
+    }
+  },
+  "simplify-fraction": {
+    "prompt": "Simplify {{n}}/{{d}}. What is the denominator of the simplest form?",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "simplify-fraction",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "a",
+            "type": "int",
+            "min": 2,
+            "max": 8,
+            "step": 1
+          },
+          {
+            "name": "b",
+            "type": "int",
+            "min": 3,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "k",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "n",
+            "type": "expr",
+            "expr": "a*k",
+            "places": 0
+          },
+          {
+            "name": "d",
+            "type": "expr",
+            "expr": "b*k",
+            "places": 0
+          }
+        ],
+        "constraints": [
+          "a<b",
+          "gcd(a,b)=1"
+        ],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "b"
+          }
+        ]
+      }
+    }
+  },
+  "unlike-fractions": {
+    "prompt": "{{a}}/{{b}} + {{c}}/{{d}} = ?/{{p}}. Find the missing numerator.",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "unlike-fractions",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "a",
+            "type": "int",
+            "min": 2,
+            "max": 8,
+            "step": 1
+          },
+          {
+            "name": "b",
+            "type": "int",
+            "min": 3,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "c",
+            "type": "int",
+            "min": 2,
+            "max": 8,
+            "step": 1
+          },
+          {
+            "name": "d",
+            "type": "int",
+            "min": 3,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "p",
+            "type": "expr",
+            "expr": "b*d",
+            "places": 0
+          }
+        ],
+        "constraints": [
+          "a<b",
+          "c<d",
+          "b!=d"
+        ],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "a*d+c*b"
+          }
+        ]
+      }
+    }
+  },
+  "percent-increase": {
+    "prompt": "A price of {{o}} is increased by {{r}}%. What is the new price?",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "percent-increase",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "k",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "r",
+            "type": "int",
+            "min": 5,
+            "max": 50,
+            "step": 5
+          },
+          {
+            "name": "o",
+            "type": "expr",
+            "expr": "20*k",
+            "places": 0
+          }
+        ],
+        "constraints": [],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "o*(100+r)/100"
+          }
+        ]
+      }
+    }
+  },
+  "percent-decrease": {
+    "prompt": "A price of {{o}} is reduced by {{r}}%. What is the new price?",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "percent-decrease",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "k",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "r",
+            "type": "int",
+            "min": 5,
+            "max": 50,
+            "step": 5
+          },
+          {
+            "name": "o",
+            "type": "expr",
+            "expr": "20*k",
+            "places": 0
+          }
+        ],
+        "constraints": [],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "o*(100-r)/100"
+          }
+        ]
+      }
+    }
+  },
+  "reverse-percentage": {
+    "prompt": "After a {{r}}% discount a coat costs {{n}}. What was the original price?",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "reverse-percentage",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "k",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "r",
+            "type": "int",
+            "min": 5,
+            "max": 50,
+            "step": 5
+          },
+          {
+            "name": "o",
+            "type": "expr",
+            "expr": "20*k",
+            "places": 0
+          },
+          {
+            "name": "n",
+            "type": "expr",
+            "expr": "o*(100-r)/100",
+            "places": 0
+          }
+        ],
+        "constraints": [],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "o"
+          }
+        ]
+      }
+    }
+  },
+  "simple-interest": {
+    "prompt": "{{p}} is invested at {{r}}% simple interest a year for {{t}} years. How much interest is earned?",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "simple-interest",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "k",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "r",
+            "type": "int",
+            "min": 1,
+            "max": 10,
+            "step": 1
+          },
+          {
+            "name": "t",
+            "type": "int",
+            "min": 1,
+            "max": 5,
+            "step": 1
+          },
+          {
+            "name": "p",
+            "type": "expr",
+            "expr": "100*k",
+            "places": 0
+          }
+        ],
+        "constraints": [],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "k*r*t"
+          }
+        ]
+      }
+    }
+  },
+  "gradient": {
+    "prompt": "Find the gradient of the line through ({{a}}, {{b}}) and ({{c}}, {{f}}).",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "gradient",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "a",
+            "type": "int",
+            "min": -9,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "b",
+            "type": "int",
+            "min": -9,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "m",
+            "type": "int",
+            "min": -9,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "d",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "c",
+            "type": "expr",
+            "expr": "a+d",
+            "places": 0
+          },
+          {
+            "name": "f",
+            "type": "expr",
+            "expr": "b+m*d",
+            "places": 0
+          }
+        ],
+        "constraints": [
+          "m!=0"
+        ],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "m"
+          }
+        ]
+      }
+    }
+  },
+  "y-intercept": {
+    "prompt": "A line with gradient {{m}} passes through ({{a}}, {{b}}). Find its y-intercept.",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "y-intercept",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "m",
+            "type": "int",
+            "min": -9,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "a",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "b",
+            "type": "int",
+            "min": -9,
+            "max": 9,
+            "step": 1
+          }
+        ],
+        "constraints": [
+          "m!=0"
+        ],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "b-m*a"
+          }
+        ]
+      }
+    }
+  },
+  "midpoint": {
+    "prompt": "Find the x-coordinate of the midpoint of ({{a}}, {{b}}) and ({{c}}, {{f}}).",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "midpoint",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "u",
+            "type": "int",
+            "min": -9,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "v",
+            "type": "int",
+            "min": -9,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "h",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "j",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "a",
+            "type": "expr",
+            "expr": "u-h",
+            "places": 0
+          },
+          {
+            "name": "c",
+            "type": "expr",
+            "expr": "u+h",
+            "places": 0
+          },
+          {
+            "name": "b",
+            "type": "expr",
+            "expr": "v-j",
+            "places": 0
+          },
+          {
+            "name": "f",
+            "type": "expr",
+            "expr": "v+j",
+            "places": 0
+          }
+        ],
+        "constraints": [],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "u"
+          }
+        ]
+      }
+    }
+  },
+  "share-ratio": {
+    "prompt": "Share {{t}} in the ratio {{a}}:{{b}}. How much is the first share?",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "share-ratio",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "a",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "b",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "k",
+            "type": "int",
+            "min": 2,
+            "max": 12,
+            "step": 1
+          },
+          {
+            "name": "t",
+            "type": "expr",
+            "expr": "(a+b)*k",
+            "places": 0
+          }
+        ],
+        "constraints": [
+          "a!=b",
+          "gcd(a,b)=1"
+        ],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "a*k"
+          }
+        ]
+      }
+    }
+  },
+  "speed": {
+    "prompt": "A car travels {{d}} km in {{t}} hours. What is its average speed in km/h?",
+    "settings": {
+      "type": "numerical",
+      "answer": 0,
+      "tolerance": 0.0001,
+      "tolerance_type": "absolute",
+      "unit": "",
+      "maths_generator": {
+        "kind": "speed",
+        "min": 2,
+        "max": 9
+      },
+      "template": {
+        "variables": [
+          {
+            "name": "v",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "t",
+            "type": "int",
+            "min": 2,
+            "max": 9,
+            "step": 1
+          },
+          {
+            "name": "d",
+            "type": "expr",
+            "expr": "v*t",
+            "places": 0
+          }
+        ],
+        "constraints": [],
+        "set": [
+          {
+            "path": "answer",
+            "expr": "v"
+          }
+        ]
+      }
+    }
+  }
+}

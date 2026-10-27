@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Responsible to handle all course related calculations.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Membership;
 
@@ -12,8 +17,8 @@ class MembershipHelper {
 	/**
 	 * Save membership plan details
 	 *
-	 * @param $membership_id
-	 * @param $membership_plans
+	 * @param mixed $membership_id Membership identifier.
+	 * @param mixed $membership_plans Membership plans.
 	 * @return array
 	 * @since 1.0.0
 	 */
@@ -33,7 +38,7 @@ class MembershipHelper {
 		if ( is_array( $membership_plans ) ) {
 			foreach ( $membership_plans as &$plan ) {
 
-				$plan['plan_id'] = $plan['plan_id'] != null ? sanitize_text_field( $plan['plan_id'] ) : uniqid( 'plan-' );
+				$plan['plan_id'] = null != $plan['plan_id'] ? sanitize_text_field( $plan['plan_id'] ) : uniqid( 'plan-' );
 				$plan['title']   = sanitize_text_field( $plan['title'] );
 				$plan['price']   = sanitize_text_field( $plan['price'] );
 			}
@@ -99,7 +104,7 @@ class MembershipHelper {
 	/**
 	 * Get subscription option by key
 	 *
-	 * @param $key
+	 * @param mixed $key Lookup key.
 	 * @return string|null
 	 * @since 1.0.0
 	 */
@@ -114,8 +119,8 @@ class MembershipHelper {
 	/**
 	 * Get plan details
 	 *
-	 * @param $membership_id
-	 * @param $plan_id
+	 * @param mixed $membership_id Membership identifier.
+	 * @param mixed $plan_id Plan identifier.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -133,8 +138,7 @@ class MembershipHelper {
 	/**
 	 * Get plan price
 	 *
-	 * @param $membership_id
-	 * @param $plan_id
+	 * @param mixed $membership_id Membership identifier.
 	 * @return float|null
 	 * @since 1.0.0
 	 */
@@ -164,7 +168,7 @@ class MembershipHelper {
 	/**
 	 * Get interval unit by frequency
 	 *
-	 * @param $frequency
+	 * @param mixed $frequency Frequency.
 	 * @return string|null
 	 * @since 1.0.0
 	 */
@@ -179,7 +183,7 @@ class MembershipHelper {
 	/**
 	 * Generate billing cycles
 	 *
-	 * @param $order
+	 * @param mixed $order Order.
 	 * @return array[]
 	 * @since 1.0.0
 	 */

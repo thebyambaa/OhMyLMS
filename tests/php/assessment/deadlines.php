@@ -122,6 +122,14 @@ ok(!AssessmentSettings::feedback_visible($exam), 'Exam results visible before re
 as_user($admin);
 call('PUT', 'quiz/' . $quiz_id . '/assessment-settings', ['released' => true]);
 ok(AssessmentSettings::feedback_visible($exam), 'Released results still hidden');
+// A late start ends at the closing time, not after the full time limit plus extra time.
+$closes_at = gmdate('Y-m-d H:i:s', time() + 120);
+call('PUT', 'quiz/' . $quiz_id . '/assessment-settings', ['available_until' => $closes_at]);
+as_user($student);
+$capped = Submission::start($quiz_id, $student); $fixture['attempts'][] = $capped;
+ok(AttemptItems::context($capped)['deadline_at'] === $closes_at && Deadlines::remaining(AttemptItems::context($capped)) <= 120, 'Attempt deadline not capped at the closing time');
+Submission::submit($quiz_id, $capped, $student, [], 'exit');
+as_user($admin);
 call('PUT', 'quiz/' . $quiz_id . '/assessment-settings', ['available_from' => gmdate('Y-m-d H:i:s', time() + 3600), 'available_until' => '']);
 as_user($student);
 $closed = Submission::start($quiz_id, $student);

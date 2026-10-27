@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 
 namespace OhMyLMS\Admin\Pages;
 
@@ -7,9 +7,15 @@ use OhMyLMS\Abstracts\SettingsPage;
 defined( 'ABSPATH' ) || exit;
 
 
+/**
+ * Plugin general settings implementation.
+ */
 class GeneralSettings extends SettingsPage {
 
 
+	/**
+	 * Initialize General settings.
+	 */
 	public function __construct() {
 		$this->id    = 'general';
 		$this->label = __( 'General', 'ohmylms' );
@@ -18,6 +24,9 @@ class GeneralSettings extends SettingsPage {
 	}
 
 
+	/**
+	 * Get settings for default section for General settings.
+	 */
 	public function get_settings_for_default_section() {
 
 		$currency_code_options = get_ohmylms_currencies();
@@ -27,7 +36,7 @@ class GeneralSettings extends SettingsPage {
 		}
 
 		$settings = array(
-			// page settings
+			// page settings.
 			array(
 				'title' => __( 'Page setup', 'ohmylms' ),
 				'type'  => 'title',
@@ -154,7 +163,7 @@ class GeneralSettings extends SettingsPage {
 				'id'   => 'general_page_settings',
 			),
 
-			// currency settings
+			// currency settings.
 			array(
 				'title' => __( 'Currency options', 'ohmylms' ),
 				'type'  => 'title',

@@ -1,5 +1,12 @@
 # OhMyLMS extensibility scope
 
+Status (checked October 19, 2026): **scope proposal of September 24, 2026; the course-experience part is not built.** No experience
+registry, per-course Experience tab or Learning Path package exists in the code (searches of `includes/` and `assets/src/` find
+none). What does exist is the extension surface in [EXTENSIONS.md](EXTENSIONS.md): layouts, question types, lesson types, activities,
+membership settings and slots, plus the numeric-answer example in `examples/extensions.php`. The learner experience moved instead to
+the Khan-style learner hub ([STUDENT-HOME.md](STUDENT-HOME.md)). Read the rest of this file as a backlog idea, not as current
+behaviour; confirm with the owner before building from it.
+
 ## Product goal
 
 Build one LMS engine that supports independently installable course experiences and question types. An administrator can give different courses different student interfaces, including a Duolingo-style learning path, without duplicating courses, losing progress, changing the site's WordPress theme, or editing LMS core files.

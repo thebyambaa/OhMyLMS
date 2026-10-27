@@ -14,44 +14,44 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 global $course;
 
-// Check if course should show add to cart button
+// Check if course should show add to cart button.
 $should_show_add_to_cart = true;
 
-// If course is cohort-based, check enrollment deadline and course expiration
+// If course is cohort-based, check enrollment deadline and course expiration.
 if ( $course && $course->get_type() === 'cohort-based' ) {
-	$cohorts = $course->get_cohort();
+	$cohorts               = $course->get_cohort();
 	$has_active_enrollment = false;
-	$all_expired = true;
-	$current_time = current_time( 'timestamp' );
+	$all_expired           = true;
+	$current_time          = current_time( 'timestamp' );
 	foreach ( $cohorts as $cohort ) {
-		// Check if any cohort has an active enrollment period
+		// Check if any cohort has an active enrollment period.
 		if ( ! empty( $cohort['enrollment_deadline'] ) ) {
 			$enrollment_end = strtotime( $cohort['enrollment_deadline'] );
-			
+
 			if ( $enrollment_end > $current_time ) {
 				$has_active_enrollment = true;
 			}
 		} else {
-			// If enrollment deadline is not set, consider it as active enrollment
+			// If enrollment deadline is not set, consider it as active enrollment.
 			$has_active_enrollment = true;
 		}
 
-		// Check if any cohort is not expired
+		// Check if any cohort is not expired.
 		if ( ! empty( $cohort['end_date'] ) ) {
 			if ( strtotime( $cohort['end_date'] ) >= $current_time ) {
 				$all_expired = false;
 			}
 		} else {
-			// If no end date, consider not expired
+			// If no end date, consider not expired.
 			$all_expired = false;
 		}
 	}
 
-	// Don't show add to cart if all cohorts are expired or no active enrollment
-	$should_show_add_to_cart = $has_active_enrollment && !$all_expired;
+	// Don't show add to cart if all cohorts are expired or no active enrollment.
+	$should_show_add_to_cart = $has_active_enrollment && ! $all_expired;
 }
 
-// Only show add to cart button if enrollment is active
+// Only show add to cart button if enrollment is active.
 if ( $should_show_add_to_cart ) {
 	echo apply_filters(
 		'ohmylms_loop_add_to_cart_link', // WPCS: XSS ok.

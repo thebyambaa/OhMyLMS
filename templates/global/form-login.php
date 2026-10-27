@@ -6,7 +6,7 @@
  *
  * @package OhMyLMS\Templates
  * * @version  1.0.0
- * * @global \CodeRex\Ecommerce\Checkout $checkout
+ * * @global \OhMyLMS\Commerce\Checkout $checkout
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -17,10 +17,13 @@ if ( is_user_logged_in() ) {
 	return;
 }
 
-$ohmylms_google_configured = \OhMyLMS\Services\GoogleAuthService::is_configured();
-$ohmylms_google_login_url  = rest_url( 'ohmylms/v1/auth/google' );
+$ohmylms_google_configured    = \OhMyLMS\Services\GoogleAuthService::is_configured();
+$ohmylms_google_login_url     = rest_url( 'ohmylms/v1/auth/google' );
+$ohmylms_microsoft_configured = \OhMyLMS\Services\MicrosoftAuthService::is_configured();
+$ohmylms_microsoft_login_url  = rest_url( 'ohmylms/v1/auth/microsoft' );
 if ( ! empty( $redirect_to ) ) {
-	$ohmylms_google_login_url = add_query_arg( 'redirect_to', rawurlencode( $redirect_to ), $ohmylms_google_login_url );
+	$ohmylms_google_login_url    = add_query_arg( 'redirect_to', rawurlencode( $redirect_to ), $ohmylms_google_login_url );
+	$ohmylms_microsoft_login_url = add_query_arg( 'redirect_to', rawurlencode( $redirect_to ), $ohmylms_microsoft_login_url );
 }
 
 ?>
@@ -40,6 +43,21 @@ if ( ! empty( $redirect_to ) ) {
 		</p>
 	<?php endif; ?>
 
+	<?php if ( isset( $_GET['microsoft_error'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
+		<p class="ohmylms-form-row ohmylms-notice ohmylms-notice-error">
+			<?php
+			$ohmylms_microsoft_error = sanitize_key( wp_unslash( $_GET['microsoft_error'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			if ( 'microsoft_link_required' === $ohmylms_microsoft_error ) {
+				esc_html_e( 'Sign in with your existing account first, then connect Microsoft from the OhMyLMS portal.', 'ohmylms' );
+			} elseif ( 'microsoft_email_unverified' === $ohmylms_microsoft_error ) {
+				esc_html_e( 'Please verify your email address before signing in. We sent you a verification link.', 'ohmylms' );
+			} else {
+				esc_html_e( "We couldn't sign you in with Microsoft. Please try again.", 'ohmylms' );
+			}
+			?>
+		</p>
+	<?php endif; ?>
+
 	<?php if ( $ohmylms_google_configured ) : ?>
 		<p class="ohmylms-form-row">
 			<a href="<?php echo esc_url( $ohmylms_google_login_url ); ?>" class="ohmylms-button ohmylms-google-signin-button" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;text-decoration:none;">
@@ -52,6 +70,23 @@ if ( ! empty( $redirect_to ) ) {
 				<?php esc_html_e( 'Continue with Google', 'ohmylms' ); ?>
 			</a>
 		</p>
+	<?php endif; ?>
+
+	<?php if ( $ohmylms_microsoft_configured ) : ?>
+		<p class="ohmylms-form-row">
+			<a href="<?php echo esc_url( $ohmylms_microsoft_login_url ); ?>" class="ohmylms-button ohmylms-microsoft-signin-button" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;text-decoration:none;">
+				<svg width="18" height="18" viewBox="0 0 23 23" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+					<path fill="#F25022" d="M1 1h10v10H1z"/>
+					<path fill="#7FBA00" d="M12 1h10v10H12z"/>
+					<path fill="#00A4EF" d="M1 12h10v10H1z"/>
+					<path fill="#FFB900" d="M12 12h10v10H12z"/>
+				</svg>
+				<?php esc_html_e( 'Continue with Microsoft', 'ohmylms' ); ?>
+			</a>
+		</p>
+	<?php endif; ?>
+
+	<?php if ( $ohmylms_google_configured || $ohmylms_microsoft_configured ) : ?>
 		<p class="ohmylms-form-row ohmylms-auth-divider" style="text-align:center;color:#7A8B9A;font-size:13px;">
 			<?php esc_html_e( 'or', 'ohmylms' ); ?>
 		</p>
@@ -94,13 +129,13 @@ if ( ! empty( $redirect_to ) ) {
 					<span class="show-password" aria-label="Toggle password visibility">
 						<span class="eye-on">
 							<?php
-								include(OHMYLMS_DIR . '/assets/images/icon/eye-icon2.php');
+								require OHMYLMS_DIR . '/assets/images/icon/eye-icon2.php';
 							?>
 						</span>
 
 						<span class="eye-off">
 							<?php
-								include(OHMYLMS_DIR . '/assets/images/icon/eye-off-icon.php');
+								require OHMYLMS_DIR . '/assets/images/icon/eye-off-icon.php';
 							?>
 						</span>
 					</span>
@@ -139,9 +174,9 @@ if ( ! empty( $redirect_to ) ) {
 		</button>
 	</p>
 
-	<?php if( !is_ohmylms_checkout() ) : ?>
+	<?php if ( ! is_ohmylms_checkout() ) : ?>
 		<p class="ohmylms-form-row dont-have-account">
-			<?php echo __('Don\'t have an account?', 'ohmylms') ?>
+			<?php echo esc_html__( 'Don\'t have an account?', 'ohmylms' ); ?>
 			<a href="#" class="ohmylms-show-signup-form">
 				<?php esc_html_e( 'Sign Up', 'ohmylms' ); ?>
 			</a>

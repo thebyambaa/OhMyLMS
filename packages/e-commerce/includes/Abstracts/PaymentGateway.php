@@ -1,14 +1,20 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
+/**
+ * Class PaymentGateway.
+ *
+ * @package OhMyLMS
+ */
 
-namespace CodeRex\Ecommerce\Abstracts;
+namespace OhMyLMS\Commerce\Abstracts;
 
 use OhMyLMS\Abstracts\SettingsApi;
-use function CodeRex\Ecommerce\ecommerce;
+use function OhMyLMS\Commerce\ecommerce;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Class PaymentGateway
+ *
  * @package OhMyLMS\Order\Abstracts
  * @since 1.0.0
  */
@@ -72,15 +78,35 @@ abstract class PaymentGateway extends SettingsApi {
 	 */
 	public $enabled;
 
+	/**
+	 * Testmode.
+	 *
+	 * @var mixed
+	 */
 	public $testmode;
 
 
+	/**
+	 * Subscription support.
+	 *
+	 * @var mixed
+	 */
 	public $subscription_support = false;
 
 
+	/**
+	 * Transaction url.
+	 *
+	 * @var mixed
+	 */
 	public $transaction_url = '';
 
 
+	/**
+	 * Settings.
+	 *
+	 * @var mixed
+	 */
 	public array $settings;
 
 	/**
@@ -98,6 +124,9 @@ abstract class PaymentGateway extends SettingsApi {
 	public array $required_checkout_fields = array();
 
 
+	/**
+	 * Get settings for Payment gateway.
+	 */
 	abstract function get_settings();
 
 
@@ -149,6 +178,9 @@ abstract class PaymentGateway extends SettingsApi {
 	}
 
 
+	/**
+	 * Init settings for Payment gateway.
+	 */
 	public function init_settings() {
 		parent::init_settings();
 	}
@@ -183,7 +215,8 @@ abstract class PaymentGateway extends SettingsApi {
 	/**
 	 * Process Payment
 	 *
-	 * @param int $order_id Order ID.
+	 * @param int  $order_id Order ID.
+	 * @param bool $is_subscription Is subscription.
 	 * @return array
 	 * @since 1.0.0
 	 */
@@ -195,7 +228,9 @@ abstract class PaymentGateway extends SettingsApi {
 	/**
 	 * Process refund
 	 *
-	 * @param int $order_id Order ID.
+	 * @param int    $order_id Order ID.
+	 * @param mixed  $amount Amount.
+	 * @param string $reason Reason.
 	 * @return bool
 	 * @since 1.0.0
 	 */
@@ -214,6 +249,9 @@ abstract class PaymentGateway extends SettingsApi {
 	}
 
 
+	/**
+	 * Get order total for Payment gateway.
+	 */
 	protected function get_order_total() {
 
 		$total    = 0;
@@ -221,7 +259,7 @@ abstract class PaymentGateway extends SettingsApi {
 
 		// Gets order total from "pay for order" page.
 		if ( 0 < $order_id ) {
-			$order = ecommerce_get_order( $order_id );
+			$order = ohmylms_ecommerce_get_order( $order_id );
 			if ( $order ) {
 				$total = (float) $order->get_total();
 			}
@@ -237,7 +275,7 @@ abstract class PaymentGateway extends SettingsApi {
 	/**
 	 * Get the return URL for the order.
 	 *
-	 * @param \CodeRex\Ecommerce\Data\Order|null $order The order object. Default is null.
+	 * @param \OhMyLMS\Commerce\Data\Order|null $order The order object. Default is null.
 	 * @return string The return URL.
 	 * @since 1.0.0
 	 */
@@ -245,10 +283,10 @@ abstract class PaymentGateway extends SettingsApi {
 		if ( ! $order ) {
 			$order_id = absint( get_query_var( 'order-pay' ) );
 			if ( 0 < $order_id ) {
-				$order = ecommerce_get_order( $order_id );
+				$order = ohmylms_ecommerce_get_order( $order_id );
 			}
 		}
-		if ( ! $order || ! is_a( $order, '\CodeRex\Ecommerce\Data\Order' ) ) {
+		if ( ! $order || ! is_a( $order, '\OhMyLMS\Commerce\Data\Order' ) ) {
 			return '';
 		}
 		$return_url = $order->get_checkout_redirect_url();
@@ -263,7 +301,7 @@ abstract class PaymentGateway extends SettingsApi {
 	 * If the option is not set, it will initialize the settings and return the default value if provided.
 	 *
 	 * @param string $key The key of the option to retrieve.
-	 * @param mixed $empty_value The value to return if the option is not set. Default is null.
+	 * @param mixed  $empty_value The value to return if the option is not set. Default is null.
 	 * @return mixed The value of the option, or the empty value if the option is not set.
 	 *
 	 * @since 1.0.0
@@ -286,6 +324,9 @@ abstract class PaymentGateway extends SettingsApi {
 		return $this->settings[ $key ];
 	}
 
+	/**
+	 * Validate fields for Payment gateway.
+	 */
 	public function validate_fields() {
 		return true;
 	}
@@ -293,14 +334,14 @@ abstract class PaymentGateway extends SettingsApi {
 	/**
 	 * Get the transaction URL for the order.
 	 *
-	 * @param \CodeRex\Ecommerce\Data\Order $order The order object.
+	 * @param \OhMyLMS\Commerce\Data\Order $order The order object.
 	 * @return string The transaction URL.
 	 * @since 1.0.0
 	 */
 	public function get_transaction_url( $order ) {
 		$transaction_id = $order->get_transaction_id();
 		// phpcs:ignore Generic.Functions.SprintfPlaceholders.Invalid
-		$return_url 	= sprintf( $this->transaction_url, $transaction_id );
+		$return_url = sprintf( $this->transaction_url, $transaction_id );
 		return $return_url;
 	}
 
@@ -311,10 +352,11 @@ abstract class PaymentGateway extends SettingsApi {
 	 * Gateways should implement this to charge the customer using stored payment details.
 	 * It should NOT handle subscription status changes or rescheduling, only the payment attempt.
 	 *
-	 * @param int $original_order_id The ID of the original order that created the subscription.
+	 * @param int   $original_order_id The ID of the original order that created the subscription.
+	 * @param mixed $renewal_order_id Renewal order identifier.
 	 * @param float $amount The amount to charge for this renewal.
-	 * @param int $subscription_id The ID of the ohmylms-subscription post.
-	 * @param int $student_id The ID of the student/user.
+	 * @param int   $subscription_id The ID of the ohmylms-subscription post.
+	 * @param int   $student_id The ID of the student/user.
 	 * @return array Should return an array with 'result' => 'success' or 'failure'.
 	 *               On success, can optionally include 'transaction_id'.
 	 *               On failure, should include 'message' with the error.
@@ -333,12 +375,12 @@ abstract class PaymentGateway extends SettingsApi {
 	 * Get payment gateway meta data for the order.
 	 * This method can be overridden by payment gateways to provide additional meta data
 	 *
-	 * @param \CodeRex\Ecommerce\Data\Order $order The order object.
+	 * @param \OhMyLMS\Commerce\Data\Order $order The order object.
 	 * @return array An associative array of meta data to be saved with the order.
 	 * @since 1.0.0
 	 */
 	public function get_payment_gateway_meta( $order ) {
-		return [];
+		return array();
 	}
 
 
@@ -349,7 +391,7 @@ abstract class PaymentGateway extends SettingsApi {
 	 * It first checks the gateway-specific settings, then falls back to the default settings.
 	 *
 	 * @param string $key The setting key to retrieve.
-	 * @param mixed $default The default value if the setting is not found.
+	 * @param mixed  $default The default value if the setting is not found.
 	 * @return mixed The setting value or default if not found.
 	 * @since 1.0.0
 	 */
@@ -362,6 +404,9 @@ abstract class PaymentGateway extends SettingsApi {
 	}
 
 
+	/**
+	 * Is test mode for Payment gateway.
+	 */
 	public function is_test_mode() {
 		return $this->testmode;
 	}

@@ -1,4 +1,5 @@
 .ohmylms-page {
+
     .ohmylms-course-details-tab {
         margin-top: 47px;
 
@@ -40,7 +41,6 @@
                 font-size: 15px;
                 font-weight: 400;
                 line-height: 1.2;
-                cursor: pointer;
                 position: relative;
                 transition: color 0.3s ease;
                 padding: 0 0 10px 0;
@@ -72,7 +72,7 @@
                 &.active  {
                     color: var(--ohmylms-primary-color);
 
-                    &:before {
+                    &::before {
                         transform-origin: bottom left;
                         transform: scaleX(1);
                     }
@@ -129,6 +129,7 @@
 
             // ------course information tab content style-----
             &.course-description {
+
                 .ohmylms-description-content-inner {
                     position: relative;
                     transition: all 0.5s ease;
@@ -137,9 +138,11 @@
             
             // ------ course resource tab content style-----
             &.course-resources {
+
                 .ohmylms-table .ohmylms-tr .time {
                     width: 212px;
                 }
+
                 .ohmylms-table .ohmylms-tr .action {
                     width: 80px;
                 }
@@ -152,6 +155,7 @@
 
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .ohmylms-course-details-tab .ohmylms-course-tab-nav button {
         font-size: 14px;
     }
@@ -159,6 +163,7 @@
     .ohmylms-page .ohmylms-course-details-tab .ohmylms-single-tab-content.course-resources .ohmylms-table .ohmylms-tr .title {
         max-width: 225px;
     }
+
     .ohmylms-page .ohmylms-course-details-tab .ohmylms-single-tab-content.course-resources .ohmylms-table .ohmylms-tr .time {
         width: 194px;
     }
@@ -171,6 +176,7 @@
 }
 
 @media screen and (max-width: 991px) {
+
     .ohmylms-page .ohmylms-course-details-tab .ohmylms-single-tab-content {
         padding-top: 30px;
     }
@@ -182,6 +188,7 @@
     .ohmylms-page .ohmylms-course-details-tab {
         margin-top: 26px;
     }
+
     .ohmylms-page .ohmylms-course-details-tab .ohmylms-single-tab-content .ohmylms-feature-image-wrapper img {
         border-radius: 10px;
     }
@@ -194,28 +201,34 @@
 }
 
 @media screen and (max-width: 767px) {
+
     .ohmylms-page .ohmylms-course-details-tab .ohmylms-single-tab-content.course-resources .ohmylms-table .ohmylms-tr .title {
         max-width: 100%;
         width: calc(100% - 85px);
     }
+
     .ohmylms-page .ohmylms-course-details-tab .ohmylms-single-tab-content.course-resources .ohmylms-table .ohmylms-tr .time {
         display: none;
     }
+
     .ohmylms-page .ohmylms-course-details-tab .ohmylms-single-tab-content.course-resources .ohmylms-table .ohmylms-tr .ohmylms-mobile-td .time {
         width: 100%;
         display: flex;
         font-size: 13px;
         padding-top: 0;
     }
-    .ohmylms-page .ohmylms-course-details-tab .ohmylms-single-tab-content.course-resources .ohmylms-table .ohmylms-tr .ohmylms-mobile-td .time:before {
+
+    .ohmylms-page .ohmylms-course-details-tab .ohmylms-single-tab-content.course-resources .ohmylms-table .ohmylms-tr .ohmylms-mobile-td .time::before {
         width: 36px;
     }
 }
 
 @media screen and (max-width: 575px) {
+
     .ohmylms-page .ohmylms-course-header .ohmylms-course-title {
         font-size: 20px;
     }
+
     .ohmylms-page .ohmylms-course-details-tab .ohmylms-single-tab-content .ohmylms-feature-image-wrapper img {
         border-radius: 8px;
     }

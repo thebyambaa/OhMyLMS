@@ -45,20 +45,6 @@
       "factories": []
     },
     {
-      "output": "assets/blocks/js/course-list.js",
-      "sha256": "da4d650eb42b8ef7c458fd7c7b5a0cebb094823fe1d7da9a05f4517866673cd9",
-      "bytes": 48158,
-      "source": "runtimes/blocks/js/course-list.js",
-      "factories": []
-    },
-    {
-      "output": "assets/blocks/js/course-list.min.js",
-      "sha256": "851079f48291c4ead833e1a5498cd0ebbd3873daccf24a75750f5b128fd58638",
-      "bytes": 28895,
-      "source": "runtimes/blocks/js/course-list.min.js",
-      "factories": []
-    },
-    {
       "output": "assets/blocks/js/dashboard.js",
       "sha256": "c7371101c70885458e574037c51aea1dbfecb19684bb71af1f511c9781c20427",
       "bytes": 16391,
@@ -84,20 +70,6 @@
       "sha256": "644b379b498d0e89fae176ca37f26864dca4a46562552278a1fa1ed023820d50",
       "bytes": 1103,
       "source": "runtimes/blocks/js/membership-list.min.js",
-      "factories": []
-    },
-    {
-      "output": "assets/blocks/js/my-courses.js",
-      "sha256": "61d0612830de5fc18e9837b4ddacdf5e6169c2b7e1397eadf80d0a12ab64a1ee",
-      "bytes": 20147,
-      "source": "runtimes/blocks/js/my-courses.js",
-      "factories": []
-    },
-    {
-      "output": "assets/blocks/js/my-courses.min.js",
-      "sha256": "3dfa549a7dc26b174912da012e47dfc935a2c2787258093dba19373a85cb3b3c",
-      "bytes": 11032,
-      "source": "runtimes/blocks/js/my-courses.min.js",
       "factories": []
     },
     {
@@ -4696,13 +4668,6 @@
           "id": "99418"
         }
       ]
-    },
-    {
-      "output": "assets/extensions/activity-editor.js",
-      "sha256": "54d6f500a2d7602b1076bd89ec742084bc09e38ea73c35684a9fb8659ba5c422",
-      "bytes": 999,
-      "source": "runtimes/extensions/activity-editor.js",
-      "factories": []
     },
     {
       "output": "assets/js/admin-notices.js",
@@ -10905,5 +10870,12 @@
         "binding": "ooe"
       }
     ]
-  }
+  },
+  "retiredAssets": [
+    "assets/blocks/js/course-list.js",
+    "assets/blocks/js/course-list.min.js",
+    "assets/blocks/js/my-courses.js",
+    "assets/blocks/js/my-courses.min.js",
+    "assets/extensions/activity-editor.js"
+  ]
 }

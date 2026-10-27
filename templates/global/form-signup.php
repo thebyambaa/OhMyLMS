@@ -6,7 +6,7 @@
  *
  * @package OhMyLMS\Templates
  * * @version  1.0.0
- * * @global \CodeRex\Ecommerce\Checkout $checkout
+ * * @global \OhMyLMS\Commerce\Checkout $checkout
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -21,7 +21,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<?php do_action( 'ohmylms_signup_form_start' ); ?>
 
 	<?php echo ( $message ) ? wpautop( wptexturize( $message ) ) : ''; // @codingStandardsIgnoreLine ?>
-	<?php if ( defined('OHMYLMS_SOURCE_ASSETS') && OHMYLMS_SOURCE_ASSETS ) : ?><div data-ohmylms-registration-fields style="display:contents"><?php endif; ?>
+	<?php
+	if ( defined( 'OHMYLMS_SOURCE_ASSETS' ) && OHMYLMS_SOURCE_ASSETS ) :
+		?>
+		<div data-ohmylms-registration-fields style="display:contents"><?php endif; ?>
 
 	<div class="ohmylms-form-row ohmylms-form-names-row">
 		<p class="ohmylms-form-row row-first-name">
@@ -82,13 +85,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<span class="show-password" aria-label="Toggle password visibility">
 						<span class="eye-on">
 							<?php
-								include(OHMYLMS_DIR . '/assets/images/icon/eye-icon2.php');
+								require OHMYLMS_DIR . '/assets/images/icon/eye-icon2.php';
 							?>
 						</span>
 
 						<span class="eye-off">
 							<?php
-								include(OHMYLMS_DIR . '/assets/images/icon/eye-off-icon.php');
+								require OHMYLMS_DIR . '/assets/images/icon/eye-off-icon.php';
 							?>
 						</span>
 					</span>
@@ -122,7 +125,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 		</span>
 	</p>
 
-	<?php if ( defined('OHMYLMS_SOURCE_ASSETS') && OHMYLMS_SOURCE_ASSETS ) : ?></div><?php endif; ?>
+	<?php
+	if ( defined( 'OHMYLMS_SOURCE_ASSETS' ) && OHMYLMS_SOURCE_ASSETS ) :
+		?>
+		</div><?php endif; ?>
 	<?php do_action( 'ohmylms_signup_form' ); ?>
 
 	<p class="ohmylms-form-row privacy-policy-row">
@@ -136,11 +142,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<?php
 					printf(
 						wp_kses_post(
-							__('By signing up, you agree to our <a href="%1$s" target="_blank">Privacy Policy</a>.', 'ohmylms')
+							/* translators: %1$s: text value. */
+							__( 'By signing up, you agree to our <a href="%1$s" target="_blank">Privacy Policy</a>.', 'ohmylms' )
 						),
-						esc_url(get_permalink(get_option('wp_page_for_privacy_policy')))
+						esc_url( get_permalink( get_option( 'wp_page_for_privacy_policy' ) ) )
 					);
-				?>
+					?>
 			</span>
 		</label>
 	</p>
@@ -150,15 +157,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<input type="hidden" name="action" value="ohmylms_signup">
 		<input type="hidden" name="redirect_to" value="<?php echo esc_url( $redirect_to ); ?>" />
 
-		<?php if ( defined('OHMYLMS_SOURCE_ASSETS') && OHMYLMS_SOURCE_ASSETS ) : ?><span data-ohmylms-registration-submit style="display:contents"><?php endif; ?>
+		<?php
+		if ( defined( 'OHMYLMS_SOURCE_ASSETS' ) && OHMYLMS_SOURCE_ASSETS ) :
+			?>
+			<span data-ohmylms-registration-submit style="display:contents"><?php endif; ?>
 		<button type="submit" class="ohmylms-button ohmylms-form-signup-submit" name="signup" value="<?php esc_attr_e( 'Sign Up', 'ohmylms' ); ?>" disabled>
 			<?php esc_html_e( 'Sign Up', 'ohmylms' ); ?>
 		</button>
-		<?php if ( defined('OHMYLMS_SOURCE_ASSETS') && OHMYLMS_SOURCE_ASSETS ) : ?></span><?php endif; ?>
+		<?php
+		if ( defined( 'OHMYLMS_SOURCE_ASSETS' ) && OHMYLMS_SOURCE_ASSETS ) :
+			?>
+			</span><?php endif; ?>
 	</p>
 
 	<p class="ohmylms-form-row dont-have-account">
-		<?php echo __('Already have an account?', 'ohmylms') ?>
+		<?php echo esc_html__( 'Already have an account?', 'ohmylms' ); ?>
 		<a href="#" class="ohmylms-show-login-form">
 			<?php esc_html_e( 'Log In', 'ohmylms' ); ?>
 		</a>

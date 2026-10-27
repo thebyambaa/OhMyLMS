@@ -1,7 +1,11 @@
 .ohmylms-page {
+
     .ohmylms-student-profile {
+
         .student-profile-edit {
+
             .ohmylms-profile-cover {
+
                 .hoverlay {
                     position: absolute;
                     top: 0;
@@ -54,14 +58,15 @@
                     visibility: visible;
                 }
 
-                & > figure:focus + .hoverlay,
-                & > figure:hover + .hoverlay {
+                > figure:focus + .hoverlay,
+                > figure:hover + .hoverlay {
                     opacity: 1;
                     visibility: visible;
                 }
             }
 
             .ohmylms-profile-avatar {
+
                 .edit-avatar {
                     position: absolute;
                     top: 0;
@@ -100,6 +105,7 @@
                 &:focus-within,
                 &:focus,
                 &:hover {
+
                     .edit-avatar {
                         opacity: 1;
                         visibility: visible;
@@ -125,7 +131,7 @@
             .ohmylms-student-basic-info {
                 border-radius: 8px;
                 background-color: #FFF;
-                box-shadow: 0px 1px 4px 0px #D3D6DD;
+                box-shadow: 0 1px 4px 0 #D3D6DD;
                 padding: 21px 30px 24px;
             }
 
@@ -154,6 +160,7 @@
 
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .ohmylms-student-profile .student-profile-edit .ohmylms-student-account, 
     .ohmylms-page .ohmylms-student-profile .student-profile-edit .ohmylms-student-basic-info {
         border-radius: 10px;
@@ -167,13 +174,16 @@
 }
 
 @media screen and (max-width: 991px) {
+
     .ohmylms-page .ohmylms-student-profile .student-profile-edit .ohmylms-profile-avatar .edit-avatar small {
         font-size: 10px;
     }
+
     .ohmylms-page .ohmylms-student-profile .student-profile-edit .ohmylms-profile-cover .hoverlay {
         align-items: flex-start;
         justify-content: flex-end;
     }
+
     .ohmylms-page .ohmylms-student-profile .student-profile-edit .ohmylms-profile-cover .hoverlay {
         border-radius: 0;
     }
@@ -192,6 +202,7 @@
 
 
 @media screen and (max-width: 767px) {
+
     .ohmylms-page .ohmylms-student-profile .student-profile-edit .ohmylms-form-group.bio textarea {
         min-height: 92px;
     }

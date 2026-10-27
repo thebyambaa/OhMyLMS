@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * OhMyLMS Course List Widget for Elementor
  *
@@ -117,7 +117,7 @@ class CourseListWidget extends Widget_Base {
 			)
 		);
 
-		// Layout Settings Section
+		// Layout Settings Section.
 		$this->add_control(
 			'layout_heading',
 			array(
@@ -140,12 +140,12 @@ class CourseListWidget extends Widget_Base {
 			)
 		);
 
-		// Build layout style options
+		// Build layout style options.
 		$layout_options = array(
 			'grid-style1' => esc_html__( 'Layout 1', 'ohmylms' ),
 		);
 
-		// Layouts 2-4
+		// Layouts 2-4.
 			$layout_options['grid-style2'] = esc_html__( 'Layout 2', 'ohmylms' );
 			$layout_options['grid-style3'] = esc_html__( 'Layout 3', 'ohmylms' );
 			$layout_options['grid-style4'] = esc_html__( 'Layout 4', 'ohmylms' );
@@ -153,10 +153,10 @@ class CourseListWidget extends Widget_Base {
 		$this->add_control(
 			'layout_style',
 			array(
-				'label'   => esc_html__( 'Layout Style', 'ohmylms' ),
-				'type'    => Controls_Manager::SELECT,
-				'default' => get_option( 'ohmylms_archive_page_layout_style', 'grid-style1' ),
-				'options' => $layout_options,
+				'label'     => esc_html__( 'Layout Style', 'ohmylms' ),
+				'type'      => Controls_Manager::SELECT,
+				'default'   => get_option( 'ohmylms_archive_page_layout_style', 'grid-style1' ),
+				'options'   => $layout_options,
 				'condition' => array(
 					'layout' => 'grid',
 				),
@@ -181,7 +181,7 @@ class CourseListWidget extends Widget_Base {
 			)
 		);
 
-        $this->add_control(
+		$this->add_control(
 			'posts_per_page',
 			array(
 				'label'   => esc_html__( 'Courses Per Page', 'ohmylms' ),
@@ -191,8 +191,32 @@ class CourseListWidget extends Widget_Base {
 				'max'     => 100,
 			)
 		);
-        
-		// Feature Toggles Section
+
+		$this->add_control(
+			'curriculum',
+			array(
+				'label'       => esc_html__( 'Curriculum', 'ohmylms' ),
+				'description' => esc_html__( 'Only show courses placed under these curriculum items. Leave empty to show all.', 'ohmylms' ),
+				'type'        => Controls_Manager::SELECT2,
+				'multiple'    => true,
+				'label_block' => true,
+				'options'     => \OhMyLMS\Curriculum\Placement::item_options(),
+			)
+		);
+
+		$this->add_control(
+			'bundle',
+			array(
+				'label'       => esc_html__( 'Course bundles', 'ohmylms' ),
+				'description' => esc_html__( 'Only show courses in these Course Bundles. Leave empty to show all.', 'ohmylms' ),
+				'type'        => Controls_Manager::SELECT2,
+				'multiple'    => true,
+				'label_block' => true,
+				'options'     => \OhMyLMS\Curriculum\Placement::bundle_options(),
+			)
+		);
+
+		// Feature Toggles Section.
 		$this->add_control(
 			'features_heading',
 			array(
@@ -256,7 +280,7 @@ class CourseListWidget extends Widget_Base {
 		$this->add_control(
 			'is_enable_category',
 			array(
-				'label'        => esc_html__( 'Show Category', 'ohmylms' ),
+				'label'        => esc_html__( 'Show Curriculum Tabs', 'ohmylms' ),
 				'type'         => Controls_Manager::SWITCHER,
 				'label_on'     => esc_html__( 'Show', 'ohmylms' ),
 				'label_off'    => esc_html__( 'Hide', 'ohmylms' ),
@@ -269,7 +293,7 @@ class CourseListWidget extends Widget_Base {
 			)
 		);
 
-		// Row Settings Section for grid-style3 and grid-style4
+		// Row Settings Section for grid-style3 and grid-style4.
 		$this->add_control(
 			'row_settings_heading',
 			array(
@@ -295,12 +319,12 @@ class CourseListWidget extends Widget_Base {
 						'type'    => Controls_Manager::SELECT,
 						'default' => 'all',
 						'options' => array(
-							'all'     		  => esc_html__( 'All Courses', 'ohmylms' ),
-							'recent'          => esc_html__( 'Recent Courses', 'ohmylms' ),
-							'top_rated'       => esc_html__( 'Top Rated Courses', 'ohmylms' ),
-							'free'            => esc_html__( 'Free Courses', 'ohmylms' ),
-							'paid'            => esc_html__( 'Paid Courses', 'ohmylms' ),
-							'best_selling'    => esc_html__( 'Best Selling Courses', 'ohmylms' ),
+							'all'          => esc_html__( 'All Courses', 'ohmylms' ),
+							'recent'       => esc_html__( 'Recent Courses', 'ohmylms' ),
+							'top_rated'    => esc_html__( 'Top Rated Courses', 'ohmylms' ),
+							'free'         => esc_html__( 'Free Courses', 'ohmylms' ),
+							'paid'         => esc_html__( 'Paid Courses', 'ohmylms' ),
+							'best_selling' => esc_html__( 'Best Selling Courses', 'ohmylms' ),
 						),
 					),
 					array(
@@ -309,12 +333,12 @@ class CourseListWidget extends Widget_Base {
 						'type'        => Controls_Manager::TEXT,
 						'default'     => esc_html__( 'All Course', 'ohmylms' ),
 						'placeholder' => esc_html__( 'Enter Row Heading', 'ohmylms' ),
-					)
+					),
 				),
 				'default'     => array(
 					array(
-						'row_display_criteria' 	=> 'all',
-						'row_heading'  			=> esc_html__( 'All Course', 'ohmylms' ),
+						'row_display_criteria' => 'all',
+						'row_heading'          => esc_html__( 'All Course', 'ohmylms' ),
 					),
 				),
 				'title_field' => '{{{ row_heading }}}',
@@ -475,7 +499,7 @@ class CourseListWidget extends Widget_Base {
 			)
 		);
 
-		// Hover Effects
+		// Hover Effects.
 		$this->add_control(
 			'card_hover_heading',
 			array(
@@ -1075,7 +1099,7 @@ class CourseListWidget extends Widget_Base {
 
 		$this->start_controls_tabs( 'button_style_tabs' );
 
-		// Normal state
+		// Normal state.
 		$this->start_controls_tab(
 			'button_normal',
 			array(
@@ -1167,7 +1191,7 @@ class CourseListWidget extends Widget_Base {
 
 		$this->end_controls_tab();
 
-		// Hover state
+		// Hover state.
 		$this->start_controls_tab(
 			'button_hover',
 			array(
@@ -1229,113 +1253,93 @@ class CourseListWidget extends Widget_Base {
 	 */
 	protected function render() {
 		$settings = $this->get_settings_for_display();
-		// Convert Elementor settings to shortcode attributes
+		// Convert Elementor settings to shortcode attributes.
 		$shortcode_attrs = $this->convert_settings_to_shortcode_attrs( $settings );
 
-		// Use the same wrapper class as shortcode for consistency
+		// Use the same wrapper class as shortcode for consistency.
 		echo '<div class="ohmylms ohmylms-page">';
-		
-		// Use the shortcode class to render the course list
+
+		// Use the shortcode class to render the course list.
 		ShortcodeCourseList::output( $shortcode_attrs );
-		
+
 		echo '</div>';
 	}
 
 	/**
 	 * Convert Elementor settings to shortcode attributes
 	 *
-	 * @param array $settings Elementor settings
+	 * @param array $settings Elementor settings.
 	 * @return array Shortcode attributes
 	 */
 	private function convert_settings_to_shortcode_attrs( $settings ) {
 		$attrs = array();
 
-		// Content controls (these are the main attributes)
-		if ( isset( $settings['posts_per_page'] ) && $settings['posts_per_page'] !== '' ) {
+		// Content controls (these are the main attributes).
+		if ( isset( $settings['posts_per_page'] ) && '' !== $settings['posts_per_page'] ) {
 			$attrs['posts_per_page'] = $settings['posts_per_page'];
 		}
 
-		if ( isset( $settings['orderby'] ) && $settings['orderby'] !== '' ) {
+		if ( isset( $settings['orderby'] ) && '' !== $settings['orderby'] ) {
 			$attrs['orderby'] = $settings['orderby'];
 		}
 
-		if ( isset( $settings['order'] ) && $settings['order'] !== '' ) {
+		if ( isset( $settings['order'] ) && '' !== $settings['order'] ) {
 			$attrs['order'] = $settings['order'];
 		}
 
-		if ( isset( $settings['category'] ) && $settings['category'] !== '' ) {
-			$attrs['category'] = $settings['category'];
+		// Curriculum items and Course Bundles the list is limited to (comma-separated slugs).
+		foreach ( array( 'curriculum', 'bundle' ) as $group ) {
+			if ( ! empty( $settings[ $group ] ) ) {
+				$attrs[ $group ] = implode( ',', array_map( 'sanitize_key', (array) $settings[ $group ] ) );
+			}
 		}
 
-		if ( isset( $settings['layout'] ) && $settings['layout'] !== '' ) {
+		if ( isset( $settings['layout'] ) && '' !== $settings['layout'] ) {
 			$attrs['layout'] = $settings['layout'];
 		}
 
-		if ( isset( $settings['layout_style'] ) && $settings['layout_style'] !== '' ) {
+		if ( isset( $settings['layout_style'] ) && '' !== $settings['layout_style'] ) {
 			$attrs['layout_style'] = $settings['layout_style'];
 		}
 
-		if ( isset( $settings['columns'] ) && $settings['columns'] !== '' ) {
+		if ( isset( $settings['columns'] ) && '' !== $settings['columns'] ) {
 			$attrs['columns'] = $settings['columns'];
 		}
 
-		// Toggle controls - these return 'yes' when enabled, empty when disabled
-		if ( isset( $settings['show_filter'] ) && $settings['show_filter'] === 'yes' ) {
+		// Toggle controls - these return 'yes' when enabled, empty when disabled.
+		if ( isset( $settings['show_filter'] ) && 'yes' === $settings['show_filter'] ) {
 			$attrs['show_filter'] = 'yes';
 		} else {
 			$attrs['show_filter'] = 'no';
 		}
 
-		if ( isset( $settings['show_search'] ) && $settings['show_search'] === 'yes' ) {
+		if ( isset( $settings['show_search'] ) && 'yes' === $settings['show_search'] ) {
 			$attrs['show_search'] = 'yes';
 		} else {
 			$attrs['show_search'] = 'no';
 		}
 
-		if ( isset( $settings['show_sort'] ) && $settings['show_sort'] === 'yes' ) {
+		if ( isset( $settings['show_sort'] ) && 'yes' === $settings['show_sort'] ) {
 			$attrs['show_sort'] = 'yes';
 		} else {
 			$attrs['show_sort'] = 'no';
 		}
 
-		if ( isset( $settings['is_enable_category'] ) && $settings['is_enable_category'] === 'yes' ) {
+		if ( isset( $settings['is_enable_category'] ) && 'yes' === $settings['is_enable_category'] ) {
 			$attrs['is_enable_category'] = 'yes';
 		} else {
 			$attrs['is_enable_category'] = 'no';
 		}
 
-		// Handle course rows for grid-style3 and grid-style4
+		// Handle course rows for grid-style3 and grid-style4.
 		if ( isset( $settings['course_rows'] ) && ! empty( $settings['course_rows'] ) ) {
 			$attrs['course_rows'] = $settings['course_rows'];
 		}
 
 		// Style controls are automatically handled by Elementor CSS selectors
-		// No need to convert them to shortcode attributes since they directly target the DOM
+		// No need to convert them to shortcode attributes since they directly target the DOM.
 
 		return $attrs;
-	}
-
-	/**
-	 * Get course categories for dropdown options
-	 *
-	 * @return array
-	 */
-	private function get_course_categories() {
-		$categories = get_terms(
-			array(
-				'taxonomy'   => 'course_category',
-				'hide_empty' => false,
-			)
-		);
-
-		$options = array();
-		if ( ! is_wp_error( $categories ) ) {
-			foreach ( $categories as $category ) {
-				$options[ $category->term_id ] = $category->name;
-			}
-		}
-
-		return $options;
 	}
 
 	/**

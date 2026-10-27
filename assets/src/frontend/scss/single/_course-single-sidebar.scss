@@ -1,7 +1,8 @@
 .ohmylms-page {
+
     .ohmylms-sidebar-widget {
         background-color: #FFF;
-        box-shadow: 0px 1px 2px #DBDDE1;
+        box-shadow: 0 1px 2px #DBDDE1;
         position: relative;
         padding: 24px;
         border-radius: 14px;
@@ -38,6 +39,7 @@
 
     // -----sidebar pricebox widget-----
     .ohmylms-widget-pricebox {
+
         .price-discount-area {
             display: flex;
             flex-flow: row wrap;
@@ -52,7 +54,7 @@
                 margin-right: 8px;
             }
 
-            & > .ohmylms-price-amount,
+            > .ohmylms-price-amount,
             .free,
             ins {
                 text-decoration: none;
@@ -79,7 +81,7 @@
 
             .amount {
                 color: var(--ohmylms-heading-color);
-                word-wrap: break-word;
+                overflow-wrap: break-word;
             }
 
             .special-deal-tag {
@@ -89,7 +91,7 @@
                 line-height: 1;
                 border-radius: 8px;
                 background: #FFF;
-                box-shadow: 0px 1px 2px 0px #D3D6DD;
+                box-shadow: 0 1px 2px 0 #D3D6DD;
                 padding: 7px 12px;
                 display: inline-block;
                 margin-left: auto;
@@ -160,6 +162,7 @@
 
     // -----sidebar membership widget-----
     .ohmylms-widget-membership {
+
         .membership-tag {
             color: var(--ohmylms-primary-color);
             font-size: 14px;
@@ -210,7 +213,7 @@
         padding: 20px 24px;
         border-radius: 8px;
         background: #FFF;
-        box-shadow: 0px 2px 2px 0px rgba(199, 206, 220, 0.41);
+        box-shadow: 0 2px 2px 0 rgba(199, 206, 220, 0.41);
         width: 100%;
 
         &:nth-child(3),
@@ -232,6 +235,7 @@
 
     // -----sidebar certificate widget-----
     .ohmylms-widget-certificate {
+
         .sidebar-widget-title {
             margin-bottom: 4px;
         }
@@ -239,7 +243,7 @@
         .certificate-box {
             border-radius: 8px;
             background: #FFF;
-            box-shadow: 0px 2px 2px 0px rgba(199, 206, 220, 0.41);
+            box-shadow: 0 2px 2px 0 rgba(199, 206, 220, 0.41);
             padding: 25px 30px;
             margin-top: 22px;
 
@@ -299,6 +303,7 @@
 
     // -----sidebar drop course widget-----
     .ohmylms-widget-drop-course {
+
         .sidebar-widget-title {
             margin-bottom: 4px;
         }
@@ -324,6 +329,7 @@
 
     // -----sidebar course meta widget-----
     .ohmylms-widget-course-meta {
+
         .ohmylms-course-meta {
             margin: 0;
             flex-flow: column;
@@ -334,6 +340,7 @@
 
     // -----sidebar course author widget-----
     .ohmylms-widget-course-author {
+
         .course-author-wrapper {
             display: flex;
             flex-flow: row wrap;
@@ -380,6 +387,7 @@
 
     // -----sidebar course taxonomy widget-----
     .ohmylms-widget-course-taxonomy {
+
         .single-taxonomy {
             position: relative;
             padding: 22px 0;
@@ -410,6 +418,7 @@
         }
     
         .ohmylms-category {
+
             .sidebar-widget-title {
                 margin-bottom: 9px;
             }
@@ -451,6 +460,7 @@
         }
 
         .ohmylms-tag {
+
             .sidebar-widget-title {
                 margin-bottom: 20px;
             }
@@ -484,6 +494,7 @@
                             background-color: var(--ohmylms-primary-color);
                             color: #fff;
                         }
+
                         &:focus {
                             outline: 2px solid var(--ohmylms-outline-color);
                         }
@@ -495,6 +506,7 @@
 
     //------pricebox for mobile view in header-----
     .ohmylms-course-header {
+
         .ohmylms-widget-pricebox {
             display: none;
         }
@@ -509,6 +521,7 @@
         padding: 20px;
         border-radius: 10px;
     }
+
     .ohmylms-page .ohmylms-sidebar-widget .sidebar-widget-title {
         font-size: 16px;
     }
@@ -517,6 +530,7 @@
     .ohmylms-page .ohmylms-widget-pricebox .price-discount-area del {
         font-size: 16px;
     }
+
     .ohmylms-page .ohmylms-widget-pricebox .price-discount-area .discount-percentage {
         font-size: 16px;
     }
@@ -526,9 +540,11 @@
     .ohmylms-page .ohmylms-widget-pricebox .price-discount-area ins {
         font-size: 26px;
     }
+
     .ohmylms-page .ohmylms-widget-pricebox .price-discount-area .special-deal-tag {
         font-size: 12px;
     }
+
     .ohmylms-page .ohmylms-widget-pricebox .ohmylms-btn-area .ohmylms-button {
         font-size: 15px;
         padding: 10px 20px;
@@ -540,9 +556,11 @@
         font-size: 14px;
         padding: 10px 18px;
     }
+
     .ohmylms-page .ohmylms-widget-membership .membership-tag {
         font-size: 13px;
     }
+
     .ohmylms-page .ohmylms-widget-membership .membership-tag svg {
         width: 17px;
         height: auto;
@@ -558,6 +576,7 @@
     .ohmylms-progressbar .progressbar-title span:last-child {
         font-size: 14px;
     }
+
     .ohmylms-page .ohmylms-circle-progressbar .progressbar-title {
         margin-top: 7px;
         transform: translateY(4px);
@@ -578,15 +597,18 @@
 }
 
 @media screen and (max-width: 991px) {
+
     .ohmylms-page .ohmylms-content .ohmylms-sidebar-widget {
         padding: 14px;
     }
+
     .ohmylms-page .ohmylms-course-header .ohmylms-widget-pricebox {
         display: block;
         margin-bottom: 0;
         margin-top: 24px;
         padding: 12px 14px 14px;
     }
+
     .ohmylms-page .ohmylms-sidebar .ohmylms-widget-pricebox {
         display: none;
     }
@@ -594,6 +616,7 @@
 }
 
 @media screen and (max-width: 575px) {
+
     .ohmylms-page .ohmylms-widget-pricebox .price-discount-area > .ohmylms-price-amount, 
     .ohmylms-page .ohmylms-widget-pricebox .price-discount-area .free, 
     .ohmylms-page .ohmylms-widget-pricebox .price-discount-area ins {
@@ -603,12 +626,15 @@
     .ohmylms-page .ohmylms-widget-certificate .certificate-box .certificate-title {
         font-size: 16px;
     }
+
     .ohmylms-page .ohmylms-widget-certificate .certificate-box {
         padding: 20px 15px 15px;
     }
+
     .ohmylms-page .ohmylms-widget-certificate .certificate-box .certificate-logo {
         gap: 6px;
     }
+
     .ohmylms-page .ohmylms-widget-certificate .certificate-box .lock-icon {
         margin-bottom: 10px;
     }
@@ -616,6 +642,7 @@
 }
 
 @media screen and (max-width: 360px) {
+
     .ohmylms-page .ohmylms-sidebar-widget .ohmylms-circle-progressbar .circle-progress-svg {
         max-width: 100%;
         height: auto;

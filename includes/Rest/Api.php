@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * API Manager class.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Rest;
 
@@ -34,7 +39,10 @@ class Api {
 		$controllers_v1  = array(
 			\OhMyLMS\Rest\V1\PluginController::class,
 			\OhMyLMS\Rest\V1\CourseController::class,
+			\OhMyLMS\Rest\V1\CourseStructureController::class,
 			\OhMyLMS\Rest\V1\LearningController::class,
+			\OhMyLMS\Rest\V1\ContentHubController::class,
+			\OhMyLMS\Rest\V1\AuthoringController::class,
 			\OhMyLMS\Rest\V1\SetupWizardController::class,
 			\OhMyLMS\Rest\V1\StudentController::class,
 			\OhMyLMS\Rest\V1\UserController::class,
@@ -44,12 +52,29 @@ class Api {
 			\OhMyLMS\Rest\V1\QuestionController::class,
 			\OhMyLMS\Rest\V1\AssessmentController::class,
 			\OhMyLMS\Rest\V1\QuestionBankController::class,
+			\OhMyLMS\Rest\V1\QuestionImportController::class,
+			\OhMyLMS\Rest\V1\QuestionBankToolsController::class,
+			\OhMyLMS\Rest\V1\CourseStructureToolsController::class,
+			\OhMyLMS\Rest\V1\SkillAssessmentToolsController::class,
 			\OhMyLMS\Rest\V1\SkillController::class,
 			\OhMyLMS\Rest\V1\AttemptController::class,
 			\OhMyLMS\Rest\V1\PracticeController::class,
+			\OhMyLMS\Rest\V1\PlacementController::class,
 			\OhMyLMS\Rest\V1\SkillReportController::class,
+			\OhMyLMS\Rest\V1\CurriculumController::class,
+			\OhMyLMS\Rest\V1\SubjectController::class,
+			\OhMyLMS\Rest\V1\SiteSetupController::class,
+			\OhMyLMS\Rest\V1\SyllabusController::class,
+			\OhMyLMS\Rest\V1\CourseOrganizationController::class,
+			\OhMyLMS\Rest\V1\SkillMappingController::class,
+			\OhMyLMS\Rest\V1\ComparisonController::class,
+			\OhMyLMS\Rest\V1\BundleController::class,
+			\OhMyLMS\Rest\V1\MyBundlesController::class,
 			\OhMyLMS\Rest\V1\PreviewController::class,
+			\OhMyLMS\Rest\V1\TemplateController::class,
 			\OhMyLMS\Rest\V1\SettingsController::class,
+			\OhMyLMS\Rest\V1\DesignSystemController::class,
+			\OhMyLMS\Rest\V1\HubIconsController::class,
 			\OhMyLMS\Rest\V1\CategoryController::class,
 			\OhMyLMS\Rest\V1\TagController::class,
 			\OhMyLMS\Rest\V1\EmailController::class,

@@ -1,16 +1,19 @@
-<?php
-namespace CodeRex\Ecommerce\DataStore;
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
+namespace OhMyLMS\Commerce\DataStore;
 
-use CodeRex\Ecommerce\Abstracts\Data;
-use CodeRex\Ecommerce\Data\OrderItem;
-use CodeRex\Ecommerce\Data\OrderItemCourse;
+use OhMyLMS\Commerce\Abstracts\Data;
+use OhMyLMS\Commerce\Data\OrderItem;
+use OhMyLMS\Commerce\Data\OrderItemCourse;
 
+/**
+ * Plugin order item course store implementation.
+ */
 class OrderItemCourseStore extends OrderItemStore {
 
 	/**
 	 * Create new record
 	 *
-	 * @param $item OrderItemCourse
+	 * @param mixed $item OrderItemCourse.
 	 * @return mixed
 	 * @since 1.0.0
 	 */
@@ -32,7 +35,7 @@ class OrderItemCourseStore extends OrderItemStore {
 	/**
 	 * Read new record
 	 *
-	 * @param $item OrderItemCourse
+	 * @param mixed $item OrderItemCourse.
 	 * @return mixed
 	 * @since 1.0.0
 	 */
@@ -52,7 +55,7 @@ class OrderItemCourseStore extends OrderItemStore {
 	/**
 	 * Update new record
 	 *
-	 * @param $data Data
+	 * @param mixed $data Data.
 	 * @return mixed
 	 * @since 1.0.0
 	 */
@@ -63,8 +66,8 @@ class OrderItemCourseStore extends OrderItemStore {
 	/**
 	 * Delete new record
 	 *
-	 * @param $data
-	 * @param array $args
+	 * @param mixed $data Input data.
+	 * @param array $args Operation arguments.
 	 * @return mixed
 	 * @since 1.0.0
 	 */
@@ -76,7 +79,7 @@ class OrderItemCourseStore extends OrderItemStore {
 	 * Saves an item's data to the database / item meta.
 	 *
 	 * @param OrderItem $item Order item object.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function save_item_data( &$item ) {

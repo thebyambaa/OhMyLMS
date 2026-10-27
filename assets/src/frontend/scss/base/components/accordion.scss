@@ -1,4 +1,5 @@
 .ohmylms-default-accordion {
+
     .ohmylms-accordion-item {
         border-radius: 14px;
         border: 1px solid #E9E4F2;
@@ -78,7 +79,7 @@
     .ohmylms-accordion-item.active {
         background: #fff;
         border-color: transparent;
-        box-shadow: 0px 1px 2px 0px #DBDDE1;
+        box-shadow: 0 1px 2px 0 #DBDDE1;
 
         .ohmylms-accordion-title svg {
             transform: rotate(-180deg);
@@ -87,18 +88,23 @@
 }
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-default-accordion .ohmylms-accordion-item {
         border-radius: 10px;
     }
+
     .ohmylms-default-accordion .ohmylms-accordion-head {
         padding: 16px 18px;
     }
+
     .ohmylms-default-accordion .ohmylms-accordion-title {
         font-size: 14px;
     }
+
     .ohmylms-default-accordion .ohmylms-accordion-title::before {
         width: 12px;
     }
+
     .ohmylms-default-accordion .ohmylms-accordion-body p {
         font-size: 14px;
     }
@@ -106,9 +112,11 @@
     .ohmylms-default-accordion .ohmylms-accordion-body ul {
         padding-left: 30px;
     }
+
     .ohmylms-default-accordion .ohmylms-accordion-body ul li {
         margin-bottom: 4px;
     }
+
     .ohmylms-default-accordion .ohmylms-accordion-body ul a {
         font-size: 14px;
     }

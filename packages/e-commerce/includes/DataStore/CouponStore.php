@@ -1,16 +1,19 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
 
-namespace CodeRex\Ecommerce\DataStore;
+namespace OhMyLMS\Commerce\DataStore;
 
 use OhMyLMS\Abstracts\Data;
 use OhMyLMS\Abstracts\DataStore;
 
+/**
+ * Plugin coupon store implementation.
+ */
 class CouponStore extends DataStore {
 
 	/**
 	 * Create a new coupon.
 	 *
-	 * @param \CodeRex\Ecommerce\Data\Coupon $coupon The coupon object.
+	 * @param \OhMyLMS\Commerce\Data\Coupon $coupon The coupon object.
 	 */
 	public function create( &$coupon ) {
 		if ( ! $coupon->get_date_created( 'edit' ) ) {
@@ -41,18 +44,18 @@ class CouponStore extends DataStore {
 	/**
 	 * Read new record
 	 *
-	 * @param $data Data
+	 * @param mixed $coupon Coupon.
 	 * @return mixed
 	 * @since 1.0.0
 	 */
 	public function read( &$coupon ) {
 		$coupon_id   = $coupon->get_id();
 		$post_object = get_post( $coupon->get_id() );
-		if( ! $post_object || 'ohmylms_coupon' !== $post_object->post_type ) {
-			\CodeRex\Ecommerce\ecommerce()->session->set( 'applied_coupons', [] );
+		if ( ! $post_object || 'ohmylms_coupon' !== $post_object->post_type ) {
+			\OhMyLMS\Commerce\ecommerce()->session->set( 'applied_coupons', array() );
 			return false;
 		}
-		
+
 		$coupon->set_props(
 			array(
 				'title'                  => get_post_meta( $coupon_id, 'title', true ),
@@ -85,14 +88,14 @@ class CouponStore extends DataStore {
 	/**
 	 * Update new record
 	 *
-	 * @param $data Data
+	 * @param mixed $coupon Coupon.
 	 * @return mixed
 	 * @since 1.0.0
 	 */
 	public function update( &$coupon ) {
 		$post_data = array(
 			'post_content' => $coupon->get_description( 'edit' ),
-			'post_excerpt'  => $coupon->get_description( 'edit' ),
+			'post_excerpt' => $coupon->get_description( 'edit' ),
 			'post_title'   => $coupon->get_code( 'edit' ),
 		);
 		if ( $coupon->get_date_created( 'edit' ) ) {
@@ -112,8 +115,8 @@ class CouponStore extends DataStore {
 	/**
 	 * Delete new record
 	 *
-	 * @param $data
-	 * @param array $args
+	 * @param mixed $data Input data.
+	 * @param array $args Operation arguments.
 	 * @return mixed
 	 * @since 1.0.0
 	 */
@@ -131,27 +134,29 @@ class CouponStore extends DataStore {
 	 * @since 1.0.0
 	 */
 	public function get_ids_by_code( $code ) {
-		return get_posts( array(
-			'post_type' => 'ohmylms_coupon',
-			'post_status' => 'publish',
-			'title' => ecommerce_format_coupon_code( $code ),
-			'fields' => 'ids',
-			'posts_per_page' => -1,
-			'orderby' => 'date',
-			'order' => 'DESC',
-		) );
+		return get_posts(
+			array(
+				'post_type'      => 'ohmylms_coupon',
+				'post_status'    => 'publish',
+				'title'          => ohmylms_ecommerce_format_coupon_code( $code ),
+				'fields'         => 'ids',
+				'posts_per_page' => -1,
+				'orderby'        => 'date',
+				'order'          => 'DESC',
+			)
+		);
 	}
 	/**
 	 * Update post meta data for the given coupon.
 	 *
-	 * @param \CodeRex\Ecommerce\Data\Coupon $coupon The coupon object to update.
-	 * @param bool $force Whether to force the update.
-	 *
+	 * @param \OhMyLMS\Commerce\Data\Coupon $coupon The coupon object to update.
+	 * @param bool                          $force Whether to force the update.
+	 * .
 	 * @since 1.0.0
 	 */
 	protected function update_post_meta( &$coupon, $force = false ) {
 		$meta_key_to_props = array(
-			'title'        		   => 'title',
+			'title'                => 'title',
 			'discount_type'        => 'discount_type',
 			'amount'               => 'amount',
 			'individual_use'       => 'individual_use',

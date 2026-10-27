@@ -1,4 +1,10 @@
 <?php
+/**
+ * Page functions.
+ *
+ * @package OhMyLMS
+ */
+
 
 use OhMyLMS\Data\Lesson;
 use OhMyLMS\Data\Quiz;
@@ -13,9 +19,9 @@ use OhMyLMS\Data\Quiz;
 function ohmylms_get_page_id( $page ) {
 
 	$page_id = apply_filters( 'ohmylms_get_' . $page . '_page_id', get_option( 'ohmylms_' . $page . '_page_id' ) );
-	if( 'course' === $page ) {
+	if ( 'course' === $page ) {
 		$page_slug = get_post_field( 'post_name', $page_id );
-		if( ! in_array( $page_slug, array( 'ohmylms-all-courses', 'ohmylms-all-courses' ), true ) ) {
+		if ( ! in_array( $page_slug, array( 'ohmylms-all-courses', 'ohmylms-all-courses' ), true ) ) {
 			return -1;
 		}
 	}
@@ -26,7 +32,7 @@ function ohmylms_get_page_id( $page ) {
 /**
  * Get page url by name
  *
- * @param $page
+ * @param mixed $page Page.
  * @return false|string|null
  * @since 1.0.0
  */
@@ -46,9 +52,9 @@ function ohmylms_get_page_url( $page ) {
  *
  * Gets the URL for an endpoint, which varies depending on permalink settings.
  *
- * @param  string $endpoint  Endpoint slug.
- * @param  string $value     Query param value.
- * @param  string $permalink Permalink.
+ * @param string $endpoint Endpoint slug.
+ * @param string $value Query param value.
+ * @param string $permalink Permalink.
  *
  * @return string
  */
@@ -58,7 +64,7 @@ function ohmylms_get_endpoint_url( $endpoint, $value = '', $permalink = '' ) {
 	}
 
 	// Map endpoint to options.
-	$query_vars = \CodeRex\Ecommerce\ecommerce()->query->get_query_vars();
+	$query_vars = \OhMyLMS\Commerce\ecommerce()->query->get_query_vars();
 	$endpoint   = ! empty( $query_vars[ $endpoint ] ) ? $query_vars[ $endpoint ] : $endpoint;
 	$value      = ( get_option( 'ohmylms_myprofile_edit_address_endpoint', 'edit-address' ) === $endpoint ) ? ohmylms_edit_address_i18n( $value ) : $value;
 
@@ -105,6 +111,11 @@ function ohmylms_get_page_permalink( $page, $fallback = null ) {
 
 
 
+/**
+ * Ohmylms get next content permalink for Page-functions.
+ *
+ * @param mixed $current_lesson Current lesson.
+ */
 function ohmylms_get_next_content_permalink( $current_lesson ) {
 	$next_lesson = ohmylms_get_next_content( $current_lesson );
 	if ( $next_lesson ) {
@@ -115,15 +126,20 @@ function ohmylms_get_next_content_permalink( $current_lesson ) {
 
 
 
+/**
+ * Ohmylms get next content for Page-functions.
+ *
+ * @param mixed $current_lesson_id Current lesson identifier.
+ */
 function ohmylms_get_next_content( $current_lesson_id ) {
 	$course_id = ohmylms_get_course_by_content_id( $current_lesson_id );
 	$course    = ohmylms_get_course( $course_id );
 	if ( $course ) {
 		$lessons = $course->get_lessons();
 		foreach ( $lessons as $index => $l ) {
-			if ( $l['type'] === 'quiz' ) {
+			if ( 'quiz' === $l['type'] ) {
 				$lesson = new Quiz( $l['id'] );
-			} elseif ( $l['type'] === 'assignment' ) {
+			} elseif ( 'assignment' === $l['type'] ) {
 				$lesson = ohmylms_is_pro() ? new OhMyLMS\Data\Assignment( $l['id'] ) : null;
 			} else {
 				$lesson = new Lesson( $l['id'] );
@@ -138,15 +154,20 @@ function ohmylms_get_next_content( $current_lesson_id ) {
 }
 
 
+/**
+ * Ohmylms get prev content for Page-functions.
+ *
+ * @param mixed $current_lesson_id Current lesson identifier.
+ */
 function ohmylms_get_prev_content( $current_lesson_id ) {
 	$course_id = ohmylms_get_course_by_content_id( $current_lesson_id );
 	$course    = ohmylms_get_course( $course_id );
 	if ( $course ) {
 		$lessons = $course->get_lessons();
 		foreach ( $lessons as $index => $l ) {
-			if ( $l['type'] === 'quiz' ) {
+			if ( 'quiz' === $l['type'] ) {
 				$lesson = new Quiz( $l['id'] );
-			} elseif ( $l['type'] === 'assignment' ) {
+			} elseif ( 'assignment' === $l['type'] ) {
 				$lesson = ohmylms_is_pro() ? new OhMyLMS\Data\Assignment( $l['id'] ) : null;
 			} else {
 				$lesson = new Lesson( $l['id'] );

@@ -1,4 +1,10 @@
 <?php
+/**
+ * Utility functions.
+ *
+ * @package OhMyLMS
+ */
+
 
 
 if ( ! function_exists( 'ecommerce_form_field' ) ) {
@@ -6,8 +12,8 @@ if ( ! function_exists( 'ecommerce_form_field' ) ) {
 	/**
 	 * Generate a form field for the checkout form.
 	 *
-	 * @param string $key The key for the field.
-	 * @param array $args The arguments for the field.
+	 * @param string     $key The key for the field.
+	 * @param array      $args The arguments for the field.
 	 * @param mixed|null $value The value of the field. Default is null.
 	 * @return string The HTML for the form field.
 	 *

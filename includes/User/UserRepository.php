@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Responsible to handle all user and enrollment related database operations.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\User;
 
@@ -12,8 +17,8 @@ class UserRepository {
 	/**
 	 * Find is user enrolled
 	 *
-	 * @param $course_id
-	 * @param $user_id
+	 * @param mixed $course_id Course identifier.
+	 * @param mixed $user_id User identifier.
 	 * @return string|null
 	 * @since 1.0.0
 	 */
@@ -34,7 +39,7 @@ class UserRepository {
 	/**
 	 * Insert new enrollment
 	 *
-	 * @param $data
+	 * @param mixed $data Input data.
 	 * @return array
 	 * @since 1.0.0
 	 */

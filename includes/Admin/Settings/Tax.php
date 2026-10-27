@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Tax settings class.
+ *
+ * @package OhMyLMS
+ */
 namespace OhMyLMS\Admin\Settings;
 
 use OhMyLMS\Abstracts\Settings;
@@ -41,7 +46,7 @@ class Tax extends Settings {
 	 */
 	public function get_settings() {
 		$settings = array(
-			// Main tax settings
+			// Main tax settings.
 			array(
 				'id'       => 'ohmylms_tax_enabled',
 				'default'  => 'no',
@@ -67,7 +72,7 @@ class Tax extends Settings {
 				'desc_tip' => true,
 			),
 
-			// EU VAT settings
+			// EU VAT settings.
 			array(
 				'id'       => 'ohmylms_eu_vat_enabled',
 				'default'  => 'no',
@@ -89,7 +94,7 @@ class Tax extends Settings {
 				'desc_tip' => true,
 			),
 
-			// Tax rates and fallback
+			// Tax rates and fallback.
 			array(
 				'id'       => 'ohmylms_existing_tax_rates',
 				'default'  => array(),
@@ -123,7 +128,7 @@ class Tax extends Settings {
 				'desc_tip'          => true,
 			),
 
-			// Countries and States data
+			// Countries and States data.
 			array(
 				'id'       => 'ohmylms_countries',
 				'default'  => $this->get_countries(),
@@ -153,12 +158,12 @@ class Tax extends Settings {
 		$countries_file = __DIR__ . '/Country.php';
 		if ( file_exists( $countries_file ) ) {
 			$countries = include $countries_file;
-			// Convert to format expected by frontend
+			// Convert to format expected by frontend.
 			$formatted_countries = array();
 			foreach ( $countries as $code => $name ) {
 				$formatted_countries[] = array(
 					'value' => $code,
-					'label' => $name
+					'label' => $name,
 				);
 			}
 			return $formatted_countries;
@@ -177,14 +182,14 @@ class Tax extends Settings {
 		$states_file = __DIR__ . '/State.php';
 		if ( file_exists( $states_file ) ) {
 			$states = include $states_file;
-			// Convert to format expected by frontend
+			// Convert to format expected by frontend.
 			$formatted_states = array();
 			foreach ( $states as $country_code => $country_states ) {
 				$formatted_states[ $country_code ] = array();
 				foreach ( $country_states as $state_code => $state_name ) {
 					$formatted_states[ $country_code ][] = array(
 						'value' => $state_code,
-						'label' => $state_name
+						'label' => $state_name,
 					);
 				}
 			}
@@ -192,5 +197,4 @@ class Tax extends Settings {
 		}
 		return array();
 	}
-
 }

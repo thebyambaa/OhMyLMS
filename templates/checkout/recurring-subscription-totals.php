@@ -10,5 +10,5 @@
 defined( 'ABSPATH' ) || exit;
 ?>
 
-<strong><?php echo $price_html; ?></strong><br>
-<span><?php echo esc_html__('First renewal:', 'ohmylms') . ' ' . esc_html($renewal_date); ?></span><br>
+<strong><?php echo wp_kses_post( $price_html ); ?></strong><br>
+<span><?php echo esc_html__( 'First renewal:', 'ohmylms' ) . ' ' . esc_html( $renewal_date ); ?></span><br>

@@ -1,0 +1,30 @@
+.wp-block-ohmylms-quiz-player.ohmylms-inline-quiz {
+	position: relative;
+	max-width: 100%;
+}
+
+.wp-block-ohmylms-quiz-player.ohmylms-inline-quiz .ohmylms-quiz[data-player-template] {
+	position: relative;
+	min-height: 0;
+	padding-bottom: 0;
+}
+
+.wp-block-ohmylms-quiz-player.ohmylms-inline-quiz .ohmylms-quiz[data-player-template] .ohmylms-quiz-footer {
+	position: relative;
+	width: 100%;
+	bottom: auto;
+}
+
+.wp-block-ohmylms-quiz-player.ohmylms-inline-quiz .ohmylms-quiz-alert {
+	position: absolute;
+	inset: 0;
+}
+
+.wp-block-ohmylms-quiz-player.ohmylms-inline-quiz .ohmylms-quiz-embed-start,
+.wp-block-ohmylms-quiz-player.ohmylms-inline-quiz .ohmylms-inline-error {
+	padding: 24px;
+}
+
+.wp-block-ohmylms-quiz-player.ohmylms-inline-quiz .skiptop-next {
+	display: none;
+}

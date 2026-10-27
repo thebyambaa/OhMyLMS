@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Class WebhookSender.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Webhooks;
 
@@ -24,25 +29,24 @@ class WebhookSender {
 	 * @since 1.0.0
 	 */
 	public function init() {
-		// Course related triggers
+		// Course related triggers.
 		add_action( 'ohmylms_after_checkout_process', array( $this, 'trigger_course_purchase' ), 10 );
 		add_action( 'ohmylms_after_enrolled_student', array( $this, 'trigger_course_enrollment' ), 10, 1 );
 		add_action( 'ohmylms_lesson_already_completed', array( $this, 'trigger_course_completion' ), 10, 2 );
-		// add_action( 'ohmylms_student_completed_course_after_reviewing_quiz', array( $this, 'trigger_course_completion' ), 10, 2 );
+		// add_action( 'ohmylms_student_completed_course_after_reviewing_quiz', array( $this, 'trigger_course_completion' ), 10, 2 );.
 		add_action( 'ohmylms_course_completed', array( $this, 'trigger_course_completion' ), 10, 2 );
-		
-		// Lesson related triggers
+
+		// Lesson related triggers.
 		add_action( 'ohmylms_lesson_completed', array( $this, 'trigger_lesson_completion' ), 10, 3 );
-		
-		// Quiz related triggers
+
+		// Quiz related triggers.
 		add_action( 'ohmylms_quiz_submission', array( $this, 'trigger_quiz_submission' ), 10, 4 );
 
-        // Quiz achievement after review
-        add_action( 'ohmylms_rest_review_quiz_attempt', array( $this, 'trigger_quiz_achievement' ), 10, 4 );
+		// Quiz achievement after review.
+		add_action( 'ohmylms_rest_review_quiz_attempt', array( $this, 'trigger_quiz_achievement' ), 10, 4 );
 
-        // Assignment related triggers
+		// Assignment related triggers.
 		add_action( 'ohmylms_after_assignment_submitted', array( $this, 'trigger_assignment_submission' ), 10, 3 );
-
 
 		add_action( 'ohmylms_pro_after_assignment_review', array( $this, 'trigger_assignment_achievement' ), 10, 4 );
 	}
@@ -50,10 +54,7 @@ class WebhookSender {
 	/**
 	 * Trigger webhook for course purchase
 	 *
-	 * @param int $order_id   Order ID.
-	 * @param int $course_id  Course ID.
-	 * @param int $student_id Student ID.
-	 *
+	 * @param int $order _id   Order ID.
 	 * @since 1.0.0
 	 */
 	public function trigger_course_purchase( $order ) {
@@ -61,64 +62,62 @@ class WebhookSender {
 		if ( empty( $webhooks ) ) {
 			return;
 		}
-        if( ! is_object( $order ) ) {
-            return;
-        }
-        
-        $student_id = $order->get_student_id();
-        $order_id   = $order->get_id();
-        $order_items = $order ? $order->get_items() : array();
+		if ( ! is_object( $order ) ) {
+			return;
+		}
 
-        foreach ( $order_items as $item ) {
-            $course_id = $item->get_course_id();
-            $course = ohmylms_get_course( $course_id );
-            if ( ! $course ) {
-                continue;
-            }
+		$student_id  = $order->get_student_id();
+		$order_id    = $order->get_id();
+		$order_items = $order ? $order->get_items() : array();
 
-            $user   = get_user_by( 'id', $student_id );
-            if ( ! $user || ! $course ) {
-                return;
-            }
-            $student = new \OhMyLMS\Data\Student( $student_id );
-            $payload_data = array(
-                'user_id'       => $student_id,
-                'user_email'    => $student->get_email(),
-                'user_name'     => $student->get_name(),
-                'course_id'     => $course_id,
-                'course_title'  => $course->get_name(),
-                'course_price'  => $course->get_sale_price() ?: $course->get_regular_price(),
-                'order_id'      => $order_id,
-                'order_total'   => $order ? $order->get_total() : 0,
-                'event_time'    => current_time( 'mysql' ),
-                'site_url'      => get_site_url(),
-            );
+		foreach ( $order_items as $item ) {
+			$course_id = $item->get_course_id();
+			$course    = ohmylms_get_course( $course_id );
+			if ( ! $course ) {
+				continue;
+			}
 
-            foreach ( $webhooks as $webhook ) {
-                $this->send_webhook( $webhook, $payload_data );
-            }
+			$user = get_user_by( 'id', $student_id );
+			if ( ! $user || ! $course ) {
+				return;
+			}
+			$student      = new \OhMyLMS\Data\Student( $student_id );
+			$payload_data = array(
+				'user_id'      => $student_id,
+				'user_email'   => $student->get_email(),
+				'user_name'    => $student->get_name(),
+				'course_id'    => $course_id,
+				'course_title' => $course->get_name(),
+				'course_price' => $course->get_sale_price() ?: $course->get_regular_price(),
+				'order_id'     => $order_id,
+				'order_total'  => $order ? $order->get_total() : 0,
+				'event_time'   => current_time( 'mysql' ),
+				'site_url'     => get_site_url(),
+			);
 
-        }
-        
+			foreach ( $webhooks as $webhook ) {
+				$this->send_webhook( $webhook, $payload_data );
+			}
+		}
 	}
 
 	/**
 	 * Trigger webhook for course enrollment
 	 *
 	 * @param object|int $order Order object or ID.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function trigger_course_enrollment( $order ) {
 		$webhooks = $this->get_active_webhooks_for_trigger( 'course_enrollment' );
-		
+
 		if ( empty( $webhooks ) ) {
 			return;
 		}
 
 		if ( ! is_object( $order ) ) {
 			$order_id = absint( $order );
-			$order    = function_exists( 'ecommerce_get_order' ) ? ecommerce_get_order( $order_id ) : null;
+			$order    = function_exists( 'ohmylms_ecommerce_get_order' ) ? ohmylms_ecommerce_get_order( $order_id ) : null;
 		}
 
 		if ( ! is_object( $order ) ) {
@@ -134,13 +133,9 @@ class WebhookSender {
 
 		global $wpdb;
 		$table_name  = $wpdb->prefix . 'ohmylms_user_enrollment';
-		$enroll_data = $wpdb->get_row( 
-			$wpdb->prepare( 
-				"SELECT * FROM $table_name WHERE user_id = %d AND order_id = %d LIMIT 1", 
-				$student_id, 
-				$order->get_id() 
-			), 
-			ARRAY_A 
+		$enroll_data = $wpdb->get_row(
+			$wpdb->prepare( 'SELECT * FROM %i WHERE user_id = %d AND order_id = %d LIMIT 1', $table_name, $student_id, $order->get_id() ),
+			ARRAY_A
 		);
 
 		if ( empty( $enroll_data['course_id'] ) ) {
@@ -152,7 +147,7 @@ class WebhookSender {
 		if ( ! $course ) {
 			return;
 		}
-        $student = new \OhMyLMS\Data\Student( $student_id );
+		$student      = new \OhMyLMS\Data\Student( $student_id );
 		$payload_data = array(
 			'user_id'         => $student_id,
 			'user_email'      => $student->get_email(),
@@ -173,9 +168,7 @@ class WebhookSender {
 	 * Trigger webhook for course completion
 	 *
 	 * @param int $student_id Student ID.
-	 * @param int $course_id  Course ID.
-	 * @param int $order_id   Order ID.
-	 *
+	 * @param int $course_id Course ID.
 	 * @since 1.0.0
 	 */
 	public function trigger_course_completion( $student_id, $course_id ) {
@@ -191,10 +184,10 @@ class WebhookSender {
 			return;
 		}
 
-		// Get completion percentage
-		$completion_percentage = 100; // Default to 100% on completion
-        $student = new \OhMyLMS\Data\Student( $student_id );
-		$payload_data = array(
+		// Get completion percentage.
+		$completion_percentage = 100; // Default to 100% on completion.
+		$student               = new \OhMyLMS\Data\Student( $student_id );
+		$payload_data          = array(
 			'user_id'               => $student_id,
 			'user_email'            => $student->get_email(),
 			'user_name'             => $student->get_name(),
@@ -214,10 +207,10 @@ class WebhookSender {
 	/**
 	 * Trigger webhook for lesson completion
 	 *
-	 * @param int $lesson_id  Lesson ID.
-	 * @param int $course_id  Course ID.
+	 * @param int $lesson_id Lesson ID.
+	 * @param int $course_id Course ID.
 	 * @param int $student_id Student ID.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function trigger_lesson_completion( $lesson_id, $course_id, $student_id ) {
@@ -233,7 +226,7 @@ class WebhookSender {
 		if ( ! $user || ! $course || ! $lesson ) {
 			return;
 		}
-        $student = new \OhMyLMS\Data\Student( $student_id );
+		$student      = new \OhMyLMS\Data\Student( $student_id );
 		$payload_data = array(
 			'user_id'      => $student_id,
 			'user_email'   => $student->get_email(),
@@ -254,16 +247,16 @@ class WebhookSender {
 	/**
 	 * Trigger webhook for quiz submission
 	 *
-	 * @param int   $quiz_id    Quiz ID.
-	 * @param int   $course_id  Course ID.
+	 * @param int   $quiz_id Quiz ID.
+	 * @param int   $course_id Course ID.
 	 * @param int   $student_id Student ID.
-	 * @param array $result     Quiz result data.
-	 *
+	 * @param array $result Quiz result data.
+	 * .
 	 * @since 1.0.0
 	 */
 	public function trigger_quiz_submission( $quiz_id, $course_id, $student_id, $result = array() ) {
 		$webhooks = $this->get_active_webhooks_for_trigger( 'quiz_submission' );
-		
+
 		if ( empty( $webhooks ) ) {
 			return;
 		}
@@ -276,8 +269,8 @@ class WebhookSender {
 			return;
 		}
 
-		$score     = isset( $result['total'] ) ? $result['total'] : 0;
-        $student = new \OhMyLMS\Data\Student( $student_id );
+		$score        = isset( $result['total'] ) ? $result['total'] : 0;
+		$student      = new \OhMyLMS\Data\Student( $student_id );
 		$payload_data = array(
 			'user_id'      => $student_id,
 			'user_email'   => $student->get_email(),
@@ -295,16 +288,16 @@ class WebhookSender {
 			$this->send_webhook( $webhook, $payload_data );
 		}
 	}
-    
-    
-    /**
+
+
+	/**
 	 * Trigger webhook for quiz submission
 	 *
-	 * @param int   $quiz_id    Quiz ID.
-	 * @param int   $course_id  Course ID.
+	 * @param int   $quiz_id Quiz ID.
+	 * @param int   $course_id Course ID.
 	 * @param int   $student_id Student ID.
-	 * @param array $result     Quiz result data.
-	 *
+	 * @param array $result Quiz result data.
+	 * .
 	 * @since 1.0.0
 	 */
 	public function trigger_quiz_achievement( $quiz_id, $course_id, $student_id, $result = array() ) {
@@ -321,8 +314,8 @@ class WebhookSender {
 			return;
 		}
 
-		$score     = is_array( $result ) && isset( $result['total'] ) ? $result['total'] : $result;
-        $student = new \OhMyLMS\Data\Student( $student_id );
+		$score        = is_array( $result ) && isset( $result['total'] ) ? $result['total'] : $result;
+		$student      = new \OhMyLMS\Data\Student( $student_id );
 		$payload_data = array(
 			'user_id'      => $student_id,
 			'user_email'   => $student->get_email(),
@@ -344,16 +337,14 @@ class WebhookSender {
 	/**
 	 * Trigger webhook for assignment submission
 	 *
-	 * @param int   $assignment_id Assignment ID.
-	 * @param int   $course_id     Course ID.
-	 * @param int   $student_id    Student ID.
-	 * @param array $submission    Submission data.
-	 *
+	 * @param int $assignment_id Assignment ID.
+	 * @param int $course_id Course ID.
+	 * @param int $student_id Student ID.
 	 * @since 1.0.0
 	 */
 	public function trigger_assignment_submission( $assignment_id, $course_id, $student_id ) {
 		$webhooks = $this->get_active_webhooks_for_trigger( 'assignment_submission' );
-		
+
 		if ( empty( $webhooks ) ) {
 			return;
 		}
@@ -367,8 +358,8 @@ class WebhookSender {
 		}
 
 		$submission_date = current_time( 'mysql' );
-        $student = new \OhMyLMS\Data\Student( $student_id );
-		$payload_data = array(
+		$student         = new \OhMyLMS\Data\Student( $student_id );
+		$payload_data    = array(
 			'user_id'          => $student_id,
 			'user_email'       => $student->get_email(),
 			'user_name'        => $student->get_name(),
@@ -387,17 +378,18 @@ class WebhookSender {
 	}
 
 
-    /**
-     * Trigger webhook for assignment achievement
-     * @param int   $assignment_id Assignment ID.
-     * @param int   $course_id     Course ID.
-     * @param int   $student_id    Student ID.
-     * @param array $review       Review data.
-     * @since 1.0.0
-     */
-    public function trigger_assignment_achievement( $assignment_id, $course_id, $student_id, $marks ) {
-        $webhooks = $this->get_active_webhooks_for_trigger( 'assignment_achievement' );
-		
+	/**
+	 * Trigger webhook for assignment achievement
+	 *
+	 * @param int   $assignment_id Assignment ID.
+	 * @param int   $course_id Course ID.
+	 * @param int   $student_id Student ID.
+	 * @param mixed $marks Marks.
+	 * @since 1.0.0
+	 */
+	public function trigger_assignment_achievement( $assignment_id, $course_id, $student_id, $marks ) {
+		$webhooks = $this->get_active_webhooks_for_trigger( 'assignment_achievement' );
+
 		if ( empty( $webhooks ) ) {
 			return;
 		}
@@ -410,8 +402,8 @@ class WebhookSender {
 		}
 
 		$submission_date = current_time( 'mysql' );
-        $student = new \OhMyLMS\Data\Student( $student_id );
-		$payload_data = array(
+		$student         = new \OhMyLMS\Data\Student( $student_id );
+		$payload_data    = array(
 			'user_id'          => $student_id,
 			'user_email'       => $student->get_email(),
 			'user_name'        => $student->get_name(),
@@ -428,7 +420,7 @@ class WebhookSender {
 		foreach ( $webhooks as $webhook ) {
 			$this->send_webhook( $webhook, $payload_data );
 		}
-    }
+	}
 
 
 	/**
@@ -443,16 +435,16 @@ class WebhookSender {
 		$args = array(
 			'status'        => 'active',
 			'trigger_event' => $trigger_event,
-			'limit'         => -1, // Get all active webhooks for this trigger
+			'limit'         => -1, // Get all active webhooks for this trigger.
 		);
 
 		$webhooks = WebhookStore::get_webhooks( $args );
-		
+
 		if ( empty( $webhooks ) ) {
 			return array();
 		}
 
-		// Convert to Webhook objects
+		// Convert to Webhook objects.
 		$webhook_objects = array();
 		foreach ( $webhooks as $webhook_data ) {
 			$webhook_objects[] = new Webhook( $webhook_data->id );
@@ -464,9 +456,9 @@ class WebhookSender {
 	/**
 	 * Send webhook with payload data
 	 *
-	 * @param Webhook $webhook      Webhook object.
+	 * @param Webhook $webhook Webhook object.
 	 * @param array   $payload_data Raw payload data.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	private function send_webhook( $webhook, $payload_data ) {
@@ -483,27 +475,27 @@ class WebhookSender {
 			return;
 		}
 
-		// Build the final payload based on data mapping
+		// Build the final payload based on data mapping.
 		$payload = $this->build_payload( $payload_data, $data_mapping );
 
-		// Prepare request arguments
+		// Prepare request arguments.
 		$args = array(
 			'method'  => $http_method,
 			'timeout' => 30,
 			'headers' => $this->get_headers( $data_type ),
 		);
 
-		// Format payload based on data type
-		if ( $http_method === 'GET' ) {
+		// Format payload based on data type.
+		if ( 'GET' === $http_method ) {
 			$webhook_url = add_query_arg( $payload, $webhook_url );
 		} else {
 			$args['body'] = $this->format_payload( $payload, $data_type );
 		}
 
-		// Send the webhook
+		// Send the webhook.
 		$response = wp_remote_request( $webhook_url, $args );
 
-		// Log the webhook (optional - you can implement logging if needed)
+		// Log the webhook (optional - you can implement logging if needed).
 		$this->log_webhook( $webhook, $payload, $response );
 	}
 
@@ -521,7 +513,7 @@ class WebhookSender {
 			return $payload_data;
 		}
 
-		// Decode data mapping if it's a JSON string
+		// Decode data mapping if it's a JSON string.
 		if ( is_string( $data_mapping ) ) {
 			$mappings = json_decode( $data_mapping, true );
 		} else {
@@ -542,12 +534,12 @@ class WebhookSender {
 			$key   = $mapping['key'];
 			$value = $mapping['value'];
 
-			// Skip empty keys
+			// Skip empty keys.
 			if ( empty( $key ) ) {
 				continue;
 			}
 
-			// Map the value from payload_data
+			// Map the value from payload_data.
 			if ( isset( $payload_data[ $value ] ) ) {
 				$payload[ $key ] = $payload_data[ $value ];
 			}
@@ -587,7 +579,7 @@ class WebhookSender {
 	/**
 	 * Format payload based on data type
 	 *
-	 * @param array  $payload   Payload array.
+	 * @param array  $payload Payload array.
 	 * @param string $data_type Data type (json, xml, form).
 	 * @return string Formatted payload.
 	 *
@@ -609,8 +601,8 @@ class WebhookSender {
 	/**
 	 * Convert array to XML
 	 *
-	 * @param array  $data    Data array.
-	 * @param string $root    Root element name.
+	 * @param array  $data Data array.
+	 * @param string $root Root element name.
 	 * @param object $xml_obj XML object.
 	 * @return string XML string.
 	 *
@@ -638,16 +630,16 @@ class WebhookSender {
 	/**
 	 * Log webhook request and response
 	 *
-	 * @param Webhook $webhook  Webhook object.
-	 * @param array   $payload  Payload sent.
+	 * @param Webhook $webhook Webhook object.
+	 * @param array   $payload Payload sent.
 	 * @param mixed   $response Response from wp_remote_request.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	private function log_webhook( $webhook, $payload, $response ) {
 		// Optional: Implement webhook logging
-		// This could be saved to a custom table or WordPress options
-		
+		// This could be saved to a custom table or WordPress options.
+
 		$log_data = array(
 			'webhook_id'    => $webhook->get_id(),
 			'webhook_name'  => $webhook->get_name(),
@@ -661,15 +653,15 @@ class WebhookSender {
 			$log_data['status']  = 'error';
 			$log_data['message'] = $response->get_error_message();
 		} else {
-			$log_data['status']       = 'success';
+			$log_data['status']        = 'success';
 			$log_data['response_code'] = wp_remote_retrieve_response_code( $response );
 			$log_data['response_body'] = wp_remote_retrieve_body( $response );
 		}
 
-		// Fire action for logging (can be hooked by other plugins/extensions)
+		// Fire action for logging (can be hooked by other plugins/extensions).
 		do_action( 'ohmylms_webhook_sent', $log_data );
 
 		// Optional: Save to custom table or transient for debugging
-		// You can implement this based on your logging requirements
+		// You can implement this based on your logging requirements.
 	}
 }

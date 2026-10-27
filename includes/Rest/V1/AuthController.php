@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * Auth Controller
  *
@@ -140,11 +140,11 @@ class AuthController extends RestController {
 
 		// Re-run the guest->user session merge now, in this request, so the
 		// cart isn't left behind waiting for the next page load's init hook.
-		if ( function_exists( '\CodeRex\Ecommerce\ecommerce' ) ) {
-			\CodeRex\Ecommerce\ecommerce()->session->init_session_cookie();
+		if ( function_exists( '\OhMyLMS\Commerce\ecommerce' ) ) {
+			\OhMyLMS\Commerce\ecommerce()->session->init_session_cookie();
 		}
 
-		wp_safe_redirect( $redirect_to !== '' ? $redirect_to : $this->dashboard_url() );
+		wp_safe_redirect( '' !== $redirect_to ? $redirect_to : \OhMyLMS\Student\LoginExperience::landing_url( $user, $this->dashboard_url() ) );
 		exit;
 	}
 
@@ -160,7 +160,7 @@ class AuthController extends RestController {
 		$redirect_to = sanitize_text_field( (string) $redirect_to );
 
 		$target = wp_parse_url( $redirect_to );
-		$home = wp_parse_url( home_url() );
+		$home   = wp_parse_url( home_url() );
 		if ( '' === $redirect_to || ! $target || ! isset( $target['host'], $target['scheme'] ) || strtolower( $target['host'] ) !== strtolower( $home['host'] ) || $target['scheme'] !== $home['scheme'] || ( $target['port'] ?? null ) !== ( $home['port'] ?? null ) || isset( $target['user'] ) || isset( $target['pass'] ) ) {
 			return '';
 		}
@@ -193,7 +193,7 @@ class AuthController extends RestController {
 	private function google_error_redirect_url( $error_code ) {
 		return add_query_arg(
 			array(
-				'google_error' => $error_code ?: 'google_auth_failed',
+				'google_error' => $error_code ? $error_code : 'google_auth_failed',
 			),
 			$this->dashboard_url()
 		);

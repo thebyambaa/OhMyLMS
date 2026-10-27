@@ -107,11 +107,11 @@ try {
     $result=\OhMyLMS\Quiz\Submission::submit($content_ids['quiz'],$timeout_attempt,$student_id,[],'timeout');
     verify_extension(!is_wp_error($result)&&(float)$result['total']===0.0,'Expired unanswered attempt failed');
     wp_set_current_user($admin->ID);
-    $cart=new \CodeRex\Ecommerce\Cart();
+    $cart=new \OhMyLMS\Commerce\Cart();
     verify_extension((bool)$cart->add_to_cart($ids[0]),'Membership cart fixture failed');
     $cart->calculate_totals();
     verify_extension((float)$cart->get_total('edit')===100.0,'Server cart price differs from membership price');
-    $coupon=new \CodeRex\Ecommerce\Data\Coupon();
+    $coupon=new \OhMyLMS\Commerce\Data\Coupon();
     $coupon_code='fixture-'.strtolower(wp_generate_password(10,false));
     $coupon->set_title($coupon_code);$coupon->set_code($coupon_code);$coupon->set_status('publish');$coupon->set_amount(10);$coupon->set_discount_type('flat-rate');
     $coupon_id=$coupon->save();$ids[]=$coupon_id;
@@ -120,7 +120,7 @@ try {
     $cart->remove_coupon($coupon_code);$cart->calculate_totals();
     verify_extension((float)$cart->get_total('edit')===100.0,'Coupon removal did not restore total');
     $cart->empty_cart();
-    $order=new \CodeRex\Ecommerce\Data\Order();
+    $order=new \OhMyLMS\Commerce\Data\Order();
     $order->set_total(100);$order->set_currency('MNT');$order->set_status('pending');$order->set_payment_method('qpay');$order->set_student_id($admin->ID);
     do_action('ohmylms_checkout_create_order',$order,['ohmylms_extension_example-reference'=>'Saved after ID']);
     $order_id=$order->save();$ids[]=$order_id;
@@ -129,8 +129,8 @@ try {
     verify_extension(get_post_meta($order_id,'_ohmylms_extension_fields',true)['example-reference']==='Saved after ID','Checkout metadata hook lost fields before ID assigned');
     $qpay_settings=['enabled'=>'yes','testmode'=>'yes','test_client_id'=>'fixture','test_client_secret'=>'fixture','invoice_code'=>'fixture'];
     add_filter('pre_option_ohmylms_qpay_settings',static function()use($qpay_settings){return $qpay_settings;});
-    $gateway=new \CodeRex\Ecommerce\Gateways\QPay\GatewayQPay();
-    \CodeRex\Ecommerce\Gateways\QPay\QPayAPI::settings_changed($qpay_settings,$qpay_settings);
+    $gateway=new \OhMyLMS\Commerce\Gateways\QPay\GatewayQPay();
+    \OhMyLMS\Commerce\Gateways\QPay\QPayAPI::settings_changed($qpay_settings,$qpay_settings);
     $payment_mode='unpaid';$payment_requests=0;
     $mock=static function($pre,$args,$url)use(&$payment_mode,&$payment_requests){
         if(strpos($url,'https://merchant-sandbox.qpay.mn/')!==0)return $pre;
@@ -152,14 +152,14 @@ try {
         update_post_meta($order_id,'_qpay_checkout_ready',1);
         foreach(['unpaid','partial','failure'] as $payment_mode){
             $callback=$gateway->handle_callback($request);
-            verify_extension(!in_array(ecommerce_get_order($order_id)->get_status(),['completed','processing'],true),"$payment_mode payment incorrectly completed order");
+            verify_extension(!in_array(ohmylms_ecommerce_get_order($order_id)->get_status(),['completed','processing'],true),"$payment_mode payment incorrectly completed order");
             if($payment_mode==='failure')verify_extension($callback->get_status()===503,'Payment failure was hidden');
         }
         $payment_mode='paid';$callback=$gateway->handle_callback($request);
-        verify_extension($callback->get_status()===200&&in_array(ecommerce_get_order($order_id)->get_status(),['completed','processing'],true),'Verified full payment failed');
+        verify_extension($callback->get_status()===200&&in_array(ohmylms_ecommerce_get_order($order_id)->get_status(),['completed','processing'],true),'Verified full payment failed');
         $requests_before=$payment_requests;$callback=$gateway->handle_callback($request);
         verify_extension($callback->get_status()===200&&$requests_before===$payment_requests,'Duplicate callback repeated payment processing');
-    } finally {remove_filter('pre_http_request',$mock,PHP_INT_MAX);\CodeRex\Ecommerce\Gateways\QPay\QPayAPI::settings_changed($qpay_settings,$qpay_settings);}
+    } finally {remove_filter('pre_http_request',$mock,PHP_INT_MAX);\OhMyLMS\Commerce\Gateways\QPay\QPayAPI::settings_changed($qpay_settings,$qpay_settings);}
     echo "$checks isolated extension integration checks passed.\n";
 } finally {
     wp_set_current_user($admin->ID);

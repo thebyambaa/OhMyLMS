@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Sections post type to connect with course.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\PostTypes;
 
@@ -9,6 +14,9 @@ namespace OhMyLMS\PostTypes;
  */
 class SectionPostType {
 
+	/**
+	 * Initialize Section post type.
+	 */
 	public function __construct() {
 		add_action( 'init', array( $this, 'register_section_cpt' ) );
 	}
@@ -68,6 +76,6 @@ class SectionPostType {
 			'capability_type'     => 'post',
 			'show_in_rest'        => true,
 		);
-		// register_post_type('ohmylms-section', $args);
+		// register_post_type('ohmylms-section', $args);.
 	}
 }

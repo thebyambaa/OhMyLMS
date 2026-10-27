@@ -6,16 +6,16 @@
  *
  * @package OhMyLMS\Templates
  * @version  1.0.0
- * @global \CodeRex\Ecommerce\Checkout $checkout
+ * @global \OhMyLMS\Commerce\Checkout $checkout
  *
- * @var \CodeRex\Ecommerce\Data\Order $order
+ * @var \OhMyLMS\Commerce\Data\Order $order
  * @var \OhMyLMS\Data\Student $student
  */
 
 defined( 'ABSPATH' ) || exit();
 do_action( 'ohmylms_account_header' );
-$dashboard_url = ohmylms_get_page_permalink('student_dashboard');
-$status = $order ? $order->get_status() : '';
+$dashboard_url = ohmylms_get_page_permalink( 'student_dashboard' );
+$status        = $order ? $order->get_status() : '';
 ?>
 
 <?php ohmylms_get_template( 'global/ohmylms-celebration.php' ); ?>
@@ -23,15 +23,15 @@ $status = $order ? $order->get_status() : '';
 <div class="ohmylms-order">
 	<?php
 	if ( $order ) :
-		$items = $order->get_items();
+		$items     = $order->get_items();
 		$is_course = true;
 		foreach ( $items as $item ) {
-			$course = $item->get_course();
+			$course    = $item->get_course();
 			$is_course = true;
-			if( !$course ){
-				$id = $item->get_course_id();
-				$course = ohmylms_get_membership($id);
-				if( !$course ){
+			if ( ! $course ) {
+				$id     = $item->get_course_id();
+				$course = ohmylms_get_membership( $id );
+				if ( ! $course ) {
 					continue;
 				}
 				$is_course = false;
@@ -52,7 +52,7 @@ $status = $order ? $order->get_status() : '';
 								</span>
 
 								<h1 class="ohmylms-thankyou-title">
-									<?php echo __( 'Payment Failed', 'ohmylms' ); ?>
+									<?php echo esc_html__( 'Payment Failed', 'ohmylms' ); ?>
 								</h1>
 
 								<div class="ohmylms-thankyou-text">
@@ -63,8 +63,8 @@ $status = $order ? $order->get_status() : '';
 								</div>
 
 								<div class="ohmylms-btn-area">
-									<a href="<?php echo esc_url( ohmylms_get_page_permalink('checkout') ); ?>" class="ohmylms-button">
-										<?php echo __( 'Return To Checkout', 'ohmylms' ); ?>
+									<a href="<?php echo esc_url( ohmylms_get_page_permalink( 'checkout' ) ); ?>" class="ohmylms-button">
+										<?php echo esc_html__( 'Return To Checkout', 'ohmylms' ); ?>
 									</a>
 								</div>
 							<?php else : ?>
@@ -74,25 +74,30 @@ $status = $order ? $order->get_status() : '';
 
 								<h1 class="ohmylms-thankyou-title">
 									<?php
-										echo sprintf( __( 'Thank You %s', 'ohmylms' ), $student->get_name() );
+										printf( /* translators: %s: text value. */
+											esc_html__( 'Thank You %s', 'ohmylms' ),
+											esc_html( $student->get_name() )
+										);
 									?>
 								</h1>
 
 								<div class="ohmylms-thankyou-text">
 									<?php
-									if( 'completed' !== $status ){
+									if ( 'completed' !== $status ) {
 										$thankyou_text = sprintf(
-										/* translators: %s: customer email */
-											__('<strong>Your Order is ' . ucfirst($status) . '!</strong>', 'ohmylms')
+										/* translators: %s: order status. */
+											__( '<strong>Your Order is %s!</strong>', 'ohmylms' ),
+											esc_html( ucfirst( $status ) )
 										);
-									}else{
+									} else {
 										$thankyou_text = sprintf(
-										/* translators: %s: customer email */
-											__('<strong>Your Order is ' . ucfirst($status) . '!</strong> A confirmation mail has been sent to <br/> <span>%s</span>.', 'ohmylms'),
-											$order->get_email()
+										/* translators: 1: order status, 2: customer email. */
+											__( '<strong>Your Order is %1$s!</strong> A confirmation mail has been sent to <br/> <span>%2$s</span>.', 'ohmylms' ),
+											esc_html( ucfirst( $status ) ),
+											esc_html( $order->get_email() )
 										);
 									}
-									
+
 
 									/**
 									 * Filter the thank you message on the order confirmation page.
@@ -100,13 +105,18 @@ $status = $order ? $order->get_status() : '';
 									 * @param string $thankyou_text The thank you message.
 									 * @param WC_Order $order The order object.
 									 */
-									echo apply_filters( 'ohmylms_thankyou_text', $thankyou_text, $order, $is_course );
+									echo wp_kses_post( apply_filters( 'ohmylms_thankyou_text', $thankyou_text, $order, $is_course ) );
 									?>
 								</div>
-								<?php if( 'completed' === $status ) : ?>
+								<?php if ( 'completed' === $status ) : ?>
 								<div class="ohmylms-btn-area">
-									<a href="<?php echo esc_url($dashboard_url); ?>" class="ohmylms-button">
-										<?php echo sprintf( __( 'Access To Your %s', 'ohmylms' ), $item_object_name ); ?>
+									<a href="<?php echo esc_url( $dashboard_url ); ?>" class="ohmylms-button">
+										<?php
+										printf( /* translators: %s: text value. */
+											__( 'Access To Your %s', 'ohmylms' ),
+											$item_object_name
+										);
+										?>
 									</a>
 								</div>
 								<?php endif; ?>
@@ -115,17 +125,17 @@ $status = $order ? $order->get_status() : '';
 
 							<div class="ohmylms-customer-details">
 								<h2 class="ohmylms-address-title">
-									<?php echo __('Student Details', 'ohmylms'); ?>
+									<?php echo esc_html__( 'Student Details', 'ohmylms' ); ?>
 								</h2>
 
 								<p class="single-address email">
-									<strong><?php echo __('Email'); ?></strong>
-									<?php echo $student->get_email(); ?>
+									<strong><?php echo esc_html__( 'Email' ); ?></strong>
+									<?php echo esc_html( $student->get_email() ); ?>
 								</p>
 
 								<p class="single-address country">
-									<strong><?php echo __('Country'); ?></strong>
-									<?php echo ohmylms_get_country_name_by_code($student->get_country()); ?>
+									<strong><?php echo esc_html__( 'Country' ); ?></strong>
+									<?php echo esc_html( ohmylms_get_country_name_by_code( $student->get_country() ) ); ?>
 								</p>
 							</div>
 
@@ -143,13 +153,13 @@ $status = $order ? $order->get_status() : '';
 						<div class="ohmylms-thankyou-content-right">
 							<div class="ohmylms-thankyou-table-wrapper order-summary">
 								<h2 class="ohmylms-order-summary-title">
-									<?php echo __('Order Summary', 'ohmylms'); ?>
+									<?php echo esc_html__( 'Order Summary', 'ohmylms' ); ?>
 								</h2>
 								<?php
 									ohmylms_get_template(
 										'order/order-details.php',
 										array(
-											'order' => $order
+											'order' => $order,
 										)
 									);
 								?>

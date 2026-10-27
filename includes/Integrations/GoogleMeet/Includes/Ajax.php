@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * Ajax class.
  *
@@ -61,7 +61,7 @@ class Ajax {
 		);
 
 		$meeting_service = new MeetingService();
-		$result = $meeting_service->create_meeting( $meeting_data );
+		$result          = $meeting_service->create_meeting( $meeting_data );
 
 		if ( $result['success'] ) {
 			\wp_send_json_success( $result );
@@ -84,7 +84,7 @@ class Ajax {
 			\wp_send_json_error( array( 'message' => __( 'Unauthorized', 'ohmylms' ) ), 403 );
 		}
 
-		$meeting_id = \sanitize_text_field( $_POST['meeting_id'] ?? '' );
+		$meeting_id   = \sanitize_text_field( $_POST['meeting_id'] ?? '' );
 		$meeting_data = array(
 			'topic'    => \sanitize_text_field( $_POST['topic'] ?? '' ),
 			'agenda'   => \sanitize_textarea_field( $_POST['agenda'] ?? '' ),
@@ -94,7 +94,7 @@ class Ajax {
 		);
 
 		$meeting_service = new MeetingService();
-		$result = $meeting_service->update_meeting( $meeting_id, $meeting_data );
+		$result          = $meeting_service->update_meeting( $meeting_id, $meeting_data );
 
 		if ( $result['success'] ) {
 			\wp_send_json_success( $result );
@@ -120,7 +120,7 @@ class Ajax {
 		$meeting_id = \sanitize_text_field( $_POST['meeting_id'] ?? '' );
 
 		$meeting_service = new MeetingService();
-		$result = $meeting_service->delete_meeting( $meeting_id );
+		$result          = $meeting_service->delete_meeting( $meeting_id );
 
 		if ( $result['success'] ) {
 			\wp_send_json_success( $result );
@@ -146,7 +146,7 @@ class Ajax {
 		$meeting_id = \sanitize_text_field( $_GET['meeting_id'] ?? '' );
 
 		$meeting_service = new MeetingService();
-		$result = $meeting_service->get_meeting( $meeting_id );
+		$result          = $meeting_service->get_meeting( $meeting_id );
 
 		if ( $result['success'] ) {
 			\wp_send_json_success( $result );

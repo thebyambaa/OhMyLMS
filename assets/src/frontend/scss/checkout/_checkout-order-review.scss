@@ -1,4 +1,5 @@
 .ohmylms-page {
+
     .ohmylms-checkout-order-review-table {
         border: none;
         border-collapse: collapse;
@@ -7,7 +8,9 @@
     }
 
     .ohmylms-order-review-table-wrapper {
+
         table {
+
             thead {
                 display: none;
             }
@@ -38,8 +41,9 @@
 
             .amount {
                 color: inherit;
+
                 bdi {
-                    word-wrap: break-word;
+                    overflow-wrap: break-word;
                 }
             }
 
@@ -47,12 +51,14 @@
                 border-bottom: none;
 
                 &:first-child {
+
                     td {
                        padding-top: 0;
                     }
                 }
 
                 &:last-child {
+
                     td {
                         border-bottom: none;
                     }
@@ -105,6 +111,7 @@
                 }
 
                 &:hover {
+
                     path {
                         stroke: #DD2001;
                     }
@@ -112,7 +119,9 @@
             }
 
             tfoot {
+
                 tr {
+
                     th, td {
                         border-bottom: 0;
                     }
@@ -123,6 +132,7 @@
                 }
 
                 tr:last-child {
+
                     th, td {
                         padding-bottom: 0;
                         border-bottom: none;
@@ -130,6 +140,7 @@
                 }
 
                 tr.coupon-tr {
+
                     th {
                         vertical-align: top;
                     }
@@ -143,12 +154,14 @@
                 }
 
                 tr.cart-subtotal {
+
                     th, td {
                         padding-top: 16px;
                     }
                 }
 
                 tr.cart-tax {
+
                     .cart-tax-span{
                         color: rgb(75, 85, 99);
                         background-color: rgb(229, 231, 235);
@@ -160,6 +173,7 @@
                 }
 
                 tr.cart-discount {
+
                     th, td {
                         border-top: 1px solid rgba(200, 210, 233, 0.3490196078);
                     }
@@ -178,7 +192,7 @@
 
                     .applied-coupon {
                         border-radius: 4px;
-                        background-color: #ffffff;
+                        background-color: #fff;
                         line-height: 1;
                         display: inline-block;
                         color: var(--ohmylms-heading-color);
@@ -200,6 +214,7 @@
                 }
 
                 tr.order-total {
+
                     th, td {
                         font-size: 18px;
                         font-weight: 600;
@@ -219,6 +234,7 @@
                 }
 
                 tr.membership-pricing {
+
                     td:last-child {
                         line-height: 1.3;
                     }
@@ -237,7 +253,6 @@
         transition: all 0.3s ease;
 
         .apply-coupon {
-            border: none;
             width: calc(100% - 130px);
             border-radius: 8px;
             border: 1px solid #EBEBEF;
@@ -299,11 +314,13 @@
 }
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .ohmylms-order-review-table-wrapper table .ohmylms-course-info-wrapper .ohmylms-course-thumbnail img {
         width: 60px;
         height: 50px;
         border-radius: 4px;
     }
+
     .ohmylms-page .ohmylms-order-review-table-wrapper table .ohmylms-course-info-wrapper .ohmylms-course-title {
         width: calc(100% - 70px);
     }
@@ -325,6 +342,7 @@
 
 
 @media screen and (max-width: 991px) {
+
     .ohmylms-page .ohmylms-checkout-form-wrapper .ohmylms-checkout-order-review {
         border-radius: 12px;
         background: #F4F5F7;
@@ -333,6 +351,7 @@
 }
 
 @media screen and (max-width: 767px) {
+
     .ohmylms-page .ohmylms-order-review-table-wrapper table .ohmylms-course-info-wrapper figure.ohmylms-course-thumbnail {
         display: none;
     }
@@ -351,6 +370,7 @@
 }
 
 @media screen and (max-width: 575px) {
+
     .ohmylms-page .ohmylms-order-review-table-wrapper table th:first-child, 
     .ohmylms-page .ohmylms-order-review-table-wrapper table td:first-child {
         width: 170px;
@@ -358,6 +378,7 @@
 }
 
 @media screen and (max-width: 425px) {
+
     .ohmylms-page .ohmylms-order-review-table-wrapper table th:first-child, 
     .ohmylms-page .ohmylms-order-review-table-wrapper table td:first-child {
         width: 150px;

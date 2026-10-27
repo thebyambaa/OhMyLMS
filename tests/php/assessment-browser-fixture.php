@@ -36,7 +36,6 @@ if ($action === 'setup') {
     $tag = strtolower(wp_generate_password(10, false, false));
     $state = ['tag' => $tag, 'posts' => [], 'users' => [], 'terms' => [], 'previous_integrations' => get_option('ohmylms_integrations', [])];
     try {
-        update_option('ohmylms_integrations', array_merge((array) $state['previous_integrations'], ['skills' => ['is_enable' => 1]]));
         // Learner, guardian and teacher accounts with throwaway passwords.
         foreach (['learner', 'guardian', 'teacher'] as $role) {
             $login = "ab-$role-$tag";

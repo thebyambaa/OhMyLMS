@@ -1,0 +1,139 @@
+{
+  "crossword": {
+    "size": 8,
+    "partial_credit": true,
+    "with_clues": true,
+    "allow_diagonal": false,
+    "allow_backward": false,
+    "alphabet": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    "entries": [
+      {
+        "id": "w1",
+        "answer": "CAT",
+        "clue": "A pet that meows",
+        "row": 3,
+        "col": 3,
+        "direction": "down"
+      },
+      {
+        "id": "w2",
+        "answer": "HAT",
+        "clue": "Something worn on your head",
+        "row": 4,
+        "col": 2,
+        "direction": "across"
+      }
+    ],
+    "grid": [],
+    "puzzle_version": 1
+  },
+  "wordsearch": {
+    "size": 8,
+    "partial_credit": true,
+    "with_clues": false,
+    "allow_diagonal": false,
+    "allow_backward": false,
+    "alphabet": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    "entries": [
+      {
+        "id": "w1",
+        "answer": "CAT",
+        "clue": "A pet that meows",
+        "row": 3,
+        "col": 4,
+        "direction": "down"
+      },
+      {
+        "id": "w2",
+        "answer": "HAT",
+        "clue": "Something worn on your head",
+        "row": 2,
+        "col": 3,
+        "direction": "down"
+      }
+    ],
+    "grid": [
+      [
+        "S",
+        "B",
+        "J",
+        "U",
+        "O",
+        "A",
+        "Q",
+        "G"
+      ],
+      [
+        "K",
+        "P",
+        "V",
+        "G",
+        "Z",
+        "W",
+        "I",
+        "R"
+      ],
+      [
+        "N",
+        "F",
+        "C",
+        "H",
+        "B",
+        "I",
+        "D",
+        "S"
+      ],
+      [
+        "P",
+        "J",
+        "G",
+        "A",
+        "C",
+        "T",
+        "Y",
+        "E"
+      ],
+      [
+        "I",
+        "Z",
+        "K",
+        "T",
+        "A",
+        "O",
+        "M",
+        "Z"
+      ],
+      [
+        "W",
+        "S",
+        "Y",
+        "Z",
+        "T",
+        "E",
+        "J",
+        "R"
+      ],
+      [
+        "E",
+        "M",
+        "E",
+        "P",
+        "W",
+        "I",
+        "A",
+        "Y"
+      ],
+      [
+        "G",
+        "V",
+        "A",
+        "J",
+        "B",
+        "I",
+        "D",
+        "V"
+      ]
+    ],
+    "puzzle_version": 1
+  }
+}

@@ -1,0 +1,125 @@
+.ohmylms-extended-question .ohmylms-diagram-labels {
+	display: grid;
+	gap: 12px;
+}
+
+.ohmylms-extended-question .ohmylms-label-bank {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.ohmylms-extended-question .ohmylms-label-bank button {
+	min-height: 44px;
+	max-width: 100%;
+	overflow-wrap: anywhere;
+	touch-action: none;
+	user-select: none;
+}
+
+.ohmylms-extended-question .ohmylms-label-bank .is-dragging {
+	opacity: 0.6;
+	cursor: grabbing;
+}
+
+.ohmylms-extended-question .ohmylms-diagram-stage .ohmylms-label-pin {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 36px;
+	min-width: 36px;
+	height: 36px;
+	min-height: 36px;
+	padding: 0;
+	border: 2px solid #fff;
+	border-radius: 50%;
+	box-shadow: 0 0 0 2px #432474;
+	transform: translate(-50%, -50%);
+	background: #fff;
+	color: #432474;
+	line-height: 1;
+	font-weight: 700;
+	z-index: 1;
+}
+
+.ohmylms-extended-question .ohmylms-diagram-stage .ohmylms-label-pin.is-filled {
+	background: #432474;
+	color: #fff;
+}
+
+.ohmylms-extended-question .ohmylms-diagram-stage .ohmylms-label-pin::after {
+	position: absolute;
+	left: calc(100% + 4px);
+	top: 50%;
+	transform: translateY(-50%);
+	content: attr(data-label);
+	width: max-content;
+	max-width: min(130px, 35vw);
+	padding: 4px;
+	border-radius: 4px;
+	background: #fff;
+	color: #1e1e1e;
+	font-size: 12px;
+	line-height: 1.3;
+	overflow-wrap: anywhere;
+	pointer-events: none;
+}
+
+.ohmylms-extended-question
+	.ohmylms-diagram-stage
+	.ohmylms-label-pin[data-label=""]::after {
+	display: none;
+}
+
+.ohmylms-extended-question
+	.ohmylms-diagram-stage
+	.ohmylms-label-pin.label-to-left::after {
+	left: auto;
+	right: calc(100% + 4px);
+}
+
+.ohmylms-extended-question
+	.ohmylms-diagram-stage
+	.ohmylms-label-pin.is-drop-target,
+.ohmylms-extended-question
+	.ohmylms-diagram-stage
+	.ohmylms-label-pin:focus-visible,
+.ohmylms-extended-question .ohmylms-label-bank button:focus-visible {
+	outline: 3px solid #dba617;
+	outline-offset: 3px;
+}
+
+.ohmylms-extended-question .ohmylms-label-menus > label {
+	display: grid;
+	grid-template-columns: 70px minmax(0, 1fr);
+	align-items: center;
+	gap: 8px;
+	margin-block: 8px;
+}
+
+.ohmylms-extended-question .ohmylms-label-menus select {
+	position: static;
+	width: 100%;
+	max-width: none;
+	min-height: 44px;
+	transform: none;
+}
+
+.ohmylms-extended-question .ohmylms-diagram-full:has(.ohmylms-diagram-labels) {
+	flex-direction: column;
+	justify-content: flex-start;
+	gap: 20px;
+	padding-top: 64px;
+}
+
+.ohmylms-extended-question .ohmylms-diagram-full .ohmylms-diagram-stage {
+	flex-shrink: 0;
+}
+
+.ohmylms-extended-question .ohmylms-diagram-full .ohmylms-diagram-labels {
+	width: min(100%, 640px);
+	padding: 12px;
+	background: #fff;
+	border-radius: 8px;
+	line-height: 1.5;
+}

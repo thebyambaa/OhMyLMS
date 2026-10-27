@@ -52,7 +52,6 @@ function publish($course, $program, $apply = false) {
 
 try {
     wp_set_current_user($admin);
-    update_option('ohmylms_integrations', array_merge($previous, ['skills' => ['is_enable' => 1]]));
     Schema::install(); ok(Schema::ready(), 'Learning tables unavailable');
     $skill = (int) wp_insert_term('Learning fractions ' . wp_generate_password(6, false, false), Taxonomy::NAME)['term_id']; $terms[] = $skill;
     $empty = (int) wp_insert_term('Learning empty ' . wp_generate_password(6, false, false), Taxonomy::NAME)['term_id']; $terms[] = $empty;
@@ -73,6 +72,37 @@ try {
     ok(CourseProgram::for_enrollment(CourseProgram::enrollment($old_student, $course)) === null, 'Publishing silently changed an existing enrollment');
     $student = learner(); $eid = enrollment($student, $course);
     wp_set_current_user($student);
+    // Presentation reads must preserve attempts, grading and completion state.
+    $before_sessions = (int) $wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM ' . AssessmentSchema::table('practice_sessions') . ' WHERE student_id=%d', $student));
+    ok(\OhMyLMS\Practice\Presentation::available($skill, $course, 10) === 5, 'Entry count ignored the authorized finite pool');
+    $entry = \OhMyLMS\Practice\Frontend::practice(['skill' => $skill, 'course' => $course]);
+    ok(strpos($entry, 'Up to 5 questions') !== false && strpos($entry, 'Right') === false, 'Practice entry count wrong or answer data exposed');
+    ob_start();
+    $opened = \OhMyLMS\Student\PlayerContext::open_practice($course, $skill);
+    \OhMyLMS\Student\PlayerContext::close();
+    $shell = ob_get_clean();
+    ok($opened && substr_count($shell, 'aria-current="page"') === 1 && strpos($shell, '#hub-unit-1') !== false, 'Practice lost its current skill or unit return');
+    ok(!\OhMyLMS\Student\PlayerContext::active(), 'Practice shell remained active after closing');
+    ob_start();
+    $lesson_opened = \OhMyLMS\Student\PlayerContext::open_learning($course, $program['items'][0]['id']);
+    \OhMyLMS\Student\PlayerContext::close();
+    $lesson_shell = ob_get_clean();
+    ok($lesson_opened && strpos($lesson_shell, '#hub-unit-1') !== false && substr_count($lesson_shell, 'aria-current="page"') === 1, 'Program lesson lost its unit context');
+    ok(!\OhMyLMS\Student\PlayerContext::open_learning($course, wp_generate_uuid4()), 'Unknown placement opened the lesson shell');
+    $presentation_course = $course;
+    $focused_lesson = Frontend::render($course, $program['items'][0]['id'], true);
+    $course = $presentation_course;
+    ok(strpos($focused_lesson, 'Equivalent fractions have the same value') !== false && strpos($focused_lesson, 'Mark lesson complete') !== false && strpos($focused_lesson, 'Program version') === false, 'Focused lesson changed content/completion controls or exposed program internals');
+    ok(!\OhMyLMS\Student\PlayerContext::open_practice($course, $empty), 'Unrelated skill opened the course shell');
+    wp_set_current_user($old_student);
+    ok(\OhMyLMS\Practice\Presentation::available($skill, $course, 10) === 0, 'Entry count bypassed frozen enrollment policy');
+    ok(!\OhMyLMS\Student\PlayerContext::open_practice($course, $skill), 'Ineligible enrollment opened the course shell');
+    wp_set_current_user($student);
+    set_query_var('hub_course', $course);
+    ob_start(); ohmylms_get_template('student-hub/course.php'); $overview = ob_get_clean();
+    ok(strpos($overview, '>Learn</h3>') !== false && strpos($overview, '>Practice</h3>') !== false && strpos($overview, '>Assessments</h3>') !== false, 'Unit activity groups missing');
+    ok(strpos($overview, 'Skill mastery legend') !== false, 'Real skill mastery legend missing');
+    ok($before_sessions === (int) $wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM ' . AssessmentSchema::table('practice_sessions') . ' WHERE student_id=%d', $student)), 'Presentation created a practice attempt');
     $state = api('GET', 'courses/' . $course . '/learning/progress')->get_data();
     ok($state['dimensions'] === ['activities' => ['met' => 0, 'total' => 1], 'outcomes' => ['met' => 0, 'total' => 1], 'assessments' => ['met' => 0, 'total' => 1]], 'Progress dimensions wrong: ' . wp_json_encode($state));
     ok(api('GET', 'courses/' . $course . '/learning')->get_status() === 403, 'Learner opened teacher editor');
@@ -115,7 +145,7 @@ try {
     CompletionPolicy::award($student, $course);
     ok($events === 1, 'Completion event repeated');
     ok((int) $wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM ' . Schema::table('awards') . ' WHERE enrollment_id=%d', $eid)) === 1, 'Award duplicated');
-    $wpdb->update(AssessmentSchema::table('student_skill_state'), ['level' => 'developing', 'review_due' => 1], ['student_id' => $student, 'term_id' => $skill]);
+    $wpdb->update(AssessmentSchema::table('student_skill_state'), ['level' => 'attempted', 'review_due' => 1], ['student_id' => $student, 'term_id' => $skill]);
     ok(CompletionPolicy::status($student, $course)['completed'], 'Review or skill decline revoked historical completion');
     wp_set_current_user($admin);
     $new_program = $program; $new_program['items'][] = item('lesson', created('lessons', ['name' => 'New requirement', 'type' => 'text', 'status' => 'publish']));
@@ -124,8 +154,9 @@ try {
     publish($course, $program, true);
     ok(CourseProgram::for_enrollment(CourseProgram::enrollment($old_student, $course))['version'] === 3, 'Explicit adoption did not upgrade unfinished enrollment');
     ok(CourseProgram::for_enrollment(CourseProgram::enrollment($student, $course))['version'] === 1, 'Explicit upgrade changed historical award');
-    $disabled = api('PUT', 'integrations', ['skills' => ['is_enable' => 0]]);
-    ok($disabled->get_status() === 409 && !empty(get_option('ohmylms_integrations')['skills']['is_enable']), 'Dependent add-on disable accepted');
+    // Skills are core: a stale client cannot switch them off, and no setting is stored for them.
+    api('PUT', 'integrations', ['skills' => ['is_enable' => 0]]);
+    ok(\OhMyLMS\Extensions\Addons::enabled('skills') && !isset(get_option('ohmylms_integrations')['skills']), 'Skills must stay on and unstored');
     ok(api('DELETE', 'skills/' . $skill, ['force' => true])->get_status() === 409, 'Published outcome skill deleted');
     $bad = $program; $bad['outcomes'][0]['term_id'] = $empty; $bad['items'] = [item('practice', $empty, false)];
     ok(api('POST', 'courses/' . $course . '/learning/publish', $bad)->get_status() === 409, 'Empty pool policy published');
@@ -161,6 +192,54 @@ try {
     ok(api('GET', 'courses/' . $fourth . '/learning/progress')->get_status() === 403, 'Unpublished course progress accessible');
     ok(is_wp_error(Sessions::start(['student_id' => $student], $skill, ['course_id' => $fourth])), 'Unpublished course practice accessible');
     ok(CompletionPolicy::status($student, $fourth)['blocked'], 'Unpublished course not blocked');
+    // Credit back: proficiency earned on another objective of the same shared skill counts here.
+    wp_set_current_user($admin);
+    $tag = wp_generate_password(6, false, false);
+    $shared = \OhMyLMS\Curriculum\Comparison::save_shared(0, ['name' => 'Credit shared ' . $tag, 'subject' => 'Credit ' . $tag, 'topic' => 'Credit', 'domain' => 'algebra', 'grade_from' => 7, 'grade_to' => 7]);
+    ok(!is_wp_error($shared), 'Shared skill not created'); $terms[] = (int) $shared['id'];
+    $mine = (int) wp_insert_term('Credit mine ' . $tag, Taxonomy::NAME)['term_id']; $terms[] = $mine;
+    $theirs = (int) wp_insert_term('Credit theirs ' . $tag, Taxonomy::NAME)['term_id']; $terms[] = $theirs;
+    ok(!is_wp_error(\OhMyLMS\Curriculum\SkillMappings::save($mine, (int) $shared['id'], 'equivalent')) && !is_wp_error(\OhMyLMS\Curriculum\SkillMappings::save($theirs, (int) $shared['id'], 'equivalent')), 'Objectives not mapped');
+    for ($i = 0; $i < 3; $i++) {
+        $q = created('question', ['name' => 'Credit question ' . $i, 'settings' => ['type' => 'single-choice', 'score' => ['enabled' => true, 'value' => 1]], 'questions' => [['answer' => 'Right', 'is_correct' => 1], ['answer' => 'Wrong']], 'skills' => ['p1' => ['primary' => $mine, 'supporting' => []]], 'bank' => ['family_id' => 'credit-family-' . $tag . $i]]);
+        ok(api('POST', 'question-bank/' . $q . '/approve')->get_status() === 200, 'Approve failed');
+    }
+    $credit_student = learner();
+    $set_state = static function ($term, $level) use ($wpdb, $credit_student) {
+        $wpdb->delete(AssessmentSchema::table('student_skill_state'), ['student_id' => $credit_student, 'term_id' => $term]);
+        $wpdb->insert(AssessmentSchema::table('student_skill_state'), ['student_id' => $credit_student, 'term_id' => $term, 'level' => $level, 'policy' => 'evidence', 'evidence_count' => 4, 'last_evidence_at' => gmdate('Y-m-d H:i:s'), 'updated_at' => current_time('mysql', true)]);
+    };
+    $credit_program = ['mode' => 'skill-based', 'recognize_prior' => true, 'evidence_days' => 0, 'bank_ids' => [], 'outcomes' => [['term_id' => $mine, 'target' => 'proficient', 'required' => true]], 'items' => [item('practice', $mine, false)]];
+    $credit_course = created('courses', ['name' => 'Credit course ' . $tag, 'status' => 'publish']); $posts[] = (int) ohmylms_get_course($credit_course)->get_chapters()[0]['id'];
+    publish($credit_course, $credit_program);
+    enrollment($credit_student, $credit_course);
+    ok(\OhMyLMS\Performance\Guidance::credit($credit_student, [$mine]) === [], 'Credit with no work elsewhere');
+    $set_state($theirs, 'familiar');
+    \OhMyLMS\Performance\Guidance::flush();
+    $familiar = CompletionPolicy::status($credit_student, $credit_course);
+    ok(\OhMyLMS\Performance\Guidance::credit($credit_student, [$mine])[$mine]['level'] === 'familiar' && !$familiar['eligible'] && $familiar['program']['outcomes'][0]['credit'] === ['level' => 'familiar', 'own' => 'not-started', 'counts' => false], 'Familiar work elsewhere is shown, not counted: ' . wp_json_encode($familiar['program']['outcomes'][0]['credit'] ?? null));
+    $set_state($theirs, 'proficient');
+    \OhMyLMS\Performance\Guidance::flush();
+    $proficient = CompletionPolicy::status($credit_student, $credit_course);
+    ok($proficient['eligible'] && $proficient['program']['outcomes'][0]['credit']['counts'] && $proficient['program']['outcomes'][0]['state']['level'] === 'proficient', 'Proficient work elsewhere completes the target');
+    $html = Frontend::class; ob_start(); $rendered = new ReflectionMethod(Frontend::class, 'outcomes'); $rendered->setAccessible(true); $rendered->invoke(null, $proficient['program'], false); $table = ob_get_clean();
+    ok(strpos($table, 'from other syllabuses') !== false, 'The level is not marked as from other syllabuses');
+    $outline = \OhMyLMS\Student\CourseOutline::get($credit_course, $credit_student);
+    ok($outline['summary']['credited'] === 1 && $outline['summary']['proficient'] === 1 && $outline['summary']['percent'] === 100, 'The course outline did not count the credited target: ' . wp_json_encode($outline['summary']));
+    $set_state($theirs, 'familiar'); \OhMyLMS\Performance\Guidance::flush();
+    $familiar_outline = \OhMyLMS\Student\CourseOutline::get($credit_course, $credit_student);
+    ok($familiar_outline['summary']['credited'] === 0 && $familiar_outline['summary']['proficient'] === 0, 'Familiar work elsewhere was counted in the outline');
+    $set_state($theirs, 'proficient'); \OhMyLMS\Performance\Guidance::flush();
+    $windowed = $credit_program; $windowed['evidence_days'] = 90;
+    $windowed_course = created('courses', ['name' => 'Credit windowed ' . $tag, 'status' => 'publish']); $posts[] = (int) ohmylms_get_course($windowed_course)->get_chapters()[0]['id'];
+    publish($windowed_course, $windowed); enrollment($credit_student, $windowed_course);
+    ok(!CompletionPolicy::status($credit_student, $windowed_course)['eligible'] && CompletionPolicy::status($credit_student, $windowed_course)['program']['outcomes'][0]['credit'] === null, 'A program with an evidence window ignores work elsewhere');
+    $own_only = $credit_program; $own_only['recognize_prior'] = false;
+    $own_course = created('courses', ['name' => 'Credit own only ' . $tag, 'status' => 'publish']); $posts[] = (int) ohmylms_get_course($own_course)->get_chapters()[0]['id'];
+    publish($own_course, $own_only); enrollment($credit_student, $own_course);
+    ok(!CompletionPolicy::status($credit_student, $own_course)['eligible'], 'A course-only program ignores work elsewhere');
+    foreach ([$mine, $theirs] as $id) { $wpdb->delete(\OhMyLMS\Curriculum\SkillMappings::table(), ['specific_term_id' => $id]); }
+
     $pure = CompletionPolicy::evaluate(['items' => [], 'outcomes' => []], [], [], []);
     ok(!$pure['eligible'], 'Empty requirements auto-completed');
     $pure = CompletionPolicy::evaluate($program, [$lesson => true], [$skill => ['level' => 'mastered']], [$quiz => ['passed' => true]], true);

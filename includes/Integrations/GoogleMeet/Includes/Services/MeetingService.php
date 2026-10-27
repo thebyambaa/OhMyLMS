@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * MeetingService class.
  *
@@ -29,7 +29,7 @@ class MeetingService {
 	 * MeetingService constructor.
 	 */
 	public function __construct() {
-		$token_service = new TokenService();
+		$token_service    = new TokenService();
 		$this->api_client = new GoogleMeetApiClient( $token_service );
 	}
 
@@ -43,23 +43,23 @@ class MeetingService {
 	 * @return array The API response.
 	 */
 	public function create_meeting( $meeting_data ) {
-		$calendar_id = 'primary'; // Use primary calendar
+		$calendar_id = 'primary'; // Use primary calendar.
 
-		// Prepare event data for Google Calendar API
+		// Prepare event data for Google Calendar API.
 		$event_data = array(
-			'summary'     => $meeting_data['topic'],
-			'description' => $meeting_data['agenda'],
-			'start'       => array(
+			'summary'        => $meeting_data['topic'],
+			'description'    => $meeting_data['agenda'],
+			'start'          => array(
 				'dateTime' => $this->format_datetime( $meeting_data['date'], $meeting_data['timezone'] ),
 				'timeZone' => $meeting_data['timezone'],
 			),
-			'end'         => array(
+			'end'            => array(
 				'dateTime' => $this->calculate_end_time( $meeting_data['date'], $meeting_data['duration'], $meeting_data['timezone'] ),
 				'timeZone' => $meeting_data['timezone'],
 			),
 			'conferenceData' => array(
 				'createRequest' => array(
-					'requestId' => uniqid( 'ohmylms_' ),
+					'requestId'             => uniqid( 'ohmylms_' ),
 					'conferenceSolutionKey' => array(
 						'type' => 'hangoutsMeet',
 					),
@@ -67,12 +67,12 @@ class MeetingService {
 			),
 		);
 
-		// Add optional settings
+		// Add optional settings.
 		if ( ! empty( $meeting_data['attendees'] ) ) {
 			$event_data['attendees'] = $this->format_attendees( $meeting_data['attendees'] );
 		}
 
-		// Create event with conference data
+		// Create event with conference data.
 		$response = $this->api_client->post(
 			"calendars/{$calendar_id}/events?conferenceDataVersion=1",
 			$event_data
@@ -80,12 +80,12 @@ class MeetingService {
 
 		if ( $response['success'] && isset( $response['data']['id'] ) ) {
 			$event_data = $response['data'];
-			
-			// Extract Google Meet link
+
+			// Extract Google Meet link.
 			$meet_link = '';
 			if ( isset( $event_data['conferenceData']['entryPoints'] ) ) {
 				foreach ( $event_data['conferenceData']['entryPoints'] as $entry ) {
-					if ( $entry['entryPointType'] === 'video' ) {
+					if ( 'video' === $entry['entryPointType'] ) {
 						$meet_link = $entry['uri'];
 						break;
 					}
@@ -93,11 +93,11 @@ class MeetingService {
 			}
 
 			return array(
-				'success'     => true,
-				'meeting_id'  => $event_data['id'],
-				'meet_link'   => $meet_link,
-				'html_link'   => $event_data['htmlLink'],
-				'event_data'  => $event_data,
+				'success'    => true,
+				'meeting_id' => $event_data['id'],
+				'meet_link'  => $meet_link,
+				'html_link'  => $event_data['htmlLink'],
+				'event_data' => $event_data,
 			);
 		}
 

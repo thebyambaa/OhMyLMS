@@ -1,0 +1,569 @@
+{
+	"crossword": {
+		"size": 8,
+		"partial_credit": true,
+		"with_clues": true,
+		"allow_diagonal": false,
+		"allow_backward": false,
+		"alphabet": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+		"entries": [
+			{
+				"id": "w1",
+				"answer": "CAT",
+				"clue": "A pet that meows",
+				"row": 3,
+				"col": 3,
+				"direction": "down"
+			},
+			{
+				"id": "w2",
+				"answer": "HAT",
+				"clue": "Something worn on your head",
+				"row": 4,
+				"col": 2,
+				"direction": "across"
+			}
+		],
+		"grid": [],
+		"puzzle_version": 1
+	},
+	"wordsearch": {
+		"size": 8,
+		"partial_credit": true,
+		"with_clues": false,
+		"allow_diagonal": false,
+		"allow_backward": false,
+		"alphabet": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+		"entries": [
+			{
+				"id": "w1",
+				"answer": "CAT",
+				"clue": "A pet that meows",
+				"row": 3,
+				"col": 4,
+				"direction": "down"
+			},
+			{
+				"id": "w2",
+				"answer": "HAT",
+				"clue": "Something worn on your head",
+				"row": 2,
+				"col": 3,
+				"direction": "down"
+			}
+		],
+		"grid": [
+			[
+				"S",
+				"B",
+				"J",
+				"U",
+				"O",
+				"A",
+				"Q",
+				"G"
+			],
+			[
+				"K",
+				"P",
+				"V",
+				"G",
+				"Z",
+				"W",
+				"I",
+				"R"
+			],
+			[
+				"N",
+				"F",
+				"C",
+				"H",
+				"B",
+				"I",
+				"D",
+				"S"
+			],
+			[
+				"P",
+				"J",
+				"G",
+				"A",
+				"C",
+				"T",
+				"Y",
+				"E"
+			],
+			[
+				"I",
+				"Z",
+				"K",
+				"T",
+				"A",
+				"O",
+				"M",
+				"Z"
+			],
+			[
+				"W",
+				"S",
+				"Y",
+				"Z",
+				"T",
+				"E",
+				"J",
+				"R"
+			],
+			[
+				"E",
+				"M",
+				"E",
+				"P",
+				"W",
+				"I",
+				"A",
+				"Y"
+			],
+			[
+				"G",
+				"V",
+				"A",
+				"J",
+				"B",
+				"I",
+				"D",
+				"V"
+			]
+		],
+		"puzzle_version": 1
+	},
+	"text-entry": {
+		"accepted": [
+			"Answer"
+		],
+		"case_sensitive": false,
+		"collapse_whitespace": true,
+		"ignore_punctuation": false
+	},
+	"dropdown-blanks": {
+		"text": "The slope is {1}, so the line {2}.",
+		"slots": [
+			{
+				"id": "1",
+				"choices": [
+					"positive",
+					"negative"
+				],
+				"answer": "positive"
+			},
+			{
+				"id": "2",
+				"choices": [
+					"rises",
+					"falls"
+				],
+				"answer": "rises"
+			}
+		]
+	},
+	"categorize": {
+		"buckets": [
+			{
+				"id": "b1",
+				"label": ""
+			},
+			{
+				"id": "b2",
+				"label": ""
+			}
+		],
+		"items": [
+			{
+				"id": "i1",
+				"text": ""
+			},
+			{
+				"id": "i2",
+				"text": ""
+			}
+		],
+		"key": {
+			"i1": "b1",
+			"i2": "b2"
+		}
+	},
+	"multi-blank": {
+		"layout": "inline",
+		"text": "3 + 4 = {a}",
+		"blanks": {
+			"a": {
+				"kind": "numerical",
+				"answer": 7
+			}
+		}
+	},
+	"build-expression": {
+		"correct": [],
+		"distractors": [],
+		"alternatives": [],
+		"equivalence": false,
+		"form": "any"
+	},
+	"expression": {
+		"answer": "2x+6",
+		"alternatives": [],
+		"form": "any"
+	},
+	"number-line": {
+		"min": 0,
+		"max": 10,
+		"step": 1,
+		"target": 5
+	},
+	"shade-model": {
+		"shape": "bar",
+		"parts": 8,
+		"cols": 8,
+		"answer": 3
+	},
+	"count-blocks": {
+		"places": [
+			"hundreds",
+			"tens",
+			"ones"
+		],
+		"target": 243,
+		"max_per_place": 20,
+		"canonical": false
+	},
+	"set-clock": {
+		"hour": 3,
+		"minute": 45,
+		"tolerance": 1,
+		"snap": 1,
+		"show_digital": false
+	},
+	"make-amount": {
+		"denominations": [
+			5000,
+			1000,
+			500,
+			100
+		],
+		"symbol": "₮",
+		"target": 3500
+	},
+	"fill-level": {
+		"min": 0,
+		"max": 1000,
+		"step": 50,
+		"unit": "ml",
+		"target": 500
+	},
+	"build-chart": {
+		"categories": [
+			{
+				"id": "a",
+				"label": "A"
+			},
+			{
+				"id": "b",
+				"label": "B"
+			}
+		],
+		"max": 10,
+		"step": 1,
+		"unit": "",
+		"values": {
+			"a": 4,
+			"b": 7
+		},
+		"show_table": true
+	},
+	"grid-build": {
+		"rows": 6,
+		"cols": 6,
+		"constraints": {
+			"area": 12,
+			"perimeter": 14,
+			"rectangle": true
+		},
+		"show_measures": false
+	},
+	"passage": {
+		"passage": "A rectangle has a length of 4 cm and a width of 3 cm.",
+		"parts": [
+			{
+				"id": "a",
+				"label": "(a)",
+				"kind": "numerical",
+				"marks": 1,
+				"prompt": "Find the area.",
+				"answer": 12
+			}
+		]
+	},
+	"graphing": {
+		"mode": "points",
+		"min": -5,
+		"max": 5,
+		"points": [
+			{
+				"x": 2,
+				"y": 3
+			}
+		],
+		"tolerance": 0.25
+	},
+	"hot-text": {
+		"tokens": [
+			{
+				"id": "t1",
+				"text": "2"
+			},
+			{
+				"id": "t2",
+				"text": "3"
+			},
+			{
+				"id": "t3",
+				"text": "4"
+			}
+		],
+		"correct": [
+			"t1",
+			"t3"
+		]
+	},
+	"match-table-grid": {
+		"rows": [
+			{
+				"id": "r1",
+				"label": "2 + 2"
+			},
+			{
+				"id": "r2",
+				"label": "3 + 3"
+			}
+		],
+		"columns": [
+			{
+				"id": "c1",
+				"label": "4"
+			},
+			{
+				"id": "c2",
+				"label": "6"
+			}
+		],
+		"key": {
+			"r1": "c1",
+			"r2": "c2"
+		}
+	},
+	"labeling": {
+		"image_url": "",
+		"targets": [
+			{
+				"id": "a",
+				"x": 25,
+				"y": 50,
+				"answer": "A"
+			},
+			{
+				"id": "b",
+				"x": 75,
+				"y": 50,
+				"answer": "B"
+			}
+		],
+		"distractors": []
+	},
+	"hotspot": {
+		"image_url": "",
+		"zones": [
+			{
+				"x": 50,
+				"y": 50,
+				"radius": 12
+			}
+		]
+	},
+	"draw": {},
+	"audio-response": {
+		"max_seconds": 60
+	},
+	"video-response": {
+		"max_seconds": 60,
+		"sources": [
+			"camera",
+			"screen"
+		]
+	},
+	"poll": {
+		"choices": [
+			{
+				"id": "c1",
+				"text": "Yes"
+			},
+			{
+				"id": "c2",
+				"text": "No"
+			}
+		]
+	},
+	"word-cloud": {},
+	"discussion-board": {},
+	"interactive-video": {
+		"video_url": "",
+		"checkpoints": [
+			{
+				"id": "a",
+				"at": 5,
+				"prompt": "What is 2 + 2?",
+				"answer": "4"
+			}
+		]
+	},
+	"spin-wheel": {
+		"cards": [
+			{
+				"id": "c1",
+				"text": "Card 1"
+			},
+			{
+				"id": "c2",
+				"text": "Card 2"
+			},
+			{
+				"id": "c3",
+				"text": "Card 3"
+			}
+		]
+	},
+	"gameshow": {
+		"choices": [
+			{
+				"id": "c1",
+				"text": "Answer 1"
+			},
+			{
+				"id": "c2",
+				"text": "Answer 2"
+			}
+		],
+		"correct": "c1",
+		"seconds": 20
+	},
+	"hangman": {
+		"accepted": [
+			"word"
+		],
+		"max_misses": 6
+	},
+	"open-box": {
+		"cards": [
+			{
+				"id": "c1",
+				"text": "Card 1"
+			},
+			{
+				"id": "c2",
+				"text": "Card 2"
+			},
+			{
+				"id": "c3",
+				"text": "Card 3"
+			}
+		]
+	},
+	"speaking-cards": {
+		"cards": [
+			{
+				"id": "c1",
+				"text": "Card 1"
+			},
+			{
+				"id": "c2",
+				"text": "Card 2"
+			},
+			{
+				"id": "c3",
+				"text": "Card 3"
+			}
+		]
+	},
+	"flip-tiles": {
+		"cards": [
+			{
+				"id": "c1",
+				"text": "Card 1"
+			},
+			{
+				"id": "c2",
+				"text": "Card 2"
+			},
+			{
+				"id": "c3",
+				"text": "Card 3"
+			}
+		]
+	},
+	"flashcards": {
+		"cards": [
+			{
+				"id": "c1",
+				"text": "Card 1"
+			},
+			{
+				"id": "c2",
+				"text": "Card 2"
+			},
+			{
+				"id": "c3",
+				"text": "Card 3"
+			}
+		]
+	},
+	"timed-true-false": {
+		"choices": [
+			{
+				"id": "c1",
+				"text": "True"
+			},
+			{
+				"id": "c2",
+				"text": "False"
+			}
+		],
+		"correct": "c1",
+		"seconds": 15
+	},
+	"whack-a-mole": {
+		"choices": [
+			{
+				"id": "c1",
+				"text": "Answer 1"
+			},
+			{
+				"id": "c2",
+				"text": "Answer 2"
+			}
+		],
+		"correct": "c1",
+		"seconds": 20
+	},
+	"flying-fruit": {
+		"choices": [
+			{
+				"id": "c1",
+				"text": "Answer 1"
+			},
+			{
+				"id": "c2",
+				"text": "Answer 2"
+			}
+		],
+		"correct": "c1",
+		"seconds": 20
+	}
+}

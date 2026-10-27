@@ -4,6 +4,7 @@
 }
 
 .ohmylms-page {
+
     .ohmylms {
         max-width: 100%;
         background-color: #F9FAFD;
@@ -91,6 +92,7 @@
     }
 
     &.admin-bar {
+
         .ohmylms-checkout-form-left {
             min-height: calc(100vh - 32px);
         }
@@ -120,7 +122,7 @@
         left: 13px;
         top: 15px;
         transition: all 0.3s ease;
-        background: #ffffff;
+        background: #fff;
         padding: 0 4px;
         z-index: 2;
 
@@ -151,8 +153,8 @@
         height: auto;
 
         &:-webkit-autofill {
-            -webkit-box-shadow: 0 0 0 30px white inset !important;
-            box-shadow: 0 0 0 30px white inset !important;
+            -webkit-box-shadow: 0 0 0 30px #fff inset !important;
+            box-shadow: 0 0 0 30px #fff inset !important;
             -webkit-text-fill-color: var(--ohmylms-body-text-color);
         }
 
@@ -183,6 +185,7 @@
     }
 
     .ohmylms-has-error {
+
         .ohmylms-input-label {
             color: #FF6F6F;
         }
@@ -193,12 +196,14 @@
     }
 
     .ohmylms-folded {
+
         .ohmylms-input-label {
             top: -8px;
         }
     }
 
     &.ohmylms-checkout {
+
         .ohmylms-input-label {
             top: 50%;
             transform: translateY(-50%);
@@ -210,6 +215,7 @@
         }
 
         .ohmylms-folded {
+
             .ohmylms-input-label {
                 top: calc(50% - 10px);
                 color: #7A8B9A!important;
@@ -226,7 +232,7 @@
         width: 100%;
         z-index: 1000;
         background: #FFF;
-        box-shadow: 0px 0px 14px 6px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 0 14px 6px rgba(0, 0, 0, 0.05);
         padding: 13px 0;
 
         .ohmylms-mobile-order-button-container {
@@ -307,15 +313,18 @@
 
 
 @media screen and (max-width: 1399px) {
+
     .ohmylms-page .ohmylms-checkout-form-left {
         padding: 30px 30px 30px 0;
     }
 }
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .ohmylms-checkout-form-left {
         width: 55%;
     }
+
     .ohmylms-page .ohmylms-checkout-form-right {
         width: 45%;
     }
@@ -336,6 +345,7 @@
 }
 
 @media screen and (max-width: 991px) {
+
     .ohmylms-page .ohmylms-checkout-form-outer::before {
         width: 100%
     }
@@ -356,6 +366,7 @@
         border: none;
         padding-bottom: 130px!important;
     }
+
     .ohmylms-page .ohmylms-checkout-form-right {
         position: relative;
         padding: 35px 0 0;
@@ -373,11 +384,17 @@
 
 }
 
+/* stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import "checkout-error";
+/* stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import "login-signup";
+/* stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import "checkout-customer-details";
+/* stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import "checkout-order-review";
+/* stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import "checkout-payment";
 // @import "checkout-order-review-toggle";
+/* stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import "no-cart-data";
 

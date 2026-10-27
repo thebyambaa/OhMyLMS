@@ -57,16 +57,22 @@ test('author adds a page break and publishes the exam', async ({ page }) => {
   const errors = trackErrors(page);
   await login(page, admin().username, admin().password);
   await page.goto(`/wp-admin/admin.php?page=ohmylms#/quiz-edit/${state.quiz}`);
-  await page
-    .getByRole('button', { name: 'Assessment settings (exam, sections, timing)' })
-    .click();
+  await page.waitForURL((url) => url.pathname.endsWith('/post.php'));
+  await page.waitForFunction(() => window.wp?.plugins?.getPlugin('ohmylms-native-quiz-settings'));
+  await page.evaluate(() => wp.data.dispatch('core/edit-post').openGeneralSidebar('edit-post/document'));
+  const assessmentPanel = page.getByRole('button', {name: 'Assessment and pools', exact: true});
+  await expect(assessmentPanel).toBeVisible();
+  if ((await assessmentPanel.getAttribute('aria-expanded')) !== 'true') await assessmentPanel.click();
   const breaks = page.getByRole('checkbox', { name: 'Start on a new page' });
   await expect(breaks).toHaveCount(2);
   await breaks.nth(1).check();
   await page.getByRole('button', { name: 'Save assessment settings' }).click();
   await expect(page.getByText('Assessment settings saved').first()).toBeVisible();
-  await page.getByRole('button', { name: 'Publish', exact: true }).click();
-  await expect(page.getByText('Published revision 2').first()).toBeVisible();
+  await page.evaluate(async () => {
+    wp.data.dispatch('core/editor').editPost({status: 'publish'});
+    await wp.data.dispatch('core/editor').savePost();
+  });
+  await expect.poll(() => page.evaluate(() => wp.data.select('core/editor').getCurrentPost().status)).toBe('publish');
   expect(errors).toEqual([]);
 });
 
@@ -236,8 +242,8 @@ test('author writes a new question directly in the bank', async ({ page }) => {
 test('admin links the skill to a course and finds the questions in the bank', async ({ page }) => {
   const errors = trackErrors(page);
   await login(page, admin().username, admin().password);
-  await page.goto('/wp-admin/admin.php?page=ohmylms');
-  await page.getByRole('link', { name: 'Skills', exact: true }).click();
+  await page.goto('/wp-admin/admin.php?page=ohmylms#/content-hub');
+  await page.getByRole('navigation', { name: 'Content Hub sections' }).getByRole('link', { name: 'Skills', exact: true }).click();
   await page.getByRole('button', { name: new RegExp(state.tag) }).first().click();
   await page.getByLabel('Find courses').fill(state.tag);
   await page.getByRole('checkbox', { name: new RegExp(`Browser exam course ${state.tag}`) }).check();
@@ -251,5 +257,51 @@ test('admin links the skill to a course and finds the questions in the bank', as
   await page.goto('/wp-admin/admin.php?page=ohmylms#/extensions/question-bank');
   await page.getByRole('textbox', { name: /Search/ }).first().fill('of 8?');
   await expect(page.getByText('Which is ½ of 8?')).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('Quizzes, Question Bank and Assignments are Content Hub tabs, and the old Assessments addresses open them', async ({ page }) => {
+  const errors = trackErrors(page);
+  await login(page, admin().username, admin().password);
+  await page.goto('/wp-admin/admin.php?page=ohmylms#/content-hub');
+  const tabs = page.getByRole('navigation', { name: 'Content Hub sections' });
+  await expect(tabs.getByRole('link')).toHaveText(['Courses', 'Lessons', 'Quizzes', 'Question Bank', 'Assignments', 'Skills', 'Curriculum', 'Course Bundles'], { timeout: 30000 });
+  // There is no Assessments entry (or one for any of its sections) in the admin menu any more.
+  const submenu = page.locator('#adminmenu li.wp-has-current-submenu .wp-submenu a:visible');
+  const labels = (await submenu.allTextContents()).map((text) => text.trim());
+  expect(labels[0]).toBe('Content Hub');
+  for (const retired of ['Assessments', 'Quizzes', 'Question Bank', 'Assignments']) expect(labels).not.toContain(retired);
+  const highlighted = page.locator('#toplevel_page_ohmylms .wp-submenu li.current');
+  const open = async (hash, tab, heading) => {
+    await page.goto(`/wp-admin/admin.php?page=ohmylms#${hash}`);
+    await expect(tabs.locator('a[aria-current="page"]')).toHaveText(tab, { timeout: 30000 });
+    await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible({ timeout: 30000 });
+    await expect(highlighted).toHaveText('Content Hub');
+  };
+  await open('/content-hub/quizzes', 'Quizzes', 'All Quizzes');
+  await open('/content-hub/question-bank', 'Question Bank', 'Question bank');
+  await open('/content-hub/assignments', 'Assignments', 'All Assignments');
+  // Every older address keeps working and lands on the same tab.
+  await open('/quizzes', 'Quizzes', 'All Quizzes');
+  await open('/assignments', 'Assignments', 'All Assignments');
+  await open('/assessments', 'Quizzes', 'All Quizzes');
+  await open('/assessments/question-bank', 'Question Bank', 'Question bank');
+  await open('/assessments/assignments', 'Assignments', 'All Assignments');
+  await open('/extensions/question-bank', 'Question Bank', 'Question bank');
+  // The bank page is the hub's only title, and the tabs link to each other.
+  await open('/content-hub/question-bank', 'Question Bank', 'Question bank');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
+  await tabs.getByRole('link', { name: 'Assignments', exact: true }).click();
+  await expect(page).toHaveURL(/#\/content-hub\/assignments$/);
+  // The quiz editor, opened from the Quizzes tab, keeps the hub highlighted.
+  await page.goto(`/wp-admin/admin.php?page=ohmylms#/quiz-edit/${state.quiz}`);
+  await expect(highlighted).toHaveText('Content Hub', { timeout: 30000 });
+  // Nine tabs still fit a phone: they wrap instead of running off the screen.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/wp-admin/admin.php?page=ohmylms#/content-hub/question-bank');
+  await expect(tabs.getByRole('link', { name: 'Course Bundles', exact: true })).toBeVisible({ timeout: 30000 });
+  const box = await tabs.boundingBox();
+  expect(box.x + box.width).toBeLessThanOrEqual(390);
+  for (const link of await tabs.getByRole('link').all()) expect((await link.boundingBox()).x + (await link.boundingBox()).width).toBeLessThanOrEqual(390);
   expect(errors).toEqual([]);
 });

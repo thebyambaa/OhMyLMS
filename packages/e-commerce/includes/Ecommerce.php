@@ -1,11 +1,17 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
+/**
+ * Class CLMS_Order_Loader
+ * Handles loading and instantiation of order-related classes.
+ *
+ * @package OhMyLMS
+ */
 
-namespace CodeRex\Ecommerce;
+namespace OhMyLMS\Commerce;
 
-use CodeRex\Ecommerce\Factory\OrderFactory;
-use CodeRex\Ecommerce\Factory\SubscriptionFactory;
-use CodeRex\Ecommerce\Gateways\Gateways;
-use CodeRex\Ecommerce\Rest\Api;
+use OhMyLMS\Commerce\Factory\OrderFactory;
+use OhMyLMS\Commerce\Factory\SubscriptionFactory;
+use OhMyLMS\Commerce\Gateways\Gateways;
+use OhMyLMS\Commerce\Rest\Api;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -16,23 +22,31 @@ defined( 'ABSPATH' ) || exit;
 final class Ecommerce {
 
 	/**
+	 * Post types.
+	 *
 	 * @var PostTypes
 	 */
 	public $post_types;
 
 
 	/**
+	 * Session.
+	 *
 	 * @var SessionHandler
 	 */
 	public $session;
 
 
 	/**
+	 * Cart.
+	 *
 	 * @var $cart Cart
 	 */
 	public $cart;
 
 	/**
+	 * Cart.
+	 *
 	 * @var $payment Cart
 	 */
 	public $payment;
@@ -45,32 +59,52 @@ final class Ecommerce {
 	private static $instance;
 
 	/**
+	 * Order factory.
+	 *
 	 * @var OrderFactory
 	 */
 	public $order_factory;
 
 
+	/**
+	 * Subscription factory.
+	 *
+	 * @var mixed
+	 */
 	public $subscription_factory;
 
 	/**
+	 * Query.
+	 *
 	 * @var CustomEndpoints
 	 */
 	public $query;
 
 	/**
+	 * Subscription manager.
+	 *
 	 * @var SubscriptionManager
 	 */
 	public $subscription_manager;
 
 
+	/**
+	 * Prefix.
+	 *
+	 * @var mixed
+	 */
 	public $prefix = 'ohmylms';
 
 	/**
+	 * Instance.
+	 *
 	 * @var Api
 	 */
 	public $rest_api;
 
 	/**
+	 * Instance.
+	 *
 	 * @var Gateways
 	 */
 	public $gateways;
@@ -90,13 +124,15 @@ final class Ecommerce {
 
 	/**
 	 * Constructor.
-	 *
 	 */
 	public function __construct() {
 		add_action( 'init', array( $this, 'init' ) );
 	}
 
 
+	/**
+	 * Init for Ecommerce.
+	 */
 	public function init() {
 		$this->register_services();
 		$this->init_post_types();
@@ -113,12 +149,12 @@ final class Ecommerce {
 		$this->session    = new SessionHandler();
 		$this->session->init();
 
-		$this->cart          		= new Cart();
-		$this->order_factory 		= new OrderFactory();
+		$this->cart                 = new Cart();
+		$this->order_factory        = new OrderFactory();
 		$this->subscription_factory = new SubscriptionFactory();
-		$this->query         		= new CustomEndpoints();
-		$this->rest_api      		= new Api();
-		$this->gateways				= $this->gateways();
+		$this->query                = new CustomEndpoints();
+		$this->rest_api             = new Api();
+		$this->gateways             = $this->gateways();
 		$this->subscription_manager = new SubscriptionManager();
 		$this->subscription_manager::init_hooks();
 
@@ -149,6 +185,7 @@ final class Ecommerce {
 
 	/**
 	 * Membership instance declared
+	 *
 	 * @return Membership|null
 	 * @since 1.0.0
 	 */
@@ -167,7 +204,8 @@ final class Ecommerce {
 
 	/**
 	 * Order object
-	 * @param $order_id
+	 *
+	 * @param mixed $order_id Order identifier.
 	 * @return Order
 	 * @sincee 1.0.0
 	 */
@@ -179,6 +217,9 @@ final class Ecommerce {
 	}
 }
 
+/**
+ * Ecommerce for Ecommerce.
+ */
 function ecommerce() {
 	return Ecommerce::instance();
 }

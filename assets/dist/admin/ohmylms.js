@@ -2552,9 +2552,9 @@
               key: 1,
               lessonType: "text",
               icon: React.createElement(ce, null),
-              title: (0, b.__)("Text", "ohmylms"),
+              title: (0, b.__)("Block lesson", "ohmylms"),
               type: "lesson",
-              description: (0, b.__)("Create text-based content with links and images", "ohmylms"),
+              description: (0, b.__)("Create content with the WordPress block editor", "ohmylms"),
               onClick: function () {
                 return o("text");
               }
@@ -15114,43 +15114,7 @@
           return r;
         }
         var pp = window.ohmylms.extensions.quizComponents.QuizEditor(() => ({
-          Br,
-          D,
-          Ec,
-          Ge,
-          Gs,
-          I,
-          Nu,
-          Od,
-          Qs,
-          Rd,
-          React,
-          Rt,
-          T,
-          W,
-          Wr,
-          Yc,
-          _,
-          _m,
-          _s,
-          b,
-          bm,
-          dp,
-          f,
-          g,
-          ip,
-          nd,
-          np,
-          op,
-          rm,
-          sp,
-          up,
-          y,
-          yd,
-          ym,
-          z,
-          za,
-          zd
+          T
         }));
         const fp = (0, g.memo)(pp);
         function vp(e) {
@@ -66700,16 +66664,11 @@
           };
         }
         var oH = window.ohmylms.extensions.courseComponents.CourseOrganization(() => ({
-          $V,
           I,
-          React,
-          T,
-          XV,
-          aH,
           b,
+          f,
           g,
-          tH,
-          y
+          l
         }));
         const iH = (0, g.memo)(oH);
         function lH(e, t) {
@@ -67855,6 +67814,7 @@
             T,
             TW,
             ZD,
+            Zp,
             aG,
             b,
             cG,
@@ -83354,7 +83314,6 @@
         }
         // Reconstructed application fragment. Assembled in manifest order within factory 1841.
         var B3 = window.ohmylms.extensions.gamificationComponents.LevelEditor(() => ({
-          C3,
           D3,
           F3,
           FK,
@@ -83371,7 +83330,9 @@
           k3,
           l,
           y,
-          z
+          z,
+          We,
+          lf
         }));
         const L3 = (0, g.memo)(B3);
         function V3() {
@@ -84079,6 +84040,7 @@
           c5,
           f,
           g,
+          o3,
           w5,
           z
         }));
@@ -87494,6 +87456,19 @@
               r7
             })),
             google_signin: window.ohmylms.extensions.integrationComponents.GoogleSignInSettings(() => ({
+              E7,
+              I,
+              Pf,
+              React,
+              S7,
+              _7,
+              b,
+              b7,
+              g,
+              g7,
+              l
+            })),
+            microsoft_signin: window.ohmylms.extensions.integrationComponents.MicrosoftSignInSettings(() => ({
               E7,
               I,
               Pf,
@@ -116408,7 +116383,7 @@
                 for (;;) switch (e.n) {
                   case 0:
                     return e.n = 1, pe()({
-                      path: (0, Sn.addQueryArgs)("/cx-ecommerce/v1/orders", t),
+                      path: (0, Sn.addQueryArgs)("/ohmylms-commerce/v1/orders", t),
                       parse: !1
                     });
                   case 1:
@@ -116443,7 +116418,7 @@
                 for (;;) switch (e.n) {
                   case 0:
                     return e.n = 1, pe()({
-                      path: (0, Sn.addQueryArgs)("/cx-ecommerce/v1/orders/".concat(t)),
+                      path: (0, Sn.addQueryArgs)("/ohmylms-commerce/v1/orders/".concat(t)),
                       parse: !1
                     });
                   case 1:
@@ -116466,7 +116441,7 @@
                 for (;;) switch (e.n) {
                   case 0:
                     return e.n = 1, pe()({
-                      path: (0, Sn.addQueryArgs)("/cx-ecommerce/v1/orders/".concat(t.id)),
+                      path: (0, Sn.addQueryArgs)("/ohmylms-commerce/v1/orders/".concat(t.id)),
                       method: "POST",
                       data: t,
                       parse: !1
@@ -116491,7 +116466,7 @@
                 for (;;) switch (e.n) {
                   case 0:
                     return e.n = 1, pe()({
-                      path: (0, Sn.addQueryArgs)("/cx-ecommerce/v1/orders/".concat(t.id, "/refunds")),
+                      path: (0, Sn.addQueryArgs)("/ohmylms-commerce/v1/orders/".concat(t.id, "/refunds")),
                       method: "POST",
                       data: {
                         amount: n.amount,
@@ -116520,7 +116495,7 @@
                 for (;;) switch (e.n) {
                   case 0:
                     return e.n = 1, pe()({
-                      path: (0, Sn.addQueryArgs)("/cx-ecommerce/v1/orders/".concat(n.id, "/notes")),
+                      path: (0, Sn.addQueryArgs)("/ohmylms-commerce/v1/orders/".concat(n.id, "/notes")),
                       method: "POST",
                       data: {
                         note: t
@@ -116545,7 +116520,7 @@
                 for (;;) switch (e.p = e.n) {
                   case 0:
                     return e.p = 0, e.n = 1, pe()({
-                      path: "/cx-ecommerce/v1/orders/".concat(t),
+                      path: "/ohmylms-commerce/v1/orders/".concat(t),
                       method: "DELETE"
                     });
                   case 1:
@@ -116568,7 +116543,7 @@
                 for (;;) switch (e.p = e.n) {
                   case 0:
                     return e.p = 0, e.n = 1, pe()({
-                      path: "/cx-ecommerce/v1/orders/trash-bulk",
+                      path: "/ohmylms-commerce/v1/orders/trash-bulk",
                       method: "DELETE",
                       data: {
                         order_ids: t
@@ -121992,7 +121967,7 @@
                 for (;;) switch (e.n) {
                   case 0:
                     return e.n = 1, pe()({
-                      path: (0, Sn.addQueryArgs)("/cx-ecommerce/v1/subscriptions", t),
+                      path: (0, Sn.addQueryArgs)("/ohmylms-commerce/v1/subscriptions", t),
                       parse: !1
                     });
                   case 1:
@@ -122027,7 +122002,7 @@
                 for (;;) switch (e.n) {
                   case 0:
                     return e.n = 1, pe()({
-                      path: (0, Sn.addQueryArgs)("/cx-ecommerce/v1/subscriptions/".concat(t)),
+                      path: (0, Sn.addQueryArgs)("/ohmylms-commerce/v1/subscriptions/".concat(t)),
                       parse: !1
                     });
                   case 1:
@@ -122050,7 +122025,7 @@
                 for (;;) switch (e.n) {
                   case 0:
                     return e.n = 1, pe()({
-                      path: (0, Sn.addQueryArgs)("/cx-ecommerce/v1/subscriptions/".concat(t.id)),
+                      path: (0, Sn.addQueryArgs)("/ohmylms-commerce/v1/subscriptions/".concat(t.id)),
                       method: "POST",
                       data: t,
                       parse: !1

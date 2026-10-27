@@ -1,6 +1,11 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
+/**
+ * Data exception class.
+ *
+ * @package OhMyLMS
+ */
 
-namespace CodeRex\Ecommerce;
+namespace OhMyLMS\Commerce;
 
 /**
  * E-Commerce module Data Exception Class

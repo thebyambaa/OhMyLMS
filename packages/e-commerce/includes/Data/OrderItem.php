@@ -1,16 +1,21 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
+/**
+ * Class OrderItem.
+ *
+ * @package OhMyLMS
+ */
 
-namespace CodeRex\Ecommerce\Data;
+namespace OhMyLMS\Commerce\Data;
 
-use CodeRex\Ecommerce\Abstracts\Data;
-use CodeRex\Ecommerce\DataStores;
+use OhMyLMS\Commerce\Abstracts\Data;
+use OhMyLMS\Commerce\DataStores;
 
 /**
  * Class OrderItem
  *
  * Represents an order item in the e-commerce system.
  *
- * @package CodeRex\Ecommerce\Data
+ * @package OhMyLMS\Commerce\Data
  * @since 1.0.0
  */
 class OrderItem extends Data {
@@ -19,7 +24,7 @@ class OrderItem extends Data {
 	 *
 	 * Represents an order item for a course.
 	 *
-	 * @package CodeRex\Ecommerce\Data
+	 * @package OhMyLMS\Commerce\Data
 	 */
 	protected array $data = array(
 		'order_id'  => 0,
@@ -29,6 +34,8 @@ class OrderItem extends Data {
 	);
 
 	/**
+	 * The type of the object, in this case, 'order_item'.
+	 *
 	 * @var string The type of the object, in this case, 'order_item'.
 	 */
 	protected string $object_type = 'order_item';
@@ -39,7 +46,7 @@ class OrderItem extends Data {
 	 * Initializes the OrderItemCourse object. If an item is provided, it sets the ID and reads the data store.
 	 *
 	 * @param int|\WC_Order_Item $item The item to initialize. Default is 0.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function __construct( $item = 0 ) {
@@ -78,6 +85,11 @@ class OrderItem extends Data {
 		return '';
 	}
 
+	/**
+	 * Get order id for Order item.
+	 *
+	 * @param string $context Context.
+	 */
 	public function get_order_id( $context = 'view' ) {
 		return $this->get_prop( 'order_id', $context );
 	}
@@ -114,10 +126,20 @@ class OrderItem extends Data {
 		return $this->get_prop( 'course_id', $context );
 	}
 
+	/**
+	 * Set name for Order item.
+	 *
+	 * @param mixed $value Value to process.
+	 */
 	public function set_name( $value ) {
 		$this->set_prop( 'name', $value );
 	}
 
+	/**
+	 * Set quantity for Order item.
+	 *
+	 * @param mixed $value Value to process.
+	 */
 	public function set_quantity( $value ) {
 		$this->set_prop( 'quantity', absint( $value ) );
 	}

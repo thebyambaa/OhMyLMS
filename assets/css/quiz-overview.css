@@ -1,0 +1,293 @@
+.ohmylms-quiz-overview {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 320px;
+	gap: 32px;
+	width: 100%;
+	max-width: 1440px;
+	margin: 0 auto;
+	padding: 24px;
+	background: #fff;
+	color: #333;
+}
+
+.ohmylms-quiz-overview .ohmylms-quiz-overview-toolbar,
+.ohmylms-quiz-overview .ohmylms-overview-card-header,
+.ohmylms-quiz-overview .ohmylms-overview-find-heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.ohmylms-quiz-overview .ohmylms-quiz-overview-toolbar p,
+.ohmylms-quiz-overview .ohmylms-overview-metadata,
+.ohmylms-quiz-overview .ohmylms-overview-card-actions {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.ohmylms-quiz-overview .ohmylms-overview-cards {
+	display: grid;
+	gap: 32px;
+	margin-top: 32px;
+}
+
+.ohmylms-quiz-overview .ohmylms-overview-card {
+	position: relative;
+	padding: 20px;
+	border: 1px solid #e5e5e5;
+	border-radius: var(--oml-radius-card, 8px);
+	background: #fff;
+}
+
+.ohmylms-quiz-overview .ohmylms-overview-card.is-dragging {
+	opacity: 0.5;
+}
+
+.ohmylms-quiz-overview .ohmylms-overview-drag {
+	position: absolute;
+	top: -14px;
+	left: calc(50% - 16px);
+	width: 32px;
+	min-width: 32px;
+	height: 26px;
+	padding: 0;
+	border: 1px solid #e5e5e5;
+	border-radius: var(--oml-radius-control, 6px);
+	background: #fff;
+	cursor: grab;
+}
+
+.ohmylms-quiz-overview .ohmylms-overview-metadata {
+	flex-wrap: wrap;
+	gap: 6px;
+	font-size: 11px;
+	color: #777;
+	text-transform: uppercase;
+}
+
+.ohmylms-quiz-overview .ohmylms-overview-card-actions {
+	gap: 2px;
+}
+
+.ohmylms-quiz-overview .ohmylms-overview-card-actions .components-button {
+	min-width: 28px;
+	height: 30px;
+	padding: 4px;
+	color: #666;
+}
+
+.ohmylms-quiz-overview .ohmylms-overview-prompt {
+	display: block;
+	width: 100%;
+	margin: 24px 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1.6;
+	text-align: left;
+	color: #222;
+	cursor: pointer;
+}
+
+.ohmylms-quiz-overview .ohmylms-overview-answers {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 12px 24px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.ohmylms-quiz-overview .ohmylms-overview-answers li {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	min-width: 0;
+	font-size: 14px;
+	overflow-wrap: anywhere;
+}
+
+.ohmylms-quiz-overview .ohmylms-overview-answer-mark {
+	flex: 0 0 16px;
+	width: 16px;
+	height: 16px;
+	border: 2px solid #aaa;
+	border-radius: 50%;
+	line-height: 12px;
+	text-align: center;
+}
+
+.ohmylms-quiz-overview .ohmylms-overview-answer-mark.is-correct {
+	border-color: #098c55;
+	background: #098c55;
+	color: #fff;
+}
+
+.ohmylms-quiz-overview .ohmylms-overview-question-image {
+	width: auto;
+	max-width: 100%;
+	max-height: 180px;
+	margin-bottom: 16px;
+	object-fit: contain;
+}
+
+.ohmylms-quiz-overview .ohmylms-overview-answer-image {
+	width: 64px;
+	height: 48px;
+	object-fit: contain;
+}
+
+.ohmylms-quiz-overview .ohmylms-overview-find {
+	position: sticky;
+	top: 50px;
+	align-self: start;
+	min-height: 520px;
+	padding: 16px;
+	border: 1px solid #ededed;
+	border-radius: var(--oml-radius-card, 8px);
+	background: #f8f9fa;
+}
+
+.ohmylms-quiz-overview .ohmylms-overview-find h2 {
+	margin: 0;
+	font-size: 16px;
+}
+
+.ohmylms-quiz-overview .ohmylms-overview-find .components-base-control {
+	margin: 20px 0;
+}
+
+.ohmylms-quiz-overview .ohmylms-overview-find-help {
+	margin: 80px 0 24px;
+	text-align: center;
+}
+
+.ohmylms-quiz-overview .ohmylms-overview-find-help > .dashicons {
+	width: 64px;
+	height: 64px;
+	font-size: 64px;
+	color: var(--ohmylms-quiz-accent, #8854b7);
+}
+
+.ohmylms-quiz-overview .ohmylms-overview-add-bottom {
+	width: 100%;
+	margin-top: 24px;
+}
+
+.ohmylms-quiz-overview .ohmylms-overview-workspace {
+	grid-column: 1;
+}
+
+.ohmylms-quiz-overview .ohmylms-overview-workspace .ohmylms-form-workspace {
+	display: none;
+}
+
+.ohmylms-overview-preview {
+	width: 900px;
+	max-width: 90vw;
+}
+
+@media (max-width: 1100px) {
+
+	.ohmylms-quiz-overview {
+		grid-template-columns: minmax(0, 1fr) 260px;
+		gap: 20px;
+		padding: 16px;
+	}
+
+	.ohmylms-quiz-overview .ohmylms-overview-card-header {
+		flex-wrap: wrap;
+	}
+}
+
+@media (max-width: 800px) {
+
+	.ohmylms-quiz-overview {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.ohmylms-quiz-overview .ohmylms-overview-find {
+		position: static;
+		grid-row: 1;
+		min-height: 0;
+	}
+
+	.ohmylms-quiz-overview .ohmylms-overview-find-help {
+		display: none;
+	}
+
+	.ohmylms-quiz-overview .ohmylms-overview-answers {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.ohmylms-quick-question-prompt {
+	position: relative;
+	margin: 24px 0;
+	padding-bottom: 24px;
+}
+
+.ohmylms-quick-question-prompt .ohmylms-prompt-label {
+	display: none;
+}
+
+.ohmylms-quick-question-prompt:not(:focus-within) [role="toolbar"],
+.ohmylms-quick-question-prompt:not(:focus-within) .ohmylms-equation-actions {
+	display: none;
+}
+
+.ohmylms-quiz-overview .ohmylms-quick-question-prompt [role="textbox"] {
+	min-height: 24px;
+	padding: 4px;
+	border: 0;
+	background: transparent;
+	color: #222;
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1.6;
+}
+
+.ohmylms-quiz-overview .ohmylms-quick-question-prompt [role="textbox"]:focus {
+	outline: 2px solid #3858e9;
+	outline-offset: 3px;
+	border-radius: 2px;
+}
+
+.ohmylms-quick-question-save-status {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	color: #50575e;
+	font-size: 12px;
+	line-height: 1.5;
+}
+
+.ohmylms-quick-question-save-status[data-save-error="true"] {
+	color: #b32d2e;
+}
+
+.ohmylms-skill-picker .ohmylms-skill-picker-branch {
+	margin: 8px 0;
+}
+
+.ohmylms-skill-picker .ohmylms-skill-picker-branch > summary {
+	padding: 4px;
+	color: #1d2327;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.ohmylms-skill-picker .ohmylms-skill-picker-branch > div {
+	margin-left: 12px;
+	padding-left: 12px;
+	border-left: 1px solid var(--oml-border, #dcdcde);
+}
+
+.ohmylms-skill-picker .ohmylms-skill-picker-branch > summary:focus-visible {
+	outline: 2px solid #3858e9;
+	outline-offset: 1px;
+}

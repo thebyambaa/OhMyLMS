@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Responsible to handle all lesson request validation.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Lesson;
 

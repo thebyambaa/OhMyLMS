@@ -1,0 +1,100 @@
+import fs from 'node:fs';
+
+// These shipped styles are immutable build inputs copied from the recovery manifest.
+// Lint the authored SCSS below; never rewrite the compiled CSS or Tailwind utilities.
+const recovery_manifest = JSON.parse(
+	fs.readFileSync(
+		new URL( './assets/src/manifest.json', import.meta.url ),
+		'utf8'
+	)
+);
+const compiled_styles = recovery_manifest.assets
+	.filter(
+		( asset ) =>
+			asset.source.startsWith( 'static/' ) &&
+			asset.output.endsWith( '.css' )
+	)
+	.map( ( asset ) => asset.output );
+
+// Public selectors already consumed by WordPress controls, checkout templates and extensions.
+// Keep this list exact: new plugin selectors must use WordPress's hyphenated convention.
+const public_classes = [
+	// Existing HubIcons markup and AI analysis status contract.
+	'oml-hub-logo--custom',
+	'oml-hub-kind--custom',
+	'is-new_skill',
+	'ohmylms-feature-settings-header__description',
+	'components-base-control__field',
+	'ohmylms-streak-settings__header',
+	'ohmylms-streak-settings__fields',
+	'ohmylms-streak-settings__card',
+	'ohmylms-streak-settings__grid',
+	'components-base-control__label',
+	'components-input-control__label',
+	'components-text-control__input',
+	'components-select-control__input',
+	'ohmylms-streak-settings__freeze-fields',
+	'ohmylms-streak-settings__details',
+	'ohmylms-streak-settings__milestone',
+	'ohmylms-streak-settings__milestone-fields',
+	'ohmylms-streak-settings__badge-field',
+	'ohmylms-streak-settings__footer',
+	'components-tab-panel__tabs',
+	'ohmylms-import-preview__headline',
+	'components-modal__content',
+	'components-modal__frame',
+	'components-popover__content',
+	'components-menu-group__label',
+	'components-menu-item__item',
+	'components-menu-item__button',
+	'components-menu-item__info',
+	'components-combobox-control__suggestions-container',
+	'components-form-token-field__suggestions-list',
+	'components-form-token-field__input-container',
+	'components-form-token-field__token',
+	'components-form-token-field__token-text',
+	'components-form-token-field__remove-token',
+	'components-radio-control__option',
+	'ohmylms-NoticeGroup',
+	'payment_box',
+	'payment_method_stripe',
+	'order_total',
+	'order_id',
+	'purchase_date',
+	'payment_method',
+];
+const public_ids = [
+	'ohmylms_checkout_place_order',
+	'last_name_field',
+	'first_name_field',
+	'country_field',
+	'state_field',
+	'city_field',
+	'postcode_field',
+];
+const compatible_pattern = ( names ) =>
+	`^(?:([a-z][a-z0-9]*)(-[a-z0-9]+)*|${ names.join( '|' ) })$`;
+
+export default {
+	extends: [ '@wordpress/stylelint-config' ],
+	rules: {
+		'selector-class-pattern': compatible_pattern( public_classes ),
+		'selector-id-pattern': compatible_pattern( public_ids ),
+	},
+	overrides: [
+		{
+			files: [ '**/*.scss' ],
+			extends: [ '@wordpress/stylelint-config/scss' ],
+			customSyntax: 'postcss-scss',
+		},
+	],
+	ignoreFiles: [
+		...compiled_styles,
+		'node_modules/**',
+		'vendor/**',
+		'build/**',
+		'assets/dist/**',
+		'assets/src/static/**',
+		'assets/src/runtimes/**',
+	],
+};

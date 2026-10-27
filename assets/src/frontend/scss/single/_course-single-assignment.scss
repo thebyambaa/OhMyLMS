@@ -1,11 +1,12 @@
 .ohmylms-page {
 
     .ohmylms-course-assignment {
+
         .ohmylms-assignment-accordion {
             padding: 0 24px;
             border-radius: 14px;
             background-color: #FFF;
-            box-shadow: 0px 1px 2px 0px #DBDDE1;
+            box-shadow: 0 1px 2px 0 #DBDDE1;
         }
 
         .ohmylms-accordion-item {
@@ -37,21 +38,23 @@
                 box-shadow: none;
                 border-bottom-color: #E4E8ED;
 
-                &:before {
+                &::before {
                     opacity: 1;
                     visibility: visible;
                 }
 
-                &:first-child:before {
+                &:first-child::before {
                     border-top-left-radius: 14px;
                     border-top-right-radius: 14px;
                 }
-                &:last-child:before {
+
+                &:last-child::before {
                     border-bottom-left-radius: 14px;
                     border-bottom-right-radius: 14px;
                 }
 
                 .ohmylms-accordion-head {
+
                     .arrow-icon {
                         transform: rotate(180deg);
                     }
@@ -132,21 +135,26 @@
 
             .ohmylms-tr {
                 border-bottom-color: #E4E8ED;
+
                 &:first-child {
                     border-top: 1px solid #E4E8ED;
                 }
 
                 .ohmylms-td {
+
                     &:first-child {
                         padding-left: 20px;
                     }
+
                     &.status > span {
                         text-transform: capitalize;
                     }
+
                     &.status > span.approved {
                         background: rgba(25, 170, 50, 0.2);
                         color: #19AA32;
                     }
+
                     &.action {
                         padding-right: 0;
                         width: 30px;
@@ -164,15 +172,19 @@
 }
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .ohmylms-course-assignment .ohmylms-table .ohmylms-tr .ohmylms-td-handle + .ohmylms-td {
         font-size: 13px;
     }
+
     .ohmylms-page .ohmylms-course-assignment .ohmylms-accordion-title {
         font-size: 13px;
     }
+
     .ohmylms-page .ohmylms-course-assignment .ohmylms-accordion-head .score {
         font-size: 13px;
     }
+
     .ohmylms-page .ohmylms-course-assignment .ohmylms-accordion-head .status {
         font-size: 12px;
     }
@@ -180,12 +192,13 @@
 }
 
 @media screen and (max-width: 767px) {
+
     .ohmylms-page .ohmylms-course-assignment .ohmylms-table .ohmylms-tr .ohmylms-td-handle {
         top: 13px;
     }
 
-    .ohmylms-page .ohmylms-course-assignment .ohmylms-table .ohmylms-mobile-td .status:before, 
-    .ohmylms-page .ohmylms-course-assignment .ohmylms-table .ohmylms-mobile-td .submission-date:before {
+    .ohmylms-page .ohmylms-course-assignment .ohmylms-table .ohmylms-mobile-td .status::before, 
+    .ohmylms-page .ohmylms-course-assignment .ohmylms-table .ohmylms-mobile-td .submission-date::before {
         width: 86px;
     }
 
@@ -193,33 +206,40 @@
         padding-left: 16px;
         padding-right: 0;
     }
+
     .ohmylms-page .ohmylms-course-assignment .ohmylms-table .ohmylms-tr .ohmylms-td.status {
         padding-right: 0;
     }
 }
 
 @media screen and (max-width: 575px) {
+
     .ohmylms-page .ohmylms-course-assignment .ohmylms-assignment-accordion {
         padding: 0 16px;
         border-radius: 10px;
     }
+
     .ohmylms-page .ohmylms-course-assignment .ohmylms-accordion-head {
         justify-content: flex-start;
         gap: 5px;
         padding-right: 35px;
     }
+
     .ohmylms-page .ohmylms-course-assignment .ohmylms-accordion-title {
         width: 100%;
         max-width: 100%;
     }
+
     .ohmylms-page .ohmylms-course-assignment .ohmylms-accordion-head .status {
         font-size: 10px;
         padding: 6px 8px;
         width: 67px;
     }
+
     .ohmylms-page .ohmylms-course-assignment .ohmylms-accordion-head .score {
         width: 90px;
     }
+
     .ohmylms-page .ohmylms-course-assignment .ohmylms-accordion-head .arrow-icon {
         position: absolute;
         top: 24px;

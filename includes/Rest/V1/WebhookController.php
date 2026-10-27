@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * WebhookController class.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Rest\V1;
 
@@ -39,7 +44,7 @@ class WebhookController extends RestController {
 	 * @since 1.0.0
 	 */
 	public function register_routes() {
-		// Get all webhooks
+		// Get all webhooks.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->base,
@@ -59,7 +64,7 @@ class WebhookController extends RestController {
 			)
 		);
 
-		// Get, update, delete specific webhook
+		// Get, update, delete specific webhook.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->base . '/(?P<id>[\d]+)',
@@ -89,7 +94,7 @@ class WebhookController extends RestController {
 			)
 		);
 
-		// Bulk actions
+		// Bulk actions.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->base . '/bulk',
@@ -100,21 +105,21 @@ class WebhookController extends RestController {
 					'permission_callback' => array( $this, 'create_item_permissions_check' ),
 					'args'                => array(
 						'action' => array(
-							'required'    => true,
-							'type'        => 'string',
-							'enum'        => array( 'delete', 'active', 'inactive' ),
+							'required' => true,
+							'type'     => 'string',
+							'enum'     => array( 'delete', 'active', 'inactive' ),
 						),
 						'ids'    => array(
-							'required'    => true,
-							'type'        => 'array',
-							'items'       => array( 'type' => 'integer' ),
+							'required' => true,
+							'type'     => 'array',
+							'items'    => array( 'type' => 'integer' ),
 						),
 					),
 				),
 			)
 		);
 
-		// Get webhook triggers
+		// Get webhook triggers.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->base . '/triggers',
@@ -207,7 +212,7 @@ class WebhookController extends RestController {
 		$orderby  = $request->get_param( 'orderby' ) ?? 'created_at';
 		$order    = $request->get_param( 'order' ) ?? 'DESC';
 
-		$args = array(
+		$args     = array(
 			'status'  => $status,
 			'search'  => $search,
 			'orderby' => $orderby,
@@ -216,7 +221,12 @@ class WebhookController extends RestController {
 			'offset'  => ( $page - 1 ) * $per_page,
 		);
 		$webhooks = WebhookStore::get_webhooks( $args );
-		$total    = WebhookStore::get_webhook_count( array( 'status' => $status, 'search' => $search ) );
+		$total    = WebhookStore::get_webhook_count(
+			array(
+				'status' => $status,
+				'search' => $search,
+			)
+		);
 
 		$data = array();
 		foreach ( $webhooks as $webhook_data ) {
@@ -260,7 +270,7 @@ class WebhookController extends RestController {
 	 */
 	public function create_item( $request ) {
 		try {
-			
+
 			$webhook = new Webhook();
 			$this->update_webhook_from_request( $webhook, $request );
 			$webhook->save();
@@ -372,32 +382,39 @@ class WebhookController extends RestController {
 	 * @return WP_REST_Response Response object.
 	 */
 	public function get_triggers( $request ) {
-		$triggers = Webhook::get_available_triggers();
-		$methods  = Webhook::get_available_methods();
+		$triggers   = Webhook::get_available_triggers();
+		$methods    = Webhook::get_available_methods();
 		$data_types = Webhook::get_available_data_types();
 
-		return rest_ensure_response( array(
-			'triggers'   => $triggers,
-			'methods'    => $methods,
-			'data_types' => $data_types,
-		) );
+		return rest_ensure_response(
+			array(
+				'triggers'   => $triggers,
+				'methods'    => $methods,
+				'data_types' => $data_types,
+			)
+		);
 	}
 
 	/**
 	 * Update webhook from request.
 	 *
-	 * @param Webhook $webhook Webhook object.
+	 * @param Webhook         $webhook Webhook object.
 	 * @param WP_REST_Request $request Request object.
 	 */
 	private function update_webhook_from_request( $webhook, $request ) {
 		$fields = array(
-			'name', 'trigger_event', 'webhook_url', 'http_method',
-			'data_type', 'data_mapping', 'status'
+			'name',
+			'trigger_event',
+			'webhook_url',
+			'http_method',
+			'data_type',
+			'data_mapping',
+			'status',
 		);
 
 		foreach ( $fields as $field ) {
 			if ( $request->has_param( $field ) ) {
-				$value = $request->get_param( $field );
+				$value  = $request->get_param( $field );
 				$method = "set_{$field}";
 				if ( method_exists( $webhook, $method ) ) {
 					$webhook->$method( $value );
@@ -409,7 +426,7 @@ class WebhookController extends RestController {
 	/**
 	 * Prepare webhook for response.
 	 *
-	 * @param Webhook $webhook Webhook object.
+	 * @param Webhook         $webhook Webhook object.
 	 * @param WP_REST_Request $request Request object.
 	 * @return array Webhook data.
 	 */
@@ -465,7 +482,7 @@ class WebhookController extends RestController {
 	 */
 	public function get_webhook_args() {
 		return array(
-			'name' => array(
+			'name'          => array(
 				'description' => __( 'Webhook name.', 'ohmylms' ),
 				'type'        => 'string',
 				'required'    => false,
@@ -475,28 +492,28 @@ class WebhookController extends RestController {
 				'type'        => 'string',
 				'required'    => false,
 			),
-			'webhook_url' => array(
+			'webhook_url'   => array(
 				'description' => __( 'Webhook URL.', 'ohmylms' ),
 				'type'        => 'string',
 				'required'    => false,
 			),
-			'http_method' => array(
+			'http_method'   => array(
 				'description' => __( 'HTTP method.', 'ohmylms' ),
 				'type'        => 'string',
 				'default'     => 'POST',
 				'enum'        => array( 'GET', 'POST', 'PUT', 'PATCH', 'DELETE' ),
 			),
-			'data_type' => array(
+			'data_type'     => array(
 				'description' => __( 'Data type.', 'ohmylms' ),
 				'type'        => 'string',
 				'default'     => 'json',
 				'enum'        => array( 'json', 'xml', 'form' ),
 			),
-			'data_mapping' => array(
+			'data_mapping'  => array(
 				'description' => __( 'Data mapping configuration.', 'ohmylms' ),
 				'type'        => 'string',
 			),
-			'status' => array(
+			'status'        => array(
 				'description' => __( 'Webhook status.', 'ohmylms' ),
 				'type'        => 'string',
 				'default'     => 'active',

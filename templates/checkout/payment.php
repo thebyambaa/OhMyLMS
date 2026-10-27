@@ -10,26 +10,26 @@
 
 defined( 'ABSPATH' ) || exit();
 
-$cart = \CodeRex\Ecommerce\ecommerce()->cart->get_cart();
-$has_membership = false;
-$by_point = false;
+$cart               = \OhMyLMS\Commerce\ecommerce()->cart->get_cart();
+$has_membership     = false;
+$by_point           = false;
 $is_recurring_daily = false;
 foreach ( $cart as $cart_item_key => $cart_item ) {
-	// Check if cart item data exists
+	// Check if cart item data exists.
 	if ( ! isset( $cart_item['data'] ) || ! is_object( $cart_item['data'] ) ) {
 		continue;
 	}
-	
-	if(get_post_type($cart_item['data']->get_id()) == 'ohmylms-membership'){
+
+	if ( get_post_type( $cart_item['data']->get_id() ) == 'ohmylms-membership' ) {
 		$membership = ohmylms_get_membership( $cart_item['data']->get_id() );
-		if( $membership && $membership->get_subscription_period() !== 'one_time' ){
+		if ( $membership && $membership->get_subscription_period() !== 'one_time' ) {
 			$has_membership = true;
 			if ( $membership->get_subscription_period() === 'day' ) {
 				$is_recurring_daily = true;
 			}
 		}
 	}
-	if ( isset( $cart_item['purchase_by'] ) && $cart_item['purchase_by'] === 'point' ) {
+	if ( isset( $cart_item['purchase_by'] ) && 'point' === $cart_item['purchase_by'] ) {
 		$by_point = true;
 	}
 }
@@ -37,7 +37,7 @@ foreach ( $cart as $cart_item_key => $cart_item ) {
 ?>
 	<div id="ohmylms-payment" class="ohmylms-checkout-payment">
 
-		<?php if ( ! $by_point && \CodeRex\Ecommerce\ecommerce()->cart->needs_payment() ) : ?>
+		<?php if ( ! $by_point && \OhMyLMS\Commerce\ecommerce()->cart->needs_payment() ) : ?>
 			<div class="ohmylms-payment-method-wrapper">
 				<h3 class="ohmylms-checkout-title">
 					<?php esc_html_e( 'Payment Information', 'ohmylms' ); ?>
@@ -55,16 +55,15 @@ foreach ( $cart as $cart_item_key => $cart_item ) {
 							ohmylms_get_template(
 								'checkout/payment-method.php',
 								array(
-									'gateway' => $gateway,
-									'is_first' => $is_first
+									'gateway'  => $gateway,
+									'is_first' => $is_first,
 								)
 							);
 							$is_first = false;
 						}
-					}
-					else {
+					} else {
 						echo '<li class="no-payment-method-text">';
-							echo esc_html('Sorry, it seems that there are no available payment methods. Please contact us if you require assistance or wish to make alternate arrangements.');
+							echo esc_html( 'Sorry, it seems that there are no available payment methods. Please contact us if you require assistance or wish to make alternate arrangements.' );
 						echo '</li>';
 					}
 					?>
@@ -85,7 +84,7 @@ foreach ( $cart as $cart_item_key => $cart_item ) {
 				name="ohmylms_checkout_place_order"
 				aria-label="Complete Checkout"
 			>
-				<?php echo __( 'Complete Checkout', 'ohmylms' ); ?>
+				<?php echo esc_html__( 'Complete Checkout', 'ohmylms' ); ?>
 				<span class="ohmylms-loader"></span>
 			</button>
 

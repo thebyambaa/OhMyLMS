@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Class AssignmentStore.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\DataStores;
 
@@ -18,7 +23,7 @@ class AssignmentStore extends DataStore {
 	/**
 	 * Create Assignment
 	 *
-	 * @param Assignment $assignment
+	 * @param Assignment $assignment Assignment.
 	 * @return mixed|void
 	 * @since 1.0.0
 	 */
@@ -68,9 +73,9 @@ class AssignmentStore extends DataStore {
 	/**
 	 * Read data
 	 *
-	 * @param Assignment $assignment
+	 * @param Assignment $assignment Assignment.
 	 * @return mixed|void
-	 * @throws \Exception
+	 * @throws \Exception When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	public function read( &$assignment ) {
@@ -87,7 +92,7 @@ class AssignmentStore extends DataStore {
 				'date_created'  => $post_object->post_date_gmt,
 				'date_modified' => $post_object->post_modified_gmt,
 				'description'   => $post_object->post_content,
-				'content'   	=> $post_object->post_content,
+				'content'       => $post_object->post_content,
 				'thumbnail_id'  => get_post_thumbnail_id( $assignment->get_id() ),
 			)
 		);
@@ -181,7 +186,7 @@ class AssignmentStore extends DataStore {
 	 * This function deletes a Assignment by its ID and triggers the 'ohmylms_after_deleting_a_assignment' action hook.
 	 *
 	 * @param Assignment $assignment The Assignment object to be deleted.
-	 * @param array      $args   Optional. Additional arguments for the delete operation. Default empty array.
+	 * @param array      $args Optional. Additional arguments for the delete operation. Default empty array.
 	 *
 	 * @since 1.0.0
 	 */
@@ -206,7 +211,7 @@ class AssignmentStore extends DataStore {
 	/**
 	 * Helper function that reads Assignment data
 	 *
-	 * @param Assignment $assignment
+	 * @param Assignment $assignment Assignment.
 	 * @return void
 	 *
 	 * @since 1.0.0
@@ -245,8 +250,8 @@ class AssignmentStore extends DataStore {
 	/**
 	 * Helper function that updates Assignment meta
 	 *
-	 * @param Assignment $assignment
-	 * @param bool       $force
+	 * @param Assignment $assignment Assignment.
+	 * @param bool       $force Force.
 	 * @return void
 	 *
 	 * @since 1.0.0
@@ -288,23 +293,31 @@ class AssignmentStore extends DataStore {
 		do_action( 'ohmylms_assignment_meta_updated', $assignment );
 	}
 
+	/**
+	 * Get submission for Assignment store.
+	 *
+	 * @param mixed $assignment Assignment.
+	 * @param mixed $user_id User identifier.
+	 */
 	public function get_submission( $assignment, $user_id ) {
-		// Query to get the submission
+		// Query to get the submission.
 		global $wpdb;
 
-		$table_name = $wpdb->prefix . 'ohmylms_assignment_attempts'; // Replace with your actual table name
+		$table_name = $wpdb->prefix . 'ohmylms_assignment_attempts'; // Replace with your actual table name.
 
-		$query = $wpdb->prepare(
-			"SELECT * FROM $table_name WHERE user_id = %d AND assignment_id = %d",
-			$user_id,
-			$assignment->get_id()
-		);
-
-		$submission = $wpdb->get_results( $query, ARRAY_A );
+		$submission = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE user_id = %d AND assignment_id = %d', $table_name, $user_id, $assignment->get_id() ), ARRAY_A );
 
 		return $submission;
 	}
 
+	/**
+	 * Submit file submission for Assignment store.
+	 *
+	 * @param mixed $assignment Assignment.
+	 * @param mixed $student_id Student identifier.
+	 * @param mixed $course_id Course identifier.
+	 * @param mixed $data Input data.
+	 */
 	public function submit_file_submission( $assignment, $student_id, $course_id, $data ) {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'ohmylms_assignment_attempts';
@@ -320,19 +333,28 @@ class AssignmentStore extends DataStore {
 			'end_date'      => current_time( 'mysql', 1 ),
 		);
 
-		$wpdb->insert( $table_name, $data );
+		if ( $wpdb->insert( $table_name, $data ) ) {
+			do_action( 'ohmylms_assignment_submitted', (int) $wpdb->insert_id, $assignment->get_id(), $course_id, $student_id );
+		}
 	}
 
 
+	/**
+	 * Get report for Assignment store.
+	 *
+	 * @param mixed $assignment Assignment.
+	 */
 	public function get_report( $assignment ) {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'ohmylms_assignment_attempts';
 
 		$query = $wpdb->prepare(
-			"SELECT attempts.*, u.user_email, u.display_name, attempts.start_date AS submitted_date
-		FROM $table_name attempts
-		LEFT JOIN {$wpdb->prefix}users u ON attempts.user_id = u.ID
-		WHERE assignment_id = %d",
+			'SELECT attempts.*, u.user_email, u.display_name, attempts.start_date AS submitted_date
+		FROM %i attempts
+		LEFT JOIN %i u ON attempts.user_id = u.ID
+		WHERE assignment_id = %d',
+			$table_name,
+			$wpdb->prefix . 'users',
 			$assignment->get_id()
 		);
 
@@ -360,15 +382,23 @@ class AssignmentStore extends DataStore {
 		return array_values( $report );
 	}
 
+	/**
+	 * Get assignment attempts for Assignment store.
+	 *
+	 * @param mixed $assignment Assignment.
+	 * @param mixed $student_id Student identifier.
+	 */
 	public function get_assignment_attempts( $assignment, $student_id ) {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'ohmylms_assignment_attempts';
 
 		$query = $wpdb->prepare(
-			"SELECT attempts.*, u.user_email, u.display_name, attempts.start_date AS submitted_date
-		FROM $table_name attempts
-		LEFT JOIN {$wpdb->prefix}users u ON attempts.user_id = u.ID
-		WHERE assignment_id = %d AND user_id = %d",
+			'SELECT attempts.*, u.user_email, u.display_name, attempts.start_date AS submitted_date
+		FROM %i attempts
+		LEFT JOIN %i u ON attempts.user_id = u.ID
+		WHERE assignment_id = %d AND user_id = %d',
+			$table_name,
+			$wpdb->prefix . 'users',
 			$assignment->get_id(),
 			$student_id
 		);
@@ -377,13 +407,13 @@ class AssignmentStore extends DataStore {
 		$report  = array();
 
 		foreach ( $results as $submission ) {
-			$submission['files'] = maybe_unserialize( $submission['files'] );
-			$submission_file_name = isset( $submission['files']['file'] ) ? basename( $submission['files']['file'] ) : '';
-			$submission_file_size = isset( $submission['files']['file'] ) ? filesize( $submission['files']['file'] ) : 0;
-			$submission_file_size = ohmylms_format_file_size( $submission_file_size );
+			$submission['files']              = maybe_unserialize( $submission['files'] );
+			$submission_file_name             = isset( $submission['files']['file'] ) ? basename( $submission['files']['file'] ) : '';
+			$submission_file_size             = isset( $submission['files']['file'] ) ? filesize( $submission['files']['file'] ) : 0;
+			$submission_file_size             = ohmylms_format_file_size( $submission_file_size );
 			$submission['files']['file_name'] = $submission_file_name;
 			$submission['files']['file_size'] = $submission_file_size;
-			$key                 = $submission['user_id'] . '_' . $submission['course_id'] . '_' . $submission['assignment_id'];
+			$key                              = $submission['user_id'] . '_' . $submission['course_id'] . '_' . $submission['assignment_id'];
 
 			if ( ! isset( $report[ $key ] ) ) {
 				$report[ $key ] = array(
@@ -402,17 +432,32 @@ class AssignmentStore extends DataStore {
 		return array_values( $report );
 	}
 
+	/**
+	 * Update assignment attempts for Assignment store.
+	 *
+	 * @param mixed $assignment Assignment.
+	 * @param mixed $student_id Student identifier.
+	 * @param mixed $attempt_data Attempt data.
+	 */
 	public function update_assignment_attempts( $assignment, $student_id, $attempt_data ) {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'ohmylms_assignment_attempts';
-		foreach ( $attempt_data as $key => $value){
+		foreach ( $attempt_data as $key => $value ) {
 			$data = array(
-				'note' => !empty($value['note']) ? $value['note'] : '',
-				'status' => $value['status'],
-				'score' => $value['score'],
-				'end_date' => current_time('mysql', 1)
+				'note'     => ! empty( $value['note'] ) ? $value['note'] : '',
+				'status'   => $value['status'],
+				'score'    => $value['score'],
+				'end_date' => current_time( 'mysql', 1 ),
 			);
-			$wpdb->update($table_name, $data, array( "id" =>$value['id'] ,'user_id' => $student_id, 'assignment_id' => $assignment->get_id()));
+			$wpdb->update(
+				$table_name,
+				$data,
+				array(
+					'id'            => $value['id'],
+					'user_id'       => $student_id,
+					'assignment_id' => $assignment->get_id(),
+				)
+			);
 		}
 	}
 }

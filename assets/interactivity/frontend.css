@@ -6,3 +6,5 @@
 @media (prefers-reduced-motion: reduce) {
   [data-wp-interactive="ohmylms/gamification"] .ohmylms-celebration-popup { animation: none; right: 20px; }
 }
+/* Quiz step button: outlined while the question is unanswered (Skip), solid once answered (Next). */
+button.ohmylms-next-quiz:has(.is-skip) { background: transparent !important; color: var(--player-accent, #7c3aed) !important; border: 2px solid var(--player-accent, #7c3aed) !important; }

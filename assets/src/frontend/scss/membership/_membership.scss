@@ -5,6 +5,7 @@
 }
 
 .ohmylms-page {
+
     .ohmylms-membership {
         background-color: #F9FAFD;
         padding: 50px 0 60px;
@@ -37,7 +38,7 @@
         text-align: center;
         padding: 40px 20px;
         border-radius: 10px;
-        box-shadow: 0 0px 17px 10px #33333314;
+        box-shadow: 0 0 17px 10px #33333314;
 
         h2 {
             font-size: 26px;
@@ -65,7 +66,7 @@
         border-radius: 14px;
         border: 1px solid #EBEBEF;
         background: #FFF;
-        box-shadow: 0px 20px 20px 0px #d8dbe03d;
+        box-shadow: 0 20px 20px 0 #d8dbe03d;
         padding: 26px 30px;
         width: calc(33.333% - 20px);
         transition: all 0.3s ease;
@@ -73,7 +74,7 @@
         flex-flow: column;
 
         &:hover {
-            box-shadow: 0px 1px 2px 0px #DBDDE1;
+            box-shadow: 0 1px 2px 0 #DBDDE1;
         }
         
         .membership-header {
@@ -114,8 +115,6 @@
                 font-size: 16px;
                 font-weight: 400;
                 line-height: 1;
-                leading-trim: both;
-                text-edge: cap;
                 display: flex;
                 flex-flow: row wrap;
                 align-items: center;
@@ -139,8 +138,6 @@
     
             .membership-description {
                 color: var(--ohmylms-body-text-color);
-                leading-trim: both;
-                text-edge: cap;
                 font-size: 15px;
                 font-weight: 400;
                 line-height: 1.6;
@@ -166,7 +163,7 @@
                     padding-left: 25px;
     
                     &::before {
-                        content: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgMTIgMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggc3Ryb2tlPSIjMzVCRDRDIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMiIgZD0iTTEwLjY5NyAxLjY2N0w0LjAzIDguMzMyIDEgNS4zMDMiLz48L3N2Zz4=");
+                        content: url(data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgMTIgMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggc3Ryb2tlPSIjMzVCRDRDIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMiIgZD0iTTEwLjY5NyAxLjY2N0w0LjAzIDguMzMyIDEgNS4zMDMiLz48L3N2Zz4=);
                         display: block;
                         width: 14px;
                         height: auto;
@@ -246,9 +243,11 @@
 
 
 @media screen and (max-width: 1399px) {
+
     .ohmylms-page .membership-section-title {
         margin-bottom: 40px;
     }
+
     .ohmylms-page .membership-section-title h2 {
         font-size: 36px;
     }
@@ -257,9 +256,11 @@
         border-radius: 10px;
         padding: 18px 24px;
     }
+
     .ohmylms-page .ohmylms-membership-wrapper {
         gap: 20px;
     }
+
     .ohmylms-page .ohmylms-single-membership {
         width: calc(33.333% - 14px);
     }
@@ -267,9 +268,11 @@
     .ohmylms-page .ohmylms-single-membership .membership-header .membership-title {
         font-size: 22px;
     }
+
     .ohmylms-page .ohmylms-single-membership .membership-header .membership-discount-price {
         font-size: 36px;
     }
+
     .ohmylms-page .ohmylms-single-membership .membership-footer .ohmylms-button {
         font-size: 16px;
     }
@@ -280,6 +283,7 @@
         margin: 0 auto;
         width: 100%;
     }
+
     .ohmylms-page .membership-col-2 .ohmylms-single-membership {
         width: calc(50% - 10px);
     }
@@ -287,9 +291,11 @@
 }
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .membership-section-title {
         margin-bottom: 30px;
     }
+
     .ohmylms-page .membership-section-title h2 {
         font-size: 30px;
     }
@@ -297,16 +303,20 @@
     .ohmylms-page .ohmylms-single-membership {
         padding: 17px 20px 20px;
     }
+
     .ohmylms-page .ohmylms-single-membership .membership-header {
         margin-bottom: 18px;
     }
+
     .ohmylms-page .ohmylms-single-membership .membership-header .membership-title {
         font-size: 20px;
     }
+
     .ohmylms-page .ohmylms-single-membership .membership-header .membership-discount-price {
         font-size: 30px;
         margin-bottom: 12px;
     }
+
     .ohmylms-page .ohmylms-single-membership .membership-header .membership-regular-price {
         font-size: 14px;
     }
@@ -314,6 +324,7 @@
     .ohmylms-page .ohmylms-single-membership .membership-header .membership-description {
         font-size: 14px;
     }
+
     .ohmylms-page .ohmylms-single-membership .membership-footer .ohmylms-button {
         font-size: 14px;
         padding: 11px 20px;
@@ -326,6 +337,7 @@
 }
 
 @media screen and (max-width: 991px) {
+
     .ohmylms-page .ohmylms-single-membership {
         width: calc(50% - 10px);
     }
@@ -333,9 +345,11 @@
 }
 
 @media screen and (max-width: 767px) {
+
     .ohmylms-page .ohmylms-single-membership .membership-header .membership-title {
         font-size: 17px;
     }
+
     .ohmylms-page .ohmylms-single-membership .membership-header .membership-discount-price {
         font-size: 26px;
     }
@@ -344,9 +358,11 @@
         font-size: 14px;
         margin-bottom: 10px;
     }
+
     .ohmylms-page .ohmylms-single-membership .membership-body .membership-courses li:not(.im-strong) a {
         font-size: 14px;
     }
+
     .ohmylms-page .ohmylms-single-membership .membership-body .membership-courses li.im-strong {
         margin-bottom: 10px;
     }
@@ -355,6 +371,7 @@
 }
 
 @media screen and (max-width: 575px) {
+
     .ohmylms-page .membership-section-title h2 {
         font-size: 26px;
     }
@@ -364,6 +381,7 @@
         max-width: 410px;
         margin: 0 auto;
     }
+
     .ohmylms-page .membership-col-2 .ohmylms-single-membership {
         width: 100%;
     }

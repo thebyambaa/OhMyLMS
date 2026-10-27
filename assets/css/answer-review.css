@@ -1,0 +1,425 @@
+
+/*
+ * Answer review on the quiz result screen. The verdict is always written out in text;
+ * the colored edge only reinforces it.
+ */
+
+.ohmylms-answer-review-heading {
+	margin-top: 0;
+}
+
+.ohmylms-answer-review-intro {
+	margin: 0 0 16px;
+	color: #50575e;
+}
+
+.ohmylms-answer-review-list {
+	display: grid;
+	gap: 16px;
+	margin: 0;
+	padding: 0;
+	list-style-position: inside;
+}
+
+.ohmylms-answer-review-question {
+	display: inline;
+	font-weight: 600;
+}
+
+.ohmylms-answer-review-verdict {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 16px;
+	margin: 8px 0;
+}
+
+.ohmylms-answer-review-marks {
+	color: #50575e;
+}
+
+/* Score summary at the top of the review. */
+
+.ohmylms-review-score {
+	margin: 0 0 8px;
+}
+
+.ohmylms-review-percent {
+	color: #50575e;
+}
+
+.ohmylms-review-passing {
+	color: #50575e;
+	margin: 8px 0 0;
+}
+
+.ohmylms-review-counts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px 16px;
+	margin: 12px 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.ohmylms-review-actions {
+	margin: 16px 0 0;
+}
+
+/* Choosing which attempt to review. */
+.ohmylms-review-attempts {
+	margin: 0 0 24px;
+}
+
+/* Parts of a structured question. */
+.ohmylms-answer-review-parts {
+	display: grid;
+	gap: 12px;
+	margin: 12px 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* Practising the missed questions again. */
+.ohmylms-review-retry {
+	margin-top: 32px;
+}
+
+.ohmylms-review-retry-number {
+	margin: 24px 0 8px;
+}
+
+/*
+ * Playful colors for the review, matching the default quiz design: green for right, red for
+ * wrong, orange for partly right or waiting, blue for the attempt being viewed. The verdict is
+ * still written out in text; the colors only reinforce it.
+ */
+.ohmylms-answer-review {
+	margin-top: 32px;
+	--review-green: #58cc02;
+	--review-green-edge: #58a700;
+	--review-red: #ff4b4b;
+	--review-red-edge: #ea2b2b;
+	--review-orange: #ff9600;
+	--review-orange-edge: #cc7400;
+	--review-blue: #1cb0f6;
+	--review-blue-edge: #1899d6;
+	--review-blue-soft: #ddf4ff;
+	--review-blue-line: #84d8ff;
+	--review-line: #e5e5e5;
+	--review-ink: #4b4b4b;
+	--review-muted: #afafaf;
+	color: var(--review-ink);
+	font-weight: 600;
+}
+
+.ohmylms-answer-review-item {
+	padding: 16px 20px;
+	background: #fff;
+	border: 2px solid var(--review-line);
+	border-bottom-width: 4px;
+	border-inline-start: 8px solid var(--review-line);
+	border-radius: 16px;
+}
+
+.ohmylms-review-summary {
+	margin: 0 0 24px;
+	padding: 16px 20px;
+	background: #fff;
+	border: 2px solid var(--review-line);
+	border-bottom-width: 4px;
+	border-inline-start: 8px solid var(--review-line);
+	border-radius: 16px;
+}
+
+.ohmylms-review-headline {
+	margin: 0 0 4px;
+	font-weight: 800;
+}
+
+.ohmylms-answer-review-part {
+	padding: 8px 12px;
+	border-inline-start: 3px solid #8c8f94;
+	border-radius: 12px;
+	background: #f7f7f7;
+}
+
+.ohmylms-answer-review-explanation {
+	margin-top: 12px;
+	padding: 10px 14px;
+	border-radius: 12px;
+	background: var(--review-blue-soft);
+}
+
+/* The score bar is a green pill. */
+.ohmylms-review-meter {
+	display: block;
+	width: 100%;
+	max-width: 420px;
+	height: 12px;
+	height: 16px;
+	border: 0;
+	border-radius: 999px;
+	background: var(--review-line);
+}
+
+.ohmylms-answer-review-note {
+	padding: 10px 14px;
+	border-radius: 12px;
+	background: #fff3d6;
+	color: var(--review-orange-edge);
+	font-weight: 800;
+}
+
+/* What the attempt did to each skill's level. */
+.ohmylms-review-levels {
+	margin: 12px 0 0;
+}
+
+.ohmylms-answer-review-question p {
+	display: inline;
+}
+
+.ohmylms-answer-review ul {
+	margin: 0;
+	padding-inline-start: 20px;
+}
+
+.ohmylms-review-attempts ul {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.ohmylms-answer-review-part p {
+	margin: 4px 0;
+}
+
+.ohmylms-answer-review-part-answer span {
+	color: #50575e;
+}
+
+.ohmylms-answer-review-verdict strong {
+	font-weight: 800;
+}
+
+.ohmylms-answer-review h3 {
+	margin: 12px 0 4px;
+	font-size: 0.875rem;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	color: #50575e;
+	color: var(--review-muted);
+	font-weight: 800;
+}
+
+.ohmylms-answer-review-explanation h3 {
+	margin-top: 0;
+	color: var(--review-blue-edge);
+}
+
+.ohmylms-review-meter::-webkit-meter-bar {
+	height: 16px;
+	border: 0;
+	border-radius: 999px;
+	background: var(--review-line);
+}
+
+.ohmylms-review-meter::-webkit-meter-optimum-value {
+	border-radius: 999px;
+	background: var(--review-green);
+}
+
+.ohmylms-review-meter::-webkit-meter-suboptimum-value {
+	border-radius: 999px;
+	background: var(--review-green);
+}
+
+.ohmylms-review-meter::-webkit-meter-even-less-good-value {
+	border-radius: 999px;
+	background: var(--review-green);
+}
+
+.ohmylms-review-meter::-moz-meter-bar {
+	border-radius: 999px;
+	background: var(--review-green);
+}
+
+/* Attempt chips: the one being viewed is blue. */
+.ohmylms-review-attempts a {
+	display: inline-block;
+	padding: 6px 12px;
+	background: #fff;
+	text-decoration: none;
+	border: 2px solid var(--review-line);
+	border-bottom-width: 4px;
+	border-radius: 14px;
+	color: var(--review-ink);
+	font-weight: 800;
+}
+
+.ohmylms-review-levels h3 {
+	margin: 0 0 4px;
+	font-size: 1rem;
+}
+
+.ohmylms-review-levels ul {
+	margin: 0;
+	padding-left: 20px;
+}
+
+.ohmylms-review-counts li::before {
+	content: "";
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	margin-inline-end: 6px;
+	border-radius: 50%;
+	background: #8c8f94;
+}
+
+.ohmylms-review-actions .ohmylms-button {
+	display: inline-block;
+	text-decoration: none;
+}
+
+.ohmylms-answer-review-item.is-correct {
+	border-inline-start-color: #1a7f37;
+	border-inline-start-color: var(--review-green);
+}
+
+.ohmylms-review-summary.is-pass {
+	border-inline-start-color: #1a7f37;
+	border-inline-start-color: var(--review-green);
+}
+
+.ohmylms-answer-review-item.is-partial {
+	border-inline-start-color: #b26200;
+	border-inline-start-color: var(--review-orange);
+}
+
+.ohmylms-answer-review-item.is-pending {
+	border-inline-start-color: var(--review-orange);
+}
+
+.ohmylms-review-summary.is-review {
+	border-inline-start-color: #b26200;
+	border-inline-start-color: var(--review-orange);
+}
+
+.ohmylms-answer-review-item.is-incorrect {
+	border-inline-start-color: #c62828;
+	border-inline-start-color: var(--review-red);
+}
+
+.ohmylms-review-summary.is-fail {
+	border-inline-start-color: #c62828;
+	border-inline-start-color: var(--review-red);
+}
+
+.ohmylms-answer-review-part.is-correct {
+	border-inline-start-color: #1a7f37;
+	border-inline-start-color: var(--review-green);
+}
+
+.ohmylms-answer-review-part.is-partial {
+	border-inline-start-color: #b26200;
+	border-inline-start-color: var(--review-orange);
+}
+
+.ohmylms-answer-review-part.is-pending {
+	border-inline-start-color: #b26200;
+	border-inline-start-color: var(--review-orange);
+}
+
+.ohmylms-answer-review-part.is-incorrect {
+	border-inline-start-color: #c62828;
+	border-inline-start-color: var(--review-red);
+}
+
+/* Actions in the review are chunky green buttons. */
+.ohmylms-answer-review .ohmylms-button {
+	padding: 12px 28px;
+	border: 0;
+	border-radius: 16px;
+	background: var(--review-green);
+	box-shadow: 0 4px 0 var(--review-green-edge);
+	color: #fff;
+	font-weight: 800;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.is-correct > .ohmylms-answer-review-verdict strong {
+	color: var(--review-green-edge);
+}
+
+.is-incorrect > .ohmylms-answer-review-verdict strong {
+	color: var(--review-red-edge);
+}
+
+.is-partial > .ohmylms-answer-review-verdict strong {
+	color: var(--review-orange-edge);
+}
+
+.is-pending > .ohmylms-answer-review-verdict strong {
+	color: var(--review-orange-edge);
+}
+
+.ohmylms-review-counts .is-correct::before {
+	background: #1a7f37;
+	background: var(--review-green);
+}
+
+.ohmylms-review-counts .is-partial::before {
+	background: #b26200;
+	background: var(--review-orange);
+}
+
+.ohmylms-review-counts .is-pending::before {
+	background: #b26200;
+	background: var(--review-orange);
+}
+
+.ohmylms-review-counts .is-incorrect::before {
+	background: #c62828;
+	background: var(--review-red);
+}
+
+.ohmylms-review-attempts .is-current a {
+	font-weight: 600;
+	border-color: var(--review-blue-line);
+	background: var(--review-blue-soft);
+	color: var(--review-blue-edge);
+}
+
+.ohmylms-review-levels li.is-up {
+	color: #166534;
+}
+
+.ohmylms-review-levels li.is-down {
+	color: #991b1b;
+}
+
+.ohmylms-review-summary.is-pass .ohmylms-review-headline {
+	color: var(--review-green-edge);
+}
+
+.ohmylms-review-summary.is-fail .ohmylms-review-headline {
+	color: var(--review-red-edge);
+}
+
+.ohmylms-review-summary.is-review .ohmylms-review-headline {
+	color: var(--review-orange-edge);
+}
+
+.ohmylms-answer-review .ohmylms-button:hover {
+	filter: brightness(1.06);
+}
+
+.ohmylms-answer-review .ohmylms-button:active {
+	box-shadow: none;
+	transform: translateY(4px);
+}

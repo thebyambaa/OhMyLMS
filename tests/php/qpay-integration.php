@@ -7,9 +7,9 @@ $config = json_decode( file_get_contents( getenv( 'OHMYLMS_TEST_CREDENTIALS' ) )
 require $config['site'] . '/wp-load.php';
 if ( ! defined( 'OHMYLMS_TEST_SITE' ) || DB_NAME !== 'ohmylms_source_test' ) { throw new RuntimeException( 'Requires disposable test site' ); }
 
-use CodeRex\Ecommerce\Gateways\QPay\GatewayQPay;
-use CodeRex\Ecommerce\Gateways\QPay\PaymentService;
-use CodeRex\Ecommerce\Data\Order;
+use OhMyLMS\Commerce\Gateways\QPay\GatewayQPay;
+use OhMyLMS\Commerce\Gateways\QPay\PaymentService;
+use OhMyLMS\Commerce\Data\Order;
 
 $checks = 0;
 function qcheck( $ok, $message ) { global $checks; if ( ! $ok ) { throw new RuntimeException( $message ); } $checks++; }
@@ -47,7 +47,7 @@ try {
     update_option( 'ohmylms_qpay_settings', $settings );
     $gateway = new GatewayQPay();
     qcheck( 'yes' === $gateway->enabled && 'qpay' === $gateway->get_settings()['id'], 'Native settings/normalization' );
-    qcheck( isset( \CodeRex\Ecommerce\ecommerce()->gateways()->get_payment_gateways()['qpay'] ), 'Native registry missing QPay' );
+    qcheck( isset( \OhMyLMS\Commerce\ecommerce()->gateways()->get_payment_gateways()['qpay'] ), 'Native registry missing QPay' );
     $admin = get_user_by( 'login', $config['username'] ); wp_set_current_user( $admin->ID );
     $controller = new OhMyLMS\Rest\V1\SettingsController();
     $request = new WP_REST_Request( 'POST', '/ohmylms/v1/settings/payment-gateway' );
@@ -58,7 +58,7 @@ try {
     $order = qorder(); $id = $order->get_id();
     $result = $gateway->process_payment( $id );
     qcheck( ! is_wp_error( $result ) && 'pending' === $result['payment_status'], 'Invoice must return pending: ' . ( is_wp_error( $result ) ? $result->get_error_code() . ' ' . $result->get_error_message() : wp_json_encode( $result ) ) );
-    qcheck( 'pending' === ecommerce_get_order( $id )->get_status() && empty( $events ), 'Invoice creation fulfilled order' );
+    qcheck( 'pending' === ohmylms_ecommerce_get_order( $id )->get_status() && empty( $events ), 'Invoice creation fulfilled order' );
     qcheck( ! empty( $result['payment_token'] ), 'Missing order capability' );
     $created = count( array_filter( $calls, function ( $call ) { return preg_match( '#/v2/invoice$#', $call[0] ); } ) );
     qcheck( ! is_wp_error( $gateway->process_payment( $id ) ), 'Resume failed' );
@@ -94,7 +94,7 @@ try {
     update_post_meta( $id, '_qpay_checkout_ready', 1 );
     qcheck( 'paid' === PaymentService::settle( $id, $gateway )['status'], 'Verified payment did not complete' );
     qcheck( 'enrolled' === $wpdb->get_var( $wpdb->prepare( "SELECT status FROM {$wpdb->prefix}ohmylms_user_enrollment WHERE id=%d", end( $enrollments ) ) ), 'Pending enrollment not activated' );
-    qcheck( 'completed' === ecommerce_get_order( $id )->get_status(), 'Order not completed' );
+    qcheck( 'completed' === ohmylms_ecommerce_get_order( $id )->get_status(), 'Order not completed' );
     $snapshot = $events;
     $gateway->handle_callback( $callback ); PaymentService::settle( $id, $gateway );
     qcheck( $events === $snapshot && 1 === $events['ohmylms_checkout_after_create_order'], 'Duplicate completion events' );
@@ -128,18 +128,24 @@ try {
     $recurring = qorder(); qcheck( is_wp_error( $new->process_payment( $recurring->get_id(), true ) ), 'Recurring QPay accepted' );
     qcheck( null === PaymentService::minor_units( 'NaN' ) && null === PaymentService::minor_units( '-1' ), 'Invalid money accepted' );
     $settings['enabled'] = 'no'; update_option( 'ohmylms_qpay_settings', $settings ); qcheck( ! ( new GatewayQPay() )->is_available(), 'Disabled gateway available' );
-    require_once dirname( __DIR__, 3 ) . '/ohmylms-qpay/ohmylms-qpay.php'; ohmylms_qpay_bootstrap();
-    qcheck( ! class_exists( 'GatewayQPay', false ), 'Legacy add-on registered duplicate gateway' );
+    $legacy_plugin = dirname( __DIR__, 3 ) . '/ohmylms-qpay/ohmylms-qpay.php';
+    if ( is_file( $legacy_plugin ) ) {
+        require_once $legacy_plugin;
+        ohmylms_qpay_bootstrap();
+        qcheck( ! class_exists( 'GatewayQPay', false ), 'Legacy add-on registered duplicate gateway' );
+    } else {
+        echo "Legacy QPay add-on compatibility check skipped: the optional add-on is not installed.\n";
+    }
 
     // Exercise the real checkout orchestration, including enrollment creation and the JSON response.
     $settings['enabled'] = 'yes'; $settings['testmode'] = 'yes'; update_option( 'ohmylms_qpay_settings', $settings );
     update_option( 'ohmylms_currency', 'MNT' );
     $gateway = new GatewayQPay();
-    $registry = \CodeRex\Ecommerce\ecommerce()->gateways();
+    $registry = \OhMyLMS\Commerce\ecommerce()->gateways();
     foreach ( $registry->payment_gateways as $key => $value ) { if ( 'qpay' === $value->id ) { $registry->payment_gateways[$key] = $gateway; } }
     $course = new OhMyLMS\Data\Course(); $course->set_name( 'QPay checkout fixture' ); $course->set_status( 'publish' );
     $course->set_price_type( 'paid' ); $course->set_regular_price( 100 ); $course->set_price( 100 ); $course->save(); $content[] = $course->get_id();
-    $cart = \CodeRex\Ecommerce\ecommerce()->cart; $cart->empty_cart(); $cart->add_to_cart( $course->get_id() ); $cart->calculate_totals();
+    $cart = \OhMyLMS\Commerce\ecommerce()->cart; $cart->empty_cart(); $cart->add_to_cart( $course->get_id() ); $cart->calculate_totals();
     qcheck( 100.0 === (float) $cart->get_total( 'edit' ), 'Checkout cart price fixture failed' );
     $_POST = array( 'payment_method' => 'qpay', 'email' => $admin->user_email, 'first_name' => 'QPay', 'last_name' => 'Fixture', 'country' => 'MN', 'phone' => '99999999', 'address' => 'Test', 'city' => 'Test', 'postcode' => '10000', 'state' => 'Test' );
     $scenario = 'pending'; $before = $events;
@@ -148,13 +154,13 @@ try {
     add_filter( 'wp_die_ajax_handler', $die );
     add_action( 'ohmylms_checkout_order_created', function ( $order ) use ( &$orders ) { $orders[] = $order->get_id(); } );
     ob_start();
-    try { \CodeRex\Ecommerce\Checkout::instance()->process_checkout(); } catch ( QPayTestResponse $response ) {}
+    try { \OhMyLMS\Commerce\Checkout::instance()->process_checkout(); } catch ( QPayTestResponse $response ) {}
     $output = ob_get_clean();
     remove_filter( 'wp_die_ajax_handler', $die ); remove_filter( 'wp_doing_ajax', '__return_true' );
     $checkout = json_decode( $output, true );
     qcheck( is_array( $checkout ) && 'pending' === ( $checkout['payment_status'] ?? '' ), 'Real checkout did not return pending: ' . $output );
     $checkout_id = $checkout['order_id'];
-    qcheck( 'pending' === ecommerce_get_order( $checkout_id )->get_status(), 'Checkout marked unpaid order complete' );
+    qcheck( 'pending' === ohmylms_ecommerce_get_order( $checkout_id )->get_status(), 'Checkout marked unpaid order complete' );
     qcheck( $events === $before, 'Checkout fired paid events before payment' );
     qcheck( ! $cart->is_empty(), 'Pending checkout discarded cart' );
     $enrollment = $wpdb->get_row( $wpdb->prepare( "SELECT id,status FROM {$wpdb->prefix}ohmylms_user_enrollment WHERE order_id=%d", $checkout_id ) );
@@ -188,12 +194,12 @@ try {
     add_action( 'ohmylms_after_order_payment', $early ); $scenario = 'paid';
     add_filter( 'wp_doing_ajax', '__return_true' ); add_filter( 'wp_die_ajax_handler', $die );
     ob_start();
-    try { \CodeRex\Ecommerce\Checkout::instance()->process_checkout(); } catch ( QPayTestResponse $response ) {}
+    try { \OhMyLMS\Commerce\Checkout::instance()->process_checkout(); } catch ( QPayTestResponse $response ) {}
     $early_response = json_decode( ob_get_clean(), true );
     remove_action( 'ohmylms_after_order_payment', $early );
     remove_filter( 'wp_die_ajax_handler', $die ); remove_filter( 'wp_doing_ajax', '__return_true' );
     qcheck( ! empty( $early_response['order_id'] ), 'Early callback checkout failed' );
-    qcheck( 'completed' === ecommerce_get_order( $early_response['order_id'] )->get_status(), 'Early callback still required a browser poll' );
+    qcheck( 'completed' === ohmylms_ecommerce_get_order( $early_response['order_id'] )->get_status(), 'Early callback still required a browser poll' );
     qcheck( 'enrolled' === $wpdb->get_var( $wpdb->prepare( "SELECT status FROM {$wpdb->prefix}ohmylms_user_enrollment WHERE order_id=%d", $early_response['order_id'] ) ), 'Early callback missed enrollment' );
     echo "QPay integration: {$checks} checks passed.\n";
 } finally {

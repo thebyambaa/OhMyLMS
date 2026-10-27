@@ -11,7 +11,7 @@ require $site . '/wp-load.php';
 $action = $argv[1] ?? 'inspect';
 foreach ($GLOBALS['wp_filter']['shutdown']->callbacks ?? [] as $priority => $callbacks) {
     foreach ($callbacks as $callback) {
-        if (is_array($callback['function']) && is_object($callback['function'][0]) && $callback['function'][0] instanceof \CodeRex\Ecommerce\SessionHandler) {
+        if (is_array($callback['function']) && is_object($callback['function'][0]) && $callback['function'][0] instanceof \OhMyLMS\Commerce\SessionHandler) {
             remove_action('shutdown', $callback['function'], $priority);
         }
     }
