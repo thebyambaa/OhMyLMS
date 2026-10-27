@@ -1,8 +1,16 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 namespace OhMyLMS\Migrations;
 
+/**
+ * Plugin migration implementation.
+ */
 class Migration {
 
+	/**
+	 * Source.
+	 *
+	 * @var mixed
+	 */
 	public $source = null;
 
 
@@ -30,13 +38,13 @@ class Migration {
 		if ( isset( $sources[ $this->source ] ) ) {
 			$migration_class = $sources[ $this->source ]['class'];
 
-			// Check if the class exists
+			// Check if the class exists.
 			if ( class_exists( $migration_class ) ) {
 				return new $migration_class();
 			}
 		}
 
-		return null; // If the source is not found, return null
+		return null; // If the source is not found, return null.
 	}
 
 	/**
@@ -47,17 +55,17 @@ class Migration {
 	 */
 	public function get_sources(): array {
 		$sources = array(
-			'tutorLMS' => array(
+			'tutorLMS'    => array(
 				'title'       => 'Tutor LMS',
 				'description' => 'Migrate Tutor LMS courses, lessons, quizzes and other data to OhMyLMS.',
 				'class'       => 'OhMyLMS\\Migrations\\TutorLMS',
 			),
-			'learnDash' => array(
+			'learnDash'   => array(
 				'title'       => 'LearnDash LMS',
 				'description' => 'Migrate LearnDash LMS courses, lessons, quizzes and other data to OhMyLMS.',
 				'class'       => 'OhMyLMS\\Migrations\\LearnDash',
 			),
-			'learnPress' => array(
+			'learnPress'  => array(
 				'title'       => 'LearnPress',
 				'description' => 'Migrate LearnPress courses, lessons, quizzes and other data to OhMyLMS.',
 				'class'       => 'OhMyLMS\\Migrations\\LearnPress',
@@ -69,7 +77,7 @@ class Migration {
 			),
 		);
 
-		// Allow filtering of the migration sources
+		// Allow filtering of the migration sources.
 		$sources = apply_filters( 'ohmylms_migrations', $sources );
 
 		return $sources;

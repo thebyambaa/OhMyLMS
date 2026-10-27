@@ -1,4 +1,3 @@
-
 <?php
 /**
  * The template for displaying long text question
@@ -10,26 +9,29 @@
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
+	exit; // Exit if accessed directly.
 }
 
-$quiz 		= ohmylms_get_quiz(get_the_ID());
-$settings = $quiz->get_settings();
-$long_text_limit = is_array($settings) && isset($settings['long_text_limit']) ? $settings['long_text_limit'] : '';
-$class = '';
+$quiz            = ohmylms_get_quiz( get_the_ID() );
+$settings        = $quiz->get_settings();
+$long_text_limit = is_array( $settings ) && isset( $settings['long_text_limit'] ) ? $settings['long_text_limit'] : '';
+$class           = '';
 
-if(!empty($long_text_limit)){
+if ( ! empty( $long_text_limit ) ) {
 	$class = 'ohmylms-has-character-limit';
 }
+
+// A question saved without answer rows (for example through the API) still needs an answer box.
+$answer_rows = ! empty( $question['questions'] ) ? $question['questions'] : array( array( 'question_id' => $question['id'] ) );
 ?>
 
-<?php foreach ($question['questions'] as $option){ ?>
+<?php foreach ( $answer_rows as $option ) { ?>
 	<div class="answer-type-text">
-		<textarea class="textarea-auto-resize <?php echo $class; ?>" data-limit="<?php echo $long_text_limit; ?>" data-question-id="<?php echo $option['question_id']; ?>" name="attempt[<?php echo $attempt['id']; ?>][quiz_question][<?php echo $option['question_id'] ?>][]" placeholder="<?php echo esc_attr( 'Type your answer here ...', 'ohmylms' ); ?>"></textarea>
+		<textarea class="textarea-auto-resize <?php echo esc_attr( $class ); ?>" data-limit="<?php echo esc_attr( $long_text_limit ); ?>" data-question-id="<?php echo esc_attr( $option['question_id'] ); ?>" name="attempt[<?php echo esc_attr( $attempt['id'] ); ?>][quiz_question][<?php echo esc_attr( $option['question_id'] ); ?>][]" placeholder="<?php echo esc_attr( 'Type your answer here ...', 'ohmylms' ); ?>"></textarea>
 
-		<?php if(!empty($long_text_limit)){ ?>
+		<?php if ( ! empty( $long_text_limit ) ) { ?>
 			<span class="ohmylms-character-limit-hints">
-				<span>0</span>/<?php echo $long_text_limit; ?>
+				<span>0</span>/<?php echo esc_html( $long_text_limit ); ?>
 			</span>
 		<?php } ?>
 	</div>

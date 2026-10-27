@@ -1,0 +1,67 @@
+{
+	"apiVersion": 3,
+	"name": "ohmylms/question-player",
+	"title": "OhMyLMS Question Player",
+	"category": "widgets",
+	"icon": "welcome-learn-more",
+	"description": "Play selected bank questions or a random set from skills.",
+	"textdomain": "ohmylms",
+	"attributes": {
+		"source": {
+			"type": "string",
+			"default": "selected"
+		},
+		"questionIds": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			},
+			"default": []
+		},
+		"skillIds": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			},
+			"default": []
+		},
+		"count": {
+			"type": "integer",
+			"default": 5
+		},
+		"graded": {
+			"type": "boolean",
+			"default": true
+		},
+		"affectsSkills": {
+			"type": "boolean",
+			"default": false
+		},
+		"activityMode": {
+			"type": "string",
+			"default": "standard"
+		},
+		"rememberCount": {
+			"type": "integer",
+			"default": 2
+		},
+		"studySeconds": {
+			"type": "integer",
+			"default": 10
+		},
+		"revealSeconds": {
+			"type": "integer",
+			"default": 30
+		},
+		"roundSeconds": {
+			"type": "integer",
+			"default": 30
+		}
+	},
+	"usesContext": [ "postType", "postId" ],
+	"supports": {
+		"html": false,
+		"inserter": false
+	},
+	"editorScript": "ohmylms-question-player-block"
+}

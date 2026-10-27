@@ -1,15 +1,24 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 
 namespace OhMyLMS\Emails\StudentsEmail;
 
 use OhMyLMS\Emails\Emails;
 
+/**
+ * Plugin manual enrollment implementation.
+ */
 class ManualEnrollment {
 
+	/**
+	 * Initialize Manual enrollment.
+	 */
 	public function __construct() {
 		add_action( 'ohmylms_manual_enrollment_by_email', array( $this, 'trigger' ), 10, 5 );
 	}
 
+	/**
+	 * Basic settings for Manual enrollment.
+	 */
 	public function basic_settings(): array {
 		return array(
 			'id'             => 'student_manual_enrollment',
@@ -19,6 +28,9 @@ class ManualEnrollment {
 		);
 	}
 
+	/**
+	 * Default settings for Manual enrollment.
+	 */
 	public function default_settings(): array {
 		return array(
 			'enable'             => true,
@@ -41,6 +53,15 @@ class ManualEnrollment {
 	}
 
 
+	/**
+	 * Trigger for Manual enrollment.
+	 *
+	 * @param mixed $student_id Student identifier.
+	 * @param mixed $course_id Course identifier.
+	 * @param mixed $username Username.
+	 * @param mixed $plain_password Plain password.
+	 * @param mixed $is_new_user Is new user.
+	 */
 	public function trigger( $student_id, $course_id, $username, $plain_password, $is_new_user ) {
 		$user = get_user_by( 'id', $student_id );
 		if ( ! $user ) {

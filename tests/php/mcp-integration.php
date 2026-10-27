@@ -91,7 +91,7 @@ try {
     rest_get_server();
     mcp_check( Server::readiness()['ready'], 'Abilities API/adapter unavailable.' );
     $adapter_server = \WP\MCP\Core\McpAdapter::instance()->get_server( 'ohmylms' );
-    mcp_check( $adapter_server !== null && count( $adapter_server->get_tools() ) === 9, 'Official adapter server not registered.' );
+    mcp_check( $adapter_server !== null && count( $adapter_server->get_tools() ) === count( Server::tools() ), 'Official adapter server not registered with every tool.' );
     foreach ( \OhMyLMS\MCP\Abilities::names() as $ability_name ) {
         $ability = wp_get_ability( $ability_name );
         mcp_check( $ability instanceof WP_Ability && $ability->get_category() === 'ohmylms', 'Native ability missing.' );
@@ -108,8 +108,11 @@ try {
     $init = mcp_request( array( 'jsonrpc' => '2.0', 'id' => 1, 'method' => 'initialize', 'params' => array( 'protocolVersion' => '2025-11-25', 'capabilities' => (object) array(), 'clientInfo' => array( 'name' => 'test', 'version' => '1' ) ) ), $token );
     mcp_check( $init->get_status() === 200 && $init->get_data()['result']['protocolVersion'] === '2025-11-25', 'Initialize failed.' );
     $tools = mcp_request( $list, $token )->get_data()['result']['tools'];
-    mcp_check( count( $tools ) === 9 && in_array( 'list_quizzes', array_column( $tools, 'name' ), true ), 'Tool catalog incorrect.' );
-    foreach ( $tools as $tool ) mcp_check( $tool['annotations']['readOnlyHint'] && $tool['inputSchema']['additionalProperties'] === false, 'Unsafe tool schema.' );
+    mcp_check( count( $tools ) === count( Server::tools() ) && in_array( 'save_lesson_alignment_review', array_column( $tools, 'name' ), true ) && in_array( 'get_student_placement', array_column( $tools, 'name' ), true ), 'Tool catalog incorrect: ' . count( $tools ) );
+    foreach ( $tools as $tool ) {
+        $definition = Server::tools()[ $tool['name'] ];
+        mcp_check( $tool['annotations']['readOnlyHint'] === ( $definition['readonly'] ?? true ) && $tool['inputSchema']['additionalProperties'] === false, 'Unsafe tool schema.' );
+    }
     $notice = mcp_request( array( 'jsonrpc' => '2.0', 'method' => 'notifications/initialized' ), $token );
     mcp_check( $notice->get_status() === 202 && $notice->get_data() === null, 'Notification response incorrect.' );
     $r = new WP_REST_Request( 'POST', Server::ROUTE );
@@ -152,21 +155,18 @@ try {
     }
     // Exercise the administrator UI's actual credential lifecycle without displaying secrets.
     wp_set_current_user( $owner->ID );
-    $saved_post = $_POST;
-    $_POST = array( 'mcp_action' => 'generate', 'provider' => 'gemini', '_wpnonce' => wp_create_nonce( 'ohmylms_mcp' ) );
-    $_REQUEST['_wpnonce'] = $_POST['_wpnonce'];
-    ob_start(); Server::page(); $page = ob_get_clean();
-    preg_match( '/oml_mcp_[a-f0-9]{64}/', $page, $generated );
-    mcp_check( ! empty( $generated[0] ), 'Generated token was not shown once.' );
+    $generate_request = new WP_REST_Request( 'POST', '/ohmylms/v1/mcp/settings/gemini' );
+    $generate_request->set_body_params( array( 'action' => 'generate' ) );
+    $generated_reply = rest_do_request( $generate_request );
+    $generated_token = $generated_reply->get_data()['token'] ?? '';
+    mcp_check( $generated_reply->get_status() === 200 && preg_match( '/^oml_mcp_[a-f0-9]{64}$/', $generated_token ), 'Generated token was not returned.' );
     $stored = get_option( Server::OPTION );
-    mcp_check( $stored['gemini']['hash'] === hash( 'sha256', $generated[0] ) && strpos( wp_json_encode( $stored ), $generated[0] ) === false, 'Credential is not stored as hash only.' );
-    mcp_check( mcp_request( $list, $generated[0] )->get_status() === 200, 'UI-generated token cannot connect.' );
+    mcp_check( $stored['gemini']['hash'] === hash( 'sha256', $generated_token ) && strpos( wp_json_encode( $stored ), $generated_token ) === false, 'Credential is not stored as hash only.' );
+    mcp_check( mcp_request( $list, $generated_token )->get_status() === 200, 'Settings-generated token cannot connect.' );
     wp_set_current_user( $owner->ID );
-    $_POST['mcp_action'] = 'revoke';
-    ob_start(); Server::page(); ob_end_clean();
-    mcp_check( mcp_request( $list, $generated[0] )->get_status() === 401, 'UI revocation failed.' );
-    $_POST = $saved_post;
-    unset( $_REQUEST['_wpnonce'] );
+    $generate_request->set_body_params( array( 'action' => 'revoke' ) );
+    rest_do_request( $generate_request );
+    mcp_check( mcp_request( $list, $generated_token )->get_status() === 401, 'Settings revocation failed.' );
     mcp_check( mcp_request( $list, $token, 'DELETE' )->get_status() === 200, 'Adapter session termination failed.' );
     unset( $mcp_sessions[$token] );
     update_option( Server::OPTION, array(), false );

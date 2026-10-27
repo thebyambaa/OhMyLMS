@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 
 namespace OhMyLMS\PostTypes;
 
@@ -6,15 +6,22 @@ use OhMyLMS\Abstracts\PostType;
 
 defined( 'ABSPATH' ) || exit();
 
+/**
+ * Plugin course post type implementation.
+ */
 class CoursePostType extends PostType {
 
 	/**
+	 * Instance.
+	 *
 	 * @var null
 	 */
 	protected static $_instance = null;
 
 
 	/**
+	 * Instance.
+	 *
 	 * @return CoursePostType|null
 	 * @since 1.0.0
 	 */
@@ -28,6 +35,9 @@ class CoursePostType extends PostType {
 
 
 
+	/**
+	 * Initialize Course post type.
+	 */
 	public function __construct() {
 		$this->post_type = 'ohmylms-course';
 		parent::__construct();
@@ -73,10 +83,10 @@ class CoursePostType extends PostType {
 			'filter_items_list'     => __( 'Filter Courses list', 'ohmylms' ),
 		);
 
-		$permalinks = ohmylms_get_permalink_structure();
+		$permalinks     = ohmylms_get_permalink_structure();
 		$course_page_id = ohmylms_get_page_id( 'course' );
-		$has_archive    = $course_page_id && get_post( $course_page_id ) ? urldecode( get_page_uri( $course_page_id ) ) : 'course';		
-		$supports = array( 'title', 'editor', 'thumbnail', 'revisions', 'comments', 'excerpt' );
+		$has_archive    = $course_page_id && get_post( $course_page_id ) ? urldecode( get_page_uri( $course_page_id ) ) : 'course';
+		$supports       = array( 'title', 'editor', 'thumbnail', 'revisions', 'comments', 'excerpt' );
 
 		$this->args = array(
 			'labels'             => $labels,
@@ -95,7 +105,7 @@ class CoursePostType extends PostType {
 			'supports'           => $supports,
 			'hierarchical'       => false,
 			'rewrite'            => $permalinks['course_base'] ? array(
-				'slug'       => $permalinks['course_base'] ,
+				'slug'       => $permalinks['course_base'],
 				'with_front' => false,
 			) : false,
 		);
@@ -113,7 +123,7 @@ class CoursePostType extends PostType {
 	public function register_taxonomy() {
 		$permalinks = ohmylms_get_permalink_structure();
 
-		// register category
+		// register category.
 		$labels = array(
 			'name'                       => __( 'Course Categories', 'ohmylms' ),
 			'singular_name'              => __( 'Category', 'ohmylms' ),
@@ -154,7 +164,7 @@ class CoursePostType extends PostType {
 			$args
 		);
 
-		// register tags
+		// register tags.
 		$labels = array(
 			'name'                       => __( 'Course Tags', 'ohmylms' ),
 			'singular_name'              => __( 'Tag', 'ohmylms' ),
@@ -200,7 +210,7 @@ class CoursePostType extends PostType {
 	/**
 	 * Course details contents
 	 *
-	 * @param $post
+	 * @param mixed $post Post.
 	 * @return void
 	 * @since 1.0.0
 	 */
@@ -213,7 +223,7 @@ class CoursePostType extends PostType {
 		$max_retake_allowed   = get_post_meta( $post->ID, 'ohmylms_course_max_retake_allowed', true );
 		$passing_grade        = get_post_meta( $post->ID, 'ohmylms_course_passing_grade', true );
 
-		// Nonce field for security
+		// Nonce field for security.
 		wp_nonce_field( 'ohmylms_course_nonce', 'nonce' );
 		?>
 		<div class="ohmylms-course-meta-box">

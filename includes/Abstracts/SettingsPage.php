@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 
 namespace OhMyLMS\Abstracts;
 
@@ -6,6 +6,9 @@ use OhMyLMS\Admin\Pages\AdminSettings;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Plugin settings page implementation.
+ */
 abstract class SettingsPage {
 
 	/**
@@ -65,7 +68,7 @@ abstract class SettingsPage {
 	/**
 	 * Add page to settings page
 	 *
-	 * @param $pages
+	 * @param mixed $pages Pages.
 	 * @return mixed
 	 * @since 1.0.0
 	 */
@@ -78,7 +81,7 @@ abstract class SettingsPage {
 	/**
 	 * Get settings array for section
 	 *
-	 * @param $section_id
+	 * @param string $section_id Section identifier.
 	 * @return array
 	 * @since 1.0.0
 	 */
@@ -207,7 +210,7 @@ abstract class SettingsPage {
 	/**
 	 * Trigger ohmylms_update_options_ hook
 	 *
-	 * @param null $section_id
+	 * @param null $section_id Section identifier.
 	 * @since 1.0.0
 	 */
 	public function do_update_options_action( $section_id = null ) {

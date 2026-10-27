@@ -1,11 +1,14 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
 
-namespace CodeRex\Ecommerce\Gateways\Stripe;
+namespace OhMyLMS\Commerce\Gateways\Stripe;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Plugin stripe customer implementation.
+ */
 class StripeCustomer {
 
 	/**
@@ -33,7 +36,7 @@ class StripeCustomer {
 	/**
 	 * Constructor for the StripeCustomer class.
 	 *
-	 * @param int    $user_id            The WordPress user ID.
+	 * @param int    $user_id The WordPress user ID.
 	 * @param string $stripe_customer_id Optional. The Stripe customer ID. Default is an empty string.
 	 */
 	public function __construct( $user_id, $stripe_customer_id = '' ) {
@@ -79,10 +82,20 @@ class StripeCustomer {
 		return $this->customer_data;
 	}
 
+	/**
+	 * Set user id for Stripe customer.
+	 *
+	 * @param mixed $user_id User identifier.
+	 */
 	public function set_user_id( $user_id ) {
 		$this->user_id = $user_id;
 	}
 
+	/**
+	 * Set id for Stripe customer.
+	 *
+	 * @param mixed $id Id.
+	 */
 	public function set_id( $id ) {
 		$this->id = $id;
 	}
@@ -126,7 +139,7 @@ class StripeCustomer {
 	public function create_customer( $args ) {
 		$args     = $this->generate_customer_request( $args );
 		$response = StripeApi::request( $args, 'customers' );
-		
+
 		if ( ! empty( $response->error ) ) {
 			throw new \Exception( print_r( $response, true ), $response->error->message );
 		}
@@ -218,6 +231,9 @@ class StripeCustomer {
 	}
 
 
+	/**
+	 * Update customer for Stripe customer.
+	 */
 	public function update_customer() {
 	}
 }

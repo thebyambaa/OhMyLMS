@@ -1,35 +1,47 @@
-<?php 
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 
 namespace OhMyLMS\Integrations\ContentProtection;
 
-if (!defined('ABSPATH')) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
-use \OhMyLMS\Integrations\ContentProtection\Includes\Hooks;
+use OhMyLMS\Integrations\ContentProtection\Includes\Hooks;
 
+/**
+ * Plugin content protection implementation.
+ */
 class ContentProtection {
 
-    public $integration_name = 'Content Protection';
+	/**
+	 * Integration name.
+	 *
+	 * @var mixed
+	 */
+	public $integration_name = 'Content Protection';
 
-    public function __construct() {
-        $this->define_constants();
-        $this->init_classes();
-    }
+	/**
+	 * Initialize Content protection.
+	 */
+	public function __construct() {
+		$this->define_constants();
+		$this->init_classes();
+	}
 
-    /**
-     * Define constants related to Content Protection integration.
-     * 
-     * @since 1.0.0
-     */
-    public function define_constants() {
+	/**
+	 * Define constants related to Content Protection integration.
+	 *
+	 * @since 1.0.0
+	 */
+	public function define_constants() {
+	}
 
-    }
-
-    /**
-     * Initialize classes related to Content Protection integration.
-     * 
-     * @since 1.0.0
-     */
-    public function init_classes() {
-        new Hooks();
-    }
+	/**
+	 * Initialize classes related to Content Protection integration.
+	 *
+	 * @since 1.0.0
+	 */
+	public function init_classes() {
+		new Hooks();
+	}
 }

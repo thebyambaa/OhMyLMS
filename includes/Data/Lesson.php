@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Class Lesson.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Data;
 
@@ -69,8 +74,8 @@ class Lesson extends PostTypeData {
 	/**
 	 * Lesson constructor.
 	 *
-	 * @param $lesson
-	 * @throws \Exception
+	 * @param string $lesson Lesson.
+	 * @throws \Exception When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	public function __construct( $lesson = '' ) {
@@ -82,7 +87,7 @@ class Lesson extends PostTypeData {
 			$this->set_id( absint( $lesson->ID ) );
 		}
 
-		// load the data store
+		// load the data store.
 		$this->data_store = DataStores::load( $this->data_store_name );
 		if ( $this->get_id() > 0 ) {
 			$this->data_store->read( $this );
@@ -104,14 +109,15 @@ class Lesson extends PostTypeData {
 	/**
 	 * Set the lesson type.
 	 *
-	 * @return string
+	 * @return void
 	 * @since 1.0.0
+	 * @param mixed $type Type.
 	 */
 	public function set_type( $type ) {
 		$this->set_prop( 'type', $type );
 	}
 
-	
+
 	/**
 	 * Get the lesson type.
 	 *
@@ -136,8 +142,9 @@ class Lesson extends PostTypeData {
 	/**
 	 * Set the lesson type.
 	 *
-	 * @return string
+	 * @return void
 	 * @since 1.0.0
+	 * @param mixed $type Type.
 	 */
 	public function set_audio_id( $type ) {
 		$this->set_prop( 'audio_id', $type );
@@ -147,8 +154,9 @@ class Lesson extends PostTypeData {
 	/**
 	 * Set the lesson type.
 	 *
-	 * @return string
+	 * @return void
 	 * @since 1.0.0
+	 * @param mixed $link Link.
 	 */
 	public function set_external_url( $link ) {
 		$this->set_prop( 'external_url', $link );
@@ -169,7 +177,7 @@ class Lesson extends PostTypeData {
 	/**
 	 * Get average rating
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -181,7 +189,7 @@ class Lesson extends PostTypeData {
 	/**
 	 * Get review count
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -192,7 +200,7 @@ class Lesson extends PostTypeData {
 	/**
 	 * Get rating counts
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -202,7 +210,7 @@ class Lesson extends PostTypeData {
 	/**
 	 * Get Modified counts
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -214,7 +222,7 @@ class Lesson extends PostTypeData {
 	/**
 	 * Get Content counts
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -226,7 +234,7 @@ class Lesson extends PostTypeData {
 	/**
 	 * Get Content counts
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -286,7 +294,7 @@ class Lesson extends PostTypeData {
 	 * Set order number of the lesson
 	 *
 	 * @param int $number The order number to set for the lesson.
-	 *
+	 * .
 	 * @return void
 	 * @since 1.0.0
 	 */
@@ -298,7 +306,7 @@ class Lesson extends PostTypeData {
 	/**
 	 * Set prerequisites of the Lesson
 	 *
-	 * @param $price
+	 * @param mixed $comments_enable Comments enable.
 	 * @return void
 	 * @since 1.0.0
 	 */
@@ -309,7 +317,7 @@ class Lesson extends PostTypeData {
 	/**
 	 * Set prerequisites of the Lesson
 	 *
-	 * @param $price
+	 * @param mixed $price Price.
 	 * @return void
 	 * @since 1.0.0
 	 */
@@ -357,24 +365,24 @@ class Lesson extends PostTypeData {
 	 * @param string $context The context in which the settings are being retrieved (default: 'view').
 	 * @return array The video settings.
 	 */
-	public function get_video_settings($context = 'view') {
-		$settings = $this->get_prop('video_settings', $context);
-		
-		// Return default settings if none are set
-		if (empty($settings) || !is_array($settings)) {
+	public function get_video_settings( $context = 'view' ) {
+		$settings = $this->get_prop( 'video_settings', $context );
+
+		// Return default settings if none are set.
+		if ( empty( $settings ) || ! is_array( $settings ) ) {
 			return array(
-				'platform' => 'self-hosted',
-				'aspect_ratio' => '16/9',
-				'autoplay' => false,
-				'loop' => false,
-				'controls' => true,
-				'remove_branding' => false,
+				'platform'            => 'self-hosted',
+				'aspect_ratio'        => '16/9',
+				'autoplay'            => false,
+				'loop'                => false,
+				'controls'            => true,
+				'remove_branding'     => false,
 				'hide_related_videos' => false,
-				'width_unit' => '%',
-				'height_unit' => 'px',
+				'width_unit'          => '%',
+				'height_unit'         => 'px',
 			);
 		}
-		
+
 		return $settings;
 	}
 
@@ -384,8 +392,8 @@ class Lesson extends PostTypeData {
 	 * @param array $settings The video settings to be set.
 	 * @return void
 	 */
-	public function set_video_settings($settings) {
-		$this->set_prop('video_settings', $settings);
+	public function set_video_settings( $settings ) {
+		$this->set_prop( 'video_settings', $settings );
 	}
 
 	/**
@@ -436,30 +444,53 @@ class Lesson extends PostTypeData {
 	/**
 	 * Delete lesson data
 	 *
-	 * @param array $args
+	 * @param array $args Operation arguments.
 	 * @since 1.0.0
 	 */
 	public function delete( $args = array() ) {
 		$this->data_store->delete( $this, $args );
 	}
 
+	/**
+	 * Get order number for Lesson.
+	 */
 	public function get_order_number() {
 		return $this->data_store->get_order_number( $this );
 	}
 
-public function get_drip_settings($context = 'view') {
-        return $this->get_prop('drip_settings', $context) ?? array();
-    }
+	/**
+	 * Get drip settings for Lesson.
+	 *
+	 * @param string $context Context.
+	 */
+	public function get_drip_settings( $context = 'view' ) {
+		return $this->get_prop( 'drip_settings', $context ) ?? array();
+	}
 
-public function set_drip_settings($drip_feed) {
-        $this->set_prop('drip_settings', $drip_feed);
-    }
+	/**
+	 * Set drip settings for Lesson.
+	 *
+	 * @param mixed $drip_feed Drip feed.
+	 */
+	public function set_drip_settings( $drip_feed ) {
+		$this->set_prop( 'drip_settings', $drip_feed );
+	}
 
-public function get_download_resource($context = 'view') {
-        return $this->get_prop('download_resource', $context) ?? array();
-    }
+	/**
+	 * Get download resource for Lesson.
+	 *
+	 * @param string $context Context.
+	 */
+	public function get_download_resource( $context = 'view' ) {
+		return $this->get_prop( 'download_resource', $context ) ?? array();
+	}
 
-public function set_download_resource($resources) {
-        $this->set_prop('download_resource', $resources);
-    }
+	/**
+	 * Set download resource for Lesson.
+	 *
+	 * @param mixed $resources Resources.
+	 */
+	public function set_download_resource( $resources ) {
+		$this->set_prop( 'download_resource', $resources );
+	}
 }

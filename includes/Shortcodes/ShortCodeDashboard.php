@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * Student Dashboard Shortcode
  *
@@ -8,18 +8,21 @@
 
 namespace OhMyLMS\Shortcodes;
 
-use CodeRex\Ecommerce\DataStores;
+use OhMyLMS\Commerce\DataStores;
 use OhMyLMS\Data\Student;
-use function CodeRex\Ecommerce\ecommerce;
+use function OhMyLMS\Commerce\ecommerce;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Plugin short code dashboard implementation.
+ */
 class ShortCodeDashboard {
 
 	/**
 	 * Render the dashboard
 	 *
-	 * @param array $atts Shortcode attributes
+	 * @param array $atts Shortcode attributes.
 	 * @since 1.0.0
 	 */
 	public static function output( $atts ) {
@@ -42,49 +45,49 @@ class ShortCodeDashboard {
 	/**
 	 * Display dashboard content
 	 *
-	 * @param array $atts Shortcode attributes
+	 * @param array $atts Shortcode attributes.
 	 * @since 1.0.0
 	 */
 	private static function dashboard( $atts ) {
 		$args = shortcode_atts(
 			array(
-				// Header visibility and configuration
-				'show_header' => 'yes',
-				// Header styling
-				'header_bg_color' => '#000D2C',
-				// User menu styling
-				'user_menu_color' => '#7A8B9A',
-				'user_menu_bg_color' => '#FFFFFF',
-				'user_menu_font_size' => 14,
-				'user_menu_font_weight' => 400,
-				// User menu hover styling
-				'user_menu_hover_color' => '#000D25',
-				'user_menu_hover_bg_color' => '#f5f5f5',
-				// User menu icon styling
-				'user_menu_icon_color' => '#7A8B9A',
-				'user_menu_icon_hover_color' => '#4361EE',
-				// Dashboard background
-				'dashboard_bg_color' => '#F9FAFD',
-				// Course card button styling
-				'course_button_text_color' => '#FFFFFF',
-				'course_button_bg_color' => '#4361EE',
-				'course_button_font_size' => 15,
-				'course_button_font_weight' => 500,
-				'course_button_border_radius' => 10,
+				// Header visibility and configuration.
+				'show_header'                    => 'yes',
+				// Header styling.
+				'header_bg_color'                => '#000D2C',
+				// User menu styling.
+				'user_menu_color'                => '#7A8B9A',
+				'user_menu_bg_color'             => '#FFFFFF',
+				'user_menu_font_size'            => 14,
+				'user_menu_font_weight'          => 400,
+				// User menu hover styling.
+				'user_menu_hover_color'          => '#000D25',
+				'user_menu_hover_bg_color'       => '#f5f5f5',
+				// User menu icon styling.
+				'user_menu_icon_color'           => '#7A8B9A',
+				'user_menu_icon_hover_color'     => '#4361EE',
+				// Dashboard background.
+				'dashboard_bg_color'             => '#F9FAFD',
+				// Course card button styling.
+				'course_button_text_color'       => '#FFFFFF',
+				'course_button_bg_color'         => '#4361EE',
+				'course_button_font_size'        => 15,
+				'course_button_font_weight'      => 500,
+				'course_button_border_radius'    => 10,
 				'course_button_hover_text_color' => '#ffffff',
-				'course_button_hover_bg_color' => 'transparent',
-				// Card styling
-				'card_bg_color' => '#FFFFFF',
-				'card_text_color' => '#52525B',
-				'card_text_font_size' => 14,
-				'card_text_font_weight' => 400,
-				'card_number_color' => '#1E1E1E',
-				'card_number_font_size' => 30,
-				'card_number_font_weight' => 700,
-				// Title styling
-				'title_color' => '#1E1E1E',
-				'title_font_size' => 22,
-				'title_font_weight' => 700,
+				'course_button_hover_bg_color'   => 'transparent',
+				// Card styling.
+				'card_bg_color'                  => '#FFFFFF',
+				'card_text_color'                => '#52525B',
+				'card_text_font_size'            => 14,
+				'card_text_font_weight'          => 400,
+				'card_number_color'              => '#1E1E1E',
+				'card_number_font_size'          => 30,
+				'card_number_font_weight'        => 700,
+				// Title styling.
+				'title_color'                    => '#1E1E1E',
+				'title_font_size'                => 22,
+				'title_font_weight'              => 700,
 			),
 			$atts,
 			'ohmylms_dashboard'
@@ -92,10 +95,10 @@ class ShortCodeDashboard {
 
 		$student = new Student( get_current_user_id() );
 
-		// Generate custom styles
+		// Generate custom styles.
 		self::generate_custom_styles( $args );
 
-		// Display header with navigation if enabled
+		// Display header with navigation if enabled.
 		$show_header = filter_var( $args['show_header'], FILTER_VALIDATE_BOOLEAN );
 		if ( $show_header ) {
 			ohmylms_get_template(
@@ -109,7 +112,7 @@ class ShortCodeDashboard {
 		// Display dashboard content.
 		echo '<section class="ohmylms-dashboard">';
 		echo '<div class="ohmylms-container">';
-		
+
 		// Show notices.
 		if ( function_exists( 'ohmylms_show_all_notices' ) ) {
 			ohmylms_show_all_notices();
@@ -123,10 +126,17 @@ class ShortCodeDashboard {
 				'student' => $student,
 			)
 		);
-		
+
+		/**
+		 * Add-ons such as Course Bundles render their own learner sections below the standard content.
+		 *
+		 * @since NEXT
+		 */
+		do_action( 'ohmylms_lms_student_dashboard_sections' );
+
 		echo '</div>';
 		echo '</section>';
-		
+
 		// Add JavaScript to prevent navigation redirects.
 		self::add_navigation_handler( $args );
 	}
@@ -134,11 +144,11 @@ class ShortCodeDashboard {
 	/**
 	 * Add JavaScript to handle navigation links
 	 *
-	 * @param array $args Shortcode attributes
+	 * @param array $args Shortcode attributes.
 	 * @since 1.0.0
 	 */
 	private static function add_navigation_handler( $args = array() ) {
-		// Get URLs from global settings
+		// Get URLs from global settings.
 		$my_profile_url = ohmylms_get_nav_link_url( 'profile' );
 		$my_courses_url = ohmylms_get_nav_link_url( 'courses' );
 		?>
@@ -181,30 +191,30 @@ class ShortCodeDashboard {
 	/**
 	 * Generate custom styles based on shortcode attributes
 	 *
-	 * @param array $args Shortcode attributes
+	 * @param array $args Shortcode attributes.
 	 * @since 1.0.0
 	 */
 	private static function generate_custom_styles( $args ) {
-		// Sanitize values
-		$header_bg_color = sanitize_hex_color( $args['header_bg_color'] );
-		$user_menu_color = sanitize_hex_color( $args['user_menu_color'] );
-		$user_menu_bg_color = sanitize_hex_color( $args['user_menu_bg_color'] );
-		$user_menu_font_size = absint( $args['user_menu_font_size'] );
-		$user_menu_font_weight = absint( $args['user_menu_font_weight'] );
-		$user_menu_hover_color = sanitize_hex_color( $args['user_menu_hover_color'] );
-		$user_menu_hover_bg_color = sanitize_hex_color( $args['user_menu_hover_bg_color'] );
-		$user_menu_icon_color = sanitize_hex_color( $args['user_menu_icon_color'] );
-		$user_menu_icon_hover_color = sanitize_hex_color( $args['user_menu_icon_hover_color'] );
-		$dashboard_bg_color = sanitize_hex_color( $args['dashboard_bg_color'] );
-		$course_button_text_color = sanitize_hex_color( $args['course_button_text_color'] );
-		$course_button_bg_color = sanitize_hex_color( $args['course_button_bg_color'] );
-		$course_button_font_size = absint( $args['course_button_font_size'] );
-		$course_button_font_weight = absint( $args['course_button_font_weight'] );
-		$course_button_border_radius = absint( $args['course_button_border_radius'] );
+		// Sanitize values.
+		$header_bg_color                = sanitize_hex_color( $args['header_bg_color'] );
+		$user_menu_color                = sanitize_hex_color( $args['user_menu_color'] );
+		$user_menu_bg_color             = sanitize_hex_color( $args['user_menu_bg_color'] );
+		$user_menu_font_size            = absint( $args['user_menu_font_size'] );
+		$user_menu_font_weight          = absint( $args['user_menu_font_weight'] );
+		$user_menu_hover_color          = sanitize_hex_color( $args['user_menu_hover_color'] );
+		$user_menu_hover_bg_color       = sanitize_hex_color( $args['user_menu_hover_bg_color'] );
+		$user_menu_icon_color           = sanitize_hex_color( $args['user_menu_icon_color'] );
+		$user_menu_icon_hover_color     = sanitize_hex_color( $args['user_menu_icon_hover_color'] );
+		$dashboard_bg_color             = sanitize_hex_color( $args['dashboard_bg_color'] );
+		$course_button_text_color       = sanitize_hex_color( $args['course_button_text_color'] );
+		$course_button_bg_color         = sanitize_hex_color( $args['course_button_bg_color'] );
+		$course_button_font_size        = absint( $args['course_button_font_size'] );
+		$course_button_font_weight      = absint( $args['course_button_font_weight'] );
+		$course_button_border_radius    = absint( $args['course_button_border_radius'] );
 		$course_button_hover_text_color = sanitize_hex_color( $args['course_button_hover_text_color'] );
-		$course_button_hover_bg_color = sanitize_hex_color( $args['course_button_hover_bg_color'] );
+		$course_button_hover_bg_color   = sanitize_hex_color( $args['course_button_hover_bg_color'] );
 
-		// Generate CSS
+		// Generate CSS.
 		?>
 		<style id="ohmylms-dashboard-custom-styles">
 			/* Header Background */

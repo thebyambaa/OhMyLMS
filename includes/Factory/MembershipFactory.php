@@ -1,17 +1,20 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 
 namespace OhMyLMS\Factory;
 
 use OhMyLMS\Data\Membership;
 
+/**
+ * Plugin membership factory implementation.
+ */
 class MembershipFactory {
 
 	/**
 	 * Get membership object
 	 *
-	 * @param bool $membership_id
+	 * @param bool $membership_id Membership identifier.
 	 * @return bool|Membership
-	 * @throws \Exception
+	 * @throws \Exception When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	public function get_membership( $membership_id = false ) {
@@ -26,7 +29,7 @@ class MembershipFactory {
 	/**
 	 * Get membership id
 	 *
-	 * @param $membership
+	 * @param mixed $membership Membership.
 	 * @return bool|int
 	 * @since 1.0.0
 	 */
@@ -49,8 +52,8 @@ class MembershipFactory {
 	/**
 	 * Check whether the membership exist or not
 	 *
-	 * @param $membership_id Membership ID
-	 *
+	 * @param mixed $membership_id Membership ID
+	 * .
 	 * @return bool If membership is exist then return true, otherwise return false
 	 *
 	 * @since 1.0.0
@@ -62,11 +65,11 @@ class MembershipFactory {
 
 		$membership = get_post( $membership_id );
 
-		// Check if the post exists and the post type is OHMYLMS_COURSE_CPT
+		// Check if the post exists and the post type is OHMYLMS_COURSE_CPT.
 		if ( $membership && OHMYLMS_MEMBERSHIP_CPT === get_post_type( $membership_id ) ) {
-			return true;  // Post exists and is of the correct type
+			return true;  // Post exists and is of the correct type.
 		} else {
-			return false; // Either post doesn't exist or the post type doesn't match
+			return false; // Either post doesn't exist or the post type doesn't match.
 		}
 	}
 }

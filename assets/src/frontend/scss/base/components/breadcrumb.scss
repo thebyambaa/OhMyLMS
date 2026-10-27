@@ -1,8 +1,9 @@
 .ohmylms-page {
+
     .ohmylms-breadcrumb {
         background-color: #FFF;
-        box-shadow: 0px 1px 2px 0px #DBDDE1;
-        padding: 14px 0px 12px;
+        box-shadow: 0 1px 2px 0 #DBDDE1;
+        padding: 14px 0 12px;
         position: relative;
         z-index: 1;
         margin: 0;
@@ -30,7 +31,7 @@
                 position: relative;
 
                 &::after {
-                    content: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgNSAxMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBmaWxsPSIjQTFBMUFBIiBzdHJva2U9IiNBMUExQUEiIHN0cm9rZS13aWR0aD0iLjQiIGQ9Ik0zLjk4NSAzLjc2M0wxLjMwOCAxLjA4NmEuNTgzLjU4MyAwIDEwLS44MjMuODI4bDIuNjgzIDIuNjcyYS41ODMuNTgzIDAgMDEwIC44MjhMLjQ4NSA4LjA4NmEuNTg0LjU4NCAwIDEwLjgyMy44MjhsMi42NzctMi42NzhhMS43NSAxLjc1IDAgMDAwLTIuNDczeiIvPjwvc3ZnPg==");
+                    content: url(data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgNSAxMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBmaWxsPSIjQTFBMUFBIiBzdHJva2U9IiNBMUExQUEiIHN0cm9rZS13aWR0aD0iLjQiIGQ9Ik0zLjk4NSAzLjc2M0wxLjMwOCAxLjA4NmEuNTgzLjU4MyAwIDEwLS44MjMuODI4bDIuNjgzIDIuNjcyYS41ODMuNTgzIDAgMDEwIC44MjhMLjQ4NSA4LjA4NmEuNTg0LjU4NCAwIDEwLjgyMy44MjhsMi42NzctMi42NzhhMS43NSAxLjc1IDAgMDAwLTIuNDczeiIvPjwvc3ZnPg==);
                     width: 5px;
                     height: 10px;
                     position: absolute;

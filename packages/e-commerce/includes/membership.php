@@ -1,9 +1,12 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
 
-namespace CodeRex\Ecommerce;
+namespace OhMyLMS\Commerce;
 
 use PaypalGateway;
 
+/**
+ * Plugin membership implementation.
+ */
 class Membership {
 
 
@@ -29,8 +32,9 @@ class Membership {
 
 	/**
 	 * Generate membership product
-	 * @param $membership_id
-	 * @param $membership_plans
+	 *
+	 * @param mixed $membership_id Membership identifier.
+	 * @param mixed $membership_plans Membership plans.
 	 * @return array|void
 	 * @since 1.0.0
 	 */
@@ -52,7 +56,8 @@ class Membership {
 
 	/**
 	 * Request membership
-	 * @param $membership_id
+	 *
+	 * @param mixed $membership_id Membership identifier.
 	 * @return void
 	 * @since 1.0.0
 	 */

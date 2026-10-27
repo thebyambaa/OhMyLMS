@@ -1,7 +1,10 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
 
-namespace CodeRex\Ecommerce\Data;
+namespace OhMyLMS\Commerce\Data;
 
+/**
+ * Plugin order item membership implementation.
+ */
 class OrderItemMembership extends OrderItem {
 
 	/**
@@ -134,6 +137,7 @@ class OrderItemMembership extends OrderItem {
 	 *
 	 * @return int The course ID of the order item.
 	 * @since 1.0.0
+	 * @param string $context Context.
 	 */
 	public function get_course_id( $context = 'view' ) {
 		return $this->get_prop( 'course_id', $context );

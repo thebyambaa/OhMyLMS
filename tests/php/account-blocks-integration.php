@@ -35,7 +35,7 @@ try {
     foreach (['student', 'teacher', 'parent'] as $role) {
         account_check(WP_Block_Type_Registry::get_instance()->is_registered('ohmylms/' . $role . '-registration'), $role . ' block missing');
         $html = do_blocks('<!-- wp:ohmylms/' . $role . '-registration /-->');
-        account_check(strpos($html, 'data-ohmylms-school-view="' . $role . '-registration"') !== false, $role . ' block render missing');
+        account_check(strpos($html, 'Continue to your learning hub') !== false && strpos($html, 'data-ohmylms-school-view') === false, $role . ' legacy block did not forward to the hub');
         $data = ['role' => $role, 'first_name' => 'Block', 'email' => $role . '-block@example.invalid', 'password' => 'Account-block-test-password-42'];
         $response = account_register($data);
         account_check(200 === $response->get_status(), $role . ' registration failed: ' . wp_json_encode($response->get_data()));
@@ -56,10 +56,8 @@ try {
     account_check(400 === account_register(['role' => 'teacher', 'email' => 'weak@example.invalid', 'password' => 'short'])->get_status(), 'Weak password accepted');
     account_check(WP_Block_Type_Registry::get_instance()->is_registered('ohmylms/sign-in'), 'Sign-in block missing');
     $login = do_blocks('<!-- wp:ohmylms/sign-in /-->');
-    account_check(strpos($login, 'name="log"') !== false && strpos($login, 'name="pwd"') !== false && strpos($login, 'wp-login.php') !== false, 'Native login form missing');
-    preg_match('/<form name="([^"]+)"/', $login, $first);
-    preg_match('/<form name="([^"]+)"/', Views::render('sign-in'), $second);
-    account_check($first[1] !== $second[1], 'Repeated login blocks duplicate IDs');
+    account_check(strpos($login, '<a href=') !== false && strpos($login, 'name="pwd"') === false, 'Legacy login block did not forward to sign-in');
+    account_check(strpos(Views::render('sign-in'), 'data-ohmylms-school-view') === false, 'Repeated login blocks still mount the retired app');
     wp_set_current_user(get_user_by('email', 'teacher-block@example.invalid')->ID);
     account_check(strpos(Views::render('sign-in'), 'name="pwd"') === false, 'Logged-in visitor sees login form');
     account_check(400 === account_register(['role' => 'parent'])->get_status(), 'Logged-in signup accepted');

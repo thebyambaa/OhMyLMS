@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Quiz post type to connect with topics.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\PostTypes;
 
@@ -53,23 +58,26 @@ class QuizPostType {
 		);
 
 		$args = array(
-			'label'               => __( 'Quiz', 'ohmylms' ),
-			'description'         => __( 'Quiz to maintain quiz and questions', 'ohmylms' ),
-			'labels'              => $labels,
-			'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt', 'custom-fields' ),
-			'taxonomies'          => array( 'category', 'post_tag' ),
-			'hierarchical'        => false,
-			'public'              => false,
-			'show_ui'             => false,
-			'show_in_menu'        => false,
-			'menu_position'       => 5,
-			'show_in_admin_bar'   => false,
-			'show_in_nav_menus'   => false,
-			'can_export'          => true,
-			'has_archive'         => false,
-			'exclude_from_search' => false,
-			'publicly_queryable'  => true,
-			'capability_type'     => 'post',
+			'label'                 => __( 'Quiz', 'ohmylms' ),
+			'description'           => __( 'Quiz to maintain quiz and questions', 'ohmylms' ),
+			'labels'                => $labels,
+			'supports'              => array( 'title', 'editor', 'thumbnail', 'excerpt', 'custom-fields', 'revisions', 'author' ),
+			'taxonomies'            => array( 'category', 'post_tag' ),
+			'hierarchical'          => false,
+			'public'                => false,
+			'show_ui'               => true,
+			'show_in_rest'          => true,
+			'rest_base'             => 'ohmylms-quizzes',
+			'rest_controller_class' => \OhMyLMS\Learning\NativeQuizController::class,
+			'show_in_menu'          => false,
+			'menu_position'         => 5,
+			'show_in_admin_bar'     => false,
+			'show_in_nav_menus'     => false,
+			'can_export'            => true,
+			'has_archive'           => false,
+			'exclude_from_search'   => false,
+			'publicly_queryable'    => true,
+			'capability_type'       => 'post',
 		);
 		register_post_type( 'ohmylms-quiz', $args );
 	}

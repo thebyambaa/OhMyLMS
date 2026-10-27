@@ -1,11 +1,17 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
+/**
+ * Class DataStores.
+ *
+ * @package OhMyLMS
+ */
 
-namespace CodeRex\Ecommerce;
+namespace OhMyLMS\Commerce;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Class DataStores
+ *
  * @package OhMyLMS\DataStores
  * @since 1.0.0
  */
@@ -45,13 +51,13 @@ class DataStores {
 	 * @since 1.0.0
 	 */
 	private $stores = array(
-		'order'             => 'CodeRex\Ecommerce\DataStore\OrderStore',
-		'order-item'        => 'CodeRex\Ecommerce\DataStore\OrderItemStore',
-		'order-item-course' => 'CodeRex\Ecommerce\DataStore\OrderItemCourseStore',
-		'order-item-coupon' => 'CodeRex\Ecommerce\DataStore\OrderItemCouponStore',
-		'coupon'            => 'CodeRex\Ecommerce\DataStore\CouponStore',
-		'order_refund'      => 'CodeRex\Ecommerce\DataStore\OrderRefundStore',
-		'subscription'      => 'CodeRex\Ecommerce\DataStore\SubscriptionStore',
+		'order'             => 'OhMyLMS\Commerce\DataStore\OrderStore',
+		'order-item'        => 'OhMyLMS\Commerce\DataStore\OrderItemStore',
+		'order-item-course' => 'OhMyLMS\Commerce\DataStore\OrderItemCourseStore',
+		'order-item-coupon' => 'OhMyLMS\Commerce\DataStore\OrderItemCouponStore',
+		'coupon'            => 'OhMyLMS\Commerce\DataStore\CouponStore',
+		'order_refund'      => 'OhMyLMS\Commerce\DataStore\OrderRefundStore',
+		'subscription'      => 'OhMyLMS\Commerce\DataStore\SubscriptionStore',
 	);
 
 
@@ -60,8 +66,8 @@ class DataStores {
 	 *
 	 * Create datastore to interact with the DB
 	 *
-	 * @param $object_type
-	 * @throws \Exception
+	 * @param mixed $object_type Object type.
+	 * @throws \Exception When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	public function __construct( $object_type ) {
@@ -83,9 +89,9 @@ class DataStores {
 	/**
 	 * Loads a data store
 	 *
-	 * @param $object_type
+	 * @param mixed $object_type Object type.
 	 * @return DataStores
-	 * @throws \Exception
+	 * @throws \Exception When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	public static function load( $object_type ) {
@@ -97,7 +103,7 @@ class DataStores {
 	/**
 	 * Read an object from the data store
 	 *
-	 * @param $data Data
+	 * @param mixed $data Data.
 	 * @since 1.0.0
 	 */
 	public function read( &$data ) {
@@ -107,7 +113,7 @@ class DataStores {
 	/**
 	 * Create a object in datastore
 	 *
-	 * @param $data Data
+	 * @param mixed $data Data.
 	 * @since 1.0.0
 	 */
 	public function create( &$data ) {
@@ -118,8 +124,8 @@ class DataStores {
 	/**
 	 * Update object in data store
 	 *
-	 * @param $data Data
-	 *
+	 * @param mixed $data Data
+	 * .
 	 * @since 1.0.0
 	 */
 	public function update( &$data ) {
@@ -130,8 +136,9 @@ class DataStores {
 	/**
 	 * Delete an object
 	 *
-	 * @param $data Data
-	 *
+	 * @param mixed $data Data
+	 * .
+	 * @param array $args Operation arguments.
 	 * @since 1.0.0
 	 */
 	public function delete( &$data, $args = array() ) {
@@ -143,9 +150,9 @@ class DataStores {
 	/**
 	 * Update or delete post meta based on the value.
 	 *
-	 * @param Data $object The data object.
+	 * @param Data   $object The data object.
 	 * @param string $meta_key The meta key.
-	 * @param mixed $meta_value The meta value.
+	 * @param mixed  $meta_value The meta value.
 	 * @return bool True if the meta was updated or deleted, false otherwise.
 	 *
 	 * @since 1.0.0

@@ -9,38 +9,38 @@
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
+	exit; // Exit if accessed directly.
 }
 global $membership;
-if( $membership == null ) {
+if ( null == $membership ) {
 	return;
 }
 
 $description = $membership->get_description();
-if(empty($description)){
+if ( empty( $description ) ) {
 	return;
 }
 
-// Character limit for truncation
-$char_limit = 200;
-$description_length = mb_strlen(strip_tags($description));
-$needs_truncation = $description_length > $char_limit;
-$unique_id = 'membership-desc-' . $membership->get_id();
+// Character limit for truncation.
+$char_limit         = 200;
+$description_length = mb_strlen( wp_strip_all_tags( $description ) );
+$needs_truncation   = $description_length > $char_limit;
+$unique_id          = 'membership-desc-' . $membership->get_id();
 
-if ($needs_truncation) {
-	$short_description = mb_substr(strip_tags($description), 0, $char_limit);
+if ( $needs_truncation ) {
+	$short_description = mb_substr( wp_strip_all_tags( $description ), 0, $char_limit );
 	?>
-	<div class="membership-description-wrapper" data-desc-id="<?php echo esc_attr($unique_id); ?>">
+	<div class="membership-description-wrapper" data-desc-id="<?php echo esc_attr( $unique_id ); ?>">
 		<p class="membership-description membership-description-short">
-			<?php echo esc_html($short_description); ?>...
-			<button type="button" class="membership-see-more-btn" data-target="<?php echo esc_attr($unique_id); ?>">
-				<?php echo esc_html__('See More', 'ohmylms'); ?>
+			<?php echo esc_html( $short_description ); ?>...
+			<button type="button" class="membership-see-more-btn" data-target="<?php echo esc_attr( $unique_id ); ?>">
+				<?php echo esc_html__( 'See More', 'ohmylms' ); ?>
 			</button>
 		</p>
 		<p class="membership-description membership-description-full" style="display: none;">
-			<?php echo wp_kses_post($description); ?>
-			<button type="button" class="membership-see-less-btn" data-target="<?php echo esc_attr($unique_id); ?>">
-				<?php echo esc_html__('See Less', 'ohmylms'); ?>
+			<?php echo wp_kses_post( $description ); ?>
+			<button type="button" class="membership-see-less-btn" data-target="<?php echo esc_attr( $unique_id ); ?>">
+				<?php echo esc_html__( 'See Less', 'ohmylms' ); ?>
 			</button>
 		</p>
 	</div>
@@ -48,7 +48,7 @@ if ($needs_truncation) {
 } else {
 	?>
 	<p class="membership-description">
-		<?php echo wp_kses_post($description); ?>
+		<?php echo wp_kses_post( $description ); ?>
 	</p>
 	<?php
 }

@@ -55,10 +55,12 @@ test('admin colors and font are chosen under Design and applied everywhere', asy
       'font-family',
       /Noto Sans/,
     );
+    // The old Skills address opens the Content Hub's Skills tab.
     await page.goto('/wp-admin/admin.php?page=ohmylms#/extensions/skills');
-    const title = page.locator('.ohmylms-ext-header h1');
-    await expect(title).toHaveText('Skills');
+    const title = page.locator('.ohmylms-content-hub-header h1');
+    await expect(title).toHaveText('Content Hub');
     await expect(title).toHaveCSS('font-size', '20px');
+    await expect(page.locator('.ohmylms-ext-header h2')).toHaveText('Skill library');
     await expect(page.locator('.ohmylms-dashboard-layout.extensions .ohmylms-content')).toHaveCSS(
       'padding-left',
       '40px',

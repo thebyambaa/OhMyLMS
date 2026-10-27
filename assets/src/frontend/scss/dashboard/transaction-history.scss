@@ -1,6 +1,9 @@
 .ohmylms-page {
+
     .ohmylms-student-profile {
+
         .student-transaction-history {
+
             @media screen and (min-width: 1400px) {
                 padding: 40px 55px;
             }
@@ -23,6 +26,7 @@
 
 
 @media screen and (max-width: 767px) {
+
     .ohmylms-page .ohmylms-student-profile .student-transaction-history .dashboard-table-tr > .dashboard-table-td.date,
     .ohmylms-page .ohmylms-student-profile .student-transaction-history .dashboard-table-tr > .dashboard-table-td.price,
     .ohmylms-page .ohmylms-student-profile .student-transaction-history .dashboard-table-tr > .dashboard-table-td.course-name,

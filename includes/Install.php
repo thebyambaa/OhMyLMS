@@ -1,9 +1,12 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 
 namespace OhMyLMS;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Plugin install implementation.
+ */
 class Install {
 
 	/**
@@ -25,15 +28,15 @@ class Install {
 	 * );
 	 */
 	private static $db_updates = array(
-		'1.0.1' => array(
+		'1.0.1'  => array(
 			'ohmylms_update_101_user_membership_table',
 			'ohmylms_update_101_db_version',
 		),
-		'1.2.1' => array(
+		'1.2.1'  => array(
 			'ohmylms_update_121_create_video_progress_table',
 			'ohmylms_update_121_db_version',
 		),
-		'1.2.5' => array(
+		'1.2.5'  => array(
 			'ohmylms_update_125_create_student_pages',
 			'ohmylms_update_125_db_version',
 		),
@@ -70,7 +73,7 @@ class Install {
 		set_transient( 'ohmylms_installing', true, MINUTE_IN_SECONDS * 10 );
 		try {
 			self::maybe_create_pages();
-            self::bundled_maybe_create_pages();
+			self::bundled_maybe_create_pages();
 			self::create_tables();
 			self::create_roles();
 			self::maybe_update_db_version();
@@ -79,7 +82,7 @@ class Install {
 				self::save_default_design_settings();
 				self::save_default_email_settings();
 			} else {
-				// For existing installations, create the new student pages
+				// For existing installations, create the new student pages.
 				self::create_student_pages_for_existing_users();
 			}
 			self::maybe_set_activation_transients();
@@ -89,10 +92,10 @@ class Install {
 
 		add_option( 'ohmylms_admin_install_timestamp', time() );
 
-		// Set flag to indicate student pages have been created
+		// Set flag to indicate student pages have been created.
 		update_option( 'ohmylms_student_pages_created', '1' );
 
-		flush_rewrite_rules(true);
+		flush_rewrite_rules( true );
 
 		/**
 		 * Fires after OhMyLMS has been installed.
@@ -139,7 +142,7 @@ class Install {
 	/**
 	 * Update DB version to current.
 	 *
-	 * @param string|null $version
+	 * @param string|null $version Version.
 	 * @since 1.0.0
 	 */
 	public static function update_db_version( $version = null ) {
@@ -576,15 +579,15 @@ class Install {
 		$pages = apply_filters(
 			'ohmylms_default_pages',
 			array(
-				'course'   => array(
+				'course'            => array(
 					'name'    => _x( 'ohmylms-all-courses', 'Page slug', 'ohmylms' ),
 					'title'   => _x( 'All Course', 'Page title', 'ohmylms' ),
 					'content' => '',
 				),
-				'checkout' => array(
-					'name'    => _x( 'ohmylms-checkout', 'Page slug', 'ohmylms' ),
-					'title'   => _x( 'OhMy Checkout', 'Page title', 'ohmylms' ),
-					'content' => '<!-- wp:shortcode -->[ohmylms_checkout]<!-- /wp:shortcode -->',
+				'checkout'          => array(
+					'name'     => _x( 'ohmylms-checkout', 'Page slug', 'ohmylms' ),
+					'title'    => _x( 'OhMy Checkout', 'Page title', 'ohmylms' ),
+					'content'  => '<!-- wp:shortcode -->[ohmylms_checkout]<!-- /wp:shortcode -->',
 					'template' => 'ohmylms-checkout',
 				),
 				'student_dashboard' => array(
@@ -593,13 +596,13 @@ class Install {
 					'content'  => '<!-- wp:shortcode -->[ohmylms_dashboard]<!-- /wp:shortcode -->',
 					'template' => 'ohmylms-dashboard',
 				),
-				'student_profile' => array(
+				'student_profile'   => array(
 					'name'     => _x( 'my-profile', 'Page slug', 'ohmylms' ),
 					'title'    => _x( 'My Profile', 'Page title', 'ohmylms' ),
 					'content'  => '<!-- wp:shortcode -->[ohmylms_profile]<!-- /wp:shortcode -->',
 					'template' => 'ohmylms-profile',
 				),
-				'student_courses' => array(
+				'student_courses'   => array(
 					'name'     => _x( 'my-courses', 'Page slug', 'ohmylms' ),
 					'title'    => _x( 'My Courses', 'Page title', 'ohmylms' ),
 					'content'  => '<!-- wp:shortcode -->[ohmylms_my_courses]<!-- /wp:shortcode -->',
@@ -634,9 +637,9 @@ class Install {
 			// 'post_name'      => $page['name'], // Ensuring slug consistency
 			// )
 			// );
-			// }
+			// }.
 
-			// Create the page if it doesn't exist
+			// Create the page if it doesn't exist.
 			$page_id = wp_insert_post(
 				array(
 					'post_title'     => $page['title'],
@@ -645,20 +648,20 @@ class Install {
 					'post_content'   => $page['content'],
 					'post_author'    => get_current_user_id(),
 					'comment_status' => 'closed',
-					'post_name'      => $page['name'], // Ensuring slug consistency
+					'post_name'      => $page['name'], // Ensuring slug consistency.
 				)
 			);
 
-			// Update the page template if required
+			// Update the page template if required.
 			if ( ! empty( $page['template'] ) ) {
 				update_post_meta( $page_id, '_wp_page_template', $page['template'] );
 			}
 
-			// Store the page ID in options
+			// Store the page ID in options.
 			update_option( 'ohmylms_' . $key . '_page_id', $page_id );
 		}
 
-		flush_rewrite_rules(true);
+		flush_rewrite_rules( true );
 	}
 
 	/**
@@ -668,22 +671,24 @@ class Install {
 	 * @since 1.0.0
 	 */
 	public static function create_student_pages_for_existing_users() {
-		// Check if student pages have already been created
+		// Check if student pages have already been created.
 		if ( get_option( 'ohmylms_student_pages_created' ) ) {
 			return;
 		}
 
-		// Handle the old profile page - update it to use the legacy shortcode
+		// Handle the old profile page - update it to use the legacy shortcode.
 		$old_profile_page_id = get_option( 'ohmylms_profile_page_id' );
 		if ( $old_profile_page_id && get_post( $old_profile_page_id ) ) {
-			// Update the old profile page to use the legacy shortcode
-			wp_update_post( array(
-				'ID'           => $old_profile_page_id,
-				'post_content' => '<!-- wp:shortcode -->[ohmylms_my_profile]<!-- /wp:shortcode -->',
-			) );
+			// Update the old profile page to use the legacy shortcode.
+			wp_update_post(
+				array(
+					'ID'           => $old_profile_page_id,
+					'post_content' => '<!-- wp:shortcode -->[ohmylms_my_profile]<!-- /wp:shortcode -->',
+				)
+			);
 		}
 
-		// Create the new student pages
+		// Create the new student pages.
 		$student_pages = array(
 			'student_dashboard' => array(
 				'name'     => _x( 'my-dashboard', 'Page slug', 'ohmylms' ),
@@ -691,13 +696,13 @@ class Install {
 				'content'  => '<!-- wp:shortcode -->[ohmylms_dashboard]<!-- /wp:shortcode -->',
 				'template' => 'ohmylms-dashboard',
 			),
-			'student_profile' => array(
+			'student_profile'   => array(
 				'name'     => _x( 'my-profile', 'Page slug', 'ohmylms' ),
 				'title'    => _x( 'My Profile', 'Page title', 'ohmylms' ),
 				'content'  => '<!-- wp:shortcode -->[ohmylms_profile]<!-- /wp:shortcode -->',
 				'template' => 'ohmylms-profile',
 			),
-			'student_courses' => array(
+			'student_courses'   => array(
 				'name'     => _x( 'my-courses', 'Page slug', 'ohmylms' ),
 				'title'    => _x( 'My Courses', 'Page title', 'ohmylms' ),
 				'content'  => '<!-- wp:shortcode -->[ohmylms_my_courses]<!-- /wp:shortcode -->',
@@ -706,27 +711,29 @@ class Install {
 		);
 
 		foreach ( $student_pages as $key => $page ) {
-			// Check if page already exists
+			// Check if page already exists.
 			$existing_page_id = get_option( 'ohmylms_' . $key . '_page_id' );
 			if ( $existing_page_id && get_post( $existing_page_id ) ) {
-				continue; // Skip if page already exists
+				continue; // Skip if page already exists.
 			}
 
-			// For student_profile, we need to handle the slug conflict
-			if ( $key === 'student_profile' ) {
-				// Check if there's already a page with 'my-profile' slug
+			// For student_profile, we need to handle the slug conflict.
+			if ( 'student_profile' === $key ) {
+				// Check if there's already a page with 'my-profile' slug.
 				$existing_my_profile = get_page_by_path( 'my-profile' );
 				if ( $existing_my_profile ) {
-					// Draft the old profile page to avoid slug conflict and frontend confusion
-					wp_update_post( array(
-						'ID'          => $existing_my_profile->ID,
-						'post_name'   => 'legacy-profile',
-						'post_status' => 'draft',
-					) );
+					// Draft the old profile page to avoid slug conflict and frontend confusion.
+					wp_update_post(
+						array(
+							'ID'          => $existing_my_profile->ID,
+							'post_name'   => 'legacy-profile',
+							'post_status' => 'draft',
+						)
+					);
 				}
 			}
 
-			// Create the page
+			// Create the page.
 			$page_id = wp_insert_post(
 				array(
 					'post_title'     => $page['title'],
@@ -739,22 +746,22 @@ class Install {
 				)
 			);
 
-			// Update the page template if required
+			// Update the page template if required.
 			if ( ! empty( $page['template'] ) ) {
 				update_post_meta( $page_id, '_wp_page_template', $page['template'] );
 			}
 
-			// Store the page ID in options
+			// Store the page ID in options.
 			update_option( 'ohmylms_' . $key . '_page_id', $page_id );
 		}
 
-		// Update settings for existing users if they haven't been customized
+		// Update settings for existing users if they haven't been customized.
 		self::maybe_update_student_page_settings();
 
-		// Set flag to indicate student pages have been created
+		// Set flag to indicate student pages have been created.
 		update_option( 'ohmylms_student_pages_created', '1' );
 
-		flush_rewrite_rules(true);
+		flush_rewrite_rules( true );
 	}
 
 	/**
@@ -763,33 +770,39 @@ class Install {
 	 * @since 1.0.0
 	 */
 	private static function maybe_update_student_page_settings() {
-		// Get current profile page setting
+		// Get current profile page setting.
 		$current_profile_page_id = get_option( 'ohmylms_profile_page_id' );
 		$default_profile_page_id = get_option( 'ohmylms_profile_page_id' );
 
-		// Update the profile page setting to point to the new student profile page
+		// Update the profile page setting to point to the new student profile page.
 		$new_student_profile_page_id = get_option( 'ohmylms_student_profile_page_id' );
 		if ( $new_student_profile_page_id ) {
 			// Keep the old profile page setting as is (for legacy shortcode)
-			// The new student profile page will be used via the new settings
+			// The new student profile page will be used via the new settings.
 		}
 	}
 
+	/**
+	 * Save default permalink settings for Install.
+	 */
 	public static function save_default_permalink_settings() {
 		$permalink          = new \OhMyLMS\Admin\Settings\Permalink();
 		$permalink_settings = $permalink->get_settings();
 		if ( is_array( $permalink_settings ) ) {
 			foreach ( $permalink_settings as $setting ) {
 				if ( isset( $setting['id'], $setting['default'] ) ) {
-					if ( 'ohmylms_permalink' == $setting['id'] ) {
+					if ( 'ohmylms_permalink' === $setting['id'] ) {
 						update_option( $setting['id'], $setting['default'] );
-						flush_rewrite_rules(true);
+						flush_rewrite_rules( true );
 					}
 				}
 			}
 		}
 	}
 
+	/**
+	 * Save default design settings for Install.
+	 */
 	public static function save_default_design_settings() {
 		$design          = new \OhMyLMS\Admin\Settings\Design();
 		$design_settings = $design->get_settings();
@@ -802,6 +815,9 @@ class Install {
 		}
 	}
 
+	/**
+	 * Save default email settings for Install.
+	 */
 	public static function save_default_email_settings() {
 		$email          = new \OhMyLMS\Admin\Settings\EmailSettings();
 		$email_settings = $email->get_settings();
@@ -814,7 +830,10 @@ class Install {
 		}
 	}
 
-private static function bundled_get_schema() {
+	/**
+	 * Bundled get schema for Install.
+	 */
+	private static function bundled_get_schema() {
 		global $wpdb;
 		$charset_collate = $wpdb->get_charset_collate();
 		$tables          = "CREATE TABLE {$wpdb->prefix}ohmylms_user_membership (
@@ -887,13 +906,19 @@ private static function bundled_get_schema() {
 		return $tables;
 	}
 
-public static function bundled_maybe_create_pages() {
+	/**
+	 * Bundled maybe create pages for Install.
+	 */
+	public static function bundled_maybe_create_pages() {
 		if ( empty( get_option( 'ohmylms_pro_db_version' ) ) ) {
 			self::bundled_create_pages();
 		}
 	}
 
-public static function bundled_create_pages() {
+	/**
+	 * Bundled create pages for Install.
+	 */
+	public static function bundled_create_pages() {
 		$pages = apply_filters(
 			'ohmylms_pro_default_pages',
 			array(
@@ -909,27 +934,12 @@ public static function bundled_create_pages() {
 			$existing_page = get_page_by_path( $page['name'], OBJECT, 'page' );
 
 			if ( $existing_page ) {
-                if (!get_option('ohmylms_' . $key . '_page_id')) update_option('ohmylms_' . $key . '_page_id', $existing_page->ID);
-                continue;
-				// Check if existing page has the same title and content
-				if ( $existing_page->post_title === $page['title'] && $existing_page->post_content === $page['content'] ) {
-					// Store the existing page ID and skip creation
+				if ( ! get_option( 'ohmylms_' . $key . '_page_id' ) ) {
 					update_option( 'ohmylms_' . $key . '_page_id', $existing_page->ID );
-					continue;
-				} else {
-					// Update existing page if needed
-					wp_update_post(
-						array(
-							'ID'           => $existing_page->ID,
-							'post_title'   => $page['title'],
-							'post_content' => $page['content'],
-						)
-					);
 				}
-
-				$page_id = $existing_page->ID;
+				continue;
 			} else {
-				// Create the page if it doesn't exist
+				// Create the page if it doesn't exist.
 				$page_id = wp_insert_post(
 					array(
 						'post_title'     => $page['title'],
@@ -938,17 +948,17 @@ public static function bundled_create_pages() {
 						'post_content'   => $page['content'],
 						'post_author'    => get_current_user_id(),
 						'comment_status' => 'closed',
-						'post_name'      => $page['name'], // Ensuring slug consistency
+						'post_name'      => $page['name'], // Ensuring slug consistency.
 					)
 				);
 			}
 
-			// Update the page template if required
+			// Update the page template if required.
 			if ( ! empty( $page['template'] ) ) {
 				update_post_meta( $page_id, '_wp_page_template', $page['template'] );
 			}
 
-			// Store the page ID in options
+			// Store the page ID in options.
 			update_option( 'ohmylms_' . $key . '_page_id', $page_id );
 		}
 

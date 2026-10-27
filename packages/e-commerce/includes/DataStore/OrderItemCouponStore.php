@@ -1,9 +1,12 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
 
-namespace CodeRex\Ecommerce\DataStore;
+namespace OhMyLMS\Commerce\DataStore;
 
-use CodeRex\Ecommerce\Abstracts\Data;
+use OhMyLMS\Commerce\Abstracts\Data;
 
+/**
+ * Plugin order item coupon store implementation.
+ */
 class OrderItemCouponStore extends OrderItemStore {
 
 	/**
@@ -17,7 +20,7 @@ class OrderItemCouponStore extends OrderItemStore {
 		$id = $item->get_id();
 		$item->set_props(
 			array(
-				'discount'  => $this->get_metadata( $id, 'discount_amount', true ),
+				'discount' => $this->get_metadata( $id, 'discount_amount', true ),
 				'code'     => $item->get_name(),
 			)
 		);

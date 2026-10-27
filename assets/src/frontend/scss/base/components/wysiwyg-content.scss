@@ -1,6 +1,7 @@
 .ohmylms-page {
    //------wysiwyg content style-------
    .ohmylms-wysiwyg-content {
+
         figure {
             margin-bottom: 20px;
         }
@@ -60,7 +61,7 @@
         .ohmylms-lesson-audio {
             border-radius: 8px;
             background: #FFF;
-            box-shadow: 0px 1px 4px 0px #D3D6DD;
+            box-shadow: 0 1px 4px 0 #D3D6DD;
             padding: 16px 20px 20px;
             margin-bottom: 24px;
 
@@ -192,7 +193,7 @@
             color: var(--ohmylms-primary-color);
             text-decoration: none;
             white-space: normal;
-            word-break: break-word;
+word-break: normal;
             overflow-wrap: break-word;
 
             &:hover {
@@ -252,7 +253,7 @@
             color: var(--ohmylms-body-text-color);
             background-color: rgba(var(--ohmylms-primary-color-rgb), 0.1);
 
-            &:before {
+            &::before {
                 opacity: 0;
             }
         }
@@ -275,6 +276,7 @@
 }
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .ohmylms-wysiwyg-content h1 {
         font-size: 28px;
         line-height: 1.2;
@@ -283,12 +285,14 @@
 }
 
 @media screen and (max-width: 991px) {
+
     .ohmylms-page .ohmylms-wysiwyg-content img {
         border-radius: 10px;
     }
 }
 
 @media screen and (max-width: 767px) {
+
     .ohmylms-page .ohmylms-wysiwyg-content p {
         font-size: 15px;
         margin: 0 0 14px;
@@ -307,6 +311,7 @@
 }
 
 @media screen and (max-width: 575px) {
+
     .ohmylms-page .ohmylms-wysiwyg-content img {
         border-radius: 8px;
     }

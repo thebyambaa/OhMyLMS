@@ -1,4 +1,10 @@
 <?php
+/**
+ * Student function.
+ *
+ * @package OhMyLMS
+ */
+
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
@@ -12,5 +18,5 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @since 1.0.0
  */
 function ohmylms_get_student( $student_id ) {
-	return ohmylms()->student_factory->get_student($student_id);
+	return ohmylms()->student_factory->get_student( $student_id );
 }

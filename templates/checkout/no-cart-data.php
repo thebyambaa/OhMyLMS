@@ -12,12 +12,12 @@ defined( 'ABSPATH' ) || exit();
 ?>
 
 <div class="ohmylms-no-cart-data">
-    <div class="ohmylms-container">
-        <div class="ohmylms-no-cart-data-wrapper">
-            <h4 class="no-cart-title"><?php echo __('Your cart is empty','ohmylms') ?></h4>
-            <a href="<?php echo $archive_page_url; ?>" class="ohmylms-button">
-                <?php echo __('Continue Learning','ohmylms') ?>
-            </a>
-        </div>
-    </div>
+	<div class="ohmylms-container">
+		<div class="ohmylms-no-cart-data-wrapper">
+			<h4 class="no-cart-title"><?php echo esc_html__( 'Your cart is empty', 'ohmylms' ); ?></h4>
+			<a href="<?php echo esc_url( $archive_page_url ); ?>" class="ohmylms-button">
+				<?php echo esc_html__( 'Continue Learning', 'ohmylms' ); ?>
+			</a>
+		</div>
+	</div>
 </div>

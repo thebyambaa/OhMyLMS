@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * TokenService class.
  *
@@ -70,7 +70,7 @@ class TokenService {
 		$account_id    = ZoomApiHelper::get_account_id();
 		$client_id     = ZoomApiHelper::get_client_id();
 		$client_secret = ZoomApiHelper::get_client_secret();
-		$response = wp_remote_post(
+		$response      = wp_remote_post(
 			'https://zoom.us/oauth/token',
 			array(
 				'headers' => array(
@@ -110,4 +110,4 @@ class TokenService {
 		update_user_meta( $user_id, 'clms_zoom_access_token', $data['access_token'] );
 		update_user_meta( $user_id, 'clms_zoom_token_expires', time() + $data['expires_in'] );
 	}
-} 
+}

@@ -1,5 +1,7 @@
 .ohmylms-page {
+
     .ohmylms-lesson-details {
+
         .ohmylms-lesson-navigation {
             border-top: 1px solid #ECEDF2;
             padding-top: 24px;
@@ -50,7 +52,7 @@
                         line-height: 1;
                     }
 
-                    &:before {
+                    &::before {
                         height: 14px;
                         visibility: hidden;
                         transition: all 0.3s ease;
@@ -60,11 +62,12 @@
                 }
             }
 
-            .ohmylms-checkbox input[type=checkbox]:checked + .ohmylms-checkbox-text .checkedbox {
+            .ohmylms-checkbox input[type="checkbox"]:checked + .ohmylms-checkbox-text .checkedbox {
                 background: transparent;
                 border-color: #fff;
             }
-            .ohmylms-checkbox input[type=checkbox]:checked + .ohmylms-checkbox-text .checkedbox svg {
+
+            .ohmylms-checkbox input[type="checkbox"]:checked + .ohmylms-checkbox-text .checkedbox svg {
                 opacity: 1;
                 visibility: visible;
             }
@@ -125,7 +128,7 @@
                         border-color: #FFF;
                         background-color: #FFF;
                         color: rgba(0, 13, 37, 0.16);
-                        box-shadow: 0px 1px 2px 0px #DBDDE1;
+                        box-shadow: 0 1px 2px 0 #DBDDE1;
                         opacity: 1;
                     }
 
@@ -166,6 +169,7 @@
 }
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .ohmylms-lesson-details .ohmylms-lesson-navigation .ohmylms-checkbox {
         border-radius: 8px;
     }
@@ -177,9 +181,11 @@
 }
 
 @media screen and (max-width: 767px) {
+
     .ohmylms-page .ohmylms-lesson-details .ohmylms-lesson-navigation .quiz-navigation {
         justify-content: flex-end;
     }
+
     .ohmylms-page .ohmylms-lesson-details .ohmylms-lesson-navigation .quiz-navigation form {
         margin-left: 0;
     }
@@ -187,6 +193,7 @@
 }
 
 @media screen and (max-width: 425px) {
+
     .ohmylms-page .ohmylms-lesson-details .ohmylms-lesson-navigation .default-navigation {
         gap: 9px;
     }
@@ -194,6 +201,7 @@
     .ohmylms-page .ohmylms-lesson-details .ohmylms-lesson-navigation .ohmylms-checkbox {
         padding: 12px 16px;
     }
+
     .ohmylms-page .ohmylms-lesson-details .ohmylms-lesson-navigation .next-lesson {
         padding: 10px 16px;
     }
@@ -201,6 +209,7 @@
     .ohmylms-page .ohmylms-lesson-details .ohmylms-lesson-navigation .ohmylms-checkbox-text {
         font-size: 13px;
     }
+
     .ohmylms-page .ohmylms-lesson-details .ohmylms-lesson-navigation .next-lesson {
         font-size: 13px;
     }

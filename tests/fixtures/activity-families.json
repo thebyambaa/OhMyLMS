@@ -1,0 +1,109 @@
+{
+  "matching": {
+    "settings": {
+      "type": "matching"
+    },
+    "questions": [
+      {
+        "answer": "One",
+        "matching_data": {
+          "label": "1"
+        }
+      },
+      {
+        "answer": "Two",
+        "matching_data": {
+          "label": "2"
+        }
+      },
+      {
+        "answer": "Three",
+        "matching_data": {
+          "label": "3"
+        }
+      }
+    ]
+  },
+  "choice": {
+    "settings": {
+      "type": "single-choice"
+    },
+    "questions": [
+      {
+        "answer": "Yes",
+        "is_correct": true
+      },
+      {
+        "answer": "No",
+        "is_correct": false
+      },
+      {
+        "answer": "Maybe",
+        "is_correct": false
+      }
+    ]
+  },
+  "boolean": {
+    "settings": {
+      "type": "true-false"
+    },
+    "questions": [
+      {
+        "answer": "True",
+        "is_correct": true
+      },
+      {
+        "answer": "False",
+        "is_correct": false
+      }
+    ]
+  },
+  "sort": {
+    "settings": {
+      "type": "categorize",
+      "buckets": [
+        {
+          "id": "a",
+          "label": "Odd"
+        },
+        {
+          "id": "b",
+          "label": "Even"
+        }
+      ],
+      "items": [
+        {
+          "id": "one",
+          "text": "1"
+        },
+        {
+          "id": "two",
+          "text": "2"
+        }
+      ],
+      "key": {
+        "one": "a",
+        "two": "b"
+      }
+    },
+    "questions": []
+  },
+  "magnets": {
+    "settings": {
+      "type": "build-expression",
+      "tile_mode": "words",
+      "tiles": [
+        "We",
+        "learn",
+        "together"
+      ],
+      "correct": [
+        "We",
+        "learn",
+        "together"
+      ],
+      "equivalence": false
+    },
+    "questions": []
+  }
+}

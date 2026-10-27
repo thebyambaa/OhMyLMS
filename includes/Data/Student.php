@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * Student class.
  *
@@ -83,8 +83,6 @@ class Student extends Data {
 	 * Constructor for the Student class.
 	 *
 	 * @param int|Student $data Student data or ID.
-	 * @param bool        $is_session Whether the data is from a session.
-	 *
 	 * @since 1.0.0
 	 */
 	public function __construct( $data = 0 ) {
@@ -276,7 +274,7 @@ class Student extends Data {
 	 */
 	public function set_skills( $value ) {
 		if ( is_array( $value ) ) {
-			// Sanitize each skill and remove empty ones
+			// Sanitize each skill and remove empty ones.
 			$sanitized_skills = array_filter( array_map( 'sanitize_text_field', $value ) );
 			$this->set_prop( 'skills', wp_json_encode( array_values( $sanitized_skills ) ) );
 		} else {
@@ -288,25 +286,25 @@ class Student extends Data {
 	 * Set the social links of the student.
 	 *
 	 * @param array|string $social_links Array of social links or labels array (for backward compatibility).
-	 * @param array $urls Array of link URLs (optional, for backward compatibility).
+	 * @param array        $urls Array of link URLs (optional, for backward compatibility).
 	 * @since 1.0.0
 	 */
 	public function set_social_links( $social_links, $urls = null ) {
 		$links = array();
-		
-		// Handle empty string or null (set empty)
-		if ( empty( $social_links ) || $social_links === '' ) {
+
+		// Handle empty string or null (set empty).
+		if ( empty( $social_links ) || '' === $social_links ) {
 			$this->set_prop( 'social_links', '' );
 			return;
 		}
-		
-		// Handle new format: array of objects with 'label' and 'url' keys
-		if ( is_array( $social_links ) && $urls === null ) {
+
+		// Handle new format: array of objects with 'label' and 'url' keys.
+		if ( is_array( $social_links ) && null === $urls ) {
 			foreach ( $social_links as $link ) {
 				if ( is_array( $link ) && isset( $link['label'] ) && isset( $link['url'] ) ) {
 					$label = sanitize_text_field( $link['label'] );
-					$url = esc_url_raw( $link['url'] );
-					
+					$url   = esc_url_raw( $link['url'] );
+
 					if ( ! empty( $label ) && ! empty( $url ) ) {
 						$links[] = array(
 							'label' => $label,
@@ -316,24 +314,24 @@ class Student extends Data {
 				}
 			}
 		}
-		// Handle old format: separate arrays for labels and URLs
+		// Handle old format: separate arrays for labels and URLs.
 		elseif ( is_array( $social_links ) && is_array( $urls ) ) {
 			$count = min( count( $social_links ), count( $urls ) );
-			
+
 			for ( $i = 0; $i < $count; $i++ ) {
 				$label = sanitize_text_field( $social_links[ $i ] );
-				$url = esc_url_raw( $urls[ $i ] );
-				
-				// Only add if both label and URL are not empty
+				$url   = esc_url_raw( $urls[ $i ] );
+
+				// Only add if both label and URL are not empty.
 				if ( ! empty( $label ) && ! empty( $url ) ) {
 					$links[] = array(
 						'label' => $label,
-						'url' => $url
+						'url'   => $url,
 					);
 				}
 			}
 		}
-		
+
 		$this->set_prop( 'social_links', wp_json_encode( $links ) );
 	}
 
@@ -358,36 +356,76 @@ class Student extends Data {
 	}
 
 
+	/**
+	 * Set notification chapter for Student.
+	 *
+	 * @param mixed $value Value to process.
+	 */
 	public function set_notification_chapter( $value ) {
 		$this->set_prop( 'notification_chapter', sanitize_text_field( $value ) );
 	}
 
+	/**
+	 * Get notification chapter for Student.
+	 *
+	 * @param string $context Context.
+	 */
 	public function get_notification_chapter( $context = 'view' ) {
 		return $this->get_prop( 'notification_chapter', $context );
 	}
 
+	/**
+	 * Set notification direct messages for Student.
+	 *
+	 * @param mixed $value Value to process.
+	 */
 	public function set_notification_direct_messages( $value ) {
 		$this->set_prop( 'notification_direct_messages', sanitize_text_field( $value ) );
 	}
 
 
+	/**
+	 * Get notification direct messages for Student.
+	 *
+	 * @param string $context Context.
+	 */
 	public function get_notification_direct_messages( $context = 'view' ) {
 		return $this->get_prop( 'notification_direct_messages', $context );
 	}
 
 
+	/**
+	 * Set notification new course content for Student.
+	 *
+	 * @param mixed $value Value to process.
+	 */
 	public function set_notification_new_course_content( $value ) {
 		$this->set_prop( 'notification_new_course_content', sanitize_text_field( $value ) );
 	}
 
+	/**
+	 * Get notification new course content for Student.
+	 *
+	 * @param string $context Context.
+	 */
 	public function get_notification_new_course_content( $context = 'view' ) {
 		return $this->get_prop( 'notification_new_course_content', $context );
 	}
 
+	/**
+	 * Set notification comments replies for Student.
+	 *
+	 * @param mixed $value Value to process.
+	 */
 	public function set_notification_comments_replies( $value ) {
 		$this->set_prop( 'notification_comments_replies', sanitize_text_field( $value ) );
 	}
 
+	/**
+	 * Get notification comments replies for Student.
+	 *
+	 * @param string $context Context.
+	 */
 	public function get_notification_comments_replies( $context = 'view' ) {
 		return $this->get_prop( 'notification_comments_replies', $context );
 	}
@@ -398,6 +436,7 @@ class Student extends Data {
 	 *
 	 * @return string The email of the student.
 	 * @since 1.0.0
+	 * @param string $context Context.
 	 */
 	public function get_email( $context = 'view' ) {
 		return $this->get_prop( 'email', $context );
@@ -430,6 +469,7 @@ class Student extends Data {
 	 *
 	 * @return string The first name of the student.
 	 * @since 1.0.0
+	 * @param string $context Context.
 	 */
 	public function get_first_name( $context = 'view' ) {
 		return $this->get_prop( 'first_name', $context );
@@ -440,6 +480,7 @@ class Student extends Data {
 	 *
 	 * @return string The last name of the student.
 	 * @since 1.0.0
+	 * @param string $context Context.
 	 */
 	public function get_last_name( $context = 'view' ) {
 		return $this->get_prop( 'last_name', $context );
@@ -450,6 +491,7 @@ class Student extends Data {
 	 *
 	 * @return string The address of the student.
 	 * @since 1.0.0
+	 * @param string $context Context.
 	 */
 	public function get_address( $context = 'view' ) {
 		return $this->get_prop( 'address', $context );
@@ -461,6 +503,7 @@ class Student extends Data {
 	 *
 	 * @return string The country of the student.
 	 * @since 1.0.0
+	 * @param string $context Context.
 	 */
 	public function get_country( $context = 'view' ) {
 		return $this->get_prop( 'country', $context );
@@ -471,6 +514,7 @@ class Student extends Data {
 	 *
 	 * @return string The city of the student.
 	 * @since 1.0.0
+	 * @param string $context Context.
 	 */
 	public function get_city( $context = 'view' ) {
 		return $this->get_prop( 'city', $context );
@@ -481,6 +525,7 @@ class Student extends Data {
 	 *
 	 * @return string The postcode of the student.
 	 * @since 1.0.0
+	 * @param string $context Context.
 	 */
 	public function get_postcode( $context = 'view' ) {
 		return $this->get_prop( 'postcode', $context );
@@ -491,6 +536,7 @@ class Student extends Data {
 	 *
 	 * @return string The state of the student.
 	 * @since 1.0.0
+	 * @param string $context Context.
 	 */
 	public function get_state( $context = 'view' ) {
 		return $this->get_prop( 'state', $context );
@@ -501,6 +547,7 @@ class Student extends Data {
 	 *
 	 * @return string The phone number of the student.
 	 * @since 1.0.0
+	 * @param string $context Context.
 	 */
 	public function get_phone( $context = 'view' ) {
 		return $this->get_prop( 'phone', $context );
@@ -511,6 +558,7 @@ class Student extends Data {
 	 *
 	 * @return string The WhatsApp number of the student.
 	 * @since 1.0.0
+	 * @param string $context Context.
 	 */
 	public function get_whatsapp( $context = 'view' ) {
 		return $this->get_prop( 'whatsapp', $context );
@@ -521,6 +569,7 @@ class Student extends Data {
 	 *
 	 * @return string The timezone of the student.
 	 * @since 1.0.0
+	 * @param string $context Context.
 	 */
 	public function get_timezone( $context = 'view' ) {
 		return $this->get_prop( 'timezone', $context );
@@ -539,6 +588,9 @@ class Student extends Data {
 	}
 
 
+	/**
+	 * Get course count for Student.
+	 */
 	public function get_course_count() {
 		return $this->data_store->get_course_count( $this );
 	}
@@ -684,6 +736,7 @@ class Student extends Data {
 	 *
 	 * @since 1.0.0
 	 * @return mixed
+	 * @param mixed $course_id Course identifier.
 	 */
 	public function get_course_progress_percentage( $course_id ) {
 		return $this->data_store->get_course_progress_percentage( $this, $course_id );
@@ -694,6 +747,7 @@ class Student extends Data {
 	 *
 	 * @since 1.0.0
 	 * @return mixed
+	 * @param mixed $course_id Course identifier.
 	 */
 	public function get_course_total_points( $course_id ) {
 		return $this->data_store->get_course_total_points( $this, $course_id );
@@ -703,6 +757,7 @@ class Student extends Data {
 	 *
 	 * @since 1.0.0
 	 * @return mixed
+	 * @param mixed $course_id Course identifier.
 	 */
 	public function get_course_completed_points( $course_id ) {
 		return $this->data_store->get_course_completed_points( $this, $course_id );
@@ -712,6 +767,7 @@ class Student extends Data {
 	 *
 	 * @since 1.0.0
 	 * @return mixed
+	 * @param mixed $course_id Course identifier.
 	 */
 	public function get_course_time_remaining( $course_id ) {
 		return $this->data_store->get_course_time_remaining( $this, $course_id );
@@ -721,6 +777,7 @@ class Student extends Data {
 	 *
 	 * @since 1.0.0
 	 * @return mixed
+	 * @param mixed $course_id Course identifier.
 	 */
 	public function get_course_resume_url( $course_id ) {
 		return $this->data_store->get_course_resume_url( $this, $course_id );
@@ -730,6 +787,7 @@ class Student extends Data {
 	 *
 	 * @since 1.0.0
 	 * @return mixed
+	 * @param mixed $course_id Course identifier.
 	 */
 	public function get_course_certificate_url( $course_id ) {
 		return $this->data_store->get_course_certificate_url( $this, $course_id );
@@ -739,6 +797,7 @@ class Student extends Data {
 	 *
 	 * @since 1.0.0
 	 * @return mixed
+	 * @param mixed $course_id Course identifier.
 	 */
 	public function is_course_in_progress( $course_id ) {
 		return $this->data_store->is_course_in_progress( $this, $course_id );
@@ -748,6 +807,7 @@ class Student extends Data {
 	 *
 	 * @since 1.0.0
 	 * @return mixed
+	 * @param mixed $course_id Course identifier.
 	 */
 	public function is_course_completed( $course_id ) {
 		return $this->data_store->is_course_completed( $this, $course_id );
@@ -831,10 +891,21 @@ class Student extends Data {
 		return $name;
 	}
 
+	/**
+	 * Complete lesson for Student.
+	 *
+	 * @param mixed $lesson_id Lesson identifier.
+	 * @param mixed $course_id Course identifier.
+	 */
 	public function complete_lesson( $lesson_id, $course_id ) {
 		return $this->data_store->complete_lesson( $this, $lesson_id, $course_id );
 	}
 
+	/**
+	 * Maybe completed for Student.
+	 *
+	 * @param mixed $lesson_id Lesson identifier.
+	 */
 	public function maybe_completed( $lesson_id ) {
 		return $this->data_store->maybe_completed( $this, $lesson_id );
 	}
@@ -844,6 +915,7 @@ class Student extends Data {
 	 *
 	 * @return int The number of lessons.
 	 * @since 1.0.0
+	 * @param mixed $course_id Course identifier.
 	 */
 	public function get_completed_content_count( $course_id ) {
 		return $this->data_store->get_completed_content_count( $this, $course_id ) ?? 0;
@@ -853,6 +925,8 @@ class Student extends Data {
 	 *
 	 * @return int The number of lessons.
 	 * @since 1.0.0
+	 * @param mixed $course_id Course identifier.
+	 * @param mixed $content_type Content type.
 	 */
 	public function get_completed_content_count_by_type( $course_id, $content_type ) {
 		return $this->data_store->get_completed_content_count_by_type( $this, $course_id, $content_type ) ?? 0;
@@ -862,6 +936,7 @@ class Student extends Data {
 	 *
 	 * @return int The number of lessons.
 	 * @since 1.0.0
+	 * @param mixed $course_id Course identifier.
 	 */
 	public function get_over_all_completion_rate( $course_id ) {
 		return $this->data_store->get_over_all_completion_rate( $this, $course_id ) ?? 0;
@@ -871,6 +946,7 @@ class Student extends Data {
 	 *
 	 * @return int The number of lessons.
 	 * @since 1.0.0
+	 * @param mixed $course_id Course identifier.
 	 */
 	public function get_quiz_completion_rate( $course_id ) {
 		return $this->data_store->get_quiz_completion_rate( $this, $course_id ) ?? 0;
@@ -880,23 +956,40 @@ class Student extends Data {
 	 *
 	 * @return int The number of lessons.
 	 * @since 1.0.0
+	 * @param mixed $course_id Course identifier.
 	 */
 	public function get_assignment_completion_rate( $course_id ) {
 		return $this->data_store->get_assignment_completion_rate( $this, $course_id ) ?? 0;
 	}
 
+	/**
+	 * Get memberships for Student.
+	 */
 	public function get_memberships() {
 		return $this->data_store->get_memberships( $this ) ?? 0;
 	}
 
+	/**
+	 * Get enrolled memberships for Student.
+	 */
 	public function get_enrolled_memberships() {
 		return $this->data_store->get_enrolled_memberships( $this ) ?? 0;
 	}
 
+	/**
+	 * Get all assignment attempts for Student.
+	 *
+	 * @param mixed $course_id Course identifier.
+	 */
 	public function get_all_assignment_attempts( $course_id ) {
 		return $this->data_store->get_all_assignment_attempts( $this, $course_id ) ?? array();
 	}
 
+	/**
+	 * Get assignment remaining time for Student.
+	 *
+	 * @param mixed $content_id Content identifier.
+	 */
 	public function get_assignment_remaining_time( $content_id ) {
 		return $this->data_store->get_assignment_remaining_time( $this, $content_id ) ?? 0;
 	}
@@ -904,8 +997,6 @@ class Student extends Data {
 
 	/**
 	 * Check student is banned or not
-	 *
-	 * @param Student $student The student object.
 	 *
 	 * @return bool True if the student is banned, false otherwise.
 	 *
@@ -941,7 +1032,7 @@ class Student extends Data {
 
 	/**
 	 * Get the total number of completed orders, optionally for a specific student.
-	 * @param int|null $student_id
+	 *
 	 * @return int
 	 *
 	 * @since 1.0.0
@@ -952,7 +1043,7 @@ class Student extends Data {
 
 	/**
 	 * Get the total revenue from completed orders, optionally for a specific student.
-	 * @param int|null $student_id
+	 *
 	 * @return float
 	 */
 	public function get_total_revenue() {
@@ -961,7 +1052,7 @@ class Student extends Data {
 
 	/**
 	 * Get the average order value (AOV) from completed orders, optionally for a specific student.
-	 * @param int|null $student_id
+	 *
 	 * @return float
 	 */
 	public function get_aov() {

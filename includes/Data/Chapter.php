@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Class Chapter.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Data;
 
@@ -58,7 +63,7 @@ class Chapter extends Data {
 	 * is provided and valid, the chapter data is fetched from the data store. Otherwise, a new chapter object is initialized.
 	 *
 	 * @param mixed $chapter Either a chapter ID, an instance of Chapter, or an object with a valid ID property.
-	 * @throws \Exception
+	 * @throws \Exception When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	public function __construct( $chapter = '' ) {
@@ -222,11 +227,15 @@ class Chapter extends Data {
 	 *
 	 * @return array The lessons of the chapter.
 	 * @since 1.0.0
+	 * @param string $return_type Return type.
 	 */
 	public function get_lessons( $return_type = 'array' ) {
 		return $this->data_store->get_lessons( $this, $return_type );
 	}
 
+	/**
+	 * Get lesson count for Chapter.
+	 */
 	public function get_lesson_count() {
 		return $this->data_store->get_lesson_count( $this );
 	}
@@ -254,6 +263,7 @@ class Chapter extends Data {
 	 *
 	 * @return array The lessons of the chapter.
 	 * @since 1.0.0
+	 * @param mixed $order Order.
 	 */
 	public function get_content_by_order( $order ) {
 		return $this->data_store->get_content_by_order( $this, $order );
@@ -263,6 +273,7 @@ class Chapter extends Data {
 	 *
 	 * @return array The lessons of the chapter.
 	 * @since 1.0.0
+	 * @param mixed $student_id Student identifier.
 	 */
 	public function completed_content_count( $student_id ) {
 		return $this->data_store->completed_content_count( $this, $student_id );
@@ -272,6 +283,7 @@ class Chapter extends Data {
 	 *
 	 * @return array The lessons of the chapter.
 	 * @since 1.0.0
+	 * @param mixed $student_id Student identifier.
 	 */
 	public function total_completion_rate( $student_id ) {
 		return $this->data_store->total_completion_rate( $this, $student_id );
@@ -281,6 +293,7 @@ class Chapter extends Data {
 	 *
 	 * @return array The lessons of the chapter.
 	 * @since 1.0.0
+	 * @param mixed $student_id Student identifier.
 	 */
 	public function maybe_all_content_is_completed( $student_id ) {
 		return $this->data_store->maybe_content_all_completed( $this, $student_id );
@@ -296,10 +309,20 @@ class Chapter extends Data {
 		$this->set_prop( 'availability', $availability );
 	}
 
+	/**
+	 * Get parent id for Chapter.
+	 *
+	 * @param string $context Context.
+	 */
 	public function get_parent_id( $context = 'view' ) {
 		return $this->get_prop( 'parent_id', $context );
 	}
 
+	/**
+	 * Set parent id for Chapter.
+	 *
+	 * @param mixed $value Value to process.
+	 */
 	public function set_parent_id( $value ) {
 		$this->set_prop( 'parent_id', absint( $value ) );
 	}

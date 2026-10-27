@@ -1,16 +1,25 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 
 namespace OhMyLMS\Emails\StudentsEmail;
 
 use OhMyLMS\Emails\Emails;
-use function CodeRex\Ecommerce\ecommerce;
+use function OhMyLMS\Commerce\ecommerce;
 
+/**
+ * Plugin complete course implementation.
+ */
 class CompleteCourse {
 
+	/**
+	 * Initialize Complete course.
+	 */
 	public function __construct() {
 		add_action( 'ohmylms_course_completed', array( $this, 'trigger' ), 10, 3 );
 	}
 
+	/**
+	 * Basic settings for Complete course.
+	 */
 	public function basic_settings(): array {
 		$basic = array(
 			'id'             => 'student_course_completed',
@@ -23,6 +32,9 @@ class CompleteCourse {
 		return $basic;
 	}
 
+	/**
+	 * Default settings for Complete course.
+	 */
 	public function default_settings(): array {
 		$default_settings = array(
 			'enable'                 => false,
@@ -38,6 +50,13 @@ class CompleteCourse {
 		return $default_settings;
 	}
 
+	/**
+	 * Trigger for Complete course.
+	 *
+	 * @param mixed $student_id Student identifier.
+	 * @param mixed $course_id Course identifier.
+	 * @param mixed $order_id Order identifier.
+	 */
 	public function trigger( $student_id, $course_id, $order_id ) {
 		$settings = get_option( 'create_lms_email_student_course_completed', $this->default_settings() );
 		$to       = '';
@@ -56,7 +75,7 @@ class CompleteCourse {
 
 		global $wpdb;
 		$table_name  = $wpdb->prefix . 'ohmylms_user_enrollment';
-		$enroll_data = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_name WHERE user_id = %d AND course_id = %d", $student_id, $course_id ), ARRAY_A );
+		$enroll_data = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE user_id = %d AND course_id = %d', $table_name, $student_id, $course_id ), ARRAY_A );
 
 		$subject        = $settings['subject'];
 		$certificate    = $course->get_certificate();
@@ -67,10 +86,10 @@ class CompleteCourse {
 		$email_settings = Emails::get_email_settings();
 		if ( is_array( $email_settings ) && is_array( $enroll_data ) && is_array( $settings ) && $course ) {
 			$student = new \OhMyLMS\Data\Student( $student_id );
-			// Use ohmylms_get_template to get the email body
+			// Use ohmylms_get_template to get the email body.
 			ob_start();
 			ohmylms_get_template(
-				'emails/complete-course', // Template file name (without .php)
+				'emails/complete-course', // Template file name (without .php).
 				array(
 					'course'         => $course,
 					'enroll_data'    => $enroll_data,
@@ -87,7 +106,7 @@ class CompleteCourse {
 			ob_start();
 			ohmylms_get_template( 'emails/email-styles' );
 			$styles    = ob_get_clean();
-			$order     = ecommerce_get_order( $order_id );
+			$order     = ohmylms_ecommerce_get_order( $order_id );
 			$html_body = Emails::replace_merge_tags( $html_body, $order, $course );
 
 			$sender_name  = $email_settings['ohmylms_email_sender_name'];

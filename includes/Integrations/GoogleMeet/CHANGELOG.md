@@ -1,5 +1,7 @@
 # Changelog - Google Meet Integration
 
+Historical record of the first release. It was written before the plugin was renamed and the Pro code was merged: `creatorlms` and `creatorlms-pro` below are today `ohmylms` (for example the `ohmylms_live_class_platforms` filter), and the integration now lives in `includes/Integrations/GoogleMeet/` of the single OhMyLMS plugin.
+
 ## [1.0.0] - 2025-10-25
 
 ### Added

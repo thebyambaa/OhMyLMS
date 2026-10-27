@@ -9,9 +9,9 @@
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
+	exit; // Exit if accessed directly.
 }
 
 global $course;
 ?>
-<span class="difficulty beginner"><?php echo __('Beginner','ohmylms'); ?></span>
+<span class="difficulty beginner"><?php echo esc_html__( 'Beginner', 'ohmylms' ); ?></span>

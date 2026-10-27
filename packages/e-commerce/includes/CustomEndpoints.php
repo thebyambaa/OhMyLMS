@@ -1,5 +1,10 @@
-<?php
-namespace CodeRex\ECommerce;
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
+/**
+ * Class CustomEndpoints.
+ *
+ * @package OhMyLMS
+ */
+namespace OhMyLMS\Commerce;
 
 /**
  * Class CustomEndpoints
@@ -9,6 +14,8 @@ namespace CodeRex\ECommerce;
 class CustomEndpoints {
 
 	/**
+	 * Query variables for custom endpoints.
+	 *
 	 * @var array $query_vars Query variables for custom endpoints.
 	 */
 	public $query_vars = array();

@@ -4,6 +4,7 @@
 }
 
 .ohmylms-page {
+
     .ohmylms-dashboard {
         padding: 56px 0;
         margin: 0;
@@ -23,6 +24,7 @@
             }
 
             .ohmylms-success {
+
                 .ohmylms-NoticeGroup {
                     padding: 13px 10px;
                     background-color: #35BD4C;
@@ -34,7 +36,7 @@
             padding: 43px 50px 50px;
             border-radius: 14px;
             background-color: #FFF;
-            box-shadow: 0px 1px 2px 0px #DBDDE1;
+            box-shadow: 0 1px 2px 0 #DBDDE1;
             margin: 0;
         }
 
@@ -66,7 +68,7 @@
             width: calc(100% / 4 - 15px);
             border-radius: 14px;
             border: 1px solid #EBEBEF;
-            background-color: #ffffff;
+            background-color: #fff;
             padding: 21px 30px;
 
             @media (max-width: 991px) {
@@ -147,7 +149,7 @@
     .ohmylms-dashboard-single-course {
         border-radius: 8px;
         background: #FFF;
-        box-shadow: 0px 1px 4px 0px #D3D6DD;
+        box-shadow: 0 1px 4px 0 #D3D6DD;
         padding: 15px 24px 15px 15px;
         display: flex;
         flex-flow: row wrap;
@@ -222,8 +224,8 @@
                     padding-left: 6px;
                     margin: 0;
 
-                    &:before {
-                        content: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgNCA0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjIiIGN5PSIyLjAwNSIgcj0iMiIgZmlsbD0iIzUyNTI1QiIvPjwvc3ZnPg==");
+                    &::before {
+                        content: url(data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgNCA0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjIiIGN5PSIyLjAwNSIgcj0iMiIgZmlsbD0iIzUyNTI1QiIvPjwvc3ZnPg==);
                         position: absolute;
                         left: -8px;
                         top: -1px;
@@ -271,6 +273,7 @@
         }
 
         &.ohmylms-course-locked {
+
             .ohmylms-button {
                 background-color: #A1A1AA;
                 pointer-events: none;
@@ -289,6 +292,7 @@
         }
 
         &.ohmylms-course-completed {
+
             .ohmylms-button {
                 display: flex;
                 align-items: center;
@@ -296,7 +300,7 @@
                 position: relative;
 
                 &::before {
-                    content: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgMTggMTgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbD0iIzM1QkQ0QyIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNOS4wMDQuMjU1YTguNzUxIDguNzUxIDAgMDEwIDE3LjUgOC43NTEgOC43NTEgMCAwMTAtMTcuNXpNNy4xODcgMTEuODQ4TDUuMDQ1IDkuNzAzYS45NC45NCAwIDAxMC0xLjMyNS45NDEuOTQxIDAgMDExLjMyNSAwbDEuNTEgMS41MTEgMy43NTgtMy43NTdhLjk0Ljk0IDAgMDExLjMyNSAwIC45NC45NCAwIDAxMCAxLjMyNmwtNC40MiA0LjQyYS45NC45NCAwIDAxLTEuMzU2LS4wM3oiIGNsaXAtcnVsZT0iZXZlbm9kZCIvPjwvc3ZnPg==");
+                    content: url(data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgMTggMTgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbD0iIzM1QkQ0QyIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNOS4wMDQuMjU1YTguNzUxIDguNzUxIDAgMDEwIDE3LjUgOC43NTEgOC43NTEgMCAwMTAtMTcuNXpNNy4xODcgMTEuODQ4TDUuMDQ1IDkuNzAzYS45NC45NCAwIDAxMC0xLjMyNS45NDEuOTQxIDAgMDExLjMyNSAwbDEuNTEgMS41MTEgMy43NTgtMy43NTdhLjk0Ljk0IDAgMDExLjMyNSAwIC45NC45NCAwIDAxMCAxLjMyNmwtNC40MiA0LjQyYS45NC45NCAwIDAxLTEuMzU2LS4wM3oiIGNsaXAtcnVsZT0iZXZlbm9kZCIvPjwvc3ZnPg==);
                     width: 18px;
                     height: auto;
                     display: block;
@@ -311,6 +315,7 @@
                 }
 
                 &:hover {
+
                     path {
                         fill: var(--ohmylms-primary-color);
                     }
@@ -327,13 +332,14 @@
     }
 
     .ohmylms-dashboard-single-membership {
+
         .membership-title {
             color: var(--ohmylms-heading-color);
             font-size: 18px;
             font-weight: 600;
             line-height: 1;
             padding: 0;
-            margin: 0 0 10px 0px;
+            margin: 0 0 10px 0;
         }
 
         .membership-price {
@@ -459,8 +465,7 @@
                     font-size: 16px;
                     font-weight: 400;
                     line-height: 1;
-                    position: relative;
-                    bottom: 0px;
+                    bottom: 0;
                     vertical-align: baseline;
                     position: relative;
                 }
@@ -522,45 +527,53 @@
 .ohmylms-membership-card {
     background-color: #fff;
     border-radius: 8px;
-    box-shadow: 0px 1px 4px 0px #D3D6DD;
+    box-shadow: 0 1px 4px 0 #D3D6DD;
     padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 15px;
     width: calc(50% - 10px);
+
     .ohmylms-membership-card-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding-bottom: 10px;
         border-bottom: 1px solid #EBEBEF;
+
         .ohmylms-membership-name {
             font-size: 18px;
             font-weight: 600;
             color: var(--ohmylms-heading-color);
             margin: 0;
         }
+
         .ohmylms-membership-status {
             padding: 5px 10px;
             border-radius: 5px;
             font-size: 12px;
             font-weight: 500;
             text-transform: capitalize;
+
             &.ohmylms-status-active {
                 background-color: #EAF7EC;
                 color: #35BD4C;
             }
+
             &.ohmylms-status-expired, &.ohmylms-status-cancelled {
                 background-color: #FCE8E8;
                 color: #FF6F6F;
             }
+
             &.ohmylms-status-trialing {
                 background-color: #FFF2E5;
                 color: #FFA500;
             }
         }
     }
+
     .ohmylms-membership-card-body {
+
         .ohmylms-membership-details {
             list-style: none;
             margin: 0;
@@ -568,26 +581,31 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
+
             li {
                 display: flex;
                 justify-content: space-between;
                 font-size: 14px;
+
                 strong {
                     color: var(--ohmylms-heading-color);
                     font-weight: 500;
                 }
+
                 span {
                     color: var(--ohmylms-body-text-color);
                 }
             }
         }
     }
+
     .ohmylms-membership-card-footer {
         display: flex;
         gap: 10px;
         margin-top: auto;
         padding-top: 15px;
         border-top: 1px solid #EBEBEF;
+
         .ohmylms-button {
             flex: 1;
             text-align: center;
@@ -596,19 +614,23 @@
             text-decoration: none;
             font-weight: 500;
             transition: all 0.3s ease;
+
             &.view-plan {
                 background-color: var(--ohmylms-primary-color);
                 color: #fff;
                 border: 1px solid var(--ohmylms-primary-color);
+
                 &:hover {
                     background-color: #fff;
                     color: var(--ohmylms-primary-color);
                 }
             }
+
             &.ohmylms-button-danger {
                 background-color: transparent;
                 color: #FF6F6F;
                 border: 1px solid #FF6F6F;
+
                 &:hover {
                     background-color: #FF6F6F;
                     color: #fff;
@@ -620,6 +642,7 @@
 
 // Responsive adjustments
 @media (max-width: 991px) {
+
     .ohmylms-membership-card {
         width: 100%;
     }
@@ -633,17 +656,21 @@
 
 
 @media screen and (max-width: 1399px) {
+
     .ohmylms-page .ohmylms-dashboard .ohmylms-dashboard-wrapper {
         padding: 20px 30px 30px;
         border-radius: 8px;
     }
+
     .ohmylms-page .ohmylms-dashboard .student-name {
         font-size: 22px;
     }
+
     .ohmylms-page .ohmylms-dashboard .ohmylms-statistics-single-card {
         padding: 18px 20px;
         border-radius: 10px;
     }
+
     .ohmylms-page .ohmylms-dashboard .ohmylms-statistics-single-card .stat-number {
         font-size: 24px;
     }
@@ -653,6 +680,7 @@
         font-size: 20px;
         margin-bottom: 15px;
     }
+
     .ohmylms-page .ohmylms-dashboard-single-course .course-info-wrapper .ohmylms-course-title {
         font-size: 16px;
     }
@@ -660,9 +688,11 @@
 }
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .ohmylms-header {
         padding: 10px 0;
     }
+
     .ohmylms-page .ohmylms-dashboard {
         padding: 46px 0;
     }
@@ -670,10 +700,12 @@
     .ohmylms-page .ohmylms-dashboard .ohmylms-course-statistics-card {
         gap: 12px;
     }
+
     .ohmylms-page .ohmylms-dashboard .ohmylms-statistics-single-card {
         padding: 18px 17px;
         width: calc(25% - 9px);
     }
+
     .ohmylms-page .ohmylms-dashboard .ohmylms-statistics-single-card .icon svg {
         width: auto;
         height: 34px;
@@ -682,10 +714,12 @@
     .ohmylms-page .ohmylms-dashboard-single-course .course-info {
         width: calc(100% - 133px);
     }
+
     .ohmylms-page .ohmylms-dashboard-single-course .course-info-wrapper {
         width: 55%;
         gap: 18px;
     }
+
     .ohmylms-page .ohmylms-dashboard-single-course .course-info-wrapper figure {
         width: 115px;
     }
@@ -693,9 +727,11 @@
     .ohmylms-page .ohmylms-dashboard-single-course .course-info-wrapper .ohmylms-progressbar .ohmylms-progressbar-outer {
         width: 150px;
     }
+
     .ohmylms-page .ohmylms-dashboard-single-course .course-info-wrapper .ohmylms-progressbar .progressbar-title {
         font-size: 13px;
     }
+
     .ohmylms-page .ohmylms-dashboard-single-course .course-info-wrapper .ohmylms-progressbar .time-remaining {
         font-size: 13px;
     }
@@ -704,9 +740,11 @@
     .ohmylms-page .ohmylms-dashboard-single-membership .membership-title {
         font-size: 16px;
     }
+
     .ohmylms-page .ohmylms-dashboard-single-membership .membership-price {
         font-size: 26px;
     }
+
     .ohmylms-page .ohmylms-dashboard-single-membership .membership-price sub {
         font-size: 15px;
     }
@@ -715,6 +753,7 @@
 
 
 @media screen and (max-width: 991px) {
+
     .ohmylms-page .ohmylms-dashboard .ohmylms-dashboard-wrapper {
         padding: 15px 20px 20px;
     }
@@ -728,11 +767,13 @@
         gap: 10px;
         flex-wrap: wrap;
     }
+
     .ohmylms-page .ohmylms-dashboard .ohmylms-statistics-single-card {
         padding: 12px 14px;
         border-radius: 8px;
         width: calc(50% - 5px);
     }
+
     .ohmylms-page .ohmylms-dashboard .ohmylms-statistics-single-card .icon svg {
         width: 30px;
         display: block;
@@ -743,9 +784,11 @@
     .ohmylms-page .ohmylms-dashboard .ohmylms-statistics-single-card.enrolled-courses .icon svg {
         width: 26px;
     }
+
     .ohmylms-page .ohmylms-dashboard .ohmylms-statistics-single-card .stat-number {
         font-size: 22px;
     }
+
     .ohmylms-page .ohmylms-dashboard .ohmylms-statistics-single-card .stat-text {
         font-size: 13px;
         margin-top: 10px;
@@ -761,6 +804,7 @@
         flex-flow: row wrap;
         margin-bottom: 20px;
     }
+
     .ohmylms-page .ohmylms-dashboard-single-course {
         flex-flow: column;
         align-items: flex-start;
@@ -774,6 +818,7 @@
         flex-direction: column;
         align-items: flex-start;
     }
+
     .ohmylms-page .ohmylms-dashboard-single-course .course-info {
         width: 100%;
     }
@@ -788,13 +833,15 @@
         row-gap: 10px;
         justify-content: space-between;
     }
+
     .ohmylms-page .ohmylms-dashboard-single-course .course-info-wrapper .ohmylms-progressbar .ohmylms-progressbar-outer {
         width: 100%;
     }
 
-    .ohmylms-page .ohmylms-dashboard-single-course .course-info-wrapper .ohmylms-progressbar .time-remaining:before {
+    .ohmylms-page .ohmylms-dashboard-single-course .course-info-wrapper .ohmylms-progressbar .time-remaining::before {
         display: none;
     }
+
     .ohmylms-page .ohmylms-dashboard-single-course .completed-date {
         margin-top: 10px;
         font-size: 13px;
@@ -803,6 +850,7 @@
     .ohmylms-page .ohmylms-dashboard-single-course .ohmylms-btn-area {
         width: 100%;
     }
+
     .ohmylms-page .ohmylms-dashboard-single-course .ohmylms-btn-area .ohmylms-button {
         width: 100%;
         text-align: center;
@@ -812,6 +860,7 @@
     .ohmylms-page .ohmylms-dashboard-single-course.ohmylms-course-completed .ohmylms-btn-area {
         width: calc(100% - 28px);
     }
+
     .ohmylms-page .ohmylms-dashboard-single-course.ohmylms-course-completed .ohmylms-button::before {
         right: -30px;
         left: inherit;
@@ -833,13 +882,16 @@
         padding: 16px 20px 20px;
         border-radius: 8px;
     }
+
     .ohmylms-page .ohmylms-membership-modal .membership-table-header {
         border-radius: 10px 10px 0 0;
         padding: 18px 20px 15px;
     }
+
     .ohmylms-page .ohmylms-membership-modal .membership-table-header .plan-name {
         font-size: 16px;
     }
+
     .ohmylms-page .ohmylms-membership-modal .membership-table-header .price {
         font-size: 32px;
     }
@@ -848,6 +900,7 @@
         padding: 20px 20px;
         border-radius: 0 0 10px 10px;
     }
+
     .ohmylms-page .ohmylms-membership-modal .membership-table-list li {
         font-size: 14px;
         margin-bottom: 10px;
@@ -856,16 +909,19 @@
 }
 
 @media screen and (max-width: 767px) {
+
     .ohmylms-page .ohmylms-header-right .ohmylms-user .ohmylms-user-dropdown {
         border-radius: 10px;
         padding: 12px;
         width: 173px;
     }
+
     .ohmylms-page .ohmylms-header-right .ohmylms-user .ohmylms-user-dropdown li a {
         padding: 8px 12px;
         font-size: 13px;
         gap: 8px;
     }
+
     .ohmylms-page .ohmylms-header-right .ohmylms-user .ohmylms-user-dropdown li a svg {
         width: 15px;
         height: auto;
@@ -876,10 +932,12 @@
         padding: 20px;
         gap: 16px;
     }
+
     .ohmylms-page .ohmylms-dashboard-single-course .course-info-wrapper {
         gap: 16px;
 
     }
+
     .ohmylms-page .ohmylms-dashboard-single-course .completed-date {
         margin-top: 14px;
         margin-bottom: 4px;
@@ -893,6 +951,7 @@
 }
 
 @media screen and (max-width: 575px) {
+
     .ohmylms-page .ohmylms-dashboard .ohmylms-statistics-single-card {
         width: 100%;
     }
@@ -900,9 +959,11 @@
     .ohmylms-page .ohmylms-dashboard-single-membership .membership-title {
         font-size: 15px;
     }
+
     .ohmylms-page .ohmylms-dashboard-single-membership .membership-price {
         font-size: 24px;
     }
+
     .ohmylms-page .ohmylms-dashboard-single-membership .membership-price sub {
         font-size: 14px;
     }
@@ -911,9 +972,11 @@
     .ohmylms-page .ohmylms-membership-modal .membership-modal-title {
         font-size: 16px;
     }
+
     .ohmylms-page .ohmylms-membership-modal .membership-table-header .plan-name {
         font-size: 15px;
     }
+
     .ohmylms-page .ohmylms-membership-modal .membership-table-header .price {
         font-size: 28px;
     }

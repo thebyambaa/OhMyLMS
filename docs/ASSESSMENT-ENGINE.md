@@ -1,10 +1,15 @@
 # Question bank, versioned assessments and skill evidence
 
-Status: implemented on branch `assessment-engine` (2026-10-02) against the
-"OhMyLMS implementation plan — repository-based revision" (v2.0). Not yet released
-to a live site; the classroom pilot is still to be run. This document describes what
-exists, how it fits together, how to roll it out and back, and what is deliberately
-out of scope.
+Status: implemented (2026-10-02) against the "OhMyLMS implementation plan — repository-based
+revision" (v2.0) and merged into `main`. Not yet released to a live site; the classroom pilot
+is still to be run. This document describes what exists, how it fits together, how to roll it
+out and back, and what is deliberately out of scope. Later additions that build on the engine
+are documented elsewhere: the optional Khan level model, mixed-skill unit tests and course
+challenges in [learner-experience/KHAN-ACTIVITIES.md](learner-experience/KHAN-ACTIVITIES.md),
+quiz and question editors in [question-block-editor.md](question-block-editor.md), quiz files in
+[QUIZ-IMPORT-EXPORT.md](QUIZ-IMPORT-EXPORT.md), bulk import in
+[QUESTION-BULK-IMPORT.md](QUESTION-BULK-IMPORT.md) and exam PDFs in
+[EXAM-IMPORT-IMPLEMENTATION.md](EXAM-IMPORT-IMPLEMENTATION.md).
 
 The engine extends the existing quiz/question post types, React editors, question
 type registry, submission/review entry points and gradebook. There is no second
@@ -22,7 +27,7 @@ and practice or inline checks never touch course completion.
 |---|---|---|
 | A01 | Isolated test site restored (`tools/create-test-site.py` renamed to ohmylms identifiers); pre-existing rename bug fixed (two completion hooks shared a name and crashed quiz completion) | `tools/`, `includes/Extensions/Bootstrap.php` |
 | A02 | Object-level authorization for every question/quiz route and nested write; foreign option IDs rejected; reports scoped to their own quiz | `QuestionBank/AccessPolicy.php`, `QuestionBank/DraftWriter.php`, `Rest/V1/QuestionController.php`, `Rest/V1/QuizController.php` |
-| A03 | Atomic nested saves with per-child errors; stale-save conflict (409); editor save-generation guard keeps edits made during a save; delete split into remove-from-quiz / archive / delete-unused | `DraftWriter.php`, `QuestionBank/Usage.php`, `features/quizzes/useQuizEditor.js`, `model.mjs` |
+| A03 | Atomic nested saves with per-child errors; stale-save conflict (409); editor save-generation guard keeps edits made during a save; delete split into remove-from-quiz / archive / delete-unused | `DraftWriter.php`, `QuestionBank/Usage.php`, `features/quiz-editor/useQuizEditor.js`, `model.mjs` |
 | A04 | Question UUIDs, immutable content-hashed versions, resumable migration with inventory | `QuestionBank/VersionPublisher.php`, `Assessment/Migration.php`, `Assessment/Schema.php` |
 | A05 | Quiz revisions and slots; per-attempt frozen items (seeded order, opaque option tokens); snapshot-aware graders; versioned reports | `Assessment/RevisionPublisher.php`, `AttemptItems.php`, `Grader.php`, `AttemptReport.php`, `Quiz/Submission.php`, `Quiz/Review.php`, quiz templates |
 | A06 | Bank search/filter, approval, archive/restore, duplicate (to edit shared questions), banks and grants, quiz references, version pins; React bank page (with a New question form for choice, true/false, short/long answer, numerical and structured questions, saved without a quiz) and quiz-editor picker | `Rest/V1/QuestionBankController.php`, `QuestionBank/Banks.php`, `features/question-bank/` |
@@ -70,7 +75,9 @@ scoring policy they started with: `legacy-int` (whole points, as before) or `dec
   stored seed. Option values are per-attempt HMAC tokens (matching definitions use a
   separate token kind), so markup never reveals correctness, pairings or order. Text-answer
   option text, `is_correct`, rubrics, tolerances and answer settings are never output.
-- **Deadlines.** UTC deadline = start + time limit + extra time. Answers within the grace
+- **Deadlines.** UTC deadline = start + time limit + extra time, capped at the assessment's
+  closing time (`available_until`): the closing time is a hard deadline, so a learner who starts
+  30 minutes before the close gets 30 minutes, and an untimed attempt ends at the close. Answers within the grace
   period count; after it, only autosaved, server-received answers are graded. A cron job
   (every five minutes) and the next start finalize abandoned attempts.
 - **Question types** must declare `'snapshot' => true` (grade only the object passed in);
@@ -81,7 +88,7 @@ scoring policy they started with: `legacy-int` (whole points, as before) or `dec
   skills inform recommendations. Assisted (hinted) answers and repeats are recorded but do
   not count toward levels. A regrade supersedes the old contribution exactly once, even
   when the attempt total does not change.
-- **Mastery levels** (option `ohmylms_mastery_rules`): Not assessed → Developing →
+- **Mastery levels** are decided by one engine; see [PERFORMANCE.md](PERFORMANCE.md). The default evidence rules (option `ohmylms_mastery_rules`) read: Not started → Attempted → Familiar →
   Proficient (≥3 independent first-try correct from ≥2 families, ≥80% recent accuracy) →
   Mastered (≥5 from ≥3 families, ≥85%, plus a correct answer ≥24 h after first reaching
   proficiency). Review due is a separate flag after 14 days without evidence. No probability
@@ -93,6 +100,34 @@ scoring policy they started with: `legacy-int` (whole points, as before) or `dec
   the approved version with a signed, per-render token and never affect completion.
 - **Guests** answer on public lesson pages with a pseudonymous credential (stored hashed);
   results stay server-side and are attached only by an authenticated, one-time claim.
+- **Answer review.** The quiz setting `show_correct_answers` (on by default, including for
+  quizzes that never set it; "Show Correct Answers On Results Page" on the quiz introduction
+  tab, which teachers can turn off per quiz) adds a "Review your answers" section
+  to the quiz page for the learner's most recent submitted attempt: verdict, marks, their
+  answer, the correct answer and the explanation (`Quiz\AnswerReview`,
+  `templates/single-lesson/quiz-review.php`, overridable in a theme). It never shows more than
+  the quiz allows: the older `hide_answers` setting still wins (and disables the new switch in
+  the editor), an attempt still in progress is never reviewed, and an exam whose results are
+  not released yet (`feedback_release`) stays hidden; once released, an exam shows its answers
+  too unless its teacher turned the switch off. Versioned attempts show the questions as
+  frozen into the attempt; attempts from before versioning use the question as it is now.
+  The setting is read from the current quiz, not the frozen revision, so changing it applies to
+  past attempts too. Types without a readable key (long text, structured and the extended
+  types) show the learner's answer and verdict but no correct answer.
+  The review opens with a score summary (headline, marks, percentage and verdict counts). A
+  learner with several attempts picks one with `?review=ATTEMPT_ID`; only their own submitted
+  attempts count, and anything else shows the newest. Structured questions list each part with
+  its own verdict and marks. "Retry the questions I missed" (`?retry=1`) offers the missed,
+  automatically marked questions again as inline practice checks. It needs the practice engine
+  and approved, non-exam-only questions, and never changes the quiz marks.
+  One renderer, `AnswerReview::render()`, serves every placement: the lesson quiz page, the
+  Quiz Player block and its embed document, `[ohmylms_quiz]`, `[ohmylms_quiz_review]` and the
+  theme helpers `ohmylms_get_quiz_player()` and `ohmylms_get_quiz_review()`. A learner's
+  attempts are found whichever course they were taken in when the review is placed on its own.
+  The instructor preview (`PreviewPlayer`) shows the same review after Submit, with the answers
+  always visible to the editor and a note when learners will not see them (switch off or hide
+  answers on). Nothing is saved, and a question with a teacher-marked part credits its
+  automatically marked parts, as a stored attempt does.
 
 ## REST API (ohmylms/v1)
 
@@ -191,7 +226,7 @@ account blocks 44, leaderboard, view-as, membership 15, QPay 59). `npm run check
 
 Browser suite (`npx playwright test`): `tests/browser/assessment.spec.cjs` covers exam page
 breaks, autosave and resume, keyboard-only answering and phone layouts, lesson checks with
-guest claim, skill practice, guardian and teacher portal skill views, and the skills/question
+guest claim, skill practice, guardian and teacher skill views, and the skills/question
 bank pages. Known failures unrelated to this work: course, lesson and learning editor specs
 report ProseMirror's `Adding different instances of a keyed plugin` because the shipped vendor
 bundles are kept (see DEVELOPMENT.md), and the student registration specs expect a published
@@ -207,15 +242,22 @@ performance report.
 ## Limitations and later work
 
 - Classroom pilot, full RTL/mobile acceptance and enabling on the math site remain.
-- Translations: `languages/ohmylms.pot` is regenerated (WP-CLI bundled with Local). There is no
-  Mongolian plugin translation yet. Mongolian (Cyrillic) content itself is verified: question
+- Translations: `languages/ohmylms.pot` is the template and Mongolian is the only bundled translation
+  (see "Translations" in [DEVELOPMENT.md](DEVELOPMENT.md)); strings added by later work arrive with
+  the next catalog refresh. Mongolian (Cyrillic) content itself is verified: question
   text, skill names, family IDs and case-insensitive text answers.
 - Math rendering uses the site's KaTeX auto-render (`wpmath`). Server-rendered quizzes and
   lesson checks are covered by its page-load pass; content added later by the practice runner
   and feedback is re-rendered through `window.ohmylmsTypeset`.
-- Inline checks are authored as shortcode text. A spike in the retained lesson editor confirmed
-  the shortcode round-trips intact (saved inside its own paragraph); curly quotes or a bare UUID
-  are also accepted. A native editor node was not built.
+- Inline checks are authored as the **OhMyLMS Question** block (`ohmylms/shared-multiple-choice`), which
+  references the bank question by ID and UUID and renders through the inline runtime (guests, retries and a
+  lesson-scoped token; no effect on lesson completion). In a lesson the block edits single and multiple choice
+  questions in place and shows every other type as a read-only learner preview with a link to the question bank.
+  The lesson panel "Inline question checks" inserts this block for every question type. Older checks written as
+  `[ohmylms_question uuid="..."]` keep working on the page; when a lesson opens in the editor, a shortcode that
+  stands alone in a Shortcode block or paragraph is shown as the block (`Inline::blocks_from_shortcodes`, applied
+  by `NativeLessonEditor::blocks_for_editor`), and is saved as a block on the next save. A shortcode inside a
+  sentence is left as text.
 - Media: each version copies the local uploads it references (question image/video, option and
   matching images, images in the question text) to `uploads/ohmylms-frozen/` by SHA-256 and serves
   those copies. Replacing a file in place produces a new version on the next save; files outside
@@ -228,4 +270,6 @@ performance report.
   to written parts). Choice-type parts are not supported.
 - Pool feasibility is checked greedily across pools; unusual overlaps may be reported short.
 - Not built: symbolic equivalence, follow-through marking, Moodle XML import/export,
-  generators, PDF/mark-scheme export, AI drafting.
+  generators, PDF/mark-scheme export. (Quiz files, bulk import, exam PDF import and AI-drafted
+  questions through the MCP import tools, which arrive unapproved, were added after this list was
+  written; see the status paragraph at the top.)

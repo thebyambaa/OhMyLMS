@@ -1,16 +1,34 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
 
-namespace CodeRex\Ecommerce\Data;
+namespace OhMyLMS\Commerce\Data;
 
-use CodeRex\Ecommerce\Abstracts\Data;
-use CodeRex\Ecommerce\DataStores;
+use OhMyLMS\Commerce\Abstracts\Data;
+use OhMyLMS\Commerce\DataStores;
 
+/**
+ * Plugin coupon implementation.
+ */
 class Coupon extends Data {
 
+	/**
+	 * Data store name.
+	 *
+	 * @var mixed
+	 */
 	protected string $data_store_name = 'coupon';
 
+	/**
+	 * Object type.
+	 *
+	 * @var mixed
+	 */
 	protected string $object_type = 'coupon';
 
+	/**
+	 * Data.
+	 *
+	 * @var mixed
+	 */
 	protected array $data = array(
 		'title'                => '',
 		'code'                 => '',
@@ -34,12 +52,17 @@ class Coupon extends Data {
 		'used_by'              => array(),
 	);
 
+	/**
+	 * Initialize Coupon.
+	 *
+	 * @param int $data Input data.
+	 */
 	public function __construct( $data = 0 ) {
 		parent::__construct( $data );
 		if ( is_int( $data ) ) {
 			$this->set_id( $data );
 		} elseif ( is_string( $data ) ) {
-			$id = ecommerce_get_coupon_id_by_code( $data );
+			$id = ohmylms_ecommerce_get_coupon_id_by_code( $data );
 			if ( ! $id ) {
 				$this->set_id( $data );
 			} else {
@@ -50,7 +73,7 @@ class Coupon extends Data {
 			$this->set_object_read( true );
 		}
 
-		// load the data store
+		// load the data store.
 		$this->data_store = DataStores::load( $this->data_store_name );
 
 		if ( $this->get_id() > 0 ) {
@@ -82,7 +105,7 @@ class Coupon extends Data {
 	/**
 	 * Set title
 	 *
-	 * @param $title
+	 * @param mixed $name Name.
 	 * @since 1.0.0
 	 */
 	public function set_title( $name ) {
@@ -444,7 +467,7 @@ class Coupon extends Data {
 	/**
 	 * Set the course IDs associated with the coupon.
 	 *
-	 * @param array $course_ids The course IDs to set.
+	 * @param mixed $type Type.
 	 * @since 1.0.0
 	 */
 	public function set_course_id_type( $type ) {

@@ -5,17 +5,21 @@
     display: flex;
     flex-flow: row wrap;
     gap: 12px;
+
     /* box-shadow: 0px 1px 8px #2222221a; */
 }
+
 .ohmylms-page .ohmylms-credit-card-form .form-row label {
     font-size: 14px;
     line-height: 1;
     display: none;
     margin-bottom: 10px;
 }
+
 .ohmylms-page .ohmylms-credit-card-form .form-row .required {
     color: #F85656;
 }
+
 .ohmylms-page .ohmylms-credit-card-form .form-row.form-row-wide {
     width: 100%;
 }
@@ -35,6 +39,7 @@
 
 
 @media (max-width: 425px) {
+
     .ohmylms-page .ohmylms-credit-card-form .form-row-last,
     .ohmylms-page .ohmylms-credit-card-form .form-row-first {
         width: 100%;

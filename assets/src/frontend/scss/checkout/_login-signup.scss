@@ -1,4 +1,5 @@
 .ohmylms-page {
+
     .ohmylms-login-signup {
         border-radius: 14px;
         border: 1px solid #EBEBEF;
@@ -71,6 +72,7 @@
             }
 
             &.ohmylms-folded {
+
                 .ohmylms-input-label {
                     top: calc(50% - 10px);
                     color: #7A8B9A !important;
@@ -80,6 +82,7 @@
         }
 
         .ohmylms-input-label {
+
             .required {
                 color: #DD2001;
             }
@@ -123,6 +126,7 @@
         }
 
         .row-country {
+
             .ohmylms-input-label {
                 top: 12px;
                 transform: none;
@@ -146,7 +150,7 @@
         .ohmylms-checkbox {
             position: relative;
 
-            input[type=checkbox] {
+            input[type="checkbox"] {
                 display: block;
                 position: absolute;
                 opacity: 0;
@@ -193,7 +197,7 @@
                 }
             }
 
-            input[type=checkbox]:checked + .ohmylms-checkbox-text .checkedbox svg {
+            input[type="checkbox"]:checked + .ohmylms-checkbox-text .checkedbox svg {
                 opacity: 1;
                 visibility: visible;
             }
@@ -220,7 +224,7 @@
             letter-spacing: 1px;
 
             .ohmylms-loader {
-                border-color: #ffffff;
+                border-color: #fff;
                 border-top-color: #2256f0;
             }
 
@@ -230,7 +234,7 @@
 
                 .ohmylms-loader {
                     border-color: #2256f0;
-                    border-top-color: #ffffff;
+                    border-top-color: #fff;
                 }
             }
 
@@ -329,6 +333,7 @@
     }
 
     .ohmylms-form-signup {
+
         #name-warning {
             font-size: 12px;
             margin-top: 4px;
@@ -338,6 +343,7 @@
 }
 
 .ohmylms-checkout {
+
     .ohmylms-login-signup {
         padding: 30px;
         margin-bottom: 30px;
@@ -345,6 +351,7 @@
 }
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-checkout .ohmylms-login-signup {
         padding: 20px;
         border-radius: 10px;
@@ -353,12 +360,15 @@
 }
 
 @media screen and (max-width: 991px) {
+
     .ohmylms-page .ohmylms-login-signup .ohmylms-login-signup-header h1 {
         font-size: 34px;
     }
+
     .ohmylms-page .ohmylms-login-signup .ohmylms-login-signup-header p {
         margin: 12px auto 0;
     }
+
     .ohmylms-page .ohmylms-login-signup .account-details-title {
         font-size: 18px;
         margin: 0 0 8px
@@ -366,6 +376,7 @@
 }
 
 @media screen and (max-width: 767px) {
+
     .ohmylms-page .ohmylms-form-signup, .ohmylms-page .ohmylms-form-login {
         border-radius: 10px;
     }
@@ -373,6 +384,7 @@
 }
 
 @media screen and (max-width: 575px) {
+
     .ohmylms-page .ohmylms-login-signup {
         padding: 30px 20px;
     }
@@ -401,6 +413,7 @@
 }
 
 @media screen and (max-width: 425px) {
+
     .ohmylms-page .ohmylms-user-login-wrapper {
         padding: 8% 15px 30px;
     }
@@ -408,6 +421,7 @@
     .ohmylms-page .ohmylms-login-signup .ohmylms-login-signup-header h1 {
         font-size: 26px;
     }
+
     .ohmylms-page .ohmylms-login-signup .ohmylms-checkbox .ohmylms-checkbox-text .checkedbox::before {
         left: calc(50% + 0px);
     }

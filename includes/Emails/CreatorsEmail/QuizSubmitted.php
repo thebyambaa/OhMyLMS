@@ -1,16 +1,25 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 
 namespace OhMyLMS\Emails\CreatorsEmail;
 
 use OhMyLMS\Emails\Emails;
 
+/**
+ * Plugin quiz submitted implementation.
+ */
 class QuizSubmitted {
 
+	/**
+	 * Initialize Quiz submitted.
+	 */
 	public function __construct() {
 		add_action( 'ohmylms_quiz_submission', array( $this, 'trigger' ), 10, 4 );
 		add_action( 'ohmylms_send_quiz_submission_digest', array( $this, 'send_digest' ) );
 	}
 
+	/**
+	 * Basic settings for Quiz submitted.
+	 */
 	public function basic_settings(): array {
 		return array(
 			'id'             => 'instructor_quiz_submitted',
@@ -22,6 +31,9 @@ class QuizSubmitted {
 		);
 	}
 
+	/**
+	 * Default settings for Quiz submitted.
+	 */
 	public function default_settings(): array {
 		return array(
 			'enable'             => true,
@@ -36,6 +48,14 @@ class QuizSubmitted {
 		);
 	}
 
+	/**
+	 * Trigger for Quiz submitted.
+	 *
+	 * @param mixed $quiz_id Quiz identifier.
+	 * @param mixed $course_id Course identifier.
+	 * @param mixed $student_id Student identifier.
+	 * @param mixed $attempt_data Attempt data.
+	 */
 	public function trigger( $quiz_id, $course_id, $student_id, $attempt_data ) {
 		// Only notify instructor when quiz needs manual review.
 		if ( ! isset( $attempt_data['status'] ) || 'in-review' !== $attempt_data['status'] ) {
@@ -68,6 +88,9 @@ class QuizSubmitted {
 		$this->send_single( $quiz_id, $attempt_id, $course_id, $student_id, $settings );
 	}
 
+	/**
+	 * Send digest for Quiz submitted.
+	 */
 	public function send_digest() {
 		$settings = get_option( 'create_lms_email_instructor_quiz_submitted', $this->default_settings() );
 
@@ -92,6 +115,15 @@ class QuizSubmitted {
 		}
 	}
 
+	/**
+	 * Send single for Quiz submitted.
+	 *
+	 * @param mixed $quiz_id Quiz identifier.
+	 * @param mixed $attempt_id Attempt identifier.
+	 * @param mixed $course_id Course identifier.
+	 * @param mixed $student_id Student identifier.
+	 * @param mixed $settings Configuration settings.
+	 */
 	private function send_single( $quiz_id, $attempt_id, $course_id, $student_id, $settings ) {
 		$student = get_userdata( $student_id );
 		if ( ! $student ) {
@@ -108,8 +140,8 @@ class QuizSubmitted {
 			return;
 		}
 
-		$quiz       = get_post( $quiz_id );
-		$quiz_title = $quiz ? $quiz->post_title : '';
+		$quiz           = get_post( $quiz_id );
+		$quiz_title     = $quiz ? $quiz->post_title : '';
 		$email_settings = Emails::get_email_settings();
 
 		$subject = isset( $settings['subject'] ) ? $settings['subject'] : '';
@@ -136,6 +168,13 @@ class QuizSubmitted {
 		$this->send_email( $to, $subject, $html_body, $email_settings );
 	}
 
+	/**
+	 * Send digest for course for Quiz submitted.
+	 *
+	 * @param mixed $course_id Course identifier.
+	 * @param mixed $items Items.
+	 * @param mixed $settings Configuration settings.
+	 */
 	private function send_digest_for_course( $course_id, $items, $settings ) {
 		$course = ohmylms_get_course( $course_id );
 		if ( ! $course ) {
@@ -151,6 +190,7 @@ class QuizSubmitted {
 
 		/* translators: 1: submission count, 2: course name */
 		$subject = sprintf(
+			/* translators: %1$d: number; %2$s: text value. */
 			__( 'Daily Digest: %1$d New Quiz Submission(s) in %2$s', 'ohmylms' ),
 			count( $items ),
 			$course->get_name()
@@ -158,8 +198,8 @@ class QuizSubmitted {
 
 		$digest_items = array();
 		foreach ( $items as $item ) {
-			$s = get_userdata( $item['student_id'] );
-			$q = get_post( $item['quiz_id'] );
+			$s              = get_userdata( $item['student_id'] );
+			$q              = get_post( $item['quiz_id'] );
 			$digest_items[] = array(
 				'student_name' => $s ? $s->display_name : __( 'Unknown Student', 'ohmylms' ),
 				'quiz_title'   => $q ? $q->post_title : __( 'Unknown Quiz', 'ohmylms' ),
@@ -170,7 +210,7 @@ class QuizSubmitted {
 			);
 		}
 
-		$digest_settings = $settings;
+		$digest_settings                = $settings;
 		$digest_settings['button_link'] = admin_url( 'admin.php?page=ohmylms#/quiz-report' );
 
 		ob_start();
@@ -191,6 +231,12 @@ class QuizSubmitted {
 		$this->send_email( $to, $subject, $html_body, $email_settings );
 	}
 
+	/**
+	 * Get instructor email for Quiz submitted.
+	 *
+	 * @param mixed $course_id Course identifier.
+	 * @param mixed $settings Configuration settings.
+	 */
 	private function get_instructor_email( $course_id, $settings ) {
 		if ( ! empty( $settings['recipient_email'] ) ) {
 			return $settings['recipient_email'];
@@ -205,6 +251,14 @@ class QuizSubmitted {
 		return get_option( 'admin_email' );
 	}
 
+	/**
+	 * Replace tags for Quiz submitted.
+	 *
+	 * @param mixed $content Content.
+	 * @param mixed $student_name Student name.
+	 * @param mixed $course_name Course name.
+	 * @param mixed $quiz_name Quiz name.
+	 */
 	private function replace_tags( $content, $student_name, $course_name, $quiz_name ) {
 		return str_replace(
 			array( '{student_name}', '{course_name}', '{quiz_name}' ),
@@ -213,6 +267,14 @@ class QuizSubmitted {
 		);
 	}
 
+	/**
+	 * Send email for Quiz submitted.
+	 *
+	 * @param mixed $to To.
+	 * @param mixed $subject Subject.
+	 * @param mixed $body Body.
+	 * @param mixed $email_settings Email settings.
+	 */
 	private function send_email( $to, $subject, $body, $email_settings ) {
 		$headers      = array( 'MIME-Version: 1.0', 'Content-Type: text/html; charset=UTF-8' );
 		$sender_name  = $email_settings['ohmylms_email_sender_name'];

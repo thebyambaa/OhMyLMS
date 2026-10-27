@@ -1,0 +1,61 @@
+[
+	{
+		"binding": "pp",
+		"name": "QuizEditor",
+		"file": "QuizEditor.jsx",
+		"dependencies": [ "T" ]
+	},
+	{
+		"binding": "qc",
+		"name": "QuestionList",
+		"file": "QuestionList.jsx",
+		"dependencies": [
+			"Bc",
+			"Ec",
+			"Gc",
+			"I",
+			"Lc",
+			"React",
+			"T",
+			"Uc",
+			"Vc",
+			"b",
+			"g",
+			"uc",
+			"y"
+		]
+	},
+	{
+		"binding": "tp",
+		"name": "QuizSettings",
+		"file": "QuizSettings.jsx",
+		"dependencies": [ "I", "React", "Xm", "b" ]
+	},
+	{
+		"binding": "Jm",
+		"name": "QuizSettingsFields",
+		"file": "QuizSettingsFields.jsx",
+		"dependencies": [
+			"$m",
+			"Bt",
+			"He",
+			"I",
+			"Km",
+			"L",
+			"Pn",
+			"React",
+			"T",
+			"Um",
+			"Vm",
+			"Ym",
+			"Zm",
+			"b",
+			"g",
+			"qm",
+			"sn",
+			"vn",
+			"y",
+			"zm"
+		]
+	}
+]

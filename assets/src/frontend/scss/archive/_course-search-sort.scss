@@ -1,4 +1,5 @@
 .ohmylms-page {
+
 	.ohmylms-courses {
 		//----search and sort style---
 		.ohmylms-search-sort {
@@ -25,7 +26,6 @@
 				font-size: 18px;
 				font-weight: 500;
 				line-height: 1;
-				display: flex;
 				align-items: center;
 				gap: 6px;
 				display: none;
@@ -68,7 +68,7 @@
 				input[type="search"] {
 					border-radius: 10px;
 					background-color: #FFF;
-					box-shadow: 0px 1px 2px 0px rgba(190, 190, 215, 0.20);
+					box-shadow: 0 1px 2px 0 rgba(190, 190, 215, 0.20);
 					border: none;
 					height: 36px;
 					padding: 10px 10px 10px 36px;
@@ -83,15 +83,19 @@
 					&::-webkit-input-placeholder {
 						color: #A1A1AA;
 					}
+
 					&::-moz-placeholder {
 						color: #A1A1AA;
 					}
+
 					&:-ms-input-placeholder {
 						color: #A1A1AA;
 					}
+
 					&:-moz-placeholder {
 						color: #A1A1AA;
 					}
+
 					&::-webkit-search-cancel-button {
 						display: none;
 					}
@@ -108,10 +112,11 @@
 			}
 
 			.course-sortbox {
+
 				select {
 					border-radius: 10px;
 					background-color: #FFF;
-					box-shadow: 0px 1px 2px 0px rgba(190, 190, 215, 0.20);
+					box-shadow: 0 1px 2px 0 rgba(190, 190, 215, 0.20);
 					border: none;
 					height: 36px;
 					padding: 8px 14px;
@@ -119,7 +124,7 @@
 					-moz-appearance:none;
 					-webkit-appearance:none;
 					appearance:none;
-					background-image: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgMTEgNyIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBmaWxsPSIjMUYyMzI4IiBkPSJNLjE4MyAxLjIzOEw0LjU1IDYuMzM2YS43NS43NSAwIDAwMS4xMzkgMGw0LjM2OC01LjA5OEEuNzUuNzUgMCAwMDkuNDg4IDBILjc1MWEuNzUuNzUgMCAwMC0uNTY4IDEuMjM4eiIvPjwvc3ZnPg==");
+					background-image: url(data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgMTEgNyIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBmaWxsPSIjMUYyMzI4IiBkPSJNLjE4MyAxLjIzOEw0LjU1IDYuMzM2YS43NS43NSAwIDAwMS4xMzkgMGw0LjM2OC01LjA5OEEuNzUuNzUgMCAwMDkuNDg4IDBILjc1MWEuNzUuNzUgMCAwMC0uNTY4IDEuMjM4eiIvPjwvc3ZnPg==);
 					background-repeat: no-repeat;
 					background-position: calc(100% - 14px) 16px;
     				background-size: 10px;
@@ -147,7 +152,8 @@
 	.ohmylms-page .ohmylms-courses .ohmylms-search-sort .course-showing {
 		font-size: 15px;
 	}
-	.ohmylms-page .ohmylms-courses .ohmylms-search-sort .course-searchbox input[type=search] {
+
+	.ohmylms-page .ohmylms-courses .ohmylms-search-sort .course-searchbox input[type="search"] {
 		width: 217px;
 	}
 
@@ -168,22 +174,27 @@
 		flex-flow: column;
 		align-items: flex-start;
 	}
+
 	.ohmylms-page .ohmylms-courses .ohmylms-search-sort .search-sort-left {
 		width: 100%;
 	}
+
 	.ohmylms-page .ohmylms-courses .ohmylms-search-sort .search-sort-right {
 		width: 100%;
 	}
+
 	.ohmylms-page .ohmylms-courses .ohmylms-search-sort .course-searchbox {
 		flex: 1;
 	}
-	.ohmylms-page .ohmylms-courses .ohmylms-search-sort .course-searchbox input[type=search] {
+
+	.ohmylms-page .ohmylms-courses .ohmylms-search-sort .course-searchbox input[type="search"] {
         width: 100%;
     }
 
 	.ohmylms-page .ohmylms-courses .ohmylms-search-sort .course-sortbox {
 		flex: 1;
 	}
+
 	.ohmylms-page .ohmylms-courses .ohmylms-search-sort .course-sortbox select {
 		width: 100%;
 	}
@@ -191,12 +202,15 @@
 	.ohmylms-page .ohmylms-courses .ohmylms-search-sort .search-sort-left {
 		gap: 10px;
 	}
+
 	.ohmylms-page .ohmylms-courses .ohmylms-search-sort .course-showing {
         font-size: 14px;
     }
+
 	.ohmylms-page .ohmylms-courses .ohmylms-search-sort .filter-hamburger {
 		font-size: 16px;
 	}
+
 	.ohmylms-page .ohmylms-courses .ohmylms-search-sort .filter-hamburger svg {
 		width: 18px;
 	}
@@ -204,14 +218,17 @@
 }
 
 @media screen and (max-width: 425px) {
+
 	.ohmylms-page .ohmylms-courses .ohmylms-search-sort {
         max-width: 320px;
         margin: 0 auto 20px;
     }
+
 	.ohmylms-page .ohmylms-courses .ohmylms-search-sort .search-sort-right {
 		justify-content: flex-start;
 		flex-flow: column;
 	}
+
 	.ohmylms-page .ohmylms-courses .ohmylms-search-sort .course-sortbox,
 	.ohmylms-page .ohmylms-courses .ohmylms-search-sort .course-searchbox {
         flex: inherit;

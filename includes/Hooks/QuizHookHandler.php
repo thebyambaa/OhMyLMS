@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Handles hooks related to lessons in the OhMyLMS plugin.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Hooks;
 
@@ -11,6 +16,9 @@ use OhMyLMS\Abstracts\HookHandler;
  */
 class QuizHookHandler extends HookHandler {
 
+	/**
+	 * Register hooks for Quiz hook handler.
+	 */
 	public function register_hooks() {
 		add_action( 'ohmylms_rest_insert_quiz', array( $this, 'link_quiz_with_chapter' ), 10, 2 );
 		add_action( 'ohmylms_rest_delete_quiz', array( $this, 'unlink_chapter_from_quiz' ), 10 );
@@ -20,6 +28,9 @@ class QuizHookHandler extends HookHandler {
 	/**
 	 * Link lesson with chapter.
 	 * Update
+	 *
+	 * @param mixed $quiz Quiz.
+	 * @param mixed $request REST request.
 	 */
 	public function link_quiz_with_chapter( $quiz, $request ) {
 		if ( ! is_a( $quiz, 'WP_Post' ) ) {
@@ -44,7 +55,7 @@ class QuizHookHandler extends HookHandler {
 	 * @param int $chapter_id The ID of the chapter.
 	 * @param int $quiz_id The ID of the lesson.
 	 * @param int $order_number The order number of the lesson in the chapter.
-	 *
+	 * .
 	 * @return void
 	 *
 	 * @since 1.0.0
@@ -58,16 +69,12 @@ class QuizHookHandler extends HookHandler {
 		global $wpdb;
 		$table_name = $wpdb->prefix . OHMYLMS_CONTENT_RELATIONSHIP;
 
-		// Check if the relationship already exists
+		// Check if the relationship already exists.
 		$exists = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT ID FROM $table_name WHERE chapter_id = %d AND content_id = %d LIMIT 1",
-				$chapter_id,
-				$quiz_id
-			)
+			$wpdb->prepare( 'SELECT ID FROM %i WHERE chapter_id = %d AND content_id = %d LIMIT 1', $table_name, $chapter_id, $quiz_id )
 		);
 
-		// If exists, update the relationship, otherwise insert a new one
+		// If exists, update the relationship, otherwise insert a new one.
 		if ( $exists ) {
 			$wpdb->update(
 				$table_name,
@@ -108,8 +115,7 @@ class QuizHookHandler extends HookHandler {
 	/**
 	 * Unlink a lesson from a chapter.
 	 *
-	 * @param \WP_Post $lesson The lesson post object.
-	 *
+	 * @param mixed $quiz_id Quiz identifier.
 	 * @return void
 	 *
 	 * @since 1.0.0
@@ -146,29 +152,26 @@ class QuizHookHandler extends HookHandler {
 			)
 		);
 
-		// Step 3: Get all question IDs linked to the quiz
+		// Step 3: Get all question IDs linked to the quiz.
 		$relationship_table = $wpdb->prefix . 'ohmylms_quiz_questions_relationship';
-		$question_ids = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT question_id FROM {$relationship_table} WHERE quiz_id = %d",
-				$quiz_id
-			)
+		$question_ids       = $wpdb->get_col(
+			$wpdb->prepare( 'SELECT question_id FROM %i WHERE quiz_id = %d', $relationship_table, $quiz_id )
 		);
-		
+
 		if ( ! empty( $question_ids ) ) {
-			// Step 4: Get all answer IDs for the above question IDs
+			// Step 4: Get all answer IDs for the above question IDs.
 			$answers_table = $wpdb->prefix . 'ohmylms_question_answers';
-			$placeholders = implode( ',', array_fill( 0, count( $question_ids ), '%d' ) );
-			$answer_ids = $wpdb->get_col(
+			$placeholders  = implode( ',', array_fill( 0, count( $question_ids ), '%d' ) );
+			$answer_ids    = $wpdb->get_col(
 				$wpdb->prepare(
 					"SELECT id FROM {$answers_table} WHERE question_id IN ($placeholders)",
 					...$question_ids
 				)
 			);
-	
-			// Step 5: Delete answer meta
+
+			// Step 5: Delete answer meta.
 			if ( ! empty( $answer_ids ) ) {
-				$ans_meta_table = $wpdb->prefix . 'ohmylms_question_answermeta';
+				$ans_meta_table    = $wpdb->prefix . 'ohmylms_question_answermeta';
 				$meta_placeholders = implode( ',', array_fill( 0, count( $answer_ids ), '%d' ) );
 				$wpdb->query(
 					$wpdb->prepare(
@@ -177,8 +180,8 @@ class QuizHookHandler extends HookHandler {
 					)
 				);
 			}
-	
-			// Step 6: Delete answers (options)
+
+			// Step 6: Delete answers (options).
 			$wpdb->query(
 				$wpdb->prepare(
 					"DELETE FROM {$answers_table} WHERE question_id IN ($placeholders)",
@@ -187,12 +190,11 @@ class QuizHookHandler extends HookHandler {
 			);
 		}
 
-		// Step 7: Delete quiz-question relationship
+		// Step 7: Delete quiz-question relationship.
 		$wpdb->delete(
 			$relationship_table,
-			[ 'quiz_id' => $quiz_id ],
-			[ '%d' ]
+			array( 'quiz_id' => $quiz_id ),
+			array( '%d' )
 		);
-		
 	}
 }

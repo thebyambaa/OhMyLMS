@@ -1,5 +1,13 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+/**
+ * Checkout.
+ *
+ * @package OhMyLMS
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
 
 $user_id = get_current_user_id();
 

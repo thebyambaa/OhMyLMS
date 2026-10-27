@@ -1,0 +1,38 @@
+/* Start screen of a mixed-skill quiz, unit test or course challenge. */
+.ohmylms-assessment-intro {
+	box-sizing: border-box;
+	margin: 0 0 20px;
+	padding: 24px;
+	border-radius: 12px;
+	background: #3b4cb8;
+	color: #fff;
+	text-align: center;
+}
+
+.ohmylms-assessment-intro.is-unit-test {
+	background: #2f3c97;
+}
+
+.ohmylms-assessment-intro.is-course-challenge {
+	background: #4a2d8f;
+}
+
+.ohmylms-assessment-intro h2 {
+	margin: 0 0 8px;
+	color: inherit;
+	font-size: 1.5rem;
+}
+
+.ohmylms-assessment-intro p {
+	margin: 0 0 8px;
+	color: inherit;
+}
+
+.ohmylms-assessment-intro-length {
+	font-size: 1.125rem;
+}
+
+.ohmylms-assessment-intro-skills {
+	font-size: 0.9375rem;
+	opacity: 0.9;
+}

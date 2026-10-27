@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * WPBakery Offer Button Element
  *
@@ -20,11 +20,11 @@ class OfferButtonElement {
 	 */
 	public function __construct() {
 		$this->register_element();
-		
-		// Disable WPBakery shortcode caching for real-time preview updates
+
+		// Disable WPBakery shortcode caching for real-time preview updates.
 		add_filter( 'vc_shortcode_content_filter_after', array( $this, 'disable_cache_for_preview' ), 10, 2 );
 	}
-	
+
 	/**
 	 * Disable caching for this shortcode in WPBakery editor
 	 *
@@ -34,7 +34,7 @@ class OfferButtonElement {
 	 */
 	public function disable_cache_for_preview( $output, $shortcode ) {
 		if ( 'ohmylms_offer_button' === $shortcode ) {
-			// Add a timestamp to force cache bypass in editor
+			// Add a timestamp to force cache bypass in editor.
 			if ( function_exists( 'vc_is_inline' ) && vc_is_inline() ) {
 				$output .= '<!-- vc-no-cache:' . time() . ' -->';
 			}
@@ -60,7 +60,7 @@ class OfferButtonElement {
 				'category'    => __( 'OhMyLMS', 'ohmylms' ),
 				'description' => __( 'Add an offer accept/decline button for funnels', 'ohmylms' ),
 				'params'      => array(
-					// Action
+					// Action.
 					array(
 						'type'        => 'dropdown',
 						'heading'     => __( 'Action', 'ohmylms' ),
@@ -73,7 +73,7 @@ class OfferButtonElement {
 						'description' => __( 'Button action type', 'ohmylms' ),
 						'admin_label' => true,
 					),
-					// Button Text
+					// Button Text.
 					array(
 						'type'        => 'textfield',
 						'heading'     => __( 'Button Text', 'ohmylms' ),
@@ -82,7 +82,7 @@ class OfferButtonElement {
 						'description' => __( 'Text to display on the button', 'ohmylms' ),
 					),
 
-					// Style Group
+					// Style Group.
 					array(
 						'type'        => 'colorpicker',
 						'heading'     => __( 'Background Color', 'ohmylms' ),
@@ -164,7 +164,7 @@ class OfferButtonElement {
 						'group'       => __( 'Style', 'ohmylms' ),
 					),
 
-					// Advanced Group
+					// Advanced Group.
 					array(
 						'type'        => 'textfield',
 						'heading'     => __( 'CSS ID', 'ohmylms' ),

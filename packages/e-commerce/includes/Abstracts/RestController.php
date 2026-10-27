@@ -1,6 +1,11 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
+/**
+ * Base controller for the OhMyLMS commerce API.
+ *
+ * @package OhMyLMS
+ */
 
-namespace CodeRex\Ecommerce\Abstracts;
+namespace OhMyLMS\Commerce\Abstracts;
 
 use WP_REST_Controller;
 
@@ -16,7 +21,19 @@ abstract class RestController extends WP_REST_Controller {
 	 *
 	 * @var string
 	 */
-	protected $namespace = 'cx-ecommerce/v1';
+	protected $namespace = 'ohmylms-commerce/v1';
+
+	/**
+	 * Register the previous commerce routes on installations without CreatorLMS.
+	 *
+	 * The caller uses a separate controller so callbacks retain their namespace.
+	 *
+	 * @return void
+	 */
+	public function register_legacy_routes(): void {
+		$this->namespace = 'cx-ecommerce/v1';
+		$this->register_routes();
+	}
 
 	/**
 	 * Check default permission for rest routes.
@@ -29,8 +46,5 @@ abstract class RestController extends WP_REST_Controller {
 	 */
 	public function check_permission(): bool {
 		return true;
-		// phpcs:disable Squiz.PHP.CommentedOutCode.Found
-		// return current_user_can( 'manage_jobs' );
-		//phpcs:enable
 	}
 }

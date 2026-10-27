@@ -45,9 +45,5 @@ Composer lock/autoload files are bundled. Action Scheduler and Dompdf remain ava
 
 ## Validation
 
-Workspace scripts in `.ohmylms-work` use disposable WordPress/MySQL databases for fresh installation, repeated upgrades and existing-record preservation. `integration-test.php` exercises nine built-in question types plus an extension type, ownership failures, timer grading, three built-in quiz displays, layout precedence/fallback, shortcode/block activities, REST aliases, merged models and PDF output. `preservation-test.php` compares 253 pre-existing records across nine content/progress tables. `audit.py` checks PHP syntax, duplicate declarations and filename case. `tests/unit.php` covers registry and grading edge cases.
-
-Browser acceptance and broader membership, assignment, cohort, certificate and Classes workflows must also be checked; class resolution alone is not evidence that these workflows pass. See the workspace verification notes for current results and outstanding work.
-
-## Naming (ohmylms)
+Tests live in `tests/`: `tests/unit.php` covers registry and grading edge cases, the PHP suites in `tests/php/` run against a disposable WordPress/MySQL database (they refuse any other database, see `docs/DEVELOPMENT.md`), and `tests/browser/` holds the Playwright specs. Run `npm run check` for formatting, contracts, the JavaScript suite and the production build. The earlier `.ohmylms-work` workspace scripts (fresh install, repeated upgrades, record-preservation comparison) are not in the repository. See `docs/ACCEPTANCE.md` and `CONTINUE-LEARNER-HUB.md` for recorded results and what is still unverified.
 

@@ -20,7 +20,6 @@ $call = static function ($method, $path, $data = []) {
 };
 if ($action === 'setup') {
     $state = ['tag' => $tag, 'posts' => [], 'previous_integrations' => get_option('ohmylms_integrations')];
-    update_option('ohmylms_integrations', array_merge((array) $state['previous_integrations'], ['skills' => ['is_enable' => 1]]));
     $create = static function ($path, $data) use ($call, &$state) { $id = (int) $call('POST', $path, $data)['id']; $state['posts'][] = $id; return $id; };
     $state['original_course'] = $create('courses', ['name' => 'Original fractions course ' . $tag, 'status' => 'publish']);
     $state['course'] = $create('courses', ['name' => 'Blended fractions ' . $tag, 'status' => 'publish']);

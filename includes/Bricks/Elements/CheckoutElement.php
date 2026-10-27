@@ -1,14 +1,20 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 namespace OhMyLMS\Bricks\Elements;
+
 use OhMyLMS\Shortcodes\ShortCodeCheckout;
-use function CodeRex\Ecommerce\ecommerce;
+use function OhMyLMS\Commerce\ecommerce;
 use Bricks\Element;
 
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
 
+/**
+ * Plugin checkout element implementation.
+ */
 class CheckoutElement extends Element {
 
-    /**
+	/**
 	 * Element category
 	 *
 	 * @var string
@@ -65,7 +71,7 @@ class CheckoutElement extends Element {
 	 * @return void
 	 */
 	public function set_controls() {
-		$this->controls = array();
+		$this->controls       = array();
 		$this->control_groups = array();
 		$this->set_content_controls();
 		$this->set_style_controls();
@@ -77,7 +83,7 @@ class CheckoutElement extends Element {
 	 * @return void
 	 */
 	private function set_content_controls() {
-		// Content Settings Group
+		// Content Settings Group.
 		$this->controls['content_heading'] = array(
 			'tab'   => 'content',
 			'label' => esc_html__( 'Content Settings', 'ohmylms' ),
@@ -138,7 +144,7 @@ class CheckoutElement extends Element {
 	private function set_style_controls() {
 
 		// -------- Step 1: Define Groups --------
-		$groups = [
+		$groups = array(
 			'title'         => esc_html__( 'Title Style', 'ohmylms' ),
 			'form_row'      => esc_html__( 'Form Row Style', 'ohmylms' ),
 			'input_label'   => esc_html__( 'Input Label Style', 'ohmylms' ),
@@ -147,22 +153,19 @@ class CheckoutElement extends Element {
 			'privacy_text'  => esc_html__( 'Privacy Text Style', 'ohmylms' ),
 			'checkout_box'  => esc_html__( 'Checkout Form Container', 'ohmylms' ),
 			'order_summary' => esc_html__( 'Order Summary Container', 'ohmylms' ),
-		];
+		);
 
 		foreach ( $groups as $group => $label ) {
-			$this->control_groups[ $group ] = [
+			$this->control_groups[ $group ] = array(
 				'title' => $label,
 				'tab'   => 'style',
-			];
+			);
 		}
-
 
 		// -------- Step 2: Add Controls --------
 
-	
-
 		$this->controls['title_typography'] = array(
-			'group'   => 'title',
+			'group' => 'title',
 			'label' => esc_html__( 'Typography', 'ohmylms' ),
 			'type'  => 'typography',
 			'css'   => array(
@@ -174,7 +177,7 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['title_padding'] = array(
-			'group'   => 'title',
+			'group' => 'title',
 			'label' => esc_html__( 'Padding', 'ohmylms' ),
 			'type'  => 'spacing',
 			'css'   => array(
@@ -186,10 +189,10 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['title_background_color'] = array(
-			'group'   => 'title',
-			'label'   => esc_html__( 'Background Color', 'ohmylms' ),
-			'type'    => 'color',
-			'css'     => array(
+			'group' => 'title',
+			'label' => esc_html__( 'Background Color', 'ohmylms' ),
+			'type'  => 'color',
+			'css'   => array(
 				array(
 					'property' => 'background-color',
 					'selector' => '{{WRAPPER}} .ohmylms-checkout-title',
@@ -200,7 +203,7 @@ class CheckoutElement extends Element {
 		// === FORM ROW STYLING ===
 
 		$this->controls['form_row_padding'] = array(
-			'group'   => 'form_row',
+			'group' => 'form_row',
 			'label' => esc_html__( 'Padding', 'ohmylms' ),
 			'type'  => 'spacing',
 			'css'   => array(
@@ -212,10 +215,10 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['form_row_background'] = array(
-			'group'   => 'form_row',
-			'label'   => esc_html__( 'Background Color', 'ohmylms' ),
-			'type'    => 'color',
-			'css'     => array(
+			'group' => 'form_row',
+			'label' => esc_html__( 'Background Color', 'ohmylms' ),
+			'type'  => 'color',
+			'css'   => array(
 				array(
 					'property' => 'background-color',
 					'selector' => '{{WRAPPER}} .ohmylms-form-row',
@@ -224,7 +227,7 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['form_row_border'] = array(
-			'group'   => 'form_row',
+			'group' => 'form_row',
 			'label' => esc_html__( 'Border', 'ohmylms' ),
 			'type'  => 'border',
 			'css'   => array(
@@ -235,9 +238,9 @@ class CheckoutElement extends Element {
 			),
 		);
 
-		// Input Label Controls
+		// Input Label Controls.
 		$this->controls['input_label_typography'] = array(
-			'group'   => 'input_label',
+			'group' => 'input_label',
 			'label' => esc_html__( 'Typography', 'ohmylms' ),
 			'type'  => 'typography',
 			'css'   => array(
@@ -249,7 +252,7 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['input_label_margin'] = array(
-			'group'   => 'input_label',
+			'group' => 'input_label',
 			'label' => esc_html__( 'Margin', 'ohmylms' ),
 			'type'  => 'spacing',
 			'css'   => array(
@@ -260,7 +263,7 @@ class CheckoutElement extends Element {
 			),
 		);
 
-		// Input Field Controls
+		// Input Field Controls.
 		$this->controls['input_color'] = array(
 			'group'   => 'input_field',
 			'label'   => esc_html__( 'Text Color', 'ohmylms' ),
@@ -288,7 +291,7 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['input_typography'] = array(
-			'group'   => 'input_field',
+			'group' => 'input_field',
 			'label' => esc_html__( 'Typography', 'ohmylms' ),
 			'type'  => 'typography',
 			'css'   => array(
@@ -300,7 +303,7 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['input_border'] = array(
-			'group'   => 'input_field',
+			'group' => 'input_field',
 			'label' => esc_html__( 'Border', 'ohmylms' ),
 			'type'  => 'border',
 			'css'   => array(
@@ -312,7 +315,7 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['input_padding'] = array(
-			'group'   => 'input_field',
+			'group' => 'input_field',
 			'label' => esc_html__( 'Padding', 'ohmylms' ),
 			'type'  => 'spacing',
 			'css'   => array(
@@ -324,7 +327,7 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['input_margin'] = array(
-			'group'   => 'input_field',
+			'group' => 'input_field',
 			'label' => esc_html__( 'Margin', 'ohmylms' ),
 			'type'  => 'spacing',
 			'css'   => array(
@@ -336,7 +339,7 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['input_box_shadow'] = array(
-			'group'   => 'input_field',
+			'group' => 'input_field',
 			'label' => esc_html__( 'Box Shadow', 'ohmylms' ),
 			'type'  => 'box-shadow',
 			'css'   => array(
@@ -347,12 +350,12 @@ class CheckoutElement extends Element {
 			),
 		);
 
-		// Input Focus States
+		// Input Focus States.
 		$this->controls['input_focus_color'] = array(
-			'group'   => 'input_field',
-			'label'   => esc_html__( 'Focus Border Color', 'ohmylms' ),
-			'type'    => 'color',
-			'css'     => array(
+			'group' => 'input_field',
+			'label' => esc_html__( 'Focus Border Color', 'ohmylms' ),
+			'type'  => 'color',
+			'css'   => array(
 				array(
 					'property' => 'border-color',
 					'selector' => '{{WRAPPER}} .ohmylms-input-text:focus, {{WRAPPER}} .ohmylms-input-select:focus',
@@ -361,7 +364,7 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['input_focus_box_shadow'] = array(
-			'group'   => 'input_field',
+			'group' => 'input_field',
 			'label' => esc_html__( 'Focus Box Shadow', 'ohmylms' ),
 			'type'  => 'box-shadow',
 			'css'   => array(
@@ -372,7 +375,7 @@ class CheckoutElement extends Element {
 			),
 		);
 
-		// Button Controls
+		// Button Controls.
 		$this->controls['button_background_color'] = array(
 			'group'   => 'button',
 			'label'   => esc_html__( 'Background Color', 'ohmylms' ),
@@ -380,15 +383,15 @@ class CheckoutElement extends Element {
 			'default' => '#6e42d3',
 			'css'     => array(
 				array(
-					'property' => 'background-color',
-					'selector' => '{{WRAPPER}} .ohmylms-page .ohmylms-checkout-payment button.ohmylms-place-order-button',
+					'property'  => 'background-color',
+					'selector'  => '{{WRAPPER}} .ohmylms-page .ohmylms-checkout-payment button.ohmylms-place-order-button',
 					'important' => true,
 				),
 			),
 		);
 
 		$this->controls['button_typography'] = array(
-			'group'   => 'button',
+			'group' => 'button',
 			'label' => esc_html__( 'Typography', 'ohmylms' ),
 			'type'  => 'typography',
 			'css'   => array(
@@ -400,7 +403,7 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['button_border'] = array(
-			'group'   => 'button',
+			'group' => 'button',
 			'label' => esc_html__( 'Border', 'ohmylms' ),
 			'type'  => 'border',
 			'css'   => array(
@@ -412,7 +415,7 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['button_padding'] = array(
-			'group'   => 'button',
+			'group' => 'button',
 			'label' => esc_html__( 'Padding', 'ohmylms' ),
 			'type'  => 'spacing',
 			'css'   => array(
@@ -424,7 +427,7 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['button_margin'] = array(
-			'group'   => 'button',
+			'group' => 'button',
 			'label' => esc_html__( 'Margin', 'ohmylms' ),
 			'type'  => 'spacing',
 			'css'   => array(
@@ -435,7 +438,6 @@ class CheckoutElement extends Element {
 			),
 		);
 
-		
 		$this->controls['button_hover_color'] = array(
 			'group'   => 'button',
 			'label'   => esc_html__( 'Hover Text Color', 'ohmylms' ),
@@ -476,7 +478,7 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['privacy_text_typography'] = array(
-			'group'   => 'privacy_text',
+			'group' => 'privacy_text',
 			'label' => esc_html__( 'Typography', 'ohmylms' ),
 			'type'  => 'typography',
 			'css'   => array(
@@ -488,7 +490,7 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['privacy_text_margin'] = array(
-			'group'   => 'privacy_text',
+			'group' => 'privacy_text',
 			'label' => esc_html__( 'Margin', 'ohmylms' ),
 			'type'  => 'spacing',
 			'css'   => array(
@@ -500,7 +502,7 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['privacy_text_padding'] = array(
-			'group'   => 'privacy_text',
+			'group' => 'privacy_text',
 			'label' => esc_html__( 'Padding', 'ohmylms' ),
 			'type'  => 'spacing',
 			'css'   => array(
@@ -525,7 +527,7 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['checkout_box_border'] = array(
-			'group'   => 'checkout_box',
+			'group' => 'checkout_box',
 			'label' => esc_html__( 'Border', 'ohmylms' ),
 			'type'  => 'border',
 			'css'   => array(
@@ -537,7 +539,7 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['checkout_box_padding'] = array(
-			'group'   => 'checkout_box',
+			'group' => 'checkout_box',
 			'label' => esc_html__( 'Padding', 'ohmylms' ),
 			'type'  => 'spacing',
 			'css'   => array(
@@ -549,7 +551,7 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['checkout_box_margin'] = array(
-			'group'   => 'checkout_box',
+			'group' => 'checkout_box',
 			'label' => esc_html__( 'Margin', 'ohmylms' ),
 			'type'  => 'spacing',
 			'css'   => array(
@@ -561,7 +563,7 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['order_summary_background_color'] = array(
-			'group'   => 'order_summary',
+			'group' => 'order_summary',
 			'label' => esc_html__( 'Background Color', 'ohmylms' ),
 			'type'  => 'color',
 			'css'   => array(
@@ -573,7 +575,7 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['order_summary_border'] = array(
-			'group'   => 'order_summary',
+			'group' => 'order_summary',
 			'label' => esc_html__( 'Border', 'ohmylms' ),
 			'type'  => 'border',
 			'css'   => array(
@@ -585,7 +587,7 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['order_summary_padding'] = array(
-			'group'   => 'order_summary',
+			'group' => 'order_summary',
 			'label' => esc_html__( 'Padding', 'ohmylms' ),
 			'type'  => 'spacing',
 			'css'   => array(
@@ -597,7 +599,7 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['order_summary_margin'] = array(
-			'group'   => 'order_summary',
+			'group' => 'order_summary',
 			'label' => esc_html__( 'Margin', 'ohmylms' ),
 			'type'  => 'spacing',
 			'css'   => array(
@@ -609,7 +611,7 @@ class CheckoutElement extends Element {
 		);
 
 		$this->controls['order_summary_box_shadow'] = array(
-			'group'   => 'order_summary',
+			'group' => 'order_summary',
 			'label' => esc_html__( 'Box Shadow', 'ohmylms' ),
 			'type'  => 'box-shadow',
 			'css'   => array(
@@ -619,26 +621,27 @@ class CheckoutElement extends Element {
 				),
 			),
 		);
-
-		
 	}
 
+	/**
+	 * Enqueue scripts for Checkout element.
+	 */
 	public function enqueue_scripts() {
-        wp_enqueue_script( 'ohmylms-checkout' );
-        wp_enqueue_script( 'ohmylms-tax-calculation' );
-        wp_enqueue_script( 'ohmylms-frontend' );
+		wp_enqueue_script( 'ohmylms-checkout' );
+		wp_enqueue_script( 'ohmylms-tax-calculation' );
+		wp_enqueue_script( 'ohmylms-frontend' );
 
-        wp_enqueue_style( 'ohmylms-frontend' );
-        wp_enqueue_style( 'ohmylms-general' );
+		wp_enqueue_style( 'ohmylms-frontend' );
+		wp_enqueue_style( 'ohmylms-general' );
 		$is_bricks_edit_mode = false;
-		if ((function_exists('bricks_is_builder') && bricks_is_builder()) ||
-			(function_exists('bricks_is_builder_main') && bricks_is_builder_main()) ||
-			(function_exists('bricks_is_rest_call') && bricks_is_rest_call())
+		if ( ( function_exists( 'bricks_is_builder' ) && bricks_is_builder() ) ||
+			( function_exists( 'bricks_is_builder_main' ) && bricks_is_builder_main() ) ||
+			( function_exists( 'bricks_is_rest_call' ) && bricks_is_rest_call() )
 		) {
 			$is_bricks_edit_mode = true;
 		}
-		
-		 // Only add the inline script in edit mode
+
+		// Only add the inline script in edit mode.
 		if ( ! $is_bricks_edit_mode ) {
 			return;
 		}
@@ -679,54 +682,57 @@ class CheckoutElement extends Element {
 			});
 		";
 		wp_add_inline_script( 'ohmylms-frontend', $inline_script );
-    }
+	}
 
-    public function render() {
+	/**
+	 * Render for Checkout element.
+	 */
+	public function render() {
 		$settings = $this->settings;
-		// Convert Bricks settings to shortcode attributes
+		// Convert Bricks settings to shortcode attributes.
 		$shortcode_attrs = $this->convert_settings_to_shortcode_attrs( $settings );
 
-		// Check if we're in Bricks builder mode
+		// Check if we're in Bricks builder mode.
 		$is_bricks_edit_mode = false;
-		if ((function_exists('bricks_is_builder') && bricks_is_builder()) ||
-			(function_exists('bricks_is_builder_main') && bricks_is_builder_main()) ||
-			(function_exists('bricks_is_rest_call') && bricks_is_rest_call())
+		if ( ( function_exists( 'bricks_is_builder' ) && bricks_is_builder() ) ||
+			( function_exists( 'bricks_is_builder_main' ) && bricks_is_builder_main() ) ||
+			( function_exists( 'bricks_is_rest_call' ) && bricks_is_rest_call() )
 		) {
 			$is_bricks_edit_mode = true;
 		}
 
 		// Render the checkout form via shortcode
 		// Wrapping divs for styling consistency
-		// Use the same wrapper class as shortcode for consistency
+		// Use the same wrapper class as shortcode for consistency.
 		echo '<div class="ohmylms-page ohmylms-checkout">';
 		echo '<div class="ohmylms">';
-		
-		// Enable preview mode for Bricks builder to show checkout form even with empty cart
+
+		// Enable preview mode for Bricks builder to show checkout form even with empty cart.
 		if ( $is_bricks_edit_mode ) {
 			add_filter( 'ohmylms_bricks_preview_mode', '__return_true' );
 		}
-		
-        ShortCodeCheckout::output( $shortcode_attrs );
-        
-        // Remove preview mode filter if it was set
+
+		ShortCodeCheckout::output( $shortcode_attrs );
+
+		// Remove preview mode filter if it was set.
 		if ( $is_bricks_edit_mode ) {
 			remove_filter( 'ohmylms_bricks_preview_mode', '__return_true' );
 		}
-	
-        echo '</div></div>';
+
+		echo '</div></div>';
 	}
 
 
-    /**
+	/**
 	 * Convert Bricks settings to shortcode attributes
 	 *
-	 * @param array $settings Bricks settings
+	 * @param array $settings Bricks settings.
 	 * @return array Shortcode attributes
 	 */
 	public function convert_settings_to_shortcode_attrs( $settings ) {
 		$attrs = array();
 
-		// Content settings
+		// Content settings.
 		if ( isset( $settings['show_empty_cart_message'] ) ) {
 			$attrs['show_empty_cart_message'] = $settings['show_empty_cart_message'] ? 'yes' : 'no';
 		}
@@ -744,10 +750,10 @@ class CheckoutElement extends Element {
 		}
 
 		// === TITLE STYLING ===
-		
+
 		if ( ! empty( $settings['title_typography'] ) ) {
 			$typography = $settings['title_typography'];
-			// for color also
+			// for color also.
 			if ( ! empty( $typography['color'] ) ) {
 				$attrs['title_color'] = $this->extract_color_value( $typography['color'] );
 			}
@@ -790,7 +796,7 @@ class CheckoutElement extends Element {
 			}
 		}
 
-		// Title background and border
+		// Title background and border.
 		if ( ! empty( $settings['title_background_color'] ) ) {
 			$attrs['title_background_color'] = $this->extract_color_value( $settings['title_background_color'] );
 		}
@@ -838,7 +844,7 @@ class CheckoutElement extends Element {
 		}
 
 		// === INPUT LABEL STYLING ===
-		
+
 		if ( ! empty( $settings['input_label_typography'] ) ) {
 			$typography = $settings['input_label_typography'];
 			if ( ! empty( $typography['color'] ) ) {
@@ -855,7 +861,7 @@ class CheckoutElement extends Element {
 			}
 		}
 
-		// Input label padding and margin
+		// Input label padding and margin.
 		if ( ! empty( $settings['input_label_margin'] ) ) {
 			$margin = $settings['input_label_margin'];
 			if ( ! empty( $margin['top'] ) ) {
@@ -893,11 +899,11 @@ class CheckoutElement extends Element {
 		if ( ! empty( $settings['input_color'] ) ) {
 			$attrs['input_color'] = $this->extract_color_value( $settings['input_color'] );
 		}
-		
+
 		if ( ! empty( $settings['input_background_color'] ) ) {
 			$attrs['input_background_color'] = $this->extract_color_value( $settings['input_background_color'] );
 		}
-		
+
 		if ( ! empty( $settings['input_typography'] ) ) {
 			$typography = $settings['input_typography'];
 			if ( ! empty( $typography['font-size'] ) ) {
@@ -910,7 +916,7 @@ class CheckoutElement extends Element {
 				$attrs['input_font_family'] = $typography['font-family'];
 			}
 		}
-		
+
 		if ( ! empty( $settings['input_border'] ) ) {
 			$border = $settings['input_border'];
 			if ( ! empty( $border['color'] ) ) {
@@ -923,12 +929,12 @@ class CheckoutElement extends Element {
 				$attrs['input_border_style'] = $border['style'];
 			}
 		}
-		
+
 		if ( ! empty( $settings['input_border_radius'] ) ) {
 			$attrs['input_border_radius'] = $this->extract_dimensions_value( $settings['input_border_radius'], 'top' );
 		}
 
-		// Input padding and margin
+		// Input padding and margin.
 		if ( ! empty( $settings['input_padding'] ) ) {
 			$padding = $settings['input_padding'];
 			if ( ! empty( $padding['top'] ) ) {
@@ -961,12 +967,12 @@ class CheckoutElement extends Element {
 			}
 		}
 
-		// Input box shadow
+		// Input box shadow.
 		if ( ! empty( $settings['input_box_shadow'] ) ) {
 			$attrs['input_box_shadow'] = $this->extract_box_shadow_value( $settings['input_box_shadow'] );
 		}
 
-		// Input focus states
+		// Input focus states.
 		if ( ! empty( $settings['input_focus_color'] ) ) {
 			$attrs['input_focus_border_color'] = $this->extract_color_value( $settings['input_focus_color'] );
 		}
@@ -977,17 +983,17 @@ class CheckoutElement extends Element {
 
 		// === BUTTON STYLING ===
 		// if ( ! empty( $settings['button_color'] ) ) {
-		// 	$attrs['button_color'] = $this->extract_color_value( $settings['button_color'] );
+		// $attrs['button_color'] = $this->extract_color_value( $settings['button_color'] );
 		// }
-		
+
 		if ( ! empty( $settings['button_background_color'] ) ) {
 			$attrs['button_background_color'] = $this->extract_color_value( $settings['button_background_color'] );
 		}
-		
+
 		if ( ! empty( $settings['button_typography'] ) ) {
 			$typography = $settings['button_typography'];
-			//for color
-			if( ! empty( $typography['color'] ) ) {
+			// for color.
+			if ( ! empty( $typography['color'] ) ) {
 				$attrs['button_color'] = $this->extract_color_value( $typography['color'] );
 			}
 
@@ -1013,7 +1019,7 @@ class CheckoutElement extends Element {
 				$attrs['button_letter_spacing'] = $this->extract_size_value( $typography['letter-spacing'] );
 			}
 		}
-		
+
 		if ( ! empty( $settings['button_padding'] ) ) {
 			$padding = $settings['button_padding'];
 			if ( ! empty( $padding['top'] ) ) {
@@ -1029,7 +1035,7 @@ class CheckoutElement extends Element {
 				$attrs['button_padding_left'] = $this->extract_size_value( $padding['left'] );
 			}
 		}
-		
+
 		if ( ! empty( $settings['button_margin'] ) ) {
 			$margin = $settings['button_margin'];
 			if ( ! empty( $margin['top'] ) ) {
@@ -1045,7 +1051,7 @@ class CheckoutElement extends Element {
 				$attrs['button_margin_left'] = $this->extract_size_value( $margin['left'] );
 			}
 		}
-		
+
 		if ( ! empty( $settings['button_border'] ) ) {
 			$border = $settings['button_border'];
 			if ( ! empty( $border['color'] ) ) {
@@ -1058,28 +1064,28 @@ class CheckoutElement extends Element {
 				$attrs['button_border_style'] = $border['style'];
 			}
 		}
-		
+
 		if ( ! empty( $settings['button_border_radius'] ) ) {
 			$attrs['button_border_radius'] = $this->extract_dimensions_value( $settings['button_border_radius'], 'top' );
 		}
-		
+
 		if ( ! empty( $settings['button_box_shadow'] ) ) {
 			$attrs['button_box_shadow'] = $this->extract_box_shadow_value( $settings['button_box_shadow'] );
 		}
 
-		// Button hover states
+		// Button hover states.
 		if ( ! empty( $settings['button_hover_color'] ) ) {
 			$attrs['button_hover_color'] = $this->extract_color_value( $settings['button_hover_color'] );
 		}
-		
+
 		if ( ! empty( $settings['button_hover_background_color'] ) ) {
 			$attrs['button_hover_background_color'] = $this->extract_color_value( $settings['button_hover_background_color'] );
 		}
-		
+
 		if ( ! empty( $settings['button_hover_border_color'] ) ) {
 			$attrs['button_hover_border_color'] = $this->extract_color_value( $settings['button_hover_border_color'] );
 		}
-		
+
 		if ( ! empty( $settings['button_hover_box_shadow'] ) ) {
 			$attrs['button_hover_box_shadow'] = $this->extract_box_shadow_value( $settings['button_hover_box_shadow'] );
 		}
@@ -1088,7 +1094,7 @@ class CheckoutElement extends Element {
 		if ( ! empty( $settings['privacy_text_color'] ) ) {
 			$attrs['privacy_text_color'] = $this->extract_color_value( $settings['privacy_text_color'] ) . ' !important;';
 		}
-		
+
 		if ( ! empty( $settings['privacy_text_typography'] ) ) {
 			$typography = $settings['privacy_text_typography'];
 			if ( ! empty( $typography['font-size'] ) ) {
@@ -1114,7 +1120,7 @@ class CheckoutElement extends Element {
 			}
 		}
 
-		// Privacy text margin
+		// Privacy text margin.
 		if ( ! empty( $settings['privacy_text_margin'] ) ) {
 			$margin = $settings['privacy_text_margin'];
 			if ( ! empty( $margin['top'] ) ) {
@@ -1151,7 +1157,7 @@ class CheckoutElement extends Element {
 		if ( ! empty( $settings['checkout_box_background_color'] ) ) {
 			$attrs['checkout_box_background_color'] = $this->extract_color_value( $settings['checkout_box_background_color'] ) . ' !important;';
 		}
-		
+
 		if ( ! empty( $settings['checkout_box_padding'] ) ) {
 			$padding = $settings['checkout_box_padding'];
 			if ( ! empty( $padding['top'] ) ) {
@@ -1167,7 +1173,7 @@ class CheckoutElement extends Element {
 				$attrs['checkout_box_padding_left'] = $this->extract_size_value( $padding['left'] );
 			}
 		}
-		
+
 		if ( ! empty( $settings['checkout_box_margin'] ) ) {
 			$margin = $settings['checkout_box_margin'];
 			if ( ! empty( $margin['top'] ) ) {
@@ -1183,7 +1189,7 @@ class CheckoutElement extends Element {
 				$attrs['checkout_box_margin_left'] = $this->extract_size_value( $margin['left'] );
 			}
 		}
-		
+
 		if ( ! empty( $settings['checkout_box_border'] ) ) {
 			$border = $settings['checkout_box_border'];
 			if ( ! empty( $border['color'] ) ) {
@@ -1196,12 +1202,12 @@ class CheckoutElement extends Element {
 				$attrs['checkout_box_border_style'] = $border['style'];
 			}
 		}
-		
+
 		if ( ! empty( $settings['checkout_box_border_radius'] ) ) {
 			$attrs['checkout_box_border_radius'] = $this->extract_dimensions_value( $settings['checkout_box_border_radius'], 'top' );
 		}
 
-		// Checkout box shadow
+		// Checkout box shadow.
 		if ( ! empty( $settings['checkout_box_box_shadow'] ) ) {
 			$attrs['checkout_box_box_shadow'] = $this->extract_box_shadow_value( $settings['checkout_box_box_shadow'] );
 		}
@@ -1210,7 +1216,7 @@ class CheckoutElement extends Element {
 		if ( ! empty( $settings['order_summary_background_color'] ) ) {
 			$attrs['order_summary_background_color'] = $this->extract_color_value( $settings['order_summary_background_color'] );
 		}
-		
+
 		if ( ! empty( $settings['order_summary_padding'] ) ) {
 			$padding = $settings['order_summary_padding'];
 			if ( ! empty( $padding['top'] ) ) {
@@ -1226,7 +1232,7 @@ class CheckoutElement extends Element {
 				$attrs['order_summary_padding_left'] = $this->extract_size_value( $padding['left'] );
 			}
 		}
-		
+
 		if ( ! empty( $settings['order_summary_margin'] ) ) {
 			$margin = $settings['order_summary_margin'];
 			if ( ! empty( $margin['top'] ) ) {
@@ -1242,7 +1248,7 @@ class CheckoutElement extends Element {
 				$attrs['order_summary_margin_left'] = $this->extract_size_value( $margin['left'] );
 			}
 		}
-		
+
 		if ( ! empty( $settings['order_summary_border'] ) ) {
 			$border = $settings['order_summary_border'];
 			if ( ! empty( $border['color'] ) ) {
@@ -1255,12 +1261,12 @@ class CheckoutElement extends Element {
 				$attrs['order_summary_border_style'] = $border['style'];
 			}
 		}
-		
+
 		if ( ! empty( $settings['order_summary_border_radius'] ) ) {
 			$attrs['order_summary_border_radius'] = $this->extract_dimensions_value( $settings['order_summary_border_radius'], 'top' );
 		}
 
-		// Order summary box shadow
+		// Order summary box shadow.
 		if ( ! empty( $settings['order_summary_box_shadow'] ) ) {
 			$attrs['order_summary_box_shadow'] = $this->extract_box_shadow_value( $settings['order_summary_box_shadow'] );
 		}
@@ -1269,11 +1275,11 @@ class CheckoutElement extends Element {
 		if ( ! empty( $settings['empty_cart_color'] ) ) {
 			$attrs['empty_cart_color'] = $this->extract_color_value( $settings['empty_cart_color'] );
 		}
-		
+
 		if ( ! empty( $settings['empty_cart_background_color'] ) ) {
 			$attrs['empty_cart_background_color'] = $this->extract_color_value( $settings['empty_cart_background_color'] );
 		}
-		
+
 		if ( ! empty( $settings['empty_cart_typography'] ) ) {
 			$typography = $settings['empty_cart_typography'];
 			if ( ! empty( $typography['font-size'] ) ) {
@@ -1344,7 +1350,7 @@ class CheckoutElement extends Element {
 		if ( ! empty( $settings['error_message_color'] ) ) {
 			$attrs['error_message_color'] = $this->extract_color_value( $settings['error_message_color'] );
 		}
-		
+
 		if ( ! empty( $settings['error_message_background'] ) ) {
 			$attrs['error_message_background'] = $this->extract_color_value( $settings['error_message_background'] );
 		}
@@ -1411,7 +1417,7 @@ class CheckoutElement extends Element {
 			$attrs['error_message_border_radius'] = $this->extract_dimensions_value( $settings['error_message_border_radius'], 'top' );
 		}
 
-		// Layout type
+		// Layout type.
 		if ( isset( $settings['layout_type'] ) ) {
 			$attrs['layout_type'] = $settings['layout_type'];
 		}
@@ -1419,10 +1425,10 @@ class CheckoutElement extends Element {
 		return $attrs;
 	}
 
-    /**
+	/**
 	 * Extract color value from Bricks color format
 	 *
-	 * @param mixed $color Color value from Bricks
+	 * @param mixed $color Color value from Bricks.
 	 * @return string Extracted color value
 	 */
 	private function extract_color_value( $color ) {
@@ -1435,36 +1441,36 @@ class CheckoutElement extends Element {
 				return $color['rgb'] . ' !important';
 			}
 		}
-		
-		// Fallback for string color values
+
+		// Fallback for string color values.
 		return is_string( $color ) ? $color . ' !important' : '';
 	}
 
 	/**
 	 * Extract size value from Bricks size format
 	 *
-	 * @param mixed $size Size value from Bricks
+	 * @param mixed $size Size value from Bricks.
 	 * @return string Extracted size with unit
 	 */
 	private function extract_size_value( $size ) {
 		if ( is_array( $size ) ) {
-			// Bricks size format: array with 'size' and 'unit'
-			$value = ! empty( $size['size'] ) ? $size['size'] : '';
-			$unit = ! empty( $size['unit'] ) ? $size['unit'] : 'px';
+			// Bricks size format: array with 'size' and 'unit'.
+			$value     = ! empty( $size['size'] ) ? $size['size'] : '';
+			$unit      = ! empty( $size['unit'] ) ? $size['unit'] : 'px';
 			$important = '';
 			// $important = ' !important';
 			return $value . $unit . $important;
 		}
-		
-		// Fallback for string size values
+
+		// Fallback for string size values.
 		return is_string( $size ) ? $size . 'px !important' : '';
 	}
 
 	/**
 	 * Extract dimensions value (for border-radius, etc.)
 	 *
-	 * @param mixed $dimensions Dimensions from Bricks
-	 * @param string $side Which side to extract (top, right, bottom, left)
+	 * @param mixed  $dimensions Dimensions from Bricks.
+	 * @param string $side Which side to extract (top, right, bottom, left).
 	 * @return string Extracted dimension value
 	 */
 	private function extract_dimensions_value( $dimensions, $side = 'top' ) {
@@ -1480,21 +1486,21 @@ class CheckoutElement extends Element {
 	/**
 	 * Extract box shadow value from Bricks box-shadow format
 	 *
-	 * @param mixed $shadow Box shadow from Bricks
+	 * @param mixed $shadow Box shadow from Bricks.
 	 * @return string CSS box-shadow value
 	 */
 	private function extract_box_shadow_value( $shadow ) {
 		if ( is_array( $shadow ) ) {
 			$h_offset = ! empty( $shadow['offsetX'] ) ? $this->extract_size_value( $shadow['offsetX'] ) : '0px';
 			$v_offset = ! empty( $shadow['offsetY'] ) ? $this->extract_size_value( $shadow['offsetY'] ) : '0px';
-			$blur = ! empty( $shadow['blur'] ) ? $this->extract_size_value( $shadow['blur'] ) : '0px';
-			$spread = ! empty( $shadow['spread'] ) ? $this->extract_size_value( $shadow['spread'] ) : '0px';
-			$color = ! empty( $shadow['color'] ) ? $this->extract_color_value( $shadow['color'] ) : 'rgba(0,0,0,0.1)';
-			$inset = ! empty( $shadow['inset'] ) ? 'inset ' : '';
-			
+			$blur     = ! empty( $shadow['blur'] ) ? $this->extract_size_value( $shadow['blur'] ) : '0px';
+			$spread   = ! empty( $shadow['spread'] ) ? $this->extract_size_value( $shadow['spread'] ) : '0px';
+			$color    = ! empty( $shadow['color'] ) ? $this->extract_color_value( $shadow['color'] ) : 'rgba(0,0,0,0.1)';
+			$inset    = ! empty( $shadow['inset'] ) ? 'inset ' : '';
+
 			return $inset . $h_offset . ' ' . $v_offset . ' ' . $blur . ' ' . $spread . ' ' . $color;
 		}
-		
+
 		return is_string( $shadow ) ? $shadow : 'none';
 	}
 }

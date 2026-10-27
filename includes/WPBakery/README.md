@@ -23,13 +23,7 @@ This directory contains the WPBakery Page Builder integration for OhMyLMS.
 
 ## Documentation
 
-See the root plugin directory for complete documentation:
-
-- `WPBAKERY_INTEGRATION.md` - Technical documentation
-- `WPBAKERY_QUICK_REFERENCE.md` - Developer reference
-- `WPBAKERY_USAGE_EXAMPLES.md` - Usage examples
-- `WPBAKERY_IMPLEMENTATION_SUMMARY.md` - Implementation summary
-- `WPBAKERY_FILE_STRUCTURE.md` - File structure overview
+The separate `WPBAKERY_*.md` guides that used to be referenced here are not in the repository. This README and the element classes in `Elements/` are the documentation for this integration; the plugin-wide index is the root `README.md`.
 
 ## Requirements
 

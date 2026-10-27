@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Rest Controller base class.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Abstracts;
 
@@ -22,10 +27,14 @@ abstract class RestController extends WP_REST_Controller {
 	 * Authorize access to an existing object of the expected post type.
 	 *
 	 * @return true|\WP_Error
+	 * @param mixed  $request REST request.
+	 * @param mixed  $action Action.
+	 * @param mixed  $post_types Post types.
+	 * @param string $id_param Id param.
 	 */
 	protected function check_object_permission( $request, $action, $post_types, $id_param = 'id' ) {
 		$post_id = isset( $request[ $id_param ] ) ? absint( $request[ $id_param ] ) : 0;
-		$post = $post_id ? get_post( $post_id ) : null;
+		$post    = $post_id ? get_post( $post_id ) : null;
 
 		if ( ! $post || ! in_array( $post->post_type, (array) $post_types, true ) ) {
 			return new \WP_Error( 'ohmylms_rest_invalid_id', __( 'Invalid ID.', 'ohmylms' ), array( 'status' => 404 ) );
@@ -50,7 +59,7 @@ abstract class RestController extends WP_REST_Controller {
 	public function check_permission(): bool {
 		return true;
         // phpcs:disable Squiz.PHP.CommentedOutCode.Found
-		// return current_user_can( 'manage_jobs' );
+		// return current_user_can( 'manage_jobs' );.
         //phpcs:enable
 	}
 }

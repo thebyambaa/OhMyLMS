@@ -1,4 +1,9 @@
 <?php
+/**
+ * Emails instructor quiz submitted template.
+ *
+ * @package OhMyLMS
+ */
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }

@@ -1,17 +1,28 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 namespace OhMyLMS\Admin\Pages;
 
 use OhMyLMS\Abstracts\SettingsPage;
 use Gateways\Gateways;
-use function CodeRex\Ecommerce\ecommerce;
+use function OhMyLMS\Commerce\ecommerce;
 
 defined( 'ABSPATH' ) || exit;
 
 
+/**
+ * Plugin payment gateway settings implementation.
+ */
 class PaymentGatewaySettings extends SettingsPage {
 
+	/**
+	 * Gateways.
+	 *
+	 * @var mixed
+	 */
 	public $gateways;
 
+	/**
+	 * Initialize Payment gateway settings.
+	 */
 	public function __construct() {
 		$this->id    = 'payments';
 		$this->label = __( 'Payment Gateways', 'ohmylms' );
@@ -72,7 +83,8 @@ class PaymentGatewaySettings extends SettingsPage {
 				'default'       => 'yes',
 				'type'          => 'checkbox',
 				'checkboxgroup' => 'start',
-			),array(
+			),
+			array(
 				'title'         => __( 'Allow purchase without login', 'ohmylms' ),
 				'desc'          => __( 'Allow purchase without login', 'ohmylms' ),
 				'id'            => 'ohmylms_allow_purchase_without_login',

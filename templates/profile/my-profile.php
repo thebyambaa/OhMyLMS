@@ -5,6 +5,8 @@
  * This template can be overridden by copying it to yourtheme/ohmylms/profile/my-profile.php.
  *
  * @version 3.5.0
+ *
+ * @package OhMyLMS
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -14,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 2.6.0
  */
-//do_action( 'ohmylms_account_navigation' );
+// do_action( 'ohmylms_account_navigation' );.
 do_action( 'ohmylms_account_header' );
 
 ?>

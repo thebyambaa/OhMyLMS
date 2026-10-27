@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 
 use OhMyLMS\OhMyLmsEndpoint;
 use OhMyLMS\Hooks\AssignmentHookHandler;
@@ -13,21 +13,35 @@ use OhMyLMS\Elementor\ElementorManager;
 use OhMyLMS\Blocks\BlocksManager;
 use OhMyLMS\WPBakery\WPBakeryManager;
 
+/**
+ * Plugin oh my lms implementation.
+ */
 final class OhMyLMS {
- public $session_factory;
+	/**
+	 * Session factory.
+	 *
+	 * @var mixed
+	 */
+	public $session_factory;
 
 	/**
+	 * OhMyLMS\Rest\Api.
+	 *
 	 * @var $rest_api OhMyLMS\Rest\Api
 	 */
 	public $rest_api;
 
 
 	/**
+	 * OhMyLMS\Admin\Admin.
+	 *
 	 * @var $admin OhMyLMS\Admin\Admin
 	 */
 	public \OhMyLMS\Admin\Admin $admin;
 
 	/**
+	 * \OhMyLMS\Admin\AdminNotices.
+	 *
 	 * @var $admin_notices \OhMyLMS\Admin\AdminNotices
 	 */
 	public $admin_notices;
@@ -39,7 +53,7 @@ final class OhMyLMS {
 	 * @return void
 	 */
 	public function init_blocks() {
-		// Include the Blocks Manager file
+		// Include the Blocks Manager file.
 		if ( file_exists( OHMYLMS_PATH . '/includes/Blocks/BlocksManager.php' ) ) {
 			require_once OHMYLMS_PATH . '/includes/Blocks/BlocksManager.php';
 			BlocksManager::instance();
@@ -47,90 +61,122 @@ final class OhMyLMS {
 	}
 
 	/**
+	 * \OhMyLMS\Admin\Menu.
+	 *
 	 * @var $admin_menu \OhMyLMS\Admin\Menu
 	 */
 	public $admin_menu;
 
 
 	/**
+	 * \OhMyLMS\Order\OrderLoader.
+	 *
 	 * @var $order_loader \OhMyLMS\Order\OrderLoader
 	 */
 	public $order_loader;
 
 
 	/**
+	 * \OhMyLMS\Order\SessionHandler.
+	 *
 	 * @var $session \OhMyLMS\Order\SessionHandler
 	 */
 	public $session;
 
 
 	/**
+	 * Course factory.
+	 *
 	 * @var \OhMyLMS\Factory\CourseFactory
 	 */
 	public $course_factory;
 
 	/**
+	 * Chapter factory.
+	 *
 	 * @var \OhMyLMS\Factory\ChapterFactory
 	 */
 	public $chapter_factory;
 
 	/**
+	 * Student factory.
+	 *
 	 * @var \OhMyLMS\Factory\StudentFactory
 	 */
 	public $student_factory;
 
 
 	/**
+	 * Lesson factory.
+	 *
 	 * @var \OhMyLMS\Factory\LessonFactory
 	 */
 	public $lesson_factory;
 
 
 	/**
+	 * Question factory.
+	 *
 	 * @var \OhMyLMS\Factory\LessonFactory
 	 */
 	public $question_factory;
 
 
 	/**
+	 * Quiz factory.
+	 *
 	 * @var \OhMyLMS\Factory\QuizFactory
 	 */
 	public $quiz_factory;
 
 	/**
+	 * Membership factory.
+	 *
 	 * @var \OhMyLMS\Factory\MembershipFactory
 	 */
 	public $membership_factory;
 
 	/**
+	 * Assignment factory.
+	 *
 	 * @var \OhMyLMS\Factory\AssignmentFactory
 	 */
 	public $assignment_factory;
 
 	/**
+	 * Certificate factory.
+	 *
 	 * @var \OhMyLMS\Factory\CertificateFactory
 	 */
 	public $certificate_factory;
 
 	/**
+	 * Attempt factory.
+	 *
 	 * @var \OhMyLMS\Factory\AttemptFactory
 	 */
 	public $attempt_factory;
 
 
 	/**
+	 * Shortcode.
+	 *
 	 * @var \OhMyLMS\Shortcodes\Shortcodes
 	 */
 	public $shortcode;
 
 
 	/**
+	 * Admin ajax.
+	 *
 	 * @var \OhMyLMS\Admin\Ajax
 	 */
 	public $admin_ajax;
 
 
 	/**
+	 * Settings pages.
+	 *
 	 * @var \OhMyLMS\Admin\Pages\AdminSettings
 	 */
 	public $settings_pages;
@@ -144,71 +190,99 @@ final class OhMyLMS {
 	private static $instance;
 
 	/**
+	 * Course hook handler.
+	 *
 	 * @var \OhMyLMS\Hooks\CourseHookHandler
 	 */
 	private $course_hook_handler;
 
 
 	/**
+	 * Chapter hook handler.
+	 *
 	 * @var \OhMyLMS\Hooks\ChapterHookHandler
 	 */
 	private $chapter_hook_handler;
 
 	/**
+	 * Lesson hook handler.
+	 *
 	 * @var \OhMyLMS\Hooks\LessonHookHandler
 	 */
 	private $lesson_hook_handler;
 
 	/**
+	 * Order hook handler.
+	 *
 	 * @var \OhMyLMS\Hooks\OrderHooks
 	 */
 	private $order_hook_handler;
 
 	/**
+	 * Question hook handler.
+	 *
 	 * @var \OhMyLMS\Hooks\QuestionHookHandler
 	 */
 	private $question_hook_handler;
 
 	/**
+	 * Quiz hook handler.
+	 *
 	 * @var \OhMyLMS\Hooks\QuizHookHandler
 	 */
 	private $quiz_hook_handler;
 
 	/**
+	 * Ohmylms endpoint.
+	 *
 	 * @var \OhMyLMS\OhMyLmsEndpoint
 	 */
 	public $ohmylms_endpoint;
 
 	/**
+	 * Course comment.
+	 *
 	 * @var \OhMyLMS\CourseComment
 	 */
 	private $course_comment;
 	/**
+	 * Common hook.
+	 *
 	 * @var \OhMyLMS\Hooks\CommonHook
 	 */
 	private $common_hook;
 	/**
+	 * Assignment hook handler.
+	 *
 	 * @var \OhMyLMS\Hooks\AssignmentHookHandler
 	 */
 	private $assignment_hook_handler;
 
 	/**
+	 * Rewrite rules.
+	 *
 	 * @var \OhMyLMS\RewriteRules
 	 */
 	private $rewrite_rules;
 
 
 	/**
+	 * Emails.
+	 *
 	 * @var \OhMyLMS\Emails\Emails
 	 */
 	public $emails;
 
 	/**
+	 * Drip content.
+	 *
 	 * @var \OhMyLMS\DripContent
 	 */
 	public $drip_content;
 
 	/**
+	 * Webhook manager.
+	 *
 	 * @var \OhMyLMS\WebhookManager
 	 */
 	public $webhook_manager;
@@ -255,9 +329,12 @@ final class OhMyLMS {
 	private function __construct() {
 		$this->includes();
 		$this->init_plugin();
-        $this->register_bundled_features();
+		$this->register_bundled_features();
 	}
 
+	/**
+	 * Maybe run setup wizard for Oh my lms.
+	 */
 	public function maybe_run_setup_wizard() {
 		if ( get_transient( '_ohmylms_activation_redirect' ) ) {
 			delete_transient( '_ohmylms_activation_redirect' );
@@ -281,8 +358,8 @@ final class OhMyLMS {
 	 */
 	public function __get( $key ) {
 		if ( in_array( $key, array( 'payment_gateways' ), true ) ) {
-			return \CodeRex\Ecommerce\ecommerce()->$key();
-			// return $this->$key();
+			return \OhMyLMS\Commerce\ecommerce()->$key();
+			// return $this->$key();.
 		}
 	}
 
@@ -382,10 +459,10 @@ final class OhMyLMS {
 
 		add_action( 'init', array( $this, 'add_image_sizes' ) );
 
-		// Localize our plugin
+		// Localize our plugin.
 		add_action( 'init', array( $this, 'localization_setup' ) );
 
-		// Add the plugin page links
+		// Add the plugin page links.
 		add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( $this, 'plugin_action_links' ) );
 
 		add_action( 'plugins_loaded', array( $this, 'on_plugins_loaded' ) );
@@ -393,16 +470,16 @@ final class OhMyLMS {
 
 		add_action( 'init', array( '\OhMyLMS\Shortcodes\Shortcodes', 'init' ) );
 
-		// Initialize Elementor widgets
+		// Initialize Elementor widgets.
 		add_action( 'plugins_loaded', array( $this, 'init_elementor' ) );
 
-		// Initialize Bricks elements
+		// Initialize Bricks elements.
 		add_action( 'plugins_loaded', array( $this, 'init_bricks' ) );
 
-		// Initialize WPBakery Page Builder elements
+		// Initialize WPBakery Page Builder elements.
 		add_action( 'plugins_loaded', array( $this, 'init_wpbakery' ) );
 
-		// Initialize Gutenberg blocks
+		// Initialize Gutenberg blocks.
 		add_action( 'plugins_loaded', array( $this, 'init_blocks' ) );
 
 		// === register post types ===//
@@ -414,10 +491,10 @@ final class OhMyLMS {
 		$assignment  = new OhMyLMS\PostTypes\AssignmentPostType();
 		$certificate = new OhMyLMS\PostTypes\CertificatePostType();
 
-		// load the helper packages
+		// load the helper packages.
 		\OhMyLMS\Packages::init();
 
-		// load form handler
+		// load form handler.
 		\OhMyLMS\FormHandler::init();
 
 		/**
@@ -488,27 +565,28 @@ final class OhMyLMS {
 			// Vendor promotions are not part of this distribution.
 		}
 
-		$this->rest_api            	= new OhMyLMS\Rest\Api();
+		$this->rest_api = new OhMyLMS\Rest\Api();
 		new \OhMyLMS\Integrations\GoogleSignIn\GoogleSignIn();
-		$this->course_factory      	= new \OhMyLMS\Factory\CourseFactory();
-		$this->lesson_factory      	= new \OhMyLMS\Factory\LessonFactory();
-		$this->chapter_factory     	= new \OhMyLMS\Factory\ChapterFactory();
-		$this->quiz_factory        	= new \OhMyLMS\Factory\QuizFactory();
-		$this->question_factory    	= new \OhMyLMS\Factory\QuestionFactory();
-		$this->certificate_factory 	= new \OhMyLMS\Factory\CertificateFactory();
-		$this->student_factory	   	= new \OhMyLMS\Factory\StudentFactory();
-		$this->attempt_factory		= new \OhMyLMS\Factory\AttemptFactory();
-		$this->membership_factory = new \OhMyLMS\Factory\MembershipFactory();
-        $this->assignment_factory = new \OhMyLMS\Factory\AssignmentFactory();
-        $this->session_factory = new \OhMyLMS\Factory\SessionFactory();
-		$this->rewrite_rules   		= new \OhMyLMS\RewriteRules();
-		$this->shortcode 			= new OhMyLMS\Shortcodes\Shortcodes();
-		$this->ohmylms_endpoint 		= new OhMyLmsEndpoint();
-		$this->course_comment 		= new \OhMyLMS\CourseComment();
-		$this->emails 				= new \OhMyLMS\Emails\Emails();
-		$this->drip_content 		= new \OhMyLMS\DripContent();
+		new \OhMyLMS\Integrations\MicrosoftSignIn\MicrosoftSignIn();
+		$this->course_factory      = new \OhMyLMS\Factory\CourseFactory();
+		$this->lesson_factory      = new \OhMyLMS\Factory\LessonFactory();
+		$this->chapter_factory     = new \OhMyLMS\Factory\ChapterFactory();
+		$this->quiz_factory        = new \OhMyLMS\Factory\QuizFactory();
+		$this->question_factory    = new \OhMyLMS\Factory\QuestionFactory();
+		$this->certificate_factory = new \OhMyLMS\Factory\CertificateFactory();
+		$this->student_factory     = new \OhMyLMS\Factory\StudentFactory();
+		$this->attempt_factory     = new \OhMyLMS\Factory\AttemptFactory();
+		$this->membership_factory  = new \OhMyLMS\Factory\MembershipFactory();
+		$this->assignment_factory  = new \OhMyLMS\Factory\AssignmentFactory();
+		$this->session_factory     = new \OhMyLMS\Factory\SessionFactory();
+		$this->rewrite_rules       = new \OhMyLMS\RewriteRules();
+		$this->shortcode           = new OhMyLMS\Shortcodes\Shortcodes();
+		$this->ohmylms_endpoint    = new OhMyLmsEndpoint();
+		$this->course_comment      = new \OhMyLMS\CourseComment();
+		$this->emails              = new \OhMyLMS\Emails\Emails();
+		$this->drip_content        = new \OhMyLMS\DripContent();
 
-		// Initialize webhook manager only if webhooks integration is enabled
+		// Initialize webhook manager only if webhooks integration is enabled.
 		if ( apply_filters( 'ohmylms_should_enable_webhooks', false ) ) {
 			$this->webhook_manager = new \OhMyLMS\WebhookManager();
 		}
@@ -526,6 +604,9 @@ final class OhMyLMS {
 	}
 
 
+	/**
+	 * On plugins loaded for Oh my lms.
+	 */
 	public function on_plugins_loaded() {
 
 		$this->course_hook_handler = new CourseHookHandler();
@@ -586,7 +667,7 @@ final class OhMyLMS {
 	 * @since 1.0.0
 	 *
 	 * @param string $type admin, ajax, cron or frontend
-	 *
+	 * .
 	 * @return bool
 	 */
 	private function is_request( $type ) {
@@ -611,8 +692,8 @@ final class OhMyLMS {
 	/**
 	 * Plugin action links
 	 *
-	 * @param array $links
-	 *
+	 * @param array $links Links.
+	 * .
 	 * @since 0.2.0
 	 *
 	 * @return array
@@ -666,7 +747,7 @@ final class OhMyLMS {
 	 * @return void
 	 */
 	public function init_elementor() {
-		// Include the Elementor Manager file
+		// Include the Elementor Manager file.
 		if ( file_exists( OHMYLMS_PATH . '/includes/Elementor/ElementorManager.php' ) ) {
 			require_once OHMYLMS_PATH . '/includes/Elementor/ElementorManager.php';
 			ElementorManager::instance();
@@ -680,7 +761,7 @@ final class OhMyLMS {
 	 * @return void
 	 */
 	public function init_bricks() {
-		// Include the Bricks Manager file
+		// Include the Bricks Manager file.
 		if ( file_exists( OHMYLMS_PATH . '/includes/Bricks/BricksManager.php' ) ) {
 			require_once OHMYLMS_PATH . '/includes/Bricks/BricksManager.php';
 			\OhMyLMS\Bricks\BricksManager::instance();
@@ -694,7 +775,7 @@ final class OhMyLMS {
 	 * @return void
 	 */
 	public function init_wpbakery() {
-		// Include the WPBakery Manager file
+		// Include the WPBakery Manager file.
 		if ( defined( 'WPB_VC_VERSION' ) && file_exists( OHMYLMS_PATH . '/includes/WPBakery/WPBakeryManager.php' ) ) {
 			require_once OHMYLMS_PATH . '/includes/WPBakery/WPBakeryManager.php';
 			\OhMyLMS\WPBakery\WPBakeryManager::instance();
@@ -708,7 +789,7 @@ final class OhMyLMS {
 	 * @return void
 	 */
 	public function include_theme_support() {
-		if ( if_theme_support_available() ) {
+		if ( ohmylms_if_theme_support_available() ) {
 			switch ( get_template() ) {
 				case 'twentytwentyone':
 					$theme_support = new \OhMyLMS\ThemeSupport\TwentyTwentyOne();
@@ -823,60 +904,75 @@ final class OhMyLMS {
 	}
 
 
-    private function register_bundled_features() {
-        foreach (['membership-function','assignment-function','session-function'] as $helper) {
-            require_once OHMYLMS_DIR . '/includes/Utility/' . $helper . '.php';
-        }
-        add_action('plugins_loaded', [$this, 'load_bundled_features'], 15);
-        add_action('plugins_loaded', function () { (new \OhMyLMS\Gateways\GatewayAutoloader())->load_gateways(); }, 25);
-        add_action('init', [$this, 'register_sessions_post_type']);
-    }
-    public function load_bundled_features() {
-        new \OhMyLMS\SequentialMode();
-        foreach (['CourseHook','ChapterHook','LessonHook','QuizHook','MembershipHook','SettingsHook','ApiHook','AutomationHook','LeaderboardHook','EngagementHook'] as $name) {
-            $class = 'OhMyLMS\\Hooks\\' . $name;
-            (new $class())->register_hooks();
-        }
-        foreach (['Cohorts','Zoom','Gamification','Funnel','ContentProtection','Webhooks','GoogleMeet','WPFusion'] as $name) {
-            $class = 'OhMyLMS\\Integrations\\' . $name . '\\' . $name;
-            new $class();
-        }
-    }
+	/**
+	 * Register bundled features for Oh my lms.
+	 */
+	private function register_bundled_features() {
+		foreach ( array( 'membership-function', 'assignment-function', 'session-function' ) as $helper ) {
+			require_once OHMYLMS_DIR . '/includes/Utility/' . $helper . '.php';
+		}
+		add_action( 'plugins_loaded', array( $this, 'load_bundled_features' ), 15 );
+		add_action(
+			'plugins_loaded',
+			function () {
+				( new \OhMyLMS\Gateways\GatewayAutoloader() )->load_gateways();
+			},
+			25
+		);
+		add_action( 'init', array( $this, 'register_sessions_post_type' ) );
+	}
+	/**
+	 * Load bundled features for Oh my lms.
+	 */
+	public function load_bundled_features() {
+		new \OhMyLMS\SequentialMode();
+		foreach ( array( 'CourseHook', 'ChapterHook', 'LessonHook', 'QuizHook', 'MembershipHook', 'SettingsHook', 'ApiHook', 'AutomationHook', 'LeaderboardHook', 'EngagementHook' ) as $name ) {
+			$class = 'OhMyLMS\\Hooks\\' . $name;
+			( new $class() )->register_hooks();
+		}
+		foreach ( array( 'Cohorts', 'Zoom', 'Gamification', 'Funnel', 'ContentProtection', 'Webhooks', 'GoogleMeet', 'WPFusion' ) as $name ) {
+			$class = 'OhMyLMS\\Integrations\\' . $name . '\\' . $name;
+			new $class();
+		}
+	}
 
 
-public function register_sessions_post_type() {
-        $labels = array(
-            'name'                  => \_x('Sessions', 'Post type general name', 'ohmylms'),
-            'singular_name'         => \_x('Session', 'Post type singular name', 'ohmylms'),
-            'menu_name'             => \_x('Sessions', 'Admin Menu text', 'ohmylms'),
-            'name_admin_bar'        => \_x('Session', 'Add New on Toolbar', 'ohmylms'),
-            'add_new'               => \__('Add New', 'ohmylms'),
-            'add_new_item'          => \__('Add New Session', 'ohmylms'),
-            'new_item'              => \__('New Session', 'ohmylms'),
-            'edit_item'             => \__('Edit Session', 'ohmylms'),
-            'view_item'             => \__('View Session', 'ohmylms'),
-            'all_items'             => \__('All Sessions', 'ohmylms'),
-            'search_items'          => \__('Search Sessions', 'ohmylms'),
-            'parent_item_colon'     => \__('Parent Sessions:', 'ohmylms'),
-            'not_found'             => \__('No sessions found.', 'ohmylms'),
-            'not_found_in_trash'    => \__('No sessions found in Trash.', 'ohmylms'),
-        );
+	/**
+	 * Register sessions post type for Oh my lms.
+	 */
+	public function register_sessions_post_type() {
+		$labels = array(
+			'name'               => \_x( 'Sessions', 'Post type general name', 'ohmylms' ),
+			'singular_name'      => \_x( 'Session', 'Post type singular name', 'ohmylms' ),
+			'menu_name'          => \_x( 'Sessions', 'Admin Menu text', 'ohmylms' ),
+			'name_admin_bar'     => \_x( 'Session', 'Add New on Toolbar', 'ohmylms' ),
+			'add_new'            => \__( 'Add New', 'ohmylms' ),
+			'add_new_item'       => \__( 'Add New Session', 'ohmylms' ),
+			'new_item'           => \__( 'New Session', 'ohmylms' ),
+			'edit_item'          => \__( 'Edit Session', 'ohmylms' ),
+			'view_item'          => \__( 'View Session', 'ohmylms' ),
+			'all_items'          => \__( 'All Sessions', 'ohmylms' ),
+			'search_items'       => \__( 'Search Sessions', 'ohmylms' ),
+			'parent_item_colon'  => \__( 'Parent Sessions:', 'ohmylms' ),
+			'not_found'          => \__( 'No sessions found.', 'ohmylms' ),
+			'not_found_in_trash' => \__( 'No sessions found in Trash.', 'ohmylms' ),
+		);
 
-        $args = array(
-            'labels'             => $labels,
-            'public'             => true,
-            'publicly_queryable' => true,
-            'show_ui'            => false,
-            'show_in_menu'       => false,
-            'query_var'          => true,
-            'capability_type'    => 'post',
-            'has_archive'        => false,
-            'hierarchical'       => false,
-            'menu_position'      => null,
-            'exclude_from_search' => true,
-            'rewrite'             => array( 'slug' => 'ohmylms-session' ),
-        );
+		$args = array(
+			'labels'              => $labels,
+			'public'              => true,
+			'publicly_queryable'  => true,
+			'show_ui'             => false,
+			'show_in_menu'        => false,
+			'query_var'           => true,
+			'capability_type'     => 'post',
+			'has_archive'         => false,
+			'hierarchical'        => false,
+			'menu_position'       => null,
+			'exclude_from_search' => true,
+			'rewrite'             => array( 'slug' => 'ohmylms-session' ),
+		);
 
-        \register_post_type('ohmylms-session', $args);
-    }
+		\register_post_type( 'ohmylms-session', $args );
+	}
 }

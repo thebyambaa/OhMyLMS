@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Handles hooks related to chapters in the OhMyLMS plugin.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Hooks;
 
@@ -12,8 +17,11 @@ use OhMyLMS\Data\Lesson;
  */
 class ChapterHookHandler extends HookHandler {
 
+	/**
+	 * Register hooks for Chapter hook handler.
+	 */
 	public function register_hooks() {
-		// add_action('ohmylms_rest_insert_chapter', [$this, 'link_chapter_with_course'], 10, 2);
+		// add_action('ohmylms_rest_insert_chapter', [$this, 'link_chapter_with_course'], 10, 2);.
 		add_action( 'ohmylms_after_remove_chapter_from_course', array( $this, 'unlink_lesson_from_chapter' ), 10 );
 		add_action( 'ohmylms_rest_delete_chapter', array( $this, 'unlink_course_from_chapter' ), 10 );
 		add_action( 'ohmylms_rest_delete_chapter', array( $this, 'unlink_lesson_from_chapter' ), 10 );
@@ -25,7 +33,7 @@ class ChapterHookHandler extends HookHandler {
 	 *
 	 * @param \WP_Post         $chapter The chapter post object.
 	 * @param \WP_REST_Request $request The REST request object.
-	 *
+	 * .
 	 * @return void
 	 *
 	 * @since 1.0.0
@@ -51,7 +59,7 @@ class ChapterHookHandler extends HookHandler {
 	 *
 	 * @param int $chapter_id The ID of the chapter.
 	 * @param int $lesson_id The ID of the lesson.
-	 *
+	 * .
 	 * @return void
 	 *
 	 * @since 1.0.0
@@ -95,7 +103,7 @@ class ChapterHookHandler extends HookHandler {
 	/**
 	 * Unlinks a lesson from a chapter.
 	 *
-	 * @param int|array $chapter_id The ID of the chapter.
+	 * @param mixed $value Value to process.
 	 * @return void
 	 *
 	 * @since 1.0.0
@@ -114,7 +122,7 @@ class ChapterHookHandler extends HookHandler {
 	 * Remove a lesson from a chapter
 	 *
 	 * @param int $chapter_id The ID of the chapter.
-	 *
+	 * .
 	 * @return void
 	 * @since 1.0.0
 	 */
@@ -143,7 +151,7 @@ class ChapterHookHandler extends HookHandler {
 	 * Unlink course from chapter relationship
 	 *
 	 * @param array $request The REST request object.
-	 *
+	 * .
 	 * @return void
 	 * @since 1.0.0
 	 */

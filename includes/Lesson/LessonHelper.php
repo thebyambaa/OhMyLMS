@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Responsible to handle all lesson related calculations.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Lesson;
 
@@ -14,8 +19,8 @@ class LessonHelper {
 	/**
 	 * Add lesson
 	 *
-	 * @param $title
-	 * @param $content
+	 * @param mixed $title Title.
+	 * @param mixed $content Content.
 	 * @return array
 	 * @since 1.0.0
 	 */
@@ -74,8 +79,8 @@ class LessonHelper {
 	/**
 	 * Update lesson
 	 *
-	 * @param mixed $post_id
-	 * @param array $map_data
+	 * @param mixed $post_id Post identifier.
+	 * @param array $map_data Map data.
 	 * @return array
 	 * @since 1.0.0
 	 */
@@ -99,7 +104,7 @@ class LessonHelper {
 
 		$post = get_post( $post_id );
 
-		if ( $post && $post->post_type === 'ohmylms-lesson' ) {
+		if ( $post && 'ohmylms-lesson' === $post->post_type ) {
 			wp_update_post(
 				array(
 					'ID'         => $post_id,
@@ -133,8 +138,8 @@ class LessonHelper {
 	/**
 	 * Save lesson
 	 *
-	 * @param mixed $post_id
-	 * @param array $lesson_data
+	 * @param mixed $post_id Post identifier.
+	 * @param array $lesson_data Lesson data.
 	 * @return array
 	 * @since 1.0.0
 	 */
@@ -158,7 +163,7 @@ class LessonHelper {
 
 		$post = get_post( $post_id );
 
-		if ( $post->post_type !== 'ohmylms-lesson' ) {
+		if ( 'ohmylms-lesson' !== $post->post_type ) {
 			return array(
 				'status'  => 'error',
 				'message' => __( 'No lesson available. ', 'ohmylms' ),
@@ -201,7 +206,7 @@ class LessonHelper {
 	/**
 	 * Get lesson content
 	 *
-	 * @param $post_id
+	 * @param mixed $post_id Post identifier.
 	 * @return array
 	 * @since 1.0.0
 	 */
@@ -209,7 +214,7 @@ class LessonHelper {
 
 		$post = get_post( $post_id );
 
-		if ( $post->post_type !== 'ohmylms-lesson' ) {
+		if ( 'ohmylms-lesson' !== $post->post_type ) {
 			return array(
 				'status'  => 'error',
 				'message' => __( 'No lesson available. ', 'ohmylms' ),
@@ -240,14 +245,14 @@ class LessonHelper {
 	/**
 	 * Delete lesson
 	 *
-	 * @param int $post_id
+	 * @param int $post_id Post identifier.
 	 * @return array
 	 * @since 1.0.0
 	 */
 	public static function delete_lesson( int $post_id ): array {
 
 		$post = get_post( $post_id );
-		if ( ! $post || $post->post_type !== 'ohmylms-lesson' ) {
+		if ( ! $post || 'ohmylms-lesson' !== $post->post_type ) {
 
 			return array(
 				'status'  => 'error',

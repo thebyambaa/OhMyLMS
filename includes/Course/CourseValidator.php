@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Responsible to validate course rest requests.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Course;
 
@@ -65,7 +70,7 @@ class CourseValidator {
 	/**
 	 * Validate course general settings fields
 	 *
-	 * @param $general_settings_items
+	 * @param mixed $general_settings_items General settings items.
 	 * @return array
 	 * @since 1.0.0
 	 */

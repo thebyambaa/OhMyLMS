@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * OhMyLMS Profile Widget for Elementor
  *
@@ -1004,9 +1004,9 @@ class ProfileWidget extends Widget_Base {
 	 */
 	private function convert_settings_to_shortcode_attrs( array $settings ) {
 		$passthrough_keys = array(
-			// Header styling
+			// Header styling.
 			'header_bg_color',
-			// User menu styling
+			// User menu styling.
 			'user_menu_color',
 			'user_menu_bg_color',
 			'user_menu_font_size',
@@ -1015,13 +1015,13 @@ class ProfileWidget extends Widget_Base {
 			'user_menu_hover_bg_color',
 			'user_menu_icon_color',
 			'user_menu_icon_hover_color',
-			// Section background
+			// Section background.
 			'section_bg_color',
-			// Profile wrapper styling
+			// Profile wrapper styling.
 			'wrapper_border',
 			'wrapper_bg_color',
 			'wrapper_shadow',
-			// Sidebar items styling
+			// Sidebar items styling.
 			'sidebar_item_color',
 			'sidebar_item_font_size',
 			'sidebar_item_font_weight',
@@ -1030,21 +1030,21 @@ class ProfileWidget extends Widget_Base {
 			'sidebar_item_active_font_size',
 			'sidebar_item_active_font_weight',
 			'sidebar_item_active_bg_color',
-			// Sidebar content styling
+			// Sidebar content styling.
 			'sidebar_content_bg_color',
 			'sidebar_content_shadow',
 			'sidebar_content_padding',
 			'sidebar_content_title_color',
 			'sidebar_content_title_font_size',
 			'sidebar_content_title_font_weight',
-			// Profile info styling
+			// Profile info styling.
 			'profile_name_color',
 			'profile_name_font_size',
 			'profile_name_font_weight',
 			'profile_bio_color',
 			'profile_bio_font_size',
 			'profile_bio_font_weight',
-			// Profile edit button styling
+			// Profile edit button styling.
 			'profile_edit_color',
 			'profile_edit_bg_color',
 			'profile_edit_border',
@@ -1052,14 +1052,14 @@ class ProfileWidget extends Widget_Base {
 			'profile_edit_font_weight',
 			'profile_edit_hover_color',
 			'profile_edit_hover_bg_color',
-			// Basic info section styling
+			// Basic info section styling.
 			'basic_info_bg_color',
 			'basic_info_shadow',
 			'basic_info_padding',
 			'basic_info_title_color',
 			'basic_info_title_font_size',
 			'basic_info_title_font_weight',
-			// Input styling
+			// Input styling.
 			'input_bg_color',
 			'input_border',
 			'input_text_color',
@@ -1067,11 +1067,11 @@ class ProfileWidget extends Widget_Base {
 			'input_font_size',
 			'input_padding',
 			'input_border_radius',
-			// Label styling
+			// Label styling.
 			'label_color',
 			'label_font_size',
 			'label_font_weight',
-			// Button styling
+			// Button styling.
 			'button_bg_color',
 			'button_text_color',
 			'button_font_size',
@@ -1098,6 +1098,7 @@ class ProfileWidget extends Widget_Base {
 	 * Render widget output on the frontend
 	 *
 	 * @return void
+	 * @throws \RuntimeException When the operation cannot be completed.
 	 */
 	protected function render() {
 		// Enqueue frontend assets.

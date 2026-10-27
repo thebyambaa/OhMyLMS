@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Class OhMyLmsTriggers.
+ *
+ * @package OhMyLMS
+ */
 namespace OhMyLMS\Automation\Triggers;
 
 use MintMail\App\Internal\Automation\HelperFunctions;
@@ -52,7 +57,7 @@ class OhMyLmsTriggers {
 		}
 
 		$trigger_name = $data['trigger_name'];
-		$settings = HelperFunctions::get_step_data( $step_data['automation_id'], $step_data['step_id'] );
+		$settings     = HelperFunctions::get_step_data( $step_data['automation_id'], $step_data['step_id'] );
 
 		if ( isset( $settings['settings']['ohmylms_settings'] ) ) {
 			$function_name = 'validate_' . $trigger_name;
@@ -83,8 +88,8 @@ class OhMyLmsTriggers {
 		}
 		return false;
 	}
-	
-	
+
+
 	/**
 	 * Validate course enrollment trigger.
 	 *
@@ -103,7 +108,7 @@ class OhMyLmsTriggers {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Validate course canceled enrollment trigger.
 	 *
@@ -122,8 +127,8 @@ class OhMyLmsTriggers {
 		}
 		return false;
 	}
-	
-	
+
+
 	/**
 	 * Validate new order trigger.
 	 *
@@ -142,8 +147,8 @@ class OhMyLmsTriggers {
 		}
 		return false;
 	}
-	
-	
+
+
 	/**
 	 * Validate new order trigger.
 	 *
@@ -162,8 +167,8 @@ class OhMyLmsTriggers {
 		}
 		return false;
 	}
-	
-	
+
+
 	/**
 	 * Validate new order trigger.
 	 *
@@ -174,11 +179,11 @@ class OhMyLmsTriggers {
 	 */
 	private function validate_lms_pass_fail_status_assignment( $settings, $data ) {
 		if ( isset( $settings['compare_with'] ) && is_array( $settings['compare_with'] ) ) {
-			if( isset( $data['status'] ) ){
-				if( 'passed' === $data['status'] && 'pass' === $settings['compare_with']['value'] ){
+			if ( isset( $data['status'] ) ) {
+				if ( 'passed' === $data['status'] && 'pass' === $settings['compare_with']['value'] ) {
 					return true;
 				}
-				if( 'failed' === $data['status'] && 'fail' === $settings['compare_with']['value'] ){
+				if ( 'failed' === $data['status'] && 'fail' === $settings['compare_with']['value'] ) {
 					return true;
 				}
 			}
@@ -204,24 +209,24 @@ class OhMyLmsTriggers {
 				}
 			}
 		}
-		
-		if( $maybe_validate && isset( $settings['compare_with'] ) && is_array( $settings['compare_with'] ) ){
-			if(isset( $settings['compare_with']['value'], $settings['compare_with_value'] ) ){
-				$expected_rate 	= floatval( $settings['compare_with_value'] );
-				$actual_rate 	= floatval( $data['completion_rate'] );
-				if( 'less_than' ===  $settings['compare_with']['value'] ){
+
+		if ( $maybe_validate && isset( $settings['compare_with'] ) && is_array( $settings['compare_with'] ) ) {
+			if ( isset( $settings['compare_with']['value'], $settings['compare_with_value'] ) ) {
+				$expected_rate = floatval( $settings['compare_with_value'] );
+				$actual_rate   = floatval( $data['completion_rate'] );
+				if ( 'less_than' === $settings['compare_with']['value'] ) {
 					return $actual_rate < $expected_rate;
 				}
-				if( 'greater_than' ===  $settings['compare_with']['value'] ){
+				if ( 'greater_than' === $settings['compare_with']['value'] ) {
 					return $actual_rate > $expected_rate;
 				}
-				if( 'equal_to' ===  $settings['compare_with']['value'] ){
+				if ( 'equal_to' === $settings['compare_with']['value'] ) {
 					return $actual_rate === $expected_rate;
 				}
-				if( 'greater_than_or_equal' ===  $settings['compare_with']['value'] ){
+				if ( 'greater_than_or_equal' === $settings['compare_with']['value'] ) {
 					return $actual_rate >= $expected_rate;
 				}
-				if( 'less_than_or_equal' ===  $settings['compare_with']['value'] ){
+				if ( 'less_than_or_equal' === $settings['compare_with']['value'] ) {
 					return $actual_rate <= $expected_rate;
 				}
 			}
@@ -259,7 +264,7 @@ class OhMyLmsTriggers {
 	public function after_enroll_student( $order ) {
 		if ( ! is_object( $order ) ) {
 			$order_id = absint( $order );
-			$order    = ecommerce_get_order( $order_id );
+			$order    = ohmylms_ecommerce_get_order( $order_id );
 		}
 
 		if ( ! is_object( $order ) ) {
@@ -273,11 +278,7 @@ class OhMyLmsTriggers {
 			global $wpdb;
 			$table_name  = $wpdb->prefix . 'ohmylms_user_enrollment';
 			$enroll_data = $wpdb->get_row(
-				$wpdb->prepare(
-					"SELECT * FROM $table_name WHERE user_id = %d AND order_id = %d",
-					$student_id,
-					$order->get_id()
-				),
+				$wpdb->prepare( 'SELECT * FROM %i WHERE user_id = %d AND order_id = %d', $table_name, $student_id, $order->get_id() ),
 				ARRAY_A
 			);
 
@@ -292,10 +293,10 @@ class OhMyLmsTriggers {
 				'connector_name' => $this->connector_name,
 				'trigger_name'   => 'lms_course_enrollment',
 				'data'           => array(
-					'user_email'  => $user->user_email ?? '',
-					'first_name'  => $first_name ? $first_name : '',
-					'last_name'   => $last_name ? $last_name : '',
-					'course_id'   => $enroll_data['course_id'],
+					'user_email' => $user->user_email ?? '',
+					'first_name' => $first_name ? $first_name : '',
+					'last_name'  => $last_name ? $last_name : '',
+					'course_id'  => $enroll_data['course_id'],
 				),
 			);
 
@@ -317,14 +318,14 @@ class OhMyLmsTriggers {
 		if ( $user ) {
 			$first_name = get_user_meta( $student_id, 'first_name', true );
 			$last_name  = get_user_meta( $student_id, 'last_name', true );
-			
+
 			$data = array(
 				'connector_name' => $this->connector_name,
 				'trigger_name'   => 'lms_complete_lesson',
 				'data'           => array(
 					'user_email' => $user->user_email ?? '',
-					'first_name'  => $first_name ? $first_name : '',
-					'last_name'   => $last_name ? $last_name : '',
+					'first_name' => $first_name ? $first_name : '',
+					'last_name'  => $last_name ? $last_name : '',
 					'course_id'  => $course_id,
 					'content_id' => $lesson_id,
 				),
@@ -339,11 +340,11 @@ class OhMyLmsTriggers {
 	 * @param mixed $order Order object or order ID.
 	 * @return void
 	 */
-	public function after_cancelled_enrollment( $order ){
-		
+	public function after_cancelled_enrollment( $order ) {
+
 		if ( ! is_object( $order ) ) {
 			$order_id = absint( $order );
-			$order    = ecommerce_get_order( $order_id );
+			$order    = ohmylms_ecommerce_get_order( $order_id );
 		}
 
 		if ( ! is_object( $order ) ) {
@@ -357,11 +358,7 @@ class OhMyLmsTriggers {
 			global $wpdb;
 			$table_name  = $wpdb->prefix . 'ohmylms_user_enrollment';
 			$enroll_data = $wpdb->get_row(
-				$wpdb->prepare(
-					"SELECT * FROM $table_name WHERE user_id = %d AND order_id = %d",
-					$student_id,
-					$order->get_id()
-				),
+				$wpdb->prepare( 'SELECT * FROM %i WHERE user_id = %d AND order_id = %d', $table_name, $student_id, $order->get_id() ),
 				ARRAY_A
 			);
 
@@ -376,18 +373,18 @@ class OhMyLmsTriggers {
 				'connector_name' => $this->connector_name,
 				'trigger_name'   => 'lms_course_enrollment_cancel',
 				'data'           => array(
-					'user_email'  => $user->user_email ?? '',
-					'first_name'  => $first_name ? $first_name : '',
-					'last_name'   => $last_name ? $last_name : '',
-					'course_id'   => $enroll_data['course_id'],
+					'user_email' => $user->user_email ?? '',
+					'first_name' => $first_name ? $first_name : '',
+					'last_name'  => $last_name ? $last_name : '',
+					'course_id'  => $enroll_data['course_id'],
 				),
 			);
 
 			do_action( MINT_TRIGGER_AUTOMATION, $data );
 		}
 	}
-	
-	
+
+
 
 	/**
 	 * Trigger when a new course order is created
@@ -396,11 +393,11 @@ class OhMyLmsTriggers {
 	 * @param array $course_data Course-related data.
 	 * @return void
 	 */
-	public function after_create_order( $order, $course_data ){
-		
+	public function after_create_order( $order, $course_data ) {
+
 		if ( ! is_object( $order ) ) {
 			$order_id = absint( $order );
-			$order    = ecommerce_get_order( $order_id );
+			$order    = ohmylms_ecommerce_get_order( $order_id );
 		}
 
 		if ( ! is_object( $order ) ) {
@@ -410,22 +407,21 @@ class OhMyLmsTriggers {
 		$student_id = $order->get_student_id();
 		$user       = get_user_by( 'id', $student_id );
 		if ( $user ) {
-			
+
 			$first_name = get_user_meta( $student_id, 'first_name', true );
 			$last_name  = get_user_meta( $student_id, 'last_name', true );
 
-
-			foreach ( $order->get_items() as $item ){
-				$course_id 		= $item->get_course_id();
-				if ($course_id) {
+			foreach ( $order->get_items() as $item ) {
+				$course_id = $item->get_course_id();
+				if ( $course_id ) {
 					$data = array(
 						'connector_name' => $this->connector_name,
 						'trigger_name'   => 'lms_new_course_order',
 						'data'           => array(
-							'user_email'  => $user->user_email ?? '',
-							'first_name'  => $first_name ? $first_name : '',
-							'last_name'   => $last_name ? $last_name : '',
-							'course_id'   => $course_id,
+							'user_email' => $user->user_email ?? '',
+							'first_name' => $first_name ? $first_name : '',
+							'last_name'  => $last_name ? $last_name : '',
+							'course_id'  => $course_id,
 						),
 					);
 					do_action( MINT_TRIGGER_AUTOMATION, $data );
@@ -454,11 +450,11 @@ class OhMyLmsTriggers {
 				'connector_name' => $this->connector_name,
 				'trigger_name'   => 'lms_course_completion_rate',
 				'data'           => array(
-					'user_email'     => $user->user_email ?? '',
-					'first_name'     => $first_name ? $first_name : '',
-					'last_name'      => $last_name ? $last_name : '',
-					'course_id'      => $course_id,
-					'completion_rate'=> $completion_rate,
+					'user_email'      => $user->user_email ?? '',
+					'first_name'      => $first_name ? $first_name : '',
+					'last_name'       => $last_name ? $last_name : '',
+					'course_id'       => $course_id,
+					'completion_rate' => $completion_rate,
 				),
 			);
 			do_action( MINT_TRIGGER_AUTOMATION, $data );
@@ -485,11 +481,11 @@ class OhMyLmsTriggers {
 				'connector_name' => $this->connector_name,
 				'trigger_name'   => 'lms_submit_assignment',
 				'data'           => array(
-					'user_email'  => $user->user_email ?? '',
-					'first_name'  => $first_name ? $first_name : '',
-					'last_name'   => $last_name ? $last_name : '',
-					'course_id'   => $course_id,
-					'content_id'  => $assignment_id,
+					'user_email' => $user->user_email ?? '',
+					'first_name' => $first_name ? $first_name : '',
+					'last_name'  => $last_name ? $last_name : '',
+					'course_id'  => $course_id,
+					'content_id' => $assignment_id,
 				),
 			);
 			do_action( MINT_TRIGGER_AUTOMATION, $data );
@@ -517,12 +513,12 @@ class OhMyLmsTriggers {
 				'connector_name' => $this->connector_name,
 				'trigger_name'   => 'lms_pass_fail_status_assignment',
 				'data'           => array(
-					'user_email'  => $user->user_email ?? '',
-					'first_name'  => $first_name ? $first_name : '',
-					'last_name'   => $last_name ? $last_name : '',
-					'course_id'   => $course_id,
-					'content_id'  => $assignment_id,
-					'status'  	  => $status,
+					'user_email' => $user->user_email ?? '',
+					'first_name' => $first_name ? $first_name : '',
+					'last_name'  => $last_name ? $last_name : '',
+					'course_id'  => $course_id,
+					'content_id' => $assignment_id,
+					'status'     => $status,
 				),
 			);
 			do_action( MINT_TRIGGER_AUTOMATION, $data );
@@ -549,16 +545,15 @@ class OhMyLmsTriggers {
 				'connector_name' => $this->connector_name,
 				'trigger_name'   => 'lms_submit_quiz',
 				'data'           => array(
-					'user_email'  => $user->user_email ?? '',
-					'first_name'  => $first_name ? $first_name : '',
-					'last_name'   => $last_name ? $last_name : '',
-					'course_id'   => $course_id,
-					'content_id'  => $quiz_id,
+					'user_email' => $user->user_email ?? '',
+					'first_name' => $first_name ? $first_name : '',
+					'last_name'  => $last_name ? $last_name : '',
+					'course_id'  => $course_id,
+					'content_id' => $quiz_id,
 				),
 			);
-			
+
 			do_action( MINT_TRIGGER_AUTOMATION, $data );
 		}
 	}
 }
-?>

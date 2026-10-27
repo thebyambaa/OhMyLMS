@@ -25,7 +25,8 @@
     "allow-plugins": false,
     "platform": {
       "php": "7.4.33"
-    }
+    },
+    "autoloader-suffix": "OhMyLMSCore"
   },
   "scripts": {
     "test": "php tests/unit.php"

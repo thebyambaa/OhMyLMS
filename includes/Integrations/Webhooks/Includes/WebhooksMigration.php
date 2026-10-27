@@ -1,9 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * Webhooks Migration Class
- * 
+ *
  * Handles the creation of webhooks table when the integration is enabled
- * 
+ *
  * @package OhMyLMS\Integrations\Webhooks
  * @since 1.0.0
  */
@@ -12,105 +12,108 @@ namespace OhMyLMS\Integrations\Webhooks\Includes;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Plugin webhooks migration implementation.
+ */
 class WebhooksMigration {
 
-    /**
-     * Option key to track if webhooks table is created
-     */
-    const WEBHOOKS_TABLE_CREATED_OPTION = 'ohmylms_webhooks_table_created';
+	/**
+	 * Option key to track if webhooks table is created
+	 */
+	const WEBHOOKS_TABLE_CREATED_OPTION = 'ohmylms_webhooks_table_created';
 
-    /**
-     * Initialize the migration
-     * 
-     * @since 1.0.0
-     */
-    public static function init() {
-        add_action( 'admin_init', array( __CLASS__, 'maybe_create_webhooks_table' ) );
-    }
+	/**
+	 * Initialize the migration
+	 *
+	 * @since 1.0.0
+	 */
+	public static function init() {
+		add_action( 'admin_init', array( __CLASS__, 'maybe_create_webhooks_table' ) );
+	}
 
-    /**
-     * Check if webhooks integration is enabled and create table if needed
-     * 
-     * @since 1.0.0
-     */
-    public static function maybe_create_webhooks_table() {
-        
-        // Check if webhooks integration is enabled
-        if ( ! self::is_webhooks_enabled() ) {
-            return;
-        }
-        // Check if table is already created
-        if ( self::is_webhooks_table_created() ) {
-            return;
-        }
+	/**
+	 * Check if webhooks integration is enabled and create table if needed
+	 *
+	 * @since 1.0.0
+	 */
+	public static function maybe_create_webhooks_table() {
 
-        // Create the table
-        self::create_webhooks_table();
-    }
+		// Check if webhooks integration is enabled.
+		if ( ! self::is_webhooks_enabled() ) {
+			return;
+		}
+		// Check if table is already created.
+		if ( self::is_webhooks_table_created() ) {
+			return;
+		}
 
-    /**
-     * Check if webhooks integration is enabled
-     * 
-     * @return bool
-     * @since 1.0.0
-     */
-    private static function is_webhooks_enabled() {
-        $integrations = get_option( 'ohmylms_integrations', array() );
-        
-        if ( empty( $integrations ) || ! is_array( $integrations ) ) {
-            return false;
-        }
+		// Create the table.
+		self::create_webhooks_table();
+	}
 
-        if ( ! isset( $integrations['webhooks']['is_enable'] ) ) {
-            return false;
-        }
+	/**
+	 * Check if webhooks integration is enabled
+	 *
+	 * @return bool
+	 * @since 1.0.0
+	 */
+	private static function is_webhooks_enabled() {
+		$integrations = get_option( 'ohmylms_integrations', array() );
 
-        return 1 === (int) $integrations['webhooks']['is_enable'];
-    }
+		if ( empty( $integrations ) || ! is_array( $integrations ) ) {
+			return false;
+		}
 
-    /**
-     * Check if webhooks table is already created
-     * 
-     * @return bool
-     * @since 1.0.0
-     */
-    private static function is_webhooks_table_created() {
-        global $wpdb;
-        
-        // First check the option
-        $option_exists = get_option( self::WEBHOOKS_TABLE_CREATED_OPTION, false );
-        
-        if ( $option_exists ) {
-            return true;
-        }
+		if ( ! isset( $integrations['webhooks']['is_enable'] ) ) {
+			return false;
+		}
 
-        // Double check if table actually exists in database
-        $table_name = $wpdb->prefix . 'ohmylms_webhooks';
-        $table_exists = $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) === $table_name;
+		return 1 === (int) $integrations['webhooks']['is_enable'];
+	}
 
-        // If table exists but option not set, set the option
-        if ( $table_exists ) {
-            update_option( self::WEBHOOKS_TABLE_CREATED_OPTION, true );
-            return true;
-        }
+	/**
+	 * Check if webhooks table is already created
+	 *
+	 * @return bool
+	 * @since 1.0.0
+	 */
+	private static function is_webhooks_table_created() {
+		global $wpdb;
 
-        return false;
-    }
+		// First check the option.
+		$option_exists = get_option( self::WEBHOOKS_TABLE_CREATED_OPTION, false );
 
-    /**
-     * Create webhooks table
-     * 
-     * @since 1.0.0
-     */
-    private static function create_webhooks_table() {
-        global $wpdb;
+		if ( $option_exists ) {
+			return true;
+		}
 
-        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		// Double check if table actually exists in database.
+		$table_name   = $wpdb->prefix . 'ohmylms_webhooks';
+		$table_exists = $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) === $table_name;
 
-        $charset_collate = $wpdb->get_charset_collate();
-        $table_name = $wpdb->prefix . 'ohmylms_webhooks';
+		// If table exists but option not set, set the option.
+		if ( $table_exists ) {
+			update_option( self::WEBHOOKS_TABLE_CREATED_OPTION, true );
+			return true;
+		}
 
-        $sql = "CREATE TABLE {$table_name} (
+		return false;
+	}
+
+	/**
+	 * Create webhooks table
+	 *
+	 * @since 1.0.0
+	 */
+	private static function create_webhooks_table() {
+		global $wpdb;
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+		$charset_collate = $wpdb->get_charset_collate();
+		$table_name      = $wpdb->prefix . 'ohmylms_webhooks';
+
+		$sql = "CREATE TABLE {$table_name} (
             id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             name VARCHAR(255) NOT NULL,
             trigger_event VARCHAR(100) NOT NULL,
@@ -126,61 +129,61 @@ class WebhooksMigration {
             KEY status (status)
         ) $charset_collate;";
 
-        dbDelta( $sql );
+		dbDelta( $sql );
 
-        // Mark as created
-        update_option( self::WEBHOOKS_TABLE_CREATED_OPTION, true );
+		// Mark as created.
+		update_option( self::WEBHOOKS_TABLE_CREATED_OPTION, true );
 
-        /**
-         * Fires after webhooks table is created
-         * 
-         * @since 1.0.0
-         */
-        do_action( 'ohmylms_webhooks_table_created' );
-    }
+		/**
+		 * Fires after webhooks table is created
+		 *
+		 * @since 1.0.0
+		 */
+		do_action( 'ohmylms_webhooks_table_created' );
+	}
 
-    /**
-     * Drop webhooks table (for uninstall/cleanup)
-     * 
-     * @since 1.0.0
-     */
-    public static function drop_webhooks_table() {
-        global $wpdb;
+	/**
+	 * Drop webhooks table (for uninstall/cleanup)
+	 *
+	 * @since 1.0.0
+	 */
+	public static function drop_webhooks_table() {
+		global $wpdb;
 
-        $table_name = $wpdb->prefix . 'ohmylms_webhooks';
-        $wpdb->query( "DROP TABLE IF EXISTS {$table_name}" );
+		$table_name = $wpdb->prefix . 'ohmylms_webhooks';
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table_name ) );
 
-        // Remove the option
-        delete_option( self::WEBHOOKS_TABLE_CREATED_OPTION );
+		// Remove the option.
+		delete_option( self::WEBHOOKS_TABLE_CREATED_OPTION );
 
-        /**
-         * Fires after webhooks table is dropped
-         * 
-         * @since 1.0.0
-         */
-        do_action( 'ohmylms_webhooks_table_dropped' );
-    }
+		/**
+		 * Fires after webhooks table is dropped
+		 *
+		 * @since 1.0.0
+		 */
+		do_action( 'ohmylms_webhooks_table_dropped' );
+	}
 
-    /**
-     * Get webhooks table name
-     * 
-     * @return string
-     * @since 1.0.0
-     */
-    public static function get_table_name() {
-        global $wpdb;
-        return $wpdb->prefix . 'ohmylms_webhooks';
-    }
+	/**
+	 * Get webhooks table name
+	 *
+	 * @return string
+	 * @since 1.0.0
+	 */
+	public static function get_table_name() {
+		global $wpdb;
+		return $wpdb->prefix . 'ohmylms_webhooks';
+	}
 
-    /**
-     * Check if webhooks table exists
-     * 
-     * @return bool
-     * @since 1.0.0
-     */
-    public static function table_exists() {
-        global $wpdb;
-        $table_name = self::get_table_name();
-        return $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) === $table_name;
-    }
+	/**
+	 * Check if webhooks table exists
+	 *
+	 * @return bool
+	 * @since 1.0.0
+	 */
+	public static function table_exists() {
+		global $wpdb;
+		$table_name = self::get_table_name();
+		return $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) === $table_name;
+	}
 }

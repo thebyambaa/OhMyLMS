@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * SequentialMode class (Pro)
  */
@@ -8,8 +8,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Plugin sequential mode implementation.
+ */
 class SequentialMode {
 
+	/**
+	 * Initialize Sequential mode.
+	 */
 	public function __construct() {
 		add_filter( 'ohmylms_is_lesson_locked', array( $this, 'is_lesson_locked' ), 20, 4 );
 	}
@@ -19,7 +25,7 @@ class SequentialMode {
 	 * Chapters ordered by chapter order_number, lessons ordered by lesson order_number.
 	 * Unpublished content is excluded — it cannot be completed, so it must not block the sequence.
 	 *
-	 * @param int $course_id
+	 * @param int $course_id Course identifier.
 	 * @return int[]
 	 */
 	public static function get_ordered_content_ids( $course_id ) {
@@ -65,9 +71,9 @@ class SequentialMode {
 	/**
 	 * Check if a content item is sequentially locked.
 	 *
-	 * @param int $content_id
-	 * @param int $course_id
-	 * @param int $student_id
+	 * @param int $content_id Content identifier.
+	 * @param int $course_id Course identifier.
+	 * @param int $student_id Student identifier.
 	 * @return bool
 	 */
 	public static function is_sequentially_locked( $content_id, $course_id, $student_id ) {
@@ -114,11 +120,13 @@ class SequentialMode {
 		// For assignments, also accept submitted/failed attempts — don't block forever on instructor review.
 		if ( $prev_post && OHMYLMS_ASSIGNMENT_CPT === $prev_post->post_type ) {
 			global $wpdb;
-			$attempt = $wpdb->get_var( $wpdb->prepare(
-				"SELECT id FROM {$wpdb->prefix}ohmylms_assignment_attempts WHERE user_id = %d AND assignment_id = %d LIMIT 1",
-				$student_id,
-				$prev_id
-			) );
+			$attempt = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT id FROM {$wpdb->prefix}ohmylms_assignment_attempts WHERE user_id = %d AND assignment_id = %d LIMIT 1",
+					$student_id,
+					$prev_id
+				)
+			);
 			if ( $attempt ) {
 				return false;
 			}
@@ -142,10 +150,10 @@ class SequentialMode {
 	/**
 	 * Filter callback for ohmylms_is_lesson_locked (priority 20, after DripContent at 10).
 	 *
-	 * @param bool $is_locked
-	 * @param int  $lesson_id
-	 * @param int  $course_id
-	 * @param int  $current_student_id
+	 * @param bool $is_locked Is locked.
+	 * @param int  $lesson_id Lesson identifier.
+	 * @param int  $course_id Course identifier.
+	 * @param int  $current_student_id Current student identifier.
 	 * @return bool
 	 */
 	public function is_lesson_locked( $is_locked, $lesson_id, $course_id, $current_student_id ) {

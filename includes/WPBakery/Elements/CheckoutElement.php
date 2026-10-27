@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * WPBakery Checkout Element
  *
@@ -20,11 +20,11 @@ class CheckoutElement {
 	 */
 	public function __construct() {
 		$this->register_element();
-		
-		// Disable WPBakery shortcode caching for real-time preview updates
+
+		// Disable WPBakery shortcode caching for real-time preview updates.
 		add_filter( 'vc_shortcode_content_filter_after', array( $this, 'disable_cache_for_preview' ), 10, 2 );
 	}
-	
+
 	/**
 	 * Disable caching for this shortcode in WPBakery editor
 	 *
@@ -34,7 +34,7 @@ class CheckoutElement {
 	 */
 	public function disable_cache_for_preview( $output, $shortcode ) {
 		if ( 'ohmylms_checkout' === $shortcode ) {
-			// Add a timestamp to force cache bypass in editor
+			// Add a timestamp to force cache bypass in editor.
 			if ( function_exists( 'vc_is_inline' ) && vc_is_inline() ) {
 				$output .= '<!-- vc-no-cache:' . time() . ' -->';
 			}
@@ -73,13 +73,13 @@ class CheckoutElement {
 						'description' => __( 'Select the layout type for the checkout page. Canvas removes header and footer.', 'ohmylms' ),
 						'group'       => __( 'Layout Settings', 'ohmylms' ),
 					),
-					
+
 					// --- Title Style ---
 					array(
-						'type'        => 'colorpicker',
-						'heading'     => __( 'Title Color', 'ohmylms' ),
-						'param_name'  => 'title_color',
-						'group'       => __( 'Title Style', 'ohmylms' ),
+						'type'       => 'colorpicker',
+						'heading'    => __( 'Title Color', 'ohmylms' ),
+						'param_name' => 'title_color',
+						'group'      => __( 'Title Style', 'ohmylms' ),
 					),
 					array(
 						'type'        => 'textfield',
@@ -95,31 +95,31 @@ class CheckoutElement {
 						'group'       => __( 'Title Style', 'ohmylms' ),
 						'description' => __( 'e.g., 600', 'ohmylms' ),
 					),
-					
+
 					// --- Input Style ---
 					array(
-						'type'        => 'colorpicker',
-						'heading'     => __( 'Input Background', 'ohmylms' ),
-						'param_name'  => 'input_background_color',
-						'group'       => __( 'Input Style', 'ohmylms' ),
+						'type'       => 'colorpicker',
+						'heading'    => __( 'Input Background', 'ohmylms' ),
+						'param_name' => 'input_background_color',
+						'group'      => __( 'Input Style', 'ohmylms' ),
 					),
 					array(
-						'type'        => 'colorpicker',
-						'heading'     => __( 'Input Text Color', 'ohmylms' ),
-						'param_name'  => 'input_color',
-						'group'       => __( 'Input Style', 'ohmylms' ),
+						'type'       => 'colorpicker',
+						'heading'    => __( 'Input Text Color', 'ohmylms' ),
+						'param_name' => 'input_color',
+						'group'      => __( 'Input Style', 'ohmylms' ),
 					),
 					array(
-						'type'        => 'colorpicker',
-						'heading'     => __( 'Input Label Color', 'ohmylms' ),
-						'param_name'  => 'input_label_color',
-						'group'       => __( 'Input Style', 'ohmylms' ),
+						'type'       => 'colorpicker',
+						'heading'    => __( 'Input Label Color', 'ohmylms' ),
+						'param_name' => 'input_label_color',
+						'group'      => __( 'Input Style', 'ohmylms' ),
 					),
 					array(
-						'type'        => 'colorpicker',
-						'heading'     => __( 'Input Border Color', 'ohmylms' ),
-						'param_name'  => 'input_border_color',
-						'group'       => __( 'Input Style', 'ohmylms' ),
+						'type'       => 'colorpicker',
+						'heading'    => __( 'Input Border Color', 'ohmylms' ),
+						'param_name' => 'input_border_color',
+						'group'      => __( 'Input Style', 'ohmylms' ),
 					),
 					array(
 						'type'        => 'textfield',
@@ -142,31 +142,31 @@ class CheckoutElement {
 						'group'       => __( 'Input Style', 'ohmylms' ),
 						'description' => __( 'e.g., 14px', 'ohmylms' ),
 					),
-					
+
 					// --- Button Style ---
 					array(
-						'type'        => 'colorpicker',
-						'heading'     => __( 'Button Background', 'ohmylms' ),
-						'param_name'  => 'button_background_color',
-						'group'       => __( 'Button Style', 'ohmylms' ),
+						'type'       => 'colorpicker',
+						'heading'    => __( 'Button Background', 'ohmylms' ),
+						'param_name' => 'button_background_color',
+						'group'      => __( 'Button Style', 'ohmylms' ),
 					),
 					array(
-						'type'        => 'colorpicker',
-						'heading'     => __( 'Button Text Color', 'ohmylms' ),
-						'param_name'  => 'button_color',
-						'group'       => __( 'Button Style', 'ohmylms' ),
+						'type'       => 'colorpicker',
+						'heading'    => __( 'Button Text Color', 'ohmylms' ),
+						'param_name' => 'button_color',
+						'group'      => __( 'Button Style', 'ohmylms' ),
 					),
 					array(
-						'type'        => 'colorpicker',
-						'heading'     => __( 'Button Hover Background', 'ohmylms' ),
-						'param_name'  => 'button_hover_background_color',
-						'group'       => __( 'Button Style', 'ohmylms' ),
+						'type'       => 'colorpicker',
+						'heading'    => __( 'Button Hover Background', 'ohmylms' ),
+						'param_name' => 'button_hover_background_color',
+						'group'      => __( 'Button Style', 'ohmylms' ),
 					),
 					array(
-						'type'        => 'colorpicker',
-						'heading'     => __( 'Button Hover Color', 'ohmylms' ),
-						'param_name'  => 'button_hover_color',
-						'group'       => __( 'Button Style', 'ohmylms' ),
+						'type'       => 'colorpicker',
+						'heading'    => __( 'Button Hover Color', 'ohmylms' ),
+						'param_name' => 'button_hover_color',
+						'group'      => __( 'Button Style', 'ohmylms' ),
 					),
 					array(
 						'type'        => 'textfield',
@@ -217,13 +217,13 @@ class CheckoutElement {
 						'group'       => __( 'Button Style', 'ohmylms' ),
 						'description' => __( 'e.g., 24px', 'ohmylms' ),
 					),
-					
+
 					// --- Checkout Box Style ---
 					array(
-						'type'        => 'colorpicker',
-						'heading'     => __( 'Checkout Box Background', 'ohmylms' ),
-						'param_name'  => 'checkout_box_background_color',
-						'group'       => __( 'Checkout Box Style', 'ohmylms' ),
+						'type'       => 'colorpicker',
+						'heading'    => __( 'Checkout Box Background', 'ohmylms' ),
+						'param_name' => 'checkout_box_background_color',
+						'group'      => __( 'Checkout Box Style', 'ohmylms' ),
 					),
 					array(
 						'type'        => 'textfield',
@@ -260,13 +260,13 @@ class CheckoutElement {
 						'group'       => __( 'Checkout Box Style', 'ohmylms' ),
 						'description' => __( 'e.g., 0', 'ohmylms' ),
 					),
-					
+
 					// --- Order Summary Style ---
 					array(
-						'type'        => 'colorpicker',
-						'heading'     => __( 'Order Summary Background', 'ohmylms' ),
-						'param_name'  => 'order_summary_background_color',
-						'group'       => __( 'Order Summary Style', 'ohmylms' ),
+						'type'       => 'colorpicker',
+						'heading'    => __( 'Order Summary Background', 'ohmylms' ),
+						'param_name' => 'order_summary_background_color',
+						'group'      => __( 'Order Summary Style', 'ohmylms' ),
 					),
 					array(
 						'type'        => 'textfield',
@@ -296,13 +296,13 @@ class CheckoutElement {
 						'group'       => __( 'Order Summary Style', 'ohmylms' ),
 						'description' => __( 'e.g., 30px', 'ohmylms' ),
 					),
-					
+
 					// --- Privacy Text Style ---
 					array(
-						'type'        => 'colorpicker',
-						'heading'     => __( 'Privacy Text Color', 'ohmylms' ),
-						'param_name'  => 'privacy_text_color',
-						'group'       => __( 'Privacy Style', 'ohmylms' ),
+						'type'       => 'colorpicker',
+						'heading'    => __( 'Privacy Text Color', 'ohmylms' ),
+						'param_name' => 'privacy_text_color',
+						'group'      => __( 'Privacy Style', 'ohmylms' ),
 					),
 					array(
 						'type'        => 'textfield',
@@ -311,8 +311,8 @@ class CheckoutElement {
 						'group'       => __( 'Privacy Style', 'ohmylms' ),
 						'description' => __( 'e.g., 14px', 'ohmylms' ),
 					),
-					
-					// Advanced
+
+					// Advanced.
 					array(
 						'type'        => 'textfield',
 						'heading'     => __( 'Extra CSS Class', 'ohmylms' ),
@@ -324,6 +324,4 @@ class CheckoutElement {
 			)
 		);
 	}
-
-
 }

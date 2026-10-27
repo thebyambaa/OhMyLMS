@@ -28,7 +28,7 @@ add_filter( 'show_admin_bar', 'ohmylms_disable_admin_bar', 10, 1 ); // phpcs:ign
  * @param string $email The email address of the new customer.
  * @param string $username Optional. The username for the new customer. Default is an empty string.
  * @param string $password Optional. The password for the new customer. Default is an empty string.
- * @param array $args Optional. Additional arguments for the new customer.
+ * @param array  $args Optional. Additional arguments for the new customer.
  * @return int|WP_Error The new customer ID on success, or a WP_Error object on failure.
  * @see https://github.com/woocommerce/woocommerce/blob/88c2f97ba4cdff4394145cee786c357b488f48dc/plugins/woocommerce/includes/wc-user-functions.php#L55
  *
@@ -45,7 +45,7 @@ function ohmylms_create_new_student( $email, $username = '', $password = '', $ar
 
 	// Handle username creation.
 	if ( empty( $username ) ) {
-		$username = creatot_lms_create_new_student_username( $email, $args );
+		$username = ohmylms_create_new_student_username( $email, $args );
 	}
 	$username = sanitize_user( $username );
 	if ( empty( $username ) || ! validate_username( $username ) ) {
@@ -93,7 +93,7 @@ function ohmylms_create_new_student( $email, $username = '', $password = '', $ar
  * Create a new student username based on the provided email and user arguments.
  *
  * @param string $email The email address of the new student.
- * @param array $new_user_args Optional. Additional arguments for the new user.
+ * @param array  $new_user_args Optional. Additional arguments for the new user.
  * @param string $suffix Optional. Suffix to append to the username to make it unique.
  * @return string The generated username.
  * @link https://github.com/woocommerce/woocommerce/blob/88c2f97ba4cdff4394145cee786c357b488f48dc/plugins/woocommerce/includes/wc-user-functions.php#L212
@@ -101,7 +101,7 @@ function ohmylms_create_new_student( $email, $username = '', $password = '', $ar
  * @since 1.0.0
  * @since 1.0.0
  */
-function creatot_lms_create_new_student_username( $email, $new_user_args = array(), $suffix = '' ) {
+function ohmylms_create_new_student_username( $email, $new_user_args = array(), $suffix = '' ) {
 	$username_parts = array();
 
 	if ( isset( $new_user_args['first_name'] ) ) {
@@ -156,13 +156,13 @@ function creatot_lms_create_new_student_username( $email, $new_user_args = array
 		$new_args               = array();
 		$new_args['first_name'] = 'woo_user_' . zeroise( wp_rand( 0, 9999 ), 4 );
 
-		return creatot_lms_create_new_student_username( $email, $new_args, $suffix );
+		return ohmylms_create_new_student_username( $email, $new_args, $suffix );
 	}
 
 	if ( username_exists( $username ) ) {
 		// Generate something unique to append to the username in case of a conflict with another user.
 		$suffix = '-' . zeroise( wp_rand( 0, 9999 ), 4 );
-		return creatot_lms_create_new_student_username( $email, $new_user_args, $suffix );
+		return ohmylms_create_new_student_username( $email, $new_user_args, $suffix );
 	}
 	return $username;
 }

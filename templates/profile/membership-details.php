@@ -43,7 +43,7 @@ defined( 'ABSPATH' ) || exit();
 				<span role="button" class="print-button">
 					<svg width="18" height="17" fill="none" viewBox="0 0 18 17" xmlns="http://www.w3.org/2000/svg"><path stroke="#A1A1AA" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="1.2" d="M13.75 12.469h.906c1.036 0 1.875-.84 1.875-1.875v-3.75c0-1.036-.84-1.875-1.875-1.875H3.344c-1.036 0-1.875.84-1.875 1.875v3.75c0 1.035.84 1.875 1.875 1.875h.906m10.25-2.5h-11"/><path stroke="#A1A1AA" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="1.2" d="M5.188 16h7.625c.517 0 .937-.42.937-.938V9.97h-9.5v5.094c0 .517.42.937.938.937zm5.062-4.031h-2.5m2.5 2h-2.5m-2.75-7H3.5M6.125.938h5.75c1.036 0 1.875.839 1.875 1.875v2.156h-9.5V2.812c0-1.035.84-1.874 1.875-1.874z"/></svg>
 				
-					<?php echo __( 'Print', 'ohmylms' ); ?>
+					<?php echo esc_html__( 'Print', 'ohmylms' ); ?>
 				</span>
 			</div>
 		</div>
@@ -52,19 +52,19 @@ defined( 'ABSPATH' ) || exit();
 			<div class="dashboard-table-head">
 				<div class="dashboard-table-tr">
 					<div class="dashboard-table-td membership-item">
-						<?php echo __( 'Item', 'ohmylms' ); ?>
+						<?php echo esc_html__( 'Item', 'ohmylms' ); ?>
 					</div>
 
 					<div class="dashboard-table-td membership-price">
-						<?php echo __( 'Price', 'ohmylms' ); ?>
+						<?php echo esc_html__( 'Price', 'ohmylms' ); ?>
 					</div>
 
 					<div class="dashboard-table-td quantity">
-						<?php echo __( 'Quantity', 'ohmylms' ); ?>
+						<?php echo esc_html__( 'Quantity', 'ohmylms' ); ?>
 					</div>
 
 					<div class="dashboard-table-td total">
-						<?php echo __( 'Total', 'ohmylms' ); ?>
+						<?php echo esc_html__( 'Total', 'ohmylms' ); ?>
 					</div>
 				</div>
 			</div>
@@ -139,7 +139,7 @@ defined( 'ABSPATH' ) || exit();
 				<div class="dashboard-table-tr dashboard-table-foot-tr">
 					<div class="dashboard-table-td item-subtotal">
 						<span class="td-label">
-							<?php echo __( 'Item subtotal:', 'ohmylms' ); ?>
+							<?php echo esc_html__( 'Item subtotal:', 'ohmylms' ); ?>
 						</span>
 
 						<span class="td-value">
@@ -149,7 +149,7 @@ defined( 'ABSPATH' ) || exit();
 
 					<div class="dashboard-table-td item-coupon">
 						<span class="td-label">
-							<?php echo __( 'Coupons:', 'ohmylms' ); ?>
+							<?php echo esc_html__( 'Coupons:', 'ohmylms' ); ?>
 						</span>
 
 						<span class="td-value">
@@ -161,7 +161,7 @@ defined( 'ABSPATH' ) || exit();
 				<div class="dashboard-table-tr dashboard-table-foot-tr">
 					<div class="dashboard-table-td intotal">
 						<span class="td-label">
-							<?php echo __( 'Paid:', 'ohmylms' ); ?>
+							<?php echo esc_html__( 'Paid:', 'ohmylms' ); ?>
 						</span>
 
 						<span class="td-value">

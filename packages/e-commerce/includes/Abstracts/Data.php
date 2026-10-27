@@ -1,10 +1,13 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
 
-namespace CodeRex\Ecommerce\Abstracts;
+namespace OhMyLMS\Commerce\Abstracts;
 
-use CodeRex\Ecommerce\DataException;
-use CodeRex\Ecommerce\EcommerceDateTime;
+use OhMyLMS\Commerce\DataException;
+use OhMyLMS\Commerce\EcommerceDateTime;
 
+/**
+ * Plugin data implementation.
+ */
 abstract class Data {
 
 	/**
@@ -67,6 +70,11 @@ abstract class Data {
 	 */
 	protected string $object_type = 'data';
 
+	/**
+	 * Initialize Data.
+	 *
+	 * @param int $data Input data.
+	 */
 	public function __construct( $data = 0 ) {
 		$this->data = array_merge( $this->data, $this->extra_data );
 	}
@@ -90,7 +98,7 @@ abstract class Data {
 		 * @param DataStores $data_store The data store handling object data.
 		 * @since 1.0.0
 		 */
-		do_action( ECOMMERCE_MODULE_PREFIX . '_before_' . $this->object_type . '_object_save', $this, $this->data_store );
+		do_action( OHMYLMS_ECOMMERCE_MODULE_PREFIX . '_before_' . $this->object_type . '_object_save', $this, $this->data_store );
 
 		// If the object already has an ID, update it, otherwise, create a new entry.
 		if ( $this->get_id() ) {
@@ -106,7 +114,7 @@ abstract class Data {
 		 * @param DataStores $data_store The data store handling object data.
 		 * @since 1.0.0
 		 */
-		do_action( ECOMMERCE_MODULE_PREFIX . '_after_' . $this->object_type . '_object_save', $this, $this->data_store );
+		do_action( OHMYLMS_ECOMMERCE_MODULE_PREFIX . '_after_' . $this->object_type . '_object_save', $this, $this->data_store );
 
 		return $this->get_id();
 	}
@@ -145,18 +153,26 @@ abstract class Data {
 	/**
 	 * Set ID of object
 	 *
-	 * @param $id
+	 * @param mixed $id Id.
 	 */
 	public function set_id( $id ) {
 		$this->id = $id;
 	}
 
 
+	/**
+	 * Set date created for Data.
+	 *
+	 * @param mixed $date Date.
+	 */
 	public function set_date_created( $date ) {
 		$this->set_date_prop( 'date_created', $date );
 	}
 
 
+	/**
+	 * Get date created for Data.
+	 */
 	public function get_date_created() {
 		$this->get_prop( 'date_created' );
 	}
@@ -175,7 +191,7 @@ abstract class Data {
 	/**
 	 * Set collection of params to the object
 	 *
-	 * @param $props
+	 * @param mixed $props Props.
 	 * @return bool|\WP_Error
 	 */
 	public function set_props( $props ) {
@@ -205,8 +221,8 @@ abstract class Data {
 	/**
 	 * Set prop
 	 *
-	 * @param $prop
-	 * @param $value
+	 * @param mixed $prop Prop.
+	 * @param mixed $value Value to process.
 	 * @since 1.0.0
 	 */
 	protected function set_prop( $prop, $value ) {
@@ -253,7 +269,7 @@ abstract class Data {
 	 * Set a date property.
 	 *
 	 * @param string $prop The name of the property to set.
-	 * @param mixed $value The value to set for the property. Can be a string, timestamp, or OhMyLmsDateTime object.
+	 * @param mixed  $value The value to set for the property. Can be a string, timestamp, or OhMyLmsDateTime object.
 	 *
 	 * @link https://github.com/woocommerce/woocommerce/blob/5907114d6eabae41edf39c593a36345b92990b38/plugins/woocommerce/includes/abstracts/abstract-wc-data.php#L898
 	 * @since 1.0.0
@@ -264,7 +280,7 @@ abstract class Data {
 				$this->set_prop( $prop, null );
 				return;
 			}
-			if ( is_a( $value, 'CodeRex\Ecommerce\EcommerceDateTime' ) ) {
+			if ( is_a( $value, 'OhMyLMS\Commerce\EcommerceDateTime' ) ) {
 				$datetime = $value;
 			} elseif ( is_numeric( $value ) ) {
 
@@ -273,17 +289,17 @@ abstract class Data {
 			} else {
 				// Strings are defined in local WP timezone. Convert to UTC.
 				if ( 1 === preg_match( '/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(Z|((-|\+)\d{2}:\d{2}))$/', $value, $date_bits ) ) {
-					$offset    = ! empty( $date_bits[7] ) ? iso8601_timezone_to_offset( $date_bits[7] ) : ecommerce_timezone_offset();
+					$offset    = ! empty( $date_bits[7] ) ? iso8601_timezone_to_offset( $date_bits[7] ) : ohmylms_ecommerce_timezone_offset();
 					$timestamp = gmmktime( $date_bits[4], $date_bits[5], $date_bits[6], $date_bits[2], $date_bits[3], $date_bits[1] ) - $offset;
 				} else {
-					$timestamp = ecommerce_string_to_timestamp( get_gmt_from_date( gmdate( 'Y-m-d H:i:s', ecommerce_string_to_timestamp( $value ) ) ) );
+					$timestamp = ohmylms_ecommerce_string_to_timestamp( get_gmt_from_date( gmdate( 'Y-m-d H:i:s', ohmylms_ecommerce_string_to_timestamp( $value ) ) ) );
 				}
 				$datetime = new EcommerceDateTime( "@{$timestamp}", new \DateTimeZone( 'UTC' ) );
 			}
 			if ( get_option( 'timezone_string' ) ) {
-				$datetime->setTimezone( new \DateTimeZone( \ecommerce_timezone_string() ) );
+				$datetime->setTimezone( new \DateTimeZone( \ohmylms_ecommerce_timezone_string() ) );
 			} else {
-				$datetime->set_utc_offset( \ecommerce_timezone_string() );
+				$datetime->set_utc_offset( \ohmylms_ecommerce_timezone_string() );
 			}
 			$this->set_prop( $prop, $datetime );
 		} catch ( \Exception $e ) {} // @codingStandardsIgnoreLine.
@@ -294,7 +310,7 @@ abstract class Data {
 	 * Update meta data for the object.
 	 *
 	 * @param string $key The meta key.
-	 * @param mixed $value The meta value.
+	 * @param mixed  $value The meta value.
 	 * @since 1.0.0
 	 */
 	public function update_meta_data( $key, $value ) {
@@ -329,9 +345,9 @@ abstract class Data {
 	 *
 	 * @param string $code The error code.
 	 * @param string $message The error message.
-	 * @param int $http_status_code The HTTP status code (default is 400).
-	 * @param array $data Additional data to pass with the exception.
-	 * @throws \OhMyLMS\DataException
+	 * @param int    $http_status_code The HTTP status code (default is 400).
+	 * @param array  $data Additional data to pass with the exception.
+	 * @throws \OhMyLMS\DataException When the operation cannot be completed.
 	 *
 	 * @since 1.0.0
 	 */

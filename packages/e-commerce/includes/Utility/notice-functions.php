@@ -1,13 +1,19 @@
 <?php
+/**
+ * Notice functions.
+ *
+ * @package OhMyLMS
+ */
 
-namespace CodeRex\Ecommerce;
+
+namespace OhMyLMS\Commerce;
 
 /**
  * Add and store a notice
  *
  * @param string $message The notice message.
  * @param string $notice_type The type of notice (e.g., 'success', 'error').
- * @param array $data Additional data for the notice.
+ * @param array  $data Additional data for the notice.
  * @return void
  *
  * @since 1.0.0
@@ -173,8 +179,8 @@ function ohmylmse_print_notices( $return = false ) {
  *
  * @param string $message The notice message.
  * @param string $notice_type The type of notice.
- * @param array $data Additional data for the notice.
- * @param bool $return Whether to return the notice instead of printing it.
+ * @param array  $data Additional data for the notice.
+ * @param bool   $return Whether to return the notice instead of printing it.
  * @return string|null The notice if $return is true, null otherwise.
  *
  * @since 1.0.0

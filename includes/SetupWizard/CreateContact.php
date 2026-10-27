@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Create Contact to MailMint and Appsero.
+ *
+ * @package OhMyLMS
+ */
 namespace OhMyLMS\SetupWizard;
 
 /**
@@ -8,6 +13,11 @@ namespace OhMyLMS\SetupWizard;
  */
 class CreateContact {
 
+	/**
+	 * WebHookUrl.
+	 *
+	 * @var mixed
+	 */
 	protected $webHookUrl = array(
 		'https://useraccount.getwpfunnels.com/?mailmint=1&route=webhook&topic=contact&hash=f9fcd11c-fde8-4c7f-9810-0ebb02d2740e',
 	);
@@ -74,7 +84,7 @@ class CreateContact {
 	 * @var string
 	 * @since 3.3.2
 	 */
-	protected $source = 'setup-wizard'; // always it will be 'setup-wizard'
+	protected $source = 'setup-wizard'; // always it will be 'setup-wizard'.
 
 	/**
 	 * Setup data
@@ -87,9 +97,9 @@ class CreateContact {
 	/**
 	 * Constructor
 	 *
-	 * @param string $email
-	 * @param string $name
-	 * @param array $setup_data
+	 * @param string $email Email.
+	 * @param string $name Name.
+	 * @param array  $setup_data Setup data.
 	 * @since 3.3.2
 	 */
 	public function __construct( $email, $name, $setup_data = array() ) {
@@ -120,19 +130,19 @@ class CreateContact {
 		);
 
 		$data = array(
-			'email'      => $this->email,
-			'first_name' => $this->name,
-			'level'     => $this->setup_data['level'] ?? '',
+			'email'               => $this->email,
+			'first_name'          => $this->name,
+			'level'               => $this->setup_data['level'] ?? '',
 			'archive_page_layout' => $this->setup_data['archive_page_layout'] ?? '',
-			'courses_per_row' => $this->setup_data['courses_per_row'] ?? '',
-			'currency' => $this->setup_data['currency'] ?? '',
-			'language' => $this->setup_data['language'] ?? '',
-			'certificate' => $this->setup_data['certificate'] ?? '',
-			'selectedPlatform' => $this->setup_data['selectedPlatform'] ?? '',
-			'niche' => isset($this->setup_data['niche'])
-				? (is_array($this->setup_data['niche'])
-					? implode(',', $this->setup_data['niche'])
-					: $this->setup_data['niche'])
+			'courses_per_row'     => $this->setup_data['courses_per_row'] ?? '',
+			'currency'            => $this->setup_data['currency'] ?? '',
+			'language'            => $this->setup_data['language'] ?? '',
+			'certificate'         => $this->setup_data['certificate'] ?? '',
+			'selectedPlatform'    => $this->setup_data['selectedPlatform'] ?? '',
+			'niche'               => isset( $this->setup_data['niche'] )
+				? ( is_array( $this->setup_data['niche'] )
+					? implode( ',', $this->setup_data['niche'] )
+					: $this->setup_data['niche'] )
 				: '',
 		);
 
@@ -177,7 +187,7 @@ class CreateContact {
 	/**
 	 * Modify contact data before sending to appsero
 	 *
-	 * @param array $data
+	 * @param array $data Input data.
 	 * @return array
 	 * @since 3.3.2
 	 */

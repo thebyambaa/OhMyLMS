@@ -1,11 +1,18 @@
 <?php
+/**
+ * Notice functions.
+ *
+ * @package OhMyLMS
+ */
+
 
 
 /**
  * Add and store a notice
  *
- * @param string $message
- * @param string $type
+ * @param string $message Message.
+ * @param string $notice_type Notice type.
+ * @param array  $data Input data.
  * @return void
  *
  * @since 1.0.0
@@ -15,7 +22,7 @@ function ohmylms_add_notice( $message, $notice_type = 'success', $data = array()
 		return;
 	}
 
-	$notices = \CodeRex\Ecommerce\ecommerce()->session->get( 'ohmylms_notices', array() );
+	$notices = \OhMyLMS\Commerce\ecommerce()->session->get( 'ohmylms_notices', array() );
 	if ( ! empty( $message ) ) {
 		$notices[ $notice_type ][] = array(
 			'notice' => $message,
@@ -23,9 +30,12 @@ function ohmylms_add_notice( $message, $notice_type = 'success', $data = array()
 		);
 	}
 
-	\CodeRex\Ecommerce\ecommerce()->session->set( 'ohmylms_notices', $notices );
+	\OhMyLMS\Commerce\ecommerce()->session->set( 'ohmylms_notices', $notices );
 }
 
 
+/**
+ * Ohmylms notice count for Notice-functions.
+ */
 function ohmylms_notice_count() {
 }

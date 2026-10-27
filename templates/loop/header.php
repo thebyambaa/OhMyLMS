@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	if ( apply_filters( 'ohmylms_show_page_title', true ) ) :
 		?>
 		<h1 class="courses-section-title page-title">
-			<?php  echo __('Discover Courses','ohmylms'); ?>
+			<?php echo esc_html__( 'Discover Courses', 'ohmylms' ); ?>
 		</h1>
 	<?php endif; ?>
 

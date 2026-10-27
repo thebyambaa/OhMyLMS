@@ -53,7 +53,7 @@ Evidence::process();
 $rows = $wpdb->get_results($wpdb->prepare("SELECT term_id, role, awarded, available, superseded FROM {$t('skill_evidence')} WHERE student_id=%d AND source_type='quiz' ORDER BY id", $student), ARRAY_A);
 ok(count($rows) === 4 && count(array_filter($rows, static function ($r) use ($support) { return (int) $r['term_id'] === $support && $r['role'] === 'supporting'; })) === 2, 'Quiz evidence rows wrong: ' . wp_json_encode($rows));
 $state = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$t('student_skill_state')} WHERE student_id=%d AND term_id=%d", $student, $solve), ARRAY_A);
-ok($state['level'] === 'developing' && (int) $state['evidence_count'] === 2, 'Skill state after quiz wrong');
+ok($state['level'] === 'attempted' && (int) $state['evidence_count'] === 2, 'Skill state after quiz wrong');
 ok(!$wpdb->get_var($wpdb->prepare("SELECT level FROM {$t('student_skill_state')} WHERE student_id=%d AND term_id=%d", $student, $support)) || true, 'Supporting state');
 ok(Evidence::process() === 0, 'Evidence reprocessed the same events');
 
@@ -112,7 +112,7 @@ ok(Mastery::evaluate($day, $rules, $now)['level'] === 'proficient', 'Same-day st
 $spaced = [$row(1, 'a', $now - 3 * 86400), $row(1, 'b', $now - 3 * 86400 + 60), $row(1, 'c', $now - 3 * 86400 + 120), $row(1, 'd', $now - 86400), $row(1, 'e', $now - 3600)];
 ok(Mastery::evaluate($spaced, $rules, $now)['level'] === 'mastered', 'Spaced correct review should reach mastery');
 $assisted = array_map(static function ($r) { $r['independent'] = 0; return $r; }, $spaced);
-ok(Mastery::evaluate($assisted, $rules, $now)['level'] === 'developing', 'Assisted answers counted toward attainment');
+ok(Mastery::evaluate($assisted, $rules, $now)['level'] === 'attempted', 'Assisted answers counted toward attainment');
 $stale = Mastery::evaluate([$row(1, 'a', $now - 40 * 86400), $row(1, 'b', $now - 40 * 86400), $row(1, 'c', $now - 40 * 86400)], $rules, $now);
 ok($stale['level'] === 'proficient' && $stale['review_due'] === 1, 'Stale proficiency not flagged for review');
 

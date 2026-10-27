@@ -1,6 +1,7 @@
 .ohmylms-page {
-    .ohmylms-button[type=submit],
-    .ohmylms-button[type=button],
+
+    .ohmylms-button[type="submit"],
+    .ohmylms-button[type="button"],
     .ohmylms-button {
         color: #FFF;
         font-size: 15px;
@@ -10,7 +11,6 @@
         background-color: var(--ohmylms-primary-color, #6e42d3);
         border: 1px solid transparent;
         transition: all 0.3s ease;
-        box-shadow: none;
         display: inline-block;
         padding: 12px 24px;
         text-align: center;
@@ -78,6 +78,7 @@
                 border-color: var(--ohmylms-gray-300) !important;
                 color: var(--ohmylms-gray-600);
             }
+
             &:focus {
                 outline: 2px solid rgba(var(--ohmylms-gray-600-rgb), 0.349);
             }
@@ -85,6 +86,7 @@
     }
 
     @media screen and (max-width: 1199px) {
+
         .ohmylms-button {
             border-radius: 8px;
             padding: 10px 18px;

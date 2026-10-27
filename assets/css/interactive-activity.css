@@ -1,0 +1,128 @@
+.ohmylms-activity-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+	gap: 16px;
+	align-items: start;
+}
+
+.ohmylms-activity-board {
+	width: 100%;
+	aspect-ratio: 4 / 3;
+	border: 1px solid #d0d5dd;
+	border-radius: 8px;
+	background: #fff;
+	touch-action: pan-y;
+}
+
+.ohmylms-activity-panel {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.ohmylms-activity-rows {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.ohmylms-activity-row {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	gap: 8px;
+	align-items: center;
+}
+
+.ohmylms-activity-swatch {
+	width: 6px;
+	align-self: stretch;
+	border-radius: 3px;
+	background: var(--ohmylms-activity-color, #2563eb);
+}
+
+.ohmylms-activity-field {
+	min-width: 0;
+	padding: 6px 8px;
+	border: 1px solid #d0d5dd;
+	border-radius: 6px;
+	background: #fff;
+	font-size: 1.15em;
+}
+
+.ohmylms-activity-row.is-invalid .ohmylms-activity-field {
+	border-color: #b42318;
+}
+
+.ohmylms-activity-remove {
+	min-width: 32px;
+	min-height: 32px;
+	border: 0;
+	border-radius: 6px;
+	background: transparent;
+	font-size: 1.4em;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.ohmylms-activity-error {
+	grid-column: 2 / -1;
+	margin: 0;
+	color: #b42318;
+	font-size: 0.85em;
+}
+
+.ohmylms-activity-add {
+	align-self: flex-start;
+	padding: 6px 12px;
+	border: 1px solid #d0d5dd;
+	border-radius: 6px;
+	background: #fff;
+	cursor: pointer;
+}
+
+.ohmylms-activity-params {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.ohmylms-activity-param {
+	display: grid;
+	grid-template-columns: 1.5em minmax(0, 1fr) 3.5em;
+	gap: 8px;
+	align-items: center;
+}
+
+.ohmylms-activity-param-name {
+	font-style: italic;
+	font-weight: 600;
+}
+
+.ohmylms-activity-param-value {
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+}
+
+.ohmylms-activity-param-editor {
+	margin-bottom: 16px;
+}
+
+@media (max-width: 700px) {
+
+	.ohmylms-activity-layout {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.ohmylms-activity-equation-editor {
+	margin-bottom: 16px;
+	padding-left: 8px;
+	border-left: 4px solid var(--ohmylms-activity-color, #2563eb);
+}
+
+code.ohmylms-activity-field {
+	overflow-wrap: anywhere;
+}

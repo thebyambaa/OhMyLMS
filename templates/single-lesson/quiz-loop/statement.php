@@ -1,4 +1,3 @@
-
 <?php
 /**
  * The template for displaying statement question
@@ -10,11 +9,11 @@
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
+	exit; // Exit if accessed directly.
 }
 ?>
-<?php foreach ($question['questions'] as $option){ ?>
+<?php foreach ( $question['questions'] as $option ) { ?>
 	<div class="answer-type-text statement">
-		<input type="text" data-question-id="<?php echo $option['question_id']; ?>" class="ohmylms-text-input" name="attempt[<?php echo $attempt['id']; ?>][quiz_question][<?php echo $option['question_id'] ?>][]" placeholder="Type your answer here ... ">
+		<input type="text" data-question-id="<?php echo esc_attr( $option['question_id'] ); ?>" class="ohmylms-text-input" name="attempt[<?php echo esc_attr( $attempt['id'] ); ?>][quiz_question][<?php echo esc_attr( $option['question_id'] ); ?>][]" placeholder="Type your answer here ... ">
 	</div>
 <?php } ?>

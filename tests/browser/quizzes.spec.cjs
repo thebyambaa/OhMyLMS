@@ -1,55 +1,153 @@
-const {test,expect}=require('@playwright/test');
-const fs=require('node:fs');
-test.beforeEach(async({page})=>{
- const config=JSON.parse(fs.readFileSync(process.env.OHMYLMS_TEST_CREDENTIALS,'utf8'));
- await page.goto('/wp-login.php');await page.locator('#user_login').fill(config.username);await page.locator('#user_pass').fill(config.password);await page.locator('#wp-submit').click();await page.waitForURL(/wp-admin/);
- await page.goto('/wp-admin/admin.php?page=ohmylms');
-});
-test('source quiz editor saves and reopens every built-in question type',async({page},testInfo)=>{
- test.setTimeout(180000);
- const errors=[];page.on('pageerror',error=>errors.push(error.message));
- const fixture=await page.evaluate(async()=>{
-  const quiz=await wp.apiFetch({path:'/ohmylms/v1/quiz',method:'POST',data:{name:'Source quiz fixture',status:'draft'}});
-  const questions=[];
-  for(const type of ['multiple-choice','single-choice','true-false','short-text','long-text','statement','fill-in-the-blank','reorder','matching','example-number']){
-   const options=['short-text','long-text'].includes(type)?[]:[{answer:type==='true-false'?'True':'Answer A',is_correct:1,order_number:0,matching_data:{label:'Match A'}},{answer:type==='true-false'?'False':'Answer B',is_correct:0,order_number:1,matching_data:{label:'Match B'}}];
-   questions.push(await wp.apiFetch({path:'/ohmylms/v1/question',method:'POST',data:{quiz_id:quiz.id,name:`Fixture ${type}`,order_number:questions.length,settings:{type,expected:1,required:false,score:{enabled:true,value:1}},questions:options}}));
-  }
-  const loaded=await wp.apiFetch({path:`/ohmylms/v1/quiz/${quiz.id}`});
-  return {quiz,questions:loaded.content};
- });
- try{
-  await page.goto(`/wp-admin/admin.php?page=ohmylms#/quiz-edit/${fixture.quiz.id}`);
-  await expect(page.getByPlaceholder('Enter Quiz Title')).toHaveValue('Source quiz fixture',{timeout:15000});
-  expect(await page.evaluate(()=>Object.keys(window.ohmylms.extensions.quizComponents).length)).toBe(17);
-  for(const question of fixture.questions){
-   await page.evaluate(question=>{const actions=wp.data.dispatch('ohmylms/store');actions.setSelectedQuestionId(question.id);actions.setQuestion(question);},question);
-   await expect(page.locator('.ohmylms-quiz-editor-page')).toBeVisible();
-   expect(errors,question.settings.type).toEqual([]);
-   if(question.settings.type==='example-number')await page.getByLabel('Expected number').fill('42');
-  }
-  // Return to a valid choice question before exercising the complete Save action.
-  await page.evaluate(question=>{const actions=wp.data.dispatch('ohmylms/store');actions.setSelectedQuestionId(question.id);actions.setQuestion(question);},fixture.questions[0]);
-  await page.locator('.ohmylms-quiz-option-item').first().locator('input[type="text"], textarea, [contenteditable="true"]').first().fill('Edited choice from React');
-  await page.locator('.ohmylms-remove-option-btn').first().click();
-  await expect(page.getByText('You must have at least 2 options')).toBeVisible();
-  await page.locator('.ohmylms-add-option-btn').first().click();
-  await expect(page.locator('.ohmylms-quiz-option-item')).toHaveCount(3);
-  await page.getByPlaceholder('Option 3',{exact:true}).fill('Temporary third answer');
-  await page.locator('.ohmylms-remove-option-btn').last().click();
-  await expect(page.locator('.ohmylms-quiz-option-item')).toHaveCount(2);
-  await page.getByPlaceholder('Enter Quiz Title').fill('Saved source quiz');
-  const response=page.waitForResponse(r=>r.url().includes(`/quiz/${fixture.quiz.id}`)&&r.request().method()==='POST',{timeout:15000});
-  await page.getByRole('button',{name:'Save',exact:true}).click();expect((await response).ok()).toBe(true);
-  await page.reload();await expect(page.getByPlaceholder('Enter Quiz Title')).toHaveValue('Saved source quiz');
-  const saved=await page.evaluate(id=>wp.apiFetch({path:`/ohmylms/v1/quiz/${id}`}),fixture.quiz.id);
-  expect(saved.content).toHaveLength(10);
-  expect(saved.content.map(question=>question.settings.type)).toEqual(fixture.questions.map(question=>question.settings.type));
-  expect(saved.content[0].questions[0].answer).toBe('Edited choice from React');
-  expect(Number(saved.content.find(question=>question.settings.type==='example-number').settings.expected)).toBe(42);
-  await page.screenshot({path:testInfo.outputPath('quiz-source.png'),fullPage:true});expect(errors).toEqual([]);
- }finally{
-  await testInfo.attach('quiz-errors',{body:JSON.stringify(errors),contentType:'application/json'});
-  await page.evaluate(async fixture=>{for(const question of fixture.questions)await wp.apiFetch({path:`/ohmylms/v1/question/${question.id}`,method:'DELETE'});await wp.apiFetch({path:`/ohmylms/v1/quiz/${fixture.quiz.id}`,method:'DELETE'});},fixture);
- }
-});
+const { test, expect } = require( '@playwright/test' );
+const fs = require( 'node:fs' );
+const { useFormAuthoring } = require( './helpers/form-authoring.cjs' );
+
+test.beforeEach( async ( { page } ) => {
+	await useFormAuthoring( page );
+	const config = JSON.parse(
+		fs.readFileSync( process.env.OHMYLMS_TEST_CREDENTIALS, 'utf8' )
+	);
+	await page.goto( '/wp-login.php' );
+	await page.locator( '#user_login' ).fill( config.username );
+	await page.locator( '#user_pass' ).fill( config.password );
+	await page.locator( '#wp-submit' ).click();
+	await page.waitForURL( /wp-admin/ );
+	await page.goto( '/wp-admin/admin.php?page=ohmylms' );
+} );
+
+test( 'former quiz routes always open Gutenberg and preserve existing question types despite rollback settings', async ( {
+	page,
+} ) => {
+	const errors = [];
+	page.on( 'pageerror', ( error ) => errors.push( error.message ) );
+	const fixture = await page.evaluate( async () => {
+		const quiz = await wp.apiFetch( {
+			path: '/ohmylms/v1/quiz',
+			method: 'POST',
+			data: { name: 'Source quiz fixture', status: 'draft' },
+		} );
+		const types = [
+			'multiple-choice',
+			'single-choice',
+			'true-false',
+			'short-text',
+			'long-text',
+			'statement',
+			'fill-in-the-blank',
+			'reorder',
+			'matching',
+			'example-number',
+		];
+		const ids = [];
+		for ( const type of types ) {
+			const options = [ 'short-text', 'long-text' ].includes( type )
+				? []
+				: [
+						{
+							answer: type === 'true-false' ? 'True' : 'Answer A',
+							is_correct: true,
+							order_number: 1,
+							matching_data: { label: 'Match A' },
+						},
+						{
+							answer:
+								type === 'true-false' ? 'False' : 'Answer B',
+							is_correct: false,
+							order_number: 2,
+							matching_data: { label: 'Match B' },
+						},
+					];
+			const question = await wp.apiFetch( {
+				path: '/ohmylms/v1/question',
+				method: 'POST',
+				data: {
+					quiz_id: quiz.id,
+					name: `Fixture ${ type }`,
+					order_number: ids.length + 1,
+					settings: {
+						type,
+						expected: 1,
+						required: false,
+						score: { enabled: true, value: 1 },
+					},
+					questions: options,
+				},
+			} );
+			ids.push( question.id );
+		}
+		return { quiz, types, ids };
+	} );
+	try {
+		await page.goto(
+			`/wp-admin/admin.php?page=ohmylms#/quiz-edit/${ fixture.quiz.id }`
+		);
+		await page.waitForURL(
+			( url ) =>
+				url.pathname.endsWith( '/post.php' ) &&
+				url.searchParams.get( 'post' ) === String( fixture.quiz.id )
+		);
+		await page.waitForFunction( () =>
+			window.wp?.plugins?.getPlugin( 'ohmylms-native-quiz-settings' )
+		);
+		const canvas = page.frameLocator( 'iframe[name="editor-canvas"]' );
+		await expect(
+			canvas.getByRole( 'textbox', {
+				name: 'Question statement',
+				exact: true,
+			} )
+		).toHaveCount( 10, { timeout: 20000 } );
+		await expect(
+			page.getByRole( 'region', { name: 'Quiz form editor' } )
+		).toHaveCount( 0 );
+		await page.evaluate( async () => {
+			wp.data
+				.dispatch( 'core/editor' )
+				.editPost( { title: 'Saved Gutenberg quiz' } );
+			await wp.data.dispatch( 'core/editor' ).savePost();
+		} );
+		await expect
+			.poll( () =>
+				page.evaluate(
+					async ( id ) =>
+						(
+							await wp.apiFetch( {
+								path: `/ohmylms/v1/quiz/${ id }`,
+							} )
+						).name,
+					fixture.quiz.id
+				)
+			)
+			.toBe( 'Saved Gutenberg quiz' );
+		await page.reload();
+		await expect(
+			canvas.getByRole( 'textbox', {
+				name: 'Question statement',
+				exact: true,
+			} )
+		).toHaveCount( 10, { timeout: 20000 } );
+		const saved = await page.evaluate(
+			( id ) => wp.apiFetch( { path: `/ohmylms/v1/quiz/${ id }` } ),
+			fixture.quiz.id
+		);
+		expect(
+			saved.content.map( ( question ) => Number( question.id ) )
+		).toEqual( fixture.ids );
+		expect(
+			saved.content.map( ( question ) => question.settings.type )
+		).toEqual( fixture.types );
+		expect( errors ).toEqual( [] );
+	} finally {
+		await page.evaluate( async ( data ) => {
+			await wp.apiFetch( {
+				path: `/ohmylms/v1/quiz/${ data.quiz.id }`,
+				method: 'DELETE',
+			} );
+			for ( const id of data.ids ) {
+				await wp.apiFetch( {
+					path: `/wp/v2/ohmylms-questions/${ id }?force=true`,
+					method: 'DELETE',
+				} );
+			}
+		}, fixture );
+	}
+} );

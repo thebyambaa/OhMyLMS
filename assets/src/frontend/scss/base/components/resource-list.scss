@@ -1,4 +1,5 @@
 .ohmylms-page {
+
     .ohmylms-resources-list {
         display: flex;
         flex-flow: column;
@@ -10,7 +11,7 @@
         li {
             border-radius: 10px;
             background: #FFF;
-            box-shadow: 0px 1px 2px 0px #DBDDE1;
+            box-shadow: 0 1px 2px 0 #DBDDE1;
             display: flex;
             flex-flow: row wrap;
             align-items: center;
@@ -76,6 +77,7 @@
 }
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .ohmylms-resources-list li .ohmylms-single-resource-info {
         width: calc(100% - 50px);
     }
@@ -87,6 +89,7 @@
 }
 
 @media screen and (max-width: 425px) {
+
     .ohmylms-page .ohmylms-resources-list li .resource-name {
         font-size: 12px;
     }

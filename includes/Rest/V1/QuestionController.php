@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Controller for handling lesson REST API endpoints.
+ *
+ * @package OhMyLMS
+ */
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
@@ -32,6 +37,9 @@ class QuestionController extends RestController {
 	 */
 	protected $base = 'question';
 
+	/**
+	 * Check question permission for Question controller.
+	 */
 	public function check_question_permission() {
 		return AccessPolicy::check( AccessPolicy::can_author() );
 	}
@@ -39,7 +47,7 @@ class QuestionController extends RestController {
 	/**
 	 * Object-level permission for single-question routes.
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return true|WP_Error
 	 */
 	public function check_item_permission( $request ) {
@@ -169,7 +177,7 @@ class QuestionController extends RestController {
 		$page        = (int) $query_args['paged'];
 		$total_posts = $posts_query->found_posts;
 
-		if ( $total_posts < 1 && $page > 1 ) {
+		if ( 1 > $total_posts && 1 < $page ) {
 			unset( $query_args['paged'] );
 			$count_query = new WP_Query();
 			$count_query->query( $query_args );
@@ -189,7 +197,7 @@ class QuestionController extends RestController {
 		}
 		$base = add_query_arg( $request_params, rest_url( sprintf( '/%s/%s', $this->namespace, $this->rest_base ) ) );
 
-		if ( $page > 1 ) {
+		if ( 1 < $page ) {
 			$prev_page = $page - 1;
 			if ( $prev_page > $max_pages ) {
 				$prev_page = $max_pages;
@@ -208,9 +216,9 @@ class QuestionController extends RestController {
 	/**
 	 * Add question
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
-	 * @throws \Exception
+	 * @throws \Exception When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	public function create_item( $request ) {
@@ -248,7 +256,7 @@ class QuestionController extends RestController {
 	/**
 	 * Update Question settings
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
 	 * @since 1.0.0
 	 */
@@ -279,14 +287,14 @@ class QuestionController extends RestController {
 	/**
 	 * Get question content
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
 	 * @since 1.0.0
 	 */
 	public function get_item( $request ) {
 		$id   = (int) $request['id'];
 		$post = get_post( $id );
-		if ( empty( $id ) || empty( $post->ID ) || $post->post_type !== OHMYLMS_QUESTION_CPT ) {
+		if ( empty( $id ) || empty( $post->ID ) || OHMYLMS_QUESTION_CPT !== $post->post_type ) {
 			return new WP_Error( 'ohmylms_rest_invalid_question_id', __( 'Invalid ID.', 'ohmylms' ), array( 'status' => 404 ) );
 		}
 
@@ -304,7 +312,7 @@ class QuestionController extends RestController {
 	/**
 	 * Delete a single question.
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
 	 *
 	 * @since 1.0.0
@@ -354,9 +362,10 @@ class QuestionController extends RestController {
 	/**
 	 * Save question
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return bool
 	 * @since 1.0.0
+	 * @throws DataException When the operation cannot be completed.
 	 */
 	public function save_question( $request ) {
 		$saved = DraftWriter::save( $request, (int) ( $request['quiz_id'] ?? 0 ) );
@@ -371,10 +380,10 @@ class QuestionController extends RestController {
 	/**
 	 * Prepare a question for database.
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return bool|Question
 	 *
-	 * @throws \Exception
+	 * @throws \Exception When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	protected function prepare_item_for_database( $request ) {
@@ -409,10 +418,10 @@ class QuestionController extends RestController {
 	 * Prepare a single question for response.
 	 *
 	 * @param \WP_Post         $post The post object.
-	 * @param \WP_REST_Request $request
+	 * @param \WP_REST_Request $request REST request.
 	 * @return WP_REST_Response
 	 *
-	 * @throws \Exception
+	 * @throws \Exception When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	public function prepare_item_for_response( $post, $request ) {
@@ -441,7 +450,7 @@ class QuestionController extends RestController {
 	/**
 	 * Get question data.
 	 *
-	 * @param question $question
+	 * @param question $question Question.
 	 * @return array
 	 *
 	 * @since 1.0.0
@@ -472,8 +481,8 @@ class QuestionController extends RestController {
 	/**
 	 * Prepare links for the request.
 	 *
-	 * @param $product
-	 * @param $request
+	 * @param mixed $product Product.
+	 * @param mixed $request REST request.
 	 * @return array[]
 	 *
 	 * @since 1.0.0
@@ -502,7 +511,7 @@ class QuestionController extends RestController {
 	 * @param \WP_REST_Request $request The REST request object containing the meta data.
 	 * @return bool True on success, false on failure.
 	 *
-	 * @throws DataException
+	 * @throws DataException When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	protected function update_post_meta_fields( $post, $request ) {
@@ -554,7 +563,7 @@ class QuestionController extends RestController {
 	 *
 	 * @param array                $prepared_args The prepared arguments for the query.
 	 * @param WP_REST_Request|null $request The REST request object.
-	 *
+	 * .
 	 * @return array The filtered and prepared query arguments.
 	 * @since 1.0.0
 	 */

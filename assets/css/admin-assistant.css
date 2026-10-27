@@ -1,0 +1,170 @@
+#ohmylms-admin-assistant-root {
+	position: fixed;
+	z-index: 100100;
+	right: 24px;
+	bottom: 24px;
+	color: #1d2327;
+	font-size: 14px;
+}
+
+#ohmylms-admin-assistant-root button {
+	padding: 8px 12px;
+	border: 1px solid #c3c4c7;
+	border-radius: var(--oml-radius-control, 6px);
+	background: #fff;
+	color: #1d2327;
+	font: inherit;
+	cursor: pointer;
+}
+
+#ohmylms-admin-assistant-root button:disabled {
+	opacity: 0.55;
+	cursor: default;
+}
+
+#ohmylms-admin-assistant-root button:focus-visible {
+	outline: 2px solid #3858e9;
+	outline-offset: 2px;
+}
+
+#ohmylms-admin-assistant-root .oml-assistant-launcher,
+#ohmylms-admin-assistant-root button[aria-pressed="true"] {
+	border-color: #3858e9;
+	background: #3858e9;
+	color: #fff;
+}
+
+#ohmylms-admin-assistant-root .oml-assistant-launcher {
+	padding: 12px 20px;
+	border-radius: 24px;
+	box-shadow: 0 4px 20px rgb(0 0 0 / 18%);
+}
+
+#oml-assistant-panel {
+	position: absolute;
+	right: 0;
+	bottom: 60px;
+	display: flex;
+	flex-direction: column;
+	width: min(460px, calc(100vw - 32px));
+	height: min(720px, calc(100dvh - 130px));
+	border: 1px solid var(--oml-border, #dcdcde);
+	border-radius: 16px;
+	background: #fff;
+	box-shadow: 0 12px 48px rgb(0 0 0 / 20%);
+	overflow: hidden;
+}
+
+#oml-assistant-panel header,
+#oml-assistant-panel nav,
+#oml-assistant-panel footer {
+	flex-shrink: 0;
+	padding: 14px;
+	border-bottom: 1px solid #e5e7eb;
+}
+
+#oml-assistant-panel header,
+#oml-assistant-panel nav,
+#oml-assistant-panel .oml-assistant-actions {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	justify-content: space-between;
+}
+
+#oml-assistant-panel small {
+	display: block;
+	margin-top: 4px;
+	color: #646970;
+}
+
+#oml-assistant-panel .oml-assistant-body {
+	flex: 1;
+	padding: 16px;
+	overflow-y: auto;
+}
+
+#oml-assistant-panel p,
+#oml-assistant-panel pre {
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+#oml-assistant-panel pre {
+	max-height: 240px;
+	padding: 10px;
+	background: #f6f7f7;
+	font-size: 12px;
+	overflow: auto;
+}
+
+#oml-assistant-panel .oml-assistant-message,
+#oml-assistant-panel .oml-assistant-card {
+	margin-bottom: 12px;
+	padding: 12px;
+	border: 1px solid var(--oml-border, #dcdcde);
+	border-radius: var(--oml-radius-card, 8px);
+}
+
+#oml-assistant-panel .is-user {
+	background: #eef2ff;
+}
+
+#oml-assistant-panel label {
+	display: block;
+	margin: 10px 0;
+}
+
+#oml-assistant-panel input:not([type="checkbox"]),
+#oml-assistant-panel select,
+#oml-assistant-panel textarea {
+	box-sizing: border-box;
+	width: 100%;
+	margin-top: 6px;
+	padding: 8px;
+	border: 1px solid #8c8f94;
+	border-radius: var(--oml-radius-control, 6px);
+	font: inherit;
+}
+
+#oml-assistant-panel textarea {
+	min-height: 70px;
+	resize: vertical;
+}
+
+#oml-assistant-panel [role="alert"] {
+	color: #b32d2e;
+}
+
+#oml-assistant-panel.is-dragging-files {
+	outline: 3px dashed #3858e9;
+	outline-offset: -6px;
+}
+
+#oml-assistant-panel .oml-assistant-attachments {
+	max-height: 150px;
+	margin: 0 0 8px;
+	list-style: none;
+	overflow-y: auto;
+}
+
+#oml-assistant-panel .oml-assistant-attachments li {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 6px;
+	padding: 6px 8px;
+	border: 1px solid var(--oml-border, #dcdcde);
+	border-radius: var(--oml-radius-card, 8px);
+	background: #f6f7f7;
+	overflow-wrap: anywhere;
+}
+
+#oml-assistant-panel .oml-assistant-attachments small {
+	display: inline;
+}
+
+#oml-assistant-panel .oml-assistant-upload-help {
+	margin-bottom: 10px;
+}

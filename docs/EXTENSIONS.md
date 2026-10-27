@@ -1,6 +1,6 @@
 # Extension API version 1
 
-Skills is a bundled add-on under **OhMyLMS → Add-ons**. Enable its switch, then choose **Manage** to edit the skill catalogue, prerequisites and lesson/course links. The Skills submenu appears while enabled. Disabling the add-on blocks skill edits and hides its page without deleting existing skills or question mappings; historical assessment reads remain available.
+Skills is a core feature with no Add-ons switch. The skill library (catalogue, prerequisites and lesson/course links) is the Skills tab of the Content Hub (`#/content-hub/skills`; the old `#/extensions/skills` address opens it). See [CONTENT-HUB.md](CONTENT-HUB.md).
 
 Feature code can live in `modules/<id>/` or a separate plugin. Internal modules load only via `OHMYLMS_ENABLED_MODULES` or `ohmylms_enabled_modules`. The examples module is disabled by default.
 
@@ -33,7 +33,7 @@ Read `modules/examples/editor.js` and the small components in `assets/src/extens
 
 ## Slots and settings
 
-Named slots: `admin.screen.before`, `admin.screen.after`, `student.course.before`, `student.course.after`, `checkout.fields.after`, `checkout.summary.after`. Editor-panel slots use actual route paths listed in the recovery manifest. PHP `ohmylms_render_slot($name,$context)` also emits a server-rendering hook. Context must be public, JSON-safe data.
+Named slots: `admin.screen.before`, `admin.screen.after`, `student.course.before`, `student.course.after`, `checkout.fields.after`, `checkout.summary.after`, and `syllabus.skill.resources`, which the syllabus editor renders in a skill's pane under what the skill owns (lessons and questions; context `{skill, syllabus}`), so a module such as practice games can add its own section for a skill. Editor-panel slots use actual route paths listed in the recovery manifest. PHP `ohmylms_render_slot($name,$context)` also emits a server-rendering hook. Context must be public, JSON-safe data.
 
 ```php
 ohmylms_register_extension_settings('my-benefit', [
@@ -55,6 +55,8 @@ GET/PUT `/ohmylms/v1/extension-settings/<type>/<id>` accepts `{settings:{...}}`,
 Versioned assessments grade frozen question versions. A type joins them by declaring `'snapshot' => true`, promising that `grade()` and `validate()` read only the question object they receive (`get_settings()`, `get_questions()`), which may be an `OhMyLMS\Assessment\QuestionSnapshot`. Quizzes containing a type without the flag cannot be published (`quiz_type_unversioned`) instead of silently grading current data. Types whose answers are option IDs should declare `'answers' => 'options'` (versioned deliveries send opaque per-attempt option tokens). Learner-facing settings must be listed in `'public_settings'`; all other settings are withheld from delivery markup. `grade()` may return `parts => [part_id => fraction|null]` for multi-part questions.
 
 `validate($answer,$question)` returns bool and should accept empty answer shape for timeouts; required-answer enforcement is separate. `grade` returns `correct`, finite `fraction` (clamped 0..1), and `manual`. The server checks enrollment, ownership, timer, question membership and repeated submissions. Scores are server-derived: attempts started before the decimal migration award whole points; later attempts award marks × fraction to four decimal places.
+
+The learner result screen shows a readable "Your answer" and "Correct answer" for each question. A type that stores answers by ID can supply them with the optional `review_given($given,$settings)` and `review_expected($settings)` callbacks, each returning a list of strings built only from the settings passed in (so frozen versions review correctly). Without them the generic lines are used; the built-in ID-based types (categorize, dropdown and multi-blank, hot-text, match grid, labeling, hotspot, interactive video, graphing) already provide theirs through `AssessmentReviewLines`.
 
 `ohmylms_register_lesson_type` requires label/render. Its matching JS editor uses supplied authoring callbacks. The example persists normal WordPress content. Existing `ohmylms_register_layout` and `ohmylms_register_activity` remain; layouts accept course/chapter/lesson/quiz contexts. Avoid recursively invoking a layout hook from its renderer.
 

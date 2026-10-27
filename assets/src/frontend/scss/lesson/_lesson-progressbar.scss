@@ -4,6 +4,7 @@
 }
 
 .ohmylms-page {
+
     .ohmylms-lesson-progressbar {
         background: rgba(var(--ohmylms-primary-color-rgb), 0.06);
         padding: 20px 0;
@@ -21,7 +22,7 @@
         .lesson-single-progressbar {
             border-radius: 8px;
             background: #FFF;
-            box-shadow: 0px 2px 2px 0px rgba(199, 206, 220, 0.41);
+            box-shadow: 0 2px 2px 0 rgba(199, 206, 220, 0.41);
             padding: 13px 20px;
 
             .progressbar-title {
@@ -61,10 +62,12 @@
 }
 
 @media screen and (max-width: 991px) {
+
     .ohmylms-page .ohmylms-lesson-progressbar .lesson-single-progressbar {
         border-radius: 10px;
         padding: 13px 16px;
     }
+
     .ohmylms-page .ohmylms-lesson-progressbar .overall-progress {
         width: calc(100% - 396px);
         padding: 22px 16px;
@@ -78,10 +81,12 @@
 }
 
 @media screen and (max-width: 767px) {
+
     .ohmylms-page .ohmylms-lesson-progressbar .lesson-single-progressbar {
         border-radius: 10px;
         padding: 13px 16px;
     }
+
     .ohmylms-page .ohmylms-lesson-progressbar .overall-progress {
         width: 100%;
     }
@@ -94,6 +99,7 @@
 }
 
 @media screen and (max-width: 425px) {
+
     .ohmylms-page .ohmylms-lesson-progressbar .lesson-single-progressbar {
         border-radius: 10px;
         padding: 11px 12px;
@@ -109,6 +115,7 @@
     .ohmylms-page .ohmylms-lesson-progressbar .assignment-progress .progressbar-title {
         width: calc(100% - 46px);
     }
+
     .ohmylms-page .ohmylms-lesson-progressbar .ohmylms-circle-progressbar .circle-progress-svg {
         width: 40px;
         height: auto;

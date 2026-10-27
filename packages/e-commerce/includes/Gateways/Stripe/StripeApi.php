@@ -1,11 +1,14 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
 
-namespace CodeRex\Ecommerce\Gateways\Stripe;
+namespace OhMyLMS\Commerce\Gateways\Stripe;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Plugin stripe api implementation.
+ */
 class StripeApi {
 	/**
 	 * Stripe API Endpoint
@@ -25,7 +28,7 @@ class StripeApi {
 	/**
 	 * Set secret API Key.
 	 *
-	 * @param string $key
+	 * @param mixed $secret_key Secret key.
 	 */
 	public static function set_secret_key( $secret_key ) {
 		self::$secret_key = $secret_key;
@@ -95,12 +98,12 @@ class StripeApi {
 	/**
 	 * Makes a request to the Stripe API.
 	 *
-	 * @param array  $request_body The request data (body).
-	 * @param string $api          The API endpoint to use. Default is 'charges'.
-	 * @param string $method       The HTTP method to use. Default is 'POST'.
-	 * @param bool   $with_headers Whether to include headers in the response. Default is false.
+	 * @param array       $request_body The request data (body).
+	 * @param string      $api The API endpoint to use. Default is 'charges'.
+	 * @param string      $method The HTTP method to use. Default is 'POST'.
+	 * @param bool        $with_headers Whether to include headers in the response. Default is false.
 	 * @param string|null $idempotency_key Optional idempotency key. If not provided, one might be generated.
-	 *
+	 * .
 	 * @return array|object The response from the Stripe API.
 	 *
 	 * @throws \Exception If there is a problem connecting to the Stripe API endpoint or if Stripe returns an error.
@@ -110,7 +113,7 @@ class StripeApi {
 	public static function request( $request_body, $api = 'charges', $method = 'POST', $with_headers = false, $idempotency_key = null ) {
 		$headers = self::get_headers();
 
-		// Idempotency for POST requests to relevant endpoints
+		// Idempotency for POST requests to relevant endpoints.
 		if ( 'POST' === $method ) {
 			if ( null === $idempotency_key && isset( $request_body['metadata']['order_id'] ) ) {
 				// Generate a basic idempotency key if not provided and order_id is available
@@ -125,11 +128,11 @@ class StripeApi {
 		$response = wp_safe_remote_request( // Changed to wp_safe_remote_request for flexibility with GET/POST etc.
 			self::ENDPOINT . $api,
 			array(
-				'method'  => $method,
-				'headers' => $headers,
-				'body'    => 'POST' === $method || 'PUT' === $method ? $request_body : null, // Only include body for relevant methods
-				'data_format' => 'body', // Ensures body is sent as form data for POST
-				'timeout' => 70,
+				'method'      => $method,
+				'headers'     => $headers,
+				'body'        => 'POST' === $method || 'PUT' === $method ? $request_body : null, // Only include body for relevant methods.
+				'data_format' => 'body', // Ensures body is sent as form data for POST.
+				'timeout'     => 70,
 			)
 		);
 
@@ -148,21 +151,20 @@ class StripeApi {
 		$decoded_body = json_decode( $response_body );
 
 		if ( json_last_error() !== JSON_ERROR_NONE ) {
-			throw new \Exception( __( 'Failed to decode JSON response from Stripe API.', 'ohmylms' ) . ' Body: ' . substr($response_body, 0, 200) );
+			throw new \Exception( __( 'Failed to decode JSON response from Stripe API.', 'ohmylms' ) . ' Body: ' . substr( $response_body, 0, 200 ) );
 		}
 
 		// Check for Stripe errors in the response body itself
-        // Stripe often returns 200 OK for API errors but includes an 'error' object in the JSON.
-        if ( isset( $decoded_body->error ) ) {
-            // It's good practice to throw an exception here so calling code can catch it.
-            // The message can be made more specific based on $decoded_body->error properties.
-            $error_message = isset($decoded_body->error->message) ? $decoded_body->error->message : 'Unknown Stripe API error.';
-            // You might want to include more details like error type or code if available.
-            // For example: $error_message .= " (Type: {$decoded_body->error->type}, Code: {$decoded_body->error->code})";
-            // throw new \Exception( 'Stripe API Error: ' . $error_message );
-            // For now, we will return the decoded body with the error, GatewayStripeIntents will check for ->error
-        }
-
+		// Stripe often returns 200 OK for API errors but includes an 'error' object in the JSON.
+		if ( isset( $decoded_body->error ) ) {
+			// It's good practice to throw an exception here so calling code can catch it.
+			// The message can be made more specific based on $decoded_body->error properties.
+			$error_message = isset( $decoded_body->error->message ) ? $decoded_body->error->message : 'Unknown Stripe API error.';
+			// You might want to include more details like error type or code if available.
+			// For example: $error_message .= " (Type: {$decoded_body->error->type}, Code: {$decoded_body->error->code})";
+			// throw new \Exception( 'Stripe API Error: ' . $error_message );
+			// For now, we will return the decoded body with the error, OhMyLMS_Gateway_Stripe_Intents will check for ->error.
+		}
 
 		if ( $with_headers ) {
 			return array(
@@ -177,9 +179,7 @@ class StripeApi {
 	/**
 	 * Retrieve a resource from the Stripe API.
 	 *
-	 * @param string $resource The resource to retrieve.
-	 * @param array  $args     The arguments to pass to the request.
-	 *
+	 * @param string $payment_method_id Payment method identifier.
 	 * @return array|object The response from the Stripe API.
 	 *
 	 * @throws \Exception If there is a problem connecting to the Stripe API endpoint.
@@ -201,7 +201,7 @@ class StripeApi {
 	 * Retrieve a resource from the Stripe API.
 	 *
 	 * @param string $api The API endpoint to retrieve.
-	 *
+	 * .
 	 * @return array|object The response from the Stripe API.
 	 *
 	 * @throws \Exception If there is a problem connecting to the Stripe API endpoint.
@@ -226,6 +226,14 @@ class StripeApi {
 	}
 
 
+	/**
+	 * Request with level3 data for Stripe api.
+	 *
+	 * @param mixed $request REST request.
+	 * @param mixed $api Api.
+	 * @param mixed $level3_data Level3 data.
+	 * @param mixed $order Order.
+	 */
 	public static function request_with_level3_data( $request, $api, $level3_data, $order ) {
 		$result = self::request(
 			$request,
@@ -235,6 +243,12 @@ class StripeApi {
 		return $result;
 	}
 
+	/**
+	 * Attach payment method for Stripe api.
+	 *
+	 * @param mixed $payment_method_id Payment method identifier.
+	 * @param mixed $customer_id Customer identifier.
+	 */
 	public static function attach_payment_method( $payment_method_id, $customer_id ) {
 		$request = array(
 			'customer' => $customer_id,
@@ -243,13 +257,19 @@ class StripeApi {
 		return self::request( $request, 'payment_methods/' . $payment_method_id . '/attach', 'POST' );
 	}
 
+	/**
+	 * Update customer default payment method for Stripe api.
+	 *
+	 * @param mixed $customer_id Customer identifier.
+	 * @param mixed $payment_method_id Payment method identifier.
+	 */
 	public static function update_customer_default_payment_method( $customer_id, $payment_method_id ) {
 		$request = array(
 			'invoice_settings' => array(
 				'default_payment_method' => $payment_method_id,
 			),
 		);
-	
+
 		return self::request( $request, 'customers/' . $customer_id, 'POST' );
 	}
 }

@@ -7,7 +7,7 @@
  * @package OhMyLMS\Templates
  * @version  1.0.0
  *
- * @var \CodeRex\Ecommerce\Data\Order $order Order object.
+ * @var \OhMyLMS\Commerce\Data\Order $order Order object.
  */
 
 defined( 'ABSPATH' ) || exit();
@@ -16,17 +16,17 @@ defined( 'ABSPATH' ) || exit();
 <table>
 	<tbody>
 		<?php
-		$items = $order->get_items();
-		$maybe_by_point = get_post_meta( $order->get_id(), '_purchased_by', true );
-		$points = get_post_meta( $order->get_id(), '_purchased_point', true );
-		$is_including_tax = CodeRex\Ecommerce\Includes\Tax\TaxService::get_instance()->prices_include_tax();
+		$items            = $order->get_items();
+		$maybe_by_point   = get_post_meta( $order->get_id(), '_purchased_by', true );
+		$points           = get_post_meta( $order->get_id(), '_purchased_point', true );
+		$is_including_tax = OhMyLMS\Commerce\Includes\Tax\TaxService::get_instance()->prices_include_tax();
 		foreach ( $items as $item ) {
-			$course = $item->get_course();
+			$course    = $item->get_course();
 			$is_course = true;
-			if( !$course ){
-				$id = $item->get_course_id();
-				$course = ohmylms_get_membership($id);
-				if( !$course ){
+			if ( ! $course ) {
+				$id     = $item->get_course_id();
+				$course = ohmylms_get_membership( $id );
+				if ( ! $course ) {
 					continue;
 				}
 				$is_course = false;
@@ -35,13 +35,13 @@ defined( 'ABSPATH' ) || exit();
 			<tr>
 				<td>
 					<div class="course-title-wrapper">
-						<?php if( $is_course && $course->get_thumbnail_url() ) : ?>
+						<?php if ( $is_course && $course->get_thumbnail_url() ) : ?>
 							<figure class="ohmylms-course-img">
-								<img src="<?php echo esc_url($course->get_thumbnail_url());?>" alt="course image">
+								<img src="<?php echo esc_url( $course->get_thumbnail_url() ); ?>" alt="course image">
 							</figure>
 						<?php endif; ?>
 
-						<p class="ohmylms-course-title" title="<?php echo esc_attr($item->get_name()); ?>">
+						<p class="ohmylms-course-title" title="<?php echo esc_attr( $item->get_name() ); ?>">
 							<?php echo esc_html( $item->get_name() ); ?>
 						</p>
 					</div>
@@ -49,11 +49,12 @@ defined( 'ABSPATH' ) || exit();
 
 				<td>
 					<span class="ohmylms-price">
-						<?php echo $maybe_by_point ? $points.' Pts' : $order->get_formatted_line_subtotal( $item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+						<?php echo $maybe_by_point ? $points . ' Pts' : $order->get_formatted_line_subtotal( $item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 					</span>
 				</td>
 			</tr>
-		<?php }
+			<?php
+		}
 		?>
 	</tbody>
 
@@ -67,13 +68,14 @@ defined( 'ABSPATH' ) || exit();
 
 		foreach ( $order->get_order_item_totals() as $key => $total ) {
 			if ( 'tax' === $key && ( $maybe_by_point || $is_including_tax ) ) {
-                continue;
-            }
-			
+				continue;
+			}
+
 			?>
-			<tr class="<?php echo $key; ?>">
+			<tr class="<?php echo esc_attr( $key ); ?>">
 				<?php
-				if( in_array( $key, $update_value_keys ) && !$maybe_by_point ): ?>
+				if ( in_array( $key, $update_value_keys ) && ! $maybe_by_point ) :
+					?>
 					<th scope="row">
 						<?php
 						// Allow HTML for tax label to display tax rate span.
@@ -93,7 +95,7 @@ defined( 'ABSPATH' ) || exit();
 					?>
 					</th>
 				<?php endif; ?>
-				<?php if( 'order_id' === $key ){ ?>
+				<?php if ( 'order_id' === $key ) { ?>
 					<td>
 						<span class="thankyou-order-id-text">
 							#<?php echo wp_kses_post( $total['value'] ); ?>
@@ -104,13 +106,14 @@ defined( 'ABSPATH' ) || exit();
 						</span>
 
 						<span class="thankyou-copy-alert">
-							<?php echo __( 'Copied!', 'ohmylms' ); ?>
+							<?php echo esc_html__( 'Copied!', 'ohmylms' ); ?>
 						</span>
 					</td>
 
-				<?php }else{ ?>
-					<?php if (  in_array( $key, $update_value_keys ) && $maybe_by_point) :
-						if( 'tax' === $key ) {
+				<?php } else { ?>
+					<?php
+					if ( in_array( $key, $update_value_keys ) && $maybe_by_point ) :
+						if ( 'tax' === $key ) {
 							continue;
 						}
 						?>
@@ -120,13 +123,14 @@ defined( 'ABSPATH' ) || exit();
 					<?php else : ?>
 						<td>
 							<?php
-							if( 'order_total' === $key ) {
-								$total = $order->get_total();
+							if ( 'order_total' === $key ) {
+								$total           = $order->get_total();
 								$formatted_total = ohmylms_price( $total );
 								echo wp_kses_post( $formatted_total );
-							}else{
+							} else {
 								echo wp_kses_post( $total['value'] );
-							} ?>
+							}
+							?>
 						</td>
 					<?php endif; ?>
 				<?php } ?>
@@ -134,4 +138,4 @@ defined( 'ABSPATH' ) || exit();
 		<?php } ?>
 	</tfoot>
 </table>
-<?php do_action('ohmylms_after_order_details', $order); ?>
+<?php do_action( 'ohmylms_after_order_details', $order ); ?>

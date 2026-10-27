@@ -1,33 +1,51 @@
 <?php
+/**
+ * Page functions.
+ *
+ * @package OhMyLMS
+ */
+
 defined( 'ABSPATH' ) || exit;
 
-function ecommerce_page_endpoint_title( $title ) {
+/**
+ * Ohmylms ecommerce page endpoint title for Page-functions.
+ *
+ * @param mixed $title Title.
+ */
+function ohmylms_ecommerce_page_endpoint_title( $title ) {
 	global $wp_query;
 
 	if ( ! is_null( $wp_query ) && ! is_admin() && is_main_query() && in_the_loop() && is_page() ) {
-		$endpoint       = \CodeRex\Ecommerce\ecommerce()->query->get_current_endpoint();
+		$endpoint       = \OhMyLMS\Commerce\ecommerce()->query->get_current_endpoint();
 		$action         = isset( $_GET['action'] ) ? sanitize_text_field( wp_unslash( $_GET['action'] ) ) : '';
-		$endpoint_title = \CodeRex\Ecommerce\ecommerce()->query->get_endpoint_title( $endpoint, $action );
+		$endpoint_title = \OhMyLMS\Commerce\ecommerce()->query->get_endpoint_title( $endpoint, $action );
 		$title          = $endpoint_title ? $endpoint_title : $title;
 
-		remove_filter( 'the_title', 'ecommerce_page_endpoint_title' );
+		remove_filter( 'the_title', 'ohmylms_ecommerce_page_endpoint_title' );
 	}
 
 	return $title;
 }
 
-add_filter( 'the_title', 'ecommerce_page_endpoint_title' );
+add_filter( 'the_title', 'ohmylms_ecommerce_page_endpoint_title' );
 
 
 
-function ecommerce_get_endpoint_url( $endpoint, $value = '', $permalink = '' ) {
+/**
+ * Ohmylms ecommerce get endpoint url for Page-functions.
+ *
+ * @param mixed  $endpoint Endpoint.
+ * @param string $value Value to process.
+ * @param string $permalink Permalink.
+ */
+function ohmylms_ecommerce_get_endpoint_url( $endpoint, $value = '', $permalink = '' ) {
 
 	if ( ! $permalink ) {
 		$permalink = get_permalink();
 	}
 
 	// Map endpoint to options.
-	$query_vars = \CodeRex\Ecommerce\ecommerce()->query->get_query_vars();
+	$query_vars = \OhMyLMS\Commerce\ecommerce()->query->get_query_vars();
 	$endpoint   = ! empty( $query_vars[ $endpoint ] ) ? $query_vars[ $endpoint ] : $endpoint;
 
 	if ( get_option( 'permalink_structure' ) ) {

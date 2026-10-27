@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Controller for handling membership REST API endpoints.
+ *
+ * @package OhMyLMS
+ */
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
@@ -28,6 +33,9 @@ class MembershipController extends RestController {
 	 */
 	protected $base = 'membership';
 
+	/**
+	 * Check membership permission for Membership controller.
+	 */
 	public function check_membership_permission() {
 		return current_user_can( 'edit_posts' );
 	}
@@ -38,7 +46,7 @@ class MembershipController extends RestController {
 	 * @since 1.2.20
 	 *
 	 * @param \WP_REST_Request $request Full details about the request.
-	 *
+	 * .
 	 * @return true|\WP_Error
 	 */
 	public function check_membership_read_permission( $request ) {
@@ -55,7 +63,7 @@ class MembershipController extends RestController {
 	 * @since 1.2.20
 	 *
 	 * @param \WP_REST_Request $request Full details about the request.
-	 *
+	 * .
 	 * @return true|\WP_Error
 	 */
 	public function check_membership_edit_permission( $request ) {
@@ -68,7 +76,7 @@ class MembershipController extends RestController {
 	 * @since 1.2.20
 	 *
 	 * @param \WP_REST_Request $request Full details about the request.
-	 *
+	 * .
 	 * @return true|\WP_Error
 	 */
 	public function check_membership_delete_permission( $request ) {
@@ -82,11 +90,15 @@ class MembershipController extends RestController {
 	 * @since 1.0.0
 	 */
 	public function register_routes() {
-        register_rest_route($this->namespace, '/membership/course-preview', [
-            'methods' => WP_REST_Server::CREATABLE,
-            'callback' => [$this, 'course_preview'],
-            'permission_callback' => [$this, 'check_membership_permission'],
-        ]);
+		register_rest_route(
+			$this->namespace,
+			'/membership/course-preview',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'course_preview' ),
+				'permission_callback' => array( $this, 'check_membership_permission' ),
+			)
+		);
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->base . '/',
@@ -106,13 +118,17 @@ class MembershipController extends RestController {
 			)
 		);
 
-		register_rest_route( $this->namespace, '/' . $this->base . '/trash-bulk/', array(
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->base . '/trash-bulk/',
 			array(
-				'methods'             => \WP_REST_Server::DELETABLE,
-				'callback'            => array( $this, 'trash_bulk' ),
-				'permission_callback' => array( $this, 'check_membership_permission' ),
+				array(
+					'methods'             => \WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'trash_bulk' ),
+					'permission_callback' => array( $this, 'check_membership_permission' ),
+				),
 			)
-		) );
+		);
 
 		register_rest_route(
 			$this->namespace,
@@ -147,7 +163,7 @@ class MembershipController extends RestController {
 	/**
 	 * Check if a given request has access to read an item.
 	 *
-	 * @param  WP_REST_Request $request Full details about the request.
+	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_Error|boolean
 	 *
 	 * @since 1.0.0
@@ -198,8 +214,8 @@ class MembershipController extends RestController {
 			) : array(),
 		);
 
-		if( 'any' === $args['post_status'] || !in_array($args['post_status'],array('draft', 'publish', 'future'))  ){
-			$args['post_status'] = array('draft', 'publish', 'future');
+		if ( 'any' === $args['post_status'] || ! in_array( $args['post_status'], array( 'draft', 'publish', 'future' ) ) ) {
+			$args['post_status'] = array( 'draft', 'publish', 'future' );
 		}
 
 		$args['date_query'] = array();
@@ -248,10 +264,10 @@ class MembershipController extends RestController {
 						'inclusive' => true,
 					);
 					break;
-				
+
 				case 'custom':
-					$start_date  = isset( $request['start_date'] ) ? sanitize_text_field( $request['start_date'] ) : '';
-					$end_date  = isset( $request['end_date'] ) ? sanitize_text_field( $request['end_date'] ) : '';
+					$start_date           = isset( $request['start_date'] ) ? sanitize_text_field( $request['start_date'] ) : '';
+					$end_date             = isset( $request['end_date'] ) ? sanitize_text_field( $request['end_date'] ) : '';
 					$args['date_query'][] = array(
 						'after'     => $start_date,
 						'before'    => $end_date,
@@ -280,7 +296,7 @@ class MembershipController extends RestController {
 		$page        = (int) $query_args['paged'];
 		$total_posts = $posts_query->found_posts;
 
-		if ( $total_posts < 1 && $page > 1 ) {
+		if ( 1 > $total_posts && 1 < $page ) {
 			unset( $query_args['paged'] );
 			$count_query = new WP_Query();
 			$count_query->query( $query_args );
@@ -300,7 +316,7 @@ class MembershipController extends RestController {
 		}
 		$base = add_query_arg( $request_params, rest_url( sprintf( '/%s/%s', $this->namespace, $this->rest_base ) ) );
 
-		if ( $page > 1 ) {
+		if ( 1 < $page ) {
 			$prev_page = $page - 1;
 			if ( $prev_page > $max_pages ) {
 				$prev_page = $max_pages;
@@ -320,7 +336,7 @@ class MembershipController extends RestController {
 	/**
 	 * Create a single membership
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
 	 *
 	 * @since 1.0.0
@@ -343,8 +359,8 @@ class MembershipController extends RestController {
 			 * @since 1.0.0
 			 */
 			do_action( 'ohmylms_rest_insert_membership', $post, $request );
-			
-			// Trigger membership created event for tracking
+
+			// Trigger membership created event for tracking.
 			do_action( 'ohmylms_membership_created', $membership_id, $request );
 
 			$this->update_additional_fields_for_object( $post, $request );
@@ -372,7 +388,7 @@ class MembershipController extends RestController {
 	public function get_item( $request ) {
 		$id   = (int) $request['id'];
 		$post = get_post( $id );
-		if ( empty( $id ) || empty( $post->ID ) || $post->post_type !== OHMYLMS_MEMBERSHIP_CPT ) {
+		if ( empty( $id ) || empty( $post->ID ) || OHMYLMS_MEMBERSHIP_CPT !== $post->post_type ) {
 			return new WP_Error( 'ohmylms_rest_invalid_membership_id', __( 'Invalid ID.', 'ohmylms' ), array( 'status' => 404 ) );
 		}
 
@@ -394,21 +410,21 @@ class MembershipController extends RestController {
 	 * @since 1.0.0
 	 */
 	public function trash_bulk( $request ) {
-		$membership_ids = $request->get_param('membership_ids');
-		if( is_array($membership_ids) ){
+		$membership_ids = $request->get_param( 'membership_ids' );
+		if ( is_array( $membership_ids ) ) {
 			$membership_ids = $this->filter_allowed_post_ids( $membership_ids, 'delete', 'ohmylms-membership' );
 
 			if ( is_wp_error( $membership_ids ) ) {
 				return $membership_ids;
 			}
 
-			foreach( $membership_ids as $membership_id ){
-				wp_trash_post($membership_id);
+			foreach ( $membership_ids as $membership_id ) {
+				wp_trash_post( $membership_id );
 				do_action( 'ohmylms_rest_delete_membership', $membership_id );
 			}
-			return new \WP_REST_Response(['message' => 'Deleted Successfully'], 200);
+			return new \WP_REST_Response( array( 'message' => 'Deleted Successfully' ), 200 );
 		}
-		return new \WP_REST_Response(['message' => 'Failed to trash the membership.'], 500);
+		return new \WP_REST_Response( array( 'message' => 'Failed to trash the membership.' ), 500 );
 	}
 
 
@@ -447,20 +463,20 @@ class MembershipController extends RestController {
 	/**
 	 * Delete membership
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
 	 * @since 1.0.0
 	 */
 	public function delete_item( $request ) {
-		// Get membership id
+		// Get membership id.
 		$membership_id = isset( $request['id'] ) ? (int) $request['id'] : 0;
 
-		// Check the membership id exist or not
+		// Check the membership id exist or not.
 		if ( ! $membership_id ) {
 			return new WP_Error( 'ohmylms_rest_membership_empty_id', __( 'ID is required.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
 
-		// Get existing membership by membership id
+		// Get existing membership by membership id.
 		$membership = ohmylms_get_membership( $membership_id );
 
 		// Check the membership exist or not.
@@ -468,7 +484,7 @@ class MembershipController extends RestController {
 			return new WP_Error( 'ohmylms_rest_membership_invalid_id', __( 'ID is invalid.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
 
-		// Delete the membership
+		// Delete the membership.
 		$membership->delete();
 
 		/**
@@ -496,7 +512,7 @@ class MembershipController extends RestController {
 	 *
 	 * @param array                $prepared_args The prepared arguments for the query.
 	 * @param WP_REST_Request|null $request The REST request object.
-	 *
+	 * .
 	 * @return array The filtered and prepared query arguments.
 	 * @since 1.0.0
 	 */
@@ -614,7 +630,7 @@ class MembershipController extends RestController {
 	 * @param \WP_REST_Request $request The REST request object containing the meta data.
 	 * @return bool True on success, false on failure.
 	 *
-	 * @throws DataException
+	 * @throws DataException When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	protected function update_post_meta_fields( $post, $request ) {
@@ -625,8 +641,8 @@ class MembershipController extends RestController {
 		// Save the membership data.
 		$membership->save();
 		$products = $membership->get_products();
-        // Notify on empty selections too, so removed courses lose this plan's access.
-        do_action('ohmylms_rest_after_adding_products_on_membership', $products, $membership->get_id());
+		// Notify on empty selections too, so removed courses lose this plan's access.
+		do_action( 'ohmylms_rest_after_adding_products_on_membership', $products, $membership->get_id() );
 		return true;
 	}
 
@@ -639,13 +655,18 @@ class MembershipController extends RestController {
 	 * @return Membership The updated membership object.
 	 *
 	 * @since 1.0.0
+	 * @throws DataException When the operation cannot be completed.
 	 */
 	protected function set_membership_meta( $membership, $request ) {
-        $error = $this->validate_course_selection($request);
-        if (is_wp_error($error)) throw new DataException($error->get_error_code(), $error->get_error_message(), 400);
-        foreach (['course_categories', 'course_tags', 'excluded_courses'] as $field) {
-            if (isset($request[$field])) $membership->{'set_' . $field}($request[$field]);
-        }
+		$error = $this->validate_course_selection( $request, $membership );
+		if ( is_wp_error( $error ) ) {
+			throw new DataException( $error->get_error_code(), $error->get_error_message(), 400 );
+		}
+		foreach ( array( 'course_categories', 'course_tags', 'course_curriculum', 'course_bundles', 'excluded_courses' ) as $field ) {
+			if ( isset( $request[ $field ] ) ) {
+				$membership->{'set_' . $field}( $request[ $field ] );
+			}
+		}
 		if ( isset( $request['regular_price'] ) ) {
 			$membership->set_regular_price( $request['regular_price'] );
 		}
@@ -701,94 +722,219 @@ class MembershipController extends RestController {
 	/**
 	 * Get membership data.
 	 *
-	 * @param Membership $membership
+	 * @param Membership $membership Membership.
 	 * @return array
 	 *
 	 * @since 1.0.0
 	 */
 	protected function get_membership_data( $membership ) {
 		$data = array(
-			'id'                    => $membership->get_id(),
-			'name'                  => $membership->get_name(),
-			'slug'                  => $membership->get_slug(),
-			'status'                => $membership->get_status(),
-			'description'           => $membership->get_description(),
-			'price'                 => $membership->get_price(),
-			'regular_price'         => $membership->get_regular_price(),
-			'sale_price'            => $membership->get_sale_price(),
-			'sale_price_dates_from' => $membership->get_sale_price_dates_from(),
-			'sale_price_dates_to'   => $membership->get_sale_price_dates_to(),
-			'date_created'          => $membership->get_date_created(),
-			'date_modified'         => $membership->get_date_modified(),
-			'membership_url'        => get_permalink( $membership->get_id() ),
-			'sign_up_fee'           => $membership->get_sign_up_fee(),
-			'free_trial'            => $membership->get_free_trial(),
-			'stop_renew'            => $membership->get_stop_renew(),
-			'subscription_length'   => $membership->get_subscription_length(),
-			'subscription_period'   => $membership->get_subscription_period(),
-			'subscription_period_interval'   => $membership->get_subscription_period_interval(),
-			'products'              => $membership->get_products('edit'),
-            'course_categories' => $membership->get_course_categories(),
-            'course_tags' => $membership->get_course_tags(),
-            'excluded_courses' => $membership->get_excluded_courses(),
-			'courses'               => count( $membership->get_products() ),
-			'members'               => $membership->count_membership_members(),
-			'currency'		 		=> html_entity_decode(get_ohmylms_currency_symbol( get_ohmylms_currency() )),
-            'currency_pos'			=> get_ohmylms_currency_position(),
+			'id'                           => $membership->get_id(),
+			'name'                         => $membership->get_name(),
+			'slug'                         => $membership->get_slug(),
+			'status'                       => $membership->get_status(),
+			'description'                  => $membership->get_description(),
+			'price'                        => $membership->get_price(),
+			'regular_price'                => $membership->get_regular_price(),
+			'sale_price'                   => $membership->get_sale_price(),
+			'sale_price_dates_from'        => $membership->get_sale_price_dates_from(),
+			'sale_price_dates_to'          => $membership->get_sale_price_dates_to(),
+			'date_created'                 => $membership->get_date_created(),
+			'date_modified'                => $membership->get_date_modified(),
+			'membership_url'               => get_permalink( $membership->get_id() ),
+			'sign_up_fee'                  => $membership->get_sign_up_fee(),
+			'free_trial'                   => $membership->get_free_trial(),
+			'stop_renew'                   => $membership->get_stop_renew(),
+			'subscription_length'          => $membership->get_subscription_length(),
+			'subscription_period'          => $membership->get_subscription_period(),
+			'subscription_period_interval' => $membership->get_subscription_period_interval(),
+			'products'                     => $membership->get_products( 'edit' ),
+			'course_categories'            => $membership->get_course_categories(),
+			'course_tags'                  => $membership->get_course_tags(),
+			'course_curriculum'            => $membership->get_course_curriculum(),
+			'course_bundles'               => $membership->get_course_bundles(),
+			'legacy_rules'                 => $this->legacy_rules( $membership ),
+			'excluded_courses'             => $membership->get_excluded_courses(),
+			'courses'                      => count( $membership->get_products() ),
+			'members'                      => $membership->count_membership_members(),
+			'currency'                     => html_entity_decode( get_ohmylms_currency_symbol( get_ohmylms_currency() ) ),
+			'currency_pos'                 => get_ohmylms_currency_position(),
 
 		);
 		return $data;
 	}
 
-    private function validate_course_selection($request) {
-        foreach (['course_categories' => 'course_category', 'course_tags' => 'course_tag', 'excluded_courses' => null] as $field => $taxonomy) {
-            if (!isset($request[$field])) continue;
-            if (!is_array($request[$field])) return new WP_Error('membership_selection_invalid', __('Course selections must be lists.', 'ohmylms'), ['status' => 400]);
-            foreach ($request[$field] as $id) {
-                if (!is_numeric($id) || (int) $id <= 0 || (string) (int) $id !== (string) $id || ($taxonomy ? !term_exists((int) $id, $taxonomy) : get_post_type((int) $id) !== 'ohmylms-course')) {
-                    return new WP_Error('membership_selection_invalid', __('A selected course category, tag or exclusion no longer exists.', 'ohmylms'), ['status' => 400]);
-                }
-            }
-        }
-        if (isset($request['products'])) {
-            if (!is_array($request['products'])) return new WP_Error('membership_selection_invalid', __('Courses must be a list.', 'ohmylms'), ['status' => 400]);
-            foreach ($request['products'] as $product) {
-                if (!is_array($product) || empty($product['id']) || !is_numeric($product['id']) || (string) (int) $product['id'] !== (string) $product['id'] || get_post_type((int) $product['id']) !== 'ohmylms-course') return new WP_Error('membership_selection_invalid', __('A selected course no longer exists.', 'ohmylms'), ['status' => 400]);
-            }
-        }
-        return true;
-    }
+	/**
+	 * Course rules. Curriculum items and course bundles are the rules to choose from. Legacy category and
+	 * tag rules, saved before those were replaced, can only be kept or removed, never extended: members keep
+	 * the access they were granted until an administrator removes the rule, yet nothing new is organized by
+	 * categories or tags.
+	 *
+	 * @param mixed $request REST request.
+	 * @param mixed $membership Membership.
+	 */
+	private function validate_course_selection( $request, $membership = null ) {
+		$rules = array(
+			'course_categories' => 'course_category',
+			'course_tags'       => 'course_tag',
+			'course_curriculum' => 'curriculum',
+			'course_bundles'    => 'bundles',
+			'excluded_courses'  => null,
+		);
+		foreach ( $rules as $field => $kind ) {
+			if ( ! isset( $request[ $field ] ) ) {
+				continue;
+			}
+			if ( ! is_array( $request[ $field ] ) ) {
+				return new WP_Error( 'membership_selection_invalid', __( 'Course selections must be lists.', 'ohmylms' ), array( 'status' => 400 ) );
+			}
+			foreach ( $request[ $field ] as $id ) {
+				if ( ! is_numeric( $id ) || (int) $id <= 0 || (string) (int) $id !== (string) $id ) {
+					return new WP_Error( 'membership_selection_invalid', __( 'A selected course rule or exclusion no longer exists.', 'ohmylms' ), array( 'status' => 400 ) );
+				}
+				$id = (int) $id;
+				if ( 'curriculum' === $kind ) {
+					$exists = \OhMyLMS\Curriculum\Items::get( $id ) !== null;
+				} elseif ( 'bundles' === $kind ) {
+					$exists = \OhMyLMS\Bundles\Bundles::get( $id ) !== null;
+				} elseif ( $kind ) {
+					$exists = (bool) term_exists( $id, $kind );
+				} else {
+					$exists = get_post_type( $id ) === 'ohmylms-course';
+				}
+				if ( ! $exists ) {
+					return new WP_Error( 'membership_selection_invalid', __( 'A selected course rule or exclusion no longer exists.', 'ohmylms' ), array( 'status' => 400 ) );
+				}
+			}
+			if ( $membership && in_array( $kind, array( 'course_category', 'course_tag' ), true ) ) {
+				$saved = 'course_category' === $kind ? $membership->get_course_categories( 'edit' ) : $membership->get_course_tags( 'edit' );
+				if ( array_diff( array_map( 'intval', $request[ $field ] ), array_map( 'intval', (array) $saved ) ) ) {
+					return new WP_Error( 'membership_legacy_rules', __( 'Category and tag rules were replaced by curriculum items and course bundles. Existing rules can only be removed.', 'ohmylms' ), array( 'status' => 400 ) );
+				}
+			}
+		}
+		if ( isset( $request['products'] ) ) {
+			if ( ! is_array( $request['products'] ) ) {
+				return new WP_Error( 'membership_selection_invalid', __( 'Courses must be a list.', 'ohmylms' ), array( 'status' => 400 ) );
+			}
+			foreach ( $request['products'] as $product ) {
+				if ( ! is_array( $product ) || empty( $product['id'] ) || ! is_numeric( $product['id'] ) || (string) (int) $product['id'] !== (string) $product['id'] || get_post_type( (int) $product['id'] ) !== 'ohmylms-course' ) {
+					return new WP_Error( 'membership_selection_invalid', __( 'A selected course no longer exists.', 'ohmylms' ), array( 'status' => 400 ) );
+				}
+			}
+		}
+		return true;
+	}
 
-    public function course_preview($request) {
-        $valid = $this->validate_course_selection($request);
-        if (is_wp_error($valid)) return $valid;
-        $courses = \OhMyLMS\Membership\CourseSelection::resolve($request['products'] ?? [], $request['course_categories'] ?? [], $request['course_tags'] ?? [], $request['excluded_courses'] ?? []);
-        $direct = array_column($request['products'] ?? [], 'id');
-        $categories = $request['course_categories'] ?? [];
-        $category_ids = $categories;
-        foreach ($categories as $category) {
-            $children = get_term_children($category, 'course_category');
-            if (!is_wp_error($children)) $category_ids = array_merge($category_ids, $children);
-        }
-        foreach ($courses as &$course) {
-            $course['reasons'] = [];
-            if (in_array($course['id'], $direct)) $course['reasons'][] = __('Individual course', 'ohmylms');
-            foreach (['course_category' => $category_ids, 'course_tag' => $request['course_tags'] ?? []] as $taxonomy => $ids) {
-                $terms = wp_get_post_terms($course['id'], $taxonomy);
-                if (is_wp_error($terms)) continue;
-                foreach ($terms as $term) if (in_array($term->term_id, $ids)) $course['reasons'][] = $term->name;
-            }
-        }
-        unset($course);
-        return rest_ensure_response(['courses' => $courses, 'total' => count($courses)]);
-    }
+	/** Legacy category and tag rules still saved on a plan, with their names, so they can be shown and removed.
+	 *
+	 * @param mixed $membership Membership.
+	 */
+	private function legacy_rules( $membership ) {
+		$named = static function ( $ids, $taxonomy ) {
+			$rows = array();
+			foreach ( (array) $ids as $id ) {
+				$term   = taxonomy_exists( $taxonomy ) ? get_term( (int) $id, $taxonomy ) : null;
+				$rows[] = array(
+					'id'   => (int) $id,
+					'name' => $term && ! is_wp_error( $term ) ? $term->name : '#' . (int) $id,
+				);
+			}
+			return $rows;
+		};
+		return array(
+			'categories' => $named( $membership->get_course_categories(), 'course_category' ),
+			'tags'       => $named( $membership->get_course_tags(), 'course_tag' ),
+		);
+	}
 
+	/**
+	 * Course preview for Membership controller.
+	 *
+	 * @param mixed $request REST request.
+	 */
+	public function course_preview( $request ) {
+		$valid = $this->validate_course_selection( $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+		$curriculum   = $request['course_curriculum'] ?? array();
+		$bundles      = $request['course_bundles'] ?? array();
+		$courses      = \OhMyLMS\Membership\CourseSelection::resolve( $request['products'] ?? array(), $request['course_categories'] ?? array(), $request['course_tags'] ?? array(), $request['excluded_courses'] ?? array(), $curriculum, $bundles );
+		$direct       = array_column( $request['products'] ?? array(), 'id' );
+		$categories   = $request['course_categories'] ?? array();
+		$category_ids = $categories;
+		foreach ( $categories as $category ) {
+			$children = get_term_children( $category, 'course_category' );
+			if ( ! is_wp_error( $children ) ) {
+				$category_ids = array_merge( $category_ids, $children );
+			}
+		}
+		// Curriculum rules include everything beneath a selected item; a bundle includes its courses and the courses under its curriculum members.
+		$item_scope = array();
+		if ( $curriculum ) {
+			$parents    = \OhMyLMS\Curriculum\Items::parents();
+			$item_scope = array_map( 'intval', $curriculum );
+			foreach ( $item_scope as $item ) {
+				$item_scope = array_merge( $item_scope, \OhMyLMS\Curriculum\Tree::descendants( $parents, $item ) );
+			}
+		}
+		$bundle_courses = array();
+		foreach ( $bundles as $bundle_id ) {
+			$bundle = \OhMyLMS\Bundles\Bundles::get( (int) $bundle_id );
+			if ( $bundle ) {
+				$bundle_courses[] = array(
+					'title'   => $bundle['title'],
+					'courses' => \OhMyLMS\Curriculum\Placement::course_ids_for_bundles( array( (int) $bundle_id ) ),
+				);
+			}
+		}
+		foreach ( $courses as &$course ) {
+			$course['reasons'] = array();
+			if ( in_array( $course['id'], $direct ) ) {
+				$course['reasons'][] = __( 'Individual course', 'ohmylms' );
+			}
+			foreach ( array(
+				'course_category' => $category_ids,
+				'course_tag'      => $request['course_tags'] ?? array(),
+			) as $taxonomy => $ids ) {
+				$terms = wp_get_post_terms( $course['id'], $taxonomy );
+				if ( is_wp_error( $terms ) ) {
+					continue;
+				}
+				foreach ( $terms as $term ) {
+					if ( in_array( $term->term_id, $ids ) ) {
+						$course['reasons'][] = $term->name;
+					}
+				}
+			}
+			if ( $item_scope ) {
+				foreach ( \OhMyLMS\Curriculum\Placement::items( $course['id'] ) as $item ) {
+					if ( in_array( $item['id'], $item_scope, true ) ) {
+										$course['reasons'][] = $item['name'];
+					}
+				}
+			}
+			foreach ( $bundle_courses as $bundle ) {
+				if ( in_array( (int) $course['id'], $bundle['courses'], true ) ) {
+					$course['reasons'][] = $bundle['title'];
+				}
+			}
+		}
+		unset( $course );
+		return rest_ensure_response(
+			array(
+				'courses' => $courses,
+				'total'   => count( $courses ),
+			)
+		);
+	}
 
 	/**
 	 * Prepare links for the request.
 	 *
-	 * @param $membership
-	 * @param $request
+	 * @param mixed $membership Membership.
+	 * @param mixed $request REST request.
 	 * @return array[]
 	 *
 	 * @since 1.0.0
@@ -810,9 +956,9 @@ class MembershipController extends RestController {
 	/**
 	 * Prepare a single membership for create or update.
 	 *
-	 * @param $request
+	 * @param mixed $request REST request.
 	 * @return bool|Membership|object|WP_Error
-	 * @throws \Exception
+	 * @throws \Exception When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	protected function prepare_item_for_database( $request ) {
@@ -843,7 +989,7 @@ class MembershipController extends RestController {
 	 * Prepare a single membership for response.
 	 *
 	 * @param \WP_Post         $post The post object.
-	 * @param \WP_REST_Request $request
+	 * @param \WP_REST_Request $request REST request.
 	 * @return WP_REST_Response
 	 *
 	 * @since 1.0.0

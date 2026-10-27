@@ -38,7 +38,7 @@ defined( 'ABSPATH' ) || exit();
 	</ul>
 
 	<?php
-	// Add hook of WordPress
+	// Add hook of WordPress.
 	do_action( 'register_form' );
 	?>
 

@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Controller for handling user REST API endpoints.
+ *
+ * @package OhMyLMS
+ */
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
@@ -26,6 +31,9 @@ class UserController extends RestController {
 	 */
 	protected $base = 'users';
 
+	/**
+	 * Check user permission for User controller.
+	 */
 	public function check_user_permission() {
 		return current_user_can( 'edit_posts' );
 	}
@@ -61,7 +69,7 @@ class UserController extends RestController {
 	 */
 	public function get_items( $request ) {
 		$search = $request->get_param( 'search' ); // Get the search parameter from the request.
-		
+
 		// Prepare query arguments.
 		$query_args = array(
 			'number' => -1, // Limit the number of users to return.

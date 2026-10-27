@@ -94,7 +94,7 @@ try {
 	foreach ( array( 910004 => 'publish', 910005 => 'draft', 910006 => 'publish' ) as $id => $status ) {
 		$wpdb->insert( $wpdb->posts, array( 'ID' => $id, 'post_type' => 'ohmylms_coupon', 'post_status' => $status, 'post_title' => 910006 === $id ? 'native-code-extra' : 'native-code', 'post_content' => '', 'post_excerpt' => '', 'to_ping' => '', 'pinged' => '', 'post_content_filtered' => '' ) );
 	}
-	$coupons = new CodeRex\Ecommerce\DataStore\CouponStore();
+	$coupons = new OhMyLMS\Commerce\DataStore\CouponStore();
 	api_check( array( 910004 ) === $coupons->get_ids_by_code( 'native-code' ), 'Coupon exact-title or status lookup changed' );
 	echo $GLOBALS['api_checks'] . " WordPress API checks passed.\n";
 } finally {

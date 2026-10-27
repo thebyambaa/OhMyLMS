@@ -1,0 +1,118 @@
+.ohmylms-exams form,
+.ohmylms-exams fieldset {
+	margin: 16px 0;
+	padding: 16px;
+	border: 1px solid var(--ohmylms-admin-border, #ddd);
+	background: var(--ohmylms-admin-surface, #fff);
+}
+
+.ohmylms-exams label {
+	display: block;
+	margin: 12px 0;
+}
+
+.ohmylms-exams input:not([type="checkbox"]),
+.ohmylms-exams textarea,
+.ohmylms-exams select {
+	display: block;
+	width: 100%;
+	margin-top: 6px;
+}
+
+.ohmylms-exams textarea {
+	min-height: 90px;
+}
+
+.ohmylms-exams .components-button,
+.ohmylms-exams a {
+	margin: 8px;
+}
+
+.ohmylms-exam-review {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 24px;
+}
+
+.ohmylms-exam-review iframe {
+	position: sticky;
+	top: 48px;
+	width: 100%;
+	height: 70vh;
+	border: 1px solid var(--ohmylms-admin-border, #ddd);
+}
+
+.ohmylms-paper-dialog .ohmylms-paper-actions,
+.ohmylms-paper-dialog .ohmylms-paper-questions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 16px 0;
+}
+
+.ohmylms-paper-dialog .ohmylms-paper-columns {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 24px;
+}
+
+.ohmylms-paper-dialog .ohmylms-paper-columns.has-source {
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.ohmylms-paper-dialog math-field {
+	font-size: 1.25em;
+}
+
+.ohmylms-paper-dialog .ohmylms-paper-columns > section {
+	min-width: 0;
+}
+
+.ohmylms-paper-dialog iframe {
+	width: 100%;
+	height: 65vh;
+	border: 1px solid var(--ohmylms-admin-border, #ddd);
+	background: #fff;
+}
+
+.ohmylms-paper-dialog .ohmylms-paper-player {
+	height: 72vh;
+}
+
+.ohmylms-paper-dialog .ohmylms-paper-part {
+	margin: 16px 0;
+	padding: 16px;
+	border: 1px solid var(--ohmylms-admin-border, #ddd);
+	background: var(--ohmylms-admin-surface, #fff);
+}
+
+@media (max-width: 900px) {
+
+	.ohmylms-exam-review {
+		grid-template-columns: 1fr;
+	}
+
+	.ohmylms-paper-dialog .ohmylms-paper-columns.has-source {
+		grid-template-columns: 1fr;
+	}
+}
+
+.ohmylms-import .ohmylms-import-target {
+	display: block;
+	padding: 10px 12px;
+	border: 1px solid var(--ohmylms-admin-border, #ddd);
+	border-radius: 6px;
+	cursor: pointer;
+}
+
+.ohmylms-import .ohmylms-import-target input[type="radio"] {
+	display: inline-block;
+	width: auto;
+	margin: 0 6px 0 0;
+}
+
+.ohmylms-import form {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}

@@ -1,9 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * WP Fusion Migration Class
- * 
+ *
  * Handles the creation of WP Fusion triggers table when the integration is enabled
- * 
+ *
  * @package OhMyLMS\Integrations\WPFusion
  * @since 1.0.0
  */
@@ -12,102 +12,105 @@ namespace OhMyLMS\Integrations\WPFusion\Includes;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Plugin wpfusion migration implementation.
+ */
 class WPFusionMigration {
 
-    /**
-     * Option key to track if integrations table is created
-     */
-    const WPFUSION_TABLE_CREATED_OPTION = 'ohmylms_integrations_table_created';
+	/**
+	 * Option key to track if integrations table is created
+	 */
+	const WPFUSION_TABLE_CREATED_OPTION = 'ohmylms_integrations_table_created';
 
-    /**
-     * Initialize the migration
-     * 
-     * @since 1.0.0
-     */
-    public static function init() {
-        add_action( 'admin_init', array( __CLASS__, 'maybe_ohmylms_integration_table' ) );
-    }
+	/**
+	 * Initialize the migration
+	 *
+	 * @since 1.0.0
+	 */
+	public static function init() {
+		add_action( 'admin_init', array( __CLASS__, 'maybe_ohmylms_integration_table' ) );
+	}
 
-    /**
-     * Check if integration table should be created
-     * Now always returns true since this is a universal integrations table for all CRMs
-     * 
-     * @since 1.0.0
-     */
-    public static function maybe_ohmylms_integration_table() {
+	/**
+	 * Check if integration table should be created
+	 * Now always returns true since this is a universal integrations table for all CRMs
+	 *
+	 * @since 1.0.0
+	 */
+	public static function maybe_ohmylms_integration_table() {
 
-        // Check if table is already created
-        if ( self::is_integration_table_created() ) {
-            return;
-        }
+		// Check if table is already created.
+		if ( self::is_integration_table_created() ) {
+			return;
+		}
 
-        // Create the table - always create for any integration usage
-        self::ohmylms_integration_table();
-    }
+		// Create the table - always create for any integration usage.
+		self::ohmylms_integration_table();
+	}
 
-    /**
-     * Check if WP Fusion integration is enabled
-     * 
-     * @return bool
-     * @since 1.0.0
-     */
-    private static function is_wpfusion_enabled() {
-        $integrations = get_option( 'ohmylms_integrations', array() );
-        
-        if ( empty( $integrations ) || ! is_array( $integrations ) ) {
-            return false;
-        }
+	/**
+	 * Check if WP Fusion integration is enabled
+	 *
+	 * @return bool
+	 * @since 1.0.0
+	 */
+	private static function is_wpfusion_enabled() {
+		$integrations = get_option( 'ohmylms_integrations', array() );
 
-        if ( ! isset( $integrations['wpfusion']['is_enable'] ) ) {
-            return false;
-        }
+		if ( empty( $integrations ) || ! is_array( $integrations ) ) {
+			return false;
+		}
 
-        return 1 === (int) $integrations['wpfusion']['is_enable'];
-    }
+		if ( ! isset( $integrations['wpfusion']['is_enable'] ) ) {
+			return false;
+		}
 
-    /**
-     * Check if integrations table is already created
-     * 
-     * @return bool
-     * @since 1.0.0
-     */
-    private static function is_integration_table_created() {
-        global $wpdb;
-        
-        // First check the option
-        $option_exists = get_option( self::WPFUSION_TABLE_CREATED_OPTION, false );
-        
-        if ( $option_exists ) {
-            return true;
-        }
+		return 1 === (int) $integrations['wpfusion']['is_enable'];
+	}
 
-        // Double check if table actually exists in database
-        $table_name = $wpdb->prefix . 'ohmylms_integrations';
-        $table_exists = $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) === $table_name;
+	/**
+	 * Check if integrations table is already created
+	 *
+	 * @return bool
+	 * @since 1.0.0
+	 */
+	private static function is_integration_table_created() {
+		global $wpdb;
 
-        // If table exists but option not set, set the option
-        if ( $table_exists ) {
-            update_option( self::WPFUSION_TABLE_CREATED_OPTION, true );
-            return true;
-        }
+		// First check the option.
+		$option_exists = get_option( self::WPFUSION_TABLE_CREATED_OPTION, false );
 
-        return false;
-    }
+		if ( $option_exists ) {
+			return true;
+		}
 
-    /**
-     * Create central integrations table for all CRMs
-     * 
-     * @since 1.0.0
-     */
-    private static function ohmylms_integration_table() {
-        global $wpdb;
+		// Double check if table actually exists in database.
+		$table_name   = $wpdb->prefix . 'ohmylms_integrations';
+		$table_exists = $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) === $table_name;
 
-        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		// If table exists but option not set, set the option.
+		if ( $table_exists ) {
+			update_option( self::WPFUSION_TABLE_CREATED_OPTION, true );
+			return true;
+		}
 
-        $charset_collate = $wpdb->get_charset_collate();
-        $table_name = $wpdb->prefix . 'ohmylms_integrations';
+		return false;
+	}
 
-        $sql = "CREATE TABLE {$table_name} (
+	/**
+	 * Create central integrations table for all CRMs
+	 *
+	 * @since 1.0.0
+	 */
+	private static function ohmylms_integration_table() {
+		global $wpdb;
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+		$charset_collate = $wpdb->get_charset_collate();
+		$table_name      = $wpdb->prefix . 'ohmylms_integrations';
+
+		$sql = "CREATE TABLE {$table_name} (
             id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             name VARCHAR(255) NOT NULL,
             crm_type VARCHAR(50) NOT NULL COMMENT 'wpfusion, activecampaign, etc.',
@@ -126,61 +129,61 @@ class WPFusionMigration {
             KEY status (status)
         ) $charset_collate;";
 
-        dbDelta( $sql );
+		dbDelta( $sql );
 
-        // Mark as created
-        update_option( self::WPFUSION_TABLE_CREATED_OPTION, true );
+		// Mark as created.
+		update_option( self::WPFUSION_TABLE_CREATED_OPTION, true );
 
-        /**
-         * Fires after integrations table is created
-         * 
-         * @since 1.0.0
-         */
-        do_action( 'ohmylms_integrations_table_created' );
-    }
+		/**
+		 * Fires after integrations table is created
+		 *
+		 * @since 1.0.0
+		 */
+		do_action( 'ohmylms_integrations_table_created' );
+	}
 
-    /**
-     * Drop integrations table (for uninstall/cleanup)
-     * 
-     * @since 1.0.0
-     */
-    public static function drop_wpfusion_table() {
-        global $wpdb;
+	/**
+	 * Drop integrations table (for uninstall/cleanup)
+	 *
+	 * @since 1.0.0
+	 */
+	public static function drop_wpfusion_table() {
+		global $wpdb;
 
-        $table_name = $wpdb->prefix . 'ohmylms_integrations';
-        $wpdb->query( "DROP TABLE IF EXISTS {$table_name}" );
+		$table_name = $wpdb->prefix . 'ohmylms_integrations';
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table_name ) );
 
-        // Remove the option
-        delete_option( self::WPFUSION_TABLE_CREATED_OPTION );
+		// Remove the option.
+		delete_option( self::WPFUSION_TABLE_CREATED_OPTION );
 
-        /**
-         * Fires after integrations table is dropped
-         * 
-         * @since 1.0.0
-         */
-        do_action( 'ohmylms_integrations_table_dropped' );
-    }
+		/**
+		 * Fires after integrations table is dropped
+		 *
+		 * @since 1.0.0
+		 */
+		do_action( 'ohmylms_integrations_table_dropped' );
+	}
 
-    /**
-     * Get integrations table name
-     * 
-     * @return string
-     * @since 1.0.0
-     */
-    public static function get_table_name() {
-        global $wpdb;
-        return $wpdb->prefix . 'ohmylms_integrations';
-    }
+	/**
+	 * Get integrations table name
+	 *
+	 * @return string
+	 * @since 1.0.0
+	 */
+	public static function get_table_name() {
+		global $wpdb;
+		return $wpdb->prefix . 'ohmylms_integrations';
+	}
 
-    /**
-     * Check if integrations table exists
-     * 
-     * @return bool
-     * @since 1.0.0
-     */
-    public static function table_exists() {
-        global $wpdb;
-        $table_name = self::get_table_name();
-        return $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) === $table_name;
-    }
+	/**
+	 * Check if integrations table exists
+	 *
+	 * @return bool
+	 * @since 1.0.0
+	 */
+	public static function table_exists() {
+		global $wpdb;
+		$table_name = self::get_table_name();
+		return $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) === $table_name;
+	}
 }

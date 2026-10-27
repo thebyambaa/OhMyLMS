@@ -1,19 +1,22 @@
 {
-    "name": "coderex/ecommerce",
-    "description": "E-Commerce module",
-    "license": "MIT",
-    "autoload": {
-        "psr-4": {
-            "CodeRex\\Ecommerce\\": "includes/"
-        },
+	"name": "ohmylms/commerce",
+	"description": "E-Commerce module",
+	"license": "MIT",
+	"autoload": {
+		"psr-4": {
+			"OhMyLMS\\Commerce\\": "includes/"
+		},
 		"classmap": [
 			"includes/Gateways/GatewayOffline.php",
 			"includes/Gateways/Stripe/GatewayStripeIntents.php"
 		]
-    },
-    "authors": [
-        {
-            "name": "Code Rex"
-        }
-    ]
+	},
+	"authors": [
+		{
+			"name": "Code Rex"
+		}
+	],
+	"config": {
+		"autoloader-suffix": "OhMyLMSCommerce"
+	}
 }

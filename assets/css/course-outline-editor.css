@@ -1,0 +1,645 @@
+/* Course outline: Khan Academy-shaped units, lessons and activities with an inspector. */
+.ohmylms-outline-frame {
+	max-width: 1440px;
+	margin: 72px auto 0;
+	padding: 24px;
+}
+
+.ohmylms-outline-editor {
+	padding: 24px;
+	border: 1px solid var(--oml-border, #dcdcde);
+	border-radius: 12px;
+	background: #fff;
+}
+
+/* Header: title, one status line and the save and publish actions. */
+.ohmylms-outline-heading {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px 24px;
+	align-items: flex-start;
+	justify-content: space-between;
+	margin-bottom: 16px;
+}
+
+.ohmylms-outline-heading h1 {
+	margin: 0 0 4px;
+	font-size: 28px;
+}
+
+.ohmylms-outline-status {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 8px;
+	align-items: center;
+	margin: 0;
+	color: var(--oml-muted, #50575e);
+}
+
+.ohmylms-outline-status-dot {
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: #00a32a;
+}
+
+.ohmylms-outline-status.is-unpublished .ohmylms-outline-status-dot {
+	background: #dba617;
+}
+
+.ohmylms-outline-status.is-unsaved .ohmylms-outline-status-dot {
+	background: #d63638;
+}
+
+.ohmylms-outline-status.is-saving .ohmylms-outline-status-dot {
+	background: #72aee6;
+}
+
+.ohmylms-outline-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+}
+
+.ohmylms-outline-editor > .components-notice {
+	margin: 0 0 16px;
+}
+
+/* Section tabs. */
+.ohmylms-outline-tabs {
+	display: flex;
+	gap: 4px;
+	overflow-x: auto;
+	overflow-y: hidden;
+	margin-bottom: 24px;
+	box-shadow: inset 0 -1px 0 var(--oml-border, #dcdcde);
+}
+
+.ohmylms-outline-tab {
+	display: inline-flex;
+	flex: none;
+	gap: 6px;
+	align-items: center;
+	padding: 10px 14px;
+	border: 0;
+	border-bottom: 3px solid transparent;
+	background: none;
+	color: var(--oml-text, #1e1e1e);
+	font-size: 14px;
+	cursor: pointer;
+}
+
+.ohmylms-outline-tab:hover {
+	color: var(--oml-primary, #3858e9);
+}
+
+.ohmylms-outline-tab:focus-visible {
+	outline: 2px solid var(--oml-primary, #3858e9);
+	outline-offset: -2px;
+}
+
+.ohmylms-outline-tab.is-active {
+	border-bottom-color: var(--oml-primary, #3858e9);
+	font-weight: 600;
+}
+
+.ohmylms-outline-tab-count {
+	min-width: 20px;
+	padding: 0 6px;
+	border-radius: 10px;
+	background: #edfaef;
+	color: #007017;
+	font-size: 12px;
+	line-height: 20px;
+	text-align: center;
+}
+
+.ohmylms-outline-tab-count.is-warning {
+	background: #fcf0f1;
+	color: #b32d2e;
+}
+
+/* Outline tree and inspector. */
+.ohmylms-outline-columns {
+	display: grid;
+	grid-template-columns: minmax(280px, 40%) minmax(0, 1fr);
+	gap: 24px;
+	align-items: start;
+}
+
+.ohmylms-outline-tree {
+	min-width: 0;
+}
+
+.ohmylms-outline-tree-toolbar {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 12px;
+}
+
+.ohmylms-outline-tree ol,
+.ohmylms-outline-tree ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.ohmylms-outline-unit,
+.ohmylms-outline-course-end {
+	border: 1px solid var(--oml-border, #dcdcde);
+	border-radius: var(--oml-radius-card, 8px);
+	background: #fff;
+}
+
+.ohmylms-outline-unit.is-selected {
+	border-color: var(--oml-primary, #3858e9);
+	box-shadow: 0 0 0 1px var(--oml-primary, #3858e9);
+}
+
+.ohmylms-outline-unit + .ohmylms-outline-unit {
+	margin-top: 12px;
+}
+
+.ohmylms-outline-unit-header {
+	display: flex;
+	gap: 4px;
+	align-items: flex-start;
+	padding: 12px 12px 8px 4px;
+}
+
+.ohmylms-outline-unit-header .ohmylms-outline-toggle {
+	flex: none;
+	margin-top: 8px;
+}
+
+.ohmylms-outline-unit-title {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.ohmylms-outline-eyebrow {
+	color: var(--oml-muted, #50575e);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.ohmylms-outline-meta {
+	color: var(--oml-muted, #50575e);
+	font-size: 12px;
+}
+
+/* Beat the design system's general button padding inside the tree. */
+.ohmylms-outline-editor
+	.ohmylms-outline-tree
+	.components-button.ohmylms-outline-row-button {
+	height: auto;
+	min-height: 32px;
+	padding: 4px 6px;
+	color: var(--oml-text, #1e1e1e);
+	font-size: 14px;
+	text-align: left;
+	white-space: normal;
+}
+
+.ohmylms-outline-editor
+	.ohmylms-outline-unit-title
+	.components-button.ohmylms-outline-row-button {
+	padding-left: 0;
+	font-size: 15px;
+}
+
+.ohmylms-outline-lessons {
+	padding: 0 12px;
+}
+
+.ohmylms-outline-lesson {
+	padding: 8px 0 8px 12px;
+	border-top: 1px solid #f0f0f1;
+	border-left: 3px solid transparent;
+}
+
+.ohmylms-outline-lesson.is-selected {
+	border-left-color: var(--oml-primary, #3858e9);
+}
+
+.ohmylms-outline-tree .ohmylms-outline-lesson-title {
+	font-weight: 600;
+}
+
+.ohmylms-outline-rows {
+	padding-left: 8px;
+}
+
+.ohmylms-outline-row {
+	display: flex;
+	gap: 4px;
+	align-items: center;
+	border-radius: 4px;
+}
+
+.ohmylms-outline-row.is-selected {
+	background: var(--oml-primary-soft, #e8eaff);
+}
+
+.ohmylms-outline-row .dashicons {
+	flex: none;
+	color: var(--oml-muted, #50575e);
+	font-size: 18px;
+}
+
+.ohmylms-outline-tree .ohmylms-outline-row .ohmylms-outline-row-button {
+	flex: 1;
+	min-width: 0;
+}
+
+.ohmylms-outline-tree
+	.ohmylms-outline-row.is-skill
+	.ohmylms-outline-row-button {
+	color: var(--oml-muted, #50575e);
+}
+
+.ohmylms-outline-tree .components-button.ohmylms-outline-row-button:hover {
+	color: var(--oml-primary, #3858e9);
+}
+
+.ohmylms-outline-badge {
+	flex: none;
+	margin-right: 4px;
+	padding: 0 8px;
+	border-radius: 10px;
+	background: #f0f0f1;
+	color: #50575e;
+	font-size: 11px;
+	line-height: 20px;
+}
+
+.ohmylms-outline-badge.is-warning {
+	background: #fcf9e8;
+	color: #8a6116;
+}
+
+.ohmylms-outline-hint,
+.ohmylms-outline-empty {
+	margin: 4px 0;
+	color: var(--oml-muted, #50575e);
+}
+
+.ohmylms-outline-tree .ohmylms-outline-add {
+	margin: 2px 0 0 4px;
+	font-size: 13px;
+	text-decoration: none;
+}
+
+.ohmylms-outline-loose {
+	padding: 8px 12px;
+	border-top: 1px solid #f0f0f1;
+}
+
+.ohmylms-outline-loose h3 {
+	margin: 4px 0;
+	color: var(--oml-muted, #50575e);
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.ohmylms-outline-unit-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 16px;
+	padding: 4px 12px 8px;
+	border-top: 1px solid #f0f0f1;
+}
+
+.ohmylms-outline-slot {
+	padding: 8px 12px 12px;
+}
+
+.ohmylms-outline-course-end {
+	margin-top: 12px;
+}
+
+.ohmylms-outline-course-end > .ohmylms-outline-slot {
+	padding-top: 12px;
+}
+
+.ohmylms-outline-tree .ohmylms-outline-slot-button {
+	gap: 6px;
+	justify-content: flex-start;
+	width: 100%;
+	height: auto;
+	min-height: 40px;
+	padding: 8px 12px;
+	border: 1px dashed var(--oml-border, #c3c4c7);
+	border-radius: 6px;
+	color: var(--oml-muted, #50575e);
+}
+
+.ohmylms-outline-tree .ohmylms-outline-slot-button:hover {
+	border-color: var(--oml-primary, #3858e9);
+	color: var(--oml-primary, #3858e9);
+}
+
+.ohmylms-outline-inspector {
+	position: sticky;
+	top: 120px;
+	min-width: 0;
+	padding: 24px;
+	border: 1px solid var(--oml-border, #dcdcde);
+	border-radius: var(--oml-radius-card, 8px);
+	background: #fff;
+}
+
+.ohmylms-outline-inspector h2 {
+	margin-top: 0;
+}
+
+.ohmylms-outline-inspector fieldset {
+	margin: 16px 0;
+}
+
+.ohmylms-outline-inspector legend {
+	margin-bottom: 8px;
+	font-weight: 600;
+}
+
+.ohmylms-outline-inspector .components-button {
+	margin: 4px;
+}
+
+.ohmylms-connections-table .components-button,
+.ohmylms-connections-table small {
+	display: block;
+	height: auto;
+	margin-bottom: 8px;
+	text-align: start;
+}
+
+.ohmylms-outline-editor > .components-notice .components-button {
+	margin-left: 8px;
+}
+
+.ohmylms-outline-move {
+	display: block;
+	margin: 12px 0;
+}
+
+.ohmylms-outline-course-info {
+	padding: 16px;
+	border: 1px solid var(--oml-border, #dcdcde);
+	border-radius: var(--oml-radius-card, 8px);
+	background: #fff;
+}
+
+.ohmylms-outline-missing {
+	margin: 12px 0;
+	padding: 12px 16px;
+	border-left: 4px solid #dba617;
+	background: #fcf9e8;
+}
+
+.ohmylms-outline-resources {
+	max-height: 400px;
+	overflow: auto;
+}
+
+.ohmylms-outline-resources li {
+	display: flex;
+	gap: 16px;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.ohmylms-outline-resources small {
+	display: block;
+	color: var(--oml-muted, #50575e);
+}
+
+/* Drag and drop: rows insert before the target; containers append. */
+.ohmylms-outline-tree [draggable="true"] {
+	cursor: grab;
+}
+
+.ohmylms-outline-row.is-drop-target,
+.ohmylms-outline-lesson.is-drop-target {
+	box-shadow: inset 0 2px 0 var(--oml-primary, #3858e9);
+}
+
+.ohmylms-outline-unit-header.is-drop-target,
+.ohmylms-outline-loose.is-drop-target,
+.ohmylms-outline-course-end.is-drop-target {
+	outline: 2px dashed var(--oml-primary, #3858e9);
+	outline-offset: -2px;
+}
+
+.ohmylms-outline-code {
+	flex: none;
+	padding: 0 6px;
+	border-radius: 4px;
+	background: #f0f0f1;
+	color: #50575e;
+	font-family: Consolas, Monaco, monospace;
+	font-size: 11px;
+	line-height: 18px;
+}
+
+.ohmylms-outline-resources .ohmylms-outline-code {
+	margin-right: 6px;
+}
+
+.ohmylms-outline-group-skills {
+	margin: 16px 0;
+	padding: 12px 16px;
+	border-left: 4px solid var(--oml-primary, #3858e9);
+	background: #f6f7f7;
+}
+
+.ohmylms-outline-group-skills h3 {
+	margin: 0 0 4px;
+	font-size: 14px;
+}
+
+/* AI skill suggestions and skill origin. */
+.ohmylms-skill-suggestions,
+.ohmylms-skill-provenance {
+	margin: 16px 0;
+	padding: 12px 16px;
+	border: 1px solid var(--oml-border, #dcdcde);
+	border-radius: var(--oml-radius-card, 8px);
+	background: #f6f7f7;
+}
+
+.ohmylms-skill-suggestions h3,
+.ohmylms-skill-provenance h3 {
+	margin: 0 0 4px;
+	font-size: 14px;
+}
+
+.ohmylms-skill-suggestions-start {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: flex-end;
+}
+
+.ohmylms-skill-suggestion-list {
+	margin: 12px 0;
+	padding: 0;
+	list-style: none;
+}
+
+.ohmylms-skill-suggestion-list li {
+	margin-bottom: 8px;
+	padding: 10px 12px;
+	border: 1px solid var(--oml-border, #dcdcde);
+	border-radius: 6px;
+	background: #fff;
+}
+
+.ohmylms-skill-suggestion-head {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	margin-bottom: 4px;
+}
+
+.ohmylms-outline-badge.is-new {
+	background: var(--oml-primary-soft, #e8eaff);
+	color: var(--oml-primary, #3858e9);
+}
+
+.ohmylms-skill-suggestion-actions,
+.ohmylms-skill-provenance-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	align-items: center;
+}
+
+@media (max-width: 960px) {
+
+	.ohmylms-outline-columns {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.ohmylms-outline-inspector {
+		position: static;
+	}
+}
+
+@media (max-width: 782px) {
+
+	.ohmylms-outline-frame {
+		padding: 12px;
+	}
+
+	.ohmylms-outline-editor {
+		padding: 16px;
+	}
+
+	.ohmylms-outline-heading h1 {
+		font-size: 22px;
+	}
+}
+
+.ohmylms-syllabus-course-dialog fieldset {
+	margin: 16px 0;
+	border: 1px solid #ddd;
+	padding: 16px;
+}
+
+.ohmylms-outline-activity-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 16px;
+}
+
+.ohmylms-outline-readiness {
+	margin: 16px 0;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	padding: 16px;
+}
+
+.ohmylms-outline-readiness summary {
+	cursor: pointer;
+	font-weight: 600;
+}
+
+.ohmylms-outline-readiness > ul {
+	padding-left: 24px;
+	list-style: disc;
+}
+
+.ohmylms-syllabus-course-dialog ul {
+	margin: 12px 0;
+	padding-left: 24px;
+	list-style: disc;
+}
+
+.ohmylms-syllabus-course-dialog li {
+	margin-bottom: 8px;
+}
+
+.ohmylms-syllabus-course-dialog .components-button + .components-button {
+	margin-left: 8px;
+}
+
+/* Explicit teaching, practice and assessment connections. */
+.ohmylms-course-start-options {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin: 16px 0;
+}
+
+.ohmylms-build-choices section[hidden] {
+	display: none;
+}
+
+.ohmylms-connections-table-wrap {
+	overflow-x: auto;
+}
+
+.ohmylms-connections-table {
+	width: 100%;
+	border-collapse: collapse;
+	text-align: start;
+}
+
+.ohmylms-connections-table th,
+.ohmylms-connections-table td {
+	min-width: 140px;
+	padding: 16px;
+	border-bottom: 1px solid #dcdcde;
+	vertical-align: top;
+}
+
+.ohmylms-connections-table thead {
+	background: #f6f7f7;
+}
+
+
+.ohmylms-connection-card {
+	margin: 12px 0;
+	padding: 16px;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	background: #f8fafc;
+}
+
+.ohmylms-connection-empty {
+	color: #765300;
+}
+
+.ohmylms-lesson-connections p,
+.ohmylms-activity-connections p {
+	line-height: 1.5;
+}

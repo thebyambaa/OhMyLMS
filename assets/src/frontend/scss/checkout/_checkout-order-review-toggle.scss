@@ -1,4 +1,5 @@
 .ohmylms-page {
+
     .ohmylms-order-review-toggle {
         margin-bottom: 30px;
         display: none;
@@ -30,7 +31,9 @@
             }
 
             &.active {
+
                 .review-toggle-title {
+
                     svg {
                         transform: rotate(-180deg);
 
@@ -59,10 +62,12 @@
             table td {
                 padding: 14px 12px;
             }
+
             table th:first-child, 
             table td:first-child {
                 padding-left: 0;
             }
+
             table th:last-child, 
             table td:last-child {
                 padding-right: 0;
@@ -73,6 +78,7 @@
 }
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .ohmylms-order-review-toggle .ohmylms-order-review-table-wrapper {
         background-color: #f9fafd;
         border: 1px solid #EBEBEF;
@@ -85,6 +91,7 @@
 }
 
 @media screen and (max-width: 991px) {
+
     .ohmylms-page .ohmylms-order-review-toggle {
         display: block;
     }

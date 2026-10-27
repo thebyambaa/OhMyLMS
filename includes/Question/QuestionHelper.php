@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Responsible to handle all quiz related calculations.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Question;
 
@@ -12,8 +17,8 @@ class QuestionHelper {
 	/**
 	 * Add new question
 	 *
-	 * @param string $title
-	 * @param string $description
+	 * @param string $title Title.
+	 * @param string $content Content.
 	 * @return array
 	 * @since 1.0.0
 	 */
@@ -65,8 +70,8 @@ class QuestionHelper {
 	/**
 	 * Saved question
 	 *
-	 * @param int   $post_id
-	 * @param array $params
+	 * @param int   $post_id Post identifier.
+	 * @param array $question_data Question data.
 	 * @return array
 	 * @since 1.0.0
 	 */
@@ -89,7 +94,7 @@ class QuestionHelper {
 
 		$post = get_post( $post_id );
 
-		if ( $post && $post->post_type === 'ohmylms-question' ) {
+		if ( $post && 'ohmylms-question' === $post->post_type ) {
 			wp_update_post(
 				array(
 					'ID'         => $post_id,
@@ -116,13 +121,13 @@ class QuestionHelper {
 	/**
 	 * Deleted question
 	 *
-	 * @param int $post_id
+	 * @param int $post_id Post identifier.
 	 * @return array
 	 * @since 1.0.0
 	 */
 	public static function delete_question( int $post_id ): array {
 		$post = get_post( $post_id );
-		if ( ! $post || $post->post_type !== 'ohmylms-question' ) {
+		if ( ! $post || 'ohmylms-question' !== $post->post_type ) {
 
 			return array(
 				'status'  => 'error',

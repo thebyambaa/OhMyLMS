@@ -1,0 +1,12 @@
+/* The existing player lives in its own frame; host-page styles remain independent. */
+body.ohmylms-quiz-embed {
+	margin: 0;
+	padding: 0;
+	min-height: 100vh;
+	background: #fff;
+}
+
+.ohmylms-quiz-embed-start {
+	padding: 24px;
+}
+

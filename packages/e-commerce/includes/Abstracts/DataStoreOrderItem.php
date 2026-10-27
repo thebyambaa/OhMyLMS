@@ -1,13 +1,16 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
 
-namespace CodeRex\Ecommerce\Abstracts;
+namespace OhMyLMS\Commerce\Abstracts;
 
+/**
+ * Plugin data store order item implementation.
+ */
 abstract class DataStoreOrderItem {
 
 	/**
 	 * Add an order item.
 	 *
-	 * @param int $order_id The ID of the order.
+	 * @param int   $order_id The ID of the order.
 	 * @param mixed $item The item to add.
 	 * @return mixed
 	 */
@@ -16,7 +19,7 @@ abstract class DataStoreOrderItem {
 	/**
 	 * Update an order item.
 	 *
-	 * @param int $item_id The ID of the item.
+	 * @param mixed $item_id Item id.
 	 * @param mixed $item The item data to update.
 	 * @return mixed
 	 */
@@ -33,9 +36,9 @@ abstract class DataStoreOrderItem {
 	/**
 	 * Add metadata to an order item.
 	 *
-	 * @param int $item_id The ID of the item.
+	 * @param int    $item_id The ID of the item.
 	 * @param string $meta_key The metadata key.
-	 * @param mixed $meta_value The metadata value.
+	 * @param mixed  $meta_value The metadata value.
 	 * @return mixed
 	 */
 	abstract public function add_order_item_metadata( $item_id, $meta_key, $meta_value );
@@ -43,9 +46,9 @@ abstract class DataStoreOrderItem {
 	/**
 	 * Update metadata of an order item.
 	 *
-	 * @param int $item_id The ID of the item.
+	 * @param int    $item_id The ID of the item.
 	 * @param string $meta_key The metadata key.
-	 * @param mixed $meta_value The metadata value.
+	 * @param mixed  $meta_value The metadata value.
 	 * @return mixed
 	 */
 	abstract public function update_order_item_metadata( $item_id, $meta_key, $meta_value );
@@ -53,10 +56,10 @@ abstract class DataStoreOrderItem {
 	/**
 	 * Delete metadata from an order item.
 	 *
-	 * @param int $item_id The ID of the item.
+	 * @param int    $item_id The ID of the item.
 	 * @param string $meta_key The metadata key.
-	 * @param mixed $meta_value The metadata value.
-	 * @param bool $delete_all Whether to delete all metadata with the given key.
+	 * @param mixed  $meta_value The metadata value.
+	 * @param bool   $delete_all Whether to delete all metadata with the given key.
 	 * @return mixed
 	 */
 	abstract public function delete_order_item_metadata( $item_id, $meta_key, $meta_value = '', $delete_all = false );

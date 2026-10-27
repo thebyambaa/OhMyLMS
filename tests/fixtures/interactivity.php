@@ -66,7 +66,7 @@ function wp_nonce_field($action, $name) { printf('<input name="%s" value="fixtur
 function get_the_ID() { return 10; }
 function get_current_user_id() { return 1; }
 function get_post_meta(...$args) { return ''; }
-function get_option($name, $default = '') { return $name === 'ohmylms_single_course_page_layout' ? 'layout_2' : $default; }
+function get_option($name, $default = '') { return $default; }
 function _nx($single, $plural, $number, ...$args) { return $number === 1 ? $single : $plural; }
 function ohmylms_format_duration($duration) { return ''; }
 function get_the_permalink() { return '/fixture'; }
@@ -120,25 +120,7 @@ function ohmylms_get_quiz($id) {
 ]]]]); ?></script>
 </head><body>
 <?php
-if (in_array($_GET['view'] ?? '', ['tabs', 'curriculum'], true)) {
-    $course = new class {
-        function get_id() { return 2; }
-        function get_review_count() { return 0; }
-        function get_lessons(...$args) { return []; }
-        function get_lessons_count() { return 0; }
-        function get_duration() { return 0; }
-        function get_chapters(...$args) {
-            return [new class {
-                function get_id() { return 201; } function get_name() { return 'Chapter A'; }
-                function get_lessons(...$args) { return []; } function get_lesson_count() { return 0; } function get_description() { return ''; }
-            }, new class {
-                function get_id() { return 202; } function get_name() { return 'Chapter B'; }
-                function get_lessons(...$args) { return []; } function get_lesson_count() { return 0; } function get_description() { return ''; }
-            }];
-        }
-    };
-    include OHMYLMS_DIR . '/templates/single-course/tabs/' . ($_GET['view'] === 'tabs' ? 'tabs.php' : 'information.php');
-} elseif (($_GET['view'] ?? '') === 'practice') {
+if (($_GET['view'] ?? '') === 'practice') {
     $quiz_id = 10;
     $state = ['score' => 0, 'zone' => 'learning', 'zoneLabel' => '', 'code' => 'A'];
     $data = ['quiz' => 10, 'title' => 'Practice fixture', 'state' => $state, 'next' => '/next-lesson'];

@@ -1,0 +1,406 @@
+.oml-player-context {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 16px;
+	box-sizing: border-box;
+	width: 100%;
+	padding: 10px 24px;
+	border-bottom: 1px solid #dcdeeb;
+	background: #fff;
+	color: #1b1c2e;
+	font-size: 14px;
+}
+
+.oml-player-context .oml-player-exit {
+	color: #3b39c9;
+	font-weight: 700;
+	text-decoration: none;
+}
+
+.oml-player-context .oml-player-course {
+	overflow: hidden;
+	color: #5d6075;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.oml-player {
+	--player-page: #f7f8fa;
+	--player-surface: #fff;
+	--player-text: #1b1c2e;
+	--player-muted: #5d6075;
+	--player-border: #dcdeeb;
+	--player-accent: #3b39c9;
+	--player-selected: #eeedff;
+	--ohmylms-heading-color: var(--player-text);
+	--ohmylms-text-color: var(--player-text);
+	--ohmylms-body-text-color: var(--player-text);
+	--ohmylms-primary-color: var(--player-accent);
+	min-height: 100vh;
+	background: var(--player-page);
+	color: var(--player-text);
+	font-family: "Plus Jakarta Sans", "Noto Sans", sans-serif;
+	line-height: 1.6;
+}
+
+.oml-player[data-theme="dark"] {
+	--player-page: #252531;
+	--player-surface: #151521;
+	--player-text: #f3f3f7;
+	--player-muted: #b7b8c5;
+	--player-border: #4a4c53;
+	--player-accent: #a4adff;
+	--player-selected: #222149;
+}
+
+@media (prefers-color-scheme: dark) {
+
+	.oml-player[data-theme="system"] {
+		--player-page: #252531;
+		--player-surface: #151521;
+		--player-text: #f3f3f7;
+		--player-muted: #b7b8c5;
+		--player-border: #4a4c53;
+		--player-accent: #a4adff;
+		--player-selected: #222149;
+	}
+}
+
+.oml-player .oml-player-context {
+	min-height: 68px;
+	border-color: var(--player-border);
+	background: var(--player-surface);
+	color: var(--player-text);
+}
+
+.oml-player .oml-player-exit {
+	color: var(--player-accent);
+}
+
+.oml-player-context .oml-player-exit:hover,
+.oml-player-context .oml-player-exit:focus-visible {
+	text-decoration: underline;
+}
+
+.oml-player .oml-player-course {
+	color: var(--player-muted);
+}
+
+.oml-player-skip {
+	margin-inline-start: auto;
+	color: var(--player-accent);
+	font-size: 12px;
+}
+
+.oml-player-layout {
+	display: grid;
+	grid-template-columns: 280px minmax(0, 1fr);
+	min-height: calc(100vh - 68px);
+}
+
+.oml-player-outline {
+	padding: 24px 16px;
+	border-inline-end: 1px solid var(--player-border);
+	background: var(--player-surface);
+}
+
+.oml-player-outline-title {
+	margin: 0 0 20px;
+	color: var(--player-text);
+	font-size: 16px;
+}
+
+.oml-player-unit {
+	margin-bottom: 12px;
+}
+
+.oml-player-unit summary {
+	padding: 8px;
+	color: var(--player-text);
+	font-size: 14px;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.oml-player-activities {
+	padding: 0;
+	margin: 8px 0;
+	list-style: none;
+}
+
+.oml-player-activity {
+	display: grid;
+	gap: 2px;
+	padding: 10px 12px;
+	border: 1px solid transparent;
+	border-radius: 8px;
+	color: var(--player-text);
+	font-size: 14px;
+	text-decoration: none;
+	overflow-wrap: anywhere;
+}
+
+.oml-player-activity-kind {
+	color: var(--player-muted);
+	font-size: 11px;
+}
+
+.oml-player-activity:hover,
+.oml-player-activity[aria-current="page"] {
+	border-color: var(--player-border);
+	background: var(--player-selected);
+	color: var(--player-accent);
+}
+
+.oml-player a:focus-visible,
+.oml-player summary:focus-visible {
+	outline: 2px solid var(--player-accent);
+	outline-offset: 3px;
+}
+
+.oml-player-main {
+	min-width: 0;
+	padding: clamp(16px, 4vw, 56px);
+}
+
+.oml-player .ohmylms-lesson-details {
+	min-height: 0;
+	padding: 0;
+	background: transparent;
+}
+
+.oml-player .ohmylms-lesson-details .ohmylms-container,
+.oml-player .ohmylms-lesson-details .ohmylms-lesson-content {
+	width: 100%;
+	max-width: 960px;
+	padding: 0;
+	margin: 0 auto;
+}
+
+.oml-player .ohmylms-lesson-details .ohmylms-lesson-content-wrapper {
+	display: block;
+}
+
+.oml-player .ohmylms-lesson-details .ohmylms-lesson-details-hamburger {
+	display: none;
+}
+
+/* Existing activity and question renderers own their controls and answer states. */
+.oml-player .ohmylms-lesson-content-body,
+.oml-player .ohmylms-lesson-navigation {
+	padding: 24px;
+	border: 1px solid var(--player-border);
+	border-radius: 8px;
+	background: var(--player-surface);
+	color: var(--player-text);
+}
+
+.oml-player .ohmylms-lesson-navigation {
+	margin-top: 24px;
+}
+
+body.ohmylms-page .oml-player .ohmylms-lesson-details .ohmylms-lesson-navigation {
+	border-color: var(--player-border);
+	background: var(--player-surface);
+}
+
+body.ohmylms-page .oml-player .ohmylms-lesson-details .ohmylms-lesson-navigation .ohmylms-checkbox {
+	background: #5753fa;
+}
+
+.oml-player-taking-quiz .oml-player-layout {
+	grid-template-columns: minmax(0, 1fr);
+}
+
+/* Assessment designs have their own color contract; keep a readable light canvas. */
+.oml-player-taking-quiz .oml-player-main {
+	--ohmylms-heading-color: #1b1c2e;
+	--ohmylms-text-color: #5d6075;
+	--ohmylms-body-text-color: #1b1c2e;
+	--ohmylms-primary-color: #5753fa;
+	padding: 0;
+	background: #fff;
+	color: #1b1c2e;
+}
+
+@media screen and (max-width: 800px) {
+
+	.oml-player-layout {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.oml-player-outline {
+		max-height: 280px;
+		padding: 16px;
+		overflow-y: auto;
+		border-inline-end: 0;
+		border-bottom: 1px solid var(--player-border);
+	}
+
+	.oml-player .oml-player-context {
+		gap: 8px 16px;
+		padding: 12px 16px;
+	}
+
+	.oml-player .ohmylms-lesson-content-body,
+	.oml-player .ohmylms-lesson-navigation {
+		padding: 16px;
+	}
+}
+
+.oml-player-outline-toggle {
+	padding: 8px 12px;
+	border: 1px solid var(--player-border);
+	border-radius: 8px;
+	background: var(--player-surface);
+	color: var(--player-accent);
+	font: inherit;
+	cursor: pointer;
+}
+
+.oml-player-outline[hidden],
+.oml-player-outline-toggle[hidden] {
+	display: none;
+}
+
+.oml-player-outline-closed .oml-player-layout {
+	grid-template-columns: minmax(0, 1fr);
+}
+
+.oml-player-unit-return {
+	color: var(--player-accent);
+	overflow-wrap: anywhere;
+}
+
+.oml-player button:focus-visible {
+	outline: 2px solid var(--player-accent);
+	outline-offset: 3px;
+}
+
+.oml-player .ohmylms-practice {
+	max-width: 800px;
+	margin: 0 auto;
+}
+
+.oml-player .ohmylms-practice-question {
+	border-color: var(--player-border);
+	background: var(--player-surface);
+	color: var(--player-text);
+}
+
+.oml-player .ohmylms-practice-controls {
+	border-color: var(--player-border);
+	background: var(--player-surface);
+}
+
+.oml-player .ohmylms-practice-progress,
+.oml-player .ohmylms-practice-entry {
+	color: var(--player-muted);
+}
+
+.oml-player .ohmylms-practice .ohmylms-button,
+.oml-player .ohmylms-learning-program .ohmylms-button {
+	padding: 12px 20px;
+	border: 1px solid #5753fa;
+	border-radius: 8px;
+	background: #5753fa;
+	color: #fff;
+	font: inherit;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.oml-player .ohmylms-practice .ohmylms-button.outline,
+.oml-player .ohmylms-learning-program .ohmylms-button.outline {
+	border-color: var(--player-border);
+	background: var(--player-surface);
+	color: var(--player-accent);
+}
+
+.oml-player .ohmylms-practice-option:has(input:checked) {
+	border-color: var(--player-accent);
+	background: var(--player-selected);
+}
+
+.oml-player .ohmylms-practice .ohmylms-inline-correct {
+	color: #168741;
+}
+
+.oml-player .ohmylms-practice .ohmylms-inline-incorrect {
+	color: #d44;
+}
+
+
+.oml-player .ohmylms-learning-program > .ohmylms-button {
+	margin-top: 24px;
+}
+
+/* The focused quiz uses the shared paper stage with the workspace accent. */
+body.ohmylms-page .oml-player .ohmylms-quiz.ohmylms-player-template-paper {
+	--player-stage: #fff;
+	--player-canvas: #fff;
+	--player-toolbar: #fff;
+	--player-toolbar-text: #1b1c2e;
+	--player-text: #1b1c2e;
+	--player-accent: #5753fa;
+	font-family: inherit;
+}
+
+body.ohmylms-page .oml-player .ohmylms-quiz[data-player-template] .ohmylms-container {
+	width: min(100% - 32px, 800px);
+}
+
+body.ohmylms-page .oml-player .ohmylms-quiz[data-player-template] .ohmylms-quiz-form .quiz-checkbox-radio-options {
+	grid-template-columns: minmax(0, 1fr);
+}
+
+body.ohmylms-page .oml-player .ohmylms-quiz[data-player-template] .ohmylms-button {
+	border-radius: 12px;
+	background: #5753fa;
+	box-shadow: 0 4px 0 #363498;
+	color: #fff;
+}
+
+body.ohmylms-page .oml-player .ohmylms-quiz[data-player-template] .ohmylms-button:disabled {
+	box-shadow: none;
+	opacity: 0.5;
+}
+
+
+body.oml-activity-page {
+	margin: 0;
+	padding: 0;
+}
+
+.oml-player .ohmylms-practice h2,
+.oml-player .ohmylms-practice h3 {
+	color: var(--player-text);
+	font-family: inherit;
+	line-height: 1.35;
+	overflow-wrap: anywhere;
+}
+
+.oml-player .ohmylms-practice h2 {
+	margin: 0 0 24px;
+	font-size: clamp(24px, 3vw, 32px);
+}
+
+.oml-player .ohmylms-learning-program {
+	max-width: 850px;
+	margin: 0 auto;
+	color: var(--player-text);
+}
+
+.oml-player .ohmylms-learning-lesson {
+	padding: 24px;
+	border: 1px solid var(--player-border);
+	border-radius: 8px;
+	background: var(--player-surface);
+}
+
+.oml-player .ohmylms-learning-lesson h2 {
+	margin: 0 0 24px;
+	color: var(--player-text);
+	font-size: clamp(24px, 3vw, 32px);
+}

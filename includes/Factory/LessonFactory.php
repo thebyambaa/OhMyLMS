@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Class LessonFactory.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Factory;
 
@@ -16,9 +21,9 @@ class LessonFactory {
 	/**
 	 * Get lesson object
 	 *
-	 * @param bool $lesson_id
+	 * @param bool $lesson_id Lesson identifier.
 	 * @return bool|Lesson
-	 * @throws \Exception
+	 * @throws \Exception When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	public function get_lesson( $lesson_id = false ) {
@@ -33,35 +38,35 @@ class LessonFactory {
 	/**
 	 * Get lesson id
 	 *
-	 * @param $lesson
+	 * @param mixed $lesson Lesson.
 	 * @return bool|int
 	 * @since 1.0.0
 	 */
 	private function get_lesson_id( $lesson ) {
 		global $post;
 
-		// Check if input is false and post is set
+		// Check if input is false and post is set.
 		if ( false === $lesson && isset( $post, $post->ID ) && OHMYLMS_LESSON_CPT === get_post_type( $post->ID ) ) {
 			return absint( $post->ID );
 		}
 
-		// If input is numeric, check if lesson exists
+		// If input is numeric, check if lesson exists.
 		elseif ( is_numeric( $lesson ) ) {
 			return $this->is_lesson_exist( $lesson ) ? $lesson : false;
 		}
 
-		// If input is an instance of Lesson
+		// If input is an instance of Lesson.
 		elseif ( $lesson instanceof Lesson ) {
 			$id = $lesson->get_id();
 			return $this->is_lesson_exist( $id ) ? $id : false;
 		}
 
-		// If input contains a valid ID property
+		// If input contains a valid ID property.
 		elseif ( ! empty( $lesson->ID ) ) {
 			return $this->is_lesson_exist( $lesson->ID ) ? $lesson->ID : false;
 		}
 
-		// Otherwise, return false
+		// Otherwise, return false.
 		else {
 			return false;
 		}
@@ -85,7 +90,7 @@ class LessonFactory {
 
 		$lesson = get_post( $lesson_id );
 
-		// Check if the post exists and the post type matches
+		// Check if the post exists and the post type matches.
 		if ( $lesson && OHMYLMS_LESSON_CPT === get_post_type( $lesson_id ) ) {
 			return true;
 		} else {

@@ -14,53 +14,48 @@ defined( 'ABSPATH' ) || exit();
 	<?php
 	/**
 	 * Hook: ohmylms_before_membership_loop_item.
-	 *
 	 */
 	do_action( 'ohmylms_before_membership_loop_item' );
 	?>
 
 	<div class="membership-header">
-		<?php 
+		<?php
 			/**
 			 * Hook: ohmylms_membership_table_header.
-			 * 
+			 *
 			 * Hooked: ohmylms_membership_title (5).
 			 * Hooked: ohmylms_membership_price (10).
 			 * Hooked: ohmylms_membership_description (15).
-			 *
 			 */
-			do_action( 'ohmylms_membership_table_header' ); 
+			do_action( 'ohmylms_membership_table_header' );
 		?>
 	</div>
 
 	<div class="membership-body">
-		<?php 
+		<?php
 			/**
 			 * Hook: ohmylms_membership_table_body.
-			 * 
-			 * Hooked: ohmylms_membership_product_list (5).
 			 *
+			 * Hooked: ohmylms_membership_product_list (5).
 			 */
-			do_action( 'ohmylms_membership_table_body' ); 
+			do_action( 'ohmylms_membership_table_body' );
 		?>
 	</div>
 
 	<div class="membership-footer">
-		<?php 
+		<?php
 			/**
 			 * Hook: ohmylms_membership_table_footer.
-			 * 
-			 * Hooked: ohmylms_membership_add_to_cart (5).
 			 *
+			 * Hooked: ohmylms_membership_add_to_cart (5).
 			 */
-			do_action( 'ohmylms_membership_table_footer' ); 
+			do_action( 'ohmylms_membership_table_footer' );
 		?>
 	</div>
 
 	<?php
 	/**
 	 * Hook: ohmylms_after_membership_loop_item.
-	 *
 	 */
 	do_action( 'ohmylms_after_membership_loop_item' );
 	?>

@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * ZoomSettingsController class.
  *
@@ -146,7 +146,7 @@ class ZoomSettingsController {
 	 * @return WP_REST_Response
 	 */
 	public function get_credentials( $request ) {
-		$user_id = \get_current_user_id();
+		$user_id  = \get_current_user_id();
 		$settings = \get_user_meta( $user_id, 'ohmylms_zoom_api_credentials', true );
 		if ( empty( $settings ) ) {
 			$settings = array();
@@ -172,17 +172,17 @@ class ZoomSettingsController {
 	 */
 	public function get_save_credentials_args() {
 		return array(
-			'account_id'    => array(
+			'account_id'           => array(
 				'description' => __( 'Zoom Account ID', 'ohmylms' ),
 				'type'        => 'string',
 				'required'    => true,
 			),
-			'client_id'     => array(
+			'client_id'            => array(
 				'description' => __( 'Zoom Client ID', 'ohmylms' ),
 				'type'        => 'string',
 				'required'    => true,
 			),
-			'client_secret' => array(
+			'client_secret'        => array(
 				'description' => __( 'Zoom Client Secret', 'ohmylms' ),
 				'type'        => 'string',
 				'required'    => true,

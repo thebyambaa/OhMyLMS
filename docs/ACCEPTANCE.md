@@ -1,5 +1,13 @@
 # Acceptance status — 2026-09-24
 
+Status (checked October 19, 2026): this file is the acceptance log of the source-recovery and extension work,
+written increment by increment between September 24 and October 6, 2026; counts and "not verified" lists are
+the figures of those dates. It does not cover the learner hub, schools and families, the Khan-style practice and
+assessments, xAPI or the MCP tools; their verification records are in
+[../CONTINUE-LEARNER-HUB.md](../CONTINUE-LEARNER-HUB.md) and
+[learner-experience/RELEASE-READINESS.md](learner-experience/RELEASE-READINESS.md). Treat the "Remaining release
+gates" at the end as the open list for the source build itself.
+
 ## Frontend Interactivity migration — 2026-10-02
 
 Default quiz navigation/validation/timers, matching/reorder, SmartScore practice, reward notifications,
@@ -78,6 +86,8 @@ Focused source and adapter tests cover the conversion boundary. Existing route s
 
 ## Categories and Tags increment
 
+(Later replaced: categories and tags were superseded by the curriculum and Course Bundles, and the routes now open those pages; the converted components stay in the tree only for the parity build. See `assets/src/features/taxonomies/README.md`.)
+
 Three named React components now build from `assets/src/features/taxonomies/`: the Categories route, Tags route and their shared create/edit modal. They cover loading, search, selection, course counts, category hierarchy, single and bulk deletion, and empty states. The checked taxonomy adapter replaces both anonymous route functions and the shared modal while retaining the existing REST endpoints, shared controls and category store synchronization.
 
 Focused source and adapter tests cover the conversion boundary. Complete create/edit/delete persistence, hierarchy edge cases, responsive and permissions acceptance remain release gates.
@@ -90,17 +100,31 @@ Focused source and adapter tests cover the conversion boundary. Complete fresh-i
 
 ## AI Course Outline Generator increment
 
-Eighteen named React components now build from `assets/src/features/ai-course-outline/`. They cover prompt templates and carousel controls, AI request and credit handling, course-outline preview, chapter and lesson navigation, preview actions, modal state, course creation and the Pro-gated route shell. The checked AI course adapter requires every factory binding while retaining the existing AI service requests, settings, integrations, stores, course endpoint and router behavior.
-
-Focused source and adapter tests cover the conversion boundary. Complete generation/regeneration, malformed AI responses, credit exhaustion, course creation, provider differences, responsive and permission browser acceptance remain release gates.
+**Removed.** This increment converted eighteen components in a former `ai-course-outline` feature folder. The AI Course Outline Generator was later removed from the plugin (commit `876b6cf`), so the directory, its adapter and its route no longer exist. AI assistance now comes from the [administrator assistant](ADMIN-ASSISTANT.md), the [AI tutor](AI-TUTOR.md) and the [MCP tools](MCP.md).
 
 ## Question bank, versioned assessment and skills increment (2026-10-02)
 
-Implemented the repository-based implementation plan v2.0 (tickets A01–A12) on branch `assessment-engine`; see [ASSESSMENT-ENGINE.md](ASSESSMENT-ENGINE.md). Object-level authorization and atomic saves for questions/quizzes; immutable question versions, quiz revisions and frozen attempt items with opaque option tokens; shared question banks with approval and pins; skill taxonomy with part-level mapping; autosave/resume, UTC deadlines with finalization, decimal scoring and an exam preset; a durable grade-event → evidence pipeline with transparent mastery rules; skill practice, inline lesson checks and guest claims; numerical and structured question types, random pools, a non-recording preview and a migration rehearsal tool.
+Implemented the repository-based implementation plan v2.0 (tickets A01–A12) on branch `assessment-engine` (since merged into `main`); see [ASSESSMENT-ENGINE.md](ASSESSMENT-ENGINE.md). Object-level authorization and atomic saves for questions/quizzes; immutable question versions, quiz revisions and frozen attempt items with opaque option tokens; shared question banks with approval and pins; skill taxonomy with part-level mapping; autosave/resume, UTC deadlines with finalization, decimal scoring and an exam preset; a durable grade-event → evidence pipeline with transparent mastery rules; skill practice, inline lesson checks and guest claims; numerical and structured question types, random pools, a non-recording preview and a migration rehearsal tool.
 
 Verification on the isolated site: 266 assessment integration checks, 49 assessment unit checks, all pre-existing PHP suites passing, JavaScript 91/92 (the remaining failure is the pre-existing shipped-bundle parity check), and browser checks of the authoring, learner, grading, practice, guest-claim and report flows. Pre-existing defects fixed along the way: the renamed completion hooks recursing into each other, `Review::save()` calling a missing method, question titles/descriptions losing LaTeX backslashes, matching/reorder markup revealing answers, and the question list endpoint querying quizzes.
 
 Not done: classroom pilot, math-site enablement, translations of new strings, and the items listed under "Limitations" in ASSESSMENT-ENGINE.md.
+
+## Content Hub increment (2026-10-06)
+
+Courses and Skills are combined into the **Content Hub** (Catalog, Courses, Lessons, Skills tabs; see [CONTENT-HUB.md](CONTENT-HUB.md)), and Skills became a core feature. The Courses and Skills submenus are removed; their old addresses open the hub tabs. A grade, exam or subject is a course whose learning-program draft is arranged as chapters, skills and scoped attachments, published explicitly. Lessons form a reusable library, and quizzes and assignments can be placed in several courses with shared attempts.
+
+Verified in a session with no WordPress or database: `npm run lint`, the JavaScript suite (including new hub routing, catalog model, autosave and component-render tests), `php tests/php/learning-model-unit.php`, `php tests/php/addons-unit.php` in all four modes, PHP syntax checks of every changed file, and a production build.
+
+**Not verified:** the REST controllers and the SQL in `Catalog`/`Placements` against a database, the shared-attempt and course-resolution changes in real quiz delivery, upgrade behaviour on a site that had the Skills switch off, and every browser flow (the updated menu and design specs were edited but not run). The existing PHP integration and Playwright suites must be run on the isolated site before release.
+
+## Syllabus increment (2026-10-06)
+
+Any curriculum item can be a **syllabus** with skill groups and skills of its own, edited in the Curriculum tab or imported from CSV (column mapping, dry-run review, repeatable import that never deletes; see [SYLLABUS.md](SYLLABUS.md)). The design follows two reference documents, a Cambridge IGCSE syllabus (topic, coded section, objectives) and a Mongolian grade 11 skill list (chapter, skill group, atomic skill). Skills are real library skills under one root skill per syllabus; names may repeat, codes are unique per syllabus. Curriculum schema moves to version 2 (two columns, two tables) on the next page load. The skill API and the curriculum skill pickers now return skill names as plain text rather than as the HTML entities WordPress stores, so objectives containing `<` and `>` read correctly.
+
+Verified on the isolated site with a production build: the JavaScript suite, `php tests/php/syllabus-unit.php`, `php tests/php/syllabus-integration.php` (flag and guard, group and skill editing, maths and Cyrillic text, long names that begin alike, dry run, apply, repeat, edit, refusal, rollback of a failed import, Bundles integration, deletion, permissions), the existing curriculum and placement integration suites, `tests/browser/syllabus.spec.cjs`, and a 259-skill, 83-group, 13-chapter import of a file made from the Mongolian reference through the real dialog (3.7 s on the server).
+
+**Not verified:** the live site has not been opened (its curriculum tables upgrade on its next page load); PDF files are not read by the app (they are converted to CSV first); browsers other than Chromium; a screen reader pass over the import dialog (focus moves into the dialog on every step, and the keyboard flow is covered by the browser spec).
 
 ## Remaining release gates
 

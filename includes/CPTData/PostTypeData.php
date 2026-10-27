@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Class PostTypeData.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\CPTData;
 
@@ -79,7 +84,7 @@ class PostTypeData extends Data {
 	/**
 	 * Get post type created date.
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 *
 	 * @since 1.0.0
@@ -92,7 +97,7 @@ class PostTypeData extends Data {
 	/**
 	 * Get post type featured image id
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -102,7 +107,7 @@ class PostTypeData extends Data {
 	/**
 	 * Get post type featured image id
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -112,7 +117,7 @@ class PostTypeData extends Data {
 	/**
 	 * Get post type featured image id
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -130,7 +135,7 @@ class PostTypeData extends Data {
 	/**
 	 * Set status
 	 *
-	 * @param $status
+	 * @param mixed $status Status.
 	 * @since 1.0.0
 	 */
 	public function set_status( $status ) {
@@ -141,7 +146,7 @@ class PostTypeData extends Data {
 	/**
 	 * Set name
 	 *
-	 * @param $name
+	 * @param mixed $name Name.
 	 * @since 1.0.0
 	 */
 	public function set_name( $name ) {
@@ -152,7 +157,7 @@ class PostTypeData extends Data {
 	/**
 	 * Set short description
 	 *
-	 * @param $short_description
+	 * @param mixed $short_description Short description.
 	 * @since 1.0.0
 	 */
 	public function set_short_description( $short_description ) {
@@ -162,7 +167,7 @@ class PostTypeData extends Data {
 	/**
 	 * Set description
 	 *
-	 * @param $description
+	 * @param mixed $description Description.
 	 * @since 1.0.0
 	 */
 	public function set_description( $description ) {
@@ -173,7 +178,7 @@ class PostTypeData extends Data {
 	/**
 	 * Set featured image id
 	 *
-	 * @param $image_id
+	 * @param mixed $image_id Image identifier.
 	 * @return void
 	 * @since 1.0.0
 	 */
@@ -183,7 +188,7 @@ class PostTypeData extends Data {
 	/**
 	 * Set featured image id
 	 *
-	 * @param $image_id
+	 * @param mixed $image_id Image identifier.
 	 * @return void
 	 * @since 1.0.0
 	 */
@@ -193,7 +198,7 @@ class PostTypeData extends Data {
 	/**
 	 * Set featured image id
 	 *
-	 * @param $image_id
+	 * @param mixed $image_id Image identifier.
 	 * @return void
 	 * @since 1.0.0
 	 */
@@ -204,7 +209,7 @@ class PostTypeData extends Data {
 	/**
 	 * Set slug
 	 *
-	 * @param $slug
+	 * @param mixed $slug Slug.
 	 * @since 1.0.0
 	 */
 	public function set_slug( $slug ) {

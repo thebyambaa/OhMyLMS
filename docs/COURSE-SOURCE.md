@@ -16,7 +16,7 @@ CourseEditor, CourseCreateDialog, CourseInfoHeader and CourseSettings have autho
 
 Other component files contain reconstructed JSX with runtime dependencies recorded in `components.json`. They retain some original minified locals, shared controls, store actions, and transpiler helpers. They are editable source, but this is not a claim that every course dependency is independently modularized. Student course templates, reporting, import/export, and external integration behavior have not been rewritten in this increment.
 
-`tools/course-adapters.mjs` checks all 25 original factory-1841 bindings and connects them to the native module factories. `tools/extract-course-components.mjs` is a one-time migration utility; do not regenerate over authored edits. Production builds consume checked-in source, not the previous compiled application. The native files compile with WordPress-provided React and source maps into the SDK.
+`tools/course-adapters.mjs` checks all 25 original factory-1841 bindings and connects them to the native module factories. The one-time extraction utility has been retired; edit the checked-in components directly. Production builds consume checked-in source, not the previous compiled application. The native files compile with WordPress-provided React and source maps into the SDK.
 
 ## Behavior repaired
 

@@ -35,6 +35,7 @@
             gap: 10px;
 
             .icon {
+
                 svg {
                     display: block;
                     width: auto!important;
@@ -106,6 +107,7 @@
     .ohmylms-page .ohmylms-alert .ohmylms-alert-wrapper {
         border-radius: 10px;
     }
+
     .ohmylms-page .ohmylms-alert .ohmylms-alert-body {
         padding: 20px;
     }
@@ -118,9 +120,11 @@
         width: 26px;
         height: auto;
     }
+
     .ohmylms-page .ohmylms-alert .ohmylms-alert-body h4 {
         font-size: 16px;
     }
+
     .ohmylms-page .ohmylms-alert .ohmylms-alert-body p {
         font-size: 14px;
     }

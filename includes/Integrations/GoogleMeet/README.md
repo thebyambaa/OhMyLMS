@@ -15,7 +15,7 @@ This integration enables OhMyLMS to create and manage Google Meet live classes, 
 
 ## File Structure
 
-### Backend (PHP) - ohmylms-pro
+### Backend (PHP) - ohmylms
 ```
 includes/Integrations/GoogleMeet/
 ├── GoogleMeet.php                          # Main integration class

@@ -5,6 +5,8 @@
  * Functions for account specific things.
  *
  * @version 2.6.0
+ *
+ * @package OhMyLMS
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -12,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Returns the url to the lost password endpoint url.
  *
- * @param  string $default_url Default lost password URL.
+ * @param string $default_url Default lost password URL.
  * @return string
  */
 function ohmylms_lostpassword_url( $default_url = '' ) {
@@ -33,7 +35,7 @@ function ohmylms_lostpassword_url( $default_url = '' ) {
 
 	$ohmylms_account_page_url    = ohmylms_get_page_permalink( 'student_profile' );
 	$ohmylms_account_page_exists = ohmylms_get_page_id( 'student_profile' ) > 0;
-	$lost_password_endpoint          = get_option( 'ohmylms_myaccount_lost_password_endpoint' );
+	$lost_password_endpoint      = get_option( 'ohmylms_myaccount_lost_password_endpoint' );
 
 	if ( $ohmylms_account_page_exists && ! empty( $lost_password_endpoint ) ) {
 		return ohmylms_get_endpoint_url( $lost_password_endpoint, '', $ohmylms_account_page_url );
@@ -58,8 +60,8 @@ function ohmylms_customer_edit_account_url() {
 /**
  * Get the edit address slug translation.
  *
- * @param  string $id   Address ID.
- * @param  bool   $flip Flip the array to make it possible to retrieve the values ​​from both sides.
+ * @param string $id Address ID.
+ * @param bool   $flip Flip the array to make it possible to retrieve the values ​​from both sides.
  *
  * @return string       Address slug i18n.
  */
@@ -121,12 +123,12 @@ function ohmylms_get_account_menu_items() {
 	// if ( empty( $endpoint ) ) {
 	// unset( $items[ $endpoint_id ] );
 	// }
-	// }
+	// }.
 
 	// Check if payment gateways support add new payment methods.
 	// if ( isset( $items['payment-methods'] ) ) {
 	// $support_payment_methods = false;
-	// foreach ( \CodeRex\Ecommerce\ecommerce()->payment_gateways->get_available_payment_gateways() as $gateway ) {
+	// foreach ( \OhMyLMS\Commerce\ecommerce()->payment_gateways->get_available_payment_gateways() as $gateway ) {
 	// if ( $gateway->supports( 'add_payment_method' ) || $gateway->supports( 'tokenization' ) ) {
 	// $support_payment_methods = true;
 	// break;
@@ -136,7 +138,7 @@ function ohmylms_get_account_menu_items() {
 	// if ( ! $support_payment_methods ) {
 	// unset( $items['payment-methods'] );
 	// }
-	// }
+	// }.
 
 	return apply_filters( 'ohmylms_account_menu_items', $items, $endpoints );
 }
@@ -191,16 +193,22 @@ function ohmylms_get_account_menu_item_classes( $endpoint ) {
  * @since 2.6.0
  * @param string $endpoint Endpoint.
  * @return string
+ * @param array  $query_params Query params.
  */
 function ohmylms_get_account_endpoint_url( $endpoint, $query_params = array() ) {
+	$hub_url = \OhMyLMS\Student\Hub::endpoint_url( $endpoint, $query_params );
+	if ( $hub_url ) {
+		return $hub_url;
+	}
+
 	if ( 'dashboard' === $endpoint ) {
 		return ohmylms_get_page_permalink( 'student_dashboard' );
 	}
-	
+
 	if ( 'profile' === $endpoint ) {
 		return ohmylms_get_page_permalink( 'student_profile' );
 	}
-	
+
 	if ( 'my-courses' === $endpoint ) {
 		return ohmylms_get_page_permalink( 'student_courses' );
 	}
@@ -311,7 +319,7 @@ function ohmylms_get_initials( $firstName = '', $lastName = '' ) {
 	$firstInitial  = ! empty( $firstName ) ? strtoupper( $firstName[0] ) : '';
 	$secondInitial = ! empty( $lastName ) ? strtoupper( $lastName[0] ) : '';
 
-	// If both are missing, return a default placeholder, e.g., "NN" for "No Name"
+	// If both are missing, return a default placeholder, e.g., "NN" for "No Name".
 	if ( empty( $firstInitial ) && empty( $secondInitial ) ) {
 		return 'NN';
 	}
@@ -323,7 +331,7 @@ function ohmylms_get_initials( $firstName = '', $lastName = '' ) {
  * Get account orders actions.
  *
  * @since  3.2.0
- * @param  int|WC_Order $order Order instance or ID.
+ * @param int|WC_Order $order Order instance or ID.
  * @return array
  */
 function ohmylms_get_account_orders_actions( $order ) {

@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * Hook for Settings
  *
@@ -7,20 +7,30 @@
  */
 namespace OhMyLMS\Hooks;
 
-class SettingsHook
-{
-    public function register_hooks(){
-        add_filter( 'ohmylms_default_pages', array( $this, 'add_membership_default_page' ) );
-    }
+/**
+ * Plugin settings hook implementation.
+ */
+class SettingsHook {
 
-    public function add_membership_default_page( $pages ) {
-        $pages['membership'] = array(
-            'name'    => _x( 'ohmylms-all-membership', 'Page slug', 'ohmylms' ),
-            'title'   => _x( 'All Membership', 'Page title', 'ohmylms' ),
-            'content' => '<!-- wp:shortcode -->[ohmylms_membership_plan]<!-- /wp:shortcode -->',
-        );
+	/**
+	 * Register hooks for Settings hook.
+	 */
+	public function register_hooks() {
+		add_filter( 'ohmylms_default_pages', array( $this, 'add_membership_default_page' ) );
+	}
 
-        return $pages;
-    }
+	/**
+	 * Add membership default page for Settings hook.
+	 *
+	 * @param mixed $pages Pages.
+	 */
+	public function add_membership_default_page( $pages ) {
+		$pages['membership'] = array(
+			'name'    => _x( 'ohmylms-all-membership', 'Page slug', 'ohmylms' ),
+			'title'   => _x( 'All Membership', 'Page title', 'ohmylms' ),
+			'content' => '<!-- wp:shortcode -->[ohmylms_membership_plan]<!-- /wp:shortcode -->',
+		);
+
+		return $pages;
+	}
 }
-?>

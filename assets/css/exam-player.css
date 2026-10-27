@@ -1,0 +1,46 @@
+.ohmylms-exam-player {
+	margin: 0;
+	background: var(--ohmylms-body-background-color, #f5f6f8);
+	color: var(--ohmylms-body-text-color, #1e1e1e);
+}
+
+.ohmylms-exam-shell {
+	max-width: 1100px;
+	margin: 0 auto;
+	padding: 24px;
+}
+
+.ohmylms-exam-shell > header {
+	margin-bottom: 24px;
+	padding-bottom: 16px;
+	border-bottom: 1px solid var(--ohmylms-outline-color, #ddd);
+}
+
+.ohmylms-exam-shell textarea {
+	min-height: 120px;
+}
+
+@media (max-width: 600px) {
+
+	.ohmylms-exam-shell {
+		padding: 12px;
+	}
+}
+
+/* An exam in progress uses the full-width dashboard design instead of the centered shell. */
+.ohmylms-exam-shell.is-attempting {
+	max-width: none;
+	padding: 0;
+}
+
+.ohmylms-exam-shell.is-attempting > header {
+	display: none;
+}
+
+.ohmylms-exam-shell.is-attempting > p {
+	margin: 0;
+	padding: 8px 32px;
+	font-size: 13px;
+	background: #fff;
+	border-bottom: 1px solid var(--ohmylms-outline-color, #ddd);
+}

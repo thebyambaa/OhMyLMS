@@ -1,17 +1,20 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 
 namespace OhMyLMS\Factory;
 
 use OhMyLMS\Data\Quiz;
 
+/**
+ * Plugin quiz factory implementation.
+ */
 class QuizFactory {
 
 	/**
 	 * Get quiz object
 	 *
-	 * @param bool $quiz_id
+	 * @param bool $quiz_id Quiz identifier.
 	 * @return bool|Quiz
-	 * @throws \Exception
+	 * @throws \Exception When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	public function get_quiz( $quiz_id = false ) {
@@ -28,7 +31,7 @@ class QuizFactory {
 	/**
 	 * Get quiz id
 	 *
-	 * @param $quiz
+	 * @param mixed $quiz Quiz.
 	 * @return bool|int
 	 * @since 1.0.0
 	 */

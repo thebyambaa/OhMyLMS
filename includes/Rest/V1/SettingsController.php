@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * SettingsController class.
+ *
+ * @package OhMyLMS
+ */
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
@@ -21,6 +26,11 @@ class SettingsController extends RestController {
 	 */
 	protected $base = 'settings/(?P<group_id>[\w-]+)';
 
+	/**
+	 * Search.
+	 *
+	 * @var mixed
+	 */
 	protected $search = 'page/search';
 
 
@@ -129,7 +139,7 @@ class SettingsController extends RestController {
 	/**
 	 * Get integration status
 	 *
-	 * @param \WP_REST_Request $request
+	 * @param \WP_REST_Request $request REST request.
 	 * @return \WP_REST_Response
 	 */
 	public function get_integration_status( $request ) {
@@ -143,7 +153,7 @@ class SettingsController extends RestController {
 			if ( empty( $name ) ) {
 				continue;
 			}
-			$is_enabled = ! empty( $integrations_option[ $name ]['is_enable'] ) ? 1 == $integrations_option[ $name ]['is_enable'] : false;
+			$is_enabled        = ! empty( $integrations_option[ $name ]['is_enable'] ) ? 1 == $integrations_option[ $name ]['is_enable'] : false;
 			$statuses[ $name ] = $is_enabled && $is_pro_active;
 		}
 
@@ -157,7 +167,7 @@ class SettingsController extends RestController {
 	/**
 	 * Permission check for getting integration status
 	 *
-	 * @param \WP_REST_Request $request
+	 * @param \WP_REST_Request $request REST request.
 	 * @return bool
 	 */
 	public function get_integration_status_permission_check( $request ) {
@@ -216,22 +226,22 @@ class SettingsController extends RestController {
 
 		foreach ( $get_data as $key => $value ) {
 			if ( ! is_array( $value ) ) {
-				$value = $group_id === 'permalink' ? $value : wp_kses_post( trim( stripslashes( is_null( $value ) ? '' : $value ) ) );
+				$value = 'permalink' === $group_id ? $value : wp_kses_post( trim( stripslashes( is_null( $value ) ? '' : $value ) ) );
 			}
 
 			if ( 'payment-gateway' === $group_id && is_array( $value ) && isset( $value['value'] ) ) {
 				$value = $value['value'];
 			}
-			
+
 			if ( ! $this->is_valid_option_key( $key ) ) {
 				continue;
 			}
 
 			update_option( $key, $value );
-			flush_rewrite_rules(true);
-			do_action("ohmylms_{$group_id}_settings_updated", $key, $value, $group_id );
-			
-			// Trigger payment gateway settings event for tracking
+			flush_rewrite_rules( true );
+			do_action( "ohmylms_{$group_id}_settings_updated", $key, $value, $group_id );
+
+			// Trigger payment gateway settings event for tracking.
 			if ( 'payment-gateway' === $group_id ) {
 				do_action( 'ohmylms_payment_gateway_settings_saved', $key, $value );
 			}
@@ -253,6 +263,9 @@ class SettingsController extends RestController {
 	 * @since 1.0.0
 	 */
 	private function is_valid_option_key( $key ) {
+		if ( is_string( $key ) && array_key_exists( $key, \OhMyLMS\Design\Tokens::QUIZ_COLORS ) ) {
+			return true;
+		}
 		$keys = array(
 			'ohmylms_course_page_id',
 			'ohmylms_profile_page_id',
@@ -433,31 +446,31 @@ class SettingsController extends RestController {
 		}
 		$settings          = apply_filters( 'ohmylms_settings-' . $group_id, array() );
 		$filtered_settings = array();
-		
+
 		foreach ( $settings as $setting ) {
 			$option_key = $setting['id'];
 			if ( 0 === strpos( $option_key, 'ohmylms_' ) && false !== strpos( $option_key, '_settings' ) ) {
-				$current_settings = AdminSettings::get_option( $option_key, array() );	
-				$merged_settings = array_merge( $setting['default'], $current_settings );
+				$current_settings = AdminSettings::get_option( $option_key, array() );
+				$merged_settings  = array_merge( $setting['default'], $current_settings );
 				$setting['value'] = $merged_settings;
 			} else {
 				$setting['value'] = AdminSettings::get_option( $option_key, $setting['default'] );
-				
-				// Special handling for student page settings to ensure they have valid default values
-				if ( in_array( $option_key, [ 'ohmylms_student_dashboard_page_id', 'ohmylms_student_profile_page_id', 'ohmylms_student_courses_page_id' ] ) ) {
-					// If the setting value is empty or -1, try to get the correct page ID
-					if ( empty( $setting['value'] ) || $setting['value'] == -1 ) {
+
+				// Special handling for student page settings to ensure they have valid default values.
+				if ( in_array( $option_key, array( 'ohmylms_student_dashboard_page_id', 'ohmylms_student_profile_page_id', 'ohmylms_student_courses_page_id' ) ) ) {
+					// If the setting value is empty or -1, try to get the correct page ID.
+					if ( empty( $setting['value'] ) || -1 == $setting['value'] ) {
 						$page_key = str_replace( 'ohmylms_', '', str_replace( '_page_id', '', $option_key ) );
-						$page_id = ohmylms_get_page_id( $page_key );
-						if ( $page_id && $page_id != -1 ) {
+						$page_id  = ohmylms_get_page_id( $page_key );
+						if ( $page_id && -1 != $page_id ) {
 							$setting['value'] = $page_id;
-							// Update the option in the database for future use
+							// Update the option in the database for future use.
 							update_option( $option_key, $page_id );
 						}
 					}
 				}
 			}
-			
+
 			$filtered_settings[] = $setting;
 		}
 
@@ -467,7 +480,7 @@ class SettingsController extends RestController {
 	/**
 	 * Restore missing default pages.
 	 *
-	 * @param \WP_REST_Request $request
+	 * @param \WP_REST_Request $request REST request.
 	 * @return \WP_REST_Response
 	 */
 	public function restore_pages( $request ) {
@@ -555,6 +568,11 @@ class SettingsController extends RestController {
 		);
 	}
 
+	/**
+	 * Get page for Settings controller.
+	 *
+	 * @param mixed $request REST request.
+	 */
 	public function get_page( $request ) {
 		$search_text = $request->get_param( 'value' );
 		$limit       = $request->get_param( 'limit' ) ? absint( $request->get_param( 'limit' ) ) : -1;

@@ -97,11 +97,11 @@ for (const directory of ['build/sdk', 'assets/dist/admin']) {
   test(`SDK loads features on demand from ${directory}`, async ({ page }) => {
     const { requests, errors } = await harness(page, directory);
     expect(requests).toEqual(['extensions.js']);
-    expect(
-      await page.evaluate(() =>
-        window.ohmylms.extensions.list('admin-page').map((item) => item.id),
-      ),
-    ).toEqual(expect.arrayContaining(['question-bank', 'skills', 'performance']));
+    const adminPages = await page.evaluate(() =>
+      window.ohmylms.extensions.list('admin-page').map((item) => item.id),
+    );
+    expect(adminPages).toEqual(expect.arrayContaining(['question-bank', 'skills']));
+    expect(adminPages).not.toContain('performance');
     await mountCourseLevel(page);
     await expect(page.getByRole('heading', { name: 'Level', exact: true })).toBeVisible();
     expect(await page.evaluate(() => window.factoryReads)).toBe(0);

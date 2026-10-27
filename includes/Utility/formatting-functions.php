@@ -1,10 +1,16 @@
 <?php
+/**
+ * Formatting functions.
+ *
+ * @package OhMyLMS
+ */
+
 
 
 /**
  * Converts a string to bool
  *
- * @param $string
+ * @param mixed $string String.
  * @return bool
  * @since 1.0.0
  */
@@ -17,7 +23,7 @@ function ohmylms_string_to_bool( $string ) {
 /**
  * Clean variables using sanitize_text_field. Arrays are cleaned recursively.
  *
- * @param $var
+ * @param mixed $var Var.
  * @return array|string
  * @since 1.0.0
  */
@@ -33,9 +39,9 @@ function ohmylms_clean( $var ) {
 /**
  * Format decimal number
  *
- * @param $number
- * @param bool   $dp
- * @param bool   $trim_zeros
+ * @param mixed $number Number.
+ * @param bool  $dp Dp.
+ * @param bool  $trim_zeros Trim zeros.
  * @return string|string[]|null
  * @since 1.0.0
  */
@@ -137,7 +143,7 @@ function ohmylms_get_price_decimals() {
 /**
  * Format a price with OhMyLMS currency settings
  *
- * @param $value
+ * @param mixed $value Value to process.
  * @return mixed|void
  * @since 1.0.0
  */
@@ -149,7 +155,7 @@ function ohmylms_format_localized_price( $value ) {
 /**
  * Get currency symbol
  *
- * @param $currency
+ * @param string $currency Currency.
  * @return mixed|null
  * @since 1.0.0
  */
@@ -169,8 +175,8 @@ function ohmylms_get_currency_symbol( $currency = '' ) {
 /**
  * Format a price with currency symbol
  *
- * @param $price
- * @param $args
+ * @param mixed $price Price.
+ * @param array $args Operation arguments.
  * @return string
  * @since 1.0.0
  */
@@ -199,7 +205,7 @@ function ohmylms_price( $price, $args = array() ) {
 /**
  * Implode and escape HTML attributes for an HTML element.
  *
- * @param $attributes
+ * @param mixed $attributes Attributes.
  * @return string
  * @since 1.0.0
  */
@@ -313,8 +319,8 @@ function ohmylms_timezone_string() {
 /**
  * Format a date/time object to a localized string.
  *
- * @param $date
- * @param $format
+ * @param mixed  $date Date.
+ * @param string $format Format.
  * @return string
  * @since 1.0.0
  */
@@ -325,7 +331,7 @@ function ohmylms_format_datetime( $date, $format = '' ) {
 			$date_format = 'F j, Y';
 		}
 	}
-	if ( ! is_a( $date, 'CodeRex\Ecommerce\EcommerceDateTime' ) ) {
+	if ( ! is_a( $date, 'OhMyLMS\Commerce\EcommerceDateTime' ) ) {
 		return '';
 	}
 	return $date->date_i18n( $date_format );
@@ -334,14 +340,14 @@ function ohmylms_format_datetime( $date, $format = '' ) {
 /**
  * Convert a local date/time string to UTC format.
  *
- * @param $localDateTimeString
- * @param $localTimezone
+ * @param mixed  $localDateTimeString Localdatetimestring.
+ * @param string $localTimezone Localtimezone.
  * @return string
- * @throws Exception
+ * @throws Exception When the operation cannot be completed.
  * @since 1.0.0
  */
-function ohmylms_convert_to_utc($localDateTimeString, $localTimezone = 'Asia/Dhaka') {
-	$date = new DateTime($localDateTimeString, new DateTimeZone($localTimezone));
-	$date->setTimezone(new DateTimeZone('UTC'));
-	return $date->format('Y-m-d\TH:i:s\Z');
+function ohmylms_convert_to_utc( $localDateTimeString, $localTimezone = 'Asia/Dhaka' ) {
+	$date = new DateTime( $localDateTimeString, new DateTimeZone( $localTimezone ) );
+	$date->setTimezone( new DateTimeZone( 'UTC' ) );
+	return $date->format( 'Y-m-d\TH:i:s\Z' );
 }

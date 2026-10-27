@@ -1,0 +1,214 @@
+.ohmylms-study-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+	gap: 12px;
+	margin: 16px 0;
+}
+
+.ohmylms-study-cards article {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.ohmylms-study-cards button {
+	width: 100%;
+	min-height: 90px;
+	white-space: normal;
+}
+
+.ohmylms-question-player {
+	--ohmylms-primary-color: #6d28d9;
+	margin: 24px 0;
+	padding: clamp(16px, 3vw, 32px);
+	border: 1px solid #d1d5db;
+	border-radius: 16px;
+	background: #fff;
+	color: #111827;
+}
+
+.ohmylms-question-player .ohmylms-question-player-question[hidden],
+.ohmylms-question-player [hidden] {
+	display: none !important;
+}
+
+.ohmylms-question-player button {
+	padding: 10px 18px;
+	border: 1px solid #6d28d9;
+	border-radius: 8px;
+	background: #fff;
+	color: #5b21b6;
+	cursor: pointer;
+}
+
+.ohmylms-question-player button:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.ohmylms-question-player-question {
+	padding: 24px 0;
+}
+
+.ohmylms-question-player button:focus-visible,
+.ohmylms-question-player-question:focus-visible {
+	outline: 3px solid #2563eb;
+	outline-offset: 3px;
+}
+
+.ohmylms-question-player-question input[type="text"],
+.ohmylms-question-player-question select,
+.ohmylms-question-player-question textarea {
+	max-width: 100%;
+	padding: 10px;
+	border: 1px solid #9ca3af;
+	border-radius: 6px;
+}
+
+.ohmylms-question-player-question img {
+	max-width: 100%;
+	height: auto;
+}
+
+.ohmylms-question-player .single-option {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 10px 0;
+	padding: 12px;
+	border: 1px solid #d1d5db;
+	border-radius: 8px;
+	cursor: pointer;
+}
+
+.ohmylms-question-player .checked-check {
+	display: none;
+}
+
+.ohmylms-question-player-navigation {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 12px;
+	padding-top: 20px;
+	border-top: 1px solid #e5e7eb;
+}
+
+.ohmylms-question-player progress {
+	width: 100%;
+	accent-color: #6d28d9;
+}
+
+.ohmylms-question-player-error {
+	padding: 12px;
+	border-left: 4px solid #b91c1c;
+	background: #fef2f2;
+	color: #991b1b;
+}
+
+.ohmylms-question-player-preview {
+	padding: 12px;
+	border-radius: 8px;
+	background: #eff6ff;
+	color: #1e40af;
+}
+
+.ohmylms-question-player-prompt,
+.ohmylms-question-player-score {
+	font-size: 1.2em;
+	font-weight: 600;
+}
+
+.ohmylms-study-cards button:disabled {
+	opacity: 1;
+	color: inherit;
+	background: #f0f6fc;
+}
+
+.ohmylms-question-player .ohmylms-word-slots {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-block: 20px;
+	font-size: 1.8em;
+	white-space: pre-wrap;
+}
+
+.ohmylms-question-player .ohmylms-hangman-drawing {
+	display: block;
+	width: 160px;
+	height: 180px;
+	color: inherit;
+}
+
+.ohmylms-recall-study {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+	gap: 12px;
+	padding: 0;
+	list-style: none;
+}
+
+.ohmylms-recall-study li {
+	display: grid;
+	place-items: center;
+	min-height: 90px;
+	padding: 12px;
+	border: 1px solid #64748b;
+	border-radius: 12px;
+	background: #eff6ff;
+	font-size: 1.3em;
+	overflow-wrap: anywhere;
+}
+
+.ohmylms-recall-choices button[aria-pressed="true"] {
+	border-color: #2563eb;
+	background: #dbeafe;
+	color: #172033;
+}
+
+.ohmylms-question-player .ohmylms-image-reveal {
+	position: relative;
+	width: min(100%, 640px);
+	aspect-ratio: 4 / 3;
+	margin-block: 16px;
+	background: #e2e8f0;
+}
+
+.ohmylms-question-player .ohmylms-image-reveal > img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+
+.ohmylms-image-mask {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
+	grid-template-rows: repeat(6, 1fr);
+	pointer-events: none;
+}
+
+.ohmylms-image-mask > span {
+	background: #1e3a5f;
+	border: 1px solid #64748b;
+}
+
+.ohmylms-image-controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin-block: 12px;
+}
+
+.ohmylms-question-player .ohmylms-image-choices button {
+	overflow-wrap: anywhere;
+}
+
+.ohmylms-question-player .ohmylms-image-choices button img {
+	display: block;
+	max-width: 100%;
+	max-height: 140px;
+	margin: 8px auto;
+	object-fit: contain;
+}

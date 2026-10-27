@@ -1,8 +1,9 @@
 .ohmylms-page {
+
     .ohmylms-course-card-popup {
         border-radius: 8px;
         background-color: #FFF;
-        box-shadow: 0px 10px 20px 0px rgba(211, 214, 221, 0.30);
+        box-shadow: 0 10px 20px 0 rgba(211, 214, 221, 0.30);
         padding: 18px 24px 24px;
         width: 100%;
         max-width: 309px;
@@ -17,17 +18,17 @@
             opacity: 1;
         }
 
-        &:before {
+        &::before {
             content: "";
             position: absolute;
             left: 0;
             top: 50%;
             width: 30px;
             height: 30px;
-            background: #ffffff;
+            background: #fff;
             border-radius: 5px;
             transform: rotate(45deg) translateX(-50%);
-            box-shadow: -3px 6px 10px 0px #d3d6dd4d;
+            box-shadow: -3px 6px 10px 0 #d3d6dd4d;
             transform-origin: center;
         }
 
@@ -43,9 +44,9 @@
             line-height: 1.4;
             margin: 0 0 10px;
             padding: 0;
-            word-break: break-word;
+word-break: normal;
             overflow-wrap: break-word;
-            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         .course-update-wrapper {
@@ -53,7 +54,7 @@
             align-items: center;
             flex-flow: row wrap;
             gap: 10px;
-            margin: 0px 0 13px;
+            margin: 0 0 13px;
         }
 
         .updated-date {
@@ -159,6 +160,7 @@
 
 
 @media screen and (max-width: 991px) {
+
     .ohmylms-page .ohmylms-course-card-popup {
         padding: 14px 20px 20px;
     }

@@ -294,7 +294,7 @@ add_filter('pre_http_request', function() {
 tail -f wp-content/debug.log
 
 # Check plugin files
-ls -la wp-content/plugins/ohmylms-pro/includes/Integrations/GoogleMeet/
+ls -la wp-content/plugins/ohmylms/includes/Integrations/GoogleMeet/
 
 # Database check
 wp db query "SELECT * FROM wp_usermeta WHERE meta_key LIKE '%googlemeet%'"

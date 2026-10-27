@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * SettingsController class.
+ *
+ * @package OhMyLMS
+ */
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
@@ -21,6 +26,11 @@ class EmailController extends RestController {
 	 */
 	protected $base = 'email-settings/(?P<email_id>[\w-]+)';
 
+	/**
+	 * Items.
+	 *
+	 * @var mixed
+	 */
 	protected $items = 'all-emails';
 
 
@@ -78,16 +88,16 @@ class EmailController extends RestController {
 	 */
 	public function get_items( $request ) {
 		$email_ids = array(
-			'CreatorsEmail\\NewOrder'           => 'creator_new_order',
-			'CreatorsEmail\\CancelledOrder'     => 'creator_cancelled_order',
+			'CreatorsEmail\\NewOrder'            => 'creator_new_order',
+			'CreatorsEmail\\CancelledOrder'      => 'creator_cancelled_order',
 			'CreatorsEmail\\AssignmentSubmitted' => 'instructor_assignment_submitted',
-			'CreatorsEmail\\QuizSubmitted'      => 'instructor_quiz_submitted',
-			'StudentsEmail\\NewOrder'           => 'student_new_order',
-			'StudentsEmail\\ConfirmEnrollment'  => 'student_confirm_enrollment',
-			'StudentsEmail\\CompleteCourse'     => 'student_course_completed',
-			'StudentsEmail\\CancelEnrollment'   => 'student_cancel_enrollment',
-			'StudentsEmail\\AssignmentGraded'   => 'student_assignment_graded',
-			'StudentsEmail\\QuizGraded'         => 'student_quiz_graded',
+			'CreatorsEmail\\QuizSubmitted'       => 'instructor_quiz_submitted',
+			'StudentsEmail\\NewOrder'            => 'student_new_order',
+			'StudentsEmail\\ConfirmEnrollment'   => 'student_confirm_enrollment',
+			'StudentsEmail\\CompleteCourse'      => 'student_course_completed',
+			'StudentsEmail\\CancelEnrollment'    => 'student_cancel_enrollment',
+			'StudentsEmail\\AssignmentGraded'    => 'student_assignment_graded',
+			'StudentsEmail\\QuizGraded'          => 'student_quiz_graded',
 		);
 
 		$search_term = $request->get_param( 'search' );
@@ -151,16 +161,16 @@ class EmailController extends RestController {
 	 */
 	public function get_item( $request ) {
 		$email_ids = array(
-			'CreatorsEmail\\NewOrder'           => 'creator_new_order',
-			'CreatorsEmail\\CancelledOrder'     => 'creator_cancelled_order',
+			'CreatorsEmail\\NewOrder'            => 'creator_new_order',
+			'CreatorsEmail\\CancelledOrder'      => 'creator_cancelled_order',
 			'CreatorsEmail\\AssignmentSubmitted' => 'instructor_assignment_submitted',
-			'CreatorsEmail\\QuizSubmitted'      => 'instructor_quiz_submitted',
-			'StudentsEmail\\NewOrder'           => 'student_new_order',
-			'StudentsEmail\\ConfirmEnrollment'  => 'student_confirm_enrollment',
-			'StudentsEmail\\CompleteCourse'     => 'student_course_completed',
-			'StudentsEmail\\CancelEnrollment'   => 'student_cancel_enrollment',
-			'StudentsEmail\\AssignmentGraded'   => 'student_assignment_graded',
-			'StudentsEmail\\QuizGraded'         => 'student_quiz_graded',
+			'CreatorsEmail\\QuizSubmitted'       => 'instructor_quiz_submitted',
+			'StudentsEmail\\NewOrder'            => 'student_new_order',
+			'StudentsEmail\\ConfirmEnrollment'   => 'student_confirm_enrollment',
+			'StudentsEmail\\CompleteCourse'      => 'student_course_completed',
+			'StudentsEmail\\CancelEnrollment'    => 'student_cancel_enrollment',
+			'StudentsEmail\\AssignmentGraded'    => 'student_assignment_graded',
+			'StudentsEmail\\QuizGraded'          => 'student_quiz_graded',
 		);
 		$key       = array_search( $request['email_id'], $email_ids );
 		$email     = 'OhMyLMS\\Emails\\' . $key;
@@ -177,8 +187,8 @@ class EmailController extends RestController {
 	/**
 	 * Get a single setting for a specific group.
 	 *
-	 * @param string $group_id The group ID.
-	 * @param string $setting_id The setting ID.
+	 * @param mixed $email_id Email identifier.
+	 * @param array $default Default.
 	 * @return array|\WP_Error The setting array or error object.
 	 *
 	 * @since 1.0.0
@@ -193,8 +203,8 @@ class EmailController extends RestController {
 	/**
 	 * Get a single setting for a specific group.
 	 *
-	 * @param string $group_id The group ID.
-	 * @param string $setting_id The setting ID.
+	 * @param mixed $email_id Email identifier.
+	 * @param mixed $data Input data.
 	 * @return bool The setting array or error object.
 	 *
 	 * @since 1.0.0

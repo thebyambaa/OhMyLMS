@@ -4,6 +4,7 @@
 }
 
 .ohmylms-page {
+
     .ohmylms-header {
         background-color: #000D2C;
         padding: 17px 0;
@@ -52,7 +53,7 @@
         .search-box {
             position: relative;
 
-            & > svg {
+            > svg {
                 position: absolute;
                 top: 9px;
                 left: 14px;
@@ -75,12 +76,15 @@
                 &::-webkit-input-placeholder {
                     color: #ffffffab;
                 }
+
                 &::-moz-placeholder {
                     color: #ffffffab;
                 }
+
                 &:-ms-input-placeholder {
                     color: #ffffffab;
                 }
+
                 &:-moz-placeholder {
                     color: #ffffffab;
                 }
@@ -106,6 +110,7 @@
         }
 
         .ohmylms-notification {
+
             a {
                 position: relative;
                 top: 2px;
@@ -149,7 +154,7 @@
                 box-shadow: none;
                 outline: none !important;
                 text-decoration: none !important;
-                background: #ffffff !important;
+                background: #fff !important;
                 cursor: pointer;
                 font-size: 15px;
                 text-transform: uppercase;
@@ -183,7 +188,7 @@
                 margin: 0;
                 border-radius: 14px;
                 background-color: #FFF;
-                box-shadow: 0px 6px 20px 0px #E1E6F1;
+                box-shadow: 0 6px 20px 0 #E1E6F1;
                 padding: 16px;
                 width: 203px;
                 position: absolute;
@@ -221,6 +226,7 @@
 
                         &.my-profile-link.active,
                         &.dashboard-link.active {
+
                             path {
                                 stroke: var(--ohmylms-heading-color);
                                 fill: var(--ohmylms-heading-color);
@@ -228,18 +234,21 @@
                         }
 
                         &.my-course-link.active {
+
                             path {
                                 fill: var(--ohmylms-heading-color);
                             }
                         }
 
                         &.settings-link.active {
+
                             path {
                                 stroke: var(--ohmylms-heading-color);
                             }
                         }
 
                         &.logout-link.active {
+
                             path {
                                 fill: var(--ohmylms-heading-color);
                             }
@@ -250,6 +259,7 @@
             }
 
             &.show-dropdown {
+
                 .ohmylms-user-dropdown {
                     opacity: 1;
                     visibility: visible;
@@ -269,22 +279,26 @@
 
 
 @media screen and (max-width: 991px) {
-    .ohmylms-page .ohmylms-header-left .search-box input[type=search] {
+
+    .ohmylms-page .ohmylms-header-left .search-box input[type="search"] {
         width: 240px;
     }
 }
 
 
 @media screen and (max-width: 767px) {
+
     .ohmylms-page .ohmylms-header-left .brand-logo {
         max-width: 100px;
     }
-    .ohmylms-page .ohmylms-header-left .search-box input[type=search] {
+
+    .ohmylms-page .ohmylms-header-left .search-box input[type="search"] {
         width: 210px;
     }
 }
 
 @media screen and (max-width: 575px) {
+
     .ohmylms-page .ohmylms-header-left .search-box {
         position: absolute;
         left: 0;
@@ -294,9 +308,11 @@
         background-color: #020c2c;
         display: none;
     }
+
     .ohmylms-page .ohmylms-header-left .search-box > svg {
         display: none;
     }
+
     .ohmylms-page .ohmylms-header-left .search-box .ohmylms-search-close {
         width: 30px;
         height: 30px;
@@ -307,7 +323,8 @@
         align-items: center;
         justify-content: center;
     }
-    .ohmylms-page .ohmylms-header-left .search-box input[type=search] {
+
+    .ohmylms-page .ohmylms-header-left .search-box input[type="search"] {
         width: calc(100% - 50px);
         padding: 7px 14px 7px 14px;
         border-radius: 8px;
@@ -316,9 +333,10 @@
     .ohmylms-page .ohmylms-header-right {
         gap: 17px;
     }
+
     .ohmylms-page .ohmylms-header-right .ohmylms-mobile-search-btn {
         display: block;
-        padding: 7px 0px 5px 7px;
+        padding: 7px 0 5px 7px;
         line-height: 1;
         border: none;
         outline: none!important;

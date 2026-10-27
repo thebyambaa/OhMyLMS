@@ -1,4 +1,5 @@
 .ohmylms-page {
+
     .ohmylms-course-cards {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -12,8 +13,8 @@
 
         .course-card {
             border-radius: 8px;
-            background-color: #ffffff;
-            box-shadow: 0px 1px 2px 0px #DBDDE1;
+            background-color: #fff;
+            box-shadow: 0 1px 2px 0 #DBDDE1;
             transition: all 0.3s ease;
 
             .ohmylms-course-card-link {
@@ -25,6 +26,7 @@
             .ohmylms-loop-course-thumbnail-link {
                 border-radius: 12px 12px 0 0;
                 position: relative;
+
                 .ohmylms-course-time-label {
                     position: absolute;
                     right: 0.5rem;
@@ -44,10 +46,11 @@
                         margin-right: .24rem;
 
                         path {
-                            fill: #ffffff;
+                            fill: #fff;
                         }
                     }
                 }
+
                 figure {
                     height: 160px;
                     width: 100%;
@@ -69,9 +72,10 @@
             }
 
             &:hover {
-                box-shadow: 0px 10px 20px 0px #d3d6dd4d;
+                box-shadow: 0 10px 20px 0 #d3d6dd4d;
 
                 .ohmylms-loop-course-thumbnail-link {
+
                     figure img {
                         transform: scale(1.1);
                     }
@@ -99,9 +103,9 @@
                     line-height: 1.4;
                     margin: 0;
                     transition: all 0.3s ease;
-                    word-break: break-word;
+word-break: normal;
                     overflow-wrap: break-word;
-                    word-wrap: break-word;
+                    overflow-wrap: break-word;
 
                     &:hover {
                         color: var(--ohmylms-primary-color);
@@ -171,12 +175,14 @@
                         }
                     }
 
-                    & > li {
+                    > li {
                         display: block;
+
                         .icon-text-align {
                             display: inline-flex;
                             align-items: center;
                             gap: 4px;
+
                             svg {
                                 display: inline-block;
                                 position: static;
@@ -188,6 +194,7 @@
                     }
 
                     .course-rating {
+
                         .rating .average-rating {
                             font-weight: 700;
                         }
@@ -217,7 +224,7 @@
                             background-repeat: no-repeat;
                             background-position: 100%;
                             background-size: 100% 100%;
-                            background-image: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgNjAgMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbD0iI0Y1RjVGNSIgZD0iTTAgMGg2MHYxMEgweiIvPjxwYXRoIGZpbGw9IiNGOUZBRkQiIGQ9Ik0tNDE1LTQxM2gxOTIwdjE5NzNILTQxNVYtNDEzeiIvPjxwYXRoIGZpbGw9IiNGRTk3MzgiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTMyLjQzIDkuODE2YS43MTEuNzExIDAgMDAuNzUtLjA1M2MuMjItLjE2LjMzLS40My4yODUtLjY5OEwzMyA2LjM1NWwxLjk3LTEuOTJhLjcxMS43MTEgMCAwMC0uMzk1LTEuMjE2bC0yLjcyMy0uMzk2TDMwLjYzNS4zNjVjLS4yNDEtLjQ4Ny0xLjAzNy0uNDg3LTEuMjc4IDBMMjguMTQgMi44MjNsLTIuNzE3LjM5NmEuNzE0LjcxNCAwIDAwLS4zOTUgMS4yMTZsMS45NyAxLjkyLS40NjQgMi43MWEuNzE1LjcxNSAwIDAwMS4wMzUuNzUxbDIuNDI2LTEuMjggMi40MzQgMS4yOHpNMjcuNjE3IDguNjZsMi4zNzctMS4yNTNMMzIuMzggOC42NmwtLjQ1NS0yLjY1NSAxLjkzLTEuODgtMi42NjgtLjM4OC0xLjE5Mi0yLjQxLTEuMTkzIDIuNDEtMi42Ni4zODcgMS45MyAxLjg4MS0uNDU1IDIuNjU0ek0xMC4xNTkgNC40MzVhLjcxMS43MTEgMCAwMC0uMzk2LTEuMjE2bC0yLjcyNC0uMzk2TDUuODIyLjM2NWMtLjI0LS40ODctMS4wMzctLjQ4Ny0xLjI3OCAwTDMuMzI3IDIuODIzLjYxIDMuMjJhLjcxNC43MTQgMCAwMC0uMzk1IDEuMjE2bDEuOTcgMS45Mi0uNDY0IDIuNzFhLjcxNS43MTUgMCAwMDEuMDM1Ljc1MWwyLjQyNy0xLjI4IDIuNDM0IDEuMjhhLjcxLjcxIDAgMDAuNzUxLS4wNTNjLjIyLS4xNi4zMy0uNDMuMjg0LS42OThsLS40NjQtMi43MSAxLjk3LTEuOTJ6TTcuNTY5IDguNjZsLS40NTUtMi42NTUgMS45My0xLjg4LTIuNjY4LS4zODgtMS4xOTMtMi40MS0xLjE5MiAyLjQxLTIuNjYuMzg3IDEuOTMgMS44ODEtLjQ1NiAyLjY1NCAyLjM3Ny0xLjI1M0w3LjU2OCA4LjY2em0xMS4yMTMtNC45MjJsLTEuMTkyLTIuNDEtMS4xOTMgMi40MS0yLjY2LjM4NyAxLjkzIDEuODgxLS40NTYgMi42NTQgMi4zNzgtMS4yNTMgMi4zODYgMS4yNTQtLjQ1NS0yLjY1NSAxLjkzLTEuODgtMi42NjgtLjM4OHptMy45NjMtLjAzNGEuNzEyLjcxMiAwIDAxLS4xOC43M2wtMS45NyAxLjkyMS40NjMgMi43MWEuNzE1LjcxNSAwIDAxLS43MDMuODM0LjcxLjcxIDAgMDEtLjMzMi0uMDgzbC0yLjQzNC0xLjI4LTIuNDI2IDEuMjhhLjcxNC43MTQgMCAwMS0xLjAzNS0uNzUxbC40NjQtMi43MS0xLjk3LTEuOTJhLjcxLjcxIDAgMDEuMzk1LTEuMjE2bDIuNzE2LS4zOTZMMTYuOTUuMzY1Yy4yNDEtLjQ4NyAxLjAzOC0uNDg3IDEuMjc5IDBsMS4yMTcgMi40NTggMi43MjMuMzk2Yy4yNjkuMDQuNDkyLjIyNy41NzYuNDg1em0yNC42MzIuNzMxYS43MTIuNzEyIDAgMDAtLjM5Ni0xLjIxNmwtMi43MjMtLjM5Nkw0My4wNDEuMzY1Yy0uMjQtLjQ4Ny0xLjAzNy0uNDg3LTEuMjc4IDBsLTEuMjE3IDIuNDU4LTIuNzE3LjM5NmEuNzE0LjcxNCAwIDAwLS4zOTUgMS4yMTZsMS45NyAxLjkyLS40NjQgMi43MWEuNzE1LjcxNSAwIDAwMS4wMzUuNzUxbDIuNDI3LTEuMjggMi40MzQgMS4yOGEuNzEuNzEgMCAwMC43NTEtLjA1M2MuMjItLjE2LjMzLS40My4yODQtLjY5OGwtLjQ2NC0yLjcxIDEuOTctMS45MnpNNDAuMDI0IDguNjZMNDIuNCA3LjQwN2wyLjM4NiAxLjI1NC0uNDU1LTIuNjU1IDEuOTMtMS44OC0yLjY2Ny0uMzg4LTEuMTkzLTIuNDEtMS4xOTMgMi40MS0yLjY2LjM4NyAxLjkzIDEuODgxLS40NTUgMi42NTR6bTkuODE2LTQuMjI1bDEuOTcgMS45Mi0uNDY0IDIuNzFhLjcxNS43MTUgMCAwMDEuMDM2Ljc1MWwyLjQyNy0xLjI4IDIuNDM0IDEuMjhhLjcxNS43MTUgMCAwMDEuMDM0LS43NTFsLS40NjQtMi43MSAxLjk3LTEuOTJhLjcxMy43MTMgMCAwMC0uMzk1LTEuMjE2bC0yLjcyNC0uMzk2TDU1LjQ0Ny4zNjVjLS4yNC0uNDg3LTEuMDM3LS40ODctMS4yNzggMGwtMS4yMTcgMi40NTgtMi43MTcuMzk2YS43MTQuNzE0IDAgMDAtLjM5NSAxLjIxNnptMS4xMTUtLjMxbDEuOTMgMS44ODEtLjQ1NSAyLjY1NCAyLjM3OC0xLjI1MyAyLjM4NSAxLjI1My0uNDU0LTIuNjU0IDEuOTMtMS44OEw1NiAzLjczN2wtMS4xOTMtMi40MS0xLjE5MiAyLjQxLTIuNjYuMzg3eiIgY2xpcC1ydWxlPSJldmVub2RkIi8+PC9zdmc+");
+                            background-image: url(data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgNjAgMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbD0iI0Y1RjVGNSIgZD0iTTAgMGg2MHYxMEgweiIvPjxwYXRoIGZpbGw9IiNGOUZBRkQiIGQ9Ik0tNDE1LTQxM2gxOTIwdjE5NzNILTQxNVYtNDEzeiIvPjxwYXRoIGZpbGw9IiNGRTk3MzgiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTMyLjQzIDkuODE2YS43MTEuNzExIDAgMDAuNzUtLjA1M2MuMjItLjE2LjMzLS40My4yODUtLjY5OEwzMyA2LjM1NWwxLjk3LTEuOTJhLjcxMS43MTEgMCAwMC0uMzk1LTEuMjE2bC0yLjcyMy0uMzk2TDMwLjYzNS4zNjVjLS4yNDEtLjQ4Ny0xLjAzNy0uNDg3LTEuMjc4IDBMMjguMTQgMi44MjNsLTIuNzE3LjM5NmEuNzE0LjcxNCAwIDAwLS4zOTUgMS4yMTZsMS45NyAxLjkyLS40NjQgMi43MWEuNzE1LjcxNSAwIDAwMS4wMzUuNzUxbDIuNDI2LTEuMjggMi40MzQgMS4yOHpNMjcuNjE3IDguNjZsMi4zNzctMS4yNTNMMzIuMzggOC42NmwtLjQ1NS0yLjY1NSAxLjkzLTEuODgtMi42NjgtLjM4OC0xLjE5Mi0yLjQxLTEuMTkzIDIuNDEtMi42Ni4zODcgMS45MyAxLjg4MS0uNDU1IDIuNjU0ek0xMC4xNTkgNC40MzVhLjcxMS43MTEgMCAwMC0uMzk2LTEuMjE2bC0yLjcyNC0uMzk2TDUuODIyLjM2NWMtLjI0LS40ODctMS4wMzctLjQ4Ny0xLjI3OCAwTDMuMzI3IDIuODIzLjYxIDMuMjJhLjcxNC43MTQgMCAwMC0uMzk1IDEuMjE2bDEuOTcgMS45Mi0uNDY0IDIuNzFhLjcxNS43MTUgMCAwMDEuMDM1Ljc1MWwyLjQyNy0xLjI4IDIuNDM0IDEuMjhhLjcxLjcxIDAgMDAuNzUxLS4wNTNjLjIyLS4xNi4zMy0uNDMuMjg0LS42OThsLS40NjQtMi43MSAxLjk3LTEuOTJ6TTcuNTY5IDguNjZsLS40NTUtMi42NTUgMS45My0xLjg4LTIuNjY4LS4zODgtMS4xOTMtMi40MS0xLjE5MiAyLjQxLTIuNjYuMzg3IDEuOTMgMS44ODEtLjQ1NiAyLjY1NCAyLjM3Ny0xLjI1M0w3LjU2OCA4LjY2em0xMS4yMTMtNC45MjJsLTEuMTkyLTIuNDEtMS4xOTMgMi40MS0yLjY2LjM4NyAxLjkzIDEuODgxLS40NTYgMi42NTQgMi4zNzgtMS4yNTMgMi4zODYgMS4yNTQtLjQ1NS0yLjY1NSAxLjkzLTEuODgtMi42NjgtLjM4OHptMy45NjMtLjAzNGEuNzEyLjcxMiAwIDAxLS4xOC43M2wtMS45NyAxLjkyMS40NjMgMi43MWEuNzE1LjcxNSAwIDAxLS43MDMuODM0LjcxLjcxIDAgMDEtLjMzMi0uMDgzbC0yLjQzNC0xLjI4LTIuNDI2IDEuMjhhLjcxNC43MTQgMCAwMS0xLjAzNS0uNzUxbC40NjQtMi43MS0xLjk3LTEuOTJhLjcxLjcxIDAgMDEuMzk1LTEuMjE2bDIuNzE2LS4zOTZMMTYuOTUuMzY1Yy4yNDEtLjQ4NyAxLjAzOC0uNDg3IDEuMjc5IDBsMS4yMTcgMi40NTggMi43MjMuMzk2Yy4yNjkuMDQuNDkyLjIyNy41NzYuNDg1em0yNC42MzIuNzMxYS43MTIuNzEyIDAgMDAtLjM5Ni0xLjIxNmwtMi43MjMtLjM5Nkw0My4wNDEuMzY1Yy0uMjQtLjQ4Ny0xLjAzNy0uNDg3LTEuMjc4IDBsLTEuMjE3IDIuNDU4LTIuNzE3LjM5NmEuNzE0LjcxNCAwIDAwLS4zOTUgMS4yMTZsMS45NyAxLjkyLS40NjQgMi43MWEuNzE1LjcxNSAwIDAwMS4wMzUuNzUxbDIuNDI3LTEuMjggMi40MzQgMS4yOGEuNzEuNzEgMCAwMC43NTEtLjA1M2MuMjItLjE2LjMzLS40My4yODQtLjY5OGwtLjQ2NC0yLjcxIDEuOTctMS45MnpNNDAuMDI0IDguNjZMNDIuNCA3LjQwN2wyLjM4NiAxLjI1NC0uNDU1LTIuNjU1IDEuOTMtMS44OC0yLjY2Ny0uMzg4LTEuMTkzLTIuNDEtMS4xOTMgMi40MS0yLjY2LjM4NyAxLjkzIDEuODgxLS40NTUgMi42NTR6bTkuODE2LTQuMjI1bDEuOTcgMS45Mi0uNDY0IDIuNzFhLjcxNS43MTUgMCAwMDEuMDM2Ljc1MWwyLjQyNy0xLjI4IDIuNDM0IDEuMjhhLjcxNS43MTUgMCAwMDEuMDM0LS43NTFsLS40NjQtMi43MSAxLjk3LTEuOTJhLjcxMy43MTMgMCAwMC0uMzk1LTEuMjE2bC0yLjcyNC0uMzk2TDU1LjQ0Ny4zNjVjLS4yNC0uNDg3LTEuMDM3LS40ODctMS4yNzggMGwtMS4yMTcgMi40NTgtMi43MTcuMzk2YS43MTQuNzE0IDAgMDAtLjM5NSAxLjIxNnptMS4xMTUtLjMxbDEuOTMgMS44ODEtLjQ1NSAyLjY1NCAyLjM3OC0xLjI1MyAyLjM4NSAxLjI1My0uNDU0LTIuNjU0IDEuOTMtMS44OEw1NiAzLjczN2wtMS4xOTMtMi40MS0xLjE5MiAyLjQxLTIuNjYuMzg3eiIgY2xpcC1ydWxlPSJldmVub2RkIi8+PC9zdmc+);
         
                         }
                     }
@@ -236,12 +243,12 @@
                             width: 64px;
                             position: absolute;
                             top: 0;
-                            left: 0px;
+                            left: 0;
                             height: 100%;
                             background-repeat: no-repeat;
                             background-position: 100%;
                             background-size: 100% 100%;
-                            background-image: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgNjAgMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbD0iI0ZFOTczOCIgZD0iTTEwLjMzOSAzLjcwNGEuNzEzLjcxMyAwIDAwLS41NzYtLjQ4NWwtMi43MjQtLjM5Nkw1LjgyMi4zNjVjLS4yNC0uNDg3LTEuMDM3LS40ODctMS4yNzggMEwzLjMyNyAyLjgyMy42MSAzLjIyYS43MTQuNzE0IDAgMDAtLjM5NSAxLjIxNmwxLjk3IDEuOTItLjQ2NCAyLjcxYS43MTUuNzE1IDAgMDAxLjAzNS43NTFsMi40MjctMS4yOCAyLjQzNCAxLjI4YS43MS43MSAwIDAwLjc1MS0uMDUzYy4yMi0uMTYuMzMtLjQzLjI4NC0uNjk4bC0uNDY0LTIuNzEgMS45Ny0xLjkyYS43MTEuNzExIDAgMDAuMTgtLjczMXptMTIuNDA2IDBhLjcxMy43MTMgMCAwMC0uNTc2LS40ODVsLTIuNzIzLS4zOTZMMTguMjI5LjM2NWMtLjI0MS0uNDg3LTEuMDM4LS40ODctMS4yNzkgMGwtMS4yMTYgMi40NTgtMi43MTcuMzk2YS43MTQuNzE0IDAgMDAtLjM5NSAxLjIxNmwxLjk3IDEuOTItLjQ2NSAyLjcxYS43MTQuNzE0IDAgMDAxLjAzNS43NTFsMi40MjctMS4yOCAyLjQzNCAxLjI4YS43MS43MSAwIDAwLjc1Mi0uMDUzYy4yMi0uMTYuMzI5LS40My4yODMtLjY5OGwtLjQ2NC0yLjcxIDEuOTctMS45MmEuNzEyLjcxMiAwIDAwLjE4MS0uNzMxem0xMi40MDYgMGEuNzEzLjcxMyAwIDAwLS41NzYtLjQ4NWwtMi43MjMtLjM5NkwzMC42MzUuMzY1Yy0uMjQxLS40ODctMS4wMzctLjQ4Ny0xLjI3OCAwTDI4LjE0IDIuODIzbC0yLjcxNy4zOTZhLjcxNC43MTQgMCAwMC0uMzk1IDEuMjE2bDEuOTcgMS45Mi0uNDY0IDIuNzFhLjcxNS43MTUgMCAwMDEuMDM1Ljc1MWwyLjQyNi0xLjI4IDIuNDM0IDEuMjhhLjcxMS43MTEgMCAwMC43NTItLjA1M2MuMjItLjE2LjMzLS40My4yODQtLjY5OEwzMyA2LjM1NWwxLjk3LTEuOTJhLjcxMS43MTEgMCAwMC4xODEtLjczMXptMTIuNDA2IDBhLjcxMy43MTMgMCAwMC0uNTc2LS40ODVsLTIuNzIzLS4zOTZMNDMuMDQxLjM2NWMtLjI0LS40ODctMS4wMzctLjQ4Ny0xLjI3OCAwbC0xLjIxNyAyLjQ1OC0yLjcxNy4zOTZhLjcxNC43MTQgMCAwMC0uMzk1IDEuMjE2bDEuOTcgMS45Mi0uNDY0IDIuNzFhLjcxNS43MTUgMCAwMDEuMDM1Ljc1MWwyLjQyNy0xLjI4IDIuNDM0IDEuMjhhLjcxLjcxIDAgMDAuNzUxLS4wNTNjLjIyLS4xNi4zMy0uNDMuMjg0LS42OThsLS40NjQtMi43MSAxLjk3LTEuOTJhLjcxMi43MTIgMCAwMC4xOC0uNzMxem0xMi40MDcgMGEuNzE0LjcxNCAwIDAwLS41NzYtLjQ4NWwtMi43MjQtLjM5Nkw1NS40NDcuMzY1Yy0uMjQtLjQ4Ny0xLjAzNy0uNDg3LTEuMjc4IDBsLTEuMjE3IDIuNDU4LTIuNzE3LjM5NmEuNzE0LjcxNCAwIDAwLS4zOTUgMS4yMTZsMS45NyAxLjkyLS40NjQgMi43MWEuNzE1LjcxNSAwIDAwMS4wMzYuNzUxbDIuNDI3LTEuMjggMi40MzQgMS4yOGEuNzE1LjcxNSAwIDAwMS4wMzQtLjc1MWwtLjQ2NC0yLjcxIDEuOTctMS45MmEuNzEzLjcxMyAwIDAwLjE4LS43MzF6Ii8+PC9zdmc+");
+                            background-image: url(data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgNjAgMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbD0iI0ZFOTczOCIgZD0iTTEwLjMzOSAzLjcwNGEuNzEzLjcxMyAwIDAwLS41NzYtLjQ4NWwtMi43MjQtLjM5Nkw1LjgyMi4zNjVjLS4yNC0uNDg3LTEuMDM3LS40ODctMS4yNzggMEwzLjMyNyAyLjgyMy42MSAzLjIyYS43MTQuNzE0IDAgMDAtLjM5NSAxLjIxNmwxLjk3IDEuOTItLjQ2NCAyLjcxYS43MTUuNzE1IDAgMDAxLjAzNS43NTFsMi40MjctMS4yOCAyLjQzNCAxLjI4YS43MS43MSAwIDAwLjc1MS0uMDUzYy4yMi0uMTYuMzMtLjQzLjI4NC0uNjk4bC0uNDY0LTIuNzEgMS45Ny0xLjkyYS43MTEuNzExIDAgMDAuMTgtLjczMXptMTIuNDA2IDBhLjcxMy43MTMgMCAwMC0uNTc2LS40ODVsLTIuNzIzLS4zOTZMMTguMjI5LjM2NWMtLjI0MS0uNDg3LTEuMDM4LS40ODctMS4yNzkgMGwtMS4yMTYgMi40NTgtMi43MTcuMzk2YS43MTQuNzE0IDAgMDAtLjM5NSAxLjIxNmwxLjk3IDEuOTItLjQ2NSAyLjcxYS43MTQuNzE0IDAgMDAxLjAzNS43NTFsMi40MjctMS4yOCAyLjQzNCAxLjI4YS43MS43MSAwIDAwLjc1Mi0uMDUzYy4yMi0uMTYuMzI5LS40My4yODMtLjY5OGwtLjQ2NC0yLjcxIDEuOTctMS45MmEuNzEyLjcxMiAwIDAwLjE4MS0uNzMxem0xMi40MDYgMGEuNzEzLjcxMyAwIDAwLS41NzYtLjQ4NWwtMi43MjMtLjM5NkwzMC42MzUuMzY1Yy0uMjQxLS40ODctMS4wMzctLjQ4Ny0xLjI3OCAwTDI4LjE0IDIuODIzbC0yLjcxNy4zOTZhLjcxNC43MTQgMCAwMC0uMzk1IDEuMjE2bDEuOTcgMS45Mi0uNDY0IDIuNzFhLjcxNS43MTUgMCAwMDEuMDM1Ljc1MWwyLjQyNi0xLjI4IDIuNDM0IDEuMjhhLjcxMS43MTEgMCAwMC43NTItLjA1M2MuMjItLjE2LjMzLS40My4yODQtLjY5OEwzMyA2LjM1NWwxLjk3LTEuOTJhLjcxMS43MTEgMCAwMC4xODEtLjczMXptMTIuNDA2IDBhLjcxMy43MTMgMCAwMC0uNTc2LS40ODVsLTIuNzIzLS4zOTZMNDMuMDQxLjM2NWMtLjI0LS40ODctMS4wMzctLjQ4Ny0xLjI3OCAwbC0xLjIxNyAyLjQ1OC0yLjcxNy4zOTZhLjcxNC43MTQgMCAwMC0uMzk1IDEuMjE2bDEuOTcgMS45Mi0uNDY0IDIuNzFhLjcxNS43MTUgMCAwMDEuMDM1Ljc1MWwyLjQyNy0xLjI4IDIuNDM0IDEuMjhhLjcxLjcxIDAgMDAuNzUxLS4wNTNjLjIyLS4xNi4zMy0uNDMuMjg0LS42OThsLS40NjQtMi43MSAxLjk3LTEuOTJhLjcxMi43MTIgMCAwMC4xOC0uNzMxem0xMi40MDcgMGEuNzE0LjcxNCAwIDAwLS41NzYtLjQ4NWwtMi43MjQtLjM5Nkw1NS40NDcuMzY1Yy0uMjQtLjQ4Ny0xLjAzNy0uNDg3LTEuMjc4IDBsLTEuMjE3IDIuNDU4LTIuNzE3LjM5NmEuNzE0LjcxNCAwIDAwLS4zOTUgMS4yMTZsMS45NyAxLjkyLS40NjQgMi43MWEuNzE1LjcxNSAwIDAwMS4wMzYuNzUxbDIuNDI3LTEuMjggMi40MzQgMS4yOGEuNzE1LjcxNSAwIDAwMS4wMzQtLjc1MWwtLjQ2NC0yLjcxIDEuOTctMS45MmEuNzEzLjcxMyAwIDAwLjE4LS43MzF6Ii8+PC9zdmc+);
                         }
                     }
                 }
@@ -336,6 +343,7 @@
                 }
 
                 &.is-cohort-based {
+
                     .cohort-enrollment-status path {
                         fill: #A1A1AA;
                     }
@@ -450,6 +458,7 @@
                     }
 
                     &.is-cohort-based {
+
                         .course-meta {
                             margin: 0 0 10px;
                         }
@@ -471,9 +480,11 @@
 
     // -----when filter is enabled-----
     .ohmylms-filter-enabled {
+
         .ohmylms-course-cards.ohmylms-col-3 .course-card .ohmylms-loop-course-thumbnail-link figure {
             height: 160px;
         }
+
         .ohmylms-course-cards.ohmylms-col-3 .course-card .course-info {
             height: calc(100% - 160px);
         }
@@ -482,6 +493,7 @@
 }
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .ohmylms-courses .ohmylms-course-cards {
 		grid-template-columns: repeat(3, 1fr);
 	}
@@ -491,6 +503,7 @@
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-col-3 .course-card .ohmylms-loop-course-thumbnail-link figure {
 		height: 170px;
 	}
+
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-col-3 .course-card .course-info {
 		height: calc(100% - 170px);
 	}
@@ -499,9 +512,11 @@
     .ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-col-2 {
         grid-template-columns: repeat(2, 1fr);
     }
+
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-col-2 .course-card .ohmylms-loop-course-thumbnail-link figure {
 		height: 230px;
 	}
+
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-col-2 .course-card .course-info {
 		height: calc(100% - 230px);
 	}
@@ -515,6 +530,7 @@
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-list-view .course-card .ohmylms-button {
 		max-width: 180px;
 	}
+
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-list-view .course-card .course-info .title-content {
 		width: calc(100% - 212px);
 	}
@@ -526,9 +542,11 @@
 }
 
 @media screen and (max-width: 991px) {
+
     .ohmylms-page .ohmylms-courses .ohmylms-course-cards {
         grid-template-columns: repeat(2, 1fr);
     }
+
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-col-3 {
 		grid-template-columns: repeat(2, 1fr);
 	}
@@ -538,6 +556,7 @@
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-col-2 .course-card .ohmylms-loop-course-thumbnail-link figure {
         height: 180px;
     }
+
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-col-2 .course-card .course-info {
         height: calc(100% - 180px);
     }
@@ -557,6 +576,7 @@
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-list-view .course-card .course-info .title-content {
         width: calc(100% - 196px);
     }
+
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-list-view .course-card .ohmylms-button {
         max-width: 165px;
     }
@@ -564,6 +584,7 @@
 }
 
 @media screen and (max-width: 767px) {
+
     .ohmylms-page .ohmylms-courses .ohmylms-course-cards .course-card .course-info .course-meta {
 		margin: 0 0 20px;
 	}
@@ -572,6 +593,7 @@
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-col-3 .course-card .ohmylms-loop-course-thumbnail-link figure {
         height: 160px;
     }
+
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-col-3 .course-card .course-info {
         height: calc(100% - 160px);
     }
@@ -580,6 +602,7 @@
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-col-2 .course-card .ohmylms-loop-course-thumbnail-link figure {
         height: 160px;
     }
+
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-col-2 .course-card .course-info {
         height: calc(100% - 160px);
     }
@@ -589,9 +612,11 @@
 		border-radius: 8px;
 		display: block;
 	}
+
     .ohmylms-page .ohmylms-course-cards.ohmylms-list-view .course-card .ohmylms-loop-course-thumbnail-link {
         height: auto;
     }
+
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-list-view .course-card .ohmylms-loop-course-thumbnail-link figure {
         width: 100%;
 		height: auto;
@@ -608,13 +633,16 @@
         width: 100%;
         display: block;
     }
+
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-list-view .course-card .course-info .title-content {
         width: 100%;
         margin-bottom: 13px;
     }
+
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-list-view .course-card .course-info .course-meta {
 		margin: 0 0 20px;
 	}
+
     .ohmylms-page .ohmylms-course-cards.ohmylms-list-view .course-card .course-info.is-cohort-based .course-meta {
         margin: 0 0 10px;
     }
@@ -626,13 +654,16 @@
 
 
 @media screen and (max-width: 575px) {
+
     .ohmylms-page .ohmylms-course-cards .course-card .ohmylms-loop-course-thumbnail-link {
         border-radius: 8px 8px 0 0;
     }
+
     .ohmylms-page .ohmylms-courses .ohmylms-course-cards .course-card .ohmylms-loop-course-thumbnail-link figure {
 		height: 120px;
 		border-radius: 8px 8px 0 0;
 	}
+
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards .course-card .ohmylms-loop-course-thumbnail-link img {
 		border-radius: 8px 8px 0 0;
 	}
@@ -640,10 +671,12 @@
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards .course-card {
 		border-radius: 8px;
 	}
+
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards .course-card .course-info {
 		height: calc(100% - 120px);
 		padding: 14px;
 	}
+
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards .course-card .course-info .price {
         font-size: 14px;
     }
@@ -656,6 +689,7 @@
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-col-3 .course-card .ohmylms-loop-course-thumbnail-link figure {
         height: 120px;
     }
+
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-col-3 .course-card .course-info {
         height: calc(100% - 120px);
     }
@@ -664,6 +698,7 @@
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-col-2 .course-card .ohmylms-loop-course-thumbnail-link figure {
         height: 120px;
     }
+
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-col-2 .course-card .course-info {
         height: calc(100% - 120px);
     }
@@ -671,14 +706,17 @@
 }
 
 @media screen and (max-width: 425px) {
+
     .ohmylms-page .ohmylms-courses .ohmylms-course-cards {
         grid-template-columns: repeat(1, 1fr);
 		max-width: 320px;
         margin: 0 auto;
     }
+
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-col-3 {
         grid-template-columns: repeat(1, 1fr);
     }
+
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-col-2 {
 		grid-template-columns: repeat(1, 1fr);
 	}
@@ -695,6 +733,7 @@
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-col-3 .course-card .ohmylms-loop-course-thumbnail-link figure {
         height: 150px;
     }
+
 	.ohmylms-page .ohmylms-courses .ohmylms-course-cards.ohmylms-col-3 .course-card .course-info {
         height: auto;
     }

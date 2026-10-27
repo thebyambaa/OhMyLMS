@@ -10,85 +10,77 @@
 
 defined( 'ABSPATH' ) || exit();
 
-if( isset($atts) && is_array($atts) && isset($atts['course_rows']) ){
-    $data = !empty($atts['course_rows']) ? $atts['course_rows'] : get_option('ohmylms_archive_page_row', []);
+if ( isset( $atts ) && is_array( $atts ) && isset( $atts['course_rows'] ) ) {
+	$data = ! empty( $atts['course_rows'] ) ? $atts['course_rows'] : get_option( 'ohmylms_archive_page_row', array() );
 } else {
-    // Fallback to default option if shortcode attributes are not set
-    $data = get_option('ohmylms_archive_page_row', []);
+	// Fallback to default option if shortcode attributes are not set.
+	$data = get_option( 'ohmylms_archive_page_row', array() );
 }
 
-if (empty($data)) {
-    return;
+if ( empty( $data ) ) {
+	return;
 }
 global $category;
 
-foreach ($data as $row) {
+foreach ( $data as $row ) {
 
-	// Validate required row fields
-	if (empty($row['row_heading']) || empty($row['row_display_criteria'])) {
+	// Validate required row fields.
+	if ( empty( $row['row_heading'] ) || empty( $row['row_display_criteria'] ) ) {
 		continue;
 	}
-	
+
 	$function = "get_{$row['row_display_criteria']}_course_ids";
-	
-	// Skip if the function does not exist and criteria is not 'all'
-	if (!function_exists($function) && 'all' !== $row['row_display_criteria'] ) {
+
+	// Skip if the function does not exist and criteria is not 'all'.
+	if ( ! function_exists( $function ) && 'all' !== $row['row_display_criteria'] ) {
 		continue;
 	}
 
-		
-	if( 'all' === $row['row_display_criteria'] ){
-		$args = [
-			'post_type' => OHMYLMS_COURSE_CPT,
-			'post_status'    => 'publish',
-			'posts_per_page' => -1,  // Adjust as needed
-		];
 
-		if ( $category && 'all' !== $category ) {
-			$args['tax_query'] = array(
-				array(
-					'taxonomy'         => 'course_category',
-					'field'            => 'slug',
-					'terms'            => $category,
-					'operator'         => 'IN',
-					'include_children' => true,
-				)
-			);
+	if ( 'all' === $row['row_display_criteria'] ) {
+		$args = array(
+			'post_type'      => OHMYLMS_COURSE_CPT,
+			'post_status'    => 'publish',
+			'posts_per_page' => -1,  // Adjust as needed.
+		);
+
+		// The selected curriculum item (with everything below it) or Course Bundle.
+		$group = ohmylms_course_ids_for_group( $category );
+		if ( null !== $group ) {
+			$args['post__in'] = $group ? $group : array( 0 );
 		}
 		$query = new \WP_Query( $args );
 
-		if ($query->have_posts()) {
-			while ($query->have_posts()) {
+		if ( $query->have_posts() ) {
+			while ( $query->have_posts() ) {
 				$query->the_post();
-				ohmylms_get_template_part( 'course', 'popup-content',isset($atts) && is_array($atts) ? $atts : null ); //calling course-popup-content.php
+				ohmylms_get_template_part( 'course', 'popup-content', isset( $atts ) && is_array( $atts ) ? $atts : null ); // calling course-popup-content.php.
 			}
 			wp_reset_postdata();
-		} 
-		
-		
-	}else{
-		
-		$course_ids = $function($category);
-		
-		if (!empty($course_ids)) {
-			// Create a WP_Query with the course IDs
-			$query = new \WP_Query([
-				'post_type' => 'ohmylms-course',
-				'post__in' => $course_ids,
-				'orderby' => 'post__in', // Maintain the order of IDs
-				'posts_per_page' => -1,  // Adjust as needed
-				'post_status'    => 'publish',
-			]);
+		}
+	} else {
 
-			if ($query->have_posts()) {
-				while ($query->have_posts()) {
+		$course_ids = $function( $category );
+
+		if ( ! empty( $course_ids ) ) {
+			// Create a WP_Query with the course IDs.
+			$query = new \WP_Query(
+				array(
+					'post_type'      => 'ohmylms-course',
+					'post__in'       => $course_ids,
+					'orderby'        => 'post__in', // Maintain the order of IDs.
+					'posts_per_page' => -1,  // Adjust as needed.
+					'post_status'    => 'publish',
+				)
+			);
+
+			if ( $query->have_posts() ) {
+				while ( $query->have_posts() ) {
 					$query->the_post();
-					ohmylms_get_template_part( 'course', 'popup-content', isset($atts) && is_array($atts) ? $atts : null ); //calling course-popup-content.php
+					ohmylms_get_template_part( 'course', 'popup-content', isset( $atts ) && is_array( $atts ) ? $atts : null ); // calling course-popup-content.php.
 				}
 				wp_reset_postdata();
-			} 
+			}
 		}
 	}
-		
 }
-?>

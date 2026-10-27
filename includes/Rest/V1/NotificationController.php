@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * NotificationController class.
+ *
+ * @package OhMyLMS
+ */
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
@@ -80,13 +85,14 @@ class NotificationController extends RestController {
 			);
 		}
 
-		// Validate required parameters
+		// Validate required parameters.
 		$required_params = array( 'email', 'subject', 'message' );
 		foreach ( $required_params as $param ) {
 			if ( empty( $request[ $param ] ) ) {
 				return new \WP_Error(
 					'rest_missing_param',
-					sprintf( __( 'Missing parameter: %s', 'ohmylms' ), $param ),
+					sprintf( /* translators: %s: text value. */
+					__( 'Missing parameter: %s', 'ohmylms' ), $param ),
 					array( 'status' => 400 )
 				);
 			}
@@ -95,12 +101,12 @@ class NotificationController extends RestController {
 		$email   = sanitize_email( $request['email'] );
 		$subject = sanitize_text_field( $request['subject'] );
 		$message = wp_kses_post( $request['message'] );
-		// Set up email headers for HTML content
+		// Set up email headers for HTML content.
 		$headers = array(
 			'Content-Type: text/html; charset=UTF-8',
 		);
 
-		// Send email with HTML formatting
+		// Send email with HTML formatting.
 		$sent = wp_mail( $email, $subject, $message, $headers );
 
 		if ( ! $sent ) {
@@ -170,6 +176,9 @@ class NotificationController extends RestController {
 		return $wpdb->insert_id;
 	}
 
+	/**
+	 * Check notification permission for Notification controller.
+	 */
 	public function check_notification_permission() {
 		return current_user_can( 'edit_posts' );
 	}

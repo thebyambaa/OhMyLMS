@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Currency settings class.
+ *
+ * @package OhMyLMS
+ */
 namespace OhMyLMS\Admin\Settings;
 
 use OhMyLMS\Abstracts\Settings;

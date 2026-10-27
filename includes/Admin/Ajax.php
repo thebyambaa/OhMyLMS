@@ -1,8 +1,14 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 namespace OhMyLMS\Admin;
 
+/**
+ * Plugin ajax implementation.
+ */
 class Ajax {
 
+	/**
+	 * Initialize Ajax.
+	 */
 	public function __construct() {
 		add_action( 'wp_ajax_install_sample_data', array( $this, 'install_sample_data' ) );
 		add_action( 'wp_ajax_delete_sample_data', array( $this, 'delete_sample_data' ) );
@@ -12,16 +18,22 @@ class Ajax {
 	}
 
 
+	/**
+	 * Install sample data for Ajax.
+	 */
 	public function install_sample_data() {
 		check_ajax_referer( 'admin_tools', 'nonce' );
 
-		// create sample course here
+		// create sample course here.
 	}
 
+	/**
+	 * Delete sample data for Ajax.
+	 */
 	public function delete_sample_data() {
 		check_ajax_referer( 'admin_tools', 'nonce' );
 
-		// create sample course here
+		// create sample course here.
 	}
 
 	/**
@@ -36,7 +48,7 @@ class Ajax {
 			wp_send_json_error( array( 'message' => __( 'Unauthorized access', 'ohmylms' ) ) );
 		}
 
-		$occasion = isset( $_POST['occasion'] ) ? sanitize_text_field( $_POST['occasion'] ) : '';
+		$occasion = isset( $_POST['occasion'] ) ? sanitize_text_field( wp_unslash( $_POST['occasion'] ) ) : '';
 
 		if ( empty( $occasion ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid occasion', 'ohmylms' ) ) );
@@ -53,18 +65,18 @@ class Ajax {
 	 * @return void
 	 */
 	public function delete_transient_cache() {
-		// Verify nonce
-		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'ohmylms_delete_cache_nonce' ) ) {
+		// Verify nonce.
+		if ( ! check_ajax_referer( 'ohmylms_delete_cache_nonce', 'nonce', false ) ) {
 			wp_send_json_error( array( 'message' => __( 'Security check failed', 'ohmylms' ) ) );
 		}
-		
+
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Unauthorized access', 'ohmylms' ) ) );
 		}
 
-global $wpdb;
+		global $wpdb;
 
-		// Delete all OhMyLMS related transients
+		// Delete all OhMyLMS related transients.
 		$count = $wpdb->query(
 			$wpdb->prepare(
 				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s",
@@ -74,8 +86,8 @@ global $wpdb;
 				$wpdb->esc_like( '_site_transient_ohmylms_' ) . '%'
 			)
 		);
-		
-		// Also delete transients with 'ohmylms' and 'ohmylms' prefix
+
+		// Also delete transients with 'ohmylms' and 'ohmylms' prefix.
 		$count += $wpdb->query(
 			$wpdb->prepare(
 				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s",
@@ -91,7 +103,7 @@ global $wpdb;
 			)
 		);
 
-		// For multisite, also delete from sitemeta
+		// For multisite, also delete from sitemeta.
 		if ( is_multisite() ) {
 			$count += $wpdb->query(
 				$wpdb->prepare(
@@ -109,15 +121,14 @@ global $wpdb;
 			);
 		}
 
-
-		wp_send_json_success( 
-			array( 
+		wp_send_json_success(
+			array(
 				'message' => sprintf(
 					/* translators: %d: number of cache items deleted */
 					_n( '%d cache item deleted successfully.', '%d cache items deleted successfully.', $count, 'ohmylms' ),
 					$count
-				)
-			) 
+				),
+			)
 		);
 	}
 
@@ -146,7 +157,7 @@ global $wpdb;
 		foreach ( array( '_site_transient_', '_site_transient_timeout_' ) as $prefix ) {
 			foreach ( array( 'ohmylms_', 'update_ohmylms_' ) as $name ) {
 				$pattern = $wpdb->esc_like( $prefix . $name ) . '%';
-				$rows = is_multisite()
+				$rows    = is_multisite()
 					? $wpdb->get_col( $wpdb->prepare( "SELECT meta_key FROM {$wpdb->sitemeta} WHERE site_id = %d AND meta_key LIKE %s", get_current_network_id(), $pattern ) )
 					: $wpdb->get_col( $wpdb->prepare( "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s", $pattern ) );
 				foreach ( $rows as $row ) {

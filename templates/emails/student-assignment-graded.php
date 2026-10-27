@@ -1,4 +1,9 @@
 <?php
+/**
+ * Emails student assignment graded template.
+ *
+ * @package OhMyLMS
+ */
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -10,8 +15,8 @@ $email_body_bg_color = $email_settings['ohmylms_email_body_background_color'] ??
 $email_text_color    = $email_settings['ohmylms_email_body_text_color'] ?? '#1F2328';
 $cta_btn_position    = $email_settings['ohmylms_email_button_possition'] ?? 'center';
 
-$status_label  = 'passed' === $status ? __( 'Passed', 'ohmylms' ) : __( 'Failed', 'ohmylms' );
-$status_color  = 'passed' === $status ? '#22C55E' : '#EF4444';
+$status_label = 'passed' === $status ? __( 'Passed', 'ohmylms' ) : __( 'Failed', 'ohmylms' );
+$status_color = 'passed' === $status ? '#22C55E' : '#EF4444';
 ?>
 <html lang="en">
 <head>

@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Controller for handling assignment REST API endpoints.
+ *
+ * @package OhMyLMS
+ */
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
@@ -110,13 +115,17 @@ class AssignmentController extends RestController {
 			)
 		);
 
-		register_rest_route( $this->namespace, '/' . $this->base . '/trash-bulk/', array(
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->base . '/trash-bulk/',
 			array(
-				'methods'             => \WP_REST_Server::DELETABLE,
-				'callback'            => array( $this, 'trash_bulk' ),
-				'permission_callback' => array( $this, 'check_assignment_permission' ),
+				array(
+					'methods'             => \WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'trash_bulk' ),
+					'permission_callback' => array( $this, 'check_assignment_permission' ),
+				),
 			)
-		) );
+		);
 
 		register_rest_route(
 			$this->namespace,
@@ -222,7 +231,7 @@ class AssignmentController extends RestController {
 			'post_parent__not_in' => isset( $request['parent_exclude'] ) ? array_map( 'intval', (array) $request['parent_exclude'] ) : array(),
 			's'                   => isset( $request['search'] ) ? sanitize_text_field( $request['search'] ) : '',
 			'post_type'           => OHMYLMS_ASSIGNMENT_CPT,
-			'post_status'         => isset($request['post_status']) ? sanitize_text_field($request['post_status']) : array('draft', 'publish', 'future'),
+			'post_status'         => isset( $request['post_status'] ) ? sanitize_text_field( $request['post_status'] ) : array( 'draft', 'publish', 'future' ),
 		);
 
 		$args['date_query'] = array();
@@ -238,8 +247,8 @@ class AssignmentController extends RestController {
 			unset( $args['filter'] );
 		}
 
-		if( 'any' === $args['post_status'] || !in_array($args['post_status'],array('draft', 'publish', 'future'))  ){
-			$args['post_status'] = array('draft', 'publish', 'future');
+		if ( 'any' === $args['post_status'] || ! in_array( $args['post_status'], array( 'draft', 'publish', 'future' ) ) ) {
+			$args['post_status'] = array( 'draft', 'publish', 'future' );
 		}
 
 		$args       = apply_filters( 'ohmylms_rest_ohmylms_assignment_query', $args, $request );
@@ -257,11 +266,11 @@ class AssignmentController extends RestController {
 			$posts[] = $this->prepare_response_for_collection( $data );
 		}
 
-		$page        = (int) $query_args['paged'];
-		$total_posts = $posts_query->found_posts;
+		$page                 = (int) $query_args['paged'];
+		$total_posts          = $posts_query->found_posts;
 		$total_filtered_posts = $total_posts;
 
-		if ( $total_posts < 1 && $page > 1 ) {
+		if ( 1 > $total_posts && 1 < $page ) {
 			unset( $query_args['paged'] );
 			$count_query = new WP_Query();
 			$count_query->query( $query_args );
@@ -270,41 +279,50 @@ class AssignmentController extends RestController {
 
 		$max_pages = ceil( $total_posts / (int) $query_args['posts_per_page'] );
 
-		if (isset($request['orderby']) && in_array($request['orderby'], ['number_of_submissions'])) {
-			usort($posts, function($a, $b) use ($request) {
-				if (strtoupper($request['order']) === 'DESC') {
-					return $a['number_of_submissions'] <=> $b['number_of_submissions'];
-				} else {
-					return $b['number_of_submissions'] <=> $a['number_of_submissions'];
+		if ( isset( $request['orderby'] ) && in_array( $request['orderby'], array( 'number_of_submissions' ) ) ) {
+			usort(
+				$posts,
+				function ( $a, $b ) use ( $request ) {
+					if ( strtoupper( $request['order'] ) === 'DESC' ) {
+						return $a['number_of_submissions'] <=> $b['number_of_submissions'];
+					} else {
+						return $b['number_of_submissions'] <=> $a['number_of_submissions'];
+					}
 				}
-			});	
+			);
 		}
 
-		if (isset($request['orderby']) && $request['orderby'] === 'course_name') {
-			usort($posts, function($a, $b) use ($request) {
-				if( isset($b['courses']['course_name']) ){
-					$order = strtoupper($request['order']) === 'DESC' ? -1 : 1;
-					return strcasecmp($a['courses']['course_name'], $b['courses']['course_name']) * $order;
+		if ( isset( $request['orderby'] ) && 'course_name' === $request['orderby'] ) {
+			usort(
+				$posts,
+				function ( $a, $b ) use ( $request ) {
+					if ( isset( $b['courses']['course_name'] ) ) {
+						$order = strtoupper( $request['order'] ) === 'DESC' ? -1 : 1;
+						return strcasecmp( $a['courses']['course_name'], $b['courses']['course_name'] ) * $order;
+					}
 				}
-			});
+			);
 		}
-		
-		if (!empty($request['course_id'])) {
+
+		if ( ! empty( $request['course_id'] ) ) {
 			$course_id = (int) $request['course_id'];
-		
-			$posts = array_filter($posts, function($post) use ($course_id) {
-				return isset($post['courses']['id']) && $post['courses']['id'] == $course_id;
-			});
-		
-			// Re-index array (optional)
-			$posts = array_values($posts);
-			$total_filtered_posts = count($posts);
+
+			$posts = array_filter(
+				$posts,
+				function ( $post ) use ( $course_id ) {
+					return isset( $post['courses']['id'] ) && $post['courses']['id'] == $course_id;
+				}
+			);
+
+			// Re-index array (optional).
+			$posts                = array_values( $posts );
+			$total_filtered_posts = count( $posts );
 		}
 
 		$response = rest_ensure_response( $posts );
 		$response->header( 'X-WP-Total', (int) $total_posts );
 		$response->header( 'X-WP-TotalPages', (int) $max_pages );
-		$response->header('X-WP-NoOfFilteredAssignments', (int) $total_filtered_posts);
+		$response->header( 'X-WP-NoOfFilteredAssignments', (int) $total_filtered_posts );
 
 		$request_params = $request->get_query_params();
 		if ( ! empty( $request_params['filter'] ) ) {
@@ -313,7 +331,7 @@ class AssignmentController extends RestController {
 		}
 		$base = add_query_arg( $request_params, rest_url( sprintf( '/%s/%s', $this->namespace, $this->rest_base ) ) );
 
-		if ( $page > 1 ) {
+		if ( 1 < $page ) {
 			$prev_page = $page - 1;
 			if ( $prev_page > $max_pages ) {
 				$prev_page = $max_pages;
@@ -332,7 +350,7 @@ class AssignmentController extends RestController {
 	/**
 	 * Add assignment
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
 	 * @since 1.0.0
 	 */
@@ -371,11 +389,11 @@ class AssignmentController extends RestController {
 	/**
 	 * Update assignment settings
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
 	 * @since 1.0.0
 	 */
-	public function update_item( $request ){
+	public function update_item( $request ) {
 
 		$post_id = (int) $request['id'];
 
@@ -407,21 +425,21 @@ class AssignmentController extends RestController {
 	 * @since 1.0.0
 	 */
 	public function trash_bulk( $request ) {
-		$assignment_ids = $request->get_param('assignment_ids');
-		if( is_array($assignment_ids) ){
+		$assignment_ids = $request->get_param( 'assignment_ids' );
+		if ( is_array( $assignment_ids ) ) {
 			$assignment_ids = $this->filter_allowed_post_ids( $assignment_ids, 'delete', 'ohmylms-assignment' );
 
 			if ( is_wp_error( $assignment_ids ) ) {
 				return $assignment_ids;
 			}
 
-			foreach( $assignment_ids as $assignment_id ){
-				wp_trash_post($assignment_id);
+			foreach ( $assignment_ids as $assignment_id ) {
+				wp_trash_post( $assignment_id );
 				do_action( 'ohmylms_rest_delete_assignment', $assignment_id );
 			}
-			return new \WP_REST_Response(['message' => 'Deleted Successfully'], 200);
+			return new \WP_REST_Response( array( 'message' => 'Deleted Successfully' ), 200 );
 		}
-		return new \WP_REST_Response(['message' => 'Failed to trash the assignment.'], 500);
+		return new \WP_REST_Response( array( 'message' => 'Failed to trash the assignment.' ), 500 );
 	}
 
 
@@ -434,7 +452,7 @@ class AssignmentController extends RestController {
 	 * @param \WP_REST_Request $request The REST request object containing the meta data.
 	 * @return bool True on success, false on failure.
 	 *
-	 * @throws DataException
+	 * @throws DataException When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	protected function update_post_meta_fields( $post, $request ) {
@@ -606,7 +624,7 @@ class AssignmentController extends RestController {
 	/**
 	 * Save assignment settings
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
 	 * @since 1.0.0
 	 */
@@ -622,14 +640,14 @@ class AssignmentController extends RestController {
 	/**
 	 * Get assignment content
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
 	 * @since 1.0.0
 	 */
 	public function get_item( $request ) {
 		$id   = (int) $request['id'];
 		$post = get_post( $id );
-		if ( empty( $id ) || empty( $post->ID ) || $post->post_type !== OHMYLMS_ASSIGNMENT_CPT ) {
+		if ( empty( $id ) || empty( $post->ID ) || OHMYLMS_ASSIGNMENT_CPT !== $post->post_type ) {
 			return new WP_Error( 'ohmylms_rest_invalid_assignment_id', __( 'Invalid ID.', 'ohmylms' ), array( 'status' => 404 ) );
 		}
 
@@ -645,14 +663,14 @@ class AssignmentController extends RestController {
 	/**
 	 * Get assignment content
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
 	 * @since 1.0.0
 	 */
 	public function get_assignment_report( $request ) {
 		$id   = (int) $request['id'];
 		$post = get_post( $id );
-		if ( empty( $id ) || empty( $post->ID ) || $post->post_type !== OHMYLMS_ASSIGNMENT_CPT ) {
+		if ( empty( $id ) || empty( $post->ID ) || OHMYLMS_ASSIGNMENT_CPT !== $post->post_type ) {
 			return new WP_Error( 'ohmylms_rest_invalid_assignment_id', __( 'Invalid ID.', 'ohmylms' ), array( 'status' => 404 ) );
 		}
 
@@ -669,34 +687,38 @@ class AssignmentController extends RestController {
 	}
 
 
+	/**
+	 * Get attempt report for Assignment controller.
+	 *
+	 * @param mixed $request REST request.
+	 */
 	public function get_attempt_report( $request ) {
 		$id         = (int) $request['id'];
 		$attempt_id = (int) $request['user_id'];
 		$post       = get_post( $id );
-		if ( empty( $id ) || empty( $post->ID ) || $post->post_type !== OHMYLMS_ASSIGNMENT_CPT ) {
+		if ( empty( $id ) || empty( $post->ID ) || OHMYLMS_ASSIGNMENT_CPT !== $post->post_type ) {
 			return new WP_Error( 'ohmylms_rest_invalid_assignemnt_id', __( 'Invalid ID.', 'ohmylms' ), array( 'status' => 404 ) );
 		}
-		$assignment     = ohmylms_get_assignment( $post->ID );
+		$assignment           = ohmylms_get_assignment( $post->ID );
 		$get_assignment_title = $assignment->get_assignment_title();
-		$report   = $assignment->get_assignment_attempts( $attempt_id );
-		$data     = array(
+		$report               = $assignment->get_assignment_attempts( $attempt_id );
+		$data                 = array(
 			'report' => $report,
 		);
-		$course_id = ohmylms_get_course_by_content_id( $post->ID );
-		$pass_marks = get_post_meta( $post->ID, '_maximum_pass_points', true );
-		$total_marks = get_post_meta( $post->ID, '_total_points', true );
+		$course_id            = ohmylms_get_course_by_content_id( $post->ID );
+		$pass_marks           = get_post_meta( $post->ID, '_maximum_pass_points', true );
+		$total_marks          = get_post_meta( $post->ID, '_total_points', true );
 
-		
-		$course = ohmylms_get_course($course_id);
-		if( $course ){
-			$data['additional_data'] = [
-				'course_id' => $course->get_id(),
-				'course_name' => $course->get_name()
-			];
+		$course = ohmylms_get_course( $course_id );
+		if ( $course ) {
+			$data['additional_data'] = array(
+				'course_id'   => $course->get_id(),
+				'course_name' => $course->get_name(),
+			);
 		}
 
-		$data['additional_data']['total_marks'] = $total_marks;
-		$data['additional_data']['pass_marks'] = $pass_marks;
+		$data['additional_data']['total_marks']     = $total_marks;
+		$data['additional_data']['pass_marks']      = $pass_marks;
 		$data['additional_data']['assignment_name'] = $get_assignment_title;
 
 		$response = rest_ensure_response( $data );
@@ -705,67 +727,71 @@ class AssignmentController extends RestController {
 		return $response;
 	}
 
+	/**
+	 * Update attempt report for Assignment controller.
+	 *
+	 * @param mixed $request REST request.
+	 */
 	public function update_attempt_report( $request ) {
-		$id   = (int) $request['id'];
+		$id         = (int) $request['id'];
 		$attempt_id = (int) $request['user_id'];
-		
+
 		$post = get_post( $id );
-		if ( empty( $id ) || empty( $post->ID ) || $post->post_type !== OHMYLMS_ASSIGNMENT_CPT ) {
+		if ( empty( $id ) || empty( $post->ID ) || OHMYLMS_ASSIGNMENT_CPT !== $post->post_type ) {
 			return new WP_Error( 'ohmylms_rest_invalid_assignemnt_id', __( 'Invalid ID.', 'ohmylms' ), array( 'status' => 404 ) );
 		}
 
 		$get_data = $request->get_json_params();
-		
-		$quiz		= ohmylms_get_assignment( $post->ID );
-		$pass_marks = get_post_meta( $post->ID, '_maximum_pass_points', true );
-		$course_id = ohmylms_get_course_by_content_id( $post->ID );
+
+		$quiz                     = ohmylms_get_assignment( $post->ID );
+		$pass_marks               = get_post_meta( $post->ID, '_maximum_pass_points', true );
+		$course_id                = ohmylms_get_course_by_content_id( $post->ID );
 		$previous_completion_rate = 0;
-		if( isset($get_data[0]['score'],$get_data[0]['status']) ){
-			if( $get_data[0]['score'] >= $pass_marks ){
+		if ( isset( $get_data[0]['score'], $get_data[0]['status'] ) ) {
+			if ( $get_data[0]['score'] >= $pass_marks ) {
 				$get_data[0]['status'] = 'passed';
-				
+
 				$student = new \OhMyLMS\Data\Student( $attempt_id );
-				if( $student ){
+				if ( $student ) {
 					$previous_completion_rate = $student->get_over_all_completion_rate( $course_id );
 					$student->complete_lesson( $post->ID, $course_id );
 				}
-			}else{
+			} else {
 				$get_data[0]['status'] = 'failed';
 			}
-		}	
+		}
 		$quiz->update_assignment_attempts( $attempt_id, $get_data );
 
 		$report = $quiz->get_assignment_attempts( $attempt_id );
 
 		$data = array(
-			'report'    => $report,
+			'report' => $report,
 		);
-		
-		
+
 		$total_marks = get_post_meta( $post->ID, '_total_points', true );
-		
-		$course = ohmylms_get_course($course_id);
-		$data['additional_data'] = [
-			'course_id' => $course->get_id(),
-			'course_name' => $course->get_name()
-		];
+
+		$course                  = ohmylms_get_course( $course_id );
+		$data['additional_data'] = array(
+			'course_id'   => $course->get_id(),
+			'course_name' => $course->get_name(),
+		);
 
 		$data['additional_data']['total_marks'] = $total_marks;
-		$data['additional_data']['pass_marks'] = $pass_marks;
-		$response 	= rest_ensure_response( $data );
+		$data['additional_data']['pass_marks']  = $pass_marks;
+		$response                               = rest_ensure_response( $data );
 
 		$response->link_header( 'alternate', get_permalink( $id ), array( 'type' => 'text/html' ) );
-		
+
 		do_action( 'ohmylms_after_assignment_review', $post->ID, $course_id, $attempt_id, $get_data[0]['status'] );
 
-		if( class_exists( '\OhMyLMS\Engagement\Leaderboard' ) ){
+		if ( class_exists( '\OhMyLMS\Engagement\Leaderboard' ) ) {
 			$avg_marks = \OhMyLMS\Engagement\Leaderboard::get_student_avg_assignment_marks( $attempt_id, $post->ID );
 			do_action( 'ohmylms_pro_after_assignment_review', $post->ID, $course_id, $attempt_id, $avg_marks );
 		}
-		$student = new \OhMyLMS\Data\Student( $attempt_id );
+		$student                 = new \OhMyLMS\Data\Student( $attempt_id );
 		$maybe_course_completion = $student && $student->is_course_completed( $course_id ) ? 'yes' : 'no';
-		
-		if( $maybe_course_completion === 'yes' ){
+
+		if ( 'yes' === $maybe_course_completion ) {
 			do_action( 'ohmylms_student_completed_course_after_reviewing_assignment', $attempt_id, $course_id );
 		}
 
@@ -773,7 +799,7 @@ class AssignmentController extends RestController {
 		if ( (int) ( $completion_rate ) === 100 && (int) ( $previous_completion_rate ) !== 100 && ! \OhMyLMS\Learning\CourseProgram::managed( $attempt_id, $course_id ) ) {
 			global $wpdb;
 			$table_name  = $wpdb->prefix . 'ohmylms_user_enrollment';
-			$enroll_data = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_name WHERE user_id = %d AND course_id = %d", $attempt_id, $course_id ), ARRAY_A );
+			$enroll_data = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE user_id = %d AND course_id = %d', $table_name, $attempt_id, $course_id ), ARRAY_A );
 			if ( isset( $enroll_data['order_id'] ) ) {
 				do_action( 'ohmylms_course_completed', $attempt_id, $course_id, $enroll_data['order_id'] );
 			}
@@ -785,7 +811,7 @@ class AssignmentController extends RestController {
 	/**
 	 * Delete a single assignment.
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
 	 *
 	 * @since 1.0.0
@@ -824,7 +850,7 @@ class AssignmentController extends RestController {
 	/**
 	 * Save assignment
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return bool
 	 * @since 1.0.0
 	 */
@@ -836,7 +862,7 @@ class AssignmentController extends RestController {
 	/**
 	 * Prepare a assignment for database.
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return Assignment
 	 *
 	 * @since 1.0.0
@@ -875,22 +901,22 @@ class AssignmentController extends RestController {
 	/**
 	 * Get assignment data.
 	 *
-	 * @param Assignment $assignment
+	 * @param Assignment $assignment Assignment.
 	 * @return array
 	 *
 	 * @since 1.0.0
 	 */
 	protected function get_assignment_data( $assignment ) {
 		$course_id = ohmylms_get_course_by_content_id( $assignment->get_id() );
-		$courses = [];
-		if( $course_id ){
+		$courses   = array();
+		if ( $course_id ) {
 			$course = ohmylms_get_course( $course_id );
-			if( $course ) {
-				$courses['id'] = $course_id;
+			if ( $course ) {
+				$courses['id']          = $course_id;
 				$courses['course_name'] = $course->get_name();
-			} 
+			}
 		}
-		$report   = $assignment->get_report();
+		$report                = $assignment->get_report();
 		$number_of_submissions = 0;
 		if ( is_array( $report ) ) {
 			$number_of_submissions = count( $report );
@@ -920,8 +946,8 @@ class AssignmentController extends RestController {
 			'enable_file_size_limit' => $assignment->get_enable_file_size_limit(),
 			'max_file_size_limit'    => $assignment->get_max_file_size_limit(),
 			'drip_settings'          => $assignment->get_drip_settings(),
-			'courses' 	  => $courses,
-			'number_of_submissions' => $number_of_submissions,
+			'courses'                => $courses,
+			'number_of_submissions'  => $number_of_submissions,
 		);
 
 		return $data;
@@ -932,7 +958,7 @@ class AssignmentController extends RestController {
 	 * Prepare a single assignment for response.
 	 *
 	 * @param \WP_Post         $post The post object.
-	 * @param \WP_REST_Request $request
+	 * @param \WP_REST_Request $request REST request.
 	 * @return WP_REST_Response
 	 *
 	 * @since 1.0.0
@@ -961,8 +987,8 @@ class AssignmentController extends RestController {
 	/**
 	 * Prepare links for the request.
 	 *
-	 * @param $product
-	 * @param $request
+	 * @param mixed $product Product.
+	 * @param mixed $request REST request.
 	 * @return array[]
 	 *
 	 * @since 1.0.0

@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * DashboardController class.
+ *
+ * @package OhMyLMS
+ */
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
@@ -46,39 +51,39 @@ class DashboardProController extends RestController {
 	 * Retrieves detailed information about a specific course, including earnings, total students,
 	 * and other course-related data based on the applied filters.
 	 *
-	 * This function uses the provided course ID to fetch detailed metrics about the course. The 
-	 * filters such as time range (monthly, weekly, yearly, or custom) are applied to calculate 
+	 * This function uses the provided course ID to fetch detailed metrics about the course. The
+	 * filters such as time range (monthly, weekly, yearly, or custom) are applied to calculate
 	 * earnings, the total number of students, and other course-specific data.
 	 *
 	 * The result is an array containing merged data from the following categories:
 	 * - Earnings: The total earnings for the course based on completed or refunded orders.
-	 * - Total Students: The total number of students enrolled or engaged with the course within 
+	 * - Total Students: The total number of students enrolled or engaged with the course within
 	 *   the filtered date range.
 	 * - Course Data: Additional course-related data (e.g., lessons, quizzes, etc.).
 	 *
 	 * @param WP_REST_Request $request The request object containing filter parameters and course ID.
-	 * 
+	 *
 	 * @return array An array containing the merged course earnings, total students, and course data.
 	 */
-	public function get_course_details( $request ){
+	public function get_course_details( $request ) {
 
-		// Get filters
+		// Get filters.
 		$filter     = $request->get_param( 'filter' ); // 'monthly', 'weekly', 'yearly', 'custom'
 		$start_date = $request->get_param( 'start_date' );
 		$end_date   = $request->get_param( 'end_date' );
-		
-		$course_id =  intval($request['id' ]);
-		
-		$course_earning = $this->get_course_earning($course_id, $filter, $start_date, $end_date);
+
+		$course_id = intval( $request['id'] );
+
+		$course_earning = $this->get_course_earning( $course_id, $filter, $start_date, $end_date );
 		$total_students = $this->get_student_data( $course_id, $filter, $start_date, $end_date );
 		$course_data    = $this->get_course_data( $course_id, $filter, $start_date, $end_date );
-		
-		$result = array_merge($course_earning, $total_students);
-		$result = array_merge($result, $course_data);
+
+		$result = array_merge( $course_earning, $total_students );
+		$result = array_merge( $result, $course_data );
 		return $result;
 	}
 
-	
+
 	/**
 	 * Retrieves the earnings details for a specific course, including total earnings, net earnings,
 	 * refunds, and a breakdown of earnings grouped by the selected filter (daily, monthly, or yearly).
@@ -105,8 +110,8 @@ class DashboardProController extends RestController {
 	 */
 	public function get_course_earning( $course_id, $filter, $start_date, $end_date ) {
 		global $wpdb;
-	
-		// Build base query to fetch orders for a specific course
+
+		// Build base query to fetch orders for a specific course.
 		$query = "
 			SELECT p.ID as order_id, m.meta_value as line_total, p.post_status as order_status, p.post_date
 			FROM {$wpdb->posts} p
@@ -119,106 +124,106 @@ class DashboardProController extends RestController {
 			  AND course_meta.meta_key = '_course_id' 
 			  AND course_meta.meta_value = {$course_id}
 		";
-	
-		// Add filters for date range and custom filtering
+
+		// Add filters for date range and custom filtering.
 		$query = $this->get_filter_query( $wpdb->prepare( $query, $course_id ), $filter, $start_date, $end_date );
-	
-		// Execute query
+
+		// Execute query.
 		$results = $wpdb->get_results( $query, ARRAY_A );
-	
-		// Initialize totals and graph data
+
+		// Initialize totals and graph data.
 		$total_earning     = 0;
 		$total_net_earning = 0;
 		$total_refund      = 0;
 		$graph_data        = array();
-	
-		// Determine grouping based on custom range
-		$group_by = 'daily'; // Default grouping
-		if ( $filter === 'custom' && $start_date && $end_date ) {
+
+		// Determine grouping based on custom range.
+		$group_by = 'daily'; // Default grouping.
+		if ( 'custom' === $filter && $start_date && $end_date ) {
 			$start    = new \DateTime( $start_date );
 			$end      = new \DateTime( $end_date );
 			$interval = $start->diff( $end );
-	
+
 			if ( $interval->m > 1 || $interval->y >= 1 ) {
-				$group_by = 'monthly'; // Group by month if range is >1 month and ≤1 year
+				$group_by = 'monthly'; // Group by month if range is >1 month and ≤1 year.
 			}
 			if ( $interval->y >= 1 && $interval->m + $interval->y * 12 > 12 ) {
-				$group_by = 'yearly'; // Group by year if range is >1 year
+				$group_by = 'yearly'; // Group by year if range is >1 year.
 			}
-		} elseif ( $filter === 'monthly' ) {
+		} elseif ( 'monthly' === $filter ) {
 			$group_by = 'daily';
-		} elseif ( $filter === 'yearly' ) {
+		} elseif ( 'yearly' === $filter ) {
 			$group_by = 'monthly';
 		}
-	
-		// Initialize graph_data with all required keys
-		if ( $group_by === 'daily' ) {
+
+		// Initialize graph_data with all required keys.
+		if ( 'daily' === $group_by ) {
 			$start    = $start_date ? new \DateTime( $start_date ) : new \DateTime( 'first day of this month' );
 			$end      = $end_date ? new \DateTime( $end_date ) : new \DateTime( 'last day of this month' );
-			$interval = new \DateInterval( 'P1D' ); // Daily intervals
-		} elseif ( $group_by === 'monthly' ) {
+			$interval = new \DateInterval( 'P1D' ); // Daily intervals.
+		} elseif ( 'monthly' === $group_by ) {
 			$start    = $start_date ? new \DateTime( $start_date ) : new \DateTime( 'first day of January this year' );
 			$end      = $end_date ? new \DateTime( $end_date ) : new \DateTime( 'last day of December this year' );
-			$interval = new \DateInterval( 'P1M' ); // Monthly intervals
-		} elseif ( $group_by === 'yearly' ) {
+			$interval = new \DateInterval( 'P1M' ); // Monthly intervals.
+		} elseif ( 'yearly' === $group_by ) {
 			$start    = $start_date ? new \DateTime( $start_date ) : new \DateTime( 'first day of January' );
 			$end      = $end_date ? new \DateTime( $end_date ) : new \DateTime( 'last day of December' );
-			$interval = new \DateInterval( 'P1Y' ); // Yearly intervals
+			$interval = new \DateInterval( 'P1Y' ); // Yearly intervals.
 		}
-	
+
 		$date_period = new \DatePeriod( $start, $interval, $end->modify( '+1 day' ) );
 		foreach ( $date_period as $date ) {
-			$date_key                = $date->format( $group_by === 'daily' ? 'Y-m-d' : ( $group_by === 'monthly' ? 'Y-m' : 'Y' ) );
+			$date_key                = $date->format( 'daily' === $group_by ? 'Y-m-d' : ( 'monthly' === $group_by ? 'Y-m' : 'Y' ) );
 			$graph_data[ $date_key ] = array(
 				'earning' => 0,
 				'net'     => 0,
 				'refund'  => 0,
 			);
 		}
-	
-		// Process query results
+
+		// Process query results.
 		foreach ( $results as $result ) {
 			$line_total     = floatval( $result['line_total'] );
 			$total_earning += $line_total;
-	
+
 			$date_key = '';
-			if ( $group_by === 'daily' ) {
+			if ( 'daily' === $group_by ) {
 				$date_key = date( 'Y-m-d', strtotime( $result['post_date'] ) );
-			} elseif ( $group_by === 'monthly' ) {
+			} elseif ( 'monthly' === $group_by ) {
 				$date_key = date( 'Y-m', strtotime( $result['post_date'] ) );
-			} elseif ( $group_by === 'yearly' ) {
+			} elseif ( 'yearly' === $group_by ) {
 				$date_key = date( 'Y', strtotime( $result['post_date'] ) );
 			}
-	
-			if ( $result['order_status'] === 'ohmylms-completed' ) {
+
+			if ( 'ohmylms-completed' === $result['order_status'] ) {
 				$total_net_earning              += $line_total;
 				$graph_data[ $date_key ]['net'] += $line_total;
 			}
-	
-			if ( $result['order_status'] === 'ohmylms-refunded' ) {
+
+			if ( 'ohmylms-refunded' === $result['order_status'] ) {
 				$total_refund                      += $line_total;
 				$graph_data[ $date_key ]['refund'] += $line_total;
 			}
-	
+
 			$graph_data[ $date_key ]['earning'] += $line_total;
 		}
 
 		ksort( $graph_data );
-		
+
 		return array(
 			'total_earning' => $total_earning,
 			'total_refund'  => $total_refund,
 			'net_amount'    => $total_net_earning,
 			'graph_data'    => $graph_data,
-			'currency'		=> html_entity_decode(get_ohmylms_currency_symbol( get_ohmylms_currency() )),
-			'currency_pos'	=> get_ohmylms_currency_position(),
+			'currency'      => html_entity_decode( get_ohmylms_currency_symbol( get_ohmylms_currency() ) ),
+			'currency_pos'  => get_ohmylms_currency_position(),
 		);
 	}
 
 
 	/**
 	 * Retrieves the student data for a specific course, including the total number of students,
-	 * the number of students who have completed the course, and the number of students currently 
+	 * the number of students who have completed the course, and the number of students currently
 	 * in progress, based on the selected filter (monthly, weekly, yearly, or custom date range).
 	 *
 	 * This function queries the enrollments for a specific course and calculates:
@@ -226,7 +231,7 @@ class DashboardProController extends RestController {
 	 * - Course completion: The number of students who have completed the course.
 	 * - Total in progress: The number of students currently in progress with the course.
 	 *
-	 * The function supports filtering by predefined filters (monthly, weekly, yearly) and custom 
+	 * The function supports filtering by predefined filters (monthly, weekly, yearly) and custom
 	 * date ranges.
 	 *
 	 * @param int    $course_id   The ID of the course to retrieve student data for.
@@ -239,54 +244,55 @@ class DashboardProController extends RestController {
 	 *  - 'course_completion': The number of students who have completed the course.
 	 *  - 'total_in_progress': The number of students who are currently in progress.
 	 */
-	public function get_student_data( $course_id, $filter, $start_date, $end_date ){
+	public function get_student_data( $course_id, $filter, $start_date, $end_date ) {
 		global $wpdb;
-		// Start with the base query
+		// Start with the base query.
 		$enrollment_query = $wpdb->prepare(
-			"SELECT ue.user_id as student_id
-			 FROM {$wpdb->prefix}ohmylms_user_enrollment ue
-			 WHERE ue.course_id = %d AND ue.status = %s",
+			'SELECT ue.user_id as student_id
+			 FROM %i ue
+			 WHERE ue.course_id = %d AND ue.status = %s',
+			$wpdb->prefix . 'ohmylms_user_enrollment',
 			$course_id,
 			'enrolled'
 		);
-	
-		// Apply date filters based on the filter type
-		if ( $filter === 'monthly' ) {
+
+		// Apply date filters based on the filter type.
+		if ( 'monthly' === $filter ) {
 			$enrollment_query .= ' AND MONTH(ue.start_date) = MONTH(CURRENT_DATE()) AND YEAR(ue.start_date) = YEAR(CURRENT_DATE())';
-		} elseif ( $filter === 'weekly' ) {
+		} elseif ( 'weekly' === $filter ) {
 			$enrollment_query .= ' AND WEEK(ue.start_date) = WEEK(CURRENT_DATE()) AND YEAR(ue.start_date) = YEAR(CURRENT_DATE())';
-		} elseif ( $filter === 'yearly' ) {
+		} elseif ( 'yearly' === $filter ) {
 			$enrollment_query .= ' AND YEAR(ue.start_date) = YEAR(CURRENT_DATE())';
-		} elseif ( $filter === 'custom' && $start_date && $end_date ) {
+		} elseif ( 'custom' === $filter && $start_date && $end_date ) {
 			$enrollment_query .= $wpdb->prepare( ' AND ue.start_date BETWEEN %s AND %s', $start_date, $end_date );
 		}
-		$total_students = 0;
+		$total_students    = 0;
 		$course_completion = 0;
 		$total_in_progress = 0;
-		$results = $wpdb->get_results( $enrollment_query, ARRAY_A );
-		if( is_array($results) ){
-			$total_students = count($results);
-			foreach( $results as $result ){
-				$student = new \OhMyLMS\Data\Student($result['student_id']);
-				if( $student->is_course_completed( $course_id ) ) {
-					$course_completion++;
+		$results           = $wpdb->get_results( $enrollment_query, ARRAY_A );
+		if ( is_array( $results ) ) {
+			$total_students = count( $results );
+			foreach ( $results as $result ) {
+				$student = new \OhMyLMS\Data\Student( $result['student_id'] );
+				if ( $student->is_course_completed( $course_id ) ) {
+					++$course_completion;
 				}
-				if( $student->is_course_in_progress($course_id) ){
-					$total_in_progress++;
+				if ( $student->is_course_in_progress( $course_id ) ) {
+					++$total_in_progress;
 				}
 			}
 		}
-		return [
-			'total_students' => $total_students,
+		return array(
+			'total_students'    => $total_students,
 			'course_completion' => $course_completion,
-			'total_in_progress' => $total_in_progress
-		];
+			'total_in_progress' => $total_in_progress,
+		);
 	}
 
 
 	/**
 	 * Retrieves course data, including the number of chapters, lessons, quizzes, assignments,
-	 * and total reviews for a specific course, based on the selected filter (monthly, weekly, 
+	 * and total reviews for a specific course, based on the selected filter (monthly, weekly,
 	 * yearly, or custom date range).
 	 *
 	 * This function counts:
@@ -296,7 +302,7 @@ class DashboardProController extends RestController {
 	 * - Assignments: The total number of assignments in the course.
 	 * - Total Reviews: The total number of reviews for the course.
 	 *
-	 * The function supports filtering by predefined filters (monthly, weekly, yearly) and custom 
+	 * The function supports filtering by predefined filters (monthly, weekly, yearly) and custom
 	 * date ranges.
 	 *
 	 * @param int    $course_id   The ID of the course to retrieve data for.
@@ -311,9 +317,9 @@ class DashboardProController extends RestController {
 	 *  - 'assignments': The number of assignments in the course.
 	 *  - 'total_review': The total number of reviews for the course.
 	 */
-	public function get_course_data( $course_id, $filter, $start_date, $end_date ){
+	public function get_course_data( $course_id, $filter, $start_date, $end_date ) {
 		global $wpdb;
-		// Base query to get courses and their details
+		// Base query to get courses and their details.
 		$query = "
 			SELECT 
 				COUNT(DISTINCT cr.chapter_id) AS chapters,
@@ -328,13 +334,13 @@ class DashboardProController extends RestController {
 			AND cr.course_id = {$course_id}
 		";
 
-		// Apply filters
-		$query = $this->get_filter_query( $query, $filter, $start_date, $end_date );
+		// Apply filters.
+		$query  = $this->get_filter_query( $query, $filter, $start_date, $end_date );
 		$result = $wpdb->get_row( $query, ARRAY_A );
 
-		$course = ohmylms_get_course( $course_id );
-		$result['total_review'] = $course->get_review_count();
-		$result['date_created'] = $course->get_date_created();
+		$course                  = ohmylms_get_course( $course_id );
+		$result['total_review']  = $course->get_review_count();
+		$result['date_created']  = $course->get_date_created();
 		$result['date_modified'] = $course->get_date_modified();
 		return $result;
 	}
@@ -354,14 +360,14 @@ class DashboardProController extends RestController {
 	public function get_filter_query( $query, $filter, $start_date, $end_date ) {
 		global $wpdb;
 
-		// Apply filters
-		if ( $filter === 'monthly' ) {
+		// Apply filters.
+		if ( 'monthly' === $filter ) {
 			$query .= ' AND MONTH(p.post_date) = MONTH(CURRENT_DATE()) AND YEAR(p.post_date) = YEAR(CURRENT_DATE())';
-		} elseif ( $filter === 'weekly' ) {
+		} elseif ( 'weekly' === $filter ) {
 			$query .= ' AND WEEK(p.post_date) = WEEK(CURRENT_DATE()) AND YEAR(p.post_date) = YEAR(CURRENT_DATE())';
-		} elseif ( $filter === 'yearly' ) {
+		} elseif ( 'yearly' === $filter ) {
 			$query .= ' AND YEAR(p.post_date) = YEAR(CURRENT_DATE())';
-		} elseif ( $filter === 'custom' && $start_date && $end_date ) {
+		} elseif ( 'custom' === $filter && $start_date && $end_date ) {
 			$query .= $wpdb->prepare( ' AND p.post_date BETWEEN %s AND %s', $start_date, $end_date );
 		}
 

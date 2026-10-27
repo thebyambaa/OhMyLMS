@@ -1,0 +1,96 @@
+/* Subject profiles: list and editor of each subject's domains, levels and AI context. */
+.ohmylms-subject-profiles {
+	display: grid;
+	grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+	gap: 20px;
+	align-items: start;
+}
+
+.ohmylms-subject-profiles-side,
+.ohmylms-subject-profiles-main {
+	display: grid;
+	gap: 16px;
+	min-width: 0;
+}
+
+.ohmylms-subject-profile-list {
+	margin: 0 0 12px;
+	padding: 0;
+	list-style: none;
+}
+
+.ohmylms-subject-profile-list li {
+	padding: 6px 0;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+/* Outranks the design system's general button rule so the list reads left-aligned. */
+.ohmylms-subject-profiles-page .ohmylms-subject-profiles .ohmylms-subject-profile-item.components-button {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: flex-start;
+	width: 100%;
+	height: auto;
+	padding: 6px 8px;
+	border-radius: 4px;
+	color: var(--oml-text, #1e1e1e);
+	text-align: left;
+}
+
+.ohmylms-subject-profiles-page .ohmylms-subject-profiles .ohmylms-subject-profile-item[aria-current="true"] {
+	background: var(--oml-primary-soft, #e8eaff);
+}
+
+.ohmylms-subject-profile-item span {
+	color: var(--oml-muted, #50575e);
+	font-size: 12px;
+}
+
+.ohmylms-subject-profile-badges {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	padding: 2px 8px 0;
+}
+
+.ohmylms-subject-profile-form fieldset {
+	margin: 16px 0;
+	padding: 12px 16px;
+	border: 1px solid var(--oml-border, #dcdcde);
+	border-radius: var(--oml-radius-card, 8px);
+}
+
+.ohmylms-subject-profile-form legend {
+	padding: 0 4px;
+	font-weight: 600;
+}
+
+.ohmylms-subject-profile-domain {
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+	gap: 8px;
+	align-items: end;
+	margin-bottom: 8px;
+}
+
+.ohmylms-subject-profile-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+}
+
+@media (max-width: 960px) {
+
+	.ohmylms-subject-profiles {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+@media (max-width: 600px) {
+
+	.ohmylms-subject-profile-domain {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}

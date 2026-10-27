@@ -17,7 +17,7 @@ do_action( 'ohmylms_before_edit_account_form' );
 
 <div class="ohmylms-student-profile-tab-content student-settings">
 	<h4 class="profile-tab-title">
-		<?php echo __( 'Settings', 'ohmylms' ); ?>
+		<?php echo esc_html__( 'Settings', 'ohmylms' ); ?>
 	</h4>
 
 	<form action="" method="post">
@@ -25,51 +25,51 @@ do_action( 'ohmylms_before_edit_account_form' );
 
 		<div class="ohmylms-student-account account-username">
 			<h6 class="account-title">
-				<?php echo __( 'Account', 'ohmylms' ); ?>
+				<?php echo esc_html__( 'Account', 'ohmylms' ); ?>
 			</h6>
 
 			<div class="ohmylms-form-wrapper">
 				<div class="ohmylms-form-group first-name half-width">
 					<label>
-						<?php echo __( 'First Name', 'ohmylms' ); ?>
+						<?php echo esc_html__( 'First Name', 'ohmylms' ); ?>
 						<span class="required">*</span>
 					</label>
 
 					<span class="ohmylms-input-wrapper">
-						<input type="text" name="first_name" placeholder="<?php echo __('Enter your first name', 'ohmylms'); ?>" value="<?php echo $student->get_first_name(); ?>">
+						<input type="text" name="first_name" placeholder="<?php echo esc_attr__( 'Enter your first name', 'ohmylms' ); ?>" value="<?php echo esc_attr( $student->get_first_name() ); ?>">
 					</span>
 				</div>
 
 				<div class="ohmylms-form-group last-name half-width">
 					<label>
-						<?php echo __( 'Last Name', 'ohmylms' ); ?>
+						<?php echo esc_html__( 'Last Name', 'ohmylms' ); ?>
 						<span class="required">*</span>
 					</label>
 
 					<span class="ohmylms-input-wrapper">
-						<input type="text" name="last_name" placeholder="<?php echo __('Enter your last name', 'ohmylms'); ?>" value="<?php echo $student->get_last_name(); ?>">
+						<input type="text" name="last_name" placeholder="<?php echo esc_attr__( 'Enter your last name', 'ohmylms' ); ?>" value="<?php echo esc_attr( $student->get_last_name() ); ?>">
 					</span>
 				</div>
 
 				<div class="ohmylms-form-group display-name">
 					<label>
-						<?php echo __( 'Display Name', 'ohmylms' ); ?>
+						<?php echo esc_html__( 'Display Name', 'ohmylms' ); ?>
 						<span class="required">*</span>
 					</label>
 
 					<span class="ohmylms-input-wrapper">
-						<input type="text" name="display_name" placeholder="<?php echo __('Enter your display name', 'ohmylms'); ?>" value="<?php echo $student->get_display_name(); ?>">
+						<input type="text" name="display_name" placeholder="<?php echo esc_attr__( 'Enter your display name', 'ohmylms' ); ?>" value="<?php echo esc_attr( $student->get_display_name() ); ?>">
 					</span>
 				</div>
 
 				<div class="ohmylms-form-group email">
 					<label>
-						<?php echo __( 'Email', 'ohmylms' ); ?>
+						<?php echo esc_html__( 'Email', 'ohmylms' ); ?>
 						<span class="required">*</span>
 					</label>
 
 					<span class="ohmylms-input-wrapper">
-						<input type="email" name="email" placeholder="<?php echo __('Enter your email address', 'ohmylms'); ?>" value="<?php echo $student->get_email(); ?>">
+						<input type="email" name="email" placeholder="<?php echo esc_attr__( 'Enter your email address', 'ohmylms' ); ?>" value="<?php echo esc_attr( $student->get_email() ); ?>">
 					</span>
 				</div>
 			</div>
@@ -77,14 +77,14 @@ do_action( 'ohmylms_before_edit_account_form' );
 
 		<div class="ohmylms-student-account account-password">
 			<h6 class="account-title">
-				<?php echo __( 'Password', 'ohmylms' ); ?>
+				<?php echo esc_html__( 'Password', 'ohmylms' ); ?>
 			</h6>
 
 			<div class="ohmylms-form-wrapper">
 				<!-- current password -->
 				<div class="ohmylms-form-group password">
 					<label for="current-password">
-						<?php echo __( 'Current Password', 'ohmylms' ); ?>
+						<?php echo esc_html__( 'Current Password', 'ohmylms' ); ?>
 					</label>
 
 					<span class="ohmylms-password-show">
@@ -96,13 +96,13 @@ do_action( 'ohmylms_before_edit_account_form' );
 							<span class="show-password" aria-label="Toggle password visibility">
 								<span class="eye-on">
 									<?php
-										include(OHMYLMS_DIR . '/assets/images/icon/eye-icon2.php');
+										require OHMYLMS_DIR . '/assets/images/icon/eye-icon2.php';
 									?>
 								</span>
 
 								<span class="eye-off">
 									<?php
-										include(OHMYLMS_DIR . '/assets/images/icon/eye-off-icon.php');
+										require OHMYLMS_DIR . '/assets/images/icon/eye-off-icon.php';
 									?>
 								</span>
 							</span>
@@ -113,7 +113,7 @@ do_action( 'ohmylms_before_edit_account_form' );
 				<!-- new password -->
 				<div class="ohmylms-form-group new-password">
 					<label for="new-password">
-						<?php echo __( 'New Password', 'ohmylms' ); ?>
+						<?php echo esc_html__( 'New Password', 'ohmylms' ); ?>
 					</label>
 
 					<span class="ohmylms-password-show">
@@ -125,13 +125,13 @@ do_action( 'ohmylms_before_edit_account_form' );
 							<span class="show-password" aria-label="Toggle password visibility">
 								<span class="eye-on">
 									<?php
-										include(OHMYLMS_DIR . '/assets/images/icon/eye-icon2.php');
+										require OHMYLMS_DIR . '/assets/images/icon/eye-icon2.php';
 									?>
 								</span>
 
 								<span class="eye-off">
 									<?php
-										include(OHMYLMS_DIR . '/assets/images/icon/eye-off-icon.php');
+										require OHMYLMS_DIR . '/assets/images/icon/eye-off-icon.php';
 									?>
 								</span>
 							</span>
@@ -142,7 +142,7 @@ do_action( 'ohmylms_before_edit_account_form' );
 				<!-- confirm password -->
 				<div class="ohmylms-form-group confirm-password">
 					<label for="confirm-password">
-						<?php echo __( 'Confirm Password', 'ohmylms' ); ?>
+						<?php echo esc_html__( 'Confirm Password', 'ohmylms' ); ?>
 					</label>
 
 					<span class="ohmylms-password-show">
@@ -154,13 +154,13 @@ do_action( 'ohmylms_before_edit_account_form' );
 							<span class="show-password" aria-label="Toggle password visibility">
 								<span class="eye-on">
 									<?php
-										include(OHMYLMS_DIR . '/assets/images/icon/eye-icon2.php');
+										require OHMYLMS_DIR . '/assets/images/icon/eye-icon2.php';
 									?>
 								</span>
 
 								<span class="eye-off">
 									<?php
-										include(OHMYLMS_DIR . '/assets/images/icon/eye-off-icon.php');
+										require OHMYLMS_DIR . '/assets/images/icon/eye-off-icon.php';
 									?>
 								</span>
 							</span>
@@ -171,10 +171,10 @@ do_action( 'ohmylms_before_edit_account_form' );
 
 			<!--		<div class="ohmylms-password-strength">-->
 			<!--			<ul>-->
-			<!--				<li class="password-strength matched">--><?php //echo __( 'Password strength: weak.', 'ohmylms' ); ?><!--</li>-->
-			<!--				<li class="password-characters">--><?php //echo __( 'Password least 8-12 characters long.', 'ohmylms' ); ?><!--</li>-->
-			<!--				<li class="password-number">--><?php //echo __( 'Contains a number or symbol.', 'ohmylms' ); ?><!--</li>-->
-			<!--				<li class="password-case">--><?php //echo __( 'Uppercase letters (A-Z); Lowercase letters (a-z).', 'ohmylms' ); ?><!--</li>-->
+			<!--				<li class="password-strength matched">--><?php // echo __( 'Password strength: weak.', 'ohmylms' );. ?><!--</li>-->
+			<!--				<li class="password-characters">--><?php // echo __( 'Password least 8-12 characters long.', 'ohmylms' );. ?><!--</li>-->
+			<!--				<li class="password-number">--><?php // echo __( 'Contains a number or symbol.', 'ohmylms' );. ?><!--</li>-->
+			<!--				<li class="password-case">--><?php // echo __( 'Uppercase letters (A-Z); Lowercase letters (a-z).', 'ohmylms' );. ?><!--</li>-->
 			<!--			</ul>-->
 			<!--		</div>-->
 		</div>

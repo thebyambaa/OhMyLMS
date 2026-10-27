@@ -4,17 +4,17 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit5b54732061010c9d5d546c3e39373072
+class ComposerStaticInitOhMyLMSCommerce
 {
     public static $prefixLengthsPsr4 = array (
-        'C' =>
+        'O' =>
         array (
-            'CodeRex\\Ecommerce\\' => 18,
+            'OhMyLMS\\Commerce\\' => 17,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'CodeRex\\Ecommerce\\' =>
+        'OhMyLMS\\Commerce\\' =>
         array (
             0 => __DIR__ . '/../..' . '/includes',
         ),
@@ -22,16 +22,16 @@ class ComposerStaticInit5b54732061010c9d5d546c3e39373072
 
     public static $classMap = array (
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
-        'GatewayOffline' => __DIR__ . '/../..' . '/includes/Gateways/GatewayOffline.php',
-        'GatewayStripeIntents' => __DIR__ . '/../..' . '/includes/Gateways/Stripe/GatewayStripeIntents.php',
+        'OhMyLMS_Gateway_Offline' => __DIR__ . '/../..' . '/includes/Gateways/GatewayOffline.php',
+        'OhMyLMS_Gateway_Stripe_Intents' => __DIR__ . '/../..' . '/includes/Gateways/Stripe/GatewayStripeIntents.php',
     );
 
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit5b54732061010c9d5d546c3e39373072::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit5b54732061010c9d5d546c3e39373072::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit5b54732061010c9d5d546c3e39373072::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInitOhMyLMSCommerce::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInitOhMyLMSCommerce::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInitOhMyLMSCommerce::$classMap;
 
         }, null, ClassLoader::class);
     }

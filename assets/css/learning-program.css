@@ -1,46 +1,134 @@
+
+
 .ohmylms-learning-main { max-width: 1120px; margin: 32px auto; padding: 0 24px; }
+
 .ohmylms-learning-editor { max-width: 1120px; padding: 16px; }
-.ohmylms-learning-editor section { padding: 20px 0; border-bottom: 1px solid #d9e0e2; }
-.ohmylms-learning-editor h2 { font-size: 22px; margin: 0; }
-.ohmylms-learning-editor h3 { font-size: 18px; }
+
 .ohmylms-learning-editor-toolbar, .ohmylms-learning-editor-add { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+
 .ohmylms-learning-editor-toolbar { padding-bottom: 16px; }
+
 .ohmylms-learning-editor-add { margin: 16px 0; align-items: end; }
-.ohmylms-learning-editor .components-base-control { margin: 12px 0; max-width: 460px; }
-.ohmylms-learning-editor .components-radio-control__option { display: inline-flex; margin-right: 20px; }
-.ohmylms-learning-editor table { min-width: 640px; }
-.ohmylms-learning-editor th, .ohmylms-learning-editor td { padding: 12px; vertical-align: middle; }
-.ohmylms-learning-editor td:first-child { overflow-wrap: anywhere; max-width: 300px; }
+
 .ohmylms-learning-program { color: #20282b; font-size: 16px; line-height: 1.6; }
+
 .ohmylms-learning-program * { box-sizing: border-box; }
-.ohmylms-learning-program h1 { font-size: 30px; line-height: 1.25; margin: 20px 0 12px; overflow-wrap: anywhere; }
-.ohmylms-learning-program h2 { font-size: 22px; margin: 28px 0 12px; }
-.ohmylms-learning-program h3 { font-size: 18px; margin: 0; }
+
 .ohmylms-learning-dimensions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-block: 1px solid #d9e0e2; padding: 16px 0; gap: 20px; }
-.ohmylms-learning-dimensions dt { font-weight: 600; }
-.ohmylms-learning-dimensions dd { margin: 4px 0 0; }
+
 .ohmylms-learning-completed { color: #176343; font-weight: 600; }
+
 .ohmylms-learning-path { margin: 0; padding: 0; list-style: none; }
-.ohmylms-learning-path li { display: grid; grid-template-columns: 100px minmax(0, 1fr) 100px; gap: 12px; align-items: center; padding: 14px 0; border-bottom: 1px solid #e3e7e8; }
-.ohmylms-learning-path li a, .ohmylms-learning-path li strong { overflow-wrap: anywhere; }
-.ohmylms-learning-path li small { grid-column: 2 / -1; }
-.ohmylms-learning-path li.ohmylms-learning-unit { display: block; padding-top: 24px; border-bottom: 0; }
+
 .ohmylms-learning-table-scroll { overflow-x: auto; }
+
 .ohmylms-learning-skills { width: 100%; border-collapse: collapse; }
-.ohmylms-learning-skills th, .ohmylms-learning-skills td { text-align: left; padding: 12px; border-bottom: 1px solid #e3e7e8; }
+
 .ohmylms-learning-lesson { max-width: 850px; }
+
+.ohmylms-learning-editor section { padding: 20px 0; border-bottom: 1px solid #d9e0e2; }
+
+.ohmylms-learning-editor h2 { font-size: 22px; margin: 0; }
+
+.ohmylms-learning-editor h3 { font-size: 18px; }
+
+.ohmylms-learning-editor table { min-width: 640px; }
+
+.ohmylms-learning-editor th, .ohmylms-learning-editor td { padding: 12px; vertical-align: middle; }
+
+.ohmylms-learning-program h1 { font-size: 30px; line-height: 1.25; margin: 20px 0 12px; overflow-wrap: anywhere; }
+
+.ohmylms-learning-program h2 { font-size: 22px; margin: 28px 0 12px; }
+
+.ohmylms-learning-program h3 { font-size: 18px; margin: 0; }
+
+.ohmylms-learning-dimensions dt { font-weight: 600; }
+
+.ohmylms-learning-dimensions dd { margin: 4px 0 0; }
+
+.ohmylms-learning-path li { display: grid; grid-template-columns: 100px minmax(0, 1fr) 100px; gap: 12px; align-items: center; padding: 14px 0; border-bottom: 1px solid #e3e7e8; }
+
+.ohmylms-learning-skills th, .ohmylms-learning-skills td { text-align: left; padding: 12px; border-bottom: 1px solid #e3e7e8; }
+
 .ohmylms-learning-lesson img, .ohmylms-learning-lesson video { max-width: 100%; height: auto; }
+
+.ohmylms-learning-path li a, .ohmylms-learning-path li strong { overflow-wrap: anywhere; }
+
+.ohmylms-learning-path li small { grid-column: 2 / -1; }
+
+.ohmylms-learning-editor .components-base-control { margin: 12px 0; max-width: 460px; }
+
+.ohmylms-learning-editor .components-radio-control__option { display: inline-flex; margin-right: 20px; }
+
 .ohmylms-learning-program .ohmylms-button { display: inline-block; white-space: normal; overflow-wrap: anywhere; max-width: 100%; border-radius: 4px; }
+
+.ohmylms-learning-editor td:first-child { overflow-wrap: anywhere; max-width: 300px; }
+
+.ohmylms-learning-path li.ohmylms-learning-unit { display: block; padding-top: 24px; border-bottom: 0; }
+
 @media (max-width: 600px) {
+
   .ohmylms-learning-main { padding-inline: 16px; }
+
   .ohmylms-learning-dimensions { grid-template-columns: 1fr; gap: 12px; }
+
   .ohmylms-learning-path li { grid-template-columns: 70px minmax(0, 1fr); }
-  .ohmylms-learning-path li > span:last-of-type { grid-column: 2; }
+
   .ohmylms-learning-program h1 { font-size: 26px; }
+
   .ohmylms-learning-skills thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
   .ohmylms-learning-skills tbody, .ohmylms-learning-skills tr, .ohmylms-learning-skills th, .ohmylms-learning-skills td { display: block; width: 100%; }
+
   .ohmylms-learning-skills tr { padding: 12px 0; border-bottom: 1px solid #e3e7e8; }
+
   .ohmylms-learning-skills th, .ohmylms-learning-skills td { padding: 6px 0; border: 0; overflow-wrap: anywhere; }
+
   .ohmylms-learning-skills td[data-label] { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 12px; }
+
+  .ohmylms-learning-path li > span:last-of-type { grid-column: 2; }
+
   .ohmylms-learning-skills td[data-label]::before { content: attr(data-label); font-weight: 600; }
+}
+
+.ohmylms-lesson-groups-unit {
+	margin: 16px 0;
+}
+
+.ohmylms-lesson-group {
+	border: 1px solid var(--oml-border, #dcdcde);
+	border-radius: var(--oml-radius-control, 4px);
+	margin: 8px 0;
+	padding: 8px 12px;
+}
+
+.ohmylms-lesson-group-head {
+	align-items: flex-end;
+	display: flex;
+	gap: 4px;
+}
+
+.ohmylms-lesson-group-head .components-base-control {
+	flex: 1;
+}
+
+.ohmylms-lesson-group ul,
+.ohmylms-course-links-list {
+	margin: 8px 0;
+}
+
+.ohmylms-lesson-group-item,
+.ohmylms-course-links-list li {
+	align-items: center;
+	display: flex;
+	gap: 8px;
+	justify-content: space-between;
+}
+
+.ohmylms-lesson-group-item .components-base-control {
+	min-width: 200px;
+}
+
+.ohmylms-course-links {
+	margin-top: 24px;
 }

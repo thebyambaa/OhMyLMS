@@ -1,5 +1,7 @@
 .ohmylms-page {
+
     .ohmylms-single-course-layout-2 {
+
         .ohmylms-course-reviews-wrapper {
             margin-top: 40px;
         }
@@ -37,7 +39,6 @@
                 border-radius: 8px;
                 border: 1px solid #EBECED;
                 background: transparent;
-                display: block;
                 cursor: pointer;
                 height: 40px;
                 padding: 10px;
@@ -65,9 +66,11 @@
 }
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-course-reviews-form .ohmylms-reviews-title {
         font-size: 20px;
     }
+
     .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-course-reviews .ohmylms-course-single-review {
         padding: 17px !important;
         border-radius: 10px;
@@ -76,9 +79,11 @@
 }
 
 @media screen and (max-width: 767px) {
+
     .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-course-reviews .ohmylms-course-single-review {
         width: 100%;
     }
+
     .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-course-reviews {
         gap: 10px;
     }
@@ -86,6 +91,7 @@
 }
 
 @media screen and (max-width: 575px) {
+
     .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-course-reviews-wrapper {
         margin-top: 30px;
     }

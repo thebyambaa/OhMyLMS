@@ -1,6 +1,8 @@
 <?php
 /**
  * Admin View: Settings
+ *
+ * @package OhMyLMS
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

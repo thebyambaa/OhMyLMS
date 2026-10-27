@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Class SettingsApi.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Abstracts;
 
@@ -117,8 +122,8 @@ abstract class SettingsApi {
 	/**
 	 * Generate settings HTML
 	 *
-	 * @param array $form_fields
-	 * @param bool  $echo
+	 * @param array $form_fields Form fields.
+	 * @param bool  $echo Echo.
 	 * @return string
 	 */
 	public function generate_settings_html( $form_fields = array(), $echo = true ) {
@@ -176,7 +181,7 @@ abstract class SettingsApi {
 	/**
 	 * Get a fields type. Defaults to "text" if not set.
 	 *
-	 * @param  array $field Field key.
+	 * @param array $field Field key.
 	 * @return string
 	 * @since 1.0.0
 	 */
@@ -188,7 +193,7 @@ abstract class SettingsApi {
 	/**
 	 * Get default value of the field
 	 *
-	 * @param $field
+	 * @param mixed $field Field.
 	 * @return mixed|string
 	 * @since 1.0.0
 	 */
@@ -199,7 +204,7 @@ abstract class SettingsApi {
 	/**
 	 * Prefix key for settings.
 	 *
-	 * @param  string $key Field key.
+	 * @param string $key Field key.
 	 * @return string
 	 */
 	public function get_field_key( $key ) {
@@ -210,9 +215,9 @@ abstract class SettingsApi {
 	/**
 	 * Get the validate value
 	 *
-	 * @param $key
-	 * @param $field
-	 * @param array $post_data
+	 * @param mixed $key Lookup key.
+	 * @param mixed $field Field.
+	 * @param array $post_data Post data.
 	 * @return mixed|string
 	 * @since 1.0.0
 	 */
@@ -243,7 +248,7 @@ abstract class SettingsApi {
 	/**
 	 * Sets the posted data
 	 *
-	 * @param array $data
+	 * @param array $data Input data.
 	 * @since 1.0.0
 	 */
 	public function set_post_data( $data = array() ) {
@@ -266,8 +271,8 @@ abstract class SettingsApi {
 	/**
 	 * Update single option
 	 *
-	 * @param $key
-	 * @param string $value
+	 * @param mixed  $key Lookup key.
+	 * @param string $value Value to process.
 	 * @return bool
 	 * @since 1.0.0
 	 */
@@ -309,7 +314,7 @@ abstract class SettingsApi {
 	/**
 	 * Add error message for display
 	 *
-	 * @param $error
+	 * @param mixed $error Error.
 	 * @since 1.0.0
 	 */
 	public function add_error( $error ) {
@@ -320,8 +325,8 @@ abstract class SettingsApi {
 	/**
 	 * Get option from DB
 	 *
-	 * @param $key
-	 * @param null $empty_value
+	 * @param mixed $key Lookup key.
+	 * @param null  $empty_value Empty value.
 	 * @return mixed
 	 * @since 1.0.0
 	 */
@@ -347,7 +352,7 @@ abstract class SettingsApi {
 	/**
 	 * Get HTML for tooltips.
 	 *
-	 * @param $data
+	 * @param mixed $data Input data.
 	 * @return string
 	 * @since 1.0.0
 	 */
@@ -367,7 +372,7 @@ abstract class SettingsApi {
 	/**
 	 * Get HTML for description
 	 *
-	 * @param $data
+	 * @param mixed $data Input data.
 	 * @return string
 	 * @since 1.0.0
 	 */
@@ -389,7 +394,7 @@ abstract class SettingsApi {
 	/**
 	 * Get custom attributes.
 	 *
-	 * @param $data
+	 * @param mixed $data Input data.
 	 * @return string
 	 * @since 1.0.0
 	 */
@@ -440,7 +445,7 @@ abstract class SettingsApi {
 				<fieldset>
 					<legend class="screen-reader-text"><span><?php echo wp_kses_post( $data['title'] ); ?></span></legend>
 					<input class="input-text regular-input <?php echo esc_attr( $data['class'] ); ?>" type="<?php echo esc_attr( $data['type'] ); ?>" name="<?php echo esc_attr( $field_key ); ?>" id="<?php echo esc_attr( $field_key ); ?>" style="<?php echo esc_attr( $data['css'] ); ?>" value="<?php echo esc_attr( $this->get_option( $key ) ); ?>" placeholder="<?php echo esc_attr( $data['placeholder'] ); ?>" <?php disabled( $data['disabled'], true ); ?> <?php echo $this->get_custom_attribute_html( $data ); // WPCS: XSS ok. ?> />
-					<?php echo $this->get_description_html( $data ); // WPCS: XSS ok. ?>
+					<?php echo wp_kses_post( $this->get_description_html( $data ) ); // WPCS: XSS ok. ?>
 				</fieldset>
 			</td>
 		</tr>
@@ -497,7 +502,7 @@ abstract class SettingsApi {
 				<fieldset>
 					<legend class="screen-reader-text"><span><?php echo wp_kses_post( $data['title'] ); ?></span></legend>
 					<input class="ohmylms_input_price input-text regular-input <?php echo esc_attr( $data['class'] ); ?>" type="text" name="<?php echo esc_attr( $field_key ); ?>" id="<?php echo esc_attr( $field_key ); ?>" style="<?php echo esc_attr( $data['css'] ); ?>" value="<?php echo esc_attr( ohmylms_format_localized_price( $this->get_option( $key ) ) ); ?>" placeholder="<?php echo esc_attr( $data['placeholder'] ); ?>" <?php disabled( $data['disabled'], true ); ?> <?php echo $this->get_custom_attribute_html( $data ); // WPCS: XSS ok. ?> />
-					<?php echo $this->get_description_html( $data ); // WPCS: XSS ok. ?>
+					<?php echo wp_kses_post( $this->get_description_html( $data ) ); // WPCS: XSS ok. ?>
 				</fieldset>
 			</td>
 		</tr>
@@ -540,7 +545,7 @@ abstract class SettingsApi {
 				<fieldset>
 					<legend class="screen-reader-text"><span><?php echo wp_kses_post( $data['title'] ); ?></span></legend>
 					<input class="ohmylms_input_decimal input-text regular-input <?php echo esc_attr( $data['class'] ); ?>" type="text" name="<?php echo esc_attr( $field_key ); ?>" id="<?php echo esc_attr( $field_key ); ?>" style="<?php echo esc_attr( $data['css'] ); ?>" value="<?php echo esc_attr( ohmylms_format_localized_price( $this->get_option( $key ) ) ); ?>" placeholder="<?php echo esc_attr( $data['placeholder'] ); ?>" <?php disabled( $data['disabled'], true ); ?> <?php echo $this->get_custom_attribute_html( $data ); // WPCS: XSS ok. ?> />
-					<?php echo $this->get_description_html( $data ); // WPCS: XSS ok. ?>
+					<?php echo wp_kses_post( $this->get_description_html( $data ) ); // WPCS: XSS ok. ?>
 				</fieldset>
 			</td>
 		</tr>
@@ -597,7 +602,7 @@ abstract class SettingsApi {
 					<span class="colorpickpreview" style="background:<?php echo esc_attr( $this->get_option( $key ) ); ?>;">&nbsp;</span>
 					<input class="colorpick <?php echo esc_attr( $data['class'] ); ?>" type="text" name="<?php echo esc_attr( $field_key ); ?>" id="<?php echo esc_attr( $field_key ); ?>" style="<?php echo esc_attr( $data['css'] ); ?>" value="<?php echo esc_attr( $this->get_option( $key ) ); ?>" placeholder="<?php echo esc_attr( $data['placeholder'] ); ?>" <?php disabled( $data['disabled'], true ); ?> <?php echo $this->get_custom_attribute_html( $data ); // WPCS: XSS ok. ?> />
 					<div id="colorPickerDiv_<?php echo esc_attr( $field_key ); ?>" class="colorpickdiv" style="z-index: 100; background: #eee; border: 1px solid #ccc; position: absolute; display: none;"></div>
-					<?php echo $this->get_description_html( $data ); // WPCS: XSS ok. ?>
+					<?php echo wp_kses_post( $this->get_description_html( $data ) ); // WPCS: XSS ok. ?>
 				</fieldset>
 			</td>
 		</tr>
@@ -640,7 +645,7 @@ abstract class SettingsApi {
 				<fieldset>
 					<legend class="screen-reader-text"><span><?php echo wp_kses_post( $data['title'] ); ?></span></legend>
 					<textarea rows="3" cols="20" class="input-text wide-input <?php echo esc_attr( $data['class'] ); ?>" type="<?php echo esc_attr( $data['type'] ); ?>" name="<?php echo esc_attr( $field_key ); ?>" id="<?php echo esc_attr( $field_key ); ?>" style="<?php echo esc_attr( $data['css'] ); ?>" placeholder="<?php echo esc_attr( $data['placeholder'] ); ?>" <?php disabled( $data['disabled'], true ); ?> <?php echo $this->get_custom_attribute_html( $data ); // WPCS: XSS ok. ?>><?php echo esc_textarea( $this->get_option( $key ) ); ?></textarea>
-					<?php echo $this->get_description_html( $data ); // WPCS: XSS ok. ?>
+					<?php echo wp_kses_post( $this->get_description_html( $data ) ); // WPCS: XSS ok. ?>
 				</fieldset>
 			</td>
 		</tr>
@@ -688,7 +693,7 @@ abstract class SettingsApi {
 					<legend class="screen-reader-text"><span><?php echo wp_kses_post( $data['title'] ); ?></span></legend>
 					<label for="<?php echo esc_attr( $field_key ); ?>">
 						<input <?php disabled( $data['disabled'], true ); ?> class="<?php echo esc_attr( $data['class'] ); ?>" type="checkbox" name="<?php echo esc_attr( $field_key ); ?>" id="<?php echo esc_attr( $field_key ); ?>" style="<?php echo esc_attr( $data['css'] ); ?>" value="1" <?php checked( $this->get_option( $key ), 'yes' ); ?> <?php echo $this->get_custom_attribute_html( $data ); // WPCS: XSS ok. ?> /> <?php echo wp_kses_post( $data['label'] ); ?></label><br/>
-					<?php echo $this->get_description_html( $data ); // WPCS: XSS ok. ?>
+					<?php echo wp_kses_post( $this->get_description_html( $data ) ); // WPCS: XSS ok. ?>
 				</fieldset>
 			</td>
 		</tr>
@@ -745,7 +750,7 @@ abstract class SettingsApi {
 							<?php endif; ?>
 						<?php endforeach; ?>
 					</select>
-					<?php echo $this->get_description_html( $data ); // WPCS: XSS ok. ?>
+					<?php echo wp_kses_post( $this->get_description_html( $data ) ); // WPCS: XSS ok. ?>
 				</fieldset>
 			</td>
 		</tr>
@@ -803,7 +808,7 @@ abstract class SettingsApi {
 							<?php endif; ?>
 						<?php endforeach; ?>
 					</select>
-					<?php echo $this->get_description_html( $data ); // WPCS: XSS ok. ?>
+					<?php echo wp_kses_post( $this->get_description_html( $data ) ); // WPCS: XSS ok. ?>
 					<?php if ( $data['select_buttons'] ) : ?>
 						<br/><a class="select_all button" href="#"><?php esc_html_e( 'Select all', 'ohmylms' ); ?></a> <a class="select_none button" href="#"><?php esc_html_e( 'Select none', 'ohmylms' ); ?></a>
 					<?php endif; ?>
@@ -850,8 +855,8 @@ abstract class SettingsApi {
 	 *
 	 * Make sure the data is escaped correctly, etc.
 	 *
-	 * @param  string $key Field key.
-	 * @param  string $value Posted Value.
+	 * @param string $key Field key.
+	 * @param string $value Posted Value.
 	 * @return string
 	 */
 	public function validate_text_field( $key, $value ) {
@@ -864,8 +869,8 @@ abstract class SettingsApi {
 	 *
 	 * Make sure the data is escaped correctly, etc.
 	 *
-	 * @param  string $key Field key.
-	 * @param  string $value Posted Value.
+	 * @param string $key Field key.
+	 * @param string $value Posted Value.
 	 * @return string
 	 */
 	public function validate_price_field( $key, $value ) {
@@ -878,8 +883,8 @@ abstract class SettingsApi {
 	 *
 	 * Make sure the data is escaped correctly, etc.
 	 *
-	 * @param  string $key Field key.
-	 * @param  string $value Posted Value.
+	 * @param string $key Field key.
+	 * @param string $value Posted Value.
 	 * @return string
 	 */
 	public function validate_decimal_field( $key, $value ) {
@@ -890,8 +895,8 @@ abstract class SettingsApi {
 	/**
 	 * Validate Password Field. No input sanitization is used to avoid corrupting passwords.
 	 *
-	 * @param  string $key Field key.
-	 * @param  string $value Posted Value.
+	 * @param string $key Field key.
+	 * @param string $value Posted Value.
 	 * @return string
 	 */
 	public function validate_password_field( $key, $value ) {
@@ -902,8 +907,8 @@ abstract class SettingsApi {
 	/**
 	 * Validate Textarea Field.
 	 *
-	 * @param  string $key Field key.
-	 * @param  string $value Posted Value.
+	 * @param string $key Field key.
+	 * @param string $value Posted Value.
 	 * @return string
 	 */
 	public function validate_textarea_field( $key, $value ) {
@@ -929,8 +934,8 @@ abstract class SettingsApi {
 	 *
 	 * If not set, return "no", otherwise return "yes".
 	 *
-	 * @param  string $key Field key.
-	 * @param  string $value Posted Value.
+	 * @param string $key Field key.
+	 * @param string $value Posted Value.
 	 * @return string
 	 */
 	public function validate_checkbox_field( $key, $value ) {
@@ -941,8 +946,8 @@ abstract class SettingsApi {
 	/**
 	 * Validate Select Field.
 	 *
-	 * @param  string $key Field key.
-	 * @param  string $value Posted Value.
+	 * @param string $key Field key.
+	 * @param string $value Posted Value.
 	 * @return string
 	 */
 	public function validate_select_field( $key, $value ) {
@@ -954,8 +959,8 @@ abstract class SettingsApi {
 	/**
 	 * Validate Multiselect Field.
 	 *
-	 * @param  string $key Field key.
-	 * @param  string $value Posted Value.
+	 * @param string $key Field key.
+	 * @param string $value Posted Value.
 	 * @return string|array
 	 */
 	public function validate_multiselect_field( $key, $value ) {

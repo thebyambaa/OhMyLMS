@@ -4,6 +4,7 @@
 }
 
 .ohmylms-page {
+
     .ohmylms-assignment-single {
         padding: 60px 0 85px;
         background-color: #F9FAFD;
@@ -25,7 +26,7 @@
             width: calc(100% - 460px);
             border-radius: 16px;
             background-color: #FFF;
-            box-shadow: 0px 2px 8px 0px #ECECEC;
+            box-shadow: 0 2px 8px 0 #ECECEC;
             padding: 34px 40px 40px;
 
             .ohmylms-resources-list {
@@ -34,7 +35,7 @@
                 border-top: 1px solid #EBECED;
 
                 li {
-                    box-shadow: 0px 1px 4px 0px #d3d6ddc7;
+                    box-shadow: 0 1px 4px 0 #d3d6ddc7;
                     margin: 0;
                 }
             }
@@ -46,6 +47,7 @@
         }
 
         .ohmylms-sidebar-widget {
+
             &.with-gray-color {
                 background-color: rgba(var(--ohmylms-primary-color-rgb), 0.059);
             }
@@ -85,7 +87,7 @@
                     line-height: 1;
                     margin-top: 5px;
 
-                    & > span {
+                    > span {
                         cursor: pointer;
                         display: inline-flex;
                         align-items: center;
@@ -130,6 +132,7 @@
 }
 
 @media screen and (max-width: 1199px) {
+
     .ohmylms-page .ohmylms-assignment-single {
         padding: 40px 0 65px;
     }
@@ -142,6 +145,7 @@
     .ohmylms-page .ohmylms-assignment-single .ohmylms-content-wrapper {
         gap: 30px;
     }
+
     .ohmylms-page .ohmylms-assignment-single .ohmylms-content {
         width: calc(100% - 390px);
         border-radius: 8px;
@@ -161,6 +165,7 @@
 }
 
 @media screen and (max-width: 991px) {
+
     .ohmylms-page .ohmylms-assignment-single .ohmylms-assignment-title {
         font-size: 24px;
     }
@@ -181,18 +186,22 @@
 }
 
 @media screen and (max-width: 575px) {
+
     .ohmylms-page .ohmylms-assignment-single .ohmylms-sidebar-widget .ohmylms-score-comment-box .read-more-toggle {
         display: inline-block;
     }
+
     .ohmylms-assignment-single .ohmylms-sidebar-widget .ohmylms-score-comment-box .score-comment-details-text .line-clamp {
         display: -webkit-box;
         -webkit-line-clamp: 3;
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
+
     .ohmylms-assignment-single .ohmylms-sidebar-widget .ohmylms-score-comment-box .score-comment-details-text.active .line-clamp {
         -webkit-line-clamp: inherit;
     }
+
     .ohmylms-assignment-single .ohmylms-sidebar-widget .ohmylms-score-comment-box .score-comment-details-text.active svg {
         transform: rotate(180deg);
     }

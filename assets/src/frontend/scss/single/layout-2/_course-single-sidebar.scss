@@ -1,16 +1,18 @@
 .ohmylms-page {
+
     .ohmylms-single-course-layout-2 {
+
         .ohmylms-sidebar-widget-wrapper {
             border-radius: 20px;
             background-color: #FFF;
-            box-shadow: 0px 0px 20px 0px rgba(216, 219, 226, 0.60);
+            box-shadow: 0 0 20px 0 rgba(216, 219, 226, 0.60);
             padding: 30px;
         }
 
         .ohmylms-feature-image-wrapper {
             border-radius: 20px;
             background-color: #FFF;
-            box-shadow: 0px 0px 20px 0px rgba(216, 219, 226, 0.60);
+            box-shadow: 0 0 20px 0 rgba(216, 219, 226, 0.60);
             padding: 10px;
             margin-bottom: 20px;
 
@@ -28,6 +30,7 @@
             }
 
             figure {
+
                 img {
                     border-radius: 8px;
                     max-width: 100%;
@@ -56,16 +59,19 @@
             background: transparent!important;
 
             .price-discount-area {
+
                 ins {
                     width: auto;
                     margin-bottom: 0;
                     order: 1;
                 }
+
                 .discount-percentage {
                     margin-left: 5px;
                     margin-right: 14px;
                     order: 3;
                 }
+
                 del {
                     margin-left: 8px;
                     margin-right: 0;
@@ -83,6 +89,7 @@
 
 
 @media screen and (max-width: 1399px) {
+
     .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-feature-image-wrapper {
         border-radius: 8px;
     }
@@ -95,10 +102,12 @@
 }
 
 @media screen and (max-width: 1024px) {
+
     .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-feature-image-wrapper .ohmylms-video-player .ohmylms-video-player-cover .ohmylms-video-player-play {
         width: 50px;
         height: 50px;
     }
+
     .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-feature-image-wrapper .ohmylms-video-player .ohmylms-video-player-cover .ohmylms-video-player-play svg {
         width: 14px;
     }
@@ -110,6 +119,7 @@
 }
 
 @media screen and (max-width: 991px) {
+
     .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-single-course > .ohmylms-widget-pricebox {
         padding: 16px;
         background: #fff !important;

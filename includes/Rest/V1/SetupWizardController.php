@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Controller for handling user REST API endpoints.
+ *
+ * @package OhMyLMS
+ */
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
@@ -25,6 +30,9 @@ class SetupWizardController extends RestController {
 	 */
 	protected $base = 'setup-wizard';
 
+	/**
+	 * Check setup permission for Setup wizard controller.
+	 */
 	public function check_setup_permission() {
 		return current_user_can( 'edit_posts' );
 	}
@@ -35,7 +43,7 @@ class SetupWizardController extends RestController {
 	 *
 	 * @param WP_REST_Request $request The REST API request object.
 	 * @return bool|WP_Error True if the nonce is valid, WP_Error otherwise.
-	 * 
+	 *
 	 * @since 1.1.18
 	 */
 	public function verify_nonce( WP_REST_Request $request ) {
@@ -136,7 +144,7 @@ class SetupWizardController extends RestController {
 	 * Fires the onboarding started telemetry event.
 	 *
 	 * @since  1.1.16
-	 * @param  WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_REST_Response
 	 */
 	public function onboarding_started( WP_REST_Request $request ) {
@@ -165,7 +173,7 @@ class SetupWizardController extends RestController {
 	 * Fires the onboarding completed telemetry event.
 	 *
 	 * @since  1.1.16
-	 * @param  WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_REST_Response
 	 */
 	public function onboarding_completed( WP_REST_Request $request ) {
@@ -174,7 +182,7 @@ class SetupWizardController extends RestController {
 		if ( is_wp_error( $nonce_verification ) ) {
 			return rest_ensure_response( $nonce_verification );
 		}
-		
+
 		/**
 		 * Fires when the setup wizard onboarding is completed.
 		 *
@@ -194,7 +202,7 @@ class SetupWizardController extends RestController {
 	 * Fires the onboarding skipped telemetry event.
 	 *
 	 * @since  1.1.17
-	 * @param  WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_REST_Response
 	 */
 	public function onboarding_skipped( WP_REST_Request $request ) {
@@ -225,7 +233,7 @@ class SetupWizardController extends RestController {
 	/**
 	 * Import a sample course from JSON data.
 	 *
-	 * @param WP_REST_Request $request
+	 * @param WP_REST_Request $request REST request.
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function import_course( WP_REST_Request $request ) {
@@ -241,8 +249,8 @@ class SetupWizardController extends RestController {
 			return new WP_Error( 'invalid_course_data', __( 'Invalid course data provided.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
 
-		$course_ids  = array();
-		$is_first    = ! get_option( 'ohmylms_first_course_created', false );
+		$course_ids = array();
+		$is_first   = ! get_option( 'ohmylms_first_course_created', false );
 
 		foreach ( $courses_data as $course_data ) {
 			if ( ! isset( $course_data['title'] ) ) {
@@ -259,7 +267,6 @@ class SetupWizardController extends RestController {
 					'post_author'  => get_current_user_id(),
 				)
 			);
-
 
 			if ( is_wp_error( $course_id ) ) {
 				continue;
@@ -287,8 +294,8 @@ class SetupWizardController extends RestController {
 
 		return rest_ensure_response(
 			array(
-				'status'  => 'success',
-				'message' => __( 'Sample course imported successfully.', 'ohmylms' ),
+				'status'     => 'success',
+				'message'    => __( 'Sample course imported successfully.', 'ohmylms' ),
 				'course_ids' => $course_ids,
 			)
 		);
@@ -297,9 +304,8 @@ class SetupWizardController extends RestController {
 
 	/**
 	 * Update default meta data
-	 * 
-	 * @param int $course_id
-	 * 
+	 *
+	 * @param int $course_id Course identifier.
 	 */
 	private function update_default_meta_data( $course_id ) {
 		update_post_meta( $course_id, '_access_type', 'public' );
@@ -313,9 +319,9 @@ class SetupWizardController extends RestController {
 	/**
 	 * Import a chapter and its contents.
 	 *
-	 * @param int   $course_id
-	 * @param array $chapter_data
-	 * @param int   $order
+	 * @param int   $course_id Course identifier.
+	 * @param array $chapter_data Chapter data.
+	 * @param int   $order Order.
 	 */
 	private function import_chapter( $course_id, $chapter_data, $order ) {
 		if ( empty( $chapter_data['title'] ) ) {
@@ -361,9 +367,9 @@ class SetupWizardController extends RestController {
 	/**
 	 * Import a content item (lesson, quiz, etc.) and associate it with a chapter.
 	 *
-	 * @param int   $chapter_id
-	 * @param array $content_data
-	 * @param int   $order
+	 * @param int   $chapter_id Chapter identifier.
+	 * @param array $content_data Content data.
+	 * @param int   $order Order.
 	 */
 	private function import_content( $chapter_id, $content_data, $order ) {
 		if ( empty( $content_data['title'] ) || empty( $content_data['type'] ) ) {
@@ -422,7 +428,7 @@ class SetupWizardController extends RestController {
 	/**
 	 * Save setup wizard data
 	 *
-	 * @param $request
+	 * @param mixed $request REST request.
 	 */
 	public function update_data( $request ) {
 		$nonce_verification = $this->verify_nonce( $request );
@@ -442,17 +448,17 @@ class SetupWizardController extends RestController {
 			}
 		}
 
-		// Save full wizard data
+		// Save full wizard data.
 		if ( isset( $request['wizard_data'] ) ) {
 			update_option( 'ohmylms_setup_wizard_data', $request['wizard_data'] );
 		}
 
-		// Save certificate ID if provided
+		// Save certificate ID if provided.
 		if ( isset( $request['certificate_id'] ) ) {
 			update_option( 'ohmylms_setup_wizard_certificate_id', $request['certificate_id'] );
 		}
 
-		flush_rewrite_rules(true);
+		flush_rewrite_rules( true );
 
 		if ( 'yes' === get_option( 'ohmylms_allow_tracking', 'no' ) ) {
 			/**
@@ -474,11 +480,11 @@ class SetupWizardController extends RestController {
 	/**
 	 * Activate addon
 	 *
-	 * @param $request
+	 * @param mixed $request REST request.
 	 */
 	public function activate_addon( $request ) {
 		$slug = sanitize_text_field( $request['slug'] );
-		
+
 		if ( ! current_user_can( 'activate_plugins' ) ) {
 			return new WP_Error( 'rest_forbidden', __( 'You do not have permissions to activate plugins.', 'ohmylms' ), array( 'status' => 403 ) );
 		}
@@ -498,6 +504,11 @@ class SetupWizardController extends RestController {
 	}
 
 
+	/**
+	 * Save email settings for Setup wizard controller.
+	 *
+	 * @param mixed $request REST request.
+	 */
 	private function save_email_settings( $request ) {
 
 		if ( isset( $request['logo'] ) ) {
@@ -537,23 +548,23 @@ class SetupWizardController extends RestController {
 		}
 	}
 
+	/**
+	 * The wizard's "category" names become top-level curriculum items (course categories were replaced
+	 * by the curriculum). Names that already exist are left alone.
+	 *
+	 * @param mixed $request REST request.
+	 */
 	private function save_terms( $request ) {
 		if ( isset( $request['category'] ) && is_array( $request['category'] ) ) {
-			$terms_data['course_category'] = $request['category'];
-			foreach ( $terms_data as $taxonomy => $term_names ) {
-				// Ensure taxonomy exists, if not create it
-				$this->create_taxonomy_if_not_exists( $taxonomy );
-				foreach ( $term_names as $term_name ) {
-					$term = term_exists( $term_name, $taxonomy );
-					if ( ! $term ) {
-						wp_insert_term( $term_name, $taxonomy );
-					}
-				}
-			}
+			\OhMyLMS\Curriculum\Placement::ensure_items( array_map( 'sanitize_text_field', array_map( 'strval', $request['category'] ) ) );
 		}
 	}
 
-
+	/**
+	 * Save payment data for Setup wizard controller.
+	 *
+	 * @param mixed $request REST request.
+	 */
 	private function save_payment_data( $request ) {
 		if ( isset( $request['payment'] ) && is_array( $request['payment'] ) ) {
 			foreach ( $request['payment'] as $key => $payment ) {
@@ -562,15 +573,25 @@ class SetupWizardController extends RestController {
 		}
 	}
 
+	/**
+	 * Save permalink data for Setup wizard controller.
+	 *
+	 * @param mixed $request REST request.
+	 */
 	private function save_permalink_data( $request ) {
 		if ( isset( $request['permalink'] ) && is_array( $request['permalink'] ) ) {
 			foreach ( $request['permalink'] as $key => $payment ) {
 				update_option( $key, $payment );
 			}
-			flush_rewrite_rules(true);
+			flush_rewrite_rules( true );
 		}
 	}
 
+	/**
+	 * Save currency data for Setup wizard controller.
+	 *
+	 * @param mixed $request REST request.
+	 */
 	private function save_currency_data( $request ) {
 		if ( isset( $request['currency'] ) && is_array( $request['currency'] ) ) {
 			foreach ( $request['currency'] as $key => $payment ) {
@@ -579,6 +600,11 @@ class SetupWizardController extends RestController {
 		}
 	}
 
+	/**
+	 * Save design data for Setup wizard controller.
+	 *
+	 * @param mixed $request REST request.
+	 */
 	private function save_design_data( $request ) {
 		if ( isset( $request['design'] ) && is_array( $request['design'] ) ) {
 			foreach ( $request['design'] as $key => $design ) {
@@ -588,27 +614,11 @@ class SetupWizardController extends RestController {
 	}
 
 
-	private function create_taxonomy_if_not_exists( $taxonomy, $post_type = 'ohmylms-course' ) {
-		global $wp_taxonomies;
-
-		if ( ! taxonomy_exists( $taxonomy ) ) {
-			register_taxonomy(
-				$taxonomy,
-				$post_type,
-				array(
-					'label'             => ucfirst( $taxonomy ),
-					'public'            => true,
-					'hierarchical'      => ( $taxonomy === 'course_category' ), // Categories are hierarchical
-					'show_ui'           => true,
-					'show_admin_column' => true,
-					'query_var'         => true,
-					'rewrite'           => array( 'slug' => $taxonomy ),
-				)
-			);
-			$wp_taxonomies[ $taxonomy ] = get_taxonomy( $taxonomy ); // Register dynamically
-		}
-	}
-
+	/**
+	 * Create contact for Setup wizard controller.
+	 *
+	 * @param mixed $request REST request.
+	 */
 	private function create_contact( $request ) {
 		if ( isset( $request['contact'] ) ) {
 			$email      = isset( $request['contact']['email'] ) ? sanitize_text_field( $request['contact']['email'] ) : '';
@@ -620,6 +630,11 @@ class SetupWizardController extends RestController {
 		}
 	}
 
+	/**
+	 * Save layout settings for Setup wizard controller.
+	 *
+	 * @param mixed $request REST request.
+	 */
 	private function save_layout_settings( $request ) {
 		$design_obj = new \OhMyLMS\Admin\Settings\Design();
 		$settings   = $design_obj->get_settings();

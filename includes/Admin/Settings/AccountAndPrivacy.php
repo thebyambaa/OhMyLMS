@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * General settings class.
+ *
+ * @package OhMyLMS
+ */
 namespace OhMyLMS\Admin\Settings;
 
 use OhMyLMS\Abstracts\Settings;
@@ -58,9 +63,9 @@ class AccountAndPrivacy extends Settings {
 				'default' => 'optional',
 				'type'    => 'select',
 				'options' => array(
-					'optional'  => __( 'Optional', 'ohmylms' ),
-					'required'  => __( 'Required', 'ohmylms' ),
-					'hidden'    => __( 'Hidden', 'ohmylms' ),
+					'optional' => __( 'Optional', 'ohmylms' ),
+					'required' => __( 'Required', 'ohmylms' ),
+					'hidden'   => __( 'Hidden', 'ohmylms' ),
 				),
 				'value'   => '',
 			),

@@ -1,0 +1,812 @@
+
+
+.oml-student-dashboard {
+  --dash-accent: #167a65;
+  --dash-bg: #e4f3e8;
+  --dash-ink: #19332d;
+  --dash-muted: #536a62;
+  --dash-line: #dae7df;
+  --ohmylms-primary-color: var(--dash-accent);
+  --ohmylms-body-text-color: var(--dash-ink);
+  --ohmylms-heading-color: var(--dash-ink);
+  --ohmylms-outline-color: var(--dash-line);
+  position: relative;
+  isolation: isolate;
+  background: var(--dash-bg);
+  color: var(--dash-ink);
+  padding: 32px;
+  border-radius: 20px;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.oml-student-dashboard * {
+  box-sizing: border-box;
+}
+
+.oml-dashboard-greeting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.oml-dashboard-person {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  min-width: 0;
+}
+
+.oml-dashboard-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 4px #fffa;
+}
+
+.oml-dashboard-customize {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.oml-dashboard-theme-picker {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 240px;
+  z-index: 10;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid var(--dash-line);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px #19332d20;
+}
+
+.oml-theme-swatch {
+  display: block;
+  width: 40px;
+  height: 26px;
+  border-radius: 5px;
+}
+
+.oml-theme-meadow {
+  background: linear-gradient(155deg, #d8f1d8 50%, #7dc7a4 50%);
+}
+
+.oml-theme-ocean {
+  background: linear-gradient(155deg, #d7f1ff 50%, #75badb 50%);
+}
+
+.oml-theme-sunset {
+  background: linear-gradient(155deg, #ffdcc3 50%, #d49ab3 50%);
+}
+
+.oml-dashboard-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.oml-dashboard-card {
+  background: #fff;
+  border: 1px solid var(--dash-line);
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 4px 16px #15382b05;
+  min-width: 0;
+}
+
+.oml-dashboard-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-top: 43px;
+  min-width: 0;
+}
+
+.oml-dashboard-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--dash-line);
+  margin: -8px -8px 20px;
+  padding-bottom: 8px;
+}
+
+.oml-dashboard-course-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.oml-dashboard-skill-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.oml-dashboard-course {
+  border: 1px solid var(--dash-line);
+  border-radius: 12px;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.oml-dashboard-skill {
+  border: 1px solid var(--dash-line);
+  border-radius: 12px;
+  overflow: hidden;
+  min-width: 0;
+  padding: 16px;
+}
+
+.oml-dashboard-text-link {
+  display: inline-block;
+  font-weight: 600;
+  margin-top: 14px;
+  font-size: 13px;
+}
+
+.oml-dashboard-empty {
+  text-align: center;
+  padding: 42px 16px;
+}
+
+.oml-dashboard-pill {
+  display: inline-block;
+  background: var(--dash-bg);
+  color: var(--dash-accent);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.oml-dashboard-recommendation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--dash-line);
+}
+
+.oml-dashboard-course-counts {
+  margin: 18px 0 0;
+}
+
+.oml-dashboard-week {
+  margin-bottom: 24px;
+}
+
+.oml-dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 20px 0 18px;
+}
+
+.oml-dashboard-bottom-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.oml-dashboard-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 0;
+}
+
+.oml-dashboard-leaders {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+}
+
+.oml-xp-card {
+	display: grid;
+	gap: 8px;
+	padding: 16px;
+	border-radius: 16px;
+	background: var(--oml-card, #fff);
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.oml-xp-met {
+	color: #15803d;
+	font-weight: 700;
+}
+
+.oml-xp-week {
+	display: flex;
+	align-items: flex-end;
+	gap: 6px;
+	height: 56px;
+	margin: 4px 0;
+	padding: 0;
+	list-style: none;
+}
+
+.oml-xp-bar {
+	display: block;
+	width: 100%;
+	border-radius: 4px 4px 0 0;
+	background: #f59e0b;
+}
+
+.oml-xp-goals {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.oml-mastery-score {
+	display: flex;
+	align-items: baseline;
+	gap: 4px;
+}
+
+.oml-mastery-medal {
+	margin-left: 8px;
+	padding: 1px 10px;
+	border-radius: 999px;
+	background: #fde68a;
+	font-size: 0.8em;
+	font-weight: 700;
+}
+
+.oml-student-dashboard::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 50%;
+  background: var(--dash-accent);
+  opacity: 0.07;
+  width: 700px;
+  height: 260px;
+  bottom: -140px;
+  left: -180px;
+  transform: rotate(-12deg);
+}
+
+.oml-student-dashboard::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 50%;
+  background: var(--dash-accent);
+  width: 700px;
+  height: 260px;
+  left: auto;
+  right: -300px;
+  bottom: -70px;
+  transform: rotate(16deg);
+  opacity: 0.05;
+}
+
+.oml-student-dashboard h1 {
+  color: var(--dash-ink);
+  font-family: inherit;
+  line-height: 1.35;
+  letter-spacing: normal;
+  font-size: 25px;
+  margin: 3px 0 0;
+  font-weight: 700;
+}
+
+.oml-student-dashboard h2 {
+  color: var(--dash-ink);
+  font-family: inherit;
+  line-height: 1.35;
+  letter-spacing: normal;
+  font-size: 20px;
+  margin: 0 0 16px;
+  font-weight: 650;
+}
+
+.oml-student-dashboard h3 {
+  color: var(--dash-ink);
+  font-family: inherit;
+  line-height: 1.35;
+  letter-spacing: normal;
+  font-size: 16px;
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.oml-student-dashboard p {
+  color: var(--dash-muted);
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.oml-dashboard-customize summary {
+  cursor: pointer;
+  border: 1px solid var(--dash-accent);
+  border-radius: 9px;
+  padding: 9px 14px;
+  background: #ffffffb8;
+  color: var(--dash-accent);
+  font-weight: 600;
+}
+
+.oml-dashboard-theme-picker button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  color: var(--dash-ink);
+  width: 100%;
+  padding: 8px;
+  margin: 4px 0;
+  border: 1px solid var(--dash-line);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.oml-dashboard-tabs button {
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: var(--dash-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1.5;
+}
+
+.oml-dashboard-course > img {
+  display: block;
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  background: var(--dash-bg);
+}
+
+.oml-dashboard-course > div {
+  padding: 16px;
+}
+
+.oml-student-dashboard a {
+  color: var(--dash-accent);
+  text-decoration: none;
+}
+
+.oml-student-dashboard progress {
+  display: block;
+  width: 100%;
+  height: 8px;
+  border: 0;
+  border-radius: 20px;
+  margin: 12px 0 16px;
+  background: var(--dash-bg);
+  overflow: hidden;
+  accent-color: var(--dash-accent);
+}
+
+.oml-dashboard-empty > span {
+  display: block;
+  color: var(--dash-accent);
+  font-size: 42px;
+  margin-bottom: 14px;
+}
+
+.oml-dashboard-empty p {
+  max-width: 360px;
+  margin: 0 auto 18px;
+}
+
+.oml-dashboard-course-counts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.oml-dashboard-course-counts dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.oml-dashboard-week > header {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.oml-dashboard-metrics > div {
+  padding: 0 20px;
+  border-left: 1px solid var(--dash-line);
+}
+
+.oml-dashboard-metrics dt {
+  font-size: 13px;
+  color: var(--dash-muted);
+}
+
+.oml-dashboard-metrics dd {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 4px 0;
+  color: var(--dash-accent);
+}
+
+.oml-dashboard-badges li {
+  text-align: center;
+  flex: 0 1 110px;
+  overflow-wrap: anywhere;
+}
+
+.oml-dashboard-badges img {
+  display: block;
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  margin: 0 auto 10px;
+}
+
+.oml-dashboard-badges strong {
+  font-size: 12px;
+  display: block;
+}
+
+.oml-dashboard-leaders li {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--dash-bg);
+  margin: 8px 0;
+}
+
+.oml-dashboard-leaders strong {
+  color: var(--dash-accent);
+}
+
+.oml-dashboard-skill-summary summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.oml-dashboard-skill-summary ul {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+}
+
+.oml-dashboard-skill-summary li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--dash-line);
+}
+
+.oml-xp-card h3 {
+	margin: 0;
+}
+
+.oml-xp-card p {
+	margin: 0;
+}
+
+.oml-xp-total strong {
+	font-size: 1.8em;
+	color: #b45309;
+}
+
+.oml-xp-card progress {
+	width: 100%;
+	height: 10px;
+}
+
+.oml-dashboard-skill progress {
+	width: 100%;
+	height: 10px;
+}
+
+.oml-xp-week li {
+	display: flex;
+	flex: 1;
+	align-items: flex-end;
+	height: 100%;
+}
+
+.oml-xp-goals button {
+	padding: 4px 12px;
+	border: 1px solid #d97706;
+	border-radius: 999px;
+	background: transparent;
+	cursor: pointer;
+}
+
+.oml-mastery-score strong {
+	font-size: 1.5em;
+}
+
+.oml-student-dashboard h3 a {
+  color: var(--dash-ink);
+}
+
+.oml-student-dashboard progress::-webkit-progress-bar {
+  background: var(--dash-bg);
+}
+
+.oml-student-dashboard progress::-webkit-progress-value {
+  background: var(--dash-accent);
+  border-radius: 20px;
+}
+
+.oml-student-dashboard progress::-moz-progress-bar {
+  background: var(--dash-accent);
+}
+
+.oml-dashboard-badges li > span {
+  font-size: 42px;
+  color: var(--dash-accent);
+}
+
+.oml-student-dashboard[data-dashboard-theme='ocean'] {
+  --dash-accent: #256aa1;
+  --dash-bg: #e2f2fa;
+  --dash-ink: #17354b;
+  --dash-muted: #526e80;
+  --dash-line: #d9e8f0;
+}
+
+.oml-student-dashboard[data-dashboard-theme='sunset'] {
+  --dash-accent: #9d4a69;
+  --dash-bg: #fff0e7;
+  --dash-ink: #4b2938;
+  --dash-muted: #7a5d68;
+  --dash-line: #efdfdf;
+}
+
+.oml-dashboard-person .oml-dashboard-eyebrow {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0;
+  color: var(--dash-accent);
+  font-weight: 700;
+}
+
+.oml-student-dashboard [hidden] {
+  display: none !important;
+}
+
+.oml-student-dashboard .oml-dashboard-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 8px;
+  color: #fff;
+  background: var(--dash-accent);
+  font-weight: 600;
+  font-size: 13px;
+  text-decoration: none;
+  min-height: 38px;
+}
+
+.oml-dashboard-recommendation:last-child {
+  border-bottom: 0;
+}
+
+.oml-dashboard-recommendation .oml-dashboard-button {
+  flex-shrink: 0;
+}
+
+.oml-dashboard-aside .ohmylms-streak-card {
+  background: #fff;
+  border: 1px solid var(--dash-line);
+  border-radius: 14px;
+  box-shadow: 0 4px 16px #15382b05;
+  min-width: 0;
+  margin: 0;
+  padding: 20px;
+}
+
+@media (max-width: 1100px) {
+
+  .oml-dashboard-main-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .oml-dashboard-aside {
+    padding-top: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+
+  .oml-student-dashboard {
+    padding: 20px 14px;
+    border-radius: 14px;
+  }
+
+  .oml-dashboard-greeting {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .oml-dashboard-card {
+    padding: 18px;
+  }
+
+  .oml-dashboard-theme-picker {
+    right: auto;
+    left: 0;
+  }
+
+  .oml-dashboard-course-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .oml-dashboard-skill-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .oml-dashboard-bottom-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .oml-dashboard-aside {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .oml-dashboard-recommendation {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .oml-dashboard-person {
+    align-items: flex-start;
+  }
+
+  .oml-student-dashboard h1 {
+    font-size: 21px;
+  }
+
+  .oml-dashboard-metrics > div {
+    padding: 0 8px;
+  }
+
+  .oml-dashboard-metrics dd {
+    font-size: 28px;
+  }
+
+  .oml-dashboard-week > header {
+    display: block;
+  }
+
+  .oml-dashboard-skill-summary li {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .oml-dashboard-tabs button {
+    padding: 8px;
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .oml-student-dashboard * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}
+
+/* XP card and mastery score */
+
+.oml-dashboard-aside .ohmylms-streak-totals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.oml-dashboard-aside .ohmylms-streak-week {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.oml-dashboard-aside .ohmylms-streak-day {
+  font-size: 10px;
+  padding: 8px 2px;
+}
+
+.oml-student-dashboard .ohmylms-bundles {
+  background: #fff;
+  border-radius: 14px;
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px solid var(--dash-line);
+}
+
+.oml-mastery-medal.is-bronze {
+	background: #fed7aa;
+}
+
+.oml-mastery-medal.is-silver {
+	background: #e5e7eb;
+}
+
+.oml-dashboard-theme-picker button[aria-pressed='true'] {
+  border-color: var(--dash-accent);
+  outline: 1px solid var(--dash-accent);
+}
+
+.oml-dashboard-tabs button[aria-selected='true'] {
+  background: var(--dash-bg);
+  color: var(--dash-accent);
+}
+
+.oml-student-dashboard a:hover {
+  text-decoration: underline;
+}
+
+.oml-dashboard-metrics > div:first-child {
+  border-left: 0;
+  padding-left: 0;
+}
+
+.oml-dashboard-aside .ohmylms-streak-totals > div {
+  display: block;
+  font-size: 11px;
+}
+
+.oml-dashboard-aside .ohmylms-streak-totals dd {
+  font-size: 20px;
+}
+
+.oml-dashboard-aside .ohmylms-streak-day small {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.oml-dashboard-aside .ohmylms-streak-card select {
+  max-width: 100%;
+}
+
+.oml-xp-goals button[aria-pressed="true"] {
+	background: #f59e0b;
+	color: #fff;
+}
+
+.oml-student-dashboard .oml-dashboard-button:hover {
+  filter: brightness(0.9);
+}
+
+.oml-dashboard-bottom-grid > .oml-dashboard-card:only-child {
+  grid-column: 1/-1;
+}
+
+.oml-student-dashboard :is(a, button, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--dash-accent);
+  outline-offset: 3px;
+}

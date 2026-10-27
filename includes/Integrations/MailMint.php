@@ -1,4 +1,9 @@
 <?php
+/**
+ * MailMint Integration.
+ *
+ * @package OhMyLMS
+ */
 namespace OhMyLMS\Integrations;
 
 use Mint\MRM\DataBase\Tables\AutomationMetaSchema;
@@ -16,115 +21,125 @@ use MintMail\App\Internal\Automation\AutomationModel;
  */
 class MailMint {
 
-    /**
-     * The post ID associated with the automation.
-     *
-     * @var int
-     */
-    public $post_id;
+	/**
+	 * The post ID associated with the automation.
+	 *
+	 * @var int
+	 */
+	public $post_id;
 
-    /**
-     * MailMint constructor
-     *
-     * Initializes the integration by setting the post ID if MailMint is active.
-     *
-     * @param int $post_id The ID of the post to associate with the automation.
-     */
-    public function __construct( $post_id ) {
-        if ( $this->is_active() ) {
-            $this->post_id = $post_id;
-        }
-    }
+	/**
+	 * MailMint constructor
+	 *
+	 * Initializes the integration by setting the post ID if MailMint is active.
+	 *
+	 * @param int $post_id The ID of the post to associate with the automation.
+	 */
+	public function __construct( $post_id ) {
+		if ( $this->is_active() ) {
+			$this->post_id = $post_id;
+		}
+	}
 
 
-    /**
-     * Retrieves all automations from MailMint based on provided filters.
-     *
-     * @param array  $ids        An array of automation IDs to filter.
-     * @param string $order_by   Column to order by.
-     * @param string $order_type Sorting order (ASC/DESC).
-     * @param int    $offset     Offset for pagination.
-     * @param int    $limit      Number of records per page.
-     * @param string $search     Search query.
-     * @param string $status     Automation status.
-     * 
-     * @return array|null Returns an array of automation data or null on failure.
-     */
-    public static function get_all( $ids, $order_by, $order_type, $offset = 0, $limit = 10, $search = '', $status = '' ) {
-        global $wpdb;
-        $automation_table      = $wpdb->prefix . AutomationSchema::$table_name;
-        $automation_meta_table = $wpdb->prefix . AutomationMetaSchema::$table_name;
-        $search_terms          = null;
-        $condition             = 'WHERE';
-        
-        // Search automation by name.
-        if ( ! empty( $search ) ) {
-            $search       = $wpdb->esc_like( $search );
-            $search_terms = "WHERE automation.name LIKE '%%$search%%'";
-            $condition    = 'AND';
-        }
-       
-        // Filter by IDs.
-        if ( ! empty( $ids ) && is_array( $ids ) ) {
-            $ids_placeholder = implode( ',', array_map( 'intval', $ids ) );
-            $condition .= " automation.id IN ($ids_placeholder) AND";
-        }
-    
-        try {
-            if ( 'all' === $status ) {
-                $select_query = $wpdb->get_results( $wpdb->prepare(
-                    "SELECT automation.id, automation.name, automation.status, automation.created_at 
+	/**
+	 * Retrieves all automations from MailMint based on provided filters.
+	 *
+	 * @param array  $ids An array of automation IDs to filter.
+	 * @param string $order_by Column to order by.
+	 * @param string $order_type Sorting order (ASC/DESC).
+	 * @param int    $offset Offset for pagination.
+	 * @param int    $limit Number of records per page.
+	 * @param string $search Search query.
+	 * @param string $status Automation status.
+	 *
+	 * @return array|null Returns an array of automation data or null on failure.
+	 */
+	public static function get_all( $ids, $order_by, $order_type, $offset = 0, $limit = 10, $search = '', $status = '' ) {
+		global $wpdb;
+		$automation_table      = $wpdb->prefix . AutomationSchema::$table_name;
+		$automation_meta_table = $wpdb->prefix . AutomationMetaSchema::$table_name;
+		$search_terms          = null;
+		$condition             = 'WHERE';
+
+		// Search automation by name.
+		if ( ! empty( $search ) ) {
+			$search       = $wpdb->esc_like( $search );
+			$search_terms = "WHERE automation.name LIKE '%%$search%%'";
+			$condition    = 'AND';
+		}
+
+		// Filter by IDs.
+		if ( ! empty( $ids ) && is_array( $ids ) ) {
+			$ids_placeholder = implode( ',', array_map( 'intval', $ids ) );
+			$condition      .= " automation.id IN ($ids_placeholder) AND";
+		}
+
+		try {
+			if ( 'all' === $status ) {
+				$select_query = $wpdb->get_results(
+					$wpdb->prepare(
+						"SELECT automation.id, automation.name, automation.status, automation.created_at 
                     FROM $automation_table as automation 
                     LEFT JOIN $automation_meta_table AS meta ON automation.id = meta.automation_id 
                     {$search_terms} {$condition} meta.meta_key = %s AND meta.meta_value = %s 
                     ORDER BY automation.$order_by $order_type 
-                    LIMIT %d, %d", 
-                    array( 'source', 'ohmylms', $offset, $limit )
-                ), ARRAY_A );
-              
-                $count_query  = $wpdb->get_var( $wpdb->prepare(
-                    "SELECT COUNT(*) 
+                    LIMIT %d, %d",
+						array( 'source', 'ohmylms', $offset, $limit )
+					),
+					ARRAY_A
+				);
+
+				$count_query = $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT COUNT(*) 
                     FROM $automation_table as automation 
                     LEFT JOIN $automation_meta_table AS meta ON automation.id = meta.automation_id 
-                    {$search_terms} {$condition} meta.meta_key  = %s AND  meta.meta_value  = %s", 
-                    array( 'source', 'ohmylms' )
-                ) );
-            } else {
-                $select_query = $wpdb->get_results( $wpdb->prepare(
-                    "SELECT automation.id, automation.name, automation.status, automation.created_at 
+                    {$search_terms} {$condition} meta.meta_key  = %s AND  meta.meta_value  = %s",
+						array( 'source', 'ohmylms' )
+					)
+				);
+			} else {
+				$select_query = $wpdb->get_results(
+					$wpdb->prepare(
+						"SELECT automation.id, automation.name, automation.status, automation.created_at 
                     FROM $automation_table as automation 
                     LEFT JOIN $automation_meta_table AS meta ON automation.id = meta.automation_id 
                     {$search_terms} {$condition} meta.meta_key = %s AND meta.meta_value = %s 
                     AND automation.status = %s 
                     ORDER BY automation.$order_by $order_type 
-                    LIMIT %d, %d", 
-                    array( 'source', 'ohmylms', $status, $offset, $limit )
-                ), ARRAY_A );
-    
-                $count_query  = $wpdb->get_var( $wpdb->prepare(
-                    "SELECT COUNT(*) 
+                    LIMIT %d, %d",
+						array( 'source', 'ohmylms', $status, $offset, $limit )
+					),
+					ARRAY_A
+				);
+
+				$count_query = $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT COUNT(*) 
                     FROM $automation_table as automation 
                     LEFT JOIN $automation_meta_table AS meta ON automation.id = meta.automation_id 
                     {$search_terms} {$condition} meta.meta_key  = %s AND  meta.meta_value  = %s 
-                    AND automation.status = %s", 
-                    array( 'source', 'ohmylms', $status )
-                ) );
-            }
-    
-            $count       = (int) $count_query;
-            $total_pages = ceil( $count / $limit );
-            $data = array(
-                'data'        => $select_query,
-                'total_pages' => $total_pages,
-                'count'       => $count,
-            );
-            if ( isset( $data['data'] ) ) {
-                $data['data'] = array_map(
-                    function( $automation ) {
-                        if ( is_array( $automation ) && !empty( $automation ) ) {
-                            $created_at    = isset( $automation['created_at'] ) ? $automation['created_at'] : '';
-                            $automation_id = isset( $automation['id'] ) ? $automation['id'] : '';
-    
+                    AND automation.status = %s",
+						array( 'source', 'ohmylms', $status )
+					)
+				);
+			}
+
+			$count       = (int) $count_query;
+			$total_pages = ceil( $count / $limit );
+			$data        = array(
+				'data'        => $select_query,
+				'total_pages' => $total_pages,
+				'count'       => $count,
+			);
+			if ( isset( $data['data'] ) ) {
+				$data['data'] = array_map(
+					function ( $automation ) {
+						if ( is_array( $automation ) && ! empty( $automation ) ) {
+							$created_at    = isset( $automation['created_at'] ) ? $automation['created_at'] : '';
+							$automation_id = isset( $automation['id'] ) ? $automation['id'] : '';
+
                             $automation['created_ago'] = human_time_diff( strtotime( $created_at ), current_time( 'timestamp' ) ); //phpcs:disable
                             $automation['enterance']   = HelperFunctions::count_total_enterance( $automation_id );
                             $automation['completed']   = HelperFunctions::count_completed_automation( $automation_id );
@@ -226,6 +241,7 @@ class MailMint {
      * @return string The subject with replaced placeholders.
      * 
      * @since 1.1.6
+     * @param mixed $post_id Post identifier.
      */
     public function replace_subject_placeholders( $subject, $post_id ) {
         $placeholders = [
@@ -263,6 +279,7 @@ class MailMint {
      * @param array  $data    The data to replace placeholders.
      * @return string The content with replaced placeholders.
      * @since 1.1.6
+     * @param mixed $post_id Post identifier.
      */
     public function replace_content_placeholders( $content, $post_id ) {
         $placeholders = [
@@ -295,8 +312,8 @@ class MailMint {
     /**
      * Updates the status of an automation in MailMint.
      *
-     * @param int    $automation_id The ID of the automation to update.
-     * @param string $status        The new status to set.
+     * @param int $automation_id The ID of the automation to update.
+     * @param string $status The new status to set.
      * @return void
      */
     public function update_automation_status( $automation_id, $status ) {
@@ -342,6 +359,11 @@ class MailMint {
     }
 
 
+    /**
+     * Duplicate automation for Mail mint.
+     *
+     * @param mixed $automation_id Automation identifier.
+     */
     public function duplicate_automation( $automation_id ){
         
         if ( ! $this->is_active() ) {

@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
 
 /**
  * Class EcommerceDateTime
@@ -9,11 +9,14 @@
  * @link https://github.com/woocommerce/woocommerce/blob/trunk/plugins/woocommerce/includes/class-wc-datetime.php
  */
 
-namespace CodeRex\Ecommerce;
+namespace OhMyLMS\Commerce;
 
 use DateTime;
 use DateTimeZone;
 
+/**
+ * Plugin ecommerce date time implementation.
+ */
 class EcommerceDateTime extends DateTime {
 
 	/**
@@ -47,6 +50,9 @@ class EcommerceDateTime extends DateTime {
 	 * Get UTC offset if set, or default to the DateTime object's offset.
 	 */
 	#[\ReturnTypeWillChange]
+	/**
+	 * Get offset for Ecommerce date time.
+	 */
 	public function getOffset() {
 		return $this->utc_offset ?: parent::getOffset();
 	}
@@ -58,6 +64,11 @@ class EcommerceDateTime extends DateTime {
 	 * @return DateTime
 	 */
 	#[\ReturnTypeWillChange]
+	/**
+	 * Set timezone for Ecommerce date time.
+	 *
+	 * @param mixed $timezone Timezone.
+	 */
 	public function setTimezone( $timezone ) {
 		$this->utc_offset = 0;
 		return parent::setTimezone( $timezone );
@@ -70,6 +81,9 @@ class EcommerceDateTime extends DateTime {
 	 * @return int
 	 */
 	#[\ReturnTypeWillChange]
+	/**
+	 * Get timestamp for Ecommerce date time.
+	 */
 	public function getTimestamp() {
 		return method_exists( 'DateTime', 'getTimestamp' ) ? parent::getTimestamp() : $this->format( 'U' );
 	}
@@ -88,7 +102,7 @@ class EcommerceDateTime extends DateTime {
 	 * Format a date based on the offset timestamp.
 	 *
 	 * @since  1.0.0
-	 * @param  string $format Date format.
+	 * @param string $format Date format.
 	 * @return string
 	 */
 	public function date( $format ) {
@@ -99,7 +113,7 @@ class EcommerceDateTime extends DateTime {
 	 * Return a localised date based on offset timestamp. Wrapper for date_i18n function.
 	 *
 	 * @since  1.0.0
-	 * @param  string $format Date format.
+	 * @param string $format Date format.
 	 * @return string
 	 */
 	public function date_i18n( $format = 'Y-m-d' ) {

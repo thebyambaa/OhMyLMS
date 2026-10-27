@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * ZoomApiClient class.
  *
@@ -45,7 +45,7 @@ class ZoomApiClient implements ZoomApiInterface {
 	 * Make a GET request to the Zoom API.
 	 *
 	 * @param string $endpoint The API endpoint.
-	 * @param array  $params   The query parameters.
+	 * @param array  $params The query parameters.
 	 *
 	 * @return array The API response.
 	 */
@@ -61,7 +61,7 @@ class ZoomApiClient implements ZoomApiInterface {
 	 * Make a POST request to the Zoom API.
 	 *
 	 * @param string $endpoint The API endpoint.
-	 * @param array  $data     The request body.
+	 * @param array  $data The request body.
 	 *
 	 * @return array The API response.
 	 */
@@ -73,7 +73,7 @@ class ZoomApiClient implements ZoomApiInterface {
 	 * Make a PUT request to the Zoom API.
 	 *
 	 * @param string $endpoint The API endpoint.
-	 * @param array  $data     The request body.
+	 * @param array  $data The request body.
 	 *
 	 * @return array The API response.
 	 */
@@ -81,6 +81,12 @@ class ZoomApiClient implements ZoomApiInterface {
 		return $this->request( 'PUT', $this->base_uri . $endpoint, $data );
 	}
 
+	/**
+	 * Patch for Zoom api client.
+	 *
+	 * @param mixed $endpoint Endpoint.
+	 * @param array $data Input data.
+	 */
 	public function patch( $endpoint, $data = array() ) {
 		return $this->request( 'PATCH', $this->base_uri . $endpoint, $data );
 	}
@@ -99,14 +105,14 @@ class ZoomApiClient implements ZoomApiInterface {
 	/**
 	 * Make a request to the Zoom API.
 	 *
-	 * @param string $method   The HTTP method.
-	 * @param string $url      The request URL.
-	 * @param array  $data     The request body.
+	 * @param string $method The HTTP method.
+	 * @param string $url The request URL.
+	 * @param array  $data The request body.
 	 *
 	 * @return array The API response.
 	 */
 	private function request( $method, $url, $data = array() ) {
-		$token = $this->token_service->get_valid_access_token();
+		$token   = $this->token_service->get_valid_access_token();
 		$headers = array(
 			'Authorization' => 'Bearer ' . $token,
 			'Content-Type'  => 'application/json',
@@ -132,10 +138,10 @@ class ZoomApiClient implements ZoomApiInterface {
 		}
 
 		$status_code = \wp_remote_retrieve_response_code( $response );
-		$body = \wp_remote_retrieve_body( $response );
-		$data = json_decode( $body, true );
+		$body        = \wp_remote_retrieve_body( $response );
+		$data        = json_decode( $body, true );
 
-		if ( $body === '' ) {
+		if ( '' === $body ) {
 			return array(
 				'success' => false,
 				'message' => 'Empty response from Zoom API.',

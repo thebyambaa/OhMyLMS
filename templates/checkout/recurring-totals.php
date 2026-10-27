@@ -11,22 +11,24 @@
 defined( 'ABSPATH' ) || exit;
 ?>
 <table class="ohmylms-checkout-order-review-table">
-    <tbody>
+	<tbody>
 <tr class="recurring-totals">
-    <td><?php esc_html_e( 'Recurring totals', 'ohmylms' ); ?></td>
-    <td>
+	<td><?php esc_html_e( 'Recurring totals', 'ohmylms' ); ?></td>
+	<td>
 <?php
 
-        /**
-         *
-         * @since 1.0.0
-         */
-        do_action( 'ohmylms_recurring_totals_subtotals', $membership );
+		/**
+		 * Membership.
+		 *
+		 *
+		 * @since 1.0.0
+		 */
+		do_action( 'ohmylms_recurring_totals_subtotals', $membership );
 
 
-        do_action( 'ohmylms_recurring_subscription_totals', $membership );
+		do_action( 'ohmylms_recurring_subscription_totals', $membership );
 ?>
-    </td>
+	</td>
 </tr>
-    </tbody>
+	</tbody>
 </table>

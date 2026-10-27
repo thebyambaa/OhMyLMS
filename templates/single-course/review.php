@@ -3,10 +3,12 @@
  * Review Comments Template
  *
  * Closing li is left out on purpose!. Please include it in your theme.
+ *
+ * @package OhMyLMS
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
+	exit; // Exit if accessed directly.
 }
 ?>
 
@@ -18,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 </div>
 
 <p class="review-description">
-	<?php echo get_comment_text($comment); ?>
+	<?php echo wp_kses_post( get_comment_text( $comment ) ); ?>
 </p>
 
 <?php
@@ -27,6 +29,6 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @hooked ohmylms_review_display_rating - 10
  */
-// do_action( 'ohmylms_review_before_comment_meta', $comment );
+// do_action( 'ohmylms_review_before_comment_meta', $comment );.
 
 ?>

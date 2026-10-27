@@ -1,9 +1,12 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 
 namespace OhMyLMS\Abstracts;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Plugin session implementation.
+ */
 abstract class Session {
 
 	/**

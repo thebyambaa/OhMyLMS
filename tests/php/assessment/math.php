@@ -12,7 +12,14 @@ global $wpdb;
 $t = static function ($name) { return Schema::table($name); };
 as_user($admin);
 $skill = static function ($name) use (&$fixture) {
-    $created = call('POST', 'skills', ['name' => $name . ' ' . wp_generate_password(5, false, false)])->get_data();
+	$created = call(
+		'POST',
+		'skills',
+		array(
+			'name'            => $name . ' ' . wp_generate_password( 5, false, false ),
+			'public_practice' => true,
+		)
+	)->get_data();
     $fixture['terms'][] = [$created['id'], Taxonomy::NAME];
     return (int) $created['id'];
 };

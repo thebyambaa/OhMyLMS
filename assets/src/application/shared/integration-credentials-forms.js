@@ -555,6 +555,10 @@ var j7 = {
         onClick: C,
         disabled: f
       }, f ? (0, b.__)("Saving...", "ohmylms") : (0, b.__)("Save", "ohmylms"))));
+    },
+    microsoft_signin: function () {
+      // Replaced by MicrosoftSignInSettings at build time (see components.json).
+      return null;
     }
   },
   A7 = function (e) {

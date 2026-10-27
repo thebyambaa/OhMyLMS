@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Class Course.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Data;
 
@@ -73,24 +78,24 @@ class Course extends Data {
 		'benefiter_description' => '',
 		'requirement'           => '',
 		'download_resource'     => '',
-		'type'					=> 'self-paced',
+		'type'                  => 'self-paced',
 		'creation_method'       => 'scratch',
 		'leaderboard_disabled'  => 'no',
-		'has_community'			=> 'no',
+		'has_community'         => 'no',
 		'sequential_mode'       => 'no',
 		'funnel_steps'          => array(),
-		'point_disabled'  		=> 'no',
-		'reward_disabled'  		=> 'no',
-		'space_title'			=> '',
-		'space_description'		=> '',
+		'point_disabled'        => 'no',
+		'reward_disabled'       => 'no',
+		'space_title'           => '',
+		'space_description'     => '',
 	);
 
 
 	/**
 	 * Course constructor.
 	 *
-	 * @param $course
-	 * @throws \Exception
+	 * @param string $course Course.
+	 * @throws \Exception When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	public function __construct( $course = '' ) {
@@ -102,7 +107,7 @@ class Course extends Data {
 			$this->set_id( absint( $course->ID ) );
 		}
 
-		// load the data store
+		// load the data store.
 		$this->data_store = DataStores::load( $this->data_store_name );
 
 		if ( $this->get_id() > 0 ) {
@@ -239,7 +244,7 @@ class Course extends Data {
 	/**
 	 * Get price of the course
 	 *
-	 * @param string $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -251,7 +256,7 @@ class Course extends Data {
 	/**
 	 * Get regular price of the course
 	 *
-	 * @param string $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -265,7 +270,7 @@ class Course extends Data {
 	/**
 	 * Get sale price of the course
 	 *
-	 * @param string $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -273,8 +278,11 @@ class Course extends Data {
 		return $this->get_prop( 'sale_price', $context ) ?? '';
 	}
 
+	/**
+	 * Is free for Course.
+	 */
 	public function is_free() {
-		return $this->get_price_type() == 'free';
+		return 'free' === $this->get_price_type();
 	}
 
 	/**
@@ -323,7 +331,7 @@ class Course extends Data {
 	/**
 	 * Get course created date.
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 *
 	 * @since 1.0.0
@@ -336,7 +344,7 @@ class Course extends Data {
 	/**
 	 * Get course created date.
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 *
 	 * @since 1.0.0
@@ -349,7 +357,7 @@ class Course extends Data {
 	/**
 	 * Get course featured image id
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -367,6 +375,11 @@ class Course extends Data {
 	}
 
 
+	/**
+	 * Get content link for Course.
+	 *
+	 * @param mixed $content_id Content identifier.
+	 */
 	public function get_content_link( $content_id ) {
 		$item_type             = get_post_type( $content_id );
 		$permalink_structure   = ohmylms_get_permalink_structure();
@@ -377,21 +390,31 @@ class Course extends Data {
 		$item_slug             = get_post_field( 'post_name', $content_id );
 
 		$slugs       = array(
-			'ohmylms-course' => $course_base_permalink,
-			'ohmylms-lesson' => $lesson_base_permalink,
-			'ohmylms-quiz'   => $quiz_base_permalink,
-			'ohmylms-assignment'   => 'assignments',
+			'ohmylms-course'     => $course_base_permalink,
+			'ohmylms-lesson'     => $lesson_base_permalink,
+			'ohmylms-quiz'       => $quiz_base_permalink,
+			'ohmylms-assignment' => 'assignments',
 		);
 		$slug_prefix = trailingslashit( $slugs[ $item_type ] ?? '' );
 		return trailingslashit( $course_permalink . $slug_prefix . $item_slug );
 	}
 
 
+	/**
+	 * Get thumbnail url for Course.
+	 *
+	 * @param string $size Size.
+	 */
 	public function get_thumbnail_url( $size = 'thumbnail' ) {
 		$thumbnail_id = $this->get_thumbnail_id();
 		return $thumbnail_id ? wp_get_attachment_image_url( $thumbnail_id, $size ) : OHMYLMS_URL . '/assets/images/course-placeholder-image.jpg';
 	}
 
+	/**
+	 * Get thumbnail url without placeholder for Course.
+	 *
+	 * @param string $size Size.
+	 */
 	public function get_thumbnail_url_without_placeholder( $size = 'thumbnail' ) {
 		$thumbnail_id = $this->get_thumbnail_id();
 		return $thumbnail_id ? wp_get_attachment_image_url( $thumbnail_id, $size ) : '';
@@ -400,7 +423,7 @@ class Course extends Data {
 	/**
 	 * Get course featured image id
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -411,7 +434,7 @@ class Course extends Data {
 	/**
 	 * Get date on sale from.
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -422,7 +445,7 @@ class Course extends Data {
 	/**
 	 * Get date on sale to.
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -434,7 +457,7 @@ class Course extends Data {
 	/**
 	 * Get average rating
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -466,7 +489,7 @@ class Course extends Data {
 	/**
 	 * Get review count
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -477,7 +500,7 @@ class Course extends Data {
 	/**
 	 * Get rating counts
 	 *
-	 * @param $context
+	 * @param string $context Context.
 	 * @return mixed|null
 	 * @since 1.0.0
 	 */
@@ -505,7 +528,7 @@ class Course extends Data {
 	public function add_to_cart_text() {
 		$price_type = $this->get_price_type();
 
-		if ( $price_type === 'free' ) {
+		if ( 'free' === $price_type ) {
 			$text = apply_filters( 'ohmylms_free_course_add_to_cart_text', __( 'Enroll Now', 'ohmylms' ) );
 		} elseif ( $this->is_purchasable() && $this->is_in_stock() ) {
 			if ( $this->validate_on_sale() && $this->is_on_sale() ) {
@@ -626,6 +649,7 @@ class Course extends Data {
 	 *
 	 * @return array The chapters of the course.
 	 * @since 1.0.0
+	 * @param string $return_type Return type.
 	 */
 	public function get_chapters( $return_type = 'array' ) {
 		return $this->data_store->get_chapters( $this, $return_type ) ?? array();
@@ -721,7 +745,7 @@ class Course extends Data {
 	 * @since 1.0.0
 	 */
 	public function get_quiz_ids() {
-		return $this->data_store->get_quiz_ids( $this ) ?? [];
+		return $this->data_store->get_quiz_ids( $this ) ?? array();
 	}
 
 	/**
@@ -738,6 +762,7 @@ class Course extends Data {
 	 *
 	 * @return array The list of lessons in the course.
 	 * @since 1.0.0
+	 * @param string $return_type Return type.
 	 */
 	public function get_lessons( $return_type = 'array' ) {
 		$lessons = array();
@@ -752,9 +777,9 @@ class Course extends Data {
 	/**
 	 * Set certificate for given course
 	 *
-	 * @param string $course_id
+	 * @param mixed $certificate_id Certificate identifier.
 	 * @return Certificate
-	 * @throws \LogicException
+	 * @throws \LogicException When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	public function set_certificate( $certificate_id ) {
@@ -765,9 +790,8 @@ class Course extends Data {
 	/**
 	 * Get certificate for given course
 	 *
-	 * @param string $course_id
 	 * @return Certificate
-	 * @throws \LogicException
+	 * @throws \LogicException When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	public function get_certificate() {
@@ -777,9 +801,9 @@ class Course extends Data {
 	/**
 	 * Get course progress for given user
 	 *
-	 * @param int $user_id
+	 * @param int $user_id User identifier.
 	 * @return CourseProgress
-	 * @throws \LogicException
+	 * @throws \LogicException When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	public function get_course_progress( int $user_id ): CourseProgress {
@@ -841,7 +865,7 @@ class Course extends Data {
 	/**
 	 * Check if course is on sale
 	 *
-	 * @param string $context
+	 * @param string $context Context.
 	 * @return bool
 	 * @since 1.0.0
 	 */
@@ -854,21 +878,24 @@ class Course extends Data {
 		return 'view' === $context ? apply_filters( 'ohmylms_product_is_on_sale', $on_sale, $this ) : $on_sale;
 	}
 
+	/**
+	 * Validate on sale for Course.
+	 */
 	public function validate_on_sale() {
-		$start   = $this->get_sale_price_dates_from();
-		$to      = $this->get_sale_price_dates_to();
-		$nowDate = current_time( 'Y-m-d' );
+		$start    = $this->get_sale_price_dates_from();
+		$to       = $this->get_sale_price_dates_to();
+		$now_date = current_time( 'Y-m-d' );
 		if ( ! $start || ! $to ) {
 			return true;
 		}
-		// Convert to DateTime if necessary
+		// Convert to DateTime if necessary.
 		if ( $start instanceof \DateTime && $to instanceof \DateTime ) {
-			// Extract only the date (YYYY-MM-DD) for comparison
-			$startDate = $start->format( 'Y-m-d' );
-			$endDate   = $to->format( 'Y-m-d' );
+			// Extract only the date (YYYY-MM-DD) for comparison.
+			$start_date = $start->format( 'Y-m-d' );
+			$end_date   = $to->format( 'Y-m-d' );
 
-			// Validate if today's date is within the sale period (ignoring time)
-			if ( $nowDate >= $startDate && $nowDate <= $endDate ) {
+			// Validate if today's date is within the sale period (ignoring time).
+			if ( $now_date >= $start_date && $now_date <= $end_date ) {
 				return true;
 			} else {
 				return false;
@@ -890,7 +917,7 @@ class Course extends Data {
 	/**
 	 * Set status
 	 *
-	 * @param $status
+	 * @param mixed $status Status.
 	 * @since 1.0.0
 	 */
 	public function set_status( $status ) {
@@ -900,7 +927,7 @@ class Course extends Data {
 	/**
 	 * Set status
 	 *
-	 * @param $status
+	 * @param mixed $status Status.
 	 * @since 1.0.0
 	 */
 	public function set_get_visibility_status( $status ) {
@@ -910,7 +937,7 @@ class Course extends Data {
 	/**
 	 * Set status
 	 *
-	 * @param $status
+	 * @param mixed $password Password.
 	 * @since 1.0.0
 	 */
 	public function set_password_protected( $password ) {
@@ -919,7 +946,7 @@ class Course extends Data {
 	/**
 	 * Set prerequisites of the Lesson
 	 *
-	 * @param $price
+	 * @param mixed $resource Resource.
 	 * @return void
 	 * @since 1.0.0
 	 */
@@ -929,7 +956,7 @@ class Course extends Data {
 	/**
 	 * Set post_date
 	 *
-	 * @param $status
+	 * @param mixed $data Input data.
 	 * @since 1.0.0
 	 */
 	public function set_post_date( $data ) {
@@ -940,7 +967,7 @@ class Course extends Data {
 	/**
 	 * Set name
 	 *
-	 * @param $name
+	 * @param mixed $name Name.
 	 * @since 1.0.0
 	 */
 	public function set_name( $name ) {
@@ -949,7 +976,7 @@ class Course extends Data {
 	/**
 	 * Set name
 	 *
-	 * @param $name
+	 * @param mixed $enable_reviews Enable reviews.
 	 * @since 1.0.0
 	 */
 	public function set_enable_reviews( $enable_reviews ) {
@@ -960,7 +987,7 @@ class Course extends Data {
 	/**
 	 * Set short description
 	 *
-	 * @param $short_description
+	 * @param mixed $short_description Short description.
 	 * @since 1.0.0
 	 */
 	public function set_short_description( $short_description ) {
@@ -970,7 +997,7 @@ class Course extends Data {
 	/**
 	 * Set description
 	 *
-	 * @param $description
+	 * @param mixed $description Description.
 	 * @since 1.0.0
 	 */
 	public function set_description( $description ) {
@@ -979,7 +1006,7 @@ class Course extends Data {
 	/**
 	 * Set description
 	 *
-	 * @param $description
+	 * @param mixed $description Description.
 	 * @since 1.0.0
 	 */
 	public function set_benefit_description( $description ) {
@@ -988,7 +1015,7 @@ class Course extends Data {
 	/**
 	 * Set description
 	 *
-	 * @param $description
+	 * @param mixed $description Description.
 	 * @since 1.0.0
 	 */
 	public function set_benefiter_description( $description ) {
@@ -997,7 +1024,7 @@ class Course extends Data {
 	/**
 	 * Set description
 	 *
-	 * @param $requirement
+	 * @param mixed $requirement Requirement.
 	 * @since 1.0.0
 	 */
 	public function set_requirement( $requirement ) {
@@ -1008,7 +1035,7 @@ class Course extends Data {
 	/**
 	 * Set featured image id
 	 *
-	 * @param $image_id
+	 * @param mixed $image_id Image identifier.
 	 * @return void
 	 * @since 1.0.0
 	 */
@@ -1018,7 +1045,7 @@ class Course extends Data {
 	/**
 	 * Set featured image id
 	 *
-	 * @param $image_id
+	 * @param mixed $image_id Image identifier.
 	 * @return void
 	 * @since 1.0.0
 	 */
@@ -1029,7 +1056,7 @@ class Course extends Data {
 	/**
 	 * Set slug
 	 *
-	 * @param $slug
+	 * @param mixed $slug Slug.
 	 * @since 1.0.0
 	 */
 	public function set_slug( $slug ) {
@@ -1040,7 +1067,7 @@ class Course extends Data {
 	/**
 	 * Set price of the course
 	 *
-	 * @param $price
+	 * @param mixed $price Price.
 	 * @return void
 	 * @since 1.0.0
 	 */
@@ -1052,7 +1079,7 @@ class Course extends Data {
 	/**
 	 * Set regular price of the course
 	 *
-	 * @param $regular_price
+	 * @param mixed $regular_price Regular price.
 	 * @return void
 	 * @since 1.0.0
 	 */
@@ -1064,7 +1091,7 @@ class Course extends Data {
 	/**
 	 * Set sale price of the course
 	 *
-	 * @param $sale_price
+	 * @param mixed $sale_price Sale price.
 	 * @return void
 	 * @since 1.0.0
 	 */
@@ -1117,7 +1144,7 @@ class Course extends Data {
 	 * Set the level of the course.
 	 *
 	 * @param mixed $level The level of the course.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function set_level( $level ) {
@@ -1129,7 +1156,7 @@ class Course extends Data {
 	 * Set the availability of the course.
 	 *
 	 * @param mixed $availability The availability of the course.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function set_availability( $availability ) {
@@ -1140,7 +1167,7 @@ class Course extends Data {
 	 * Set the available date of the course.
 	 *
 	 * @param mixed $available_date The available date of the course.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function set_available_date( $available_date ) {
@@ -1151,7 +1178,7 @@ class Course extends Data {
 	 * Set the capacity date of the course.
 	 *
 	 * @param mixed $capacity The capacity date of the course.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function set_has_capacity( $capacity ) {
@@ -1162,7 +1189,7 @@ class Course extends Data {
 	 * Set the limit date of the course.
 	 *
 	 * @param mixed $limit The limit date of the course.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function set_capacity( $limit ) {
@@ -1173,7 +1200,7 @@ class Course extends Data {
 	 * Set the accessibility date of the course.
 	 *
 	 * @param mixed $accessibility The limit date of the course.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function set_access_type( $accessibility ) {
@@ -1185,7 +1212,7 @@ class Course extends Data {
 	 * Set the chapters of the course.
 	 *
 	 * @param array $chapters The chapters of the course.
-	 *
+	 * .
 	 * @since 1.0.0
 	 */
 	public function set_chapters( $chapters ) {
@@ -1259,6 +1286,9 @@ class Course extends Data {
 		$this->set_prop( 'review_count', absint( $count ) );
 	}
 
+	/**
+	 * Is enrolled for Course.
+	 */
 	public function is_enrolled() {
 		$this->data_store->is_enrolled( $this, $args );
 	}
@@ -1311,7 +1341,7 @@ class Course extends Data {
 	/**
 	 * Delete course data
 	 *
-	 * @param array $args
+	 * @param array $args Operation arguments.
 	 * @since 1.0.0
 	 */
 	public function delete( $args = array() ) {
@@ -1329,6 +1359,13 @@ class Course extends Data {
 
 	/**
 	 * Get all students
+	 *
+	 * @param string $filter Filter.
+	 * @param mixed  $sort_by Sort by.
+	 * @param mixed  $start_date Start date.
+	 * @param mixed  $end_date End date.
+	 * @param mixed  $search Search.
+	 * @param mixed  $only_completed Only completed.
 	 */
 	public function get_students( $filter = 'all', $sort_by = null, $start_date = null, $end_date = null, $search = null, $only_completed = null ) {
 		return $this->data_store->get_students( $this, $filter, $sort_by, $start_date, $end_date, $search, $only_completed );
@@ -1347,80 +1384,80 @@ class Course extends Data {
 		return $this->data_store->search_lessons_in_course( $this, $term );
 	}
 
-    /**
-     * Get the type of the course (self-paced or cohort-based)
-     *
-     * @param string $context
-     * @return string
-     * @since 1.0.0
-     */
-    public function get_type( $context = 'view' ) {
-        return $this->get_prop( 'type', $context ) ?? 'self-paced';
-    }
-
-    /**
-     * Set the type of the course (self-paced or cohort-based)
-     *
-     * @param string $type
-     * @since 1.0.0
-     */
-    public function set_type( $type ) {
-        $this->set_prop( 'type', $type );
-    }
-
-    /**
-     * Get the creation method of the course (scratch, template, or ai)
-     *
-     * @param string $context
-     * @return string
-     * @since 1.0.0
-     */
-    public function get_creation_method( $context = 'view' ) {
-        return $this->get_prop( 'creation_method', $context ) ?? 'scratch';
-    }
-
-    /**
-     * Set the creation method of the course (scratch, template, or ai)
-     *
-     * @param string $creation_method
-     * @since 1.0.0
-     */
-    public function set_creation_method( $creation_method ) {
-        $this->set_prop( 'creation_method', $creation_method );
-    }
-
-    /**
-     * Get whether the course has community features enabled
-     *
-     * @param string $context
-     * @return bool
-     * @since 1.0.0
-     */
-    public function get_has_community( $context = 'view' ) {
-        return $this->get_prop( 'has_community', $context ) ?? false;
-    }
+	/**
+	 * Get the type of the course (self-paced or cohort-based)
+	 *
+	 * @param string $context Context.
+	 * @return string
+	 * @since 1.0.0
+	 */
+	public function get_type( $context = 'view' ) {
+		return $this->get_prop( 'type', $context ) ?? 'self-paced';
+	}
 
 	/**
-     * Get the title of the course space.
-     *
-     * @param string $context
-     * @return string
-     * @since 1.0.0
-     */
-    public function get_space_title( $context = 'view' ) {
-        return $this->get_prop( 'space_title', $context ) ?? '';
-    }
+	 * Set the type of the course (self-paced or cohort-based)
+	 *
+	 * @param string $type Type.
+	 * @since 1.0.0
+	 */
+	public function set_type( $type ) {
+		$this->set_prop( 'type', $type );
+	}
 
 	/**
-     * Get the description of the course space.
-     *
-     * @param string $context
-     * @return string
-     * @since 1.0.0
-     */
-    public function get_space_description( $context = 'view' ) {
-        return $this->get_prop( 'space_description', $context ) ?? '';
-    }
+	 * Get the creation method of the course (scratch, template, or ai)
+	 *
+	 * @param string $context Context.
+	 * @return string
+	 * @since 1.0.0
+	 */
+	public function get_creation_method( $context = 'view' ) {
+		return $this->get_prop( 'creation_method', $context ) ?? 'scratch';
+	}
+
+	/**
+	 * Set the creation method of the course (scratch, template, or ai)
+	 *
+	 * @param string $creation_method Creation method.
+	 * @since 1.0.0
+	 */
+	public function set_creation_method( $creation_method ) {
+		$this->set_prop( 'creation_method', $creation_method );
+	}
+
+	/**
+	 * Get whether the course has community features enabled
+	 *
+	 * @param string $context Context.
+	 * @return bool
+	 * @since 1.0.0
+	 */
+	public function get_has_community( $context = 'view' ) {
+		return $this->get_prop( 'has_community', $context ) ?? false;
+	}
+
+	/**
+	 * Get the title of the course space.
+	 *
+	 * @param string $context Context.
+	 * @return string
+	 * @since 1.0.0
+	 */
+	public function get_space_title( $context = 'view' ) {
+		return $this->get_prop( 'space_title', $context ) ?? '';
+	}
+
+	/**
+	 * Get the description of the course space.
+	 *
+	 * @param string $context Context.
+	 * @return string
+	 * @since 1.0.0
+	 */
+	public function get_space_description( $context = 'view' ) {
+		return $this->get_prop( 'space_description', $context ) ?? '';
+	}
 
 	/**
 	 * Get the URL of the course space.
@@ -1432,66 +1469,66 @@ class Course extends Data {
 		return $this->data_store->get_space_url( $this );
 	}
 
-    /**
-     * Set whether the course has community features enabled
-     *
-     * @param bool $has_community
-     * @since 1.0.0
-     */
-    public function set_has_community( $has_community ) {
-        $this->set_prop( 'has_community', $has_community );
-    }
-
-    /**
-     * Get whether sequential lesson access mode is enabled
-     *
-     * @param string $context
-     * @return string 'yes' or 'no'
-     * @since 1.0.0
-     */
-    public function get_sequential_mode( $context = 'view' ) {
-        return $this->get_prop( 'sequential_mode', $context ) ?? 'no';
-    }
-
-    /**
-     * Set sequential lesson access mode
-     *
-     * @param string $sequential_mode 'yes' or 'no'
-     * @since 1.0.0
-     */
-    public function set_sequential_mode( $sequential_mode ) {
-        $this->set_prop( 'sequential_mode', $sequential_mode );
-    }
+	/**
+	 * Set whether the course has community features enabled
+	 *
+	 * @param bool $has_community Has community.
+	 * @since 1.0.0
+	 */
+	public function set_has_community( $has_community ) {
+		$this->set_prop( 'has_community', $has_community );
+	}
 
 	/**
-     * Set the title of the course space.
-     *
-     * @param string $title
-     * @since 1.0.0
-     */
-    public function set_space_title( $title ) {
-        $this->set_prop( 'space_title', $title );
-    }
+	 * Get whether sequential lesson access mode is enabled
+	 *
+	 * @param string $context Context.
+	 * @return string 'yes' or 'no'
+	 * @since 1.0.0
+	 */
+	public function get_sequential_mode( $context = 'view' ) {
+		return $this->get_prop( 'sequential_mode', $context ) ?? 'no';
+	}
 
 	/**
-     * Set the description of the course space.
-     *
-     * @param string $description
-     * @since 1.0.0
-     */
-    public function set_space_description( $description ) {
-        $this->set_prop( 'space_description', $description );
-    }
+	 * Set sequential lesson access mode
+	 *
+	 * @param string $sequential_mode 'yes' or 'no'.
+	 * @since 1.0.0
+	 */
+	public function set_sequential_mode( $sequential_mode ) {
+		$this->set_prop( 'sequential_mode', $sequential_mode );
+	}
 
 	/**
-     * Set the URL of the course space.
-     *
-     * @param string $url
-     * @since 1.0.0
-     */
-    public function set_space_url( $url ) {
-        $this->set_prop( 'space_url', $url );
-    }
+	 * Set the title of the course space.
+	 *
+	 * @param string $title Title.
+	 * @since 1.0.0
+	 */
+	public function set_space_title( $title ) {
+		$this->set_prop( 'space_title', $title );
+	}
+
+	/**
+	 * Set the description of the course space.
+	 *
+	 * @param string $description Description.
+	 * @since 1.0.0
+	 */
+	public function set_space_description( $description ) {
+		$this->set_prop( 'space_description', $description );
+	}
+
+	/**
+	 * Set the URL of the course space.
+	 *
+	 * @param string $url Url.
+	 * @since 1.0.0
+	 */
+	public function set_space_url( $url ) {
+		$this->set_prop( 'space_url', $url );
+	}
 
 	/**
 	 * Get the cohort associated with the course.
@@ -1503,56 +1540,107 @@ class Course extends Data {
 		return $this->data_store->get_cohort( $this );
 	}
 
-public function get_additional_resource_count() {
+	/**
+	 * Get additional resource count for Course.
+	 */
+	public function get_additional_resource_count() {
 		$download_resource = $this->get_download_resource();
 		return isset( $download_resource['file'] ) ? count( $download_resource['file'] ) : 0;
 	}
 
-public function get_download_resource($context = 'view') {
-        return $this->get_prop('download_resource', $context) ?? array();
-    }
-
-public function get_purchase_point() {
-        return $this->data_store->get_purchase_point( $this );
+	/**
+	 * Get download resource for Course.
+	 *
+	 * @param string $context Context.
+	 */
+	public function get_download_resource( $context = 'view' ) {
+		return $this->get_prop( 'download_resource', $context ) ?? array();
 	}
 
-public function set_purchase_point( $point ) {
+	/**
+	 * Get purchase point for Course.
+	 */
+	public function get_purchase_point() {
+		return $this->data_store->get_purchase_point( $this );
+	}
+
+	/**
+	 * Set purchase point for Course.
+	 *
+	 * @param mixed $point Point.
+	 */
+	public function set_purchase_point( $point ) {
 		update_post_meta( $this->get_id(), '_purchase_point', $point );
 	}
 
-public function get_resources() {
+	/**
+	 * Get resources for Course.
+	 */
+	public function get_resources() {
 		return $this->data_store->get_resources( $this );
 	}
 
-public function get_leaderboard_disabled() {
-        return $this->data_store->get_leaderboard_disabled( $this );
-    }
+	/**
+	 * Get leaderboard disabled for Course.
+	 */
+	public function get_leaderboard_disabled() {
+		return $this->data_store->get_leaderboard_disabled( $this );
+	}
 
-public function set_leaderboard_disabled( $disabled ) {
-        update_post_meta( $this->get_id(), '_leaderboard_disabled', $disabled );
-    }
+	/**
+	 * Set leaderboard disabled for Course.
+	 *
+	 * @param mixed $disabled Disabled.
+	 */
+	public function set_leaderboard_disabled( $disabled ) {
+		update_post_meta( $this->get_id(), '_leaderboard_disabled', $disabled );
+	}
 
-public function get_funnel_steps() {
-        return $this->data_store->get_funnel_steps( $this );
-    }
+	/**
+	 * Get funnel steps for Course.
+	 */
+	public function get_funnel_steps() {
+		return $this->data_store->get_funnel_steps( $this );
+	}
 
-public function set_funnel_steps( $steps ) {
-        update_post_meta( $this->get_id(), '_funnel_steps', $steps );
-    }
+	/**
+	 * Set funnel steps for Course.
+	 *
+	 * @param mixed $steps Steps.
+	 */
+	public function set_funnel_steps( $steps ) {
+		update_post_meta( $this->get_id(), '_funnel_steps', $steps );
+	}
 
-public function get_point_disabled() {
-        return $this->data_store->get_point_disabled( $this );
-    }
+	/**
+	 * Get point disabled for Course.
+	 */
+	public function get_point_disabled() {
+		return $this->data_store->get_point_disabled( $this );
+	}
 
-public function set_point_disabled( $disabled ) {
-        update_post_meta( $this->get_id(), '_point_disabled', $disabled );
-    }
+	/**
+	 * Set point disabled for Course.
+	 *
+	 * @param mixed $disabled Disabled.
+	 */
+	public function set_point_disabled( $disabled ) {
+		update_post_meta( $this->get_id(), '_point_disabled', $disabled );
+	}
 
-public function get_reward_disabled() {
-        return $this->data_store->get_reward_disabled( $this );
-    }
+	/**
+	 * Get reward disabled for Course.
+	 */
+	public function get_reward_disabled() {
+		return $this->data_store->get_reward_disabled( $this );
+	}
 
-public function set_reward_disabled( $disabled ) {
-        update_post_meta( $this->get_id(), '_reward_disabled', $disabled );
-    }
+	/**
+	 * Set reward disabled for Course.
+	 *
+	 * @param mixed $disabled Disabled.
+	 */
+	public function set_reward_disabled( $disabled ) {
+		update_post_meta( $this->get_id(), '_reward_disabled', $disabled );
+	}
 }

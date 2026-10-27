@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Class Certificate.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Data;
 
@@ -57,7 +62,7 @@ class Certificate extends Data {
 	 * is provided and valid, the certificate data is fetched from the data store. Otherwise, a new certificate object is initialized.
 	 *
 	 * @param mixed $certificate Either a certificate ID, an instance of Certificate, or an object with a valid ID property.
-	 * @throws \Exception
+	 * @throws \Exception When the operation cannot be completed.
 	 * @since 1.0.0
 	 */
 	public function __construct( $certificate = '' ) {
@@ -294,6 +299,8 @@ class Certificate extends Data {
 
 	/**
 	 * Set thumbnail image
+	 *
+	 * @param mixed $thumbnail_id Thumbnail identifier.
 	 */
 	public function set_thumbnail_image( $thumbnail_id ) {
 		return $this->data_store->set_thumbnail_image( $this, $thumbnail_id );
@@ -309,6 +316,8 @@ class Certificate extends Data {
 
 	/**
 	 * Set courses
+	 *
+	 * @param mixed $courses Courses.
 	 */
 	public function set_courses( $courses ) {
 		return $this->data_store->set_courses( $this, $courses );

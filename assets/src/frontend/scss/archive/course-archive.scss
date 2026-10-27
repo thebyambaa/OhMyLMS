@@ -1,4 +1,5 @@
 .ohmylms-page {
+
 	.site-main > * {
 		margin: 0;
 	}
@@ -49,6 +50,7 @@
 }
 
 @media screen and (max-width: 1199px) {
+
 	.ohmylms-page .ohmylms-courses {
 		padding: 70px 0 80px;
 	}
@@ -56,6 +58,7 @@
 	.ohmylms-page .ohmylms-courses .ohmylms-courses-header {
 		margin-bottom: 44px;
 	}
+
 	.ohmylms-page .ohmylms-courses .courses-section-title {
 		font-size: 36px;
 	}
@@ -63,6 +66,7 @@
 	.ohmylms-page .ohmylms-courses .ohmylms-filter-enabled {
 		gap: 24px;
 	}
+
 	.ohmylms-page .ohmylms-courses .ohmylms-filter-enabled .ohmylms-course-main {
 		width: calc(100% - 291px);
 	}
@@ -70,6 +74,7 @@
 }
 
 @media screen and (max-width: 991px) {
+
 	.ohmylms-page .ohmylms-courses {
         padding: 50px 0 60px;
     }
@@ -78,7 +83,7 @@
         width: 100%;
     }
 
-	.ohmylms-page .ohmylms-courses .ohmylms-filter-enabled:before {
+	.ohmylms-page .ohmylms-courses .ohmylms-filter-enabled::before {
 		content: "";
 		position: fixed;
 		left: 0;
@@ -91,7 +96,8 @@
 		visibility: hidden;
 		transition: all 0.3s ease;
 	}
-	.ohmylms-page .ohmylms-courses .ohmylms-filter-enabled.open-sidebar:before {
+
+	.ohmylms-page .ohmylms-courses .ohmylms-filter-enabled.open-sidebar::before {
 		opacity: 1;
 		visibility: visible;
 	}
@@ -99,28 +105,41 @@
 }
 
 @media screen and (max-width: 767px) {
+
 	.ohmylms-page .ohmylms-courses .courses-section-title {
         font-size: 30px;
     }
 }
 
 @media screen and (max-width: 575px) {
+
 	.ohmylms-page .ohmylms-courses .ohmylms-courses-header {
         margin-bottom: 34px;
     }
+
 	.ohmylms-page .ohmylms-courses .courses-section-title {
         font-size: 26px;
     }
 
 }
 
+/*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import "slick.min";
+/*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import "course-filter";
+/*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import "course-category-type-button";
+/*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import "course-search-sort";
+/*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import "course-card";
+/*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import "course-grid-style2";
+/*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import "course-grid-style3";
+/*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import "course-grid-style4";
+/*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import "course-loadmore";
+/*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import "course-popup";

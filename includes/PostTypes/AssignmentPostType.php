@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
+/**
+ * Lesson post type to connect with topics.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\PostTypes;
 
