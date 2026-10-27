@@ -79,7 +79,6 @@ defined( 'ABSPATH' ) || exit;
 					<?php endforeach; ?>
 				</ul>
 				<p><?php esc_html_e( 'Courses that sit only above a chosen level are not listed. Roadmaps are never listed.', 'ohmylms' ); ?></p>
-				<p><label><input type="checkbox" name="hub[library_bundles]" value="1" <?php checked( $config['library_bundles'] ); ?>> <?php esc_html_e( 'Also list published course bundles', 'ohmylms' ); ?></label></p>
 			</section>
 			<section class="oml-hub-editor-panel">
 				<h2><?php esc_html_e( 'Home cards', 'ohmylms' ); ?></h2>

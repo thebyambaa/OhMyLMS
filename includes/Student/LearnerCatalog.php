@@ -138,36 +138,8 @@ final class LearnerCatalog {
 	 * @return array<int,array> Bundles: id, title, courses, total.
 	 */
 	public static function bundles( $search = '' ) {
-		$search = trim( (string) $search );
-		$hidden = array_flip( self::roadmap_course_ids() );
-		$result = array();
-		foreach ( Placement::public_bundles() as $bundle ) {
-			$ids = Placement::course_ids_for_bundles( array( (int) $bundle['id'] ) );
-			if ( $ids ) {
-				_prime_post_caches( $ids, false, false );
-			}
-			$courses = array();
-			foreach ( $ids as $course_id ) {
-				$title = get_the_title( $course_id );
-				if ( isset( $hidden[ $course_id ] ) || OHMYLMS_COURSE_CPT !== get_post_type( $course_id ) || 'publish' !== get_post_status( $course_id ) || self::excluded_by_search( $title, $search ) ) {
-					continue;
-				}
-				$courses[] = array(
-					'id'    => (int) $course_id,
-					'title' => $title,
-					'url'   => Hub::course_url( $course_id ),
-				);
-			}
-			if ( $courses ) {
-				$result[] = array(
-					'id'      => (int) $bundle['id'],
-					'title'   => $bundle['title'],
-					'courses' => $courses,
-					'total'   => count( $courses ),
-				);
-			}
-		}
-		return $result;
+		// Compatibility entry point for the retired catalog section.
+		return array();
 	}
 
 	/** Register the front-end guard that keeps roadmap courses out of every course list. */

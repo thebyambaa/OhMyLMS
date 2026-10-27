@@ -87924,15 +87924,8 @@
         }
         var o8 = window.ohmylms.extensions.membershipComponents.MembershipSaleSchedule(() => ({
           I,
-          React,
           T,
           b,
-          g,
-          n8,
-          qt,
-          r8,
-          sn,
-          t8,
           y
         }));
         const i8 = (0, g.memo)(o8);

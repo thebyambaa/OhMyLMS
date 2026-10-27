@@ -123,3 +123,4 @@ $preview = $controller->course_preview(['products' => [['id' => 1]], 'course_cat
 check(array_column($preview['courses'], 'id') === [1, 2, 5], 'Unsaved preview resolves the same live course set');
 check($preview['courses'][0]['reasons'] === ['Individual course'] && $preview['courses'][1]['reasons'] === ['Term 11'], 'Preview explains direct and descendant-category matches');
 echo "Membership preview and validation checks passed.\n";
+check( array() === \OhMyLMS\Membership\CourseSelection::resolve( array(), array(), array(), array(), array(), array( 999 ) ), 'Retired bundle rules grant no courses' );

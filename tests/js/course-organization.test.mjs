@@ -315,15 +315,12 @@ test( 'the panel loads the outline and the course placement, then saves each cha
 			[
 				[ 'Mathematics', false, false ],
 				[ 'Algebra', true, false ],
-				[ 'Data career', true, false ],
-				[ 'Draft path (draft)', false, false ],
 			]
 		);
 		assert.deepEqual(
 			panel.requests.slice( 0, 3 ).map( ( request ) => request.url ),
 			[
 				'http://xyz.local/wp-json/ohmylms/v1/curriculum/outline',
-				'http://xyz.local/wp-json/ohmylms/v1/bundles/outline',
 				'http://xyz.local/wp-json/ohmylms/v1/courses/5/organization',
 			]
 		);
@@ -340,15 +337,6 @@ test( 'the panel loads the outline and the course placement, then saves each cha
 				.props.checked,
 			true
 		);
-
-		panel
-			.render()
-			.filter( ( node ) => node.type === 'CheckboxControl' )[ 3 ]
-			.props.onChange( true );
-		await settle();
-		assert.deepEqual( panel.requests.at( -1 ).data, {
-			bundle_ids: [ 7, 8 ],
-		} );
 	} finally {
 		delete globalThis.window;
 	}
@@ -356,7 +344,7 @@ test( 'the panel loads the outline and the course placement, then saves each cha
 
 test( 'a rejected change is undone and the server reason is shown', async () => {
 	const state = {
-		organization: organization( [], [ 7 ] ),
+		organization: organization( [ 2 ], [ 7 ] ),
 		put: () =>
 			Promise.reject(
 				new Error( 'A published bundle must keep at least one member.' )
@@ -367,12 +355,12 @@ test( 'a rejected change is undone and the server reason is shown', async () => 
 		await panel.flush();
 		panel
 			.render()
-			.filter( ( node ) => node.type === 'CheckboxControl' )[ 2 ]
+			.filter( ( node ) => node.type === 'CheckboxControl' )[ 1 ]
 			.props.onChange( false );
 		await settle();
 		const nodes = panel.render();
 		assert.equal(
-			nodes.filter( ( node ) => node.type === 'CheckboxControl' )[ 2 ]
+			nodes.filter( ( node ) => node.type === 'CheckboxControl' )[ 1 ]
 				.props.checked,
 			true,
 			'the checkbox goes back'
@@ -386,7 +374,7 @@ test( 'a rejected change is undone and the server reason is shown', async () => 
 	}
 } );
 
-test( 'people who cannot manage course bundles see them read-only', async () => {
+test( 'retired course bundles are absent from the organization panel', async () => {
 	const state = {
 		organization: organization( [], [ 7 ], false ),
 		put: () => Promise.reject( new Error( 'unexpected write' ) ),
@@ -400,10 +388,10 @@ test( 'people who cannot manage course bundles see them read-only', async () => 
 		);
 		assert.deepEqual(
 			boxes.map( ( box ) => box.props.disabled ),
-			[ false, false, true, true ]
+			[ false, false ]
 		);
 		assert.ok(
-			nodes.some(
+			! nodes.some(
 				( node ) =>
 					node.type === 'p' &&
 					node.children.join( '' ).includes( 'Only administrators' )

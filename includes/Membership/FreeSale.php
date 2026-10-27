@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
 
 /** Free grants have their own row identity; expiration must never revoke a paid upgrade. */
 final class FreeSale {
-	const META = '_ohmylms_membership_free_sales';
+	const META        = '_ohmylms_membership_free_sales';
 	const EXPIRY_HOOK = 'ohmylms_expire_free_membership';
 
 	/** Register authenticated signup and cron/request-time expiry. */
@@ -44,7 +44,7 @@ final class FreeSale {
 	/**
 	 * The exclusive expiry boundary, at the next local midnight.
 	 *
-	 * @param string $end Sale end date.
+	 * @param string        $end Sale end date.
 	 * @param \DateTimeZone $timezone Site timezone.
 	 * @return int UTC timestamp, or zero for an invalid date.
 	 */
@@ -63,9 +63,9 @@ final class FreeSale {
 		if ( ! $plan || 'ohmylms-membership' !== get_post_type( $plan->get_id() ) || 'publish' !== $plan->get_status() || '' === (string) $plan->get_sale_price( 'edit' ) || ! is_numeric( $plan->get_sale_price( 'edit' ) ) || 0.0 !== (float) $plan->get_sale_price( 'edit' ) ) {
 			return 0;
 		}
-		$end = self::cutoff( self::date( $plan->get_sale_price_dates_to() ), wp_timezone() );
+		$end   = self::cutoff( self::date( $plan->get_sale_price_dates_to() ), wp_timezone() );
 		$start = self::date( $plan->get_sale_price_dates_from() );
-		$now = time();
+		$now   = time();
 		return $end > $now && ( ! $start || ( new \DateTimeImmutable( $start, wp_timezone() ) )->getTimestamp() <= $now ) ? $end : 0;
 	}
 
@@ -105,7 +105,7 @@ final class FreeSale {
 	}
 
 	/**
-	 * Grant access under a per-user/plan lock, never creating an order or subscription.
+	 * Grant access under a per-user lock, never creating an order or subscription.
 	 *
 	 * @param int $plan_id Membership ID.
 	 * @param int $user_id Current user ID.
@@ -123,22 +123,43 @@ final class FreeSale {
 		try {
 			self::expire_locked( $user_id );
 			$plan = ohmylms_get_membership( $plan_id );
-			$end = self::active( $plan );
+			$end  = self::active( $plan );
 			if ( ! $end ) {
 				return new \WP_Error( 'free_membership_closed', __( 'This free promotion is not available.', 'ohmylms' ) );
 			}
-			$table = $wpdb->prefix . 'ohmylms_user_membership';
+			$table    = $wpdb->prefix . 'ohmylms_user_membership';
 			$existing = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM %i WHERE user_id=%d AND membership_id=%d AND status='enrolled' LIMIT 1", $table, $user_id, $plan_id ) );
 			if ( ! $existing ) {
-				if ( false === $wpdb->insert( $table, array( 'user_id' => $user_id, 'membership_id' => $plan_id, 'status' => 'enrolled', 'progress' => 'running', 'start_date' => current_time( 'mysql', true ), 'end_date' => gmdate( 'Y-m-d H:i:s', $end ) ) ) ) {
+				if ( false === $wpdb->insert(
+					$table,
+					array(
+						'user_id'       => $user_id,
+						'membership_id' => $plan_id,
+						'status'        => 'enrolled',
+						'progress'      => 'running',
+						'start_date'    => current_time( 'mysql', true ),
+						'end_date'      => gmdate( 'Y-m-d H:i:s', $end ),
+					)
+				) ) {
 					return new \WP_Error( 'free_membership_failed', __( 'Free access could not be saved.', 'ohmylms' ) );
 				}
-				$row_id = (int) $wpdb->insert_id;
-				$grants = get_user_meta( $user_id, self::META, true );
-				$grants = is_array( $grants ) ? $grants : array();
-				$grants[ $row_id ] = array( 'plan_id' => $plan_id, 'expires' => $end );
+				$row_id            = (int) $wpdb->insert_id;
+				$grants            = get_user_meta( $user_id, self::META, true );
+				$grants            = is_array( $grants ) ? $grants : array();
+				$grants[ $row_id ] = array(
+					'plan_id' => $plan_id,
+					'expires' => $end,
+				);
 				if ( false === update_user_meta( $user_id, self::META, $grants ) ) {
-					$wpdb->delete( $table, array( 'id' => $row_id, 'user_id' => $user_id, 'order_id' => 0, 'subscription_id' => 0 ) );
+					$wpdb->delete(
+						$table,
+						array(
+							'id'              => $row_id,
+							'user_id'         => $user_id,
+							'order_id'        => 0,
+							'subscription_id' => 0,
+						)
+					);
 					return new \WP_Error( 'free_membership_failed', __( 'Free access could not be saved.', 'ohmylms' ) );
 				}
 				wp_schedule_single_event( $end, self::EXPIRY_HOOK, array( $user_id ) );
@@ -186,8 +207,8 @@ final class FreeSale {
 	 */
 	private static function expire_locked( $user_id ) {
 		global $wpdb;
-		$grants = get_user_meta( $user_id, self::META, true );
-		$grants = is_array( $grants ) ? $grants : array();
+		$grants    = get_user_meta( $user_id, self::META, true );
+		$grants    = is_array( $grants ) ? $grants : array();
 		$remaining = $grants;
 		foreach ( $grants as $row_id => $grant ) {
 			if ( (int) $grant['expires'] > time() ) {
@@ -197,10 +218,12 @@ final class FreeSale {
 			if ( false === $changed ) {
 				continue;
 			}
-			unset( $remaining[ $row_id ] );
-			if ( $changed ) {
-				CourseSelection::sync( (int) $grant['plan_id'] );
+			// Retry failed course revocation on the next request, even if the grant is already expired.
+			$revoked = $wpdb->query( $wpdb->prepare( "UPDATE %i SET status='cancelled' WHERE user_id=%d AND membership_id=%d AND order_id=0 AND status='enrolled' AND NOT EXISTS (SELECT 1 FROM %i WHERE user_id=%d AND membership_id=%d AND status='enrolled')", $wpdb->prefix . 'ohmylms_user_enrollment', $user_id, $grant['plan_id'], $wpdb->prefix . 'ohmylms_user_membership', $user_id, $grant['plan_id'] ) );
+			if ( false === $revoked ) {
+				continue;
 			}
+			unset( $remaining[ $row_id ] );
 		}
 		if ( $remaining !== $grants ) {
 			update_user_meta( $user_id, self::META, $remaining );

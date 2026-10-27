@@ -61,7 +61,7 @@ const { ContentHubFrame, contentHubScreen, redirectScreen } = load(
 	}
 );
 
-test( 'The hub has Courses, Lessons, quiz and exam tabs, Skills, Curriculum and Course Bundles under one base path', () => {
+test( 'The hub has Courses, Lessons, quiz and exam tabs, Skills and Curriculum under one base path', () => {
 	assert.deepEqual(
 		HUB_TABS.map( ( tab ) => tab.id ),
 		[
@@ -73,7 +73,6 @@ test( 'The hub has Courses, Lessons, quiz and exam tabs, Skills, Curriculum and 
 			'assignments',
 			'skills',
 			'curriculum',
-			'bundles',
 		]
 	);
 	assert.deepEqual(
@@ -87,7 +86,6 @@ test( 'The hub has Courses, Lessons, quiz and exam tabs, Skills, Curriculum and 
 			'Assignments',
 			'Skills',
 			'Curriculum',
-			'Course Bundles',
 		]
 	);
 	assert.equal(
@@ -144,6 +142,7 @@ test( 'Hub routes reuse the application list screens and the SDK pages', () => {
 			'/content-hub/skills',
 			'/content-hub/curriculum',
 			'/content-hub/bundles',
+			'/extensions/bundles',
 			'/assessments',
 			'/assessments/question-bank',
 			'/assessments/assignments',
@@ -172,7 +171,7 @@ test( 'Hub routes reuse the application list screens and the SDK pages', () => {
 	assert.equal( byTab[ 'question-bank' ], allPages.QuestionBankPage );
 	assert.equal( byTab.skills, allPages.SkillsPage );
 	assert.equal( byTab.curriculum, allPages.CurriculumPage );
-	assert.equal( byTab.bundles, allPages.BundlesPage );
+	assert.equal( byTab.bundles, undefined );
 	assert.deepEqual(
 		Object.keys( byTab ).sort(),
 		HUB_TABS.map( ( tab ) => tab.id ).sort(),
@@ -201,6 +200,8 @@ test( 'The old Assessments addresses open the Quizzes, Question Bank and Assignm
 		at( '/content-hub/assignments' )
 	);
 	assert.deepEqual( HUB_ALIASES, {
+		'/content-hub/bundles': 'curriculum',
+		'/extensions/bundles': 'curriculum',
 		'/assessments': 'quizzes',
 		'/assessments/question-bank': 'question-bank',
 		'/assessments/assignments': 'assignments',
@@ -219,6 +220,7 @@ test( 'Without the application list screens the hub still serves its own tabs', 
 			'/content-hub/skills',
 			'/content-hub/curriculum',
 			'/content-hub/bundles',
+			'/extensions/bundles',
 			'/assessments/question-bank',
 		]
 	);
@@ -372,7 +374,6 @@ test( 'Old addresses open the hub tabs', () => {
 		skills: 'skills',
 		'question-bank': 'question-bank',
 		curriculum: 'curriculum',
-		bundles: 'bundles',
 	} );
 	for ( const tab of [
 		...Object.values( HUB_EXTENSION_TABS ),
@@ -386,7 +387,7 @@ test( 'Old addresses open the hub tabs', () => {
 	// The retired category and tag screens open Curriculum and Course Bundles, now hub tabs too.
 	assert.match(
 		source,
-		/replacedBy = \{ '\/categories': 'curriculum', '\/tags': 'bundles' \}/
+		/replacedBy = \{ '\/categories': 'curriculum', '\/tags': 'curriculum' \}/
 	);
 	assert.match(
 		source,

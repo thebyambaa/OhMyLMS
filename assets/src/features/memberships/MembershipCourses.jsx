@@ -31,7 +31,6 @@ export function createMembershipCourses( readRuntime ) {
 		);
 		const [ courses, setCourses ] = Hooks.useState( [] );
 		const [ items, setItems ] = Hooks.useState( [] );
-		const [ bundles, setBundles ] = Hooks.useState( [] );
 		const [ preview, setPreview ] = Hooks.useState( null );
 		const [ error, setError ] = Hooks.useState( '' );
 		const [ previewError, setPreviewError ] = Hooks.useState( '' );
@@ -115,34 +114,7 @@ export function createMembershipCourses( readRuntime ) {
 						);
 					}
 				} );
-			request( {
-				path: '/ohmylms/v1/bundles/outline',
-			} )
-				.then( ( outline ) => {
-					if ( active ) {
-						setBundles(
-							( outline.bundles || [] ).map( ( bundle ) => ( {
-								value: Number( bundle.id ),
-								label: Ge(
-									bundle.status === 'published'
-										? bundle.title
-										: `${ bundle.title } (${ I18n.__( 'draft', 'ohmylms' ) })`
-								),
-							} ) )
-						);
-					}
-				} )
-				.catch( ( cause ) => {
-					if ( active ) {
-						setError(
-							cause.message ||
-								I18n.__(
-									'Could not load course bundles.',
-									'ohmylms'
-								)
-						);
-					}
-				} );
+
 			return () => {
 				active = false;
 			};
@@ -316,7 +288,7 @@ export function createMembershipCourses( readRuntime ) {
 					<Controls.SpacerWP padding={ 6 } margin={ 0 }>
 						<p>
 							{ I18n.__(
-								'Include individual courses, curriculum items or course bundles. Matching courses below a curriculum item and future published courses are included automatically. Exclusions override every inclusion.',
+								'Include individual courses, curriculum items. Matching courses below a curriculum item and future published courses are included automatically. Exclusions override every inclusion.',
 								'ohmylms'
 							) }
 						</p>
@@ -375,16 +347,7 @@ export function createMembershipCourses( readRuntime ) {
 								return undefined;
 							} )() }
 						/>
-						{ field(
-							I18n.__( 'Course bundles', 'ohmylms' ),
-							selected( selection.course_bundles, bundles ),
-							bundles,
-							( rows ) =>
-								updateMembershipPlan(
-									'course_bundles',
-									rows.map( ( item ) => item.value )
-								)
-						) }
+
 						{ field(
 							I18n.__( 'Excluded courses', 'ohmylms' ),
 							selected(
@@ -407,7 +370,7 @@ export function createMembershipCourses( readRuntime ) {
 							>
 								<p>
 									{ I18n.__(
-										'This plan still includes courses through old course categories and tags. They keep granting access, so members are not affected, but they can no longer be changed. Remove one once its courses are covered by curriculum items or course bundles.',
+										'This plan still includes courses through old course categories and tags. They keep granting access, so members are not affected, but they can no longer be changed. Remove one once its courses are covered by curriculum items.',
 										'ohmylms'
 									) }
 								</p>

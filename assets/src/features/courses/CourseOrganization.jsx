@@ -6,13 +6,7 @@ import {
 	Spinner,
 	TextControl,
 } from '@wordpress/components';
-import {
-	filterItems,
-	orderItems,
-	orderBundles,
-	sameIds,
-	toggleId,
-} from './organization.mjs';
+import { filterItems, orderItems, toggleId } from './organization.mjs';
 import { restUrl } from '../restUrl.mjs';
 
 /**
@@ -37,11 +31,7 @@ export function createCourseOrganization( readRuntime ) {
 			error: '',
 		} );
 		const [ items, setItems ] = Hooks.useState( [] );
-		const [ bundles, setBundles ] = Hooks.useState( [] );
 		const [ curriculumIds, setCurriculumIds ] = Hooks.useState( [] );
-		const [ bundleIds, setBundleIds ] = Hooks.useState( [] );
-		const [ canManageBundles, setCanManageBundles ] =
-			Hooks.useState( false );
 		const [ search, setSearch ] = Hooks.useState( '' );
 		const [ busy, setBusy ] = Hooks.useState( false );
 		const [ error, setError ] = Hooks.useState( '' );
@@ -68,20 +58,16 @@ export function createCourseOrganization( readRuntime ) {
 			setLoad( { status: 'loading', error: '' } );
 			Promise.all( [
 				request( { path: '/ohmylms/v1/curriculum/outline' } ),
-				request( { path: '/ohmylms/v1/bundles/outline' } ),
 				request( {
 					path: `/ohmylms/v1/courses/${ courseId }/organization`,
 				} ),
 			] )
-				.then( ( [ outline, bundleOutline, organization ] ) => {
+				.then( ( [ outline, organization ] ) => {
 					if ( ! active ) {
 						return;
 					}
 					setItems( orderItems( outline.items ) );
-					setBundles( orderBundles( bundleOutline.bundles ) );
 					setCurriculumIds( idsOf( organization.curriculum ) );
-					setBundleIds( idsOf( organization.bundles ) );
-					setCanManageBundles( !! organization.can_manage_bundles );
 					setLoad( { status: 'ready', error: '' } );
 				} )
 				.catch( ( cause ) => {
@@ -91,7 +77,7 @@ export function createCourseOrganization( readRuntime ) {
 							error: messageOf(
 								cause,
 								I18n.__(
-									'Could not load the curriculum and course bundles.',
+									'Could not load the curriculum.',
 									'ohmylms'
 								)
 							),
@@ -121,8 +107,6 @@ export function createCourseOrganization( readRuntime ) {
 					data: { [ field ]: next },
 				} );
 				setCurriculumIds( idsOf( saved.curriculum ) );
-				setBundleIds( idsOf( saved.bundles ) );
-				setCanManageBundles( !! saved.can_manage_bundles );
 			} catch ( cause ) {
 				apply( previous );
 				setError(
@@ -379,136 +363,6 @@ export function createCourseOrganization( readRuntime ) {
 											</p>
 										</div>
 									) }
-								</Controls.SpacerWP>
-							</Controls.CardWP>
-						</Controls.FlexItemWP>
-						<Controls.FlexItemWP flex={ 1 }>
-							<Controls.CardWP
-								isBorderless
-								variant={ 'secondary' }
-								fullHeight
-							>
-								<Controls.SpacerWP
-									marginBottom={ 0 }
-									padding={ 5 }
-								>
-									<Controls.HeadingWP level={ 4 }>
-										{ I18n.__(
-											'Course bundles',
-											'ohmylms'
-										) }
-									</Controls.HeadingWP>
-									<p>
-										{ I18n.__(
-											'Course bundles are curated paths that learners can follow. Only published bundles are shown to learners.',
-											'ohmylms'
-										) }
-									</p>
-									{ bundles.length === 0 ? (
-										<p>
-											{ I18n.__(
-												'There are no course bundles yet.',
-												'ohmylms'
-											) }{ ' ' }
-											{ canManageBundles && (
-												<a
-													href={ adminHref(
-														'bundles'
-													) }
-													target="_blank"
-													rel="noopener noreferrer"
-												>
-													{ I18n.__(
-														'Create a course bundle',
-														'ohmylms'
-													) }
-												</a>
-											) }
-										</p>
-									) : (
-										<div
-											role="group"
-											aria-label={ I18n.__(
-												'Course bundles',
-												'ohmylms'
-											) }
-										>
-											{ bundles.map( ( bundle ) => (
-												<div
-													key={ bundle.id }
-													style={ {
-														margin: '6px 0',
-													} }
-												>
-													<CheckboxControl
-														__nextHasNoMarginBottom
-														label={
-															bundle.status ===
-															'published'
-																? bundle.title
-																: `${ bundle.title } (${ I18n.__( 'draft', 'ohmylms' ) })`
-														}
-														checked={ bundleIds.includes(
-															bundle.id
-														) }
-														disabled={
-															busy ||
-															! canManageBundles
-														}
-														onChange={ (
-															checked
-														) => {
-															const next =
-																toggleId(
-																	bundleIds,
-																	bundle.id,
-																	checked
-																);
-															if (
-																! sameIds(
-																	next,
-																	bundleIds
-																)
-															) {
-																save(
-																	'bundle_ids',
-																	next,
-																	bundleIds,
-																	setBundleIds
-																);
-															}
-														} }
-													/>
-												</div>
-											) ) }
-										</div>
-									) }
-									{ ! canManageBundles &&
-										bundles.length > 0 && (
-											<p>
-												{ I18n.__(
-													'Only administrators can change which course bundles a course is in.',
-													'ohmylms'
-												) }
-											</p>
-										) }
-									{ canManageBundles &&
-										bundles.length > 0 && (
-											<p>
-												<a
-													href={ adminHref(
-														'bundles'
-													) }
-													target="_blank"
-													rel="noopener noreferrer"
-												>
-													{ I18n.__(
-														'Manage course bundles',
-														'ohmylms'
-													) }
-												</a>
-											</p>
-										) }
 								</Controls.SpacerWP>
 							</Controls.CardWP>
 						</Controls.FlexItemWP>

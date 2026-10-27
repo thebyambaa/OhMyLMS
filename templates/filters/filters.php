@@ -50,14 +50,8 @@ $items = array(
 				}
 			}
 
-			if ( 'tag' == $filter ) {
-				$filter_title = __( 'Course bundle', 'ohmylms' );
-				foreach ( \OhMyLMS\Curriculum\Placement::public_bundles() as $entry ) {
-					$items['tag'][] = array(
-						'name' => $entry['title'],
-						'slug' => $entry['slug'],
-					);
-				}
+			if ( 'tag' === $filter ) {
+				continue;
 			}
 
 			if ( 'price_type' == $filter ) {

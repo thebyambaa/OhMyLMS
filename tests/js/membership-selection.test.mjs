@@ -73,7 +73,6 @@ test( 'membership topic options stay hidden and existing topic access survives p
 			{ value: 10, label: 'Syllabus', item_type: 'syllabus' },
 			{ value: 99, label: 'Hidden topic', item_type: 'topic' },
 		],
-		[],
 		preview,
 		'',
 		'',
@@ -126,7 +125,6 @@ test( 'membership editor restores all selections, saves IDs and shows the resolv
 	const states = [
 		[],
 		[ { value: 10, label: 'Mathematics' } ],
-		[ { value: 20, label: 'Advanced' } ],
 		preview,
 		'',
 		'',
@@ -158,14 +156,12 @@ test( 'membership editor restores all selections, saves IDs and shows the resolv
 		selects.map( ( node ) =>
 			node.props.value.map( ( item ) => item.value )
 		),
-		[ [ 1 ], [ 10 ], [ 20 ], [ 3 ] ]
+		[ [ 1 ], [ 10 ], [ 3 ] ]
 	);
 	selects[ 1 ].props.onChange( [ { value: 11, label: 'Algebra' } ] );
-	selects[ 2 ].props.onChange( null );
-	selects[ 3 ].props.onChange( [ { value: 5, label: 'Excluded' } ] );
+	selects[ 2 ].props.onChange( [ { value: 5, label: 'Excluded' } ] );
 	assert.deepEqual( writes, [
 		[ 'course_curriculum', [ 11 ] ],
-		[ 'course_bundles', [] ],
 		[ 'excluded_courses', [ 5 ] ],
 	] );
 	assert.ok(
@@ -212,7 +208,7 @@ test( 'old category and tag rules are listed, keep counting in the preview, and 
 			tags: [ { id: 40, name: 'Old tag' } ],
 		},
 	};
-	const states = [ [], [], [], preview, '', '', false, 'ready' ];
+	const states = [ [], [], preview, '', '', false, 'ready' ];
 	let index = 0;
 	const writes = [];
 	const requests = [];
@@ -288,7 +284,7 @@ test( 'old category and tag rules are listed, keep counting in the preview, and 
 	}
 } );
 
-test( 'curriculum and bundle loading uses the REST root and survives a failed bundle request', async () => {
+test( 'curriculum loading uses the REST root without requesting retired bundles', async () => {
 	const effects = [];
 	const states = [];
 	const requests = [];
@@ -344,15 +340,14 @@ test( 'curriculum and bundle loading uses the REST root and survives a failed bu
 			requests.map( ( request ) => request.url ),
 			[
 				'http://xyz.local/wp-json/ohmylms/v1/curriculum/outline?courses=1',
-				'http://xyz.local/wp-json/ohmylms/v1/bundles/outline',
 			]
 		);
 		assert.equal( states[ 1 ][ 0 ].label, 'Cambridge' );
 		assert.deepEqual( states[ 1 ][ 0 ].courses, [
 			{ id: 9, title: 'Maths' },
 		] );
-		assert.equal( states[ 7 ], 'ready' );
-		assert.equal( states[ 4 ], 'Invalid JSON' );
+		assert.equal( states[ 6 ], 'ready' );
+		assert.equal( states[ 3 ], '' );
 	} finally {
 		delete globalThis.window;
 	}
@@ -389,7 +384,6 @@ test( 'plain-permalink sites get a valid URL for routes with a query string', as
 		await new Promise( ( resolve ) => setImmediate( resolve ) );
 		assert.deepEqual( requests, [
 			'http://xyz.local/index.php?rest_route=/ohmylms/v1/curriculum/outline&courses=1',
-			'http://xyz.local/index.php?rest_route=/ohmylms/v1/bundles/outline',
 		] );
 	} finally {
 		delete globalThis.window;
