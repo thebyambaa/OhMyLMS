@@ -1,5 +1,10 @@
 import { createElement } from '@wordpress/element';
-import { Button, Notice, Spinner } from '@wordpress/components';
+import {
+	Button,
+	CheckboxControl,
+	Notice,
+	Spinner,
+} from '@wordpress/components';
 import { CurriculumMindmap } from './CurriculumMindmap';
 import { restUrl } from '../restUrl.mjs';
 
@@ -58,6 +63,7 @@ export function createMembershipCourses( readRuntime ) {
 			} ) );
 		const ids = ( list ) => ( list || [] ).map( Number );
 		const selection = {
+			all_learning_content: Boolean( plan?.all_learning_content ),
 			products: plan?.products || [],
 			course_curriculum: ids( plan?.course_curriculum ),
 			course_bundles: ids( plan?.course_bundles ),
@@ -286,6 +292,24 @@ export function createMembershipCourses( readRuntime ) {
 			>
 				<Ea isBorderless variant="secondary">
 					<Controls.SpacerWP padding={ 6 } margin={ 0 }>
+						<CheckboxControl
+							label={ I18n.__(
+								'All learning content',
+								'ohmylms'
+							) }
+							help={ I18n.__(
+								'Include all current and future published courses, including their lessons and quizzes. Excluded courses still apply.',
+								'ohmylms'
+							) }
+							checked={ selection.all_learning_content }
+							onChange={ ( checked ) =>
+								updateMembershipPlan(
+									'all_learning_content',
+									checked
+								)
+							}
+							__nextHasNoMarginBottom
+						/>
 						<p>
 							{ I18n.__(
 								'Include individual courses, curriculum items. Matching courses below a curriculum item and future published courses are included automatically. Exclusions override every inclusion.',

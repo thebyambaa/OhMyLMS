@@ -37,10 +37,24 @@ final class CourseSelection {
 	 * @param mixed $tags Tags.
 	 * @param mixed $excluded Excluded.
 	 * @param array $curriculum Curriculum.
-	 * @param array $bundles Bundles.
+	 * @param array $bundles Retired bundles argument.
+	 * @param bool  $all_learning_content Include all published courses.
 	 */
-	public static function resolve( $products, $categories, $tags, $excluded, $curriculum = array(), $bundles = array() ) {
+	public static function resolve( $products, $categories, $tags, $excluded, $curriculum = array(), $bundles = array(), $all_learning_content = false ) {
 		$ids = self::ids( array_column( (array) $products, 'id' ) );
+		if ( $all_learning_content ) {
+			$ids = array_merge(
+				$ids,
+				get_posts(
+					array(
+						'post_type'      => 'ohmylms-course',
+						'post_status'    => 'publish',
+						'posts_per_page' => -1,
+						'fields'         => 'ids',
+					)
+				)
+			);
+		}
 		$tax = array( 'relation' => 'OR' );
 		foreach ( array(
 			'course_category' => $categories,

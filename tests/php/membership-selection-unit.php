@@ -17,7 +17,9 @@ $GLOBALS['courses'] = [
 function get_post_type($id) { return isset($GLOBALS['courses'][$id]) ? 'ohmylms-course' : 'post'; }
 function get_post_status($id) { return $GLOBALS['courses'][$id]['status'] ?? ''; }
 function get_the_title($id) { return 'Course ' . $id; }
+function rest_sanitize_boolean($value) { return ! in_array($value, [false, 0, '0', 'false', null, ''], true); }
 function get_posts($args) {
+    if (!isset($args['tax_query'])) return array_keys(array_filter($GLOBALS['courses'], fn($course) => $course['status'] === 'publish'));
     check($args['post_status'] === 'publish', 'Only published courses enter membership selection');
     check($args['tax_query']['relation'] === 'OR', 'Categories and tags match either rule');
     $matches = [];
@@ -124,3 +126,11 @@ check(array_column($preview['courses'], 'id') === [1, 2, 5], 'Unsaved preview re
 check($preview['courses'][0]['reasons'] === ['Individual course'] && $preview['courses'][1]['reasons'] === ['Term 11'], 'Preview explains direct and descendant-category matches');
 echo "Membership preview and validation checks passed.\n";
 check( array() === \OhMyLMS\Membership\CourseSelection::resolve( array(), array(), array(), array(), array(), array( 999 ) ), 'Retired bundle rules grant no courses' );
+
+$plan->set_all_learning_content(true);
+$plan->set_excluded_courses([3]);
+check(array_column($plan->get_products(), 'id') === [1, 2, 4, 5], 'All learning content includes every published course and honors exclusions');
+$GLOBALS['courses'][6] = ['status' => 'publish', 'course_category' => [], 'course_tag' => []];
+check(in_array(6, array_column($plan->get_products(), 'id'), true), 'Future published courses enter the plan automatically');
+$plan->set_all_learning_content(false);
+check(!in_array(6, array_column($plan->get_products(), 'id'), true), 'Turning all content off restores selective rules');

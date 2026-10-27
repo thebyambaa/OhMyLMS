@@ -36,3 +36,5 @@ Free signup requires an authenticated, nonce-protected request and an active pub
 Cron and authenticated request-time checks expire the tracked grant. Course revocation is scoped to the user and plan, preserves paid upgrades and other active grants, and retries database failures. No automatic charge occurs. Calendar checks: `php tests/php/membership-free-sale-unit.php` and `node --test tests/js/memberships.test.mjs`.
 
 Course Bundles are retired. Their navigation, course/membership pickers, learner catalog listing and public filter are removed. Old bundle screen URLs open Curriculum. The legacy REST fields and resolver argument remain accepted, but bundle selections no longer grant access; an administrator request resynchronizes existing plan enrollments once.
+
+The All learning content checkbox persists as the boolean all_learning_content REST field and _all_learning_content plan meta. It includes all current and future published courses and their lessons/quizzes. Exclusions still win. Turning it off restores the saved individual and curriculum choices. The existing publication hooks synchronize newly matching courses for active members.

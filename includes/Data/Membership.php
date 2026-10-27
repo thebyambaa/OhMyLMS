@@ -80,6 +80,7 @@ class Membership extends Data {
 		'products'                     => array(),
 		'course_categories'            => array(),
 		'course_tags'                  => array(),
+		'all_learning_content'         => false,
 		'course_curriculum'            => array(),
 		'course_bundles'               => array(),
 		'excluded_courses'             => array(),
@@ -554,7 +555,7 @@ class Membership extends Data {
 	 */
 	public function get_products( $context = 'view' ) {
 		$products = $this->get_prop( 'products', $context ) ?? array();
-		return 'edit' === $context ? $products : \OhMyLMS\Membership\CourseSelection::resolve( $products, $this->get_course_categories(), $this->get_course_tags(), $this->get_excluded_courses(), $this->get_course_curriculum(), $this->get_course_bundles() );
+		return 'edit' === $context ? $products : \OhMyLMS\Membership\CourseSelection::resolve( $products, $this->get_course_categories(), $this->get_course_tags(), $this->get_excluded_courses(), $this->get_course_curriculum(), $this->get_course_bundles(), $this->get_all_learning_content() );
 	}
 	/**
 	 * Get course categories for Membership.
@@ -570,6 +571,25 @@ class Membership extends Data {
 	 */
 	public function get_course_tags( $context = 'view' ) {
 		return $this->get_prop( 'course_tags', $context ) ?? array(); }
+	/**
+	 * Whether this plan includes all published courses.
+	 *
+	 * @param string $context Read context.
+	 * @return bool
+	 */
+	public function get_all_learning_content( $context = 'view' ) {
+		return (bool) $this->get_prop( 'all_learning_content', $context );
+	}
+
+	/**
+	 * Set automatic access to all current and future published courses.
+	 *
+	 * @param mixed $value Boolean setting.
+	 */
+	public function set_all_learning_content( $value ) {
+		$this->set_prop( 'all_learning_content', rest_sanitize_boolean( $value ) );
+	}
+
 	/**
 	 * Get course curriculum for Membership.
 	 *

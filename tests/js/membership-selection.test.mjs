@@ -37,10 +37,19 @@ const factory = new Function(
 	'Button',
 	'Notice',
 	'Spinner',
+	'CheckboxControl',
 	'CurriculumMindmap',
 	'restUrl',
 	`${ code }; return createMembershipCourses;`
-)( element, 'Button', 'Notice', 'Spinner', 'CurriculumMindmap', restUrl );
+)(
+	element,
+	'Button',
+	'Notice',
+	'Spinner',
+	'CheckboxControl',
+	'CurriculumMindmap',
+	restUrl
+);
 function flatten( node ) {
 	return ! node || typeof node !== 'object'
 		? []
@@ -115,6 +124,7 @@ test( 'membership topic options stay hidden and existing topic access survives p
 
 test( 'membership editor restores all selections, saves IDs and shows the resolved preview', () => {
 	const plan = {
+		all_learning_content: true,
 		products: [ { id: 1, name: 'Direct course' } ],
 		course_curriculum: [ 10 ],
 		course_bundles: [ 20 ],
@@ -151,6 +161,13 @@ test( 'membership editor restores all selections, saves IDs and shows the resolv
 		} )
 	);
 	const nodes = flatten( Component() );
+	const allContent = nodes.find(
+		( node ) => node.type === 'CheckboxControl'
+	);
+	assert.equal( allContent.props.label, 'All learning content' );
+	assert.equal( allContent.props.checked, true );
+	allContent.props.onChange( true );
+	assert.deepEqual( writes.pop(), [ 'all_learning_content', true ] );
 	const selects = nodes.filter( ( node ) => node.type === 'Select' );
 	assert.deepEqual(
 		selects.map( ( node ) =>
