@@ -120,6 +120,13 @@ function ohmylms_teacher_class_checks() {
 		$classes[] = $class_id;
 		$check( 0 === (int) Service::row( 'classes', $class_id )['school_id'], 'Independent class acquired a school.' );
 		$check( in_array( $class_id, array_map( 'intval', array_column( TeacherWorkspace::classes(), 'id' ) ), true ), 'Creator cannot see class.' );
+		$check( array() === \OhMyLMS\Student\SchoolGradebook::courses( 0, $class_id, true ), 'Teacher cannot open their independent class gradebook.' );
+		$denied(
+			static function () use ( $class_id ) {
+				\OhMyLMS\Student\SchoolGradebook::courses( 999, $class_id, true );
+			},
+			'Teacher gradebook accepted a mismatched school.'
+		);
 		TeacherActions::apply(
 			'edit',
 			array(
@@ -139,6 +146,12 @@ function ohmylms_teacher_class_checks() {
 			'Empty class name accepted.'
 		);
 		$actor( $other_teacher );
+		$denied(
+			static function () use ( $class_id ) {
+				\OhMyLMS\Student\SchoolGradebook::courses( 0, $class_id, true );
+			},
+			'Unrelated teacher read the class gradebook.'
+		);
 		$denied(
 			static function () use ( $class_id ) {
 				ClassManagement::edit( $class_id, array( 'name' => 'Stolen' ) );

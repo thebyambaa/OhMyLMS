@@ -836,7 +836,7 @@ final class Hub {
 			$config['labels']['classes']        = __( 'My classes', 'ohmylms' );
 			$config['labels']['work']           = __( 'Assignments', 'ohmylms' );
 			$config['labels']['roster']         = __( 'Roster', 'ohmylms' );
-			$config['labels']['progress']       = __( 'Reports', 'ohmylms' );
+			$config['labels']['progress']       = __( 'Gradebook', 'ohmylms' );
 			$config['labels']['class-settings'] = __( 'Class settings', 'ohmylms' );
 			$section                            = in_array( get_query_var( 'hub_section' ), $config['tabs'], true ) ? get_query_var( 'hub_section' ) : 'classes';
 			$views                              = in_array( $section, array( 'classes', 'work', 'roster', 'progress', 'class-settings' ), true ) ? array() : self::views( $section );

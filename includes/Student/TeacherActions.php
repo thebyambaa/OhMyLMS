@@ -21,6 +21,7 @@ final class TeacherActions {
 	/** Register signed-in form handling only. */
 	public static function init() {
 		add_action( 'admin_post_' . self::ACTION, array( __CLASS__, 'handle' ) );
+		add_action( 'admin_post_' . SchoolGradebook::TEACHER_EXPORT_ACTION, array( SchoolGradebook::class, 'export_teacher' ) );
 	}
 
 	/** Retire the old teacher portal entry while leaving file and invitation flows intact. */

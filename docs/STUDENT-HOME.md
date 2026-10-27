@@ -103,3 +103,11 @@ no horizontal overflow. New production PHP has no PHPCS errors and six warnings
 described above. The integration fixture has 30 direct-database/local-file warnings.
 The full repository standards command still fails on existing violations outside
 this change; no baseline or broad suppression was added.
+
+### Teacher class gradebook
+
+The teacher workspace's existing progress address now displays Gradebook. Choose a class and an explicitly distributed course to see students against quiz/assignment columns, earned/possible points, percentage totals, and Missing / Pending review / Not assigned states. Pending retakes do not replace an existing graded result; ungraded work is omitted from totals, while real zero scores count. Skill progress remains in a separate expandable section. Full class CSV uses a teacher-specific nonce and rechecks current class access on each page.
+
+Teacher reads use the current active classroom relationship, including independent classes with school_id=0. School reads retain their existing school-admin authorization and active school-student requirement. Only distributed courses, assessments and current recipients enter the matrix. The course builder no longer opens the platform gradebook; its existing API and course-list access remain compatible. Manual platform overrides remain separate from assessment grades.
+
+Checks: `php tests/php/class-gradebook-unit.php`, source/ESLint/PHPCS checks and production build. Teacher authorization cases were added to the guarded `teacher-class-integration.php` suite, which requires disposable database credentials.
