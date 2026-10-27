@@ -1089,9 +1089,11 @@ export function CourseOutlineEditor( {
 								</Button>
 								<Button
 									disabled={ busy }
-									onClick={ () => openPicker( unit.id ) }
+									onClick={ () =>
+										openPicker( unit.id, '', 'quiz' )
+									}
 								>
-									{ __( 'Add activity to unit', 'ohmylms' ) }
+									{ __( 'Add quiz to unit', 'ohmylms' ) }
 								</Button>
 								<Button
 									isDestructive
@@ -1353,7 +1355,9 @@ export function CourseOutlineEditor( {
 							__( 'Link skills to lesson', 'ohmylms' ) ) ||
 						( picker.lesson
 							? __( 'Add lesson', 'ohmylms' )
-							: __( 'Add activity', 'ohmylms' ) )
+							: ( 'quiz' === picker.initialKind &&
+									__( 'Add quiz', 'ohmylms' ) ) ||
+								__( 'Add activity', 'ohmylms' ) )
 					}
 					onRequestClose={
 						pickerBusy ? () => {} : () => setPicker( null )

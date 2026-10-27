@@ -472,13 +472,13 @@ export function CourseOutlineTree( {
 									{ addButton(
 										sprintf(
 											/* translators: %s: unit title. */ __(
-												'Add activity to %s',
+												'Add quiz to %s',
 												'ohmylms'
 											),
 											unit.title
 										),
-										__( 'Add activity', 'ohmylms' ),
-										() => onAdd( unit.id, '', '' )
+										__( 'Add quiz', 'ohmylms' ),
+										() => onAdd( unit.id, '', 'quiz' )
 									) }
 								</div>
 								<div className="ohmylms-outline-slot">
