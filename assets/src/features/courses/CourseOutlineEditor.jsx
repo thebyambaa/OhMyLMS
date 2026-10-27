@@ -305,7 +305,9 @@ export function CourseOutlineEditor( {
 		setSearch( '' );
 		setResourcePage( 1 );
 		let initial = 'lesson';
-		if ( checkpoint ) {
+		if ( initialKind === 'skills' ) {
+			initial = 'practice';
+		} else if ( checkpoint ) {
 			initial = 'quiz';
 		} else if ( [ 'quiz', 'practice' ].includes( initialKind ) ) {
 			initial = initialKind;
@@ -317,8 +319,11 @@ export function CourseOutlineEditor( {
 			initialKind,
 			style: checkpoint ? initialKind : '',
 			lesson: 'lesson' === initialKind,
+			skills: 'skills' === initialKind,
 			create:
-				!! initialKind && initialKind !== 'practice' && ! checkpoint,
+				!! initialKind &&
+				! [ 'practice', 'skills' ].includes( initialKind ) &&
+				! checkpoint,
 			requestId: uuid(),
 		} );
 	}
@@ -564,10 +569,9 @@ export function CourseOutlineEditor( {
 		? []
 		: results.filter( ( resource ) => {
 				if ( picker.skills ) {
-					return ! lessonSkillIds(
-						draft.program,
-						picker.groupId
-					).includes( resource.id );
+					return ! draft.program.outcomes.some(
+						( row ) => row.term_id === resource.id
+					);
 				}
 				if ( picker.style && resource.style !== picker.style ) {
 					return false;
@@ -1096,6 +1100,15 @@ export function CourseOutlineEditor( {
 									{ __( 'Add quiz to unit', 'ohmylms' ) }
 								</Button>
 								<Button
+									variant="secondary"
+									disabled={ busy }
+									onClick={ () =>
+										openPicker( unit.id, '', 'skills' )
+									}
+								>
+									{ __( 'Link course skills', 'ohmylms' ) }
+								</Button>
+								<Button
 									isDestructive
 									disabled={
 										busy ||
@@ -1352,7 +1365,7 @@ export function CourseOutlineEditor( {
 							),
 						}[ picker.style ] ||
 						( picker.skills &&
-							__( 'Link skills to lesson', 'ohmylms' ) ) ||
+							__( 'Link course skills', 'ohmylms' ) ) ||
 						( picker.lesson
 							? __( 'Add lesson', 'ohmylms' )
 							: ( 'quiz' === picker.initialKind &&
