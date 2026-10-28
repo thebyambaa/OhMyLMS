@@ -2,7 +2,7 @@ import { createElement, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Button, TextControl } from '@wordpress/components';
 import { useCurriculum } from './context';
-import { normalizeType, validateDraft } from './model.mjs';
+import { validateDraft } from './model.mjs';
 const MESSAGES = {
 	required: () => __( 'Enter a name.', 'ohmylms' ),
 	'too-long': () => __( 'That is too long.', 'ohmylms' ),
@@ -21,16 +21,14 @@ const MESSAGES = {
  * @param root0.parentName
  */
 export function AddItemRow( { parentId, parentName } ) {
-	const { types, actions, pending } = useCurriculum();
+	const { actions, pending } = useCurriculum();
 	const [ name, setName ] = useState( '' );
-	const [ type, setType ] = useState( 'custom' );
 	const [ touched, setTouched ] = useState( false );
 	const errors = validateDraft( {
 		name,
-		item_type: type,
+		item_type: 'custom',
 	} );
 	const nameId = `ohmylms-cur-add-name-${ parentId }`;
-	const listId = `ohmylms-cur-types-add-${ parentId }`;
 	const label = parentId
 		? sprintf(
 				/* translators: %s: curriculum item name. */ __(
@@ -48,7 +46,7 @@ export function AddItemRow( { parentId, parentName } ) {
 		}
 		const ok = await actions.create( parentId, {
 			name,
-			item_type: normalizeType( type ) || 'custom',
+			item_type: 'custom',
 		} );
 		if ( ok ) {
 			setName( '' );
@@ -70,23 +68,7 @@ export function AddItemRow( { parentId, parentName } ) {
 				}
 				__nextHasNoMarginBottom
 			/>
-			<TextControl
-				label={ __( 'Type', 'ohmylms' ) }
-				value={ type }
-				onChange={ setType }
-				list={ listId }
-				help={
-					touched && errors.item_type
-						? MESSAGES[ errors.item_type ]()
-						: undefined
-				}
-				__nextHasNoMarginBottom
-			/>
-			<datalist id={ listId }>
-				{ types.map( ( option ) => (
-					<option key={ option } value={ option } />
-				) ) }
-			</datalist>
+
 			<div className="ohmylms-cur-add-actions">
 				<Button
 					variant="primary"

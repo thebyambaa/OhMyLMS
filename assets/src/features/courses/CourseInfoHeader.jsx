@@ -7,6 +7,8 @@ export function createCourseInfoHeader( readRuntime ) {
 		onContentChange,
 		handleRemoveMedia,
 		handleUploadComplete,
+		compact = false,
+		afterTitle,
 	} ) {
 		const {
 			Qp: Media,
@@ -27,39 +29,57 @@ export function createCourseInfoHeader( readRuntime ) {
 		} = course || {};
 		return (
 			<div
-				className={ `ohmylms-course-info-header ${ video || image ? 'ohmylms-has-media' : '' } ${ video ? 'ohmylms-thumb-video-wrapper' : '' } ${ image ? 'ohmylms-thumb-img-wrapper' : '' }` }
+				className={ `ohmylms-course-info-header ${ compact ? 'is-compact' : '' } ${ video || image ? 'ohmylms-has-media' : '' } ${ video ? 'ohmylms-thumb-video-wrapper' : '' } ${ image ? 'ohmylms-thumb-img-wrapper' : '' }` }
 			>
-				<Media
-					videoSrc={ video }
-					imageSrc={ image }
-					handleRemoveMedia={ handleRemoveMedia }
-					handleUploadComplete={ handleUploadComplete }
-				/>
+				{ ! compact && (
+					<Media
+						videoSrc={ video }
+						imageSrc={ image }
+						handleRemoveMedia={ handleRemoveMedia }
+						handleUploadComplete={ handleUploadComplete }
+					/>
+				) }
 				<div className="ohmylms-course-content-info">
-					<div className="ohmylms-title-input-wrapper ohmylms-course-title">
-						<TitleInput
-							value={ name !== 'Untitled' ? decode( name ) : '' }
-							onChange={ handleInputChange }
-							placeholder={ __(
-								'Enter Course Title',
-								'ohmylms'
-							) }
-							name="name"
-							className="ohmylms-course-title"
-							style={ {
-								fontSize: 30,
-								fontWeight: 'bold',
-								border: 'none',
-								background: 'transparent',
-								padding: 0,
-								textAlign: 'left',
-								lineHeight: 1.2,
-								boxShadow: 'none',
-							} }
-							size="large"
-							autoComplete="off"
-							variant="borderless"
-						/>
+					<div className="ohmylms-course-name-row">
+						<div
+							className="ohmylms-title-input-wrapper ohmylms-course-title"
+							role={ compact ? 'heading' : undefined }
+							aria-level={ compact ? 1 : undefined }
+							aria-label={
+								compact
+									? decode( name ) ||
+										__( 'Untitled course', 'ohmylms' )
+									: undefined
+							}
+						>
+							<TitleInput
+								value={
+									name !== 'Untitled' ? decode( name ) : ''
+								}
+								onChange={ handleInputChange }
+								placeholder={ __(
+									'Enter Course Title',
+									'ohmylms'
+								) }
+								name="name"
+								aria-label={ __( 'Course name', 'ohmylms' ) }
+								className="ohmylms-course-title"
+								style={ {
+									fontSize: 30,
+									fontWeight: 'bold',
+									border: 'none',
+									background: 'transparent',
+									padding: 0,
+									textAlign: 'left',
+									lineHeight: 1.2,
+									boxShadow: 'none',
+								} }
+								size="large"
+								autoComplete="off"
+								variant="borderless"
+							/>
+						</div>
+						{ afterTitle }
 					</div>
 					<RichText
 						onContentChange={ onContentChange }
@@ -74,6 +94,19 @@ export function createCourseInfoHeader( readRuntime ) {
 						editorFor="course"
 					/>
 				</div>
+				{ compact && (
+					<details className="ohmylms-course-media-details">
+						<summary>
+							{ __( 'Course image and video', 'ohmylms' ) }
+						</summary>{ ' ' }
+						<Media
+							videoSrc={ video }
+							imageSrc={ image }
+							handleRemoveMedia={ handleRemoveMedia }
+							handleUploadComplete={ handleUploadComplete }
+						/>
+					</details>
+				) }
 			</div>
 		);
 	};

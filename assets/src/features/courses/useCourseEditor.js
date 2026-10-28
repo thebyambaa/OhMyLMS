@@ -268,7 +268,7 @@ export function useCourseEditor( {
 		savedAt,
 		error,
 		save,
-		refreshStructure: async () => {
+		refreshStructure: async ( { syncStatus = false } = {} ) => {
 			const fresh = await loadCourse( courseId );
 			for ( const chapter of orderedChapters( state.chapters ) ) {
 				actions.removeChapterFromCourse( chapter.id );
@@ -283,6 +283,7 @@ export function useCourseEditor( {
 			actions.setCourse( {
 				...fresh,
 				...latestCourse.current,
+				...( syncStatus ? { status: fresh.status } : {} ),
 				chapters: fresh.chapters,
 			} );
 		},

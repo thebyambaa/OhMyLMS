@@ -3,6 +3,27 @@
  * Canvas rules are scoped to .is-ohmylms-paper; question rules are shared with the print page.
  */
 
+/* Keep the contextual insertion menu beside its question. */
+
+.editor-styles-wrapper .ohmylms-shared-choice-block {
+	position: relative;
+}
+
+.editor-styles-wrapper .ohmylms-shared-choice-block > .ohmylms-paper-inserter {
+	position: absolute;
+	z-index: 2;
+	inset-block-start: 0;
+	inset-inline-end: -40px;
+}
+
+@media (max-width: 600px) {
+
+	.editor-styles-wrapper .ohmylms-shared-choice-block > .ohmylms-paper-inserter {
+		inset-block-start: -40px;
+		inset-inline-end: 0;
+	}
+}
+
 /* Paper blocks, shared by the editor sheet and the print page */
 
 .ohmylms-paper-header {

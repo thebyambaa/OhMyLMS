@@ -17,6 +17,7 @@ defined( 'ABSPATH' ) || exit;
 final class CourseObjectives {
 
 	const META        = '_ohmylms_course_objectives';
+	const SOURCE_META = '_ohmylms_course_syllabus';
 	const MAX_TARGETS = 200;
 
 	/**
@@ -43,15 +44,63 @@ final class CourseObjectives {
 			}
 			$profile = SyllabusSettings::get( $item['id'] );
 			$rows[]  = array(
-				'id'      => (int) $item['id'],
-				'name'    => Syllabus::text( $item['name'] ),
-				'code'    => $item['code'],
-				'version' => $item['version'],
-				'grade'   => $profile['grade'],
-				'subject' => $profile['subject'],
+				'id'        => (int) $item['id'],
+				'item_type' => $item['item_type'],
+				'name'      => Syllabus::text( $item['name'] ),
+				'code'      => $item['code'],
+				'version'   => $item['version'],
+				'grade'     => $profile['grade'],
+				'subject'   => $profile['subject'],
 			);
 		}
 		return $rows;
+	}
+
+	/**
+	 * Resolve a course's single syllabus without treating roadmaps as teaching sources.
+	 *
+	 * @param int $course_id Course ID.
+	 * @return int Syllabus ID, or zero when no unambiguous valid source is selected.
+	 */
+	public static function source( $course_id ) {
+		$eligible = array_column( self::course_syllabuses(), null, 'id' );
+		if ( metadata_exists( 'post', $course_id, self::SOURCE_META ) ) {
+			$id = (int) get_post_meta( $course_id, self::SOURCE_META, true );
+			return isset( $eligible[ $id ] ) ? $id : 0;
+		}
+		$owner = SyllabusCourse::owner( $course_id );
+		if ( isset( $eligible[ $owner ] ) ) {
+			return $owner;
+		}
+		$ids = array_values( array_intersect( array_keys( $eligible ), array_unique( array_column( self::references( $course_id ), 'syllabus_id' ) ) ) );
+		return 1 === count( $ids ) ? (int) $ids[0] : 0;
+	}
+
+	/**
+	 * Syllabus choices for course alignment; comparison roadmaps are excluded.
+	 *
+	 * @return array Available syllabuses.
+	 */
+	private static function course_syllabuses() {
+		return array_values(
+			array_filter(
+				self::syllabuses(),
+				static function ( $row ) {
+					return 'roadmap' !== $row['item_type'];
+				}
+			)
+		);
+	}
+
+	/**
+	 * Include the explicit source in concurrency checks while retaining legacy read tokens.
+	 *
+	 * @param int $course_id Course ID.
+	 * @return string Revision token.
+	 */
+	private static function revision( $course_id ) {
+		$references = self::references( $course_id );
+		return md5( wp_json_encode( metadata_exists( 'post', $course_id, self::SOURCE_META ) ? array( $references, (int) get_post_meta( $course_id, self::SOURCE_META, true ) ) : $references ) );
 	}
 
 	/**
@@ -173,11 +222,14 @@ final class CourseObjectives {
 				'content' => array_values( $coverage[ $reference['term_id'] ] ?? array() ),
 			);
 		}
+		$source = self::source( $course_id );
 		return array(
-			'mappings'   => $rows,
-			'revision'   => md5( wp_json_encode( $references ) ),
-			'syllabuses' => self::syllabuses(),
-			'limit'      => self::MAX_TARGETS,
+			'mappings'    => $rows,
+			'syllabus_id' => $source,
+			'source_ids'  => $source ? array( $source ) : array(),
+			'revision'    => self::revision( $course_id ),
+			'syllabuses'  => self::course_syllabuses(),
+			'limit'       => self::MAX_TARGETS,
 		);
 	}
 
@@ -189,6 +241,9 @@ final class CourseObjectives {
 	 * @return true|\WP_Error
 	 */
 	public static function save( $course_id, array $data ) {
+		if ( array_key_exists( 'syllabus_id', $data ) ) {
+			return self::select_source( $course_id, $data );
+		}
 		if ( ! isset( $data['mappings'], $data['revision'] ) || ! is_array( $data['mappings'] ) || array_values( $data['mappings'] ) !== $data['mappings'] || count( $data['mappings'] ) > self::MAX_TARGETS || ! is_string( $data['revision'] ) ) {
 			return Catalog::error( __( 'Provide a mapping list of at most 200 objectives and its revision.', 'ohmylms' ) );
 		}
@@ -196,7 +251,7 @@ final class CourseObjectives {
 			static function () use ( $course_id, $data ) {
 				wp_cache_delete( $course_id, 'post_meta' );
 				$current = self::references( $course_id );
-				if ( md5( wp_json_encode( $current ) ) !== $data['revision'] ) {
+				if ( self::revision( $course_id ) !== $data['revision'] ) {
 					return Catalog::error( __( 'These mappings changed in another session. Reload objectives before saving.', 'ohmylms' ), 409 );
 				}
 				$next   = array();
@@ -220,9 +275,56 @@ final class CourseObjectives {
 					}
 					$next[ $reference['syllabus_id'] . ':' . $reference['term_id'] ] = $reference;
 				}
-				$next = array_values( $next );
+				$next     = array_values( $next );
+				$ids      = array_unique( array_column( $next, 'syllabus_id' ) );
+				$source   = self::source( $course_id );
+				$eligible = array_column( self::course_syllabuses(), null, 'id' );
+				$incoming = $ids ? (int) reset( $ids ) : 0;
+				if ( 1 < count( $ids ) || ( $incoming && ( ! isset( $eligible[ $incoming ] ) || ( $source && $source !== $incoming ) ) ) ) {
+					return Catalog::error( __( 'Choose objectives from the course’s single selected syllabus. Roadmaps are for measurement and comparison.', 'ohmylms' ) );
+				}
 				if ( $next !== $current && ! update_post_meta( $course_id, self::META, $next ) ) {
 					return Catalog::error( __( 'The objective mappings could not be saved.', 'ohmylms' ), 500 );
+				}
+				return true;
+			}
+		);
+	}
+
+	/**
+	 * Select one syllabus independently of course outcomes and activity connections.
+	 *
+	 * @param int   $course_id Course ID.
+	 * @param array $data Syllabus ID and current alignment revision.
+	 * @return bool|\WP_Error Save result.
+	 */
+	private static function select_source( $course_id, array $data ) {
+		if ( ! is_int( $data['syllabus_id'] ) || $data['syllabus_id'] < 0 || ! is_string( $data['revision'] ?? null ) ) {
+			return Catalog::error( __( 'Choose one syllabus and provide its current revision.', 'ohmylms' ) );
+		}
+		return Items::exclusive(
+			static function () use ( $course_id, $data ) {
+				wp_cache_delete( $course_id, 'post_meta' );
+				if ( self::revision( $course_id ) !== $data['revision'] ) {
+					return Catalog::error( __( 'The syllabus alignment changed in another session. Reload before choosing a syllabus.', 'ohmylms' ), 409 );
+				}
+				$source   = $data['syllabus_id'];
+				$eligible = array_column( self::course_syllabuses(), null, 'id' );
+				if ( $source && ! isset( $eligible[ $source ] ) ) {
+					return Catalog::error( __( 'Choose a syllabus. A roadmap cannot be the course syllabus.', 'ohmylms' ) );
+				}
+				$references = array_values(
+					array_filter(
+						self::references( $course_id ),
+						static function ( $row ) use ( $source ) {
+							return $source === $row['syllabus_id'];
+						}
+					)
+				);
+				update_post_meta( $course_id, self::META, $references );
+				update_post_meta( $course_id, self::SOURCE_META, $source );
+				if ( (int) get_post_meta( $course_id, self::SOURCE_META, true ) !== $source || self::references( $course_id ) !== $references ) {
+					throw new \RuntimeException( 'Course syllabus save failed.' );
 				}
 				return true;
 			}

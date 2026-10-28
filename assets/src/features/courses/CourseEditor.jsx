@@ -13,6 +13,7 @@ import { useCourseEditor } from './useCourseEditor';
 import { useCourseIntegrations } from './useCourseIntegrations';
 import { courseEditPath } from './model.mjs';
 import { CourseObjectives } from './CourseObjectives';
+import { createCourseOrganization } from './CourseOrganization';
 import { CourseSaveStatus } from './CourseSaveStatus';
 import { CourseOutlineEditor } from './CourseOutlineEditor';
 
@@ -21,6 +22,7 @@ import { CourseOutlineEditor } from './CourseOutlineEditor';
  * @param readRuntime
  */
 export function createCourseEditor( readRuntime ) {
+	const CourseOrganization = createCourseOrganization( readRuntime );
 	return function CourseEditor( { courseId = null, enableSpin = false } ) {
 		const r = readRuntime();
 		const {
@@ -40,6 +42,9 @@ export function createCourseEditor( readRuntime ) {
 		const navigate = r.f.Zp();
 		const [ outlineDirty, setOutlineDirty ] = useState( false );
 		const [ outlineRevision, setOutlineRevision ] = useState( '' );
+		const [ skillSourceRevision, setSkillSourceRevision ] = useState( 0 );
+		const [ saveError, setSaveError ] = useState( '' );
+		const [ courseSaving, setCourseSaving ] = useState( false );
 		const [ pendingNavigation, setPendingNavigation ] = useState( null );
 		const requestNavigation = useCallback(
 			( target ) => {
@@ -89,6 +94,56 @@ export function createCourseEditor( readRuntime ) {
 		} );
 		const { contextHolder, openNotificationWithIcon } = r.z.A();
 		const course = editor.course;
+		async function saveCourse() {
+			if ( courseSaving ) {
+				return false;
+			}
+			setCourseSaving( true );
+			setSaveError( '' );
+			try {
+				if (
+					editor.dirty &&
+					! ( await editor.save( undefined, undefined, undefined, {
+						silent: true,
+					} ) )
+				) {
+					return false;
+				}
+				const path = `/ohmylms/v1/courses/${ courseId }/structure`;
+				const structure = await window.wp.apiFetch( { path } );
+				const saved = await window.wp.apiFetch( {
+					path,
+					method: 'PUT',
+					data: {
+						revision: structure.revision,
+						units: structure.units.filter(
+							( unit ) => unit.id > 0
+						),
+						program: structure.program,
+						activate: true,
+					},
+				} );
+				setOutlineRevision( saved.revision );
+				await editor.refreshStructure( { syncStatus: true } );
+				return true;
+			} catch ( cause ) {
+				setSaveError(
+					[ cause.message, ...( cause.data?.errors || [] ) ]
+						.filter( Boolean )
+						.join( ' ' )
+				);
+				return false;
+			} finally {
+				setCourseSaving( false );
+			}
+		}
+		useEffect( () => {
+			if ( step === 'preview' ) {
+				navigate( `/course-edit/${ courseId }/content`, {
+					replace: true,
+				} );
+			}
+		}, [ step, courseId, navigate ] );
 		const shownNotice = useRef( null );
 		const syllabusContent = ! editor.loading && course?.syllabus_id > 0;
 		const syllabusPath = syllabusContent ? courseEditPath( course ) : '';
@@ -153,7 +208,7 @@ export function createCourseEditor( readRuntime ) {
 					>
 						<p>
 							{ __(
-								'Save your outline draft before leaving, or discard these changes.',
+								'Save your course before leaving, or discard these changes.',
 								'ohmylms'
 							) }
 						</p>
@@ -231,16 +286,19 @@ export function createCourseEditor( readRuntime ) {
 									: value.description || ''
 							)
 						}
-						loading={ editor.loading || editor.saving }
+						loading={
+							editor.loading || editor.saving || courseSaving
+						}
 						courseName={ course?.name }
-						onSave={ editor.save }
+						courseUrl={ course?.course_url }
+						onSave={ saveCourse }
 						isCommunityEnabled={
 							editor.integrations?.community?.is_enable
 						}
 					/>
-					{ editor.error && (
+					{ ( editor.error || saveError ) && (
 						<p role="alert" className="ohmylms-course-save-error">
-							{ editor.error }
+							{ editor.error || saveError }
 						</p>
 					) }
 					{ ! editor.loading && course && step !== 'content' && (
@@ -249,7 +307,7 @@ export function createCourseEditor( readRuntime ) {
 							saving={ editor.saving }
 							savedAt={ editor.savedAt }
 							status={ course.status }
-							onSave={ editor.save }
+							onSave={ saveCourse }
 						/>
 					) }
 					<div
@@ -271,6 +329,9 @@ export function createCourseEditor( readRuntime ) {
 													<Fragment>
 														<div className="ohmylms-outline-frame">
 															<CourseOutlineEditor
+																skillSourceRevision={
+																	skillSourceRevision
+																}
 																onSaved={
 																	setOutlineRevision
 																}
@@ -306,6 +367,20 @@ export function createCourseEditor( readRuntime ) {
 																}
 																alignment={
 																	<CourseObjectives
+																		subjectControl={
+																			<CourseOrganization
+																				subjectOnly
+																			/>
+																		}
+																		onSourceChanged={ () =>
+																			setSkillSourceRevision(
+																				(
+																					value
+																				) =>
+																					value +
+																					1
+																			)
+																		}
 																		outlineRevision={
 																			outlineRevision
 																		}

@@ -154,7 +154,7 @@ export function CourseOutlineTree( {
 		if ( 'practice' !== item.type && ! item.status ) {
 			badge = __( 'Missing', 'ohmylms' );
 		} else if ( 'practice' !== item.type && 'publish' !== item.status ) {
-			badge = __( 'Draft', 'ohmylms' );
+			badge = __( 'Saved resource', 'ohmylms' );
 		} else if ( 'practice' === item.type && ! names?.[ item.content_id ] ) {
 			badge = __( 'Missing skill', 'ohmylms' );
 		} else if ( 'practice' === item.type ) {
@@ -190,6 +190,31 @@ export function CourseOutlineTree( {
 				>
 					{ label }
 				</Button>
+				{ item.skill_ids?.length > 0 && (
+					<div className="ohmylms-outline-linked-skills">
+						{ item.skill_ids.slice( 0, 3 ).map( ( id ) => (
+							<Button
+								variant="tertiary"
+								key={ id }
+								label={ sprintf(
+									/* translators: %s: skill name. */ __(
+										'Edit skill connections: %s',
+										'ohmylms'
+									),
+									outlineSkillName( names, id )
+								) }
+								onClick={ () =>
+									onSelect( 'activity', item.id )
+								}
+							>
+								{ outlineSkillName( names, id ) }
+							</Button>
+						) ) }
+						{ item.skill_ids.length > 3 && (
+							<span>+{ item.skill_ids.length - 3 }</span>
+						) }
+					</div>
+				) }
 				{ badge && (
 					<span className="ohmylms-outline-badge is-warning">
 						{ badge }

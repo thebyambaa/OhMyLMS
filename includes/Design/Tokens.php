@@ -269,7 +269,7 @@ final class Tokens {
 		wp_enqueue_style( 'ohmylms-admin-ui', plugins_url( 'assets/css/admin-ui.css', OHMYLMS_FILE ), array( 'ohmylms-main' ), $ui_version );
 		$question_editor_version = OHMYLMS_VERSION . '.' . substr( hash_file( 'sha256', OHMYLMS_DIR . '/assets/css/question-editor.css' ), 0, 12 );
 		wp_enqueue_style( 'ohmylms-question-editor', plugins_url( 'assets/css/question-editor.css', OHMYLMS_FILE ), array( 'ohmylms-admin-ui' ), $question_editor_version );
-		foreach ( array( 'question-stage', 'quiz-design', 'quiz-overview', 'course-objectives', 'skill-matrix', 'course-editor-ux', 'course-outline-editor', 'subject-profiles' ) as $file ) {
+		foreach ( array( 'question-stage', 'quiz-design', 'quiz-overview', 'course-objectives', 'skill-matrix', 'course-editor-ux', 'course-outline-editor', 'subject-profiles', 'library-curriculum' ) as $file ) {
 			wp_enqueue_style( 'ohmylms-' . $file, plugins_url( 'assets/css/' . $file . '.css', OHMYLMS_FILE ), array( 'ohmylms-question-editor' ), (string) filemtime( OHMYLMS_DIR . '/assets/css/' . $file . '.css' ) );
 		}
 		wp_add_inline_style( 'ohmylms-admin-ui', self::admin_css() );

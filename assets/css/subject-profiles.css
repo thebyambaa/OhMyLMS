@@ -1,4 +1,10 @@
 /* Subject profiles: list and editor of each subject's domains, levels and AI context. */
+.ohmylms-dashboard-layout.content-hub .ohmylms-content > section.ohmylms-subject-profiles-page {
+	box-sizing: border-box;
+	min-width: 0;
+	padding: 24px 24px 40px;
+}
+
 .ohmylms-subject-profiles {
 	display: grid;
 	grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
@@ -89,6 +95,10 @@
 }
 
 @media (max-width: 600px) {
+
+	.ohmylms-dashboard-layout.content-hub .ohmylms-content > section.ohmylms-subject-profiles-page {
+		padding: 16px 16px 24px;
+	}
 
 	.ohmylms-subject-profile-domain {
 		grid-template-columns: minmax(0, 1fr);

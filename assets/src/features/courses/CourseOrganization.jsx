@@ -16,7 +16,7 @@ import { restUrl } from '../restUrl.mjs';
  * @param readRuntime
  */
 export function createCourseOrganization( readRuntime ) {
-	return function CourseOrganization() {
+	return function CourseOrganization( { subjectOnly = false } = {} ) {
 		const {
 			I: Controls,
 			b: I18n,
@@ -191,7 +191,7 @@ export function createCourseOrganization( readRuntime ) {
 					</Controls.HeadingWP>
 					<p>
 						{ I18n.__(
-							'Choose the subjects for this course. Published courses appear under their subjects in the Library and Explore.',
+							'Choose the subject profiles for this course. Subject connections save immediately. Saved, publicly available courses appear under these subjects in the Library and Explore.',
 							'ohmylms'
 						) }
 					</p>
@@ -233,121 +233,36 @@ export function createCourseOrganization( readRuntime ) {
 							) }
 						</a>
 					</p>
-					<Controls.FlexWP gap={ 6 } align={ 'stretch' }>
-						<Controls.FlexItemWP flex={ 1 }>
-							<Controls.CardWP
-								isBorderless
-								variant={ 'secondary' }
-								fullHeight
-							>
-								<Controls.SpacerWP
-									marginBottom={ 0 }
-									padding={ 5 }
+					{ ! subjectOnly && (
+						<Controls.FlexWP gap={ 6 } align={ 'stretch' }>
+							<Controls.FlexItemWP flex={ 1 }>
+								<Controls.CardWP
+									isBorderless
+									variant={ 'secondary' }
+									fullHeight
 								>
-									<Controls.HeadingWP level={ 4 }>
-										{ I18n.__( 'Curriculum', 'ohmylms' ) }
-									</Controls.HeadingWP>
-									<p>
-										{ I18n.__(
-											'Place this course where it belongs in your curriculum. A course filter for an item also includes everything below it.',
-											'ohmylms'
-										) }
-									</p>
-									{ items.length === 0 ? (
+									<Controls.SpacerWP
+										marginBottom={ 0 }
+										padding={ 5 }
+									>
+										<Controls.HeadingWP level={ 4 }>
+											{ I18n.__(
+												'Curriculum',
+												'ohmylms'
+											) }
+										</Controls.HeadingWP>
 										<p>
 											{ I18n.__(
-												'There are no curriculum items yet.',
+												'Place this course where it belongs in your curriculum. A course filter for an item also includes everything below it.',
 												'ohmylms'
-											) }{ ' ' }
-											<a
-												href={ adminHref(
-													'curriculum'
-												) }
-												target="_blank"
-												rel="noopener noreferrer"
-											>
-												{ I18n.__(
-													'Create curriculum items',
-													'ohmylms'
-												) }
-											</a>
+											) }
 										</p>
-									) : (
-										<div>
-											<TextControl
-												label={ I18n.__(
-													'Find a curriculum item',
-													'ohmylms'
-												) }
-												value={ search }
-												onChange={ setSearch }
-												__nextHasNoMarginBottom
-											/>
-											<div
-												role="group"
-												aria-label={ I18n.__(
-													'Curriculum items',
-													'ohmylms'
-												) }
-												style={ {
-													maxHeight: 320,
-													overflowY: 'auto',
-												} }
-											>
-												{ visibleItems.map(
-													( item ) => (
-														<div
-															key={ item.id }
-															style={ {
-																paddingLeft:
-																	item.depth *
-																	20,
-																margin: '6px 0',
-															} }
-														>
-															<CheckboxControl
-																__nextHasNoMarginBottom
-																label={
-																	item.code
-																		? `${ item.name } (${ item.code })`
-																		: item.name
-																}
-																checked={ curriculumIds.includes(
-																	item.id
-																) }
-																disabled={
-																	busy
-																}
-																onChange={ (
-																	checked
-																) =>
-																	save(
-																		'curriculum_ids',
-																		toggleId(
-																			curriculumIds,
-																			item.id,
-																			checked
-																		),
-																		curriculumIds,
-																		setCurriculumIds
-																	)
-																}
-															/>
-														</div>
-													)
-												) }
-												{ search &&
-													visibleItems.length ===
-														0 && (
-														<p>
-															{ I18n.__(
-																'No curriculum items match your search.',
-																'ohmylms'
-															) }
-														</p>
-													) }
-											</div>
+										{ items.length === 0 ? (
 											<p>
+												{ I18n.__(
+													'There are no curriculum items yet.',
+													'ohmylms'
+												) }{ ' ' }
 												<a
 													href={ adminHref(
 														'curriculum'
@@ -356,17 +271,107 @@ export function createCourseOrganization( readRuntime ) {
 													rel="noopener noreferrer"
 												>
 													{ I18n.__(
-														'Manage the curriculum',
+														'Create curriculum items',
 														'ohmylms'
 													) }
 												</a>
 											</p>
-										</div>
-									) }
-								</Controls.SpacerWP>
-							</Controls.CardWP>
-						</Controls.FlexItemWP>
-					</Controls.FlexWP>
+										) : (
+											<div>
+												<TextControl
+													label={ I18n.__(
+														'Find a curriculum item',
+														'ohmylms'
+													) }
+													value={ search }
+													onChange={ setSearch }
+													__nextHasNoMarginBottom
+												/>
+												<div
+													role="group"
+													aria-label={ I18n.__(
+														'Curriculum items',
+														'ohmylms'
+													) }
+													style={ {
+														maxHeight: 320,
+														overflowY: 'auto',
+													} }
+												>
+													{ visibleItems.map(
+														( item ) => (
+															<div
+																key={ item.id }
+																style={ {
+																	paddingLeft:
+																		item.depth *
+																		20,
+																	margin: '6px 0',
+																} }
+															>
+																<CheckboxControl
+																	__nextHasNoMarginBottom
+																	label={
+																		item.code
+																			? `${ item.name } (${ item.code })`
+																			: item.name
+																	}
+																	checked={ curriculumIds.includes(
+																		item.id
+																	) }
+																	disabled={
+																		busy
+																	}
+																	onChange={ (
+																		checked
+																	) =>
+																		save(
+																			'curriculum_ids',
+																			toggleId(
+																				curriculumIds,
+																				item.id,
+																				checked
+																			),
+																			curriculumIds,
+																			setCurriculumIds
+																		)
+																	}
+																/>
+															</div>
+														)
+													) }
+													{ search &&
+														visibleItems.length ===
+															0 && (
+															<p>
+																{ I18n.__(
+																	'No curriculum items match your search.',
+																	'ohmylms'
+																) }
+															</p>
+														) }
+												</div>
+												<p>
+													<a
+														href={ adminHref(
+															'curriculum'
+														) }
+														target="_blank"
+														rel="noopener noreferrer"
+													>
+														{ I18n.__(
+															'Manage the curriculum',
+															'ohmylms'
+														) }
+													</a>
+												</p>
+											</div>
+										) }
+									</Controls.SpacerWP>
+								</Controls.CardWP>
+							</Controls.FlexItemWP>
+						</Controls.FlexWP>
+					) }
 				</Controls.SpacerWP>
 			</Controls.CardWP>
 		);

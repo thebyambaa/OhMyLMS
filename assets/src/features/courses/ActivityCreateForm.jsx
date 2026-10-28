@@ -75,7 +75,7 @@ export function ActivityCreateForm( {
 							'ohmylms'
 						)
 					: __(
-							'Create a draft resource here, then save the outline to keep its placement. Finish and publish the resource in its content editor.',
+							'Create a resource here, edit its content, then save the course to make it available to learners.',
 							'ohmylms'
 						) }
 			</p>
@@ -153,7 +153,7 @@ export function ActivityCreateForm( {
 			>
 				{ lessonOnly
 					? __( 'Create lesson', 'ohmylms' )
-					: __( 'Create draft activity', 'ohmylms' ) }
+					: __( 'Create activity', 'ohmylms' ) }
 			</Button>
 		</div>
 	);

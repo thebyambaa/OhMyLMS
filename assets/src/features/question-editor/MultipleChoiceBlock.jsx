@@ -34,6 +34,7 @@ import {
 	fromQuestionBlock,
 } from './questionSource.mjs';
 import { BankPicker } from '../question-bank/BankPicker';
+import { PaperInserter } from '../paper/PaperInserter';
 import { TemplatePanel } from './TemplatePanel';
 import { defaultTemplate } from './templateModel.mjs';
 import { MathVariables } from '../math/MathInput';
@@ -507,6 +508,9 @@ export function registerMultipleChoiceBlock( LessonEdit ) {
 		const content = <LessonEdit { ...props } />;
 		return (
 			<div { ...blockProps }>
+				{ props.isSelected && postType === 'ohmylms-quiz' && (
+					<PaperInserter clientId={ props.clientId } />
+				) }
 				{ props.isSelected && ! paper && (
 					<QuestionSourceSwitch
 						source="write"

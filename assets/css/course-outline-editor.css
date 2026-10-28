@@ -239,6 +239,7 @@
 
 .ohmylms-outline-row {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 4px;
 	align-items: center;
 	border-radius: 4px;
@@ -379,6 +380,14 @@
 	height: auto;
 	margin-bottom: 8px;
 	text-align: start;
+}
+
+.ohmylms-outline-linked-skills .components-button {
+ height: auto;
+ padding: 4px 8px;
+ border-radius: 12px;
+ background: #eef4ff;
+ font-size: 12px;
 }
 
 .ohmylms-outline-editor > .components-notice .components-button {
@@ -642,4 +651,227 @@
 .ohmylms-lesson-connections p,
 .ohmylms-activity-connections p {
 	line-height: 1.5;
+}
+
+.ohmylms-outline-skills-toolbar,
+.ohmylms-skill-chips {
+ display: flex;
+ flex-wrap: wrap;
+ gap: 8px;
+ margin-bottom: 16px;
+}
+
+.ohmylms-course-skills > .components-base-control {
+ margin-top: 16px;
+}
+
+.ohmylms-course-skill-card {
+ padding: 16px 0;
+ border-top: 1px solid #dcdcde;
+}
+
+.ohmylms-course-skill-card > strong {
+ display: block;
+ margin-bottom: 8px;
+}
+
+.ohmylms-activity-skill-options,
+.ohmylms-outline-skill-results {
+ max-height: 320px;
+ padding: 8px;
+ overflow-y: auto;
+ border: 1px solid #dcdcde;
+ border-radius: 4px;
+}
+
+.ohmylms-outline-linked-skills {
+ display: flex;
+ flex-wrap: wrap;
+ gap: 4px;
+ width: 100%;
+ padding-left: 28px;
+}
+
+.ohmylms-picker-tree,
+.ohmylms-picker-tree ul {
+ margin: 0;
+ padding: 0;
+ list-style: none;
+}
+
+.ohmylms-picker-tree ul {
+ margin-left: 20px;
+ padding-left: 12px;
+ border-left: 1px solid #dcdcde;
+}
+
+.ohmylms-picker-branch-toggle.components-button {
+ display: flex;
+ gap: 8px;
+ width: 100%;
+ height: auto;
+ min-height: 40px;
+ text-align: left;
+ white-space: normal;
+ font-weight: 600;
+}
+
+.ohmylms-picker-branch-toggle small {
+ color: #646970;
+ font-weight: 400;
+}
+
+.ohmylms-picker-skill {
+ padding: 10px 8px;
+ border-bottom: 1px solid #f0f0f0;
+}
+
+.ohmylms-picker-controls {
+ display: flex;
+ gap: 8px;
+ align-items: center;
+ margin: 8px 0;
+}
+
+.ohmylms-outline-title-row {
+ display: flex;
+ flex-wrap: wrap;
+ gap: 8px 16px;
+ align-items: center;
+ margin-bottom: 4px;
+}
+
+.ohmylms-outline-editor .ohmylms-outline-heading .ohmylms-readiness-indicator {
+ display: inline-flex;
+ gap: 8px;
+ height: auto;
+ min-height: 32px;
+ padding: 6px 12px;
+ border: 1px solid currentcolor;
+ border-radius: 16px;
+ color: #50575e;
+ background: #f6f7f7;
+ font-size: 13px;
+ text-align: start;
+}
+
+.ohmylms-readiness-dot {
+ flex: none;
+ width: 8px;
+ height: 8px;
+ border-radius: 50%;
+ background: currentcolor;
+}
+
+.ohmylms-outline-editor .ohmylms-outline-heading .ohmylms-readiness-indicator.is-blocked,
+.ohmylms-outline-editor .ohmylms-outline-heading .ohmylms-readiness-indicator.is-unavailable {
+ color: #b32d2e;
+ background: #fcf0f1;
+}
+
+.ohmylms-outline-editor .ohmylms-outline-heading .ohmylms-readiness-indicator.is-suggestions,
+.ohmylms-outline-editor .ohmylms-outline-heading .ohmylms-readiness-indicator.is-unsaved {
+ color: #855800;
+ background: #fcf9e8;
+}
+
+.ohmylms-outline-editor .ohmylms-outline-heading .ohmylms-readiness-indicator.is-ready {
+ color: #006b1b;
+ background: #edfaef;
+}
+
+.ohmylms-outline-readiness-panel {
+	max-height: 480px;
+ margin-bottom: 20px;
+	overflow: auto;
+}
+
+.ohmylms-outline-heading .ohmylms-outline-title {
+ flex: 1 1 100%;
+ min-width: 0;
+}
+
+.ohmylms-outline-editor .ohmylms-course-info-header.is-compact {
+ display: block;
+ width: 100%;
+ min-height: 0;
+ margin: 0;
+ padding: 0;
+ border: 0;
+ background: transparent;
+ box-shadow: none;
+}
+
+.ohmylms-course-info-header.is-compact .ohmylms-course-content-info {
+ width: 100%;
+ max-width: none;
+}
+
+.ohmylms-course-info-header.is-compact .ohmylms-course-name-row {
+ display: flex;
+ flex-wrap: wrap;
+ gap: 8px 16px;
+ align-items: center;
+}
+
+.ohmylms-course-info-header.is-compact .ohmylms-course-name-row > .ohmylms-course-title {
+ flex: 1 1 340px;
+ min-width: 0;
+}
+
+.ohmylms-course-info-header.is-compact .ohmylms-course-title input {
+ width: 100%;
+}
+
+.ohmylms-course-media-details {
+ margin: 8px 0;
+}
+
+.ohmylms-course-media-details summary {
+ color: #3858e9;
+ font-size: 13px;
+ cursor: pointer;
+}
+
+.ohmylms-course-media-details > div {
+ max-width: 320px;
+ margin-top: 12px;
+}
+
+/* stylelint-disable-next-line selector-class-pattern -- WordPress supplies this admin body class; match the legacy modal sizing rule's scope. */
+.toplevel_page_ohmylms .ohmylms-outline-block-editor.components-modal__frame {
+ width: calc(100vw - 32px);
+ max-width: 1600px;
+
+ /* Override the legacy admin application's automatic modal height. */
+ height: calc(100vh - 32px) !important;
+ max-height: calc(100vh - 32px) !important;
+}
+
+.ohmylms-outline-block-editor .components-modal__content {
+ display: flex;
+ flex-direction: column;
+ overflow: hidden;
+}
+
+/* stylelint-disable-next-line selector-class-pattern -- WordPress Modal owns this wrapper; it must stretch to contain the native editor. */
+.ohmylms-outline-block-editor .components-modal__children-container {
+ display: flex;
+ flex: 1;
+ flex-direction: column;
+ min-height: 0;
+}
+
+.ohmylms-outline-block-editor-help {
+ display: flex;
+ gap: 16px;
+ align-items: center;
+ justify-content: space-between;
+}
+
+.ohmylms-outline-block-editor iframe {
+ flex: 1;
+ width: 100%;
+ min-height: 250px;
+ border: 1px solid #ddd;
 }

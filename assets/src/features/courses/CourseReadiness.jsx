@@ -64,8 +64,16 @@ export function CourseReadiness( {
 		( report?.skills.filter( ( skill ) => ! skill.ready ).length || 0 );
 	const ready = !! report?.ready;
 	useEffect( () => {
-		onSummary( dirty || ! report ? null : { ready, blocked } );
-	}, [ dirty, report, ready, blocked, onSummary ] );
+		if ( dirty ) {
+			onSummary( null );
+		} else if ( error ) {
+			onSummary( { unavailable: true } );
+		} else {
+			onSummary(
+				report ? { ready, blocked, suggestions: skills.length } : null
+			);
+		}
+	}, [ dirty, report, error, ready, blocked, skills.length, onSummary ] );
 	function selectSkill( skill ) {
 		const outcome = draft.program.outcomes.find(
 			( row ) => row.term_id === skill.term_id
@@ -84,7 +92,7 @@ export function CourseReadiness( {
 			{ dirty ? (
 				<p role="status">
 					{ __(
-						'Save outline draft to check publishing requirements for your latest changes. Lesson guidance below reflects your current edits.',
+						'Save course to check content requirements for your latest changes. Lesson guidance below reflects your current edits.',
 						'ohmylms'
 					) }
 				</p>
@@ -97,12 +105,12 @@ export function CourseReadiness( {
 							<h3>
 								{ report.ready
 									? __(
-											'Saved draft passes publishing checks',
+											'Saved course passes content checks',
 											'ohmylms'
 										)
 									: sprintf(
 											/* translators: %d: number of publishing blockers. */ __(
-												'Publishing blockers: %d',
+												'Content checks: %d',
 												'ohmylms'
 											),
 											blocked
@@ -154,7 +162,7 @@ export function CourseReadiness( {
 								<>
 									<h4>
 										{ __(
-											'Unpublished resources — publishing blockers',
+											'Saved resources to include',
 											'ohmylms'
 										) }
 									</h4>
@@ -210,7 +218,7 @@ export function CourseReadiness( {
 																rel="noreferrer"
 															>
 																{ __(
-																	'Edit and publish resource',
+																	'Edit saved resource',
 																	'ohmylms'
 																) }
 															</Button>
@@ -232,7 +240,7 @@ export function CourseReadiness( {
 									</h4>
 									<p>
 										{ __(
-											'Required skill gaps block publishing. Optional skill gaps are guidance. Counts use this course’s allowed question pool; importing questions alone does not approve them or add them to a restricted pool.',
+											'Required skill gaps need attention before saving for learners. Optional skill gaps are guidance. Counts use this course’s allowed question pool; importing questions alone does not approve them or add them to a restricted pool.',
 											'ohmylms'
 										) }
 									</p>
@@ -254,7 +262,7 @@ export function CourseReadiness( {
 																'ohmylms'
 															)
 														: __(
-																'Required skill — publishing blocker',
+																'Required skill — content check',
 																'ohmylms'
 															) }
 													{ ' · ' }
@@ -311,7 +319,7 @@ export function CourseReadiness( {
 			<h3>{ __( 'Lesson guidance', 'ohmylms' ) }</h3>
 			<p>
 				{ __(
-					'Coverage suggestions help you build complete lessons. They do not add publishing requirements.',
+					'Coverage suggestions help you build complete lessons. They do not add completion requirements.',
 					'ohmylms'
 				) }
 			</p>

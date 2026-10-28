@@ -784,11 +784,17 @@ final class Catalog {
 	 * @param array $args Operation arguments.
 	 */
 	public static function lessons( array $args ) {
+		$curriculum = absint( $args['curriculum'] ?? 0 );
+		$candidates = $curriculum ? LessonCurriculum::ids( $curriculum ) : null;
+		if ( is_wp_error( $candidates ) ) {
+			return $candidates;
+		}
 		$status   = (string) ( $args['status'] ?? '' );
 		$statuses = array( 'publish', 'draft', 'pending', 'private', 'future' );
 		$query    = new \WP_Query(
 			array(
 				'post_type'      => OHMYLMS_LESSON_CPT,
+				'post__in'       => null === $candidates ? array() : ( $candidates ? $candidates : array( 0 ) ),
 				'post_status'    => in_array( $status, $statuses, true ) ? $status : $statuses,
 				's'              => (string) ( $args['search'] ?? '' ),
 				'posts_per_page' => max( 1, min( 50, (int) ( $args['per_page'] ?? 20 ) ) ),
@@ -912,7 +918,9 @@ final class Catalog {
 					'post_status'  => 'draft',
 					'post_author'  => get_current_user_id(),
 					'post_title'   => sprintf( /* translators: %s: text value. */
-					__( '%s (copy)', 'ohmylms' ), $post->post_title ),
+						__( '%s (copy)', 'ohmylms' ),
+						$post->post_title
+					),
 					'post_content' => $post->post_content,
 					'post_excerpt' => $post->post_excerpt,
 				)

@@ -1,6 +1,7 @@
 /** @jsx createElement */
 import {
 	createElement,
+	cloneElement,
 	useCallback,
 	useEffect,
 	useState,
@@ -18,12 +19,15 @@ import {
 import apiFetch from '@wordpress/api-fetch';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { withNativeReturn } from '../content-hub/editorNavigation.mjs';
-import { CourseStructurePublish } from './CourseStructurePublish';
+
 import { ActivityCreateForm } from './ActivityCreateForm';
+import { OutlineBlockEditor } from './OutlineBlockEditor';
 import { CourseReadiness } from './CourseReadiness';
 import { CourseOutlineTree, outlineSkillName } from './CourseOutlineTree';
+import { CourseSkillsPanel, OutlineAddSkills } from './OutlineSkills';
 import { SkillProvenance } from './SkillProvenance';
 import { lessonSkillIds, linkLessonSkill } from './lessonSkills.mjs';
+import { connectActivitySkills } from './activitySkills.mjs';
 import {
 	CourseSkillCoverage,
 	ActivitySkillConnections,
@@ -65,13 +69,14 @@ const key = ( value ) =>
 /**
  * Unified course, unit, lesson and activity authoring with one saved revision.
  *
- * @param {Object}                     root0               Component properties.
- * @param {number}                     root0.courseId      Course ID.
- * @param {Object}                     root0.editor        Course metadata editor.
- * @param {(dirty: boolean) => void}   root0.onDirtyChange Track unsaved outline edits in navigation.
- * @param {(revision: string) => void} root0.onSaved       Refresh related course coverage after a save.
- * @param {Element}                    root0.courseInfo    Course information and media fields.
- * @param {Element}                    root0.alignment     Syllabus objective mappings.
+ * @param {Object}                     root0                     Component properties.
+ * @param {number}                     root0.courseId            Course ID.
+ * @param {Object}                     root0.editor              Course metadata editor.
+ * @param {(dirty: boolean) => void}   root0.onDirtyChange       Track unsaved outline edits in navigation.
+ * @param {(revision: string) => void} root0.onSaved             Refresh related course coverage after a save.
+ * @param {Element}                    root0.courseInfo          Course information and media fields.
+ * @param {Element}                    root0.alignment           Syllabus objective mappings.
+ * @param {number}                     root0.skillSourceRevision Current syllabus choice revision.
  */
 export function CourseOutlineEditor( {
 	courseId,
@@ -80,6 +85,7 @@ export function CourseOutlineEditor( {
 	onSaved,
 	courseInfo,
 	alignment,
+	skillSourceRevision,
 } ) {
 	const [ draft, setDraft ] = useState( null );
 	const [ baseline, setBaseline ] = useState( '' );
@@ -88,6 +94,7 @@ export function CourseOutlineEditor( {
 	const [ error, setError ] = useState( '' );
 	const [ notice, setNotice ] = useState( '' );
 	const [ picker, setPicker ] = useState( null );
+	const [ skillPicker, setSkillPicker ] = useState( null );
 	const [ pickerBusy, setPickerBusy ] = useState( false );
 	const [ kind, setKind ] = useState( 'lesson' );
 	const [ search, setSearch ] = useState( '' );
@@ -98,6 +105,8 @@ export function CourseOutlineEditor( {
 	const [ discard, setDiscard ] = useState( false );
 	const [ tab, setTab ] = useState( 'outline' );
 	const [ readiness, setReadiness ] = useState( null );
+	const [ readinessOpen, setReadinessOpen ] = useState( false );
+	const [ blockEditor, setBlockEditor ] = useState( null );
 	const dirty = draft && key( draft ) !== baseline;
 	const adopt = useCallback( ( data ) => {
 		const next = {
@@ -257,6 +266,7 @@ export function CourseOutlineEditor( {
 				method: 'PUT',
 				data: {
 					revision: draft.revision,
+					activate: true,
 					units: draft.units,
 					program: {
 						...draft.program,
@@ -269,13 +279,21 @@ export function CourseOutlineEditor( {
 			} );
 			adopt( result );
 			setSelected( null );
-			await editor.refreshStructure();
+			await editor.refreshStructure( { syncStatus: true } );
 			onSaved?.( result.revision );
-			setNotice( __( 'Outline draft saved.', 'ohmylms' ) );
+			setNotice(
+				__(
+					'Course saved. Learners now use the saved outline.',
+					'ohmylms'
+				)
+			);
 			return true;
 		} catch ( cause ) {
 			setError(
-				cause.message || __( 'Could not save the outline.', 'ohmylms' )
+				[ cause.message, ...( cause.data?.errors || [] ) ]
+					.filter( Boolean )
+					.join( ' ' ) ||
+					__( 'Could not save the course.', 'ohmylms' )
 			);
 			return false;
 		} finally {
@@ -320,10 +338,7 @@ export function CourseOutlineEditor( {
 			style: checkpoint ? initialKind : '',
 			lesson: 'lesson' === initialKind,
 			skills: 'skills' === initialKind,
-			create:
-				!! initialKind &&
-				! [ 'practice', 'skills' ].includes( initialKind ) &&
-				! checkpoint,
+			create: false,
 			requestId: uuid(),
 		} );
 	}
@@ -447,6 +462,61 @@ export function CourseOutlineEditor( {
 		} );
 		setPicker( null );
 	}
+	function addSelectedSkills( rows ) {
+		setDraft( ( current ) => {
+			const outcomes = [ ...current.program.outcomes ];
+			const names = { ...current.skill_names };
+			const codes = { ...current.skill_codes };
+			for ( const row of rows ) {
+				names[ row.term_id ] = row.name;
+				if ( row.code ) {
+					codes[ row.term_id ] = row.code;
+				}
+				if (
+					! outcomes.some(
+						( outcome ) => outcome.term_id === row.term_id
+					)
+				) {
+					outcomes.push( {
+						term_id: row.term_id,
+						target: 'proficient',
+						required: false,
+						...( skillPicker.unitId
+							? { chapter_id: skillPicker.unitId }
+							: {} ),
+					} );
+				}
+			}
+			const ids = rows.map( ( row ) => row.term_id );
+			const items = current.program.items.map( ( item ) =>
+				item.id === skillPicker.activityId
+					? {
+							...item,
+							skill_ids: [
+								...new Set( [
+									...( item.skill_ids || [] ),
+									...ids,
+								] ),
+							],
+						}
+					: item
+			);
+			return {
+				...current,
+				skill_names: names,
+				skill_codes: codes,
+				program: { ...current.program, outcomes, items },
+			};
+		} );
+		setSkillPicker( null );
+		setError( '' );
+		setNotice(
+			__(
+				'Skills added. Save the course to keep these connections.',
+				'ohmylms'
+			)
+		);
+	}
 	async function removeUnit( unit ) {
 		if ( typeof unit.id === 'string' ) {
 			change( {
@@ -532,21 +602,65 @@ export function CourseOutlineEditor( {
 		saving: __( 'Saving…', 'ohmylms' ),
 		unsaved: __( 'Unsaved changes', 'ohmylms' ),
 		unpublished: __(
-			'Draft saved · not yet published to learners',
+			'Saved changes are waiting to be applied. Choose Save course.',
 			'ohmylms'
 		),
-		published: __( 'Published · learners see this outline', 'ohmylms' ),
+		published: __( 'Saved · learners see this outline', 'ohmylms' ),
 	}[ status ];
+	let readinessState = 'checking';
+	let readinessLabel = __( 'Checking readiness…', 'ohmylms' );
+	if ( dirty ) {
+		readinessState = 'unsaved';
+		readinessLabel = __( 'Save to check readiness', 'ohmylms' );
+	} else if ( readiness?.unavailable ) {
+		readinessState = 'unavailable';
+		readinessLabel = __( 'Readiness unavailable', 'ohmylms' );
+	} else if ( readiness && ! readiness.ready ) {
+		readinessState = 'blocked';
+		readinessLabel = sprintf(
+			/* translators: %d: publishing blocker count. */ _n(
+				'%d check needs attention',
+				'%d checks need attention',
+				readiness.blocked,
+				'ohmylms'
+			),
+			readiness.blocked
+		);
+	} else if ( readiness?.suggestions ) {
+		readinessState = 'suggestions';
+		readinessLabel = __( 'Ready with suggestions', 'ohmylms' );
+	} else if ( readiness?.ready ) {
+		readinessState = 'ready';
+		readinessLabel = __( 'Ready', 'ohmylms' );
+	}
+	const readinessIndicator = (
+		<Button
+			className={ `ohmylms-readiness-indicator is-${ readinessState }` }
+			aria-label={ sprintf(
+				/* translators: %s: readiness status. */ __(
+					'Course readiness: %s',
+					'ohmylms'
+				),
+				readinessLabel
+			) }
+			aria-controls="ohmylms-outline-readiness-details"
+			aria-expanded={ tab === 'outline' && readinessOpen }
+			onClick={ () => {
+				setReadinessOpen( tab !== 'outline' || ! readinessOpen );
+				setTab( 'outline' );
+			} }
+		>
+			<span className="ohmylms-readiness-dot" aria-hidden="true" />
+			<span aria-live="polite">{ readinessLabel }</span>
+			<span aria-hidden="true">
+				{ tab === 'outline' && readinessOpen ? '▴' : '▾' }
+			</span>
+		</Button>
+	);
 	const tabs = [
 		[ 'outline', __( 'Outline', 'ohmylms' ) ],
 		[ 'skills', __( 'Skill connections', 'ohmylms' ) ],
-		[
-			'readiness',
-			__( 'Readiness', 'ohmylms' ),
-			readiness ? readiness.blocked : undefined,
-		],
 		[ 'alignment', __( 'Syllabus alignment', 'ohmylms' ) ],
-		[ 'info', __( 'Course info', 'ohmylms' ) ],
 	];
 	const tabKey = ( event ) => {
 		const index = tabs.findIndex( ( [ value ] ) => value === tab );
@@ -635,29 +749,26 @@ export function CourseOutlineEditor( {
 			) }
 			<header className="ohmylms-outline-heading">
 				<div className="ohmylms-outline-title">
-					<h1>{ __( 'Course outline', 'ohmylms' ) }</h1>
+					{ courseInfo ? (
+						cloneElement( courseInfo, {
+							compact: true,
+							afterTitle: readinessIndicator,
+						} )
+					) : (
+						<div className="ohmylms-outline-title-row">
+							<h1>
+								{ editor.course?.name ||
+									__( 'Untitled course', 'ohmylms' ) }
+							</h1>
+							{ readinessIndicator }
+						</div>
+					) }
 					<p className={ `ohmylms-outline-status is-${ status }` }>
 						<span
 							className="ohmylms-outline-status-dot"
 							aria-hidden="true"
 						/>
 						{ statusText }
-						{ readiness && ! readiness.ready && (
-							<Button
-								variant="link"
-								onClick={ () => setTab( 'readiness' ) }
-							>
-								{ sprintf(
-									/* translators: %d: number of publishing blockers. */ _n(
-										'%d publishing blocker',
-										'%d publishing blockers',
-										readiness.blocked,
-										'ohmylms'
-									),
-									readiness.blocked
-								) }
-							</Button>
-						) }
 					</p>
 				</div>
 				<div className="ohmylms-outline-actions">
@@ -675,32 +786,20 @@ export function CourseOutlineEditor( {
 					<Button
 						variant={ dirty ? 'primary' : 'secondary' }
 						disabled={
-							busy || ! ( dirty || editor.dirty ) || editor.saving
+							busy ||
+							! (
+								dirty ||
+								editor.dirty ||
+								draft.unpublished_changes ||
+								editor.course?.status !== 'publish'
+							) ||
+							editor.saving
 						}
 						onClick={ save }
 						isBusy={ busy }
 					>
-						{ __( 'Save outline draft', 'ohmylms' ) }
+						{ __( 'Save course', 'ohmylms' ) }
 					</Button>
-					<CourseStructurePublish
-						primary={ ! dirty && 'unpublished' === status }
-						onPublished={ ( revision ) =>
-							setDraft( ( current ) => ( {
-								...current,
-								revision,
-								unpublished_changes: false,
-							} ) )
-						}
-						onNotice={ setNotice }
-						onError={ setError }
-						courseId={ courseId }
-						editor={ {
-							...editor,
-							dirty: dirty || editor.dirty,
-							saving: busy || editor.saving,
-							save,
-						} }
-					/>
 				</div>
 			</header>
 			{ error && (
@@ -792,34 +891,7 @@ export function CourseOutlineEditor( {
 					} }
 				/>
 			</div>
-			<div
-				role="tabpanel"
-				id="ohmylms-outline-panel-readiness"
-				aria-labelledby="ohmylms-outline-tab-readiness"
-				hidden={ tab !== 'readiness' }
-			>
-				<CourseReadiness
-					courseId={ courseId }
-					draft={ draft }
-					dirty={ !! dirty }
-					onSummary={ setReadiness }
-					onRemoveMissing={ () => removeSkills( missing ) }
-					onSelect={ ( type, id ) => {
-						setTab( 'outline' );
-						select( type, id );
-						window.requestAnimationFrame( () => {
-							const inspector = document.querySelector(
-								'.ohmylms-outline-inspector'
-							);
-							inspector?.scrollIntoView( {
-								block: 'start',
-								behavior: 'smooth',
-							} );
-							inspector?.focus();
-						} );
-					} }
-				/>
-			</div>
+
 			<div
 				role="tabpanel"
 				id="ohmylms-outline-panel-alignment"
@@ -828,21 +900,77 @@ export function CourseOutlineEditor( {
 			>
 				{ alignment }
 			</div>
-			<div
-				role="tabpanel"
-				id="ohmylms-outline-panel-info"
-				aria-labelledby="ohmylms-outline-tab-info"
-				className="ohmylms-outline-course-info"
-				hidden={ tab !== 'info' }
-			>
-				{ courseInfo }
-			</div>
+
 			<div
 				role="tabpanel"
 				id="ohmylms-outline-panel-outline"
 				aria-labelledby="ohmylms-outline-tab-outline"
 				hidden={ tab !== 'outline' }
 			>
+				<div
+					id="ohmylms-outline-readiness-details"
+					className="ohmylms-outline-readiness-panel"
+
+					hidden={ ! readinessOpen }
+				>
+					<Button
+						variant="tertiary"
+						onClick={ () => setReadinessOpen( false ) }
+					>
+						{ __( 'Hide readiness details', 'ohmylms' ) }
+					</Button>
+					<CourseReadiness
+						courseId={ courseId }
+						draft={ draft }
+						dirty={ !! dirty }
+						onSummary={ setReadiness }
+						onRemoveMissing={ () => removeSkills( missing ) }
+						onSelect={ ( type, id ) => {
+							setTab( 'outline' );
+							setReadinessOpen( false );
+							select( type, id );
+							window.requestAnimationFrame( () => {
+								const inspector = document.querySelector(
+									'.ohmylms-outline-inspector'
+								);
+								inspector?.scrollIntoView( {
+									block: 'start',
+									behavior: 'smooth',
+								} );
+								inspector?.focus();
+							} );
+						} }
+					/>
+				</div>
+				<div className="ohmylms-outline-skills-toolbar">
+					<Button
+						variant="secondary"
+						onClick={ () => setSelected( null ) }
+					>
+						{ sprintf(
+							/* translators: %d: course skills. */ __(
+								'Course skills (%d)',
+								'ohmylms'
+							),
+							draft.program.outcomes.length
+						) }
+					</Button>
+					<Button
+						variant="secondary"
+						disabled={ busy }
+						onClick={ () =>
+							setSkillPicker( {
+								unitId: unit?.id || activity?.chapter_id,
+								activityId:
+									activity?.type === 'practice'
+										? null
+										: activity?.id,
+							} )
+						}
+					>
+						{ __( 'Add skills', 'ohmylms' ) }
+					</Button>
+				</div>
 				<div className="ohmylms-outline-columns">
 					<CourseOutlineTree
 						draft={ draft }
@@ -855,75 +983,12 @@ export function CourseOutlineEditor( {
 					/>
 					<div className="ohmylms-outline-inspector" tabIndex={ -1 }>
 						{ ! unit && ! activity && ! skill && (
-							<div>
-								<h2>
-									{ __( 'Course completion', 'ohmylms' ) }
-								</h2>
-								<p>
-									{ __(
-										'Select an activity in the outline to require its completion. Required skills also need enough approved questions for their target.',
-										'ohmylms'
-									) }
-								</p>
-								{ draft.program.outcomes.length > 0 && (
-									<fieldset>
-										<legend>
-											{ __(
-												'Skills required for completion',
-												'ohmylms'
-											) }
-										</legend>
-										{ draft.program.outcomes.map(
-											( outcome ) => (
-												<CheckboxControl
-													key={ outcome.term_id }
-													label={ outlineSkillName(
-														draft.skill_names,
-														outcome.term_id
-													) }
-													checked={
-														!! outcome.required
-													}
-													disabled={ busy }
-													onChange={ ( required ) =>
-														program( {
-															outcomes:
-																draft.program.outcomes.map(
-																	( row ) =>
-																		row.term_id ===
-																		outcome.term_id
-																			? {
-																					...row,
-																					required,
-																				}
-																			: row
-																),
-														} )
-													}
-												/>
-											)
-										) }
-									</fieldset>
-								) }
-								{ draft.units.length === 0 ? (
-									<Button
-										variant="primary"
-										onClick={ addUnit }
-									>
-										{ __(
-											'Add your first unit',
-											'ohmylms'
-										) }
-									</Button>
-								) : (
-									<p className="ohmylms-outline-hint">
-										{ __(
-											'Each unit holds lessons, practice, quizzes and assignments. Select anything in the outline to edit it.',
-											'ohmylms'
-										) }
-									</p>
-								) }
-							</div>
+							<CourseSkillsPanel
+								draft={ draft }
+								busy={ busy }
+								onAdd={ () => setSkillPicker( {} ) }
+								onChange={ program }
+							/>
 						) }
 						{ skill && (
 							<div>
@@ -1103,7 +1168,7 @@ export function CourseOutlineEditor( {
 									variant="secondary"
 									disabled={ busy }
 									onClick={ () =>
-										openPicker( unit.id, '', 'skills' )
+										setSkillPicker( { unitId: unit.id } )
 									}
 								>
 									{ __( 'Link course skills', 'ohmylms' ) }
@@ -1136,7 +1201,7 @@ export function CourseOutlineEditor( {
 											isDismissible={ false }
 										>
 											{ __(
-												'This resource is a draft. Finish and publish it in its content editor before publishing the outline.',
+												'This saved resource will be available to learners when you save the course.',
 												'ohmylms'
 											) }
 										</Notice>
@@ -1178,23 +1243,28 @@ export function CourseOutlineEditor( {
 									</>
 								) : (
 									<ActivitySkillConnections
+										skillSourceRevision={
+											skillSourceRevision
+										}
+										courseId={ courseId }
 										draft={ draft }
 										activity={ activity }
 										busy={ busy }
-										onSelect={ select }
-										onChange={ ( skillIds ) =>
-											program( {
-												items: draft.program.items.map(
-													( item ) =>
-														item.id === activity.id
-															? {
-																	...item,
-																	skill_ids:
-																		skillIds,
-																}
-															: item
-												),
+										onAdd={ () =>
+											setSkillPicker( {
+												unitId: activity.chapter_id,
+												activityId: activity.id,
 											} )
+										}
+										onChange={ ( skillIds, skills ) =>
+											setDraft( ( current ) =>
+												connectActivitySkills(
+													current,
+													activity.id,
+													skillIds,
+													skills
+												)
+											)
 										}
 									/>
 								) }
@@ -1316,20 +1386,42 @@ export function CourseOutlineEditor( {
 									}
 								/>
 								{ activity.edit_url && (
-									<Button
-										variant="secondary"
-										href={ withNativeReturn(
-											activity.edit_url,
-											window.location.hash.slice( 1 )
-										) }
-										target="_blank"
-										rel="noreferrer"
-									>
-										{ __(
-											'Edit resource content',
-											'ohmylms'
-										) }
-									</Button>
+									<>
+										{ [ 'lesson', 'quiz' ].includes(
+											activity.type
+										) &&
+											/\/post\.php\?/.test(
+												activity.edit_url
+											) && (
+												<Button
+													variant="primary"
+													onClick={ () =>
+														setBlockEditor(
+															activity
+														)
+													}
+												>
+													{ __(
+														'Edit blocks here',
+														'ohmylms'
+													) }
+												</Button>
+											) }
+										<Button
+											variant="secondary"
+											href={ withNativeReturn(
+												activity.edit_url,
+												window.location.hash.slice( 1 )
+											) }
+											target="_blank"
+											rel="noreferrer"
+										>
+											{ __(
+												'Edit resource content',
+												'ohmylms'
+											) }
+										</Button>
+									</>
 								) }
 								<Button
 									isDestructive
@@ -1354,6 +1446,21 @@ export function CourseOutlineEditor( {
 					</div>
 				</div>
 			</div>
+			{ blockEditor && (
+				<OutlineBlockEditor
+					activity={ blockEditor }
+					onClose={ () => setBlockEditor( null ) }
+				/>
+			) }
+			{ skillPicker && (
+				<OutlineAddSkills
+					key={ skillSourceRevision }
+					courseId={ courseId }
+					draft={ draft }
+					onClose={ () => setSkillPicker( null ) }
+					onAdd={ addSelectedSkills }
+				/>
+			) }
 			{ picker && (
 				<Modal
 					title={
@@ -1437,7 +1544,7 @@ export function CourseOutlineEditor( {
 												'ohmylms'
 											) }{ ' ' }
 									{ __(
-										'Or choose Create new activity to make a draft with this style.',
+										'Or choose Create new activity to add a resource with this style.',
 										'ohmylms'
 									) }
 								</p>

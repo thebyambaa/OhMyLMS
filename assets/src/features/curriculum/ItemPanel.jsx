@@ -19,7 +19,6 @@ import {
 	draftFrom,
 	isDirty,
 	moveTargets,
-	normalizeType,
 	pathNames,
 	payloadFrom,
 	validateDraft,
@@ -113,7 +112,6 @@ export function ItemPanel( { id, item } ) {
 	}
 	const targets = moveTargets( c.items, item.id, c.maxDepth );
 	const path = pathNames( c.items, item.id );
-	const listId = `ohmylms-cur-types-${ item.id }`;
 	return (
 		<section
 			id={ id }
@@ -137,7 +135,7 @@ export function ItemPanel( { id, item } ) {
 					disabled={ c.pending }
 					onChange={ toggleSyllabus }
 					help={ __(
-						'Any item can be a syllabus, whatever its type. A syllabus is also a course: its folders are folders and its skills are the course’s skills. It is edited in its own editor, opened by its name. This saves at once.',
+						'Any item can be a syllabus. A syllabus is also a course: its folders are folders and its skills are the course’s skills. It is edited in its own editor, opened by its name. This saves at once.',
 						'ohmylms'
 					) }
 					__nextHasNoMarginBottom
@@ -156,29 +154,7 @@ export function ItemPanel( { id, item } ) {
 					}
 					__nextHasNoMarginBottom
 				/>
-				<TextControl
-					label={ __( 'Type', 'ohmylms' ) }
-					value={ draft.item_type }
-					onChange={ set( 'item_type' ) }
-					list={ listId }
-					help={
-						touched && errors.item_type
-							? MESSAGES[ errors.item_type ]()
-							: sprintf(
-									/* translators: %s: curriculum item name. */ __(
-										'Saved as “%s”. Use any type that fits your structure.',
-										'ohmylms'
-									),
-									normalizeType( draft.item_type ) || 'custom'
-								)
-					}
-					__nextHasNoMarginBottom
-				/>
-				<datalist id={ listId }>
-					{ c.types.map( ( option ) => (
-						<option key={ option } value={ option } />
-					) ) }
-				</datalist>
+
 				<TextControl
 					label={ __( 'Syllabus code (optional)', 'ohmylms' ) }
 					value={ draft.code }

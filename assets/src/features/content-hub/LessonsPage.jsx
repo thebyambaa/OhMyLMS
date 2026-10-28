@@ -23,6 +23,7 @@ import {
 	trashLessons,
 } from './api.mjs';
 import { courseEditPath } from './hubRoutes.mjs';
+import { CurriculumLibraryLayout } from './CurriculumLibraryLayout';
 import { SkillPicker } from './SkillPicker';
 import { lessonEditorHref } from './editorNavigation.mjs';
 const statusOptions = () => [
@@ -65,6 +66,7 @@ export function LessonsPage() {
 	const [ query, setQuery ] = useState( {
 		search: '',
 		status: '',
+		curriculum: 0,
 		page: 1,
 	} );
 	const [ data, setData ] = useState( null );
@@ -93,8 +95,10 @@ export function LessonsPage() {
 	}, [ input ] );
 	const load = useCallback( () => {
 		const id = ++latest.current;
+		setData( null );
 		return listLessons( {
 			search: query.search,
+			curriculum: query.curriculum,
 			status: query.status,
 			page: query.page,
 			per_page: 20,
@@ -164,7 +168,7 @@ export function LessonsPage() {
 			headingLevel={ 2 }
 			title={ __( 'Lesson library', 'ohmylms' ) }
 			description={ __(
-				'Lessons are reusable. Link them to skills here, and attach them to the chapters of a syllabus from its editor in the Curriculum tab.',
+				'Browse reusable lessons by curriculum category. Categories include lessons linked through skills, syllabuses and courses.',
 				'ohmylms'
 			) }
 		>
@@ -178,274 +182,292 @@ export function LessonsPage() {
 					{ notice }
 				</Notice>
 			) }
-			<AdminCard>
-				<div className="ohmylms-ext-toolbar">
-					<TextControl
-						label={ __( 'Search lessons', 'ohmylms' ) }
-						type="search"
-						value={ input }
-						onChange={ setInput }
-						__nextHasNoMarginBottom
-					/>
-					<SelectControl
-						label={ __( 'Status', 'ohmylms' ) }
-						value={ query.status }
-						options={ statusOptions() }
-						onChange={ ( status ) =>
-							setQuery( {
-								...query,
-								status,
-								page: 1,
-							} )
-						}
-						__nextHasNoMarginBottom
-					/>
-					<Button
-						variant="secondary"
-						isDestructive
-						disabled={ ! selected.size || busy }
-						onClick={ () => setConfirm( [ ...selected ] ) }
-					>
-						{ sprintf(
-							/* translators: %d: lesson or chapter title. */ __(
-								'Move to trash (%d)',
-								'ohmylms'
-							),
-							selected.size
-						) }
-					</Button>
-				</div>
-				{ ! data ? (
-					<Spinner />
-				) : (
-					<div className="ohmylms-ext-table-scroll">
-						<table className="widefat striped">
-							<thead>
-								<tr>
-									<td className="check-column">
-										<CheckboxControl
-											label={ __(
-												'Select all lessons on this page',
-												'ohmylms'
-											) }
-											checked={ allSelected }
-											onChange={ toggleAll }
-											__nextHasNoMarginBottom
-										/>
-									</td>
-									<th>{ __( 'Lesson', 'ohmylms' ) }</th>
-									<th>{ __( 'Skills', 'ohmylms' ) }</th>
-									<th>{ __( 'Used in', 'ohmylms' ) }</th>
-									<th>{ __( 'Updated', 'ohmylms' ) }</th>
-									<th>{ __( 'Actions', 'ohmylms' ) }</th>
-								</tr>
-							</thead>
-							<tbody>
-								{ ! items.length && (
+			<CurriculumLibraryLayout
+				value={ query.curriculum }
+				onChange={ ( curriculum ) =>
+					setQuery( { ...query, curriculum, page: 1 } )
+				}
+			>
+				<AdminCard>
+					<div className="ohmylms-ext-toolbar">
+						<TextControl
+							label={ __( 'Search lessons', 'ohmylms' ) }
+							type="search"
+							value={ input }
+							onChange={ setInput }
+							__nextHasNoMarginBottom
+						/>
+						<SelectControl
+							label={ __( 'Status', 'ohmylms' ) }
+							value={ query.status }
+							options={ statusOptions() }
+							onChange={ ( status ) =>
+								setQuery( {
+									...query,
+									status,
+									page: 1,
+								} )
+							}
+							__nextHasNoMarginBottom
+						/>
+						<Button
+							variant="secondary"
+							isDestructive
+							disabled={ ! selected.size || busy }
+							onClick={ () => setConfirm( [ ...selected ] ) }
+						>
+							{ sprintf(
+								/* translators: %d: lesson or chapter title. */ __(
+									'Move to trash (%d)',
+									'ohmylms'
+								),
+								selected.size
+							) }
+						</Button>
+					</div>
+					{ ! data ? (
+						<Spinner />
+					) : (
+						<div className="ohmylms-ext-table-scroll">
+							<table className="widefat striped">
+								<thead>
 									<tr>
-										<td colSpan={ 6 }>
-											{ query.search || query.status
-												? __(
-														'No lessons match these filters.',
-														'ohmylms'
-													)
-												: __(
-														'No lessons yet. Use Add → Lesson to create one.',
-														'ohmylms'
-													) }
-										</td>
-									</tr>
-								) }
-								{ items.map( ( item ) => (
-									<tr key={ item.id }>
 										<td className="check-column">
 											<CheckboxControl
-												label={ sprintf(
-													/* translators: %s: lesson or chapter title. */ __(
-														'Select %s',
-														'ohmylms'
-													),
-													item.title
+												label={ __(
+													'Select all lessons on this page',
+													'ohmylms'
 												) }
-												checked={ selected.has(
-													item.id
-												) }
-												onChange={ ( checked ) =>
-													toggleOne(
-														item.id,
-														checked
-													)
-												}
+												checked={ allSelected }
+												onChange={ toggleAll }
 												__nextHasNoMarginBottom
 											/>
 										</td>
-										<td>
-											<a
-												href={ lessonEditorHref(
-													item,
-													'/content-hub/lessons'
-												) }
-											>
-												{ item.title ||
-													`#${ item.id }` }
-											</a>
-											<div className="ohmylms-ext-muted">
-												{ item.type } ·{ ' ' }
-												{ statusLabel( item.status ) }
-											</div>
-										</td>
-										<td>
-											<ul className="ohmylms-hub-chips">
-												{ item.skills.map(
-													( skill ) => (
-														<li key={ skill.id }>
-															{ skill.code
-																? `${ skill.code } · ${ skill.name }`
-																: skill.name }
-														</li>
-													)
-												) }
-											</ul>
-											<Button
-												variant="link"
-												onClick={ () =>
-													setSkillsFor( item )
-												}
-											>
-												{ item.skills.length
+										<th>{ __( 'Lesson', 'ohmylms' ) }</th>
+										<th>{ __( 'Skills', 'ohmylms' ) }</th>
+										<th>{ __( 'Used in', 'ohmylms' ) }</th>
+										<th>{ __( 'Updated', 'ohmylms' ) }</th>
+										<th>{ __( 'Actions', 'ohmylms' ) }</th>
+									</tr>
+								</thead>
+								<tbody>
+									{ ! items.length && (
+										<tr>
+											<td colSpan={ 6 }>
+												{ query.search || query.status
 													? __(
-															'Edit skills',
+															'No lessons match these filters.',
 															'ohmylms'
 														)
 													: __(
-															'Link skills',
+															'No lessons yet. Use Add → Lesson to create one.',
 															'ohmylms'
 														) }
-											</Button>
-										</td>
-										<td>
-											{ item.courses.length ? (
-												<ul className="ohmylms-hub-links">
-													{ item.courses.map(
-														( course ) => (
+											</td>
+										</tr>
+									) }
+									{ items.map( ( item ) => (
+										<tr key={ item.id }>
+											<td className="check-column">
+												<CheckboxControl
+													label={ sprintf(
+														/* translators: %s: lesson or chapter title. */ __(
+															'Select %s',
+															'ohmylms'
+														),
+														item.title
+													) }
+													checked={ selected.has(
+														item.id
+													) }
+													onChange={ ( checked ) =>
+														toggleOne(
+															item.id,
+															checked
+														)
+													}
+													__nextHasNoMarginBottom
+												/>
+											</td>
+											<td>
+												<a
+													href={ lessonEditorHref(
+														item,
+														'/content-hub/lessons'
+													) }
+												>
+													{ item.title ||
+														`#${ item.id }` }
+												</a>
+												<div className="ohmylms-ext-muted">
+													{ item.type } ·{ ' ' }
+													{ statusLabel(
+														item.status
+													) }
+												</div>
+											</td>
+											<td>
+												<ul className="ohmylms-hub-chips">
+													{ item.skills.map(
+														( skill ) => (
 															<li
-																key={
-																	course.id
-																}
+																key={ skill.id }
 															>
-																<a
-																	href={ `#${ courseEditPath( course.id ) }` }
-																>
-																	{ course.title ||
-																		`#${ course.id }` }
-																</a>
+																{ skill.code
+																	? `${ skill.code } · ${ skill.name }`
+																	: skill.name }
 															</li>
 														)
 													) }
 												</ul>
-											) : (
-												<span className="ohmylms-ext-muted">
+												<Button
+													variant="link"
+													onClick={ () =>
+														setSkillsFor( item )
+													}
+												>
+													{ item.skills.length
+														? __(
+																'Edit skills',
+																'ohmylms'
+															)
+														: __(
+																'Link skills',
+																'ohmylms'
+															) }
+												</Button>
+											</td>
+											<td>
+												{ item.courses.length ? (
+													<ul className="ohmylms-hub-links">
+														{ item.courses.map(
+															( course ) => (
+																<li
+																	key={
+																		course.id
+																	}
+																>
+																	<a
+																		href={ `#${ courseEditPath( course.id ) }` }
+																	>
+																		{ course.title ||
+																			`#${ course.id }` }
+																	</a>
+																</li>
+															)
+														) }
+													</ul>
+												) : (
+													<span className="ohmylms-ext-muted">
+														{ __(
+															'Not in a course yet',
+															'ohmylms'
+														) }
+													</span>
+												) }
+											</td>
+											<td>
+												{ formatDate( item.modified ) }
+											</td>
+											<td>
+												<a
+													href={ lessonEditorHref(
+														item,
+														'/content-hub/lessons'
+													) }
+												>
+													{ __( 'Edit', 'ohmylms' ) }
+												</a>
+												{ ' · ' }
+												<Button
+													variant="link"
+													disabled={ busy }
+													onClick={ () =>
+														run(
+															async () => {
+																await duplicateLesson(
+																	item.id
+																);
+																await load();
+															},
+															sprintf(
+																/* translators: %s: lesson or chapter title. */ __(
+																	'Copied “%s” as a draft.',
+																	'ohmylms'
+																),
+																item.title
+															)
+														)
+													}
+												>
 													{ __(
-														'Not in a course yet',
+														'Duplicate',
 														'ohmylms'
 													) }
-												</span>
-											) }
-										</td>
-										<td>{ formatDate( item.modified ) }</td>
-										<td>
-											<a
-												href={ lessonEditorHref(
-													item,
-													'/content-hub/lessons'
-												) }
-											>
-												{ __( 'Edit', 'ohmylms' ) }
-											</a>
-											{ ' · ' }
-											<Button
-												variant="link"
-												disabled={ busy }
-												onClick={ () =>
-													run(
-														async () => {
-															await duplicateLesson(
-																item.id
-															);
-															await load();
-														},
-														sprintf(
-															/* translators: %s: lesson or chapter title. */ __(
-																'Copied “%s” as a draft.',
-																'ohmylms'
-															),
-															item.title
-														)
-													)
-												}
-											>
-												{ __( 'Duplicate', 'ohmylms' ) }
-											</Button>
-											{ ' · ' }
-											<Button
-												variant="link"
-												isDestructive
-												disabled={ busy }
-												onClick={ () =>
-													setConfirm( [ item.id ] )
-												}
-											>
-												{ __( 'Trash', 'ohmylms' ) }
-											</Button>
-										</td>
-									</tr>
-								) ) }
-							</tbody>
-						</table>
-					</div>
-				) }
-				{ data && data.pages > 1 && (
-					<nav
-						className="ohmylms-hub-pager"
-						aria-label={ __( 'Lesson pages', 'ohmylms' ) }
-					>
-						<Button
-							variant="secondary"
-							disabled={ query.page <= 1 }
-							onClick={ () =>
-								setQuery( {
-									...query,
-									page: query.page - 1,
-								} )
-							}
+												</Button>
+												{ ' · ' }
+												<Button
+													variant="link"
+													isDestructive
+													disabled={ busy }
+													onClick={ () =>
+														setConfirm( [
+															item.id,
+														] )
+													}
+												>
+													{ __( 'Trash', 'ohmylms' ) }
+												</Button>
+											</td>
+										</tr>
+									) ) }
+								</tbody>
+							</table>
+						</div>
+					) }
+					{ data && data.pages > 1 && (
+						<nav
+							className="ohmylms-hub-pager"
+							aria-label={ __( 'Lesson pages', 'ohmylms' ) }
 						>
-							{ __( 'Previous', 'ohmylms' ) }
-						</Button>
-						<span>
-							{ sprintf(
-								/* translators: %1$d: current page number; %2$d: total number of pages. */ __(
-									'Page %1$d of %2$d',
-									'ohmylms'
-								),
-								query.page,
-								data.pages
-							) }
-						</span>
-						<Button
-							variant="secondary"
-							disabled={ query.page >= data.pages }
-							onClick={ () =>
-								setQuery( {
-									...query,
-									page: query.page + 1,
-								} )
-							}
-						>
-							{ __( 'Next', 'ohmylms' ) }
-						</Button>
-					</nav>
-				) }
-			</AdminCard>
+							<Button
+								variant="secondary"
+								disabled={ query.page <= 1 }
+								onClick={ () =>
+									setQuery( {
+										...query,
+										page: query.page - 1,
+									} )
+								}
+							>
+								{ __( 'Previous', 'ohmylms' ) }
+							</Button>
+							<span>
+								{ sprintf(
+									/* translators: %1$d: current page number; %2$d: total number of pages. */ __(
+										'Page %1$d of %2$d',
+										'ohmylms'
+									),
+									query.page,
+									data.pages
+								) }
+							</span>
+							<Button
+								variant="secondary"
+								disabled={ query.page >= data.pages }
+								onClick={ () =>
+									setQuery( {
+										...query,
+										page: query.page + 1,
+									} )
+								}
+							>
+								{ __( 'Next', 'ohmylms' ) }
+							</Button>
+						</nav>
+					) }
+				</AdminCard>
+			</CurriculumLibraryLayout>
 			{ skillsFor && (
 				<SkillPicker
 					title={ sprintf(

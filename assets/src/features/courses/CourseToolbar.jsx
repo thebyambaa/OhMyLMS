@@ -47,8 +47,8 @@ export function createCourseToolbar( readRuntime ) {
 		var O = P[ 0 ];
 		var k = P[ 1 ];
 		var j = JW();
-		var steps = j.steps;
-		var totalSteps = j.totalSteps;
+		var steps = j.steps.filter( ( step ) => step.id !== 'preview' );
+		var totalSteps = steps.length;
 		var F = function ( e ) {
 			var _tLocal = '/course-edit/'.concat( courseId, '/' ).concat( e );
 			if ( 'settings' === e ) {
@@ -267,14 +267,17 @@ export function createCourseToolbar( readRuntime ) {
 								justify={ 'flex-end' }
 								gap={ 1 }
 							>
-								{ 'content' === activeStep && (
+								{ props.courseUrl && (
 									<React.Fragment>
 										<Controls.ButtonWP
 											variant={ 'primary' }
-											onClick={ N }
+											href={ props.courseUrl }
+											target="_blank"
+											rel="noopener noreferrer"
+											disabled={ loading }
 										>
 											{ ( 0, I18n.__ )(
-												'Next',
+												'View course',
 												'ohmylms'
 											) }
 										</Controls.ButtonWP>
@@ -297,10 +300,11 @@ export function createCourseToolbar( readRuntime ) {
 										</Controls.ButtonWP>
 										<Controls.ButtonWP
 											variant={ 'primary' }
-											onClick={ N }
+											onClick={ () => onSave() }
+											disabled={ loading }
 										>
 											{ ( 0, I18n.__ )(
-												'Next',
+												'Save course',
 												'ohmylms'
 											) }
 										</Controls.ButtonWP>
@@ -473,15 +477,6 @@ export function createCourseToolbar( readRuntime ) {
 																'activate-mail-mint'
 															) );
 												}
-											},
-										},
-										{
-											title: ( 0, I18n.__ )(
-												'Save as Draft',
-												'ohmylms'
-											),
-											onClick() {
-												Notifications( 'draft' );
 											},
 										},
 									] }

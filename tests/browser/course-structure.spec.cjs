@@ -8,6 +8,11 @@ test.beforeEach(async ({ context }) => {
   await context.addCookies(state.cookies);
 });
 
+async function openReadiness(page) {
+  const indicator = page.getByRole('button', { name: /^Course readiness:/ });
+  if (await indicator.getAttribute('aria-expanded') !== 'true') await indicator.click();
+}
+
 test('authors build, save and publish a unified outline without overwriting shared resources', async ({ page, context }, testInfo) => {
   const errors = [];
   const bulkWrites = [];
@@ -15,7 +20,7 @@ test('authors build, save and publish a unified outline without overwriting shar
   page.on('request', request => { if (request.url().includes(`/courses/${state.course}/chapters`) && request.method() === 'POST') bulkWrites.push(request.url()); });
   const url = `${state.base}/wp-admin/admin.php?page=ohmylms#/course-edit/${state.course}/content`;
   await page.goto(url);
-  await expect(page.getByRole('heading', { name: 'Course outline', exact: true })).toBeVisible();
+  await expect(page.getByPlaceholder('Enter Course Title')).toBeVisible();
   const outline = page.getByRole('region', { name: 'Course outline editor' });
   const tree = page.getByRole('navigation', { name: 'Units, lessons and activities' });
   await page.getByRole('button', { name: 'Add unit', exact: true }).click();
@@ -28,14 +33,17 @@ test('authors build, save and publish a unified outline without overwriting shar
   await lessonPicker.getByRole('button', { name: 'Add Outline lesson library', exact: true }).click();
   await page.getByLabel('Activity name in this course', { exact: true }).fill('Introduction');
   const readiness = page.getByRole('region', { name: 'Course readiness report', exact: true });
-  await page.getByRole('tab', { name: /^Readiness/ }).click();
+  await expect(page.getByRole('tab', { name: /^Readiness/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Course readiness: Save to check readiness', exact: true })).toBeVisible();
+  await openReadiness(page);
   await expect(readiness.getByRole('status')).toContainText('Save outline draft');
   await expect(readiness.getByText('Saved draft passes publishing checks', { exact: true })).toHaveCount(0);
   await page.getByRole('tab', { name: 'Outline', exact: true }).click();
   await tree.getByRole('button', { name: 'Foundations', exact: true }).click();
-  await page.getByRole('button', { name: 'Add activity to unit', exact: true }).click();
-  const picker = page.getByRole('dialog', { name: 'Add activity', exact: true });
-  await picker.getByLabel('Find an activity').fill('Outline library activity');
+  await page.getByRole('button', { name: 'Add lesson', exact: true }).click();
+  const picker = page.getByRole('dialog', { name: 'Add lesson', exact: true });
+  await picker.getByRole('button', { name: 'Choose existing lesson', exact: true }).click();
+  await picker.getByLabel('Find a lesson').fill('Outline library activity');
   await picker.getByRole('button', { name: 'Add Outline library activity', exact: true }).click();
   await page.getByLabel('Activity name in this course').fill('Read the introduction');
   await page.getByRole('button', { name: 'Next', exact: true }).click();
@@ -46,16 +54,18 @@ test('authors build, save and publish a unified outline without overwriting shar
   await page.getByRole('button', { name: 'Move up', exact: true }).click();
   await page.getByRole('button', { name: 'Save outline draft', exact: true }).click();
   await expect(outline.getByText('Outline draft saved.', { exact: true })).toBeVisible();
-  await page.getByRole('tab', { name: /^Readiness/ }).click();
+  await openReadiness(page);
   await expect(readiness.getByRole('heading', { name: 'Saved draft passes publishing checks', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Course readiness: Ready to publish', exact: true })).toBeVisible();
   await page.getByRole('tab', { name: 'Outline', exact: true }).click();
   await tree.getByRole('button', { name: 'Introduction', exact: true }).click();
   await expect(page.getByLabel('Activity name in this course', { exact: true })).toHaveValue('Introduction');
   const readinessRoute = '**/content-hub/catalog/*';
   await page.route(readinessRoute, route => route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ message: 'Readiness unavailable.' }) }));
-  await page.getByRole('tab', { name: /^Readiness/ }).click();
+  await openReadiness(page);
   await readiness.getByRole('button', { name: 'Check readiness again', exact: true }).click();
   await expect(readiness.getByRole('alert')).toHaveText('Readiness unavailable.');
+  await expect(page.getByRole('button', { name: 'Course readiness: Readiness unavailable', exact: true })).toBeVisible();
   await expect(readiness.getByText('Saved draft passes publishing checks', { exact: true })).toHaveCount(0);
   await page.unroute(readinessRoute);
   await readiness.getByRole('button', { name: 'Check readiness again', exact: true }).click();
@@ -65,10 +75,13 @@ test('authors build, save and publish a unified outline without overwriting shar
   expect(typeof unit.id).toBe('number');
   expect(snapshot.program.items.find(item => item.title === 'Introduction').chapter_id).toBe(unit.id);
   expect(snapshot.program.items.find(item => item.title === 'Read the introduction').chapter_id).toBe(unit.id);
-  await page.getByRole('tab', { name: 'Course info', exact: true }).click();
+  await expect(page.getByRole('tab', { name: 'Course info', exact: true })).toHaveCount(0);
   const metadataSaved = page.waitForResponse(response => new URL(response.url()).pathname.endsWith(`/courses/${state.course}`) && response.request().method() === 'POST');
   await page.getByPlaceholder('Enter Course Title').fill('Outline browser course');
   expect((await metadataSaved).ok()).toBe(true);
+  const descriptionSaved = page.waitForResponse(response => new URL(response.url()).pathname.endsWith(`/courses/${state.course}`) && response.request().method() === 'POST');
+  await page.locator('.ohmylms-course-info-header.is-compact [contenteditable="true"]').fill('Description edited directly in the course header.');
+  expect((await descriptionSaved).ok()).toBe(true);
   await expect(page.getByRole('button', { name: 'Preview draft outline', exact: true })).toBeEnabled();
   await page.getByRole('tab', { name: 'Outline', exact: true }).click();
   expect(bulkWrites).toEqual([]);
@@ -86,7 +99,8 @@ test('authors build, save and publish a unified outline without overwriting shar
   await expect(outline.getByText('Outline draft saved.', { exact: true })).toBeVisible();
   const other = await context.newPage();
   await other.goto(url);
-  await expect(other.getByRole('heading', { name: 'Course outline', exact: true })).toBeVisible();
+  await expect(other.getByPlaceholder('Enter Course Title')).toHaveValue('Outline browser course');
+  await expect(other.locator('.ohmylms-course-info-header.is-compact [contenteditable="true"]')).toContainText('Description edited directly in the course header.');
   await other.evaluate(async ({ course, unit }) => {
     await wp.apiFetch({ path: `/ohmylms/v1/courses/${course}/structure` });
     await wp.apiFetch({ path: `/ohmylms/v1/chapters/${unit}`, method: 'PUT', data: { name: 'Other author unit' } });
@@ -108,7 +122,7 @@ test('authors build, save and publish a unified outline without overwriting shar
 test('completion blockers lead to editable course rules', async ({ page }) => {
   const url = state.base + '/wp-admin/admin.php?page=ohmylms#/course-edit/' + state.course + '/content';
   await page.goto(url);
-  await expect(page.getByRole('heading', { name: 'Course outline', exact: true })).toBeVisible();
+  await expect(page.getByPlaceholder('Enter Course Title')).toBeVisible();
   await page.evaluate(async id => {
     const draft = await wp.apiFetch({ path: '/ohmylms/v1/courses/' + id + '/structure' });
     const program = { ...draft.program, mode: 'traditional', items: draft.program.items.map(item => ({ ...item, required: false })), outcomes: [] };
@@ -116,12 +130,14 @@ test('completion blockers lead to editable course rules', async ({ page }) => {
   }, state.course);
   await page.reload();
   const report = page.getByRole('region', { name: 'Course readiness report', exact: true });
-  await page.getByRole('tab', { name: /^Readiness/ }).click();
+  await openReadiness(page);
   await expect(report.getByRole('heading', { name: 'Publishing blockers: 1', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Course readiness: 1 issue blocks publishing', exact: true })).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('tab', { name: 'Outline', exact: true })).toHaveAttribute('aria-selected', 'true');
   await report.getByRole('button', { name: 'Edit completion requirements', exact: true }).click();
   await page.getByRole('navigation', { name: 'Units, lessons and activities' }).getByRole('button', { name: 'Introduction after publishing', exact: true }).click();
   await page.getByLabel('Required for completion', { exact: true }).check();
-  await page.getByRole('tab', { name: /^Readiness/ }).click();
+  await openReadiness(page);
   await expect(report.getByRole('status')).toContainText('Save outline draft');
 });
 
@@ -131,18 +147,20 @@ test('shared skills connect block lessons and quiz plans and survive reload', as
   const tree = page.getByRole('navigation', { name: 'Units, lessons and activities' });
   await tree.getByRole('button', { name: 'Other author unit', exact: true }).click();
   await page.getByRole('button', { name: 'Link course skills', exact: true }).click();
-  const skills = page.getByRole('dialog', { name: 'Link course skills', exact: true });
-  await skills.getByLabel('Find a skill').fill('Outline connection skill');
-  await skills.getByRole('button', { name: /^Add Outline connection skill/ }).click();
-  await tree.getByRole('button', { name: 'Introduction after publishing', exact: true }).click();
+  const skills = page.getByRole('dialog', { name: 'Add skills', exact: true });
+  await skills.getByLabel('Find skills', { exact: true }).fill('Outline connection skill');
+  await skills.getByRole('checkbox', { name: /^Outline connection skill/ }).check();
+  await skills.getByRole('button', { name: 'Add selected skills (1)', exact: true }).click();
+  await page.getByRole('button', { name: 'Course skills (1)', exact: true }).click();
+  const courseSkills = page.getByRole('region', { name: 'Course skills', exact: true });
+  await courseSkills.getByRole('button', { name: 'Connect lessons and quizzes', exact: true }).click();
+  await courseSkills.getByRole('checkbox', { name: 'Introduction after publishing · Teaches', exact: true }).check();
+  await courseSkills.getByRole('checkbox', { name: 'Read the introduction · Teaches', exact: true }).check();
   const skillCheck = page.getByRole('checkbox', { name: /^Outline connection skill/ });
-  await skillCheck.check();
-  await tree.getByRole('button', { name: 'Read the introduction', exact: true }).click();
-  await skillCheck.check();
   await tree.getByRole('button', { name: 'Other author unit', exact: true }).click();
-  await page.getByRole('button', { name: 'Add activity to unit', exact: true }).click();
-  const picker = page.getByRole('dialog', { name: 'Add activity', exact: true });
-  await picker.getByLabel('Activity type', { exact: true }).selectOption('quiz');
+  await page.getByRole('button', { name: 'Add quiz to unit', exact: true }).click();
+  const picker = page.getByRole('dialog', { name: 'Add quiz', exact: true });
+  await picker.getByRole('button', { name: 'Use existing activity', exact: true }).click();
   await picker.getByLabel('Find an activity').fill('Outline connection quiz');
   await picker.getByRole('button', { name: 'Add Outline connection quiz', exact: true }).click();
   await skillCheck.check();
@@ -159,4 +177,63 @@ test('shared skills connect block lessons and quiz plans and survive reload', as
   await expect(coverage.getByRole('button', { name: 'Read the introduction', exact: true })).toBeVisible();
   await expect(coverage.getByRole('button', { name: 'Outline connection quiz', exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('course-skill-connections.png'), fullPage: true });
+});
+
+test('skills can start without units and be added to a lesson from a syllabus in the outline', async ({ page }, testInfo) => {
+  await page.goto(`${state.base}/wp-admin/admin.php?page=ohmylms#/course-edit/${state.empty_course}/content`);
+  const outline = page.getByRole('region', { name: 'Course outline editor' });
+  let courseSkills = page.getByRole('region', { name: 'Course skills', exact: true });
+  await expect(courseSkills).toBeVisible();
+  await expect(page.getByText('This course has no units yet. Add a unit, then add lessons, practice and quizzes to it.', { exact: true })).toBeVisible();
+  await courseSkills.getByRole('button', { name: 'Add skills', exact: true }).click();
+  let picker = page.getByRole('dialog', { name: 'Add skills', exact: true });
+  await picker.getByLabel('Skill source').selectOption('aligned');
+  await picker.getByRole('checkbox', { name: /^Outline connection skill/ }).check();
+  await picker.getByRole('button', { name: 'Add selected skills (1)', exact: true }).click();
+  await courseSkills.getByLabel('Required for course completion', { exact: true }).check();
+  await courseSkills.getByLabel('Completion target', { exact: true }).selectOption('mastered');
+  await page.getByRole('button', { name: 'Save outline draft', exact: true }).click();
+  await expect(outline.getByText('Outline draft saved.', { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(courseSkills.getByLabel('Required for course completion', { exact: true })).toBeChecked();
+  await expect(courseSkills.getByLabel('Completion target', { exact: true })).toHaveValue('mastered');
+  await page.screenshot({ path: testInfo.outputPath('course-skills-without-units.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Add unit', exact: true }).click();
+  await page.getByLabel('Unit title', { exact: true }).fill('Skills first');
+  await page.getByRole('button', { name: 'Add lesson', exact: true }).click();
+  const lessonPicker = page.getByRole('dialog', { name: 'Add lesson', exact: true });
+  await lessonPicker.getByRole('button', { name: 'Choose existing lesson', exact: true }).click();
+  await lessonPicker.getByLabel('Find a lesson').fill('Outline lesson library');
+  await lessonPicker.getByRole('button', { name: 'Add Outline lesson library', exact: true }).click();
+  await page.getByRole('button', { name: 'Add skills from library or syllabus', exact: true }).click();
+  picker = page.getByRole('dialog', { name: 'Add skills', exact: true });
+  await picker.getByLabel('Skill source').selectOption(String(state.syllabus));
+  await picker.getByRole('checkbox', { name: /^Outline syllabus skill/ }).check();
+  await picker.getByRole('button', { name: 'Add selected skills (1)', exact: true }).click();
+  await expect(page.getByRole('checkbox', { name: /^Outline syllabus skill/ })).toBeChecked();
+  await expect(page.getByRole('tab', { name: 'Outline', exact: true })).toHaveAttribute('aria-selected','true');
+  await page.getByRole('button', { name: 'Save outline draft', exact: true }).click();
+  await expect(outline.getByText('Outline draft saved.', { exact: true })).toBeVisible();
+  await page.reload();
+  const result = await page.evaluate(async id => ({ structure: await wp.apiFetch({ path: `/ohmylms/v1/courses/${id}/structure` }), references: await wp.apiFetch({ path: `/ohmylms/v1/courses/${id}/syllabus-objectives` }) }), state.empty_course);
+  expect(result.structure.program.outcomes).toHaveLength(2);
+  expect(result.structure.program.items[0].skill_ids).toContain(state.skills[1]);
+  expect(result.references.mappings).toHaveLength(2);
+  await page.getByRole('navigation', { name: 'Units, lessons and activities' }).getByRole('button', { name: 'Outline lesson library', exact: true }).click();
+  await expect(page.getByRole('checkbox', { name: /^Outline syllabus skill/ })).toBeChecked();
+  await page.screenshot({ path: testInfo.outputPath('lesson-skills-inline.png'), fullPage: true });
+});
+
+test('readiness suggestions expand inside the outline', async ({ page }) => {
+  await page.route('**/content-hub/catalog/*', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ attachments: [], readiness: { ready: true, completion: [], resources: [], skills: [], practice_skills: [{ term_id: state.skills[0], name: 'Optional guidance fixture', ready: false, required: false, questions: 0, questions_need: 3, families: 0, families_need: 2 }] } }) }));
+  await page.goto(`${state.base}/wp-admin/admin.php?page=ohmylms#/course-edit/${state.course}/content`);
+  const indicator = page.getByRole('button', { name: 'Course readiness: Ready with suggestions', exact: true });
+  await expect(indicator).toBeVisible();
+  await expect(indicator).toHaveAttribute('aria-expanded','false');
+  await indicator.click();
+  await expect(page.getByRole('region', { name: 'Course readiness report', exact: true })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Outline', exact: true })).toHaveAttribute('aria-selected','true');
+  await page.getByRole('button', { name: 'Hide readiness details', exact: true }).click();
+  await expect(indicator).toHaveAttribute('aria-expanded','false');
+  await expect(page.getByRole('region', { name: 'Course readiness report', exact: true })).not.toBeVisible();
 });
