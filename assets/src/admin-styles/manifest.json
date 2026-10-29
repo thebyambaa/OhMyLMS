@@ -1,0 +1,1567 @@
+[
+	{
+		"file": "main-000-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-001-emails.css",
+		"group": "emails",
+		"rtl": false
+	},
+	{
+		"file": "main-002-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-003-quizzes.css",
+		"group": "quizzes",
+		"rtl": false
+	},
+	{
+		"file": "main-004-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-005-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-006-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-007-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-008-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-009-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-010-commerce.css",
+		"group": "commerce",
+		"rtl": false
+	},
+	{
+		"file": "main-011-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-012-commerce.css",
+		"group": "commerce",
+		"rtl": false
+	},
+	{
+		"file": "main-013-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-014-commerce.css",
+		"group": "commerce",
+		"rtl": false
+	},
+	{
+		"file": "main-015-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-016-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-017-communities.css",
+		"group": "communities",
+		"rtl": false
+	},
+	{
+		"file": "main-018-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-019-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-020-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-021-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-022-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-023-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-024-commerce.css",
+		"group": "commerce",
+		"rtl": false
+	},
+	{
+		"file": "main-025-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-026-commerce.css",
+		"group": "commerce",
+		"rtl": false
+	},
+	{
+		"file": "main-027-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-028-emails.css",
+		"group": "emails",
+		"rtl": false
+	},
+	{
+		"file": "main-029-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-030-commerce.css",
+		"group": "commerce",
+		"rtl": false
+	},
+	{
+		"file": "main-031-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-032-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-033-settings.css",
+		"group": "settings",
+		"rtl": false
+	},
+	{
+		"file": "main-034-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-035-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-036-commerce.css",
+		"group": "commerce",
+		"rtl": false
+	},
+	{
+		"file": "main-037-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-038-commerce.css",
+		"group": "commerce",
+		"rtl": false
+	},
+	{
+		"file": "main-039-emails.css",
+		"group": "emails",
+		"rtl": false
+	},
+	{
+		"file": "main-040-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-041-emails.css",
+		"group": "emails",
+		"rtl": false
+	},
+	{
+		"file": "main-042-settings.css",
+		"group": "settings",
+		"rtl": false
+	},
+	{
+		"file": "main-043-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-044-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-045-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-046-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-047-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-048-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-049-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-050-quizzes.css",
+		"group": "quizzes",
+		"rtl": false
+	},
+	{
+		"file": "main-051-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-052-emails.css",
+		"group": "emails",
+		"rtl": false
+	},
+	{
+		"file": "main-053-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-054-emails.css",
+		"group": "emails",
+		"rtl": false
+	},
+	{
+		"file": "main-055-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-056-commerce.css",
+		"group": "commerce",
+		"rtl": false
+	},
+	{
+		"file": "main-057-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-058-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-059-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-060-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-061-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-062-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-063-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-064-quizzes.css",
+		"group": "quizzes",
+		"rtl": false
+	},
+	{
+		"file": "main-065-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-066-quizzes.css",
+		"group": "quizzes",
+		"rtl": false
+	},
+	{
+		"file": "main-067-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-068-quizzes.css",
+		"group": "quizzes",
+		"rtl": false
+	},
+	{
+		"file": "main-069-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-070-quizzes.css",
+		"group": "quizzes",
+		"rtl": false
+	},
+	{
+		"file": "main-071-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-072-quizzes.css",
+		"group": "quizzes",
+		"rtl": false
+	},
+	{
+		"file": "main-073-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-074-quizzes.css",
+		"group": "quizzes",
+		"rtl": false
+	},
+	{
+		"file": "main-075-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-076-quizzes.css",
+		"group": "quizzes",
+		"rtl": false
+	},
+	{
+		"file": "main-077-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-078-quizzes.css",
+		"group": "quizzes",
+		"rtl": false
+	},
+	{
+		"file": "main-079-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-080-quizzes.css",
+		"group": "quizzes",
+		"rtl": false
+	},
+	{
+		"file": "main-081-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-082-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-083-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-084-communities.css",
+		"group": "communities",
+		"rtl": false
+	},
+	{
+		"file": "main-085-block-editor.css",
+		"group": "block-editor",
+		"rtl": false
+	},
+	{
+		"file": "main-086-email-shell.css",
+		"group": "email-shell",
+		"rtl": false
+	},
+	{
+		"file": "main-087-email-editor.css",
+		"group": "email-editor",
+		"rtl": false
+	},
+	{
+		"file": "main-088-automations.css",
+		"group": "automations",
+		"rtl": false
+	},
+	{
+		"file": "main-089-integrations.css",
+		"group": "integrations",
+		"rtl": false
+	},
+	{
+		"file": "main-090-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-091-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-092-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-093-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-094-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-095-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-096-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-097-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-098-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-099-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-100-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-101-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-102-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-103-quizzes.css",
+		"group": "quizzes",
+		"rtl": false
+	},
+	{
+		"file": "main-104-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-105-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-106-settings.css",
+		"group": "settings",
+		"rtl": false
+	},
+	{
+		"file": "main-107-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-108-settings.css",
+		"group": "settings",
+		"rtl": false
+	},
+	{
+		"file": "main-109-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-110-settings.css",
+		"group": "settings",
+		"rtl": false
+	},
+	{
+		"file": "main-111-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-112-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-113-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-114-students.css",
+		"group": "students",
+		"rtl": false
+	},
+	{
+		"file": "main-115-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-116-setup.css",
+		"group": "setup",
+		"rtl": false
+	},
+	{
+		"file": "main-117-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-118-setup.css",
+		"group": "setup",
+		"rtl": false
+	},
+	{
+		"file": "main-119-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "main-120-setup.css",
+		"group": "setup",
+		"rtl": false
+	},
+	{
+		"file": "main-121-courses.css",
+		"group": "courses",
+		"rtl": false
+	},
+	{
+		"file": "main-122-setup.css",
+		"group": "setup",
+		"rtl": false
+	},
+	{
+		"file": "main-123-shared.css",
+		"group": "shared",
+		"rtl": false
+	},
+	{
+		"file": "rtl-000-shared.css",
+		"group": "shared",
+		"rtl": true
+	},
+	{
+		"file": "rtl-001-commerce.css",
+		"group": "commerce",
+		"rtl": true
+	},
+	{
+		"file": "rtl-002-shared.css",
+		"group": "shared",
+		"rtl": true
+	},
+	{
+		"file": "rtl-003-commerce.css",
+		"group": "commerce",
+		"rtl": true
+	},
+	{
+		"file": "rtl-004-emails.css",
+		"group": "emails",
+		"rtl": true
+	},
+	{
+		"file": "rtl-005-shared.css",
+		"group": "shared",
+		"rtl": true
+	},
+	{
+		"file": "rtl-006-emails.css",
+		"group": "emails",
+		"rtl": true
+	},
+	{
+		"file": "rtl-007-settings.css",
+		"group": "settings",
+		"rtl": true
+	},
+	{
+		"file": "rtl-008-courses.css",
+		"group": "courses",
+		"rtl": true
+	},
+	{
+		"file": "rtl-009-shared.css",
+		"group": "shared",
+		"rtl": true
+	},
+	{
+		"file": "rtl-010-courses.css",
+		"group": "courses",
+		"rtl": true
+	},
+	{
+		"file": "rtl-011-shared.css",
+		"group": "shared",
+		"rtl": true
+	},
+	{
+		"file": "rtl-012-courses.css",
+		"group": "courses",
+		"rtl": true
+	},
+	{
+		"file": "rtl-013-shared.css",
+		"group": "shared",
+		"rtl": true
+	},
+	{
+		"file": "rtl-014-courses.css",
+		"group": "courses",
+		"rtl": true
+	},
+	{
+		"file": "rtl-015-quizzes.css",
+		"group": "quizzes",
+		"rtl": true
+	},
+	{
+		"file": "rtl-016-shared.css",
+		"group": "shared",
+		"rtl": true
+	},
+	{
+		"file": "rtl-017-emails.css",
+		"group": "emails",
+		"rtl": true
+	},
+	{
+		"file": "rtl-018-shared.css",
+		"group": "shared",
+		"rtl": true
+	},
+	{
+		"file": "rtl-019-emails.css",
+		"group": "emails",
+		"rtl": true
+	},
+	{
+		"file": "rtl-020-shared.css",
+		"group": "shared",
+		"rtl": true
+	},
+	{
+		"file": "ui-000-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-001-settings.css",
+		"group": "settings",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-002-gamification.css",
+		"group": "gamification",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-003-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-004-gamification.css",
+		"group": "gamification",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-005-settings.css",
+		"group": "settings",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-006-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-007-gamification.css",
+		"group": "gamification",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-008-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-009-commerce.css",
+		"group": "commerce",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-010-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-011-quizzes.css",
+		"group": "quizzes",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-012-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-013-quizzes.css",
+		"group": "quizzes",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-014-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-015-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-016-gamification.css",
+		"group": "gamification",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-017-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-018-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-019-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-020-skills.css",
+		"group": "skills",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-021-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-022-quizzes.css",
+		"group": "quizzes",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-023-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-024-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-025-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-026-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-027-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-028-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-029-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-030-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-031-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-032-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-033-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-034-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-035-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-036-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-037-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-038-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-039-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-040-quizzes.css",
+		"group": "quizzes",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-041-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-042-skills.css",
+		"group": "skills",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-043-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-044-quizzes.css",
+		"group": "quizzes",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-045-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-046-quizzes.css",
+		"group": "quizzes",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-047-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-048-quizzes.css",
+		"group": "quizzes",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-049-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-050-quizzes.css",
+		"group": "quizzes",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-051-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-052-quizzes.css",
+		"group": "quizzes",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-053-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-054-quizzes.css",
+		"group": "quizzes",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-055-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-056-skills.css",
+		"group": "skills",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-057-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-058-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-059-settings.css",
+		"group": "settings",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-060-gamification.css",
+		"group": "gamification",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-061-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-062-quizzes.css",
+		"group": "quizzes",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-063-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-064-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-065-skills.css",
+		"group": "skills",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-066-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-067-commerce.css",
+		"group": "commerce",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-068-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-069-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-070-skills.css",
+		"group": "skills",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-071-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-072-quizzes.css",
+		"group": "quizzes",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-073-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-074-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-075-settings.css",
+		"group": "settings",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-076-gamification.css",
+		"group": "gamification",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-077-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-078-gamification.css",
+		"group": "gamification",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-079-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-080-gamification.css",
+		"group": "gamification",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-081-quizzes.css",
+		"group": "quizzes",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-082-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-083-commerce.css",
+		"group": "commerce",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-084-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-085-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-086-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-087-skills.css",
+		"group": "skills",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-088-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-089-skills.css",
+		"group": "skills",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-090-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-091-commerce.css",
+		"group": "commerce",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-092-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-093-commerce.css",
+		"group": "commerce",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-094-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-095-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-096-quizzes.css",
+		"group": "quizzes",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-097-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-098-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-099-quizzes.css",
+		"group": "quizzes",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-100-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-101-quizzes.css",
+		"group": "quizzes",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-102-skills.css",
+		"group": "skills",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-103-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-104-gamification.css",
+		"group": "gamification",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-105-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-106-quizzes.css",
+		"group": "quizzes",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-107-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-108-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-109-commerce.css",
+		"group": "commerce",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-110-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-111-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-112-quizzes.css",
+		"group": "quizzes",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-113-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-114-skills.css",
+		"group": "skills",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-115-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-116-quizzes.css",
+		"group": "quizzes",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-117-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-118-quizzes.css",
+		"group": "quizzes",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-119-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-120-quizzes.css",
+		"group": "quizzes",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-121-gamification.css",
+		"group": "gamification",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-122-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-123-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-124-quizzes.css",
+		"group": "quizzes",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-125-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-126-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-127-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-128-quizzes.css",
+		"group": "quizzes",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-129-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-130-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-131-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-132-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-133-quizzes.css",
+		"group": "quizzes",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-134-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-135-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-136-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-137-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-138-curriculum.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui"
+	},
+	{
+		"file": "ui-139-shared.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui"
+	}
+]

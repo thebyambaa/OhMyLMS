@@ -134,7 +134,6 @@ const withPaperInsertion = createHigherOrderComponent(
 			[]
 		);
 		const eligible =
-			props.name === 'ohmylms/shared-multiple-choice' ||
 			props.name === 'ohmylms/quiz-question-reference' ||
 			props.name.startsWith( 'ohmylms/paper-' );
 		return (

@@ -1,0 +1,88 @@
+{
+  "lowlight": {
+    "languages": 192,
+    "commonLanguages": 37
+  },
+  "icons": {
+    "consumers": [
+      "modules/dist/admin/ohmylms/0-4353.js",
+      "modules/dist/admin/ohmylms/0-10183.js",
+      "modules/dist/admin/ohmylms/0-25545.js",
+      "modules/dist/admin/ohmylms/0-39574.js",
+      "modules/dist/admin/ohmylms/0-62768.js",
+      "modules/dist/admin/ohmylms/0-64593.js",
+      "modules/dist/admin/ohmylms/0-68203.js",
+      "modules/dist/admin/ohmylms/0-71946.js",
+      "modules/dist/admin/ohmylms/0-82080.js",
+      "modules/dist/admin/ohmylms/0-85760.js",
+      "modules/dist/admin/ohmylms/0-93552.js"
+    ],
+    "literalNames": [
+      "AlignCenter",
+      "AlignHorizontalDistributeCenter",
+      "AlignHorizontalDistributeEnd",
+      "AlignHorizontalDistributeStart",
+      "AlignJustify",
+      "AlignLeft",
+      "AlignRight",
+      "Bold",
+      "ChevronDown",
+      "Clipboard",
+      "Code",
+      "Copy",
+      "EllipsisVertical",
+      "GripVertical",
+      "Highlighter",
+      "Italic",
+      "Link",
+      "Palette",
+      "Pen",
+      "Plus",
+      "RemoveFormatting",
+      "Strikethrough",
+      "Subscript",
+      "Superscript",
+      "Trash2",
+      "Underline",
+      "Undo"
+    ],
+    "dynamicConsumers": [
+      {
+        "source": "modules/dist/admin/ohmylms/0-82080.js",
+        "expression": "e.iconName"
+      },
+      {
+        "source": "modules/dist/admin/ohmylms/0-93552.js",
+        "expression": "\"option\" === (null == n ? void 0 : n.type) && n.icon || \"Pilcrow\""
+      },
+      {
+        "source": "modules/dist/admin/ohmylms/0-93552.js",
+        "expression": "e.icon"
+      }
+    ]
+  },
+  "bundles": [
+    {
+      "file": "assets/dist/vendors/vendors.js",
+      "bytes": 1340288,
+      "gzipBytes": 445730
+    },
+    {
+      "file": "assets/dist/admin/editor-lowlight.js",
+      "bytes": 951353,
+      "gzipBytes": 291150
+    },
+    {
+      "file": "assets/dist/admin/editor-tiptap.js",
+      "bytes": 1054918,
+      "gzipBytes": 289284
+    },
+    {
+      "file": "assets/dist/vendors/editor.js",
+      "bytes": 24001,
+      "gzipBytes": 1541
+    }
+  ],
+  "combinedBytes": 3370560,
+  "combinedGzipBytes": 1027705
+}

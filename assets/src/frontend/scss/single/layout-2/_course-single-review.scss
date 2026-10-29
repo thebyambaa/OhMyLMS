@@ -1,99 +1,108 @@
 .ohmylms-page {
 
-    .ohmylms-single-course-layout-2 {
+	.ohmylms-single-course-layout-2 {
 
-        .ohmylms-course-reviews-wrapper {
-            margin-top: 40px;
-        }
+		.ohmylms-course-reviews-wrapper {
+			margin-top: 40px;
+		}
 
-        .ohmylms-course-reviews {
-            display: flex;
-            flex-flow: row wrap;
-            gap: 20px;
-    
-            .ohmylms-course-single-review {
-                border: 1px solid #EBECED;
-                padding: 24px!important;
-                border-radius: 8px;
-                width: calc(100% / 2 - 10px);
-                display: none;
-                row-gap: 12px;
-    
-                &:nth-child(1),
-                &:nth-child(2) {
-                    display: block;
-                }
-    
-                &.shown {
-                    display: block;
-                }
-            }
-    
-            .review-description {
-                padding-left: 0;
-                font-size: 14px;
-            }
-    
-            .show-more-review {
-                width: 100%;
-                border-radius: 8px;
-                border: 1px solid #EBECED;
-                background: transparent;
-                cursor: pointer;
-                height: 40px;
-                padding: 10px;
-                color: var(--ohmylms-primary-color);
-                font-size: 14px;
-                font-weight: 500;
-                line-height: 1;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                text-transform: none;
-                letter-spacing: 0;
-    
-                svg {
-                    margin-left: 5px;
-                }
-            }
-        }
+		.ohmylms-course-reviews {
+			display: flex;
+			flex-flow: row wrap;
+			gap: 20px;
 
-        .ohmylms-course-reviews-form .ohmylms-reviews-title {
-            font-size: 24px;
-            font-weight: 700;
-        }
-    }
+			.ohmylms-course-single-review {
+				border: 1px solid var(--oml-border);
+				padding: var(--oml-space-5) !important;
+				border-radius: var(--oml-radius-control);
+				width: calc(100% / 2 - 10px);
+				display: none;
+				row-gap: 12px;
+
+				&:nth-child(1),
+				&:nth-child(2) {
+					display: block;
+				}
+
+				&.shown {
+					display: block;
+				}
+			}
+
+			.review-description {
+				padding-left: 0;
+				font-size: var(--oml-font-size-md);
+			}
+
+			.show-more-review {
+				width: 100%;
+				border-radius: var(--oml-radius-control);
+				border: 1px solid var(--oml-border);
+				background: transparent;
+				cursor: pointer;
+				height: 40px;
+				padding: 10px;
+				color: var(--oml-primary);
+				font-size: var(--oml-font-size-md);
+				font-weight: var(--oml-weight-medium);
+				line-height: 1;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				text-transform: none;
+				letter-spacing: 0;
+
+				svg {
+					margin-left: 5px;
+				}
+			}
+		}
+
+		.ohmylms-course-reviews-form .ohmylms-reviews-title {
+			font-size: var(--oml-font-size-2xl);
+			font-weight: var(--oml-weight-strong);
+		}
+	}
 }
 
 @media screen and (max-width: 1199px) {
 
-    .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-course-reviews-form .ohmylms-reviews-title {
-        font-size: 20px;
-    }
+	.ohmylms-page
+		.ohmylms-single-course-layout-2
+		.ohmylms-course-reviews-form
+		.ohmylms-reviews-title {
+		font-size: var(--oml-font-size-xl);
+	}
 
-    .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-course-reviews .ohmylms-course-single-review {
-        padding: 17px !important;
-        border-radius: 10px;
-        gap: 12px;
-    }
+	.ohmylms-page
+		.ohmylms-single-course-layout-2
+		.ohmylms-course-reviews
+		.ohmylms-course-single-review {
+		padding: 17px !important;
+		border-radius: var(--oml-radius-control);
+		gap: var(--oml-space-3);
+	}
 }
 
 @media screen and (max-width: 767px) {
 
-    .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-course-reviews .ohmylms-course-single-review {
-        width: 100%;
-    }
+	.ohmylms-page
+		.ohmylms-single-course-layout-2
+		.ohmylms-course-reviews
+		.ohmylms-course-single-review {
+		width: 100%;
+	}
 
-    .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-course-reviews {
-        gap: 10px;
-    }
-
+	.ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-course-reviews {
+		gap: 10px;
+	}
 }
 
 @media screen and (max-width: 575px) {
 
-    .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-course-reviews-wrapper {
-        margin-top: 30px;
-    }
-
+	.ohmylms-page
+		.ohmylms-single-course-layout-2
+		.ohmylms-course-reviews-wrapper {
+		margin-top: 30px;
+	}
 }

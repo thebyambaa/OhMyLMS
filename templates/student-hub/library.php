@@ -19,7 +19,7 @@ if ( $hub_subject ) {
 
 $hub_query = get_query_var( 'hub_q', '' );
 $hub_query = is_string( $hub_query ) ? sanitize_text_field( $hub_query ) : '';
-$subjects  = LearnerCatalog::subjects( $hub_query, $config['library_types'] ? $config['library_types'] : array( 'subject' ) );
+$subjects  = LearnerCatalog::subjects( $hub_query, array_values( array_unique( array_merge( array( 'subject' ), $config['library_types'] ) ) ), true );
 $bundles   = $config['library_bundles'] ? LearnerCatalog::bundles( $hub_query ) : array();
 
 /**
@@ -76,6 +76,9 @@ $hub_render_group = static function ( array $node, $depth ) use ( &$hub_render_g
 					<span class="oml-hub-subject-count"><?php /* translators: %d: number of courses. */ echo esc_html( sprintf( _n( '%d course', '%d courses', $subject['total'], 'ohmylms' ), $subject['total'] ) ); ?></span>
 				</summary>
 				<div class="oml-hub-subject-body">
+					<?php if ( ! $subject['total'] ) : ?>
+						<p><?php esc_html_e( 'Courses will appear here when they are published and assigned to this subject.', 'ohmylms' ); ?></p>
+					<?php endif; ?>
 					<p><a class="oml-hub-button" href="<?php echo esc_url( \OhMyLMS\Student\Subjects::url( $subject['id'], true ) ); ?>"><?php esc_html_e( 'View subject', 'ohmylms' ); ?></a></p>
 					<?php $hub_render_group( $subject, 0 ); ?>
 				</div>

@@ -39,6 +39,10 @@ This applies only to filename spelling and the `class-` prefix: every other PHP 
 Renaming those files would break case-sensitive PSR-4 loading, the published package classmap,
 or consumers that include the existing paths. Unmatched paths remain reported for review.
 
+`Assessment\Interactive::shuffled()` retains its public `$list` parameter for PHP named-argument
+compatibility. Its method-local annotation covers only the reserved-parameter-name warning;
+other standards checks remain active. New parameters must avoid reserved keywords.
+
 `stylelint.config.mjs` preserves an exact list of existing public BEM/checkout selectors.
 WordPress component classes belong to the host; plugin classes and checkout field IDs are
 already consumed by templates, scripts and extensions. Other selector names still follow the

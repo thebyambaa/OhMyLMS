@@ -1,0 +1,46 @@
+.ohmylms-question-cards {
+	max-width: 1100px;
+	margin: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.ohmylms-question-card {
+	background: #fff;
+	border: 1px solid var(--oml-border, #dcdcde);
+	border-left: 6px solid transparent;
+	border-radius: var(--oml-radius-card, 8px);
+	box-shadow: 0 1px 3px #00000012;
+	overflow: hidden;
+}
+
+.ohmylms-question-card-heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 16px 24px;
+}
+
+.ohmylms-question-card-summary {
+	display: block;
+	width: 100%;
+	text-align: left;
+	background: #fff;
+	border: 0;
+	padding: 8px 28px 24px;
+	cursor: pointer;
+	color: #1e1e1e;
+}
+
+.ohmylms-question-card-footer {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	flex-wrap: wrap;
+	gap: 8px;
+	padding: 16px 24px;
+	border-top: 1px solid #eee;
+}
+

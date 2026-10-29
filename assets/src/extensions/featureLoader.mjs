@@ -8,7 +8,13 @@ export function createFeatureLoader( importFeature, registryName ) {
 	return function loadFeature() {
 		if ( ! pending ) {
 			pending = Promise.resolve()
-				.then( importFeature )
+				.then( () =>
+					Promise.all( [
+						importFeature(),
+						globalThis.ohmylmsStyles?.ensure( registryName ),
+					] )
+				)
+				.then( ( [ module ] ) => module )
 				.then( ( module ) => {
 					const components = module[ registryName ];
 					if ( ! components ) {

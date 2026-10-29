@@ -1,0 +1,8 @@
+.ohmylms-ws-field input.ohmylms-ws-title.is-syllabus-name:focus {
+	border-color: var(--ws-primary);
+	box-shadow: var(--oml-shadow-sm);
+}
+
+.ohmylms-ws-field input.ohmylms-ws-title.is-syllabus-name[aria-invalid="true"] {
+	border-color: var(--oml-danger, var(--oml-danger));
+}

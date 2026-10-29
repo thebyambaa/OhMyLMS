@@ -1,0 +1,6 @@
+.ohmylms-content-hub
+	.ohmylms-question-bank
+	> .components-tab-panel
+	> .components-tab-panel__tabs {
+	margin-bottom: var(--oml-space-4);
+}

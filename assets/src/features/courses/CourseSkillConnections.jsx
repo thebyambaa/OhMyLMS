@@ -9,16 +9,14 @@ const connectionLabel = ( item ) => {
 
 /** @jsx createElement */
 import { createElement, useEffect, useState } from '@wordpress/element';
-import {
-	Button,
-	CheckboxControl,
-	Notice,
-	Spinner,
-} from '@wordpress/components';
+import { Button, FormTokenField, Notice, Spinner } from '@wordpress/components';
 import apiFetch from '@wordpress/api-fetch';
 import { __, sprintf } from '@wordpress/i18n';
 import { lessonSkillIds } from './lessonSkills.mjs';
 import { outlineSkillName } from './CourseOutlineTree';
+import { objectiveRequest } from './objectives.mjs';
+import { loadSyllabus } from '../curriculum/api.mjs';
+import { syllabusSkillRows } from './skillPickerTree.mjs';
 
 const name = ( item ) =>
 	item.title || item.name || __( 'Untitled activity', 'ohmylms' );
@@ -64,14 +62,14 @@ export function CourseSkillCoverage( { draft, onSelect } ) {
 			</h2>
 			<p>
 				{ __(
-					'A skill can appear in several lessons. Teaching and assessment links below describe your plan; open a quiz to check its question mappings. Completion counts each skill once.',
+					'A skill can be taught in several block lessons and assessed in several quizzes. These links describe your plan; open a quiz to check its question mappings. Completion counts each skill once.',
 					'ohmylms'
 				) }
 			</p>
 			{ ! program.outcomes.length ? (
 				<p>
 					{ __(
-						'Select a lesson in the outline and choose Link skills to lesson to get started.',
+						'Select a unit and choose Link course skills to get started. Then select a lesson or quiz to connect its skills.',
 						'ohmylms'
 					) }
 				</p>
@@ -82,7 +80,6 @@ export function CourseSkillCoverage( { draft, onSelect } ) {
 							<tr>
 								{ [
 									__( 'Skill', 'ohmylms' ),
-									__( 'Lessons', 'ohmylms' ),
 									__( 'Teaching activities', 'ohmylms' ),
 									__( 'Practice', 'ohmylms' ),
 									__( 'Planned assessments', 'ohmylms' ),
@@ -127,20 +124,6 @@ export function CourseSkillCoverage( { draft, onSelect } ) {
 														) }
 											</small>
 										</th>
-										<td>
-											{ links(
-												( program.groups || [] ).filter(
-													( group ) =>
-														lessonSkillIds(
-															program,
-															group.id
-														).includes(
-															skill.term_id
-														)
-												),
-												'lesson'
-											) }
-										</td>
 										<td>
 											{ links(
 												items.filter( teaches ),
@@ -292,24 +275,57 @@ export function LessonSkillConnections( {
 
 /**
  * Edit course-local coverage and inspect saved question mappings for a quiz.
- * @param {Object}                                    props          Component properties.
- * @param {Object}                                    props.draft    Outline draft.
- * @param {Object}                                    props.activity Selected activity.
- * @param {boolean}                                   props.busy     Save in progress.
- * @param {(ids: number[]) => void}                   props.onChange Update intended skill IDs.
- * @param {(type: string, id: string|number) => void} props.onSelect Select the containing lesson.
+ * @param {Object}                  props                     Component properties.
+ * @param {Object}                  props.draft               Outline draft.
+ * @param {Object}                  props.activity            Selected activity.
+ * @param {number}                  props.courseId            Course identifier.
+ * @param {number}                  props.skillSourceRevision Current syllabus selection revision.
+ * @param {boolean}                 props.busy                Save in progress.
+ * @param {() => void}              props.onAdd               Add course skills here.
+ * @param {(ids: number[]) => void} props.onChange            Update intended skill IDs.
  * @return {Element} Coverage controls.
  */
 export function ActivitySkillConnections( {
+	onAdd,
 	draft,
 	activity,
+	courseId,
+	skillSourceRevision,
 	busy,
 	onChange,
-	onSelect,
 } ) {
 	const [ quiz, setQuiz ] = useState( null );
 	const [ error, setError ] = useState( '' );
 	const [ retry, setRetry ] = useState( 0 );
+	const [ sourceSkills, setSourceSkills ] = useState( [] );
+	const [ skillError, setSkillError ] = useState( '' );
+	const [ skillsLoading, setSkillsLoading ] = useState( true );
+	useEffect( () => {
+		let active = true;
+		setSkillsLoading( true );
+		setSkillError( '' );
+		setSourceSkills( [] );
+		async function load() {
+			const data = await objectiveRequest( courseId );
+			const ids = new Set(
+				data.source_ids ||
+					data.mappings.map( ( row ) => row.syllabus_id )
+			);
+			const source = data.syllabuses.find( ( row ) => ids.has( row.id ) );
+			const rows = source
+				? syllabusSkillRows( await loadSyllabus( source.id ) )
+				: [];
+			if ( active ) {
+				setSourceSkills( rows );
+			}
+		}
+		load()
+			.catch( ( cause ) => active && setSkillError( cause.message ) )
+			.finally( () => active && setSkillsLoading( false ) );
+		return () => {
+			active = false;
+		};
+	}, [ courseId, draft.revision, skillSourceRevision, retry ] );
 	useEffect( () => {
 		let active = true;
 		setQuiz( null );
@@ -324,12 +340,33 @@ export function ActivitySkillConnections( {
 		};
 	}, [ activity.content_id, activity.type, retry ] );
 	const selected = activity.skill_ids || [];
-	const local = lessonSkillIds( draft.program, activity.group_id );
-	const skills = draft.program.outcomes.filter(
-		( row ) =>
-			! activity.group_id ||
-			local.includes( row.term_id ) ||
-			selected.includes( row.term_id )
+	const skills = draft.program.outcomes;
+	const byId = new Map( sourceSkills.map( ( row ) => [ row.term_id, row ] ) );
+	const skillIds = [ ...new Set( [ ...byId.keys(), ...selected ] ) ];
+	const baseLabel = ( id ) =>
+		[
+			draft.skill_codes?.[ id ] || byId.get( id )?.code,
+			draft.skill_names?.[ id ] ||
+				byId.get( id )?.name ||
+				outlineSkillName( draft.skill_names, id ),
+		]
+			.filter( Boolean )
+			.join( ' · ' );
+	const labels = new Map(
+		skillIds.map( ( id ) => {
+			const label = baseLabel( id );
+			return [
+				id,
+				skillIds.some(
+					( other ) => other !== id && baseLabel( other ) === label
+				)
+					? `${ label } (#${ id })`
+					: label,
+			];
+		} )
+	);
+	const idsByLabel = new Map(
+		[ ...labels ].map( ( [ id, label ] ) => [ label, id ] )
 	);
 	const counts = new Map();
 	for ( const question of quiz?.content || [] ) {
@@ -352,48 +389,76 @@ export function ActivitySkillConnections( {
 				</legend>
 				<p>
 					{ __(
-						'These links apply to this course activity. The shared resource stays reusable in other courses.',
+						'Choose the skills taught or assessed here. They are connected to this lesson or quiz in this course.',
 						'ohmylms'
 					) }
 				</p>
-				{ skills.map( ( skill ) => (
-					<CheckboxControl
-						key={ skill.term_id }
-						label={ outlineSkillName(
-							draft.skill_names,
-							skill.term_id
-						) }
-						disabled={ busy }
-						checked={ selected.includes( skill.term_id ) }
-						onChange={ ( checked ) =>
-							onChange(
-								checked
-									? [ ...selected, skill.term_id ]
-									: selected.filter(
-											( id ) => id !== skill.term_id
+				<FormTokenField
+					label={ __( 'Connected skills', 'ohmylms' ) }
+					__experimentalShowHowTo={ false }
+					__experimentalValidateInput={ ( token ) =>
+						idsByLabel.has( token ) &&
+						( skills.length < 200 ||
+							skills.some(
+								( row ) =>
+									row.term_id === idsByLabel.get( token )
+							) )
+					}
+					value={ selected.map( ( id ) => labels.get( id ) ) }
+					suggestions={ [ ...labels.values() ] }
+					disabled={ busy }
+					placeholder={ __(
+						'Type a skill name or code…',
+						'ohmylms'
+					) }
+					tokenizeOnSpace={ false }
+					onChange={ ( tokens ) =>
+						onChange(
+							[
+								...new Set(
+									tokens
+										.map( ( token ) =>
+											idsByLabel.get(
+												typeof token === 'string'
+													? token
+													: token.value
+											)
 										)
-							)
-						}
-					/>
-				) ) }
-				{ ! skills.length && (
-					<p>
+										.filter( ( id ) => id !== undefined )
+								),
+							],
+							sourceSkills
+						)
+					}
+				/>
+				{ skillsLoading && (
+					<p role="status">{ __( 'Loading skills…', 'ohmylms' ) }</p>
+				) }
+				{ skillError && (
+					<Notice status="error" isDismissible={ false }>
+						{ skillError }
+						<Button onClick={ () => setRetry( retry + 1 ) }>
+							{ __( 'Retry', 'ohmylms' ) }
+						</Button>
+					</Notice>
+				) }
+				{ ! skillsLoading && ! skillError && ! skillIds.length && (
+					<p role="status">
 						{ __(
-							'Link skills to the lesson first, then choose which ones this activity covers.',
+							'Link a syllabus in Syllabus alignment to search its skills.',
 							'ohmylms'
 						) }
 					</p>
 				) }
-				{ activity.group_id && (
-					<Button
-						variant="secondary"
-						onClick={ () =>
-							onSelect( 'lesson', activity.group_id )
-						}
-					>
-						{ __( 'Manage lesson skills', 'ohmylms' ) }
-					</Button>
-				) }
+				<p>
+					{ __(
+						'Type to find skills from your linked syllabus. Select a result to add a tag, or use Add skills to browse. Remove tags with ×, then Save course.',
+						'ohmylms'
+					) }
+				</p>
+				<Button variant="secondary" disabled={ busy } onClick={ onAdd }>
+					{ __( 'Add skills', 'ohmylms' ) }
+				</Button>
 			</fieldset>
 			{ activity.type === 'quiz' && (
 				<div className="ohmylms-connection-card">

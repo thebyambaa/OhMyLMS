@@ -5,7 +5,7 @@ import {
 	useState,
 	useId,
 } from '@wordpress/element';
-import { Modal } from '@wordpress/components';
+import { Modal } from '../../ui/Modal';
 import { __, sprintf } from '@wordpress/i18n';
 import {
 	assignTab,
@@ -113,6 +113,7 @@ export function MovableTabs( {
 				draggable
 				aria-current={ active === id ? 'page' : undefined }
 				className={ [
+					'oml-tab',
 					active === id ? 'is-active' : '',
 					over === id ? 'is-drop-target' : '',
 					dragging?.id === id ? 'is-dragging' : '',
@@ -171,7 +172,7 @@ export function MovableTabs( {
 	return (
 		<>
 			<nav
-				className={ `ohmylms-content-hub-nav ohmylms-movable-tabs ${ className }` }
+				className={ `oml-tab-list ohmylms-content-hub-nav ohmylms-movable-tabs ${ className }` }
 				aria-label={ label }
 			>
 				{ layoutBlocks( layout ).map( ( block ) =>

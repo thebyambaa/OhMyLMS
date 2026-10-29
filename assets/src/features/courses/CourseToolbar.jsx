@@ -1,6 +1,5 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
-import { CourseGradebook } from './CourseGradebook';
 export function createCourseToolbar( readRuntime ) {
 	return function CourseToolbar( props ) {
 		const {
@@ -21,8 +20,6 @@ export function createCourseToolbar( readRuntime ) {
 			tz,
 			y: WordPressData,
 		} = readRuntime();
-		const [ gradebookOpen, setGradebookOpen ] =
-			ReactHooks.useState( false );
 		var activeStep = props.activeStep;
 		var r = ( props.setActiveStep, props.courseDescription );
 		var setLocalCourse = props.setLocalCourse;
@@ -50,8 +47,8 @@ export function createCourseToolbar( readRuntime ) {
 		var O = P[ 0 ];
 		var k = P[ 1 ];
 		var j = JW();
-		var steps = j.steps;
-		var totalSteps = j.totalSteps;
+		var steps = j.steps.filter( ( step ) => step.id !== 'preview' );
+		var totalSteps = steps.length;
 		var F = function ( e ) {
 			var _tLocal = '/course-edit/'.concat( courseId, '/' ).concat( e );
 			if ( 'settings' === e ) {
@@ -106,12 +103,6 @@ export function createCourseToolbar( readRuntime ) {
 		};
 		return (
 			<React.Fragment>
-				{ gradebookOpen && (
-					<CourseGradebook
-						courseId={ Number( courseId ) }
-						onClose={ () => setGradebookOpen( false ) }
-					/>
-				) }
 				<Controls.CardWP
 					padding={ '10px 10px 10px 20px' }
 					className={ 'ohmylms-top-navigation '
@@ -276,21 +267,17 @@ export function createCourseToolbar( readRuntime ) {
 								justify={ 'flex-end' }
 								gap={ 1 }
 							>
-								<Controls.ButtonWP
-									variant="secondary"
-									disabled={ loading || ! Number( courseId ) }
-									onClick={ () => setGradebookOpen( true ) }
-								>
-									{ ( 0, I18n.__ )( 'Gradebook', 'ohmylms' ) }
-								</Controls.ButtonWP>
-								{ 'content' === activeStep && (
+								{ props.courseUrl && (
 									<React.Fragment>
 										<Controls.ButtonWP
 											variant={ 'primary' }
-											onClick={ N }
+											href={ props.courseUrl }
+											target="_blank"
+											rel="noopener noreferrer"
+											disabled={ loading }
 										>
 											{ ( 0, I18n.__ )(
-												'Next',
+												'View course',
 												'ohmylms'
 											) }
 										</Controls.ButtonWP>
@@ -313,10 +300,11 @@ export function createCourseToolbar( readRuntime ) {
 										</Controls.ButtonWP>
 										<Controls.ButtonWP
 											variant={ 'primary' }
-											onClick={ N }
+											onClick={ () => onSave() }
+											disabled={ loading }
 										>
 											{ ( 0, I18n.__ )(
-												'Next',
+												'Save course',
 												'ohmylms'
 											) }
 										</Controls.ButtonWP>
@@ -489,15 +477,6 @@ export function createCourseToolbar( readRuntime ) {
 																'activate-mail-mint'
 															) );
 												}
-											},
-										},
-										{
-											title: ( 0, I18n.__ )(
-												'Save as Draft',
-												'ohmylms'
-											),
-											onClick() {
-												Notifications( 'draft' );
 											},
 										},
 									] }

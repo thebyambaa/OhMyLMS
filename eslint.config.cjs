@@ -41,16 +41,21 @@ module.exports = [
 		files: [
 			'assets/src/features/**/*.{js,jsx,mjs}',
 			'assets/src/extensions/**/*.{js,jsx,mjs}',
+			'assets/src/ui/**/*.{js,jsx,mjs}',
 			'assets/src/blocks/**/*.{js,jsx,mjs}',
 			'assets/interactivity/**/*.js',
 			'assets/js/student-hub.js',
 			'assets/js/player-context.js',
+			'assets/js/admin-benchmark.js',
+			'assets/js/admin-styles.js',
+			'assets/js/ui.js',
 		],
 	} ) ),
 	{
 		files: [
 			'assets/src/features/**/*.{js,jsx,mjs}',
 			'assets/src/extensions/**/*.{js,jsx,mjs}',
+			'assets/src/ui/**/*.{js,jsx,mjs}',
 			'assets/src/blocks/**/*.{js,jsx,mjs}',
 			'assets/interactivity/**/*.js',
 		],

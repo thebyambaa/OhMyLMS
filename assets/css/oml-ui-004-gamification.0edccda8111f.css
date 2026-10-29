@@ -1,0 +1,43 @@
+.ohmylms-streak-settings__card {
+	margin-bottom: 20px;
+	padding: 24px;
+	background: var(--ohmylms-admin-card-bg, #fff);
+	border: 1px solid var(--ohmylms-admin-border, #dcdcde);
+	border-radius: var(--ohmylms-admin-radius, 7px);
+	min-width: 0;
+}
+
+.ohmylms-streak-settings__grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 20px;
+}
+
+.ohmylms-streak-settings__freeze-fields {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0 16px;
+}
+
+.ohmylms-streak-settings__milestone {
+	min-width: 0;
+	margin: 16px 0;
+	padding: 16px;
+	border: 1px solid var(--ohmylms-admin-border, #dcdcde);
+	border-radius: var(--oml-radius-control, 6px);
+}
+
+.ohmylms-streak-settings__milestone-fields {
+	display: grid;
+	grid-template-columns: minmax(90px, 1fr) minmax(160px, 2fr) minmax(
+			90px,
+			1fr
+		) auto;
+	align-items: start;
+	gap: 16px;
+}
+
+.ohmylms-streak-settings__badge-field {
+	min-width: 0;
+}
+

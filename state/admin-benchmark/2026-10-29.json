@@ -1,0 +1,56 @@
+{
+	"site": "http://800.local/",
+	"timingDefinition": "Legacy ttfbMs values here include DNS and connection time (navigation.responseStart). See 2026-10-29-investigation.json for actual server-wait measurements and the confirmed local DNS delay.",
+	"route": "wp-admin/admin.php?page=ohmylms#/dashboard",
+	"conditions": "Logged-in in-app browser, normal cache, no throttling; three local samples per version. First after sample fetched the changed vendor bundle. Background development work was not controlled.",
+	"metric": "Dashboard heading is the first Overview h1, not full analytics-data readiness. Long tasks observed until five seconds after load.",
+	"before": [
+		{
+			"ttfbMs": 626.4,
+			"firstContentfulPaintMs": 852,
+			"dashboardHeadingMs": 1165.1,
+			"loadMs": 1146.9,
+			"longTaskMs": 68
+		},
+		{
+			"ttfbMs": 6767.2,
+			"firstContentfulPaintMs": 6952,
+			"dashboardHeadingMs": 14848.8,
+			"loadMs": 14885,
+			"longTaskMs": 56
+		},
+		{
+			"ttfbMs": 662.5,
+			"firstContentfulPaintMs": 848,
+			"dashboardHeadingMs": 1185.3,
+			"loadMs": 1141.2,
+			"longTaskMs": 120
+		}
+	],
+	"after": [
+		{
+			"ttfbMs": 2737.7,
+			"firstContentfulPaintMs": 2948,
+			"dashboardHeadingMs": 6802.9,
+			"loadMs": 6842.9,
+			"longTaskMs": 403
+		},
+		{
+			"ttfbMs": 655,
+			"firstContentfulPaintMs": 868,
+			"dashboardHeadingMs": 1390.4,
+			"loadMs": 1254.6,
+			"longTaskMs": 226
+		},
+		{
+			"ttfbMs": 6610.7,
+			"firstContentfulPaintMs": 6784,
+			"dashboardHeadingMs": 10684.6,
+			"loadMs": 10723.8,
+			"longTaskMs": 52
+		}
+	],
+	"vendorBytes": { "before": 6054793, "after": 3313084 },
+	"vendorGzipBytes": { "before": 1782466, "after": 1024735 },
+	"conclusion": "The startup payload decreased. These variable, cache-dependent samples do not demonstrate an improvement in dashboard latency. Investigate server response stalls and repeat controlled cold/warm runs."
+}

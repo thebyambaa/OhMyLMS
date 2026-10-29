@@ -71,7 +71,7 @@ final class Interactive {
 	 * @param array $list List.
 	 * @param mixed $seed Seed.
 	 */
-	public static function shuffled( array $list, $seed ) {
+	public static function shuffled( array $list, $seed ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.listFound -- Preserve the public named-argument contract; see docs/CODING-STANDARDS.md.
 		$keyed = array();
 		foreach ( array_values( $list ) as $index => $item ) {
 			$keyed[] = array( hash( 'sha256', $seed . '|' . $index ), $item );
@@ -353,7 +353,7 @@ final class Interactive {
 		if ( ! wp_script_is( 'ohmylms-interactive-visual', 'registered' ) ) {
 			wp_register_script( 'ohmylms-interactive-visual', plugins_url( 'assets/js/interactive-visual.js', OHMYLMS_FILE ), array( 'ohmylms-interactive' ), OHMYLMS_VERSION, true ); }
 		if ( ! wp_style_is( 'ohmylms-interactive', 'registered' ) ) {
-			wp_register_style( 'ohmylms-interactive', plugins_url( 'assets/css/interactive.css', OHMYLMS_FILE ), array(), OHMYLMS_VERSION ); }
+			wp_register_style( 'ohmylms-interactive', plugins_url( 'assets/css/interactive.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/interactive.css' ) ); }
 	}
 
 	/**

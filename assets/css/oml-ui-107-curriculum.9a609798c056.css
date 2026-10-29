@@ -1,0 +1,9 @@
+.ohmylms-content-hub-nav a.is-active {
+	font-weight: var(--oml-weight-strong);
+	border-bottom-color: var(--ohmylms-primary-color, var(--oml-primary));
+}
+
+.ohmylms-content-hub-nav a:focus-visible {
+	outline: 2px solid var(--wp-admin-theme-color, var(--oml-info));
+	outline-offset: 2px;
+}

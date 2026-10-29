@@ -1,0 +1,19 @@
+.ohmylms-question-type-picker {
+	width: 220px;
+	min-width: 160px;
+	max-width: 100%;
+	flex: 0 1 220px;
+}
+
+.ohmylms-question-autosave {
+	align-self: center;
+	font-size: 12px;
+	color: var(--ohmylms-text-secondary, #646970);
+}
+
+.ohmylms-question-toolbar-label {
+	margin-right: auto;
+	white-space: nowrap;
+	color: #646970;
+}
+

@@ -1,0 +1,16 @@
+.ohmylms-content-hub-header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--oml-space-3) var(--oml-space-5);
+	margin: var(--oml-space-5) var(--ohmylms-hub-gutter) var(--oml-space-3);
+}
+
+.ohmylms-content-hub-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--oml-space-2);
+}

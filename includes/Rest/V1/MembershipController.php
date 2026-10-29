@@ -617,7 +617,37 @@ class MembershipController extends RestController {
 	 */
 	public function save_membership( $request ) {
 		$membership = $this->prepare_item_for_database( $request );
+		$this->validate_sale_schedule( $request, $membership );
 		return $membership->save();
+	}
+
+	/**
+	 * Validate calendar sale fields before creating or changing a plan.
+	 *
+	 * @param WP_REST_Request $request Submitted fields.
+	 * @param Membership      $membership Existing membership values.
+	 * @throws DataException When the date range or free-access end is invalid.
+	 */
+	private function validate_sale_schedule( $request, $membership ) {
+		$sale  = isset( $request['sale_price'] ) ? $request['sale_price'] : $membership->get_sale_price( 'edit' );
+		$dates = array();
+		foreach ( array( 'from', 'to' ) as $side ) {
+			$field          = 'sale_price_dates_' . $side;
+			$value          = isset( $request[ $field ] ) ? $request[ $field ] : $membership->{'get_' . $field}();
+			$dates[ $side ] = \OhMyLMS\Membership\FreeSale::date( $value );
+			if ( ! empty( $value ) && ! $dates[ $side ] ) {
+				throw new DataException( 'membership_sale_date', esc_html__( 'Choose a valid sale date from the calendar.', 'ohmylms' ), 400 );
+			}
+		}
+		if ( $dates['from'] && $dates['to'] && $dates['from'] > $dates['to'] ) {
+			throw new DataException( 'membership_sale_date', esc_html__( 'The sale end date must be on or after its start date.', 'ohmylms' ), 400 );
+		}
+		if ( '' !== (string) $sale && ( ! is_numeric( $sale ) || 0 > (float) $sale ) ) {
+			throw new DataException( 'membership_sale_price', esc_html__( 'Sale price must be zero or greater.', 'ohmylms' ), 400 );
+		}
+		if ( '' !== (string) $sale && is_numeric( $sale ) && 0.0 === (float) $sale && ! $dates['to'] ) {
+			throw new DataException( 'membership_free_until', esc_html__( 'Choose a Free until date for a zero-price sale.', 'ohmylms' ), 400 );
+		}
 	}
 
 
@@ -658,6 +688,9 @@ class MembershipController extends RestController {
 	 * @throws DataException When the operation cannot be completed.
 	 */
 	protected function set_membership_meta( $membership, $request ) {
+		if ( isset( $request['all_learning_content'] ) ) {
+			$membership->set_all_learning_content( $request['all_learning_content'] );
+		}
 		$error = $this->validate_course_selection( $request, $membership );
 		if ( is_wp_error( $error ) ) {
 			throw new DataException( $error->get_error_code(), $error->get_error_message(), 400 );
@@ -673,11 +706,13 @@ class MembershipController extends RestController {
 		if ( isset( $request['sale_price'] ) ) {
 			$membership->set_sale_price( $request['sale_price'] );
 		}
-		if ( isset( $request['sale_price_dates_from'] ) && ! empty( $request['sale_price_dates_from'] ) ) {
-			$membership->set_sale_price_dates_from( $request['sale_price_dates_from']['date'] );
+		if ( isset( $request['sale_price_dates_from'] ) ) {
+			$date = \OhMyLMS\Membership\FreeSale::date( $request['sale_price_dates_from'] );
+			$membership->set_sale_price_dates_from( $date ? $date : null );
 		}
-		if ( isset( $request['sale_price_dates_to'] ) && ! empty( $request['sale_price_dates_to'] ) ) {
-			$membership->set_sale_price_dates_to( $request['sale_price_dates_to']['date'] );
+		if ( isset( $request['sale_price_dates_to'] ) ) {
+			$date = \OhMyLMS\Membership\FreeSale::date( $request['sale_price_dates_to'] );
+			$membership->set_sale_price_dates_to( $date ? $date : null );
 		}
 		if ( isset( $request['subscription_length'] ) ) {
 			$membership->set_subscription_length( $request['subscription_length'] );
@@ -751,6 +786,7 @@ class MembershipController extends RestController {
 			'products'                     => $membership->get_products( 'edit' ),
 			'course_categories'            => $membership->get_course_categories(),
 			'course_tags'                  => $membership->get_course_tags(),
+			'all_learning_content'         => $membership->get_all_learning_content(),
 			'course_curriculum'            => $membership->get_course_curriculum(),
 			'course_bundles'               => $membership->get_course_bundles(),
 			'legacy_rules'                 => $this->legacy_rules( $membership ),
@@ -774,6 +810,9 @@ class MembershipController extends RestController {
 	 * @param mixed $membership Membership.
 	 */
 	private function validate_course_selection( $request, $membership = null ) {
+		if ( isset( $request['all_learning_content'] ) && ! is_bool( $request['all_learning_content'] ) && ! in_array( $request['all_learning_content'], array( 0, 1, '0', '1', 'true', 'false' ), true ) ) {
+			return new WP_Error( 'membership_all_learning_content', __( 'All learning content must be a checkbox value.', 'ohmylms' ), array( 'status' => 400 ) );
+		}
 		$rules = array(
 			'course_categories' => 'course_category',
 			'course_tags'       => 'course_tag',
@@ -860,7 +899,7 @@ class MembershipController extends RestController {
 		}
 		$curriculum   = $request['course_curriculum'] ?? array();
 		$bundles      = $request['course_bundles'] ?? array();
-		$courses      = \OhMyLMS\Membership\CourseSelection::resolve( $request['products'] ?? array(), $request['course_categories'] ?? array(), $request['course_tags'] ?? array(), $request['excluded_courses'] ?? array(), $curriculum, $bundles );
+		$courses      = \OhMyLMS\Membership\CourseSelection::resolve( $request['products'] ?? array(), $request['course_categories'] ?? array(), $request['course_tags'] ?? array(), $request['excluded_courses'] ?? array(), $curriculum, $bundles, rest_sanitize_boolean( $request['all_learning_content'] ?? false ) );
 		$direct       = array_column( $request['products'] ?? array(), 'id' );
 		$categories   = $request['course_categories'] ?? array();
 		$category_ids = $categories;
@@ -891,6 +930,9 @@ class MembershipController extends RestController {
 		}
 		foreach ( $courses as &$course ) {
 			$course['reasons'] = array();
+			if ( rest_sanitize_boolean( $request['all_learning_content'] ?? false ) ) {
+				$course['reasons'][] = __( 'All learning content', 'ohmylms' );
+			}
 			if ( in_array( $course['id'], $direct ) ) {
 				$course['reasons'][] = __( 'Individual course', 'ohmylms' );
 			}

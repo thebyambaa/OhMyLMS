@@ -21,7 +21,7 @@ export function CourseSaveStatus( { dirty, saving, savedAt, status, onSave } ) {
 		text = __( 'Saving…', 'ohmylms' );
 	} else if ( dirty ) {
 		text = live
-			? __( 'You have changes that are not published yet.', 'ohmylms' )
+			? __( 'You have unsaved changes.', 'ohmylms' )
 			: __( 'You have unsaved changes.', 'ohmylms' );
 	} else if ( savedAt ) {
 		text = sprintf(
@@ -46,8 +46,8 @@ export function CourseSaveStatus( { dirty, saving, savedAt, status, onSave } ) {
 					onClick={ () => onSave( live ? 'publish' : 'draft' ) }
 				>
 					{ live
-						? __( 'Update course', 'ohmylms' )
-						: __( 'Save draft', 'ohmylms' ) }
+						? __( 'Save course', 'ohmylms' )
+						: __( 'Save course', 'ohmylms' ) }
 				</Button>
 			) }
 		</div>

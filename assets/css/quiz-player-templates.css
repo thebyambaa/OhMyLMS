@@ -1,5 +1,6 @@
 
 
+/* stylelint-disable color-no-hex -- Template palettes: each player design defines its own colors. */
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz[data-player-template] {
 	--player-stage: var(--ohmylms-quiz-player-stage, #450565);
 	--player-prompt: var(--ohmylms-quiz-player-prompt, #260932);
@@ -88,6 +89,8 @@
 	font-weight: 700;
 }
 
+/* stylelint-enable color-no-hex */
+
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz[data-player-template] .ohmylms-container {
 	width: min(100% - 48px, 1200px);
 	margin: 0 auto;
@@ -158,8 +161,8 @@
 	) {
 	padding: 24px;
 	border-radius: 10px;
-	background: #fff;
-	color: #29232e;
+	background: var(--oml-surface);
+	color: var(--oml-text);
 }
 
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz[data-player-template] .ohmylms-quiz-footer {
@@ -187,7 +190,7 @@
 	padding: 12px 28px;
 	border-radius: 8px;
 	background: var(--player-accent);
-	color: #fff;
+	color: var(--oml-surface);
 }
 
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz[data-player-template] .ohmylms-quiz-timer {
@@ -200,8 +203,8 @@
 	margin: 40px auto;
 	padding: 40px;
 	border-radius: 14px;
-	background: #fff;
-	color: #29232e;
+	background: var(--oml-surface);
+	color: var(--oml-text);
 }
 
 /* Top bar: close button, title and a thick progress pill. */
@@ -259,7 +262,7 @@
 	) {
 	border: 2px solid var(--playful-line);
 	border-radius: 16px;
-	background: #fff;
+	background: var(--oml-surface);
 	color: var(--playful-ink);
 }
 
@@ -276,7 +279,7 @@
 	border-radius: 16px;
 	background: var(--playful-green);
 	box-shadow: 0 4px 0 var(--playful-green-edge);
-	color: #fff;
+	color: var(--oml-surface);
 	font-weight: 800;
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
@@ -286,7 +289,7 @@
 /* Timer, messages and the result card. */
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-playful .ohmylms-quiz-timer {
 	border-bottom: 2px solid var(--playful-line);
-	background: #fff;
+	background: var(--oml-surface);
 }
 
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-playful .ohmylms-quiz-result {
@@ -310,7 +313,7 @@
 	border: 2px solid var(--playful-line);
 	border-bottom-width: 4px;
 	border-radius: 14px;
-	background: #fff;
+	background: var(--oml-surface);
 	color: var(--playful-ink);
 	font-size: 17px;
 	font-weight: 800;
@@ -359,6 +362,7 @@
 	left: 8px;
 	height: 4px;
 	border-radius: 999px;
+	/* stylelint-disable-next-line color-no-hex -- Translucent shading overlay, not a palette color. */
 	background: #fff5;
 }
 
@@ -366,6 +370,7 @@
 	padding: 16px;
 	border-radius: 14px;
 	background-color: var(--player-stage);
+	/* stylelint-disable-next-line color-no-hex -- Translucent shading overlay, not a palette color. */
 	background-image: var(--player-grid, linear-gradient(#ffffff05 1px, transparent 1px), linear-gradient(90deg, #ffffff05 1px, transparent 1px));
 	background-size: 32px 32px;
 }
@@ -476,7 +481,7 @@
 	width: 26px;
 	height: 26px;
 	border: 2px solid var(--playful-line);
-	background: #fff;
+	background: var(--oml-surface);
 }
 
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-playful .ohmylms-quiz-footer .skiptop-next {
@@ -489,7 +494,7 @@
 
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-playful .ohmylms-button.outline {
 	border: 2px solid var(--playful-line);
-	background: #fff;
+	background: var(--oml-surface);
 	box-shadow: 0 4px 0 var(--playful-line);
 	color: var(--playful-blue);
 }
@@ -538,7 +543,7 @@
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-playful
 	:is(input[type="text"], input[type="number"], textarea, select, .ohmylms-text-input):focus {
 	border-color: var(--playful-blue-line);
-	background: #fff;
+	background: var(--oml-surface);
 	outline: 0;
 }
 
@@ -568,6 +573,7 @@
 	border: 3px solid transparent;
 	border-radius: 8px;
 	background: var(--player-answer-1);
+	/* stylelint-disable-next-line color-no-hex -- Translucent shading overlay, not a palette color. */
 	background-image: var(--player-card-gradient, linear-gradient(180deg, #ffffff12, #00000028));
 	color: var(--player-text);
 	text-align: center;
@@ -578,7 +584,7 @@
 	.option-box {
 	justify-content: flex-start;
 	min-height: 64px;
-	border-color: #d9dce3;
+	border-color: var(--oml-border);
 }
 
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-playful
@@ -600,7 +606,7 @@
 	border: 2px solid var(--playful-line);
 	border-bottom-width: 4px;
 	border-radius: 16px;
-	background: #fff;
+	background: var(--oml-surface);
 	color: var(--playful-ink);
 	text-align: left;
 	transition: background-color 0.12s ease, border-color 0.12s ease;
@@ -640,6 +646,7 @@
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz[data-player-template] .ohmylms-quiz-form .single-option input:checked + .option-box {
 	border-color: var(--player-text);
 	box-shadow: 0 0 0 2px var(--player-accent);
+	/* stylelint-disable-next-line color-no-hex -- Translucent shading overlay, not a palette color. */
 	background-image: linear-gradient(#ffffff12, #ffffff12);
 }
 
@@ -747,7 +754,7 @@
 	border: 0;
 	border-radius: 8px;
 	background: transparent;
-	color: #4b4b4b;
+	color: var(--oml-text);
 	cursor: pointer;
 }
 
@@ -758,7 +765,7 @@
 
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz .reorder-move:focus-visible,
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz .reorder-move:hover:not(:disabled) {
-	background: rgba(0, 0, 0, 0.06);
+	background: var(--oml-subtle);
 }
 
 /* Matching: terms on the left, definitions on the right, a coloured line for each pair. */
@@ -802,9 +809,9 @@
 	justify-content: center;
 	min-height: 56px;
 	padding: 12px 20px;
-	border: 2px solid #d0d7de;
+	border: 2px solid var(--oml-border);
 	border-radius: 12px;
-	background: #fff;
+	background: var(--oml-surface);
 	text-align: center;
 }
 
@@ -853,10 +860,10 @@
 	justify-content: center;
 	width: 28px;
 	height: 28px;
-	border: 2px solid #d0d7de;
+	border: 2px solid var(--oml-border);
 	border-radius: 50%;
-	background: #fff;
-	color: #fff;
+	background: var(--oml-surface);
+	color: var(--oml-surface);
 	content: "";
 	font-size: 15px;
 	font-weight: 800;
@@ -884,8 +891,8 @@
 }
 
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz .quiz-matching-options .matching-option[aria-pressed="true"] {
-	border-color: var(--ohmylms-primary-color, #2563eb);
-	background: #eff6ff;
+	border-color: var(--oml-primary);
+	background: var(--oml-primary-soft);
 }
 
 @media (max-width: 520px) {
@@ -940,9 +947,9 @@
 	justify-content: center;
 	min-height: 56px;
 	padding: 12px 16px;
-	border: 2px solid #d0d7de;
+	border: 2px solid var(--oml-border);
 	border-radius: 12px;
-	background: #fff;
+	background: var(--oml-surface);
 }
 
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz .quiz-matching-options.is-grid .matching-definition .option-drop-box {
@@ -951,9 +958,9 @@
 	align-items: stretch;
 	justify-content: center;
 	min-height: 76px;
-	border: 2px dashed #b6c0cc;
+	border: 2px dashed var(--oml-border);
 	border-radius: 12px;
-	background: #f8fafc;
+	background: var(--oml-subtle);
 }
 
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz .quiz-matching-options.is-grid .matching-definition .option-drop-box::before {
@@ -969,7 +976,7 @@
 	justify-content: center;
 	width: 100%;
 	margin: auto;
-	color: #94a3b8;
+	color: var(--oml-muted);
 	text-align: center;
 	font-size: 13px;
 }
@@ -981,7 +988,7 @@
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz .quiz-matching-options.is-grid .matching-definition.is-linked .option-drop-box {
 	border-style: solid;
 	border-color: var(--pair-color);
-	background: #fff;
+	background: var(--oml-surface);
 }
 
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz .quiz-matching-options.is-grid :is(.matching-option, .dropped) {
@@ -998,8 +1005,8 @@
 
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz .quiz-matching-options.is-grid .matching-option {
 	min-height: 76px;
-	border: 2px solid #d0d7de;
-	background: #fff;
+	border: 2px solid var(--oml-border);
+	background: var(--oml-surface);
 	cursor: grab;
 }
 
@@ -1039,9 +1046,9 @@
     flex-wrap: wrap;
     gap: 12px;
     padding: 12px 20px;
-    border-bottom: 1px solid #cbd5e1;
-    background: #fff;
-    color: #172033;
+    border-bottom: 1px solid var(--oml-border);
+    background: var(--oml-surface);
+    color: var(--oml-heading);
 }
 
 .ohmylms-paper-form .ohmylms-autosave-status {
@@ -1071,7 +1078,7 @@
 /* Digital paper: one sheet in the paper's font, numbered like the printed paper. */
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-paper-form .ohmylms-quiz-form {
     padding: 24px 16px;
-    background: #f1f5f9;
+    background: var(--oml-background);
 }
 
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-paper-form[data-player-template] .ohmylms-quiz-form .ohmylms-quiz-form-wrapper {
@@ -1079,9 +1086,9 @@
     margin: 0 auto;
     padding: clamp(20px, 6vw, 20mm);
     border-radius: 2px;
-    background: #fff;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12), 0 8px 24px rgba(15, 23, 42, 0.06);
-    color: #172033;
+    background: var(--oml-surface);
+    box-shadow: var(--oml-shadow-md);
+    color: var(--oml-heading);
 }
 
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-paper-form.is-font-serif .ohmylms-quiz-form {
@@ -1107,14 +1114,14 @@
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-paper-form[data-player-template] .ohmylms-quiz-form .ohmylms-paper-question-header .question-number {
     padding: 0;
     background: transparent;
-    color: #172033;
+    color: var(--oml-heading);
     font-size: inherit;
     font-weight: 700;
     line-height: inherit;
 }
 
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-paper-form[data-player-template] .ohmylms-quiz-form .ohmylms-paper-question-header .ohmylms-player-marks {
-    color: #475569;
+    color: var(--oml-muted);
     font-weight: 600;
 }
 
@@ -1126,7 +1133,7 @@
 
     :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-paper-form .ohmylms-quiz-form {
         padding: 0;
-        background: #fff;
+        background: var(--oml-surface);
     }
 
     :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-paper-form[data-player-template] .ohmylms-quiz-form .ohmylms-quiz-form-wrapper {
@@ -1149,7 +1156,7 @@
     border: 0;
     border-radius: 6px;
     background: transparent;
-    color: #172033;
+    color: var(--oml-heading);
     text-align: left;
 }
 
@@ -1168,17 +1175,17 @@
 
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-paper-form[data-player-template] .ohmylms-quiz-form .quiz-checkbox-radio-options .single-option input:checked + .option-box {
     background: transparent;
-    color: #172033;
+    color: var(--oml-heading);
 }
 
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-paper-form[data-player-template] .ohmylms-quiz-form .quiz-checkbox-radio-options .single-option input:checked + .option-box::before {
-    border-color: #1d4ed8;
-    background: #1d4ed8;
-    color: #fff;
+    border-color: var(--oml-primary);
+    background: var(--oml-primary);
+    color: var(--oml-on-primary);
 }
 
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-paper-form[data-player-template] .ohmylms-quiz-form .quiz-checkbox-radio-options .single-option input:focus-visible + .option-box {
-    outline: 3px solid #1d4ed8;
+    outline: 3px solid var(--oml-primary);
     outline-offset: 3px;
 }
 
@@ -1226,6 +1233,7 @@
 }
 
 /* The player's lighter text weight and colour must not reach the paper. */
+/* stylelint-disable color-no-hex -- Print palette: the paper sheet stays black on white whatever the design settings. */
 .ohmylms-paper-student .ohmylms-print-sheet {
 	color: #1e1e1e;
 	font-weight: 400;

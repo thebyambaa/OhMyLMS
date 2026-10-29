@@ -1,55 +1,53 @@
 .single.ohmylms-page {
 
-    .ohmylms-courses-single-layout3 {
-        background-color: #fff;
+	.ohmylms-courses-single-layout3 {
+		background-color: var(--oml-surface);
 
-        .ohmylms-content-wrapper {
-            gap: 30px;
-        }
+		.ohmylms-content-wrapper {
+			gap: 30px;
+		}
 
-        .ohmylms-content {
-            width: calc(100% - 410px);
-        }
-        
-        .ohmylms-sidebar {
-            width: 380px;
-        }
-    }
+		.ohmylms-content {
+			width: calc(100% - 410px);
+		}
+
+		.ohmylms-sidebar {
+			width: 380px;
+		}
+	}
 }
 
 /* stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade. */
-@import './header';
+@import "./header";
 /* stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade. */
-@import './content-style';
+@import "./content-style";
 /* stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade. */
-@import './sidebar-widget';
-
+@import "./sidebar-widget";
 
 @media screen and (max-width: 1199px) {
 
-    .single.ohmylms-page .ohmylms-courses-single-layout3 .ohmylms-content {
-        width: calc(100% - 380px);
-    }
+	.single.ohmylms-page .ohmylms-courses-single-layout3 .ohmylms-content {
+		width: calc(100% - 380px);
+	}
 
-    .single.ohmylms-page .ohmylms-courses-single-layout3 .ohmylms-sidebar {
-        width: 350px;
-    }
-    
+	.single.ohmylms-page .ohmylms-courses-single-layout3 .ohmylms-sidebar {
+		width: 350px;
+	}
 }
 
 @media screen and (max-width: 991px) {
 
-    .single.ohmylms-page .ohmylms-courses-single-layout3 .ohmylms-content-wrapper {
-        gap: 10px;
-    }
+	.single.ohmylms-page
+		.ohmylms-courses-single-layout3
+		.ohmylms-content-wrapper {
+		gap: 10px;
+	}
 
-    .single.ohmylms-page .ohmylms-courses-single-layout3 .ohmylms-content {
-        width: 100%;
-    }
+	.single.ohmylms-page .ohmylms-courses-single-layout3 .ohmylms-content {
+		width: 100%;
+	}
 
-    .single.ohmylms-page .ohmylms-courses-single-layout3 .ohmylms-sidebar {
-        width: 100%;
-    }
-    
-    
+	.single.ohmylms-page .ohmylms-courses-single-layout3 .ohmylms-sidebar {
+		width: 100%;
+	}
 }

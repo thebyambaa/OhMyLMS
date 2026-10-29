@@ -1,0 +1,87 @@
+.ohmylms-ext-card > h2 {
+	margin: 0 0 12px;
+	font-size: 16px;
+	font-weight: 600;
+	color: var(--ohmylms-admin-heading-color, #000d25);
+}
+
+.ohmylms-ext-card > h3 {
+	margin: 0 0 12px;
+	font-size: 16px;
+	font-weight: 600;
+	color: var(--ohmylms-admin-heading-color, #000d25);
+}
+
+.ohmylms-cur-syllabus-shortcuts li {
+	display: flex;
+	align-items: baseline;
+	gap: 10px;
+	margin: 0;
+	padding: 4px 0;
+}
+
+.ohmylms-cur-panel h3 {
+	margin: 20px 0 8px;
+	font-size: 15px;
+}
+
+.ohmylms-cur-link-group > summary {
+	cursor: pointer;
+	font-weight: 600;
+}
+
+.ohmylms-cur-mapping > summary {
+	cursor: pointer;
+	font-weight: 600;
+}
+
+.ohmylms-cur-link-list li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 10px;
+	padding: 6px 0;
+	border-bottom: 1px solid var(--ohmylms-admin-border, #ebedf0);
+}
+
+.ohmylms-bundle-members > li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 12px;
+	padding: 8px 0;
+	border-bottom: 1px solid var(--ohmylms-admin-border, #dcdcde);
+}
+
+.ohmylms-cur-syllabus-summary p {
+	margin: 0 0 4px;
+}
+
+.ohmylms-syl-existing summary {
+	cursor: pointer;
+}
+
+.ohmylms-syl-map th {
+	min-width: 160px;
+	vertical-align: top;
+	font-weight: 400;
+}
+
+.ohmylms-syl-map td {
+	max-width: 260px;
+	overflow-wrap: anywhere;
+}
+
+.ohmylms-syl-report th {
+	text-align: start;
+}
+
+.ohmylms-syl-report td {
+	text-align: start;
+}
+
+.ohmylms-syl-problems ul {
+	margin: 0 0 0 18px;
+	list-style: disc;
+}
+

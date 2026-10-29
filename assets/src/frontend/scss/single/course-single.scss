@@ -1,135 +1,132 @@
 .single.ohmylms-page .ohmylms-courses {
-    padding: 0 0 65px !important;
+	padding: 0 0 65px !important;
 }
 
 .single.ohmylms-page .ohmylms-courses-single-layout-2 {
-    background-color: #fff;
+	background-color: var(--oml-surface);
 }
 
 .ohmylms-single-course * {
-    padding: 0;
-    margin: 0;
+	padding: 0;
+	margin: 0;
 }
 
 .ohmylms-page {
 
-    .ohmylms-single-course {
+	.ohmylms-single-course {
 
-        > .ohmylms-widget-pricebox {
-            padding: 16px;
-            position: fixed;
-            bottom: -86px;
-            width: 100%;
-            left: 0;
-            border-radius: 0;
-            background-color: #fff !important;
-            box-shadow: 0 -4px 10px 0 #dbdee77a;
-            transition: all 0.5s ease;
-            visibility: hidden;
-            z-index: 99;
+		> .ohmylms-widget-pricebox {
+			padding: var(--oml-space-4);
+			position: fixed;
+			bottom: -86px;
+			width: 100%;
+			left: 0;
+			border-radius: 0;
+			background-color: var(--oml-surface) !important;
+			box-shadow: var(--oml-shadow-sm);
+			transition: all 0.5s ease;
+			visibility: hidden;
+			z-index: 99;
 
-            .price-discount-area {
-                display: none;
-            }
+			.price-discount-area {
+				display: none;
+			}
 
-            .ohmylms-btn-area {
-                margin-top: 0;
-            }
-        }
-    }
+			.ohmylms-btn-area {
+				margin-top: 0;
+			}
+		}
+	}
 
-    .ohmylms-enrolled-course {
-        padding-top: 60px;
-    }
+	.ohmylms-enrolled-course {
+		padding-top: 60px;
+	}
 
-    .ohmylms-content-wrapper {
-        display: flex;
-        flex-flow: row wrap;
-        gap: 60px;
-    }
+	.ohmylms-content-wrapper {
+		display: flex;
+		flex-flow: row wrap;
+		gap: 60px;
+	}
 
-    .ohmylms-content {
-        width: calc(100% - 480px);
-    }
+	.ohmylms-content {
+		width: calc(100% - 480px);
+	}
 
-    .ohmylms-sidebar {
-        width: 420px;
-        max-width: 100%;
-    }
-
+	.ohmylms-sidebar {
+		width: 420px;
+		max-width: 100%;
+	}
 }
 
 @media screen and (max-width: 1199px) {
 
-    .ohmylms-page .ohmylms-content-wrapper {
-        gap: 30px;
-    }
+	.ohmylms-page .ohmylms-content-wrapper {
+		gap: 30px;
+	}
 
-    .ohmylms-page .ohmylms-content {
-        width: calc(100% - 390px);
-    }
+	.ohmylms-page .ohmylms-content {
+		width: calc(100% - 390px);
+	}
 
-    .ohmylms-page .ohmylms-sidebar {
-        width: 360px;
-    }
-    
+	.ohmylms-page .ohmylms-sidebar {
+		width: 360px;
+	}
 }
 
 @media screen and (max-width: 991px) {
 
-    .single.ohmylms-page .ohmylms-courses {
-        padding: 0 0 50px !important;
-    }
+	.single.ohmylms-page .ohmylms-courses {
+		padding: 0 0 50px !important;
+	}
 
-    .ohmylms-page .ohmylms-enrolled-course {
-        padding-top: 30px;
-    }
+	.ohmylms-page .ohmylms-enrolled-course {
+		padding-top: 30px;
+	}
 
-    .ohmylms-page .ohmylms-content-wrapper {
-        flex-direction: column;
-    }
+	.ohmylms-page .ohmylms-content-wrapper {
+		flex-direction: column;
+	}
 
-    .ohmylms-page .ohmylms-content {
-        width: 100%;
-    }
+	.ohmylms-page .ohmylms-content {
+		width: 100%;
+	}
 
-    .ohmylms-page .ohmylms-sidebar {
-        width: 100%;
-    }
+	.ohmylms-page .ohmylms-sidebar {
+		width: 100%;
+	}
 
-    .ohmylms-page .ohmylms-single-course.show-sticky-price > .ohmylms-widget-pricebox {
-        bottom: 0;
-        visibility: visible;
-        box-shadow: 0 -4px 10px 0 rgba(219, 222, 231, 0.4784313725);
-    }
-    
-
+	.ohmylms-page
+		.ohmylms-single-course.show-sticky-price
+		> .ohmylms-widget-pricebox {
+		bottom: 0;
+		visibility: visible;
+		box-shadow: var(--oml-shadow-sm);
+	}
 }
 
 /*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
-@import 'course-single-header';
+@import "course-single-header";
 /*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
-@import 'course-single-content-tab';
+@import "course-single-content-tab";
 /*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
-@import 'course-single-chapters';
+@import "course-single-chapters";
 /*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
-@import 'course-single-assignment';
+@import "course-single-assignment";
 /*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
-@import 'course-single-reviews';
+@import "course-single-reviews";
 /*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
-@import 'course-single-sidebar';
+@import "course-single-sidebar";
 /*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
-@import 'course-assignment-details';
+@import "course-assignment-details";
 /*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
-@import 'sticky-price-bar';
+@import "sticky-price-bar";
 /*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
-@import 'password-protected';
+@import "password-protected";
 
-
-//-----layout-2------
+/*-----layout-2------*/
 /*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
-@import './layout-2/course-single-layout-2';
+@import "./layout-2/course-single-layout-2";
 
-//-----layout-3------
+/*-----layout-3------*/
 /*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
-@import './layout-3/course-single-layout-3';
+@import "./layout-3/course-single-layout-3";

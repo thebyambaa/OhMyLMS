@@ -1,0 +1,4 @@
+.ohmylms-membership {
+	--ohmylms-hub-gutter: var(--ohmylms-admin-gutter, 40px);
+}
+

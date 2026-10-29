@@ -1,0 +1,4 @@
+.ohmylms-ws-field input.ohmylms-ws-title.is-syllabus-name:hover {
+	border-color: var(--ws-primary);
+}
+

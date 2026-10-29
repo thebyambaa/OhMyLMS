@@ -28,7 +28,7 @@ final class CourseSelection {
 
 	/**
 	 * Courses a membership plan includes. Curriculum items (with everything beneath them) and
-	 * Course Bundles are the rules to choose from. Legacy category and tag rules, saved before they
+	 * individual courses are the rules to choose from. Legacy category and tag rules, saved before they
 	 * were replaced, still resolve so existing members keep the access they were granted until an
 	 * administrator removes those rules.
 	 *
@@ -37,10 +37,24 @@ final class CourseSelection {
 	 * @param mixed $tags Tags.
 	 * @param mixed $excluded Excluded.
 	 * @param array $curriculum Curriculum.
-	 * @param array $bundles Bundles.
+	 * @param array $bundles Retired bundles argument.
+	 * @param bool  $all_learning_content Include all published courses.
 	 */
-	public static function resolve( $products, $categories, $tags, $excluded, $curriculum = array(), $bundles = array() ) {
+	public static function resolve( $products, $categories, $tags, $excluded, $curriculum = array(), $bundles = array(), $all_learning_content = false ) {
 		$ids = self::ids( array_column( (array) $products, 'id' ) );
+		if ( $all_learning_content ) {
+			$ids = array_merge(
+				$ids,
+				get_posts(
+					array(
+						'post_type'      => 'ohmylms-course',
+						'post_status'    => 'publish',
+						'posts_per_page' => -1,
+						'fields'         => 'ids',
+					)
+				)
+			);
+		}
 		$tax = array( 'relation' => 'OR' );
 		foreach ( array(
 			'course_category' => $categories,
@@ -74,10 +88,7 @@ final class CourseSelection {
 		if ( $curriculum ) {
 			$ids = array_merge( $ids, \OhMyLMS\Curriculum\Placement::course_ids_for_items( $curriculum ) );
 		}
-		$bundles = self::ids( $bundles );
-		if ( $bundles ) {
-			$ids = array_merge( $ids, \OhMyLMS\Curriculum\Placement::course_ids_for_bundles( $bundles ) );
-		}
+		// The retired bundles argument remains accepted for API compatibility.
 		$ids    = array_diff( self::ids( $ids ), self::ids( $excluded ) );
 		$result = array();
 		foreach ( $ids as $id ) {
@@ -98,6 +109,8 @@ final class CourseSelection {
 	 * Init for Course selection.
 	 */
 	public static function init() {
+		FreeSale::init();
+		add_action( 'admin_init', array( __CLASS__, 'retire_bundles' ) );
 		add_action( 'save_post', array( __CLASS__, 'post_changed' ), 20, 2 );
 		add_action( 'before_delete_post', array( __CLASS__, 'post_changed' ), 20, 2 );
 		add_action( 'set_object_terms', array( __CLASS__, 'terms_changed' ), 20, 4 );
@@ -105,6 +118,15 @@ final class CourseSelection {
 			add_action( $hook, array( __CLASS__, 'queue' ) );
 		}
 		add_action( 'shutdown', array( __CLASS__, 'flush' ) );
+	}
+	/** Refresh existing plan access after retiring bundle rules. */
+	public static function retire_bundles() {
+		if ( ! current_user_can( 'manage_options' ) || get_option( 'ohmylms_bundles_retired' ) ) {
+			return;
+		}
+		self::queue();
+		self::flush();
+		update_option( 'ohmylms_bundles_retired', 1, false );
 	}
 	/**
 	 * Queue for Course selection.

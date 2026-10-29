@@ -88,7 +88,17 @@ test( 'reassembled assets preserve shipped AST outside the authored admin app', 
 	for ( const asset of manifest.assets.filter(
 		( a ) =>
 			a.output.endsWith( '.js' ) &&
-			a.output !== 'assets/dist/admin/ohmylms.js'
+			a.output !== 'assets/dist/admin/ohmylms.js' &&
+			// Vendor-chunk tests compare every factory across these relocated bundles.
+			! [
+				'assets/dist/vendors/vendors.js',
+				// Editor runtime tests verify every npm bridge and retired factory.
+				'assets/dist/vendors/editor.js',
+				// Vendor package tests verify the complete Chart.js and Emotion bridges.
+				'assets/dist/vendors/chartjs.js',
+				'assets/dist/vendors/emotion.js',
+				'assets/dist/chunks/355.js',
+			].includes( a.output )
 	) ) {
 		assert.equal(
 			canonical(

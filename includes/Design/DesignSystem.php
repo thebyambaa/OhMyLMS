@@ -352,22 +352,123 @@ final class DesignSystem {
 		);
 	}
 
+	/** Fixed dark neutrals: page, card, text, muted text and borders for the dark theme. */
+	const DARK = array(
+		'background' => '#252531',
+		'surface'    => '#151521',
+		'heading'    => '#f3f3f7',
+		'text'       => '#f3f3f7',
+		'muted'      => '#b7b8c5',
+		'border'     => '#4a4c53',
+	);
+
+	/** Minimum contrast of a brand or status color against the dark card (WCAG AA for text). */
+	const DARK_MIN_CONTRAST = 4.5;
+
 	/**
-	 * CSS custom properties for the settings, scoped to the plugin's admin screens.
+	 * Lighten a color until it reads on the dark card.
 	 *
-	 * @param array|null $settings Cleaned settings; the saved ones when null.
-	 * @return string
+	 * @param string $hex Hex color.
+	 * @return string Hex color with at least DARK_MIN_CONTRAST against DARK['surface'].
 	 */
-	public static function css( $settings = null ) {
-		$settings = is_array( $settings ) ? self::sanitize( $settings ) : self::get();
-		$c        = $settings['colors'];
-		$primary  = $c['primary'];
-		$on       = self::text_on( $primary );
-		$space    = self::spacing( $settings['density'] );
-		$radii    = self::radii( $settings['button_radius'] );
-		$heights  = self::HEIGHTS[ $settings['density'] ];
-		$focus    = self::contrast( $primary, $c['surface'] ) >= 3 ? $primary : $c['heading'];
-		$vars     = array(
+	public static function for_dark( $hex ) {
+		for ( $step = 0; $step <= 10; $step++ ) {
+			$candidate = Tokens::mix( $hex, '#ffffff', $step / 10 );
+			if ( self::contrast( $candidate, self::DARK['surface'] ) >= self::DARK_MIN_CONTRAST ) {
+				return $candidate;
+			}
+		}
+		return '#ffffff';
+	}
+
+	/**
+	 * Adapt status text to its soft surface while retaining its hue where contrast permits.
+	 *
+	 * @param string $hex Status color.
+	 * @param string $surface Background color.
+	 * @return string Color with at least 4.5:1 contrast on the background.
+	 */
+	public static function readable_status( $hex, $surface ) {
+		$toward = self::text_on( $surface );
+		for ( $step = 0; $step <= 10; $step++ ) {
+			$candidate = Tokens::mix( $hex, $toward, $step / 10 );
+			if ( self::contrast( $candidate, $surface ) >= 4.5 ) {
+				return $candidate;
+			}
+		}
+		return $toward;
+	}
+
+	/**
+	 * The dark theme's --oml-* overrides: neutrals are fixed, brand and status colors are lightened so
+	 * they stay readable, soft tints are mixed into the dark card. Same names as variables(), so
+	 * components need no dark-specific rules.
+	 *
+	 * @param array $c Validated colors (COLOR_KEYS).
+	 * @return array<string,string> Variable name (without the leading dashes) => value.
+	 */
+	public static function dark_variables( $c ) {
+		$dark    = self::DARK;
+		$primary = self::for_dark( $c['primary'] );
+		$second  = self::for_dark( $c['secondary'] );
+		$link    = self::for_dark( $c['link'] );
+		$vars    = array(
+			'oml-background'      => $dark['background'],
+			'oml-surface'         => $dark['surface'],
+			'oml-subtle'          => Tokens::mix( $dark['surface'], '#ffffff', 0.06 ),
+			'oml-heading'         => $dark['heading'],
+			'oml-text'            => $dark['text'],
+			'oml-muted'           => $dark['muted'],
+			'oml-border'          => $dark['border'],
+			'oml-primary'         => $primary,
+			'oml-primary-hover'   => Tokens::mix( $primary, '#ffffff', 0.15 ),
+			'oml-primary-active'  => Tokens::mix( $primary, '#ffffff', 0.3 ),
+			'oml-primary-soft'    => Tokens::mix( $dark['surface'], $primary, 0.2 ),
+			'oml-primary-rgb'     => Tokens::rgb( $primary ),
+			'oml-on-primary'      => self::text_on( $primary ),
+			'oml-secondary'       => $second,
+			'oml-secondary-hover' => Tokens::mix( $second, '#ffffff', 0.15 ),
+			'oml-link'            => $link,
+			'oml-link-hover'      => Tokens::mix( $link, '#ffffff', 0.2 ),
+			'oml-focus'           => $primary,
+			'oml-shade'           => self::DARK['surface'],
+			'oml-color-scheme'    => 'dark',
+			'oml-shadow-sm'       => '0 1px 2px rgba(0, 0, 0, 0.4)',
+			'oml-shadow-md'       => '0 4px 12px rgba(0, 0, 0, 0.5)',
+		);
+		foreach ( array( 'success', 'warning', 'danger', 'info' ) as $status ) {
+			$color                              = self::for_dark( $c[ $status ] );
+			$vars[ 'oml-' . $status ]           = $color;
+			$vars[ 'oml-' . $status . '-soft' ] = Tokens::mix( $dark['surface'], $color, 0.2 );
+			$vars[ 'oml-' . $status . '-text' ] = self::readable_status( $color, $vars[ 'oml-' . $status . '-soft' ] );
+		}
+		$vars['oml-danger-hover']  = Tokens::mix( $vars['oml-danger'], '#ffffff', 0.15 );
+		$vars['oml-danger-active'] = Tokens::mix( $vars['oml-danger'], '#ffffff', 0.3 );
+		$vars['oml-on-danger']     = self::text_on( $vars['oml-danger'] );
+		return $vars;
+	}
+
+	/**
+	 * The --oml-* semantic tokens: the one vocabulary every component reads, in admin and on learner pages.
+	 *
+	 * Admin feeds it from the Design system settings; learner pages feed it from the learner branding
+	 * options (Tokens::frontend_css), so the names and derived shades are identical but each side keeps
+	 * its own values.
+	 *
+	 * @param array  $c             Validated colors (COLOR_KEYS).
+	 * @param int    $button_radius Button radius in pixels.
+	 * @param string $density       One of DENSITIES.
+	 * @return array<string,string> Variable name (without the leading dashes) => value.
+	 */
+	public static function variables( $c, $button_radius, $density ) {
+		$font    = Tokens::font( 'ohmylms_font_family' );
+		$primary = $c['primary'];
+		$on      = self::text_on( $primary );
+		$space   = self::spacing( $density );
+		$radii   = self::radii( $button_radius );
+		$heights = self::HEIGHTS[ $density ];
+		$focus   = self::contrast( $primary, $c['surface'] ) >= 3 ? $primary : $c['heading'];
+		$vars    = array(
 			'oml-primary'          => $primary,
 			'oml-primary-hover'    => Tokens::mix( $primary, '#000000', 0.15 ),
 			'oml-primary-active'   => Tokens::mix( $primary, '#000000', 0.3 ),
@@ -397,6 +498,8 @@ final class DesignSystem {
 			'oml-subtle'           => Tokens::mix( $c['background'], '#ffffff', 0.5 ),
 			'oml-background'       => $c['background'],
 			'oml-focus'            => $focus,
+			'oml-shade'            => $c['heading'],
+			'oml-color-scheme'     => 'light',
 			'oml-radius-button'    => $radii['button'] . 'px',
 			'oml-radius-control'   => $radii['control'] . 'px',
 			'oml-radius-card'      => $radii['card'] . 'px',
@@ -411,6 +514,47 @@ final class DesignSystem {
 		foreach ( $space as $i => $px ) {
 			$vars[ 'oml-space-' . ( $i + 1 ) ] = $px . 'px';
 		}
+		foreach ( array( 'success', 'warning', 'danger', 'info' ) as $status ) {
+			$vars[ 'oml-' . $status . '-text' ] = self::readable_status( $c[ $status ], $vars[ 'oml-' . $status . '-soft' ] );
+		}
+		$shadow = Tokens::rgb( $c['heading'] );
+		return $vars + array(
+			'oml-font-size-xs'   => '12px',
+			'oml-font-family'    => Tokens::stack( 'inherit' === $font ? 'system' : $font ),
+			'oml-on-shade'       => '#ffffff',
+			'oml-font-size-sm'   => '13px',
+			'oml-font-size-md'   => '14px',
+			'oml-font-size-lg'   => '16px',
+			'oml-font-size-xl'   => '20px',
+			'oml-font-size-2xl'  => '24px',
+			'oml-line-tight'     => '1.2',
+			'oml-line-normal'    => '1.5',
+			'oml-weight-regular' => '400',
+			'oml-weight-medium'  => '500',
+			'oml-weight-strong'  => '600',
+			'oml-shadow-sm'      => '0 1px 2px rgba(' . $shadow . ', 0.08)',
+			'oml-shadow-md'      => '0 4px 12px rgba(' . $shadow . ', 0.12)',
+			'oml-motion-fast'    => '120ms',
+			'oml-motion-base'    => '200ms',
+			'oml-z-dropdown'     => '100',
+			'oml-z-modal'        => '1000',
+			'oml-z-toast'        => '1100',
+		);
+	}
+
+	/**
+	 * CSS custom properties for the settings, scoped to the plugin's admin screens.
+	 *
+	 * @param array|null $settings Cleaned settings; the saved ones when null.
+	 * @return string
+	 */
+	public static function css( $settings = null ) {
+		$settings = is_array( $settings ) ? self::sanitize( $settings ) : self::get();
+		$c        = $settings['colors'];
+		$primary  = $c['primary'];
+		$on       = self::text_on( $primary );
+		$radii    = self::radii( $settings['button_radius'] );
+		$vars     = self::variables( $c, $settings['button_radius'], $settings['density'] );
 		// The existing admin stylesheets and WordPress/Arco components read these names.
 		$vars += array(
 			'wp-admin-theme-color'                      => $primary,
@@ -498,7 +642,7 @@ final class DesignSystem {
 		$path = OHMYLMS_DIR . '/assets/css/admin-design-system.css';
 		// Load after the other plugin and WordPress component styles so the shared rules win ties.
 		$deps = array();
-		foreach ( array( 'wp-components', 'ohmylms-main', 'ohmylms-tailwind', 'ohmylms-admin-ui', 'ohmylms-question-editor', 'ohmylms-skill-studio' ) as $handle ) {
+		foreach ( array( 'wp-components', Ui::STYLE_HANDLE, 'ohmylms-main', 'ohmylms-tailwind', 'ohmylms-admin-ui', 'ohmylms-question-editor', 'ohmylms-skill-studio' ) as $handle ) {
 			if ( wp_style_is( $handle, 'registered' ) ) {
 				$deps[] = $handle;
 			}

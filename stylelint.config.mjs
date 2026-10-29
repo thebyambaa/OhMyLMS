@@ -87,9 +87,48 @@ export default {
 			extends: [ '@wordpress/stylelint-config/scss' ],
 			customSyntax: 'postcss-scss',
 		},
+		{
+			// Shared components take every color from the --oml-* tokens so one design setting restyles
+			// admin and learner pages alike; see docs/DESIGN-TOKENS.md.
+			files: [
+				'assets/css/oml-ui.css',
+				'assets/css/admin-design-system.css',
+				'assets/css/oml-legacy-*.css',
+				'assets/css/exam-player-template.css',
+				'assets/css/quiz-player-templates.css',
+				'assets/css/question-player.css',
+				'assets/css/game-player.css',
+				'assets/css/answer-review.css',
+				'assets/css/player-context.css',
+				'assets/css/learning-context.css',
+				'assets/css/student-hub.css',
+				'assets/css/student-dashboard.css',
+				'assets/css/practice.css',
+				'assets/css/extended-questions.css',
+				'assets/css/interactive.css',
+				'assets/css/paper.css',
+				'assets/css/quiz-overview.css',
+				'assets/css/question-stage.css',
+				'assets/src/ui/**/*.{css,scss}',
+				'assets/src/admin-styles/ui-*.css',
+				'assets/src/frontend/scss/single/**/*.scss',
+				'assets/src/frontend/scss/lesson/**/*.scss',
+				'assets/src/frontend/scss/learning-pages.scss',
+			],
+			rules: {
+				'color-no-hex': true,
+				'color-named': 'never',
+				'function-disallowed-list': [ 'rgb', 'rgba', 'hsl', 'hsla' ],
+			},
+		},
 	],
 	ignoreFiles: [
 		...compiled_styles,
+		// Lint the authored ui-* modules; these are their generated compatibility outputs.
+		'assets/css/admin-ui.css',
+		// Generated from learning-pages.scss; lint its authored partials above.
+		'assets/css/learning-pages.css',
+		'assets/css/oml-ui-*.css',
 		'node_modules/**',
 		'vendor/**',
 		'build/**',

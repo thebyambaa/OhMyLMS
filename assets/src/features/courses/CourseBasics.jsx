@@ -3,7 +3,6 @@ import { createElement } from '@wordpress/element';
 export function createCourseBasics( readRuntime ) {
 	return function CourseBasics() {
 		const {
-			Az,
 			Dz,
 			He,
 			I: Controls,
@@ -15,9 +14,6 @@ export function createCourseBasics( readRuntime ) {
 			b: I18n,
 			g: ReactHooks,
 			kz,
-			mz,
-			vz,
-			wz,
 			y: WordPressData,
 			zz,
 		} = readRuntime();
@@ -136,87 +132,17 @@ export function createCourseBasics( readRuntime ) {
 		var o = r[ 1 ];
 		var availability = t.availability;
 		var _availableDate = t.available_date;
-		var _accessType = t.access_type;
-		var _hasCapacity = t.has_capacity;
-		var capacity = t.capacity;
-		var level = t.level;
-		var _enableReviews = t.enable_reviews;
 		var slug = t.slug;
-		var _isCohort = t.is_cohort;
 		return (
 			<React.Fragment>
 				<He.default isOpen={ a } onClose={ o } />
 				<Controls.SpacerWP marginBottom={ 0 } paddingY={ 6 }>
-					<Controls.CardWP isBorderless={ ! 0 }>
-						<Controls.SpacerWP marginBottom={ 0 } padding={ 5 }>
-							{ React.createElement( mz, null ) }
-						</Controls.SpacerWP>
-					</Controls.CardWP>
-					<Controls.SpacerWP marginBottom={ 6 } />
 					<Controls.CardWP
 						isBorderless={ ! 0 }
 						className={
 							'ohmylms-basic-tab ohmylms-course-settings'
 						}
 					>
-						{ ! _isCohort && (
-							<Controls.SpacerWP marginBottom={ 0 } padding={ 5 }>
-								{ React.createElement( vz, {
-									capacity,
-									capacityEnabled: _hasCapacity,
-									handleCapacityEnabled( _nLocal3 ) {
-										e.setCourse(
-											Dz(
-												Dz( {}, t ),
-												{},
-												{
-													has_capacity: _nLocal3,
-												}
-											)
-										);
-									},
-									handleCapacityChange( _nLocal4 ) {
-										if ( isNaN( _nLocal4 ) ) {
-											e.setCourse(
-												Dz(
-													Dz( {}, t ),
-													{},
-													{
-														capacity: 0,
-													}
-												)
-											);
-										} else {
-											e.setCourse(
-												Dz(
-													Dz( {}, t ),
-													{},
-													{
-														capacity: _nLocal4,
-													}
-												)
-											);
-										}
-									},
-								} ) }
-							</Controls.SpacerWP>
-						) }
-						<Controls.SpacerWP marginBottom={ 0 } padding={ 5 }>
-							{ React.createElement( wz, {
-								access: _accessType,
-								handleAccessChange( _nLocal5 ) {
-									e.setCourse(
-										Dz(
-											Dz( {}, t ),
-											{},
-											{
-												access_type: _nLocal5,
-											}
-										)
-									);
-								},
-							} ) }
-						</Controls.SpacerWP>
 						<Controls.SpacerWP marginBottom={ 0 } padding={ 5 }>
 							<Pz
 								durationEnabled={ availability }
@@ -246,20 +172,7 @@ export function createCourseBasics( readRuntime ) {
 							/>
 						</Controls.SpacerWP>
 						<Controls.SpacerWP marginBottom={ 0 } padding={ 5 }>
-							{ React.createElement( kz, {
-								experienceLevel: level,
-								handleExperienceLevelChange( _nLocal8 ) {
-									e.setCourse(
-										Dz(
-											Dz( {}, t ),
-											{},
-											{
-												level: _nLocal8,
-											}
-										)
-									);
-								},
-							} ) }
+							{ React.createElement( kz, null ) }
 						</Controls.SpacerWP>
 						<Controls.SpacerWP marginBottom={ 0 } padding={ 5 }>
 							<Iz
@@ -282,22 +195,6 @@ export function createCourseBasics( readRuntime ) {
 											{},
 											{
 												slug: _nLocal9,
-											}
-										)
-									);
-								} }
-							/>
-						</Controls.SpacerWP>
-						<Controls.SpacerWP marginBottom={ 0 } padding={ 5 }>
-							<Az
-								reviewEnabled={ _enableReviews }
-								handleReviewEnabled={ function ( _nLocal0 ) {
-									e.setCourse(
-										Dz(
-											Dz( {}, t ),
-											{},
-											{
-												enable_reviews: _nLocal0,
 											}
 										)
 									);

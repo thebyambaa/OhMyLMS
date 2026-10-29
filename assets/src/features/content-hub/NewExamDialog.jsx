@@ -1,6 +1,8 @@
 import { createElement, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { Button, Modal, Notice, TextControl } from '@wordpress/components';
+import { Button, TextControl } from '@wordpress/components';
+import { Modal } from '../../ui/Modal';
+import { Alert } from '../../ui/Alert';
 import { examEditorHref } from './examEditor.mjs';
 
 /**
@@ -42,11 +44,7 @@ export function NewExamDialog( { onClose } ) {
 					'ohmylms'
 				) }
 			</p>
-			{ error && (
-				<Notice status="error" isDismissible={ false }>
-					{ error }
-				</Notice>
-			) }
+			{ error && <Alert tone="danger">{ error }</Alert> }
 			<TextControl
 				label={ __( 'Exam title', 'ohmylms' ) }
 				value={ title }

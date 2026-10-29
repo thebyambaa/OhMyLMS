@@ -1,0 +1,593 @@
+/*
+ * OhMyLMS shared components.
+ *
+ * Every color, radius, height and gap comes from the --oml-* tokens (docs/DESIGN-TOKENS.md), so the
+ * same markup looks right in admin screens and on learner pages. No hardcoded colors here; stylelint
+ * enforces it.
+ */
+
+/* ---- Tabs: local panels, separate from route navigation ---- */
+.oml-tab-list {
+	border-bottom: 1px solid var(--oml-border);
+	display: flex;
+	gap: var(--oml-space-2);
+	overflow-x: auto;
+}
+
+.oml-tab-list[aria-orientation="vertical"] {
+	border-bottom: 0;
+	border-inline-end: 1px solid var(--oml-border);
+	flex-direction: column;
+}
+
+.oml-tab {
+	align-items: center;
+	background: var(--oml-surface);
+	border: 0;
+	border-bottom: var(--oml-space-1) solid transparent;
+	border-radius: var(--oml-radius-control) var(--oml-radius-control) 0 0;
+	color: var(--oml-text);
+	cursor: pointer;
+	display: inline-flex;
+	flex-shrink: 0;
+	font: inherit;
+	font-size: var(--oml-font-size-md);
+	min-height: var(--oml-button-height-md);
+	padding: var(--oml-space-2) var(--oml-space-4);
+	text-decoration: none;
+}
+
+.oml-tab:where(:hover:not(:disabled)) {
+	background: var(--oml-subtle);
+}
+
+.oml-tab[aria-selected="true"],
+.oml-tab[aria-current="page"] {
+	background: var(--oml-primary-soft);
+	border-color: var(--oml-primary);
+	color: var(--oml-primary);
+	font-weight: var(--oml-weight-strong);
+}
+
+.oml-tab:disabled {
+	color: var(--oml-muted);
+	cursor: not-allowed;
+}
+
+.oml-tab-panel {
+	color: var(--oml-text);
+	padding: var(--oml-space-4) 0;
+}
+
+.oml-tab-panel[hidden] {
+	display: none;
+}
+
+/* ---- Modal: native dialog supplies the focus trap and inert page background ---- */
+.oml-modal {
+	background: var(--oml-surface);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card);
+	box-shadow: var(--oml-shadow-md);
+	box-sizing: border-box;
+	color: var(--oml-text);
+	font-size: var(--oml-font-size-md);
+	line-height: var(--oml-line-normal);
+	margin: auto;
+	max-height: calc(100dvh - var(--oml-space-6));
+	max-width: calc(100vw - var(--oml-space-6));
+	overflow: auto;
+	padding: var(--oml-space-5);
+	width: 40rem;
+	z-index: var(--oml-z-modal);
+}
+
+.oml-modal::backdrop {
+	background: color-mix(in srgb, var(--oml-shade) 60%, transparent);
+}
+
+.oml-modal-header {
+	align-items: center;
+	display: flex;
+	gap: var(--oml-space-4);
+	justify-content: space-between;
+	margin-bottom: var(--oml-space-4);
+}
+
+.oml-modal-title {
+	color: var(--oml-heading);
+	font-size: var(--oml-font-size-xl);
+	font-weight: var(--oml-weight-strong);
+	line-height: var(--oml-line-tight);
+	margin: 0;
+}
+
+.oml-modal-content {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+/* ---- Table: native semantics and horizontal scrolling on narrow screens ---- */
+.oml-table-scroll {
+	max-width: 100%;
+	overflow-x: auto;
+}
+
+.oml-table {
+	background: var(--oml-surface);
+	border: 1px solid var(--oml-border);
+	border-collapse: collapse;
+	color: var(--oml-text);
+	font-size: var(--oml-font-size-md);
+	line-height: var(--oml-line-normal);
+	text-align: start;
+	width: 100%;
+}
+
+.oml-table caption {
+	color: var(--oml-heading);
+	font-weight: var(--oml-weight-strong);
+	padding: var(--oml-space-3) 0;
+	text-align: start;
+}
+
+.oml-table th,
+.oml-table td {
+	border-bottom: 1px solid var(--oml-border);
+	padding: var(--oml-space-3) var(--oml-space-4);
+	text-align: start;
+	vertical-align: top;
+}
+
+.oml-table th {
+	background: var(--oml-subtle);
+	color: var(--oml-heading);
+	font-weight: var(--oml-weight-strong);
+}
+
+.oml-table-striped tbody tr:nth-child(even) {
+	background: var(--oml-subtle);
+}
+
+.oml-table-compact th,
+.oml-table-compact td {
+	padding: var(--oml-space-2);
+}
+
+/* ---- Empty state: guidance and optional shared actions ---- */
+.oml-empty-state {
+	background: var(--oml-surface);
+	border: 1px dashed var(--oml-border);
+	border-radius: var(--oml-radius-card);
+	color: var(--oml-text);
+	font-size: var(--oml-font-size-md);
+	line-height: var(--oml-line-normal);
+	padding: var(--oml-space-6) var(--oml-space-4);
+	text-align: center;
+}
+
+.oml-empty-state-title {
+	color: var(--oml-heading);
+	font-size: var(--oml-font-size-lg);
+	font-weight: var(--oml-weight-strong);
+	margin: 0 0 var(--oml-space-2);
+}
+
+.oml-empty-state-description {
+	color: var(--oml-muted);
+	margin: 0 0 var(--oml-space-4);
+}
+
+.oml-empty-state-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-2);
+	justify-content: center;
+}
+
+.oml-tab:focus-visible,
+.oml-tab-panel:focus-visible,
+.oml-table-scroll:focus-visible {
+	outline: 2px solid var(--oml-focus);
+	outline-offset: -2px;
+}
+
+/* ---- Alert: shared status feedback ---- */
+.oml-alert {
+	background: var(--oml-info-soft);
+	border: 1px solid var(--oml-info);
+	border-inline-start-width: var(--oml-space-1);
+	border-radius: var(--oml-radius-control);
+	box-sizing: border-box;
+	color: var(--oml-text);
+	display: grid;
+	font-size: var(--oml-font-size-md);
+	gap: var(--oml-space-2);
+	line-height: var(--oml-line-normal);
+	min-width: 0;
+	overflow-wrap: anywhere;
+	padding: var(--oml-space-4);
+}
+
+.oml-alert-info {
+	background: var(--oml-info-soft);
+	border-color: var(--oml-info);
+}
+
+.oml-alert-success {
+	background: var(--oml-success-soft);
+	border-color: var(--oml-success);
+}
+
+.oml-alert-warning {
+	background: var(--oml-warning-soft);
+	border-color: var(--oml-warning);
+}
+
+.oml-alert-danger {
+	background: var(--oml-danger-soft);
+	border-color: var(--oml-danger);
+}
+
+.oml-alert-title {
+	color: var(--oml-heading);
+	font-size: var(--oml-font-size-md);
+	font-weight: var(--oml-weight-strong);
+	margin: 0;
+}
+
+.oml-alert-content {
+	min-width: 0;
+}
+
+.oml-alert-content > :first-child {
+	margin-top: 0;
+}
+
+.oml-alert-content > :last-child {
+	margin-bottom: 0;
+}
+
+.oml-alert-content a {
+	color: var(--oml-link);
+	text-decoration: underline;
+}
+
+.oml-alert-content a:focus-visible {
+	outline: 2px solid var(--oml-focus);
+	outline-offset: 2px;
+}
+
+/* ---- Button: .oml-btn + .oml-btn-{primary|secondary|tertiary|danger} + .oml-btn-{sm|md|lg} ---- */
+.oml-btn {
+	align-items: center;
+	background: var(--oml-surface);
+	border: 1px solid var(--oml-secondary);
+	border-radius: var(--oml-radius-button);
+	box-shadow: none;
+	box-sizing: border-box;
+	color: var(--oml-primary);
+	cursor: pointer;
+	display: inline-flex;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 600;
+	gap: var(--oml-space-2);
+	justify-content: center;
+	line-height: 1.2;
+	margin: 0;
+	min-height: var(--oml-button-height-md);
+	padding: 0 var(--oml-button-pad-md);
+	text-decoration: none;
+	transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+	vertical-align: middle;
+}
+
+.oml-btn:hover {
+	background: var(--oml-primary-soft);
+	border-color: var(--oml-secondary-hover);
+	color: var(--oml-primary-hover);
+}
+
+.oml-btn:active {
+	color: var(--oml-primary-active);
+}
+
+.oml-btn:focus-visible {
+	outline: 2px solid var(--oml-focus);
+	outline-offset: 2px;
+}
+
+.oml-btn-primary {
+	background: var(--oml-primary);
+	border-color: var(--oml-primary);
+	color: var(--oml-on-primary);
+}
+
+.oml-btn-primary:hover,
+.oml-btn-primary:focus {
+	background: var(--oml-primary-hover);
+	border-color: var(--oml-primary-hover);
+	color: var(--oml-on-primary);
+}
+
+.oml-btn-primary:active {
+	background: var(--oml-primary-active);
+	border-color: var(--oml-primary-active);
+	color: var(--oml-on-primary);
+}
+
+.oml-btn-tertiary {
+	background: transparent;
+	border-color: transparent;
+	color: var(--oml-link);
+}
+
+.oml-btn-tertiary:hover {
+	background: var(--oml-primary-soft);
+	border-color: transparent;
+	color: var(--oml-link-hover);
+}
+
+.oml-btn-danger {
+	background: var(--oml-danger);
+	border-color: var(--oml-danger);
+	color: var(--oml-on-danger);
+}
+
+.oml-btn-danger:hover,
+.oml-btn-danger:focus {
+	background: var(--oml-danger-hover);
+	border-color: var(--oml-danger-hover);
+	color: var(--oml-on-danger);
+}
+
+.oml-btn-danger:active {
+	background: var(--oml-danger-active);
+	border-color: var(--oml-danger-active);
+	color: var(--oml-on-danger);
+}
+
+.oml-btn-sm {
+	min-height: var(--oml-button-height-sm);
+	padding: 0 var(--oml-button-pad-sm);
+}
+
+.oml-btn-lg {
+	min-height: var(--oml-button-height-lg);
+	padding: 0 var(--oml-button-pad-lg);
+}
+
+.oml-btn-block {
+	display: flex;
+	width: 100%;
+}
+
+.oml-btn[disabled],
+.oml-btn[aria-disabled="true"] {
+	background: var(--oml-subtle);
+	border-color: var(--oml-border);
+	color: var(--oml-muted);
+	cursor: not-allowed;
+	opacity: 0.7;
+	pointer-events: none;
+}
+
+/* ---- Card: .oml-card + .oml-card-flat | .oml-card-interactive; .oml-card-title ---- */
+.oml-card {
+	background: var(--oml-surface);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card);
+	box-shadow: var(--oml-shadow-sm);
+	box-sizing: border-box;
+	color: var(--oml-text);
+	padding: var(--oml-space-4);
+}
+
+.oml-card-flat {
+	box-shadow: none;
+}
+
+.oml-card-interactive {
+	transition: box-shadow var(--oml-motion-base) ease, border-color var(--oml-motion-base) ease;
+}
+
+.oml-card-interactive:hover {
+	border-color: var(--oml-secondary);
+	box-shadow: var(--oml-shadow-md);
+}
+
+.oml-card-title {
+	color: var(--oml-heading);
+	font-size: var(--oml-font-size-lg);
+	font-weight: var(--oml-weight-strong);
+	line-height: var(--oml-line-tight);
+	margin: 0 0 var(--oml-space-2);
+}
+
+/* ---- Badge: .oml-badge + .oml-badge-{primary|success|warning|danger|info} ---- */
+.oml-badge {
+	align-items: center;
+	background: var(--oml-subtle);
+	border: 1px solid var(--oml-border);
+	border-radius: 999px;
+	box-sizing: border-box;
+	color: var(--oml-heading);
+	display: inline-flex;
+	font-size: var(--oml-font-size-xs);
+	font-weight: var(--oml-weight-strong);
+	gap: var(--oml-space-1);
+	line-height: var(--oml-line-tight);
+	padding: var(--oml-space-1) var(--oml-space-2);
+	white-space: nowrap;
+}
+
+.oml-badge-primary {
+	background: var(--oml-primary-soft);
+	border-color: var(--oml-primary);
+	color: var(--oml-primary);
+}
+
+.oml-badge-success {
+	background: var(--oml-success-soft);
+	border-color: var(--oml-success);
+	color: var(--oml-heading);
+}
+
+.oml-badge-warning {
+	background: var(--oml-warning-soft);
+	border-color: var(--oml-warning);
+	color: var(--oml-heading);
+}
+
+.oml-badge-danger {
+	background: var(--oml-danger-soft);
+	border-color: var(--oml-danger);
+	color: var(--oml-danger);
+}
+
+.oml-badge-info {
+	background: var(--oml-info-soft);
+	border-color: var(--oml-info);
+	color: var(--oml-heading);
+}
+
+/* ---- Progress: .oml-progress > .oml-progress-bar, + .oml-progress-success; width is set inline ---- */
+.oml-progress {
+	background: var(--oml-border);
+	border-radius: 999px;
+	box-sizing: border-box;
+	height: var(--oml-space-2);
+	overflow: hidden;
+	width: 100%;
+}
+
+.oml-progress-bar {
+	background: var(--oml-primary);
+	border-radius: 999px;
+	display: block;
+	height: 100%;
+	transition: width var(--oml-motion-base) ease;
+}
+
+.oml-progress-success .oml-progress-bar {
+	background: var(--oml-success);
+}
+
+/* ---- Input/Select: native controls with a shared label, help and error wrapper ---- */
+.oml-field {
+	display: grid;
+	align-content: start;
+	gap: var(--oml-space-1);
+	min-width: 0;
+	color: var(--oml-text);
+	font: inherit;
+	font-size: var(--oml-font-size-md);
+	line-height: var(--oml-line-normal);
+}
+
+.oml-field-label {
+	color: var(--oml-heading);
+	font-weight: var(--oml-weight-strong);
+}
+
+.oml-field-required,
+.oml-field-error {
+	color: var(--oml-danger);
+}
+
+.oml-field-help,
+.oml-field-error {
+	margin: 0;
+	font-size: var(--oml-font-size-sm);
+	line-height: var(--oml-line-normal);
+}
+
+.oml-field-help {
+	color: var(--oml-muted);
+}
+
+.oml-field .oml-control {
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
+	min-height: var(--oml-button-height-md);
+	margin: 0;
+	padding: var(--oml-space-1) var(--oml-space-2);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-surface);
+	box-shadow: none;
+	color: var(--oml-text);
+	color-scheme: var(--oml-color-scheme);
+	font: inherit;
+	font-size: var(--oml-font-size-md);
+	font-weight: var(--oml-weight-regular);
+	line-height: var(--oml-line-normal);
+	transition: border-color var(--oml-motion-fast) ease, background-color var(--oml-motion-fast) ease;
+}
+
+.oml-field .oml-input::placeholder {
+	color: var(--oml-muted);
+	opacity: 1;
+}
+
+.oml-field .oml-select {
+	appearance: auto;
+	cursor: pointer;
+}
+
+.oml-field .oml-select option {
+	background: var(--oml-surface);
+	color: var(--oml-text);
+}
+
+.oml-field .oml-control-sm {
+	min-height: var(--oml-button-height-sm);
+	font-size: var(--oml-font-size-xs);
+}
+
+.oml-field .oml-control-lg {
+	min-height: var(--oml-button-height-lg);
+	font-size: var(--oml-font-size-lg);
+}
+
+.oml-field .oml-control:focus {
+	border-color: var(--oml-border);
+	box-shadow: none;
+}
+
+.oml-field .oml-control-invalid,
+.oml-field .oml-control-invalid:focus {
+	border-color: var(--oml-danger);
+}
+
+.oml-field .oml-control:focus-visible {
+	outline: 2px solid var(--oml-focus);
+	outline-offset: 2px;
+}
+
+.oml-field .oml-control[readonly],
+.oml-field .oml-control:disabled {
+	border-color: var(--oml-border);
+	background: var(--oml-subtle);
+	color: var(--oml-muted);
+}
+
+.oml-field .oml-control:disabled {
+	cursor: not-allowed;
+	opacity: 1;
+}
+
+.oml-field .oml-select[multiple] {
+	min-height: calc(var(--oml-button-height-lg) + var(--oml-space-6));
+	padding-block: var(--oml-space-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	.oml-field .oml-control {
+		transition: none;
+	}
+}

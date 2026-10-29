@@ -508,12 +508,13 @@ class ContentHubController extends RestController {
 		return rest_ensure_response(
 			Catalog::lessons(
 				array(
-					'search'   => (string) $request['search'],
-					'status'   => (string) $request['status'],
-					'page'     => (int) $request['page'],
-					'per_page' => (int) $request['per_page'],
-					'orderby'  => (string) $request['orderby'],
-					'order'    => (string) $request['order'],
+					'curriculum' => absint( $request['curriculum'] ),
+					'search'     => (string) $request['search'],
+					'status'     => (string) $request['status'],
+					'page'       => (int) $request['page'],
+					'per_page'   => (int) $request['per_page'],
+					'orderby'    => (string) $request['orderby'],
+					'order'      => (string) $request['order'],
 				)
 			)
 		);

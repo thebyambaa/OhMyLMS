@@ -1,0 +1,187 @@
+.ohmylms-ws-node-line {
+	display: flex;
+	align-items: center;
+	border: 1px solid transparent;
+	border-radius: var(--oml-radius-control, 6px);
+}
+
+.ohmylms-ws-drag-handle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 20px;
+	width: 20px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--ws-muted);
+	cursor: grab;
+}
+
+.ohmylms-ws-drag-grip {
+	display: block;
+	width: 12px;
+	height: 6px;
+	border-top: 1px solid var(--oml-border);
+	border-bottom: 1px solid var(--oml-border);
+	pointer-events: none;
+}
+
+.ohmylms-ws-root-drop {
+	position: sticky;
+	top: 0;
+	z-index: 2;
+	width: 100%;
+	margin-bottom: var(--oml-space-2);
+	padding: var(--oml-space-3) var(--oml-space-2);
+	border: 1px dashed var(--ws-primary);
+	border-radius: var(--oml-radius-control, 6px);
+	background: var(--ohmylms-admin-surface, var(--oml-surface));
+	color: var(--ws-primary);
+	font: inherit;
+	cursor: pointer;
+}
+
+.ohmylms-ws-kind {
+	flex-shrink: 0;
+}
+
+.ohmylms-ws-toggle-spacer {
+	flex: 0 0 28px;
+	width: 28px;
+	height: 28px;
+}
+
+.ohmylms-ws-toggle {
+	flex: 0 0 28px;
+	width: 28px;
+	height: 28px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	border: 0;
+	border-radius: var(--oml-radius-control, 4px);
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+}
+
+.ohmylms-ws-node-main {
+	display: flex;
+	flex: 1 1 auto;
+	align-items: center;
+	gap: var(--oml-space-2);
+	min-width: 0;
+	padding: var(--oml-space-2) var(--oml-space-2) var(--oml-space-2) 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: start;
+	cursor: pointer;
+}
+
+.ohmylms-ws-node-label {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.ohmylms-ws-node-count {
+	flex: 0 0 auto;
+	min-width: 22px;
+	padding: 0 6px;
+	border-radius: var(--oml-radius-card);
+	background: var(--ws-subtle);
+	font-size: var(--oml-font-size-xs);
+	text-align: center;
+}
+
+.ohmylms-ws-node-hint {
+	flex: 0 0 auto;
+	font-size: 11px;
+	font-weight: var(--oml-weight-regular);
+	color: var(--ws-muted);
+}
+
+.ohmylms-ws-main {
+	flex: 1 1 auto;
+	min-width: 0;
+	padding: 0 var(--oml-space-6) var(--oml-space-8);
+	overflow-y: auto;
+}
+
+.ohmylms-ws-status {
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	max-width: 1040px;
+	margin: 0 auto;
+}
+
+.ohmylms-ws-pane {
+	max-width: 1040px;
+	margin: 0 auto;
+}
+
+.ohmylms-ws-crumbs {
+	margin: 18px 0 6px;
+}
+
+.ohmylms-ws-pane-head {
+	display: grid;
+	gap: 6px;
+}
+
+.ohmylms-ws-pane-title {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--oml-space-2);
+}
+
+.ohmylms-ws-objective-editor {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.ohmylms-ws-objective-columns {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--oml-space-4);
+}
+
+.ohmylms-ws-language-buttons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-2);
+	margin-bottom: var(--oml-space-4);
+}
+
+.ohmylms-ws-objective-draft-actions {
+	display: flex;
+	gap: var(--oml-space-2);
+}
+
+.ohmylms-ws-objective-resize {
+	display: flex;
+	align-items: center;
+	gap: var(--oml-space-3);
+	margin: var(--oml-space-2) 0;
+	font-size: var(--oml-font-size-xs);
+}
+
+.ohmylms-ws-objective-column {
+	min-width: 0;
+}
+
+.ohmylms-ws-objective-frame {
+	position: relative;
+}
+
+.ohmylms-ws-field {
+	display: flex;
+	flex-direction: column;
+	gap: var(--oml-space-1);
+	min-width: 0;
+}

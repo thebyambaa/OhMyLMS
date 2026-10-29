@@ -1,0 +1,62 @@
+/* Lessons, quizzes and assignments attached to a chapter of a syllabus course: a type tag, the title as a
+ * link, flags, and the controls that say whether each one counts. */
+
+.ohmylms-cur-syllabus-badge {
+	background: var(--ohmylms-primary-soft-color, var(--oml-primary-soft));
+	border-color: var(--ohmylms-primary-color, var(--oml-primary));
+	font-weight: var(--oml-weight-strong);
+}
+
+.ohmylms-cur-name-link {
+	color: var(--ohmylms-primary-color, var(--oml-primary));
+	text-decoration: none;
+}
+
+.ohmylms-cur-syllabus-summary {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--oml-space-3) 20px;
+	margin: 20px 0 var(--oml-space-2);
+	padding: 14px var(--oml-space-4);
+	border: 1px solid var(--ohmylms-admin-border, var(--oml-border));
+	border-radius: var(--ohmylms-admin-radius, 7px);
+	background: var(--ohmylms-admin-surface, var(--oml-surface));
+}
+
+.ohmylms-syl-existing {
+	margin: var(--oml-space-2) 0;
+}
+
+.ohmylms-syl-import {
+	width: min(920px, calc(100vw - 32px));
+}
+
+.ohmylms-syl-options {
+	display: grid;
+	gap: var(--oml-space-2);
+	margin: var(--oml-space-2) 0 var(--oml-space-3);
+}
+
+.ohmylms-syl-report {
+	margin: var(--oml-space-2) 0;
+}
+
+.ohmylms-ws {
+	--ws-muted: color-mix(
+		in srgb,
+		var(--ohmylms-admin-text-color, var(--oml-heading)) 68%,
+		var(--oml-surface)
+	);
+	--ws-border: var(--ohmylms-admin-border, var(--oml-border));
+	--ws-primary: var(--ohmylms-primary-color, var(--oml-primary));
+	--ws-soft: var(--ohmylms-primary-soft-color, var(--oml-primary-soft));
+	--ws-subtle: var(--ohmylms-admin-subtle, var(--oml-background));
+	display: flex;
+	flex-direction: column;
+	height: calc(100vh - 32px);
+	min-height: 520px;
+	background: var(--ohmylms-admin-surface, var(--oml-surface));
+	color: var(--ohmylms-admin-text-color, var(--oml-heading));
+}

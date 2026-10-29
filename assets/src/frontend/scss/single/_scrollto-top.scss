@@ -1,73 +1,68 @@
 .ohmylms-page {
 
-    .ohmylms-scroll-to-top {
-        position: fixed;
-        bottom: 50px;
-        right: 10%;
-        z-index: 999;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.4s ease;
+	.ohmylms-scroll-to-top {
+		position: fixed;
+		bottom: 50px;
+		right: 10%;
+		z-index: 999;
+		opacity: 0;
+		visibility: hidden;
+		transition: all 0.4s ease;
 
-        &.visible {
-            opacity: 1;
-            visibility: visible;
-        }
+		&.visible {
+			opacity: 1;
+			visibility: visible;
+		}
 
-        button {
-            background-color: var(--ohmylms-primary-color);
-            border: none;
-            box-shadow: none;
-            width: 50px;
-            height: 50px;
-            display: flex;
-            flex-flow: column;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            cursor: pointer;
+		button {
+			background-color: var(--oml-primary);
+			border: none;
+			box-shadow: none;
+			width: 50px;
+			height: 50px;
+			display: flex;
+			flex-flow: column;
+			align-items: center;
+			justify-content: center;
+			border-radius: 50%;
+			cursor: pointer;
 
-            svg {
-                display: block;
-                width: 24px;
-                height: auto;
-            }
-        }
-    }
+			svg {
+				display: block;
+				width: 24px;
+				height: auto;
+			}
+		}
+	}
 }
-
 
 @media screen and (max-width: 1199px) {
 
-    .ohmylms-page .ohmylms-scroll-to-top {
-        bottom: 20px;
-        right: 20px;
-    }
+	.ohmylms-page .ohmylms-scroll-to-top {
+		bottom: 20px;
+		right: 20px;
+	}
 
-    .ohmylms-page .ohmylms-scroll-to-top button {
-        width: 40px;
-        height: 40px;
-    }
+	.ohmylms-page .ohmylms-scroll-to-top button {
+		width: 40px;
+		height: 40px;
+	}
 
-    .ohmylms-page .ohmylms-scroll-to-top button svg {
-        width: 18px;
-    }
-    
+	.ohmylms-page .ohmylms-scroll-to-top button svg {
+		width: 18px;
+	}
 }
-
 
 @media screen and (max-width: 991px) {
 
-    .ohmylms-page .ohmylms-scroll-to-top {
-        bottom: 110px;
-    }
-    
+	.ohmylms-page .ohmylms-scroll-to-top {
+		bottom: 110px;
+	}
 }
 
 @media screen and (max-width: 575px) {
 
-    .ohmylms-page .ohmylms-scroll-to-top {
-        bottom: 130px;
-    }
-    
+	.ohmylms-page .ohmylms-scroll-to-top {
+		bottom: 130px;
+	}
 }

@@ -17,17 +17,24 @@ defined( 'ABSPATH' ) || exit;
 /** Only distributed course activities and current class recipients enter this gradebook. */
 final class SchoolGradebook {
 
-	const EXPORT_ACTION = 'ohmylms_school_gradebook_export';
+	const EXPORT_ACTION         = 'ohmylms_school_gradebook_export';
+	const TEACHER_EXPORT_ACTION = 'ohmylms_teacher_gradebook_export';
 
 	/**
 	 * Courses explicitly distributed to this class.
 	 *
-	 * @param int $school School ID.
-	 * @param int $class_id Class ID.
+	 * @param int  $school School ID.
+	 * @param int  $class_id Class ID.
+	 * @param bool $teacher Use teacher class authorization.
 	 * @return array
 	 */
-	public static function courses( $school, $class_id ) {
-		SchoolReports::classroom( $school, $class_id );
+	public static function courses( $school, $class_id, $teacher = false ) {
+		if ( $teacher ) {
+			$class = \OhMyLMS\Schools\Access::classroom( absint( $class_id ), true );
+			\OhMyLMS\Schools\Access::require_access( TeacherWorkspace::available() && $class && (int) $class['school_id'] === (int) $school );
+		} else {
+			SchoolReports::classroom( $school, $class_id );
+		}
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Current scoped course selector.
 		return $wpdb->get_results( $wpdb->prepare( "SELECT DISTINCT p.ID AS id,p.post_title AS title FROM %i a JOIN %i p ON p.ID=a.course_id WHERE a.school_id=%d AND a.class_id=%d AND a.status='active' AND p.post_type=%s AND p.post_status<>'trash' ORDER BY p.post_title,p.ID", Schema::table( 'learning_assignments' ), $wpdb->posts, $school, $class_id, OHMYLMS_COURSE_CPT ), ARRAY_A );
@@ -36,18 +43,19 @@ final class SchoolGradebook {
 	/**
 	 * Build a matrix page. No platform gradebook endpoint or global enrollment read is used.
 	 *
-	 * @param int $school School ID.
-	 * @param int $class_id Class ID.
-	 * @param int $course Course ID.
-	 * @param int $page Page number.
+	 * @param int  $school School ID.
+	 * @param int  $class_id Class ID.
+	 * @param int  $course Course ID.
+	 * @param int  $page Page number.
+	 * @param bool $teacher Use teacher class authorization.
 	 * @return array
 	 */
-	public static function read( $school, $class_id, $course, $page = 1 ) {
-		$courses = self::courses( $school, $class_id );
+	public static function read( $school, $class_id, $course, $page = 1, $teacher = false ) {
+		$courses = self::courses( $school, $class_id, $teacher );
 		\OhMyLMS\Schools\Access::require_access( in_array( (int) $course, array_map( 'intval', array_column( $courses, 'id' ) ), true ) );
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Current class and school memberships, bounded to one roster page.
-		$students = $wpdb->get_results( $wpdb->prepare( "SELECT u.ID AS id,u.display_name AS name FROM %i cm JOIN %i sm ON sm.user_id=cm.user_id AND sm.school_id=%d AND sm.role='student' AND sm.status='active' JOIN %i u ON u.ID=cm.user_id WHERE cm.class_id=%d AND cm.role='student' AND cm.status='active' ORDER BY u.display_name,u.ID LIMIT 51 OFFSET %d", Schema::table( 'class_memberships' ), Schema::table( 'school_memberships' ), $school, $wpdb->users, $class_id, ( max( 1, absint( $page ) ) - 1 ) * 50 ), ARRAY_A );
+		$students = $wpdb->get_results( $wpdb->prepare( "SELECT u.ID AS id,u.display_name AS name FROM %i cm LEFT JOIN %i sm ON sm.user_id=cm.user_id AND sm.school_id=%d AND sm.role='student' AND sm.status='active' JOIN %i u ON u.ID=cm.user_id WHERE cm.class_id=%d AND cm.role='student' AND cm.status='active' AND (%d=0 OR sm.user_id IS NOT NULL) ORDER BY u.display_name,u.ID LIMIT 51 OFFSET %d", Schema::table( 'class_memberships' ), Schema::table( 'school_memberships' ), $school, $wpdb->users, $class_id, $school, ( min( 10000, max( 1, absint( $page ) ) ) - 1 ) * 50 ), ARRAY_A );
 		$more     = count( $students ) > 50;
 		$students = array_slice( $students, 0, 50 );
 		$ids      = array_map( 'intval', array_column( $students, 'id' ) );
@@ -188,16 +196,25 @@ final class SchoolGradebook {
 		return array_merge( $row, array( $total['score'], $total['max'], $total['percent'] ?? '' ) );
 	}
 
-	/** Download the entire scoped class/course matrix as CSV, reauthorizing each page. */
-	public static function export() {
-		check_admin_referer( self::EXPORT_ACTION );
+	/** Export only a currently authorized teacher's class. */
+	public static function export_teacher() {
+		self::export( true );
+	}
+
+	/**
+	 * Download the scoped class/course matrix, reauthorizing each page.
+	 *
+	 * @param bool $teacher Use teacher class authorization.
+	 */
+	public static function export( $teacher = false ) {
+		check_admin_referer( $teacher ? self::TEACHER_EXPORT_ACTION : self::EXPORT_ACTION );
 		if ( 'POST' !== sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ?? '' ) ) ) {
 			wp_die( esc_html__( 'Invalid request.', 'ohmylms' ), '', array( 'response' => 405 ) ); }
 		$school   = isset( $_POST['school_id'] ) ? absint( $_POST['school_id'] ) : 0;
 		$class_id = isset( $_POST['class_id'] ) ? absint( $_POST['class_id'] ) : 0;
 		$course   = isset( $_POST['course_id'] ) ? absint( $_POST['course_id'] ) : 0;
 		try {
-			$matrix = self::read( $school, $class_id, $course );
+			$matrix = self::read( $school, $class_id, $course, 1, $teacher );
 		} catch ( \RuntimeException $error ) {
 			wp_die( esc_html__( 'This gradebook is not available.', 'ohmylms' ), '', array( 'response' => 403 ) ); }
 		nocache_headers();
@@ -221,7 +238,7 @@ final class SchoolGradebook {
 			if ( ! $matrix['more'] ) {
 				break; }
 			++$page;
-			$matrix = self::read( $school, $class_id, $course, $page );
+			$matrix = self::read( $school, $class_id, $course, $page, $teacher );
 		} while ( true );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Close the response stream.
 		fclose( $output );

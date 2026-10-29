@@ -79,7 +79,14 @@ foreach ( array( '--oml-primary:#1865f2;', '--oml-on-primary:#ffffff;', '--oml-r
 }
 $body = substr( $css, strlen( 'body.oml-ds{' ), -1 );
 foreach ( array_filter( explode( ';', $body ) ) as $declaration ) {
-	check( 1 === preg_match( '/^--[a-z0-9-]+:(#[0-9a-f]{6}|[0-9]+px|[0-9]+, [0-9]+, [0-9]+)$/', $declaration ), "declaration is a plain variable: $declaration" );
+	if ( str_starts_with( $declaration, '--oml-font-family:' ) ) {
+		check( '--oml-font-family:' . \OhMyLMS\Design\Tokens::SYSTEM_STACK === $declaration, 'shared font uses a validated stack' );
+		continue;
+	}
+	if ( 1 === preg_match( '/^--oml-color-scheme:(light|dark)$/', $declaration ) ) {
+		continue;
+	}
+	check( 1 === preg_match( '/^--[a-z0-9-]+:(#[0-9a-f]{6}|[0-9]+px|[0-9]+, [0-9]+, [0-9]+|[0-9]+(\.[0-9]+)?|[0-9]+ms|0 [0-9]+px [0-9]+px rgba\([0-9]+, [0-9]+, [0-9]+, 0\.[0-9]+\))$/', $declaration ), "declaration is a plain variable: $declaration" );
 }
 $hostile = DS::css( array( 'colors' => array( 'primary' => '#fff;}body{display:none', 'link' => 'red;x:y' ), 'button_radius' => '4px;}x{', 'density' => '</style>' ) );
 check( false === strpos( $hostile, 'display' ) && false === strpos( $hostile, '</style>' ) && false === strpos( $hostile, 'red' ) && substr_count( $hostile, '{' ) === 1, 'hostile values cannot inject CSS' );
@@ -92,6 +99,62 @@ $saved = DS::save( array( 'colors' => array( 'primary' => '#ff0066' ), 'button_r
 check( 'custom' === $saved['preset'] && $saved === $options['ohmylms_design_system'], 'save stores the sanitized option' );
 check( 'custom' === DS::get()['preset'] && 999 === DS::get()['button_radius'], 'saved values are read back' );
 DS::save( DS::preset_values( 'khan' ) );
+
+foreach ( array( 'khan', 'classic' ) as $preset_name ) {
+	$palette = DS::preset_values( $preset_name )['colors'];
+	foreach ( array( DS::variables( $palette, 4, 'comfortable' ), DS::dark_variables( $palette ) ) as $status_vars ) {
+		foreach ( array( 'success', 'warning', 'danger', 'info' ) as $status ) {
+			check( DS::contrast( $status_vars[ 'oml-' . $status . '-text' ], $status_vars[ 'oml-' . $status . '-soft' ] ) >= 4.5, 'status text is readable in ' . $preset_name );
+		}
+	}
+}
 check( 'khan' === DS::get()['preset'], 'reset to khan' );
+
+// Admin and learner pages share one saved palette; legacy option names no longer fork it.
+$options['ohmylms_primary_color_scheme'] = '#aa2200';
+$learner                                 = \OhMyLMS\Design\Tokens::frontend_css();
+check( false !== strpos( $learner, '--oml-primary:#1865f2;' ) && false !== strpos( $learner, '--ohmylms-primary-color:var(--oml-primary);' ), 'learner tokens and public aliases use the shared Design system' );
+check( false === strpos( $learner, '--oml-primary:#aa2200;' ), 'legacy learner options cannot fork the shared palette' );
+check( DS::get()['colors'] === \OhMyLMS\Design\Tokens::frontend_colors(), 'both contexts share all colors' );
+$shared_custom = DS::sanitize( array( 'preset' => 'classic', 'button_radius' => 12, 'density' => 'compact' ) );
+DS::save( $shared_custom );
+$shared_vars = DS::variables( $shared_custom['colors'], 12, 'compact' );
+foreach ( $shared_vars as $name => $value ) {
+	check( false !== strpos( \OhMyLMS\Design\Tokens::frontend_oml_vars(), '--' . $name . ':' . $value . ';' ), 'learner uses saved shared token ' . $name );
+}
+DS::save( DS::preset_values( 'khan' ) );
+$admin_names = array_keys( DS::variables( DS::preset_values( 'classic' )['colors'], 4, 'comfortable' ) );
+foreach ( $admin_names as $name ) {
+	check( false !== strpos( $learner, '--' . $name . ':' ), "learner css defines --$name" );
+}
+unset( $options['ohmylms_primary_color_scheme'] );
+
+// Dark theme: same token names as light, brand and status colors lightened to read on the dark card.
+$light_names = array_keys( DS::variables( DS::preset_values( 'classic' )['colors'], 4, 'comfortable' ) );
+foreach ( array( '#6e42d3', '#000d25', '#1865f2', '#ffb100', '#222222' ) as $brand ) {
+	$palette         = DS::preset_values( 'classic' )['colors'];
+	$palette['primary']   = $brand;
+	$palette['secondary'] = $brand;
+	$palette['link']      = $brand;
+	$dark            = DS::dark_variables( $palette );
+	check( DS::contrast( $dark['oml-primary'], DS::DARK['surface'] ) >= DS::DARK_MIN_CONTRAST, "dark primary for $brand reads on the dark card" );
+	check( DS::contrast( $dark['oml-on-primary'], $dark['oml-primary'] ) >= 4.5, "dark on-primary for $brand reads on the primary" );
+}
+foreach ( array_keys( DS::dark_variables( DS::preset_values( 'classic' )['colors'] ) ) as $name ) {
+	check( in_array( $name, $light_names, true ), "dark token --$name also exists in the light set" );
+}
+$dark = DS::dark_variables( DS::preset_values( 'classic' )['colors'] );
+check( DS::DARK['surface'] === $dark['oml-surface'] && DS::DARK['border'] === $dark['oml-border'], 'dark neutrals are the fixed dark values' );
+check( $dark['oml-primary'] === DS::for_dark( '#6e42d3' ), 'dark primary derives from the brand color' );
+$options['ohmylms_primary_color_scheme'] = '#aa2200';
+$learner_css                             = \OhMyLMS\Design\Tokens::frontend_css();
+check( false !== strpos( $learner_css, '[data-theme="dark"],body:has(.oml-player[data-theme="dark"]){' ) && false !== strpos( $learner_css, '@media (prefers-color-scheme:dark){[data-theme="system"],body:has(.oml-player[data-theme="system"]){' ), 'learner css has dark and system rules' );
+check( false !== strpos( $learner_css, '--oml-surface:' . DS::DARK['surface'] . ';' ), 'dark rule sets the dark surface' );
+unset( $options['ohmylms_primary_color_scheme'] );
+
+$control_light = DS::variables( DS::PRESETS['classic']['colors'], 4, 'comfortable' );
+$control_dark  = DS::dark_variables( DS::PRESETS['classic']['colors'] );
+check( 'light' === $control_light['oml-color-scheme'], 'native controls use the light color scheme' );
+check( 'dark' === $control_dark['oml-color-scheme'], 'native controls follow the dark token scope' );
 
 echo "Design system checks passed: $checks\n";

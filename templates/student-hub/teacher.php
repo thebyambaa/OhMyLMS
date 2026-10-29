@@ -27,7 +27,7 @@ $teacher_titles  = array(
 	'classes'        => __( 'My classes', 'ohmylms' ),
 	'work'           => __( 'Assignments', 'ohmylms' ),
 	'roster'         => __( 'Roster', 'ohmylms' ),
-	'progress'       => __( 'Reports', 'ohmylms' ),
+	'progress'       => __( 'Gradebook', 'ohmylms' ),
 	'class-settings' => __( 'Class settings', 'ohmylms' ),
 );
 ?>
@@ -90,52 +90,53 @@ $teacher_titles  = array(
 		<?php else : ?>
 			<?php if ( 'progress' === $section ) : ?>
 				<?php ohmylms_get_template( 'student-hub/teacher-report.php', compact( 'teacher_class', 'teacher_page' ) ); ?>
-			<?php endif; ?>
-			<?php $teacher_work = Service::assignments( $teacher_class, 0, 0, $teacher_page ); ?>
+			<?php else : ?>
+				<?php $teacher_work = Service::assignments( $teacher_class, 0, 0, $teacher_page ); ?>
 		<p><?php esc_html_e( 'Distributed class work only. Independent learning is not included.', 'ohmylms' ); ?></p>
 		<ul class="oml-hub-commerce-list">
-			<?php foreach ( $teacher_work as $teacher_assignment ) : ?>
+				<?php foreach ( $teacher_work as $teacher_assignment ) : ?>
 				<li><div><strong><?php echo esc_html( $teacher_assignment['title'] ); ?></strong><p><?php echo esc_html( $teacher_assignment['student_name'] ); ?></p></div><span><?php echo esc_html( $teacher_assignment['completed_at'] ? __( 'Completed', 'ohmylms' ) : __( 'Not completed', 'ohmylms' ) ); ?></span></li>
 			<?php endforeach; ?>
 		</ul>
-			<?php
-			if ( ! $teacher_work ) :
-				?>
+				<?php
+				if ( ! $teacher_work ) :
+					?>
 			<p><?php esc_html_e( 'No distributed work on this page.', 'ohmylms' ); ?></p><?php endif; ?>
 		<nav class="oml-hub-subnav" aria-label="<?php esc_attr_e( 'Assigned work pages', 'ohmylms' ); ?>">
-			<?php
-			if ( 1 < $teacher_page ) :
-				?>
-				<a class="oml-hub-pill" href="
 				<?php
-				echo esc_url(
-					add_query_arg(
-						array(
-							'hub_class'    => $teacher_class,
-							'current_page' => $teacher_page - 1,
-						),
-						TeacherWorkspace::url( $section )
-					)
-				);
-				?>
+				if ( 1 < $teacher_page ) :
+					?>
+				<a class="oml-hub-pill" href="
+					<?php
+					echo esc_url(
+						add_query_arg(
+							array(
+								'hub_class'    => $teacher_class,
+								'current_page' => $teacher_page - 1,
+							),
+							TeacherWorkspace::url( $section )
+						)
+					);
+					?>
 				"><?php esc_html_e( 'Previous', 'ohmylms' ); ?></a><?php endif; ?>
-			<?php
-			if ( 50 === count( $teacher_work ) ) :
-				?>
-				<a class="oml-hub-pill" href="
 				<?php
-				echo esc_url(
-					add_query_arg(
-						array(
-							'hub_class'    => $teacher_class,
-							'current_page' => $teacher_page + 1,
-						),
-						TeacherWorkspace::url( $section )
-					)
-				);
-				?>
+				if ( 50 === count( $teacher_work ) ) :
+					?>
+				<a class="oml-hub-pill" href="
+					<?php
+					echo esc_url(
+						add_query_arg(
+							array(
+								'hub_class'    => $teacher_class,
+								'current_page' => $teacher_page + 1,
+							),
+							TeacherWorkspace::url( $section )
+						)
+					);
+					?>
 				"><?php esc_html_e( 'Next', 'ohmylms' ); ?></a><?php endif; ?>
 		</nav>
+		<?php endif; ?>
 		<?php endif; ?>
 	</section>
 <?php endif; ?>

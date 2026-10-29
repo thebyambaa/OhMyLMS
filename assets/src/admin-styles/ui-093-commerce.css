@@ -1,0 +1,22 @@
+.ohmylms-membership-modal .components-modal__content {
+	min-width: 0;
+	box-sizing: border-box;
+	overflow-x: hidden;
+	scrollbar-width: none;
+}
+
+.ohmylms-membership-modal .ohmylms-membership-plan-course-section {
+	min-width: 0;
+	max-width: 100%;
+}
+
+.ohmylms-membership-modal .ohmylms-tab-has-custom-navigation {
+	min-width: 0;
+	max-width: 100%;
+}
+
+.ohmylms-membership-modal .ohmylms-advanced-select {
+	min-width: 0;
+	max-width: 100%;
+}
+

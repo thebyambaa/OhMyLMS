@@ -1,217 +1,259 @@
 .ohmylms-page {
 
-    .ohmylms-lesson-details {
+	.ohmylms-lesson-details {
 
-        .ohmylms-lesson-navigation {
-            border-top: 1px solid #ECEDF2;
-            padding-top: 24px;
-            position: relative;
-            bottom: 0;
-            background: #f9fafd;
-            z-index: 2;
+		.ohmylms-lesson-navigation {
+			border-top: 1px solid var(--oml-border);
+			padding-top: var(--oml-space-5);
+			position: relative;
+			bottom: 0;
+			background: var(--oml-background);
+			z-index: 2;
 
-            .default-navigation {
-                display: flex;
-                align-items: center;
-                flex-flow: row wrap;
-                justify-content: flex-end;
-                gap: 12px;
-            }
+			.default-navigation {
+				display: flex;
+				align-items: center;
+				flex-flow: row wrap;
+				justify-content: flex-end;
+				gap: var(--oml-space-3);
+			}
 
-            .ohmylms-checkbox {
-                border-radius: 10px;
-                background-color: #35BD4C;
-                padding: 12px 20px;
+			.ohmylms-checkbox {
+				border-radius: var(--oml-radius-control);
+				background-color: var(--oml-success-text);
+				padding: var(--oml-space-3) 20px;
 
-                &:focus {
-                    outline: 2px solid rgba(var(--ohmylms-primary-color-rgb), 0.3490196078);
-                }
-            }
+				&:focus {
+					outline: 2px solid
+						color-mix(
+							in srgb,
+							var(--oml-primary) 34.90196078%,
+							transparent
+						);
+				}
+			}
 
-            .ohmylms-checkbox-text {
-                color: #FFF;
-                font-size: 14px;
-                line-height: 1;
-                font-weight: 500;
+			.ohmylms-checkbox-text {
+				color: var(--oml-on-primary);
+				font-size: var(--oml-font-size-md);
+				line-height: 1;
+				font-weight: var(--oml-weight-medium);
 
-                .checkedbox {
-                    width: 18px;
-                    height: 18px;
-                    top: -2px;
-                    border-color: #fff;
-                    background: transparent;
-                    display: flex;
-                    flex-flow: column;
-                    align-items: center;
-                    justify-content: center;
+				.checkedbox {
+					width: 18px;
+					height: 18px;
+					top: -2px;
+					border-color: var(--oml-border);
+					background: transparent;
+					display: flex;
+					flex-flow: column;
+					align-items: center;
+					justify-content: center;
 
-                    svg {
-                        opacity: 0;
-                        visibility: hidden;
-                        display: block;
-                        line-height: 1;
-                    }
+					svg {
+						opacity: 0;
+						visibility: hidden;
+						display: block;
+						line-height: 1;
+					}
 
-                    &::before {
-                        height: 14px;
-                        visibility: hidden;
-                        transition: all 0.3s ease;
-                        opacity: 0;
-                    }
+					&::before {
+						height: 14px;
+						visibility: hidden;
+						transition: all 0.3s ease;
+						opacity: 0;
+					}
+				}
+			}
 
-                }
-            }
+			.ohmylms-checkbox
+				input[type="checkbox"]:checked
+				+ .ohmylms-checkbox-text
+				.checkedbox {
+				background: transparent;
+				border-color: var(--oml-border);
+			}
 
-            .ohmylms-checkbox input[type="checkbox"]:checked + .ohmylms-checkbox-text .checkedbox {
-                background: transparent;
-                border-color: #fff;
-            }
+			.ohmylms-checkbox
+				input[type="checkbox"]:checked
+				+ .ohmylms-checkbox-text
+				.checkedbox
+				svg {
+				opacity: 1;
+				visibility: visible;
+			}
 
-            .ohmylms-checkbox input[type="checkbox"]:checked + .ohmylms-checkbox-text .checkedbox svg {
-                opacity: 1;
-                visibility: visible;
-            }
+			.next-lesson {
+				color: var(--oml-on-primary);
+				font-size: var(--oml-font-size-md);
+				padding: 10px 20px;
+				height: 38px;
+				border-radius: var(--oml-radius-control);
 
-            .next-lesson {
-                color: #fff;
-                font-size: 14px;
-                padding: 10px 20px;
-                height: 38px;
-                border-radius: 10px;
+				&:hover {
+					color: var(--oml-primary);
+				}
+			}
 
-                &:hover {
-                    color: var(--ohmylms-primary-color);
-                }
-            }
-            
-            //-----navigation for assignment and quiz-----
-            .assignment-quiz-navigation {
-                display: flex;
-                align-items: center;
-                flex-flow: row wrap;
-                justify-content: space-between;
-                gap: 12px;
+			/*-----navigation for assignment and quiz-----*/
+			.assignment-quiz-navigation {
+				display: flex;
+				align-items: center;
+				flex-flow: row wrap;
+				justify-content: space-between;
+				gap: var(--oml-space-3);
 
-                .skip {
-                    color: #696971;
-                    font-size: 13px;
-                    font-weight: 400;
-                    line-height: 1.2;
-                    text-decoration: none;
+				.skip {
+					color: var(--oml-muted);
+					font-size: var(--oml-font-size-sm);
+					font-weight: var(--oml-weight-regular);
+					line-height: 1.2;
+					text-decoration: none;
 
-                    &:hover {
-                        text-decoration: underline;
-                        color: var(--ohmylms-primary-color);
-                    }
-                }
+					&:hover {
+						text-decoration: underline;
+						color: var(--oml-primary);
+					}
+				}
 
-                form {
-                    margin-left: auto;
-                }
+				form {
+					margin-left: auto;
+				}
 
-                .ohmylms-button {
-                    color: #fff;
-                    font-size: 14px;
-                    padding: 10px 20px 9px;
-                    background-color: var(--ohmylms-primary-color);
-                    height: 38px;
-                    border-radius: 10px;
+				.ohmylms-button {
+					color: var(--oml-on-primary);
+					font-size: var(--oml-font-size-md);
+					padding: 10px 20px 9px;
+					background-color: var(--oml-primary);
+					height: 38px;
+					border-radius: var(--oml-radius-control);
 
-                    
-                    &:hover {
-                        color: var(--ohmylms-primary-color);
-                        background-color: transparent;
-                    }
+					&:hover {
+						color: var(--oml-primary);
+						background-color: transparent;
+					}
 
-                    &:disabled {
-                        cursor: not-allowed;
-                        border-color: #FFF;
-                        background-color: #FFF;
-                        color: rgba(0, 13, 37, 0.16);
-                        box-shadow: 0 1px 2px 0 #DBDDE1;
-                        opacity: 1;
-                    }
+					&:disabled {
+						cursor: not-allowed;
+						border-color: var(--oml-border);
+						background-color: var(--oml-surface);
+						color: color-mix(
+							in srgb,
+							var(--oml-heading) 16%,
+							transparent
+						);
+						box-shadow: var(--oml-shadow-sm);
+						opacity: 1;
+					}
 
-                    // &.quiz-taken {
-                    //     border-color: #FFF;
-                    //     background-color: #FFF;
-                    //     color: var(--ohmylms-heading-color);
-                    //     box-shadow: 0px 1px 2px 0px #DBDDE1;
-                    // }
-                }
+					/* &.quiz-taken {*/
 
-            }
+					/*     border-color: #FFF;*/
 
-            .assignment-navigation {
-                justify-content: flex-end;
+					/*     background-color: #FFF;*/
 
-                a.skip {
-                    margin-right: auto;
-                }
-            }
+					/*     color: var(--ohmylms-heading-color);*/
 
-            .ohmylms-quiz-notice {
-                color: #A1A1AA;
-                font-size: 13px;
-                font-weight: 400;
-                line-height: 15px;
-                margin: 16px 0 0;
-                text-align: right;
-                display: flex;
-                align-items: center;
-                justify-content: flex-end;
-                gap: 5px;
-            }
+					/*     box-shadow: 0px 1px 2px 0px #DBDDE1;*/
 
-        }
+					/* }*/
+				}
+			}
 
-    }
+			.assignment-navigation {
+				justify-content: flex-end;
+
+				a.skip {
+					margin-right: auto;
+				}
+			}
+
+			.ohmylms-quiz-notice {
+				color: var(--oml-muted);
+				font-size: var(--oml-font-size-sm);
+				font-weight: var(--oml-weight-regular);
+				line-height: 15px;
+				margin: var(--oml-space-4) 0 0;
+				text-align: right;
+				display: flex;
+				align-items: center;
+				justify-content: flex-end;
+				gap: 5px;
+			}
+		}
+	}
 }
 
 @media screen and (max-width: 1199px) {
 
-    .ohmylms-page .ohmylms-lesson-details .ohmylms-lesson-navigation .ohmylms-checkbox {
-        border-radius: 8px;
-    }
+	.ohmylms-page
+		.ohmylms-lesson-details
+		.ohmylms-lesson-navigation
+		.ohmylms-checkbox {
+		border-radius: var(--oml-radius-control);
+	}
 
-    .ohmylms-page .ohmylms-lesson-details .ohmylms-lesson-navigation .assignment-quiz-navigation .ohmylms-button {
-        border-radius: 8px;
-    }
-
+	.ohmylms-page
+		.ohmylms-lesson-details
+		.ohmylms-lesson-navigation
+		.assignment-quiz-navigation
+		.ohmylms-button {
+		border-radius: var(--oml-radius-control);
+	}
 }
 
 @media screen and (max-width: 767px) {
 
-    .ohmylms-page .ohmylms-lesson-details .ohmylms-lesson-navigation .quiz-navigation {
-        justify-content: flex-end;
-    }
+	.ohmylms-page
+		.ohmylms-lesson-details
+		.ohmylms-lesson-navigation
+		.quiz-navigation {
+		justify-content: flex-end;
+	}
 
-    .ohmylms-page .ohmylms-lesson-details .ohmylms-lesson-navigation .quiz-navigation form {
-        margin-left: 0;
-    }
-
+	.ohmylms-page
+		.ohmylms-lesson-details
+		.ohmylms-lesson-navigation
+		.quiz-navigation
+		form {
+		margin-left: 0;
+	}
 }
 
 @media screen and (max-width: 425px) {
 
-    .ohmylms-page .ohmylms-lesson-details .ohmylms-lesson-navigation .default-navigation {
-        gap: 9px;
-    }
+	.ohmylms-page
+		.ohmylms-lesson-details
+		.ohmylms-lesson-navigation
+		.default-navigation {
+		gap: 9px;
+	}
 
-    .ohmylms-page .ohmylms-lesson-details .ohmylms-lesson-navigation .ohmylms-checkbox {
-        padding: 12px 16px;
-    }
+	.ohmylms-page
+		.ohmylms-lesson-details
+		.ohmylms-lesson-navigation
+		.ohmylms-checkbox {
+		padding: var(--oml-space-3) var(--oml-space-4);
+	}
 
-    .ohmylms-page .ohmylms-lesson-details .ohmylms-lesson-navigation .next-lesson {
-        padding: 10px 16px;
-    }
+	.ohmylms-page
+		.ohmylms-lesson-details
+		.ohmylms-lesson-navigation
+		.next-lesson {
+		padding: 10px var(--oml-space-4);
+	}
 
-    .ohmylms-page .ohmylms-lesson-details .ohmylms-lesson-navigation .ohmylms-checkbox-text {
-        font-size: 13px;
-    }
+	.ohmylms-page
+		.ohmylms-lesson-details
+		.ohmylms-lesson-navigation
+		.ohmylms-checkbox-text {
+		font-size: var(--oml-font-size-sm);
+	}
 
-    .ohmylms-page .ohmylms-lesson-details .ohmylms-lesson-navigation .next-lesson {
-        font-size: 13px;
-    }
-
+	.ohmylms-page
+		.ohmylms-lesson-details
+		.ohmylms-lesson-navigation
+		.next-lesson {
+		font-size: var(--oml-font-size-sm);
+	}
 }

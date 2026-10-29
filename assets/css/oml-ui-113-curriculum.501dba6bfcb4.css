@@ -1,0 +1,30 @@
+.ohmylms-ws-field input[aria-invalid="true"] {
+	border-color: var(--oml-danger, var(--oml-danger));
+}
+
+.ohmylms-ws-quickadd input[aria-invalid="true"] {
+	border-color: var(--oml-danger, var(--oml-danger));
+}
+
+.ohmylms-ws-field textarea.ohmylms-ws-title {
+	min-height: 120px;
+	padding: 10px var(--oml-space-3);
+	border: 1px solid var(--ws-border);
+	border-radius: var(--oml-radius-control, 4px);
+	font-size: var(--oml-font-size-xl);
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	resize: vertical;
+}
+
+.ohmylms-ws-owns-head h4 > .dashicon {
+	box-sizing: content-box;
+	padding: var(--oml-space-2);
+	border-radius: var(--oml-radius-card, 8px);
+	background: var(--ws-soft);
+	color: var(--ws-primary);
+}
+
+.ohmylms-ws-owned li:first-child {
+	border-top: 0;
+}

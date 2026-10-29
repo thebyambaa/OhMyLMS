@@ -159,7 +159,15 @@ try {
 		)
 	);
 	ohmylms_hub_check( array( 'learn', 'account' ) === $hub_invalid['tabs'] && 'learn' === $hub_invalid['default'], 'Invalid/duplicate sections or hidden defaults accepted.' );
-	ohmylms_hub_check( array() === $hub_invalid['cards'] && 'Study' === $hub_invalid['labels']['learn'] && '#4361ee' === $hub_invalid['accent'], 'Presentation settings not sanitized.' );
+	ohmylms_hub_check( array() === $hub_invalid['cards'] && 'Study' === $hub_invalid['labels']['learn'] && true === $hub_invalid['accent_brand'] && \OhMyLMS\Design\Tokens::color( 'ohmylms_primary_color_scheme' ) === $hub_invalid['accent'], 'Presentation settings not sanitized.' );
+	$hub_custom = Hub::sanitize( array( 'accent' => '#ff0066' ) );
+	ohmylms_hub_check( false === $hub_custom['accent_brand'] && '#ff0066' === $hub_custom['accent'], 'A saved accent color should stay custom.' );
+	$hub_follow = Hub::sanitize( array( 'accent' => '#ff0066', 'accent_brand' => '1' ) );
+	ohmylms_hub_check( true === $hub_follow['accent_brand'] && '#ff0066' !== $hub_follow['accent'], 'Following the brand should ignore the saved color.' );
+	$hub_style = \OhMyLMS\Schools\Settings::style( '#1a237e' );
+	ohmylms_hub_check( str_contains( $hub_style, '--hub-accent-light:#1a237e;--hub-on-accent-light:#ffffff;' ), 'A custom accent should set its light value and the text color that reads on it.' );
+	preg_match( '/--hub-accent-dark:(#[0-9a-f]{6});--hub-on-accent-dark:(#[0-9a-f]{6})/', $hub_style, $hub_dark );
+	ohmylms_hub_check( ! empty( $hub_dark ) && \OhMyLMS\Design\DesignSystem::contrast( $hub_dark[1], \OhMyLMS\Design\DesignSystem::DARK['surface'] ) >= \OhMyLMS\Design\DesignSystem::DARK_MIN_CONTRAST && \OhMyLMS\Design\DesignSystem::contrast( $hub_dark[2], $hub_dark[1] ) >= 4.5, 'A dark navy accent should be lightened to read on the dark card, with readable text on it.' );
 	foreach ( array( 'dashboard', 'profile', 'my-courses', 'profile-edit', 'transactions-history', 'invoice-details' ) as $hub_endpoint ) {
 		ohmylms_hub_check( str_starts_with( ohmylms_get_account_endpoint_url( $hub_endpoint ), Hub::base_url() ), 'An account link leaves the hub.' );
 	}

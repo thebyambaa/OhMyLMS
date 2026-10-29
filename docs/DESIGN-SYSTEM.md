@@ -22,10 +22,12 @@ Colors: `--oml-primary` (+ `-hover` 15% darker, `-active` 30%, `-soft` 90% tint,
 Shape: `--oml-radius-button` (0–24px or 999px for pill), `--oml-radius-control` (min(button, 8px)), `--oml-radius-card` (control + 4px, 0 when square).
 Spacing (4px grid): `--oml-space-1..8` = 4, 8, 12, 16, 24, 32, 48, 64px at Comfortable; Compact multiplies by 0.75, Spacious by 1.25.
 Buttons: heights 28/36/44 (Compact 24/32/40, Spacious 32/40/48), horizontal padding `space-2/4/5`.
+Native controls: `--oml-color-scheme` is `light` in the normal token scope and `dark` in dark scopes,
+so select menus and date/time pickers follow the chosen theme independently of the device preference.
 
 Roundness presets: Square 0, Slightly rounded 4, Rounded 8, Pill 999 (the slider covers 0–24; pill is a preset only).
 
-Sanitizing: colors through a strict `#rrggbb` check (3-digit expands), radius clamped, density and preset whitelisted. The generated CSS contains only `--name:value;` pairs whose values are hex colors, whole pixels or `r, g, b` triplets.
+Sanitizing: colors through a strict `#rrggbb` check (3-digit expands), radius clamped, density and preset whitelisted. The generated CSS contains only validated `--name:value;` declarations: colors, numeric dimensions/type/motion, generated shadows, and the fixed `light`/`dark` native color-scheme keywords.
 
 ## Khan Academy preset (default)
 

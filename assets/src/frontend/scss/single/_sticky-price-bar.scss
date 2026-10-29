@@ -1,298 +1,352 @@
 .ohmylms-single-course-layout3 {
 
-    .ohmylms-sticky-price {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        z-index: 99;
-        background: #FFF;
-        box-shadow: 0 4px 10px 0 rgba(110, 66, 211, 0.14);
-        padding: 20px 0;
-        transform: translateY(-150px);
-        transition: all 0.5s ease;
+	.ohmylms-sticky-price {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		z-index: 99;
+		background: var(--oml-surface);
+		box-shadow: var(--oml-shadow-sm);
+		padding: 20px 0;
+		transform: translateY(-150px);
+		transition: all 0.5s ease;
 
-        &.is-stuck {
-            transform: translateY(0);
-        }
-    }
+		&.is-stuck {
+			transform: translateY(0);
+		}
+	}
 }
 
 body.admin-bar {
 
-    .ohmylms-single-course-layout3 .ohmylms-sticky-price {
-        top: 32px;
+	.ohmylms-single-course-layout3 .ohmylms-sticky-price {
+		top: 32px;
 
-        @media screen and (max-width: 991px) {
-            top: inherit;
-        }
-    }
+		@media screen and (max-width: 991px) {
+			top: inherit;
+		}
+	}
 }
 
 .ohmylms-sticky-price {
 
-    .sticky-price-wrapper {
-        display: flex;
-        flex-flow: row wrap;
-        align-items: center;
-        gap: 30px;
-        justify-content: space-between;
+	.sticky-price-wrapper {
+		display: flex;
+		flex-flow: row wrap;
+		align-items: center;
+		gap: 30px;
+		justify-content: space-between;
 
-        .sticky-price-left {
-            width: calc(54% - 30px);
-        }
+		.sticky-price-left {
+			width: calc(54% - 30px);
+		}
 
-        .course-name {
-            color: var(--ohmylms-heading-color);
-            font-size: 30px;
-            font-weight: 600;
-            line-height: 1.4;
-            margin: 0;
-            padding: 0;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
+		.course-name {
+			color: var(--oml-heading);
+			font-size: var(--oml-font-size-2xl);
+			font-weight: var(--oml-weight-strong);
+			line-height: 1.4;
+			margin: 0;
+			padding: 0;
+			display: -webkit-box;
+			-webkit-line-clamp: 2;
+			-webkit-box-orient: vertical;
+			overflow: hidden;
+		}
 
-        .ohmylms-widget-pricebox {
-            box-shadow: none;
-            border-radius: 0;
-            padding: 0;
-            display: flex;
-            flex-flow: row wrap;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-            width: 44%;
+		.ohmylms-widget-pricebox {
+			box-shadow: none;
+			border-radius: 0;
+			padding: 0;
+			display: flex;
+			flex-flow: row wrap;
+			align-items: center;
+			justify-content: space-between;
+			gap: 20px;
+			width: 44%;
 
-            &.with-gray-color {
-                background-color: transparent;
-            }
+			&.with-gray-color {
+				background-color: transparent;
+			}
 
-            .price-discount-area {
-                gap: 5px;
-                width: calc(100% - 220px);
+			.price-discount-area {
+				gap: 5px;
+				width: calc(100% - 220px);
 
-                ins {
-                    width: auto;
-                    margin-bottom: 0;
-                    font-size: 36px;
-                }
+				ins {
+					width: auto;
+					margin-bottom: 0;
+					font-size: var(--oml-font-size-2xl);
+				}
 
-                .discount-percentage {
-                    display: none;
-                }
+				.discount-percentage {
+					display: none;
+				}
 
-                del {
-                    color: #7A8B9A;
-                    font-size: 24px;
-                    font-weight: 600;
-                    margin-right: 0;
+				del {
+					color: var(--oml-muted);
+					font-size: var(--oml-font-size-2xl);
+					font-weight: var(--oml-weight-strong);
+					margin-right: 0;
 
-                    .amount {
-                        color: #7A8B9A;
-                    }
-                }
+					.amount {
+						color: var(--oml-muted);
+					}
+				}
 
-                .special-deal-tag {
-                    margin-left: 0;
-                    display: block;
-                    width: 100%;
-                    margin-top: 4px;
-                    border-radius: 0;
-                    box-shadow: none;
-                    background: transparent;
-                    padding: 0;
-                }
-            }
+				.special-deal-tag {
+					margin-left: 0;
+					display: block;
+					width: 100%;
+					margin-top: var(--oml-space-1);
+					border-radius: 0;
+					box-shadow: none;
+					background: transparent;
+					padding: 0;
+				}
+			}
 
-            .ohmylms-btn-area {
-                margin-top: 0;
-                width: 200px;
-            }
-
-        }
-    }
+			.ohmylms-btn-area {
+				margin-top: 0;
+				width: 200px;
+			}
+		}
+	}
 }
 
 @media screen and (max-width: 1599px) {
 
-    .ohmylms-sticky-price .sticky-price-wrapper .course-name {
-        font-size: 22px;
-    }
+	.ohmylms-sticky-price .sticky-price-wrapper .course-name {
+		font-size: var(--oml-font-size-xl);
+	}
 
-    .ohmylms-sticky-price .sticky-price-wrapper .ohmylms-widget-pricebox .price-discount-area ins {
-        font-size: 30px;
-    }
+	.ohmylms-sticky-price
+		.sticky-price-wrapper
+		.ohmylms-widget-pricebox
+		.price-discount-area
+		ins {
+		font-size: var(--oml-font-size-2xl);
+	}
 
-    .ohmylms-sticky-price .sticky-price-wrapper .ohmylms-widget-pricebox .price-discount-area del {
-        font-size: 20px;
-    }
+	.ohmylms-sticky-price
+		.sticky-price-wrapper
+		.ohmylms-widget-pricebox
+		.price-discount-area
+		del {
+		font-size: var(--oml-font-size-xl);
+	}
 
-    .ohmylms-page .ohmylms-widget-pricebox .ohmylms-btn-area .ohmylms-button {
-        font-size: 16px;
-        padding: 13px 17px;
-    }
-    
+	.ohmylms-page .ohmylms-widget-pricebox .ohmylms-btn-area .ohmylms-button {
+		font-size: var(--oml-font-size-lg);
+		padding: 13px 17px;
+	}
 }
 
 @media screen and (max-width: 1399px) {
 
-    .ohmylms-sticky-price .sticky-price-wrapper .course-name {
-        font-size: 20px;
-    }
+	.ohmylms-sticky-price .sticky-price-wrapper .course-name {
+		font-size: var(--oml-font-size-xl);
+	}
 
-    .ohmylms-sticky-price .sticky-price-wrapper .ohmylms-widget-pricebox .price-discount-area ins {
-        font-size: 26px;
-    }
+	.ohmylms-sticky-price
+		.sticky-price-wrapper
+		.ohmylms-widget-pricebox
+		.price-discount-area
+		ins {
+		font-size: var(--oml-font-size-2xl);
+	}
 
-    .ohmylms-sticky-price .sticky-price-wrapper .ohmylms-widget-pricebox .price-discount-area del {
-        font-size: 18px;
-    }
+	.ohmylms-sticky-price
+		.sticky-price-wrapper
+		.ohmylms-widget-pricebox
+		.price-discount-area
+		del {
+		font-size: var(--oml-font-size-lg);
+	}
 
-    .ohmylms-page .ohmylms-widget-pricebox .ohmylms-btn-area .ohmylms-button {
-        font-size: 15px;
-        display: inline-flex;
-    }
-    
+	.ohmylms-page .ohmylms-widget-pricebox .ohmylms-btn-area .ohmylms-button {
+		font-size: var(--oml-font-size-md);
+		display: inline-flex;
+	}
 }
 
 @media screen and (max-width: 1199px) {
 
-    .ohmylms-single-course-layout3 .ohmylms-sticky-price {
-        padding: 12px 0;
-    }
+	.ohmylms-single-course-layout3 .ohmylms-sticky-price {
+		padding: var(--oml-space-3) 0;
+	}
 
-    .ohmylms-sticky-price .sticky-price-wrapper .sticky-price-left {
-        width: calc(50% - 30px);
-    }
+	.ohmylms-sticky-price .sticky-price-wrapper .sticky-price-left {
+		width: calc(50% - 30px);
+	}
 
-    .ohmylms-sticky-price .sticky-price-wrapper .ohmylms-widget-pricebox {
-        width: 50%;
-    }
+	.ohmylms-sticky-price .sticky-price-wrapper .ohmylms-widget-pricebox {
+		width: 50%;
+	}
 
-    .ohmylms-sticky-price .sticky-price-wrapper .ohmylms-widget-pricebox .price-discount-area {
-        width: calc(100% - 190px);
-    }
+	.ohmylms-sticky-price
+		.sticky-price-wrapper
+		.ohmylms-widget-pricebox
+		.price-discount-area {
+		width: calc(100% - 190px);
+	}
 
-    .ohmylms-sticky-price .sticky-price-wrapper .ohmylms-widget-pricebox .price-discount-area ins {
-        font-size: 24px;
-    }
+	.ohmylms-sticky-price
+		.sticky-price-wrapper
+		.ohmylms-widget-pricebox
+		.price-discount-area
+		ins {
+		font-size: var(--oml-font-size-2xl);
+	}
 
-    .ohmylms-sticky-price .sticky-price-wrapper .ohmylms-widget-pricebox .ohmylms-btn-area {
-        width: 170px;
-        text-align: right;
-    }
-    
+	.ohmylms-sticky-price
+		.sticky-price-wrapper
+		.ohmylms-widget-pricebox
+		.ohmylms-btn-area {
+		width: 170px;
+		text-align: right;
+	}
 }
 
 @media screen and (max-width: 991px) {
 
-    body.ohmylms-has-sticky-pricebar {
-        padding-bottom: 100px; //this padding for sticky price
-    }
+	body.ohmylms-has-sticky-pricebar {
+		padding-bottom: 100px; /*this padding for sticky price*/
+	}
 
-    .ohmylms-single-course-layout3 .ohmylms-sticky-price {
-        transform: translateY(0);
-        top: inherit;
-        bottom: 0;
-        box-shadow: 0 -4px 10px 0 rgba(110, 66, 211, 0.14);
-    }
+	.ohmylms-single-course-layout3 .ohmylms-sticky-price {
+		transform: translateY(0);
+		top: inherit;
+		bottom: 0;
+		box-shadow: var(--oml-shadow-sm);
+	}
 
-    .ohmylms-sticky-price .sticky-price-wrapper {
-        gap: 16px;
-    }
+	.ohmylms-sticky-price .sticky-price-wrapper {
+		gap: var(--oml-space-4);
+	}
 
-    .ohmylms-sticky-price .sticky-price-wrapper .sticky-price-left {
-        width: calc(45% - 16px);
-    }
+	.ohmylms-sticky-price .sticky-price-wrapper .sticky-price-left {
+		width: calc(45% - 16px);
+	}
 
-    .ohmylms-sticky-price.course-enrolled .sticky-price-wrapper .sticky-price-left {
-        width: calc(95% - 170px);
-    }
+	.ohmylms-sticky-price.course-enrolled
+		.sticky-price-wrapper
+		.sticky-price-left {
+		width: calc(95% - 170px);
+	}
 
-    .ohmylms-sticky-price .sticky-price-wrapper .ohmylms-widget-pricebox {
-        width: 55%;
-    }
+	.ohmylms-sticky-price .sticky-price-wrapper .ohmylms-widget-pricebox {
+		width: 55%;
+	}
 
-    .ohmylms-sticky-price .sticky-price-wrapper .course-name {
-        font-size: 16px;
-    }
-    
-    
-    .ohmylms-sticky-price .sticky-price-wrapper .ohmylms-widget-pricebox .price-discount-area ins {
-        font-size: 22px;
-    }
+	.ohmylms-sticky-price .sticky-price-wrapper .course-name {
+		font-size: var(--oml-font-size-lg);
+	}
 
-    .ohmylms-sticky-price .sticky-price-wrapper .ohmylms-widget-pricebox .price-discount-area del {
-        font-size: 16px;
-    }
+	.ohmylms-sticky-price
+		.sticky-price-wrapper
+		.ohmylms-widget-pricebox
+		.price-discount-area
+		ins {
+		font-size: var(--oml-font-size-xl);
+	}
 
-    .ohmylms-page .ohmylms-widget-pricebox .ohmylms-btn-area .ohmylms-button {
-        font-size: 14px;
-        display: inline-flex;
-        padding: 10px 15px;
-        width: auto;
-    }
+	.ohmylms-sticky-price
+		.sticky-price-wrapper
+		.ohmylms-widget-pricebox
+		.price-discount-area
+		del {
+		font-size: var(--oml-font-size-lg);
+	}
 
-    .ohmylms-sticky-price .sticky-price-wrapper .ohmylms-widget-pricebox .ohmylms-btn-area {
-        width: 150px;
-    }
+	.ohmylms-page .ohmylms-widget-pricebox .ohmylms-btn-area .ohmylms-button {
+		font-size: var(--oml-font-size-md);
+		display: inline-flex;
+		padding: 10px 15px;
+		width: auto;
+	}
 
+	.ohmylms-sticky-price
+		.sticky-price-wrapper
+		.ohmylms-widget-pricebox
+		.ohmylms-btn-area {
+		width: 150px;
+	}
 }
 
 @media screen and (max-width: 767px) {
 
-    .ohmylms-sticky-price .sticky-price-wrapper .sticky-price-left {
-        display: none;
-    }
+	.ohmylms-sticky-price .sticky-price-wrapper .sticky-price-left {
+		display: none;
+	}
 
-    .ohmylms-sticky-price.course-enrolled .sticky-price-wrapper .sticky-price-left {
-        display: block;
-    }
+	.ohmylms-sticky-price.course-enrolled
+		.sticky-price-wrapper
+		.sticky-price-left {
+		display: block;
+	}
 
-    .ohmylms-sticky-price .sticky-price-wrapper .ohmylms-widget-pricebox {
-        width: 100%;
-    }
+	.ohmylms-sticky-price .sticky-price-wrapper .ohmylms-widget-pricebox {
+		width: 100%;
+	}
 }
 
 @media screen and (max-width: 575px) {
 
-    .ohmylms-sticky-price.course-enrolled .sticky-price-wrapper {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-    }
+	.ohmylms-sticky-price.course-enrolled .sticky-price-wrapper {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: var(--oml-space-2);
+	}
 
-    .ohmylms-sticky-price.course-enrolled .sticky-price-wrapper .sticky-price-left {
-        width: 100%;
-    }
+	.ohmylms-sticky-price.course-enrolled
+		.sticky-price-wrapper
+		.sticky-price-left {
+		width: 100%;
+	}
 
-    .ohmylms-sticky-price .sticky-price-wrapper .ohmylms-widget-pricebox .price-discount-area {
-        width: 100%;
-    }
+	.ohmylms-sticky-price
+		.sticky-price-wrapper
+		.ohmylms-widget-pricebox
+		.price-discount-area {
+		width: 100%;
+	}
 
-    .ohmylms-sticky-price .sticky-price-wrapper .ohmylms-widget-pricebox .price-discount-area ins {
-        font-size: 24px;
-    }
+	.ohmylms-sticky-price
+		.sticky-price-wrapper
+		.ohmylms-widget-pricebox
+		.price-discount-area
+		ins {
+		font-size: var(--oml-font-size-2xl);
+	}
 
-    .ohmylms-sticky-price .sticky-price-wrapper .ohmylms-widget-pricebox .price-discount-area del {
-        font-size: 15px;
-    }
+	.ohmylms-sticky-price
+		.sticky-price-wrapper
+		.ohmylms-widget-pricebox
+		.price-discount-area
+		del {
+		font-size: var(--oml-font-size-md);
+	}
 
-    .ohmylms-sticky-price .sticky-price-wrapper .ohmylms-widget-pricebox .price-discount-area .special-deal-tag {
-        margin-left: auto;
-        width: auto;
-        margin-top: 0;
-    }
+	.ohmylms-sticky-price
+		.sticky-price-wrapper
+		.ohmylms-widget-pricebox
+		.price-discount-area
+		.special-deal-tag {
+		margin-left: auto;
+		width: auto;
+		margin-top: 0;
+	}
 
-    .ohmylms-sticky-price .sticky-price-wrapper .ohmylms-widget-pricebox .ohmylms-btn-area {
-        width: 100%;
-    }
+	.ohmylms-sticky-price
+		.sticky-price-wrapper
+		.ohmylms-widget-pricebox
+		.ohmylms-btn-area {
+		width: 100%;
+	}
 
-    .ohmylms-page .ohmylms-widget-pricebox .ohmylms-btn-area .ohmylms-button {
-        width: 100%;
-    }
-
+	.ohmylms-page .ohmylms-widget-pricebox .ohmylms-btn-area .ohmylms-button {
+		width: 100%;
+	}
 }

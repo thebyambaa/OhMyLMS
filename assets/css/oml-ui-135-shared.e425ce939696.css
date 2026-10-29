@@ -1,0 +1,10 @@
+.ohmylms-dashboard-layout.extensions .ohmylms-content table.widefat {
+	border: 0;
+	border-radius: var(--ohmylms-admin-radius, 7px);
+	box-shadow: none;
+	border-collapse: separate;
+	border-spacing: 0;
+	overflow: hidden;
+	background: var(--ohmylms-admin-surface, #fff);
+}
+

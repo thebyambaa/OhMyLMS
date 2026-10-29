@@ -104,6 +104,7 @@ add_action( 'init', array( 'OhMyLMS\\Extensions\\Bootstrap', 'init' ), 5 );
 \OhMyLMS\Quiz\AnswerReview::init();
 \OhMyLMS\Curriculum\Bootstrap::init();
 \OhMyLMS\Design\Tokens::init();
+\OhMyLMS\Design\Ui::init();
 \OhMyLMS\Design\DesignSystem::init();
 \OhMyLMS\Schools\Bootstrap::init();
 \OhMyLMS\Family\Bootstrap::init();

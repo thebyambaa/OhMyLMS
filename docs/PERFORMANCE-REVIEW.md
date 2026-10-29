@@ -1,5 +1,66 @@
 # Performance and unused-code review — 15 October 2026
 
+## npm-backed editor syntax — 29 October 2026
+
+[The editor audit](EDITOR-DEPENDENCY-AUDIT.md) replaces recovered Lowlight and its standalone
+Highlight.js core with pinned npm packages in a separate admin-only entry. All 192 languages
+and sample highlighting trees are preserved. Combined syntax/vendor payload remains about
+3.31 MB; this is a package/provenance boundary rather than a measured loading-speed gain.
+
+## Local DNS latency — 29 October 2026
+
+[The follow-up investigation](DASHBOARD-LATENCY-INVESTIGATION.md) separates DNS from
+server wait: a slow browser navigation spent 6,037 ms resolving `800.local` and 772 ms
+waiting for the server. Static-file comparisons reproduce 4-second DNS delays and complete
+in about 1 ms with the existing loopback address pinned. Slow loopback resolution also
+keeps PHP workers busy during cron and scheduled-action dispatch. Earlier first-byte
+figures included DNS and should not be treated as isolated server execution time.
+
+## Deferred MJML/email runtime and measured dashboard — 29 October 2026
+
+The next email-runtime split reduces the shared vendor bundle from 6,054,793 to 3,313,084
+bytes (gzip: 1,782,466 to 1,024,735 bytes). The actual logged-in dashboard measurements
+were variable and did not demonstrate a latency improvement. See
+[the full benchmark](DASHBOARD-BENCHMARK.md) for all six samples, cache conditions,
+the synchronous model boundary, regression checks and server-response investigation target.
+
+## Deferred email designer vendors — 29 October 2026
+
+The shared vendor bundle now defers Arco Design React and html2canvas into the existing email
+designer chunk. Its shipped size decreases from 7,242,969 to 6,054,793 bytes; gzip decreases
+from 2,101,267 to 1,782,466 bytes. See [the dependency audit](ADMIN-VENDOR-AUDIT.md) for the
+build guards, cache handling, tests and remaining dependency boundaries.
+
+## Compact admin output — 29 October 2026
+
+The authored SDK already splits feature screens into on-demand chunks. The recovered main
+admin application was still shipped with formatted whitespace. `tools/build-assets.mjs`
+now prints adapted (`--extensions`) JavaScript compactly, retaining comments, embedded
+readable sources and source maps. The parity build retains its readable output. No bindings
+are renamed and no expressions are optimized by this change.
+
+| Main admin application | Before | After | Reduction |
+| --- | ---: | ---: | ---: |
+| JavaScript bytes | 5,502,504 | 3,206,926 | 41.7% |
+| Gzip bytes | 684,160 | 532,299 | 22.2% |
+
+These are file sizes, not measured page-load times. Gzip transfer savings depend on server
+compression. The shipped vendor bundles remain unchanged. Run `npm run analyze:bundles`
+to inspect current shipped admin and vendor sizes; it does not include WordPress dependencies
+or lazy chunks and is not a complete page-transfer estimate.
+
+Validation compared the entire pre-change and compact application after parsing and canonical
+printing: executable syntax was identical. All 1,098,736 mapped positions with source locations
+resolved to embedded source content. The production build succeeded. The existing SDK browser
+suite passed its failed-chunk recovery scenario; two other scenarios stopped at the existing
+assertion that the registered `performance` page must be absent, before exercising feature
+navigation. This does not establish authenticated site or editor save/reopen acceptance.
+
+The full JavaScript suite passes with 660 tests and one skipped test. The label-contract test
+now reads translation calls from the syntax tree rather than depending on spaces in the
+generated bundle. Formatting and source-contract checks pass. An HTTP request to the test
+site returned the compact shipped application with matching bytes.
+
 ## Database evidence
 
 An isolated WordPress database fixture uses two syllabus sources, 96 source objectives, 12 shared skills and 96 mappings. Each case starts with the process-local object cache flushed; no live-site records were changed. All three before/after JSON response SHA-256 hashes match.

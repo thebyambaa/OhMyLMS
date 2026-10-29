@@ -65,7 +65,11 @@ $member_query = null;
 				<h2><?php echo esc_html( $member_plan->get_name() ); ?></h2>
 				<p><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $member_plan->get_short_description() ), 35 ) ); ?></p>
 				<p><?php echo wp_kses_post( $member_plan->get_price_html() ); ?></p>
-				<a class="oml-hub-button" href="<?php echo esc_url( $member_plan->get_permalink() ); ?>"><?php esc_html_e( 'View plan', 'ohmylms' ); ?></a>
+				<?php if ( \OhMyLMS\Membership\FreeSale::active( $member_plan ) ) : ?>
+					<?php \OhMyLMS\Membership\FreeSale::form( $member_plan ); ?>
+				<?php else : ?>
+					<a class="oml-hub-button" href="<?php echo esc_url( $member_plan->get_permalink() ); ?>"><?php esc_html_e( 'View plan', 'ohmylms' ); ?></a>
+				<?php endif; ?>
 			</section>
 		<?php endforeach; ?>
 	</div>

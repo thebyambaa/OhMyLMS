@@ -1,0 +1,18 @@
+.ohmylms-form-add-bottom {
+	margin-top: 20px;
+}
+
+.ohmylms-form-workspace {
+	background: #fff;
+	padding: 24px;
+	border-radius: var(--oml-radius-card, 8px);
+}
+
+.ohmylms-form-workspace-actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: 12px;
+	margin-bottom: 20px;
+}
+

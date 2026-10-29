@@ -1,0 +1,30 @@
+[
+	{
+		"name": "text, Unicode, links and button",
+		"source": "<mjml><mj-head><mj-title>Course update</mj-title><mj-preview>Preview Монгол</mj-preview></mj-head><mj-body><mj-section><mj-column><mj-text>Hello Монгол &amp; text <a href=\"https://example.com?a=1&amp;b=2\">Open</a></mj-text><mj-button href=\"https://example.com\" border-radius=\"8px\">Start learning</mj-button></mj-column></mj-section></mj-body></mjml>"
+	},
+	{
+		"name": "images, backgrounds and responsive columns",
+		"source": "<mjml><mj-head><mj-breakpoint width=\"480px\"/><mj-attributes><mj-all font-family=\"Arial\"/><mj-text color=\"#123456\"/></mj-attributes></mj-head><mj-body background-color=\"#eeeeee\"><mj-wrapper background-color=\"white\"><mj-section background-url=\"https://example.com/background.jpg\"><mj-column width=\"50%\"><mj-image src=\"https://example.com/logo.png\" alt=\"Course\" width=\"120px\"/><mj-text>First</mj-text></mj-column><mj-column width=\"50%\"><mj-text>Second</mj-text><mj-divider border-color=\"#123456\"/><mj-spacer height=\"24px\"/></mj-column></mj-section></mj-wrapper></mj-body></mjml>"
+	},
+	{
+		"name": "tables, raw HTML, custom styles and merge tags",
+		"source": "<mjml><mj-head><mj-style inline=\"inline\">.price { color: #123456; }</mj-style><mj-style>.mobile { display: block; }</mj-style></mj-head><mj-body><mj-section><mj-column><mj-table><tr><td class=\"price\">{{course_price}}</td><td>₮</td></tr></mj-table><mj-raw><!-- retained comment --><div data-value=\"{{student_name}}\">Raw HTML</div></mj-raw><mj-text css-class=\"mobile\">{{student_name}}</mj-text></mj-column></mj-section></mj-body></mjml>"
+	},
+	{
+		"name": "social icons and navigation",
+		"source": "<mjml><mj-body><mj-section><mj-column><mj-navbar hamburger=\"hamburger\"><mj-navbar-link href=\"https://example.com\">Courses</mj-navbar-link></mj-navbar><mj-social><mj-social-element name=\"facebook\" href=\"https://example.com\">Facebook</mj-social-element><mj-social-element name=\"twitter\" href=\"https://example.com\">Twitter</mj-social-element></mj-social></mj-column></mj-section></mj-body></mjml>"
+	},
+	{
+		"name": "accordion and carousel",
+		"source": "<mjml><mj-body><mj-section><mj-column><mj-accordion><mj-accordion-element><mj-accordion-title>Details</mj-accordion-title><mj-accordion-text>Course details</mj-accordion-text></mj-accordion-element></mj-accordion><mj-carousel><mj-carousel-image src=\"https://example.com/one.jpg\"/><mj-carousel-image src=\"https://example.com/two.jpg\"/></mj-carousel></mj-column></mj-section></mj-body></mjml>"
+	},
+	{
+		"name": "hero and grouped columns",
+		"source": "<mjml lang=\"mn\" dir=\"ltr\"><mj-body><mj-hero mode=\"fixed-height\" height=\"240px\" background-url=\"https://example.com/hero.jpg\"><mj-text>Welcome</mj-text></mj-hero><mj-section><mj-group><mj-column><mj-text>Left</mj-text></mj-column><mj-column><mj-text>Right</mj-text></mj-column></mj-group></mj-section></mj-body></mjml>"
+	},
+	{
+		"name": "soft validation",
+		"source": "<mjml><mj-body><mj-section><mj-column><mj-text unsupported-attribute=\"test\">Text</mj-text></mj-column></mj-section></mj-body></mjml>"
+	}
+]

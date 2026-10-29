@@ -1,0 +1,11 @@
+/* Small screens: narrower gutter. */
+@media (max-width: 782px) {
+
+	.ohmylms-dashboard-layout.extensions .ohmylms-content {
+		padding: var(--oml-space-4) var(--oml-space-3) var(--oml-space-6);
+	}
+}
+
+/* Curriculum accordion editor and Course Bundles manager. Indentation comes from nesting,
+ * so every inline panel, add row and child list lines up with its parent. Logical properties
+ * keep right-to-left layouts correct. */

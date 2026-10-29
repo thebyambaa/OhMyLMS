@@ -28,6 +28,7 @@ defined( 'ABSPATH' ) || exit;
 				<input id="hub-title" type="text" name="hub[title]" value="<?php echo esc_attr( $config['title'] ); ?>" maxlength="100">
 				<label for="hub-accent"><?php esc_html_e( 'Accent color', 'ohmylms' ); ?></label>
 				<input id="hub-accent" type="color" name="hub[accent]" value="<?php echo esc_attr( $config['accent'] ); ?>">
+				<label><input type="checkbox" name="hub[accent_brand]" value="1" <?php checked( $config['accent_brand'] ); ?>> <?php esc_html_e( 'Use the site brand color (ignores the color above)', 'ohmylms' ); ?></label>
 				<label for="hub-layout"><?php esc_html_e( 'Navigation layout', 'ohmylms' ); ?></label>
 				<select id="hub-layout" name="hub[layout]"><option value="sidebar" <?php selected( $config['layout'], 'sidebar' ); ?>><?php esc_html_e( 'Left sidebar', 'ohmylms' ); ?></option><option value="top" <?php selected( $config['layout'], 'top' ); ?>><?php esc_html_e( 'Top navigation', 'ohmylms' ); ?></option></select>
 				<label for="hub-default"><?php esc_html_e( 'Default section', 'ohmylms' ); ?></label>
@@ -69,9 +70,9 @@ defined( 'ABSPATH' ) || exit;
 			</section>
 			<section class="oml-hub-editor-panel">
 				<h2><?php esc_html_e( 'Browse subjects', 'ohmylms' ); ?></h2>
-				<p><?php esc_html_e( 'Choose which curriculum levels appear as subject tiles. Courses and deeper levels sit inside the tile. Leave all unchecked to use every top-level curriculum item.', 'ohmylms' ); ?></p>
+				<p><?php esc_html_e( 'Subjects created in Subject profiles always appear in the Library. Choose any additional curriculum levels to show as tiles. Courses and deeper levels sit inside each tile.', 'ohmylms' ); ?></p>
 				<?php
-				$hub_types = array_diff( array_unique( array_merge( \OhMyLMS\Curriculum\Items::types(), array_column( \OhMyLMS\Curriculum\Items::all(), 'item_type' ), $config['library_types'] ) ), array( 'roadmap' ) );
+				$hub_types = array_diff( array_unique( array_merge( \OhMyLMS\Curriculum\Items::types(), array_column( \OhMyLMS\Curriculum\Items::all(), 'item_type' ), $config['library_types'] ) ), array( 'roadmap', 'subject' ) );
 				?>
 				<ul class="oml-hub-checklist">
 					<?php foreach ( $hub_types as $hub_type ) : ?>
@@ -79,7 +80,6 @@ defined( 'ABSPATH' ) || exit;
 					<?php endforeach; ?>
 				</ul>
 				<p><?php esc_html_e( 'Courses that sit only above a chosen level are not listed. Roadmaps are never listed.', 'ohmylms' ); ?></p>
-				<p><label><input type="checkbox" name="hub[library_bundles]" value="1" <?php checked( $config['library_bundles'] ); ?>> <?php esc_html_e( 'Also list published course bundles', 'ohmylms' ); ?></label></p>
 			</section>
 			<section class="oml-hub-editor-panel">
 				<h2><?php esc_html_e( 'Home cards', 'ohmylms' ); ?></h2>

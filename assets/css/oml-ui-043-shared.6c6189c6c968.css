@@ -1,0 +1,45 @@
+.ohmylms-category-tags {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+	border: 1px solid #d4dae5;
+	border-radius: 10px;
+	background: #fff;
+	padding: 10px 12px;
+	min-height: 52px;
+}
+
+.ohmylms-category-token {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 5px 10px 5px 13px;
+	background: #e5f5ec;
+	color: #166b42;
+	border: 1px solid #c7e7d4;
+	border-radius: 999px;
+	font-weight: 600;
+	font-size: 13px;
+	line-height: 22px;
+}
+
+.ohmylms-category-add {
+	border: 0;
+	border-radius: var(--oml-radius-card, 7px);
+	background: #f0edfc;
+	color: var(--oml-primary-hover, #6048ce);
+	padding: 6px 12px;
+	cursor: pointer;
+	font-weight: 600;
+}
+
+.ohmylms-category-appearance {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 0;
+	border-bottom: 1px solid var(--ws-border);
+}
+

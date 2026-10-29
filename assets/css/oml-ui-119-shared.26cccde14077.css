@@ -1,0 +1,6 @@
+.ohmylms-cur-link-list li > span:first-child {
+	flex: 1 1 200px;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+

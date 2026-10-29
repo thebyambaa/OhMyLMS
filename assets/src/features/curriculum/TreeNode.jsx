@@ -5,12 +5,7 @@ import { Button } from '@wordpress/components';
 import { useCurriculum } from './context';
 import { AddItemRow } from './AddItemRow';
 import { ItemPanel } from './ItemPanel';
-import {
-	isOpen,
-	siblingInfo,
-	syllabusBreadcrumbs,
-	typeLabel,
-} from './model.mjs';
+import { isOpen, siblingInfo, syllabusBreadcrumbs } from './model.mjs';
 import { workspacePath } from './workspace.mjs';
 function counts( item ) {
 	const parts = [];
@@ -190,14 +185,6 @@ export function TreeNode( { node } ) {
 						node.depth + 1
 					) }
 				</span>
-				<span className="ohmylms-cur-type">
-					{ typeLabel( item.item_type ) }
-				</span>
-				{ item.is_syllabus && (
-					<span className="ohmylms-cur-badge ohmylms-cur-syllabus-badge">
-						{ __( 'Syllabus', 'ohmylms' ) }
-					</span>
-				) }
 				{ item.is_syllabus ? (
 					// A syllabus is edited in its own full-page workspace; its name opens it.
 					<a
@@ -318,9 +305,6 @@ export function TreeNode( { node } ) {
 				>
 					{ shortcuts.map( ( shortcut ) => (
 						<li key={ shortcut.item.id }>
-							<span className="ohmylms-cur-badge ohmylms-cur-syllabus-badge">
-								{ __( 'Syllabus', 'ohmylms' ) }
-							</span>
 							<span className="ohmylms-cur-syllabus-path">
 								{ shortcut.ancestors.map( ( ancestor ) => (
 									<span key={ ancestor.id }>

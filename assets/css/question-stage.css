@@ -4,16 +4,16 @@
 	display: flex;
 	flex-shrink: 0;
 	align-items: center;
-	gap: 4px;
-	padding-left: 8px;
-	border-left: 1px solid var(--oml-border, #dcdcde);
+	gap: var(--oml-space-1);
+	padding-left: var(--oml-space-2);
+	border-left: 1px solid var(--oml-border);
 }
 
 .ohmylms-question-authoring .ohmylms-choice-controls {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: flex-start;
-	gap: 24px;
+	gap: var(--oml-space-5);
 	text-align: left;
 }
 
@@ -21,11 +21,17 @@
 	display: none;
 }
 
+/* stylelint-disable color-no-hex -- The quiz stage, prompt, answer palette and their paired overlay controls are independent of the chrome theme. */
+
 .ohmylms-question-stage-modal [class~="components-modal__content"] {
 	margin: 0;
 	padding: 0;
 	background: var(--ohmylms-quiz-canvas, #e6e6e6);
 }
+
+/* stylelint-enable color-no-hex */
+
+/* stylelint-disable color-no-hex -- The quiz stage, prompt, answer palette and their paired overlay controls are independent of the chrome theme. */
 
 .ohmylms-question-authoring.is-stage-editor {
 	min-height: 100vh;
@@ -35,6 +41,8 @@
 	background: var(--ohmylms-quiz-canvas, #e6e6e6);
 }
 
+/* stylelint-enable color-no-hex */
+
 .ohmylms-question-authoring .ohmylms-question-points-picker {
 	width: 100px;
 }
@@ -42,7 +50,7 @@
 .ohmylms-question-authoring .ohmylms-stage-toolbar-end {
 	display: flex;
 	align-items: center;
-	gap: 16px;
+	gap: var(--oml-space-4);
 	margin-left: auto;
 }
 
@@ -53,7 +61,7 @@
 
 .ohmylms-question-authoring .ohmylms-question-points-picker label {
 	display: inline;
-	margin-right: 8px;
+	margin-right: var(--oml-space-2);
 }
 
 .ohmylms-question-authoring .ohmylms-question-points-picker input {
@@ -72,13 +80,13 @@
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
-	gap: 12px;
+	gap: var(--oml-space-3);
 	min-height: 56px;
 	margin: 0;
-	padding: 8px 16px;
-	border-bottom: 1px solid #e5e5e5;
-	background: var(--ohmylms-quiz-toolbar, #fff);
-	color: var(--ohmylms-quiz-toolbar-text, #333);
+	padding: var(--oml-space-2) var(--oml-space-4);
+	border-bottom: 1px solid var(--oml-border);
+	background: var(--oml-surface);
+	color: var(--oml-text);
 }
 
 .ohmylms-question-authoring.is-stage-editor .ohmylms-question-type-picker {
@@ -89,6 +97,8 @@
 .ohmylms-question-authoring.is-stage-editor [class~="components-base-control__field"] {
 	margin: 0;
 }
+
+/* stylelint-disable color-no-hex -- The quiz stage, prompt, answer palette and their paired overlay controls are independent of the chrome theme. */
 
 .ohmylms-question-authoring.is-stage-editor
 	> :is(
@@ -106,10 +116,12 @@
 	color: var(--ohmylms-quiz-text, #fff);
 }
 
+/* stylelint-enable color-no-hex */
+
 .ohmylms-question-authoring.is-stage-editor > .ohmylms-form-description {
 	position: relative;
-	margin-top: 64px;
-	border-radius: 16px 16px 0 0;
+	margin-top: var(--oml-space-8);
+	border-radius: var(--oml-radius-control) var(--oml-radius-control) 0 0;
 }
 
 .ohmylms-question-authoring.is-stage-editor .ohmylms-prompt-label {
@@ -125,10 +137,16 @@
 	border: 0;
 }
 
+/* stylelint-disable color-no-hex -- The quiz stage, prompt, answer palette and their paired overlay controls are independent of the chrome theme. */
+
 .ohmylms-question-authoring.is-stage-editor .ohmylms-answer-guidance {
 	color: var(--ohmylms-quiz-text, #fff);
 	font-size: 12px;
 }
+
+/* stylelint-enable color-no-hex */
+
+/* stylelint-disable color-no-hex -- The quiz stage, prompt, answer palette and their paired overlay controls are independent of the chrome theme. */
 
 .ohmylms-question-authoring.is-stage-editor .ohmylms-shared-answer-correct {
 	position: absolute;
@@ -142,9 +160,15 @@
 	background: transparent;
 }
 
+/* stylelint-enable color-no-hex */
+
+/* stylelint-disable color-no-hex -- The quiz stage, prompt, answer palette and their paired overlay controls are independent of the chrome theme. */
+
 .ohmylms-question-authoring.is-stage-editor .ohmylms-form-settings {
 	color: var(--ohmylms-quiz-text, #fff);
 }
+
+/* stylelint-enable color-no-hex */
 
 .ohmylms-question-authoring.is-stage-editor
 	:is(
@@ -153,23 +177,23 @@
 		.ohmylms-numerical-editor,
 		.ohmylms-structured-editor
 	) {
-	background: #fff;
-	color: #333;
+	background: var(--oml-surface);
+	color: var(--oml-text);
 }
 
 .ohmylms-question-authoring.is-stage-editor .ohmylms-question-authoring-footer {
 	position: relative;
 	border: 0;
-	border-radius: 0 0 16px 16px;
+	border-radius: 0 0 var(--oml-radius-control) var(--oml-radius-control);
 }
 
 .ohmylms-question-authoring.is-stage-editor .ohmylms-form-settings > fieldset {
-	background: #fff;
-	color: #333;
+	background: var(--oml-surface);
+	color: var(--oml-text);
 }
 
 .ohmylms-question-authoring.is-stage-editor .ohmylms-shared-answer-correct[type="checkbox"] {
-	border-radius: var(--oml-radius-control, 4px);
+	border-radius: var(--oml-radius-control, var(--oml-radius-control));
 }
 
 
@@ -186,7 +210,7 @@
 }
 
 .ohmylms-question-authoring.is-stage-editor .ohmylms-form-workspace-actions .components-button {
-	color: var(--ohmylms-quiz-toolbar-text, #333);
+	color: var(--oml-text);
 }
 
 .ohmylms-question-authoring.is-stage-editor
@@ -208,18 +232,20 @@
 	left: 50%;
 	display: flex;
 	align-items: center;
-	gap: 4px;
+	gap: var(--oml-space-1);
 	box-sizing: border-box;
 	width: calc(100vw - 24px);
 	height: 48px;
 	margin: 0;
-	padding: 4px 16px;
-	background: var(--ohmylms-quiz-toolbar, #fff);
-	color: var(--ohmylms-quiz-toolbar-text, #333);
+	padding: var(--oml-space-1) var(--oml-space-4);
+	background: var(--oml-surface);
+	color: var(--oml-text);
 	overflow-x: auto;
 	overflow-y: hidden;
 	transform: translateX(-50%);
 }
+
+/* stylelint-disable color-no-hex -- The quiz stage, prompt, answer palette and their paired overlay controls are independent of the chrome theme. */
 
 .ohmylms-question-authoring.is-stage-editor
 	.ohmylms-form-description
@@ -234,6 +260,8 @@
 	font-size: 22px;
 }
 
+/* stylelint-enable color-no-hex */
+
 .ohmylms-question-authoring.is-stage-editor
 	.ohmylms-shared-answers:is(
 		.is-single-choice,
@@ -242,8 +270,10 @@
 	) {
 	position: relative;
 	grid-template-columns: repeat(var(--ohmylms-answer-columns, 4), minmax(0, 1fr));
-	gap: 8px;
+	gap: var(--oml-space-2);
 }
+
+/* stylelint-disable color-no-hex -- The quiz stage, prompt, answer palette and their paired overlay controls are independent of the chrome theme. */
 
 .ohmylms-question-authoring.is-stage-editor .ohmylms-shared-answers > .components-button {
 	grid-column: 1 / -1;
@@ -263,6 +293,12 @@
 	font-size: 0;
 }
 
+/* stylelint-enable color-no-hex */
+
+
+
+/* stylelint-disable color-no-hex -- The quiz stage, prompt, answer palette and their paired overlay controls are independent of the chrome theme. */
+
 
 
 .ohmylms-question-authoring.is-stage-editor
@@ -275,11 +311,17 @@
 	background: #ffffff26;
 }
 
+
+
+/* stylelint-enable color-no-hex */
+
 .ohmylms-question-authoring.is-stage-editor
 	.ohmylms-shared-answer-row
 	> .components-base-control {
 	flex: 1 0 100%;
 }
+
+/* stylelint-disable color-no-hex -- The quiz stage, prompt, answer palette and their paired overlay controls are independent of the chrome theme. */
 
 .ohmylms-question-authoring.is-stage-editor
 	.ohmylms-question-authoring-footer
@@ -288,6 +330,8 @@
 	background: transparent;
 	color: var(--ohmylms-quiz-text, #fff);
 }
+
+/* stylelint-enable color-no-hex */
 
 .ohmylms-question-authoring.is-vertical-answers
 	.ohmylms-shared-answers:is(
@@ -298,11 +342,17 @@
 	grid-template-columns: 1fr;
 }
 
+/* stylelint-disable color-no-hex -- The quiz stage, prompt, answer palette and their paired overlay controls are independent of the chrome theme. */
+
 .ohmylms-question-authoring.is-stage-editor
 	.ohmylms-shared-answer-row:has(input:checked) {
 	border-color: var(--ohmylms-quiz-correct, #00c985);
 	box-shadow: none;
 }
+
+/* stylelint-enable color-no-hex */
+
+/* stylelint-disable color-no-hex -- The quiz stage, prompt, answer palette and their paired overlay controls are independent of the chrome theme. */
 
 .ohmylms-question-authoring.is-stage-editor .ohmylms-shared-answer-correct:checked::before {
 	content: "✓";
@@ -316,6 +366,8 @@
 	color: #fff;
 }
 
+/* stylelint-enable color-no-hex */
+
 .ohmylms-question-authoring.is-stage-editor .ohmylms-shared-answers > .components-button::after {
 	content: "+";
 	font-size: 28px;
@@ -323,19 +375,25 @@
 }
 
 .ohmylms-question-authoring.is-stage-editor .ohmylms-form-description [role="textbox"] p {
-	margin: 4px 0;
+	margin: var(--oml-space-1) 0;
 	font-size: inherit;
 	line-height: inherit;
 }
+
+/* stylelint-disable color-no-hex -- The quiz stage, prompt, answer palette and their paired overlay controls are independent of the chrome theme. */
 
 .ohmylms-question-authoring .ohmylms-choice-controls [class~="components-form-toggle"].is-checked [class~="components-form-toggle__track"] {
 	background: var(--ohmylms-quiz-correct, #00c985);
 }
 
+/* stylelint-enable color-no-hex */
+
 .ohmylms-question-authoring.is-stage-editor .ohmylms-form-workspace-actions .components-button.is-primary {
-	background: var(--ohmylms-quiz-accent, #8854b7);
-	color: var(--ohmylms-quiz-text, #fff);
+	background: var(--oml-primary);
+	color: var(--oml-on-primary);
 }
+
+/* stylelint-disable color-no-hex -- The quiz stage, prompt, answer palette and their paired overlay controls are independent of the chrome theme. */
 
 .ohmylms-question-authoring.is-stage-editor
 	.ohmylms-shared-answers:is(
@@ -356,6 +414,10 @@
 	color: var(--ohmylms-quiz-text, #fff);
 }
 
+/* stylelint-enable color-no-hex */
+
+/* stylelint-disable color-no-hex -- The quiz stage, prompt, answer palette and their paired overlay controls are independent of the chrome theme. */
+
 .ohmylms-question-authoring.is-stage-editor
 	.ohmylms-shared-answers:is(
 		.is-single-choice,
@@ -365,6 +427,10 @@
 	.ohmylms-shared-answer-row:nth-of-type(4n + 2) {
 	background: var(--ohmylms-quiz-answer-2, #2a9ca6);
 }
+
+/* stylelint-enable color-no-hex */
+
+/* stylelint-disable color-no-hex -- The quiz stage, prompt, answer palette and their paired overlay controls are independent of the chrome theme. */
 
 .ohmylms-question-authoring.is-stage-editor
 	.ohmylms-shared-answers:is(
@@ -376,6 +442,10 @@
 	background: var(--ohmylms-quiz-answer-3, #eca91d);
 }
 
+/* stylelint-enable color-no-hex */
+
+/* stylelint-disable color-no-hex -- The quiz stage, prompt, answer palette and their paired overlay controls are independent of the chrome theme. */
+
 .ohmylms-question-authoring.is-stage-editor
 	.ohmylms-shared-answers:is(
 		.is-single-choice,
@@ -386,10 +456,16 @@
 	background: var(--ohmylms-quiz-answer-4, #cf5071);
 }
 
+/* stylelint-enable color-no-hex */
+
+/* stylelint-disable color-no-hex -- The quiz stage, prompt, answer palette and their paired overlay controls are independent of the chrome theme. */
+
 .ohmylms-question-authoring.is-stage-editor .ohmylms-shared-answers > .components-button:hover:not(:disabled) {
 	background: #fff6;
 	color: var(--ohmylms-quiz-text, #fff);
 }
+
+/* stylelint-enable color-no-hex */
 
 
 
@@ -434,12 +510,12 @@
 .ohmylms-question-authoring .ohmylms-blank-answer-chip,
 .ohmylms-inline-blank-preview .ohmylms-blank-drop,
 .ohmylms-inline-blank-preview .ohmylms-blank-token {
-	background: #f6f7f7;
-	color: #1d2327;
+	background: var(--oml-subtle);
+	color: var(--oml-heading);
 }
 
 .ohmylms-question-authoring .ohmylms-build-expression {
-	color: #1d2327;
+	color: var(--oml-heading);
 }
 
 .ohmylms-question-authoring .ohmylms-dropdown-choice-list {
@@ -449,23 +525,23 @@
 .ohmylms-question-authoring .ohmylms-dropdown-choice-row {
 	display: grid;
 	grid-template-columns: 24px minmax(0, 1fr) auto;
-	gap: 8px;
+	gap: var(--oml-space-2);
 	align-items: center;
-	margin-bottom: 8px;
-	color: #1d2327;
+	margin-bottom: var(--oml-space-2);
+	color: var(--oml-heading);
 }
 
 .ohmylms-question-authoring .ohmylms-build-expression .ohmylms-build-answer,
 .ohmylms-question-authoring .ohmylms-build-expression .ohmylms-build-bank {
-	border: 1px solid #8c8f94;
-	border-radius: var(--oml-radius-card, 8px);
-	background: #f6f7f7;
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card, var(--oml-radius-control));
+	background: var(--oml-subtle);
 }
 
 .ohmylms-question-authoring .ohmylms-build-expression .ohmylms-tile {
-	border-color: #8c8f94;
-	background: #fff;
-	color: #1d2327;
+	border-color: var(--oml-border);
+	background: var(--oml-surface);
+	color: var(--oml-heading);
 }
 
 .ohmylms-question-authoring.is-stage-editor .ohmylms-preview-note {
@@ -476,15 +552,15 @@
 	width: 20px;
 	height: 20px;
 	margin: 0;
-	border: 1px solid #646970;
+	border: 1px solid var(--oml-muted);
 }
 
 .ohmylms-question-authoring .ohmylms-build-expression .ohmylms-tile.is-placed {
-	background: #e5efff;
+	background: var(--oml-primary-soft);
 }
 
 .ohmylms-question-authoring .ohmylms-build-expression .ohmylms-tile:focus-visible {
-	outline: 2px solid #1d2327;
+	outline: 2px solid var(--oml-heading);
 	outline-offset: 2px;
 }
 
@@ -493,12 +569,12 @@
 }
 
 .ohmylms-question-authoring .ohmylms-dropdown-choice-row input[type="checkbox"]:focus-visible {
-	outline: 2px solid #3858e9;
+	outline: 2px solid var(--oml-focus);
 	outline-offset: 2px;
 }
 
 .ohmylms-question-authoring .ohmylms-inline-blank-preview button.ohmylms-blank-token.is-placed:disabled {
-	border: 1px dashed #8c8f94;
+	border: 1px dashed var(--oml-border);
 	background: transparent;
 	color: transparent;
 	opacity: 1;

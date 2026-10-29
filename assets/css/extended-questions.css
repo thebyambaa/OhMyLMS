@@ -1,10 +1,22 @@
 
 
-.ohmylms-extended-question { display: grid; gap: 12px; }
+.ohmylms-extended-question :where(input:not([type="radio"]):not([type="checkbox"]):not([type="range"]), select, textarea) {
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-surface);
+	color: var(--oml-text);
+	font: inherit;
+}
+
+
+
+.ohmylms-extended-question { display: grid; gap: var(--oml-space-3); color: var(--oml-text); background: var(--oml-surface); border-radius: var(--oml-radius-card); padding: var(--oml-space-3); box-sizing: border-box; min-width: 0; }
 
 
 
 .ohmylms-author-diagram { position: relative; width: fit-content; max-height: none; }
+
+/* stylelint-disable color-no-hex -- Game artwork and drawing/video canvases keep their fixed palette in every theme. */
 
 .ohmylms-spin-wheel {
 	--ohmylms-spin: 0deg;
@@ -17,6 +29,8 @@
 	transition: transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+/* stylelint-enable color-no-hex */
+
 .ohmylms-hangman-shape {
 	font-family: monospace;
 	font-size: 1.8rem;
@@ -25,7 +39,7 @@
 
 .ohmylms-activity {
 	display: grid;
-	gap: 14px;
+	gap: calc(var(--oml-space-1) * 3.5);
 	justify-items: center;
 	text-align: center;
 }
@@ -35,6 +49,8 @@
 	width: min(18rem, 80vw);
 	aspect-ratio: 1;
 }
+
+/* stylelint-disable color-no-hex -- Game artwork and drawing/video canvases keep their fixed palette in every theme. */
 
 .ohmylms-wheel-pointer {
 	position: absolute;
@@ -48,43 +64,46 @@
 	transform: translateX(-50%);
 }
 
+/* stylelint-enable color-no-hex */
+
 .ohmylms-spin-history {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 6px;
+	gap: calc(var(--oml-space-1) * 1.5);
 	margin: 0;
 	padding: 0;
 	list-style-position: inside;
-	color: #646970;
+	color: var(--oml-muted);
 }
 
 .ohmylms-gameshow-clock {
 	margin: 0;
-	font-size: 1.1rem;
-	font-weight: 700;
+	font-size: var(--oml-font-size-lg);
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-gameshow-bar {
 	width: 100%;
 	height: 10px;
 	border-radius: 999px;
-	background: #e6e0f5;
+	background: var(--oml-subtle);
 	overflow: hidden;
 }
 
 .ohmylms-gameshow-choice {
 	display: flex;
 	align-items: center;
-	gap: 14px;
+	gap: calc(var(--oml-space-1) * 3.5);
 	width: 100%;
-	padding: 14px 18px;
-	border: 2px solid #d9d0f0;
-	border-radius: 12px;
-	background: #fff;
+	padding: calc(var(--oml-space-1) * 3.5) calc(var(--oml-space-1) * 4.5);
+	border: 2px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-surface);
 	font: inherit;
-	font-size: 1.15rem;
+	font-size: var(--oml-font-size-lg);
 	text-align: left;
 	cursor: pointer;
+	color: var(--oml-text);
 }
 
 .ohmylms-gameshow-key {
@@ -93,24 +112,26 @@
 	flex: none;
 	width: 2rem;
 	height: 2rem;
-	border-radius: 8px;
-	background: #7153c6;
-	color: #fff;
-	font-weight: 700;
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-primary);
+	color: var(--oml-on-primary);
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-hangman-keys {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 6px;
+	gap: calc(var(--oml-space-1) * 1.5);
 	justify-content: center;
 	max-width: 34rem;
 }
 
 .ohmylms-hangman-tabs {
 	display: flex;
-	gap: 6px;
+	gap: calc(var(--oml-space-1) * 1.5);
 }
+
+/* stylelint-disable color-no-hex -- Game artwork and drawing/video canvases keep their fixed palette in every theme. */
 
 .ohmylms-jsxgraph {
 	width: 100%;
@@ -119,41 +140,45 @@
 	border: 1px solid #cfd6e0;
 	border-radius: 8px;
 	touch-action: none;
+	background: #fff;
+	color: #111827;
 }
+
+/* stylelint-enable color-no-hex */
 
 .ohmylms-graph-actions {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 8px;
-	margin-top: 8px;
+	gap: var(--oml-space-2);
+	margin-top: var(--oml-space-2);
 }
 
 .ohmylms-graph-typed {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 8px;
-	margin-top: 8px;
+	gap: var(--oml-space-2);
+	margin-top: var(--oml-space-2);
 }
 
 .ohmylms-deck-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
-	gap: 10px;
+	gap: calc(var(--oml-space-1) * 2.5);
 	width: 100%;
 }
 
 .ohmylms-deck-progress {
 	margin: 0;
-	color: #646970;
+	color: var(--oml-muted);
 }
 
 .ohmylms-pick-field {
 	position: relative;
 	display: flex;
 	flex-wrap: wrap;
-	gap: 12px;
+	gap: var(--oml-space-3);
 	justify-content: center;
 	width: 100%;
 	min-height: 8rem;
@@ -161,9 +186,13 @@
 
 .ohmylms-author-diagram img { display: block; max-width: 100%; max-height: 300px; }
 
-.ohmylms-extended-question canvas { display: block; max-width: 100%; height: auto; border: 1px solid #a7aaad; background: #fff; touch-action: none; }
+/* stylelint-disable color-no-hex -- Game artwork and drawing/video canvases keep their fixed palette in every theme. */
 
-.ohmylms-extended-question button { min-height: 40px; padding: 8px 16px; border: 1px solid #b4a6cb; border-radius: 6px; background: #f5f0fc; color: #432474; cursor: pointer; }
+.ohmylms-extended-question canvas { display: block; max-width: 100%; height: auto; border: 1px solid #a7aaad; background: #fff; touch-action: none; color: #111827; }
+
+/* stylelint-enable color-no-hex */
+
+.ohmylms-extended-question button { min-height: 40px; padding: var(--oml-space-2) var(--oml-space-4); border: 1px solid var(--oml-secondary); border-radius: var(--oml-radius-control); background: var(--oml-primary-soft); color: var(--oml-primary); cursor: pointer; }
 
 body.ohmylms-diagram-open { overflow: hidden; }
 
@@ -175,53 +204,53 @@ body.ohmylms-diagram-open { overflow: hidden; }
 	display: block;
 	width: 100%;
 	height: 100%;
-	background: #7153c6;
+	background: var(--oml-primary);
 	transition: width 1s linear;
 }
 
 .ohmylms-hangman-keys button {
 	min-width: 2.4rem;
-	padding: 8px 10px;
-	border: 2px solid #d9d0f0;
-	border-radius: 8px;
-	background: #fff;
+	padding: var(--oml-space-2) calc(var(--oml-space-1) * 2.5);
+	border: 2px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-surface);
 	font: inherit;
-	font-weight: 700;
+	font-weight: var(--oml-weight-strong);
 	cursor: pointer;
 }
 
 .ohmylms-hangman-tabs button {
 	min-width: 2.4rem;
-	padding: 8px 10px;
-	border: 2px solid #d9d0f0;
-	border-radius: 8px;
-	background: #fff;
+	padding: var(--oml-space-2) calc(var(--oml-space-1) * 2.5);
+	border: 2px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-surface);
 	font: inherit;
-	font-weight: 700;
+	font-weight: var(--oml-weight-strong);
 	cursor: pointer;
 }
 
 .ohmylms-graph-actions button {
-	padding: 6px 14px;
-	border: 2px solid #d0d7de;
+	padding: calc(var(--oml-space-1) * 1.5) calc(var(--oml-space-1) * 3.5);
+	border: 2px solid var(--oml-border);
 	border-radius: 999px;
-	background: #fff;
+	background: var(--oml-surface);
 	font: inherit;
 	cursor: pointer;
 }
 
 .ohmylms-graph-typed button {
-	padding: 6px 14px;
-	border: 2px solid #d0d7de;
+	padding: calc(var(--oml-space-1) * 1.5) calc(var(--oml-space-1) * 3.5);
+	border: 2px solid var(--oml-border);
 	border-radius: 999px;
-	background: #fff;
+	background: var(--oml-surface);
 	font: inherit;
 	cursor: pointer;
 }
 
-.ohmylms-extended-question .ohmylms-extended-field { display: grid; gap: 6px; }
+.ohmylms-extended-question .ohmylms-extended-field { display: grid; gap: calc(var(--oml-space-1) * 1.5); }
 
-.ohmylms-extended-question .ohmylms-plot-toolbar { display: flex; flex-wrap: wrap; gap: 8px; }
+.ohmylms-extended-question .ohmylms-plot-toolbar { display: flex; flex-wrap: wrap; gap: var(--oml-space-2); }
 
 .ohmylms-extended-question .ohmylms-diagram { position: relative; }
 
@@ -238,25 +267,29 @@ body.ohmylms-diagram-open { overflow: hidden; }
 	}
 }
 
-.ohmylms-extended-question .ohmylms-diagram-full { position: fixed; inset: 0; z-index: 100000; display: flex; align-items: center; justify-content: center; padding: 16px; overflow: auto; background: rgba(0, 0, 0, 0.88); }
+.ohmylms-extended-question .ohmylms-diagram-full { position: fixed; inset: 0; z-index: 100000; display: flex; align-items: center; justify-content: center; padding: var(--oml-space-4); overflow: auto; background: var(--oml-shade); }
 
 .ohmylms-extended-question .ohmylms-diagram-close { display: none; }
 
-.ohmylms-extended-question .ohmylms-hotspot-pin { position: absolute; transform: translate(-50%, -50%); color: #d63638; font-size: 28px; pointer-events: none; }
+.ohmylms-extended-question .ohmylms-hotspot-pin { position: absolute; transform: translate(-50%, -50%); color: var(--oml-danger); font-size: 28px; pointer-events: none; }
 
 .ohmylms-extended-question .ohmylms-match-grid { width: 100%; border-collapse: collapse; }
 
-.ohmylms-extended-question .ohmylms-passage { white-space: pre-wrap; padding: 20px; border-left: 4px solid #7153c6; background: #f8f5fc; }
+.ohmylms-extended-question .ohmylms-passage { white-space: pre-wrap; padding: calc(var(--oml-space-1) * 5); border-left: 4px solid var(--oml-primary); background: var(--oml-subtle); }
 
 .ohmylms-author-diagram .ohmylms-diagram-place { display: block; padding: 0; border: 0; background: none; cursor: crosshair; }
 
 
 
-.ohmylms-author-diagram .ohmylms-author-marker { position: absolute; width: 32px; height: 32px; border: 2px solid #fff; border-radius: 50%; color: #fff; background: #432474; transform: translate(-50%, -50%); cursor: move; }
+.ohmylms-author-diagram .ohmylms-author-marker { position: absolute; width: 32px; height: 32px; border: 2px solid var(--oml-surface); border-radius: 50%; color: var(--oml-on-primary); background: var(--oml-primary); transform: translate(-50%, -50%); cursor: move; }
 
-.ohmylms-extended-question .ohmylms-word-cloud { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; color: #432474; }
+.ohmylms-extended-question .ohmylms-word-cloud { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--oml-space-3); color: var(--oml-primary); }
+
+/* stylelint-disable color-no-hex -- Game artwork and drawing/video canvases keep their fixed palette in every theme. */
 
 .ohmylms-extended-question .ohmylms-video-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; }
+
+/* stylelint-enable color-no-hex */
 
 .ohmylms-wheel-stage .ohmylms-spin-wheel {
 	width: 100%;
@@ -266,29 +299,29 @@ body.ohmylms-diagram-open { overflow: hidden; }
 }
 
 .ohmylms-activity .ohmylms-activity-button {
-	padding: 12px 36px;
+	padding: var(--oml-space-3) calc(var(--oml-space-1) * 9);
 	border: 0;
 	border-radius: 999px;
-	background: #7153c6;
-	color: #fff;
+	background: var(--oml-primary);
+	color: var(--oml-on-primary);
 	font: inherit;
-	font-size: 1.1rem;
-	font-weight: 700;
+	font-size: var(--oml-font-size-lg);
+	font-weight: var(--oml-weight-strong);
 	cursor: pointer;
 }
 
 .ohmylms-activity .ohmylms-spin-result {
 	min-width: 60%;
-	padding: 16px 24px;
-	border: 2px solid #7153c6;
-	border-radius: 12px;
-	background: #f6f1ff;
-	font-size: 1.5rem;
+	padding: var(--oml-space-4) var(--oml-space-5);
+	border: 2px solid var(--oml-primary);
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-subtle);
+	font-size: var(--oml-font-size-2xl);
 }
 
 .ohmylms-gameshow-choice[aria-pressed="true"] {
-	border-color: #7153c6;
-	background: #f1ebff;
+	border-color: var(--oml-primary);
+	background: var(--oml-primary-soft);
 }
 
 .ohmylms-gameshow-choice:disabled {
@@ -298,14 +331,14 @@ body.ohmylms-diagram-open { overflow: hidden; }
 
 .ohmylms-activity .ohmylms-deck-tile {
 	min-height: 5.5rem;
-	padding: 10px;
-	border: 2px solid #d9d0f0;
-	border-radius: 14px;
-	background: #7153c6;
-	color: #fff;
+	padding: calc(var(--oml-space-1) * 2.5);
+	border: 2px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-primary);
+	color: var(--oml-on-primary);
 	font: inherit;
-	font-size: 1.3rem;
-	font-weight: 700;
+	font-size: var(--oml-font-size-xl);
+	font-weight: var(--oml-weight-strong);
 	cursor: pointer;
 }
 
@@ -314,24 +347,25 @@ body.ohmylms-diagram-open { overflow: hidden; }
 	place-items: center;
 	width: min(28rem, 100%);
 	min-height: 12rem;
-	padding: 24px;
-	border: 3px solid #7153c6;
-	border-radius: 18px;
-	background: #fff;
+	padding: var(--oml-space-5);
+	border: 3px solid var(--oml-primary);
+	border-radius: var(--oml-radius-card);
+	background: var(--oml-surface);
 	font: inherit;
-	font-size: 1.6rem;
-	font-weight: 600;
+	font-size: var(--oml-font-size-2xl);
+	font-weight: var(--oml-weight-strong);
 	cursor: pointer;
+	color: var(--oml-text);
 }
 
 .ohmylms-activity .ohmylms-pick-target {
-	padding: 14px 28px;
-	border: 3px solid #d9d0f0;
-	border-radius: 14px;
-	background: #fff;
+	padding: calc(var(--oml-space-1) * 3.5) calc(var(--oml-space-1) * 7);
+	border: 3px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-surface);
 	font: inherit;
-	font-size: 1.2rem;
-	font-weight: 700;
+	font-size: var(--oml-font-size-xl);
+	font-weight: var(--oml-weight-strong);
 	cursor: pointer;
 }
 
@@ -347,7 +381,7 @@ body.ohmylms-diagram-open { overflow: hidden; }
 
 .ohmylms-extended-question .ohmylms-plot-toolbar input { width: 100px; }
 
-.ohmylms-extended-question button[aria-pressed="true"] { background: #7153c6; color: #fff; }
+.ohmylms-extended-question button[aria-pressed="true"] { background: var(--oml-primary); color: var(--oml-on-primary); }
 
 .ohmylms-extended-question .ohmylms-diagram-stage img { cursor: crosshair; }
 
@@ -355,22 +389,22 @@ body.ohmylms-diagram-open { overflow: hidden; }
 
 .ohmylms-extended-question .ohmylms-diagram select { position: absolute; max-width: 180px; transform: translate(-50%, -50%); }
 
-.ohmylms-extended-question .ohmylms-match-grid th { padding: 12px; border: 1px solid #dcdcde; text-align: center; }
+.ohmylms-extended-question .ohmylms-match-grid th { padding: var(--oml-space-3); border: 1px solid var(--oml-border); text-align: center; }
 
-.ohmylms-extended-question .ohmylms-match-grid td { padding: 12px; border: 1px solid #dcdcde; text-align: center; }
+.ohmylms-extended-question .ohmylms-match-grid td { padding: var(--oml-space-3); border: 1px solid var(--oml-border); text-align: center; }
 
 .ohmylms-extended-question .ohmylms-video-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 
 .ohmylms-hangman-keys button[aria-pressed="true"] {
-	border-color: #7153c6;
-	background: #7153c6;
-	color: #fff;
+	border-color: var(--oml-primary);
+	background: var(--oml-primary);
+	color: var(--oml-on-primary);
 }
 
 .ohmylms-hangman-tabs button[aria-pressed="true"] {
-	border-color: #7153c6;
-	background: #7153c6;
-	color: #fff;
+	border-color: var(--oml-primary);
+	background: var(--oml-primary);
+	color: var(--oml-on-primary);
 }
 
 .ohmylms-extended-question .ohmylms-graph-typed input {
@@ -378,21 +412,21 @@ body.ohmylms-diagram-open { overflow: hidden; }
 }
 
 .ohmylms-extended-question > button[aria-pressed] {
-	margin: 0 8px 8px 0;
-	padding: 10px 18px;
-	border: 2px solid #d9d0f0;
-	border-radius: 12px;
-	background: #fff;
+	margin: 0 var(--oml-space-2) var(--oml-space-2) 0;
+	padding: calc(var(--oml-space-1) * 2.5) calc(var(--oml-space-1) * 4.5);
+	border: 2px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-surface);
 	font: inherit;
-	font-size: 1.1rem;
-	font-weight: 600;
+	font-size: var(--oml-font-size-lg);
+	font-weight: var(--oml-weight-strong);
 	cursor: pointer;
 }
 
 .ohmylms-extended-question > button[aria-pressed="true"] {
-	border-color: #7153c6;
-	background: #7153c6;
-	color: #fff;
+	border-color: var(--oml-primary);
+	background: var(--oml-primary);
+	color: var(--oml-on-primary);
 }
 
 .ohmylms-extended-question .ohmylms-match-grid input {
@@ -404,7 +438,7 @@ body.ohmylms-diagram-open { overflow: hidden; }
 
 .ohmylms-extended-question .ohmylms-diagram-full .ohmylms-diagram-close { display: block; position: fixed; top: 12px; right: 12px; z-index: 100001; }
 
-.ohmylms-author-diagram .ohmylms-author-marker[aria-pressed="true"] { outline: 3px solid #dba617; }
+.ohmylms-author-diagram .ohmylms-author-marker[aria-pressed="true"] { outline: 3px solid var(--oml-focus); }
 
 .ohmylms-activity .ohmylms-activity-button:disabled {
 	opacity: 0.6;
@@ -412,8 +446,8 @@ body.ohmylms-diagram-open { overflow: hidden; }
 }
 
 .ohmylms-activity .ohmylms-deck-tile.is-open {
-	background: #f1ebff;
-	color: #432474;
+	background: var(--oml-primary-soft);
+	color: var(--oml-primary);
 }
 
 .ohmylms-activity .ohmylms-deck-tile:disabled {
@@ -422,12 +456,12 @@ body.ohmylms-diagram-open { overflow: hidden; }
 }
 
 .ohmylms-activity .ohmylms-flashcard.is-back {
-	background: #f1ebff;
+	background: var(--oml-primary-soft);
 }
 
 .ohmylms-activity .ohmylms-pick-target[aria-pressed="true"] {
-	border-color: #7153c6;
-	background: #f1ebff;
+	border-color: var(--oml-primary);
+	background: var(--oml-primary-soft);
 }
 
 .ohmylms-activity .ohmylms-pick-target:disabled {
@@ -438,8 +472,10 @@ body.ohmylms-diagram-open { overflow: hidden; }
 .ohmylms-activity.is-timed-true-false .ohmylms-pick-target {
 	flex: 1 1 40%;
 	min-height: 6rem;
-	font-size: 1.6rem;
+	font-size: var(--oml-font-size-2xl);
 }
+
+/* stylelint-disable color-no-hex -- Game artwork and drawing/video canvases keep their fixed palette in every theme. */
 
 .ohmylms-activity.is-whack-a-mole .ohmylms-pick-target {
 	border-radius: 50% 50% 14px 14px;
@@ -449,6 +485,8 @@ body.ohmylms-diagram-open { overflow: hidden; }
 	animation: ohmylms-pop 3s ease-in-out infinite;
 	animation-delay: calc(var(--ohmylms-slot) * 0.6s);
 }
+
+/* stylelint-enable color-no-hex */
 
 .ohmylms-activity.is-flying-fruit .ohmylms-pick-target {
 	position: absolute;
@@ -460,7 +498,7 @@ body.ohmylms-diagram-open { overflow: hidden; }
 .ohmylms-extended-question .ohmylms-diagram.ohmylms-diagram-full img { max-width: none; }
 
 .ohmylms-extended-question .ohmylms-match-grid tbody tr:nth-child(odd) {
-	background: #f6f1ff;
+	background: var(--oml-subtle);
 }
 
 @keyframes ohmylms-pop {
@@ -504,4 +542,9 @@ body.ohmylms-diagram-open { overflow: hidden; }
 		position: static;
 		animation: none;
 	}
+}
+
+.ohmylms-extended-question :is(button, input, select, textarea):focus-visible {
+	outline: 2px solid var(--oml-focus);
+	outline-offset: 2px;
 }

@@ -1,3 +1,4 @@
+import { CurriculumLibraryLayout } from '../content-hub/CurriculumLibraryLayout';
 import { nativeLessonHref } from '../content-hub/editorNavigation.mjs';
 import {
 	createElement,
@@ -105,7 +106,6 @@ function QuestionsTab() {
 	const [ error, setError ] = useState( '' );
 	const [ skills, setSkills ] = useState( [] );
 	const [ banks, setBanks ] = useState( [] );
-	const [ organisationViews, setOrganisationViews ] = useState( [] );
 	const [ selected, setSelected ] = useState( null );
 	const [ creating, setCreating ] = useState( false );
 	const [ reload, setReload ] = useState( 0 );
@@ -120,10 +120,6 @@ function QuestionsTab() {
 				);
 	useHubAction( { new: newQuestion } );
 	useEffect( () => {
-		window.wp
-			.apiFetch( { path: '/ohmylms/v1/question-bank-organisation' } )
-			.then( ( data ) => setOrganisationViews( data.views || [] ) )
-			.catch( ( cause ) => setError( cause.message ) );
 		listSkills()
 			.then( ( data ) => setSkills( data.skills || [] ) )
 			.catch( () => {} );
@@ -194,424 +190,384 @@ function QuestionsTab() {
 					} }
 				/>
 			) }
-			<AdminCard className="ohmylms-bank-card">
-				<div className="ohmylms-bank-filters ohmylms-ext-toolbar">
-					<SelectControl
-						label={ __( 'Organise question bank by', 'ohmylms' ) }
-						value={ filters.organisation || '' }
-						options={ [
-							{
-								value: '',
-								label: __( 'All questions', 'ohmylms' ),
-							},
-							...organisationViews.map( ( view ) => ( {
-								value: view.id,
-								label: view.name,
-							} ) ),
-						] }
-						onChange={ ( value ) => {
-							setPage( 1 );
-							setFilters( {
-								...filters,
-								organisation: value,
-								scope: '',
-							} );
-						} }
-					/>
-					{ filters.organisation && (
+			<CurriculumLibraryLayout
+				value={ filters.scope || 0 }
+				onChange={ ( id ) => {
+					setPage( 1 );
+					setFilters( {
+						...filters,
+						organisation: id ? 'curriculum' : '',
+						scope: id ? String( id ) : '',
+					} );
+				} }
+			>
+				<AdminCard className="ohmylms-bank-card">
+					<div className="ohmylms-bank-filters ohmylms-ext-toolbar">
+						<TextControl
+							label={ __( 'Search', 'ohmylms' ) }
+							value={ filters.search }
+							onChange={ update( 'search' ) }
+						/>
 						<SelectControl
-							label={ __(
-								'Curriculum, roadmap or course',
-								'ohmylms'
-							) }
-							value={ filters.scope || '' }
+							label={ __( 'Type', 'ohmylms' ) }
+							value={ filters.type }
 							options={ [
 								{
 									value: '',
-									label: __( 'Choose a location', 'ohmylms' ),
+									label: __( 'All types', 'ohmylms' ),
 								},
-								...(
-									organisationViews.find(
-										( view ) =>
-											view.id === filters.organisation
-									)?.scopes || []
-								).map( ( scope, index, scopes ) => {
-									const names = [ scope.name ];
-									const seen = new Set( [ scope.id ] );
-									let parent = scopes.find(
-										( item ) => item.id === scope.parent
-									);
-									while (
-										parent &&
-										! seen.has( parent.id )
-									) {
-										seen.add( parent.id );
-										names.unshift( parent.name );
-										parent = scopes.find(
-											( item ) =>
-												item.id === parent.parent
-										);
-									}
-									return {
-										value: String( scope.id ),
-										label: names.join( ' / ' ),
-									};
-								} ),
+								...TYPES.map( ( type ) => ( {
+									value: type,
+									label: type,
+								} ) ),
 							] }
-							onChange={ update( 'scope' ) }
+							onChange={ update( 'type' ) }
 						/>
-					) }
-					<p>
-						{ __(
-							'These views follow existing curriculum skills, roadmap skills, course targets and quiz placements. Questions stay reusable; organising them grants no additional access. Use the Skill filter below to narrow a branch.',
-							'ohmylms'
-						) }
-					</p>
-				</div>
-				<div className="ohmylms-bank-filters ohmylms-ext-toolbar">
-					<TextControl
-						label={ __( 'Search', 'ohmylms' ) }
-						value={ filters.search }
-						onChange={ update( 'search' ) }
-					/>
-					<SelectControl
-						label={ __( 'Type', 'ohmylms' ) }
-						value={ filters.type }
-						options={ [
-							{
-								value: '',
-								label: __( 'All types', 'ohmylms' ),
-							},
-							...TYPES.map( ( type ) => ( {
-								value: type,
-								label: type,
-							} ) ),
-						] }
-						onChange={ update( 'type' ) }
-					/>
-					<SelectControl
-						label={ __( 'Difficulty', 'ohmylms' ) }
-						value={ filters.difficulty }
-						options={ [
-							{
-								value: '',
-								label: __( 'Any', 'ohmylms' ),
-							},
-							...DIFFICULTIES.map( ( value ) => ( {
-								value,
-								label: value,
-							} ) ),
-						] }
-						onChange={ update( 'difficulty' ) }
-					/>
-					<SelectControl
-						label={ __( 'Status', 'ohmylms' ) }
-						value={ filters.status }
-						options={ [
-							{
-								value: '',
-								label: __( 'Active', 'ohmylms' ),
-							},
-							{
-								value: 'draft',
-								label: __( 'Not approved', 'ohmylms' ),
-							},
-							{
-								value: 'approved',
-								label: __( 'Approved', 'ohmylms' ),
-							},
-							{
-								value: 'archived',
-								label: __( 'Archived', 'ohmylms' ),
-							},
-						] }
-						onChange={ update( 'status' ) }
-					/>
-					<SelectControl
-						label={ __( 'Skill', 'ohmylms' ) }
-						value={ filters.skill }
-						options={ [
-							{
-								value: '',
-								label: __( 'Any skill', 'ohmylms' ),
-							},
-							...flattenTree( skillTree( skills ) ).map(
-								( skill ) => ( {
-									value: String( skill.id ),
-									label: `${ '— '.repeat( skill.depth ) }${ skill.name }`,
-								} )
-							),
-						] }
-						onChange={ update( 'skill' ) }
-					/>
-					<SelectControl
-						label={ __( 'Bank', 'ohmylms' ) }
-						value={ filters.bank }
-						options={ [
-							{
-								value: '',
-								label: __( 'All visible', 'ohmylms' ),
-							},
-							{
-								value: '0',
-								label: __(
-									'My questions (no bank)',
-									'ohmylms'
+						<SelectControl
+							label={ __( 'Difficulty', 'ohmylms' ) }
+							value={ filters.difficulty }
+							options={ [
+								{
+									value: '',
+									label: __( 'Any', 'ohmylms' ),
+								},
+								...DIFFICULTIES.map( ( value ) => ( {
+									value,
+									label: value,
+								} ) ),
+							] }
+							onChange={ update( 'difficulty' ) }
+						/>
+						<SelectControl
+							label={ __( 'Status', 'ohmylms' ) }
+							value={ filters.status }
+							options={ [
+								{
+									value: '',
+									label: __( 'Active', 'ohmylms' ),
+								},
+								{
+									value: 'draft',
+									label: __( 'Not approved', 'ohmylms' ),
+								},
+								{
+									value: 'approved',
+									label: __( 'Approved', 'ohmylms' ),
+								},
+								{
+									value: 'archived',
+									label: __( 'Archived', 'ohmylms' ),
+								},
+							] }
+							onChange={ update( 'status' ) }
+						/>
+						<SelectControl
+							label={ __( 'Skill', 'ohmylms' ) }
+							value={ filters.skill }
+							options={ [
+								{
+									value: '',
+									label: __( 'Any skill', 'ohmylms' ),
+								},
+								...flattenTree( skillTree( skills ) ).map(
+									( skill ) => ( {
+										value: String( skill.id ),
+										label: `${ '— '.repeat( skill.depth ) }${ skill.name }`,
+									} )
 								),
-							},
-							...banks.map( ( bank ) => ( {
-								value: String( bank.id ),
-								label: bank.name,
-							} ) ),
-						] }
-						onChange={ update( 'bank' ) }
-					/>
-					<div
-						style={ {
-							marginLeft: 'auto',
-						} }
-					>
-						<Button variant="primary" onClick={ newQuestion }>
-							{ __( 'New question', 'ohmylms' ) }
-						</Button>{ ' ' }
-						<ImportButton target="questions" />
-						<ExportRowsButtons
-							ids={ result.items.map( ( item ) => item.id ) }
-							label={ __( 'Question bank', 'ohmylms' ) }
+							] }
+							onChange={ update( 'skill' ) }
 						/>
+						<SelectControl
+							label={ __( 'Bank', 'ohmylms' ) }
+							value={ filters.bank }
+							options={ [
+								{
+									value: '',
+									label: __( 'All visible', 'ohmylms' ),
+								},
+								{
+									value: '0',
+									label: __(
+										'My questions (no bank)',
+										'ohmylms'
+									),
+								},
+								...banks.map( ( bank ) => ( {
+									value: String( bank.id ),
+									label: bank.name,
+								} ) ),
+							] }
+							onChange={ update( 'bank' ) }
+						/>
+						<div
+							style={ {
+								marginLeft: 'auto',
+							} }
+						>
+							<Button variant="primary" onClick={ newQuestion }>
+								{ __( 'New question', 'ohmylms' ) }
+							</Button>{ ' ' }
+							<ImportButton target="questions" />
+							<ExportRowsButtons
+								ids={ result.items.map( ( item ) => item.id ) }
+								label={ __( 'Question bank', 'ohmylms' ) }
+							/>
+						</div>
 					</div>
-				</div>
-				{ error && (
-					<Notice status="error" onRemove={ () => setError( '' ) }>
-						{ error }
-					</Notice>
-				) }
-				{ ( () => {
-					if ( loading ) {
-						return <Spinner />;
-					}
-					if ( result.items.length === 0 ) {
+					{ error && (
+						<Notice
+							status="error"
+							onRemove={ () => setError( '' ) }
+						>
+							{ error }
+						</Notice>
+					) }
+					{ ( () => {
+						if ( loading ) {
+							return <Spinner />;
+						}
+						if ( result.items.length === 0 ) {
+							return (
+								<p>
+									{ __(
+										'No questions match these filters.',
+										'ohmylms'
+									) }
+								</p>
+							);
+						}
 						return (
-							<p>
-								{ __(
-									'No questions match these filters.',
-									'ohmylms'
-								) }
-							</p>
-						);
-					}
-					return (
-						<div className="ohmylms-ext-table-scroll">
-							<table className="widefat striped ohmylms-bank-table">
-								<thead>
-									<tr>
-										<th>{ __( 'Question', 'ohmylms' ) }</th>
-										<th>{ __( 'Type', 'ohmylms' ) }</th>
-										<th>{ __( 'Version', 'ohmylms' ) }</th>
-										<th>
-											{ __( 'Difficulty', 'ohmylms' ) }
-										</th>
-										<th>{ __( 'Skills', 'ohmylms' ) }</th>
-										<th>{ __( 'Used in', 'ohmylms' ) }</th>
-										<th>{ __( 'Actions', 'ohmylms' ) }</th>
-									</tr>
-								</thead>
-								<tbody>
-									{ result.items.map( ( item ) => (
-										<tr key={ item.id }>
-											<td>
-												<Button
-													variant="link"
-													onClick={ () =>
-														item.can_edit &&
-														! window
-															.ohmylmsAssessment
-															?.formAuthoring
-															? window.location.assign(
-																	item.native_editor_url ||
-																		nativeLessonHref(
-																			item.id,
-																			'/question-bank'
-																		)
-																)
-															: setSelected(
-																	item.id
-																)
-													}
-												>
-													{ item.name ||
-														__(
-															'(untitled)',
-															'ohmylms'
-														) }
-												</Button>
-												{ item.secure && (
-													<span className="ohmylms-badge">
-														{ __(
-															'Exam only',
-															'ohmylms'
-														) }
-													</span>
+							<div className="ohmylms-ext-table-scroll">
+								<table className="widefat striped ohmylms-bank-table">
+									<thead>
+										<tr>
+											<th>
+												{ __( 'Question', 'ohmylms' ) }
+											</th>
+											<th>{ __( 'Type', 'ohmylms' ) }</th>
+											<th>
+												{ __( 'Version', 'ohmylms' ) }
+											</th>
+											<th>
+												{ __(
+													'Difficulty',
+													'ohmylms'
 												) }
-											</td>
-											<td>{ item.type }</td>
-											<td>{ versionLabel( item ) }</td>
-											<td>{ item.difficulty }</td>
-											<td>
-												{ item.skills
-													.map( ( id ) =>
-														skillNames.get( id )
-													)
-													.filter( Boolean )
-													.join( ', ' ) }
-											</td>
-											<td>
-												{ sprintf(
-													/* translators: 1: quizzes, 2: learner responses */
-													__(
-														'%1$d quizzes · %2$d responses',
-														'ohmylms'
-													),
-													item.usage.quizzes.length,
-													item.usage.responses
-												) }
-											</td>
-											<td
-												style={ {
-													whiteSpace: 'nowrap',
-												} }
-											>
-												{ item.can_approve &&
-													! item.approved_is_current &&
-													item.post_status !==
-														'ohmylms_archived' && (
-														<Button
-															variant="secondary"
-															size="small"
-															onClick={ () =>
-																run( () =>
-																	approveQuestion(
-																		item.id
-																	)
-																)
-															}
-														>
-															{ __(
-																'Approve',
-																'ohmylms'
-															) }
-														</Button>
-													) }{ ' ' }
-												<Button
-													variant="tertiary"
-													size="small"
-													onClick={ () =>
-														run( () =>
-															duplicateQuestion(
-																item.id
-															).then(
-																( copy ) => {
-																	if (
-																		! window
-																			.ohmylmsAssessment
-																			?.formAuthoring
-																	) {
-																		window.location.assign(
+											</th>
+											<th>
+												{ __( 'Skills', 'ohmylms' ) }
+											</th>
+											<th>
+												{ __( 'Used in', 'ohmylms' ) }
+											</th>
+											<th>
+												{ __( 'Actions', 'ohmylms' ) }
+											</th>
+										</tr>
+									</thead>
+									<tbody>
+										{ result.items.map( ( item ) => (
+											<tr key={ item.id }>
+												<td>
+													<Button
+														variant="link"
+														onClick={ () =>
+															item.can_edit &&
+															! window
+																.ohmylmsAssessment
+																?.formAuthoring
+																? window.location.assign(
+																		item.native_editor_url ||
 																			nativeLessonHref(
-																				copy.id,
+																				item.id,
 																				'/question-bank'
 																			)
-																		);
-																	}
-																}
-															)
-														)
-													}
-												>
-													{ __(
-														'Duplicate',
-														'ohmylms'
+																	)
+																: setSelected(
+																		item.id
+																	)
+														}
+													>
+														{ item.name ||
+															__(
+																'(untitled)',
+																'ohmylms'
+															) }
+													</Button>
+													{ item.secure && (
+														<span className="ohmylms-badge">
+															{ __(
+																'Exam only',
+																'ohmylms'
+															) }
+														</span>
 													) }
-												</Button>{ ' ' }
-												{ item.can_edit &&
-													( item.post_status ===
-													'ohmylms_archived' ? (
-														<Button
-															variant="tertiary"
-															size="small"
-															onClick={ () =>
-																run( () =>
-																	restoreQuestion(
-																		item.id
+												</td>
+												<td>{ item.type }</td>
+												<td>
+													{ versionLabel( item ) }
+												</td>
+												<td>{ item.difficulty }</td>
+												<td>
+													{ item.skills
+														.map( ( id ) =>
+															skillNames.get( id )
+														)
+														.filter( Boolean )
+														.join( ', ' ) }
+												</td>
+												<td>
+													{ sprintf(
+														/* translators: 1: quizzes, 2: learner responses */
+														__(
+															'%1$d quizzes · %2$d responses',
+															'ohmylms'
+														),
+														item.usage.quizzes
+															.length,
+														item.usage.responses
+													) }
+												</td>
+												<td
+													style={ {
+														whiteSpace: 'nowrap',
+													} }
+												>
+													{ item.can_approve &&
+														! item.approved_is_current &&
+														item.post_status !==
+															'ohmylms_archived' && (
+															<Button
+																variant="secondary"
+																size="small"
+																onClick={ () =>
+																	run( () =>
+																		approveQuestion(
+																			item.id
+																		)
 																	)
+																}
+															>
+																{ __(
+																	'Approve',
+																	'ohmylms'
+																) }
+															</Button>
+														) }{ ' ' }
+													<Button
+														variant="tertiary"
+														size="small"
+														onClick={ () =>
+															run( () =>
+																duplicateQuestion(
+																	item.id
+																).then(
+																	(
+																		copy
+																	) => {
+																		if (
+																			! window
+																				.ohmylmsAssessment
+																				?.formAuthoring
+																		) {
+																			window.location.assign(
+																				nativeLessonHref(
+																					copy.id,
+																					'/question-bank'
+																				)
+																			);
+																		}
+																	}
 																)
-															}
-														>
-															{ __(
-																'Restore',
-																'ohmylms'
-															) }
-														</Button>
-													) : (
-														<Button
-															variant="tertiary"
-															size="small"
-															isDestructive
-															onClick={ () =>
-																run( () =>
-																	archiveQuestion(
-																		item.id
+															)
+														}
+													>
+														{ __(
+															'Duplicate',
+															'ohmylms'
+														) }
+													</Button>{ ' ' }
+													{ item.can_edit &&
+														( item.post_status ===
+														'ohmylms_archived' ? (
+															<Button
+																variant="tertiary"
+																size="small"
+																onClick={ () =>
+																	run( () =>
+																		restoreQuestion(
+																			item.id
+																		)
 																	)
-																)
-															}
-														>
-															{ __(
-																'Archive',
-																'ohmylms'
-															) }
-														</Button>
-													) ) }
-											</td>
-										</tr>
-									) ) }
-								</tbody>
-							</table>
-						</div>
-					);
-				} )() }
-				<div
-					className="ohmylms-bank-pagination ohmylms-ext-toolbar"
-					style={ {
-						marginTop: 16,
-						marginBottom: 0,
-					} }
-				>
-					<Button
-						variant="secondary"
-						disabled={ page <= 1 }
-						onClick={ () => setPage( page - 1 ) }
+																}
+															>
+																{ __(
+																	'Restore',
+																	'ohmylms'
+																) }
+															</Button>
+														) : (
+															<Button
+																variant="tertiary"
+																size="small"
+																isDestructive
+																onClick={ () =>
+																	run( () =>
+																		archiveQuestion(
+																			item.id
+																		)
+																	)
+																}
+															>
+																{ __(
+																	'Archive',
+																	'ohmylms'
+																) }
+															</Button>
+														) ) }
+												</td>
+											</tr>
+										) ) }
+									</tbody>
+								</table>
+							</div>
+						);
+					} )() }
+					<div
+						className="ohmylms-bank-pagination ohmylms-ext-toolbar"
+						style={ {
+							marginTop: 16,
+							marginBottom: 0,
+						} }
 					>
-						{ __( 'Previous', 'ohmylms' ) }
-					</Button>{ ' ' }
-					<span>
-						{ sprintf(
-							/* translators: %1$d: current page number; %2$d: total number of pages. */ __(
-								'Page %1$d of %2$d',
-								'ohmylms'
-							),
-							page,
-							pages
-						) }
-					</span>{ ' ' }
-					<Button
-						variant="secondary"
-						disabled={ page >= pages }
-						onClick={ () => setPage( page + 1 ) }
-					>
-						{ __( 'Next', 'ohmylms' ) }
-					</Button>
-				</div>
-			</AdminCard>
+						<Button
+							variant="secondary"
+							disabled={ page <= 1 }
+							onClick={ () => setPage( page - 1 ) }
+						>
+							{ __( 'Previous', 'ohmylms' ) }
+						</Button>{ ' ' }
+						<span>
+							{ sprintf(
+								/* translators: %1$d: current page number; %2$d: total number of pages. */ __(
+									'Page %1$d of %2$d',
+									'ohmylms'
+								),
+								page,
+								pages
+							) }
+						</span>{ ' ' }
+						<Button
+							variant="secondary"
+							disabled={ page >= pages }
+							onClick={ () => setPage( page + 1 ) }
+						>
+							{ __( 'Next', 'ohmylms' ) }
+						</Button>
+					</div>
+				</AdminCard>
+			</CurriculumLibraryLayout>
 			{ selected && (
 				<QuestionDetail
 					id={ selected }

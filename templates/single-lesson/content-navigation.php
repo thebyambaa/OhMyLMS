@@ -211,7 +211,7 @@ if ( 'ohmylms-session' === get_post_type() ) {
 				<?php } ?>
 			</form>
 
-			<div class="default-navigation" style="display: <?php echoesc_attr( ( 'quiz' == $get_type && $is_checked ) || ( 'quiz' != $get_type ) ? 'flex' : 'none' ); ?>" >
+			<div class="default-navigation" style="display: <?php echo esc_attr( ( 'quiz' === $get_type && $is_checked ) || ( 'quiz' !== $get_type ) ? 'flex' : 'none' ); ?>" >
 				<input type="hidden" id="ohmylms-lesson-id" value="<?php echo esc_attr( get_the_ID() ); ?>">
 				<input type="hidden" id="ohmylms-student-id" value="<?php echo esc_attr( get_current_user_id() ); ?>">
 				

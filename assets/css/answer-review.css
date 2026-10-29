@@ -10,7 +10,7 @@
 
 .ohmylms-answer-review-intro {
 	margin: 0 0 16px;
-	color: #50575e;
+	color: var(--oml-muted);
 }
 
 .ohmylms-answer-review-list {
@@ -34,7 +34,7 @@
 }
 
 .ohmylms-answer-review-marks {
-	color: #50575e;
+	color: var(--oml-muted);
 }
 
 /* Score summary at the top of the review. */
@@ -44,11 +44,11 @@
 }
 
 .ohmylms-review-percent {
-	color: #50575e;
+	color: var(--oml-muted);
 }
 
 .ohmylms-review-passing {
-	color: #50575e;
+	color: var(--oml-muted);
 	margin: 8px 0 0;
 }
 
@@ -95,6 +95,7 @@
  */
 .ohmylms-answer-review {
 	margin-top: 32px;
+	/* stylelint-disable color-no-hex -- Answer review palette, shared with the playful quiz design. */
 	--review-green: #58cc02;
 	--review-green-edge: #58a700;
 	--review-red: #ff4b4b;
@@ -108,13 +109,14 @@
 	--review-line: #e5e5e5;
 	--review-ink: #4b4b4b;
 	--review-muted: #afafaf;
+	/* stylelint-enable color-no-hex */
 	color: var(--review-ink);
 	font-weight: 600;
 }
 
 .ohmylms-answer-review-item {
 	padding: 16px 20px;
-	background: #fff;
+	background: var(--oml-surface);
 	border: 2px solid var(--review-line);
 	border-bottom-width: 4px;
 	border-inline-start: 8px solid var(--review-line);
@@ -124,7 +126,7 @@
 .ohmylms-review-summary {
 	margin: 0 0 24px;
 	padding: 16px 20px;
-	background: #fff;
+	background: var(--oml-surface);
 	border: 2px solid var(--review-line);
 	border-bottom-width: 4px;
 	border-inline-start: 8px solid var(--review-line);
@@ -138,9 +140,9 @@
 
 .ohmylms-answer-review-part {
 	padding: 8px 12px;
-	border-inline-start: 3px solid #8c8f94;
+	border-inline-start: 3px solid var(--oml-muted);
 	border-radius: 12px;
-	background: #f7f7f7;
+	background: var(--oml-subtle);
 }
 
 .ohmylms-answer-review-explanation {
@@ -165,7 +167,7 @@
 .ohmylms-answer-review-note {
 	padding: 10px 14px;
 	border-radius: 12px;
-	background: #fff3d6;
+	background: var(--oml-warning-soft);
 	color: var(--review-orange-edge);
 	font-weight: 800;
 }
@@ -198,7 +200,7 @@
 }
 
 .ohmylms-answer-review-part-answer span {
-	color: #50575e;
+	color: var(--oml-muted);
 }
 
 .ohmylms-answer-review-verdict strong {
@@ -210,7 +212,7 @@
 	font-size: 0.875rem;
 	letter-spacing: 0.02em;
 	text-transform: uppercase;
-	color: #50575e;
+	color: var(--oml-muted);
 	color: var(--review-muted);
 	font-weight: 800;
 }
@@ -251,7 +253,7 @@
 .ohmylms-review-attempts a {
 	display: inline-block;
 	padding: 6px 12px;
-	background: #fff;
+	background: var(--oml-surface);
 	text-decoration: none;
 	border: 2px solid var(--review-line);
 	border-bottom-width: 4px;
@@ -277,7 +279,7 @@
 	height: 10px;
 	margin-inline-end: 6px;
 	border-radius: 50%;
-	background: #8c8f94;
+	background: var(--oml-muted);
 }
 
 .ohmylms-review-actions .ohmylms-button {
@@ -286,17 +288,17 @@
 }
 
 .ohmylms-answer-review-item.is-correct {
-	border-inline-start-color: #1a7f37;
+	border-inline-start-color: var(--oml-success);
 	border-inline-start-color: var(--review-green);
 }
 
 .ohmylms-review-summary.is-pass {
-	border-inline-start-color: #1a7f37;
+	border-inline-start-color: var(--oml-success);
 	border-inline-start-color: var(--review-green);
 }
 
 .ohmylms-answer-review-item.is-partial {
-	border-inline-start-color: #b26200;
+	border-inline-start-color: var(--oml-warning);
 	border-inline-start-color: var(--review-orange);
 }
 
@@ -305,37 +307,37 @@
 }
 
 .ohmylms-review-summary.is-review {
-	border-inline-start-color: #b26200;
+	border-inline-start-color: var(--oml-warning);
 	border-inline-start-color: var(--review-orange);
 }
 
 .ohmylms-answer-review-item.is-incorrect {
-	border-inline-start-color: #c62828;
+	border-inline-start-color: var(--oml-danger);
 	border-inline-start-color: var(--review-red);
 }
 
 .ohmylms-review-summary.is-fail {
-	border-inline-start-color: #c62828;
+	border-inline-start-color: var(--oml-danger);
 	border-inline-start-color: var(--review-red);
 }
 
 .ohmylms-answer-review-part.is-correct {
-	border-inline-start-color: #1a7f37;
+	border-inline-start-color: var(--oml-success);
 	border-inline-start-color: var(--review-green);
 }
 
 .ohmylms-answer-review-part.is-partial {
-	border-inline-start-color: #b26200;
+	border-inline-start-color: var(--oml-warning);
 	border-inline-start-color: var(--review-orange);
 }
 
 .ohmylms-answer-review-part.is-pending {
-	border-inline-start-color: #b26200;
+	border-inline-start-color: var(--oml-warning);
 	border-inline-start-color: var(--review-orange);
 }
 
 .ohmylms-answer-review-part.is-incorrect {
-	border-inline-start-color: #c62828;
+	border-inline-start-color: var(--oml-danger);
 	border-inline-start-color: var(--review-red);
 }
 
@@ -346,7 +348,7 @@
 	border-radius: 16px;
 	background: var(--review-green);
 	box-shadow: 0 4px 0 var(--review-green-edge);
-	color: #fff;
+	color: var(--oml-surface);
 	font-weight: 800;
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
@@ -369,22 +371,22 @@
 }
 
 .ohmylms-review-counts .is-correct::before {
-	background: #1a7f37;
+	background: var(--oml-success);
 	background: var(--review-green);
 }
 
 .ohmylms-review-counts .is-partial::before {
-	background: #b26200;
+	background: var(--oml-warning);
 	background: var(--review-orange);
 }
 
 .ohmylms-review-counts .is-pending::before {
-	background: #b26200;
+	background: var(--oml-warning);
 	background: var(--review-orange);
 }
 
 .ohmylms-review-counts .is-incorrect::before {
-	background: #c62828;
+	background: var(--oml-danger);
 	background: var(--review-red);
 }
 
@@ -396,11 +398,11 @@
 }
 
 .ohmylms-review-levels li.is-up {
-	color: #166534;
+	color: var(--oml-success);
 }
 
 .ohmylms-review-levels li.is-down {
-	color: #991b1b;
+	color: var(--oml-danger);
 }
 
 .ohmylms-review-summary.is-pass .ohmylms-review-headline {

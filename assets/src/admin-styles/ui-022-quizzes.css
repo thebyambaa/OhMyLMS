@@ -1,0 +1,7 @@
+@media (max-width: 782px) {
+
+	.ohmylms-quiz-skills-question {
+		grid-template-columns: 32px 1fr;
+	}
+}
+

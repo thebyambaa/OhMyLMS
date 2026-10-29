@@ -1,11 +1,29 @@
+
+.ohmylms-interactive input:not([type="radio"]):not([type="checkbox"]):not([type="range"]),
+.ohmylms-interactive select,
+.ohmylms-interactive textarea {
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-surface);
+	color: var(--oml-text);
+	font: inherit;
+	accent-color: var(--oml-primary);
+}
+
 /* Interactive question types: dropdown sentence, sort into groups, multi-blank, tile expression. */
 .ohmylms-interactive {
-	margin: 12px 0;
+	margin: var(--oml-space-3) 0;
+	color: var(--oml-text);
+	background: var(--oml-surface);
+	padding: var(--oml-space-3);
+	border-radius: var(--oml-radius-card);
+	box-sizing: border-box;
+	min-width: 0;
 }
 
 .ohmylms-interactive .ohmylms-inline-select {
 	min-width: 8em;
-	margin: 0 4px;
+	margin: 0 var(--oml-space-1);
 }
 
 .ohmylms-dropdown-sentence,
@@ -15,7 +33,7 @@
 
 .ohmylms-blank-input {
 	width: 6em;
-	margin: 0 4px;
+	margin: 0 var(--oml-space-1);
 	text-align: center;
 }
 
@@ -25,8 +43,8 @@
 
 .ohmylms-blank-table th,
 .ohmylms-blank-table td {
-	padding: 8px 14px;
-	border: 1px solid #d0d7de;
+	padding: var(--oml-space-2) calc(var(--oml-space-1) * 3.5);
+	border: 1px solid var(--oml-border);
 	text-align: center;
 }
 
@@ -37,7 +55,7 @@
 }
 
 .ohmylms-cat-item {
-	margin: 6px 0;
+	margin: calc(var(--oml-space-1) * 1.5) 0;
 }
 
 .ohmylms-cat-bank,
@@ -46,42 +64,42 @@
 .ohmylms-cat-drop {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px;
+	gap: var(--oml-space-2);
 	min-height: 48px;
-	padding: 8px;
+	padding: var(--oml-space-2);
 }
 
 .ohmylms-build-answer {
-	margin-bottom: 12px;
-	border-bottom: 2px solid #d0d7de;
+	margin-bottom: var(--oml-space-3);
+	border-bottom: 2px solid var(--oml-border);
 }
 
 .ohmylms-tile {
 	min-height: 44px;
-	padding: 8px 16px;
-	border: 2px solid #d0d7de;
-	border-radius: 12px;
-	background: #fff;
+	padding: var(--oml-space-2) var(--oml-space-4);
+	border: 2px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-surface);
 	color: inherit;
 	font: inherit;
 	cursor: pointer;
-	box-shadow: 0 2px 0 #d0d7de;
+	box-shadow: var(--oml-shadow-sm);
 }
 
 .ohmylms-tile:hover,
 .ohmylms-tile:focus-visible {
-	border-color: var(--ohmylms-primary-color, #2563eb);
+	border-color: var(--oml-primary);
 }
 
 .ohmylms-tile[aria-pressed="true"] {
-	border-color: var(--ohmylms-primary-color, #2563eb);
-	background: #eff6ff;
+	border-color: var(--oml-primary);
+	background: var(--oml-primary-soft);
 }
 
 .ohmylms-tile-slot,
 .ohmylms-tile-slot:hover,
 .ohmylms-tile-slot:focus-visible {
-	border: 2px dashed #b6c0cc;
+	border: 2px dashed var(--oml-border);
 	background: transparent;
 	box-shadow: none;
 	color: transparent;
@@ -95,58 +113,64 @@
 	display: block;
 	max-width: 96px;
 	max-height: 64px;
-	margin: 0 auto 4px;
+	margin: 0 auto var(--oml-space-1);
 }
 
 .ohmylms-cat-groups {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-	gap: 12px;
-	margin-top: 12px;
+	gap: var(--oml-space-3);
+	margin-top: var(--oml-space-3);
 }
 
 .ohmylms-cat-bucket {
-	border: 2px dashed #b6c0cc;
-	border-radius: 12px;
+	border: 2px dashed var(--oml-border);
+	border-radius: var(--oml-radius-card);
 }
 
 .ohmylms-cat-place {
 	width: 100%;
-	padding: 8px;
+	padding: var(--oml-space-2);
 	border: 0;
 	background: transparent;
 	color: inherit;
 	font: inherit;
-	font-weight: 600;
+	font-weight: var(--oml-weight-strong);
 	cursor: pointer;
 }
 
 .ohmylms-expression-input {
 	width: 100%;
 	max-width: 28em;
-	font-size: 1.15em;
+	font-size: var(--oml-font-size-lg);
 }
 
 .ohmylms-expression-keys {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 6px;
-	margin-top: 8px;
+	gap: calc(var(--oml-space-1) * 1.5);
+	margin-top: var(--oml-space-2);
 }
 
 .ohmylms-key {
 	min-width: 44px;
 	min-height: 40px;
-	padding: 4px 10px;
+	padding: var(--oml-space-1) calc(var(--oml-space-1) * 2.5);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-surface);
+	color: var(--oml-text);
+	font: inherit;
 }
 
 .ohmylms-expression-form {
-	margin: 6px 0 0;
-	font-size: 0.9em;
+	margin: calc(var(--oml-space-1) * 1.5) 0 0;
+	font-size: var(--oml-font-size-sm);
 	opacity: 0.8;
 }
 
 /* Visual question widgets */
+/* stylelint-disable color-no-hex -- Educational drawing canvases stay light, including their labels, in every theme. */
 .ohmylms-vis-svg {
 	display: block;
 	width: 100%;
@@ -154,13 +178,18 @@
 	touch-action: none;
 	user-select: none;
 	-webkit-user-select: none;
+	background: #fff;
+	color: #111827;
 }
+/* stylelint-enable color-no-hex */
 
 .ohmylms-vis-svg:focus-visible,
 .ohmylms-vis-svg [tabindex]:focus-visible {
-	outline: 3px solid var(--ohmylms-primary-color, #2563eb);
+	outline: 3px solid var(--oml-focus);
 	outline-offset: 2px;
 }
+
+/* stylelint-disable color-no-hex -- Math illustrations, manipulatives and currency retain fixed colors on a light canvas. */
 
 .ohmylms-vis-axis {
 	stroke: #6b7280;
@@ -168,10 +197,16 @@
 	stroke-linecap: round;
 }
 
+/* stylelint-enable color-no-hex */
+
+/* stylelint-disable color-no-hex -- Math illustrations, manipulatives and currency retain fixed colors on a light canvas. */
+
 .ohmylms-vis-grid {
 	stroke: #e5e7eb;
 	stroke-width: 1;
 }
+
+/* stylelint-enable color-no-hex */
 
 .ohmylms-vis-text {
 	fill: currentcolor;
@@ -186,12 +221,18 @@
 	stroke-width: 3;
 }
 
+/* stylelint-disable color-no-hex -- Math illustrations, manipulatives and currency retain fixed colors on a light canvas. */
+
 .ohmylms-vis-point {
 	fill: var(--ohmylms-primary-color, #2563eb);
 	stroke: #fff;
 	stroke-width: 3;
 	cursor: grab;
 }
+
+/* stylelint-enable color-no-hex */
+
+/* stylelint-disable color-no-hex -- Math illustrations, manipulatives and currency retain fixed colors on a light canvas. */
 
 .ohmylms-vis-face,
 .ohmylms-vis-glass {
@@ -200,14 +241,20 @@
 	stroke-width: 3;
 }
 
+/* stylelint-enable color-no-hex */
+
 .ohmylms-vis-glass {
 	fill: none;
 }
+
+/* stylelint-disable color-no-hex -- Math illustrations, manipulatives and currency retain fixed colors on a light canvas. */
 
 .ohmylms-vis-hand {
 	stroke: #111827;
 	stroke-linecap: round;
 }
+
+/* stylelint-enable color-no-hex */
 
 .ohmylms-vis-hand.is-hour {
 	stroke-width: 6;
@@ -217,6 +264,8 @@
 	stroke-width: 3;
 }
 
+/* stylelint-disable color-no-hex -- Math illustrations, manipulatives and currency retain fixed colors on a light canvas. */
+
 .ohmylms-vis-cell {
 	fill: #fff;
 	stroke: #374151;
@@ -224,30 +273,50 @@
 	cursor: pointer;
 }
 
+/* stylelint-enable color-no-hex */
+
+/* stylelint-disable color-no-hex -- Math illustrations, manipulatives and currency retain fixed colors on a light canvas. */
+
 .ohmylms-vis-cell.is-on {
 	fill: var(--ohmylms-primary-color, #2563eb);
 }
+
+/* stylelint-enable color-no-hex */
+
+/* stylelint-disable color-no-hex -- Math illustrations, manipulatives and currency retain fixed colors on a light canvas. */
 
 .ohmylms-vis-liquid {
 	fill: #38bdf8;
 	opacity: 0.85;
 }
 
+/* stylelint-enable color-no-hex */
+
+/* stylelint-disable color-no-hex -- Math illustrations, manipulatives and currency retain fixed colors on a light canvas. */
+
 .ohmylms-vis-bar {
 	fill: var(--ohmylms-primary-color, #2563eb);
 	cursor: ns-resize;
 }
+
+/* stylelint-enable color-no-hex */
 
 .ohmylms-vis-bar-control {
 	cursor: ns-resize;
 	outline: none;
 }
 
+/* stylelint-disable color-no-hex -- Math illustrations, manipulatives and currency retain fixed colors on a light canvas. */
+
 .ohmylms-vis-bar-handle rect {
 	fill: #fff;
 	stroke: var(--ohmylms-primary-color, #2563eb);
 	stroke-width: 2;
 }
+
+/* stylelint-enable color-no-hex */
+
+/* stylelint-disable color-no-hex -- Math illustrations, manipulatives and currency retain fixed colors on a light canvas. */
 
 .ohmylms-vis-bar-handle path {
 	fill: none;
@@ -256,15 +325,21 @@
 	stroke-linecap: round;
 }
 
+/* stylelint-enable color-no-hex */
+
+/* stylelint-disable color-no-hex -- Math illustrations, manipulatives and currency retain fixed colors on a light canvas. */
+
 .ohmylms-vis-bar-control:focus-visible .ohmylms-vis-bar-handle rect {
 	stroke: #111827;
 	stroke-width: 3;
 }
 
+/* stylelint-enable color-no-hex */
+
 .ohmylms-vis-chart-help {
-	margin: 8px 0 0;
-	color: #4b5563;
-	font-size: 0.875rem;
+	margin: var(--oml-space-2) 0 0;
+	color: var(--oml-muted);
+	font-size: var(--oml-font-size-md);
 }
 
 .ohmylms-vis-hit {
@@ -273,16 +348,16 @@
 }
 
 .ohmylms-vis-readout {
-	margin: 6px 0 0;
-	font-size: 1.1em;
-	font-weight: 600;
+	margin: calc(var(--oml-space-1) * 1.5) 0 0;
+	font-size: var(--oml-font-size-lg);
+	font-weight: var(--oml-weight-strong);
 	min-height: 1.4em;
 }
 
 .ohmylms-jug-row {
 	display: flex;
 	align-items: flex-end;
-	gap: 16px;
+	gap: var(--oml-space-4);
 }
 
 .ohmylms-vis-range {
@@ -296,8 +371,8 @@
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
-	gap: 8px;
-	margin: 8px 0;
+	gap: var(--oml-space-2);
+	margin: var(--oml-space-2) 0;
 }
 
 .ohmylms-blocks-name {
@@ -308,16 +383,18 @@
 .ohmylms-blocks-count {
 	min-width: 2em;
 	text-align: center;
-	font-weight: 700;
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-blocks-tray {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: flex-end;
-	gap: 4px;
+	gap: var(--oml-space-1);
 	flex: 1 1 100%;
 }
+
+/* stylelint-disable color-no-hex -- Math illustrations, manipulatives and currency retain fixed colors on a light canvas. */
 
 .ohmylms-block {
 	display: inline-block;
@@ -325,16 +402,24 @@
 	background: #93c5fd;
 }
 
+/* stylelint-enable color-no-hex */
+
+/* stylelint-disable color-no-hex -- Math illustrations, manipulatives and currency retain fixed colors on a light canvas. */
+
 .ohmylms-block.is-thousands {
 	width: 56px;
 	height: 56px;
 	background: #bfdbfe;
 }
 
+/* stylelint-enable color-no-hex */
+
 .ohmylms-block.is-hundreds {
 	width: 44px;
 	height: 44px;
 }
+
+/* stylelint-disable color-no-hex -- Math illustrations, manipulatives and currency retain fixed colors on a light canvas. */
 
 .ohmylms-block.is-tens {
 	width: 12px;
@@ -342,26 +427,34 @@
 	background: #60a5fa;
 }
 
+/* stylelint-enable color-no-hex */
+
+/* stylelint-disable color-no-hex -- Math illustrations, manipulatives and currency retain fixed colors on a light canvas. */
+
 .ohmylms-block.is-ones {
 	width: 12px;
 	height: 12px;
 	background: #3b82f6;
 }
 
+/* stylelint-enable color-no-hex */
+
 .ohmylms-money-purse,
 .ohmylms-money-tray {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px;
+	gap: var(--oml-space-2);
 	min-height: 52px;
-	margin: 8px 0;
-	padding: 8px;
+	margin: var(--oml-space-2) 0;
+	padding: var(--oml-space-2);
 }
 
 .ohmylms-money-tray {
-	border: 2px dashed #b6c0cc;
-	border-radius: 12px;
+	border: 2px dashed var(--oml-border);
+	border-radius: var(--oml-radius-control);
 }
+
+/* stylelint-disable color-no-hex -- Math illustrations, manipulatives and currency retain fixed colors on a light canvas. */
 
 .ohmylms-bill {
 	min-width: 84px;
@@ -376,17 +469,31 @@
 	cursor: pointer;
 }
 
+/* stylelint-enable color-no-hex */
+
+/* stylelint-disable color-no-hex -- Math illustrations, manipulatives and currency retain fixed colors on a light canvas. */
+
 .ohmylms-bill.is-source {
 	background: #bbf7d0;
 }
 
+/* stylelint-enable color-no-hex */
+
+/* stylelint-disable color-no-hex -- Educational drawing canvases stay light, including their labels, in every theme. */
+
 .ohmylms-grid {
 	display: grid;
-	gap: 2px;
+	gap: calc(var(--oml-space-1) * 0.5);
 	width: max-content;
 	max-width: 100%;
 	touch-action: none;
+	background: #fff;
+	color: #111827;
 }
+
+/* stylelint-enable color-no-hex */
+
+/* stylelint-disable color-no-hex -- Math illustrations, manipulatives and currency retain fixed colors on a light canvas. */
 
 .ohmylms-grid-cell {
 	aspect-ratio: 1;
@@ -397,26 +504,32 @@
 	cursor: pointer;
 }
 
+/* stylelint-enable color-no-hex */
+
+/* stylelint-disable color-no-hex -- Math illustrations, manipulatives and currency retain fixed colors on a light canvas. */
+
 .ohmylms-grid-cell.is-on {
 	background: var(--ohmylms-primary-color, #2563eb);
 }
 
+/* stylelint-enable color-no-hex */
+
 .ohmylms-grid-cell:focus-visible {
-	outline: 3px solid #f59e0b;
+	outline: 3px solid var(--oml-focus);
 	outline-offset: 1px;
 }
 
 /* Question editors (admin): rows of fields, and the randomize panel */
 .ohmylms-interactive-editor {
-	margin: 8px 0 12px;
+	margin: var(--oml-space-2) 0 var(--oml-space-3);
 }
 
 .ohmylms-interactive-row {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: flex-end;
-	gap: 4px 14px;
-	margin: 0 0 14px;
+	gap: var(--oml-space-1) calc(var(--oml-space-1) * 3.5);
+	margin: 0 0 calc(var(--oml-space-1) * 3.5);
 	padding: 0;
 	border: 0;
 }
@@ -430,44 +543,44 @@
 .ohmylms-interactive-row > legend {
 	flex: 0 0 100%;
 	padding: 0;
-	font-weight: 600;
+	font-weight: var(--oml-weight-strong);
 }
 
 fieldset.ohmylms-interactive-row {
-	padding: 10px 12px;
-	border: 1px solid #d0d7de;
-	border-radius: 8px;
+	padding: calc(var(--oml-space-1) * 2.5) var(--oml-space-3);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
 }
 
 .ohmylms-template-panel {
-	margin: 18px 0;
-	padding: 12px 16px;
-	border: 1px solid #d0d7de;
-	border-radius: 8px;
-	background: #f8fafc;
+	margin: calc(var(--oml-space-1) * 4.5) 0;
+	padding: var(--oml-space-3) var(--oml-space-4);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card);
+	background: var(--oml-subtle);
 }
 
 .ohmylms-template-panel > summary {
 	cursor: pointer;
-	font-weight: 600;
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-template-panel h4 {
-	margin: 16px 0 6px;
+	margin: var(--oml-space-4) 0 calc(var(--oml-space-1) * 1.5);
 }
 
 .ohmylms-template-preview ol {
-	margin: 10px 0 0 22px;
+	margin: calc(var(--oml-space-1) * 2.5) 0 0 calc(var(--oml-space-1) * 5.5);
 }
 
 .ohmylms-template-preview li {
-	margin: 4px 0;
+	margin: var(--oml-space-1) 0;
 }
 
 @media (prefers-reduced-motion: no-preference) {
 
 	.ohmylms-tile {
-		transition: border-color 0.12s, transform 0.12s;
+		transition: border-color var(--oml-motion-fast), transform var(--oml-motion-fast);
 	}
 
 	.ohmylms-tile:active {
@@ -476,47 +589,51 @@ fieldset.ohmylms-interactive-row {
 }
 
 .ohmylms-tag-row .components-form-token-field__input-container {
-	gap: 6px;
-	padding: 8px;
-	border: 1px solid var(--ohmylms-primary-color, #6e42d3);
-	border-radius: 8px;
+	gap: calc(var(--oml-space-1) * 1.5);
+	padding: var(--oml-space-2);
+	border: 1px solid var(--oml-primary);
+	border-radius: var(--oml-radius-control);
 }
 
 .ohmylms-tag-row .components-form-token-field__token {
 	max-width: none;
 	margin: 0;
-	font-size: 14px;
+	font-size: var(--oml-font-size-md);
 }
 
 .ohmylms-tag-row .components-form-token-field__token-text,
 .ohmylms-tag-row .components-form-token-field__remove-token.components-button {
-	color: #fff;
-	background: var(--ohmylms-primary-color, #6e42d3);
+	color: var(--oml-on-primary);
+	background: var(--oml-primary);
 }
 
 .ohmylms-tag-row .components-form-token-field__token-text {
-	padding: 0 4px 0 12px;
-	border-radius: 8px 0 0 8px;
+	padding: 0 var(--oml-space-1) 0 var(--oml-space-3);
+	border-radius: var(--oml-radius-control) 0 0 var(--oml-radius-control);
 	line-height: 32px;
 }
 
 .ohmylms-tag-row .components-form-token-field__remove-token.components-button {
-	padding: 0 8px 0 4px;
-	border-radius: 0 8px 8px 0;
+	padding: 0 var(--oml-space-2) 0 var(--oml-space-1);
+	border-radius: 0 var(--oml-radius-control) var(--oml-radius-control) 0;
 }
 
 .ohmylms-vis-hint,
 .ohmylms-build-hint {
-	margin: 0 0 8px;
-	color: #646970;
-	font-size: 0.95em;
+	margin: 0 0 var(--oml-space-2);
+	color: var(--oml-muted);
+	font-size: var(--oml-font-size-md);
 }
+
+/* stylelint-disable color-no-hex -- Math illustrations, manipulatives and currency retain fixed colors on a light canvas. */
 
 .ohmylms-vis-ghost {
 	fill: var(--ohmylms-primary-color, #2563eb);
 	opacity: 0.3;
 	pointer-events: none;
 }
+
+/* stylelint-enable color-no-hex */
 
 .ohmylms-vis-numberline {
 	max-width: 720px;
@@ -525,31 +642,32 @@ fieldset.ohmylms-interactive-row {
 
 .ohmylms-build-expression .ohmylms-build-answer {
 	min-height: 64px;
-	border: 2px dashed #b6c0cc;
-	border-radius: 12px;
-	background: #f8fafc;
+	border: 2px dashed var(--oml-border);
+	border-radius: var(--oml-radius-card);
+	background: var(--oml-subtle);
 }
 
 .ohmylms-build-expression .ohmylms-build-answer:empty::before {
 	align-self: center;
-	color: #8a94a3;
+	color: var(--oml-muted);
 	content: attr(data-placeholder);
 }
 
 .ohmylms-build-expression .ohmylms-tile {
 	min-width: 3rem;
 	min-height: 48px;
-	padding: 8px 18px;
-	font-size: 1.15rem;
-	font-weight: 600;
+	padding: var(--oml-space-2) calc(var(--oml-space-1) * 4.5);
+	font-size: var(--oml-font-size-lg);
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-build-expression .ohmylms-build-clear {
-	margin-top: 8px;
-	padding: 6px 14px;
-	border: 1px solid #b6c0cc;
+	margin-top: var(--oml-space-2);
+	padding: calc(var(--oml-space-1) * 1.5) calc(var(--oml-space-1) * 3.5);
+	border: 1px solid var(--oml-border);
 	border-radius: 999px;
-	background: #fff;
+	background: var(--oml-surface);
+	color: var(--oml-text);
 	font: inherit;
 	cursor: pointer;
 }
@@ -558,11 +676,16 @@ fieldset.ohmylms-interactive-row {
 .ohmylms-interactive .ohmylms-bill {
 	min-width: 44px;
 	min-height: 44px;
-	padding: 6px 14px;
+	padding: calc(var(--oml-space-1) * 1.5) calc(var(--oml-space-1) * 3.5);
 	font: inherit;
-	font-weight: 600;
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-interactive .ohmylms-vis-readout {
-	font-size: 1.3rem;
+	font-size: var(--oml-font-size-xl);
+}
+
+.ohmylms-interactive :is(button, input, select, textarea):focus-visible {
+	outline: 2px solid var(--oml-focus);
+	outline-offset: 2px;
 }

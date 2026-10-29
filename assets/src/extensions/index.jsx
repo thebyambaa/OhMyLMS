@@ -1,5 +1,6 @@
 import { createElement, createRoot, render } from '@wordpress/element';
 import { createRegistry } from './registry.mjs';
+import { lazyEmailComponent } from './LazyFeature';
 import { registerBuiltinSlashCommands, slashGroups } from './slashCommands.mjs';
 import { registerCurriculumLabels } from './curriculumLabels';
 import { ExtensionSlot } from './ExtensionSlot';
@@ -73,6 +74,7 @@ registerCurriculumLabels();
 registerBuiltinSlashCommands( registry );
 const roots = new WeakMap();
 const publicApi = {
+	lazyEmailComponent,
 	...registry,
 	api,
 	validateMembership,
@@ -102,7 +104,10 @@ const publicApi = {
 	extendRoutes( routes ) {
 		// Course categories and tags were replaced by the curriculum and Course Bundles. Their old screens
 		// could only report errors, so old links to them open the replacements, which are Content Hub tabs.
-		const replacedBy = { '/categories': 'curriculum', '/tags': 'bundles' };
+		const replacedBy = {
+			'/categories': 'curriculum',
+			'/tags': 'curriculum',
+		};
 		// With Gamification on, Certificates is one of its tabs (`#/gamification/certificates`); the old
 		// `#/certificates` address opens it and the template editor keeps the Gamification entry highlighted.
 		// With Gamification off there is no such screen, so Certificates keeps its own screen and menu entry.

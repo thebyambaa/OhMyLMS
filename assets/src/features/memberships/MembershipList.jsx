@@ -419,7 +419,9 @@ export function createMembershipList( readRuntime ) {
 						>
 							{ _tLocal9 !== null &&
 							_tLocal9 !== void 0 &&
-							_tLocal9.sale_price ? (
+							_tLocal9.sale_price !== '' &&
+							_tLocal9.sale_price !== null &&
+							_tLocal9.sale_price !== undefined ? (
 								<React.Fragment>
 									<span>
 										<YH

@@ -1,0 +1,28 @@
+.ohmylms-ws-resource-actions .components-button {
+	min-height: 34px;
+	border-radius: var(--oml-radius-control, 6px);
+}
+
+.ohmylms-ws-owns-extra:empty {
+	display: none;
+}
+
+.ohmylms-ws-popover .components-popover__content {
+	min-width: 280px;
+}
+
+.ohmylms-ws-popover .components-menu-item__button {
+	align-items: flex-start;
+	height: auto;
+	min-height: 36px;
+	padding-block: 8px;
+}
+
+.ohmylms-ws-popover .components-menu-item__item {
+	white-space: normal;
+}
+
+.ohmylms-ws-popover .components-menu-item__info {
+	white-space: normal;
+}
+

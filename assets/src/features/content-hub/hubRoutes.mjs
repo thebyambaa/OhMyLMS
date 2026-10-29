@@ -2,7 +2,7 @@
  * Routing data for the Content Hub, kept free of React so it can be tested on its own.
  *
  * The hub replaces the Courses, Skills, Curriculum, Course Bundles and Assessments submenus. Its tabs
- * are Courses, Lessons, Quizzes, Question Bank, Assignments, Skills, Curriculum and Course Bundles, and
+ * are Courses, Lessons, Quizzes, Exams, Question Bank, Assignments, Skills and Curriculum, and
  * the hub itself (`#/content-hub`) opens the first of them. Every address those screens had keeps working
  * and opens the matching tab (`#/courses`, `#/quizzes`, `#/assignments`, `#/assessments`,
  * `#/assessments/question-bank`, `#/assessments/assignments`, `#/extensions/skills`,
@@ -29,7 +29,6 @@ export const HUB_TABS = [
 	},
 	{ id: 'skills', path: '/content-hub/skills', label: 'Skills' },
 	{ id: 'curriculum', path: '/content-hub/curriculum', label: 'Curriculum' },
-	{ id: 'bundles', path: '/content-hub/bundles', label: 'Course Bundles' },
 ];
 
 /** SDK admin pages that are hub tabs, keyed by their `#/extensions/<id>` address. */
@@ -37,7 +36,6 @@ export const HUB_EXTENSION_TABS = {
 	skills: 'skills',
 	'question-bank': 'question-bank',
 	curriculum: 'curriculum',
-	bundles: 'bundles',
 };
 
 /** The application's own list screens that are hub tabs, keyed by their old route. */
@@ -49,6 +47,8 @@ export const HUB_APP_ROUTES = {
 
 /** The retired Assessments addresses and the tab each one opens. */
 export const HUB_ALIASES = {
+	'/content-hub/bundles': 'curriculum',
+	'/extensions/bundles': 'curriculum',
 	'/assessments': 'quizzes',
 	'/assessments/question-bank': 'question-bank',
 	'/assessments/assignments': 'assignments',
@@ -61,7 +61,6 @@ const TAB_PAGES = {
 	'question-bank': 'QuestionBankPage',
 	skills: 'SkillsPage',
 	curriculum: 'CurriculumPage',
-	bundles: 'BundlesPage',
 };
 
 /** Core screens that are opened from the hub; the admin menu keeps Content Hub highlighted for them. */

@@ -1,0 +1,37 @@
+.ohmylms-quiz-inspector-settings input {
+	max-width: 100%;
+}
+
+.ohmylms-quiz-inspector-settings select {
+	max-width: 100%;
+}
+
+.ohmylms-question-live-preview textarea {
+	max-width: 100%;
+}
+
+.ohmylms-question-live-preview select {
+	max-width: 100%;
+}
+
+.ohmylms-question-live-preview fieldset {
+	border: 1px solid var(--oml-border, #dcdcde);
+	padding: 16px;
+	margin: 12px 0;
+}
+
+.ohmylms-question-card-summary h3 {
+	font-size: 20px;
+	margin: 0 0 12px;
+}
+
+.ohmylms-question-card-summary li {
+	list-style: circle;
+	margin: 8px 24px;
+}
+
+.ohmylms-question-card > p {
+	margin-left: 24px;
+	margin-right: 24px;
+}
+

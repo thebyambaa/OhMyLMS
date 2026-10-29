@@ -13,7 +13,6 @@ const tabLabels = () => ( {
 	assignments: __( 'Assignments', 'ohmylms' ),
 	skills: __( 'Skills', 'ohmylms' ),
 	curriculum: __( 'Curriculum', 'ohmylms' ),
-	bundles: __( 'Course Bundles', 'ohmylms' ),
 } );
 
 /** Keep the Content Hub submenu entry highlighted while a hub screen or an editor opened from it is shown. */

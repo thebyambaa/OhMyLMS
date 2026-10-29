@@ -364,6 +364,15 @@ class Checkout {
 			$this->update_session( $posted_data );
 
 			$cart_data = ecommerce()->cart->get_cart_contents();
+			$membership_ids = array( absint( $posted_data['membership_id'] ?? 0 ) );
+			foreach ( $cart_data as $cart_entry ) {
+				$membership_ids[] = absint( $cart_entry['course_id'] ?? 0 );
+			}
+			foreach ( array_unique( array_filter( $membership_ids ) ) as $membership_id ) {
+				if ( 'ohmylms-membership' === get_post_type( $membership_id ) && \OhMyLMS\Membership\FreeSale::active( ohmylms_get_membership( $membership_id ) ) ) {
+					wp_send_json( array( 'status' => 'error', 'message' => __( 'Use Start free access on the Membership plans page. No payment is needed.', 'ohmylms' ) ) );
+				}
+			}
 
 			if ( empty( $cart_data ) && empty( $posted_data['membership_id'] ) ) {
 				$response = array(

@@ -1,61 +1,50 @@
-# Unified course outline editor
+# Unified course editor
 
-Independent courses now use **Course → Units → Lessons → Activities** in the Content screen. Lessons are the existing program groups, retaining their UUIDs and `group_id` fields. Syllabus-owned courses continue to use their syllabus workspace; this does not convert them.
+Empty courses, syllabus courses and courses imported from quiz files open the same course editor. The starting-content choice only determines what is prefilled.
 
-The selected lesson now also supports [creating activities, linking skills and checking lesson coverage](LESSON-ACTIVITIES.md).
+Units contain block lessons, practice and quizzes. Lessons are reusable WordPress lesson posts, edited through their block editor. The outline inspector edits the placement title, unit, required completion and skill connections. It does not edit the shared resource body.
 
-Learners can open [lesson pages with grouped activity navigation, resume and separate progress measures](LEARNER-LESSON-JOURNEY.md).
+## Course header
 
-The left outline selects a unit, lesson or activity. The right panel edits that selection. Authors can reorder units, lessons and activities, move lessons with their activities between units, and place reusable resources. Removing a lesson ungroups its activities; removing an activity removes its placement. Shared content posts remain intact. Only empty units can be explicitly removed.
+The course's editable name and rich description appear at the top of the outline, alongside its readiness indicator. The separate Course info tab is removed. Image and video controls are available in the collapsed **Course image and video** section in the header. Existing metadata autosave behavior is preserved for drafts; live courses retain explicit saving, and metadata edits do not submit a stale chapter list.
 
-## Saving and publishing
+## Subject and syllabus alignment
 
-**Save outline draft** explicitly saves units, lessons and activity placements together. The outline does not autosave. Navigation warns about unsaved edits. Course information/media retains its existing metadata save behavior, without submitting a stale chapter list. Syllabus objectives remain separate mappings.
+Syllabus alignment includes the existing Subject profile connections above the single syllabus selector. Both this view and Settings → Organize use the same course organization endpoint. Subject changes save immediately, preserve other curriculum placements, and control the Library and Explore grouping of publicly available courses. The syllabus independently controls skill suggestions.
 
-Preview saves pending edits before showing the saved draft. Publishing uses the reviewed revision and existing readiness/enrollment rules. Published unit snapshots protect learners from draft unit changes. Resource bodies still use their existing shared content editors and are not versioned by an outline publication. See [publishing behavior](COURSE-OUTLINE-PUBLISHING.md).
+## Skill connections
 
-Concurrent edits return a conflict and retain local edits. Reloading requires explicit discard when there are local changes. A successful publication updates the editor revision so subsequent saves can proceed.
+Use **Course skills** in the Outline to add skills from the selected syllabus. Units are optional at this stage. Course skills are searchable, with completion requirements and target controls on each skill card. **Connect lessons and quizzes** edits the skill's content links in the same panel.
 
-## API and storage
+Every lesson and quiz uses one **Connected skills** tag field and one **Add skills** action. Suggestions include skills from the selected syllabus, even when the course has no selected skills yet. Picking a source skill creates its optional course outcome and connects it to the selected activity in one local edit. Loading, request failure and missing-source states are shown explicitly; deleting an activity tag retains the course outcome and its completion requirements. The Add skills action opens the same selected syllabus picker and connects the selection directly to the selected activity and course. The older Manage lesson skills shortcut is removed; stored legacy group associations are preserved. Outline rows show linked skill chips that reopen the same controls.
 
-- `GET /ohmylms/v1/courses/{id}/structure` includes the complete program draft, ordered units, editable resource links, creation links and an unpublished-change indicator.
-- `PUT /ohmylms/v1/courses/{id}/structure` accepts the complete `units` array and `program` object. Send the revision header or `revision` field. Existing units use their integer IDs; new units use UUID strings. Program chapter references may use those UUIDs in the same save. The response includes the saved structure and `unit_ids` mapping to native integer IDs.
-- `GET /ohmylms/v1/courses/{id}/structure/resources` searches editable lesson, quiz and assignment resources using `type`, `search` and `page`. Practice choices come from the course's selected skill outcomes. Create or edit resource bodies through their existing editors.
+Adding syllabus skills through this picker also saves the corresponding alignment references using their existing revision check. The dialog explains that alignment references save immediately; the author must choose Save course to keep the course and activity connections. Failure to save references retains the picker selection and does not add course outcomes. Completion always counts each distinct skill once.
 
-The existing shared authorization, course lock and transaction wrap the complete save. Unknown unit references, invalid program rows and failed unit writes roll back all changes. Existing units cannot disappear through omission. No schema migration is required.
+**Skill connections** shows each course skill's teaching activities, practice and planned assessments, computed from the current draft. Selecting a listed resource opens its outline inspector. Quiz inspectors compare intended skill links against saved questions: primary question mappings count as assessment coverage; supporting mappings and quiz tags do not. A planned link alone does not establish learner mastery.
 
-Activity placements can include an optional `title` of up to 200 characters. This overrides the displayed name only within this course. An empty title restores the shared resource title. Learner outlines, next-action labels and author previews use the override. Legacy placement round trips preserve it when omitted by older clients; existing resource IDs and assessment contracts remain unchanged.
+## Readiness indicator
 
-## Ordering and assessments
+A button beside **Course outline** replaces the Readiness tab. It shows a red publishing blocker count, amber **Ready with suggestions**, or green **Ready to publish**. Unsaved changes show **Save to check readiness**; loading and failed checks show their own status rather than a stale ready result.
 
-Program activity order follows native unit order, then lesson order and its activities, followed by activities directly in the unit. The server canonicalizes this order so learner progression matches the displayed outline. Legacy ungrouped activities remain available.
+Click the indicator to expand readiness details above the outline. It exposes its expanded state and controlled panel to assistive technology. Repair links close the details and focus the corresponding outline inspector. Content checks and the explicit Save course action remain authoritative.
 
-Assessment placement uses the quiz's stored assessment style, not a client-provided style:
+## Saving for learners
 
-- One unit test at most per unit, after its other activities, outside lessons.
-- One course challenge at most, outside units and lessons, after the course's other activities.
+The Add skills picker shows only the course's selected syllabus, using its saved topic and skill-group hierarchy. Syllabus alignment selects a single syllabus and saves it immediately in `_ohmylms_course_syllabus`, independently of selected objective references. Roadmaps are excluded; their Curriculum relationships remain available for broader skill measurement and comparison. Existing courses infer their source from a syllabus owner or one unambiguous alignment source. Changing the syllabus replaces alignment references from the old source but preserves course outcomes, activity links and completion requirements. Inline suggestions refresh without reloading or discarding outline edits. Unrelated syllabuses and the unrestricted skill library are excluded. The picker uses the linked source automatically and starts directly at its topics or groups, without a source dropdown or repeated syllabus root. Courses without a linked source are directed to Syllabus alignment. Search preserves ancestor paths, branches show skill counts, and filtering or collapsing retains selections. Existing course connections remain unchanged until the author saves.
 
-The shared program validator enforces these rules for other program writers too. The learner course view displays the challenge after the units and includes it in completion totals.
+Select a native lesson or quiz and choose **Edit blocks here** to open Gutenberg inside the course page. The embedded editor retains the native block inserter, media library, custom OhMyLMS blocks, resource permissions and save behavior. Save resource content in that panel, then choose **Back to outline**. Closing warns about unsaved block edits and offers an explicit discard action. Outline edits remain mounted while the panel is open; resource saves affect the shared lesson or quiz. Extension resource editors retain their separate editor links.
 
-## Verification
+**Save course** saves units and placements and activates the validated program in one authorized, revision-guarded transaction. Saved draft block lessons and quizzes used by the course are made available in that save, subject to edit and publish capabilities. Active enrolled learners receive the saved version immediately; completed-course history stays pinned. Completion, skill review and approved-question checks remain enforced; failed saves roll back the outline, resource statuses and learner bindings. Course versions remain internal history. The course UI has no draft preview, publication stage or Save as Draft action. Legacy REST calls without `activate: true` retain their existing draft-save behavior. Navigation still protects unsaved outline edits. The top toolbar's **View course** link opens the saved learner-facing course in a separate tab from Content or Settings; it replaces the old Next action and does not save or activate pending edits.
 
-The browser test covers adding a unit/lesson/resource, course-specific naming, reordering, unsaved navigation, explicit saving, metadata isolation, preview, publication, saving after publication and a conflicting edit in another tab. PHP integration covers temporary unit mapping, rollback, stale revisions, resource preservation, checkpoint placement and published learner output. Pure tests cover ordering and lesson removal.
+Use the site's canonical admin address. On this Local installation, `http://800.local` is the configured WordPress origin; opening the admin through `:10004` can cause cross-origin REST writes to fail.
 
 Run the PHP integration with `OHMYLMS_STRUCTURE_INTEGRATION=1 php tests/php/course-outline-integration.php` against local WordPress, and the browser workflow with the fixture and `tests/course-structure.config.cjs` described in [the structure contract](COURSE-STRUCTURE-CONTRACT.md).
 
-## Editor layout (October 24, 2026)
+## Compatibility and verification
 
-The Content step follows the Khan Academy course shape:
+Older stored drafts may retain skill or legacy group associations after their native unit was removed. The unified save detaches an unchanged stored orphan skill association into a course-level outcome and drops its obsolete legacy group. Skill identity, target, required status and current activity links are retained. New or changed unknown references and activity references remain invalid; the authorized revision-locked transaction rolls back failed saves. This server-side repair accepts an already-open editor's retry without discarding its unsaved new units or lessons.
 
-- **Header**: one status line (unsaved changes, draft not yet published, or published), a link to any publishing blockers, and **Discard changes**/**Reload saved outline**, **Save outline draft** and **Preview draft outline**. On the Content step the header replaces the separate course save-status bar; course information still saves through its existing metadata save.
-- **Tabs**: Outline, Readiness (with the blocker count), Syllabus alignment (the course objective mappings) and Course info. Readiness links switch back to the Outline tab and select the item to repair.
-- **Outline**: each unit is a card that can be collapsed, with its lesson, skill and activity counts. Lessons list their activities with type icons and draft or missing badges, plus linked skills that have no practice yet. Skills and activities outside a lesson appear under "Not in a lesson". Every unit ends with an **Add unit test** slot and the course ends with an **Add course challenge** slot; these pickers list only quizzes whose assessment style matches.
-- **Practice is the skill**: Add practice lists the skills already linked to the lesson and, when you search, the whole skill library. Choosing a library skill links it to the lesson and places its practice in one step. A skill already linked to another lesson stays there and cannot be chosen.
-- **Skills**: selecting a skill opens a panel to change whether it is required, move it to a lesson in its unit, add its practice or remove it from the course. Skills whose shared term no longer exists show as "Missing skill #ID". The server rejects saves while they remain, so the editor offers **Remove missing skills**, which also removes their practice placements and activity coverage links.
 
-- **Drag and drop**: drag a unit onto another unit's header to put it before that unit, or onto the course end to move it last. Drag a lesson onto another lesson, or onto a unit header to append it to that unit; its activities and skills move with it. Drag an activity onto another activity, onto a lesson, onto "Not in a lesson" or onto a unit header. Unit tests and the course challenge keep their fixed places. The inspector's Move buttons remain the keyboard alternative.
-- **Skill codes**: the structure response adds `skill_codes`, the shared skill's `_ohmylms_skill_code` keyed by term ID. Practice and skill rows and the skill picker show the code next to the name.
-- **Group skills into lessons**: a selected unit with skills outside lessons offers **Make a lesson for each skill** and **Put them in one lesson**. Both link the skills to the new lessons and place their practice; missing skills are left for removal.
-- **Unit test and course challenge slots** can also create a new draft quiz with that assessment style.
+REST paths, resource identifiers and assessment contracts remain compatible. The existing legacy group helper remains available for older integrations; the current editor creates block lesson placements.
 
-At 960px and below the toolbar wraps the steps under Back and the actions. At 782px and below it scrolls with the page and stays pinned to the top. No REST contract, stored field or assessment contract changed.
+The local browser fixture exercises outline editing, saving, preview, publishing, conflicts and shared skill connections. The syllabus integration checks draft block lesson creation, skill links, save/reload, validation, authorization and rollback. Fixture records and session tokens are removed after verification.

@@ -1,0 +1,35 @@
+.ohmylms-catalog-item-controls .components-base-control {
+	margin-bottom: 0;
+}
+
+.ohmylms-catalog-items.is-chapter {
+	margin: 0 0 8px;
+}
+
+.ohmylms-catalog-item-controls .components-text-control__input {
+	width: 4.5rem;
+	min-height: 28px;
+}
+
+.ohmylms-catalog-type.is-quiz {
+	background: #fff4e0;
+	color: #b45309;
+}
+
+.ohmylms-catalog-type.is-assignment {
+	background: #e6f6ec;
+	color: #15803d;
+}
+
+.ohmylms-catalog-flag.is-ok {
+	background: #e6f6ec;
+	color: #15803d;
+}
+
+.ohmylms-catalog-flag.is-warning {
+	background: #fff4e0;
+	color: #b45309;
+}
+
+/* Adding things one after another */
+

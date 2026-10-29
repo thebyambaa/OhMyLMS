@@ -10,10 +10,28 @@ use OhMyLMS\Student\TeacherWorkspace;
 
 defined( 'ABSPATH' ) || exit;
 
+$gradebook_class = \OhMyLMS\Schools\Access::classroom( $teacher_class, true );
+if ( ! $gradebook_class || ! TeacherWorkspace::available() ) {
+	echo '<p role="alert">' . esc_html__( 'This class gradebook is not available.', 'ohmylms' ) . '</p>';
+	return;
+}
+echo '<h3>' . esc_html__( 'Class gradebook', 'ohmylms' ) . '</h3>';
+ohmylms_get_template(
+	'student-hub/school-gradebook.php',
+	array(
+		'school_id'      => (int) $gradebook_class['school_id'],
+		'class_id'       => $teacher_class,
+		'page'           => $teacher_page,
+		'matrix_teacher' => true,
+	)
+);
+echo '<details class="oml-hub-skill-report"><summary>' . esc_html__( 'Skill progress', 'ohmylms' ) . '</summary>';
+
 try {
 	$class_report = TeacherReports::read( $teacher_class, absint( get_query_var( 'hub_period', 30 ) ), $teacher_page );
 } catch ( RuntimeException $class_report_error ) {
 	echo '<p role="alert">' . esc_html__( 'This class report is no longer available. Return to your classes and try again.', 'ohmylms' ) . '</p>';
+	echo '</details>';
 	return;
 }
 $class_report_url = add_query_arg( 'hub_class', $teacher_class, TeacherWorkspace::url( 'progress' ) );
@@ -71,3 +89,5 @@ $class_report_url = add_query_arg( 'hub_class', $teacher_class, TeacherWorkspace
 		<?php endif; ?>
 	<?php endforeach; ?>
 </nav>
+
+</details>

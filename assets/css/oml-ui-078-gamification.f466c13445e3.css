@@ -1,0 +1,16 @@
+.ohmylms-streak-settings .components-base-control__label {
+	text-transform: none;
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 1.5;
+	margin-bottom: 8px;
+}
+
+.ohmylms-streak-settings .components-input-control__label {
+	text-transform: none;
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 1.5;
+	margin-bottom: 8px;
+}
+
