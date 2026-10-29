@@ -51,7 +51,8 @@ security and testing progress alongside.
 
 ### Step 2: libraries (owner: `features/vendor-packages`)
 
-- **Easy Email** (about 2.2 MB across chunk 355 and the shared bundle) is the largest remaining
+- **Easy Email** (see [the audit](EASY-EMAIL-AUDIT.md): a locally patched copy of an unidentified release; swap core first, behind a golden-template corpus)
+  (about 2.2 MB across chunk 355 and the shared bundle) is the largest remaining
   family. It also embeds private copies of MJML, Arco, CodeMirror, html2canvas and
   `@wordpress/icons`. Move the whole package rather than individual internals. Removing pieces
   one at a time risks the editor's form and selection contracts. Before switching, capture
