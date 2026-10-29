@@ -7,6 +7,7 @@ import generatorModule from '@babel/generator';
 import { adaptVendors } from '../../tools/vendor-adapters.mjs';
 import { adaptEditorPackages } from '../../tools/editor-package-adapters.mjs';
 import { adaptEmailModel } from '../../tools/email-runtime-adapters.mjs';
+import { adaptEditorRuntime } from '../../tools/editor-runtime-adapters.mjs';
 import {
 	auditEmailVendors,
 	emailVendorModules,
@@ -35,6 +36,7 @@ test( 'email vendor relocation preserves every factory and its chunk registratio
 	adaptVendors( baselineVendor );
 	adaptEditorPackages( baselineVendor );
 	adaptEmailModel( baselineVendor );
+	adaptEditorRuntime( baselineVendor, emailVendorSource );
 	const [ vendorIds, vendors ] = capture( read( emailVendorSource ) );
 	const [ emailIds, email ] = capture( read( emailVendorTarget ) );
 	assert.deepEqual( Array.from( vendorIds ), [ 96 ] );

@@ -8,6 +8,10 @@ import generatorModule from '@babel/generator';
 import { adaptApplication } from './application-adapters.mjs';
 import { adaptVendors, adaptConnectionStatus } from './vendor-adapters.mjs';
 import {
+	auditEditorRuntime,
+	adaptEditorRuntime,
+} from './editor-runtime-adapters.mjs';
+import {
 	auditHighlightConsumers,
 	adaptEditorPackages,
 } from './editor-package-adapters.mjs';
@@ -68,6 +72,8 @@ const emailVendors = process.argv.includes( '--extensions' )
 	: [];
 if ( process.argv.includes( '--extensions' ) )
 	auditHighlightConsumers( manifest, readSource );
+if ( process.argv.includes( '--extensions' ) )
+	auditEditorRuntime( manifest, readSource );
 const emailAsset = manifest.assets.find(
 	( asset ) => asset.output === emailVendorTarget
 );
@@ -289,6 +295,8 @@ for ( const asset of manifest.assets ) {
 			asset.output === 'assets/dist/admin/ohmylms.js'
 		)
 			console.log( 'Slash command adapter:', adaptSlashCommands( ast ) );
+		if ( process.argv.includes( '--extensions' ) )
+			adaptEditorRuntime( ast, asset.output );
 		const result = generate(
 			ast,
 			{

@@ -51,6 +51,8 @@ for ( const module of manifest.modules ) {
 const bundles = [
 	'assets/dist/vendors/vendors.js',
 	'assets/dist/admin/editor-lowlight.js',
+	'assets/dist/admin/editor-tiptap.js',
+	'assets/dist/vendors/editor.js',
 ].map( ( file ) => {
 	const code = fs.readFileSync( path.join( root, file ) );
 	return { file, bytes: code.length, gzipBytes: gzipSync( code ).length };

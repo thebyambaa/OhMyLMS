@@ -12,6 +12,7 @@ const files = [
 	'assets/dist/admin/extensions.js',
 	'assets/dist/vendors/vendors.js',
 	'assets/dist/admin/editor-lowlight.js',
+	'assets/dist/admin/editor-tiptap.js',
 	'assets/dist/vendors/editor.js',
 	'assets/dist/vendors/chartjs.js',
 	'assets/dist/vendors/emotion.js',

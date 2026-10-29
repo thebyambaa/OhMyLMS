@@ -22,6 +22,24 @@ for ( const retired of manifest.retiredAssets || [] ) {
 	}
 }
 for ( const [ source, target ] of [
+	[ 'build/sdk/editor-tiptap.js', 'assets/dist/admin/editor-tiptap.js' ],
+	[
+		'build/sdk/editor-tiptap.js.LICENSE.txt',
+		'assets/dist/admin/editor-tiptap.js.LICENSE.txt',
+	],
+	[
+		'build/sdk/editor-tiptap.js.map',
+		'assets/dist/admin/editor-tiptap.js.map',
+	],
+	[
+		'build/sdk/editor-tiptap.asset.php',
+		'assets/dist/admin/editor-tiptap.asset.php',
+	],
+	[ 'build/assets/dist/vendors/editor.js', 'assets/dist/vendors/editor.js' ],
+	[
+		'build/assets/dist/vendors/editor.js.map',
+		'assets/dist/vendors/editor.js.map',
+	],
 	[ 'build/sdk/editor-lowlight.js', 'assets/dist/admin/editor-lowlight.js' ],
 	[
 		'build/sdk/editor-lowlight.js.map',
@@ -181,6 +199,46 @@ const syntaxNotices = [
 fs.writeFileSync(
 	path.join( root, 'assets/dist/admin/editor-lowlight.LICENSES.txt' ),
 	syntaxNotices
+);
+// Include notices for every installed package present in the editor source map.
+const editorMap = JSON.parse(
+	fs.readFileSync(
+		path.join( root, 'build/sdk/editor-tiptap.js.map' ),
+		'utf8'
+	)
+);
+const editorPackages = new Set(
+	editorMap.sources.flatMap( ( source ) => {
+		const name = source.split( 'node_modules/' )[ 1 ];
+		return name
+			? [
+					name
+						.split( '/' )
+						.slice( 0, name.startsWith( '@' ) ? 2 : 1 )
+						.join( '/' ),
+				]
+			: [];
+	} )
+);
+const editorNotices = [ ...editorPackages ].sort().map( ( name ) => {
+	const directory = path.join( root, 'node_modules', name );
+	const metadata = JSON.parse(
+		fs.readFileSync( path.join( directory, 'package.json' ), 'utf8' )
+	);
+	const license = fs
+		.readdirSync( directory )
+		.find( ( file ) => /^license(?:\.|$)/i.test( file ) );
+	const licensePath = license
+		? path.join( directory, license )
+		: name.startsWith( '@tiptap/' )
+			? path.join( root, 'tools/licenses/tiptap-MIT.txt' )
+			: null;
+	if ( ! licensePath ) throw new Error( `Missing editor license: ${ name }` );
+	return `${ name } ${ metadata.version } (${ metadata.license })\n${ fs.readFileSync( licensePath, 'utf8' ) }`;
+} );
+fs.writeFileSync(
+	path.join( root, 'assets/dist/admin/editor-tiptap.LICENSES.txt' ),
+	editorNotices.join( '\n\n' )
 );
 fs.mkdirSync( path.join( root, 'assets/dist/mathlive' ), { recursive: true } );
 fs.cpSync(

@@ -8,7 +8,12 @@ const generate = require( '@babel/generator' ).default;
 const root = path.resolve( __dirname, '../../..' );
 const wordpress = path.resolve( root, '../../../wp-includes/js/dist/vendor' );
 
-async function harness( page, failFirst = false, baselineVendor = false ) {
+async function harness(
+	page,
+	failFirst = false,
+	baselineVendor = false,
+	baselineEditor = false
+) {
 	// Run the shipped Webpack loader, replacing only application startup in memory.
 	// No login or database is needed to exercise real lazy chunks and real UI libraries.
 	const ast = parse(
@@ -57,6 +62,7 @@ async function harness( page, failFirst = false, baselineVendor = false ) {
         <script src="/react.js"></script><script src="/react-dom.js"></script>
         <script>window.wp={element:{...React,...ReactDOM}};</script>
         <script src="/plugin/assets/dist/admin/editor-lowlight.js"></script>
+        <script src="/plugin/assets/dist/admin/editor-tiptap.js"></script>
         <script src="/plugin/assets/dist/vendors/vendors.js"></script>
         <script src="/plugin/assets/dist/vendors/editor.js"></script>
         <script src="/plugin/assets/dist/vendors/emotion.js"></script>
@@ -74,14 +80,23 @@ async function harness( page, failFirst = false, baselineVendor = false ) {
 				contentType: 'application/javascript; charset=utf-8',
 				body: application,
 			} );
-		if ( baselineVendor && url.pathname.endsWith( '/vendors/vendors.js' ) )
-			return route.fulfill( {
-				path: path.join(
-					root,
-					'build/parity/assets/dist/vendors/vendors.js'
-				),
-				contentType: 'application/javascript; charset=utf-8',
-			} );
+		if (
+			( baselineVendor &&
+				url.pathname.endsWith( '/vendors/vendors.js' ) ) ||
+			( baselineEditor && url.pathname.endsWith( '/vendors/editor.js' ) )
+		) {
+			const baselineFile = path.join( root,
+				`build/parity/assets/dist/vendors/${ baselineEditor && url.pathname.endsWith( '/editor.js' ) ? 'editor' : 'vendors' }.js` );
+			let body = fs.readFileSync( baselineFile, 'utf8' );
+			if ( baselineEditor && baselineFile.endsWith( 'vendors.js' ) ) {
+				// Preserve the pre-migration production deduplication adapter.
+				const { adaptVendors } = await import( '../../../tools/vendor-adapters.mjs' );
+				const baseline = parse( body );
+				adaptVendors( baseline );
+				body = generate( baseline, { compact: true } ).code;
+			}
+			return route.fulfill( { body, contentType: 'application/javascript; charset=utf-8' } );
+		}
 		if ( url.pathname.endsWith( '/chunks/355.js' ) && failures-- > 0 )
 			return route.abort();
 		const relative = url.pathname.replace( /^\/plugin\//, '' );

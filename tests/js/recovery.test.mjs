@@ -92,6 +92,8 @@ test( 'reassembled assets preserve shipped AST outside the authored admin app', 
 			// Vendor-chunk tests compare every factory across these relocated bundles.
 			! [
 				'assets/dist/vendors/vendors.js',
+				// Editor runtime tests verify every npm bridge and retired factory.
+				'assets/dist/vendors/editor.js',
 				'assets/dist/chunks/355.js',
 			].includes( a.output )
 	) ) {

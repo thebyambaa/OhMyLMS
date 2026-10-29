@@ -42,15 +42,27 @@ class AdminAssets extends Assets {
 	 * Get scripts for Admin assets.
 	 */
 	public function get_scripts() {
-		$suffix            = '';
-		$editor_directory  = defined( 'OHMYLMS_SOURCE_ASSETS' ) && OHMYLMS_SOURCE_ASSETS ? 'build/sdk' : 'assets/dist/admin';
-		$editor_asset_file = OHMYLMS_DIR . '/' . $editor_directory . '/editor-lowlight.asset.php';
-		$editor_asset      = is_file( $editor_asset_file ) ? require $editor_asset_file : array(
+		$suffix             = '';
+		$editor_directory   = defined( 'OHMYLMS_SOURCE_ASSETS' ) && OHMYLMS_SOURCE_ASSETS ? 'build/sdk' : 'assets/dist/admin';
+		$editor_asset_file  = OHMYLMS_DIR . '/' . $editor_directory . '/editor-lowlight.asset.php';
+		$editor_asset       = is_file( $editor_asset_file ) ? require $editor_asset_file : array(
 			'dependencies' => array(),
+			'version'      => OHMYLMS_VERSION,
+		);
+		$runtime_asset_file = OHMYLMS_DIR . '/' . $editor_directory . '/editor-tiptap.asset.php';
+		$runtime_asset      = is_file( $runtime_asset_file ) ? require $runtime_asset_file : array(
+			'dependencies' => array( 'react', 'react-dom' ),
 			'version'      => OHMYLMS_VERSION,
 		);
 
 		$scripts = array(
+			'ohmylms-editor-tiptap'    => array(
+				'src'       => self::get_asset_url( $editor_directory . '/editor-tiptap.js' ),
+				'version'   => $runtime_asset['version'],
+				'deps'      => array_values( array_unique( array_merge( $runtime_asset['dependencies'], array( 'ohmylms-editor-lowlight' ) ) ) ),
+				'in_footer' => true,
+				'screens'   => array( 'toplevel_page_ohmylms' ),
+			),
 			'ohmylms-editor-lowlight'  => array(
 				'src'       => self::get_asset_url( $editor_directory . '/editor-lowlight.js' ),
 				'version'   => $editor_asset['version'],
@@ -68,7 +80,7 @@ class AdminAssets extends Assets {
 			'ohmylms-vendor'           => array(
 				'src'       => self::get_asset_url( 'assets/dist/vendors/vendors' . $suffix . '.js' ),
 				'version'   => OHMYLMS_VERSION . '.' . filemtime( OHMYLMS_DIR . '/assets/dist/vendors/vendors.js' ),
-				'deps'      => array( 'react', 'react-dom', 'ohmylms-editor-lowlight' ),
+				'deps'      => array( 'react', 'react-dom', 'ohmylms-editor-tiptap' ),
 				'in_footer' => true,
 				'screens'   => array( 'toplevel_page_ohmylms' ),
 			),
@@ -81,7 +93,7 @@ class AdminAssets extends Assets {
 			),
 			'ohmylms-editor'           => array(
 				'src'       => self::get_asset_url( 'assets/dist/vendors/editor' . $suffix . '.js' ),
-				'version'   => OHMYLMS_VERSION,
+				'version'   => OHMYLMS_VERSION . '.' . filemtime( OHMYLMS_DIR . '/assets/dist/vendors/editor.js' ),
 				'deps'      => array( 'ohmylms-vendor' ),
 				'in_footer' => true,
 				'screens'   => array( 'toplevel_page_ohmylms' ),
