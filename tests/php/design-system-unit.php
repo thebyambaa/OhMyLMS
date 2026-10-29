@@ -94,4 +94,15 @@ check( 'custom' === DS::get()['preset'] && 999 === DS::get()['button_radius'], '
 DS::save( DS::preset_values( 'khan' ) );
 check( 'khan' === DS::get()['preset'], 'reset to khan' );
 
+// Learner pages get the same --oml-* names, valued from the learner branding, not the admin Design system.
+$options['ohmylms_primary_color_scheme'] = '#aa2200';
+$learner                                 = \OhMyLMS\Design\Tokens::frontend_css();
+check( false !== strpos( $learner, '--oml-primary:#aa2200;' ) && false !== strpos( $learner, '--ohmylms-primary-color:#aa2200;' ), 'learner --oml-primary follows the learner brand color' );
+check( false === strpos( $learner, '--oml-primary:#1865f2;' ), 'learner tokens ignore the admin Design system' );
+$admin_names = array_keys( DS::variables( DS::preset_values( 'classic' )['colors'], 4, 'comfortable' ) );
+foreach ( $admin_names as $name ) {
+	check( false !== strpos( $learner, '--' . $name . ':' ), "learner css defines --$name" );
+}
+unset( $options['ohmylms_primary_color_scheme'] );
+
 echo "Design system checks passed: $checks\n";

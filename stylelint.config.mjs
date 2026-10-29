@@ -87,6 +87,16 @@ export default {
 			extends: [ '@wordpress/stylelint-config/scss' ],
 			customSyntax: 'postcss-scss',
 		},
+		{
+			// Shared components take every color from the --oml-* tokens so one design setting restyles
+			// admin and learner pages alike; see docs/DESIGN-TOKENS.md.
+			files: [ 'assets/src/ui/**/*.{css,scss}' ],
+			rules: {
+				'color-no-hex': true,
+				'color-named': 'never',
+				'function-disallowed-list': [ 'rgb', 'rgba', 'hsl', 'hsla' ],
+			},
+		},
 	],
 	ignoreFiles: [
 		...compiled_styles,

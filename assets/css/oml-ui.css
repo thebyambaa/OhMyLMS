@@ -1,0 +1,122 @@
+/*
+ * OhMyLMS shared components.
+ *
+ * Every color, radius, height and gap comes from the --oml-* tokens (docs/DESIGN-TOKENS.md), so the
+ * same markup looks right in admin screens and on learner pages. No hardcoded colors here; stylelint
+ * enforces it.
+ */
+
+/* ---- Button: .oml-btn + .oml-btn-{primary|secondary|tertiary|danger} + .oml-btn-{sm|md|lg} ---- */
+.oml-btn {
+	align-items: center;
+	background: var(--oml-surface);
+	border: 1px solid var(--oml-secondary);
+	border-radius: var(--oml-radius-button);
+	box-shadow: none;
+	box-sizing: border-box;
+	color: var(--oml-primary);
+	cursor: pointer;
+	display: inline-flex;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 600;
+	gap: var(--oml-space-2);
+	justify-content: center;
+	line-height: 1.2;
+	margin: 0;
+	min-height: var(--oml-button-height-md);
+	padding: 0 var(--oml-button-pad-md);
+	text-decoration: none;
+	transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+	vertical-align: middle;
+}
+
+.oml-btn:hover {
+	background: var(--oml-primary-soft);
+	border-color: var(--oml-secondary-hover);
+	color: var(--oml-primary-hover);
+}
+
+.oml-btn:active {
+	color: var(--oml-primary-active);
+}
+
+.oml-btn:focus-visible {
+	outline: 2px solid var(--oml-focus);
+	outline-offset: 2px;
+}
+
+.oml-btn-primary {
+	background: var(--oml-primary);
+	border-color: var(--oml-primary);
+	color: var(--oml-on-primary);
+}
+
+.oml-btn-primary:hover,
+.oml-btn-primary:focus {
+	background: var(--oml-primary-hover);
+	border-color: var(--oml-primary-hover);
+	color: var(--oml-on-primary);
+}
+
+.oml-btn-primary:active {
+	background: var(--oml-primary-active);
+	border-color: var(--oml-primary-active);
+	color: var(--oml-on-primary);
+}
+
+.oml-btn-tertiary {
+	background: transparent;
+	border-color: transparent;
+	color: var(--oml-link);
+}
+
+.oml-btn-tertiary:hover {
+	background: var(--oml-primary-soft);
+	border-color: transparent;
+	color: var(--oml-link-hover);
+}
+
+.oml-btn-danger {
+	background: var(--oml-danger);
+	border-color: var(--oml-danger);
+	color: var(--oml-on-danger);
+}
+
+.oml-btn-danger:hover,
+.oml-btn-danger:focus {
+	background: var(--oml-danger-hover);
+	border-color: var(--oml-danger-hover);
+	color: var(--oml-on-danger);
+}
+
+.oml-btn-danger:active {
+	background: var(--oml-danger-active);
+	border-color: var(--oml-danger-active);
+	color: var(--oml-on-danger);
+}
+
+.oml-btn-sm {
+	min-height: var(--oml-button-height-sm);
+	padding: 0 var(--oml-button-pad-sm);
+}
+
+.oml-btn-lg {
+	min-height: var(--oml-button-height-lg);
+	padding: 0 var(--oml-button-pad-lg);
+}
+
+.oml-btn-block {
+	display: flex;
+	width: 100%;
+}
+
+.oml-btn[disabled],
+.oml-btn[aria-disabled="true"] {
+	background: var(--oml-subtle);
+	border-color: var(--oml-border);
+	color: var(--oml-muted);
+	cursor: not-allowed;
+	opacity: 0.7;
+	pointer-events: none;
+}

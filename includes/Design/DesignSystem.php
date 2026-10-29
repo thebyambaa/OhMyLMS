@@ -353,21 +353,25 @@ final class DesignSystem {
 	}
 
 	/**
-	 * CSS custom properties for the settings, scoped to the plugin's admin screens.
+	 * The --oml-* semantic tokens: the one vocabulary every component reads, in admin and on learner pages.
 	 *
-	 * @param array|null $settings Cleaned settings; the saved ones when null.
-	 * @return string
+	 * Admin feeds it from the Design system settings; learner pages feed it from the learner branding
+	 * options (Tokens::frontend_css), so the names and derived shades are identical but each side keeps
+	 * its own values.
+	 *
+	 * @param array  $c             Validated colors (COLOR_KEYS).
+	 * @param int    $button_radius Button radius in pixels.
+	 * @param string $density       One of DENSITIES.
+	 * @return array<string,string> Variable name (without the leading dashes) => value.
 	 */
-	public static function css( $settings = null ) {
-		$settings = is_array( $settings ) ? self::sanitize( $settings ) : self::get();
-		$c        = $settings['colors'];
-		$primary  = $c['primary'];
-		$on       = self::text_on( $primary );
-		$space    = self::spacing( $settings['density'] );
-		$radii    = self::radii( $settings['button_radius'] );
-		$heights  = self::HEIGHTS[ $settings['density'] ];
-		$focus    = self::contrast( $primary, $c['surface'] ) >= 3 ? $primary : $c['heading'];
-		$vars     = array(
+	public static function variables( $c, $button_radius, $density ) {
+		$primary = $c['primary'];
+		$on      = self::text_on( $primary );
+		$space   = self::spacing( $density );
+		$radii   = self::radii( $button_radius );
+		$heights = self::HEIGHTS[ $density ];
+		$focus   = self::contrast( $primary, $c['surface'] ) >= 3 ? $primary : $c['heading'];
+		$vars    = array(
 			'oml-primary'          => $primary,
 			'oml-primary-hover'    => Tokens::mix( $primary, '#000000', 0.15 ),
 			'oml-primary-active'   => Tokens::mix( $primary, '#000000', 0.3 ),
@@ -411,6 +415,22 @@ final class DesignSystem {
 		foreach ( $space as $i => $px ) {
 			$vars[ 'oml-space-' . ( $i + 1 ) ] = $px . 'px';
 		}
+		return $vars;
+	}
+
+	/**
+	 * CSS custom properties for the settings, scoped to the plugin's admin screens.
+	 *
+	 * @param array|null $settings Cleaned settings; the saved ones when null.
+	 * @return string
+	 */
+	public static function css( $settings = null ) {
+		$settings = is_array( $settings ) ? self::sanitize( $settings ) : self::get();
+		$c        = $settings['colors'];
+		$primary  = $c['primary'];
+		$on       = self::text_on( $primary );
+		$radii    = self::radii( $settings['button_radius'] );
+		$vars     = self::variables( $c, $settings['button_radius'], $settings['density'] );
 		// The existing admin stylesheets and WordPress/Arco components read these names.
 		$vars += array(
 			'wp-admin-theme-color'                      => $primary,
@@ -498,7 +518,7 @@ final class DesignSystem {
 		$path = OHMYLMS_DIR . '/assets/css/admin-design-system.css';
 		// Load after the other plugin and WordPress component styles so the shared rules win ties.
 		$deps = array();
-		foreach ( array( 'wp-components', 'ohmylms-main', 'ohmylms-tailwind', 'ohmylms-admin-ui', 'ohmylms-question-editor', 'ohmylms-skill-studio' ) as $handle ) {
+		foreach ( array( 'wp-components', Ui::STYLE_HANDLE, 'ohmylms-main', 'ohmylms-tailwind', 'ohmylms-admin-ui', 'ohmylms-question-editor', 'ohmylms-skill-studio' ) as $handle ) {
 			if ( wp_style_is( $handle, 'registered' ) ) {
 				$deps[] = $handle;
 			}

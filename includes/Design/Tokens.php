@@ -166,6 +166,32 @@ final class Tokens {
 		return 'https://fonts.googleapis.com/css2?family=' . str_replace( ' ', '+', $font ) . ':wght@400;500;600;700&display=swap';
 	}
 
+	/**
+	 * The --oml-* semantic tokens for learner pages.
+	 *
+	 * Same names and derived shades as the admin Design system, so a shared component renders the same
+	 * way in both places, but the values come from the learner branding options. Neutrals, status colors
+	 * and shape use the Classic preset, which matches the learner theme.
+	 *
+	 * @return string Declarations without a selector.
+	 */
+	public static function frontend_oml_vars() {
+		$preset              = DesignSystem::PRESETS['classic'];
+		$colors              = $preset['colors'];
+		$primary             = self::color( 'ohmylms_primary_color_scheme' );
+		$colors['primary']   = $primary;
+		$colors['secondary'] = $primary;
+		$colors['link']      = $primary;
+		$colors['heading']   = self::color( 'ohmylms_heading_color_scheme' );
+		$colors['text']      = self::color( 'ohmylms_body_text_color_scheme' );
+		$colors['success']   = self::color( 'ohmylms_body_progress_color_scheme' );
+		$css                 = '';
+		foreach ( DesignSystem::variables( $colors, $preset['button_radius'], $preset['density'] ) as $name => $value ) {
+			$css .= '--' . $name . ':' . $value . ';';
+		}
+		return $css;
+	}
+
 	/** Learner-site variables, plus the font rule when a font is chosen. */
 	public static function frontend_css() {
 		$primary = self::color( 'ohmylms_primary_color_scheme' );
@@ -179,6 +205,7 @@ final class Tokens {
 			. '--ohmylms-body-text-color:' . self::color( 'ohmylms_body_text_color_scheme' ) . ';'
 			. '--ohmylms-progressbar-color:' . self::color( 'ohmylms_body_progress_color_scheme' ) . ';'
 			. '--ohmylms-outline-color:var(--ohmylms-primary-color);'
+			. self::frontend_oml_vars()
 			// Left undefined for "Theme font" so var(--ohmylms-font-family, fallback) keeps each page's own font.
 			. ( 'inherit' !== $font ? '--ohmylms-font-family:' . self::stack( $font ) . ';' : '' )
 			. '}';

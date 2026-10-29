@@ -1,0 +1,77 @@
+/*
+ * Learner buttons (.ohmylms-button) drawn with the shared Button tokens.
+ *
+ * Loaded as inline CSS right after assets/css/style.css (Ui::legacy_button_css), so these rules win the
+ * tie with the older ones there at equal specificity. The class name stays: Elementor and Bricks style
+ * controls, quiz scripts and site custom CSS target it. Once the markup uses oml-btn everywhere the
+ * older rules in style.css can be deleted. Colors, radius, height and spacing are --oml-* tokens
+ * (docs/DESIGN-TOKENS.md); no hardcoded values.
+ */
+
+.ohmylms-page .ohmylms-button[type="submit"],
+.ohmylms-page .ohmylms-button[type="button"],
+.ohmylms-page .ohmylms-button {
+	align-items: center;
+	background-color: var(--oml-primary);
+	border: 1px solid var(--oml-primary);
+	border-radius: var(--oml-radius-button);
+	box-shadow: none;
+	color: var(--oml-on-primary);
+	cursor: pointer;
+	display: inline-flex;
+	font-size: 14px;
+	font-weight: 600;
+	gap: var(--oml-space-2);
+	justify-content: center;
+	letter-spacing: 0;
+	line-height: 1.2;
+	min-height: var(--oml-button-height-md);
+	padding: 0 var(--oml-button-pad-md);
+	text-align: center;
+	text-decoration: none !important;
+	text-transform: none;
+	transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.ohmylms-page .ohmylms-button[type="submit"]:hover,
+.ohmylms-page .ohmylms-button[type="button"]:hover,
+.ohmylms-page .ohmylms-button:hover {
+	background-color: var(--oml-primary-hover);
+	border-color: var(--oml-primary-hover);
+	color: var(--oml-on-primary);
+}
+
+.ohmylms-page .ohmylms-button[type="submit"]:focus,
+.ohmylms-page .ohmylms-button[type="button"]:focus,
+.ohmylms-page .ohmylms-button:focus {
+	outline: 2px solid var(--oml-focus);
+	outline-offset: 2px;
+}
+
+.ohmylms-page .ohmylms-button[type="submit"].ohmylms-button-outline,
+.ohmylms-page .ohmylms-button[type="button"].ohmylms-button-outline,
+.ohmylms-page .ohmylms-button.ohmylms-button-outline {
+	background-color: var(--oml-surface);
+	border-color: var(--oml-secondary);
+	color: var(--oml-primary);
+}
+
+.ohmylms-page .ohmylms-button[type="submit"].ohmylms-button-outline:hover,
+.ohmylms-page .ohmylms-button[type="button"].ohmylms-button-outline:hover,
+.ohmylms-page .ohmylms-button.ohmylms-button-outline:hover {
+	background-color: var(--oml-primary-soft);
+	border-color: var(--oml-secondary-hover);
+	color: var(--oml-primary-hover);
+}
+
+.ohmylms-page .ohmylms-button[type="submit"].ohmylms-button-disabled,
+.ohmylms-page .ohmylms-button[type="button"].ohmylms-button-disabled,
+.ohmylms-page .ohmylms-button.ohmylms-button-disabled,
+.ohmylms-page .ohmylms-button[type="submit"].ohmylms-button-disabled:hover,
+.ohmylms-page .ohmylms-button[type="button"].ohmylms-button-disabled:hover,
+.ohmylms-page .ohmylms-button.ohmylms-button-disabled:hover {
+	background-color: var(--oml-subtle);
+	border-color: var(--oml-border) !important;
+	color: var(--oml-muted) !important;
+	cursor: not-allowed;
+}
