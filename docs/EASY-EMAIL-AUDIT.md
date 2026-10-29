@@ -81,6 +81,27 @@ for built-in social icons. The plugin defines that global in `includes/Abstracts
 reads `document.querySelector("html")` at load time to detect right-to-left pages. A published core
 does neither, so the swap needs an authored module that supplies both.
 
+## Where saved templates live (checked on 800.local)
+
+Checked through the REST API on the local site, logged in as the administrator:
+
+- **The ten system emails are not Easy Email documents.** `/ohmylms/v1/all-emails` returns flat
+  fields per email (`heading`, `subject`, `additional_content` as HTML, `button_text`,
+  `footer_text`, `recipient_email`). None contains MJML or block JSON. Their preview is built from
+  those fields by `email-template-markup` (factory 1841), not by `JsonToMjml`.
+- **Easy Email JSON appears only in the automation email builder.** The gallery and picker
+  fragments read `json_content.content` (with `json_content.editor` set to `classic-editor` or the
+  advanced builder) and call `JsonToMjml` on it.
+- **That storage is not in this plugin.** The builder reads and writes `mrm/v1/...` routes
+  (`email/templates`, `automation`). Those belong to a separate plugin; on 800.local
+  `/wp-json/mrm/v1/email/templates` returns 404. There are no saved builder templates here to add
+  to the corpus, and this plugin's PHP has no table or option for them.
+
+What this changes: the compatibility surface of a swap is the automation builder only, and the
+saved JSON is owned by whichever plugin serves `mrm/v1`. Before swapping, find out whether any live
+site has builder templates (they would use footer blocks and demo images the corpus cannot predict),
+and take a sample of their `json_content` for the corpus. The system emails are unaffected.
+
 ## Risks for a swap
 
 1. **Behavioural drift in rendering.** Core builds MJML from the saved JSON. A different release
@@ -98,7 +119,7 @@ Do not swap everything at once. Core is pure (JSON to MJML, no DOM), so it can b
 Node, which makes it the first and safest step.
 
 1. **Golden corpus.** Built (above) for block types and one composition. Still to add: real
-   saved templates from the test site and the built-in starter templates, and the recorded MJML
+   saved templates from a site that runs the `mrm/v1` backend and the built-in starter templates, and the recorded MJML
    renderer's HTML. Saved-template conversion from MJML needs a DOM, so it belongs in the browser
    test suite.
 2. **Core.** Resolve the three differences above, then add a pinned `easy-email-core` behind an
