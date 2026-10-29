@@ -8,13 +8,18 @@
 namespace OhMyLMS\DataStores;
 
 use OhMyLMS\Abstracts\DataStore;
+use OhMyLMS\Certificates\Template;
 use OhMyLMS\Data\Certificate;
-use OhMyLMS\Data\Student;
+use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Class CertificateStore
+ *
+ * Certificates are posts of type `ohmylms-certificate`. The template lives in the `_contents` meta
+ * (see {@see Template}), the server-rendered HTML in `_html_contents`, and the course assignments in
+ * the `ohmylms_certificate_relationship` table.
  *
  * @package OhMyLMS\DataStores
  * @since 1.0.0
@@ -51,7 +56,6 @@ class CertificateStore extends DataStore {
 
 		if ( $id && ! is_wp_error( $id ) ) {
 			$certificate->set_id( $id );
-			flush_rewrite_rules( true );
 
 			/**
 			 * Fires after a new certificate is created.
@@ -92,33 +96,6 @@ class CertificateStore extends DataStore {
 				'date_modified' => $post_object->post_modified_gmt,
 			)
 		);
-
-		$this->read_certificate_data( $certificate );
-	}
-
-	/**
-	 * Helper function that reads certificate data
-	 *
-	 * @param Certificate $certificate Certificate.
-	 * @return void
-	 *
-	 * @since 1.0.0
-	 */
-	protected function read_certificate_data( &$certificate ) {
-		$id               = $certificate->get_id();
-		$post_meta_values = get_post_meta( $id );
-
-		$meta_key_to_props = array(
-			'_thumbnail_id' => 'thumbnail_id',
-		);
-		$set_props         = array();
-		foreach ( $meta_key_to_props as $meta_key => $prop ) {
-			$meta_value = isset( $post_meta_values[ $meta_key ][0] ) ? $post_meta_values[ $meta_key ][0] : null;
-
-			$set_props[ $prop ] = maybe_unserialize( $meta_value );
-
-		}
-		$certificate->set_props( $set_props );
 	}
 
 
@@ -147,8 +124,6 @@ class CertificateStore extends DataStore {
 
 		wp_update_post( array_merge( array( 'ID' => $certificate->get_id() ), $post_data ) );
 
-		$this->update_post_meta( $certificate );
-
 		/**
 		 * Action hook to perform additional actions after a certificate is updated.
 		 *
@@ -162,31 +137,7 @@ class CertificateStore extends DataStore {
 
 
 	/**
-	 * Update post meta for the certificate.
-	 *
-	 * @param Certificate $certificate The certificate object.
-	 * @param bool        $force Whether to force the update.
-	 * @return void
-	 *
-	 * @since 1.0.0
-	 */
-	protected function update_post_meta( &$certificate, $force = false ) {
-		$meta_key_to_props = array(
-			'_contents' => 'contents',
-		);
-
-		$props_to_update = $meta_key_to_props;
-
-		foreach ( $props_to_update as $meta_key => $prop ) {
-			$value = $certificate->{"get_$prop"}( 'edit' );
-			$value = is_string( $value ) ? wp_slash( $value ) : $value;
-			update_post_meta( $certificate->get_id(), $meta_key, $value );
-		}
-	}
-
-
-	/**
-	 * Delete the certificate
+	 * Delete the certificate and its course assignments.
 	 *
 	 * @param mixed $certificate Certificate.
 	 * @param array $args Operation arguments.
@@ -194,10 +145,13 @@ class CertificateStore extends DataStore {
 	 * @since 1.0.0
 	 */
 	public function delete( &$certificate, $args = array() ) {
+		global $wpdb;
+
 		if ( $certificate ) {
 			$certificate_id = $certificate->get_id();
 			if ( $certificate_id ) {
 				wp_delete_post( $certificate_id, true );
+				$wpdb->delete( $wpdb->prefix . 'ohmylms_certificate_relationship', array( 'certificate_id' => $certificate_id ), array( '%d' ) );
 				/**
 				 * Triggered after deleting a certificate.
 				 *
@@ -211,156 +165,173 @@ class CertificateStore extends DataStore {
 	}
 
 	/**
-	 * Set the contents of the certificate.
+	 * Store the canonical template (already validated by Template::normalize()).
 	 *
 	 * @param Certificate $certificate The certificate object.
-	 * @param array       $content The content to set for the certificate.
-	 * @return bool True on success, false on failure.
+	 * @param array       $template    Canonical template.
+	 * @return bool True on success.
 	 *
 	 * @since 1.0.0
 	 */
-	public function set_contents( $certificate, $content ) {
-		update_post_meta( $certificate->get_id(), '_contents', $content );
-		return true;
-	}
-
-
-	/**
-	 * Set the contents of the certificate.
-	 *
-	 * @param Certificate $certificate The certificate object.
-	 * @param array       $content The content to set for the certificate.
-	 * @return bool True on success, false on failure.
-	 *
-	 * @since 1.0.0
-	 */
-	public function set_html_contents( $certificate, $content ) {
-		update_post_meta( $certificate->get_id(), '_html_contents', $content );
+	public function set_contents( $certificate, $template ) {
+		update_post_meta( $certificate->get_id(), '_contents', $template );
 		return true;
 	}
 
 	/**
-	 * Set thumbnail image for Certificate store.
+	 * Store the HTML rendered from the template (derived server-side; never accepted from clients).
 	 *
-	 * @param mixed $certificate Certificate.
-	 * @param mixed $thumbnail_id Thumbnail identifier.
+	 * @param Certificate $certificate The certificate object.
+	 * @param string      $html        HTML produced by TemplateRenderer.
+	 * @return bool True on success.
+	 *
+	 * @since 1.0.0
+	 */
+	public function set_html_contents( $certificate, $html ) {
+		update_post_meta( $certificate->get_id(), '_html_contents', wp_slash( (string) $html ) );
+		return true;
+	}
+
+	/**
+	 * Set the featured image.
+	 *
+	 * @param Certificate $certificate  Certificate.
+	 * @param int         $thumbnail_id Attachment id (0 removes it).
+	 * @return bool|WP_Error
 	 */
 	public function set_thumbnail_image( $certificate, $thumbnail_id ) {
-		$result = set_post_thumbnail( $certificate->get_id(), $thumbnail_id );
-		if ( is_wp_error( $result ) ) {
-			return new \WP_Error( 'failed_to_set_thumbnail', __( 'Failed to set preview image.', 'ohmylms' ), array( 'status' => 500 ) );
+		$thumbnail_id = absint( $thumbnail_id );
+		if ( ! $thumbnail_id ) {
+			delete_post_thumbnail( $certificate->get_id() );
+			return true;
+		}
+		if ( ! set_post_thumbnail( $certificate->get_id(), $thumbnail_id ) ) {
+			return new WP_Error( 'ohmylms_certificate_thumbnail_failed', __( 'Failed to set preview image.', 'ohmylms' ), array( 'status' => 500 ) );
 		}
 		return true;
 	}
 
-
 	/**
-	 * Get the contents of the certificate.
+	 * Get the canonical template, with defaults for anything missing.
 	 *
 	 * @param Certificate $certificate The certificate object.
-	 * @return bool True on success, false on failure.
+	 * @return array Canonical template.
 	 *
 	 * @since 1.0.0
 	 */
 	public function get_contents( $certificate ) {
-		return get_post_meta( $certificate->get_id(), '_contents', true );
+		return Template::from_stored( get_post_meta( $certificate->get_id(), '_contents', true ) );
 	}
 
 	/**
-	 * Get the contents of the certificate.
+	 * Get the stored rendered HTML (placeholders are still tokens such as {student_name}).
 	 *
 	 * @param Certificate $certificate The certificate object.
-	 * @return bool True on success, false on failure.
+	 * @return string
 	 *
 	 * @since 1.0.0
 	 */
 	public function get_html_contents( $certificate ) {
-		return get_post_meta( $certificate->get_id(), '_html_contents', true );
+		return (string) get_post_meta( $certificate->get_id(), '_html_contents', true );
 	}
 
-
 	/**
-	 * Get courses
+	 * Course ids assigned to certificates, one query for any number of certificates.
 	 *
-	 * @param mixed $certificate Certificate.
+	 * @param int[] $certificate_ids Certificate ids.
+	 * @return array<int,int[]> Certificate id => course ids.
 	 */
-	public function get_courses( $certificate ) {
+	public function get_course_ids_for( array $certificate_ids ) {
 		global $wpdb;
 
-		// Get the certificate ID.
-		$certificate_id = $certificate->get_id();
-
-		// Query to get all course IDs associated with the certificate.
-		$query = $wpdb->prepare( 'SELECT course_id FROM %i WHERE certificate_id = %d', $wpdb->prefix . 'ohmylms_certificate_relationship', $certificate_id );
-
-		// Execute the query and get the results.
-		$results = $wpdb->get_col( $query );
-
-		if ( ! empty( $results ) ) {
-			$courses    = array();
-			$course_ids = $results;
-			foreach ( $course_ids as $course_id ) {
-				$course = ohmylms_get_course( $course_id );
-				if ( $course ) {
-					$courses[] = array(
-						'id'           => $course_id,
-						'name'         => $course->get_name(),
-						'date_created' => $course->get_date_created(),
-						'image_src'    => $course->get_thumbnail_url(),
-					);
-				}
-			}
-			return $courses;
+		$certificate_ids = array_values( array_unique( array_filter( array_map( 'absint', $certificate_ids ) ) ) );
+		$map             = array_fill_keys( $certificate_ids, array() );
+		if ( ! $certificate_ids ) {
+			return $map;
 		}
 
-		// Return the list of course IDs.
-		return array();
-	}
-
-	/**
-	 * Set courses for Certificate store.
-	 *
-	 * @param mixed $certificate Certificate.
-	 * @param mixed $courses Courses.
-	 */
-	public function set_courses( $certificate, $courses ) {
-		global $wpdb;
-
-		// Get the certificate ID.
-		$certificate_id = $certificate->get_id();
-
-		// Prepare the table name.
-		$table_name = $wpdb->prefix . 'ohmylms_certificate_relationship';
-
-		// Delete all existing relationships.
-		$wpdb->delete(
-			$table_name,
-			array( 'certificate_id' => $certificate_id ),
-			array( '%d' )
+		$placeholders = implode( ', ', array_fill( 0, count( $certificate_ids ), '%d' ) );
+		$rows         = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT certificate_id, course_id FROM %i WHERE certificate_id IN ($placeholders) ORDER BY course_id ASC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- The placeholder list is built from absint() ids.
+				array_merge( array( $wpdb->prefix . 'ohmylms_certificate_relationship' ), $certificate_ids )
+			),
+			ARRAY_A
 		);
+		foreach ( (array) $rows as $row ) {
+			$map[ (int) $row['certificate_id'] ][] = (int) $row['course_id'];
+		}
 
-		// Insert new relationships.
-		foreach ( $courses as $course ) {
-			if ( isset( $course['id'] ) ) {
-				// Delete all existing relationships.
-				$wpdb->delete(
-					$table_name,
-					array( 'course_id' => $course['id'] ),
-					array( '%d' )
-				);
+		return $map;
+	}
 
-				$wpdb->insert(
-					$table_name,
-					array(
-						'certificate_id' => $certificate_id,
-						'course_id'      => $course['id'],
-					),
-					array(
-						'%d',
-						'%d',
-					)
+	/**
+	 * Get the assigned courses as id/title pairs (courses that no longer exist are skipped).
+	 *
+	 * @param Certificate $certificate Certificate.
+	 * @param int[]|null  $course_ids  Preloaded course ids, or null to query.
+	 * @return array<int,array{id:int,title:string}>
+	 */
+	public function get_courses( $certificate, $course_ids = null ) {
+		if ( null === $course_ids ) {
+			$all        = $this->get_course_ids_for( array( $certificate->get_id() ) );
+			$course_ids = isset( $all[ $certificate->get_id() ] ) ? $all[ $certificate->get_id() ] : array();
+		}
+
+		$courses = array();
+		foreach ( $course_ids as $course_id ) {
+			if ( OHMYLMS_COURSE_CPT === get_post_type( $course_id ) ) {
+				$courses[] = array(
+					'id'    => (int) $course_id,
+					'title' => get_the_title( $course_id ),
 				);
 			}
 		}
+
+		return $courses;
+	}
+
+	/**
+	 * Replace the courses assigned to a certificate.
+	 *
+	 * A course uses one certificate, so assigning a course here moves it away from any other template.
+	 * The change is atomic: either every row is written or none.
+	 *
+	 * @param Certificate $certificate Certificate.
+	 * @param int[]       $course_ids  Course ids (already validated by the caller).
+	 * @return true|WP_Error
+	 */
+	public function set_courses( $certificate, $course_ids ) {
+		global $wpdb;
+
+		$table          = $wpdb->prefix . 'ohmylms_certificate_relationship';
+		$certificate_id = (int) $certificate->get_id();
+		$course_ids     = array_values( array_unique( array_filter( array_map( 'absint', (array) $course_ids ) ) ) );
+
+		$wpdb->query( 'START TRANSACTION' );
+
+		$ok = false !== $wpdb->delete( $table, array( 'certificate_id' => $certificate_id ), array( '%d' ) );
+		foreach ( $course_ids as $course_id ) {
+			if ( $ok ) {
+				$ok = false !== $wpdb->delete( $table, array( 'course_id' => $course_id ), array( '%d' ) )
+					&& false !== $wpdb->insert(
+						$table,
+						array(
+							'certificate_id' => $certificate_id,
+							'course_id'      => $course_id,
+						),
+						array( '%d', '%d' )
+					);
+			}
+		}
+
+		if ( ! $ok ) {
+			$wpdb->query( 'ROLLBACK' );
+			return new WP_Error( 'ohmylms_certificate_courses_failed', __( 'The assigned courses could not be saved.', 'ohmylms' ), array( 'status' => 500 ) );
+		}
+
+		$wpdb->query( 'COMMIT' );
+
+		return true;
 	}
 }

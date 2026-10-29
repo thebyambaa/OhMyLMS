@@ -1,0 +1,500 @@
+{
+	"contract": "ohmylms/v1/certificates",
+	"version": 1,
+	"namespace": "ohmylms/v1",
+	"restBase": "certificates",
+	"capability": "manage_options",
+	"auth": "WordPress REST authentication. Cookie auth requires the X-WP-Nonce header (wp_create_nonce('wp_rest')); application passwords also work.",
+	"routes": [
+		{
+			"name": "list",
+			"method": "GET",
+			"path": "/certificates",
+			"args": {
+				"page": { "type": "integer", "default": 1, "minimum": 1 },
+				"per_page": {
+					"type": "integer",
+					"default": 10,
+					"minimum": 1,
+					"maximum": 100
+				},
+				"search": { "type": "string" },
+				"status": {
+					"type": "string",
+					"default": "all",
+					"enum": [ "all", "draft", "publish" ]
+				},
+				"course": { "type": "integer", "minimum": 1 },
+				"orderby": {
+					"type": "string",
+					"default": "created_at",
+					"enum": [
+						"id",
+						"name",
+						"status",
+						"created_at",
+						"updated_at"
+					]
+				},
+				"order": {
+					"type": "string",
+					"default": "desc",
+					"enum": [ "asc", "desc" ]
+				},
+				"_fields": {
+					"type": "string",
+					"description": "Comma separated response fields."
+				}
+			},
+			"success": {
+				"status": 200,
+				"body": "Certificate[]",
+				"headers": [ "X-WP-Total", "X-WP-TotalPages", "Link" ]
+			},
+			"errors": [ 400, 401, 403 ]
+		},
+		{
+			"name": "create",
+			"method": "POST",
+			"path": "/certificates",
+			"args": {
+				"$ref": "#/definitions/CertificateWrite",
+				"required": [ "name" ]
+			},
+			"success": {
+				"status": 201,
+				"body": "Certificate",
+				"headers": [ "Location" ]
+			},
+			"errors": [ 400, 401, 403, 422, 500 ]
+		},
+		{
+			"name": "read",
+			"method": "GET",
+			"path": "/certificates/{id}",
+			"args": { "id": { "type": "integer", "minimum": 1, "in": "path" } },
+			"success": { "status": 200, "body": "Certificate" },
+			"errors": [ 401, 403, 404 ]
+		},
+		{
+			"name": "update",
+			"method": "PUT | PATCH | POST",
+			"path": "/certificates/{id}",
+			"args": {
+				"id": { "type": "integer", "minimum": 1, "in": "path" },
+				"$ref": "#/definitions/CertificateWrite",
+				"note": "Partial update: only the fields sent change. Nothing is written unless every field validates."
+			},
+			"success": { "status": 200, "body": "Certificate" },
+			"errors": [ 400, 401, 403, 404, 422, 500 ]
+		},
+		{
+			"name": "delete",
+			"method": "DELETE",
+			"path": "/certificates/{id}",
+			"args": { "id": { "type": "integer", "minimum": 1, "in": "path" } },
+			"success": {
+				"status": 200,
+				"body": "{ deleted: true, previous: Certificate }"
+			},
+			"errors": [ 401, 403, 404, 500 ]
+		},
+		{
+			"name": "duplicate",
+			"method": "POST",
+			"path": "/certificates/{id}/duplicate",
+			"args": { "id": { "type": "integer", "minimum": 1, "in": "path" } },
+			"success": {
+				"status": 201,
+				"body": "Certificate",
+				"headers": [ "Location" ]
+			},
+			"errors": [ 401, 403, 404, 500 ]
+		},
+		{
+			"name": "options",
+			"method": "GET",
+			"path": "/certificates/options",
+			"args": {},
+			"success": { "status": 200, "body": "Options" },
+			"errors": [ 401, 403 ]
+		},
+		{
+			"name": "courses",
+			"method": "GET",
+			"path": "/certificates/courses",
+			"args": {
+				"search": { "type": "string", "default": "" },
+				"page": { "type": "integer", "default": 1, "minimum": 1 },
+				"per_page": {
+					"type": "integer",
+					"default": 20,
+					"minimum": 1,
+					"maximum": 50
+				}
+			},
+			"success": {
+				"status": 200,
+				"body": "CourseChoice[]",
+				"headers": [ "X-WP-Total", "X-WP-TotalPages" ]
+			},
+			"errors": [ 400, 401, 403 ]
+		},
+		{
+			"name": "preview",
+			"method": "POST",
+			"path": "/certificates/preview",
+			"args": {
+				"$ref": "#/definitions/CertificateWrite",
+				"note": "Template fields only (orientation, size, font_family, background_color, background_id, signature, blocks). Nothing is stored."
+			},
+			"success": { "status": 200, "body": "Preview" },
+			"errors": [ 400, 401, 403, 422 ]
+		}
+	],
+	"definitions": {
+		"TextBlock": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [ "id", "text", "x", "y", "width", "font_size" ],
+			"properties": {
+				"id": {
+					"type": "string",
+					"pattern": "^[A-Za-z0-9_-]{1,32}$",
+					"description": "Unique within the template."
+				},
+				"text": {
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 500,
+					"description": "Plain text; tags are stripped. {tokens} must be registered placeholders."
+				},
+				"x": {
+					"type": "number",
+					"minimum": 0,
+					"maximum": 100,
+					"description": "Left edge, percent of page width."
+				},
+				"y": {
+					"type": "number",
+					"minimum": 0,
+					"maximum": 100,
+					"description": "Top edge, percent of page height."
+				},
+				"width": {
+					"type": "number",
+					"minimum": 1,
+					"maximum": 100,
+					"description": "Percent of page width; x + width <= 100."
+				},
+				"font_size": {
+					"type": "number",
+					"minimum": 8,
+					"maximum": 120,
+					"description": "Points."
+				},
+				"align": {
+					"type": "string",
+					"enum": [ "left", "center", "right" ],
+					"default": "center"
+				},
+				"color": {
+					"type": "string",
+					"pattern": "^#[0-9a-fA-F]{6}$",
+					"default": "#1d2327"
+				},
+				"bold": { "type": "boolean", "default": false }
+			}
+		},
+		"Signature": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"image_id": {
+					"type": "integer",
+					"minimum": 0,
+					"description": "Attachment id; 0 for none."
+				},
+				"x": { "type": "number", "minimum": 0, "maximum": 100 },
+				"y": { "type": "number", "minimum": 0, "maximum": 100 },
+				"width": { "type": "number", "minimum": 1, "maximum": 100 }
+			}
+		},
+		"CertificateWrite": {
+			"type": "object",
+			"properties": {
+				"name": { "type": "string", "minLength": 1, "maxLength": 200 },
+				"status": {
+					"type": "string",
+					"enum": [ "draft", "publish" ],
+					"default": "draft (create only)"
+				},
+				"orientation": {
+					"type": "string",
+					"enum": [ "landscape", "portrait" ],
+					"default": "landscape (create only)"
+				},
+				"size": {
+					"type": "string",
+					"enum": [ "a4", "letter" ],
+					"default": "a4 (create only)"
+				},
+				"font_family": {
+					"type": "string",
+					"enum": [ "serif", "sans-serif" ],
+					"default": "serif (create only)"
+				},
+				"background_color": {
+					"type": "string",
+					"pattern": "^#[0-9a-fA-F]{6}$",
+					"default": "#ffffff (create only)"
+				},
+				"background_id": {
+					"type": "integer",
+					"minimum": 0,
+					"description": "Image attachment (JPEG, PNG, GIF, WebP) the user can edit; 0 for none."
+				},
+				"signature": { "$ref": "#/definitions/Signature" },
+				"blocks": {
+					"type": "array",
+					"maxItems": 20,
+					"items": { "$ref": "#/definitions/TextBlock" },
+					"description": "Replaces all blocks. Omitted on create: five default blocks."
+				},
+				"course_ids": {
+					"type": "array",
+					"maxItems": 200,
+					"items": { "type": "integer", "minimum": 1 },
+					"description": "Replaces the assigned courses. A course uses one template, so assigning it moves it from any other."
+				}
+			}
+		},
+		"Certificate": {
+			"type": "object",
+			"required": [
+				"id",
+				"name",
+				"status",
+				"orientation",
+				"size",
+				"font_family",
+				"background_color",
+				"background_id",
+				"background_url",
+				"signature",
+				"signature_url",
+				"blocks",
+				"course_ids",
+				"courses",
+				"course_count",
+				"created_at",
+				"updated_at"
+			],
+			"properties": {
+				"id": { "type": "integer", "minimum": 1 },
+				"name": { "type": "string" },
+				"status": { "type": "string", "enum": [ "draft", "publish" ] },
+				"orientation": {
+					"type": "string",
+					"enum": [ "landscape", "portrait" ]
+				},
+				"size": { "type": "string", "enum": [ "a4", "letter" ] },
+				"font_family": {
+					"type": "string",
+					"enum": [ "serif", "sans-serif" ]
+				},
+				"background_color": { "type": "string" },
+				"background_id": { "type": "integer", "minimum": 0 },
+				"background_url": {
+					"type": "string",
+					"description": "Empty when no background."
+				},
+				"signature": { "$ref": "#/definitions/Signature" },
+				"signature_url": { "type": "string" },
+				"blocks": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/TextBlock" }
+				},
+				"course_ids": {
+					"type": "array",
+					"items": { "type": "integer" }
+				},
+				"courses": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"required": [ "id", "title" ],
+						"properties": {
+							"id": { "type": "integer" },
+							"title": { "type": "string" }
+						}
+					}
+				},
+				"course_count": { "type": "integer", "minimum": 0 },
+				"created_at": {
+					"type": "string",
+					"format": "date-time",
+					"description": "UTC, suffix Z."
+				},
+				"updated_at": {
+					"type": "string",
+					"format": "date-time",
+					"description": "UTC, suffix Z."
+				}
+			}
+		},
+		"Options": {
+			"type": "object",
+			"required": [
+				"orientations",
+				"sizes",
+				"font_families",
+				"alignments",
+				"statuses",
+				"placeholders",
+				"limits"
+			],
+			"properties": {
+				"orientations": { "$ref": "#/definitions/OptionList" },
+				"sizes": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"required": [
+							"value",
+							"label",
+							"width_mm",
+							"height_mm"
+						],
+						"properties": {
+							"value": { "type": "string" },
+							"label": { "type": "string" },
+							"width_mm": { "type": "number" },
+							"height_mm": { "type": "number" }
+						}
+					}
+				},
+				"font_families": { "$ref": "#/definitions/OptionList" },
+				"alignments": { "$ref": "#/definitions/OptionList" },
+				"statuses": { "$ref": "#/definitions/OptionList" },
+				"placeholders": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"required": [ "value", "label", "sample" ],
+						"properties": {
+							"value": {
+								"type": "string",
+								"description": "Token including braces, for example {student_name}."
+							},
+							"label": { "type": "string" },
+							"sample": { "type": "string" }
+						}
+					}
+				},
+				"limits": {
+					"type": "object",
+					"properties": {
+						"max_blocks": { "type": "integer" },
+						"max_text": { "type": "integer" },
+						"min_font_size": { "type": "integer" },
+						"max_font_size": { "type": "integer" },
+						"max_courses": { "type": "integer" }
+					}
+				}
+			}
+		},
+		"OptionList": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"required": [ "value", "label" ],
+				"properties": {
+					"value": { "type": "string" },
+					"label": { "type": "string" }
+				}
+			}
+		},
+		"CourseChoice": {
+			"type": "object",
+			"required": [ "id", "title", "status" ],
+			"properties": {
+				"id": { "type": "integer" },
+				"title": { "type": "string" },
+				"status": { "type": "string" }
+			}
+		},
+		"Preview": {
+			"type": "object",
+			"required": [ "html", "width_mm", "height_mm", "values" ],
+			"properties": {
+				"html": {
+					"type": "string",
+					"description": "Complete HTML document with a restrictive Content-Security-Policy. Display it only in an iframe with sandbox=\"\"."
+				},
+				"width_mm": { "type": "number" },
+				"height_mm": { "type": "number" },
+				"values": {
+					"type": "object",
+					"description": "Sample value used for each placeholder."
+				}
+			}
+		},
+		"Error": {
+			"type": "object",
+			"required": [ "code", "message", "data" ],
+			"properties": {
+				"code": { "type": "string" },
+				"message": { "type": "string" },
+				"data": {
+					"type": "object",
+					"properties": {
+						"status": { "type": "integer" },
+						"field": {
+							"type": "string",
+							"description": "422 errors: the field, or block id, at fault."
+						},
+						"block_id": { "type": "string" },
+						"placeholders": {
+							"type": "array",
+							"items": { "type": "string" }
+						},
+						"course_ids": {
+							"type": "array",
+							"items": { "type": "integer" }
+						},
+						"params": {
+							"type": "object",
+							"description": "Present on rest_invalid_param."
+						}
+					}
+				}
+			}
+		}
+	},
+	"errorCodes": {
+		"rest_invalid_param": 400,
+		"rest_missing_callback_param": 400,
+		"ohmylms_certificate_invalid_page": 400,
+		"rest_cookie_invalid_nonce": 403,
+		"ohmylms_certificate_cannot_view": [ 401, 403 ],
+		"ohmylms_certificate_cannot_create": [ 401, 403 ],
+		"ohmylms_certificate_cannot_edit": [ 401, 403 ],
+		"ohmylms_certificate_cannot_delete": [ 401, 403 ],
+		"ohmylms_certificate_not_found": 404,
+		"ohmylms_certificate_invalid_name": 422,
+		"ohmylms_certificate_invalid_option": 422,
+		"ohmylms_certificate_invalid_color": 422,
+		"ohmylms_certificate_invalid_image": 422,
+		"ohmylms_certificate_invalid_geometry": 422,
+		"ohmylms_certificate_block_out_of_bounds": 422,
+		"ohmylms_certificate_invalid_blocks": 422,
+		"ohmylms_certificate_duplicate_block": 422,
+		"ohmylms_certificate_invalid_text": 422,
+		"ohmylms_certificate_unknown_placeholder": 422,
+		"ohmylms_certificate_invalid_courses": 422,
+		"ohmylms_certificate_save_failed": 500,
+		"ohmylms_certificate_courses_failed": 500,
+		"ohmylms_certificate_delete_failed": 500
+	}
+}

@@ -1,0 +1,60 @@
+import { useEffect, useState } from '@wordpress/element';
+import { ApiError, normalizeApiError } from '../../lib/api';
+import { getCertificate, getOptions } from './api';
+import type { Certificate, CertificateOptions } from './types';
+
+/**
+ * Load one template and the server options for the editor. Switching templates or unmounting cancels
+ * the requests and ignores late results.
+ *
+ * @param id Template id, or `null` when the route id is invalid (nothing is requested).
+ * @return The loaded data, loading and error state, a reload action and a setter for the saved copy.
+ */
+export function useCertificateEditor( id: number | null ) {
+	const [ certificate, setCertificate ] = useState< Certificate | null >(
+		null
+	);
+	const [ options, setOptions ] = useState< CertificateOptions | null >(
+		null
+	);
+	const [ loading, setLoading ] = useState( null !== id );
+	const [ error, setError ] = useState< ApiError | null >( null );
+	const [ version, setVersion ] = useState( 0 );
+	useEffect( () => {
+		if ( null === id ) {
+			return undefined;
+		}
+		const controller = new AbortController();
+		setLoading( true );
+		setError( null );
+		Promise.all( [
+			getCertificate( id, controller.signal ),
+			getOptions( controller.signal ),
+		] ).then(
+			( [ loaded, choices ] ) => {
+				if ( controller.signal.aborted ) {
+					return;
+				}
+				setCertificate( loaded );
+				setOptions( choices );
+				setLoading( false );
+			},
+			( failure: unknown ) => {
+				if ( controller.signal.aborted ) {
+					return;
+				}
+				setError( normalizeApiError( failure ) );
+				setLoading( false );
+			}
+		);
+		return () => controller.abort();
+	}, [ id, version ] );
+	return {
+		certificate,
+		options,
+		loading,
+		error,
+		setCertificate,
+		reload: () => setVersion( ( current ) => current + 1 ),
+	};
+}

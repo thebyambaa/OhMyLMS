@@ -113,13 +113,20 @@ class Certificate extends Data {
 	}
 
 	/**
-	 * Get the attachment_id of the certificate.
+	 * Get the attachment id used as the certificate thumbnail.
 	 *
-	 * @return string|null The attachment_id of the certificate
+	 * This is the template background image when one is set, otherwise the featured image.
+	 *
+	 * @return int Attachment id, or 0.
 	 * @since 1.0.0
 	 */
 	public function get_thumbnail_id() {
-		return get_post_thumbnail_id( $this->get_id() );
+		$template = $this->get_contents();
+		if ( ! empty( $template['background_id'] ) ) {
+			return (int) $template['background_id'];
+		}
+
+		return (int) get_post_thumbnail_id( $this->get_id() );
 	}
 
 	/**
@@ -256,9 +263,9 @@ class Certificate extends Data {
 	}
 
 	/**
-	 * Get the lessons of the certificate.
+	 * Get the canonical template (layout, text blocks, images).
 	 *
-	 * @return array The lessons of the certificate.
+	 * @return array
 	 * @since 1.0.0
 	 */
 	public function get_contents() {
@@ -266,9 +273,9 @@ class Certificate extends Data {
 	}
 
 	/**
-	 * Get the lessons of the certificate.
+	 * Get the HTML rendered from the template when it was last saved. Placeholders are still tokens.
 	 *
-	 * @return array The lessons of the certificate.
+	 * @return string
 	 * @since 1.0.0
 	 */
 	public function get_html_contents() {
@@ -276,10 +283,10 @@ class Certificate extends Data {
 	}
 
 	/**
-	 * Set the contents of the certificate.
+	 * Store the canonical template. Validate with {@see \OhMyLMS\Certificates\Template::normalize()} first.
 	 *
-	 * @param array $contents The chapters of the certificate.
-	 *
+	 * @param array $contents Canonical template.
+	 * @return bool
 	 * @since 1.0.0
 	 */
 	public function set_contents( $contents ) {
@@ -287,10 +294,10 @@ class Certificate extends Data {
 	}
 
 	/**
-	 * Set the contents of the certificate.
+	 * Store the server-rendered HTML.
 	 *
-	 * @param array $contents The chapters of the certificate.
-	 *
+	 * @param string $contents HTML produced by TemplateRenderer.
+	 * @return bool
 	 * @since 1.0.0
 	 */
 	public function set_html_contents( $contents ) {
@@ -298,28 +305,32 @@ class Certificate extends Data {
 	}
 
 	/**
-	 * Set thumbnail image
+	 * Set the featured image.
 	 *
 	 * @param mixed $thumbnail_id Thumbnail identifier.
+	 * @return bool|\WP_Error
 	 */
 	public function set_thumbnail_image( $thumbnail_id ) {
 		return $this->data_store->set_thumbnail_image( $this, $thumbnail_id );
 	}
 
 	/**
-	 * Get courses list
+	 * Get the assigned courses as id/title pairs.
+	 *
+	 * @param int[]|null $course_ids Preloaded course ids, or null to query.
+	 * @return array
 	 */
-	public function get_courses() {
-		return $this->data_store->get_courses( $this );
+	public function get_courses( $course_ids = null ) {
+		return $this->data_store->get_courses( $this, $course_ids );
 	}
 
-
 	/**
-	 * Set courses
+	 * Replace the assigned courses.
 	 *
-	 * @param mixed $courses Courses.
+	 * @param int[] $course_ids Course ids.
+	 * @return true|\WP_Error
 	 */
-	public function set_courses( $courses ) {
-		return $this->data_store->set_courses( $this, $courses );
+	public function set_courses( $course_ids ) {
+		return $this->data_store->set_courses( $this, $course_ids );
 	}
 }
