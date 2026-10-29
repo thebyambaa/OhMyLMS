@@ -64,3 +64,23 @@ export function editorBackPath( hash, fallback ) {
 		? target
 		: fallback;
 }
+
+/**
+ * Add the LMS return route to a native post editor link, leaving any other link alone.
+ *
+ * @param {string} href     Editor link.
+ * @param {string} returnTo LMS return route.
+ * @return {string} Editor link that returns to the LMS route.
+ */
+export function withNativeReturn( href, returnTo ) {
+	try {
+		const url = new URL( href, window.location.href );
+		if ( returnTo && url.pathname.endsWith( '/post.php' ) ) {
+			url.searchParams.set( 'ohmylms_return', returnTo );
+			return url.href;
+		}
+	} catch {
+		// Keep the original link when it cannot be parsed.
+	}
+	return href;
+}
