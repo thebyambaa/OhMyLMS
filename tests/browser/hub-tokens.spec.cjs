@@ -36,8 +36,8 @@ const read = ( page, selector, prop ) =>
 test( 'light hub uses the light tokens', async ( { page } ) => {
 	await page.emulateMedia( { colorScheme: 'dark' } );
 	await page.setContent( markup( 'light' ) );
-	expect( await read( page, '.ohmylms-student-hub', 'backgroundColor' ) ).toBe( 'rgb(240, 240, 241)' );
-	expect( await read( page, '.ohmylms-student-hub', 'color' ) ).toBe( 'rgb(0, 13, 37)' );
+	expect( await read( page, '.ohmylms-student-hub', 'backgroundColor' ) ).toBe( 'rgb(247, 248, 250)' );
+	expect( await read( page, '.ohmylms-student-hub', 'color' ) ).toBe( 'rgb(33, 36, 44)' );
 } );
 
 test( 'dark hub flips through the tokens', async ( { page } ) => {
@@ -49,7 +49,7 @@ test( 'dark hub flips through the tokens', async ( { page } ) => {
 test( 'system hub follows the device preference', async ( { page } ) => {
 	await page.emulateMedia( { colorScheme: 'light' } );
 	await page.setContent( markup( 'system' ) );
-	expect( await read( page, '.ohmylms-student-hub', 'backgroundColor' ) ).toBe( 'rgb(240, 240, 241)' );
+	expect( await read( page, '.ohmylms-student-hub', 'backgroundColor' ) ).toBe( 'rgb(247, 248, 250)' );
 	await page.emulateMedia( { colorScheme: 'dark' } );
 	expect( await read( page, '.ohmylms-student-hub', 'backgroundColor' ) ).toBe( 'rgb(37, 37, 49)' );
 } );

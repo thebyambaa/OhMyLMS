@@ -1,18 +1,23 @@
 # Design tokens
 
-Shared components read one vocabulary: the `--oml-*` variables. Admin and learner pages define the
-same names, each from its own settings, so a component looks consistent without the two sides sharing
-values.
+Shared components read one vocabulary: the `--oml-*` variables. Admin and learner pages use the same
+saved Design system palette, spacing, roundness and font. Settings > Design system is the palette editor.
 
 | Context | Values come from | Emitted by | Selector |
 | --- | --- | --- | --- |
 | Plugin admin screens | Settings > Design system (`ohmylms_design_system`) | `DesignSystem::css()` | `body.oml-ds` |
-| Learner pages | Learner branding options (primary, heading, body text, progress colors) | `Tokens::frontend_css()` | `:root` |
+| Learner pages | The same `ohmylms_design_system` settings | `Tokens::frontend_css()` | `:root` |
 
 Both call `DesignSystem::variables( $colors, $button_radius, $density )`, so derived shades (`-hover`,
 `-active`, `-soft`, `-rgb`, `on-*`), radii, button heights and the 4px spacing scale are computed
-identically. On learner pages the status colors, neutrals and shape come from the Classic preset;
-only primary, heading, text and success follow the learner branding.
+identically. The default is Khan on both sides. A saved Classic or custom preset applies to both sides,
+including density and radius. `ohmylms_font_family` supplies the shared font; the historical `inherit`
+value now means the default system stack so the two contexts do not choose different fonts.
+
+Compatibility: legacy color option names remain accepted by `Tokens::color()` as aliases of the
+shared palette. The older `--ohmylms-*` names also remain aliases, reapplied in dark scopes. Their
+independent saved color values no longer override the Design system. Quiz canvas colors, subject/artwork
+palettes and explicitly customized school/hub accents retain their existing contracts.
 
 The variable list is in `docs/DESIGN-SYSTEM.md`. The older `--ohmylms-*`, `--wp-*` and Arco names
 still exist for current stylesheets; new code uses `--oml-*` only.
@@ -60,6 +65,34 @@ design-system stylesheet. Migrate old buttons feature by feature and delete thei
 
 The full guide to using these tokens and components, with the planned component list, is `docs/DESIGN-LANGUAGE.md`.
 The visual gallery and its screenshot tests are `tests/browser/ui-gallery.spec.cjs`.
+
+## Tabs, Modal, Table and EmptyState
+
+- `Tabs` accepts `items` (`id`, `label`, `content`, optional `disabled`), an accessible `label`, optional
+  controlled `value` / `onChange`, `defaultValue`, and horizontal/vertical `orientation`. It supports
+  Home/End and wrapping arrow keys, skips disabled items, supports RTL, and keeps panel state mounted.
+  PHP `Ui::tabs( $items, $args )` uses `content_html` for caller-escaped panel markup and `value` for
+  initial selection. Its content remains readable before JavaScript enhances it.
+- `Modal` uses a native dialog, a visible `title`, controlled `open` (default true), and `onRequestClose`.
+  The browser makes the rest of the page inert; Tab/Shift+Tab stay inside, Escape requests closure, and
+  focus returns to the opener. PHP `Ui::modal( $content_html, array( 'id' => 'settings', 'title' => 'Settings' ) )`
+  starts closed; open it from a button with `data-oml-dialog-open="settings"`. Content HTML must already
+  be escaped. React dialogs remain in their original theme scope; no portal loses inherited tokens.
+- `Table` accepts a visible `caption`, native table children, `striped` and `compact`; the caption also
+  names its keyboard-scrollable region. Use native header `scope` and `aria-sort` for sortable columns.
+  PHP `Ui::table( $headers, $rows, $args )` escapes all text cells and accepts the same caption/modifiers.
+- `EmptyState` accepts a title, description and optional action children. PHP `Ui::empty_state( $title,
+  $args )` escapes the title/description and accepts caller-escaped `actions_html`. It does not announce
+  automatically or move focus; a caller can place changing search results in a status region.
+
+`assets/js/ui.js` enhances PHP tabs/dialogs and is queued only by those helpers. React owns its own
+state and events. Route navigation retains real links and its existing drag/reorder behavior, using
+the shared tab classes with `aria-current` rather than pretending to be local ARIA panels.
+
+The authored course/lesson SCSS compiles to `learning-pages.css` after the immutable recovery baseline.
+The build also regenerates the ordered admin UI modules; edit those sources rather than their hashed
+outputs. Video controls retain a documented fixed media palette over arbitrary footage. Status text
+has separate contrast-adjusted `--oml-{success,warning,danger,info}-text` tokens for soft backgrounds.
 
 ## Input and Select
 
@@ -112,6 +145,39 @@ echo \OhMyLMS\Design\Ui::input( array(
 
 The gallery has learner/admin control sections; `tests/browser/ui-controls.spec.cjs` also exercises
 the authored React components with WordPress's React runtime, native form data and light/dark/system.
+
+## Alert
+
+React `Alert` (`assets/src/ui/Alert.jsx`) and `Ui::alert( $message, $args )` share
+`oml-alert`, a tone modifier (`oml-alert-info|success|warning|danger`), and optional
+`oml-alert-title` followed by `oml-alert-content`. Unknown tones fall back to info.
+`alertClass()` matches PHP's `alert_class()`.
+
+```jsx
+import { Alert } from '../../ui/Alert';
+<Alert tone="success" title="Saved">Your changes are saved.</Alert>
+```
+
+```php
+echo \OhMyLMS\Design\Ui::alert( __( 'Your changes are saved.', 'ohmylms' ), array(
+    'tone' => 'success', 'title' => __( 'Saved', 'ohmylms' ),
+) );
+```
+
+- The default role is `status` (polite); danger defaults to `alert` (assertive).
+  Override with `role="status"`, `role="alert"` or `role="none"` for static information.
+  Live-region roles announce changes, so mount the region before updating messages when reliable
+  announcements are needed. Alerts do not move focus; the caller owns visibility and dismissal.
+- PHP escapes the message and title as text. Its `attrs` allow `id`, `title`, `aria-*` and
+  `data-*`; event handlers and inline styles are rejected. React accepts children (including links)
+  and native div attributes. Extra classes use React `className` / PHP `class`.
+- Status borders and soft backgrounds use the corresponding tokens; body/title text uses shared
+  text/heading tokens for readable contrast. Links keep an underline and a token focus ring.
+  Spacing, radius and type use tokens, logical borders support RTL, and long content wraps on phones.
+  Light/dark/system require no component-specific theme rules.
+
+Learner/admin gallery snapshots cover all tones, a title-free message and escaped PHP content.
+`tests/browser/ui-alerts.spec.cjs` checks React roles, themes, focus and narrow layouts.
 
 ## Dark theme token output
 

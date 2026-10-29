@@ -79,6 +79,10 @@ foreach ( array( '--oml-primary:#1865f2;', '--oml-on-primary:#ffffff;', '--oml-r
 }
 $body = substr( $css, strlen( 'body.oml-ds{' ), -1 );
 foreach ( array_filter( explode( ';', $body ) ) as $declaration ) {
+	if ( str_starts_with( $declaration, '--oml-font-family:' ) ) {
+		check( '--oml-font-family:' . \OhMyLMS\Design\Tokens::SYSTEM_STACK === $declaration, 'shared font uses a validated stack' );
+		continue;
+	}
 	if ( 1 === preg_match( '/^--oml-color-scheme:(light|dark)$/', $declaration ) ) {
 		continue;
 	}
@@ -95,13 +99,30 @@ $saved = DS::save( array( 'colors' => array( 'primary' => '#ff0066' ), 'button_r
 check( 'custom' === $saved['preset'] && $saved === $options['ohmylms_design_system'], 'save stores the sanitized option' );
 check( 'custom' === DS::get()['preset'] && 999 === DS::get()['button_radius'], 'saved values are read back' );
 DS::save( DS::preset_values( 'khan' ) );
+
+foreach ( array( 'khan', 'classic' ) as $preset_name ) {
+	$palette = DS::preset_values( $preset_name )['colors'];
+	foreach ( array( DS::variables( $palette, 4, 'comfortable' ), DS::dark_variables( $palette ) ) as $status_vars ) {
+		foreach ( array( 'success', 'warning', 'danger', 'info' ) as $status ) {
+			check( DS::contrast( $status_vars[ 'oml-' . $status . '-text' ], $status_vars[ 'oml-' . $status . '-soft' ] ) >= 4.5, 'status text is readable in ' . $preset_name );
+		}
+	}
+}
 check( 'khan' === DS::get()['preset'], 'reset to khan' );
 
-// Learner pages get the same --oml-* names, valued from the learner branding, not the admin Design system.
+// Admin and learner pages share one saved palette; legacy option names no longer fork it.
 $options['ohmylms_primary_color_scheme'] = '#aa2200';
 $learner                                 = \OhMyLMS\Design\Tokens::frontend_css();
-check( false !== strpos( $learner, '--oml-primary:#aa2200;' ) && false !== strpos( $learner, '--ohmylms-primary-color:#aa2200;' ), 'learner --oml-primary follows the learner brand color' );
-check( false === strpos( $learner, '--oml-primary:#1865f2;' ), 'learner tokens ignore the admin Design system' );
+check( false !== strpos( $learner, '--oml-primary:#1865f2;' ) && false !== strpos( $learner, '--ohmylms-primary-color:var(--oml-primary);' ), 'learner tokens and public aliases use the shared Design system' );
+check( false === strpos( $learner, '--oml-primary:#aa2200;' ), 'legacy learner options cannot fork the shared palette' );
+check( DS::get()['colors'] === \OhMyLMS\Design\Tokens::frontend_colors(), 'both contexts share all colors' );
+$shared_custom = DS::sanitize( array( 'preset' => 'classic', 'button_radius' => 12, 'density' => 'compact' ) );
+DS::save( $shared_custom );
+$shared_vars = DS::variables( $shared_custom['colors'], 12, 'compact' );
+foreach ( $shared_vars as $name => $value ) {
+	check( false !== strpos( \OhMyLMS\Design\Tokens::frontend_oml_vars(), '--' . $name . ':' . $value . ';' ), 'learner uses saved shared token ' . $name );
+}
+DS::save( DS::preset_values( 'khan' ) );
 $admin_names = array_keys( DS::variables( DS::preset_values( 'classic' )['colors'], 4, 'comfortable' ) );
 foreach ( $admin_names as $name ) {
 	check( false !== strpos( $learner, '--' . $name . ':' ), "learner css defines --$name" );

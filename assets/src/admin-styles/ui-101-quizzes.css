@@ -1,16 +1,15 @@
 .ohmylms-form-response-fields .ohmylms-numerical-editor {
-	padding: 16px;
-	border: 1px solid var(--oml-border, #dcdcde);
+	padding: var(--oml-space-4);
+	border: 1px solid var(--oml-border, var(--oml-border));
 	border-radius: var(--oml-radius-control, 6px);
 }
 
 .ohmylms-form-response-fields .ohmylms-structured-editor {
-	padding: 16px;
-	border: 1px solid var(--oml-border, #dcdcde);
+	padding: var(--oml-space-4);
+	border: 1px solid var(--oml-border, var(--oml-border));
 	border-radius: var(--oml-radius-control, 6px);
 }
 
 .ohmylms-form-workspace .ohmylms-question-live-preview {
 	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
-

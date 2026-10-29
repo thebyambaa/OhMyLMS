@@ -1,6 +1,6 @@
 .ohmylms-movable-tabs {
 	align-items: center;
-	gap: 6px 16px;
+	gap: 6px var(--oml-space-4);
 	--ohmylms-hub-gutter: 0px;
 }
 
@@ -8,9 +8,9 @@
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
-	gap: 12px;
+	gap: var(--oml-space-3);
 	border-radius: 8px 8px 0 0;
-	padding: 0 12px;
+	padding: 0 var(--oml-space-3);
 	border-bottom: 3px solid currentcolor;
 }
 
@@ -19,32 +19,32 @@
 	color: inherit;
 	background: transparent;
 	border: 0;
-	padding: 8px 4px;
+	padding: var(--oml-space-2) var(--oml-space-1);
 	cursor: pointer;
 	cursor: grab;
-	font-weight: 600;
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-tab-organize {
 	font: inherit;
 	background: transparent;
 	border: 0;
-	padding: 8px 4px;
+	padding: var(--oml-space-2) var(--oml-space-1);
 	cursor: pointer;
 	margin-left: auto;
-	font-size: 12px;
-	color: var(--ohmylms-admin-muted-color, #646970);
+	font-size: var(--oml-font-size-xs);
+	color: var(--ohmylms-admin-muted-color, var(--oml-muted));
 }
 
 .ohmylms-tab-ungroup {
-	padding: 8px;
-	border: 1px dashed #787c82;
-	font-size: 12px;
+	padding: var(--oml-space-2);
+	border: 1px dashed var(--oml-border);
+	font-size: var(--oml-font-size-xs);
 }
 
 .ohmylms-tab-save-status {
-	margin: -16px var(--ohmylms-hub-gutter, 0px) 16px;
-	font-size: 12px;
+	margin: -var(--oml-space-4) var(--ohmylms-hub-gutter, 0px) var(--oml-space-4);
+	font-size: var(--oml-font-size-xs);
 }
 
 .ohmylms-tab-modal {
@@ -58,10 +58,9 @@
 .ohmylms-tab-modal-footer {
 	display: flex;
 	justify-content: space-between;
-	gap: 12px;
+	gap: var(--oml-space-3);
 }
 
 .ohmylms-tab-panel-body {
 	min-width: 0;
 }
-

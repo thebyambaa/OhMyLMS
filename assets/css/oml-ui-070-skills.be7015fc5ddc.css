@@ -1,0 +1,18 @@
+.ohmylms-skill-category-choices legend {
+	margin-bottom: var(--oml-space-2);
+	font-weight: var(--oml-weight-strong);
+}
+
+.ohmylms-skill-category-options button {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-height: 36px;
+	padding: 6px var(--oml-space-3);
+	border: 1px solid var(--category-color);
+	border-radius: var(--oml-radius-control, 6px);
+	background: var(--ohmylms-admin-surface, var(--oml-surface));
+	color: var(--category-color);
+	font: inherit;
+	cursor: pointer;
+}

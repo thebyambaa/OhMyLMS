@@ -22,8 +22,8 @@
 	display: block;
 	width: 12px;
 	height: 6px;
-	border-top: 1px solid #989da6;
-	border-bottom: 1px solid #989da6;
+	border-top: 1px solid var(--oml-border);
+	border-bottom: 1px solid var(--oml-border);
 	pointer-events: none;
 }
 
@@ -32,11 +32,11 @@
 	top: 0;
 	z-index: 2;
 	width: 100%;
-	margin-bottom: 8px;
-	padding: 12px 8px;
+	margin-bottom: var(--oml-space-2);
+	padding: var(--oml-space-3) var(--oml-space-2);
 	border: 1px dashed var(--ws-primary);
 	border-radius: var(--oml-radius-control, 6px);
-	background: var(--ohmylms-admin-surface, #fff);
+	background: var(--ohmylms-admin-surface, var(--oml-surface));
 	color: var(--ws-primary);
 	font: inherit;
 	cursor: pointer;
@@ -71,9 +71,9 @@
 	display: flex;
 	flex: 1 1 auto;
 	align-items: center;
-	gap: 8px;
+	gap: var(--oml-space-2);
 	min-width: 0;
-	padding: 8px 8px 8px 0;
+	padding: var(--oml-space-2) var(--oml-space-2) var(--oml-space-2) 0;
 	border: 0;
 	background: none;
 	color: inherit;
@@ -92,23 +92,23 @@
 	flex: 0 0 auto;
 	min-width: 22px;
 	padding: 0 6px;
-	border-radius: 999px;
+	border-radius: var(--oml-radius-card);
 	background: var(--ws-subtle);
-	font-size: 12px;
+	font-size: var(--oml-font-size-xs);
 	text-align: center;
 }
 
 .ohmylms-ws-node-hint {
 	flex: 0 0 auto;
 	font-size: 11px;
-	font-weight: 400;
+	font-weight: var(--oml-weight-regular);
 	color: var(--ws-muted);
 }
 
 .ohmylms-ws-main {
 	flex: 1 1 auto;
 	min-width: 0;
-	padding: 0 32px 64px;
+	padding: 0 var(--oml-space-6) var(--oml-space-8);
 	overflow-y: auto;
 }
 
@@ -137,7 +137,7 @@
 .ohmylms-ws-pane-title {
 	display: flex;
 	align-items: flex-start;
-	gap: 8px;
+	gap: var(--oml-space-2);
 }
 
 .ohmylms-ws-objective-editor {
@@ -148,27 +148,27 @@
 .ohmylms-ws-objective-columns {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 16px;
+	gap: var(--oml-space-4);
 }
 
 .ohmylms-ws-language-buttons {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px;
-	margin-bottom: 16px;
+	gap: var(--oml-space-2);
+	margin-bottom: var(--oml-space-4);
 }
 
 .ohmylms-ws-objective-draft-actions {
 	display: flex;
-	gap: 8px;
+	gap: var(--oml-space-2);
 }
 
 .ohmylms-ws-objective-resize {
 	display: flex;
 	align-items: center;
-	gap: 12px;
-	margin: 8px 0;
-	font-size: 12px;
+	gap: var(--oml-space-3);
+	margin: var(--oml-space-2) 0;
+	font-size: var(--oml-font-size-xs);
 }
 
 .ohmylms-ws-objective-column {
@@ -182,7 +182,6 @@
 .ohmylms-ws-field {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
+	gap: var(--oml-space-1);
 	min-width: 0;
 }
-

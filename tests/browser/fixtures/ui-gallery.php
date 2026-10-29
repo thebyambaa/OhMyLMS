@@ -73,6 +73,27 @@ function wp_style_is() {
 	return true; }
 /** No-op stylesheet queue for the standalone gallery. */
 function wp_enqueue_style() {}
+/** Ignore the behavior queue; browser specs load the authored script explicitly. */
+function wp_enqueue_script() {}
+/**
+ * Resolve a fixture asset URL without WordPress.
+ *
+ * @param string $path Relative asset path.
+ * @return string
+ */
+function plugins_url( $path ) {
+	return 'https://example.test/' . $path;
+}
+/**
+ * Generate fixture-local IDs.
+ *
+ * @param string $prefix ID prefix.
+ * @return string
+ */
+function wp_unique_id( $prefix ) {
+	static $next = 0;
+	return $prefix . ( ++$next );
+}
 require OHMYLMS_DIR . '/vendor/autoload.php';
 
 use OhMyLMS\Design\DesignSystem;
@@ -245,7 +266,75 @@ function oml_gallery_sections( $context = 'learner' ) {
 		'colors'   => $swatches,
 		'controls' => $controls,
 	);
-	$html     = '';
+	$alerts   = '<div style="display:grid;gap:var(--oml-space-3)">';
+	foreach ( array( 'info', 'success', 'warning', 'danger' ) as $tone ) {
+		$alerts .= Ui::alert(
+			'Your course progress is saved. You can continue from any device.',
+			array(
+				'tone'  => $tone,
+				'title' => ucfirst( $tone ),
+			)
+		);
+	}
+	$alerts                 .= Ui::alert( 'A message without a title.', array( 'role' => 'status' ) );
+	$alerts                 .= Ui::alert(
+		'<script>alert("unsafe")</script>',
+		array(
+			'tone'  => 'bogus',
+			'title' => '<em>Plain text</em>',
+			'attrs' => array(
+				'data-test' => 'escaped-alert',
+				'onclick'   => 'alert(1)',
+				'style'     => 'display:none',
+			),
+		)
+	);
+	$sections['alerts']      = $alerts . '</div>';
+	$sections['tabs']        = Ui::tabs(
+		array(
+			array(
+				'id'           => 'overview',
+				'label'        => 'Overview',
+				'content_html' => '<p>Course overview.</p>',
+			),
+			array(
+				'id'           => 'locked',
+				'label'        => 'Locked',
+				'disabled'     => true,
+				'content_html' => '<p>Unavailable content.</p>',
+			),
+			array(
+				'id'           => 'lessons',
+				'label'        => 'Lessons',
+				'content_html' => '<p>Course lessons.</p>',
+			),
+		),
+		array( 'label' => 'Course details' )
+	);
+	$sections['table']       = Ui::table(
+		array( 'Course', 'Status', 'Progress' ),
+		array( array( 'Mathematics', 'Published', '60%' ), array( 'Science', 'Draft', '0%' ) ),
+		array(
+			'caption' => 'Courses',
+			'striped' => true,
+		)
+	);
+	$sections['empty-state'] = Ui::empty_state(
+		'No lessons yet',
+		array(
+			'description'  => 'Create a lesson to begin.',
+			'actions_html' => Ui::button( 'Create lesson', array( 'variant' => 'primary' ) ),
+		)
+	);
+	$sections['modal']       = Ui::button( 'Open dialog', array( 'attrs' => array( 'data-oml-dialog-open' => $context . '-modal' ) ) )
+		. Ui::modal(
+			'<p>Review the course settings.</p><label>Course name <input id="' . esc_attr( $context . '-modal-input' ) . '" class="oml-control oml-input" name="title"></label>',
+			array(
+				'id'    => $context . '-modal',
+				'title' => 'Course settings',
+			)
+		);
+	$html                    = '';
 	foreach ( $sections as $name => $markup ) {
 		$html .= '<section data-gallery="' . $name . '"><h2>' . ucfirst( $name ) . '</h2>' . $markup . '</section>';
 	}
@@ -253,7 +342,7 @@ function oml_gallery_sections( $context = 'learner' ) {
 }
 
 $learner_vars = ':root{' . Tokens::frontend_oml_vars() . '}';
-$admin_vars   = str_replace( 'body.' . DesignSystem::BODY_CLASS, '.gallery-admin', DesignSystem::css( DesignSystem::preset_values( 'khan' ) ) );
+$admin_vars   = str_replace( 'body.' . DesignSystem::BODY_CLASS, '.gallery-admin', DesignSystem::css() );
 
 echo '<!doctype html><html><head><meta charset="utf-8"><title>OhMyLMS design language</title><style>'
 	. file_get_contents( OHMYLMS_DIR . '/assets/css/oml-ui.css' ) // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents,WordPress.Security.EscapeOutput.OutputNotEscaped -- Local component CSS is intentionally rendered as stylesheet text.

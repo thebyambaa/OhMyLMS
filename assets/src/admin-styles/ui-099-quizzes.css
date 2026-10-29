@@ -12,7 +12,7 @@
 }
 
 .ohmylms-question-card.is-active {
-	border-left-color: var(--ohmylms-primary-color, #7153c6);
+	border-left-color: var(--ohmylms-primary-color, var(--oml-primary));
 }
 
 .ohmylms-question-card-heading .components-base-control {
@@ -21,8 +21,8 @@
 }
 
 .ohmylms-question-card-footer .components-toggle-control {
-	margin: 0 0 0 12px;
-	border-left: 1px solid #ddd;
+	margin: 0 0 0 var(--oml-space-3);
+	border-left: 1px solid var(--oml-border);
 	padding-left: 20px;
 }
 
@@ -31,8 +31,8 @@
 }
 
 .ohmylms-question-card > .ohmylms-question-version-bar {
-	margin-left: 24px;
-	margin-right: 24px;
+	margin-left: var(--oml-space-5);
+	margin-right: var(--oml-space-5);
 }
 
 .ohmylms-question-type-picker .components-base-control {
@@ -53,14 +53,13 @@
 	margin: 0;
 	max-height: 260px;
 	overflow-y: auto;
-	background: #fff;
-	border: 1px solid var(--oml-border, #dcdcde);
+	background: var(--oml-surface);
+	border: 1px solid var(--oml-border, var(--oml-border));
 	border-radius: var(--oml-radius-control, 6px);
-	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
+	box-shadow: var(--oml-shadow-sm);
 }
 
 .ohmylms-form-workspace-actions:has(.ohmylms-question-type-picker) {
 	flex-wrap: wrap;
 	align-items: center;
 }
-

@@ -1,6 +1,5 @@
 .ohmylms-streak-settings__footer {
 	display: flex;
 	justify-content: flex-end;
-	padding-top: 4px;
+	padding-top: var(--oml-space-1);
 }
-

@@ -14,7 +14,7 @@
 @media (max-width: 782px) {
 
 	.ohmylms-streak-settings {
-		padding: 16px 4px 24px;
+		padding: var(--oml-space-4) var(--oml-space-1) var(--oml-space-5);
 	}
 
 	.ohmylms-streak-settings__grid {
@@ -32,7 +32,7 @@
 
 	.ohmylms-gamification-settings .components-tab-panel__tabs {
 		flex-wrap: wrap;
-		padding-top: 32px;
+		padding-top: var(--oml-space-6);
 	}
 
 	.ohmylms-streak-settings__footer .components-button {
@@ -40,4 +40,3 @@
 		justify-content: center;
 	}
 }
-

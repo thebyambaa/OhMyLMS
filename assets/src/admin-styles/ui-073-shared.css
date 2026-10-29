@@ -1,8 +1,8 @@
 .ohmylms-form-description > label {
 	display: block;
-	margin-bottom: 8px;
-	font-size: 13px;
-	font-weight: 500;
+	margin-bottom: var(--oml-space-2);
+	font-size: var(--oml-font-size-sm);
+	font-weight: var(--oml-weight-medium);
 }
 
 .ohmylms-form-settings > fieldset {
@@ -20,8 +20,8 @@
 
 .ohmylms-form-settings > summary {
 	cursor: pointer;
-	font-weight: 600;
-	margin-bottom: 16px;
+	font-weight: var(--oml-weight-strong);
+	margin-bottom: var(--oml-space-4);
 }
 
 .ohmylms-mindmap-branches > li::before {
@@ -30,6 +30,5 @@
 	top: 50%;
 	left: -24px;
 	width: 24px;
-	border-top: 1px solid var(--ohmylms-admin-border, #dcdcde);
+	border-top: 1px solid var(--ohmylms-admin-border, var(--oml-border));
 }
-

@@ -1,6 +1,5 @@
 .ohmylms-quiz-form {
-	background: #f4f2fa;
-	padding: 24px;
+	background: var(--oml-primary-soft);
+	padding: var(--oml-space-5);
 	border-radius: var(--oml-radius-card, 8px);
 }
-

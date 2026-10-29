@@ -74,8 +74,15 @@ an element and everything inside it flips; `data-theme="system"` follows the dev
 | Badge | `oml-badge` + `-primary` `-success` `-warning` `-danger` `-info` | `Badge` | `Ui::badge()` |
 | Progress | `oml-progress` + `-success`, inner `oml-progress-bar` | `Progress` | `Ui::progress()` |
 | Input/Select | `oml-field`, `oml-control` + `oml-input` / `oml-select`, `oml-control-sm` / `-lg` / `-invalid` | `Input`, `Select` | `Ui::input()`, `Ui::select()` |
+| Alert | `oml-alert` + `-info` `-success` `-warning` `-danger`, `oml-alert-title`, `oml-alert-content` | `Alert` | `Ui::alert()` |
+| Tabs | `oml-tabs`, `oml-tab-list`, `oml-tab`, `oml-tab-panel` | `Tabs` | `Ui::tabs()` |
+| Modal | `oml-modal`, `oml-modal-header`, `oml-modal-title`, `oml-modal-content` | `Modal` | `Ui::modal()` |
+| Table | `oml-table-scroll`, `oml-table`, `oml-table-striped`, `oml-table-compact` | `Table` | `Ui::table()` |
+| EmptyState | `oml-empty-state`, title/description/actions children | `EmptyState` | `Ui::empty_state()` |
 
-Planned next: Alert, Tabs, Modal, Table, EmptyState.
+All shared components use one saved Design system across admin and learner pages. The old Colors &
+fonts screen links to that editor and retains the shared font control. Independent legacy color
+settings no longer create separate palettes; their public token/API names remain compatibility aliases.
 
 ## Adopting it
 
@@ -107,5 +114,6 @@ baselines only when the visual change is intended.
 | Practice, inline checks and skill progress (`practice.css`) | Migrated: chrome, controls, guidance, feedback, rewards, spacing, type and radii use shared tokens; runner actions use the existing shared Button helpers while preserving legacy hooks. Device-only dark overrides were removed; light/dark/system use the same token names. Categorical mastery levels and bronze/silver/gold medals keep fixed, paired palettes behind documented lint exceptions. Covered by `tests/browser/practice-tokens.spec.cjs`; verified on the disposable site's working practice page, including answer feedback and mobile layout |
 | Extended and interactive question chrome (`extended-questions.css`, `interactive.css`) | Migrated: controls, panels, selection, hints, focus, spacing, radii and transitions use tokens; game artwork and light math canvases keep documented palettes. `tests/browser/question-styles-tokens.spec.cjs` covers all theme modes. Verified live on the disposable site: flashcards, expression tiles, light/dark/system and phone layout |
 | Paper (`paper.css`) | Migrated: preview/editor surround and print toolbar use tokens; the standalone print page emits its own token definitions and uses the shared Button helper. Printed ink, light sheets, typography and physical dimensions remain fixed behind documented palette exceptions. Covered in screen and print media by `tests/browser/question-styles-tokens.spec.cjs`, and verified on the live disposable print page |
-| Quiz overview and generic question-stage chrome (`quiz-overview.css`, `question-stage.css`) | Token migration implemented and lint-enforced; quiz stage/prompt/answer palettes remain independent. Covered by `tests/browser/question-styles-tokens.spec.cjs`. Live legacy overview/stage verification remains pending: the legacy editor route did not expose these screens on the current disposable site. Admin dark mode is not enabled by this migration |
-| Course and lesson pages, remaining admin screens | Not migrated |
+| Quiz overview and generic question-stage chrome (`quiz-overview.css`, `question-stage.css`) | Token migration implemented and lint-enforced; quiz stage/prompt/answer palettes remain independent. Covered by `tests/browser/question-styles-tokens.spec.cjs`. Verified live on the published Combined editor verification quiz overview and the block editor's non-recording Student preview. A pre-existing navigation template typo that prevented the overview from rendering was corrected. Admin dark mode is not enabled by this migration |
+| Course and lesson pages | Authored course/lesson SCSS uses the shared palette, typography, spacing and shape. `learning-pages.css` is built and enqueued after the recovery baseline. Video controls retain their fixed media palette. Covered by `tests/browser/learning-pages-tokens.spec.cjs`; verified live on a published course preview and lesson |
+| Remaining admin screens | Authored `ui-*` modules and the scoped admin design-system adapter use shared tokens, with color literals rejected by lint. SDK cards and movable navigation share the component styling; the Lesson library uses Table/EmptyState and the new-exam dialog uses Modal/Alert. Existing public selectors, routes and drag/reorder behavior are preserved |

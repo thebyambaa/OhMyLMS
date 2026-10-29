@@ -1,8 +1,8 @@
 .ohmylms-question-content-modes {
 	display: flex;
-	border-right: 1px solid var(--oml-border, #dcdcde);
-	margin-right: 8px;
-	padding-right: 8px;
+	border-right: 1px solid var(--oml-border, var(--oml-border));
+	margin-right: var(--oml-space-2);
+	padding-right: var(--oml-space-2);
 }
 
 .ohmylms-question-html-source {
@@ -11,12 +11,11 @@
 	min-height: 180px;
 	resize: vertical;
 	margin: 0;
-	padding: 12px;
+	padding: var(--oml-space-3);
 	border: 0;
 	border-radius: 0;
 	box-sizing: border-box;
 	font-family: Consolas, monospace;
-	font-size: 13px;
+	font-size: var(--oml-font-size-sm);
 	line-height: 1.6;
 }
-

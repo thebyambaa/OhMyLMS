@@ -1,0 +1,22 @@
+.ohmylms-dashboard-layout.extensions .ohmylms-content {
+	padding: 26px var(--ohmylms-admin-gutter, 40px) 40px;
+	color: var(--ohmylms-admin-text-color, var(--oml-heading));
+}
+
+.ohmylms-movable-tab-panel.is-vertical > .ohmylms-movable-tabs {
+	align-content: start;
+	align-items: stretch;
+	flex-direction: column;
+	border-bottom: 0;
+}
+
+.ohmylms-movable-tab-panel.is-vertical .ohmylms-tab-group {
+	align-items: stretch;
+	flex-direction: column;
+	gap: 0;
+}
+
+.ohmylms-movable-tab-panel.is-vertical .ohmylms-tab-organize {
+	margin-left: 0;
+	text-align: left;
+}

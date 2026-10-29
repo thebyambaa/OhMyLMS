@@ -7,70 +7,69 @@ const root = path.resolve( __dirname, '../../..' );
 
 // Evaluate the authored ES modules against WordPress's real React runtime in the browser.
 // Only module syntax is adapted; no component or class-name implementation is duplicated.
-function modules() {
+function modules(
+	names = [ 'controls.mjs', 'Field.jsx', 'Input.jsx', 'Select.jsx' ]
+) {
 	return Object.fromEntries(
-		[ 'controls.mjs', 'Field.jsx', 'Input.jsx', 'Select.jsx' ].map(
-			( name ) => {
-				const ast = parse(
-					fs.readFileSync(
-						path.join( root, 'assets/src/ui', name ),
-						'utf8'
-					),
-					{ sourceType: 'module' }
-				);
-				const body = [];
-				for ( const node of ast.program.body ) {
-					if ( node.type === 'ImportDeclaration' ) {
-						body.push(
-							t.variableDeclaration( 'const', [
-								t.variableDeclarator(
-									t.objectPattern(
-										node.specifiers.map( ( specifier ) =>
-											t.objectProperty(
-												specifier.imported,
-												specifier.local,
-												false,
-												specifier.imported.name ===
-													specifier.local.name
-											)
+		names.map( ( name ) => {
+			const ast = parse(
+				fs.readFileSync(
+					path.join( root, 'assets/src/ui', name ),
+					'utf8'
+				),
+				{ sourceType: 'module' }
+			);
+			const body = [];
+			for ( const node of ast.program.body ) {
+				if ( node.type === 'ImportDeclaration' ) {
+					body.push(
+						t.variableDeclaration( 'const', [
+							t.variableDeclarator(
+								t.objectPattern(
+									node.specifiers.map( ( specifier ) =>
+										t.objectProperty(
+											specifier.imported,
+											specifier.local,
+											false,
+											specifier.imported.name ===
+												specifier.local.name
 										)
-									),
-									t.callExpression(
-										t.identifier( 'require' ),
-										[ node.source ]
 									)
 								),
-							] )
-						);
-					} else if ( node.type === 'ExportNamedDeclaration' ) {
-						body.push( node.declaration );
-						const names =
-							node.declaration.type === 'VariableDeclaration'
-								? node.declaration.declarations.map(
-										( declaration ) => declaration.id.name
-									)
-								: [ node.declaration.id.name ];
-						for ( const exported of names )
-							body.push(
-								t.expressionStatement(
-									t.assignmentExpression(
-										'=',
-										t.memberExpression(
-											t.identifier( 'exports' ),
-											t.identifier( exported )
-										),
-										t.identifier( exported )
-									)
+								t.callExpression( t.identifier( 'require' ), [
+									node.source,
+								] )
+							),
+						] )
+					);
+				} else if ( node.type === 'ExportNamedDeclaration' ) {
+					body.push( node.declaration );
+					const names =
+						node.declaration.type === 'VariableDeclaration'
+							? node.declaration.declarations.map(
+									( declaration ) => declaration.id.name
 								)
-							);
-					} else body.push( node );
-				}
-				return [
-					name.replace( /\.(jsx|mjs)$/, '' ),
-					generate( t.program( body ) ).code,
-				];
+							: [ node.declaration.id.name ];
+					for ( const exported of names )
+						body.push(
+							t.expressionStatement(
+								t.assignmentExpression(
+									'=',
+									t.memberExpression(
+										t.identifier( 'exports' ),
+										t.identifier( exported )
+									),
+									t.identifier( exported )
+								)
+							)
+						);
+				} else body.push( node );
 			}
-		)
+			return [
+				name.replace( /\.(jsx|mjs)$/, '' ),
+				generate( t.program( body ) ).code,
+			];
+		} )
 	);
 }
 
@@ -185,4 +184,4 @@ async function mountControls( page ) {
 	}, modules() );
 	await page.getByRole( 'textbox', { name: 'Email', exact: true } ).waitFor();
 }
-module.exports = { mountControls };
+module.exports = { mountControls, modules };

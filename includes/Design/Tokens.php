@@ -78,6 +78,18 @@ final class Tokens {
 	 * @return string
 	 */
 	public static function color( $option ) {
+		$aliases = array(
+			'ohmylms_primary_color_scheme'       => 'primary',
+			'ohmylms_heading_color_scheme'       => 'heading',
+			'ohmylms_body_text_color_scheme'     => 'text',
+			'ohmylms_body_progress_color_scheme' => 'success',
+			'ohmylms_admin_primary_color'        => 'primary',
+			'ohmylms_admin_heading_color'        => 'heading',
+			'ohmylms_admin_muted_color'          => 'muted',
+		);
+		if ( isset( $aliases[ $option ] ) ) {
+			return DesignSystem::get()['colors'][ $aliases[ $option ] ];
+		}
 		$value = get_option( $option, '' );
 		$value = is_string( $value ) ? strtolower( trim( $value ) ) : '';
 		if ( preg_match( '/^#([0-9a-f]{3})$/', $value, $short ) ) {
@@ -169,32 +181,22 @@ final class Tokens {
 	/**
 	 * The --oml-* semantic tokens for learner pages.
 	 *
-	 * Same names and derived shades as the admin Design system, so a shared component renders the same
-	 * way in both places, but the values come from the learner branding options. Neutrals, status colors
-	 * and shape use the Classic preset, which matches the learner theme.
+	 * One saved Design system controls admin and learner colors, spacing and shape.
 	 *
 	 * @return string Declarations without a selector.
 	 */
 	public static function frontend_oml_vars() {
-		$preset = DesignSystem::PRESETS['classic'];
+		$preset = DesignSystem::get();
 		return self::declarations( DesignSystem::variables( self::frontend_colors(), $preset['button_radius'], $preset['density'] ) );
 	}
 
 	/**
-	 * The learner palette: the Classic preset with the learner branding options applied.
+	 * The shared palette, used unchanged by admin and learner pages.
 	 *
 	 * @return array Colors keyed like DesignSystem::COLOR_KEYS.
 	 */
 	public static function frontend_colors() {
-		$colors              = DesignSystem::PRESETS['classic']['colors'];
-		$primary             = self::color( 'ohmylms_primary_color_scheme' );
-		$colors['primary']   = $primary;
-		$colors['secondary'] = $primary;
-		$colors['link']      = $primary;
-		$colors['heading']   = self::color( 'ohmylms_heading_color_scheme' );
-		$colors['text']      = self::color( 'ohmylms_body_text_color_scheme' );
-		$colors['success']   = self::color( 'ohmylms_body_progress_color_scheme' );
-		return $colors;
+		return DesignSystem::get()['colors'];
 	}
 
 	/**
@@ -204,7 +206,7 @@ final class Tokens {
 	 * @return string CSS rules.
 	 */
 	public static function frontend_dark_css() {
-		$vars = self::declarations( DesignSystem::dark_variables( self::frontend_colors() ) );
+		$vars = self::declarations( DesignSystem::dark_variables( self::frontend_colors() ) ) . self::legacy_aliases();
 		return '[data-theme="dark"],body:has(.oml-player[data-theme="dark"]){' . $vars . '}'
 			. '@media (prefers-color-scheme:dark){[data-theme="system"],body:has(.oml-player[data-theme="system"]){' . $vars . '}}';
 	}
@@ -223,26 +225,29 @@ final class Tokens {
 		return $css;
 	}
 
+	/**
+	 * Preserve public legacy token names as aliases of the shared vocabulary.
+	 *
+	 * @return string CSS declarations, reapplied within dark theme scopes.
+	 */
+	private static function legacy_aliases() {
+		return '--ohmylms-primary-color:var(--oml-primary);--ohmylms-primary-color-rgb:var(--oml-primary-rgb);'
+			. '--ohmylms-primary-hover-color:var(--oml-primary-hover);--ohmylms-primary-soft-color:var(--oml-primary-soft);'
+			. '--ohmylms-heading-color:var(--oml-heading);--ohmylms-body-text-color:var(--oml-text);'
+			. '--ohmylms-progressbar-color:var(--oml-success);--ohmylms-outline-color:var(--oml-primary);';
+	}
+
 	/** Learner-site variables, plus the font rule when a font is chosen. */
 	public static function frontend_css() {
-		$primary = self::color( 'ohmylms_primary_color_scheme' );
-		$font    = self::font( 'ohmylms_font_family' );
-		$css     = ':root{'
-			. '--ohmylms-primary-color:' . $primary . ';'
-			. '--ohmylms-primary-color-rgb:' . self::rgb( $primary ) . ';'
-			. '--ohmylms-primary-hover-color:' . self::mix( $primary, '#000000', 0.15 ) . ';'
-			. '--ohmylms-primary-soft-color:' . self::mix( $primary, '#ffffff', 0.9 ) . ';'
-			. '--ohmylms-heading-color:' . self::color( 'ohmylms_heading_color_scheme' ) . ';'
-			. '--ohmylms-body-text-color:' . self::color( 'ohmylms_body_text_color_scheme' ) . ';'
-			. '--ohmylms-progressbar-color:' . self::color( 'ohmylms_body_progress_color_scheme' ) . ';'
-			. '--ohmylms-outline-color:var(--ohmylms-primary-color);'
+		$font = self::font( 'ohmylms_font_family' );
+		$css  = ':root{'
+			. self::legacy_aliases()
+			. '--ohmylms-font-family:var(--oml-font-family);'
 			. self::frontend_oml_vars()
 			// Left undefined for "Theme font" so var(--ohmylms-font-family, fallback) keeps each page's own font.
 			. ( 'inherit' !== $font ? '--ohmylms-font-family:' . self::stack( $font ) . ';' : '' )
 			. '}';
-		if ( 'inherit' !== $font ) {
-			$css .= '.ohmylms-page,.ohmylms-schools,.ohmylms-practice,.ohmylms-inline-check,.ohmylms-skill-progress,.ohmylms-quiz{font-family:var(--ohmylms-font-family)}';
-		}
+		$css .= '.ohmylms-page,.ohmylms-schools,.ohmylms-practice,.ohmylms-inline-check,.ohmylms-skill-progress,.ohmylms-quiz{font-family:var(--oml-font-family)}';
 		return $css . self::frontend_dark_css() . self::quiz_css();
 	}
 
@@ -257,56 +262,9 @@ final class Tokens {
 
 	/** Admin-app variables (brand, WordPress components, Arco scale) and font. */
 	public static function admin_css() {
-		$primary = self::color( 'ohmylms_admin_primary_color' );
-		$heading = self::color( 'ohmylms_admin_heading_color' );
-		$muted   = self::color( 'ohmylms_admin_muted_color' );
-		$font    = self::font( 'ohmylms_admin_font_family' );
-		$css     = ':root{'
-			. '--wp-admin-theme-color:' . $primary . ';'
-			. '--wp-admin-theme-color--rgb:' . self::rgb( $primary ) . ';'
-			. '--wp-admin-theme-color-darker-10:' . self::mix( $primary, '#000000', 0.1 ) . ';'
-			. '--wp-admin-theme-color-darker-20:' . self::mix( $primary, '#000000', 0.2 ) . ';'
-			. '--wp-components-color-accent:' . $primary . ';'
-			. '--wp-components-color-accent-darker-10:' . self::mix( $primary, '#000000', 0.1 ) . ';'
-			. '--wp-components-color-accent-darker-20:' . self::mix( $primary, '#000000', 0.2 ) . ';'
-			. '--wp-components-color-foreground:' . $heading . ';'
-			. '--wp-components-color-subdued:' . $muted . ';'
-			. '--wp-components-button-color-secondary-text:' . $heading . ';'
-			. '--ohmylms-primary-color:' . $primary . ';'
-			. '--ohmylms-primary-color-rgb:' . self::rgb( $primary ) . ';'
-			. '--ohmylms-primary-hover-color:' . self::mix( $primary, '#000000', 0.25 ) . ';'
-			. '--ohmylms-primary-soft-color:' . self::mix( $primary, '#ffffff', 0.9 ) . ';'
-			. '--ohmylms-admin-heading-color:' . $heading . ';'
-			. '--ohmylms-admin-text-color:' . $heading . ';'
-			. '--ohmylms-admin-muted-color:' . $muted . ';'
-			. '--ohmylms-admin-surface:#ffffff;'
-			. '--ohmylms-admin-subtle:#f4f5f7;'
-			. '--ohmylms-admin-border:#ebedf0;'
-			. '--ohmylms-admin-radius:7px;'
-			. '--ohmylms-admin-gutter:40px;'
-			. '--ohmylms-admin-font:' . self::stack( $font ) . ';'
-			. '}';
-		// Arco components read "r, g, b" triplets on a 1..9 scale (6 = base).
-		$scale = array(
-			1 => array( '#ffffff', 0.9 ),
-			2 => array( '#ffffff', 0.8 ),
-			3 => array( '#ffffff', 0.65 ),
-			4 => array( '#ffffff', 0.45 ),
-			5 => array( '#ffffff', 0.2 ),
-			6 => array( '#ffffff', 0 ),
-			7 => array( '#000000', 0.15 ),
-			8 => array( '#000000', 0.3 ),
-			9 => array( '#000000', 0.45 ),
-		);
-		$css  .= 'body{';
-		foreach ( $scale as $step => [$toward, $amount] ) {
-			$css .= '--primary-' . $step . ':' . self::rgb( self::mix( $primary, $toward, $amount ) ) . ';'; }
-		$css .= '}';
-		if ( 'system' !== $font ) {
-			$css .= '#wpbody .ohmylms-admin-page :is(h1,h2,h3,h4,h5,h6,p,span,div,a,button,input,select,textarea,label,td,th,li,legend,strong,small)'
-				. ':not(.dashicons):not([class*="dashicons-"]):not(.iconfont){font-family:var(--ohmylms-admin-font)}';
-		}
-		return $css;
+		return DesignSystem::css()
+			. 'body.oml-ds{--ohmylms-admin-font:var(--oml-font-family);--ohmylms-admin-gutter:var(--oml-page-pad);}'
+			. 'body.oml-ds .ohmylms-admin-page{font-family:var(--oml-font-family)}';
 	}
 
 	/**
@@ -325,7 +283,10 @@ final class Tokens {
 			return; }
 		$ui_version = OHMYLMS_VERSION . '.' . substr( hash_file( 'sha256', OHMYLMS_DIR . '/assets/css/admin-ui.css' ), 0, 12 );
 		$ui_modules = \OhMyLMS\Assets\AdminAssets::get_module_handles( 'ui' );
-		wp_enqueue_style( 'ohmylms-admin-ui', $ui_modules ? false : plugins_url( 'assets/css/admin-ui.css', OHMYLMS_FILE ), array_merge( array( 'ohmylms-main' ), $ui_modules ), $ui_version );
+		// WordPress only registers a new handle through wp_enqueue_style() when its URL is non-empty.
+		// Register the module-only alias explicitly so its dependencies and the design system can load.
+		wp_register_style( 'ohmylms-admin-ui', $ui_modules ? false : plugins_url( 'assets/css/admin-ui.css', OHMYLMS_FILE ), array_merge( array( 'ohmylms-main' ), $ui_modules ), $ui_version );
+		wp_enqueue_style( 'ohmylms-admin-ui' );
 		$question_editor_version = OHMYLMS_VERSION . '.' . substr( hash_file( 'sha256', OHMYLMS_DIR . '/assets/css/question-editor.css' ), 0, 12 );
 		wp_enqueue_style( 'ohmylms-question-editor', plugins_url( 'assets/css/question-editor.css', OHMYLMS_FILE ), array( 'ohmylms-admin-ui' ), $question_editor_version );
 		foreach ( array( 'question-stage', 'quiz-design', 'quiz-overview', 'course-objectives', 'skill-matrix', 'course-editor-ux', 'course-outline-editor', 'subject-profiles', 'library-curriculum' ) as $file ) {
@@ -333,7 +294,7 @@ final class Tokens {
 		}
 		wp_add_inline_style( 'ohmylms-admin-ui', self::admin_css() );
 		wp_add_inline_style( 'ohmylms-question-editor', self::quiz_css() );
-		$url = self::font_url( self::font( 'ohmylms_admin_font_family' ) );
+		$url = self::font_url( self::font( 'ohmylms_font_family' ) );
 		if ( $url ) {
 			wp_enqueue_style( 'ohmylms-admin-font', $url, array(), null ); }
 		// The Design settings screen previews font names in their own face.

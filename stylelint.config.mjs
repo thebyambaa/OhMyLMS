@@ -92,6 +92,7 @@ export default {
 			// admin and learner pages alike; see docs/DESIGN-TOKENS.md.
 			files: [
 				'assets/css/oml-ui.css',
+				'assets/css/admin-design-system.css',
 				'assets/css/oml-legacy-*.css',
 				'assets/css/exam-player-template.css',
 				'assets/css/quiz-player-templates.css',
@@ -109,6 +110,10 @@ export default {
 				'assets/css/quiz-overview.css',
 				'assets/css/question-stage.css',
 				'assets/src/ui/**/*.{css,scss}',
+				'assets/src/admin-styles/ui-*.css',
+				'assets/src/frontend/scss/single/**/*.scss',
+				'assets/src/frontend/scss/lesson/**/*.scss',
+				'assets/src/frontend/scss/learning-pages.scss',
 			],
 			rules: {
 				'color-no-hex': true,
@@ -121,6 +126,8 @@ export default {
 		...compiled_styles,
 		// Lint the authored ui-* modules; these are their generated compatibility outputs.
 		'assets/css/admin-ui.css',
+		// Generated from learning-pages.scss; lint its authored partials above.
+		'assets/css/learning-pages.css',
 		'assets/css/oml-ui-*.css',
 		'node_modules/**',
 		'vendor/**',

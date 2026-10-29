@@ -5,6 +5,5 @@
 	border-collapse: separate;
 	border-spacing: 0;
 	overflow: hidden;
-	background: var(--ohmylms-admin-surface, #fff);
+	background: var(--ohmylms-admin-surface, var(--oml-surface));
 }
-

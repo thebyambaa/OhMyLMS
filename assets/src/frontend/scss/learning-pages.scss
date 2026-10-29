@@ -1,0 +1,14 @@
+/* Course and lesson layouts share the same tokens as admin and learner components. */
+@import "base/variable";
+@import "single/course-single";
+@import "single/scrollto-top";
+@import "lesson/lesson-single";
+
+.ohmylms-page {
+	color: var(--oml-text);
+	font-family: var(--oml-font-family);
+}
+
+.ohmylms-page .ohmylms-lesson-details-hamburger {
+	color: var(--oml-on-shade);
+}

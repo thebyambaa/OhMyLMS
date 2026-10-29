@@ -1,0 +1,21 @@
+.ohmylms-ws-side.is-collapsed .ohmylms-ws-side-tools.is-header {
+	display: none;
+}
+
+.ohmylms-ws-node.is-topic > .ohmylms-ws-node-line .ohmylms-ws-node-main {
+	font-weight: var(--oml-weight-strong);
+}
+
+.ohmylms-ws-add-content.components-button:hover:not(:disabled) {
+	background: color-mix(in srgb, var(--ws-primary, var(--oml-primary)) 88%, var(--oml-shade));
+	color: var(--oml-on-primary);
+	box-shadow: var(--oml-shadow-sm);
+}
+
+.ohmylms-ws-content-popover.is-compact
+	.ohmylms-ws-content-option.components-button {
+	min-height: 36px;
+	padding: 6px var(--oml-space-2);
+	gap: var(--oml-space-2);
+	border-radius: var(--oml-radius-control, 4px);
+}

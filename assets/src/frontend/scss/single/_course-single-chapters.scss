@@ -1,230 +1,247 @@
 .ohmylms-page {
 
-    .ohmylms-course-chapters {
+	.ohmylms-course-chapters {
 
-        .ohmylms-single-chapter {
-            margin-bottom: 50px;
+		.ohmylms-single-chapter {
+			margin-bottom: 50px;
 
-            &:last-child {
-                margin-bottom: 0;
-            }
+			&:last-child {
+				margin-bottom: 0;
+			}
 
-            .chapter-title-wrapper {
-                border-bottom: 1px solid #EBECED;
-                padding-bottom: 25px;
-                margin-bottom: 36px;
-            }
+			.chapter-title-wrapper {
+				border-bottom: 1px solid var(--oml-border);
+				padding-bottom: 25px;
+				margin-bottom: 36px;
+			}
 
-            .chapter-title {
-                color: var(--ohmylms-heading-color);
-                font-size: 24px;
-                font-weight: 700;
-                line-height: 1.4;
-                letter-spacing: 0;
-            }
+			.chapter-title {
+				color: var(--oml-heading);
+				font-size: var(--oml-font-size-2xl);
+				font-weight: var(--oml-weight-strong);
+				line-height: 1.4;
+				letter-spacing: 0;
+			}
 
-            .chapter-description {
-                color: var(--ohmylms-body-text-color);
-                font-size: 14px;
-                font-weight: 400;
-                line-height: 1.6;
-                display: block;
-                margin: 8px 0 0;
-            }
+			.chapter-description {
+				color: var(--oml-text);
+				font-size: var(--oml-font-size-md);
+				font-weight: var(--oml-weight-regular);
+				line-height: 1.6;
+				display: block;
+				margin: var(--oml-space-2) 0 0;
+			}
 
-            .ohmylms-wysiwyg-content {
-                margin-top: 14px;
-                margin-bottom: 10px;
-                
-                p, li, span, div, a {
-                    font-size: 14px;
-                    line-height: 1.6;
-                }
+			.ohmylms-wysiwyg-content {
+				margin-top: 14px;
+				margin-bottom: 10px;
 
-                p span {
-                    font-family: inherit;
-                }
-            }
+				p,
+				li,
+				span,
+				div,
+				a {
+					font-size: var(--oml-font-size-md);
+					line-height: 1.6;
+				}
 
-            .readmore {
-                color: var(--ohmylms-primary-color);
-                font-size: 15px;
-                font-weight: 500;
-                line-height: 1.3;
-                display: inline-block;
-                cursor: pointer;
-                position: relative;
-                padding: 0;
-                background-color: transparent;
-                border: none;
-                outline: none;
-                text-transform: none;
-                min-height: auto;
+				p span {
+					font-family: inherit;
+				}
+			}
 
-                svg {
-                    width: 12px;
-                    height: auto;
-                    display: block;
-                    position: absolute;
-                    right: -21px;
-                    top: calc(50% - 2px);
-                    transform-origin: center;
-                    transition: all 0.3s ease;
-                }
+			.readmore {
+				color: var(--oml-primary);
+				font-size: var(--oml-font-size-md);
+				font-weight: var(--oml-weight-medium);
+				line-height: 1.3;
+				display: inline-block;
+				cursor: pointer;
+				position: relative;
+				padding: 0;
+				background-color: transparent;
+				border: none;
+				outline: none;
+				text-transform: none;
+				min-height: auto;
 
-                &.active {
+				svg {
+					width: 12px;
+					height: auto;
+					display: block;
+					position: absolute;
+					right: -21px;
+					top: calc(50% - 2px);
+					transform-origin: center;
+					transition: all 0.3s ease;
+				}
 
-                    svg {
-                        transform: rotate(-180deg);
-                    }
-                }
+				&.active {
 
-                &:focus {
-                    outline: 1px dotted var(--ohmylms-primary-color);
-                }
-            }
-        }
+					svg {
+						transform: rotate(-180deg);
+					}
+				}
 
-        .ohmylms-chapter-content-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            overflow: hidden;
-            position: relative;
-            transition: all 0.3s ease;
+				&:focus {
+					outline: 1px dotted var(--oml-primary);
+				}
+			}
+		}
 
-            &.enabled-readmore::before {
-                content: "";
-                position: absolute;
-                bottom: 5px;
-                left: 0;
-                width: 100%;
-                height: var(--el-height);
-                background: #f9fafdb8;
-                z-index: 1;
-            }
+		.ohmylms-chapter-content-list {
+			list-style: none;
+			padding: 0;
+			margin: 0;
+			overflow: hidden;
+			position: relative;
+			transition: all 0.3s ease;
 
-            &.active {
+			&.enabled-readmore::before {
+				content: "";
+				position: absolute;
+				bottom: 5px;
+				left: 0;
+				width: 100%;
+				height: var(--el-height);
+				background: color-mix(
+					in srgb,
+					var(--oml-background) 72%,
+					transparent
+				);
+				z-index: 1;
+			}
 
-                &.enabled-readmore::before {
-                    opacity: 0;
-                    visibility: hidden;
-                }
-            }
-        }
+			&.active {
 
-        .ohmylms-chapter-content-list-item {
-            display: flex;
-            flex-flow: row wrap;
-            gap: 10px;
-            align-items: flex-start;
-            padding-bottom: 28px;
+				&.enabled-readmore::before {
+					opacity: 0;
+					visibility: hidden;
+				}
+			}
+		}
 
-            .icon {
-                position: relative;
-                top: 5px;
-                line-height: 1;
+		.ohmylms-chapter-content-list-item {
+			display: flex;
+			flex-flow: row wrap;
+			gap: 10px;
+			align-items: flex-start;
+			padding-bottom: 28px;
 
-                svg {
-                    display: block;
-                }
+			.icon {
+				position: relative;
+				top: 5px;
+				line-height: 1;
 
-                path {
-                    transition: all 0.3s ease;
-                }
-            }
+				svg {
+					display: block;
+				}
 
-            .lesson-title-row {
-                display: flex;
-                width: calc(100% - 30px);
-                line-height: 1;
-                justify-content: space-between;
-                gap: 10px;
+				path {
+					transition: all 0.3s ease;
+				}
+			}
 
-                .lock-icon {
-                    display: block;
-                    line-height: 1;
-                    position: relative;
-                    top: 4px;
-                }
-            }
+			.lesson-title-row {
+				display: flex;
+				width: calc(100% - 30px);
+				line-height: 1;
+				justify-content: space-between;
+				gap: 10px;
 
-            a {
-                color: var(--ohmylms-heading-color);
-                font-size: 16px;
-                font-style: normal;
-                font-weight: 400;
-                line-height: 1.5;
-                text-decoration: none;
-                outline: none;
+				.lock-icon {
+					display: block;
+					line-height: 1;
+					position: relative;
+					top: 4px;
+				}
+			}
 
-                &:hover {
-                    color: var(--ohmylms-primary-color);
-                }
+			a {
+				color: var(--oml-heading);
+				font-size: var(--oml-font-size-lg);
+				font-style: normal;
+				font-weight: var(--oml-weight-regular);
+				line-height: 1.5;
+				text-decoration: none;
+				outline: none;
 
-                &:focus {
-                    color: var(--ohmylms-primary-color);
-                }
-            }
+				&:hover {
+					color: var(--oml-primary);
+				}
 
-            .lesson-title-locked {
-                font-size: 16px;
-                font-style: normal;
-                font-weight: 400;
-                line-height: 1.5;
-                width: calc(100% - 30px);
-            }
+				&:focus {
+					color: var(--oml-primary);
+				}
+			}
 
-            &.type-text:hover {
+			.lesson-title-locked {
+				font-size: var(--oml-font-size-lg);
+				font-style: normal;
+				font-weight: var(--oml-weight-regular);
+				line-height: 1.5;
+				width: calc(100% - 30px);
+			}
 
-                .icon path {
-                    fill: var(--ohmylms-primary-color);
-                    stroke: var(--ohmylms-primary-color);
-                }
-            }
+			&.type-text:hover {
 
-            &.type-event:hover,
-            &.type-assignment:hover,
-            &.type-audio:hover,
-            &.type-quiz:hover,
-            &.type-video:hover,
-            &.type-session:hover {
+				.icon path {
+					fill: var(--oml-primary);
+					stroke: var(--oml-primary);
+				}
+			}
 
-                .icon path {
-                    fill: var(--ohmylms-primary-color);
-                }
-            }
-        }
-    }
+			&.type-event:hover,
+			&.type-assignment:hover,
+			&.type-audio:hover,
+			&.type-quiz:hover,
+			&.type-video:hover,
+			&.type-session:hover {
+
+				.icon path {
+					fill: var(--oml-primary);
+				}
+			}
+		}
+	}
 }
 
 @media screen and (max-width: 1199px) {
 
-    .ohmylms-page .ohmylms-course-chapters .ohmylms-single-chapter .chapter-title {
-        font-size: 18px;
-        padding-bottom: 16px;
-        margin-bottom: 23px;
-    }
+	.ohmylms-page
+		.ohmylms-course-chapters
+		.ohmylms-single-chapter
+		.chapter-title {
+		font-size: var(--oml-font-size-lg);
+		padding-bottom: var(--oml-space-4);
+		margin-bottom: 23px;
+	}
 
-    .ohmylms-page .ohmylms-course-chapters .ohmylms-chapter-content-list-item a {
-        font-size: 15px;
-    }
+	.ohmylms-page
+		.ohmylms-course-chapters
+		.ohmylms-chapter-content-list-item
+		a {
+		font-size: var(--oml-font-size-md);
+	}
 }
 
 @media screen and (max-width: 991px) {
 
-    .ohmylms-page .ohmylms-course-chapters .ohmylms-single-chapter {
-        margin-bottom: 30px;
-    }
+	.ohmylms-page .ohmylms-course-chapters .ohmylms-single-chapter {
+		margin-bottom: 30px;
+	}
 
-    .ohmylms-page .ohmylms-course-chapters .ohmylms-chapter-content-list-item {
-        padding-bottom: 20px;
-    }
+	.ohmylms-page .ohmylms-course-chapters .ohmylms-chapter-content-list-item {
+		padding-bottom: 20px;
+	}
 }
 
 @media screen and (max-width: 767px) {
 
-    .ohmylms-page .ohmylms-course-chapters .ohmylms-single-chapter .chapter-description {
-        font-size: 13px;
-    }
+	.ohmylms-page
+		.ohmylms-course-chapters
+		.ohmylms-single-chapter
+		.chapter-description {
+		font-size: var(--oml-font-size-sm);
+	}
 }

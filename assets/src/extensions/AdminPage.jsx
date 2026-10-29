@@ -1,4 +1,5 @@
 import { createElement } from '@wordpress/element';
+import { Card } from '../ui/Card';
 
 /**
  * Shared frame for SDK admin pages so they match the native screens: title row with optional
@@ -46,9 +47,9 @@ export function AdminPage( {
  */
 export function AdminCard( { title, className = '', children } ) {
 	return (
-		<div className={ `ohmylms-ext-card ${ className }`.trim() }>
+		<Card className={ `ohmylms-ext-card ${ className }`.trim() }>
 			{ title && <h2>{ title }</h2> }
 			{ children }
-		</div>
+		</Card>
 	);
 }

@@ -1,24 +1,23 @@
 .ohmylms-question-legacy-media {
 	max-width: 100%;
 	height: auto;
-	margin: 16px 0;
+	margin: var(--oml-space-4) 0;
 }
 
 .ohmylms-quiz-inspector-settings {
-	padding: 16px;
+	padding: var(--oml-space-4);
 }
 
 .ohmylms-question-block-heading {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 16px;
-	margin-bottom: 16px;
+	gap: var(--oml-space-4);
+	margin-bottom: var(--oml-space-4);
 }
 
 .ohmylms-question-answer-block {
-	border: 1px solid var(--oml-border, #dcdcde);
+	border: 1px solid var(--oml-border, var(--oml-border));
 	border-radius: var(--oml-radius-control, 4px);
 	padding: 20px;
 }
-

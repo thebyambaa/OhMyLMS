@@ -7,16 +7,44 @@ import { buildAdminStyles } from '../../tools/build-admin-styles.mjs';
 import { createFeatureLoader } from '../../assets/src/extensions/featureLoader.mjs';
 
 const root = path.resolve( import.meta.dirname, '../..' );
+test( 'source builds include the curriculum stylesheet imports beside their modules', () => {
+	const destination = fs.mkdtempSync(
+		path.join( os.tmpdir(), 'oml-css-imports-' )
+	);
+	try {
+		buildAdminStyles( root, destination );
+		for ( const name of [
+			'syllabus-spreadsheet.css',
+			'syllabus-mindmap.css',
+		] ) {
+			assert.equal(
+				fs.readFileSync(
+					path.join( destination, 'assets/css', name ),
+					'utf8'
+				),
+				fs.readFileSync( path.join( root, 'assets/css', name ), 'utf8' )
+			);
+		}
+	} finally {
+		fs.rmSync( destination, { recursive: true, force: true } );
+	}
+} );
 test( 'modular CSS preserves every original rule, URL and cascade position, including RTL', () => {
 	const destination = fs.mkdtempSync( path.join( os.tmpdir(), 'oml-css-' ) );
 	try {
 		const modules = buildAdminStyles( root, destination );
 		for ( const rtl of [ false, true ] ) {
 			const filename = rtl ? 'ohmylms-rtl.css' : 'ohmylms.css';
-			const baseline = fs.readFileSync(
-				path.join( root, 'assets/src/static/dist/css/admin', filename ),
-				'utf8'
-			);
+			const baseline = fs
+				.readFileSync(
+					path.join(
+						root,
+						'assets/src/static/dist/css/admin',
+						filename
+					),
+					'utf8'
+				)
+				.replace( /\r\n/g, '\n' );
 			assert.equal(
 				fs.readFileSync(
 					path.join( destination, 'assets/dist/css/admin', filename ),
@@ -63,10 +91,12 @@ test( 'modular CSS preserves every original rule, URL and cascade position, incl
 					)
 				)
 				.join( '' ),
-			fs.readFileSync(
-				path.join( root, 'assets/css/admin-ui.css' ),
-				'utf8'
-			)
+			fs
+				.readFileSync(
+					path.join( root, 'assets/css/admin-ui.css' ),
+					'utf8'
+				)
+				.replace( /\r\n/g, '\n' )
 		);
 	} finally {
 		fs.rmSync( destination, { recursive: true, force: true } );

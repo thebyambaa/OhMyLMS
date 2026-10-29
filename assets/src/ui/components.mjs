@@ -1,12 +1,40 @@
 // Class names for Card, Badge and Progress. includes/Design/Ui.php builds the same strings; the parity
 // test (tests/js/ui-components.test.mjs) keeps the two in step.
-export const BADGE_TONES = [ 'primary', 'success', 'warning', 'danger', 'info' ];
+export const BADGE_TONES = [
+	'primary',
+	'success',
+	'warning',
+	'danger',
+	'info',
+];
 export const PROGRESS_TONES = [ 'primary', 'success' ];
+export const ALERT_TONES = [ 'info', 'success', 'warning', 'danger' ];
+
+export function alertClass( { tone = 'info', className = '' } = {} ) {
+	return [
+		'oml-alert',
+		'oml-alert-' + ( ALERT_TONES.includes( tone ) ? tone : 'info' ),
+		className,
+	]
+		.filter( Boolean )
+		.join( ' ' );
+}
+
+export function alertRole( { tone, role } = {} ) {
+	if ( [ 'alert', 'status', 'none' ].includes( role ) ) {
+		return role;
+	}
+	return 'danger' === tone ? 'alert' : 'status';
+}
 
 const join = ( classes, extra ) =>
 	( extra ? [ ...classes, extra ] : classes ).join( ' ' );
 
-export function cardClass( { flat = false, interactive = false, className = '' } = {} ) {
+export function cardClass( {
+	flat = false,
+	interactive = false,
+	className = '',
+} = {} ) {
 	const classes = [ 'oml-card' ];
 	if ( flat ) {
 		classes.push( 'oml-card-flat' );

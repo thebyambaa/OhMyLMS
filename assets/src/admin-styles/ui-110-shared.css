@@ -6,5 +6,4 @@
 	opacity: 0.45;
 }
 
-.ohmylms-action-confirmation button + button { margin-inline-start: 12px; }
-
+.ohmylms-action-confirmation button + button { margin-inline-start: var(--oml-space-3); }

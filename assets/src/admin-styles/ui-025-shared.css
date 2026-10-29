@@ -2,13 +2,13 @@
  * link, flags, and the controls that say whether each one counts. */
 
 .ohmylms-cur-syllabus-badge {
-	background: var(--ohmylms-primary-soft-color, #f6f3fd);
-	border-color: var(--ohmylms-primary-color, #6e42d3);
-	font-weight: 600;
+	background: var(--ohmylms-primary-soft-color, var(--oml-primary-soft));
+	border-color: var(--ohmylms-primary-color, var(--oml-primary));
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-cur-name-link {
-	color: var(--ohmylms-primary-color, #6e42d3);
+	color: var(--ohmylms-primary-color, var(--oml-primary));
 	text-decoration: none;
 }
 
@@ -17,16 +17,16 @@
 	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
-	gap: 12px 20px;
-	margin: 20px 0 8px;
-	padding: 14px 16px;
-	border: 1px solid var(--ohmylms-admin-border, #dcdcde);
+	gap: var(--oml-space-3) 20px;
+	margin: 20px 0 var(--oml-space-2);
+	padding: 14px var(--oml-space-4);
+	border: 1px solid var(--ohmylms-admin-border, var(--oml-border));
 	border-radius: var(--ohmylms-admin-radius, 7px);
-	background: var(--ohmylms-admin-surface, #fff);
+	background: var(--ohmylms-admin-surface, var(--oml-surface));
 }
 
 .ohmylms-syl-existing {
-	margin: 8px 0;
+	margin: var(--oml-space-2) 0;
 }
 
 .ohmylms-syl-import {
@@ -35,29 +35,28 @@
 
 .ohmylms-syl-options {
 	display: grid;
-	gap: 8px;
-	margin: 8px 0 12px;
+	gap: var(--oml-space-2);
+	margin: var(--oml-space-2) 0 var(--oml-space-3);
 }
 
 .ohmylms-syl-report {
-	margin: 8px 0;
+	margin: var(--oml-space-2) 0;
 }
 
 .ohmylms-ws {
 	--ws-muted: color-mix(
 		in srgb,
-		var(--ohmylms-admin-text-color, #000d25) 68%,
-		#fff
+		var(--ohmylms-admin-text-color, var(--oml-heading)) 68%,
+		var(--oml-surface)
 	);
-	--ws-border: var(--ohmylms-admin-border, #dcdfe5);
-	--ws-primary: var(--ohmylms-primary-color, #6e42d3);
-	--ws-soft: var(--ohmylms-primary-soft-color, #f4effd);
-	--ws-subtle: var(--ohmylms-admin-subtle, #f4f5f7);
+	--ws-border: var(--ohmylms-admin-border, var(--oml-border));
+	--ws-primary: var(--ohmylms-primary-color, var(--oml-primary));
+	--ws-soft: var(--ohmylms-primary-soft-color, var(--oml-primary-soft));
+	--ws-subtle: var(--ohmylms-admin-subtle, var(--oml-background));
 	display: flex;
 	flex-direction: column;
 	height: calc(100vh - 32px);
 	min-height: 520px;
-	background: var(--ohmylms-admin-surface, #fff);
-	color: var(--ohmylms-admin-text-color, #000d25);
+	background: var(--ohmylms-admin-surface, var(--oml-surface));
+	color: var(--ohmylms-admin-text-color, var(--oml-heading));
 }
-

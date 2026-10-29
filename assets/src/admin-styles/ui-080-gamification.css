@@ -25,10 +25,9 @@
 }
 
 .ohmylms-streak-settings__badge-field > .components-button {
-	margin-top: 8px;
+	margin-top: var(--oml-space-2);
 }
 
 .ohmylms-streak-settings > .components-notice {
 	margin: 0 0 20px;
 }
-

@@ -3,20 +3,19 @@
 }
 
 .ohmylms-ws-node.is-topic > .ohmylms-ws-node-line .ohmylms-ws-node-main {
-	font-weight: 600;
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-ws-add-content.components-button:hover:not(:disabled) {
-	background: color-mix(in srgb, var(--ws-primary, #6e42d3) 88%, #000);
-	color: #fff;
-	box-shadow: 0 4px 12px rgb(110 66 211 / 24%);
+	background: color-mix(in srgb, var(--ws-primary, var(--oml-primary)) 88%, var(--oml-shade));
+	color: var(--oml-on-primary);
+	box-shadow: var(--oml-shadow-sm);
 }
 
 .ohmylms-ws-content-popover.is-compact
 	.ohmylms-ws-content-option.components-button {
 	min-height: 36px;
-	padding: 6px 8px;
-	gap: 8px;
+	padding: 6px var(--oml-space-2);
+	gap: var(--oml-space-2);
 	border-radius: var(--oml-radius-control, 4px);
 }
-

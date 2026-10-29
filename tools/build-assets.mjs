@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { buildAdminStyles } from './build-admin-styles.mjs';
+import { buildLearningStyles } from './build-learning-styles.mjs';
 import { parse } from '@babel/parser';
 import traverseModule from '@babel/traverse';
 import generatorModule from '@babel/generator';
@@ -63,6 +64,7 @@ const outputRoot = path.resolve(
 );
 const hashes = {};
 buildAdminStyles( root, outputRoot );
+buildLearningStyles( root, outputRoot );
 const sourceCache = new Map();
 const readSource = ( name ) => {
 	if ( ! sourceCache.has( name ) )

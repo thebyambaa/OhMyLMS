@@ -2,6 +2,5 @@
 	.ohmylms-question-bank
 	> .components-tab-panel
 	> .components-tab-panel__tabs {
-	margin-bottom: 16px;
+	margin-bottom: var(--oml-space-4);
 }
-

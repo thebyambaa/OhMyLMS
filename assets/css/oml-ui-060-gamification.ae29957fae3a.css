@@ -1,0 +1,29 @@
+.ohmylms-streak-settings h2 {
+	margin: 0 0 var(--oml-space-2);
+	font-size: var(--oml-font-size-xl);
+	line-height: 1.4;
+}
+
+.ohmylms-streak-settings h3 {
+	margin: 0 0 var(--oml-space-3);
+	font-size: var(--oml-font-size-lg);
+	line-height: 1.5;
+}
+
+.ohmylms-streak-settings p {
+	margin: var(--oml-space-2) 0 var(--oml-space-4);
+	color: var(--ohmylms-admin-muted-color, var(--oml-muted));
+	font-size: var(--oml-font-size-sm);
+	line-height: 1.65;
+}
+
+.ohmylms-streak-settings__details summary {
+	cursor: pointer;
+	font-weight: var(--oml-weight-medium);
+	line-height: 1.6;
+}
+
+.ohmylms-streak-settings__milestone legend {
+	padding: 0 var(--oml-space-2);
+	font-weight: var(--oml-weight-strong);
+}

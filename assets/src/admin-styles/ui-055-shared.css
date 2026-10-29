@@ -15,19 +15,18 @@
 
 .ohmylms-shared-answer-correct {
 	flex: 0 0 auto;
-	accent-color: var(--ohmylms-primary-color);
+	accent-color: var(--oml-primary);
 }
 
 .ohmylms-shared-answer-image {
 	flex-basis: 100%;
 	display: flex;
 	align-items: center;
-	gap: 12px;
+	gap: var(--oml-space-3);
 }
 
 .ohmylms-form-settings {
-	margin-top: 24px;
-	padding-top: 16px;
-	border-top: 1px solid #eee;
+	margin-top: var(--oml-space-5);
+	padding-top: var(--oml-space-4);
+	border-top: 1px solid var(--oml-border);
 }
-

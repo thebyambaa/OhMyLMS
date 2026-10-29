@@ -1,0 +1,7 @@
+.ohmylms-question-type-layout {
+	display: grid;
+	grid-template-columns: 200px minmax(0, 1fr) 300px;
+	gap: var(--oml-space-5);
+	background: var(--oml-surface);
+	padding: var(--oml-space-5);
+}

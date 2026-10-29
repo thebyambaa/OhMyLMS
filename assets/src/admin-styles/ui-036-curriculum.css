@@ -1,7 +1,7 @@
 .ohmylms-ws-row {
 	border: 1px solid var(--ws-border);
 	border-radius: var(--oml-radius-card, 8px);
-	background: var(--ohmylms-admin-surface, #fff);
+	background: var(--ohmylms-admin-surface, var(--oml-surface));
 }
 
 .ohmylms-ws-row-line {
@@ -13,9 +13,9 @@
 	display: flex;
 	flex: 1 1 auto;
 	align-items: center;
-	gap: 12px;
+	gap: var(--oml-space-3);
 	min-width: 0;
-	padding: 14px 16px;
+	padding: 14px var(--oml-space-4);
 	border: 0;
 	border-radius: var(--oml-radius-card, 8px);
 	background: none;
@@ -32,26 +32,25 @@
 	flex-direction: column;
 	gap: 2px;
 	min-width: 0;
-	font-weight: 600;
+	font-weight: var(--oml-weight-strong);
 	overflow-wrap: anywhere;
 }
 
 .ohmylms-ws-row-notes {
-	font-size: 12px;
-	font-weight: 400;
+	font-size: var(--oml-font-size-xs);
+	font-weight: var(--oml-weight-regular);
 	color: var(--ws-muted);
 	white-space: pre-line;
 }
 
 .ohmylms-ws-row-meta {
 	flex: 0 0 auto;
-	font-size: 12px;
+	font-size: var(--oml-font-size-xs);
 	color: var(--ws-muted);
 	white-space: nowrap;
 }
 
 .ohmylms-ws-menu {
 	flex: 0 0 auto;
-	margin-inline-end: 8px;
+	margin-inline-end: var(--oml-space-2);
 }
-

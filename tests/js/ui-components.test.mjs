@@ -8,6 +8,8 @@ import {
 	badgeClass,
 	progressClass,
 	clampPercent,
+	alertClass,
+	alertRole,
 } from '../../assets/src/ui/components.mjs';
 import { inputClass, selectClass } from '../../assets/src/ui/controls.mjs';
 
@@ -16,6 +18,12 @@ const css = fs.readFileSync(
 	'utf8'
 );
 const cases = {
+	alert: [
+		{},
+		...[ 'info', 'success', 'warning', 'danger', 'bogus' ].map(
+			( tone ) => ( { tone, className: 'extra' } )
+		),
+	],
 	card: [ {}, { flat: true }, { interactive: true, className: 'extra' } ],
 	badge: [
 		{},
@@ -46,6 +54,7 @@ const cases = {
 	],
 };
 const builders = {
+	alert: alertClass,
 	card: cardClass,
 	badge: badgeClass,
 	progress: progressClass,
@@ -76,6 +85,16 @@ test( 'progress values are clamped to whole percentages', () => {
 		[ -5, 0, 49.6, 100, 140, 'x', null ].map( clampPercent ),
 		[ 0, 0, 50, 100, 100, 0, 0 ]
 	);
+} );
+
+test( 'alerts default to polite information and allow explicit announcement roles', () => {
+	assert.equal( alertClass(), 'oml-alert oml-alert-info' );
+	assert.equal( alertClass( { tone: 'bogus' } ), alertClass() );
+	assert.equal( alertRole(), 'status' );
+	assert.equal( alertRole( { tone: 'danger' } ), 'alert' );
+	assert.equal( alertRole( { tone: 'danger', role: 'status' } ), 'status' );
+	assert.equal( alertRole( { role: 'none' } ), 'none' );
+	assert.equal( alertRole( { role: 'bogus' } ), 'status' );
 } );
 
 test( 'every class a component emits is styled in oml-ui.css', () => {

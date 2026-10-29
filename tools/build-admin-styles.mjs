@@ -25,6 +25,17 @@ export function buildAdminStyles( root, outputRoot ) {
 			layer === 'ui' ? 'assets/css' : 'assets/dist/css/admin';
 		const targetDirectory = path.join( outputRoot, relative );
 		fs.mkdirSync( targetDirectory, { recursive: true } );
+		// The curriculum module imports authored sibling styles. Source builds need those siblings too.
+		if ( path.resolve( root ) !== path.resolve( outputRoot ) ) {
+			for ( const [ , dependency ] of css.matchAll(
+				/@import\s+url\(\.\/([a-z0-9-]+\.css)\)/g
+			) ) {
+				fs.copyFileSync(
+					path.join( root, relative, dependency ),
+					path.join( targetDirectory, dependency )
+				);
+			}
+		}
 		// Keep the original directory depth: vendor font/image URLs stay valid.
 		fs.writeFileSync(
 			path.join( targetDirectory, file ),

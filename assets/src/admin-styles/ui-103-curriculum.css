@@ -8,6 +8,5 @@
 .ohmylms-syllabus-sheet .ohmylms-skill-connections {
 	min-width: 210px;
 	max-width: 360px;
-	padding: 8px;
+	padding: var(--oml-space-2);
 }
-

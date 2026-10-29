@@ -9,7 +9,7 @@
 	--hub-bg: var(--oml-background);
 	--hub-surface: var(--oml-surface);
 	--hub-rail: var(--oml-surface);
-	--hub-text: var(--oml-heading);
+	--hub-text: var(--oml-text);
 	--hub-muted: var(--oml-muted);
 	--hub-border: var(--oml-border);
 	--hub-selected-bg: color-mix(in srgb, var(--hub-accent) 14%, var(--hub-surface));
@@ -22,7 +22,11 @@
 	margin: 0;
 	background: var(--hub-bg);
 	color: var(--hub-text);
-	font-family: "Plus Jakarta Sans", "Noto Sans", system-ui, sans-serif;
+	font-family: var(--oml-font-family);
+}
+
+.ohmylms-student-hub :is(h1, h2, h3, h4, h5, h6) {
+	color: var(--oml-heading);
 }
 
 .oml-hub-page {

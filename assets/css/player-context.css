@@ -44,7 +44,7 @@ body:has(.oml-player) {
 	min-height: 100vh;
 	background: var(--player-page);
 	color: var(--player-text);
-	font-family: "Plus Jakarta Sans", "Noto Sans", sans-serif;
+	font-family: var(--oml-font-family);
 	line-height: 1.6;
 }
 

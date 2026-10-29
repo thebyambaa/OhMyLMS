@@ -1,13 +1,12 @@
 .ohmylms-skill-picker-list {
 	max-height: 260px;
 	overflow: auto;
-	margin: 12px 0;
-	padding: 8px 12px;
-	border: 1px solid var(--ohmylms-admin-border, #dcdcde);
+	margin: var(--oml-space-3) 0;
+	padding: var(--oml-space-2) var(--oml-space-3);
+	border: 1px solid var(--ohmylms-admin-border, var(--oml-border));
 	border-radius: var(--oml-radius-control, 4px);
 }
 
 .ohmylms-skill-picker-create {
-	margin: 0 0 12px;
+	margin: 0 0 var(--oml-space-3);
 }
-

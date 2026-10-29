@@ -3,8 +3,8 @@
 	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
-	gap: 12px 24px;
-	margin: 24px var(--ohmylms-hub-gutter) 12px;
+	gap: var(--oml-space-3) var(--oml-space-5);
+	margin: var(--oml-space-5) var(--ohmylms-hub-gutter) var(--oml-space-3);
 }
 
 .ohmylms-content-hub-actions {
@@ -12,6 +12,5 @@
 	flex-wrap: wrap;
 	align-items: center;
 	justify-content: flex-end;
-	gap: 8px;
+	gap: var(--oml-space-2);
 }
-

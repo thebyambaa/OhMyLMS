@@ -1,5 +1,4 @@
 .ohmylms-skill-picker-create summary {
 	cursor: pointer;
-	font-weight: 500;
+	font-weight: var(--oml-weight-medium);
 }
-

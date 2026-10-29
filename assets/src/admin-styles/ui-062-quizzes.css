@@ -8,15 +8,14 @@ button.ohmylms-quiz-skill-chip {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 12px;
+	gap: var(--oml-space-3);
 }
 
 .ohmylms-quiz-skills-block h3 {
 	margin: 0;
-	font-size: 15px;
+	font-size: var(--oml-font-size-md);
 }
 
 .ohmylms-question-skills h3 {
-	font-size: 14px;
+	font-size: var(--oml-font-size-md);
 }
-

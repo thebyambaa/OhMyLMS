@@ -2,8 +2,8 @@
 	display: grid;
 	gap: 6px;
 	margin-top: 6px;
-	font-size: 12px;
-	font-weight: 400;
+	font-size: var(--oml-font-size-xs);
+	font-weight: var(--oml-weight-regular);
 	line-height: 1.5;
 	text-align: start;
 	white-space: normal;
@@ -13,5 +13,3 @@
 .ohmylms-skill-connection {
 	display: block;
 }
-
-

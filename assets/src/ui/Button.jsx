@@ -9,7 +9,10 @@ import { buttonClass } from './button.mjs';
  * @param {string}  props.variant   primary, secondary (default), tertiary or danger.
  * @param {string}  props.size      sm, md (default) or lg.
  * @param {boolean} props.block     Full width.
+ * @param           props.className
  * @param {boolean} props.disabled  Disabled; links get aria-disabled.
+ * @param           props.href
+ * @param           props.children
  */
 export function Button( {
 	variant,

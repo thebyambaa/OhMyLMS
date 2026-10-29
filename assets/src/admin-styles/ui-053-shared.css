@@ -49,11 +49,11 @@
 
 .ohmylms-shared-answers {
 	display: grid;
-	gap: 12px;
+	gap: var(--oml-space-3);
 }
 
 .ohmylms-inline-blank-stem {
-	font-size: 18px;
+	font-size: var(--oml-font-size-lg);
 	line-height: 2.2;
 }
 
@@ -61,27 +61,26 @@
 	display: inline-block;
 	min-width: 100px;
 	padding: 3px 10px;
-	margin: 0 4px;
+	margin: 0 var(--oml-space-1);
 	font: inherit;
-	border: 1px dashed #8c8f94;
-	border-radius: 5px;
-	background: #f6f7f7;
+	border: 1px dashed var(--oml-border);
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-subtle);
 	cursor: pointer;
 }
 
 .ohmylms-blank-answer-bank {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px;
-	margin: 12px 0;
+	gap: var(--oml-space-2);
+	margin: var(--oml-space-3) 0;
 }
 
 /* Skill library picker inside a chapter, and the import dialog. */
 
 .ohmylms-blank-answer-chip {
-	border: 1px solid var(--oml-border, #dcdcde);
-	padding: 6px 12px;
-	border-radius: 5px;
-	background: #f6f7f7;
+	border: 1px solid var(--oml-border, var(--oml-border));
+	padding: 6px var(--oml-space-3);
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-subtle);
 }
-

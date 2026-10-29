@@ -1,6 +1,6 @@
 .ohmylms-workspace-skill-settings > summary {
-	padding: 12px 0;
-	color: #3858e9;
+	padding: var(--oml-space-3) 0;
+	color: var(--oml-primary);
 	cursor: pointer;
 }
 
@@ -8,12 +8,11 @@
 	display: flex;
 	align-items: flex-start;
 	justify-content: space-between;
-	gap: 12px;
+	gap: var(--oml-space-3);
 	padding: 14px 0;
-	border-bottom: 1px solid #dcdcde;
+	border-bottom: 1px solid var(--oml-border);
 }
 
 .ohmylms-workspace-connection-list p {
-	margin: 4px 0;
+	margin: var(--oml-space-1) 0;
 }
-

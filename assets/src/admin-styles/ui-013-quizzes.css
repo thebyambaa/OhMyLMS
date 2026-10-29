@@ -1,27 +1,27 @@
 .ohmylms-question-skills {
-	margin-top: 16px;
+	margin-top: var(--oml-space-4);
 }
 
 .ohmylms-quiz-skills-tab {
 	display: grid;
-	gap: 16px;
-	padding: 16px 0;
+	gap: var(--oml-space-4);
+	padding: var(--oml-space-4) 0;
 }
 
 .ohmylms-quiz-skills-block {
-	padding: 16px;
-	border: 1px solid #e3e6eb;
+	padding: var(--oml-space-4);
+	border: 1px solid var(--oml-border);
 	border-radius: var(--oml-radius-card, 8px);
-	background: #fff;
+	background: var(--oml-surface);
 }
 
 .ohmylms-quiz-skills-question {
 	display: grid;
 	grid-template-columns: 32px minmax(120px, 1fr) minmax(160px, 2fr) auto;
 	align-items: center;
-	gap: 8px 12px;
+	gap: var(--oml-space-2) var(--oml-space-3);
 	padding: 10px 0;
-	border-top: 1px solid #eef0f3;
+	border-top: 1px solid var(--oml-border);
 }
 
 .ohmylms-quiz-skills-prompt {
@@ -29,4 +29,3 @@
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
-

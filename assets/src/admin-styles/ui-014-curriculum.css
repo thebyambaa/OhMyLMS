@@ -1,8 +1,7 @@
 .ohmylms-content-hub-nav {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 24px;
-	margin: 0 var(--ohmylms-hub-gutter) 24px;
-	border-bottom: 1px solid var(--ohmylms-admin-border, #dcdcde);
+	gap: var(--oml-space-5);
+	margin: 0 var(--ohmylms-hub-gutter) var(--oml-space-5);
+	border-bottom: 1px solid var(--ohmylms-admin-border, var(--oml-border));
 }
-

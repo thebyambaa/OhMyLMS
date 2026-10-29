@@ -1,21 +1,21 @@
 .ohmylms-page {
 
-    .ohmylms-single-course-layout-2 {
+	.ohmylms-single-course-layout-2 {
 
-        .ohmylms-course-assignment {
-            margin-top: 40px;
+		.ohmylms-course-assignment {
+			margin-top: 40px;
 
-            .ohmylms-assignment-accordion {
-                box-shadow: none;
-                border: 1px solid #EBECED;
-            }
-        }
-    }
+			.ohmylms-assignment-accordion {
+				box-shadow: none;
+				border: 1px solid var(--oml-border);
+			}
+		}
+	}
 }
 
 @media screen and (max-width: 575px) {
 
-    .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-course-assignment  {
-        margin-top: 30px;
-    }
+	.ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-course-assignment {
+		margin-top: 30px;
+	}
 }

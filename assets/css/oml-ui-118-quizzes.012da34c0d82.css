@@ -1,0 +1,21 @@
+.ohmylms-form-workspace .ohmylms-question-live-preview > h3 {
+	color: inherit;
+}
+
+.ohmylms-question-live-preview input[type="radio"] {
+	appearance: auto !important;
+	width: 18px;
+	height: 18px;
+	border: 1px solid var(--oml-border) !important;
+	accent-color: var(--oml-primary-hover, var(--oml-primary));
+	flex-shrink: 0;
+}
+
+.ohmylms-question-live-preview input[type="checkbox"] {
+	appearance: auto !important;
+	width: 18px;
+	height: 18px;
+	border: 1px solid var(--oml-border) !important;
+	accent-color: var(--oml-primary-hover, var(--oml-primary));
+	flex-shrink: 0;
+}

@@ -10,14 +10,14 @@
 .ohmylms-ws-field textarea.ohmylms-ws-objective {
 	width: 100%;
 	min-height: 140px;
-	padding: 10px 12px;
+	padding: 10px var(--oml-space-3);
 	border: 1px solid var(--ws-border);
 	border-radius: var(--oml-radius-control, 4px);
-	background: var(--ohmylms-admin-surface, #fff);
+	background: var(--ohmylms-admin-surface, var(--oml-surface));
 	color: inherit;
 	font-family: inherit;
-	font-size: 14px;
-	font-weight: 400;
+	font-size: var(--oml-font-size-md);
+	font-weight: var(--oml-weight-regular);
 	line-height: 1.6;
 	white-space: pre-wrap;
 	overflow-wrap: anywhere;
@@ -27,7 +27,7 @@
 .ohmylms-ws-objective-columns textarea.ohmylms-ws-objective {
 	height: var(--ws-objective-height, 240px);
 	min-height: 160px;
-	padding-bottom: 48px;
+	padding-bottom: var(--oml-space-7);
 	resize: none;
 }
 
@@ -37,7 +37,6 @@
 	padding: 6px 10px;
 	border: 1px solid var(--ws-border);
 	border-radius: var(--oml-radius-control, 4px);
-	background: var(--ohmylms-admin-surface, #fff);
+	background: var(--ohmylms-admin-surface, var(--oml-surface));
 	color: inherit;
 }
-

@@ -1,5 +1,5 @@
 .ohmylms-category-token button:hover {
-	background: #c7e7d4;
+	background: var(--oml-success-soft);
 }
 
 .ohmylms-category-tags button:disabled {
@@ -8,7 +8,6 @@
 }
 
 .ohmylms-category-tags button:focus-visible {
-	outline: 2px solid var(--oml-primary-hover, #6048ce);
+	outline: 2px solid var(--oml-primary-hover, var(--oml-primary));
 	outline-offset: 2px;
 }
-

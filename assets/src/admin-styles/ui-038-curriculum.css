@@ -4,13 +4,13 @@
 	padding: 2px 10px;
 	border-radius: var(--oml-radius-control, 6px);
 	background: var(--ws-subtle);
-	font-size: 12px;
-	font-weight: 600;
+	font-size: var(--oml-font-size-xs);
+	font-weight: var(--oml-weight-strong);
 	line-height: 1.6;
 }
 
 .ohmylms-ws-empty {
-	margin: 12px 0;
+	margin: var(--oml-space-3) 0;
 	padding: 18px;
 	border: 1px dashed var(--ws-border);
 	border-radius: var(--oml-radius-card, 8px);
@@ -18,8 +18,8 @@
 }
 
 .ohmylms-ws-quickadd {
-	margin: 0 0 12px;
-	padding: 12px;
+	margin: 0 0 var(--oml-space-3);
+	padding: var(--oml-space-3);
 	border: 1px dashed var(--ws-primary);
 	border-radius: var(--oml-radius-card, 8px);
 	background: var(--ws-soft);
@@ -36,24 +36,24 @@
 	display: flex;
 	flex: 0 1 120px;
 	flex-direction: column;
-	gap: 4px;
+	gap: var(--oml-space-1);
 }
 
 .ohmylms-ws-quickadd-name {
 	display: flex;
 	flex: 1 1 240px;
 	flex-direction: column;
-	gap: 4px;
+	gap: var(--oml-space-1);
 }
 
 .ohmylms-ws-quickadd-actions {
 	display: flex;
-	gap: 8px;
+	gap: var(--oml-space-2);
 }
 
 .ohmylms-ws-course {
-	margin-top: 24px;
-	padding: 16px 18px;
+	margin-top: var(--oml-space-5);
+	padding: var(--oml-space-4) 18px;
 	border: 1px solid var(--ws-border);
 	border-radius: var(--oml-radius-card, 8px);
 	background: var(--ws-subtle);
@@ -63,29 +63,29 @@
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 8px;
+	gap: var(--oml-space-2);
 }
 
 .ohmylms-ws-facts {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 	gap: 10px 20px;
-	margin: 12px 0;
+	margin: var(--oml-space-3) 0;
 }
 
 .ohmylms-ws-course-actions {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px;
-	margin-top: 12px;
+	gap: var(--oml-space-2);
+	margin-top: var(--oml-space-3);
 }
 
 .ohmylms-syllabus-settings-card {
 	margin: 20px 0;
-	padding: 24px;
-	border: 1px solid var(--ws-border, #e4e7ee);
-	border-radius: 12px;
-	background: #fff;
+	padding: var(--oml-space-5);
+	border: 1px solid var(--ws-border, var(--oml-border));
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-surface);
 }
 
 .ohmylms-ws-icon-picker {
@@ -96,6 +96,5 @@
 	display: grid;
 	grid-template-columns: repeat(4, minmax(0, 1fr));
 	gap: 6px;
-	margin-bottom: 12px;
+	margin-bottom: var(--oml-space-3);
 }
-

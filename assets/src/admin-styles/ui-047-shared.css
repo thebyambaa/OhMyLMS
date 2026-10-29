@@ -1,19 +1,19 @@
 .ohmylms-preview-note {
-	color: #646970;
-	font-size: 13px;
+	color: var(--oml-muted);
+	font-size: var(--oml-font-size-sm);
 }
 
 .ohmylms-preview-choice {
 	display: flex;
-	gap: 12px;
-	padding: 12px 0;
+	gap: var(--oml-space-3);
+	padding: var(--oml-space-3) 0;
 	align-items: center;
 }
 
 .ohmylms-preview-input {
 	display: flex;
-	gap: 12px;
-	padding: 12px 0;
+	gap: var(--oml-space-3);
+	padding: var(--oml-space-3) 0;
 	flex-direction: column;
 	align-items: stretch;
 }
@@ -22,4 +22,3 @@
 	width: 120px;
 	margin: 0 6px;
 }
-

@@ -48,6 +48,7 @@ module.exports = [
 			'assets/js/player-context.js',
 			'assets/js/admin-benchmark.js',
 			'assets/js/admin-styles.js',
+			'assets/js/ui.js',
 		],
 	} ) ),
 	{

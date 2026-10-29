@@ -9,6 +9,7 @@ define( 'ABSPATH', __DIR__ . '/' );
 require dirname( __DIR__, 2 ) . '/vendor/autoload.php';
 
 $methods = array(
+	'alert'    => 'alert_class',
 	'card'     => 'card_class',
 	'badge'    => 'badge_class',
 	'progress' => 'progress_class',

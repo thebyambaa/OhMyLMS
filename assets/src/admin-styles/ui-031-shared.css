@@ -15,11 +15,11 @@
 	.ohmylms-mindmap-root {
 		width: 100%;
 		min-width: 0;
-		margin-bottom: 16px;
+		margin-bottom: var(--oml-space-4);
 	}
 
 	.ohmylms-mindmap-branches {
-		padding-left: 16px;
+		padding-left: var(--oml-space-4);
 		min-width: 0;
 	}
 
@@ -44,4 +44,3 @@
 		display: none;
 	}
 }
-

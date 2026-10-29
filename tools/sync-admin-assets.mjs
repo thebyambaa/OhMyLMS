@@ -4,6 +4,12 @@ import { buildAdminStyles } from './build-admin-styles.mjs';
 
 // Ship the same admin app and SDK used during development, including add-on settings.
 const root = path.resolve( import.meta.dirname, '..' );
+for ( const suffix of [ '.css', '.css.map' ] ) {
+	fs.copyFileSync(
+		path.join( root, 'build/assets/css/learning-pages' + suffix ),
+		path.join( root, 'assets/css/learning-pages' + suffix )
+	);
+}
 buildAdminStyles( root, root );
 const manifest = JSON.parse(
 	fs.readFileSync( path.join( root, 'assets/src/manifest.json' ), 'utf8' )

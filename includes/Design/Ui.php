@@ -20,6 +20,7 @@ final class Ui {
 	const BUTTON_VARIANTS = array( 'primary', 'secondary', 'tertiary', 'danger' );
 	const BUTTON_SIZES    = array( 'sm', 'md', 'lg' );
 	const BADGE_TONES     = array( 'primary', 'success', 'warning', 'danger', 'info' );
+	const ALERT_TONES     = array( 'info', 'success', 'warning', 'danger' );
 	const CONTROL_SIZES   = array( 'sm', 'md', 'lg' );
 	const INPUT_TYPES     = array( 'text', 'email', 'number', 'password', 'search', 'tel', 'url', 'date', 'datetime-local', 'month', 'time', 'week' );
 
@@ -36,6 +37,10 @@ final class Ui {
 		$css = self::legacy_button_css();
 		if ( '' !== $css && wp_style_is( 'ohmylms-frontend', 'registered' ) ) {
 			wp_add_inline_style( 'ohmylms-frontend', $css );
+		}
+		$path = OHMYLMS_DIR . '/assets/css/learning-pages.css';
+		if ( is_readable( $path ) && wp_style_is( 'ohmylms-frontend', 'enqueued' ) ) {
+			wp_enqueue_style( 'ohmylms-learning-pages', plugins_url( 'assets/css/learning-pages.css', OHMYLMS_FILE ), array( 'ohmylms-frontend', self::STYLE_HANDLE ), OHMYLMS_VERSION . '.' . substr( (string) hash_file( 'sha256', $path ), 0, 12 ) );
 		}
 	}
 
@@ -65,6 +70,109 @@ final class Ui {
 			self::register();
 		}
 		wp_enqueue_style( self::STYLE_HANDLE );
+	}
+
+	/** Enqueue progressive enhancement for PHP tabs and native dialogs. */
+	private static function enqueue_behavior() {
+		wp_enqueue_script( 'ohmylms-ui', plugins_url( 'assets/js/ui.js', OHMYLMS_FILE ), array(), OHMYLMS_VERSION . '.' . substr( (string) hash_file( 'sha256', OHMYLMS_DIR . '/assets/js/ui.js' ), 0, 12 ), true );
+	}
+
+	/**
+	 * Render local tabs. Panels remain readable without JavaScript.
+	 *
+	 * @param array $items Items containing id, label, content_html (already escaped) and disabled.
+	 * @param array $args label, value, orientation, class.
+	 * @return string HTML containing caller-escaped panel markup.
+	 */
+	public static function tabs( $items, $args = array() ) {
+		self::enqueue();
+		self::enqueue_behavior();
+		$id       = wp_unique_id( 'oml-tabs-' );
+		$vertical = 'vertical' === ( $args['orientation'] ?? '' );
+		$enabled  = array_values( array_filter( $items, static fn( $item ) => empty( $item['disabled'] ) ) );
+		$active   = $args['value'] ?? ( $enabled[0]['id'] ?? '' );
+		if ( ! in_array( $active, array_column( $enabled, 'id' ), true ) ) {
+			$active = $enabled[0]['id'] ?? '';
+		}
+		$html   = '<div class="' . esc_attr( trim( 'oml-tabs ' . ( $args['class'] ?? '' ) ) ) . '" data-oml-tabs><div class="oml-tab-list" role="tablist" aria-label="' . esc_attr( $args['label'] ?? '' ) . '" aria-orientation="' . ( $vertical ? 'vertical' : 'horizontal' ) . '">';
+		$panels = '';
+		foreach ( array_values( $items ) as $index => $item ) {
+			$selected = $active === $item['id'];
+			$tab_id   = $id . '-tab-' . $index;
+			$panel_id = $id . '-panel-' . $index;
+			$html    .= '<button type="button" role="tab" class="oml-tab" id="' . esc_attr( $tab_id ) . '" aria-controls="' . esc_attr( $panel_id ) . '" aria-selected="' . ( $selected ? 'true' : 'false' ) . '" tabindex="' . ( $selected ? '0' : '-1' ) . '"' . ( ! empty( $item['disabled'] ) ? ' disabled' : '' ) . '>' . esc_html( $item['label'] ?? '' ) . '</button>';
+			$panels  .= '<div class="oml-tab-panel" role="tabpanel" id="' . esc_attr( $panel_id ) . '" aria-labelledby="' . esc_attr( $tab_id ) . '" tabindex="0">' . ( $item['content_html'] ?? '' ) . '</div>';
+		}
+		return $html . '</div>' . $panels . '</div>';
+	}
+
+	/**
+	 * Render a closed native dialog. Open with a button bearing data-oml-dialog-open="ID".
+	 *
+	 * @param string $content_html Caller-escaped dialog markup.
+	 * @param array  $args Required id and title; optional class and close_label.
+	 * @return string HTML containing caller-escaped content.
+	 */
+	public static function modal( $content_html, $args ) {
+		self::enqueue();
+		self::enqueue_behavior();
+		$id          = $args['id'];
+		$close_label = $args['close_label'] ?? __( 'Close', 'ohmylms' );
+		return '<dialog data-oml-dialog id="' . esc_attr( $id ) . '" class="' . esc_attr( trim( 'oml-modal ' . ( $args['class'] ?? '' ) ) ) . '" aria-labelledby="' . esc_attr( $id . '-title' ) . '"><header class="oml-modal-header"><h2 class="oml-modal-title" id="' . esc_attr( $id . '-title' ) . '">' . esc_html( $args['title'] ?? '' ) . '</h2>' . self::button(
+			$close_label,
+			array(
+				'variant' => 'tertiary',
+				'attrs'   => array(
+					'data-oml-dialog-close' => '',
+					'aria-label'            => $close_label,
+				),
+			)
+		) . '</header><div class="oml-modal-content">' . $content_html . '</div></dialog>';
+	}
+
+	/**
+	 * Render a native, scrollable table with escaped text cells.
+	 *
+	 * @param array $headers Column labels.
+	 * @param array $rows Arrays of plain-text cell values.
+	 * @param array $args Required caption; optional striped, compact, class.
+	 * @return string Escaped table HTML.
+	 */
+	public static function table( $headers, $rows, $args ) {
+		self::enqueue();
+		$classes = 'oml-table' . ( ! empty( $args['striped'] ) ? ' oml-table-striped' : '' ) . ( ! empty( $args['compact'] ) ? ' oml-table-compact' : '' ) . ' ' . ( $args['class'] ?? '' );
+		$html    = '<div class="oml-table-scroll" role="region" aria-label="' . esc_attr( $args['caption'] ) . '" tabindex="0"><table class="' . esc_attr( trim( $classes ) ) . '"><caption>' . esc_html( $args['caption'] ) . '</caption><thead><tr>';
+		foreach ( $headers as $label ) {
+			$html .= '<th scope="col">' . esc_html( $label ) . '</th>';
+		}
+		$html .= '</tr></thead><tbody>';
+		foreach ( $rows as $row ) {
+			$html .= '<tr>';
+			foreach ( $headers as $index => $label ) {
+				$html .= '<td>' . esc_html( $row[ $index ] ?? '' ) . '</td>';
+			}
+			$html .= '</tr>';
+		}
+		return $html . '</tbody></table></div>';
+	}
+
+	/**
+	 * Render empty-content guidance and optional caller-escaped actions.
+	 *
+	 * @param string $title Plain-text title.
+	 * @param array  $args description, actions_html (already escaped), class.
+	 * @return string HTML containing caller-escaped action markup.
+	 */
+	public static function empty_state( $title, $args = array() ) {
+		self::enqueue();
+		$html = '<div class="' . esc_attr( trim( 'oml-empty-state ' . ( $args['class'] ?? '' ) ) ) . '"><p class="oml-empty-state-title">' . esc_html( $title ) . '</p>';
+		if ( ! empty( $args['description'] ) ) {
+			$html .= '<p class="oml-empty-state-description">' . esc_html( $args['description'] ) . '</p>';
+		}
+		if ( ! empty( $args['actions_html'] ) ) {
+			$html .= '<div class="oml-empty-state-actions">' . $args['actions_html'] . '</div>';
+		}
+		return $html . '</div>';
 	}
 
 	/**
@@ -163,6 +271,48 @@ final class Ui {
 			$classes[] = $args['class'];
 		}
 		return implode( ' ', $classes );
+	}
+
+	/**
+	 * Alert classes; matches assets/src/ui/components.mjs.
+	 *
+	 * @param array $args tone, class.
+	 * @return string
+	 */
+	public static function alert_class( $args = array() ) {
+		$tone = $args['tone'] ?? 'info';
+		$tone = in_array( $tone, self::ALERT_TONES, true ) ? $tone : 'info';
+		return trim( 'oml-alert oml-alert-' . $tone . ' ' . ( $args['class'] ?? '' ) );
+	}
+
+	/**
+	 * Render feedback with an optional plain-text title and message.
+	 *
+	 * @param string $message Plain text, escaped here.
+	 * @param array  $args    tone, title, class, role (status, alert or none), attrs (id, title, aria-/data-*).
+	 * @return string Escaped HTML. Danger announces assertively; other tones announce politely.
+	 */
+	public static function alert( $message, $args = array() ) {
+		self::enqueue();
+		$role       = $args['role'] ?? '';
+		$role       = in_array( $role, array( 'alert', 'status', 'none' ), true ) ? $role : ( 'danger' === ( $args['tone'] ?? 'info' ) ? 'alert' : 'status' );
+		$attributes = array_intersect_key(
+			(array) ( $args['attrs'] ?? array() ),
+			array(
+				'id'    => true,
+				'title' => true,
+			)
+		);
+		foreach ( (array) ( $args['attrs'] ?? array() ) as $name => $value ) {
+			if ( preg_match( '/^(aria|data)-[a-z0-9_-]+$/', $name ) ) {
+				$attributes[ $name ] = $value;
+			}
+		}
+		$html = '<div class="' . esc_attr( self::alert_class( $args ) ) . '" role="' . esc_attr( $role ) . '"' . self::control_attributes( $attributes ) . '>';
+		if ( isset( $args['title'] ) && '' !== (string) $args['title'] ) {
+			$html .= '<strong class="oml-alert-title">' . esc_html( $args['title'] ) . '</strong>';
+		}
+		return $html . '<div class="oml-alert-content">' . esc_html( $message ) . '</div></div>';
 	}
 
 	/**

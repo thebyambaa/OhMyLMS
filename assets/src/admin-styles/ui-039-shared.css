@@ -1,8 +1,7 @@
 .ohmylms-form-settings-bar {
 	margin: 20px 0 0;
-	padding: 16px;
-	border: 1px solid var(--oml-border, #e4e7ee);
+	padding: var(--oml-space-4);
+	border: 1px solid var(--oml-border, var(--oml-border));
 	border-radius: var(--oml-radius-card, 8px);
-	background: var(--ohmylms-admin-surface-subtle, #f8f9fc);
+	background: var(--ohmylms-admin-surface-subtle, var(--oml-background));
 }
-

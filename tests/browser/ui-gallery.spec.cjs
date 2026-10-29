@@ -22,6 +22,11 @@ const sections = [
 	'type',
 	'colors',
 	'controls',
+	'alerts',
+	'tabs',
+	'table',
+	'empty-state',
+	'modal',
 ];
 const contexts = [ 'learner', 'admin' ];
 
@@ -43,6 +48,7 @@ test.describe( 'design language gallery', () => {
 	test.beforeEach( async ( { page } ) => {
 		await page.setViewportSize( { width: 800, height: 1000 } );
 		await page.goto( 'file://' + outFile.replace( /\\/g, '/' ) );
+		await page.addScriptTag( { path: path.join( root, 'assets/js/ui.js' ) } );
 	} );
 
 	for ( const context of contexts ) {
@@ -167,7 +173,7 @@ test.describe( 'design language gallery', () => {
 		}
 	} );
 
-	test( 'the two contexts differ only by their token values', async ( {
+	test( 'admin and learner contexts share the same primary color', async ( {
 		page,
 	} ) => {
 		const primaries = await page.evaluate( () =>
@@ -180,6 +186,6 @@ test.describe( 'design language gallery', () => {
 					).backgroundColor
 			)
 		);
-		expect( primaries[ 0 ] ).not.toBe( primaries[ 1 ] );
+		expect( primaries[ 0 ] ).toBe( primaries[ 1 ] );
 	} );
 } );

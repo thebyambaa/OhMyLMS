@@ -6,8 +6,8 @@
 	appearance: auto !important;
 	width: 18px;
 	height: 18px;
-	border: 1px solid #949494 !important;
-	accent-color: var(--oml-primary-hover, #7153c6);
+	border: 1px solid var(--oml-border) !important;
+	accent-color: var(--oml-primary-hover, var(--oml-primary));
 	flex-shrink: 0;
 }
 
@@ -15,8 +15,7 @@
 	appearance: auto !important;
 	width: 18px;
 	height: 18px;
-	border: 1px solid #949494 !important;
-	accent-color: var(--oml-primary-hover, #7153c6);
+	border: 1px solid var(--oml-border) !important;
+	accent-color: var(--oml-primary-hover, var(--oml-primary));
 	flex-shrink: 0;
 }
-

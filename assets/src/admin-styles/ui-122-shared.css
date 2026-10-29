@@ -1,6 +1,6 @@
 .ohmylms-dashboard-layout.extensions .ohmylms-content {
 	padding: 26px var(--ohmylms-admin-gutter, 40px) 40px;
-	color: var(--ohmylms-admin-text-color, #000d25);
+	color: var(--ohmylms-admin-text-color, var(--oml-heading));
 }
 
 .ohmylms-movable-tab-panel.is-vertical > .ohmylms-movable-tabs {
@@ -20,4 +20,3 @@
 	margin-left: 0;
 	text-align: left;
 }
-

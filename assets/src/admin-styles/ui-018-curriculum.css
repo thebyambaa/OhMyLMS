@@ -1,7 +1,6 @@
 .ohmylms-content-hub-dialog-actions {
 	display: flex;
 	justify-content: flex-end;
-	gap: 8px;
+	gap: var(--oml-space-2);
 	margin-top: 20px;
 }
-

@@ -15,6 +15,8 @@ import {
 	Spinner,
 	TextControl,
 } from '@wordpress/components';
+import { Table } from '../../ui/Table';
+import { EmptyState } from '../../ui/EmptyState';
 import { AdminCard, AdminPage } from '../../extensions/AdminPage';
 import {
 	duplicateLesson,
@@ -229,7 +231,11 @@ export function LessonsPage() {
 						<Spinner />
 					) : (
 						<div className="ohmylms-ext-table-scroll">
-							<table className="widefat striped">
+							<Table
+								caption={ __( 'Lessons', 'ohmylms' ) }
+								striped
+								className="widefat"
+							>
 								<thead>
 									<tr>
 										<td className="check-column">
@@ -254,15 +260,20 @@ export function LessonsPage() {
 									{ ! items.length && (
 										<tr>
 											<td colSpan={ 6 }>
-												{ query.search || query.status
-													? __(
-															'No lessons match these filters.',
-															'ohmylms'
-														)
-													: __(
-															'No lessons yet. Use Add → Lesson to create one.',
-															'ohmylms'
-														) }
+												<EmptyState
+													title={
+														query.search ||
+														query.status
+															? __(
+																	'No lessons match these filters.',
+																	'ohmylms'
+																)
+															: __(
+																	'No lessons yet. Use Add → Lesson to create one.',
+																	'ohmylms'
+																)
+													}
+												/>
 											</td>
 										</tr>
 									) }
@@ -422,7 +433,7 @@ export function LessonsPage() {
 										</tr>
 									) ) }
 								</tbody>
-							</table>
+							</Table>
 						</div>
 					) }
 					{ data && data.pages > 1 && (

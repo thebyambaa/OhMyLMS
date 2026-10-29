@@ -382,6 +382,24 @@ final class DesignSystem {
 	}
 
 	/**
+	 * Adapt status text to its soft surface while retaining its hue where contrast permits.
+	 *
+	 * @param string $hex Status color.
+	 * @param string $surface Background color.
+	 * @return string Color with at least 4.5:1 contrast on the background.
+	 */
+	public static function readable_status( $hex, $surface ) {
+		$toward = self::text_on( $surface );
+		for ( $step = 0; $step <= 10; $step++ ) {
+			$candidate = Tokens::mix( $hex, $toward, $step / 10 );
+			if ( self::contrast( $candidate, $surface ) >= 4.5 ) {
+				return $candidate;
+			}
+		}
+		return $toward;
+	}
+
+	/**
 	 * The dark theme's --oml-* overrides: neutrals are fixed, brand and status colors are lightened so
 	 * they stay readable, soft tints are mixed into the dark card. Same names as variables(), so
 	 * components need no dark-specific rules.
@@ -422,6 +440,7 @@ final class DesignSystem {
 			$color                              = self::for_dark( $c[ $status ] );
 			$vars[ 'oml-' . $status ]           = $color;
 			$vars[ 'oml-' . $status . '-soft' ] = Tokens::mix( $dark['surface'], $color, 0.2 );
+			$vars[ 'oml-' . $status . '-text' ] = self::readable_status( $color, $vars[ 'oml-' . $status . '-soft' ] );
 		}
 		$vars['oml-danger-hover']  = Tokens::mix( $vars['oml-danger'], '#ffffff', 0.15 );
 		$vars['oml-danger-active'] = Tokens::mix( $vars['oml-danger'], '#ffffff', 0.3 );
@@ -442,6 +461,7 @@ final class DesignSystem {
 	 * @return array<string,string> Variable name (without the leading dashes) => value.
 	 */
 	public static function variables( $c, $button_radius, $density ) {
+		$font    = Tokens::font( 'ohmylms_font_family' );
 		$primary = $c['primary'];
 		$on      = self::text_on( $primary );
 		$space   = self::spacing( $density );
@@ -494,9 +514,14 @@ final class DesignSystem {
 		foreach ( $space as $i => $px ) {
 			$vars[ 'oml-space-' . ( $i + 1 ) ] = $px . 'px';
 		}
+		foreach ( array( 'success', 'warning', 'danger', 'info' ) as $status ) {
+			$vars[ 'oml-' . $status . '-text' ] = self::readable_status( $c[ $status ], $vars[ 'oml-' . $status . '-soft' ] );
+		}
 		$shadow = Tokens::rgb( $c['heading'] );
 		return $vars + array(
 			'oml-font-size-xs'   => '12px',
+			'oml-font-family'    => Tokens::stack( 'inherit' === $font ? 'system' : $font ),
+			'oml-on-shade'       => '#ffffff',
 			'oml-font-size-sm'   => '13px',
 			'oml-font-size-md'   => '14px',
 			'oml-font-size-lg'   => '16px',

@@ -3,43 +3,43 @@
 	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
-	gap: 12px 24px;
+	gap: var(--oml-space-3) var(--oml-space-5);
 	margin: 0 0 20px;
 }
 
 .ohmylms-ext-actions {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px;
+	gap: var(--oml-space-2);
 }
 
 .ohmylms-mindmap {
 	container-type: inline-size;
 	container-name: ohmylms-mindmap;
-	margin: 0 0 24px;
-	padding: 16px;
-	border: 1px solid var(--ohmylms-admin-border, #dcdcde);
+	margin: 0 0 var(--oml-space-5);
+	padding: var(--oml-space-4);
+	border: 1px solid var(--ohmylms-admin-border, var(--oml-border));
 	border-radius: var(--ohmylms-admin-radius, 7px);
 }
 
 .ohmylms-mindmap-actions {
 	display: flex;
-	gap: 8px;
-	margin-bottom: 12px;
+	gap: var(--oml-space-2);
+	margin-bottom: var(--oml-space-3);
 }
 
 .ohmylms-mindmap-scroll {
 	max-height: none;
 	overflow: visible;
-	padding: 16px;
-	background: var(--ohmylms-admin-subtle, #f4f5f7);
+	padding: var(--oml-space-4);
+	background: var(--ohmylms-admin-subtle, var(--oml-background));
 	border-radius: var(--ohmylms-admin-radius, 7px);
 }
 
 .ohmylms-mindmap-stage {
 	display: flex;
 	align-items: center;
-	gap: 24px;
+	gap: var(--oml-space-5);
 	width: max-content;
 	min-width: 100%;
 }
@@ -49,10 +49,10 @@
 	box-sizing: border-box;
 	flex-shrink: 0;
 	width: 220px;
-	padding: 12px;
-	border: 1px solid var(--ohmylms-admin-border, #dcdcde);
+	padding: var(--oml-space-3);
+	border: 1px solid var(--ohmylms-admin-border, var(--oml-border));
 	border-radius: var(--ohmylms-admin-radius, 7px);
-	background: var(--ohmylms-admin-surface, #fff);
+	background: var(--ohmylms-admin-surface, var(--oml-surface));
 	overflow-wrap: anywhere;
 }
 
@@ -60,35 +60,35 @@
 	position: relative;
 	box-sizing: border-box;
 	flex-shrink: 0;
-	padding: 12px;
-	border: 1px solid var(--ohmylms-admin-border, #dcdcde);
+	padding: var(--oml-space-3);
+	border: 1px solid var(--ohmylms-admin-border, var(--oml-border));
 	border-radius: var(--ohmylms-admin-radius, 7px);
-	background: var(--ohmylms-admin-surface, #fff);
+	background: var(--ohmylms-admin-surface, var(--oml-surface));
 	overflow-wrap: anywhere;
 	width: 160px;
-	font-weight: 600;
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-mindmap-node-heading {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 8px;
+	gap: var(--oml-space-2);
 }
 
 .ohmylms-mindmap-branches {
 	list-style: none;
 	margin: 0;
-	padding: 0 0 0 24px;
-	border-left: 1px solid var(--ohmylms-admin-border, #dcdcde);
+	padding: 0 0 0 var(--oml-space-5);
+	border-left: 1px solid var(--ohmylms-admin-border, var(--oml-border));
 }
 
 .ohmylms-mindmap-node-details {
-	margin-top: 8px;
+	margin-top: var(--oml-space-2);
 }
 
 .ohmylms-ext-card {
-	background: var(--ohmylms-admin-surface, #fff);
+	background: var(--ohmylms-admin-surface, var(--oml-surface));
 	border-radius: var(--ohmylms-admin-radius, 7px);
 	padding: 20px;
 	margin: 0 0 20px;
@@ -100,7 +100,6 @@
 	display: flex;
 	flex-wrap: wrap;
 	align-items: flex-end;
-	gap: 12px;
-	margin: 0 0 16px;
+	gap: var(--oml-space-3);
+	margin: 0 0 var(--oml-space-4);
 }
-

@@ -7,10 +7,10 @@
 	display: flex;
 	align-items: end;
 	flex-wrap: wrap;
-	gap: 12px;
-	border: 1px solid var(--oml-border, #dcdcde);
-	padding: 12px;
-	margin-bottom: 12px;
+	gap: var(--oml-space-3);
+	border: 1px solid var(--oml-border, var(--oml-border));
+	padding: var(--oml-space-3);
+	margin-bottom: var(--oml-space-3);
 }
 
 .ohmylms-tab-group-editor label {
@@ -22,7 +22,7 @@
 .ohmylms-tab-assignments > div {
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: var(--oml-space-2);
 	margin: 10px 0;
 }
 
@@ -31,28 +31,27 @@
 	align-items: center;
 	justify-content: space-between;
 	flex: 1;
-	gap: 12px;
+	gap: var(--oml-space-3);
 }
 
 .ohmylms-ext-header h2 {
 	margin: 0;
 	padding: 0;
-	font-size: 18px;
+	font-size: var(--oml-font-size-lg);
 	line-height: 1.4;
-	font-weight: 600;
-	color: var(--ohmylms-admin-heading-color, #000d25);
+	font-weight: var(--oml-weight-strong);
+	color: var(--ohmylms-admin-heading-color, var(--oml-heading));
 }
 
 .ohmylms-hub-chips li {
 	margin: 0;
-	padding: 1px 8px;
-	border-radius: 10px;
-	font-size: 12px;
-	background: var(--ohmylms-primary-soft-color, #f6f3fd);
-	color: var(--ohmylms-primary-color, #6e42d3);
+	padding: 1px var(--oml-space-2);
+	border-radius: var(--oml-radius-control);
+	font-size: var(--oml-font-size-xs);
+	background: var(--ohmylms-primary-soft-color, var(--oml-primary-soft));
+	color: var(--ohmylms-primary-color, var(--oml-primary));
 }
 
 .ohmylms-hub-links li {
 	margin: 0;
 }
-

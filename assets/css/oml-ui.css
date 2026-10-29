@@ -6,6 +6,258 @@
  * enforces it.
  */
 
+/* ---- Tabs: local panels, separate from route navigation ---- */
+.oml-tab-list {
+	border-bottom: 1px solid var(--oml-border);
+	display: flex;
+	gap: var(--oml-space-2);
+	overflow-x: auto;
+}
+
+.oml-tab-list[aria-orientation="vertical"] {
+	border-bottom: 0;
+	border-inline-end: 1px solid var(--oml-border);
+	flex-direction: column;
+}
+
+.oml-tab {
+	align-items: center;
+	background: var(--oml-surface);
+	border: 0;
+	border-bottom: var(--oml-space-1) solid transparent;
+	border-radius: var(--oml-radius-control) var(--oml-radius-control) 0 0;
+	color: var(--oml-text);
+	cursor: pointer;
+	display: inline-flex;
+	flex-shrink: 0;
+	font: inherit;
+	font-size: var(--oml-font-size-md);
+	min-height: var(--oml-button-height-md);
+	padding: var(--oml-space-2) var(--oml-space-4);
+	text-decoration: none;
+}
+
+.oml-tab:where(:hover:not(:disabled)) {
+	background: var(--oml-subtle);
+}
+
+.oml-tab[aria-selected="true"],
+.oml-tab[aria-current="page"] {
+	background: var(--oml-primary-soft);
+	border-color: var(--oml-primary);
+	color: var(--oml-primary);
+	font-weight: var(--oml-weight-strong);
+}
+
+.oml-tab:disabled {
+	color: var(--oml-muted);
+	cursor: not-allowed;
+}
+
+.oml-tab-panel {
+	color: var(--oml-text);
+	padding: var(--oml-space-4) 0;
+}
+
+.oml-tab-panel[hidden] {
+	display: none;
+}
+
+/* ---- Modal: native dialog supplies the focus trap and inert page background ---- */
+.oml-modal {
+	background: var(--oml-surface);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card);
+	box-shadow: var(--oml-shadow-md);
+	box-sizing: border-box;
+	color: var(--oml-text);
+	font-size: var(--oml-font-size-md);
+	line-height: var(--oml-line-normal);
+	margin: auto;
+	max-height: calc(100dvh - var(--oml-space-6));
+	max-width: calc(100vw - var(--oml-space-6));
+	overflow: auto;
+	padding: var(--oml-space-5);
+	width: 40rem;
+	z-index: var(--oml-z-modal);
+}
+
+.oml-modal::backdrop {
+	background: color-mix(in srgb, var(--oml-shade) 60%, transparent);
+}
+
+.oml-modal-header {
+	align-items: center;
+	display: flex;
+	gap: var(--oml-space-4);
+	justify-content: space-between;
+	margin-bottom: var(--oml-space-4);
+}
+
+.oml-modal-title {
+	color: var(--oml-heading);
+	font-size: var(--oml-font-size-xl);
+	font-weight: var(--oml-weight-strong);
+	line-height: var(--oml-line-tight);
+	margin: 0;
+}
+
+.oml-modal-content {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+/* ---- Table: native semantics and horizontal scrolling on narrow screens ---- */
+.oml-table-scroll {
+	max-width: 100%;
+	overflow-x: auto;
+}
+
+.oml-table {
+	background: var(--oml-surface);
+	border: 1px solid var(--oml-border);
+	border-collapse: collapse;
+	color: var(--oml-text);
+	font-size: var(--oml-font-size-md);
+	line-height: var(--oml-line-normal);
+	text-align: start;
+	width: 100%;
+}
+
+.oml-table caption {
+	color: var(--oml-heading);
+	font-weight: var(--oml-weight-strong);
+	padding: var(--oml-space-3) 0;
+	text-align: start;
+}
+
+.oml-table th,
+.oml-table td {
+	border-bottom: 1px solid var(--oml-border);
+	padding: var(--oml-space-3) var(--oml-space-4);
+	text-align: start;
+	vertical-align: top;
+}
+
+.oml-table th {
+	background: var(--oml-subtle);
+	color: var(--oml-heading);
+	font-weight: var(--oml-weight-strong);
+}
+
+.oml-table-striped tbody tr:nth-child(even) {
+	background: var(--oml-subtle);
+}
+
+.oml-table-compact th,
+.oml-table-compact td {
+	padding: var(--oml-space-2);
+}
+
+/* ---- Empty state: guidance and optional shared actions ---- */
+.oml-empty-state {
+	background: var(--oml-surface);
+	border: 1px dashed var(--oml-border);
+	border-radius: var(--oml-radius-card);
+	color: var(--oml-text);
+	font-size: var(--oml-font-size-md);
+	line-height: var(--oml-line-normal);
+	padding: var(--oml-space-6) var(--oml-space-4);
+	text-align: center;
+}
+
+.oml-empty-state-title {
+	color: var(--oml-heading);
+	font-size: var(--oml-font-size-lg);
+	font-weight: var(--oml-weight-strong);
+	margin: 0 0 var(--oml-space-2);
+}
+
+.oml-empty-state-description {
+	color: var(--oml-muted);
+	margin: 0 0 var(--oml-space-4);
+}
+
+.oml-empty-state-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-2);
+	justify-content: center;
+}
+
+.oml-tab:focus-visible,
+.oml-tab-panel:focus-visible,
+.oml-table-scroll:focus-visible {
+	outline: 2px solid var(--oml-focus);
+	outline-offset: -2px;
+}
+
+/* ---- Alert: shared status feedback ---- */
+.oml-alert {
+	background: var(--oml-info-soft);
+	border: 1px solid var(--oml-info);
+	border-inline-start-width: var(--oml-space-1);
+	border-radius: var(--oml-radius-control);
+	box-sizing: border-box;
+	color: var(--oml-text);
+	display: grid;
+	font-size: var(--oml-font-size-md);
+	gap: var(--oml-space-2);
+	line-height: var(--oml-line-normal);
+	min-width: 0;
+	overflow-wrap: anywhere;
+	padding: var(--oml-space-4);
+}
+
+.oml-alert-info {
+	background: var(--oml-info-soft);
+	border-color: var(--oml-info);
+}
+
+.oml-alert-success {
+	background: var(--oml-success-soft);
+	border-color: var(--oml-success);
+}
+
+.oml-alert-warning {
+	background: var(--oml-warning-soft);
+	border-color: var(--oml-warning);
+}
+
+.oml-alert-danger {
+	background: var(--oml-danger-soft);
+	border-color: var(--oml-danger);
+}
+
+.oml-alert-title {
+	color: var(--oml-heading);
+	font-size: var(--oml-font-size-md);
+	font-weight: var(--oml-weight-strong);
+	margin: 0;
+}
+
+.oml-alert-content {
+	min-width: 0;
+}
+
+.oml-alert-content > :first-child {
+	margin-top: 0;
+}
+
+.oml-alert-content > :last-child {
+	margin-bottom: 0;
+}
+
+.oml-alert-content a {
+	color: var(--oml-link);
+	text-decoration: underline;
+}
+
+.oml-alert-content a:focus-visible {
+	outline: 2px solid var(--oml-focus);
+	outline-offset: 2px;
+}
+
 /* ---- Button: .oml-btn + .oml-btn-{primary|secondary|tertiary|danger} + .oml-btn-{sm|md|lg} ---- */
 .oml-btn {
 	align-items: center;

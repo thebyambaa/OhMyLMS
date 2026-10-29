@@ -3,7 +3,7 @@
 
 .ohmylms-workspace-objective-summary {
 	line-height: 1.6;
-	margin: 12px 0;
+	margin: var(--oml-space-3) 0;
 }
 
 .ohmylms-unified-workspace :where(.ohmylms-ws-pane-title > .ohmylms-ws-field) {
@@ -14,21 +14,21 @@
 .ohmylms-workspace-filters {
 	display: grid;
 	gap: 10px;
-	padding: 12px;
+	padding: var(--oml-space-3);
 }
 
 .ohmylms-ws-connection-count {
 	display: block;
 	font-size: 11px;
-	font-weight: 400;
-	color: #646970;
+	font-weight: var(--oml-weight-regular);
+	color: var(--oml-muted);
 }
 
 .ohmylms-workspace-connection-head {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 12px;
+	gap: var(--oml-space-3);
 	flex-wrap: wrap;
 }
 
@@ -39,11 +39,10 @@
 }
 
 .ohmylms-workspace-connection-form {
-	padding: 16px 0;
+	padding: var(--oml-space-4) 0;
 }
 
 .ohmylms-workspace-connections {
-	margin: 16px 0 28px;
+	margin: var(--oml-space-4) 0 28px;
 	min-width: 0;
 }
-

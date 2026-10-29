@@ -11,10 +11,10 @@
 }
 
 .ohmylms-ws-field input.ohmylms-ws-title.is-syllabus-name {
-	padding: 10px 12px;
+	padding: 10px var(--oml-space-3);
 	border: 2px solid var(--ws-muted);
 	border-radius: var(--oml-radius-control, 6px);
-	background: var(--ohmylms-admin-surface, #fff);
+	background: var(--ohmylms-admin-surface, var(--oml-surface));
 }
 
 .ohmylms-ws-field .ohmylms-category-appearance input[type="color"] {
@@ -24,4 +24,3 @@
 	padding: 2px;
 	cursor: pointer;
 }
-

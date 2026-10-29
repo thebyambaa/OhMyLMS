@@ -1,15 +1,15 @@
 .ohmylms-ext-card > h2 {
-	margin: 0 0 12px;
-	font-size: 16px;
-	font-weight: 600;
-	color: var(--ohmylms-admin-heading-color, #000d25);
+	margin: 0 0 var(--oml-space-3);
+	font-size: var(--oml-font-size-lg);
+	font-weight: var(--oml-weight-strong);
+	color: var(--ohmylms-admin-heading-color, var(--oml-heading));
 }
 
 .ohmylms-ext-card > h3 {
-	margin: 0 0 12px;
-	font-size: 16px;
-	font-weight: 600;
-	color: var(--ohmylms-admin-heading-color, #000d25);
+	margin: 0 0 var(--oml-space-3);
+	font-size: var(--oml-font-size-lg);
+	font-weight: var(--oml-weight-strong);
+	color: var(--ohmylms-admin-heading-color, var(--oml-heading));
 }
 
 .ohmylms-cur-syllabus-shortcuts li {
@@ -17,22 +17,22 @@
 	align-items: baseline;
 	gap: 10px;
 	margin: 0;
-	padding: 4px 0;
+	padding: var(--oml-space-1) 0;
 }
 
 .ohmylms-cur-panel h3 {
-	margin: 20px 0 8px;
-	font-size: 15px;
+	margin: 20px 0 var(--oml-space-2);
+	font-size: var(--oml-font-size-md);
 }
 
 .ohmylms-cur-link-group > summary {
 	cursor: pointer;
-	font-weight: 600;
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-cur-mapping > summary {
 	cursor: pointer;
-	font-weight: 600;
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-cur-link-list li {
@@ -41,20 +41,20 @@
 	align-items: center;
 	gap: 6px 10px;
 	padding: 6px 0;
-	border-bottom: 1px solid var(--ohmylms-admin-border, #ebedf0);
+	border-bottom: 1px solid var(--ohmylms-admin-border, var(--oml-border));
 }
 
 .ohmylms-bundle-members > li {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 6px 12px;
-	padding: 8px 0;
-	border-bottom: 1px solid var(--ohmylms-admin-border, #dcdcde);
+	gap: 6px var(--oml-space-3);
+	padding: var(--oml-space-2) 0;
+	border-bottom: 1px solid var(--ohmylms-admin-border, var(--oml-border));
 }
 
 .ohmylms-cur-syllabus-summary p {
-	margin: 0 0 4px;
+	margin: 0 0 var(--oml-space-1);
 }
 
 .ohmylms-syl-existing summary {
@@ -64,7 +64,7 @@
 .ohmylms-syl-map th {
 	min-width: 160px;
 	vertical-align: top;
-	font-weight: 400;
+	font-weight: var(--oml-weight-regular);
 }
 
 .ohmylms-syl-map td {
@@ -84,4 +84,3 @@
 	margin: 0 0 0 18px;
 	list-style: disc;
 }
-

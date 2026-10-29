@@ -1,127 +1,146 @@
 .ohmylms-page {
 
-    .ohmylms-single-course-layout-2 {
+	.ohmylms-single-course-layout-2 {
 
-        .ohmylms-sidebar-widget-wrapper {
-            border-radius: 20px;
-            background-color: #FFF;
-            box-shadow: 0 0 20px 0 rgba(216, 219, 226, 0.60);
-            padding: 30px;
-        }
+		.ohmylms-sidebar-widget-wrapper {
+			border-radius: var(--oml-radius-card);
+			background-color: var(--oml-surface);
+			box-shadow: var(--oml-shadow-sm);
+			padding: 30px;
+		}
 
-        .ohmylms-feature-image-wrapper {
-            border-radius: 20px;
-            background-color: #FFF;
-            box-shadow: 0 0 20px 0 rgba(216, 219, 226, 0.60);
-            padding: 10px;
-            margin-bottom: 20px;
+		.ohmylms-feature-image-wrapper {
+			border-radius: var(--oml-radius-card);
+			background-color: var(--oml-surface);
+			box-shadow: var(--oml-shadow-sm);
+			padding: 10px;
+			margin-bottom: 20px;
 
-            .ohmylms-video-player {
-                margin: 0;
+			.ohmylms-video-player {
+				margin: 0;
 
-                .ohmylms-video-player-cover .ohmylms-video-player-play {
-                    width: 60px;
-                    height: 60px;
+				.ohmylms-video-player-cover .ohmylms-video-player-play {
+					width: 60px;
+					height: 60px;
 
-                    svg {
-                        width: 18px;
-                    }
-                }
-            }
+					svg {
+						width: 18px;
+					}
+				}
+			}
 
-            figure {
+			figure {
 
-                img {
-                    border-radius: 8px;
-                    max-width: 100%;
-                    width: 100%;
-                    display: block;
-                    height: auto;
-                    object-fit: cover;
-                }
-            }
-        }
-        
-        .ohmylms-sidebar-widget {
-            box-shadow: none;
-            border: 1px solid #EBECED;
-            padding-top: 20px;
+				img {
+					border-radius: var(--oml-radius-control);
+					max-width: 100%;
+					width: 100%;
+					display: block;
+					height: auto;
+					object-fit: cover;
+				}
+			}
+		}
 
-            &.with-gray-color {
-                border: none;
-            }
-        }
+		.ohmylms-sidebar-widget {
+			box-shadow: none;
+			border: 1px solid var(--oml-border);
+			padding-top: 20px;
 
-        .ohmylms-widget-pricebox {
-            padding: 0;
-            border-radius: 0;
-            border: none;
-            background: transparent!important;
+			&.with-gray-color {
+				border: none;
+			}
+		}
 
-            .price-discount-area {
+		.ohmylms-widget-pricebox {
+			padding: 0;
+			border-radius: 0;
+			border: none;
+			background: transparent !important;
 
-                ins {
-                    width: auto;
-                    margin-bottom: 0;
-                    order: 1;
-                }
+			.price-discount-area {
 
-                .discount-percentage {
-                    margin-left: 5px;
-                    margin-right: 14px;
-                    order: 3;
-                }
+				ins {
+					width: auto;
+					margin-bottom: 0;
+					order: 1;
+				}
 
-                del {
-                    margin-left: 8px;
-                    margin-right: 0;
-                    order: 2;
-                }
+				.discount-percentage {
+					margin-left: 5px;
+					margin-right: 14px;
+					order: 3;
+				}
 
-                .special-deal-tag {
-                    order: 4;
-                    margin-left: 0;
-                }
-            }
-        }
-    }
+				del {
+					margin-left: var(--oml-space-2);
+					margin-right: 0;
+					order: 2;
+				}
+
+				.special-deal-tag {
+					order: 4;
+					margin-left: 0;
+				}
+			}
+		}
+	}
 }
-
 
 @media screen and (max-width: 1399px) {
 
-    .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-feature-image-wrapper {
-        border-radius: 8px;
-    }
+	.ohmylms-page
+		.ohmylms-single-course-layout-2
+		.ohmylms-feature-image-wrapper {
+		border-radius: var(--oml-radius-control);
+	}
 
-    .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-sidebar-widget-wrapper {
-        border-radius: 8px;
-        padding: 15px;
-    }
-
+	.ohmylms-page
+		.ohmylms-single-course-layout-2
+		.ohmylms-sidebar-widget-wrapper {
+		border-radius: var(--oml-radius-control);
+		padding: 15px;
+	}
 }
 
 @media screen and (max-width: 1024px) {
 
-    .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-feature-image-wrapper .ohmylms-video-player .ohmylms-video-player-cover .ohmylms-video-player-play {
-        width: 50px;
-        height: 50px;
-    }
+	.ohmylms-page
+		.ohmylms-single-course-layout-2
+		.ohmylms-feature-image-wrapper
+		.ohmylms-video-player
+		.ohmylms-video-player-cover
+		.ohmylms-video-player-play {
+		width: 50px;
+		height: 50px;
+	}
 
-    .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-feature-image-wrapper .ohmylms-video-player .ohmylms-video-player-cover .ohmylms-video-player-play svg {
-        width: 14px;
-    }
+	.ohmylms-page
+		.ohmylms-single-course-layout-2
+		.ohmylms-feature-image-wrapper
+		.ohmylms-video-player
+		.ohmylms-video-player-cover
+		.ohmylms-video-player-play
+		svg {
+		width: 14px;
+	}
 
-    .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-circle-progressbar .circle-progress-svg {
-        width: 105px;
-        height: auto;
-    }
+	.ohmylms-page
+		.ohmylms-single-course-layout-2
+		.ohmylms-circle-progressbar
+		.circle-progress-svg {
+		width: 105px;
+		height: auto;
+	}
 }
 
 @media screen and (max-width: 991px) {
 
-    .ohmylms-page .ohmylms-single-course-layout-2 .ohmylms-single-course > .ohmylms-widget-pricebox {
-        padding: 16px;
-        background: #fff !important;
-    }
+	.ohmylms-page
+		.ohmylms-single-course-layout-2
+		.ohmylms-single-course
+		> .ohmylms-widget-pricebox {
+		padding: var(--oml-space-4);
+		background: var(--oml-surface) !important;
+	}
 }

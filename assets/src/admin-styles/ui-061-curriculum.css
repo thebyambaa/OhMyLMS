@@ -1,16 +1,15 @@
 .ohmylms-content-hub-header h1 {
 	margin: 0;
 	padding: 0;
-	font-size: 20px;
+	font-size: var(--oml-font-size-xl);
 	line-height: 1.4;
-	font-weight: 600;
-	color: var(--ohmylms-admin-heading-color, #000d25);
+	font-weight: var(--oml-weight-strong);
+	color: var(--ohmylms-admin-heading-color, var(--oml-heading));
 }
 
 .ohmylms-content-hub-header p {
-	margin: 4px 0 0;
+	margin: var(--oml-space-1) 0 0;
 	max-width: 760px;
-	font-size: 14px;
-	color: var(--ohmylms-admin-muted-color, #7a8b9a);
+	font-size: var(--oml-font-size-md);
+	color: var(--ohmylms-admin-muted-color, var(--oml-muted));
 }
-

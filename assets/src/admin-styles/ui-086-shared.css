@@ -3,7 +3,7 @@
 }
 
 .ohmylms-catalog-items.is-chapter {
-	margin: 0 0 8px;
+	margin: 0 0 var(--oml-space-2);
 }
 
 .ohmylms-catalog-item-controls .components-text-control__input {
@@ -12,24 +12,23 @@
 }
 
 .ohmylms-catalog-type.is-quiz {
-	background: #fff4e0;
-	color: #b45309;
+	background: var(--oml-warning-soft);
+	color: var(--oml-warning-text);
 }
 
 .ohmylms-catalog-type.is-assignment {
-	background: #e6f6ec;
-	color: #15803d;
+	background: var(--oml-success-soft);
+	color: var(--oml-success-text);
 }
 
 .ohmylms-catalog-flag.is-ok {
-	background: #e6f6ec;
-	color: #15803d;
+	background: var(--oml-success-soft);
+	color: var(--oml-success-text);
 }
 
 .ohmylms-catalog-flag.is-warning {
-	background: #fff4e0;
-	color: #b45309;
+	background: var(--oml-warning-soft);
+	color: var(--oml-warning-text);
 }
 
 /* Adding things one after another */
-

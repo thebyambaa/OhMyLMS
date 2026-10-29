@@ -1,11 +1,11 @@
 .ohmylms-streak-settings {
 	max-width: 1120px;
-	padding: 20px 24px 32px;
-	color: var(--ohmylms-admin-text-color, #000d25);
+	padding: 20px var(--oml-space-5) var(--oml-space-6);
+	color: var(--ohmylms-admin-text-color, var(--oml-heading));
 }
 
 .ohmylms-streak-settings__header {
-	margin-bottom: 24px;
+	margin-bottom: var(--oml-space-5);
 }
 
 .ohmylms-streak-settings__fields {
@@ -14,5 +14,3 @@
 	border: 0;
 	min-width: 0;
 }
-
-

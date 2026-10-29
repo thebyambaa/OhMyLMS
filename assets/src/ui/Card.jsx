@@ -8,8 +8,17 @@ import { cardClass } from './components.mjs';
  * @param {boolean} props.flat        No shadow.
  * @param {boolean} props.interactive Lifts on hover (for clickable cards).
  * @param {string}  props.as          Element name, div by default.
+ * @param           props.className
+ * @param           props.children
  */
-export function Card( { as = 'div', flat, interactive, className, children, ...rest } ) {
+export function Card( {
+	as = 'div',
+	flat,
+	interactive,
+	className,
+	children,
+	...rest
+} ) {
 	return createElement(
 		as,
 		{ ...rest, className: cardClass( { flat, interactive, className } ) },
@@ -20,7 +29,12 @@ export function Card( { as = 'div', flat, interactive, className, children, ...r
 export function CardTitle( { as = 'h3', className, children, ...rest } ) {
 	return createElement(
 		as,
-		{ ...rest, className: [ 'oml-card-title', className ].filter( Boolean ).join( ' ' ) },
+		{
+			...rest,
+			className: [ 'oml-card-title', className ]
+				.filter( Boolean )
+				.join( ' ' ),
+		},
 		children
 	);
 }

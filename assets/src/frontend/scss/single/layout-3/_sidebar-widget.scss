@@ -1,432 +1,456 @@
 .ohmylms-single-course-layout3 {
-    position: relative;
+	position: relative;
 
-    .sidebar-widget-title {
-        color: var(--ohmylms-heading-color);
-        font-size: 26px;
-        font-weight: 600;
-        line-height: 1.2;
-        margin-bottom: 17px;
-        width: 100%;
-    }
+	.sidebar-widget-title {
+		color: var(--oml-heading);
+		font-size: var(--oml-font-size-2xl);
+		font-weight: var(--oml-weight-strong);
+		line-height: 1.2;
+		margin-bottom: 17px;
+		width: 100%;
+	}
 
-    // --- widget pricebox and course meta --- //
-    .ohmylms-course-pricebox-and-meta {
-        border-radius: 16px;
-        background-color: #F4F5F7;
-        padding: 18px;
-        margin-bottom: 24px;
+	/* --- widget pricebox and course meta --- //*/
+	.ohmylms-course-pricebox-and-meta {
+		border-radius: var(--oml-radius-card);
+		background-color: var(--oml-background);
+		padding: 18px;
+		margin-bottom: var(--oml-space-5);
 
-        .ohmylms-widget-course-meta {
-            border-radius: 0;
-            box-shadow: none;
-            padding: 0;
-            background-color: transparent;
-            margin-bottom: 30px;
-        }
+		.ohmylms-widget-course-meta {
+			border-radius: 0;
+			box-shadow: none;
+			padding: 0;
+			background-color: transparent;
+			margin-bottom: 30px;
+		}
 
-        .ohmylms-course-meta {
+		.ohmylms-course-meta {
 
-            li {
-                color: var(--ohmylms-heading-color);
+			li {
+				color: var(--oml-heading);
 
-                &.course-capacity,
-                &.course-additional-resource,
-                &.course-count,
-                &.course-rating {
+				&.course-capacity,
+				&.course-additional-resource,
+				&.course-count,
+				&.course-rating {
 
-                    path {
-                        fill: var(--ohmylms-primary-color);
-                    }
-                }
+					path {
+						fill: var(--oml-primary);
+					}
+				}
 
-                &.experience {
+				&.experience {
 
-                    path:first-child {
-                        fill: var(--ohmylms-primary-color);
-                        stroke: var(--ohmylms-primary-color);
-                    }
+					path:first-child {
+						fill: var(--oml-primary);
+						stroke: var(--oml-primary);
+					}
 
-                    path:last-child {
-                        fill: rgba(var(--ohmylms-primary-color-rgb), 0.5)
-                    }
-                }
+					path:last-child {
+						fill: color-mix(
+							in srgb,
+							var(--oml-primary) 50%,
+							transparent
+						);
+					}
+				}
 
-                &.course-lesson-count,
-                &.course-duration {
+				&.course-lesson-count,
+				&.course-duration {
 
-                    path {
-                        fill: var(--ohmylms-primary-color);
-                        stroke: var(--ohmylms-primary-color);
-                    }
-                }
-            }
-        }
+					path {
+						fill: var(--oml-primary);
+						stroke: var(--oml-primary);
+					}
+				}
+			}
+		}
 
-        .ohmylms-widget-pricebox {
-            border-radius: 12px;
+		.ohmylms-widget-pricebox {
+			border-radius: var(--oml-radius-control);
 
-            &.with-gray-color {
-                background-color: #fff;
-            }
+			&.with-gray-color {
+				background-color: var(--oml-surface);
+			}
 
-            .price-discount-area {
-                gap: 5px;
-                justify-content: center;
+			.price-discount-area {
+				gap: 5px;
+				justify-content: center;
 
-                ins {
-                    width: auto;
-                    margin-bottom: 0;
-                }
+				ins {
+					width: auto;
+					margin-bottom: 0;
+				}
 
-                .discount-percentage {
-                    display: none;
-                }
+				.discount-percentage {
+					display: none;
+				}
 
-                del {
-                    color: #7A8B9A;
-                    font-size: 24px;
-                    font-weight: 600;
+				del {
+					color: var(--oml-muted);
+					font-size: var(--oml-font-size-2xl);
+					font-weight: var(--oml-weight-strong);
 
-                    .amount {
-                        color: #7A8B9A;
-                    }
-                }
+					.amount {
+						color: var(--oml-muted);
+					}
+				}
 
-                .special-deal-tag {
-                    margin-left: 0;
-                    display: block;
-                    width: 100%;
-                    text-align: center;
-                    margin-top: 10px;
-                    border-radius: 0;
-                    box-shadow: none;
-                    background: transparent;
-                    padding: 0;
-                }
+				.special-deal-tag {
+					margin-left: 0;
+					display: block;
+					width: 100%;
+					text-align: center;
+					margin-top: 10px;
+					border-radius: 0;
+					box-shadow: none;
+					background: transparent;
+					padding: 0;
+				}
+			}
 
-            }
+			.ohmylms-btn-area .ohmylms-button {
+				height: 55px;
+			}
 
-            .ohmylms-btn-area .ohmylms-button {
-                height: 55px;
-            }
+			.price-discount-area > .ohmylms-price-amount,
+			.price-discount-area .free,
+			.price-discount-area ins {
+				font-size: 35px;
+			}
+		}
 
-            .price-discount-area > .ohmylms-price-amount, 
-            .price-discount-area .free, 
-            .price-discount-area ins {
-                font-size: 35px;
-            }
-        }
+		.ohmylms-widget-continue-learn {
+			border-radius: var(--oml-radius-control);
+			background-color: var(--oml-surface);
+			padding: 13px;
 
-        .ohmylms-widget-continue-learn {
-            border-radius: 12px;
-            background-color: #fff;
-            padding: 13px;
+			.ohmylms-button {
+				display: block;
+				width: 100%;
+				padding: var(--oml-space-4) 20px;
+				font-size: var(--oml-font-size-lg);
+			}
 
-            .ohmylms-button {
-                display: block;
-                width: 100%;
-                padding: 16px 20px;
-                font-size: 18px;
-            }
+			.layout3-progressbar-box {
+				margin-bottom: 30px;
 
-            .layout3-progressbar-box {
-                margin-bottom: 30px;
+				.progressbar-title {
+					color: var(--oml-heading);
+					font-size: var(--oml-font-size-lg);
+					font-weight: var(--oml-weight-strong);
+					line-height: 1.2;
+					margin: 0 0 13px;
+				}
 
-                .progressbar-title {
-                    color: var(--ohmylms-heading-color);
-                    font-size: 18px;
-                    font-weight: 600;
-                    line-height: 1.2;
-                    margin: 0 0 13px;
-                }
+				.ohmylms-progressbar-outer {
+					width: calc(100% - 110px);
+					height: 6px;
+					display: block;
+					border-radius: var(--oml-radius-card);
+					background: var(--oml-primary-soft);
+					position: relative;
+				}
 
-                .ohmylms-progressbar-outer {
-                    width: calc(100% - 110px);
-                    height: 6px;
-                    display: block;
-                    border-radius: 100px;
-                    background: #EAEDF4;
-                    position: relative;
-                }
+				.progressbar-progress {
+					display: flex;
+					align-items: center;
+					justify-content: flex-start;
+					flex-flow: row wrap;
+					gap: 10px;
+					margin: 0;
+				}
 
-                .progressbar-progress {
-                    display: flex;
-                    align-items: center;
-                    justify-content: flex-start;
-                    flex-flow: row wrap;
-                    gap: 10px;
-                    margin: 0;
-                }
+				.ohmylms-progressbar-inner {
+					height: 100%;
+					background-color: var(--oml-success-text);
+					display: block;
+					border-radius: var(--oml-radius-card);
+					transition: width 0.3s linear;
+				}
 
-                .ohmylms-progressbar-inner {
-                    height: 100%;
-                    background-color: var(--ohmylms-progressbar-color);
-                    display: block;
-                    border-radius: 100px;
-                    transition: width 0.3s linear;
-                }
+				.progressbar-percentage {
+					color: var(--oml-heading);
+					text-align: right;
+					font-size: var(--oml-font-size-xs);
+					font-weight: var(--oml-weight-strong);
+					line-height: 1.2;
+				}
+			}
+		}
+	}
 
-                .progressbar-percentage {
-                    color: var(--ohmylms-heading-color);
-                    text-align: right;
-                    font-size: 12px;
-                    font-weight: 600;
-                    line-height: 1.2;
-                }
-            }
-        }
-    }
+	/* --- widget global --- //*/
+	.ohmylms-sidebar-widget {
+		box-shadow: none;
+		border-radius: var(--oml-radius-card);
+		padding: 18px;
+		background-color: var(--oml-background);
 
-    // --- widget global --- //
-    .ohmylms-sidebar-widget {
-        box-shadow: none;
-        border-radius: 16px;
-        padding: 18px;
-        background-color: #F4F5F7;
+		&.with-gray-color {
+			background-color: var(--oml-background);
+		}
 
-        &.with-gray-color {
-            background-color: #F4F5F7;
-        }
+		.sidebar-widget-title {
+			font-size: var(--oml-font-size-2xl);
+		}
+	}
 
-        .sidebar-widget-title {
-            font-size: 26px;
-        }
-    }
+	/* --- widget membership --- //*/
+	.ohmylms-widget-membership {
 
-    // --- widget membership --- //
-    .ohmylms-widget-membership {
+		.sidebar-widget-title {
+			font-size: var(--oml-font-size-lg);
+		}
 
-        .sidebar-widget-title {
-            font-size: 18px;
-        }
+		.membership-tag {
+			border-radius: var(--oml-radius-control);
+			background: color-mix(in srgb, var(--oml-primary) 8%, transparent);
+		}
 
-        .membership-tag {
-            border-radius: 4px;
-            background: rgba(var(--ohmylms-primary-color-rgb), 0.08);
-        }
+		.ohmylms-button-area .ohmylms-button {
+			background-color: var(--oml-surface);
+			color: var(--oml-primary);
+			border: none;
+			font-weight: var(--oml-weight-strong);
+			padding: 18px var(--oml-space-5);
+			font-size: var(--oml-font-size-lg);
 
-        .ohmylms-button-area .ohmylms-button {
-            background-color: #fff;
-            color: var(--ohmylms-primary-color);
-            border: none;
-            font-weight: 600;
-            padding: 18px 24px;
-            font-size: 16px;
+			&:hover {
+				color: var(--oml-on-primary);
+			}
+		}
+	}
 
-            &:hover {
-                color: #fff;
-            }
-            
-            
-        }
-    }
+	/* --- widget leaderboard --- //*/
+	.ohmylms-widget-leaderboard-v2 {
 
-    // --- widget leaderboard --- //
-    .ohmylms-widget-leaderboard-v2 {
+		.your-rank {
+			display: block;
+			color: var(--oml-text);
+			font-size: var(--oml-font-size-md);
+			font-weight: var(--oml-weight-regular);
+			line-height: 1.3;
+			margin-top: 3px;
+		}
 
-        .your-rank {
-            display: block;
-            color: #444D5E;
-            font-size: 14px;
-            font-weight: 400;
-            line-height: 1.3;
-            margin-top: 3px;
-        }
-        
-        .ohmylms-leaderboard-wrapper {
-            display: flex;
-            flex-flow: row wrap;
-            gap: 8px;
-        }
+		.ohmylms-leaderboard-wrapper {
+			display: flex;
+			flex-flow: row wrap;
+			gap: var(--oml-space-2);
+		}
 
-        .ohmylms-single-leaderboard {
-            width: 100%;
-            padding: 12px 12px;
-            border-radius: 12px;
-            background-color: #FFF;
-            display: flex;
-            flex-flow: row wrap;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            border: 1px solid transparent;
+		.ohmylms-single-leaderboard {
+			width: 100%;
+			padding: var(--oml-space-3) var(--oml-space-3);
+			border-radius: var(--oml-radius-control);
+			background-color: var(--oml-surface);
+			display: flex;
+			flex-flow: row wrap;
+			align-items: center;
+			justify-content: space-between;
+			gap: var(--oml-space-3);
+			border: 1px solid transparent;
 
-            &.its-me {
-                border-color: var(--ohmylms-primary-color);
-            }
-            
-            &:nth-child(1),
-            &:nth-child(2),
-            &:nth-child(3) {
-                background: linear-gradient(#fff, #fff) padding-box, linear-gradient(175deg, #fff 2%, #6E42D3 64%, #C442D2 86%, #FFC454 100%) border-box;
-                border-color: transparent;
-            }
+			&.its-me {
+				border-color: var(--oml-primary);
+			}
 
-            .ohmylms-leaderboard-content {
-                width: calc(100% - 65px);
-                display: flex;
-                align-items: center;
-                gap: 12px;
-            }
+			&:nth-child(1),
+			&:nth-child(2),
+			&:nth-child(3) {
+				background:
+					linear-gradient(var(--oml-surface), var(--oml-surface))
+						padding-box,
+					linear-gradient(
+							175deg,
+							var(--oml-surface) 2%,
+							var(--oml-primary) 64%,
+							var(--oml-primary) 86%,
+							var(--oml-warning) 100%
+						)
+						border-box;
+				border-color: transparent;
+			}
 
-            figure {
-                width: 48px;
-                height: 48px;
-                border-radius: 100%;
-                background-color: #eee;
+			.ohmylms-leaderboard-content {
+				width: calc(100% - 65px);
+				display: flex;
+				align-items: center;
+				gap: var(--oml-space-3);
+			}
 
-                img {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                    border-radius: 100%;
-                }
-            }
+			figure {
+				width: 48px;
+				height: 48px;
+				border-radius: 100%;
+				background-color: var(--oml-subtle);
 
-            .student-name {
-                color: var(--ohmylms-heading-color);
-                font-size: 14px;
-                font-weight: 500;
-                line-height: 1.1;
-                width: calc(100% - 60px);
+				img {
+					width: 100%;
+					height: 100%;
+					object-fit: cover;
+					border-radius: 100%;
+				}
+			}
 
-                .score {
-                    display: block;
-                    color: #6F767E;
-                    font-size: 11px;
-                    font-weight: 400;
-                    line-height: 1.2;
-                    margin: 6px 0 0 0;
-                }
-            }
+			.student-name {
+				color: var(--oml-heading);
+				font-size: var(--oml-font-size-md);
+				font-weight: var(--oml-weight-medium);
+				line-height: 1.1;
+				width: calc(100% - 60px);
 
-            .ohmylms-leaderboard-position {
-                border-radius: 5px;
-                background: #f1f6f7;
-                width: 50px;
-                height: 50px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: #000;
-                text-align: center;
-                font-size: 14px;
-                font-weight: 700;
-                line-height: 1;
-            }
-                        
-        }
-    }
+				.score {
+					display: block;
+					color: var(--oml-muted);
+					font-size: 11px;
+					font-weight: var(--oml-weight-regular);
+					line-height: 1.2;
+					margin: 6px 0 0 0;
+				}
+			}
 
-    // --- widget texonomy --- //
-    .ohmylms-widget-course-taxonomy {
-        border-radius: 0;
-        padding: 0;
-        background: transparent;
+			.ohmylms-leaderboard-position {
+				border-radius: var(--oml-radius-control);
+				background: var(--oml-subtle);
+				width: 50px;
+				height: 50px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				color: var(--oml-heading);
+				text-align: center;
+				font-size: var(--oml-font-size-md);
+				font-weight: var(--oml-weight-strong);
+				line-height: 1;
+			}
+		}
+	}
 
-        .single-taxonomy {
-            padding: 6px 0;
-            display: flex;
-            flex-flow: row wrap;
-            align-items: center;
-            gap: 10px;
+	/* --- widget texonomy --- //*/
+	.ohmylms-widget-course-taxonomy {
+		border-radius: 0;
+		padding: 0;
+		background: transparent;
 
-            &::before {
-                display: none;
-            }
+		.single-taxonomy {
+			padding: 6px 0;
+			display: flex;
+			flex-flow: row wrap;
+			align-items: center;
+			gap: 10px;
 
-            .sidebar-widget-title {
-                margin-bottom: 0;
-                width: auto;
-                font-size: 14px;
-                font-weight: 600;
+			&::before {
+				display: none;
+			}
 
-                &::after {
-                    content: ":";
-                }
-            }
+			.sidebar-widget-title {
+				margin-bottom: 0;
+				width: auto;
+				font-size: var(--oml-font-size-md);
+				font-weight: var(--oml-weight-strong);
 
-            .category-lists li a {
-                display: block;
-            }
+				&::after {
+					content: ":";
+				}
+			}
 
-            .tag-lists li a {
-                background-color: #F4F5F7;
-                padding: 5px 12px 5px;
+			.category-lists li a {
+				display: block;
+			}
 
-                &:hover {
-                    background-color: #F4F5F7;
-                    color: var(--ohmylms-body-text-color);
-                }
-            }
-        }
-    }
+			.tag-lists li a {
+				background-color: var(--oml-background);
+				padding: 5px var(--oml-space-3) 5px;
 
-    // --- widget drop course --- //
-    .ohmylms-widget-drop-course {
+				&:hover {
+					background-color: var(--oml-background);
+					color: var(--oml-text);
+				}
+			}
+		}
+	}
 
-        .sidebar-widget-title {
-            font-size: 18px;
-        }
+	/* --- widget drop course --- //*/
+	.ohmylms-widget-drop-course {
 
-        .drop-course-wrapper {
-            margin-top: 30px;
-        }
+		.sidebar-widget-title {
+			font-size: var(--oml-font-size-lg);
+		}
 
-        .ohmylms-button {
-            height: 55px;
-            color: #DE2134;
-            border-color: #DE2134;
+		.drop-course-wrapper {
+			margin-top: 30px;
+		}
 
-            &:hover {
-                border-color: #DE2134;
-                background-color: #DE2134;
-            }
-        }
-    }
+		.ohmylms-button {
+			height: 55px;
+			color: var(--oml-danger-text);
+			border-color: var(--oml-danger-text);
 
+			&:hover {
+				border-color: var(--oml-danger-text);
+				background-color: var(--oml-danger-text);
+			}
+		}
+	}
 }
-
 
 @media screen and (max-width: 1199px) {
 
-    .ohmylms-single-course-layout3 .ohmylms-course-pricebox-and-meta .ohmylms-widget-continue-learn .ohmylms-button {
-        padding: 12px 16px;
-        font-size: 15px;
-    }
+	.ohmylms-single-course-layout3
+		.ohmylms-course-pricebox-and-meta
+		.ohmylms-widget-continue-learn
+		.ohmylms-button {
+		padding: var(--oml-space-3) var(--oml-space-4);
+		font-size: var(--oml-font-size-md);
+	}
 
-    .ohmylms-single-course-layout3 .ohmylms-widget-membership .ohmylms-button-area .ohmylms-button {
-        padding: 12px 16px;
-        font-size: 15px;
-    }
+	.ohmylms-single-course-layout3
+		.ohmylms-widget-membership
+		.ohmylms-button-area
+		.ohmylms-button {
+		padding: var(--oml-space-3) var(--oml-space-4);
+		font-size: var(--oml-font-size-md);
+	}
 
-    .ohmylms-single-course-layout3 .ohmylms-sidebar-widget .sidebar-widget-title {
-        font-size: 22px;
-    }
+	.ohmylms-single-course-layout3
+		.ohmylms-sidebar-widget
+		.sidebar-widget-title {
+		font-size: var(--oml-font-size-xl);
+	}
 
-    .ohmylms-single-course-layout3 .ohmylms-widget-drop-course .sidebar-widget-title {
-        font-size: 18px;
-    }
+	.ohmylms-single-course-layout3
+		.ohmylms-widget-drop-course
+		.sidebar-widget-title {
+		font-size: var(--oml-font-size-lg);
+	}
 
-    .ohmylms-single-course-layout3 .ohmylms-widget-membership .sidebar-widget-title {
-        font-size: 18px;
-    }
-    
-    .ohmylms-single-course-layout3 .ohmylms-widget-drop-course .ohmylms-button {
-        height: 44px;
-    }
-    
+	.ohmylms-single-course-layout3
+		.ohmylms-widget-membership
+		.sidebar-widget-title {
+		font-size: var(--oml-font-size-lg);
+	}
+
+	.ohmylms-single-course-layout3 .ohmylms-widget-drop-course .ohmylms-button {
+		height: 44px;
+	}
 }
 
 @media screen and (max-width: 767px) {
 
-    .ohmylms-single-course-layout3 .ohmylms-course-pricebox-and-meta .ohmylms-widget-continue-learn .layout3-progressbar-box .progressbar-title {
-        font-size: 15px;
-    }
+	.ohmylms-single-course-layout3
+		.ohmylms-course-pricebox-and-meta
+		.ohmylms-widget-continue-learn
+		.layout3-progressbar-box
+		.progressbar-title {
+		font-size: var(--oml-font-size-md);
+	}
 
-    .ohmylms-single-course-layout3 .ohmylms-sidebar-widget .sidebar-widget-title {
-        font-size: 20px;
-    }
-    
+	.ohmylms-single-course-layout3
+		.ohmylms-sidebar-widget
+		.sidebar-widget-title {
+		font-size: var(--oml-font-size-xl);
+	}
 }

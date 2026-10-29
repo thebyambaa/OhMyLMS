@@ -172,9 +172,9 @@ array( 'file' => 'oml-rtl-020-shared.f1fd47dfeff3.css', 'path' => 'assets/dist/c
 @tailwind base;@tailwind components;@tailwind utilities;@layer base{body{@apply antialiased;font-size:16px}}
 
 /*# sourceMappingURL=ohmylms-rtl.css.map*/' ),
-array( 'file' => 'oml-ui-000-curriculum.9b303883e322.css', 'path' => 'assets/css/oml-ui-000-curriculum.9b303883e322.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-001-settings.1b4f893c7e13.css', 'path' => 'assets/css/oml-ui-001-settings.1b4f893c7e13.css', 'layer' => 'ui', 'group' => 'settings', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-002-gamification.535c84481424.css', 'path' => 'assets/css/oml-ui-002-gamification.535c84481424.css', 'layer' => 'ui', 'group' => 'gamification', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-000-curriculum.b0f7bc12a2ef.css', 'path' => 'assets/css/oml-ui-000-curriculum.b0f7bc12a2ef.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-001-settings.a01bbfd9ef9c.css', 'path' => 'assets/css/oml-ui-001-settings.a01bbfd9ef9c.css', 'layer' => 'ui', 'group' => 'settings', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-002-gamification.15e1214d3f3d.css', 'path' => 'assets/css/oml-ui-002-gamification.15e1214d3f3d.css', 'layer' => 'ui', 'group' => 'gamification', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-003-shared.a988e7fefb26.css', 'path' => 'assets/css/oml-ui-003-shared.a988e7fefb26.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '/*
  * Shared layout for OhMyLMS admin pages added through the extension SDK (Question bank,
  * Skills, Performance and others). Mirrors the native screens: 40px side gutter, a 20px
@@ -185,23 +185,23 @@ array( 'file' => 'oml-ui-003-shared.a988e7fefb26.css', 'path' => 'assets/css/oml
 /* Feature switches sit alongside the setting title rather than above its content. */
 
 ' ),
-array( 'file' => 'oml-ui-004-gamification.0edccda8111f.css', 'path' => 'assets/css/oml-ui-004-gamification.0edccda8111f.css', 'layer' => 'ui', 'group' => 'gamification', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-005-settings.bd26580692fc.css', 'path' => 'assets/css/oml-ui-005-settings.bd26580692fc.css', 'layer' => 'ui', 'group' => 'settings', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-004-gamification.2d7e91c624a4.css', 'path' => 'assets/css/oml-ui-004-gamification.2d7e91c624a4.css', 'layer' => 'ui', 'group' => 'gamification', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-005-settings.03aab3463f62.css', 'path' => 'assets/css/oml-ui-005-settings.03aab3463f62.css', 'layer' => 'ui', 'group' => 'settings', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-006-shared.717529535c63.css', 'path' => 'assets/css/oml-ui-006-shared.717529535c63.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '/* Streak settings share the native Gamification card spacing and tokens. */
 
 ' ),
-array( 'file' => 'oml-ui-007-gamification.aed949dc3370.css', 'path' => 'assets/css/oml-ui-007-gamification.aed949dc3370.css', 'layer' => 'ui', 'group' => 'gamification', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-007-gamification.a2a36355e0ac.css', 'path' => 'assets/css/oml-ui-007-gamification.a2a36355e0ac.css', 'layer' => 'ui', 'group' => 'gamification', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-008-curriculum.07367298c5eb.css', 'path' => 'assets/css/oml-ui-008-curriculum.07367298c5eb.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-009-commerce.886074a9d9bb.css', 'path' => 'assets/css/oml-ui-009-commerce.886074a9d9bb.css', 'layer' => 'ui', 'group' => 'commerce', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-010-curriculum.a4c3458213e6.css', 'path' => 'assets/css/oml-ui-010-curriculum.a4c3458213e6.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-011-quizzes.3e9f61c91e66.css', 'path' => 'assets/css/oml-ui-011-quizzes.3e9f61c91e66.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-012-shared.bceb27700351.css', 'path' => 'assets/css/oml-ui-012-shared.bceb27700351.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-import-preview {
-	margin: 12px 0;
+array( 'file' => 'oml-ui-010-curriculum.d0531abe94c3.css', 'path' => 'assets/css/oml-ui-010-curriculum.d0531abe94c3.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-011-quizzes.2c390a89de00.css', 'path' => 'assets/css/oml-ui-011-quizzes.2c390a89de00.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-012-shared.168dd16c3313.css', 'path' => 'assets/css/oml-ui-012-shared.168dd16c3313.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-import-preview {
+	margin: var(--oml-space-3) 0;
 }
 
 .ohmylms-import-preview__headline {
-	margin: 0 0 8px;
-	font-weight: 600;
+	margin: 0 0 var(--oml-space-2);
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-import-list {
@@ -211,13 +211,12 @@ array( 'file' => 'oml-ui-012-shared.bceb27700351.css', 'path' => 'assets/css/oml
 	overflow-y: auto;
 	list-style: disc;
 }
-
 ' ),
-array( 'file' => 'oml-ui-013-quizzes.87d854b6c66d.css', 'path' => 'assets/css/oml-ui-013-quizzes.87d854b6c66d.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-014-curriculum.0e57290fedd8.css', 'path' => 'assets/css/oml-ui-014-curriculum.0e57290fedd8.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-015-shared.6c3b158c8561.css', 'path' => 'assets/css/oml-ui-015-shared.6c3b158c8561.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-movable-tabs {
+array( 'file' => 'oml-ui-013-quizzes.fd0dac57c26a.css', 'path' => 'assets/css/oml-ui-013-quizzes.fd0dac57c26a.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-014-curriculum.c7dc9bca5e9c.css', 'path' => 'assets/css/oml-ui-014-curriculum.c7dc9bca5e9c.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-015-shared.71e5596aa7d0.css', 'path' => 'assets/css/oml-ui-015-shared.71e5596aa7d0.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-movable-tabs {
 	align-items: center;
-	gap: 6px 16px;
+	gap: 6px var(--oml-space-4);
 	--ohmylms-hub-gutter: 0px;
 }
 
@@ -225,9 +224,9 @@ array( 'file' => 'oml-ui-015-shared.6c3b158c8561.css', 'path' => 'assets/css/oml
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
-	gap: 12px;
+	gap: var(--oml-space-3);
 	border-radius: 8px 8px 0 0;
-	padding: 0 12px;
+	padding: 0 var(--oml-space-3);
 	border-bottom: 3px solid currentcolor;
 }
 
@@ -236,32 +235,32 @@ array( 'file' => 'oml-ui-015-shared.6c3b158c8561.css', 'path' => 'assets/css/oml
 	color: inherit;
 	background: transparent;
 	border: 0;
-	padding: 8px 4px;
+	padding: var(--oml-space-2) var(--oml-space-1);
 	cursor: pointer;
 	cursor: grab;
-	font-weight: 600;
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-tab-organize {
 	font: inherit;
 	background: transparent;
 	border: 0;
-	padding: 8px 4px;
+	padding: var(--oml-space-2) var(--oml-space-1);
 	cursor: pointer;
 	margin-left: auto;
-	font-size: 12px;
-	color: var(--ohmylms-admin-muted-color, #646970);
+	font-size: var(--oml-font-size-xs);
+	color: var(--ohmylms-admin-muted-color, var(--oml-muted));
 }
 
 .ohmylms-tab-ungroup {
-	padding: 8px;
-	border: 1px dashed #787c82;
-	font-size: 12px;
+	padding: var(--oml-space-2);
+	border: 1px dashed var(--oml-border);
+	font-size: var(--oml-font-size-xs);
 }
 
 .ohmylms-tab-save-status {
-	margin: -16px var(--ohmylms-hub-gutter, 0px) 16px;
-	font-size: 12px;
+	margin: -var(--oml-space-4) var(--ohmylms-hub-gutter, 0px) var(--oml-space-4);
+	font-size: var(--oml-font-size-xs);
 }
 
 .ohmylms-tab-modal {
@@ -275,23 +274,22 @@ array( 'file' => 'oml-ui-015-shared.6c3b158c8561.css', 'path' => 'assets/css/oml
 .ohmylms-tab-modal-footer {
 	display: flex;
 	justify-content: space-between;
-	gap: 12px;
+	gap: var(--oml-space-3);
 }
 
 .ohmylms-tab-panel-body {
 	min-width: 0;
 }
-
 ' ),
-array( 'file' => 'oml-ui-016-gamification.e9a32f3a5e9c.css', 'path' => 'assets/css/oml-ui-016-gamification.e9a32f3a5e9c.css', 'layer' => 'ui', 'group' => 'gamification', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-016-gamification.5c40c7b54a53.css', 'path' => 'assets/css/oml-ui-016-gamification.5c40c7b54a53.css', 'layer' => 'ui', 'group' => 'gamification', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-017-shared.84bf93aff0ff.css', 'path' => 'assets/css/oml-ui-017-shared.84bf93aff0ff.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '/* Page header: title and description on the left, actions on the right. */
 
 /* Content Hub: title, the section tabs, then the active tab\'s body. It supplies its own
  * gutter, and drops it when opened through a legacy extension URL, which already has one. */
 
 ' ),
-array( 'file' => 'oml-ui-018-curriculum.8b4a0f8a0122.css', 'path' => 'assets/css/oml-ui-018-curriculum.8b4a0f8a0122.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-019-shared.4634bc9446a3.css', 'path' => 'assets/css/oml-ui-019-shared.4634bc9446a3.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-catalog-items {
+array( 'file' => 'oml-ui-018-curriculum.2e7f92603782.css', 'path' => 'assets/css/oml-ui-018-curriculum.2e7f92603782.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-019-shared.61e58b963949.css', 'path' => 'assets/css/oml-ui-019-shared.61e58b963949.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-catalog-items {
 	margin: 0;
 	margin-block: 6px 0;
 	margin-inline-start: 3.25rem;
@@ -303,50 +301,50 @@ array( 'file' => 'oml-ui-019-shared.4634bc9446a3.css', 'path' => 'assets/css/oml
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 2px 8px;
-	padding: 4px 0;
-	font-size: 13px;
+	gap: 2px var(--oml-space-2);
+	padding: var(--oml-space-1) 0;
+	font-size: var(--oml-font-size-sm);
 }
 
 .ohmylms-catalog-item-title {
 	min-width: 0;
 	overflow-wrap: anywhere;
-	font-weight: 500;
+	font-weight: var(--oml-weight-medium);
 }
 
 .ohmylms-catalog-item-controls {
 	display: inline-flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 4px 12px;
+	gap: var(--oml-space-1) var(--oml-space-3);
 	margin-inline-start: auto;
 }
 
 .ohmylms-catalog-type {
-	padding: 1px 8px;
-	border-radius: 10px;
+	padding: 1px var(--oml-space-2);
+	border-radius: var(--oml-radius-control);
 	font-size: 11px;
-	font-weight: 600;
+	font-weight: var(--oml-weight-strong);
 	letter-spacing: 0.02em;
 	text-transform: uppercase;
-	background: #e7f1ff;
-	color: #1d4ed8;
+	background: var(--oml-info-soft);
+	color: var(--oml-info-text);
 }
 
 .ohmylms-catalog-flag {
 	display: inline-block;
-	padding: 1px 8px;
-	border-radius: 10px;
-	font-size: 12px;
-	background: var(--ohmylms-admin-subtle, #f4f5f7);
-	color: var(--ohmylms-admin-muted-color, #5b6b7b);
+	padding: 1px var(--oml-space-2);
+	border-radius: var(--oml-radius-control);
+	font-size: var(--oml-font-size-xs);
+	background: var(--ohmylms-admin-subtle, var(--oml-background));
+	color: var(--ohmylms-admin-muted-color, var(--oml-muted));
 }
 
 .ohmylms-hub-chips {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 4px 6px;
-	margin: 0 0 4px;
+	gap: var(--oml-space-1) 6px;
+	margin: 0 0 var(--oml-space-1);
 	padding: 0;
 	list-style: none;
 }
@@ -354,8 +352,8 @@ array( 'file' => 'oml-ui-019-shared.4634bc9446a3.css', 'path' => 'assets/css/oml
 .ohmylms-hub-links {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 4px 6px;
-	margin: 0 0 4px;
+	gap: var(--oml-space-1) 6px;
+	margin: 0 0 var(--oml-space-1);
 	padding: 0;
 	list-style: none;
 }
@@ -364,27 +362,26 @@ array( 'file' => 'oml-ui-019-shared.4634bc9446a3.css', 'path' => 'assets/css/oml
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	gap: 12px;
-	margin-block-start: 16px;
+	gap: var(--oml-space-3);
+	margin-block-start: var(--oml-space-4);
 }
-
 ' ),
-array( 'file' => 'oml-ui-020-skills.80a896082fcc.css', 'path' => 'assets/css/oml-ui-020-skills.80a896082fcc.css', 'layer' => 'ui', 'group' => 'skills', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-021-shared.6b4d3207ec48.css', 'path' => 'assets/css/oml-ui-021-shared.6b4d3207ec48.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-020-skills.ba17285de96f.css', 'path' => 'assets/css/oml-ui-020-skills.ba17285de96f.css', 'layer' => 'ui', 'group' => 'skills', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-021-shared.b4d6f07af3ae.css', 'path' => 'assets/css/oml-ui-021-shared.b4d6f07af3ae.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-022-quizzes.806a29ff91a8.css', 'path' => 'assets/css/oml-ui-022-quizzes.806a29ff91a8.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-023-shared.ebd2ae502b3a.css', 'path' => 'assets/css/oml-ui-023-shared.ebd2ae502b3a.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-023-shared.fe52d8399e98.css', 'path' => 'assets/css/oml-ui-023-shared.fe52d8399e98.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-024-curriculum.5a8ab21c80f3.css', 'path' => 'assets/css/oml-ui-024-curriculum.5a8ab21c80f3.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-025-shared.daa43e8138de.css', 'path' => 'assets/css/oml-ui-025-shared.daa43e8138de.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '/* Lessons, quizzes and assignments attached to a chapter of a syllabus course: a type tag, the title as a
+array( 'file' => 'oml-ui-025-shared.60f2d55070a7.css', 'path' => 'assets/css/oml-ui-025-shared.60f2d55070a7.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '/* Lessons, quizzes and assignments attached to a chapter of a syllabus course: a type tag, the title as a
  * link, flags, and the controls that say whether each one counts. */
 
 .ohmylms-cur-syllabus-badge {
-	background: var(--ohmylms-primary-soft-color, #f6f3fd);
-	border-color: var(--ohmylms-primary-color, #6e42d3);
-	font-weight: 600;
+	background: var(--ohmylms-primary-soft-color, var(--oml-primary-soft));
+	border-color: var(--ohmylms-primary-color, var(--oml-primary));
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-cur-name-link {
-	color: var(--ohmylms-primary-color, #6e42d3);
+	color: var(--ohmylms-primary-color, var(--oml-primary));
 	text-decoration: none;
 }
 
@@ -393,16 +390,16 @@ array( 'file' => 'oml-ui-025-shared.daa43e8138de.css', 'path' => 'assets/css/oml
 	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
-	gap: 12px 20px;
-	margin: 20px 0 8px;
-	padding: 14px 16px;
-	border: 1px solid var(--ohmylms-admin-border, #dcdcde);
+	gap: var(--oml-space-3) 20px;
+	margin: 20px 0 var(--oml-space-2);
+	padding: 14px var(--oml-space-4);
+	border: 1px solid var(--ohmylms-admin-border, var(--oml-border));
 	border-radius: var(--ohmylms-admin-radius, 7px);
-	background: var(--ohmylms-admin-surface, #fff);
+	background: var(--ohmylms-admin-surface, var(--oml-surface));
 }
 
 .ohmylms-syl-existing {
-	margin: 8px 0;
+	margin: var(--oml-space-2) 0;
 }
 
 .ohmylms-syl-import {
@@ -411,34 +408,33 @@ array( 'file' => 'oml-ui-025-shared.daa43e8138de.css', 'path' => 'assets/css/oml
 
 .ohmylms-syl-options {
 	display: grid;
-	gap: 8px;
-	margin: 8px 0 12px;
+	gap: var(--oml-space-2);
+	margin: var(--oml-space-2) 0 var(--oml-space-3);
 }
 
 .ohmylms-syl-report {
-	margin: 8px 0;
+	margin: var(--oml-space-2) 0;
 }
 
 .ohmylms-ws {
 	--ws-muted: color-mix(
 		in srgb,
-		var(--ohmylms-admin-text-color, #000d25) 68%,
-		#fff
+		var(--ohmylms-admin-text-color, var(--oml-heading)) 68%,
+		var(--oml-surface)
 	);
-	--ws-border: var(--ohmylms-admin-border, #dcdfe5);
-	--ws-primary: var(--ohmylms-primary-color, #6e42d3);
-	--ws-soft: var(--ohmylms-primary-soft-color, #f4effd);
-	--ws-subtle: var(--ohmylms-admin-subtle, #f4f5f7);
+	--ws-border: var(--ohmylms-admin-border, var(--oml-border));
+	--ws-primary: var(--ohmylms-primary-color, var(--oml-primary));
+	--ws-soft: var(--ohmylms-primary-soft-color, var(--oml-primary-soft));
+	--ws-subtle: var(--ohmylms-admin-subtle, var(--oml-background));
 	display: flex;
 	flex-direction: column;
 	height: calc(100vh - 32px);
 	min-height: 520px;
-	background: var(--ohmylms-admin-surface, #fff);
-	color: var(--ohmylms-admin-text-color, #000d25);
+	background: var(--ohmylms-admin-surface, var(--oml-surface));
+	color: var(--ohmylms-admin-text-color, var(--oml-heading));
 }
-
 ' ),
-array( 'file' => 'oml-ui-026-curriculum.5a827224dd2e.css', 'path' => 'assets/css/oml-ui-026-curriculum.5a827224dd2e.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-026-curriculum.6c5d36955a0c.css', 'path' => 'assets/css/oml-ui-026-curriculum.6c5d36955a0c.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-027-shared.062b494eb2a2.css', 'path' => 'assets/css/oml-ui-027-shared.062b494eb2a2.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '@media (max-width: 600px) {
 
 	.ohmylms-catalog-item-controls {
@@ -451,8 +447,8 @@ array( 'file' => 'oml-ui-028-curriculum.f07a42e09334.css', 'path' => 'assets/css
 array( 'file' => 'oml-ui-029-shared.f139f645f73c.css', 'path' => 'assets/css/oml-ui-029-shared.f139f645f73c.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '/* Cards. */
 
 ' ),
-array( 'file' => 'oml-ui-030-curriculum.70ff988df101.css', 'path' => 'assets/css/oml-ui-030-curriculum.70ff988df101.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-031-shared.48db2294194c.css', 'path' => 'assets/css/oml-ui-031-shared.48db2294194c.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '/* Narrow editors use a branching vertical layout instead of a wide canvas. */
+array( 'file' => 'oml-ui-030-curriculum.1c4d95d075f0.css', 'path' => 'assets/css/oml-ui-030-curriculum.1c4d95d075f0.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-031-shared.c51e1b9c287c.css', 'path' => 'assets/css/oml-ui-031-shared.c51e1b9c287c.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '/* Narrow editors use a branching vertical layout instead of a wide canvas. */
 @container ohmylms-mindmap (max-width: 1000px) {
 
 	.ohmylms-mindmap-stage {
@@ -469,11 +465,11 @@ array( 'file' => 'oml-ui-031-shared.48db2294194c.css', 'path' => 'assets/css/oml
 	.ohmylms-mindmap-root {
 		width: 100%;
 		min-width: 0;
-		margin-bottom: 16px;
+		margin-bottom: var(--oml-space-4);
 	}
 
 	.ohmylms-mindmap-branches {
-		padding-left: 16px;
+		padding-left: var(--oml-space-4);
 		min-width: 0;
 	}
 
@@ -498,77 +494,74 @@ array( 'file' => 'oml-ui-031-shared.48db2294194c.css', 'path' => 'assets/css/oml
 		display: none;
 	}
 }
-
 ' ),
-array( 'file' => 'oml-ui-032-curriculum.44ca3bdc8365.css', 'path' => 'assets/css/oml-ui-032-curriculum.44ca3bdc8365.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-032-curriculum.3987103dda96.css', 'path' => 'assets/css/oml-ui-032-curriculum.3987103dda96.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-033-shared.08db97530535.css', 'path' => 'assets/css/oml-ui-033-shared.08db97530535.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '/* Keep content reachable by wheel, touch and keyboard without visible bars. */
 
 ' ),
-array( 'file' => 'oml-ui-034-curriculum.cfdf46554d14.css', 'path' => 'assets/css/oml-ui-034-curriculum.cfdf46554d14.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-034-curriculum.1b462181e8a0.css', 'path' => 'assets/css/oml-ui-034-curriculum.1b462181e8a0.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-035-shared.4912d8f066f7.css', 'path' => 'assets/css/oml-ui-035-shared.4912d8f066f7.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '/* Tables: the native ohmylms-table look for WordPress tables inside extension pages. */
 
 ' ),
-array( 'file' => 'oml-ui-036-curriculum.68e58233e47b.css', 'path' => 'assets/css/oml-ui-036-curriculum.68e58233e47b.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-037-shared.8c0862ab31b6.css', 'path' => 'assets/css/oml-ui-037-shared.8c0862ab31b6.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '/* Small screens: narrower gutter. */
+array( 'file' => 'oml-ui-036-curriculum.d2cab7b6fca3.css', 'path' => 'assets/css/oml-ui-036-curriculum.d2cab7b6fca3.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-037-shared.e73275b3a03b.css', 'path' => 'assets/css/oml-ui-037-shared.e73275b3a03b.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '/* Small screens: narrower gutter. */
 @media (max-width: 782px) {
 
 	.ohmylms-dashboard-layout.extensions .ohmylms-content {
-		padding: 16px 12px 32px;
+		padding: var(--oml-space-4) var(--oml-space-3) var(--oml-space-6);
 	}
 }
 
 /* Curriculum accordion editor and Course Bundles manager. Indentation comes from nesting,
  * so every inline panel, add row and child list lines up with its parent. Logical properties
  * keep right-to-left layouts correct. */
-
 ' ),
-array( 'file' => 'oml-ui-038-curriculum.c81b78bf634e.css', 'path' => 'assets/css/oml-ui-038-curriculum.c81b78bf634e.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-039-shared.41d99f94bc8c.css', 'path' => 'assets/css/oml-ui-039-shared.41d99f94bc8c.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-form-settings-bar {
+array( 'file' => 'oml-ui-038-curriculum.4811f5ed056c.css', 'path' => 'assets/css/oml-ui-038-curriculum.4811f5ed056c.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-039-shared.b6b855cbaafb.css', 'path' => 'assets/css/oml-ui-039-shared.b6b855cbaafb.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-form-settings-bar {
 	margin: 20px 0 0;
-	padding: 16px;
-	border: 1px solid var(--oml-border, #e4e7ee);
+	padding: var(--oml-space-4);
+	border: 1px solid var(--oml-border, var(--oml-border));
 	border-radius: var(--oml-radius-card, 8px);
-	background: var(--ohmylms-admin-surface-subtle, #f8f9fc);
+	background: var(--ohmylms-admin-surface-subtle, var(--oml-background));
 }
-
 ' ),
-array( 'file' => 'oml-ui-040-quizzes.b8396e4f99ac.css', 'path' => 'assets/css/oml-ui-040-quizzes.b8396e4f99ac.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-041-curriculum.9b0cad2b6f2d.css', 'path' => 'assets/css/oml-ui-041-curriculum.9b0cad2b6f2d.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-042-skills.9cfce9a3975e.css', 'path' => 'assets/css/oml-ui-042-skills.9cfce9a3975e.css', 'layer' => 'ui', 'group' => 'skills', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-043-shared.6c6189c6c968.css', 'path' => 'assets/css/oml-ui-043-shared.6c6189c6c968.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-category-tags {
+array( 'file' => 'oml-ui-040-quizzes.23f9ba47e806.css', 'path' => 'assets/css/oml-ui-040-quizzes.23f9ba47e806.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-041-curriculum.f1d892601bf7.css', 'path' => 'assets/css/oml-ui-041-curriculum.f1d892601bf7.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-042-skills.afb77460f559.css', 'path' => 'assets/css/oml-ui-042-skills.afb77460f559.css', 'layer' => 'ui', 'group' => 'skills', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-043-shared.00c9c55a4305.css', 'path' => 'assets/css/oml-ui-043-shared.00c9c55a4305.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-category-tags {
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: var(--oml-space-2);
 	flex-wrap: wrap;
-	border: 1px solid #d4dae5;
-	border-radius: 10px;
-	background: #fff;
-	padding: 10px 12px;
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-surface);
+	padding: 10px var(--oml-space-3);
 	min-height: 52px;
 }
 
 .ohmylms-category-token {
 	display: inline-flex;
 	align-items: center;
-	gap: 8px;
+	gap: var(--oml-space-2);
 	padding: 5px 10px 5px 13px;
-	background: #e5f5ec;
-	color: #166b42;
-	border: 1px solid #c7e7d4;
-	border-radius: 999px;
-	font-weight: 600;
-	font-size: 13px;
+	background: var(--oml-success-soft);
+	color: var(--oml-success-text);
+	border: 1px solid var(--oml-success-soft);
+	border-radius: var(--oml-radius-card);
+	font-weight: var(--oml-weight-strong);
+	font-size: var(--oml-font-size-sm);
 	line-height: 22px;
 }
 
 .ohmylms-category-add {
 	border: 0;
 	border-radius: var(--oml-radius-card, 7px);
-	background: #f0edfc;
-	color: var(--oml-primary-hover, #6048ce);
-	padding: 6px 12px;
+	background: var(--oml-primary-soft);
+	color: var(--oml-primary-hover, var(--oml-primary));
+	padding: 6px var(--oml-space-3);
 	cursor: pointer;
-	font-weight: 600;
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-category-appearance {
@@ -576,38 +569,36 @@ array( 'file' => 'oml-ui-043-shared.6c6189c6c968.css', 'path' => 'assets/css/oml
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 10px;
-	padding: 8px 0;
+	padding: var(--oml-space-2) 0;
 	border-bottom: 1px solid var(--ws-border);
 }
-
 ' ),
-array( 'file' => 'oml-ui-044-quizzes.33876eba2eb4.css', 'path' => 'assets/css/oml-ui-044-quizzes.33876eba2eb4.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-045-shared.9d183c9aba52.css', 'path' => 'assets/css/oml-ui-045-shared.9d183c9aba52.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-assessment-editor-tabs {
+array( 'file' => 'oml-ui-044-quizzes.4297aea3e900.css', 'path' => 'assets/css/oml-ui-044-quizzes.4297aea3e900.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-045-shared.3a435f99a427.css', 'path' => 'assets/css/oml-ui-045-shared.3a435f99a427.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-assessment-editor-tabs {
 	display: flex;
-	gap: 8px;
-	background: #fff;
-	border-bottom: 1px solid #e0e3e8;
-	padding: 8px 16px;
+	gap: var(--oml-space-2);
+	background: var(--oml-surface);
+	border-bottom: 1px solid var(--oml-border);
+	padding: var(--oml-space-2) var(--oml-space-4);
 }
-
 ' ),
-array( 'file' => 'oml-ui-046-quizzes.ac6b0c1725fe.css', 'path' => 'assets/css/oml-ui-046-quizzes.ac6b0c1725fe.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-047-shared.69d1023e299f.css', 'path' => 'assets/css/oml-ui-047-shared.69d1023e299f.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-preview-note {
-	color: #646970;
-	font-size: 13px;
+array( 'file' => 'oml-ui-046-quizzes.512b6455fea7.css', 'path' => 'assets/css/oml-ui-046-quizzes.512b6455fea7.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-047-shared.2fbc4f3c8b16.css', 'path' => 'assets/css/oml-ui-047-shared.2fbc4f3c8b16.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-preview-note {
+	color: var(--oml-muted);
+	font-size: var(--oml-font-size-sm);
 }
 
 .ohmylms-preview-choice {
 	display: flex;
-	gap: 12px;
-	padding: 12px 0;
+	gap: var(--oml-space-3);
+	padding: var(--oml-space-3) 0;
 	align-items: center;
 }
 
 .ohmylms-preview-input {
 	display: flex;
-	gap: 12px;
-	padding: 12px 0;
+	gap: var(--oml-space-3);
+	padding: var(--oml-space-3) 0;
 	flex-direction: column;
 	align-items: stretch;
 }
@@ -616,26 +607,24 @@ array( 'file' => 'oml-ui-047-shared.69d1023e299f.css', 'path' => 'assets/css/oml
 	width: 120px;
 	margin: 0 6px;
 }
-
 ' ),
-array( 'file' => 'oml-ui-048-quizzes.7447d2332cd5.css', 'path' => 'assets/css/oml-ui-048-quizzes.7447d2332cd5.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-049-shared.d42fac05d3b9.css', 'path' => 'assets/css/oml-ui-049-shared.d42fac05d3b9.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-form-actions {
+array( 'file' => 'oml-ui-048-quizzes.297e00027ebe.css', 'path' => 'assets/css/oml-ui-048-quizzes.297e00027ebe.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-049-shared.eab6ee1a864e.css', 'path' => 'assets/css/oml-ui-049-shared.eab6ee1a864e.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-form-actions {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 12px;
+	gap: var(--oml-space-3);
 	margin: 0 auto 20px;
 	max-width: 1100px;
 }
-
 ' ),
-array( 'file' => 'oml-ui-050-quizzes.7236ce99901b.css', 'path' => 'assets/css/oml-ui-050-quizzes.7236ce99901b.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-051-shared.dd897f615919.css', 'path' => 'assets/css/oml-ui-051-shared.dd897f615919.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-form-add-bottom {
+array( 'file' => 'oml-ui-050-quizzes.621d9ef8ef72.css', 'path' => 'assets/css/oml-ui-050-quizzes.621d9ef8ef72.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-051-shared.f768b0c5685c.css', 'path' => 'assets/css/oml-ui-051-shared.f768b0c5685c.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-form-add-bottom {
 	margin-top: 20px;
 }
 
 .ohmylms-form-workspace {
-	background: #fff;
-	padding: 24px;
+	background: var(--oml-surface);
+	padding: var(--oml-space-5);
 	border-radius: var(--oml-radius-card, 8px);
 }
 
@@ -643,13 +632,12 @@ array( 'file' => 'oml-ui-051-shared.dd897f615919.css', 'path' => 'assets/css/oml
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: flex-end;
-	gap: 12px;
+	gap: var(--oml-space-3);
 	margin-bottom: 20px;
 }
-
 ' ),
-array( 'file' => 'oml-ui-052-quizzes.efea4c228504.css', 'path' => 'assets/css/oml-ui-052-quizzes.efea4c228504.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-053-shared.f28cfd054500.css', 'path' => 'assets/css/oml-ui-053-shared.f28cfd054500.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-form-description {
+array( 'file' => 'oml-ui-052-quizzes.3ad21365d9e0.css', 'path' => 'assets/css/oml-ui-052-quizzes.3ad21365d9e0.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-053-shared.6c4676e293e9.css', 'path' => 'assets/css/oml-ui-053-shared.6c4676e293e9.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-form-description {
 	margin: 20px 0;
 }
 
@@ -700,11 +688,11 @@ array( 'file' => 'oml-ui-053-shared.f28cfd054500.css', 'path' => 'assets/css/oml
 
 .ohmylms-shared-answers {
 	display: grid;
-	gap: 12px;
+	gap: var(--oml-space-3);
 }
 
 .ohmylms-inline-blank-stem {
-	font-size: 18px;
+	font-size: var(--oml-font-size-lg);
 	line-height: 2.2;
 }
 
@@ -712,33 +700,32 @@ array( 'file' => 'oml-ui-053-shared.f28cfd054500.css', 'path' => 'assets/css/oml
 	display: inline-block;
 	min-width: 100px;
 	padding: 3px 10px;
-	margin: 0 4px;
+	margin: 0 var(--oml-space-1);
 	font: inherit;
-	border: 1px dashed #8c8f94;
-	border-radius: 5px;
-	background: #f6f7f7;
+	border: 1px dashed var(--oml-border);
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-subtle);
 	cursor: pointer;
 }
 
 .ohmylms-blank-answer-bank {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px;
-	margin: 12px 0;
+	gap: var(--oml-space-2);
+	margin: var(--oml-space-3) 0;
 }
 
 /* Skill library picker inside a chapter, and the import dialog. */
 
 .ohmylms-blank-answer-chip {
-	border: 1px solid var(--oml-border, #dcdcde);
-	padding: 6px 12px;
-	border-radius: 5px;
-	background: #f6f7f7;
+	border: 1px solid var(--oml-border, var(--oml-border));
+	padding: 6px var(--oml-space-3);
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-subtle);
 }
-
 ' ),
-array( 'file' => 'oml-ui-054-quizzes.aac39560f802.css', 'path' => 'assets/css/oml-ui-054-quizzes.aac39560f802.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-055-shared.4021cd271e0f.css', 'path' => 'assets/css/oml-ui-055-shared.4021cd271e0f.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-shared-answer-row {
+array( 'file' => 'oml-ui-054-quizzes.6a701a577f75.css', 'path' => 'assets/css/oml-ui-054-quizzes.6a701a577f75.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-055-shared.8cde9eec8027.css', 'path' => 'assets/css/oml-ui-055-shared.8cde9eec8027.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-shared-answer-row {
 	display: flex;
 	align-items: center;
 	gap: 10px;
@@ -755,34 +742,33 @@ array( 'file' => 'oml-ui-055-shared.4021cd271e0f.css', 'path' => 'assets/css/oml
 
 .ohmylms-shared-answer-correct {
 	flex: 0 0 auto;
-	accent-color: var(--ohmylms-primary-color);
+	accent-color: var(--oml-primary);
 }
 
 .ohmylms-shared-answer-image {
 	flex-basis: 100%;
 	display: flex;
 	align-items: center;
-	gap: 12px;
+	gap: var(--oml-space-3);
 }
 
 .ohmylms-form-settings {
-	margin-top: 24px;
-	padding-top: 16px;
-	border-top: 1px solid #eee;
+	margin-top: var(--oml-space-5);
+	padding-top: var(--oml-space-4);
+	border-top: 1px solid var(--oml-border);
 }
-
 ' ),
-array( 'file' => 'oml-ui-056-skills.a1fd40868d11.css', 'path' => 'assets/css/oml-ui-056-skills.a1fd40868d11.css', 'layer' => 'ui', 'group' => 'skills', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-057-curriculum.d07f05954a85.css', 'path' => 'assets/css/oml-ui-057-curriculum.d07f05954a85.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-056-skills.27efcc54a4cf.css', 'path' => 'assets/css/oml-ui-056-skills.27efcc54a4cf.css', 'layer' => 'ui', 'group' => 'skills', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-057-curriculum.93b43fe6c24b.css', 'path' => 'assets/css/oml-ui-057-curriculum.93b43fe6c24b.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-058-shared.49dcdcd3f44a.css', 'path' => 'assets/css/oml-ui-058-shared.49dcdcd3f44a.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '/* Left panel */
 
 ' ),
-array( 'file' => 'oml-ui-059-settings.4e3b9db237fe.css', 'path' => 'assets/css/oml-ui-059-settings.4e3b9db237fe.css', 'layer' => 'ui', 'group' => 'settings', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-060-gamification.c9723ae6d462.css', 'path' => 'assets/css/oml-ui-060-gamification.c9723ae6d462.css', 'layer' => 'ui', 'group' => 'gamification', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-061-curriculum.163bac50cb44.css', 'path' => 'assets/css/oml-ui-061-curriculum.163bac50cb44.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-062-quizzes.8cb69fd74396.css', 'path' => 'assets/css/oml-ui-062-quizzes.8cb69fd74396.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-063-curriculum.678bb519d179.css', 'path' => 'assets/css/oml-ui-063-curriculum.678bb519d179.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-064-shared.8186a457dacb.css', 'path' => 'assets/css/oml-ui-064-shared.8186a457dacb.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-movable-tabs a {
+array( 'file' => 'oml-ui-059-settings.f395ff3d50df.css', 'path' => 'assets/css/oml-ui-059-settings.f395ff3d50df.css', 'layer' => 'ui', 'group' => 'settings', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-060-gamification.ae29957fae3a.css', 'path' => 'assets/css/oml-ui-060-gamification.ae29957fae3a.css', 'layer' => 'ui', 'group' => 'gamification', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-061-curriculum.2979b257317f.css', 'path' => 'assets/css/oml-ui-061-curriculum.2979b257317f.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-062-quizzes.a36129bd2321.css', 'path' => 'assets/css/oml-ui-062-quizzes.a36129bd2321.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-063-curriculum.04bdc01bcca5.css', 'path' => 'assets/css/oml-ui-063-curriculum.04bdc01bcca5.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-064-shared.23f118a7bdc2.css', 'path' => 'assets/css/oml-ui-064-shared.23f118a7bdc2.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-movable-tabs a {
 	white-space: nowrap;
 	cursor: grab;
 }
@@ -791,10 +777,10 @@ array( 'file' => 'oml-ui-064-shared.8186a457dacb.css', 'path' => 'assets/css/oml
 	display: flex;
 	align-items: end;
 	flex-wrap: wrap;
-	gap: 12px;
-	border: 1px solid var(--oml-border, #dcdcde);
-	padding: 12px;
-	margin-bottom: 12px;
+	gap: var(--oml-space-3);
+	border: 1px solid var(--oml-border, var(--oml-border));
+	padding: var(--oml-space-3);
+	margin-bottom: var(--oml-space-3);
 }
 
 .ohmylms-tab-group-editor label {
@@ -806,7 +792,7 @@ array( 'file' => 'oml-ui-064-shared.8186a457dacb.css', 'path' => 'assets/css/oml
 .ohmylms-tab-assignments > div {
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: var(--oml-space-2);
 	margin: 10px 0;
 }
 
@@ -815,54 +801,53 @@ array( 'file' => 'oml-ui-064-shared.8186a457dacb.css', 'path' => 'assets/css/oml
 	align-items: center;
 	justify-content: space-between;
 	flex: 1;
-	gap: 12px;
+	gap: var(--oml-space-3);
 }
 
 .ohmylms-ext-header h2 {
 	margin: 0;
 	padding: 0;
-	font-size: 18px;
+	font-size: var(--oml-font-size-lg);
 	line-height: 1.4;
-	font-weight: 600;
-	color: var(--ohmylms-admin-heading-color, #000d25);
+	font-weight: var(--oml-weight-strong);
+	color: var(--ohmylms-admin-heading-color, var(--oml-heading));
 }
 
 .ohmylms-hub-chips li {
 	margin: 0;
-	padding: 1px 8px;
-	border-radius: 10px;
-	font-size: 12px;
-	background: var(--ohmylms-primary-soft-color, #f6f3fd);
-	color: var(--ohmylms-primary-color, #6e42d3);
+	padding: 1px var(--oml-space-2);
+	border-radius: var(--oml-radius-control);
+	font-size: var(--oml-font-size-xs);
+	background: var(--ohmylms-primary-soft-color, var(--oml-primary-soft));
+	color: var(--ohmylms-primary-color, var(--oml-primary));
 }
 
 .ohmylms-hub-links li {
 	margin: 0;
 }
-
 ' ),
-array( 'file' => 'oml-ui-065-skills.db4dd2b5a1f5.css', 'path' => 'assets/css/oml-ui-065-skills.db4dd2b5a1f5.css', 'layer' => 'ui', 'group' => 'skills', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-066-shared.40530f6c0332.css', 'path' => 'assets/css/oml-ui-066-shared.40530f6c0332.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '/* Right pane */
+array( 'file' => 'oml-ui-065-skills.90832c69c19b.css', 'path' => 'assets/css/oml-ui-065-skills.90832c69c19b.css', 'layer' => 'ui', 'group' => 'skills', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-066-shared.68b5446032a2.css', 'path' => 'assets/css/oml-ui-066-shared.68b5446032a2.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '/* Right pane */
 
 .ohmylms-ext-header h1 {
 	margin: 0;
 	padding: 0;
-	font-size: 20px;
+	font-size: var(--oml-font-size-xl);
 	line-height: 1.4;
-	font-weight: 600;
-	color: var(--ohmylms-admin-heading-color, #000d25);
+	font-weight: var(--oml-weight-strong);
+	color: var(--ohmylms-admin-heading-color, var(--oml-heading));
 }
 
 .ohmylms-ext-header p {
-	margin: 4px 0 0;
+	margin: var(--oml-space-1) 0 0;
 	max-width: 760px;
-	font-size: 14px;
-	color: var(--ohmylms-admin-muted-color, #7a8b9a);
+	font-size: var(--oml-font-size-md);
+	color: var(--ohmylms-admin-muted-color, var(--oml-muted));
 }
 
 .ohmylms-mindmap > summary {
 	cursor: pointer;
-	font-weight: 600;
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-mindmap-root::after {
@@ -871,14 +856,14 @@ array( 'file' => 'oml-ui-066-shared.40530f6c0332.css', 'path' => 'assets/css/oml
 	top: 50%;
 	right: -25px;
 	width: 24px;
-	border-top: 1px solid var(--ohmylms-admin-border, #dcdcde);
+	border-top: 1px solid var(--ohmylms-admin-border, var(--oml-border));
 }
 
 .ohmylms-mindmap-node-heading label {
 	display: flex;
 	align-items: center;
-	gap: 8px;
-	font-weight: 600;
+	gap: var(--oml-space-2);
+	font-weight: var(--oml-weight-strong);
 	cursor: pointer;
 }
 
@@ -891,24 +876,24 @@ array( 'file' => 'oml-ui-066-shared.40530f6c0332.css', 'path' => 'assets/css/oml
 	flex-shrink: 0;
 	width: 28px;
 	height: 28px;
-	border: 1px solid var(--ohmylms-admin-border, #dcdcde);
+	border: 1px solid var(--ohmylms-admin-border, var(--oml-border));
 	border-radius: var(--oml-radius-control, 4px);
-	background: var(--ohmylms-admin-surface, #fff);
+	background: var(--ohmylms-admin-surface, var(--oml-surface));
 	cursor: pointer;
 }
 
 .ohmylms-mindmap-node small {
 	display: block;
-	margin-top: 8px;
-	color: var(--ohmylms-admin-muted-color, #7a8b9a);
+	margin-top: var(--oml-space-2);
+	color: var(--ohmylms-admin-muted-color, var(--oml-muted));
 }
 
 .ohmylms-mindmap-branches > li {
 	position: relative;
 	display: flex;
 	align-items: center;
-	gap: 24px;
-	margin: 12px 0;
+	gap: var(--oml-space-5);
+	margin: var(--oml-space-3) 0;
 }
 
 .ohmylms-mindmap-node-details summary {
@@ -918,23 +903,22 @@ array( 'file' => 'oml-ui-066-shared.40530f6c0332.css', 'path' => 'assets/css/oml
 .ohmylms-mindmap-node-details ul {
 	list-style: disc;
 	padding-left: 18px;
-	margin: 8px 0 0;
+	margin: var(--oml-space-2) 0 0;
 }
-
 ' ),
 array( 'file' => 'oml-ui-067-commerce.0911a323f93a.css', 'path' => 'assets/css/oml-ui-067-commerce.0911a323f93a.css', 'layer' => 'ui', 'group' => 'commerce', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-068-shared.9dc2ae04dad5.css', 'path' => 'assets/css/oml-ui-068-shared.9dc2ae04dad5.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-ext-card > h2 {
-	margin: 0 0 12px;
-	font-size: 16px;
-	font-weight: 600;
-	color: var(--ohmylms-admin-heading-color, #000d25);
+array( 'file' => 'oml-ui-068-shared.0628bcc0ca2d.css', 'path' => 'assets/css/oml-ui-068-shared.0628bcc0ca2d.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-ext-card > h2 {
+	margin: 0 0 var(--oml-space-3);
+	font-size: var(--oml-font-size-lg);
+	font-weight: var(--oml-weight-strong);
+	color: var(--ohmylms-admin-heading-color, var(--oml-heading));
 }
 
 .ohmylms-ext-card > h3 {
-	margin: 0 0 12px;
-	font-size: 16px;
-	font-weight: 600;
-	color: var(--ohmylms-admin-heading-color, #000d25);
+	margin: 0 0 var(--oml-space-3);
+	font-size: var(--oml-font-size-lg);
+	font-weight: var(--oml-weight-strong);
+	color: var(--ohmylms-admin-heading-color, var(--oml-heading));
 }
 
 .ohmylms-cur-syllabus-shortcuts li {
@@ -942,22 +926,22 @@ array( 'file' => 'oml-ui-068-shared.9dc2ae04dad5.css', 'path' => 'assets/css/oml
 	align-items: baseline;
 	gap: 10px;
 	margin: 0;
-	padding: 4px 0;
+	padding: var(--oml-space-1) 0;
 }
 
 .ohmylms-cur-panel h3 {
-	margin: 20px 0 8px;
-	font-size: 15px;
+	margin: 20px 0 var(--oml-space-2);
+	font-size: var(--oml-font-size-md);
 }
 
 .ohmylms-cur-link-group > summary {
 	cursor: pointer;
-	font-weight: 600;
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-cur-mapping > summary {
 	cursor: pointer;
-	font-weight: 600;
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-cur-link-list li {
@@ -966,20 +950,20 @@ array( 'file' => 'oml-ui-068-shared.9dc2ae04dad5.css', 'path' => 'assets/css/oml
 	align-items: center;
 	gap: 6px 10px;
 	padding: 6px 0;
-	border-bottom: 1px solid var(--ohmylms-admin-border, #ebedf0);
+	border-bottom: 1px solid var(--ohmylms-admin-border, var(--oml-border));
 }
 
 .ohmylms-bundle-members > li {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 6px 12px;
-	padding: 8px 0;
-	border-bottom: 1px solid var(--ohmylms-admin-border, #dcdcde);
+	gap: 6px var(--oml-space-3);
+	padding: var(--oml-space-2) 0;
+	border-bottom: 1px solid var(--ohmylms-admin-border, var(--oml-border));
 }
 
 .ohmylms-cur-syllabus-summary p {
-	margin: 0 0 4px;
+	margin: 0 0 var(--oml-space-1);
 }
 
 .ohmylms-syl-existing summary {
@@ -989,7 +973,7 @@ array( 'file' => 'oml-ui-068-shared.9dc2ae04dad5.css', 'path' => 'assets/css/oml
 .ohmylms-syl-map th {
 	min-width: 160px;
 	vertical-align: top;
-	font-weight: 400;
+	font-weight: var(--oml-weight-regular);
 }
 
 .ohmylms-syl-map td {
@@ -1009,11 +993,10 @@ array( 'file' => 'oml-ui-068-shared.9dc2ae04dad5.css', 'path' => 'assets/css/oml
 	margin: 0 0 0 18px;
 	list-style: disc;
 }
-
 ' ),
-array( 'file' => 'oml-ui-069-curriculum.e0b229eaed9b.css', 'path' => 'assets/css/oml-ui-069-curriculum.e0b229eaed9b.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-070-skills.8a01e2a81193.css', 'path' => 'assets/css/oml-ui-070-skills.8a01e2a81193.css', 'layer' => 'ui', 'group' => 'skills', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-071-shared.5530a68c4d80.css', 'path' => 'assets/css/oml-ui-071-shared.5530a68c4d80.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-category-token button {
+array( 'file' => 'oml-ui-069-curriculum.a212bdebb836.css', 'path' => 'assets/css/oml-ui-069-curriculum.a212bdebb836.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-070-skills.be7015fc5ddc.css', 'path' => 'assets/css/oml-ui-070-skills.be7015fc5ddc.css', 'layer' => 'ui', 'group' => 'skills', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-071-shared.1ba99384916a.css', 'path' => 'assets/css/oml-ui-071-shared.1ba99384916a.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-category-token button {
 	border: 0;
 	background: transparent;
 	color: inherit;
@@ -1046,16 +1029,15 @@ array( 'file' => 'oml-ui-071-shared.5530a68c4d80.css', 'path' => 'assets/css/oml
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
-	font-size: 12px;
+	font-size: var(--oml-font-size-xs);
 }
-
 ' ),
-array( 'file' => 'oml-ui-072-quizzes.a60b3af10f14.css', 'path' => 'assets/css/oml-ui-072-quizzes.a60b3af10f14.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-073-shared.d23cf82fbcf1.css', 'path' => 'assets/css/oml-ui-073-shared.d23cf82fbcf1.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-form-description > label {
+array( 'file' => 'oml-ui-072-quizzes.40dce0a8f65b.css', 'path' => 'assets/css/oml-ui-072-quizzes.40dce0a8f65b.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-073-shared.859a95e78930.css', 'path' => 'assets/css/oml-ui-073-shared.859a95e78930.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-form-description > label {
 	display: block;
-	margin-bottom: 8px;
-	font-size: 13px;
-	font-weight: 500;
+	margin-bottom: var(--oml-space-2);
+	font-size: var(--oml-font-size-sm);
+	font-weight: var(--oml-weight-medium);
 }
 
 .ohmylms-form-settings > fieldset {
@@ -1073,8 +1055,8 @@ array( 'file' => 'oml-ui-073-shared.d23cf82fbcf1.css', 'path' => 'assets/css/oml
 
 .ohmylms-form-settings > summary {
 	cursor: pointer;
-	font-weight: 600;
-	margin-bottom: 16px;
+	font-weight: var(--oml-weight-strong);
+	margin-bottom: var(--oml-space-4);
 }
 
 .ohmylms-mindmap-branches > li::before {
@@ -1083,9 +1065,8 @@ array( 'file' => 'oml-ui-073-shared.d23cf82fbcf1.css', 'path' => 'assets/css/oml
 	top: 50%;
 	left: -24px;
 	width: 24px;
-	border-top: 1px solid var(--ohmylms-admin-border, #dcdcde);
+	border-top: 1px solid var(--ohmylms-admin-border, var(--oml-border));
 }
-
 ' ),
 array( 'file' => 'oml-ui-074-curriculum.27603a704cea.css', 'path' => 'assets/css/oml-ui-074-curriculum.27603a704cea.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-075-settings.9e20fa7c10a2.css', 'path' => 'assets/css/oml-ui-075-settings.9e20fa7c10a2.css', 'layer' => 'ui', 'group' => 'settings', 'rtl' => false, 'inline' => null ),
@@ -1094,19 +1075,19 @@ array( 'file' => 'oml-ui-077-shared.0fd1ae137d87.css', 'path' => 'assets/css/oml
  * so only their size and spacing are set here. */
 
 ' ),
-array( 'file' => 'oml-ui-078-gamification.f466c13445e3.css', 'path' => 'assets/css/oml-ui-078-gamification.f466c13445e3.css', 'layer' => 'ui', 'group' => 'gamification', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-078-gamification.5600699250d2.css', 'path' => 'assets/css/oml-ui-078-gamification.5600699250d2.css', 'layer' => 'ui', 'group' => 'gamification', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-079-curriculum.db56afa2d091.css', 'path' => 'assets/css/oml-ui-079-curriculum.db56afa2d091.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-080-gamification.c3032d83e3c1.css', 'path' => 'assets/css/oml-ui-080-gamification.c3032d83e3c1.css', 'layer' => 'ui', 'group' => 'gamification', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-081-quizzes.33973bda8417.css', 'path' => 'assets/css/oml-ui-081-quizzes.33973bda8417.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-080-gamification.17210ee94c3f.css', 'path' => 'assets/css/oml-ui-080-gamification.17210ee94c3f.css', 'layer' => 'ui', 'group' => 'gamification', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-081-quizzes.a3c2f0626248.css', 'path' => 'assets/css/oml-ui-081-quizzes.a3c2f0626248.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-082-curriculum.0ea0b6ba4bd4.css', 'path' => 'assets/css/oml-ui-082-curriculum.0ea0b6ba4bd4.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-083-commerce.9320ae4d2137.css', 'path' => 'assets/css/oml-ui-083-commerce.9320ae4d2137.css', 'layer' => 'ui', 'group' => 'commerce', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-084-shared.7379d2c4d145.css', 'path' => 'assets/css/oml-ui-084-shared.7379d2c4d145.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-tab-group-label.is-active {
+array( 'file' => 'oml-ui-084-shared.6c033d5d97be.css', 'path' => 'assets/css/oml-ui-084-shared.6c033d5d97be.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-tab-group-label.is-active {
 	text-decoration: underline;
 	text-underline-offset: 4px;
 }
 
 .ohmylms-movable-tabs .is-drop-target {
-	outline: 2px dashed var(--ohmylms-primary-color, #6e42d3);
+	outline: 2px dashed var(--ohmylms-primary-color, var(--oml-primary));
 	outline-offset: 2px;
 }
 
@@ -1121,17 +1102,16 @@ array( 'file' => 'oml-ui-084-shared.7379d2c4d145.css', 'path' => 'assets/css/oml
 .ohmylms-movable-tab-panel.is-vertical {
 	display: grid;
 	grid-template-columns: minmax(200px, 240px) minmax(0, 1fr);
-	gap: 24px;
+	gap: var(--oml-space-5);
 }
-
 ' ),
 array( 'file' => 'oml-ui-085-curriculum.c7c2a059da3e.css', 'path' => 'assets/css/oml-ui-085-curriculum.c7c2a059da3e.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-086-shared.7608a5c574fb.css', 'path' => 'assets/css/oml-ui-086-shared.7608a5c574fb.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-catalog-item-controls .components-base-control {
+array( 'file' => 'oml-ui-086-shared.0ae6d278897d.css', 'path' => 'assets/css/oml-ui-086-shared.0ae6d278897d.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-catalog-item-controls .components-base-control {
 	margin-bottom: 0;
 }
 
 .ohmylms-catalog-items.is-chapter {
-	margin: 0 0 8px;
+	margin: 0 0 var(--oml-space-2);
 }
 
 .ohmylms-catalog-item-controls .components-text-control__input {
@@ -1140,27 +1120,26 @@ array( 'file' => 'oml-ui-086-shared.7608a5c574fb.css', 'path' => 'assets/css/oml
 }
 
 .ohmylms-catalog-type.is-quiz {
-	background: #fff4e0;
-	color: #b45309;
+	background: var(--oml-warning-soft);
+	color: var(--oml-warning-text);
 }
 
 .ohmylms-catalog-type.is-assignment {
-	background: #e6f6ec;
-	color: #15803d;
+	background: var(--oml-success-soft);
+	color: var(--oml-success-text);
 }
 
 .ohmylms-catalog-flag.is-ok {
-	background: #e6f6ec;
-	color: #15803d;
+	background: var(--oml-success-soft);
+	color: var(--oml-success-text);
 }
 
 .ohmylms-catalog-flag.is-warning {
-	background: #fff4e0;
-	color: #b45309;
+	background: var(--oml-warning-soft);
+	color: var(--oml-warning-text);
 }
 
 /* Adding things one after another */
-
 ' ),
 array( 'file' => 'oml-ui-087-skills.5f02ba06aacc.css', 'path' => 'assets/css/oml-ui-087-skills.5f02ba06aacc.css', 'layer' => 'ui', 'group' => 'skills', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-088-shared.ccda5991985b.css', 'path' => 'assets/css/oml-ui-088-shared.ccda5991985b.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-attach-dialog .components-modal__content {
@@ -1169,18 +1148,17 @@ array( 'file' => 'oml-ui-088-shared.ccda5991985b.css', 'path' => 'assets/css/oml
 
 ' ),
 array( 'file' => 'oml-ui-089-skills.45e831aca20d.css', 'path' => 'assets/css/oml-ui-089-skills.45e831aca20d.css', 'layer' => 'ui', 'group' => 'skills', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-090-shared.5419e6323785.css', 'path' => 'assets/css/oml-ui-090-shared.5419e6323785.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-mindmap-node.is-included {
-	border-color: var(--ohmylms-primary-color, #6e42d3);
-	background: var(--ohmylms-primary-soft-color, #f6f3fd);
+array( 'file' => 'oml-ui-090-shared.f55b3c6ed0dd.css', 'path' => 'assets/css/oml-ui-090-shared.f55b3c6ed0dd.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-mindmap-node.is-included {
+	border-color: var(--ohmylms-primary-color, var(--oml-primary));
+	background: var(--ohmylms-primary-soft-color, var(--oml-primary-soft));
 }
-
 ' ),
 array( 'file' => 'oml-ui-091-commerce.6ef80bbbae2a.css', 'path' => 'assets/css/oml-ui-091-commerce.6ef80bbbae2a.css', 'layer' => 'ui', 'group' => 'commerce', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-092-shared.5639444b5d05.css', 'path' => 'assets/css/oml-ui-092-shared.5639444b5d05.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '/* The course a syllabus is */
 
 ' ),
 array( 'file' => 'oml-ui-093-commerce.68dbdb65cd47.css', 'path' => 'assets/css/oml-ui-093-commerce.68dbdb65cd47.css', 'layer' => 'ui', 'group' => 'commerce', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-094-shared.03528a8a61ac.css', 'path' => 'assets/css/oml-ui-094-shared.03528a8a61ac.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-ext-toolbar .components-base-control {
+array( 'file' => 'oml-ui-094-shared.6859ec5653b5.css', 'path' => 'assets/css/oml-ui-094-shared.6859ec5653b5.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-ext-toolbar .components-base-control {
 	margin-bottom: 0;
 }
 
@@ -1189,8 +1167,8 @@ array( 'file' => 'oml-ui-094-shared.03528a8a61ac.css', 'path' => 'assets/css/oml
 }
 
 .ohmylms-cur-status .components-notice {
-	margin: 0 0 12px;
-	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+	margin: 0 0 var(--oml-space-3);
+	box-shadow: var(--oml-shadow-sm);
 }
 
 /* What a skill owns */
@@ -1200,16 +1178,16 @@ array( 'file' => 'oml-ui-094-shared.03528a8a61ac.css', 'path' => 'assets/css/oml
 }
 
 .ohmylms-cur-row.is-editing {
-	background: var(--ohmylms-admin-subtle, #f4f5f7);
+	background: var(--ohmylms-admin-subtle, var(--oml-background));
 }
 
 .ohmylms-cur-row.is-match {
-	background: var(--ohmylms-primary-soft-color, #f6f3fd);
-	box-shadow: inset 3px 0 0 var(--ohmylms-primary-color, #6e42d3);
+	background: var(--ohmylms-primary-soft-color, var(--oml-primary-soft));
+	box-shadow: var(--oml-shadow-sm);
 }
 
 .ohmylms-cur-toggle:focus-visible {
-	outline: 2px solid var(--ohmylms-primary-color, #6e42d3);
+	outline: 2px solid var(--ohmylms-primary-color, var(--oml-primary));
 	outline-offset: 2px;
 }
 
@@ -1234,17 +1212,17 @@ array( 'file' => 'oml-ui-094-shared.03528a8a61ac.css', 'path' => 'assets/css/oml
 }
 
 .ohmylms-cur-delete.is-confirming {
-	padding: 12px 16px;
-	border: 1px solid var(--oml-danger, #cc1818);
+	padding: var(--oml-space-3) var(--oml-space-4);
+	border: 1px solid var(--oml-danger, var(--oml-danger));
 	border-radius: var(--oml-radius-control, 4px);
-	background: var(--ohmylms-admin-surface, #fff);
+	background: var(--ohmylms-admin-surface, var(--oml-surface));
 }
 
 .ohmylms-cur-delete .is-confirming {
-	padding: 12px 16px;
-	border: 1px solid var(--oml-danger, #cc1818);
+	padding: var(--oml-space-3) var(--oml-space-4);
+	border: 1px solid var(--oml-danger, var(--oml-danger));
 	border-radius: var(--oml-radius-control, 4px);
-	background: var(--ohmylms-admin-surface, #fff);
+	background: var(--ohmylms-admin-surface, var(--oml-surface));
 }
 
 .ohmylms-cur-name-link:hover {
@@ -1258,24 +1236,22 @@ array( 'file' => 'oml-ui-094-shared.03528a8a61ac.css', 'path' => 'assets/css/oml
 .ohmylms-syl-frame:focus {
 	outline: none;
 }
-
 ' ),
-array( 'file' => 'oml-ui-095-curriculum.ab4e1ad41a0e.css', 'path' => 'assets/css/oml-ui-095-curriculum.ab4e1ad41a0e.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-095-curriculum.8367be60124b.css', 'path' => 'assets/css/oml-ui-095-curriculum.8367be60124b.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-096-quizzes.b1210d12ae85.css', 'path' => 'assets/css/oml-ui-096-quizzes.b1210d12ae85.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-097-curriculum.312bbf8c7b7e.css', 'path' => 'assets/css/oml-ui-097-curriculum.312bbf8c7b7e.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-098-shared.fed263e1c7db.css', 'path' => 'assets/css/oml-ui-098-shared.fed263e1c7db.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-category-tags:focus-within {
-	border-color: var(--oml-primary-hover, #6048ce);
-	box-shadow: 0 0 0 2px var(--oml-primary-hover, #6048ce)18;
+array( 'file' => 'oml-ui-097-curriculum.5e205fc4e62d.css', 'path' => 'assets/css/oml-ui-097-curriculum.5e205fc4e62d.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-098-shared.0b26f1739c7f.css', 'path' => 'assets/css/oml-ui-098-shared.0b26f1739c7f.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-category-tags:focus-within {
+	border-color: var(--oml-primary-hover, var(--oml-primary));
+	box-shadow: var(--oml-shadow-sm);
 }
 
 .ohmylms-assessment-editor-tabs [aria-selected="true"] {
-	color: var(--oml-primary-hover, #6740d8);
-	box-shadow: inset 0 -3px var(--oml-primary-hover, #6740d8);
+	color: var(--oml-primary-hover, var(--oml-primary));
+	box-shadow: var(--oml-shadow-sm);
 }
-
 ' ),
-array( 'file' => 'oml-ui-099-quizzes.29c6df3048a5.css', 'path' => 'assets/css/oml-ui-099-quizzes.29c6df3048a5.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-100-shared.63c609ca82af.css', 'path' => 'assets/css/oml-ui-100-shared.63c609ca82af.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '@media (max-width: 782px) {
+array( 'file' => 'oml-ui-099-quizzes.c429fe499d76.css', 'path' => 'assets/css/oml-ui-099-quizzes.c429fe499d76.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-100-shared.d09f8f629e7c.css', 'path' => 'assets/css/oml-ui-100-shared.d09f8f629e7c.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '@media (max-width: 782px) {
 
 	.ohmylms-ws {
 		height: auto;
@@ -1298,12 +1274,12 @@ array( 'file' => 'oml-ui-100-shared.63c609ca82af.css', 'path' => 'assets/css/oml
 	}
 
 	.ohmylms-ws-main {
-		padding: 0 16px 48px;
+		padding: 0 var(--oml-space-4) var(--oml-space-7);
 		overflow: visible;
 	}
 
 	.ohmylms-ws-title {
-		font-size: 24px;
+		font-size: var(--oml-font-size-2xl);
 	}
 
 	.ohmylms-ws-header {
@@ -1333,17 +1309,17 @@ array( 'file' => 'oml-ui-100-shared.63c609ca82af.css', 'path' => 'assets/css/oml
 /* Syllabus-level category tags; skill panes use a selection-only dropdown. */
 
 .ohmylms-form-description [role="toolbar"] {
-	border: 1px solid var(--oml-border, #dcdcde);
-	background: #fafafa;
+	border: 1px solid var(--oml-border, var(--oml-border));
+	background: var(--oml-subtle);
 	display: flex;
 }
 
 .ohmylms-form-description [role="textbox"] {
 	min-height: 80px;
-	border: 1px solid var(--oml-border, #dcdcde);
+	border: 1px solid var(--oml-border, var(--oml-border));
 	border-top: 0;
-	padding: 12px;
-	outline-color: var(--oml-primary-hover, #7153c6);
+	padding: var(--oml-space-3);
+	outline-color: var(--oml-primary-hover, var(--oml-primary));
 }
 
 .ohmylms-shared-answers > .components-button {
@@ -1363,16 +1339,15 @@ array( 'file' => 'oml-ui-100-shared.63c609ca82af.css', 'path' => 'assets/css/oml
 	flex: 0 0 auto;
 	min-width: 30px;
 }
-
 ' ),
-array( 'file' => 'oml-ui-101-quizzes.5013cb2fe6cf.css', 'path' => 'assets/css/oml-ui-101-quizzes.5013cb2fe6cf.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-102-skills.861c4b67b9ad.css', 'path' => 'assets/css/oml-ui-102-skills.861c4b67b9ad.css', 'layer' => 'ui', 'group' => 'skills', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-103-curriculum.3fb9151e2ad2.css', 'path' => 'assets/css/oml-ui-103-curriculum.3fb9151e2ad2.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-104-gamification.3073783c9400.css', 'path' => 'assets/css/oml-ui-104-gamification.3073783c9400.css', 'layer' => 'ui', 'group' => 'gamification', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-101-quizzes.efb4567b3bfa.css', 'path' => 'assets/css/oml-ui-101-quizzes.efb4567b3bfa.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-102-skills.93792b8ccd69.css', 'path' => 'assets/css/oml-ui-102-skills.93792b8ccd69.css', 'layer' => 'ui', 'group' => 'skills', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-103-curriculum.c5ab74c64f26.css', 'path' => 'assets/css/oml-ui-103-curriculum.c5ab74c64f26.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-104-gamification.a93629e89610.css', 'path' => 'assets/css/oml-ui-104-gamification.a93629e89610.css', 'layer' => 'ui', 'group' => 'gamification', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-105-curriculum.78e9f922c2e2.css', 'path' => 'assets/css/oml-ui-105-curriculum.78e9f922c2e2.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-106-quizzes.ff984620f159.css', 'path' => 'assets/css/oml-ui-106-quizzes.ff984620f159.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-107-curriculum.565ec7339637.css', 'path' => 'assets/css/oml-ui-107-curriculum.565ec7339637.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-108-shared.fb528a8e8a9d.css', 'path' => 'assets/css/oml-ui-108-shared.fb528a8e8a9d.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-movable-tabs .ohmylms-tab-group a {
+array( 'file' => 'oml-ui-107-curriculum.9a609798c056.css', 'path' => 'assets/css/oml-ui-107-curriculum.9a609798c056.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-108-shared.2691955afe89.css', 'path' => 'assets/css/oml-ui-108-shared.2691955afe89.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-movable-tabs .ohmylms-tab-group a {
 	color: inherit;
 }
 
@@ -1392,12 +1367,11 @@ array( 'file' => 'oml-ui-108-shared.fb528a8e8a9d.css', 'path' => 'assets/css/oml
 	top: 50%;
 	right: -25px;
 	width: 24px;
-	border-top: 1px solid var(--ohmylms-admin-border, #dcdcde);
+	border-top: 1px solid var(--ohmylms-admin-border, var(--oml-border));
 }
-
 ' ),
 array( 'file' => 'oml-ui-109-commerce.b7b7b6d847d3.css', 'path' => 'assets/css/oml-ui-109-commerce.b7b7b6d847d3.css', 'layer' => 'ui', 'group' => 'commerce', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-110-shared.db5136ef2436.css', 'path' => 'assets/css/oml-ui-110-shared.db5136ef2436.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-cur-panel .ohmylms-cur-syllabus-summary h3 {
+array( 'file' => 'oml-ui-110-shared.c6997a64ab4d.css', 'path' => 'assets/css/oml-ui-110-shared.c6997a64ab4d.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-cur-panel .ohmylms-cur-syllabus-summary h3 {
 	margin: 0 0 2px;
 }
 
@@ -1405,15 +1379,14 @@ array( 'file' => 'oml-ui-110-shared.db5136ef2436.css', 'path' => 'assets/css/oml
 	opacity: 0.45;
 }
 
-.ohmylms-action-confirmation button + button { margin-inline-start: 12px; }
-
+.ohmylms-action-confirmation button + button { margin-inline-start: var(--oml-space-3); }
 ' ),
-array( 'file' => 'oml-ui-111-curriculum.f5f1cfa61644.css', 'path' => 'assets/css/oml-ui-111-curriculum.f5f1cfa61644.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-111-curriculum.c8850d5f82f3.css', 'path' => 'assets/css/oml-ui-111-curriculum.c8850d5f82f3.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-112-quizzes.a085c79cae5a.css', 'path' => 'assets/css/oml-ui-112-quizzes.a085c79cae5a.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-113-curriculum.51f4d6f6fd48.css', 'path' => 'assets/css/oml-ui-113-curriculum.51f4d6f6fd48.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-113-curriculum.501dba6bfcb4.css', 'path' => 'assets/css/oml-ui-113-curriculum.501dba6bfcb4.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-114-skills.2c0538b27247.css', 'path' => 'assets/css/oml-ui-114-skills.2c0538b27247.css', 'layer' => 'ui', 'group' => 'skills', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-115-shared.8650b11c26f6.css', 'path' => 'assets/css/oml-ui-115-shared.8650b11c26f6.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-category-token button:hover {
-	background: #c7e7d4;
+array( 'file' => 'oml-ui-115-shared.86446f5f7ef1.css', 'path' => 'assets/css/oml-ui-115-shared.86446f5f7ef1.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-category-token button:hover {
+	background: var(--oml-success-soft);
 }
 
 .ohmylms-category-tags button:disabled {
@@ -1422,25 +1395,23 @@ array( 'file' => 'oml-ui-115-shared.8650b11c26f6.css', 'path' => 'assets/css/oml
 }
 
 .ohmylms-category-tags button:focus-visible {
-	outline: 2px solid var(--oml-primary-hover, #6048ce);
+	outline: 2px solid var(--oml-primary-hover, var(--oml-primary));
 	outline-offset: 2px;
 }
-
 ' ),
 array( 'file' => 'oml-ui-116-quizzes.1d27e1bba1b1.css', 'path' => 'assets/css/oml-ui-116-quizzes.1d27e1bba1b1.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-117-shared.4781f532c20c.css', 'path' => 'assets/css/oml-ui-117-shared.4781f532c20c.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-form-workspace > .components-base-control input {
-	font-size: 20px;
-	padding: 12px;
-	background: #fafafa;
+array( 'file' => 'oml-ui-117-shared.c03e5d172561.css', 'path' => 'assets/css/oml-ui-117-shared.c03e5d172561.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-form-workspace > .components-base-control input {
+	font-size: var(--oml-font-size-xl);
+	padding: var(--oml-space-3);
+	background: var(--oml-subtle);
 }
 
 .ohmylms-form-description [role="textbox"] img {
 	max-width: 100%;
 	height: auto;
 }
-
 ' ),
-array( 'file' => 'oml-ui-118-quizzes.b41d01408197.css', 'path' => 'assets/css/oml-ui-118-quizzes.b41d01408197.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-118-quizzes.012da34c0d82.css', 'path' => 'assets/css/oml-ui-118-quizzes.012da34c0d82.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-119-shared.26cccde14077.css', 'path' => 'assets/css/oml-ui-119-shared.26cccde14077.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-cur-link-list li > span:first-child {
 	flex: 1 1 200px;
 	min-width: 0;
@@ -1450,9 +1421,9 @@ array( 'file' => 'oml-ui-119-shared.26cccde14077.css', 'path' => 'assets/css/oml
 ' ),
 array( 'file' => 'oml-ui-120-quizzes.36b46b597257.css', 'path' => 'assets/css/oml-ui-120-quizzes.36b46b597257.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-121-gamification.c4b23f0d19b7.css', 'path' => 'assets/css/oml-ui-121-gamification.c4b23f0d19b7.css', 'layer' => 'ui', 'group' => 'gamification', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-122-shared.e7ac15f9b0b8.css', 'path' => 'assets/css/oml-ui-122-shared.e7ac15f9b0b8.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-dashboard-layout.extensions .ohmylms-content {
+array( 'file' => 'oml-ui-122-shared.4eaf56deb13f.css', 'path' => 'assets/css/oml-ui-122-shared.4eaf56deb13f.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-dashboard-layout.extensions .ohmylms-content {
 	padding: 26px var(--ohmylms-admin-gutter, 40px) 40px;
-	color: var(--ohmylms-admin-text-color, #000d25);
+	color: var(--ohmylms-admin-text-color, var(--oml-heading));
 }
 
 .ohmylms-movable-tab-panel.is-vertical > .ohmylms-movable-tabs {
@@ -1472,11 +1443,10 @@ array( 'file' => 'oml-ui-122-shared.e7ac15f9b0b8.css', 'path' => 'assets/css/oml
 	margin-left: 0;
 	text-align: left;
 }
-
 ' ),
 array( 'file' => 'oml-ui-123-curriculum.bdfb5c80210a.css', 'path' => 'assets/css/oml-ui-123-curriculum.bdfb5c80210a.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-124-quizzes.74ec63e90659.css', 'path' => 'assets/css/oml-ui-124-quizzes.74ec63e90659.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-125-curriculum.73d85627645d.css', 'path' => 'assets/css/oml-ui-125-curriculum.73d85627645d.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-124-quizzes.ece24bf1012b.css', 'path' => 'assets/css/oml-ui-124-quizzes.ece24bf1012b.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-125-curriculum.e002d3cf07db.css', 'path' => 'assets/css/oml-ui-125-curriculum.e002d3cf07db.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-126-shared.1bc0b6478a97.css', 'path' => 'assets/css/oml-ui-126-shared.1bc0b6478a97.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-cur-syllabus-path .components-button.is-link {
 	display: inline;
 	height: auto;
@@ -1486,7 +1456,7 @@ array( 'file' => 'oml-ui-126-shared.1bc0b6478a97.css', 'path' => 'assets/css/oml
 }
 
 ' ),
-array( 'file' => 'oml-ui-127-curriculum.1dff4ea19f56.css', 'path' => 'assets/css/oml-ui-127-curriculum.1dff4ea19f56.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-127-curriculum.7d9af7eb1cc6.css', 'path' => 'assets/css/oml-ui-127-curriculum.7d9af7eb1cc6.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-128-quizzes.dbf82c8d2762.css', 'path' => 'assets/css/oml-ui-128-quizzes.dbf82c8d2762.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
 array( 'file' => 'oml-ui-129-shared.a9bb22ec4683.css', 'path' => 'assets/css/oml-ui-129-shared.a9bb22ec4683.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-movable-tabs .ohmylms-tab-group a.is-active {
 	border-bottom-color: currentcolor;
@@ -1494,106 +1464,37 @@ array( 'file' => 'oml-ui-129-shared.a9bb22ec4683.css', 'path' => 'assets/css/oml
 
 
 ' ),
-array( 'file' => 'oml-ui-130-curriculum.529472113814.css', 'path' => 'assets/css/oml-ui-130-curriculum.529472113814.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-131-shared.7f00ac363593.css', 'path' => 'assets/css/oml-ui-131-shared.7f00ac363593.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-dashboard-layout.extensions .ohmylms-content > section > h1 {
+array( 'file' => 'oml-ui-130-curriculum.9c9136bdba90.css', 'path' => 'assets/css/oml-ui-130-curriculum.9c9136bdba90.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-131-shared.2771dc647411.css', 'path' => 'assets/css/oml-ui-131-shared.2771dc647411.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-dashboard-layout.extensions .ohmylms-content > section > h1 {
 	margin: 0;
 	padding: 0;
-	font-size: 20px;
+	font-size: var(--oml-font-size-xl);
 	line-height: 1.4;
-	font-weight: 600;
-	color: var(--ohmylms-admin-heading-color, #000d25);
+	font-weight: var(--oml-weight-strong);
+	color: var(--ohmylms-admin-heading-color, var(--oml-heading));
 }
-
 ' ),
 array( 'file' => 'oml-ui-132-curriculum.94575dfcfcbe.css', 'path' => 'assets/css/oml-ui-132-curriculum.94575dfcfcbe.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-133-quizzes.6774d506db05.css', 'path' => 'assets/css/oml-ui-133-quizzes.6774d506db05.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-134-curriculum.6fdc5a4939a2.css', 'path' => 'assets/css/oml-ui-134-curriculum.6fdc5a4939a2.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-135-shared.e425ce939696.css', 'path' => 'assets/css/oml-ui-135-shared.e425ce939696.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-dashboard-layout.extensions .ohmylms-content table.widefat {
+array( 'file' => 'oml-ui-133-quizzes.6f651865a065.css', 'path' => 'assets/css/oml-ui-133-quizzes.6f651865a065.css', 'layer' => 'ui', 'group' => 'quizzes', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-134-curriculum.d2c95ca19911.css', 'path' => 'assets/css/oml-ui-134-curriculum.d2c95ca19911.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-135-shared.edc807c8bf5a.css', 'path' => 'assets/css/oml-ui-135-shared.edc807c8bf5a.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-dashboard-layout.extensions .ohmylms-content table.widefat {
 	border: 0;
 	border-radius: var(--ohmylms-admin-radius, 7px);
 	box-shadow: none;
 	border-collapse: separate;
 	border-spacing: 0;
 	overflow: hidden;
-	background: var(--ohmylms-admin-surface, #fff);
+	background: var(--ohmylms-admin-surface, var(--oml-surface));
 }
-
 ' ),
 array( 'file' => 'oml-ui-136-curriculum.219d8dfe6a2d.css', 'path' => 'assets/css/oml-ui-136-curriculum.219d8dfe6a2d.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-137-shared.033c9281e946.css', 'path' => 'assets/css/oml-ui-137-shared.033c9281e946.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '@media (max-width: 600px) {
+array( 'file' => 'oml-ui-137-shared.4de161741cec.css', 'path' => 'assets/css/oml-ui-137-shared.4de161741cec.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '@media (max-width: 600px) {
 
 	.ohmylms-form-workspace {
-		padding: 16px;
+		padding: var(--oml-space-4);
 	}
 }
-
 ' ),
-array( 'file' => 'oml-ui-138-curriculum.b824a92b46ac.css', 'path' => 'assets/css/oml-ui-138-curriculum.b824a92b46ac.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
-array( 'file' => 'oml-ui-139-shared.469075e19e3e.css', 'path' => 'assets/css/oml-ui-139-shared.469075e19e3e.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => '.ohmylms-dashboard-layout.extensions .ohmylms-content table.widefat thead th {
-	background: var(--ohmylms-admin-subtle, #f4f5f7);
-	color: var(--ohmylms-admin-muted-color, #7a8b9a);
-	font-size: 14px;
-	font-weight: 500;
-	padding: 8px 12px;
-	border: 0;
-}
-
-.ohmylms-dashboard-layout.extensions .ohmylms-content table.widefat thead td {
-	background: var(--ohmylms-admin-subtle, #f4f5f7);
-	color: var(--ohmylms-admin-muted-color, #7a8b9a);
-	font-size: 14px;
-	font-weight: 500;
-	padding: 8px 12px;
-	border: 0;
-}
-
-.ohmylms-dashboard-layout.extensions .ohmylms-content table.widefat tbody td {
-	color: var(--ohmylms-admin-text-color, #000d25);
-	font-size: 14px;
-	padding: 14px 12px;
-	vertical-align: middle;
-	border-top: 1px solid var(--ohmylms-admin-border, #ebedf0);
-}
-
-.ohmylms-dashboard-layout.extensions .ohmylms-content table.widefat tbody th {
-	color: var(--ohmylms-admin-text-color, #000d25);
-	font-size: 14px;
-	padding: 14px 12px;
-	vertical-align: middle;
-	border-top: 1px solid var(--ohmylms-admin-border, #ebedf0);
-}
-
-.ohmylms-cur-row .ohmylms-cur-actions .components-button.is-secondary.is-small {
-	min-height: 32px;
-	padding: 0 10px;
-	font-size: 13px;
-	line-height: 1.4;
-}
-
-.ohmylms-dashboard-layout.extensions
-	.ohmylms-content
-	table.widefat
-	tbody
-	tr:hover {
-	background: var(--ohmylms-primary-soft-color, #f6f3fd);
-}
-
-.ohmylms-cur-row
-	.ohmylms-cur-actions
-	.components-button.is-secondary.is-small:disabled {
-	opacity: 0.45;
-}
-
-.ohmylms-dashboard-layout.extensions
-	.ohmylms-content
-	table.widefat.striped
-	> tbody
-	> :nth-child(odd) {
-	background: transparent;
-}
-
-.ohmylms-request-feedback { position: fixed; z-index: 1000000; inset: auto 24px 24px auto; max-width: min(420px, calc(100vw - 48px)); border: 1px solid #d63638; border-radius: 4px; padding: 16px; background: #fff; color: #1e1e1e; box-shadow: 0 2px 8px #0002; }
-
-.ohmylms-action-confirmation { max-width: min(480px, calc(100vw - 48px)); border: 1px solid #c3c4c7; border-radius: 8px; padding: 24px; }
-' )
+array( 'file' => 'oml-ui-138-curriculum.d7eda32236db.css', 'path' => 'assets/css/oml-ui-138-curriculum.d7eda32236db.css', 'layer' => 'ui', 'group' => 'curriculum', 'rtl' => false, 'inline' => null ),
+array( 'file' => 'oml-ui-139-shared.7c332d8b11b6.css', 'path' => 'assets/css/oml-ui-139-shared.7c332d8b11b6.css', 'layer' => 'ui', 'group' => 'shared', 'rtl' => false, 'inline' => null )
 );

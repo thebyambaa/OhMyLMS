@@ -1305,30 +1305,30 @@
 		"inline": ".toplevel_page_ohmylms.rtl .mintmrm-automation-editor .automation-editor__header-right .mintmrm-btn{margin-left:0;margin-right:16px}.ohmylms-templates-view-container[dir=rtl] .ohmylms-template-item-wrapper{margin-right:0 !important;margin-left:var(--template-gap, 16px)}.ohmylms-templates-view-container[dir=rtl] .ohmylms-template-item-wrapper:last-child{margin-left:0 !important}.ohmylms-prompt-carousel-navigation .ohmylms-carousel-dots{direction:ltr}\n@tailwind base;@tailwind components;@tailwind utilities;@layer base{body{@apply antialiased;font-size:16px}}\n\n/*# sourceMappingURL=ohmylms-rtl.css.map*/"
 	},
 	{
-		"file": "oml-ui-000-curriculum.9b303883e322.css",
+		"file": "oml-ui-000-curriculum.b0f7bc12a2ef.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-000-curriculum.9b303883e322.css",
-		"bytes": 802,
+		"path": "assets/css/oml-ui-000-curriculum.b0f7bc12a2ef.css",
+		"bytes": 902,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-001-settings.1b4f893c7e13.css",
+		"file": "oml-ui-001-settings.a01bbfd9ef9c.css",
 		"group": "settings",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-001-settings.1b4f893c7e13.css",
-		"bytes": 391,
+		"path": "assets/css/oml-ui-001-settings.a01bbfd9ef9c.css",
+		"bytes": 456,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-002-gamification.535c84481424.css",
+		"file": "oml-ui-002-gamification.15e1214d3f3d.css",
 		"group": "gamification",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-002-gamification.535c84481424.css",
-		"bytes": 277,
+		"path": "assets/css/oml-ui-002-gamification.15e1214d3f3d.css",
+		"bytes": 328,
 		"inline": null
 	},
 	{
@@ -1341,21 +1341,21 @@
 		"inline": "/*\n * Shared layout for OhMyLMS admin pages added through the extension SDK (Question bank,\n * Skills, Performance and others). Mirrors the native screens: 40px side gutter, a 20px\n * title row, white cards with 7px corners and the grey-header table. Colors, radius and\n * font come from the design tokens printed by OhMyLMS\\Design\\Tokens.\n */\n\n/* Feature switches sit alongside the setting title rather than above its content. */\n\n"
 	},
 	{
-		"file": "oml-ui-004-gamification.0edccda8111f.css",
+		"file": "oml-ui-004-gamification.2d7e91c624a4.css",
 		"group": "gamification",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-004-gamification.0edccda8111f.css",
-		"bytes": 930,
+		"path": "assets/css/oml-ui-004-gamification.2d7e91c624a4.css",
+		"bytes": 1033,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-005-settings.bd26580692fc.css",
+		"file": "oml-ui-005-settings.03aab3463f62.css",
 		"group": "settings",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-005-settings.bd26580692fc.css",
-		"bytes": 176,
+		"path": "assets/css/oml-ui-005-settings.03aab3463f62.css",
+		"bytes": 204,
 		"inline": null
 	},
 	{
@@ -1368,12 +1368,12 @@
 		"inline": "/* Streak settings share the native Gamification card spacing and tokens. */\n\n"
 	},
 	{
-		"file": "oml-ui-007-gamification.aed949dc3370.css",
+		"file": "oml-ui-007-gamification.a2a36355e0ac.css",
 		"group": "gamification",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-007-gamification.aed949dc3370.css",
-		"bytes": 101,
+		"path": "assets/css/oml-ui-007-gamification.a2a36355e0ac.css",
+		"bytes": 115,
 		"inline": null
 	},
 	{
@@ -1395,66 +1395,66 @@
 		"inline": null
 	},
 	{
-		"file": "oml-ui-010-curriculum.a4c3458213e6.css",
+		"file": "oml-ui-010-curriculum.d0531abe94c3.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-010-curriculum.a4c3458213e6.css",
-		"bytes": 314,
+		"path": "assets/css/oml-ui-010-curriculum.d0531abe94c3.css",
+		"bytes": 384,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-011-quizzes.3e9f61c91e66.css",
+		"file": "oml-ui-011-quizzes.2c390a89de00.css",
 		"group": "quizzes",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-011-quizzes.3e9f61c91e66.css",
-		"bytes": 272,
+		"path": "assets/css/oml-ui-011-quizzes.2c390a89de00.css",
+		"bytes": 369,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-012-shared.bceb27700351.css",
+		"file": "oml-ui-012-shared.168dd16c3313.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-012-shared.bceb27700351.css",
-		"bytes": 242,
-		"inline": ".ohmylms-import-preview {\n\tmargin: 12px 0;\n}\n\n.ohmylms-import-preview__headline {\n\tmargin: 0 0 8px;\n\tfont-weight: 600;\n}\n\n.ohmylms-import-list {\n\tmax-height: 220px;\n\tmargin: 6px 0 0 18px;\n\tpadding: 0;\n\toverflow-y: auto;\n\tlist-style: disc;\n}\n\n"
+		"path": "assets/css/oml-ui-012-shared.168dd16c3313.css",
+		"bytes": 291,
+		"inline": ".ohmylms-import-preview {\n\tmargin: var(--oml-space-3) 0;\n}\n\n.ohmylms-import-preview__headline {\n\tmargin: 0 0 var(--oml-space-2);\n\tfont-weight: var(--oml-weight-strong);\n}\n\n.ohmylms-import-list {\n\tmax-height: 220px;\n\tmargin: 6px 0 0 18px;\n\tpadding: 0;\n\toverflow-y: auto;\n\tlist-style: disc;\n}\n"
 	},
 	{
-		"file": "oml-ui-013-quizzes.87d854b6c66d.css",
+		"file": "oml-ui-013-quizzes.fd0dac57c26a.css",
 		"group": "quizzes",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-013-quizzes.87d854b6c66d.css",
-		"bytes": 577,
+		"path": "assets/css/oml-ui-013-quizzes.fd0dac57c26a.css",
+		"bytes": 695,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-014-curriculum.0e57290fedd8.css",
+		"file": "oml-ui-014-curriculum.c7dc9bca5e9c.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-014-curriculum.0e57290fedd8.css",
-		"bytes": 183,
+		"path": "assets/css/oml-ui-014-curriculum.c7dc9bca5e9c.css",
+		"bytes": 220,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-015-shared.6c3b158c8561.css",
+		"file": "oml-ui-015-shared.71e5596aa7d0.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-015-shared.6c3b158c8561.css",
-		"bytes": 1072,
-		"inline": ".ohmylms-movable-tabs {\n\talign-items: center;\n\tgap: 6px 16px;\n\t--ohmylms-hub-gutter: 0px;\n}\n\n.ohmylms-tab-group {\n\tdisplay: flex;\n\talign-items: center;\n\tflex-wrap: wrap;\n\tgap: 12px;\n\tborder-radius: 8px 8px 0 0;\n\tpadding: 0 12px;\n\tborder-bottom: 3px solid currentcolor;\n}\n\n.ohmylms-tab-group-label {\n\tfont: inherit;\n\tcolor: inherit;\n\tbackground: transparent;\n\tborder: 0;\n\tpadding: 8px 4px;\n\tcursor: pointer;\n\tcursor: grab;\n\tfont-weight: 600;\n}\n\n.ohmylms-tab-organize {\n\tfont: inherit;\n\tbackground: transparent;\n\tborder: 0;\n\tpadding: 8px 4px;\n\tcursor: pointer;\n\tmargin-left: auto;\n\tfont-size: 12px;\n\tcolor: var(--ohmylms-admin-muted-color, #646970);\n}\n\n.ohmylms-tab-ungroup {\n\tpadding: 8px;\n\tborder: 1px dashed #787c82;\n\tfont-size: 12px;\n}\n\n.ohmylms-tab-save-status {\n\tmargin: -16px var(--ohmylms-hub-gutter, 0px) 16px;\n\tfont-size: 12px;\n}\n\n.ohmylms-tab-modal {\n\twidth: min(760px, 95vw);\n}\n\n.ohmylms-tab-assignments {\n\tmargin: 20px 0;\n}\n\n.ohmylms-tab-modal-footer {\n\tdisplay: flex;\n\tjustify-content: space-between;\n\tgap: 12px;\n}\n\n.ohmylms-tab-panel-body {\n\tmin-width: 0;\n}\n\n"
+		"path": "assets/css/oml-ui-015-shared.71e5596aa7d0.css",
+		"bytes": 1327,
+		"inline": ".ohmylms-movable-tabs {\n\talign-items: center;\n\tgap: 6px var(--oml-space-4);\n\t--ohmylms-hub-gutter: 0px;\n}\n\n.ohmylms-tab-group {\n\tdisplay: flex;\n\talign-items: center;\n\tflex-wrap: wrap;\n\tgap: var(--oml-space-3);\n\tborder-radius: 8px 8px 0 0;\n\tpadding: 0 var(--oml-space-3);\n\tborder-bottom: 3px solid currentcolor;\n}\n\n.ohmylms-tab-group-label {\n\tfont: inherit;\n\tcolor: inherit;\n\tbackground: transparent;\n\tborder: 0;\n\tpadding: var(--oml-space-2) var(--oml-space-1);\n\tcursor: pointer;\n\tcursor: grab;\n\tfont-weight: var(--oml-weight-strong);\n}\n\n.ohmylms-tab-organize {\n\tfont: inherit;\n\tbackground: transparent;\n\tborder: 0;\n\tpadding: var(--oml-space-2) var(--oml-space-1);\n\tcursor: pointer;\n\tmargin-left: auto;\n\tfont-size: var(--oml-font-size-xs);\n\tcolor: var(--ohmylms-admin-muted-color, var(--oml-muted));\n}\n\n.ohmylms-tab-ungroup {\n\tpadding: var(--oml-space-2);\n\tborder: 1px dashed var(--oml-border);\n\tfont-size: var(--oml-font-size-xs);\n}\n\n.ohmylms-tab-save-status {\n\tmargin: -var(--oml-space-4) var(--ohmylms-hub-gutter, 0px) var(--oml-space-4);\n\tfont-size: var(--oml-font-size-xs);\n}\n\n.ohmylms-tab-modal {\n\twidth: min(760px, 95vw);\n}\n\n.ohmylms-tab-assignments {\n\tmargin: 20px 0;\n}\n\n.ohmylms-tab-modal-footer {\n\tdisplay: flex;\n\tjustify-content: space-between;\n\tgap: var(--oml-space-3);\n}\n\n.ohmylms-tab-panel-body {\n\tmin-width: 0;\n}\n"
 	},
 	{
-		"file": "oml-ui-016-gamification.e9a32f3a5e9c.css",
+		"file": "oml-ui-016-gamification.5c40c7b54a53.css",
 		"group": "gamification",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-016-gamification.e9a32f3a5e9c.css",
-		"bytes": 818,
+		"path": "assets/css/oml-ui-016-gamification.5c40c7b54a53.css",
+		"bytes": 874,
 		"inline": null
 	},
 	{
@@ -1467,39 +1467,39 @@
 		"inline": "/* Page header: title and description on the left, actions on the right. */\n\n/* Content Hub: title, the section tabs, then the active tab's body. It supplies its own\n * gutter, and drops it when opened through a legacy extension URL, which already has one. */\n\n"
 	},
 	{
-		"file": "oml-ui-018-curriculum.8b4a0f8a0122.css",
+		"file": "oml-ui-018-curriculum.2e7f92603782.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-018-curriculum.8b4a0f8a0122.css",
-		"bytes": 115,
+		"path": "assets/css/oml-ui-018-curriculum.2e7f92603782.css",
+		"bytes": 129,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-019-shared.4634bc9446a3.css",
+		"file": "oml-ui-019-shared.61e58b963949.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-019-shared.4634bc9446a3.css",
-		"bytes": 1276,
-		"inline": ".ohmylms-catalog-items {\n\tmargin: 0;\n\tmargin-block: 6px 0;\n\tmargin-inline-start: 3.25rem;\n\tpadding: 0;\n\tlist-style: none;\n}\n\n.ohmylms-catalog-item {\n\tdisplay: flex;\n\tflex-wrap: wrap;\n\talign-items: center;\n\tgap: 2px 8px;\n\tpadding: 4px 0;\n\tfont-size: 13px;\n}\n\n.ohmylms-catalog-item-title {\n\tmin-width: 0;\n\toverflow-wrap: anywhere;\n\tfont-weight: 500;\n}\n\n.ohmylms-catalog-item-controls {\n\tdisplay: inline-flex;\n\tflex-wrap: wrap;\n\talign-items: center;\n\tgap: 4px 12px;\n\tmargin-inline-start: auto;\n}\n\n.ohmylms-catalog-type {\n\tpadding: 1px 8px;\n\tborder-radius: 10px;\n\tfont-size: 11px;\n\tfont-weight: 600;\n\tletter-spacing: 0.02em;\n\ttext-transform: uppercase;\n\tbackground: #e7f1ff;\n\tcolor: #1d4ed8;\n}\n\n.ohmylms-catalog-flag {\n\tdisplay: inline-block;\n\tpadding: 1px 8px;\n\tborder-radius: 10px;\n\tfont-size: 12px;\n\tbackground: var(--ohmylms-admin-subtle, #f4f5f7);\n\tcolor: var(--ohmylms-admin-muted-color, #5b6b7b);\n}\n\n.ohmylms-hub-chips {\n\tdisplay: flex;\n\tflex-wrap: wrap;\n\tgap: 4px 6px;\n\tmargin: 0 0 4px;\n\tpadding: 0;\n\tlist-style: none;\n}\n\n.ohmylms-hub-links {\n\tdisplay: flex;\n\tflex-wrap: wrap;\n\tgap: 4px 6px;\n\tmargin: 0 0 4px;\n\tpadding: 0;\n\tlist-style: none;\n}\n\n.ohmylms-hub-pager {\n\tdisplay: flex;\n\talign-items: center;\n\tjustify-content: center;\n\tgap: 12px;\n\tmargin-block-start: 16px;\n}\n\n"
+		"path": "assets/css/oml-ui-019-shared.61e58b963949.css",
+		"bytes": 1623,
+		"inline": ".ohmylms-catalog-items {\n\tmargin: 0;\n\tmargin-block: 6px 0;\n\tmargin-inline-start: 3.25rem;\n\tpadding: 0;\n\tlist-style: none;\n}\n\n.ohmylms-catalog-item {\n\tdisplay: flex;\n\tflex-wrap: wrap;\n\talign-items: center;\n\tgap: 2px var(--oml-space-2);\n\tpadding: var(--oml-space-1) 0;\n\tfont-size: var(--oml-font-size-sm);\n}\n\n.ohmylms-catalog-item-title {\n\tmin-width: 0;\n\toverflow-wrap: anywhere;\n\tfont-weight: var(--oml-weight-medium);\n}\n\n.ohmylms-catalog-item-controls {\n\tdisplay: inline-flex;\n\tflex-wrap: wrap;\n\talign-items: center;\n\tgap: var(--oml-space-1) var(--oml-space-3);\n\tmargin-inline-start: auto;\n}\n\n.ohmylms-catalog-type {\n\tpadding: 1px var(--oml-space-2);\n\tborder-radius: var(--oml-radius-control);\n\tfont-size: 11px;\n\tfont-weight: var(--oml-weight-strong);\n\tletter-spacing: 0.02em;\n\ttext-transform: uppercase;\n\tbackground: var(--oml-info-soft);\n\tcolor: var(--oml-info-text);\n}\n\n.ohmylms-catalog-flag {\n\tdisplay: inline-block;\n\tpadding: 1px var(--oml-space-2);\n\tborder-radius: var(--oml-radius-control);\n\tfont-size: var(--oml-font-size-xs);\n\tbackground: var(--ohmylms-admin-subtle, var(--oml-background));\n\tcolor: var(--ohmylms-admin-muted-color, var(--oml-muted));\n}\n\n.ohmylms-hub-chips {\n\tdisplay: flex;\n\tflex-wrap: wrap;\n\tgap: var(--oml-space-1) 6px;\n\tmargin: 0 0 var(--oml-space-1);\n\tpadding: 0;\n\tlist-style: none;\n}\n\n.ohmylms-hub-links {\n\tdisplay: flex;\n\tflex-wrap: wrap;\n\tgap: var(--oml-space-1) 6px;\n\tmargin: 0 0 var(--oml-space-1);\n\tpadding: 0;\n\tlist-style: none;\n}\n\n.ohmylms-hub-pager {\n\tdisplay: flex;\n\talign-items: center;\n\tjustify-content: center;\n\tgap: var(--oml-space-3);\n\tmargin-block-start: var(--oml-space-4);\n}\n"
 	},
 	{
-		"file": "oml-ui-020-skills.80a896082fcc.css",
+		"file": "oml-ui-020-skills.ba17285de96f.css",
 		"group": "skills",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-020-skills.80a896082fcc.css",
-		"bytes": 264,
+		"path": "assets/css/oml-ui-020-skills.ba17285de96f.css",
+		"bytes": 330,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-021-shared.6b4d3207ec48.css",
+		"file": "oml-ui-021-shared.b4d6f07af3ae.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-021-shared.6b4d3207ec48.css",
-		"bytes": 2101,
+		"path": "assets/css/oml-ui-021-shared.b4d6f07af3ae.css",
+		"bytes": 2445,
 		"inline": null
 	},
 	{
@@ -1512,12 +1512,12 @@
 		"inline": null
 	},
 	{
-		"file": "oml-ui-023-shared.ebd2ae502b3a.css",
+		"file": "oml-ui-023-shared.fe52d8399e98.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-023-shared.ebd2ae502b3a.css",
-		"bytes": 5356,
+		"path": "assets/css/oml-ui-023-shared.fe52d8399e98.css",
+		"bytes": 6532,
 		"inline": null
 	},
 	{
@@ -1530,21 +1530,21 @@
 		"inline": null
 	},
 	{
-		"file": "oml-ui-025-shared.daa43e8138de.css",
+		"file": "oml-ui-025-shared.60f2d55070a7.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-025-shared.daa43e8138de.css",
-		"bytes": 1516,
-		"inline": "/* Lessons, quizzes and assignments attached to a chapter of a syllabus course: a type tag, the title as a\n * link, flags, and the controls that say whether each one counts. */\n\n.ohmylms-cur-syllabus-badge {\n\tbackground: var(--ohmylms-primary-soft-color, #f6f3fd);\n\tborder-color: var(--ohmylms-primary-color, #6e42d3);\n\tfont-weight: 600;\n}\n\n.ohmylms-cur-name-link {\n\tcolor: var(--ohmylms-primary-color, #6e42d3);\n\ttext-decoration: none;\n}\n\n.ohmylms-cur-syllabus-summary {\n\tdisplay: flex;\n\tflex-wrap: wrap;\n\talign-items: center;\n\tjustify-content: space-between;\n\tgap: 12px 20px;\n\tmargin: 20px 0 8px;\n\tpadding: 14px 16px;\n\tborder: 1px solid var(--ohmylms-admin-border, #dcdcde);\n\tborder-radius: var(--ohmylms-admin-radius, 7px);\n\tbackground: var(--ohmylms-admin-surface, #fff);\n}\n\n.ohmylms-syl-existing {\n\tmargin: 8px 0;\n}\n\n.ohmylms-syl-import {\n\twidth: min(920px, calc(100vw - 32px));\n}\n\n.ohmylms-syl-options {\n\tdisplay: grid;\n\tgap: 8px;\n\tmargin: 8px 0 12px;\n}\n\n.ohmylms-syl-report {\n\tmargin: 8px 0;\n}\n\n.ohmylms-ws {\n\t--ws-muted: color-mix(\n\t\tin srgb,\n\t\tvar(--ohmylms-admin-text-color, #000d25) 68%,\n\t\t#fff\n\t);\n\t--ws-border: var(--ohmylms-admin-border, #dcdfe5);\n\t--ws-primary: var(--ohmylms-primary-color, #6e42d3);\n\t--ws-soft: var(--ohmylms-primary-soft-color, #f4effd);\n\t--ws-subtle: var(--ohmylms-admin-subtle, #f4f5f7);\n\tdisplay: flex;\n\tflex-direction: column;\n\theight: calc(100vh - 32px);\n\tmin-height: 520px;\n\tbackground: var(--ohmylms-admin-surface, #fff);\n\tcolor: var(--ohmylms-admin-text-color, #000d25);\n}\n\n"
+		"path": "assets/css/oml-ui-025-shared.60f2d55070a7.css",
+		"bytes": 1816,
+		"inline": "/* Lessons, quizzes and assignments attached to a chapter of a syllabus course: a type tag, the title as a\n * link, flags, and the controls that say whether each one counts. */\n\n.ohmylms-cur-syllabus-badge {\n\tbackground: var(--ohmylms-primary-soft-color, var(--oml-primary-soft));\n\tborder-color: var(--ohmylms-primary-color, var(--oml-primary));\n\tfont-weight: var(--oml-weight-strong);\n}\n\n.ohmylms-cur-name-link {\n\tcolor: var(--ohmylms-primary-color, var(--oml-primary));\n\ttext-decoration: none;\n}\n\n.ohmylms-cur-syllabus-summary {\n\tdisplay: flex;\n\tflex-wrap: wrap;\n\talign-items: center;\n\tjustify-content: space-between;\n\tgap: var(--oml-space-3) 20px;\n\tmargin: 20px 0 var(--oml-space-2);\n\tpadding: 14px var(--oml-space-4);\n\tborder: 1px solid var(--ohmylms-admin-border, var(--oml-border));\n\tborder-radius: var(--ohmylms-admin-radius, 7px);\n\tbackground: var(--ohmylms-admin-surface, var(--oml-surface));\n}\n\n.ohmylms-syl-existing {\n\tmargin: var(--oml-space-2) 0;\n}\n\n.ohmylms-syl-import {\n\twidth: min(920px, calc(100vw - 32px));\n}\n\n.ohmylms-syl-options {\n\tdisplay: grid;\n\tgap: var(--oml-space-2);\n\tmargin: var(--oml-space-2) 0 var(--oml-space-3);\n}\n\n.ohmylms-syl-report {\n\tmargin: var(--oml-space-2) 0;\n}\n\n.ohmylms-ws {\n\t--ws-muted: color-mix(\n\t\tin srgb,\n\t\tvar(--ohmylms-admin-text-color, var(--oml-heading)) 68%,\n\t\tvar(--oml-surface)\n\t);\n\t--ws-border: var(--ohmylms-admin-border, var(--oml-border));\n\t--ws-primary: var(--ohmylms-primary-color, var(--oml-primary));\n\t--ws-soft: var(--ohmylms-primary-soft-color, var(--oml-primary-soft));\n\t--ws-subtle: var(--ohmylms-admin-subtle, var(--oml-background));\n\tdisplay: flex;\n\tflex-direction: column;\n\theight: calc(100vh - 32px);\n\tmin-height: 520px;\n\tbackground: var(--ohmylms-admin-surface, var(--oml-surface));\n\tcolor: var(--ohmylms-admin-text-color, var(--oml-heading));\n}\n"
 	},
 	{
-		"file": "oml-ui-026-curriculum.5a827224dd2e.css",
+		"file": "oml-ui-026-curriculum.6c5d36955a0c.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-026-curriculum.5a827224dd2e.css",
-		"bytes": 2037,
+		"path": "assets/css/oml-ui-026-curriculum.6c5d36955a0c.css",
+		"bytes": 2254,
 		"inline": null
 	},
 	{
@@ -1575,30 +1575,30 @@
 		"inline": "/* Cards. */\n\n"
 	},
 	{
-		"file": "oml-ui-030-curriculum.70ff988df101.css",
+		"file": "oml-ui-030-curriculum.1c4d95d075f0.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-030-curriculum.70ff988df101.css",
-		"bytes": 2938,
+		"path": "assets/css/oml-ui-030-curriculum.1c4d95d075f0.css",
+		"bytes": 3297,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-031-shared.48db2294194c.css",
+		"file": "oml-ui-031-shared.c51e1b9c287c.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-031-shared.48db2294194c.css",
-		"bytes": 746,
-		"inline": "/* Narrow editors use a branching vertical layout instead of a wide canvas. */\n@container ohmylms-mindmap (max-width: 1000px) {\n\n\t.ohmylms-mindmap-stage {\n\t\tdisplay: block;\n\t\twidth: 100%;\n\t\tmin-width: 0;\n\t}\n\n\t.ohmylms-mindmap-node {\n\t\twidth: 100%;\n\t\tmin-width: 0;\n\t}\n\n\t.ohmylms-mindmap-root {\n\t\twidth: 100%;\n\t\tmin-width: 0;\n\t\tmargin-bottom: 16px;\n\t}\n\n\t.ohmylms-mindmap-branches {\n\t\tpadding-left: 16px;\n\t\tmin-width: 0;\n\t}\n\n\t.ohmylms-mindmap-root::after {\n\t\tdisplay: none;\n\t}\n\n\t.ohmylms-mindmap-branches > li {\n\t\tflex-direction: column;\n\t\talign-items: stretch;\n\t\tgap: 0;\n\t\tmin-width: 0;\n\t}\n\n\t.ohmylms-mindmap-branches > li::before {\n\t\ttop: 24px;\n\t\tleft: -16px;\n\t\twidth: 16px;\n\t}\n\n\t.ohmylms-mindmap-node.has-children::after {\n\t\tdisplay: none;\n\t}\n}\n\n"
+		"path": "assets/css/oml-ui-031-shared.c51e1b9c287c.css",
+		"bytes": 773,
+		"inline": "/* Narrow editors use a branching vertical layout instead of a wide canvas. */\n@container ohmylms-mindmap (max-width: 1000px) {\n\n\t.ohmylms-mindmap-stage {\n\t\tdisplay: block;\n\t\twidth: 100%;\n\t\tmin-width: 0;\n\t}\n\n\t.ohmylms-mindmap-node {\n\t\twidth: 100%;\n\t\tmin-width: 0;\n\t}\n\n\t.ohmylms-mindmap-root {\n\t\twidth: 100%;\n\t\tmin-width: 0;\n\t\tmargin-bottom: var(--oml-space-4);\n\t}\n\n\t.ohmylms-mindmap-branches {\n\t\tpadding-left: var(--oml-space-4);\n\t\tmin-width: 0;\n\t}\n\n\t.ohmylms-mindmap-root::after {\n\t\tdisplay: none;\n\t}\n\n\t.ohmylms-mindmap-branches > li {\n\t\tflex-direction: column;\n\t\talign-items: stretch;\n\t\tgap: 0;\n\t\tmin-width: 0;\n\t}\n\n\t.ohmylms-mindmap-branches > li::before {\n\t\ttop: 24px;\n\t\tleft: -16px;\n\t\twidth: 16px;\n\t}\n\n\t.ohmylms-mindmap-node.has-children::after {\n\t\tdisplay: none;\n\t}\n}\n"
 	},
 	{
-		"file": "oml-ui-032-curriculum.44ca3bdc8365.css",
+		"file": "oml-ui-032-curriculum.3987103dda96.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-032-curriculum.44ca3bdc8365.css",
-		"bytes": 941,
+		"path": "assets/css/oml-ui-032-curriculum.3987103dda96.css",
+		"bytes": 1122,
 		"inline": null
 	},
 	{
@@ -1611,12 +1611,12 @@
 		"inline": "/* Keep content reachable by wheel, touch and keyboard without visible bars. */\n\n"
 	},
 	{
-		"file": "oml-ui-034-curriculum.cfdf46554d14.css",
+		"file": "oml-ui-034-curriculum.1b462181e8a0.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-034-curriculum.cfdf46554d14.css",
-		"bytes": 1011,
+		"path": "assets/css/oml-ui-034-curriculum.1b462181e8a0.css",
+		"bytes": 1249,
 		"inline": null
 	},
 	{
@@ -1629,201 +1629,201 @@
 		"inline": "/* Tables: the native ohmylms-table look for WordPress tables inside extension pages. */\n\n"
 	},
 	{
-		"file": "oml-ui-036-curriculum.68e58233e47b.css",
+		"file": "oml-ui-036-curriculum.d2cab7b6fca3.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-036-curriculum.68e58233e47b.css",
-		"bytes": 957,
+		"path": "assets/css/oml-ui-036-curriculum.d2cab7b6fca3.css",
+		"bytes": 1094,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-037-shared.8c0862ab31b6.css",
+		"file": "oml-ui-037-shared.e73275b3a03b.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-037-shared.8c0862ab31b6.css",
-		"bytes": 385,
-		"inline": "/* Small screens: narrower gutter. */\n@media (max-width: 782px) {\n\n\t.ohmylms-dashboard-layout.extensions .ohmylms-content {\n\t\tpadding: 16px 12px 32px;\n\t}\n}\n\n/* Curriculum accordion editor and Course Bundles manager. Indentation comes from nesting,\n * so every inline panel, add row and child list lines up with its parent. Logical properties\n * keep right-to-left layouts correct. */\n\n"
+		"path": "assets/css/oml-ui-037-shared.e73275b3a03b.css",
+		"bytes": 426,
+		"inline": "/* Small screens: narrower gutter. */\n@media (max-width: 782px) {\n\n\t.ohmylms-dashboard-layout.extensions .ohmylms-content {\n\t\tpadding: var(--oml-space-4) var(--oml-space-3) var(--oml-space-6);\n\t}\n}\n\n/* Curriculum accordion editor and Course Bundles manager. Indentation comes from nesting,\n * so every inline panel, add row and child list lines up with its parent. Logical properties\n * keep right-to-left layouts correct. */\n"
 	},
 	{
-		"file": "oml-ui-038-curriculum.c81b78bf634e.css",
+		"file": "oml-ui-038-curriculum.4811f5ed056c.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-038-curriculum.c81b78bf634e.css",
-		"bytes": 1751,
+		"path": "assets/css/oml-ui-038-curriculum.4811f5ed056c.css",
+		"bytes": 2036,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-039-shared.41d99f94bc8c.css",
+		"file": "oml-ui-039-shared.b6b855cbaafb.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-039-shared.41d99f94bc8c.css",
-		"bytes": 218,
-		"inline": ".ohmylms-form-settings-bar {\n\tmargin: 20px 0 0;\n\tpadding: 16px;\n\tborder: 1px solid var(--oml-border, #e4e7ee);\n\tborder-radius: var(--oml-radius-card, 8px);\n\tbackground: var(--ohmylms-admin-surface-subtle, #f8f9fc);\n}\n\n"
+		"path": "assets/css/oml-ui-039-shared.b6b855cbaafb.css",
+		"bytes": 255,
+		"inline": ".ohmylms-form-settings-bar {\n\tmargin: 20px 0 0;\n\tpadding: var(--oml-space-4);\n\tborder: 1px solid var(--oml-border, var(--oml-border));\n\tborder-radius: var(--oml-radius-card, 8px);\n\tbackground: var(--ohmylms-admin-surface-subtle, var(--oml-background));\n}\n"
 	},
 	{
-		"file": "oml-ui-040-quizzes.b8396e4f99ac.css",
+		"file": "oml-ui-040-quizzes.23f9ba47e806.css",
 		"group": "quizzes",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-040-quizzes.b8396e4f99ac.css",
-		"bytes": 415,
+		"path": "assets/css/oml-ui-040-quizzes.23f9ba47e806.css",
+		"bytes": 484,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-041-curriculum.9b0cad2b6f2d.css",
+		"file": "oml-ui-041-curriculum.f1d892601bf7.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-041-curriculum.9b0cad2b6f2d.css",
-		"bytes": 934,
+		"path": "assets/css/oml-ui-041-curriculum.f1d892601bf7.css",
+		"bytes": 1086,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-042-skills.9cfce9a3975e.css",
+		"file": "oml-ui-042-skills.afb77460f559.css",
 		"group": "skills",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-042-skills.9cfce9a3975e.css",
-		"bytes": 161,
+		"path": "assets/css/oml-ui-042-skills.afb77460f559.css",
+		"bytes": 189,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-043-shared.6c6189c6c968.css",
+		"file": "oml-ui-043-shared.00c9c55a4305.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-043-shared.6c6189c6c968.css",
-		"bytes": 834,
-		"inline": ".ohmylms-category-tags {\n\tdisplay: flex;\n\talign-items: center;\n\tgap: 8px;\n\tflex-wrap: wrap;\n\tborder: 1px solid #d4dae5;\n\tborder-radius: 10px;\n\tbackground: #fff;\n\tpadding: 10px 12px;\n\tmin-height: 52px;\n}\n\n.ohmylms-category-token {\n\tdisplay: inline-flex;\n\talign-items: center;\n\tgap: 8px;\n\tpadding: 5px 10px 5px 13px;\n\tbackground: #e5f5ec;\n\tcolor: #166b42;\n\tborder: 1px solid #c7e7d4;\n\tborder-radius: 999px;\n\tfont-weight: 600;\n\tfont-size: 13px;\n\tline-height: 22px;\n}\n\n.ohmylms-category-add {\n\tborder: 0;\n\tborder-radius: var(--oml-radius-card, 7px);\n\tbackground: #f0edfc;\n\tcolor: var(--oml-primary-hover, #6048ce);\n\tpadding: 6px 12px;\n\tcursor: pointer;\n\tfont-weight: 600;\n}\n\n.ohmylms-category-appearance {\n\tdisplay: flex;\n\tflex-wrap: wrap;\n\talign-items: center;\n\tgap: 10px;\n\tpadding: 8px 0;\n\tborder-bottom: 1px solid var(--ws-border);\n}\n\n"
+		"path": "assets/css/oml-ui-043-shared.00c9c55a4305.css",
+		"bytes": 1104,
+		"inline": ".ohmylms-category-tags {\n\tdisplay: flex;\n\talign-items: center;\n\tgap: var(--oml-space-2);\n\tflex-wrap: wrap;\n\tborder: 1px solid var(--oml-border);\n\tborder-radius: var(--oml-radius-control);\n\tbackground: var(--oml-surface);\n\tpadding: 10px var(--oml-space-3);\n\tmin-height: 52px;\n}\n\n.ohmylms-category-token {\n\tdisplay: inline-flex;\n\talign-items: center;\n\tgap: var(--oml-space-2);\n\tpadding: 5px 10px 5px 13px;\n\tbackground: var(--oml-success-soft);\n\tcolor: var(--oml-success-text);\n\tborder: 1px solid var(--oml-success-soft);\n\tborder-radius: var(--oml-radius-card);\n\tfont-weight: var(--oml-weight-strong);\n\tfont-size: var(--oml-font-size-sm);\n\tline-height: 22px;\n}\n\n.ohmylms-category-add {\n\tborder: 0;\n\tborder-radius: var(--oml-radius-card, 7px);\n\tbackground: var(--oml-primary-soft);\n\tcolor: var(--oml-primary-hover, var(--oml-primary));\n\tpadding: 6px var(--oml-space-3);\n\tcursor: pointer;\n\tfont-weight: var(--oml-weight-strong);\n}\n\n.ohmylms-category-appearance {\n\tdisplay: flex;\n\tflex-wrap: wrap;\n\talign-items: center;\n\tgap: 10px;\n\tpadding: var(--oml-space-2) 0;\n\tborder-bottom: 1px solid var(--ws-border);\n}\n"
 	},
 	{
-		"file": "oml-ui-044-quizzes.33876eba2eb4.css",
+		"file": "oml-ui-044-quizzes.4297aea3e900.css",
 		"group": "quizzes",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-044-quizzes.33876eba2eb4.css",
-		"bytes": 150,
+		"path": "assets/css/oml-ui-044-quizzes.4297aea3e900.css",
+		"bytes": 191,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-045-shared.9d183c9aba52.css",
+		"file": "oml-ui-045-shared.3a435f99a427.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-045-shared.9d183c9aba52.css",
-		"bytes": 138,
-		"inline": ".ohmylms-assessment-editor-tabs {\n\tdisplay: flex;\n\tgap: 8px;\n\tbackground: #fff;\n\tborder-bottom: 1px solid #e0e3e8;\n\tpadding: 8px 16px;\n}\n\n"
+		"path": "assets/css/oml-ui-045-shared.3a435f99a427.css",
+		"bytes": 205,
+		"inline": ".ohmylms-assessment-editor-tabs {\n\tdisplay: flex;\n\tgap: var(--oml-space-2);\n\tbackground: var(--oml-surface);\n\tborder-bottom: 1px solid var(--oml-border);\n\tpadding: var(--oml-space-2) var(--oml-space-4);\n}\n"
 	},
 	{
-		"file": "oml-ui-046-quizzes.ac6b0c1725fe.css",
+		"file": "oml-ui-046-quizzes.512b6455fea7.css",
 		"group": "quizzes",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-046-quizzes.ac6b0c1725fe.css",
-		"bytes": 429,
+		"path": "assets/css/oml-ui-046-quizzes.512b6455fea7.css",
+		"bytes": 494,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-047-shared.69d1023e299f.css",
+		"file": "oml-ui-047-shared.2fbc4f3c8b16.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-047-shared.69d1023e299f.css",
-		"bytes": 340,
-		"inline": ".ohmylms-preview-note {\n\tcolor: #646970;\n\tfont-size: 13px;\n}\n\n.ohmylms-preview-choice {\n\tdisplay: flex;\n\tgap: 12px;\n\tpadding: 12px 0;\n\talign-items: center;\n}\n\n.ohmylms-preview-input {\n\tdisplay: flex;\n\tgap: 12px;\n\tpadding: 12px 0;\n\tflex-direction: column;\n\talign-items: stretch;\n}\n\n.ohmylms-preview-blank {\n\twidth: 120px;\n\tmargin: 0 6px;\n}\n\n"
+		"path": "assets/css/oml-ui-047-shared.2fbc4f3c8b16.css",
+		"bytes": 423,
+		"inline": ".ohmylms-preview-note {\n\tcolor: var(--oml-muted);\n\tfont-size: var(--oml-font-size-sm);\n}\n\n.ohmylms-preview-choice {\n\tdisplay: flex;\n\tgap: var(--oml-space-3);\n\tpadding: var(--oml-space-3) 0;\n\talign-items: center;\n}\n\n.ohmylms-preview-input {\n\tdisplay: flex;\n\tgap: var(--oml-space-3);\n\tpadding: var(--oml-space-3) 0;\n\tflex-direction: column;\n\talign-items: stretch;\n}\n\n.ohmylms-preview-blank {\n\twidth: 120px;\n\tmargin: 0 6px;\n}\n"
 	},
 	{
-		"file": "oml-ui-048-quizzes.7447d2332cd5.css",
+		"file": "oml-ui-048-quizzes.297e00027ebe.css",
 		"group": "quizzes",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-048-quizzes.7447d2332cd5.css",
-		"bytes": 107,
+		"path": "assets/css/oml-ui-048-quizzes.297e00027ebe.css",
+		"bytes": 136,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-049-shared.d42fac05d3b9.css",
+		"file": "oml-ui-049-shared.eab6ee1a864e.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-049-shared.d42fac05d3b9.css",
-		"bytes": 115,
-		"inline": ".ohmylms-form-actions {\n\tdisplay: flex;\n\tflex-wrap: wrap;\n\tgap: 12px;\n\tmargin: 0 auto 20px;\n\tmax-width: 1100px;\n}\n\n"
+		"path": "assets/css/oml-ui-049-shared.eab6ee1a864e.css",
+		"bytes": 128,
+		"inline": ".ohmylms-form-actions {\n\tdisplay: flex;\n\tflex-wrap: wrap;\n\tgap: var(--oml-space-3);\n\tmargin: 0 auto 20px;\n\tmax-width: 1100px;\n}\n"
 	},
 	{
-		"file": "oml-ui-050-quizzes.7236ce99901b.css",
+		"file": "oml-ui-050-quizzes.621d9ef8ef72.css",
 		"group": "quizzes",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-050-quizzes.7236ce99901b.css",
-		"bytes": 843,
+		"path": "assets/css/oml-ui-050-quizzes.621d9ef8ef72.css",
+		"bytes": 1019,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-051-shared.dd897f615919.css",
+		"file": "oml-ui-051-shared.f768b0c5685c.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-051-shared.dd897f615919.css",
-		"bytes": 291,
-		"inline": ".ohmylms-form-add-bottom {\n\tmargin-top: 20px;\n}\n\n.ohmylms-form-workspace {\n\tbackground: #fff;\n\tpadding: 24px;\n\tborder-radius: var(--oml-radius-card, 8px);\n}\n\n.ohmylms-form-workspace-actions {\n\tdisplay: flex;\n\tflex-wrap: wrap;\n\tjustify-content: flex-end;\n\tgap: 12px;\n\tmargin-bottom: 20px;\n}\n\n"
+		"path": "assets/css/oml-ui-051-shared.f768b0c5685c.css",
+		"bytes": 332,
+		"inline": ".ohmylms-form-add-bottom {\n\tmargin-top: 20px;\n}\n\n.ohmylms-form-workspace {\n\tbackground: var(--oml-surface);\n\tpadding: var(--oml-space-5);\n\tborder-radius: var(--oml-radius-card, 8px);\n}\n\n.ohmylms-form-workspace-actions {\n\tdisplay: flex;\n\tflex-wrap: wrap;\n\tjustify-content: flex-end;\n\tgap: var(--oml-space-3);\n\tmargin-bottom: 20px;\n}\n"
 	},
 	{
-		"file": "oml-ui-052-quizzes.efea4c228504.css",
+		"file": "oml-ui-052-quizzes.3ad21365d9e0.css",
 		"group": "quizzes",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-052-quizzes.efea4c228504.css",
-		"bytes": 321,
+		"path": "assets/css/oml-ui-052-quizzes.3ad21365d9e0.css",
+		"bytes": 357,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-053-shared.f28cfd054500.css",
+		"file": "oml-ui-053-shared.6c4676e293e9.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-053-shared.f28cfd054500.css",
-		"bytes": 1504,
-		"inline": ".ohmylms-form-description {\n\tmargin: 20px 0;\n}\n\n.ohmylms-form-response-fields {\n\tborder: 0;\n\tmargin: 0;\n\tpadding: 0;\n\tmin-width: 0;\n}\n\n@media (max-width: 782px) {\n\n\t.ohmylms-cur-status {\n\t\ttop: 46px;\n\t}\n\n\t.ohmylms-cur-actions {\n\t\tflex: 1 0 100%;\n\t\tmargin-inline-start: 38px;\n\t}\n\n\t.ohmylms-cur-children {\n\t\tmargin-inline-start: 10px;\n\t}\n\n\t.ohmylms-cur-node > .ohmylms-cur-add-wrap {\n\t\tmargin-inline-start: 10px;\n\t}\n\n\t.ohmylms-cur-toolbar .components-base-control {\n\t\tmin-width: 0;\n\t\tflex: 1 1 100%;\n\t}\n\n\t.ohmylms-cur-move .components-base-control {\n\t\tmin-width: 0;\n\t\tflex: 1 1 100%;\n\t}\n\n\t.ohmylms-cur-add .components-base-control {\n\t\tmin-width: 0;\n\t\tflex: 1 1 100%;\n\t}\n}\n\n/* Syllabus: any curriculum item can be one. The item panel only summarises it and opens the syllabus workspace\n * (styled further down), where its topics, chapters and skills are edited. */\n\n.ohmylms-shared-answers {\n\tdisplay: grid;\n\tgap: 12px;\n}\n\n.ohmylms-inline-blank-stem {\n\tfont-size: 18px;\n\tline-height: 2.2;\n}\n\n.ohmylms-blank-drop {\n\tdisplay: inline-block;\n\tmin-width: 100px;\n\tpadding: 3px 10px;\n\tmargin: 0 4px;\n\tfont: inherit;\n\tborder: 1px dashed #8c8f94;\n\tborder-radius: 5px;\n\tbackground: #f6f7f7;\n\tcursor: pointer;\n}\n\n.ohmylms-blank-answer-bank {\n\tdisplay: flex;\n\tflex-wrap: wrap;\n\tgap: 8px;\n\tmargin: 12px 0;\n}\n\n/* Skill library picker inside a chapter, and the import dialog. */\n\n.ohmylms-blank-answer-chip {\n\tborder: 1px solid var(--oml-border, #dcdcde);\n\tpadding: 6px 12px;\n\tborder-radius: 5px;\n\tbackground: #f6f7f7;\n}\n\n"
+		"path": "assets/css/oml-ui-053-shared.6c4676e293e9.css",
+		"bytes": 1678,
+		"inline": ".ohmylms-form-description {\n\tmargin: 20px 0;\n}\n\n.ohmylms-form-response-fields {\n\tborder: 0;\n\tmargin: 0;\n\tpadding: 0;\n\tmin-width: 0;\n}\n\n@media (max-width: 782px) {\n\n\t.ohmylms-cur-status {\n\t\ttop: 46px;\n\t}\n\n\t.ohmylms-cur-actions {\n\t\tflex: 1 0 100%;\n\t\tmargin-inline-start: 38px;\n\t}\n\n\t.ohmylms-cur-children {\n\t\tmargin-inline-start: 10px;\n\t}\n\n\t.ohmylms-cur-node > .ohmylms-cur-add-wrap {\n\t\tmargin-inline-start: 10px;\n\t}\n\n\t.ohmylms-cur-toolbar .components-base-control {\n\t\tmin-width: 0;\n\t\tflex: 1 1 100%;\n\t}\n\n\t.ohmylms-cur-move .components-base-control {\n\t\tmin-width: 0;\n\t\tflex: 1 1 100%;\n\t}\n\n\t.ohmylms-cur-add .components-base-control {\n\t\tmin-width: 0;\n\t\tflex: 1 1 100%;\n\t}\n}\n\n/* Syllabus: any curriculum item can be one. The item panel only summarises it and opens the syllabus workspace\n * (styled further down), where its topics, chapters and skills are edited. */\n\n.ohmylms-shared-answers {\n\tdisplay: grid;\n\tgap: var(--oml-space-3);\n}\n\n.ohmylms-inline-blank-stem {\n\tfont-size: var(--oml-font-size-lg);\n\tline-height: 2.2;\n}\n\n.ohmylms-blank-drop {\n\tdisplay: inline-block;\n\tmin-width: 100px;\n\tpadding: 3px 10px;\n\tmargin: 0 var(--oml-space-1);\n\tfont: inherit;\n\tborder: 1px dashed var(--oml-border);\n\tborder-radius: var(--oml-radius-control);\n\tbackground: var(--oml-subtle);\n\tcursor: pointer;\n}\n\n.ohmylms-blank-answer-bank {\n\tdisplay: flex;\n\tflex-wrap: wrap;\n\tgap: var(--oml-space-2);\n\tmargin: var(--oml-space-3) 0;\n}\n\n/* Skill library picker inside a chapter, and the import dialog. */\n\n.ohmylms-blank-answer-chip {\n\tborder: 1px solid var(--oml-border, var(--oml-border));\n\tpadding: 6px var(--oml-space-3);\n\tborder-radius: var(--oml-radius-control);\n\tbackground: var(--oml-subtle);\n}\n"
 	},
 	{
-		"file": "oml-ui-054-quizzes.aac39560f802.css",
+		"file": "oml-ui-054-quizzes.6a701a577f75.css",
 		"group": "quizzes",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-054-quizzes.aac39560f802.css",
+		"path": "assets/css/oml-ui-054-quizzes.6a701a577f75.css",
+		"bytes": 480,
+		"inline": null
+	},
+	{
+		"file": "oml-ui-055-shared.8cde9eec8027.css",
+		"group": "shared",
+		"rtl": false,
+		"layer": "ui",
+		"path": "assets/css/oml-ui-055-shared.8cde9eec8027.css",
+		"bytes": 808,
+		"inline": ".ohmylms-shared-answer-row {\n\tdisplay: flex;\n\talign-items: center;\n\tgap: 10px;\n\tflex-wrap: wrap;\n\tmargin: 0;\n\tpadding: 10px 0;\n\tborder: 0;\n\tmin-width: 0;\n}\n\n/* Syllabus workspace: the full-page editor, laid out like the course builder. The outline (topics, chapters\n * and skills) is on the left and whatever is selected is on the right. A chapter is a skill group and a\n * chapter of the syllabus's course. Logical properties keep right-to-left layouts correct. */\n\n.ohmylms-shared-answer-correct {\n\tflex: 0 0 auto;\n\taccent-color: var(--oml-primary);\n}\n\n.ohmylms-shared-answer-image {\n\tflex-basis: 100%;\n\tdisplay: flex;\n\talign-items: center;\n\tgap: var(--oml-space-3);\n}\n\n.ohmylms-form-settings {\n\tmargin-top: var(--oml-space-5);\n\tpadding-top: var(--oml-space-4);\n\tborder-top: 1px solid var(--oml-border);\n}\n"
+	},
+	{
+		"file": "oml-ui-056-skills.27efcc54a4cf.css",
+		"group": "skills",
+		"rtl": false,
+		"layer": "ui",
+		"path": "assets/css/oml-ui-056-skills.27efcc54a4cf.css",
+		"bytes": 289,
+		"inline": null
+	},
+	{
+		"file": "oml-ui-057-curriculum.93b43fe6c24b.css",
+		"group": "curriculum",
+		"rtl": false,
+		"layer": "ui",
+		"path": "assets/css/oml-ui-057-curriculum.93b43fe6c24b.css",
 		"bytes": 408,
-		"inline": null
-	},
-	{
-		"file": "oml-ui-055-shared.4021cd271e0f.css",
-		"group": "shared",
-		"rtl": false,
-		"layer": "ui",
-		"path": "assets/css/oml-ui-055-shared.4021cd271e0f.css",
-		"bytes": 764,
-		"inline": ".ohmylms-shared-answer-row {\n\tdisplay: flex;\n\talign-items: center;\n\tgap: 10px;\n\tflex-wrap: wrap;\n\tmargin: 0;\n\tpadding: 10px 0;\n\tborder: 0;\n\tmin-width: 0;\n}\n\n/* Syllabus workspace: the full-page editor, laid out like the course builder. The outline (topics, chapters\n * and skills) is on the left and whatever is selected is on the right. A chapter is a skill group and a\n * chapter of the syllabus's course. Logical properties keep right-to-left layouts correct. */\n\n.ohmylms-shared-answer-correct {\n\tflex: 0 0 auto;\n\taccent-color: var(--ohmylms-primary-color);\n}\n\n.ohmylms-shared-answer-image {\n\tflex-basis: 100%;\n\tdisplay: flex;\n\talign-items: center;\n\tgap: 12px;\n}\n\n.ohmylms-form-settings {\n\tmargin-top: 24px;\n\tpadding-top: 16px;\n\tborder-top: 1px solid #eee;\n}\n\n"
-	},
-	{
-		"file": "oml-ui-056-skills.a1fd40868d11.css",
-		"group": "skills",
-		"rtl": false,
-		"layer": "ui",
-		"path": "assets/css/oml-ui-056-skills.a1fd40868d11.css",
-		"bytes": 250,
-		"inline": null
-	},
-	{
-		"file": "oml-ui-057-curriculum.d07f05954a85.css",
-		"group": "curriculum",
-		"rtl": false,
-		"layer": "ui",
-		"path": "assets/css/oml-ui-057-curriculum.d07f05954a85.css",
-		"bytes": 345,
 		"inline": null
 	},
 	{
@@ -1836,76 +1836,76 @@
 		"inline": "/* Left panel */\n\n"
 	},
 	{
-		"file": "oml-ui-059-settings.4e3b9db237fe.css",
+		"file": "oml-ui-059-settings.f395ff3d50df.css",
 		"group": "settings",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-059-settings.4e3b9db237fe.css",
-		"bytes": 289,
+		"path": "assets/css/oml-ui-059-settings.f395ff3d50df.css",
+		"bytes": 346,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-060-gamification.c9723ae6d462.css",
+		"file": "oml-ui-060-gamification.ae29957fae3a.css",
 		"group": "gamification",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-060-gamification.c9723ae6d462.css",
-		"bytes": 506,
+		"path": "assets/css/oml-ui-060-gamification.ae29957fae3a.css",
+		"bytes": 686,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-061-curriculum.163bac50cb44.css",
+		"file": "oml-ui-061-curriculum.2979b257317f.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-061-curriculum.163bac50cb44.css",
-		"bytes": 311,
+		"path": "assets/css/oml-ui-061-curriculum.2979b257317f.css",
+		"bytes": 404,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-062-quizzes.8cb69fd74396.css",
+		"file": "oml-ui-062-quizzes.a36129bd2321.css",
 		"group": "quizzes",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-062-quizzes.8cb69fd74396.css",
-		"bytes": 340,
+		"path": "assets/css/oml-ui-062-quizzes.a36129bd2321.css",
+		"bytes": 391,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-063-curriculum.678bb519d179.css",
+		"file": "oml-ui-063-curriculum.04bdc01bcca5.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-063-curriculum.678bb519d179.css",
-		"bytes": 149,
+		"path": "assets/css/oml-ui-063-curriculum.04bdc01bcca5.css",
+		"bytes": 184,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-064-shared.8186a457dacb.css",
+		"file": "oml-ui-064-shared.23f118a7bdc2.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-064-shared.8186a457dacb.css",
-		"bytes": 979,
-		"inline": ".ohmylms-movable-tabs a {\n\twhite-space: nowrap;\n\tcursor: grab;\n}\n\n.ohmylms-tab-group-editor fieldset {\n\tdisplay: flex;\n\talign-items: end;\n\tflex-wrap: wrap;\n\tgap: 12px;\n\tborder: 1px solid var(--oml-border, #dcdcde);\n\tpadding: 12px;\n\tmargin-bottom: 12px;\n}\n\n.ohmylms-tab-group-editor label {\n\tdisplay: flex;\n\tflex-direction: column;\n\tgap: 6px;\n}\n\n.ohmylms-tab-assignments > div {\n\tdisplay: flex;\n\talign-items: center;\n\tgap: 8px;\n\tmargin: 10px 0;\n}\n\n.ohmylms-tab-assignments label {\n\tdisplay: flex;\n\talign-items: center;\n\tjustify-content: space-between;\n\tflex: 1;\n\tgap: 12px;\n}\n\n.ohmylms-ext-header h2 {\n\tmargin: 0;\n\tpadding: 0;\n\tfont-size: 18px;\n\tline-height: 1.4;\n\tfont-weight: 600;\n\tcolor: var(--ohmylms-admin-heading-color, #000d25);\n}\n\n.ohmylms-hub-chips li {\n\tmargin: 0;\n\tpadding: 1px 8px;\n\tborder-radius: 10px;\n\tfont-size: 12px;\n\tbackground: var(--ohmylms-primary-soft-color, #f6f3fd);\n\tcolor: var(--ohmylms-primary-color, #6e42d3);\n}\n\n.ohmylms-hub-links li {\n\tmargin: 0;\n}\n\n"
+		"path": "assets/css/oml-ui-064-shared.23f118a7bdc2.css",
+		"bytes": 1192,
+		"inline": ".ohmylms-movable-tabs a {\n\twhite-space: nowrap;\n\tcursor: grab;\n}\n\n.ohmylms-tab-group-editor fieldset {\n\tdisplay: flex;\n\talign-items: end;\n\tflex-wrap: wrap;\n\tgap: var(--oml-space-3);\n\tborder: 1px solid var(--oml-border, var(--oml-border));\n\tpadding: var(--oml-space-3);\n\tmargin-bottom: var(--oml-space-3);\n}\n\n.ohmylms-tab-group-editor label {\n\tdisplay: flex;\n\tflex-direction: column;\n\tgap: 6px;\n}\n\n.ohmylms-tab-assignments > div {\n\tdisplay: flex;\n\talign-items: center;\n\tgap: var(--oml-space-2);\n\tmargin: 10px 0;\n}\n\n.ohmylms-tab-assignments label {\n\tdisplay: flex;\n\talign-items: center;\n\tjustify-content: space-between;\n\tflex: 1;\n\tgap: var(--oml-space-3);\n}\n\n.ohmylms-ext-header h2 {\n\tmargin: 0;\n\tpadding: 0;\n\tfont-size: var(--oml-font-size-lg);\n\tline-height: 1.4;\n\tfont-weight: var(--oml-weight-strong);\n\tcolor: var(--ohmylms-admin-heading-color, var(--oml-heading));\n}\n\n.ohmylms-hub-chips li {\n\tmargin: 0;\n\tpadding: 1px var(--oml-space-2);\n\tborder-radius: var(--oml-radius-control);\n\tfont-size: var(--oml-font-size-xs);\n\tbackground: var(--ohmylms-primary-soft-color, var(--oml-primary-soft));\n\tcolor: var(--ohmylms-primary-color, var(--oml-primary));\n}\n\n.ohmylms-hub-links li {\n\tmargin: 0;\n}\n"
 	},
 	{
-		"file": "oml-ui-065-skills.db4dd2b5a1f5.css",
+		"file": "oml-ui-065-skills.90832c69c19b.css",
 		"group": "skills",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-065-skills.db4dd2b5a1f5.css",
-		"bytes": 79,
+		"path": "assets/css/oml-ui-065-skills.90832c69c19b.css",
+		"bytes": 99,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-066-shared.40530f6c0332.css",
+		"file": "oml-ui-066-shared.68b5446032a2.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-066-shared.40530f6c0332.css",
-		"bytes": 1409,
-		"inline": "/* Right pane */\n\n.ohmylms-ext-header h1 {\n\tmargin: 0;\n\tpadding: 0;\n\tfont-size: 20px;\n\tline-height: 1.4;\n\tfont-weight: 600;\n\tcolor: var(--ohmylms-admin-heading-color, #000d25);\n}\n\n.ohmylms-ext-header p {\n\tmargin: 4px 0 0;\n\tmax-width: 760px;\n\tfont-size: 14px;\n\tcolor: var(--ohmylms-admin-muted-color, #7a8b9a);\n}\n\n.ohmylms-mindmap > summary {\n\tcursor: pointer;\n\tfont-weight: 600;\n}\n\n.ohmylms-mindmap-root::after {\n\tcontent: \"\";\n\tposition: absolute;\n\ttop: 50%;\n\tright: -25px;\n\twidth: 24px;\n\tborder-top: 1px solid var(--ohmylms-admin-border, #dcdcde);\n}\n\n.ohmylms-mindmap-node-heading label {\n\tdisplay: flex;\n\talign-items: center;\n\tgap: 8px;\n\tfont-weight: 600;\n\tcursor: pointer;\n}\n\n.ohmylms-mindmap-node-heading input {\n\tflex-shrink: 0;\n\tmargin: 0;\n}\n\n.ohmylms-mindmap-node-heading button {\n\tflex-shrink: 0;\n\twidth: 28px;\n\theight: 28px;\n\tborder: 1px solid var(--ohmylms-admin-border, #dcdcde);\n\tborder-radius: var(--oml-radius-control, 4px);\n\tbackground: var(--ohmylms-admin-surface, #fff);\n\tcursor: pointer;\n}\n\n.ohmylms-mindmap-node small {\n\tdisplay: block;\n\tmargin-top: 8px;\n\tcolor: var(--ohmylms-admin-muted-color, #7a8b9a);\n}\n\n.ohmylms-mindmap-branches > li {\n\tposition: relative;\n\tdisplay: flex;\n\talign-items: center;\n\tgap: 24px;\n\tmargin: 12px 0;\n}\n\n.ohmylms-mindmap-node-details summary {\n\tcursor: pointer;\n}\n\n.ohmylms-mindmap-node-details ul {\n\tlist-style: disc;\n\tpadding-left: 18px;\n\tmargin: 8px 0 0;\n}\n\n"
+		"path": "assets/css/oml-ui-066-shared.68b5446032a2.css",
+		"bytes": 1660,
+		"inline": "/* Right pane */\n\n.ohmylms-ext-header h1 {\n\tmargin: 0;\n\tpadding: 0;\n\tfont-size: var(--oml-font-size-xl);\n\tline-height: 1.4;\n\tfont-weight: var(--oml-weight-strong);\n\tcolor: var(--ohmylms-admin-heading-color, var(--oml-heading));\n}\n\n.ohmylms-ext-header p {\n\tmargin: var(--oml-space-1) 0 0;\n\tmax-width: 760px;\n\tfont-size: var(--oml-font-size-md);\n\tcolor: var(--ohmylms-admin-muted-color, var(--oml-muted));\n}\n\n.ohmylms-mindmap > summary {\n\tcursor: pointer;\n\tfont-weight: var(--oml-weight-strong);\n}\n\n.ohmylms-mindmap-root::after {\n\tcontent: \"\";\n\tposition: absolute;\n\ttop: 50%;\n\tright: -25px;\n\twidth: 24px;\n\tborder-top: 1px solid var(--ohmylms-admin-border, var(--oml-border));\n}\n\n.ohmylms-mindmap-node-heading label {\n\tdisplay: flex;\n\talign-items: center;\n\tgap: var(--oml-space-2);\n\tfont-weight: var(--oml-weight-strong);\n\tcursor: pointer;\n}\n\n.ohmylms-mindmap-node-heading input {\n\tflex-shrink: 0;\n\tmargin: 0;\n}\n\n.ohmylms-mindmap-node-heading button {\n\tflex-shrink: 0;\n\twidth: 28px;\n\theight: 28px;\n\tborder: 1px solid var(--ohmylms-admin-border, var(--oml-border));\n\tborder-radius: var(--oml-radius-control, 4px);\n\tbackground: var(--ohmylms-admin-surface, var(--oml-surface));\n\tcursor: pointer;\n}\n\n.ohmylms-mindmap-node small {\n\tdisplay: block;\n\tmargin-top: var(--oml-space-2);\n\tcolor: var(--ohmylms-admin-muted-color, var(--oml-muted));\n}\n\n.ohmylms-mindmap-branches > li {\n\tposition: relative;\n\tdisplay: flex;\n\talign-items: center;\n\tgap: var(--oml-space-5);\n\tmargin: var(--oml-space-3) 0;\n}\n\n.ohmylms-mindmap-node-details summary {\n\tcursor: pointer;\n}\n\n.ohmylms-mindmap-node-details ul {\n\tlist-style: disc;\n\tpadding-left: 18px;\n\tmargin: var(--oml-space-2) 0 0;\n}\n"
 	},
 	{
 		"file": "oml-ui-067-commerce.0911a323f93a.css",
@@ -1917,58 +1917,58 @@
 		"inline": null
 	},
 	{
-		"file": "oml-ui-068-shared.9dc2ae04dad5.css",
+		"file": "oml-ui-068-shared.0628bcc0ca2d.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-068-shared.9dc2ae04dad5.css",
-		"bytes": 1410,
-		"inline": ".ohmylms-ext-card > h2 {\n\tmargin: 0 0 12px;\n\tfont-size: 16px;\n\tfont-weight: 600;\n\tcolor: var(--ohmylms-admin-heading-color, #000d25);\n}\n\n.ohmylms-ext-card > h3 {\n\tmargin: 0 0 12px;\n\tfont-size: 16px;\n\tfont-weight: 600;\n\tcolor: var(--ohmylms-admin-heading-color, #000d25);\n}\n\n.ohmylms-cur-syllabus-shortcuts li {\n\tdisplay: flex;\n\talign-items: baseline;\n\tgap: 10px;\n\tmargin: 0;\n\tpadding: 4px 0;\n}\n\n.ohmylms-cur-panel h3 {\n\tmargin: 20px 0 8px;\n\tfont-size: 15px;\n}\n\n.ohmylms-cur-link-group > summary {\n\tcursor: pointer;\n\tfont-weight: 600;\n}\n\n.ohmylms-cur-mapping > summary {\n\tcursor: pointer;\n\tfont-weight: 600;\n}\n\n.ohmylms-cur-link-list li {\n\tdisplay: flex;\n\tflex-wrap: wrap;\n\talign-items: center;\n\tgap: 6px 10px;\n\tpadding: 6px 0;\n\tborder-bottom: 1px solid var(--ohmylms-admin-border, #ebedf0);\n}\n\n.ohmylms-bundle-members > li {\n\tdisplay: flex;\n\tflex-wrap: wrap;\n\talign-items: center;\n\tgap: 6px 12px;\n\tpadding: 8px 0;\n\tborder-bottom: 1px solid var(--ohmylms-admin-border, #dcdcde);\n}\n\n.ohmylms-cur-syllabus-summary p {\n\tmargin: 0 0 4px;\n}\n\n.ohmylms-syl-existing summary {\n\tcursor: pointer;\n}\n\n.ohmylms-syl-map th {\n\tmin-width: 160px;\n\tvertical-align: top;\n\tfont-weight: 400;\n}\n\n.ohmylms-syl-map td {\n\tmax-width: 260px;\n\toverflow-wrap: anywhere;\n}\n\n.ohmylms-syl-report th {\n\ttext-align: start;\n}\n\n.ohmylms-syl-report td {\n\ttext-align: start;\n}\n\n.ohmylms-syl-problems ul {\n\tmargin: 0 0 0 18px;\n\tlist-style: disc;\n}\n\n"
+		"path": "assets/css/oml-ui-068-shared.0628bcc0ca2d.css",
+		"bytes": 1716,
+		"inline": ".ohmylms-ext-card > h2 {\n\tmargin: 0 0 var(--oml-space-3);\n\tfont-size: var(--oml-font-size-lg);\n\tfont-weight: var(--oml-weight-strong);\n\tcolor: var(--ohmylms-admin-heading-color, var(--oml-heading));\n}\n\n.ohmylms-ext-card > h3 {\n\tmargin: 0 0 var(--oml-space-3);\n\tfont-size: var(--oml-font-size-lg);\n\tfont-weight: var(--oml-weight-strong);\n\tcolor: var(--ohmylms-admin-heading-color, var(--oml-heading));\n}\n\n.ohmylms-cur-syllabus-shortcuts li {\n\tdisplay: flex;\n\talign-items: baseline;\n\tgap: 10px;\n\tmargin: 0;\n\tpadding: var(--oml-space-1) 0;\n}\n\n.ohmylms-cur-panel h3 {\n\tmargin: 20px 0 var(--oml-space-2);\n\tfont-size: var(--oml-font-size-md);\n}\n\n.ohmylms-cur-link-group > summary {\n\tcursor: pointer;\n\tfont-weight: var(--oml-weight-strong);\n}\n\n.ohmylms-cur-mapping > summary {\n\tcursor: pointer;\n\tfont-weight: var(--oml-weight-strong);\n}\n\n.ohmylms-cur-link-list li {\n\tdisplay: flex;\n\tflex-wrap: wrap;\n\talign-items: center;\n\tgap: 6px 10px;\n\tpadding: 6px 0;\n\tborder-bottom: 1px solid var(--ohmylms-admin-border, var(--oml-border));\n}\n\n.ohmylms-bundle-members > li {\n\tdisplay: flex;\n\tflex-wrap: wrap;\n\talign-items: center;\n\tgap: 6px var(--oml-space-3);\n\tpadding: var(--oml-space-2) 0;\n\tborder-bottom: 1px solid var(--ohmylms-admin-border, var(--oml-border));\n}\n\n.ohmylms-cur-syllabus-summary p {\n\tmargin: 0 0 var(--oml-space-1);\n}\n\n.ohmylms-syl-existing summary {\n\tcursor: pointer;\n}\n\n.ohmylms-syl-map th {\n\tmin-width: 160px;\n\tvertical-align: top;\n\tfont-weight: var(--oml-weight-regular);\n}\n\n.ohmylms-syl-map td {\n\tmax-width: 260px;\n\toverflow-wrap: anywhere;\n}\n\n.ohmylms-syl-report th {\n\ttext-align: start;\n}\n\n.ohmylms-syl-report td {\n\ttext-align: start;\n}\n\n.ohmylms-syl-problems ul {\n\tmargin: 0 0 0 18px;\n\tlist-style: disc;\n}\n"
 	},
 	{
-		"file": "oml-ui-069-curriculum.e0b229eaed9b.css",
+		"file": "oml-ui-069-curriculum.a212bdebb836.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-069-curriculum.e0b229eaed9b.css",
-		"bytes": 2336,
+		"path": "assets/css/oml-ui-069-curriculum.a212bdebb836.css",
+		"bytes": 2715,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-070-skills.8a01e2a81193.css",
+		"file": "oml-ui-070-skills.be7015fc5ddc.css",
 		"group": "skills",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-070-skills.8a01e2a81193.css",
-		"bytes": 427,
+		"path": "assets/css/oml-ui-070-skills.be7015fc5ddc.css",
+		"bytes": 490,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-071-shared.5530a68c4d80.css",
+		"file": "oml-ui-071-shared.1ba99384916a.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-071-shared.5530a68c4d80.css",
-		"bytes": 625,
-		"inline": ".ohmylms-category-token button {\n\tborder: 0;\n\tbackground: transparent;\n\tcolor: inherit;\n\tborder-radius: 50%;\n\tfont-size: 19px;\n\tline-height: 22px;\n\twidth: 22px;\n\theight: 22px;\n\tcursor: pointer;\n\tpadding: 0;\n}\n\n.ohmylms-category-tags input {\n\tflex: 1;\n\tmin-width: 160px;\n\twidth: auto !important;\n\tborder: 0 !important;\n\tbox-shadow: none !important;\n\tbackground: transparent !important;\n\tpadding: 5px !important;\n\tmargin: 0 !important;\n\toutline: 0;\n}\n\n.ohmylms-category-appearance > strong {\n\tmin-width: 90px;\n}\n\n.ohmylms-category-appearance label {\n\tdisplay: inline-flex;\n\talign-items: center;\n\tgap: 6px;\n\tfont-size: 12px;\n}\n\n"
+		"path": "assets/css/oml-ui-071-shared.1ba99384916a.css",
+		"bytes": 643,
+		"inline": ".ohmylms-category-token button {\n\tborder: 0;\n\tbackground: transparent;\n\tcolor: inherit;\n\tborder-radius: 50%;\n\tfont-size: 19px;\n\tline-height: 22px;\n\twidth: 22px;\n\theight: 22px;\n\tcursor: pointer;\n\tpadding: 0;\n}\n\n.ohmylms-category-tags input {\n\tflex: 1;\n\tmin-width: 160px;\n\twidth: auto !important;\n\tborder: 0 !important;\n\tbox-shadow: none !important;\n\tbackground: transparent !important;\n\tpadding: 5px !important;\n\tmargin: 0 !important;\n\toutline: 0;\n}\n\n.ohmylms-category-appearance > strong {\n\tmin-width: 90px;\n}\n\n.ohmylms-category-appearance label {\n\tdisplay: inline-flex;\n\talign-items: center;\n\tgap: 6px;\n\tfont-size: var(--oml-font-size-xs);\n}\n"
 	},
 	{
-		"file": "oml-ui-072-quizzes.a60b3af10f14.css",
+		"file": "oml-ui-072-quizzes.40dce0a8f65b.css",
 		"group": "quizzes",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-072-quizzes.a60b3af10f14.css",
-		"bytes": 602,
+		"path": "assets/css/oml-ui-072-quizzes.40dce0a8f65b.css",
+		"bytes": 729,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-073-shared.d23cf82fbcf1.css",
+		"file": "oml-ui-073-shared.859a95e78930.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-073-shared.d23cf82fbcf1.css",
-		"bytes": 580,
-		"inline": ".ohmylms-form-description > label {\n\tdisplay: block;\n\tmargin-bottom: 8px;\n\tfont-size: 13px;\n\tfont-weight: 500;\n}\n\n.ohmylms-form-settings > fieldset {\n\tborder: 0;\n\tmargin: 0;\n\tpadding: 0;\n\tmin-width: 0;\n}\n\n.ohmylms-shared-answer-image img {\n\tmax-width: 160px;\n\tmax-height: 120px;\n\tobject-fit: contain;\n}\n\n.ohmylms-form-settings > summary {\n\tcursor: pointer;\n\tfont-weight: 600;\n\tmargin-bottom: 16px;\n}\n\n.ohmylms-mindmap-branches > li::before {\n\tcontent: \"\";\n\tposition: absolute;\n\ttop: 50%;\n\tleft: -24px;\n\twidth: 24px;\n\tborder-top: 1px solid var(--ohmylms-admin-border, #dcdcde);\n}\n\n"
+		"path": "assets/css/oml-ui-073-shared.859a95e78930.css",
+		"bytes": 679,
+		"inline": ".ohmylms-form-description > label {\n\tdisplay: block;\n\tmargin-bottom: var(--oml-space-2);\n\tfont-size: var(--oml-font-size-sm);\n\tfont-weight: var(--oml-weight-medium);\n}\n\n.ohmylms-form-settings > fieldset {\n\tborder: 0;\n\tmargin: 0;\n\tpadding: 0;\n\tmin-width: 0;\n}\n\n.ohmylms-shared-answer-image img {\n\tmax-width: 160px;\n\tmax-height: 120px;\n\tobject-fit: contain;\n}\n\n.ohmylms-form-settings > summary {\n\tcursor: pointer;\n\tfont-weight: var(--oml-weight-strong);\n\tmargin-bottom: var(--oml-space-4);\n}\n\n.ohmylms-mindmap-branches > li::before {\n\tcontent: \"\";\n\tposition: absolute;\n\ttop: 50%;\n\tleft: -24px;\n\twidth: 24px;\n\tborder-top: 1px solid var(--ohmylms-admin-border, var(--oml-border));\n}\n"
 	},
 	{
 		"file": "oml-ui-074-curriculum.27603a704cea.css",
@@ -2007,12 +2007,12 @@
 		"inline": "/* Row actions use the app's secondary button look (the admin stylesheet forces tertiary buttons to muted text),\n * so only their size and spacing are set here. */\n\n"
 	},
 	{
-		"file": "oml-ui-078-gamification.f466c13445e3.css",
+		"file": "oml-ui-078-gamification.5600699250d2.css",
 		"group": "gamification",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-078-gamification.f466c13445e3.css",
-		"bytes": 325,
+		"path": "assets/css/oml-ui-078-gamification.5600699250d2.css",
+		"bytes": 434,
 		"inline": null
 	},
 	{
@@ -2025,21 +2025,21 @@
 		"inline": null
 	},
 	{
-		"file": "oml-ui-080-gamification.c3032d83e3c1.css",
+		"file": "oml-ui-080-gamification.17210ee94c3f.css",
 		"group": "gamification",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-080-gamification.c3032d83e3c1.css",
-		"bytes": 735,
+		"path": "assets/css/oml-ui-080-gamification.17210ee94c3f.css",
+		"bytes": 749,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-081-quizzes.33973bda8417.css",
+		"file": "oml-ui-081-quizzes.a3c2f0626248.css",
 		"group": "quizzes",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-081-quizzes.33973bda8417.css",
-		"bytes": 252,
+		"path": "assets/css/oml-ui-081-quizzes.a3c2f0626248.css",
+		"bytes": 317,
 		"inline": null
 	},
 	{
@@ -2061,13 +2061,13 @@
 		"inline": null
 	},
 	{
-		"file": "oml-ui-084-shared.7379d2c4d145.css",
+		"file": "oml-ui-084-shared.6c033d5d97be.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-084-shared.7379d2c4d145.css",
-		"bytes": 487,
-		"inline": ".ohmylms-tab-group-label.is-active {\n\ttext-decoration: underline;\n\ttext-underline-offset: 4px;\n}\n\n.ohmylms-movable-tabs .is-drop-target {\n\toutline: 2px dashed var(--ohmylms-primary-color, #6e42d3);\n\toutline-offset: 2px;\n}\n\n.ohmylms-movable-tabs .is-dragging {\n\topacity: 0.45;\n}\n\n.ohmylms-movable-tab-panel > .ohmylms-movable-tabs {\n\tmargin-inline: 0;\n}\n\n.ohmylms-movable-tab-panel.is-vertical {\n\tdisplay: grid;\n\tgrid-template-columns: minmax(200px, 240px) minmax(0, 1fr);\n\tgap: 24px;\n}\n\n"
+		"path": "assets/css/oml-ui-084-shared.6c033d5d97be.css",
+		"bytes": 511,
+		"inline": ".ohmylms-tab-group-label.is-active {\n\ttext-decoration: underline;\n\ttext-underline-offset: 4px;\n}\n\n.ohmylms-movable-tabs .is-drop-target {\n\toutline: 2px dashed var(--ohmylms-primary-color, var(--oml-primary));\n\toutline-offset: 2px;\n}\n\n.ohmylms-movable-tabs .is-dragging {\n\topacity: 0.45;\n}\n\n.ohmylms-movable-tab-panel > .ohmylms-movable-tabs {\n\tmargin-inline: 0;\n}\n\n.ohmylms-movable-tab-panel.is-vertical {\n\tdisplay: grid;\n\tgrid-template-columns: minmax(200px, 240px) minmax(0, 1fr);\n\tgap: var(--oml-space-5);\n}\n"
 	},
 	{
 		"file": "oml-ui-085-curriculum.c7c2a059da3e.css",
@@ -2079,13 +2079,13 @@
 		"inline": null
 	},
 	{
-		"file": "oml-ui-086-shared.7608a5c574fb.css",
+		"file": "oml-ui-086-shared.0ae6d278897d.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-086-shared.7608a5c574fb.css",
-		"bytes": 582,
-		"inline": ".ohmylms-catalog-item-controls .components-base-control {\n\tmargin-bottom: 0;\n}\n\n.ohmylms-catalog-items.is-chapter {\n\tmargin: 0 0 8px;\n}\n\n.ohmylms-catalog-item-controls .components-text-control__input {\n\twidth: 4.5rem;\n\tmin-height: 28px;\n}\n\n.ohmylms-catalog-type.is-quiz {\n\tbackground: #fff4e0;\n\tcolor: #b45309;\n}\n\n.ohmylms-catalog-type.is-assignment {\n\tbackground: #e6f6ec;\n\tcolor: #15803d;\n}\n\n.ohmylms-catalog-flag.is-ok {\n\tbackground: #e6f6ec;\n\tcolor: #15803d;\n}\n\n.ohmylms-catalog-flag.is-warning {\n\tbackground: #fff4e0;\n\tcolor: #b45309;\n}\n\n/* Adding things one after another */\n\n"
+		"path": "assets/css/oml-ui-086-shared.0ae6d278897d.css",
+		"bytes": 724,
+		"inline": ".ohmylms-catalog-item-controls .components-base-control {\n\tmargin-bottom: 0;\n}\n\n.ohmylms-catalog-items.is-chapter {\n\tmargin: 0 0 var(--oml-space-2);\n}\n\n.ohmylms-catalog-item-controls .components-text-control__input {\n\twidth: 4.5rem;\n\tmin-height: 28px;\n}\n\n.ohmylms-catalog-type.is-quiz {\n\tbackground: var(--oml-warning-soft);\n\tcolor: var(--oml-warning-text);\n}\n\n.ohmylms-catalog-type.is-assignment {\n\tbackground: var(--oml-success-soft);\n\tcolor: var(--oml-success-text);\n}\n\n.ohmylms-catalog-flag.is-ok {\n\tbackground: var(--oml-success-soft);\n\tcolor: var(--oml-success-text);\n}\n\n.ohmylms-catalog-flag.is-warning {\n\tbackground: var(--oml-warning-soft);\n\tcolor: var(--oml-warning-text);\n}\n\n/* Adding things one after another */\n"
 	},
 	{
 		"file": "oml-ui-087-skills.5f02ba06aacc.css",
@@ -2115,13 +2115,13 @@
 		"inline": null
 	},
 	{
-		"file": "oml-ui-090-shared.5419e6323785.css",
+		"file": "oml-ui-090-shared.f55b3c6ed0dd.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-090-shared.5419e6323785.css",
-		"bytes": 150,
-		"inline": ".ohmylms-mindmap-node.is-included {\n\tborder-color: var(--ohmylms-primary-color, #6e42d3);\n\tbackground: var(--ohmylms-primary-soft-color, #f6f3fd);\n}\n\n"
+		"path": "assets/css/oml-ui-090-shared.f55b3c6ed0dd.css",
+		"bytes": 176,
+		"inline": ".ohmylms-mindmap-node.is-included {\n\tborder-color: var(--ohmylms-primary-color, var(--oml-primary));\n\tbackground: var(--ohmylms-primary-soft-color, var(--oml-primary-soft));\n}\n"
 	},
 	{
 		"file": "oml-ui-091-commerce.6ef80bbbae2a.css",
@@ -2151,21 +2151,21 @@
 		"inline": null
 	},
 	{
-		"file": "oml-ui-094-shared.03528a8a61ac.css",
+		"file": "oml-ui-094-shared.6859ec5653b5.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-094-shared.03528a8a61ac.css",
-		"bytes": 1647,
-		"inline": ".ohmylms-ext-toolbar .components-base-control {\n\tmargin-bottom: 0;\n}\n\n.ohmylms-ext-toolbar .components-base-control__field {\n\tmargin-bottom: 0;\n}\n\n.ohmylms-cur-status .components-notice {\n\tmargin: 0 0 12px;\n\tbox-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);\n}\n\n/* What a skill owns */\n\n.ohmylms-cur-toolbar .components-base-control {\n\tmin-width: 240px;\n}\n\n.ohmylms-cur-row.is-editing {\n\tbackground: var(--ohmylms-admin-subtle, #f4f5f7);\n}\n\n.ohmylms-cur-row.is-match {\n\tbackground: var(--ohmylms-primary-soft-color, #f6f3fd);\n\tbox-shadow: inset 3px 0 0 var(--ohmylms-primary-color, #6e42d3);\n}\n\n.ohmylms-cur-toggle:focus-visible {\n\toutline: 2px solid var(--ohmylms-primary-color, #6e42d3);\n\toutline-offset: 2px;\n}\n\n.ohmylms-cur-details .components-textarea-control {\n\tgrid-column: 1 / -1;\n}\n\n.ohmylms-cur-details .ohmylms-cur-save {\n\tgrid-column: 1 / -1;\n}\n\n.ohmylms-cur-move .components-base-control {\n\tmin-width: 260px;\n}\n\n.ohmylms-cur-node > .ohmylms-cur-add-wrap {\n\tmargin-inline-start: 20px;\n}\n\n.ohmylms-cur-add .components-base-control {\n\tmin-width: 220px;\n}\n\n.ohmylms-cur-delete.is-confirming {\n\tpadding: 12px 16px;\n\tborder: 1px solid var(--oml-danger, #cc1818);\n\tborder-radius: var(--oml-radius-control, 4px);\n\tbackground: var(--ohmylms-admin-surface, #fff);\n}\n\n.ohmylms-cur-delete .is-confirming {\n\tpadding: 12px 16px;\n\tborder: 1px solid var(--oml-danger, #cc1818);\n\tborder-radius: var(--oml-radius-control, 4px);\n\tbackground: var(--ohmylms-admin-surface, #fff);\n}\n\n.ohmylms-cur-name-link:hover {\n\ttext-decoration: underline;\n}\n\n.ohmylms-cur-name-link:focus-visible {\n\ttext-decoration: underline;\n}\n\n.ohmylms-syl-frame:focus {\n\toutline: none;\n}\n\n"
+		"path": "assets/css/oml-ui-094-shared.6859ec5653b5.css",
+		"bytes": 1765,
+		"inline": ".ohmylms-ext-toolbar .components-base-control {\n\tmargin-bottom: 0;\n}\n\n.ohmylms-ext-toolbar .components-base-control__field {\n\tmargin-bottom: 0;\n}\n\n.ohmylms-cur-status .components-notice {\n\tmargin: 0 0 var(--oml-space-3);\n\tbox-shadow: var(--oml-shadow-sm);\n}\n\n/* What a skill owns */\n\n.ohmylms-cur-toolbar .components-base-control {\n\tmin-width: 240px;\n}\n\n.ohmylms-cur-row.is-editing {\n\tbackground: var(--ohmylms-admin-subtle, var(--oml-background));\n}\n\n.ohmylms-cur-row.is-match {\n\tbackground: var(--ohmylms-primary-soft-color, var(--oml-primary-soft));\n\tbox-shadow: var(--oml-shadow-sm);\n}\n\n.ohmylms-cur-toggle:focus-visible {\n\toutline: 2px solid var(--ohmylms-primary-color, var(--oml-primary));\n\toutline-offset: 2px;\n}\n\n.ohmylms-cur-details .components-textarea-control {\n\tgrid-column: 1 / -1;\n}\n\n.ohmylms-cur-details .ohmylms-cur-save {\n\tgrid-column: 1 / -1;\n}\n\n.ohmylms-cur-move .components-base-control {\n\tmin-width: 260px;\n}\n\n.ohmylms-cur-node > .ohmylms-cur-add-wrap {\n\tmargin-inline-start: 20px;\n}\n\n.ohmylms-cur-add .components-base-control {\n\tmin-width: 220px;\n}\n\n.ohmylms-cur-delete.is-confirming {\n\tpadding: var(--oml-space-3) var(--oml-space-4);\n\tborder: 1px solid var(--oml-danger, var(--oml-danger));\n\tborder-radius: var(--oml-radius-control, 4px);\n\tbackground: var(--ohmylms-admin-surface, var(--oml-surface));\n}\n\n.ohmylms-cur-delete .is-confirming {\n\tpadding: var(--oml-space-3) var(--oml-space-4);\n\tborder: 1px solid var(--oml-danger, var(--oml-danger));\n\tborder-radius: var(--oml-radius-control, 4px);\n\tbackground: var(--ohmylms-admin-surface, var(--oml-surface));\n}\n\n.ohmylms-cur-name-link:hover {\n\ttext-decoration: underline;\n}\n\n.ohmylms-cur-name-link:focus-visible {\n\ttext-decoration: underline;\n}\n\n.ohmylms-syl-frame:focus {\n\toutline: none;\n}\n"
 	},
 	{
-		"file": "oml-ui-095-curriculum.ab4e1ad41a0e.css",
+		"file": "oml-ui-095-curriculum.8367be60124b.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-095-curriculum.ab4e1ad41a0e.css",
-		"bytes": 6009,
+		"path": "assets/css/oml-ui-095-curriculum.8367be60124b.css",
+		"bytes": 6532,
 		"inline": null
 	},
 	{
@@ -2178,75 +2178,75 @@
 		"inline": null
 	},
 	{
-		"file": "oml-ui-097-curriculum.312bbf8c7b7e.css",
+		"file": "oml-ui-097-curriculum.5e205fc4e62d.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-097-curriculum.312bbf8c7b7e.css",
-		"bytes": 529,
+		"path": "assets/css/oml-ui-097-curriculum.5e205fc4e62d.css",
+		"bytes": 543,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-098-shared.fed263e1c7db.css",
+		"file": "oml-ui-098-shared.0b26f1739c7f.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-098-shared.fed263e1c7db.css",
-		"bytes": 315,
-		"inline": ".ohmylms-category-tags:focus-within {\n\tborder-color: var(--oml-primary-hover, #6048ce);\n\tbox-shadow: 0 0 0 2px var(--oml-primary-hover, #6048ce)18;\n}\n\n.ohmylms-assessment-editor-tabs [aria-selected=\"true\"] {\n\tcolor: var(--oml-primary-hover, #6740d8);\n\tbox-shadow: inset 0 -3px var(--oml-primary-hover, #6740d8);\n}\n\n"
+		"path": "assets/css/oml-ui-098-shared.0b26f1739c7f.css",
+		"bytes": 285,
+		"inline": ".ohmylms-category-tags:focus-within {\n\tborder-color: var(--oml-primary-hover, var(--oml-primary));\n\tbox-shadow: var(--oml-shadow-sm);\n}\n\n.ohmylms-assessment-editor-tabs [aria-selected=\"true\"] {\n\tcolor: var(--oml-primary-hover, var(--oml-primary));\n\tbox-shadow: var(--oml-shadow-sm);\n}\n"
 	},
 	{
-		"file": "oml-ui-099-quizzes.29c6df3048a5.css",
+		"file": "oml-ui-099-quizzes.c429fe499d76.css",
 		"group": "quizzes",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-099-quizzes.29c6df3048a5.css",
-		"bytes": 1451,
+		"path": "assets/css/oml-ui-099-quizzes.c429fe499d76.css",
+		"bytes": 1530,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-100-shared.63c609ca82af.css",
+		"file": "oml-ui-100-shared.d09f8f629e7c.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-100-shared.63c609ca82af.css",
-		"bytes": 1617,
-		"inline": "@media (max-width: 782px) {\n\n\t.ohmylms-ws {\n\t\theight: auto;\n\t\tmin-height: 0;\n\t}\n\n\t.ohmylms-ws-body {\n\t\tflex-direction: column;\n\t}\n\n\t.ohmylms-ws-side {\n\t\tflex-basis: auto;\n\t\twidth: auto;\n\t\tborder-inline-end: 0;\n\t\tborder-bottom: 1px solid var(--ws-border);\n\t}\n\n\t.ohmylms-ws-side-body {\n\t\tmax-height: 40vh;\n\t}\n\n\t.ohmylms-ws-main {\n\t\tpadding: 0 16px 48px;\n\t\toverflow: visible;\n\t}\n\n\t.ohmylms-ws-title {\n\t\tfont-size: 24px;\n\t}\n\n\t.ohmylms-ws-header {\n\t\tpadding: 10px 14px;\n\t}\n\n\t.ohmylms-ws-side.is-collapsed {\n\t\tflex-basis: auto;\n\t\twidth: auto;\n\t\tborder-inline-end: 0;\n\t\tborder-bottom: 1px solid var(--ws-border);\n\t}\n\n\t.ohmylms-ws-side.is-collapsed .ohmylms-ws-add-chapter {\n\t\tdisplay: inline-flex;\n\t}\n\n\t.ohmylms-ws-side.is-collapsed .ohmylms-ws-side-count {\n\t\tdisplay: inline-flex;\n\t}\n\n\t.ohmylms-ws-side.is-collapsed .ohmylms-ws-side-tools.is-header {\n\t\tdisplay: inline-flex;\n\t}\n}\n\n/* Syllabus-level category tags; skill panes use a selection-only dropdown. */\n\n.ohmylms-form-description [role=\"toolbar\"] {\n\tborder: 1px solid var(--oml-border, #dcdcde);\n\tbackground: #fafafa;\n\tdisplay: flex;\n}\n\n.ohmylms-form-description [role=\"textbox\"] {\n\tmin-height: 80px;\n\tborder: 1px solid var(--oml-border, #dcdcde);\n\tborder-top: 0;\n\tpadding: 12px;\n\toutline-color: var(--oml-primary-hover, #7153c6);\n}\n\n.ohmylms-shared-answers > .components-button {\n\tjustify-self: start;\n}\n\n.ohmylms-shared-answer-row > .components-base-control {\n\tflex: 1 1 180px;\n\tmargin: 0;\n}\n\n.ohmylms-shared-answer-row .components-base-control__field {\n\tmargin-bottom: 0;\n}\n\n.ohmylms-shared-answer-row > .components-button {\n\tflex: 0 0 auto;\n\tmin-width: 30px;\n}\n\n"
+		"path": "assets/css/oml-ui-100-shared.d09f8f629e7c.css",
+		"bytes": 1719,
+		"inline": "@media (max-width: 782px) {\n\n\t.ohmylms-ws {\n\t\theight: auto;\n\t\tmin-height: 0;\n\t}\n\n\t.ohmylms-ws-body {\n\t\tflex-direction: column;\n\t}\n\n\t.ohmylms-ws-side {\n\t\tflex-basis: auto;\n\t\twidth: auto;\n\t\tborder-inline-end: 0;\n\t\tborder-bottom: 1px solid var(--ws-border);\n\t}\n\n\t.ohmylms-ws-side-body {\n\t\tmax-height: 40vh;\n\t}\n\n\t.ohmylms-ws-main {\n\t\tpadding: 0 var(--oml-space-4) var(--oml-space-7);\n\t\toverflow: visible;\n\t}\n\n\t.ohmylms-ws-title {\n\t\tfont-size: var(--oml-font-size-2xl);\n\t}\n\n\t.ohmylms-ws-header {\n\t\tpadding: 10px 14px;\n\t}\n\n\t.ohmylms-ws-side.is-collapsed {\n\t\tflex-basis: auto;\n\t\twidth: auto;\n\t\tborder-inline-end: 0;\n\t\tborder-bottom: 1px solid var(--ws-border);\n\t}\n\n\t.ohmylms-ws-side.is-collapsed .ohmylms-ws-add-chapter {\n\t\tdisplay: inline-flex;\n\t}\n\n\t.ohmylms-ws-side.is-collapsed .ohmylms-ws-side-count {\n\t\tdisplay: inline-flex;\n\t}\n\n\t.ohmylms-ws-side.is-collapsed .ohmylms-ws-side-tools.is-header {\n\t\tdisplay: inline-flex;\n\t}\n}\n\n/* Syllabus-level category tags; skill panes use a selection-only dropdown. */\n\n.ohmylms-form-description [role=\"toolbar\"] {\n\tborder: 1px solid var(--oml-border, var(--oml-border));\n\tbackground: var(--oml-subtle);\n\tdisplay: flex;\n}\n\n.ohmylms-form-description [role=\"textbox\"] {\n\tmin-height: 80px;\n\tborder: 1px solid var(--oml-border, var(--oml-border));\n\tborder-top: 0;\n\tpadding: var(--oml-space-3);\n\toutline-color: var(--oml-primary-hover, var(--oml-primary));\n}\n\n.ohmylms-shared-answers > .components-button {\n\tjustify-self: start;\n}\n\n.ohmylms-shared-answer-row > .components-base-control {\n\tflex: 1 1 180px;\n\tmargin: 0;\n}\n\n.ohmylms-shared-answer-row .components-base-control__field {\n\tmargin-bottom: 0;\n}\n\n.ohmylms-shared-answer-row > .components-button {\n\tflex: 0 0 auto;\n\tmin-width: 30px;\n}\n"
 	},
 	{
-		"file": "oml-ui-101-quizzes.5013cb2fe6cf.css",
+		"file": "oml-ui-101-quizzes.efb4567b3bfa.css",
 		"group": "quizzes",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-101-quizzes.5013cb2fe6cf.css",
-		"bytes": 478,
+		"path": "assets/css/oml-ui-101-quizzes.efb4567b3bfa.css",
+		"bytes": 525,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-102-skills.861c4b67b9ad.css",
+		"file": "oml-ui-102-skills.93792b8ccd69.css",
 		"group": "skills",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-102-skills.861c4b67b9ad.css",
-		"bytes": 235,
+		"path": "assets/css/oml-ui-102-skills.93792b8ccd69.css",
+		"bytes": 302,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-103-curriculum.3fb9151e2ad2.css",
+		"file": "oml-ui-103-curriculum.c5ab74c64f26.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-103-curriculum.3fb9151e2ad2.css",
-		"bytes": 241,
+		"path": "assets/css/oml-ui-103-curriculum.c5ab74c64f26.css",
+		"bytes": 255,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-104-gamification.3073783c9400.css",
+		"file": "oml-ui-104-gamification.a93629e89610.css",
 		"group": "gamification",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-104-gamification.3073783c9400.css",
-		"bytes": 141,
+		"path": "assets/css/oml-ui-104-gamification.a93629e89610.css",
+		"bytes": 148,
 		"inline": null
 	},
 	{
@@ -2268,22 +2268,22 @@
 		"inline": null
 	},
 	{
-		"file": "oml-ui-107-curriculum.565ec7339637.css",
+		"file": "oml-ui-107-curriculum.9a609798c056.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-107-curriculum.565ec7339637.css",
-		"bytes": 248,
+		"path": "assets/css/oml-ui-107-curriculum.9a609798c056.css",
+		"bytes": 287,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-108-shared.fb528a8e8a9d.css",
+		"file": "oml-ui-108-shared.2691955afe89.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-108-shared.fb528a8e8a9d.css",
-		"bytes": 404,
-		"inline": ".ohmylms-movable-tabs .ohmylms-tab-group a {\n\tcolor: inherit;\n}\n\n.ohmylms-tab-group-editor input[type=\"color\"] {\n\twidth: 64px;\n\theight: 32px;\n}\n\n.ohmylms-ext-header > div:first-child {\n\tflex: 1 1 360px;\n\tmin-width: 0;\n}\n\n.ohmylms-mindmap-node.has-children::after {\n\tcontent: \"\";\n\tposition: absolute;\n\ttop: 50%;\n\tright: -25px;\n\twidth: 24px;\n\tborder-top: 1px solid var(--ohmylms-admin-border, #dcdcde);\n}\n\n"
+		"path": "assets/css/oml-ui-108-shared.2691955afe89.css",
+		"bytes": 413,
+		"inline": ".ohmylms-movable-tabs .ohmylms-tab-group a {\n\tcolor: inherit;\n}\n\n.ohmylms-tab-group-editor input[type=\"color\"] {\n\twidth: 64px;\n\theight: 32px;\n}\n\n.ohmylms-ext-header > div:first-child {\n\tflex: 1 1 360px;\n\tmin-width: 0;\n}\n\n.ohmylms-mindmap-node.has-children::after {\n\tcontent: \"\";\n\tposition: absolute;\n\ttop: 50%;\n\tright: -25px;\n\twidth: 24px;\n\tborder-top: 1px solid var(--ohmylms-admin-border, var(--oml-border));\n}\n"
 	},
 	{
 		"file": "oml-ui-109-commerce.b7b7b6d847d3.css",
@@ -2295,21 +2295,21 @@
 		"inline": null
 	},
 	{
-		"file": "oml-ui-110-shared.db5136ef2436.css",
+		"file": "oml-ui-110-shared.c6997a64ab4d.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-110-shared.db5136ef2436.css",
-		"bytes": 204,
-		"inline": ".ohmylms-cur-panel .ohmylms-cur-syllabus-summary h3 {\n\tmargin: 0 0 2px;\n}\n\n.ohmylms-syl-map td.is-ignored {\n\topacity: 0.45;\n}\n\n.ohmylms-action-confirmation button + button { margin-inline-start: 12px; }\n\n"
+		"path": "assets/css/oml-ui-110-shared.c6997a64ab4d.css",
+		"bytes": 217,
+		"inline": ".ohmylms-cur-panel .ohmylms-cur-syllabus-summary h3 {\n\tmargin: 0 0 2px;\n}\n\n.ohmylms-syl-map td.is-ignored {\n\topacity: 0.45;\n}\n\n.ohmylms-action-confirmation button + button { margin-inline-start: var(--oml-space-3); }\n"
 	},
 	{
-		"file": "oml-ui-111-curriculum.f5f1cfa61644.css",
+		"file": "oml-ui-111-curriculum.c8850d5f82f3.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-111-curriculum.f5f1cfa61644.css",
-		"bytes": 1010,
+		"path": "assets/css/oml-ui-111-curriculum.c8850d5f82f3.css",
+		"bytes": 1106,
 		"inline": null
 	},
 	{
@@ -2322,12 +2322,12 @@
 		"inline": null
 	},
 	{
-		"file": "oml-ui-113-curriculum.51f4d6f6fd48.css",
+		"file": "oml-ui-113-curriculum.501dba6bfcb4.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-113-curriculum.51f4d6f6fd48.css",
-		"bytes": 689,
+		"path": "assets/css/oml-ui-113-curriculum.501dba6bfcb4.css",
+		"bytes": 756,
 		"inline": null
 	},
 	{
@@ -2340,13 +2340,13 @@
 		"inline": null
 	},
 	{
-		"file": "oml-ui-115-shared.8650b11c26f6.css",
+		"file": "oml-ui-115-shared.86446f5f7ef1.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-115-shared.8650b11c26f6.css",
-		"bytes": 267,
-		"inline": ".ohmylms-category-token button:hover {\n\tbackground: #c7e7d4;\n}\n\n.ohmylms-category-tags button:disabled {\n\topacity: 0.5;\n\tcursor: default;\n}\n\n.ohmylms-category-tags button:focus-visible {\n\toutline: 2px solid var(--oml-primary-hover, #6048ce);\n\toutline-offset: 2px;\n}\n\n"
+		"path": "assets/css/oml-ui-115-shared.86446f5f7ef1.css",
+		"bytes": 293,
+		"inline": ".ohmylms-category-token button:hover {\n\tbackground: var(--oml-success-soft);\n}\n\n.ohmylms-category-tags button:disabled {\n\topacity: 0.5;\n\tcursor: default;\n}\n\n.ohmylms-category-tags button:focus-visible {\n\toutline: 2px solid var(--oml-primary-hover, var(--oml-primary));\n\toutline-offset: 2px;\n}\n"
 	},
 	{
 		"file": "oml-ui-116-quizzes.1d27e1bba1b1.css",
@@ -2358,21 +2358,21 @@
 		"inline": null
 	},
 	{
-		"file": "oml-ui-117-shared.4781f532c20c.css",
+		"file": "oml-ui-117-shared.c03e5d172561.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-117-shared.4781f532c20c.css",
-		"bytes": 203,
-		"inline": ".ohmylms-form-workspace > .components-base-control input {\n\tfont-size: 20px;\n\tpadding: 12px;\n\tbackground: #fafafa;\n}\n\n.ohmylms-form-description [role=\"textbox\"] img {\n\tmax-width: 100%;\n\theight: auto;\n}\n\n"
+		"path": "assets/css/oml-ui-117-shared.c03e5d172561.css",
+		"bytes": 245,
+		"inline": ".ohmylms-form-workspace > .components-base-control input {\n\tfont-size: var(--oml-font-size-xl);\n\tpadding: var(--oml-space-3);\n\tbackground: var(--oml-subtle);\n}\n\n.ohmylms-form-description [role=\"textbox\"] img {\n\tmax-width: 100%;\n\theight: auto;\n}\n"
 	},
 	{
-		"file": "oml-ui-118-quizzes.b41d01408197.css",
+		"file": "oml-ui-118-quizzes.012da34c0d82.css",
 		"group": "quizzes",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-118-quizzes.b41d01408197.css",
-		"bytes": 527,
+		"path": "assets/css/oml-ui-118-quizzes.012da34c0d82.css",
+		"bytes": 568,
 		"inline": null
 	},
 	{
@@ -2403,13 +2403,13 @@
 		"inline": null
 	},
 	{
-		"file": "oml-ui-122-shared.e7ac15f9b0b8.css",
+		"file": "oml-ui-122-shared.4eaf56deb13f.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-122-shared.e7ac15f9b0b8.css",
-		"bytes": 544,
-		"inline": ".ohmylms-dashboard-layout.extensions .ohmylms-content {\n\tpadding: 26px var(--ohmylms-admin-gutter, 40px) 40px;\n\tcolor: var(--ohmylms-admin-text-color, #000d25);\n}\n\n.ohmylms-movable-tab-panel.is-vertical > .ohmylms-movable-tabs {\n\talign-content: start;\n\talign-items: stretch;\n\tflex-direction: column;\n\tborder-bottom: 0;\n}\n\n.ohmylms-movable-tab-panel.is-vertical .ohmylms-tab-group {\n\talign-items: stretch;\n\tflex-direction: column;\n\tgap: 0;\n}\n\n.ohmylms-movable-tab-panel.is-vertical .ohmylms-tab-organize {\n\tmargin-left: 0;\n\ttext-align: left;\n}\n\n"
+		"path": "assets/css/oml-ui-122-shared.4eaf56deb13f.css",
+		"bytes": 554,
+		"inline": ".ohmylms-dashboard-layout.extensions .ohmylms-content {\n\tpadding: 26px var(--ohmylms-admin-gutter, 40px) 40px;\n\tcolor: var(--ohmylms-admin-text-color, var(--oml-heading));\n}\n\n.ohmylms-movable-tab-panel.is-vertical > .ohmylms-movable-tabs {\n\talign-content: start;\n\talign-items: stretch;\n\tflex-direction: column;\n\tborder-bottom: 0;\n}\n\n.ohmylms-movable-tab-panel.is-vertical .ohmylms-tab-group {\n\talign-items: stretch;\n\tflex-direction: column;\n\tgap: 0;\n}\n\n.ohmylms-movable-tab-panel.is-vertical .ohmylms-tab-organize {\n\tmargin-left: 0;\n\ttext-align: left;\n}\n"
 	},
 	{
 		"file": "oml-ui-123-curriculum.bdfb5c80210a.css",
@@ -2421,21 +2421,21 @@
 		"inline": null
 	},
 	{
-		"file": "oml-ui-124-quizzes.74ec63e90659.css",
+		"file": "oml-ui-124-quizzes.ece24bf1012b.css",
 		"group": "quizzes",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-124-quizzes.74ec63e90659.css",
-		"bytes": 202,
+		"path": "assets/css/oml-ui-124-quizzes.ece24bf1012b.css",
+		"bytes": 243,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-125-curriculum.73d85627645d.css",
+		"file": "oml-ui-125-curriculum.e002d3cf07db.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-125-curriculum.73d85627645d.css",
-		"bytes": 106,
+		"path": "assets/css/oml-ui-125-curriculum.e002d3cf07db.css",
+		"bytes": 119,
 		"inline": null
 	},
 	{
@@ -2448,12 +2448,12 @@
 		"inline": ".ohmylms-cur-syllabus-path .components-button.is-link {\n\tdisplay: inline;\n\theight: auto;\n\tpadding: 0;\n\tfont-size: inherit;\n\tvertical-align: baseline;\n}\n\n"
 	},
 	{
-		"file": "oml-ui-127-curriculum.1dff4ea19f56.css",
+		"file": "oml-ui-127-curriculum.7d9af7eb1cc6.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-127-curriculum.1dff4ea19f56.css",
-		"bytes": 2989,
+		"path": "assets/css/oml-ui-127-curriculum.7d9af7eb1cc6.css",
+		"bytes": 3359,
 		"inline": null
 	},
 	{
@@ -2475,22 +2475,22 @@
 		"inline": ".ohmylms-movable-tabs .ohmylms-tab-group a.is-active {\n\tborder-bottom-color: currentcolor;\n}\n\n\n"
 	},
 	{
-		"file": "oml-ui-130-curriculum.529472113814.css",
+		"file": "oml-ui-130-curriculum.9c9136bdba90.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-130-curriculum.529472113814.css",
-		"bytes": 674,
+		"path": "assets/css/oml-ui-130-curriculum.9c9136bdba90.css",
+		"bytes": 701,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-131-shared.7f00ac363593.css",
+		"file": "oml-ui-131-shared.2771dc647411.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-131-shared.7f00ac363593.css",
-		"bytes": 208,
-		"inline": ".ohmylms-dashboard-layout.extensions .ohmylms-content > section > h1 {\n\tmargin: 0;\n\tpadding: 0;\n\tfont-size: 20px;\n\tline-height: 1.4;\n\tfont-weight: 600;\n\tcolor: var(--ohmylms-admin-heading-color, #000d25);\n}\n\n"
+		"path": "assets/css/oml-ui-131-shared.2771dc647411.css",
+		"bytes": 258,
+		"inline": ".ohmylms-dashboard-layout.extensions .ohmylms-content > section > h1 {\n\tmargin: 0;\n\tpadding: 0;\n\tfont-size: var(--oml-font-size-xl);\n\tline-height: 1.4;\n\tfont-weight: var(--oml-weight-strong);\n\tcolor: var(--ohmylms-admin-heading-color, var(--oml-heading));\n}\n"
 	},
 	{
 		"file": "oml-ui-132-curriculum.94575dfcfcbe.css",
@@ -2502,31 +2502,31 @@
 		"inline": null
 	},
 	{
-		"file": "oml-ui-133-quizzes.6774d506db05.css",
+		"file": "oml-ui-133-quizzes.6f651865a065.css",
 		"group": "quizzes",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-133-quizzes.6774d506db05.css",
-		"bytes": 128,
+		"path": "assets/css/oml-ui-133-quizzes.6f651865a065.css",
+		"bytes": 141,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-134-curriculum.6fdc5a4939a2.css",
+		"file": "oml-ui-134-curriculum.d2c95ca19911.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-134-curriculum.6fdc5a4939a2.css",
-		"bytes": 567,
+		"path": "assets/css/oml-ui-134-curriculum.d2c95ca19911.css",
+		"bytes": 645,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-135-shared.e425ce939696.css",
+		"file": "oml-ui-135-shared.edc807c8bf5a.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-135-shared.e425ce939696.css",
-		"bytes": 270,
-		"inline": ".ohmylms-dashboard-layout.extensions .ohmylms-content table.widefat {\n\tborder: 0;\n\tborder-radius: var(--ohmylms-admin-radius, 7px);\n\tbox-shadow: none;\n\tborder-collapse: separate;\n\tborder-spacing: 0;\n\toverflow: hidden;\n\tbackground: var(--ohmylms-admin-surface, #fff);\n}\n\n"
+		"path": "assets/css/oml-ui-135-shared.edc807c8bf5a.css",
+		"bytes": 283,
+		"inline": ".ohmylms-dashboard-layout.extensions .ohmylms-content table.widefat {\n\tborder: 0;\n\tborder-radius: var(--ohmylms-admin-radius, 7px);\n\tbox-shadow: none;\n\tborder-collapse: separate;\n\tborder-spacing: 0;\n\toverflow: hidden;\n\tbackground: var(--ohmylms-admin-surface, var(--oml-surface));\n}\n"
 	},
 	{
 		"file": "oml-ui-136-curriculum.219d8dfe6a2d.css",
@@ -2538,30 +2538,30 @@
 		"inline": null
 	},
 	{
-		"file": "oml-ui-137-shared.033c9281e946.css",
+		"file": "oml-ui-137-shared.4de161741cec.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-137-shared.033c9281e946.css",
-		"bytes": 79,
-		"inline": "@media (max-width: 600px) {\n\n\t.ohmylms-form-workspace {\n\t\tpadding: 16px;\n\t}\n}\n\n"
+		"path": "assets/css/oml-ui-137-shared.4de161741cec.css",
+		"bytes": 92,
+		"inline": "@media (max-width: 600px) {\n\n\t.ohmylms-form-workspace {\n\t\tpadding: var(--oml-space-4);\n\t}\n}\n"
 	},
 	{
-		"file": "oml-ui-138-curriculum.b824a92b46ac.css",
+		"file": "oml-ui-138-curriculum.d7eda32236db.css",
 		"group": "curriculum",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-138-curriculum.b824a92b46ac.css",
-		"bytes": 269,
+		"path": "assets/css/oml-ui-138-curriculum.d7eda32236db.css",
+		"bytes": 274,
 		"inline": null
 	},
 	{
-		"file": "oml-ui-139-shared.469075e19e3e.css",
+		"file": "oml-ui-139-shared.7c332d8b11b6.css",
 		"group": "shared",
 		"rtl": false,
 		"layer": "ui",
-		"path": "assets/css/oml-ui-139-shared.469075e19e3e.css",
-		"bytes": 1975,
-		"inline": ".ohmylms-dashboard-layout.extensions .ohmylms-content table.widefat thead th {\n\tbackground: var(--ohmylms-admin-subtle, #f4f5f7);\n\tcolor: var(--ohmylms-admin-muted-color, #7a8b9a);\n\tfont-size: 14px;\n\tfont-weight: 500;\n\tpadding: 8px 12px;\n\tborder: 0;\n}\n\n.ohmylms-dashboard-layout.extensions .ohmylms-content table.widefat thead td {\n\tbackground: var(--ohmylms-admin-subtle, #f4f5f7);\n\tcolor: var(--ohmylms-admin-muted-color, #7a8b9a);\n\tfont-size: 14px;\n\tfont-weight: 500;\n\tpadding: 8px 12px;\n\tborder: 0;\n}\n\n.ohmylms-dashboard-layout.extensions .ohmylms-content table.widefat tbody td {\n\tcolor: var(--ohmylms-admin-text-color, #000d25);\n\tfont-size: 14px;\n\tpadding: 14px 12px;\n\tvertical-align: middle;\n\tborder-top: 1px solid var(--ohmylms-admin-border, #ebedf0);\n}\n\n.ohmylms-dashboard-layout.extensions .ohmylms-content table.widefat tbody th {\n\tcolor: var(--ohmylms-admin-text-color, #000d25);\n\tfont-size: 14px;\n\tpadding: 14px 12px;\n\tvertical-align: middle;\n\tborder-top: 1px solid var(--ohmylms-admin-border, #ebedf0);\n}\n\n.ohmylms-cur-row .ohmylms-cur-actions .components-button.is-secondary.is-small {\n\tmin-height: 32px;\n\tpadding: 0 10px;\n\tfont-size: 13px;\n\tline-height: 1.4;\n}\n\n.ohmylms-dashboard-layout.extensions\n\t.ohmylms-content\n\ttable.widefat\n\ttbody\n\ttr:hover {\n\tbackground: var(--ohmylms-primary-soft-color, #f6f3fd);\n}\n\n.ohmylms-cur-row\n\t.ohmylms-cur-actions\n\t.components-button.is-secondary.is-small:disabled {\n\topacity: 0.45;\n}\n\n.ohmylms-dashboard-layout.extensions\n\t.ohmylms-content\n\ttable.widefat.striped\n\t> tbody\n\t> :nth-child(odd) {\n\tbackground: transparent;\n}\n\n.ohmylms-request-feedback { position: fixed; z-index: 1000000; inset: auto 24px 24px auto; max-width: min(420px, calc(100vw - 48px)); border: 1px solid #d63638; border-radius: 4px; padding: 16px; background: #fff; color: #1e1e1e; box-shadow: 0 2px 8px #0002; }\n\n.ohmylms-action-confirmation { max-width: min(480px, calc(100vw - 48px)); border: 1px solid #c3c4c7; border-radius: 8px; padding: 24px; }\n"
+		"path": "assets/css/oml-ui-139-shared.7c332d8b11b6.css",
+		"bytes": 2424,
+		"inline": null
 	}
 ]

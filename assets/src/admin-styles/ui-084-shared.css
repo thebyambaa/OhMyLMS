@@ -4,7 +4,7 @@
 }
 
 .ohmylms-movable-tabs .is-drop-target {
-	outline: 2px dashed var(--ohmylms-primary-color, #6e42d3);
+	outline: 2px dashed var(--ohmylms-primary-color, var(--oml-primary));
 	outline-offset: 2px;
 }
 
@@ -19,6 +19,5 @@
 .ohmylms-movable-tab-panel.is-vertical {
 	display: grid;
 	grid-template-columns: minmax(200px, 240px) minmax(0, 1fr);
-	gap: 24px;
+	gap: var(--oml-space-5);
 }
-

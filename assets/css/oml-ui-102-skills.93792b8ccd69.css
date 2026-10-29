@@ -1,0 +1,10 @@
+.ohmylms-skill-connection .ohmylms-relationship-badge {
+	display: inline-block;
+	margin-inline-start: var(--oml-space-1);
+	padding: 1px 5px;
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-subtle);
+	color: var(--oml-heading);
+	font-size: 11px;
+}

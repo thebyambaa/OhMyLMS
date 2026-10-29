@@ -1,37 +1,37 @@
 .ohmylms-category-tags {
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: var(--oml-space-2);
 	flex-wrap: wrap;
-	border: 1px solid #d4dae5;
-	border-radius: 10px;
-	background: #fff;
-	padding: 10px 12px;
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-surface);
+	padding: 10px var(--oml-space-3);
 	min-height: 52px;
 }
 
 .ohmylms-category-token {
 	display: inline-flex;
 	align-items: center;
-	gap: 8px;
+	gap: var(--oml-space-2);
 	padding: 5px 10px 5px 13px;
-	background: #e5f5ec;
-	color: #166b42;
-	border: 1px solid #c7e7d4;
-	border-radius: 999px;
-	font-weight: 600;
-	font-size: 13px;
+	background: var(--oml-success-soft);
+	color: var(--oml-success-text);
+	border: 1px solid var(--oml-success-soft);
+	border-radius: var(--oml-radius-card);
+	font-weight: var(--oml-weight-strong);
+	font-size: var(--oml-font-size-sm);
 	line-height: 22px;
 }
 
 .ohmylms-category-add {
 	border: 0;
 	border-radius: var(--oml-radius-card, 7px);
-	background: #f0edfc;
-	color: var(--oml-primary-hover, #6048ce);
-	padding: 6px 12px;
+	background: var(--oml-primary-soft);
+	color: var(--oml-primary-hover, var(--oml-primary));
+	padding: 6px var(--oml-space-3);
 	cursor: pointer;
-	font-weight: 600;
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-category-appearance {
@@ -39,7 +39,6 @@
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 10px;
-	padding: 8px 0;
+	padding: var(--oml-space-2) 0;
 	border-bottom: 1px solid var(--ws-border);
 }
-

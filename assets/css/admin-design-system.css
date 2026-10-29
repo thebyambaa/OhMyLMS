@@ -10,6 +10,7 @@
 body.oml-ds {
 	background: var(--oml-background);
 	color: var(--oml-text);
+	font-family: var(--oml-font-family);
 }
 
 body.oml-ds #wpcontent {
@@ -683,10 +684,10 @@ html body.block-editor-page.is-fullscreen-mode #wpadminbar {
 	display: grid;
 	width: 44px;
 	height: 44px;
-	border: 1px solid var(--oml-border, #dcdcde);
+	border: 1px solid var(--oml-border);
 	border-radius: 8px;
-	background: #fff;
-	color: var(--oml-muted, #50575e);
+	background: var(--oml-surface);
+	color: var(--oml-muted);
 	font-size: 11px;
 	place-items: center;
 }
