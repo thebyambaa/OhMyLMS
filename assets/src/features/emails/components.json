@@ -6,7 +6,6 @@
 		"dependencies": [
 			"D",
 			"HG",
-			"I",
 			"R4",
 			"React",
 			"T",
@@ -21,14 +20,13 @@
 		"binding": "c4",
 		"name": "EmailTemplateList",
 		"file": "EmailTemplateList.jsx",
-		"dependencies": [ "D", "I", "React", "T", "b", "f", "g", "i4", "y" ]
+		"dependencies": [ "D", "React", "T", "b", "f", "g", "i4", "y" ]
 	},
 	{
 		"binding": "f4",
 		"name": "EmailButtonPosition",
 		"file": "EmailButtonPosition.jsx",
 		"dependencies": [
-			"I",
 			"React",
 			"T",
 			"Tt",
@@ -45,7 +43,7 @@
 		"binding": "h4",
 		"name": "EmailSenderOptions",
 		"file": "EmailSenderOptions.jsx",
-		"dependencies": [ "I", "React", "T", "W", "b", "g4", "y" ]
+		"dependencies": [ "React", "T", "W", "b", "g4", "y" ]
 	},
 	{
 		"binding": "S4",
@@ -53,7 +51,6 @@
 		"file": "EmailPersonalization.jsx",
 		"dependencies": [
 			"E4",
-			"I",
 			"L2",
 			"React",
 			"T",
@@ -71,7 +68,6 @@
 		"file": "EmailEditorPage.jsx",
 		"dependencies": [
 			"Ea",
-			"I",
 			"Nr",
 			"React",
 			"T",
@@ -93,7 +89,6 @@
 			"Ea",
 			"Fee",
 			"Hee",
-			"I",
 			"Oee",
 			"React",
 			"Ree",
@@ -108,7 +103,7 @@
 		"binding": "See",
 		"name": "EmailEditorHeader",
 		"file": "EmailEditorHeader.jsx",
-		"dependencies": [ "Eee", "I", "React", "_ee", "b" ]
+		"dependencies": [ "Eee", "React", "_ee", "b" ]
 	},
 	{
 		"binding": "bee",
@@ -126,7 +121,7 @@
 		"binding": "Pee",
 		"name": "EmailPreview",
 		"file": "EmailPreview.jsx",
-		"dependencies": [ "Cee", "Ea", "I", "React", "T", "b", "g", "y" ]
+		"dependencies": [ "Cee", "Ea", "React", "T", "b", "g", "y" ]
 	},
 	{
 		"binding": "Iee",
@@ -134,7 +129,6 @@
 		"file": "EmailFields.jsx",
 		"dependencies": [
 			"Aee",
-			"I",
 			"Mee",
 			"React",
 			"T",

@@ -1,12 +1,12 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { InfoIcon } from '../../shared/icons';
+import * as Controls from '../../shared/controls';
 export function createDownloadResources( readRuntime ) {
 	return function DownloadResources( props ) {
 		const {
 			An,
 			He,
-			I: Controls,
 			Ie,
 			In,
 			M,

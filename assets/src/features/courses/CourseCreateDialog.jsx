@@ -3,11 +3,12 @@ import { useDispatch, useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 import { createCourse } from './api.mjs';
 import { CourseBuildChoices } from './CourseBuildChoices';
+import * as Controls from '../../shared/controls';
 export function createCourseCreateDialog( readRuntime ) {
 	return function CourseCreateDialog( { isOpen, onClose } ) {
 		const {
 			T: { default: store },
-			I: Controls,
+
 			QG: { A: Modal },
 			JG: CourseTypes,
 			f: Router,

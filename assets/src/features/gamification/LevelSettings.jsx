@@ -2,12 +2,12 @@
 import { createElement } from '@wordpress/element';
 import { FeatureSwitch } from './FeatureSwitch';
 import { useNotifications } from '../../shared/notices';
+import * as Controls from '../../shared/controls';
 export function createLevelSettings( readRuntime ) {
 	return function LevelSettings() {
 		const {
 			$3: LevelList,
 			He,
-			I: Controls,
 			React,
 			T: StoreModule,
 			X3,

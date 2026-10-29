@@ -1,11 +1,11 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { EditIcon } from '../../shared/icons';
+import * as Controls from '../../shared/controls';
 export function createQuizNameCell( readRuntime ) {
 	return function QuizNameCell( props ) {
 		const {
 			Ge,
-			I: Controls,
 			React,
 			UG,
 			b: I18n,

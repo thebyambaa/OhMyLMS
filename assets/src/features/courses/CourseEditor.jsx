@@ -11,6 +11,7 @@ import { Button, Modal } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { useCourseEditor } from './useCourseEditor';
 import { useNotifications } from '../../shared/notices';
+import * as Controls from '../../shared/controls';
 import { useCourseIntegrations } from './useCourseIntegrations';
 import { courseEditPath } from './model.mjs';
 import { CourseObjectives } from './CourseObjectives';
@@ -27,7 +28,6 @@ export function createCourseEditor( readRuntime ) {
 	return function CourseEditor( { courseId = null, enableSpin = false } ) {
 		const r = readRuntime();
 		const {
-			I: Controls,
 			Zp: InfoHeader,
 			oz: Toolbar,
 

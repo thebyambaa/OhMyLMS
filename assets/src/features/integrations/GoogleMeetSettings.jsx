@@ -1,10 +1,10 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createGoogleMeetSettings( readRuntime ) {
 	return function GoogleMeetSettings( props ) {
 		const {
-			I: Controls,
 			J6,
 			K6,
 			Pf,

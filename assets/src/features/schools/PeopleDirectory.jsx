@@ -5,6 +5,7 @@ import { ListTableFrame } from '../students/ListTableFrame';
 import { AddModal, EditModal, addLabel } from './AddModal';
 import { ViewAsModal, canViewAs } from './ViewAsModal';
 import { Table } from '../../shared/table';
+import * as Controls from '../../shared/controls';
 const labels = {
 	teachers: 'Teachers',
 	parents: 'Parents',
@@ -14,7 +15,6 @@ const labels = {
 };
 export function PeopleDirectory( { tab, readRuntime } ) {
 	const {
-		I: Controls,
 		JU: AvatarPlaceholder,
 		aY: Filters,
 		fN: Pagination,

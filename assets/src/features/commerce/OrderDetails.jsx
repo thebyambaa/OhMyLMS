@@ -5,6 +5,7 @@
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { Skeleton } from '../../shared/skeleton';
+import * as Controls from '../../shared/controls';
 
 export function createOrderDetails( readRuntime ) {
 	return function OrderDetails( { id = null } ) {
@@ -12,7 +13,6 @@ export function createOrderDetails( readRuntime ) {
 			CQ: CustomerProfile,
 			EQ: OrderStatus,
 			Ge: decodeEntities,
-			I: Controls,
 			Nr: BackButton,
 			PQ: OrderGeneral,
 			RQ: CustomerHistory,

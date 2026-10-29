@@ -1,12 +1,12 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
+import * as Controls from '../../shared/controls';
 export function createEmailSettingsPage( readRuntime ) {
 	return function EmailSettingsPage() {
 		const {
 			D: Buttons,
 			HG,
-			I: Controls,
 			R4: MemoEmailPersonalization,
 			React,
 			T: StoreModule,

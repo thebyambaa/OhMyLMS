@@ -2,12 +2,12 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
+import * as Controls from '../../shared/controls';
 export function createPaymentSettings( readRuntime ) {
 	return function PaymentSettings() {
 		const {
 			B1: MemoTaxSettings,
 			G1,
-			I: Controls,
 			P1: MemoCurrencySettings,
 			Q1,
 			React,

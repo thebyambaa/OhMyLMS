@@ -1,10 +1,10 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createDeleteLearningItem( readRuntime ) {
 	return function DeleteLearningItem( props ) {
 		const {
 			Bn,
-			I: Controls,
 			Ie,
 			Ln,
 			React,

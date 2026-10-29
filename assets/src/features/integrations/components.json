@@ -3,7 +3,7 @@
 		"binding": "D6",
 		"name": "IntegrationCard",
 		"file": "IntegrationCard.jsx",
-		"dependencies": [ "F6", "I", "N6", "React", "T6", "b", "g" ]
+		"dependencies": [ "F6", "N6", "React", "T6", "b", "g" ]
 	},
 	{
 		"binding": "j7.zoom",
@@ -11,7 +11,6 @@
 		"file": "ZoomSettings.jsx",
 		"dependencies": [
 			"H6",
-			"I",
 			"L6",
 			"Pf",
 			"React",
@@ -28,7 +27,6 @@
 		"name": "GoogleMeetSettings",
 		"file": "GoogleMeetSettings.jsx",
 		"dependencies": [
-			"I",
 			"J6",
 			"K6",
 			"Pf",
@@ -47,7 +45,6 @@
 		"file": "GoogleSignInSettings.jsx",
 		"dependencies": [
 			"E7",
-			"I",
 			"Pf",
 			"React",
 			"S7",
@@ -65,7 +62,6 @@
 		"file": "MicrosoftSignInSettings.jsx",
 		"dependencies": [
 			"E7",
-			"I",
 			"Pf",
 			"React",
 			"S7",
@@ -81,7 +77,7 @@
 		"binding": "A7",
 		"name": "IntegrationConfig",
 		"file": "IntegrationConfig.jsx",
-		"dependencies": [ "I", "Nr", "O7", "P7", "React", "b", "g", "j7", "k7" ]
+		"dependencies": [ "Nr", "O7", "P7", "React", "b", "g", "j7", "k7" ]
 	},
 	{
 		"binding": "U7",
@@ -95,7 +91,6 @@
 			"H7",
 			"HG",
 			"He",
-			"I",
 			"L7",
 			"M7",
 			"React",

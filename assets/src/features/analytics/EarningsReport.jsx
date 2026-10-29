@@ -2,6 +2,7 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { Skeleton } from '../../shared/skeleton';
+import * as Controls from '../../shared/controls';
 export function createEarningsReport( readRuntime ) {
 	return function EarningsReport() {
 		const {
@@ -9,7 +10,6 @@ export function createEarningsReport( readRuntime ) {
 			Aq,
 			Fq,
 			Ge,
-			I: Controls,
 			LU: EarningsChart,
 			Mq,
 			Nr: BackButton,

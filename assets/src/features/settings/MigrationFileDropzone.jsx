@@ -1,14 +1,9 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createMigrationFileDropzone( readRuntime ) {
 	return function MigrationFileDropzone( props ) {
-		const {
-			I: Controls,
-			React,
-			b: I18n,
-			e6,
-			g: ReactHooks,
-		} = readRuntime();
+		const { React, b: I18n, e6, g: ReactHooks } = readRuntime();
 		var t = props.onFileChange,
 			n = props.jsonImportEnabled,
 			r = void 0 === n || n,

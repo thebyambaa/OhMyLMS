@@ -3,10 +3,10 @@
  * Displays order action card for updating order status.
  */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createOrderStatus( readRuntime ) {
 	return function OrderStatus( { order, status } ) {
 		const {
-			I: Controls,
 			React,
 			T: StoreModule,
 			b: I18n,

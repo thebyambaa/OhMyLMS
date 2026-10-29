@@ -1,5 +1,6 @@
 import { createElement } from '@wordpress/element';
 import { TextControl } from '@wordpress/components';
+import * as Controls from '../../shared/controls';
 
 /**
  * A sale uses calendar dates; a zero sale price grants access only until its end.
@@ -8,12 +9,7 @@ import { TextControl } from '@wordpress/components';
  */
 export function createMembershipSaleSchedule( readRuntime ) {
 	return function MembershipSaleSchedule( { errors = {}, validate } ) {
-		const {
-			I: Controls,
-			T: StoreModule,
-			b: I18n,
-			y: WordPressData,
-		} = readRuntime();
+		const { T: StoreModule, b: I18n, y: WordPressData } = readRuntime();
 		const plan = WordPressData.useSelect(
 			( select ) =>
 				select( StoreModule.default ).selectMembershipPlanData(),

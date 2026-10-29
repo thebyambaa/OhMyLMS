@@ -4,13 +4,13 @@
  */
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
+import * as Controls from '../../shared/controls';
 export function createSubscriptionList( readRuntime ) {
 	return function SubscriptionList() {
 		const {
 			Br: ViewIcon,
 			Cm: SearchInput,
 			Ea: ContentCard,
-			I: Controls,
 			React,
 			T: StoreModule,
 			VY: formatDateTime,

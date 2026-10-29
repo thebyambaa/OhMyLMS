@@ -1,14 +1,9 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createCourseSlug( readRuntime ) {
 	return function CourseSlug( props ) {
-		const {
-			I: Controls,
-			Mz,
-			React,
-			b: I18n,
-			g: ReactHooks,
-		} = readRuntime();
+		const { Mz, React, b: I18n, g: ReactHooks } = readRuntime();
 		var slug = props.slug,
 			handleSlugChange = props.handleSlugChange,
 			r = ( function ( e, t ) {

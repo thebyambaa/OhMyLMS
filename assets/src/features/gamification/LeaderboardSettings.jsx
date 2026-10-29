@@ -3,10 +3,10 @@ import { showRequestError } from '../requestFeedback.mjs';
 import { createElement } from '@wordpress/element';
 import { FeatureSwitch } from './FeatureSwitch';
 import { useNotifications } from '../../shared/notices';
+import * as Controls from '../../shared/controls';
 export function createLeaderboardSettings( readRuntime ) {
 	return function LeaderboardSettings() {
 		const {
-			I: Controls,
 			React,
 			T: StoreModule,
 			_2,

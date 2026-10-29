@@ -1,10 +1,10 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
+import * as Controls from '../../shared/controls';
 export function createSubscriptionDetails( readRuntime ) {
 	return function SubscriptionDetails() {
 		const {
-			I: Controls,
 			KQ,
 			Nr: BackButton,
 			OQ,

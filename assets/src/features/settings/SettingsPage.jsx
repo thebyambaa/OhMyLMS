@@ -6,13 +6,13 @@ import { AiTutorSettings } from './AiTutorSettings';
 import { XApiSettings } from './XApiSettings';
 import { DesignSystemSettings } from './DesignSystemSettings';
 import { useNotifications } from '../../shared/notices';
+import * as Controls from '../../shared/controls';
 export function createSettingsPage( readRuntime ) {
 	return function SettingsPage() {
 		const {
 			C5,
 			E6: MemoMigrationSettings,
 			HG,
-			I: Controls,
 			J1: MemoPaymentSettings,
 			JK: MemoAccountPrivacySettings,
 			O6,

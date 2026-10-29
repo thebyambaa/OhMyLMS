@@ -2,12 +2,12 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
+import * as Controls from '../../shared/controls';
 export function createWebhookEditorModal( readRuntime ) {
 	return function WebhookEditorModal( props ) {
 		const {
 			B5: MemoWebhookDataMapping,
 			G5,
-			I: Controls,
 			M5: MemoWebhookDetails,
 			Q5,
 			React,

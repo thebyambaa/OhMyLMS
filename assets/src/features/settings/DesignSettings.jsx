@@ -2,13 +2,13 @@
 import { createElement } from '@wordpress/element';
 import { createThemeSettings } from './ThemeSettings';
 import { createQuizDesignSettings } from './QuizDesignSettings';
+import * as Controls from '../../shared/controls';
 export function createDesignSettings( readRuntime ) {
 	return function DesignSettings( props ) {
 		const {
 			B0,
 			D0,
 			GK,
-			I: Controls,
 			JJ,
 			React,
 			SK: MemoSettingsActionBar,

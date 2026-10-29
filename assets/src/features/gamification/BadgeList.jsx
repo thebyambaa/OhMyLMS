@@ -3,11 +3,11 @@ import { showRequestError } from '../requestFeedback.mjs';
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { EditIcon } from '../../shared/icons';
+import * as Controls from '../../shared/controls';
 export function createBadgeList( readRuntime ) {
 	return function BadgeList() {
 		const {
 			Ge,
-			I: Controls,
 			Ie,
 			Ne,
 			React,

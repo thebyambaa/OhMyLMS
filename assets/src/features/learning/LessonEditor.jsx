@@ -4,6 +4,7 @@ import { showRequestError } from '../requestFeedback.mjs';
 import { createElement } from '@wordpress/element';
 import { NativeLessonRoute } from './NativeLessonRoute';
 import { useNotifications } from '../../shared/notices';
+import * as Controls from '../../shared/controls';
 export function createLessonEditor( readRuntime ) {
 	const LegacyLessonEditor = createLegacyLessonEditor( readRuntime );
 	return function LessonEditor( props ) {
@@ -31,7 +32,6 @@ function createLegacyLessonEditor( readRuntime ) {
 		const {
 			$r,
 			Br,
-			I: Controls,
 			React,
 			T: StoreModule,
 			Ur,

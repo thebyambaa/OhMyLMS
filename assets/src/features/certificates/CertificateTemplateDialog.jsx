@@ -1,10 +1,10 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { Skeleton } from '../../shared/skeleton';
+import * as Controls from '../../shared/controls';
 export function createCertificateTemplateDialog( readRuntime ) {
 	return function CertificateTemplateDialog( props ) {
 		const {
-			I: Controls,
 			React,
 			ate,
 			b: I18n,

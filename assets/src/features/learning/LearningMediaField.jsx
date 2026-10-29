@@ -1,11 +1,11 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createLearningMediaField( readRuntime ) {
 	return function LearningMediaField( props ) {
 		const {
 			He,
-			I: Controls,
 			M,
 			Re,
 			React,

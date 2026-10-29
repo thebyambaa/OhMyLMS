@@ -1,16 +1,9 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createSubscriptionNotes( readRuntime ) {
 	return function SubscriptionNotes( props ) {
-		const {
-			I: Controls,
-			JQ,
-			JY,
-			React,
-			b: I18n,
-			g: ReactHooks,
-			q,
-		} = readRuntime();
+		const { JQ, JY, React, b: I18n, g: ReactHooks, q } = readRuntime();
 		var t = props.notes,
 			n = void 0 === t ? [] : t,
 			r =

@@ -13,7 +13,6 @@
 			"$ee",
 			"Ea",
 			"Ge",
-			"I",
 			"Ie",
 			"Ne",
 			"React",
@@ -46,7 +45,7 @@
 		"binding": "Zee",
 		"name": "CertificateNameCell",
 		"file": "CertificateNameCell.jsx",
-		"dependencies": [ "Ge", "I", "React", "b", "f", "g", "v" ]
+		"dependencies": [ "Ge", "React", "b", "f", "g", "v" ]
 	},
 	{
 		"binding": "nte",
@@ -54,7 +53,6 @@
 		"file": "CertificateTemplateCard.jsx",
 		"dependencies": [
 			"CB",
-			"I",
 			"Kee",
 			"L",
 			"React",
@@ -72,7 +70,7 @@
 		"binding": "ite",
 		"name": "CertificateTemplateDialog",
 		"file": "CertificateTemplateDialog.jsx",
-		"dependencies": [ "I", "React", "ate", "b", "f", "g", "hB", "rte" ]
+		"dependencies": [ "React", "ate", "b", "f", "g", "hB", "rte" ]
 	},
 	{
 		"binding": "Ste",
@@ -97,7 +95,6 @@
 		"file": "CertificateEditor.jsx",
 		"dependencies": [
 			"DL",
-			"I",
 			"React",
 			"T",
 			"YL",
@@ -116,7 +113,6 @@
 		"file": "CertificateEditorHeader.jsx",
 		"dependencies": [
 			"Ge",
-			"I",
 			"Nr",
 			"Re",
 			"React",
@@ -139,7 +135,6 @@
 		"file": "CertificateControls.jsx",
 		"dependencies": [
 			"He",
-			"I",
 			"IL",
 			"L",
 			"ML",
@@ -156,7 +151,7 @@
 		"binding": "qL",
 		"name": "CertificatePreview",
 		"file": "CertificatePreview.jsx",
-		"dependencies": [ "GL", "I", "React", "T", "UL", "g", "y" ]
+		"dependencies": [ "GL", "React", "T", "UL", "g", "y" ]
 	},
 	{
 		"binding": "aV",
@@ -164,7 +159,6 @@
 		"file": "CertificateCourseSelector.jsx",
 		"dependencies": [
 			"Ge",
-			"I",
 			"JL",
 			"React",
 			"T",
@@ -182,12 +176,12 @@
 		"binding": "OL",
 		"name": "CertificateTextField",
 		"file": "CertificateTextField.jsx",
-		"dependencies": [ "EL", "I", "L", "PL", "React", "SL", "b", "g", "xL" ]
+		"dependencies": [ "EL", "L", "PL", "React", "SL", "b", "g", "xL" ]
 	},
 	{
 		"binding": "AL",
 		"name": "CertificateImageField",
 		"file": "CertificateImageField.jsx",
-		"dependencies": [ "I", "M", "React", "b", "g", "hu", "jL" ]
+		"dependencies": [ "M", "React", "b", "g", "hu", "jL" ]
 	}
 ]

@@ -40,6 +40,7 @@ const factory = new Function(
 	'CheckboxControl',
 	'CurriculumMindmap',
 	'restUrl',
+	'Controls',
 	`${ code }; return createMembershipCourses;`
 )(
 	element,
@@ -48,7 +49,8 @@ const factory = new Function(
 	'Spinner',
 	'CheckboxControl',
 	'CurriculumMindmap',
-	restUrl
+	restUrl,
+	{ SpacerWP: 'Spacer', HeadingWP: 'Heading' }
 );
 function flatten( node ) {
 	return ! node || typeof node !== 'object'

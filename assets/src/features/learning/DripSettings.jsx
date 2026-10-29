@@ -1,8 +1,9 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createDripSettings( readRuntime ) {
 	return function DripSettings( props ) {
-		const { I: Controls, Kt, React, Rn, b: I18n, xn } = readRuntime();
+		const { Kt, React, Rn, b: I18n, xn } = readRuntime();
 		var onChange = props.onChange,
 			isChecked = props.isChecked,
 			onDripFeedTypeChange = props.onDripFeedTypeChange,

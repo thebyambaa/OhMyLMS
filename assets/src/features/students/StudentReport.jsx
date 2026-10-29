@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createStudentReport( readRuntime ) {
 	return function StudentReport() {
 		const {
@@ -10,7 +11,6 @@ export function createStudentReport( readRuntime ) {
 			GZ,
 			HG,
 			HZ,
-			I: Controls,
 			Nr,
 			React,
 			T: StoreModule,

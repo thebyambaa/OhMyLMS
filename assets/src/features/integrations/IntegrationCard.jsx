@@ -1,17 +1,10 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createIntegrationCard( readRuntime ) {
 	return function IntegrationCard( props ) {
-		const {
-			F6,
-			I: Controls,
-			N6,
-			React,
-			T6,
-			b: I18n,
-			g: ReactHooks,
-		} = readRuntime();
+		const { F6, N6, React, T6, b: I18n, g: ReactHooks } = readRuntime();
 		var t = props.integration,
 			n = props.onToggle,
 			r = props.onManage,

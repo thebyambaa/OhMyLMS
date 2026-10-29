@@ -1,10 +1,10 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createWebhookDataMapping( readRuntime ) {
 	return function WebhookDataMapping( props ) {
 		const {
 			D5,
-			I: Controls,
 			I5,
 			Ps,
 			React,

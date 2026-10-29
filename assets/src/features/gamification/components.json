@@ -29,7 +29,6 @@
 		"name": "LeaderboardSettings",
 		"file": "LeaderboardSettings.jsx",
 		"dependencies": [
-			"I",
 			"L",
 			"React",
 			"T",
@@ -50,7 +49,6 @@
 		"file": "BonusPointSettings.jsx",
 		"dependencies": [
 			"A2",
-			"I",
 			"I2",
 			"L",
 			"M2",
@@ -73,7 +71,6 @@
 		"dependencies": [
 			"D2",
 			"FK",
-			"I",
 			"M",
 			"React",
 			"Tt",
@@ -88,7 +85,7 @@
 		"binding": "G2",
 		"name": "AchievementRules",
 		"file": "AchievementRules.jsx",
-		"dependencies": [ "I", "React", "V2", "We", "b", "lf" ]
+		"dependencies": [ "React", "V2", "We", "b", "lf" ]
 	},
 	{
 		"binding": "o3",
@@ -96,7 +93,6 @@
 		"file": "BadgeEditor.jsx",
 		"dependencies": [
 			"FK",
-			"I",
 			"J2",
 			"L2",
 			"Pf",
@@ -121,7 +117,6 @@
 		"file": "BadgeList.jsx",
 		"dependencies": [
 			"Ge",
-			"I",
 			"Ie",
 			"Ne",
 			"React",
@@ -147,7 +142,6 @@
 		"file": "BadgeSettings.jsx",
 		"dependencies": [
 			"He",
-			"I",
 			"L",
 			"React",
 			"T",
@@ -169,7 +163,6 @@
 			"D3",
 			"F3",
 			"FK",
-			"I",
 			"N3",
 			"O3",
 			"Pf",
@@ -192,7 +185,6 @@
 		"file": "LevelList.jsx",
 		"dependencies": [
 			"Ge",
-			"I",
 			"Ie",
 			"L3",
 			"Ne",
@@ -221,7 +213,6 @@
 		"dependencies": [
 			"$3",
 			"He",
-			"I",
 			"L",
 			"React",
 			"T",
@@ -240,7 +231,6 @@
 		"name": "RewardSettings",
 		"file": "RewardSettings.jsx",
 		"dependencies": [
-			"I",
 			"L",
 			"React",
 			"T",

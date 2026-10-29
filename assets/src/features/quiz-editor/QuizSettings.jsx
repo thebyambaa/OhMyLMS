@@ -1,8 +1,9 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createQuizSettings( readRuntime ) {
 	return function QuizSettings( props ) {
-		const { I: Controls, React, Xm, b: I18n } = readRuntime();
+		const { React, Xm, b: I18n } = readRuntime();
 		const setIsSettingsOpen = props.setIsSettingsOpen;
 		if ( props.embedded ) {
 			return (

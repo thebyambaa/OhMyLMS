@@ -1,18 +1,9 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createAssignmentResultHeader( readRuntime ) {
 	return function AssignmentResultHeader( props ) {
-		const {
-			Ge,
-			I: Controls,
-			React,
-			b: I18n,
-			f: Router,
-			oK,
-			r$,
-			sn,
-			v,
-		} = readRuntime();
+		const { Ge, React, b: I18n, f: Router, oK, r$, sn, v } = readRuntime();
 		var t,
 			n,
 			r,

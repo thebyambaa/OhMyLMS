@@ -2,11 +2,11 @@
 import { createElement } from '@wordpress/element';
 import { FeatureSwitch } from './FeatureSwitch';
 import { useNotifications } from '../../shared/notices';
+import * as Controls from '../../shared/controls';
 export function createBonusPointSettings( readRuntime ) {
 	return function BonusPointSettings() {
 		const {
 			A2,
-			I: Controls,
 			I2,
 			M2,
 			O2,

@@ -2,13 +2,13 @@
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { EditIcon } from '../../shared/icons';
+import * as Controls from '../../shared/controls';
 export function createCategoriesPage( readRuntime ) {
 	return function CategoriesPage() {
 		const {
 			Ea,
 			Ge,
 			HG,
-			I: Controls,
 			IY,
 			Ie,
 			Ne,

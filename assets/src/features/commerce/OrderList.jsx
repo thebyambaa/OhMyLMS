@@ -5,6 +5,7 @@
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { Table } from '../../shared/table';
+import * as Controls from '../../shared/controls';
 
 export function createOrderList( readRuntime ) {
 	return function OrderList() {
@@ -12,7 +13,6 @@ export function createOrderList( readRuntime ) {
 			Br: ViewIcon,
 			Cm: SearchInput,
 			Ea: ContentCard,
-			I: Controls,
 			Ie: ConfirmDialog,
 			Ne: MenuIcon,
 			React,

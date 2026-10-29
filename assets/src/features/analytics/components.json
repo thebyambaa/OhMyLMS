@@ -7,7 +7,6 @@
 			"D",
 			"GG",
 			"HG",
-			"I",
 			"L",
 			"NG",
 			"React",
@@ -30,7 +29,6 @@
 		"file": "DashboardOverview.jsx",
 		"dependencies": [
 			"D",
-			"I",
 			"MG",
 			"React",
 			"T",
@@ -51,13 +49,13 @@
 		"binding": "mG",
 		"name": "EarningsSummaryCards",
 		"file": "EarningsSummaryCards.jsx",
-		"dependencies": [ "I", "React", "b" ]
+		"dependencies": [ "React", "b" ]
 	},
 	{
 		"binding": "wG",
 		"name": "DashboardStats",
 		"file": "DashboardStats.jsx",
-		"dependencies": [ "I", "L", "React", "b", "f" ]
+		"dependencies": [ "L", "React", "b", "f" ]
 	},
 	{
 		"binding": "MG",
@@ -66,7 +64,6 @@
 		"dependencies": [
 			"EG",
 			"Ge",
-			"I",
 			"PG",
 			"React",
 			"SG",
@@ -82,7 +79,6 @@
 		"file": "RecentCourses.jsx",
 		"dependencies": [
 			"Br",
-			"I",
 			"Ne",
 			"React",
 			"T",
@@ -110,7 +106,7 @@
 		"binding": "LG",
 		"name": "CourseImportDialog",
 		"file": "CourseImportDialog.jsx",
-		"dependencies": [ "DG", "I", "React", "WG", "b", "g", "zG" ]
+		"dependencies": [ "DG", "React", "WG", "b", "g", "zG" ]
 	},
 	{
 		"binding": "bq",
@@ -121,7 +117,6 @@
 			"EU",
 			"Ge",
 			"HG",
-			"I",
 			"IU",
 			"LU",
 			"MU",
@@ -153,7 +148,7 @@
 		"binding": "vU",
 		"name": "ReportMetricCard",
 		"file": "ReportMetricCard.jsx",
-		"dependencies": [ "I", "React" ]
+		"dependencies": [ "React" ]
 	},
 	{
 		"binding": "LU",
@@ -170,7 +165,6 @@
 			"Cm",
 			"D",
 			"Ge",
-			"I",
 			"L",
 			"React",
 			"T",
@@ -197,19 +191,19 @@
 		"binding": "XU",
 		"name": "ReportStudentCell",
 		"file": "ReportStudentCell.jsx",
-		"dependencies": [ "Ge", "I", "JU", "L", "PG", "React", "v", "vG" ]
+		"dependencies": [ "Ge", "JU", "L", "PG", "React", "v", "vG" ]
 	},
 	{
 		"binding": "GU",
 		"name": "StudentReminderDialog",
 		"file": "StudentReminderDialog.jsx",
-		"dependencies": [ "I", "M", "React", "b", "g" ]
+		"dependencies": [ "M", "React", "b", "g" ]
 	},
 	{
 		"binding": "QU",
 		"name": "AnalyticsDateFilter",
 		"file": "AnalyticsDateFilter.jsx",
-		"dependencies": [ "I", "React", "b", "g", "qU" ]
+		"dependencies": [ "React", "b", "g", "qU" ]
 	},
 	{
 		"binding": "Wq",
@@ -226,7 +220,6 @@
 			"Aq",
 			"Fq",
 			"Ge",
-			"I",
 			"L",
 			"LU",
 			"Mq",
@@ -255,17 +248,6 @@
 		"binding": "Sq",
 		"name": "TransactionHistory",
 		"file": "TransactionHistory.jsx",
-		"dependencies": [
-			"Eq",
-			"I",
-			"L",
-			"React",
-			"ZU",
-			"b",
-			"df",
-			"g",
-			"uf",
-			"vn"
-		]
+		"dependencies": [ "Eq", "L", "React", "ZU", "b", "df", "g", "uf", "vn" ]
 	}
 ]

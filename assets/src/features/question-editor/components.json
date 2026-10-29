@@ -6,7 +6,6 @@
 		"dependencies": [
 			"Au",
 			"Eu",
-			"I",
 			"Ie",
 			"Iu",
 			"L",
@@ -74,7 +73,7 @@
 		"binding": "td",
 		"name": "TrueFalseEditor",
 		"file": "TrueFalseEditor.jsx",
-		"dependencies": [ "I", "React", "T", "Xs", "b", "y" ]
+		"dependencies": [ "React", "T", "Xs", "b", "y" ]
 	},
 	{
 		"binding": "sd",
@@ -98,7 +97,7 @@
 		"binding": "Dd",
 		"name": "FillInTheBlankEditor",
 		"file": "FillInTheBlankEditor.jsx",
-		"dependencies": [ "Fd", "I", "L", "React", "T", "b", "y" ]
+		"dependencies": [ "Fd", "L", "React", "T", "b", "y" ]
 	},
 	{
 		"binding": "tm",
@@ -107,7 +106,6 @@
 		"dependencies": [
 			"$d",
 			"$e",
-			"I",
 			"Jd",
 			"Qd",
 			"React",
@@ -128,7 +126,6 @@
 		"file": "MatchingEditor.jsx",
 		"dependencies": [
 			"$e",
-			"I",
 			"React",
 			"T",
 			"We",

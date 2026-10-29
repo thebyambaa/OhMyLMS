@@ -3,13 +3,14 @@
  * Displays order general information (assigned student details).
  */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createOrderGeneral( readRuntime ) {
 	return function OrderGeneral( {
 		student_name: _studentName,
 		student_email: _studentEmail,
 		student_id: _studentId,
 	} ) {
-		const { I: Controls, React, b: I18n } = readRuntime();
+		const { React, b: I18n } = readRuntime();
 		return (
 			<React.Fragment>
 				<Controls.HeadingWP

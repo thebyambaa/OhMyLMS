@@ -1,8 +1,9 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createStudentReminderDialog( readRuntime ) {
 	return function StudentReminderDialog( props ) {
-		const { I: Controls, M, React, b: I18n, g: ReactHooks } = readRuntime();
+		const { M, React, b: I18n, g: ReactHooks } = readRuntime();
 		M().noConflict();
 		var t = props.title,
 			n = void 0 === t ? ( 0, I18n.__ )( 'Send Reminder', 'ohmylms' ) : t,

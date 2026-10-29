@@ -3,11 +3,11 @@ import { validateCoupon } from './model.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { CopyToClipboard } from '../../shared/copy-to-clipboard';
+import * as Controls from '../../shared/controls';
 export function createCouponModal( readRuntime ) {
 	return function CouponModal( props ) {
 		const {
 			Ge: decodeEntities,
-			I: Controls,
 			Nm: SettingSelect,
 			Pf: SettingField,
 			Pre,

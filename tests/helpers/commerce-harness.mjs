@@ -103,6 +103,7 @@ function harness( states = [] ) {
 		console: { error() {} },
 		window: {},
 		I: controls,
+		Controls: controls,
 		b: { __: ( text ) => text },
 		HG() {},
 		Ge: ( text ) => text,

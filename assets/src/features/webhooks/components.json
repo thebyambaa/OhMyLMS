@@ -3,35 +3,13 @@
 		"binding": "A5",
 		"name": "WebhookDetails",
 		"file": "WebhookDetails.jsx",
-		"dependencies": [
-			"Ge",
-			"I",
-			"Nm",
-			"Pf",
-			"React",
-			"T",
-			"b",
-			"j5",
-			"k5",
-			"y"
-		]
+		"dependencies": [ "Ge", "Nm", "Pf", "React", "T", "b", "j5", "k5", "y" ]
 	},
 	{
 		"binding": "z5",
 		"name": "WebhookDataMapping",
 		"file": "WebhookDataMapping.jsx",
-		"dependencies": [
-			"D5",
-			"I",
-			"I5",
-			"Ps",
-			"React",
-			"T",
-			"W5",
-			"b",
-			"ks",
-			"y"
-		]
+		"dependencies": [ "D5", "I5", "Ps", "React", "T", "W5", "b", "ks", "y" ]
 	},
 	{
 		"binding": "$5",
@@ -40,7 +18,6 @@
 		"dependencies": [
 			"B5",
 			"G5",
-			"I",
 			"M5",
 			"Q5",
 			"React",
@@ -60,7 +37,6 @@
 			"Ea",
 			"HG",
 			"He",
-			"I",
 			"Ie",
 			"J5",
 			"K5",

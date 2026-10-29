@@ -1,8 +1,9 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createSettingsActionBar( readRuntime ) {
 	return function SettingsActionBar( props ) {
-		const { D: Buttons, I: Controls, React, b: I18n } = readRuntime();
+		const { D: Buttons, React, b: I18n } = readRuntime();
 		var t = props.activeTab,
 			n = props.handleSave,
 			r = props.handleMigration,

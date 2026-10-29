@@ -3,11 +3,11 @@ import { showRequestError } from '../requestFeedback.mjs';
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { EditIcon } from '../../shared/icons';
+import * as Controls from '../../shared/controls';
 export function createLevelList( readRuntime ) {
 	return function LevelList( props ) {
 		const {
 			Ge,
-			I: Controls,
 			Ie,
 			L3: LevelEditor,
 			Ne,

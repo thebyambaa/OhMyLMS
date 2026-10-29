@@ -1,14 +1,9 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createAnalyticsDateFilter( readRuntime ) {
 	return function AnalyticsDateFilter( props ) {
-		const {
-			I: Controls,
-			React,
-			b: I18n,
-			g: ReactHooks,
-			qU,
-		} = readRuntime();
+		const { React, b: I18n, g: ReactHooks, qU } = readRuntime();
 		var t = props.defaultValue,
 			n = props.placeholder,
 			r = props.onChange,

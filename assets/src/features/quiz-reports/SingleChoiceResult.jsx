@@ -1,13 +1,9 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createSingleChoiceResult( readRuntime ) {
 	return function SingleChoiceResult( props ) {
-		const {
-			I: Controls,
-			React,
-			b: I18n,
-			p$: QuizQuestionHeader,
-		} = readRuntime();
+		const { React, b: I18n, p$: QuizQuestionHeader } = readRuntime();
 		var t,
 			n,
 			data = props.data,

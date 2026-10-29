@@ -34,7 +34,7 @@ report is stale.
 | --- | --- | --- | --- |
 | 1 | Dependency inventory | Every recovered library and LMS-owned module has an owner and plan | **Done**: generated report, zero unassigned bindings, drift test |
 | 2 | Easy Email and remaining libraries | Email UI, editor core, source editor, html2canvas and embedded vendor copies use maintained packages or documented replacements; saved templates still open | Partly done (MJML, Arco shared factory, Chart.js, Emotion, Tiptap, Lowlight) |
-| 3 | Shared application infrastructure | Routing, controls, notifications, permissions, configuration and utilities have named modules and public exports | Not started |
+| 3 | Shared application infrastructure | Routing, controls, notifications, permissions, configuration and utilities have named modules and public exports | In progress: notices, skeleton, avatar, spinner, tooltip, copy button, table, icons and 41 of 43 used controls are authored modules under `assets/src/shared`. Routing, permissions, configuration, `AdvancedSelectWP`, `SearchSelectWP` and the admin-menu, HTML-text and media helpers remain |
 | 4 | State and API access | Features import their stores, hooks and API clients directly | Not started |
 | 5 | Feature independence | Features use normal components and explicit imports, not `createComponent(readRuntime)` | Components extracted; they still read the runtime |
 | 6 | Authored entry point | A small bootstrap registers routes, initializes services and loads features. Production startup needs no numeric Webpack IDs or adapters | Not started |

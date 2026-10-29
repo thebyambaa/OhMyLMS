@@ -2,6 +2,7 @@
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { EditIcon } from '../../shared/icons';
+import * as Controls from '../../shared/controls';
 export function createTagsPage( readRuntime ) {
 	return function TagsPage() {
 		const {
@@ -9,7 +10,6 @@ export function createTagsPage( readRuntime ) {
 			Ea,
 			Ge,
 			HG,
-			I: Controls,
 			Ie,
 			NY,
 			Ne,

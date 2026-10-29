@@ -56,24 +56,24 @@ Platform is zero and its components no longer use `createComponent(readRuntime)`
 
 | Feature | Components | Platform | Shared | State/API | Vendor | Other features | Own recovered | Babel helpers |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| analytics | 18 | 7 | 22 | 1 | 6 | 2 | 12 | 30 |
-| certificates | 13 | 6 | 14 | 4 | 5 | 0 | 3 | 35 |
-| commerce | 22 | 7 | 19 | 1 | 5 | 1 | 4 | 23 |
+| analytics | 18 | 7 | 21 | 1 | 6 | 2 | 12 | 30 |
+| certificates | 13 | 6 | 13 | 4 | 5 | 0 | 3 | 35 |
+| commerce | 22 | 7 | 18 | 1 | 5 | 1 | 4 | 23 |
 | communities | 5 | 6 | 10 | 2 | 2 | 1 | 1 | 12 |
-| courses | 25 | 6 | 21 | 4 | 12 | 4 | 26 | 68 |
-| emails | 12 | 5 | 6 | 1 | 5 | 1 | 1 | 16 |
+| courses | 25 | 6 | 20 | 4 | 12 | 4 | 26 | 68 |
+| emails | 12 | 5 | 5 | 1 | 5 | 1 | 1 | 16 |
 | gamification | 13 | 6 | 9 | 2 | 3 | 0 | 1 | 54 |
-| integrations | 7 | 5 | 5 | 3 | 0 | 0 | 2 | 27 |
-| learning | 25 | 6 | 24 | 2 | 6 | 1 | 16 | 72 |
+| integrations | 7 | 5 | 4 | 3 | 0 | 0 | 2 | 27 |
+| learning | 25 | 6 | 23 | 2 | 6 | 1 | 16 | 72 |
 | memberships | 7 | 6 | 16 | 2 | 3 | 0 | 5 | 23 |
-| question-editor | 13 | 5 | 5 | 1 | 1 | 0 | 11 | 20 |
-| quiz-editor | 4 | 4 | 5 | 2 | 1 | 1 | 5 | 8 |
-| quiz-reports | 10 | 4 | 9 | 0 | 3 | 0 | 4 | 10 |
-| settings | 19 | 5 | 10 | 3 | 3 | 3 | 10 | 62 |
+| question-editor | 13 | 5 | 4 | 1 | 1 | 0 | 11 | 20 |
+| quiz-editor | 4 | 4 | 4 | 2 | 1 | 1 | 5 | 8 |
+| quiz-reports | 10 | 4 | 8 | 0 | 3 | 0 | 4 | 10 |
+| settings | 19 | 5 | 9 | 3 | 3 | 3 | 10 | 62 |
 | setup | 11 | 5 | 4 | 1 | 3 | 0 | 11 | 25 |
-| students | 4 | 7 | 18 | 3 | 5 | 2 | 4 | 15 |
-| taxonomies | 3 | 6 | 9 | 1 | 1 | 0 | 0 | 16 |
-| webhooks | 4 | 5 | 12 | 2 | 1 | 0 | 2 | 16 |
+| students | 4 | 7 | 17 | 3 | 5 | 2 | 4 | 15 |
+| taxonomies | 3 | 6 | 8 | 1 | 1 | 0 | 0 | 16 |
+| webhooks | 4 | 5 | 11 | 2 | 1 | 0 | 2 | 16 |
 
 ## Shared application infrastructure (step 3)
 
@@ -84,7 +84,6 @@ feature reads. Each becomes a direct import or a named public module.
 | --- | --- | --- | --- |
 | `b` | @wordpress/i18n | 18 | direct `@wordpress/*` / `@wordpress/element` import |
 | `g` | react (wp.element) | 18 | direct `@wordpress/*` / `@wordpress/element` import |
-| `I` | Shared controls kit (`*WP` wrappers) (factory 38093) | 18 | named shared module (step 3) |
 | `React` | react (wp.element) | 18 | direct `@wordpress/*` / `@wordpress/element` import |
 | `y` | @wordpress/data | 17 | direct `@wordpress/*` / `@wordpress/element` import |
 | `HG` | helper in dashboard-income-overview.js | 14 | named shared module (step 3) |
@@ -102,6 +101,7 @@ feature reads. Each becomes a direct import or a named public module.
 | `Br` | component in lesson-editor.js | 5 | named shared module (step 3) |
 | `D` | Unlabelled module (factory 94490) | 5 | named shared module (step 3) |
 | `xq` | helper in earnings-report.js | 5 | named shared module (step 3) |
+| `I` | Shared controls kit (`*WP` wrappers) (factory 38093) | 4 | named shared module (step 3) |
 | `nf` | component in course-thumbnail-controls.js | 4 | named shared module (step 3) |
 | `Nm` | component in quiz-matching-question-editor.js | 4 | named shared module (step 3) |
 | `vn` | Wrapper around @wordpress/components SelectControl (factory 54870) | 4 | named shared module (step 3) |

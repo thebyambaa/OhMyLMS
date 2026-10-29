@@ -2,11 +2,11 @@
 import { createElement } from '@wordpress/element';
 import { MovableTabPanel } from '../navigation/MovableTabPanel';
 import { Switcher } from '../../shared/spinner';
+import * as Controls from '../../shared/controls';
 export function createEmailTemplateList( readRuntime ) {
 	return function EmailTemplateList() {
 		const {
 			D: Buttons,
-			I: Controls,
 			React,
 			T: StoreModule,
 			b: I18n,

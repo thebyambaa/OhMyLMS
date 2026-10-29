@@ -9,12 +9,12 @@ import {
 	useExportQuiz,
 } from '../content-hub/QuizActions';
 import { EditIcon } from '../../shared/icons';
+import * as Controls from '../../shared/controls';
 export function createQuizList( readRuntime ) {
 	return function QuizList() {
 		const {
 			Ea,
 			Ge,
-			I: Controls,
 			Ie,
 			Ne,
 			React,

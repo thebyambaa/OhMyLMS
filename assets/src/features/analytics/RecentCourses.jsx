@@ -2,11 +2,11 @@
 import { createElement } from '@wordpress/element';
 import { Table } from '../../shared/table';
 import { EditIcon } from '../../shared/icons';
+import * as Controls from '../../shared/controls';
 export function createRecentCourses( readRuntime ) {
 	return function RecentCourses( props ) {
 		const {
 			Br,
-			I: Controls,
 			Ne,
 			React,
 			T: StoreModule,

@@ -15,7 +15,6 @@
 			"Ge",
 			"H8",
 			"He",
-			"I",
 			"Ie",
 			"L",
 			"L8",
@@ -53,7 +52,6 @@
 			"D8",
 			"F8",
 			"He",
-			"I",
 			"I8",
 			"L",
 			"React",
@@ -71,7 +69,6 @@
 		"file": "MembershipDetails.jsx",
 		"dependencies": [
 			"Ge",
-			"I",
 			"J7",
 			"Nm",
 			"Pf",
@@ -95,13 +92,13 @@
 		"binding": "K7",
 		"name": "MembershipPricing",
 		"file": "MembershipPricing.jsx",
-		"dependencies": [ "$7", "I", "React", "T", "Z7", "_n", "b", "y" ]
+		"dependencies": [ "$7", "React", "T", "Z7", "_n", "b", "y" ]
 	},
 	{
 		"binding": "o8",
 		"name": "MembershipSaleSchedule",
 		"file": "MembershipSaleSchedule.jsx",
-		"dependencies": [ "I", "T", "b", "y" ]
+		"dependencies": [ "T", "b", "y" ]
 	},
 	{
 		"binding": "T8",
@@ -111,7 +108,6 @@
 			"C8",
 			"Ea",
 			"Ge",
-			"I",
 			"O8",
 			"React",
 			"S8",
@@ -122,7 +118,8 @@
 			"k8",
 			"l",
 			"x8",
-			"y"
+			"y",
+			"I"
 		]
 	}
 ]

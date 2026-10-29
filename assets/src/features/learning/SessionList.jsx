@@ -1,13 +1,13 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { EditIcon } from '../../shared/icons';
+import * as Controls from '../../shared/controls';
 export function createSessionList( readRuntime ) {
 	return function SessionList() {
 		const {
 			Al: ZoomEditor,
 			Ea,
 			Gp,
-			I: Controls,
 			Ne,
 			RZ,
 			React,

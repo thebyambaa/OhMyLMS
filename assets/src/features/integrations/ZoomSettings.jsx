@@ -1,11 +1,11 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createZoomSettings( readRuntime ) {
 	return function ZoomSettings( props ) {
 		const {
 			H6,
-			I: Controls,
 			L6,
 			Pf,
 			React,

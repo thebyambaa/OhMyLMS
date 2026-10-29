@@ -3,6 +3,7 @@ import { showRequestError } from '../requestFeedback.mjs';
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { EditIcon } from '../../shared/icons';
+import * as Controls from '../../shared/controls';
 export function createMembershipList( readRuntime ) {
 	return function MembershipList() {
 		const {
@@ -11,7 +12,6 @@ export function createMembershipList( readRuntime ) {
 			Ge,
 			H8,
 			He,
-			I: Controls,
 			Ie,
 			L8: MembershipEditor,
 			Ne,

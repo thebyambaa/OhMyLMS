@@ -2,6 +2,7 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
+import * as Controls from '../../shared/controls';
 export function createEmailEditor( readRuntime ) {
 	return function EmailEditor() {
 		const {
@@ -10,7 +11,6 @@ export function createEmailEditor( readRuntime ) {
 			Ea,
 			Fee: MemoEmailFields,
 			Hee,
-			I: Controls,
 			Oee: MemoEmailPreview,
 			React,
 			Ree: MemoEmailEditorHeader,

@@ -2,11 +2,11 @@
 import { createElement } from '@wordpress/element';
 import { Avatar } from '../../shared/avatar';
 import { EditIcon } from '../../shared/icons';
+import * as Controls from '../../shared/controls';
 export function createCertificateNameCell( readRuntime ) {
 	return function CertificateNameCell( props ) {
 		const {
 			Ge,
-			I: Controls,
 			React,
 			b: I18n,
 			f: Router,

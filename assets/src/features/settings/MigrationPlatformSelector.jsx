@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createMigrationPlatformSelector( readRuntime ) {
 	return function MigrationPlatformSelector() {
 		const {
@@ -8,7 +9,6 @@ export function createMigrationPlatformSelector( readRuntime ) {
 			B4,
 			G4,
 			H4,
-			I: Controls,
 			K4,
 			React,
 			T: StoreModule,

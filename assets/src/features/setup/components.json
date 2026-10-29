@@ -3,23 +3,13 @@
 		"binding": "Qte",
 		"name": "SetupWelcome",
 		"file": "SetupWelcome.jsx",
-		"dependencies": [
-			"I",
-			"React",
-			"T",
-			"Wte",
-			"Yte",
-			"b",
-			"g",
-			"qte",
-			"y"
-		]
+		"dependencies": [ "React", "T", "Wte", "Yte", "b", "g", "qte", "y" ]
 	},
 	{
 		"binding": "rne",
 		"name": "SetupLevelSelection",
 		"file": "SetupLevelSelection.jsx",
-		"dependencies": [ "Gte", "I", "React", "T", "b", "nne", "y" ]
+		"dependencies": [ "Gte", "React", "T", "b", "nne", "y" ]
 	},
 	{
 		"binding": "gne",
@@ -27,7 +17,6 @@
 		"file": "SetupPreferences.jsx",
 		"dependencies": [
 			"Gte",
-			"I",
 			"React",
 			"T",
 			"b",
@@ -40,7 +29,8 @@
 			"pne",
 			"sne",
 			"une",
-			"y"
+			"y",
+			"I"
 		]
 	},
 	{
@@ -51,7 +41,6 @@
 			"Cne",
 			"Ene",
 			"Gte",
-			"I",
 			"Pne",
 			"React",
 			"T",
@@ -76,7 +65,6 @@
 			"Gne",
 			"Gte",
 			"Hne",
-			"I",
 			"Lne",
 			"React",
 			"T",
@@ -95,7 +83,7 @@
 		"binding": "$ne",
 		"name": "ScormImport",
 		"file": "ScormImport.jsx",
-		"dependencies": [ "Gte", "I", "Qne", "React", "T", "b", "g", "y" ]
+		"dependencies": [ "Gte", "Qne", "React", "T", "b", "g", "y" ]
 	},
 	{
 		"binding": "lre",
@@ -103,7 +91,6 @@
 		"file": "CourseImport.jsx",
 		"dependencies": [
 			"Gte",
-			"I",
 			"Kne",
 			"React",
 			"T",
@@ -125,7 +112,6 @@
 		"file": "SetupCompletion.jsx",
 		"dependencies": [
 			"Ane",
-			"I",
 			"Nte",
 			"React",
 			"T",

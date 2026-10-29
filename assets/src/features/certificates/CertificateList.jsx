@@ -2,13 +2,13 @@
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { EditIcon } from '../../shared/icons';
+import * as Controls from '../../shared/controls';
 export function createCertificateList( readRuntime ) {
 	return function CertificateList() {
 		const {
 			$ee: MemoCertificateNameCell,
 			Ea,
 			Ge,
-			I: Controls,
 			Ie,
 			Ne,
 			React,

@@ -1,8 +1,9 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createCourseAccess( readRuntime ) {
 	return function CourseAccess( props ) {
-		const { I: Controls, React, b: I18n, bz, hz, ls } = readRuntime();
+		const { React, b: I18n, bz, hz, ls } = readRuntime();
 		var access = props.access,
 			handleAccessChange = props.handleAccessChange,
 			r = [

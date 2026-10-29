@@ -1,8 +1,9 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createReportMetricCard( readRuntime ) {
 	return function ReportMetricCard( props ) {
-		const { I: Controls, React } = readRuntime();
+		const { React } = readRuntime();
 		var t = props.title,
 			n = void 0 === t ? '' : t,
 			r = props.numberSize,

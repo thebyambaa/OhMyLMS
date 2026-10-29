@@ -15,10 +15,10 @@ import { ViewAsModal, canViewAs } from '../schools/ViewAsModal';
 import { PreviewHome } from '../schools/PreviewHome';
 import { useNotifications } from '../../shared/notices';
 import { Table } from '../../shared/table';
+import * as Controls from '../../shared/controls';
 export function createStudentList( readRuntime ) {
 	function StudentTable() {
 		const {
-			I: Controls,
 			aY: Filters,
 			e9: NameCell,
 			fN: Pagination,
@@ -375,7 +375,7 @@ export function createStudentList( readRuntime ) {
 	}
 	return function StudentList() {
 		const _controlId = useId();
-		const { I: Controls, YG: Header } = readRuntime();
+		const { YG: Header } = readRuntime();
 		const currentTab = () => {
 			const value = new URLSearchParams(
 				window.location.hash.split( '?' )[ 1 ]

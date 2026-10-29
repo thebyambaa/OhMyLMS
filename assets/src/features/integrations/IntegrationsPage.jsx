@@ -2,6 +2,7 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
+import * as Controls from '../../shared/controls';
 export function createIntegrationsPage( readRuntime ) {
 	return function IntegrationsPage() {
 		const {
@@ -12,7 +13,6 @@ export function createIntegrationsPage( readRuntime ) {
 			H7: IntegrationCategories,
 			HG,
 			He,
-			I: Controls,
 			L7,
 			M7: MemoIntegrationConfig,
 			React,

@@ -2,11 +2,11 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
+import * as Controls from '../../shared/controls';
 export function createAssignmentGrading( readRuntime ) {
 	return function AssignmentGrading() {
 		const {
 			HG,
-			I: Controls,
 			React,
 			T: StoreModule,
 			X$: AssignmentGradeForm,

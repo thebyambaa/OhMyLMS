@@ -1,8 +1,9 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createCourseResources( readRuntime ) {
 	return function CourseResources() {
-		const { Gz, I: Controls, React, bV } = readRuntime();
+		const { Gz, React, bV } = readRuntime();
 		return (
 			<Controls.CardWP isBorderless={ ! 0 }>
 				<Controls.SpacerWP

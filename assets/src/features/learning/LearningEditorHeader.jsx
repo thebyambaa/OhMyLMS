@@ -1,9 +1,10 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { editorBackPath } from '../content-hub/editorNavigation.mjs';
+import * as Controls from '../../shared/controls';
 export function createLearningEditorHeader( readRuntime ) {
 	return function LearningEditorHeader( props ) {
-		const { I: Controls, Nr, React, f: Router } = readRuntime();
+		const { Nr, React, f: Router } = readRuntime();
 		var title = props.title,
 			redirection = props.redirection,
 			rightContent = props.rightContent,

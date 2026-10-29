@@ -3,11 +3,11 @@
  * Displays order title, ID, payment method, transaction link, and creation date.
  */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createOrderHeader( readRuntime ) {
 	return function OrderHeader( { order } ) {
 		const {
 			Ge: decodeEntities,
-			I: Controls,
 			JY: formatOrderDate,
 			React,
 			b: I18n,

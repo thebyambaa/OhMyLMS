@@ -1,10 +1,10 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createMicrosoftSignInSettings( readRuntime ) {
 	return function MicrosoftSignInSettings( props ) {
 		const {
 			E7,
-			I: Controls,
 			Pf,
 			React,
 			S7,

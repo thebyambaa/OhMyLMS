@@ -1,10 +1,10 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { MCPSettings } from '../settings/MCPSettings';
+import * as Controls from '../../shared/controls';
 export function createIntegrationConfig( readRuntime ) {
 	return function IntegrationConfig( props ) {
 		const {
-			I: Controls,
 			Nr,
 			O7,
 			P7,

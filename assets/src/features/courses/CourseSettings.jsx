@@ -2,11 +2,11 @@ import { createElement } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 import { CourseLearning } from './CourseLearning';
+import * as Controls from '../../shared/controls';
 
 export function createCourseSettings( readRuntime ) {
 	return function CourseSettings() {
 		const {
-			I: Controls,
 			T: { default: store },
 			f: Router,
 			Lz: Basics,

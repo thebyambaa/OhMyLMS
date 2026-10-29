@@ -3,13 +3,13 @@ import { showRequestError } from '../requestFeedback.mjs';
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { Table } from '../../shared/table';
+import * as Controls from '../../shared/controls';
 export function createCourseStudentsReport( readRuntime ) {
 	return function CourseStudentsReport( props ) {
 		const {
 			Cm,
 			D: Buttons,
 			Ge,
-			I: Controls,
 			React,
 			T: StoreModule,
 			UU: StudentReminderDialog,

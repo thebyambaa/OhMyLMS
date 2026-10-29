@@ -3,13 +3,13 @@ import { showRequestError } from '../requestFeedback.mjs';
 import { createElement } from '@wordpress/element';
 import { createAchievementRules } from './AchievementRules';
 import { useNotifications } from '../../shared/notices';
+import * as Controls from '../../shared/controls';
 export function createLevelEditor( readRuntime ) {
 	const AchievementRules = createAchievementRules( readRuntime );
 	return function LevelEditor( props ) {
 		const {
 			F3,
 			FK,
-			I: Controls,
 			N3,
 			O3,
 			Pf,

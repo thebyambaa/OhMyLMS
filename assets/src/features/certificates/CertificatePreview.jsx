@@ -1,10 +1,10 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createCertificatePreview( readRuntime ) {
 	return function CertificatePreview( props ) {
 		const {
 			GL,
-			I: Controls,
 			React,
 			T: StoreModule,
 			UL,

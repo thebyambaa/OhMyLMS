@@ -1,7 +1,8 @@
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 
 export function ListTableFrame( { readRuntime, toolbar, children } ) {
-	const { I: Controls, Ea: Card } = readRuntime();
+	const { Ea: Card } = readRuntime();
 	return (
 		<Card isBorderless minHeight="calc(100vh - 200px)">
 			<Controls.SpacerWP padding={ 5 }>

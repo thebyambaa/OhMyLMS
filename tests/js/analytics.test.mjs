@@ -99,6 +99,7 @@ function harness( states = [] ) {
 		sortRecentCourses,
 		window: {},
 		I: controls,
+		Controls: controls,
 		b: { __: ( text ) => text },
 		HG() {},
 		Ge: ( text ) => text,

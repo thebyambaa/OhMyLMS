@@ -3,17 +3,10 @@ import { showRequestError } from '../requestFeedback.mjs';
 import { createElement } from '@wordpress/element';
 import { Tooltip } from '../../shared/tooltip';
 import { InfoIcon } from '../../shared/icons';
+import * as Controls from '../../shared/controls';
 export function createCertificateImageField( readRuntime ) {
 	return function CertificateImageField( props ) {
-		const {
-			I: Controls,
-			M,
-			React,
-			b: I18n,
-			g: ReactHooks,
-			hu,
-			jL,
-		} = readRuntime();
+		const { M, React, b: I18n, g: ReactHooks, hu, jL } = readRuntime();
 		M().noConflict();
 		var t = props.thumbnail,
 			n = void 0 === t ? null : t,

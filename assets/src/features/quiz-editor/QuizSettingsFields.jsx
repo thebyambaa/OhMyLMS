@@ -2,12 +2,12 @@
 import { createElement } from '@wordpress/element';
 import { PlayerTemplatePicker } from './PlayerTemplatePicker';
 import { Switcher } from '../../shared/spinner';
+import * as Controls from '../../shared/controls';
 export function createQuizSettingsFields( readRuntime ) {
 	return function QuizSettingsFields( props ) {
 		const {
 			$m,
 			He,
-			I: Controls,
 			Km,
 			Pn,
 			React,

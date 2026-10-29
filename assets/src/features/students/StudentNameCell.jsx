@@ -1,9 +1,9 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createStudentNameCell( readRuntime ) {
 	return function StudentNameCell( props ) {
 		const {
-			I: Controls,
 			JU,
 			React,
 			UG,

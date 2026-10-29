@@ -3,12 +3,12 @@
  * Displays related orders table (linked subscriptions, renewal orders, parent orders).
  */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 
 export function createRelatedOrders( readRuntime ) {
 	return function RelatedOrders( { relatedOrders = [] } ) {
 		const {
 			Ge: decodeEntities,
-			I: Controls,
 			OQ: formatPrice,
 			React,
 			VY: formatDateTime,

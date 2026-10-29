@@ -2,13 +2,13 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
+import * as Controls from '../../shared/controls';
 export function createAssignmentEditor( readRuntime ) {
 	return function AssignmentEditor( props ) {
 		const {
 			$a,
 			Br,
 			Da: AssignmentSettings,
-			I: Controls,
 			La,
 			React,
 			T: StoreModule,
@@ -23,7 +23,6 @@ export function createAssignmentEditor( readRuntime ) {
 			qa,
 			y: WordPressData,
 			ya: AssignmentContent,
-
 			za,
 		} = readRuntime();
 		var t = useNotifications(),

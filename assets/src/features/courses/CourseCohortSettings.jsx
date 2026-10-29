@@ -1,9 +1,9 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createCourseCohortSettings( readRuntime ) {
 	return function CourseCohortSettings() {
 		const {
-			I: Controls,
 			React,
 			T: StoreModule,
 			gH,

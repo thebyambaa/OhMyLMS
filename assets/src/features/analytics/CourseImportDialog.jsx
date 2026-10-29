@@ -1,17 +1,10 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement, useId } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createCourseImportDialog( readRuntime ) {
 	return function CourseImportDialog( props ) {
 		const _controlId = useId();
-		const {
-			DG,
-			I: Controls,
-			React,
-			WG,
-			b: I18n,
-			g: ReactHooks,
-			zG,
-		} = readRuntime();
+		const { DG, React, WG, b: I18n, g: ReactHooks, zG } = readRuntime();
 		var t = props.isOpen;
 		var n = props.onClose;
 		var r = props.onAction;

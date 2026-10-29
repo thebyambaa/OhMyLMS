@@ -1,8 +1,9 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createAssignmentGradeForm( readRuntime ) {
 	return function AssignmentGradeForm( props ) {
-		const { Ge, I: Controls, React, W: RichText, b: I18n } = readRuntime();
+		const { Ge, React, W: RichText, b: I18n } = readRuntime();
 		var t,
 			n,
 			r,

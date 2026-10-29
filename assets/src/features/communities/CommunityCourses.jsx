@@ -1,13 +1,14 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createCommunityCourses( readRuntime ) {
 	return function CommunityCourses() {
 		const {
+			I: RecoveredControls,
 			C9,
 			E9,
 			Ea: Card,
-			I: Controls,
 			R9,
 			React,
 			T: StoreModule,
@@ -248,7 +249,7 @@ export function createCommunityCourses( readRuntime ) {
 								{ ( 0, I18n.__ )( 'Course', 'ohmylms' ) }
 							</Controls.HeadingWP>
 							<Controls.SpacerWP />
-							<Controls.AdvancedSelectWP
+							<RecoveredControls.AdvancedSelectWP
 								isClearable={ ! 0 }
 								closeMenuOnSelect={ ! 0 }
 								value={

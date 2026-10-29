@@ -1,13 +1,13 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createCourseMedia( readRuntime ) {
 	return function CourseMedia( props ) {
 		const {
 			Bp,
 			Gp,
 			He,
-			I: Controls,
 			Ie,
 			M,
 			Np,

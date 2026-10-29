@@ -7,6 +7,7 @@ import {
 } from '@wordpress/components';
 import { CurriculumMindmap } from './CurriculumMindmap';
 import { restUrl } from '../restUrl.mjs';
+import * as Controls from '../../shared/controls';
 
 /**
  * Which courses a membership plan includes: individual courses, curriculum items (with everything
@@ -17,7 +18,7 @@ import { restUrl } from '../restUrl.mjs';
 export function createMembershipCourses( readRuntime ) {
 	return function MembershipCourses() {
 		const {
-			I: Controls,
+			I: RecoveredControls,
 			Ea,
 			T: StoreModule,
 			b: I18n,
@@ -256,7 +257,7 @@ export function createMembershipCourses( readRuntime ) {
 				} }
 			>
 				<Controls.HeadingWP level={ 4 }>{ label }</Controls.HeadingWP>
-				<Controls.AdvancedSelectWP
+				<RecoveredControls.AdvancedSelectWP
 					isMulti
 					closeMenuOnSelect={ false }
 					value={ value }

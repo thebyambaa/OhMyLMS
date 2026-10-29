@@ -4,6 +4,7 @@ import { createElement, useId } from '@wordpress/element';
 import { ViewAsModal, canViewAs } from '../schools/ViewAsModal';
 import { CourseGradebook } from './CourseGradebook';
 import { useNotifications } from '../../shared/notices';
+import * as Controls from '../../shared/controls';
 export function createCourseList( readRuntime ) {
 	return function CourseList() {
 		const _controlId = useId();
@@ -12,7 +13,6 @@ export function createCourseList( readRuntime ) {
 			Ea,
 			Gq,
 			He,
-			I: Controls,
 			Ie,
 			Ne,
 			Ot,

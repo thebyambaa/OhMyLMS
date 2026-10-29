@@ -2,6 +2,7 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { normalizeQuizReport } from './model.mjs';
+import * as Controls from '../../shared/controls';
 export function createQuizGrading( readRuntime ) {
 	return function QuizGrading() {
 		const {
@@ -9,7 +10,6 @@ export function createQuizGrading( readRuntime ) {
 			D$,
 			Ge: decodeHtml,
 			HG: useAdminScreen,
-			I: Controls,
 			I$: QuizQuestionResults,
 			L$,
 			N$: QuizResultSummary,

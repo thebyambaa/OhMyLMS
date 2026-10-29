@@ -4,11 +4,11 @@ import { removeQuestionFromQuiz } from '../quiz-editor/api.mjs';
 import { QuestionForm } from './QuestionForm';
 import { questionWorkspaceKey } from './choiceModel.mjs';
 import { QUESTION_BLOCK_TYPES, questionTypePatch } from './questionBlocks.mjs';
+import * as Controls from '../../shared/controls';
 export function createQuestionCanvas( readRuntime ) {
 	return function QuestionCanvas( props ) {
 		const {
 			Eu,
-			I: Controls,
 			Ie,
 			Lc,
 			Pu,

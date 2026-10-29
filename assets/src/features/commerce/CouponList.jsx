@@ -3,6 +3,7 @@ import { showRequestError } from '../requestFeedback.mjs';
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { EditIcon } from '../../shared/icons';
+import * as Controls from '../../shared/controls';
 export function createCouponList( readRuntime ) {
 	return function CouponList() {
 		const {
@@ -10,7 +11,6 @@ export function createCouponList( readRuntime ) {
 			Dre,
 			Fre,
 			Ge,
-			I: Controls,
 			Ie,
 			Mre,
 			Ne,

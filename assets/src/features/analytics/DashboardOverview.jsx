@@ -1,11 +1,11 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { loadDashboard, sortRecentCourses } from './model.mjs';
+import * as Controls from '../../shared/controls';
 export function createDashboardOverview( readRuntime ) {
 	return function DashboardOverview( props ) {
 		const {
 			D: Buttons,
-			I: Controls,
 			MG: TopCoursePerformance,
 			React,
 			T: StoreModule,

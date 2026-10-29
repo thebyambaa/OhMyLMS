@@ -1,11 +1,11 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement, useId } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createFillInTheBlankEditor( readRuntime ) {
 	return function FillInTheBlankEditor() {
 		const _controlId = useId();
 		const {
 			Fd,
-			I: Controls,
 			React,
 			T: StoreModule,
 			b: I18n,

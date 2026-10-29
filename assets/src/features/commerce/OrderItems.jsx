@@ -5,12 +5,12 @@ import { createElement, useId } from '@wordpress/element';
 import { Tooltip } from '../../shared/tooltip';
 import { Table } from '../../shared/table';
 import { InfoIcon } from '../../shared/icons';
+import * as Controls from '../../shared/controls';
 export function createOrderItems( readRuntime ) {
 	return function OrderItems( props ) {
 		const _controlId = useId();
 		const {
 			Ge: decodeEntities,
-			I: Controls,
 			React,
 			T: StoreModule,
 			W: Textarea,

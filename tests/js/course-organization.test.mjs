@@ -130,6 +130,7 @@ const factory = new Function(
 	'sameIds',
 	'toggleId',
 	'restUrl',
+	'Controls',
 	`${ code }; return createCourseOrganization;`
 )(
 	element,
@@ -143,7 +144,14 @@ const factory = new Function(
 	orderBundles,
 	sameIds,
 	toggleId,
-	restUrl
+	restUrl,
+	{
+		CardWP: 'Card',
+		SpacerWP: 'Spacer',
+		FlexWP: 'Flex',
+		FlexItemWP: 'FlexItem',
+		HeadingWP: 'Heading',
+	}
 );
 const flatten = ( node ) =>
 	! node || typeof node !== 'object'

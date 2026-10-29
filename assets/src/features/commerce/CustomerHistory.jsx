@@ -3,10 +3,11 @@
  * Displays customer order metrics: total orders, total revenue, average order value.
  */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 
 export function createCustomerHistory( readRuntime ) {
 	return function CustomerHistory( { order } ) {
-		const { I: Controls, React, b: I18n, g: ReactHooks } = readRuntime();
+		const { React, b: I18n, g: ReactHooks } = readRuntime();
 
 		const [ isOpen, setIsOpen ] = ReactHooks.useState( true );
 

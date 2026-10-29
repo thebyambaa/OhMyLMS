@@ -1,13 +1,9 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createAssignmentContent( readRuntime ) {
 	return function AssignmentContent( props ) {
-		const {
-			I: Controls,
-			Pr: LearningContentForm,
-			React,
-			b: I18n,
-		} = readRuntime();
+		const { Pr: LearningContentForm, React, b: I18n } = readRuntime();
 		const assignment = props.assignment,
 			handleInputChange = props.handleInputChange,
 			handleEditorContentChange = props.handleEditorContentChange,

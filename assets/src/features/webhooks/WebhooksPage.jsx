@@ -2,13 +2,13 @@
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { EditIcon } from '../../shared/icons';
+import * as Controls from '../../shared/controls';
 export function createWebhooksPage( readRuntime ) {
 	return function WebhooksPage() {
 		const {
 			Ea,
 			HG,
 			He,
-			I: Controls,
 			Ie,
 			J5,
 			K5: MemoWebhookEditorModal,

@@ -1,5 +1,6 @@
 import { createElement } from '@wordpress/element';
 import { restUrl } from '../restUrl.mjs';
+import * as Controls from '../../shared/controls';
 
 /**
  * Course levels are a read-only view of curriculum placement and saved skill bands.
@@ -8,13 +9,7 @@ import { restUrl } from '../restUrl.mjs';
  */
 export function createCourseLevel( readRuntime ) {
 	return function CourseLevel() {
-		const {
-			I: Controls,
-			b: I18n,
-			f: Router,
-			g: Hooks,
-			l: apiFetch,
-		} = readRuntime();
+		const { b: I18n, f: Router, g: Hooks, l: apiFetch } = readRuntime();
 		const { id } = Router.g();
 		const [ summary, setSummary ] = Hooks.useState( null );
 		const [ error, setError ] = Hooks.useState( '' );

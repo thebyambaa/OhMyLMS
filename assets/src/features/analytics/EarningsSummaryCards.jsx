@@ -3,9 +3,10 @@ import { createElement } from '@wordpress/element';
 import { Skeleton } from '../../shared/skeleton';
 import { Tooltip } from '../../shared/tooltip';
 import { InfoIcon } from '../../shared/icons';
+import * as Controls from '../../shared/controls';
 export function createEarningsSummaryCards( readRuntime ) {
 	return function EarningsSummaryCards( props ) {
-		const { I: Controls, React, b: I18n } = readRuntime();
+		const { React, b: I18n } = readRuntime();
 		var t = props.dashboardCardData,
 			n = props.dataLoading,
 			r = props.withIn,

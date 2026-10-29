@@ -2,13 +2,13 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement, useId } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
+import * as Controls from '../../shared/controls';
 export function createTaxSettings( readRuntime ) {
 	return function TaxSettings() {
 		const _controlId = useId();
 		const {
 			D1,
 			F1,
-			I: Controls,
 			I1,
 			Kt,
 			M1,

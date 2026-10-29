@@ -3,14 +3,10 @@
  * Displays customer billing info: name, address, email, phone.
  */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createOrderBilling( readRuntime ) {
 	return function OrderBilling( { order, address, email } ) {
-		const {
-			Ge: decodeEntities,
-			I: Controls,
-			React,
-			b: I18n,
-		} = readRuntime();
+		const { Ge: decodeEntities, React, b: I18n } = readRuntime();
 		return (
 			<React.Fragment>
 				<Controls.HeadingWP

@@ -8,6 +8,7 @@ import {
 } from '@wordpress/components';
 import { filterItems, orderItems, toggleId } from './organization.mjs';
 import { restUrl } from '../restUrl.mjs';
+import * as Controls from '../../shared/controls';
 
 /**
  * Where a course sits: the curriculum items it is placed under and the Course Bundles it belongs to.
@@ -17,13 +18,7 @@ import { restUrl } from '../restUrl.mjs';
  */
 export function createCourseOrganization( readRuntime ) {
 	return function CourseOrganization( { subjectOnly = false } = {} ) {
-		const {
-			I: Controls,
-			b: I18n,
-			f: Router,
-			g: Hooks,
-			l: apiFetch,
-		} = readRuntime();
+		const { b: I18n, f: Router, g: Hooks, l: apiFetch } = readRuntime();
 		const { id } = Router.g();
 		const courseId = Number( id ) || 0;
 		const [ load, setLoad ] = Hooks.useState( {

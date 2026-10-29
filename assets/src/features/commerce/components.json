@@ -13,7 +13,6 @@
 			"Br",
 			"Cm",
 			"Ea",
-			"I",
 			"Ie",
 			"Ne",
 			"React",
@@ -42,13 +41,13 @@
 		"binding": "XY",
 		"name": "OrderHeader",
 		"file": "OrderHeader.jsx",
-		"dependencies": [ "Ge", "I", "JY", "React", "b" ]
+		"dependencies": [ "Ge", "JY", "React", "b" ]
 	},
 	{
 		"binding": "eQ",
 		"name": "OrderBilling",
 		"file": "OrderBilling.jsx",
-		"dependencies": [ "Ge", "I", "React", "b" ]
+		"dependencies": [ "Ge", "React", "b" ]
 	},
 	{
 		"binding": "cQ",
@@ -56,7 +55,6 @@
 		"file": "OrderItems.jsx",
 		"dependencies": [
 			"Ge",
-			"I",
 			"React",
 			"T",
 			"W",
@@ -76,48 +74,37 @@
 		"binding": "fQ",
 		"name": "OrderNotes",
 		"file": "OrderNotes.jsx",
-		"dependencies": [
-			"Ge",
-			"I",
-			"JY",
-			"React",
-			"T",
-			"W",
-			"b",
-			"g",
-			"q",
-			"y"
-		]
+		"dependencies": [ "Ge", "JY", "React", "T", "W", "b", "g", "q", "y" ]
 	},
 	{
 		"binding": "EQ",
 		"name": "OrderStatus",
 		"file": "OrderStatus.jsx",
-		"dependencies": [ "I", "React", "T", "b", "g", "vn", "y" ]
+		"dependencies": [ "React", "T", "b", "g", "vn", "y" ]
 	},
 	{
 		"binding": "CQ",
 		"name": "CustomerProfile",
 		"file": "CustomerProfile.jsx",
-		"dependencies": [ "I", "React", "b", "g" ]
+		"dependencies": [ "React", "b", "g" ]
 	},
 	{
 		"binding": "RQ",
 		"name": "CustomerHistory",
 		"file": "CustomerHistory.jsx",
-		"dependencies": [ "I", "React", "b", "g" ]
+		"dependencies": [ "React", "b", "g" ]
 	},
 	{
 		"binding": "PQ",
 		"name": "OrderGeneral",
 		"file": "OrderGeneral.jsx",
-		"dependencies": [ "I", "React", "b" ]
+		"dependencies": [ "React", "b" ]
 	},
 	{
 		"binding": "kQ",
 		"name": "RelatedOrders",
 		"file": "RelatedOrders.jsx",
-		"dependencies": [ "Ge", "I", "OQ", "React", "VY", "b" ]
+		"dependencies": [ "Ge", "OQ", "React", "VY", "b" ]
 	},
 	{
 		"binding": "FQ",
@@ -127,7 +114,6 @@
 			"CQ",
 			"EQ",
 			"Ge",
-			"I",
 			"Nr",
 			"PQ",
 			"RQ",
@@ -158,7 +144,6 @@
 			"Br",
 			"Cm",
 			"Ea",
-			"I",
 			"L",
 			"React",
 			"T",
@@ -179,20 +164,19 @@
 		"binding": "KQ",
 		"name": "SubscriptionStatus",
 		"file": "SubscriptionStatus.jsx",
-		"dependencies": [ "I", "React", "T", "b", "g", "vn", "y" ]
+		"dependencies": [ "React", "T", "b", "g", "vn", "y" ]
 	},
 	{
 		"binding": "eZ",
 		"name": "SubscriptionNotes",
 		"file": "SubscriptionNotes.jsx",
-		"dependencies": [ "I", "JQ", "JY", "React", "b", "g", "q" ]
+		"dependencies": [ "JQ", "JY", "React", "b", "g", "q" ]
 	},
 	{
 		"binding": "iZ",
 		"name": "SubscriptionDetails",
 		"file": "SubscriptionDetails.jsx",
 		"dependencies": [
-			"I",
 			"KQ",
 			"Nr",
 			"OQ",
@@ -228,7 +212,6 @@
 		"dependencies": [
 			"Cre",
 			"Ge",
-			"I",
 			"Nm",
 			"Pf",
 			"Pre",
@@ -249,7 +232,6 @@
 			"Dre",
 			"Fre",
 			"Ge",
-			"I",
 			"Ie",
 			"Mre",
 			"Ne",
@@ -280,6 +262,6 @@
 		"binding": "Ure",
 		"name": "CouponsPage",
 		"file": "CouponsPage.jsx",
-		"dependencies": [ "Gre", "HG", "I", "React", "YG", "b" ]
+		"dependencies": [ "Gre", "HG", "React", "YG", "b" ]
 	}
 ]

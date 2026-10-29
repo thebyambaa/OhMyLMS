@@ -1,4 +1,5 @@
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 import {
 	newAchievementRule,
 	removeAchievementRule,
@@ -6,12 +7,7 @@ import {
 } from './model.mjs';
 export function createAchievementRules( readRuntime ) {
 	return function AchievementRules( { rules = [], setRules } ) {
-		const {
-			I: Controls,
-			b: I18n,
-			We: DeleteIcon,
-			lf: AddButton,
-		} = readRuntime();
+		const { b: I18n, We: DeleteIcon, lf: AddButton } = readRuntime();
 		const fields = [
 			{
 				label: I18n.__( 'Points', 'ohmylms' ),

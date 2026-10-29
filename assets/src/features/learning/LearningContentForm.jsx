@@ -1,14 +1,9 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createLearningContentForm( readRuntime ) {
 	return function LearningContentForm( props ) {
-		const {
-			Cr: LearningMediaField,
-			Ge,
-			I: Controls,
-			React,
-			ne,
-		} = readRuntime();
+		const { Cr: LearningMediaField, Ge, React, ne } = readRuntime();
 		var titleName = props.titleName,
 			titleValue = props.titleValue,
 			titlePlaceholder = props.titlePlaceholder,

@@ -5,6 +5,7 @@ import { Skeleton } from '../../shared/skeleton';
 import { Tooltip } from '../../shared/tooltip';
 import { Table } from '../../shared/table';
 import { InfoIcon } from '../../shared/icons';
+import * as Controls from '../../shared/controls';
 export function createCommunityList( readRuntime ) {
 	return function CommunityList() {
 		const {
@@ -12,7 +13,6 @@ export function createCommunityList( readRuntime ) {
 			Br,
 			D9,
 			Ge,
-			I: Controls,
 			L9,
 			N9: CommunityEditor,
 			Ne,

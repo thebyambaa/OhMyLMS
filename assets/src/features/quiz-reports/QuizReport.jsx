@@ -2,12 +2,12 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { Table } from '../../shared/table';
+import * as Controls from '../../shared/controls';
 export function createQuizReport( readRuntime ) {
 	return function QuizReport() {
 		const {
 			Cm: SearchInput,
 			HG: useAdminScreen,
-			I: Controls,
 			JZ,
 			KZ,
 			QZ: BackIcon,

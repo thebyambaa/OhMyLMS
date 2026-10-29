@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 import { createElement } from '@wordpress/element';
 import { validateCommunity } from './model.mjs';
+import * as Controls from '../../shared/controls';
 export function createCommunityEditor( readRuntime ) {
 	return function CommunityEditor( {
 		isOpen,
@@ -10,7 +11,6 @@ export function createCommunityEditor( readRuntime ) {
 	} ) {
 		const {
 			React,
-			I: Controls,
 			He: ProDialog,
 			T: StoreModule,
 			b: I18n,

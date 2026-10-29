@@ -4,11 +4,11 @@ import { showRequestError } from '../requestFeedback.mjs';
  * Displays order notes timeline and handles adding new notes.
  */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createOrderNotes( readRuntime ) {
 	return function OrderNotes( { notes = [], order } ) {
 		const {
 			Ge: decodeEntities,
-			I: Controls,
 			JY: formatOrderDate,
 			React,
 			T: StoreModule,

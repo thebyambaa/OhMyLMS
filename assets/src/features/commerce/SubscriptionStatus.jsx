@@ -3,10 +3,10 @@
  * Controls subscription status dropdown and update action.
  */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createSubscriptionStatus( readRuntime ) {
 	return function SubscriptionStatus( { subscription, status } ) {
 		const {
-			I: Controls,
 			React,
 			T: StoreModule,
 			b: I18n,

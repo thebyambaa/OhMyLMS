@@ -1,10 +1,10 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { Tooltip } from '../../shared/tooltip';
+import * as Controls from '../../shared/controls';
 export function createTrueFalseEditor( readRuntime ) {
 	return function TrueFalseEditor() {
 		const {
-			I: Controls,
 			React,
 			T: StoreModule,
 			Xs,

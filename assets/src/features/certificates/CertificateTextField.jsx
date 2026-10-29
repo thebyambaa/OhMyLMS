@@ -1,18 +1,10 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { InfoIcon } from '../../shared/icons';
+import * as Controls from '../../shared/controls';
 export function createCertificateTextField( readRuntime ) {
 	return function CertificateTextField( props ) {
-		const {
-			EL,
-			I: Controls,
-			PL,
-			React,
-			SL,
-			b: I18n,
-			g: ReactHooks,
-			xL,
-		} = readRuntime();
+		const { EL, PL, React, SL, b: I18n, g: ReactHooks, xL } = readRuntime();
 		var t = true,
 			n = props.label,
 			r = props.value,

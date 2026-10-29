@@ -1,5 +1,6 @@
 import { createElement, Fragment } from '@wordpress/element';
 import { validateMembership } from './validateMembership.mjs';
+import * as Controls from '../../shared/controls';
 export function createMembershipEditor( readRuntime ) {
 	return function MembershipEditor( {
 		isOpen,
@@ -9,7 +10,6 @@ export function createMembershipEditor( readRuntime ) {
 		isLoading,
 	} ) {
 		const {
-			I: Controls,
 			I8: MembershipCourses,
 			w8: MembershipDetails,
 			He: UpgradeModal,

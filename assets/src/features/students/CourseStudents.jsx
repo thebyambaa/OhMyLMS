@@ -4,13 +4,13 @@ import { createElement } from '@wordpress/element';
 import { CourseGradebook } from '../courses/CourseGradebook';
 import { useNotifications } from '../../shared/notices';
 import { Avatar } from '../../shared/avatar';
+import * as Controls from '../../shared/controls';
 export function createCourseStudents( readRuntime ) {
 	return function CourseStudents() {
 		const {
 			Cm,
 			HG,
 			He,
-			I: Controls,
 			Ie,
 			JU,
 			React,

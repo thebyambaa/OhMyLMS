@@ -2,6 +2,7 @@
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { EditIcon } from '../../shared/icons';
+import * as Controls from '../../shared/controls';
 export function createAssignmentList( readRuntime ) {
 	return function AssignmentList() {
 		const {
@@ -9,7 +10,6 @@ export function createAssignmentList( readRuntime ) {
 			Cte: AssignmentNameCell,
 			Ea,
 			Ge,
-			I: Controls,
 			Ie,
 			Mte,
 			Ne,

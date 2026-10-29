@@ -3,11 +3,11 @@ import { createElement } from '@wordpress/element';
 import { courseEditPath } from './model.mjs';
 import { Avatar } from '../../shared/avatar';
 import { EditIcon } from '../../shared/icons';
+import * as Controls from '../../shared/controls';
 export function createCourseListItem( readRuntime ) {
 	return function CourseListItem( props ) {
 		const {
 			Ge,
-			I: Controls,
 			React,
 			SB,
 			b: I18n,

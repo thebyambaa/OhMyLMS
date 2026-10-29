@@ -2,10 +2,10 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
+import * as Controls from '../../shared/controls';
 export function createCurrencySettings( readRuntime ) {
 	return function CurrencySettings() {
 		const {
-			I: Controls,
 			Nm,
 			Pf,
 			R1,

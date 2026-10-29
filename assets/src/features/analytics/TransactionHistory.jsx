@@ -1,11 +1,11 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { Table } from '../../shared/table';
+import * as Controls from '../../shared/controls';
 export function createTransactionHistory( readRuntime ) {
 	return function TransactionHistory( props ) {
 		const {
 			Eq,
-			I: Controls,
 			React,
 			ZU: AnalyticsDateFilter,
 			b: I18n,

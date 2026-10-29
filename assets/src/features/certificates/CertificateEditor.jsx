@@ -2,11 +2,11 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
+import * as Controls from '../../shared/controls';
 export function createCertificateEditor( readRuntime ) {
 	return function CertificateEditor( props ) {
 		const {
 			DL: MemoCertificateControls,
-			I: Controls,
 			React,
 			T: StoreModule,
 			YL: MemoCertificatePreview,

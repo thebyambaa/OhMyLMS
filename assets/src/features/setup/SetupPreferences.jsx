@@ -1,11 +1,12 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createSetupPreferences( readRuntime ) {
 	return function SetupPreferences( props ) {
 		const {
+			I: RecoveredControls,
 			Gte,
-			I: Controls,
 			React,
 			T: StoreModule,
 			b: I18n,
@@ -870,7 +871,7 @@ export function createSetupPreferences( readRuntime ) {
 												<Controls.FlexItemWP
 													isBlock={ ! 0 }
 												>
-													<Controls.SearchSelectWP
+													<RecoveredControls.SearchSelectWP
 														placeholder={ ( 0,
 														I18n.__ )(
 															'Select Language',
@@ -938,7 +939,7 @@ export function createSetupPreferences( readRuntime ) {
 												<Controls.FlexItemWP
 													isBlock={ ! 0 }
 												>
-													<Controls.SearchSelectWP
+													<RecoveredControls.SearchSelectWP
 														placeholder={ ( 0,
 														I18n.__ )(
 															'Type to Select Currency',

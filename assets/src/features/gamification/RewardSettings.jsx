@@ -2,10 +2,10 @@
 import { createElement } from '@wordpress/element';
 import { FeatureSwitch } from './FeatureSwitch';
 import { useNotifications } from '../../shared/notices';
+import * as Controls from '../../shared/controls';
 export function createRewardSettings( readRuntime ) {
 	return function RewardSettings() {
 		const {
-			I: Controls,
 			React,
 			T: StoreModule,
 			b: I18n,

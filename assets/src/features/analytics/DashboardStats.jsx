@@ -2,9 +2,10 @@
 import { createElement } from '@wordpress/element';
 import { Tooltip } from '../../shared/tooltip';
 import { InfoIcon } from '../../shared/icons';
+import * as Controls from '../../shared/controls';
 export function createDashboardStats( readRuntime ) {
 	return function DashboardStats( props ) {
-		const { I: Controls, React, b: I18n, f: Router } = readRuntime();
+		const { React, b: I18n, f: Router } = readRuntime();
 		var t;
 		var n;
 		var r;

@@ -3,6 +3,7 @@
  * Displays student profile card, avatar, email, and link to report.
  */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createCustomerProfile( readRuntime ) {
 	return function CustomerProfile( {
 		student_name: _studentName,
@@ -10,7 +11,7 @@ export function createCustomerProfile( readRuntime ) {
 		student_id: _studentId,
 		student_image: _studentImage,
 	} ) {
-		const { I: Controls, React, b: I18n, g: ReactHooks } = readRuntime();
+		const { React, b: I18n, g: ReactHooks } = readRuntime();
 		const [ isOpen, setIsOpen ] = ReactHooks.useState( true );
 		return (
 			<React.Fragment>

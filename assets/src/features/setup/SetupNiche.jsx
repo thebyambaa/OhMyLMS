@@ -1,13 +1,13 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import * as Controls from '../../shared/controls';
 export function createSetupNiche( readRuntime ) {
 	return function SetupNiche( props ) {
 		const {
 			Cne,
 			Ene,
 			Gte,
-			I: Controls,
 			Pne,
 			React,
 			T: StoreModule,
