@@ -1,0 +1,15 @@
+.toplevel_page_ohmylms.rtl
+	.ohmylms-email-button-position-wrapper
+	.ohmylms-email-button-position-options {
+	margin-left: unset !important;
+	margin-right: auto;
+}
+
+.toplevel_page_ohmylms.rtl
+	.ohmylms-email-button-position-wrapper
+	.ohmylms-email-button-position-options
+	.components-toggle-group-control-option-base
+	svg {
+	width: 24px;
+	height: 24px;
+}

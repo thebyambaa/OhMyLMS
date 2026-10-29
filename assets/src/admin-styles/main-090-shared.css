@@ -1,1 +1,0 @@
-.ohmylms-crm-selection-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));gap:16px;margin:24px 0}.ohmylms-crm-selection-grid .ohmylms-crm-card{transition:all .2s ease;border:2px solid #e5e7eb}.ohmylms-crm-selection-grid .ohmylms-crm-card:hover{border-color:#6366f1;box-shadow:0 4px 12px rgba(99,102,241,.15);transform:translateY(-2px)}

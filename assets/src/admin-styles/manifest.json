@@ -2,1566 +2,1845 @@
 	{
 		"file": "main-000-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-000-shared.css"
 	},
 	{
 		"file": "main-001-emails.css",
 		"group": "emails",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-001-emails.css"
 	},
 	{
 		"file": "main-002-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-002-shared.css"
 	},
 	{
 		"file": "main-003-quizzes.css",
 		"group": "quizzes",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-003-quizzes.css"
 	},
 	{
 		"file": "main-004-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-004-shared.css"
 	},
 	{
 		"file": "main-005-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-005-courses.css"
 	},
 	{
 		"file": "main-006-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-006-shared.css"
 	},
 	{
 		"file": "main-007-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-007-courses.css"
 	},
 	{
 		"file": "main-008-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-008-shared.css"
 	},
 	{
 		"file": "main-009-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-009-courses.css"
 	},
 	{
 		"file": "main-010-commerce.css",
 		"group": "commerce",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-010-commerce.css"
 	},
 	{
 		"file": "main-011-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-011-shared.css"
 	},
 	{
 		"file": "main-012-commerce.css",
 		"group": "commerce",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-012-commerce.css"
 	},
 	{
 		"file": "main-013-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-013-shared.css"
 	},
 	{
 		"file": "main-014-commerce.css",
 		"group": "commerce",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-014-commerce.css"
 	},
 	{
 		"file": "main-015-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-015-courses.css"
 	},
 	{
 		"file": "main-016-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-016-shared.css"
 	},
 	{
 		"file": "main-017-communities.css",
 		"group": "communities",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-017-communities.css"
 	},
 	{
 		"file": "main-018-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-018-courses.css"
 	},
 	{
 		"file": "main-019-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-019-shared.css"
 	},
 	{
 		"file": "main-020-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-020-courses.css"
 	},
 	{
 		"file": "main-021-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-021-shared.css"
 	},
 	{
 		"file": "main-022-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-022-courses.css"
 	},
 	{
 		"file": "main-023-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-023-shared.css"
 	},
 	{
 		"file": "main-024-commerce.css",
 		"group": "commerce",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-024-commerce.css"
 	},
 	{
 		"file": "main-025-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-025-shared.css"
 	},
 	{
 		"file": "main-026-commerce.css",
 		"group": "commerce",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-026-commerce.css"
 	},
 	{
 		"file": "main-027-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-027-shared.css"
 	},
 	{
 		"file": "main-028-emails.css",
 		"group": "emails",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-028-emails.css"
 	},
 	{
 		"file": "main-029-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-029-shared.css"
 	},
 	{
 		"file": "main-030-commerce.css",
 		"group": "commerce",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-030-commerce.css"
 	},
 	{
 		"file": "main-031-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-031-shared.css"
 	},
 	{
 		"file": "main-032-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-032-courses.css"
 	},
 	{
 		"file": "main-033-settings.css",
 		"group": "settings",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-033-settings.css"
 	},
 	{
 		"file": "main-034-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-034-courses.css"
 	},
 	{
 		"file": "main-035-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-035-shared.css"
 	},
 	{
 		"file": "main-036-commerce.css",
 		"group": "commerce",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-036-commerce.css"
 	},
 	{
 		"file": "main-037-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-037-shared.css"
 	},
 	{
 		"file": "main-038-commerce.css",
 		"group": "commerce",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-038-commerce.css"
 	},
 	{
 		"file": "main-039-emails.css",
 		"group": "emails",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-039-emails.css"
 	},
 	{
 		"file": "main-040-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-040-shared.css"
 	},
 	{
 		"file": "main-041-emails.css",
 		"group": "emails",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-041-emails.css"
 	},
 	{
 		"file": "main-042-settings.css",
 		"group": "settings",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-042-settings.css"
 	},
 	{
 		"file": "main-043-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-043-courses.css"
 	},
 	{
 		"file": "main-044-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-044-shared.css"
 	},
 	{
 		"file": "main-045-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-045-courses.css"
 	},
 	{
 		"file": "main-046-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-046-shared.css"
 	},
 	{
 		"file": "main-047-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-047-courses.css"
 	},
 	{
 		"file": "main-048-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-048-shared.css"
 	},
 	{
 		"file": "main-049-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-049-courses.css"
 	},
 	{
 		"file": "main-050-quizzes.css",
 		"group": "quizzes",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-050-quizzes.css"
 	},
 	{
 		"file": "main-051-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-051-shared.css"
 	},
 	{
 		"file": "main-052-emails.css",
 		"group": "emails",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-052-emails.css"
 	},
 	{
 		"file": "main-053-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-053-shared.css"
 	},
 	{
 		"file": "main-054-emails.css",
 		"group": "emails",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-054-emails.css"
 	},
 	{
 		"file": "main-055-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-055-shared.css"
 	},
 	{
 		"file": "main-056-commerce.css",
 		"group": "commerce",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-056-commerce.css"
 	},
 	{
 		"file": "main-057-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-057-shared.css"
 	},
 	{
 		"file": "main-058-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-058-courses.css"
 	},
 	{
 		"file": "main-059-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-059-shared.css"
 	},
 	{
 		"file": "main-060-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-060-courses.css"
 	},
 	{
 		"file": "main-061-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-061-shared.css"
 	},
 	{
 		"file": "main-062-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-062-courses.css"
 	},
 	{
 		"file": "main-063-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-063-shared.css"
 	},
 	{
 		"file": "main-064-quizzes.css",
 		"group": "quizzes",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-064-quizzes.css"
 	},
 	{
 		"file": "main-065-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-065-shared.css"
 	},
 	{
 		"file": "main-066-quizzes.css",
 		"group": "quizzes",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-066-quizzes.css"
 	},
 	{
 		"file": "main-067-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-067-shared.css"
 	},
 	{
 		"file": "main-068-quizzes.css",
 		"group": "quizzes",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-068-quizzes.css"
 	},
 	{
 		"file": "main-069-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-069-shared.css"
 	},
 	{
 		"file": "main-070-quizzes.css",
 		"group": "quizzes",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-070-quizzes.css"
 	},
 	{
 		"file": "main-071-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-071-shared.css"
 	},
 	{
 		"file": "main-072-quizzes.css",
 		"group": "quizzes",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-072-quizzes.css"
 	},
 	{
 		"file": "main-073-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-073-shared.css"
 	},
 	{
 		"file": "main-074-quizzes.css",
 		"group": "quizzes",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-074-quizzes.css"
 	},
 	{
 		"file": "main-075-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-075-shared.css"
 	},
 	{
 		"file": "main-076-quizzes.css",
 		"group": "quizzes",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-076-quizzes.css"
 	},
 	{
 		"file": "main-077-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-077-courses.css"
 	},
 	{
 		"file": "main-078-quizzes.css",
 		"group": "quizzes",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-078-quizzes.css"
 	},
 	{
 		"file": "main-079-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-079-shared.css"
 	},
 	{
 		"file": "main-080-quizzes.css",
 		"group": "quizzes",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-080-quizzes.css"
 	},
 	{
 		"file": "main-081-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-081-shared.css"
 	},
 	{
 		"file": "main-082-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-082-courses.css"
 	},
 	{
 		"file": "main-083-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-083-shared.css"
 	},
 	{
 		"file": "main-084-communities.css",
 		"group": "communities",
-		"rtl": false
-	},
-	{
-		"file": "main-085-block-editor.css",
-		"group": "block-editor",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-084-communities.css"
 	},
 	{
 		"file": "main-086-email-shell.css",
 		"group": "email-shell",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/admin-styles/main-086-email-shell.css"
 	},
 	{
 		"file": "main-087-email-editor.css",
 		"group": "email-editor",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/admin-styles/main-087-email-editor.css"
 	},
 	{
 		"file": "main-088-automations.css",
 		"group": "automations",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/admin-styles/main-088-automations.css"
 	},
 	{
 		"file": "main-089-integrations.css",
 		"group": "integrations",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-089-integrations.css"
 	},
 	{
 		"file": "main-090-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-090-shared.css"
 	},
 	{
 		"file": "main-091-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-091-courses.css"
 	},
 	{
 		"file": "main-092-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-092-shared.css"
 	},
 	{
 		"file": "main-093-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-093-courses.css"
 	},
 	{
 		"file": "main-094-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-094-shared.css"
 	},
 	{
 		"file": "main-095-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-095-courses.css"
 	},
 	{
 		"file": "main-096-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-096-shared.css"
 	},
 	{
 		"file": "main-097-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-097-courses.css"
 	},
 	{
 		"file": "main-098-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-098-shared.css"
 	},
 	{
 		"file": "main-099-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-099-courses.css"
 	},
 	{
 		"file": "main-100-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-100-shared.css"
 	},
 	{
 		"file": "main-101-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-101-courses.css"
 	},
 	{
 		"file": "main-102-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-102-shared.css"
 	},
 	{
 		"file": "main-103-quizzes.css",
 		"group": "quizzes",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-103-quizzes.css"
 	},
 	{
 		"file": "main-104-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-104-shared.css"
 	},
 	{
 		"file": "main-105-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-105-courses.css"
 	},
 	{
 		"file": "main-106-settings.css",
 		"group": "settings",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-106-settings.css"
 	},
 	{
 		"file": "main-107-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-107-shared.css"
 	},
 	{
 		"file": "main-108-settings.css",
 		"group": "settings",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-108-settings.css"
 	},
 	{
 		"file": "main-109-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-109-shared.css"
 	},
 	{
 		"file": "main-110-settings.css",
 		"group": "settings",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-110-settings.css"
 	},
 	{
 		"file": "main-111-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-111-shared.css"
 	},
 	{
 		"file": "main-112-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-112-courses.css"
 	},
 	{
 		"file": "main-113-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-113-shared.css"
 	},
 	{
 		"file": "main-114-students.css",
 		"group": "students",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-114-students.css"
 	},
 	{
 		"file": "main-115-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-115-shared.css"
 	},
 	{
 		"file": "main-116-setup.css",
 		"group": "setup",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-116-setup.css"
 	},
 	{
 		"file": "main-117-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-117-shared.css"
 	},
 	{
 		"file": "main-118-setup.css",
 		"group": "setup",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-118-setup.css"
 	},
 	{
 		"file": "main-119-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-119-shared.css"
 	},
 	{
 		"file": "main-120-setup.css",
 		"group": "setup",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-120-setup.css"
 	},
 	{
 		"file": "main-121-courses.css",
 		"group": "courses",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-121-courses.css"
 	},
 	{
 		"file": "main-122-setup.css",
 		"group": "setup",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-122-setup.css"
 	},
 	{
 		"file": "main-123-shared.css",
 		"group": "shared",
-		"rtl": false
+		"rtl": false,
+		"source": "assets/src/design-system/admin/main-123-shared.css"
 	},
 	{
 		"file": "rtl-000-shared.css",
 		"group": "shared",
-		"rtl": true
+		"rtl": true,
+		"source": "assets/src/design-system/admin/rtl-000-shared.css"
 	},
 	{
 		"file": "rtl-001-commerce.css",
 		"group": "commerce",
-		"rtl": true
+		"rtl": true,
+		"source": "assets/src/design-system/admin/rtl-001-commerce.css"
 	},
 	{
 		"file": "rtl-002-shared.css",
 		"group": "shared",
-		"rtl": true
+		"rtl": true,
+		"source": "assets/src/design-system/admin/rtl-002-shared.css"
 	},
 	{
 		"file": "rtl-003-commerce.css",
 		"group": "commerce",
-		"rtl": true
+		"rtl": true,
+		"source": "assets/src/design-system/admin/rtl-003-commerce.css"
 	},
 	{
 		"file": "rtl-004-emails.css",
 		"group": "emails",
-		"rtl": true
+		"rtl": true,
+		"source": "assets/src/design-system/admin/rtl-004-emails.css"
 	},
 	{
 		"file": "rtl-005-shared.css",
 		"group": "shared",
-		"rtl": true
+		"rtl": true,
+		"source": "assets/src/design-system/admin/rtl-005-shared.css"
 	},
 	{
 		"file": "rtl-006-emails.css",
 		"group": "emails",
-		"rtl": true
+		"rtl": true,
+		"source": "assets/src/design-system/admin/rtl-006-emails.css"
 	},
 	{
 		"file": "rtl-007-settings.css",
 		"group": "settings",
-		"rtl": true
+		"rtl": true,
+		"source": "assets/src/design-system/admin/rtl-007-settings.css"
 	},
 	{
 		"file": "rtl-008-courses.css",
 		"group": "courses",
-		"rtl": true
+		"rtl": true,
+		"source": "assets/src/design-system/admin/rtl-008-courses.css"
 	},
 	{
 		"file": "rtl-009-shared.css",
 		"group": "shared",
-		"rtl": true
+		"rtl": true,
+		"source": "assets/src/design-system/admin/rtl-009-shared.css"
 	},
 	{
 		"file": "rtl-010-courses.css",
 		"group": "courses",
-		"rtl": true
+		"rtl": true,
+		"source": "assets/src/design-system/admin/rtl-010-courses.css"
 	},
 	{
 		"file": "rtl-011-shared.css",
 		"group": "shared",
-		"rtl": true
+		"rtl": true,
+		"source": "assets/src/design-system/admin/rtl-011-shared.css"
 	},
 	{
 		"file": "rtl-012-courses.css",
 		"group": "courses",
-		"rtl": true
+		"rtl": true,
+		"source": "assets/src/design-system/admin/rtl-012-courses.css"
 	},
 	{
 		"file": "rtl-013-shared.css",
 		"group": "shared",
-		"rtl": true
+		"rtl": true,
+		"source": "assets/src/design-system/admin/rtl-013-shared.css"
 	},
 	{
 		"file": "rtl-014-courses.css",
 		"group": "courses",
-		"rtl": true
+		"rtl": true,
+		"source": "assets/src/design-system/admin/rtl-014-courses.css"
 	},
 	{
 		"file": "rtl-015-quizzes.css",
 		"group": "quizzes",
-		"rtl": true
+		"rtl": true,
+		"source": "assets/src/design-system/admin/rtl-015-quizzes.css"
 	},
 	{
 		"file": "rtl-016-shared.css",
 		"group": "shared",
-		"rtl": true
+		"rtl": true,
+		"source": "assets/src/design-system/admin/rtl-016-shared.css"
 	},
 	{
 		"file": "rtl-017-emails.css",
 		"group": "emails",
-		"rtl": true
+		"rtl": true,
+		"source": "assets/src/design-system/admin/rtl-017-emails.css"
 	},
 	{
 		"file": "rtl-018-shared.css",
 		"group": "shared",
-		"rtl": true
+		"rtl": true,
+		"source": "assets/src/design-system/admin/rtl-018-shared.css"
 	},
 	{
 		"file": "rtl-019-emails.css",
 		"group": "emails",
-		"rtl": true
+		"rtl": true,
+		"source": "assets/src/design-system/admin/rtl-019-emails.css"
 	},
 	{
 		"file": "rtl-020-shared.css",
 		"group": "shared",
-		"rtl": true
+		"rtl": true,
+		"source": "assets/src/design-system/admin/rtl-020-shared.css"
 	},
 	{
 		"file": "ui-000-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-000-curriculum.css"
 	},
 	{
 		"file": "ui-001-settings.css",
 		"group": "settings",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-001-settings.css"
 	},
 	{
 		"file": "ui-002-gamification.css",
 		"group": "gamification",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-002-gamification.css"
 	},
 	{
 		"file": "ui-003-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-003-shared.css"
 	},
 	{
 		"file": "ui-004-gamification.css",
 		"group": "gamification",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-004-gamification.css"
 	},
 	{
 		"file": "ui-005-settings.css",
 		"group": "settings",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-005-settings.css"
 	},
 	{
 		"file": "ui-006-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-006-shared.css"
 	},
 	{
 		"file": "ui-007-gamification.css",
 		"group": "gamification",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-007-gamification.css"
 	},
 	{
 		"file": "ui-008-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-008-curriculum.css"
 	},
 	{
 		"file": "ui-009-commerce.css",
 		"group": "commerce",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-009-commerce.css"
 	},
 	{
 		"file": "ui-010-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-010-curriculum.css"
 	},
 	{
 		"file": "ui-011-quizzes.css",
 		"group": "quizzes",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-011-quizzes.css"
 	},
 	{
 		"file": "ui-012-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-012-shared.css"
 	},
 	{
 		"file": "ui-013-quizzes.css",
 		"group": "quizzes",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-013-quizzes.css"
 	},
 	{
 		"file": "ui-014-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-014-curriculum.css"
 	},
 	{
 		"file": "ui-015-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-015-shared.css"
 	},
 	{
 		"file": "ui-016-gamification.css",
 		"group": "gamification",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-016-gamification.css"
 	},
 	{
 		"file": "ui-017-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-017-shared.css"
 	},
 	{
 		"file": "ui-018-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-018-curriculum.css"
 	},
 	{
 		"file": "ui-019-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-019-shared.css"
 	},
 	{
 		"file": "ui-020-skills.css",
 		"group": "skills",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-020-skills.css"
 	},
 	{
 		"file": "ui-021-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-021-shared.css"
 	},
 	{
 		"file": "ui-022-quizzes.css",
 		"group": "quizzes",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-022-quizzes.css"
 	},
 	{
 		"file": "ui-023-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-023-shared.css"
 	},
 	{
 		"file": "ui-024-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-024-curriculum.css"
 	},
 	{
 		"file": "ui-025-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-025-shared.css"
 	},
 	{
 		"file": "ui-026-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-026-curriculum.css"
 	},
 	{
 		"file": "ui-027-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-027-shared.css"
 	},
 	{
 		"file": "ui-028-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-028-curriculum.css"
 	},
 	{
 		"file": "ui-029-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-029-shared.css"
 	},
 	{
 		"file": "ui-030-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-030-curriculum.css"
 	},
 	{
 		"file": "ui-031-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-031-shared.css"
 	},
 	{
 		"file": "ui-032-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-032-curriculum.css"
 	},
 	{
 		"file": "ui-033-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-033-shared.css"
 	},
 	{
 		"file": "ui-034-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-034-curriculum.css"
 	},
 	{
 		"file": "ui-035-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-035-shared.css"
 	},
 	{
 		"file": "ui-036-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-036-curriculum.css"
 	},
 	{
 		"file": "ui-037-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-037-shared.css"
 	},
 	{
 		"file": "ui-038-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-038-curriculum.css"
 	},
 	{
 		"file": "ui-039-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-039-shared.css"
 	},
 	{
 		"file": "ui-040-quizzes.css",
 		"group": "quizzes",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-040-quizzes.css"
 	},
 	{
 		"file": "ui-041-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-041-curriculum.css"
 	},
 	{
 		"file": "ui-042-skills.css",
 		"group": "skills",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-042-skills.css"
 	},
 	{
 		"file": "ui-043-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-043-shared.css"
 	},
 	{
 		"file": "ui-044-quizzes.css",
 		"group": "quizzes",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-044-quizzes.css"
 	},
 	{
 		"file": "ui-045-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-045-shared.css"
 	},
 	{
 		"file": "ui-046-quizzes.css",
 		"group": "quizzes",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-046-quizzes.css"
 	},
 	{
 		"file": "ui-047-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-047-shared.css"
 	},
 	{
 		"file": "ui-048-quizzes.css",
 		"group": "quizzes",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-048-quizzes.css"
 	},
 	{
 		"file": "ui-049-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-049-shared.css"
 	},
 	{
 		"file": "ui-050-quizzes.css",
 		"group": "quizzes",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-050-quizzes.css"
 	},
 	{
 		"file": "ui-051-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-051-shared.css"
 	},
 	{
 		"file": "ui-052-quizzes.css",
 		"group": "quizzes",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-052-quizzes.css"
 	},
 	{
 		"file": "ui-053-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-053-shared.css"
 	},
 	{
 		"file": "ui-054-quizzes.css",
 		"group": "quizzes",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-054-quizzes.css"
 	},
 	{
 		"file": "ui-055-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-055-shared.css"
 	},
 	{
 		"file": "ui-056-skills.css",
 		"group": "skills",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-056-skills.css"
 	},
 	{
 		"file": "ui-057-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-057-curriculum.css"
 	},
 	{
 		"file": "ui-058-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-058-shared.css"
 	},
 	{
 		"file": "ui-059-settings.css",
 		"group": "settings",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-059-settings.css"
 	},
 	{
 		"file": "ui-060-gamification.css",
 		"group": "gamification",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-060-gamification.css"
 	},
 	{
 		"file": "ui-061-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-061-curriculum.css"
 	},
 	{
 		"file": "ui-062-quizzes.css",
 		"group": "quizzes",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-062-quizzes.css"
 	},
 	{
 		"file": "ui-063-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-063-curriculum.css"
 	},
 	{
 		"file": "ui-064-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-064-shared.css"
 	},
 	{
 		"file": "ui-065-skills.css",
 		"group": "skills",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-065-skills.css"
 	},
 	{
 		"file": "ui-066-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-066-shared.css"
 	},
 	{
 		"file": "ui-067-commerce.css",
 		"group": "commerce",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-067-commerce.css"
 	},
 	{
 		"file": "ui-068-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-068-shared.css"
 	},
 	{
 		"file": "ui-069-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-069-curriculum.css"
 	},
 	{
 		"file": "ui-070-skills.css",
 		"group": "skills",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-070-skills.css"
 	},
 	{
 		"file": "ui-071-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-071-shared.css"
 	},
 	{
 		"file": "ui-072-quizzes.css",
 		"group": "quizzes",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-072-quizzes.css"
 	},
 	{
 		"file": "ui-073-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-073-shared.css"
 	},
 	{
 		"file": "ui-074-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-074-curriculum.css"
 	},
 	{
 		"file": "ui-075-settings.css",
 		"group": "settings",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-075-settings.css"
 	},
 	{
 		"file": "ui-076-gamification.css",
 		"group": "gamification",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-076-gamification.css"
 	},
 	{
 		"file": "ui-077-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-077-shared.css"
 	},
 	{
 		"file": "ui-078-gamification.css",
 		"group": "gamification",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-078-gamification.css"
 	},
 	{
 		"file": "ui-079-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-079-curriculum.css"
 	},
 	{
 		"file": "ui-080-gamification.css",
 		"group": "gamification",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-080-gamification.css"
 	},
 	{
 		"file": "ui-081-quizzes.css",
 		"group": "quizzes",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-081-quizzes.css"
 	},
 	{
 		"file": "ui-082-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-082-curriculum.css"
 	},
 	{
 		"file": "ui-083-commerce.css",
 		"group": "commerce",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-083-commerce.css"
 	},
 	{
 		"file": "ui-084-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-084-shared.css"
 	},
 	{
 		"file": "ui-085-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-085-curriculum.css"
 	},
 	{
 		"file": "ui-086-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-086-shared.css"
 	},
 	{
 		"file": "ui-087-skills.css",
 		"group": "skills",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-087-skills.css"
 	},
 	{
 		"file": "ui-088-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-088-shared.css"
 	},
 	{
 		"file": "ui-089-skills.css",
 		"group": "skills",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-089-skills.css"
 	},
 	{
 		"file": "ui-090-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-090-shared.css"
 	},
 	{
 		"file": "ui-091-commerce.css",
 		"group": "commerce",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-091-commerce.css"
 	},
 	{
 		"file": "ui-092-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-092-shared.css"
 	},
 	{
 		"file": "ui-093-commerce.css",
 		"group": "commerce",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-093-commerce.css"
 	},
 	{
 		"file": "ui-094-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-094-shared.css"
 	},
 	{
 		"file": "ui-095-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-095-curriculum.css"
 	},
 	{
 		"file": "ui-096-quizzes.css",
 		"group": "quizzes",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-096-quizzes.css"
 	},
 	{
 		"file": "ui-097-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-097-curriculum.css"
 	},
 	{
 		"file": "ui-098-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-098-shared.css"
 	},
 	{
 		"file": "ui-099-quizzes.css",
 		"group": "quizzes",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-099-quizzes.css"
 	},
 	{
 		"file": "ui-100-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-100-shared.css"
 	},
 	{
 		"file": "ui-101-quizzes.css",
 		"group": "quizzes",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-101-quizzes.css"
 	},
 	{
 		"file": "ui-102-skills.css",
 		"group": "skills",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-102-skills.css"
 	},
 	{
 		"file": "ui-103-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-103-curriculum.css"
 	},
 	{
 		"file": "ui-104-gamification.css",
 		"group": "gamification",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-104-gamification.css"
 	},
 	{
 		"file": "ui-105-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-105-curriculum.css"
 	},
 	{
 		"file": "ui-106-quizzes.css",
 		"group": "quizzes",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-106-quizzes.css"
 	},
 	{
 		"file": "ui-107-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-107-curriculum.css"
 	},
 	{
 		"file": "ui-108-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-108-shared.css"
 	},
 	{
 		"file": "ui-109-commerce.css",
 		"group": "commerce",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-109-commerce.css"
 	},
 	{
 		"file": "ui-110-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-110-shared.css"
 	},
 	{
 		"file": "ui-111-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-111-curriculum.css"
 	},
 	{
 		"file": "ui-112-quizzes.css",
 		"group": "quizzes",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-112-quizzes.css"
 	},
 	{
 		"file": "ui-113-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-113-curriculum.css"
 	},
 	{
 		"file": "ui-114-skills.css",
 		"group": "skills",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-114-skills.css"
 	},
 	{
 		"file": "ui-115-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-115-shared.css"
 	},
 	{
 		"file": "ui-116-quizzes.css",
 		"group": "quizzes",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-116-quizzes.css"
 	},
 	{
 		"file": "ui-117-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-117-shared.css"
 	},
 	{
 		"file": "ui-118-quizzes.css",
 		"group": "quizzes",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-118-quizzes.css"
 	},
 	{
 		"file": "ui-119-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-119-shared.css"
 	},
 	{
 		"file": "ui-120-quizzes.css",
 		"group": "quizzes",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-120-quizzes.css"
 	},
 	{
 		"file": "ui-121-gamification.css",
 		"group": "gamification",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-121-gamification.css"
 	},
 	{
 		"file": "ui-122-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-122-shared.css"
 	},
 	{
 		"file": "ui-123-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-123-curriculum.css"
 	},
 	{
 		"file": "ui-124-quizzes.css",
 		"group": "quizzes",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-124-quizzes.css"
 	},
 	{
 		"file": "ui-125-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-125-curriculum.css"
 	},
 	{
 		"file": "ui-126-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-126-shared.css"
 	},
 	{
 		"file": "ui-127-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-127-curriculum.css"
 	},
 	{
 		"file": "ui-128-quizzes.css",
 		"group": "quizzes",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-128-quizzes.css"
 	},
 	{
 		"file": "ui-129-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-129-shared.css"
 	},
 	{
 		"file": "ui-130-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-130-curriculum.css"
 	},
 	{
 		"file": "ui-131-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-131-shared.css"
 	},
 	{
 		"file": "ui-132-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-132-curriculum.css"
 	},
 	{
 		"file": "ui-133-quizzes.css",
 		"group": "quizzes",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-133-quizzes.css"
 	},
 	{
 		"file": "ui-134-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-134-curriculum.css"
 	},
 	{
 		"file": "ui-135-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-135-shared.css"
 	},
 	{
 		"file": "ui-136-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-136-curriculum.css"
 	},
 	{
 		"file": "ui-137-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-137-shared.css"
 	},
 	{
 		"file": "ui-138-curriculum.css",
 		"group": "curriculum",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-138-curriculum.css"
 	},
 	{
 		"file": "ui-139-shared.css",
 		"group": "shared",
 		"rtl": false,
-		"layer": "ui"
+		"layer": "ui",
+		"source": "assets/src/design-system/admin/ui-139-shared.css"
 	}
 ]

@@ -1,0 +1,152 @@
+@media screen and (max-width: 1145px) {
+
+	.ohmylms-page-feature-settings
+		.ohmylms-layout-frame.ohmylms-dummy-layout-2
+		.ohmylms-frame-contents-wrapper
+		.ohmylms-dummy-sidebar {
+		padding: 10px;
+		right: 10px;
+		top: 10px;
+		max-width: 150px;
+	}
+
+	.ohmylms-page-feature-settings
+		.ohmylms-layout-frame.ohmylms-dummy-layout-2
+		.ohmylms-frame-contents-wrapper
+		.ohmylms-dummy-header
+		.ohmylms-dummy-course-info {
+		max-width: 60%;
+		flex-wrap: wrap;
+	}
+
+	.ohmylms-page-feature-settings
+		.ohmylms-card-wrapper.ohmylms-page-features-settings-card
+		.ohmylms-layout-frame
+		.ohmylms-frame-contents-wrapper
+		.ohmylms-dummy-layout-body
+		svg {
+		max-width: 100%;
+	}
+
+	.ohmylms-page-feature-settings
+		.ohmylms-card-wrapper.ohmylms-page-features-settings-card
+		.ohmylms-dummy-pricing
+		.ohmylms-dummy-button {
+		max-width: 100%;
+	}
+
+	.ohmylms-page-feature-settings
+		.ohmylms-card-wrapper.ohmylms-page-features-settings-card
+		.ohmylms-dummy-sidebar-content {
+		overflow: hidden;
+	}
+}
+
+@media screen and (max-width: 1099px) {
+
+	.ohmylms-page-feature-settings
+		.ohmylms-layout-frame.ohmylms-dummy-layout-2
+		.ohmylms-frame-contents-wrapper
+		.ohmylms-dummy-sidebar {
+		transform: scale(0.8);
+		transform-origin: top right;
+	}
+}
+
+@media screen and (max-width: 991px) {
+
+	.ohmylms-page-feature-settings
+		.ohmylms-layout-frame.ohmylms-dummy-layout-2
+		.ohmylms-frame-contents-wrapper
+		.ohmylms-dummy-sidebar {
+		max-width: 175px;
+		right: 20px;
+		top: 20px;
+		transform: scale(1);
+	}
+}
+
+.ohmylms-page-feature-settings
+	.ohmylms-card-wrapper.ohmylms-page-features-settings-card
+	.ohmylms-page-features-settings-tab
+	.ohmylms-frame-contents-wrapper
+	.ohmylms-dummy-layout-wrapper.for-template3
+	.ohmylms-dummy-layout-body {
+	margin-top: 0;
+	width: calc(100% - 200px);
+}
+
+.ohmylms-page-feature-settings
+	.ohmylms-card-wrapper.ohmylms-page-features-settings-card
+	.ohmylms-page-features-settings-tab
+	.ohmylms-frame-contents-wrapper
+	.ohmylms-dummy-layout-wrapper.for-template3
+	.ohmylms-dummy-layout-sidebar {
+	width: 180px;
+}
+
+.ohmylms-page-feature-settings
+	.ohmylms-card-wrapper.ohmylms-page-features-settings-card
+	.ohmylms-page-features-settings-tab
+	.ohmylms-frame-contents-wrapper
+	.ohmylms-dummy-layout-wrapper.for-template3
+	.ohmylms-dummy-course-info {
+	margin: 0 0 2px;
+}
+
+.ohmylms-page-feature-settings
+	.ohmylms-card-wrapper.ohmylms-page-features-settings-card
+	.ohmylms-page-features-settings-tab
+	.ohmylms-frame-contents-wrapper
+	.ohmylms-dummy-layout-wrapper.for-template3
+	.ohmylms-dummy-pricing
+	.ohmylms-dummy-price
+	del {
+	font-size: var(--oml-font-size-xs);
+	color: var(--oml-muted);
+}
+
+.ohmylms-page-feature-settings
+	.ohmylms-card-wrapper.ohmylms-page-features-settings-card
+	.ohmylms-page-features-settings-tab
+	.ohmylms-frame-contents-wrapper
+	.ohmylms-dummy-layout-wrapper.for-template3
+	.ohmylms-dummy-pricing
+	.ohmylms-dummy-button {
+	background: var(--oml-muted);
+}
+
+.ohmylms-page-feature-settings
+	.ohmylms-card-wrapper.ohmylms-page-features-settings-card
+	.ohmylms-page-features-settings-tab
+	.ohmylms-frame-contents-wrapper
+	.ohmylms-dummy-layout-wrapper.for-template3
+	.ohmylms-dummy-membership
+	.ohmylms-dummy-button {
+	background: var(--oml-surface);
+	height: 30px;
+	border-radius: var(--oml-radius-control);
+	margin-top: var(--oml-space-4);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 5px;
+	padding: var(--oml-space-3) 18px;
+}
+
+.ohmylms-page-feature-settings
+	.ohmylms-card-wrapper.ohmylms-page-features-settings-card
+	.ohmylms-page-features-settings-tab
+	.ohmylms-frame-contents-wrapper
+	.ohmylms-dummy-layout-wrapper.for-template3
+	.ohmylms-dummy-membership
+	.ohmylms-dummy-button
+	.ohmylms-dummy-button-text {
+	background: var(--oml-muted);
+	font-size: var(--oml-font-size-xs);
+	font-weight: var(--oml-weight-strong);
+	display: block;
+	height: 4px;
+	width: 100%;
+	border-radius: var(--oml-radius-card);
+}

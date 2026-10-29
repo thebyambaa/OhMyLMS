@@ -1,0 +1,43 @@
+@media screen and (max-width: 1599px) {
+
+	.ohmylms-ui-express-active.toplevel_page_ohmylms
+		.ohmylms-course-builder-wrapper.ohmylms-steps-5
+		.ohmylms-course-builder-content {
+		margin-top: 47px;
+	}
+
+	.ohmylms-ui-express-active.toplevel_page_ohmylms
+		.ohmylms-course-builder-wrapper.ohmylms-steps-5
+		.ohmylms-chapter-sidebar {
+		top: 105px;
+	}
+
+	.ohmylms-ui-express-active.toplevel_page_ohmylms
+		.ohmylms-course-builder-wrapper.ohmylms-steps-5
+		.ohmylms-course-info-wrapper.ohmylms-course-info-closed
+		.ohmylms-course-info-toggle {
+		top: 106px;
+	}
+}
+
+@media screen and (max-width: 1199px) {
+
+	.ohmylms-ui-express-active.toplevel_page_ohmylms
+		.ohmylms-course-builder-wrapper.ohmylms-steps-4
+		.ohmylms-course-builder-content {
+		margin-top: 47px;
+	}
+
+	.ohmylms-ui-express-active.toplevel_page_ohmylms
+		.ohmylms-course-builder-wrapper.ohmylms-steps-4
+		.ohmylms-chapter-sidebar {
+		top: 105px;
+	}
+
+	.ohmylms-ui-express-active.toplevel_page_ohmylms
+		.ohmylms-course-builder-wrapper.ohmylms-steps-4
+		.ohmylms-course-info-wrapper.ohmylms-course-info-closed
+		.ohmylms-course-info-toggle {
+		top: 106px;
+	}
+}

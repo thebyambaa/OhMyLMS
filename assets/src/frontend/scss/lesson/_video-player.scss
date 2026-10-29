@@ -44,9 +44,9 @@
 	left: 0;
 	width: 100%;
 	height: 100%;
-	z-index: 1; // Below the blocker
-	overflow: hidden; // Critical: hide overflowing iframe parts
-	cursor: pointer; // Indicate video is clickable
+	z-index: 1; /* Below the blocker*/
+	overflow: hidden; /* Critical: hide overflowing iframe parts*/
+	cursor: pointer; /* Indicate video is clickable*/
 
 	iframe,
 	video {
@@ -59,17 +59,17 @@
 		display: block;
 	}
 
-	// YouTube branding removal trick
-	// Make iframe 200% height and position at -50% to cut off top/bottom branding
+	/* YouTube branding removal trick*/
+	/* Make iframe 200% height and position at -50% to cut off top/bottom branding*/
 	iframe[src*="youtube"] {
 		pointer-events: auto;
 		top: -50% !important;
 		height: 200% !important;
-		opacity: 0; // Hide initially to prevent zoom flash
+		opacity: 0; /* Hide initially to prevent zoom flash*/
 		transition: opacity 0.2s ease;
 
 		&.player-ready {
-			opacity: 1; // Show when player is ready
+			opacity: 1; /* Show when player is ready*/
 		}
 	}
 
@@ -93,7 +93,7 @@
 	top: 0;
 	left: 0;
 	right: 0;
-	height: 150px; // Cover YouTube's top bar completely
+	height: 150px; /* Cover YouTube's top bar completely*/
 	background: transparent;
 	z-index: 9997;
 	pointer-events: auto !important;
@@ -102,9 +102,9 @@
 
 .ohmylms-branding-blocker-bottom-right {
 	position: absolute;
-	bottom: 80px; // Position above custom controls
+	bottom: 80px; /* Position above custom controls*/
 	right: 0;
-	width: 250px; // Cover YouTube logo and controls
+	width: 250px; /* Cover YouTube logo and controls*/
 	height: 100px;
 	background: transparent;
 	z-index: 9997;
@@ -112,14 +112,14 @@
 	cursor: default;
 }
 
-// Add a full video area blocker that sits between video and controls
+/* Add a full video area blocker that sits between video and controls*/
 .ohmylms-video-interaction-blocker {
 	position: absolute;
 	top: 0;
 	left: 0;
 	right: 0;
-	bottom: 80px; // Leave space for custom controls
-	z-index: 9996; // Below the specific blockers but above YouTube iframe
+	bottom: 80px; /* Leave space for custom controls*/
+	z-index: 9996; /* Below the specific blockers but above YouTube iframe*/
 	pointer-events: auto !important;
 	cursor: default;
 	background: transparent;
@@ -134,7 +134,7 @@
 	left: 0;
 	width: 100%;
 	bottom: 0;
-	z-index: 9998; // Below big play button (9999) and custom controls (10000) but above YouTube iframe
+	z-index: 9998; /* Below big play button (9999) and custom controls (10000) but above YouTube iframe*/
 	cursor: pointer;
 	background: transparent;
 	pointer-events: auto !important;
@@ -146,14 +146,14 @@
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
-	z-index: 9999; // Above YouTube iframe and click blocker, below controls
+	z-index: 9999; /* Above YouTube iframe and click blocker, below controls*/
 	cursor: pointer;
 	transition:
 		opacity 0.3s ease,
 		transform 0.2s ease;
 	pointer-events: auto !important;
 
-	// YouTube-style rounded rectangle button
+	/* YouTube-style rounded rectangle button*/
 	width: 68px;
 	height: 48px;
 	background: var(--ohmylms-primary-color, #4f46e5);
@@ -171,31 +171,31 @@
 		transform: translate(-50%, -50%) scale(0.95);
 	}
 
-	// Hide the SVG circle, only show play icon
+	/* Hide the SVG circle, only show play icon*/
 	svg {
 		width: 48px;
 		height: 48px;
 		display: block;
 	}
 
-	// Hide the circle background from SVG
+	/* Hide the circle background from SVG*/
 	.play-button-circle {
 		display: none;
 	}
 
-	// White play icon
+	/* White play icon*/
 	.play-button-icon {
 		fill: #fff;
 	}
 }
 
-// Prevent clicks on YouTube controls - force use of custom controls
+/* Prevent clicks on YouTube controls - force use of custom controls*/
 .ohmylms-custom-video-player {
-	// Ensure proper stacking context
+	/* Ensure proper stacking context*/
 	position: relative;
 	isolation: isolate;
 
-	// Allow interaction with video through blocker
+	/* Allow interaction with video through blocker*/
 	.ohmylms-branding-blocker-top {
 
 		&:hover {
@@ -203,10 +203,10 @@
 		}
 	}
 
-	// Allow interaction with our custom controls
+	/* Allow interaction with our custom controls*/
 	.ohmylms-custom-controls {
 		position: absolute;
-		z-index: 10000 !important; // Above the blocker
+		z-index: 10000 !important; /* Above the blocker*/
 		pointer-events: auto !important;
 	}
 }
@@ -224,11 +224,11 @@
 		transparent 100%
 	);
 	padding: 24px 20px 0;
-	z-index: 10000 !important; // Above all blockers and overlays
+	z-index: 10000 !important; /* Above all blockers and overlays*/
 	transition:
 		opacity 0.3s ease,
 		transform 0.3s ease;
-	pointer-events: auto !important; // Ensure controls are always clickable
+	pointer-events: auto !important; /* Ensure controls are always clickable*/
 
 	&.hidden {
 		opacity: 0;
@@ -265,7 +265,7 @@
 		transform: translateY(-50%) translateX(-50%) scale(1);
 	}
 
-	// Active state when dragging
+	/* Active state when dragging*/
 	&.is-seeking {
 		height: 7px;
 
@@ -286,7 +286,7 @@
 	transition: width 0.05s linear;
 	will-change: width;
 
-	// Remove transition when actively seeking for instant feedback
+	/* Remove transition when actively seeking for instant feedback*/
 	.is-seeking & {
 		transition: none;
 	}
@@ -309,7 +309,7 @@
 	pointer-events: none;
 	will-change: left;
 
-	// Remove transition when actively seeking for instant feedback
+	/* Remove transition when actively seeking for instant feedback*/
 	.is-seeking & {
 		transition: none;
 	}
@@ -437,7 +437,7 @@
 	}
 }
 
-// Custom div-based volume slider (no input conflicts)
+/* Custom div-based volume slider (no input conflicts)*/
 .ohmylms-volume-track {
 	position: relative;
 	width: 100px;
@@ -449,7 +449,7 @@
 	outline: none;
 	flex-shrink: 0;
 
-	// Keyboard focus styles
+	/* Keyboard focus styles*/
 	&:focus {
 		outline: none;
 	}
@@ -459,7 +459,7 @@
 		outline-offset: 2px;
 	}
 
-	// Active/dragging state
+	/* Active/dragging state*/
 	&.is-dragging {
 		height: 6px;
 
@@ -953,24 +953,24 @@
 
 /* Mobile-specific improvements */
 @media (max-width: 768px), (hover: none) {
-	// Make video player container responsive
+	/* Make video player container responsive*/
 	.ohmylms-custom-video-player {
 		margin-bottom: 16px;
 		border-radius: 8px;
 	}
 
-	// Ensure YouTube iframe is touchable on mobile
+	/* Ensure YouTube iframe is touchable on mobile*/
 	.ohmylms-video-player-container iframe {
 		pointer-events: auto !important;
 		touch-action: auto !important;
 	}
 
-	// Remove YouTube click blocker on mobile to allow direct iframe interaction
+	/* Remove YouTube click blocker on mobile to allow direct iframe interaction*/
 	.ohmylms-youtube-click-blocker {
 		display: none !important;
 	}
 
-	// Adjust branding blockers for mobile
+	/* Adjust branding blockers for mobile*/
 	.ohmylms-branding-blocker-top,
 	.ohmylms-branding-blocker-bottom-right,
 	.ohmylms-video-interaction-blocker {
@@ -978,7 +978,7 @@
 		-webkit-tap-highlight-color: transparent;
 	}
 
-	// Compact touch targets for controls on mobile
+	/* Compact touch targets for controls on mobile*/
 	.ohmylms-control-btn {
 		min-width: 36px;
 		min-height: 36px;
@@ -990,7 +990,7 @@
 		}
 	}
 
-	// YouTube-style button on mobile - sized to cover YT's button
+	/* YouTube-style button on mobile - sized to cover YT's button*/
 	.ohmylms-big-play-button {
 		width: 72px;
 		height: 50px;
@@ -1004,7 +1004,7 @@
 		}
 	}
 
-	// Compact progress bar for mobile
+	/* Compact progress bar for mobile*/
 	.ohmylms-progress-bar {
 		height: 4px;
 		margin-bottom: 6px;
@@ -1017,7 +1017,7 @@
 			height: 6px;
 		}
 
-		// Always show handle on mobile for easier dragging
+		/* Always show handle on mobile for easier dragging*/
 		.ohmylms-progress-handle {
 			opacity: 1;
 			transform: translateY(-50%) translateX(-50%) scale(1);
@@ -1036,7 +1036,7 @@
 		border-radius: 2px;
 	}
 
-	// Compact volume slider for mobile
+	/* Compact volume slider for mobile*/
 	.ohmylms-volume-track {
 		touch-action: manipulation;
 		-webkit-tap-highlight-color: transparent;
@@ -1047,18 +1047,18 @@
 			width: 10px;
 			height: 10px;
 			margin-left: -5px;
-			opacity: 1; // Always visible on mobile
+			opacity: 1; /* Always visible on mobile*/
 		}
 	}
 
 	.ohmylms-volume-control {
 
 		.ohmylms-volume-slider {
-			display: none; // Hide slider on mobile, only show mute button
+			display: none; /* Hide slider on mobile, only show mute button*/
 		}
 	}
 
-	// Compact time display for mobile
+	/* Compact time display for mobile*/
 	.ohmylms-time-display {
 		font-size: 11px;
 		gap: 2px;
@@ -1074,13 +1074,13 @@
 		}
 	}
 
-	// Compact control visibility and spacing on mobile
+	/* Compact control visibility and spacing on mobile*/
 	.ohmylms-custom-controls {
 		opacity: 1 !important;
 		transform: translateY(0) !important;
 		padding: 10px 10px 6px;
 
-		// Subtle gradient for cleaner look on mobile
+		/* Subtle gradient for cleaner look on mobile*/
 		background: linear-gradient(
 			to top,
 			rgba(0, 0, 0, 0.85) 0%,
@@ -1088,7 +1088,7 @@
 			transparent 100%
 		);
 
-		// Ensure controls don't overflow
+		/* Ensure controls don't overflow*/
 		overflow: visible;
 	}
 
@@ -1109,7 +1109,7 @@
 		min-width: 0;
 	}
 
-	// Speed control adjustments for mobile
+	/* Speed control adjustments for mobile*/
 	.ohmylms-speed-control {
 
 		.ohmylms-speed-btn {
@@ -1136,7 +1136,7 @@
 		}
 	}
 
-	// Prevent double-tap zoom on interactive elements
+	/* Prevent double-tap zoom on interactive elements*/
 	.ohmylms-custom-video-player,
 	.ohmylms-big-play-button,
 	.ohmylms-control-btn,
@@ -1146,7 +1146,7 @@
 		touch-action: manipulation;
 	}
 
-	// Compact indicators on mobile
+	/* Compact indicators on mobile*/
 	.ohmylms-volume-indicator,
 	.ohmylms-seek-indicator {
 
@@ -1227,7 +1227,7 @@
 		}
 	}
 
-	// Stack controls on very small screens if needed
+	/* Stack controls on very small screens if needed*/
 	.ohmylms-controls-bottom {
 		gap: 2px;
 	}
@@ -1289,12 +1289,12 @@
 		transform: translateZ(0);
 	}
 
-	// Ensure video container is properly touchable
+	/* Ensure video container is properly touchable*/
 	.ohmylms-custom-video-player {
 		-webkit-overflow-scrolling: touch;
 	}
 
-	// Fix iOS touch issues
+	/* Fix iOS touch issues*/
 	.ohmylms-progress-bar,
 	.ohmylms-volume-track {
 		-webkit-tap-highlight-color: transparent;

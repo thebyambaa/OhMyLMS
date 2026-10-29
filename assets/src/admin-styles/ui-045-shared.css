@@ -1,7 +1,0 @@
-.ohmylms-assessment-editor-tabs {
-	display: flex;
-	gap: var(--oml-space-2);
-	background: var(--oml-surface);
-	border-bottom: 1px solid var(--oml-border);
-	padding: var(--oml-space-2) var(--oml-space-4);
-}

@@ -1,18 +1,34 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import * as sass from 'sass';
 
 /** Build ordered, cache-busted modules and the legacy compatibility entrypoints. */
 export function buildAdminStyles( root, outputRoot ) {
 	const source = path.join( root, 'assets/src/admin-styles' );
 	const destination = path.join( outputRoot, 'assets/dist/css/admin' );
 	fs.mkdirSync( destination, { recursive: true } );
+	const metadataPath = path.join( destination, 'modules.json' );
+	const previous = fs.existsSync( metadataPath )
+		? JSON.parse( fs.readFileSync( metadataPath, 'utf8' ) )
+		: [];
 	const manifest = JSON.parse(
 		fs.readFileSync( path.join( source, 'manifest.json' ), 'utf8' )
 	);
 	const combined = { main: '', rtl: '', ui: '' };
 	const modules = manifest.map( ( entry ) => {
-		const css = fs.readFileSync( path.join( source, entry.file ), 'utf8' );
+		const authored = fs.readFileSync(
+			entry.source
+				? path.join( root, entry.source )
+				: path.join( source, entry.file ),
+			'utf8'
+		);
+		const css = entry.source?.startsWith( 'assets/src/design-system/' )
+			? sass.compileString( authored, {
+					syntax: 'css',
+					style: 'compressed',
+				} ).css
+			: authored;
 		const layer = entry.layer || 'main';
 		combined[ layer === 'ui' ? 'ui' : entry.rtl ? 'rtl' : 'main' ] += css;
 		const hash = crypto
@@ -27,8 +43,8 @@ export function buildAdminStyles( root, outputRoot ) {
 		fs.mkdirSync( targetDirectory, { recursive: true } );
 		// The curriculum module imports authored sibling styles. Source builds need those siblings too.
 		if ( path.resolve( root ) !== path.resolve( outputRoot ) ) {
-			for ( const [ , dependency ] of css.matchAll(
-				/@import\s+url\(\.\/([a-z0-9-]+\.css)\)/g
+			for ( const [ , dependency ] of authored.matchAll(
+				/@import\s+url\(["']?\.\/([a-z0-9-]+\.css)["']?\)/g
 			) ) {
 				fs.copyFileSync(
 					path.join( root, relative, dependency ),
@@ -56,6 +72,24 @@ export function buildAdminStyles( root, outputRoot ) {
 			inline,
 		};
 	} );
+	const currentPaths = new Set( modules.map( ( entry ) => entry.path ) );
+	for ( const entry of previous ) {
+		if (
+			currentPaths.has( entry.path ) ||
+			! /^assets\/(?:css|dist\/css\/admin)\/oml-[a-z0-9-]+\.[a-f0-9]{12}\.css$/.test(
+				entry.path
+			)
+		) {
+			continue;
+		}
+		const obsolete = path.resolve( outputRoot, entry.path );
+		if ( ! obsolete.startsWith( path.resolve( outputRoot ) + path.sep ) ) {
+			throw new Error( 'Obsolete CSS outside build directory.' );
+		}
+		if ( fs.existsSync( obsolete ) ) {
+			fs.unlinkSync( obsolete );
+		}
+	}
 	fs.writeFileSync(
 		path.join( destination, 'modules.json' ),
 		JSON.stringify( modules, null, '\t' ) + '\n'

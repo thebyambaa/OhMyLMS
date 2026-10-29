@@ -259,59 +259,96 @@
 }
 
 /* ---- Button: .oml-btn + .oml-btn-{primary|secondary|tertiary|danger} + .oml-btn-{sm|md|lg} ---- */
-.oml-btn {
+.oml-btn,
+:where(.ohmylms-page) .ohmylms-button,
+body.oml-ds .button,
+body.oml-ds .button-secondary,
+body.oml-ds .button-primary,
+body.oml-ds .button-small,
+body.oml-ds .button-large,
+body.oml-ds input[type="submit"].button,
+body.oml-ds .page-title-action,
+body.oml-ds:not(.block-editor-page) .components-button,
+body.oml-ds .arco-btn {
+	font: inherit;
+	border-radius: var(--oml-radius-button);
+	font-weight: 600;
+	min-height: var(--oml-button-height-md);
+	padding: 0 var(--oml-button-pad-md);
+}
+
+.oml-btn,
+:where(.ohmylms-page) .ohmylms-button {
 	align-items: center;
 	background: var(--oml-surface);
 	border: 1px solid var(--oml-secondary);
-	border-radius: var(--oml-radius-button);
 	box-shadow: none;
 	box-sizing: border-box;
 	color: var(--oml-primary);
 	cursor: pointer;
 	display: inline-flex;
-	font: inherit;
 	font-size: 14px;
-	font-weight: 600;
 	gap: var(--oml-space-2);
 	justify-content: center;
 	line-height: 1.2;
 	margin: 0;
-	min-height: var(--oml-button-height-md);
-	padding: 0 var(--oml-button-pad-md);
 	text-decoration: none;
-	transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+	transition:
+		background-color 0.12s ease,
+		border-color 0.12s ease,
+		color 0.12s ease;
 	vertical-align: middle;
 }
 
-.oml-btn:hover {
+.oml-btn:hover,
+:where(.ohmylms-page) .ohmylms-button:hover {
 	background: var(--oml-primary-soft);
 	border-color: var(--oml-secondary-hover);
 	color: var(--oml-primary-hover);
 }
 
-.oml-btn:active {
+.oml-btn:active,
+:where(.ohmylms-page) .ohmylms-button:active {
 	color: var(--oml-primary-active);
 }
 
-.oml-btn:focus-visible {
+.oml-btn:focus-visible,
+:where(.ohmylms-page) .ohmylms-button:focus-visible {
 	outline: 2px solid var(--oml-focus);
 	outline-offset: 2px;
 }
 
-.oml-btn-primary {
+.oml-btn-primary,
+:where(.ohmylms-page) .ohmylms-button:not(.ohmylms-button-outline):where(:not([disabled], .ohmylms-button-disabled)) {
 	background: var(--oml-primary);
 	border-color: var(--oml-primary);
 	color: var(--oml-on-primary);
 }
 
-.oml-btn-primary:hover,
-.oml-btn-primary:focus {
+.oml-btn[disabled],
+.oml-btn[aria-disabled="true"],
+:where(.ohmylms-page) .ohmylms-button:is([disabled], .ohmylms-button-disabled),
+:where(.ohmylms-page)
+	.ohmylms-button:is([disabled], .ohmylms-button-disabled):hover {
+	background: var(--oml-subtle);
+	border-color: var(--oml-border);
+	color: var(--oml-muted);
+	cursor: not-allowed;
+	opacity: 0.7;
+	pointer-events: none;
+}
+
+.oml-btn-primary:where(:not([disabled], [aria-disabled="true"])):hover,
+.oml-btn-primary:where(:not([disabled], [aria-disabled="true"])):focus,
+:where(.ohmylms-page)
+	.ohmylms-button:not(.ohmylms-button-outline):where(:not([disabled], .ohmylms-button-disabled)):is(:hover, :focus) {
 	background: var(--oml-primary-hover);
 	border-color: var(--oml-primary-hover);
 	color: var(--oml-on-primary);
 }
 
-.oml-btn-primary:active {
+.oml-btn-primary:active,
+:where(.ohmylms-page) .ohmylms-button:not(.ohmylms-button-outline):where(:not([disabled], .ohmylms-button-disabled)):active {
 	background: var(--oml-primary-active);
 	border-color: var(--oml-primary-active);
 	color: var(--oml-on-primary);
@@ -323,7 +360,7 @@
 	color: var(--oml-link);
 }
 
-.oml-btn-tertiary:hover {
+.oml-btn-tertiary:where(:not([disabled], [aria-disabled="true"])):hover {
 	background: var(--oml-primary-soft);
 	border-color: transparent;
 	color: var(--oml-link-hover);
@@ -335,8 +372,8 @@
 	color: var(--oml-on-danger);
 }
 
-.oml-btn-danger:hover,
-.oml-btn-danger:focus {
+.oml-btn-danger:where(:not([disabled], [aria-disabled="true"])):hover,
+.oml-btn-danger:where(:not([disabled], [aria-disabled="true"])):focus {
 	background: var(--oml-danger-hover);
 	border-color: var(--oml-danger-hover);
 	color: var(--oml-on-danger);
@@ -363,14 +400,33 @@
 	width: 100%;
 }
 
-.oml-btn[disabled],
-.oml-btn[aria-disabled="true"] {
-	background: var(--oml-subtle);
-	border-color: var(--oml-border);
-	color: var(--oml-muted);
-	cursor: not-allowed;
-	opacity: 0.7;
+.oml-btn.is-loading,
+:where(.ohmylms-page) .ohmylms-button.loading {
+	position: relative;
+	color: transparent;
 	pointer-events: none;
+}
+
+.oml-btn.is-loading::after,
+:where(.ohmylms-page) .ohmylms-button.loading::after {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: var(--oml-space-4);
+	height: var(--oml-space-4);
+	margin: calc(var(--oml-space-2) * -1);
+	border: 2px solid var(--oml-on-primary);
+	border-top-color: transparent;
+	border-radius: 50%;
+	content: "";
+	animation: oml-button-spin var(--oml-motion-base) linear infinite;
+}
+
+@keyframes oml-button-spin {
+
+	to {
+		transform: rotate(360deg);
+	}
 }
 
 /* ---- Card: .oml-card + .oml-card-flat | .oml-card-interactive; .oml-card-title ---- */
@@ -389,7 +445,9 @@
 }
 
 .oml-card-interactive {
-	transition: box-shadow var(--oml-motion-base) ease, border-color var(--oml-motion-base) ease;
+	transition:
+		box-shadow var(--oml-motion-base) ease,
+		border-color var(--oml-motion-base) ease;
 }
 
 .oml-card-interactive:hover {
@@ -453,7 +511,8 @@
 }
 
 /* ---- Progress: .oml-progress > .oml-progress-bar, + .oml-progress-success; width is set inline ---- */
-.oml-progress {
+.oml-progress,
+:where(.ohmylms-page) .ohmylms-progressbar-outer {
 	background: var(--oml-border);
 	border-radius: 999px;
 	box-sizing: border-box;
@@ -462,7 +521,8 @@
 	width: 100%;
 }
 
-.oml-progress-bar {
+.oml-progress-bar,
+:where(.ohmylms-page) .ohmylms-progressbar-inner {
 	background: var(--oml-primary);
 	border-radius: 999px;
 	display: block;
@@ -470,7 +530,8 @@
 	transition: width var(--oml-motion-base) ease;
 }
 
-.oml-progress-success .oml-progress-bar {
+.oml-progress-success .oml-progress-bar,
+:where(.ohmylms-page) .ohmylms-progressbar-inner {
 	background: var(--oml-success);
 }
 
@@ -486,7 +547,8 @@
 	line-height: var(--oml-line-normal);
 }
 
-.oml-field-label {
+.oml-field-label,
+:where(.ohmylms-page) .ohmylms-form-group > label {
 	color: var(--oml-heading);
 	font-weight: var(--oml-weight-strong);
 }
@@ -507,7 +569,19 @@
 	color: var(--oml-muted);
 }
 
-.oml-field .oml-control {
+.oml-field .oml-control,
+:where(.ohmylms-page)
+	.ohmylms-form-group
+	:is(
+		input[type="text"],
+		input[type="email"],
+		input[type="password"],
+		input[type="number"],
+		input[type="date"],
+		input[type="url"],
+		select,
+		textarea
+	) {
 	display: block;
 	box-sizing: border-box;
 	width: 100%;
@@ -525,20 +599,36 @@
 	font-size: var(--oml-font-size-md);
 	font-weight: var(--oml-weight-regular);
 	line-height: var(--oml-line-normal);
-	transition: border-color var(--oml-motion-fast) ease, background-color var(--oml-motion-fast) ease;
+	transition:
+		border-color var(--oml-motion-fast) ease,
+		background-color var(--oml-motion-fast) ease;
 }
 
-.oml-field .oml-input::placeholder {
+.oml-field .oml-input::placeholder,
+:where(.ohmylms-page)
+	.ohmylms-form-group
+	:is(
+		input[type="text"],
+		input[type="email"],
+		input[type="password"],
+		input[type="number"],
+		input[type="date"],
+		input[type="url"],
+		select,
+		textarea
+	)::placeholder {
 	color: var(--oml-muted);
 	opacity: 1;
 }
 
-.oml-field .oml-select {
+.oml-field .oml-select,
+:where(.ohmylms-page) .ohmylms-form-group select {
 	appearance: auto;
 	cursor: pointer;
 }
 
-.oml-field .oml-select option {
+.oml-field .oml-select option,
+.ohmylms-page .ohmylms-form-group select option {
 	background: var(--oml-surface);
 	color: var(--oml-text);
 }
@@ -553,7 +643,19 @@
 	font-size: var(--oml-font-size-lg);
 }
 
-.oml-field .oml-control:focus {
+.oml-field .oml-control:focus,
+:where(.ohmylms-page)
+	.ohmylms-form-group
+	:is(
+		input[type="text"],
+		input[type="email"],
+		input[type="password"],
+		input[type="number"],
+		input[type="date"],
+		input[type="url"],
+		select,
+		textarea
+	):focus {
 	border-color: var(--oml-border);
 	box-shadow: none;
 }
@@ -563,19 +665,55 @@
 	border-color: var(--oml-danger);
 }
 
-.oml-field .oml-control:focus-visible {
+.oml-field .oml-control:focus-visible,
+:where(.ohmylms-page)
+	.ohmylms-form-group
+	:is(
+		input[type="text"],
+		input[type="email"],
+		input[type="password"],
+		input[type="number"],
+		input[type="date"],
+		input[type="url"],
+		select,
+		textarea
+	):focus-visible {
 	outline: 2px solid var(--oml-focus);
 	outline-offset: 2px;
 }
 
 .oml-field .oml-control[readonly],
-.oml-field .oml-control:disabled {
+.oml-field .oml-control:disabled,
+:where(.ohmylms-page)
+	.ohmylms-form-group
+	:is(
+		input[type="text"],
+		input[type="email"],
+		input[type="password"],
+		input[type="number"],
+		input[type="date"],
+		input[type="url"],
+		select,
+		textarea
+	):disabled {
 	border-color: var(--oml-border);
 	background: var(--oml-subtle);
 	color: var(--oml-muted);
 }
 
-.oml-field .oml-control:disabled {
+.oml-field .oml-control:disabled,
+:where(.ohmylms-page)
+	.ohmylms-form-group
+	:is(
+		input[type="text"],
+		input[type="email"],
+		input[type="password"],
+		input[type="number"],
+		input[type="date"],
+		input[type="url"],
+		select,
+		textarea
+	):disabled {
 	cursor: not-allowed;
 	opacity: 1;
 }
@@ -587,7 +725,19 @@
 
 @media (prefers-reduced-motion: reduce) {
 
-	.oml-field .oml-control {
+	.oml-field .oml-control,
+	:where(.ohmylms-page)
+		.ohmylms-form-group
+		:is(
+			input[type="text"],
+			input[type="email"],
+			input[type="password"],
+			input[type="number"],
+			input[type="date"],
+			input[type="url"],
+			select,
+			textarea
+		) {
 		transition: none;
 	}
 }

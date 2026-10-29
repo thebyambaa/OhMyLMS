@@ -1,0 +1,30 @@
+.toplevel_page_ohmylms.rtl .ohmylms-editor-content-wrapper ol,
+.toplevel_page_ohmylms.rtl .ohmylms-editor-content-wrapper ul {
+	margin-left: unset;
+	margin-right: 1.5em;
+}
+
+.toplevel_page_ohmylms.rtl .ohmylms-editor-content-wrapper blockquote {
+	border-left: none;
+	border-right: 4px solid var(--oml-primary);
+}
+
+.toplevel_page_ohmylms.rtl .ohmylms-ai-img-propmt-box {
+	left: unset;
+	right: 43px;
+}
+
+.toplevel_page_ohmylms.rtl
+	.components-base-control
+	.components-base-control__field
+	.components-toggle-group-control {
+	margin-left: unset;
+	margin-right: auto;
+}
+
+.toplevel_page_ohmylms.rtl
+	.ohmylms-ai-img-propmt-box
+	.ohmylms-ai-img-propmt-box {
+	left: unset;
+	right: unset;
+}

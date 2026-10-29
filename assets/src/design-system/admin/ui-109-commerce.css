@@ -1,0 +1,3 @@
+.ohmylms-membership-modal .components-modal__content::-webkit-scrollbar {
+	display: none;
+}

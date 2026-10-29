@@ -1,0 +1,10 @@
+.ohmylms-lesson-settings-visibility .ant-typography {
+	margin: 0;
+}
+
+.ohmylms-lesson-settings-visibility
+	.ant-typography.ohmylms-lesson-settings-visibility-text-title {
+	color: var(--oml-heading);
+	font-size: var(--oml-font-size-md);
+	font-weight: var(--oml-weight-medium);
+}

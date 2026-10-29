@@ -1,0 +1,54 @@
+.ohmylms-editor-left-sidebar {
+	height: 100%;
+	border-right: 1px solid var(--oml-border);
+}
+
+.ohmylms-editor-left-sidebar .ohmylms-add-question-wrapper {
+	padding: 15px 19px;
+	border-bottom: 1px solid var(--oml-border);
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	background: var(--oml-surface);
+	border-radius: 10px 0 0 0;
+}
+
+.ohmylms-editor-left-sidebar
+	.ohmylms-add-question-wrapper
+	.ohmylms-add-question {
+	color: var(--oml-primary);
+	font-size: var(--oml-font-size-md);
+	font-weight: var(--oml-weight-strong);
+	height: auto;
+	padding: 0;
+	outline: none !important;
+	box-shadow: none !important;
+}
+
+.ohmylms-editor-left-sidebar
+	.ohmylms-add-question-wrapper
+	.ohmylms-add-question
+	.ant-btn-icon {
+	border-radius: var(--oml-radius-control);
+	border: 2px dashed var(--oml-primary);
+	background: color-mix(in srgb, var(--oml-primary) 10%, transparent);
+	padding: var(--oml-space-1);
+	width: 32px;
+	height: 32px;
+	text-align: center;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.ohmylms-editor-left-sidebar
+	.ohmylms-add-question-wrapper
+	.ohmylms-add-question:hover {
+	background: color-mix(in srgb, var(--oml-shade) 0%, transparent);
+}
+
+.ohmylms-editor-left-sidebar
+	.ohmylms-add-question-wrapper
+	.ohmylms-add-question:focus-visible {
+	outline: 3px solid var(--oml-focus) !important;
+}

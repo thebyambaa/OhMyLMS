@@ -95,11 +95,11 @@ class FrontendAssets extends Assets {
 					'has_rtl' => false,
 				),
 				'ohmylms-frontend'  => array(
-					'src'     => self::get_asset_url( 'assets/css/style.css' ),
+					'src'     => false,
 					'deps'    => array( 'ohmylms-quiz-a11y' ),
 					'version' => OHMYLMS_VERSION,
 					'media'   => 'all',
-					'has_rtl' => true,
+					'has_rtl' => false,
 				),
 			)
 		);
@@ -218,6 +218,7 @@ class FrontendAssets extends Assets {
 	public function load_scripts() {
 		$this->register_scripts();
 		$this->register_styles();
+		\OhMyLMS\Design\FrontendStyles::register();
 
 		$layout       = get_option( 'ohmylms_archive_page_layout', 'grid' );
 		$layout_style = get_option( 'ohmylms_archive_page_layout_style', 'grid-style1' );

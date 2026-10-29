@@ -1,62 +1,45 @@
 .ohmylms-page {
 
-    .ohmylms-student-profile {
+	.ohmylms-student-profile {
 
-        .student-billing {
+		.student-billing {
 
-            .ohmylms-billing-box {
-                border-radius: 8px;
-                background-color: #FFF;
-                box-shadow: 0 1px 4px 0 #D3D6DD;
-                padding: 24px 30px;
+			.ohmylms-billing-box {
+				border-radius: var(--oml-radius-control);
+				background-color: var(--oml-surface);
+				box-shadow: var(--oml-shadow-sm);
+				padding: var(--oml-space-5) 30px;
 
-                display: flex;
-                flex-flow: row wrap;
-                gap: 20px;
-                row-gap: 24px;
-            }
+				display: flex;
+				flex-flow: row wrap;
+				gap: 20px;
+				row-gap: 24px;
+			}
 
-            .ohmylms-form-group {
-                margin-bottom: 0;
-            }
+			.ohmylms-form-group {
+				margin-bottom: 0;
+			}
+		}
 
-        }
+		.ohmylms-form-submit {
+			display: flex;
+			justify-content: flex-end;
+			align-items: center;
+			gap: var(--oml-space-3);
+			margin-top: 25px;
 
-        .ohmylms-form-submit {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 12px;
-            margin-top: 25px;
+			.ohmylms-button {
 
-            .ohmylms-button {
-                background-color: var(--ohmylms-primary-color);
-                color: #fff;
-                padding: 9px 20px 10px;
-
-                &:hover {
-                    background-color: transparent;
-                    color: var(--ohmylms-primary-color);
-                }
-
-                &.cancel {
-                    background-color: transparent;
-                    color: var(--ohmylms-heading-color);
-                    border-color: #DCDFE4;
-
-                    &:hover {
-                        background-color: #0000000f;
-                    }
-                }
-            }
-        }
-    }
+				&.cancel {
+				}
+			}
+		}
+	}
 }
-
 
 @media screen and (max-width: 767px) {
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-form-submit {
-        margin-top: 22px;
-    }
+	.ohmylms-page .ohmylms-student-profile .ohmylms-form-submit {
+		margin-top: 22px;
+	}
 }

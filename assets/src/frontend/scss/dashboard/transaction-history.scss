@@ -1,53 +1,83 @@
 .ohmylms-page {
 
-    .ohmylms-student-profile {
+	.ohmylms-student-profile {
 
-        .student-transaction-history {
+		.student-transaction-history {
 
-            @media screen and (min-width: 1400px) {
-                padding: 40px 55px;
-            }
+			@media screen and (min-width: 1400px) {
+				padding: 40px 55px;
+			}
 
-            .ohmylms-dashboard-table .dashboard-table-body .dashboard-table-tr:last-child {
-                border-bottom: 0;
-            }
+			.ohmylms-dashboard-table
+				.dashboard-table-body
+				.dashboard-table-tr:last-child {
+				border-bottom: 0;
+			}
 
-            .no-course-data {
-                box-shadow: none;
-                border-radius: 0;
-                background-color: transparent;
-                padding-bottom: 25px;
-            }
-            
-        }
-    }
+			.no-course-data {
+				box-shadow: none;
+				border-radius: 0;
+				background-color: transparent;
+				padding-bottom: 25px;
+			}
+		}
+	}
 }
-
-
 
 @media screen and (max-width: 767px) {
 
-    .ohmylms-page .ohmylms-student-profile .student-transaction-history .dashboard-table-tr > .dashboard-table-td.date,
-    .ohmylms-page .ohmylms-student-profile .student-transaction-history .dashboard-table-tr > .dashboard-table-td.price,
-    .ohmylms-page .ohmylms-student-profile .student-transaction-history .dashboard-table-tr > .dashboard-table-td.course-name,
-    .ohmylms-page .ohmylms-student-profile .student-transaction-history .dashboard-table-tr > .dashboard-table-td.purchase-method {
-        display: none;
-    }
-   
-    .ohmylms-page .ohmylms-student-profile .student-transaction-history .dashboard-table-tr .dashboard-table-td.status {
-        width: 100px;
-        margin-left: auto;
-        text-align: right;
-    }
-    
-    .ohmylms-page .ohmylms-student-profile .student-transaction-history .dashboard-table-mobile-td .dashboard-table-td.date,
-    .ohmylms-page .ohmylms-student-profile .student-transaction-history .dashboard-table-mobile-td .dashboard-table-td.price,
-    .ohmylms-page .ohmylms-student-profile .student-transaction-history .dashboard-table-mobile-td .dashboard-table-td.course-name {
-        width: 100%;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.student-transaction-history
+		.dashboard-table-tr
+		> .dashboard-table-td.date,
+	.ohmylms-page
+		.ohmylms-student-profile
+		.student-transaction-history
+		.dashboard-table-tr
+		> .dashboard-table-td.price,
+	.ohmylms-page
+		.ohmylms-student-profile
+		.student-transaction-history
+		.dashboard-table-tr
+		> .dashboard-table-td.course-name,
+	.ohmylms-page
+		.ohmylms-student-profile
+		.student-transaction-history
+		.dashboard-table-tr
+		> .dashboard-table-td.purchase-method {
+		display: none;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .no-course-data {
-        padding-bottom: 5px;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.student-transaction-history
+		.dashboard-table-tr
+		.dashboard-table-td.status {
+		width: 100px;
+		margin-left: auto;
+		text-align: right;
+	}
 
+	.ohmylms-page
+		.ohmylms-student-profile
+		.student-transaction-history
+		.dashboard-table-mobile-td
+		.dashboard-table-td.date,
+	.ohmylms-page
+		.ohmylms-student-profile
+		.student-transaction-history
+		.dashboard-table-mobile-td
+		.dashboard-table-td.price,
+	.ohmylms-page
+		.ohmylms-student-profile
+		.student-transaction-history
+		.dashboard-table-mobile-td
+		.dashboard-table-td.course-name {
+		width: 100%;
+	}
+
+	.ohmylms-page .ohmylms-student-profile .no-course-data {
+		padding-bottom: 5px;
+	}
 }

@@ -4,10 +4,20 @@ import { buildAdminStyles } from './build-admin-styles.mjs';
 
 // Ship the same admin app and SDK used during development, including add-on settings.
 const root = path.resolve( import.meta.dirname, '..' );
-for ( const suffix of [ '.css', '.css.map' ] ) {
+fs.cpSync(
+	path.join( root, 'build/assets/css/frontend' ),
+	path.join( root, 'assets/css/frontend' ),
+	{ recursive: true }
+);
+for ( const name of [
+	'style.css',
+	'style.css.map',
+	'style-rtl.css',
+	'style-rtl.css.map',
+] ) {
 	fs.copyFileSync(
-		path.join( root, 'build/assets/css/learning-pages' + suffix ),
-		path.join( root, 'assets/css/learning-pages' + suffix )
+		path.join( root, 'build/assets/css', name ),
+		path.join( root, 'assets/css', name )
 	);
 }
 buildAdminStyles( root, root );

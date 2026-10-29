@@ -1,0 +1,41 @@
+{
+	"core": [
+		"base/variable",
+		"base/default",
+		"base/components/breadcrumb",
+		"base/components/progressbar",
+		"base/components/leaderboard",
+		"base/components/table",
+		"base/components/accordion",
+		"base/components/loader",
+		"base/components/checkbox",
+		"base/components/radiobutton",
+		"base/components/switcher",
+		"base/components/resource-list",
+		"base/components/toast",
+		"base/components/wysiwyg-content",
+		"base/components/skeleton",
+		"base/components/alert",
+		"header",
+		"login"
+	],
+	"catalog": [ "archive/course-archive" ],
+	"course": [ "single/course-single", "single/scrollto-top" ],
+	"lesson": [ "lesson/lesson-single" ],
+	"checkout": [ "checkout/checkout" ],
+	"thankyou": [ "thankyou/thankyou" ],
+	"account": [
+		"dashboard/dashboard-table",
+		"dashboard/dashboard",
+		"dashboard/my-courses",
+		"dashboard/profile",
+		"dashboard/profile-edit",
+		"dashboard/notification",
+		"dashboard/billing-information",
+		"dashboard/transaction-history",
+		"dashboard/membership-list",
+		"dashboard/membership-invoice"
+	],
+	"membership": [ "membership/membership" ],
+	"rtl": [ "rtl" ]
+}

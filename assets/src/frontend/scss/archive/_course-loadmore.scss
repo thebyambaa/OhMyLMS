@@ -1,48 +1,40 @@
 .ohmylms-page {
 
-    .ohmylms-course-loadmore-area {
-        text-align: center;
-        margin-top: 40px;
-        width: 100%;
+	.ohmylms-course-loadmore-area {
+		text-align: center;
+		margin-top: 40px;
+		width: 100%;
 
-        .ohmylms-button {
-            font-family: inherit;
-            font-size: 18px;
-            padding: 16px 30px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+		.ohmylms-button {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			gap: var(--oml-space-2);
 
-            .ohmylms-loader {
-                position: relative;
-                top: 1px;
-                border-color: #5d8eff;
-                border-top-color: #fff;
-            }
+			.ohmylms-loader {
+				position: relative;
+				top: 1px;
+				border-top-color: var(--oml-border);
+			}
 
-            &:hover {
+			&:hover {
 
-                .ohmylms-loader {
-                    border-color: var(--ohmylms-primary-color);
-                    border-top-color: #fff;
-                }
-            }
+				.ohmylms-loader {
+					border-top-color: var(--oml-border);
+				}
+			}
+		}
+	}
 
-        }
-
-    }
-
-    .ohmylms-filter-enabled + .ohmylms-course-loadmore-area {
-        width: calc(100% - 337px);
-        margin-left: auto;
-    }
-
+	.ohmylms-filter-enabled + .ohmylms-course-loadmore-area {
+		width: calc(100% - 337px);
+		margin-left: auto;
+	}
 }
 
 @media screen and (max-width: 1199px) {
 
-    .ohmylms-page .ohmylms-filter-enabled + .ohmylms-course-loadmore-area {
+	.ohmylms-page .ohmylms-filter-enabled + .ohmylms-course-loadmore-area {
 		width: calc(100% - 291px);
 	}
 }
@@ -50,15 +42,10 @@
 @media screen and (max-width: 991px) {
 
 	.ohmylms-page .ohmylms-courses .ohmylms-course-loadmore-area {
-        margin-top: 30px;
-    }
-
-	.ohmylms-page .ohmylms-courses .ohmylms-course-loadmore-area .ohmylms-button {
-		font-size: 15px;
-		padding: 13px 20px;
+		margin-top: 30px;
 	}
 
-    .ohmylms-page .ohmylms-filter-enabled + .ohmylms-course-loadmore-area {
+	.ohmylms-page .ohmylms-filter-enabled + .ohmylms-course-loadmore-area {
 		width: 100%;
 	}
 }

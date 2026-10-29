@@ -109,7 +109,7 @@ if ( '/fixture' !== $route ) {
 }
 ?>
 <!doctype html><html><head><meta charset="utf-8"><title>Native quiz block test</title>
-<link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/assets/css/quiz-player-templates.css"><link rel="stylesheet" href="/assets/css/quiz-player-inline.css"><link rel="stylesheet" href="/assets/interactivity/frontend.css">
+<link rel="stylesheet" href="/assets/css/oml-ui.css"><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/assets/css/quiz-player-templates.css"><link rel="stylesheet" href="/assets/css/quiz-player-inline.css"><link rel="stylesheet" href="/assets/interactivity/frontend.css">
 <script type="importmap">{"imports":{"@wordpress/interactivity":"/runtime.js","@wordpress/interactivity-router":"/router.js","ohmylms/interactivity":"/assets/interactivity/sdk.js","ohmylms/questions":"/assets/interactivity/questions.js"}}</script>
 <script id="wp-script-module-data-@wordpress/interactivity" type="application/json">{"config":{}}</script></head>
 <body><main style="max-width:900px;margin:32px auto"><h1>Lesson with native quizzes</h1><p>Browser test fixture — no learner records are created.</p>

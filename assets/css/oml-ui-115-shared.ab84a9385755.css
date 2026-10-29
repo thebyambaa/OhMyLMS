@@ -1,0 +1,1 @@
+.ohmylms-category-token button:hover{background:var(--oml-success-soft)}.ohmylms-category-tags button:disabled{opacity:.5;cursor:default}.ohmylms-category-tags button:focus-visible{outline:2px solid var(--oml-primary-hover, var(--oml-primary));outline-offset:2px}

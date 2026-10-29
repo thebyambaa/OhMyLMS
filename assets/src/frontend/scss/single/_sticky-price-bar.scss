@@ -136,11 +136,6 @@ body.admin-bar {
 		del {
 		font-size: var(--oml-font-size-xl);
 	}
-
-	.ohmylms-page .ohmylms-widget-pricebox .ohmylms-btn-area .ohmylms-button {
-		font-size: var(--oml-font-size-lg);
-		padding: 13px 17px;
-	}
 }
 
 @media screen and (max-width: 1399px) {
@@ -166,7 +161,6 @@ body.admin-bar {
 	}
 
 	.ohmylms-page .ohmylms-widget-pricebox .ohmylms-btn-area .ohmylms-button {
-		font-size: var(--oml-font-size-md);
 		display: inline-flex;
 	}
 }
@@ -261,9 +255,7 @@ body.admin-bar {
 	}
 
 	.ohmylms-page .ohmylms-widget-pricebox .ohmylms-btn-area .ohmylms-button {
-		font-size: var(--oml-font-size-md);
 		display: inline-flex;
-		padding: 10px 15px;
 		width: auto;
 	}
 

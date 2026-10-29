@@ -104,14 +104,10 @@
 
 			.ohmylms-button {
 				width: 100%;
-				font-size: var(--oml-font-size-lg);
-				font-weight: var(--oml-weight-strong);
 				display: flex;
 				align-items: center;
 				justify-content: center;
 				gap: 7px;
-				padding: 13px var(--oml-space-5);
-				color: var(--oml-on-primary);
 
 				svg {
 					display: block;
@@ -124,22 +120,13 @@
 				}
 
 				&:hover {
-					color: var(--oml-primary);
-					background-color: transparent;
-					border-color: var(--oml-primary);
 
 					path {
-						fill: var(--oml-primary);
+						fill: currentColor;
 					}
 				}
 
 				&.ohmylms-button-outline {
-					color: var(--oml-primary);
-
-					&:hover {
-						background-color: var(--oml-primary);
-						color: var(--oml-on-primary);
-					}
 				}
 			}
 		}
@@ -192,19 +179,7 @@
 			margin-top: 26px;
 
 			.ohmylms-button {
-				font-size: var(--oml-font-size-lg);
-				font-weight: var(--oml-weight-strong);
-				width: 100%;
-				background-color: transparent;
-				color: var(--oml-heading);
-				border-color: var(--oml-border);
-				padding: 14px var(--oml-space-5);
-
-				&:hover {
-					background-color: var(--oml-primary);
-					color: var(--oml-on-primary);
-					border-color: var(--oml-primary);
-				}
+				width: 100%
 			}
 		}
 	}
@@ -316,16 +291,7 @@
 		}
 
 		.ohmylms-button {
-			width: 100%;
-			background: transparent;
-			border: 1px solid var(--oml-danger);
-			color: var(--oml-danger-text);
-
-			&:hover {
-				border-color: var(--oml-danger-text);
-				background-color: var(--oml-danger-text);
-				color: var(--oml-on-primary);
-			}
+			width: 100%
 		}
 	}
 
@@ -552,20 +518,7 @@
 		font-size: var(--oml-font-size-xs);
 	}
 
-	.ohmylms-page .ohmylms-widget-pricebox .ohmylms-btn-area .ohmylms-button {
-		font-size: var(--oml-font-size-md);
-		padding: 10px 20px;
-		border-radius: var(--oml-radius-control);
-	}
-
 	/* -----membership widget-----*/
-	.ohmylms-page
-		.ohmylms-widget-membership
-		.ohmylms-button-area
-		.ohmylms-button {
-		font-size: var(--oml-font-size-md);
-		padding: 10px 18px;
-	}
 
 	.ohmylms-page .ohmylms-widget-membership .membership-tag {
 		font-size: var(--oml-font-size-sm);

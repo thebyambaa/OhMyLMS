@@ -1,0 +1,23 @@
+.toplevel_page_ohmylms.rtl
+	.ohmylms-course-builder-wrapper
+	.ohmylms-top-navigation
+	.ohmylms-course-single-steps-wrapper:not(:last-child)::after {
+	left: unset;
+	right: 100%;
+	transform: translateY(50%);
+}
+
+.toplevel_page_ohmylms.rtl
+	.ohmylms-course-builder-wrapper
+	.ohmylms-chapter-preview {
+	margin-left: unset;
+	margin-right: auto;
+}
+
+.toplevel_page_ohmylms.rtl
+	.ohmylms-course-builder-wrapper
+	.ohmylms-course-info-wrapper
+	.ohmylms-course-info-toggle {
+	left: 40px;
+	right: unset;
+}

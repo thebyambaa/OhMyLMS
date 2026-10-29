@@ -1,0 +1,8 @@
+.toplevel_page_ohmylms
+	.ohmylms-admin-page
+	.ohmylms-preference-screen-wrapper
+	.components-base-control
+	.components-base-control__field
+	.components-toggle-group-control {
+	width: 180px;
+}

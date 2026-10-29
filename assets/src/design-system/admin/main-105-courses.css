@@ -1,0 +1,21 @@
+.ohmylms-course-details-layout-settings
+	.ohmylms-select-card-wrapper
+	.ohmylms-select-card-info
+	.ohmylms-select-card-title {
+	font-size: var(--oml-font-size-lg);
+	font-weight: var(--oml-weight-medium);
+}
+
+.ohmylms-course-details-layout-settings
+	.ohmylms-select-card-wrapper
+	.ohmylms-select-card-info
+	.ohmylms-select-card-description {
+	color: var(--oml-muted) !important;
+}
+
+.ohmylms-course-details-layout-settings
+	.ohmylms-select-card-wrapper
+	.ohmylms-search-select {
+	max-width: 330px;
+	width: 100%;
+}

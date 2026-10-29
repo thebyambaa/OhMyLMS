@@ -19,7 +19,6 @@ test.beforeAll( () => {
 
 const markup = ( theme ) => `<!doctype html><html><head><style>${ tokens }
 ${ fs.readFileSync( path.join( root, 'assets/css/oml-ui.css' ), 'utf8' ) }
-${ fs.readFileSync( path.join( root, 'assets/css/oml-legacy-buttons.css' ), 'utf8' ) }
 ${ fs.readFileSync( path.join( root, 'assets/css/practice.css' ), 'utf8' ) }
 body{margin:24px;background:var(--oml-background);font-family:system-ui}main{max-width:760px;margin:auto}
 </style></head><body data-theme="${ theme }"><main>

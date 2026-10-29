@@ -1,7 +1,0 @@
-@media (max-width: 780px) {
-
-	.ohmylms-question-type-layout {
-		grid-template-columns: minmax(0, 1fr);
-	}
-}
-

@@ -1,0 +1,11 @@
+.ohmylms-ui-express-active.toplevel_page_ohmylms
+	.ohmylms-classic-editor-modal-wrap {
+	left: 0;
+	top: 0;
+}
+
+.ohmylms-ui-express-active.toplevel_page_ohmylms
+	.ohmylms-classic-editor-modal-wrap
+	.ohmylms-classic-certificate-builder {
+	max-width: 100%;
+}

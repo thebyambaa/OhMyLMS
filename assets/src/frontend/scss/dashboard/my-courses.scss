@@ -1,182 +1,177 @@
 .ohmylms-page {
 
-    .ohmylms-dashboard {
+	.ohmylms-dashboard {
 
-        .ohmylms-my-courses-tab {
-            border-bottom: 1px solid #EBEBEF;
-            padding-bottom: 14px;
-            overflow: hidden;
+		.ohmylms-my-courses-tab {
+			border-bottom: 1px solid var(--oml-border);
+			padding-bottom: 14px;
+			overflow: hidden;
 
-            ul {
-                list-style: none;
-                padding: 0;
-                margin: 0;
-                display: flex;
+			ul {
+				list-style: none;
+				padding: 0;
+				margin: 0;
+				display: flex;
 
-                li {
-                    padding: 0;
-                    margin: 0;
-                    line-height: 1;
+				li {
+					padding: 0;
+					margin: 0;
+					line-height: 1;
 
-                    button {
-                        color: var(--ohmylms-heading-color);
-                        font-size: 14px;
-                        font-weight: 400;
-                        line-height: 1.2;
-                        margin: 0 0 0 24px;
-                        cursor: pointer;
-                        position: relative;
-                        background-color: transparent!important;
-                        border: none;
-                        outline: none;
-                        box-shadow: none;
-                        transition: all 0.3s ease;
-                        padding: 0;
+					button {
+						color: var(--oml-heading);
+						font-size: var(--oml-font-size-md);
+						font-weight: var(--oml-weight-regular);
+						line-height: 1.2;
+						margin: 0 0 0 var(--oml-space-5);
+						cursor: pointer;
+						position: relative;
+						background-color: transparent !important;
+						border: none;
+						outline: none;
+						box-shadow: none;
+						transition: all 0.3s ease;
+						padding: 0;
 
-                        &::before {
-                            content: "";
-                            position: absolute;
-                            left: 0;
-                            bottom: -14px;
-                            width: 100%;
-                            height: 2px;
-                            background-color: var(--ohmylms-primary-color);
-                            transition: transform 0.4s ease;
-                            transform: scaleX(0);
-                            transform-origin: bottom right;
-                        }
+						&::before {
+							content: "";
+							position: absolute;
+							left: 0;
+							bottom: -14px;
+							width: 100%;
+							height: 2px;
+							background-color: var(--oml-primary);
+							transition: transform 0.4s ease;
+							transform: scaleX(0);
+							transform-origin: bottom right;
+						}
 
-                        &:hover,
-                        &.active {
-                            color: var(--ohmylms-primary-color);
-                        }
+						&:hover,
+						&.active {
+							color: var(--oml-primary);
+						}
 
-                        &:focus {
-                            outline: 1px dotted var(--ohmylms-heading-color) !important;
-                        }
+						&:focus {
+							outline: 1px dotted var(--oml-heading) !important;
+						}
 
-                        &.active::before {
-                            transform-origin: bottom left;
-                            transform: scaleX(1);
-                        }
-                    }
+						&.active::before {
+							transform-origin: bottom left;
+							transform: scaleX(1);
+						}
+					}
 
-                    &:first-child {
+					&:first-child {
 
-                        button {
-                            margin-left: 0;
-                        }
-                    }
-                }
-            }
-        }
+						button {
+							margin-left: 0;
+						}
+					}
+				}
+			}
+		}
 
-        .ohmylms-single-tab-content {
-            display: none;
-            padding-top: 40px;
+		.ohmylms-single-tab-content {
+			display: none;
+			padding-top: 40px;
 
-            &.active {
-                display: block;
-            }
+			&.active {
+				display: block;
+			}
 
-            .ohmylms-dashboard-courses {
-                margin-bottom: 0;
-            }
+			.ohmylms-dashboard-courses {
+				margin-bottom: 0;
+			}
+		}
+	}
 
-        }
-        
-    }
+	.no-course-data {
+		text-align: center;
+		display: flex;
+		flex-flow: column;
+		align-items: center;
+		justify-content: center;
+		gap: 18px;
+		padding: 40px 0 35px;
+		border-radius: var(--oml-radius-control);
+		background: var(--oml-surface);
+		box-shadow: var(--oml-shadow-sm);
+		width: 100%;
 
-    .no-course-data {
-        text-align: center;
-        display: flex;
-        flex-flow: column;
-        align-items: center;
-        justify-content: center;
-        gap: 18px;
-        padding: 40px 0 35px;
-        border-radius: 8px;
-        background: #FFF;
-        box-shadow: 0 1px 4px 0 #D3D6DD;
-        width: 100%;
+		svg {
+			display: block;
+			margin: 0 auto;
+		}
 
-        svg {
-            display: block;
-            margin: 0 auto;
-        }
+		p {
+			font-size: var(--oml-font-size-lg);
+			color: var(--oml-text);
+			line-height: 1.4;
+			margin: 0;
+			padding: 0;
+			font-weight: var(--oml-weight-medium);
+		}
 
-        p {
-            font-size: 18px;
-            color: var(--ohmylms-body-text-color);
-            line-height: 1.4;
-            margin: 0;
-            padding: 0;
-            font-weight: 500;
-        }
-
-        &.no-course-section {
-            margin-bottom: 40px;
-        }
-    }
+		&.no-course-section {
+			margin-bottom: 40px;
+		}
+	}
 }
 
 @media screen and (max-width: 1199px) {
 
-    .ohmylms-page .ohmylms-dashboard .ohmylms-my-courses-tab {
-        padding-bottom: 13px;
-    }
+	.ohmylms-page .ohmylms-dashboard .ohmylms-my-courses-tab {
+		padding-bottom: 13px;
+	}
 
-    .ohmylms-page .ohmylms-dashboard .ohmylms-my-courses-tab ul li::before {
-        bottom: -13px;
-    }
+	.ohmylms-page .ohmylms-dashboard .ohmylms-my-courses-tab ul li::before {
+		bottom: -13px;
+	}
 
-    .ohmylms-page .ohmylms-dashboard .ohmylms-single-tab-content {
-        padding-top: 30px;
-    }
+	.ohmylms-page .ohmylms-dashboard .ohmylms-single-tab-content {
+		padding-top: 30px;
+	}
 
-    .ohmylms-page .no-course-data {
-        gap: 12px;
-    }
+	.ohmylms-page .no-course-data {
+		gap: var(--oml-space-3);
+	}
 
-    .ohmylms-page .no-course-data svg {
-        width: 100px;
-        height: auto;
-    }
+	.ohmylms-page .no-course-data svg {
+		width: 100px;
+		height: auto;
+	}
 
-    .ohmylms-page .no-course-data p {
-        font-size: 15px;
-    }
-
+	.ohmylms-page .no-course-data p {
+		font-size: var(--oml-font-size-md);
+	}
 }
 
 @media screen and (max-width: 991px) {
 
-    .ohmylms-page .no-course-data.no-course-section {
-        margin-bottom: 20px;
-    }
+	.ohmylms-page .no-course-data.no-course-section {
+		margin-bottom: 20px;
+	}
 }
 
 @media screen and (max-width: 767px) {
 
-    .ohmylms-page .ohmylms-dashboard .ohmylms-single-tab-content {
-        padding-top: 20px;
-    }
+	.ohmylms-page .ohmylms-dashboard .ohmylms-single-tab-content {
+		padding-top: 20px;
+	}
 
-    .ohmylms-page .no-course-data {
-        padding: 20px 0 15px;
-        gap: 14px;
-    }
+	.ohmylms-page .no-course-data {
+		padding: 20px 0 15px;
+		gap: 14px;
+	}
 
-    .ohmylms-page .no-course-data p {
-        font-size: 14px;
-    }
-
+	.ohmylms-page .no-course-data p {
+		font-size: var(--oml-font-size-md);
+	}
 }
 
 @media screen and (max-width: 575px) {
 
-    .ohmylms-page .ohmylms-dashboard .ohmylms-my-courses-tab ul li {
-        text-align: center;
-    }
-
+	.ohmylms-page .ohmylms-dashboard .ohmylms-my-courses-tab ul li {
+		text-align: center;
+	}
 }

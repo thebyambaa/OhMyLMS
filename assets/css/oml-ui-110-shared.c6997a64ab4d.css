@@ -1,9 +1,0 @@
-.ohmylms-cur-panel .ohmylms-cur-syllabus-summary h3 {
-	margin: 0 0 2px;
-}
-
-.ohmylms-syl-map td.is-ignored {
-	opacity: 0.45;
-}
-
-.ohmylms-action-confirmation button + button { margin-inline-start: var(--oml-space-3); }

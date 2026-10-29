@@ -1,429 +1,405 @@
 .ohmylms-page {
 
-    .ohmylms-login-signup {
-        border-radius: 14px;
-        border: 1px solid #EBEBEF;
-        padding: 50px 30px;
-        background-color: #fff;
+	.ohmylms-login-signup {
+		border-radius: var(--oml-radius-card);
+		border: 1px solid var(--oml-border);
+		padding: 50px 30px;
+		background-color: var(--oml-surface);
 
-        .ohmylms-login-signup-header {
-            text-align: center;
-            margin-bottom: 40px;
+		.ohmylms-login-signup-header {
+			text-align: center;
+			margin-bottom: 40px;
 
-            h1 {
-                color: var(--ohmylms-heading-color);
-                font-size: 40px;
-                font-weight: 500;
-                line-height: 1.3;
-                margin: 0;
-                padding: 0;
-            }
+			h1 {
+				color: var(--oml-heading);
+				font-size: 40px;
+				font-weight: var(--oml-weight-medium);
+				line-height: 1.3;
+				margin: 0;
+				padding: 0;
+			}
 
-            p {
-                color: var(--ohmylms-heading-color);
-                font-size: 13px;
-                font-weight: 400;
-                line-height: 1.5;
-                margin: 15px auto 0;
-                padding: 0;
-                max-width: 310px;
-            }
-        }
+			p {
+				color: var(--oml-heading);
+				font-size: var(--oml-font-size-sm);
+				font-weight: var(--oml-weight-regular);
+				line-height: 1.5;
+				margin: 15px auto 0;
+				padding: 0;
+				max-width: 310px;
+			}
+		}
 
-        .account-details-title {
-            color: var(--ohmylms-heading-color);
-            font-size: 22px;
-            font-weight: 500;
-            line-height: 1.2;
-            margin: 0 0 14px;
-            display: block;
-        }
+		.account-details-title {
+			color: var(--oml-heading);
+			font-size: var(--oml-font-size-xl);
+			font-weight: var(--oml-weight-medium);
+			line-height: 1.2;
+			margin: 0 0 14px;
+			display: block;
+		}
 
-        .ohmylms-input-label {
-            top: 50%;
-            transform: translateY(-50%);
-        }
+		.ohmylms-input-label {
+			top: 50%;
+			transform: translateY(-50%);
+		}
 
-        .ohmylms-input-text {
-            color: var(--ohmylms-body-text-color);
-            padding: 26px 16px 8px;
-            height: 54px;
+		.ohmylms-input-text {
+			color: var(--oml-text);
+			padding: 26px var(--oml-space-4) var(--oml-space-2);
+			height: 54px;
 
-            &::placeholder { 
-                color: #A3A5AA;
-                opacity: 1;
-            }
-            
-            &:-ms-input-placeholder { 
-                color: #A3A5AA;
-            }
-            
-            &::-ms-input-placeholder { 
-                color: #A3A5AA;
-            }
-        }
+			&::placeholder {
+				color: var(--oml-muted);
+				opacity: 1;
+			}
 
-        .ohmylms-form-row {
-            margin-bottom: 8px;
-            margin-top: 0;
+			&:-ms-input-placeholder {
+				color: var(--oml-muted);
+			}
 
-            &:last-child {
-                margin-bottom: 0;
-            }
+			&::-ms-input-placeholder {
+				color: var(--oml-muted);
+			}
+		}
 
-            &.ohmylms-folded {
+		.ohmylms-form-row {
+			margin-bottom: var(--oml-space-2);
+			margin-top: 0;
 
-                .ohmylms-input-label {
-                    top: calc(50% - 10px);
-                    color: #7A8B9A !important;
-                    font-size: 12px;
-                }
-            }
-        }
+			&:last-child {
+				margin-bottom: 0;
+			}
 
-        .ohmylms-input-label {
+			&.ohmylms-folded {
 
-            .required {
-                color: #DD2001;
-            }
-        }
+				.ohmylms-input-label {
+					top: calc(50% - 10px);
+					color: var(--oml-muted) !important;
+					font-size: var(--oml-font-size-xs);
+				}
+			}
+		}
 
-        .rememberme-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            margin: 0;
+		.ohmylms-input-label {
 
-            .forgot-pass {
-                color: var(--ohmylms-primary-color);
-                font-size: 14px;
-                font-weight: 400;
-                line-height: 1.2;
-                text-decoration: underline;
-                box-shadow: none;
+			.required {
+				color: var(--oml-danger);
+			}
+		}
 
-                &:hover {
-                    text-decoration: none;
-                }
+		.rememberme-row {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 10px;
+			margin: 0;
 
-                &:focus {
-                    outline: 1px dotted var(--ohmylms-heading-color);
-                }
-                
-            }
-        }
+			.forgot-pass {
+				color: var(--oml-primary);
+				font-size: var(--oml-font-size-md);
+				font-weight: var(--oml-weight-regular);
+				line-height: 1.2;
+				text-decoration: underline;
+				box-shadow: none;
 
-        .ohmylms-form-names-row {
-            display: flex;
-            gap: 8px;
+				&:hover {
+					text-decoration: none;
+				}
 
-            .ohmylms-form-row {
-                flex: 1;
-                min-width: 0;
-                margin-bottom: 0;
-            }
-        }
+				&:focus {
+					outline: 1px dotted var(--oml-heading);
+				}
+			}
+		}
 
-        .row-country {
+		.ohmylms-form-names-row {
+			display: flex;
+			gap: var(--oml-space-2);
 
-            .ohmylms-input-label {
-                top: 12px;
-                transform: none;
-                font-size: 12px;
-                color: #7A8B9A;
-                pointer-events: none;
-            }
+			.ohmylms-form-row {
+				flex: 1;
+				min-width: 0;
+				margin-bottom: 0;
+			}
+		}
 
-            select.ohmylms-input-text {
-                height: 54px;
-                padding: 26px 40px 8px 16px;
-                appearance: none;
-                -webkit-appearance: none;
-                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%237A8B9A' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
-                background-repeat: no-repeat;
-                background-position: right 16px center;
-                cursor: pointer;
-            }
-        }
+		.row-country {
 
-        .ohmylms-checkbox {
-            position: relative;
+			.ohmylms-input-label {
+				top: 12px;
+				transform: none;
+				font-size: var(--oml-font-size-xs);
+				color: var(--oml-muted);
+				pointer-events: none;
+			}
 
-            input[type="checkbox"] {
-                display: block;
-                position: absolute;
-                opacity: 0;
-                width: 17px;
-                height: 17px;
-                top: 3px;
-                left: 0;
-                margin: 0;
-                padding: 0;
-                cursor: pointer;
-                z-index: 1;
+			select.ohmylms-input-text {
+				height: 54px;
+				padding: 26px 40px var(--oml-space-2) var(--oml-space-4);
+				appearance: none;
+				-webkit-appearance: none;
+				background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%237A8B9A' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+				background-repeat: no-repeat;
+				background-position: right 16px center;
+				cursor: pointer;
+			}
+		}
 
-                &:focus + .ohmylms-checkbox-text .checkedbox {
-                    outline: 2px solid var(--ohmylms-primary-color);
-                    outline-offset: 2px;
-                }
-            }
+		.ohmylms-checkbox {
+			position: relative;
 
-            .ohmylms-checkbox-text {
-                color: #7A8B9A;
-                font-size: 14px;
-                padding-left: 24px;
+			input[type="checkbox"] {
+				display: block;
+				position: absolute;
+				opacity: 0;
+				width: 17px;
+				height: 17px;
+				top: 3px;
+				left: 0;
+				margin: 0;
+				padding: 0;
+				cursor: pointer;
+				z-index: 1;
 
-                .checkedbox {
-                    top: 3px;
-                    width: 17px;
-                    height: 17px;
-                    border-color: var(--ohmylms-primary-color);
-                    display: flex;
-                    flex-flow: column;
-                    align-items: center;
-                    justify-content: center;
+				&:focus + .ohmylms-checkbox-text .checkedbox {
+					outline: 2px solid var(--oml-primary);
+					outline-offset: 2px;
+				}
+			}
 
-                    &::before {
-                        display: none;
-                    }
+			.ohmylms-checkbox-text {
+				color: var(--oml-muted);
+				font-size: var(--oml-font-size-md);
+				padding-left: var(--oml-space-5);
 
-                    svg {
-                        display: block;
-                        opacity: 0;
-                        visibility: hidden;
-                        transition: all 0.3s ease;
-                    }
-                }
-            }
+				.checkedbox {
+					top: 3px;
+					width: 17px;
+					height: 17px;
+					border-color: var(--oml-primary);
+					display: flex;
+					flex-flow: column;
+					align-items: center;
+					justify-content: center;
 
-            input[type="checkbox"]:checked + .ohmylms-checkbox-text .checkedbox svg {
-                opacity: 1;
-                visibility: visible;
-            }
-        }
+					&::before {
+						display: none;
+					}
 
-        .ohmylms-button {
-            width: 100%;
-            color: #FFF!important;
-            font-size: 18px;
-            font-weight: 600;
-            line-height: 1.2;
-            border-radius: 8px;
-            background-color: var(--ohmylms-primary-color)!important;
-            box-shadow: none;
-            outline: none;
-            padding: 12px 24px;
-            height: 55px;
-            margin-top: 24px;
-            border-color: var(--ohmylms-primary-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            letter-spacing: 1px;
+					svg {
+						display: block;
+						opacity: 0;
+						visibility: hidden;
+						transition: all 0.3s ease;
+					}
+				}
+			}
 
-            .ohmylms-loader {
-                border-color: #fff;
-                border-top-color: #2256f0;
-            }
+			input[type="checkbox"]:checked
+				+ .ohmylms-checkbox-text
+				.checkedbox
+				svg {
+				opacity: 1;
+				visibility: visible;
+			}
+		}
 
-            &:hover {
-                background-color: transparent!important;
-                color: var(--ohmylms-primary-color)!important;
+		.ohmylms-button {
+			width: 100%;
+			margin-top: var(--oml-space-5);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 5px;
+			letter-spacing: 1px;
 
-                .ohmylms-loader {
-                    border-color: #2256f0;
-                    border-top-color: #fff;
-                }
-            }
+			.ohmylms-loader {
+				border-top-color: var(--oml-primary);
+			}
 
-            &:disabled {
-                background-color: #7A8B9A!important;
-                color: #FFF!important;
-                cursor: not-allowed;
-                border-color: #7A8B9A!important;
-            }
-            
-        }
+			&:hover {
 
-        .dont-have-account {
-            color: var(--ohmylms-heading-color);
-            font-size: 14px;
-            font-weight: 400;
-            line-height: 1.14;
-            outline: none;
-            text-decoration: none;
-            text-align: center;
-            margin-top: 18px;
+				.ohmylms-loader {
+					border-top-color: var(--oml-border);
+				}
+			}
 
-            a {
-                color: var(--ohmylms-primary-color);
-                font-weight: 700;
-                text-decoration: underline;
-                outline: none;
+			&:disabled {
+				cursor: not-allowed;
+			}
+		}
 
-                &:hover {
-                    text-decoration: none;
-                }
+		.dont-have-account {
+			color: var(--oml-heading);
+			font-size: var(--oml-font-size-md);
+			font-weight: var(--oml-weight-regular);
+			line-height: 1.14;
+			outline: none;
+			text-decoration: none;
+			text-align: center;
+			margin-top: 18px;
 
-                &:focus {
-                    outline: 1px dotted var(--ohmylms-heading-color);
-                }
-            }
-        }
+			a {
+				color: var(--oml-primary);
+				font-weight: var(--oml-weight-strong);
+				text-decoration: underline;
+				outline: none;
 
-    }
+				&:hover {
+					text-decoration: none;
+				}
 
-    .ohmylms-password-show {
-        position: relative;
-        display: block;
-        line-height: 1;
+				&:focus {
+					outline: 1px dotted var(--oml-heading);
+				}
+			}
+		}
+	}
 
-        .show-password-icon {
-            position: absolute;
-            right: 16px;
-            top: calc(50% + 1px);
-            line-height: 1;
-            cursor: pointer;
-            transform: translateY(-50%);
-        }
+	.ohmylms-password-show {
+		position: relative;
+		display: block;
+		line-height: 1;
 
-        input[type="checkbox"] {
-            display: none;
-        }
-        
-        svg {
-            display: block;
-        }
+		.show-password-icon {
+			position: absolute;
+			right: 16px;
+			top: calc(50% + 1px);
+			line-height: 1;
+			cursor: pointer;
+			transform: translateY(-50%);
+		}
 
-        .eye-off {
-            line-height: 1;
-            position: relative;
-        }
+		input[type="checkbox"] {
+			display: none;
+		}
 
-        .eye-on {
-            line-height: 1;
-            display: none;
-        }
-        
-    }
+		svg {
+			display: block;
+		}
 
-    .ohmylms-form-login-toggle {
-        color: var(--ohmylms-heading-color);
-        font-size: 15px;
-        font-weight: 400;
-        line-height: 1.2;
-        text-decoration: none;
+		.eye-off {
+			line-height: 1;
+			position: relative;
+		}
 
-        a {
-            text-decoration: none;
-            color: var(--ohmylms-primary-color);
-            font-weight: 700;
-            outline: none;
+		.eye-on {
+			line-height: 1;
+			display: none;
+		}
+	}
 
-            &:hover {
-                text-decoration: underline;
-            }
+	.ohmylms-form-login-toggle {
+		color: var(--oml-heading);
+		font-size: var(--oml-font-size-md);
+		font-weight: var(--oml-weight-regular);
+		line-height: 1.2;
+		text-decoration: none;
 
-            &:focus {
-                outline: 1px dotted var(--ohmylms-heading-color);
-            }
-        }
-    }
+		a {
+			text-decoration: none;
+			color: var(--oml-primary);
+			font-weight: var(--oml-weight-strong);
+			outline: none;
 
-    .ohmylms-form-signup {
+			&:hover {
+				text-decoration: underline;
+			}
 
-        #name-warning {
-            font-size: 12px;
-            margin-top: 4px;
-        }
-    }
+			&:focus {
+				outline: 1px dotted var(--oml-heading);
+			}
+		}
+	}
 
+	.ohmylms-form-signup {
+
+		#name-warning {
+			font-size: var(--oml-font-size-xs);
+			margin-top: var(--oml-space-1);
+		}
+	}
 }
 
 .ohmylms-checkout {
 
-    .ohmylms-login-signup {
-        padding: 30px;
-        margin-bottom: 30px;
-    }
+	.ohmylms-login-signup {
+		padding: 30px;
+		margin-bottom: 30px;
+	}
 }
 
 @media screen and (max-width: 1199px) {
 
-    .ohmylms-checkout .ohmylms-login-signup {
-        padding: 20px;
-        border-radius: 10px;
-    }
-
+	.ohmylms-checkout .ohmylms-login-signup {
+		padding: 20px;
+		border-radius: var(--oml-radius-control);
+	}
 }
 
 @media screen and (max-width: 991px) {
 
-    .ohmylms-page .ohmylms-login-signup .ohmylms-login-signup-header h1 {
-        font-size: 34px;
-    }
+	.ohmylms-page .ohmylms-login-signup .ohmylms-login-signup-header h1 {
+		font-size: 34px;
+	}
 
-    .ohmylms-page .ohmylms-login-signup .ohmylms-login-signup-header p {
-        margin: 12px auto 0;
-    }
+	.ohmylms-page .ohmylms-login-signup .ohmylms-login-signup-header p {
+		margin: var(--oml-space-3) auto 0;
+	}
 
-    .ohmylms-page .ohmylms-login-signup .account-details-title {
-        font-size: 18px;
-        margin: 0 0 8px
-    }
+	.ohmylms-page .ohmylms-login-signup .account-details-title {
+		font-size: var(--oml-font-size-lg);
+		margin: 0 0 var(--oml-space-2);
+	}
 }
 
 @media screen and (max-width: 767px) {
 
-    .ohmylms-page .ohmylms-form-signup, .ohmylms-page .ohmylms-form-login {
-        border-radius: 10px;
-    }
-
+	.ohmylms-page .ohmylms-form-signup,
+	.ohmylms-page .ohmylms-form-login {
+		border-radius: var(--oml-radius-control);
+	}
 }
 
 @media screen and (max-width: 575px) {
 
-    .ohmylms-page .ohmylms-login-signup {
-        padding: 30px 20px;
-    }
+	.ohmylms-page .ohmylms-login-signup {
+		padding: 30px 20px;
+	}
 
-    .ohmylms-page .ohmylms-form-login-toggle {
-        font-size: 14px;
-    }
+	.ohmylms-page .ohmylms-form-login-toggle {
+		font-size: var(--oml-font-size-md);
+	}
 
-    .ohmylms-page .ohmylms-login-signup .ohmylms-login-signup-header h1 {
-        font-size: 30px;
-    }
+	.ohmylms-page .ohmylms-login-signup .ohmylms-login-signup-header h1 {
+		font-size: var(--oml-font-size-2xl);
+	}
 
-    .ohmylms-page .ohmylms-login-signup .account-details-title {
-        font-size: 16px;
-    }
-    
-    .ohmylms-page .ohmylms-login-signup .ohmylms-button {
-        font-size: 16px;
-        height: 46px;
-    }
+	.ohmylms-page .ohmylms-login-signup .account-details-title {
+		font-size: var(--oml-font-size-lg);
+	}
 
-    .ohmylms-checkout .ohmylms-login-signup {
-        padding: 20px;
-    }
-
+	.ohmylms-checkout .ohmylms-login-signup {
+		padding: 20px;
+	}
 }
 
 @media screen and (max-width: 425px) {
 
-    .ohmylms-page .ohmylms-user-login-wrapper {
-        padding: 8% 15px 30px;
-    }
+	.ohmylms-page .ohmylms-user-login-wrapper {
+		padding: 8% 15px 30px;
+	}
 
-    .ohmylms-page .ohmylms-login-signup .ohmylms-login-signup-header h1 {
-        font-size: 26px;
-    }
+	.ohmylms-page .ohmylms-login-signup .ohmylms-login-signup-header h1 {
+		font-size: var(--oml-font-size-2xl);
+	}
 
-    .ohmylms-page .ohmylms-login-signup .ohmylms-checkbox .ohmylms-checkbox-text .checkedbox::before {
-        left: calc(50% + 0px);
-    }
-
+	.ohmylms-page
+		.ohmylms-login-signup
+		.ohmylms-checkbox
+		.ohmylms-checkbox-text
+		.checkedbox::before {
+		left: calc(50% + 0px);
+	}
 }

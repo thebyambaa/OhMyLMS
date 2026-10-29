@@ -291,10 +291,6 @@
 						cursor: pointer;
 					}
 
-					.ohmylms-button {
-						padding: 10px 20px;
-					}
-
 					.drop-file-text {
 						color: var(--oml-text);
 						text-align: center;
@@ -336,22 +332,7 @@
 						}
 
 						.ohmylms-button {
-							border: 1px solid var(--oml-border);
-							color: var(--oml-heading);
-							background-color: transparent !important;
-							padding: var(--oml-space-3) var(--oml-space-4);
-							font-size: var(--oml-font-size-md);
-							font-weight: var(--oml-weight-medium);
-							line-height: 1;
-							letter-spacing: -0.15px;
-
-							&:hover {
-								background-color: color-mix(
-									in srgb,
-									var(--oml-subtle) 46%,
-									transparent
-								) !important;
-							}
+							letter-spacing: -0.15px
 						}
 					}
 
@@ -400,26 +381,10 @@
 					}
 
 					.ohmylms-button {
-						font-size: var(--oml-font-size-md);
-						padding: 10px 20px;
-						background-color: var(--oml-primary) !important;
-						color: var(--oml-on-primary) !important;
-						border-radius: var(--oml-radius-control);
 						margin-left: auto;
-
-						&:hover {
-							background-color: transparent !important;
-							color: var(--oml-primary) !important;
-						}
 
 						&[disabled] {
 							pointer-events: none;
-							color: var(--oml-muted) !important;
-							background: color-mix(
-								in srgb,
-								var(--oml-primary) 10%,
-								transparent
-							) !important;
 						}
 					}
 				}
@@ -577,15 +542,6 @@
 		border-radius: var(--oml-radius-control);
 		padding: 15px;
 		height: 135px;
-	}
-
-	.ohmylms-page
-		.ohmylms-lesson-details
-		.ohmylms-assignment-submit
-		.ohmylms-form-group.submission-submit
-		.ohmylms-button {
-		font-size: var(--oml-font-size-sm);
-		padding: 10px var(--oml-space-4);
 	}
 
 	.ohmylms-page

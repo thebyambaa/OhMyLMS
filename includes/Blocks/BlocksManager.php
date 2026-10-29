@@ -173,12 +173,8 @@ class BlocksManager {
 		);
 
 		// Enqueue main OhMyLMS styles in editor for ServerSideRender checkout styling.
-		wp_enqueue_style(
-			'ohmylms-main-editor',
-			OHMYLMS_URL . '/assets/css/style.css',
-			array(),
-			OHMYLMS_VERSION
-		);
+		\OhMyLMS\Design\FrontendStyles::register( array( 'core', 'checkout' ) );
+		wp_enqueue_style( 'ohmylms-frontend' );
 	}
 
 	/**

@@ -1,62 +1,64 @@
 .ohmylms-page {
 
-    .ohmylms-switcher {
+	.ohmylms-switcher {
 
-        input[type="checkbox"] {
-            display: none;
-        }
+		input[type="checkbox"] {
+			display: none;
+		}
 
-        .switcher-slider {
-            display: block;
-            position: relative;
-            height: 24px;
-            width: 40px;
-            border-radius: 50px;
-            border: 1px solid #c6c6c6;
-            background-color: #c6c6c6;
-            transition: all 0.3s ease;
-            cursor: pointer;
+		.switcher-slider {
+			display: block;
+			position: relative;
+			height: 24px;
+			width: 40px;
+			border-radius: var(--oml-radius-card);
+			border: 1px solid var(--oml-border);
+			background-color: var(--oml-border);
+			transition: all 0.3s ease;
+			cursor: pointer;
 
-            &::before {
-                content: "";
-                position: absolute;
-                top: 2px;
-                left: 2px;
-                width: 18px;
-                height: 18px;
-                border-radius: 100%;
-                background-color: #fff;
-                transition: all 0.3s ease;
-            }
-        }
+			&::before {
+				content: "";
+				position: absolute;
+				top: 2px;
+				left: 2px;
+				width: 18px;
+				height: 18px;
+				border-radius: 100%;
+				background-color: var(--oml-surface);
+				transition: all 0.3s ease;
+			}
+		}
 
-        input[type="checkbox"]:checked + .switcher-slider {
-            background-color: var(--ohmylms-primary-color);
-            border-color: var(--ohmylms-primary-color);
-        }
+		input[type="checkbox"]:checked + .switcher-slider {
+			background-color: var(--oml-primary);
+			border-color: var(--oml-primary);
+		}
 
-        input[type="checkbox"]:checked + .switcher-slider::before {
-            background-color: #fff;
-            left: 18px;
-            box-shadow: 0 1px 1px 0 #2C49C0;
-        }
-    }
+		input[type="checkbox"]:checked + .switcher-slider::before {
+			background-color: var(--oml-surface);
+			left: 18px;
+			box-shadow: var(--oml-shadow-sm);
+		}
+	}
 }
 
 @media screen and (max-width: 991px) {
 
-    .ohmylms-page .ohmylms-switcher .switcher-slider {
-        height: 20px;
-        width: 32px;
-    }
+	.ohmylms-page .ohmylms-switcher .switcher-slider {
+		height: 20px;
+		width: 32px;
+	}
 
-    .ohmylms-page .ohmylms-switcher .switcher-slider::before {
-        width: 14px;
-        height: 14px;
-    }
+	.ohmylms-page .ohmylms-switcher .switcher-slider::before {
+		width: 14px;
+		height: 14px;
+	}
 
-    .ohmylms-page .ohmylms-switcher input[type="checkbox"]:checked + .switcher-slider::before {
-        left: 15px;
-    }
-
+	.ohmylms-page
+		.ohmylms-switcher
+		input[type="checkbox"]:checked
+		+ .switcher-slider::before {
+		left: 15px;
+	}
 }

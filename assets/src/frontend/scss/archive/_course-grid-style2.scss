@@ -1,52 +1,53 @@
 .ohmylms-page {
-    //-----when layout style-2----
-    .grid-style2 {
 
-        .ohmylms-course-cards .course-card .course-info {
-            justify-content: flex-start;
+	/*-----when layout style-2----*/
+	.grid-style2 {
 
-            .course-meta {
-                justify-content: space-between;
-                margin: 0 0 12px!important;
+		.ohmylms-course-cards .course-card .course-info {
+			justify-content: flex-start;
 
-                > li {
-                    display: none;
+			.course-meta {
+				justify-content: space-between;
+				margin: 0 0 var(--oml-space-3) !important;
 
-                    &.total-duration,
-                    &.total-enrolled-user {
-                        display: block;
-                    }
+				> li {
+					display: none;
 
-                    &.total-duration {
-                        margin-left: auto;
-                    }
-                }
-            }
+					&.total-duration,
+					&.total-enrolled-user {
+						display: block;
+					}
 
-            .ohmylms-loop-course-title {
-                color: var(--ohmylms-heading-color);
-                margin: 0 0 36px;
+					&.total-duration {
+						margin-left: auto;
+					}
+				}
+			}
 
-                @media screen and (max-width: 1199px) {
-                    margin: 0 0 20px;
-                }
-            }
+			.ohmylms-loop-course-title {
+				color: var(--oml-heading);
+				margin: 0 0 36px;
 
-            .course-author {
-                color: var(--ohmylms-body-text-color);
-                font-size: 13px;
-                font-weight: 400;
-                line-height: 1;
-                margin: auto 0 0;
-                padding: 0;
-            }
+				@media screen and (max-width: 1199px) {
+					margin: 0 0 20px;
+				}
+			}
 
-            &.is-cohort-based {
+			.course-author {
+				color: var(--oml-text);
+				font-size: var(--oml-font-size-sm);
+				font-weight: var(--oml-weight-regular);
+				line-height: 1;
+				margin: auto 0 0;
+				padding: 0;
+			}
 
-                .course-meta {
-                    margin: 0 0 10px !important;
-                }
-            }
-        }
-    }
+			&.is-cohort-based {
+
+				.course-meta {
+					margin: 0 0 10px !important;
+				}
+			}
+		}
+	}
 }

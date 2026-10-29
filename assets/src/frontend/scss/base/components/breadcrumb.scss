@@ -1,62 +1,62 @@
 .ohmylms-page {
 
-    .ohmylms-breadcrumb {
-        background-color: #FFF;
-        box-shadow: 0 1px 2px 0 #DBDDE1;
-        padding: 14px 0 12px;
-        position: relative;
-        z-index: 1;
-        margin: 0;
+	.ohmylms-breadcrumb {
+		background-color: var(--oml-surface);
+		box-shadow: var(--oml-shadow-sm);
+		padding: 14px 0 var(--oml-space-3);
+		position: relative;
+		z-index: 1;
+		margin: 0;
 
-        ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            flex-flow: row wrap;
-            gap: 22px;
-            row-gap: 4px;
+		ul {
+			list-style: none;
+			padding: 0;
+			margin: 0;
+			display: flex;
+			align-items: center;
+			flex-flow: row wrap;
+			gap: 22px;
+			row-gap: 4px;
 
-            * {
-                padding: 0;
-                margin: 0;
-            }
+			* {
+				padding: 0;
+				margin: 0;
+			}
 
-            li {
-                color: #A3A5AA;
-                font-size: 13px;
-                font-weight: 400;
-                line-height: 1.5;
-                position: relative;
+			li {
+				color: var(--oml-muted);
+				font-size: var(--oml-font-size-sm);
+				font-weight: var(--oml-weight-regular);
+				line-height: 1.5;
+				position: relative;
 
-                &::after {
-                    content: url(data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgNSAxMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBmaWxsPSIjQTFBMUFBIiBzdHJva2U9IiNBMUExQUEiIHN0cm9rZS13aWR0aD0iLjQiIGQ9Ik0zLjk4NSAzLjc2M0wxLjMwOCAxLjA4NmEuNTgzLjU4MyAwIDEwLS44MjMuODI4bDIuNjgzIDIuNjcyYS41ODMuNTgzIDAgMDEwIC44MjhMLjQ4NSA4LjA4NmEuNTg0LjU4NCAwIDEwLjgyMy44MjhsMi42NzctMi42NzhhMS43NSAxLjc1IDAgMDAwLTIuNDczeiIvPjwvc3ZnPg==);
-                    width: 5px;
-                    height: 10px;
-                    position: absolute;
-                    top: 1px;
-                    right: -14px;
-                }
+				&::after {
+					content: url(data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgNSAxMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBmaWxsPSIjQTFBMUFBIiBzdHJva2U9IiNBMUExQUEiIHN0cm9rZS13aWR0aD0iLjQiIGQ9Ik0zLjk4NSAzLjc2M0wxLjMwOCAxLjA4NmEuNTgzLjU4MyAwIDEwLS44MjMuODI4bDIuNjgzIDIuNjcyYS41ODMuNTgzIDAgMDEwIC44MjhMLjQ4NSA4LjA4NmEuNTg0LjU4NCAwIDEwLjgyMy44MjhsMi42NzctMi42NzhhMS43NSAxLjc1IDAgMDAwLTIuNDczeiIvPjwvc3ZnPg==);
+					width: 5px;
+					height: 10px;
+					position: absolute;
+					top: 1px;
+					right: -14px;
+				}
 
-                &:last-child::after {
-                    opacity: 0;
-                    visibility: hidden;
-                }
+				&:last-child::after {
+					opacity: 0;
+					visibility: hidden;
+				}
 
-                a {
-                    color: var(--ohmylms-body-text-color);
-                    font-size: 13px;
-                    font-weight: 500;
-                    line-height: 1.5;
-                    text-decoration: none;
-                    transition: all 0.3s ease;
+				a {
+					color: var(--oml-text);
+					font-size: var(--oml-font-size-sm);
+					font-weight: var(--oml-weight-medium);
+					line-height: 1.5;
+					text-decoration: none;
+					transition: all 0.3s ease;
 
-                    &:hover {
-                        color: var(--ohmylms-primary-color);
-                    }
-                }
-            }
-        }
-    }
+					&:hover {
+						color: var(--oml-primary);
+					}
+				}
+			}
+		}
+	}
 }

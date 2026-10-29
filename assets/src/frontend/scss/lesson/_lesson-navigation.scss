@@ -121,28 +121,9 @@
 				}
 
 				.ohmylms-button {
-					color: var(--oml-on-primary);
-					font-size: var(--oml-font-size-md);
-					padding: 10px 20px 9px;
-					background-color: var(--oml-primary);
-					height: 38px;
-					border-radius: var(--oml-radius-control);
-
-					&:hover {
-						color: var(--oml-primary);
-						background-color: transparent;
-					}
 
 					&:disabled {
 						cursor: not-allowed;
-						border-color: var(--oml-border);
-						background-color: var(--oml-surface);
-						color: color-mix(
-							in srgb,
-							var(--oml-heading) 16%,
-							transparent
-						);
-						box-shadow: var(--oml-shadow-sm);
 						opacity: 1;
 					}
 
@@ -190,14 +171,6 @@
 		.ohmylms-lesson-details
 		.ohmylms-lesson-navigation
 		.ohmylms-checkbox {
-		border-radius: var(--oml-radius-control);
-	}
-
-	.ohmylms-page
-		.ohmylms-lesson-details
-		.ohmylms-lesson-navigation
-		.assignment-quiz-navigation
-		.ohmylms-button {
 		border-radius: var(--oml-radius-control);
 	}
 }

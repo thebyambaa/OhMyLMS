@@ -1,0 +1,66 @@
+@media screen and (max-width: 1399px) {
+
+	.toplevel_page_ohmylms .ohmylms-order-details-general-billing {
+		flex-direction: column;
+	}
+
+	.toplevel_page_ohmylms .customer-profile-avater {
+		flex-direction: column;
+		gap: 20px !important;
+	}
+
+	.toplevel_page_ohmylms .customer-profile-avater > .components-flex-item {
+		width: 100% !important;
+		text-align: left !important;
+	}
+
+	.toplevel_page_ohmylms
+		.ohmylms-order-details-summary-table
+		.ohmylms-table-tbody
+		.ohmylms-td-name,
+	.toplevel_page_ohmylms
+		.ohmylms-order-details-summary-table
+		.ohmylms-table-thead
+		.ohmylms-th-name {
+		width: 250px;
+	}
+
+	.ohmylms-admin-page
+		.ohmylms-order-details-summary-table
+		.ohmylms-table-tbody
+		.ohmylms-td-price,
+	.ohmylms-admin-page
+		.ohmylms-order-details-summary-table
+		.ohmylms-table-thead
+		.ohmylms-th-price {
+		width: 100px;
+	}
+
+	.ohmylms-admin-page
+		.ohmylms-order-details-summary-table
+		.ohmylms-table-tbody
+		.ohmylms-td-quantity,
+	.ohmylms-admin-page
+		.ohmylms-order-details-summary-table
+		.ohmylms-table-thead
+		.ohmylms-th-quantity {
+		width: 90px;
+	}
+
+	.ohmylms-admin-page
+		.ohmylms-order-details-summary-table
+		.ohmylms-table-tbody
+		.ohmylms-td-total,
+	.ohmylms-admin-page
+		.ohmylms-order-details-summary-table
+		.ohmylms-table-thead
+		.ohmylms-th-total {
+		width: 100px;
+	}
+
+	.toplevel_page_ohmylms
+		.ohmylms-order-details-tfoot-row
+		.ohmylms-order-details-tfoot-td-right {
+		width: 80px;
+	}
+}

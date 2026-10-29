@@ -110,10 +110,6 @@
 				}
 			}
 
-			.ohmylms-btn-area .ohmylms-button {
-				height: 55px;
-			}
-
 			.price-discount-area > .ohmylms-price-amount,
 			.price-discount-area .free,
 			.price-discount-area ins {
@@ -129,8 +125,6 @@
 			.ohmylms-button {
 				display: block;
 				width: 100%;
-				padding: var(--oml-space-4) 20px;
-				font-size: var(--oml-font-size-lg);
 			}
 
 			.layout3-progressbar-box {
@@ -210,16 +204,6 @@
 		}
 
 		.ohmylms-button-area .ohmylms-button {
-			background-color: var(--oml-surface);
-			color: var(--oml-primary);
-			border: none;
-			font-weight: var(--oml-weight-strong);
-			padding: 18px var(--oml-space-5);
-			font-size: var(--oml-font-size-lg);
-
-			&:hover {
-				color: var(--oml-on-primary);
-			}
 		}
 	}
 
@@ -385,35 +369,11 @@
 		}
 
 		.ohmylms-button {
-			height: 55px;
-			color: var(--oml-danger-text);
-			border-color: var(--oml-danger-text);
-
-			&:hover {
-				border-color: var(--oml-danger-text);
-				background-color: var(--oml-danger-text);
-			}
 		}
 	}
 }
 
 @media screen and (max-width: 1199px) {
-
-	.ohmylms-single-course-layout3
-		.ohmylms-course-pricebox-and-meta
-		.ohmylms-widget-continue-learn
-		.ohmylms-button {
-		padding: var(--oml-space-3) var(--oml-space-4);
-		font-size: var(--oml-font-size-md);
-	}
-
-	.ohmylms-single-course-layout3
-		.ohmylms-widget-membership
-		.ohmylms-button-area
-		.ohmylms-button {
-		padding: var(--oml-space-3) var(--oml-space-4);
-		font-size: var(--oml-font-size-md);
-	}
 
 	.ohmylms-single-course-layout3
 		.ohmylms-sidebar-widget
@@ -431,10 +391,6 @@
 		.ohmylms-widget-membership
 		.sidebar-widget-title {
 		font-size: var(--oml-font-size-lg);
-	}
-
-	.ohmylms-single-course-layout3 .ohmylms-widget-drop-course .ohmylms-button {
-		height: 44px;
 	}
 }
 

@@ -15,18 +15,29 @@ const cases = [
 
 test( 'button classes follow the documented variants and sizes', () => {
 	assert.equal( buttonClass(), 'oml-btn' );
-	assert.equal( buttonClass( { variant: 'primary' } ), 'oml-btn oml-btn-primary' );
+	assert.equal(
+		buttonClass( { variant: 'primary' } ),
+		'oml-btn oml-btn-primary'
+	);
 	assert.equal(
 		buttonClass( { variant: 'danger', size: 'lg', block: true } ),
 		'oml-btn oml-btn-danger oml-btn-lg oml-btn-block'
 	);
-	assert.equal( buttonClass( { variant: 'bogus', size: 'huge' } ), 'oml-btn' );
+	assert.equal(
+		buttonClass( { variant: 'bogus', size: 'huge' } ),
+		'oml-btn'
+	);
 } );
 
 test( 'every class the button emits is styled in oml-ui.css', () => {
-	const css = fs.readFileSync( new URL( '../../assets/css/oml-ui.css', import.meta.url ), 'utf8' );
+	const css = fs.readFileSync(
+		new URL( '../../assets/css/oml-ui.css', import.meta.url ),
+		'utf8'
+	);
 	for ( const args of cases ) {
-		for ( const name of buttonClass( args ).split( ' ' ).filter( ( c ) => c.startsWith( 'oml-' ) ) ) {
+		for ( const name of buttonClass( args )
+			.split( ' ' )
+			.filter( ( c ) => c.startsWith( 'oml-' ) ) ) {
 			assert.ok( css.includes( '.' + name ), name + ' has a rule' );
 		}
 	}
@@ -40,21 +51,34 @@ test( 'PHP and React build identical button classes', ( t ) => {
 	}
 	const out = execFileSync(
 		php,
-		[ fileURLToPath( new URL( '../php/ui-button-classes.php', import.meta.url ) ), JSON.stringify( cases ) ],
+		[
+			fileURLToPath(
+				new URL( '../php/ui-button-classes.php', import.meta.url )
+			),
+			JSON.stringify( cases ),
+		],
 		{ encoding: 'utf8' }
 	);
 	assert.deepEqual( JSON.parse( out ), cases.map( buttonClass ) );
 } );
 
-test( 'legacy learner button rules stay scoped and token-only', () => {
-	const css = fs.readFileSync( new URL( '../../assets/css/oml-legacy-buttons.css', import.meta.url ), 'utf8' );
-	const rules = css.replace( /\/\*[\s\S]*?\*\//g, '' ).split( '}' ).filter( ( r ) => r.trim() );
-	assert.ok( rules.length >= 6 );
-	for ( const rule of rules ) {
-		const [ selectors, body ] = rule.split( '{' );
-		for ( const selector of selectors.split( ',' ) ) {
-			assert.match( selector.trim(), /^\.ohmylms-page \.ohmylms-button/ );
-		}
-		assert.doesNotMatch( body, /#[0-9a-f]{3,6}\b|rgba?\(/i );
-	}
+test( 'legacy button markup uses the shared declaration blocks', () => {
+	const css = fs.readFileSync(
+		new URL( '../../assets/css/oml-ui.css', import.meta.url ),
+		'utf8'
+	);
+	assert.match(
+		css,
+		/\.oml-btn,\s*:where\(\.ohmylms-page\) \.ohmylms-button\s*\{/
+	);
+	assert.match( css, /\.oml-btn-primary,[\s\S]*?ohmylms-button-outline/ );
+	assert.equal(
+		fs.existsSync(
+			new URL(
+				'../../assets/css/oml-legacy-buttons.css',
+				import.meta.url
+			)
+		),
+		false
+	);
 } );

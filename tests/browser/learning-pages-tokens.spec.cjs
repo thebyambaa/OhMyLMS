@@ -23,10 +23,16 @@ for ( const [ theme, device ] of [
 		page,
 	} ) => {
 		await page.emulateMedia( { colorScheme: device } );
-		const css = fs.readFileSync(
-			path.join( root, 'assets/css/learning-pages.css' ),
-			'utf8'
-		);
+		const css = [
+			'oml-ui.css',
+			'frontend/core.css',
+			'frontend/course.css',
+			'frontend/lesson.css',
+		]
+			.map( ( name ) =>
+				fs.readFileSync( path.join( root, 'assets/css', name ), 'utf8' )
+			)
+			.join( '\n' );
 		await page.setContent(
 			`<style>${ tokens }${ css }</style><body class="ohmylms-page" data-theme="${ theme }"><div class="ohmylms-course-header"><h1 class="ohmylms-course-title">Course</h1></div><section class="ohmylms-lesson-details"><div class="ohmylms-lesson-content"><h1>Lesson</h1><ul class="ohmylms-resources-list"><li>Resources</li></ul></div></section></body>`
 		);

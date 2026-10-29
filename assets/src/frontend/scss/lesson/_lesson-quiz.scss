@@ -145,25 +145,8 @@
 			gap: var(--oml-space-3);
 
 			.ohmylms-button {
-				font-size: var(--oml-font-size-md);
-				border-radius: var(--oml-radius-control);
-				padding: 10px 20px;
-				line-height: 1;
-				height: 38px;
-				background-color: var(--oml-primary) !important;
-
-				&:hover {
-					background-color: transparent !important;
-				}
 
 				&.quiz-alert-cancel {
-					background-color: transparent !important;
-					border-color: var(--oml-border);
-					color: var(--oml-heading);
-
-					&:hover {
-						background-color: var(--oml-background);
-					}
 				}
 			}
 		}
@@ -896,50 +879,17 @@
 			}
 
 			.ohmylms-button {
-				font-size: var(--oml-font-size-md);
-				padding: 10px 20px;
-				border-radius: var(--oml-radius-control);
-				background-color: var(--oml-primary);
-				color: var(--oml-on-primary);
-
-				&:hover {
-					background-color: transparent;
-					color: var(--oml-primary);
-				}
 
 				&:disabled {
 					pointer-events: none;
 					cursor: not-allowed;
-					background: var(--oml-primary-soft);
-					border-color: var(--oml-primary-soft);
 				}
 
 				&.outline {
-					background-color: transparent;
-					border-color: var(--oml-border);
-					color: var(--oml-heading);
-
-					&:hover {
-						background-color: color-mix(
-							in srgb,
-							var(--oml-subtle) 15%,
-							transparent
-						);
-					}
 
 					&:disabled {
 						pointer-events: none;
 						cursor: not-allowed;
-						background: color-mix(
-							in srgb,
-							var(--oml-subtle) 15%,
-							transparent
-						);
-						color: color-mix(
-							in srgb,
-							var(--oml-heading) 33%,
-							transparent
-						);
 					}
 				}
 			}
@@ -1332,11 +1282,6 @@
 
 	.ohmylms-page .ohmylms-quiz .ohmylms-quiz-form .question-video {
 		margin-bottom: 15px;
-	}
-
-	.ohmylms-page .ohmylms-quiz .ohmylms-quiz-footer .ohmylms-button {
-		padding: 7px 13px;
-		border-radius: var(--oml-radius-control);
 	}
 
 	/* -------quiz table------*/

@@ -1,189 +1,251 @@
 .ohmylms-page {
 
-    .ohmylms-student-profile {
+	.ohmylms-student-profile {
 
-        .student-membership {
+		.student-membership {
 
-            @media screen and (min-width: 1400px) {
-                padding: 40px 55px;
-            }
+			@media screen and (min-width: 1400px) {
+				padding: 40px 55px;
+			}
 
-            .ohmylms-dashboard-table {
+			.ohmylms-dashboard-table {
 
-                .dashboard-table-tr {
+				.dashboard-table-tr {
 
-                    .dashboard-table-td {
+					.dashboard-table-td {
 
-                        &.membership-id {
-                            width: 65px;
-                        }
-                        
-                        &.membership-plan {
-                            max-width: 230px;
-                            width: 50%;
-                        }
+						&.membership-id {
+							width: 65px;
+						}
 
-                        &.expiration {
-                            width: 115px;
-                        }
+						&.membership-plan {
+							max-width: 230px;
+							width: 50%;
+						}
 
-                        &.billing {
-                            width: 100px;
-                        }
+						&.expiration {
+							width: 115px;
+						}
 
-                        sub {
-                            bottom: 1px;
-                            vertical-align: baseline;
-                            position: relative;
-                        }
+						&.billing {
+							width: 100px;
+						}
 
-                        &.action {
-                            width: 44px;
+						sub {
+							bottom: 1px;
+							vertical-align: baseline;
+							position: relative;
+						}
 
-                            .cancel {
-                                display: inline-block;
-                                padding: 2px 4px;
+						&.action {
+							width: 44px;
 
-                                &:focus {
-                                    outline: 1px dotted #000;
-                                }
-                            }
+							.cancel {
+								display: inline-block;
+								padding: 2px var(--oml-space-1);
 
-                            svg {
-                                display: block;
-                                width: 18px;
-                                height: auto;
-                            }
-                        }
-                        
-                    }
-                }
+								&:focus {
+									outline: 1px dotted var(--oml-shade);
+								}
+							}
 
-                .dashboard-table-body {
+							svg {
+								display: block;
+								width: 18px;
+								height: auto;
+							}
+						}
+					}
+				}
 
-                    .dashboard-table-tr {
+				.dashboard-table-body {
 
-                        &:last-child {
-                            border-bottom: 0;
-                            padding-bottom: 8px;
-                        }
+					.dashboard-table-tr {
 
-                        .dashboard-table-td {
+						&:last-child {
+							border-bottom: 0;
+							padding-bottom: var(--oml-space-2);
+						}
 
-                            &.membership-id {
-                                color: var(--ohmylms-primary-color);
-                            }
-                        }
-                    }
-                }
-            }
+						.dashboard-table-td {
 
-            .my-membership-table {
-                margin-bottom: 25px;
-            }
+							&.membership-id {
+								color: var(--oml-primary);
+							}
+						}
+					}
+				}
+			}
 
-            .past-invoice-title {
-                color: var(--ohmylms-heading-color);
-                font-size: 18px;
-                font-weight: 600;
-                line-height: 1.2;
-                margin-bottom: 20px;
-                letter-spacing: 0;
-            }
+			.my-membership-table {
+				margin-bottom: 25px;
+			}
 
-            .past-invoice-table {
+			.past-invoice-title {
+				color: var(--oml-heading);
+				font-size: var(--oml-font-size-lg);
+				font-weight: var(--oml-weight-strong);
+				line-height: 1.2;
+				margin-bottom: 20px;
+				letter-spacing: 0;
+			}
 
-                .dashboard-table-tr .dashboard-table-td.method {
-                    width: 160px;
-                }
+			.past-invoice-table {
 
-                .dashboard-table-tr .dashboard-table-td.price {
-                    width: 99px;
-                }
+				.dashboard-table-tr .dashboard-table-td.method {
+					width: 160px;
+				}
 
-                .dashboard-table-tr .dashboard-table-td.status {
-                    width: 95px;
-                }
+				.dashboard-table-tr .dashboard-table-td.price {
+					width: 99px;
+				}
 
-                .dashboard-table-tr .dashboard-table-td.action {
-                    width: 44px;
-                }
-            }
+				.dashboard-table-tr .dashboard-table-td.status {
+					width: 95px;
+				}
 
-            .no-course-data {
-                box-shadow: none;
-                border-radius: 0;
-                background-color: transparent;
-                padding-bottom: 25px;
-            }
-        }
-    }
+				.dashboard-table-tr .dashboard-table-td.action {
+					width: 44px;
+				}
+			}
+
+			.no-course-data {
+				box-shadow: none;
+				border-radius: 0;
+				background-color: transparent;
+				padding-bottom: 25px;
+			}
+		}
+	}
 }
 
 @media screen and (max-width: 1199px) {
 
-    .ohmylms-page .ohmylms-student-profile .student-membership .ohmylms-dashboard-table .dashboard-table-tr .dashboard-table-td.membership-plan {
-        max-width: 140px;
-        width: 50%;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.student-membership
+		.ohmylms-dashboard-table
+		.dashboard-table-tr
+		.dashboard-table-td.membership-plan {
+		max-width: 140px;
+		width: 50%;
+	}
 }
 
 @media screen and (max-width: 767px) {
 
-    .ohmylms-page .past-invoice-table .dashboard-table-tr > .dashboard-table-td.status,
-    .ohmylms-page .past-invoice-table .dashboard-table-tr > .dashboard-table-td.price,
-    .ohmylms-page .past-invoice-table .dashboard-table-tr > .dashboard-table-td.date,
-    .ohmylms-page .my-membership-table .dashboard-table-tr > .dashboard-table-td.membership-id,
-    .ohmylms-page .my-membership-table .dashboard-table-tr > .dashboard-table-td.expiration,
-    .ohmylms-page .my-membership-table .dashboard-table-tr > .dashboard-table-td.billing  {
-        display: none;
-    }
-   
-    .ohmylms-page .past-invoice-table .dashboard-table-tr .dashboard-table-td.action,
-    .ohmylms-page .my-membership-table .dashboard-table-tr .dashboard-table-td.action {
-        width: 100px;
-        margin-left: auto;
-        text-align: right;
-    }
-    
-    .ohmylms-page .past-invoice-table .dashboard-table-mobile-td .dashboard-table-td.status,
-    .ohmylms-page .past-invoice-table .dashboard-table-mobile-td .dashboard-table-td.price,
-    .ohmylms-page .past-invoice-table .dashboard-table-mobile-td .dashboard-table-td.date,
-    .ohmylms-page .my-membership-table .dashboard-table-mobile-td .dashboard-table-td.membership-id,
-    .ohmylms-page .my-membership-table .dashboard-table-mobile-td .dashboard-table-td.expiration,
-    .ohmylms-page .my-membership-table .dashboard-table-mobile-td .dashboard-table-td.billing {
-        width: 100%!important;
-    }
+	.ohmylms-page
+		.past-invoice-table
+		.dashboard-table-tr
+		> .dashboard-table-td.status,
+	.ohmylms-page
+		.past-invoice-table
+		.dashboard-table-tr
+		> .dashboard-table-td.price,
+	.ohmylms-page
+		.past-invoice-table
+		.dashboard-table-tr
+		> .dashboard-table-td.date,
+	.ohmylms-page
+		.my-membership-table
+		.dashboard-table-tr
+		> .dashboard-table-td.membership-id,
+	.ohmylms-page
+		.my-membership-table
+		.dashboard-table-tr
+		> .dashboard-table-td.expiration,
+	.ohmylms-page
+		.my-membership-table
+		.dashboard-table-tr
+		> .dashboard-table-td.billing {
+		display: none;
+	}
 
-    .ohmylms-page .past-invoice-table .dashboard-table-mobile-td .dashboard-table-td,
-    .ohmylms-page .my-membership-table .dashboard-table-mobile-td .dashboard-table-td {
-        align-items: center;
-    }
+	.ohmylms-page
+		.past-invoice-table
+		.dashboard-table-tr
+		.dashboard-table-td.action,
+	.ohmylms-page
+		.my-membership-table
+		.dashboard-table-tr
+		.dashboard-table-td.action {
+		width: 100px;
+		margin-left: auto;
+		text-align: right;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .student-membership .ohmylms-dashboard-table .dashboard-table-tr .dashboard-table-td.action .ohmylms-button {
-        padding: 7px 12px 8px;
-    }
+	.ohmylms-page
+		.past-invoice-table
+		.dashboard-table-mobile-td
+		.dashboard-table-td.status,
+	.ohmylms-page
+		.past-invoice-table
+		.dashboard-table-mobile-td
+		.dashboard-table-td.price,
+	.ohmylms-page
+		.past-invoice-table
+		.dashboard-table-mobile-td
+		.dashboard-table-td.date,
+	.ohmylms-page
+		.my-membership-table
+		.dashboard-table-mobile-td
+		.dashboard-table-td.membership-id,
+	.ohmylms-page
+		.my-membership-table
+		.dashboard-table-mobile-td
+		.dashboard-table-td.expiration,
+	.ohmylms-page
+		.my-membership-table
+		.dashboard-table-mobile-td
+		.dashboard-table-td.billing {
+		width: 100% !important;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .student-membership .no-course-data {
-        padding-bottom: 5px;
-    }
+	.ohmylms-page
+		.past-invoice-table
+		.dashboard-table-mobile-td
+		.dashboard-table-td,
+	.ohmylms-page
+		.my-membership-table
+		.dashboard-table-mobile-td
+		.dashboard-table-td {
+		align-items: center;
+	}
 
+	.ohmylms-page .ohmylms-student-profile .student-membership .no-course-data {
+		padding-bottom: 5px;
+	}
 }
 
 @media screen and (max-width: 424px) {
 
-    .ohmylms-page .ohmylms-student-profile .student-membership .ohmylms-dashboard-table .dashboard-table-tr .dashboard-table-td.membership-plan {
-        max-width: 140px;
-        width: 44%;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.student-membership
+		.ohmylms-dashboard-table
+		.dashboard-table-tr
+		.dashboard-table-td.membership-plan {
+		max-width: 140px;
+		width: 44%;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .student-membership .past-invoice-table .dashboard-table-tr .dashboard-table-td.method {
-        width: 110px;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.student-membership
+		.past-invoice-table
+		.dashboard-table-tr
+		.dashboard-table-td.method {
+		width: 110px;
+	}
 
-    .ohmylms-page .past-invoice-table .dashboard-table-mobile-td .dashboard-table-td::before,
-    .ohmylms-page .my-membership-table .dashboard-table-mobile-td .dashboard-table-td::before {
-        width: 67px;
-    }
-    
+	.ohmylms-page
+		.past-invoice-table
+		.dashboard-table-mobile-td
+		.dashboard-table-td::before,
+	.ohmylms-page
+		.my-membership-table
+		.dashboard-table-mobile-td
+		.dashboard-table-td::before {
+		width: 67px;
+	}
 }

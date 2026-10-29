@@ -1,0 +1,46 @@
+@keyframes fadeInUp {
+
+	from {
+		opacity: 0;
+		transform: translateY(30px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes slideInFromRight {
+
+	from {
+		opacity: 0;
+		transform: translateX(50px) scale(0.95);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateX(0) scale(1);
+	}
+}
+
+.toplevel_page_ohmylms .ohmylms-import-btn {
+	display: flex;
+	height: 48px;
+	padding: 15px 20px;
+	justify-content: center;
+	align-items: center;
+	gap: 10px;
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-surface);
+	color: var(--oml-primary) !important;
+	font-size: var(--oml-font-size-md);
+	font-weight: var(--oml-weight-strong);
+	line-height: 1.6;
+	letter-spacing: -0.15px;
+	border: none;
+}
+
+.toplevel_page_ohmylms .ohmylms-import-btn .ohmylms-pro-tag.on-button {
+	background: var(--oml-background);
+}

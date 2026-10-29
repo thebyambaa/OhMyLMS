@@ -1,96 +1,100 @@
 .ohmylms-page {
 
-    .ohmylms-leaderboard {
-        width: 100%;
-        padding: 14px 20px;
-        border-radius: 8px;
-        border: 1px solid #EBEBEF;
-        background-color: #FFF;
-        display: flex;
-        flex-flow: row wrap;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
+	.ohmylms-leaderboard {
+		width: 100%;
+		padding: 14px 20px;
+		border-radius: var(--oml-radius-control);
+		border: 1px solid var(--oml-border);
+		background-color: var(--oml-surface);
+		display: flex;
+		flex-flow: row wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--oml-space-3);
 
-        .ohmylms-leaderboard-content {
-            width: calc(100% - 65px);
-            display: flex;
-            align-items: center;
-            gap: 13px;
-        }
+		.ohmylms-leaderboard-content {
+			width: calc(100% - 65px);
+			display: flex;
+			align-items: center;
+			gap: 13px;
+		}
 
-        figure {
-            width: 40px;
-            height: 40px;
-            border-radius: 100%;
-            background-color: #eee;
-            
-            img {
-                width: 100%;
-                height: 100%;
-                border-radius: 100%;
-                object-fit: cover;
-            }
-        }
+		figure {
+			width: 40px;
+			height: 40px;
+			border-radius: 100%;
+			background-color: var(--oml-subtle);
 
-        .student-name {
-            color: var(--ohmylms-heading-color);
-            font-size: 15px;
-            font-weight: 500;
-            line-height: 1.1;
+			img {
+				width: 100%;
+				height: 100%;
+				border-radius: 100%;
+				object-fit: cover;
+			}
+		}
 
-            .score {
-                display: block;
-                color: #A1A1AA;
-                font-size: 13px;
-                font-weight: 400;
-                line-height: 1.2;
-                margin: 6px 0 0 0;
-            }
-        }
+		.student-name {
+			color: var(--oml-heading);
+			font-size: var(--oml-font-size-md);
+			font-weight: var(--oml-weight-medium);
+			line-height: 1.1;
 
-        .ohmylms-leaderboard-position {
-            border-radius: 8px;
-            background: #FFF;
-            box-shadow: 0 1px 2px 0 #D3D6DD;
-            display: inline-block;
-            color: var(--ohmylms-heading-color);
-            font-size: 16px;
-            font-weight: 500;
-            line-height: 1;
-            padding: 5px 7px;
-            width: 50px;
-            text-align: center;
-        }
+			.score {
+				display: block;
+				color: var(--oml-muted);
+				font-size: var(--oml-font-size-sm);
+				font-weight: var(--oml-weight-regular);
+				line-height: 1.2;
+				margin: 6px 0 0 0;
+			}
+		}
 
-        &.position-success {
+		.ohmylms-leaderboard-position {
+			border-radius: var(--oml-radius-control);
+			background: var(--oml-surface);
+			box-shadow: var(--oml-shadow-sm);
+			display: inline-block;
+			color: var(--oml-heading);
+			font-size: var(--oml-font-size-lg);
+			font-weight: var(--oml-weight-medium);
+			line-height: 1;
+			padding: 5px 7px;
+			width: 50px;
+			text-align: center;
+		}
 
-            .ohmylms-leaderboard-position {
-                background-color: #35bd4c1a;
-                color: #35BD4C;
-            }
-        }
-    }
+		&.position-success {
+
+			.ohmylms-leaderboard-position {
+				background-color: color-mix(
+					in srgb,
+					var(--oml-success) 10%,
+					transparent
+				);
+				color: var(--oml-success);
+			}
+		}
+	}
 }
 
 @media screen and (max-width: 1199px) {
 
-    .ohmylms-page .ohmylms-leaderboard {
-        padding: 11px 13px;
-        border-radius: 8px;
-    }
+	.ohmylms-page .ohmylms-leaderboard {
+		padding: 11px 13px;
+		border-radius: var(--oml-radius-control);
+	}
 
-    .ohmylms-page .ohmylms-leaderboard .student-name {
-        font-size: 14px;
-    }
+	.ohmylms-page .ohmylms-leaderboard .student-name {
+		font-size: var(--oml-font-size-md);
+	}
 
-    .ohmylms-page .ohmylms-leaderboard .ohmylms-leaderboard-position {
-        font-size: 13px;
-        padding: 4px 6px;
-        width: 46px;
-    }
+	.ohmylms-page .ohmylms-leaderboard .ohmylms-leaderboard-position {
+		font-size: var(--oml-font-size-sm);
+		padding: var(--oml-space-1) 6px;
+		width: 46px;
+	}
 
-    .ohmylms-page .ohmylms-leaderboard .student-name .score {
-        font-size: 12px;
-    }
+	.ohmylms-page .ohmylms-leaderboard .student-name .score {
+		font-size: var(--oml-font-size-xs);
+	}
 }

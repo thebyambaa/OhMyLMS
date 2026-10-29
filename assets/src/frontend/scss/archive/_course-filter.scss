@@ -1,223 +1,226 @@
 .ohmylms-page {
 
-    .ohmylms-courses {
+	.ohmylms-courses {
 
-        .ohmylms-course-sidebar {
+		.ohmylms-course-sidebar {
 			width: 307px;
-			border-radius: 8px;
-			background-color: #FFF;
-			box-shadow: 0 1px 3px 0 rgba(211, 214, 221, 0.60);
+			border-radius: var(--oml-radius-control);
+			background-color: var(--oml-surface);
+			box-shadow: var(--oml-shadow-sm);
 			position: sticky;
 			top: 30px;
 		}
 
-        .ohmylms-filter-header {
+		.ohmylms-filter-header {
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
 			gap: 10px;
-			border-bottom: 1px solid #EEEEF4;
+			border-bottom: 1px solid var(--oml-border);
 			padding: 15px 20px 14px;
 			border-radius: 14px 14px 0 0;
 			position: relative;
 
-            .filter-title {
-                color: var(--ohmylms-heading-color);
-                font-size: 18px;
-                font-weight: 500;
-                line-height: 1;
-                display: flex;
-                align-items: center;
-                gap: 6px;
+			.filter-title {
+				color: var(--oml-heading);
+				font-size: var(--oml-font-size-lg);
+				font-weight: var(--oml-weight-medium);
+				line-height: 1;
+				display: flex;
+				align-items: center;
+				gap: 6px;
 
-                svg {
-                    display: block;
-                }
-            }
+				svg {
+					display: block;
+				}
+			}
 
-            .clear-filter {
-                color: var(--ohmylms-primary-color);
-                font-size: 12px;
-                font-weight: 500;
-                text-decoration-line: underline;
-                line-height: 1;
-                padding: 0;
-                border: none!important;
-                background: transparent!important;
-                box-shadow: none!important;
-                cursor: pointer;
-                margin-left: auto;
-                text-transform: none;
+			.clear-filter {
+				color: var(--oml-primary);
+				font-size: var(--oml-font-size-xs);
+				font-weight: var(--oml-weight-medium);
+				text-decoration-line: underline;
+				line-height: 1;
+				padding: 0;
+				border: none !important;
+				background: transparent !important;
+				box-shadow: none !important;
+				cursor: pointer;
+				margin-left: auto;
+				text-transform: none;
 
-                &:hover {
-                    text-decoration: none;
-                }
+				&:hover {
+					text-decoration: none;
+				}
 
-                &:focus {
-                    outline: 2px solid var(--ohmylms-outline-color);
-                    outline-offset: 2px;
-                }
-            }
+				&:focus {
+					outline: 2px solid var(--ohmylms-outline-color);
+					outline-offset: 2px;
+				}
+			}
 
-            .ohmylms-close-filter {
-                line-height: 1;
-                padding: 3px 0 3px 4px;
-                border: none!important;
-                background: transparent!important;
-                box-shadow: none!important;
-                cursor: pointer;
-                display: none;
+			.ohmylms-close-filter {
+				line-height: 1;
+				padding: 3px 0 3px var(--oml-space-1);
+				border: none !important;
+				background: transparent !important;
+				box-shadow: none !important;
+				cursor: pointer;
+				display: none;
 
-                svg {
-                    display: block;
-                }
-            }
+				svg {
+					display: block;
+				}
+			}
 		}
 
-        .ohmylms-filter-accordion {
-            padding: 27px 20px 54px;
-            max-height: calc(100vh - 90px);
-            overflow: auto;
-            margin-top: 0;
+		.ohmylms-filter-accordion {
+			padding: 27px 20px 54px;
+			max-height: calc(100vh - 90px);
+			overflow: auto;
+			margin-top: 0;
 
-            .no-filter {
-                font-size: 14px;
-                line-height: 1;
-                font-weight: 500;
-                color: rgba(0, 0, 0, 0.4509803922);
-                text-align: center;
-                margin-top: 27px;
-            }
-    
-            .ohmylms-accordion-item {
-                border: none;
-                margin-bottom: 32px;
-    
-                &.active {
-                    box-shadow: none;
-    
-                    .ohmylms-accordion-title svg {
-                        transform: rotate(180deg);
-                    }
-                }
-    
-                &:last-child {
-                    margin-bottom: 0;
-                }
-    
-            }
-    
-            .ohmylms-accordion-head {
-                padding: 0;
-            }
-    
-            .ohmylms-accordion-body {
-                display: block;
-                padding: 20px 0 0;
-            }
-    
-            .ohmylms-accordion-title {
-                font-size: 18px;
-                font-weight: 500;
-                line-height: 1;
-                letter-spacing: -0.429px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 0;
-    
-                &::before {
-                    display: none;
-                }
-    
-                svg {
-                    display: block;
-                    transition: all 0.3s ease;
-                }
-            }
-    
-            .ohmylms-checkbox {
-                margin-bottom: 16px;
-    
-                &:last-child {
-                    margin-bottom: 0;
-                }
-    
-                .ohmylms-checkbox-text {
-                    color: var(--ohmylms-body-text-color);
-                    font-size: 14px;
-                    line-height: 1.53;
-    
-                    .checkedbox {
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        transition: border 0.3s ease, background-color 0.3s ease;
-                        
-                        &::before {
-                            display: none;
-                        }
+			.no-filter {
+				font-size: var(--oml-font-size-md);
+				line-height: 1;
+				font-weight: var(--oml-weight-medium);
+				color: color-mix(
+					in srgb,
+					var(--oml-shade) 45.098039220000004%,
+					transparent
+				);
+				text-align: center;
+				margin-top: 27px;
+			}
 
-                        &:focus {
-                            outline: 2px solid var(--ohmylms-outline-color);
-                            outline-offset: 2px;
-                        }
-    
-                        svg {
-                            opacity: 0;
-                            transition: all 0.3s ease;
-                        }
-                    }
-                }
-    
-                input[type="checkbox"]:checked + .ohmylms-checkbox-text {
-                    color: var(--ohmylms-primary-color);
-    
-                    svg {
-                        opacity: 1;
-                    }
-                }
-    
-            }
-    
-        }
+			.ohmylms-accordion-item {
+				border: none;
+				margin-bottom: var(--oml-space-6);
 
-    }
+				&.active {
+					box-shadow: none;
 
-    
+					.ohmylms-accordion-title svg {
+						transform: rotate(180deg);
+					}
+				}
+
+				&:last-child {
+					margin-bottom: 0;
+				}
+			}
+
+			.ohmylms-accordion-head {
+				padding: 0;
+			}
+
+			.ohmylms-accordion-body {
+				display: block;
+				padding: 20px 0 0;
+			}
+
+			.ohmylms-accordion-title {
+				font-size: var(--oml-font-size-lg);
+				font-weight: var(--oml-weight-medium);
+				line-height: 1;
+				letter-spacing: -0.429px;
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 0;
+
+				&::before {
+					display: none;
+				}
+
+				svg {
+					display: block;
+					transition: all 0.3s ease;
+				}
+			}
+
+			.ohmylms-checkbox {
+				margin-bottom: var(--oml-space-4);
+
+				&:last-child {
+					margin-bottom: 0;
+				}
+
+				.ohmylms-checkbox-text {
+					color: var(--oml-text);
+					font-size: var(--oml-font-size-md);
+					line-height: 1.53;
+
+					.checkedbox {
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						transition:
+							border 0.3s ease,
+							background-color 0.3s ease;
+
+						&::before {
+							display: none;
+						}
+
+						&:focus {
+							outline: 2px solid var(--ohmylms-outline-color);
+							outline-offset: 2px;
+						}
+
+						svg {
+							opacity: 0;
+							transition: all 0.3s ease;
+						}
+					}
+				}
+
+				input[type="checkbox"]:checked + .ohmylms-checkbox-text {
+					color: var(--oml-primary);
+
+					svg {
+						opacity: 1;
+					}
+				}
+			}
+		}
+	}
 }
 
 @media screen and (max-width: 1199px) {
 
 	.ohmylms-page .ohmylms-courses .ohmylms-course-sidebar {
-        width: 267px;
-    } 
+		width: 267px;
+	}
 }
 
 @media screen and (max-width: 991px) {
 
 	.ohmylms-page .ohmylms-courses .ohmylms-course-sidebar {
-        position: fixed;
-        left: -70px;
-        top: 20px;
-        z-index: 99999;
-        height: calc(100% - 40px);
+		position: fixed;
+		left: -70px;
+		top: 20px;
+		z-index: 99999;
+		height: calc(100% - 40px);
 		opacity: 0;
-        visibility: hidden;
+		visibility: hidden;
 		transition: all 0.3s ease;
-    }
+	}
 
 	.ohmylms-page .ohmylms-courses .open-sidebar .ohmylms-course-sidebar {
-        left: 10px;
+		left: 10px;
 		opacity: 1;
-        visibility: visible;
-    }
+		visibility: visible;
+	}
 
-    .ohmylms-page .ohmylms-courses .ohmylms-filter-header .ohmylms-close-filter {
+	.ohmylms-page
+		.ohmylms-courses
+		.ohmylms-filter-header
+		.ohmylms-close-filter {
 		display: block;
 	}
 
-    .ohmylms-page .ohmylms-courses .ohmylms-filter-accordion {
+	.ohmylms-page .ohmylms-courses .ohmylms-filter-accordion {
 		padding: 20px 20px 20px;
 		max-height: calc(100vh - 103px);
 	}
@@ -225,11 +228,14 @@
 
 @media screen and (max-width: 767px) {
 
-	.ohmylms-page .ohmylms-courses .ohmylms-filter-accordion .ohmylms-accordion-title {
-        font-size: 16px;
-    }
+	.ohmylms-page
+		.ohmylms-courses
+		.ohmylms-filter-accordion
+		.ohmylms-accordion-title {
+		font-size: var(--oml-font-size-lg);
+	}
 
-    .ohmylms-page .ohmylms-courses .ohmylms-filter-accordion .ohmylms-checkbox {
-        margin-bottom: 12px;
-    }
+	.ohmylms-page .ohmylms-courses .ohmylms-filter-accordion .ohmylms-checkbox {
+		margin-bottom: var(--oml-space-3);
+	}
 }

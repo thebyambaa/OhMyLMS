@@ -19,6 +19,16 @@ const compiled_styles = recovery_manifest.assets
 // Public selectors already consumed by WordPress controls, checkout templates and extensions.
 // Keep this list exact: new plugin selectors must use WordPress's hyphenated convention.
 const public_classes = [
+	// Existing WordPress/Arco/BEM markup; exact compatibility names, never a wildcard.
+	...JSON.parse(
+		fs.readFileSync(
+			new URL(
+				'./assets/src/design-system/admin/public-selectors.json',
+				import.meta.url
+			),
+			'utf8'
+		)
+	),
 	// Existing HubIcons markup and AI analysis status contract.
 	'oml-hub-logo--custom',
 	'oml-hub-kind--custom',
@@ -110,10 +120,8 @@ export default {
 				'assets/css/quiz-overview.css',
 				'assets/css/question-stage.css',
 				'assets/src/ui/**/*.{css,scss}',
-				'assets/src/admin-styles/ui-*.css',
-				'assets/src/frontend/scss/single/**/*.scss',
-				'assets/src/frontend/scss/lesson/**/*.scss',
-				'assets/src/frontend/scss/learning-pages.scss',
+				'assets/src/design-system/admin/*.css',
+				'assets/src/frontend/scss/**/*.scss',
 			],
 			rules: {
 				'color-no-hex': true,

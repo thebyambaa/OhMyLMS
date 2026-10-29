@@ -1,0 +1,56 @@
+[
+	{
+		"name": "core",
+		"path": "assets/css/frontend/core.css",
+		"bytes": 51338,
+		"version": "757a5395220d"
+	},
+	{
+		"name": "catalog",
+		"path": "assets/css/frontend/catalog.css",
+		"bytes": 56013,
+		"version": "1a384c59f178"
+	},
+	{
+		"name": "course",
+		"path": "assets/css/frontend/course.css",
+		"bytes": 121829,
+		"version": "a1acf471dd32"
+	},
+	{
+		"name": "lesson",
+		"path": "assets/css/frontend/lesson.css",
+		"bytes": 105241,
+		"version": "a6c21fa20231"
+	},
+	{
+		"name": "checkout",
+		"path": "assets/css/frontend/checkout.css",
+		"bytes": 36512,
+		"version": "491e957247a9"
+	},
+	{
+		"name": "thankyou",
+		"path": "assets/css/frontend/thankyou.css",
+		"bytes": 12995,
+		"version": "23fe6f8e48aa"
+	},
+	{
+		"name": "account",
+		"path": "assets/css/frontend/account.css",
+		"bytes": 84565,
+		"version": "f42da11af839"
+	},
+	{
+		"name": "membership",
+		"path": "assets/css/frontend/membership.css",
+		"bytes": 8352,
+		"version": "ab27b5cb820e"
+	},
+	{
+		"name": "rtl",
+		"path": "assets/css/frontend/rtl.css",
+		"bytes": 1209,
+		"version": "df811556d631"
+	}
+]

@@ -186,7 +186,7 @@ class AdminAssets extends Assets {
 			),
 			'ohmylms-main'                => array(
 				'src'     => $modules ? false : self::get_asset_url( 'assets/dist/css/admin/ohmylms.css' ),
-				'deps'    => self::get_module_handles( 'main' ),
+				'deps'    => array_merge( array( 'wp-block-editor' ), self::get_module_handles( 'main' ) ),
 				'version' => OHMYLMS_VERSION,
 				'media'   => 'all',
 				'has_rtl' => false,

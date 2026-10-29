@@ -6,16 +6,16 @@
 
 	.site-main,
 	main#content {
-		max-width: 100%!important;
-		width: 100%!important;
-		padding: 0!important;
-		margin: 0!important;
+		max-width: 100% !important;
+		width: 100% !important;
+		padding: 0 !important;
+		margin: 0 !important;
 		padding-inline-start: 0 !important;
 		padding-inline-end: 0 !important;
 	}
-	
+
 	.ohmylms-courses {
-		background-color: #F9FAFD;
+		background-color: var(--oml-background);
 		padding: 90px 0 100px;
 		margin: 0;
 
@@ -24,16 +24,16 @@
 		}
 
 		.courses-section-title {
-			color: var(--ohmylms-heading-color);
+			color: var(--oml-heading);
 			font-size: 40px;
-			font-weight: 700;
+			font-weight: var(--oml-weight-strong);
 			line-height: 1.25;
 			text-align: center;
 			margin: 0;
 			padding: 0;
 		}
 
-		//-----if filter is enabled-----
+		/*-----if filter is enabled-----*/
 		.ohmylms-filter-enabled {
 			display: flex;
 			flex-flow: row wrap;
@@ -44,9 +44,7 @@
 				width: calc(100% - 337px);
 			}
 		}
-
 	}
-
 }
 
 @media screen and (max-width: 1199px) {
@@ -60,28 +58,33 @@
 	}
 
 	.ohmylms-page .ohmylms-courses .courses-section-title {
-		font-size: 36px;
+		font-size: var(--oml-font-size-2xl);
 	}
 
 	.ohmylms-page .ohmylms-courses .ohmylms-filter-enabled {
-		gap: 24px;
+		gap: var(--oml-space-5);
 	}
 
-	.ohmylms-page .ohmylms-courses .ohmylms-filter-enabled .ohmylms-course-main {
+	.ohmylms-page
+		.ohmylms-courses
+		.ohmylms-filter-enabled
+		.ohmylms-course-main {
 		width: calc(100% - 291px);
 	}
-
 }
 
 @media screen and (max-width: 991px) {
 
 	.ohmylms-page .ohmylms-courses {
-        padding: 50px 0 60px;
-    }
+		padding: 50px 0 60px;
+	}
 
-	.ohmylms-page .ohmylms-courses .ohmylms-filter-enabled .ohmylms-course-main {
-        width: 100%;
-    }
+	.ohmylms-page
+		.ohmylms-courses
+		.ohmylms-filter-enabled
+		.ohmylms-course-main {
+		width: 100%;
+	}
 
 	.ohmylms-page .ohmylms-courses .ohmylms-filter-enabled::before {
 		content: "";
@@ -90,37 +93,37 @@
 		top: 0;
 		width: 100%;
 		height: 100%;
-		background-color: #0000004f;
+		background-color: color-mix(in srgb, var(--oml-shade) 31%, transparent);
 		z-index: 99;
 		opacity: 0;
 		visibility: hidden;
 		transition: all 0.3s ease;
 	}
 
-	.ohmylms-page .ohmylms-courses .ohmylms-filter-enabled.open-sidebar::before {
+	.ohmylms-page
+		.ohmylms-courses
+		.ohmylms-filter-enabled.open-sidebar::before {
 		opacity: 1;
 		visibility: visible;
 	}
-
 }
 
 @media screen and (max-width: 767px) {
 
 	.ohmylms-page .ohmylms-courses .courses-section-title {
-        font-size: 30px;
-    }
+		font-size: var(--oml-font-size-2xl);
+	}
 }
 
 @media screen and (max-width: 575px) {
 
 	.ohmylms-page .ohmylms-courses .ohmylms-courses-header {
-        margin-bottom: 34px;
-    }
+		margin-bottom: 34px;
+	}
 
 	.ohmylms-page .ohmylms-courses .courses-section-title {
-        font-size: 26px;
-    }
-
+		font-size: var(--oml-font-size-2xl);
+	}
 }
 
 /*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/

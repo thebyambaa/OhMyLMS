@@ -1,0 +1,37 @@
+.ohmylms-single-settings.settings-experience-level .ant-radio-group {
+	border-radius: var(--oml-radius-card);
+	background-color: var(--oml-background);
+	border: none;
+	padding: 6px var(--oml-space-2);
+}
+
+.ohmylms-single-settings.settings-experience-level
+	.ant-radio-group
+	.ant-radio-button-wrapper {
+	border: none !important;
+	height: auto;
+	line-height: 1.2;
+	color: var(--oml-heading);
+	font-size: var(--oml-font-size-md);
+	font-weight: var(--oml-weight-regular);
+	white-space: nowrap;
+	padding: 6px 9px;
+	border-radius: var(--oml-radius-control);
+	background-color: color-mix(in srgb, var(--oml-shade) 0%, transparent);
+}
+
+.ohmylms-single-settings.settings-experience-level
+	.ant-radio-group
+	.ant-radio-button-wrapper::before {
+	opacity: 0;
+	visibility: hidden;
+}
+
+.ohmylms-single-settings.settings-experience-level
+	.ant-radio-group
+	.ant-radio-button-wrapper-checked {
+	border-radius: var(--oml-radius-card);
+	background: var(--oml-primary);
+	box-shadow: var(--oml-shadow-sm);
+	color: var(--oml-on-primary);
+}

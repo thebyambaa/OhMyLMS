@@ -1,87 +1,86 @@
 .ohmylms-accordion {
 
-    .ohmylms-accordion-title {
-        color: var(--ohmylms-heading-color);
-        font-size: 14px;
-        font-weight: 500;
-        line-height: 1.5;
-        position: relative;
-        padding-left: 20px;
-        width: calc(100% - 54px);
+	.ohmylms-accordion-title {
+		color: var(--oml-heading);
+		font-size: var(--oml-font-size-md);
+		font-weight: var(--oml-weight-medium);
+		line-height: 1.5;
+		position: relative;
+		padding-left: 20px;
+		width: calc(100% - 54px);
 
-        &::before {
-            content: url(data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgOCAxMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBmaWxsPSIjMUYyMzI4IiBkPSJNMS4wNDcuNjZhLjMxMy4zMTMgMCAwMS4zMjguMDI1TDcgNC43NDdhLjMxMy4zMTMgMCAwMTAgLjUwNkwxLjM3NSA5LjMxNmEuMzEyLjMxMiAwIDAxLS40OTctLjI1M1YuOTM4QS4zMTMuMzEzIDAgMDExLjA0Ny42NnoiLz48L3N2Zz4=);
-            display: block;
-            width: 8px;
-            height: auto;
-            line-height: 1;
-            position: absolute;
-            top: 3px;
-            left: 0;
-            transition: all 0.3s ease;
-        }
+		&::before {
+			content: url(data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgOCAxMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBmaWxsPSIjMUYyMzI4IiBkPSJNMS4wNDcuNjZhLjMxMy4zMTMgMCAwMS4zMjguMDI1TDcgNC43NDdhLjMxMy4zMTMgMCAwMTAgLjUwNkwxLjM3NSA5LjMxNmEuMzEyLjMxMiAwIDAxLS40OTctLjI1M1YuOTM4QS4zMTMuMzEzIDAgMDExLjA0Ny42NnoiLz48L3N2Zz4=);
+			display: block;
+			width: 8px;
+			height: auto;
+			line-height: 1;
+			position: absolute;
+			top: 3px;
+			left: 0;
+			transition: all 0.3s ease;
+		}
 
-        .publish-date {
-            color: #A1A1AA;
-            font-size: 12px;
-            font-weight: 400;
-            line-height: 1.2;
-            margin-top: 4px;
-            display: none;
-        }
-    }
+		.publish-date {
+			color: var(--oml-muted);
+			font-size: var(--oml-font-size-xs);
+			font-weight: var(--oml-weight-regular);
+			line-height: 1.2;
+			margin-top: var(--oml-space-1);
+			display: none;
+		}
+	}
 
-    .ohmylms-accordion-content {
-        display: none;
-        padding-top: 15px;
-    }
+	.ohmylms-accordion-content {
+		display: none;
+		padding-top: 15px;
+	}
 
-    .ohmylms-single-accordion {
-        border-bottom: 1px solid #EBEBEF;
-        padding: 18px 12px;
-        transition: all 0.3s ease;
-    }
+	.ohmylms-single-accordion {
+		border-bottom: 1px solid var(--oml-border);
+		padding: 18px var(--oml-space-3);
+		transition: all 0.3s ease;
+	}
 
-    .ohmylms-accordion-head {
-        display: flex;
-        flex-flow: row wrap;
-        justify-content: space-around;
-        align-items: flex-start;
-        gap: 20px;
-        cursor: pointer;
+	.ohmylms-accordion-head {
+		display: flex;
+		flex-flow: row wrap;
+		justify-content: space-around;
+		align-items: flex-start;
+		gap: 20px;
+		cursor: pointer;
 
-        svg {
-            display: block;
-        }
-    }
+		svg {
+			display: block;
+		}
+	}
 
-    //-----when accordion is active-----
-    .ohmylms-single-accordion.active {
-        background-color: #F4F5F7;
-        border-bottom-color: transparent;
-        border-radius: 10px;
+	/*-----when accordion is active-----*/
+	.ohmylms-single-accordion.active {
+		background-color: var(--oml-background);
+		border-bottom-color: transparent;
+		border-radius: var(--oml-radius-control);
 
-        .ohmylms-accordion-title::before {
-            transform: rotate(90deg);
-        }
+		.ohmylms-accordion-title::before {
+			transform: rotate(90deg);
+		}
 
-        .ohmylms-accordion-title .publish-date {
-            display: block;
-        }
+		.ohmylms-accordion-title .publish-date {
+			display: block;
+		}
 
-        .ohmylms-accordion-content {
-            display: block;
-        }
-    }
-
+		.ohmylms-accordion-content {
+			display: block;
+		}
+	}
 }
 
 .ohmylms-accordion-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease;
+	max-height: 0;
+	overflow: hidden;
+	transition: max-height 0.3s ease;
 }
 
 .ohmylms-single-accordion.active .ohmylms-accordion-content {
-    max-height: 0;
+	max-height: 0;
 }

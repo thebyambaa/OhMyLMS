@@ -1,0 +1,36 @@
+.ohmylms-single-settings.settings-capacity .ant-input-number {
+	border: 1px solid var(--oml-border);
+	box-shadow: none;
+	outline: none;
+	width: 230px;
+	border-radius: var(--oml-radius-control);
+}
+
+.ohmylms-single-settings.settings-capacity
+	.ant-input-number.ant-input-number-focused {
+	border-color: var(--oml-primary);
+	box-shadow: var(--oml-shadow-sm);
+}
+
+.ohmylms-single-settings.settings-capacity
+	.ant-input-number
+	.ant-input-number-input {
+	padding: var(--oml-space-3) 14px;
+	font-size: var(--oml-font-size-md);
+	line-height: 1.3;
+	border-radius: var(--oml-radius-control);
+	width: 230px;
+	color: var(--oml-heading);
+}
+
+.ohmylms-single-settings.settings-capacity .ant-input-number-handler-wrap {
+	background-color: color-mix(in srgb, var(--oml-shade) 0%, transparent);
+}
+
+.ohmylms-single-settings.settings-capacity .ant-input-number-handler-up {
+	border-start-end-radius: 11px !important;
+}
+
+.ohmylms-single-settings.settings-capacity .ant-input-number-handler-down {
+	border-end-end-radius: 11px !important;
+}

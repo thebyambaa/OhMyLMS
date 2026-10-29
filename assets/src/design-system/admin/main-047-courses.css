@@ -1,0 +1,8 @@
+.toplevel_page_ohmylms.rtl
+	.ohmylms-course-info-header
+	.ohmylms-course-content-info
+	.ohmylms-editor-content-wrapper
+	.ohmylms-editor-content
+	* {
+	text-align: right;
+}

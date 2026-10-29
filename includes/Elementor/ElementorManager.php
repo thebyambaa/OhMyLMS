@@ -243,13 +243,7 @@ class ElementorManager {
 		}
 
 		if ( ! wp_style_is( 'ohmylms-frontend', 'registered' ) ) {
-			wp_register_style(
-				'ohmylms-frontend',
-				$url . '/assets/css/style.css',
-				array(),
-				$version,
-				'all'
-			);
+			\OhMyLMS\Design\FrontendStyles::register();
 		}
 
 		wp_enqueue_script( 'ohmylms-frontend' );

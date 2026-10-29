@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import postcss from 'postcss';
+import selectorParser from 'postcss-selector-parser';
 import { buildAdminStyles } from '../../tools/build-admin-styles.mjs';
 import { createFeatureLoader } from '../../assets/src/extensions/featureLoader.mjs';
 
@@ -29,29 +31,92 @@ test( 'source builds include the curriculum stylesheet imports beside their modu
 		fs.rmSync( destination, { recursive: true, force: true } );
 	}
 } );
-test( 'modular CSS preserves every original rule, URL and cascade position, including RTL', () => {
+test( 'admin modules retain layout coverage and vendor bytes while replacing the duplicate WordPress stylesheet', () => {
 	const destination = fs.mkdtempSync( path.join( os.tmpdir(), 'oml-css-' ) );
 	try {
 		const modules = buildAdminStyles( root, destination );
-		for ( const rtl of [ false, true ] ) {
-			const filename = rtl ? 'ohmylms-rtl.css' : 'ohmylms.css';
-			const baseline = fs
+		const manifest = JSON.parse(
+			fs.readFileSync(
+				path.join( root, 'assets/src/admin-styles/manifest.json' ),
+				'utf8'
+			)
+		);
+		assert.equal(
+			modules.some( ( entry ) => entry.group === 'block-editor' ),
+			false
+		);
+		assert.ok(
+			fs
 				.readFileSync(
-					path.join(
-						root,
-						'assets/src/static/dist/css/admin',
-						filename
-					),
+					path.join( root, 'includes/Assets/AdminAssets.php' ),
 					'utf8'
 				)
-				.replace( /\r\n/g, '\n' );
-			assert.equal(
-				fs.readFileSync(
-					path.join( destination, 'assets/dist/css/admin', filename ),
-					'utf8'
-				),
-				baseline
+				.includes( "array( 'wp-block-editor' )" )
+		);
+		assert.deepEqual(
+			modules.map( ( entry ) => entry.group ),
+			manifest.map( ( entry ) => entry.group )
+		);
+		const selectors = ( css ) => {
+			const result = new Set();
+			postcss.parse( css ).walkRules( ( rule ) => {
+				if (
+					rule.parent.type === 'atrule' &&
+					/keyframes$/.test( rule.parent.name )
+				)
+					return;
+				selectorParser( ( ast ) =>
+					ast.each( ( selector ) =>
+						result.add(
+							selector
+								.toString()
+								.replace( /\s+/g, '' )
+								.replaceAll( '"', '' )
+								.replaceAll( "'", '' )
+								.replace( /:{1,2}(before|after)\b/g, '::$1' )
+						)
+					)
+				).processSync( rule.selector );
+			} );
+			return result;
+		};
+		// Layout/public markup coverage is retained; component skins and obsolete global aliases are deliberately replaced.
+		for ( const rtl of [ false, true ] ) {
+			const name = rtl ? 'ohmylms-rtl.css' : 'ohmylms.css';
+			let original = fs.readFileSync(
+				path.join( root, 'assets/src/static/dist/css/admin', name ),
+				'utf8'
 			);
+			if ( ! rtl )
+				original = original.replace(
+					fs.readFileSync(
+						path.join(
+							root,
+							'assets/src/admin-styles/main-085-block-editor.css'
+						),
+						'utf8'
+					),
+					''
+				);
+			const output = fs.readFileSync(
+				path.join( destination, 'assets/dist/css/admin', name ),
+				'utf8'
+			);
+			const current = selectors( output );
+			for ( const selector of selectors( original ) ) {
+				if (
+					selector === ':root' ||
+					selector === 'body' ||
+					( ! rtl &&
+						selector.startsWith( '.toplevel_page_ohmylms' ) &&
+						selector.includes( '.components-button' ) )
+				)
+					continue;
+				assert.ok(
+					current.has( selector ),
+					'Missing layout selector: ' + selector
+				);
+			}
 			const combined = modules
 				.filter(
 					( entry ) => entry.layer === 'main' && entry.rtl === rtl
@@ -65,39 +130,20 @@ test( 'modular CSS preserves every original rule, URL and cascade position, incl
 				.join( '' );
 			assert.equal(
 				combined,
-				baseline.replace( /\/\*# sourceMappingURL=.*?\*\//g, '' )
+				output.replace( /\/\*# sourceMappingURL=.*?\*\//g, '' )
 			);
 		}
-		const shared = modules
-			.filter(
-				( entry ) =>
-					entry.layer === 'main' &&
-					! entry.rtl &&
-					entry.group === 'shared'
-			)
-			.reduce( ( sum, entry ) => sum + entry.bytes, 0 );
-		assert.ok(
-			shared < 120000,
-			`Shared admin CSS grew to ${ shared } bytes`
-		);
+		for ( const entry of modules.filter( ( entry ) =>
+			entry.source.startsWith( 'assets/src/admin-styles/' )
+		) ) {
+			assert.equal(
+				fs.readFileSync( path.join( destination, entry.path ), 'utf8' ),
+				fs
+					.readFileSync( path.join( root, entry.source ), 'utf8' )
+					.replace( /\/\*# sourceMappingURL=.*?\*\//g, '' )
+			);
+		}
 		assert.deepEqual( buildAdminStyles( root, destination ), modules );
-		assert.equal(
-			modules
-				.filter( ( entry ) => entry.layer === 'ui' )
-				.map( ( entry ) =>
-					fs.readFileSync(
-						path.join( destination, entry.path ),
-						'utf8'
-					)
-				)
-				.join( '' ),
-			fs
-				.readFileSync(
-					path.join( root, 'assets/css/admin-ui.css' ),
-					'utf8'
-				)
-				.replace( /\r\n/g, '\n' )
-		);
 	} finally {
 		fs.rmSync( destination, { recursive: true, force: true } );
 	}

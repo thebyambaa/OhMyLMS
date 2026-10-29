@@ -1,96 +1,95 @@
 .ohmylms-page {
 
-    .ohmylms-resources-list {
-        display: flex;
-        flex-flow: column;
-        gap: 12px;
-        padding: 0;
-        margin: 0;
-        list-style: none;
+	.ohmylms-resources-list {
+		display: flex;
+		flex-flow: column;
+		gap: var(--oml-space-3);
+		padding: 0;
+		margin: 0;
+		list-style: none;
 
-        li {
-            border-radius: 10px;
-            background: #FFF;
-            box-shadow: 0 1px 2px 0 #DBDDE1;
-            display: flex;
-            flex-flow: row wrap;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            padding: 10px 15px 10px 10px;
-            
-            .ohmylms-single-resource-info {
-                position: relative;
-                padding-left: 51px;
-                width: calc(100% - 130px);
-            }
+		li {
+			border-radius: var(--oml-radius-control);
+			background: var(--oml-surface);
+			box-shadow: var(--oml-shadow-sm);
+			display: flex;
+			flex-flow: row wrap;
+			align-items: center;
+			justify-content: space-between;
+			gap: 10px;
+			padding: 10px 15px 10px 10px;
 
-            .resource-icon {
-                width: 40px;
-                height: 40px;
-                border-radius: 10px;
-                border: 1px solid #EBEBEF;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                position: absolute;
-                top: 50%;
-                left: 0;
-                transform: translateY(-50%);
-            }
+			.ohmylms-single-resource-info {
+				position: relative;
+				padding-left: 51px;
+				width: calc(100% - 130px);
+			}
 
-            .resource-name {
-                color: var(--ohmylms-heading-color);
-                font-size: 14px;
-                font-weight: 700;
-                line-height: 1.3;
-                margin-bottom: 6px;
-                display: -webkit-box;
-                -webkit-line-clamp: 1;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
-                width: 100%;
-            }
+			.resource-icon {
+				width: 40px;
+				height: 40px;
+				border-radius: var(--oml-radius-control);
+				border: 1px solid var(--oml-border);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				position: absolute;
+				top: 50%;
+				left: 0;
+				transform: translateY(-50%);
+			}
 
-            .resource-size {
-                color: #A1A1AA;
-                font-size: 13px;
-                font-style: normal;
-                font-weight: 400;
-                line-height: 1.2;
-                display: block;
-            }
+			.resource-name {
+				color: var(--oml-heading);
+				font-size: var(--oml-font-size-md);
+				font-weight: var(--oml-weight-strong);
+				line-height: 1.3;
+				margin-bottom: 6px;
+				display: -webkit-box;
+				-webkit-line-clamp: 1;
+				-webkit-box-orient: vertical;
+				overflow: hidden;
+				width: 100%;
+			}
 
-            .resource-action {
-                display: block;
-                line-height: 1;
-                padding: 5px;
+			.resource-size {
+				color: var(--oml-muted);
+				font-size: var(--oml-font-size-sm);
+				font-style: normal;
+				font-weight: var(--oml-weight-regular);
+				line-height: 1.2;
+				display: block;
+			}
 
-                svg {
-                    display: block;
-                    width: 22px;
-                    height: 22px;
-                }
-            }
-        }
-    }
+			.resource-action {
+				display: block;
+				line-height: 1;
+				padding: 5px;
+
+				svg {
+					display: block;
+					width: 22px;
+					height: 22px;
+				}
+			}
+		}
+	}
 }
 
 @media screen and (max-width: 1199px) {
 
-    .ohmylms-page .ohmylms-resources-list li .ohmylms-single-resource-info {
-        width: calc(100% - 50px);
-    }
+	.ohmylms-page .ohmylms-resources-list li .ohmylms-single-resource-info {
+		width: calc(100% - 50px);
+	}
 
-    .ohmylms-page .ohmylms-resources-list li .resource-name {
-        font-size: 13px;
-    }
-    
+	.ohmylms-page .ohmylms-resources-list li .resource-name {
+		font-size: var(--oml-font-size-sm);
+	}
 }
 
 @media screen and (max-width: 425px) {
 
-    .ohmylms-page .ohmylms-resources-list li .resource-name {
-        font-size: 12px;
-    }
+	.ohmylms-page .ohmylms-resources-list li .resource-name {
+		font-size: var(--oml-font-size-xs);
+	}
 }

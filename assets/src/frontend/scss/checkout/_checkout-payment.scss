@@ -1,223 +1,237 @@
 .ohmylms-page {
 
-    .ohmylms-checkout-payment {
+	.ohmylms-checkout-payment {
 
-        .ohmylms-payment-methods {
-            list-style: none;
-            padding: 0;
-            margin: 0 0 13px;
-            display: flex;
-            flex-flow: column;
-            gap: 13px;
-        }
+		.ohmylms-payment-methods {
+			list-style: none;
+			padding: 0;
+			margin: 0 0 13px;
+			display: flex;
+			flex-flow: column;
+			gap: 13px;
+		}
 
-        .ohmylms-payment-method-wrapper {
-            border-radius: 12px;
-            background: #FFF;
-            margin-bottom: 40px;
-        }
+		.ohmylms-payment-method-wrapper {
+			border-radius: var(--oml-radius-control);
+			background: var(--oml-surface);
+			margin-bottom: 40px;
+		}
 
-        .ohmylms-single-payment {
-            padding: 11px 12px 11px;
-            margin: 0;
-            border-radius: 6px;
-            border: 0.4px solid rgba(200, 210, 233, 0.50);
-            background: #F4F5F7;
-            transition: all 0.3s ease;
+		.ohmylms-single-payment {
+			padding: 11px var(--oml-space-3) 11px;
+			margin: 0;
+			border-radius: var(--oml-radius-control);
+			border: 0.4px solid
+				color-mix(in srgb, var(--oml-border) 50%, transparent);
+			background: var(--oml-background);
+			transition: all 0.3s ease;
 
-            &.selected {
-                border-color: var(--ohmylms-primary-color);
-                background-color: #fff;
-            }
-
-            .ohmylms-radiobtn {
-
-                .ohmylms-radiobtn-text {
-                    color: var(--ohmylms-heading-color);
-                    font-size: 16px;
-                    font-weight: 500;
-                    line-height: 1;
-                    text-transform: capitalize;
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-
-                    .radiobox {
-                        top: 50%;
-                        display: flex;
-                        flex-flow: column;
-                        align-items: center;
-                        justify-content: center;
-                        transform: translateY(-50%);
-
-                        svg {
-                            display: block;
-                            line-height: 1;
-                            opacity: 0;
-                            transition: all 0.3s ease;
-                            width: 10px;
-                            height: auto;
-                        }
-
-                        &::before {
-                            top: calc(50% - 3px);
-                            display: none;
-                        }
-                    }
-                }
-
-                input[type="radio"]:checked + .ohmylms-radiobtn-text .radiobox svg {
-                    opacity: 1;
-                }
-            }
-
-			.payment_box {
-				margin-top: 12px;
-				display: none;
-
-                p {
-                    font-size: 14px;
-                    line-height: 1.5;
-                    margin-bottom: 12px;
-                    color: var(--ohmylms-body-text-color);
-
-                    a {
-                        color: var(--ohmylms-primary-color);
-                        text-decoration: none;
-
-                        &:hover {
-                            text-decoration: underline;
-                        }
-                    }
-                }
+			&.selected {
+				border-color: var(--oml-primary);
+				background-color: var(--oml-surface);
 			}
 
-            &.payment_method_stripe {
-                padding: 9px 12px 9px;
-            }
-        }
+			.ohmylms-radiobtn {
 
-        .no-payment-method-text {
-            color: #DD2001;
-            font-size: 14px;
-            font-weight: 400;
-            line-height: 1.56;
-            font-style: italic;
-            padding: 17px 22px 16px;
-        }
+				.ohmylms-radiobtn-text {
+					color: var(--oml-heading);
+					font-size: var(--oml-font-size-lg);
+					font-weight: var(--oml-weight-medium);
+					line-height: 1;
+					text-transform: capitalize;
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
 
-        .ohmylms-tnc-wrapper {
-            margin-top: 12px;
+					.radiobox {
+						top: 50%;
+						display: flex;
+						flex-flow: column;
+						align-items: center;
+						justify-content: center;
+						transform: translateY(-50%);
 
-            p {
-                margin: 0;
-            }
+						svg {
+							display: block;
+							line-height: 1;
+							opacity: 0;
+							transition: all 0.3s ease;
+							width: 10px;
+							height: auto;
+						}
 
-            .ohmylms-checkbox-text {
-                padding-left: 0;
+						&::before {
+							top: calc(50% - 3px);
+							display: none;
+						}
+					}
+				}
 
-                .checkedbox::before {
-                    height: 14px;
-                }
+				input[type="radio"]:checked
+					+ .ohmylms-radiobtn-text
+					.radiobox
+					svg {
+					opacity: 1;
+				}
+			}
 
-                a {
-                    color: var(--ohmylms-primary-color);
-                    outline: none!important;
+			.payment_box {
+				margin-top: var(--oml-space-3);
+				display: none;
 
-                    &:hover {
-                        text-decoration: none;
-                    }
+				p {
+					font-size: var(--oml-font-size-md);
+					line-height: 1.5;
+					margin-bottom: var(--oml-space-3);
+					color: var(--oml-text);
 
-                    &:focus {
-                        outline: 1px dotted var(--ohmylms-heading-color)!important;
-                    }
-                }
-            }
+					a {
+						color: var(--oml-primary);
+						text-decoration: none;
 
-            .ohmylms-checkbox-text .checkedbox {
-                display: none;
-            }
+						&:hover {
+							text-decoration: underline;
+						}
+					}
+				}
+			}
 
-        }
+			&.payment_method_stripe {
+				padding: 9px var(--oml-space-3) 9px;
+			}
+		}
 
-        .ohmylms-place-order-button {
-            color: #FFF!important;
-            font-size: 18px;
-            font-weight: 700;
-            line-height: 1.2;
-            background-color: var(--ohmylms-primary-color)!important;
-            padding: 16px 24px;
-            text-transform: none;
-            letter-spacing: 0;
-            border-radius: 8px;
-            border-color: var(--ohmylms-primary-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            width: 100%;
+		.no-payment-method-text {
+			color: var(--oml-danger);
+			font-size: var(--oml-font-size-md);
+			font-weight: var(--oml-weight-regular);
+			line-height: 1.56;
+			font-style: italic;
+			padding: 17px 22px var(--oml-space-4);
+		}
 
-            @media screen and (max-width: 1199px) {
-                border-radius: 8px;
-            }
+		.ohmylms-tnc-wrapper {
+			margin-top: var(--oml-space-3);
 
-            .ohmylms-loader {
-                border-color: #fff;
-                border-top-color: var(--ohmylms-primary-color);
-                width: 14px;
-                height: 14px;
-                transition: all 0.3s ease;
-            }
+			p {
+				margin: 0;
+			}
 
-            &:hover {
-                background-color: transparent!important;
-                color: var(--ohmylms-primary-color)!important;
+			.ohmylms-checkbox-text {
+				padding-left: 0;
 
-                .ohmylms-loader {
-                    border-color: var(--ohmylms-primary-color);
-                    border-top-color: #fff;
-                    width: 14px;
-                    height: 14px;
-                }
-            }
-        }
-    }
+				.checkedbox::before {
+					height: 14px;
+				}
+
+				a {
+					color: var(--oml-primary);
+					outline: none !important;
+
+					&:hover {
+						text-decoration: none;
+					}
+
+					&:focus {
+						outline: 1px dotted var(--oml-heading) !important;
+					}
+				}
+			}
+
+			.ohmylms-checkbox-text .checkedbox {
+				display: none;
+			}
+		}
+
+		.ohmylms-place-order-button {
+			color: var(--oml-on-primary) !important;
+			font-size: var(--oml-font-size-lg);
+			font-weight: var(--oml-weight-strong);
+			line-height: 1.2;
+			background-color: var(--oml-primary) !important;
+			padding: var(--oml-space-4) var(--oml-space-5);
+			text-transform: none;
+			letter-spacing: 0;
+			border-radius: var(--oml-radius-control);
+			border-color: var(--oml-primary);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 6px;
+			width: 100%;
+
+			@media screen and (max-width: 1199px) {
+				border-radius: var(--oml-radius-control);
+			}
+
+			.ohmylms-loader {
+				border-color: var(--oml-border);
+				border-top-color: var(--oml-primary);
+				width: 14px;
+				height: 14px;
+				transition: all 0.3s ease;
+			}
+
+			&:hover {
+				background-color: transparent !important;
+				color: var(--oml-primary) !important;
+
+				.ohmylms-loader {
+					border-color: var(--oml-primary);
+					border-top-color: var(--oml-border);
+					width: 14px;
+					height: 14px;
+				}
+			}
+		}
+	}
 }
 
 @media screen and (max-width: 1199px) {
 
-    .ohmylms-page .ohmylms-checkout-payment .ohmylms-place-order-button {
-        font-size: 15px;
-        padding: 14px 18px;
-    }
+	.ohmylms-page .ohmylms-checkout-payment .ohmylms-place-order-button {
+		font-size: var(--oml-font-size-md);
+		padding: 14px 18px;
+	}
 
-    .ohmylms-page .ohmylms-checkout-payment .ohmylms-place-order-button .ohmylms-loader {
-        width: 12px;
-        height: 12px;
-    }
+	.ohmylms-page
+		.ohmylms-checkout-payment
+		.ohmylms-place-order-button
+		.ohmylms-loader {
+		width: 12px;
+		height: 12px;
+	}
 
-    .ohmylms-page .ohmylms-checkout-payment .no-payment-method-text,
-    .ohmylms-page .ohmylms-checkout-payment .ohmylms-single-payment {
-        padding: 13px 15px 13px;
-    }
+	.ohmylms-page .ohmylms-checkout-payment .no-payment-method-text,
+	.ohmylms-page .ohmylms-checkout-payment .ohmylms-single-payment {
+		padding: 13px 15px 13px;
+	}
 
-    .ohmylms-page .ohmylms-checkout-payment .ohmylms-single-payment .ohmylms-radiobtn .ohmylms-radiobtn-text {
-        font-size: 14px;
-    }
+	.ohmylms-page
+		.ohmylms-checkout-payment
+		.ohmylms-single-payment
+		.ohmylms-radiobtn
+		.ohmylms-radiobtn-text {
+		font-size: var(--oml-font-size-md);
+	}
 
-    .ohmylms-page .ohmylms-checkout-payment .ohmylms-single-payment .ohmylms-radiobtn .ohmylms-radiobtn-text .radiobox::before {
-        top: calc(50% - 2px);
-    }
+	.ohmylms-page
+		.ohmylms-checkout-payment
+		.ohmylms-single-payment
+		.ohmylms-radiobtn
+		.ohmylms-radiobtn-text
+		.radiobox::before {
+		top: calc(50% - 2px);
+	}
 }
 
 @media screen and (max-width: 991px) {
-    
-    .ohmylms-page .ohmylms-checkout-payment .ohmylms-payment-method-wrapper {
-        margin-bottom: 14px;
-    }
 
-    .ohmylms-page .ohmylms-checkout-payment .ohmylms-place-order-button {
-        display: none;
-    }
-    
+	.ohmylms-page .ohmylms-checkout-payment .ohmylms-payment-method-wrapper {
+		margin-bottom: 14px;
+	}
+
+	.ohmylms-page .ohmylms-checkout-payment .ohmylms-place-order-button {
+		display: none;
+	}
 }

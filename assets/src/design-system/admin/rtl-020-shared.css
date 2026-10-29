@@ -1,0 +1,23 @@
+.toplevel_page_ohmylms.rtl
+	.mintmrm-automation-editor
+	.automation-editor__header-right
+	.mintmrm-btn {
+	margin-left: 0;
+	margin-right: var(--oml-space-4);
+}
+
+.ohmylms-templates-view-container[dir="rtl"] .ohmylms-template-item-wrapper {
+	margin-right: 0 !important;
+	margin-left: var(--template-gap, var(--oml-space-4));
+}
+
+.ohmylms-templates-view-container[dir="rtl"]
+	.ohmylms-template-item-wrapper:last-child {
+	margin-left: 0 !important;
+}
+
+.ohmylms-prompt-carousel-navigation .ohmylms-carousel-dots {
+	direction: ltr;
+}
+
+/*# sourceMappingURL=ohmylms-rtl.css.map*/

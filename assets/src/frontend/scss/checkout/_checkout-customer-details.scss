@@ -1,48 +1,46 @@
 .ohmylms-page {
 
-    .ohmylms-checkout-customer-details {
-        margin-bottom: 30px;
-        
-        .ohmylms-billing-field-wrapper {
-            display: flex;
-            flex-flow: row wrap;
-            gap: 10px;
-        }
+	.ohmylms-checkout-customer-details {
+		margin-bottom: 30px;
 
-        .ohmylms-form-row {
-            width: 100%;
-            margin: 0;
-            padding: 0;
-        }
+		.ohmylms-billing-field-wrapper {
+			display: flex;
+			flex-flow: row wrap;
+			gap: 10px;
+		}
 
-        #last_name_field,
-        #first_name_field,
-        #country_field,
-        #state_field,
-        #city_field,
-        #postcode_field {
-            width: calc(50% - 5px);
-        }
+		.ohmylms-form-row {
+			width: 100%;
+			margin: 0;
+			padding: 0;
+		}
 
-    }
+		#last_name_field,
+		#first_name_field,
+		#country_field,
+		#state_field,
+		#city_field,
+		#postcode_field {
+			width: calc(50% - 5px);
+		}
+	}
 }
 
 @media screen and (max-width: 991px) {
 
-    .ohmylms-page .ohmylms-checkout-customer-details {
-        margin-bottom: 22px;
-    }
+	.ohmylms-page .ohmylms-checkout-customer-details {
+		margin-bottom: 22px;
+	}
 }
 
 @media screen and (max-width: 575px) {
 
-    .ohmylms-page .ohmylms-checkout-customer-details #country_field,
-    .ohmylms-page .ohmylms-checkout-customer-details #state_field,
-    .ohmylms-page .ohmylms-checkout-customer-details #city_field,
-    .ohmylms-page .ohmylms-checkout-customer-details #postcode_field,
-    .ohmylms-page .ohmylms-checkout-customer-details #last_name_field, 
-    .ohmylms-page .ohmylms-checkout-customer-details #first_name_field {
-        width: 100%;
-    }
-    
+	.ohmylms-page .ohmylms-checkout-customer-details #country_field,
+	.ohmylms-page .ohmylms-checkout-customer-details #state_field,
+	.ohmylms-page .ohmylms-checkout-customer-details #city_field,
+	.ohmylms-page .ohmylms-checkout-customer-details #postcode_field,
+	.ohmylms-page .ohmylms-checkout-customer-details #last_name_field,
+	.ohmylms-page .ohmylms-checkout-customer-details #first_name_field {
+		width: 100%;
+	}
 }

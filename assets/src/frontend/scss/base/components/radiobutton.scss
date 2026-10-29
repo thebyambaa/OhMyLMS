@@ -1,61 +1,60 @@
 .ohmylms-page {
 
-    .ohmylms-radiobtn {
-        position: relative;
-        display: block;
-        margin: 0;
-        padding: 0;
-        cursor: pointer;
+	.ohmylms-radiobtn {
+		position: relative;
+		display: block;
+		margin: 0;
+		padding: 0;
+		cursor: pointer;
 
-        input[type="radio"] {
-            display: none;
-        }
+		input[type="radio"] {
+			display: none;
+		}
 
-        .ohmylms-radiobtn-text {
-            position: relative;
-            color: var(--ohmylms-body-text-color);
-            font-size: 13px;
-            font-weight: 400;
-            line-height: 1.53;
-            display: block;
-            padding-left: 27px;
+		.ohmylms-radiobtn-text {
+			position: relative;
+			color: var(--oml-text);
+			font-size: var(--oml-font-size-sm);
+			font-weight: var(--oml-weight-regular);
+			line-height: 1.53;
+			display: block;
+			padding-left: 27px;
 
-            .radiobox {
-                border-radius: 100px;
-                border: 1px solid #CCC;
-                width: 18px;
-                height: 18px;
-                display: block;
-                position: absolute;
-                top: 2px;
-                left: 0;
-                background: #fff;
-                transition: all 0.3s ease;
+			.radiobox {
+				border-radius: var(--oml-radius-card);
+				border: 1px solid var(--oml-border);
+				width: 18px;
+				height: 18px;
+				display: block;
+				position: absolute;
+				top: 2px;
+				left: 0;
+				background: var(--oml-surface);
+				transition: all 0.3s ease;
 
-                &::before {
-                    content: url(data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgNiA2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjMiIGN5PSIzIiByPSIzIiBmaWxsPSIjZmZmIi8+PC9zdmc+);
-                    display: block;
-                    width: 6px;
-                    height: auto;
-                    line-height: 1;
-                    position: absolute;
-                    top: calc(50% - 1px);
-                    left: 50%;
-                    transition: all 0.3s ease;
-                    transform: translate(-50%, -50%);
-                    opacity: 0;
-                }
-            }
-        }
+				&::before {
+					content: url(data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgNiA2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjMiIGN5PSIzIiByPSIzIiBmaWxsPSIjZmZmIi8+PC9zdmc+);
+					display: block;
+					width: 6px;
+					height: auto;
+					line-height: 1;
+					position: absolute;
+					top: calc(50% - 1px);
+					left: 50%;
+					transition: all 0.3s ease;
+					transform: translate(-50%, -50%);
+					opacity: 0;
+				}
+			}
+		}
 
-        input[type="radio"]:checked + .ohmylms-radiobtn-text .radiobox {
-            background: var(--ohmylms-primary-color);
-            border-color: var(--ohmylms-primary-color);
-        }
+		input[type="radio"]:checked + .ohmylms-radiobtn-text .radiobox {
+			background: var(--oml-primary);
+			border-color: var(--oml-primary);
+		}
 
-        input[type="radio"]:checked + .ohmylms-radiobtn-text .radiobox::before {
-            opacity: 1;
-        }
-
-    }
+		input[type="radio"]:checked + .ohmylms-radiobtn-text .radiobox::before {
+			opacity: 1;
+		}
+	}
 }

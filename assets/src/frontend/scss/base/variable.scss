@@ -1,4 +1,4 @@
-$primary-color: #6e42d3;
-$heading-color: #000D25;
-$text-color: #52525B;
-$progress-color:#35BD4C;
+$primary-color: var(--oml-primary);
+$heading-color: var(--oml-heading);
+$text-color: var(--oml-text);
+$progress-color: var(--oml-success);

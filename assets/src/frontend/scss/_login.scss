@@ -1,66 +1,65 @@
 .ohmylms-page {
 
-    .ohmylms-user-login-wrapper {
-        height: 100vh;
-        min-height: 410px;
-        padding: 5% 15px 30px;
-        display: flex;
-        flex-flow: column;
-        align-items: center;
-        justify-content: flex-start;
+	.ohmylms-user-login-wrapper {
+		height: 100vh;
+		min-height: 410px;
+		padding: 5% 15px 30px;
+		display: flex;
+		flex-flow: column;
+		align-items: center;
+		justify-content: flex-start;
 
-        .ohmylms-form-signup,
-        .ohmylms-form-login {
-            width: 100%;
-            max-width: 635px;
-            
-        }
+		.ohmylms-form-signup,
+		.ohmylms-form-login {
+			width: 100%;
+			max-width: 635px;
+		}
 
-        .ohmylms-form-signup {
-            display: none;
+		.ohmylms-form-signup {
+			display: none;
 
-            .privacy-policy-row {
+			.privacy-policy-row {
 
-                a {
-                    color: var(--ohmylms-primary-color);
-                    text-decoration: underline;
-                    transition: color 0.3s ease;
+				a {
+					color: var(--oml-primary);
+					text-decoration: underline;
+					transition: color 0.3s ease;
 
-                    &:hover {
-                        text-decoration: none;
-                    }
-                }
-            }
-        }
-    }
+					&:hover {
+						text-decoration: none;
+					}
+				}
+			}
+		}
+	}
 }
 
 .ohmylms-email-pending-notice {
-    text-align: center;
-    padding: 32px 24px;
-    max-width: 635px;
-    margin: 0 auto;
+	text-align: center;
+	padding: var(--oml-space-6) var(--oml-space-5);
+	max-width: 635px;
+	margin: 0 auto;
 
-    .ohmylms-email-pending-icon {
-        display: block;
-        margin-bottom: 16px;
+	.ohmylms-email-pending-icon {
+		display: block;
+		margin-bottom: var(--oml-space-4);
 
-        svg {
-            margin: 0 auto;
-        }
-    }
+		svg {
+			margin: 0 auto;
+		}
+	}
 
-    h3 {
-        font-size: 22px;
-        font-weight: 700;
-        color: #162031;
-        margin: 0 0 12px;
-    }
+	h3 {
+		font-size: var(--oml-font-size-xl);
+		font-weight: var(--oml-weight-strong);
+		color: var(--oml-heading);
+		margin: 0 0 var(--oml-space-3);
+	}
 
-    p {
-        font-size: 15px;
-        color: #4B5563;
-        line-height: 1.6;
-        margin: 0;
-    }
+	p {
+		font-size: var(--oml-font-size-md);
+		color: var(--oml-text);
+		line-height: 1.6;
+		margin: 0;
+	}
 }

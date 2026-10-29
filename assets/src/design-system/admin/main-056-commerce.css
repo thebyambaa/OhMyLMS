@@ -1,0 +1,6 @@
+.toplevel_page_ohmylms
+	.ohmylms-subscription-price-input
+	.components-input-control__prefix {
+	display: block;
+	line-height: 2;
+}

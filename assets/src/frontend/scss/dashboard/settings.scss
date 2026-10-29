@@ -1,43 +1,41 @@
 .ohmylms-page {
 
-    .ohmylms-student-profile {
+	.ohmylms-student-profile {
 
-        .student-settings {
+		.student-settings {
 
-            .required {
-                color: #f66f6f;
-            }
+			.required {
+				color: var(--oml-danger);
+			}
 
-            .ohmylms-student-account {
-                border-radius: 8px;
-                background-color: #FFF;
-                box-shadow: 0 1px 4px 0 #D3D6DD;
-                padding: 24px 30px;
+			.ohmylms-student-account {
+				border-radius: var(--oml-radius-control);
+				background-color: var(--oml-surface);
+				box-shadow: var(--oml-shadow-sm);
+				padding: var(--oml-space-5) 30px;
 
-                &.account-username {
-                    margin-bottom: 24px;
-                }
+				&.account-username {
+					margin-bottom: var(--oml-space-5);
+				}
 
-                .account-title {
-                    color: var(--ohmylms-heading-color);
-                    font-size: 18px;
-                    font-weight: 600;
-                    line-height: 1.2;
-                    letter-spacing: 0;
-                    margin: 0 0 15px;
-                }
+				.account-title {
+					color: var(--oml-heading);
+					font-size: var(--oml-font-size-lg);
+					font-weight: var(--oml-weight-strong);
+					line-height: 1.2;
+					letter-spacing: 0;
+					margin: 0 0 15px;
+				}
 
-                .ohmylms-password-strength {
-                    margin-top: -12px;
-                    display: none;
-                }
-                
-            }
+				.ohmylms-password-strength {
+					margin-top: -var(--oml-space-3);
+					display: none;
+				}
+			}
 
-            .ohmylms-password-show .show-password-icon {
-                top: 10px;
-            }
-        }
-        
-    }
+			.ohmylms-password-show .show-password-icon {
+				top: 10px;
+			}
+		}
+	}
 }

@@ -28,34 +28,20 @@ final class Ui {
 	public static function init() {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register' ), 5 );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'register' ), 5 );
-		// After FrontendAssets registers ohmylms-frontend (priority 10).
-		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'attach_legacy_buttons' ), 11 );
 	}
 
-	/** Draw the existing .ohmylms-button markup with the shared tokens; prints right after the learner stylesheet. */
+	/** Deprecated compatibility entry point; button aliases are part of the shared component stylesheet. */
 	public static function attach_legacy_buttons() {
-		$css = self::legacy_button_css();
-		if ( '' !== $css && wp_style_is( 'ohmylms-frontend', 'registered' ) ) {
-			wp_add_inline_style( 'ohmylms-frontend', $css );
-		}
-		$path = OHMYLMS_DIR . '/assets/css/learning-pages.css';
-		if ( is_readable( $path ) && wp_style_is( 'ohmylms-frontend', 'enqueued' ) ) {
-			wp_enqueue_style( 'ohmylms-learning-pages', plugins_url( 'assets/css/learning-pages.css', OHMYLMS_FILE ), array( 'ohmylms-frontend', self::STYLE_HANDLE ), OHMYLMS_VERSION . '.' . substr( (string) hash_file( 'sha256', $path ), 0, 12 ) );
-		}
+		self::enqueue();
 	}
 
 	/**
-	 * Contents of assets/css/oml-legacy-buttons.css, read once per request.
+	 * Deprecated compatibility entry point. No separate legacy button rules are loaded.
 	 *
 	 * @return string
 	 */
 	public static function legacy_button_css() {
-		static $css = null;
-		if ( null === $css ) {
-			$path = OHMYLMS_DIR . '/assets/css/oml-legacy-buttons.css';
-			$css  = is_readable( $path ) ? (string) file_get_contents( $path ) : ''; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local plugin file.
-		}
-		return $css;
+		return '';
 	}
 
 	/** Register the shared stylesheet; learner pages enqueue it through the helpers below. */

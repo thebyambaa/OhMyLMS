@@ -84,6 +84,9 @@ All shared components use one saved Design system across admin and learner pages
 fonts screen links to that editor and retains the shared font control. Independent legacy color
 settings no longer create separate palettes; their public token/API names remain compatibility aliases.
 
+This completes the shared design foundation, not the replacement of every legacy runtime and layout.
+See [the legacy dependency audit](LEGACY-DESIGN-AUDIT.md) before removing compatibility code or assets.
+
 ## Adopting it
 
 - New screens use the components from the start.

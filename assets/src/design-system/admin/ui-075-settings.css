@@ -1,0 +1,8 @@
+.ohmylms-feature-settings-header > .components-toggle-control {
+	flex-shrink: 0;
+	margin-bottom: 0;
+}
+
+.ohmylms-feature-settings-header .components-base-control__field {
+	margin-bottom: 0;
+}

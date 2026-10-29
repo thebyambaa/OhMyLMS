@@ -1,1154 +1,1275 @@
 .ohmylms-student-profile * {
-    padding: 0;
-    margin: 0;
+	padding: 0;
+	margin: 0;
 }
 
 .ohmylms-page {
 
-    .ohmylms-student-profile {
-        position: relative;
-        margin: 0;
-        padding: 0;
-
-        &::before {
-            content: "";
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: #0000001a;
-            z-index: 2;
-            border-radius: 14px;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .ohmylms-hamburger {
-            border-radius: 100%;
-            background-color: #10052E;
-            height: 40px;
-            width: 40px;
-            position: fixed;
-            bottom: 15px;
-            left: 18px;
-            z-index: 99;
-            display: none;
-            flex-flow: column;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        &.open-sidebar::before {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .ohmylms-student-profile-wrapper {
-            border-radius: 14px;
-            border: 1px solid #EBECEF;
-            background: #F8F8F8;
-            box-shadow: 0 2px 8px 0 #ECECEC;
-            padding: 16px 16px 24px;
-            display: flex;
-            flex-flow: row wrap;
-            gap: 30px;
-        }
-
-        .ohmylms-student-profile-sidebar {
-            padding: 14px;
-            width: 218px;
-        }
-
-        .ohmylms-student-profile-sidebar-content {
-            width: calc(100% - 248px);
-            border-radius: 14px;
-            background: #FFF;
-            box-shadow: 0 1px 2px 0 #DBDDE1;
-        }
-
-        .ohmylms-student-profile-tab {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-
-            li {
-                margin-bottom: 7px;
-
-                &:last-child {
-                    margin-bottom: 0;
-                }
-
-                a {
-                    color: var(--ohmylms-heading-color);
-                    font-size: 14px;
-                    font-weight: 400;
-                    line-height: 1.2;
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    position: relative;
-                    border-radius: 10px;
-                    padding: 11px 14px 10px 42px;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                    text-decoration: none!important;
-                    background-color: transparent;
-                }
-
-                .icon {
-                    width: 18px;
-                    height: 18px;
-                    display: block;
-                    position: absolute;
-                    transition: all 0.3s ease;
-                    left: 13px;
-                    top: 10px;
-                }
-
-                .icon-active {
-                    opacity: 0;
-                    visibility: hidden;
-                }
-
-                svg {
-                    display: block;
-                    line-height: 1;
-                }
-
-                a:hover,
-                &.active a {
-                    color: var(--ohmylms-primary-color);
-                    background-color: #FFF;
-                    box-shadow: 0 1px 2px 0 #DBDDE1;
-
-                    .icon-regular {
-                        opacity: 0;
-                        visibility: hidden;
-                    }
-
-                    .icon-active {
-                        opacity: 1;
-                        visibility: visible;
-                    }
-                }
-            }
-        }
-
-
-        //--------student-profile-tab-content--------
-        .ohmylms-student-profile-tab-content {
-            padding: 40px 87px;
-
-            .profile-tab-title {
-                color: var(--ohmylms-heading-color);
-                font-size: 24px;
-                font-weight: 600;
-                line-height: 1.2;
-                margin-bottom: 24px;
-            }
-        }
-
-        // ------profile tab content------
-        .student-profile {
-
-            .ohmylms-profile-cover {
-                height: 228px;
-                background-color: #B3B3B3;
-                border-radius: 14px;
-                position: relative;
-
-                > figure {
-                    width: 100%;
-                    height: 100%;
-                    overflow: hidden;
-                    border-radius: 14px;
-
-                    img {
-                        width: 100%;
-                        height: 100%;
-                        object-fit: cover;
-                    }
-                }
-            }
-
-            .ohmylms-profile-avatar {
-                position: absolute;
-                width: 130px;
-                height: 130px;
-                bottom: -40px;
-                left: 30px;
-                border-radius: 100%;
-                border: 4px solid #FFF;
-                background-color: #27B0E7;
-                box-shadow: 0 2px 2px 0 rgba(164, 169, 180, 0.24);
-                display: flex;
-                flex-flow: column;
-                align-items: center;
-                justify-content: center;
-                overflow: hidden;
-
-                figure {
-                    color: #FFF;
-                    font-size: 40px;
-                    font-weight: 700;
-                    line-height: 1;
-                    border-radius: 100%;
-                    height: 100%;
-                    width: 100%;
-                    display: flex;
-                    flex-flow: column;
-                    align-items: center;
-                    justify-content: center;
-                }
-
-                img {
-                    width: 100%;
-                    height: 100%;
-                    border-radius: 100%;
-                    object-fit: cover;
-                }
-            }
-
-            .ohmylms-profile-actions {
-                display: flex;
-                align-items: center;
-                flex-flow: row wrap;
-                justify-content: flex-end;
-                margin-top: 20px;
-
-                .profile-edit {
-                    border-radius: 8px;
-                    border: 1px solid #EBEBEF;
-                    background: #FFF;
-                    color: var(--ohmylms-heading-color);
-                    font-size: 14px;
-                    font-weight: 500;
-                    letter-spacing: -0.14px;
-                    text-decoration: none;
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    padding: 4px 12px 4px 10px;
-                    transition: all 0.3s ease;
-
-                    &:hover {
-                        background-color: #f6f6f6;
-                    }
-                }
-            }
-
-            .ohmylms-profile-info {
-                margin-top: 7px;
-            }
-
-            .ohmylms-profile-name {
-                color: var(--ohmylms-heading-color);
-                font-size: 20px;
-                font-weight: 700;
-                line-height: 1.3;
-                display: flex;
-                align-items: center;
-                flex-flow: row wrap;
-                justify-content: space-between;
-                gap: 10px;
-
-                .ohmylms-user-details {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: flex-start;
-                    gap: 10px;
-                }
-
-                .ohmylms-user-xp-display {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: flex-end;
-                    gap: 0;
-
-                    .ohmylms-xp-label {
-                        font-size: 0.875rem;
-                        color: #6b7280;
-                    }
-                }
-            }
-
-            .ohmylms-progress-section {
-                margin-top: 22px;
-
-                .ohmylms-progress-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 0.75rem;
-
-                    .ohmylms-progress-label {
-                    font-weight: 600;
-                    color: #374151;
-                    font-size: 0.875rem;
-                    }
-
-                    .ohmylms-progress-numbers {
-                    font-size: 0.875rem;
-                    color: #6b7280;
-                    }
-                }
-
-                .ohmylms-progress-remaining {
-                    text-align: center;
-                    font-size: 0.75rem;
-                    color: #6b7280;
-                }
-            }
-
-            .ohmylms-progress-bar {
-                height: 0.75rem;
-                background: #e5e7eb;
-                border-radius: 0.375rem;
-                overflow: hidden;
-                margin-bottom: 0.5rem;
-
-                .ohmylms-progress-fill {
-                    height: 100%;
-                    width: var(--fill-width);
-                    background: var(--ohmylms-progressbar-color, #3b82f6);
-                    border-radius: 0.375rem;
-                    transition: width 0.3s ease;
-                    animation: ohmylms-fill-progress 1s ease forwards;
-                    
-                }
-            }
-
-            .ohmylms-badges-section {
-                margin-top: 22px;
-                border-radius: 8px;
-                border: 1px solid #eee;
-                padding: 20px;
-
-                .ohmylms-section-title {
-                    display: flex;
-                    align-items: center;
-                    gap: 0.5rem;
-                    font-size: 1.125rem;
-                    font-weight: 600;
-                    color: #1f2937;
-                    margin-bottom: 1.5rem;
-
-                    .ohmylms-trophy-icon {
-                        width: 1.25rem;
-                        height: 1.25rem;
-                        color: #f59e0b;
-                        transform: translateY(5px);
-                    }
-                }
-
-                .ohmylms-badges-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(120px, 120px));
-                    gap: 1rem;
-                    margin-bottom: 1.5rem;
-
-                    .ohmylms-badge {
-                        aspect-ratio: 1;
-                        border-radius: 1rem;
-                        padding: 1rem;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        position: relative;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-                        background: var(--badge-color, #6e42d3);
-
-                        &:hover {
-                            transform: translateY(-4px) scale(1.05);
-                            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-                        }
-
-                        &.earned {
-
-                            &.green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-
-                            &.orange { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
-
-                            &.yellow { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); }
-
-                            &.blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
-                        }
-
-                        &.locked {
-
-                            &.purple,
-                            &.pink {
-                                background: #e5e7eb;
-                            }
-
-                            .ohmylms-badge-icon {
-                                color: #9ca3af;
-                            }
-
-                            .ohmylms-badge-name {
-                                color: #6b7280;
-                            }
-
-                            .ohmylms-lock-overlay {
-                                position: absolute;
-                                inset: 0;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                background: rgba(0, 0, 0, 0.2);
-                                border-radius: 1rem;
-
-                                .ohmylms-lock-icon {
-                                    width: 1.5rem;
-                                    height: 1.5rem;
-                                    color: #fff;
-                                }
-                            }
-                        }
-
-                        .ohmylms-badge-icon {
-                            width: 2rem;
-                            height: 2rem;
-                            color: #fff;
-                            margin-bottom: 0.5rem;
-                        }
-
-                        .ohmylms-badge-name {
-                            font-size: 0.75rem;
-                            font-weight: 600;
-                            text-align: center;
-                            color: #fff;
-                        }
-
-                        &[data-tooltip]:hover::before {
-                            content: attr(data-tooltip);
-                            position: absolute;
-                            bottom: 110%;
-                            left: 50%;
-                            transform: translateX(-50%);
-                            background: #1f2937;
-                            color: #fff;
-                            padding: 0.5rem 0.75rem;
-                            border-radius: 0.5rem;
-                            font-size: 0.75rem;
-                            z-index: 1000;
-                            opacity: 1;
-                            max-width: 250px;
-                            width: max-content;
-                        }
-
-                        &[data-tooltip]:hover::after {
-                            content: '';
-                            position: absolute;
-                            bottom: 100%;
-                            left: 50%;
-                            transform: translateX(-50%);
-                            border: 4px solid transparent;
-                            border-top-color: #1f2937;
-                            z-index: 1000;
-                        }
-                    }
-                }
-
-                .ohmylms-badge-progress {
-                    text-align: center;
-
-                    .ohmylms-progress-text {
-                        font-size: 0.875rem;
-                        color: #6b7280;
-                        margin-bottom: 0.5rem;
-                    }
-                }
-            }
-
-            // Keyframe animation
-            @keyframes ohmylms-fill-progress {
-
-                from {
-                    width: 0%;
-                }
-
-                to {
-                    width: var(--fill-width);
-                }
-            }
-
-
-
-            .learning-level {
-                display: inline-block;
-                color: var(--ohmylms-heading-color);
-                font-size: 12px;
-                font-weight: 500;
-                line-height: 1.3;
-                padding: 3px 7px;
-                border-radius: 4px;
-            }
-
-            .profile-bio {
-                color: var(--ohmylms-body-text-color);
-                font-size: 15px;
-                font-weight: 400;
-                line-height: 1.5;
-                margin: 22px 0 0;
-            }
-
-            .profile-contact-info {
-                display: flex;
-                align-items: center;
-                gap: 14px;
-                margin: 9px 0 0;
-
-                address {
-                    color: var(--ohmylms-body-text-color);
-                    font-size: 14px;
-                    font-weight: 400;
-                    line-height: 1.3;
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 5px;
-                    font-style: normal;
-                }
-
-                .contact-link {
-                    color: var(--ohmylms-primary-color);
-                    font-size: 14px;
-                    font-weight: 700;
-                    line-height: 1.3;
-                    text-decoration: none;
-                    outline: none;
-                    background-color: transparent;
-
-                    &:hover {
-                        text-decoration: underline;
-                    }
-                }
-            }
-
-            .profile-contact-details {
-                display: flex;
-                flex-wrap: wrap;
-                align-items: center;
-                gap: 8px 20px;
-                margin: 9px 0 0;
-
-                .profile-contact-item {
-                    color: var(--ohmylms-body-text-color);
-                    font-size: 14px;
-                    font-weight: 400;
-                    line-height: 1.3;
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 5px;
-
-                    strong {
-                        color: var(--ohmylms-heading-color);
-                        font-weight: 600;
-                    }
-                }
-            }
-
-            // Skills and Social Links Styles
-            .profile-skills,
-            .profile-social-links {
-                margin: 22px 0 0;
-            }
-
-            .profile-section-title {
-                color: var(--ohmylms-heading-color);
-                font-size: 16px;
-                font-weight: 600;
-                line-height: 1.3;
-                margin: 0 0 12px;
-            }
-
-            .skills-list {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 8px;
-
-                .skill-tag {
-                    background: var(--ohmylms-primary-color);
-                    color: #fff;
-                    padding: 6px 12px;
-                    border-radius: 20px;
-                    font-size: 13px;
-                    font-weight: 500;
-                    line-height: 1.2;
-                    display: inline-block;
-                }
-            }
-
-            .social-links-list {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 12px;
-
-                .social-link {
-                    color: var(--ohmylms-primary-color);
-                    background: rgba(var(--ohmylms-primary-color-rgb), 0.1);
-                    padding: 8px 14px;
-                    border-radius: 6px;
-                    font-size: 14px;
-                    font-weight: 500;
-                    line-height: 1.2;
-                    text-decoration: none;
-                    transition: all 0.3s ease;
-                    display: inline-block;
-
-                    &:hover {
-                        background: var(--ohmylms-primary-color);
-                        color: #fff;
-                        text-decoration: none;
-                    }
-                }
-            }
-
-            .profile-info-list {
-                list-style: none;
-                margin: 14px 0 11px;
-                display: inline-flex;
-                flex-flow: column;
-                gap: 15px;
-                background-color: #FFF;
-                box-shadow: 0 1px 4px #D3D6DD;
-                border-radius: 8px;
-                padding: 20px;
-
-                li {
-                    font-size: 14px;
-                    font-weight: 600;
-                    line-height: 1;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                }
-
-                .title {
-                    width: 70px;
-                    display: inline-block;
-                }
-            }
-
-            .level-progressbar {
-                width: 200px;
-                height: 10px;
-                background: #e5e5e5;
-                border-radius: 4px;
-                display: block;
-                position: relative;
-
-                .level-progressbar-inner {
-                    position: absolute;
-                    left: 0;
-                    top: 0;
-                    width: var(--progress);
-                    height: 100%;
-                    border-radius: 4px;
-                    background-color: var(--ohmylms-progressbar-color);
-                }
-
-                .next-level {
-                    position: absolute;
-                    right: -12px;
-                    bottom: calc(100% + 6px);
-                    background: #cdcdcd;
-                    line-height: 1;
-                    font-size: 10px;
-                    padding: 4px 5px;
-                    border-radius: 4px;
-                    min-width: 44px;
-                    text-align: center;
-
-                    &::before {
-                        content: "";
-                        position: absolute;
-                        left: 50%;
-                        bottom: -5px;
-                        width: 6px;
-                        height: 6px;
-                        background: #cdcdcd;
-                        transform: rotate(45deg) translateX(-50%);
-                    }
-                }
-
-                .level-title {
-                    transition: all 0.3s ease;
-                }
-
-                .level-point {
-                    position: absolute;
-                    left: 50%;
-                    top: 50%;
-                    transform: translate(-50%, -50%);
-                    opacity: 0;
-                    visibility: hidden;
-                    transition: all 0.3s ease;
-                }
-
-                .progrss-percent {
-                    position: absolute;
-                    right: 3px;
-                    top: 1px;
-                    font-size: 8px;
-                }
-            }
-
-            .profile-info-list:hover {
-
-                .level-progressbar {
-
-                    .level-point {
-                        opacity: 1;
-                        visibility: visible;
-                    }
-
-                    .level-title {
-                        opacity: 0;
-                        visibility: hidden;
-                    }
-                }
-            }
-        }
-
-        // ------profile edit tab content------
-        .student-profile-edit {
-            // Dynamic Fields Styles for Profile Edit
-            .ohmylms-dynamic-fields {
-                margin-bottom: 10px;
-            }
-
-            .ohmylms-dynamic-field-row {
-                display: flex;
-                align-items: center;
-                margin-bottom: 10px;
-                gap: 10px;
-
-                .ohmylms-input-wrapper {
-                    flex: 1;
-                }
-            }
-
-            .ohmylms-link-row {
-
-                .ohmylms-link-label {
-                    flex: 0 0 30% !important;
-                }
-
-                .ohmylms-link-url {
-                    flex: 1 !important;
-                }
-            }
-
-            .ohmylms-remove-field {
-                background: #f1f1f1;
-                color: #666;
-                border: 1px solid #ddd;
-                border-radius: 50%;
-                width: 32px;
-                height: 32px;
-                cursor: pointer;
-                font-size: 18px;
-                line-height: 1;
-                flex-shrink: 0;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: all 0.2s ease;
-
-                &:hover {
-                    background: #e74c3c;
-                    color: #fff;
-                    border-color: #e74c3c;
-                }
-            }
-
-            .ohmylms-add-field {
-                margin-top: 10px;
-            }
-
-            .skills-section,
-            .links-section {
-
-                .ohmylms-input-wrapper {
-                    flex: 1;
-                }
-            }
-        }
-
-        // ----achivements section style-----
-        .ohmylms-student-achivements {
-            margin-top: 22px;
-
-            .achivements-title {
-                color: var(--ohmylms-heading-color);
-                font-size: 16px;
-                font-weight: 700;
-                line-height: 1.2;
-                margin-bottom: 16px;
-                letter-spacing: normal;
-                text-transform: none;
-            }
-
-            .no-achivement {
-                background-color: #FFF;
-                box-shadow: 0 1px 4px #D3D6DD;
-                height: 340px;
-                border-radius: 8px;
-                padding: 20px;
-                display: flex;
-                flex-flow: column;
-                align-items: center;
-                justify-content: center;
-                gap: 23px;
-            }
-
-            .no-achivement-text {
-                color: var(--ohmylms-body-text-color);
-                font-size: 14px;
-                font-weight: 400;
-                line-height: 1.5;
-                text-align: center;
-            }
-        }
-
-        .ohmylms-achivement-box {
-            background-color: #FFF;
-            border-radius: 8px;
-            border: 1px solid #eee;
-            margin-bottom: 30px;
-
-            &:last-child {
-                margin-bottom: 0;
-            }
-
-            .single-badges-types {
-                padding: 10px 16px;
-            }
-
-            .achivement-type-title {
-                color: var(--ohmylms-heading-color);
-                font-size: 14px;
-                font-weight: 700;
-                line-height: 1.2;
-                letter-spacing: normal;
-                text-transform: none;
-                border-bottom: 1px solid #eee;
-                padding: 10px 16px;
-            }
-
-            .badges-type-title {
-                color: var(--ohmylms-body-text-color);
-                font-size: 13px;
-                font-weight: 700;
-                line-height: 1.2;
-                letter-spacing: normal;
-                text-transform: none;
-                margin-bottom: 13px;
-            }
-
-            .achivement-badge-list {
-                display: flex;
-                flex-flow: row wrap;
-                align-items: center;
-                justify-content: flex-start;
-                gap: 10px;
-                list-style: none;
-                padding: 0;
-                margin: 0;
-
-                figure {
-                    display: block;
-                    margin: 0;
-
-                    img {
-                        width: 50px;
-                        height: auto;
-                        display: block;
-                    }
-                }
-            }
-
-            .achivement-certificate-list {
-                display: flex;
-                flex-flow: row wrap;
-                align-items: center;
-                justify-content: flex-start;
-                gap: 20px;
-                list-style: none;
-                padding: 16px;
-                margin: 0;
-
-                li {
-                    width: calc(100% / 4 - 15px);
-                }
-
-                figure {
-                    align-content: center;
-                    margin: 0;
-                    height: 130px;
-                    width: 100%;
-                    border-radius: 8px;
-                    border: 1px solid #eee;
-                    padding: 10px;
-                    position: relative;
-
-                    img {
-                        max-width: 100%;
-                        height: auto;
-                        max-height: 100%;
-                        display: block;
-                        border-radius: 8px;
-                        margin: 0 auto;
-                    }
-                }
-
-                .certificate-download {
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    display: flex;
-                    background: var(--ohmylms-primary-color);
-                    padding: 7px;
-                    align-items: center;
-                    justify-content: center;
-                    border-radius: 5px;
-                    cursor: pointer;
-                    opacity: 0;
-                    visibility: hidden;
-                    transition: all 0.3s ease;
-
-                    path {
-                        fill: #fff;
-                    }
-                }
-
-                figure:hover {
-
-                    .certificate-download {
-                        opacity: 1;
-                        visibility: visible;
-                    }
-                }
-            }
-        }
-        
-    }
+	.ohmylms-student-profile {
+		position: relative;
+		margin: 0;
+		padding: 0;
+
+		&::before {
+			content: "";
+			position: absolute;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			background: color-mix(in srgb, var(--oml-shade) 10%, transparent);
+			z-index: 2;
+			border-radius: var(--oml-radius-card);
+			opacity: 0;
+			visibility: hidden;
+			transition: all 0.3s ease;
+		}
+
+		.ohmylms-hamburger {
+			border-radius: 100%;
+			background-color: var(--oml-shade);
+			height: 40px;
+			width: 40px;
+			position: fixed;
+			bottom: 15px;
+			left: 18px;
+			z-index: 99;
+			display: none;
+			flex-flow: column;
+			align-items: center;
+			justify-content: center;
+			transition: all 0.3s ease;
+		}
+
+		&.open-sidebar::before {
+			opacity: 1;
+			visibility: visible;
+		}
+
+		.ohmylms-student-profile-wrapper {
+			border-radius: var(--oml-radius-card);
+			border: 1px solid var(--oml-border);
+			background: var(--oml-surface);
+			box-shadow: var(--oml-shadow-sm);
+			padding: var(--oml-space-4) var(--oml-space-4) var(--oml-space-5);
+			display: flex;
+			flex-flow: row wrap;
+			gap: 30px;
+		}
+
+		.ohmylms-student-profile-sidebar {
+			padding: 14px;
+			width: 218px;
+		}
+
+		.ohmylms-student-profile-sidebar-content {
+			width: calc(100% - 248px);
+			border-radius: var(--oml-radius-card);
+			background: var(--oml-surface);
+			box-shadow: var(--oml-shadow-sm);
+		}
+
+		.ohmylms-student-profile-tab {
+			list-style: none;
+			padding: 0;
+			margin: 0;
+
+			li {
+				margin-bottom: 7px;
+
+				&:last-child {
+					margin-bottom: 0;
+				}
+
+				a {
+					color: var(--oml-heading);
+					font-size: var(--oml-font-size-md);
+					font-weight: var(--oml-weight-regular);
+					line-height: 1.2;
+					display: flex;
+					align-items: center;
+					gap: var(--oml-space-3);
+					position: relative;
+					border-radius: var(--oml-radius-control);
+					padding: 11px 14px 10px 42px;
+					cursor: pointer;
+					transition: all 0.3s ease;
+					text-decoration: none !important;
+					background-color: transparent;
+				}
+
+				.icon {
+					width: 18px;
+					height: 18px;
+					display: block;
+					position: absolute;
+					transition: all 0.3s ease;
+					left: 13px;
+					top: 10px;
+				}
+
+				.icon-active {
+					opacity: 0;
+					visibility: hidden;
+				}
+
+				svg {
+					display: block;
+					line-height: 1;
+				}
+
+				a:hover,
+				&.active a {
+					color: var(--oml-primary);
+					background-color: var(--oml-surface);
+					box-shadow: var(--oml-shadow-sm);
+
+					.icon-regular {
+						opacity: 0;
+						visibility: hidden;
+					}
+
+					.icon-active {
+						opacity: 1;
+						visibility: visible;
+					}
+				}
+			}
+		}
+
+		/*--------student-profile-tab-content--------*/
+		.ohmylms-student-profile-tab-content {
+			padding: 40px 87px;
+
+			.profile-tab-title {
+				color: var(--oml-heading);
+				font-size: var(--oml-font-size-2xl);
+				font-weight: var(--oml-weight-strong);
+				line-height: 1.2;
+				margin-bottom: var(--oml-space-5);
+			}
+		}
+
+		/* ------profile tab content------*/
+		.student-profile {
+
+			.ohmylms-profile-cover {
+				height: 228px;
+				background-color: var(--oml-border);
+				border-radius: var(--oml-radius-card);
+				position: relative;
+
+				> figure {
+					width: 100%;
+					height: 100%;
+					overflow: hidden;
+					border-radius: var(--oml-radius-card);
+
+					img {
+						width: 100%;
+						height: 100%;
+						object-fit: cover;
+					}
+				}
+			}
+
+			.ohmylms-profile-avatar {
+				position: absolute;
+				width: 130px;
+				height: 130px;
+				bottom: -40px;
+				left: 30px;
+				border-radius: 100%;
+				border: 4px solid var(--oml-border);
+				background-color: var(--oml-info);
+				box-shadow: var(--oml-shadow-sm);
+				display: flex;
+				flex-flow: column;
+				align-items: center;
+				justify-content: center;
+				overflow: hidden;
+
+				figure {
+					color: var(--oml-on-primary);
+					font-size: 40px;
+					font-weight: var(--oml-weight-strong);
+					line-height: 1;
+					border-radius: 100%;
+					height: 100%;
+					width: 100%;
+					display: flex;
+					flex-flow: column;
+					align-items: center;
+					justify-content: center;
+				}
+
+				img {
+					width: 100%;
+					height: 100%;
+					border-radius: 100%;
+					object-fit: cover;
+				}
+			}
+
+			.ohmylms-profile-actions {
+				display: flex;
+				align-items: center;
+				flex-flow: row wrap;
+				justify-content: flex-end;
+				margin-top: 20px;
+
+				.profile-edit {
+					border-radius: var(--oml-radius-control);
+					border: 1px solid var(--oml-border);
+					background: var(--oml-surface);
+					color: var(--oml-heading);
+					font-size: var(--oml-font-size-md);
+					font-weight: var(--oml-weight-medium);
+					letter-spacing: -0.14px;
+					text-decoration: none;
+					display: flex;
+					align-items: center;
+					gap: 6px;
+					padding: var(--oml-space-1) var(--oml-space-3)
+						var(--oml-space-1) 10px;
+					transition: all 0.3s ease;
+
+					&:hover {
+						background-color: var(--oml-surface);
+					}
+				}
+			}
+
+			.ohmylms-profile-info {
+				margin-top: 7px;
+			}
+
+			.ohmylms-profile-name {
+				color: var(--oml-heading);
+				font-size: var(--oml-font-size-xl);
+				font-weight: var(--oml-weight-strong);
+				line-height: 1.3;
+				display: flex;
+				align-items: center;
+				flex-flow: row wrap;
+				justify-content: space-between;
+				gap: 10px;
+
+				.ohmylms-user-details {
+					display: flex;
+					flex-direction: column;
+					align-items: flex-start;
+					gap: 10px;
+				}
+
+				.ohmylms-user-xp-display {
+					display: flex;
+					flex-direction: column;
+					align-items: flex-end;
+					gap: 0;
+
+					.ohmylms-xp-label {
+						font-size: 0.875rem;
+						color: var(--oml-muted);
+					}
+				}
+			}
+
+			.ohmylms-progress-section {
+				margin-top: 22px;
+
+				.ohmylms-progress-header {
+					display: flex;
+					justify-content: space-between;
+					align-items: center;
+					margin-bottom: 0.75rem;
+
+					.ohmylms-progress-label {
+						font-weight: var(--oml-weight-strong);
+						color: var(--oml-text);
+						font-size: 0.875rem;
+					}
+
+					.ohmylms-progress-numbers {
+						font-size: 0.875rem;
+						color: var(--oml-muted);
+					}
+				}
+
+				.ohmylms-progress-remaining {
+					text-align: center;
+					font-size: 0.75rem;
+					color: var(--oml-muted);
+				}
+			}
+
+			.ohmylms-progress-bar {
+				height: 0.75rem;
+				background: var(--oml-border);
+				border-radius: 0.375rem;
+				overflow: hidden;
+				margin-bottom: 0.5rem;
+
+				.ohmylms-progress-fill {
+					height: 100%;
+					width: var(--fill-width);
+					background: var(
+						--ohmylms-progressbar-color,
+						var(--oml-primary)
+					);
+					border-radius: 0.375rem;
+					transition: width 0.3s ease;
+					animation: ohmylms-fill-progress 1s ease forwards;
+				}
+			}
+
+			.ohmylms-badges-section {
+				margin-top: 22px;
+				border-radius: var(--oml-radius-control);
+				border: 1px solid var(--oml-border);
+				padding: 20px;
+
+				.ohmylms-section-title {
+					display: flex;
+					align-items: center;
+					gap: 0.5rem;
+					font-size: 1.125rem;
+					font-weight: var(--oml-weight-strong);
+					color: var(--oml-heading);
+					margin-bottom: 1.5rem;
+
+					.ohmylms-trophy-icon {
+						width: 1.25rem;
+						height: 1.25rem;
+						color: var(--oml-warning);
+						transform: translateY(5px);
+					}
+				}
+
+				.ohmylms-badges-grid {
+					display: grid;
+					grid-template-columns: repeat(
+						auto-fit,
+						minmax(120px, 120px)
+					);
+					gap: 1rem;
+					margin-bottom: 1.5rem;
+
+					.ohmylms-badge {
+						aspect-ratio: 1;
+						border-radius: 1rem;
+						padding: 1rem;
+						display: flex;
+						flex-direction: column;
+						align-items: center;
+						justify-content: center;
+						position: relative;
+						cursor: pointer;
+						transition: all 0.3s ease;
+						box-shadow: var(--oml-shadow-sm);
+						background: var(--badge-color, var(--oml-primary));
+
+						&:hover {
+							transform: translateY(-4px) scale(1.05);
+							box-shadow: var(--oml-shadow-sm);
+						}
+
+						&.earned {
+
+							&.green {
+								background: linear-gradient(
+									135deg,
+									var(--oml-success) 0%,
+									var(--oml-success) 100%
+								);
+							}
+
+							&.orange {
+								background: linear-gradient(
+									135deg,
+									var(--oml-warning) 0%,
+									var(--oml-warning) 100%
+								);
+							}
+
+							&.yellow {
+								background: linear-gradient(
+									135deg,
+									var(--oml-warning) 0%,
+									var(--oml-warning) 100%
+								);
+							}
+
+							&.blue {
+								background: linear-gradient(
+									135deg,
+									var(--oml-primary) 0%,
+									var(--oml-primary) 100%
+								);
+							}
+						}
+
+						&.locked {
+
+							&.purple,
+							&.pink {
+								background: var(--oml-border);
+							}
+
+							.ohmylms-badge-icon {
+								color: var(--oml-muted);
+							}
+
+							.ohmylms-badge-name {
+								color: var(--oml-muted);
+							}
+
+							.ohmylms-lock-overlay {
+								position: absolute;
+								inset: 0;
+								display: flex;
+								align-items: center;
+								justify-content: center;
+								background: color-mix(
+									in srgb,
+									var(--oml-shade) 20%,
+									transparent
+								);
+								border-radius: 1rem;
+
+								.ohmylms-lock-icon {
+									width: 1.5rem;
+									height: 1.5rem;
+									color: var(--oml-on-primary);
+								}
+							}
+						}
+
+						.ohmylms-badge-icon {
+							width: 2rem;
+							height: 2rem;
+							color: var(--oml-on-primary);
+							margin-bottom: 0.5rem;
+						}
+
+						.ohmylms-badge-name {
+							font-size: 0.75rem;
+							font-weight: var(--oml-weight-strong);
+							text-align: center;
+							color: var(--oml-on-primary);
+						}
+
+						&[data-tooltip]:hover::before {
+							content: attr(data-tooltip);
+							position: absolute;
+							bottom: 110%;
+							left: 50%;
+							transform: translateX(-50%);
+							background: var(--oml-heading);
+							color: var(--oml-on-primary);
+							padding: 0.5rem 0.75rem;
+							border-radius: 0.5rem;
+							font-size: 0.75rem;
+							z-index: 1000;
+							opacity: 1;
+							max-width: 250px;
+							width: max-content;
+						}
+
+						&[data-tooltip]:hover::after {
+							content: "";
+							position: absolute;
+							bottom: 100%;
+							left: 50%;
+							transform: translateX(-50%);
+							border: 4px solid transparent;
+							border-top-color: var(--oml-heading);
+							z-index: 1000;
+						}
+					}
+				}
+
+				.ohmylms-badge-progress {
+					text-align: center;
+
+					.ohmylms-progress-text {
+						font-size: 0.875rem;
+						color: var(--oml-muted);
+						margin-bottom: 0.5rem;
+					}
+				}
+			}
+
+			/* Keyframe animation*/
+			@keyframes ohmylms-fill-progress {
+
+				from {
+					width: 0%;
+				}
+
+				to {
+					width: var(--fill-width);
+				}
+			}
+
+			.learning-level {
+				display: inline-block;
+				color: var(--oml-heading);
+				font-size: var(--oml-font-size-xs);
+				font-weight: var(--oml-weight-medium);
+				line-height: 1.3;
+				padding: 3px 7px;
+				border-radius: var(--oml-radius-control);
+			}
+
+			.profile-bio {
+				color: var(--oml-text);
+				font-size: var(--oml-font-size-md);
+				font-weight: var(--oml-weight-regular);
+				line-height: 1.5;
+				margin: 22px 0 0;
+			}
+
+			.profile-contact-info {
+				display: flex;
+				align-items: center;
+				gap: 14px;
+				margin: 9px 0 0;
+
+				address {
+					color: var(--oml-text);
+					font-size: var(--oml-font-size-md);
+					font-weight: var(--oml-weight-regular);
+					line-height: 1.3;
+					display: inline-flex;
+					align-items: center;
+					gap: 5px;
+					font-style: normal;
+				}
+
+				.contact-link {
+					color: var(--oml-primary);
+					font-size: var(--oml-font-size-md);
+					font-weight: var(--oml-weight-strong);
+					line-height: 1.3;
+					text-decoration: none;
+					outline: none;
+					background-color: transparent;
+
+					&:hover {
+						text-decoration: underline;
+					}
+				}
+			}
+
+			.profile-contact-details {
+				display: flex;
+				flex-wrap: wrap;
+				align-items: center;
+				gap: var(--oml-space-2) 20px;
+				margin: 9px 0 0;
+
+				.profile-contact-item {
+					color: var(--oml-text);
+					font-size: var(--oml-font-size-md);
+					font-weight: var(--oml-weight-regular);
+					line-height: 1.3;
+					display: inline-flex;
+					align-items: center;
+					gap: 5px;
+
+					strong {
+						color: var(--oml-heading);
+						font-weight: var(--oml-weight-strong);
+					}
+				}
+			}
+
+			/* Skills and Social Links Styles*/
+			.profile-skills,
+			.profile-social-links {
+				margin: 22px 0 0;
+			}
+
+			.profile-section-title {
+				color: var(--oml-heading);
+				font-size: var(--oml-font-size-lg);
+				font-weight: var(--oml-weight-strong);
+				line-height: 1.3;
+				margin: 0 0 var(--oml-space-3);
+			}
+
+			.skills-list {
+				display: flex;
+				flex-wrap: wrap;
+				gap: var(--oml-space-2);
+
+				.skill-tag {
+					background: var(--oml-primary);
+					color: var(--oml-on-primary);
+					padding: 6px var(--oml-space-3);
+					border-radius: var(--oml-radius-card);
+					font-size: var(--oml-font-size-sm);
+					font-weight: var(--oml-weight-medium);
+					line-height: 1.2;
+					display: inline-block;
+				}
+			}
+
+			.social-links-list {
+				display: flex;
+				flex-wrap: wrap;
+				gap: var(--oml-space-3);
+
+				.social-link {
+					color: var(--oml-primary);
+					background: color-mix(
+						in srgb,
+						var(--oml-primary) 10%,
+						transparent
+					);
+					padding: var(--oml-space-2) 14px;
+					border-radius: var(--oml-radius-control);
+					font-size: var(--oml-font-size-md);
+					font-weight: var(--oml-weight-medium);
+					line-height: 1.2;
+					text-decoration: none;
+					transition: all 0.3s ease;
+					display: inline-block;
+
+					&:hover {
+						background: var(--oml-primary);
+						color: var(--oml-on-primary);
+						text-decoration: none;
+					}
+				}
+			}
+
+			.profile-info-list {
+				list-style: none;
+				margin: 14px 0 11px;
+				display: inline-flex;
+				flex-flow: column;
+				gap: 15px;
+				background-color: var(--oml-surface);
+				box-shadow: var(--oml-shadow-sm);
+				border-radius: var(--oml-radius-control);
+				padding: 20px;
+
+				li {
+					font-size: var(--oml-font-size-md);
+					font-weight: var(--oml-weight-strong);
+					line-height: 1;
+					display: flex;
+					align-items: center;
+					gap: 10px;
+				}
+
+				.title {
+					width: 70px;
+					display: inline-block;
+				}
+			}
+
+			.level-progressbar {
+				width: 200px;
+				height: 10px;
+				background: var(--oml-border);
+				border-radius: var(--oml-radius-control);
+				display: block;
+				position: relative;
+
+				.level-progressbar-inner {
+					position: absolute;
+					left: 0;
+					top: 0;
+					width: var(--progress);
+					height: 100%;
+					border-radius: var(--oml-radius-control);
+					background-color: var(--oml-success);
+				}
+
+				.next-level {
+					position: absolute;
+					right: -12px;
+					bottom: calc(100% + 6px);
+					background: var(--oml-border);
+					line-height: 1;
+					font-size: 10px;
+					padding: var(--oml-space-1) 5px;
+					border-radius: var(--oml-radius-control);
+					min-width: 44px;
+					text-align: center;
+
+					&::before {
+						content: "";
+						position: absolute;
+						left: 50%;
+						bottom: -5px;
+						width: 6px;
+						height: 6px;
+						background: var(--oml-border);
+						transform: rotate(45deg) translateX(-50%);
+					}
+				}
+
+				.level-title {
+					transition: all 0.3s ease;
+				}
+
+				.level-point {
+					position: absolute;
+					left: 50%;
+					top: 50%;
+					transform: translate(-50%, -50%);
+					opacity: 0;
+					visibility: hidden;
+					transition: all 0.3s ease;
+				}
+
+				.progrss-percent {
+					position: absolute;
+					right: 3px;
+					top: 1px;
+					font-size: 8px;
+				}
+			}
+
+			.profile-info-list:hover {
+
+				.level-progressbar {
+
+					.level-point {
+						opacity: 1;
+						visibility: visible;
+					}
+
+					.level-title {
+						opacity: 0;
+						visibility: hidden;
+					}
+				}
+			}
+		}
+
+		/* ------profile edit tab content------*/
+		.student-profile-edit {
+
+			/* Dynamic Fields Styles for Profile Edit*/
+			.ohmylms-dynamic-fields {
+				margin-bottom: 10px;
+			}
+
+			.ohmylms-dynamic-field-row {
+				display: flex;
+				align-items: center;
+				margin-bottom: 10px;
+				gap: 10px;
+
+				.ohmylms-input-wrapper {
+					flex: 1;
+				}
+			}
+
+			.ohmylms-link-row {
+
+				.ohmylms-link-label {
+					flex: 0 0 30% !important;
+				}
+
+				.ohmylms-link-url {
+					flex: 1 !important;
+				}
+			}
+
+			.ohmylms-remove-field {
+				background: var(--oml-background);
+				color: var(--oml-muted);
+				border: 1px solid var(--oml-border);
+				border-radius: 50%;
+				width: 32px;
+				height: 32px;
+				cursor: pointer;
+				font-size: var(--oml-font-size-lg);
+				line-height: 1;
+				flex-shrink: 0;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				transition: all 0.2s ease;
+
+				&:hover {
+					background: var(--oml-danger);
+					color: var(--oml-on-primary);
+					border-color: var(--oml-danger);
+				}
+			}
+
+			.ohmylms-add-field {
+				margin-top: 10px;
+			}
+
+			.skills-section,
+			.links-section {
+
+				.ohmylms-input-wrapper {
+					flex: 1;
+				}
+			}
+		}
+
+		/* ----achivements section style-----*/
+		.ohmylms-student-achivements {
+			margin-top: 22px;
+
+			.achivements-title {
+				color: var(--oml-heading);
+				font-size: var(--oml-font-size-lg);
+				font-weight: var(--oml-weight-strong);
+				line-height: 1.2;
+				margin-bottom: var(--oml-space-4);
+				letter-spacing: normal;
+				text-transform: none;
+			}
+
+			.no-achivement {
+				background-color: var(--oml-surface);
+				box-shadow: var(--oml-shadow-sm);
+				height: 340px;
+				border-radius: var(--oml-radius-control);
+				padding: 20px;
+				display: flex;
+				flex-flow: column;
+				align-items: center;
+				justify-content: center;
+				gap: 23px;
+			}
+
+			.no-achivement-text {
+				color: var(--oml-text);
+				font-size: var(--oml-font-size-md);
+				font-weight: var(--oml-weight-regular);
+				line-height: 1.5;
+				text-align: center;
+			}
+		}
+
+		.ohmylms-achivement-box {
+			background-color: var(--oml-surface);
+			border-radius: var(--oml-radius-control);
+			border: 1px solid var(--oml-border);
+			margin-bottom: 30px;
+
+			&:last-child {
+				margin-bottom: 0;
+			}
+
+			.single-badges-types {
+				padding: 10px var(--oml-space-4);
+			}
+
+			.achivement-type-title {
+				color: var(--oml-heading);
+				font-size: var(--oml-font-size-md);
+				font-weight: var(--oml-weight-strong);
+				line-height: 1.2;
+				letter-spacing: normal;
+				text-transform: none;
+				border-bottom: 1px solid var(--oml-border);
+				padding: 10px var(--oml-space-4);
+			}
+
+			.badges-type-title {
+				color: var(--oml-text);
+				font-size: var(--oml-font-size-sm);
+				font-weight: var(--oml-weight-strong);
+				line-height: 1.2;
+				letter-spacing: normal;
+				text-transform: none;
+				margin-bottom: 13px;
+			}
+
+			.achivement-badge-list {
+				display: flex;
+				flex-flow: row wrap;
+				align-items: center;
+				justify-content: flex-start;
+				gap: 10px;
+				list-style: none;
+				padding: 0;
+				margin: 0;
+
+				figure {
+					display: block;
+					margin: 0;
+
+					img {
+						width: 50px;
+						height: auto;
+						display: block;
+					}
+				}
+			}
+
+			.achivement-certificate-list {
+				display: flex;
+				flex-flow: row wrap;
+				align-items: center;
+				justify-content: flex-start;
+				gap: 20px;
+				list-style: none;
+				padding: var(--oml-space-4);
+				margin: 0;
+
+				li {
+					width: calc(100% / 4 - 15px);
+				}
+
+				figure {
+					align-content: center;
+					margin: 0;
+					height: 130px;
+					width: 100%;
+					border-radius: var(--oml-radius-control);
+					border: 1px solid var(--oml-border);
+					padding: 10px;
+					position: relative;
+
+					img {
+						max-width: 100%;
+						height: auto;
+						max-height: 100%;
+						display: block;
+						border-radius: var(--oml-radius-control);
+						margin: 0 auto;
+					}
+				}
+
+				.certificate-download {
+					position: absolute;
+					top: 50%;
+					left: 50%;
+					transform: translate(-50%, -50%);
+					display: flex;
+					background: var(--oml-primary);
+					padding: 7px;
+					align-items: center;
+					justify-content: center;
+					border-radius: var(--oml-radius-control);
+					cursor: pointer;
+					opacity: 0;
+					visibility: hidden;
+					transition: all 0.3s ease;
+
+					path {
+						fill: var(--oml-surface);
+					}
+				}
+
+				figure:hover {
+
+					.certificate-download {
+						opacity: 1;
+						visibility: visible;
+					}
+				}
+			}
+		}
+	}
 }
 
 @media screen and (max-width: 1399px) {
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-student-profile-tab-content {
-        padding: 40px 50px;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.ohmylms-student-profile-tab-content {
+		padding: 40px 50px;
+	}
 }
-
 
 @media screen and (max-width: 1199px) {
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-student-profile-wrapper {
-        gap: 20px;
-    }
+	.ohmylms-page .ohmylms-student-profile .ohmylms-student-profile-wrapper {
+		gap: 20px;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-student-profile-sidebar {
-        padding: 0;
-        width: 188px;
-    }
+	.ohmylms-page .ohmylms-student-profile .ohmylms-student-profile-sidebar {
+		padding: 0;
+		width: 188px;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-student-profile-sidebar-content {
-        width: calc(100% - 208px);
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.ohmylms-student-profile-sidebar-content {
+		width: calc(100% - 208px);
+	}
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-student-profile-tab-content {
-        padding: 20px 30px;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.ohmylms-student-profile-tab-content {
+		padding: 20px 30px;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .student-profile .ohmylms-profile-cover {
-        height: 188px;
-        border-radius: 10px;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.student-profile
+		.ohmylms-profile-cover {
+		height: 188px;
+		border-radius: var(--oml-radius-control);
+	}
 
-    .ohmylms-page .ohmylms-student-profile .student-profile .ohmylms-profile-cover > figure {
-        border-radius: 10px;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.student-profile
+		.ohmylms-profile-cover
+		> figure {
+		border-radius: var(--oml-radius-control);
+	}
 
-    .ohmylms-page .ohmylms-student-profile .student-profile .ohmylms-profile-avatar {
-        width: 100px;
-        height: 100px;
-        bottom: -30px;
-        border-width: 2px;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.student-profile
+		.ohmylms-profile-avatar {
+		width: 100px;
+		height: 100px;
+		bottom: -30px;
+		border-width: 2px;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .student-profile .ohmylms-profile-avatar figure {
-        font-size: 28px;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.student-profile
+		.ohmylms-profile-avatar
+		figure {
+		font-size: var(--oml-font-size-2xl);
+	}
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-student-achivements .no-achivement {
-        height: 220px;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.ohmylms-student-achivements
+		.no-achivement {
+		height: 220px;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-student-achivements .no-achivement svg {
-        max-width: 150px;
-        height: auto;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.ohmylms-student-achivements
+		.no-achivement
+		svg {
+		max-width: 150px;
+		height: auto;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-achivement-box .achivement-certificate-list figure {
-        height: 100px;
-    }
-
+	.ohmylms-page
+		.ohmylms-student-profile
+		.ohmylms-achivement-box
+		.achivement-certificate-list
+		figure {
+		height: 100px;
+	}
 }
-
 
 @media screen and (max-width: 991px) {
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-hamburger {
-        display: flex;
-    }
+	.ohmylms-page .ohmylms-student-profile .ohmylms-hamburger {
+		display: flex;
+	}
 
-    .ohmylms-page .ohmylms-student-profile.open-sidebar .ohmylms-hamburger {
-        opacity: 0;
-        visibility: hidden;
-    }
+	.ohmylms-page .ohmylms-student-profile.open-sidebar .ohmylms-hamburger {
+		opacity: 0;
+		visibility: hidden;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-student-profile-sidebar-close {
-        display: flex;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.ohmylms-student-profile-sidebar-close {
+		display: flex;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-student-profile-wrapper {
-        display: block;
-        position: relative;
-        padding: 0;
-        border: none;
-        border-radius: 0;
-        background: transparent;
-        box-shadow: none;
-    }
+	.ohmylms-page .ohmylms-student-profile .ohmylms-student-profile-wrapper {
+		display: block;
+		position: relative;
+		padding: 0;
+		border: none;
+		border-radius: 0;
+		background: transparent;
+		box-shadow: none;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-student-profile-tab-content {
-        padding: 20px 20px;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.ohmylms-student-profile-tab-content {
+		padding: 20px 20px;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-student-profile-sidebar {
-        position: absolute;
-        top: 0;
-        left: -40px;
-        height: calc(100% + 2px);
-        z-index: 99;
-        background-color: #f9fafd;
-        border-radius: 10px;
-        padding: 15px;
-        width: 230px;
-        box-shadow: 10px 14px 22px 4px #0000000a;
-        transition: all 0.3s ease;
-        opacity: 0;
-        visibility: hidden;
-    }
+	.ohmylms-page .ohmylms-student-profile .ohmylms-student-profile-sidebar {
+		position: absolute;
+		top: 0;
+		left: -40px;
+		height: calc(100% + 2px);
+		z-index: 99;
+		background-color: var(--oml-background);
+		border-radius: var(--oml-radius-control);
+		padding: 15px;
+		width: 230px;
+		box-shadow: var(--oml-shadow-sm);
+		transition: all 0.3s ease;
+		opacity: 0;
+		visibility: hidden;
+	}
 
-    .ohmylms-page .ohmylms-student-profile.open-sidebar .ohmylms-student-profile-sidebar {
-        left: 0;
-        opacity: 1;
-        visibility: visible;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile.open-sidebar
+		.ohmylms-student-profile-sidebar {
+		left: 0;
+		opacity: 1;
+		visibility: visible;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-student-profile-sidebar-content {
-        width: 100%;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.ohmylms-student-profile-sidebar-content {
+		width: 100%;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-student-profile-tab-content .profile-tab-title {
-        font-size: 18px;
-        margin-bottom: 16px;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.ohmylms-student-profile-tab-content
+		.profile-tab-title {
+		font-size: var(--oml-font-size-lg);
+		margin-bottom: var(--oml-space-4);
+	}
 
-    .ohmylms-page .ohmylms-student-profile .student-profile .ohmylms-profile-cover {
-        height: 190px;
-        border-radius: 0;
-        left: -20px;
-        width: calc(100% + 40px);
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.student-profile
+		.ohmylms-profile-cover {
+		height: 190px;
+		border-radius: 0;
+		left: -20px;
+		width: calc(100% + 40px);
+	}
 
-    .ohmylms-page .ohmylms-student-profile .student-profile .ohmylms-profile-cover > figure {
-        border-radius: 0;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.student-profile
+		.ohmylms-profile-cover
+		> figure {
+		border-radius: 0;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .student-profile .ohmylms-profile-avatar {
-        left: 20px;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.student-profile
+		.ohmylms-profile-avatar {
+		left: 20px;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .student-profile .ohmylms-profile-actions {
-        margin-top: 14px;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.student-profile
+		.ohmylms-profile-actions {
+		margin-top: 14px;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .student-profile .ohmylms-profile-info {
-        margin-top: 6px;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.student-profile
+		.ohmylms-profile-info {
+		margin-top: 6px;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .student-profile .ohmylms-profile-name {
-        font-size: 18px;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.student-profile
+		.ohmylms-profile-name {
+		font-size: var(--oml-font-size-lg);
+	}
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-student-achivements {
-        margin-top: 18px;
-    }
+	.ohmylms-page .ohmylms-student-profile .ohmylms-student-achivements {
+		margin-top: 18px;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .student-profile .profile-bio {
-        font-size: 14px;
-        margin: 7px 0 0;
-    }
+	.ohmylms-page .ohmylms-student-profile .student-profile .profile-bio {
+		font-size: var(--oml-font-size-md);
+		margin: 7px 0 0;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-student-achivements .achivements-title {
-        font-size: 15px;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.ohmylms-student-achivements
+		.achivements-title {
+		font-size: var(--oml-font-size-md);
+	}
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-achivement-box .achivement-certificate-list li {
-        width: calc(100% / 3 - 14px);
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.ohmylms-achivement-box
+		.achivement-certificate-list
+		li {
+		width: calc(100% / 3 - 14px);
+	}
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-achivement-box .achivement-certificate-list figure {
-        height: 130px;
-    }
-
+	.ohmylms-page
+		.ohmylms-student-profile
+		.ohmylms-achivement-box
+		.achivement-certificate-list
+		figure {
+		height: 130px;
+	}
 }
 
 @media screen and (max-width: 767px) {
 
-    .ohmylms-page .ohmylms-dashboard {
-        padding: 16px 0 46px;
-    }
+	.ohmylms-page .ohmylms-dashboard {
+		padding: var(--oml-space-4) 0 46px;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .student-profile .ohmylms-profile-actions .profile-edit {
-        font-size: 13px;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.student-profile
+		.ohmylms-profile-actions
+		.profile-edit {
+		font-size: var(--oml-font-size-sm);
+	}
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-achivement-box .achivement-certificate-list figure {
-        height: 100px;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.ohmylms-achivement-box
+		.achivement-certificate-list
+		figure {
+		height: 100px;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-achivement-box .achivement-certificate-list {
-        gap: 10px;
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.ohmylms-achivement-box
+		.achivement-certificate-list {
+		gap: 10px;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-achivement-box .achivement-certificate-list li {
-        width: calc(100% / 3 - 7px);
-    }
-
+	.ohmylms-page
+		.ohmylms-student-profile
+		.ohmylms-achivement-box
+		.achivement-certificate-list
+		li {
+		width: calc(100% / 3 - 7px);
+	}
 }
 
 @media screen and (max-width: 575px) {
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-hamburger {
-        position: fixed;
-        bottom: 6px;
-        left: 5px;
-    }
+	.ohmylms-page .ohmylms-student-profile .ohmylms-hamburger {
+		position: fixed;
+		bottom: 6px;
+		left: 5px;
+	}
 
-    .ohmylms-page .ohmylms-student-profile .ohmylms-achivement-box .achivement-certificate-list li {
-        width: calc(50% - 5px);
-    }
+	.ohmylms-page
+		.ohmylms-student-profile
+		.ohmylms-achivement-box
+		.achivement-certificate-list
+		li {
+		width: calc(50% - 5px);
+	}
 }

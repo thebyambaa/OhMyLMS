@@ -1,0 +1,4 @@
+.ohmylms-content-hub > .ohmylms-ext-page {
+	padding: 0 var(--ohmylms-hub-gutter) 40px;
+	min-width: 0;
+}

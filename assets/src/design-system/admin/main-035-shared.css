@@ -1,0 +1,39 @@
+.toplevel_page_ohmylms
+	.google-meet-credentials
+	.components-text-control__input {
+	padding: 9px;
+	background: var(--oml-surface);
+}
+
+.toplevel_page_ohmylms .google-meet-redirect-url .ohmylms-copy-to-clipboard {
+	background-color: var(--oml-surface) !important;
+	border: 1px solid var(--oml-border) !important;
+	width: 40px;
+	height: 40px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: var(--oml-radius-control);
+}
+
+.toplevel_page_ohmylms.rtl
+	.ohmylms-pagination-wrapper
+	.ohmylms-pagination-info {
+	display: flex;
+	gap: 10px;
+}
+
+.toplevel_page_ohmylms.rtl
+	.ohmylms-pagination-wrapper
+	.ohmylms-pagination-buttons
+	.components-button {
+	transform: rotate(-180deg);
+}
+
+.toplevel_page_ohmylms.rtl
+	.ohmylms-table-wrapper
+	.ohmylms-table-tbody
+	.ohmylms-tr
+	.ohmylms-td.ohmylms-td-select {
+	padding-right: var(--oml-space-3);
+}

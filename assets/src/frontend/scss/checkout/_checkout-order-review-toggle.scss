@@ -1,99 +1,98 @@
 .ohmylms-page {
 
-    .ohmylms-order-review-toggle {
-        margin-bottom: 30px;
-        display: none;
+	.ohmylms-order-review-toggle {
+		margin-bottom: 30px;
+		display: none;
 
-        .order-review-toggle-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 15px;
-            background-color: #f9fafd;
-            border: 1px solid #EBEBEF;
-            padding: 13px 17px;
-            border-radius: 8px;
-            cursor: pointer;
+		.order-review-toggle-head {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 15px;
+			background-color: var(--oml-background);
+			border: 1px solid var(--oml-border);
+			padding: 13px 17px;
+			border-radius: var(--oml-radius-control);
+			cursor: pointer;
 
-            .review-toggle-title {
-                display: flex;
-                align-items: center;
-                gap: 9px;
-                font-size: 15px;
-                font-weight: 500;
-                line-height: 1.3;
-                color: var(--ohmylms-heading-color);
-                margin: 0;
-            }
+			.review-toggle-title {
+				display: flex;
+				align-items: center;
+				gap: 9px;
+				font-size: var(--oml-font-size-md);
+				font-weight: var(--oml-weight-medium);
+				line-height: 1.3;
+				color: var(--oml-heading);
+				margin: 0;
+			}
 
-            svg {
-                transition: all 0.3s ease;
-            }
+			svg {
+				transition: all 0.3s ease;
+			}
 
-            &.active {
+			&.active {
 
-                .review-toggle-title {
+				.review-toggle-title {
 
-                    svg {
-                        transform: rotate(-180deg);
+					svg {
+						transform: rotate(-180deg);
+					}
+				}
+			}
 
-                    }
-                }
-            }
+			.total-price {
+				font-size: var(--oml-font-size-md);
+				font-weight: var(--oml-weight-medium);
+				line-height: 1.3;
+				color: var(--oml-heading);
+			}
 
-            .total-price {
-                font-size: 15px;
-                font-weight: 500;
-                line-height: 1.3;
-                color: var(--ohmylms-heading-color);
-            }
+			.amount {
+				color: inherit;
+			}
+		}
 
-            .amount {
-                color: inherit;
-            }
-        }
+		.ohmylms-order-review-table-wrapper {
+			padding: 17px;
+			margin-bottom: 0;
+			margin-top: 10px;
+			display: none;
 
-        .ohmylms-order-review-table-wrapper {
-            padding: 17px;
-            margin-bottom: 0;
-            margin-top: 10px;
-            display: none;
+			table td {
+				padding: 14px var(--oml-space-3);
+			}
 
-            table td {
-                padding: 14px 12px;
-            }
+			table th:first-child,
+			table td:first-child {
+				padding-left: 0;
+			}
 
-            table th:first-child, 
-            table td:first-child {
-                padding-left: 0;
-            }
-
-            table th:last-child, 
-            table td:last-child {
-                padding-right: 0;
-            }
-
-        }
-    }
+			table th:last-child,
+			table td:last-child {
+				padding-right: 0;
+			}
+		}
+	}
 }
 
 @media screen and (max-width: 1199px) {
 
-    .ohmylms-page .ohmylms-order-review-toggle .ohmylms-order-review-table-wrapper {
-        background-color: #f9fafd;
-        border: 1px solid #EBEBEF;
-        border-radius: 10px;
-    }
-    
-    .ohmylms-page .ohmylms-order-review-toggle .order-review-toggle-head {
-        border-radius: 10px;
-    }
+	.ohmylms-page
+		.ohmylms-order-review-toggle
+		.ohmylms-order-review-table-wrapper {
+		background-color: var(--oml-background);
+		border: 1px solid var(--oml-border);
+		border-radius: var(--oml-radius-control);
+	}
+
+	.ohmylms-page .ohmylms-order-review-toggle .order-review-toggle-head {
+		border-radius: var(--oml-radius-control);
+	}
 }
 
 @media screen and (max-width: 991px) {
 
-    .ohmylms-page .ohmylms-order-review-toggle {
-        display: block;
-    }
-
+	.ohmylms-page .ohmylms-order-review-toggle {
+		display: block;
+	}
 }

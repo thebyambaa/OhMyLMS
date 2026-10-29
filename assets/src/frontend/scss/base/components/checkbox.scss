@@ -1,68 +1,69 @@
 .ohmylms-page {
 
-    .ohmylms-checkbox {
-        position: relative;
-        display: block;
-        margin: 0;
-        padding: 0;
-        cursor: pointer;
+	.ohmylms-checkbox {
+		position: relative;
+		display: block;
+		margin: 0;
+		padding: 0;
+		cursor: pointer;
 
-        input[type="checkbox"] {
-            display: none;
-        }
+		input[type="checkbox"] {
+			display: none;
+		}
 
-        .ohmylms-checkbox-text {
-            position: relative;
-            color: var(--ohmylms-body-text-color);
-            font-size: 13px;
-            font-weight: 400;
-            line-height: 1.53;
-            display: block;
-            padding-left: 27px;
+		.ohmylms-checkbox-text {
+			position: relative;
+			color: var(--oml-text);
+			font-size: var(--oml-font-size-sm);
+			font-weight: var(--oml-weight-regular);
+			line-height: 1.53;
+			display: block;
+			padding-left: 27px;
 
-            .checkedbox {
-                border-radius: 4px;
-                border: 1px solid #CCC;
-                width: 18px;
-                height: 18px;
-                display: block;
-                position: absolute;
-                top: 2px;
-                left: 0;
-                background: #fff;
-                transition: all 0.3s ease;
+			.checkedbox {
+				border-radius: var(--oml-radius-control);
+				border: 1px solid var(--oml-border);
+				width: 18px;
+				height: 18px;
+				display: block;
+				position: absolute;
+				top: 2px;
+				left: 0;
+				background: var(--oml-surface);
+				transition: all 0.3s ease;
 
-                &::before {
-                    content: url(data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgMTAgNyIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBmaWxsPSIjZmZmIiBkPSJNOC4xNDYuMjRMMy41MTggNC44NjggMS4zOTcgMi43NDdBLjgxOC44MTggMCAwMC4yNCAzLjkwNGwyLjcgMi43YS44MTguODE4IDAgMDAxLjE1NyAwbDUuMjA2LTUuMjA3QS44MTguODE4IDAgMDA4LjE0Ni4yNHoiLz48L3N2Zz4=);
-                    display: block;
-                    width: 10px;
-                    height: auto;
-                    line-height: 1;
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transition: all 0.3s ease;
-                    transform: translate(-50%, -50%);
-                    opacity: 0;
-                }
-            }
-        }
+				&::before {
+					content: url(data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgMTAgNyIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBmaWxsPSIjZmZmIiBkPSJNOC4xNDYuMjRMMy41MTggNC44NjggMS4zOTcgMi43NDdBLjgxOC44MTggMCAwMC4yNCAzLjkwNGwyLjcgMi43YS44MTguODE4IDAgMDAxLjE1NyAwbDUuMjA2LTUuMjA3QS44MTguODE4IDAgMDA4LjE0Ni4yNHoiLz48L3N2Zz4=);
+					display: block;
+					width: 10px;
+					height: auto;
+					line-height: 1;
+					position: absolute;
+					top: 50%;
+					left: 50%;
+					transition: all 0.3s ease;
+					transform: translate(-50%, -50%);
+					opacity: 0;
+				}
+			}
+		}
 
-        input[type="checkbox"]:checked + .ohmylms-checkbox-text .checkedbox {
-            background: var(--ohmylms-primary-color);
-            border-color: var(--ohmylms-primary-color);
-        }
+		input[type="checkbox"]:checked + .ohmylms-checkbox-text .checkedbox {
+			background: var(--oml-primary);
+			border-color: var(--oml-primary);
+		}
 
-        input[type="checkbox"]:checked + .ohmylms-checkbox-text .checkedbox::before {
-            opacity: 1;
-        }
+		input[type="checkbox"]:checked
+			+ .ohmylms-checkbox-text
+			.checkedbox::before {
+			opacity: 1;
+		}
 
-        input[type="checkbox"]:focus {
+		input[type="checkbox"]:focus {
 
-            .ohmylms-checkbox-text .checkedbox {
-                border-color: var(--ohmylms-primary-color);
-            }
-        }
-
-    }
+			.ohmylms-checkbox-text .checkedbox {
+				border-color: var(--oml-primary);
+			}
+		}
+	}
 }
