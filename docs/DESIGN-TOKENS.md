@@ -30,7 +30,7 @@ still exist for current stylesheets; new code uses `--oml-*` only.
 
 ## Learner `.ohmylms-button`
 
-`assets/css/oml-ui-legacy.css` restyles the existing `.ohmylms-button` markup with the same tokens, so the
+`assets/css/oml-legacy-buttons.css` restyles the existing `.ohmylms-button` markup with the same tokens, so the
 learner buttons match `oml-btn` without touching templates. `Ui::attach_legacy_buttons()` adds it as inline
 CSS after `ohmylms-frontend`, which wins ties with the older rules in `style.css` (recovered, left as is).
 The class name stays because Elementor/Bricks controls, quiz scripts and custom CSS target it. Delete

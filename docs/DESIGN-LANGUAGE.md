@@ -72,3 +72,13 @@ Planned next: Input/Select, Alert, Tabs, Modal, Table, EmptyState.
 `tests/browser/ui-gallery.spec.cjs` renders every component and variant in learner mode and in the admin
 preset, and compares screenshots. Run it after any change to `oml-ui.css` or the tokens, and update the
 baselines only when the visual change is intended.
+
+## Migration status
+
+| Area | State |
+| --- | --- |
+| Shared components (`oml-ui.css`) | Tokens only, lint-enforced |
+| Learner `.ohmylms-button` | Restyled with tokens (`oml-legacy-buttons.css`) |
+| Exam player chrome (`exam-player-template.css`) | Migrated: neutrals, status chips and button text use tokens; the accent stays the quiz accent setting. Covered by `tests/browser/exam-player-tokens.spec.cjs` and lint-enforced |
+| Quiz player templates (`quiz-player-templates.css`) | Migrated: the shared question widgets (answer cards, matching, reorder, paper form, result card) use tokens. Template palettes (`--player-*`, `--playful-*`) and the print sheet keep literal colors behind commented stylelint disables. Covered by `tests/browser/quiz-templates-tokens.spec.cjs` |
+| Course and lesson pages, dashboard, practice, student hub, admin screens | Not migrated |

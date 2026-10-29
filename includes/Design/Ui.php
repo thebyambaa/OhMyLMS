@@ -38,14 +38,14 @@ final class Ui {
 	}
 
 	/**
-	 * Contents of assets/css/oml-ui-legacy.css, read once per request.
+	 * Contents of assets/css/oml-legacy-buttons.css, read once per request.
 	 *
 	 * @return string
 	 */
 	public static function legacy_button_css() {
 		static $css = null;
 		if ( null === $css ) {
-			$path = OHMYLMS_DIR . '/assets/css/oml-ui-legacy.css';
+			$path = OHMYLMS_DIR . '/assets/css/oml-legacy-buttons.css';
 			$css  = is_readable( $path ) ? (string) file_get_contents( $path ) : ''; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local plugin file.
 		}
 		return $css;

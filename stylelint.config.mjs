@@ -90,7 +90,13 @@ export default {
 		{
 			// Shared components take every color from the --oml-* tokens so one design setting restyles
 			// admin and learner pages alike; see docs/DESIGN-TOKENS.md.
-			files: [ 'assets/src/ui/**/*.{css,scss}' ],
+			files: [
+				'assets/css/oml-ui.css',
+				'assets/css/oml-legacy-*.css',
+				'assets/css/exam-player-template.css',
+				'assets/css/quiz-player-templates.css',
+				'assets/src/ui/**/*.{css,scss}',
+			],
 			rules: {
 				'color-no-hex': true,
 				'color-named': 'never',

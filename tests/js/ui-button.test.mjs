@@ -47,7 +47,7 @@ test( 'PHP and React build identical button classes', ( t ) => {
 } );
 
 test( 'legacy learner button rules stay scoped and token-only', () => {
-	const css = fs.readFileSync( new URL( '../../assets/css/oml-ui-legacy.css', import.meta.url ), 'utf8' );
+	const css = fs.readFileSync( new URL( '../../assets/css/oml-legacy-buttons.css', import.meta.url ), 'utf8' );
 	const rules = css.replace( /\/\*[\s\S]*?\*\//g, '' ).split( '}' ).filter( ( r ) => r.trim() );
 	assert.ok( rules.length >= 6 );
 	for ( const rule of rules ) {
