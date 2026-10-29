@@ -2,6 +2,7 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { CourseGradebook } from '../courses/CourseGradebook';
+import { useNotifications } from '../../shared/notices';
 export function createCourseStudents( readRuntime ) {
 	return function CourseStudents() {
 		const {
@@ -34,7 +35,7 @@ export function createCourseStudents( readRuntime ) {
 			vee,
 			vn,
 			y: WordPressData,
-			z: Notifications,
+
 			zn,
 		} = readRuntime();
 		const [ gradebookOpen, setGradebookOpen ] =
@@ -42,7 +43,7 @@ export function createCourseStudents( readRuntime ) {
 		HG( 'ohmylms', 'courses' );
 		var e = ( 0, WordPressData.useDispatch )( StoreModule.default ),
 			t = ( 0, Router.Zp )(),
-			n = ( 0, Notifications.A )(),
+			n = useNotifications(),
 			openNotificationWithIcon = n.openNotificationWithIcon,
 			contextHolder = n.contextHolder,
 			o = true,

@@ -3,6 +3,7 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** @jsx createElement */
 import { createElement } from '@wordpress/element';
 import { NativeLessonRoute } from './NativeLessonRoute';
+import { useNotifications } from '../../shared/notices';
 export function createLessonEditor( readRuntime ) {
 	const LegacyLessonEditor = createLegacyLessonEditor( readRuntime );
 	return function LessonEditor( props ) {
@@ -44,9 +45,8 @@ function createLegacyLessonEditor( readRuntime ) {
 			nr: LessonSettings,
 			qr,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
-		var t = ( 0, Notifications.A )(),
+		var t = useNotifications(),
 			openNotificationWithIcon = t.openNotificationWithIcon,
 			contextHolder = t.contextHolder,
 			a = props.id,

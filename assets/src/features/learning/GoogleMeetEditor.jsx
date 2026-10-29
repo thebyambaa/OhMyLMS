@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createGoogleMeetEditor( readRuntime ) {
 	return function GoogleMeetEditor( props ) {
 		const {
@@ -21,7 +22,7 @@ export function createGoogleMeetEditor( readRuntime ) {
 			sn,
 			ul,
 			y: WordPressData,
-			z: Notifications,
+
 			zl,
 		} = readRuntime();
 		const isOpen = props.isOpen,
@@ -70,7 +71,7 @@ export function createGoogleMeetEditor( readRuntime ) {
 			),
 			P = C[ 0 ],
 			O = C[ 1 ],
-			k = ( 0, Notifications.A )(),
+			k = useNotifications(),
 			openNotificationWithIcon = k.openNotificationWithIcon,
 			contextHolder = k.contextHolder,
 			I = true,

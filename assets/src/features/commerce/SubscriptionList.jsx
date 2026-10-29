@@ -3,6 +3,7 @@
  * Displays subscriptions table, Pro overlay gating, search, and pagination.
  */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createSubscriptionList( readRuntime ) {
 	return function SubscriptionList() {
 		const {
@@ -23,11 +24,10 @@ export function createSubscriptionList( readRuntime ) {
 			uf: EmptyContainer,
 			v: RouterLink,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		const dispatch = WordPressData.useDispatch( StoreModule.default );
 		const navigate = Router.Zp();
-		const notifications = Notifications.A();
+		const notifications = useNotifications();
 		const openNotification = notifications.openNotificationWithIcon;
 		const contextHolder = notifications.contextHolder;
 		const subscriptions = WordPressData.useSelect(

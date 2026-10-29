@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createZoomEditor( readRuntime ) {
 	return function ZoomEditor( props ) {
 		const {
@@ -22,7 +23,6 @@ export function createZoomEditor( readRuntime ) {
 			wl,
 			xl,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		var t,
 			isOpen = props.isOpen,
@@ -71,7 +71,7 @@ export function createZoomEditor( readRuntime ) {
 		);
 		var j = k[ 0 ];
 		var A = k[ 1 ];
-		var I = ( 0, Notifications.A )();
+		var I = useNotifications();
 		var openNotificationWithIcon = I.openNotificationWithIcon;
 		var contextHolder = I.contextHolder;
 		var D = true;

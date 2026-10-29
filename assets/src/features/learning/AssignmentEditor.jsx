@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createAssignmentEditor( readRuntime ) {
 	return function AssignmentEditor( props ) {
 		const {
@@ -22,10 +23,10 @@ export function createAssignmentEditor( readRuntime ) {
 			qa,
 			y: WordPressData,
 			ya: AssignmentContent,
-			z: Notifications,
+
 			za,
 		} = readRuntime();
-		var t = ( 0, Notifications.A )(),
+		var t = useNotifications(),
 			openNotificationWithIcon = t.openNotificationWithIcon,
 			contextHolder = t.contextHolder,
 			a = props.id,

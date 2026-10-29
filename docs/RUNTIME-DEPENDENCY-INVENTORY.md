@@ -15,10 +15,10 @@ steps and acceptance criteria, see [the modularization roadmap](MODULARIZATION-R
 | Top-level bindings in factory 1841 | 3703 |
 | Routes in the recovered router | 31 |
 | Authored components created through `readRuntime` | 215 |
-| Distinct bindings those components read | 863 |
+| Distinct bindings those components read | 862 |
 | … authored feature components | 167 |
 | … WordPress/React platform packages | 7 |
-| … recovered LMS-owned modules | 36 |
+| … recovered LMS-owned modules | 35 |
 | … recovered vendor libraries | 18 |
 | … recovered code in factory 1841 | 155 |
 | … inlined Babel helpers (removed by authoring) | 480 |
@@ -34,7 +34,7 @@ drifts from the source.
 | Step | Work | Bindings |
 | --- | --- | --- |
 | 2 | Migrate Easy Email and remaining libraries | 18 |
-| 3 | Extract shared application infrastructure | 71 |
+| 3 | Extract shared application infrastructure | 70 |
 | 4 | Separate state and API access | 9 |
 | 5 | Finish feature independence | 765 |
 | 6 | Replace the recovered application entry point | 0 |
@@ -56,24 +56,24 @@ Platform is zero and its components no longer use `createComponent(readRuntime)`
 
 | Feature | Components | Platform | Shared | State/API | Vendor | Other features | Own recovered | Babel helpers |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| analytics | 18 | 7 | 28 | 1 | 6 | 2 | 12 | 30 |
-| certificates | 13 | 6 | 20 | 4 | 5 | 0 | 3 | 35 |
-| commerce | 22 | 7 | 26 | 1 | 5 | 1 | 4 | 23 |
+| analytics | 18 | 7 | 27 | 1 | 6 | 2 | 12 | 30 |
+| certificates | 13 | 6 | 19 | 4 | 5 | 0 | 3 | 35 |
+| commerce | 22 | 7 | 25 | 1 | 5 | 1 | 4 | 23 |
 | communities | 5 | 6 | 14 | 2 | 2 | 1 | 1 | 12 |
-| courses | 25 | 6 | 28 | 4 | 12 | 4 | 26 | 68 |
-| emails | 12 | 5 | 9 | 1 | 5 | 1 | 1 | 16 |
-| gamification | 13 | 6 | 11 | 2 | 3 | 0 | 1 | 54 |
-| integrations | 7 | 5 | 6 | 3 | 0 | 0 | 2 | 27 |
-| learning | 25 | 6 | 28 | 2 | 6 | 1 | 16 | 72 |
-| memberships | 7 | 6 | 18 | 2 | 3 | 0 | 5 | 23 |
+| courses | 25 | 6 | 27 | 4 | 12 | 4 | 26 | 68 |
+| emails | 12 | 5 | 8 | 1 | 5 | 1 | 1 | 16 |
+| gamification | 13 | 6 | 10 | 2 | 3 | 0 | 1 | 54 |
+| integrations | 7 | 5 | 5 | 3 | 0 | 0 | 2 | 27 |
+| learning | 25 | 6 | 27 | 2 | 6 | 1 | 16 | 72 |
+| memberships | 7 | 6 | 17 | 2 | 3 | 0 | 5 | 23 |
 | question-editor | 13 | 5 | 7 | 1 | 1 | 0 | 11 | 20 |
 | quiz-editor | 4 | 4 | 6 | 2 | 1 | 1 | 5 | 8 |
 | quiz-reports | 10 | 4 | 12 | 0 | 3 | 0 | 4 | 10 |
-| settings | 19 | 5 | 11 | 3 | 3 | 3 | 10 | 62 |
+| settings | 19 | 5 | 10 | 3 | 3 | 3 | 10 | 62 |
 | setup | 11 | 5 | 4 | 1 | 3 | 0 | 11 | 25 |
-| students | 4 | 7 | 20 | 3 | 5 | 2 | 4 | 15 |
-| taxonomies | 3 | 6 | 11 | 1 | 1 | 0 | 0 | 16 |
-| webhooks | 4 | 5 | 14 | 2 | 1 | 0 | 2 | 16 |
+| students | 4 | 7 | 19 | 3 | 5 | 2 | 4 | 15 |
+| taxonomies | 3 | 6 | 10 | 1 | 1 | 0 | 0 | 16 |
+| webhooks | 4 | 5 | 13 | 2 | 1 | 0 | 2 | 16 |
 
 ## Shared application infrastructure (step 3)
 
@@ -93,7 +93,6 @@ feature reads. Each becomes a direct import or a named public module.
 | `L` | Stylesheet side-effect module (factory 77558) | 13 | named shared module (step 3) |
 | `q` | @wordpress/components | 13 | direct `@wordpress/*` / `@wordpress/element` import |
 | `uf` | component in course-thumbnail-controls.js | 13 | named shared module (step 3) |
-| `z` | Component (.ohmylms-notice-wrapper) (factory 71046) | 13 | named shared module (step 3) |
 | `Ge` | helper in course-builder-lesson-actions.js | 12 | named shared module (step 3) |
 | `YG` | component in dashboard-income-overview.js | 12 | named shared module (step 3) |
 | `sN` | Component (.ohmylms-table) (factory 65) | 10 | named shared module (step 3) |

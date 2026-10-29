@@ -2,6 +2,7 @@
 import { createElement } from '@wordpress/element';
 import { ImportButton } from '../content-hub/ImportButton';
 import { useHubAction } from '../content-hub/useHubAction.js';
+import { useNotifications } from '../../shared/notices';
 import {
 	ExportIcon,
 	useAddQuiz,
@@ -40,7 +41,6 @@ export function createQuizList( readRuntime ) {
 			v,
 			y: WordPressData,
 			yZ,
-			z: Notifications,
 		} = readRuntime();
 		const addQuiz = useAddQuiz();
 		// Ctrl+K opens `#/content-hub/quizzes?action=new`.
@@ -95,7 +95,7 @@ export function createQuizList( readRuntime ) {
 			G = yZ( ( 0, ReactHooks.useState )( [] ), 2 ),
 			U = G[ 0 ],
 			Y = G[ 1 ],
-			Q = ( 0, Notifications.A )(),
+			Q = useNotifications(),
 			openNotificationWithIcon = Q.openNotificationWithIcon,
 			contextHolder = Q.contextHolder,
 			K = ( 0, Router.Zp )(),

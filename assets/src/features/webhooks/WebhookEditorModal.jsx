@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createWebhookEditorModal( readRuntime ) {
 	return function WebhookEditorModal( props ) {
 		const {
@@ -16,14 +17,13 @@ export function createWebhookEditorModal( readRuntime ) {
 			g: ReactHooks,
 			q5,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		var t = props.webhook,
 			n = props.isOpen,
 			r = props.onClose,
 			a = props.onSave,
 			o = ( 0, WordPressData.useDispatch )( StoreModule.default ),
-			i = ( 0, Notifications.A )(),
+			i = useNotifications(),
 			l = i.openNotificationWithIcon,
 			c = i.contextHolder,
 			u = Q5( ( 0, ReactHooks.useState )( ! 1 ), 2 ),

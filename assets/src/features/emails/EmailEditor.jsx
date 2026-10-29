@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createEmailEditor( readRuntime ) {
 	return function EmailEditor() {
 		const {
@@ -18,7 +19,6 @@ export function createEmailEditor( readRuntime ) {
 			b: I18n,
 			g: ReactHooks,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		var e,
 			t = ( 0, WordPressData.useSelect )( function ( _eLocal ) {
@@ -30,7 +30,7 @@ export function createEmailEditor( readRuntime ) {
 			o = Hee( ( 0, ReactHooks.useState )( 'desktop' ), 2 ),
 			i = o[ 0 ],
 			l = o[ 1 ],
-			c = ( 0, Notifications.A )(),
+			c = useNotifications(),
 			u = c.openNotificationWithIcon,
 			s = c.contextHolder,
 			d = Hee(

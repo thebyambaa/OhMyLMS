@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createCouponList( readRuntime ) {
 	return function CouponList() {
 		const {
@@ -33,7 +34,7 @@ export function createCouponList( readRuntime ) {
 			uf: EmptyState,
 			v,
 			y: WordPressData,
-			z: Notifications,
+
 			zre,
 		} = readRuntime();
 		var e = ( 0, WordPressData.useSelect )( function ( _eLocal ) {
@@ -80,7 +81,7 @@ export function createCouponList( readRuntime ) {
 			U = Bre( ( 0, ReactHooks.useState )( ! 1 ), 2 ),
 			Y = U[ 0 ],
 			Q = U[ 1 ],
-			Z = ( 0, Notifications.A )(),
+			Z = useNotifications(),
 			$ = Z.openNotificationWithIcon,
 			K = Z.contextHolder,
 			J = ( 0, ReactHooks.useCallback )( function ( _eLocal3, _tLocal ) {

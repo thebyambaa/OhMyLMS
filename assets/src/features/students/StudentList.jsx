@@ -13,6 +13,7 @@ import { PeopleDirectory } from '../schools/PeopleDirectory';
 import { AddModal } from '../schools/AddModal';
 import { ViewAsModal, canViewAs } from '../schools/ViewAsModal';
 import { PreviewHome } from '../schools/PreviewHome';
+import { useNotifications } from '../../shared/notices';
 export function createStudentList( readRuntime ) {
 	function StudentTable() {
 		const {
@@ -31,14 +32,13 @@ export function createStudentList( readRuntime ) {
 			RZ: BlockIcon,
 			f: Router,
 			aN: date,
-			z: Notifications,
 		} = readRuntime();
 		const students = useStudents();
 		const navigate = Router.Zp();
 		const [ selected, setSelected ] = useState( [] );
 		const [ confirmation, setConfirmation ] = useState( null );
 		const [ viewAs, setViewAs ] = useState( null );
-		const { contextHolder, openNotificationWithIcon } = Notifications.A();
+		const { contextHolder, openNotificationWithIcon } = useNotifications();
 		const badge = ( value, variant = 'secondary' ) => (
 			<Controls.BadgeWP variant={ variant } isBorderLess>
 				{ value }

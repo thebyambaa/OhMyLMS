@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createLevelList( readRuntime ) {
 	return function LevelList( props ) {
 		const {
@@ -26,7 +27,6 @@ export function createLevelList( readRuntime ) {
 			q3,
 			uf,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		var setLevelList = props.setLevelList,
 			n = q3( ( 0, ReactHooks.useState )( [] ), 2 ),
@@ -47,7 +47,7 @@ export function createLevelList( readRuntime ) {
 			w = q3( ( 0, ReactHooks.useState )( ! 1 ), 2 ),
 			E = w[ 0 ],
 			S = w[ 1 ],
-			R = ( 0, Notifications.A )(),
+			R = useNotifications(),
 			openNotificationWithIcon = R.openNotificationWithIcon,
 			contextHolder = R.contextHolder,
 			P = ( 0, WordPressData.useSelect )( function ( e ) {

@@ -1,5 +1,6 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createEmailSettingsPage( readRuntime ) {
 	return function EmailSettingsPage() {
 		const {
@@ -14,7 +15,6 @@ export function createEmailSettingsPage( readRuntime ) {
 			u4: MemoEmailTemplateList,
 			x4,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		HG( 'ohmylms', 'emails' );
 		var e = ( function ( _eLocal, t ) {
@@ -119,7 +119,7 @@ export function createEmailSettingsPage( readRuntime ) {
 			} )( ( 0, ReactHooks.useState )( ! 1 ), 2 ),
 			t = e[ 0 ],
 			n = e[ 1 ],
-			r = ( 0, Notifications.A )().contextHolder,
+			r = useNotifications().contextHolder,
 			a = ( 0, WordPressData.useDispatch )(
 				StoreModule.default
 			).getEmailSettings;

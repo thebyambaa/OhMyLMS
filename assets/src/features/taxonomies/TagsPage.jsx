@@ -1,5 +1,6 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createTagsPage( readRuntime ) {
 	return function TagsPage() {
 		const {
@@ -25,11 +26,11 @@ export function createTagsPage( readRuntime ) {
 			sN,
 			uf,
 			xY: TaxonomyModal,
-			z: Notifications,
+
 			zY,
 		} = readRuntime();
 		HG( 'ohmylms', 'tags' );
-		var e = ( 0, Notifications.A )(),
+		var e = useNotifications(),
 			t = e.openNotificationWithIcon,
 			n = e.contextHolder,
 			r = BY( ( 0, ReactHooks.useState )( [] ), 2 ),

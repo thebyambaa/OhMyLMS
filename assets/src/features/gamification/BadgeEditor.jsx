@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createBadgeEditor( readRuntime ) {
 	return function BadgeEditor( props ) {
 		const {
@@ -21,7 +22,6 @@ export function createBadgeEditor( readRuntime ) {
 			l,
 			t3,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		const { useState, useEffect, useMemo } = ReactHooks;
 		const { useSelect } = WordPressData;
@@ -61,7 +61,7 @@ export function createBadgeEditor( readRuntime ) {
 		);
 		var [ u, s ] = useState( e3( {}, i ) );
 		var [ m, p ] = useState( ! 1 );
-		var f = ( 0, Notifications.A )();
+		var f = useNotifications();
 		var openNotificationWithIcon = f.openNotificationWithIcon;
 		var contextHolder = f.contextHolder;
 		var _ = useSelect(

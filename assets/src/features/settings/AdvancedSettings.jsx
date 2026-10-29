@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createAdvancedSettings( readRuntime ) {
 	return function AdvancedSettings( props ) {
 		const {
@@ -16,7 +17,6 @@ export function createAdvancedSettings( readRuntime ) {
 			l,
 			mJ,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		var t = props.activeTab,
 			n = props.handleSave,
@@ -24,7 +24,7 @@ export function createAdvancedSettings( readRuntime ) {
 			a = props.selectedCourses,
 			o = props.isSaving,
 			i = ( 0, WordPressData.useDispatch )( StoreModule.default ),
-			c = ( 0, Notifications.A )(),
+			c = useNotifications(),
 			u = c.openNotificationWithIcon,
 			s = c.contextHolder,
 			d = mJ( ( 0, ReactHooks.useState )( ! 1 ), 2 ),

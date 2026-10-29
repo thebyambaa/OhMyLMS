@@ -1,5 +1,6 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createCertificateList( readRuntime ) {
 	return function CertificateList() {
 		const {
@@ -34,7 +35,6 @@ export function createCertificateList( readRuntime ) {
 			sn,
 			uf,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		var e = ( 0, WordPressData.useDispatch )( StoreModule.default ),
 			t = ( 0, WordPressData.useSelect )( function ( _eLocal ) {
@@ -89,7 +89,7 @@ export function createCertificateList( readRuntime ) {
 			Y = mte( ( 0, ReactHooks.useState )( ! 1 ), 2 ),
 			Q = Y[ 0 ],
 			Z = Y[ 1 ],
-			$ = ( 0, Notifications.A )(),
+			$ = useNotifications(),
 			K = $.openNotificationWithIcon,
 			J = $.contextHolder,
 			X = ( 0, Router.Zp )(),

@@ -3,6 +3,7 @@
  * Displays order management table, filters, pagination, and bulk delete operations.
  */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 
 export function createOrderList( readRuntime ) {
 	return function OrderList() {
@@ -34,7 +35,6 @@ export function createOrderList( readRuntime ) {
 			vn: SelectControl,
 			xq: isCustomDateRange,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 
 		const dispatch = WordPressData.useDispatch( StoreModule.default );
@@ -83,7 +83,7 @@ export function createOrderList( readRuntime ) {
 			order: 'DESC',
 		} );
 
-		const notifications = Notifications.A();
+		const notifications = useNotifications();
 		const openNotification = notifications.openNotificationWithIcon;
 		const contextHolder = notifications.contextHolder;
 		const navigate = Router.Zp();

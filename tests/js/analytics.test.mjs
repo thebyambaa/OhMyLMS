@@ -137,9 +137,14 @@ function harness( states = [] ) {
 			Zp: () => ( target ) => requests.push( target ),
 		},
 		v: { Link: 'Link' },
+		// The recovered baseline still reads the runtime binding; authored code imports the hook.
 		z: {
 			A: () => ( { openNotificationWithIcon() {}, contextHolder: null } ),
 		},
+		useNotifications: () => ( {
+			openNotificationWithIcon() {},
+			contextHolder: null,
+		} ),
 		EG: { A: 'Flex' },
 		SG: { A: 'FlexItem' },
 		Ne: { A: 'MenuIcon' },

@@ -1,6 +1,7 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { FeatureSwitch } from './FeatureSwitch';
+import { useNotifications } from '../../shared/notices';
 export function createBonusPointSettings( readRuntime ) {
 	return function BonusPointSettings() {
 		const {
@@ -18,7 +19,6 @@ export function createBonusPointSettings( readRuntime ) {
 			lf,
 			x2,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		var e;
 		var t;
@@ -271,7 +271,7 @@ export function createBonusPointSettings( readRuntime ) {
 		var k = M2( ( 0, ReactHooks.useState )( ! 1 ), 2 );
 		var j = k[ 0 ];
 		var A = k[ 1 ];
-		var M = ( 0, Notifications.A )();
+		var M = useNotifications();
 		var openNotificationWithIcon = M.openNotificationWithIcon;
 		var contextHolder = M.contextHolder;
 		var D = ( 0, ReactHooks.useRef )( null );

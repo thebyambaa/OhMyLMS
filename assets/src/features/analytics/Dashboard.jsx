@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createDashboard( readRuntime ) {
 	return function Dashboard() {
 		const {
@@ -21,11 +22,10 @@ export function createDashboard( readRuntime ) {
 			mU,
 			nf,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		HG( 'ohmylms', 'dashboard' );
 		var e = ( 0, WordPressData.useDispatch )( StoreModule.default ),
-			t = ( 0, Notifications.A )(),
+			t = useNotifications(),
 			n = t.openNotificationWithIcon,
 			r = t.contextHolder,
 			a = true,

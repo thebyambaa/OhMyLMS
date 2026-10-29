@@ -1,5 +1,6 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createWebhooksPage( readRuntime ) {
 	return function WebhooksPage() {
 		const {
@@ -28,13 +29,12 @@ export function createWebhooksPage( readRuntime ) {
 			uf,
 			wq,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		var e;
 		HG( 'ohmylms', 'webhooks' );
 		var t = true,
 			n = ( 0, WordPressData.useDispatch )( StoreModule.default ),
-			r = ( 0, Notifications.A )(),
+			r = useNotifications(),
 			a = r.openNotificationWithIcon,
 			o = r.contextHolder,
 			i = n4( ( 0, ReactHooks.useState )( ! 1 ), 2 ),

@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createEmailPersonalization( readRuntime ) {
 	return function EmailPersonalization( props ) {
 		const {
@@ -15,11 +16,10 @@ export function createEmailPersonalization( readRuntime ) {
 			v4: MemoEmailButtonPosition,
 			y: WordPressData,
 			y4: MemoEmailSenderOptions,
-			z: Notifications,
 		} = readRuntime();
 		var t = props.isOpen,
 			n = props.setIsOpen,
-			r = ( 0, Notifications.A )(),
+			r = useNotifications(),
 			a = r.openNotificationWithIcon,
 			o = r.contextHolder,
 			i = ( 0, WordPressData.useSelect )( function ( e ) {

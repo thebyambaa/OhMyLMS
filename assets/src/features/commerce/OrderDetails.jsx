@@ -3,6 +3,7 @@
  * Full edit view for an order (/order-edit/:id).
  */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 
 export function createOrderDetails( readRuntime ) {
 	return function OrderDetails( { id = null } ) {
@@ -26,7 +27,6 @@ export function createOrderDetails( readRuntime ) {
 			g: ReactHooks,
 			kQ: RelatedOrders,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 
 		const navigate = Router.Zp();
@@ -39,7 +39,7 @@ export function createOrderDetails( readRuntime ) {
 		const [ loading, setLoading ] = ReactHooks.useState( true );
 		const [ notFound, setNotFound ] = ReactHooks.useState( false );
 
-		const notifications = Notifications.A();
+		const notifications = useNotifications();
 		const openNotification = notifications.openNotificationWithIcon;
 		const contextHolder = notifications.contextHolder;
 		const notificationMessage = WordPressData.useSelect(

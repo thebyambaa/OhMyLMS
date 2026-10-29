@@ -1,6 +1,7 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { FeatureSwitch } from './FeatureSwitch';
+import { useNotifications } from '../../shared/notices';
 export function createBadgeSettings( readRuntime ) {
 	return function BadgeSettings() {
 		const {
@@ -16,7 +17,6 @@ export function createBadgeSettings( readRuntime ) {
 			v3,
 			y: WordPressData,
 			y3,
-			z: Notifications,
 		} = readRuntime();
 		var t = ( 0, WordPressData.useDispatch )( StoreModule.default );
 		var n = b3(
@@ -56,7 +56,7 @@ export function createBadgeSettings( readRuntime ) {
 				} ),
 				2
 			) );
-		var u = ( c[ 0 ], c[ 1 ], ( 0, Notifications.A )() );
+		var u = ( c[ 0 ], c[ 1 ], useNotifications() );
 		var openNotificationWithIcon = u.openNotificationWithIcon;
 		var contextHolder = u.contextHolder;
 		var m = b3( ( 0, ReactHooks.useState )( ! 1 ), 2 );

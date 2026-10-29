@@ -8,12 +8,13 @@ import {
 import { StreakSettings } from './StreakSettings';
 import { XpMasterySettings } from './XpMasterySettings';
 import { MovableTabPanel } from '../navigation/MovableTabPanel';
+import { useNotifications } from '../../shared/notices';
 
 export function createGamificationSettings( readRuntime ) {
 	return function GamificationSettings() {
 		const runtime = readRuntime();
-		const { I: Controls, b: I18n, f: Router, z: Notifications } = runtime;
-		const { contextHolder } = Notifications.A();
+		const { I: Controls, b: I18n, f: Router } = runtime;
+		const { contextHolder } = useNotifications();
 		const params = Router.g();
 		const navigate = Router.Zp();
 		// Settings → Gamification has the seven settings tabs; the standalone screen adds the tabs that

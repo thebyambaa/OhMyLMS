@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createCurrencySettings( readRuntime ) {
 	return function CurrencySettings() {
 		const {
@@ -17,7 +18,6 @@ export function createCurrencySettings( readRuntime ) {
 			g: ReactHooks,
 			l,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		var t,
 			n,
@@ -33,7 +33,7 @@ export function createCurrencySettings( readRuntime ) {
 				return e( StoreModule.default ).getCurrencySettings();
 			}, [] ),
 			p = ( 0, WordPressData.useDispatch )( StoreModule.default ),
-			f = ( 0, Notifications.A )(),
+			f = useNotifications(),
 			v = ( f.openNotificationWithIcon, f.contextHolder );
 		function h( e ) {
 			return e

@@ -2,6 +2,7 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { FeatureSwitch } from './FeatureSwitch';
+import { useNotifications } from '../../shared/notices';
 export function createLeaderboardSettings( readRuntime ) {
 	return function LeaderboardSettings() {
 		const {
@@ -17,7 +18,6 @@ export function createLeaderboardSettings( readRuntime ) {
 			l,
 			p2,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		var t = ( 0, WordPressData.useDispatch )( StoreModule.default );
 		var n = _2(
@@ -43,7 +43,7 @@ export function createLeaderboardSettings( readRuntime ) {
 		var d = _2( ( 0, ReactHooks.useState )( ! 1 ), 2 );
 		var m = d[ 0 ];
 		var p = d[ 1 ];
-		var f = ( 0, Notifications.A )();
+		var f = useNotifications();
 		var openNotificationWithIcon = f.openNotificationWithIcon;
 		var contextHolder = f.contextHolder;
 		var _ = ( function () {

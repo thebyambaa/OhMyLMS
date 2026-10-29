@@ -5,6 +5,7 @@ import { MovableTabPanel } from '../navigation/MovableTabPanel';
 import { AiTutorSettings } from './AiTutorSettings';
 import { XApiSettings } from './XApiSettings';
 import { DesignSystemSettings } from './DesignSystemSettings';
+import { useNotifications } from '../../shared/notices';
 export function createSettingsPage( readRuntime ) {
 	return function SettingsPage() {
 		const {
@@ -33,7 +34,6 @@ export function createSettingsPage( readRuntime ) {
 			qK: MemoBrandingSettings,
 			vJ: MemoAdvancedSettings,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		HG( 'ohmylms', 'settings' );
 		var t = ( 0, WordPressData.useDispatch )( StoreModule.default );
@@ -64,7 +64,7 @@ export function createSettingsPage( readRuntime ) {
 		var d = ( 0, WordPressData.useSelect )( function ( _eLocal9 ) {
 			return _eLocal9( StoreModule.default ).getMigrationTool();
 		}, [] );
-		var m = ( 0, Notifications.A )();
+		var m = useNotifications();
 		var p = m.openNotificationWithIcon;
 		var v = m.contextHolder;
 		var h = ( 0, Router.Zp )();

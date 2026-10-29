@@ -10,6 +10,7 @@ import {
 import { Button, Modal } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { useCourseEditor } from './useCourseEditor';
+import { useNotifications } from '../../shared/notices';
 import { useCourseIntegrations } from './useCourseIntegrations';
 import { courseEditPath } from './model.mjs';
 import { CourseObjectives } from './CourseObjectives';
@@ -92,7 +93,7 @@ export function createCourseEditor( readRuntime ) {
 			actions: editor.actions,
 			enableSpin,
 		} );
-		const { contextHolder, openNotificationWithIcon } = r.z.A();
+		const { contextHolder, openNotificationWithIcon } = useNotifications();
 		const course = editor.course;
 		async function saveCourse() {
 			if ( courseSaving ) {

@@ -1,5 +1,6 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createCouponsPage( readRuntime ) {
 	return function CouponsPage() {
 		const {
@@ -9,10 +10,9 @@ export function createCouponsPage( readRuntime ) {
 			React,
 			YG: PageHeader,
 			b: I18n,
-			z: Notifications,
 		} = readRuntime();
 		HG( 'ohmylms', 'coupons' );
-		var e = ( 0, Notifications.A )().contextHolder;
+		var e = useNotifications().contextHolder;
 		return (
 			<React.Fragment>
 				{ e }

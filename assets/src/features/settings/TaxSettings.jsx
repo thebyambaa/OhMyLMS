@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement, useId } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createTaxSettings( readRuntime ) {
 	return function TaxSettings() {
 		const _controlId = useId();
@@ -23,7 +24,6 @@ export function createTaxSettings( readRuntime ) {
 			l,
 			nf,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		var t,
 			n,
@@ -41,7 +41,7 @@ export function createTaxSettings( readRuntime ) {
 				return e( StoreModule.default ).getTaxSettings();
 			}, [] ),
 			v = ( 0, WordPressData.useDispatch )( StoreModule.default ),
-			h = ( 0, Notifications.A )(),
+			h = useNotifications(),
 			_ = ( h.openNotificationWithIcon, h.contextHolder ),
 			w =
 				( f === null ||

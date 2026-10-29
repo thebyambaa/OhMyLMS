@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createAssignmentGrading( readRuntime ) {
 	return function AssignmentGrading() {
 		const {
@@ -19,7 +20,6 @@ export function createAssignmentGrading( readRuntime ) {
 			mK,
 			rK: AssignmentSubmission,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		HG( 'ohmylms', 'assignments' );
 		var e = ( 0, WordPressData.useDispatch )( StoreModule.default ),
@@ -51,7 +51,7 @@ export function createAssignmentGrading( readRuntime ) {
 			),
 			E = w[ 0 ],
 			S = w[ 1 ],
-			R = ( 0, Notifications.A )(),
+			R = useNotifications(),
 			openNotificationWithIcon = R.openNotificationWithIcon,
 			contextHolder = R.contextHolder,
 			P = ( 0, WordPressData.useSelect )( function ( _eLocal ) {

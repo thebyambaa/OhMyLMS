@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createCourseStudentsReport( readRuntime ) {
 	return function CourseStudentsReport( props ) {
 		const {
@@ -28,7 +29,6 @@ export function createCourseStudentsReport( readRuntime ) {
 			uf: EmptyState,
 			vn,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		var t = true,
 			n = props.students,
@@ -78,7 +78,7 @@ export function createCourseStudentsReport( readRuntime ) {
 			J = oq( ( 0, ReactHooks.useState )( ! 1 ), 2 ),
 			X = J[ 0 ],
 			ee = J[ 1 ],
-			te = ( 0, Notifications.A )(),
+			te = useNotifications(),
 			ne = te.openNotificationWithIcon,
 			re = te.contextHolder,
 			ae = oq( ( 0, ReactHooks.useState )( null ), 2 ),

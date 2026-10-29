@@ -2,6 +2,7 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { createAchievementRules } from './AchievementRules';
+import { useNotifications } from '../../shared/notices';
 export function createLevelEditor( readRuntime ) {
 	const AchievementRules = createAchievementRules( readRuntime );
 	return function LevelEditor( props ) {
@@ -21,7 +22,6 @@ export function createLevelEditor( readRuntime ) {
 			k3,
 			l,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		const { useState, useEffect, useMemo } = ReactHooks;
 		const { useSelect } = WordPressData;
@@ -51,7 +51,7 @@ export function createLevelEditor( readRuntime ) {
 		);
 		var [ u, s ] = useState( F3( {}, i ) );
 		var [ m, p ] = useState( ! 1 );
-		var f = ( 0, Notifications.A )();
+		var f = useNotifications();
 		var openNotificationWithIcon = f.openNotificationWithIcon;
 		var contextHolder = f.contextHolder;
 		var _ = useSelect(

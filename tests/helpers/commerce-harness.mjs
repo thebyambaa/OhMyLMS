@@ -95,6 +95,10 @@ function harness( states = [] ) {
 		validateCoupon,
 		validateRefund,
 		showRequestError: ( message ) => requests.push( { notice: message } ),
+		useNotifications: () => ( {
+			openNotificationWithIcon() {},
+			contextHolder: null,
+		} ),
 		h: () => React,
 		console: { error() {} },
 		window: {},

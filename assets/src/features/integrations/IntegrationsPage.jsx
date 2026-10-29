@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createIntegrationsPage( readRuntime ) {
 	return function IntegrationsPage() {
 		const {
@@ -23,7 +24,6 @@ export function createIntegrationsPage( readRuntime ) {
 			g: ReactHooks,
 			uf,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		HG( 'ohmylms', 'integrations' );
 		var e = ( 0, WordPressData.useDispatch )( StoreModule.default ),
@@ -39,7 +39,7 @@ export function createIntegrationsPage( readRuntime ) {
 			a = L7( ( 0, ReactHooks.useState )( ! 1 ), 2 ),
 			o = a[ 0 ],
 			i = a[ 1 ],
-			l = ( 0, Notifications.A )(),
+			l = useNotifications(),
 			c = l.openNotificationWithIcon,
 			u = l.contextHolder,
 			s = L7( ( 0, ReactHooks.useState )( ! 1 ), 2 ),

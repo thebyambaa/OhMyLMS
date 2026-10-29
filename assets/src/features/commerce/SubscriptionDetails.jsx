@@ -1,5 +1,6 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createSubscriptionDetails( readRuntime ) {
 	return function SubscriptionDetails() {
 		const {
@@ -16,7 +17,6 @@ export function createSubscriptionDetails( readRuntime ) {
 			g: ReactHooks,
 			kQ,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		var e,
 			t,
@@ -24,7 +24,7 @@ export function createSubscriptionDetails( readRuntime ) {
 			r = ( 0, Router.Zp )(),
 			a = ( 0, Router.g )().id,
 			o = ( 0, WordPressData.useDispatch )( StoreModule.default ),
-			i = ( 0, Notifications.A )(),
+			i = useNotifications(),
 			l = i.openNotificationWithIcon,
 			c = i.contextHolder,
 			u = ( 0, WordPressData.useSelect )( function ( _eLocal ) {

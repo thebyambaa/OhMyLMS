@@ -1,5 +1,6 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createAssignmentList( readRuntime ) {
 	return function AssignmentList() {
 		const {
@@ -33,7 +34,6 @@ export function createAssignmentList( readRuntime ) {
 			uf,
 			v,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		var e = ( 0, WordPressData.useDispatch )( StoreModule.default ),
 			t = ( 0, WordPressData.useSelect )( function ( _eLocal ) {
@@ -83,7 +83,7 @@ export function createAssignmentList( readRuntime ) {
 			G = Ate( ( 0, ReactHooks.useState )( [] ), 2 ),
 			U = G[ 0 ],
 			Y = G[ 1 ],
-			Q = ( 0, Notifications.A )(),
+			Q = useNotifications(),
 			openNotificationWithIcon = Q.openNotificationWithIcon,
 			contextHolder = Q.contextHolder,
 			K = ( 0, Router.Zp )(),

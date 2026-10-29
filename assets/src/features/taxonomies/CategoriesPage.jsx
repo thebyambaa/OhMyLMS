@@ -1,5 +1,6 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createCategoriesPage( readRuntime ) {
 	return function CategoriesPage() {
 		const {
@@ -29,11 +30,10 @@ export function createCategoriesPage( readRuntime ) {
 			uf,
 			xY: TaxonomyModal,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		HG( 'ohmylms', 'categories' );
 		var e = ( 0, WordPressData.useDispatch )( StoreModule.default ),
-			t = ( 0, Notifications.A )(),
+			t = useNotifications(),
 			n = t.openNotificationWithIcon,
 			r = t.contextHolder,
 			a = IY( ( 0, ReactHooks.useState )( [] ), 2 ),

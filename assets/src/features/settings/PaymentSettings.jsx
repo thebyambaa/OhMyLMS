@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createPaymentSettings( readRuntime ) {
 	return function PaymentSettings() {
 		const {
@@ -22,7 +23,6 @@ export function createPaymentSettings( readRuntime ) {
 			l,
 			y: WordPressData,
 			y1: MemoPaymentGatewaysSettings,
-			z: Notifications,
 		} = readRuntime();
 		var e = ( 0, WordPressData.useDispatch )( StoreModule.default ),
 			t = ( 0, WordPressData.useSelect )( function ( _eLocal ) {
@@ -43,7 +43,7 @@ export function createPaymentSettings( readRuntime ) {
 			i = ( 0, WordPressData.useSelect )( function ( _eLocal6 ) {
 				return _eLocal6( StoreModule.default ).getNotificationStatus();
 			}, [] ),
-			c = ( 0, Notifications.A )(),
+			c = useNotifications(),
 			u = c.openNotificationWithIcon,
 			s = c.contextHolder,
 			d = ( 0, Router.Zp )(),

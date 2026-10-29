@@ -1,6 +1,7 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { FeatureSwitch } from './FeatureSwitch';
+import { useNotifications } from '../../shared/notices';
 export function createLevelSettings( readRuntime ) {
 	return function LevelSettings() {
 		const {
@@ -17,7 +18,6 @@ export function createLevelSettings( readRuntime ) {
 			o5,
 			t5,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		var t = ( 0, WordPressData.useDispatch )( StoreModule.default );
 		var n = o5(
@@ -46,7 +46,7 @@ export function createLevelSettings( readRuntime ) {
 		var o = o5( ( 0, ReactHooks.useState )( [] ), 2 );
 		var i = o[ 0 ];
 		var c = o[ 1 ];
-		var u = ( 0, Notifications.A )();
+		var u = useNotifications();
 		var openNotificationWithIcon = u.openNotificationWithIcon;
 		var contextHolder = u.contextHolder;
 		var m = ( 0, WordPressData.useSelect )( function ( _eLocal ) {

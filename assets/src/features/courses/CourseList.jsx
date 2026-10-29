@@ -3,6 +3,7 @@ import { showRequestError } from '../requestFeedback.mjs';
 import { createElement, useId } from '@wordpress/element';
 import { ViewAsModal, canViewAs } from '../schools/ViewAsModal';
 import { CourseGradebook } from './CourseGradebook';
+import { useNotifications } from '../../shared/notices';
 export function createCourseList( readRuntime ) {
 	return function CourseList() {
 		const _controlId = useId();
@@ -46,7 +47,6 @@ export function createCourseList( readRuntime ) {
 			y: WordPressData,
 			yG,
 			yc,
-			z: Notifications,
 		} = readRuntime();
 		const [ viewAs, setViewAs ] = ReactHooks.useState( null );
 		const [ gradebook, setGradebook ] = ReactHooks.useState( null );
@@ -309,7 +309,7 @@ export function createCourseList( readRuntime ) {
 				};
 			} )(),
 			Te = ( Me.isDownloading, Me.downloadFile ),
-			Fe = ( 0, Notifications.A )(),
+			Fe = useNotifications(),
 			openNotificationWithIcon = Fe.openNotificationWithIcon,
 			contextHolder = Fe.contextHolder,
 			Be = ( 0, Router.Zp )(),

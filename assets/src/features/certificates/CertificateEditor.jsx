@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createCertificateEditor( readRuntime ) {
 	return function CertificateEditor( props ) {
 		const {
@@ -16,7 +17,6 @@ export function createCertificateEditor( readRuntime ) {
 			oL,
 			oV: MemoCertificateCourseSelector,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		var t = props.onClose,
 			n = props.componentFrom,
@@ -28,7 +28,7 @@ export function createCertificateEditor( readRuntime ) {
 			i = iV( ( 0, ReactHooks.useState )( ! 1 ), 2 ),
 			l = i[ 0 ],
 			c = i[ 1 ],
-			u = ( 0, Notifications.A )(),
+			u = useNotifications(),
 			s = u.openNotificationWithIcon,
 			d = u.contextHolder,
 			m = iV( ( 0, ReactHooks.useState )( ! 1 ), 2 ),

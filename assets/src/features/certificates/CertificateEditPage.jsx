@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { useNotifications } from '../../shared/notices';
 export function createCertificateEditPage( readRuntime ) {
 	return function CertificateEditPage() {
 		const {
@@ -15,7 +16,6 @@ export function createCertificateEditPage( readRuntime ) {
 			uV,
 			wte,
 			y: WordPressData,
-			z: Notifications,
 		} = readRuntime();
 		HG( 'ohmylms', 'certificates' );
 		var e = ( 0, Router.g )().id,
@@ -130,7 +130,7 @@ export function createCertificateEditPage( readRuntime ) {
 			r = n[ 0 ],
 			a = n[ 1 ],
 			o = ( 0, Router.Zp )(),
-			i = ( 0, Notifications.A )(),
+			i = useNotifications(),
 			l = i.openNotificationWithIcon,
 			c = i.contextHolder,
 			u = ( 0, WordPressData.useSelect )( function ( _eLocal6 ) {
