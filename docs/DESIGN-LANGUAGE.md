@@ -28,6 +28,7 @@ this page says how to use them.
 | Lines | `--oml-border`, `--oml-secondary` | Dividers, outlines, secondary button border |
 | Status | `--oml-success`, `--oml-warning`, `--oml-danger`, `--oml-info` (+ `-soft`) | Feedback, badges, destructive actions |
 | Focus | `--oml-focus` | Focus ring |
+| Shade | `--oml-shade` | A dark color in both themes, for darkening an accent (for example a tactile button edge) |
 
 ## Type
 
@@ -100,4 +101,5 @@ baselines only when the visual change is intended.
 | Quiz player templates (`quiz-player-templates.css`) | Migrated: the shared question widgets (answer cards, matching, reorder, paper form, result card) use tokens. Template palettes (`--player-*`, `--playful-*`) and the print sheet keep literal colors behind commented stylelint disables. Covered by `tests/browser/quiz-templates-tokens.spec.cjs` |
 | Question player, game player, answer review | Migrated: chrome uses tokens; the answer review palette and game artwork (board, wall, hole, image mask) stay literal behind commented disables. Covered by `tests/browser/player-widgets-tokens.spec.cjs` |
 | Player context shell (`player-context.css`) | Migrated: the shell uses tokens and gets dark mode from them; the quiz and paper canvases stay light behind commented disables. Covered by `tests/browser/dark-theme.spec.cjs` |
+| Student hub (`student-hub.css`) | Migrated: the shell palette is tokens and the hub gets dark mode from them; the accent follows the site brand color unless an admin picks one (Student Home settings, "Use the site brand color"); a school can still set its own. Selected and hero tints, the button edge and the text on the accent derive from the accent, in light and dark. The category and status palette (subject tones, state dots, card tints) and embedded legacy pages stay literal behind commented disables. Covered by `tests/browser/hub-tokens.spec.cjs` |
 | Course and lesson pages, dashboard, practice, student hub, admin screens | Not migrated |

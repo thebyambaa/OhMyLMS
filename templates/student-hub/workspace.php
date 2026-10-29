@@ -19,7 +19,8 @@ $parent_mode = ! empty( $parent_mode );
 $school_mode = ! empty( $school_mode );
 // A school can override the site accent and logo for everyone working in that school.
 $hub_school_id = $school_mode && SchoolWorkspace::current() ? (int) SchoolWorkspace::current()['id'] : \OhMyLMS\Schools\Settings::school_for_user();
-$hub_style     = '--hub-accent:' . $config['accent'];
+// Following the brand sets no inline accent, so the stylesheet's token (and its dark variant) applies.
+$hub_style = $config['accent_brand'] ? '' : \OhMyLMS\Schools\Settings::style( $config['accent'] );
 if ( $hub_school_id ) {
 	$hub_own_accent = \OhMyLMS\Schools\Settings::overrides( $hub_school_id )['accent'] ?? '';
 	$hub_style      = '' !== $hub_own_accent ? \OhMyLMS\Schools\Settings::style( $hub_own_accent ) : $hub_style;

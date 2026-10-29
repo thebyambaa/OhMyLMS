@@ -120,12 +120,16 @@ final class Hub {
 	 * @return array
 	 */
 	public static function sanitize( $input ) {
-		$input  = is_array( $input ) ? $input : array();
-		$result = array(
+		$input        = is_array( $input ) ? $input : array();
+		$own_accent   = is_string( $input['accent'] ?? null ) ? sanitize_hex_color( $input['accent'] ) : '';
+		$follow_brand = ! empty( $input['accent_brand'] ) || ! $own_accent;
+		$result       = array(
 			'version'         => 4,
 			'page_id'         => absint( $input['page_id'] ?? 0 ),
 			'title'           => sanitize_text_field( is_string( $input['title'] ?? null ) ? $input['title'] : __( 'Student Home', 'ohmylms' ) ),
-			'accent'          => is_string( $input['accent'] ?? null ) && sanitize_hex_color( $input['accent'] ) ? sanitize_hex_color( $input['accent'] ) : '#4361ee',
+			// The resolved color: the brand color while following it, so callers always get a hex value.
+			'accent'          => $follow_brand ? \OhMyLMS\Design\Tokens::color( 'ohmylms_primary_color_scheme' ) : $own_accent,
+			'accent_brand'    => $follow_brand,
 			'layout'          => in_array( $input['layout'] ?? '', array( 'sidebar', 'top' ), true ) ? $input['layout'] : 'sidebar',
 			'commerce'        => ! empty( $input['commerce'] ),
 			'personalize'     => ! empty( $input['personalize'] ),

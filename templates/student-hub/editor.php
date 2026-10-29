@@ -28,6 +28,7 @@ defined( 'ABSPATH' ) || exit;
 				<input id="hub-title" type="text" name="hub[title]" value="<?php echo esc_attr( $config['title'] ); ?>" maxlength="100">
 				<label for="hub-accent"><?php esc_html_e( 'Accent color', 'ohmylms' ); ?></label>
 				<input id="hub-accent" type="color" name="hub[accent]" value="<?php echo esc_attr( $config['accent'] ); ?>">
+				<label><input type="checkbox" name="hub[accent_brand]" value="1" <?php checked( $config['accent_brand'] ); ?>> <?php esc_html_e( 'Use the site brand color (ignores the color above)', 'ohmylms' ); ?></label>
 				<label for="hub-layout"><?php esc_html_e( 'Navigation layout', 'ohmylms' ); ?></label>
 				<select id="hub-layout" name="hub[layout]"><option value="sidebar" <?php selected( $config['layout'], 'sidebar' ); ?>><?php esc_html_e( 'Left sidebar', 'ohmylms' ); ?></option><option value="top" <?php selected( $config['layout'], 'top' ); ?>><?php esc_html_e( 'Top navigation', 'ohmylms' ); ?></option></select>
 				<label for="hub-default"><?php esc_html_e( 'Default section', 'ohmylms' ); ?></label>

@@ -55,7 +55,7 @@ final class Settings {
 	}
 
 	/**
-	 * Hub colour tokens derived from a school accent, so the button edge and selected tab match it.
+	 * Inline hub accent for a light and a dark theme, each with the text color that reads on it (the dark accent is lightened to stay visible on the dark card). The button edge and tints are derived from the accent in student-hub.css.
 	 *
 	 * @param string $hex Accent colour.
 	 * @return string Inline custom properties for the hub root element.
@@ -69,10 +69,9 @@ final class Settings {
 		if ( 3 === strlen( $hex ) ) {
 			$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
 		}
-		$rgb    = array_map( 'hexdec', str_split( $hex, 2 ) );
-		$shadow = vsprintf( '#%02x%02x%02x', array_map( static fn( $c ) => (int) round( $c * 0.7 ), $rgb ) );
-		$tint   = vsprintf( '#%02x%02x%02x', array_map( static fn( $c ) => (int) round( 255 - ( 255 - $c ) * 0.12 ), $rgb ) );
-		return '--hub-accent:#' . $hex . ';--hub-accent-shadow:' . $shadow . ';--hub-selected-bg:' . $tint . ';--hub-selected-text:#' . $hex . ';--hub-hero:' . $tint;
+		$dark = \OhMyLMS\Design\DesignSystem::for_dark( '#' . $hex );
+		return '--hub-accent-light:#' . $hex . ';--hub-on-accent-light:' . \OhMyLMS\Design\DesignSystem::text_on( '#' . $hex )
+			. ';--hub-accent-dark:' . $dark . ';--hub-on-accent-dark:' . \OhMyLMS\Design\DesignSystem::text_on( $dark );
 	}
 
 	/**

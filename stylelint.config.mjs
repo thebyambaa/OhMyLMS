@@ -100,6 +100,7 @@ export default {
 				'assets/css/answer-review.css',
 				'assets/css/player-context.css',
 				'assets/css/learning-context.css',
+				'assets/css/student-hub.css',
 				'assets/src/ui/**/*.{css,scss}',
 			],
 			rules: {

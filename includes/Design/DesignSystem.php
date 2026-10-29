@@ -413,6 +413,7 @@ final class DesignSystem {
 			'oml-link'            => $link,
 			'oml-link-hover'      => Tokens::mix( $link, '#ffffff', 0.2 ),
 			'oml-focus'           => $primary,
+			'oml-shade'           => self::DARK['surface'],
 			'oml-shadow-sm'       => '0 1px 2px rgba(0, 0, 0, 0.4)',
 			'oml-shadow-md'       => '0 4px 12px rgba(0, 0, 0, 0.5)',
 		);
@@ -476,6 +477,7 @@ final class DesignSystem {
 			'oml-subtle'           => Tokens::mix( $c['background'], '#ffffff', 0.5 ),
 			'oml-background'       => $c['background'],
 			'oml-focus'            => $focus,
+			'oml-shade'            => $c['heading'],
 			'oml-radius-button'    => $radii['button'] . 'px',
 			'oml-radius-control'   => $radii['control'] . 'px',
 			'oml-radius-card'      => $radii['card'] . 'px',
