@@ -15,10 +15,10 @@ steps and acceptance criteria, see [the modularization roadmap](MODULARIZATION-R
 | Top-level bindings in factory 1841 | 3703 |
 | Routes in the recovered router | 31 |
 | Authored components created through `readRuntime` | 215 |
-| Distinct bindings those components read | 862 |
+| Distinct bindings those components read | 853 |
 | … authored feature components | 167 |
 | … WordPress/React platform packages | 7 |
-| … recovered LMS-owned modules | 35 |
+| … recovered LMS-owned modules | 26 |
 | … recovered vendor libraries | 18 |
 | … recovered code in factory 1841 | 155 |
 | … inlined Babel helpers (removed by authoring) | 480 |
@@ -34,7 +34,7 @@ drifts from the source.
 | Step | Work | Bindings |
 | --- | --- | --- |
 | 2 | Migrate Easy Email and remaining libraries | 18 |
-| 3 | Extract shared application infrastructure | 70 |
+| 3 | Extract shared application infrastructure | 61 |
 | 4 | Separate state and API access | 9 |
 | 5 | Finish feature independence | 765 |
 | 6 | Replace the recovered application entry point | 0 |
@@ -56,24 +56,24 @@ Platform is zero and its components no longer use `createComponent(readRuntime)`
 
 | Feature | Components | Platform | Shared | State/API | Vendor | Other features | Own recovered | Babel helpers |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| analytics | 18 | 7 | 27 | 1 | 6 | 2 | 12 | 30 |
-| certificates | 13 | 6 | 19 | 4 | 5 | 0 | 3 | 35 |
-| commerce | 22 | 7 | 25 | 1 | 5 | 1 | 4 | 23 |
-| communities | 5 | 6 | 14 | 2 | 2 | 1 | 1 | 12 |
-| courses | 25 | 6 | 27 | 4 | 12 | 4 | 26 | 68 |
-| emails | 12 | 5 | 8 | 1 | 5 | 1 | 1 | 16 |
-| gamification | 13 | 6 | 10 | 2 | 3 | 0 | 1 | 54 |
+| analytics | 18 | 7 | 22 | 1 | 6 | 2 | 12 | 30 |
+| certificates | 13 | 6 | 14 | 4 | 5 | 0 | 3 | 35 |
+| commerce | 22 | 7 | 19 | 1 | 5 | 1 | 4 | 23 |
+| communities | 5 | 6 | 10 | 2 | 2 | 1 | 1 | 12 |
+| courses | 25 | 6 | 21 | 4 | 12 | 4 | 26 | 68 |
+| emails | 12 | 5 | 6 | 1 | 5 | 1 | 1 | 16 |
+| gamification | 13 | 6 | 9 | 2 | 3 | 0 | 1 | 54 |
 | integrations | 7 | 5 | 5 | 3 | 0 | 0 | 2 | 27 |
-| learning | 25 | 6 | 27 | 2 | 6 | 1 | 16 | 72 |
-| memberships | 7 | 6 | 17 | 2 | 3 | 0 | 5 | 23 |
-| question-editor | 13 | 5 | 7 | 1 | 1 | 0 | 11 | 20 |
-| quiz-editor | 4 | 4 | 6 | 2 | 1 | 1 | 5 | 8 |
-| quiz-reports | 10 | 4 | 12 | 0 | 3 | 0 | 4 | 10 |
+| learning | 25 | 6 | 24 | 2 | 6 | 1 | 16 | 72 |
+| memberships | 7 | 6 | 16 | 2 | 3 | 0 | 5 | 23 |
+| question-editor | 13 | 5 | 5 | 1 | 1 | 0 | 11 | 20 |
+| quiz-editor | 4 | 4 | 5 | 2 | 1 | 1 | 5 | 8 |
+| quiz-reports | 10 | 4 | 9 | 0 | 3 | 0 | 4 | 10 |
 | settings | 19 | 5 | 10 | 3 | 3 | 3 | 10 | 62 |
 | setup | 11 | 5 | 4 | 1 | 3 | 0 | 11 | 25 |
-| students | 4 | 7 | 19 | 3 | 5 | 2 | 4 | 15 |
-| taxonomies | 3 | 6 | 10 | 1 | 1 | 0 | 0 | 16 |
-| webhooks | 4 | 5 | 13 | 2 | 1 | 0 | 2 | 16 |
+| students | 4 | 7 | 18 | 3 | 5 | 2 | 4 | 15 |
+| taxonomies | 3 | 6 | 9 | 1 | 1 | 0 | 0 | 16 |
+| webhooks | 4 | 5 | 12 | 2 | 1 | 0 | 2 | 16 |
 
 ## Shared application infrastructure (step 3)
 
@@ -95,14 +95,10 @@ feature reads. Each becomes a direct import or a named public module.
 | `uf` | component in course-thumbnail-controls.js | 13 | named shared module (step 3) |
 | `Ge` | helper in course-builder-lesson-actions.js | 12 | named shared module (step 3) |
 | `YG` | component in dashboard-income-overview.js | 12 | named shared module (step 3) |
-| `sN` | Component (.ohmylms-table) (factory 65) | 10 | named shared module (step 3) |
-| `pG` | SVG icon (factory 22601) | 9 | named shared module (step 3) |
 | `We` | component in course-builder-lesson-actions.js | 9 | named shared module (step 3) |
 | `aY` | component in course-list-filters.js | 8 | named shared module (step 3) |
 | `fN` | component in automation-list-table.js | 8 | named shared module (step 3) |
-| `Mt` | SVG icon (factory 79476) | 7 | named shared module (step 3) |
-| `V` | Wrapper around @wordpress/components Tooltip (factory 6425) | 6 | named shared module (step 3) |
-| `_` | Component (.ohmylms-skeleton-avatar) (factory 68119) | 5 | named shared module (step 3) |
+| `sN` | Component (.ohmylms-table) (factory 65) | 6 | named shared module (step 3) |
 | `Br` | component in lesson-editor.js | 5 | named shared module (step 3) |
 | `D` | Unlabelled module (factory 94490) | 5 | named shared module (step 3) |
 | `xq` | helper in earnings-report.js | 5 | named shared module (step 3) |
@@ -110,8 +106,6 @@ feature reads. Each becomes a direct import or a named public module.
 | `Nm` | component in quiz-matching-question-editor.js | 4 | named shared module (step 3) |
 | `vn` | Wrapper around @wordpress/components SelectControl (factory 54870) | 4 | named shared module (step 3) |
 | `YH` | helper in course-funnel-upsell-downsell.js | 4 | named shared module (step 3) |
-| `Bt` | Component (.ohmylms-switcher-spinner) (factory 25946) | 3 | named shared module (step 3) |
-| `gG` | Component (.ohmylms-avatar-img) (factory 53725) | 3 | named shared module (step 3) |
 | `hu` | component in quiz-editor-media-library.js | 3 | named shared module (step 3) |
 | `lN` | @wordpress/url | 3 | direct `@wordpress/*` / `@wordpress/element` import |
 | `ne` | component in course-builder-chapter-editor.js | 3 | named shared module (step 3) |
@@ -120,7 +114,6 @@ feature reads. Each becomes a direct import or a named public module.
 | `_U` | component in course-report-table-header.js | 2 | named shared module (step 3) |
 | `Gp` | component in quiz-editor-header.js | 2 | named shared module (step 3) |
 | `hB` | data in email-preview-styles.js | 2 | named shared module (step 3) |
-| `jf` | Component (.ohmylms-copy-to-clipboard) (factory 21186) | 2 | named shared module (step 3) |
 | `JU` | component in course-report-reminder-email.js | 2 | named shared module (step 3) |
 | `kf` | component in course-chapter-contents-and-community.js | 2 | named shared module (step 3) |
 | `Lc` | helper in quiz-editor-question-sidebar.js | 2 | named shared module (step 3) |
@@ -134,7 +127,6 @@ feature reads. Each becomes a direct import or a named public module.
 | `Tt` | Unlabelled module (factory 50127) | 2 | named shared module (step 3) |
 | `UG` | Unlabelled module (factory 99166) | 2 | named shared module (step 3) |
 | `wn` | Unlabelled module (factory 55907) | 2 | named shared module (step 3) |
-| `wr` | SVG icon (factory 98243) | 2 | named shared module (step 3) |
 | `zn` | component in lesson-settings-panel.js | 2 | named shared module (step 3) |
 | `$U` | Unlabelled module (factory 93509) | 1 | named shared module (step 3) |
 | `Ec` | Unlabelled module (factory 5836) | 1 | named shared module (step 3) |
@@ -142,7 +134,6 @@ feature reads. Each becomes a direct import or a named public module.
 | `ep` | Component (.ohmylms-tabs-header) (factory 12278) | 1 | named shared module (step 3) |
 | `GG` | Wrapper around @wordpress/components Notice (factory 39706) | 1 | named shared module (step 3) |
 | `kt` | Component (.ohmylms-tag-icon) (factory 27268) | 1 | named shared module (step 3) |
-| `ld` | SVG icon (factory 75809) | 1 | named shared module (step 3) |
 | `pz` | Unlabelled module (factory 82140) | 1 | named shared module (step 3) |
 | `QG` | Wrapper around @wordpress/components Modal (factory 24295) | 1 | named shared module (step 3) |
 | `re` | Wrapper around @wordpress/components TextControl (factory 43052) | 1 | named shared module (step 3) |

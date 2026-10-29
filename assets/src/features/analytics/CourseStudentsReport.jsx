@@ -2,6 +2,7 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
+import { Table } from '../../shared/table';
 export function createCourseStudentsReport( readRuntime ) {
 	return function CourseStudentsReport( props ) {
 		const {
@@ -24,7 +25,6 @@ export function createCourseStudentsReport( readRuntime ) {
 			l,
 			lN,
 			oq,
-			sN: TableModule,
 			tq,
 			uf: EmptyState,
 			vn,
@@ -612,7 +612,7 @@ export function createCourseStudentsReport( readRuntime ) {
 						</Controls.FlexWP>
 						<Controls.SpacerWP marginBottom={ 5 } />
 
-						<TableModule.A
+						<Table
 							rowKey={ 'student_id' }
 							columns={ le }
 							dataSource={ u !== null && u !== void 0 ? u : [] }

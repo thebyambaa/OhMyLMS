@@ -1,5 +1,6 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { Skeleton } from '../../shared/skeleton';
 export function createCourseCurriculum( readRuntime ) {
 	return function CourseCurriculum( props ) {
 		const {
@@ -12,7 +13,6 @@ export function createCourseCurriculum( readRuntime ) {
 			React,
 			T: StoreModule,
 			Xl,
-			_,
 			_f,
 			b: I18n,
 			bf,
@@ -385,7 +385,7 @@ export function createCourseCurriculum( readRuntime ) {
 						} ) }
 						{ se ? (
 							<React.Fragment>
-								<_.A active={ ! 0 } />
+								<Skeleton active={ ! 0 } />
 							</React.Fragment>
 						) : (
 							<React.Fragment>
@@ -637,7 +637,9 @@ export function createCourseCurriculum( readRuntime ) {
 											return (
 												<React.Suspense
 													fallback={
-														<_.A active={ ! 0 } />
+														<Skeleton
+															active={ ! 0 }
+														/>
 													}
 													key={
 														e === null ||

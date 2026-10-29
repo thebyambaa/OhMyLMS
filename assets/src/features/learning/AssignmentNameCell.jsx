@@ -1,5 +1,6 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { EditIcon } from '../../shared/icons';
 export function createAssignmentNameCell( readRuntime ) {
 	return function AssignmentNameCell( props ) {
 		const {
@@ -9,7 +10,6 @@ export function createAssignmentNameCell( readRuntime ) {
 			UG,
 			f: Router,
 			g: ReactHooks,
-			pG,
 			v,
 			vG,
 		} = readRuntime();
@@ -135,7 +135,7 @@ export function createAssignmentNameCell( readRuntime ) {
 										height: '26px',
 									} }
 								>
-									<pG.A />
+									<EditIcon />
 								</Controls.ButtonWP>
 								<Controls.ButtonWP
 									icon={ React.createElement( vG, null ) }

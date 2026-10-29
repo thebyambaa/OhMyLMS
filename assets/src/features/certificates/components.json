@@ -33,7 +33,6 @@
 			"l",
 			"lte",
 			"mte",
-			"pG",
 			"pZ",
 			"pte",
 			"q",
@@ -47,7 +46,7 @@
 		"binding": "Zee",
 		"name": "CertificateNameCell",
 		"file": "CertificateNameCell.jsx",
-		"dependencies": [ "Ge", "I", "React", "b", "f", "g", "gG", "pG", "v" ]
+		"dependencies": [ "Ge", "I", "React", "b", "f", "g", "v" ]
 	},
 	{
 		"binding": "nte",
@@ -73,7 +72,7 @@
 		"binding": "ite",
 		"name": "CertificateTemplateDialog",
 		"file": "CertificateTemplateDialog.jsx",
-		"dependencies": [ "I", "React", "_", "ate", "b", "f", "g", "hB", "rte" ]
+		"dependencies": [ "I", "React", "ate", "b", "f", "g", "hB", "rte" ]
 	},
 	{
 		"binding": "Ste",
@@ -84,7 +83,6 @@
 			"HG",
 			"React",
 			"T",
-			"_",
 			"bte",
 			"f",
 			"g",
@@ -184,23 +182,12 @@
 		"binding": "OL",
 		"name": "CertificateTextField",
 		"file": "CertificateTextField.jsx",
-		"dependencies": [
-			"EL",
-			"I",
-			"L",
-			"Mt",
-			"PL",
-			"React",
-			"SL",
-			"b",
-			"g",
-			"xL"
-		]
+		"dependencies": [ "EL", "I", "L", "PL", "React", "SL", "b", "g", "xL" ]
 	},
 	{
 		"binding": "AL",
 		"name": "CertificateImageField",
 		"file": "CertificateImageField.jsx",
-		"dependencies": [ "I", "M", "Mt", "React", "V", "b", "g", "hu", "jL" ]
+		"dependencies": [ "I", "M", "React", "b", "g", "hu", "jL" ]
 	}
 ]

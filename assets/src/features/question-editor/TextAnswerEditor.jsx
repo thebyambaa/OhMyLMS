@@ -1,8 +1,9 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { WarningBubbleIcon } from '../../shared/icons';
 export function createTextAnswerEditor( readRuntime ) {
 	return function TextAnswerEditor( props ) {
-		const { React, b: I18n, ld } = readRuntime();
+		const { React, b: I18n } = readRuntime();
 		var message = props.message,
 			n =
 				void 0 === message
@@ -14,7 +15,7 @@ export function createTextAnswerEditor( readRuntime ) {
 		return (
 			<React.Fragment>
 				<div className={ 'ohmylms-quiz-warning' }>
-					<ld.A />
+					<WarningBubbleIcon />
 					{ n }
 				</div>
 			</React.Fragment>

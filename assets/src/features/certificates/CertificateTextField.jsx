@@ -1,11 +1,11 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { InfoIcon } from '../../shared/icons';
 export function createCertificateTextField( readRuntime ) {
 	return function CertificateTextField( props ) {
 		const {
 			EL,
 			I: Controls,
-			Mt,
 			PL,
 			React,
 			SL,
@@ -181,7 +181,7 @@ export function createCertificateTextField( readRuntime ) {
 												'ohmylms'
 											) }
 										>
-											<Mt.A />
+											<InfoIcon />
 										</Controls.TooltipWP>
 									</React.Fragment>
 								) }

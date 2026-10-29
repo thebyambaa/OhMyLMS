@@ -1,8 +1,9 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { Switcher } from '../../shared/spinner';
 export function createCourseReviews( readRuntime ) {
 	return function CourseReviews( props ) {
-		const { Bt, I: Controls, React, b: I18n } = readRuntime();
+		const { I: Controls, React, b: I18n } = readRuntime();
 		const reviewEnabled = props.reviewEnabled,
 			handleReviewEnabled = props.handleReviewEnabled;
 		return (
@@ -33,7 +34,7 @@ export function createCourseReviews( readRuntime ) {
 						} }
 					>
 						<Controls.FlexWP justify={ 'flex-end' }>
-							<Bt.A
+							<Switcher
 								checked={ reviewEnabled }
 								onChange={ handleReviewEnabled }
 							/>

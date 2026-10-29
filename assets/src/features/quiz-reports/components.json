@@ -18,7 +18,6 @@
 			"fN",
 			"g",
 			"l",
-			"sN",
 			"sn",
 			"uf",
 			"v"
@@ -54,19 +53,7 @@
 		"binding": "m$",
 		"name": "QuizQuestionHeader",
 		"file": "QuizQuestionHeader.jsx",
-		"dependencies": [
-			"Ge",
-			"I",
-			"Mt",
-			"React",
-			"V",
-			"b",
-			"f",
-			"l$",
-			"o$",
-			"s$",
-			"wn"
-		]
+		"dependencies": [ "Ge", "I", "React", "b", "f", "l$", "o$", "s$", "wn" ]
 	},
 	{
 		"binding": "f$",
@@ -84,7 +71,7 @@
 		"binding": "w$",
 		"name": "TextAnswerResult",
 		"file": "TextAnswerResult.jsx",
-		"dependencies": [ "I", "React", "V", "_$", "b", "b$", "g", "p$" ]
+		"dependencies": [ "I", "React", "_$", "b", "b$", "g", "p$" ]
 	},
 	{
 		"binding": "x$",

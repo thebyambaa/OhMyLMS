@@ -8,6 +8,7 @@ import {
 	useAddQuiz,
 	useExportQuiz,
 } from '../content-hub/QuizActions';
+import { EditIcon } from '../../shared/icons';
 export function createQuizList( readRuntime ) {
 	return function QuizList() {
 		const {
@@ -32,7 +33,6 @@ export function createQuizList( readRuntime ) {
 			hN,
 			hZ,
 			l,
-			pG,
 			pZ,
 			q,
 			sN,
@@ -460,7 +460,7 @@ export function createQuizList( readRuntime ) {
 										},
 										icon: (
 											<span>
-												<pG.A />
+												<EditIcon />
 											</span>
 										),
 									},

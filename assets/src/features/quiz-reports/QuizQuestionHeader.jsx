@@ -1,13 +1,13 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { Tooltip } from '../../shared/tooltip';
+import { InfoIcon } from '../../shared/icons';
 export function createQuizQuestionHeader( readRuntime ) {
 	return function QuizQuestionHeader( props ) {
 		const {
 			Ge: decodeHtml,
 			I: Controls,
-			Mt: InfoIcon,
 			React,
-			V: Tooltip,
 			b: I18n,
 			f: Router,
 			l$: IncorrectIcon,
@@ -125,7 +125,7 @@ export function createQuizQuestionHeader( readRuntime ) {
 															'ohmylms'
 														) }
 													</Controls.TextWP>
-													<Tooltip.A
+													<Tooltip
 														title={ ( 0, I18n.__ )(
 															'This Question Marks: '.concat(
 																data === null ||
@@ -149,8 +149,8 @@ export function createQuizQuestionHeader( readRuntime ) {
 															'ohmylms-tooltip'
 														}
 													>
-														<InfoIcon.A />
-													</Tooltip.A>
+														<InfoIcon />
+													</Tooltip>
 												</Controls.FlexWP>
 											</Controls.FlexItemWP>
 											<Controls.FlexItemWP>

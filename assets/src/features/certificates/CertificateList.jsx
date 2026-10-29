@@ -1,6 +1,7 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
+import { EditIcon } from '../../shared/icons';
 export function createCertificateList( readRuntime ) {
 	return function CertificateList() {
 		const {
@@ -27,7 +28,6 @@ export function createCertificateList( readRuntime ) {
 			l,
 			lte: MemoCertificateTemplateDialog,
 			mte,
-			pG,
 			pZ,
 			pte,
 			q,
@@ -468,7 +468,7 @@ export function createCertificateList( readRuntime ) {
 										},
 										icon: (
 											<span>
-												<pG.A />
+												<EditIcon />
 											</span>
 										),
 									},

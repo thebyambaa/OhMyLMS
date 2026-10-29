@@ -84,7 +84,6 @@
 			"gr",
 			"pe",
 			"ve",
-			"wr",
 			"y"
 		]
 	},
@@ -129,7 +128,6 @@
 			"In",
 			"L",
 			"M",
-			"Mt",
 			"React",
 			"T",
 			"Tn",
@@ -235,7 +233,6 @@
 			"hN",
 			"jte",
 			"l",
-			"pG",
 			"pZ",
 			"q",
 			"sN",
@@ -248,7 +245,7 @@
 		"binding": "xte",
 		"name": "AssignmentNameCell",
 		"file": "AssignmentNameCell.jsx",
-		"dependencies": [ "Ge", "I", "React", "UG", "f", "g", "pG", "v", "vG" ]
+		"dependencies": [ "Ge", "I", "React", "UG", "f", "g", "v", "vG" ]
 	},
 	{
 		"binding": "wZ",
@@ -276,7 +273,6 @@
 			"hN",
 			"hZ",
 			"l",
-			"pG",
 			"pZ",
 			"q",
 			"sN",
@@ -291,18 +287,7 @@
 		"binding": "uZ",
 		"name": "QuizNameCell",
 		"file": "QuizNameCell.jsx",
-		"dependencies": [
-			"Ge",
-			"I",
-			"React",
-			"UG",
-			"b",
-			"f",
-			"g",
-			"pG",
-			"v",
-			"vG"
-		]
+		"dependencies": [ "Ge", "I", "React", "UG", "b", "f", "g", "v", "vG" ]
 	},
 	{
 		"binding": "PZ",
@@ -323,7 +308,6 @@
 			"df",
 			"fN",
 			"g",
-			"pG",
 			"q",
 			"uf",
 			"xZ",

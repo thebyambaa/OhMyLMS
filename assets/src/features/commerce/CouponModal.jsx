@@ -2,6 +2,7 @@ import { showRequestError } from '../requestFeedback.mjs';
 import { validateCoupon } from './model.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { CopyToClipboard } from '../../shared/copy-to-clipboard';
 export function createCouponModal( readRuntime ) {
 	return function CouponModal( props ) {
 		const {
@@ -14,7 +15,6 @@ export function createCouponModal( readRuntime ) {
 			Sre,
 			b: I18n,
 			g: ReactHooks,
-			jf: CourseSelector,
 			sH: DatePicker,
 		} = readRuntime();
 		var isOpen = props.isOpen,
@@ -433,7 +433,7 @@ export function createCouponModal( readRuntime ) {
 														<Sre />
 													</Controls.ButtonWP>
 												</Controls.FlexItemWP>
-												<CourseSelector.A
+												<CopyToClipboard
 													textToCopy={ code }
 												/>
 											</Controls.FlexWP>

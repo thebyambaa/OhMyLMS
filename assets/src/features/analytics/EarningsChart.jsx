@@ -1,5 +1,6 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { Skeleton } from '../../shared/skeleton';
 export function createEarningsChart( readRuntime ) {
 	return function EarningsChart( props ) {
 		const {
@@ -9,7 +10,6 @@ export function createEarningsChart( readRuntime ) {
 			NU,
 			React,
 			T: StoreModule,
-			_,
 			b: I18n,
 			g: ReactHooks,
 			y: WordPressData,
@@ -474,7 +474,7 @@ export function createEarningsChart( readRuntime ) {
 			<React.Fragment>
 				{ h ? (
 					<React.Fragment>
-						<_.A
+						<Skeleton
 							paragraph={ {
 								rows: 6,
 							} }

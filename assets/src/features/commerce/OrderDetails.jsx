@@ -4,6 +4,7 @@
  */
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
+import { Skeleton } from '../../shared/skeleton';
 
 export function createOrderDetails( readRuntime ) {
 	return function OrderDetails( { id = null } ) {
@@ -18,7 +19,6 @@ export function createOrderDetails( readRuntime ) {
 			React,
 			T: StoreModule,
 			XY: OrderHeader,
-			_: SkeletonModule,
 			b: I18n,
 			cQ: OrderItems,
 			eQ: OrderBilling,
@@ -95,7 +95,7 @@ export function createOrderDetails( readRuntime ) {
 		}, [ id, fetchOrder ] );
 
 		if ( loading ) {
-			return <SkeletonModule.A active={ true } />;
+			return <Skeleton active={ true } />;
 		}
 
 		if ( ! order || notFound ) {

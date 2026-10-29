@@ -1,6 +1,8 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { courseEditPath } from './model.mjs';
+import { Avatar } from '../../shared/avatar';
+import { EditIcon } from '../../shared/icons';
 export function createCourseListItem( readRuntime ) {
 	return function CourseListItem( props ) {
 		const {
@@ -11,8 +13,6 @@ export function createCourseListItem( readRuntime ) {
 			b: I18n,
 			f: Router,
 			g: ReactHooks,
-			gG,
-			pG,
 			v,
 			vG,
 		} = readRuntime();
@@ -56,7 +56,7 @@ export function createCourseListItem( readRuntime ) {
 								course.image_src
 							) {
 								return (
-									<gG.A
+									<Avatar
 										shape={ 'square' }
 										src={ course.image_src }
 										size={ 100 }
@@ -154,7 +154,7 @@ export function createCourseListItem( readRuntime ) {
 									padding: '5px',
 								} }
 							>
-								<pG.A />
+								<EditIcon />
 							</Controls.ButtonWP>
 							{ course?.syllabus_id > 0 && (
 								<Controls.ButtonWP

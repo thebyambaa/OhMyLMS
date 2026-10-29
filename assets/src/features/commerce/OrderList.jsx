@@ -4,6 +4,7 @@
  */
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
+import { Table } from '../../shared/table';
 
 export function createOrderList( readRuntime ) {
 	return function OrderList() {
@@ -28,7 +29,6 @@ export function createOrderList( readRuntime ) {
 			g: ReactHooks,
 			hN: BulkActionsBar,
 			q: IconWrapper,
-			sN: TableModule,
 			sn: moment,
 			uf: EmptyContainer,
 			v: RouterLink,
@@ -539,7 +539,7 @@ export function createOrderList( readRuntime ) {
 									</Controls.FlexWP>
 								) }
 							</Controls.SpacerWP>
-							<TableModule.A
+							<Table
 								rowKey="id"
 								columns={ columns }
 								dataSource={ orders || [] }

@@ -131,8 +131,11 @@ function harness( states = [] ) {
 				: globals.response;
 		},
 		sN: { A: 'Table' },
+		Table: 'Table',
 		Mt: { A: 'InfoIcon' },
+		InfoIcon: 'InfoIcon',
 		V: { A: 'Tooltip' },
+		Tooltip: 'Tooltip',
 	};
 	Object.assign( globals, {
 		wq: { format: ( _, date ) => String( date ) },
@@ -155,10 +158,13 @@ function harness( states = [] ) {
 		D: { A: 'Button' },
 		GG: { A: 'Notice' },
 		_: { A: 'Skeleton' },
+		Skeleton: 'Skeleton',
 		vn: { A: 'Select' },
 		kt: { A: 'Tag' },
 		gG: { A: 'Avatar' },
+		Avatar: 'Avatar',
 		pG: { A: 'EditIcon' },
+		EditIcon: 'EditIcon',
 		lN: {
 			addQueryArgs: ( path, args ) =>
 				path + '?' + new URLSearchParams( args ),
@@ -307,6 +313,7 @@ function harness( states = [] ) {
 		Ere: 'CouponRefreshIcon',
 		sH: 'DatePicker',
 		jf: 'CourseSelect',
+		CopyToClipboard: 'CourseSelect',
 	} );
 	globals.actions = new Proxy(
 		{},

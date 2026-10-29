@@ -2,6 +2,7 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
+import { EditIcon } from '../../shared/icons';
 export function createCouponList( readRuntime ) {
 	return function CouponList() {
 		const {
@@ -29,12 +30,10 @@ export function createCouponList( readRuntime ) {
 			l,
 			lN,
 			nf,
-			pG,
 			q,
 			uf: EmptyState,
 			v,
 			y: WordPressData,
-
 			zre,
 		} = readRuntime();
 		var e = ( 0, WordPressData.useSelect )( function ( _eLocal ) {
@@ -278,7 +277,7 @@ export function createCouponList( readRuntime ) {
 													},
 													icon: (
 														<span>
-															<pG.A />
+															<EditIcon />
 														</span>
 													),
 												},

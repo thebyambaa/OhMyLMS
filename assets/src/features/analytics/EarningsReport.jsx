@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { Skeleton } from '../../shared/skeleton';
 export function createEarningsReport( readRuntime ) {
 	return function EarningsReport() {
 		const {
@@ -17,7 +18,6 @@ export function createEarningsReport( readRuntime ) {
 			Rq: TransactionHistory,
 			Tq,
 			ZU: AnalyticsDateFilter,
-			_,
 			b: I18n,
 			dc,
 			df: EmptyIcon,
@@ -343,7 +343,7 @@ export function createEarningsReport( readRuntime ) {
 				{},
 				{
 					render() {
-						return <_.A active={ ! 0 } paragraph={ ! 1 } />;
+						return <Skeleton active={ ! 0 } paragraph={ ! 1 } />;
 					},
 				}
 			);
@@ -888,7 +888,7 @@ export function createEarningsReport( readRuntime ) {
 												padding={ 6 }
 											>
 												{ c ? (
-													<_.A
+													<Skeleton
 														paragraph={ {
 															rows: 3,
 														} }
@@ -1049,7 +1049,7 @@ export function createEarningsReport( readRuntime ) {
 															marginTop={ 8 }
 														>
 															{ c ? (
-																<_.A
+																<Skeleton
 																	paragraph={ {
 																		rows: 3,
 																	} }
@@ -1203,7 +1203,7 @@ export function createEarningsReport( readRuntime ) {
 															) }
 														</Controls.HeadingWP>
 														{ c ? (
-															<_.A
+															<Skeleton
 																paragraph={ {
 																	rows: 3,
 																} }

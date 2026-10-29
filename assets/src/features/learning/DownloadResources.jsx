@@ -1,5 +1,6 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { InfoIcon } from '../../shared/icons';
 export function createDownloadResources( readRuntime ) {
 	return function DownloadResources( props ) {
 		const {
@@ -9,7 +10,6 @@ export function createDownloadResources( readRuntime ) {
 			Ie,
 			In,
 			M,
-			Mt,
 			React,
 			T: StoreModule,
 			Tn,
@@ -89,7 +89,7 @@ export function createDownloadResources( readRuntime ) {
 								className={ 'ohmylms-tooltip' }
 							>
 								<React.Fragment>
-									<Mt.A />
+									<InfoIcon />
 								</React.Fragment>
 							</Controls.TooltipWP>
 						) }

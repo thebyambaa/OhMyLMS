@@ -51,13 +51,13 @@
 		"binding": "mG",
 		"name": "EarningsSummaryCards",
 		"file": "EarningsSummaryCards.jsx",
-		"dependencies": [ "I", "Mt", "React", "V", "_", "b" ]
+		"dependencies": [ "I", "React", "b" ]
 	},
 	{
 		"binding": "wG",
 		"name": "DashboardStats",
 		"file": "DashboardStats.jsx",
-		"dependencies": [ "I", "L", "Mt", "React", "V", "b", "f" ]
+		"dependencies": [ "I", "L", "React", "b", "f" ]
 	},
 	{
 		"binding": "MG",
@@ -70,7 +70,6 @@
 			"PG",
 			"React",
 			"SG",
-			"_",
 			"b",
 			"f",
 			"jG",
@@ -93,9 +92,7 @@
 			"df",
 			"f",
 			"g",
-			"pG",
 			"q",
-			"sN",
 			"sn",
 			"uf",
 			"v",
@@ -162,18 +159,7 @@
 		"binding": "LU",
 		"name": "EarningsChart",
 		"file": "EarningsChart.jsx",
-		"dependencies": [
-			"BU",
-			"DU",
-			"FU",
-			"NU",
-			"React",
-			"T",
-			"_",
-			"b",
-			"g",
-			"y"
-		]
+		"dependencies": [ "BU", "DU", "FU", "NU", "React", "T", "b", "g", "y" ]
 	},
 	{
 		"binding": "lq",
@@ -201,7 +187,6 @@
 			"l",
 			"lN",
 			"oq",
-			"sN",
 			"tq",
 			"uf",
 			"vn",
@@ -251,7 +236,6 @@
 			"Rq",
 			"Tq",
 			"ZU",
-			"_",
 			"b",
 			"dc",
 			"df",
@@ -280,7 +264,6 @@
 			"b",
 			"df",
 			"g",
-			"sN",
 			"uf",
 			"vn"
 		]

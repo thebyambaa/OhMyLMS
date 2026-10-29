@@ -1,12 +1,12 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { Tooltip } from '../../shared/tooltip';
 export function createTrueFalseEditor( readRuntime ) {
 	return function TrueFalseEditor() {
 		const {
 			I: Controls,
 			React,
 			T: StoreModule,
-			V,
 			Xs,
 			b: I18n,
 			y: WordPressData,
@@ -63,7 +63,7 @@ export function createTrueFalseEditor( readRuntime ) {
 										) }
 									>
 										<Controls.FlexWP>
-											<V.A
+											<Tooltip
 												title={ ( 0, I18n.__ )(
 													'Mark as correct answer',
 													'ohmylms'
@@ -139,7 +139,7 @@ export function createTrueFalseEditor( readRuntime ) {
 														},
 													] }
 												/>
-											</V.A>
+											</Tooltip>
 											<Controls.FlexItemWP
 												isBlock={ ! 0 }
 											>

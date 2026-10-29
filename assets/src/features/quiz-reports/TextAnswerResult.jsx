@@ -1,11 +1,11 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { Tooltip } from '../../shared/tooltip';
 export function createTextAnswerResult( readRuntime ) {
 	return function TextAnswerResult( props ) {
 		const {
 			I: Controls,
 			React,
-			V: Tooltip,
 			_$,
 			b: I18n,
 			b$: AnswerIcon,
@@ -264,7 +264,7 @@ export function createTextAnswerResult( readRuntime ) {
 							{ ( data === null || data === void 0
 								? void 0
 								: data.explanation ) && (
-								<Tooltip.A
+								<Tooltip
 									title={
 										( data === null || data === void 0
 											? void 0
@@ -280,7 +280,7 @@ export function createTextAnswerResult( readRuntime ) {
 									>
 										<AnswerIcon />
 									</span>
-								</Tooltip.A>
+								</Tooltip>
 							) }
 						</Controls.CardWP>
 						{ 'fill-in-the-blank' ===

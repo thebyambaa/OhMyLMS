@@ -1,8 +1,10 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { Tooltip } from '../../shared/tooltip';
+import { InfoIcon } from '../../shared/icons';
 export function createDashboardStats( readRuntime ) {
 	return function DashboardStats( props ) {
-		const { I: Controls, Mt, React, V, b: I18n, f: Router } = readRuntime();
+		const { I: Controls, React, b: I18n, f: Router } = readRuntime();
 		var t;
 		var n;
 		var r;
@@ -75,7 +77,7 @@ export function createDashboardStats( readRuntime ) {
 															'ohmylms'
 														) }
 													</Controls.TextWP>
-													<V.A
+													<Tooltip
 														text={
 															'Total courses sold in the past 30 days'
 														}
@@ -85,9 +87,9 @@ export function createDashboardStats( readRuntime ) {
 														placement={ 'top' }
 													>
 														<React.Fragment>
-															<Mt.A />
+															<InfoIcon />
 														</React.Fragment>
-													</V.A>
+													</Tooltip>
 													<Controls.FlexItemWP>
 														<Controls.BadgeWP
 															variant={
@@ -280,7 +282,7 @@ export function createDashboardStats( readRuntime ) {
 															'ohmylms'
 														) }
 													</Controls.TextWP>
-													<V.A
+													<Tooltip
 														text={
 															'New Students in the past 30 days'
 														}
@@ -290,9 +292,9 @@ export function createDashboardStats( readRuntime ) {
 														placement={ 'top' }
 													>
 														<React.Fragment>
-															<Mt.A />
+															<InfoIcon />
 														</React.Fragment>
-													</V.A>
+													</Tooltip>
 													<Controls.FlexItemWP>
 														<Controls.BadgeWP
 															variant={

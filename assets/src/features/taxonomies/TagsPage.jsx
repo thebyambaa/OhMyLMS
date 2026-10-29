@@ -1,6 +1,7 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
+import { EditIcon } from '../../shared/icons';
 export function createTagsPage( readRuntime ) {
 	return function TagsPage() {
 		const {
@@ -21,12 +22,10 @@ export function createTagsPage( readRuntime ) {
 			g: ReactHooks,
 			hN,
 			l,
-			pG,
 			q,
 			sN,
 			uf,
 			xY: TaxonomyModal,
-
 			zY,
 		} = readRuntime();
 		HG( 'ohmylms', 'tags' );
@@ -515,7 +514,7 @@ export function createTagsPage( readRuntime ) {
 										},
 										icon: (
 											<span>
-												<pG.A />
+												<EditIcon />
 											</span>
 										),
 									},

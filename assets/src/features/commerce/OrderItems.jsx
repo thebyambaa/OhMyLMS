@@ -2,22 +2,22 @@ import { showRequestError } from '../requestFeedback.mjs';
 import { validateRefund } from './model.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement, useId } from '@wordpress/element';
+import { Tooltip } from '../../shared/tooltip';
+import { Table } from '../../shared/table';
+import { InfoIcon } from '../../shared/icons';
 export function createOrderItems( readRuntime ) {
 	return function OrderItems( props ) {
 		const _controlId = useId();
 		const {
 			Ge: decodeEntities,
 			I: Controls,
-			Mt: InfoIcon,
 			React,
 			T: StoreModule,
-			V: Tooltip,
 			W: Textarea,
 			YH: Price,
 			b: I18n,
 			g: ReactHooks,
 			iQ,
-			sN: TableModule,
 			tQ: Tag,
 			wn: NumberInput,
 			y: WordPressData,
@@ -398,7 +398,7 @@ export function createOrderItems( readRuntime ) {
 				} }
 			>
 				<Controls.SpacerWP padding={ 4 }>
-					<TableModule.A
+					<Table
 						rowKey={ 'key' }
 						columns={ columns }
 						dataSource={ items }
@@ -729,14 +729,14 @@ export function createOrderItems( readRuntime ) {
 										'ohmylms'
 									) }
 								</Controls.TextWP>
-								<Tooltip.A
+								<Tooltip
 									title={ ( 0, I18n.__ )(
 										'Information about order edit.',
 										'ohmylms'
 									) }
 								>
-									<InfoIcon.A />
-								</Tooltip.A>
+									<InfoIcon />
+								</Tooltip>
 							</Controls.FlexWP>
 						</Controls.FlexWP>
 					</Controls.SpacerWP>

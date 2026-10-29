@@ -1,11 +1,11 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { PlayerTemplatePicker } from './PlayerTemplatePicker';
+import { Switcher } from '../../shared/spinner';
 export function createQuizSettingsFields( readRuntime ) {
 	return function QuizSettingsFields( props ) {
 		const {
 			$m,
-			Bt,
 			He,
 			I: Controls,
 			Km,
@@ -545,7 +545,7 @@ export function createQuizSettingsFields( readRuntime ) {
 								cursor: 'pointer',
 							} }
 						>
-							<Bt.A
+							<Switcher
 								checked={
 									( d === null || d === void 0
 										? void 0
@@ -579,7 +579,7 @@ export function createQuizSettingsFields( readRuntime ) {
 								cursor: 'pointer',
 							} }
 						>
-							<Bt.A
+							<Switcher
 								checked={
 									( d?.show_correct_answers ?? true ) &&
 									! d?.hide_answers
@@ -614,7 +614,7 @@ export function createQuizSettingsFields( readRuntime ) {
 								cursor: 'pointer',
 							} }
 						>
-							<Bt.A
+							<Switcher
 								checked={
 									( d === null || d === void 0
 										? void 0
@@ -648,7 +648,7 @@ export function createQuizSettingsFields( readRuntime ) {
 								cursor: 'pointer',
 							} }
 						>
-							<Bt.A
+							<Switcher
 								checked={
 									( d === null || d === void 0
 										? void 0
@@ -868,7 +868,7 @@ export function createQuizSettingsFields( readRuntime ) {
 								cursor: 'pointer',
 							} }
 						>
-							<Bt.A
+							<Switcher
 								checked={
 									( d === null || d === void 0
 										? void 0

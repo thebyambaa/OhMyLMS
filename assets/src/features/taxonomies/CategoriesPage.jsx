@@ -1,6 +1,7 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
+import { EditIcon } from '../../shared/icons';
 export function createCategoriesPage( readRuntime ) {
 	return function CategoriesPage() {
 		const {
@@ -24,7 +25,6 @@ export function createCategoriesPage( readRuntime ) {
 			hN,
 			jY,
 			l,
-			pG,
 			q,
 			sN,
 			uf,
@@ -567,7 +567,7 @@ export function createCategoriesPage( readRuntime ) {
 										},
 										icon: (
 											<span>
-												<pG.A />
+												<EditIcon />
 											</span>
 										),
 									},

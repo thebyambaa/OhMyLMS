@@ -1,8 +1,11 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { Skeleton } from '../../shared/skeleton';
+import { Tooltip } from '../../shared/tooltip';
+import { InfoIcon } from '../../shared/icons';
 export function createEarningsSummaryCards( readRuntime ) {
 	return function EarningsSummaryCards( props ) {
-		const { I: Controls, Mt, React, V, _, b: I18n } = readRuntime();
+		const { I: Controls, React, b: I18n } = readRuntime();
 		var t = props.dashboardCardData,
 			n = props.dataLoading,
 			r = props.withIn,
@@ -42,7 +45,7 @@ export function createEarningsSummaryCards( readRuntime ) {
 									marginBottom={ 0 }
 								>
 									{ n ? (
-										<_.A rows={ 3 } active={ ! 0 } />
+										<Skeleton rows={ 3 } active={ ! 0 } />
 									) : (
 										<React.Fragment>
 											<Controls.BadgeWP
@@ -90,7 +93,7 @@ export function createEarningsSummaryCards( readRuntime ) {
 														{ e.label }
 													</Controls.TextWP>
 													{ e.tooltip && (
-														<V.A
+														<Tooltip
 															text={ e.tooltip }
 															className={
 																'ohmylms-tooltip'
@@ -98,9 +101,9 @@ export function createEarningsSummaryCards( readRuntime ) {
 															placement={ 'top' }
 														>
 															<React.Fragment>
-																<Mt.A />
+																<InfoIcon />
 															</React.Fragment>
-														</V.A>
+														</Tooltip>
 													) }
 												</Controls.FlexWP>
 												<span

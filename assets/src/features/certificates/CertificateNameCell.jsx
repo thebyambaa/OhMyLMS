@@ -1,5 +1,7 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { Avatar } from '../../shared/avatar';
+import { EditIcon } from '../../shared/icons';
 export function createCertificateNameCell( readRuntime ) {
 	return function CertificateNameCell( props ) {
 		const {
@@ -9,8 +11,6 @@ export function createCertificateNameCell( readRuntime ) {
 			b: I18n,
 			f: Router,
 			g: ReactHooks,
-			gG,
-			pG,
 			v,
 		} = readRuntime();
 		var t = props.record,
@@ -50,7 +50,7 @@ export function createCertificateNameCell( readRuntime ) {
 							) }
 						>
 							{ t !== null && t !== void 0 && t.image_src ? (
-								<gG.A
+								<Avatar
 									shape={ 'square' }
 									src={ t.image_src }
 									size={ 100 }
@@ -114,7 +114,7 @@ export function createCertificateNameCell( readRuntime ) {
 										height: '26px',
 									} }
 								>
-									<pG.A />
+									<EditIcon />
 								</Controls.ButtonWP>
 							</Controls.FlexWP>
 						</Controls.FlexWP>

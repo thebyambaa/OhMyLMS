@@ -4,6 +4,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import { ListTableFrame } from '../students/ListTableFrame';
 import { AddModal, EditModal, addLabel } from './AddModal';
 import { ViewAsModal, canViewAs } from './ViewAsModal';
+import { Table } from '../../shared/table';
 const labels = {
 	teachers: 'Teachers',
 	parents: 'Parents',
@@ -16,7 +17,6 @@ export function PeopleDirectory( { tab, readRuntime } ) {
 		I: Controls,
 		JU: AvatarPlaceholder,
 		aY: Filters,
-		sN: { A: Table },
 		fN: Pagination,
 		aN: date,
 		Ne: MenuIcon,

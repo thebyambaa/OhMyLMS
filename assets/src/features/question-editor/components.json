@@ -56,7 +56,7 @@
 		"binding": "cd",
 		"name": "TextAnswerEditor",
 		"file": "TextAnswerEditor.jsx",
-		"dependencies": [ "React", "b", "ld" ]
+		"dependencies": [ "React", "b" ]
 	},
 	{
 		"binding": "Vs",
@@ -74,7 +74,7 @@
 		"binding": "td",
 		"name": "TrueFalseEditor",
 		"file": "TrueFalseEditor.jsx",
-		"dependencies": [ "I", "React", "T", "V", "Xs", "b", "y" ]
+		"dependencies": [ "I", "React", "T", "Xs", "b", "y" ]
 	},
 	{
 		"binding": "sd",

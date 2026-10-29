@@ -1,6 +1,7 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
+import { EditIcon } from '../../shared/icons';
 export function createWebhooksPage( readRuntime ) {
 	return function WebhooksPage() {
 		const {
@@ -23,7 +24,6 @@ export function createWebhooksPage( readRuntime ) {
 			g: ReactHooks,
 			hN,
 			n4,
-			pG,
 			q,
 			t4,
 			uf,
@@ -701,7 +701,7 @@ export function createWebhooksPage( readRuntime ) {
 										},
 										icon: (
 											<span>
-												<pG.A />
+												<EditIcon />
 											</span>
 										),
 									},

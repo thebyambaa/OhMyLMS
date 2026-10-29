@@ -1,5 +1,6 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { Skeleton } from '../../shared/skeleton';
 export function createTopCoursePerformance( readRuntime ) {
 	return function TopCoursePerformance( props ) {
 		const {
@@ -9,7 +10,6 @@ export function createTopCoursePerformance( readRuntime ) {
 			PG,
 			React,
 			SG,
-			_,
 			b: I18n,
 			f: Router,
 			jG,
@@ -58,7 +58,7 @@ export function createTopCoursePerformance( readRuntime ) {
 						</Controls.HeadingWP>
 						<Controls.SpacerWP marginBottom={ 3 } />
 						{ a ? (
-							<_.A rows={ 3 } active={ ! 0 } />
+							<Skeleton rows={ 3 } active={ ! 0 } />
 						) : (
 							<React.Fragment>
 								{ n ? (

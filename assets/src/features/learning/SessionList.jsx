@@ -1,5 +1,6 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { EditIcon } from '../../shared/icons';
 export function createSessionList( readRuntime ) {
 	return function SessionList() {
 		const {
@@ -17,7 +18,6 @@ export function createSessionList( readRuntime ) {
 			df,
 			fN,
 			g: ReactHooks,
-			pG,
 			q,
 			uf,
 			xZ,
@@ -313,7 +313,7 @@ export function createSessionList( readRuntime ) {
 										onClick() {
 											return C( _tLocal6 );
 										},
-										icon: <pG.A />,
+										icon: <EditIcon />,
 									} ),
 									'expired' === _aLocal2 &&
 										_oLocal2.push( {

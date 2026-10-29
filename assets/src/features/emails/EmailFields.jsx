@@ -1,12 +1,12 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { InfoIcon } from '../../shared/icons';
 export function createEmailFields( readRuntime ) {
 	return function EmailFields( props ) {
 		const {
 			Aee,
 			I: Controls,
 			Mee,
-			Mt,
 			React,
 			T: StoreModule,
 			W: RichText,
@@ -154,7 +154,7 @@ export function createEmailFields( readRuntime ) {
 										'ohmylms'
 									) }
 								>
-									<Mt.A />
+									<InfoIcon />
 								</Controls.TooltipWP>
 							</Controls.FlexWP>
 							<Controls.SpacerWP />
@@ -187,7 +187,7 @@ export function createEmailFields( readRuntime ) {
 										'ohmylms'
 									) }
 								>
-									<Mt.A />
+									<InfoIcon />
 								</Controls.TooltipWP>
 							</Controls.FlexWP>
 							<Controls.SpacerWP />
@@ -220,7 +220,7 @@ export function createEmailFields( readRuntime ) {
 										'ohmylms'
 									) }
 								>
-									<Mt.A />
+									<InfoIcon />
 								</Controls.TooltipWP>
 							</Controls.FlexWP>
 							<Controls.SpacerWP />
@@ -273,7 +273,7 @@ export function createEmailFields( readRuntime ) {
 											'ohmylms'
 										) }
 									>
-										<Mt.A />
+										<InfoIcon />
 									</Controls.TooltipWP>
 								</Controls.FlexWP>
 								<Controls.SpacerWP />
@@ -328,7 +328,7 @@ export function createEmailFields( readRuntime ) {
 											'ohmylms'
 										) }
 									>
-										<Mt.A />
+										<InfoIcon />
 									</Controls.TooltipWP>
 								</Controls.FlexWP>
 								<Controls.SpacerWP />
@@ -382,7 +382,7 @@ export function createEmailFields( readRuntime ) {
 											'ohmylms'
 										) }
 									>
-										<Mt.A />
+										<InfoIcon />
 									</Controls.TooltipWP>
 								</Controls.FlexWP>
 								<Controls.SpacerWP />

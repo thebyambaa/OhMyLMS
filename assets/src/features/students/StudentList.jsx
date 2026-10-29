@@ -14,12 +14,12 @@ import { AddModal } from '../schools/AddModal';
 import { ViewAsModal, canViewAs } from '../schools/ViewAsModal';
 import { PreviewHome } from '../schools/PreviewHome';
 import { useNotifications } from '../../shared/notices';
+import { Table } from '../../shared/table';
 export function createStudentList( readRuntime ) {
 	function StudentTable() {
 		const {
 			I: Controls,
 			aY: Filters,
-			sN: { A: Table },
 			e9: NameCell,
 			fN: Pagination,
 			hN: BulkActions,

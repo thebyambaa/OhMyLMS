@@ -37,7 +37,6 @@
 		"file": "QuizSettingsFields.jsx",
 		"dependencies": [
 			"$m",
-			"Bt",
 			"He",
 			"I",
 			"Km",

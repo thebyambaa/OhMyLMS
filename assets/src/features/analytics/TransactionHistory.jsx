@@ -1,5 +1,6 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { Table } from '../../shared/table';
 export function createTransactionHistory( readRuntime ) {
 	return function TransactionHistory( props ) {
 		const {
@@ -10,7 +11,6 @@ export function createTransactionHistory( readRuntime ) {
 			b: I18n,
 			df: EmptyIcon,
 			g: ReactHooks,
-			sN: TableModule,
 			uf: EmptyState,
 			vn,
 		} = readRuntime();
@@ -175,7 +175,7 @@ export function createTransactionHistory( readRuntime ) {
 					</Controls.FlexItemWP>
 				</Controls.FlexWP>
 				<Controls.SpacerWP marginBottom={ 4 } />
-				<TableModule.A
+				<Table
 					rowKey={ 'order_id' }
 					columns={ a || c ? i : l }
 					dataSource={ o }

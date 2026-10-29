@@ -2,6 +2,7 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
+import { EditIcon } from '../../shared/icons';
 export function createMembershipList( readRuntime ) {
 	return function MembershipList() {
 		const {
@@ -29,7 +30,6 @@ export function createMembershipList( readRuntime ) {
 			g: ReactHooks,
 			hN,
 			l,
-			pG,
 			q,
 			q8,
 			sN,
@@ -650,7 +650,7 @@ export function createMembershipList( readRuntime ) {
 									},
 									icon: (
 										<span>
-											<pG.A />
+											<EditIcon />
 										</span>
 									),
 								},

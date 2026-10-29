@@ -2,6 +2,7 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { nativeLessonHref } from '../content-hub/editorNavigation.mjs';
+import { Skeleton } from '../../shared/skeleton';
 export function createCourseChapter( readRuntime ) {
 	return function CourseChapter( props ) {
 		const {
@@ -14,7 +15,6 @@ export function createCourseChapter( readRuntime ) {
 			T: StoreModule,
 			Ul,
 			Zl,
-			_,
 			f: Router,
 			g: ReactHooks,
 			ga,
@@ -424,7 +424,9 @@ export function createCourseChapter( readRuntime ) {
 							setIsSaved,
 							handleSaveName: b,
 						} ) }
-						<React.Suspense fallback={ <_.A active={ ! 0 } /> }>
+						<React.Suspense
+							fallback={ <Skeleton active={ ! 0 } /> }
+						>
 							{ React.createElement( ot, {
 								chapter,
 								contents: ee,

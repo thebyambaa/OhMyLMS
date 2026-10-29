@@ -124,9 +124,12 @@ function harness( states = [] ) {
 				: globals.response;
 		},
 		sN: { A: 'Table' },
+		Table: 'Table',
 		wn: { A: 'NumberInput' },
 		Mt: { A: 'InfoIcon' },
+		InfoIcon: 'InfoIcon',
 		V: { A: 'Tooltip' },
+		Tooltip: 'Tooltip',
 	};
 	for ( const name of [
 		'Cm',

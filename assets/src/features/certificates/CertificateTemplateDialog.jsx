@@ -1,11 +1,11 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { Skeleton } from '../../shared/skeleton';
 export function createCertificateTemplateDialog( readRuntime ) {
 	return function CertificateTemplateDialog( props ) {
 		const {
 			I: Controls,
 			React,
-			_,
 			ate,
 			b: I18n,
 			f: Router,
@@ -52,7 +52,7 @@ export function createCertificateTemplateDialog( readRuntime ) {
 						>
 							<Controls.FlexWP wrap={ 'wrap' } gap={ 3 }>
 								{ l ? (
-									<_.A active={ ! 0 } />
+									<Skeleton active={ ! 0 } />
 								) : (
 									hB
 										.slice()

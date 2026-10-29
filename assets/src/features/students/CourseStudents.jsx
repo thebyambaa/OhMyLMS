@@ -3,6 +3,7 @@ import { showRequestError } from '../requestFeedback.mjs';
 import { createElement } from '@wordpress/element';
 import { CourseGradebook } from '../courses/CourseGradebook';
 import { useNotifications } from '../../shared/notices';
+import { Avatar } from '../../shared/avatar';
 export function createCourseStudents( readRuntime ) {
 	return function CourseStudents() {
 		const {
@@ -21,7 +22,6 @@ export function createCourseStudents( readRuntime ) {
 			fN,
 			fee,
 			g: ReactHooks,
-			gG,
 			iee,
 			l,
 			lN,
@@ -35,7 +35,6 @@ export function createCourseStudents( readRuntime ) {
 			vee,
 			vn,
 			y: WordPressData,
-
 			zn,
 		} = readRuntime();
 		const [ gradebookOpen, setGradebookOpen ] =
@@ -127,7 +126,7 @@ export function createCourseStudents( readRuntime ) {
 								{ _tLocal !== null &&
 								_tLocal !== void 0 &&
 								_tLocal.student_img ? (
-									<gG.A
+									<Avatar
 										size={ 40 }
 										src={
 											_tLocal === null ||

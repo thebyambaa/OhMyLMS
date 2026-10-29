@@ -1,10 +1,10 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { InfoIcon } from '../../shared/icons';
 export function createEmailSenderOptions( readRuntime ) {
 	return function EmailSenderOptions() {
 		const {
 			I: Controls,
-			Mt,
 			React,
 			T: StoreModule,
 			W: RichText,
@@ -113,7 +113,7 @@ export function createEmailSenderOptions( readRuntime ) {
 										'ohmylms'
 									) }
 								>
-									<Mt.A />
+									<InfoIcon />
 								</Controls.TooltipWP>
 							</Controls.FlexWP>
 							<Controls.SpacerWP />
@@ -150,7 +150,7 @@ export function createEmailSenderOptions( readRuntime ) {
 										'ohmylms'
 									) }
 								>
-									<Mt.A />
+									<InfoIcon />
 								</Controls.TooltipWP>
 							</Controls.FlexWP>
 							<Controls.SpacerWP />
@@ -187,7 +187,7 @@ export function createEmailSenderOptions( readRuntime ) {
 										'ohmylms'
 									) }
 								>
-									<Mt.A />
+									<InfoIcon />
 								</Controls.TooltipWP>
 							</Controls.FlexWP>
 							<Controls.SpacerWP />

@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { CopyToClipboard } from '../../shared/copy-to-clipboard';
 export function createCourseCommunity( readRuntime ) {
 	return function CourseCommunity( props ) {
 		const {
@@ -13,7 +14,6 @@ export function createCourseCommunity( readRuntime ) {
 			Wf,
 			b: I18n,
 			g: ReactHooks,
-			jf,
 			kf,
 			l,
 		} = readRuntime();
@@ -434,7 +434,7 @@ export function createCourseCommunity( readRuntime ) {
 																						) }
 																					</Controls.ButtonWP>
 																				</Controls.FlexItemWP>
-																				<jf.A
+																				<CopyToClipboard
 																					textToCopy={
 																						u
 																					}

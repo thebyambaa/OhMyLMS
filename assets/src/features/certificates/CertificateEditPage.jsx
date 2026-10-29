@@ -2,6 +2,7 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
+import { Skeleton } from '../../shared/skeleton';
 export function createCertificateEditPage( readRuntime ) {
 	return function CertificateEditPage() {
 		const {
@@ -9,7 +10,6 @@ export function createCertificateEditPage( readRuntime ) {
 			HG,
 			React,
 			T: StoreModule,
-			_,
 			bte,
 			f: Router,
 			g: ReactHooks,
@@ -239,7 +239,7 @@ export function createCertificateEditPage( readRuntime ) {
 					<div>
 						{ c }
 						{ r ? (
-							<_.A active={ ! 0 } />
+							<Skeleton active={ ! 0 } />
 						) : (
 							React.createElement( uV, null )
 						) }

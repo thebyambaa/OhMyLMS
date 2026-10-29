@@ -1,5 +1,7 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { Table } from '../../shared/table';
+import { EditIcon } from '../../shared/icons';
 export function createRecentCourses( readRuntime ) {
 	return function RecentCourses( props ) {
 		const {
@@ -14,9 +16,7 @@ export function createRecentCourses( readRuntime ) {
 			df: EmptyIcon,
 			f: Router,
 			g: ReactHooks,
-			pG,
 			q,
-			sN: TableModule,
 			sn,
 			uf: EmptyState,
 			v,
@@ -394,7 +394,7 @@ export function createRecentCourses( readRuntime ) {
 										},
 										icon: (
 											<span>
-												<pG.A />
+												<EditIcon />
 											</span>
 										),
 									},
@@ -407,7 +407,7 @@ export function createRecentCourses( readRuntime ) {
 			];
 		return (
 			<React.Fragment>
-				<TableModule.A
+				<Table
 					rowKey={ 'id' }
 					columns={ s }
 					dataSource={ t || [] }

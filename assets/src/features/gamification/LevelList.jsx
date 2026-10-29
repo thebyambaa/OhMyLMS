@@ -2,6 +2,7 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
+import { EditIcon } from '../../shared/icons';
 export function createLevelList( readRuntime ) {
 	return function LevelList( props ) {
 		const {
@@ -22,7 +23,6 @@ export function createLevelList( readRuntime ) {
 			g: ReactHooks,
 			l,
 			lf,
-			pG,
 			q,
 			q3,
 			uf,
@@ -119,7 +119,7 @@ export function createLevelList( readRuntime ) {
 										},
 										icon: (
 											<span>
-												<pG.A />
+												<EditIcon />
 											</span>
 										),
 									},

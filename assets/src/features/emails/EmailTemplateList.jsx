@@ -1,10 +1,10 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import { MovableTabPanel } from '../navigation/MovableTabPanel';
+import { Switcher } from '../../shared/spinner';
 export function createEmailTemplateList( readRuntime ) {
 	return function EmailTemplateList() {
 		const {
-			Bt,
 			D: Buttons,
 			I: Controls,
 			React,
@@ -166,7 +166,7 @@ export function createEmailTemplateList( readRuntime ) {
 														'ohmylms-email-listing-card-actions'
 													}
 												>
-													<Bt.A
+													<Switcher
 														onChange={ function () {
 															var _nLocal3;
 															return ( function (

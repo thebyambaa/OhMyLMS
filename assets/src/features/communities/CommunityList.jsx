@@ -1,6 +1,10 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { Skeleton } from '../../shared/skeleton';
+import { Tooltip } from '../../shared/tooltip';
+import { Table } from '../../shared/table';
+import { InfoIcon } from '../../shared/icons';
 export function createCommunityList( readRuntime ) {
 	return function CommunityList() {
 		const {
@@ -10,21 +14,17 @@ export function createCommunityList( readRuntime ) {
 			Ge,
 			I: Controls,
 			L9,
-			Mt,
 			N9: CommunityEditor,
 			Ne,
 			React,
 			Rt,
 			SB,
 			T: StoreModule,
-			V,
-			_,
 			b: I18n,
 			df: EmptyIcon,
 			g: ReactHooks,
 			l,
 			q,
-			sN: TableModule,
 			uf: EmptyState,
 			y: WordPressData,
 		} = readRuntime();
@@ -563,7 +563,7 @@ export function createCommunityList( readRuntime ) {
 																					}
 																				>
 																					{ o ? (
-																						<_.A
+																						<Skeleton
 																							rows={
 																								3
 																							}
@@ -660,7 +660,7 @@ export function createCommunityList( readRuntime ) {
 																										}
 																									</Controls.TextWP>
 																									{ _eLocal12.tooltip && (
-																										<V.A
+																										<Tooltip
 																											text={
 																												_eLocal12.tooltip
 																											}
@@ -672,9 +672,9 @@ export function createCommunityList( readRuntime ) {
 																											}
 																										>
 																											<React.Fragment>
-																												<Mt.A />
+																												<InfoIcon />
 																											</React.Fragment>
-																										</V.A>
+																										</Tooltip>
 																									) }
 																								</Controls.FlexWP>
 																								<span
@@ -750,7 +750,7 @@ export function createCommunityList( readRuntime ) {
 											isBorderless={ ! 0 }
 											padding={ '24px' }
 										>
-											<TableModule.A
+											<Table
 												columns={ C }
 												dataSource={ S }
 												loading={ u }

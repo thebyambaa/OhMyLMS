@@ -71,7 +71,6 @@
 			"React",
 			"T",
 			"Xl",
-			"_",
 			"_f",
 			"b",
 			"bf",
@@ -114,7 +113,6 @@
 			"b",
 			"g",
 			"gr",
-			"wr",
 			"y"
 		]
 	},
@@ -190,7 +188,7 @@
 		"binding": "fz",
 		"name": "CourseCapacity",
 		"file": "CourseCapacity.jsx",
-		"dependencies": [ "Bt", "I", "React", "b", "pz" ]
+		"dependencies": [ "I", "React", "b", "pz" ]
 	},
 	{
 		"binding": "_z",
@@ -220,7 +218,7 @@
 		"binding": "jz",
 		"name": "CourseReviews",
 		"file": "CourseReviews.jsx",
-		"dependencies": [ "Bt", "I", "React", "b" ]
+		"dependencies": [ "I", "React", "b" ]
 	},
 	{
 		"binding": "_V",
@@ -309,7 +307,6 @@
 			"Wf",
 			"b",
 			"g",
-			"jf",
 			"kf",
 			"l"
 		]
@@ -365,19 +362,7 @@
 		"binding": "hG",
 		"name": "CourseListItem",
 		"file": "CourseListItem.jsx",
-		"dependencies": [
-			"Ge",
-			"I",
-			"React",
-			"SB",
-			"b",
-			"f",
-			"g",
-			"gG",
-			"pG",
-			"v",
-			"vG"
-		]
+		"dependencies": [ "Ge", "I", "React", "SB", "b", "f", "g", "v", "vG" ]
 	},
 	{
 		"binding": "lU",
@@ -414,7 +399,6 @@
 			"T",
 			"Ul",
 			"Zl",
-			"_",
 			"f",
 			"g",
 			"ga",

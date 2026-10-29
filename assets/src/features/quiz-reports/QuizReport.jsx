@@ -1,6 +1,7 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { Table } from '../../shared/table';
 export function createQuizReport( readRuntime ) {
 	return function QuizReport() {
 		const {
@@ -18,7 +19,6 @@ export function createQuizReport( readRuntime ) {
 			fN: Pagination,
 			g: ReactHooks,
 			l: ApiFetchModule,
-			sN: Table,
 			sn: DateLibrary,
 			uf: EmptyState,
 			v: RouterLinks,
@@ -363,7 +363,7 @@ export function createQuizReport( readRuntime ) {
 						</Controls.FlexWP>
 						<Controls.CardWP isBorderless={ ! 0 }>
 							<Controls.SpacerWP padding={ 5 } marginTop={ 4 }>
-								<Table.A
+								<Table
 									columns={ columns }
 									rowKey={ 'quiz_attempt_id' }
 									dataSource={ filteredSubmissions.slice(

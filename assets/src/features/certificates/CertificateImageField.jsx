@@ -1,14 +1,14 @@
 import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { Tooltip } from '../../shared/tooltip';
+import { InfoIcon } from '../../shared/icons';
 export function createCertificateImageField( readRuntime ) {
 	return function CertificateImageField( props ) {
 		const {
 			I: Controls,
 			M,
-			Mt,
 			React,
-			V,
 			b: I18n,
 			g: ReactHooks,
 			hu,
@@ -205,11 +205,11 @@ export function createCertificateImageField( readRuntime ) {
 								{ i }
 							</Controls.HeadingWP>
 							{ c && (
-								<V.A title={ c }>
+								<Tooltip title={ c }>
 									<React.Fragment>
-										<Mt.A />
+										<InfoIcon />
 									</React.Fragment>
-								</V.A>
+								</Tooltip>
 							) }
 						</Controls.FlexWP>
 						{ n ? (

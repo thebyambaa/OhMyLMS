@@ -114,8 +114,11 @@ function harness( states = [] ) {
 				: globals.response;
 		},
 		sN: { A: 'Table' },
+		Table: 'Table',
 		Mt: { A: 'InfoIcon' },
+		InfoIcon: 'InfoIcon',
 		V: { A: 'Tooltip' },
+		Tooltip: 'Tooltip',
 	};
 	Object.assign( globals, {
 		T: { default: 'store' },
@@ -123,6 +126,7 @@ function harness( states = [] ) {
 		L: { isProActive: true },
 		He: { default: 'ProDialog' },
 		_: { A: 'Skeleton' },
+		Skeleton: 'Skeleton',
 		q: { Icon: 'Icon' },
 		Ne: { A: 'MenuIcon' },
 		community: {
