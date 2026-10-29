@@ -2,7 +2,7 @@
 /**
  * Webhooks Migration Class
  *
- * Handles the creation of webhooks table when the integration is enabled
+ * Handles the creation and upgrade of the webhooks tables.
  *
  * @package OhMyLMS\Integrations\Webhooks
  * @since 1.0.0
@@ -21,6 +21,18 @@ class WebhooksMigration {
 	 * Option key to track if webhooks table is created
 	 */
 	const WEBHOOKS_TABLE_CREATED_OPTION = 'ohmylms_webhooks_table_created';
+
+	/**
+	 * Option that stores the installed schema version of the webhooks tables.
+	 */
+	const DB_VERSION_OPTION = 'ohmylms_webhooks_db_version';
+
+	/**
+	 * Current schema version. Bump when get_schema() changes.
+	 *
+	 * 2: adds the `secret` column and the deliveries table.
+	 */
+	const DB_VERSION = '2';
 
 	/**
 	 * Initialize the migration
@@ -42,13 +54,79 @@ class WebhooksMigration {
 		if ( ! self::is_webhooks_enabled() ) {
 			return;
 		}
-		// Check if table is already created.
+
+		self::ensure_schema();
+	}
+
+	/**
+	 * Create or upgrade the webhooks tables when the stored schema version is behind.
+	 *
+	 * Safe to call on every request: it costs one autoloaded option read once the schema is current.
+	 * The REST controller calls it so the API works even before the integration is switched on.
+	 *
+	 * @since 1.1.0
+	 * @return void
+	 */
+	public static function ensure_schema() {
 		if ( self::is_webhooks_table_created() ) {
 			return;
 		}
 
-		// Create the table.
 		self::create_webhooks_table();
+	}
+
+	/**
+	 * Get the CREATE TABLE statements for the webhooks and deliveries tables.
+	 *
+	 * Formatted for dbDelta(): two spaces after PRIMARY KEY, one column per line.
+	 *
+	 * @param string $charset_collate Charset and collation clause.
+	 * @return string
+	 * @since 1.1.0
+	 */
+	public static function get_schema( $charset_collate = '' ) {
+		global $wpdb;
+
+		if ( '' === $charset_collate ) {
+			$charset_collate = $wpdb->get_charset_collate();
+		}
+
+		return "CREATE TABLE {$wpdb->prefix}ohmylms_webhooks (
+			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			name VARCHAR(255) NOT NULL,
+			trigger_event VARCHAR(100) NOT NULL,
+			webhook_url TEXT NOT NULL,
+			http_method VARCHAR(10) NOT NULL DEFAULT 'POST',
+			data_type VARCHAR(20) NOT NULL DEFAULT 'json',
+			data_mapping LONGTEXT,
+			secret VARCHAR(128) NOT NULL DEFAULT '',
+			status VARCHAR(20) NOT NULL DEFAULT 'active',
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY trigger_event (trigger_event),
+			KEY status (status)
+		) $charset_collate;
+		CREATE TABLE {$wpdb->prefix}ohmylms_webhook_deliveries (
+			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			webhook_id BIGINT(20) UNSIGNED NOT NULL,
+			delivery_uuid VARCHAR(36) NOT NULL DEFAULT '',
+			event VARCHAR(100) NOT NULL DEFAULT '',
+			url TEXT NOT NULL,
+			http_method VARCHAR(10) NOT NULL DEFAULT 'POST',
+			status VARCHAR(20) NOT NULL DEFAULT 'success',
+			response_code SMALLINT(5) UNSIGNED NOT NULL DEFAULT 0,
+			duration_ms INT(10) UNSIGNED NOT NULL DEFAULT 0,
+			error_code VARCHAR(100) NOT NULL DEFAULT '',
+			error_message TEXT,
+			request_body TEXT,
+			response_body TEXT,
+			is_test TINYINT(1) NOT NULL DEFAULT 0,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY webhook_id (webhook_id),
+			KEY created_at (created_at)
+		) $charset_collate;";
 	}
 
 	/**
@@ -72,67 +150,28 @@ class WebhooksMigration {
 	}
 
 	/**
-	 * Check if webhooks table is already created
+	 * Check whether the tables exist at the current schema version.
 	 *
 	 * @return bool
 	 * @since 1.0.0
 	 */
 	private static function is_webhooks_table_created() {
-		global $wpdb;
-
-		// First check the option.
-		$option_exists = get_option( self::WEBHOOKS_TABLE_CREATED_OPTION, false );
-
-		if ( $option_exists ) {
-			return true;
-		}
-
-		// Double check if table actually exists in database.
-		$table_name   = $wpdb->prefix . 'ohmylms_webhooks';
-		$table_exists = $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) === $table_name;
-
-		// If table exists but option not set, set the option.
-		if ( $table_exists ) {
-			update_option( self::WEBHOOKS_TABLE_CREATED_OPTION, true );
-			return true;
-		}
-
-		return false;
+		return self::DB_VERSION === (string) get_option( self::DB_VERSION_OPTION, '' );
 	}
 
 	/**
-	 * Create webhooks table
+	 * Create or upgrade the webhooks tables.
 	 *
 	 * @since 1.0.0
 	 */
 	private static function create_webhooks_table() {
-		global $wpdb;
-
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-		$charset_collate = $wpdb->get_charset_collate();
-		$table_name      = $wpdb->prefix . 'ohmylms_webhooks';
-
-		$sql = "CREATE TABLE {$table_name} (
-            id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-            name VARCHAR(255) NOT NULL,
-            trigger_event VARCHAR(100) NOT NULL,
-            webhook_url TEXT NOT NULL,
-            http_method VARCHAR(10) NOT NULL DEFAULT 'POST',
-            data_type VARCHAR(20) NOT NULL DEFAULT 'json',
-            data_mapping LONGTEXT,
-            status VARCHAR(20) NOT NULL DEFAULT 'active',
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            KEY trigger_event (trigger_event),
-            KEY status (status)
-        ) $charset_collate;";
-
-		dbDelta( $sql );
+		dbDelta( self::get_schema() );
 
 		// Mark as created.
 		update_option( self::WEBHOOKS_TABLE_CREATED_OPTION, true );
+		update_option( self::DB_VERSION_OPTION, self::DB_VERSION );
 
 		/**
 		 * Fires after webhooks table is created
@@ -143,18 +182,21 @@ class WebhooksMigration {
 	}
 
 	/**
-	 * Drop webhooks table (for uninstall/cleanup)
+	 * Drop webhooks tables (for uninstall/cleanup)
 	 *
 	 * @since 1.0.0
 	 */
 	public static function drop_webhooks_table() {
 		global $wpdb;
 
-		$table_name = $wpdb->prefix . 'ohmylms_webhooks';
-		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table_name ) );
+		$tables = array( $wpdb->prefix . 'ohmylms_webhook_deliveries', $wpdb->prefix . 'ohmylms_webhooks' );
+		foreach ( $tables as $table_name ) {
+			$wpdb->query( "DROP TABLE IF EXISTS `{$table_name}`" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Trusted table name; uninstall cleanup.
+		}
 
-		// Remove the option.
+		// Remove the options.
 		delete_option( self::WEBHOOKS_TABLE_CREATED_OPTION );
+		delete_option( self::DB_VERSION_OPTION );
 
 		/**
 		 * Fires after webhooks table is dropped
@@ -184,6 +226,6 @@ class WebhooksMigration {
 	public static function table_exists() {
 		global $wpdb;
 		$table_name = self::get_table_name();
-		return $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) === $table_name;
+		return $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table_name ) ) ) === $table_name;
 	}
 }

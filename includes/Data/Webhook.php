@@ -8,6 +8,7 @@
 namespace OhMyLMS\Data;
 
 use OhMyLMS\Abstracts\Data;
+use OhMyLMS\Webhooks\WebhookDelivery;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -48,6 +49,7 @@ class Webhook extends Data {
 		'http_method'   => 'POST',
 		'data_type'     => 'json',
 		'data_mapping'  => '',
+		'secret'        => '',
 		'status'        => 'active',
 		'created_at'    => null,
 		'updated_at'    => null,
@@ -127,18 +129,58 @@ class Webhook extends Data {
 	}
 
 	/**
-	 * Get data mapping
+	 * Get data mapping.
+	 *
+	 * The view context returns a list of `{ key, value }` rows (always an array); the
+	 * edit context returns the raw JSON string kept in the database.
 	 *
 	 * @param string $context What the value is for. Valid values are 'view' and 'edit'.
 	 * @return string|array
 	 */
 	public function get_data_mapping( $context = 'view' ) {
 		$data_mapping = $this->get_prop( 'data_mapping', $context );
-		if ( 'view' === $context && ! empty( $data_mapping ) ) {
-			$decoded = json_decode( $data_mapping, true );
-			return is_array( $decoded ) ? $decoded : array();
+		if ( 'view' === $context ) {
+			if ( is_array( $data_mapping ) ) {
+				return $data_mapping;
+			}
+			$decoded = is_string( $data_mapping ) && '' !== $data_mapping ? json_decode( $data_mapping, true ) : array();
+			return is_array( $decoded ) ? array_values( $decoded ) : array();
 		}
 		return $data_mapping;
+	}
+
+	/**
+	 * Get the signing secret.
+	 *
+	 * Never expose this in list or read responses; use get_secret_hint() instead.
+	 *
+	 * @param string $context What the value is for. Valid values are 'view' and 'edit'.
+	 * @return string
+	 */
+	public function get_secret( $context = 'view' ) {
+		return (string) $this->get_prop( 'secret', $context );
+	}
+
+	/**
+	 * Get a masked hint of the signing secret (prefix plus the last four characters).
+	 *
+	 * @return string Empty string when no secret is set.
+	 */
+	public function get_secret_hint() {
+		$secret = $this->get_secret( 'edit' );
+		if ( '' === $secret ) {
+			return '';
+		}
+		return 'whsec_****' . substr( $secret, -4 );
+	}
+
+	/**
+	 * Set the signing secret.
+	 *
+	 * @param string $secret Signing secret.
+	 */
+	public function set_secret( $secret ) {
+		$this->set_prop( 'secret', (string) $secret );
 	}
 
 	/**
@@ -318,102 +360,46 @@ class Webhook extends Data {
 	}
 
 	/**
-	 * Execute webhook
+	 * Get the supported statuses.
+	 *
+	 * @return array
+	 */
+	public static function get_available_statuses() {
+		return array(
+			'active'   => __( 'Active', 'ohmylms' ),
+			'inactive' => __( 'Inactive', 'ohmylms' ),
+		);
+	}
+
+	/**
+	 * Generate a new random signing secret.
+	 *
+	 * @return string
+	 */
+	public static function generate_secret() {
+		return 'whsec_' . wp_generate_password( 32, false, false );
+	}
+
+	/**
+	 * Execute webhook.
+	 *
+	 * Kept for backwards compatibility; delegates to the shared delivery service so signing,
+	 * SSRF checks, timeouts and logging behave the same everywhere.
 	 *
 	 * @param array $data Data to send with the webhook.
-	 * @return bool|WP_Error
+	 * @return bool|\WP_Error False when inactive, true for a 2xx response, WP_Error otherwise.
 	 */
 	public function execute( $data = array() ) {
 		if ( 'active' !== $this->get_status() ) {
 			return false;
 		}
 
-		$webhook_data = $this->prepare_webhook_data( $data );
+		$payload = WebhookDelivery::map_payload( (array) $data, $this->get_data_mapping() );
+		$result  = WebhookDelivery::send( $this, $payload, array( 'event' => $this->get_trigger_event() ) );
 
-		$args = array(
-			'method'  => $this->get_http_method(),
-			'timeout' => 30,
-			'headers' => array(),
-		);
-
-		// Set content type based on data type.
-		switch ( $this->get_data_type() ) {
-			case 'json':
-				$args['headers']['Content-Type'] = 'application/json';
-				$args['body']                    = wp_json_encode( $webhook_data );
-				break;
-			case 'xml':
-				$args['headers']['Content-Type'] = 'application/xml';
-				$args['body']                    = $this->array_to_xml( $webhook_data );
-				break;
-			case 'form':
-				$args['headers']['Content-Type'] = 'application/x-www-form-urlencoded';
-				$args['body']                    = http_build_query( $webhook_data );
-				break;
+		if ( ! empty( $result['error'] ) ) {
+			return new \WP_Error( $result['error']['code'], $result['error']['message'] );
 		}
-
-		// Add webhook signature for security.
-		$args['headers']['X-OhMyLMS-Signature'] = hash_hmac( 'sha256', $args['body'], wp_hash( 'ohmylms_webhook_' . $this->get_id() ) );
-		$args['headers']['X-OhMyLMS-Event']     = $this->get_trigger_event();
-
-		$response = wp_remote_request( $this->get_webhook_url(), $args );
-
-		if ( is_wp_error( $response ) ) {
-			return $response;
-		}
-
-		$response_code = wp_remote_retrieve_response_code( $response );
-		return $response_code >= 200 && $response_code < 300;
-	}
-
-	/**
-	 * Prepare webhook data based on mapping
-	 *
-	 * @param array $data Raw data.
-	 * @return array
-	 */
-	private function prepare_webhook_data( $data ) {
-		$mapping = $this->get_data_mapping();
-		if ( empty( $mapping ) ) {
-			return $data;
-		}
-
-		$webhook_data = array();
-		foreach ( $mapping as $webhook_key => $source_key ) {
-			if ( isset( $data[ $source_key ] ) ) {
-				$webhook_data[ $webhook_key ] = $data[ $source_key ];
-			}
-		}
-
-		return $webhook_data;
-	}
-
-	/**
-	 * Convert array to XML
-	 *
-	 * @param array $data Data to convert.
-	 * @return string
-	 */
-	private function array_to_xml( $data ) {
-		$xml = new \SimpleXMLElement( '<webhook/>' );
-		$this->array_to_xml_recursive( $data, $xml );
-		return $xml->asXML();
-	}
-
-	/**
-	 * Recursively convert array to XML
-	 *
-	 * @param array             $data Data to convert.
-	 * @param \SimpleXMLElement $xml XML element.
-	 */
-	private function array_to_xml_recursive( $data, &$xml ) {
-		foreach ( $data as $key => $value ) {
-			if ( is_array( $value ) ) {
-				$child = $xml->addChild( $key );
-				$this->array_to_xml_recursive( $value, $child );
-			} else {
-				$xml->addChild( $key, htmlspecialchars( $value ) );
-			}
-		}
+		return (bool) $result['success'];
 	}
 }

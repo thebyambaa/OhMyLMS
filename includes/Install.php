@@ -455,22 +455,9 @@ class Install {
 				KEY student_id (student_id),
 				KEY course_id (course_id)
 				) $charset_collate;
-			CREATE TABLE {$wpdb->prefix}ohmylms_webhooks (
-				id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-				name VARCHAR(255) NOT NULL,
-				trigger_event VARCHAR(100) NOT NULL,
-				webhook_url TEXT NOT NULL,
-				http_method VARCHAR(10) NOT NULL DEFAULT 'POST',
-				data_type VARCHAR(20) NOT NULL DEFAULT 'json',
-				data_mapping LONGTEXT,
-				status VARCHAR(20) NOT NULL DEFAULT 'active',
-				created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-				updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-				PRIMARY KEY (id),
-				KEY trigger_event (trigger_event),
-				KEY status (status)
-				) $charset_collate;
 			";
+		// The webhooks tables are defined once, next to their migration.
+		$tables .= \OhMyLMS\Integrations\Webhooks\Includes\WebhooksMigration::get_schema( $charset_collate );
 		return $tables;
 	}
 

@@ -447,221 +447,34 @@ class WebhookSender {
 		// Convert to Webhook objects.
 		$webhook_objects = array();
 		foreach ( $webhooks as $webhook_data ) {
-			$webhook_objects[] = new Webhook( $webhook_data->id );
+			try {
+				$webhook_objects[] = new Webhook( $webhook_data->id );
+			} catch ( \Exception $e ) {
+				// The row was removed between the query and the load; skip it.
+				continue;
+			}
 		}
 
 		return $webhook_objects;
 	}
 
 	/**
-	 * Send webhook with payload data
+	 * Send webhook with payload data.
+	 *
+	 * Delivery (SSRF checks, signing, timeout, logging) is handled by WebhookDelivery.
 	 *
 	 * @param Webhook $webhook Webhook object.
 	 * @param array   $payload_data Raw payload data.
-	 * .
+	 *
 	 * @since 1.0.0
 	 */
 	private function send_webhook( $webhook, $payload_data ) {
-		if ( ! $webhook instanceof Webhook || ! $webhook->get_id() ) {
+		if ( ! $webhook instanceof Webhook || ! $webhook->get_id() || '' === $webhook->get_webhook_url() ) {
 			return;
 		}
 
-		$webhook_url  = $webhook->get_webhook_url();
-		$http_method  = $webhook->get_http_method();
-		$data_type    = $webhook->get_data_type();
-		$data_mapping = $webhook->get_data_mapping();
+		$payload = WebhookDelivery::map_payload( (array) $payload_data, $webhook->get_data_mapping() );
 
-		if ( empty( $webhook_url ) ) {
-			return;
-		}
-
-		// Build the final payload based on data mapping.
-		$payload = $this->build_payload( $payload_data, $data_mapping );
-
-		// Prepare request arguments.
-		$args = array(
-			'method'  => $http_method,
-			'timeout' => 30,
-			'headers' => $this->get_headers( $data_type ),
-		);
-
-		// Format payload based on data type.
-		if ( 'GET' === $http_method ) {
-			$webhook_url = add_query_arg( $payload, $webhook_url );
-		} else {
-			$args['body'] = $this->format_payload( $payload, $data_type );
-		}
-
-		// Send the webhook.
-		$response = wp_remote_request( $webhook_url, $args );
-
-		// Log the webhook (optional - you can implement logging if needed).
-		$this->log_webhook( $webhook, $payload, $response );
-	}
-
-	/**
-	 * Build payload from data mapping
-	 *
-	 * @param array  $payload_data Raw payload data.
-	 * @param string $data_mapping Data mapping JSON string.
-	 * @return array Mapped payload.
-	 *
-	 * @since 1.0.0
-	 */
-	private function build_payload( $payload_data, $data_mapping ) {
-		if ( empty( $data_mapping ) ) {
-			return $payload_data;
-		}
-
-		// Decode data mapping if it's a JSON string.
-		if ( is_string( $data_mapping ) ) {
-			$mappings = json_decode( $data_mapping, true );
-		} else {
-			$mappings = $data_mapping;
-		}
-
-		if ( ! is_array( $mappings ) || empty( $mappings ) ) {
-			return $payload_data;
-		}
-
-		$payload = array();
-
-		foreach ( $mappings as $mapping ) {
-			if ( ! isset( $mapping['key'], $mapping['value'] ) ) {
-				continue;
-			}
-
-			$key   = $mapping['key'];
-			$value = $mapping['value'];
-
-			// Skip empty keys.
-			if ( empty( $key ) ) {
-				continue;
-			}
-
-			// Map the value from payload_data.
-			if ( isset( $payload_data[ $value ] ) ) {
-				$payload[ $key ] = $payload_data[ $value ];
-			}
-		}
-
-		return $payload;
-	}
-
-	/**
-	 * Get headers based on data type
-	 *
-	 * @param string $data_type Data type (json, xml, form).
-	 * @return array Headers array.
-	 *
-	 * @since 1.0.0
-	 */
-	private function get_headers( $data_type ) {
-		$headers = array();
-
-		switch ( $data_type ) {
-			case 'json':
-				$headers['Content-Type'] = 'application/json';
-				break;
-			case 'xml':
-				$headers['Content-Type'] = 'application/xml';
-				break;
-			case 'form':
-				$headers['Content-Type'] = 'application/x-www-form-urlencoded';
-				break;
-			default:
-				$headers['Content-Type'] = 'application/json';
-		}
-
-		return $headers;
-	}
-
-	/**
-	 * Format payload based on data type
-	 *
-	 * @param array  $payload Payload array.
-	 * @param string $data_type Data type (json, xml, form).
-	 * @return string Formatted payload.
-	 *
-	 * @since 1.0.0
-	 */
-	private function format_payload( $payload, $data_type ) {
-		switch ( $data_type ) {
-			case 'json':
-				return wp_json_encode( $payload );
-			case 'xml':
-				return $this->array_to_xml( $payload );
-			case 'form':
-				return http_build_query( $payload );
-			default:
-				return wp_json_encode( $payload );
-		}
-	}
-
-	/**
-	 * Convert array to XML
-	 *
-	 * @param array  $data Data array.
-	 * @param string $root Root element name.
-	 * @param object $xml_obj XML object.
-	 * @return string XML string.
-	 *
-	 * @since 1.0.0
-	 */
-	private function array_to_xml( $data, $root = 'root', $xml_obj = null ) {
-		if ( null === $xml_obj ) {
-			$xml_obj = new \SimpleXMLElement( "<?xml version=\"1.0\"?><{$root}></{$root}>" );
-		}
-
-		foreach ( $data as $key => $value ) {
-			$key = is_numeric( $key ) ? "item{$key}" : $key;
-
-			if ( is_array( $value ) ) {
-				$subnode = $xml_obj->addChild( $key );
-				$this->array_to_xml( $value, $root, $subnode );
-			} else {
-				$xml_obj->addChild( $key, htmlspecialchars( $value ) );
-			}
-		}
-
-		return $xml_obj->asXML();
-	}
-
-	/**
-	 * Log webhook request and response
-	 *
-	 * @param Webhook $webhook Webhook object.
-	 * @param array   $payload Payload sent.
-	 * @param mixed   $response Response from wp_remote_request.
-	 * .
-	 * @since 1.0.0
-	 */
-	private function log_webhook( $webhook, $payload, $response ) {
-		// Optional: Implement webhook logging
-		// This could be saved to a custom table or WordPress options.
-
-		$log_data = array(
-			'webhook_id'    => $webhook->get_id(),
-			'webhook_name'  => $webhook->get_name(),
-			'trigger_event' => $webhook->get_trigger_event(),
-			'webhook_url'   => $webhook->get_webhook_url(),
-			'payload'       => $payload,
-			'timestamp'     => current_time( 'mysql' ),
-		);
-
-		if ( is_wp_error( $response ) ) {
-			$log_data['status']  = 'error';
-			$log_data['message'] = $response->get_error_message();
-		} else {
-			$log_data['status']        = 'success';
-			$log_data['response_code'] = wp_remote_retrieve_response_code( $response );
-			$log_data['response_body'] = wp_remote_retrieve_body( $response );
-		}
-
-		// Fire action for logging (can be hooked by other plugins/extensions).
-		do_action( 'ohmylms_webhook_sent', $log_data );
-
-		// Optional: Save to custom table or transient for debugging
-		// You can implement this based on your logging requirements.
+		WebhookDelivery::send( $webhook, $payload, array( 'event' => $webhook->get_trigger_event() ) );
 	}
 }

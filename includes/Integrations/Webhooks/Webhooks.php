@@ -39,7 +39,9 @@ class Webhooks {
 	 * @since 1.0.0
 	 */
 	public function define_constants() {
-		define( 'OHMYLMS_WEBHOOKS_VERSION', self::Version );
+		if ( ! defined( 'OHMYLMS_WEBHOOKS_VERSION' ) ) {
+			define( 'OHMYLMS_WEBHOOKS_VERSION', self::Version );
+		}
 	}
 
 	/**
