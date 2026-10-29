@@ -86,7 +86,9 @@ final class Taxonomy {
 		$uuid = (string) get_term_meta( $term_id, '_ohmylms_skill_uuid', true );
 		if ( '' === $uuid && term_exists( $term_id, self::NAME ) ) {
 			$uuid = wp_generate_uuid4();
-			add_term_meta( $term_id, '_ohmylms_skill_uuid', $uuid, true ) || ( $uuid = (string) get_term_meta( $term_id, '_ohmylms_skill_uuid', true ) );
+			if ( ! add_term_meta( $term_id, '_ohmylms_skill_uuid', $uuid, true ) ) {
+				$uuid = (string) get_term_meta( $term_id, '_ohmylms_skill_uuid', true );
+			}
 		}
 		return $uuid;
 	}
@@ -127,6 +129,22 @@ final class Taxonomy {
 	 * @param array $prerequisites Prerequisites.
 	 */
 	public static function set_prerequisites( $term_id, array $prerequisites ) {
+		$validated = self::validate_prerequisites( $term_id, $prerequisites );
+		if ( is_wp_error( $validated ) ) {
+			return $validated;
+		}
+		update_term_meta( $term_id, '_ohmylms_prerequisites', $validated );
+		return $validated;
+	}
+
+	/**
+	 * Validate prerequisite edits without changing term metadata.
+	 *
+	 * @param int   $term_id Skill identifier, or zero before creation.
+	 * @param int[] $prerequisites Requested prerequisites.
+	 * @return int[]|\WP_Error
+	 */
+	public static function validate_prerequisites( $term_id, array $prerequisites ) {
 		$term_id       = (int) $term_id;
 		$prerequisites = array_values( array_unique( array_filter( array_map( 'intval', $prerequisites ) ) ) );
 		foreach ( $prerequisites as $id ) {
@@ -145,7 +163,6 @@ final class Taxonomy {
 				);
 			}
 		}
-		update_term_meta( $term_id, '_ohmylms_prerequisites', $prerequisites );
 		return $prerequisites;
 	}
 

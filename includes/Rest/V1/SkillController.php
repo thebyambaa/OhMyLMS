@@ -28,6 +28,110 @@ class SkillController extends RestController {
 	 * Register routes for Skill controller.
 	 */
 	public function register_routes() {
+		$write_args = array(
+			'name'            => array(
+				'type'      => 'string',
+				'minLength' => 1,
+				'maxLength' => 200,
+			),
+			'code'            => array(
+				'type'      => 'string',
+				'maxLength' => 40,
+			),
+			'description'     => array(
+				'type'      => 'string',
+				'maxLength' => 10000,
+			),
+			'parent'          => array(
+				'type'    => 'integer',
+				'minimum' => 0,
+			),
+			'prerequisites'   => array(
+				'type'     => 'array',
+				'maxItems' => 100,
+				'items'    => array(
+					'type'    => 'integer',
+					'minimum' => 1,
+				),
+			),
+			'public_practice' => array( 'type' => 'boolean' ),
+		);
+		register_rest_route(
+			$this->namespace,
+			'/skills/(?P<id>[\d]+)/relationships/(?P<kind>lessons|courses)',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'relationship_targets' ),
+				'permission_callback' => array( $this, 'author_permission' ),
+				'args'                => array(
+					'page'        => array(
+						'type'    => 'integer',
+						'minimum' => 1,
+						'default' => 1,
+					),
+					'search'      => array(
+						'type'      => 'string',
+						'maxLength' => 200,
+						'default'   => '',
+					),
+					'linked_only' => array(
+						'type'    => 'boolean',
+						'default' => false,
+					),
+				),
+			)
+		);
+		register_rest_route(
+			$this->namespace,
+			'/skills/(?P<id>[\d]+)/relationships/(?P<kind>lessons|courses)/(?P<post_id>[\d]+)',
+			array(
+				'methods'             => 'PUT',
+				'callback'            => array( $this, 'change_relationship' ),
+				'permission_callback' => array( $this, 'author_permission' ),
+				'args'                => array(
+					'linked' => array(
+						'type'     => 'boolean',
+						'required' => true,
+					),
+				),
+			)
+		);
+		register_rest_route(
+			$this->namespace,
+			'/skills/catalog',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'catalog' ),
+				'permission_callback' => array( $this, 'author_permission' ),
+				'args'                => array(
+					'page'     => array(
+						'type'    => 'integer',
+						'minimum' => 1,
+						'default' => 1,
+					),
+					'per_page' => array(
+						'type'    => 'integer',
+						'minimum' => 1,
+						'maximum' => 50,
+						'default' => 20,
+					),
+					'search'   => array(
+						'type'      => 'string',
+						'maxLength' => 200,
+						'default'   => '',
+					),
+					'include'  => array(
+						'type'     => 'array',
+						'items'    => array(
+							'type'    => 'integer',
+							'minimum' => 1,
+						),
+						'maxItems' => 50,
+						'default'  => array(),
+					),
+				),
+			)
+		);
 		register_rest_route(
 			$this->namespace,
 			'/skills/(?P<id>[\d]+)/translate',
@@ -49,6 +153,7 @@ class SkillController extends RestController {
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create' ),
+					'args'                => $write_args,
 					'permission_callback' => array( $this, 'author_permission' ),
 				),
 			)
@@ -65,6 +170,7 @@ class SkillController extends RestController {
 				array(
 					'methods'             => WP_REST_Server::EDITABLE,
 					'callback'            => array( $this, 'update' ),
+					'args'                => $write_args,
 					'permission_callback' => array( $this, 'author_permission' ),
 				),
 				array(
@@ -215,11 +321,201 @@ class SkillController extends RestController {
 	}
 
 	/**
+	 * Search editable posts, optionally limited to this skill's current links.
+	 *
+	 * @param WP_REST_Request $request Skill, post kind and bounded page.
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function relationship_targets( WP_REST_Request $request ) {
+		$id = (int) $request['id'];
+		if ( ! term_exists( $id, Taxonomy::NAME ) ) {
+			return new WP_Error( 'ohmylms_skill_missing', __( 'Skill not found.', 'ohmylms' ), array( 'status' => 404 ) );
+		}
+		$post_type = 'courses' === $request['kind'] ? OHMYLMS_COURSE_CPT : OHMYLMS_LESSON_CPT;
+		$args      = array(
+			'post_type'      => $post_type,
+			'post_status'    => array( 'publish', 'draft', 'pending', 'private', 'future' ),
+			'posts_per_page' => 20,
+			'paged'          => $request['page'],
+			's'              => (string) $request['search'],
+			'orderby'        => array(
+				'title' => 'ASC',
+				'ID'    => 'ASC',
+			),
+		);
+		$type      = get_post_type_object( $post_type );
+		if ( ! $type || ! current_user_can( $type->cap->edit_others_posts ) ) {
+			$args['author'] = get_current_user_id();
+		}
+		if ( $request['linked_only'] ) {
+			$args['tax_query'] = array(
+				array(
+					'taxonomy'         => Taxonomy::NAME,
+					'terms'            => array( $id ),
+					'include_children' => false,
+				),
+			);
+		}
+		$query = new \WP_Query( $args );
+		$rows  = array();
+		foreach ( $query->posts as $post ) {
+			if ( current_user_can( 'edit_post', $post->ID ) ) {
+				$rows[] = array(
+					'id'     => (int) $post->ID,
+					'title'  => html_entity_decode( get_the_title( $post ), ENT_QUOTES, 'UTF-8' ),
+					'linked' => has_term( $id, Taxonomy::NAME, $post->ID ),
+				);
+			}
+		}
+		$response = rest_ensure_response( $rows );
+		$response->header( 'X-WP-Total', (int) $query->found_posts );
+		$response->header( 'X-WP-TotalPages', (int) $query->max_num_pages );
+		return $response;
+	}
+
+	/**
+	 * Change one relationship without replacing unseen links.
+	 *
+	 * @param WP_REST_Request $request Skill, post and desired linked state.
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function change_relationship( WP_REST_Request $request ) {
+		$id      = (int) $request['id'];
+		$post_id = (int) $request['post_id'];
+		if ( ! term_exists( $id, Taxonomy::NAME ) ) {
+			return new WP_Error( 'ohmylms_skill_missing', __( 'Skill not found.', 'ohmylms' ), array( 'status' => 404 ) );
+		}
+		$post_type = 'courses' === $request['kind'] ? OHMYLMS_COURSE_CPT : OHMYLMS_LESSON_CPT;
+		if ( get_post_type( $post_id ) !== $post_type || ! current_user_can( 'edit_post', $post_id ) ) {
+			return AccessPolicy::denied( __( 'You cannot change links for this post.', 'ohmylms' ) );
+		}
+		$result = $request['linked'] ? wp_add_object_terms( $post_id, $id, Taxonomy::NAME ) : wp_remove_object_terms( $post_id, $id, Taxonomy::NAME );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		return rest_ensure_response(
+			array(
+				'id'     => $post_id,
+				'linked' => has_term( $id, Taxonomy::NAME, $post_id ),
+			)
+		);
+	}
+
+	/**
+	 * Bounded summaries without loading every skill's linked posts.
+	 *
+	 * @param WP_REST_Request $request Pagination, search and optional identifiers.
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function catalog( WP_REST_Request $request ) {
+		$args  = array(
+			'taxonomy'     => Taxonomy::NAME,
+			'hide_empty'   => false,
+			'hierarchical' => false,
+			'orderby'      => 'name',
+			'order'        => 'ASC',
+			'search'       => (string) $request['search'],
+			'include'      => $request['include'],
+		);
+		$total = wp_count_terms( $args );
+		if ( is_wp_error( $total ) ) {
+			return $total;
+		}
+		$pages = (int) ceil( (int) $total / $request['per_page'] );
+		if ( 1 < $request['page'] && $request['page'] > $pages ) {
+			return new WP_Error( 'ohmylms_skill_invalid_page', __( 'This skill page does not exist.', 'ohmylms' ), array( 'status' => 400 ) );
+		}
+		$args['number'] = $request['per_page'];
+		$args['offset'] = ( $request['page'] - 1 ) * $request['per_page'];
+		$terms          = get_terms( $args );
+		if ( is_wp_error( $terms ) ) {
+			return $terms;
+		}
+		$rows = array();
+		foreach ( $terms as $term ) {
+			$rows[] = array(
+				'id'            => (int) $term->term_id,
+				'name'          => Taxonomy::plain( $term->name ),
+				'code'          => (string) get_term_meta( $term->term_id, '_ohmylms_skill_code', true ),
+				'description'   => Taxonomy::plain( $term->description ),
+				'parent'        => (int) $term->parent,
+				'prerequisites' => Taxonomy::prerequisites( $term->term_id ),
+				'archived'      => \OhMyLMS\Skills\Provenance::archived( $term->term_id ),
+			);
+		}
+		$response = rest_ensure_response( $rows );
+		$response->header( 'X-WP-Total', (int) $total );
+		$response->header( 'X-WP-TotalPages', $pages );
+		return $response;
+	}
+
+	/**
+	 * Reject invalid edits before writing any metadata or term fields.
+	 *
+	 * @param int             $id Existing identifier, or zero for creation.
+	 * @param WP_REST_Request $request Requested fields.
+	 * @return true|WP_Error
+	 */
+	private function validate_edit( $id, WP_REST_Request $request ) {
+		foreach ( array( 'name', 'code', 'description' ) as $field ) {
+			if ( $request->has_param( $field ) && ! is_string( $request[ $field ] ) ) {
+				return new WP_Error( 'ohmylms_skill_invalid', __( 'Skill text fields must be strings.', 'ohmylms' ), array( 'status' => 400 ) );
+			}
+		}
+		if ( $request->has_param( 'name' ) && '' === trim( sanitize_text_field( $request['name'] ) ) ) {
+			return new WP_Error( 'ohmylms_skill_invalid', __( 'A skill name is required.', 'ohmylms' ), array( 'status' => 400 ) );
+		}
+		if ( isset( $request['parent'] ) ) {
+			$parent = filter_var( $request['parent'], FILTER_VALIDATE_INT, array( 'options' => array( 'min_range' => 0 ) ) );
+			if ( false === $parent || ( $parent && ! term_exists( $parent, Taxonomy::NAME ) ) ) {
+				return new WP_Error( 'ohmylms_skill_invalid', __( 'Choose an existing parent skill.', 'ohmylms' ), array( 'status' => 400 ) );
+			}
+			if ( $id && ( $parent === $id || ( $parent && term_is_ancestor_of( $id, $parent, Taxonomy::NAME ) ) ) ) {
+				return new WP_Error( 'ohmylms_skill_cycle', __( 'A skill cannot be nested under itself.', 'ohmylms' ), array( 'status' => 400 ) );
+			}
+		}
+		if ( isset( $request['public_practice'] ) && (bool) get_term_meta( $id, '_ohmylms_public_practice', true ) !== rest_sanitize_boolean( $request['public_practice'] ) && ! current_user_can( 'manage_options' ) ) {
+			return AccessPolicy::denied( __( 'Only an administrator can make a practice pool public.', 'ohmylms' ) );
+		}
+		foreach ( array(
+			'objective'    => 'Objectives',
+			'translations' => 'Translations',
+		) as $field => $class_name ) {
+			if ( isset( $request[ $field ] ) ) {
+				$class  = '\\OhMyLMS\\Skills\\' . $class_name;
+				$result = $class::normalize( $request[ $field ] );
+				if ( is_wp_error( $result ) ) {
+					return $result;
+				}
+			}
+		}
+		if ( isset( $request['prerequisites'] ) ) {
+			if ( ! is_array( $request['prerequisites'] ) || 100 < count( $request['prerequisites'] ) ) {
+				return new WP_Error( 'ohmylms_skill_invalid', __( 'Supply at most 100 prerequisite identifiers.', 'ohmylms' ), array( 'status' => 400 ) );
+			}
+			foreach ( $request['prerequisites'] as $prerequisite ) {
+				if ( false === filter_var( $prerequisite, FILTER_VALIDATE_INT, array( 'options' => array( 'min_range' => 1 ) ) ) ) {
+					return new WP_Error( 'ohmylms_skill_invalid', __( 'Invalid prerequisite identifier.', 'ohmylms' ), array( 'status' => 400 ) );
+				}
+			}
+			$result = Taxonomy::validate_prerequisites( $id, $request['prerequisites'] );
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+		}
+		return true;
+	}
+
+	/**
 	 * Create for Skill controller.
 	 *
 	 * @param WP_REST_Request $request REST request.
 	 */
 	public function create( WP_REST_Request $request ) {
+		$valid = $this->validate_edit( 0, $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
 		$name = sanitize_text_field( (string) $request['name'] );
 		if ( '' === $name ) {
 			return new WP_Error( 'ohmylms_skill_invalid', __( 'A skill name is required.', 'ohmylms' ), array( 'status' => 400 ) ); }
@@ -257,6 +553,10 @@ class SkillController extends RestController {
 		$id = (int) $request['id'];
 		if ( ! term_exists( $id, Taxonomy::NAME ) ) {
 			return new WP_Error( 'ohmylms_skill_missing', __( 'Skill not found.', 'ohmylms' ), array( 'status' => 404 ) ); }
+		$valid = $this->validate_edit( $id, $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
 		$args = array();
 		if ( isset( $request['name'] ) ) {
 			$args['name'] = sanitize_text_field( (string) $request['name'] ); }
@@ -268,14 +568,15 @@ class SkillController extends RestController {
 				return new WP_Error( 'ohmylms_skill_cycle', __( 'A skill cannot be nested under itself.', 'ohmylms' ), array( 'status' => 400 ) ); }
 			$args['parent'] = $parent;
 		}
-		$result = $this->apply_meta( $id, $request );
-		if ( is_wp_error( $result ) ) {
-			return $result; }
 		if ( $args ) {
 			$updated = wp_update_term( $id, Taxonomy::NAME, $args );
 			if ( is_wp_error( $updated ) ) {
 				$updated->add_data( array( 'status' => 400 ) );
 				return $updated; }
+		}
+		$result = $this->apply_meta( $id, $request );
+		if ( is_wp_error( $result ) ) {
+			return $result;
 		}
 		return rest_ensure_response( Taxonomy::describe( $id ) );
 	}
@@ -434,7 +735,7 @@ class SkillController extends RestController {
 				if ( current_user_can( 'edit_post', $post->ID ) ) {
 					$rows[] = array(
 						'id'                => (int) $post->ID,
-						'title'             => get_the_title( $post ) ?: '#' . $post->ID,
+						'title'             => ( '' !== get_the_title( $post ) ? get_the_title( $post ) : '#' . $post->ID ),
 						'native_editor_url' => \OhMyLMS\Learning\NativeLessonEditor::edit_url( $post->ID ),
 					); }
 			}
