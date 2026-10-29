@@ -1,0 +1,49 @@
+@import url(./syllabus-spreadsheet.css);
+@import url(./syllabus-mindmap.css);
+
+.ohmylms-workspace-objective-summary {
+	line-height: 1.6;
+	margin: 12px 0;
+}
+
+.ohmylms-unified-workspace :where(.ohmylms-ws-pane-title > .ohmylms-ws-field) {
+	flex: 1;
+	min-width: 0;
+}
+
+.ohmylms-workspace-filters {
+	display: grid;
+	gap: 10px;
+	padding: 12px;
+}
+
+.ohmylms-ws-connection-count {
+	display: block;
+	font-size: 11px;
+	font-weight: 400;
+	color: #646970;
+}
+
+.ohmylms-workspace-connection-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	flex-wrap: wrap;
+}
+
+.ohmylms-workspace-connection-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.ohmylms-workspace-connection-form {
+	padding: 16px 0;
+}
+
+.ohmylms-workspace-connections {
+	margin: 16px 0 28px;
+	min-width: 0;
+}
+

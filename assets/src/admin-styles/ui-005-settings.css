@@ -1,0 +1,11 @@
+@media (max-width: 782px) {
+
+	.ohmylms-feature-settings-header {
+		align-items: flex-start;
+		flex-direction: column;
+		margin: 20px 4px 0;
+		padding: 18px;
+		gap: 16px;
+	}
+}
+

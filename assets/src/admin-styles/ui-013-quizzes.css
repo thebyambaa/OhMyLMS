@@ -1,0 +1,32 @@
+.ohmylms-question-skills {
+	margin-top: 16px;
+}
+
+.ohmylms-quiz-skills-tab {
+	display: grid;
+	gap: 16px;
+	padding: 16px 0;
+}
+
+.ohmylms-quiz-skills-block {
+	padding: 16px;
+	border: 1px solid #e3e6eb;
+	border-radius: var(--oml-radius-card, 8px);
+	background: #fff;
+}
+
+.ohmylms-quiz-skills-question {
+	display: grid;
+	grid-template-columns: 32px minmax(120px, 1fr) minmax(160px, 2fr) auto;
+	align-items: center;
+	gap: 8px 12px;
+	padding: 10px 0;
+	border-top: 1px solid #eef0f3;
+}
+
+.ohmylms-quiz-skills-prompt {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+

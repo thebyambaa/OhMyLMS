@@ -1,0 +1,30 @@
+.ohmylms-streak-settings h2 {
+	margin: 0 0 8px;
+	font-size: 20px;
+	line-height: 1.4;
+}
+
+.ohmylms-streak-settings h3 {
+	margin: 0 0 12px;
+	font-size: 16px;
+	line-height: 1.5;
+}
+
+.ohmylms-streak-settings p {
+	margin: 8px 0 16px;
+	color: var(--ohmylms-admin-muted-color, #64748b);
+	font-size: 13px;
+	line-height: 1.65;
+}
+
+.ohmylms-streak-settings__details summary {
+	cursor: pointer;
+	font-weight: 500;
+	line-height: 1.6;
+}
+
+.ohmylms-streak-settings__milestone legend {
+	padding: 0 8px;
+	font-weight: 600;
+}
+

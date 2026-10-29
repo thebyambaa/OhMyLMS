@@ -90,6 +90,9 @@ export default {
 	],
 	ignoreFiles: [
 		...compiled_styles,
+		// Lint the authored ui-* modules; these are their generated compatibility outputs.
+		'assets/css/admin-ui.css',
+		'assets/css/oml-ui-*.css',
 		'node_modules/**',
 		'vendor/**',
 		'build/**',

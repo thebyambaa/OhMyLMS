@@ -1,0 +1,16 @@
+.ohmylms-quiz-skills {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 8px;
+	margin: 0 0 12px;
+	font-size: 13px;
+}
+
+.ohmylms-quiz-skill-chip {
+	padding: 2px 10px;
+	border-radius: 999px;
+	background: #efe9fb;
+	color: var(--oml-primary-hover, #5b2fc4);
+}
+

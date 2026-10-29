@@ -1,0 +1,89 @@
+@media (max-width: 782px) {
+
+	.ohmylms-ws {
+		height: auto;
+		min-height: 0;
+	}
+
+	.ohmylms-ws-body {
+		flex-direction: column;
+	}
+
+	.ohmylms-ws-side {
+		flex-basis: auto;
+		width: auto;
+		border-inline-end: 0;
+		border-bottom: 1px solid var(--ws-border);
+	}
+
+	.ohmylms-ws-side-body {
+		max-height: 40vh;
+	}
+
+	.ohmylms-ws-main {
+		padding: 0 16px 48px;
+		overflow: visible;
+	}
+
+	.ohmylms-ws-title {
+		font-size: 24px;
+	}
+
+	.ohmylms-ws-header {
+		padding: 10px 14px;
+	}
+
+	.ohmylms-ws-side.is-collapsed {
+		flex-basis: auto;
+		width: auto;
+		border-inline-end: 0;
+		border-bottom: 1px solid var(--ws-border);
+	}
+
+	.ohmylms-ws-side.is-collapsed .ohmylms-ws-add-chapter {
+		display: inline-flex;
+	}
+
+	.ohmylms-ws-side.is-collapsed .ohmylms-ws-side-count {
+		display: inline-flex;
+	}
+
+	.ohmylms-ws-side.is-collapsed .ohmylms-ws-side-tools.is-header {
+		display: inline-flex;
+	}
+}
+
+/* Syllabus-level category tags; skill panes use a selection-only dropdown. */
+
+.ohmylms-form-description [role="toolbar"] {
+	border: 1px solid var(--oml-border, #dcdcde);
+	background: #fafafa;
+	display: flex;
+}
+
+.ohmylms-form-description [role="textbox"] {
+	min-height: 80px;
+	border: 1px solid var(--oml-border, #dcdcde);
+	border-top: 0;
+	padding: 12px;
+	outline-color: var(--oml-primary-hover, #7153c6);
+}
+
+.ohmylms-shared-answers > .components-button {
+	justify-self: start;
+}
+
+.ohmylms-shared-answer-row > .components-base-control {
+	flex: 1 1 180px;
+	margin: 0;
+}
+
+.ohmylms-shared-answer-row .components-base-control__field {
+	margin-bottom: 0;
+}
+
+.ohmylms-shared-answer-row > .components-button {
+	flex: 0 0 auto;
+	min-width: 30px;
+}
+

@@ -1,0 +1,106 @@
+.ohmylms-ext-header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px 24px;
+	margin: 0 0 20px;
+}
+
+.ohmylms-ext-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.ohmylms-mindmap {
+	container-type: inline-size;
+	container-name: ohmylms-mindmap;
+	margin: 0 0 24px;
+	padding: 16px;
+	border: 1px solid var(--ohmylms-admin-border, #dcdcde);
+	border-radius: var(--ohmylms-admin-radius, 7px);
+}
+
+.ohmylms-mindmap-actions {
+	display: flex;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.ohmylms-mindmap-scroll {
+	max-height: none;
+	overflow: visible;
+	padding: 16px;
+	background: var(--ohmylms-admin-subtle, #f4f5f7);
+	border-radius: var(--ohmylms-admin-radius, 7px);
+}
+
+.ohmylms-mindmap-stage {
+	display: flex;
+	align-items: center;
+	gap: 24px;
+	width: max-content;
+	min-width: 100%;
+}
+
+.ohmylms-mindmap-node {
+	position: relative;
+	box-sizing: border-box;
+	flex-shrink: 0;
+	width: 220px;
+	padding: 12px;
+	border: 1px solid var(--ohmylms-admin-border, #dcdcde);
+	border-radius: var(--ohmylms-admin-radius, 7px);
+	background: var(--ohmylms-admin-surface, #fff);
+	overflow-wrap: anywhere;
+}
+
+.ohmylms-mindmap-root {
+	position: relative;
+	box-sizing: border-box;
+	flex-shrink: 0;
+	padding: 12px;
+	border: 1px solid var(--ohmylms-admin-border, #dcdcde);
+	border-radius: var(--ohmylms-admin-radius, 7px);
+	background: var(--ohmylms-admin-surface, #fff);
+	overflow-wrap: anywhere;
+	width: 160px;
+	font-weight: 600;
+}
+
+.ohmylms-mindmap-node-heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.ohmylms-mindmap-branches {
+	list-style: none;
+	margin: 0;
+	padding: 0 0 0 24px;
+	border-left: 1px solid var(--ohmylms-admin-border, #dcdcde);
+}
+
+.ohmylms-mindmap-node-details {
+	margin-top: 8px;
+}
+
+.ohmylms-ext-card {
+	background: var(--ohmylms-admin-surface, #fff);
+	border-radius: var(--ohmylms-admin-radius, 7px);
+	padding: 20px;
+	margin: 0 0 20px;
+}
+
+/* Every extension route gets the native page gutter. */
+
+.ohmylms-ext-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 12px;
+	margin: 0 0 16px;
+}
+

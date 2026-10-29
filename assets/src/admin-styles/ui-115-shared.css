@@ -1,0 +1,14 @@
+.ohmylms-category-token button:hover {
+	background: #c7e7d4;
+}
+
+.ohmylms-category-tags button:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.ohmylms-category-tags button:focus-visible {
+	outline: 2px solid var(--oml-primary-hover, #6048ce);
+	outline-offset: 2px;
+}
+

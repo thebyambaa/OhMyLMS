@@ -1,0 +1,66 @@
+.ohmylms-question-block-modal.components-modal__frame {
+	width: min(1500px, calc(100vw - 40px));
+	max-width: none;
+}
+
+.ohmylms-question-block-modal .components-modal__content {
+	padding: 0 20px 20px;
+}
+
+.ohmylms-quiz-inspector-settings .components-flex {
+	flex-wrap: wrap;
+}
+
+.ohmylms-question-card.is-active {
+	border-left-color: var(--ohmylms-primary-color, #7153c6);
+}
+
+.ohmylms-question-card-heading .components-base-control {
+	margin: 0;
+	min-width: 220px;
+}
+
+.ohmylms-question-card-footer .components-toggle-control {
+	margin: 0 0 0 12px;
+	border-left: 1px solid #ddd;
+	padding-left: 20px;
+}
+
+.ohmylms-question-card-footer .components-base-control__field {
+	margin: 0;
+}
+
+.ohmylms-question-card > .ohmylms-question-version-bar {
+	margin-left: 24px;
+	margin-right: 24px;
+}
+
+.ohmylms-question-type-picker .components-base-control {
+	margin-bottom: 0;
+}
+
+.ohmylms-question-type-picker
+	.components-combobox-control__suggestions-container {
+	position: relative;
+}
+
+.ohmylms-question-type-picker .components-form-token-field__suggestions-list {
+	position: absolute;
+	top: calc(100% + 4px);
+	left: 0;
+	right: 0;
+	z-index: 20;
+	margin: 0;
+	max-height: 260px;
+	overflow-y: auto;
+	background: #fff;
+	border: 1px solid var(--oml-border, #dcdcde);
+	border-radius: var(--oml-radius-control, 6px);
+	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
+}
+
+.ohmylms-form-workspace-actions:has(.ohmylms-question-type-picker) {
+	flex-wrap: wrap;
+	align-items: center;
+}
+

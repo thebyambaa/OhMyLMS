@@ -16,17 +16,48 @@ class AdminAssets extends Assets {
 	 * Init for Admin assets.
 	 */
 	public function init() {
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_benchmark' ), 9 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'load_scripts' ) );
 		add_action( 'admin_print_scripts', array( $this, 'localize_printed_scripts' ) );
+		add_filter( 'style_loader_tag', array( $this, 'defer_feature_style' ), 10, 2 );
+	}
+
+	/**
+	 * Load read-only diagnostics only when an administrator requests a sample.
+	 *
+	 * @param string $hook Current admin screen hook.
+	 */
+	public function enqueue_benchmark( $hook ) {
+		if ( 'toplevel_page_ohmylms' !== $hook || ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This opt-in only displays timings; it does not change settings or content.
+		if ( ! isset( $_GET['ohmylms_benchmark'] ) || '1' !== sanitize_text_field( wp_unslash( $_GET['ohmylms_benchmark'] ) ) ) {
+			return;
+		}
+		wp_enqueue_script( 'ohmylms-admin-benchmark', self::get_asset_url( 'assets/js/admin-benchmark.js' ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/js/admin-benchmark.js' ), false );
 	}
 
 	/**
 	 * Get scripts for Admin assets.
 	 */
 	public function get_scripts() {
-		$suffix = '';
+		$suffix            = '';
+		$editor_directory  = defined( 'OHMYLMS_SOURCE_ASSETS' ) && OHMYLMS_SOURCE_ASSETS ? 'build/sdk' : 'assets/dist/admin';
+		$editor_asset_file = OHMYLMS_DIR . '/' . $editor_directory . '/editor-lowlight.asset.php';
+		$editor_asset      = is_file( $editor_asset_file ) ? require $editor_asset_file : array(
+			'dependencies' => array(),
+			'version'      => OHMYLMS_VERSION,
+		);
 
 		$scripts = array(
+			'ohmylms-editor-lowlight'  => array(
+				'src'       => self::get_asset_url( $editor_directory . '/editor-lowlight.js' ),
+				'version'   => $editor_asset['version'],
+				'deps'      => $editor_asset['dependencies'],
+				'in_footer' => true,
+				'screens'   => array( 'toplevel_page_ohmylms' ),
+			),
 			'ohmylms-structure-client' => array(
 				'src'       => self::get_asset_url( 'assets/dist/admin/course-structure.js' ),
 				'version'   => OHMYLMS_VERSION . '.' . filemtime( OHMYLMS_DIR . '/assets/dist/admin/course-structure.js' ),
@@ -36,8 +67,8 @@ class AdminAssets extends Assets {
 			),
 			'ohmylms-vendor'           => array(
 				'src'       => self::get_asset_url( 'assets/dist/vendors/vendors' . $suffix . '.js' ),
-				'version'   => OHMYLMS_VERSION,
-				'deps'      => array( 'react', 'react-dom' ),
+				'version'   => OHMYLMS_VERSION . '.' . filemtime( OHMYLMS_DIR . '/assets/dist/vendors/vendors.js' ),
+				'deps'      => array( 'react', 'react-dom', 'ohmylms-editor-lowlight' ),
 				'in_footer' => true,
 				'screens'   => array( 'toplevel_page_ohmylms' ),
 			),
@@ -78,7 +109,22 @@ class AdminAssets extends Assets {
 	 * Get styles for Admin assets.
 	 */
 	public function get_styles() {
-		$suffix = '';
+		$suffix        = '';
+		$modules       = $this->get_style_modules();
+		$module_styles = array();
+		foreach ( $modules as $index => $module ) {
+			if ( $module['rtl'] && ! is_rtl() ) {
+				continue;
+			}
+			$module_styles[ 'ohmylms-module-' . $index ] = array(
+				'src'     => null !== $module['inline'] ? false : self::get_asset_url( $module['path'] ),
+				'deps'    => array(),
+				'version' => null,
+				'media'   => 'all',
+				'has_rtl' => false,
+				'screens' => array( 'toplevel_page_ohmylms' ),
+			);
+		}
 		$styles = array(
 			'ohmylms-skill-studio'        => array(
 				'src'     => self::get_asset_url( 'assets/css/skill-studio.css' ),
@@ -97,15 +143,15 @@ class AdminAssets extends Assets {
 				'screens' => array( 'toplevel_page_ohmylms' ),
 			),
 			'ohmylms-main'                => array(
-				'src'     => self::get_asset_url( 'assets/dist/css/admin/ohmylms.css' ),
-				'deps'    => '',
+				'src'     => $modules ? false : self::get_asset_url( 'assets/dist/css/admin/ohmylms.css' ),
+				'deps'    => self::get_module_handles( 'main' ),
 				'version' => OHMYLMS_VERSION,
 				'media'   => 'all',
 				'has_rtl' => false,
 				'screens' => array( 'toplevel_page_ohmylms' ),
 			),
 			'ohmylms-rtl'                 => array(
-				'src'     => self::get_asset_url( 'assets/dist/css/admin/ohmylms-rtl.css' ),
+				'src'     => $modules ? false : self::get_asset_url( 'assets/dist/css/admin/ohmylms-rtl.css' ),
 				'deps'    => '',
 				'version' => OHMYLMS_VERSION,
 				'media'   => 'all',
@@ -129,7 +175,77 @@ class AdminAssets extends Assets {
 				'screens' => array( 'all' ),
 			),
 		);
-		return is_array( $styles ) ? array_filter( $styles ) : array();
+		return array_merge( $styles, $module_styles );
+	}
+
+	/**
+	 * Read the build's ordered CSS module manifest once per request.
+	 *
+	 * @return array Style modules.
+	 */
+	public static function get_style_modules() {
+		static $modules = null;
+		if ( null === $modules ) {
+			$path    = OHMYLMS_DIR . '/assets/dist/css/admin/modules.php';
+			$modules = is_file( $path ) ? require $path : array();
+			$modules = is_array( $modules ) ? $modules : array();
+		}
+		return $modules;
+	}
+
+	/**
+	 * Get dependency handles for a CSS layer, retaining manifest order.
+	 *
+	 * @param string $layer CSS layer name.
+	 * @return array Ordered handles.
+	 */
+	public static function get_module_handles( $layer ) {
+		$handles = array();
+		foreach ( self::get_style_modules() as $index => $module ) {
+			if ( $layer === $module['layer'] && ( ! $module['rtl'] || is_rtl() ) ) {
+				$handles[] = 'ohmylms-module-' . $index;
+			}
+		}
+		return $handles;
+	}
+
+	/**
+	 * Keep deferred links in their original cascade position, before theme overrides.
+	 *
+	 * @param string $html Stylesheet link markup.
+	 * @param string $handle Registered style handle.
+	 * @return string Link markup.
+	 */
+	public function defer_feature_style( $html, $handle ) {
+		$feature_handles = array(
+			'ohmylms-skill-studio'          => 'skills',
+			'ohmylms-syllabus-comparison'   => 'curriculum',
+			'ohmylms-question-editor'       => 'quizzes',
+			'ohmylms-question-stage'        => 'quizzes',
+			'ohmylms-quiz-design'           => 'quizzes',
+			'ohmylms-quiz-overview'         => 'quizzes',
+			'ohmylms-course-objectives'     => 'courses',
+			'ohmylms-course-editor-ux'      => 'courses',
+			'ohmylms-course-outline-editor' => 'courses',
+			'ohmylms-skill-matrix'          => 'skills',
+			'ohmylms-subject-profiles'      => 'curriculum',
+			'ohmylms-library-curriculum'    => 'curriculum',
+		);
+		if ( isset( $feature_handles[ $handle ] ) && $this->get_style_modules() ) {
+			$html = preg_replace( '/\shref=/', ' data-oml-href=', $html, 1 );
+			return str_replace( '<link ', '<link data-oml-group="' . esc_attr( $feature_handles[ $handle ] ) . '" ', $html );
+		}
+		$prefix = 'ohmylms-module-';
+		if ( 0 !== strpos( $handle, $prefix ) ) {
+			return $html;
+		}
+		$modules = $this->get_style_modules();
+		$index   = (int) substr( $handle, strlen( $prefix ) );
+		if ( ! isset( $modules[ $index ] ) || 'shared' === $modules[ $index ]['group'] ) {
+			return $html;
+		}
+		$html = preg_replace( '/\shref=/', ' data-oml-href=', $html, 1 );
+		return str_replace( '<link ', '<link data-oml-group="' . esc_attr( $modules[ $index ]['group'] ) . '" ', $html );
 	}
 
 	/**
@@ -226,13 +342,13 @@ class AdminAssets extends Assets {
 	 * @since 1.0.0
 	 */
 	public function default_timezone() {
-		$date          = new \DateTime( 'now', wp_timezone() );
-		$offsetSeconds = $date->getOffset();
+		$date           = new \DateTime( 'now', wp_timezone() );
+		$offset_seconds = $date->getOffset();
 
 		$timezone = sprintf(
 			'%+03d:%02d',
-			floor( $offsetSeconds / 3600 ),
-			abs( ( $offsetSeconds % 3600 ) / 60 )
+			floor( $offset_seconds / 3600 ),
+			abs( ( $offset_seconds % 3600 ) / 60 )
 		);
 
 		$timezone_string = get_option( 'timezone_string' );
@@ -251,9 +367,17 @@ class AdminAssets extends Assets {
 	public function load_scripts() {
 		$this->register_scripts();
 		$this->register_styles();
+		foreach ( $this->get_style_modules() as $index => $module ) {
+			if ( null !== $module['inline'] && ( ! $module['rtl'] || is_rtl() ) ) {
+				wp_add_inline_style( 'ohmylms-module-' . $index, $module['inline'] );
+			}
+		}
 
 		$screen    = get_current_screen();
 		$screen_id = $screen ? $screen->id : '';
+		if ( \OhMyLMS\Design\DesignSystem::is_plugin_screen() && $this->get_style_modules() ) {
+			wp_enqueue_script( 'ohmylms-admin-styles', self::get_asset_url( 'assets/js/admin-styles.js' ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/js/admin-styles.js' ), false );
+		}
 		wp_tinymce_inline_scripts();
 		wp_enqueue_editor();
 		wp_enqueue_media();
@@ -280,6 +404,10 @@ class AdminAssets extends Assets {
 		);
 
 		foreach ( $this->get_styles() as $handle => $style ) {
+			// Modules enter the queue through their original main/admin-ui handles.
+			if ( 0 === strpos( $handle, 'ohmylms-module-' ) ) {
+				continue;
+			}
 			if ( ! $this->should_enqueue( $style, $screen_id ) ) {
 				continue;
 			}

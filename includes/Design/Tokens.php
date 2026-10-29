@@ -266,7 +266,8 @@ final class Tokens {
 		if ( ! self::is_admin_app_screen() ) {
 			return; }
 		$ui_version = OHMYLMS_VERSION . '.' . substr( hash_file( 'sha256', OHMYLMS_DIR . '/assets/css/admin-ui.css' ), 0, 12 );
-		wp_enqueue_style( 'ohmylms-admin-ui', plugins_url( 'assets/css/admin-ui.css', OHMYLMS_FILE ), array( 'ohmylms-main' ), $ui_version );
+		$ui_modules = \OhMyLMS\Assets\AdminAssets::get_module_handles( 'ui' );
+		wp_enqueue_style( 'ohmylms-admin-ui', $ui_modules ? false : plugins_url( 'assets/css/admin-ui.css', OHMYLMS_FILE ), array_merge( array( 'ohmylms-main' ), $ui_modules ), $ui_version );
 		$question_editor_version = OHMYLMS_VERSION . '.' . substr( hash_file( 'sha256', OHMYLMS_DIR . '/assets/css/question-editor.css' ), 0, 12 );
 		wp_enqueue_style( 'ohmylms-question-editor', plugins_url( 'assets/css/question-editor.css', OHMYLMS_FILE ), array( 'ohmylms-admin-ui' ), $question_editor_version );
 		foreach ( array( 'question-stage', 'quiz-design', 'quiz-overview', 'course-objectives', 'skill-matrix', 'course-editor-ux', 'course-outline-editor', 'subject-profiles', 'library-curriculum' ) as $file ) {

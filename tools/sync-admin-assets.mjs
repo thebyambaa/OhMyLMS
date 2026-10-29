@@ -1,8 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { buildAdminStyles } from './build-admin-styles.mjs';
 
 // Ship the same admin app and SDK used during development, including add-on settings.
 const root = path.resolve( import.meta.dirname, '..' );
+buildAdminStyles( root, root );
 const manifest = JSON.parse(
 	fs.readFileSync( path.join( root, 'assets/src/manifest.json' ), 'utf8' )
 );
@@ -20,6 +22,25 @@ for ( const retired of manifest.retiredAssets || [] ) {
 	}
 }
 for ( const [ source, target ] of [
+	[ 'build/sdk/editor-lowlight.js', 'assets/dist/admin/editor-lowlight.js' ],
+	[
+		'build/sdk/editor-lowlight.js.map',
+		'assets/dist/admin/editor-lowlight.js.map',
+	],
+	[
+		'build/sdk/editor-lowlight.asset.php',
+		'assets/dist/admin/editor-lowlight.asset.php',
+	],
+	[
+		'build/assets/dist/vendors/vendors.js',
+		'assets/dist/vendors/vendors.js',
+	],
+	[
+		'build/assets/dist/vendors/vendors.js.map',
+		'assets/dist/vendors/vendors.js.map',
+	],
+	[ 'build/assets/dist/chunks/355.js', 'assets/dist/chunks/355.js' ],
+	[ 'build/assets/dist/chunks/355.js.map', 'assets/dist/chunks/355.js.map' ],
 	[
 		'build/sdk/course-structure.js',
 		'assets/dist/admin/course-structure.js',
@@ -144,6 +165,23 @@ for ( const entry of fs.readdirSync( targetChunks, { withFileTypes: true } ) ) {
 // Async imports resolve relative to extensions.js in both shipped and opt-in builds.
 fs.cpSync( sourceChunks, targetChunks, { recursive: true } );
 console.log( 'Updated shipped admin app and extension SDK.' );
+const syntaxNotices = [
+	[ 'lowlight', 'license' ],
+	[ 'highlight.js', 'LICENSE' ],
+	[ 'devlop', 'license' ],
+]
+	.map( ( [ name, license ] ) => {
+		const directory = path.join( root, 'node_modules', name );
+		const metadata = JSON.parse(
+			fs.readFileSync( path.join( directory, 'package.json' ), 'utf8' )
+		);
+		return `${ name } ${ metadata.version } (${ metadata.license })\n${ fs.readFileSync( path.join( directory, license ), 'utf8' ) }`;
+	} )
+	.join( '\n\n' );
+fs.writeFileSync(
+	path.join( root, 'assets/dist/admin/editor-lowlight.LICENSES.txt' ),
+	syntaxNotices
+);
 fs.mkdirSync( path.join( root, 'assets/dist/mathlive' ), { recursive: true } );
 fs.cpSync(
 	path.join( root, 'node_modules/mathlive/fonts' ),

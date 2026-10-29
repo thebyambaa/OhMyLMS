@@ -1,11 +1,25 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { buildAdminStyles } from './build-admin-styles.mjs';
 import { parse } from '@babel/parser';
 import traverseModule from '@babel/traverse';
 import generatorModule from '@babel/generator';
 import { adaptApplication } from './application-adapters.mjs';
 import { adaptVendors, adaptConnectionStatus } from './vendor-adapters.mjs';
+import {
+	auditHighlightConsumers,
+	adaptEditorPackages,
+} from './editor-package-adapters.mjs';
+import {
+	adaptEmailRuntime,
+	adaptEmailModel,
+} from './email-runtime-adapters.mjs';
+import {
+	auditEmailVendors,
+	relocateEmailVendors,
+	emailVendorTarget,
+} from './email-vendor-chunks.mjs';
 import { adaptQuizzes } from './quiz-adapters.mjs';
 import { adaptCourses } from './course-adapters.mjs';
 import { adaptStudents } from './student-adapters.mjs';
@@ -39,6 +53,37 @@ const outputRoot = path.resolve(
 		)
 );
 const hashes = {};
+buildAdminStyles( root, outputRoot );
+const sourceCache = new Map();
+const readSource = ( name ) => {
+	if ( ! sourceCache.has( name ) )
+		sourceCache.set(
+			name,
+			fs.readFileSync( path.join( sourceRoot, name ), 'utf8' )
+		);
+	return sourceCache.get( name );
+};
+const emailVendors = process.argv.includes( '--extensions' )
+	? auditEmailVendors( manifest, readSource )
+	: [];
+if ( process.argv.includes( '--extensions' ) )
+	auditHighlightConsumers( manifest, readSource );
+const emailAsset = manifest.assets.find(
+	( asset ) => asset.output === emailVendorTarget
+);
+const emailVersion = crypto
+	.createHash( 'sha256' )
+	.update(
+		JSON.stringify( [
+			readSource( emailAsset.source ),
+			...emailAsset.factories.map( ( factory ) =>
+				readSource( factory.source )
+			),
+			...emailVendors.map( ( factory ) => readSource( factory.source ) ),
+		] )
+	)
+	.digest( 'hex' )
+	.slice( 0, 12 );
 // Retired block assets must not survive rebuilds in an existing output directory.
 for ( const retired of manifest.retiredAssets || [] ) {
 	for ( const suffix of [ '', '.map' ] ) {
@@ -57,15 +102,22 @@ for ( const asset of manifest.assets ) {
 	const destination = path.join( outputRoot, asset.output );
 	fs.mkdirSync( path.dirname( destination ), { recursive: true } );
 	if ( ! asset.output.endsWith( '.js' ) ) {
-		fs.copyFileSync( path.join( sourceRoot, asset.source ), destination );
+		if (
+			! [
+				'assets/dist/css/admin/ohmylms.css',
+				'assets/dist/css/admin/ohmylms-rtl.css',
+			].includes( asset.output )
+		) {
+			fs.copyFileSync(
+				path.join( sourceRoot, asset.source ),
+				destination
+			);
+		}
 	} else {
 		const sources = {};
 		const load = ( name ) => {
 			const label = 'ohmylms-source:///' + name;
-			const code = fs.readFileSync(
-				path.join( sourceRoot, name ),
-				'utf8'
-			);
+			const code = readSource( name );
 			sources[ label ] = code;
 			return parse( code, {
 				sourceType: 'unambiguous',
@@ -94,6 +146,42 @@ for ( const asset of manifest.assets ) {
 				}
 			},
 		} );
+		if ( emailVendors.length ) {
+			if ( asset.output === 'assets/dist/vendors/vendors.js' )
+				adaptEmailModel( ast );
+			relocateEmailVendors(
+				ast,
+				asset.output,
+				new Map(
+					emailVendors.map( ( factory ) => [
+						factory.id,
+						asset.output === emailVendorTarget
+							? load( factory.source ).program.body.find(
+									( node ) =>
+										node.type === 'ExpressionStatement'
+								).expression
+							: null,
+					] )
+				)
+			);
+			if ( asset.output === 'assets/dist/admin/ohmylms.js' ) {
+				console.log(
+					'Deferred email runtime:',
+					adaptEmailRuntime( ast )
+				);
+				let urls = 0;
+				traverse( ast, {
+					StringLiteral( literal ) {
+						if ( literal.node.value === 'chunks/355.js' ) {
+							literal.node.value += `?ver=${ emailVersion }`;
+							urls++;
+						}
+					},
+				} );
+				if ( urls !== 1 )
+					throw new Error( 'Email chunk URL mapping changed' );
+			}
+		}
 		if (
 			process.argv.includes( '--extensions' ) &&
 			asset.output === 'assets/dist/admin/ohmylms.js'
@@ -187,8 +275,10 @@ for ( const asset of manifest.assets ) {
 		if (
 			process.argv.includes( '--extensions' ) &&
 			asset.output === 'assets/dist/vendors/vendors.js'
-		)
+		) {
 			console.log( 'Vendor adapters:', adaptVendors( ast ) );
+			console.log( 'Editor packages:', adaptEditorPackages( ast ) );
+		}
 		if (
 			process.argv.includes( '--extensions' ) &&
 			asset.output === 'assets/dist/admin/ohmylms.js'
@@ -201,7 +291,13 @@ for ( const asset of manifest.assets ) {
 			console.log( 'Slash command adapter:', adaptSlashCommands( ast ) );
 		const result = generate(
 			ast,
-			{ sourceMaps: true, comments: true, compact: false },
+			{
+				sourceMaps: true,
+				comments: true,
+				// Keep the recovery baseline readable; ship compact application output.
+				// This changes printing only, without renaming bindings or optimizing expressions.
+				compact: process.argv.includes( '--extensions' ),
+			},
 			sources
 		);
 		fs.writeFileSync(

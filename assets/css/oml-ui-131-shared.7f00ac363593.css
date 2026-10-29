@@ -1,0 +1,9 @@
+.ohmylms-dashboard-layout.extensions .ohmylms-content > section > h1 {
+	margin: 0;
+	padding: 0;
+	font-size: 20px;
+	line-height: 1.4;
+	font-weight: 600;
+	color: var(--ohmylms-admin-heading-color, #000d25);
+}
+

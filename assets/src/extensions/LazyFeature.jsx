@@ -33,7 +33,13 @@ class FeatureBoundary extends Component {
 }
 
 function wrapLazy( loadComponent, name ) {
-	const View = lazy( async () => ( { default: await loadComponent() } ) );
+	const View = lazy( async () => {
+		const [ component ] = await Promise.all( [
+			loadComponent(),
+			globalThis.ohmylmsStyles?.ensure( name ),
+		] );
+		return { default: component };
+	} );
 	function LazyFeature( props ) {
 		return (
 			<FeatureBoundary>
@@ -86,4 +92,20 @@ export function lazyComponents( names, importFeature, registryName ) {
 			wrapLazy( async () => ( await load() )[ name ], name ),
 		] )
 	);
+}
+
+/**
+ * Keep recovered template conversion synchronous once its libraries are ready.
+ * @param {import('react').ComponentType} Screen        Recovered template component.
+ * @param {() => Promise<unknown>}        loadLibraries Load the matching editor chunk.
+ * @return {import('react').ComponentType} Component with loading and failure handling.
+ */
+export function lazyEmailComponent( Screen, loadLibraries ) {
+	return wrapLazy( async () => {
+		await Promise.all( [
+			loadLibraries(),
+			globalThis.ohmylmsStyles?.ensure( 'EmailTemplate' ),
+		] );
+		return Screen;
+	}, 'EmailTemplate' );
 }

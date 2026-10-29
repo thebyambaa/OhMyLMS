@@ -1,0 +1,10 @@
+.ohmylms-category-tags:focus-within {
+	border-color: var(--oml-primary-hover, #6048ce);
+	box-shadow: 0 0 0 2px var(--oml-primary-hover, #6048ce)18;
+}
+
+.ohmylms-assessment-editor-tabs [aria-selected="true"] {
+	color: var(--oml-primary-hover, #6740d8);
+	box-shadow: inset 0 -3px var(--oml-primary-hover, #6740d8);
+}
+

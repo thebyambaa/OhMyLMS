@@ -45,6 +45,8 @@ module.exports = [
 			'assets/interactivity/**/*.js',
 			'assets/js/student-hub.js',
 			'assets/js/player-context.js',
+			'assets/js/admin-benchmark.js',
+			'assets/js/admin-styles.js',
 		],
 	} ) ),
 	{

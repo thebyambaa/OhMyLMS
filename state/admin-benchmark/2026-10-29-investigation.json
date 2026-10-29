@@ -1,0 +1,62 @@
+{
+	"site": "http://800.local/",
+	"browserSamples": [
+		{
+			"dnsMs": 6037,
+			"connectMs": 0.4,
+			"serverWaitMs": 772.1,
+			"navigationToFirstByteMs": 6813.1,
+			"dashboardHeadingMs": 14913.4
+		},
+		{
+			"dnsMs": 0,
+			"connectMs": 0,
+			"serverWaitMs": 697.2,
+			"navigationToFirstByteMs": 699.5,
+			"dashboardHeadingMs": 1396
+		}
+	],
+	"phpProfiles": [
+		{
+			"footerMs": 665.9,
+			"shutdownMs": 8787,
+			"queriesAtFooter": 299,
+			"backgroundRequests": [
+				{
+					"path": "/wp-admin/admin-ajax.php",
+					"blocking": false,
+					"durationMs": 4013.3,
+					"caller": "Action Scheduler async queue runner"
+				},
+				{
+					"path": "/wp-cron.php",
+					"blocking": false,
+					"durationMs": 4016.4,
+					"caller": "WordPress cron spawn"
+				}
+			]
+		},
+		{
+			"footerMs": 618.6,
+			"shutdownMs": 696,
+			"queriesAtFooter": 291,
+			"backgroundRequests": []
+		}
+	],
+	"staticHeadRequests": [
+		{ "mode": "normal hostname", "dnsMs": 4023.314, "totalMs": 4024.332 },
+		{ "mode": "IPv4 hostname", "dnsMs": 2014.836, "totalMs": 2030.804 },
+		{
+			"mode": "pinned to existing IPv4 loopback",
+			"dnsMs": 0.018,
+			"totalMs": 1.331
+		},
+		{
+			"mode": "pinned to existing IPv6 loopback",
+			"dnsMs": 0.016,
+			"totalMs": 1.338
+		}
+	],
+	"windowsLookup": { "hostnameMs": 4032, "localhostMs": 12 },
+	"conclusion": "The main intermittent first-byte delay is local hostname resolution, with further PHP-worker occupancy from slow background loopback DNS. The former ttfbMs metric included DNS; it is now split into actual server wait and navigation-to-first-byte."
+}

@@ -1,5 +1,6 @@
 import { createElement, createRoot, render } from '@wordpress/element';
 import { createRegistry } from './registry.mjs';
+import { lazyEmailComponent } from './LazyFeature';
 import { registerBuiltinSlashCommands, slashGroups } from './slashCommands.mjs';
 import { registerCurriculumLabels } from './curriculumLabels';
 import { ExtensionSlot } from './ExtensionSlot';
@@ -73,6 +74,7 @@ registerCurriculumLabels();
 registerBuiltinSlashCommands( registry );
 const roots = new WeakMap();
 const publicApi = {
+	lazyEmailComponent,
 	...registry,
 	api,
 	validateMembership,

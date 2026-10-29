@@ -24,12 +24,14 @@
 		"check": "npm run format:check && npm run lint && npm test && npm run build",
 		"lint:php": "node tools/wp-standards.mjs",
 		"lint:php:fix": "node tools/wp-standards.mjs fix",
-		"lint:js": "eslint assets/src/features assets/src/extensions assets/src/blocks assets/interactivity assets/js/student-hub.js assets/js/player-context.js assets/js/practice-guidance.js assets/js/import-figures.js",
+		"lint:js": "eslint assets/src/features assets/src/extensions assets/src/blocks assets/interactivity assets/js/student-hub.js assets/js/player-context.js assets/js/practice-guidance.js assets/js/import-figures.js assets/js/admin-benchmark.js assets/js/admin-styles.js",
 		"lint:js:fix": "npm run lint:js -- --fix",
-		"lint:css": "stylelint \"assets/css/*.css\" \"assets/src/frontend/scss/**/*.scss\"",
+		"lint:css": "stylelint \"assets/css/*.css\" \"assets/src/admin-styles/ui-*.css\" \"assets/src/frontend/scss/**/*.scss\"",
 		"lint:css:fix": "npm run lint:css -- --fix",
 		"lint:standards": "npm run lint:php && npm run lint:js && npm run lint:css",
-		"lint:source": "node tools/check-source.mjs"
+		"lint:source": "node tools/check-source.mjs",
+		"analyze:bundles": "node tools/analyze-admin-bundles.mjs",
+		"analyze:editor": "node tools/analyze-editor-dependencies.mjs"
 	},
 	"devDependencies": {
 		"@babel/core": "7.29.7",
@@ -59,7 +61,9 @@
 	},
 	"dependencies": {
 		"@cortex-js/compute-engine": "0.151.0",
+		"highlight.js": "11.11.1",
 		"jsxgraph": "1.14.1",
+		"lowlight": "3.3.0",
 		"mathlive": "0.111.1"
 	}
 }

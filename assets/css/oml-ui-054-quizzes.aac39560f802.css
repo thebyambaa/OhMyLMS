@@ -1,0 +1,22 @@
+.ohmylms-question-content-modes {
+	display: flex;
+	border-right: 1px solid var(--oml-border, #dcdcde);
+	margin-right: 8px;
+	padding-right: 8px;
+}
+
+.ohmylms-question-html-source {
+	display: block;
+	width: 100%;
+	min-height: 180px;
+	resize: vertical;
+	margin: 0;
+	padding: 12px;
+	border: 0;
+	border-radius: 0;
+	box-sizing: border-box;
+	font-family: Consolas, monospace;
+	font-size: 13px;
+	line-height: 1.6;
+}
+

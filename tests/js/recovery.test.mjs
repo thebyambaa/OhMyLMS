@@ -88,7 +88,12 @@ test( 'reassembled assets preserve shipped AST outside the authored admin app', 
 	for ( const asset of manifest.assets.filter(
 		( a ) =>
 			a.output.endsWith( '.js' ) &&
-			a.output !== 'assets/dist/admin/ohmylms.js'
+			a.output !== 'assets/dist/admin/ohmylms.js' &&
+			// Vendor-chunk tests compare every factory across these relocated bundles.
+			! [
+				'assets/dist/vendors/vendors.js',
+				'assets/dist/chunks/355.js',
+			].includes( a.output )
 	) ) {
 		assert.equal(
 			canonical(
