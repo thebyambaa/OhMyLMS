@@ -101,6 +101,7 @@ export default {
 				'assets/css/player-context.css',
 				'assets/css/learning-context.css',
 				'assets/css/student-hub.css',
+				'assets/css/student-dashboard.css',
 				'assets/src/ui/**/*.{css,scss}',
 			],
 			rules: {

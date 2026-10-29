@@ -1,11 +1,16 @@
 
 
 .oml-student-dashboard {
-  --dash-accent: #167a65;
+  /* stylelint-disable color-no-hex -- Dashboard theme palette: a look the student chooses (meadow, ocean, sunset), not a site token. */
+  --dash-accent-base: #167a65;
   --dash-bg: #e4f3e8;
   --dash-ink: #19332d;
   --dash-muted: #536a62;
   --dash-line: #dae7df;
+  --dash-surface: #fff;
+  --dash-on-accent: #fff;
+  /* stylelint-enable color-no-hex */
+  --dash-accent: var(--dash-accent-base);
   --ohmylms-primary-color: var(--dash-accent);
   --ohmylms-body-text-color: var(--dash-ink);
   --ohmylms-heading-color: var(--dash-ink);
@@ -45,7 +50,7 @@
   height: 56px;
   border-radius: 50%;
   flex-shrink: 0;
-  box-shadow: 0 0 0 4px #fffa;
+  box-shadow: 0 0 0 4px var(--dash-surface);
 }
 
 .oml-dashboard-customize {
@@ -60,10 +65,10 @@
   width: 240px;
   z-index: 10;
   padding: 18px;
-  background: #fff;
+  background: var(--dash-surface);
   border: 1px solid var(--dash-line);
   border-radius: 12px;
-  box-shadow: 0 12px 30px #19332d20;
+  box-shadow: var(--oml-shadow-md);
 }
 
 .oml-theme-swatch {
@@ -74,14 +79,17 @@
 }
 
 .oml-theme-meadow {
+  /* stylelint-disable-next-line color-no-hex -- Preview of the theme palette. */
   background: linear-gradient(155deg, #d8f1d8 50%, #7dc7a4 50%);
 }
 
 .oml-theme-ocean {
+  /* stylelint-disable-next-line color-no-hex -- Preview of the theme palette. */
   background: linear-gradient(155deg, #d7f1ff 50%, #75badb 50%);
 }
 
 .oml-theme-sunset {
+  /* stylelint-disable-next-line color-no-hex -- Preview of the theme palette. */
   background: linear-gradient(155deg, #ffdcc3 50%, #d49ab3 50%);
 }
 
@@ -93,11 +101,11 @@
 }
 
 .oml-dashboard-card {
-  background: #fff;
+  background: var(--dash-surface);
   border: 1px solid var(--dash-line);
   border-radius: 14px;
   padding: 24px;
-  box-shadow: 0 4px 16px #15382b05;
+  box-shadow: var(--oml-shadow-sm);
   min-width: 0;
 }
 
@@ -218,12 +226,12 @@
 	gap: 8px;
 	padding: 16px;
 	border-radius: 16px;
-	background: var(--oml-card, #fff);
-	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+	background: var(--dash-surface);
+	box-shadow: var(--oml-shadow-sm);
 }
 
 .oml-xp-met {
-	color: #15803d;
+	color: var(--oml-success);
 	font-weight: 700;
 }
 
@@ -241,7 +249,7 @@
 	display: block;
 	width: 100%;
 	border-radius: 4px 4px 0 0;
-	background: #f59e0b;
+	background: var(--oml-warning);
 }
 
 .oml-xp-goals {
@@ -260,6 +268,7 @@
 	margin-left: 8px;
 	padding: 1px 10px;
 	border-radius: 999px;
+	/* stylelint-disable-next-line color-no-hex -- Medal metal color (gold, bronze, silver). */
 	background: #fde68a;
 	font-size: 0.8em;
 	font-weight: 700;
@@ -338,7 +347,7 @@
   border: 1px solid var(--dash-accent);
   border-radius: 9px;
   padding: 9px 14px;
-  background: #ffffffb8;
+  background: var(--dash-surface);
   color: var(--dash-accent);
   font-weight: 600;
 }
@@ -347,7 +356,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #fff;
+  background: var(--dash-surface);
   color: var(--dash-ink);
   width: 100%;
   padding: 8px;
@@ -508,7 +517,7 @@
 
 .oml-xp-total strong {
 	font-size: 1.8em;
-	color: #b45309;
+	color: var(--oml-warning);
 }
 
 .oml-xp-card progress {
@@ -530,7 +539,7 @@
 
 .oml-xp-goals button {
 	padding: 4px 12px;
-	border: 1px solid #d97706;
+	border: 1px solid var(--oml-warning);
 	border-radius: 999px;
 	background: transparent;
 	cursor: pointer;
@@ -563,19 +572,68 @@
 }
 
 .oml-student-dashboard[data-dashboard-theme='ocean'] {
-  --dash-accent: #256aa1;
+  /* stylelint-disable color-no-hex -- Dashboard theme palette: a look the student chooses (meadow, ocean, sunset), not a site token. */
+  --dash-accent-base: #256aa1;
   --dash-bg: #e2f2fa;
   --dash-ink: #17354b;
   --dash-muted: #526e80;
   --dash-line: #d9e8f0;
+  /* stylelint-enable color-no-hex */
 }
 
 .oml-student-dashboard[data-dashboard-theme='sunset'] {
-  --dash-accent: #9d4a69;
+  /* stylelint-disable color-no-hex -- Dashboard theme palette: a look the student chooses (meadow, ocean, sunset), not a site token. */
+  --dash-accent-base: #9d4a69;
   --dash-bg: #fff0e7;
   --dash-ink: #4b2938;
   --dash-muted: #7a5d68;
   --dash-line: #efdfdf;
+  /* stylelint-enable color-no-hex */
+}
+
+/*
+ * Dark: the hub's theme (data-theme on an ancestor) retones the dashboard through the shared tokens and
+ * keeps each theme's accent, lightened. The standalone dashboard page has no data-theme and stays light.
+ */
+[data-theme="dark"] .oml-student-dashboard.oml-student-dashboard {
+  --dash-accent: color-mix(in srgb, var(--dash-accent-base) 55%, var(--oml-heading));
+  --dash-bg: color-mix(in srgb, var(--dash-accent-base) 12%, var(--oml-surface));
+  --dash-ink: var(--oml-heading);
+  --dash-muted: var(--oml-muted);
+  --dash-line: var(--oml-border);
+  --dash-surface: var(--oml-surface);
+  --dash-on-accent: var(--oml-surface);
+}
+
+@media (prefers-color-scheme: dark) {
+
+  [data-theme="system"] .oml-student-dashboard.oml-student-dashboard {
+    --dash-accent: color-mix(in srgb, var(--dash-accent-base) 55%, var(--oml-heading));
+    --dash-bg: color-mix(in srgb, var(--dash-accent-base) 12%, var(--oml-surface));
+    --dash-ink: var(--oml-heading);
+    --dash-muted: var(--oml-muted);
+    --dash-line: var(--oml-border);
+    --dash-surface: var(--oml-surface);
+    --dash-on-accent: var(--oml-surface);
+  }
+
+  [data-theme="system"] .oml-student-dashboard .oml-dashboard-course > img {
+    filter: brightness(0.85);
+  }
+}
+
+/* Course images are fixed artwork or photos; dim them a little on the dark card. */
+[data-theme="dark"] .oml-student-dashboard .oml-dashboard-course > img {
+  filter: brightness(0.85);
+}
+
+/* Browsers without color-mix() keep the brand tokens in dark. */
+@supports not (color: color-mix(in srgb, red, blue)) {
+
+  [data-theme="dark"] .oml-student-dashboard.oml-student-dashboard {
+    --dash-accent: var(--oml-primary);
+    --dash-bg: var(--oml-background);
+  }
 }
 
 .oml-dashboard-person .oml-dashboard-eyebrow {
@@ -597,7 +655,7 @@
   justify-content: center;
   padding: 8px 14px;
   border-radius: 8px;
-  color: #fff;
+  color: var(--dash-on-accent);
   background: var(--dash-accent);
   font-weight: 600;
   font-size: 13px;
@@ -614,10 +672,10 @@
 }
 
 .oml-dashboard-aside .ohmylms-streak-card {
-  background: #fff;
+  background: var(--dash-surface);
   border: 1px solid var(--dash-line);
   border-radius: 14px;
-  box-shadow: 0 4px 16px #15382b05;
+  box-shadow: var(--oml-shadow-sm);
   min-width: 0;
   margin: 0;
   padding: 20px;
@@ -738,7 +796,7 @@
 }
 
 .oml-student-dashboard .ohmylms-bundles {
-  background: #fff;
+  background: var(--dash-surface);
   border-radius: 14px;
   margin-top: 24px;
   padding: 24px;
@@ -746,10 +804,12 @@
 }
 
 .oml-mastery-medal.is-bronze {
+	/* stylelint-disable-next-line color-no-hex -- Medal metal color (gold, bronze, silver). */
 	background: #fed7aa;
 }
 
 .oml-mastery-medal.is-silver {
+	/* stylelint-disable-next-line color-no-hex -- Medal metal color (gold, bronze, silver). */
 	background: #e5e7eb;
 }
 
@@ -794,8 +854,8 @@
 }
 
 .oml-xp-goals button[aria-pressed="true"] {
-	background: #f59e0b;
-	color: #fff;
+	background: var(--oml-warning);
+	color: var(--oml-surface);
 }
 
 .oml-student-dashboard .oml-dashboard-button:hover {
