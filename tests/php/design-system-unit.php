@@ -79,7 +79,7 @@ foreach ( array( '--oml-primary:#1865f2;', '--oml-on-primary:#ffffff;', '--oml-r
 }
 $body = substr( $css, strlen( 'body.oml-ds{' ), -1 );
 foreach ( array_filter( explode( ';', $body ) ) as $declaration ) {
-	check( 1 === preg_match( '/^--[a-z0-9-]+:(#[0-9a-f]{6}|[0-9]+px|[0-9]+, [0-9]+, [0-9]+)$/', $declaration ), "declaration is a plain variable: $declaration" );
+	check( 1 === preg_match( '/^--[a-z0-9-]+:(#[0-9a-f]{6}|[0-9]+px|[0-9]+, [0-9]+, [0-9]+|[0-9]+(\.[0-9]+)?|[0-9]+ms|0 [0-9]+px [0-9]+px rgba\([0-9]+, [0-9]+, [0-9]+, 0\.[0-9]+\))$/', $declaration ), "declaration is a plain variable: $declaration" );
 }
 $hostile = DS::css( array( 'colors' => array( 'primary' => '#fff;}body{display:none', 'link' => 'red;x:y' ), 'button_radius' => '4px;}x{', 'density' => '</style>' ) );
 check( false === strpos( $hostile, 'display' ) && false === strpos( $hostile, '</style>' ) && false === strpos( $hostile, 'red' ) && substr_count( $hostile, '{' ) === 1, 'hostile values cannot inject CSS' );

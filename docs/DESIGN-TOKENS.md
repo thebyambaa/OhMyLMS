@@ -57,3 +57,6 @@ echo \OhMyLMS\Design\Ui::button( __( 'Enroll', 'ohmylms' ), array( 'variant' => 
 
 `Ui::button()` enqueues `oml-ui.css` on learner pages; plugin admin screens load it as a dependency of the
 design-system stylesheet. Migrate old buttons feature by feature and delete their own `*-button` classes.
+
+The full guide to using these tokens and components, with the planned component list, is `docs/DESIGN-LANGUAGE.md`.
+The visual gallery and its screenshot tests are `tests/browser/ui-gallery.spec.cjs`.

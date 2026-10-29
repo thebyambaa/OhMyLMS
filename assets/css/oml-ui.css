@@ -120,3 +120,104 @@
 	opacity: 0.7;
 	pointer-events: none;
 }
+
+/* ---- Card: .oml-card + .oml-card-flat | .oml-card-interactive; .oml-card-title ---- */
+.oml-card {
+	background: var(--oml-surface);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card);
+	box-shadow: var(--oml-shadow-sm);
+	box-sizing: border-box;
+	color: var(--oml-text);
+	padding: var(--oml-space-4);
+}
+
+.oml-card-flat {
+	box-shadow: none;
+}
+
+.oml-card-interactive {
+	transition: box-shadow var(--oml-motion-base) ease, border-color var(--oml-motion-base) ease;
+}
+
+.oml-card-interactive:hover {
+	border-color: var(--oml-secondary);
+	box-shadow: var(--oml-shadow-md);
+}
+
+.oml-card-title {
+	color: var(--oml-heading);
+	font-size: var(--oml-font-size-lg);
+	font-weight: var(--oml-weight-strong);
+	line-height: var(--oml-line-tight);
+	margin: 0 0 var(--oml-space-2);
+}
+
+/* ---- Badge: .oml-badge + .oml-badge-{primary|success|warning|danger|info} ---- */
+.oml-badge {
+	align-items: center;
+	background: var(--oml-subtle);
+	border: 1px solid var(--oml-border);
+	border-radius: 999px;
+	box-sizing: border-box;
+	color: var(--oml-heading);
+	display: inline-flex;
+	font-size: var(--oml-font-size-xs);
+	font-weight: var(--oml-weight-strong);
+	gap: var(--oml-space-1);
+	line-height: var(--oml-line-tight);
+	padding: var(--oml-space-1) var(--oml-space-2);
+	white-space: nowrap;
+}
+
+.oml-badge-primary {
+	background: var(--oml-primary-soft);
+	border-color: var(--oml-primary);
+	color: var(--oml-primary);
+}
+
+.oml-badge-success {
+	background: var(--oml-success-soft);
+	border-color: var(--oml-success);
+	color: var(--oml-heading);
+}
+
+.oml-badge-warning {
+	background: var(--oml-warning-soft);
+	border-color: var(--oml-warning);
+	color: var(--oml-heading);
+}
+
+.oml-badge-danger {
+	background: var(--oml-danger-soft);
+	border-color: var(--oml-danger);
+	color: var(--oml-danger);
+}
+
+.oml-badge-info {
+	background: var(--oml-info-soft);
+	border-color: var(--oml-info);
+	color: var(--oml-heading);
+}
+
+/* ---- Progress: .oml-progress > .oml-progress-bar, + .oml-progress-success; width is set inline ---- */
+.oml-progress {
+	background: var(--oml-border);
+	border-radius: 999px;
+	box-sizing: border-box;
+	height: var(--oml-space-2);
+	overflow: hidden;
+	width: 100%;
+}
+
+.oml-progress-bar {
+	background: var(--oml-primary);
+	border-radius: 999px;
+	display: block;
+	height: 100%;
+	transition: width var(--oml-motion-base) ease;
+}
+
+.oml-progress-success .oml-progress-bar {
+	background: var(--oml-success);
+}

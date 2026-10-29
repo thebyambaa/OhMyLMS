@@ -19,6 +19,7 @@ final class Ui {
 	const STYLE_HANDLE    = 'ohmylms-ui';
 	const BUTTON_VARIANTS = array( 'primary', 'secondary', 'tertiary', 'danger' );
 	const BUTTON_SIZES    = array( 'sm', 'md', 'lg' );
+	const BADGE_TONES     = array( 'primary', 'success', 'warning', 'danger', 'info' );
 
 	/** Register the stylesheet on admin and learner pages. */
 	public static function init() {
@@ -122,5 +123,110 @@ final class Ui {
 			$html .= ' ' . $name . '="' . ( 'href' === $name ? esc_url( $value ) : esc_attr( $value ) ) . '"';
 		}
 		return '<' . $tag . $html . '>' . esc_html( $label ) . '</' . $tag . '>';
+	}
+
+	/**
+	 * Class names for a card; the same strings as assets/src/ui/components.mjs.
+	 *
+	 * @param array $args flat, interactive, class.
+	 * @return string
+	 */
+	public static function card_class( $args = array() ) {
+		$classes = array( 'oml-card' );
+		if ( ! empty( $args['flat'] ) ) {
+			$classes[] = 'oml-card-flat';
+		}
+		if ( ! empty( $args['interactive'] ) ) {
+			$classes[] = 'oml-card-interactive';
+		}
+		if ( ! empty( $args['class'] ) ) {
+			$classes[] = $args['class'];
+		}
+		return implode( ' ', $classes );
+	}
+
+	/**
+	 * Class names for a badge.
+	 *
+	 * @param array $args tone, class.
+	 * @return string
+	 */
+	public static function badge_class( $args = array() ) {
+		$tone    = $args['tone'] ?? 'neutral';
+		$classes = array( 'oml-badge' );
+		if ( in_array( $tone, self::BADGE_TONES, true ) ) {
+			$classes[] = 'oml-badge-' . $tone;
+		}
+		if ( ! empty( $args['class'] ) ) {
+			$classes[] = $args['class'];
+		}
+		return implode( ' ', $classes );
+	}
+
+	/**
+	 * Class names for a progress bar.
+	 *
+	 * @param array $args tone, class.
+	 * @return string
+	 */
+	public static function progress_class( $args = array() ) {
+		$classes = array( 'oml-progress' );
+		if ( 'success' === ( $args['tone'] ?? 'primary' ) ) {
+			$classes[] = 'oml-progress-success';
+		}
+		if ( ! empty( $args['class'] ) ) {
+			$classes[] = $args['class'];
+		}
+		return implode( ' ', $classes );
+	}
+
+	/**
+	 * A progress value as a whole number from 0 to 100.
+	 *
+	 * @param mixed $value Raw value.
+	 * @return int
+	 */
+	public static function clamp_percent( $value ) {
+		return is_numeric( $value ) ? (int) min( 100, max( 0, round( (float) $value ) ) ) : 0;
+	}
+
+	/**
+	 * Render a card around markup the caller has already escaped.
+	 *
+	 * @param string $content_html Escaped inner HTML.
+	 * @param array  $args         flat, interactive, class, tag.
+	 * @return string
+	 */
+	public static function card( $content_html, $args = array() ) {
+		self::enqueue();
+		$tag = $args['tag'] ?? 'div';
+		$tag = in_array( $tag, array( 'div', 'section', 'article', 'li', 'aside' ), true ) ? $tag : 'div';
+		return '<' . $tag . ' class="' . esc_attr( self::card_class( $args ) ) . '">' . $content_html . '</' . $tag . '>';
+	}
+
+	/**
+	 * Render a badge.
+	 *
+	 * @param string $label Text (escaped here).
+	 * @param array  $args  tone, class.
+	 * @return string
+	 */
+	public static function badge( $label, $args = array() ) {
+		self::enqueue();
+		return '<span class="' . esc_attr( self::badge_class( $args ) ) . '">' . esc_html( $label ) . '</span>';
+	}
+
+	/**
+	 * Render a progress bar.
+	 *
+	 * @param mixed  $value 0 to 100.
+	 * @param string $label Accessible name (escaped here).
+	 * @param array  $args  tone, class.
+	 * @return string
+	 */
+	public static function progress( $value, $label, $args = array() ) {
+		self::enqueue();
+		$percent = self::clamp_percent( $value );
+		return '<div class="' . esc_attr( self::progress_class( $args ) ) . '" role="progressbar" aria-label="' . esc_attr( $label ) . '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' . $percent . '"><span class="oml-progress-bar" style="width:' . $percent . '%"></span></div>';
 	}
 }

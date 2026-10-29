@@ -415,7 +415,27 @@ final class DesignSystem {
 		foreach ( $space as $i => $px ) {
 			$vars[ 'oml-space-' . ( $i + 1 ) ] = $px . 'px';
 		}
-		return $vars;
+		$shadow = Tokens::rgb( $c['heading'] );
+		return $vars + array(
+			'oml-font-size-xs'   => '12px',
+			'oml-font-size-sm'   => '13px',
+			'oml-font-size-md'   => '14px',
+			'oml-font-size-lg'   => '16px',
+			'oml-font-size-xl'   => '20px',
+			'oml-font-size-2xl'  => '24px',
+			'oml-line-tight'     => '1.2',
+			'oml-line-normal'    => '1.5',
+			'oml-weight-regular' => '400',
+			'oml-weight-medium'  => '500',
+			'oml-weight-strong'  => '600',
+			'oml-shadow-sm'      => '0 1px 2px rgba(' . $shadow . ', 0.08)',
+			'oml-shadow-md'      => '0 4px 12px rgba(' . $shadow . ', 0.12)',
+			'oml-motion-fast'    => '120ms',
+			'oml-motion-base'    => '200ms',
+			'oml-z-dropdown'     => '100',
+			'oml-z-modal'        => '1000',
+			'oml-z-toast'        => '1100',
+		);
 	}
 
 	/**
