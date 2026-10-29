@@ -35,15 +35,14 @@ still exist for current stylesheets; new code uses `--oml-*` only.
 
 ## Learner `.ohmylms-button`
 
-`assets/css/oml-legacy-buttons.css` restyles the existing `.ohmylms-button` markup with the same tokens, so the
-learner buttons match `oml-btn` without touching templates. `Ui::attach_legacy_buttons()` adds it as inline
-CSS after `ohmylms-frontend`, which wins ties with the older rules in `style.css` (recovered, left as is).
-The class name stays because Elementor/Bricks controls, quiz scripts and custom CSS target it. Delete
-the older `.ohmylms-button` rules in `style.css` once nothing depends on them.
+The existing `.ohmylms-button` markup is an alias in the shared declaration blocks in
+`assets/css/oml-ui.css`. There is no separate learner button stylesheet or override layer.
+The public class remains because Elementor/Bricks controls, quiz scripts and custom CSS target it.
+`ohmylms-button-outline` selects the secondary appearance. Radius, density, typography and states
+come from the same shared tokens as `oml-btn`; page modules supply layout only.
 
-Behavior change from the older look: radius and height follow the Classic preset (4px, 36px), text is
-14px/600, and hover darkens the fill instead of switching to an outline. `ohmylms-button-outline` is the
-secondary look.
+`Ui::attach_legacy_buttons()` and `Ui::legacy_button_css()` remain compatibility entry points;
+the former enqueues the shared stylesheet and the latter returns an empty string.
 
 ## Button
 
@@ -89,9 +88,12 @@ The visual gallery and its screenshot tests are `tests/browser/ui-gallery.spec.c
 state and events. Route navigation retains real links and its existing drag/reorder behavior, using
 the shared tab classes with `aria-current` rather than pretending to be local ARIA panels.
 
-The authored course/lesson SCSS compiles to `learning-pages.css` after the immutable recovery baseline.
-The build also regenerates the ordered admin UI modules; edit those sources rather than their hashed
-outputs. Video controls retain a documented fixed media palette over arbitrary footage. Status text
+Authored frontend SCSS compiles to nine page modules through `tools/build-frontend-styles.mjs`.
+`FrontendStyles` registers shared components and the groups required by each request;
+`ohmylms_frontend_style_groups` lets integrations request additional groups explicitly.
+The generated `style.css` and `style-rtl.css` URLs remain compatibility outputs and are not loaded
+alongside those modules. The ordered admin feature modules are built from
+`assets/src/design-system/admin`; edit authored sources rather than hashed outputs. Video controls retain a documented fixed media palette over arbitrary footage. Status text
 has separate contrast-adjusted `--oml-{success,warning,danger,info}-text` tokens for soft backgrounds.
 
 ## Input and Select

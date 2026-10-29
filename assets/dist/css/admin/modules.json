@@ -50,13 +50,13 @@
 		"inline": null
 	},
 	{
-		"file": "oml-main-005-courses.f576da31531b.css",
+		"file": "oml-main-005-courses.d14ba745a392.css",
 		"group": "courses",
 		"rtl": false,
 		"source": "assets/src/design-system/admin/main-005-courses.css",
-		"path": "assets/dist/css/admin/oml-main-005-courses.f576da31531b.css",
+		"path": "assets/dist/css/admin/oml-main-005-courses.d14ba745a392.css",
 		"layer": "main",
-		"bytes": 5902,
+		"bytes": 5786,
 		"inline": null
 	},
 	{
@@ -660,13 +660,13 @@
 		"inline": ".toplevel_page_ohmylms .quiz-edit .app-content{padding:0}"
 	},
 	{
-		"file": "oml-main-066-quizzes.d42baee996ac.css",
+		"file": "oml-main-066-quizzes.dfa1acd4c2d7.css",
 		"group": "quizzes",
 		"rtl": false,
 		"source": "assets/src/design-system/admin/main-066-quizzes.css",
-		"path": "assets/dist/css/admin/oml-main-066-quizzes.d42baee996ac.css",
+		"path": "assets/dist/css/admin/oml-main-066-quizzes.dfa1acd4c2d7.css",
 		"layer": "main",
-		"bytes": 988,
+		"bytes": 157,
 		"inline": null
 	},
 	{

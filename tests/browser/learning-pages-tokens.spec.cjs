@@ -65,5 +65,43 @@ for ( const [ theme, device ] of [
 			'border-top-color',
 			values.border
 		);
+		await page.locator( 'body' ).evaluate( ( body ) => {
+			body.insertAdjacentHTML(
+				'beforeend',
+				'<div class="oml-progress oml-progress-success"><div class="oml-progress-bar"></div></div>' +
+					'<div class="ohmylms-single-course-layout3"><div class="ohmylms-course-pricebox-and-meta"><div class="ohmylms-widget-continue-learn"><div class="layout3-progressbar-box"><div class="ohmylms-progressbar-outer"><div class="ohmylms-progressbar-inner"></div></div></div></div></div></div>'
+			);
+		} );
+		const sharedProgress = await page
+			.locator( '.oml-progress' )
+			.evaluate( ( element ) => {
+				const style = getComputedStyle( element );
+				return {
+					height: style.height,
+					background: style.backgroundColor,
+					radius: style.borderRadius,
+				};
+			} );
+		const sharedFill = await page
+			.locator( '.oml-progress-bar' )
+			.evaluate(
+				( element ) => getComputedStyle( element ).backgroundColor
+			);
+		await expect( page.locator( '.ohmylms-progressbar-outer' ) ).toHaveCSS(
+			'height',
+			sharedProgress.height
+		);
+		await expect( page.locator( '.ohmylms-progressbar-outer' ) ).toHaveCSS(
+			'background-color',
+			sharedProgress.background
+		);
+		await expect( page.locator( '.ohmylms-progressbar-outer' ) ).toHaveCSS(
+			'border-radius',
+			sharedProgress.radius
+		);
+		await expect( page.locator( '.ohmylms-progressbar-inner' ) ).toHaveCSS(
+			'background-color',
+			sharedFill
+		);
 	} );
 }

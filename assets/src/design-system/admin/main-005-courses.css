@@ -96,13 +96,6 @@
 
 .toplevel_page_ohmylms
 	.components-modal__frame.ohmylms-course-type-modal
-	.components-modal__header
-	+ div {
-	height: 100%;
-}
-
-.toplevel_page_ohmylms
-	.components-modal__frame.ohmylms-course-type-modal
 	.components-modal__content {
 	padding: var(--oml-space-4);
 }

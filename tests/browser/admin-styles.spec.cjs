@@ -43,6 +43,53 @@ test( 'failed CSS requests reject and can be retried in the same slot', async ( 
 	expect( await page.locator( '#feature' ).count() ).toBe( 1 );
 } );
 
+test( 'WordPress navigation does not load feature CSS, while content and portals do', async ( {
+	page,
+} ) => {
+	const requested = [];
+	await page.route( 'https://scoped-styles.test/*.css', ( route ) => {
+		requested.push( new URL( route.request().url() ).pathname );
+		return route.fulfill( { contentType: 'text/css', body: '' } );
+	} );
+	await page.setContent( `
+		<link rel="stylesheet" data-oml-group="courses" data-oml-href="https://scoped-styles.test/courses.css">
+		<link rel="stylesheet" data-oml-group="commerce" data-oml-href="https://scoped-styles.test/commerce.css">
+		<link rel="stylesheet" data-oml-group="quizzes" data-oml-href="https://scoped-styles.test/quizzes.css">
+		<div id="wpwrap">
+			<nav><a class="visit-ohmylms-courses-class">Courses</a></nav>
+			<div id="wpadminbar"><a class="visit-ohmylms-memberships-class">Membership</a></div>
+			<main id="wpbody-content">Curriculum</main>
+		</div>
+	` );
+	await page.addScriptTag( {
+		path: path.join( root, 'assets/js/admin-styles.js' ),
+	} );
+	// Wait for the loader's animation-frame scan without using a fixed delay.
+	await page.evaluate( () => new Promise( requestAnimationFrame ) );
+	expect( requested ).toEqual( [] );
+	await page.evaluate( () => {
+		document.querySelector( '#wpbody-content' ).innerHTML =
+			'<section class="ohmylms-course-builder-wrapper">Course</section>';
+	} );
+	await expect.poll( () => requested ).toEqual( [ '/courses.css' ] );
+	await page.evaluate( () => {
+		const portal = document.createElement( 'div' );
+		portal.innerHTML = '<div class="ohmylms-question-modal">Question</div>';
+		document.body.appendChild( portal );
+	} );
+	await expect
+		.poll( () => requested )
+		.toEqual( [ '/courses.css', '/quizzes.css' ] );
+	await page.evaluate( () =>
+		window.ohmylmsStyles.ensure( 'commerceComponents' )
+	);
+	expect( requested ).toEqual( [
+		'/courses.css',
+		'/quizzes.css',
+		'/commerce.css',
+	] );
+} );
+
 for ( const rtl of [ false, true ] ) {
 	test( `admin CSS loads features on demand with stable cascade (${ rtl ? 'RTL' : 'LTR' })`, async ( {
 		page,
@@ -88,7 +135,8 @@ for ( const rtl of [ false, true ] ) {
 			window.ohmylmsStyles.ensure( 'courseComponents' )
 		);
 		expect( groups() ).toContain( 'courses' );
-		expect( groups() ).toContain( 'block-editor' );
+		// WordPress supplies the editor stylesheet; the plugin does not duplicate it.
+		expect( groups() ).not.toContain( 'block-editor' );
 		expect( groups() ).not.toContain( 'email-editor' );
 		await page.evaluate( () => {
 			document.querySelector( '#app' ).innerHTML =

@@ -1,46 +1,5 @@
-.ohmylms-options-list .ohmylms-option-item-wrapper {
-	margin-bottom: var(--oml-space-4);
-}
-
-.ohmylms-options-list .ohmylms-option-item {
-	display: flex;
-	align-items: center;
-	padding: 0;
-	border: none;
-	position: relative;
-}
-
 .ohmylms-options-list .ohmylms-option-item > div {
 	width: 100%;
-}
-
-.ohmylms-options-list .ohmylms-option-item--correct {
-	border-color: var(--oml-success);
-}
-
-.ohmylms-options-list .ohmylms-option-item--correct .ant-input {
-	border-color: var(--oml-success) !important;
-}
-
-.ohmylms-options-list .ohmylms-option-item .ohmylms-drag-icon {
-	cursor: grab;
-	color: var(--oml-muted);
-	font-size: var(--oml-font-size-lg);
-	margin-left: var(--oml-space-2);
-}
-
-.ohmylms-options-list .ohmylms-option-item:hover .ohmylms-drag-icon {
-	visibility: visible;
-}
-
-.ohmylms-options-list .ohmylms-option-correct {
-	color: var(--oml-success);
-	font-size: var(--oml-font-size-sm);
-	display: block;
-	width: 100%;
-	text-align: left;
-	margin-left: 25px;
-	margin-top: var(--oml-space-2);
 }
 
 .ohmylms-options-list .ohmylms-option-error-msg {

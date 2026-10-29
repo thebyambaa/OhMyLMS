@@ -1,6 +1,6 @@
 # Stylesheet ownership (roadmap step 7)
 
-Measured on `main` on 29 October 2026. Sizes are uncompressed bytes of the files in the plugin directory. Nothing here claims a speed-up; page-load timing was not measured.
+The table below records the 29 October 2026 snapshot on `main`; see the 30 October cleanup below for subsequent changes. Sizes are uncompressed bytes of the files in the plugin directory. Nothing here claims a speed-up; page-load timing was not measured.
 
 ## Who owns what
 
@@ -41,18 +41,44 @@ Earlier in step 7 (commit `5d4cbc26` and predecessors), measured from git: front
 
 ## Competing declarations, measured
 
-- Frontend: no exact duplicate rules across the eight page modules. Page rules that target `.ohmylms-button` set layout only (`width`, `display`, `gap`, `max-width`); none sets colour, background, border or padding. The layout 3 sidebar progress bar in `course.css` still sets its own size and colour.
-- Admin (non-vendor): 3,148 rules scanned; 46 exact duplicate rules (about 5.9 KB), mostly the quiz option list (`main-066` and `main-074`) and RTL pagination rules. They are not removed because deleting the later copy changes cascade order.
+- Frontend: no exact duplicate rules across the eight page modules. Page rules that target `.ohmylms-button` set layout only (`width`, `display`, `gap`, `max-width`); none sets colour, background, border or padding. After the 30 October cleanup, the layout-3 progress bar retains its allocated width and uses the shared component appearance.
+- The cleanup rechecked exact authored rules using layer, direction, loading group and conditional scope. It removed eight earlier copies while retaining their later copies. A regression check now rejects exact duplicates within the same loading scope. Vendor rules and distinct states/conditions are not collapsed.
 - Admin button rules outside the shared layer that set skin properties: 6 (icon picker, resource actions, streak milestone fields); all are component-specific sizing or selected-state colours.
 
 ## Public selectors kept
 
 All `.ohmylms-*` frontend classes used by `templates/`, Elementor, Bricks and add-ons, including `.ohmylms-button`, `.ohmylms-form-group`, `.ohmylms-progressbar*` and the `.ohmylms-page` scope, stay in the shared component styles and page modules. The old `style.css` and `style-rtl.css` URLs still work. No class was deleted in this step.
 
-## Still open
+## Cleanup verified 30 October 2026
 
-- 177 plugin stylesheet links (284 modules, 95 inlined) load on the application screen. Adjacent modules cannot be merged because groups alternate in cascade order (284 runs for 284 modules); merging needs a cascade review.
-- The Extensions page (`ohmylms-extensions`) requests many `courses` and `commerce` modules; check the on-demand loader against what that screen renders.
-- Nine feature files totalling 55,727 bytes load on every application screen; they can move to the lazy groups already assigned in `AdminAssets::defer_feature_style()`.
-- `assets/src/static/dist/css/admin/ohmylms.css` (1,648,931 bytes) remains as the parity fixture for `tests/js/admin-styles.test.mjs`; replace it with a generated selector list to retire it. `assets/dist/css/chunks/355.css` (167,412 bytes) is still requested by the email-editor chunk.
-- Playwright style specs were not run: the Chromium binary is not installed on this machine.
+- WordPress toolbar entries `visit-ohmylms-courses-class` and `visit-ohmylms-memberships-class`
+  were incorrectly triggering course and commerce CSS on Curriculum. Automatic detection now scans
+  `#wpbody-content` (or the standalone main element) and body-level portal containers. WordPress
+  menus and the toolbar are excluded; explicit feature loading is unchanged.
+- Eight earlier exact rules were removed from `main-005-courses.css` and `main-066-quizzes.css`.
+  Later identical copies remain in the same loading scope, preserving final cascade priority.
+- Layout-3 course progress no longer overrides shared height, fill, track, radius or animation.
+- The design language, token guide and legacy audit describe the actual modular build and aliases.
+- Browser checks cover menu false positives, dynamic content, portals, explicit loading, retry,
+  LTR/RTL loading order, shared progress across themes and the component gallery.
+
+Live Curriculum verification: plugin stylesheet links with an active URL fell from **127 to 82**;
+all 45 course/commerce slots remained deferred. The page rendered with no console errors. The rebuilt
+admin compatibility CSS shrank by 947 bytes (1,430,902 to 1,429,955); the course module shrank by
+395 bytes (121,829 to 121,434). These are byte/request counts, not a measured load-time improvement.
+
+Validation: 35 relevant browser checks, nine focused Node checks, 364 PHP design-token checks,
+PHP admin-style registration checks, CSS lint and the modified loader's JavaScript lint passed.
+
+## Remaining optimization boundaries
+
+- Feature modules retain their ordered cascade slots. Further request-count reduction needs a
+  cascade review; arbitrary regrouping can change precedence.
+- The nine feature styles are already assigned lazy groups by `AdminAssets::defer_feature_style()`.
+  They load when their corresponding content or explicit feature loader requires them, rather than
+  being treated as unconditional application CSS.
+- `assets/src/static/dist/css/admin/ohmylms.css` remains a selector/parity test input.
+  `assets/dist/css/chunks/355.css` remains an email-editor dependency. Neither should be deleted
+  without replacing its consumer.
+- The Sass build still uses legacy `@import` because some partials share placeholder extensions.
+  A future Sass module migration must preserve those dependencies and the existing cascade.

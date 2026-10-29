@@ -3,7 +3,7 @@
 return array(
 	'core' => array( 'path' => 'assets/css/frontend/core.css', 'version' => '757a5395220d', 'bytes' => 51338 ),
 	'catalog' => array( 'path' => 'assets/css/frontend/catalog.css', 'version' => '1a384c59f178', 'bytes' => 56013 ),
-	'course' => array( 'path' => 'assets/css/frontend/course.css', 'version' => 'aef042799218', 'bytes' => 121829 ),
+	'course' => array( 'path' => 'assets/css/frontend/course.css', 'version' => '67a01c3949d4', 'bytes' => 121434 ),
 	'lesson' => array( 'path' => 'assets/css/frontend/lesson.css', 'version' => 'a6c21fa20231', 'bytes' => 105241 ),
 	'checkout' => array( 'path' => 'assets/css/frontend/checkout.css', 'version' => '491e957247a9', 'bytes' => 36512 ),
 	'thankyou' => array( 'path' => 'assets/css/frontend/thankyou.css', 'version' => '23fe6f8e48aa', 'bytes' => 12995 ),

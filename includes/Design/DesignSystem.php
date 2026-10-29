@@ -652,8 +652,14 @@ final class DesignSystem {
 			$styles->registered[ Ui::STYLE_HANDLE ]->deps = array_values( array_unique( $styles->registered[ Ui::STYLE_HANDLE ]->deps ) );
 		}
 		// Load after the other plugin and WordPress component styles so the shared rules win ties.
-		$deps = array();
+		$deps            = array();
+		$screen          = get_current_screen();
+		$is_authored_app = $screen && \OhMyLMS\Admin\AppPage::is_app_screen( $screen->id );
 		foreach ( array( 'wp-components', Ui::STYLE_HANDLE, 'ohmylms-main', 'ohmylms-tailwind', 'ohmylms-admin-ui', 'ohmylms-question-editor', 'ohmylms-skill-studio' ) as $handle ) {
+			// The new shell shares controls and tokens, but does not depend on the recovered application's CSS.
+			if ( $is_authored_app && ! in_array( $handle, array( 'wp-components', Ui::STYLE_HANDLE ), true ) ) {
+				continue;
+			}
 			if ( wp_style_is( $handle, 'registered' ) ) {
 				$deps[] = $handle;
 			}

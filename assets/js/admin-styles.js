@@ -106,10 +106,30 @@
 		emails: '[class*="ohmylms-email"], [class*="ohmylms-automation"]',
 	};
 	let scheduled = false;
+	function contentRoots() {
+		const content =
+			document.getElementById( 'wpbody-content' ) ||
+			document.querySelector( 'main' );
+		// WordPress menus and the toolbar contain feature names too. Only application
+		// content and body-level portals should trigger automatic feature loading.
+		const portals = Array.from( document.body.children ).filter(
+			( element ) =>
+				element.id !== 'wpwrap' &&
+				element.id !== 'wpadminbar' &&
+				! element.matches( 'script, style, link, header, nav' ) &&
+				! element.contains( content )
+		);
+		return content ? [ content, ...portals ] : portals;
+	}
 	function scan() {
 		scheduled = false;
+		const roots = contentRoots();
 		const groups = Object.keys( selectors ).filter( ( group ) =>
-			document.querySelector( selectors[ group ] )
+			roots.some(
+				( root ) =>
+					root.matches( selectors[ group ] ) ||
+					root.querySelector( selectors[ group ] )
+			)
 		);
 		ensureGroups( groups ).catch( () => {
 			// A later render or explicit feature load can retry a failed request.

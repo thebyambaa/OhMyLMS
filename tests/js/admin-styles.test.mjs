@@ -9,6 +9,55 @@ import { buildAdminStyles } from '../../tools/build-admin-styles.mjs';
 import { createFeatureLoader } from '../../assets/src/extensions/featureLoader.mjs';
 
 const root = path.resolve( import.meta.dirname, '../..' );
+test( 'authored admin groups contain no exact duplicate rules in the same conditional scope', () => {
+	const manifest = JSON.parse(
+		fs.readFileSync(
+			path.join( root, 'assets/src/admin-styles/manifest.json' ),
+			'utf8'
+		)
+	);
+	const seen = new Set();
+	for ( const entry of manifest ) {
+		if ( ! entry.source.startsWith( 'assets/src/design-system/' ) )
+			continue;
+		postcss
+			.parse( fs.readFileSync( path.join( root, entry.source ), 'utf8' ) )
+			.walkRules( ( rule ) => {
+				const context = [];
+				for (
+					let parent = rule.parent;
+					parent.type !== 'root';
+					parent = parent.parent
+				) {
+					if (
+						parent.type === 'atrule' &&
+						/keyframes/.test( parent.name )
+					)
+						return;
+					context.unshift( [ parent.name, parent.params ] );
+				}
+				const key = JSON.stringify( [
+					entry.layer || 'main',
+					entry.rtl,
+					entry.group,
+					context,
+					rule.selector.replace( /\s+/g, ' ' ),
+					rule.nodes
+						.filter( ( node ) => node.type === 'decl' )
+						.map( ( node ) => [
+							node.prop,
+							node.value,
+							!! node.important,
+						] ),
+				] );
+				assert.ok(
+					! seen.has( key ),
+					`Duplicate rule in ${ entry.source }: ${ rule.selector }`
+				);
+				seen.add( key );
+			} );
+	}
+} );
 test( 'source builds include the curriculum stylesheet imports beside their modules', () => {
 	const destination = fs.mkdtempSync(
 		path.join( os.tmpdir(), 'oml-css-imports-' )
