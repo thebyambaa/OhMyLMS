@@ -72,7 +72,7 @@ The most-read shared bindings, in suggested extraction order:
 
 | Module to create | Recovered source | Read by |
 | --- | --- | --- |
-| `controls` | factory 38093 (`I`, `*WP` wrappers) | 16 of 17 features |
+| `controls` | factory 38093 (`I`, `*WP` wrappers) | 18 features |
 | `notices` | factory 71046 (`z`) plus the toast library | 13 |
 | `admin-menu` / routing helpers | `HG` (admin menu highlight), router bindings | 14 |
 | `html` utilities | `Ge` (safe text from HTML) | 12 |
@@ -84,7 +84,7 @@ The most-read shared bindings, in suggested extraction order:
 
 ### Step 4: state and API (owner: each feature, with a thin shared REST client)
 
-Factory 86169 (`T`) is one store-plus-client read by 111 components in 16 of the 17 wired features. Split it by REST
+Factory 86169 (`T`) is one store-plus-client read by 123 components in 17 of the 18 wired features. Split it by REST
 namespace into per-feature `api.mjs` modules and stores. `courses/api.mjs` and
 `courses/structureClient.js` already show the pattern. The plugin-installer client (`He`,
 18 components) belongs in shared infrastructure. Each split needs the permission check from
@@ -93,7 +93,7 @@ the invariants: the client must not widen which capability can reach a route.
 ### Step 5: feature independence (owner: the named feature)
 
 The report lists, for each feature, the recovered locals only that feature uses. They move
-into the feature as authored modules. The 443 inlined Babel helper bindings need no work of
+into the feature as authored modules. The 480 inlined Babel helper bindings need no work of
 their own; they disappear as each component is rewritten as normal JSX.
 
 Cross-feature reads (for example, settings reading `GamificationPage`, `EmailSettingsPage` and
