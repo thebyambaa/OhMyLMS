@@ -5,7 +5,6 @@ import * as Controls from '../../shared/controls';
 export function createSetupPreferences( readRuntime ) {
 	return function SetupPreferences( props ) {
 		const {
-			I: RecoveredControls,
 			Gte,
 			React,
 			T: StoreModule,
@@ -871,7 +870,7 @@ export function createSetupPreferences( readRuntime ) {
 												<Controls.FlexItemWP
 													isBlock={ ! 0 }
 												>
-													<RecoveredControls.SearchSelectWP
+													<Controls.SearchSelectWP
 														placeholder={ ( 0,
 														I18n.__ )(
 															'Select Language',
@@ -939,7 +938,7 @@ export function createSetupPreferences( readRuntime ) {
 												<Controls.FlexItemWP
 													isBlock={ ! 0 }
 												>
-													<RecoveredControls.SearchSelectWP
+													<Controls.SearchSelectWP
 														placeholder={ ( 0,
 														I18n.__ )(
 															'Type to Select Currency',

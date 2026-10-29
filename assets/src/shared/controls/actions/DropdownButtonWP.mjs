@@ -26,12 +26,12 @@ const chevronDown = createElement(
 /**
  * Split button: a primary button plus an arrow that opens a dropdown menu.
  *
- * @param {Object}   props               Component props.
- * @param {Object[]} [props.menuItems]   Menu controls. Defaults to [].
- * @param {string}   [props.className]   Extra class for the arrow menu. Defaults to "".
- * @param {string}   [props.buttonLabel] Main button label. Defaults to "Actions".
- * @param {Function} [props.onClick]     Main button click handler.
- * @param {boolean}  [props.loading]     Loading state of the main button. Defaults to false.
+ * @param {Object}                     props               Component props.
+ * @param {Object[]}                   [props.menuItems]   Menu controls. Defaults to [].
+ * @param {string}                     [props.className]   Extra class for the arrow menu. Defaults to "".
+ * @param {string}                     [props.buttonLabel] Main button label. Defaults to "Actions".
+ * @param {( event: unknown ) => void} [props.onClick]     Main button click handler.
+ * @param {boolean}                    [props.loading]     Loading state of the main button. Defaults to false.
  * @return {import('react').ReactElement} Split button.
  */
 function DropdownButtonWPBase( {

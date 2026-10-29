@@ -5,10 +5,10 @@ import { showRequestError } from '../requestFeedback.mjs';
  */
 import { createElement } from '@wordpress/element';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
 export function createOrderNotes( readRuntime ) {
 	return function OrderNotes( { notes = [], order } ) {
 		const {
-			Ge: decodeEntities,
 			JY: formatOrderDate,
 			React,
 			T: StoreModule,
@@ -117,7 +117,7 @@ export function createOrderNotes( readRuntime ) {
 															weight={ 400 }
 															size={ 13 }
 														>
-															{ decodeEntities(
+															{ decodeHtmlEntities(
 																note.content
 															) }
 														</Controls.TextWP>

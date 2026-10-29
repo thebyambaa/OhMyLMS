@@ -2,6 +2,7 @@
 import { createElement } from '@wordpress/element';
 import { Table } from '../../shared/table';
 import * as Controls from '../../shared/controls';
+import { EmptyState, NoDataIllustration } from '../../shared/media';
 export function createTransactionHistory( readRuntime ) {
 	return function TransactionHistory( props ) {
 		const {
@@ -9,9 +10,7 @@ export function createTransactionHistory( readRuntime ) {
 			React,
 			ZU: AnalyticsDateFilter,
 			b: I18n,
-			df: EmptyIcon,
 			g: ReactHooks,
-			uf: EmptyState,
 			vn,
 		} = readRuntime();
 		var t = props.handleTypeFilters,
@@ -182,7 +181,7 @@ export function createTransactionHistory( readRuntime ) {
 					locale={ {
 						emptyText: (
 							<EmptyState
-								icon={ <EmptyIcon /> }
+								icon={ <NoDataIllustration /> }
 								title={ ( 0, I18n.__ )(
 									'Your transaction history is waiting to be filled!',
 									'ohmylms'

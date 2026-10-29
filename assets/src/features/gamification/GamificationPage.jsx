@@ -1,10 +1,11 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
+import { highlightAdminMenu } from '../../shared/utils';
 export function createGamificationPage( readRuntime ) {
 	return function GamificationPage() {
-		const { HG, R5: GamificationSettings, React } = readRuntime();
+		const { R5: GamificationSettings, React } = readRuntime();
 		return (
-			HG( 'ohmylms', 'gamification' ),
+			highlightAdminMenu( 'ohmylms', 'gamification' ),
 			(
 				<React.Fragment>
 					<GamificationSettings />

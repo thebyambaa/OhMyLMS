@@ -2,6 +2,7 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import * as Controls from '../../shared/controls';
+import { highlightAdminMenu } from '../../shared/utils';
 export function createStudentReport( readRuntime ) {
 	return function StudentReport() {
 		const {
@@ -9,7 +10,6 @@ export function createStudentReport( readRuntime ) {
 			DZ,
 			FZ,
 			GZ,
-			HG,
 			HZ,
 			Nr,
 			React,
@@ -138,7 +138,7 @@ export function createStudentReport( readRuntime ) {
 			o = ( 0, WordPressData.useSelect )( function ( _eLocal6 ) {
 				return _eLocal6( StoreModule.default ).getStudent();
 			}, [] );
-		HG( 'ohmylms', 'students' );
+		highlightAdminMenu( 'ohmylms', 'students' );
 		var i = ( 0, ReactHooks.useCallback )(
 			HZ(
 				BZ().m( function _nLocal3() {

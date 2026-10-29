@@ -13,12 +13,12 @@ import { pickDay } from './date-range-model.mjs';
  * starts a new one. Days between the endpoints, and the days between the start
  * and the hovered day, are highlighted.
  *
- * @param {Object}   props
- * @param {*}        props.initialStartDate Range start the calendar opens with.
- * @param {*}        props.initialEndDate   Range end the calendar opens with.
- * @param {Function} props.onSelect         Called with `{ startDate, endDate }`
- *                                          once the range is complete, or with
- *                                          both set to `null` by "Clear".
+ * @param {Object}                                                          props
+ * @param {unknown}                                                         props.initialStartDate Range start the calendar opens with.
+ * @param {unknown}                                                         props.initialEndDate   Range end the calendar opens with.
+ * @param {( selection: { startDate: unknown, endDate: unknown } ) => void} props.onSelect         Called with `{ startDate, endDate }`
+ *                                                                                                 once the range is complete, or with
+ *                                                                                                 both set to `null` by "Clear".
  * @return {import('react').ReactElement} Calendar.
  */
 export function DateRangeCalendar( {

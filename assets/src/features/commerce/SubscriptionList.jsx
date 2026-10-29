@@ -5,6 +5,7 @@
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import * as Controls from '../../shared/controls';
+import { EmptyState, NoDataIllustration, PageHeader } from '../../shared/media';
 export function createSubscriptionList( readRuntime ) {
 	return function SubscriptionList() {
 		const {
@@ -14,14 +15,11 @@ export function createSubscriptionList( readRuntime ) {
 			React,
 			T: StoreModule,
 			VY: formatDateTime,
-			YG: PageHeader,
 			b: I18n,
-			df: EmptyIcon,
 			f: Router,
 			fN: Pagination,
 			g: ReactHooks,
 			hN: BulkActionsBar,
-			uf: EmptyContainer,
 			v: RouterLink,
 			y: WordPressData,
 		} = readRuntime();
@@ -312,8 +310,8 @@ export function createSubscriptionList( readRuntime ) {
 								onChange={ handleTableChange }
 								locale={ {
 									emptyText: (
-										<EmptyContainer
-											icon={ <EmptyIcon /> }
+										<EmptyState
+											icon={ <NoDataIllustration /> }
 											title={ I18n.__(
 												'No Subscriptions Found',
 												'ohmylms'

@@ -4,14 +4,10 @@
  */
 import { createElement } from '@wordpress/element';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
 export function createOrderHeader( readRuntime ) {
 	return function OrderHeader( { order } ) {
-		const {
-			Ge: decodeEntities,
-			JY: formatOrderDate,
-			React,
-			b: I18n,
-		} = readRuntime();
+		const { JY: formatOrderDate, React, b: I18n } = readRuntime();
 		if ( ! order ) {
 			return null;
 		}
@@ -29,7 +25,7 @@ export function createOrderHeader( readRuntime ) {
 					<Controls.BadgeWP isBorderLess={ true }>
 						<Controls.TextWP>
 							{ I18n.__( 'Payment via', 'ohmylms' ) }{ ' ' }
-							{ decodeEntities( order.payment_method_title ) }
+							{ decodeHtmlEntities( order.payment_method_title ) }
 							&nbsp;
 							{ order.transaction_id && order.transaction_url && (
 								<Controls.ButtonWP

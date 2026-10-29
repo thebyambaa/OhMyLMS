@@ -1,6 +1,7 @@
 import { createElement } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
+import { decodeHtmlEntities } from '../../shared/utils';
 export function createCourseInfoHeader( readRuntime ) {
 	return function CourseInfoHeader( {
 		handleInputChange,
@@ -15,7 +16,6 @@ export function createCourseInfoHeader( readRuntime ) {
 			re: { A: TitleInput },
 			ne: RichText,
 			T: { default: store },
-			Ge: decode,
 		} = readRuntime();
 		const course = useSelect(
 			( select ) => select( store ).getCourse(),
@@ -47,14 +47,16 @@ export function createCourseInfoHeader( readRuntime ) {
 							aria-level={ compact ? 1 : undefined }
 							aria-label={
 								compact
-									? decode( name ) ||
+									? decodeHtmlEntities( name ) ||
 										__( 'Untitled course', 'ohmylms' )
 									: undefined
 							}
 						>
 							<TitleInput
 								value={
-									name !== 'Untitled' ? decode( name ) : ''
+									name !== 'Untitled'
+										? decodeHtmlEntities( name )
+										: ''
 								}
 								onChange={ handleInputChange }
 								placeholder={ __(

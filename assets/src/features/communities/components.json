@@ -3,7 +3,7 @@
 		"binding": "U9",
 		"name": "CommunitiesPage",
 		"file": "CommunitiesPage.jsx",
-		"dependencies": [ "G9", "HG", "React", "YG", "b" ]
+		"dependencies": [ "G9", "React", "b" ]
 	},
 	{
 		"binding": "H9",
@@ -13,7 +13,6 @@
 			"B9",
 			"Br",
 			"D9",
-			"Ge",
 			"L9",
 			"N9",
 			"Ne",
@@ -22,11 +21,9 @@
 			"SB",
 			"T",
 			"b",
-			"df",
 			"g",
 			"l",
 			"q",
-			"uf",
 			"y"
 		]
 	},
@@ -41,7 +38,6 @@
 		"name": "CommunityDetails",
 		"file": "CommunityDetails.jsx",
 		"dependencies": [
-			"Ge",
 			"L2",
 			"M",
 			"Pf",
@@ -71,8 +67,7 @@
 			"g",
 			"l",
 			"x9",
-			"y",
-			"I"
+			"y"
 		]
 	}
 ]

@@ -4,10 +4,10 @@ import { validateCoupon } from './model.mjs';
 import { createElement } from '@wordpress/element';
 import { CopyToClipboard } from '../../shared/copy-to-clipboard';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
 export function createCouponModal( readRuntime ) {
 	return function CouponModal( props ) {
 		const {
-			Ge: decodeEntities,
 			Nm: SettingSelect,
 			Pf: SettingField,
 			Pre,
@@ -354,7 +354,7 @@ export function createCouponModal( readRuntime ) {
 										'ohmylms'
 									) }
 									inputType={ 'text' }
-									value={ decodeEntities( title ) }
+									value={ decodeHtmlEntities( title ) }
 									onChange={ function ( e ) {
 										return setTitle( e );
 									} }
@@ -454,7 +454,7 @@ export function createCouponModal( readRuntime ) {
 										'Type here',
 										'ohmylms'
 									) }
-									value={ decodeEntities( description ) }
+									value={ decodeHtmlEntities( description ) }
 									onChange={ function ( e ) {
 										return setDescription( e );
 									} }

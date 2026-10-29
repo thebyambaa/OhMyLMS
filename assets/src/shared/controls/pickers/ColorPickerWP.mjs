@@ -48,14 +48,14 @@ const resetIcon = createElement(
 /**
  * Colour swatch that opens a colour picker popover; clicking outside closes it.
  *
- * @param {Object}   props
- * @param {string}   [props.initialColor]    Colour shown; follows later changes of the prop.
- * @param {string}   [props.defaultColor]    Colour the reset button restores, empty by default.
- * @param {boolean}  [props.isShowResetBtn]  Show the reset button.
- * @param {boolean}  [props.showColorCode]   Show the colour code beside the swatch.
- * @param {boolean}  [props.disableAlpha]    Hide the alpha slider.
- * @param {boolean}  [props.disabled]        Stops the swatch following changes; `onChange` is still called.
- * @param {Function} [props.onChange]        Called with the colour object (`{ hex, ... }`) after a pick or reset.
+ * @param {Object}                    props
+ * @param {string}                    [props.initialColor]   Colour shown; follows later changes of the prop.
+ * @param {string}                    [props.defaultColor]   Colour the reset button restores, empty by default.
+ * @param {boolean}                   [props.isShowResetBtn] Show the reset button.
+ * @param {boolean}                   [props.showColorCode]  Show the colour code beside the swatch.
+ * @param {boolean}                   [props.disableAlpha]   Hide the alpha slider.
+ * @param {boolean}                   [props.disabled]       Stops the swatch following changes; `onChange` is still called.
+ * @param {( color: Object ) => void} [props.onChange]       Called with the colour object (`{ hex, ... }`) after a pick or reset.
  * @return {import('react').ReactElement} Colour picker.
  */
 export function ColorPickerWP( {

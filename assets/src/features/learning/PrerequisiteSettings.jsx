@@ -1,10 +1,10 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
 export function createPrerequisiteSettings( readRuntime ) {
 	return function PrerequisiteSettings( props ) {
 		const {
-			Ge,
 			Kt,
 			React,
 			an,
@@ -202,7 +202,7 @@ export function createPrerequisiteSettings( readRuntime ) {
 																	_eLocal7
 																) {
 																	return {
-																		label: Ge(
+																		label: decodeHtmlEntities(
 																			_eLocal7 ===
 																				null ||
 																				_eLocal7 ===

@@ -3,11 +3,11 @@ import { showRequestError } from '../requestFeedback.mjs';
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { Skeleton } from '../../shared/skeleton';
+import { highlightAdminMenu } from '../../shared/utils';
 export function createCertificateEditPage( readRuntime ) {
 	return function CertificateEditPage() {
 		const {
 			Ete,
-			HG,
 			React,
 			T: StoreModule,
 			bte,
@@ -17,7 +17,7 @@ export function createCertificateEditPage( readRuntime ) {
 			wte,
 			y: WordPressData,
 		} = readRuntime();
-		HG( 'ohmylms', 'certificates' );
+		highlightAdminMenu( 'ohmylms', 'certificates' );
 		var e = ( 0, Router.g )().id,
 			t = ( 0, WordPressData.useDispatch )( StoreModule.default ),
 			n = ( function ( _eLocal, _tLocal ) {

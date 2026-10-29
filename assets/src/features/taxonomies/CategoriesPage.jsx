@@ -3,12 +3,12 @@ import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { EditIcon } from '../../shared/icons';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities, highlightAdminMenu } from '../../shared/utils';
+import { EmptyState, NoDataIllustration, PageHeader } from '../../shared/media';
 export function createCategoriesPage( readRuntime ) {
 	return function CategoriesPage() {
 		const {
 			Ea,
-			Ge,
-			HG,
 			IY,
 			Ie,
 			Ne,
@@ -17,21 +17,18 @@ export function createCategoriesPage( readRuntime ) {
 			T: StoreModule,
 			TY,
 			We,
-			YG,
 			aY,
 			b: I18n,
-			df,
 			g: ReactHooks,
 			hN,
 			jY,
 			l,
 			q,
 			sN,
-			uf,
 			xY: TaxonomyModal,
 			y: WordPressData,
 		} = readRuntime();
-		HG( 'ohmylms', 'categories' );
+		highlightAdminMenu( 'ohmylms', 'categories' );
 		var e = ( 0, WordPressData.useDispatch )( StoreModule.default ),
 			t = useNotifications(),
 			n = t.openNotificationWithIcon,
@@ -520,7 +517,7 @@ export function createCategoriesPage( readRuntime ) {
 																} }
 															>
 																{ '• ' }
-																{ Ge(
+																{ decodeHtmlEntities(
 																	_eLocal14.title
 																) }
 															</div>
@@ -592,7 +589,7 @@ export function createCategoriesPage( readRuntime ) {
 			<React.Fragment>
 				{ r }
 				<Controls.ContainerWP>
-					<YG
+					<PageHeader
 						title={ ( 0, I18n.__ )( 'Categories', 'ohmylms' ) }
 						showAddButton={ ! 0 }
 						addButtonConfig={ X }
@@ -641,22 +638,28 @@ export function createCategoriesPage( readRuntime ) {
 									return V( null );
 								} }
 								locale={ {
-									emptyText: React.createElement( uf, {
-										icon: React.createElement( df, null ),
-										title: ( 0, I18n.__ )(
-											'No categories yet!',
-											'ohmylms'
-										),
-										description: ( 0, I18n.__ )(
-											'Create your first category and it will show up here.',
-											'ohmylms'
-										),
-										ctaText: ( 0, I18n.__ )(
-											'Add Category',
-											'ohmylms'
-										),
-										ctaHandler: U,
-									} ),
+									emptyText: React.createElement(
+										EmptyState,
+										{
+											icon: React.createElement(
+												NoDataIllustration,
+												null
+											),
+											title: ( 0, I18n.__ )(
+												'No categories yet!',
+												'ohmylms'
+											),
+											description: ( 0, I18n.__ )(
+												'Create your first category and it will show up here.',
+												'ohmylms'
+											),
+											ctaText: ( 0, I18n.__ )(
+												'Add Category',
+												'ohmylms'
+											),
+											ctaHandler: U,
+										}
+									),
 								} }
 							/>
 						</Controls.SpacerWP>

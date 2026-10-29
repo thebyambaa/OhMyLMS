@@ -3,16 +3,13 @@
  * Main route view for /subscriptions and /subscriptions/:page.
  */
 import { createElement } from '@wordpress/element';
+import { highlightAdminMenu } from '../../shared/utils';
 
 export function createSubscriptionsPage( readRuntime ) {
 	return function SubscriptionsPage() {
-		const {
-			HG: setScreenId,
-			HQ: SubscriptionListMemo,
-			React,
-		} = readRuntime();
+		const { HQ: SubscriptionListMemo, React } = readRuntime();
 
-		setScreenId( 'ohmylms', 'subscriptions' );
+		highlightAdminMenu( 'ohmylms', 'subscriptions' );
 
 		return (
 			<React.Fragment>

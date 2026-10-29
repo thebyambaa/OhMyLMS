@@ -3,27 +3,26 @@ import { showRequestError } from '../requestFeedback.mjs';
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import * as Controls from '../../shared/controls';
+import { highlightAdminMenu } from '../../shared/utils';
+import { PageHeader, PlusIcon } from '../../shared/media';
 export function createDashboard( readRuntime ) {
 	return function Dashboard() {
 		const {
 			D: Buttons,
 			GG,
-			HG,
 			NG: DashboardOverview,
 			React,
 			T: StoreModule,
 			VG: CourseImportDialog,
-			YG: PageHeader,
 			b: I18n,
 			cU,
 			dU,
 			g: ReactHooks,
 			lU: CourseCreateDialog,
 			mU,
-			nf,
 			y: WordPressData,
 		} = readRuntime();
-		HG( 'ohmylms', 'dashboard' );
+		highlightAdminMenu( 'ohmylms', 'dashboard' );
 		var e = ( 0, WordPressData.useDispatch )( StoreModule.default ),
 			t = useNotifications(),
 			n = t.openNotificationWithIcon,
@@ -212,7 +211,10 @@ export function createDashboard( readRuntime ) {
 									variant={ 'primary' }
 									isBusy={ f }
 									onClick={ k }
-									icon={ React.createElement( nf, null ) }
+									icon={ React.createElement(
+										PlusIcon,
+										null
+									) }
 									iconPosition={ 'left' }
 								>
 									{ ( 0, I18n.__ )(

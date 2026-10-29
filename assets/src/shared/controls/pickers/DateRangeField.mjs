@@ -13,10 +13,10 @@ import {
 /**
  * Range button with a preset menu and a calendar popover.
  *
- * @param {Object}   props
- * @param {*}        props.initialStartDate Range start.
- * @param {*}        props.initialEndDate   Range end.
- * @param {Function} props.onChange         Called with `[ start, end ]` as `YYYY-MM-DD`, or `[ null, null ]` when cleared.
+ * @param {Object}                                props
+ * @param {unknown}                               props.initialStartDate Range start.
+ * @param {unknown}                               props.initialEndDate   Range end.
+ * @param {( range: Array<string|null> ) => void} props.onChange         Called with `[ start, end ]` as `YYYY-MM-DD`, or `[ null, null ]` when cleared.
  * @return {import('react').ReactElement} Field.
  */
 export function DateRangeField( {

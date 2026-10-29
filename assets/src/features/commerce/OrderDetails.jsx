@@ -6,13 +6,13 @@ import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { Skeleton } from '../../shared/skeleton';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
 
 export function createOrderDetails( readRuntime ) {
 	return function OrderDetails( { id = null } ) {
 		const {
 			CQ: CustomerProfile,
 			EQ: OrderStatus,
-			Ge: decodeEntities,
 			Nr: BackButton,
 			PQ: OrderGeneral,
 			RQ: CustomerHistory,
@@ -174,7 +174,7 @@ export function createOrderDetails( readRuntime ) {
 												marginBottom={ 0 }
 											>
 												<OrderGeneral
-													student_name={ decodeEntities(
+													student_name={ decodeHtmlEntities(
 														order.student_name
 													) }
 													student_email={
@@ -283,7 +283,7 @@ export function createOrderDetails( readRuntime ) {
 										marginBottom={ 0 }
 									>
 										<CustomerProfile
-											student_name={ decodeEntities(
+											student_name={ decodeHtmlEntities(
 												order.student_name
 											) }
 											student_email={

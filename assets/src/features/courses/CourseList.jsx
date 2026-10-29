@@ -5,6 +5,8 @@ import { ViewAsModal, canViewAs } from '../schools/ViewAsModal';
 import { CourseGradebook } from './CourseGradebook';
 import { useNotifications } from '../../shared/notices';
 import * as Controls from '../../shared/controls';
+import { PriceDisplay, isValidDateRange } from '../../shared/utils';
+import { EmptyState, NoDataIllustration, PageHeader } from '../../shared/media';
 export function createCourseList( readRuntime ) {
 	return function CourseList() {
 		const _controlId = useId();
@@ -20,13 +22,10 @@ export function createCourseList( readRuntime ) {
 			T: StoreModule,
 			VG,
 			We,
-			YG,
-			YH,
 			aY,
 			b: I18n,
 			cY,
 			dY,
-			df,
 			f: Router,
 			fN,
 			g: ReactHooks,
@@ -41,9 +40,7 @@ export function createCourseList( readRuntime ) {
 			q,
 			sN,
 			sn,
-			uf,
 			v,
-			xq,
 			y: WordPressData,
 			yG,
 			yc,
@@ -364,7 +361,7 @@ export function createCourseList( readRuntime ) {
 											price_type: p,
 											category_id: w,
 										};
-										if ( xq( s ) ) {
+										if ( isValidDateRange( s, sn ) ) {
 											{
 												_aLocal3.date_filter = 'custom';
 												_aLocal3.start_date = sn()(
@@ -1198,7 +1195,7 @@ export function createCourseList( readRuntime ) {
 							>
 								{ _tLocal14.sale_price ? (
 									<React.Fragment>
-										<YH
+										<PriceDisplay
 											currency={
 												( _tLocal14 === null ||
 												_tLocal14 === void 0
@@ -1223,7 +1220,7 @@ export function createCourseList( readRuntime ) {
 										/>
 										{ ' ' }
 										<del>
-											<YH
+											<PriceDisplay
 												currency={
 													( _tLocal14 === null ||
 													_tLocal14 === void 0
@@ -1250,7 +1247,7 @@ export function createCourseList( readRuntime ) {
 										</del>
 									</React.Fragment>
 								) : (
-									<YH
+									<PriceDisplay
 										currency={
 											( _tLocal14 === null ||
 											_tLocal14 === void 0
@@ -1504,13 +1501,13 @@ export function createCourseList( readRuntime ) {
 						/>
 					) }
 					<Controls.ContainerWP>
-						<YG
+						<PageHeader
 							title={ ( 0, I18n.__ )( 'All Courses', 'ohmylms' ) }
 							showAddButton={ ! 0 }
 							addButtonConfig={ gt }
 						>
 							<Gq onClick={ dt } />
-						</YG>
+						</PageHeader>
 						<Ea
 							isBorderless={ ! 0 }
 							minHeight={ 'calc(100vh - 200px)' }
@@ -1572,25 +1569,28 @@ export function createCourseList( readRuntime ) {
 										return G( null );
 									} }
 									locale={ {
-										emptyText: React.createElement( uf, {
-											icon: React.createElement(
-												df,
-												null
-											),
-											title: ( 0, I18n.__ )(
-												'No courses yet!',
-												'ohmylms'
-											),
-											description: ( 0, I18n.__ )(
-												'Start building your first course and it’ll show up here as soon as you hit publish.',
-												'ohmylms'
-											),
-											ctaText: ( 0, I18n.__ )(
-												'Add Course',
-												'ohmylms'
-											),
-											ctaHandler: Ge,
-										} ),
+										emptyText: React.createElement(
+											EmptyState,
+											{
+												icon: React.createElement(
+													NoDataIllustration,
+													null
+												),
+												title: ( 0, I18n.__ )(
+													'No courses yet!',
+													'ohmylms'
+												),
+												description: ( 0, I18n.__ )(
+													'Start building your first course and it’ll show up here as soon as you hit publish.',
+													'ohmylms'
+												),
+												ctaText: ( 0, I18n.__ )(
+													'Add Course',
+													'ohmylms'
+												),
+												ctaHandler: Ge,
+											}
+										),
 									} }
 								/>
 								{ ! F &&

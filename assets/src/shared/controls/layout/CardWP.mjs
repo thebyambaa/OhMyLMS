@@ -21,7 +21,7 @@ import { getCardStyle } from './model.mjs';
  * @param {import('react').Ref}  ref                  Forwarded to `Card`.
  * @return {import('react').ReactElement} Card element.
  */
-export const CardWP = forwardRef( function CardWP(
+export const CardWP = forwardRef( function CardWPRender(
 	{
 		children,
 		actions,

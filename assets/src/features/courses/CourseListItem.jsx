@@ -4,10 +4,10 @@ import { courseEditPath } from './model.mjs';
 import { Avatar } from '../../shared/avatar';
 import { EditIcon } from '../../shared/icons';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
 export function createCourseListItem( readRuntime ) {
 	return function CourseListItem( props ) {
 		const {
-			Ge,
 			React,
 			SB,
 			b: I18n,
@@ -99,7 +99,7 @@ export function createCourseListItem( readRuntime ) {
 								numberOfLines={ 2 }
 								truncate={ ! 0 }
 							>
-								{ Ge(
+								{ decodeHtmlEntities(
 									( () => {
 										if (
 											null !==

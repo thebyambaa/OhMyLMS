@@ -32,7 +32,7 @@ const wrapperStyle = {
  *
  * Same contract the recovered application exposed, so screens migrate by changing the import.
  *
- * @return {{openNotificationWithIcon: Function, contextHolder: import('react').ReactElement}} Notice API.
+ * @return {{openNotificationWithIcon: ( ...args: unknown[] ) => unknown, contextHolder: import('react').ReactElement}} Notice API.
  */
 export function useNotifications() {
 	const [ notices, setNotices ] = useState( [] );

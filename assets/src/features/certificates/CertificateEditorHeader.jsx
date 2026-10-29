@@ -2,10 +2,10 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
 export function createCertificateEditorHeader( readRuntime ) {
 	return function CertificateEditorHeader( props ) {
 		const {
-			Ge,
 			Nr,
 			Re,
 			React,
@@ -451,7 +451,9 @@ export function createCertificateEditorHeader( readRuntime ) {
 										>
 											{ u ? (
 												<Controls.InputWP
-													value={ Ge( m ) }
+													value={ decodeHtmlEntities(
+														m
+													) }
 													onChange={ function ( e ) {
 														return p( e );
 													} }
@@ -460,8 +462,14 @@ export function createCertificateEditorHeader( readRuntime ) {
 												/>
 											) : (
 												<React.Fragment>
-													<span title={ Ge( m ) }>
-														{ Ge( m ) }
+													<span
+														title={ decodeHtmlEntities(
+															m
+														) }
+													>
+														{ decodeHtmlEntities(
+															m
+														) }
 													</span>
 													<Controls.ButtonWP
 														variant={ 'tertiary' }

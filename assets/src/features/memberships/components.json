@@ -3,7 +3,7 @@
 		"binding": "K8",
 		"name": "MembershipsPage",
 		"file": "MembershipsPage.jsx",
-		"dependencies": [ "$8", "HG", "React" ]
+		"dependencies": [ "$8", "React" ]
 	},
 	{
 		"binding": "Z8",
@@ -12,7 +12,6 @@
 		"dependencies": [
 			"D",
 			"Ea",
-			"Ge",
 			"H8",
 			"He",
 			"Ie",
@@ -24,11 +23,8 @@
 			"V8",
 			"We",
 			"Y8",
-			"YG",
-			"YH",
 			"aY",
 			"b",
-			"df",
 			"f",
 			"fN",
 			"g",
@@ -38,9 +34,6 @@
 			"q8",
 			"sN",
 			"sn",
-			"uf",
-			"wq",
-			"xq",
 			"y"
 		]
 	},
@@ -68,7 +61,6 @@
 		"name": "MembershipDetails",
 		"file": "MembershipDetails.jsx",
 		"dependencies": [
-			"Ge",
 			"J7",
 			"Nm",
 			"Pf",
@@ -107,7 +99,6 @@
 		"dependencies": [
 			"C8",
 			"Ea",
-			"Ge",
 			"O8",
 			"React",
 			"S8",
@@ -118,8 +109,7 @@
 			"k8",
 			"l",
 			"x8",
-			"y",
-			"I"
+			"y"
 		]
 	}
 ]

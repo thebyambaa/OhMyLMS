@@ -3,22 +3,21 @@ import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { EditIcon } from '../../shared/icons';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
+import { EmptyState, NoDataIllustration, PageHeader } from '../../shared/media';
 export function createCertificateList( readRuntime ) {
 	return function CertificateList() {
 		const {
 			$ee: MemoCertificateNameCell,
 			Ea,
-			Ge,
 			Ie,
 			Ne,
 			React,
 			T: StoreModule,
 			We,
-			YG,
 			aY,
 			b: I18n,
 			cte,
-			df,
 			dte,
 			f: Router,
 			fN,
@@ -33,7 +32,6 @@ export function createCertificateList( readRuntime ) {
 			q,
 			sN,
 			sn,
-			uf,
 			y: WordPressData,
 		} = readRuntime();
 		var e = ( 0, WordPressData.useDispatch )( StoreModule.default ),
@@ -283,7 +281,7 @@ export function createCertificateList( readRuntime ) {
 						} )(
 							G.map( function ( _eLocal14 ) {
 								return {
-									label: Ge(
+									label: decodeHtmlEntities(
 										_eLocal14 === null ||
 											_eLocal14 === void 0
 											? void 0
@@ -529,7 +527,7 @@ export function createCertificateList( readRuntime ) {
 				<React.Fragment>
 					{ J }
 					<Controls.ContainerWP>
-						<YG
+						<PageHeader
 							title={ ( 0, I18n.__ )(
 								'All Certificates',
 								'ohmylms'
@@ -594,20 +592,23 @@ export function createCertificateList( readRuntime ) {
 									} }
 									className={ 'certificate-listing-table' }
 									locale={ {
-										emptyText: React.createElement( uf, {
-											icon: React.createElement(
-												df,
-												null
-											),
-											title: ( 0, I18n.__ )(
-												'No Certificates yet!',
-												'ohmylms'
-											),
-											description: ( 0, I18n.__ )(
-												'Start building your first certificate and it’ll show up here as soon as you hit publish.',
-												'ohmylms'
-											),
-										} ),
+										emptyText: React.createElement(
+											EmptyState,
+											{
+												icon: React.createElement(
+													NoDataIllustration,
+													null
+												),
+												title: ( 0, I18n.__ )(
+													'No Certificates yet!',
+													'ohmylms'
+												),
+												description: ( 0, I18n.__ )(
+													'Start building your first certificate and it’ll show up here as soon as you hit publish.',
+													'ohmylms'
+												),
+											}
+										),
 									} }
 								/>
 								{ ! c &&

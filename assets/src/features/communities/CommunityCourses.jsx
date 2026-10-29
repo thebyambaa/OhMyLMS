@@ -5,7 +5,6 @@ import * as Controls from '../../shared/controls';
 export function createCommunityCourses( readRuntime ) {
 	return function CommunityCourses() {
 		const {
-			I: RecoveredControls,
 			C9,
 			E9,
 			Ea: Card,
@@ -249,7 +248,7 @@ export function createCommunityCourses( readRuntime ) {
 								{ ( 0, I18n.__ )( 'Course', 'ohmylms' ) }
 							</Controls.HeadingWP>
 							<Controls.SpacerWP />
-							<RecoveredControls.AdvancedSelectWP
+							<Controls.AdvancedSelectWP
 								isClearable={ ! 0 }
 								closeMenuOnSelect={ ! 0 }
 								value={

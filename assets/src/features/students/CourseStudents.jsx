@@ -5,11 +5,12 @@ import { CourseGradebook } from '../courses/CourseGradebook';
 import { useNotifications } from '../../shared/notices';
 import { Avatar } from '../../shared/avatar';
 import * as Controls from '../../shared/controls';
+import { highlightAdminMenu } from '../../shared/utils';
+import { EmptyState, NoDataIllustration, PlusIcon } from '../../shared/media';
 export function createCourseStudents( readRuntime ) {
 	return function CourseStudents() {
 		const {
 			Cm,
-			HG,
 			He,
 			Ie,
 			JU,
@@ -17,7 +18,6 @@ export function createCourseStudents( readRuntime ) {
 			T: StoreModule,
 			b: I18n,
 			dee,
-			df,
 			f: Router,
 			fN,
 			fee,
@@ -25,12 +25,10 @@ export function createCourseStudents( readRuntime ) {
 			iee,
 			l,
 			lN,
-			nf,
 			oK,
 			sN,
 			sn,
 			uee,
-			uf,
 			v,
 			vee,
 			vn,
@@ -39,7 +37,7 @@ export function createCourseStudents( readRuntime ) {
 		} = readRuntime();
 		const [ gradebookOpen, setGradebookOpen ] =
 			ReactHooks.useState( false );
-		HG( 'ohmylms', 'courses' );
+		highlightAdminMenu( 'ohmylms', 'courses' );
 		var e = ( 0, WordPressData.useDispatch )( StoreModule.default ),
 			t = ( 0, Router.Zp )(),
 			n = useNotifications(),
@@ -528,7 +526,7 @@ export function createCourseStudents( readRuntime ) {
 										'ohmylms'
 									) }
 								>
-									{ React.createElement( nf, null ) }
+									{ React.createElement( PlusIcon, null ) }
 									{ ' ' }
 									{ ( 0, I18n.__ )(
 										'Enroll a Student',
@@ -579,10 +577,10 @@ export function createCourseStudents( readRuntime ) {
 										} }
 										locale={ {
 											emptyText: React.createElement(
-												uf,
+												EmptyState,
 												{
 													icon: React.createElement(
-														df,
+														NoDataIllustration,
 														null
 													),
 													title: ( 0, I18n.__ )(

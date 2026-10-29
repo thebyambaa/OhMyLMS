@@ -3,7 +3,7 @@
 		"binding": "KY",
 		"name": "OrdersPage",
 		"file": "OrdersPage.jsx",
-		"dependencies": [ "$Y", "HG", "React" ]
+		"dependencies": [ "$Y", "React" ]
 	},
 	{
 		"binding": "ZY",
@@ -19,21 +19,16 @@
 			"T",
 			"VY",
 			"We",
-			"YG",
-			"YH",
 			"ZU",
 			"b",
-			"df",
 			"f",
 			"fN",
 			"g",
 			"hN",
 			"q",
 			"sn",
-			"uf",
 			"v",
 			"vn",
-			"xq",
 			"y"
 		]
 	},
@@ -41,24 +36,22 @@
 		"binding": "XY",
 		"name": "OrderHeader",
 		"file": "OrderHeader.jsx",
-		"dependencies": [ "Ge", "JY", "React", "b" ]
+		"dependencies": [ "JY", "React", "b" ]
 	},
 	{
 		"binding": "eQ",
 		"name": "OrderBilling",
 		"file": "OrderBilling.jsx",
-		"dependencies": [ "Ge", "React", "b" ]
+		"dependencies": [ "React", "b" ]
 	},
 	{
 		"binding": "cQ",
 		"name": "OrderItems",
 		"file": "OrderItems.jsx",
 		"dependencies": [
-			"Ge",
 			"React",
 			"T",
 			"W",
-			"YH",
 			"b",
 			"g",
 			"iQ",
@@ -74,7 +67,7 @@
 		"binding": "fQ",
 		"name": "OrderNotes",
 		"file": "OrderNotes.jsx",
-		"dependencies": [ "Ge", "JY", "React", "T", "W", "b", "g", "q", "y" ]
+		"dependencies": [ "JY", "React", "T", "W", "b", "g", "q", "y" ]
 	},
 	{
 		"binding": "EQ",
@@ -104,7 +97,7 @@
 		"binding": "kQ",
 		"name": "RelatedOrders",
 		"file": "RelatedOrders.jsx",
-		"dependencies": [ "Ge", "OQ", "React", "VY", "b" ]
+		"dependencies": [ "OQ", "React", "VY", "b" ]
 	},
 	{
 		"binding": "FQ",
@@ -113,7 +106,6 @@
 		"dependencies": [
 			"CQ",
 			"EQ",
-			"Ge",
 			"Nr",
 			"PQ",
 			"RQ",
@@ -134,7 +126,7 @@
 		"binding": "GQ",
 		"name": "SubscriptionsPage",
 		"file": "SubscriptionsPage.jsx",
-		"dependencies": [ "HG", "HQ", "React" ]
+		"dependencies": [ "HQ", "React" ]
 	},
 	{
 		"binding": "VQ",
@@ -148,14 +140,11 @@
 			"React",
 			"T",
 			"VY",
-			"YG",
 			"b",
-			"df",
 			"f",
 			"fN",
 			"g",
 			"hN",
-			"uf",
 			"v",
 			"y"
 		]
@@ -197,7 +186,7 @@
 		"binding": "lZ",
 		"name": "SubscriptionEditPage",
 		"file": "SubscriptionEditPage.jsx",
-		"dependencies": [ "HG", "React", "iZ" ]
+		"dependencies": [ "React", "iZ" ]
 	},
 	{
 		"binding": "Ere",
@@ -211,7 +200,6 @@
 		"file": "CouponModal.jsx",
 		"dependencies": [
 			"Cre",
-			"Ge",
 			"Nm",
 			"Pf",
 			"Pre",
@@ -231,7 +219,6 @@
 			"Bre",
 			"Dre",
 			"Fre",
-			"Ge",
 			"Ie",
 			"Mre",
 			"Ne",
@@ -243,16 +230,13 @@
 			"aN",
 			"aY",
 			"b",
-			"df",
 			"fN",
 			"g",
 			"hN",
 			"jre",
 			"l",
 			"lN",
-			"nf",
 			"q",
-			"uf",
 			"v",
 			"y",
 			"zre"
@@ -262,6 +246,6 @@
 		"binding": "Ure",
 		"name": "CouponsPage",
 		"file": "CouponsPage.jsx",
-		"dependencies": [ "Gre", "HG", "React", "YG", "b" ]
+		"dependencies": [ "Gre", "React", "b" ]
 	}
 ]

@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import { parse } from '@babel/parser';
 import generatorModule from '@babel/generator';
 import { transformSync } from '@babel/core';
+import { isValidDateRange } from '../../assets/src/shared/utils/dateRange.mjs';
 import {
 	loadDashboard,
 	sortRecentCourses,
@@ -36,7 +37,7 @@ const compiled = new Map(
 	rows.map( ( row ) => {
 		const input = fs
 			.readFileSync( 'assets/src/features/analytics/' + row.file, 'utf8' )
-			.replace( /^import .*;$/gm, '' )
+			.replace( /^import [\s\S]*?;$/gm, '' )
 			.replace( 'export function', 'function' );
 		return [
 			row.name,
@@ -103,6 +104,17 @@ function harness( states = [] ) {
 		b: { __: ( text ) => text },
 		HG() {},
 		Ge: ( text ) => text,
+		decodeHtmlEntities: ( text ) => text,
+		// The harness `sn` stub is a factory that returns the parser.
+		isValidDateRange: ( value, parse ) =>
+			isValidDateRange( value, parse() ),
+		highlightAdminMenu() {},
+		wpDate: { format: ( _, date ) => String( date ) },
+		PageHeader: 'YG',
+		EmptyState: 'uf',
+		NoDataIllustration: 'df',
+		PlusIcon: 'nf',
+		PriceDisplay: 'YH',
 		g: {
 			memo: ( fn ) => fn,
 			useState( initial ) {

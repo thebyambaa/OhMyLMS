@@ -59,7 +59,7 @@
 		"binding": "Pr",
 		"name": "LearningContentForm",
 		"file": "LearningContentForm.jsx",
-		"dependencies": [ "Cr", "Ge", "React", "ne" ]
+		"dependencies": [ "Cr", "React", "ne" ]
 	},
 	{
 		"binding": "xr",
@@ -94,17 +94,7 @@
 		"binding": "ln",
 		"name": "PrerequisiteSettings",
 		"file": "PrerequisiteSettings.jsx",
-		"dependencies": [
-			"Ge",
-			"Kt",
-			"React",
-			"an",
-			"b",
-			"g",
-			"nn",
-			"on",
-			"tn"
-		]
+		"dependencies": [ "Kt", "React", "an", "b", "g", "nn", "on", "tn" ]
 	},
 	{
 		"binding": "Cn",
@@ -206,7 +196,6 @@
 			"Ate",
 			"Cte",
 			"Ea",
-			"Ge",
 			"Ie",
 			"Mte",
 			"Ne",
@@ -215,10 +204,8 @@
 			"T",
 			"Tte",
 			"We",
-			"YG",
 			"aY",
 			"b",
-			"df",
 			"f",
 			"fN",
 			"g",
@@ -228,7 +215,6 @@
 			"pZ",
 			"q",
 			"sN",
-			"uf",
 			"v",
 			"y"
 		]
@@ -237,7 +223,7 @@
 		"binding": "xte",
 		"name": "AssignmentNameCell",
 		"file": "AssignmentNameCell.jsx",
-		"dependencies": [ "Ge", "React", "UG", "f", "g", "v", "vG" ]
+		"dependencies": [ "React", "UG", "f", "g", "v", "vG" ]
 	},
 	{
 		"binding": "wZ",
@@ -245,18 +231,15 @@
 		"file": "QuizList.jsx",
 		"dependencies": [
 			"Ea",
-			"Ge",
 			"Ie",
 			"Ne",
 			"React",
 			"T",
 			"We",
-			"YG",
 			"_Z",
 			"aY",
 			"b",
 			"bZ",
-			"df",
 			"f",
 			"fN",
 			"fZ",
@@ -268,7 +251,6 @@
 			"q",
 			"sN",
 			"sZ",
-			"uf",
 			"v",
 			"y",
 			"yZ"
@@ -278,7 +260,7 @@
 		"binding": "uZ",
 		"name": "QuizNameCell",
 		"file": "QuizNameCell.jsx",
-		"dependencies": [ "Ge", "React", "UG", "b", "f", "g", "v", "vG" ]
+		"dependencies": [ "React", "UG", "b", "f", "g", "v", "vG" ]
 	},
 	{
 		"binding": "PZ",
@@ -293,13 +275,10 @@
 			"React",
 			"T",
 			"Ul",
-			"YG",
 			"b",
-			"df",
 			"fN",
 			"g",
 			"q",
-			"uf",
 			"xZ",
 			"y"
 		]
@@ -362,20 +341,17 @@
 		"file": "AssignmentReport.jsx",
 		"dependencies": [
 			"Cm",
-			"HG",
 			"Q$",
 			"QZ",
 			"React",
 			"U$",
 			"Y$",
 			"b",
-			"df",
 			"f",
 			"fN",
 			"g",
 			"l",
 			"sN",
-			"uf",
 			"v"
 		]
 	},
@@ -384,7 +360,6 @@
 		"name": "AssignmentGrading",
 		"file": "AssignmentGrading.jsx",
 		"dependencies": [
-			"HG",
 			"React",
 			"T",
 			"X$",
@@ -404,18 +379,18 @@
 		"binding": "iK",
 		"name": "AssignmentResultHeader",
 		"file": "AssignmentResultHeader.jsx",
-		"dependencies": [ "Ge", "React", "b", "f", "oK", "r$", "sn", "v" ]
+		"dependencies": [ "React", "b", "f", "oK", "r$", "sn", "v" ]
 	},
 	{
 		"binding": "nK",
 		"name": "AssignmentSubmission",
 		"file": "AssignmentSubmission.jsx",
-		"dependencies": [ "Ge", "React", "b", "kn", "tK" ]
+		"dependencies": [ "React", "b", "kn", "tK" ]
 	},
 	{
 		"binding": "J$",
 		"name": "AssignmentGradeForm",
 		"file": "AssignmentGradeForm.jsx",
-		"dependencies": [ "Ge", "React", "W", "b" ]
+		"dependencies": [ "React", "W", "b" ]
 	}
 ]

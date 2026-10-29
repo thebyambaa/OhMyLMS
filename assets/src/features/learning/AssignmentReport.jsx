@@ -2,27 +2,26 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import * as Controls from '../../shared/controls';
+import { highlightAdminMenu } from '../../shared/utils';
+import { EmptyState, NoDataIllustration } from '../../shared/media';
 export function createAssignmentReport( readRuntime ) {
 	return function AssignmentReport() {
 		const {
 			Cm,
-			HG,
 			Q$,
 			QZ,
 			React,
 			U$,
 			Y$,
 			b: I18n,
-			df,
 			f: Router,
 			fN,
 			g: ReactHooks,
 			l,
 			sN,
-			uf,
 			v,
 		} = readRuntime();
-		HG( 'ohmylms', 'assignments' );
+		highlightAdminMenu( 'ohmylms', 'assignments' );
 		var e = Q$( ( 0, ReactHooks.useState )( '' ), 2 ),
 			t = e[ 0 ],
 			n = e[ 1 ],
@@ -315,16 +314,19 @@ export function createAssignmentReport( readRuntime ) {
 									pagination={ ! 1 }
 									loading={ d }
 									locale={ {
-										emptyText: React.createElement( uf, {
-											icon: React.createElement(
-												df,
-												null
-											),
-											title: ( 0, I18n.__ )(
-												'No submission yet!',
-												'ohmylms'
-											),
-										} ),
+										emptyText: React.createElement(
+											EmptyState,
+											{
+												icon: React.createElement(
+													NoDataIllustration,
+													null
+												),
+												title: ( 0, I18n.__ )(
+													'No submission yet!',
+													'ohmylms'
+												),
+											}
+										),
 									} }
 								/>
 								{ _.length > p &&

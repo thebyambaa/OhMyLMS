@@ -4,10 +4,11 @@ import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { EditIcon } from '../../shared/icons';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
+import { EmptyState, NoDataIllustration } from '../../shared/media';
 export function createBadgeList( readRuntime ) {
 	return function BadgeList() {
 		const {
-			Ge,
 			Ie,
 			Ne,
 			React,
@@ -15,7 +16,6 @@ export function createBadgeList( readRuntime ) {
 			We,
 			b: I18n,
 			d3,
-			df,
 			g: ReactHooks,
 			i3: BadgeEditor,
 			l,
@@ -23,7 +23,6 @@ export function createBadgeList( readRuntime ) {
 			lf,
 			q,
 			s3,
-			uf,
 			y: WordPressData,
 		} = readRuntime();
 		var e = d3( ( 0, ReactHooks.useState )( [] ), 2 ),
@@ -89,7 +88,7 @@ export function createBadgeList( readRuntime ) {
 											cursor: 'pointer',
 										} }
 									>
-										{ Ge( _tLocal.name ) }
+										{ decodeHtmlEntities( _tLocal.name ) }
 									</Controls.TextWP>
 									{ O ===
 										( _tLocal === null || _tLocal === void 0
@@ -371,17 +370,23 @@ export function createBadgeList( readRuntime ) {
 									return k( null );
 								} }
 								locale={ {
-									emptyText: React.createElement( uf, {
-										icon: React.createElement( df, null ),
-										title: ( 0, I18n.__ )(
-											'No badge yet!',
-											'ohmylms'
-										),
-										description: ( 0, I18n.__ )(
-											"Start building your first badge and it'll show up here as soon as you hit publish.",
-											'ohmylms'
-										),
-									} ),
+									emptyText: React.createElement(
+										EmptyState,
+										{
+											icon: React.createElement(
+												NoDataIllustration,
+												null
+											),
+											title: ( 0, I18n.__ )(
+												'No badge yet!',
+												'ohmylms'
+											),
+											description: ( 0, I18n.__ )(
+												"Start building your first badge and it'll show up here as soon as you hit publish.",
+												'ohmylms'
+											),
+										}
+									),
 								} }
 							/>
 						</Controls.SpacerWP>

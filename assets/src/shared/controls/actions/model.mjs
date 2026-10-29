@@ -46,7 +46,7 @@ export function omitProps( props, keys ) {
  * Join class names like the `classnames` package: strings and numbers are kept,
  * arrays are flattened and objects contribute the keys with truthy values.
  *
- * @param {...*} args Class name values.
+ * @param {...unknown} args Class name values.
  * @return {string} Space separated class names.
  */
 export function classNames( ...args ) {
@@ -105,9 +105,9 @@ export function getButtonStyle( { padding, variant, size, style } ) {
 /**
  * Busy state of a button: the first truthy of `loading` and `isBusy`.
  *
- * @param {*} loading Loading flag.
- * @param {*} isBusy  Busy flag.
- * @return {*} Value for the `isBusy` button prop.
+ * @param {unknown} loading Loading flag.
+ * @param {unknown} isBusy  Busy flag.
+ * @return {unknown} Value for the `isBusy` button prop.
  */
 export function getButtonBusy( loading, isBusy ) {
 	return loading || isBusy;
@@ -170,7 +170,7 @@ export function getMenuItemProps( item ) {
  * `onClick` and then closes the menu.
  *
  * @param {Object|null} item    Menu item.
- * @param {Function}    onClose Closes the menu.
+ * @param {() => void}  onClose Closes the menu.
  * @return {void}
  */
 export function selectMenuItem( item, onClose ) {
@@ -224,7 +224,7 @@ export function getTabsClassName( { className, centered, variant } ) {
  *
  * @param {Object[]} tabs      Tabs from `getTabs`.
  * @param {string}   activekey Key of the active item.
- * @return {*} Content of the active tab, or undefined.
+ * @return {unknown} Content of the active tab, or undefined.
  */
 export function getActiveTabContent( tabs, activekey ) {
 	return tabs.find( ( tab ) => tab.name === activekey )?.content;

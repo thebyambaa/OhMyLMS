@@ -6,13 +6,14 @@ import { Tooltip } from '../../shared/tooltip';
 import { Table } from '../../shared/table';
 import { InfoIcon } from '../../shared/icons';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
+import { EmptyState, NoDataIllustration } from '../../shared/media';
 export function createCommunityList( readRuntime ) {
 	return function CommunityList() {
 		const {
 			B9,
 			Br,
 			D9,
-			Ge,
 			L9,
 			N9: CommunityEditor,
 			Ne,
@@ -21,11 +22,9 @@ export function createCommunityList( readRuntime ) {
 			SB,
 			T: StoreModule,
 			b: I18n,
-			df: EmptyIcon,
 			g: ReactHooks,
 			l,
 			q,
-			uf: EmptyState,
 			y: WordPressData,
 		} = readRuntime();
 		var e = ( 0, WordPressData.useDispatch )( StoreModule.default ),
@@ -250,7 +249,7 @@ export function createCommunityList( readRuntime ) {
 										numberOfLines={ 2 }
 										truncate={ ! 0 }
 									>
-										{ Ge(
+										{ decodeHtmlEntities(
 											( () => {
 												if (
 													null !==
@@ -762,7 +761,7 @@ export function createCommunityList( readRuntime ) {
 													emptyText: (
 														<EmptyState
 															icon={
-																<EmptyIcon />
+																<NoDataIllustration />
 															}
 															title={ ( 0,
 															I18n.__ )(

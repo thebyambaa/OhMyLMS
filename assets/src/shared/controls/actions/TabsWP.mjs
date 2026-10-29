@@ -21,14 +21,14 @@ const OWN_PROPS = [
  * Tabs built on the WordPress `TabPanel`. The active tab is controlled through
  * `activekey`, and only its content is shown.
  *
- * @param {Object}                    props                       Component props.
- * @param {Object[]}                  [props.items]               Tabs: `key`, `label`, `children`, `disabled`. Defaults to [].
- * @param {string}                    props.activekey             Key of the active tab.
- * @param {Function}                  [props.onChange]            Called with the key of the selected tab.
- * @param {string}                    [props.className]           Extra class name. Defaults to "".
- * @param {boolean}                   [props.centered]            Center the tab bar. Defaults to false.
- * @param {import('react').ReactNode} [props.tabBarExtraContent]  Content shown above the tabs. Defaults to null.
- * @param {string}                    [props.variant]             `horizontal` (default) or `vertical`.
+ * @param {Object}                    props                      Component props.
+ * @param {Object[]}                  [props.items]              Tabs: `key`, `label`, `children`, `disabled`. Defaults to [].
+ * @param {string}                    props.activekey            Key of the active tab.
+ * @param {( key: string ) => void}   [props.onChange]           Called with the key of the selected tab.
+ * @param {string}                    [props.className]          Extra class name. Defaults to "".
+ * @param {boolean}                   [props.centered]           Center the tab bar. Defaults to false.
+ * @param {import('react').ReactNode} [props.tabBarExtraContent] Content shown above the tabs. Defaults to null.
+ * @param {string}                    [props.variant]            `horizontal` (default) or `vertical`.
  * @return {import('react').ReactElement} Tabs.
  */
 function TabsWPBase( props ) {

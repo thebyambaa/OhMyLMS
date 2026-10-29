@@ -2,17 +2,10 @@
 import { createElement } from '@wordpress/element';
 import { EditIcon } from '../../shared/icons';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
 export function createAssignmentNameCell( readRuntime ) {
 	return function AssignmentNameCell( props ) {
-		const {
-			Ge,
-			React,
-			UG,
-			f: Router,
-			g: ReactHooks,
-			v,
-			vG,
-		} = readRuntime();
+		const { React, UG, f: Router, g: ReactHooks, v, vG } = readRuntime();
 		var record = props.record,
 			n = ( props.isHover, ( 0, Router.Zp )() ),
 			r = ( 0, ReactHooks.useCallback )(
@@ -112,7 +105,7 @@ export function createAssignmentNameCell( readRuntime ) {
 									numberOfLines={ 2 }
 									truncate={ ! 0 }
 								>
-									{ Ge(
+									{ decodeHtmlEntities(
 										record === null || record === void 0
 											? void 0
 											: record.name

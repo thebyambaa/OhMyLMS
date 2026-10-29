@@ -1,4 +1,5 @@
 import { createElement } from '@wordpress/element';
+// eslint-disable-next-line @wordpress/no-unsafe-wp-apis -- the recovered application renders this experimental component; markup parity is tested.
 import { __experimentalText as Text } from '@wordpress/components';
 
 /**

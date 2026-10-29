@@ -9,7 +9,7 @@ import { Flex } from '@wordpress/components';
  * @param {import('react').Ref}  ref              Forwarded to `Flex`.
  * @return {import('react').ReactElement} Flex element.
  */
-export const FlexWP = forwardRef( function FlexWP(
+export const FlexWP = forwardRef( function FlexWPRender(
 	{ children, ...rest },
 	ref
 ) {

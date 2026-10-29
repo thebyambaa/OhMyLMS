@@ -4,12 +4,18 @@ import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { EditIcon } from '../../shared/icons';
 import * as Controls from '../../shared/controls';
+import {
+	PriceDisplay,
+	decodeHtmlEntities,
+	isValidDateRange,
+} from '../../shared/utils';
+import * as wpDate from '../../shared/utils/wpDate.mjs';
+import { EmptyState, NoDataIllustration, PageHeader } from '../../shared/media';
 export function createMembershipList( readRuntime ) {
 	return function MembershipList() {
 		const {
 			D: Buttons,
 			Ea,
-			Ge,
 			H8,
 			He,
 			Ie,
@@ -20,11 +26,8 @@ export function createMembershipList( readRuntime ) {
 			V8,
 			We,
 			Y8,
-			YG,
-			YH,
 			aY,
 			b: I18n,
-			df,
 			f: Router,
 			fN,
 			g: ReactHooks,
@@ -34,9 +37,6 @@ export function createMembershipList( readRuntime ) {
 			q8,
 			sN,
 			sn,
-			uf,
-			wq,
-			xq,
 			y: WordPressData,
 		} = readRuntime();
 		var e = ( 0, WordPressData.useDispatch )( StoreModule.default );
@@ -224,7 +224,7 @@ export function createMembershipList( readRuntime ) {
 										orderby: _nLocal2,
 										date_filter: X,
 									};
-									if ( xq( X ) ) {
+									if ( isValidDateRange( X, sn ) ) {
 										{
 											a.date_filter = 'custom';
 											a.start_date = sn()(
@@ -403,7 +403,11 @@ export function createMembershipList( readRuntime ) {
 				key: 'name',
 				sorter: ! 0,
 				render( _eLocal11 ) {
-					return <span>{ Ge( _eLocal11 ) || 'Untitled' }</span>;
+					return (
+						<span>
+							{ decodeHtmlEntities( _eLocal11 ) || 'Untitled' }
+						</span>
+					);
 				},
 			},
 			{
@@ -424,7 +428,7 @@ export function createMembershipList( readRuntime ) {
 							_tLocal9.sale_price !== undefined ? (
 								<React.Fragment>
 									<span>
-										<YH
+										<PriceDisplay
 											currency={
 												( _tLocal9 === null ||
 												_tLocal9 === void 0
@@ -448,7 +452,7 @@ export function createMembershipList( readRuntime ) {
 										/>
 										{ ' ' }
 										<del>
-											<YH
+											<PriceDisplay
 												currency={
 													( _tLocal9 === null ||
 													_tLocal9 === void 0
@@ -476,7 +480,7 @@ export function createMembershipList( readRuntime ) {
 									</span>
 								</React.Fragment>
 							) : (
-								<YH
+								<PriceDisplay
 									currency={
 										( _tLocal9 === null ||
 										_tLocal9 === void 0
@@ -609,12 +613,12 @@ export function createMembershipList( readRuntime ) {
 						_eLocal17 &&
 						'object' === V8( _eLocal17 ) &&
 						_eLocal17.date
-							? ( _nLocal4 = ( 0, wq.dateI18n )(
+							? ( _nLocal4 = ( 0, wpDate.dateI18n )(
 									a,
 									_eLocal17.date
 								) )
 							: 'string' === typeof _eLocal17 &&
-								( _nLocal4 = ( 0, wq.dateI18n )(
+								( _nLocal4 = ( 0, wpDate.dateI18n )(
 									a,
 									_eLocal17
 								) ),
@@ -702,7 +706,7 @@ export function createMembershipList( readRuntime ) {
 				<React.Fragment>
 					{ contextHolder }
 					<Controls.ContainerWP>
-						<YG
+						<PageHeader
 							title={ ( 0, I18n.__ )(
 								'All Memberships',
 								'ohmylms'
@@ -760,27 +764,30 @@ export function createMembershipList( readRuntime ) {
 										return B( null );
 									} }
 									locale={ {
-										emptyText: React.createElement( uf, {
-											icon: React.createElement(
-												df,
-												null
-											),
-											title: ( 0, I18n.__ )(
-												'No Memberships yet!',
-												'ohmylms'
-											),
-											description: ( 0, I18n.__ )(
-												'Start building your first membership and it’ll show up here as soon as you hit publish.',
-												'ohmylms'
-											),
-											ctaText: ( 0, I18n.__ )(
-												'Add Membership',
-												'ohmylms'
-											),
-											ctaHandler() {
-												return G( ! 0 );
-											},
-										} ),
+										emptyText: React.createElement(
+											EmptyState,
+											{
+												icon: React.createElement(
+													NoDataIllustration,
+													null
+												),
+												title: ( 0, I18n.__ )(
+													'No Memberships yet!',
+													'ohmylms'
+												),
+												description: ( 0, I18n.__ )(
+													'Start building your first membership and it’ll show up here as soon as you hit publish.',
+													'ohmylms'
+												),
+												ctaText: ( 0, I18n.__ )(
+													'Add Membership',
+													'ohmylms'
+												),
+												ctaHandler() {
+													return G( ! 0 );
+												},
+											}
+										),
 									} }
 								/>
 								{ u &&

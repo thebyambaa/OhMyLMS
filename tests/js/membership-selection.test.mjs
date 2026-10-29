@@ -41,6 +41,7 @@ const factory = new Function(
 	'CurriculumMindmap',
 	'restUrl',
 	'Controls',
+	'decodeHtmlEntities',
 	`${ code }; return createMembershipCourses;`
 )(
 	element,
@@ -50,7 +51,8 @@ const factory = new Function(
 	'CheckboxControl',
 	'CurriculumMindmap',
 	restUrl,
-	{ SpacerWP: 'Spacer', HeadingWP: 'Heading' }
+	{ SpacerWP: 'Spacer', HeadingWP: 'Heading', AdvancedSelectWP: 'Select' },
+	( text ) => text
 );
 function flatten( node ) {
 	return ! node || typeof node !== 'object'

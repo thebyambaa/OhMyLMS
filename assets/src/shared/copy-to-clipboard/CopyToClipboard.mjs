@@ -66,6 +66,7 @@ function CopyToClipboardButton( { textToCopy } ) {
 			setCopied( true );
 			timer.current = setTimeout( () => setCopied( false ), RESET_DELAY );
 		} catch ( error ) {
+			// eslint-disable-next-line no-console -- reports a failed clipboard write to the developer; the UI keeps its state.
 			console.error( error );
 		}
 	}, [ textToCopy ] );

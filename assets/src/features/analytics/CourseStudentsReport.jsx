@@ -4,12 +4,13 @@ import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { Table } from '../../shared/table';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
+import { EmptyState, NoDataIllustration } from '../../shared/media';
 export function createCourseStudentsReport( readRuntime ) {
 	return function CourseStudentsReport( props ) {
 		const {
 			Cm,
 			D: Buttons,
-			Ge,
 			React,
 			T: StoreModule,
 			UU: StudentReminderDialog,
@@ -17,7 +18,6 @@ export function createCourseStudentsReport( readRuntime ) {
 			aN,
 			aq,
 			b: I18n,
-			df: EmptyIcon,
 			eq: ReportStudentCell,
 			f: Router,
 			g: ReactHooks,
@@ -26,7 +26,6 @@ export function createCourseStudentsReport( readRuntime ) {
 			lN,
 			oq,
 			tq,
-			uf: EmptyState,
 			vn,
 			y: WordPressData,
 		} = readRuntime();
@@ -113,7 +112,7 @@ export function createCourseStudentsReport( readRuntime ) {
 									? e.map( function ( _eLocal, _tLocal2 ) {
 											return (
 												<kt.A key={ _tLocal2 }>
-													{ Ge(
+													{ decodeHtmlEntities(
 														_eLocal === null ||
 															_eLocal === void 0
 															? void 0
@@ -139,7 +138,7 @@ export function createCourseStudentsReport( readRuntime ) {
 									? e.map( function ( _eLocal2, _tLocal3 ) {
 											return (
 												<kt.A key={ _tLocal3 }>
-													{ Ge(
+													{ decodeHtmlEntities(
 														_eLocal2 === null ||
 															_eLocal2 === void 0
 															? void 0
@@ -632,7 +631,7 @@ export function createCourseStudentsReport( readRuntime ) {
 							locale={ {
 								emptyText: (
 									<EmptyState
-										icon={ <EmptyIcon /> }
+										icon={ <NoDataIllustration /> }
 										title={ ( 0, I18n.__ )(
 											'Things are quiet for now',
 											'ohmylms'

@@ -6,6 +6,8 @@ import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { Table } from '../../shared/table';
 import * as Controls from '../../shared/controls';
+import { PriceDisplay, isValidDateRange } from '../../shared/utils';
+import { EmptyState, NoDataIllustration, PageHeader } from '../../shared/media';
 
 export function createOrderList( readRuntime ) {
 	return function OrderList() {
@@ -19,21 +21,16 @@ export function createOrderList( readRuntime ) {
 			T: StoreModule,
 			VY: formatDateTime,
 			We: DeleteIcon,
-			YG: PageHeader,
-			YH: PriceDisplay,
 			ZU: DateFilter,
 			b: I18n,
-			df: EmptyIcon,
 			f: Router,
 			fN: Pagination,
 			g: ReactHooks,
 			hN: BulkActionsBar,
 			q: IconWrapper,
 			sn: moment,
-			uf: EmptyContainer,
 			v: RouterLink,
 			vn: SelectControl,
-			xq: isCustomDateRange,
 			y: WordPressData,
 		} = readRuntime();
 
@@ -135,7 +132,7 @@ export function createOrderList( readRuntime ) {
 					payment_method: paymentMethodFilter,
 				};
 
-				if ( isCustomDateRange( dateFilter ) ) {
+				if ( isValidDateRange( dateFilter, moment ) ) {
 					params.date_filter = 'custom';
 					params.start_date = moment()( dateFilter[ 0 ] ).format(
 						'YYYY-MM-DD'
@@ -555,8 +552,8 @@ export function createOrderList( readRuntime ) {
 								}
 								locale={ {
 									emptyText: (
-										<EmptyContainer
-											icon={ <EmptyIcon /> }
+										<EmptyState
+											icon={ <NoDataIllustration /> }
 											title={ I18n.__(
 												'No Order yet!',
 												'ohmylms'

@@ -3,7 +3,7 @@
 		"binding": "x5",
 		"name": "GamificationPage",
 		"file": "GamificationPage.jsx",
-		"dependencies": [ "HG", "R5", "React" ]
+		"dependencies": [ "R5", "React" ]
 	},
 	{
 		"binding": "S5",
@@ -116,7 +116,6 @@
 		"name": "BadgeList",
 		"file": "BadgeList.jsx",
 		"dependencies": [
-			"Ge",
 			"Ie",
 			"Ne",
 			"React",
@@ -124,7 +123,6 @@
 			"We",
 			"b",
 			"d3",
-			"df",
 			"g",
 			"i3",
 			"l",
@@ -132,7 +130,6 @@
 			"lf",
 			"q",
 			"s3",
-			"uf",
 			"y"
 		]
 	},
@@ -184,7 +181,6 @@
 		"name": "LevelList",
 		"file": "LevelList.jsx",
 		"dependencies": [
-			"Ge",
 			"Ie",
 			"L3",
 			"Ne",
@@ -196,13 +192,11 @@
 			"We",
 			"Y3",
 			"b",
-			"df",
 			"g",
 			"l",
 			"lf",
 			"q",
 			"q3",
-			"uf",
 			"y"
 		]
 	},

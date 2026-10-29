@@ -2,6 +2,7 @@
 import { createElement } from '@wordpress/element';
 import { Skeleton } from '../../shared/skeleton';
 import * as Controls from '../../shared/controls';
+import { EmptyState, NoDataIllustration } from '../../shared/media';
 export function createCourseCurriculum( readRuntime ) {
 	return function CourseCurriculum( props ) {
 		const {
@@ -16,7 +17,6 @@ export function createCourseCurriculum( readRuntime ) {
 			_f,
 			b: I18n,
 			bf,
-			df,
 			ef,
 			f: Router,
 			ff,
@@ -24,7 +24,6 @@ export function createCourseCurriculum( readRuntime ) {
 			gf,
 			hf,
 			lc,
-			uf,
 			y: WordPressData,
 		} = readRuntime();
 		const { useSelect } = WordPressData;
@@ -686,25 +685,29 @@ export function createCourseCurriculum( readRuntime ) {
 												align={ 'center' }
 												justify={ 'center' }
 											>
-												{ React.createElement( uf, {
-													icon: React.createElement(
-														df,
-														null
-													),
-													title: ( 0, I18n.__ )(
-														'No chapter found!',
-														'ohmylms'
-													),
-													description: ( 0, I18n.__ )(
-														'Add your first chapter to get started.',
-														'ohmylms'
-													),
-													ctaText: ( 0, I18n.__ )(
-														'Add Chapter',
-														'ohmylms'
-													),
-													ctaHandler: pe,
-												} ) }
+												{ React.createElement(
+													EmptyState,
+													{
+														icon: React.createElement(
+															NoDataIllustration,
+															null
+														),
+														title: ( 0, I18n.__ )(
+															'No chapter found!',
+															'ohmylms'
+														),
+														description: ( 0,
+														I18n.__ )(
+															'Add your first chapter to get started.',
+															'ohmylms'
+														),
+														ctaText: ( 0, I18n.__ )(
+															'Add Chapter',
+															'ohmylms'
+														),
+														ctaHandler: pe,
+													}
+												) }
 											</Controls.FlexWP>
 										</React.Fragment>
 									) }

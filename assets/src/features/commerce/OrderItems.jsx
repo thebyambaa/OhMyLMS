@@ -6,15 +6,14 @@ import { Tooltip } from '../../shared/tooltip';
 import { Table } from '../../shared/table';
 import { InfoIcon } from '../../shared/icons';
 import * as Controls from '../../shared/controls';
+import { PriceDisplay, decodeHtmlEntities } from '../../shared/utils';
 export function createOrderItems( readRuntime ) {
 	return function OrderItems( props ) {
 		const _controlId = useId();
 		const {
-			Ge: decodeEntities,
 			React,
 			T: StoreModule,
 			W: Textarea,
-			YH: Price,
 			b: I18n,
 			g: ReactHooks,
 			iQ,
@@ -159,7 +158,7 @@ export function createOrderItems( readRuntime ) {
 								isBlock={ ! 0 }
 							>
 								{ _aLocal && '-' }
-								<Price
+								<PriceDisplay
 									currency={
 										order === null ||
 										order === void 0 ||
@@ -222,7 +221,7 @@ export function createOrderItems( readRuntime ) {
 								align={ 'right' }
 								isBlock={ ! 0 }
 							>
-								<Price
+								<PriceDisplay
 									currency={
 										order === null ||
 										order === void 0 ||
@@ -261,7 +260,7 @@ export function createOrderItems( readRuntime ) {
 								weight={ 500 }
 								size={ 14 }
 							>
-								{ decodeEntities( e ) }
+								{ decodeHtmlEntities( e ) }
 							</Controls.TextWP>
 						);
 					},
@@ -279,7 +278,7 @@ export function createOrderItems( readRuntime ) {
 								weight={ 500 }
 								size={ 14 }
 							>
-								<Price
+								<PriceDisplay
 									currency={
 										order === null ||
 										order === void 0 ||
@@ -351,7 +350,7 @@ export function createOrderItems( readRuntime ) {
 								size={ 14 }
 								align={ 'right' }
 							>
-								<Price
+								<PriceDisplay
 									currency={
 										order === null ||
 										order === void 0 ||
@@ -507,7 +506,7 @@ export function createOrderItems( readRuntime ) {
 											align={ 'right' }
 											isBlock={ ! 0 }
 										>
-											<Price
+											<PriceDisplay
 												currency={
 													order === null ||
 													order === void 0 ||
@@ -551,7 +550,7 @@ export function createOrderItems( readRuntime ) {
 													'Including Tax: ',
 													'ohmylms'
 												) }
-												<Price
+												<PriceDisplay
 													currency={
 														order === null ||
 														order === void 0 ||

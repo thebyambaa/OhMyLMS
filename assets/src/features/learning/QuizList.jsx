@@ -10,22 +10,21 @@ import {
 } from '../content-hub/QuizActions';
 import { EditIcon } from '../../shared/icons';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
+import { EmptyState, NoDataIllustration, PageHeader } from '../../shared/media';
 export function createQuizList( readRuntime ) {
 	return function QuizList() {
 		const {
 			Ea,
-			Ge,
 			Ie,
 			Ne,
 			React,
 			T: StoreModule,
 			We,
-			YG,
 			_Z,
 			aY,
 			b: I18n,
 			bZ,
-			df,
 			f: Router,
 			fN,
 			fZ,
@@ -37,7 +36,6 @@ export function createQuizList( readRuntime ) {
 			q,
 			sN,
 			sZ: QuizNameCell,
-			uf,
 			v,
 			y: WordPressData,
 			yZ,
@@ -284,7 +282,7 @@ export function createQuizList( readRuntime ) {
 						} )(
 							U.map( function ( _eLocal14 ) {
 								return {
-									label: Ge(
+									label: decodeHtmlEntities(
 										_eLocal14 === null ||
 											_eLocal14 === void 0
 											? void 0
@@ -541,13 +539,13 @@ export function createQuizList( readRuntime ) {
 				<React.Fragment>
 					{ contextHolder }
 					<Controls.ContainerWP>
-						<YG
+						<PageHeader
 							title={ ( 0, I18n.__ )( 'All Quizzes', 'ohmylms' ) }
 							showAddButton={ ! 0 }
 							addButtonConfig={ addQuiz }
 						>
 							<ImportButton target="quiz" />
-						</YG>
+						</PageHeader>
 						<Ea
 							isBorderless={ ! 0 }
 							minHeight={ 'calc(100vh - 200px)' }
@@ -610,20 +608,23 @@ export function createQuizList( readRuntime ) {
 									} }
 									className={ 'quiz-listing-table' }
 									locale={ {
-										emptyText: React.createElement( uf, {
-											icon: React.createElement(
-												df,
-												null
-											),
-											title: ( 0, I18n.__ )(
-												'No Quizzes yet!',
-												'ohmylms'
-											),
-											description: ( 0, I18n.__ )(
-												'Start building your first quiz and it’ll show up here as soon as you hit publish.',
-												'ohmylms'
-											),
-										} ),
+										emptyText: React.createElement(
+											EmptyState,
+											{
+												icon: React.createElement(
+													NoDataIllustration,
+													null
+												),
+												title: ( 0, I18n.__ )(
+													'No Quizzes yet!',
+													'ohmylms'
+												),
+												description: ( 0, I18n.__ )(
+													'Start building your first quiz and it’ll show up here as soon as you hit publish.',
+													'ohmylms'
+												),
+											}
+										),
 									} }
 								/>
 								{ ! c &&

@@ -3,13 +3,15 @@ import { showRequestError } from '../requestFeedback.mjs';
 import { createElement } from '@wordpress/element';
 import { Skeleton } from '../../shared/skeleton';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities, isValidDateRange } from '../../shared/utils';
+import * as wpDate from '../../shared/utils/wpDate.mjs';
+import { EmptyState, NoDataIllustration } from '../../shared/media';
 export function createEarningsReport( readRuntime ) {
 	return function EarningsReport() {
 		const {
 			$U,
 			Aq,
 			Fq,
-			Ge,
 			LU: EarningsChart,
 			Mq,
 			Nr: BackButton,
@@ -20,7 +22,6 @@ export function createEarningsReport( readRuntime ) {
 			ZU: AnalyticsDateFilter,
 			b: I18n,
 			dc,
-			df: EmptyIcon,
 			f: Router,
 			g: ReactHooks,
 			kq,
@@ -28,9 +29,6 @@ export function createEarningsReport( readRuntime ) {
 			lN,
 			mG: EarningsSummaryCards,
 			sn,
-			uf: EmptyState,
-			wq,
-			xq,
 		} = readRuntime();
 		var e;
 		var t;
@@ -215,7 +213,7 @@ export function createEarningsReport( readRuntime ) {
 						return 'N/A';
 					}
 					try {
-						return ( 0, wq.format )(
+						return ( 0, wpDate.format )(
 							'M d, Y',
 							new Date( _eLocal )
 						);
@@ -294,7 +292,7 @@ export function createEarningsReport( readRuntime ) {
 								function ( _eLocal8, _tLocal6 ) {
 									return (
 										<span key={ _tLocal6 }>
-											{ Ge(
+											{ decodeHtmlEntities(
 												_eLocal8 === null ||
 													_eLocal8 === void 0
 													? void 0
@@ -475,7 +473,10 @@ export function createEarningsReport( readRuntime ) {
 															order: _oLocal,
 															sort_by: _iLocal,
 														} ),
-														xq( _nLocal3 ) &&
+														isValidDateRange(
+															_nLocal3,
+															sn
+														) &&
 															( ( _cLocal.filter =
 																'custom' ),
 															( _cLocal.start_date =
@@ -1326,7 +1327,7 @@ export function createEarningsReport( readRuntime ) {
 																	<React.Fragment>
 																		<EmptyState
 																			icon={
-																				<EmptyIcon />
+																				<NoDataIllustration />
 																			}
 																			title={ ( 0,
 																			I18n.__ )(

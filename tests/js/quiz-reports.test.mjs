@@ -36,7 +36,7 @@ const compiled = new Map(
 				'assets/src/features/quiz-reports/' + row.file,
 				'utf8'
 			)
-			.replace( /^import .*;$/gm, '' )
+			.replace( /^import [\s\S]*?;$/gm, '' )
 			.replace( 'export function', 'function' );
 		return [
 			row.name,
@@ -99,6 +99,14 @@ function harness( states = [] ) {
 		b: { __: ( text ) => text },
 		HG() {},
 		Ge: ( text ) => text,
+		decodeHtmlEntities: ( text ) => text,
+		highlightAdminMenu() {},
+		wpDate: { format: ( _, date ) => String( date ) },
+		PageHeader: 'YG',
+		EmptyState: 'uf',
+		NoDataIllustration: 'df',
+		PlusIcon: 'nf',
+		PriceDisplay: 'YH',
 		g: {
 			memo: ( fn ) => fn,
 			useState( initial ) {

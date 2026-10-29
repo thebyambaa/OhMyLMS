@@ -3,6 +3,8 @@ import { showRequestError } from '../requestFeedback.mjs';
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import * as Controls from '../../shared/controls';
+import { highlightAdminMenu } from '../../shared/utils';
+import { EmptyState, NoDataIllustration, PageHeader } from '../../shared/media';
 export function createIntegrationsPage( readRuntime ) {
 	return function IntegrationsPage() {
 		const {
@@ -11,21 +13,17 @@ export function createIntegrationsPage( readRuntime ) {
 			F7,
 			G7: IntegrationManifest,
 			H7: IntegrationCategories,
-			HG,
 			He,
 			L7,
 			M7: MemoIntegrationConfig,
 			React,
 			T: StoreModule,
 			W6: MemoIntegrationCard,
-			YG,
 			b: I18n,
-			df,
 			g: ReactHooks,
-			uf,
 			y: WordPressData,
 		} = readRuntime();
-		HG( 'ohmylms', 'integrations' );
+		highlightAdminMenu( 'ohmylms', 'integrations' );
 		var e = ( 0, WordPressData.useDispatch )( StoreModule.default ),
 			t = ( 0, WordPressData.useSelect )( function ( _eLocal ) {
 				return _eLocal( StoreModule.default ).getIntegrations();
@@ -278,7 +276,7 @@ export function createIntegrationsPage( readRuntime ) {
 				<React.Fragment>
 					{ u }
 					<Controls.ContainerWP>
-						<YG
+						<PageHeader
 							title={ ( 0, I18n.__ )( 'Addons', 'ohmylms' ) }
 							description={ ( 0, I18n.__ )(
 								'Enable and manage addons for your LMS to enhance your course experience.',
@@ -415,16 +413,19 @@ export function createIntegrationsPage( readRuntime ) {
 											</Controls.GridWP>
 										) : (
 											<React.Fragment>
-												{ React.createElement( uf, {
-													icon: React.createElement(
-														df,
-														null
-													),
-													title: ( 0, I18n.__ )(
-														'No integrations found',
-														'ohmylms'
-													),
-												} ) }
+												{ React.createElement(
+													EmptyState,
+													{
+														icon: React.createElement(
+															NoDataIllustration,
+															null
+														),
+														title: ( 0, I18n.__ )(
+															'No integrations found',
+															'ohmylms'
+														),
+													}
+												) }
 											</React.Fragment>
 										) }
 									</React.Fragment>

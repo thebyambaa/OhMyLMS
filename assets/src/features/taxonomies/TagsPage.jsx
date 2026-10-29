@@ -3,32 +3,29 @@ import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { EditIcon } from '../../shared/icons';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities, highlightAdminMenu } from '../../shared/utils';
+import { EmptyState, NoDataIllustration, PageHeader } from '../../shared/media';
 export function createTagsPage( readRuntime ) {
 	return function TagsPage() {
 		const {
 			BY,
 			Ea,
-			Ge,
-			HG,
 			Ie,
 			NY,
 			Ne,
 			React,
 			We,
-			YG,
 			aY,
 			b: I18n,
-			df,
 			g: ReactHooks,
 			hN,
 			l,
 			q,
 			sN,
-			uf,
 			xY: TaxonomyModal,
 			zY,
 		} = readRuntime();
-		HG( 'ohmylms', 'tags' );
+		highlightAdminMenu( 'ohmylms', 'tags' );
 		var e = useNotifications(),
 			t = e.openNotificationWithIcon,
 			n = e.contextHolder,
@@ -467,7 +464,7 @@ export function createTagsPage( readRuntime ) {
 																} }
 															>
 																{ '• ' }
-																{ Ge(
+																{ decodeHtmlEntities(
 																	_eLocal14.title
 																) }
 															</div>
@@ -539,7 +536,7 @@ export function createTagsPage( readRuntime ) {
 			<React.Fragment>
 				{ n }
 				<Controls.ContainerWP>
-					<YG
+					<PageHeader
 						title={ ( 0, I18n.__ )( 'Tags', 'ohmylms' ) }
 						showAddButton={ ! 0 }
 						addButtonConfig={ $ }
@@ -588,22 +585,28 @@ export function createTagsPage( readRuntime ) {
 									return W( null );
 								} }
 								locale={ {
-									emptyText: React.createElement( uf, {
-										icon: React.createElement( df, null ),
-										title: ( 0, I18n.__ )(
-											'No tags yet!',
-											'ohmylms'
-										),
-										description: ( 0, I18n.__ )(
-											'Create your first tag and it will show up here.',
-											'ohmylms'
-										),
-										ctaText: ( 0, I18n.__ )(
-											'Add Tag',
-											'ohmylms'
-										),
-										ctaHandler: V,
-									} ),
+									emptyText: React.createElement(
+										EmptyState,
+										{
+											icon: React.createElement(
+												NoDataIllustration,
+												null
+											),
+											title: ( 0, I18n.__ )(
+												'No tags yet!',
+												'ohmylms'
+											),
+											description: ( 0, I18n.__ )(
+												'Create your first tag and it will show up here.',
+												'ohmylms'
+											),
+											ctaText: ( 0, I18n.__ )(
+												'Add Tag',
+												'ohmylms'
+											),
+											ctaHandler: V,
+										}
+									),
 								} }
 							/>
 						</Controls.SpacerWP>

@@ -2,10 +2,10 @@
 import { createElement } from '@wordpress/element';
 import { EditIcon } from '../../shared/icons';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
 export function createQuizNameCell( readRuntime ) {
 	return function QuizNameCell( props ) {
 		const {
-			Ge,
 			React,
 			UG,
 			b: I18n,
@@ -108,7 +108,7 @@ export function createQuizNameCell( readRuntime ) {
 									numberOfLines={ 2 }
 									truncate={ ! 0 }
 								>
-									{ Ge(
+									{ decodeHtmlEntities(
 										record === null || record === void 0
 											? void 0
 											: record.name

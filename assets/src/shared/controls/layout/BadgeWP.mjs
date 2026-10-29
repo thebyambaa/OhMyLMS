@@ -31,7 +31,7 @@ import { getBadgeClassName, getBadgeStyle } from './model.mjs';
  * @param {Object}               [props.style]              Overrides the rest.
  * @return {import('react').ReactElement} Badge markup.
  */
-export const BadgeWP = memo( function BadgeWP( {
+export const BadgeWP = memo( function BadgeWPRender( {
 	variant = 'default',
 	children,
 	padding,

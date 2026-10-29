@@ -4,9 +4,10 @@
  */
 import { createElement } from '@wordpress/element';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
 export function createOrderBilling( readRuntime ) {
 	return function OrderBilling( { order, address, email } ) {
-		const { Ge: decodeEntities, React, b: I18n } = readRuntime();
+		const { React, b: I18n } = readRuntime();
 		return (
 			<React.Fragment>
 				<Controls.HeadingWP
@@ -32,7 +33,7 @@ export function createOrderBilling( readRuntime ) {
 						>
 							{ I18n.__( 'Name:', 'ohmylms' ) + ' ' }
 						</strong>{ ' ' }
-						{ decodeEntities( order?.student_name ) }
+						{ decodeHtmlEntities( order?.student_name ) }
 					</Controls.TextWP>
 					<Controls.TextWP
 						variant="muted"
@@ -46,7 +47,7 @@ export function createOrderBilling( readRuntime ) {
 						>
 							{ I18n.__( 'Address:', 'ohmylms' ) + ' ' }
 						</strong>{ ' ' }
-						{ decodeEntities( address ) }
+						{ decodeHtmlEntities( address ) }
 					</Controls.TextWP>
 					<Controls.TextWP size="14px" color="#7A8B9A">
 						<strong

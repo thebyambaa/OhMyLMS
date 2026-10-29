@@ -105,7 +105,6 @@ export function guessCellDate( cell, current, anchor, requireDigits ) {
 		return current;
 	}
 	const day = parseInt( text, 10 );
-	const guess = setDayOfMonth( anchor, day );
 	const firstOfRow = cell
 		.closest( 'tr' )
 		?.querySelector( DAY_SELECTOR )?.textContent;
@@ -115,15 +114,15 @@ export function guessCellDate( cell, current, anchor, requireDigits ) {
 	if ( day > 15 && cell.closest( 'tr:last-child' ) ) {
 		return setDayOfMonth( addMonths( endOfMonth( anchor ), 1 ), day );
 	}
-	return guess;
+	return setDayOfMonth( anchor, day );
 }
 
 /**
  * Classes a day button gets for the pending range.
  *
  * @param {Date}      date  Date of the button.
- * @param {*}         start Range start.
- * @param {*}         end   Range end.
+ * @param {unknown}   start Range start.
+ * @param {unknown}   end   Range end.
  * @param {Date|null} hover Day under the pointer.
  * @return {string[]} Classes to add.
  */
@@ -177,8 +176,8 @@ function resolveCell( cell, doc, anchor, requireDigits ) {
  * Mark the day buttons of the calendar that fall in the pending range.
  *
  * @param {Document}  doc   Document holding the calendar.
- * @param {*}         start Range start.
- * @param {*}         end   Range end.
+ * @param {unknown}   start Range start.
+ * @param {unknown}   end   Range end.
  * @param {Date|null} hover Day under the pointer.
  * @return {void}
  */
@@ -201,10 +200,10 @@ const hoverHandlers = new WeakMap();
  * Report the day under the pointer. A button keeps a single pair of listeners,
  * replaced whenever the calendar is rendered again.
  *
- * @param {Document}   doc      Document holding the calendar.
- * @param {*}          start    Range start.
- * @param {*}          end      Range end.
- * @param {Function}   setHover Receives a Date on enter and null on leave.
+ * @param {Document}                    doc      Document holding the calendar.
+ * @param {unknown}                     start    Range start.
+ * @param {unknown}                     end      Range end.
+ * @param {( date: Date|null ) => void} setHover Receives a Date on enter and null on leave.
  * @return {void}
  */
 export function bindHover( doc, start, end, setHover ) {
@@ -232,12 +231,12 @@ export function bindHover( doc, start, end, setHover ) {
 /**
  * Keep the highlights and hover listeners in step with the calendar.
  *
- * @param {Document}  doc      Document holding the calendar.
- * @param {*}         start    Range start.
- * @param {*}         end      Range end.
- * @param {Date|null} hover    Day under the pointer.
- * @param {Function}  setHover Receives the hovered Date or null.
- * @return {Function|undefined} Cleanup, or nothing when no calendar is shown.
+ * @param {Document}                    doc      Document holding the calendar.
+ * @param {unknown}                     start    Range start.
+ * @param {unknown}                     end      Range end.
+ * @param {Date|null}                   hover    Day under the pointer.
+ * @param {( date: Date|null ) => void} setHover Receives the hovered Date or null.
+ * @return {( () => void )|undefined} Cleanup, or nothing when no calendar is shown.
  */
 export function watchCalendar( doc, start, end, hover, setHover ) {
 	const calendar = doc.querySelector( CALENDAR_SELECTOR );

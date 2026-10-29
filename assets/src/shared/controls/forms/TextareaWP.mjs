@@ -10,7 +10,7 @@ import { createElement, forwardRef } from '@wordpress/element';
  * @param {Object} ref   Ref forwarded to `TextareaControl`.
  * @return {import('react').ReactElement} Textarea control.
  */
-export const TextareaWP = forwardRef( function TextareaWP( props, ref ) {
+export const TextareaWP = forwardRef( function TextareaWPRender( props, ref ) {
 	return createElement( TextareaControl, {
 		ref,
 		__nextHasNoMarginBottom: true,

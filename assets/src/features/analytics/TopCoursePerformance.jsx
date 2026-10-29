@@ -2,19 +2,10 @@
 import { createElement } from '@wordpress/element';
 import { Skeleton } from '../../shared/skeleton';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
 export function createTopCoursePerformance( readRuntime ) {
 	return function TopCoursePerformance( props ) {
-		const {
-			EG,
-			Ge,
-			PG,
-			React,
-			SG,
-			b: I18n,
-			f: Router,
-			jG,
-			lf,
-		} = readRuntime();
+		const { EG, PG, React, SG, b: I18n, f: Router, jG, lf } = readRuntime();
 		var t,
 			n = props.data,
 			r = props.totalCourses,
@@ -105,7 +96,7 @@ export function createTopCoursePerformance( readRuntime ) {
 											target={ '_blank' }
 											weight={ '700' }
 										>
-											{ Ge(
+											{ decodeHtmlEntities(
 												n === null || n === void 0
 													? void 0
 													: n.title

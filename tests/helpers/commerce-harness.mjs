@@ -9,6 +9,7 @@ import vm from 'node:vm';
 import { parse } from '@babel/parser';
 import generatorModule from '@babel/generator';
 import { transformSync } from '@babel/core';
+import { isValidDateRange } from '../../assets/src/shared/utils/dateRange.mjs';
 
 const generate = generatorModule.default || generatorModule;
 const source = 'assets/src/';
@@ -36,7 +37,7 @@ const compiled = new Map(
 	rows.map( ( row ) => {
 		const input = fs
 			.readFileSync( 'assets/src/features/commerce/' + row.file, 'utf8' )
-			.replace( /^import .*;$/gm, '' )
+			.replace( /^import [\s\S]*?;$/gm, '' )
 			.replace( 'export function', 'function' );
 		return [
 			row.name,
@@ -107,6 +108,17 @@ function harness( states = [] ) {
 		b: { __: ( text ) => text },
 		HG() {},
 		Ge: ( text ) => text,
+		decodeHtmlEntities: ( text ) => text,
+		// The harness `sn` stub is a factory that returns the parser.
+		isValidDateRange: ( value, parse ) =>
+			isValidDateRange( value, parse() ),
+		highlightAdminMenu() {},
+		wpDate: { format: ( _, date ) => String( date ) },
+		PageHeader: 'YG',
+		EmptyState: 'uf',
+		NoDataIllustration: 'df',
+		PlusIcon: 'nf',
+		PriceDisplay: 'YH',
 		g: {
 			memo: ( fn ) => fn,
 			useState( initial ) {
@@ -265,6 +277,17 @@ function harness( states = [] ) {
 		JY: ( value ) => String( value ),
 		OQ: ( value ) => String( value ),
 		Ge: ( value ) => value,
+		decodeHtmlEntities: ( text ) => text,
+		// The harness `sn` stub is a factory that returns the parser.
+		isValidDateRange: ( value, parse ) =>
+			isValidDateRange( value, parse() ),
+		highlightAdminMenu() {},
+		wpDate: { format: ( _, date ) => String( date ) },
+		PageHeader: 'YG',
+		EmptyState: 'uf',
+		NoDataIllustration: 'df',
+		PlusIcon: 'SearchInput',
+		PriceDisplay: 'YH',
 		sn: () => ( value ) => ( {
 			format: () => String( value ),
 			isValid: () => true,

@@ -3,6 +3,8 @@ import { createElement } from '@wordpress/element';
 import { Table } from '../../shared/table';
 import { EditIcon } from '../../shared/icons';
 import * as Controls from '../../shared/controls';
+import { PriceDisplay } from '../../shared/utils';
+import { EmptyState, NoDataIllustration } from '../../shared/media';
 export function createRecentCourses( readRuntime ) {
 	return function RecentCourses( props ) {
 		const {
@@ -10,15 +12,12 @@ export function createRecentCourses( readRuntime ) {
 			Ne,
 			React,
 			T: StoreModule,
-			YH: Price,
 			b: I18n,
 			bG,
-			df: EmptyIcon,
 			f: Router,
 			g: ReactHooks,
 			q,
 			sn,
-			uf: EmptyState,
 			v,
 			y: WordPressData,
 			yG: CourseListItem,
@@ -332,7 +331,7 @@ export function createRecentCourses( readRuntime ) {
 								variant={ 'secondary' }
 								isBorderLess={ ! 0 }
 							>
-								<Price
+								<PriceDisplay
 									currency={ r || '$' }
 									currency_pos={ a || 'left' }
 									price={ Number(
@@ -425,7 +424,7 @@ export function createRecentCourses( readRuntime ) {
 					locale={ {
 						emptyText: (
 							<EmptyState
-								icon={ <EmptyIcon /> }
+								icon={ <NoDataIllustration /> }
 								title={ ( 0, I18n.__ )(
 									'No courses yet!',
 									'ohmylms'

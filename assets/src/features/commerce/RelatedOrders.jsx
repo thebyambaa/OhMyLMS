@@ -4,11 +4,11 @@
  */
 import { createElement } from '@wordpress/element';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
 
 export function createRelatedOrders( readRuntime ) {
 	return function RelatedOrders( { relatedOrders = [] } ) {
 		const {
-			Ge: decodeEntities,
 			OQ: formatPrice,
 			React,
 			VY: formatDateTime,
@@ -79,7 +79,7 @@ export function createRelatedOrders( readRuntime ) {
 						weight={ 400 }
 						size={ 14 }
 					>
-						{ decodeEntities( record.relationship ) }
+						{ decodeHtmlEntities( record.relationship ) }
 					</Controls.TextWP>
 				),
 			},

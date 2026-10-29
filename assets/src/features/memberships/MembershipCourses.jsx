@@ -8,6 +8,7 @@ import {
 import { CurriculumMindmap } from './CurriculumMindmap';
 import { restUrl } from '../restUrl.mjs';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
 
 /**
  * Which courses a membership plan includes: individual courses, curriculum items (with everything
@@ -18,14 +19,12 @@ import * as Controls from '../../shared/controls';
 export function createMembershipCourses( readRuntime ) {
 	return function MembershipCourses() {
 		const {
-			I: RecoveredControls,
 			Ea,
 			T: StoreModule,
 			b: I18n,
 			g: Hooks,
 			y: Data,
 			l: apiFetch,
-			Ge,
 		} = readRuntime();
 		const plan = Data.useSelect(
 			( select ) =>
@@ -60,7 +59,7 @@ export function createMembershipCourses( readRuntime ) {
 		const options = ( rows ) =>
 			rows.map( ( item ) => ( {
 				value: Number( item.term_id ?? item.id ),
-				label: Ge( item.name ),
+				label: decodeHtmlEntities( item.name ),
 			} ) );
 		const ids = ( list ) => ( list || [] ).map( Number );
 		const selection = {
@@ -95,13 +94,15 @@ export function createMembershipCourses( readRuntime ) {
 						setItems(
 							( outline.items || [] ).map( ( item ) => ( {
 								value: Number( item.id ),
-								label: Ge( item.name ),
+								label: decodeHtmlEntities( item.name ),
 								item_type: item.item_type,
 								parent: Number( item.parent_id || 0 ),
 								courses: ( item.courses || [] ).map(
 									( course ) => ( {
 										...course,
-										title: Ge( course.title ),
+										title: decodeHtmlEntities(
+											course.title
+										),
 									} )
 								),
 							} ) )
@@ -230,7 +231,9 @@ export function createMembershipCourses( readRuntime ) {
 			);
 		const direct = selection.products.map( ( item ) => ( {
 			value: Number( item.id ),
-			label: Ge( item.label || item.name || '#' + item.id ),
+			label: decodeHtmlEntities(
+				item.label || item.name || '#' + item.id
+			),
 		} ) );
 		const courseChoices = [
 			...new Map(
@@ -239,7 +242,7 @@ export function createMembershipCourses( readRuntime ) {
 					...direct,
 					...( preview?.courses || [] ).map( ( item ) => ( {
 						value: item.id,
-						label: Ge( item.name ),
+						label: decodeHtmlEntities( item.name ),
 					} ) ),
 				].map( ( item ) => [ item.value, item ] )
 			).values(),
@@ -257,7 +260,7 @@ export function createMembershipCourses( readRuntime ) {
 				} }
 			>
 				<Controls.HeadingWP level={ 4 }>{ label }</Controls.HeadingWP>
-				<RecoveredControls.AdvancedSelectWP
+				<Controls.AdvancedSelectWP
 					isMulti
 					closeMenuOnSelect={ false }
 					value={ value }
@@ -402,7 +405,8 @@ export function createMembershipCourses( readRuntime ) {
 								<ul>
 									{ legacy.map( ( rule ) => (
 										<li key={ rule.field + rule.id }>
-											{ Ge( rule.name ) } ({ rule.kind }){ ' ' }
+											{ decodeHtmlEntities( rule.name ) }{ ' ' }
+											({ rule.kind }){ ' ' }
 											<Button
 												variant="secondary"
 												size="small"
@@ -475,7 +479,11 @@ export function createMembershipCourses( readRuntime ) {
 									<tbody>
 										{ preview.courses.map( ( course ) => (
 											<tr key={ course.id }>
-												<td>{ Ge( course.name ) }</td>
+												<td>
+													{ decodeHtmlEntities(
+														course.name
+													) }
+												</td>
 												<td>
 													{ course.reasons.join(
 														', '

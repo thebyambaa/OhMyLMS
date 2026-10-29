@@ -1,3 +1,4 @@
+// eslint-disable-next-line @wordpress/no-unsafe-wp-apis -- the recovered application renders this experimental component; markup parity is tested.
 import { __experimentalHeading as Heading } from '@wordpress/components';
 import { cloneElement, createElement } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -16,13 +17,13 @@ const ICON_SIZE = 48;
 /**
  * Empty state with an optional icon, heading, description and action.
  *
- * @param {Object}                       props                    Component props.
- * @param {import('react').ReactElement} [props.icon]             Icon element, shown at 48px.
- * @param {string}                       [props.title]            Heading. Defaults to "Nothing here yet".
- * @param {import('react').ReactNode}    [props.description]      Description text.
- * @param {import('react').ReactNode}    [props.actionComponent]  Action shown below.
- * @param {string}                       [props.className]        Extra class name. Defaults to "".
- * @param {string}                       [props.titleLevel]       Heading level. Defaults to "4".
+ * @param {Object}                       props                   Component props.
+ * @param {import('react').ReactElement} [props.icon]            Icon element, shown at 48px.
+ * @param {string}                       [props.title]           Heading. Defaults to "Nothing here yet".
+ * @param {import('react').ReactNode}    [props.description]     Description text.
+ * @param {import('react').ReactNode}    [props.actionComponent] Action shown below.
+ * @param {string}                       [props.className]       Extra class name. Defaults to "".
+ * @param {string}                       [props.titleLevel]      Heading level. Defaults to "4".
  * @return {import('react').ReactElement} Empty state region.
  */
 export function EmptyWP( props ) {

@@ -71,7 +71,6 @@
 			"_f",
 			"b",
 			"bf",
-			"df",
 			"ef",
 			"f",
 			"ff",
@@ -79,7 +78,6 @@
 			"gf",
 			"hf",
 			"lc",
-			"uf",
 			"y"
 		]
 	},
@@ -87,7 +85,7 @@
 		"binding": "Zp",
 		"name": "CourseInfoHeader",
 		"file": "CourseInfoHeader.jsx",
-		"dependencies": [ "Ge", "Qp", "React", "T", "b", "g", "ne", "re", "y" ]
+		"dependencies": [ "Qp", "React", "T", "b", "g", "ne", "re", "y" ]
 	},
 	{
 		"binding": "Yp",
@@ -244,11 +242,9 @@
 		"dependencies": [
 			"$H",
 			"Br",
-			"Ge",
 			"QH",
 			"React",
 			"T",
-			"YH",
 			"ZH",
 			"b",
 			"f",
@@ -266,7 +262,6 @@
 			"BH",
 			"DH",
 			"FH",
-			"Ge",
 			"HH",
 			"Jt",
 			"L",
@@ -277,7 +272,6 @@
 			"VH",
 			"We",
 			"b",
-			"df",
 			"g",
 			"l",
 			"q",
@@ -318,13 +312,10 @@
 			"T",
 			"VG",
 			"We",
-			"YG",
-			"YH",
 			"aY",
 			"b",
 			"cY",
 			"dY",
-			"df",
 			"f",
 			"fN",
 			"g",
@@ -339,9 +330,7 @@
 			"q",
 			"sN",
 			"sn",
-			"uf",
 			"v",
-			"xq",
 			"y",
 			"yG",
 			"yc"
@@ -351,7 +340,7 @@
 		"binding": "hG",
 		"name": "CourseListItem",
 		"file": "CourseListItem.jsx",
-		"dependencies": [ "Ge", "React", "SB", "b", "f", "g", "v", "vG" ]
+		"dependencies": [ "React", "SB", "b", "f", "g", "v", "vG" ]
 	},
 	{
 		"binding": "lU",

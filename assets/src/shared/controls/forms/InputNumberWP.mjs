@@ -1,3 +1,4 @@
+// eslint-disable-next-line @wordpress/no-unsafe-wp-apis -- the recovered application renders this experimental component; markup parity is tested.
 import { __experimentalNumberControl as NumberControl } from '@wordpress/components';
 import { createElement } from '@wordpress/element';
 

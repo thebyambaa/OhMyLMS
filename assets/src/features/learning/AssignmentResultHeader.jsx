@@ -1,9 +1,10 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
 export function createAssignmentResultHeader( readRuntime ) {
 	return function AssignmentResultHeader( props ) {
-		const { Ge, React, b: I18n, f: Router, oK, r$, sn, v } = readRuntime();
+		const { React, b: I18n, f: Router, oK, r$, sn, v } = readRuntime();
 		var t,
 			n,
 			r,
@@ -54,7 +55,7 @@ export function createAssignmentResultHeader( readRuntime ) {
 										</Controls.TextWP>
 									</v.Link>
 									<Controls.TextWP size={ 15 }>
-										{ Ge(
+										{ decodeHtmlEntities(
 											( data === null || data === void 0
 												? void 0
 												: data.display_name ) ||

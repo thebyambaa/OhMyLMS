@@ -1,10 +1,10 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
 export function createCommunityDetails( readRuntime ) {
 	return function CommunityDetails( props ) {
 		const {
-			Ge,
 			L2: ImageField,
 			M,
 			Pf: DetailField,
@@ -82,7 +82,7 @@ export function createCommunityDetails( readRuntime ) {
 							'What would you like to call this community?',
 							'ohmylms'
 						) }
-						value={ Ge(
+						value={ decodeHtmlEntities(
 							r === null || r === void 0 ? void 0 : r.title
 						) }
 						onChange={ function ( e ) {
@@ -125,7 +125,7 @@ export function createCommunityDetails( readRuntime ) {
 							'Describe your space to help members understand its purpose.',
 							'ohmylms'
 						) }
-						value={ Ge(
+						value={ decodeHtmlEntities(
 							r === null || r === void 0 ? void 0 : r.description
 						) }
 						onChange={ function ( e ) {

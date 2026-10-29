@@ -1,16 +1,15 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import * as Controls from '../../shared/controls';
+import { PriceDisplay, decodeHtmlEntities } from '../../shared/utils';
 export function createCoursePreview( readRuntime ) {
 	return function CoursePreview( props ) {
 		const {
 			$H,
 			Br,
-			Ge,
 			QH,
 			React,
 			T: StoreModule,
-			YH,
 			ZH,
 			b: I18n,
 			f: Router,
@@ -147,7 +146,7 @@ export function createCoursePreview( readRuntime ) {
 						{
 							id: 0,
 							label: ( 0, I18n.__ )( 'Course Title', 'ohmylms' ),
-							value: Ge(
+							value: decodeHtmlEntities(
 								null !==
 									( e =
 										a === null || a === void 0
@@ -177,7 +176,9 @@ export function createCoursePreview( readRuntime ) {
 								}
 								return a.categories
 									.map( function ( _eLocal2 ) {
-										return Ge( _eLocal2.name );
+										return decodeHtmlEntities(
+											_eLocal2.name
+										);
 									} )
 									.join( ', ' );
 							} )(),
@@ -282,7 +283,7 @@ export function createCoursePreview( readRuntime ) {
 									) {
 										return (
 											<React.Fragment>
-												<YH
+												<PriceDisplay
 													currency={
 														( a === null ||
 														a === void 0
@@ -306,7 +307,7 @@ export function createCoursePreview( readRuntime ) {
 												/>
 												{ ' ' }
 												<del>
-													<YH
+													<PriceDisplay
 														currency={
 															( a === null ||
 															a === void 0
@@ -334,7 +335,7 @@ export function createCoursePreview( readRuntime ) {
 										);
 									}
 									return (
-										<YH
+										<PriceDisplay
 											currency={
 												( a === null || a === void 0
 													? void 0
@@ -571,7 +572,7 @@ export function createCoursePreview( readRuntime ) {
 																			14
 																		}
 																	>
-																		{ Ge(
+																		{ decodeHtmlEntities(
 																			e.label
 																		) }
 																	</Controls.TextWP>

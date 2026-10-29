@@ -2,11 +2,11 @@
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import * as Controls from '../../shared/controls';
+import { highlightAdminMenu } from '../../shared/utils';
 export function createEmailSettingsPage( readRuntime ) {
 	return function EmailSettingsPage() {
 		const {
 			D: Buttons,
-			HG,
 			R4: MemoEmailPersonalization,
 			React,
 			T: StoreModule,
@@ -16,7 +16,7 @@ export function createEmailSettingsPage( readRuntime ) {
 			x4,
 			y: WordPressData,
 		} = readRuntime();
-		HG( 'ohmylms', 'emails' );
+		highlightAdminMenu( 'ohmylms', 'emails' );
 		var e = ( function ( _eLocal, t ) {
 				return (
 					( function ( _eLocal2 ) {

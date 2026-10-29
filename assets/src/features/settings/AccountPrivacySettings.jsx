@@ -1,12 +1,12 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
 export function createAccountPrivacySettings( readRuntime ) {
 	return function AccountPrivacySettings( props ) {
 		const {
 			$K,
 			Ea,
-			Ge,
 			He,
 			Pf,
 			React,
@@ -427,7 +427,7 @@ export function createAccountPrivacySettings( readRuntime ) {
 													},
 											} );
 										} }
-										value={ Ge(
+										value={ decodeHtmlEntities(
 											v === null ||
 												v === void 0 ||
 												null ===

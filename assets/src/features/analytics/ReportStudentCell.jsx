@@ -1,9 +1,10 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
 export function createReportStudentCell( readRuntime ) {
 	return function ReportStudentCell( props ) {
-		const { Ge, JU, PG, React, v, vG: AnalyticsLinkIcon } = readRuntime();
+		const { JU, PG, React, v, vG: AnalyticsLinkIcon } = readRuntime();
 		var t = true,
 			n = props.studentData,
 			r = props.isHover,
@@ -50,7 +51,7 @@ export function createReportStudentCell( readRuntime ) {
 							level={ 4 }
 							className={ 'student-name' }
 						>
-							{ Ge(
+							{ decodeHtmlEntities(
 								n === null || n === void 0 ? void 0 : n.name
 							) }
 						</Controls.HeadingWP>

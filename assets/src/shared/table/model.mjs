@@ -64,8 +64,8 @@ export function collectKeys( rows, rowKey ) {
 /**
  * Add the key when absent, remove it when present.
  *
- * @param {Array} selectedKeys Currently selected keys.
- * @param {*}     key          Key to toggle.
+ * @param {Array}   selectedKeys Currently selected keys.
+ * @param {unknown} key          Key to toggle.
  * @return {Array} A new array of selected keys.
  */
 export function toggleKey( selectedKeys, key ) {
@@ -117,7 +117,7 @@ export function rowClassName( index, count ) {
  *
  * @param {Object} column Column definition.
  * @param {Object} row    Data row.
- * @return {*} Rendered content.
+ * @return {unknown} Rendered content.
  */
 export function cellContent( column, row ) {
 	return column.render

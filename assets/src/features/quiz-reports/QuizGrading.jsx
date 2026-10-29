@@ -3,13 +3,12 @@ import { showRequestError } from '../requestFeedback.mjs';
 import { createElement } from '@wordpress/element';
 import { normalizeQuizReport } from './model.mjs';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities, highlightAdminMenu } from '../../shared/utils';
 export function createQuizGrading( readRuntime ) {
 	return function QuizGrading() {
 		const {
 			B$,
 			D$,
-			Ge: decodeHtml,
-			HG: useAdminScreen,
 			I$: QuizQuestionResults,
 			L$,
 			N$: QuizResultSummary,
@@ -26,7 +25,7 @@ export function createQuizGrading( readRuntime ) {
 			v: RouterLinks,
 		} = readRuntime();
 		var e, t, n, r, a, o, i, c, u, s, d;
-		useAdminScreen( 'ohmylms', 'quizzes' );
+		highlightAdminMenu( 'ohmylms', 'quizzes' );
 		var m = L$( ( 0, ReactHooks.useState )( [] ), 2 ),
 			attempt = m[ 0 ],
 			setAttempt = m[ 1 ],
@@ -236,7 +235,7 @@ export function createQuizGrading( readRuntime ) {
 													</Controls.TextWP>
 												</RouterLinks.Link>
 												<Controls.TextWP size={ 15 }>
-													{ decodeHtml(
+													{ decodeHtmlEntities(
 														attempt === null ||
 															attempt ===
 																void 0 ||
@@ -646,28 +645,30 @@ export function createQuizGrading( readRuntime ) {
 														void 0 === u
 															? void 0
 															: u.status,
-													student_name: decodeHtml(
-														attempt === null ||
-															attempt ===
-																void 0 ||
-															null ===
-																( s =
-																	attempt.student ) ||
-															void 0 === s
-															? void 0
-															: s.name
-													),
-													course_name: decodeHtml(
-														attempt === null ||
-															attempt ===
-																void 0 ||
-															null ===
-																( d =
-																	attempt.course ) ||
-															void 0 === d
-															? void 0
-															: d.name
-													),
+													student_name:
+														decodeHtmlEntities(
+															attempt === null ||
+																attempt ===
+																	void 0 ||
+																null ===
+																	( s =
+																		attempt.student ) ||
+																void 0 === s
+																? void 0
+																: s.name
+														),
+													course_name:
+														decodeHtmlEntities(
+															attempt === null ||
+																attempt ===
+																	void 0 ||
+																null ===
+																	( d =
+																		attempt.course ) ||
+																void 0 === d
+																? void 0
+																: d.name
+														),
 												} }
 											/>
 										</Controls.FlexBlockWP>

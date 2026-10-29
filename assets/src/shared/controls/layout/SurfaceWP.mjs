@@ -1,4 +1,5 @@
 import { createElement, Fragment, memo } from '@wordpress/element';
+// eslint-disable-next-line @wordpress/no-unsafe-wp-apis -- the recovered application renders this experimental component; markup parity is tested.
 import { __experimentalSurface as Surface } from '@wordpress/components';
 import { getSurfaceStyle } from './model.mjs';
 
@@ -12,7 +13,7 @@ import { getSurfaceStyle } from './model.mjs';
  * @param {Object}               [props.style]      Overrides the shorthands.
  * @return {import('react').ReactElement} Surface element.
  */
-export const SurfaceWP = memo( function SurfaceWP( {
+export const SurfaceWP = memo( function SurfaceWPRender( {
 	children,
 	fullHeight,
 	minHeight,

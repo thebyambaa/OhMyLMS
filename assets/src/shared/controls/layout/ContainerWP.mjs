@@ -8,7 +8,7 @@ import { createElement, Fragment, memo } from '@wordpress/element';
  * @param {import('react').Node} [props.children]          Container content.
  * @return {import('react').ReactElement} Container markup.
  */
-export const ContainerWP = memo( function ContainerWP( {
+export const ContainerWP = memo( function ContainerWPRender( {
 	isFullWidth = false,
 	children,
 } ) {

@@ -7,12 +7,13 @@ import { XApiSettings } from './XApiSettings';
 import { DesignSystemSettings } from './DesignSystemSettings';
 import { useNotifications } from '../../shared/notices';
 import * as Controls from '../../shared/controls';
+import { highlightAdminMenu } from '../../shared/utils';
+import { PageHeader } from '../../shared/media';
 export function createSettingsPage( readRuntime ) {
 	return function SettingsPage() {
 		const {
 			C5,
 			E6: MemoMigrationSettings,
-			HG,
 			J1: MemoPaymentSettings,
 			JK: MemoAccountPrivacySettings,
 			O6,
@@ -23,7 +24,6 @@ export function createSettingsPage( readRuntime ) {
 			S6,
 			T: StoreModule,
 			V0: MemoDesignSettings,
-			YG,
 			b: I18n,
 			f: Router,
 			g: ReactHooks,
@@ -35,7 +35,7 @@ export function createSettingsPage( readRuntime ) {
 			vJ: MemoAdvancedSettings,
 			y: WordPressData,
 		} = readRuntime();
-		HG( 'ohmylms', 'settings' );
+		highlightAdminMenu( 'ohmylms', 'settings' );
 		var t = ( 0, WordPressData.useDispatch )( StoreModule.default );
 		var n = ( 0, WordPressData.useSelect )( function ( _eLocal ) {
 			return _eLocal( StoreModule.default ).isSettingsLoading();
@@ -541,7 +541,7 @@ export function createSettingsPage( readRuntime ) {
 			<React.Fragment>
 				{ v }
 				<Controls.ContainerWP>
-					<YG
+					<PageHeader
 						title={ ( 0, I18n.__ )( 'Settings', 'ohmylms' ) }
 						showAddButton={ ! 1 }
 					/>

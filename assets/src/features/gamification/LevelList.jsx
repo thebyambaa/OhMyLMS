@@ -4,10 +4,11 @@ import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { EditIcon } from '../../shared/icons';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
+import { EmptyState, NoDataIllustration } from '../../shared/media';
 export function createLevelList( readRuntime ) {
 	return function LevelList( props ) {
 		const {
-			Ge,
 			Ie,
 			L3: LevelEditor,
 			Ne,
@@ -19,13 +20,11 @@ export function createLevelList( readRuntime ) {
 			We,
 			Y3,
 			b: I18n,
-			df,
 			g: ReactHooks,
 			l,
 			lf,
 			q,
 			q3,
-			uf,
 			y: WordPressData,
 		} = readRuntime();
 		var setLevelList = props.setLevelList,
@@ -94,7 +93,7 @@ export function createLevelList( readRuntime ) {
 									numberOfLines={ 2 }
 									truncate={ ! 0 }
 								>
-									{ Ge( t.name ) }
+									{ decodeHtmlEntities( t.name ) }
 								</Controls.TextWP>
 							</Controls.FlexWP>
 						);
@@ -439,17 +438,23 @@ export function createLevelList( readRuntime ) {
 									};
 								} }
 								locale={ {
-									emptyText: React.createElement( uf, {
-										icon: React.createElement( df, null ),
-										title: ( 0, I18n.__ )(
-											'No level yet!',
-											'ohmylms'
-										),
-										description: ( 0, I18n.__ )(
-											"Start building your first level and it'll show up here as soon as you hit publish.",
-											'ohmylms'
-										),
-									} ),
+									emptyText: React.createElement(
+										EmptyState,
+										{
+											icon: React.createElement(
+												NoDataIllustration,
+												null
+											),
+											title: ( 0, I18n.__ )(
+												'No level yet!',
+												'ohmylms'
+											),
+											description: ( 0, I18n.__ )(
+												"Start building your first level and it'll show up here as soon as you hit publish.",
+												'ohmylms'
+											),
+										}
+									),
 								} }
 							/>
 						</Controls.SpacerWP>

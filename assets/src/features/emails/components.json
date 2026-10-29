@@ -3,18 +3,7 @@
 		"binding": "C4",
 		"name": "EmailSettingsPage",
 		"file": "EmailSettingsPage.jsx",
-		"dependencies": [
-			"D",
-			"HG",
-			"R4",
-			"React",
-			"T",
-			"b",
-			"g",
-			"u4",
-			"x4",
-			"y"
-		]
+		"dependencies": [ "D", "R4", "React", "T", "b", "g", "u4", "x4", "y" ]
 	},
 	{
 		"binding": "c4",

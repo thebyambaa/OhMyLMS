@@ -14,7 +14,7 @@ export const DISPLAY_FORMAT = 'DD/MM/YYYY';
 /**
  * Parse a value the way `dayjs( value )` does.
  *
- * @param {*} value `undefined` (now), `null` (invalid), a Date, a number or a string.
+ * @param {unknown} value `undefined` (now), `null` (invalid), a Date, a number or a string.
  * @return {Date} A new Date, invalid when the value cannot be parsed.
  */
 export function parseDay( value ) {
@@ -286,9 +286,9 @@ export function getPresetRange( preset, now = new Date() ) {
 /**
  * Label of the range button.
  *
- * @param {*}      start       Range start.
- * @param {*}      end         Range end.
- * @param {string} placeholder Text shown when the range is incomplete.
+ * @param {unknown} start       Range start.
+ * @param {unknown} end         Range end.
+ * @param {string}  placeholder Text shown when the range is incomplete.
  * @return {string} `DD/MM/YYYY - DD/MM/YYYY` or the placeholder.
  */
 export function getRangeLabel( start, end, placeholder ) {
@@ -303,10 +303,10 @@ export function getRangeLabel( start, end, placeholder ) {
 /**
  * Outcome of a click on a calendar day.
  *
- * @param {*} start  Pending range start.
- * @param {*} end    Pending range end.
- * @param {*} picked Value from the calendar.
- * @return {{type: string, start?: *, startDate?: *, endDate?: *}} Either a new
+ * @param {unknown} start  Pending range start.
+ * @param {unknown} end    Pending range end.
+ * @param {unknown} picked Value from the calendar.
+ * @return {{type: string, start?: unknown, startDate?: unknown, endDate?: unknown}} Either a new
  *     range start, or the completed range ordered by time.
  */
 export function pickDay( start, end, picked ) {
@@ -321,7 +321,7 @@ export function pickDay( start, end, picked ) {
 /**
  * Turn the calendar selection into the value reported by the picker.
  *
- * @param {{startDate: *, endDate: *}} selection Selection from the calendar.
+ * @param {{startDate: unknown, endDate: unknown}} selection Selection from the calendar.
  * @return {{close: boolean, value: Array, dates?: string[]}} `value` is
  *     `[ start, end ]` as `YYYY-MM-DD`, or `[ null, null ]` when cleared;
  *     `dates` is only set for a complete range.

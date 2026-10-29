@@ -2,10 +2,10 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
 export function createCertificateCourseSelector( readRuntime ) {
 	return function CertificateCourseSelector( props ) {
 		const {
-			Ge,
 			JL,
 			React,
 			T: StoreModule,
@@ -206,7 +206,7 @@ export function createCertificateCourseSelector( readRuntime ) {
 																_eLocal9
 															) {
 																return {
-																	label: Ge(
+																	label: decodeHtmlEntities(
 																		_eLocal9 ===
 																			null ||
 																			_eLocal9 ===
@@ -259,7 +259,9 @@ export function createCertificateCourseSelector( readRuntime ) {
 							} )
 							.map( function ( _eLocal1 ) {
 								return {
-									label: Ge( _eLocal1.name ).trim(),
+									label: decodeHtmlEntities(
+										_eLocal1.name
+									).trim(),
 									value: _eLocal1.id,
 								};
 							} )

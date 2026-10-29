@@ -15,12 +15,12 @@ steps and acceptance criteria, see [the modularization roadmap](MODULARIZATION-R
 | Top-level bindings in factory 1841 | 3703 |
 | Routes in the recovered router | 31 |
 | Authored components created through `readRuntime` | 215 |
-| Distinct bindings those components read | 853 |
+| Distinct bindings those components read | 845 |
 | … authored feature components | 167 |
 | … WordPress/React platform packages | 7 |
 | … recovered LMS-owned modules | 26 |
 | … recovered vendor libraries | 18 |
-| … recovered code in factory 1841 | 155 |
+| … recovered code in factory 1841 | 147 |
 | … inlined Babel helpers (removed by authoring) | 480 |
 | Unassigned bindings | 0 |
 | Recovered library families | 22 |
@@ -34,9 +34,9 @@ drifts from the source.
 | Step | Work | Bindings |
 | --- | --- | --- |
 | 2 | Migrate Easy Email and remaining libraries | 18 |
-| 3 | Extract shared application infrastructure | 61 |
+| 3 | Extract shared application infrastructure | 52 |
 | 4 | Separate state and API access | 9 |
-| 5 | Finish feature independence | 765 |
+| 5 | Finish feature independence | 766 |
 | 6 | Replace the recovered application entry point | 0 |
 
 ## Unwired feature copies
@@ -56,24 +56,24 @@ Platform is zero and its components no longer use `createComponent(readRuntime)`
 
 | Feature | Components | Platform | Shared | State/API | Vendor | Other features | Own recovered | Babel helpers |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| analytics | 18 | 7 | 21 | 1 | 6 | 2 | 12 | 30 |
-| certificates | 13 | 6 | 13 | 4 | 5 | 0 | 3 | 35 |
-| commerce | 22 | 7 | 18 | 1 | 5 | 1 | 4 | 23 |
-| communities | 5 | 6 | 10 | 2 | 2 | 1 | 1 | 12 |
-| courses | 25 | 6 | 20 | 4 | 12 | 4 | 26 | 68 |
-| emails | 12 | 5 | 5 | 1 | 5 | 1 | 1 | 16 |
-| gamification | 13 | 6 | 9 | 2 | 3 | 0 | 1 | 54 |
-| integrations | 7 | 5 | 4 | 3 | 0 | 0 | 2 | 27 |
-| learning | 25 | 6 | 23 | 2 | 6 | 1 | 16 | 72 |
-| memberships | 7 | 6 | 16 | 2 | 3 | 0 | 5 | 23 |
+| analytics | 18 | 7 | 12 | 1 | 6 | 2 | 12 | 30 |
+| certificates | 13 | 6 | 8 | 4 | 5 | 0 | 3 | 35 |
+| commerce | 22 | 7 | 10 | 1 | 5 | 1 | 4 | 23 |
+| communities | 5 | 6 | 4 | 2 | 2 | 1 | 1 | 12 |
+| courses | 25 | 6 | 14 | 4 | 12 | 4 | 26 | 68 |
+| emails | 12 | 5 | 4 | 1 | 5 | 1 | 1 | 16 |
+| gamification | 13 | 6 | 5 | 2 | 3 | 0 | 1 | 54 |
+| integrations | 7 | 5 | 0 | 3 | 0 | 0 | 2 | 27 |
+| learning | 25 | 6 | 18 | 2 | 6 | 1 | 16 | 72 |
+| memberships | 7 | 6 | 7 | 2 | 3 | 0 | 5 | 23 |
 | question-editor | 13 | 5 | 4 | 1 | 1 | 0 | 11 | 20 |
 | quiz-editor | 4 | 4 | 4 | 2 | 1 | 1 | 5 | 8 |
-| quiz-reports | 10 | 4 | 8 | 0 | 3 | 0 | 4 | 10 |
-| settings | 19 | 5 | 9 | 3 | 3 | 3 | 10 | 62 |
-| setup | 11 | 5 | 4 | 1 | 3 | 0 | 11 | 25 |
-| students | 4 | 7 | 17 | 3 | 5 | 2 | 4 | 15 |
-| taxonomies | 3 | 6 | 8 | 1 | 1 | 0 | 0 | 16 |
-| webhooks | 4 | 5 | 11 | 2 | 1 | 0 | 2 | 16 |
+| quiz-reports | 10 | 4 | 4 | 0 | 3 | 0 | 4 | 10 |
+| settings | 19 | 5 | 5 | 3 | 3 | 3 | 10 | 62 |
+| setup | 11 | 5 | 3 | 1 | 3 | 0 | 11 | 25 |
+| students | 4 | 7 | 11 | 3 | 5 | 2 | 5 | 15 |
+| taxonomies | 3 | 6 | 3 | 1 | 1 | 0 | 0 | 16 |
+| webhooks | 4 | 5 | 5 | 2 | 1 | 0 | 2 | 16 |
 
 ## Shared application infrastructure (step 3)
 
@@ -86,31 +86,21 @@ feature reads. Each becomes a direct import or a named public module.
 | `g` | react (wp.element) | 18 | direct `@wordpress/*` / `@wordpress/element` import |
 | `React` | react (wp.element) | 18 | direct `@wordpress/*` / `@wordpress/element` import |
 | `y` | @wordpress/data | 17 | direct `@wordpress/*` / `@wordpress/element` import |
-| `HG` | helper in dashboard-income-overview.js | 14 | named shared module (step 3) |
 | `l` | @wordpress/api-fetch | 14 | direct `@wordpress/*` / `@wordpress/element` import |
-| `df` | component in course-thumbnail-controls.js | 13 | named shared module (step 3) |
 | `L` | Stylesheet side-effect module (factory 77558) | 13 | named shared module (step 3) |
 | `q` | @wordpress/components | 13 | direct `@wordpress/*` / `@wordpress/element` import |
-| `uf` | component in course-thumbnail-controls.js | 13 | named shared module (step 3) |
-| `Ge` | helper in course-builder-lesson-actions.js | 12 | named shared module (step 3) |
-| `YG` | component in dashboard-income-overview.js | 12 | named shared module (step 3) |
 | `We` | component in course-builder-lesson-actions.js | 9 | named shared module (step 3) |
 | `aY` | component in course-list-filters.js | 8 | named shared module (step 3) |
 | `fN` | component in automation-list-table.js | 8 | named shared module (step 3) |
 | `sN` | Component (.ohmylms-table) (factory 65) | 6 | named shared module (step 3) |
 | `Br` | component in lesson-editor.js | 5 | named shared module (step 3) |
 | `D` | Unlabelled module (factory 94490) | 5 | named shared module (step 3) |
-| `xq` | helper in earnings-report.js | 5 | named shared module (step 3) |
-| `I` | Shared controls kit (`*WP` wrappers) (factory 38093) | 4 | named shared module (step 3) |
-| `nf` | component in course-thumbnail-controls.js | 4 | named shared module (step 3) |
 | `Nm` | component in quiz-matching-question-editor.js | 4 | named shared module (step 3) |
 | `vn` | Wrapper around @wordpress/components SelectControl (factory 54870) | 4 | named shared module (step 3) |
-| `YH` | helper in course-funnel-upsell-downsell.js | 4 | named shared module (step 3) |
 | `hu` | component in quiz-editor-media-library.js | 3 | named shared module (step 3) |
 | `lN` | @wordpress/url | 3 | direct `@wordpress/*` / `@wordpress/element` import |
 | `ne` | component in course-builder-chapter-editor.js | 3 | named shared module (step 3) |
 | `W` | Wrapper around @wordpress/components TextareaControl (factory 15468) | 3 | named shared module (step 3) |
-| `wq` | helper in CourseReportRoute.js | 3 | named shared module (step 3) |
 | `_U` | component in course-report-table-header.js | 2 | named shared module (step 3) |
 | `Gp` | component in quiz-editor-header.js | 2 | named shared module (step 3) |
 | `hB` | data in email-preview-styles.js | 2 | named shared module (step 3) |
@@ -133,6 +123,7 @@ feature reads. Each becomes a direct import or a named public module.
 | `EG` | Unlabelled module (factory 4315) | 1 | named shared module (step 3) |
 | `ep` | Component (.ohmylms-tabs-header) (factory 12278) | 1 | named shared module (step 3) |
 | `GG` | Wrapper around @wordpress/components Notice (factory 39706) | 1 | named shared module (step 3) |
+| `I` | Shared controls kit (`*WP` wrappers) (factory 38093) | 1 | named shared module (step 3) |
 | `kt` | Component (.ohmylms-tag-icon) (factory 27268) | 1 | named shared module (step 3) |
 | `pz` | Unlabelled module (factory 82140) | 1 | named shared module (step 3) |
 | `QG` | Wrapper around @wordpress/components Modal (factory 24295) | 1 | named shared module (step 3) |
@@ -168,7 +159,7 @@ Every third-party family still registered by shipped bundles, consumed or not.
 
 | Library | Factories | Size | Bundles | Bridged by | Plan |
 | --- | --- | --- | --- | --- | --- |
-| Easy Email | 5 | 2,220 KB | dist/chunks/355, dist/vendors/vendors | email-runtime-adapters.mjs, email-vendor-chunks.mjs | Replace the recovered UI, editor core, export and source-editor copies in chunk 355 with pinned npm packages or an authored editor. Saved template JSON/MJML must reopen unchanged. |
+| Easy Email | 5 | 2,220 KB | dist/chunks/355, dist/vendors/vendors | email-package-adapters.mjs, email-runtime-adapters.mjs, email-vendor-chunks.mjs | Replace the recovered UI, editor core, export and source-editor copies in chunk 355 with pinned npm packages or an authored editor. Saved template JSON/MJML must reopen unchanged. |
 | MJML | 3 | 1,718 KB | dist/chunks/355, dist/vendors/vendors | email-package-adapters.mjs, email-runtime-adapters.mjs, email-vendor-chunks.mjs | Shared renderer done (`mjml-browser`). The embedded copy goes when Easy Email moves. |
 | Arco Design React | 1 | 1,417 KB | dist/vendors/vendors | email-package-adapters.mjs, email-vendor-chunks.mjs | Shared factory bridged to `@arco-design/web-react`. Private copies inside Easy Email go with it. |
 | Lowlight / Highlight.js | 2 | 1,129 KB | dist/vendors/vendors | editor-package-adapters.mjs | Done (npm `lowlight`). Remove the compatibility factory once nothing consumes it. |
@@ -474,6 +465,7 @@ moves into that feature as an authored module.
 | `DZ` | component | students-report-table.js | 926 B | StudentReport |
 | `FZ` | component | students-report-table.js | 535 B | StudentReport |
 | `TZ` | component | students-report-table.js | 4,326 B | StudentReport |
+| `xq` | helper | earnings-report.js | 111 B | StudentList |
 | `zZ` | component | students-report-table.js | 11,051 B | StudentReport |
 
 ### webhooks

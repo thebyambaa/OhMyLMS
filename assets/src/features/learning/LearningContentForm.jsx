@@ -1,9 +1,10 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
 export function createLearningContentForm( readRuntime ) {
 	return function LearningContentForm( props ) {
-		const { Cr: LearningMediaField, Ge, React, ne } = readRuntime();
+		const { Cr: LearningMediaField, React, ne } = readRuntime();
 		var titleName = props.titleName,
 			titleValue = props.titleValue,
 			titlePlaceholder = props.titlePlaceholder,
@@ -105,7 +106,7 @@ export function createLearningContentForm( readRuntime ) {
 					>
 						<Controls.InputWP
 							type={ 'text' }
-							value={ Ge(
+							value={ decodeHtmlEntities(
 								'Untitled' !== titleValue ? titleValue : ''
 							) }
 							onChange={ onInputChange }

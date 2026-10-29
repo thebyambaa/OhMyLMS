@@ -3,10 +3,10 @@ import { createElement } from '@wordpress/element';
 import { Tooltip } from '../../shared/tooltip';
 import { InfoIcon } from '../../shared/icons';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
 export function createQuizQuestionHeader( readRuntime ) {
 	return function QuizQuestionHeader( props ) {
 		const {
-			Ge: decodeHtml,
 			React,
 			b: I18n,
 			f: Router,
@@ -319,7 +319,7 @@ export function createQuizQuestionHeader( readRuntime ) {
 						level={ 3 }
 						className={ 'ohmylms-question-name' }
 					>
-						{ decodeHtml(
+						{ decodeHtmlEntities(
 							data === null || data === void 0
 								? void 0
 								: data.name

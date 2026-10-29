@@ -2,6 +2,7 @@
 import { createElement } from '@wordpress/element';
 import { EditIcon } from '../../shared/icons';
 import * as Controls from '../../shared/controls';
+import { EmptyState, NoDataIllustration, PageHeader } from '../../shared/media';
 export function createSessionList( readRuntime ) {
 	return function SessionList() {
 		const {
@@ -13,13 +14,10 @@ export function createSessionList( readRuntime ) {
 			React,
 			T: StoreModule,
 			Ul: GoogleMeetEditor,
-			YG,
 			b: I18n,
-			df,
 			fN,
 			g: ReactHooks,
 			q,
-			uf,
 			xZ,
 			y: WordPressData,
 		} = readRuntime();
@@ -347,7 +345,9 @@ export function createSessionList( readRuntime ) {
 			(
 				<React.Fragment>
 					<Controls.ContainerWP>
-						<YG title={ ( 0, I18n.__ )( 'Sessions', 'ohmylms' ) } />
+						<PageHeader
+							title={ ( 0, I18n.__ )( 'Sessions', 'ohmylms' ) }
+						/>
 						{ i && (
 							<Controls.NoticeWP
 								status={ 'error' }
@@ -371,20 +371,23 @@ export function createSessionList( readRuntime ) {
 										x: 'max-content',
 									} }
 									locale={ {
-										emptyText: React.createElement( uf, {
-											icon: React.createElement(
-												df,
-												null
-											),
-											title: ( 0, I18n.__ )(
-												'No sessions yet!',
-												'ohmylms'
-											),
-											description: ( 0, I18n.__ )(
-												"Create your first session and it'll show up here.",
-												'ohmylms'
-											),
-										} ),
+										emptyText: React.createElement(
+											EmptyState,
+											{
+												icon: React.createElement(
+													NoDataIllustration,
+													null
+												),
+												title: ( 0, I18n.__ )(
+													'No sessions yet!',
+													'ohmylms'
+												),
+												description: ( 0, I18n.__ )(
+													"Create your first session and it'll show up here.",
+													'ohmylms'
+												),
+											}
+										),
 									} }
 								/>
 								{ ( a === null || a === void 0

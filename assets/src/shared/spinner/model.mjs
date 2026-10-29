@@ -2,10 +2,10 @@
  * Class of the switch wrapper element.
  *
  * @param {Object}  options
- * @param {string}  [options.className='']          Extra class.
- * @param {boolean} [options.loading=false]         Switch is saving.
- * @param {boolean} [options.isDefaultStyle=false]  Use the WordPress default look.
- * @param {string}  [options.variant='primary']     Colour variant.
+ * @param {string}  [options.className='']         Extra class.
+ * @param {boolean} [options.loading=false]        Switch is saving.
+ * @param {boolean} [options.isDefaultStyle=false] Use the WordPress default look.
+ * @param {string}  [options.variant='primary']    Colour variant.
  * @return {string} Class attribute value.
  */
 export function getWrapperClass( {

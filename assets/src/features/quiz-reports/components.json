@@ -5,20 +5,17 @@
 		"file": "QuizReport.jsx",
 		"dependencies": [
 			"Cm",
-			"HG",
 			"JZ",
 			"KZ",
 			"QZ",
 			"React",
 			"ZZ",
 			"b",
-			"df",
 			"f",
 			"fN",
 			"g",
 			"l",
 			"sn",
-			"uf",
 			"v"
 		]
 	},
@@ -29,8 +26,6 @@
 		"dependencies": [
 			"B$",
 			"D$",
-			"Ge",
-			"HG",
 			"I$",
 			"L$",
 			"N$",
@@ -51,7 +46,7 @@
 		"binding": "m$",
 		"name": "QuizQuestionHeader",
 		"file": "QuizQuestionHeader.jsx",
-		"dependencies": [ "Ge", "React", "b", "f", "l$", "o$", "s$", "wn" ]
+		"dependencies": [ "React", "b", "f", "l$", "o$", "s$", "wn" ]
 	},
 	{
 		"binding": "f$",

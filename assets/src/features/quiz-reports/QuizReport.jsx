@@ -3,27 +3,26 @@ import { showRequestError } from '../requestFeedback.mjs';
 import { createElement } from '@wordpress/element';
 import { Table } from '../../shared/table';
 import * as Controls from '../../shared/controls';
+import { highlightAdminMenu } from '../../shared/utils';
+import { EmptyState, NoDataIllustration } from '../../shared/media';
 export function createQuizReport( readRuntime ) {
 	return function QuizReport() {
 		const {
 			Cm: SearchInput,
-			HG: useAdminScreen,
 			JZ,
 			KZ,
 			QZ: BackIcon,
 			React,
 			ZZ,
 			b: I18n,
-			df: EmptyIcon,
 			f: Router,
 			fN: Pagination,
 			g: ReactHooks,
 			l: ApiFetchModule,
 			sn: DateLibrary,
-			uf: EmptyState,
 			v: RouterLinks,
 		} = readRuntime();
-		useAdminScreen( 'ohmylms', 'quizzes' );
+		highlightAdminMenu( 'ohmylms', 'quizzes' );
 		var e = JZ( ( 0, ReactHooks.useState )( '' ), 2 ),
 			search = e[ 0 ],
 			setSearch = e[ 1 ],
@@ -375,7 +374,7 @@ export function createQuizReport( readRuntime ) {
 									locale={ {
 										emptyText: (
 											<EmptyState
-												icon={ <EmptyIcon /> }
+												icon={ <NoDataIllustration /> }
 												title={ ( 0, I18n.__ )(
 													'No submission yet!',
 													'ohmylms'

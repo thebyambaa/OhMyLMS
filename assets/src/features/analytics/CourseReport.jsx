@@ -2,13 +2,16 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import * as Controls from '../../shared/controls';
+import {
+	PriceDisplay,
+	decodeHtmlEntities,
+	highlightAdminMenu,
+} from '../../shared/utils';
 export function createCourseReport( readRuntime ) {
 	return function CourseReport() {
 		const {
 			CU,
 			EU,
-			Ge,
-			HG,
 			IU,
 			LU: EarningsChart,
 			MU,
@@ -17,7 +20,6 @@ export function createCourseReport( readRuntime ) {
 			RU,
 			React,
 			T: StoreModule,
-			YH: Price,
 			_U,
 			b: I18n,
 			cq: CourseStudentsReport,
@@ -58,7 +60,7 @@ export function createCourseReport( readRuntime ) {
 			x = ( 0, Router.g )().id;
 		if ( ! x ) {
 		}
-		HG( 'ohmylms', 'course' );
+		highlightAdminMenu( 'ohmylms', 'course' );
 		( 0, WordPressData.useDispatch )( StoreModule.default );
 		var C = hq( ( 0, ReactHooks.useState )( {} ), 2 ),
 			P = C[ 0 ],
@@ -196,7 +198,7 @@ export function createCourseReport( readRuntime ) {
 								{ ! j && (
 									<small>
 										{ '(' }
-										{ Ge(
+										{ decodeHtmlEntities(
 											P === null || P === void 0
 												? void 0
 												: P.title
@@ -603,7 +605,7 @@ export function createCourseReport( readRuntime ) {
 																					'40px',
 																			} }
 																		>
-																			<Price
+																			<PriceDisplay
 																				currency={
 																					P ===
 																						null ||
@@ -677,7 +679,7 @@ export function createCourseReport( readRuntime ) {
 																					'40px',
 																			} }
 																		>
-																			<Price
+																			<PriceDisplay
 																				currency={
 																					P ===
 																						null ||
@@ -751,7 +753,7 @@ export function createCourseReport( readRuntime ) {
 																					'40px',
 																			} }
 																		>
-																			<Price
+																			<PriceDisplay
 																				currency={
 																					P ===
 																						null ||

@@ -10,8 +10,8 @@ export const DEFAULT_DELAY = 3000;
 /**
  * Append a notice, dropping the oldest beyond the limit.
  *
- * @param {Array<{id: number, status: string, message: *}>} notices Current notices.
- * @param {{id: number, status: string, message: *}}        notice  Notice to add.
+ * @param {Array<{id: number, status: string, message: unknown}>} notices Current notices.
+ * @param {{id: number, status: string, message: unknown}}        notice  Notice to add.
  * @return {Array} New list; the input is not modified.
  */
 export function addNotice( notices, notice ) {
@@ -32,10 +32,10 @@ export function removeNotice( notices, id ) {
 /**
  * Build a notice from the positional arguments `openNotificationWithIcon` accepts.
  *
- * @param {string} status  WordPress notice status: info (default), success, warning or error.
- * @param {*}      message Notice content.
- * @param {number} id      Unique id, normally `Date.now()`.
- * @return {{id: number, status: string, message: *}} Notice.
+ * @param {string}  status  WordPress notice status: info (default), success, warning or error.
+ * @param {unknown} message Notice content.
+ * @param {number}  id      Unique id, normally `Date.now()`.
+ * @return {{id: number, status: string, message: unknown}} Notice.
  */
 export function createNotice( status = 'info', message = '', id = Date.now() ) {
 	return { id, status, message };

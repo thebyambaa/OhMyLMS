@@ -2,6 +2,8 @@ import { showRequestError } from '../requestFeedback.mjs';
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
+import { NoDataIllustration } from '../../shared/media';
 export function createCourseFunnel( readRuntime ) {
 	return function CourseFunnel() {
 		const {
@@ -9,7 +11,6 @@ export function createCourseFunnel( readRuntime ) {
 			BH,
 			DH,
 			FH,
-			Ge,
 			HH,
 			Jt,
 			LH,
@@ -19,7 +20,6 @@ export function createCourseFunnel( readRuntime ) {
 			VH,
 			We,
 			b: I18n,
-			df,
 			g: ReactHooks,
 			l,
 			q,
@@ -228,7 +228,7 @@ export function createCourseFunnel( readRuntime ) {
 																_eLocal6
 															) {
 																return {
-																	label: Ge(
+																	label: decodeHtmlEntities(
 																		_eLocal6 ===
 																			null ||
 																			_eLocal6 ===
@@ -371,7 +371,7 @@ export function createCourseFunnel( readRuntime ) {
 																_eLocal10
 															) {
 																return {
-																	label: Ge(
+																	label: decodeHtmlEntities(
 																		_eLocal10 ===
 																			null ||
 																			_eLocal10 ===
@@ -514,7 +514,7 @@ export function createCourseFunnel( readRuntime ) {
 																_eLocal16
 															) {
 																return {
-																	label: Ge(
+																	label: decodeHtmlEntities(
 																		_eLocal16 ===
 																			null ||
 																			_eLocal16 ===
@@ -848,7 +848,7 @@ export function createCourseFunnel( readRuntime ) {
 													}
 												>
 													{ React.createElement(
-														df,
+														NoDataIllustration,
 														null
 													) }
 												</div>

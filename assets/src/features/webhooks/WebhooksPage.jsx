@@ -3,11 +3,13 @@ import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { EditIcon } from '../../shared/icons';
 import * as Controls from '../../shared/controls';
+import { highlightAdminMenu } from '../../shared/utils';
+import * as wpDate from '../../shared/utils/wpDate.mjs';
+import { EmptyState, NoDataIllustration, PageHeader } from '../../shared/media';
 export function createWebhooksPage( readRuntime ) {
 	return function WebhooksPage() {
 		const {
 			Ea,
-			HG,
 			He,
 			Ie,
 			J5,
@@ -16,22 +18,18 @@ export function createWebhooksPage( readRuntime ) {
 			React,
 			T: StoreModule,
 			We,
-			YG,
 			aY,
 			b: I18n,
-			df,
 			fN,
 			g: ReactHooks,
 			hN,
 			n4,
 			q,
 			t4,
-			uf,
-			wq,
 			y: WordPressData,
 		} = readRuntime();
 		var e;
-		HG( 'ohmylms', 'webhooks' );
+		highlightAdminMenu( 'ohmylms', 'webhooks' );
 		var t = true,
 			n = ( 0, WordPressData.useDispatch )( StoreModule.default ),
 			r = useNotifications(),
@@ -665,7 +663,7 @@ export function createWebhooksPage( readRuntime ) {
 									? void 0
 									: _tLocal6.date_format ) || 'F j, Y',
 							_rLocal4 = _eLocal21
-								? ( 0, wq.dateI18n )( _nLocal3, _eLocal21 )
+								? ( 0, wpDate.dateI18n )( _nLocal3, _eLocal21 )
 								: '-';
 						return (
 							<Controls.BadgeWP
@@ -742,7 +740,7 @@ export function createWebhooksPage( readRuntime ) {
 						marginTop={ 4 }
 						marginBottom={ 0 }
 					>
-						<YG
+						<PageHeader
 							title={ ( 0, I18n.__ )(
 								'All Webhooks',
 								'ohmylms'
@@ -790,25 +788,28 @@ export function createWebhooksPage( readRuntime ) {
 										x: 'max-content',
 									} }
 									locale={ {
-										emptyText: React.createElement( uf, {
-											icon: React.createElement(
-												df,
-												null
-											),
-											title: ( 0, I18n.__ )(
-												'No Webhooks yet!',
-												'ohmylms'
-											),
-											description: ( 0, I18n.__ )(
-												'Start building your first webhook and it will show up here as soon as you create it.',
-												'ohmylms'
-											),
-											ctaText: ( 0, I18n.__ )(
-												'Add Webhook',
-												'ohmylms'
-											),
-											ctaHandler: te,
-										} ),
+										emptyText: React.createElement(
+											EmptyState,
+											{
+												icon: React.createElement(
+													NoDataIllustration,
+													null
+												),
+												title: ( 0, I18n.__ )(
+													'No Webhooks yet!',
+													'ohmylms'
+												),
+												description: ( 0, I18n.__ )(
+													'Start building your first webhook and it will show up here as soon as you create it.',
+													'ohmylms'
+												),
+												ctaText: ( 0, I18n.__ )(
+													'Add Webhook',
+													'ohmylms'
+												),
+												ctaHandler: te,
+											}
+										),
 									} }
 								/>
 								{ ! l &&

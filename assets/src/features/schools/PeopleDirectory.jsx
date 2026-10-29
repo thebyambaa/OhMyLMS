@@ -6,6 +6,7 @@ import { AddModal, EditModal, addLabel } from './AddModal';
 import { ViewAsModal, canViewAs } from './ViewAsModal';
 import { Table } from '../../shared/table';
 import * as Controls from '../../shared/controls';
+import { EmptyState, NoDataIllustration } from '../../shared/media';
 const labels = {
 	teachers: 'Teachers',
 	parents: 'Parents',
@@ -21,8 +22,6 @@ export function PeopleDirectory( { tab, readRuntime } ) {
 		aN: date,
 		Ne: MenuIcon,
 		q: { Icon },
-		uf: Empty,
-		df: EmptyIcon,
 	} = readRuntime();
 	const [ rows, setRows ] = useState( [] );
 	const [ loading, setLoading ] = useState( true );
@@ -564,8 +563,8 @@ export function PeopleDirectory( { tab, readRuntime } ) {
 					className="student-listing-table"
 					locale={ {
 						emptyText: (
-							<Empty
-								icon={ <EmptyIcon /> }
+							<EmptyState
+								icon={ <NoDataIllustration /> }
 								title={ __( 'No records yet.', 'ohmylms' ) }
 							/>
 						),

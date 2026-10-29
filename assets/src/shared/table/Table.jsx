@@ -75,17 +75,17 @@ function LoadingPlaceholder() {
  * given a checkbox column is shown. Other props such as `pagination`,
  * `scroll`, `style` and `onChange` are accepted for compatibility and ignored.
  *
- * @param {Object}   props                   Component props.
- * @param {Array}    props.columns           Column definitions.
- * @param {Array}    props.dataSource        Data rows.
- * @param {string}   props.rowKey            Field that identifies a row.
- * @param {Object}   [props.rowSelection]    Row selection configuration.
- * @param {boolean}  [props.loading]         Show the loading placeholder.
- * @param {Object}   [props.locale]          `{ emptyText }` shown when there are no rows.
- * @param {string}   [props.className]       Extra class on the wrapper.
- * @param {Function} [props.onMouseEnterOnRow] Called with `( row, index )` on row hover.
- * @param {Function} [props.onMouseLeaveOnRow] Called with `( row, index )` when hover ends.
- * @param {Function} [props.onRow]           Returns extra props for each row element.
+ * @param {Object}                                    props                     Component props.
+ * @param {Array}                                     props.columns             Column definitions.
+ * @param {Array}                                     props.dataSource          Data rows.
+ * @param {string}                                    props.rowKey              Field that identifies a row.
+ * @param {Object}                                    [props.rowSelection]      Row selection configuration.
+ * @param {boolean}                                   [props.loading]           Show the loading placeholder.
+ * @param {Object}                                    [props.locale]            `{ emptyText }` shown when there are no rows.
+ * @param {string}                                    [props.className]         Extra class on the wrapper.
+ * @param {( row: unknown, index: number ) => void}   [props.onMouseEnterOnRow] Called with `( row, index )` on row hover.
+ * @param {( row: unknown, index: number ) => void}   [props.onMouseLeaveOnRow] Called with `( row, index )` when hover ends.
+ * @param {( row: unknown, index: number ) => Object} [props.onRow]             Returns extra props for each row element.
  * @return {Element} The table.
  */
 export function Table( {

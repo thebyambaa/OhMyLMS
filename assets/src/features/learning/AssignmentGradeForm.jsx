@@ -1,9 +1,10 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
 export function createAssignmentGradeForm( readRuntime ) {
 	return function AssignmentGradeForm( props ) {
-		const { Ge, React, W: RichText, b: I18n } = readRuntime();
+		const { React, W: RichText, b: I18n } = readRuntime();
 		var t,
 			n,
 			r,
@@ -67,7 +68,7 @@ export function createAssignmentGradeForm( readRuntime ) {
 								width: 'calc(100% - 80px)',
 							} }
 						>
-							{ Ge(
+							{ decodeHtmlEntities(
 								additionData === null || additionData === void 0
 									? void 0
 									: additionData.course_name

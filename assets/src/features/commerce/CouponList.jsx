@@ -4,13 +4,14 @@ import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { EditIcon } from '../../shared/icons';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
+import { EmptyState, NoDataIllustration, PlusIcon } from '../../shared/media';
 export function createCouponList( readRuntime ) {
 	return function CouponList() {
 		const {
 			Bre,
 			Dre,
 			Fre,
-			Ge,
 			Ie,
 			Mre,
 			Ne,
@@ -22,16 +23,13 @@ export function createCouponList( readRuntime ) {
 			aN,
 			aY,
 			b: I18n,
-			df: EmptyIcon,
 			fN,
 			g: ReactHooks,
 			hN,
 			jre,
 			l,
 			lN,
-			nf,
 			q,
-			uf: EmptyState,
 			v,
 			y: WordPressData,
 			zre,
@@ -123,7 +121,8 @@ export function createCouponList( readRuntime ) {
 										} }
 										className={ 'ohmylms-coupon-title' }
 									>
-										{ Ge( _eLocal8 ) || 'N/A' }
+										{ decodeHtmlEntities( _eLocal8 ) ||
+											'N/A' }
 									</v.Link>
 								);
 							},
@@ -749,7 +748,10 @@ export function createCouponList( readRuntime ) {
 								<Controls.FlexItemWP>
 									<Controls.ButtonWP
 										variant={ 'primary' }
-										icon={ React.createElement( nf, null ) }
+										icon={ React.createElement(
+											PlusIcon,
+											null
+										) }
 										onClick={ function () {
 											f( ! 0 );
 										} }
@@ -785,7 +787,9 @@ export function createCouponList( readRuntime ) {
 										locale={ {
 											emptyText: (
 												<EmptyState
-													icon={ <EmptyIcon /> }
+													icon={
+														<NoDataIllustration />
+													}
 													title={ ( 0, I18n.__ )(
 														'No Coupons Found!',
 														'ohmylms'

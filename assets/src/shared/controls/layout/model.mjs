@@ -1,9 +1,9 @@
 /**
  * Add `value` to `target` under `key` when `value` is truthy.
  *
- * @param {Object} target Style object being built.
- * @param {string} key    CSS property name.
- * @param {*}      value  Candidate value.
+ * @param {Object}  target Style object being built.
+ * @param {string}  key    CSS property name.
+ * @param {unknown} value  Candidate value.
  * @return {Object} The same target object.
  */
 function setIfTruthy( target, key, value ) {

@@ -7,11 +7,11 @@ import { DateRangeField } from './DateRangeField.mjs';
  * popover. The range follows `initialStartDate` and `initialEndDate` whenever
  * they change.
  *
- * @param {Object}   props
- * @param {*}        [props.initialStartDate] Range start; a `YYYY-MM-DD` string, Date, or empty.
- * @param {*}        [props.initialEndDate]   Range end.
- * @param {Function} [props.onChange]         Called with `[ start, end ]` as `YYYY-MM-DD`
- *                                            strings, or `[ null, null ]` when cleared.
+ * @param {Object}                                props
+ * @param {unknown}                               [props.initialStartDate] Range start; a `YYYY-MM-DD` string, Date, or empty.
+ * @param {unknown}                               [props.initialEndDate]   Range end.
+ * @param {( range: Array<string|null> ) => void} [props.onChange]         Called with `[ start, end ]` as `YYYY-MM-DD`
+ *                                                                         strings, or `[ null, null ]` when cleared.
  * @return {import('react').ReactElement} Date-range picker.
  */
 export function DateRangePickerWP( {

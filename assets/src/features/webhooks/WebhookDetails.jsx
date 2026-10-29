@@ -1,10 +1,10 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
 export function createWebhookDetails( readRuntime ) {
 	return function WebhookDetails( props ) {
 		const {
-			Ge,
 			Nm,
 			Pf,
 			React,
@@ -85,7 +85,7 @@ export function createWebhookDetails( readRuntime ) {
 						'This name helps you identify the webhook.',
 						'ohmylms'
 					) }
-					value={ Ge(
+					value={ decodeHtmlEntities(
 						( r === null || r === void 0 ? void 0 : r.name ) || ''
 					) }
 					onChange={ function ( e ) {

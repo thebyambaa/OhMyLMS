@@ -3,10 +3,10 @@ import { showRequestError } from '../requestFeedback.mjs';
 import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import * as Controls from '../../shared/controls';
+import { highlightAdminMenu } from '../../shared/utils';
 export function createAssignmentGrading( readRuntime ) {
 	return function AssignmentGrading() {
 		const {
-			HG,
 			React,
 			T: StoreModule,
 			X$: AssignmentGradeForm,
@@ -21,7 +21,7 @@ export function createAssignmentGrading( readRuntime ) {
 			rK: AssignmentSubmission,
 			y: WordPressData,
 		} = readRuntime();
-		HG( 'ohmylms', 'assignments' );
+		highlightAdminMenu( 'ohmylms', 'assignments' );
 		var e = ( 0, WordPressData.useDispatch )( StoreModule.default ),
 			t = mK( ( 0, ReactHooks.useState )( [] ), 2 ),
 			n = t[ 0 ],

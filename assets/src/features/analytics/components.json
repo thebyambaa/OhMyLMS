@@ -6,20 +6,17 @@
 		"dependencies": [
 			"D",
 			"GG",
-			"HG",
 			"L",
 			"NG",
 			"React",
 			"T",
 			"VG",
-			"YG",
 			"b",
 			"cU",
 			"dU",
 			"g",
 			"lU",
 			"mU",
-			"nf",
 			"y"
 		]
 	},
@@ -61,17 +58,7 @@
 		"binding": "MG",
 		"name": "TopCoursePerformance",
 		"file": "TopCoursePerformance.jsx",
-		"dependencies": [
-			"EG",
-			"Ge",
-			"PG",
-			"React",
-			"SG",
-			"b",
-			"f",
-			"jG",
-			"lf"
-		]
+		"dependencies": [ "EG", "PG", "React", "SG", "b", "f", "jG", "lf" ]
 	},
 	{
 		"binding": "_G",
@@ -82,15 +69,12 @@
 			"Ne",
 			"React",
 			"T",
-			"YH",
 			"b",
 			"bG",
-			"df",
 			"f",
 			"g",
 			"q",
 			"sn",
-			"uf",
 			"v",
 			"y",
 			"yG"
@@ -115,8 +99,6 @@
 		"dependencies": [
 			"CU",
 			"EU",
-			"Ge",
-			"HG",
 			"IU",
 			"LU",
 			"MU",
@@ -125,7 +107,6 @@
 			"RU",
 			"React",
 			"T",
-			"YH",
 			"_U",
 			"b",
 			"cq",
@@ -164,7 +145,6 @@
 			"$U",
 			"Cm",
 			"D",
-			"Ge",
 			"L",
 			"React",
 			"T",
@@ -173,7 +153,6 @@
 			"aN",
 			"aq",
 			"b",
-			"df",
 			"eq",
 			"f",
 			"g",
@@ -182,7 +161,6 @@
 			"lN",
 			"oq",
 			"tq",
-			"uf",
 			"vn",
 			"y"
 		]
@@ -191,7 +169,7 @@
 		"binding": "XU",
 		"name": "ReportStudentCell",
 		"file": "ReportStudentCell.jsx",
-		"dependencies": [ "Ge", "JU", "L", "PG", "React", "v", "vG" ]
+		"dependencies": [ "JU", "L", "PG", "React", "v", "vG" ]
 	},
 	{
 		"binding": "GU",
@@ -219,7 +197,6 @@
 			"$U",
 			"Aq",
 			"Fq",
-			"Ge",
 			"L",
 			"LU",
 			"Mq",
@@ -231,23 +208,19 @@
 			"ZU",
 			"b",
 			"dc",
-			"df",
 			"f",
 			"g",
 			"kq",
 			"l",
 			"lN",
 			"mG",
-			"sn",
-			"uf",
-			"wq",
-			"xq"
+			"sn"
 		]
 	},
 	{
 		"binding": "Sq",
 		"name": "TransactionHistory",
 		"file": "TransactionHistory.jsx",
-		"dependencies": [ "Eq", "L", "React", "ZU", "b", "df", "g", "uf", "vn" ]
+		"dependencies": [ "Eq", "L", "React", "ZU", "b", "g", "vn" ]
 	}
 ]

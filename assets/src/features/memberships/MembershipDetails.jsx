@@ -1,10 +1,10 @@
 /** Reconstructed React source. Runtime dependencies are explicit in components.json. */
 import { createElement } from '@wordpress/element';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
 export function createMembershipDetails( readRuntime ) {
 	return function MembershipDetails( props ) {
 		const {
-			Ge,
 			J7: MembershipPricing,
 			Nm,
 			Pf,
@@ -127,7 +127,7 @@ export function createMembershipDetails( readRuntime ) {
 							'This is the title of the plan.',
 							'ohmylms'
 						) }
-						value={ Ge(
+						value={ decodeHtmlEntities(
 							o === null || o === void 0 ? void 0 : o.name
 						) }
 						onChange={ function ( e ) {
@@ -147,7 +147,7 @@ export function createMembershipDetails( readRuntime ) {
 							'Describe what the membership plan offers.',
 							'ohmylms'
 						) }
-						value={ Ge(
+						value={ decodeHtmlEntities(
 							o === null || o === void 0 ? void 0 : o.description
 						) }
 						onChange={ function ( e ) {

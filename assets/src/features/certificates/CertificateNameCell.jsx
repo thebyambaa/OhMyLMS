@@ -3,16 +3,10 @@ import { createElement } from '@wordpress/element';
 import { Avatar } from '../../shared/avatar';
 import { EditIcon } from '../../shared/icons';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
 export function createCertificateNameCell( readRuntime ) {
 	return function CertificateNameCell( props ) {
-		const {
-			Ge,
-			React,
-			b: I18n,
-			f: Router,
-			g: ReactHooks,
-			v,
-		} = readRuntime();
+		const { React, b: I18n, f: Router, g: ReactHooks, v } = readRuntime();
 		var t = props.record,
 			n = ( props.isHover, ( 0, Router.Zp )() ),
 			r = ( 0, ReactHooks.useCallback )(
@@ -88,7 +82,7 @@ export function createCertificateNameCell( readRuntime ) {
 									numberOfLines={ 2 }
 									truncate={ ! 0 }
 								>
-									{ Ge(
+									{ decodeHtmlEntities(
 										t === null || t === void 0
 											? void 0
 											: t.name

@@ -15,8 +15,8 @@ export function canUseClipboardApi( navigatorLike, windowLike ) {
  * Copy text, using the Clipboard API when possible and a hidden textarea with
  * `execCommand( 'copy' )` otherwise. Rejects when copying throws.
  *
- * @param {string} text         Text to copy.
- * @param {Object} environment  Browser objects.
+ * @param {string} text                  Text to copy.
+ * @param {Object} environment           Browser objects.
  * @param {Object} environment.navigator Browser `navigator`.
  * @param {Object} environment.window    Browser `window`.
  * @param {Object} environment.document  Browser `document`.

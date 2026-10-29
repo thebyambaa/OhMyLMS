@@ -3,7 +3,7 @@
 		"binding": "hte",
 		"name": "CertificatesPage",
 		"file": "CertificatesPage.jsx",
-		"dependencies": [ "HG", "React", "gte" ]
+		"dependencies": [ "React", "gte" ]
 	},
 	{
 		"binding": "vte",
@@ -12,17 +12,14 @@
 		"dependencies": [
 			"$ee",
 			"Ea",
-			"Ge",
 			"Ie",
 			"Ne",
 			"React",
 			"T",
 			"We",
-			"YG",
 			"aY",
 			"b",
 			"cte",
-			"df",
 			"dte",
 			"f",
 			"fN",
@@ -37,7 +34,6 @@
 			"q",
 			"sN",
 			"sn",
-			"uf",
 			"y"
 		]
 	},
@@ -45,7 +41,7 @@
 		"binding": "Zee",
 		"name": "CertificateNameCell",
 		"file": "CertificateNameCell.jsx",
-		"dependencies": [ "Ge", "React", "b", "f", "g", "v" ]
+		"dependencies": [ "React", "b", "f", "g", "v" ]
 	},
 	{
 		"binding": "nte",
@@ -78,7 +74,6 @@
 		"file": "CertificateEditPage.jsx",
 		"dependencies": [
 			"Ete",
-			"HG",
 			"React",
 			"T",
 			"bte",
@@ -112,7 +107,6 @@
 		"name": "CertificateEditorHeader",
 		"file": "CertificateEditorHeader.jsx",
 		"dependencies": [
-			"Ge",
 			"Nr",
 			"Re",
 			"React",
@@ -158,7 +152,6 @@
 		"name": "CertificateCourseSelector",
 		"file": "CertificateCourseSelector.jsx",
 		"dependencies": [
-			"Ge",
 			"JL",
 			"React",
 			"T",

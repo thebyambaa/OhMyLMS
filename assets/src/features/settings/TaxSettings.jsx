@@ -3,6 +3,7 @@ import { showRequestError } from '../requestFeedback.mjs';
 import { createElement, useId } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import * as Controls from '../../shared/controls';
+import { PlusIcon } from '../../shared/media';
 export function createTaxSettings( readRuntime ) {
 	return function TaxSettings() {
 		const _controlId = useId();
@@ -22,7 +23,6 @@ export function createTaxSettings( readRuntime ) {
 			g: ReactHooks,
 			k1,
 			l,
-			nf,
 			y: WordPressData,
 		} = readRuntime();
 		var t,
@@ -1405,7 +1405,7 @@ export function createTaxSettings( readRuntime ) {
 																}
 															>
 																{ React.createElement(
-																	nf,
+																	PlusIcon,
 																	null
 																) }
 																{ ( 0,

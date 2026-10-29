@@ -3,13 +3,14 @@ import { createElement } from '@wordpress/element';
 import { useNotifications } from '../../shared/notices';
 import { EditIcon } from '../../shared/icons';
 import * as Controls from '../../shared/controls';
+import { decodeHtmlEntities } from '../../shared/utils';
+import { EmptyState, NoDataIllustration, PageHeader } from '../../shared/media';
 export function createAssignmentList( readRuntime ) {
 	return function AssignmentList() {
 		const {
 			Ate,
 			Cte: AssignmentNameCell,
 			Ea,
-			Ge,
 			Ie,
 			Mte,
 			Ne,
@@ -18,10 +19,8 @@ export function createAssignmentList( readRuntime ) {
 			T: StoreModule,
 			Tte,
 			We,
-			YG,
 			aY,
 			b: I18n,
-			df,
 			f: Router,
 			fN,
 			g: ReactHooks,
@@ -31,7 +30,6 @@ export function createAssignmentList( readRuntime ) {
 			pZ,
 			q,
 			sN,
-			uf,
 			v,
 			y: WordPressData,
 		} = readRuntime();
@@ -272,7 +270,7 @@ export function createAssignmentList( readRuntime ) {
 						} )(
 							U.map( function ( _eLocal14 ) {
 								return {
-									label: Ge(
+									label: decodeHtmlEntities(
 										_eLocal14 === null ||
 											_eLocal14 === void 0
 											? void 0
@@ -509,7 +507,7 @@ export function createAssignmentList( readRuntime ) {
 				<React.Fragment>
 					{ contextHolder }
 					<Controls.ContainerWP>
-						<YG
+						<PageHeader
 							title={ ( 0, I18n.__ )(
 								'All Assignments',
 								'ohmylms'
@@ -567,20 +565,23 @@ export function createAssignmentList( readRuntime ) {
 									onChange={ ie }
 									className={ 'assignment-listing-table' }
 									locale={ {
-										emptyText: React.createElement( uf, {
-											icon: React.createElement(
-												df,
-												null
-											),
-											title: ( 0, I18n.__ )(
-												'No Assignment yet!',
-												'ohmylms'
-											),
-											description: ( 0, I18n.__ )(
-												'Start building your first assignment and it’ll show up here as soon as you hit publish.',
-												'ohmylms'
-											),
-										} ),
+										emptyText: React.createElement(
+											EmptyState,
+											{
+												icon: React.createElement(
+													NoDataIllustration,
+													null
+												),
+												title: ( 0, I18n.__ )(
+													'No Assignment yet!',
+													'ohmylms'
+												),
+												description: ( 0, I18n.__ )(
+													'Start building your first assignment and it’ll show up here as soon as you hit publish.',
+													'ohmylms'
+												),
+											}
+										),
 									} }
 									onRowMouseEnter={ function ( _eLocal22 ) {
 										return H(

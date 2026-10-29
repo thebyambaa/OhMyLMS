@@ -16,6 +16,7 @@ import { PreviewHome } from '../schools/PreviewHome';
 import { useNotifications } from '../../shared/notices';
 import { Table } from '../../shared/table';
 import * as Controls from '../../shared/controls';
+import { EmptyState, NoDataIllustration, PageHeader } from '../../shared/media';
 export function createStudentList( readRuntime ) {
 	function StudentTable() {
 		const {
@@ -24,8 +25,6 @@ export function createStudentList( readRuntime ) {
 			fN: Pagination,
 			hN: BulkActions,
 			Ie: Confirm,
-			uf: Empty,
-			df: EmptyIcon,
 			Ne: MenuIcon,
 			q: { Icon },
 			vG: AnalyticsIcon,
@@ -308,8 +307,8 @@ export function createStudentList( readRuntime ) {
 						className="student-listing-table"
 						locale={ {
 							emptyText: (
-								<Empty
-									icon={ <EmptyIcon /> }
+								<EmptyState
+									icon={ <NoDataIllustration /> }
 									title={ __(
 										'No Students yet!',
 										'ohmylms'
@@ -375,7 +374,7 @@ export function createStudentList( readRuntime ) {
 	}
 	return function StudentList() {
 		const _controlId = useId();
-		const { YG: Header } = readRuntime();
+		const {} = readRuntime();
 		const currentTab = () => {
 			const value = new URLSearchParams(
 				window.location.hash.split( '?' )[ 1 ]
@@ -406,7 +405,7 @@ export function createStudentList( readRuntime ) {
 		}, [] );
 		return (
 			<Controls.ContainerWP>
-				<Header
+				<PageHeader
 					title={ __( 'Account Hub', 'ohmylms' ) }
 					showAddButton={ false }
 				/>

@@ -1,4 +1,5 @@
 import { createElement, Fragment, memo } from '@wordpress/element';
+// eslint-disable-next-line @wordpress/no-unsafe-wp-apis -- the recovered application renders this experimental component; markup parity is tested.
 import { __experimentalGrid as Grid } from '@wordpress/components';
 
 /**
@@ -8,7 +9,7 @@ import { __experimentalGrid as Grid } from '@wordpress/components';
  * @param {import('react').Node} [props.children] Grid content.
  * @return {import('react').ReactElement} Grid element.
  */
-export const GridWP = memo( function GridWP( { children, ...rest } ) {
+export const GridWP = memo( function GridWPRender( { children, ...rest } ) {
 	return createElement(
 		Fragment,
 		null,
