@@ -9,6 +9,8 @@ import { createLoader, installBrowserStubs } from './recovered-modules.mjs';
  *
  *   node tools/easy-email-corpus.mjs --write            record the recovered core's output
  *   node tools/easy-email-corpus.mjs --compare [ver]    run a published core over the corpus
+ *   node tools/easy-email-corpus.mjs --wrapper          run the authored wrapper (assets/src/shared/easy-email)
+ *                                                       over the corpus
  *
  * Templates are stored as JSON, so they are independent of whichever core builds them. The
  * recorded output is what existing emails render from today; a replacement core must match it
@@ -21,9 +23,14 @@ export const corpusPath = path.join(
 );
 export const modes = [ 'production', 'testing' ];
 
-/** Recovered core, loaded without the browser. */
-export function loadRecoveredCore() {
-	const hostRequire = installBrowserStubs();
+/**
+ * Recovered core, loaded without the browser. Pass `{ stubs: false }` to keep the globals
+ * the caller has set up (for example a different `MRM_Vars`) instead of the defaults.
+ */
+export function loadRecoveredCore( { stubs = true } = {} ) {
+	const hostRequire = stubs
+		? installBrowserStubs()
+		: createRequire( path.join( root, 'package.json' ) );
 	const load = createLoader( {
 		// react-dom/server wrapper; the rest of the chain is not needed for static markup.
 		65848: { qV: hostRequire( 'react-dom/server' ).renderToStaticMarkup },
@@ -33,6 +40,14 @@ export function loadRecoveredCore() {
 		},
 	} );
 	return load( 49050 );
+}
+
+/** The authored wrapper around the installed `easy-email-core`, loaded as the bundle loads it. */
+export async function loadCompatibleCore() {
+	installBrowserStubs();
+	const { createEasyEmailCore } =
+		await import( '../assets/src/shared/easy-email/index.mjs' );
+	return createEasyEmailCore();
 }
 
 /** Build one template per block type, plus hand-written compositions. */
@@ -188,6 +203,34 @@ function firstDifference( a, b ) {
 	return 'none';
 }
 
+/** Render every template in both modes with `core` and report each difference from the recording. */
+export function compareCorpus( corpus, core ) {
+	let same = 0;
+	let different = 0;
+	for ( const entry of corpus ) {
+		for ( const mode of modes ) {
+			let actual;
+			try {
+				actual = render( core, entry.data, mode );
+			} catch ( error ) {
+				actual = `ERROR ${ error.message }`;
+			}
+			if ( actual === entry.output[ mode ] ) {
+				same++;
+			} else {
+				different++;
+				console.log(
+					`DIFF ${ entry.name } [${ mode }]: ${ firstDifference(
+						entry.output[ mode ],
+						actual
+					) }`
+				);
+			}
+		}
+	}
+	return { same, different };
+}
+
 if (
 	process.argv[ 1 ] &&
 	path.resolve( process.argv[ 1 ] ) === import.meta.filename
@@ -201,44 +244,33 @@ if (
 		console.log(
 			`Recorded ${ corpus.length } templates x ${ modes.length } modes`
 		);
+	} else if ( process.argv.includes( '--wrapper' ) ) {
+		const corpus = JSON.parse( fs.readFileSync( corpusPath, 'utf8' ) );
+		const { same, different } = compareCorpus(
+			corpus,
+			await loadCompatibleCore()
+		);
+		console.log(
+			`authored wrapper: ${ same } identical, ${ different } different`
+		);
+		process.exitCode = different ? 1 : 0;
 	} else if ( process.argv.includes( '--compare' ) ) {
 		const version =
 			process.argv[ process.argv.indexOf( '--compare' ) + 1 ] || '4.17.1';
 		const corpus = JSON.parse( fs.readFileSync( corpusPath, 'utf8' ) );
 		const { dir, core } = loadPublishedCore( version );
-		let same = 0;
-		let different = 0;
+		let result;
 		try {
-			for ( const entry of corpus ) {
-				for ( const mode of modes ) {
-					let actual;
-					try {
-						actual = render( core, entry.data, mode );
-					} catch ( error ) {
-						actual = `ERROR ${ error.message }`;
-					}
-					if ( actual === entry.output[ mode ] ) {
-						same++;
-					} else {
-						different++;
-						console.log(
-							`DIFF ${ entry.name } [${ mode }]: ${ firstDifference(
-								entry.output[ mode ],
-								actual
-							) }`
-						);
-					}
-				}
-			}
+			result = compareCorpus( corpus, core );
 		} finally {
 			fs.rmSync( dir, { recursive: true, force: true } );
 		}
 		console.log(
-			`easy-email-core@${ version }: ${ same } identical, ${ different } different`
+			`easy-email-core@${ version }: ${ result.same } identical, ${ result.different } different`
 		);
-		process.exitCode = different ? 1 : 0;
+		process.exitCode = result.different ? 1 : 0;
 	} else {
-		console.error( 'Use --write or --compare [version]' );
+		console.error( 'Use --write, --wrapper or --compare [version]' );
 		process.exitCode = 2;
 	}
 }

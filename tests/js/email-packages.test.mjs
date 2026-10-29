@@ -97,10 +97,23 @@ test( 'email packages remain asynchronous with host React and license notices', 
 	const bootstrap = JSON.parse(
 		read( 'assets/dist/admin/email-packages.js.map' )
 	);
-	assert.equal(
-		bootstrap.sources.some( ( source ) => /node_modules\//.test( source ) ),
-		false
+	// Easy Email core is the only npm code in the bootstrap: admin startup requires it
+	// synchronously. Arco and MJML must stay in the lazy chunks.
+	const bootstrapPackages = new Set(
+		bootstrap.sources
+			.filter( ( source ) => /node_modules\//.test( source ) )
+			.map(
+				( source ) =>
+					source.match( /node_modules\/(@[^/]+\/[^/]+|[^/]+)/ )[ 1 ]
+			)
 	);
+	for ( const name of bootstrapPackages )
+		assert.ok(
+			[ 'easy-email-core', 'js-beautify', 'react-dom', 'uuid' ].includes(
+				name
+			),
+			`Unexpected package in the email bootstrap: ${ name }`
+		);
 	const directory = 'assets/dist/admin/chunks';
 	const sources = fs
 		.readdirSync( directory )

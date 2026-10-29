@@ -68,9 +68,9 @@ styles. Beside each template is the output the **recovered** core's `JsonToMjml`
 come from two causes. Each appears for both the basic and the `advanced_` block type:
 
 1. **Footer blocks vanish** (4 renders: both modes, both block types). In `footer` and `advanced_footer` templates the recovered core renders
-   an `<mj-hero>`, while 4.17.1 renders an empty wrapper. This could be a registration difference
-   rather than a rendering one; it needs investigating before swapping. Existing emails that
-   contain a footer block would lose it, so this blocks the swap until understood.
+   an `<mj-hero>`, while 4.17.1 renders an empty wrapper. Existing emails that contain a footer
+   block would lose it. **Resolved below:** the footer is a local block that no release has, not a
+   registration difference.
 2. **Image placeholder removed** (2 renders: `testing` mode, both block types). 4.17.1 fills an empty `src` with a hosted demo
    image at `easy-email-m-ryan.vercel.app` (11 references). The recovered core has none, so an empty
    image stays empty. That is a local change, and the swap must keep it.
@@ -122,9 +122,8 @@ Node, which makes it the first and safest step.
    saved templates from a site that runs the `mrm/v1` backend and the built-in starter templates, and the recorded MJML
    renderer's HTML. Saved-template conversion from MJML needs a DOM, so it belongs in the browser
    test suite.
-2. **Core.** Resolve the three differences above, then add a pinned `easy-email-core` behind an
-   authored patch module (image placeholder, `MRM_Vars` icons, right-to-left) and swap only when
-   `--compare` reports every render identical.
+2. **Core.** Done: see "Core swap" below. A pinned `easy-email-core` sits behind an authored
+   wrapper that restores every difference found, and all 74 recorded renders are identical.
 3. **Editor.** Move the ten rich-text helpers into an authored module (`features/emails`), then
    take `easy-email-editor` from npm. The save → reopen browser test runs on both builds.
 4. **Extensions.** Last, because it is 1.6 MB and holds the private library copies. Take the npm
@@ -141,3 +140,62 @@ Each swap lands as its own commit on `main`, so it can be reverted without touch
 
 No runtime code changed, and nothing was measured in a browser. The corpus covers rendering from
 JSON only. It does not cover `MjmlToJson` (needs a DOM), the editor UI, or real saved templates.
+
+## Core swap (roadmap step 2): findings and result
+
+### Why footer blocks vanished
+
+Footer blocks are not a registration difference. No published release has them: `easy-email-core`
+3.2.3, 4.0.0, 4.4.5, 4.9.0, 4.10.0, 4.13.0, 4.15.0, 4.16.5 and 4.17.1 define no footer block type
+and no `BasicType.FOOTER` or `AdvancedType.FOOTER` (the word only appears in a list of HTML tag
+names). Registering blocks cannot help, because there is nothing to register. The footer is a Mail
+Mint addition: it renders an `mj-hero`, its default content reads `MRM_Vars.business_basic_settings`
+and `MRM_Vars.address`, and the recovered core lists it as a valid parent of the other content
+blocks. The wrapper carries that definition, built on the package's own hero block.
+
+Correction to the export table above: the recovered core exports 39 names, 38 of them shared with
+4.17.1. The only recovered-only name is `MjmlToJson`; `getNodeIdxClassName` is exported by both (the
+audit script mis-read it). The package also exports `I18nManager` and a minified alias `t`.
+
+### Everything else the recovered core changed
+
+The corpus only exercises 2 of these. A differential run of 888 further renders (hidden blocks,
+iteration, conditions, class names, boolean attributes, page head settings, beautified output, both
+modes) found the rest, and `tests/js/easy-email-core.test.mjs` now checks each against the recovered
+core:
+
+| Area | Recovered core | 4.17.1 | Restored by |
+| --- | --- | --- | --- |
+| Footer blocks | `footer`, `advanced_footer`, drawn as `mj-hero`; listed as valid parent of content blocks | none | `footer.mjs`, `block-types.mjs` |
+| Empty image in `testing` mode | `src=""` | hosted demo image | `ImageManager` values |
+| Default images | all empty except social icons | demo images for accordion, hero, carousel, social, carousel arrows | `ImageManager`, `recovered-defaults.mjs` |
+| Social icons | `MRM_Vars.images_url` + file name, read when the core loads; `MRM_Vars.business_social_settings` replaces the list | demo images | `host-settings.mjs`, `recovered-defaults.mjs` |
+| Right-to-left | new text blocks align right when `<html dir="rtl">` at load | always left | `recovered-defaults.mjs` |
+| Block labels and texts | `MRM_Vars.mint_trans` (names at load; text, button and the four empty-container hints at use) | English via `I18nManager` | `recovered-defaults.mjs`, `render.mjs` |
+| Default values of new blocks | Arial page font, white section, column, wrapper backgrounds, different button, hero and social defaults | published defaults | `recovered-defaults.mjs` |
+| Hidden blocks | `data.hidden` ignored | skipped | `render.mjs` |
+| Boolean attributes | not printed | printed as `name="true"` | `render.mjs` |
+| Condition tags | falsy is `x == nil`; variable suffix is 5 characters | `x == nil or x == false`; UUID | `render.mjs` |
+| `beautify: true` | js-beautify 1.14.11 or newer output | older inlined js-beautify, different line breaks | `render.mjs` with pinned js-beautify 1.15.4 |
+| Block set and order | no `advanced_table`; footers after social | has `advanced_table` | `block-types.mjs`, `core.mjs` |
+| `MjmlToJson` | exported from core | exported by easy-email-extensions | `mjml-to-json.mjs` |
+
+`beautify: true` matters: the template gallery, picker and designer all call it. js-beautify 1.13.5,
+1.14.0 and 1.14.4 do not match the recovered output; 1.14.11, 1.15.1 and 1.15.4 match all 70 non-footer
+corpus renders (the test also covers the footers).
+
+One deliberate difference remains. The recovered core handed every new social block the same
+element array, so a payload merged into an advanced social block changed the defaults of every
+later social block. The wrapper creates a fresh list each time. Saved emails are not affected; only
+the icons of a social block added after such a call could differ from the old behaviour, and the old
+behaviour was an accident.
+
+### Result
+
+`node tools/easy-email-corpus.mjs --wrapper` renders all 74 recorded outputs identically. The wrapper
+lives in `assets/src/shared/easy-email/`. `createEasyEmailCore()` builds it when the first consumer
+requires factory 49050, because the recovered core read `MRM_Vars` and the `dir` attribute at that
+moment and WordPress defines `MRM_Vars` after the scripts that precede the application.
+
+Not verified here: the designer UI in a browser, `MjmlToJson` from markup (it needs `DOMParser`; only
+the parsed-tree path is compared), and emails saved by a live `mrm/v1` backend.

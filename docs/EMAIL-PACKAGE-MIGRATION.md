@@ -84,3 +84,46 @@ author and source declaration are recorded explicitly rather than inventing a co
 References: [MJML browser package](https://github.com/mjmlio/mjml/blob/master/packages/mjml-browser/README.md),
 [MJML 4.16.1 license](https://github.com/mjmlio/mjml/blob/v4.16.1/LICENSE.md),
 [Arco React](https://github.com/arco-design/arco-design).
+
+## Easy Email core (roadmap step 2) — 29 October 2026
+
+`easy-email-core` **4.17.1** replaces the recovered core (webpack factory 49050) behind an authored
+wrapper in `assets/src/shared/easy-email/`. Exact pins: `easy-email-core` 4.17.1, `js-beautify`
+1.15.4 (the recovered formatter matches 1.14.11 and newer, the package's inlined copy is older) and
+`lodash` 4.18.1 (the version WordPress 7.1 ships; webpack maps it to the `lodash` script, so it is
+not bundled). Peer dependencies are `react` and `react-dom` 18.3.1, the version WordPress ships; the
+lock file moves them from 19.3.0 to 18.3.1. `docs/EASY-EMAIL-AUDIT.md` lists what the wrapper
+restores and why.
+
+### Runtime boundary
+
+- `email-loader.js` now also defines `window.ohmylmsEmailPackages.createEasyEmailCore`. Arco and
+  MJML stay in the lazy chunk, which merges into the same object instead of replacing it.
+- `bridgeEasyEmailCore()` in `tools/email-package-adapters.mjs` replaces factory 49050 in
+  `vendors.js`. The factory calls `createEasyEmailCore()` when the first consumer requires it, so
+  the page globals are read at the same moment as before. It refuses to build unless the recovered
+  factory exports exactly the names in `export-names.mjs`.
+- Core stays **eager**, unlike Arco and MJML. Admin startup requires factory 49050 synchronously
+  (the template previews, and the default templates in factory 87381, which call
+  `BlockManager` while loading), and the "Start from scratch" button reads those templates before
+  any email chunk is requested. Making the core lazy needs a loading step before that click and an
+  adapter that defers factory 87381; neither can be checked without a browser.
+- Cost: `email-packages.js` grows from about 3.4 KB to about 457 KB minified (150 KB gzip), made of
+  the package, the matching js-beautify, the React 18 server renderer and uuid. The shared
+  `vendors.js` shrinks by about 173 KB. Webpack cannot drop the package's own inlined copies of `he`
+  and js-beautify.
+- `MjmlToJson` obtains the MJML renderer from the lazy chunk when it is called with markup.
+
+### Licences
+
+`tools/email-licenses.mjs` builds the notice text from the source maps of the bootstrap and the lazy
+chunks, including `he`, which the package inlines. `tools/sync-admin-assets.mjs` still scans only
+the lazy chunk maps, so it must call `emailNotices( root, maps )` with both before the next ship.
+
+### Verification
+
+`tests/js/easy-email-core.test.mjs` compares the wrapper with the still-present recovered factory
+(exports, registry, defaults with payloads, helpers, 74 corpus renders, 888 variant renders, three
+page-global scenarios). `tests/js/email-core-bridge.test.mjs` covers the adapter and its
+fail-closed checks. The designer UI, `MjmlToJson` from markup and a save, reopen and send round trip
+were not exercised in a browser.
