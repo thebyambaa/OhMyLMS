@@ -1,0 +1,160 @@
+{
+	"contract": "ohmylms/v1/categories+tags",
+	"version": 2,
+	"namespace": "ohmylms/v1",
+	"restBase": [ "categories", "tags" ],
+	"capability": {
+		"read": "edit_posts",
+		"edit_context_and_writes": "manage_options"
+	},
+	"auth": "WordPress REST authentication. Cookie auth requires the X-WP-Nonce header (wp_create_nonce('wp_rest')); application passwords also work.",
+	"description": "Read-only. /categories lists curriculum items, /tags lists course bundles, both in the shape of the former taxonomy terms. Every write route answers 410.",
+	"routes": [
+		{
+			"name": "list",
+			"method": "GET",
+			"path": "/{categories|tags}",
+			"args": {
+				"page": { "type": "integer", "default": 1, "minimum": 1 },
+				"per_page": {
+					"type": "integer",
+					"default": 20,
+					"minimum": 1,
+					"maximum": 100
+				},
+				"search": { "type": "string", "maxLength": 100 },
+				"parent": {
+					"type": "integer",
+					"minimum": 0,
+					"description": "Categories only. 0 lists top-level items."
+				},
+				"orderby": {
+					"type": "string",
+					"default": "name",
+					"enum": [ "name", "id" ]
+				},
+				"order": {
+					"type": "string",
+					"default": "asc",
+					"enum": [ "asc", "desc" ]
+				}
+			},
+			"success": {
+				"status": 200,
+				"body": "Term[]",
+				"headers": [ "X-WP-Total", "X-WP-TotalPages", "Link" ]
+			},
+			"errors": [ 400, 401, 403 ]
+		},
+		{
+			"name": "read",
+			"method": "GET",
+			"path": "/{categories|tags}/{id}",
+			"args": {
+				"id": { "type": "integer", "minimum": 1, "in": "path" },
+				"context": {
+					"type": "string",
+					"default": "view",
+					"enum": [ "view", "edit" ],
+					"description": "edit adds the linked courses (at most 100) and needs manage_options."
+				}
+			},
+			"success": { "status": 200, "body": "Term | TermDetail" },
+			"errors": [ 401, 403, 404 ]
+		},
+		{
+			"name": "write",
+			"method": [ "POST", "PUT", "PATCH", "DELETE" ],
+			"path": "/{categories|tags}, /{categories|tags}/{id}, /{categories|tags}/bulk",
+			"description": "Refused. Needs manage_options, then answers 410 ohmylms_categories_replaced or ohmylms_tags_replaced without changing anything.",
+			"success": null,
+			"errors": [ 401, 403, 410 ]
+		}
+	],
+	"definitions": {
+		"Term": {
+			"type": "object",
+			"required": [
+				"id",
+				"name",
+				"slug",
+				"description",
+				"parent",
+				"count"
+			],
+			"properties": {
+				"id": {
+					"type": "integer",
+					"minimum": 1,
+					"description": "Curriculum item ID (categories) or bundle ID (tags)."
+				},
+				"name": { "type": "string" },
+				"slug": {
+					"type": "string",
+					"description": "Synthetic filter slug: c<ID> for items, b<ID> for bundles."
+				},
+				"description": { "type": "string" },
+				"parent": {
+					"type": "integer",
+					"minimum": 0,
+					"description": "Parent item ID; always 0 for tags."
+				},
+				"count": { "type": "integer", "minimum": 0 },
+				"_links": { "type": "object" }
+			}
+		},
+		"TermDetail": {
+			"allOf": [
+				{ "$ref": "#/definitions/Term" },
+				{
+					"type": "object",
+					"required": [ "courses" ],
+					"properties": {
+						"courses": {
+							"type": "array",
+							"maxItems": 100,
+							"items": {
+								"type": "object",
+								"required": [ "id", "title" ],
+								"properties": {
+									"id": { "type": "integer" },
+									"title": { "type": "string" }
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		"Error": {
+			"type": "object",
+			"required": [ "code", "message", "data" ],
+			"properties": {
+				"code": { "type": "string" },
+				"message": { "type": "string" },
+				"data": {
+					"type": "object",
+					"properties": {
+						"status": { "type": "integer" },
+						"params": { "type": "object" }
+					}
+				}
+			}
+		}
+	},
+	"errorCodes": {
+		"rest_invalid_param": 400,
+		"ohmylms_category_invalid_page": 400,
+		"ohmylms_tag_invalid_page": 400,
+		"rest_cookie_invalid_nonce": 403,
+		"rest_forbidden_context": 403,
+		"ohmylms_category_cannot_view": [ 401, 403 ],
+		"ohmylms_tag_cannot_view": [ 401, 403 ],
+		"ohmylms_category_cannot_edit": [ 401, 403 ],
+		"ohmylms_tag_cannot_edit": [ 401, 403 ],
+		"ohmylms_category_not_found": 404,
+		"ohmylms_tag_not_found": 404,
+		"ohmylms_categories_replaced": 410,
+		"ohmylms_tags_replaced": 410
+	}
+}

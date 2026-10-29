@@ -1,109 +1,114 @@
 <?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
- * Course tags were replaced by Course Bundles. GET returns bundles in the shape of the former tag terms
- * (the bundle ID is `term_id`) for older clients; nothing can be written here any more. Bundles are
- * managed with /bundles and a course's bundles with /courses/{id}/organization.
+ * TagController class.
  *
  * @package OhMyLMS
  */
+
 namespace OhMyLMS\Rest\V1;
 
-use OhMyLMS\Abstracts\RestController;
+use OhMyLMS\Bundles\Bundles;
 use OhMyLMS\Curriculum\Placement;
+use OhMyLMS\Curriculum\Schema;
+use WP_Error;
+use WP_REST_Request;
 
 /**
- * Course tags were replaced by Course Bundles. GET returns bundles in the shape of the former tag terms
- * (the bundle ID is `term_id`) for older clients; nothing can be written here any more. Bundles are
- * managed with /bundles and a course's bundles with /courses/{id}/organization.
+ * TagController class.
+ *
+ * Course tags were replaced by Course Bundles, so this is a read-only, paged view of the bundles in
+ * the shape of the former tag terms. Writes are refused with 410: bundles are managed with
+ * `/bundles` and a course's bundles with `/courses/{id}/organization`. All behaviour (permissions,
+ * paging, schema, refused writes) is inherited from CategoryController; only the data source and
+ * the messages differ. See docs/api/taxonomies.md.
+ *
+ * @since 1.0.0
  */
-class TagController extends RestController {
+class TagController extends CategoryController {
 
 	/**
-	 * Base.
+	 * The base route.
 	 *
-	 * @var mixed
+	 * @var string
 	 */
-	protected $base = 'tags';
+	protected $rest_base = 'tags';
 
 	/**
-	 * Get items permissions check for Tag controller.
+	 * Singular name used in error codes.
 	 *
-	 * @param mixed $request REST request.
+	 * @var string
 	 */
-	public function get_items_permissions_check( $request ) {
-		return current_user_can( 'edit_posts' );
-	}
+	protected $singular = 'tag';
 
 	/**
-	 * Register routes for Tag controller.
-	 */
-	public function register_routes() {
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base,
-			array(
-				array(
-					'methods'             => 'GET',
-					'callback'            => array( $this, 'get_items' ),
-					'permission_callback' => array( $this, 'get_items_permissions_check' ),
-				),
-				array(
-					'methods'             => \WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'replaced' ),
-					'permission_callback' => array( $this, 'get_items_permissions_check' ),
-				),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/(?P<id>\d+)',
-			array(
-				array(
-					'methods'             => \WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'replaced' ),
-					'permission_callback' => array( $this, 'get_items_permissions_check' ),
-				),
-				array(
-					'methods'             => \WP_REST_Server::DELETABLE,
-					'callback'            => array( $this, 'replaced' ),
-					'permission_callback' => array( $this, 'get_items_permissions_check' ),
-				),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/bulk',
-			array(
-				array(
-					'methods'             => \WP_REST_Server::DELETABLE,
-					'callback'            => array( $this, 'replaced' ),
-					'permission_callback' => array( $this, 'get_items_permissions_check' ),
-				),
-			)
-		);
-	}
-
-	/**
-	 * Get items for Tag controller.
+	 * Bundles have no parent.
 	 *
-	 * @param mixed $request REST request.
+	 * @var bool
 	 */
-	public function get_items( $request ) {
-		return rest_ensure_response( Placement::term_bundles( (string) $request['search'] ) );
-	}
+	protected $hierarchical = false;
 
 	/**
-	 * Replaced for Tag controller.
+	 * Refuse a write: bundles are managed elsewhere.
 	 *
-	 * @param mixed $request REST request.
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_Error
 	 */
 	public function replaced( $request ) {
-		return new \WP_Error(
+		return new WP_Error(
 			'ohmylms_tags_replaced',
 			__( 'Course tags were replaced by Course Bundles. Manage them under OhMyLMS > Course Bundles.', 'ohmylms' ),
 			array( 'status' => 410 )
 		);
+	}
+
+	/**
+	 * Read every bundle as a normalised row.
+	 *
+	 * @return array[]
+	 */
+	protected function load_rows() {
+		if ( ! Schema::ready() ) {
+			return array();
+		}
+
+		$rows = array();
+		foreach ( Bundles::all() as $row ) {
+			$id     = (int) $row['id'];
+			$rows[] = array(
+				'id'          => $id,
+				'name'        => (string) $row['title'],
+				'slug'        => Placement::bundle_slug( $id ),
+				'description' => (string) $row['description'],
+				'parent'      => 0,
+			);
+		}
+		return $rows;
+	}
+
+	/**
+	 * Count courses of several bundles (direct members plus courses under member items).
+	 *
+	 * A bundle's courses come from two member kinds, so this costs a few queries per bundle on the
+	 * requested page (at most `per_page`).
+	 *
+	 * @param int[] $ids Bundle IDs.
+	 * @return array<int,int> Counts keyed by ID.
+	 */
+	protected function count_courses( array $ids ) {
+		$counts = array();
+		foreach ( array_values( array_filter( array_map( 'intval', $ids ) ) ) as $id ) {
+			$counts[ $id ] = count( Placement::course_ids_for_bundles( array( $id ) ) );
+		}
+		return $counts;
+	}
+
+	/**
+	 * IDs of the courses of one bundle.
+	 *
+	 * @param int $id Bundle ID.
+	 * @return int[]
+	 */
+	protected function course_ids( $id ) {
+		return Placement::course_ids_for_bundles( array( $id ) );
 	}
 }
