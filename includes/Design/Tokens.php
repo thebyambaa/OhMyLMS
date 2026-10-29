@@ -176,8 +176,17 @@ final class Tokens {
 	 * @return string Declarations without a selector.
 	 */
 	public static function frontend_oml_vars() {
-		$preset              = DesignSystem::PRESETS['classic'];
-		$colors              = $preset['colors'];
+		$preset = DesignSystem::PRESETS['classic'];
+		return self::declarations( DesignSystem::variables( self::frontend_colors(), $preset['button_radius'], $preset['density'] ) );
+	}
+
+	/**
+	 * The learner palette: the Classic preset with the learner branding options applied.
+	 *
+	 * @return array Colors keyed like DesignSystem::COLOR_KEYS.
+	 */
+	public static function frontend_colors() {
+		$colors              = DesignSystem::PRESETS['classic']['colors'];
 		$primary             = self::color( 'ohmylms_primary_color_scheme' );
 		$colors['primary']   = $primary;
 		$colors['secondary'] = $primary;
@@ -185,8 +194,30 @@ final class Tokens {
 		$colors['heading']   = self::color( 'ohmylms_heading_color_scheme' );
 		$colors['text']      = self::color( 'ohmylms_body_text_color_scheme' );
 		$colors['success']   = self::color( 'ohmylms_body_progress_color_scheme' );
-		$css                 = '';
-		foreach ( DesignSystem::variables( $colors, $preset['button_radius'], $preset['density'] ) as $name => $value ) {
+		return $colors;
+	}
+
+	/**
+	 * The dark theme for learner pages: the --oml-* overrides on a data-theme="dark" element, or on
+	 * data-theme="system" when the visitor's device prefers dark.
+	 *
+	 * @return string CSS rules.
+	 */
+	public static function frontend_dark_css() {
+		$vars = self::declarations( DesignSystem::dark_variables( self::frontend_colors() ) );
+		return '[data-theme="dark"],body:has(.oml-player[data-theme="dark"]){' . $vars . '}'
+			. '@media (prefers-color-scheme:dark){[data-theme="system"],body:has(.oml-player[data-theme="system"]){' . $vars . '}}';
+	}
+
+	/**
+	 * Custom property declarations.
+	 *
+	 * @param array $vars Name without the leading dashes => value.
+	 * @return string
+	 */
+	private static function declarations( $vars ) {
+		$css = '';
+		foreach ( $vars as $name => $value ) {
 			$css .= '--' . $name . ':' . $value . ';';
 		}
 		return $css;
@@ -212,7 +243,7 @@ final class Tokens {
 		if ( 'inherit' !== $font ) {
 			$css .= '.ohmylms-page,.ohmylms-schools,.ohmylms-practice,.ohmylms-inline-check,.ohmylms-skill-progress,.ohmylms-quiz{font-family:var(--ohmylms-font-family)}';
 		}
-		return $css . self::quiz_css();
+		return $css . self::frontend_dark_css() . self::quiz_css();
 	}
 
 	/**

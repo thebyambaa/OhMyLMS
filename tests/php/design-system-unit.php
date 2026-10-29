@@ -105,4 +105,27 @@ foreach ( $admin_names as $name ) {
 }
 unset( $options['ohmylms_primary_color_scheme'] );
 
+// Dark theme: same token names as light, brand and status colors lightened to read on the dark card.
+$light_names = array_keys( DS::variables( DS::preset_values( 'classic' )['colors'], 4, 'comfortable' ) );
+foreach ( array( '#6e42d3', '#000d25', '#1865f2', '#ffb100', '#222222' ) as $brand ) {
+	$palette         = DS::preset_values( 'classic' )['colors'];
+	$palette['primary']   = $brand;
+	$palette['secondary'] = $brand;
+	$palette['link']      = $brand;
+	$dark            = DS::dark_variables( $palette );
+	check( DS::contrast( $dark['oml-primary'], DS::DARK['surface'] ) >= DS::DARK_MIN_CONTRAST, "dark primary for $brand reads on the dark card" );
+	check( DS::contrast( $dark['oml-on-primary'], $dark['oml-primary'] ) >= 4.5, "dark on-primary for $brand reads on the primary" );
+}
+foreach ( array_keys( DS::dark_variables( DS::preset_values( 'classic' )['colors'] ) ) as $name ) {
+	check( in_array( $name, $light_names, true ), "dark token --$name also exists in the light set" );
+}
+$dark = DS::dark_variables( DS::preset_values( 'classic' )['colors'] );
+check( DS::DARK['surface'] === $dark['oml-surface'] && DS::DARK['border'] === $dark['oml-border'], 'dark neutrals are the fixed dark values' );
+check( $dark['oml-primary'] === DS::for_dark( '#6e42d3' ), 'dark primary derives from the brand color' );
+$options['ohmylms_primary_color_scheme'] = '#aa2200';
+$learner_css                             = \OhMyLMS\Design\Tokens::frontend_css();
+check( false !== strpos( $learner_css, '[data-theme="dark"],body:has(.oml-player[data-theme="dark"]){' ) && false !== strpos( $learner_css, '@media (prefers-color-scheme:dark){[data-theme="system"],body:has(.oml-player[data-theme="system"]){' ), 'learner css has dark and system rules' );
+check( false !== strpos( $learner_css, '--oml-surface:' . DS::DARK['surface'] . ';' ), 'dark rule sets the dark surface' );
+unset( $options['ohmylms_primary_color_scheme'] );
+
 echo "Design system checks passed: $checks\n";

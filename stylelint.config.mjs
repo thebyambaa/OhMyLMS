@@ -95,6 +95,11 @@ export default {
 				'assets/css/oml-legacy-*.css',
 				'assets/css/exam-player-template.css',
 				'assets/css/quiz-player-templates.css',
+				'assets/css/question-player.css',
+				'assets/css/game-player.css',
+				'assets/css/answer-review.css',
+				'assets/css/player-context.css',
+				'assets/css/learning-context.css',
 				'assets/src/ui/**/*.{css,scss}',
 			],
 			rules: {

@@ -11,4 +11,4 @@ function get_option( $key, $default = false ) { return $default; }
 function __( $text ) { return $text; }
 require dirname( __DIR__, 3 ) . '/vendor/autoload.php';
 
-echo ':root{' . \OhMyLMS\Design\Tokens::frontend_oml_vars() . '}';
+echo ':root{' . \OhMyLMS\Design\Tokens::frontend_oml_vars() . '}' . \OhMyLMS\Design\Tokens::frontend_dark_css();

@@ -60,3 +60,9 @@ design-system stylesheet. Migrate old buttons feature by feature and delete thei
 
 The full guide to using these tokens and components, with the planned component list, is `docs/DESIGN-LANGUAGE.md`.
 The visual gallery and its screenshot tests are `tests/browser/ui-gallery.spec.cjs`.
+
+## Dark theme tokens
+
+`DesignSystem::dark_variables()` returns overrides for the same names, and `Tokens::frontend_dark_css()`
+emits them for `[data-theme="dark"]` and, under `prefers-color-scheme: dark`, `[data-theme="system"]`.
+See "Dark mode" in `docs/DESIGN-LANGUAGE.md`.

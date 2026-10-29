@@ -47,6 +47,23 @@ Shadows `--oml-shadow-sm` (cards at rest) and `--oml-shadow-md` (raised, hover).
 `--oml-motion-fast` (120 ms, color changes) and `--oml-motion-base` (200 ms, movement). Layers:
 `--oml-z-dropdown` 100, `--oml-z-modal` 1000, `--oml-z-toast` 1100.
 
+## Dark mode
+
+Dark mode is a second set of the same `--oml-*` tokens, not a second stylesheet. Put `data-theme="dark"` on
+an element and everything inside it flips; `data-theme="system"` follows the device
+(`prefers-color-scheme`). The player shell already carries this attribute; `data-theme="light"` is the default.
+
+- **Neutrals are fixed:** page `#252531`, card `#151521`, text `#f3f3f7`, muted `#b7b8c5`, borders `#4a4c53`
+  (`DesignSystem::DARK`).
+- **Brand and status colors adapt.** Each is lightened just enough to reach 4.5:1 against the dark card
+  (`DesignSystem::for_dark()`), so a dark brand color such as navy still reads. Soft tints are mixed into the
+  dark card, and text on the primary is re-chosen for contrast.
+- **Components need no dark rules.** If a component uses tokens, it supports dark mode. A hardcoded color is
+  what breaks dark mode.
+- **Exception: assessment canvases stay light.** The quiz and paper stage keep a light canvas in every theme
+  (their literal colors are documented in `player-context.css`), because quiz designs have their own color contract.
+- **Learner pages only for now.** Admin screens follow the Design system settings and have no dark theme.
+
 ## Components
 
 | Component | Classes | React | PHP |
@@ -81,4 +98,6 @@ baselines only when the visual change is intended.
 | Learner `.ohmylms-button` | Restyled with tokens (`oml-legacy-buttons.css`) |
 | Exam player chrome (`exam-player-template.css`) | Migrated: neutrals, status chips and button text use tokens; the accent stays the quiz accent setting. Covered by `tests/browser/exam-player-tokens.spec.cjs` and lint-enforced |
 | Quiz player templates (`quiz-player-templates.css`) | Migrated: the shared question widgets (answer cards, matching, reorder, paper form, result card) use tokens. Template palettes (`--player-*`, `--playful-*`) and the print sheet keep literal colors behind commented stylelint disables. Covered by `tests/browser/quiz-templates-tokens.spec.cjs` |
+| Question player, game player, answer review | Migrated: chrome uses tokens; the answer review palette and game artwork (board, wall, hole, image mask) stay literal behind commented disables. Covered by `tests/browser/player-widgets-tokens.spec.cjs` |
+| Player context shell (`player-context.css`) | Migrated: the shell uses tokens and gets dark mode from them; the quiz and paper canvases stay light behind commented disables. Covered by `tests/browser/dark-theme.spec.cjs` |
 | Course and lesson pages, dashboard, practice, student hub, admin screens | Not migrated |

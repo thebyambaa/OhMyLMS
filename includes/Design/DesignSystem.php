@@ -352,6 +352,81 @@ final class DesignSystem {
 		);
 	}
 
+	/** Fixed dark neutrals: page, card, text, muted text and borders for the dark theme. */
+	const DARK = array(
+		'background' => '#252531',
+		'surface'    => '#151521',
+		'heading'    => '#f3f3f7',
+		'text'       => '#f3f3f7',
+		'muted'      => '#b7b8c5',
+		'border'     => '#4a4c53',
+	);
+
+	/** Minimum contrast of a brand or status color against the dark card (WCAG AA for text). */
+	const DARK_MIN_CONTRAST = 4.5;
+
+	/**
+	 * Lighten a color until it reads on the dark card.
+	 *
+	 * @param string $hex Hex color.
+	 * @return string Hex color with at least DARK_MIN_CONTRAST against DARK['surface'].
+	 */
+	public static function for_dark( $hex ) {
+		for ( $step = 0; $step <= 10; $step++ ) {
+			$candidate = Tokens::mix( $hex, '#ffffff', $step / 10 );
+			if ( self::contrast( $candidate, self::DARK['surface'] ) >= self::DARK_MIN_CONTRAST ) {
+				return $candidate;
+			}
+		}
+		return '#ffffff';
+	}
+
+	/**
+	 * The dark theme's --oml-* overrides: neutrals are fixed, brand and status colors are lightened so
+	 * they stay readable, soft tints are mixed into the dark card. Same names as variables(), so
+	 * components need no dark-specific rules.
+	 *
+	 * @param array $c Validated colors (COLOR_KEYS).
+	 * @return array<string,string> Variable name (without the leading dashes) => value.
+	 */
+	public static function dark_variables( $c ) {
+		$dark    = self::DARK;
+		$primary = self::for_dark( $c['primary'] );
+		$second  = self::for_dark( $c['secondary'] );
+		$link    = self::for_dark( $c['link'] );
+		$vars    = array(
+			'oml-background'      => $dark['background'],
+			'oml-surface'         => $dark['surface'],
+			'oml-subtle'          => Tokens::mix( $dark['surface'], '#ffffff', 0.06 ),
+			'oml-heading'         => $dark['heading'],
+			'oml-text'            => $dark['text'],
+			'oml-muted'           => $dark['muted'],
+			'oml-border'          => $dark['border'],
+			'oml-primary'         => $primary,
+			'oml-primary-hover'   => Tokens::mix( $primary, '#ffffff', 0.15 ),
+			'oml-primary-active'  => Tokens::mix( $primary, '#ffffff', 0.3 ),
+			'oml-primary-soft'    => Tokens::mix( $dark['surface'], $primary, 0.2 ),
+			'oml-primary-rgb'     => Tokens::rgb( $primary ),
+			'oml-on-primary'      => self::text_on( $primary ),
+			'oml-secondary'       => $second,
+			'oml-secondary-hover' => Tokens::mix( $second, '#ffffff', 0.15 ),
+			'oml-link'            => $link,
+			'oml-link-hover'      => Tokens::mix( $link, '#ffffff', 0.2 ),
+			'oml-focus'           => $primary,
+			'oml-shadow-sm'       => '0 1px 2px rgba(0, 0, 0, 0.4)',
+			'oml-shadow-md'       => '0 4px 12px rgba(0, 0, 0, 0.5)',
+		);
+		foreach ( array( 'success', 'warning', 'danger', 'info' ) as $status ) {
+			$color                              = self::for_dark( $c[ $status ] );
+			$vars[ 'oml-' . $status ]           = $color;
+			$vars[ 'oml-' . $status . '-soft' ] = Tokens::mix( $dark['surface'], $color, 0.2 );
+		}
+		$vars['oml-danger-hover']  = Tokens::mix( $vars['oml-danger'], '#ffffff', 0.15 );
+		$vars['oml-danger-active'] = Tokens::mix( $vars['oml-danger'], '#ffffff', 0.3 );
+		$vars['oml-on-danger']     = self::text_on( $vars['oml-danger'] );
+		return $vars;
+	}
+
 	/**
 	 * The --oml-* semantic tokens: the one vocabulary every component reads, in admin and on learner pages.
 	 *

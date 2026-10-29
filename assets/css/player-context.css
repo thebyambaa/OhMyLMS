@@ -1,3 +1,7 @@
+body:has(.oml-player) {
+	background: var(--oml-background);
+}
+
 .oml-player-context {
 	display: flex;
 	flex-wrap: wrap;
@@ -6,33 +10,33 @@
 	box-sizing: border-box;
 	width: 100%;
 	padding: 10px 24px;
-	border-bottom: 1px solid #dcdeeb;
-	background: #fff;
-	color: #1b1c2e;
+	border-bottom: 1px solid var(--oml-border);
+	background: var(--oml-surface);
+	color: var(--oml-heading);
 	font-size: 14px;
 }
 
 .oml-player-context .oml-player-exit {
-	color: #3b39c9;
+	color: var(--oml-link);
 	font-weight: 700;
 	text-decoration: none;
 }
 
 .oml-player-context .oml-player-course {
 	overflow: hidden;
-	color: #5d6075;
+	color: var(--oml-muted);
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 
 .oml-player {
-	--player-page: #f7f8fa;
-	--player-surface: #fff;
-	--player-text: #1b1c2e;
-	--player-muted: #5d6075;
-	--player-border: #dcdeeb;
-	--player-accent: #3b39c9;
-	--player-selected: #eeedff;
+	--player-page: var(--oml-background);
+	--player-surface: var(--oml-surface);
+	--player-text: var(--oml-heading);
+	--player-muted: var(--oml-muted);
+	--player-border: var(--oml-border);
+	--player-accent: var(--oml-primary);
+	--player-selected: var(--oml-primary-soft);
 	--ohmylms-heading-color: var(--player-text);
 	--ohmylms-text-color: var(--player-text);
 	--ohmylms-body-text-color: var(--player-text);
@@ -42,29 +46,6 @@
 	color: var(--player-text);
 	font-family: "Plus Jakarta Sans", "Noto Sans", sans-serif;
 	line-height: 1.6;
-}
-
-.oml-player[data-theme="dark"] {
-	--player-page: #252531;
-	--player-surface: #151521;
-	--player-text: #f3f3f7;
-	--player-muted: #b7b8c5;
-	--player-border: #4a4c53;
-	--player-accent: #a4adff;
-	--player-selected: #222149;
-}
-
-@media (prefers-color-scheme: dark) {
-
-	.oml-player[data-theme="system"] {
-		--player-page: #252531;
-		--player-surface: #151521;
-		--player-text: #f3f3f7;
-		--player-muted: #b7b8c5;
-		--player-border: #4a4c53;
-		--player-accent: #a4adff;
-		--player-selected: #222149;
-	}
 }
 
 .oml-player .oml-player-context {
@@ -206,7 +187,7 @@ body.ohmylms-page .oml-player .ohmylms-lesson-details .ohmylms-lesson-navigation
 }
 
 body.ohmylms-page .oml-player .ohmylms-lesson-details .ohmylms-lesson-navigation .ohmylms-checkbox {
-	background: #5753fa;
+	background: var(--oml-primary);
 }
 
 .oml-player-taking-quiz .oml-player-layout {
@@ -214,6 +195,7 @@ body.ohmylms-page .oml-player .ohmylms-lesson-details .ohmylms-lesson-navigation
 }
 
 /* Assessment designs have their own color contract; keep a readable light canvas. */
+/* stylelint-disable color-no-hex -- The quiz canvas stays light in every theme, so it cannot follow the dark tokens. */
 .oml-player-taking-quiz .oml-player-main {
 	--ohmylms-heading-color: #1b1c2e;
 	--ohmylms-text-color: #5d6075;
@@ -223,6 +205,7 @@ body.ohmylms-page .oml-player .ohmylms-lesson-details .ohmylms-lesson-navigation
 	background: #fff;
 	color: #1b1c2e;
 }
+/* stylelint-enable color-no-hex */
 
 @media screen and (max-width: 800px) {
 
@@ -302,10 +285,10 @@ body.ohmylms-page .oml-player .ohmylms-lesson-details .ohmylms-lesson-navigation
 .oml-player .ohmylms-practice .ohmylms-button,
 .oml-player .ohmylms-learning-program .ohmylms-button {
 	padding: 12px 20px;
-	border: 1px solid #5753fa;
+	border: 1px solid var(--oml-primary);
 	border-radius: 8px;
-	background: #5753fa;
-	color: #fff;
+	background: var(--oml-primary);
+	color: var(--oml-on-primary);
 	font: inherit;
 	font-weight: 700;
 	cursor: pointer;
@@ -324,11 +307,11 @@ body.ohmylms-page .oml-player .ohmylms-lesson-details .ohmylms-lesson-navigation
 }
 
 .oml-player .ohmylms-practice .ohmylms-inline-correct {
-	color: #168741;
+	color: var(--oml-success);
 }
 
 .oml-player .ohmylms-practice .ohmylms-inline-incorrect {
-	color: #d44;
+	color: var(--oml-danger);
 }
 
 
@@ -337,6 +320,7 @@ body.ohmylms-page .oml-player .ohmylms-lesson-details .ohmylms-lesson-navigation
 }
 
 /* The focused quiz uses the shared paper stage with the workspace accent. */
+/* stylelint-disable color-no-hex -- The paper stage and its buttons stay light in every theme. */
 body.ohmylms-page .oml-player .ohmylms-quiz.ohmylms-player-template-paper {
 	--player-stage: #fff;
 	--player-canvas: #fff;
@@ -361,6 +345,7 @@ body.ohmylms-page .oml-player .ohmylms-quiz[data-player-template] .ohmylms-butto
 	box-shadow: 0 4px 0 #363498;
 	color: #fff;
 }
+/* stylelint-enable color-no-hex */
 
 body.ohmylms-page .oml-player .ohmylms-quiz[data-player-template] .ohmylms-button:disabled {
 	box-shadow: none;
