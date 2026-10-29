@@ -15,6 +15,8 @@ export interface FeatureDefinition {
 	readonly icon?: Element;
 	/** Route component. Must be created with `lazy( () => import( './Page' ) )` so the feature is code-split. */
 	readonly component: ComponentType;
+	/** Route only: keep it out of the primary navigation (for example an editor opened from a list). */
+	readonly hidden?: boolean;
 	/** Capability the user needs (as exposed by `ohmylms_app_capabilities`). Omit for everyone. */
 	readonly capability?: string;
 }

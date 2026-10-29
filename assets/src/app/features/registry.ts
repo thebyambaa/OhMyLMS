@@ -1,6 +1,11 @@
 import { hasCapability } from '../bootstrap/config';
+import { certificateEditor, certificates } from './certificates';
 import { contentHub } from './content-hub';
+import { emails } from './emails';
 import { home } from './home';
+import { integrations } from './integrations';
+import { students } from './students';
+import { taxonomies } from './taxonomies';
 import { webhooks } from './webhooks';
 import type { FeatureDefinition } from './types';
 
@@ -11,6 +16,12 @@ import type { FeatureDefinition } from './types';
 export const features: readonly FeatureDefinition[] = [
 	home,
 	contentHub,
+	students,
+	certificates,
+	certificateEditor,
+	emails,
+	integrations,
+	taxonomies,
 	webhooks,
 ];
 

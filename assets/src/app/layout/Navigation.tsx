@@ -17,19 +17,21 @@ export function Navigation( {
 	return (
 		<nav aria-label={ __( 'Main', 'ohmylms' ) } className="ohmylms-app-nav">
 			<ul>
-				{ features.map( ( feature ) => (
-					<li key={ feature.id }>
-						<NavLink
-							to={ feature.path }
-							end={ '/' === feature.path }
-						>
-							{ feature.icon && (
-								<Icon icon={ feature.icon } size={ 20 } />
-							) }
-							<span>{ feature.title }</span>
-						</NavLink>
-					</li>
-				) ) }
+				{ features
+					.filter( ( feature ) => ! feature.hidden )
+					.map( ( feature ) => (
+						<li key={ feature.id }>
+							<NavLink
+								to={ feature.path }
+								end={ '/' === feature.path }
+							>
+								{ feature.icon && (
+									<Icon icon={ feature.icon } size={ 20 } />
+								) }
+								<span>{ feature.title }</span>
+							</NavLink>
+						</li>
+					) ) }
 			</ul>
 		</nav>
 	);
