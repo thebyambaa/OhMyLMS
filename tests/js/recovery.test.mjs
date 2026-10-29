@@ -94,6 +94,9 @@ test( 'reassembled assets preserve shipped AST outside the authored admin app', 
 				'assets/dist/vendors/vendors.js',
 				// Editor runtime tests verify every npm bridge and retired factory.
 				'assets/dist/vendors/editor.js',
+				// Vendor package tests verify the complete Chart.js and Emotion bridges.
+				'assets/dist/vendors/chartjs.js',
+				'assets/dist/vendors/emotion.js',
 				'assets/dist/chunks/355.js',
 			].includes( a.output )
 	) ) {

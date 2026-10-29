@@ -8,6 +8,7 @@ import { adaptVendors } from '../../tools/vendor-adapters.mjs';
 import { adaptEditorPackages } from '../../tools/editor-package-adapters.mjs';
 import { adaptEmailModel } from '../../tools/email-runtime-adapters.mjs';
 import { adaptEditorRuntime } from '../../tools/editor-runtime-adapters.mjs';
+import { adaptVendorPackages } from '../../tools/vendor-package-adapters.mjs';
 import {
 	auditEmailVendors,
 	emailVendorModules,
@@ -37,6 +38,7 @@ test( 'email vendor relocation preserves every factory and its chunk registratio
 	adaptEditorPackages( baselineVendor );
 	adaptEmailModel( baselineVendor );
 	adaptEditorRuntime( baselineVendor, emailVendorSource );
+	adaptVendorPackages( baselineVendor, emailVendorSource );
 	const [ vendorIds, vendors ] = capture( read( emailVendorSource ) );
 	const [ emailIds, email ] = capture( read( emailVendorTarget ) );
 	assert.deepEqual( Array.from( vendorIds ), [ 96 ] );
@@ -46,12 +48,18 @@ test( 'email vendor relocation preserves every factory and its chunk registratio
 		...capture( read( `build/parity/${ emailVendorTarget }` ) )[ 1 ],
 	};
 	const relocated = { ...vendors, ...email };
+	// npm package tests cover these two explicit replacements; compare every other factory.
+	for ( const id of [ 3270, 44098 ] ) {
+		assert.ok( original[ id ] );
+		delete original[ id ];
+		delete relocated[ id ];
+	}
 	assert.deepEqual(
 		Object.keys( relocated ).sort(),
 		Object.keys( original ).sort()
 	);
 	assert.equal(
-		Object.keys( vendors ).length + Object.keys( email ).length,
+		Object.keys( vendors ).length + Object.keys( email ).length - 2,
 		Object.keys( original ).length
 	);
 	for ( const id of Object.keys( original ) ) {

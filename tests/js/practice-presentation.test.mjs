@@ -2,13 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import fs from 'node:fs';
+import { buttonClass } from '../../assets/src/ui/button.mjs';
 
 // A small DOM double runs the authored runner; no grading or selection logic is duplicated.
 function fixture(
 	failAnswer = false,
 	remembered = null,
 	extra = {},
-	answerResult = null
+	answerResult = null,
+	client = {}
 ) {
 	let focus;
 	class Element {
@@ -18,7 +20,22 @@ function fixture(
 			this.attributes = {};
 			this.events = {};
 			this.value = '';
-			this.classList = { add() {} };
+			this.classList = {
+				contains: ( name ) =>
+					( this.attributes.class || '' )
+						.split( ' ' )
+						.includes( name ),
+				add: ( name ) => {
+					this.attributes.class = [
+						...new Set( [
+							...( this.attributes.class || '' ).split( ' ' ),
+							name,
+						] ),
+					]
+						.filter( Boolean )
+						.join( ' ' );
+				},
+			};
 		}
 		setAttribute( name, value ) {
 			this.attributes[ name ] = String( value );
@@ -99,6 +116,7 @@ function fixture(
 				root: '/api/',
 				studentId: 4,
 				loggedIn: true,
+				...client,
 				practiceI18n: {
 					start: 'Start',
 					resume: 'Resume',
@@ -197,6 +215,29 @@ function fixture(
 const settle = async () => {
 	for ( let i = 0; i < 12; i++ ) await Promise.resolve();
 };
+
+test( 'practice uses the shared button classes while preserving its public hooks', async () => {
+	const buttonClasses = {
+		primary: buttonClass( { variant: 'primary' } ),
+		secondary: buttonClass(),
+		tertiary: buttonClass( { variant: 'tertiary', size: 'sm' } ),
+	};
+	const f = fixture( false, null, { can_skip: true }, null, {
+		buttonClasses,
+	} );
+	f.button( 'Start' ).events.click();
+	await settle();
+	for ( const [ button, variant, hook ] of [
+		[ f.button( 'Check' ), 'primary', 'ohmylms-button' ],
+		[ f.button( 'Skip' ), 'secondary', 'ohmylms-practice-skip' ],
+		[ f.button( 'Start over' ), 'tertiary', 'ohmylms-practice-restart' ],
+	] ) {
+		assert.ok( button, variant );
+		assert.ok( button.classList.contains( hook ), hook );
+		for ( const name of buttonClasses[ variant ].split( ' ' ) )
+			assert.ok( button.classList.contains( name ), name );
+	}
+} );
 
 test( 'practice entry does not start an attempt; checking is single-flight and Next uses the server state', async () => {
 	const f = fixture();

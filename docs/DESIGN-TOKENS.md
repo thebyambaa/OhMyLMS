@@ -61,7 +61,59 @@ design-system stylesheet. Migrate old buttons feature by feature and delete thei
 The full guide to using these tokens and components, with the planned component list, is `docs/DESIGN-LANGUAGE.md`.
 The visual gallery and its screenshot tests are `tests/browser/ui-gallery.spec.cjs`.
 
-## Dark theme tokens
+## Input and Select
+
+`Input` (`assets/src/ui/Input.jsx`) and `Select` (`Select.jsx`) render native controls inside an
+`oml-field` wrapper. PHP uses `Ui::input( $args )` and `Ui::select( $args )`; both enqueue `oml-ui.css`.
+The pure helpers `inputClass()` / `selectClass()` in `controls.mjs` match PHP's `input_class()` /
+`select_class()` and are covered by the component class-name parity test. When using a class helper
+directly, keep the `oml-field` wrapper so styles outrank native WordPress form defaults.
+
+```jsx
+import { Input } from '../../ui/Input';
+import { Select } from '../../ui/Select';
+
+<Input label="Email" name="email" type="email" required
+    help="Use your school email." error={ emailError }
+    value={ email } onChange={ event => setEmail( event.target.value ) } />
+<Select label="Subject" name="subject" placeholder="Choose a subject" required
+    options={ [ { value: 'math', label: 'Mathematics' } ] }
+    value={ subject } onChange={ event => setSubject( event.target.value ) } />
+```
+
+```php
+echo \OhMyLMS\Design\Ui::input( array(
+    'label' => __( 'Email', 'ohmylms' ), 'name' => 'email', 'type' => 'email',
+    'required' => true, 'help' => __( 'Use your school email.', 'ohmylms' ),
+    'error' => $email_error, 'value' => $email,
+) );
+```
+
+- `size` is `sm`, `md` (default) or `lg`; unknown values use `md`. Input types are text, email, number,
+  password, search, tel, url, date, datetime-local, month, time and week; unsupported types use text.
+- `label`, `help` and `error` are text. A supplied error implies `invalid` and `aria-invalid="true"`.
+  Native `required`, disabled, read-only, browser validation and form submission remain intact.
+- IDs are optional: React uses `useId()`, PHP uses `wp_unique_id()`. Labels target the control ID;
+  generated help/error IDs merge with the caller's `aria-describedby` without duplicates. Without a
+  visible label, supply `aria-label` or `aria-labelledby`. The required marker is hidden from assistive
+  technology because the native `required` attribute supplies that state.
+- React forwards refs and native input/select props, including `value` / `defaultValue` and events.
+  PHP accepts `attrs` for native attributes and `aria-*` / `data-*`; values are escaped and event
+  handler attributes are rejected. Extra control classes use React `className` / PHP `class`; wrapper
+  classes use `fieldClassName` / `field_class`. PHP's native read-only flag is `readonly`.
+- Select options are `{value,label,disabled}` objects. PHP `value` selects the matching option;
+  `multiple` accepts an array. React also accepts native option/optgroup children. A placeholder adds
+  an empty option to a single select; multiple selects omit it. A locked select uses `disabled`, since
+  HTML does not define a read-only select. Native list size can be set through PHP `attrs['size']`.
+- Controls read `--oml-color-scheme` (`light` / `dark`) alongside the color tokens, so native picker
+  chrome follows explicit themes even when the device preference differs. Focus uses `--oml-focus`;
+  errors use `--oml-danger`; disabled/read-only controls use subtle/muted tokens. Reduced motion
+  removes their transitions.
+
+The gallery has learner/admin control sections; `tests/browser/ui-controls.spec.cjs` also exercises
+the authored React components with WordPress's React runtime, native form data and light/dark/system.
+
+## Dark theme token output
 
 `DesignSystem::dark_variables()` returns overrides for the same names, and `Tokens::frontend_dark_css()`
 emits them for `[data-theme="dark"]` and, under `prefers-color-scheme: dark`, `[data-theme="system"]`.

@@ -54,8 +54,38 @@ class AdminAssets extends Assets {
 			'dependencies' => array( 'react', 'react-dom' ),
 			'version'      => OHMYLMS_VERSION,
 		);
+		$vendor_packages    = array();
+		foreach ( array( 'charts', 'emotion', 'email' ) as $package ) {
+			$entry_name                  = 'email' === $package ? 'email-packages' : 'vendor-' . $package;
+			$asset_file                  = OHMYLMS_DIR . '/' . $editor_directory . '/' . $entry_name . '.asset.php';
+			$vendor_packages[ $package ] = is_file( $asset_file ) ? require $asset_file : array(
+				'dependencies' => 'email' === $package ? array( 'react', 'react-dom' ) : array( 'react', 'react-jsx-runtime' ),
+				'version'      => OHMYLMS_VERSION,
+			);
+		}
 
 		$scripts = array(
+			'ohmylms-email-packages'   => array(
+				'src'       => self::get_asset_url( $editor_directory . '/email-packages.js' ),
+				'version'   => $vendor_packages['email']['version'],
+				'deps'      => $vendor_packages['email']['dependencies'],
+				'in_footer' => true,
+				'screens'   => array( 'toplevel_page_ohmylms' ),
+			),
+			'ohmylms-vendor-charts'    => array(
+				'src'       => self::get_asset_url( $editor_directory . '/vendor-charts.js' ),
+				'version'   => $vendor_packages['charts']['version'],
+				'deps'      => $vendor_packages['charts']['dependencies'],
+				'in_footer' => true,
+				'screens'   => array( 'toplevel_page_ohmylms' ),
+			),
+			'ohmylms-vendor-emotion'   => array(
+				'src'       => self::get_asset_url( $editor_directory . '/vendor-emotion.js' ),
+				'version'   => $vendor_packages['emotion']['version'],
+				'deps'      => $vendor_packages['emotion']['dependencies'],
+				'in_footer' => true,
+				'screens'   => array( 'toplevel_page_ohmylms' ),
+			),
 			'ohmylms-editor-tiptap'    => array(
 				'src'       => self::get_asset_url( $editor_directory . '/editor-tiptap.js' ),
 				'version'   => $runtime_asset['version'],
@@ -86,8 +116,8 @@ class AdminAssets extends Assets {
 			),
 			'ohmylms-chartjs'          => array(
 				'src'       => self::get_asset_url( 'assets/dist/vendors/chartjs' . $suffix . '.js' ),
-				'version'   => OHMYLMS_VERSION,
-				'deps'      => array( 'ohmylms-vendor' ),
+				'version'   => OHMYLMS_VERSION . '.' . filemtime( OHMYLMS_DIR . '/assets/dist/vendors/chartjs.js' ),
+				'deps'      => array( 'ohmylms-vendor', 'ohmylms-vendor-charts' ),
 				'in_footer' => true,
 				'screens'   => array( 'toplevel_page_ohmylms' ),
 			),
@@ -100,14 +130,14 @@ class AdminAssets extends Assets {
 			),
 			'ohmylms-emotion'          => array(
 				'src'       => self::get_asset_url( 'assets/dist/vendors/emotion' . $suffix . '.js' ),
-				'version'   => OHMYLMS_VERSION,
-				'deps'      => array( 'ohmylms-vendor' ),
+				'version'   => OHMYLMS_VERSION . '.' . filemtime( OHMYLMS_DIR . '/assets/dist/vendors/emotion.js' ),
+				'deps'      => array( 'ohmylms-vendor', 'ohmylms-vendor-emotion' ),
 				'in_footer' => true,
 				'screens'   => array( 'toplevel_page_ohmylms' ),
 			),
 			'ohmylms'                  => array(
 				'src'       => self::get_asset_url( 'assets/dist/admin/ohmylms' . $suffix . '.js' ),
-				'deps'      => array( 'wp-element', 'wp-i18n', 'wp-components', 'wp-api-fetch', 'ohmylms-structure-client', 'ohmylms-vendor', 'ohmylms-chartjs', 'ohmylms-editor', 'ohmylms-emotion' ),
+				'deps'      => array( 'wp-element', 'wp-i18n', 'wp-components', 'wp-api-fetch', 'ohmylms-structure-client', 'ohmylms-vendor', 'ohmylms-chartjs', 'ohmylms-editor', 'ohmylms-emotion', 'ohmylms-email-packages' ),
 				'version'   => OHMYLMS_VERSION . '.' . filemtime( OHMYLMS_DIR . '/assets/dist/admin/ohmylms' . $suffix . '.js' ),
 				'in_footer' => true,
 				'screens'   => array( 'toplevel_page_ohmylms' ),

@@ -8,6 +8,77 @@ buildAdminStyles( root, root );
 const manifest = JSON.parse(
 	fs.readFileSync( path.join( root, 'assets/src/manifest.json' ), 'utf8' )
 );
+for ( const suffix of [ '.js', '.js.map', '.asset.php' ] ) {
+	const name = `email-packages${ suffix }`;
+	fs.copyFileSync(
+		path.join( root, 'build/sdk', name ),
+		path.join( root, 'assets/dist/admin', name )
+	);
+}
+for ( const packageName of [ 'charts', 'emotion' ] ) {
+	for ( const suffix of [ '.js', '.js.map', '.asset.php' ] ) {
+		const name = `vendor-${ packageName }${ suffix }`;
+		fs.copyFileSync(
+			path.join( root, 'build/sdk', name ),
+			path.join( root, 'assets/dist/admin', name )
+		);
+	}
+	const noticeName = `vendor-${ packageName }.js.LICENSE.txt`;
+	const noticePath = path.join( root, 'build/sdk', noticeName );
+	if ( fs.existsSync( noticePath ) )
+		fs.copyFileSync(
+			noticePath,
+			path.join( root, 'assets/dist/admin', noticeName )
+		);
+	const map = JSON.parse(
+		fs.readFileSync(
+			path.join( root, 'build/sdk', `vendor-${ packageName }.js.map` ),
+			'utf8'
+		)
+	);
+	const packages = new Set(
+		map.sources.flatMap( ( source ) => {
+			const name = source.split( 'node_modules/' )[ 1 ];
+			return name
+				? [
+						name
+							.split( '/' )
+							.slice( 0, name.startsWith( '@' ) ? 2 : 1 )
+							.join( '/' ),
+					]
+				: [];
+		} )
+	);
+	const notices = [ ...packages ].sort().map( ( name ) => {
+		const directory = path.join( root, 'node_modules', name );
+		const metadata = JSON.parse(
+			fs.readFileSync( path.join( directory, 'package.json' ), 'utf8' )
+		);
+		const licenses = fs
+			.readdirSync( directory )
+			.filter( ( file ) => /^license(?:\.|$)/i.test( file ) );
+		if ( ! licenses.length )
+			throw new Error( `Missing vendor license: ${ name }` );
+		return `${ name } ${ metadata.version } (${ metadata.license })\n${ licenses.map( ( file ) => fs.readFileSync( path.join( directory, file ), 'utf8' ) ).join( '\n' ) }`;
+	} );
+	fs.writeFileSync(
+		path.join(
+			root,
+			'assets/dist/admin',
+			`vendor-${ packageName }.LICENSES.txt`
+		),
+		notices.join( '\n\n' )
+	);
+}
+for ( const packageName of [ 'chartjs', 'emotion' ] ) {
+	for ( const suffix of [ '.js', '.js.map' ] ) {
+		const name = packageName + suffix;
+		fs.copyFileSync(
+			path.join( root, 'build/assets/dist/vendors', name ),
+			path.join( root, 'assets/dist/vendors', name )
+		);
+	}
+}
 for ( const retired of manifest.retiredAssets || [] ) {
 	for ( const suffix of [ '', '.map' ] ) {
 		const target = path.resolve( root, retired + suffix );
@@ -174,7 +245,9 @@ const currentChunks = new Set( fs.readdirSync( sourceChunks ) );
 for ( const entry of fs.readdirSync( targetChunks, { withFileTypes: true } ) ) {
 	if (
 		entry.isFile() &&
-		/^[\w-]+\.[a-f0-9]{12}\.js(?:\.map)?$/.test( entry.name ) &&
+		/^[\w-]+\.[a-f0-9]{12}\.js(?:\.map|\.LICENSE\.txt)?$/.test(
+			entry.name
+		) &&
 		! currentChunks.has( entry.name )
 	) {
 		fs.unlinkSync( path.join( targetChunks, entry.name ) );
@@ -182,6 +255,75 @@ for ( const entry of fs.readdirSync( targetChunks, { withFileTypes: true } ) ) {
 }
 // Async imports resolve relative to extensions.js in both shipped and opt-in builds.
 fs.cpSync( sourceChunks, targetChunks, { recursive: true } );
+// Resolve nested npm packages from the actual lazy bundle's source maps.
+const emailPackageDirectories = new Set();
+for ( const name of fs
+	.readdirSync( sourceChunks )
+	.filter( ( file ) => file.endsWith( '.js.map' ) ) ) {
+	const map = JSON.parse(
+		fs.readFileSync( path.join( sourceChunks, name ), 'utf8' )
+	);
+	if (
+		! map.sources.some( ( source ) =>
+			/node_modules\/(?:@arco-design\/web-react|mjml-browser)\//.test(
+				source
+			)
+		)
+	)
+		continue;
+	for ( const source of map.sources ) {
+		const start = source.indexOf( 'node_modules/' );
+		if ( start < 0 ) continue;
+		const segments = source.slice( start ).split( '/' );
+		const last = segments.lastIndexOf( 'node_modules' );
+		const count = segments[ last + 1 ].startsWith( '@' ) ? 2 : 1;
+		emailPackageDirectories.add(
+			segments.slice( 0, last + 1 + count ).join( '/' )
+		);
+	}
+}
+if ( ! emailPackageDirectories.has( 'node_modules/mjml-browser' ) )
+	throw new Error( 'Missing lazy npm MJML bundle' );
+const emailNotices = [ ...emailPackageDirectories ]
+	.sort()
+	.map( ( directory ) => {
+		const location = path.join( root, directory );
+		const metadata = JSON.parse(
+			fs.readFileSync( path.join( location, 'package.json' ), 'utf8' )
+		);
+		const files = fs
+			.readdirSync( location )
+			.filter( ( file ) => /^licen[cs]e(?:[.\-_]|$)/i.test( file ) );
+		const licenses = files.map( ( file ) =>
+			fs.readFileSync( path.join( location, file ), 'utf8' )
+		);
+		if ( ! licenses.length && metadata.name === 'mjml-browser' )
+			licenses.push(
+				fs.readFileSync(
+					path.join( root, 'tools/licenses/mjml-MIT.txt' ),
+					'utf8'
+				)
+			);
+		// Upstream number-precision publishes only an MIT declaration in README/package.json.
+		if (
+			! licenses.length &&
+			metadata.name === 'number-precision' &&
+			metadata.license === 'MIT'
+		) {
+			licenses.push(
+				`Upstream declares MIT in package.json and README.md. Author: ${ metadata.author }. Source: ${ metadata.homepage }. No standalone license text is distributed upstream.`
+			);
+		}
+		if ( ! licenses.length )
+			throw new Error(
+				`Missing email package license: ${ metadata.name }`
+			);
+		return `${ metadata.name } ${ metadata.version } (${ metadata.license })\n${ licenses.join( '\n' ) }`;
+	} );
+fs.writeFileSync(
+	path.join( root, 'assets/dist/admin/email-packages.LICENSES.txt' ),
+	emailNotices.join( '\n\n' )
+);
 console.log( 'Updated shipped admin app and extension SDK.' );
 const syntaxNotices = [
 	[ 'lowlight', 'license' ],

@@ -184,7 +184,7 @@ final class Frontend {
 		if ( ! self::enabled() || ! is_user_logged_in() ) {
 			return ''; }
 		Evidence::process( 50 );
-		wp_enqueue_style( 'ohmylms-practice', plugins_url( 'assets/css/practice.css', OHMYLMS_FILE ), array(), OHMYLMS_VERSION );
+		wp_enqueue_style( 'ohmylms-practice', plugins_url( 'assets/css/practice.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/practice.css' ) );
 		$student = get_current_user_id();
 		$skills  = Evidence::summary( $student );
 		// One subject for the whole page; skill_map_subject is the older name of the same choice.
@@ -537,6 +537,7 @@ final class Frontend {
 	 * @param array $strings Words that replace the practice defaults.
 	 */
 	public static function runner_assets( array $strings = array() ) {
+		\OhMyLMS\Design\Ui::enqueue();
 		// The inline-check script provides the shared guest credential and local history.
 		if ( ! wp_script_is( 'ohmylms-inline-check', 'enqueued' ) ) {
 			wp_enqueue_script( 'ohmylms-inline-check', plugins_url( 'assets/js/inline-check.js', OHMYLMS_FILE ), array(), OHMYLMS_VERSION, true );
@@ -550,8 +551,18 @@ final class Frontend {
 			'ohmylms-practice',
 			'ohmylmsPractice',
 			Inline::client_config() + array(
-				'studentId'    => get_current_user_id(),
-				'practiceI18n' => array_merge(
+				'studentId'     => get_current_user_id(),
+				'buttonClasses' => array(
+					'primary'   => \OhMyLMS\Design\Ui::button_class( array( 'variant' => 'primary' ) ),
+					'secondary' => \OhMyLMS\Design\Ui::button_class(),
+					'tertiary'  => \OhMyLMS\Design\Ui::button_class(
+						array(
+							'variant' => 'tertiary',
+							'size'    => 'sm',
+						)
+					),
+				),
+				'practiceI18n'  => array_merge(
 					array(
 						'start'             => __( 'Start practice', 'ohmylms' ),
 						'resume'            => __( 'Resume practice', 'ohmylms' ),
@@ -689,6 +700,7 @@ final class Frontend {
 		$skill = (int) get_query_var( 'ohmylms_practice' );
 		if ( ! $skill || ! self::enabled() ) {
 			return; }
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Sanitized, read-only view choices; practice session writes require API authorization.
 		$course = isset( $_GET['learning_course'] ) ? absint( $_GET['learning_course'] ) : 0;
 		$args   = array(
 			'skill'  => $skill,
@@ -698,6 +710,7 @@ final class Frontend {
 			$args['style'] = sanitize_key( wp_unslash( $_GET['style'] ) ); }
 		if ( isset( $_GET['items'] ) ) {
 			$args['items'] = absint( $_GET['items'] ); }
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 		$html = self::practice( $args );
 		if ( '' === $html ) {
 			return; }

@@ -14,7 +14,6 @@ import * as gapcursor from '@tiptap/pm/gapcursor';
 import * as dropcursor from '@tiptap/pm/dropcursor';
 import * as starterKit from '@tiptap/starter-kit';
 import * as suggestion from '@tiptap/suggestion';
-import * as table from '@tiptap/extension-table';
 import * as tableHeader from '@tiptap/extension-table-header';
 import * as tableRow from '@tiptap/extension-table-row';
 import * as superscript from '@tiptap/extension-superscript';
@@ -31,7 +30,6 @@ import * as orderedList from '@tiptap/extension-ordered-list';
 import * as taskList from '@tiptap/extension-task-list';
 import * as paragraph from '@tiptap/extension-paragraph';
 import * as codeBlockLowlight from '@tiptap/extension-code-block-lowlight';
-import * as textAlignPackage from '@tiptap/extension-text-align';
 import * as taskItem from '@tiptap/extension-task-item';
 import * as dropcursorExtension from '@tiptap/extension-dropcursor';
 import * as documentExtension from '@tiptap/extension-document';
@@ -46,16 +44,7 @@ import * as bulletList from '@tiptap/extension-bullet-list';
 import * as blockquote from '@tiptap/extension-blockquote';
 import * as codeBlock from '@tiptap/extension-code-block';
 import { iconExports } from './icons';
-
-// Preserve the recovered schema's default, which differs from current v2 defaults.
-const alignedText = textAlignPackage.default.configure( {
-	defaultAlignment: 'left',
-} );
-const textAlign = {
-	...textAlignPackage,
-	default: alignedText,
-	TextAlign: alignedText,
-};
+import { table, textAlign } from './compatibility';
 const modules = {
 	core,
 	react,

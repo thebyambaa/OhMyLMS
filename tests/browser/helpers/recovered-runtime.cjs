@@ -12,7 +12,9 @@ async function harness(
 	page,
 	failFirst = false,
 	baselineVendor = false,
-	baselineEditor = false
+	baselineEditor = false,
+	baselinePackages = false,
+	baselineEmail = false
 ) {
 	// Run the shipped Webpack loader, replacing only application startup in memory.
 	// No login or database is needed to exercise real lazy chunks and real UI libraries.
@@ -60,21 +62,50 @@ async function harness(
 				contentType: 'text/html',
 				body: `<!doctype html><html><head><meta charset="utf-8"></head><body><div id="app"></div>
         <script src="/react.js"></script><script src="/react-dom.js"></script>
+        <script src="/react-jsx-runtime.js"></script>
         <script>window.wp={element:{...React,...ReactDOM}};</script>
+        <script src="/plugin/assets/dist/admin/vendor-charts.js"></script>
+        <script src="/plugin/assets/dist/admin/vendor-emotion.js"></script>
+        <script src="/plugin/assets/dist/admin/email-packages.js"></script>
         <script src="/plugin/assets/dist/admin/editor-lowlight.js"></script>
         <script src="/plugin/assets/dist/admin/editor-tiptap.js"></script>
         <script src="/plugin/assets/dist/vendors/vendors.js"></script>
         <script src="/plugin/assets/dist/vendors/editor.js"></script>
+        <script src="/plugin/assets/dist/vendors/chartjs.js"></script>
         <script src="/plugin/assets/dist/vendors/emotion.js"></script>
         <script src="/plugin/assets/dist/admin/ohmylms.js"></script>
         </body></html>`,
 			} );
-		if ( [ '/react.js', '/react-dom.js' ].includes( url.pathname ) )
+		if (
+			[ '/react.js', '/react-dom.js', '/react-jsx-runtime.js' ].includes(
+				url.pathname
+			)
+		)
 			return route.fulfill( {
 				contentType: 'application/javascript',
 				path: path.join( wordpress, url.pathname.slice( 1 ) ),
 			} );
+		if (
+			baselinePackages &&
+			/\/vendors\/(chartjs|emotion)\.js$/.test( url.pathname )
+		)
+			return route.fulfill( {
+				path: path.join(
+					root,
+					'build/parity',
+					url.pathname.replace( /^\/plugin\//, '' )
+				),
+				contentType: 'application/javascript; charset=utf-8',
+			} );
 		requests.push( url.pathname + url.search );
+		if ( baselineEmail && url.pathname.endsWith( '/chunks/355.js' ) )
+			return route.fulfill( {
+				path: path.join(
+					root,
+					'build/parity/assets/dist/chunks/355.js'
+				),
+				contentType: 'application/javascript; charset=utf-8',
+			} );
 		if ( url.pathname.endsWith( '/admin/ohmylms.js' ) )
 			return route.fulfill( {
 				contentType: 'application/javascript; charset=utf-8',
@@ -85,17 +116,23 @@ async function harness(
 				url.pathname.endsWith( '/vendors/vendors.js' ) ) ||
 			( baselineEditor && url.pathname.endsWith( '/vendors/editor.js' ) )
 		) {
-			const baselineFile = path.join( root,
-				`build/parity/assets/dist/vendors/${ baselineEditor && url.pathname.endsWith( '/editor.js' ) ? 'editor' : 'vendors' }.js` );
+			const baselineFile = path.join(
+				root,
+				`build/parity/assets/dist/vendors/${ baselineEditor && url.pathname.endsWith( '/editor.js' ) ? 'editor' : 'vendors' }.js`
+			);
 			let body = fs.readFileSync( baselineFile, 'utf8' );
 			if ( baselineEditor && baselineFile.endsWith( 'vendors.js' ) ) {
 				// Preserve the pre-migration production deduplication adapter.
-				const { adaptVendors } = await import( '../../../tools/vendor-adapters.mjs' );
+				const { adaptVendors } =
+					await import( '../../../tools/vendor-adapters.mjs' );
 				const baseline = parse( body );
 				adaptVendors( baseline );
 				body = generate( baseline, { compact: true } ).code;
 			}
-			return route.fulfill( { body, contentType: 'application/javascript; charset=utf-8' } );
+			return route.fulfill( {
+				body,
+				contentType: 'application/javascript; charset=utf-8',
+			} );
 		}
 		if ( url.pathname.endsWith( '/chunks/355.js' ) && failures-- > 0 )
 			return route.abort();

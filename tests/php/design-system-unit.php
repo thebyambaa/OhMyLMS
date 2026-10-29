@@ -79,6 +79,9 @@ foreach ( array( '--oml-primary:#1865f2;', '--oml-on-primary:#ffffff;', '--oml-r
 }
 $body = substr( $css, strlen( 'body.oml-ds{' ), -1 );
 foreach ( array_filter( explode( ';', $body ) ) as $declaration ) {
+	if ( 1 === preg_match( '/^--oml-color-scheme:(light|dark)$/', $declaration ) ) {
+		continue;
+	}
 	check( 1 === preg_match( '/^--[a-z0-9-]+:(#[0-9a-f]{6}|[0-9]+px|[0-9]+, [0-9]+, [0-9]+|[0-9]+(\.[0-9]+)?|[0-9]+ms|0 [0-9]+px [0-9]+px rgba\([0-9]+, [0-9]+, [0-9]+, 0\.[0-9]+\))$/', $declaration ), "declaration is a plain variable: $declaration" );
 }
 $hostile = DS::css( array( 'colors' => array( 'primary' => '#fff;}body{display:none', 'link' => 'red;x:y' ), 'button_radius' => '4px;}x{', 'density' => '</style>' ) );
@@ -127,5 +130,10 @@ $learner_css                             = \OhMyLMS\Design\Tokens::frontend_css(
 check( false !== strpos( $learner_css, '[data-theme="dark"],body:has(.oml-player[data-theme="dark"]){' ) && false !== strpos( $learner_css, '@media (prefers-color-scheme:dark){[data-theme="system"],body:has(.oml-player[data-theme="system"]){' ), 'learner css has dark and system rules' );
 check( false !== strpos( $learner_css, '--oml-surface:' . DS::DARK['surface'] . ';' ), 'dark rule sets the dark surface' );
 unset( $options['ohmylms_primary_color_scheme'] );
+
+$control_light = DS::variables( DS::PRESETS['classic']['colors'], 4, 'comfortable' );
+$control_dark  = DS::dark_variables( DS::PRESETS['classic']['colors'] );
+check( 'light' === $control_light['oml-color-scheme'], 'native controls use the light color scheme' );
+check( 'dark' === $control_dark['oml-color-scheme'], 'native controls follow the dark token scope' );
 
 echo "Design system checks passed: $checks\n";

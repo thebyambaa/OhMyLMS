@@ -20,6 +20,8 @@ final class Ui {
 	const BUTTON_VARIANTS = array( 'primary', 'secondary', 'tertiary', 'danger' );
 	const BUTTON_SIZES    = array( 'sm', 'md', 'lg' );
 	const BADGE_TONES     = array( 'primary', 'success', 'warning', 'danger', 'info' );
+	const CONTROL_SIZES   = array( 'sm', 'md', 'lg' );
+	const INPUT_TYPES     = array( 'text', 'email', 'number', 'password', 'search', 'tel', 'url', 'date', 'datetime-local', 'month', 'time', 'week' );
 
 	/** Register the stylesheet on admin and learner pages. */
 	public static function init() {
@@ -228,5 +230,168 @@ final class Ui {
 		self::enqueue();
 		$percent = self::clamp_percent( $value );
 		return '<div class="' . esc_attr( self::progress_class( $args ) ) . '" role="progressbar" aria-label="' . esc_attr( $label ) . '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' . $percent . '"><span class="oml-progress-bar" style="width:' . $percent . '%"></span></div>';
+	}
+
+	/**
+	 * Input classes; matches assets/src/ui/controls.mjs.
+	 *
+	 * @param array $args size, invalid, error, class.
+	 * @return string
+	 */
+	public static function input_class( $args = array() ) {
+		return self::control_class( 'input', $args );
+	}
+
+	/**
+	 * Select classes; matches assets/src/ui/controls.mjs.
+	 *
+	 * @param array $args size, invalid, error, class.
+	 * @return string
+	 */
+	public static function select_class( $args = array() ) {
+		return self::control_class( 'select', $args );
+	}
+
+	/**
+	 * Shared control class names, keeping unknown sizes at the default.
+	 *
+	 * @param string $kind input or select.
+	 * @param array  $args Presentation arguments.
+	 * @return string
+	 */
+	private static function control_class( $kind, $args ) {
+		$classes = array( 'oml-control', 'oml-' . $kind );
+		$size    = $args['size'] ?? 'md';
+		if ( 'md' !== $size && in_array( $size, self::CONTROL_SIZES, true ) ) {
+			$classes[] = 'oml-control-' . $size;
+		}
+		if ( ! empty( $args['invalid'] ) || ( isset( $args['error'] ) && '' !== (string) $args['error'] ) ) {
+			$classes[] = 'oml-control-invalid';
+		}
+		if ( ! empty( $args['class'] ) ) {
+			$classes[] = $args['class'];
+		}
+		return implode( ' ', $classes );
+	}
+
+	/**
+	 * Render a native text-like input, including its label and descriptions.
+	 *
+	 * @param array $args id, label, help, error, size, invalid, type, name, value, placeholder,
+	 *                    required, disabled, readonly, class, field_class, attrs.
+	 * @return string Escaped HTML. Without a visible label, provide attrs aria-label/aria-labelledby.
+	 */
+	public static function input( $args = array() ) {
+		return self::control( 'input', $args );
+	}
+
+	/**
+	 * Render a native select, including its label and descriptions.
+	 *
+	 * @param array $args Same field arguments as input(), plus options (value, label, disabled),
+	 *                    multiple and value (a scalar, or an array for a multiple select).
+	 * @return string Escaped HTML.
+	 */
+	public static function select( $args = array() ) {
+		return self::control( 'select', $args );
+	}
+
+	/**
+	 * Render only known native attributes and aria-/data- extensions, never event handlers.
+	 *
+	 * @param array $attributes Native control attributes.
+	 * @return string Escaped attribute markup.
+	 */
+	private static function control_attributes( $attributes ) {
+		$allowed = array( 'id', 'class', 'type', 'name', 'value', 'placeholder', 'disabled', 'readonly', 'required', 'multiple', 'autofocus', 'autocomplete', 'min', 'max', 'step', 'minlength', 'maxlength', 'pattern', 'inputmode', 'form', 'title', 'spellcheck', 'size' );
+		$boolean = array( 'disabled', 'readonly', 'required', 'multiple', 'autofocus' );
+		$html    = '';
+		foreach ( $attributes as $name => $value ) {
+			if ( ! in_array( $name, $allowed, true ) && ! preg_match( '/^(aria|data)-[a-z0-9_-]+$/', $name ) ) {
+				continue;
+			}
+			if ( in_array( $name, $boolean, true ) ) {
+				if ( $value ) {
+					$html .= ' ' . $name;
+				}
+				continue;
+			}
+			if ( null !== $value && is_scalar( $value ) ) {
+				$html .= ' ' . $name . '="' . esc_attr( is_bool( $value ) ? ( $value ? 'true' : 'false' ) : $value ) . '"';
+			}
+		}
+		return $html;
+	}
+
+	/**
+	 * Build a control and one associated field wrapper. Descriptions are plain text.
+	 *
+	 * @param string $kind input or select.
+	 * @param array  $args Field and native control arguments.
+	 * @return string Escaped field markup.
+	 */
+	private static function control( $kind, $args ) {
+		self::enqueue();
+		$attributes = (array) ( $args['attrs'] ?? array() );
+		foreach ( array( 'id', 'name', 'placeholder', 'disabled', 'readonly', 'required', 'multiple', 'autofocus', 'autocomplete', 'min', 'max', 'step', 'minlength', 'maxlength', 'pattern', 'inputmode' ) as $name ) {
+			if ( array_key_exists( $name, $args ) ) {
+				$attributes[ $name ] = $args[ $name ];
+			}
+		}
+		$id                  = ! empty( $attributes['id'] ) ? (string) $attributes['id'] : wp_unique_id( 'oml-' . $kind . '-' );
+		$help                = (string) ( $args['help'] ?? '' );
+		$error               = (string) ( $args['error'] ?? '' );
+		$args['invalid']     = ! empty( $args['invalid'] ) || '' !== $error || in_array( $attributes['aria-invalid'] ?? false, array( true, 'true' ), true );
+		$attributes['id']    = $id;
+		$attributes['class'] = self::control_class( $kind, $args );
+		if ( $args['invalid'] ) {
+			$attributes['aria-invalid'] = 'true';
+		}
+		$descriptions = preg_split( '/\s+/', trim( (string) ( $attributes['aria-describedby'] ?? '' ) ), -1, PREG_SPLIT_NO_EMPTY );
+		if ( '' !== $help ) {
+			$descriptions[] = $id . '-help';
+		}
+		if ( '' !== $error ) {
+			$descriptions[] = $id . '-error';
+		}
+		if ( $descriptions ) {
+			$attributes['aria-describedby'] = implode( ' ', array_unique( $descriptions ) );
+		}
+		if ( 'input' === $kind ) {
+			$attributes['type']  = in_array( $args['type'] ?? 'text', self::INPUT_TYPES, true ) ? ( $args['type'] ?? 'text' ) : 'text';
+			$attributes['value'] = $args['value'] ?? '';
+			$control             = '<input' . self::control_attributes( $attributes ) . '>';
+		} else {
+			unset( $attributes['placeholder'], $attributes['value'], $attributes['type'], $attributes['readonly'] );
+			$options = (array) ( $args['options'] ?? array() );
+			if ( isset( $args['placeholder'] ) && '' !== (string) $args['placeholder'] && empty( $attributes['multiple'] ) ) {
+				array_unshift(
+					$options,
+					array(
+						'value' => '',
+						'label' => $args['placeholder'],
+					)
+				);
+			}
+			$selected = array_map( 'strval', (array) ( $args['value'] ?? array() ) );
+			$control  = '<select' . self::control_attributes( $attributes ) . '>';
+			foreach ( $options as $option ) {
+				$value    = (string) ( $option['value'] ?? '' );
+				$control .= '<option value="' . esc_attr( $value ) . '"' . ( in_array( $value, $selected, true ) ? ' selected' : '' ) . ( ! empty( $option['disabled'] ) ? ' disabled' : '' ) . '>' . esc_html( $option['label'] ?? '' ) . '</option>';
+			}
+			$control .= '</select>';
+		}
+		$html = '<div class="' . esc_attr( trim( 'oml-field ' . ( $args['field_class'] ?? '' ) ) ) . '">';
+		if ( isset( $args['label'] ) && '' !== (string) $args['label'] ) {
+			$html .= '<label class="oml-field-label" for="' . esc_attr( $id ) . '">' . esc_html( $args['label'] ) . ( ! empty( $attributes['required'] ) ? '<span class="oml-field-required" aria-hidden="true"> *</span>' : '' ) . '</label>';
+		}
+		$html .= $control;
+		if ( '' !== $help ) {
+			$html .= '<p class="oml-field-help" id="' . esc_attr( $id . '-help' ) . '">' . esc_html( $help ) . '</p>';
+		}
+		if ( '' !== $error ) {
+			$html .= '<p class="oml-field-error" id="' . esc_attr( $id . '-error' ) . '" role="alert">' . esc_html( $error ) . '</p>';
+		}
+		return $html . '</div>';
 	}
 }

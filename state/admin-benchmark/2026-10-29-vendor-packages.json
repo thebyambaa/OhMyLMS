@@ -1,0 +1,179 @@
+{
+  "bundles": [
+    {
+      "file": "assets/dist/admin/ohmylms.js",
+      "bytes": 3207099,
+      "gzipBytes": 532350
+    },
+    {
+      "file": "assets/dist/admin/extensions.js",
+      "bytes": 201203,
+      "gzipBytes": 58196
+    },
+    {
+      "file": "assets/dist/vendors/vendors.js",
+      "bytes": 1327572,
+      "gzipBytes": 440687
+    },
+    {
+      "file": "assets/dist/admin/editor-lowlight.js",
+      "bytes": 951353,
+      "gzipBytes": 291150
+    },
+    {
+      "file": "assets/dist/admin/editor-tiptap.js",
+      "bytes": 1054918,
+      "gzipBytes": 289284
+    },
+    {
+      "file": "assets/dist/admin/vendor-charts.js",
+      "bytes": 147573,
+      "gzipBytes": 50910
+    },
+    {
+      "file": "assets/dist/admin/vendor-emotion.js",
+      "bytes": 18447,
+      "gzipBytes": 7336
+    },
+    {
+      "file": "assets/dist/vendors/editor.js",
+      "bytes": 24001,
+      "gzipBytes": 1541
+    },
+    {
+      "file": "assets/dist/vendors/chartjs.js",
+      "bytes": 1094,
+      "gzipBytes": 495
+    },
+    {
+      "file": "assets/dist/vendors/emotion.js",
+      "bytes": 922,
+      "gzipBytes": 394
+    }
+  ],
+  "lazyEmailVendors": [
+    {
+      "id": 3270,
+      "library": "Arco Design React",
+      "source": "modules/dist/vendors/vendors/0-3270.js",
+      "references": [
+        "modules/dist/chunks/355/0-1951.js",
+        "modules/dist/chunks/355/0-18815.js",
+        "modules/dist/chunks/355/0-20600.js",
+        "modules/dist/chunks/355/0-31736.js",
+        "modules/dist/chunks/355/0-37063.js",
+        "modules/dist/chunks/355/0-54387.js",
+        "modules/dist/chunks/355/0-69595.js",
+        "modules/dist/chunks/355/0-85722.js",
+        "modules/dist/chunks/355/0-93012.js"
+      ],
+      "loadedWith": "assets/dist/chunks/355.js"
+    },
+    {
+      "id": 50587,
+      "library": "html2canvas",
+      "source": "modules/dist/vendors/vendors/0-50587.js",
+      "references": [
+        "modules/dist/chunks/355/0-31736.js"
+      ],
+      "loadedWith": "assets/dist/chunks/355.js"
+    },
+    {
+      "id": 44098,
+      "library": "MJML renderer",
+      "source": "modules/dist/vendors/vendors/0-44098.js",
+      "references": [
+        "application/shared/automation-campaign-email-builder.js",
+        "modules/dist/chunks/355/0-31736.js",
+        "modules/dist/chunks/355/0-86840.js",
+        "modules/dist/vendors/vendors/0-49050.js",
+        "modules/dist/vendors/vendors/0-58088.js"
+      ],
+      "loadedWith": "assets/dist/chunks/355.js"
+    },
+    {
+      "id": 47909,
+      "library": "Email designer UI",
+      "source": "modules/dist/vendors/vendors/0-47909.js",
+      "references": [
+        "application/shared/certificate-builder-classic.js",
+        "modules/dist/vendors/vendors/0-17190.js",
+        "modules/dist/vendors/vendors/0-43203.js"
+      ],
+      "loadedWith": "assets/dist/chunks/355.js"
+    },
+    {
+      "id": 58088,
+      "library": "Email editor core",
+      "source": "modules/dist/vendors/vendors/0-58088.js",
+      "references": [
+        "modules/dist/chunks/355/0-1951.js",
+        "modules/dist/chunks/355/0-2420.js",
+        "modules/dist/chunks/355/0-6037.js",
+        "modules/dist/chunks/355/0-12220.js",
+        "modules/dist/chunks/355/0-12317.js",
+        "modules/dist/chunks/355/0-18815.js",
+        "modules/dist/chunks/355/0-20600.js",
+        "modules/dist/chunks/355/0-23358.js",
+        "modules/dist/chunks/355/0-31736.js",
+        "modules/dist/chunks/355/0-34065.js",
+        "modules/dist/chunks/355/0-35277.js",
+        "modules/dist/chunks/355/0-35997.js",
+        "modules/dist/chunks/355/0-37063.js",
+        "modules/dist/chunks/355/0-42163.js",
+        "modules/dist/chunks/355/0-51253.js",
+        "modules/dist/chunks/355/0-53814.js",
+        "modules/dist/chunks/355/0-54387.js",
+        "modules/dist/chunks/355/0-55513.js",
+        "modules/dist/chunks/355/0-57308.js",
+        "modules/dist/chunks/355/0-69595.js",
+        "modules/dist/chunks/355/0-81177.js",
+        "modules/dist/chunks/355/0-85722.js",
+        "modules/dist/chunks/355/0-86840.js",
+        "modules/dist/chunks/355/0-87408.js",
+        "modules/dist/chunks/355/0-87932.js",
+        "modules/dist/chunks/355/0-93012.js",
+        "modules/dist/vendors/vendors/0-17190.js",
+        "modules/dist/vendors/vendors/0-43203.js",
+        "modules/dist/vendors/vendors/0-47909.js"
+      ],
+      "loadedWith": "assets/dist/chunks/355.js"
+    },
+    {
+      "id": 43203,
+      "library": "Email editor exports",
+      "source": "modules/dist/vendors/vendors/0-43203.js",
+      "references": [
+        "application/shared/certificate-template-preview.js",
+        "modules/dist/chunks/355/0-1951.js",
+        "modules/dist/chunks/355/0-6037.js",
+        "modules/dist/chunks/355/0-18815.js",
+        "modules/dist/chunks/355/0-18985.js",
+        "modules/dist/chunks/355/0-20600.js",
+        "modules/dist/chunks/355/0-23358.js",
+        "modules/dist/chunks/355/0-31736.js",
+        "modules/dist/chunks/355/0-34065.js",
+        "modules/dist/chunks/355/0-35277.js",
+        "modules/dist/chunks/355/0-37063.js",
+        "modules/dist/chunks/355/0-54387.js",
+        "modules/dist/chunks/355/0-55513.js",
+        "modules/dist/chunks/355/0-57308.js",
+        "modules/dist/chunks/355/0-69595.js",
+        "modules/dist/chunks/355/0-85722.js",
+        "modules/dist/chunks/355/0-87408.js",
+        "modules/dist/chunks/355/0-87932.js",
+        "modules/dist/chunks/355/0-93012.js"
+      ],
+      "loadedWith": "assets/dist/chunks/355.js"
+    },
+    {
+      "id": 17190,
+      "library": "Email source editor",
+      "source": "modules/dist/vendors/vendors/0-17190.js",
+      "references": [
+        "modules/dist/vendors/vendors/0-47909.js"
+      ],
+      "loadedWith": "assets/dist/chunks/355.js"
+    }
+  ]
+}

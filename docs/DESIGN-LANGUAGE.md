@@ -73,8 +73,9 @@ an element and everything inside it flips; `data-theme="system"` follows the dev
 | Card | `oml-card` + `-flat` `-interactive`, `oml-card-title` | `Card`, `CardTitle` | `Ui::card()` |
 | Badge | `oml-badge` + `-primary` `-success` `-warning` `-danger` `-info` | `Badge` | `Ui::badge()` |
 | Progress | `oml-progress` + `-success`, inner `oml-progress-bar` | `Progress` | `Ui::progress()` |
+| Input/Select | `oml-field`, `oml-control` + `oml-input` / `oml-select`, `oml-control-sm` / `-lg` / `-invalid` | `Input`, `Select` | `Ui::input()`, `Ui::select()` |
 
-Planned next: Input/Select, Alert, Tabs, Modal, Table, EmptyState.
+Planned next: Alert, Tabs, Modal, Table, EmptyState.
 
 ## Adopting it
 
@@ -103,4 +104,8 @@ baselines only when the visual change is intended.
 | Player context shell (`player-context.css`) | Migrated: the shell uses tokens and gets dark mode from them; the quiz and paper canvases stay light behind commented disables. Covered by `tests/browser/dark-theme.spec.cjs` |
 | Student hub (`student-hub.css`) | Migrated: the shell palette is tokens and the hub gets dark mode from them; the accent follows the site brand color unless an admin picks one (Student Home settings, "Use the site brand color"); a school can still set its own. Selected and hero tints, the button edge and the text on the accent derive from the accent, in light and dark. The category and status palette (subject tones, state dots, card tints) and embedded legacy pages stay literal behind commented disables. Covered by `tests/browser/hub-tokens.spec.cjs` |
 | Student dashboard (`student-dashboard.css`) | Migrated: surfaces, shadows and status colors use tokens. The three student-chosen themes (meadow, ocean, sunset) stay literal palettes and look unchanged in light; under the hub's dark theme each theme is retoned through the tokens and keeps its own lightened accent. Medal colors and the picker previews stay literal. Covered by `tests/browser/dashboard-tokens.spec.cjs` |
-| Course and lesson pages, dashboard, practice, student hub, admin screens | Not migrated |
+| Practice, inline checks and skill progress (`practice.css`) | Migrated: chrome, controls, guidance, feedback, rewards, spacing, type and radii use shared tokens; runner actions use the existing shared Button helpers while preserving legacy hooks. Device-only dark overrides were removed; light/dark/system use the same token names. Categorical mastery levels and bronze/silver/gold medals keep fixed, paired palettes behind documented lint exceptions. Covered by `tests/browser/practice-tokens.spec.cjs`; verified on the disposable site's working practice page, including answer feedback and mobile layout |
+| Extended and interactive question chrome (`extended-questions.css`, `interactive.css`) | Migrated: controls, panels, selection, hints, focus, spacing, radii and transitions use tokens; game artwork and light math canvases keep documented palettes. `tests/browser/question-styles-tokens.spec.cjs` covers all theme modes. Verified live on the disposable site: flashcards, expression tiles, light/dark/system and phone layout |
+| Paper (`paper.css`) | Migrated: preview/editor surround and print toolbar use tokens; the standalone print page emits its own token definitions and uses the shared Button helper. Printed ink, light sheets, typography and physical dimensions remain fixed behind documented palette exceptions. Covered in screen and print media by `tests/browser/question-styles-tokens.spec.cjs`, and verified on the live disposable print page |
+| Quiz overview and generic question-stage chrome (`quiz-overview.css`, `question-stage.css`) | Token migration implemented and lint-enforced; quiz stage/prompt/answer palettes remain independent. Covered by `tests/browser/question-styles-tokens.spec.cjs`. Live legacy overview/stage verification remains pending: the legacy editor route did not expose these screens on the current disposable site. Admin dark mode is not enabled by this migration |
+| Course and lesson pages, remaining admin screens | Not migrated |

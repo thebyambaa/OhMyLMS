@@ -59,6 +59,25 @@
 			else if ( key === 'html' ) node.innerHTML = attributes[ key ];
 			else node.setAttribute( key, attributes[ key ] );
 		} );
+		if ( 'button' === tag && config.buttonClasses ) {
+			let variant;
+			if ( node.classList.contains( 'ohmylms-practice-restart' ) ) {
+				variant = 'tertiary';
+			} else if ( node.classList.contains( 'ohmylms-button' ) ) {
+				variant = node.classList.contains( 'outline' )
+					? 'secondary'
+					: 'primary';
+			}
+			if ( variant && config.buttonClasses[ variant ] ) {
+				for ( const className of config.buttonClasses[ variant ].split(
+					' '
+				) ) {
+					if ( className ) {
+						node.classList.add( className );
+					}
+				}
+			}
+		}
 		( children || [] ).forEach( function ( child ) {
 			if ( child ) node.appendChild( child );
 		} );

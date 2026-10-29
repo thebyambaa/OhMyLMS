@@ -94,6 +94,7 @@ test( 'React editor hooks update toolbar state and dynamic icons retain custom p
 				createElement(
 					'button',
 					{
+						onMouseDown: ( event ) => event.preventDefault(),
 						onClick: () =>
 							editor.chain().focus().toggleBold().run(),
 						'aria-pressed': editor?.isActive( 'bold' ) || false,
@@ -114,6 +115,8 @@ test( 'React editor hooks update toolbar state and dynamic icons retain custom p
 		1
 	);
 	await expect( page.locator( 'svg.lucide-arrow-right' ) ).toHaveCount( 1 );
+	await page.locator( '.ProseMirror' ).click();
+	await page.keyboard.press( 'End' );
 	await page.getByRole( 'button', { name: 'Bold', exact: true } ).click();
 	await expect(
 		page.getByRole( 'button', { name: 'Bold', exact: true } )

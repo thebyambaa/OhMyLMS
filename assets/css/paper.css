@@ -1,7 +1,7 @@
 /*
- * Printable exam paper: the editor's paper canvas and the printed questions.
- * Canvas rules are scoped to .is-ohmylms-paper; question rules are shared with the print page.
- */
+	* Printable exam paper: the editor's paper canvas and the printed questions.
+	* Canvas rules are scoped to .is-ohmylms-paper; question rules are shared with the print page.
+	*/
 
 /* Keep the contextual insertion menu beside its question. */
 
@@ -154,9 +154,17 @@
 	column-gap: 8mm;
 }
 
+/*
+	stylelint-disable color-no-hex -- Printed sheets, editor paper and answer-key ink stay light and preserve their physical print contract.
+	*/
+
 .ohmylms-paper-columns.is-flow.has-rule .ohmylms-paper-columns-body {
 	column-rule: 1px solid #8c8f94;
 }
+
+/*
+	stylelint-enable color-no-hex
+	*/
 
 .ohmylms-paper-columns .ohmylms-paper-columns-body > * {
 	margin: 0 0 1.25em;
@@ -183,6 +191,10 @@
 	column-span: all;
 }
 
+/*
+	stylelint-disable color-no-hex -- Printed sheets, editor paper and answer-key ink stay light and preserve their physical print contract.
+	*/
+
 .ohmylms-paper-page-break {
 	position: relative;
 	height: 0;
@@ -190,6 +202,14 @@
 	border-top: 2px dashed #8c8f94;
 	break-after: page;
 }
+
+/*
+	stylelint-enable color-no-hex
+	*/
+
+/*
+	stylelint-disable color-no-hex -- Printed sheets, editor paper and answer-key ink stay light and preserve their physical print contract.
+	*/
 
 .ohmylms-paper-page-break span {
 	position: absolute;
@@ -204,11 +224,19 @@
 	text-transform: uppercase;
 }
 
+/*
+	stylelint-enable color-no-hex
+	*/
+
 .ohmylms-paper-answer-space {
 	-webkit-print-color-adjust: exact;
 	print-color-adjust: exact;
 	height: calc(var(--ohmylms-paper-lines, 6) * 8mm);
 }
+
+/*
+	stylelint-disable color-no-hex -- Printed sheets, editor paper and answer-key ink stay light and preserve their physical print contract.
+	*/
 
 .ohmylms-paper-answer-space.is-lines {
 	background:
@@ -221,6 +249,14 @@
 		);
 }
 
+/*
+	stylelint-enable color-no-hex
+	*/
+
+/*
+	stylelint-disable color-no-hex -- Printed sheets, editor paper and answer-key ink stay light and preserve their physical print contract.
+	*/
+
 .ohmylms-paper-answer-space.is-grid {
 	border: 1px solid #a7aaad;
 	background-image:
@@ -228,6 +264,10 @@
 		linear-gradient(90deg, #c3c4c7 1px, transparent 1px);
 	background-size: 5mm 5mm;
 }
+
+/*
+	stylelint-enable color-no-hex
+	*/
 
 .ohmylms-paper-answer-space.is-blank {
 	box-sizing: border-box;
@@ -237,19 +277,22 @@
 /* Paper canvas in the block editor */
 
 .editor-styles-wrapper.is-ohmylms-paper {
-	padding: 32px 16px 64px;
-	background: #dcdcde;
+	padding: var(--oml-space-6) var(--oml-space-4) var(--oml-space-8);
+	background: var(--oml-background);
 }
 
 /*
- * Scroll sideways rather than clip a sheet wider than the canvas. This outranks the frontend
- * full-width rule in blocks-frontend.css, which hides horizontal overflow on the canvas body.
- */
+	* Scroll sideways rather than clip a sheet wider than the canvas. This outranks the frontend
+	* full-width rule in blocks-frontend.css, which hides horizontal overflow on the canvas body.
+	*/
 html body.editor-styles-wrapper.is-ohmylms-paper {
 	overflow-x: auto;
 }
 
 /* The root is .alignfull; its frontend offset (blocks-frontend.css) must not move the sheet. */
+/*
+	stylelint-disable color-no-hex -- Printed sheets, editor paper and answer-key ink stay light and preserve their physical print contract.
+	*/
 .editor-styles-wrapper.is-ohmylms-paper .is-root-container {
 	left: 0;
 	box-sizing: border-box;
@@ -270,6 +313,9 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 	font-size: var(--ohmylms-paper-font-size);
 	line-height: 1.45;
 }
+/*
+	stylelint-enable color-no-hex
+	*/
 
 .editor-styles-wrapper.is-ohmylms-paper.is-ohmylms-paper-serif .is-root-container {
 	font-family: Georgia, "Times New Roman", serif;
@@ -302,7 +348,7 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 .ohmylms-paper-page-number {
 	position: absolute;
 	transform: translateY(-50%);
-	color: #50575e;
+	color: var(--oml-muted);
 	font: 9pt/1 Arial, Helvetica, sans-serif;
 	text-align: center;
 }
@@ -310,8 +356,8 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 .ohmylms-paper-print-actions {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px;
-	margin-bottom: 16px;
+	gap: var(--oml-space-2);
+	margin-bottom: var(--oml-space-4);
 }
 
 /* In the editor, blocks inside a columns section use the section's own spacing. */
@@ -417,11 +463,19 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 	print-color-adjust: exact;
 }
 
+/*
+	stylelint-disable color-no-hex -- Printed sheets, editor paper and answer-key ink stay light and preserve their physical print contract.
+	*/
+
 .ohmylms-print-question.is-choice li.is-correct .ohmylms-print-letter {
 	border-color: #222;
 	background: #222;
 	color: #fff;
 }
+
+/*
+	stylelint-enable color-no-hex
+	*/
 
 .ohmylms-print-option > :first-child {
 	margin-top: 0;
@@ -445,6 +499,10 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 	border-bottom: 1px dotted currentcolor;
 }
 
+/*
+	stylelint-disable color-no-hex -- Printed sheets, editor paper and answer-key ink stay light and preserve their physical print contract.
+	*/
+
 .ohmylms-print-lines {
 	-webkit-print-color-adjust: exact;
 	print-color-adjust: exact;
@@ -460,6 +518,10 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 		);
 }
 
+/*
+	stylelint-enable color-no-hex
+	*/
+
 .ohmylms-print-part {
 	margin: 0.8em 0 0 2.4em;
 }
@@ -469,6 +531,10 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 	text-align: right;
 }
 
+/*
+	stylelint-disable color-no-hex -- Printed sheets, editor paper and answer-key ink stay light and preserve their physical print contract.
+	*/
+
 .ohmylms-print-key {
 	margin: 0.4em 0 0 2.4em;
 	padding: 0.2em 0.6em;
@@ -476,6 +542,10 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 	color: #b32d2e;
 	font-size: 0.9em;
 }
+
+/*
+	stylelint-enable color-no-hex
+	*/
 
 .ohmylms-print-key p {
 	margin: 0;
@@ -486,6 +556,10 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 	margin-left: 2.4em;
 }
 
+/*
+	stylelint-disable color-no-hex -- Printed sheets, editor paper and answer-key ink stay light and preserve their physical print contract.
+	*/
+
 .ohmylms-print-note {
 	margin: 0.6em 0 0 2.4em;
 	padding: 4px 8px;
@@ -494,6 +568,10 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 	font-size: 12px;
 }
+
+/*
+	stylelint-enable color-no-hex
+	*/
 
 /* Answer sheet */
 
@@ -535,10 +613,18 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 	border-radius: 3px;
 }
 
+/*
+	stylelint-disable color-no-hex -- Printed sheets, editor paper and answer-key ink stay light and preserve their physical print contract.
+	*/
+
 .ohmylms-answer-sheet-bubble.is-filled {
 	background: #1e1e1e;
 	color: #fff;
 }
+
+/*
+	stylelint-enable color-no-hex
+	*/
 
 /* Printed matching, ordering, blank, sorting, tile and word puzzle questions */
 
@@ -551,11 +637,19 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 	vertical-align: baseline;
 }
 
+/*
+	stylelint-disable color-no-hex -- Printed sheets, editor paper and answer-key ink stay light and preserve their physical print contract.
+	*/
+
 .ohmylms-print-blank.is-answered,
 .ohmylms-print-key .ohmylms-print-blank {
 	color: #b32d2e;
 	font-size: 1em;
 }
+
+/*
+	stylelint-enable color-no-hex
+	*/
 
 .ohmylms-print-matching {
 	display: grid;
@@ -692,14 +786,26 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 	margin: 0.6em 0 0 2.4em;
 }
 
+/*
+	stylelint-disable color-no-hex -- Printed sheets, editor paper and answer-key ink stay light and preserve their physical print contract.
+	*/
+
 .ohmylms-print-grid.is-crossword td {
 	border: 1px solid currentcolor;
 	color: #b32d2e;
 }
 
+/*
+	stylelint-enable color-no-hex
+	*/
+
 .ohmylms-print-grid.is-crossword td.is-empty {
 	border: 0;
 }
+
+/*
+	stylelint-disable color-no-hex -- Printed sheets, editor paper and answer-key ink stay light and preserve their physical print contract.
+	*/
 
 .ohmylms-print-cell-number {
 	position: absolute;
@@ -711,15 +817,35 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 	line-height: 1;
 }
 
+/*
+	stylelint-enable color-no-hex
+	*/
+
+/*
+	stylelint-disable color-no-hex -- Printed sheets, editor paper and answer-key ink stay light and preserve their physical print contract.
+	*/
+
 .ohmylms-print-grid.is-wordsearch td {
 	border: 1px solid #c3c4c7;
 }
+
+/*
+	stylelint-enable color-no-hex
+	*/
+
+/*
+	stylelint-disable color-no-hex -- Printed sheets, editor paper and answer-key ink stay light and preserve their physical print contract.
+	*/
 
 .ohmylms-print-grid.is-wordsearch td.is-marked {
 	-webkit-print-color-adjust: exact;
 	print-color-adjust: exact;
 	background: #f5c4c4;
 }
+
+/*
+	stylelint-enable color-no-hex
+	*/
 
 .ohmylms-print-clues {
 	display: grid;
@@ -796,6 +922,10 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 	margin: 0;
 }
 
+/*
+	stylelint-disable color-no-hex -- Printed sheets, editor paper and answer-key ink stay light and preserve their physical print contract.
+	*/
+
 .ohmylms-print-digital .ohmylms-print-box,
 .ohmylms-print-money .ohmylms-print-box {
 	display: inline-flex;
@@ -807,6 +937,10 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 	color: #b32d2e;
 	font-weight: 700;
 }
+
+/*
+	stylelint-enable color-no-hex
+	*/
 
 .ohmylms-print-note-value {
 	padding: 0.15em 0.5em;
@@ -821,12 +955,20 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 	margin: 0 0 0.6em;
 }
 
+/*
+	stylelint-disable color-no-hex -- Printed sheets, editor paper and answer-key ink stay light and preserve their physical print contract.
+	*/
+
 .ohmylms-print-table.is-places td {
 	height: 2.4em;
 	color: #b32d2e;
 	font-weight: 700;
 	text-align: center;
 }
+
+/*
+	stylelint-enable color-no-hex
+	*/
 
 /* On the answer sheet, notes line up with the sheet rather than with question text. */
 .ohmylms-answer-sheet .ohmylms-print-instruction {
@@ -837,8 +979,8 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 
 .ohmylms-print-page {
 	margin: 0;
-	background: #dcdcde;
-	color: #1e1e1e;
+	background: var(--oml-background);
+	color: var(--oml-text);
 }
 
 .ohmylms-print-toolbar {
@@ -847,15 +989,16 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 	z-index: 1;
 	display: flex;
 	align-items: center;
-	gap: 12px;
-	padding: 8px 16px;
-	border-bottom: 1px solid #c3c4c7;
-	background: #fff;
-	font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	gap: var(--oml-space-3);
+	padding: var(--oml-space-2) var(--oml-space-4);
+	border-bottom: 1px solid var(--oml-border);
+	background: var(--oml-surface);
+	font: var(--oml-font-size-sm)/var(--oml-line-normal) -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	color: var(--oml-text);
 }
 
 .ohmylms-print-back {
-	color: #2271b1;
+	color: var(--oml-link);
 	text-decoration: none;
 	white-space: nowrap;
 }
@@ -868,27 +1011,16 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 .ohmylms-print-toolbar-title {
 	flex: 1;
 	min-width: 0;
-	font-weight: 600;
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-print-status {
-	color: #50575e;
+	color: var(--oml-muted);
 }
 
-.ohmylms-print-button {
-	padding: 6px 16px;
-	border: 0;
-	border-radius: 2px;
-	background: #2271b1;
-	color: #fff;
-	font: inherit;
-	cursor: pointer;
-}
-
-.ohmylms-print-button:disabled {
-	opacity: 0.6;
-	cursor: default;
-}
+/*
+	stylelint-disable color-no-hex -- Printed sheets, editor paper and answer-key ink stay light and preserve their physical print contract.
+	*/
 
 .ohmylms-print-sheet {
 	box-sizing: border-box;
@@ -900,7 +1032,12 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: var(--ohmylms-paper-font-size);
 	line-height: 1.45;
+	color: #1e1e1e;
 }
+
+/*
+	stylelint-enable color-no-hex
+	*/
 
 .ohmylms-print-page.is-serif .ohmylms-print-sheet {
 	font-family: Georgia, "Times New Roman", serif;
@@ -910,6 +1047,10 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 	margin-top: 1.25em;
 }
 
+/*
+	stylelint-disable color-no-hex -- Printed sheets, editor paper and answer-key ink stay light and preserve their physical print contract.
+	*/
+
 .ohmylms-print-key-banner {
 	margin: 0 0 1.25em;
 	padding: 0.3em 0.6em;
@@ -918,6 +1059,10 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 	font-weight: 700;
 	text-align: center;
 }
+
+/*
+	stylelint-enable color-no-hex
+	*/
 
 @media print {
 
@@ -947,4 +1092,9 @@ html body.editor-styles-wrapper.is-ohmylms-paper {
 	.ohmylms-print-block {
 		break-inside: avoid;
 	}
+}
+
+.ohmylms-print-back:focus-visible {
+	outline: 2px solid var(--oml-focus);
+	outline-offset: 2px;
 }

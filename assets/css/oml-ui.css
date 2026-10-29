@@ -221,3 +221,121 @@
 .oml-progress-success .oml-progress-bar {
 	background: var(--oml-success);
 }
+
+/* ---- Input/Select: native controls with a shared label, help and error wrapper ---- */
+.oml-field {
+	display: grid;
+	align-content: start;
+	gap: var(--oml-space-1);
+	min-width: 0;
+	color: var(--oml-text);
+	font: inherit;
+	font-size: var(--oml-font-size-md);
+	line-height: var(--oml-line-normal);
+}
+
+.oml-field-label {
+	color: var(--oml-heading);
+	font-weight: var(--oml-weight-strong);
+}
+
+.oml-field-required,
+.oml-field-error {
+	color: var(--oml-danger);
+}
+
+.oml-field-help,
+.oml-field-error {
+	margin: 0;
+	font-size: var(--oml-font-size-sm);
+	line-height: var(--oml-line-normal);
+}
+
+.oml-field-help {
+	color: var(--oml-muted);
+}
+
+.oml-field .oml-control {
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
+	min-height: var(--oml-button-height-md);
+	margin: 0;
+	padding: var(--oml-space-1) var(--oml-space-2);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-surface);
+	box-shadow: none;
+	color: var(--oml-text);
+	color-scheme: var(--oml-color-scheme);
+	font: inherit;
+	font-size: var(--oml-font-size-md);
+	font-weight: var(--oml-weight-regular);
+	line-height: var(--oml-line-normal);
+	transition: border-color var(--oml-motion-fast) ease, background-color var(--oml-motion-fast) ease;
+}
+
+.oml-field .oml-input::placeholder {
+	color: var(--oml-muted);
+	opacity: 1;
+}
+
+.oml-field .oml-select {
+	appearance: auto;
+	cursor: pointer;
+}
+
+.oml-field .oml-select option {
+	background: var(--oml-surface);
+	color: var(--oml-text);
+}
+
+.oml-field .oml-control-sm {
+	min-height: var(--oml-button-height-sm);
+	font-size: var(--oml-font-size-xs);
+}
+
+.oml-field .oml-control-lg {
+	min-height: var(--oml-button-height-lg);
+	font-size: var(--oml-font-size-lg);
+}
+
+.oml-field .oml-control:focus {
+	border-color: var(--oml-border);
+	box-shadow: none;
+}
+
+.oml-field .oml-control-invalid,
+.oml-field .oml-control-invalid:focus {
+	border-color: var(--oml-danger);
+}
+
+.oml-field .oml-control:focus-visible {
+	outline: 2px solid var(--oml-focus);
+	outline-offset: 2px;
+}
+
+.oml-field .oml-control[readonly],
+.oml-field .oml-control:disabled {
+	border-color: var(--oml-border);
+	background: var(--oml-subtle);
+	color: var(--oml-muted);
+}
+
+.oml-field .oml-control:disabled {
+	cursor: not-allowed;
+	opacity: 1;
+}
+
+.oml-field .oml-select[multiple] {
+	min-height: calc(var(--oml-button-height-lg) + var(--oml-space-6));
+	padding-block: var(--oml-space-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	.oml-field .oml-control {
+		transition: none;
+	}
+}

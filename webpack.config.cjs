@@ -34,6 +34,18 @@ const pmAliases = Object.fromEntries(
 const DependencyExtractionWebpackPlugin = require( '@wordpress/dependency-extraction-webpack-plugin' );
 module.exports = {
 	entry: {
+		'email-packages': path.resolve(
+			__dirname,
+			'assets/src/features/vendor-packages/email-loader.js'
+		),
+		'vendor-charts': path.resolve(
+			__dirname,
+			'assets/src/features/vendor-packages/charts.js'
+		),
+		'vendor-emotion': path.resolve(
+			__dirname,
+			'assets/src/features/vendor-packages/emotion.js'
+		),
 		'editor-tiptap': path.resolve(
 			__dirname,
 			'assets/src/features/editor-packages/tiptap.js'

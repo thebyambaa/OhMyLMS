@@ -41,6 +41,7 @@ module.exports = [
 		files: [
 			'assets/src/features/**/*.{js,jsx,mjs}',
 			'assets/src/extensions/**/*.{js,jsx,mjs}',
+			'assets/src/ui/**/*.{js,jsx,mjs}',
 			'assets/src/blocks/**/*.{js,jsx,mjs}',
 			'assets/interactivity/**/*.js',
 			'assets/js/student-hub.js',
@@ -53,6 +54,7 @@ module.exports = [
 		files: [
 			'assets/src/features/**/*.{js,jsx,mjs}',
 			'assets/src/extensions/**/*.{js,jsx,mjs}',
+			'assets/src/ui/**/*.{js,jsx,mjs}',
 			'assets/src/blocks/**/*.{js,jsx,mjs}',
 			'assets/interactivity/**/*.js',
 		],

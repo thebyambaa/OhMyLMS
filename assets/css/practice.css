@@ -1,73 +1,85 @@
 /* Learner-facing practice, inline checks and skill progress. */
+
+.ohmylms-practice .ohmylms-text-input,
+.ohmylms-inline-check .ohmylms-text-input,
+.ohmylms-practice-match select {
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-surface);
+	color: var(--oml-text);
+	font: inherit;
+	accent-color: var(--oml-primary);
+}
+
 .ohmylms-inline-check {
-	border: 1px solid #e4e4e7;
-	border-radius: 8px;
-	padding: 16px;
-	margin: 16px 0;
-	background: #fff;
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card);
+	padding: var(--oml-space-4);
+	margin: var(--oml-space-4) 0;
+	background: var(--oml-surface);
 }
 
 .ohmylms-practice-question {
-	border: 1px solid #e4e4e7;
-	border-radius: 8px;
-	padding: 16px;
-	margin: 16px 0;
-	background: #fff;
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card);
+	padding: var(--oml-space-4);
+	margin: var(--oml-space-4) 0;
+	background: var(--oml-surface);
 }
 
 .ohmylms-inline-check-question {
-	font-weight: 600;
-	margin: 0 0 12px;
+	font-weight: var(--oml-weight-strong);
+	margin: 0 0 var(--oml-space-3);
 }
 
 .ohmylms-practice-option {
 	display: flex;
 	align-items: center;
-	gap: 8px;
-	padding: 8px 10px;
-	margin: 6px 0;
-	border: 1px solid #e4e4e7;
-	border-radius: 6px;
+	gap: var(--oml-space-2);
+	padding: var(--oml-space-2) calc(var(--oml-space-1) * 2.5);
+	margin: calc(var(--oml-space-1) * 1.5) 0;
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
 	cursor: pointer;
 }
 
 .ohmylms-practice-match {
 	display: flex;
 	align-items: center;
-	gap: 8px;
-	padding: 8px 10px;
-	margin: 6px 0;
-	border: 1px solid #e4e4e7;
-	border-radius: 6px;
+	gap: var(--oml-space-2);
+	padding: var(--oml-space-2) calc(var(--oml-space-1) * 2.5);
+	margin: calc(var(--oml-space-1) * 1.5) 0;
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
 	cursor: pointer;
 }
 
 .ohmylms-inline-answer {
-	border-color: #16a34a !important;
-	background: #f0fdf4;
+	border-color: var(--oml-success) !important;
+	background: var(--oml-success-soft);
 }
 
 .ohmylms-inline-correct {
-	color: #15803d;
-	font-weight: 600;
+	color: var(--oml-success);
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-inline-incorrect {
-	color: #b91c1c;
-	font-weight: 600;
+	color: var(--oml-danger);
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-inline-check-feedback {
-	margin-top: 12px;
+	margin-top: var(--oml-space-3);
 }
 
 .ohmylms-practice-feedback {
-	margin-top: 12px;
+	margin-top: var(--oml-space-3);
 }
 
 .ohmylms-practice-progress {
-	color: var(--ohmylms-body-text-color, #52525b);
-	font-size: 0.9em;
+	color: var(--oml-muted);
+	font-size: var(--oml-font-size-sm);
 }
 
 .ohmylms-skill-table {
@@ -77,12 +89,14 @@
 
 .ohmylms-skill-level {
 	display: inline-block;
-	padding: 2px 8px;
+	padding: calc(var(--oml-space-1) * 0.5) var(--oml-space-2);
 	border-radius: 999px;
-	font-size: 0.85em;
-	background: #f4f4f5;
-	color: var(--ohmylms-body-text-color, #3f3f46);
+	font-size: var(--oml-font-size-xs);
+	background: var(--oml-subtle);
+	color: var(--oml-muted);
 }
+
+/* stylelint-disable color-no-hex -- Mastery levels use a fixed categorical palette, with their own readable text colors. */
 
 .ohmylms-skill-attempted { background: #fef3c7; color: #92400e; }
 
@@ -92,31 +106,33 @@
 
 .ohmylms-skill-mastered { background: #dcfce7; color: #166534; }
 
+/* stylelint-enable color-no-hex */
+
 .ohmylms-skill-review {
-	margin-left: 6px;
-	font-size: 0.85em;
-	color: var(--ohmylms-primary-color, #6e42d3);
+	margin-left: calc(var(--oml-space-1) * 1.5);
+	font-size: var(--oml-font-size-xs);
+	color: var(--oml-link);
 }
 
 .ohmylms-skill-table-wrap {
 	overflow-x: auto;
 }
 
-.ohmylms-guidance-session { margin: -4px 0 8px; color: #52525b; font-size: 13px; }
+.ohmylms-guidance-session { margin: calc(var(--oml-space-1) * -1) 0 var(--oml-space-2); color: var(--oml-muted); font-size: var(--oml-font-size-sm); }
 
 .ohmylms-guidance {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-	gap: 16px;
-	margin: 16px 0 24px;
+	gap: var(--oml-space-4);
+	margin: var(--oml-space-4) 0 var(--oml-space-5);
 }
 
 .ohmylms-guidance-card {
 	min-width: 0;
-	padding: 16px;
-	border: 1px solid #e4e4e7;
-	border-radius: 12px;
-	background: #fff;
+	padding: var(--oml-space-4);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card);
+	background: var(--oml-surface);
 }
 
 .ohmylms-guidance-next {
@@ -125,7 +141,7 @@
 
 .ohmylms-guidance-bars {
 	display: grid;
-	gap: 12px;
+	gap: var(--oml-space-3);
 	margin: 0;
 	padding: 0;
 	list-style: none;
@@ -133,7 +149,7 @@
 
 .ohmylms-guidance-covered {
 	display: grid;
-	gap: 12px;
+	gap: var(--oml-space-3);
 	margin: 0;
 	padding: 0;
 	list-style: none;
@@ -142,120 +158,122 @@
 .ohmylms-recommendation {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
-	padding: 12px;
-	border-left: 4px solid #a1a1aa;
-	border-radius: 8px;
-	background: #fafafa;
+	gap: var(--oml-space-1);
+	padding: var(--oml-space-3);
+	border-left: 4px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-subtle);
 }
 
-.ohmylms-recommendation-help { border-left-color: #d97706; }
+.ohmylms-recommendation-help { border-left-color: var(--oml-warning); }
 
-.ohmylms-recommendation-review { border-left-color: #2563eb; }
+.ohmylms-recommendation-review { border-left-color: var(--oml-info); }
 
-.ohmylms-recommendation-ready { border-left-color: #16a34a; }
+.ohmylms-recommendation-ready { border-left-color: var(--oml-success); }
 
-.ohmylms-recommendation-continue { border-left-color: #7c3aed; }
+.ohmylms-recommendation-continue { border-left-color: var(--oml-primary); }
 
 .ohmylms-recommendation-kind {
-	color: var(--ohmylms-body-text-color, #52525b);
-	font-size: 0.75em;
-	font-weight: 600;
+	color: var(--oml-muted);
+	font-size: var(--oml-font-size-xs);
+	font-weight: var(--oml-weight-strong);
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
 }
 
 .ohmylms-recommendation-note {
-	color: var(--ohmylms-body-text-color, #52525b);
+	color: var(--oml-muted);
 }
 
 .ohmylms-recommendation-links {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px 12px;
+	gap: var(--oml-space-2) var(--oml-space-3);
 	align-items: center;
 	margin-top: auto;
-	padding-top: 8px;
-	font-size: 0.9em;
+	padding-top: var(--oml-space-2);
+	font-size: var(--oml-font-size-sm);
 }
 
 .ohmylms-guidance-bar-label {
 	display: flex;
 	justify-content: space-between;
-	gap: 8px;
+	gap: var(--oml-space-2);
 }
 
 .ohmylms-guidance-meter {
 	display: block;
 	height: 8px;
-	margin: 6px 0 4px;
+	margin: calc(var(--oml-space-1) * 1.5) 0 var(--oml-space-1);
 	overflow: hidden;
 	border-radius: 999px;
-	background: #f4f4f5;
+	background: var(--oml-subtle);
 }
 
 .ohmylms-guidance-bar-detail {
 	display: block;
-	color: var(--ohmylms-body-text-color, #52525b);
-	font-size: 0.85em;
+	color: var(--oml-muted);
+	font-size: var(--oml-font-size-xs);
 }
 
 .ohmylms-skill-map {
-	margin: 0 0 24px;
+	margin: 0 0 var(--oml-space-5);
 }
 
 .ohmylms-skill-map-subjects {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px;
-	margin: 0 0 8px;
+	gap: var(--oml-space-2);
+	margin: 0 0 var(--oml-space-2);
 }
 
 .ohmylms-skill-map-legend {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 6px 14px;
-	margin: 0 0 10px;
+	gap: calc(var(--oml-space-1) * 1.5) calc(var(--oml-space-1) * 3.5);
+	margin: 0 0 calc(var(--oml-space-1) * 2.5);
 	padding: 0;
 	list-style: none;
-	font-size: 0.85em;
+	font-size: var(--oml-font-size-xs);
 }
 
 .ohmylms-skill-map-scroll {
 	position: relative;
 	overflow-x: auto;
-	border: 1px solid #e4e4e7;
-	border-radius: 12px;
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card);
 }
 
 .ohmylms-skill-map-table {
 	min-width: 100%;
 	border-collapse: separate;
 	border-spacing: 0;
-	font-size: 0.85em;
+	font-size: var(--oml-font-size-xs);
 }
 
 .ohmylms-skill-map-strength {
 	display: block;
-	color: var(--ohmylms-body-text-color, #52525b);
-	font-weight: 400;
+	color: var(--oml-muted);
+	font-weight: var(--oml-weight-regular);
 	font-variant-numeric: tabular-nums;
 }
 
 .ohmylms-map-chip {
 	position: relative;
 	display: block;
-	margin: 0 0 4px;
-	padding: 3px 8px;
+	margin: 0 0 var(--oml-space-1);
+	padding: calc(var(--oml-space-1) * 0.75) var(--oml-space-2);
 	border: 1px solid transparent;
-	border-radius: 6px;
-	line-height: 1.3;
+	border-radius: var(--oml-radius-control);
+	line-height: var(--oml-line-normal);
 }
 
 .ohmylms-map-not-started {
-	border: 1px dashed #a1a1aa;
-	color: var(--ohmylms-body-text-color, #52525b);
+	border: 1px dashed var(--oml-border);
+	color: var(--oml-muted);
 }
+
+/* stylelint-disable color-no-hex -- Skill-map levels match the categorical mastery palette in every theme. */
 
 .ohmylms-map-attempted { background: #fef3c7; color: #92400e; }
 
@@ -265,61 +283,63 @@
 
 .ohmylms-map-mastered { background: #dcfce7; color: #166534; }
 
+/* stylelint-enable color-no-hex */
+
 .ohmylms-placement-page {
 	box-sizing: border-box;
 	max-width: 760px;
-	margin: 32px auto;
-	padding: 0 16px;
+	margin: var(--oml-space-6) auto;
+	padding: 0 var(--oml-space-4);
 }
 
 .ohmylms-placement-grade {
 	display: block;
 	max-width: 100%;
-	margin-top: 4px;
+	margin-top: var(--oml-space-1);
 }
 
 .ohmylms-placement-areas {
-	margin: 0 0 12px;
+	margin: 0 0 var(--oml-space-3);
 	padding-left: 1.2em;
 }
 
 .ohmylms-placement-start {
-	margin: 0 0 12px;
+	margin: 0 0 var(--oml-space-3);
 	padding-left: 1.2em;
 }
 
 .ohmylms-placement-summary {
-	margin: 0 0 24px;
+	margin: 0 0 var(--oml-space-5);
 }
 
 .ohmylms-placement-when {
 	display: block;
-	color: var(--ohmylms-body-text-color, #52525b);
-	font-size: 0.9em;
+	color: var(--oml-muted);
+	font-size: var(--oml-font-size-sm);
 }
 
 .ohmylms-placement-grades {
 	display: block;
-	color: var(--ohmylms-body-text-color, #52525b);
-	font-size: 0.9em;
+	color: var(--oml-muted);
+	font-size: var(--oml-font-size-sm);
 }
 
 .ohmylms-placement-first {
 	display: block;
-	color: var(--ohmylms-body-text-color, #52525b);
-	font-size: 0.9em;
+	color: var(--oml-muted);
+	font-size: var(--oml-font-size-sm);
 }
 
 .ohmylms-placement-link {
 	display: inline-block;
-	margin-top: 4px;
-	font-size: 0.9em;
+	margin-top: var(--oml-space-1);
+	font-size: var(--oml-font-size-sm);
 }
 
 .ohmylms-autosave-status {
-	font-size: 0.85em;
-	color: var(--ohmylms-body-text-color, #52525b);
-	margin: 0 12px;
+	font-size: var(--oml-font-size-xs);
+	color: var(--oml-muted);
+	margin: 0 var(--oml-space-3);
 }
 
 @media (max-width: 600px) {
@@ -329,7 +349,7 @@
 	}
 
 	.ohmylms-guidance-card {
-		padding: 12px;
+		padding: var(--oml-space-3);
 	}
 
 	.ohmylms-skill-table thead {
@@ -349,10 +369,10 @@
 	.ohmylms-skill-table tr {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) auto;
-		gap: 4px 12px;
+		gap: var(--oml-space-1) var(--oml-space-3);
 		align-items: center;
-		padding: 12px 0;
-		border-bottom: 1px solid #e4e4e7;
+		padding: var(--oml-space-3) 0;
+		border-bottom: 1px solid var(--oml-border);
 	}
 
 	.ohmylms-skill-table td {
@@ -367,7 +387,7 @@
 	}
 
 	.ohmylms-skill-table td:first-child {
-		font-weight: 600;
+		font-weight: var(--oml-weight-strong);
 	}
 
 	.ohmylms-skill-table td:last-child {
@@ -382,110 +402,93 @@
 	}
 
 	.ohmylms-skill-table td:not(:first-child):not(:nth-child(2)):not(:last-child) {
-		color: var(--ohmylms-body-text-color, #52525b);
-		font-size: 0.85em;
-	}
-}
-
-@media (prefers-color-scheme: dark) {
-
-	/* The theme may stay light, so these tints read on either background. */
-	.ohmylms-guidance-card {
-		border-color: rgba(161, 161, 170, 0.45);
-		background: transparent;
-	}
-
-	.ohmylms-recommendation {
-		background: rgba(161, 161, 170, 0.1);
-	}
-
-	.ohmylms-guidance-meter {
-		background: rgba(161, 161, 170, 0.3);
+		color: var(--oml-muted);
+		font-size: var(--oml-font-size-xs);
 	}
 }
 
 .ohmylms-quiz-section-title {
-	margin: 24px 0 8px;
-	font-size: 1.2em;
+	margin: var(--oml-space-5) 0 var(--oml-space-2);
+	font-size: var(--oml-font-size-xl);
 }
 
 .ohmylms-numerical-unit {
-	margin-left: 6px;
+	margin-left: calc(var(--oml-space-1) * 1.5);
 }
 
 .ohmylms-lesson-header {
-	margin: 8px 0 12px;
+	margin: var(--oml-space-2) 0 var(--oml-space-3);
 }
 
 .ohmylms-lesson-bar {
 	display: flex;
-	gap: 4px;
+	gap: var(--oml-space-1);
 }
 
 .ohmylms-lesson-seg {
 	flex: 1 1 0;
 	height: 10px;
-	border-radius: 5px;
-	background: #e5e7eb;
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-subtle);
 }
 
 .ohmylms-lesson-stages {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 6px;
-	margin: 8px 0 0;
+	gap: calc(var(--oml-space-1) * 1.5);
+	margin: var(--oml-space-2) 0 0;
 	padding: 0;
 	list-style: none;
 }
 
 .ohmylms-practice-sound {
 	display: inline-block;
-	margin: 0 0 6px;
-	font-size: 0.85em;
+	margin: 0 0 calc(var(--oml-space-1) * 1.5);
+	font-size: var(--oml-font-size-xs);
 	opacity: 0.8;
 }
 
 .ohmylms-replay-banner {
-	margin: 8px 0;
-	padding: 8px 12px;
-	border-left: 4px solid #f59e0b;
-	background: #fffbeb;
-	font-weight: 600;
+	margin: var(--oml-space-2) 0;
+	padding: var(--oml-space-2) var(--oml-space-3);
+	border-left: 4px solid var(--oml-warning);
+	background: var(--oml-warning-soft);
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-solution {
-	margin: 10px 0;
-	padding: 10px 12px;
-	border-radius: 8px;
-	background: rgba(255, 255, 255, 0.7);
+	margin: calc(var(--oml-space-1) * 2.5) 0;
+	padding: calc(var(--oml-space-1) * 2.5) var(--oml-space-3);
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-subtle);
 }
 
 .ohmylms-tutor {
-	margin: 10px 0;
+	margin: calc(var(--oml-space-1) * 2.5) 0;
 }
 
 .ohmylms-ai-reply {
-	margin: 8px 0;
+	margin: var(--oml-space-2) 0;
 	white-space: pre-wrap;
 }
 
 .ohmylms-missed {
-	margin: 8px 0 16px 20px;
+	margin: var(--oml-space-2) 0 var(--oml-space-4) calc(var(--oml-space-1) * 5);
 }
 
 .ohmylms-reward {
 	display: grid;
-	gap: 14px;
-	margin: 14px 0;
-	padding: 14px 16px;
-	border: 2px solid #fcd34d;
-	border-radius: 14px;
-	background: #fffbeb;
+	gap: calc(var(--oml-space-1) * 3.5);
+	margin: calc(var(--oml-space-1) * 3.5) 0;
+	padding: calc(var(--oml-space-1) * 3.5) var(--oml-space-4);
+	border: 2px solid var(--oml-warning);
+	border-radius: var(--oml-radius-card);
+	background: var(--oml-warning-soft);
 }
 
 .ohmylms-reward-gain {
-	font-size: 1.6em;
-	color: #b45309;
+	font-size: var(--oml-font-size-2xl);
+	color: var(--oml-warning);
 }
 
 /* Positioned, so the hidden level text stays inside the scrolling frame. */
@@ -493,41 +496,41 @@
 .ohmylms-reward-parts {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 6px;
-	margin: 6px 0;
+	gap: calc(var(--oml-space-1) * 1.5);
+	margin: calc(var(--oml-space-1) * 1.5) 0;
 	padding: 0;
 	list-style: none;
 }
 
 .ohmylms-reward-goal {
-	margin: 4px 0 0;
-	color: #15803d;
-	font-weight: 700;
+	margin: var(--oml-space-1) 0 0;
+	color: var(--oml-success);
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-reward-note {
-	margin: 4px 0 0;
-	font-size: 0.9em;
+	margin: var(--oml-space-1) 0 0;
+	font-size: var(--oml-font-size-sm);
 	opacity: 0.8;
 }
 
 .ohmylms-reward-score {
-	margin: 2px 0;
-	font-size: 1.1em;
-	font-weight: 600;
+	margin: calc(var(--oml-space-1) * 0.5) 0;
+	font-size: var(--oml-font-size-lg);
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-reward-medal {
 	display: inline-block;
-	margin: 6px 0 0;
-	padding: 2px 12px;
+	margin: calc(var(--oml-space-1) * 1.5) 0 0;
+	padding: calc(var(--oml-space-1) * 0.5) var(--oml-space-3);
 	border-radius: 999px;
-	font-weight: 700;
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-reward-streak {
 	margin: 0;
-	font-weight: 700;
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-practice-controls {
@@ -536,120 +539,91 @@
 	bottom: 0;
 	display: flex;
 	flex-wrap: wrap;
-	gap: 12px;
-	padding: 16px 0;
-	margin-top: 24px;
-	border-top: 1px solid #e4e4e7;
-	background: #fff;
+	gap: var(--oml-space-3);
+	padding: var(--oml-space-4) 0;
+	margin-top: var(--oml-space-5);
+	border-top: 1px solid var(--oml-border);
+	background: var(--oml-surface);
 }
 
 .ohmylms-practice-meter {
 	display: block;
 	width: 100%;
 	height: 8px;
-	accent-color: #5753fa;
-}
-
-@media (prefers-color-scheme: dark) {
-
-	.ohmylms-skill-map-scroll {
-		border-color: rgba(161, 161, 170, 0.45);
-	}
-
-	.ohmylms-skill-map-subjects a {
-		border-color: rgba(161, 161, 170, 0.45);
-	}
-
-	.ohmylms-skill-map-table th {
-		border-bottom-color: rgba(161, 161, 170, 0.2);
-	}
-
-	.ohmylms-skill-map-table td {
-		border-bottom-color: rgba(161, 161, 170, 0.2);
-	}
+	accent-color: var(--oml-primary);
 }
 
 .ohmylms-practice-bar {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 12px;
-	margin: 8px 0 16px;
+	gap: var(--oml-space-3);
+	margin: var(--oml-space-2) 0 var(--oml-space-4);
 }
 
 .ohmylms-practice-dots {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px;
+	gap: var(--oml-space-2);
 	margin: 0;
 	padding: 0;
 	list-style: none;
-}
-
-.ohmylms-practice-restart {
-	padding: 4px 8px;
-	border: 0;
-	background: transparent;
-	color: #5753fa;
-	font: inherit;
-	text-decoration: underline;
-	cursor: pointer;
 }
 
 .ohmylms-practice-skip {
 	margin-inline-start: auto;
 }
 
-.ohmylms-exam-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin-top: 12px; }
+.ohmylms-exam-form { display: flex; flex-wrap: wrap; gap: var(--oml-space-2); align-items: end; margin-top: var(--oml-space-3); }
 
-.ohmylms-exam-error { color: #b91c1c; }
+.ohmylms-exam-error { color: var(--oml-danger); }
 
-.ohmylms-exam-schedule { margin: 0; padding-left: 20px; font-size: 14px; }
+.ohmylms-exam-schedule { margin: 0; padding-left: calc(var(--oml-space-1) * 5); font-size: var(--oml-font-size-md); }
 
 .ohmylms-inline-check label {
 	display: flex;
 	align-items: center;
-	gap: 8px;
-	padding: 8px 10px;
-	margin: 6px 0;
-	border: 1px solid #e4e4e7;
-	border-radius: 6px;
+	gap: var(--oml-space-2);
+	padding: var(--oml-space-2) calc(var(--oml-space-1) * 2.5);
+	margin: calc(var(--oml-space-1) * 1.5) 0;
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
 	cursor: pointer;
 }
 
 .ohmylms-practice-reorder li {
 	display: flex;
-	gap: 8px;
+	gap: var(--oml-space-2);
 	align-items: center;
-	padding: 6px 0;
+	padding: calc(var(--oml-space-1) * 1.5) 0;
 }
 
 .ohmylms-skill-table th {
 	text-align: left;
-	padding: 8px;
-	border-bottom: 1px solid #e4e4e7;
+	padding: var(--oml-space-2);
+	border-bottom: 1px solid var(--oml-border);
 }
 
 .ohmylms-skill-table td {
 	text-align: left;
-	padding: 8px;
-	border-bottom: 1px solid #e4e4e7;
+	padding: var(--oml-space-2);
+	border-bottom: 1px solid var(--oml-border);
 }
 
 .ohmylms-guidance-card h3 {
-	margin: 0 0 12px;
-	font-size: 1.05em;
+	margin: 0 0 var(--oml-space-3);
+	font-size: var(--oml-font-size-lg);
 }
 
 .ohmylms-guidance-card > p {
-	margin: 0 0 12px;
-	color: var(--ohmylms-body-text-color, #52525b);
-	font-size: 0.9em;
+	margin: 0 0 var(--oml-space-3);
+	color: var(--oml-muted);
+	font-size: var(--oml-font-size-sm);
 }
 
 .ohmylms-recommendation p {
 	margin: 0;
-	font-size: 0.9em;
+	font-size: var(--oml-font-size-sm);
 }
 
 .ohmylms-guidance-bar-label strong {
@@ -662,44 +636,15 @@
 	font-variant-numeric: tabular-nums;
 }
 
-@media (prefers-color-scheme: dark) {
-
-	.ohmylms-inline-check {
-		background: transparent;
-		border-color: #3f3f46;
-	}
-
-	.ohmylms-practice-question {
-		background: transparent;
-		border-color: #3f3f46;
-	}
-
-	.ohmylms-practice-option {
-		border-color: #3f3f46;
-	}
-
-	.ohmylms-practice-match {
-		border-color: #3f3f46;
-	}
-
-	.ohmylms-inline-answer {
-		background: rgba(22, 163, 74, 0.15);
-	}
-
-	.ohmylms-inline-check label {
-		border-color: #3f3f46;
-	}
-}
-
 .ohmylms-guidance-meter span {
 	display: block;
 	height: 100%;
 	border-radius: inherit;
-	background: var(--ohmylms-primary-color, #6e42d3);
+	background: var(--oml-primary);
 }
 
 .ohmylms-guidance-covered li {
-	font-size: 0.9em;
+	font-size: var(--oml-font-size-sm);
 }
 
 .ohmylms-guidance-covered strong {
@@ -707,16 +652,16 @@
 }
 
 .ohmylms-skill-map > p {
-	margin: 0 0 8px;
-	color: var(--ohmylms-body-text-color, #52525b);
-	font-size: 0.9em;
+	margin: 0 0 var(--oml-space-2);
+	color: var(--oml-muted);
+	font-size: var(--oml-font-size-sm);
 }
 
 .ohmylms-skill-map-subjects a {
-	padding: 2px 10px;
-	border: 1px solid #e4e4e7;
+	padding: calc(var(--oml-space-1) * 0.5) calc(var(--oml-space-1) * 2.5);
+	border: 1px solid var(--oml-border);
 	border-radius: 999px;
-	font-size: 0.9em;
+	font-size: var(--oml-font-size-sm);
 	text-decoration: none;
 }
 
@@ -724,60 +669,60 @@
 
 .ohmylms-skill-map-legend li {
 	display: flex;
-	gap: 6px;
+	gap: calc(var(--oml-space-1) * 1.5);
 	align-items: center;
 }
 
 .ohmylms-skill-map-table th {
 	min-width: 120px;
-	padding: 8px;
-	border-bottom: 1px solid #f4f4f5;
+	padding: var(--oml-space-2);
+	border-bottom: 1px solid var(--oml-subtle);
 	text-align: left;
 	vertical-align: top;
 }
 
 .ohmylms-skill-map-table td {
 	min-width: 120px;
-	padding: 8px;
-	border-bottom: 1px solid #f4f4f5;
+	padding: var(--oml-space-2);
+	border-bottom: 1px solid var(--oml-subtle);
 	text-align: left;
 	vertical-align: top;
 }
 
 .ohmylms-placement-summary ul {
-	margin: 0 0 12px;
+	margin: 0 0 var(--oml-space-3);
 	padding-left: 1.2em;
 }
 
 .ohmylms-placement-areas li {
-	margin: 0 0 6px;
+	margin: 0 0 calc(var(--oml-space-1) * 1.5);
 }
 
 .ohmylms-placement-start li {
-	margin: 0 0 6px;
+	margin: 0 0 calc(var(--oml-space-1) * 1.5);
 }
 
 .ohmylms-placement-summary li {
-	margin: 0 0 6px;
+	margin: 0 0 calc(var(--oml-space-1) * 1.5);
 }
 
 .ohmylms-placement-start a {
-	margin-left: 4px;
+	margin-left: var(--oml-space-1);
 }
 
 .ohmylms-lesson-stages li {
-	padding: 2px 10px;
+	padding: calc(var(--oml-space-1) * 0.5) calc(var(--oml-space-1) * 2.5);
 	border-radius: 999px;
-	background: #f3f4f6;
-	color: #6b7280;
-	font-size: 0.85em;
+	background: var(--oml-subtle);
+	color: var(--oml-muted);
+	font-size: var(--oml-font-size-xs);
 }
 
 .ohmylms-reward-parts li {
-	padding: 2px 10px;
+	padding: calc(var(--oml-space-1) * 0.5) calc(var(--oml-space-1) * 2.5);
 	border-radius: 999px;
-	background: #fef3c7;
-	font-size: 0.85em;
+	background: var(--oml-warning-soft);
+	font-size: var(--oml-font-size-xs);
 }
 
 .ohmylms-reward progress {
@@ -790,7 +735,7 @@
 	box-sizing: border-box;
 	width: 14px;
 	height: 14px;
-	border: 2px solid #71717a;
+	border: 2px solid var(--oml-muted);
 	border-radius: 50%;
 	background: transparent;
 }
@@ -800,15 +745,15 @@
 	height: auto;
 }
 
-.ohmylms-exam-form label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.ohmylms-exam-form label { display: flex; flex-direction: column; gap: var(--oml-space-1); font-size: var(--oml-font-size-sm); }
 
-.ohmylms-exam-schedule span { margin: 0 6px; color: #52525b; font-size: 12px; text-transform: uppercase; }
+.ohmylms-exam-schedule span { margin: 0 calc(var(--oml-space-1) * 1.5); color: var(--oml-muted); font-size: var(--oml-font-size-xs); text-transform: uppercase; }
 
-.ohmylms-exam-day-review span { color: #7c3aed; }
+.ohmylms-exam-day-review span { color: var(--oml-primary); }
 
 .ohmylms-skill-map-table thead th {
-	color: var(--ohmylms-body-text-color, #52525b);
-	font-weight: 600;
+	color: var(--oml-muted);
+	font-weight: var(--oml-weight-strong);
 	white-space: nowrap;
 }
 
@@ -817,41 +762,41 @@
 	left: 0;
 	z-index: 1;
 	min-width: 110px;
-	background: var(--ohmylms-background-color, #fff);
+	background: var(--oml-surface);
 }
 
 .ohmylms-inline-check .the-question {
-	font-weight: 600;
-	margin: 0 0 12px;
+	font-weight: var(--oml-weight-strong);
+	margin: 0 0 var(--oml-space-3);
 }
 
 .ohmylms-practice-question .the-question {
-	font-weight: 600;
-	margin: 0 0 12px;
+	font-weight: var(--oml-weight-strong);
+	margin: 0 0 var(--oml-space-3);
 }
 
 .ohmylms-practice-option:focus-within {
-	outline: 2px solid var(--ohmylms-outline-color, #6e42d3);
+	outline: 2px solid var(--oml-focus);
 	outline-offset: 1px;
 }
 
 .ohmylms-inline-check .ohmylms-text-input {
 	width: 100%;
 	max-width: 420px;
-	padding: 8px;
-	margin: 4px 0;
+	padding: var(--oml-space-2);
+	margin: var(--oml-space-1) 0;
 }
 
 .ohmylms-practice-inputs .ohmylms-text-input {
 	width: 100%;
 	max-width: 420px;
-	padding: 8px;
-	margin: 4px 0;
+	padding: var(--oml-space-2);
+	margin: var(--oml-space-1) 0;
 }
 
 .ohmylms-guidance .ohmylms-recommendations {
 	display: grid;
-	gap: 12px;
+	gap: var(--oml-space-3);
 	margin: 0;
 	padding: 0;
 	list-style: none;
@@ -869,7 +814,7 @@
 
 .ohmylms-structured-question .ohmylms-structured-part {
 	display: block;
-	margin: 12px 0;
+	margin: var(--oml-space-3) 0;
 }
 
 .ohmylms-numerical-answer .ohmylms-text-input {
@@ -879,27 +824,28 @@
 }
 
 .ohmylms-lesson-seg.is-done {
-	background: #22c55e;
+	background: var(--oml-success);
 }
 
 .ohmylms-lesson-seg.is-current {
-	background: #93c5fd;
+	background: var(--oml-primary-soft);
 }
 
 .ohmylms-practice-feedback.is-correct {
-	margin-top: 14px;
-	padding: 12px 16px;
-	border-radius: 12px;
-	background: #dcfce7;
-	border: 2px solid #22c55e;
+	margin-top: calc(var(--oml-space-1) * 3.5);
+	padding: var(--oml-space-3) var(--oml-space-4);
+	border-radius: var(--oml-radius-card);
+	background: var(--oml-success-soft);
+	border: 2px solid var(--oml-success);
 }
 
 .ohmylms-practice-feedback.is-wrong {
-	margin-top: 14px;
-	padding: 12px 16px;
-	border-radius: 12px;
-	background: #fee2e2;
-	border: 2px solid #ef4444;
+	margin-top: calc(var(--oml-space-1) * 3.5);
+	padding: var(--oml-space-3) var(--oml-space-4);
+	border-radius: var(--oml-radius-card);
+	background: var(--oml-danger-soft);
+	border: 2px solid var(--oml-danger);
+	color: var(--oml-danger);
 }
 
 .ohmylms-ai-reply:empty {
@@ -912,7 +858,7 @@
 }
 
 .ohmylms-ai-reply.is-error {
-	color: #991b1b;
+	color: var(--oml-danger);
 }
 
 .ohmylms-tutor-button[aria-disabled="true"] {
@@ -921,6 +867,8 @@
 }
 
 /* The existing form owns submission; this footer only keeps its controls in reach. */
+
+/* stylelint-disable color-no-hex -- Bronze, silver and gold medals keep their award palette and paired text colors. */
 
 .ohmylms-reward-medal.is-80 {
 	background: #fed7aa;
@@ -937,6 +885,8 @@
 	color: #92400e;
 }
 
+/* stylelint-enable color-no-hex */
+
 /* Progress dots: one per problem. Shape and the hidden label carry the state as well as colour. */
 
 .ohmylms-practice-controls [hidden] {
@@ -944,81 +894,83 @@
 }
 
 .ohmylms-practice-hint-step + .ohmylms-practice-hint-step {
-	margin-top: 8px;
+	margin-top: var(--oml-space-2);
 }
 
 .ohmylms-practice-hint-step + .ohmylms-practice-more-hint {
-	margin-top: 8px;
+	margin-top: var(--oml-space-2);
 }
 
 .ohmylms-inline-check label:focus-within {
-	outline: 2px solid var(--ohmylms-outline-color, #6e42d3);
+	outline: 2px solid var(--oml-focus);
 	outline-offset: 1px;
 }
 
-.ohmylms-area-strong .ohmylms-guidance-meter span { background: #16a34a; }
+.ohmylms-area-strong .ohmylms-guidance-meter span { background: var(--oml-success); }
 
-.ohmylms-area-steady .ohmylms-guidance-meter span { background: #2563eb; }
+.ohmylms-area-steady .ohmylms-guidance-meter span { background: var(--oml-info); }
 
-.ohmylms-area-building .ohmylms-guidance-meter span { background: #d97706; }
+.ohmylms-area-building .ohmylms-guidance-meter span { background: var(--oml-warning); }
 
 .ohmylms-skill-map-subjects a[aria-current="page"] {
-	border-color: var(--ohmylms-primary-color, #6e42d3);
-	font-weight: 600;
+	border-color: var(--oml-primary);
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-structured-question .ohmylms-structured-part label {
 	display: block;
-	margin-bottom: 6px;
+	margin-bottom: calc(var(--oml-space-1) * 1.5);
 }
 
 .ohmylms-lesson-stages li.is-active {
-	background: #1d4ed8;
-	color: #fff;
-	font-weight: 600;
+	background: var(--oml-primary);
+	color: var(--oml-on-primary);
+	font-weight: var(--oml-weight-strong);
 }
 
 .ohmylms-missed .is-fixed em {
-	color: #15803d;
+	color: var(--oml-success);
 }
 
 .ohmylms-missed .is-open em {
-	color: #b45309;
+	color: var(--oml-warning);
 }
 
 .ohmylms-practice-dots li.is-current {
-	border-color: #5753fa;
-	box-shadow: 0 0 0 2px #dcdcff;
+	border-color: var(--oml-primary);
+	box-shadow: var(--oml-shadow-sm);
+	outline: 2px solid var(--oml-focus);
+	outline-offset: 2px;
 }
 
 .ohmylms-practice-dots li.is-right {
-	border-color: #15803d;
-	background: #15803d;
+	border-color: var(--oml-success);
+	background: var(--oml-success-soft);
 }
 
 .ohmylms-practice-dots li.is-done {
-	border-color: #71717a;
-	background: #71717a;
+	border-color: var(--oml-muted);
+	background: var(--oml-muted);
 }
 
 .ohmylms-practice-dots li.is-help {
-	border-color: #71717a;
-	background: #a1a1aa;
+	border-color: var(--oml-muted);
+	background: var(--oml-border);
 }
 
 .ohmylms-practice-dots li.is-wrong {
-	border-color: #b91c1c;
-	background: #fff;
+	border-color: var(--oml-danger);
+	background: var(--oml-surface);
 }
 
 .ohmylms-practice-dots li.is-right::after {
 	position: absolute;
 	top: -3px;
 	left: 2px;
-	color: #fff;
-	font-size: 10px;
-	font-weight: 700;
-	line-height: 14px;
+	color: var(--oml-success);
+	font-size: calc(var(--oml-font-size-xs) * 5 / 6);
+	font-weight: var(--oml-weight-strong);
+	line-height: calc(var(--oml-space-1) * 3.5);
 	content: "\2713";
 }
 
@@ -1026,10 +978,10 @@
 	position: absolute;
 	top: -3px;
 	left: 3px;
-	color: #b91c1c;
-	font-size: 10px;
-	font-weight: 700;
-	line-height: 14px;
+	color: var(--oml-danger);
+	font-size: calc(var(--oml-font-size-xs) * 5 / 6);
+	font-weight: var(--oml-weight-strong);
+	line-height: calc(var(--oml-space-1) * 3.5);
 	content: "\00d7";
 }
 
@@ -1040,8 +992,67 @@
 }
 
 .ohmylms-ai-reply:not(.is-error):not(.is-waiting):not(:empty) {
-	padding: 10px 12px;
-	border-left: 4px solid #7c3aed;
-	background: #f5f3ff;
-	border-radius: 0 8px 8px 0;
+	padding: calc(var(--oml-space-1) * 2.5) var(--oml-space-3);
+	border-left: 4px solid var(--oml-primary);
+	background: var(--oml-primary-soft);
+	border-radius: 0 var(--oml-radius-control) var(--oml-radius-control) 0;
+}
+
+/* Chrome inherits the selected theme; mastery and medal palettes above remain self-contained. */
+
+.ohmylms-practice,
+.ohmylms-inline-check,
+.ohmylms-guidance,
+.ohmylms-skill-progress,
+.ohmylms-skill-map,
+.ohmylms-placement-page,
+.ohmylms-reward {
+	color: var(--oml-text);
+	font-size: var(--oml-font-size-md);
+	line-height: var(--oml-line-normal);
+}
+
+.ohmylms-practice-question .the-question,
+.ohmylms-inline-check .the-question,
+.ohmylms-guidance-card h3 {
+	color: var(--oml-heading);
+}
+
+.ohmylms-practice h2 {
+	color: var(--oml-heading);
+	font-size: var(--oml-font-size-xl);
+	font-weight: var(--oml-weight-strong);
+	line-height: var(--oml-line-tight);
+}
+
+.ohmylms-practice {
+	padding: var(--oml-space-4);
+	border-radius: var(--oml-radius-card);
+	background: var(--oml-background);
+}
+
+.ohmylms-guidance a,
+.ohmylms-skill-map a,
+.ohmylms-placement-page a {
+	color: var(--oml-link);
+}
+
+.ohmylms-guidance a:hover,
+.ohmylms-skill-map a:hover,
+.ohmylms-placement-page a:hover {
+	color: var(--oml-link-hover);
+}
+
+.ohmylms-practice-feedback.is-correct,
+.ohmylms-inline-answer {
+	color: var(--oml-success);
+}
+
+.ohmylms-practice a:focus-visible,
+.ohmylms-practice button:focus-visible,
+.ohmylms-practice input:focus-visible,
+.ohmylms-practice select:focus-visible,
+.ohmylms-inline-check input:focus-visible {
+	outline: 2px solid var(--oml-focus);
+	outline-offset: 2px;
 }

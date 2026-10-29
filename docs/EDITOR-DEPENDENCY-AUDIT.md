@@ -1,5 +1,8 @@
 # Editor dependency audit and npm Lowlight migration — 29 October 2026
 
+This historical snapshot is superseded by [the completed editor runtime migration](EDITOR-MODULARIZATION.md),
+which also replaces Tiptap, ProseMirror and Lucide with npm packages and preserves their contracts.
+
 The production editor now uses **lowlight 3.3.0** and **highlight.js 11.11.1** from npm,
 with exact direct versions and a committed lockfile. The Highlight.js version matches the
 version string in the recovered core. The original Lowlight package version is not inferred.

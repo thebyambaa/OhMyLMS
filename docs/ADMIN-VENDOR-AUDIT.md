@@ -1,5 +1,14 @@
 # Admin vendor audit — 29 October 2026
 
+The shared MJML and Arco APIs now use lazy npm packages; see the
+[email package migration](EMAIL-PACKAGE-MIGRATION.md) for scope and saved-template checks.
+
+Chart.js and Emotion have since been replaced with npm packages; see
+[the vendor package migration](VENDOR-PACKAGE-MIGRATION.md) for current ownership and checks.
+
+For the current editor package boundaries and payloads, see [editor modularization](EDITOR-MODULARIZATION.md).
+The figures below describe earlier stages.
+
 The subsequent [editor dependency audit](EDITOR-DEPENDENCY-AUDIT.md) moves recovered Lowlight
 to a separate npm entry. The shared vendor file is now 2,361,829 bytes, plus a 951,340-byte
 syntax bundle; combined size is effectively unchanged by that package migration.

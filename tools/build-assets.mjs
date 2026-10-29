@@ -7,6 +7,11 @@ import traverseModule from '@babel/traverse';
 import generatorModule from '@babel/generator';
 import { adaptApplication } from './application-adapters.mjs';
 import { adaptVendors, adaptConnectionStatus } from './vendor-adapters.mjs';
+import { adaptEmailPackages } from './email-package-adapters.mjs';
+import {
+	auditVendorPackages,
+	adaptVendorPackages,
+} from './vendor-package-adapters.mjs';
 import {
 	auditEditorRuntime,
 	adaptEditorRuntime,
@@ -74,6 +79,8 @@ if ( process.argv.includes( '--extensions' ) )
 	auditHighlightConsumers( manifest, readSource );
 if ( process.argv.includes( '--extensions' ) )
 	auditEditorRuntime( manifest, readSource );
+if ( process.argv.includes( '--extensions' ) )
+	auditVendorPackages( manifest, readSource );
 const emailAsset = manifest.assets.find(
 	( asset ) => asset.output === emailVendorTarget
 );
@@ -81,6 +88,10 @@ const emailVersion = crypto
 	.createHash( 'sha256' )
 	.update(
 		JSON.stringify( [
+			fs.readFileSync(
+				path.join( root, 'tools/email-package-adapters.mjs' ),
+				'utf8'
+			),
 			readSource( emailAsset.source ),
 			...emailAsset.factories.map( ( factory ) =>
 				readSource( factory.source )
@@ -297,6 +308,10 @@ for ( const asset of manifest.assets ) {
 			console.log( 'Slash command adapter:', adaptSlashCommands( ast ) );
 		if ( process.argv.includes( '--extensions' ) )
 			adaptEditorRuntime( ast, asset.output );
+		if ( process.argv.includes( '--extensions' ) )
+			adaptVendorPackages( ast, asset.output );
+		if ( process.argv.includes( '--extensions' ) )
+			adaptEmailPackages( ast, asset.output );
 		const result = generate(
 			ast,
 			{

@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import * as npmIcons from 'lucide-react';
+import { ESLint } from 'eslint';
+import prettier from 'prettier';
 
 const root = path.resolve( import.meta.dirname, '..' );
 const React = {
@@ -66,14 +68,22 @@ for ( const [ name, icon ] of Object.entries( legacy ) ) {
 	} else throw new Error( `Unmapped legacy icon export ${ name }` );
 }
 const directory = path.join( root, 'assets/src/features/editor-packages' );
+const compatPath = path.join( directory, 'icon-compat.json' );
 fs.writeFileSync(
-	path.join( directory, 'icon-compat.json' ),
-	JSON.stringify( compatibility, null, 2 ) + '\n'
+	compatPath,
+	await prettier.format( JSON.stringify( compatibility ), {
+		...( await prettier.resolveConfig( compatPath ) ),
+		filepath: compatPath,
+	} )
 );
-fs.writeFileSync(
-	path.join( directory, 'icons.js' ),
-	`// Generated once by tools/generate-editor-icons.mjs; preserve the legacy icon contract.\nimport {${ imports.join( ',' ) }} from 'lucide-react';\nimport compatibility from './icon-compat.json';\nexport const icons=Object.freeze({${ definitions.join( ',\n' ) }});\nexport const iconExports=Object.freeze({${ exports.join( ',\n' ) }});\n`
-);
+const iconPath = path.join( directory, 'icons.js' );
+const code = `// Generated once by tools/generate-editor-icons.mjs; preserve the legacy icon contract.\nimport {${ imports.join( ',' ) }} from 'lucide-react';\nimport compatibility from './icon-compat.json';\nexport const icons=Object.freeze({${ definitions.join( ',\n' ) }});\nexport const iconExports=Object.freeze({${ exports.join( ',\n' ) }});\n`;
+const [ formatted ] = await new ESLint( { fix: true } ).lintText( code, {
+	filePath: iconPath,
+} );
+if ( formatted.errorCount )
+	throw new Error( 'Generated icons failed WordPress lint' );
+fs.writeFileSync( iconPath, formatted.output || code );
 console.log(
 	JSON.stringify( {
 		icons: names.length,

@@ -43,6 +43,7 @@ test('keyboard, click placement, drag placement and restoration keep repeated to
  await expect(page.locator('#q2 .is-placed')).toHaveCount(1);
 });
 test('author chips and learner tokens have readable dark text on light backgrounds', async ({ page }) => {
+	await page.addStyleTag({content: ':root{--oml-heading:#1d2327;--oml-subtle:#f6f7f7;--oml-border:#8c8f94}'});
  await page.addStyleTag({path: path.join(base, 'assets/css/question-stage.css')});
  await page.evaluate(() => {
   const editor = document.createElement('div'); editor.className = 'ohmylms-question-authoring toplevel_page_ohmylms'; editor.style.color = '#fff';

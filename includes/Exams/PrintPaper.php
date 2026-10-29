@@ -246,11 +246,11 @@ final class PrintPaper {
 			}
 			return array(
 				'figure_part_html' => true,
-				'id'          => $question_id,
-				'name'        => $snapshot->get_name(),
-				'description' => $snapshot->get_description() . \OhMyLMS\ExamImport\FigureContent::html( $snapshot, 'print:' . $quiz_id ),
-				'settings'    => $private_settings,
-				'questions'   => $options,
+				'id'               => $question_id,
+				'name'             => $snapshot->get_name(),
+				'description'      => $snapshot->get_description() . \OhMyLMS\ExamImport\FigureContent::html( $snapshot, 'print:' . $quiz_id ),
+				'settings'         => $private_settings,
+				'questions'        => $options,
 			);
 		}
 		$view     = $snapshot->student_view( array_column( $options, 'id' ), array(), array(), array(), 'print:' . $quiz_id );
@@ -408,6 +408,8 @@ final class PrintPaper {
 
 		$asset = require OHMYLMS_DIR . '/assets/dist/admin/paper-print.asset.php';
 		wp_register_style( self::STYLE, plugins_url( 'assets/css/paper.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/paper.css' ) );
+		wp_add_inline_style( self::STYLE, ':root{' . \OhMyLMS\Design\Tokens::frontend_oml_vars() . '}' . \OhMyLMS\Design\Tokens::frontend_dark_css() );
+		\OhMyLMS\Design\Ui::enqueue();
 		$dependencies = $asset['dependencies'];
 		if ( \OhMyLMS\Assessment\MathLive::enabled() ) {
 			// This runs before wp_enqueue_scripts, where the math scripts are normally registered.
@@ -441,7 +443,7 @@ final class PrintPaper {
 <meta name="robots" content="noindex,nofollow">
 <title><?php echo esc_html( $title ); ?></title>
 		<?php
-		wp_print_styles( array( self::STYLE, 'ohmylms-mathlive', 'ohmylms-figures' ) );
+		wp_print_styles( array( self::STYLE, \OhMyLMS\Design\Ui::STYLE_HANDLE, 'ohmylms-mathlive', 'ohmylms-figures' ) );
 		// The CSS is built only from sanitized enumerations, integers and an escaped CSS string.
 		printf( '<style id="ohmylms-print-page">%s</style>', self::page_css( $paper ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- See above.
 		?>
@@ -451,7 +453,17 @@ final class PrintPaper {
 	<a class="ohmylms-print-back" href="<?php echo esc_url( (string) get_edit_post_link( $id, 'raw' ) ); ?>"><?php esc_html_e( '← Back to the exam', 'ohmylms' ); ?></a>
 	<span class="ohmylms-print-toolbar-title"><?php echo esc_html( $title ); ?></span>
 	<span class="ohmylms-print-status" role="status"><?php esc_html_e( 'Preparing the paper…', 'ohmylms' ); ?></span>
-	<button type="button" class="ohmylms-print-button" disabled><?php esc_html_e( 'Print', 'ohmylms' ); ?></button>
+		<?php
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::button() escapes its attributes and label.
+		echo \OhMyLMS\Design\Ui::button(
+			__( 'Print', 'ohmylms' ),
+			array(
+				'variant'  => 'primary',
+				'class'    => 'ohmylms-print-button',
+				'disabled' => true,
+			)
+		);
+		?>
 </div>
 <main id="ohmylms-print-root" class="ohmylms-print-sheet"></main>
 <script type="application/json" id="ohmylms-print-data"><?php echo wp_json_encode( $data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE ); ?></script>

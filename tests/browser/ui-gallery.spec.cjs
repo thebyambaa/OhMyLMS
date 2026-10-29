@@ -14,7 +14,15 @@ const path = require( 'node:path' );
 const root = path.resolve( __dirname, '../..' );
 const php = process.env.OHMYLMS_PHP || 'php';
 const outFile = path.join( root, 'test-results', 'ui-gallery.html' );
-const sections = [ 'buttons', 'badges', 'progress', 'cards', 'type', 'colors' ];
+const sections = [
+	'buttons',
+	'badges',
+	'progress',
+	'cards',
+	'type',
+	'colors',
+	'controls',
+];
 const contexts = [ 'learner', 'admin' ];
 
 test.describe( 'design language gallery', () => {
@@ -24,7 +32,10 @@ test.describe( 'design language gallery', () => {
 			[ path.join( __dirname, 'fixtures/ui-gallery.php' ) ],
 			{ encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 }
 		);
-		test.skip( run.error || 0 !== run.status, 'php is not available: ' + ( run.error || run.stderr ) );
+		test.skip(
+			run.error || 0 !== run.status,
+			'php is not available: ' + ( run.error || run.stderr )
+		);
 		fs.mkdirSync( path.dirname( outFile ), { recursive: true } );
 		fs.writeFileSync( outFile, run.stdout );
 	} );
@@ -36,19 +47,27 @@ test.describe( 'design language gallery', () => {
 
 	for ( const context of contexts ) {
 		for ( const section of sections ) {
-			test( `${ context } ${ section } looks as expected`, async ( { page } ) => {
+			test( `${ context } ${ section } looks as expected`, async ( {
+				page,
+			} ) => {
 				const target = page.locator(
 					`[data-context="${ context }"] [data-gallery="${ section }"]`
 				);
-				await expect( target ).toHaveScreenshot( `${ context }-${ section }.png` );
+				await expect( target ).toHaveScreenshot(
+					`${ context }-${ section }.png`
+				);
 			} );
 		}
 	}
 
-	test( 'components read their colors from the tokens of their context', async ( { page } ) => {
+	test( 'components read their colors from the tokens of their context', async ( {
+		page,
+	} ) => {
 		for ( const context of contexts ) {
 			const result = await page.evaluate( ( name ) => {
-				const main = document.querySelector( `[data-context="${ name }"]` );
+				const main = document.querySelector(
+					`[data-context="${ name }"]`
+				);
 				const token = ( n ) => {
 					const probe = document.createElement( 'i' );
 					probe.style.color = `var(${ n })`;
@@ -60,7 +79,13 @@ test.describe( 'design language gallery', () => {
 				const style = ( selector, prop ) =>
 					getComputedStyle( main.querySelector( selector ) )[ prop ];
 				return {
-					primaryButton: style( '.oml-btn-primary', 'backgroundColor' ),
+					inputSurface: style( '.oml-input', 'backgroundColor' ),
+					selectSurface: style( '.oml-select', 'backgroundColor' ),
+					surface: token( '--oml-surface' ),
+					primaryButton: style(
+						'.oml-btn-primary',
+						'backgroundColor'
+					),
 					primary: token( '--oml-primary' ),
 					dangerButton: style( '.oml-btn-danger', 'backgroundColor' ),
 					danger: token( '--oml-danger' ),
@@ -69,19 +94,90 @@ test.describe( 'design language gallery', () => {
 					border: token( '--oml-border' ),
 				};
 			}, context );
-			expect( result.primaryButton, context + ' primary button' ).toBe( result.primary );
-			expect( result.dangerButton, context + ' danger button' ).toBe( result.danger );
-			expect( result.bar, context + ' progress bar' ).toBe( result.primary );
-			expect( result.cardBorder, context + ' card border' ).toBe( result.border );
+			expect( result.primaryButton, context + ' primary button' ).toBe(
+				result.primary
+			);
+			expect( result.inputSurface, context + ' input' ).toBe(
+				result.surface
+			);
+			expect( result.selectSurface, context + ' select' ).toBe(
+				result.surface
+			);
+			expect( result.dangerButton, context + ' danger button' ).toBe(
+				result.danger
+			);
+			expect( result.bar, context + ' progress bar' ).toBe(
+				result.primary
+			);
+			expect( result.cardBorder, context + ' card border' ).toBe(
+				result.border
+			);
 		}
 	} );
 
-	test( 'the two contexts differ only by their token values', async ( { page } ) => {
+	test( 'PHP fields have unique label and description targets and native states', async ( {
+		page,
+	} ) => {
+		const ids = await page
+			.locator( '.oml-control' )
+			.evaluateAll( ( controls ) => controls.map( ( el ) => el.id ) );
+		expect( new Set( ids ).size ).toBe( ids.length );
+		for ( const context of contexts ) {
+			const area = page.locator(
+				`[data-context="${ context }"] [data-gallery="controls"]`
+			);
+			const email = area.getByRole( 'textbox', {
+				name: 'Email address',
+				exact: true,
+			} );
+			await expect( email ).toHaveAttribute( 'required' );
+			await expect( email ).toHaveAttribute( 'aria-invalid', 'true' );
+			const descriptions = await email.evaluate( ( el ) =>
+				( el.getAttribute( 'aria-describedby' ) || '' )
+					.split( ' ' )
+					.map( ( id ) => document.getElementById( id )?.textContent )
+			);
+			expect( descriptions ).toEqual( [
+				'Use your school email.',
+				'Enter a valid email address.',
+			] );
+			await expect(
+				area.getByRole( 'textbox', { name: 'Disabled', exact: true } )
+			).toBeDisabled();
+			await expect(
+				area.getByRole( 'textbox', { name: 'Read only', exact: true } )
+			).not.toBeEditable();
+			await expect(
+				area.getByRole( 'listbox', {
+					name: 'Multiple subjects',
+					exact: true,
+				} )
+			).toHaveValues( [ 'math', 'science' ] );
+			const required = area.getByRole( 'combobox', {
+				name: 'Required subject',
+				exact: true,
+			} );
+			expect(
+				await required.evaluate( ( el ) => el.checkValidity() )
+			).toBe( false );
+			await required.selectOption( 'science' );
+			expect(
+				await required.evaluate( ( el ) => el.checkValidity() )
+			).toBe( true );
+		}
+	} );
+
+	test( 'the two contexts differ only by their token values', async ( {
+		page,
+	} ) => {
 		const primaries = await page.evaluate( () =>
-			[ 'learner', 'admin' ].map( ( name ) =>
-				getComputedStyle(
-					document.querySelector( `[data-context="${ name }"] .oml-btn-primary` )
-				).backgroundColor
+			[ 'learner', 'admin' ].map(
+				( name ) =>
+					getComputedStyle(
+						document.querySelector(
+							`[data-context="${ name }"] .oml-btn-primary`
+						)
+					).backgroundColor
 			)
 		);
 		expect( primaries[ 0 ] ).not.toBe( primaries[ 1 ] );

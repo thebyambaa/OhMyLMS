@@ -12,6 +12,8 @@ $methods = array(
 	'card'     => 'card_class',
 	'badge'    => 'badge_class',
 	'progress' => 'progress_class',
+	'input'    => 'input_class',
+	'select'   => 'select_class',
 );
 $out     = array();
 foreach ( json_decode( $argv[1], true ) as $name => $list ) {
@@ -22,4 +24,4 @@ foreach ( json_decode( $argv[1], true ) as $name => $list ) {
 		$out[ $name ][] = call_user_func( array( '\OhMyLMS\Design\Ui', $methods[ $name ] ), $args );
 	}
 }
-echo json_encode( $out );
+echo json_encode( $out ); // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- Standalone CLI fixture has no WordPress JSON wrapper.

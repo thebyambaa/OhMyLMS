@@ -9,6 +9,7 @@ import {
 	progressClass,
 	clampPercent,
 } from '../../assets/src/ui/components.mjs';
+import { inputClass, selectClass } from '../../assets/src/ui/controls.mjs';
 
 const css = fs.readFileSync(
 	new URL( '../../assets/css/oml-ui.css', import.meta.url ),
@@ -22,12 +23,34 @@ const cases = {
 		{ tone: 'danger', className: 'extra' },
 		{ tone: 'bogus' },
 	],
-	progress: [ {}, { tone: 'success' }, { tone: 'bogus', className: 'extra' } ],
+	progress: [
+		{},
+		{ tone: 'success' },
+		{ tone: 'bogus', className: 'extra' },
+	],
+	input: [
+		{},
+		{ size: 'sm' },
+		{ size: 'lg', className: 'extra' },
+		{ invalid: true },
+		{ error: 'Required' },
+		{ size: 'bogus' },
+	],
+	select: [
+		{},
+		{ size: 'sm' },
+		{ size: 'lg' },
+		{ invalid: true },
+		{ error: 'Choose one', className: 'extra' },
+		{ size: 'bogus' },
+	],
 };
 const builders = {
 	card: cardClass,
 	badge: badgeClass,
 	progress: progressClass,
+	input: inputClass,
+	select: selectClass,
 };
 
 test( 'component classes follow the documented modifiers', () => {

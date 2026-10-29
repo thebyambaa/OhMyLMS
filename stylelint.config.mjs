@@ -102,6 +102,12 @@ export default {
 				'assets/css/learning-context.css',
 				'assets/css/student-hub.css',
 				'assets/css/student-dashboard.css',
+				'assets/css/practice.css',
+				'assets/css/extended-questions.css',
+				'assets/css/interactive.css',
+				'assets/css/paper.css',
+				'assets/css/quiz-overview.css',
+				'assets/css/question-stage.css',
 				'assets/src/ui/**/*.{css,scss}',
 			],
 			rules: {
