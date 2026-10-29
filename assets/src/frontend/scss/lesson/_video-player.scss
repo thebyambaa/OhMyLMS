@@ -59,8 +59,7 @@
 		display: block;
 	}
 
-	/* YouTube branding removal trick*/
-	/* Make iframe 200% height and position at -50% to cut off top/bottom branding*/
+	/* YouTube branding removal trick. Make iframe 200% height and position at -50% to cut off top/bottom branding. */
 	iframe[src*="youtube"] {
 		pointer-events: auto;
 		top: -50% !important;
@@ -191,6 +190,7 @@
 
 /* Prevent clicks on YouTube controls - force use of custom controls*/
 .ohmylms-custom-video-player {
+
 	/* Ensure proper stacking context*/
 	position: relative;
 	isolation: isolate;
@@ -953,6 +953,7 @@
 
 /* Mobile-specific improvements */
 @media (max-width: 768px), (hover: none) {
+
 	/* Make video player container responsive*/
 	.ohmylms-custom-video-player {
 		margin-bottom: 16px;

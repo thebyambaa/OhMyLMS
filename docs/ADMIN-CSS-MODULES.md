@@ -46,3 +46,5 @@ Validation:
 - `npx playwright test tests/browser/admin-styles.spec.cjs` checks on-demand
   requests, request reuse and cascade order for LTR and RTL in a browser.
 - `npm test` runs the source regression suite; `npm run build` ships the modules.
+
+The current stylesheet map, sizes and remaining work are in [STYLESHEET-OWNERSHIP.md](STYLESHEET-OWNERSHIP.md). The WordPress block-editor parity fixture lives in `tests/fixtures/admin-styles/wordpress-block-editor.css`.

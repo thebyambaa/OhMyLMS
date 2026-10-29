@@ -258,8 +258,6 @@
 			gap: 10px;
 		}
 
-		.ohmylms-button {
-		}
 
 		&.ohmylms-course-locked {
 
@@ -294,14 +292,14 @@
 				}
 
 				path {
-					fill: currentColor;
+					fill: currentcolor;
 					transition: all 0.3s ease;
 				}
 
 				&:hover {
 
 					path {
-						fill: currentColor;
+						fill: currentcolor;
 					}
 				}
 			}
@@ -586,11 +584,7 @@
 			text-decoration: none;
 			transition: all 0.3s ease;
 
-			&.view-plan {
-			}
 
-			&.ohmylms-button-danger {
-			}
 		}
 	}
 }

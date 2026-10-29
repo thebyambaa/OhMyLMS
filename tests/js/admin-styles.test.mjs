@@ -92,7 +92,7 @@ test( 'admin modules retain layout coverage and vendor bytes while replacing the
 					fs.readFileSync(
 						path.join(
 							root,
-							'assets/src/admin-styles/main-085-block-editor.css'
+							'tests/fixtures/admin-styles/wordpress-block-editor.css'
 						),
 						'utf8'
 					),

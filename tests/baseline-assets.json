@@ -299,10 +299,6 @@
     "bytes": 2652,
     "sha256": "ce5269ebf38cd1c3b7b79bd2640f874a720393b0a2402b5ff4bd7652763fdfd5"
   },
-  "assets/dist/css/vendors.css": {
-    "bytes": 578254,
-    "sha256": "512a5ee249244e1d9e08564bc340d6cb9bc67ca28d0db6f620c950505c508b60"
-  },
   "assets/dist/frontend/add-to-cart.js": {
     "bytes": 1724,
     "sha256": "e5c987be101fdf69144f8fb9eac7d9cc9a2a98fd89a091f2391f75c4a429fd83"

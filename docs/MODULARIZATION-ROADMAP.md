@@ -38,7 +38,7 @@ report is stale.
 | 4 | State and API access | Features import their stores, hooks and API clients directly | Not started |
 | 5 | Feature independence | Features use normal components and explicit imports, not `createComponent(readRuntime)` | Components extracted; they still read the runtime |
 | 6 | Authored entry point | A small bootstrap registers routes, initializes services and loads features. Production startup needs no numeric Webpack IDs or adapters | Not started |
-| 7 | Stylesheet ownership | Tokens and controls are centralized; feature styles load with their features; recovered CSS snapshots are retired | In progress (design-system work on `main`) |
+| 7 | Stylesheet ownership | Tokens and controls are centralized; feature styles load with their features; recovered CSS snapshots are retired | In progress: page-specific frontend modules, orphan and snapshot cleanup done; see [stylesheet ownership](STYLESHEET-OWNERSHIP.md) |
 | 8 | Backend boundaries | PHP modules separate REST controllers, business rules and persistence; cross-feature access goes through services | Not started |
 | 9 | Asset and dependency isolation | Each page type loads only its modules; one deliberate React; no accidental duplicate runtimes | Partly done (lazy email/editor chunks) |
 | 10 | Enforcement and release checks | Automated checks catch circular imports, forbidden cross-feature imports, compatibility regressions, security findings and build drift | Inventory drift check added |

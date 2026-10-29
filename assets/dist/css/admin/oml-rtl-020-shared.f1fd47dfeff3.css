@@ -1,3 +1,0 @@
-.toplevel_page_ohmylms.rtl .mintmrm-automation-editor .automation-editor__header-right .mintmrm-btn{margin-left:0;margin-right:16px}.ohmylms-templates-view-container[dir=rtl] .ohmylms-template-item-wrapper{margin-right:0 !important;margin-left:var(--template-gap, 16px)}.ohmylms-templates-view-container[dir=rtl] .ohmylms-template-item-wrapper:last-child{margin-left:0 !important}.ohmylms-prompt-carousel-navigation .ohmylms-carousel-dots{direction:ltr}
-@tailwind base;@tailwind components;@tailwind utilities;@layer base{body{@apply antialiased;font-size:16px}}
-

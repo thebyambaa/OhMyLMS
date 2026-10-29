@@ -129,20 +129,6 @@
 			"factories": []
 		},
 		{
-			"output": "assets/css/style-rtl.css",
-			"sha256": "6b818c54859597b687307d0ff59937ae8e87c93c9ff83cfdacb8a80500c7b235",
-			"bytes": 508832,
-			"source": "static/css/style-rtl.css",
-			"factories": []
-		},
-		{
-			"output": "assets/css/style.css",
-			"sha256": "8d0d6acd018aba21ecc0e609c62dd52abb7b365693139e4b0f43095438f46cff",
-			"bytes": 570171,
-			"source": "static/css/style.css",
-			"factories": []
-		},
-		{
 			"output": "assets/css/tailwind.css",
 			"sha256": "a003c79d5e94c05b4e7251016080bbb75f2d66dc9c54058aef6d20421e4a7d16",
 			"bytes": 22088,
@@ -1670,13 +1656,6 @@
 			"sha256": "d95c25fc407f9ff333ba1bdd675ece099871c85d73f98c6cbf8001161f3f71f8",
 			"bytes": 167399,
 			"source": "static/dist/css/chunks/355.css",
-			"factories": []
-		},
-		{
-			"output": "assets/dist/css/vendors.css",
-			"sha256": "512a5ee249244e1d9e08564bc340d6cb9bc67ca28d0db6f620c950505c508b60",
-			"bytes": 578254,
-			"source": "static/dist/css/vendors.css",
 			"factories": []
 		},
 		{
@@ -10877,6 +10856,7 @@
 		"assets/blocks/js/my-courses.js",
 		"assets/blocks/js/my-courses.min.js",
 		"assets/extensions/activity-editor.js",
-		"assets/css/learning-pages.css"
+		"assets/css/learning-pages.css",
+		"assets/dist/css/vendors.css"
 	]
 }

@@ -15,7 +15,7 @@
 		"name": "course",
 		"path": "assets/css/frontend/course.css",
 		"bytes": 121829,
-		"version": "a1acf471dd32"
+		"version": "aef042799218"
 	},
 	{
 		"name": "lesson",
@@ -39,7 +39,7 @@
 		"name": "account",
 		"path": "assets/css/frontend/account.css",
 		"bytes": 84565,
-		"version": "f42da11af839"
+		"version": "bfb926c76541"
 	},
 	{
 		"name": "membership",

@@ -426,8 +426,11 @@ class AdminAssets extends Assets {
 		wp_enqueue_script( 'wp-element' );
 		wp_enqueue_script( 'wp-components' );
 		wp_enqueue_script( 'wp-data' );
-		wp_enqueue_style( 'wp-interface' );
-		wp_enqueue_style( 'wp-block-editor' );
+		// WordPress owns these editor stylesheets. Only the LMS application needs them; other admin screens must not download them.
+		if ( 'toplevel_page_ohmylms' === $screen_id ) {
+			wp_enqueue_style( 'wp-interface' );
+			wp_enqueue_style( 'wp-block-editor' );
+		}
 		foreach ( $this->get_scripts() as $handle => $script ) {
 			if ( ! $this->should_enqueue( $script, $screen_id ) ) {
 				continue;
