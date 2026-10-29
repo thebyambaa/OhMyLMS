@@ -1,0 +1,112 @@
+/*
+ * Styles for the typed admin app. Everything is scoped under .ohmylms-app and reads the shared design
+ * tokens (--oml-*, defined by includes/Design/DesignSystem.php on plugin admin screens).
+ * Prefer @wordpress/components for UI; add rules here only for the shell and for feature layouts.
+ */
+
+.ohmylms-app {
+	color: var(--oml-text);
+	font-family: var(--oml-font-family);
+	font-size: var(--oml-font-size-md);
+	line-height: var(--oml-line-normal);
+}
+
+.ohmylms-app h1,
+.ohmylms-app h2,
+.ohmylms-app h3 {
+	color: var(--oml-heading);
+}
+
+.ohmylms-app-layout {
+	display: grid;
+	gap: var(--oml-space-4);
+	padding-block: var(--oml-space-4);
+}
+
+.ohmylms-app-skip-link {
+	background: var(--oml-surface);
+	border-radius: var(--oml-radius-control);
+	left: var(--oml-space-2);
+	padding: var(--oml-space-2) var(--oml-space-4);
+	position: absolute;
+	top: var(--oml-space-2);
+	transform: translateY(-200%);
+	z-index: var(--oml-z-dropdown);
+}
+
+.ohmylms-app-skip-link:focus {
+	transform: translateY(0);
+}
+
+.ohmylms-app-header {
+	align-items: center;
+	border-bottom: 1px solid var(--oml-border);
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-4);
+	padding-bottom: var(--oml-space-2);
+}
+
+.ohmylms-app-header h1 {
+	font-size: var(--oml-font-size-xl);
+	margin: 0;
+}
+
+.ohmylms-app-nav ul {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-2);
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.ohmylms-app-nav a {
+	align-items: center;
+	border-radius: var(--oml-radius-control);
+	color: var(--oml-link);
+	display: inline-flex;
+	gap: var(--oml-space-1);
+	padding: var(--oml-space-1) var(--oml-space-2);
+	text-decoration: none;
+}
+
+.ohmylms-app-nav a[aria-current="page"] {
+	background: var(--oml-primary-soft);
+	font-weight: var(--oml-weight-strong);
+}
+
+.ohmylms-app-nav svg {
+	fill: currentcolor;
+}
+
+.ohmylms-app-main {
+	min-width: 0;
+	background: var(--oml-surface);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card);
+	padding: var(--oml-space-4);
+}
+
+.ohmylms-app-main:focus {
+	outline: none;
+}
+
+.ohmylms-app-main:focus-visible {
+	outline: 2px solid var(--oml-focus);
+	outline-offset: 2px;
+}
+
+.ohmylms-app-loading {
+	align-items: center;
+	display: flex;
+	gap: var(--oml-space-2);
+}
+
+.ohmylms-app-error {
+	border-inline-start: 4px solid var(--oml-danger);
+	padding-inline-start: var(--oml-space-4);
+}
+
+
+/*# sourceMappingURL=admin-app.css.map*/

@@ -1,4 +1,24 @@
-# Modularization roadmap — 29 October 2026
+# Modularization roadmap — updated 30 October 2026
+
+## Current rebuild direction
+
+The new admin is a typed application in `assets/src/app`, developed at
+`admin.php?page=ohmylms-app`. Its foundation, feature registry, REST client and tests are present.
+Webhooks (`#/webhooks`) and the core Skills catalogue (`#/content-hub/skills`) now have authored
+preview screens using their PHP controllers directly. See [architecture](ARCHITECTURE.md) for the
+implemented scope and remaining work, and the [Webhooks API](api/webhooks.md).
+
+The stored-data compatibility requirement below has been superseded by the user's rebuild policy:
+stored data, REST shapes, option names and tables may be redesigned with PHP and TypeScript changed
+together. Do not add migrations or compatibility wrappers solely to preserve old stored data.
+Preserve the public hooks and extension points in [EXTENSIONS.md](EXTENSIONS.md). Fix recovered
+quirks rather than reproduce them. Ask before destructive actions outside the repository, including
+dropping or resetting the Local database.
+
+Every rebuilt feature needs server permission checks, validation, typed API boundaries, tests and
+accessible controls. The old admin must not be replaced or its runtime deleted while features and
+documented extension surfaces are still missing. Stylesheet cleanup is outside this rebuild;
+reuse the existing tokens and shared components.
 
 The LMS counts as fully modular when each feature owns its UI, state, API access, styles and
 tests, with explicit imports and documented interfaces. The largest remaining job is removing
@@ -19,12 +39,12 @@ report is stale.
 
 ## Invariants for every step
 
-- Course IDs, enrollments, progress, quiz attempts, extension fields and saved email content
-  stay unchanged. No step rewrites stored data unless a compatible migration ships with it.
+- Stored-data preservation is not a release requirement. Coordinate changes across PHP, TypeScript,
+  validation and tests; do not silently drop or reset the Local database.
 - Before a feature's old implementation is retired, it must pass a real WordPress save →
   reopen check and a permission check (allowed and denied user).
-- Public hooks, REST fields, PSR-4 class/file mappings and versioned assessment contracts
-  stay compatible (see `AGENTS.md`).
+- Preserve the documented hooks and extension points. REST shapes and internal persistence may
+  change as part of the coordinated rebuild. Retain assessment security and correct server grading.
 - Modularization and performance need separate evidence. A migration claims no speed-up
   without a benchmark.
 
@@ -35,10 +55,10 @@ report is stale.
 | 1 | Dependency inventory | Every recovered library and LMS-owned module has an owner and plan | **Done**: generated report, zero unassigned bindings, drift test |
 | 2 | Easy Email and remaining libraries | Email UI, editor core, source editor, html2canvas and embedded vendor copies use maintained packages or documented replacements; saved templates still open | Partly done (MJML, Arco shared factory, Chart.js, Emotion, Tiptap, Lowlight) |
 | 3 | Shared application infrastructure | Routing, controls, notifications, permissions, configuration and utilities have named modules and public exports | In progress: notices, skeleton, avatar, spinner, tooltip, copy button, table, icons and 41 of 43 used controls are authored modules under `assets/src/shared`. Routing, permissions, configuration, `AdvancedSelectWP`, `SearchSelectWP` and the admin-menu, HTML-text and media helpers remain |
-| 4 | State and API access | Features import their stores, hooks and API clients directly | Not started |
-| 5 | Feature independence | Features use normal components and explicit imports, not `createComponent(readRuntime)` | Components extracted; they still read the runtime |
-| 6 | Authored entry point | A small bootstrap registers routes, initializes services and loads features. Production startup needs no numeric Webpack IDs or adapters | Not started |
-| 7 | Stylesheet ownership | Tokens and controls are centralized; feature styles load with their features; recovered CSS snapshots are retired | In progress: page-specific frontend modules, orphan and snapshot cleanup done; see [stylesheet ownership](STYLESHEET-OWNERSHIP.md) |
+| 4 | State and API access | Features import their stores, hooks and API clients directly | New typed client and home reference store present; Webhooks uses a typed, validated client and page-owned cancellable state |
+| 5 | Feature independence | Features use normal components and explicit imports, not `createComponent(readRuntime)` | Webhooks and core Skills catalogue previews are authored TypeScript with no recovered imports; advanced Skills tools and remaining business features still need rebuilding |
+| 6 | Authored entry point | A small bootstrap registers routes, initializes services and loads features. Production startup needs no numeric Webpack IDs or adapters | New preview bootstrap exists beside the old admin; production cutover and runtime deletion remain pending |
+| 7 | Stylesheet ownership | Tokens and controls are centralized; feature styles load with their features; recovered CSS snapshots are retired | Separate CSS work completed; excluded from this app rebuild. See [stylesheet ownership](STYLESHEET-OWNERSHIP.md) |
 | 8 | Backend boundaries | PHP modules separate REST controllers, business rules and persistence; cross-feature access goes through services | Not started |
 | 9 | Asset and dependency isolation | Each page type loads only its modules; one deliberate React; no accidental duplicate runtimes | Partly done (lazy email/editor chunks) |
 | 10 | Enforcement and release checks | Automated checks catch circular imports, forbidden cross-feature imports, compatibility regressions, security findings and build drift | Inventory drift check added |
@@ -47,7 +67,18 @@ Sequence: remaining email dependencies → shared infrastructure → state/API m
 independent features → authored bootstrap → retire recovery adapters. Backend, styles,
 security and testing progress alongside.
 
-## Owners and plans from the inventory
+## Recovered-runtime inventory (reference)
+
+The sections below describe the earlier extraction approach. Use them to locate dependencies;
+they are not instructions to preserve recovered quirks or introduce stored-data compatibility
+wrappers. The active sequence is: verify the typed foundation and Webhooks API, rebuild feature
+batches, verify the documented extension surfaces, switch the admin, then retire the recovered
+runtime and finish backend boundaries, page-specific loading and CI enforcement.
+
+The core Skills catalogue batch is implemented in the preview, with bounded search, editing,
+hierarchy/prerequisites, archive/restore and lesson/course links. Next, rebuild the advanced Skills
+and Curriculum workflows, then the remaining Content Hub editors. Skills stays core without an
+Add-ons switch. Do not remove existing routes until replacements and extension contexts are verified.
 
 ### Step 2: libraries (owner: `features/vendor-packages`)
 

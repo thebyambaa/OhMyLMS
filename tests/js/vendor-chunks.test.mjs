@@ -48,8 +48,9 @@ test( 'email vendor relocation preserves every factory and its chunk registratio
 		...capture( read( `build/parity/${ emailVendorTarget }` ) )[ 1 ],
 	};
 	const relocated = { ...vendors, ...email };
-	// npm package tests cover these two explicit replacements; compare every other factory.
-	for ( const id of [ 3270, 44098 ] ) {
+	// npm package tests cover these explicit replacements (Arco, MJML, Easy Email core); compare every other factory.
+	const replaced = [ 3270, 44098, 49050 ];
+	for ( const id of replaced ) {
 		assert.ok( original[ id ] );
 		delete original[ id ];
 		delete relocated[ id ];
@@ -59,7 +60,9 @@ test( 'email vendor relocation preserves every factory and its chunk registratio
 		Object.keys( original ).sort()
 	);
 	assert.equal(
-		Object.keys( vendors ).length + Object.keys( email ).length - 2,
+		Object.keys( vendors ).length +
+			Object.keys( email ).length -
+			replaced.length,
 		Object.keys( original ).length
 	);
 	for ( const id of Object.keys( original ) ) {

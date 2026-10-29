@@ -36,6 +36,11 @@ final class SourceAssets {
 	/** Load the application SDK; native screens use their dedicated editor bundle. */
 	public static function enqueue() {
 		$screen = is_admin() ? get_current_screen() : null;
+		// The authored preview owns its bootstrap. Keep the recovered SDK on existing screens
+		// until the new app implements the documented extension surfaces before cutover.
+		if ( $screen && \OhMyLMS\Admin\AppPage::is_app_screen( $screen->id ) ) {
+			return;
+		}
 		if ( $screen && in_array( $screen->post_type, array( 'ohmylms-lesson', 'ohmylms-quiz', 'ohmylms-question' ), true ) && $screen->is_block_editor() ) {
 			return;
 		}

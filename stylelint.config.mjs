@@ -120,6 +120,7 @@ export default {
 				'assets/css/quiz-overview.css',
 				'assets/css/question-stage.css',
 				'assets/src/ui/**/*.{css,scss}',
+				'assets/src/app/styles/*.css',
 				'assets/src/design-system/admin/*.css',
 				'assets/src/frontend/scss/**/*.scss',
 			],

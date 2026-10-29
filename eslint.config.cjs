@@ -52,6 +52,16 @@ module.exports = [
 			'assets/js/ui.js',
 		],
 	} ) ),
+	...wordpress.configs[ 'recommended' ].map( ( config ) => ( {
+		...config,
+		files: [ 'assets/src/app/**/*.{ts,tsx}' ],
+	} ) ),
+	{
+		// Typed admin app (docs/ARCHITECTURE.md). @wordpress/* packages resolve from node_modules for types
+		// and tests; webpack externalizes them to the WordPress script handles at build time.
+		files: [ 'assets/src/app/**/*.{ts,tsx}' ],
+		settings: { 'import/resolver': { typescript: { project: 'assets/src/app/tsconfig.json' } } },
+	},
 	{
 		files: [
 			'assets/src/features/**/*.{js,jsx,mjs}',

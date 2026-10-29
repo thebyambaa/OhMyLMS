@@ -218,3 +218,19 @@ New: `ohmylms_webhook_request_args` (filter, outgoing `wp_safe_remote_request()`
 `ohmylms_webhook_sample_payload` (filter), `ohmylms_webhook_timeout`, `ohmylms_webhook_test_timeout`,
 `ohmylms_webhook_test_rate_limit` (filters). `Webhook::execute()` is kept and delegates to
 `WebhookDelivery`.
+
+
+## Authored admin preview (30 October 2026)
+
+The new `admin.php?page=ohmylms-app#/webhooks` route consumes this contract directly through
+`assets/src/app/features/webhooks/api.ts`. It provides a paged/searchable list, create/edit forms,
+validated mapping rows, confirmed deletion and test delivery, secret rotation and delivery history.
+The preview defaults new webhooks to inactive, even though the API's create default is active.
+Full secrets are kept only in the temporary reveal dialog and cleared on close/unmount.
+Bulk UI is not implemented in this batch; the existing bulk API remains available.
+
+The UI uses server-provided options, validates response records and pagination, and cancels obsolete
+requests. Tables reuse the shared labelled, keyboard-scrollable Table component. A live create and
+full-page reopen check passed with an inactive verification record; no outbound delivery was sent.
+That inactive record remains for review. See [the authored admin architecture](../ARCHITECTURE.md)
+for boundaries, build/publishing and the remaining feature/extension cutover work.

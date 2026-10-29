@@ -32,8 +32,11 @@ const pmAliases = Object.fromEntries(
 	} )
 );
 const DependencyExtractionWebpackPlugin = require( '@wordpress/dependency-extraction-webpack-plugin' );
+const MiniCssExtractPlugin = require( 'mini-css-extract-plugin' );
 module.exports = {
 	entry: {
+		// New typed admin app (see docs/ARCHITECTURE.md). Self-contained; it imports nothing from the recovered app.
+		'admin-app': path.resolve( __dirname, 'assets/src/app/main.tsx' ),
 		'email-packages': path.resolve(
 			__dirname,
 			'assets/src/features/vendor-packages/email-loader.js'
@@ -122,9 +125,32 @@ module.exports = {
 			callback();
 		},
 	],
-	resolve: { alias: pmAliases, extensions: [ '.js', '.jsx', '.mjs' ] },
+	resolve: {
+		alias: pmAliases,
+		extensions: [ '.js', '.jsx', '.mjs', '.ts', '.tsx' ],
+	},
 	module: {
 		rules: [
+			{
+				// Typed admin app: TypeScript and the automatic JSX runtime (react/jsx-runtime is a WordPress external).
+				test: /\.tsx?$/,
+				include: path.resolve( __dirname, 'assets/src/app' ),
+				use: {
+					loader: 'babel-loader',
+					options: {
+						presets: [
+							'@babel/preset-typescript',
+							[ '@babel/preset-react', { runtime: 'automatic' } ],
+						],
+					},
+				},
+			},
+			{
+				// The admin app's stylesheet is extracted to build/sdk/admin-app.css.
+				test: /\.css$/,
+				include: path.resolve( __dirname, 'assets/src/app' ),
+				use: [ MiniCssExtractPlugin.loader, 'css-loader' ],
+			},
 			{
 				test: /\.[cm]?jsx?$/,
 				exclude: /node_modules/,
@@ -143,6 +169,7 @@ module.exports = {
 		],
 	},
 	plugins: [
+		new MiniCssExtractPlugin( { filename: '[name].css' } ),
 		new DependencyExtractionWebpackPlugin( {
 			requestToExternal: ( request ) =>
 				'jsxgraph' === request ? 'JXG' : undefined,

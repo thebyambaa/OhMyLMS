@@ -1,0 +1,64 @@
+import { hasCapability } from '../bootstrap/config';
+import { contentHub } from './content-hub';
+import { home } from './home';
+import { webhooks } from './webhooks';
+import type { FeatureDefinition } from './types';
+
+/**
+ * Every feature of the app, in navigation order. Add new features with an explicit import and one entry;
+ * nothing is discovered automatically.
+ */
+export const features: readonly FeatureDefinition[] = [
+	home,
+	contentHub,
+	webhooks,
+];
+
+/**
+ * Features the current user may open.
+ *
+ * @param all          Feature list, normally {@link features}.
+ * @param capabilities Capability map from the bootstrap data.
+ * @return Features whose capability requirement is met, in the original order.
+ */
+export function getVisibleFeatures(
+	all: readonly FeatureDefinition[],
+	capabilities: Readonly< Record< string, boolean > >
+): readonly FeatureDefinition[] {
+	return all.filter( ( feature ) =>
+		hasCapability( capabilities, feature.capability )
+	);
+}
+
+/**
+ * Describe mistakes in a feature list: duplicate ids or paths, and malformed paths.
+ *
+ * @param all Feature list to check.
+ * @return Human-readable problems; empty when the list is valid.
+ */
+export function findRegistryProblems(
+	all: readonly FeatureDefinition[]
+): string[] {
+	const problems: string[] = [];
+	const ids = new Set< string >();
+	const paths = new Set< string >();
+	for ( const feature of all ) {
+		if ( ids.has( feature.id ) ) {
+			problems.push( `Duplicate feature id "${ feature.id }".` );
+		}
+		if ( paths.has( feature.path ) ) {
+			problems.push( `Duplicate feature path "${ feature.path }".` );
+		}
+		if (
+			! feature.path.startsWith( '/' ) ||
+			feature.path.includes( '*' )
+		) {
+			problems.push(
+				`Feature "${ feature.id }" must have an absolute path without wildcards.`
+			);
+		}
+		ids.add( feature.id );
+		paths.add( feature.path );
+	}
+	return problems;
+}

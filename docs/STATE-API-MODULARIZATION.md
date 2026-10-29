@@ -1,5 +1,11 @@
 # State and API modularization (roadmap step 4)
 
+**Rebuild update, 30 October 2026:** this document analyzes the recovered store. Its W1/W2 adapter
+proposal below is historical, not the active new-app plan. The new Webhooks screen in
+`assets/src/app/features/webhooks` uses typed API calls and cancellable page-owned state directly;
+it does not wire the recovered slice into the new application. See [ARCHITECTURE.md](ARCHITECTURE.md)
+and [the current roadmap](MODULARIZATION-ROADMAP.md) for the rebuild and stored-data policy.
+
 Status: analysis and design, plus a first slice (`webhooks`) that is **not wired in**. Nothing under
 `assets/dist`, `tools/` or the existing feature files was changed.
 

@@ -1,9 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { buildAdminStyles } from './build-admin-styles.mjs';
+import { syncAdminApp } from './sync-admin-app.mjs';
 
 // Ship the same admin app and SDK used during development, including add-on settings.
 const root = path.resolve( import.meta.dirname, '..' );
+syncAdminApp( root );
 fs.cpSync(
 	path.join( root, 'build/assets/css/frontend' ),
 	path.join( root, 'assets/css/frontend' ),

@@ -1,0 +1,528 @@
+{
+	"contract": "ohmylms/v1/webhooks",
+	"version": 2,
+	"namespace": "ohmylms/v1",
+	"restBase": "webhooks",
+	"capability": "manage_options",
+	"auth": "WordPress REST authentication. Cookie auth requires the X-WP-Nonce header (wp_create_nonce('wp_rest')); application passwords also work.",
+	"routes": [
+		{
+			"name": "list",
+			"method": "GET",
+			"path": "/webhooks",
+			"args": {
+				"page": { "type": "integer", "default": 1, "minimum": 1 },
+				"per_page": {
+					"type": "integer",
+					"default": 10,
+					"minimum": 1,
+					"maximum": 100
+				},
+				"search": { "type": "string" },
+				"status": {
+					"type": "string",
+					"default": "all",
+					"enum": [ "all", "active", "inactive" ]
+				},
+				"trigger_event": {
+					"type": "string",
+					"enum": "see GET /webhooks/triggers (triggers[].value)"
+				},
+				"orderby": {
+					"type": "string",
+					"default": "created_at",
+					"enum": [
+						"id",
+						"name",
+						"status",
+						"trigger_event",
+						"created_at",
+						"updated_at"
+					]
+				},
+				"order": {
+					"type": "string",
+					"default": "desc",
+					"enum": [ "asc", "desc" ]
+				},
+				"_fields": {
+					"type": "string",
+					"description": "Comma separated response fields."
+				}
+			},
+			"success": {
+				"status": 200,
+				"body": "Webhook[]",
+				"headers": [ "X-WP-Total", "X-WP-TotalPages", "Link" ]
+			},
+			"errors": [ 400, 401, 403 ]
+		},
+		{
+			"name": "create",
+			"method": "POST",
+			"path": "/webhooks",
+			"args": {
+				"$ref": "#/definitions/WebhookWrite",
+				"required": [ "name", "trigger_event", "webhook_url" ]
+			},
+			"success": {
+				"status": 201,
+				"body": "Webhook & { secret: string }",
+				"headers": [ "Location" ]
+			},
+			"errors": [ 400, 401, 403, 422, 500 ]
+		},
+		{
+			"name": "read",
+			"method": "GET",
+			"path": "/webhooks/{id}",
+			"args": { "id": { "type": "integer", "minimum": 1, "in": "path" } },
+			"success": { "status": 200, "body": "Webhook" },
+			"errors": [ 401, 403, 404 ]
+		},
+		{
+			"name": "update",
+			"method": [ "PUT", "PATCH", "POST" ],
+			"path": "/webhooks/{id}",
+			"description": "Partial update: only the fields that are sent change. The secret cannot be changed here; use rotate-secret.",
+			"args": {
+				"id": { "type": "integer", "minimum": 1, "in": "path" },
+				"$ref": "#/definitions/WebhookWrite",
+				"required": []
+			},
+			"success": { "status": 200, "body": "Webhook" },
+			"errors": [ 400, 401, 403, 404, 422, 500 ]
+		},
+		{
+			"name": "delete",
+			"method": "DELETE",
+			"path": "/webhooks/{id}",
+			"description": "Also deletes the delivery log of the webhook.",
+			"args": { "id": { "type": "integer", "minimum": 1, "in": "path" } },
+			"success": {
+				"status": 200,
+				"body": "{ deleted: true, previous: Webhook }"
+			},
+			"errors": [ 401, 403, 404, 500 ]
+		},
+		{
+			"name": "bulk",
+			"method": "POST",
+			"path": "/webhooks/bulk",
+			"args": {
+				"action": {
+					"type": "string",
+					"required": true,
+					"enum": [ "delete", "activate", "deactivate" ]
+				},
+				"ids": {
+					"type": "array",
+					"required": true,
+					"items": { "type": "integer", "minimum": 1 },
+					"minItems": 1,
+					"maxItems": 100,
+					"uniqueItems": true
+				}
+			},
+			"success": {
+				"status": 200,
+				"body": "BulkResult",
+				"description": "Always 200 once the request is valid; per-id outcomes are in succeeded and failed."
+			},
+			"errors": [ 400, 401, 403 ]
+		},
+		{
+			"name": "triggers",
+			"method": "GET",
+			"path": "/webhooks/triggers",
+			"args": {},
+			"success": { "status": 200, "body": "TriggerOptions" },
+			"errors": [ 401, 403 ]
+		},
+		{
+			"name": "test",
+			"method": "POST",
+			"path": "/webhooks/test",
+			"description": "Sends one sample delivery. With id, the stored webhook is used and any other field overrides it for this delivery only (and the attempt is logged). Without id, webhook_url is required and nothing is logged. Rate limited to 10 per user per minute.",
+			"args": {
+				"id": { "type": "integer", "minimum": 1 },
+				"webhook_url": {
+					"type": "string",
+					"format": "uri",
+					"maxLength": 2048
+				},
+				"trigger_event": { "type": "string" },
+				"http_method": {
+					"type": "string",
+					"enum": [ "GET", "POST", "PUT", "PATCH", "DELETE" ]
+				},
+				"data_type": {
+					"type": "string",
+					"enum": [ "json", "xml", "form" ]
+				},
+				"data_mapping": { "$ref": "#/definitions/DataMapping" },
+				"secret": {
+					"type": "string",
+					"minLength": 16,
+					"maxLength": 128
+				}
+			},
+			"success": {
+				"status": 200,
+				"body": "TestResult",
+				"description": "200 whenever an attempt was made, even if the endpoint failed (check success and error)."
+			},
+			"errors": [ 400, 401, 403, 404, 422, 429 ]
+		},
+		{
+			"name": "rotate-secret",
+			"method": "POST",
+			"path": "/webhooks/{id}/rotate-secret",
+			"args": { "id": { "type": "integer", "minimum": 1, "in": "path" } },
+			"success": {
+				"status": 200,
+				"body": "Webhook & { secret: string }"
+			},
+			"errors": [ 401, 403, 404, 500 ]
+		},
+		{
+			"name": "deliveries",
+			"method": "GET",
+			"path": "/webhooks/{id}/deliveries",
+			"args": {
+				"id": { "type": "integer", "minimum": 1, "in": "path" },
+				"page": { "type": "integer", "default": 1, "minimum": 1 },
+				"per_page": {
+					"type": "integer",
+					"default": 10,
+					"minimum": 1,
+					"maximum": 100
+				},
+				"status": {
+					"type": "string",
+					"default": "all",
+					"enum": [ "all", "success", "failed" ]
+				}
+			},
+			"success": {
+				"status": 200,
+				"body": "Delivery[]",
+				"headers": [ "X-WP-Total", "X-WP-TotalPages" ]
+			},
+			"errors": [ 400, 401, 403, 404 ]
+		}
+	],
+	"definitions": {
+		"DataMapping": {
+			"type": "array",
+			"maxItems": 50,
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": [ "key", "value" ],
+				"properties": {
+					"key": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 100,
+						"pattern": "^[A-Za-z_][A-Za-z0-9_.-]*$",
+						"description": "Field name sent to the endpoint. Unique within the array."
+					},
+					"value": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 100,
+						"pattern": "^[A-Za-z0-9_.-]+$",
+						"description": "Source field of the event payload."
+					}
+				}
+			}
+		},
+		"WebhookWrite": {
+			"type": "object",
+			"properties": {
+				"name": { "type": "string", "minLength": 1, "maxLength": 255 },
+				"trigger_event": {
+					"type": "string",
+					"description": "A value from GET /webhooks/triggers."
+				},
+				"webhook_url": {
+					"type": "string",
+					"format": "uri",
+					"maxLength": 2048,
+					"description": "Public http(s) URL, no credentials, no private or local address."
+				},
+				"http_method": {
+					"type": "string",
+					"enum": [ "GET", "POST", "PUT", "PATCH", "DELETE" ],
+					"default": "POST (create only)"
+				},
+				"data_type": {
+					"type": "string",
+					"enum": [ "json", "xml", "form" ],
+					"default": "json (create only)"
+				},
+				"data_mapping": {
+					"$ref": "#/definitions/DataMapping",
+					"default": "[] (create only)"
+				},
+				"status": {
+					"type": "string",
+					"enum": [ "active", "inactive" ],
+					"default": "active (create only)"
+				},
+				"secret": {
+					"type": "string",
+					"minLength": 16,
+					"maxLength": 128,
+					"description": "Create only. Generated when omitted."
+				}
+			}
+		},
+		"Webhook": {
+			"type": "object",
+			"required": [
+				"id",
+				"name",
+				"trigger_event",
+				"webhook_url",
+				"http_method",
+				"data_type",
+				"data_mapping",
+				"status",
+				"secret_hint",
+				"last_delivery",
+				"created_at",
+				"updated_at"
+			],
+			"properties": {
+				"id": { "type": "integer" },
+				"name": { "type": "string" },
+				"trigger_event": { "type": "string" },
+				"webhook_url": { "type": "string" },
+				"http_method": {
+					"type": "string",
+					"enum": [ "GET", "POST", "PUT", "PATCH", "DELETE" ]
+				},
+				"data_type": {
+					"type": "string",
+					"enum": [ "json", "xml", "form" ]
+				},
+				"data_mapping": { "$ref": "#/definitions/DataMapping" },
+				"status": {
+					"type": "string",
+					"enum": [ "active", "inactive" ]
+				},
+				"secret_hint": {
+					"type": "string",
+					"description": "whsec_**** plus the last four characters; empty if no secret."
+				},
+				"last_delivery": {
+					"oneOf": [
+						{ "type": "null" },
+						{ "$ref": "#/definitions/DeliverySummary" }
+					]
+				},
+				"created_at": {
+					"type": "string",
+					"description": "Site timezone, Y-m-d\\TH:i:s."
+				},
+				"updated_at": {
+					"type": "string",
+					"description": "Site timezone, Y-m-d\\TH:i:s."
+				},
+				"_links": { "type": "object" }
+			}
+		},
+		"DeliverySummary": {
+			"type": "object",
+			"properties": {
+				"id": { "type": "integer" },
+				"delivery_id": { "type": "string" },
+				"event": { "type": "string" },
+				"status": { "type": "string", "enum": [ "success", "failed" ] },
+				"response_code": {
+					"type": "integer",
+					"description": "0 when no response was received."
+				},
+				"duration_ms": { "type": "integer" },
+				"error_code": { "type": "string" },
+				"error_message": { "type": "string" },
+				"is_test": { "type": "boolean" },
+				"created_at": { "type": "string" }
+			}
+		},
+		"Delivery": {
+			"allOf": [
+				{ "$ref": "#/definitions/DeliverySummary" },
+				{
+					"type": "object",
+					"properties": {
+						"webhook_id": { "type": "integer" },
+						"url": { "type": "string" },
+						"http_method": { "type": "string" },
+						"request_body": {
+							"type": "string",
+							"description": "Truncated to 4000 characters."
+						},
+						"response_body": {
+							"type": "string",
+							"description": "Truncated to 2000 characters. Remote content: render as text only."
+						}
+					}
+				}
+			]
+		},
+		"BulkResult": {
+			"type": "object",
+			"required": [ "action", "succeeded", "failed" ],
+			"properties": {
+				"action": {
+					"type": "string",
+					"enum": [ "delete", "activate", "deactivate" ]
+				},
+				"succeeded": {
+					"type": "array",
+					"items": { "type": "integer" }
+				},
+				"failed": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"id": { "type": "integer" },
+							"code": { "type": "string" },
+							"message": { "type": "string" }
+						}
+					}
+				}
+			}
+		},
+		"TriggerOptions": {
+			"type": "object",
+			"required": [ "triggers", "methods", "data_types", "statuses" ],
+			"properties": {
+				"triggers": { "$ref": "#/definitions/OptionList" },
+				"methods": { "$ref": "#/definitions/OptionList" },
+				"data_types": { "$ref": "#/definitions/OptionList" },
+				"statuses": { "$ref": "#/definitions/OptionList" }
+			}
+		},
+		"OptionList": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"required": [ "value", "label" ],
+				"properties": {
+					"value": { "type": "string" },
+					"label": { "type": "string" }
+				}
+			}
+		},
+		"TestResult": {
+			"type": "object",
+			"required": [
+				"success",
+				"delivery_id",
+				"request",
+				"response",
+				"error"
+			],
+			"properties": {
+				"success": {
+					"type": "boolean",
+					"description": "True for a 2xx response."
+				},
+				"delivery_id": { "type": "string" },
+				"request": {
+					"type": "object",
+					"properties": {
+						"url": { "type": "string" },
+						"method": { "type": "string" },
+						"data_type": { "type": "string" },
+						"event": { "type": "string" },
+						"body": { "type": "string" }
+					}
+				},
+				"response": {
+					"type": "object",
+					"properties": {
+						"status_code": {
+							"type": "integer",
+							"description": "0 when no response was received."
+						},
+						"duration_ms": { "type": "integer" },
+						"body": {
+							"type": "string",
+							"description": "Truncated to 2000 characters."
+						},
+						"truncated": { "type": "boolean" }
+					}
+				},
+				"error": {
+					"oneOf": [
+						{ "type": "null" },
+						{
+							"type": "object",
+							"properties": {
+								"code": {
+									"type": "string",
+									"enum": [
+										"ohmylms_webhook_http_error",
+										"ohmylms_webhook_request_failed"
+									]
+								},
+								"message": { "type": "string" }
+							}
+						}
+					]
+				}
+			}
+		},
+		"Error": {
+			"type": "object",
+			"required": [ "code", "message", "data" ],
+			"properties": {
+				"code": { "type": "string" },
+				"message": { "type": "string" },
+				"data": {
+					"type": "object",
+					"properties": {
+						"status": { "type": "integer" },
+						"params": {
+							"type": "object",
+							"description": "Present on rest_invalid_param."
+						},
+						"details": { "type": "object" },
+						"retry_after": {
+							"type": "integer",
+							"description": "Seconds, on 429 only."
+						}
+					}
+				}
+			}
+		}
+	},
+	"errorCodes": {
+		"rest_invalid_param": 400,
+		"rest_missing_callback_param": 400,
+		"ohmylms_webhook_invalid_page": 400,
+		"ohmylms_webhook_exists": 400,
+		"ohmylms_webhook_test_target_required": 400,
+		"rest_cookie_invalid_nonce": 403,
+		"ohmylms_webhook_cannot_view": [ 401, 403 ],
+		"ohmylms_webhook_cannot_create": [ 401, 403 ],
+		"ohmylms_webhook_cannot_edit": [ 401, 403 ],
+		"ohmylms_webhook_cannot_delete": [ 401, 403 ],
+		"ohmylms_webhook_not_found": 404,
+		"ohmylms_webhook_invalid_name": 422,
+		"ohmylms_webhook_invalid_url": 422,
+		"ohmylms_webhook_unsafe_url": 422,
+		"ohmylms_webhook_invalid_mapping": 422,
+		"ohmylms_webhook_test_rate_limited": 429,
+		"ohmylms_webhook_create_failed": 500,
+		"ohmylms_webhook_update_failed": 500,
+		"ohmylms_webhook_delete_failed": 500,
+		"ohmylms_webhook_bulk_item_failed": "inside BulkResult.failed[].code only"
+	}
+}
