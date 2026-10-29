@@ -1,0 +1,573 @@
+{
+	"contract": "ohmylms/v1/emails",
+	"version": 2,
+	"namespace": "ohmylms/v1",
+	"restBase": "emails",
+	"capability": "manage_options",
+	"auth": "WordPress REST authentication. Cookie auth requires the X-WP-Nonce header (wp_create_nonce('wp_rest')); application passwords also work.",
+	"emailIds": [
+		"creator_new_order",
+		"creator_cancelled_order",
+		"instructor_assignment_submitted",
+		"instructor_quiz_submitted",
+		"student_new_order",
+		"student_confirm_enrollment",
+		"student_manual_enrollment",
+		"student_course_completed",
+		"student_cancel_enrollment",
+		"student_assignment_graded",
+		"student_quiz_graded"
+	],
+	"routes": [
+		{
+			"name": "list",
+			"method": "GET",
+			"path": "/emails",
+			"args": {
+				"page": {
+					"type": "integer",
+					"default": 1,
+					"minimum": 1
+				},
+				"per_page": {
+					"type": "integer",
+					"default": 20,
+					"minimum": 1,
+					"maximum": 100
+				},
+				"search": {
+					"type": "string",
+					"maxLength": 100
+				},
+				"status": {
+					"type": "string",
+					"default": "all",
+					"enum": [ "all", "enabled", "disabled" ]
+				},
+				"recipient_type": {
+					"type": "string",
+					"default": "all",
+					"enum": [ "all", "student", "creator" ]
+				},
+				"_fields": {
+					"type": "string",
+					"description": "Comma separated response fields."
+				}
+			},
+			"success": {
+				"status": 200,
+				"body": "Email[]",
+				"headers": [ "X-WP-Total", "X-WP-TotalPages" ]
+			},
+			"errors": [ 400, 401, 403 ]
+		},
+		{
+			"name": "readSettings",
+			"method": "GET",
+			"path": "/emails/settings",
+			"success": {
+				"status": 200,
+				"body": "EmailSettings"
+			},
+			"errors": [ 401, 403 ]
+		},
+		{
+			"name": "updateSettings",
+			"method": [ "PUT", "PATCH", "POST" ],
+			"path": "/emails/settings",
+			"body": "EmailSettingsWrite",
+			"success": {
+				"status": 200,
+				"body": "EmailSettings"
+			},
+			"errors": [ 400, 401, 403, 422 ]
+		},
+		{
+			"name": "read",
+			"method": "GET",
+			"path": "/emails/{id}",
+			"args": {
+				"id": {
+					"type": "string",
+					"enum": [
+						"creator_new_order",
+						"creator_cancelled_order",
+						"instructor_assignment_submitted",
+						"instructor_quiz_submitted",
+						"student_new_order",
+						"student_confirm_enrollment",
+						"student_manual_enrollment",
+						"student_course_completed",
+						"student_cancel_enrollment",
+						"student_assignment_graded",
+						"student_quiz_graded"
+					],
+					"in": "path"
+				}
+			},
+			"success": {
+				"status": 200,
+				"body": "Email"
+			},
+			"errors": [ 401, 403, 404 ]
+		},
+		{
+			"name": "update",
+			"method": [ "PUT", "PATCH", "POST" ],
+			"path": "/emails/{id}",
+			"args": {
+				"id": {
+					"type": "string",
+					"enum": [
+						"creator_new_order",
+						"creator_cancelled_order",
+						"instructor_assignment_submitted",
+						"instructor_quiz_submitted",
+						"student_new_order",
+						"student_confirm_enrollment",
+						"student_manual_enrollment",
+						"student_course_completed",
+						"student_cancel_enrollment",
+						"student_assignment_graded",
+						"student_quiz_graded"
+					],
+					"in": "path"
+				}
+			},
+			"body": "EmailWrite",
+			"success": {
+				"status": 200,
+				"body": "Email"
+			},
+			"errors": [ 400, 401, 403, 404, 422 ]
+		},
+		{
+			"name": "preview",
+			"method": "POST",
+			"path": "/emails/{id}/preview",
+			"args": {
+				"id": {
+					"type": "string",
+					"enum": [
+						"creator_new_order",
+						"creator_cancelled_order",
+						"instructor_assignment_submitted",
+						"instructor_quiz_submitted",
+						"student_new_order",
+						"student_confirm_enrollment",
+						"student_manual_enrollment",
+						"student_course_completed",
+						"student_cancel_enrollment",
+						"student_assignment_graded",
+						"student_quiz_graded"
+					],
+					"in": "path"
+				}
+			},
+			"body": "EmailWrite",
+			"success": {
+				"status": 200,
+				"body": "EmailPreview"
+			},
+			"errors": [ 400, 401, 403, 404, 422 ]
+		},
+		{
+			"name": "test",
+			"method": "POST",
+			"path": "/emails/{id}/test",
+			"args": {
+				"id": {
+					"type": "string",
+					"enum": [
+						"creator_new_order",
+						"creator_cancelled_order",
+						"instructor_assignment_submitted",
+						"instructor_quiz_submitted",
+						"student_new_order",
+						"student_confirm_enrollment",
+						"student_manual_enrollment",
+						"student_course_completed",
+						"student_cancel_enrollment",
+						"student_assignment_graded",
+						"student_quiz_graded"
+					],
+					"in": "path"
+				}
+			},
+			"body": "EmailWrite",
+			"success": {
+				"status": 200,
+				"body": "TestResult"
+			},
+			"errors": [ 400, 401, 403, 404, 422, 429, 500 ],
+			"note": "Sends only to the current administrator. No recipient parameter exists."
+		}
+	],
+	"mergeTags": {
+		"syntax": "{tag_name} or [tag_name], case-insensitive. [Word] without an underscore is literal text.",
+		"common": [ "site_name", "store_name", "admin_email" ],
+		"perEmail": {
+			"creator_new_order": [ "student_name" ],
+			"creator_cancelled_order": [
+				"student_name",
+				"course_name",
+				"expected_processing_time"
+			],
+			"instructor_assignment_submitted": [
+				"student_name",
+				"course_name",
+				"assignment_name"
+			],
+			"instructor_quiz_submitted": [
+				"student_name",
+				"course_name",
+				"quiz_name"
+			],
+			"student_new_order": [ "student_name" ],
+			"student_confirm_enrollment": [ "student_name", "course_name" ],
+			"student_manual_enrollment": [ "student_name", "course_name" ],
+			"student_course_completed": [ "student_name", "course_name" ],
+			"student_cancel_enrollment": [
+				"student_name",
+				"course_name",
+				"expected_processing_time"
+			],
+			"student_assignment_graded": [
+				"student_name",
+				"course_name",
+				"assignment_name",
+				"status"
+			],
+			"student_quiz_graded": [
+				"student_name",
+				"course_name",
+				"quiz_name"
+			]
+		}
+	},
+	"definitions": {
+		"EmailWrite": {
+			"type": "object",
+			"description": "Partial: only the fields sent change (update) or are rendered (preview, test).",
+			"properties": {
+				"enabled": {
+					"type": "boolean"
+				},
+				"subject": {
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 255,
+					"description": "Plain text, one line."
+				},
+				"heading": {
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 200,
+					"description": "Plain text, one line."
+				},
+				"additional_content": {
+					"type": "string",
+					"maxLength": 20000,
+					"description": "HTML limited to the email allow-list."
+				},
+				"button_text": {
+					"type": "string",
+					"maxLength": 60
+				},
+				"button_link": {
+					"type": "string",
+					"maxLength": 2048,
+					"description": "Empty or a full http(s) URL."
+				},
+				"footer_text": {
+					"type": "string",
+					"maxLength": 5000,
+					"description": "HTML limited to the email allow-list."
+				},
+				"course_suggestion_text": {
+					"type": [ "string", "null" ],
+					"maxLength": 5000,
+					"description": "Only emails that have it (student_course_completed)."
+				},
+				"recipient_email": {
+					"type": "array",
+					"maxItems": 10,
+					"items": {
+						"type": "string",
+						"format": "email"
+					},
+					"description": "Staff emails only."
+				}
+			}
+		},
+		"Email": {
+			"type": "object",
+			"required": [
+				"id",
+				"title",
+				"description",
+				"recipient_type",
+				"enabled",
+				"subject",
+				"heading",
+				"additional_content",
+				"button_text",
+				"button_link",
+				"footer_text",
+				"course_suggestion_text",
+				"recipient_email",
+				"tags"
+			],
+			"properties": {
+				"id": {
+					"type": "string",
+					"enum": [
+						"creator_new_order",
+						"creator_cancelled_order",
+						"instructor_assignment_submitted",
+						"instructor_quiz_submitted",
+						"student_new_order",
+						"student_confirm_enrollment",
+						"student_manual_enrollment",
+						"student_course_completed",
+						"student_cancel_enrollment",
+						"student_assignment_graded",
+						"student_quiz_graded"
+					]
+				},
+				"title": {
+					"type": "string"
+				},
+				"description": {
+					"type": "string"
+				},
+				"recipient_type": {
+					"type": "string",
+					"enum": [ "student", "creator" ]
+				},
+				"enabled": {
+					"type": "boolean"
+				},
+				"subject": {
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 255,
+					"description": "Plain text, one line."
+				},
+				"heading": {
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 200,
+					"description": "Plain text, one line."
+				},
+				"additional_content": {
+					"type": "string",
+					"maxLength": 20000,
+					"description": "HTML limited to the email allow-list."
+				},
+				"button_text": {
+					"type": "string",
+					"maxLength": 60
+				},
+				"button_link": {
+					"type": "string",
+					"maxLength": 2048,
+					"description": "Empty or a full http(s) URL."
+				},
+				"footer_text": {
+					"type": "string",
+					"maxLength": 5000,
+					"description": "HTML limited to the email allow-list."
+				},
+				"course_suggestion_text": {
+					"type": [ "string", "null" ],
+					"maxLength": 5000,
+					"description": "Only emails that have it (student_course_completed)."
+				},
+				"recipient_email": {
+					"type": "array",
+					"maxItems": 10,
+					"items": {
+						"type": "string",
+						"format": "email"
+					},
+					"description": "Staff emails only."
+				},
+				"tags": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"required": [ "tag", "label", "description" ],
+						"properties": {
+							"tag": {
+								"type": "string"
+							},
+							"label": {
+								"type": "string"
+							},
+							"description": {
+								"type": "string"
+							}
+						}
+					}
+				}
+			}
+		},
+		"EmailSettingsWrite": {
+			"type": "object",
+			"properties": {
+				"branding_image": {
+					"type": "string",
+					"maxLength": 2048,
+					"description": "Empty or a full http(s) image URL."
+				},
+				"base_color": {
+					"type": "string",
+					"pattern": "^#[0-9A-Fa-f]{6}$"
+				},
+				"background_color": {
+					"type": "string",
+					"pattern": "^#[0-9A-Fa-f]{6}$"
+				},
+				"body_background_color": {
+					"type": "string",
+					"pattern": "^#[0-9A-Fa-f]{6}$"
+				},
+				"body_text_color": {
+					"type": "string",
+					"pattern": "^#[0-9A-Fa-f]{6}$"
+				},
+				"button_position": {
+					"type": "string",
+					"enum": [ "left", "center", "right" ]
+				},
+				"sender_name": {
+					"type": "string",
+					"maxLength": 100,
+					"description": "No control characters, quotes or angle brackets."
+				},
+				"sender_email": {
+					"type": "string",
+					"description": "Valid address or empty."
+				},
+				"footer_text": {
+					"type": "string",
+					"maxLength": 1000,
+					"description": "HTML limited to the email allow-list."
+				}
+			}
+		},
+		"EmailSettings": {
+			"type": "object",
+			"required": [
+				"branding_image",
+				"base_color",
+				"background_color",
+				"body_background_color",
+				"body_text_color",
+				"button_position",
+				"sender_name",
+				"sender_email",
+				"footer_text"
+			],
+			"properties": {
+				"branding_image": {
+					"type": "string",
+					"maxLength": 2048,
+					"description": "Empty or a full http(s) image URL."
+				},
+				"base_color": {
+					"type": "string",
+					"pattern": "^#[0-9A-Fa-f]{6}$"
+				},
+				"background_color": {
+					"type": "string",
+					"pattern": "^#[0-9A-Fa-f]{6}$"
+				},
+				"body_background_color": {
+					"type": "string",
+					"pattern": "^#[0-9A-Fa-f]{6}$"
+				},
+				"body_text_color": {
+					"type": "string",
+					"pattern": "^#[0-9A-Fa-f]{6}$"
+				},
+				"button_position": {
+					"type": "string",
+					"enum": [ "left", "center", "right" ]
+				},
+				"sender_name": {
+					"type": "string",
+					"maxLength": 100,
+					"description": "No control characters, quotes or angle brackets."
+				},
+				"sender_email": {
+					"type": "string",
+					"description": "Valid address or empty."
+				},
+				"footer_text": {
+					"type": "string",
+					"maxLength": 1000,
+					"description": "HTML limited to the email allow-list."
+				}
+			}
+		},
+		"EmailPreview": {
+			"type": "object",
+			"required": [ "subject", "html", "unknown_tags" ],
+			"properties": {
+				"subject": {
+					"type": "string"
+				},
+				"html": {
+					"type": "string",
+					"description": "Sanitized fragment (body content). Display in a sandboxed iframe."
+				},
+				"unknown_tags": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				}
+			}
+		},
+		"TestResult": {
+			"type": "object",
+			"required": [ "sent", "to", "subject" ],
+			"properties": {
+				"sent": {
+					"const": true
+				},
+				"to": {
+					"type": "string",
+					"format": "email"
+				},
+				"subject": {
+					"type": "string"
+				}
+			}
+		}
+	},
+	"errorCodes": {
+		"400": [
+			"rest_invalid_param",
+			"ohmylms_email_invalid_page",
+			"ohmylms_email_empty_update"
+		],
+		"401": [ "ohmylms_email_cannot_view", "ohmylms_email_cannot_edit" ],
+		"403": [
+			"ohmylms_email_cannot_view",
+			"ohmylms_email_cannot_edit",
+			"rest_cookie_invalid_nonce"
+		],
+		"404": [ "ohmylms_email_not_found" ],
+		"422": [
+			"ohmylms_email_invalid_field",
+			"ohmylms_email_unsupported_field",
+			"ohmylms_email_unknown_tags",
+			"ohmylms_email_no_recipient"
+		],
+		"429": [ "ohmylms_email_test_rate_limited" ],
+		"500": [ "ohmylms_email_send_failed", "ohmylms_email_save_failed" ]
+	}
+}

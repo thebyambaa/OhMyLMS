@@ -93,7 +93,11 @@ class NewOrder {
 			return;
 		}
 
-		$settings       = get_option( 'create_lms_email_creator_new_order', $this->default_settings() );
+		$settings = Emails::get_template_settings( 'creator_new_order', $this->default_settings() );
+
+		if ( ! Emails::is_enabled( $settings ) ) {
+			return;
+		}
 		$to             = ! empty( $settings['recipient_email'] ) ? $settings['recipient_email'] : get_option( 'admin_email' );
 		$subject        = isset( $settings['subject'] ) ? $settings['subject'] : '';
 		$subject        = Emails::replace_merge_tags( $subject, $order );

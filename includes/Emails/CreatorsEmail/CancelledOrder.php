@@ -39,7 +39,7 @@ class CancelledOrder {
 			'heading'            => __( 'Order Canceled!', 'ohmylms' ),
 			'subject'            => __( 'Ops! an order has been canceled', 'ohmylms' ),
 			'additional_content' => '<p>Hi,</p><p>[student_name] has canceled their order for <strong>[course_name]</strong></p>',
-			'footer_text'        => '<p>Your payout will be processed as soon as possible, and you will receive an e-mail notification once it has been completed. Please allow <strong>[expected_processing_time]</strong> for the payout to reflect in your account.</p><p>Thank you for partnering with <strong>[Your Platform Name]</strong>, and we look forward to continuing to support your success. If you have any questions or need assistance, contact us at <a href="mailto:[email@example.com]" style="color: var(--ohmylms-primary-color); font-weight: 500;">[email@example.com]</a>.</p><p>Best, <strong>[site_name]</strong></p>',
+			'footer_text'        => '<p>Your payout will be processed as soon as possible, and you will receive an e-mail notification once it has been completed. Please allow <strong>[expected_processing_time]</strong> for the payout to reflect in your account.</p><p>Thank you for partnering with <strong>[store_name]</strong>, and we look forward to continuing to support your success. If you have any questions or need assistance, contact us at <a href="mailto:[admin_email]" style="color: var(--ohmylms-primary-color); font-weight: 500;">[admin_email]</a>.</p><p>Best, <strong>[site_name]</strong></p>',
 			'recipient_email'    => array(),
 		);
 		return $default_settings;
@@ -51,23 +51,20 @@ class CancelledOrder {
 	 * @param mixed $order Order.
 	 */
 	public function trigger( $order ) {
-		$settings = get_option( 'create_lms_email_creator_cancelled_order', $this->default_settings() );
+		$settings = Emails::get_template_settings( 'creator_cancelled_order', $this->default_settings() );
+
+		if ( ! Emails::is_enabled( $settings ) ) {
+			return;
+		}
 
 		if ( ! $order ) {
 			return;
 		}
 
 		$student_id = $order->get_student_id();
-		$user       = get_user_by( 'id', $student_id );
-		$name       = '';
-		if ( $user ) {
-			$to   = $user->user_email;
-			$name = $user->display_name;
-		}
 
-		if ( ! $to ) {
-			return;
-		}
+		// The creator is notified, not the student: use the configured recipients or the site administrator.
+		$to = ! empty( $settings['recipient_email'] ) ? $settings['recipient_email'] : get_option( 'admin_email' );
 
 		$subject = isset( $settings['subject'] ) ? $settings['subject'] : '';
 
@@ -86,7 +83,8 @@ class CancelledOrder {
 			return;
 		}
 
-		$course = ohmylms_get_course( $enroll_data['course_id'] );
+		$course  = ohmylms_get_course( $enroll_data['course_id'] );
+		$subject = Emails::replace_merge_tags( $subject, $order, $course );
 
 		$email_settings = Emails::get_email_settings();
 		if ( $order && is_array( $email_settings ) && is_array( $enroll_data ) && is_array( $settings ) && $course ) {
@@ -96,7 +94,7 @@ class CancelledOrder {
 				'emails/cancel-enrollment', // Template file name (without .php).
 				array(
 					'order'          => $order,
-					'student_name'   => $name,
+					'student_name'   => (string) $order->get_student_name(),
 					'enroll_data'    => $enroll_data,
 					'course'         => $course,
 					'settings'       => $settings,

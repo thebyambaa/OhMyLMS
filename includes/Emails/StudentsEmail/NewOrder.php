@@ -80,7 +80,11 @@ class NewOrder {
 			return;
 		}
 
-		$settings   = get_option( 'create_lms_email_student_new_order', $this->default_settings() );
+		$settings = Emails::get_template_settings( 'student_new_order', $this->default_settings() );
+
+		if ( ! Emails::is_enabled( $settings ) ) {
+			return;
+		}
 		$student_id = $order->get_student_id();
 		$user       = get_user_by( 'id', $student_id );
 		$to         = '';

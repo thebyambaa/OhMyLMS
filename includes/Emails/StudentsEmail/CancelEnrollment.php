@@ -40,7 +40,7 @@ class CancelEnrollment {
 			'heading'            => __( 'Enrollment Canceled: Need Assistance?', 'ohmylms' ),
 			'subject'            => __( 'Ops! Enrollment Canceled', 'ohmylms' ),
 			'additional_content' => '<p>Hi [student_name],</p><p>We noticed your enrollment for <strong>[course_name]</strong> was canceled.</p>',
-			'footer_text'        => '<p>Your refund will be processed as soon as possible, and you will receive an e-mail notification once it has been completed. Please allow <strong>[expected_processing_time]</strong> for the refund to reflect in your account.</p><p>Thank you for choosing <strong>[store_name]</strong>, and we look forward to serving you better in the future. If you\'d like to explore more of our courses or re-enroll, contact us at<a href="mailto:[email@example.com]" style="color: var(--ohmylms-primary-color); font-weight: 500;">[email@example.com]</a>.</p><p >Best,<strong>[site_name]</strong></p>',
+			'footer_text'        => '<p>Your refund will be processed as soon as possible, and you will receive an e-mail notification once it has been completed. Please allow <strong>[expected_processing_time]</strong> for the refund to reflect in your account.</p><p>Thank you for choosing <strong>[store_name]</strong>, and we look forward to serving you better in the future. If you\'d like to explore more of our courses or re-enroll, contact us at<a href="mailto:[admin_email]" style="color: var(--ohmylms-primary-color); font-weight: 500;">[admin_email]</a>.</p><p >Best,<strong>[site_name]</strong></p>',
 			'recipient_email'    => array(),
 		);
 		return $default_settings;
@@ -56,10 +56,15 @@ class CancelEnrollment {
 			return;
 		}
 
-		$settings   = get_option( 'create_lms_email_creator_cancelled_order', $this->default_settings() );
+		$settings = Emails::get_template_settings( 'student_cancel_enrollment', $this->default_settings() );
+
+		if ( ! Emails::is_enabled( $settings ) ) {
+			return;
+		}
 		$student_id = $order->get_student_id();
 		$user       = get_user_by( 'id', $student_id );
 		$name       = '';
+		$to         = '';
 
 		if ( $user ) {
 			$to   = $user->user_email;
@@ -80,7 +85,8 @@ class CancelEnrollment {
 			return;
 		}
 
-		$course = ohmylms_get_course( $enroll_data['course_id'] );
+		$course  = ohmylms_get_course( $enroll_data['course_id'] );
+		$subject = Emails::replace_merge_tags( $subject, $order, $course );
 
 		$email_settings = Emails::get_email_settings();
 		if ( $order && is_array( $email_settings ) && is_array( $enroll_data ) && is_array( $settings ) && $course ) {

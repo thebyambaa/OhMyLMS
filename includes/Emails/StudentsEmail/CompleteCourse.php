@@ -58,10 +58,14 @@ class CompleteCourse {
 	 * @param mixed $order_id Order identifier.
 	 */
 	public function trigger( $student_id, $course_id, $order_id ) {
-		$settings = get_option( 'create_lms_email_student_course_completed', $this->default_settings() );
-		$to       = '';
-		$user     = get_user_by( 'id', $student_id );
-		$name     = '';
+		$settings = Emails::get_template_settings( 'student_course_completed', $this->default_settings() );
+
+		if ( ! Emails::is_enabled( $settings ) ) {
+			return;
+		}
+		$to   = '';
+		$user = get_user_by( 'id', $student_id );
+		$name = '';
 		if ( $user ) {
 			$to   = $user->user_email;
 			$name = $user->display_name;
@@ -77,7 +81,11 @@ class CompleteCourse {
 		$table_name  = $wpdb->prefix . 'ohmylms_user_enrollment';
 		$enroll_data = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE user_id = %d AND course_id = %d', $table_name, $student_id, $course_id ), ARRAY_A );
 
-		$subject        = $settings['subject'];
+		$tags           = array(
+			'student_name' => $name,
+			'course_name'  => $course->get_name(),
+		);
+		$subject        = Emails::render_tags( $settings['subject'], $tags );
 		$certificate    = $course->get_certificate();
 		$certificate_id = '';
 		if ( $certificate ) {
@@ -106,8 +114,7 @@ class CompleteCourse {
 			ob_start();
 			ohmylms_get_template( 'emails/email-styles' );
 			$styles    = ob_get_clean();
-			$order     = ohmylms_ecommerce_get_order( $order_id );
-			$html_body = Emails::replace_merge_tags( $html_body, $order, $course );
+			$html_body = Emails::render_tags( $html_body, $tags );
 
 			$sender_name  = $email_settings['ohmylms_email_sender_name'];
 			$sender_email = $email_settings['ohmylms_email_sender_email_address'];

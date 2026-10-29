@@ -55,7 +55,7 @@ class QuizGraded {
 	 * @param mixed $score Score.
 	 */
 	public function trigger( $quiz_id, $course_id, $student_id, $score ) {
-		$settings = get_option( 'create_lms_email_student_quiz_graded', $this->default_settings() );
+		$settings = Emails::get_template_settings( 'student_quiz_graded', $this->default_settings() );
 
 		if ( empty( $settings['enable'] ) ) {
 			return;
@@ -124,10 +124,13 @@ class QuizGraded {
 	 * @param mixed $quiz_name Quiz name.
 	 */
 	private function replace_tags( $content, $student_name, $course_name, $quiz_name ) {
-		return str_replace(
-			array( '{student_name}', '{course_name}', '{quiz_name}' ),
-			array( $student_name, $course_name, $quiz_name ),
-			$content
+		return Emails::render_tags(
+			$content,
+			array(
+				'student_name' => $student_name,
+				'course_name'  => $course_name,
+				'quiz_name'    => $quiz_name,
+			)
 		);
 	}
 }

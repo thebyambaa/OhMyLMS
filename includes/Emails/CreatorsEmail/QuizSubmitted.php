@@ -62,7 +62,7 @@ class QuizSubmitted {
 			return;
 		}
 
-		$settings = get_option( 'create_lms_email_instructor_quiz_submitted', $this->default_settings() );
+		$settings = Emails::get_template_settings( 'instructor_quiz_submitted', $this->default_settings() );
 
 		if ( empty( $settings['enable'] ) ) {
 			return;
@@ -92,7 +92,7 @@ class QuizSubmitted {
 	 * Send digest for Quiz submitted.
 	 */
 	public function send_digest() {
-		$settings = get_option( 'create_lms_email_instructor_quiz_submitted', $this->default_settings() );
+		$settings = Emails::get_template_settings( 'instructor_quiz_submitted', $this->default_settings() );
 
 		if ( empty( $settings['enable'] ) ) {
 			return;
@@ -260,10 +260,13 @@ class QuizSubmitted {
 	 * @param mixed $quiz_name Quiz name.
 	 */
 	private function replace_tags( $content, $student_name, $course_name, $quiz_name ) {
-		return str_replace(
-			array( '{student_name}', '{course_name}', '{quiz_name}' ),
-			array( $student_name, $course_name, $quiz_name ),
-			$content
+		return Emails::render_tags(
+			$content,
+			array(
+				'student_name' => $student_name,
+				'course_name'  => $course_name,
+				'quiz_name'    => $quiz_name,
+			)
 		);
 	}
 

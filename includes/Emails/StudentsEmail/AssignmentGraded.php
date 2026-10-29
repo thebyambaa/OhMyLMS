@@ -55,7 +55,7 @@ class AssignmentGraded {
 	 * @param mixed $status Status.
 	 */
 	public function trigger( $assignment_id, $course_id, $student_id, $status ) {
-		$settings = get_option( 'create_lms_email_student_assignment_graded', $this->default_settings() );
+		$settings = Emails::get_template_settings( 'student_assignment_graded', $this->default_settings() );
 
 		if ( empty( $settings['enable'] ) ) {
 			return;
@@ -127,10 +127,14 @@ class AssignmentGraded {
 	 */
 	private function replace_tags( $content, $student_name, $course_name, $assignment_name, $status ) {
 		$status_label = 'passed' === $status ? __( 'Passed', 'ohmylms' ) : __( 'Failed', 'ohmylms' );
-		return str_replace(
-			array( '{student_name}', '{course_name}', '{assignment_name}', '{status}' ),
-			array( $student_name, $course_name, $assignment_name, $status_label ),
-			$content
+		return Emails::render_tags(
+			$content,
+			array(
+				'student_name'    => $student_name,
+				'course_name'     => $course_name,
+				'assignment_name' => $assignment_name,
+				'status'          => $status_label,
+			)
 		);
 	}
 }

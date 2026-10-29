@@ -65,7 +65,11 @@ class ConfirmEnrollment {
 			return;
 		}
 
-		$settings   = get_option( 'create_lms_email_student_confirm_enrollment', $this->default_settings() );
+		$settings = Emails::get_template_settings( 'student_confirm_enrollment', $this->default_settings() );
+
+		if ( ! Emails::is_enabled( $settings ) ) {
+			return;
+		}
 		$student_id = $order->get_student_id();
 		$user       = get_user_by( 'id', $student_id );
 		$name       = '';
@@ -90,7 +94,8 @@ class ConfirmEnrollment {
 			return;
 		}
 
-		$course = ohmylms_get_course( $enroll_data['course_id'] );
+		$course  = ohmylms_get_course( $enroll_data['course_id'] );
+		$subject = Emails::replace_merge_tags( $subject, $order, $course );
 
 		$email_settings = Emails::get_email_settings();
 		if ( $order && is_array( $email_settings ) && is_array( $enroll_data ) && is_array( $settings ) && $course ) {

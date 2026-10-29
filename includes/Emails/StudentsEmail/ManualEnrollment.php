@@ -73,11 +73,21 @@ class ManualEnrollment {
 			return;
 		}
 
-		$settings       = get_option( 'create_lms_email_student_manual_enrollment', $this->default_settings() );
+		$settings = Emails::get_template_settings( 'student_manual_enrollment', $this->default_settings() );
+
+		if ( ! Emails::is_enabled( $settings ) ) {
+			return;
+		}
 		$email_settings = Emails::get_email_settings();
 
 		$subject = isset( $settings['subject'] ) ? $settings['subject'] : $this->default_settings()['subject'];
-		$subject = str_replace( '[course_name]', $course->get_name(), $subject );
+		$subject = Emails::render_tags(
+			$subject,
+			array(
+				'student_name' => $user->display_name,
+				'course_name'  => $course->get_name(),
+			)
+		);
 
 		ob_start();
 		ohmylms_get_template(
@@ -96,8 +106,13 @@ class ManualEnrollment {
 		);
 		$html_body = ob_get_clean();
 
-		$html_body = str_replace( '[student_name]', esc_html( $user->display_name ), $html_body );
-		$html_body = str_replace( '[course_name]', esc_html( $course->get_name() ), $html_body );
+		$html_body = Emails::render_tags(
+			$html_body,
+			array(
+				'student_name' => $user->display_name,
+				'course_name'  => $course->get_name(),
+			)
+		);
 
 		$sender_name  = $email_settings['ohmylms_email_sender_name'];
 		$sender_email = $email_settings['ohmylms_email_sender_email_address'];

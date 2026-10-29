@@ -56,7 +56,7 @@ class AssignmentSubmitted {
 	 * @param mixed $student_id Student identifier.
 	 */
 	public function trigger( $assignment_id, $course_id, $student_id ) {
-		$settings = get_option( 'create_lms_email_instructor_assignment_submitted', $this->default_settings() );
+		$settings = Emails::get_template_settings( 'instructor_assignment_submitted', $this->default_settings() );
 
 		if ( empty( $settings['enable'] ) ) {
 			return;
@@ -81,7 +81,7 @@ class AssignmentSubmitted {
 	 * Send digest for Assignment submitted.
 	 */
 	public function send_digest() {
-		$settings = get_option( 'create_lms_email_instructor_assignment_submitted', $this->default_settings() );
+		$settings = Emails::get_template_settings( 'instructor_assignment_submitted', $this->default_settings() );
 
 		if ( empty( $settings['enable'] ) ) {
 			return;
@@ -246,10 +246,13 @@ class AssignmentSubmitted {
 	 * @param mixed $assignment_name Assignment name.
 	 */
 	private function replace_tags( $content, $student_name, $course_name, $assignment_name ) {
-		return str_replace(
-			array( '{student_name}', '{course_name}', '{assignment_name}' ),
-			array( $student_name, $course_name, $assignment_name ),
-			$content
+		return Emails::render_tags(
+			$content,
+			array(
+				'student_name'    => $student_name,
+				'course_name'     => $course_name,
+				'assignment_name' => $assignment_name,
+			)
 		);
 	}
 
