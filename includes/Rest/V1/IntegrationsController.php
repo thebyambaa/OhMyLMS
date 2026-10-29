@@ -2,40 +2,47 @@
 /**
  * Integrations controller.
  *
- * @package     OhMyLMS
- * @author      OhMyLMS
- * @copyright   Copyright (c) 2024, CreatorLMS
- * @license     GPL2+
- * @since       1.0.0
+ * @package OhMyLMS
  */
 
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
+use OhMyLMS\Integrations\IntegrationSettings;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 
 /**
- * OhMyLMS Integrations settings controller class.
+ * REST API for the Add-ons (integrations) screen under `ohmylms/v1/integrations`.
+ *
+ * The catalogue comes from the `ohmylms_integrations` filter; the on/off state lives in the
+ * `ohmylms_integrations` option (`{ id: { is_enable: 0|1 } }`), which other modules read. See
+ * docs/api/integrations.md for the contract.
+ *
+ * Authentication is WordPress core's: cookie authentication requires the `X-WP-Nonce` header
+ * (verified by rest_cookie_check_errors()); application passwords also work. Every route requires
+ * the CAPABILITY below.
  *
  * @since 1.0.0
  */
 class IntegrationsController extends RestController {
 
 	/**
-	 * is_valid/required_plan for an integration. Every bundled integration is available.
-	 *
-	 * @param string $key Integration key.
-	 * @return array{is_valid: bool, required_plan: string|null}
+	 * Capability required by every integrations route.
 	 */
-	private static function get_integration_validity( $key ) {
-		return array(
-			'is_valid'      => true,
-			'required_plan' => null,
-		);
-	}
+	const CAPABILITY = 'manage_options';
+
+	/**
+	 * Option that stores the integration switches.
+	 */
+	const OPTION = 'ohmylms_integrations';
+
+	/**
+	 * Integrations whose switch changes the admin menu, so the screen should reload after a change.
+	 */
+	const RELOAD_IDS = array( 'gamification', 'zoom', 'community', 'webhooks', 'googlemeet', 'mcp' );
 
 	/**
 	 * Endpoint namespace.
@@ -52,15 +59,22 @@ class IntegrationsController extends RestController {
 	protected $rest_base = 'integrations';
 
 	/**
-	 * Register the routes for the objects.
+	 * Register the routes.
 	 *
-	 * @since 1.0.0
 	 * @return void
 	 */
 	public function register_routes() {
+		$base = '/' . $this->rest_base;
+		$item = $base . '/(?P<id>[a-z0-9_-]+)';
+		$id   = array(
+			'description' => __( 'Identifier of the integration.', 'ohmylms' ),
+			'type'        => 'string',
+			'pattern'     => '^[a-z0-9_-]+$',
+		);
+
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base,
+			$base,
 			array(
 				array(
 					'methods'             => WP_REST_Server::READABLE,
@@ -68,11 +82,36 @@ class IntegrationsController extends RestController {
 					'permission_callback' => array( $this, 'get_items_permissions_check' ),
 					'args'                => $this->get_collection_params(),
 				),
+				'schema' => array( $this, 'get_public_item_schema' ),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			$item,
+			array(
+				'args'   => array( 'id' => $id ),
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_item' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'args'                => array(
+						'context' => $this->get_context_param( array( 'default' => 'view' ) ),
+					),
+				),
 				array(
 					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'update_items' ),
-					'permission_callback' => array( $this, 'update_items_permissions_check' ),
-					'args'                => $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
+					'callback'            => array( $this, 'update_item' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'enabled' => array(
+							'description'       => __( 'Whether the integration is switched on.', 'ohmylms' ),
+							'type'              => 'boolean',
+							'required'          => true,
+							'validate_callback' => 'rest_validate_request_arg',
+							'sanitize_callback' => 'rest_sanitize_request_arg',
+						),
+					),
 				),
 				'schema' => array( $this, 'get_public_item_schema' ),
 			)
@@ -80,212 +119,594 @@ class IntegrationsController extends RestController {
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<id>[\w-]+)',
+			$item . '/settings',
 			array(
-				'args'   => array(
-					'id' => array(
-						'description' => __( 'Unique identifier for the resource.', 'ohmylms' ),
-						'type'        => 'string',
-					),
+				'args'   => array( 'id' => $id ),
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_settings' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
 				),
 				array(
-					'methods'             => WP_REST_Server::DELETABLE,
-					'callback'            => array( $this, 'delete_item' ),
-					'permission_callback' => array( $this, 'delete_item_permissions_check' ),
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'update_settings' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 				),
-				'schema' => array( $this, 'get_public_item_schema' ),
+				'schema' => array( $this, 'get_settings_schema' ),
 			)
 		);
 	}
 
 	/**
-	 * Retrieves all integrations.
+	 * Check the capability shared by every route.
 	 *
-	 * @since 1.0.0
-	 * @param WP_REST_Request $request Full details about the request.
-	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
+	 * @param string $code    Error code.
+	 * @param string $message Error message used when access is denied.
+	 * @return true|WP_Error
 	 */
-	public function get_items( $request ) {
-		$integrations = get_option( 'ohmylms_integrations', array() );
-		unset( $integrations['ai_model'], $integrations['question_bank'] );
-		if ( is_array( $integrations ) ) {
-			foreach ( $integrations as $key => $value ) {
-				$validity             = self::get_integration_validity( $key );
-				$integrations[ $key ] = array(
-					'is_enable'     => isset( $value['is_enable'] ) ? absint( $value['is_enable'] ) : 0,
-					'class'         => isset( $value['class'] ) ? sanitize_text_field( $value['class'] ) : '',
-					'is_valid'      => $validity['is_valid'],
-					'required_plan' => $validity['required_plan'],
-				);
-			}
+	private function require_capability( $code, $message ) {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			return new WP_Error( $code, $message, array( 'status' => rest_authorization_required_code() ) );
 		}
 
-		$is_community_active = defined( 'OHMYLMS_COMMUNITY_VERSION' );
-
-		if ( $is_community_active ) {
-			$integrations['community']['is_enable'] = 1;
-		} else {
-			$integrations['community']['is_enable'] = 0;
-		}
-		return new WP_REST_Response( $integrations, 200 );
+		return true;
 	}
 
 	/**
-	 * Checks if a given request has access to get integrations.
+	 * Check if the current user can list integrations.
 	 *
-	 * @since 1.0.0
 	 * @param WP_REST_Request $request Full details about the request.
-	 * @return bool|WP_Error True if the request has read access, WP_Error object otherwise.
+	 * @return true|WP_Error
 	 */
 	public function get_items_permissions_check( $request ) {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return new WP_Error( 'ohmylms_rest_cannot_view', __( 'Sorry, you are not allowed to view these integrations.', 'ohmylms' ), array( 'status' => rest_authorization_required_code() ) );
+		return $this->require_capability( 'ohmylms_integration_cannot_view', __( 'Sorry, you are not allowed to view integrations.', 'ohmylms' ) );
+	}
+
+	/**
+	 * Check if the current user can read one integration or its settings.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error
+	 */
+	public function get_item_permissions_check( $request ) {
+		return $this->require_capability( 'ohmylms_integration_cannot_view', __( 'Sorry, you are not allowed to view integrations.', 'ohmylms' ) );
+	}
+
+	/**
+	 * Check if the current user can switch an integration or change its settings.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error
+	 */
+	public function update_item_permissions_check( $request ) {
+		return $this->require_capability( 'ohmylms_integration_cannot_edit', __( 'Sorry, you are not allowed to change integrations.', 'ohmylms' ) );
+	}
+
+	/**
+	 * Read the stored switches as an array.
+	 *
+	 * @return array
+	 */
+	private function get_stored() {
+		$stored = get_option( self::OPTION, array() );
+
+		return is_array( $stored ) ? $stored : array();
+	}
+
+	/**
+	 * Catalogue of known integrations, keyed by id, in registration order.
+	 *
+	 * @return array<string, array>
+	 */
+	private function get_catalogue() {
+		$catalogue = apply_filters( 'ohmylms_integrations', array() );
+		$clean     = array();
+		if ( ! is_array( $catalogue ) ) {
+			return $clean;
 		}
+		foreach ( $catalogue as $id => $definition ) {
+			if ( is_string( $id ) && preg_match( '/^[a-z0-9_-]+$/', $id ) && is_array( $definition ) ) {
+				$clean[ $id ] = $definition;
+			}
+		}
+
+		return $clean;
+	}
+
+	/**
+	 * Find one integration definition or return a 404 error.
+	 *
+	 * @param string $id Integration id.
+	 * @return array|WP_Error
+	 */
+	private function get_definition( $id ) {
+		$catalogue = $this->get_catalogue();
+		if ( ! isset( $catalogue[ $id ] ) ) {
+			return new WP_Error( 'ohmylms_integration_not_found', __( 'Integration not found.', 'ohmylms' ), array( 'status' => 404 ) );
+		}
+
+		return $catalogue[ $id ];
+	}
+
+	/**
+	 * Whether an integration is switched on (its own manifest wins over the stored switch).
+	 *
+	 * @param string $id         Integration id.
+	 * @param array  $definition Catalogue definition.
+	 * @return bool
+	 */
+	private function is_enabled( $id, array $definition ) {
+		if ( isset( $definition['is_enable'] ) ) {
+			return 1 === (int) $definition['is_enable'];
+		}
+		$stored = $this->get_stored();
+
+		return isset( $stored[ $id ]['is_enable'] ) && 1 === (int) $stored[ $id ]['is_enable'];
+	}
+
+	/**
+	 * Reason an integration cannot be switched on, or null when it can.
+	 *
+	 * @param string $id         Integration id.
+	 * @param array  $definition Catalogue definition.
+	 * @return string|null
+	 */
+	private function get_unavailable_reason( $id, array $definition ) {
+		$reason = null;
+		if ( isset( $definition['is_valid'] ) && ! $definition['is_valid'] ) {
+			$reason = __( 'This integration is not available with your current plan.', 'ohmylms' );
+		} elseif ( 'wpfusion' === $id && ! defined( 'WP_FUSION_VERSION' ) ) {
+			$reason = __( 'Install and activate the WP Fusion Lite plugin to use this integration.', 'ohmylms' );
+		}
+
+		/**
+		 * Filters why an integration cannot be switched on.
+		 *
+		 * @param string|null $reason Translated reason, or null when the integration can be enabled.
+		 * @param string      $id     Integration id.
+		 */
+		$reason = apply_filters( 'ohmylms_integration_unavailable_reason', $reason, $id );
+
+		return is_string( $reason ) && '' !== $reason ? $reason : null;
+	}
+
+	/**
+	 * Whether a catalogue entry matches the collection filters.
+	 *
+	 * @param array           $entry   Prepared entry.
+	 * @param WP_REST_Request $request Request.
+	 * @return bool
+	 */
+	private function matches_filters( array $entry, $request ) {
+		$status = (string) $request['status'];
+		if ( ( 'enabled' === $status && ! $entry['enabled'] ) || ( 'disabled' === $status && $entry['enabled'] ) ) {
+			return false;
+		}
+		$category = (string) $request['category'];
+		if ( '' !== $category && ! in_array( $category, $entry['categories'], true ) ) {
+			return false;
+		}
+		$search = trim( (string) $request['search'] );
+		if ( '' !== $search && false === mb_stripos( $entry['label'] . ' ' . $entry['description'], $search ) ) {
+			return false;
+		}
+
 		return true;
 	}
 
 	/**
-	 * Updates integration settings.
+	 * Build the internal entry for one catalogue definition.
 	 *
-	 * @since 1.0.0
-	 * @param WP_REST_Request $request Full details about the request.
-	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
+	 * @param string $id         Integration id.
+	 * @param array  $definition Catalogue definition.
+	 * @return array
 	 */
-	public function update_items( $request ) {
-		$integrations = $request->get_json_params();
-		// Managed elsewhere (or core): never saved or returned from this endpoint.
-		$skipped_keys         = array( 'ai_model', 'question_bank', 'skills' );
-		$current_integrations = get_option( 'ohmylms_integrations', array() );
-		foreach ( $skipped_keys as $skipped_key ) {
-			unset( $current_integrations[ $skipped_key ] );
+	private function build_entry( $id, array $definition ) {
+		$reason = $this->get_unavailable_reason( $id, $definition );
+
+		return array(
+			'id'                 => $id,
+			'label'              => isset( $definition['label'] ) ? wp_strip_all_tags( (string) $definition['label'] ) : $id,
+			'description'        => isset( $definition['description'] ) ? wp_strip_all_tags( (string) $definition['description'] ) : '',
+			'icon'               => isset( $definition['icon'] ) ? esc_url_raw( (string) $definition['icon'] ) : '',
+			'categories'         => isset( $definition['categories'] ) ? array_values( array_map( 'sanitize_key', (array) $definition['categories'] ) ) : array(),
+			'dependency'         => ! empty( $definition['dependency'] ) ? wp_strip_all_tags( (string) $definition['dependency'] ) : null,
+			'required_plan'      => ! empty( $definition['required_plan'] ) ? sanitize_text_field( (string) $definition['required_plan'] ) : null,
+			'enabled'            => $this->is_enabled( $id, $definition ),
+			'available'          => null === $reason,
+			'unavailable_reason' => $reason,
+			'configurable'       => IntegrationSettings::supports( $id ),
+			'requires_reload'    => false,
+		);
+	}
+
+	/**
+	 * Get integrations.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response
+	 */
+	public function get_items( $request ) {
+		$data = array();
+		foreach ( $this->get_catalogue() as $id => $definition ) {
+			$entry = $this->build_entry( $id, $definition );
+			if ( $this->matches_filters( $entry, $request ) ) {
+				$data[] = $this->prepare_response_for_collection( $this->prepare_item_for_response( $entry, $request ) );
+			}
 		}
-		do_action( 'ohmylms_integrations_before_update', $integrations, $current_integrations );
-		$sanitized_integrations = array();
-		$previous_integrations  = get_option( 'ohmylms_integrations', array() );
-		$need_reload            = false;
 
-		foreach ( $integrations as $key => $value ) {
-			if ( in_array( $key, $skipped_keys, true ) ) {
-				continue;
-			}
-			$sanitized_key = sanitize_text_field( $key );
-			$is_enable     = isset( $value['is_enable'] ) ? absint( $value['is_enable'] ) : 0;
-			$validity      = self::get_integration_validity( $key );
-			$is_valid      = $validity['is_valid'];
-			$required_plan = $validity['required_plan'];
-			$class         = isset( $value['class'] ) ? sanitize_text_field( $value['class'] ) : '';
+		$response = rest_ensure_response( $data );
+		// The catalogue is small and fixed, so it is never paginated.
+		$response->header( 'X-WP-Total', (string) count( $data ) );
+		$response->header( 'X-WP-TotalPages', '1' );
 
-			// Check if gamification or zoom settings changed.
-			if ( 'gamification' === $sanitized_key || 'zoom' === $sanitized_key || 'community' === $sanitized_key || 'webhooks' === $sanitized_key || 'googlemeet' === $sanitized_key || 'question_bank' === $sanitized_key || 'mcp' === $sanitized_key ) {
-				$previous_enabled = isset( $previous_integrations[ $sanitized_key ]['is_enable'] ) ? absint( $previous_integrations[ $sanitized_key ]['is_enable'] ) : 0;
-				if ( $previous_enabled !== $is_enable ) {
-					$need_reload = true;
-				}
-			}
+		return $response;
+	}
 
-			$was_enabled      = isset( $current_integrations[ $sanitized_key ]['is_enable'] ) ? absint( $current_integrations[ $sanitized_key ]['is_enable'] ) : 0;
-			$is_being_enabled = ( 1 === $is_enable && 0 === $was_enabled );
+	/**
+	 * Get one integration.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_item( $request ) {
+		$id         = (string) $request['id'];
+		$definition = $this->get_definition( $id );
+		if ( is_wp_error( $definition ) ) {
+			return $definition;
+		}
 
-			$current_integrations[ $sanitized_key ] = array(
-				'is_enable' => $is_enable,
+		return $this->prepare_item_for_response( $this->build_entry( $id, $definition ), $request );
+	}
+
+	/**
+	 * Switch an integration on or off.
+	 *
+	 * Fires, in order and only when the state changes: `ohmylms_integrations_before_update`,
+	 * `ohmylms_integration_{id}_updated`, `ohmylms_integration_{id}_before_enable` (enabling),
+	 * the option write, `ohmylms_integration_{id}_after_enable` and `ohmylms_addon_activated`
+	 * (enabling), `ohmylms_integrations_after_update` and `ohmylms_integrations_{id}_after_update`.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function update_item( $request ) {
+		$id         = (string) $request['id'];
+		$definition = $this->get_definition( $id );
+		if ( is_wp_error( $definition ) ) {
+			return $definition;
+		}
+
+		$entry   = $this->build_entry( $id, $definition );
+		$enabled = (bool) $request['enabled'];
+
+		if ( $enabled === $entry['enabled'] ) {
+			return $this->prepare_item_for_response( $entry, $request );
+		}
+
+		if ( $enabled && ! $entry['available'] ) {
+			return new WP_Error(
+				'ohmylms_integration_unavailable',
+				(string) $entry['unavailable_reason'],
+				array( 'status' => 422 )
 			);
-
-			do_action( 'ohmylms_integration_' . $sanitized_key . '_updated', $is_enable );
-
-			if ( $is_being_enabled ) {
-				do_action( 'ohmylms_integration_' . $sanitized_key . '_before_enable', $sanitized_key );
-			}
-
-			update_option( 'ohmylms_integrations', $current_integrations );
-
-			if ( $is_being_enabled ) {
-				do_action( 'ohmylms_integration_' . $sanitized_key . '_after_enable', $sanitized_key );
-
-				// Trigger addon activation tracking.
-				do_action( 'ohmylms_addon_activated', $sanitized_key );
-			}
-			if ( 'content_protection' === $sanitized_key ) {
-				update_option( 'ohmylms_content_protection', $is_enable ? 'yes' : 'no' );
-			}
-
-			$integrations[ $sanitized_key ]['is_enable']     = $is_enable;
-			$integrations[ $sanitized_key ]['class']         = $class;
-			$integrations[ $sanitized_key ]['is_valid']      = $is_valid;
-			$integrations[ $sanitized_key ]['required_plan'] = $required_plan;
 		}
 
-		foreach ( $skipped_keys as $skipped_key ) {
-			unset( $integrations[ $skipped_key ] );
-		}
-
-		update_option( 'ohmylms_integrations', $integrations );
-
-		do_action( 'ohmylms_integrations_after_update', $current_integrations );
-		do_action( 'ohmylms_integrations_' . $sanitized_key . '_after_update', $current_integrations );
-
-		return new WP_REST_Response(
-			array(
-				'success'      => true,
-				'integrations' => $integrations,
-				'need_reload'  => $need_reload,
-				'message'      => __( 'Integrations updated successfully.', 'ohmylms' ),
-			),
-			200
+		$is_enable = $enabled ? 1 : 0;
+		$current   = $this->get_stored();
+		$changes   = array(
+			$id => array( 'is_enable' => $is_enable ),
 		);
+
+		do_action( 'ohmylms_integrations_before_update', $changes, $current );
+		do_action( 'ohmylms_integration_' . $id . '_updated', $is_enable );
+		if ( $enabled ) {
+			do_action( 'ohmylms_integration_' . $id . '_before_enable', $id );
+		}
+
+		$next        = $current;
+		$next[ $id ] = array_merge( isset( $current[ $id ] ) && is_array( $current[ $id ] ) ? $current[ $id ] : array(), $changes[ $id ] );
+		update_option( self::OPTION, $next );
+
+		$saved = $this->get_stored();
+		if ( ! isset( $saved[ $id ]['is_enable'] ) || (int) $saved[ $id ]['is_enable'] !== $is_enable ) {
+			return new WP_Error( 'ohmylms_integration_update_failed', __( 'The integration could not be saved.', 'ohmylms' ), array( 'status' => 500 ) );
+		}
+
+		if ( $enabled ) {
+			do_action( 'ohmylms_integration_' . $id . '_after_enable', $id );
+			do_action( 'ohmylms_addon_activated', $id );
+		}
+		if ( 'content_protection' === $id ) {
+			update_option( 'ohmylms_content_protection', $enabled ? 'yes' : 'no' );
+		}
+
+		do_action( 'ohmylms_integrations_after_update', $saved );
+		do_action( 'ohmylms_integrations_' . $id . '_after_update', $saved );
+
+		$entry                    = $this->build_entry( $id, $this->get_definition( $id ) );
+		$entry['enabled']         = $enabled;
+		$entry['requires_reload'] = in_array( $id, self::RELOAD_IDS, true );
+
+		return $this->prepare_item_for_response( $entry, $request );
 	}
 
 	/**
-	 * Checks if a given request has access to update integrations.
+	 * Resolve the integration of a settings request.
 	 *
-	 * @since 1.0.0
-	 * @param WP_REST_Request $request Full details about the request.
-	 * @return bool|WP_Error True if the request has read access, WP_Error object otherwise.
+	 * @param string $id Integration id.
+	 * @return true|WP_Error
 	 */
-	public function update_items_permissions_check( $request ) {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return new WP_Error( 'ohmylms_rest_cannot_update', __( 'Sorry, you are not allowed to update these integrations.', 'ohmylms' ), array( 'status' => rest_authorization_required_code() ) );
+	private function check_settings_target( $id ) {
+		$definition = $this->get_definition( $id );
+		if ( is_wp_error( $definition ) ) {
+			return $definition;
 		}
+		if ( ! IntegrationSettings::supports( $id ) ) {
+			return new WP_Error( 'ohmylms_integration_no_settings', __( 'This integration has no settings here.', 'ohmylms' ), array( 'status' => 404 ) );
+		}
+
 		return true;
 	}
 
 	/**
-	 * Deletes a single integration.
+	 * Get an integration's settings (secrets are never returned).
 	 *
-	 * @since 1.0.0
 	 * @param WP_REST_Request $request Full details about the request.
-	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
+	 * @return WP_REST_Response|WP_Error
 	 */
-	public function delete_item( $request ) {
-		$integration_id = $request['id'];
-		$integrations   = get_option( 'ohmylms_integrations', array() );
-
-		if ( ! isset( $integrations[ $integration_id ] ) ) {
-			return new WP_Error( 'ohmylms_rest_integration_not_found', __( 'Integration not found.', 'ohmylms' ), array( 'status' => 404 ) );
+	public function get_settings( $request ) {
+		$id     = (string) $request['id'];
+		$target = $this->check_settings_target( $id );
+		if ( is_wp_error( $target ) ) {
+			return $target;
 		}
 
-		unset( $integrations[ $integration_id ] );
-		update_option( 'ohmylms_integrations', $integrations );
+		return rest_ensure_response( IntegrationSettings::describe( $id ) );
+	}
 
-		return new WP_REST_Response(
-			array(
-				'success' => true,
-				'message' => __( 'Integration deleted successfully.', 'ohmylms' ),
+	/**
+	 * Update an integration's settings.
+	 *
+	 * The body is a JSON object of field names. Omitted fields are kept; a secret is replaced by a
+	 * non-empty string or cleared with null (optional secrets only).
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function update_settings( $request ) {
+		$id     = (string) $request['id'];
+		$target = $this->check_settings_target( $id );
+		if ( is_wp_error( $target ) ) {
+			return $target;
+		}
+
+		$body = $request->get_json_params();
+		if ( ! is_array( $body ) || ( $body && array_values( $body ) === $body ) ) {
+			return new WP_Error( 'ohmylms_integration_invalid_body', __( 'Send a JSON object of settings.', 'ohmylms' ), array( 'status' => 400 ) );
+		}
+
+		$changed = IntegrationSettings::update( $id, $body );
+		if ( is_wp_error( $changed ) ) {
+			return $changed;
+		}
+
+		if ( $changed ) {
+			/**
+			 * Fires after an integration's credentials changed.
+			 *
+			 * @param string   $id      Integration id.
+			 * @param string[] $changed Names of the fields that changed (never their values).
+			 */
+			do_action( 'ohmylms_integration_settings_updated', $id, $changed );
+		}
+
+		return rest_ensure_response( IntegrationSettings::describe( $id ) );
+	}
+
+	/**
+	 * Prepare an integration entry for the response.
+	 *
+	 * @param array           $item    Entry from {@see self::build_entry()}.
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	public function prepare_item_for_response( $item, $request ) {
+		$data = array(
+			'id'                 => $item['id'],
+			'label'              => $item['label'],
+			'description'        => $item['description'],
+			'icon'               => $item['icon'],
+			'categories'         => $item['categories'],
+			'dependency'         => $item['dependency'],
+			'required_plan'      => $item['required_plan'],
+			'enabled'            => $item['enabled'],
+			'available'          => $item['available'],
+			'unavailable_reason' => $item['unavailable_reason'],
+			'configurable'       => $item['configurable'],
+			'requires_reload'    => $item['requires_reload'],
+		);
+
+		$context  = ! empty( $request['context'] ) ? $request['context'] : 'view';
+		$data     = $this->filter_response_by_context( $data, $context );
+		$response = rest_ensure_response( $data );
+
+		$self = rest_url( $this->namespace . '/' . $this->rest_base . '/' . $item['id'] );
+		$response->add_link( 'self', $self );
+		$response->add_link( 'collection', rest_url( $this->namespace . '/' . $this->rest_base ) );
+		if ( $item['configurable'] ) {
+			$response->add_link( 'settings', $self . '/settings' );
+		}
+
+		return $response;
+	}
+
+	/**
+	 * Collection parameters.
+	 *
+	 * @return array
+	 */
+	public function get_collection_params() {
+		return array(
+			'context'  => $this->get_context_param( array( 'default' => 'view' ) ),
+			'search'   => array(
+				'description'       => __( 'Limit results to integrations whose name or description contains this text.', 'ohmylms' ),
+				'type'              => 'string',
+				'default'           => '',
+				'maxLength'         => 100,
+				'validate_callback' => 'rest_validate_request_arg',
+				'sanitize_callback' => 'sanitize_text_field',
 			),
-			200
+			'category' => array(
+				'description'       => __( 'Limit results to one category slug.', 'ohmylms' ),
+				'type'              => 'string',
+				'default'           => '',
+				'pattern'           => '^[a-z0-9_-]*$',
+				'maxLength'         => 64,
+				'validate_callback' => 'rest_validate_request_arg',
+				'sanitize_callback' => 'sanitize_key',
+			),
+			'status'   => array(
+				'description'       => __( 'Limit results by switch state.', 'ohmylms' ),
+				'type'              => 'string',
+				'default'           => 'all',
+				'enum'              => array( 'all', 'enabled', 'disabled' ),
+				'validate_callback' => 'rest_validate_request_arg',
+				'sanitize_callback' => 'rest_sanitize_request_arg',
+			),
 		);
 	}
 
 	/**
-	 * Checks if a given request has access to delete an integration.
+	 * Integration schema (JSON Schema draft 4).
 	 *
-	 * @since 1.0.0
-	 * @param WP_REST_Request $request Full details about the request.
-	 * @return bool|WP_Error True if the request has read access, WP_Error object otherwise.
+	 * @return array
 	 */
-	public function delete_item_permissions_check( $request ) {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return new WP_Error( 'ohmylms_rest_cannot_delete', __( 'Sorry, you are not allowed to delete this integration.', 'ohmylms' ), array( 'status' => rest_authorization_required_code() ) );
+	public function get_item_schema() {
+		if ( $this->schema ) {
+			return $this->add_additional_fields_schema( $this->schema );
 		}
-		return true;
+
+		$context = array( 'view', 'edit' );
+
+		$this->schema = array(
+			'$schema'    => 'http://json-schema.org/draft-04/schema#',
+			'title'      => 'integration',
+			'type'       => 'object',
+			'properties' => array(
+				'id'                 => array(
+					'description' => __( 'Identifier of the integration.', 'ohmylms' ),
+					'type'        => 'string',
+					'context'     => $context,
+					'readonly'    => true,
+				),
+				'label'              => array(
+					'description' => __( 'Display name.', 'ohmylms' ),
+					'type'        => 'string',
+					'context'     => $context,
+					'readonly'    => true,
+				),
+				'description'        => array(
+					'description' => __( 'What the integration does.', 'ohmylms' ),
+					'type'        => 'string',
+					'context'     => $context,
+					'readonly'    => true,
+				),
+				'icon'               => array(
+					'description' => __( 'Icon URL.', 'ohmylms' ),
+					'type'        => 'string',
+					'format'      => 'uri',
+					'context'     => $context,
+					'readonly'    => true,
+				),
+				'categories'         => array(
+					'description' => __( 'Category slugs.', 'ohmylms' ),
+					'type'        => 'array',
+					'items'       => array( 'type' => 'string' ),
+					'context'     => $context,
+					'readonly'    => true,
+				),
+				'dependency'         => array(
+					'description' => __( 'Informational note about what the integration works with.', 'ohmylms' ),
+					'type'        => array( 'string', 'null' ),
+					'context'     => $context,
+					'readonly'    => true,
+				),
+				'required_plan'      => array(
+					'description' => __( 'Plan that unlocks the integration, when it is restricted.', 'ohmylms' ),
+					'type'        => array( 'string', 'null' ),
+					'context'     => $context,
+					'readonly'    => true,
+				),
+				'enabled'            => array(
+					'description' => __( 'Whether the integration is switched on.', 'ohmylms' ),
+					'type'        => 'boolean',
+					'context'     => $context,
+					'required'    => true,
+				),
+				'available'          => array(
+					'description' => __( 'Whether the integration can be switched on.', 'ohmylms' ),
+					'type'        => 'boolean',
+					'context'     => $context,
+					'readonly'    => true,
+				),
+				'unavailable_reason' => array(
+					'description' => __( 'Why the integration cannot be switched on.', 'ohmylms' ),
+					'type'        => array( 'string', 'null' ),
+					'context'     => $context,
+					'readonly'    => true,
+				),
+				'configurable'       => array(
+					'description' => __( 'Whether credentials are managed at /integrations/{id}/settings.', 'ohmylms' ),
+					'type'        => 'boolean',
+					'context'     => $context,
+					'readonly'    => true,
+				),
+				'requires_reload'    => array(
+					'description' => __( 'True in an update response when the admin menu changes, so the page should reload.', 'ohmylms' ),
+					'type'        => 'boolean',
+					'context'     => $context,
+					'readonly'    => true,
+				),
+			),
+		);
+
+		return $this->add_additional_fields_schema( $this->schema );
+	}
+
+	/**
+	 * Settings schema (JSON Schema draft 4).
+	 *
+	 * @return array
+	 */
+	public function get_settings_schema() {
+		return array(
+			'$schema'    => 'http://json-schema.org/draft-04/schema#',
+			'title'      => 'integration-settings',
+			'type'       => 'object',
+			'properties' => array(
+				'integration' => array(
+					'type'     => 'string',
+					'readonly' => true,
+				),
+				'configured'  => array(
+					'description' => __( 'True when every required field has a value.', 'ohmylms' ),
+					'type'        => 'boolean',
+					'readonly'    => true,
+				),
+				'fields'      => array(
+					'description' => __( 'Editable fields. Text fields carry `value`; secret fields carry `configured` and `hint`, never the secret.', 'ohmylms' ),
+					'type'        => 'array',
+					'readonly'    => true,
+					'items'       => array( 'type' => 'object' ),
+				),
+				'readonly'    => array(
+					'description' => __( 'Values to copy into the provider’s console.', 'ohmylms' ),
+					'type'        => 'array',
+					'readonly'    => true,
+					'items'       => array( 'type' => 'object' ),
+				),
+			),
+		);
 	}
 }

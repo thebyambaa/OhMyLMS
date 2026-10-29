@@ -1,0 +1,149 @@
+{
+	"contract": "ohmylms/v1/integrations",
+	"version": 2,
+	"namespace": "ohmylms/v1",
+	"restBase": "integrations",
+	"capability": "manage_options",
+	"auth": "WordPress REST authentication. Cookie auth requires the X-WP-Nonce header (wp_create_nonce('wp_rest')); application passwords also work.",
+	"routes": [
+		{
+			"name": "list",
+			"method": "GET",
+			"path": "/integrations",
+			"args": {
+				"search": { "type": "string", "default": "", "maxLength": 100 },
+				"category": {
+					"type": "string",
+					"default": "",
+					"pattern": "^[a-z0-9_-]*$",
+					"maxLength": 64
+				},
+				"status": {
+					"type": "string",
+					"default": "all",
+					"enum": [ "all", "enabled", "disabled" ]
+				},
+				"_fields": {
+					"type": "string",
+					"description": "Comma separated response fields."
+				}
+			},
+			"success": {
+				"status": 200,
+				"body": "Integration[]",
+				"headers": [ "X-WP-Total", "X-WP-TotalPages (always 1)" ]
+			},
+			"errors": [ 400, 401, 403 ]
+		},
+		{
+			"name": "get",
+			"method": "GET",
+			"path": "/integrations/{id}",
+			"success": { "status": 200, "body": "Integration" },
+			"errors": [ 401, 403, 404 ]
+		},
+		{
+			"name": "setEnabled",
+			"method": "PATCH",
+			"alsoAccepts": [ "PUT", "POST" ],
+			"path": "/integrations/{id}",
+			"body": {
+				"enabled": { "type": "boolean", "required": true }
+			},
+			"success": {
+				"status": 200,
+				"body": "Integration (requires_reload is true when the admin menu changes)"
+			},
+			"errors": [ 400, 401, 403, 404, 422, 500 ]
+		},
+		{
+			"name": "getSettings",
+			"method": "GET",
+			"path": "/integrations/{id}/settings",
+			"success": { "status": 200, "body": "IntegrationSettings" },
+			"errors": [ 401, 403, 404 ]
+		},
+		{
+			"name": "saveSettings",
+			"method": "PATCH",
+			"alsoAccepts": [ "PUT", "POST" ],
+			"path": "/integrations/{id}/settings",
+			"body": {
+				"description": "JSON object keyed by field name. Omitted fields are kept. A secret is replaced by a non-empty string; null clears an optional secret.",
+				"zoom": [
+					"account_id",
+					"client_id",
+					"client_secret",
+					"webhook_secret_token"
+				],
+				"google_signin": [ "client_id", "client_secret" ],
+				"microsoft_signin": [ "client_id", "tenant", "client_secret" ]
+			},
+			"success": { "status": 200, "body": "IntegrationSettings" },
+			"errors": [ 400, 401, 403, 404, 422 ]
+		}
+	],
+	"types": {
+		"Integration": {
+			"id": "string ^[a-z0-9_-]+$",
+			"label": "string",
+			"description": "string",
+			"icon": "string (URL, may be empty)",
+			"categories": "string[] (slugs)",
+			"dependency": "string | null (informational)",
+			"required_plan": "string | null",
+			"enabled": "boolean",
+			"available": "boolean (false: cannot be switched on)",
+			"unavailable_reason": "string | null",
+			"configurable": "boolean (true: /integrations/{id}/settings exists)",
+			"requires_reload": "boolean (read only)"
+		},
+		"IntegrationSettings": {
+			"integration": "string",
+			"configured": "boolean (every required field has a value)",
+			"fields": "(TextField | SecretField)[]",
+			"readonly": "{ name, label, help, value }[]"
+		},
+		"TextField": {
+			"kind": "text",
+			"name": "string",
+			"label": "string",
+			"help": "string",
+			"required": "boolean",
+			"max_length": "integer",
+			"value": "string"
+		},
+		"SecretField": {
+			"kind": "secret",
+			"name": "string",
+			"label": "string",
+			"help": "string",
+			"required": "boolean",
+			"max_length": "integer",
+			"configured": "boolean",
+			"hint": "string ('****' + last 4 characters when the secret has 12 or more, else '****', '' when unset). The secret itself is never returned."
+		}
+	},
+	"errorCodes": {
+		"400": [
+			"rest_invalid_param",
+			"rest_missing_callback_param",
+			"ohmylms_integration_invalid_body",
+			"ohmylms_integration_unknown_setting"
+		],
+		"401/403": [
+			"ohmylms_integration_cannot_view",
+			"ohmylms_integration_cannot_edit",
+			"rest_cookie_invalid_nonce"
+		],
+		"404": [
+			"ohmylms_integration_not_found",
+			"ohmylms_integration_no_settings"
+		],
+		"422": [
+			"ohmylms_integration_unavailable",
+			"ohmylms_integration_invalid_settings (data.params maps field name to message)"
+		],
+		"500": [ "ohmylms_integration_update_failed" ]
+	}
+}

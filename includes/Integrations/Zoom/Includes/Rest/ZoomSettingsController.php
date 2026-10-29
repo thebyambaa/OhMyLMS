@@ -8,6 +8,7 @@
 
 namespace OhMyLMS\Integrations\Zoom\Includes\Rest;
 
+use OhMyLMS\Integrations\IntegrationSettings;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -103,27 +104,18 @@ class ZoomSettingsController {
 	 * @return WP_REST_Response
 	 */
 	public function save_credentials( WP_REST_Request $request ) {
-		$account_id    = \sanitize_text_field( $request->get_param( 'account_id' ) );
-		$client_id     = \sanitize_text_field( $request->get_param( 'client_id' ) );
-		$client_secret = \sanitize_text_field( $request->get_param( 'client_secret' ) );
+		// Delegates to the shared, validated implementation. A blank secret keeps the stored one.
+		$input = array();
+		foreach ( array( 'account_id', 'client_id', 'client_secret', 'webhook_secret_token' ) as $name ) {
+			$value = $request->get_param( $name );
+			if ( null !== $value && ( '' !== $value || ! in_array( $name, array( 'client_secret', 'webhook_secret_token' ), true ) ) ) {
+				$input[ $name ] = $value;
+			}
+		}
 
-		$user_id = \get_current_user_id();
-
-		// Save all settings as a single array under one user meta key.
-		$settings = array(
-			'account_id'    => $account_id,
-			'client_id'     => $client_id,
-			'client_secret' => $client_secret,
-		);
-		\update_user_meta( $user_id, 'ohmylms_zoom_api_credentials', $settings );
-
-		// Webhook secret token is site-wide (verifies an unauthenticated
-		// endpoint), so it's stored as an option rather than user meta.
-		if ( null !== $request->get_param( 'webhook_secret_token' ) ) {
-			\update_option(
-				'ohmylms_zoom_webhook_secret_token',
-				\sanitize_text_field( $request->get_param( 'webhook_secret_token' ) )
-			);
+		$changed = IntegrationSettings::update( 'zoom', $input );
+		if ( is_wp_error( $changed ) ) {
+			return $changed;
 		}
 
 		return new \WP_REST_Response(
@@ -137,7 +129,7 @@ class ZoomSettingsController {
 	}
 
 	/**
-	 * Get zoom settings
+	 * Get zoom settings. Secrets are never returned, only whether they are set.
 	 *
 	 * @since 1.0.0
 	 *
@@ -146,13 +138,18 @@ class ZoomSettingsController {
 	 * @return WP_REST_Response
 	 */
 	public function get_credentials( $request ) {
-		$user_id  = \get_current_user_id();
-		$settings = \get_user_meta( $user_id, 'ohmylms_zoom_api_credentials', true );
-		if ( empty( $settings ) ) {
-			$settings = array();
+		$settings = array(
+			'webhook_url'              => rest_url( 'ohmylms/v1/zoom/webhook' ),
+			'has_client_secret'        => false,
+			'has_webhook_secret_token' => false,
+		);
+		foreach ( IntegrationSettings::describe( 'zoom' )['fields'] as $field ) {
+			if ( 'secret' === $field['kind'] ) {
+				$settings[ 'has_' . $field['name'] ] = $field['configured'];
+			} else {
+				$settings[ $field['name'] ] = $field['value'];
+			}
 		}
-		$settings['webhook_secret_token'] = \get_option( 'ohmylms_zoom_webhook_secret_token', '' );
-		$settings['webhook_url']          = \rest_url( 'ohmylms/v1/zoom/webhook' );
 
 		return new \WP_REST_Response(
 			array(
