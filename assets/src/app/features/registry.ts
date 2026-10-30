@@ -1,4 +1,5 @@
 import { hasCapability } from '../bootstrap/config';
+import { accountHub, accountHubClass, accountHubSchool } from './account-hub';
 import {
 	assignmentEditor,
 	assignmentGrading,
@@ -68,6 +69,9 @@ export const features: readonly FeatureDefinition[] = [
 	memberships,
 	membershipEditor,
 	students,
+	accountHub,
+	accountHubSchool,
+	accountHubClass,
 	certificates,
 	certificateEditor,
 	gamification,
