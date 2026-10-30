@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom';
 import { Pagination } from '../../components/Pagination';
 import { enroll, setBlocked, unenroll } from './api';
 import { enrollmentStatus, formatDate, validateEnrollment } from './model';
+import { reportPath } from './report';
 import { useOperation } from './useOperation';
 import { useCourseOptions, useEnrollments, useStudent } from './useStudents';
 import type { Enrollment, ProgressFilter } from './types';
@@ -135,6 +136,10 @@ export function StudentProfile( { studentId }: { studentId: number } ) {
 	const back = (
 		<p>
 			<Link to="/students">{ __( 'All students', 'ohmylms' ) }</Link>
+			{ ' · ' }
+			<Link to={ reportPath( studentId ) }>
+				{ __( 'Quiz, assignment and skill report', 'ohmylms' ) }
+			</Link>
 		</p>
 	);
 	if ( profile.error && ! student ) {

@@ -161,9 +161,83 @@
 				"headers": [ "X-WP-Total", "X-WP-TotalPages", "Link" ]
 			},
 			"errors": [ 400, 401, 403, 404, 500 ]
+		},
+		{
+			"name": "enrolByEmail",
+			"method": "POST",
+			"path": "/analytics/courses/{id}/enrollments",
+			"description": "Enrols an existing user found by e-mail; dispatched to POST /students/{user}/enrollments.",
+			"args": {
+				"email": {
+					"type": "string",
+					"format": "email",
+					"maxLength": 100,
+					"required": true
+				}
+			},
+			"success": {
+				"status": 201,
+				"body": "{ user_id, name, enrollment: Enrollment }"
+			},
+			"errors": [ 400, 401, 403, 404, 409, 500 ]
+		},
+		{
+			"name": "bulk",
+			"method": "POST",
+			"path": "/analytics/courses/{id}/enrollments/bulk",
+			"args": {
+				"action": {
+					"type": "string",
+					"enum": [ "unenroll" ],
+					"required": true
+				},
+				"user_ids": {
+					"type": "array",
+					"items": { "type": "integer", "minimum": 1 },
+					"minItems": 1,
+					"maxItems": 50,
+					"required": true
+				}
+			},
+			"success": {
+				"status": 200,
+				"body": "{ action, results: { user_id, ok, code }[] }"
+			},
+			"errors": [ 400, 401, 403, 404 ]
+		},
+		{
+			"name": "reminders",
+			"method": "POST",
+			"path": "/analytics/courses/{id}/reminders",
+			"description": "Fixed plain-text templates to enrolled students only; one per student and course per day; 50 per sender per hour.",
+			"args": {
+				"template": {
+					"type": "string",
+					"enum": [ "start", "continue", "complete" ],
+					"required": true
+				},
+				"user_ids": {
+					"type": "array",
+					"items": { "type": "integer", "minimum": 1 },
+					"minItems": 1,
+					"maxItems": 20,
+					"required": true
+				}
+			},
+			"success": {
+				"status": 200,
+				"body": "{ sent: integer[], skipped: { user_id, reason }[], remaining: integer }"
+			},
+			"errors": [ 400, 401, 403, 404, 429 ]
 		}
 	],
 	"errorCodes": [
+		"ohmylms_roster_cannot_edit",
+		"ohmylms_roster_user_not_found",
+		"ohmylms_reminder_cannot_send",
+		"ohmylms_reminder_rate_limited",
+		"ohmylms_reminder_invalid_template",
+		"ohmylms_reminder_route_retired",
 		"ohmylms_analytics_cannot_view",
 		"ohmylms_analytics_invalid_range",
 		"ohmylms_analytics_invalid_page",

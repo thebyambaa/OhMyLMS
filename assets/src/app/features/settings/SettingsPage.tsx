@@ -6,15 +6,18 @@ import { AccountForm } from './AccountForm';
 import { AdvancedForm } from './AdvancedForm';
 import { AiTutorForm } from './AiTutorForm';
 import { BrandingForm } from './BrandingForm';
+import { CourseArchiveForm } from './CourseArchiveForm';
 import { CurrencyForm } from './CurrencyForm';
 import { DesignSystemForm } from './DesignSystemForm';
 import { GeneralForm } from './GeneralForm';
 import { useSettingsGroup } from './hooks';
 import { HubIconsForm } from './HubIconsForm';
 import { McpForm } from './McpForm';
+import { MigrationForm } from './MigrationForm';
 import { tabFromParam } from './model';
 import { PaymentGatewaysForm } from './PaymentGatewaysForm';
 import { PermalinkForm } from './PermalinkForm';
+import { QuizDesignForm } from './QuizDesignForm';
 import { TaxForm } from './TaxForm';
 import { Tabs, tabId, tabPanelId, type TabItem } from './Tabs';
 import {
@@ -41,6 +44,9 @@ const LABELS: Record< TabId, string > = {
 	xapi: __( 'xAPI', 'ohmylms' ),
 	'ai-tutor': __( 'AI tutor', 'ohmylms' ),
 	mcp: __( 'MCP', 'ohmylms' ),
+	'course-archive': __( 'Course archive', 'ohmylms' ),
+	'quiz-design': __( 'Quiz design', 'ohmylms' ),
+	migration: __( 'Migration', 'ohmylms' ),
 };
 
 const TAB_IDS: readonly TabId[] = [ ...GROUP_IDS, ...EXTRA_TAB_IDS ];
@@ -114,6 +120,9 @@ export default function SettingsPage() {
 		xapi: Boolean( extraDirty.xapi ),
 		'ai-tutor': Boolean( extraDirty[ 'ai-tutor' ] ),
 		mcp: false,
+		'course-archive': Boolean( extraDirty[ 'course-archive' ] ),
+		'quiz-design': Boolean( extraDirty[ 'quiz-design' ] ),
+		migration: false,
 	};
 	const guard = useUnsavedChangesGuard(
 		Object.values( dirty ).some( Boolean )
@@ -164,6 +173,19 @@ export default function SettingsPage() {
 			/>
 		),
 		mcp: <McpForm active={ 'mcp' === selected } />,
+		'course-archive': (
+			<CourseArchiveForm
+				active={ 'course-archive' === selected }
+				onDirty={ reporters[ 'course-archive' ] }
+			/>
+		),
+		'quiz-design': (
+			<QuizDesignForm
+				active={ 'quiz-design' === selected }
+				onDirty={ reporters[ 'quiz-design' ] }
+			/>
+		),
+		migration: <MigrationForm active={ 'migration' === selected } />,
 	};
 	const groupVisited: Record< GroupId, boolean > = {
 		general: null !== general.saved || general.loading,

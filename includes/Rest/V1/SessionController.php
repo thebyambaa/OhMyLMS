@@ -168,7 +168,7 @@ class SessionController extends RestController {
 
 		$posts = array();
 		foreach ( $query_result as $post ) {
-			if ( ! current_user_can( 'read_post', $post->ID ) ) {
+			if ( ! current_user_can( 'edit_post', $post->ID ) ) {
 				continue;
 			}
 
@@ -568,6 +568,8 @@ class SessionController extends RestController {
 			$formatted_end_date = $end_date ? date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $end_date ) ) : '';
 		}
 
+		// A Zoom start link signs the caller in as the meeting host.
+		$can_host = current_user_can( 'edit_post', $post->ID );
 		$data     = array(
 			'id'                => $post->ID,
 			'topic'             => $post->post_title,
@@ -578,7 +580,7 @@ class SessionController extends RestController {
 			'rawEndDate'        => $end_date, // Raw end date for editing.
 			'duration'          => $duration,
 			'duration_unit'     => 'min',
-			'password'          => get_post_meta( $post->ID, '_password', true ),
+			'password'          => $can_host ? get_post_meta( $post->ID, '_password', true ) : '',
 			'timezone'          => $timezone,
 			'order'             => get_post_meta( $post->ID, '_order', true ),
 			'type'              => get_post_meta( $post->ID, '_type', true ),
@@ -589,7 +591,7 @@ class SessionController extends RestController {
 			'content_type'      => 'session',
 			'platform'          => $platform,
 			'join_url'          => $this->get_join_url( $post->ID, $platform, $meeting_data ),
-			'start_url'         => $this->get_start_url( $post->ID, $platform, $meeting_data ),
+			'start_url'         => $can_host ? $this->get_start_url( $post->ID, $platform, $meeting_data ) : '',
 			'status'            => $meeting_status,
 			'course_id'         => $course_id,
 			'chapter_id'        => $chapter_id,

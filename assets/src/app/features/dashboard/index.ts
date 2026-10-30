@@ -49,3 +49,19 @@ export const courseReport: FeatureDefinition = {
 			)
 	),
 };
+
+/** Roster of one course at `#/reports/courses/<id>/students`: enrol by e-mail, bulk unenrol, reminders. */
+export const courseRoster: FeatureDefinition = {
+	id: 'course-roster',
+	title: __( 'Course roster', 'ohmylms' ),
+	path: '/reports/courses/:id/students',
+	extensionRoute: '/courses/:id/students',
+	hidden: true,
+	capability: 'manage_options',
+	component: lazy(
+		() =>
+			import(
+				/* webpackChunkName: "admin-app-dashboard" */ './CourseRosterPage'
+			)
+	),
+};

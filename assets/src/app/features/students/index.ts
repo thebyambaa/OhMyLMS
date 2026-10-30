@@ -14,3 +14,19 @@ export const students: FeatureDefinition = {
 			)
 	),
 };
+
+/** One student's results at `#/students/<id>/report` (quiz attempts, assignments, skills). */
+export const studentReport: FeatureDefinition = {
+	id: 'student-report',
+	title: __( 'Student report', 'ohmylms' ),
+	path: '/students/:id/report',
+	extensionRoute: '/students/:id/report',
+	hidden: true,
+	capability: 'manage_options',
+	component: lazy(
+		() =>
+			import(
+				/* webpackChunkName: "admin-app-students" */ './StudentReportPage'
+			)
+	),
+};

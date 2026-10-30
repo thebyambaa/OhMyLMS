@@ -4,15 +4,19 @@
  *
  * @package OhMyLMS
  */
+
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
-use WP_Query;
+use WP_Error;
 
 /**
- * NotificationController class.
+ * Retired reminder route `notification/course/{course_id}/student/{student_id}`.
  *
- * Handles REST API endpoints for notification.
+ * It mailed any caller-supplied address, subject and HTML body (an open mail relay for every
+ * `edit_posts` user). Reminders now go through `POST /analytics/courses/{id}/reminders`
+ * (CourseRosterController and Analytics\Reminders): recipients come from enrolments and the text is a
+ * fixed template. The route stays registered so old screens get a clear 410 instead of a 404.
  *
  * @since 1.0.0
  */
@@ -27,7 +31,7 @@ class NotificationController extends RestController {
 	protected $base = 'notification';
 
 	/**
-	 * Register the routes for the notification endpoints.
+	 * Register the retired route.
 	 *
 	 * @since 1.0.0
 	 */
@@ -36,150 +40,38 @@ class NotificationController extends RestController {
 			$this->namespace,
 			'/' . $this->base . '/course/(?P<course_id>[\d]+)/student/(?P<student_id>[\d]+)',
 			array(
-				'args' => array(
-					'student_id' => array(
-						'description' => __( 'Unique identifier for the notification.', 'ohmylms' ),
-						'type'        => 'integer',
-					),
-					'course_id'  => array(
-						'description' => __( 'Unique identifier for the notification.', 'ohmylms' ),
-						'type'        => 'integer',
-					),
-				),
 				array(
 					'methods'             => \WP_REST_Server::EDITABLE,
 					'callback'            => array( $this, 'send_reminder' ),
 					'permission_callback' => array( $this, 'check_notification_permission' ),
-					'args'                => $this->get_collection_params(),
 				),
 			)
 		);
 	}
 
 	/**
-	 * Send reminder to student.
+	 * Answer that the route was replaced; nothing is sent.
 	 *
-	 * @param WP_REST_Request $request Full data about the request.
-	 *
-	 * @return WP_Error|WP_REST_Response
+	 * @return WP_Error
 	 * @since 1.0.0
 	 */
-	public function send_reminder( $request ) {
-		$student_id = absint( $request['student_id'] );
-
-		if ( ! $student_id ) {
-			return new \WP_Error(
-				'rest_invalid_student',
-				__( 'Invalid student ID.', 'ohmylms' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		$course_id = absint( $request['course_id'] );
-
-		if ( ! $course_id ) {
-			return new \WP_Error(
-				'rest_invalid_course',
-				__( 'Invalid course ID.', 'ohmylms' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		// Validate required parameters.
-		$required_params = array( 'email', 'subject', 'message' );
-		foreach ( $required_params as $param ) {
-			if ( empty( $request[ $param ] ) ) {
-				return new \WP_Error(
-					'rest_missing_param',
-					sprintf( /* translators: %s: text value. */
-					__( 'Missing parameter: %s', 'ohmylms' ), $param ),
-					array( 'status' => 400 )
-				);
-			}
-		}
-
-		$email   = sanitize_email( $request['email'] );
-		$subject = sanitize_text_field( $request['subject'] );
-		$message = wp_kses_post( $request['message'] );
-		// Set up email headers for HTML content.
-		$headers = array(
-			'Content-Type: text/html; charset=UTF-8',
-		);
-
-		// Send email with HTML formatting.
-		$sent = wp_mail( $email, $subject, $message, $headers );
-
-		if ( ! $sent ) {
-			return new \WP_Error(
-				'rest_email_failed',
-				__( 'Failed to send reminder email.', 'ohmylms' ),
-				array( 'status' => 500 )
-			);
-		}
-
-		$save_result = $this->save_notification_record(
+	public function send_reminder() {
+		return new WP_Error(
+			'ohmylms_reminder_route_retired',
+			__( 'This reminder route was retired. Send reminders from the course roster.', 'ohmylms' ),
 			array(
-				'student_id' => $student_id,
-				'course_id'  => $course_id,
-				'email'      => $email,
-				'subject'    => $subject,
-				'message'    => $message,
+				'status'      => 410,
+				'replacement' => '/ohmylms/v1/analytics/courses/{id}/reminders',
 			)
 		);
-
-		if ( is_wp_error( $save_result ) ) {
-			return $save_result;
-		}
-
-		return new \WP_REST_Response(
-			array(
-				'message' => __( 'Reminder sent successfully', 'ohmylms' ),
-				'status'  => true,
-			),
-			200
-		);
 	}
 
 	/**
-	 * Save notification record to database.
+	 * Only users who may send reminders learn that the route moved.
 	 *
-	 * @param array $data Notification data.
-	 * @return int|\WP_Error Post ID on success, WP_Error on failure.
-	 */
-	private function save_notification_record( $data ) {
-		global $wpdb;
-
-		$table_name = $wpdb->prefix . 'ohmylms_notifications';
-
-		$inserted = $wpdb->insert(
-			$table_name,
-			array(
-				'student_id' => $data['student_id'],
-				'course_id'  => $data['course_id'],
-				'email'      => $data['email'],
-				'subject'    => $data['subject'],
-				'message'    => $data['message'],
-				'status'     => 'sent',
-				'created_at' => current_time( 'mysql' ),
-			),
-			array( '%d', '%d', '%s', '%s', '%s', '%s', '%s' )
-		);
-
-		if ( false === $inserted ) {
-			return new \WP_Error(
-				'rest_notification_save_failed',
-				__( 'Failed to save notification record.', 'ohmylms' ),
-				array( 'status' => 500 )
-			);
-		}
-
-		return $wpdb->insert_id;
-	}
-
-	/**
-	 * Check notification permission for Notification controller.
+	 * @return true|WP_Error
 	 */
 	public function check_notification_permission() {
-		return current_user_can( 'edit_posts' );
+		return StudentController::authorize( 'ohmylms_reminder_cannot_send', __( 'Sorry, you are not allowed to send reminders.', 'ohmylms' ) );
 	}
 }

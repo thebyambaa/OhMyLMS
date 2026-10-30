@@ -35,6 +35,14 @@ function Students( { courseId }: { courseId: number } ) {
 	return (
 		<section aria-label={ __( 'Students', 'ohmylms' ) }>
 			<h3>{ __( 'Students', 'ohmylms' ) }</h3>
+			<p>
+				<Link to={ `/reports/courses/${ courseId }/students` }>
+					{ __(
+						'Manage roster: enrol, unenrol and send reminders',
+						'ohmylms'
+					) }
+				</Link>
+			</p>
 			<form
 				role="search"
 				aria-label={ __( 'Search students', 'ohmylms' ) }

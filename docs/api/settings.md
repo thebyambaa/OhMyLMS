@@ -317,20 +317,87 @@ settings pages until those are retired.
   they should be retired in favour of the new tab.
 - **Gateway extras not exposed:** checkout order (`ohmylms_gateway_order`), `ohmylms_guest_checkout`,
   `ohmylms_content_protection`, `ohmylms_enable_login`, and Stripe's read-only webhook data.
-- **Design settings (layout, archive, quiz design):** no route serves them since the old `design`
-  group was removed from the settings API, and their options and readers need an audit like the
-  one above before a registry group is added. Not implemented. (Hub icons, also in the legacy
-  Design tab, is implemented over `/hub-icons`.)
+- **Design settings (layout, archive, quiz design):** implemented 31 October 2026 as the
+  `course-archive` and `quiz-design` groups; see [Design groups](#design-groups). (Hub icons, also in
+  the legacy Design tab, is implemented over `/hub-icons`.)
 - **AI tutor validation:** `POST /ai` clamps or replaces invalid values (`provider`, `model`, limits)
   instead of answering 400, and resets policies that are not sent. The tab validates first and sends
   the whole form; a stricter route would change the legacy contract.
 - **Stored credentials are plain text** in gateway and xAPI options (AI keys are sealed).
 
+## Design groups
+
+Server: `includes/Settings/DesignSettings.php` (fields, validation, storage) and
+`includes/Rest/V1/DesignSettingsController.php`. Test: `tests/php/design-migration-rest-integration.php`
+(`OHMYLMS_DESIGN_MIGRATION_TEST=1`). They are separate from the registry (so `GET /settings` still
+lists seven groups) but follow its contract: `manage_options`, `GET` and `PUT|PATCH|POST` with
+`{group, values, changed}`, partial and all-or-nothing writes with rollback, `400 rest_invalid_param` /
+`ohmylms_settings_unknown_field`, `422 ohmylms_settings_invalid_value` with `data.params`, and an
+`OPTIONS` schema. Action `ohmylms_design_settings_updated( $group, $changed )` fires once per save.
+
+### Audit before (legacy `design` group, `includes/Admin/Settings/Design.php`)
+
+| Severity | Finding |
+| --- | --- |
+| High | **Option-driven function call.** The carousel and popup templates call `"get_{$row['row_display_criteria']}_course_ids"` from `ohmylms_archive_page_row` and from shortcode `course_rows` attributes (any author), so the value chose which function ran. Both templates now require one of `all`, `best_selling`, `top_rated`, `top_reviewed`, `free`, `paid`, `recent`. |
+| High | **No validation.** The removed generic writer stored any value: layouts outside `grid/list`, styles that select no template branch, string column counts, unbounded row arrays with arbitrary keys. |
+| Medium | Readers disagree: `templates/archive-course.php` reads `ohmylms_archive_page_per_page` (never written), other readers `ohmylms_courses_per_page`; Bricks/Elementor default `columns_per_row` to 3, the loop to 4. Reported, readers unchanged. |
+| Low | `ohmylms_single_course_page_layout`, `ohmylms_single_course_page_features` and `ohmylms_container_width` have no readers; `ohmylms_debug_mode` is unused. Not exposed. Colours, fonts and admin colours belong to Branding and the Design system. |
+
+### `course-archive`
+
+| Field | Option | Type |
+| --- | --- | --- |
+| `courses_per_page` | `ohmylms_courses_per_page` | integer 1-100, default 10 |
+| `layout` | `ohmylms_archive_page_layout` | `grid\|list` |
+| `layout_style` | `ohmylms_archive_page_layout_style` | `grid-style1`…`grid-style4` |
+| `columns_per_row` | `ohmylms_columns_per_row` | integer 1-6, default 4 |
+| `show_filters`, `show_search`, `show_sorting`, `show_category` | `ohmylms_archive_page_{filter,search,sorting,category}_is_enabled` | boolean (`yes/no`) |
+| `filters` | `ohmylms_archive_page_filters` | unique subset of `keyword, category, tag, difficulty_level, price_type` |
+| `rows` | `ohmylms_archive_page_row` | ≤ 10 `{heading (1-100, plain text), criteria}`; stored as `{row_display_criteria, row_heading}` |
+
+Rule (422): the filter panel needs at least one filter. Malformed stored values read as defaults;
+stored rows with unknown criteria are dropped.
+
+### `quiz-design`
+
+Twenty colours named after `Tokens::QUIZ_COLORS` without the `ohmylms_quiz_` prefix and `_color`
+suffix (`stage`, `prompt`, `canvas`, `toolbar`, `toolbar_text`, `accent`, `text`, `answer_1`…`answer_4`,
+`correct`, `player_stage`, `player_prompt`, `player_toolbar`, `player_toolbar_text`,
+`player_answer_1`…`player_answer_4`); `#rgb`/`#rrggbb`, stored lower-case `#rrggbb` in the same options.
+
+## Migration
+
+Server: `includes/Rest/V1/MigrationController.php` over the unchanged `includes/Migrations/*` importers.
+
+Audit before: `edit_posts` (contributors) could list every course of another LMS, including drafts and
+private ones, and import them; an unknown source fatally called `init()` on null (500); the course ID
+was never checked against the source post type; success was reported even when `migrate_course()`
+returned an error; repeated runs created duplicates silently; the course list was unbounded and
+HTML-escaped inside JSON.
+
+| Method | Path | Success | Errors |
+| --- | --- | --- | --- |
+| GET | `/migrations` | `[{ id, title, description, available }]` (`ohmylms_migrations` sources; class names are not returned) | 401, 403 |
+| GET | `/migrations/{source}/courses?page&per_page(1-50)&search` | `[{ id, title, status, migrated_to }]` + pagination headers | 400, 401, 403, 404, 409 |
+| POST | `/migrations/{source}` `{ course_id }` | `{ source, course_id, migrated_to }` (new draft course) | 400, 401, 403, 404, 409, 500 |
+
+All routes need `manage_options` (`ohmylms_migration_forbidden`). Errors:
+`404 ohmylms_migration_unknown_source`, `409 ohmylms_migration_source_inactive` (plugin not active),
+`404 ohmylms_migration_course_not_found` (not a course of that source), `409
+ohmylms_migration_already_done` (`data.course_id` is the existing copy), `500 ohmylms_migration_failed`,
+`400 ohmylms_migration_invalid_page`. A migrated course carries `_ohmylms_migrated_from =
+<source>:<id>`; copies made before this change are not detected. The legacy body
+`{ "<source>": { "course_id": n } }` is still accepted. Filtered sources need a `post_type` key.
+
 ## Admin preview
 
 `admin.php?page=ohmylms-app#/settings` (one registry entry; the tab is the `tab` query parameter,
 for example `#/settings?tab=tax`). Tabs: the seven groups, then `payment-gateways`,
-`design-system`, `hub-icons`, `xapi`, `ai-tutor` and `mcp`. Each tab loads when first opened,
+`design-system`, `course-archive`, `quiz-design`, `hub-icons`, `xapi`, `ai-tutor`, `mcp` and
+`migration` (source plugin, paged course list, confirmed migration, link to the copy). Legacy
+routes these replace: `/settings/design-settings(/*)` → `/settings?tab=course-archive` (quiz design
+subtab → `?tab=quiz-design`), `/settings/migration-settings` → `/settings?tab=migration`. Each tab loads when first opened,
 validates like the server, saves only changed fields (gateways) or the whole form (routes that
 require it), shows per-field errors, keeps drafts across tabs and guards unsaved edits (page unload
 and in-app links). Credential inputs are password fields that start empty, show only whether a value

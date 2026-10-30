@@ -17,7 +17,7 @@ import {
 	courseSettings,
 } from './course-structure';
 import { bundles, curriculum, skillMap, subjectProfiles } from './curriculum';
-import { courseReport, dashboard, earnings } from './dashboard';
+import { courseReport, courseRoster, dashboard, earnings } from './dashboard';
 import { emails } from './emails';
 import { extensionPages } from './extensions';
 import { gamification } from './gamification';
@@ -29,7 +29,8 @@ import { questionEditor, questions } from './questions';
 import { quizAttempts, quizEditor, quizzes } from './quizzes';
 import { settings } from './settings';
 import { setup } from './setup';
-import { students } from './students';
+import { sessionEditor, sessions } from './sessions';
+import { studentReport, students } from './students';
 import { syllabusEditor } from './syllabus';
 import { taxonomies } from './taxonomies';
 import { webhooks } from './webhooks';
@@ -43,6 +44,7 @@ export const features: readonly FeatureDefinition[] = [
 	dashboard,
 	earnings,
 	courseReport,
+	courseRoster,
 	home,
 	setup,
 	contentHub,
@@ -75,11 +77,14 @@ export const features: readonly FeatureDefinition[] = [
 	memberships,
 	membershipEditor,
 	students,
+	studentReport,
 	accountHub,
 	accountHubSchool,
 	accountHubClass,
 	certificates,
 	certificateEditor,
+	sessions,
+	sessionEditor,
 	gamification,
 	emails,
 	integrations,

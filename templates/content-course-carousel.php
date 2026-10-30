@@ -26,7 +26,8 @@ global $category;
 	foreach ( $data as $row ) {
 
 		// Validate required row fields.
-		if ( empty( $row['row_heading'] ) || empty( $row['row_display_criteria'] ) ) {
+		// Rows also come from shortcode attributes, so the criteria names a fixed set of functions.
+		if ( empty( $row['row_heading'] ) || empty( $row['row_display_criteria'] ) || ! in_array( $row['row_display_criteria'], \OhMyLMS\Settings\DesignSettings::ROW_CRITERIA, true ) ) {
 			continue;
 		}
 
