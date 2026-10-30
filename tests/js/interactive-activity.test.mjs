@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { createRequire } from 'node:module';
+import path from 'node:path';
 import test from 'node:test';
 import { compileExpression } from '../../assets/src/blocks/interactive-activity/expression.mjs';
+
+const root = path.resolve( import.meta.dirname, '../..' );
 
 const evaluate = ( latex, x, params = {} ) => {
 	const result = compileExpression( latex, Object.keys( params ) );
@@ -53,4 +58,57 @@ test( 'reports errors without throwing', () => {
 	assert.match( compileExpression( '\\unknown{x}' ).error, /Unsupported/ );
 	assert.match( compileExpression( 'x@' ).error, /Unexpected "@"/ );
 	assert.match( compileExpression( 'x'.repeat( 501 ) ).error, /too long/ );
+} );
+
+test( 'only the math runtime bundles MathLive; the activity uses its copy', () => {
+	const sources = fs
+		.readdirSync( path.join( root, 'assets/src' ), { recursive: true } )
+		.filter( ( file ) => /\.(?:[cm]?jsx?|tsx?)$/.test( file ) )
+		.map( ( file ) =>
+			path.join( 'assets/src', file ).split( path.sep ).join( '/' )
+		);
+	const bundling = sources.filter( ( file ) =>
+		/\bfrom\s*['"]mathlive['"]/.test(
+			fs.readFileSync( path.join( root, file ), 'utf8' )
+		)
+	);
+	// A second copy defines its own MathfieldElement, which the page's <math-field> rejects.
+	assert.deepEqual( bundling, [ 'assets/src/features/math/runtime.mjs' ] );
+	assert.match(
+		fs.readFileSync(
+			path.join( root, 'assets/src/features/math/runtime.mjs' ),
+			'utf8'
+		),
+		/window\.OhMyLMSMath = \{[^}]*\bMathLive,/
+	);
+	for ( const file of [ 'function-graph.mjs', 'index.jsx' ] ) {
+		assert.match(
+			fs.readFileSync(
+				path.join(
+					root,
+					'assets/src/blocks/interactive-activity',
+					file
+				),
+				'utf8'
+			),
+			/from 'ohmylms\/mathlive'/
+		);
+	}
+	const config = createRequire( import.meta.url )(
+		'../../webpack.config.cjs'
+	);
+	const { options } = config.plugins.find(
+		( plugin ) =>
+			plugin.constructor.name === 'DependencyExtractionWebpackPlugin'
+	);
+	assert.deepEqual( options.requestToExternal( 'ohmylms/mathlive' ), [
+		'OhMyLMSMath',
+		'MathLive',
+	] );
+	assert.equal(
+		options.requestToHandle( 'ohmylms/mathlive' ),
+		'ohmylms-mathlive'
+	);
+	assert.equal( options.requestToExternal( 'mathlive' ), undefined );
+	assert.equal( options.requestToExternal( 'jsxgraph' ), 'JXG' );
 } );

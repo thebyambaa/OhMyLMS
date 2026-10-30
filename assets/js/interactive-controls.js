@@ -702,6 +702,8 @@
 	function start() {
 		enhance( document );
 		if ( window.MutationObserver ) {
+			// The block editor canvas iframe has no body until React mounts one; the root then sees it added.
+			var target = document.body || document.documentElement;
 			new MutationObserver( function ( records ) {
 				records.forEach( function ( record ) {
 					Array.prototype.forEach.call(
@@ -713,7 +715,7 @@
 						}
 					);
 				} );
-			} ).observe( document.body, { childList: true, subtree: true } );
+			} ).observe( target, { childList: true, subtree: true } );
 		}
 	}
 	if ( document.readyState === 'loading' ) {

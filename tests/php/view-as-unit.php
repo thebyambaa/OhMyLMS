@@ -58,10 +58,12 @@ namespace {
         public function prepare($query, ...$args) { return [$query, $args]; }
         public function get_col($query) {
             if (is_array($query)) {
+                // Tables are %i identifiers: the table is the first argument and the role the last.
                 [$sql, $args] = $query;
-                if (str_contains($sql, 'class_memberships')) { return $args[1] === 'teacher' ? [3] : [2]; }
-                if (str_contains($sql, 'user_enrollment')) { return [2]; }
-                if (str_contains($sql, 'school_memberships')) { return []; }
+                check(str_starts_with($sql, 'SELECT ') && str_contains($sql, ' FROM %i '), 'Table not passed as a prepared identifier');
+                if ($args[0] === 'class_memberships') { return end($args) === 'teacher' ? [3] : [2]; }
+                if ($args[0] === 'user_enrollment') { return [2]; }
+                if ($args[0] === 'school_memberships') { return []; }
             }
             return [4];
         }

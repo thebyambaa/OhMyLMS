@@ -61,6 +61,7 @@ module.exports = [
 				'@wordpress/media-utils',
 				'@wordpress/primitives',
 				'ohmylms/interactivity',
+				'ohmylms/mathlive',
 			],
 		},
 		rules: {

@@ -109,10 +109,18 @@ module.exports = {
 			chunkFilename: 'chunks/[name].[contenthash:12].css',
 		} ),
 		new DependencyExtractionWebpackPlugin( {
+			// MathLive registers the global <math-field> element, so only math-runtime bundles it;
+			// other entries import `ohmylms/mathlive` and depend on its script handle.
 			requestToExternal: ( request ) =>
-				'jsxgraph' === request ? 'JXG' : undefined,
+				( {
+					jsxgraph: 'JXG',
+					'ohmylms/mathlive': [ 'OhMyLMSMath', 'MathLive' ],
+				} )[ request ],
 			requestToHandle: ( request ) =>
-				'jsxgraph' === request ? 'ohmylms-jsxgraph' : undefined,
+				( {
+					jsxgraph: 'ohmylms-jsxgraph',
+					'ohmylms/mathlive': 'ohmylms-mathlive',
+				} )[ request ],
 		} ),
 	],
 };

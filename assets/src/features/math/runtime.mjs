@@ -1,4 +1,4 @@
-import { MathfieldElement } from 'mathlive';
+import * as MathLive from 'mathlive';
 import {
 	equationPattern,
 	contentEquations,
@@ -7,6 +7,7 @@ import {
 	safeMathSource,
 } from './content.mjs';
 
+const { MathfieldElement } = MathLive;
 MathfieldElement.fontsDirectory = window.ohmylmsMath.fonts;
 MathfieldElement.soundsDirectory = null;
 MathfieldElement.computeEngine = null;
@@ -513,6 +514,8 @@ function display( container, source ) {
 }
 
 window.OhMyLMSMath = {
+	// The page's only MathLive; other bundles import `ohmylms/mathlive`, which webpack maps here.
+	MathLive,
 	mountInput,
 	renderContent,
 	mount,

@@ -9,7 +9,7 @@ import {
 	ToggleControl,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { MathfieldElement } from 'mathlive';
+import { MathfieldElement } from 'ohmylms/mathlive';
 import metadata from './block.json';
 import {
 	COLORS,

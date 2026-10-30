@@ -1,5 +1,5 @@
 import JXG from 'jsxgraph';
-import { MathfieldElement } from 'mathlive';
+import { MathfieldElement } from 'ohmylms/mathlive';
 import { compileExpression } from './expression.mjs';
 import { COLORS, MAX_FUNCTIONS, normalizeConfig } from './config.mjs';
 
