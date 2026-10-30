@@ -166,10 +166,12 @@ test in `tests/php/` and component tests.
 | Settings (General, Branding, Account, Permalinks, Advanced, Currency, Tax) | Done | Payment gateway secrets still returned by the old route |
 | Dashboard, Earnings, Course report | Done | Mixed-currency totals; amounts still in postmeta |
 | Content Hub (skills and curriculum) | Partial | Skills catalogue, curriculum hierarchy/placement, syllabus skill groups/order/library assignment, CSV review/apply, draft-course sync and individual mapping/comparison. Rich objectives/translations, resources, combined mappings and full workspace parity remain |
-| Courses | Partial | List/draft creation, units/lesson placements, core metadata/pricing/access, mastery settings, readiness preview and confirmed publication. Advanced settings, author/media pickers and extension panels remain |
+| Courses | Partial | The `/courses` screens provide hardened metadata/media editing; `/content-hub/courses` retains units, lesson placements, settings, mastery and reviewed program publication. Consolidating overlapping controls and extension parity remain |
 | Learner frontend TypeScript | Planned | Migrate learner-facing JavaScript after the authoring workflows; admin TypeScript completion does not complete the frontend migration |
 | Lessons | Partial | Typed library/draft creation, WordPress visual blocks/source, resources, explicit publication and course-unit editing links. Advanced media, inline question and extension controls remain native |
-| Communities, Setup wizard, Gamification, Assignments, Quizzes and question editors | Preview UI pending | Setup services, Gamification registry/store and quiz policy/settings are backend groundwork; no full-screen parity claim |
+| Setup wizard and Gamification | Typed admin screens available | Upstream registry-backed screens/APIs are merged; see their feature contracts |
+| Quizzes, attempts and grading | Partial | Upstream hardened APIs and typed screens are merged; full question/content editor parity remains |
+| Communities, Assignments and question editors | Preview UI pending | Backend groundwork exists; no full-screen parity claim |
 | Cutover (menu points at the new app, recovered runtime deleted) | Not started | Old PHP tests for removed routes go with it |
 | PHP boundaries, page-by-page asset loading, CI enforcement checks | Partial | Named backend services and lazy preview chunks exist; complete boundaries, isolation and enforcement remain |
 
@@ -269,10 +271,10 @@ Stylesheet cleanup is intentionally skipped.
 - See [the settings API and scope](api/course-settings.md) for remaining advanced
   controls. Learner frontend TypeScript migration and old-menu cutover remain future work.
 
-## Current batch: Lesson content authoring (30 October 2026)
+## Completed batch: Lesson content authoring (30 October 2026)
 
 - Started `codex/lesson-authoring` from course-settings commit `9e0de26d`; this branch
-  includes that completed batch and has not been merged into main.
+  includes that completed batch. Both batches are included in the integration below.
 - Added lazy typed lesson library/editor routes and course-unit links. Owned drafts
   are created with retry identifiers; existing lessons remain reusable shared posts.
 - The installed WordPress block editor supplies visual blocks, the inspector,
@@ -304,3 +306,17 @@ Stylesheet cleanup is intentionally skipped.
 - Remaining: advanced lesson media/inline assessments/extensions, assignments, quizzes,
   advanced course settings, learner frontend TypeScript migration, then old-menu
   cutover/runtime retirement. See [the lesson contract and limitations](api/lesson-authoring.md).
+
+## Integration checkpoint: main/origin (30 October 2026)
+
+- Combined course-settings `9e0de26d` and lesson-authoring `41603df8` with upstream
+  main `a4a2e6d5`, retaining the newer course, quiz, setup and gamification work.
+- Resolved the feature registry by retaining both course route families, lesson and
+  course-settings routes, and every upstream feature. Generated assets were rebuilt
+  from the combined source, including the source map deleted upstream.
+- The setup heading-focus test now waits for the existing focus effect; its focus
+  requirement is unchanged. All 995 app tests and 574 PHP integration checks pass
+  (course settings, lessons, course authoring, courses and quizzes).
+- TypeScript, source contracts and targeted registry/setup-test lint pass. The SDK
+  retains its three existing performance warnings. All 50 shipped app assets match
+  the build; 21 script chunks and the hashed lesson stylesheet resolve correctly.

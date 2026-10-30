@@ -81,9 +81,10 @@ describe( 'loading', () => {
 		expect( screen.getAllByRole( 'status' )[ 0 ] ).toHaveTextContent(
 			'Loading setup'
 		);
-		expect(
-			await screen.findByRole( 'heading', { name: 'Welcome to OhMyLMS' } )
-		).toHaveFocus();
+		const heading = await screen.findByRole( 'heading', {
+			name: 'Welcome to OhMyLMS',
+		} );
+		await waitFor( () => expect( heading ).toHaveFocus() );
 		expect(
 			screen.getByText( 'Step 1 of 7: Welcome' )
 		).toBeInTheDocument();
