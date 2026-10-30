@@ -185,6 +185,11 @@ if ( 'ohmylms-session' === get_post_type() ) {
 	<?php
 	if ( 'quiz' == $get_type ) {
 		$currentUrl = ohmylms_get_pretty_content_permalink( $lesson_id );
+		// Admins and authors previewing a quiz can retry without limit and never see it as completed.
+		$is_quiz_preview = \OhMyLMS\Quiz\Submission::is_preview( $lesson_id, get_current_user_id() );
+		if ( $is_quiz_preview ) {
+			$is_checked = '';
+		}
 		?>
 		<div class="assignment-quiz-navigation quiz-navigation">
 			<?php if ( ! empty( ohmylms_get_next_content_permalink( $lesson_id ) ) ) { ?>
@@ -200,7 +205,7 @@ if ( 'ohmylms-session' === get_post_type() ) {
 				<?php wp_nonce_field( 'save_quiz_attempt', 'save-quiz-attempt-nonce' ); ?>
 				
 
-				<?php if ( $lesson->get_take_attempts() > 0 && $lesson->get_take_attempts() > $lesson->count_total_attempt( $student->get_id(), $course_id ) ) { ?>
+				<?php if ( $is_quiz_preview || ( $lesson->get_take_attempts() > 0 && $lesson->get_take_attempts() > $lesson->count_total_attempt( $student->get_id(), $course_id ) ) ) { ?>
 					<button type="submit" class="start-submit-quiz ohmylms-button <?php echo esc_attr( $lesson->count_total_attempt( $student->get_id(), $course_id ) > 1 ? 'quiz-taken' : '' ); ?>">
 						<?php echo esc_html__( 'Start Quiz', 'ohmylms' ); ?>
 					</button>
@@ -237,7 +242,7 @@ if ( 'ohmylms-session' === get_post_type() ) {
 
 		<!-- quiz attempts notice -->
 		<?php
-		if ( $lesson->get_take_attempts() > 0 && $lesson->get_take_attempts() > $lesson->count_total_attempt( $student->get_id(), $course_id ) ) {
+		if ( $is_quiz_preview || ( $lesson->get_take_attempts() > 0 && $lesson->get_take_attempts() > $lesson->count_total_attempt( $student->get_id(), $course_id ) ) ) {
 
 		} else {
 			?>
@@ -247,7 +252,10 @@ if ( 'ohmylms-session' === get_post_type() ) {
 					$attempts     = $lesson->get_take_attempts();
 					$attempt_text = $attempts > 1 ? __( 'attempts', 'ohmylms' ) : __( 'attempt', 'ohmylms' );
 					printf( /* translators: %1$d: number; %2$s: text value. */
-					__( 'You have already taken %1$d %2$s.', 'ohmylms' ), $attempts, $attempt_text );
+						__( 'You have already taken %1$d %2$s.', 'ohmylms' ),
+						$attempts,
+						$attempt_text
+					);
 					?>
 				</p>
 			<?php
