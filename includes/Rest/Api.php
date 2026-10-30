@@ -39,6 +39,8 @@ class Api {
 		$controllers_v1  = array(
 			\OhMyLMS\Rest\V1\PluginController::class,
 			\OhMyLMS\Rest\V1\CourseController::class,
+			\OhMyLMS\Rest\V1\CourseCatalogController::class,
+			\OhMyLMS\Rest\V1\SyllabusEditorController::class,
 			\OhMyLMS\Rest\V1\CourseStructureController::class,
 			\OhMyLMS\Rest\V1\LearningController::class,
 			\OhMyLMS\Rest\V1\ContentHubController::class,

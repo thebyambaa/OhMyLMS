@@ -1,0 +1,21 @@
+{
+	"version": 1,
+	"namespace": "ohmylms/v1",
+	"catalog": {
+		"path": "/authoring/courses",
+		"methods": [ "GET", "POST" ],
+		"pageSize": 20,
+		"summary": [ "id", "title", "status" ],
+		"create": { "title": "nonblank string, at most 190 characters" },
+		"createStatus": "draft"
+	},
+	"structure": {
+		"path": "/courses/{id}/structure",
+		"methods": [ "GET", "PUT" ],
+		"writeFields": [ "revision", "units", "program" ],
+		"revisionHeader": "X-OhMyLMS-Structure-Revision",
+		"conflictStatus": 409,
+		"publishes": false
+	},
+	"documentation": "docs/api/course-authoring.md"
+}

@@ -1,5 +1,9 @@
 # Authored admin architecture
 
+Current authoring batches are documented in [course authoring](api/course-authoring.md) and
+[syllabus authoring](api/syllabus-authoring.md). The historical first-batch notes below describe
+their original scope; use the [current roadmap](MODULARIZATION-ROADMAP.md) for present coverage.
+
 The preview app lives in `assets/src/app` and opens at
 `/wp-admin/admin.php?page=ohmylms-app`. The existing admin remains the production entry until the
 feature rebuild and documented extension surfaces are verified. The preview is not a claim that the

@@ -3,6 +3,11 @@ import { certificateEditor, certificates } from './certificates';
 import { coupons, orderDetail, orders } from './commerce';
 import { contentHub } from './content-hub';
 import { courseEditor, courses } from './courses';
+import {
+	courseEditor as courseStructureEditor,
+	courses as courseStructures,
+} from './course-structure';
+import { curriculum } from './curriculum';
 import { courseReport, dashboard, earnings } from './dashboard';
 import { emails } from './emails';
 import { gamification } from './gamification';
@@ -13,6 +18,7 @@ import { quizAttempts, quizEditor, quizzes } from './quizzes';
 import { settings } from './settings';
 import { setup } from './setup';
 import { students } from './students';
+import { syllabusEditor } from './syllabus';
 import { taxonomies } from './taxonomies';
 import { webhooks } from './webhooks';
 import type { FeatureDefinition } from './types';
@@ -28,6 +34,10 @@ export const features: readonly FeatureDefinition[] = [
 	home,
 	setup,
 	contentHub,
+	curriculum,
+	syllabusEditor,
+	courseStructures,
+	courseStructureEditor,
 	courses,
 	courseEditor,
 	quizzes,

@@ -1,0 +1,28 @@
+{
+	"version": 1,
+	"namespace": "ohmylms/v1",
+	"read": "/authoring/syllabuses/{id}",
+	"commands": "/authoring/syllabuses/{id}/commands",
+	"operations": [
+		"add_group",
+		"edit_group",
+		"move_group",
+		"create_skill",
+		"edit_skill",
+		"attach_skill",
+		"move_skill",
+		"detach_skill",
+		"sync_course",
+		"import"
+	],
+	"previewPermission": "manage_options",
+	"serverPermission": "Curriculum Access::admin",
+	"import": {
+		"maximumRows": 5000,
+		"maximumBytes": 5242880,
+		"reviewField": "review_revision",
+		"conflictStatus": 409
+	},
+	"publishes": false,
+	"documentation": "docs/api/syllabus-authoring.md"
+}
