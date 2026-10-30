@@ -185,48 +185,6 @@
       "factories": []
     },
     {
-      "output": "assets/dist/packages/automation-canvas/shared/components/Editor/CustomBlocks/default-image.35c6a344ce7fb86504b11de0646bf838.png",
-      "sha256": "9e7906f348b548cb27c7f00387aa73713bda38cf228ecfaddfe2f5b4bccf945a",
-      "bytes": 1907,
-      "source": "static/dist/packages/automation-canvas/shared/components/Editor/CustomBlocks/default-image.35c6a344ce7fb86504b11de0646bf838.png",
-      "factories": []
-    },
-    {
-      "output": "assets/dist/packages/automation-canvas/shared/components/Editor/CustomBlocks/facebook.7e872004ef5cffbcbbc852c0ab07e0b0.png",
-      "sha256": "9d0ba3874bd849a5bef0b093a7507c3649f6ce8fa975822429659a1cb8a60b21",
-      "bytes": 495,
-      "source": "static/dist/packages/automation-canvas/shared/components/Editor/CustomBlocks/facebook.7e872004ef5cffbcbbc852c0ab07e0b0.png",
-      "factories": []
-    },
-    {
-      "output": "assets/dist/packages/automation-canvas/shared/components/Editor/CustomBlocks/instagram.41e9421fc851e468cfcfbebd9aaaaa93.png",
-      "sha256": "a3189362c257f079b3db9ac37372b80a418af0fddf87ce769a9a812506180f9a",
-      "bytes": 1761,
-      "source": "static/dist/packages/automation-canvas/shared/components/Editor/CustomBlocks/instagram.41e9421fc851e468cfcfbebd9aaaaa93.png",
-      "factories": []
-    },
-    {
-      "output": "assets/dist/packages/automation-canvas/shared/components/Editor/CustomBlocks/twitter.6d2ec4b35079d821ca77dbf8552ef5b7.png",
-      "sha256": "83247aa86c2eaa6ea81b754915f43c58ef65530b420f42c37bc3dc3a622bb227",
-      "bytes": 22315,
-      "source": "static/dist/packages/automation-canvas/shared/components/Editor/CustomBlocks/twitter.6d2ec4b35079d821ca77dbf8552ef5b7.png",
-      "factories": []
-    },
-    {
-      "output": "assets/dist/packages/automation-canvas/shared/components/Editor/CustomBlocks/woocommerce-logo.d07f2af85ef702d1f3858ec5e9cb67e1.png",
-      "sha256": "1d4a9bfd014ff383639ad802003f012fdd9c3f12c0aff6432348acecb0130779",
-      "bytes": 6119,
-      "source": "static/dist/packages/automation-canvas/shared/components/Editor/CustomBlocks/woocommerce-logo.d07f2af85ef702d1f3858ec5e9cb67e1.png",
-      "factories": []
-    },
-    {
-      "output": "assets/dist/packages/automation-canvas/shared/components/Editor/CustomBlocks/your-logo.3574ec1fbc984eec932d8ab7f373a888.png",
-      "sha256": "cf74a8600716345932658a2cad8c7c05c8ccaca79a6193644e4c12f7d19421e5",
-      "bytes": 1813,
-      "source": "static/dist/packages/automation-canvas/shared/components/Editor/CustomBlocks/your-logo.3574ec1fbc984eec932d8ab7f373a888.png",
-      "factories": []
-    },
-    {
       "output": "assets/js/admin-notices.js",
       "sha256": "e1d015ae536db8750f45d0fcd926d517e9cc532efac4e287c5d46aa668f788c3",
       "bytes": 1224,
@@ -357,13 +315,6 @@
       "source": "static/images/student-cover-image-placeholder.jpeg",
       "sha256": "bc894979fd2ce2d90c7b22781762e9b5868ba65e6d84c195c835f8ca22985131",
       "bytes": 24577,
-      "factories": []
-    },
-    {
-      "output": "assets/lib/admin/css/select2.css",
-      "source": "static/lib/admin/css/select2.css",
-      "sha256": "8ad5d68417a36543241db92eed249486ec1890f80dc201d4ae1bb7ea433ad65d",
-      "bytes": 16262,
       "factories": []
     },
     {
@@ -563,6 +514,8 @@
     "assets/blocks/js/my-courses.min.js",
     "assets/extensions/activity-editor.js",
     "assets/css/learning-pages.css",
-    "assets/dist/css/vendors.css"
+    "assets/dist/css/vendors.css",
+    "assets/lib/admin/css/select2.css",
+    "assets/lib/admin/js/select2.js"
   ]
 }

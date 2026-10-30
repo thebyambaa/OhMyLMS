@@ -1,7 +1,9 @@
 # Admin vendor audit — 29 October 2026
 
 > **Historical.** The recovered admin and the vendor code audited here were deleted on 31 October 2026
-> ([CUTOVER.md](CUTOVER.md)); paths and commands below may no longer exist.
+> ([CUTOVER.md](CUTOVER.md)); paths and commands below no longer exist. The current inventory of bundled and
+> vendored libraries (npm packages, Slick, html2pdf, Composer) is in
+> [third-party libraries](VENDOR-PACKAGE-MIGRATION.md).
 
 The shared MJML and Arco APIs now use lazy npm packages; see the
 [email package migration](EMAIL-PACKAGE-MIGRATION.md) for scope and saved-template checks.
