@@ -1,8 +1,0 @@
-/*
- * Shared layout for OhMyLMS admin pages added through the extension SDK (Question bank,
- * Skills, Performance and others). Mirrors the native screens: 40px side gutter, a 20px
- * title row, white cards with 7px corners and the grey-header table. Colors, radius and
- * font come from the design tokens printed by OhMyLMS\Design\Tokens.
- */
-
-/* Feature switches sit alongside the setting title rather than above its content. */

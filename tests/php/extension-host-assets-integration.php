@@ -4,9 +4,9 @@
  *
  * Checks, in the mode the site runs (source assets on 800.local), that slots, checkout fields and the signup
  * form enqueue `ohmylms-app-extensions` / `ohmylms-app-registration` with their data and fire
- * `ohmylms_enqueue_extension_scripts` with the host handle; that the recovered SDK loads only on
- * `admin.php?page=ohmylms` and carries `window.ohmylmsMath` there; that `MathLive::configure()` no longer
- * names the SDK; and that editor links go through LegacyRoutes. It then re-runs itself with
+ * `ohmylms_enqueue_extension_scripts` with the host handle; that the recovered SDK (`ohmylms-extension-sdk`)
+ * is no longer registered anywhere, including wp-admin; that `MathLive::configure()` does not name it;
+ * and that editor links go through LegacyRoutes to the app. It then re-runs itself with
  * OHMYLMS_SOURCE_ASSETS defined false (shipped mode: published assets, no client slots or signup fields).
  * Nothing is written to the database.
  *
@@ -105,7 +105,7 @@ wp_set_current_user( $administrators ? $administrators[0]->ID : 0 );
 $source    = defined( 'OHMYLMS_SOURCE_ASSETS' ) && OHMYLMS_SOURCE_ASSETS;
 $directory = $source ? 'build/sdk' : 'assets/dist/admin';
 $host      = SourceAssets::HOST_HANDLE;
-$legacy    = SourceAssets::HANDLE;
+$legacy    = 'ohmylms-extension-sdk';
 $fired     = array();
 $rendered  = array();
 add_action(
@@ -125,14 +125,14 @@ add_action(
 ok( $shipped === ! $source, 'the shipped run did not switch OHMYLMS_SOURCE_ASSETS off' );
 ok( 'ohmylms-app-extensions' === $host, 'the host handle is not the admin app extension handle' );
 ok( false !== has_action( 'wp_enqueue_scripts', array( SourceAssets::class, 'register_host' ) ), 'the host is not registered on the front end' );
-ok( false === has_action( 'wp_enqueue_scripts', array( SourceAssets::class, 'register' ) ), 'the recovered SDK is still registered on every front-end page' );
+ok( ! method_exists( SourceAssets::class, 'register' ) && ! defined( SourceAssets::class . '::HANDLE' ), 'SourceAssets still registers the recovered SDK' );
+ok( ! method_exists( SourceAssets::class, 'admin' ) && false === has_action( 'admin_enqueue_scripts', array( SourceAssets::class, 'admin' ) ), 'SourceAssets still loads the recovered SDK in wp-admin' );
 ok( is_file( OHMYLMS_DIR . '/' . $directory . '/admin-app-extensions.js' ), $directory . '/admin-app-extensions.js is not built' );
 
-// MathLive no longer configures the recovered SDK.
+// MathLive configures its loader, not the recovered SDK.
 reset_scripts();
-SourceAssets::register();
 MathLive::configure();
-ok( false === strpos( script_data( $legacy ), 'ohmylmsMath' ), 'MathLive::configure() still localizes the recovered SDK' );
+ok( ! wp_script_is( $legacy, 'registered' ), 'MathLive::configure() registered the recovered SDK' );
 ok( false !== strpos( script_data( 'ohmylms-mathlive-loader' ), 'ohmylmsMath' ), 'MathLive::configure() no longer configures its loader' );
 
 // Front end: slots and checkout fields.
@@ -177,29 +177,15 @@ if ( $source ) {
 }
 ok( ! wp_script_is( $legacy, 'registered' ), 'the signup form loaded the recovered SDK' );
 
-// wp-admin: the recovered SDK on its own page only.
-reset_scripts();
-$fired = array();
-SourceAssets::admin( 'edit.php' );
-ok( ! wp_script_is( $legacy, 'registered' ) && ! wp_script_is( $host, 'enqueued' ) && array() === $fired, 'another admin screen loaded extension scripts' );
-SourceAssets::admin( 'toplevel_page_' . OHMYLMS_SLUG );
-ok( wp_script_is( $legacy, 'enqueued' ), 'the recovered admin lost its SDK' );
-ok( false !== strpos( script_src( $legacy ), $directory . '/extensions.js' ), 'the recovered SDK is not loaded from ' . $directory );
-ok( false !== strpos( script_data( $legacy ), 'var ohmylmsMath' ), 'the recovered SDK lost window.ohmylmsMath' );
-ok( array( $legacy ) === $fired, 'the recovered admin did not pass its SDK handle to extensions: ' . wp_json_encode( $fired ) );
-ok( ! wp_script_is( $host, 'enqueued' ), 'the recovered admin loaded the host' );
-
-// Editor links go through the route map.
+// Editor links go through the route map to the app.
 ok( LegacyRoutes::url( '/quiz-edit/5' ) === PreviewPlayer::editor_url( 5 ), 'preview return link bypasses LegacyRoutes' );
 ok( LegacyRoutes::url( '/quiz-edit/5' ) === NativeQuizEditor::form_url( 5 ), 'quiz form link bypasses LegacyRoutes' );
 $_GET['ohmylms_return'] = '/question-bank';
 ok( LegacyRoutes::url( '/content-hub/question-bank' ) === NativeLessonEditor::return_url(), 'the question bank return link is not the Content Hub tab: ' . NativeLessonEditor::return_url() );
 $_GET['ohmylms_return'] = '/course-edit/12/curriculum';
 ok( LegacyRoutes::url( '/course-edit/12/curriculum' ) === NativeLessonEditor::return_url(), 'the course return link bypasses LegacyRoutes' );
-if ( LegacyRoutes::enabled() ) {
-	ok( LegacyRoutes::app_url( '/courses/12' ) === NativeLessonEditor::return_url(), 'the course return link does not open the app: ' . NativeLessonEditor::return_url() );
-	ok( LegacyRoutes::app_url( '/quizzes/5' ) === PreviewPlayer::editor_url( 5 ), 'the preview return link does not open the app' );
-}
+ok( LegacyRoutes::app_url( '/courses/12' ) === NativeLessonEditor::return_url(), 'the course return link does not open the app: ' . NativeLessonEditor::return_url() );
+ok( LegacyRoutes::app_url( '/quizzes/5' ) === PreviewPlayer::editor_url( 5 ), 'the preview return link does not open the app' );
 unset( $_GET['ohmylms_return'] );
 
 echo ( $source ? 'source' : 'shipped' ) . " mode: {$checks} checks passed\n";

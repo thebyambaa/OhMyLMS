@@ -7,14 +7,11 @@
 
 namespace OhMyLMS\Admin;
 
-use OhMyLMS\Assets\AdminAppAssets;
-
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The one list of legacy screens (`admin.php?page=ohmylms#/...`) that the new app
- * (`admin.php?page=ohmylms-app#/...`) replaces. Only screens at parity are listed; every other legacy
- * route keeps opening the legacy screen. PHP links use {@see LegacyRoutes::url()}, and
+ * The one list of retired legacy screens (`admin.php?page=ohmylms#/...`) and the new-app routes
+ * (`admin.php?page=ohmylms-app#/...`) that replace them. PHP links use {@see LegacyRoutes::url()}, and
  * assets/js/legacy-redirects.js applies the same rules in the browser. See docs/LEGACY-ROUTES.md.
  *
  * A rule has:
@@ -24,20 +21,14 @@ defined( 'ABSPATH' ) || exit;
  * - `query` (optional): query parameter => allowed values (`''` means absent). The rule applies only
  *   when every listed parameter has an allowed value; the value is then available to `to` and is not
  *   copied to the new route.
- * - `skip` (optional): query parameters whose presence keeps the legacy screen.
+ * - `skip` (optional): query parameters whose presence makes the rule not match.
  *
  * Rules are tried in order and the first match wins. Other query parameters are copied unchanged.
  *
- * Cutover switch: while {@see LegacyRoutes::legacy_admin_enabled()} is false (constant
- * `OHMYLMS_LEGACY_ADMIN` or filter `ohmylms_legacy_admin_enabled`), the legacy page redirects to the new
+ * The legacy page itself only redirects: {@see LegacyRoutes::redirect_legacy_page()} sends it to the new
  * app on the server, and the app maps the carried-over hash. See docs/CUTOVER.md.
  */
 final class LegacyRoutes {
-
-	/**
-	 * Query parameter that keeps an administrator on the legacy screen (`&ohmylms_legacy=1`).
-	 */
-	const OPT_OUT = 'ohmylms_legacy';
 
 	/**
 	 * Query parameter the server redirect adds, so the app maps the legacy hash it receives.
@@ -45,22 +36,22 @@ final class LegacyRoutes {
 	const FROM_LEGACY = 'ohmylms_from_legacy';
 
 	/**
-	 * Constant that turns the legacy admin off when defined as false (`wp-config.php`).
+	 * Retired query parameter that used to keep the legacy screen; dropped by the redirect.
 	 */
-	const LEGACY_ADMIN_CONSTANT = 'OHMYLMS_LEGACY_ADMIN';
+	const RETIRED_OPT_OUT = 'ohmylms_legacy';
 
 	/**
-	 * New-app route that unmapped legacy routes open after the cutover.
+	 * New-app route that unmapped legacy routes open, with the notice naming them.
 	 */
 	const APP_HOME = '/';
 
 	/**
-	 * Id of the notice that names a legacy screen the new app does not have yet.
+	 * Id of the notice that names a legacy screen the new app does not have.
 	 */
 	const NOTICE_ID = 'ohmylms-legacy-unavailable';
 
 	/**
-	 * Script handle of the browser redirect.
+	 * Script handle of the hash mapping that runs on the new app after the redirect.
 	 */
 	const HANDLE = 'ohmylms-legacy-redirects';
 
@@ -91,20 +82,6 @@ final class LegacyRoutes {
 		'streak-settings'      => 'streaks',
 		'xp-settings'          => 'xp',
 	);
-
-	/**
-	 * Cached result of {@see LegacyRoutes::enabled()}.
-	 *
-	 * @var bool|null
-	 */
-	private static $enabled = null;
-
-	/**
-	 * Cached result of {@see LegacyRoutes::legacy_admin_enabled()}.
-	 *
-	 * @var bool|null
-	 */
-	private static $legacy_admin = null;
 
 	/**
 	 * Cached rules.
@@ -413,7 +390,7 @@ final class LegacyRoutes {
 				'to'   => '/settings?tab=course-archive',
 			),
 		);
-		// List dialogs the new screens open from the address; other values keep the legacy screen.
+		// List dialogs the new screens open from the address; other values open the app home.
 		$dialogs = array(
 			array( '/content-hub/question-bank', '/content-hub/question-bank', 'action', array( 'new', 'import' ) ),
 			array( '/extensions/question-bank', '/content-hub/question-bank', 'action', array( 'new', 'import' ) ),
@@ -472,67 +449,21 @@ final class LegacyRoutes {
 	}
 
 	/**
-	 * Whether links go to the new app. False when the app has not been built; always true once the
-	 * legacy admin is switched off.
-	 *
-	 * @return bool
-	 */
-	public static function enabled() {
-		if ( null === self::$enabled ) {
-			/**
-			 * Filters whether legacy admin links open the new admin app.
-			 *
-			 * @param bool $enabled True when the app's assets are present.
-			 */
-			$enabled       = (bool) apply_filters( 'ohmylms_legacy_routes_enabled', null !== AdminAppAssets::locate() );
-			self::$enabled = $enabled || ! self::legacy_admin_enabled();
-		}
-		return self::$enabled;
-	}
-
-	/**
-	 * Whether the recovered legacy admin (`admin.php?page=ohmylms`) is still served and linked.
-	 *
-	 * Defaults to true. Define `OHMYLMS_LEGACY_ADMIN` as false, or return false from the
-	 * `ohmylms_legacy_admin_enabled` filter, to cut over to the new app. The legacy admin stays on while
-	 * the new app is not built, because there would be nothing to open instead.
-	 *
-	 * @return bool
-	 */
-	public static function legacy_admin_enabled() {
-		if ( null === self::$legacy_admin ) {
-			$default = defined( self::LEGACY_ADMIN_CONSTANT ) ? (bool) constant( self::LEGACY_ADMIN_CONSTANT ) : true;
-			/**
-			 * Filters whether the recovered legacy admin is still served. When false, the OhMyLMS menu
-			 * opens the new app, `admin.php?page=ohmylms` redirects to it and only `&ohmylms_legacy=1`
-			 * keeps the legacy screen. See docs/CUTOVER.md.
-			 *
-			 * @param bool $enabled Value of OHMYLMS_LEGACY_ADMIN, true when it is not defined.
-			 */
-			$enabled            = (bool) apply_filters( 'ohmylms_legacy_admin_enabled', $default );
-			self::$legacy_admin = $enabled || null === AdminAppAssets::locate();
-		}
-		return self::$legacy_admin;
-	}
-
-	/**
-	 * Forget cached rules and flags (after changing the filters).
+	 * Forget the cached rules (after changing the `ohmylms_legacy_routes` filter).
 	 */
 	public static function reset() {
-		self::$enabled      = null;
-		self::$legacy_admin = null;
-		self::$routes       = null;
+		self::$routes = null;
 	}
 
 	/**
-	 * Legacy screens the new app does not have yet, listed in the notice shown after the cutover.
+	 * Legacy screens the new app does not have, listed in the notice shown after the redirect.
 	 *
 	 * @return array<string, string> Legacy route => screen name.
 	 */
 	public static function unavailable() {
 		$screens = array();
 		/**
-		 * Filters the legacy screens listed as not yet available in the new app.
+		 * Filters the legacy screens listed as not available in the new app.
 		 *
 		 * @param array<string, string> $screens Legacy route => screen name.
 		 */
@@ -540,21 +471,18 @@ final class LegacyRoutes {
 	}
 
 	/**
-	 * Where a request for the legacy page goes after the cutover: the new app, marked with
-	 * {@see LegacyRoutes::FROM_LEGACY}. The browser keeps the `#/route` fragment across the redirect, and
-	 * the app maps it (assets/js/legacy-redirects.js). Other query parameters are kept.
+	 * Where a request for the legacy page goes: the new app, marked with {@see LegacyRoutes::FROM_LEGACY}.
+	 * The browser keeps the `#/route` fragment across the redirect, and the app maps it
+	 * (assets/js/legacy-redirects.js). Other query parameters are kept.
 	 *
-	 * @return string|null Absolute URL, or null to serve the legacy screen.
+	 * @return string Absolute URL.
 	 */
 	public static function legacy_redirect_url() {
-		if ( self::legacy_admin_enabled() || self::opted_out() ) {
-			return null;
-		}
 		$query = array();
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Navigation only; the values are passed on unchanged.
 		foreach ( wp_unslash( $_GET ) as $name => $value ) {
 			$name = sanitize_key( $name );
-			if ( is_string( $value ) && '' !== $name && ! in_array( $name, array( 'page', self::OPT_OUT, self::FROM_LEGACY ), true ) ) {
+			if ( is_string( $value ) && '' !== $name && ! in_array( $name, array( 'page', self::RETIRED_OPT_OUT, self::FROM_LEGACY ), true ) ) {
 				$query[ $name ] = rawurlencode( sanitize_text_field( $value ) );
 			}
 		}
@@ -564,19 +492,27 @@ final class LegacyRoutes {
 	}
 
 	/**
-	 * Redirect the legacy page to the new app after the cutover (`load-toplevel_page_ohmylms`).
+	 * Redirect the legacy page to the new app (`load-toplevel_page_ohmylms`).
 	 */
 	public static function redirect_legacy_page() {
-		$url = self::legacy_redirect_url();
-		if ( null === $url ) {
-			return;
-		}
-		wp_safe_redirect( $url, 302, 'OhMyLMS' );
+		wp_safe_redirect( self::legacy_redirect_url(), 302, 'OhMyLMS' );
 		exit;
 	}
 
 	/**
-	 * Whether the new app was opened by the cutover redirect.
+	 * Fallback body of the legacy page, which WordPress needs to register it. The page redirects on
+	 * `load-toplevel_page_ohmylms`, before anything is printed.
+	 */
+	public static function render_legacy_page() {
+		?>
+		<div class="wrap">
+			<p><a href="<?php echo esc_url( self::app_url( self::APP_HOME ) ); ?>"><?php echo esc_html__( 'Open OhMyLMS', 'ohmylms' ); ?></a></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Whether the new app was opened by the legacy redirect or by an unmapped legacy link.
 	 *
 	 * @return bool
 	 */
@@ -586,8 +522,21 @@ final class LegacyRoutes {
 	}
 
 	/**
-	 * Load the hash mapping in the head of the new app when the cutover redirect opened it, before the
-	 * app's router reads the hash.
+	 * Drop the marker from WordPress' canonical admin address (`removable_query_args`). WordPress rewrites
+	 * the address to the canonical one after the hash mapping has removed the marker, and would put it back.
+	 *
+	 * @param string[] $args Query parameters WordPress removes from the address.
+	 * @return string[]
+	 */
+	public static function removable_query_args( $args ) {
+		$args   = (array) $args;
+		$args[] = self::FROM_LEGACY;
+		return $args;
+	}
+
+	/**
+	 * Load the hash mapping in the head of the new app when it was opened from a legacy address, before
+	 * the app's router reads the hash.
 	 *
 	 * @param string $hook Current admin page hook suffix.
 	 */
@@ -597,17 +546,11 @@ final class LegacyRoutes {
 		}
 		$file = OHMYLMS_DIR . '/assets/js/legacy-redirects.js';
 		wp_enqueue_script( self::HANDLE, OHMYLMS_URL . '/assets/js/legacy-redirects.js', array(), (string) filemtime( $file ), false );
-		$data            = self::script_data();
-		$data['landing'] = array(
-			'param'    => self::FROM_LEGACY,
-			'home'     => self::APP_HOME,
-			'noticeId' => self::NOTICE_ID,
-		);
-		wp_add_inline_script( self::HANDLE, 'window.ohmylmsLegacyRoutes = ' . wp_json_encode( $data ) . ';', 'before' );
+		wp_add_inline_script( self::HANDLE, 'window.ohmylmsLegacyRoutes = ' . wp_json_encode( self::script_data() ) . ';', 'before' );
 	}
 
 	/**
-	 * The new-app route for a legacy route, ignoring whether the app is enabled.
+	 * The new-app route for a legacy route.
 	 *
 	 * @param string $legacy Legacy hash route such as `/order-edit/12` or `#/accounthub?tab=classes`.
 	 * @return string|null New route such as `/orders/12`, or null when the screen is not replaced.
@@ -644,34 +587,34 @@ final class LegacyRoutes {
 	}
 
 	/**
-	 * Where a legacy route opens: the new app when mapped and enabled, otherwise the legacy page.
+	 * Where a legacy route opens in the new app: its mapped route, or the app home when unmapped.
 	 *
 	 * @param string $legacy Legacy hash route.
 	 * @return array{page: string, route: string}
 	 */
 	public static function target( $legacy ) {
-		$route  = '/' . ltrim( ltrim( (string) $legacy, '#' ), '/' );
-		$mapped = self::enabled() ? self::resolve( $route ) : null;
-		return null === $mapped
-			? array(
-				'page'  => self::legacy_page(),
-				'route' => $route,
-			)
-			: array(
-				'page'  => AppPage::SLUG,
-				'route' => $mapped,
-			);
+		$mapped = self::resolve( self::normalize( $legacy ) );
+		return array(
+			'page'  => AppPage::SLUG,
+			'route' => null === $mapped ? self::APP_HOME : $mapped,
+		);
 	}
 
 	/**
-	 * Absolute admin URL for a legacy route: the new app when mapped, the legacy screen otherwise.
+	 * Absolute new-app URL for a legacy route. An unmapped route opens the app home, marked with
+	 * {@see LegacyRoutes::FROM_LEGACY} and keeping the legacy route in the hash, so the app shows the
+	 * notice that names it.
 	 *
 	 * @param string $legacy Legacy hash route such as `/orders` or `/quiz-edit/5`.
 	 * @return string
 	 */
 	public static function url( $legacy ) {
-		$target = self::target( $legacy );
-		return admin_url( 'admin.php?page=' . $target['page'] . '#' . $target['route'] );
+		$route  = self::normalize( $legacy );
+		$mapped = self::resolve( $route );
+		if ( null !== $mapped ) {
+			return self::app_url( $mapped );
+		}
+		return admin_url( 'admin.php?page=' . AppPage::SLUG . '&' . self::FROM_LEGACY . '=1#' . $route );
 	}
 
 	/**
@@ -696,9 +639,6 @@ final class LegacyRoutes {
 		$assignment_id = absint( $assignment_id );
 		$student_id    = absint( $student_id );
 		$legacy        = '/assignment-report/' . $assignment_id . '/grade-assignment/' . $student_id;
-		if ( AppPage::SLUG !== self::target( $legacy )['page'] ) {
-			return self::url( $legacy );
-		}
 		global $wpdb;
 		$submission_id = (int) $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- One indexed lookup per notification; the row was written moments ago.
 			$wpdb->prepare(
@@ -714,50 +654,29 @@ final class LegacyRoutes {
 	}
 
 	/**
-	 * Whether an administrator asked to stay on the legacy screen (`&ohmylms_legacy=1`).
-	 *
-	 * @return bool
-	 */
-	public static function opted_out() {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display preference.
-		$value = isset( $_GET[ self::OPT_OUT ] ) ? sanitize_key( wp_unslash( $_GET[ self::OPT_OUT ] ) ) : '';
-		return '1' === $value && current_user_can( 'manage_options' );
-	}
-
-	/**
-	 * Load the browser redirect in the head of the legacy screen, before the legacy app.
-	 *
-	 * @param string $hook Current admin page hook suffix.
-	 */
-	public static function enqueue_redirect( $hook ) {
-		if ( 'toplevel_page_' . self::legacy_page() !== $hook || ! self::enabled() || self::opted_out() ) {
-			return;
-		}
-		$file = OHMYLMS_DIR . '/assets/js/legacy-redirects.js';
-		wp_enqueue_script( self::HANDLE, OHMYLMS_URL . '/assets/js/legacy-redirects.js', array(), (string) filemtime( $file ), false );
-		wp_add_inline_script( self::HANDLE, 'window.ohmylmsLegacyRoutes = ' . wp_json_encode( self::script_data() ) . ';', 'before' );
-	}
-
-	/**
 	 * Data for assets/js/legacy-redirects.js.
 	 *
-	 * @return array{appPage: string, optOut: string, routes: array[]}
+	 * @return array{routes: array[], landing: array{param: string, home: string, noticeId: string}}
 	 */
 	public static function script_data() {
 		return array(
-			'appPage' => AppPage::SLUG,
-			'optOut'  => self::OPT_OUT,
 			'routes'  => self::routes(),
+			'landing' => array(
+				'param'    => self::FROM_LEGACY,
+				'home'     => self::APP_HOME,
+				'noticeId' => self::NOTICE_ID,
+			),
 		);
 	}
 
 	/**
-	 * Slug of the legacy admin page.
+	 * A legacy route with one leading slash and no `#`.
 	 *
+	 * @param string $legacy Legacy hash route such as `#/orders` or `orders`.
 	 * @return string
 	 */
-	private static function legacy_page() {
-		return defined( 'OHMYLMS_SLUG' ) ? OHMYLMS_SLUG : 'ohmylms';
+	private static function normalize( $legacy ) {
+		return '/' . ltrim( ltrim( (string) $legacy, '#' ), '/' );
 	}
 
 	/**

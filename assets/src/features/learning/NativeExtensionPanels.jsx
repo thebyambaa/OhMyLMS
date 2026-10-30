@@ -1,6 +1,6 @@
 import { createElement, useEffect, useState } from '@wordpress/element';
 import { PluginDocumentSettingPanel } from '@wordpress/editor';
-import { ExtensionBoundary } from '../../extensions/ExtensionBoundary';
+import { ExtensionBoundary } from '../../app/extensions/ExtensionBoundary';
 
 /**
  * Keep registered quiz panels available in the native editor with an explicit native context.

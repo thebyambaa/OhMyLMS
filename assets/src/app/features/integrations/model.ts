@@ -396,3 +396,51 @@ export function toLoadError( error: ApiError ): LoadError {
 		permission: isPermissionError( error ),
 	};
 }
+
+/** Query parameters the Google Meet OAuth callback adds (`?auth=success|error&message=<code>`). */
+export const AUTH_PARAMS = [ 'auth', 'message' ] as const;
+
+/**
+ * The notice for the result of the Google Meet OAuth callback
+ * (includes/Integrations/GoogleMeet/Includes/Hooks.php), which redirects here.
+ *
+ * @param auth    `success` or `error`; anything else shows nothing.
+ * @param message Error code sent with `auth=error`.
+ * @return Status and text, or null.
+ */
+export function authNotice(
+	auth: string | null,
+	message: string | null
+): { status: 'success' | 'error'; text: string } | null {
+	if ( 'success' === auth ) {
+		return {
+			status: 'success',
+			text: __( 'Google Meet is connected.', 'ohmylms' ),
+		};
+	}
+	if ( 'error' !== auth ) {
+		return null;
+	}
+	const reasons: Record< string, string > = {
+		missing_credentials: __(
+			'Save the Google Meet client ID and client secret, then connect again.',
+			'ohmylms'
+		),
+		oauth_failed: __(
+			'Google could not be reached. Try again.',
+			'ohmylms'
+		),
+		no_access_token: __(
+			'Google did not return an access token. Check the client ID, client secret and redirect URL, then connect again.',
+			'ohmylms'
+		),
+	};
+	const reason =
+		message && Object.prototype.hasOwnProperty.call( reasons, message )
+			? reasons[ message ]
+			: __( 'Try connecting again.', 'ohmylms' );
+	return {
+		status: 'error',
+		text: `${ __( 'Google Meet could not be connected.', 'ohmylms' ) } ${ reason }`,
+	};
+}

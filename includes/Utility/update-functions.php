@@ -138,6 +138,29 @@ function ohmylms_update_1212_db_version() {
 }
 
 /**
+ * Delete the stored data of the removed administrator assistant: its settings (including the encrypted
+ * provider key) and the development worker's configuration and job records.
+ *
+ * @return void
+ * @since 1.2.21
+ */
+function ohmylms_update_1221_remove_admin_assistant() {
+	foreach ( array( 'ohmylms_admin_assistant', 'ohmylms_coding_worker', 'ohmylms_coding_jobs' ) as $option ) {
+		delete_option( $option );
+	}
+}
+
+/**
+ * Update database version to 1.2.21
+ *
+ * @return void
+ * @since 1.2.21
+ */
+function ohmylms_update_1221_db_version() {
+	\OhMyLMS\Install::update_db_version( '1.2.21' );
+}
+
+/**
  * Process one batch of the 'subscriber' -> 'ohmylms_student' migration.
  *
  * Scoped to users who have an actual course enrollment record (not every

@@ -328,7 +328,7 @@ final class ViewAs {
 		self::cookie( '', time() - HOUR_IN_SECONDS );
 		wp_set_current_user( $record['actor'] );
 		Service::audit( 0, 'view_as_returned', $record['target'] );
-		return array( 'url' => admin_url( 'admin.php?page=' . OHMYLMS_SLUG ) . '#/accounthub' );
+		return array( 'url' => \OhMyLMS\Admin\LegacyRoutes::app_url( '/account-hub' ) );
 	}
 	/**
 	 * Banner for View as.

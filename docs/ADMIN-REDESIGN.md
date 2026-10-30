@@ -9,7 +9,23 @@ agreed menu organisation (`ohmylms-redesign/PROPOSED-NAV.md`, `wp-native/WP-MENU
 (`CURRENT-NAV-MAP.md`) and the enrolment/gradebook research (`GRADEBOOK-RESEARCH.md`, `KHAN-COMPARISON.md`).
 
 Decisions (31 October 2026): start after the cutover; six real WordPress pages with tabs addressed by query string;
-order: menu and WordPress look, then the dashboard, then the gradebook.
+order: menu and WordPress look, then the dashboard, then the gradebook. Also decided:
+
+| Topic | Decision |
+| --- | --- |
+| Audience | Site administrators see everything; school administrators and teachers see only their schools and classes. Every dashboard and gradebook endpoint is scoped server-side. |
+| Scope picker | All schools, one school, one class. No district entity. |
+| Tabs | Real links with a full page load; moving inside a tab uses `pushState`. |
+| Old app addresses | `page=ohmylms-app#/…` redirect forever, like the legacy addresses. |
+| Rollout | Replaced in place on `main`, screen by screen, each verified; no feature switch. |
+| Lists | React renders WordPress list-table markup over the existing REST APIs (no `WP_List_Table`). |
+| Dashboard data | Computed on request, cached about 10 minutes per scope and period. |
+| At-risk rules | Defaults (for example inactive 7+ days, mastery down 10+ points in 2 weeks, overdue work), adjustable in Settings. |
+| Nudge | A fixed email template, rate limited and logged. |
+| Gradebook edits | Per-cell manual override with reason and history; the computed score stays visible. |
+| Weighting | Per course, with an optional per-class override. |
+| Letter grades | One site-wide scale in Settings; percentages always shown. |
+| Enrolment source | A new enrolments table, filled once from existing data by a reversible migration. |
 
 ## Principles
 
@@ -64,11 +80,10 @@ stay as they are.
 
 - Lists: `ui/Table` renders WordPress list-table markup (views, bulk actions, search box, sortable columns, row
   actions, pagination); every list screen moves to it. Forms and dialogs stay on `@wordpress/components`.
-- Colours: admin screens follow the user's WordPress admin colour scheme (`--wp-admin-theme-color`); `--oml-*`
-  remains for learner pages. **Open decision:** the Design system setting (`ohmylms_design_system`, Khan Academy preset
-  by default) currently recolours plugin admin screens. Recommended: add a "WordPress" preset that reads the admin
-  colour scheme, make it the default for admin screens, and keep the other presets for sites that want a branded
-  admin.
+- Colours (decided 31 October 2026): admin screens follow the user's WordPress admin colour scheme
+  (`--wp-admin-theme-color`); `--oml-*` remains for learner pages. The Design system setting (`ohmylms_design_system`,
+  Khan Academy preset by default) no longer recolours admin screens by default: add a "WordPress" preset that reads the
+  admin colour scheme and make it the admin default; the other presets stay for sites that want a branded admin.
 - Remove one-off values: every new-app stylesheet uses WordPress classes or tokens only
   ([DESIGN-TOKENS](DESIGN-TOKENS.md), [STYLESHEET-OWNERSHIP](STYLESHEET-OWNERSHIP.md)); `check:architecture` gains a
   rule against raw colours in `assets/src/app`.

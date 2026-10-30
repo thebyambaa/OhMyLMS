@@ -272,9 +272,6 @@ class Server {
 		if ( ! self::enabled() ) {
 			return new \WP_Error( 'mcp_disabled', 'The MCP add-on is disabled.', array( 'status' => 403 ) );
 		}
-		if ( \OhMyLMS\AI\AssistantMcpClient::is_local_request( $request ) ) {
-			return true;
-		}
 		$origin   = $request->get_header( 'origin' );
 		$home     = wp_parse_url( home_url() );
 		$expected = $home['scheme'] . '://' . $home['host'] . ( isset( $home['port'] ) ? ':' . $home['port'] : '' );

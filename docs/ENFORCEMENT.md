@@ -9,10 +9,9 @@ every push and pull request to `main`.
 
 | Command | What it runs |
 | --- | --- |
-| `npm run check:ci` | Everything CI runs in the Node job: `typecheck`, `test:app`, `check:architecture`, then `node --test tests/js/runtime-inventory.test.mjs tests/js/check-architecture.test.mjs` |
+| `npm run check:ci` | Everything CI runs in the Node job: `typecheck`, `test:app`, `check:architecture`, then `node --test tests/js/check-architecture.test.mjs` |
 | `npm run check:architecture` | `node tools/check-architecture.mjs`: the five architecture rules below and the budget table |
 | `node --test tests/js/check-architecture.test.mjs` | Tests for the checker, using fixture trees under `tests/fixtures/architecture/` |
-| `node --test tests/js/runtime-inventory.test.mjs` | Runtime dependency inventory: owners, contracts and report drift |
 
 The architecture check reads source files and the bundles already published in `assets/dist/admin`.
 It never builds anything. After you rebuild the admin app, run it again to check the new bundles.
@@ -137,7 +136,5 @@ screen legitimately grows, or when you add or remove a chunk:
 
 ### Runtime dependency inventory
 
-`docs/RUNTIME-DEPENDENCY-INVENTORY.md` is generated. When the inventory test reports drift, run
-`node tools/runtime-inventory-report.mjs --write` and commit the result. The inventory reads every
-source with CRLF folded to LF, so the sizes it reports are the same on Windows (`core.autocrlf=true`)
-and Linux.
+Retired on 31 October 2026 with the recovered runtime it inventoried; see
+[MODULARIZATION-ROADMAP.md](MODULARIZATION-ROADMAP.md).

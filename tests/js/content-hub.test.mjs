@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import { transformSync } from '@babel/core';
 import { codeForAssertions } from './sourceAssertions.mjs';
 import {
@@ -14,52 +13,6 @@ import {
 	hashQuery,
 	legacyCatalogTarget,
 } from '../../assets/src/features/content-hub/hubRoutes.mjs';
-
-const createElement = ( type, props, ...children ) => ( {
-	type,
-	props: props || {},
-	children,
-} );
-const load = ( file, names, scope ) => {
-	const { code } = transformSync( fs.readFileSync( file, 'utf8' ), {
-		configFile: false,
-		babelrc: false,
-		presets: [ [ '@babel/preset-react', { pragma: 'createElement' } ] ],
-		plugins: [
-			() => ( {
-				visitor: {
-					ImportDeclaration( path ) {
-						path.remove();
-					},
-					ExportNamedDeclaration( path ) {
-						path.replaceWith( path.node.declaration );
-					},
-				},
-			} ),
-		],
-	} );
-	return new Function(
-		...Object.keys( scope ),
-		`${ code }; return { ${ names.join( ', ' ) } };`
-	)( ...Object.values( scope ) );
-};
-
-const MovableTabs = () => null;
-const HubContext = { Provider: 'HubContext.Provider' };
-const effects = [];
-const { ContentHubFrame, contentHubScreen, redirectScreen } = load(
-	'assets/src/features/content-hub/ContentHub.jsx',
-	[ 'ContentHubFrame', 'contentHubScreen', 'redirectScreen' ],
-	{
-		createElement,
-		useEffect: ( effect ) => effects.push( effect ),
-		__: ( text ) => text,
-		useMenuHighlight: () => {},
-		MovableTabs,
-		HubContext,
-		HUB_TABS,
-	}
-);
 
 test( 'The hub has Courses, Lessons, quiz and exam tabs, Skills and Curriculum under one base path', () => {
 	assert.deepEqual(
@@ -231,41 +184,6 @@ test( 'Without the application list screens the hub still serves its own tabs', 
 	} );
 } );
 
-test( 'The frame links every tab and marks the active one below the title', () => {
-	HUB_TABS.forEach( ( active ) => {
-		const frame = ContentHubFrame( {
-			active: active.id,
-			children: 'body',
-		} );
-		const [ header, nav, provider ] = frame.children;
-		assert.equal( header.type, 'header' );
-		assert.equal( header.children[ 0 ].type, 'h1' );
-		assert.equal( header.children[ 0 ].children[ 0 ], 'Content Hub' );
-		assert.equal( header.children.length, 1 );
-		assert.equal( nav.type, MovableTabs );
-		assert.equal( nav.props.scope, 'content-hub' );
-		assert.deepEqual( nav.props.tabs, HUB_TABS );
-		assert.equal( nav.props.active, active.id );
-		assert.equal(
-			nav.props.labels[ active.id ],
-			HUB_TABS.find( ( tab ) => tab.id === active.id ).label
-		);
-		assert.equal( provider.type, HubContext.Provider );
-		assert.deepEqual( provider.props.value, { active: active.id } );
-		assert.equal( provider.children[ 0 ], 'body' );
-	} );
-} );
-
-test( 'A wrapped screen receives its original props', () => {
-	const Inner = () => null;
-	const screen = contentHubScreen( Inner, 'courses' );
-	const rendered = screen( { example: 1 } );
-	assert.equal( rendered.type, ContentHubFrame );
-	assert.equal( rendered.props.active, 'courses' );
-	assert.equal( rendered.children[ 0 ].type, Inner );
-	assert.equal( rendered.children[ 0 ].props.example, 1 );
-} );
-
 test( 'Course addresses, the retired Catalog addresses and hash queries', () => {
 	assert.equal( courseEditPath( 42 ), '/course-edit/42' );
 	assert.equal( courseEditPath( '7' ), '/course-edit/7' );
@@ -309,114 +227,6 @@ test( 'Editors opened from the hub keep its menu entry highlighted', () => {
 			! HUB_MENU_ROUTES.includes( path ),
 			`${ path } is a hub tab, not a bare route`
 		);
-} );
-
-test( 'The admin menu offers Content Hub instead of Courses, Assessments, Skills, Curriculum and Course Bundles', () => {
-	const menu = fs.readFileSync( 'includes/Admin/Menu.php', 'utf8' );
-	const labels = [
-		...menu.matchAll(
-			/esc_attr__\( '([^']+)', 'ohmylms' \)(?: \. \$badge_html)?, \$capability, (?:'admin\.php\?page=' \. \$slug \. '#|LegacyRoutes::url\( ')([^']+)'/g
-		),
-	].map( ( match ) => [ match[ 1 ], match[ 2 ] ] );
-	const names = labels.map( ( [ label ] ) => label );
-	assert.ok( names.includes( 'Content Hub' ) );
-	assert.deepEqual(
-		labels.find( ( [ label ] ) => label === 'Content Hub' ),
-		[ 'Content Hub', '/content-hub' ]
-	);
-	assert.ok( ! names.includes( 'Courses' ), 'no Courses submenu' );
-	assert.ok( ! names.includes( 'Skills' ), 'no Skills submenu' );
-	assert.ok( ! names.includes( 'Curriculum' ), 'no Curriculum submenu' );
-	assert.ok(
-		! names.includes( 'Course Bundles' ),
-		'no Course Bundles submenu'
-	);
-	assert.ok( ! names.includes( 'Assessments' ), 'no Assessments submenu' );
-	assert.ok(
-		! labels.some( ( [ , hash ] ) =>
-			[
-				'/courses',
-				'/quizzes',
-				'/assignments',
-				'/assessments',
-				'/extensions/skills',
-				'/extensions/question-bank',
-				'/extensions/curriculum',
-				'/extensions/bundles',
-			].includes( hash )
-		)
-	);
-	// Certificates keeps its entry only while Gamification, which holds it as a tab, is off.
-	assert.ok(
-		names.includes( 'Certificates' ),
-		'the other entries are untouched'
-	);
-	assert.ok(
-		names.indexOf( 'Content Hub' ) < names.indexOf( 'Certificates' )
-	);
-} );
-
-test( 'Old addresses open the hub tabs', () => {
-	const source = codeForAssertions(
-		fs.readFileSync( 'assets/src/extensions/index.jsx', 'utf8' )
-	);
-	// The application's own list screens (courses, quizzes, assignments) become tabs at their old routes.
-	assert.match(
-		source,
-		/HUB_APP_ROUTES\[route\.path\]\)\s*return \{ \.\.\.route, element: contentHubScreen\(route\.element, HUB_APP_ROUTES\[route\.path\]\) \}/
-	);
-	// The SDK pages open at #/extensions/<id> inside the hub frame, on the tab named in HUB_EXTENSION_TABS.
-	assert.match(
-		source,
-		/HUB_EXTENSION_TABS\[entry\.id\]\s*\? contentHubScreen\(extensionPage\(entry\), HUB_EXTENSION_TABS\[entry\.id\]\)/
-	);
-	assert.deepEqual( HUB_EXTENSION_TABS, {
-		skills: 'skills',
-		'question-bank': 'question-bank',
-		curriculum: 'curriculum',
-	} );
-	for ( const tab of [
-		...Object.values( HUB_EXTENSION_TABS ),
-		...Object.values( HUB_APP_ROUTES ),
-		...Object.values( HUB_ALIASES ),
-	] )
-		assert.ok(
-			HUB_TABS.some( ( entry ) => entry.id === tab ),
-			tab
-		);
-	// The retired category and tag screens open Curriculum and Course Bundles, now hub tabs too.
-	assert.match(
-		source,
-		/replacedBy = \{ '\/categories': 'curriculum', '\/tags': 'curriculum' \}/
-	);
-	assert.match(
-		source,
-		/contentHubScreen\(extensionPage\(replacement\), HUB_EXTENSION_TABS\[replacement\.id\]\)/
-	);
-	// The hub's list screens keep their extension slots, and the old Assessments frame is gone.
-	assert.match(
-		source,
-		/HUB_APP_ROUTES\[route\.path\]\s*\? \{ \.\.\.route, element: wrapScreen\(route\.element, route\.path, registry\) \}/
-	);
-	assert.doesNotMatch(
-		source,
-		/assessmentScreen|assessmentsRoutes|AssessmentsHub/
-	);
-	assert.ok(
-		! fs.existsSync( 'assets/src/features/assessment/AssessmentsHub.jsx' )
-	);
-} );
-
-test( 'Question Bank, Curriculum and Course Bundles drop their own page title level inside the hub', () => {
-	for ( const file of [
-		'assets/src/features/question-bank/QuestionBankPage.jsx',
-		'assets/src/features/curriculum/CurriculumPage.jsx',
-		'assets/src/features/bundles/BundlesPage.jsx',
-	] ) {
-		const source = codeForAssertions( fs.readFileSync( file, 'utf8' ) );
-		assert.match( source, /const hub = useContext\(HubContext\);/, file );
-		assert.match( source, /headingLevel=\{hub \? 2 : 1\}/, file );
-	}
 } );
 
 test( 'The hub address shows the Courses tab, and without course screens the first tab there is', () => {
@@ -474,25 +284,3 @@ test( 'The retired Catalog addresses are redirected rather than left without a p
 	);
 } );
 
-test( 'A redirect screen replaces the address with where it leads', () => {
-	const calls = [];
-	globalThis.window = {
-		location: {
-			hash: '#/content-hub/catalog/42',
-			pathname: '/wp-admin/admin.php',
-			search: '?page=ohmylms',
-			replace: ( url ) => calls.push( url ),
-		},
-	};
-	try {
-		effects.length = 0;
-		const Screen = redirectScreen( legacyCatalogTarget );
-		assert.equal( Screen(), null, 'it renders nothing' );
-		effects[ 0 ]();
-		assert.deepEqual( calls, [
-			'/wp-admin/admin.php?page=ohmylms#/course-edit/42',
-		] );
-	} finally {
-		delete globalThis.window;
-	}
-} );

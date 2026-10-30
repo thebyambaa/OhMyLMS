@@ -10,67 +10,43 @@ function fixture( t ) {
 		path.join( os.tmpdir(), 'ohmylms-contracts-' )
 	);
 	t.after( () => fs.rmSync( root, { recursive: true, force: true } ) );
-	fs.mkdirSync( path.join( root, 'extensions' ) );
 	const directory = path.join( root, 'features', 'example' );
 	fs.mkdirSync( directory, { recursive: true } );
+	fs.mkdirSync( path.join( root, 'app', 'extensions' ), { recursive: true } );
+	fs.writeFileSync(
+		path.join( root, 'app', 'extensions', 'api.ts' ),
+		'export const api = 1;'
+	);
 	const write = ( file, content ) =>
 		fs.writeFileSync( path.join( directory, file ), content );
-	write(
-		'components.json',
-		JSON.stringify( [
-			{
-				name: 'Example',
-				binding: 'x',
-				file: 'Example.jsx',
-				dependencies: [],
-			},
-		] )
-	);
-	write(
-		'Example.jsx',
-		'export function createExample(){return function Example(){return null;};}'
-	);
+	write( 'Example.jsx', 'export function Example(){return null;}' );
 	write(
 		'index.js',
-		"import {createExample} from './Example'; export const components={Example:createExample};"
+		"import {Example} from './Example'; import {api} from '../../app/extensions/api'; export {Example, api};"
 	);
 	return { root, write };
 }
 
-test( 'valid feature factories and extensionless imports pass contract checks', ( t ) => {
+test( 'extensionless imports of authored and typed modules pass', ( t ) => {
 	const { root } = fixture( t );
-	assert.deepEqual( checkContracts( root ), {
-		errors: [],
-		features: 1,
-		components: 1,
-	} );
+	assert.deepEqual( checkContracts( root ), { errors: [], files: 2 } );
 } );
 
-test( 'missing imports and unregistered components produce actionable diagnostics', ( t ) => {
+test( 'missing imports produce actionable diagnostics', ( t ) => {
 	const { root, write } = fixture( t );
 	write(
 		'index.js',
-		"import {createExample} from './Missing'; export const components={};"
+		"import {Example} from './Missing'; export const components={Example};"
 	);
 	const { errors } = checkContracts( root );
-	assert.ok(
-		errors.some( ( error ) =>
-			error.includes( 'unresolved import ./Missing' )
-		)
-	);
-	assert.ok(
-		errors.some( ( error ) =>
-			error.includes( 'Example must register createExample' )
-		)
-	);
+	assert.equal( errors.length, 1 );
+	assert.ok( errors[ 0 ].includes( 'unresolved import ./Missing' ) );
 } );
 
-test( 'a renamed factory cannot silently break a manifest contract', ( t ) => {
-	const { root, write } = fixture( t );
-	write( 'Example.jsx', 'export function renamed() {}' );
-	assert.ok(
-		checkContracts( root ).errors.some( ( error ) =>
-			error.includes( 'missing exported factory createExample' )
-		)
+test( 'absent authored folders are skipped', ( t ) => {
+	const root = fs.mkdtempSync(
+		path.join( os.tmpdir(), 'ohmylms-contracts-' )
 	);
+	t.after( () => fs.rmSync( root, { recursive: true, force: true } ) );
+	assert.deepEqual( checkContracts( root ), { errors: [], files: 0 } );
 } );

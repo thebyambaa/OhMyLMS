@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   checks:
-    name: Typecheck, app tests and architecture (npm run check:ci)
+    name: Build, typecheck, app tests and architecture (npm run check:ci)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,6 +26,9 @@ jobs:
           cache: npm
 
       - run: npm ci
+
+      # Styles, the admin app, blocks and native editors; the architecture check then measures these bundles.
+      - run: npm run build
 
       - run: npm run check:ci
 

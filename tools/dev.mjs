@@ -2,6 +2,8 @@ import { watch } from 'node:fs';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 const root = path.resolve( import.meta.dirname, '..' );
+// Sources of tools/build-assets.mjs; webpack watches the rest of assets/src itself.
+const assetSources = /^(?:frontend|runtimes|static)[\\/]|^manifest\.json$/;
 let building = false,
 	pending = false,
 	timer;
@@ -11,17 +13,14 @@ function rebuild() {
 		return;
 	}
 	building = true;
-	const child = spawn(
-		process.execPath,
-		[ 'tools/build-assets.mjs', '--extensions' ],
-		{ cwd: root, stdio: 'inherit' }
-	);
+	const child = spawn( process.execPath, [ 'tools/build-assets.mjs' ], {
+		cwd: root,
+		stdio: 'inherit',
+	} );
 	child.on( 'exit', ( code ) => {
 		building = false;
 		if ( code )
-			console.error(
-				'Application build failed; fix source and save again.'
-			);
+			console.error( 'Asset build failed; fix source and save again.' );
 		if ( pending ) {
 			pending = false;
 			rebuild();
@@ -29,11 +28,14 @@ function rebuild() {
 	} );
 }
 rebuild();
-const watchers = [ 'assets/src', 'tools' ].map( ( dir ) =>
-	watch( path.join( root, dir ), { recursive: true }, () => {
+const watcher = watch(
+	path.join( root, 'assets/src' ),
+	{ recursive: true },
+	( event, file ) => {
+		if ( file && ! assetSources.test( file ) ) return;
 		clearTimeout( timer );
 		timer = setTimeout( rebuild, 250 );
-	} )
+	}
 );
 const sdk = spawn(
 	process.execPath,
@@ -48,7 +50,7 @@ const sdk = spawn(
 	{ cwd: root, stdio: 'inherit' }
 );
 process.on( 'SIGINT', () => {
-	watchers.forEach( ( w ) => w.close() );
+	watcher.close();
 	sdk.kill();
 	process.exit();
 } );

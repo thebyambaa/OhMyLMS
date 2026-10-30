@@ -1,4 +1,4 @@
-import * as api from '../../extensions/api.mjs';
+import * as api from '../../app/extensions/api';
 import { createRegistry } from '../../app/extensions/registry.mjs';
 
 // Native screens expose the same registration contract without loading the LMS app.

@@ -31,12 +31,11 @@ final class Library {
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'styles' ) );
 	}
 
-	/** Load scoped exam import styling only in the LMS admin application. */
+	/** Load the figure runtime of imported exam questions only in the admin app. */
 	public static function styles() {
 		$screen = get_current_screen();
-		if ( $screen && 'toplevel_page_ohmylms' === $screen->id ) {
+		if ( $screen && \OhMyLMS\Admin\AppPage::is_app_screen( $screen->id ) ) {
 			\OhMyLMS\ExamImport\FigureContent::enqueue();
-			wp_enqueue_style( 'ohmylms-exam-import', plugins_url( 'assets/css/exam-import.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/exam-import.css' ) );
 		}
 	}
 

@@ -276,5 +276,5 @@ and records the remaining full-repository standards and exact-parity differences
 | Mixed-skill assessments | `includes/Assessment/SkillAssessment.php` (`create()`, `create_for_course()`), REST `POST /ohmylms/v1/skill-assessments` and `/skill-assessments/course` in `Rest/V1/AssessmentController.php`, setting `style` in `Assessment/AssessmentSettings.php`, pools in `Assessment/Pools.php` |
 | Intro screen and result levels | `includes/Quiz/Intro.php`, `Quiz/AnswerReview.php` |
 | Authoring screen | **OhMyLMS -> Skill assessments**: `Assessment/SkillAssessmentPage.php` and `templates/admin/skill-assessments.php` |
-| AI and MCP tools | `list_unit_skills` and `create_skill_assessment` (draft only): `includes/MCP/SkillAssessmentTools.php`, the administrator assistant in `includes/AI/AssistantTools.php`; see [../ADMIN-ASSISTANT.md](../ADMIN-ASSISTANT.md) and [../MCP.md](../MCP.md) |
+| AI and MCP tools | `list_unit_skills` and `create_skill_assessment` (draft only): `includes/MCP/SkillAssessmentTools.php`; see [../MCP.md](../MCP.md) |
 | Level up and Course challenge on the hub | `includes/Student/CourseOutline.php` (`units[].test`, `challenge`), `templates/student-hub/course.php` |

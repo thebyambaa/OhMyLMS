@@ -76,36 +76,3 @@ test( 'retired editor arguments and rollback settings cannot restore quiz form a
 	assert.deepEqual( view.calls[ 1 ], [ 'native', 'native-only' ] );
 	assert.equal( view.location.hash, '#/content-hub/quizzes' );
 } );
-
-test( 'the public quiz editor factory always forwards the selected quiz and chapter to Gutenberg', () => {
-	const source = fs
-		.readFileSync(
-			'assets/src/features/quiz-editor/QuizEditor.jsx',
-			'utf8'
-		)
-		.replace( /^import [\s\S]*?;$/gm, '' )
-		.replace( /export /g, '' );
-	const { code } = transformSync( source, {
-		configFile: false,
-		babelrc: false,
-		presets: [ [ '@babel/preset-react', { pragma: 'createElement' } ] ],
-	} );
-	const NativeQuizRoute = () => {};
-	const factory = new Function(
-		'createElement',
-		'useSelect',
-		'NativeQuizRoute',
-		'window',
-		code + ';return createQuizEditor;'
-	)(
-		( component, props ) => ( { component, props } ),
-		( select ) => select( () => ( { getSelectedQuizId: () => 42 } ) ),
-		NativeQuizRoute,
-		{ ohmylmsAssessment: { formAuthoring: true } }
-	);
-	const Editor = factory( () => ( { T: { default: 'quiz-store' } } ) );
-	assert.deepEqual( Editor( { chapterId: 9 } ), {
-		component: NativeQuizRoute,
-		props: { id: 42, chapterId: 9 },
-	} );
-} );

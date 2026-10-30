@@ -6,10 +6,10 @@ and [lesson authoring](api/lesson-authoring.md).
 The historical first-batch notes below describe
 their original scope; use the [current roadmap](MODULARIZATION-ROADMAP.md) for present coverage.
 
-The preview app lives in `assets/src/app` and opens at
-`/wp-admin/admin.php?page=ohmylms-app`. The existing admin remains the production entry until the
-feature rebuild and documented extension surfaces are verified. The preview is not a claim that the
-recovered runtime can already be deleted.
+The admin app lives in `assets/src/app` and opens at `/wp-admin/admin.php?page=ohmylms-app`. It is the
+only admin: the recovered runtime (`admin.php?page=ohmylms`, its Webpack factories, adapters, bridge entries
+and extension SDK) was deleted at the cutover ([CUTOVER.md](CUTOVER.md)), and `admin.php?page=ohmylms`
+redirects to the mapped app route ([LEGACY-ROUTES.md](LEGACY-ROUTES.md)).
 
 ## Boundaries
 
@@ -85,10 +85,10 @@ tracked PHP and roadmap changes passes.
 
 ## Public extension contract
 
-[EXTENSIONS.md](EXTENSIONS.md) remains the public API v1 contract. The existing admin retains its
-extension SDK. The new app has its own authored host, `assets/src/app/extensions`, built from the
-shared registry (`assets/src/app/extensions/registry.mjs`, which the recovered SDK and the native
-editors import too); it does not load the recovered SDK.
+[EXTENSIONS.md](EXTENSIONS.md) remains the public API v1 contract. The app's authored host,
+`assets/src/app/extensions`, is its only implementation. The native lesson and quiz editors on `post.php`
+import the same registry (`registry.mjs`), REST helpers (`api.ts`) and `ExtensionBoundary.tsx` from there
+(`features/learning/nativeAuthoringBootstrap.js` creates the registry when the host is not on the page).
 
 - `admin-app-extensions` (under 5 KB) publishes the frozen `window.ohmylms.extensions` (registry methods,
   `api`, `renderSlot`, `renderEditor`, `mount`) and fires `ohmylms:extensions-ready`.
@@ -100,7 +100,7 @@ editors import too); it does not load the recovered SDK.
   `[data-ohmylms-slot]` element (`extensions/dom.ts`, `checkout-field` kind included). The signup form's
   React fields are a separate entry, `admin-app-registration` (`ohmylms-app-registration`), enqueued on
   `ohmylms_signup_form_start`, so the host carries no chunk loader. Both are source-build only, as before;
-  the recovered SDK loads only on `admin.php?page=ohmylms`.
+  the recovered SDK no longer exists.
 - `/extensions/<id>` renders registered admin pages, which the navigation lists. Every route renders the
   `admin.screen.before`/`after` slots and the editor panels whose slot is the feature's
   `extensionRoute`: the original admin route pattern (for example `/quiz-edit/:id` for `#/quizzes/:id`),
@@ -114,8 +114,8 @@ editors import too); it does not load the recovered SDK.
   `{question, value, onChange}`. The app registers the 15 built-in settings editors (numerical,
   structured and the interactive types) into the host in `bootstrap/mount.tsx`, after extension
   scripts ran, through the same `registerCoreQuestionEditors()`
-  (`assets/src/features/question-editor/registerCoreEditors.js`) that the existing admin calls; an
-  editor an extension registered first is kept. The components are authored modules in the lazy
+  (`assets/src/features/question-editor/registerCoreEditors.js`); an editor an extension registered first
+  is kept. The components are authored modules in the lazy
   `admin-app-question-editors` chunk (`extensions/coreEditors.ts`). On the app screen
   `AdminAppAssets` enqueues what they use: the learners' interactive widgets
   (`Interactive::enqueue()`, `window.OhMyLMSInteractive`), the media library, the math field styles
@@ -138,7 +138,7 @@ assets; the normal full-build synchronizer calls it too. Feature chunks have con
 new entry cannot accidentally reuse a cached chunk from an older build.
 The preview uses `build/sdk` with source assets enabled and `assets/dist/admin` otherwise. Save/reopen
 and denied-user checks must pass before feature cutover. No startup speed-up is claimed without a
-benchmark. The old runtime and its adapters remain until feature and extension coverage is complete.
+benchmark.
 
 ## Verification of the first batch (30 October 2026)
 

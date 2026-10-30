@@ -34,13 +34,14 @@ final class Views {
 	}
 	/** Register shared styles and the platform management bundle. */
 	public static function assets() {
-		$asset = OHMYLMS_DIR . '/build/sdk/schools.asset.php';
+		$directory = defined( 'OHMYLMS_SOURCE_ASSETS' ) && OHMYLMS_SOURCE_ASSETS ? 'build/sdk' : 'assets/dist/admin';
+		$asset     = OHMYLMS_DIR . '/' . $directory . '/schools.asset.php';
 		if ( ! is_file( $asset ) ) {
 			return; }
 		$meta = require $asset;
-		wp_register_script( 'ohmylms-schools', plugins_url( 'build/sdk/schools.js', OHMYLMS_FILE ), $meta['dependencies'], $meta['version'], true );
+		wp_register_script( 'ohmylms-schools', plugins_url( $directory . '/schools.js', OHMYLMS_FILE ), $meta['dependencies'], $meta['version'], true );
 		wp_register_style( 'ohmylms-schools', plugins_url( 'assets/schools/schools.css', OHMYLMS_FILE ), array(), filemtime( OHMYLMS_DIR . '/assets/schools/schools.css' ) );
-		if ( is_admin() && in_array( self::query_value( 'page' ), array( 'ohmylms-schools', OHMYLMS_SLUG ), true ) ) {
+		if ( is_admin() && 'ohmylms-schools' === self::query_value( 'page' ) ) {
 			wp_enqueue_style( 'ohmylms-schools' ); }
 		if ( is_admin() ) {
 			$can_preview = current_user_can( 'manage_options' );

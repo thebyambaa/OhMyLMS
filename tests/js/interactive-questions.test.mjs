@@ -24,7 +24,6 @@ import {
 	questionPreviewModel,
 	questionTypePatch,
 } from '../../assets/src/features/question-editor/questionBlocks.mjs';
-import { describeExpected } from '../../assets/src/features/quiz-reports/model.mjs';
 
 test( 'markers are found once, in order', () => {
 	assert.deepEqual( markerIds( 'a {1} b {x} c {1}' ), [ '1', 'x' ] );
@@ -153,35 +152,6 @@ test( 'authors are warned about incomplete questions', () => {
 	);
 } );
 
-test( 'reports describe the expected answer of each new type', () => {
-	assert.equal(
-		describeExpected( {
-			settings: {
-				type: 'dropdown-blanks',
-				slots: [ { id: '1', answer: 'positive' } ],
-			},
-		} ),
-		'{1} = positive'
-	);
-	assert.equal(
-		describeExpected( {
-			settings: { type: 'build-expression', correct: [ '3', 'x' ] },
-		} ),
-		'3 x'
-	);
-	assert.equal(
-		describeExpected( {
-			settings: {
-				type: 'categorize',
-				buckets: [ { id: 'b1', label: 'Polygon' } ],
-				items: [ { id: 'i1', text: 'Triangle' } ],
-				key: { i1: 'b1' },
-			},
-		} ),
-		'Triangle → Polygon'
-	);
-} );
-
 test( 'math expression questions start valid and warn when the answer is empty', () => {
 	assert.ok( INTERACTIVE_TYPES.includes( 'expression' ) );
 	const defaults = interactiveDefaults( 'expression' );
@@ -212,16 +182,6 @@ test( 'math expression questions start valid and warn when the answer is empty',
 			blanks: { a: { kind: 'expression', answer: 'x+1' } },
 		} ),
 		[]
-	);
-	assert.equal(
-		describeExpected( {
-			settings: {
-				type: 'expression',
-				answer: 'x=2',
-				alternatives: [ 'x=-2' ],
-			},
-		} ),
-		'x=2  or  x=-2'
 	);
 } );
 test( 'every visual type starts valid and is warned about when broken', () => {
@@ -338,42 +298,6 @@ test( 'amounts and chart bars are edited without losing consistency', () => {
 	] );
 } );
 
-test( 'reports describe the expected answer of every visual type', () => {
-	const expected = ( settings ) => describeExpected( { settings } );
-	assert.equal( expected( { type: 'number-line', target: 3.5 } ), '3.5' );
-	assert.equal(
-		expected( { type: 'fill-level', target: 750, unit: 'ml' } ),
-		'750 ml'
-	);
-	assert.equal(
-		expected( { type: 'shade-model', answer: 3, parts: 8 } ),
-		'3 / 8'
-	);
-	assert.equal( expected( { type: 'count-blocks', target: 243 } ), '243' );
-	assert.equal(
-		expected( { type: 'set-clock', hour: 3, minute: 5 } ),
-		'3:05'
-	);
-	assert.equal(
-		expected( { type: 'make-amount', target: 3500, symbol: '₮' } ),
-		'3500 ₮'
-	);
-	assert.equal(
-		expected( {
-			type: 'build-chart',
-			categories: [ { id: 'a', label: 'Cats' } ],
-			values: { a: 4 },
-		} ),
-		'Cats = 4'
-	);
-	assert.equal(
-		expected( {
-			type: 'grid-build',
-			constraints: { area: 12, perimeter: 14, rectangle: true },
-		} ),
-		'area 12, perimeter 14, rectangle'
-	);
-} );
 test( 'language tiles preserve repeated letters, graphemes and words', () => {
 	assert.deepEqual( languageTiles( 'үүл', 'letters' ), [ 'ү', 'ү', 'л' ] );
 	assert.deepEqual( languageTiles( 'e\u0301', 'letters' ), [ 'é' ] );

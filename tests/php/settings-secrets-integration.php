@@ -255,9 +255,9 @@ try {
 	ok( PaymentGatewaySettings::BODY_KEYS === $contract['paymentGateways']['writeKeys'], 'contract lists the gateway write keys' );
 	ok( PaymentGatewaySettings::MAX_LENGTH === $contract['paymentGateways']['maxLength'], 'contract lists the gateway field limits' );
 
-	// The legacy admin page data (ohmylms_params) carries gateway definitions but no credentials. Gateway
-	// objects read their options once per request, so a gateway with stored values is supplied through the
-	// same filter the page data passes them through.
+	// Redacted gateway definitions (PaymentGatewaySettings::redact(), which the retired legacy page data
+	// used) carry no credentials. Gateway objects read their options once per request, so a gateway with
+	// stored values is supplied through the gateway filter.
 	wp_set_current_user( $admin );
 	$legacy_secret = $tag . 'legacy_secret';
 	$legacy_filter = static function ( $gateways ) use ( $legacy_secret ) {
@@ -287,17 +287,17 @@ try {
 		return $gateways;
 	};
 	add_filter( 'ohmylms_payment_gateways', $legacy_filter );
-	$legacy = ( new \OhMyLMS\Assets\AdminAssets() )->get_script_data( 'ohmylms' );
+	$legacy = array( 'payment_gateways' => PaymentGatewaySettings::redact( (array) apply_filters( 'ohmylms_payment_gateways', \OhMyLMS\Commerce\ecommerce()->gateways()->get_payment_gateway_settings() ) ) );
 	remove_filter( 'ohmylms_payment_gateways', $legacy_filter );
 	$legacy_json = (string) wp_json_encode( $legacy['payment_gateways'] );
 	$probe       = $legacy['payment_gateways']['ohmylms_legacy_probe']['settings_fields'];
-	ok( false === strpos( $legacy_json, $legacy_secret ), 'legacy page data omits a gateway credential' );
+	ok( false === strpos( $legacy_json, $legacy_secret ), 'redacted gateway data omits a gateway credential' );
 	foreach ( array( $live_secret, $test_secret, $qpay_secret ) as $secret ) {
-		ok( false === strpos( $legacy_json, $secret ), 'legacy page data omits a stored gateway credential' );
+		ok( false === strpos( $legacy_json, $secret ), 'redacted gateway data omits a stored gateway credential' );
 	}
-	ok( 'Probe title' === $probe[0]['value'] && ! isset( $probe[0]['has_value'] ), 'legacy page data keeps non-secret values' );
-	ok( true === $probe[1]['has_value'] && '' === $probe[1]['value'] && '' === $probe[1]['default_value'], 'legacy page data reports a stored credential as has_value only' );
-	ok( false === $probe[2]['has_value'], 'legacy page data reports an empty credential as has_value false' );
+	ok( 'Probe title' === $probe[0]['value'] && ! isset( $probe[0]['has_value'] ), 'redacted gateway data keeps non-secret values' );
+	ok( true === $probe[1]['has_value'] && '' === $probe[1]['value'] && '' === $probe[1]['default_value'], 'redacted gateway data reports a stored credential as has_value only' );
+	ok( false === $probe[2]['has_value'], 'redacted gateway data reports an empty credential as has_value false' );
 
 	// Routes and permission callbacks.
 	$routes = rest_get_server()->get_routes( 'ohmylms/v1' );

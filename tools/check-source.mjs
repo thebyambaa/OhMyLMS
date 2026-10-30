@@ -19,12 +19,12 @@ for ( const file of files ) {
 		throw new Error( `${ file }: ${ error.message }`, { cause: error } );
 	}
 }
-const { errors, features, components } = checkContracts( root );
+const { errors, files: checked } = checkContracts( root );
 if ( errors.length ) {
 	console.error( errors.join( '\n' ) );
 	process.exitCode = 1;
 } else {
 	console.log(
-		`${ files.length } JavaScript/JSX files parse; ${ components } component contracts across ${ features } feature manifests and authored imports are valid.`
+		`${ files.length } JavaScript/JSX files parse; the relative imports of ${ checked } authored files resolve.`
 	);
 }

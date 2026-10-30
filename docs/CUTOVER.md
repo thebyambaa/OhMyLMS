@@ -1,208 +1,81 @@
 # Cutover from the recovered admin to the new app
 
-The recovered admin (`admin.php?page=ohmylms`, the webpack runtime rebuilt from shipped bundles) is being replaced by
-the typed admin app (`admin.php?page=ohmylms-app`, see [ARCHITECTURE](ARCHITECTURE.md)). This document is the plan
-for switching over and then deleting the recovered runtime. Nothing has been deleted yet: the cutover switch exists
-and is **off** by default.
+The recovered admin (`admin.php?page=ohmylms`, the webpack runtime rebuilt from shipped bundles) was replaced by the
+typed admin app (`admin.php?page=ohmylms-app`, see [ARCHITECTURE](ARCHITECTURE.md)) and deleted on 31 October 2026.
+This document records how the switch works now, what was removed and how it was verified.
 
-Inputs: [LEGACY-ROUTES](LEGACY-ROUTES.md) (which legacy screens the new app replaces) and
-[RUNTIME-DEPENDENCY-INVENTORY](RUNTIME-DEPENDENCY-INVENTORY.md) (what authored code still reads from the runtime).
+Inputs: [LEGACY-ROUTES](LEGACY-ROUTES.md) (which legacy addresses open which new screens).
 
-## The cutover switch
+## After the cutover
 
-| | Legacy admin enabled (default) | Legacy admin disabled (cutover) |
-| --- | --- | --- |
-| How | nothing to do | `define( 'OHMYLMS_LEGACY_ADMIN', false );` in `wp-config.php`, or `add_filter( 'ohmylms_legacy_admin_enabled', '__return_false' );` |
-| OhMyLMS menu | every entry opens the new app | the top-level entry opens the new dashboard; every submenu entry opens a new-app route |
-| Content Hub entry | `page=ohmylms-app#/content-hub` | `page=ohmylms-app#/content-hub` |
-| Sessions entry (when shown) | `page=ohmylms-app#/sessions` | `page=ohmylms-app#/sessions` |
-| "OhMyLMS (new)" entry | shown | removed; `page=ohmylms-app` still loads |
-| Add-on entries that open `page=ohmylms#/…` | unchanged | mapped through `LegacyRoutes::resolve()`; unmapped ones are dropped. Entries for other pages and external links are kept |
-| `admin.php?page=ohmylms#/route` | served; the browser redirect (`legacy-redirects.js`) moves mapped routes to the new app | redirected on the server (302) to `page=ohmylms-app&ohmylms_from_legacy=1`. The browser keeps the `#/route` fragment; the same script, loaded in the app's head, replaces it with the mapped route, or with the app home (`#/`) plus a notice naming the route, listing what is not available yet and linking to the legacy screen |
-| `&ohmylms_legacy=1` (administrators) | keeps the legacy screen | still keeps the legacy screen; nothing is unreachable |
-| `LegacyRoutes::url()` | unchanged | mapped routes open the new app (even if `ohmylms_legacy_routes_enabled` is false); unmapped ones still name the legacy route, which the server redirect sends home with the notice |
+There is no switch any more: `OHMYLMS_LEGACY_ADMIN`, the `ohmylms_legacy_admin_enabled` and
+`ohmylms_legacy_routes_enabled` filters and the `&ohmylms_legacy=1` opt-out are gone and have no effect.
 
-The filter wins over the constant. When the new app is not built (`AdminAppAssets::locate()` is null), the legacy
-admin stays on whatever the switch says, because there would be nothing to open instead.
+| | Behaviour |
+| --- | --- |
+| OhMyLMS menu | the top-level entry opens the new dashboard (its first submenu entry); every submenu entry opens a new-app route (`LegacyRoutes::app_url()`) |
+| Add-on entries that open `page=ohmylms#/…` | mapped through `LegacyRoutes::resolve()`; unmapped ones are dropped. Entries for other pages and external links are kept |
+| `page=ohmylms-app` | has no menu entry of its own ("OhMyLMS (new)" is gone) but stays registered below the OhMyLMS menu |
+| `admin.php?page=ohmylms#/route` | still a registered admin page (the OhMyLMS top-level slug), redirected on the server (302) to `page=ohmylms-app&ohmylms_from_legacy=1`; other query parameters are kept, a leftover `ohmylms_legacy` is dropped. The browser keeps the `#/route` fragment; `legacy-redirects.js`, loaded in the app's head, replaces it with the mapped route, or with the app home (`#/`) plus a notice naming the route (and any screens add-ons list as unavailable). The marker is removed from the address, also from WordPress' canonical admin URL (`removable_query_args`) |
+| `LegacyRoutes::url()` | always the new app: the mapped route, or for unmapped routes `page=ohmylms-app&ohmylms_from_legacy=1#/legacy/route`, which lands on the app home with the notice |
+| `LegacyRoutes::target()` (command palette) | always `ohmylms-app`; unmapped routes open the app home |
 
-Implementation: `LegacyRoutes::legacy_admin_enabled()`, `legacy_redirect_url()`, `redirect_legacy_page()` (hooked on
-`load-toplevel_page_ohmylms`), `enqueue_landing()` and `unavailable()` (filter `ohmylms_legacy_unavailable_screens`);
-`Menu::cutover_submenu()` (on `admin_menu`, priority 9999); `AppPage::hide_menu_entry()` (on `admin_head`, because
+Implementation: `LegacyRoutes::legacy_redirect_url()`, `redirect_legacy_page()` (hooked on
+`load-toplevel_page_ohmylms`), `render_legacy_page()` (the page body WordPress needs to fire that hook; never reached),
+`enqueue_landing()`, `removable_query_args()` and `unavailable()` (filter `ohmylms_legacy_unavailable_screens`);
+`Menu::map_legacy_submenu()` (on `admin_menu`, priority 9999); `AppPage::hide_menu_entry()` (on `admin_head`, because
 removing the entry on `admin_menu` would make the page unloadable) and the hidden notice in `AppPage::render()`;
-landing mode in `assets/js/legacy-redirects.js`. Both states are covered by `tests/php/legacy-routes-integration.php`
-and `tests/js/legacy-redirects.test.mjs`.
+`assets/js/legacy-redirects.js` (landing only; the legacy-page redirect mode is gone). Covered by
+`tests/php/legacy-routes-integration.php` and `tests/js/legacy-redirects.test.mjs`.
 
-## Inventory
 
-`node tools/cutover-inventory.mjs` prints what still depends on the recovered runtime; `--details` lists every file,
-`--json` prints the report, `--check` exits 1 on a blocker (a browser spec opening `page=ohmylms` without
-`&ohmylms_legacy=1`, or code a kept entry loads reaching recovered or runtime-bound code). It is read-only; re-run it
-after every deletion step. How it classifies is described in its header: the manifest output for
-`assets/src/{runtimes,static}`, and import reachability from the webpack entries for authored source, where the legacy
-entries are `extensions` (the legacy SDK) and the bridges `email-packages`, `vendor-charts`, `vendor-emotion`,
-`editor-tiptap`, `editor-lowlight` and `course-structure`.
+## What was removed
 
-Summary on 2026-10-31 (sizes include source maps):
+Before deleting, every legacy screen got a new-app screen and a rule in `LegacyRoutes` (exams, comparison, sessions,
+the student report, course students, design settings, migration, rewards, All accounts, the Content Hub overview, quiz
+reports and the `?action=`/`?add=` dialogs), and every route in the recovered router resolves. The front-end slots,
+checkout and registration fields and MathLive moved to the 2 KB extension host; native editors no longer import the
+legacy SDK. The administrator chat assistant (LMS chat, attachments, draft creation, development worker) existed only
+in the legacy admin and was dropped rather than rebuilt: its classes, REST routes, worker tool, tests and docs are
+gone, the MCP server no longer trusts its in-process requests, and the 1.2.21 database update deletes its stored
+options (`ohmylms_admin_assistant`, `ohmylms_coding_worker`, `ohmylms_coding_jobs`).
 
-| Group | Files | Size |
-| --- | --- | --- |
-| Recovered source used only by the legacy admin (`application` 230, `modules` 820, `runtimes` 8, `static` 3) | 1,061 | 18.7 MB |
-| Recovered source still shipped to the front end, blocks and other screens (keep) | 80 | 736 KB |
-| Authored source reachable only from the legacy SDK and bridges | 543 | 3.6 MB |
-| … of which `createComponent(readRuntime)` components (plus 19 `components.json`) | 239 | 2.2 MB |
-| Authored source shared with kept entries (keep) | 83 | 510 KB |
-| Recovered bundles in `assets/dist` (`admin/ohmylms.js`, `vendors/*`, `chunks/355`, `chunks/655`) | 14 | 42.1 MB |
-| Bridge entries (`assets/dist/admin/{email-packages,vendor-charts,vendor-emotion,editor-tiptap,editor-lowlight,course-structure}.*`) | 26 | 10.6 MB |
-| Legacy SDK `extensions.js` and its named chunks | 55 | 8.6 MB |
-| Numbered chunks to re-check after a build without the legacy entries | 28 | 11.2 MB |
-| Legacy admin CSS (`assets/dist/css/admin`: 284 modules in 16 groups; `css/chunks/355.css`) plus `skill-studio.css`, `syllabus-comparison.css`, `tailwind.css` | 149 + 3 | 3.1 MB |
-| PHP lines: `toplevel_page_ohmylms` checks 24, recovered bundle enqueues 20, bridge enqueues 20, legacy SDK 6, hard-coded legacy links 10 | | |
-| Recovery-only tools (39), mixed tools to split (4) | 43 | |
-| `tests/js`: recovery, parity and adapter tests 37; tests of features only the SDK loads 41 | 78 | |
-| Legacy-only browser specs (27 to delete, 4 to retarget) | 31 | |
-| npm packages imported only by legacy files | 50 | |
+| Area | Removed |
+| --- | --- |
+| PHP | every legacy handle and enqueue in `AdminAssets` (only `ohmylms-global` remains), the CSS modules and their loader, `get_script_data()` (`ohmylms_params`, `MRM_Vars`), the editor/TinyMCE block for the legacy screen, `SourceAssets::admin()`, `Tokens::enqueue_admin()`, `Menu::plugin_page()`, `includes/Admin/views/app.php`, the switch (`OHMYLMS_LEGACY_ADMIN`, its filters, the `&ohmylms_legacy=1` opt-out) |
+| Webpack | the legacy SDK entry `extensions` and the six bridges (`email-packages`, `vendor-charts`, `vendor-emotion`, `editor-tiptap`, `editor-lowlight`, `course-structure`) |
+| Shipped assets | `assets/dist` 91.5 MB to 17.6 MB: recovered bundles, `vendors/`, recovered chunks, bridge entries, the legacy SDK and its chunks, `css/admin/`, `css/chunks/`, and the stylesheets only the legacy screen loaded (`admin-ui`, `tailwind`, `skill-studio`, `syllabus-comparison`, `question-stage`, `quiz-design`, `quiz-overview`, `course-objectives`, `course-editor-ux`, `course-outline-editor`, `subject-profiles`, `library-curriculum`, `admin-assistant`, `exam-import`) |
+| Source | 2,179 files, 26.9 MB: `assets/src/application` (230), `modules` (820), the legacy files of `runtimes`/`static`, `assets/src/extensions`, 612 legacy-only authored files with their `components.json`, the admin CSS sources; `manifest.json` trimmed to the 79 kept front-end, block, theme and image assets |
+| Tools and tests | 43 recovery tools (including the cutover inventory), 118 `tests/js` files, 38 legacy browser specs, helpers and fixtures |
+| npm | 50 packages imported only by legacy code (`@arco-design/web-react`, `@emotion/*`, `@tiptap/*`, `chart.js`, `easy-email-core`, `mjml-browser`, `lodash`, `react-select` and others) plus `sass-loader` |
 
-## Replace first
-
-These must move before anything is deleted, in this order.
-
-1. **Front-end slots, checkout fields and registration fields.** `Slots::render()` (`student.course.*`,
-   `checkout.fields.after`, `checkout.summary.after`, `checkout-field` kind) and the signup form
-   (`ohmylms_signup_form_start`, `[data-ohmylms-registration-fields]`) load the legacy SDK through
-   `SourceAssets::enqueue()`. Move the DOM mounting (`mountSlots()` in `assets/src/extensions/index.jsx`) and the lazy
-   `registration` chunk into the new app's 4 KB extension host (`assets/src/app/extensions/host-entry.ts`; `host.ts`
-   already has `mount()`), make `SourceAssets::enqueue()` load the `ohmylms-app-extensions` handle, and keep the
-   `ohmylms_enqueue_extension_scripts` action so add-ons keep registering. Measure the host stays small.
-   *Done (31 October 2026):* the host mounts the slots (`extensions/dom.ts`; 4,317 → 4,653 B, gzip 1,932 → 2,102 B);
-   the registration fields are their own entry, `admin-app-registration` (6,060 B, gzip 2,227 B), enqueued by
-   `SourceAssets::enqueue_registration()` on `ohmylms_signup_form_start`, because a lazy chunk would add webpack's
-   chunk loader (about 2.8 KB) to the host. The recovered SDK loads only on `page=ohmylms`. Covered by
-   `tests/php/extension-host-assets-integration.php` (`OHMYLMS_EXTENSION_HOST_TEST=1`, both asset modes).
-2. **MathLive configuration.** `MathLive::configure()` localizes `ohmylmsMath` on `ohmylms-extension-sdk`; move it to
-   the host handle (`AdminAppAssets` already does this on the app page).
-   *Done:* `SourceAssets::enqueue()` localizes it on the host; the legacy page's SDK gets it from `enqueue_legacy()`.
-3. **Native lesson and quiz editors.** They do not need the SDK (`nativeAuthoringBootstrap.js` creates a registry when
-   `window.ohmylms.extensions` is missing), but they import `assets/src/extensions/registry.mjs`, which the new host also
-   imports. Move `registry.mjs` and `registry.d.mts` into `assets/src/app/extensions/` before deleting
-   `assets/src/extensions/`. *Done;* they still import `assets/src/extensions/api.mjs`.
-4. **Hard-coded legacy links** (`tools/cutover-inventory.mjs --details`, section 4): `PreviewPlayer.php`,
-   `NativeQuizEditor.php`, `NativeLessonEditor.php` (`#/question-bank` is not even a legacy route), the Google Meet OAuth
-   redirects, `AdminAssets.php` (`ohmylms_home_page`) and `Rest/V1/CourseController.php` (`builder_url`). Use
-   `LegacyRoutes::url()` or `LegacyRoutes::app_url()`. With the switch off they still land through the redirect, but
-   unmapped ones end on the home screen with the notice. *Done;* left: `Schools/ViewAs.php` (`#/accounthub`) and
-   `templates/admin/skill-assessments.php`, which the inventory does not scan.
-5. **Screens the new app does not have:** none (31 October 2026). Exams, comparison, sessions, the student report,
-   course students, design settings, migration, rewards, All accounts, the Content Hub overview, the quiz reports
-   overview and the `?action=`/`?add=` dialogs all have new screens and rules; `LegacyRoutes::unavailable()` is empty.
-6. **Features only the legacy SDK loads** (543 files, 41 `tests/js` files): port what the new app needs, then delete
-   the rest with its tests.
-7. **Mixed tools** (`build-assets.mjs`, `sync-admin-assets.mjs`, `dev.mjs`, `check-reproducible.mjs`) and the npm
-   scripts that call recovery tools (`recover`, `build:assets`, `build:application`, `build`, `dev`, `test` with
-   `--parity`, `test:reproducible`, `format`/`format:check` globs, `analyze:bundles`, `analyze:editor`): keep the style
-   builds and the new-app sync, drop the recovered parts.
-8. **Browser specs that reach native editors through a legacy redirect** (`assessment`, `lesson-block-editor`,
-   `native-authoring`, `quizzes`): open `post.php?post=<id>&action=edit` directly, so the native editor coverage stays.
-   *Done.* `assessment` still opens legacy Content Hub screens (with the opt-out) in three tests.
-
-## Ordered deletion plan
-
-1. Staging: turn the switch off (`OHMYLMS_LEGACY_ADMIN` false), run the verification checklist, soak for a release.
-2. Change the default in `LegacyRoutes::legacy_admin_enabled()` to false for one release; `&ohmylms_legacy=1` and the
-   constant/filter (set to true) remain the escape hatch.
-3. PHP: remove the legacy handles from `AdminAssets::get_scripts()`/`get_styles()` and the CSS modules, the editor and
-   TinyMCE block for `toplevel_page_ohmylms`, `enqueue_benchmark()`, `SourceAssets::admin()`; re-target the screen
-   checks in `AssistantController.php`, `Design/Tokens.php`, `Exams/Library.php` and `Hooks/CommonHook.php` to the app
-   screen; drop `Menu::plugin_page()` and `includes/Admin/views/app.php`. Keep `LegacyRoutes` (map, server redirect,
-   landing) so old bookmarks and emails keep working; the legacy-page mode of `legacy-redirects.js` and
-   `LegacyRoutes::enqueue_redirect()` go. `admin.php?page=ohmylms` must stay a registered page that redirects.
-4. Webpack: remove the legacy entries (`extensions` and the six bridges) from `webpack.config.cjs` and rebuild; then
-   delete the numbered chunks no kept entry produces.
-5. Shipped assets: `assets/dist/admin/ohmylms*.js*`, `assets/dist/vendors/`, `assets/dist/chunks/`, the bridge entries,
-   `assets/dist/admin/extensions.*` and its named chunks, `assets/dist/css/admin/`, `assets/dist/css/chunks/`,
-   `assets/css/{skill-studio,syllabus-comparison,tailwind}.css`, and their `build/` mirrors.
-6. Source: `assets/src/application/`, `assets/src/modules/`, the 11 legacy-admin files in `assets/src/runtimes/` and
-   `assets/src/static/`; move the 80 kept files (front-end runtimes, block scripts, theme-support CSS, images) to an
-   authored location before deleting the rest of those folders and `assets/src/manifest.json`; the legacy-only
-   authored files, the 19 `components.json`, `assets/src/extensions/` (after step 3 of "Replace first") and the
-   unwired `features/commerce-reference/`.
-7. Tools: the 39 recovery-only tools; split the 4 mixed ones; update `KEEP_TOOLS` (`check-architecture.mjs` drops its
-   `readRuntime` rule).
-8. Tests: the 37 recovery tests and the SDK-feature tests not ported; the 27 legacy-only browser specs below.
-9. npm: re-run the inventory and remove the packages it then lists as imported only by legacy files (today 50:
-   `@arco-design/web-react`, `@emotion/cache`, `@emotion/react`, the `@tiptap/*` family, `chart.js`,
-   `react-chartjs-2`, `easy-email-core`, `mjml-browser`, `highlight.js`, `lowlight`, `js-beautify`, `lodash`,
-   `lucide-react`, `react-select`, `react-dom`). Check the 9 packages it lists as not imported (CLI and config).
-10. Docs: retire RUNTIME-DEPENDENCY-INVENTORY.md and its generator, update LEGACY-ROUTES.md and ask the roadmap owner to
-    close the related steps in MODULARIZATION-ROADMAP.md.
-
-## Browser specs
-
-Specs now open the legacy admin only on purpose. `--check` fails if one opens `page=ohmylms` without the opt-out.
-
-- **Moved to the new app** (the page was only an authenticated page with `wp.apiFetch` for REST fixtures):
-  `all-activities`, `diagram-labels`, `image-quiz`, `recall-activity`, `word-games`, `word-puzzles`,
-  `wordwall-activities`, and the fixture setup of `comparison`, `single-workspace`, `quizzes`, `lesson-block-editor`
-  (`#/content-hub/lessons`) and `native-authoring` (`#/quizzes`).
-- **Legacy-only, opened with `&ohmylms_legacy=1`, delete at cutover** (26; `communities` was deleted with the
-  retired Communities screen): `analytics`, `baseline`, `commerce`, `comparison`, `course-objectives`, `course-structure`, `courses`, `curriculum`, `design`,
-  `extensions`, `gamification`, `learning-program`, `learning`, `memberships`, `placement`, `schools`,
-  `single-workspace`, `students`, `subjects`, `syllabus-course`, `syllabus`, `xapi-settings`, and the harness specs on
-  the recovered bundles `editor-packages`, `editor-runtime`, `email-vendor-chunks`, `vendor-packages`. Write new-app
-  specs for the screens that survive before deleting them; none exists yet for `page=ohmylms-app`.
-- **Retargeted to `post.php`** (4): `assessment`, `lesson-block-editor`, `native-authoring`, `quizzes` (see
-  "Replace first", item 8). On 800.local (temporary administrator) they reach the native editors directly; their
-  remaining failures are editor UI the specs do not match yet (question blocks show "Edit question" previews, no
-  "Quiz authoring" panel) and a `MutationObserver` error from `assets/js/interactive-controls.js` on `post.php`.
-
-The specs were checked with `node --check`; they were not run against 800.local (no credentials in this environment).
+Kept: `LegacyRoutes` (map, server redirect, landing notice) so old bookmarks and emails keep working, and the 79
+recovered front-end assets the manifest still lists.
 
 ## Risks
 
-- `assets/src/runtimes` and `assets/src/static` are not admin-only: 80 files feed the front end (checkout, Stripe,
-  video player, blocks, Elementor/WPBakery, theme support, images). Delete by manifest output, never by folder.
-- The front-end slots and registration fields load the extension host only in source mode (`OHMYLMS_SOURCE_ASSETS`);
-  in shipped mode `Slots::render()` fires only the server hook and the signup form keeps its PHP fields.
-- Add-ons may register submenu entries or link to `page=ohmylms#/…`. Entries are mapped or dropped, and links land
-  through the redirect, but add-on admin pages built on the legacy SDK (`/extensions/<id>` with
-  `registerAdminPage`) need the new app's `/extensions/:id` route to be at parity.
-- The server cannot see the `#` fragment, so the notice is filled in by the browser; without JavaScript the app does not
-  run anyway.
-- Some legacy screens link to other legacy screens without the opt-out; with the switch off such a click leaves the
-  legacy screen.
-- The WordPress menu does not highlight the matching submenu entry on the new app (known gap in LEGACY-ROUTES.md).
-- Deleting numbered chunks by name is unsafe; rebuild without the legacy entries first and delete only chunks no
-  build produces.
-- Other engineers add files while this runs; the inventory numbers move. Re-run it rather than trusting this snapshot.
-
+- Add-on admin pages built on the legacy SDK (`/extensions/<id>` with `registerAdminPage`) must register with the new
+  app's extension host; unmapped add-on addresses land on the app home with the notice.
+- The WordPress menu does not highlight the matching submenu entry on the new app (known gap in LEGACY-ROUTES.md); the
+  redesign in [ADMIN-REDESIGN](ADMIN-REDESIGN.md) fixes it with real group pages.
+- Translation files (`languages/*.pot`/`.po`) still reference deleted source files until they are regenerated.
+- No browser specs exist yet for `page=ohmylms-app`.
 ## Rollback
 
-- Before any deletion: set `OHMYLMS_LEGACY_ADMIN` to true (or remove it), or return true from
-  `ohmylms_legacy_admin_enabled`. Menu, redirect and links return to today's behaviour on the next request; nothing is
-  stored.
-- After step 2 (default flipped): the same constant or filter, set to true.
-- After deletion (steps 3–9): revert the deletion commits; the recovered bundles cannot be regenerated from npm, so keep
-  the last release that shipped them available until the new app has run in production for a full release.
-- Per user: `&ohmylms_legacy=1` opens any legacy screen while it still exists.
+- The switch is gone, so there is no configuration rollback. Revert the cutover commit; the
+  recovered bundles cannot be regenerated from npm, so keep the last release that shipped them available until the new
+  app has run in production for a full release.
 
-## Verification checklist
+## Verification (31 October 2026)
 
-- [ ] `OHMYLMS_LEGACY_ROUTES_TEST=1 php … tests/php/legacy-routes-integration.php` passes (both switch states).
-- [ ] `node --test tests/js/legacy-redirects.test.mjs` passes.
-- [ ] `node tools/cutover-inventory.mjs --check` exits 0.
-- [ ] With the switch off, as an administrator: the OhMyLMS menu item opens `page=ohmylms-app#/dashboard`; every
-      submenu link opens `page=ohmylms-app` (or another page/external link); "OhMyLMS (new)" is gone;
-      `page=ohmylms-app` still loads.
-- [ ] `page=ohmylms#/order-edit/<id>`, `#/settings/xapi-settings` (with `&xapi_notice=saved`) and a bare `page=ohmylms`
-      end on `#/orders/<id>`, `#/settings?tab=xapi&xapi_notice=saved` and `#/dashboard`, with
-      `ohmylms_from_legacy` removed from the address.
-- [ ] An unmapped add-on page such as `page=ohmylms#/extensions/unknown-addon-page` ends on `#/` with the notice
-      naming it, and its link opens the legacy screen with `&ohmylms_legacy=1`.
-- [ ] `page=ohmylms#/communities` (retired) opens `#/integrations`.
-- [ ] `page=ohmylms&ohmylms_legacy=1#/orders` stays on the legacy Orders screen.
-- [ ] Instructor emails, the plugins-screen Settings link, the command palette and the admin bar open new-app routes.
-- [ ] Front end: course page slots, checkout fields and registration fields render (source mode and shipped mode)
-      after "Replace first" items 1–2; MathLive fields load.
-- [ ] Native lesson and quiz editors (`post.php`) open and save.
-- [ ] The browser specs that remain pass against a test site; the new-app specs that replace the deleted ones exist.
-- [ ] After each deletion step: `npm run build:sdk`, `npm run typecheck`, `npm run test:app`, `npm test`,
-      `npm run check:architecture`, the PHP standards check and the inventory pass.
+- `npm run build` and `npm run check:ci`: typecheck, 1,524 app tests (148 files), the architecture check and its
+  budgets pass; every chunk `admin-app.js` references exists.
+- `npm test`: 399 of 400 pass, one skipped.
+- 41 PHP suites pass, including every `*-rest-integration.php`, `legacy-routes-integration.php` (367 checks),
+  `extension-host-assets-integration.php` (source and shipped modes), `native-lesson-editor-integration.php` and
+  `settings-secrets-integration.php`. `view-as-unit.php` fails the same way on the commit before the cutover.
+- On 800.local: the OhMyLMS menu opens only `page=ohmylms-app`; bare `page=ohmylms` lands on `#/dashboard`,
+  `#/order-edit/<id>` on `#/orders/<id>`, an unmapped add-on address on `#/` with the notice, and the
+  `ohmylms_from_legacy` marker is removed from the address. 24 app screens load without error notices, missing assets
+  or script errors. The course, checkout, a lesson with blocks and the native editor load without plugin 404s and
+  without the legacy SDK.

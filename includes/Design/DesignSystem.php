@@ -640,24 +640,18 @@ final class DesignSystem {
 			return;
 		}
 		$path = OHMYLMS_DIR . '/assets/css/admin-design-system.css';
-		// Shared primitives follow active feature styles, including on PHP-rendered plugin screens.
-		// Depend only on enqueued aliases: a native settings page must not pull in the React application.
+		// Shared primitives follow the WordPress component styles when the screen loads them.
 		$styles = wp_styles();
-		if ( isset( $styles->registered[ Ui::STYLE_HANDLE ] ) ) {
-			foreach ( array( 'wp-components', 'ohmylms-main', 'ohmylms-admin-ui' ) as $handle ) {
-				if ( wp_style_is( $handle, 'enqueued' ) ) {
-					$styles->registered[ Ui::STYLE_HANDLE ]->deps[] = $handle;
-				}
-			}
-			$styles->registered[ Ui::STYLE_HANDLE ]->deps = array_values( array_unique( $styles->registered[ Ui::STYLE_HANDLE ]->deps ) );
+		if ( isset( $styles->registered[ Ui::STYLE_HANDLE ] ) && wp_style_is( 'wp-components', 'enqueued' ) ) {
+			$styles->registered[ Ui::STYLE_HANDLE ]->deps = array_values( array_unique( array_merge( $styles->registered[ Ui::STYLE_HANDLE ]->deps, array( 'wp-components' ) ) ) );
 		}
 		// Load after the other plugin and WordPress component styles so the shared rules win ties.
 		$deps            = array();
 		$screen          = get_current_screen();
 		$is_authored_app = $screen && \OhMyLMS\Admin\AppPage::is_app_screen( $screen->id );
-		foreach ( array( 'wp-components', Ui::STYLE_HANDLE, 'ohmylms-main', 'ohmylms-tailwind', 'ohmylms-admin-ui', 'ohmylms-question-editor', 'ohmylms-skill-studio' ) as $handle ) {
-			// The new shell shares controls and tokens, but does not depend on the recovered application's CSS.
-			if ( $is_authored_app && ! in_array( $handle, array( 'wp-components', Ui::STYLE_HANDLE ), true ) ) {
+		foreach ( array( 'wp-components', Ui::STYLE_HANDLE, 'ohmylms-question-editor' ) as $handle ) {
+			// The admin app shares controls and tokens only; the question editor styles belong to the native editors.
+			if ( $is_authored_app && 'ohmylms-question-editor' === $handle ) {
 				continue;
 			}
 			if ( wp_style_is( $handle, 'registered' ) ) {

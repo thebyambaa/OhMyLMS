@@ -1,6 +1,6 @@
 # Stylesheet ownership (roadmap step 7)
 
-The table below records the 29 October 2026 snapshot on `main`; see the 30 October cleanup below for subsequent changes. Sizes are uncompressed bytes of the files in the plugin directory. Nothing here claims a speed-up; page-load timing was not measured.
+The table below records the 29 October 2026 snapshot on `main`; see the 30 October cleanup and the 31 October legacy admin deletion below for subsequent changes. Sizes are uncompressed bytes of the files in the plugin directory. Nothing here claims a speed-up; page-load timing was not measured.
 
 ## Who owns what
 
@@ -14,11 +14,10 @@ The table below records the 29 October 2026 snapshot on `main`; see the 30 Octob
 | Learner RTL | `frontend/rtl.css` | 1,209 | `assets/src/frontend/scss/rtl` | Only when `is_rtl()` |
 | Learner, other features | `student-hub.css` 49,070, `quiz-player-templates.css` 43,298, `practice.css` 23,752, `paper.css` 21,618, `student-dashboard.css` 17,373, and about 30 smaller files | | Each feature's PHP class enqueues its own | Referenced from `includes/` or `templates/` |
 | Public compatibility URLs | `assets/css/style.css`, `style-rtl.css` | 476,556 / 1,215 | Generated from the same SCSS by `tools/build-frontend-styles.mjs` | Not enqueued by the plugin. Kept for integrations that request the old URLs |
-| Admin application, shell | `admin-design-system.css` 17,002 (plus inline variables from `DesignSystem.php`), `tailwind.css` 22,069, `global.css` 596 (all wp-admin, LMS menu) | | `Design/DesignSystem.php`, `Assets/AdminAssets.php` | |
-| Admin application, main layer | `assets/dist/css/admin/oml-main-*.css` (and the `ohmylms.css` fallback) | 1,430,902 across 144 modules | `assets/src/design-system/admin`, plus three vendor modules in `assets/src/admin-styles` | Of this, email editor 654,046, automations 394,457 and email shell 69,440 are vendor (Arco, email builder) and load on demand |
-| Admin application, UI layer | `assets/css/oml-ui-*.css` (and the `admin-ui.css` fallback) | 77,274 across 140 modules | `assets/src/design-system/admin` | |
-| Admin application, RTL | `oml-rtl-*.css` | 4,968 | same | Only when `is_rtl()` |
-| Admin application, always requested on the app screen | `question-editor.css` 17,672, plus nine feature files (`question-stage`, `quiz-design`, `quiz-overview`, `course-objectives`, `skill-matrix`, `course-editor-ux`, `course-outline-editor`, `subject-profiles`, `library-curriculum`) totalling 55,727 | | `Design/Tokens.php::enqueue_admin()` | Printed as deferred slots and filled by `admin-styles.js` |
+| Admin shell | `admin-design-system.css` 17,002 (plus inline variables from `DesignSystem.php`), `global.css` 596 (all wp-admin, LMS menu) | | `Design/DesignSystem.php`, `Assets/AdminAssets.php` | |
+| Admin app (`page=ohmylms-app`) | `assets/dist/admin/admin-app*.css` and its feature chunks | | `assets/src/app/styles`, feature CSS in `assets/src/app` | Built by Webpack; see [ARCHITECTURE.md](ARCHITECTURE.md) |
+| Retired legacy admin (`page=ohmylms`) | `assets/dist/css/admin/oml-{main,rtl}-*.css`, `assets/css/oml-ui-*.css`, `admin-ui.css`, `tailwind.css`, the `admin-styles.js` loader | was 1,430,902 + 77,274 + 4,968 + 22,069 | deleted 31 October 2026 (see below) | |
+| Question editing styles | `question-editor.css` 17,672, plus nine feature files (`question-stage`, `quiz-design`, `quiz-overview`, `course-objectives`, `skill-matrix`, `course-editor-ux`, `course-outline-editor`, `subject-profiles`, `library-curriculum`) totalling 55,727 | | `Design/Tokens.php::enqueue_admin()` | Were requested on the legacy screen; re-targeted with that screen check |
 | Gutenberg editor | `assets/blocks/css/*`, `question-editor.css` and `paper.css` (native lesson editor) | | `Blocks/BlocksManager.php`, `Learning/NativeLessonEditor.php` | WordPress's own editor styles are not copied |
 
 ## WordPress core styles
@@ -70,6 +69,21 @@ admin compatibility CSS shrank by 947 bytes (1,430,902 to 1,429,955); the course
 Validation: 35 relevant browser checks, nine focused Node checks, 364 PHP design-token checks,
 PHP admin-style registration checks, CSS lint and the modified loader's JavaScript lint passed.
 
+## Legacy admin CSS deleted (31 October 2026)
+
+The recovered admin was deleted, so the build of its stylesheets went with it:
+
+| Removed | Files | Bytes |
+| --- | ---: | ---: |
+| `assets/src/design-system/admin/*.css` (main, UI and RTL modules); `public-selectors.json` stays for `stylelint.config.mjs` | 281 | 439,092 |
+| `assets/src/admin-styles/` (module manifest and the email shell, email editor and automations vendor modules) | 4 | 1,161,090 |
+| `assets/src/static/css/tailwind.css` and its manifest entry (only `toplevel_page_ohmylms` loaded it) | 1 | 22,069 |
+| `tools/build-admin-styles.mjs`, `tools/modularize-admin-css.mjs`, `tools/modularize-admin-overrides.mjs`, `assets/js/admin-styles.js`, `tests/js/admin-styles.test.mjs`, `tests/browser/admin-styles.spec.cjs`, `tests/fixtures/admin-styles/` | 7 | |
+
+Front-end SCSS, `oml-ui.css`, the learner CSS, block styles, theme-support CSS and the app's own CSS are unchanged.
+The shipped outputs (`assets/dist/css/admin`, `assets/dist/css/chunks`, `assets/css/oml-ui-*.css`, `admin-ui.css`,
+`tailwind.css`) and their PHP handles are removed by the build and PHP steps of [CUTOVER.md](CUTOVER.md).
+
 ## Remaining optimization boundaries
 
 - Feature modules retain their ordered cascade slots. Further request-count reduction needs a
@@ -77,8 +91,5 @@ PHP admin-style registration checks, CSS lint and the modified loader's JavaScri
 - The nine feature styles are already assigned lazy groups by `AdminAssets::defer_feature_style()`.
   They load when their corresponding content or explicit feature loader requires them, rather than
   being treated as unconditional application CSS.
-- `assets/src/static/dist/css/admin/ohmylms.css` remains a selector/parity test input.
-  `assets/dist/css/chunks/355.css` remains an email-editor dependency. Neither should be deleted
-  without replacing its consumer.
 - The Sass build still uses legacy `@import` because some partials share placeholder extensions.
   A future Sass module migration must preserve those dependencies and the existing cascade.

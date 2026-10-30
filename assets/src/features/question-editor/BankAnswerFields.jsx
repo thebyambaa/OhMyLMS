@@ -27,7 +27,7 @@ import {
 import { QuestionMediaUpload as MediaUpload } from './QuestionMediaUpload';
 import { moveOption } from './model.mjs';
 import { RichContentControl } from '../math/RichContentControl';
-import { ExtensionBoundary } from '../../extensions/ExtensionBoundary';
+import { ExtensionBoundary } from '../../app/extensions/ExtensionBoundary';
 
 /**
  * Private answer controls used by the question block; they save through the assessment writer.

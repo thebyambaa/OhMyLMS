@@ -100,7 +100,7 @@ Focused source and adapter tests cover the conversion boundary. Complete fresh-i
 
 ## AI Course Outline Generator increment
 
-**Removed.** This increment converted eighteen components in a former `ai-course-outline` feature folder. The AI Course Outline Generator was later removed from the plugin (commit `876b6cf`), so the directory, its adapter and its route no longer exist. AI assistance now comes from the [administrator assistant](ADMIN-ASSISTANT.md), the [AI tutor](AI-TUTOR.md) and the [MCP tools](MCP.md).
+**Removed.** This increment converted eighteen components in a former `ai-course-outline` feature folder. The AI Course Outline Generator was later removed from the plugin (commit `876b6cf`), so the directory, its adapter and its route no longer exist. AI assistance now comes from the [AI tutor](AI-TUTOR.md) and the [MCP tools](MCP.md); the administrator chat assistant was dropped with the legacy admin (31 October 2026).
 
 ## Question bank, versioned assessment and skills increment (2026-10-02)
 

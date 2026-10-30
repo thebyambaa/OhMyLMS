@@ -8,9 +8,12 @@ import {
 } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
+import { useSearchParams } from 'react-router-dom';
 import { setIntegrationEnabled } from './api';
 import { useIntegrations, useOperation } from './hooks';
 import {
+	AUTH_PARAMS,
+	authNotice,
 	categoryLabel,
 	categoryOptions,
 	EMPTY_FILTERS,
@@ -29,8 +32,21 @@ export default function IntegrationsPage() {
 	const [ pending, setPending ] = useState< string | null >( null );
 	const [ message, setMessage ] = useState< string | null >( null );
 	const [ needsReload, setNeedsReload ] = useState( false );
+	const [ params, setParams ] = useSearchParams();
+	const auth = authNotice( params.get( 'auth' ), params.get( 'message' ) );
 
 	const visible = filterIntegrations( list.items, filters );
+
+	function dismissAuth() {
+		setParams(
+			( current ) => {
+				const next = new URLSearchParams( current );
+				AUTH_PARAMS.forEach( ( name ) => next.delete( name ) );
+				return next;
+			},
+			{ replace: true }
+		);
+	}
 
 	function change( item: Integration, enabled: boolean ) {
 		setMessage( null );
@@ -75,6 +91,11 @@ export default function IntegrationsPage() {
 					'ohmylms'
 				) }
 			</p>
+			{ auth && (
+				<Notice status={ auth.status } onRemove={ dismissAuth }>
+					{ auth.text }
+				</Notice>
+			) }
 			{ message && (
 				<Notice status="success" onRemove={ () => setMessage( null ) }>
 					{ message }

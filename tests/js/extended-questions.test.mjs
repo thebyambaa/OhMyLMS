@@ -5,7 +5,6 @@ import {
 	extendedPublicView,
 } from '../../assets/src/features/question-editor/extendedModel.mjs';
 import { questionTypePatch } from '../../assets/src/features/question-editor/questionBlocks.mjs';
-import { describeExpected } from '../../assets/src/features/quiz-reports/model.mjs';
 
 test( 'learner configuration never contains extended grading keys or teacher notes', () => {
 	for ( const type of [
@@ -68,30 +67,6 @@ test( 'unscored formats reset marks and extended formats do not create legacy an
 		assert.equal( patch.settings.score.value, 0 );
 		assert.deepEqual( patch.questions, [] );
 	}
-} );
-
-test( 'teacher reports describe extended answers using frozen labels', () => {
-	assert.equal(
-		describeExpected( {
-			settings: { type: 'hot-text', ...extendedDefaults( 'hot-text' ) },
-		} ),
-		'2, 4'
-	);
-	assert.equal(
-		describeExpected( {
-			settings: {
-				type: 'match-table-grid',
-				...extendedDefaults( 'match-table-grid' ),
-			},
-		} ),
-		'2 + 2 → 4, 3 + 3 → 6'
-	);
-	assert.equal(
-		describeExpected( {
-			settings: { type: 'graphing', ...extendedDefaults( 'graphing' ) },
-		} ),
-		'(2, 3)'
-	);
 } );
 
 test( 'a graphing question is only saveable when the server will accept it', async () => {

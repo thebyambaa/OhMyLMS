@@ -84,62 +84,12 @@ test( 'skill level display and inline authoring code', async () => {
 	assert.equal( call.path, '/ohmylms/v1/reports/skills?course_id=9' );
 } );
 import {
-	describeExpected,
-	structuredRows,
-} from '../../assets/src/features/quiz-reports/model.mjs';
-import {
 	addPart,
 	removePart,
 	updatePart,
 	listToNumbers,
 	numbersToList,
 } from '../../assets/src/features/question-bank/model.mjs';
-test( 'report helpers describe numerical and structured answers for teachers', () => {
-	assert.equal(
-		describeExpected( {
-			settings: {
-				type: 'numerical',
-				answer: 0.75,
-				answers: [ 3 / 4 ],
-				tolerance: 0.01,
-				unit: 'm',
-			},
-		} ),
-		'0.75 or 0.75 ± 0.01 m'
-	);
-	assert.equal(
-		describeExpected( {
-			settings: { type: 'single-choice' },
-			questions: [
-				{ answer: 'A', is_correct: '1' },
-				{ answer: 'B', is_correct: '0' },
-			],
-		} ),
-		'A'
-	);
-	const rows = structuredRows( {
-		given_answer: { a: '15' },
-		settings: {
-			parts: [
-				{
-					id: 'a',
-					label: '(a)',
-					kind: 'numerical',
-					answer: 15,
-					unit: 'cm²',
-				},
-				{ id: 'c', kind: 'written', rubric: 'method marks' },
-			],
-		},
-	} );
-	assert.deepEqual(
-		rows.map( ( r ) => [ r.id, r.given, r.expected ] ),
-		[
-			[ 'a', '15', '15 cm²' ],
-			[ 'c', '', 'method marks' ],
-		]
-	);
-} );
 test( 'structured part editing keeps stable unique IDs; numeric lists parse safely', () => {
 	let parts = addPart( [] );
 	parts = addPart( parts );
@@ -154,50 +104,6 @@ test( 'structured part editing keeps stable unique IDs; numeric lists parse safe
 	assert.deepEqual( listToNumbers( '1, x, 2.5,' ), [ 1, 2.5 ] );
 	assert.equal( listToNumbers( 'x' ), undefined );
 	assert.equal( numbersToList( [ 1, 2 ] ), '1, 2' );
-} );
-import { setPartMark } from '../../assets/src/features/quiz-reports/model.mjs';
-test( 'per-part marks update the question total and are clamped to the part maximum', () => {
-	const attempt = {
-		report: {
-			questions: [
-				{
-					id: 5,
-					achive_mark: 3,
-					parts: {
-						a: { max: 2, awarded: 2 },
-						b: { max: 1, awarded: 1 },
-						c: { max: 3, awarded: null },
-					},
-				},
-				{ id: 6, achive_mark: 1 },
-			],
-		},
-	};
-	let next = setPartMark( attempt, 5, 'c', '2.5' );
-	assert.deepEqual( next.report.questions[ 0 ].part_marks, { c: 2.5 } );
-	assert.equal( next.report.questions[ 0 ].achive_mark, 5.5 );
-	next = setPartMark( next, 5, 'a', '9' );
-	assert.equal( next.report.questions[ 0 ].part_marks.a, 2 );
-	next = setPartMark( next, 5, 'b', '-1' );
-	assert.equal( next.report.questions[ 0 ].achive_mark, 4.5 );
-	assert.equal( attempt.report.questions[ 0 ].part_marks, undefined );
-	assert.equal( next.report.questions[ 1 ].achive_mark, 1 );
-	const rows = structuredRows( {
-		...next.report.questions[ 0 ],
-		settings: {
-			parts: [
-				{ id: 'a', kind: 'numerical', answer: 1 },
-				{ id: 'c', kind: 'written' },
-			],
-		},
-	} );
-	assert.deepEqual(
-		rows.map( ( r ) => [ r.id, r.awarded, r.max ] ),
-		[
-			[ 'a', 2, 2 ],
-			[ 'c', 2.5, 3 ],
-		]
-	);
 } );
 test( 'moving questions between sections keeps each section page break', () => {
 	const sections = [

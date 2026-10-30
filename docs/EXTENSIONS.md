@@ -32,7 +32,7 @@ All registration methods accept `(id, definition)` and return an unregister func
 | registerCheckoutField | Checkout UI guidance; register server fields separately |
 | registerIntegration | Integrations screen panel |
 
-Read `modules/examples/editor.js` and the small components in `assets/src/extensions/` for exact render props. `list`, `get`, `subscribe` and `getRevision` support custom consumers. `renderSlot(name,context,kind)` returns React; `mount(element,name,context,kind)` mounts outside admin. Rendering failures show a per-extension alert and emit `ohmylms:extension-error`. Async/event handlers and trusted PHP callbacks handle their own errors.
+Read `modules/examples/editor.js` and the host components in `assets/src/app/extensions/` (`ExtensionSlot.tsx`, `ExtensionBoundary.tsx`, `host.ts`) for exact render props. `list`, `get`, `subscribe` and `getRevision` support custom consumers. `renderSlot(name,context,kind)` returns React; `mount(element,name,context,kind)` mounts outside admin. Rendering failures show a per-extension alert and emit `ohmylms:extension-error`. Async/event handlers and trusted PHP callbacks handle their own errors.
 
 ## Slots and settings
 

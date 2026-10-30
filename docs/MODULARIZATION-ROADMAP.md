@@ -1,13 +1,13 @@
-# Modularization roadmap — updated 30 October 2026
+# Modularization roadmap — updated 31 October 2026
 
 ## Current rebuild direction
 
-The new admin is a typed application in `assets/src/app`, developed at
-`admin.php?page=ohmylms-app`. Its foundation, feature registry, REST client and tests are present.
+The admin is a typed application in `assets/src/app` at `admin.php?page=ohmylms-app`. The recovered
+admin runtime was deleted on 31 October 2026 (see "Legacy admin deletion" below). Its foundation, feature registry, REST client and tests are present.
 The preview includes Skills, Webhooks, Students, Taxonomies, Certificates, Emails, Integrations,
 Commerce, Memberships, Settings, Dashboard/analytics, Curriculum hierarchy, Course structure
 and Syllabus authoring screens. These are bounded feature batches, not full product parity. The current
-batch/status sections below are authoritative; the recovered-runtime sections are reference.
+batch/status sections below are authoritative; the recovered-runtime sections are history.
 See [architecture](ARCHITECTURE.md) and [course authoring](api/course-authoring.md).
 
 The stored-data compatibility requirement below has been superseded by the user's rebuild policy:
@@ -18,26 +18,36 @@ quirks rather than reproduce them. Ask before destructive actions outside the re
 dropping or resetting the Local database.
 
 Every rebuilt feature needs server permission checks, validation, typed API boundaries, tests and
-accessible controls. The old admin must not be replaced or its runtime deleted while features and
-documented extension surfaces are still missing. Stylesheet cleanup is outside this rebuild;
+accessible controls. Stylesheet cleanup is outside this rebuild;
 reuse the existing tokens and shared components.
 
 The LMS counts as fully modular when each feature owns its UI, state, API access, styles and
-tests, with explicit imports and documented interfaces. The largest remaining job is removing
-dependence on the recovered application runtime. Feature folders exist, but their components
-are still created with `createComponent(readRuntime)` and receive stores, controls, helpers
-and other components from recovered factory 1841.
+tests, with explicit imports and documented interfaces. No authored module depends on the recovered
+runtime any more: `createComponent(readRuntime)`, the `components.json` contracts, factory 1841 and the
+generated runtime dependency inventory (`tools/runtime-inventory*.mjs`, `RUNTIME-DEPENDENCY-INVENTORY.md`)
+were deleted with it.
 
-Current numbers live in the generated [runtime dependency inventory](RUNTIME-DEPENDENCY-INVENTORY.md).
-To regenerate it:
+## Legacy admin deletion (31 October 2026)
 
-```bash
-node tools/runtime-inventory-report.mjs --write
-```
+Deleted from source, tools and tests (counted before deletion, sizes include source maps):
 
-`tests/js/runtime-inventory.test.mjs` runs as part of `npm test`. It fails when a binding has no
-owner, when a component reads a binding its `components.json` does not declare, or when the
-report is stale.
+| Group | Files | Bytes |
+| --- | ---: | ---: |
+| Recovered admin source: `assets/src/application` 230, `modules` 820, legacy-admin `runtimes` 8 and `static` 4 (incl. `tailwind.css`) | 1,062 | 19,589,633 |
+| `assets/src/manifest.json` trimmed to the 79 kept assets (modules and fragment map dropped) | | 259,611 |
+| `assets/src/extensions/` (recovered SDK) | 18 | 38,123 |
+| Authored code only the SDK and bridges reached, incl. 234 `createComponent(readRuntime)` components, 18 `components.json`, the unwired `commerce-reference`, `quizzes` and other files (68, 252,666 B), and all of `assets/src/shared` | 612 | 3,982,056 |
+| Legacy admin CSS sources (`assets/src/admin-styles`, `assets/src/design-system/admin/*.css`) | 285 | 1,600,182 |
+| Tools (38 recovery-only, `build-admin-styles`, `import-static`, `modularize-admin-overrides`, `email-licenses`, `cutover-inventory`) | 43 | 160,514 |
+| `tests/js` (recovery, parity, adapter and SDK-feature tests, their stubs and hooks) | 118 | 484,489 |
+| Browser specs, helpers and fixtures of the legacy admin | 38 | 1,028,640 |
+| `assets/js/admin-styles.js`, `admin-benchmark.js`; `docs/RUNTIME-DEPENDENCY-INVENTORY.md` | 3 | 43,010 |
+
+Kept: the app, `assets/src/ui`, `blocks`, `frontend`, the authored `features` the Webpack entries reach
+(native editors, question editors, papers, math, Schools), and the 79 front-end, block and theme assets in
+`runtimes`/`static`. The native editors now import `api.ts` and `ExtensionBoundary.tsx` from
+`assets/src/app/extensions`. Verified after deletion: `npm run typecheck`, `npm run test:app` (1,524 tests; four that timed
+out under concurrent build load pass on rerun), the `tests/js` suite (391 of 393; `content-hub.test.mjs` still reads deleted legacy files) and `npm run check:architecture`.
 
 ## Invariants for every step
 
@@ -54,13 +64,13 @@ report is stale.
 
 | # | Work | Done when | Status |
 | --- | --- | --- | --- |
-| 1 | Dependency inventory | Every recovered library and LMS-owned module has an owner and plan | **Done**: generated report, zero unassigned bindings, drift test |
+| 1 | Dependency inventory | Every recovered library and LMS-owned module has an owner and plan | **Done and retired** (31 October 2026): the runtime it inventoried is deleted, so the report, its generator and drift test were removed |
 | 2 | Easy Email and remaining libraries | Email UI, editor core, source editor, html2canvas and embedded vendor copies use maintained packages or documented replacements; saved templates still open | Partly done (MJML, Arco shared factory, Chart.js, Emotion, Tiptap, Lowlight) |
 | 3 | Shared application infrastructure | Routing, controls, notifications, permissions, configuration and utilities have named modules and public exports | Typed app bootstrap/router/API/layout are present. Shared controls include npm-backed advanced/search selects. Cancellable request and unsaved-change hooks are shared by the new authoring batch. Legacy consumers still need extraction |
 | 4 | State and API access | Features import their stores, hooks and API clients directly | Preview feature batches own typed APIs and page state; the new authoring batch reuses existing transactional services. Legacy store/client dependencies remain |
-| 5 | Feature independence | Features use normal components and explicit imports, not `createComponent(readRuntime)` | 15 preview feature folders, including Home, with 22 registered route entries. Curriculum/course and syllabus authoring batches added. Full workflow and extension parity remain |
-| 6 | Authored entry point | A small bootstrap registers routes, initializes services and loads features. Production startup needs no numeric Webpack IDs or adapters | New preview bootstrap exists beside the old admin; production cutover and runtime deletion remain pending |
-| 7 | Stylesheet ownership | Tokens and controls are centralized; feature styles load with their features; recovered CSS snapshots are retired | Separate CSS work completed; excluded from this app rebuild. See [stylesheet ownership](STYLESHEET-OWNERSHIP.md) |
+| 5 | Feature independence | Features use normal components and explicit imports, not `createComponent(readRuntime)` | **Done for the runtime dependency**: no `createComponent(readRuntime)` component or `components.json` remains (234 components and 18 manifests deleted). 15 preview feature folders, including Home, with 22 registered route entries. Curriculum/course and syllabus authoring batches added. Full workflow and extension parity remain |
+| 6 | Authored entry point | A small bootstrap registers routes, initializes services and loads features. Production startup needs no numeric Webpack IDs or adapters | **Done** (31 October 2026): the app bootstrap is the only admin entry; the recovered runtime, its 820 factories, 230 fragments, adapters and SDK are deleted |
+| 7 | Stylesheet ownership | Tokens and controls are centralized; feature styles load with their features; recovered CSS snapshots are retired | **Done**: the legacy admin CSS build (285 source files, 1,600,182 bytes) and `tailwind.css` were deleted on 31 October 2026. See [stylesheet ownership](STYLESHEET-OWNERSHIP.md) |
 | 8 | Backend boundaries | PHP modules separate REST controllers, business rules and persistence; cross-feature access goes through services | Partial: Analytics repository/date/cache, Settings registry/service, Setup services, Gamification registry/store, quiz policy/settings, and course catalogue/structure services exist. Repository-wide separation remains |
 | 9 | Asset and dependency isolation | Each page type loads only its modules; one deliberate React; no accidental duplicate runtimes | Partly done (lazy email/editor chunks) |
 | 10 | Enforcement and release checks | Automated checks catch circular imports, forbidden cross-feature imports, compatibility regressions, security findings and build drift | `npm run check:ci` and `.github/workflows/ci.yml`: recovered-runtime imports, cycles, cross-feature imports, duplicate React/WordPress bundles, per-screen JS/CSS budgets, line-ending-safe inventory drift ([enforcement](ENFORCEMENT.md)) |
@@ -69,9 +79,10 @@ Sequence: remaining email dependencies → shared infrastructure → state/API m
 independent features → authored bootstrap → retire recovery adapters. Backend, styles,
 security and testing progress alongside.
 
-## Recovered-runtime inventory (reference)
+## Recovered-runtime inventory (history)
 
-The sections below describe the earlier extraction approach. Use them to locate dependencies;
+The code these sections describe was deleted on 31 October 2026; the paths and tools they name no longer
+exist. They describe the earlier extraction approach. Use them to locate dependencies;
 they are not instructions to preserve recovered quirks or introduce stored-data compatibility
 wrappers. The active sequence is: verify the typed foundation and Webhooks API, rebuild feature
 batches, verify the documented extension surfaces, switch the admin, then retire the recovered

@@ -1,4 +1,0 @@
-.ohmylms-form-workspace-actions:has(.ohmylms-question-type-picker)
-	> .components-button {
-	flex-shrink: 0;
-}

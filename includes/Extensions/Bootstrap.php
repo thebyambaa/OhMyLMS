@@ -70,7 +70,6 @@ final class Bootstrap {
 		);
 		Editor::init();
 		\OhMyLMS\AI\AdminPage::init();
-		\OhMyLMS\AI\AssistantController::init();
 		add_action(
 			'ohmylms_lesson_completed',
 			static function ( $lesson, $course, $student ) {

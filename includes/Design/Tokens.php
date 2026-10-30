@@ -68,7 +68,6 @@ final class Tokens {
 			);
 		}
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_frontend_font' ), 5 );
-		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_admin' ), 20 );
 	}
 
 	/**
@@ -258,55 +257,5 @@ final class Tokens {
 		$url = self::font_url( self::font( 'ohmylms_font_family' ) );
 		if ( $url ) {
 			wp_enqueue_style( 'ohmylms-font', $url, array(), null ); }
-	}
-
-	/** Admin-app variables (brand, WordPress components, Arco scale) and font. */
-	public static function admin_css() {
-		return DesignSystem::css()
-			. 'body.oml-ds{--ohmylms-admin-font:var(--oml-font-family);--ohmylms-admin-gutter:var(--oml-page-pad);}'
-			. 'body.oml-ds .ohmylms-admin-page{font-family:var(--oml-font-family)}';
-	}
-
-	/**
-	 * Is admin app screen for Tokens.
-	 */
-	public static function is_admin_app_screen() {
-		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
-		return $screen && 'toplevel_page_ohmylms' === $screen->id;
-	}
-
-	/**
-	 * Enqueue admin for Tokens.
-	 */
-	public static function enqueue_admin() {
-		if ( ! self::is_admin_app_screen() ) {
-			return; }
-		$ui_version = OHMYLMS_VERSION . '.' . substr( hash_file( 'sha256', OHMYLMS_DIR . '/assets/css/admin-ui.css' ), 0, 12 );
-		$ui_modules = \OhMyLMS\Assets\AdminAssets::get_module_handles( 'ui' );
-		// WordPress only registers a new handle through wp_enqueue_style() when its URL is non-empty.
-		// Register the module-only alias explicitly so its dependencies and the design system can load.
-		wp_register_style( 'ohmylms-admin-ui', $ui_modules ? false : plugins_url( 'assets/css/admin-ui.css', OHMYLMS_FILE ), array_merge( array( 'ohmylms-main' ), $ui_modules ), $ui_version );
-		wp_enqueue_style( 'ohmylms-admin-ui' );
-		$question_editor_version = OHMYLMS_VERSION . '.' . substr( hash_file( 'sha256', OHMYLMS_DIR . '/assets/css/question-editor.css' ), 0, 12 );
-		wp_enqueue_style( 'ohmylms-question-editor', plugins_url( 'assets/css/question-editor.css', OHMYLMS_FILE ), array( 'ohmylms-admin-ui' ), $question_editor_version );
-		foreach ( array( 'question-stage', 'quiz-design', 'quiz-overview', 'course-objectives', 'skill-matrix', 'course-editor-ux', 'course-outline-editor', 'subject-profiles', 'library-curriculum' ) as $file ) {
-			wp_enqueue_style( 'ohmylms-' . $file, plugins_url( 'assets/css/' . $file . '.css', OHMYLMS_FILE ), array( 'ohmylms-question-editor' ), (string) filemtime( OHMYLMS_DIR . '/assets/css/' . $file . '.css' ) );
-		}
-		wp_add_inline_style( 'ohmylms-admin-ui', self::admin_css() );
-		wp_add_inline_style( 'ohmylms-question-editor', self::quiz_css() );
-		$url = self::font_url( self::font( 'ohmylms_font_family' ) );
-		if ( $url ) {
-			wp_enqueue_style( 'ohmylms-admin-font', $url, array(), null ); }
-		// The Design settings screen previews font names in their own face.
-		wp_add_inline_script(
-			'wp-element',
-			'window.ohmylmsDesign=' . wp_json_encode(
-				array(
-					'fonts'    => self::FONTS,
-					'defaults' => self::DEFAULTS + self::QUIZ_COLORS,
-				)
-			) . ';',
-			'before'
-		);
 	}
 }

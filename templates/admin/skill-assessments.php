@@ -44,7 +44,7 @@ $ticked = $form['skills'];
 			echo esc_html( sprintf( __( '“%1$s” was created with %2$d questions for %3$d skills.', 'ohmylms' ), $created['title'], $created['questions'], $created['skills'] ) );
 			?>
 			<?php echo 'publish' === $created['status'] ? esc_html__( 'It is published.', 'ohmylms' ) : esc_html__( 'It is a draft: publish it from the quiz editor when you are ready.', 'ohmylms' ); ?>
-			<a href="<?php echo esc_url( $assessment_edit_url ? $assessment_edit_url : admin_url( 'admin.php?page=ohmylms' ) ); ?>"><?php esc_html_e( 'Open it', 'ohmylms' ); ?></a>
+			<a href="<?php echo esc_url( $assessment_edit_url ? $assessment_edit_url : \OhMyLMS\Admin\LegacyRoutes::app_url( '/quizzes' ) ); ?>"><?php esc_html_e( 'Open it', 'ohmylms' ); ?></a>
 		</p></div>
 	<?php endif; ?>
 	<?php if ( '' !== $message ) : ?>

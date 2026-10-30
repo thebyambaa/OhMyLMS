@@ -28,7 +28,7 @@ WordPress LMS with editable React feature modules, a reproducible source build a
 ## Integrations and extension points
 
 - [Extension SDK](docs/EXTENSIONS.md), [Add-ons](docs/ADDONS.md) and [frontend Interactivity contract](docs/INTERACTIVITY.md).
-- [Administrator assistant](docs/ADMIN-ASSISTANT.md) and [MCP connections](docs/MCP.md): authenticated LMS tools for OpenAI, Anthropic and Gemini, including `list_unit_skills` and the draft-only `create_skill_assessment`.
+- [MCP connections](docs/MCP.md): authenticated LMS tools for OpenAI, Anthropic and Gemini, including `list_unit_skills` and the draft-only `create_skill_assessment`.
 - [xAPI emitter](docs/XAPI.md) and the [cmi5 design](docs/CMI5.md).
 
 Run `npm run format` to format authored React source and `npm run check` to validate formatting, contracts, tests and the production build.

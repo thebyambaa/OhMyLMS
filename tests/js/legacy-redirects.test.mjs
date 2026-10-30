@@ -4,13 +4,8 @@ import { createRequire } from 'node:module';
 import test from 'node:test';
 
 const require = createRequire( import.meta.url );
-const {
-	resolve,
-	redirectUrl,
-	landingUrl,
-	showUnavailable,
-	start,
-} = require( '../../assets/js/legacy-redirects.js' );
+const legacyRedirects = require( '../../assets/js/legacy-redirects.js' );
+const { resolve, landingUrl, showUnavailable, start } = legacyRedirects;
 // Rules and cases shared with tests/php/legacy-routes-integration.php, which checks that `routes` is
 // exactly LegacyRoutes::routes().
 const fixture = JSON.parse(
@@ -19,11 +14,6 @@ const fixture = JSON.parse(
 		'utf8'
 	)
 );
-const config = {
-	appPage: 'ohmylms-app',
-	optOut: 'ohmylms_legacy',
-	routes: fixture.routes,
-};
 
 test( 'the fixture holds the PHP route map', () => {
 	assert.ok( fixture.routes.length > 40 );
@@ -36,77 +26,13 @@ test( 'resolves every shared case like LegacyRoutes::resolve()', () => {
 	}
 } );
 
-test( 'redirectUrl keeps other query parameters and opens the new page', () => {
-	assert.equal(
-		redirectUrl( config, {
-			pathname: '/wp-admin/admin.php',
-			search: '?page=ohmylms&xapi_notice=saved',
-			hash: '#/settings/xapi-settings',
-		} ),
-		'/wp-admin/admin.php?page=ohmylms-app&xapi_notice=saved#/settings?tab=xapi'
-	);
-	assert.equal(
-		redirectUrl( config, {
-			pathname: '/wp-admin/admin.php',
-			search: '?page=ohmylms',
-			hash: '',
-		} ),
-		'/wp-admin/admin.php?page=ohmylms-app#/dashboard'
-	);
-} );
-
-test( 'redirectUrl stays on unmapped screens and when opted out', () => {
-	const location = {
-		pathname: '/wp-admin/admin.php',
-		search: '?page=ohmylms',
-		hash: '#/extensions/unknown-addon-page',
-	};
-	assert.equal( redirectUrl( config, location ), null );
-	assert.equal(
-		redirectUrl( config, {
-			...location,
-			search: '?page=ohmylms&ohmylms_legacy=1',
-			hash: '#/orders',
-		} ),
-		null
-	);
-	assert.equal( redirectUrl( null, location ), null );
-} );
-
-test( 'start redirects on load and after the legacy router changes the hash', () => {
-	const listeners = {};
-	const replaced = [];
-	const win = {
-		ohmylmsLegacyRoutes: config,
-		location: {
-			pathname: '/wp-admin/admin.php',
-			search: '?page=ohmylms',
-			hash: '#/extensions/unknown-addon-page',
-			replace: ( url ) => replaced.push( url ),
-		},
-		history: {
-			pushState( state, title, url ) {
-				win.location.hash = url;
-			},
-			replaceState() {},
-		},
-		addEventListener: ( name, callback ) => {
-			listeners[ name ] = callback;
-		},
-	};
-	start( win );
-	assert.deepEqual( replaced, [], 'an unmapped add-on page stays legacy' );
-	win.history.pushState( null, '', '#/memberships/orders' );
-	assert.deepEqual( replaced, [
-		'/wp-admin/admin.php?page=ohmylms-app#/orders',
+test( 'the legacy-page redirect mode is gone', () => {
+	assert.deepEqual( Object.keys( legacyRedirects ).sort(), [
+		'landingUrl',
+		'resolve',
+		'showUnavailable',
+		'start',
 	] );
-	win.location.hash = '#/order-edit/12';
-	listeners.hashchange();
-	assert.equal(
-		replaced[ 1 ],
-		'/wp-admin/admin.php?page=ohmylms-app#/orders/12'
-	);
-	assert.equal( typeof listeners.popstate, 'function' );
 } );
 
 test( 'start does nothing without the localized map', () => {
@@ -114,10 +40,11 @@ test( 'start does nothing without the localized map', () => {
 	assert.doesNotThrow( () => start( {} ) );
 } );
 
-// After the cutover the server sends admin.php?page=ohmylms to the new app with the marker, and the
-// browser carries the legacy hash over (LegacyRoutes::legacy_redirect_url()).
+// The server sends admin.php?page=ohmylms to the new app with the marker, and the browser carries the
+// legacy hash over (LegacyRoutes::legacy_redirect_url()); LegacyRoutes::url() builds the same address
+// for unmapped routes. LegacyRoutes::script_data() is the config.
 const landing = {
-	...config,
+	routes: fixture.routes,
 	landing: {
 		param: 'ohmylms_from_legacy',
 		home: '/',
@@ -153,20 +80,20 @@ test( 'landingUrl maps a carried-over legacy hash and drops the marker', () => {
 } );
 
 test( 'landingUrl sends unmapped legacy routes home and names them', () => {
-	assert.deepEqual( landingUrl( landing, arrived( '#/extensions/unknown-addon-page' ) ), {
-		url: '/wp-admin/admin.php?page=ohmylms-app#/',
-		unavailable: '/extensions/unknown-addon-page',
-	} );
+	assert.deepEqual(
+		landingUrl( landing, arrived( '#/extensions/unknown-addon-page' ) ),
+		{
+			url: '/wp-admin/admin.php?page=ohmylms-app#/',
+			unavailable: '/extensions/unknown-addon-page',
+		}
+	);
 	assert.equal(
-		landingUrl(
-			landing,
-			arrived( '#/quizzes?action=bulk' )
-		).unavailable,
+		landingUrl( landing, arrived( '#/quizzes?action=bulk' ) ).unavailable,
 		'/quizzes?action=bulk'
 	);
 } );
 
-test( 'landingUrl ignores pages not opened by the cutover redirect', () => {
+test( 'landingUrl ignores pages not opened from a legacy address', () => {
 	assert.equal(
 		landingUrl( landing, {
 			pathname: '/wp-admin/admin.php',
@@ -175,7 +102,10 @@ test( 'landingUrl ignores pages not opened by the cutover redirect', () => {
 		} ),
 		null
 	);
-	assert.equal( landingUrl( config, arrived( '#/orders' ) ), null );
+	assert.equal(
+		landingUrl( { routes: fixture.routes }, arrived( '#/orders' ) ),
+		null
+	);
 } );
 
 /**
@@ -185,16 +115,14 @@ test( 'landingUrl ignores pages not opened by the cutover redirect', () => {
  */
 function fakeDocument( readyState ) {
 	const code = { textContent: '' };
-	const link = { hash: '' };
 	const notice = {
 		hidden: true,
 		querySelector: ( selector ) =>
-			'[data-ohmylms-legacy-route]' === selector ? code : link,
+			'[data-ohmylms-legacy-route]' === selector ? code : null,
 	};
 	const listeners = {};
 	return {
 		code,
-		link,
 		notice,
 		listeners,
 		readyState,
@@ -206,12 +134,15 @@ function fakeDocument( readyState ) {
 	};
 }
 
-test( 'showUnavailable fills in the route and the legacy link', () => {
+test( 'showUnavailable fills in the route', () => {
 	const doc = fakeDocument( 'complete' );
-	showUnavailable( doc, 'ohmylms-legacy-unavailable', '/extensions/unknown-addon-page' );
+	showUnavailable(
+		doc,
+		'ohmylms-legacy-unavailable',
+		'/extensions/unknown-addon-page'
+	);
 	assert.equal( doc.notice.hidden, false );
 	assert.equal( doc.code.textContent, '/extensions/unknown-addon-page' );
-	assert.equal( doc.link.hash, '/extensions/unknown-addon-page' );
 	assert.doesNotThrow( () => showUnavailable( doc, 'missing', '/x' ) );
 } );
 
@@ -221,7 +152,10 @@ test( 'start lands once with replaceState and shows the notice after load', () =
 	const win = {
 		ohmylmsLegacyRoutes: landing,
 		document: doc,
-		location: { ...arrived( '#/extensions/unknown-addon-page' ), replace: assert.fail },
+		location: {
+			...arrived( '#/extensions/unknown-addon-page' ),
+			replace: assert.fail,
+		},
 		history: {
 			state: null,
 			replaceState: ( state, title, url ) => replaced.push( url ),
@@ -247,4 +181,16 @@ test( 'start lands once with replaceState and shows the notice after load', () =
 		'/wp-admin/admin.php?page=ohmylms-app#/memberships',
 	] );
 	assert.equal( mapped.notice.hidden, true );
+
+	replaced.length = 0;
+	start( {
+		...win,
+		location: {
+			pathname: '/wp-admin/admin.php',
+			search: '?page=ohmylms-app',
+			hash: '#/orders',
+			replace: assert.fail,
+		},
+	} );
+	assert.deepEqual( replaced, [], 'a normal app visit keeps its address' );
 } );

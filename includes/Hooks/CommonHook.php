@@ -2,17 +2,6 @@
 
 namespace OhMyLMS\Hooks;
 
-use MailMintPro\App\Utilities\Helper\Integration;
-use MailMintPro\Mint\Internal\AbandonedCart\Helper\Common;
-use Mint\MRM\DataBase\Models\ContactGroupModel;
-use Mint\MRM\Internal\Constants;
-use Mint\MRM\Utilites\Helper\Email;
-use Mint\MRM\Utilities\Helper\PermissionManager;
-use Mint\MRM\Utilities\Helper\TranslationString\TransStrings;
-use MintMail\App\Internal\Automation\HelperFunctions;
-use MintMailPro\Mint_Pro_Helper;
-use MRM\Common\MrmCommon;
-
 use OhMyLMS\Abstracts\HookHandler;
 
 /**
@@ -44,7 +33,6 @@ class CommonHook extends HookHandler {
 		add_filter( 'mint_webhook_allowed', array( $this, 'maybe_allowed_webhook' ), 10 );
 
 		add_filter( 'wp_head', array( $this, 'ohmylms_add_internal_styles' ), 10 );
-		add_filter( 'admin_init', array( $this, 'ohmylms_remove_notice' ), 10 );
 		add_action( 'admin_init', array( $this, 'ohmylms_remove_emoji' ), 10 );
 		add_action( 'admin_bar_menu', array( $this, 'add_edit_course_menu' ), 999 );
 		add_action( 'wp_login', array( $this, 'set_users_last_login' ), 10, 2 );
@@ -73,7 +61,6 @@ class CommonHook extends HookHandler {
 		add_filter( 'ohmylms_data_stores', array( $this, 'pro_data_stores' ), 10 );
 		add_filter( 'ohmylms_modules', array( $this, 'pro_modules' ), 10 );
 		add_filter( 'ohmylms_is_pro', array( $this, 'ohmylms_is_pro' ), 10 );
-		add_filter( 'ohmylms_get_admin_script_data', array( $this, 'ohmylms_get_admin_script_data_for_mm' ), 10, 2 );
 		add_action( 'template_redirect', array( $this, 'restrict_session_access' ), 10 );
 		add_action( 'ohmylms_after_settings_menu_item', array( $this, 'register_submenu' ) );
 		add_filter( 'post_type_link', array( $this, 'session_single_url' ), 1, 2 );
@@ -139,19 +126,6 @@ class CommonHook extends HookHandler {
 		}
 	}
 
-
-	/**
-	 * Removes the notice.
-	 *
-	 * @since 1.0.0
-	 */
-	public function ohmylms_remove_notice() {
-		global $pagenow;
-		if ( 'admin.php' === $pagenow && isset( $_GET['page'] ) && 'ohmylms' === $_GET['page'] ) {
-			remove_all_actions( 'admin_notices' );
-			remove_all_actions( 'all_admin_notices' );
-		}
-	}
 
 	/**
 	 * Modifies the number of posts per page for the course archive.
@@ -1520,7 +1494,6 @@ class CommonHook extends HookHandler {
 
 		// Check if we're on any OhMyLMS admin page.
 		$ohmylms_pages = array(
-			'toplevel_page_ohmylms',
 			'ohmylms_page_ohmylms-courses',
 			'ohmylms_page_ohmylms-lessons',
 			'ohmylms_page_ohmylms-quiz',
@@ -2409,186 +2382,6 @@ class CommonHook extends HookHandler {
 				}
 			}
 		}
-	}
-
-	/**
-	 * Ohmylms get admin script data for mm for Common hook.
-	 *
-	 * @param mixed $localized_data Localized data.
-	 * @param mixed $handle Handle.
-	 */
-	public function ohmylms_get_admin_script_data_for_mm( $localized_data, $handle ) {
-		if ( defined( 'MAILMINT' ) && 'ohmylms' === $handle ) {
-			$wc_active         = MrmCommon::is_wc_active();
-			$recaptcha_default = MrmCommon::recaptcha_default_configuration();
-			$default           = array(
-				'business_name'    => '',
-				'phone'            => '',
-				'business_address' => array(
-					'address_line_1' => '',
-					'postal'         => '',
-					'city'           => '',
-					'address_line_2' => '',
-					'country'        => '',
-					'state'          => '',
-				),
-				'logo_url'         => '',
-			);
-
-			// Admin Name & Email Finding Starts.
-			$admin_email = get_option( 'admin_email' );
-			$admin_user  = get_user_by( 'email', $admin_email );
-			$admin_name  = $admin_user ? $admin_user->display_name : '';
-			// Get current user email.
-			$current_user       = wp_get_current_user();
-			$current_user_email = $current_user->user_email;
-
-			$new_data = array(
-				'current_userID'                 => get_current_user_id(),
-				'editor_data_source'             => $this->get_editor_source(),
-				'timezone_list'                  => Constants::get_timezone_list(),
-				'admin_url'                      => get_admin_url(),
-				'countries'                      => Constants::get_country_name(),
-				'states'                         => Constants::get_country_state(),
-				'lists'                          => ContactGroupModel::get_all_to_custom_select( 'lists' ),
-				'tags'                           => ContactGroupModel::get_all_to_custom_select( 'tags' ),
-				'email_settings'                 => get_option( '_mrm_email_settings', Email::default_email_settings() ),
-				'is_wc_active'                   => $wc_active,
-				'start_of_week'                  => get_option( 'start_of_week', 1 ),
-				'unsubscribe_url'                => home_url(),
-				'preference_url'                 => home_url(),
-				'business_basic_settings'        => get_option( '_mrm_business_basic_info_setting', $default ),
-				'business_social_settings'       => get_option( '_mrm_business_social_info_setting', array( 'socialMedia' => array() ) ),
-				'date_format'                    => get_option( 'date_format', 'F j, Y' ),
-				'local_time'                     => date_i18n( 'Y-m-d H:i:s' ),
-				'site_url'                       => site_url(),
-				'currency_format'                => $wc_active ? html_entity_decode( get_woocommerce_currency_symbol() ) : '',
-				'is_mailmint_pro_active'         => MrmCommon::is_mailmint_pro_active(),
-				'is_mailmint_pro_license_active' => MrmCommon::is_mailmint_pro_license_active(),
-				'is_edd_active'                  => HelperFunctions::is_edd_active(),
-				'contacts_map_attrs'             => MrmCommon::import_contacts_map_attrs(),
-				'post_types'                     => MrmCommon::get_all_post_types(),
-				'open_ai_key'                    => MrmCommon::is_mailmint_pro_active() && MrmCommon::is_mailmint_pro_version_compatible( '1.15.2' ) ? Integration::get_open_ai_secret_key() : array(),
-				'recaptcha_settings'             => get_option( '_mint_recaptcha_settings', $recaptcha_default ),
-				'smtp_warring'                   => MrmCommon::find_active_smtp_plugin(),
-				'exist_contact_field'            => Constants::get_exsiting_fields_array(),
-				'contact_general_fields'         => MrmCommon::get_contact_general_fields(),
-				'contact_custom_fields'          => MrmCommon::get_contact_custom_fields(),
-				'cart_settings'                  => $wc_active && MrmCommon::is_mailmint_pro_active() && MrmCommon::is_mailmint_pro_version_compatible( '1.5.0' ) ? Common::get_abandoned_cart_settings() : array(),
-				'images_url'                     => plugins_url( 'Email-Templates/images', __FILE__ ) . '/',
-				'mint_page'                      => 'campaign',
-				'is_learndash_active'            => HelperFunctions::is_learndash_lms_active(),
-				'is_tutor_active'                => HelperFunctions::is_tutor_active(),
-				'tutor_courses'                  => HelperFunctions::get_tutor_lms_courses(),
-				'is_memberpress_active'          => HelperFunctions::is_memberpress_active(),
-				'mint_trans'                     => TransStrings::getStrings(),
-				'is_customize_wc_email'          => method_exists( MrmCommon::class, 'is_email_customization_active' ) ? MrmCommon::is_email_customization_active() : false,
-				'total_batches'                  => MrmCommon::get_total_batches(),
-				'wp_uuid4'                       => wp_generate_uuid4(),
-				'is_lifterlms_active'            => HelperFunctions::is_lifter_lms_active(),
-				'lifter_courses'                 => HelperFunctions::get_lifter_lms_courses(),
-				'lifter_memberships'             => HelperFunctions::get_lifter_lms_memberships(),
-				'admin_img_url'                  => MRM_DIR_URL . 'admin/assets/images',
-				'admin_name'                     => $admin_name,
-				'admin_email'                    => $admin_email,
-				'address'                        => MrmCommon::get_business_full_address(),
-				'current_user_email'             => $current_user_email,
-				'bounce_configs'                 => MrmCommon::get_bounce_configs(),
-				'is_wcs_active'                  => MrmCommon::is_mailmint_pro_active() && MrmCommon::is_mailmint_pro_version_compatible( '1.15.0' ) ? Mint_Pro_Helper::is_woocommerce_subscription_active() : false,
-				'is_wcm_active'                  => MrmCommon::is_mailmint_pro_active() && MrmCommon::is_mailmint_pro_version_compatible( '1.15.0' ) ? Mint_Pro_Helper::is_woocommerce_membership_active() : false,
-				'permissions'                    => PermissionManager::get_readable_permissions(),
-				'is_wcw_active'                  => MrmCommon::is_mailmint_pro_active() && MrmCommon::is_mailmint_pro_version_compatible( '1.15.0' ) ? Mint_Pro_Helper::is_woocommerce_wishlist_active() : false,
-				'is_fluent_booking_active'       => HelperFunctions::is_fluent_booking_active(),
-				'is_mailpoet_active'             => HelperFunctions::is_mailpoet_active(),
-			);
-
-			// Merge new data into localized data.
-			$localized_data = array_merge( $localized_data, $new_data );
-		}
-		return $localized_data;
-	}
-
-	/**
-	 * Get editor source for Common hook.
-	 */
-	private function get_editor_source() {
-		// get product categories for email builder.
-		$wc_categories = $this->get_formatted_wc_categories();
-		$wp_categories = $this->get_formatted_wp_post_categories();
-
-		return apply_filters(
-			'plugin_hook_name',
-			array(
-				'product_categories' => $wc_categories,
-				'post_categories'    => $wp_categories,
-				'placeholder_image'  => MRM_DIR_URL . 'admin/assets/images/mint-placeholder.png',
-			)
-		);
-	}
-
-	/**
-	 * Get formatted wc categories for Common hook.
-	 */
-	private function get_formatted_wc_categories() {
-		$taxonomy     = 'product_cat';
-		$orderby      = 'name';
-		$show_count   = 0;
-		$pad_counts   = 0;
-		$hierarchical = 1;
-		$title        = '';
-		$empty        = 0;
-
-		$args               = array(
-			'taxonomy'     => $taxonomy,
-			'orderby'      => $orderby,
-			'show_count'   => $show_count,
-			'pad_counts'   => $pad_counts,
-			'hierarchical' => $hierarchical,
-			'title_li'     => $title,
-			'hide_empty'   => $empty,
-		);
-		$product_categories = get_categories( $args );
-		$wc_categories      = array();
-		foreach ( $product_categories as $product_cat ) {
-			$wc_categories[] = array(
-				'value' => $product_cat->term_id,
-				'label' => $product_cat->name,
-			);
-		}
-
-		return $wc_categories;
-	}
-
-	/**
-	 * Get formatted wp post categories for Common hook.
-	 */
-	private function get_formatted_wp_post_categories() {
-		$taxonomy     = 'category';
-		$orderby      = 'name';
-		$show_count   = 0;
-		$pad_counts   = 0;
-		$hierarchical = 1;
-		$title        = '';
-		$empty        = 0;
-
-		$args            = array(
-			'taxonomy'     => $taxonomy,
-			'orderby'      => $orderby,
-			'show_count'   => $show_count,
-			'pad_counts'   => $pad_counts,
-			'hierarchical' => $hierarchical,
-			'title_li'     => $title,
-			'hide_empty'   => $empty,
-		);
-		$post_categories = get_categories( $args );
-		$categories      = array();
-		foreach ( $post_categories as $post_cat ) {
-			$categories[] = array(
-				'value' => $post_cat->term_id,
-				'label' => $post_cat->name,
-			);
-		}
-		return $categories;
 	}
 
 	/**

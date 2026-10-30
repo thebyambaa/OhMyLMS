@@ -8,34 +8,30 @@ They load on demand independently of the opt-in admin source build. The maintain
 
 The source build is opt-in. Read ACCEPTANCE.md before enabling it on a working site.
 
-For component conventions, factory contracts and the feature development workflow, read [REACT-DEVELOPMENT.md](REACT-DEVELOPMENT.md). Run `npm run check` before delivering source changes.
+The admin is the typed app in `assets/src/app` ([ARCHITECTURE.md](ARCHITECTURE.md)); for its conventions and the feature workflow, read [REACT-DEVELOPMENT.md](REACT-DEVELOPMENT.md). Run `npm run check` before delivering source changes.
 
 ## Source layout
 
-- `assets/src/manifest.json`: original SHA-256/size, asset-to-source and numeric module mappings.
-- `assets/src/modules/`: 831 extracted Webpack factories. Vendor-bundle modules are under `dist/vendors/`.
-- `assets/src/application/`: ordered fragments of factory 1841. `routes.js` is the admin route table, `screens/<feature>/` holds each screen (`*Route.js` is the memoized route wrapper, `*Screen.js` the implementation), and `shared/<topic>.js` are byte-sized slices of shared code, named after the feature they mostly contain (a slice can include helpers for neighbouring features because the original scope was cut by size, not by feature). Fragment order in `manifest.json` is significant; rebuilding must produce an identical `ohmylms.js`.
-- `assets/src/extensions/`: authored React components, registry, API client, error boundaries and editor integrations.
-- `assets/src/features/`: membership validation and 17 quiz/question React components, including an authored quiz hook/API client and choice-options editor. See QUIZ-SOURCE.md for the compatibility boundaries and tested coverage.
-- `tools/quiz-adapters.mjs`: checked integration of native quiz components into the recovered runtime.
-- `assets/src/features/quiz-reports/`: ten editable report, grading and question-result components, integrated by `tools/quiz-report-adapters.mjs`. See the feature README for compatibility boundaries and validation.
-- `assets/src/features/courses/`: 25 course components, authored editor/create/settings views, load/save and integration hooks, API client and model helpers. See COURSE-SOURCE.md for tested scope and compatibility boundaries.
-- `tools/course-adapters.mjs`: checked integration of native course components into the recovered runtime.
-- `tools/application-adapters.mjs`: checked AST integration points. Missing/changed patterns fail the build.
-- Adapted application builds strip the retired `/license` and `/free-vs-pro` routes and their component implementations. Their recovered fragments remain untouched solely for parity/provenance checks.
-- `assets/src/features/certificates/`: 13 editable certificate list, template, editor, design-control and preview React components integrated by `tools/certificate-adapters.mjs`. With the Gamification add-on on, the certificate list is shown as the Certificates tab of the Gamification screen; the recovered components are untouched. See [GAMIFICATION-CERTIFICATES.md](GAMIFICATION-CERTIFICATES.md).
-- `assets/src/features/emails/`: 12 editable notification-template settings, personalization, editor, field and responsive-preview React components integrated by `tools/email-adapters.mjs`.
-- `assets/src/features/settings/`: 19 editable General Settings route, design, account/privacy, permalink, advanced, payment and migration React components integrated by `tools/settings-adapters.mjs`. Email Settings remains in its dedicated feature.
-- `assets/src/features/integrations/`: six editable Add-ons route, card, configuration and provider settings React components integrated by `tools/integration-adapters.mjs`.
-- `assets/src/features/webhooks/`: four editable webhook list, details, field-mapping and editor-modal React components integrated by `tools/webhook-adapters.mjs`.
-- `assets/src/features/taxonomies/`: the former Categories and Tags routes plus their shared taxonomy modal, integrated by `tools/taxonomy-adapters.mjs`. Categories and tags were replaced by the curriculum and Course Bundles, so `assets/src/extensions/index.jsx` sends `#/categories` and `#/tags` to those pages, shown as the Curriculum and Course Bundles tabs of the Content Hub; the converted source is kept because the parity build still expects it.
-- `assets/src/features/setup/`: eleven editable Setup Wizard step, migration/import, controller and route components integrated by `tools/setup-adapters.mjs`.
-- `tools/vendor-adapters.mjs`: makes the two installed ProseMirror state export formats share the editor's existing CommonJS instance. The original duplicated generators caused `Adding different instances of a keyed plugin (plugin$)` in both original and recovered lesson screens. The parity build retains the untouched factories; the adapted build repairs the duplication rather than suppressing its error.
-- `assets/src/features/content-hub/`: the Content Hub frame and routes, the lesson library, the attach and publish dialogs the syllabus editor reuses, and their pure model modules, wired through `assets/src/extensions/index.jsx` and loaded as the lazy `content-hub` chunk (no recovered component is replaced). See [CONTENT-HUB.md](CONTENT-HUB.md).
-- `assets/src/features/curriculum/` and `assets/src/features/bundles/`: authored accordion curriculum editor and Course Bundles manager, registered as SDK admin pages (no recovered component is replaced, so there is no `components.json`). See [CURRICULUM-BUNDLES.md](CURRICULUM-BUNDLES.md). The curriculum editor also hosts syllabuses (skill groups, skills, CSV import), described in [SYLLABUS.md](SYLLABUS.md).
-- `build/`: generated output; never edit it.
+The recovered admin (`admin.php?page=ohmylms`, its Webpack factories, fragments, adapters and SDK) was deleted
+at the cutover ([CUTOVER.md](CUTOVER.md)); `admin.php?page=ohmylms` only redirects to the new app.
 
-Recovered fragments are reconstructed compiled syntax, not original JSX. They retain shared lexical scope, minified names, transpiler helpers and some third-party code. Moving one into an ES module requires identifying its imports/exports. Original comments, names and package versions cannot be recovered reliably. The original readable frontend JS and SCSS remain; this first equivalent build uses recovered runtime/CSS snapshots, not an unverified SCSS recompilation.
+- `assets/src/app/`: the typed admin app, its extension host (`app/extensions/`: registry, `api.ts`,
+  `ExtensionBoundary.tsx`, slots, DOM mounting) and the registration entry.
+- `assets/src/features/`: authored JavaScript the kept Webpack entries and the app still use: native lesson and
+  quiz editors (`learning/`), question editors and models (`question-editor/`, `question-bank/`), assessment
+  settings, content-hub helpers, curriculum CSV/API helpers, math runtime, printable papers, Schools and the
+  signup fields (`students/registration-api.mjs`). `features/curriculum/icons.json` is read by
+  `Curriculum/Icons.php`.
+- `assets/src/ui/`: the shared UI kit with the PHP twin in `Design/Ui.php`.
+- `assets/src/blocks/`: block editor and view scripts (quiz player, question player, interactive activity, subject
+  browsing).
+- `assets/src/frontend/`: front-end SCSS (built by `tools/build-frontend-styles.mjs`) and readable front-end
+  scripts; `frontend/js/ohmylms.js` is served by `Extensions/Interactivity.php`.
+- `assets/src/runtimes/` and `assets/src/static/`: the 79 recovered front-end, block, Elementor/WPBakery,
+  theme-support and image assets still shipped. `assets/src/manifest.json` maps each to its output;
+  `tools/build-assets.mjs` copies or reprints them. Delete by manifest output, never by folder.
+- `assets/src/design-system/admin/public-selectors.json`: the public class names `stylelint.config.mjs` allows.
+- `build/`: generated output; never edit it.
 
 ## Commands
 
@@ -50,9 +46,9 @@ npm run lint
 npm run test:reproducible
 ```
 
-`build` reads recovered/authored source, not the previous compiled app. `dev` watches recovered source/build adapters and the React SDK. `test` compares the unadapted rebuilt AST with the shipped baseline and tests registry/form behavior. Syntax checks use Babel. Source maps embed source contents. The SDK uses WordPress-provided React and generates `extensions.asset.php` through [WordPress dependency extraction](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-dependency-extraction-webpack-plugin/).
+`build` runs `build:assets` (front-end styles and the manifest outputs), `build:sdk` (the Webpack entries) and `tools/sync-admin-assets.mjs`, which publishes `build/` to `assets/dist`. `dev` watches the manifest sources and runs Webpack in watch mode. `test` runs the `node:test` suites in `tests/js`; `test:app` runs the app's Vitest suites. `lint:source` (`tools/check-source.mjs`) parses every script and checks that authored relative imports resolve. Source maps embed source contents. Entries use WordPress-provided React and generate `*.asset.php` through [WordPress dependency extraction](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-dependency-extraction-webpack-plugin/).
 
-`recover`, `split-admin.mjs` and `import-static.mjs` are one-time migration tools, not build steps. Do not regenerate over edits. Installed PHP packages are included; do not clone another e-commerce package over this modified implementation.
+Installed PHP packages are included; do not clone another e-commerce package over this modified implementation.
 
 For the disposable WordPress installation, set `OHMYLMS_TEST_CREDENTIALS` to its external JSON file and run `npm run test:browser` (Chromium; set `OHMYLMS_CHROMIUM_PATH` to use a specific binary), then `php tests/php/extensions-integration.php` with mysqli/mbstring. The PHP suite refuses databases other than `ohmylms_source_test`. Also run `php tests/unit.php` and `php tests/membership-permissions.php`.
 
@@ -82,10 +78,6 @@ add-on can still provide communities and add its own admin page through the exte
 (`registerAdminPage`, see [EXTENSIONS.md](EXTENSIONS.md)). The recovered route and its fragments are deleted
 with the rest of the recovered runtime (see [CUTOVER.md](CUTOVER.md)).
 
-## Dashboard and analytics source
-
-Eighteen components now build from assets/src/features/analytics through tools/analytics-adapters.mjs. They cover the dashboard, course analytics, earnings reports and supporting controls; the existing course-row source is reused. See the feature README for compatibility boundaries and verification.
-
 ## Design tokens and admin page layout
 
 Colors and fonts are chosen under Settings → Design → Colors & fonts and turned into CSS custom
@@ -102,14 +94,11 @@ brand colors or fonts.
 - Fonts: system, the theme font (learner pages) or one of the Cyrillic-capable Google Fonts in
   `Tokens::FONTS`. Values are validated; invalid colors and fonts fall back to the defaults.
 
-SDK admin pages wrap their content in `AdminPage` and `AdminCard` from
-`assets/src/extensions/AdminPage.jsx`, styled by `assets/css/admin-ui.css`: the native 40px gutter,
-20px title row with actions, white 7px cards and the grey-header table look for `table.widefat`.
-Every extension route gets the gutter even without the component.
+Extension admin pages (`registerAdminPage`) render in the new app at `#/extensions/<id>`, inside the app layout.
 
 ## Known issues
 
-None currently recorded. The source-built vendor bundles used to load duplicate ProseMirror packages, which broke the rich-text editor. `tools/vendor-adapters.mjs` now maps the ESM copies of prosemirror-state, prosemirror-model and prosemirror-transform onto their CJS twins (module ids 42845/37820, 58903/77712, 38262/36553), so each package has a single instance, and the bundled `core/preferences` and `core/keyboard-shortcuts` stores are replaced by the WordPress ones. `SourceAssets::url()` serves `assets/dist/vendors/*` from `build/` like every other asset. If you rebuild after upgrading the shipped vendor bundle, re-check those module ids and export names.
+None currently recorded.
 
 ## Block-based Text lessons and the question engine
 
@@ -143,10 +132,10 @@ python tools/compile-translations.py --locale mn --merge-pot
 
 `tools/compile-translations.py` appends missing entries to the `.po` without rewriting existing translations and compiles the `.mo` and the Jed JSON; recompiling an unchanged catalog is byte-identical. Do not edit generated `.mo` or `.json` files by hand.
 
-## Interactive items in the lesson editor's "/" menu
+## Interactive items
 
-The legacy rich-text editor's slash menu is a fixed list in a recovered module (`0-66427.js`). `tools/slash-adapters.mjs` patches the slash extension (`0-70181.js`) so the menu also reads `window.ohmylms.extensions.slashGroups()`: commands registered with `registerSlashCommand(id, {label, description, aliases, iconName, action(editor)})` appear in an "Interactive" group (`iconName` is any Lucide icon name; unknown names show no icon).
+`registerSlashCommand(id, {label, description, aliases, iconName, action(editor)})` still registers commands in the extension registry, but the recovered rich-text editor that showed them in its "/" menu was deleted with the legacy admin; no current editor reads them.
 
 Interactive content is stored as a shortcode, e.g. `[ohmylms_activity type="reveal" prompt="..." answer="..."]`, and rendered by PHP (`ohmylms_register_activity`, see `includes/Extensions/Activities.php`). Behaviour uses the WordPress Interactivity API (`assets/extensions/reveal.js`, a script module). Only the shortcode is saved, so content filtering never strips markup. Plain shortcode attributes cannot contain double quotes; use a `data='{...}'` JSON attribute for richer data.
 
-To add an activity: register the PHP activity, add a script module if it needs behaviour, and register a slash command whose action inserts its shortcode. Lesson pages render content after `wp_head`; on block themes `Activities::ensure_import_map()` prints the module import map in the footer so late-enqueued modules resolve `@wordpress/interactivity`.
+To add an activity: register the PHP activity and add a script module if it needs behaviour. Lesson pages render content after `wp_head`; on block themes `Activities::ensure_import_map()` prints the module import map in the footer so late-enqueued modules resolve `@wordpress/interactivity`.

@@ -1,36 +1,4 @@
 const path = require( 'node:path' );
-const fs = require( 'node:fs' );
-const pmNames = [
-	'state',
-	'model',
-	'view',
-	'transform',
-	'commands',
-	'keymap',
-	'schema-list',
-	'tables',
-	'history',
-	'gapcursor',
-	'dropcursor',
-	'inputrules',
-	'changeset',
-	'collab',
-	'menu',
-	'schema-basic',
-	'markdown',
-];
-const pmAliases = Object.fromEntries(
-	pmNames.map( ( name ) => {
-		const id = 'prosemirror-' + name;
-		const target = path.join(
-			path.dirname( require.resolve( id ) ),
-			'index.js'
-		);
-		if ( ! fs.existsSync( target ) )
-			throw new Error( 'Missing shared ESM runtime ' + id );
-		return [ id.concat( '$' ), target ];
-	} )
-);
 const DependencyExtractionWebpackPlugin = require( '@wordpress/dependency-extraction-webpack-plugin' );
 const MiniCssExtractPlugin = require( 'mini-css-extract-plugin' );
 module.exports = {
@@ -46,34 +14,6 @@ module.exports = {
 		'admin-app-registration': path.resolve(
 			__dirname,
 			'assets/src/app/extensions/registration-entry.ts'
-		),
-		'email-packages': path.resolve(
-			__dirname,
-			'assets/src/features/vendor-packages/email-loader.js'
-		),
-		'vendor-charts': path.resolve(
-			__dirname,
-			'assets/src/features/vendor-packages/charts.js'
-		),
-		'vendor-emotion': path.resolve(
-			__dirname,
-			'assets/src/features/vendor-packages/emotion.js'
-		),
-		'editor-tiptap': path.resolve(
-			__dirname,
-			'assets/src/features/editor-packages/tiptap.js'
-		),
-		'editor-lowlight': path.resolve(
-			__dirname,
-			'assets/src/features/editor-packages/lowlight.js'
-		),
-		'course-structure': path.resolve(
-			__dirname,
-			'assets/src/features/courses/structureClient.js'
-		),
-		extensions: path.resolve(
-			__dirname,
-			'assets/src/extensions/index.jsx'
 		),
 		schools: path.resolve(
 			__dirname,
@@ -121,22 +61,7 @@ module.exports = {
 		clean: true,
 	},
 	devtool: 'source-map',
-	externals: [
-		( { context, request }, callback ) => {
-			if (
-				request === 'highlight.js/lib/core' &&
-				context.includes( '@tiptap' )
-			)
-				return callback(
-					null,
-					[ 'ohmylmsEditorPackages', 'highlight' ],
-					'window'
-				);
-			callback();
-		},
-	],
 	resolve: {
-		alias: pmAliases,
 		extensions: [ '.js', '.jsx', '.mjs', '.ts', '.tsx' ],
 	},
 	module: {
