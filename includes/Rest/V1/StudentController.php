@@ -225,8 +225,9 @@ class StudentController extends RestController {
 			$roles[] = '%' . $wpdb->esc_like( '"' . $role . '";b:1;' ) . '%';
 		}
 
-		$sql .= ' WHERE ( agg.user_id IS NOT NULL OR EXISTS ( SELECT 1 FROM %i m WHERE m.user_id = u.ID AND m.meta_key = %s AND ( ' . implode( ' OR ', $likes ) . ' ) ) )';
-		$args = array_merge( $args, $roles );
+		// New student accounts, and students created inside a school, belong in the directory before their first enrollment.
+		$sql .= ' WHERE ( agg.user_id IS NOT NULL OR EXISTS ( SELECT 1 FROM %i m WHERE m.user_id = u.ID AND m.meta_key = %s AND ( ' . implode( ' OR ', $likes ) . ' ) ) OR EXISTS ( SELECT 1 FROM %i ms WHERE ms.user_id = u.ID AND ms.meta_key = %s ) )';
+		$args = array_merge( $args, $roles, array( $wpdb->usermeta, '_ohmylms_managed_school' ) );
 
 		if ( ! empty( $filters['user_id'] ) ) {
 			$sql   .= ' AND u.ID = %d';
