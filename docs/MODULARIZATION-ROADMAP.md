@@ -63,7 +63,7 @@ report is stale.
 | 7 | Stylesheet ownership | Tokens and controls are centralized; feature styles load with their features; recovered CSS snapshots are retired | Separate CSS work completed; excluded from this app rebuild. See [stylesheet ownership](STYLESHEET-OWNERSHIP.md) |
 | 8 | Backend boundaries | PHP modules separate REST controllers, business rules and persistence; cross-feature access goes through services | Partial: Analytics repository/date/cache, Settings registry/service, Setup services, Gamification registry/store, quiz policy/settings, and course catalogue/structure services exist. Repository-wide separation remains |
 | 9 | Asset and dependency isolation | Each page type loads only its modules; one deliberate React; no accidental duplicate runtimes | Partly done (lazy email/editor chunks) |
-| 10 | Enforcement and release checks | Automated checks catch circular imports, forbidden cross-feature imports, compatibility regressions, security findings and build drift | Inventory drift check added |
+| 10 | Enforcement and release checks | Automated checks catch circular imports, forbidden cross-feature imports, compatibility regressions, security findings and build drift | `npm run check:ci` and `.github/workflows/ci.yml`: recovered-runtime imports, cycles, cross-feature imports, duplicate React/WordPress bundles, per-screen JS/CSS budgets, line-ending-safe inventory drift ([enforcement](ENFORCEMENT.md)) |
 
 Sequence: remaining email dependencies → shared infrastructure → state/API modules →
 independent features → authored bootstrap → retire recovery adapters. Backend, styles,
@@ -161,18 +161,21 @@ test in `tests/php/` and component tests.
 | --- | --- | --- |
 | Webhooks, Integrations, Emails, Certificates (templates) | Done | Issued certificates and learner download not built; Google Meet, xAPI and MCP settings not built |
 | Students, Categories and tags (read-only) | Done | Student reminder route (open mail relay) must be rebuilt before any UI |
-| Orders, Coupons | Done | Refund UI deliberately absent; gateway list route missing |
+| Orders, Coupons | Done | Refund UI deliberately absent |
+| Subscriptions | Done | List, detail, confirmed pause/resume/cancel ([commerce](api/commerce.md)); cancel-at-end-of-term is impossible in the current schema |
 | Memberships | Done | Old membership routes removed |
-| Settings (General, Branding, Account, Permalinks, Advanced, Currency, Tax) | Done | Payment gateway secrets still returned by the old route |
+| Settings (General, Branding, Account, Permalinks, Advanced, Currency, Tax, Payment gateways, Design system, Hub icons, xAPI, AI tutor, MCP) | Done | Credentials are write-only everywhere, including the legacy page data. Layout, archive and quiz design settings have no route and remain |
 | Dashboard, Earnings, Course report | Done | Mixed-currency totals; amounts still in postmeta |
 | Content Hub (skills and curriculum) | Partial | Skills catalogue, curriculum hierarchy/placement, syllabus skill groups/order/library assignment, CSV review/apply, draft-course sync and individual mapping/comparison. Rich objectives/translations, resources, combined mappings and full workspace parity remain |
 | Courses | Partial | The `/courses` screens provide hardened metadata/media editing; `/content-hub/courses` retains units, lesson placements, settings, mastery and reviewed program publication. Consolidating overlapping controls and extension parity remain |
 | Learner frontend TypeScript | Planned | Migrate learner-facing JavaScript after the authoring workflows; admin TypeScript completion does not complete the frontend migration |
 | Lessons | Partial | Typed library/draft creation, WordPress visual blocks/source, resources, explicit publication and course-unit editing links. Advanced media, inline question and extension controls remain native |
-| Setup wizard and Gamification | Typed admin screens available | Upstream registry-backed screens/APIs are merged; see their feature contracts |
+| Setup wizard and Gamification | Typed admin screens available | Gamification now includes the Streaks and XP and mastery tabs over hardened engagement settings routes |
 | Quizzes, attempts and grading | Partial | Upstream hardened APIs and typed screens are merged; full question/content editor parity remains |
 | Question bank and question editor | Partial | Hardened `ohmylms/v1/questions` API (see [questions](api/questions.md)) and typed `#/content-hub/question-bank` list and editor. The editor edits name, text, points, difficulty and the options of single-choice, multiple-choice, true/false, reorder and matching, and hosts registered extension editors (graded-reader verified). Live checks on `800.local`: create, edit, save, full reload, version history, stale-save conflict keeping local edits. Built-in SDK editors (numerical, categorize and others), skills, media, approve, duplicate, banks, import/export and quiz question authoring remain |
-| Communities and Assignments | Preview UI pending | Backend groundwork exists; no full-screen parity claim |
+| Assignments | Done | List, editor, submissions and grading through the legacy grading pipeline ([assignments](api/assignments.md)); placement is read-only and instructor emails still link to legacy screens |
+| Account Hub | Partial | Schools, classes, teachers and parents ([account hub](api/account-hub.md)); roster intake (invitations, CSV, managed students) and school archiving remain in the legacy admin |
+| Communities | Preview UI pending | Its REST API comes from a separate add-on |
 | Cutover (menu points at the new app, recovered runtime deleted) | Not started | Old PHP tests for removed routes go with it |
 | PHP boundaries, page-by-page asset loading, CI enforcement checks | Partial | Named backend services and lazy preview chunks exist. The extension SDK, classic editor, media library and TinyMCE no longer load on every page (logged-out home page on `800.local`: 49 scripts, 1,030 KB gzip before; 2 scripts, 2 KB after). Complete boundaries and enforcement remain |
 | Extension host in the new app | Partial | Authored host: admin pages, screen slots, editor panels by original route, integration panels, readiness event and per-extension error isolation, verified with the examples module and graded-reader on `800.local`. Question, lesson and membership surfaces wait for their rebuilt screens; checkout and frontend slots still use the existing SDK |
