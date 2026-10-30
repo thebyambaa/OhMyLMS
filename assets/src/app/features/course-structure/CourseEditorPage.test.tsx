@@ -22,6 +22,45 @@ function open() {
 	);
 	return { ...result, reload };
 }
+it( 'saves learning controls and targets while preserving placement and bank settings', async () => {
+	const user = userEvent.setup();
+	open();
+	vi.mocked( api.saveOutline ).mockResolvedValue( {
+		...outline,
+		revision: 'next',
+	} );
+	await user.selectOptions(
+		screen.getByLabelText( 'Learning mode' ),
+		'skill-based'
+	);
+	await user.selectOptions(
+		screen.getByLabelText( 'Mastery target' ),
+		'mastered'
+	);
+	await user.click( screen.getByLabelText( 'Required for completion' ) );
+	await user.click(
+		screen.getByRole( 'button', { name: 'Save outline draft' } )
+	);
+	await screen.findAllByText(
+		'Outline draft saved. Learner publication is unchanged.'
+	);
+	expect( vi.mocked( api.saveOutline ).mock.calls[ 0 ]![ 1 ] ).toMatchObject(
+		{
+			program: {
+				...outline.program,
+				mode: 'skill-based',
+				outcomes: [
+					{
+						term_id: 7,
+						chapter_id: 8,
+						required: true,
+						target: 'mastered',
+					},
+				],
+			},
+		}
+	);
+} );
 it( 'keeps all draft fields and new unit UUIDs when saving', async () => {
 	const user = userEvent.setup();
 	open();

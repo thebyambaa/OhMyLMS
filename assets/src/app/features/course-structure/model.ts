@@ -59,6 +59,36 @@ export function parseOutline( raw: unknown ): Outline {
 	) {
 		return invalid();
 	}
+	if (
+		! [ 'traditional', 'skill-based', 'blended' ].includes(
+			text( program.mode )
+		) ||
+		typeof program.recognize_prior !== 'boolean' ||
+		! Number.isSafeInteger( program.evidence_days ) ||
+		Number( program.evidence_days ) < 0
+	) {
+		return invalid();
+	}
+	const outcomes = program.outcomes.map( ( value ) => {
+		const outcome = record( value );
+		positiveId( outcome.term_id );
+		if (
+			! [ 'proficient', 'mastered' ].includes( text( outcome.target ) ) ||
+			typeof outcome.required !== 'boolean' ||
+			( outcome.chapter_id !== undefined &&
+				( ! Number.isSafeInteger( outcome.chapter_id ) ||
+					Number( outcome.chapter_id ) < 0 ) )
+		) {
+			return invalid();
+		}
+		return outcome;
+	} );
+	if (
+		new Set( outcomes.map( ( outcome ) => outcome.term_id ) ).size !==
+		outcomes.length
+	) {
+		return invalid();
+	}
 	const units = row.units
 		.map( ( value ) => {
 			const unit = record( value );
@@ -108,7 +138,7 @@ export function parseOutline( raw: unknown ): Outline {
 			...program,
 			items,
 			groups: ( ( program.groups ?? [] ) as unknown[] ).map( record ),
-			outcomes: program.outcomes.map( record ),
+			outcomes,
 		},
 	};
 }

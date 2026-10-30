@@ -190,8 +190,16 @@ class CommonHook extends HookHandler {
 			// Check if the current post type is in the restricted list.
 			if ( in_array( $post->post_type, $restrict_post_types, true ) ) {
 
-				// Check if the user is logged in and is the author of the post.
-				if ( ! is_user_logged_in() || get_current_user_id() !== (int) $post->post_author ) {
+				// Opening a quiz you author is a preview: clear any old recorded attempt or
+				// completion of it so the page never opens on a stale "passed".
+				if ( 'ohmylms-quiz' === $post->post_type && is_user_logged_in() ) {
+					\OhMyLMS\Quiz\Submission::clear_preview_record( $post->ID, get_current_user_id() );
+				}
+
+				// Admins and the post's author preview and work through their own content
+				// without enrolling. This matches the template-level check in
+				// templates/single-lesson.php and OhMyLMS\SequentialMode's bypass.
+				if ( ! is_user_logged_in() || ( ! current_user_can( 'manage_options' ) && get_current_user_id() !== (int) $post->post_author ) ) {
 
 					// Block access for logged-in users who haven't verified their email yet.
 					if (
@@ -1581,7 +1589,7 @@ class CommonHook extends HookHandler {
 		}
 
 		if ( ! empty( $_GET['ohmylms_verify_error'] ) ) {
-			$error = sanitize_key( wp_unslash( $_GET['ohmylms_verify_error'] ));
+			$error = sanitize_key( wp_unslash( $_GET['ohmylms_verify_error'] ) );
 			if ( 'expired' === $error ) {
 				$msg = __( 'The verification link has expired.', 'ohmylms' );
 			} else {
@@ -1608,7 +1616,7 @@ class CommonHook extends HookHandler {
 	 *
 	 * @param string $type 'success' | 'info' | 'warning'.
 	 * @param string $message Already-escaped or safe HTML message.
-	 * @param bool   $escape Whether to run esc_html on $message (default true).
+	 * @param bool   $escape  Whether to run esc_html on $message (default true).
 	 */
 	private function render_verification_notice( string $type, string $message, bool $escape = true ): void {
 		$brand = get_option( 'ohmylms_notification_color', get_option( 'ohmylms_email_base_color', '#6E42D3' ) );

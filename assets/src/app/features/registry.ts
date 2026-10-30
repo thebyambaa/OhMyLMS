@@ -6,6 +6,7 @@ import { courseEditor, courses } from './courses';
 import {
 	courseEditor as courseStructureEditor,
 	courses as courseStructures,
+	courseSettings,
 } from './course-structure';
 import { curriculum } from './curriculum';
 import { courseReport, dashboard, earnings } from './dashboard';
@@ -13,6 +14,7 @@ import { emails } from './emails';
 import { gamification } from './gamification';
 import { home } from './home';
 import { integrations } from './integrations';
+import { lessons, lessonEditor } from './lessons';
 import { membershipEditor, memberships } from './memberships';
 import { quizAttempts, quizEditor, quizzes } from './quizzes';
 import { settings } from './settings';
@@ -43,6 +45,9 @@ export const features: readonly FeatureDefinition[] = [
 	quizzes,
 	quizEditor,
 	quizAttempts,
+	courseSettings,
+	lessons,
+	lessonEditor,
 	orders,
 	orderDetail,
 	coupons,

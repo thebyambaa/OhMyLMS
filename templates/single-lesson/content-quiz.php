@@ -13,6 +13,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
 $course_id = ohmylms_get_course_by_content_id( get_the_ID() );
+// Admins and the quiz's author are previewing: nothing they submit is saved.
+$is_preview = \OhMyLMS\Quiz\Submission::is_preview( get_the_ID(), get_current_user_id() );
 ?>
 
 <?php while ( have_posts() ) : ?>
@@ -52,6 +54,37 @@ $course_id = ohmylms_get_course_by_content_id( get_the_ID() );
 			?>
 		</div>
 		
+		<?php if ( $is_preview ) : ?>
+			<?php $preview_result = \OhMyLMS\Quiz\Submission::take_preview_result( get_the_ID(), get_current_user_id() ); ?>
+			<p class="ohmylms-quiz-notice" style="margin:16px 0;padding:12px 16px;border-radius:8px;background:#F4F5F7;color:#4B5563;font-size:14px;line-height:1.5;">
+				<?php esc_html_e( 'Preview mode: you can edit this quiz, so your attempts and results are not saved. You can retake it as often as you like.', 'ohmylms' ); ?>
+			</p>
+			<?php if ( $preview_result ) : ?>
+				<div class="ohmylms-quiz-preview-result" style="margin:0 0 24px;padding:16px;border:1px solid #E2E4EA;border-radius:8px;font-size:14px;line-height:1.6;">
+					<h3 style="margin:0 0 8px;font-size:16px;"><?php esc_html_e( 'Last preview result', 'ohmylms' ); ?></h3>
+					<p style="margin:4px 0;">
+						<strong><?php esc_html_e( 'Score: ', 'ohmylms' ); ?></strong>
+						<?php echo esc_html( \OhMyLMS\Assessment\Scoring::display( $preview_result['total'] ) . ' / ' . \OhMyLMS\Assessment\Scoring::display( $preview_result['max'] ) ); ?>
+					</p>
+					<p style="margin:4px 0;">
+						<strong><?php esc_html_e( 'Correct answers: ', 'ohmylms' ); ?></strong>
+						<?php echo esc_html( $preview_result['correct'] . ' / ' . $preview_result['questions'] ); ?>
+					</p>
+					<p style="margin:4px 0;">
+						<strong><?php esc_html_e( 'Result: ', 'ohmylms' ); ?></strong>
+						<?php
+						if ( 'in-review' === $preview_result['status'] ) {
+							echo '<span class="pending">' . esc_html__( 'Needs manual grading (not available in preview)', 'ohmylms' ) . '</span>';
+						} elseif ( $preview_result['total'] >= $preview_result['passing'] ) {
+							echo '<span class="passed">' . esc_html__( 'Pass', 'ohmylms' ) . '</span>';
+						} else {
+							echo '<span class="failed">' . esc_html__( 'Fail', 'ohmylms' ) . '</span>';
+						}
+						?>
+					</p>
+				</div>
+			<?php endif; ?>
+		<?php else : ?>
 		<div class="ohmylms-table ohmylms-quiz-table">
 			<div class="ohmylms-tr ohmylms-head">
 				<div class="ohmylms-th date"><?php esc_html_e( 'Date', 'ohmylms' ); ?></div>
@@ -144,10 +177,11 @@ $course_id = ohmylms_get_course_by_content_id( get_the_ID() );
 
 		</div>
 
-		<?php
-		// The learner's score and answer review, shared with the Quiz Player block and the shortcode.
-		// The newest attempt is shown unless the address asks for another one (?review=ID).
-		echo \OhMyLMS\Quiz\AnswerReview::render( $quiz, (array) $quiz_attempts ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped by the review template.
-		?>
+			<?php
+			// The learner's score and answer review, shared with the Quiz Player block and the shortcode.
+			// The newest attempt is shown unless the address asks for another one (?review=ID).
+			echo \OhMyLMS\Quiz\AnswerReview::render( $quiz, (array) $quiz_attempts ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped by the review template.
+			?>
+		<?php endif; ?>
 	</div>
 <?php endwhile; // end of the loop. ?>

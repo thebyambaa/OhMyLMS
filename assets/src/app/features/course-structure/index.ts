@@ -27,3 +27,16 @@ export const courseEditor: FeatureDefinition = {
 			)
 	),
 };
+export const courseSettings: FeatureDefinition = {
+	id: 'course-settings-editor',
+	title: __( 'Course settings', 'ohmylms' ),
+	path: '/content-hub/courses/:id/settings',
+	capability: 'manage_options',
+	hidden: true,
+	component: lazy(
+		() =>
+			import(
+				/* webpackChunkName: "admin-app-course-settings" */ './CourseSettingsPage'
+			)
+	),
+};

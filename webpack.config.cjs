@@ -169,7 +169,10 @@ module.exports = {
 		],
 	},
 	plugins: [
-		new MiniCssExtractPlugin( { filename: '[name].css' } ),
+		new MiniCssExtractPlugin( {
+			filename: '[name].css',
+			chunkFilename: 'chunks/[name].[contenthash:12].css',
+		} ),
 		new DependencyExtractionWebpackPlugin( {
 			requestToExternal: ( request ) =>
 				'jsxgraph' === request ? 'JXG' : undefined,
