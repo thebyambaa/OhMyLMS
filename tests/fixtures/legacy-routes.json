@@ -314,7 +314,7 @@
 		],
 		[
 			"/quiz-report",
-			null
+			"/reports/quizzes"
 		],
 		[
 			"/quiz-edit/5",
@@ -350,7 +350,7 @@
 		],
 		[
 			"/content-hub",
-			null
+			"/content-hub"
 		],
 		[
 			"/content-hub/courses",
@@ -475,6 +475,14 @@
 		[
 			"/accounthub?tab=users&page=2",
 			"/account-hub?tab=users&page=2"
+		],
+		[
+			"/quiz-report?search=algebra",
+			"/reports/quizzes?search=algebra"
+		],
+		[
+			"/content-hub?tab=courses",
+			"/content-hub?tab=courses"
 		]
 	],
 	"routes": [
@@ -651,8 +659,16 @@
 			}
 		},
 		{
+			"from": "/quiz-report",
+			"to": "/reports/quizzes"
+		},
+		{
 			"from": "/quiz-report/:id/*",
 			"to": "/quizzes/:id/attempts"
+		},
+		{
+			"from": "/content-hub",
+			"to": "/content-hub"
 		},
 		{
 			"from": "/quiz-edit/:id",

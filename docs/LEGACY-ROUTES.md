@@ -70,7 +70,9 @@ Each rule has `from` (path pattern), `to` (new route) and optionally `query` and
 | `/accounthub` (no tab, `home`, `schools`) | `/account-hub` |
 | `/accounthub?tab=classes\|teachers\|parents\|users` | `/account-hub?tab=<same>` |
 | `/accounthub?tab=students` | `/students` |
+| `/quiz-report` | `/reports/quizzes` (filters copied) |
 | `/quiz-report/:id/...` (including `/grade-quiz/:attempt`) | `/quizzes/:id/attempts` |
+| `/content-hub` | `/content-hub` (overview) |
 | `/quiz-edit/:id` | `/quizzes/:id` (settings and questions) |
 | `/quizzes`, `/content-hub/quizzes`, `/assessments` (no `?action=`, or `new`/`import`) | `/quizzes(?action=<same>)` |
 | `/course-edit/:id/...` | `/courses/:id` |
@@ -103,11 +105,11 @@ Gamification tabs: `point-settings` → `points`, `badge-settings` → `badges`,
 
 ## Kept on the legacy admin
 
-Not at parity, so not mapped: the `/content-hub` frame, other `?action=`/`?add=` values, other `/extensions/<id>`
-pages and `/quiz-report` without an id. The Content Hub
-menu entry therefore still opens the legacy admin; the "OhMyLMS (new)" entry is kept. After the cutover the Content Hub
-entry opens `/courses` and "OhMyLMS (new)" is removed. The Sessions entry (when shown) opens `/sessions` in both
-states.
+Every built-in legacy screen has a new one (31 October 2026). Still unmapped: `?action=`/`?add=` values the new
+screens do not open, and add-on `/extensions/<id>` pages, whose add-ons register them with the new app.
+`LegacyRoutes::unavailable()` is empty; add-ons can list their own screens with `ohmylms_legacy_unavailable_screens`.
+The Content Hub and Sessions menu entries open the new app in both states; after the cutover "OhMyLMS (new)" is
+removed.
 
 ## Known gaps
 

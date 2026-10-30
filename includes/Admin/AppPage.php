@@ -136,10 +136,13 @@ final class AppPage {
 				<?php echo esc_html__( 'This screen is not available in the new OhMyLMS admin yet:', 'ohmylms' ); ?>
 				<code data-ohmylms-legacy-route></code>
 			</p>
-			<p>
-				<?php echo esc_html__( 'Not available yet:', 'ohmylms' ); ?>
-				<?php echo esc_html( implode( ', ', array_values( LegacyRoutes::unavailable() ) ) ); ?>
-			</p>
+			<?php $unavailable = LegacyRoutes::unavailable(); ?>
+			<?php if ( $unavailable ) : ?>
+				<p>
+					<?php echo esc_html__( 'Not available yet:', 'ohmylms' ); ?>
+					<?php echo esc_html( implode( ', ', array_values( $unavailable ) ) ); ?>
+				</p>
+			<?php endif; ?>
 			<p>
 				<a data-ohmylms-legacy-link href="<?php echo esc_url( $legacy ); ?>"><?php echo esc_html__( 'Open it in the legacy admin', 'ohmylms' ); ?></a>
 			</p>

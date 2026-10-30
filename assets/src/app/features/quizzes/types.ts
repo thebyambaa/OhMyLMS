@@ -260,3 +260,54 @@ export interface QuizQuestionCreated extends QuizQuestions {
 
 /** A pin request: the version the quiz uses now, a version id, or `null` to unpin. */
 export type PinChoice = 'current' | number | null;
+
+/** A row of `GET /reports/quizzes`: aggregate attempt figures, never student data. */
+export interface QuizReportRow {
+	id: number;
+	title: string;
+	status: 'publish' | 'draft';
+	course: CourseRef | null;
+	attempts: number;
+	learners: number;
+	in_progress: number;
+	to_grade: number;
+	completed: number;
+	/** Mean marks of completed attempts; null without completed attempts. */
+	average_score: number | null;
+	/** Pass mark in marks; 0 when the quiz has none. */
+	passing_score: number;
+	/** Completed attempts at or above the pass mark; null without a pass mark. */
+	passed: number | null;
+	/** Percentage of completed attempts that passed; null without a pass mark or completed attempts. */
+	pass_rate: number | null;
+	last_submitted_at: string | null;
+	can_edit: boolean;
+	can_grade: boolean;
+}
+
+/** `GET /reports/quizzes/summary`: totals over the filtered quizzes. */
+export interface QuizReportSummary {
+	quizzes: number;
+	attempts: number;
+	learners: number;
+	to_grade: number;
+	completed: number;
+}
+
+/** Which quizzes the report lists by attempt activity. */
+export type ReportActivity = 'all' | 'attempted' | 'to_grade';
+
+/** Sort fields of the report. */
+export type ReportOrderBy =
+	'last_submitted' | 'attempts' | 'to_grade' | 'title' | 'created_at';
+
+/** Report filters, paging and sort, as kept in the address. */
+export interface QuizReportQuery {
+	page: number;
+	search: string;
+	course: number;
+	status: 'all' | 'publish' | 'draft';
+	activity: ReportActivity;
+	orderby: ReportOrderBy;
+	order: 'asc' | 'desc';
+}

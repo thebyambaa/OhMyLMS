@@ -49,18 +49,15 @@ class Menu {
 		$pending_count = $this->count_unchecked_orders();
 		$pending_count = apply_filters( 'ohmylms_pending_orders_count', $pending_count );
 		$pending_count = 0;
-		$badge_html    = $pending_count > 0 ? " <span class='update-plugins count-$pending_count'><span class='plugin-count'>$pending_count</span></span>" : '';
-		$legacy_admin  = LegacyRoutes::legacy_admin_enabled();
-		if ( current_user_can( $capability ) ) {
+		$badge_html    = $pending_count > 0 ? " <span class='update-plugins count-$pending_count'><span class='plugin-count'>$pending_count</span></span>" : '';		if ( current_user_can( $capability ) ) {
 			// Each entry names its legacy route; LegacyRoutes opens the new app where it replaces the screen.
 			$submenu[ $slug ][] = array( esc_attr__( 'Dashboard', 'ohmylms' ), $capability, LegacyRoutes::url( '/dashboard' ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 			// Courses, lessons, quizzes, the question bank, assignments, skills, the curriculum and Learning
 			// Bundles are managed together in the Content Hub; the old #/courses, #/quizzes, #/assignments,
 			// #/assessments, #/extensions/skills, #/extensions/question-bank, #/extensions/curriculum,
 			// #/extensions/bundles, #/categories and #/tags addresses open the matching tabs. Curriculum
-			// replaces course categories and Course Bundles replace course tags. The new app has no hub frame,
-			// so after the cutover the entry opens its course list.
-			$submenu[ $slug ][] = array( esc_attr__( 'Content Hub', 'ohmylms' ), $capability, LegacyRoutes::url( $legacy_admin ? '/content-hub' : '/content-hub/courses' ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+			// replaces course categories and Course Bundles replace course tags.
+			$submenu[ $slug ][] = array( esc_attr__( 'Content Hub', 'ohmylms' ), $capability, LegacyRoutes::url( '/content-hub' ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 			// With Gamification on, Certificates is a tab of the Gamification screen (#/gamification/certificates)
 				// and #/certificates opens it; without Gamification it keeps its own entry.
 				$gamification_enabled = apply_filters( 'ohmylms_show_gamification_menu', false );

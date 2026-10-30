@@ -222,7 +222,7 @@ try {
 		ok( isset( $commands[ $name ] ) && array( $commands[ $name ]['page'], $commands[ $name ]['route'] ) === $target, 'command ' . $name );
 	}
 
-	// Menu: mapped entries open the new app; Content Hub stays legacy; OhMyLMS (new) remains.
+	// Menu: mapped entries open the new app; OhMyLMS (new) remains.
 	$GLOBALS['menu']              = array();
 	$GLOBALS['submenu']           = array();
 	$GLOBALS['admin_page_hooks']  = array();
@@ -234,7 +234,7 @@ try {
 	( new ReflectionClass( \OhMyLMS\Hooks\CommonHook::class ) )->newInstanceWithoutConstructor()->register_submenu();
 	AppPage::register_menu();
 	ok( submenu_url( 'Dashboard' ) === $app . '#/dashboard', 'menu: Dashboard' );
-	ok( submenu_url( 'Content Hub' ) === $legacy . '#/content-hub', 'menu: Content Hub stays legacy' );
+	ok( submenu_url( 'Content Hub' ) === $app . '#/content-hub', 'menu: Content Hub opens the overview' );
 	ok( submenu_url( 'Membership' ) === $app . '#/memberships', 'menu: Membership' );
 	ok( submenu_url( 'Account Hub' ) === $app . '#/account-hub', 'menu: Account Hub' );
 	ok( submenu_url( 'Account Hub' ) === \OhMyLMS\Student\Hub::admin_home_url(), 'menu: Account Hub matches the highlighted submenu file' );
@@ -307,7 +307,7 @@ try {
 		AppPage::hide_menu_entry();
 	};
 	$build_menu();
-	ok( submenu_url( 'Content Hub' ) === $legacy . '#/content-hub', 'cutover off: Content Hub opens the legacy hub' );
+	ok( submenu_url( 'Content Hub' ) === $app . '#/content-hub', 'cutover off: Content Hub opens the overview' );
 	ok( submenu_url( 'Sessions' ) === $app . '#/sessions', 'cutover off: Sessions opens the new sessions screen' );
 	ok( submenu_url( 'OhMyLMS (new)' ) === AppPage::SLUG, 'cutover off: OhMyLMS (new) stays' );
 	ok( submenu_url( 'Add-on page link' ) === 'admin.php?page=' . OHMYLMS_SLUG . '#/extensions/unknown-addon-page', 'cutover off: add-on entries are untouched' );
@@ -327,7 +327,7 @@ try {
 	$build_menu();
 	ok( submenu_url( 'Dashboard' ) === $app . '#/dashboard', 'cutover on: Dashboard' );
 	ok( array_values( $GLOBALS['submenu'][ OHMYLMS_SLUG ] )[0][2] === $app . '#/dashboard', 'cutover on: the top-level entry opens the new dashboard' );
-	ok( submenu_url( 'Content Hub' ) === $app . '#/courses', 'cutover on: Content Hub opens the new course list' );
+	ok( submenu_url( 'Content Hub' ) === $app . '#/content-hub', 'cutover on: Content Hub opens the overview' );
 	ok( submenu_url( 'Sessions' ) === $app . '#/sessions', 'cutover on: Sessions' );
 	ok( null === submenu_url( 'OhMyLMS (new)' ), 'cutover on: OhMyLMS (new) is removed' );
 	ok( submenu_url( 'Settings' ) === $app . '#/settings?tab=general', 'cutover on: Settings' );
@@ -388,7 +388,17 @@ try {
 	AppPage::render();
 	$page_html = ob_get_clean();
 	ok( false !== strpos( $page_html, 'id="' . LegacyRoutes::NOTICE_ID . '"' ) && false !== strpos( $page_html, 'hidden' ), 'cutover on: the app prints the hidden unavailable notice' );
-	ok( false !== strpos( $page_html, esc_html( LegacyRoutes::unavailable()['/content-hub'] ) ), 'cutover on: the notice lists the screens that are not available yet' );
+	ok( array() === LegacyRoutes::unavailable() && false === strpos( $page_html, 'Not available yet:' ), 'cutover on: every legacy screen has a new one, so the notice lists none' );
+	$probe_screen = static function ( $screens ) {
+		$screens['/extensions/unknown-addon-page'] = 'Probe add-on screen';
+		return $screens;
+	};
+	add_filter( 'ohmylms_legacy_unavailable_screens', $probe_screen );
+	ob_start();
+	AppPage::render();
+	$probe_html = ob_get_clean();
+	remove_filter( 'ohmylms_legacy_unavailable_screens', $probe_screen );
+	ok( false !== strpos( $probe_html, 'Not available yet:' ) && false !== strpos( $probe_html, 'Probe add-on screen' ), 'cutover on: the notice lists screens added by add-ons' );
 	ok(
 		false !== strpos(
 			$page_html,

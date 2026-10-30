@@ -13,8 +13,8 @@ Inputs: [LEGACY-ROUTES](LEGACY-ROUTES.md) (which legacy screens the new app repl
 | | Legacy admin enabled (default) | Legacy admin disabled (cutover) |
 | --- | --- | --- |
 | How | nothing to do | `define( 'OHMYLMS_LEGACY_ADMIN', false );` in `wp-config.php`, or `add_filter( 'ohmylms_legacy_admin_enabled', '__return_false' );` |
-| OhMyLMS menu | as today: mapped entries open the new app, Content Hub opens the legacy admin | the top-level entry opens the new dashboard; every submenu entry opens a new-app route |
-| Content Hub entry | `page=ohmylms#/content-hub` | `page=ohmylms-app#/courses` |
+| OhMyLMS menu | every entry opens the new app | the top-level entry opens the new dashboard; every submenu entry opens a new-app route |
+| Content Hub entry | `page=ohmylms-app#/content-hub` | `page=ohmylms-app#/content-hub` |
 | Sessions entry (when shown) | `page=ohmylms-app#/sessions` | `page=ohmylms-app#/sessions` |
 | "OhMyLMS (new)" entry | shown | removed; `page=ohmylms-app` still loads |
 | Add-on entries that open `page=ohmylms#/…` | unchanged | mapped through `LegacyRoutes::resolve()`; unmapped ones are dropped. Entries for other pages and external links are kept |
@@ -84,9 +84,9 @@ These must move before anything is deleted, in this order.
    redirects, `AdminAssets.php` (`ohmylms_home_page`) and `Rest/V1/CourseController.php` (`builder_url`). Use
    `LegacyRoutes::url()` or `LegacyRoutes::app_url()`. With the switch off they still land through the redirect, but
    unmapped ones end on the home screen with the notice.
-5. **Screens the new app does not have** (`LegacyRoutes::unavailable()`): the Content Hub overview and the quiz reports
-   overview (rewards and the All accounts tab landed too; exams, comparison, sessions, the student report, course students, design
-   settings, migration and the `?action=`/`?add=` dialogs landed on 31 October 2026). Build or consciously drop each one; add a rule to `LegacyRoutes::routes()` (and regenerate the fixture) when a screen lands.
+5. **Screens the new app does not have:** none (31 October 2026). Exams, comparison, sessions, the student report,
+   course students, design settings, migration, rewards, All accounts, the Content Hub overview, the quiz reports
+   overview and the `?action=`/`?add=` dialogs all have new screens and rules; `LegacyRoutes::unavailable()` is empty.
 6. **Features only the legacy SDK loads** (543 files, 41 `tests/js` files): port what the new app needs, then delete
    the rest with its tests.
 7. **Mixed tools** (`build-assets.mjs`, `sync-admin-assets.mjs`, `dev.mjs`, `check-reproducible.mjs`) and the npm
@@ -185,8 +185,8 @@ The specs were checked with `node --check`; they were not run against 800.local 
 - [ ] `page=ohmylms#/order-edit/<id>`, `#/settings/xapi-settings` (with `&xapi_notice=saved`) and a bare `page=ohmylms`
       end on `#/orders/<id>`, `#/settings?tab=xapi&xapi_notice=saved` and `#/dashboard`, with
       `ohmylms_from_legacy` removed from the address.
-- [ ] `page=ohmylms#/content-hub` ends on `#/` with the notice naming `/content-hub` (while it is unmapped), and its
-      link opens the legacy screen with `&ohmylms_legacy=1`.
+- [ ] An unmapped add-on page such as `page=ohmylms#/extensions/unknown-addon-page` ends on `#/` with the notice
+      naming it, and its link opens the legacy screen with `&ohmylms_legacy=1`.
 - [ ] `page=ohmylms#/communities` (retired) opens `#/integrations`.
 - [ ] `page=ohmylms&ohmylms_legacy=1#/orders` stays on the legacy Orders screen.
 - [ ] Instructor emails, the plugins-screen Settings link, the command palette and the admin bar open new-app routes.

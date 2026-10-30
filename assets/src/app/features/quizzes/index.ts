@@ -35,6 +35,24 @@ export const quizEditor: FeatureDefinition = {
 	),
 };
 
+/**
+ * Quiz reports overview at `#/reports/quizzes`: attempt figures across every quiz the user may grade.
+ * Replaces the legacy `#/quiz-report` address, so extensions see that route.
+ */
+export const quizReports: FeatureDefinition = {
+	id: 'quiz-reports',
+	title: __( 'Quiz reports', 'ohmylms' ),
+	path: '/reports/quizzes',
+	extensionRoute: '/quiz-report',
+	capability: 'edit_posts',
+	component: lazy(
+		() =>
+			import(
+				/* webpackChunkName: "admin-app-quiz-reports" */ './QuizReportsPage'
+			)
+	),
+};
+
 /** Attempts review and grading at `#/quizzes/<id>/attempts`. */
 export const quizAttempts: FeatureDefinition = {
 	id: 'quizzes-attempts',

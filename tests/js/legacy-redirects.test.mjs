@@ -81,7 +81,7 @@ test( 'start redirects on load and after the legacy router changes the hash', ()
 		location: {
 			pathname: '/wp-admin/admin.php',
 			search: '?page=ohmylms',
-			hash: '#/content-hub',
+			hash: '#/extensions/unknown-addon-page',
 			replace: ( url ) => replaced.push( url ),
 		},
 		history: {
@@ -95,7 +95,7 @@ test( 'start redirects on load and after the legacy router changes the hash', ()
 		},
 	};
 	start( win );
-	assert.deepEqual( replaced, [], 'Content Hub stays legacy' );
+	assert.deepEqual( replaced, [], 'an unmapped add-on page stays legacy' );
 	win.history.pushState( null, '', '#/memberships/orders' );
 	assert.deepEqual( replaced, [
 		'/wp-admin/admin.php?page=ohmylms-app#/orders',
@@ -208,10 +208,10 @@ function fakeDocument( readyState ) {
 
 test( 'showUnavailable fills in the route and the legacy link', () => {
 	const doc = fakeDocument( 'complete' );
-	showUnavailable( doc, 'ohmylms-legacy-unavailable', '/content-hub' );
+	showUnavailable( doc, 'ohmylms-legacy-unavailable', '/extensions/unknown-addon-page' );
 	assert.equal( doc.notice.hidden, false );
-	assert.equal( doc.code.textContent, '/content-hub' );
-	assert.equal( doc.link.hash, '/content-hub' );
+	assert.equal( doc.code.textContent, '/extensions/unknown-addon-page' );
+	assert.equal( doc.link.hash, '/extensions/unknown-addon-page' );
 	assert.doesNotThrow( () => showUnavailable( doc, 'missing', '/x' ) );
 } );
 
@@ -221,7 +221,7 @@ test( 'start lands once with replaceState and shows the notice after load', () =
 	const win = {
 		ohmylmsLegacyRoutes: landing,
 		document: doc,
-		location: { ...arrived( '#/content-hub' ), replace: assert.fail },
+		location: { ...arrived( '#/extensions/unknown-addon-page' ), replace: assert.fail },
 		history: {
 			state: null,
 			replaceState: ( state, title, url ) => replaced.push( url ),
@@ -234,7 +234,7 @@ test( 'start lands once with replaceState and shows the notice after load', () =
 	assert.equal( doc.notice.hidden, true, 'waits for the notice markup' );
 	doc.listeners.DOMContentLoaded();
 	assert.equal( doc.notice.hidden, false );
-	assert.equal( doc.code.textContent, '/content-hub' );
+	assert.equal( doc.code.textContent, '/extensions/unknown-addon-page' );
 
 	const mapped = fakeDocument( 'complete' );
 	replaced.length = 0;

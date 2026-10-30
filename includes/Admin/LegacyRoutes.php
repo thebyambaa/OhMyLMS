@@ -281,11 +281,18 @@ final class LegacyRoutes {
 				'query' => array( 'tab' => array( 'students' ) ),
 			),
 			array(
+				'from' => '/quiz-report',
+				'to'   => '/reports/quizzes',
+			),
+			array(
 				'from' => '/quiz-report/:id/*',
 				'to'   => '/quizzes/:id/attempts',
 			),
-			// Quizzes, courses, lessons and the curriculum workspace. The Content Hub frame itself stays
-			// legacy.
+			// Content Hub, quizzes, courses, lessons and the curriculum workspace.
+			array(
+				'from' => '/content-hub',
+				'to'   => '/content-hub',
+			),
 			array(
 				'from' => '/quiz-edit/:id',
 				'to'   => '/quizzes/:id',
@@ -514,10 +521,7 @@ final class LegacyRoutes {
 	 * @return array<string, string> Legacy route => screen name.
 	 */
 	public static function unavailable() {
-		$screens = array(
-			'/content-hub' => __( 'Content Hub overview', 'ohmylms' ),
-			'/quiz-report' => __( 'Quiz reports overview', 'ohmylms' ),
-		);
+		$screens = array();
 		/**
 		 * Filters the legacy screens listed as not yet available in the new app.
 		 *

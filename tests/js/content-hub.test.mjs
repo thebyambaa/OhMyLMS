@@ -315,7 +315,7 @@ test( 'The admin menu offers Content Hub instead of Courses, Assessments, Skills
 	const menu = fs.readFileSync( 'includes/Admin/Menu.php', 'utf8' );
 	const labels = [
 		...menu.matchAll(
-			/esc_attr__\( '([^']+)', 'ohmylms' \)(?: \. \$badge_html)?, \$capability, (?:'admin\.php\?page=' \. \$slug \. '#|LegacyRoutes::url\( (?:\$legacy_admin \? )?')([^']+)'/g
+			/esc_attr__\( '([^']+)', 'ohmylms' \)(?: \. \$badge_html)?, \$capability, (?:'admin\.php\?page=' \. \$slug \. '#|LegacyRoutes::url\( ')([^']+)'/g
 		),
 	].map( ( match ) => [ match[ 1 ], match[ 2 ] ] );
 	const names = labels.map( ( [ label ] ) => label );

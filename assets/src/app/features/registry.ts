@@ -14,7 +14,7 @@ import {
 import { certificateEditor, certificates } from './certificates';
 import { coupons, orderDetail, orders } from './commerce';
 import { subscriptionDetail, subscriptions } from './commerce/subscriptions';
-import { contentHub } from './content-hub';
+import { contentHub, contentHubOverview } from './content-hub';
 import { courseEditor, courses } from './courses';
 import {
 	courseEditor as courseStructureEditor,
@@ -38,7 +38,7 @@ import { integrations } from './integrations';
 import { lessons, lessonEditor } from './lessons';
 import { membershipEditor, memberships } from './memberships';
 import { questionEditor, questions } from './questions';
-import { quizAttempts, quizEditor, quizzes } from './quizzes';
+import { quizAttempts, quizEditor, quizReports, quizzes } from './quizzes';
 import { sessionEditor, sessions } from './sessions';
 import { settings } from './settings';
 import { setup } from './setup';
@@ -59,6 +59,7 @@ export const features: readonly FeatureDefinition[] = [
 	courseRoster,
 	home,
 	setup,
+	contentHubOverview,
 	contentHub,
 	curriculum,
 	skillMap,
@@ -73,6 +74,7 @@ export const features: readonly FeatureDefinition[] = [
 	quizzes,
 	quizEditor,
 	quizAttempts,
+	quizReports,
 	assignments,
 	assignmentEditor,
 	assignmentSubmissions,

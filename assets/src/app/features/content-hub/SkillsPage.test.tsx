@@ -52,7 +52,7 @@ it( 'hides Skills and sends no requests without author capability', () => {
 	open( { edit_posts: false, manage_options: false } );
 	expect( api.listSkills ).not.toHaveBeenCalled();
 	expect(
-		screen.queryByRole( 'link', { name: 'Content Hub' } )
+		screen.queryByRole( 'link', { name: 'Skills' } )
 	).not.toBeInTheDocument();
 } );
 it( 'shows the shared accessible table, pages and repeats a search', async () => {
