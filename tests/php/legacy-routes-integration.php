@@ -124,7 +124,14 @@ try {
 	foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $root . '/assets/src/app/features', FilesystemIterator::SKIP_DOTS ) ) as $file ) {
 		if ( preg_match( '/(?<!\.test)\.ts$/', $file->getFilename() ) && preg_match_all( "/^\tpath: '([^']+)'/m", file_get_contents( $file->getPathname() ), $found ) ) {
 			foreach ( $found[1] as $path ) {
-				$paths[] = preg_replace( '/:[A-Za-z]+/', ':', $path );
+				// A trailing optional segment (`/courses/:id/:tab?`) also matches the path without it.
+				while ( true ) {
+					$paths[] = preg_replace( '/:[A-Za-z]+/', ':', $path );
+					if ( ! preg_match( '#/:[A-Za-z]+\?$#', $path ) ) {
+						break;
+					}
+					$path = preg_replace( '#/:[A-Za-z]+\?$#', '', $path );
+				}
 			}
 		}
 	}
@@ -154,7 +161,8 @@ try {
 	ok( LegacyRoutes::url( '/orders' ) === $app . '#/orders', 'mapped url' );
 	ok( LegacyRoutes::url( '#/order-edit/45' ) === $app . '#/orders/45', 'mapped url keeps the id' );
 	ok( LegacyRoutes::url( 'accounthub?tab=classes' ) === $app . '#/account-hub?tab=classes', 'mapped url maps the tab' );
-	ok( LegacyRoutes::url( '/quiz-edit/5' ) === $legacy . '#/quiz-edit/5', 'unmapped url stays legacy' );
+	ok( LegacyRoutes::url( '/content-hub/exams' ) === $legacy . '#/content-hub/exams', 'unmapped url stays legacy' );
+	ok( LegacyRoutes::url( '/quiz-edit/5' ) === $app . '#/quizzes/5', 'quiz edit opens the new quiz editor' );
 	ok( LegacyRoutes::url( '/content-hub/question-bank?action=new' ) === $legacy . '#/content-hub/question-bank?action=new', 'dialog route stays legacy' );
 	ok( LegacyRoutes::app_url( 'orders/3' ) === $app . '#/orders/3', 'app_url' );
 	ok(
@@ -194,7 +202,8 @@ try {
 	remove_filter( 'ohmylms_admin_commands', $add_on );
 	$expect = array(
 		'ohmylms/go-dashboard'      => array( AppPage::SLUG, '/dashboard' ),
-		'ohmylms/go-courses'        => array( OHMYLMS_SLUG, '/content-hub/courses' ),
+		'ohmylms/go-courses'        => array( AppPage::SLUG, '/courses' ),
+		'ohmylms/go-exams'          => array( OHMYLMS_SLUG, '/content-hub/exams' ),
 		'ohmylms/go-question-bank'  => array( AppPage::SLUG, '/content-hub/question-bank' ),
 		'ohmylms/go-assignments'    => array( AppPage::SLUG, '/assignments' ),
 		'ohmylms/go-account-hub'    => array( AppPage::SLUG, '/account-hub' ),

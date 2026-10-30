@@ -267,6 +267,93 @@ final class LegacyRoutes {
 				'from' => '/quiz-report/:id/*',
 				'to'   => '/quizzes/:id/attempts',
 			),
+			// Quizzes, courses, lessons and the curriculum workspace. The Content Hub frame itself and its
+			// Exams tab stay legacy until exams are rebuilt; list dialogs opened by `?action=` stay legacy too.
+			array(
+				'from' => '/quiz-edit/:id',
+				'to'   => '/quizzes/:id',
+			),
+			array(
+				'from' => '/quizzes',
+				'to'   => '/quizzes',
+				'skip' => array( 'action' ),
+			),
+			array(
+				'from' => '/content-hub/quizzes',
+				'to'   => '/quizzes',
+				'skip' => array( 'action' ),
+			),
+			array(
+				'from' => '/assessments',
+				'to'   => '/quizzes',
+				'skip' => array( 'action' ),
+			),
+			array(
+				'from' => '/course-edit/:id/*',
+				'to'   => '/courses/:id',
+			),
+			array(
+				'from' => '/courses',
+				'to'   => '/courses',
+			),
+			array(
+				'from' => '/content-hub/courses',
+				'to'   => '/courses',
+			),
+			array(
+				'from' => '/lesson-edit/:id',
+				'to'   => '/content-hub/lessons/:id',
+			),
+			array(
+				'from' => '/content-hub/lessons',
+				'to'   => '/content-hub/lessons',
+			),
+			array(
+				'from' => '/content-hub/skills',
+				'to'   => '/content-hub/skills',
+				'skip' => array( 'add' ),
+			),
+			array(
+				'from' => '/extensions/skills',
+				'to'   => '/content-hub/skills',
+				'skip' => array( 'add' ),
+			),
+			array(
+				'from' => '/content-hub/curriculum',
+				'to'   => '/content-hub/curriculum',
+			),
+			array(
+				'from' => '/extensions/curriculum',
+				'to'   => '/content-hub/curriculum',
+			),
+			array(
+				'from' => '/categories',
+				'to'   => '/content-hub/curriculum',
+			),
+			array(
+				'from' => '/tags',
+				'to'   => '/content-hub/curriculum',
+			),
+			array(
+				'from' => '/content-hub/curriculum/skill-map',
+				'to'   => '/content-hub/curriculum/skill-map',
+			),
+			array(
+				'from' => '/content-hub/curriculum/subjects',
+				'to'   => '/content-hub/curriculum/subjects',
+			),
+			array(
+				'from' => '/content-hub/curriculum/syllabus/:id',
+				'to'   => '/content-hub/curriculum/syllabus/:id',
+			),
+			array(
+				'from' => '/content-hub/bundles',
+				'to'   => '/content-hub/bundles',
+			),
+			array(
+				'from' => '/extensions/bundles',
+				'to'   => '/content-hub/bundles',
+			),
 		);
 		foreach ( self::SETTINGS_TABS as $legacy => $tab ) {
 			$routes[] = array(

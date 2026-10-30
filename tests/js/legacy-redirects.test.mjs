@@ -57,7 +57,7 @@ test( 'redirectUrl stays on unmapped screens and when opted out', () => {
 	const location = {
 		pathname: '/wp-admin/admin.php',
 		search: '?page=ohmylms',
-		hash: '#/quiz-edit/5',
+		hash: '#/content-hub/exams',
 	};
 	assert.equal( redirectUrl( config, location ), null );
 	assert.equal(

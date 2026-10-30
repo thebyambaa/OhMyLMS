@@ -318,27 +318,27 @@
 		],
 		[
 			"/quiz-edit/5",
-			null
+			"/quizzes/5"
 		],
 		[
 			"/quizzes",
-			null
+			"/quizzes"
 		],
 		[
 			"/course-edit/12",
-			null
+			"/courses/12"
 		],
 		[
 			"/course-edit/12/settings/general",
-			null
+			"/courses/12"
 		],
 		[
 			"/lesson-edit/3",
-			null
+			"/content-hub/lessons/3"
 		],
 		[
 			"/courses",
-			null
+			"/courses"
 		],
 		[
 			"/courses/12/students",
@@ -354,11 +354,11 @@
 		],
 		[
 			"/content-hub/courses",
-			null
+			"/courses"
 		],
 		[
 			"/content-hub/lessons",
-			null
+			"/content-hub/lessons"
 		],
 		[
 			"/content-hub/quizzes?action=new",
@@ -370,15 +370,15 @@
 		],
 		[
 			"/content-hub/skills",
-			null
+			"/content-hub/skills"
 		],
 		[
 			"/content-hub/curriculum",
-			null
+			"/content-hub/curriculum"
 		],
 		[
 			"/content-hub/bundles",
-			null
+			"/content-hub/bundles"
 		],
 		[
 			"/communities",
@@ -390,15 +390,15 @@
 		],
 		[
 			"/extensions/skills",
-			null
+			"/content-hub/skills"
 		],
 		[
 			"/extensions/curriculum",
-			null
+			"/content-hub/curriculum"
 		],
 		[
 			"/categories",
-			null
+			"/content-hub/curriculum"
 		],
 		[
 			"/order-edit",
@@ -605,6 +605,101 @@
 		{
 			"from": "/quiz-report/:id/*",
 			"to": "/quizzes/:id/attempts"
+		},
+		{
+			"from": "/quiz-edit/:id",
+			"to": "/quizzes/:id"
+		},
+		{
+			"from": "/quizzes",
+			"to": "/quizzes",
+			"skip": [
+				"action"
+			]
+		},
+		{
+			"from": "/content-hub/quizzes",
+			"to": "/quizzes",
+			"skip": [
+				"action"
+			]
+		},
+		{
+			"from": "/assessments",
+			"to": "/quizzes",
+			"skip": [
+				"action"
+			]
+		},
+		{
+			"from": "/course-edit/:id/*",
+			"to": "/courses/:id"
+		},
+		{
+			"from": "/courses",
+			"to": "/courses"
+		},
+		{
+			"from": "/content-hub/courses",
+			"to": "/courses"
+		},
+		{
+			"from": "/lesson-edit/:id",
+			"to": "/content-hub/lessons/:id"
+		},
+		{
+			"from": "/content-hub/lessons",
+			"to": "/content-hub/lessons"
+		},
+		{
+			"from": "/content-hub/skills",
+			"to": "/content-hub/skills",
+			"skip": [
+				"add"
+			]
+		},
+		{
+			"from": "/extensions/skills",
+			"to": "/content-hub/skills",
+			"skip": [
+				"add"
+			]
+		},
+		{
+			"from": "/content-hub/curriculum",
+			"to": "/content-hub/curriculum"
+		},
+		{
+			"from": "/extensions/curriculum",
+			"to": "/content-hub/curriculum"
+		},
+		{
+			"from": "/categories",
+			"to": "/content-hub/curriculum"
+		},
+		{
+			"from": "/tags",
+			"to": "/content-hub/curriculum"
+		},
+		{
+			"from": "/content-hub/curriculum/skill-map",
+			"to": "/content-hub/curriculum/skill-map"
+		},
+		{
+			"from": "/content-hub/curriculum/subjects",
+			"to": "/content-hub/curriculum/subjects"
+		},
+		{
+			"from": "/content-hub/curriculum/syllabus/:id",
+			"to": "/content-hub/curriculum/syllabus/:id"
+		},
+		{
+			"from": "/content-hub/bundles",
+			"to": "/content-hub/bundles"
+		},
+		{
+			"from": "/extensions/bundles",
+			"to": "/content-hub/bundles"
 		},
 		{
 			"from": "/settings/general-settings/*",

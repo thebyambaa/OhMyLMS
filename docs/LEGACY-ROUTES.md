@@ -65,6 +65,16 @@ Each rule has `from` (path pattern), `to` (new route) and optionally `query` and
 | `/accounthub?tab=classes\|teachers\|parents` | `/account-hub?tab=<same>` |
 | `/accounthub?tab=students` | `/students` |
 | `/quiz-report/:id/...` (including `/grade-quiz/:attempt`) | `/quizzes/:id/attempts` |
+| `/quiz-edit/:id` | `/quizzes/:id` (settings and questions) |
+| `/quizzes`, `/content-hub/quizzes`, `/assessments` (without `?action=`) | `/quizzes` |
+| `/course-edit/:id/...` | `/courses/:id` |
+| `/courses`, `/content-hub/courses` | `/courses` |
+| `/lesson-edit/:id` | `/content-hub/lessons/:id` |
+| `/content-hub/lessons` | `/content-hub/lessons` |
+| `/content-hub/skills`, `/extensions/skills` (without `?add=`) | `/content-hub/skills` |
+| `/content-hub/curriculum`, `/extensions/curriculum`, `/categories`, `/tags` | `/content-hub/curriculum` |
+| `/content-hub/curriculum/skill-map`, `/subjects`, `/syllabus/:id` | the same paths |
+| `/content-hub/bundles`, `/extensions/bundles` | `/content-hub/bundles` |
 
 Settings tabs: `general-settings` → `general`, `branding-settings` → `branding`, `account-privacy-settings` →
 `account-and-privacy`, `parmalink-settings` → `permalink`, `advanced-settings` → `advanced`, `ai-tutor-settings` →
@@ -77,9 +87,8 @@ Gamification tabs: `point-settings` → `points`, `badge-settings` → `badges`,
 
 ## Kept on the legacy admin
 
-Not at parity, so not mapped: `/quiz-edit/:id`, `/quizzes`, `/courses`, `/course-edit/*`, `/lesson-edit/*`,
-`/content-hub` and its courses, lessons, quizzes, exams, skills, curriculum and bundles tabs, `?action=` dialogs,
-`/communities`, `/sessions`, `/students/:id/report`, `/courses/:id/students`, `/categories`, `/tags`, other
+Not at parity, so not mapped: the `/content-hub` frame and its Exams tab, `/content-hub/curriculum/compare`,
+`?action=` and `?add=` dialogs, `/communities`, `/sessions`, `/students/:id/report`, `/courses/:id/students`, other
 `/extensions/<id>` pages, `/settings/design-settings` (layout, archive and quiz design), `/settings/migration-settings`,
 `/gamification/reward-settings`, `/accounthub?tab=users` and `/quiz-report` without an id. The Content Hub and
 Sessions menu entries therefore still open the legacy admin; the "OhMyLMS (new)" entry is kept.
