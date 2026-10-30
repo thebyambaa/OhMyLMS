@@ -1,4 +1,10 @@
 import { hasCapability } from '../bootstrap/config';
+import {
+	assignmentEditor,
+	assignmentGrading,
+	assignments,
+	assignmentSubmissions,
+} from './assignments';
 import { certificateEditor, certificates } from './certificates';
 import { coupons, orderDetail, orders } from './commerce';
 import { contentHub } from './content-hub';
@@ -47,6 +53,10 @@ export const features: readonly FeatureDefinition[] = [
 	quizzes,
 	quizEditor,
 	quizAttempts,
+	assignments,
+	assignmentEditor,
+	assignmentSubmissions,
+	assignmentGrading,
 	courseSettings,
 	lessons,
 	lessonEditor,

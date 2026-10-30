@@ -92,6 +92,7 @@ class Api {
 			\OhMyLMS\Rest\V1\IntegrationsController::class,
 			\OhMyLMS\Rest\V1\AppController::class,
 			\OhMyLMS\Rest\V1\WebhookController::class,
+			\OhMyLMS\Rest\V1\AssignmentsController::class,
 		);
 		$controllers_v1  = apply_filters( 'ohmylms_rest_v1_controllers', $controllers_v1 );
 		$controllers_v2  = array();
