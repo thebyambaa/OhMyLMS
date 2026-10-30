@@ -84,10 +84,7 @@ describe( 'QuizzesPage', () => {
 			first.getByRole( 'link', {
 				name: 'Edit questions of Fractions check',
 			} )
-		).toHaveAttribute(
-			'href',
-			'http://example.test/wp-admin/admin.php?page=ohmylms#/quiz-edit/11'
-		);
+		).toHaveAttribute( 'href', '/quizzes/11' );
 		const trashed = within( rows[ 2 ]! );
 		expect(
 			trashed.getByRole( 'button', { name: 'Restore Trashed quiz' } )

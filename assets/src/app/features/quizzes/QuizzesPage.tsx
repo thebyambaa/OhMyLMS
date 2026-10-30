@@ -9,7 +9,6 @@ import {
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useNavigate } from 'react-router-dom';
-import { useBootstrap } from '../../bootstrap/BootstrapContext';
 import { Pagination } from '../../components/Pagination';
 import { normalizeApiError } from '../../lib/api';
 import {
@@ -28,23 +27,11 @@ type Dialog =
 	{ kind: 'create' } | { kind: 'trash' | 'delete'; item: Quiz } | null;
 
 /**
- * Link to the question screens of the existing admin, where questions are authored.
- *
- * @param adminUrl Site admin URL.
- * @param id       Quiz id.
- * @return Absolute URL.
- */
-function questionsUrl( adminUrl: string, id: number ): string {
-	return `${ adminUrl }admin.php?page=ohmylms#/quiz-edit/${ id }`;
-}
-
-/**
  * Quiz list (`#/quizzes`): paged and searchable, filtered by status and course, with create, trash,
  * restore and confirmed permanent delete. Settings live at `#/quizzes/<id>`, attempts at
  * `#/quizzes/<id>/attempts`.
  */
 export default function QuizzesPage() {
-	const { adminUrl } = useBootstrap();
 	const list = useQuizzes();
 	const navigate = useNavigate();
 	const [ query, setQuery ] = useState( '' );
@@ -394,11 +381,8 @@ export default function QuizzesPage() {
 																	'ohmylms'
 																) }
 															</Link>{ ' ' }
-															<a
-																href={ questionsUrl(
-																	adminUrl,
-																	item.id
-																) }
+															<Link
+																to={ `/quizzes/${ item.id }` }
 																aria-label={ sprintf(
 																	/* translators: %s: quiz title. */
 																	__(
@@ -412,7 +396,7 @@ export default function QuizzesPage() {
 																	'Questions',
 																	'ohmylms'
 																) }
-															</a>{ ' ' }
+															</Link>{ ' ' }
 														</>
 													) }
 													{ item.can_grade && (
