@@ -309,6 +309,15 @@ final class LegacyRoutes {
 				'from' => '/content-hub/courses',
 				'to'   => '/courses',
 			),
+			// Retired Catalog addresses, which the legacy hub still opened as Courses.
+			array(
+				'from' => '/content-hub/catalog',
+				'to'   => '/courses',
+			),
+			array(
+				'from' => '/content-hub/catalog/:id',
+				'to'   => '/courses/:id',
+			),
 			array(
 				'from' => '/lesson-edit/:id',
 				'to'   => '/content-hub/lessons/:id',
