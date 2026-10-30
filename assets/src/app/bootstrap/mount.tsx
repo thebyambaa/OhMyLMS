@@ -1,6 +1,8 @@
 import { createRoot } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import { createRegistry } from '../../extensions/registry.mjs';
 import { App } from '../App';
+import { registerAppQuestionEditors } from '../extensions/coreEditors';
 import { isExtensionHost } from '../extensions/host';
 import { parseBootstrap } from './config';
 import { configureApiFetch } from './configure-api-fetch';
@@ -9,7 +11,8 @@ import { configureApiFetch } from './configure-api-fetch';
 export const MOUNT_ID = 'ohmylms-app-root';
 
 /**
- * Validate the bootstrap data, configure the API client and render the app.
+ * Validate the bootstrap data, configure the API client, register the built-in question editors
+ * (after the extensions, which may replace them) and render the app.
  *
  * @param doc Document that contains the mount element.
  * @param raw Unvalidated `window.ohmylmsApp`.
@@ -33,11 +36,10 @@ export function mountApp( doc: Document, raw: unknown ): boolean {
 	}
 	configureApiFetch( bootstrap );
 	const host = doc.defaultView?.ohmylms?.extensions;
+	const extensions = isExtensionHost( host ) ? host : createRegistry();
+	registerAppQuestionEditors( extensions );
 	createRoot( container ).render(
-		<App
-			bootstrap={ bootstrap }
-			extensions={ isExtensionHost( host ) ? host : undefined }
-		/>
+		<App bootstrap={ bootstrap } extensions={ extensions } />
 	);
 	return true;
 }

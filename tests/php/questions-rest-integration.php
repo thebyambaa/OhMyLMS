@@ -150,7 +150,7 @@ try {
 
 	// Routes and permission callbacks.
 	$routes = rest_get_server()->get_routes( 'ohmylms/v1' );
-	foreach ( array( '/questions', '/questions/types', '/questions/(?P<id>[\d]+)', '/questions/(?P<id>[\d]+)/archive', '/questions/(?P<id>[\d]+)/restore', '/questions/(?P<id>[\d]+)/versions' ) as $route ) {
+	foreach ( array( '/questions', '/questions/types', '/questions/(?P<id>[\d]+)', '/questions/(?P<id>[\d]+)/archive', '/questions/(?P<id>[\d]+)/restore', '/questions/(?P<id>[\d]+)/approve', '/questions/(?P<id>[\d]+)/duplicate', '/questions/(?P<id>[\d]+)/versions' ) as $route ) {
 		ok( isset( $routes[ '/ohmylms/v1' . $route ] ), 'route registered: ' . $route );
 		foreach ( $routes[ '/ohmylms/v1' . $route ] as $endpoint ) {
 			ok( is_callable( $endpoint['permission_callback'] ) && '__return_true' !== $endpoint['permission_callback'], "real permission_callback on $route" );
@@ -294,6 +294,8 @@ try {
 		array( 'POST', $alpha_path ),
 		array( 'POST', $alpha_path . '/archive' ),
 		array( 'POST', $alpha_path . '/restore' ),
+		array( 'POST', $alpha_path . '/approve' ),
+		array( 'POST', $alpha_path . '/duplicate' ),
 		array( 'GET', $alpha_path . '/versions' ),
 	);
 	foreach ( array(
@@ -313,6 +315,8 @@ try {
 	}
 	ok( 0 === (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = %s AND post_title = %s", OHMYLMS_QUESTION_CPT, $tag . ' denied' ) ), 'forbidden writes wrote nothing' );
 	ok( 'publish' === get_post_status( $alpha['id'] ), 'forbidden archive changed nothing' );
+	ok( 0 === (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = %s AND post_title LIKE %s", OHMYLMS_QUESTION_CPT, $wpdb->esc_like( $alpha['name'] . ' (copy)' ) . '%' ) ), 'forbidden duplicates wrote nothing' );
+	ok( 0 === (int) $wpdb->get_var( $wpdb->prepare( 'SELECT approved_version_id FROM %i WHERE question_id = %d', Schema::table( 'qb_questions' ), $alpha['id'] ) ), 'forbidden approve changed nothing' );
 
 	// Object-level access: author A cannot open author B's question; the admin can.
 	wp_set_current_user( $author_a );
@@ -759,6 +763,108 @@ try {
 	ok( false === strpos( $dump, 'Three' . $tag ) && false === strpos( $dump, 'Divide' ), 'no answer text or settings reach a user without access' );
 	ok( 403 === $seen[0]->get_status() && 403 === $seen[1]->get_status() && 403 === $seen[7]->get_status(), 'item reads are refused' );
 	ok( ! in_array( (int) $alpha['id'], ids_of( $seen[2] ), true ), "A's question is not listed for B" );
+
+	// Approve: 404 before capabilities, object-level approve rights, then the legacy approval logic.
+	$approve_path = $alpha_path . '/approve';
+	wp_set_current_user( 0 );
+	ok_error( call_api( 'POST', '/questions/999999999/approve' ), 404, 'ohmylms_question_not_found', 'approve unknown id for a guest' );
+	ok_error( call_api( 'POST', '/questions/999999999/duplicate' ), 404, 'ohmylms_question_not_found', 'duplicate unknown id for a guest' );
+	wp_set_current_user( $author_b );
+	ok_error( call_api( 'POST', $approve_path ), 403, 'ohmylms_question_cannot_approve', "author B approves A's question" );
+	ok_error( call_api( 'POST', '/question-bank/' . $alpha['id'] . '/approve' ), 403, 'ohmylms_forbidden', "legacy: author B approves A's question" );
+	wp_set_current_user( $author_a );
+	$before = call_api( 'GET', $alpha_path )->get_data();
+	ok( 0 === $before['approved_version_id'] && 'draft' === $before['status'], 'alpha starts unapproved' );
+	ok_error( call_api( 'POST', $approve_path, array( 'reason' => 'x' ) ), 400, 'ohmylms_question_unknown_field', 'approve takes only version_id' );
+	ok_error( call_api( 'POST', $approve_path, array( 'version_id' => 0 ) ), 400, 'rest_invalid_param', 'version_id must be positive' );
+	ok_error( call_api( 'POST', $approve_path, array( 'version_id' => 999999999 ) ), 404, 'ohmylms_version_missing', 'unknown version' );
+	ok_error( call_api( 'POST', $approve_path, array( 'version_id' => $beta['current_version_id'] ) ), 404, 'ohmylms_version_missing', "a version of B's question" );
+	ok( 0 === (int) $wpdb->get_var( $wpdb->prepare( 'SELECT approved_version_id FROM %i WHERE question_id = %d', Schema::table( 'qb_questions' ), $alpha['id'] ) ), 'rejected approvals changed nothing' );
+	$approved = call_api( 'POST', $approve_path );
+	ok( 200 === $approved->get_status() && 'private, no-store' === $approved->get_headers()['Cache-Control'], 'approve: ' . wp_json_encode( $approved->get_data() ) );
+	$approved = $approved->get_data();
+	ok( isset( $approved['settings'], $approved['options'], $approved['permissions']['can_approve'] ), 'approve returns the editor view' );
+	ok( 'approved' === $approved['status'] && $approved['approved_version_id'] === $approved['current_version_id'] && true === $approved['approved_is_current'], 'approve sets approved_version_id to the current version' );
+	ok( $before['version'] === $approved['version'] && $before['current_version_id'] === $approved['current_version_id'], 'approving unchanged content reuses the current version' );
+	ok( 'approved' === $wpdb->get_var( $wpdb->prepare( 'SELECT status FROM %i WHERE question_id = %d', Schema::table( 'qb_questions' ), $alpha['id'] ) ), 'identity row status is approved' );
+	ok( true === call_api( 'GET', $alpha_path . '/versions' )->get_data()[0]['is_approved'], 'the current version is marked approved' );
+	$newer = call_api(
+		'PATCH',
+		$alpha_path,
+		array(
+			'base_modified' => $approved['modified'],
+			'name'          => $tag . ' alpha approved then edited',
+		)
+	)->get_data();
+	ok( 'approved' === $newer['status'] && $approved['approved_version_id'] === $newer['approved_version_id'] && false === $newer['approved_is_current'], 'an edit after approval keeps the approved version and is not current' );
+	$older = call_api( 'POST', $approve_path, array( 'version_id' => $before['current_version_id'] ) )->get_data();
+	ok( $before['current_version_id'] === $older['approved_version_id'] && false === $older['approved_is_current'], 'version_id approves that version' );
+	wp_set_current_user( $admin );
+	$legacy_approve = call_api( 'POST', '/question-bank/' . $alpha['id'] . '/approve' );
+	$legacy_data    = $legacy_approve->get_data();
+	ok( 200 === $legacy_approve->get_status() && $newer['current_version_id'] === $legacy_data['approved_version_id'] && 'approved' === $legacy_data['status'] && isset( $legacy_data['native_editor_url'], $legacy_data['can_approve'] ) && ! isset( $legacy_data['settings'] ), 'legacy approve still works and returns its summary: ' . wp_json_encode( $legacy_data ) );
+	ok( true === call_api( 'GET', $alpha_path )->get_data()['approved_is_current'], 'legacy approve approved the current version' );
+
+	// A bank grant of edit (not approve): the user may edit and duplicate, but not approve.
+	wp_set_current_user( $author_b );
+	$gamma = make_question(
+		array(
+			'name'     => $tag . ' gamma',
+			'settings' => array( 'type' => 'true-false' ),
+			'options'  => array(
+				array(
+					'answer'     => 'True',
+					'is_correct' => true,
+				),
+				array( 'answer' => 'False' ),
+			),
+			'bank'     => array( 'bank_id' => (int) $private_bank['id'] ),
+		)
+	);
+	ok( (int) $private_bank['id'] === $gamma['bank']['bank_id'], 'gamma is in the private bank' );
+	ok( is_array( Banks::grant( $private_bank['id'], $author_a, 'edit' ) ), 'author A gets an edit grant' );
+	wp_set_current_user( $author_a );
+	$gamma_path = '/questions/' . $gamma['id'];
+	$gamma_view = call_api( 'GET', $gamma_path );
+	ok( 200 === $gamma_view->get_status() && true === $gamma_view->get_data()['permissions']['can_edit'] && false === $gamma_view->get_data()['permissions']['can_approve'], 'edit grant: can edit, cannot approve' );
+	ok_error( call_api( 'POST', $gamma_path . '/approve' ), 403, 'ohmylms_question_cannot_approve', 'edit grant cannot approve' );
+	ok( 0 === (int) $wpdb->get_var( $wpdb->prepare( 'SELECT approved_version_id FROM %i WHERE question_id = %d', Schema::table( 'qb_questions' ), $gamma['id'] ) ), 'denied approve changed nothing' );
+
+	// Duplicate.
+	$source = call_api( 'GET', $alpha_path )->get_data();
+	ok_error( call_api( 'POST', $alpha_path . '/duplicate', array( 'quiz_id' => 1 ) ), 400, 'ohmylms_question_unknown_field', 'duplicate takes no body fields' );
+	$duplicated = call_api( 'POST', $alpha_path . '/duplicate' );
+	ok( 201 === $duplicated->get_status(), 'duplicate is 201: ' . wp_json_encode( $duplicated->get_data() ) );
+	$copy           = $duplicated->get_data();
+	$question_ids[] = (int) $copy['id'];
+	ok( rest_url( 'ohmylms/v1/questions/' . $copy['id'] ) === $duplicated->get_headers()['Location'] && 'private, no-store' === $duplicated->get_headers()['Cache-Control'], 'duplicate Location and Cache-Control' );
+	ok( $copy['id'] !== $source['id'] && 36 === strlen( $copy['uuid'] ) && $copy['uuid'] !== $source['uuid'], 'the copy has a new id and a different uuid' );
+	ok( $source['name'] . ' (copy)' === $copy['name'] && $source['description'] === $copy['description'] && $source['type'] === $copy['type'] && $source['settings'] === $copy['settings'], 'the copy has the same content' );
+	$strip = static function ( $options ) {
+		return array_map(
+			static function ( $option ) {
+				unset( $option['id'] );
+				return $option;
+			},
+			$options
+		);
+	};
+	ok( $strip( $source['options'] ) === $strip( $copy['options'] ) && ! array_intersect( wp_list_pluck( $source['options'], 'id' ), wp_list_pluck( $copy['options'], 'id' ) ), 'the copy has the same options as new rows' );
+	ok( $source['bank']['difficulty'] === $copy['bank']['difficulty'] && $source['bank']['source'] === $copy['bank']['source'] && '' !== $copy['bank']['family_id'], 'the copy keeps the bank attributes' );
+	ok( call_api( 'GET', $alpha_path )->get_data()['bank']['family_id'] === $copy['bank']['family_id'], 'source and copy share a family' );
+	ok( 'draft' === $copy['status'] && 1 === $copy['version'] && 0 === $copy['approved_version_id'] && true === $copy['permissions']['can_edit'] && (int) get_post_field( 'post_author', $copy['id'] ) === $author_a, 'the copy is an unapproved draft owned by the user' );
+	$gamma_copy = call_api( 'POST', $gamma_path . '/duplicate' );
+	ok( 201 === $gamma_copy->get_status() && (int) $private_bank['id'] === $gamma_copy->get_data()['bank']['bank_id'], 'a bank editor duplicates into the bank: ' . wp_json_encode( $gamma_copy->get_data() ) );
+	$question_ids[] = (int) $gamma_copy->get_data()['id'];
+	wp_set_current_user( $author_b );
+	ok_error( call_api( 'POST', $alpha_path . '/duplicate' ), 403, 'ohmylms_question_cannot_duplicate', "author B duplicates A's question" );
+	ok_error( call_api( 'POST', '/question-bank/' . $alpha['id'] . '/duplicate' ), 403, 'ohmylms_forbidden', "legacy: author B duplicates A's question" );
+	wp_set_current_user( $author_a );
+	$legacy_copy = call_api( 'POST', '/question-bank/' . $alpha['id'] . '/duplicate' );
+	$legacy_data = $legacy_copy->get_data();
+	ok( 201 === $legacy_copy->get_status() && (int) $alpha['id'] === $legacy_data['duplicated_from'] && (int) $legacy_data['id'] !== (int) $alpha['id'] && isset( $legacy_data['native_editor_url'] ) && ! isset( $legacy_data['settings'] ), 'legacy duplicate still works and returns its summary: ' . wp_json_encode( $legacy_data ) );
+	$question_ids[] = (int) $legacy_data['id'];
+	ok( get_post_field( 'post_title', $legacy_data['id'] ) === $source['name'] . ' (copy)', 'legacy copy name' );
 
 	// Schema.
 	$schema = rest_do_request( new WP_REST_Request( 'OPTIONS', '/ohmylms/v1/questions' ) )->get_data()['schema'];

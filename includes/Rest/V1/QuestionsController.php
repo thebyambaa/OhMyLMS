@@ -12,9 +12,11 @@ use OhMyLMS\Assessment\Schema;
 use OhMyLMS\Extensions\Registry;
 use OhMyLMS\Extensions\Settings as ExtensionSettings;
 use OhMyLMS\QuestionBank\AccessPolicy;
+use OhMyLMS\QuestionBank\Approval;
 use OhMyLMS\QuestionBank\BankAttributes;
 use OhMyLMS\QuestionBank\Banks;
 use OhMyLMS\QuestionBank\DraftWriter;
+use OhMyLMS\QuestionBank\Duplicator;
 use OhMyLMS\QuestionBank\Search;
 use OhMyLMS\QuestionBank\SkillMap;
 use OhMyLMS\QuestionBank\Usage;
@@ -164,6 +166,39 @@ class QuestionsController extends RestController {
 				)
 			);
 		}
+
+		register_rest_route(
+			$this->namespace,
+			$item . '/approve',
+			array(
+				'args' => array( 'id' => $id ),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'approve_item' ),
+					'permission_callback' => array( $this, 'approve_item_permissions_check' ),
+					'args'                => array(
+						'version_id' => array(
+							'description' => __( 'Version to approve; the current version when omitted.', 'ohmylms' ),
+							'type'        => 'integer',
+							'minimum'     => 1,
+						),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			$item . '/duplicate',
+			array(
+				'args' => array( 'id' => $id ),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'duplicate_item' ),
+					'permission_callback' => array( $this, 'duplicate_item_permissions_check' ),
+				),
+			)
+		);
 
 		register_rest_route(
 			$this->namespace,
@@ -324,6 +359,38 @@ class QuestionsController extends RestController {
 	}
 
 	/**
+	 * Permission to approve a version of one question.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return true|WP_Error
+	 */
+	public function approve_item_permissions_check( $request ) {
+		return $this->check_question(
+			$request,
+			array( AccessPolicy::class, 'can_approve_question' ),
+			'ohmylms_question_cannot_approve',
+			__( 'Sorry, you are not allowed to approve versions of this question.', 'ohmylms' )
+		);
+	}
+
+	/**
+	 * Permission to duplicate one question: authors who may use it.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return true|WP_Error
+	 */
+	public function duplicate_item_permissions_check( $request ) {
+		return $this->check_question(
+			$request,
+			static function ( $question_id ) {
+				return AccessPolicy::can_author() && AccessPolicy::can_use_question( $question_id );
+			},
+			'ohmylms_question_cannot_duplicate',
+			__( 'Sorry, you are not allowed to duplicate this question.', 'ohmylms' )
+		);
+	}
+
+	/**
 	 * 404 for missing questions, then the object-level edit check.
 	 *
 	 * @param WP_REST_Request $request Request.
@@ -332,6 +399,19 @@ class QuestionsController extends RestController {
 	 * @return true|WP_Error
 	 */
 	private function check_editor( $request, $code, $message ) {
+		return $this->check_question( $request, array( AccessPolicy::class, 'can_edit_question' ), $code, $message );
+	}
+
+	/**
+	 * 404 for missing questions, then an object-level check.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @param callable        $allowed Receives the question ID; true when allowed.
+	 * @param string          $code    Error code when denied.
+	 * @param string          $message Message when denied.
+	 * @return true|WP_Error
+	 */
+	private function check_question( $request, $allowed, $code, $message ) {
 		$ready = $this->bank_ready();
 		if ( is_wp_error( $ready ) ) {
 			return $ready;
@@ -341,7 +421,7 @@ class QuestionsController extends RestController {
 			return $post;
 		}
 
-		return AccessPolicy::can_edit_question( $post->ID ) ? true : $this->forbidden( $code, $message );
+		return call_user_func( $allowed, $post->ID ) ? true : $this->forbidden( $code, $message );
 	}
 
 	// Reads.
@@ -605,6 +685,62 @@ class QuestionsController extends RestController {
 	 */
 	public function restore_item( $request ) {
 		return $this->change_lifecycle( $request, array( Usage::class, 'restore' ) );
+	}
+
+	/**
+	 * Approve a version of a question for shared use and practice (default: the current version,
+	 * captured first when the content changed since the last version).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function approve_item( $request ) {
+		$known = $this->reject_unknown_fields( $request, array( 'version_id' ) );
+		if ( is_wp_error( $known ) ) {
+			return $known;
+		}
+		$post = $this->get_question_post( $request['id'] );
+		if ( is_wp_error( $post ) ) {
+			return $post;
+		}
+		$approved = Approval::approve( $post->ID, $request['version_id'] );
+		if ( is_wp_error( $approved ) ) {
+			return $approved;
+		}
+		clean_post_cache( $post->ID );
+
+		return $this->prepare_item_for_response( get_post( $post->ID ), $request );
+	}
+
+	/**
+	 * Duplicate a question as a new question owned by the current user (new UUID, same family).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function duplicate_item( $request ) {
+		$known = $this->reject_unknown_fields( $request, array() );
+		if ( is_wp_error( $known ) ) {
+			return $known;
+		}
+		$post = $this->get_question_post( $request['id'] );
+		if ( is_wp_error( $post ) ) {
+			return $post;
+		}
+		$saved = Duplicator::duplicate( $post->ID );
+		if ( is_wp_error( $saved ) ) {
+			return $saved;
+		}
+		$copy = get_post( (int) $saved['id'] );
+
+		/** This action is documented in includes/Rest/V1/QuestionsController.php (ohmylms_rest_save_question_item). */
+		do_action( 'ohmylms_rest_save_question_item', $copy, $request, true );
+
+		$response = $this->prepare_item_for_response( $copy, $request );
+		$response->set_status( 201 );
+		$response->header( 'Location', rest_url( sprintf( '%s/%s/%d', $this->namespace, $this->rest_base, $copy->ID ) ) );
+
+		return $response;
 	}
 
 	/**

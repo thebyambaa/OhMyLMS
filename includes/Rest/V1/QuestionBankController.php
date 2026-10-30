@@ -10,9 +10,10 @@ namespace OhMyLMS\Rest\V1;
 use OhMyLMS\Abstracts\RestController;
 use OhMyLMS\Assessment\Schema;
 use OhMyLMS\QuestionBank\AccessPolicy;
-use OhMyLMS\QuestionBank\BankAttributes;
+use OhMyLMS\QuestionBank\Approval;
 use OhMyLMS\QuestionBank\Banks;
 use OhMyLMS\QuestionBank\DraftWriter;
+use OhMyLMS\QuestionBank\Duplicator;
 use OhMyLMS\QuestionBank\RowExporter;
 use OhMyLMS\QuestionBank\Search;
 use OhMyLMS\QuestionBank\SkillMap;
@@ -352,37 +353,11 @@ class QuestionBankController extends RestController {
 	 * @param WP_REST_Request $request REST request.
 	 */
 	public function approve( WP_REST_Request $request ) {
-		global $wpdb;
 		$question_id = (int) $request['id'];
-		try {
-			$version = Transaction::run(
-				static function () use ( $question_id, $request ) {
-					$version = $request['version_id'] ? VersionPublisher::version( (int) $request['version_id'] ) : VersionPublisher::capture( $question_id );
-					if ( ! $version || (int) $version['question_id'] !== $question_id ) {
-						throw new \OhMyLMS\Assessment\ErrorException( new WP_Error( 'ohmylms_version_missing', __( 'Version not found for this question.', 'ohmylms' ), array( 'status' => 404 ) ) ); }
-					$type         = (string) $version['type'];
-					$figure_check = \OhMyLMS\ExamImport\FigureContent::publishable( json_decode( $version['settings'], true ) ?: array() );
-					if ( is_wp_error( $figure_check ) ) {
-						throw new \OhMyLMS\Assessment\ErrorException( $figure_check );
-					}
-					if ( ! VersionPublisher::supports_snapshots( $type ) ) {
-						throw new \OhMyLMS\Assessment\ErrorException( new WP_Error( 'quiz_type_unversioned', __( 'This question type cannot be approved for versioned use.', 'ohmylms' ), array( 'status' => 409 ) ) ); }
-					return $version;
-				}
-			);
-		} catch ( \OhMyLMS\Assessment\ErrorException $error ) {
-			return $error->error;
+		$approved    = Approval::approve( $question_id, $request['version_id'] );
+		if ( is_wp_error( $approved ) ) {
+			return $approved;
 		}
-		$wpdb->update(
-			Schema::table( 'qb_questions' ),
-			array(
-				'approved_version_id' => (int) $version['id'],
-				'status'              => 'approved',
-				'updated_at'          => current_time( 'mysql', true ),
-			),
-			array( 'question_id' => $question_id )
-		);
-		do_action( 'ohmylms_question_version_approved', $question_id, (int) $version['id'], get_current_user_id() );
 		return rest_ensure_response( $this->summary( $question_id ) );
 	}
 
@@ -413,73 +388,11 @@ class QuestionBankController extends RestController {
 	 * @param WP_REST_Request $request REST request.
 	 */
 	public function duplicate( WP_REST_Request $request ) {
-		global $wpdb;
 		$source_id = (int) $request['id'];
-		$quiz_id   = (int) $request['quiz_id'];
-		if ( $quiz_id && ! AccessPolicy::can_edit_quiz( $quiz_id ) ) {
-			return AccessPolicy::denied(); }
-		if ( ! AccessPolicy::can_author() ) {
-			return AccessPolicy::denied(); }
-		$source     = ohmylms_get_question( $source_id );
-		$attributes = BankAttributes::get( $source_id );
-		$options    = array_map(
-			static function ( $option ) {
-				return array(
-					'answer'        => $option['answer'],
-					'is_correct'    => $option['is_correct'],
-					'order_number'  => $option['order_number'],
-					'thumbnail_id'  => $option['thumbnail_id'] ?? 0,
-					'matching_data' => $option['matching_data'] ?? array(),
-				);
-			},
-			$source->get_questions()
-		);
-		$family     = $attributes['family_id'] ? $attributes['family_id'] : ( 'q-' . substr( $attributes['uuid'] ?? wp_generate_uuid4(), 0, 8 ) );
-		$bank       = array(
-			'family_id'  => $family,
-			'difficulty' => $attributes['difficulty'] ?? 'standard',
-			'source'     => $attributes['source'] ?? '',
-			'secure'     => (int) ( $attributes['secure'] ?? 0 ),
-		);
-		if ( ! empty( $attributes['bank_id'] ) && Banks::can( (int) $attributes['bank_id'], 'edit' ) ) {
-			$bank['bank_id'] = (int) $attributes['bank_id']; }
-		$payload = array(
-			'name'         => sprintf( /* translators: %s: text value. */
-			__( '%s (copy)', 'ohmylms' ), $source->get_name() ),
-			'description'  => $source->get_description(),
-			'settings'     => $source->get_settings(),
-			'thumbnail_id' => $source->get_thumbnail_id(),
-			'video_id'     => $source->get_video_id(),
-			'questions'    => $options,
-			'skills'       => SkillMap::current( $source_id ),
-			'bank'         => $bank,
-		);
-		$order   = null;
-		if ( $quiz_id ) {
-			$order = $wpdb->get_var( $wpdb->prepare( 'SELECT order_number FROM %i WHERE quiz_id=%d AND question_id=%d', $wpdb->prefix . 'ohmylms_quiz_questions_relationship', $quiz_id, $source_id ) );
-			if ( null !== $order ) {
-				$payload['order_number'] = (int) $order; }
+		$saved     = Duplicator::duplicate( $source_id, (int) $request['quiz_id'] );
+		if ( is_wp_error( $saved ) ) {
+			return $saved;
 		}
-		try {
-			$saved = Transaction::run(
-				static function () use ( $payload, $quiz_id, $source_id, $order ) {
-					$saved = DraftWriter::save( $payload, $quiz_id );
-					if ( is_wp_error( $saved ) ) {
-						throw new \OhMyLMS\Assessment\ErrorException( $saved ); }
-					if ( $quiz_id && null !== $order ) {
-						$removed = Usage::remove_from_quiz( $quiz_id, $source_id );
-						if ( is_wp_error( $removed ) ) {
-							throw new \OhMyLMS\Assessment\ErrorException( $removed ); }
-					}
-					return $saved;
-				}
-			);
-		} catch ( \OhMyLMS\Assessment\ErrorException $error ) {
-			return $error->error;
-		}
-		// The family links the copy to its source; the original stays unchanged.
-		if ( empty( $attributes['family_id'] ) ) {
-			BankAttributes::write( $source_id, array( 'family_id' => $family ) ); }
 		$response = rest_ensure_response( $this->summary( $saved['id'] ) + array( 'duplicated_from' => $source_id ) );
 		$response->set_status( 201 );
 		return $response;

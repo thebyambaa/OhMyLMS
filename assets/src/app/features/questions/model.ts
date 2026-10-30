@@ -455,6 +455,43 @@ export function versionLabel( item: QuestionLifecycle ): string {
 }
 
 /**
+ * Whether the user may approve the question's current version and it is not approved yet.
+ *
+ * @param item Lifecycle fields and permissions.
+ * @return True when "Approve this version" applies.
+ */
+export function canApproveCurrent(
+	item: QuestionLifecycle & { permissions: { can_approve: boolean } }
+): boolean {
+	return item.permissions.can_approve && ! item.approved_is_current;
+}
+
+/**
+ * Describe the approval state of a question.
+ *
+ * @param item Lifecycle fields.
+ * @return Translated sentence.
+ */
+export function approvalLabel( item: QuestionLifecycle ): string {
+	if ( item.approved_is_current ) {
+		return __(
+			'This version is approved for shared use and practice.',
+			'ohmylms'
+		);
+	}
+	if ( item.approved_version_id > 0 ) {
+		return __(
+			'An earlier version is approved for shared use and practice; approve this version to replace it.',
+			'ohmylms'
+		);
+	}
+	return __(
+		'No version is approved for shared use and practice yet.',
+		'ohmylms'
+	);
+}
+
+/**
  * Describe how often a question is used, such as "2 quizzes · 14 responses".
  *
  * @param item       Question with usage counts.

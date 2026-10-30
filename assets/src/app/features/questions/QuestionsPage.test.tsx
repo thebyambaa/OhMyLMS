@@ -13,6 +13,7 @@ vi.mock( './api', () => ( {
 	createQuestion: vi.fn(),
 	archiveQuestion: vi.fn(),
 	restoreQuestion: vi.fn(),
+	duplicateQuestion: vi.fn(),
 } ) );
 
 const archived: QuestionSummary = {
@@ -202,6 +203,82 @@ describe( 'QuestionsPage', () => {
 		await waitFor( () =>
 			expect( api.listQuestions ).toHaveBeenCalledTimes( 2 )
 		);
+	} );
+
+	it( 'duplicates a question, reloads the list and links to the copy', async () => {
+		vi.mocked( api.duplicateQuestion ).mockResolvedValue( {
+			...question,
+			id: 900,
+			name: 'Solve 2x = 6 (copy)',
+		} );
+		const user = userEvent.setup();
+		renderPage();
+		await screen.findByRole( 'table' );
+		await user.click(
+			screen.getByRole( 'button', { name: 'Duplicate Solve 2x = 6' } )
+		);
+		expect(
+			await screen.findByText(
+				/Duplicated Solve 2x = 6 as Solve 2x = 6 \(copy\)\./,
+				notice
+			)
+		).toBeInTheDocument();
+		expect( api.duplicateQuestion ).toHaveBeenCalledWith(
+			812,
+			expect.any( AbortSignal )
+		);
+		await waitFor( () =>
+			expect( api.listQuestions ).toHaveBeenCalledTimes( 2 )
+		);
+		await user.click(
+			screen.getByRole( 'link', { name: 'Edit the copy' } )
+		);
+		expect(
+			await screen.findByText( 'Editor for 900' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'offers duplicate on rows the user cannot edit', async () => {
+		vi.mocked( api.listQuestions ).mockResolvedValue( {
+			items: [
+				{
+					...summary,
+					permissions: { can_edit: false, can_approve: false },
+				},
+			],
+			total: 1,
+			totalPages: 1,
+		} );
+		renderPage();
+		await screen.findByRole( 'table' );
+		expect(
+			screen.getByRole( 'button', { name: 'Duplicate Solve 2x = 6' } )
+		).toBeEnabled();
+	} );
+
+	it( 'shows a duplicate failure', async () => {
+		vi.mocked( api.duplicateQuestion ).mockRejectedValue(
+			new ApiError( {
+				status: 403,
+				code: 'ohmylms_question_cannot_duplicate',
+				message:
+					'Sorry, you are not allowed to duplicate this question.',
+			} )
+		);
+		const user = userEvent.setup();
+		renderPage();
+		await screen.findByRole( 'table' );
+		await user.click(
+			screen.getByRole( 'button', {
+				name: 'Duplicate Untitled question',
+			} )
+		);
+		expect(
+			await screen.findByText(
+				'Sorry, you are not allowed to duplicate this question.',
+				notice
+			)
+		).toBeInTheDocument();
 	} );
 
 	it( 'shows a lifecycle failure', async () => {

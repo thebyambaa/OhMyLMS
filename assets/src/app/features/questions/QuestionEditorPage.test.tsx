@@ -6,6 +6,10 @@ import {
 	type ExtensionRegistry,
 } from '../../../extensions/registry.mjs';
 import { BootstrapProvider } from '../../bootstrap/BootstrapContext';
+import {
+	registerAppQuestionEditors,
+	type EditorModuleLoader,
+} from '../../extensions/coreEditors';
 import { ExtensionsProvider } from '../../extensions/context';
 import { ApiError } from '../../lib/api';
 import { createBootstrap } from '../../test/render';
@@ -20,6 +24,8 @@ vi.mock( './api', () => ( {
 	updateQuestion: vi.fn(),
 	archiveQuestion: vi.fn(),
 	restoreQuestion: vi.fn(),
+	approveQuestion: vi.fn(),
+	duplicateQuestion: vi.fn(),
 	listVersions: vi.fn(),
 } ) );
 
@@ -522,5 +528,274 @@ describe( 'QuestionEditorPage', () => {
 		).toBeInTheDocument();
 		expect( label ).toHaveAttribute( 'aria-invalid', 'true' );
 		expect( api.updateQuestion ).not.toHaveBeenCalled();
+	} );
+
+	it( 'loads a built-in editor lazily behind a fallback and saves its settings', async () => {
+		let finish: (
+			module: Awaited< ReturnType< EditorModuleLoader > >
+		) => void = () => undefined;
+		const load = vi.fn(
+			() =>
+				new Promise< Awaited< ReturnType< EditorModuleLoader > > >(
+					( resolve ) => {
+						finish = resolve;
+					}
+				)
+		);
+		const registry = createRegistry();
+		registerAppQuestionEditors( registry, load );
+		loadQuestion( {
+			...question,
+			type: 'numerical',
+			settings: {
+				type: 'numerical',
+				score: { enabled: true, value: 2 },
+				answer: 3,
+			},
+			options: [],
+		} );
+		const user = userEvent.setup();
+		renderEditor( undefined, registry );
+		await loaded();
+		expect( screen.getByText( 'Loading editor…' ) ).toHaveAttribute(
+			'role',
+			'status'
+		);
+		expect(
+			screen.getByRole( 'group', { name: 'Numerical' } )
+		).toBeInTheDocument();
+		expect( load ).toHaveBeenCalledTimes( 1 );
+
+		finish( {
+			NumericalEditor: ( {
+				value,
+				onChange,
+			}: {
+				value: QuestionSettings;
+				onChange: ( patch: QuestionSettings ) => void;
+			} ) => (
+				<>
+					<label htmlFor="oml-test-answer">Answer</label>
+					<input
+						id="oml-test-answer"
+						value={ String( value.answer ?? '' ) }
+						onChange={ ( event ) =>
+							onChange( { answer: Number( event.target.value ) } )
+						}
+					/>
+				</>
+			),
+		} );
+		const field = await screen.findByRole( 'textbox', { name: 'Answer' } );
+		expect(
+			screen.queryByText( 'Loading editor…' )
+		).not.toBeInTheDocument();
+		expect( field ).toHaveValue( '3' );
+		await user.clear( field );
+		await user.type( field, '6' );
+		await user.click( saveButton() );
+		await screen.findByText( 'Question saved.', notice );
+		expect( api.updateQuestion ).toHaveBeenCalledWith(
+			812,
+			{
+				base_modified: '2026-10-30T13:05:12Z',
+				settings: {
+					type: 'numerical',
+					score: { enabled: true, value: 2 },
+					answer: 6,
+				},
+			},
+			expect.any( AbortSignal )
+		);
+	} );
+
+	describe( 'approval', () => {
+		it( 'approves the current version', async () => {
+			vi.mocked( api.approveQuestion ).mockResolvedValue( {
+				...question,
+				status: 'approved',
+				approved_version_id: 95,
+				approved_is_current: true,
+			} );
+			const user = userEvent.setup();
+			renderEditor();
+			await loaded();
+			expect(
+				screen.getByText(
+					'No version is approved for shared use and practice yet.'
+				)
+			).toBeInTheDocument();
+			await user.click(
+				screen.getByRole( 'button', { name: 'Approve this version' } )
+			);
+			expect(
+				await screen.findByText( 'Version 3 approved.', notice )
+			).toBeInTheDocument();
+			expect( api.approveQuestion ).toHaveBeenCalledWith(
+				812,
+				expect.any( AbortSignal )
+			);
+			expect(
+				screen.getByText(
+					'This version is approved for shared use and practice.'
+				)
+			).toBeInTheDocument();
+			expect(
+				screen.queryByRole( 'button', { name: 'Approve this version' } )
+			).not.toBeInTheDocument();
+			await waitFor( () =>
+				expect( api.listVersions ).toHaveBeenCalledTimes( 2 )
+			);
+		} );
+
+		it( 'asks to save first while there are unsaved changes', async () => {
+			const user = userEvent.setup();
+			renderEditor();
+			await user.type( await loaded(), '!' );
+			expect(
+				screen.getByRole( 'button', { name: 'Approve this version' } )
+			).toBeDisabled();
+			expect(
+				screen.getByRole( 'button', { name: 'Duplicate' } )
+			).toBeDisabled();
+			expect( api.approveQuestion ).not.toHaveBeenCalled();
+		} );
+
+		it( 'offers approval of a newer version only to approvers', async () => {
+			loadQuestion( {
+				...question,
+				status: 'approved',
+				approved_version_id: 94,
+				approved_is_current: false,
+			} );
+			const { unmount } = renderEditor();
+			await loaded();
+			expect(
+				screen.getByText( /An earlier version is approved/ )
+			).toBeInTheDocument();
+			expect(
+				screen.getByRole( 'button', { name: 'Approve this version' } )
+			).toBeEnabled();
+			unmount();
+
+			loadQuestion( {
+				...question,
+				permissions: {
+					can_edit: true,
+					can_approve: false,
+					can_delete: true,
+				},
+			} );
+			renderEditor();
+			await loaded();
+			expect(
+				screen.queryByRole( 'heading', { name: 'Approval' } )
+			).not.toBeInTheDocument();
+			expect(
+				screen.queryByRole( 'button', { name: 'Approve this version' } )
+			).not.toBeInTheDocument();
+		} );
+
+		it( 'shows an approval failure', async () => {
+			vi.mocked( api.approveQuestion ).mockRejectedValue(
+				new ApiError( {
+					status: 409,
+					code: 'quiz_type_unversioned',
+					message:
+						'This question type cannot be approved for versioned use.',
+				} )
+			);
+			const user = userEvent.setup();
+			renderEditor();
+			await loaded();
+			await user.click(
+				screen.getByRole( 'button', { name: 'Approve this version' } )
+			);
+			expect(
+				await screen.findByText(
+					'This question type cannot be approved for versioned use.',
+					notice
+				)
+			).toBeInTheDocument();
+		} );
+	} );
+
+	describe( 'duplicate', () => {
+		const copy: QuestionDetail = {
+			...question,
+			id: 900,
+			uuid: '1b0c5c1e-0000-4000-8000-000000000900',
+			name: 'Solve 2x = 6 (copy)',
+			version: 1,
+			current_version_id: 120,
+			usage: { quizzes: 0, responses: 0 },
+			quizzes: [],
+			modified: '2026-10-30T14:10:00Z',
+		};
+
+		it( 'opens the editor of the copy', async () => {
+			vi.mocked( api.getQuestion ).mockImplementation( async ( id ) =>
+				900 === id ? copy : question
+			);
+			vi.mocked( api.duplicateQuestion ).mockResolvedValue( copy );
+			const user = userEvent.setup();
+			renderEditor();
+			await loaded();
+			await user.click(
+				screen.getByRole( 'button', { name: 'Duplicate' } )
+			);
+			expect(
+				await screen.findByRole( 'heading', {
+					name: 'Edit question: Solve 2x = 6 (copy)',
+				} )
+			).toBeInTheDocument();
+			expect(
+				screen.getByText(
+					'Question duplicated. You are now editing the copy.',
+					notice
+				)
+			).toBeInTheDocument();
+			expect( api.duplicateQuestion ).toHaveBeenCalledWith(
+				812,
+				expect.any( AbortSignal )
+			);
+			await waitFor( () =>
+				expect( api.getQuestion ).toHaveBeenLastCalledWith(
+					900,
+					expect.any( AbortSignal )
+				)
+			);
+			expect(
+				screen.getByRole( 'textbox', { name: 'Name' } )
+			).toHaveValue( 'Solve 2x = 6 (copy)' );
+		} );
+
+		it( 'stays on the question when duplicating fails', async () => {
+			vi.mocked( api.duplicateQuestion ).mockRejectedValue(
+				new ApiError( {
+					status: 403,
+					code: 'ohmylms_question_cannot_duplicate',
+					message:
+						'Sorry, you are not allowed to duplicate this question.',
+				} )
+			);
+			const user = userEvent.setup();
+			renderEditor();
+			await loaded();
+			await user.click(
+				screen.getByRole( 'button', { name: 'Duplicate' } )
+			);
+			expect(
+				await screen.findByText(
+					'Sorry, you are not allowed to duplicate this question.',
+					notice
+				)
+			).toBeInTheDocument();
+			expect(
+				screen.getByRole( 'heading', {
+					name: 'Edit question: Solve 2x = 6',
+				} )
+			).toBeInTheDocument();
+		} );
 	} );
 } );

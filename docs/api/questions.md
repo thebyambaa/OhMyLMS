@@ -6,7 +6,9 @@ old admin still uses and which keep their routes and response shapes. Server cod
 `includes/Rest/V1/QuestionsController.php` (routes, arguments, validation, responses) and
 `includes/QuestionBank/Search.php` (the visibility-scoped list query, shared with `/question-bank`).
 Writes go through `includes/QuestionBank/DraftWriter.php`; archive and restore through
-`includes/QuestionBank/Usage.php`; object permissions come from `includes/QuestionBank/AccessPolicy.php`.
+`includes/QuestionBank/Usage.php`; approval through `includes/QuestionBank/Approval.php` and duplication
+through `includes/QuestionBank/Duplicator.php` (both shared with the legacy `/question-bank` routes);
+object permissions come from `includes/QuestionBank/AccessPolicy.php`.
 
 ## Audit before
 
@@ -40,6 +42,8 @@ response carries `Cache-Control: private, no-store`.
 | PATCH / PUT / POST | `/questions/{id}` | `can_edit_question` | 200 editor view | 400, 401, 403, 404, 409, 413, 422, 500, 503 |
 | POST | `/questions/{id}/archive` | `can_edit_question` | 200 editor view | 400, 401, 403, 404, 500, 503 |
 | POST | `/questions/{id}/restore` | `can_edit_question` | 200 editor view | 400, 401, 403, 404, 500, 503 |
+| POST | `/questions/{id}/approve` | `AccessPolicy::can_approve_question` | 200 editor view | 400, 401, 403, 404, 409, 503 |
+| POST | `/questions/{id}/duplicate` | `can_author` and `AccessPolicy::can_use_question` | 201 editor view of the copy + `Location` | 400, 401, 403, 404, 500, 503 |
 | GET | `/questions/{id}/versions` | `can_edit_question` | 200 versions + totals | 400, 401, 403, 404, 503 |
 
 `503 ohmylms_question_bank_unavailable` means the question bank tables (`Assessment\Schema::ready()`) are
@@ -169,6 +173,36 @@ values. A request whose only field is `base_modified` changes nothing and return
 content change is captured as a new immutable version; a save whose content equals the latest version reuses
 it, so `version` only increases when something changed.
 
+### Approve (`POST /questions/{id}/approve`)
+
+Approves a version for shared use and practice. The only body field is optional `version_id` (integer >= 1);
+any other field answers 400 `ohmylms_question_unknown_field`. Without it the current content is approved:
+it is captured as a new version first if it changed since the last version, otherwise the current version
+is reused (`version` does not change). The logic is the legacy route's, now in `QuestionBank\Approval`:
+
+- the version must belong to this question, otherwise 404 `ohmylms_version_missing`;
+- figure content must be publishable (`ExamImport\FigureContent::publishable()`), otherwise 409
+  `exam_figure_review`;
+- the type must support versioned snapshots, otherwise 409 `quiz_type_unversioned`;
+- the identity row gets `approved_version_id` and `status = approved`, then
+  `ohmylms_question_version_approved` ($question_id, $version_id, $user_id) fires.
+
+The response is the editor view: `status` is `approved` (unless archived), `approved_version_id` is the
+approved version and `approved_is_current` tells whether it is the current content. Permission is
+`can_approve_question`: the bank's `approve` grant for questions in a bank, otherwise `edit_post` on the
+question. A bank `edit` grant can edit but not approve (403 `ohmylms_question_cannot_approve`).
+
+### Duplicate (`POST /questions/{id}/duplicate`)
+
+Copies a question the user may use (shared-bank `use` grants included) as a new question owned by the user;
+no body fields are accepted. The logic is the legacy route's, now in `QuestionBank\Duplicator`: the copy is
+named "<name> (copy)" and keeps the body, settings, options (as new option rows), media, skill map,
+difficulty, source and `secure`; it gets a new UUID, is version 1 and unapproved, and shares the source's
+`family_id` (a new family is written to the source when it had none). It stays in the source's bank only if
+the user can edit that bank. Extension settings are not copied (as in the legacy route). The legacy
+`quiz_id` option (replace the source in a quiz) is not offered here. Answers 201 with the copy's editor view
+and `Location`; `ohmylms_rest_save_question_item` fires with `$creating = true`.
+
 ## Examples
 
 ```http
@@ -214,12 +248,14 @@ Stale save:
 | 400 | `ohmylms_question_invalid_page` | `page` past the last page (list, versions). |
 | 400 | `ohmylms_question_invalid_extension_settings` | Unregistered or invalid extension settings (`data.reason` is the underlying code). |
 | 400 | `ohmylms_invalid_question_settings`, `ohmylms_question_invalid`, `ohmylms_skill_map_invalid`, `ohmylms_skill_missing`, `ohmylms_bank_invalid` | DraftWriter, SkillMap and BankAttributes validation. |
-| 401 / 403 | `ohmylms_question_cannot_view`, `_cannot_create`, `_cannot_edit` | Not logged in (401) or missing the permission (403). |
+| 401 / 403 | `ohmylms_question_cannot_view`, `_cannot_create`, `_cannot_edit`, `_cannot_approve`, `_cannot_duplicate` | Not logged in (401) or missing the permission (403). |
 | 403 | `ohmylms_question_bank_forbidden` | `bank` filter for a bank the user cannot see. |
 | 403 | `ohmylms_forbidden`, `ohmylms_option_foreign` | A `bank_id` the user cannot edit; an option id of another question. |
 | 403 | `rest_cookie_invalid_nonce` | Cookie auth without a valid `X-WP-Nonce` (core). |
 | 404 | `ohmylms_question_not_found` | Unknown id, another post type, trash or auto-draft. |
+| 404 | `ohmylms_version_missing` | Approve: `version_id` unknown or of another question. |
 | 409 | `ohmylms_question_conflict` | Stale `base_modified` (`data.modified`). |
+| 409 | `quiz_type_unversioned`, `exam_figure_review` | Approve: the type does not support versioned snapshots; figures are not reviewed. |
 | 413 | `ohmylms_question_too_large` | Body above 256 KiB (`data.max_bytes`). |
 | 422 | `ohmylms_question_invalid_name`, `ohmylms_question_invalid_options`, `ohmylms_question_invalid_media` | Blank name, option rules, media IDs that are not attachments (`data.field`). |
 | 500 | `ohmylms_question_storage` | Storage failure; DraftWriter rolled the save back. |
@@ -231,9 +267,10 @@ Stale save:
   visibility is applied afterwards and cannot be widened.
 - Filter `ohmylms_rest_prepare_question_summary` ($data, $post, $request): one list row.
 - Filter `ohmylms_rest_prepare_question_item` ($response, $post, $request): the editor view.
-- Action `ohmylms_rest_save_question_item` ($post, $request, $creating): after create or update.
-- DraftWriter, Usage and VersionPublisher actions still fire (`ohmylms_question_draft_saved`,
-  `ohmylms_question_archived`, `ohmylms_question_version_created`, …). The legacy
+- Action `ohmylms_rest_save_question_item` ($post, $request, $creating): after create, update or
+  duplicate (`$post` is the copy).
+- DraftWriter, Usage, VersionPublisher and Approval actions still fire (`ohmylms_question_draft_saved`,
+  `ohmylms_question_archived`, `ohmylms_question_version_created`, `ohmylms_question_version_approved`, …). The legacy
   `ohmylms_rest_insert_question` / `ohmylms_rest_prepare_question` hooks belong to `/question` and do not fire here.
 
 ## Security notes
@@ -264,12 +301,18 @@ $env:OHMYLMS_QUESTIONS_TEST='1'; php -n -d extension_dir=C:\php8.5.4\ext -d exte
 It covers route registration and permission callbacks, 401/403 on every route, object-level access between two
 authors, every validation rule above, create/list/read/update/archive/restore/versions/types, stale saves,
 extension settings versioning, that reads create no identity row, that a user without access never receives
-answer text, and that `GET /question-bank` returns the same ids and totals as `GET /questions`.
+answer text, and that `GET /question-bank` returns the same ids and totals as `GET /questions`. Approve:
+404 before capabilities, 403 for an author without rights and for a bank `edit` grant, unknown and foreign
+`version_id`, approving the current and an older version, `approved_is_current` after a later edit, the
+identity row status. Duplicate: new id and UUID with the same content and family, bank placement for a bank
+editor, 403 for a user who cannot use the source. The legacy `/question-bank/{id}/approve` and `/duplicate`
+routes still answer with their own summaries and permissions.
 
 ## Not covered
 
 - **Delete**: left to the legacy `DELETE /question/{id}`.
-- **Approve and duplicate**: still the legacy `/question-bank/{id}/approve` and `/duplicate` routes.
+- **Duplicate into a quiz**: the legacy `/question-bank/{id}/duplicate` with `quiz_id` (the copy replaces the
+  source in that quiz) has no equivalent here.
 - **`fill-in-the-blank` and `short-text` option rules**: not enforced. Fill-in-the-blank has two answer
   storages (`{braces}` in the name parsed by `InlineBlanks`, or correct options compared by text in
   `QuestionTypes::grade_builtin()`), and short-text is graded manually with no stored key.

@@ -50,6 +50,8 @@ GET/PUT `/ohmylms/v1/extension-settings/<type>/<id>` accepts `{settings:{...}}`,
 
 ## Question/lesson lifecycle
 
+In the new admin app the built-in question editors (numerical, structured and the interactive types) register after extension scripts and skip IDs that are already registered, so an extension may supply the editor of a built-in type there; the existing admin registers its own first.
+
 `ohmylms_register_question_type` requires label, render, validate and grade callbacks. Optional `editor.schema` validates saved settings; optional `validate_settings($settings)` returns `true` or an error message for checks a schema cannot express. JS editor IDs must match server manifest IDs. Updates go through the existing question store/save API.
 
 Versioned assessments grade frozen question versions. A type joins them by declaring `'snapshot' => true`, promising that `grade()` and `validate()` read only the question object they receive (`get_settings()`, `get_questions()`), which may be an `OhMyLMS\Assessment\QuestionSnapshot`. Quizzes containing a type without the flag cannot be published (`quiz_type_unversioned`) instead of silently grading current data. Types whose answers are option IDs should declare `'answers' => 'options'` (versioned deliveries send opaque per-attempt option tokens). Learner-facing settings must be listed in `'public_settings'`; all other settings are withheld from delivery markup. `grade()` may return `parts => [part_id => fraction|null]` for multi-part questions.

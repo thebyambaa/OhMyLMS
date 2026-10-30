@@ -30,14 +30,24 @@ final class MathLive {
 		return (bool) apply_filters( 'ohmylms_mathlive_enabled', $enabled );
 	}
 
-	/** Register a lazy runtime and make its local URLs available to editors. */
-	public static function configure() {
-		$config = array(
+	/**
+	 * Client configuration (`window.ohmylmsMath`): whether math input is enabled and the local URLs of
+	 * the lazy runtime, its fonts and its stylesheet.
+	 *
+	 * @return array{enabled:bool,runtime:string,fonts:string,style:string}
+	 */
+	public static function config() {
+		return array(
 			'enabled' => self::enabled(),
 			'runtime' => plugins_url( 'assets/dist/admin/math-runtime.js', OHMYLMS_FILE ),
 			'fonts'   => plugins_url( 'assets/dist/mathlive/fonts', OHMYLMS_FILE ),
 			'style'   => plugins_url( 'assets/css/mathlive.css', OHMYLMS_FILE ),
 		);
+	}
+
+	/** Register a lazy runtime and make its local URLs available to editors. */
+	public static function configure() {
+		$config = self::config();
 		wp_register_script( 'ohmylms-mathlive', $config['runtime'], array(), '0.111.1', true );
 		wp_register_script( 'ohmylms-mathlive-loader', plugins_url( 'assets/interactivity/math-loader.js', OHMYLMS_FILE ), array(), '0.111.1', true );
 		wp_localize_script( 'ohmylms-mathlive-loader', 'ohmylmsMath', $config );
@@ -51,6 +61,11 @@ final class MathLive {
 			return;
 		}
 		wp_enqueue_script( 'ohmylms-mathlive' );
+		self::enqueue_style();
+	}
+
+	/** Styles of math fields and of the rich content controls that author equations. */
+	public static function enqueue_style() {
 		wp_enqueue_style( 'ohmylms-mathlive', plugins_url( 'assets/css/mathlive.css', OHMYLMS_FILE ), array(), '0.111.1' );
 	}
 

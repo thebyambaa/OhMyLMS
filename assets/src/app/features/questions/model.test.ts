@@ -1,6 +1,8 @@
 import { ApiError } from '../../lib/api';
 import { question, summary, types, version } from './fixtures';
 import {
+	approvalLabel,
+	canApproveCurrent,
 	createInput,
 	formFromQuestion,
 	isDirty,
@@ -121,6 +123,34 @@ describe( 'labels', () => {
 		).toBe( 'v3 · newer than approved' );
 		expect( versionLabel( { ...summary, status: 'archived' } ) ).toBe(
 			'v3 · archived'
+		);
+	} );
+
+	it( 'describes approval and when the current version can be approved', () => {
+		const approved = {
+			...question,
+			status: 'approved' as const,
+			approved_version_id: 95,
+			approved_is_current: true,
+		};
+		const older = { ...approved, approved_is_current: false };
+		expect( canApproveCurrent( question ) ).toBe( true );
+		expect( canApproveCurrent( older ) ).toBe( true );
+		expect( canApproveCurrent( approved ) ).toBe( false );
+		expect(
+			canApproveCurrent( {
+				...question,
+				permissions: { ...question.permissions, can_approve: false },
+			} )
+		).toBe( false );
+		expect( approvalLabel( question ) ).toBe(
+			'No version is approved for shared use and practice yet.'
+		);
+		expect( approvalLabel( older ) ).toMatch(
+			/^An earlier version is approved/
+		);
+		expect( approvalLabel( approved ) ).toBe(
+			'This version is approved for shared use and practice.'
 		);
 	} );
 

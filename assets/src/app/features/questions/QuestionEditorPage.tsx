@@ -6,17 +6,31 @@ import {
 	TextControl,
 	TextareaControl,
 } from '@wordpress/components';
-import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
+import {
+	Suspense,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import type { ComponentType } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useBootstrap } from '../../bootstrap/BootstrapContext';
 import { ExtensionBoundary } from '../../extensions/ExtensionBoundary';
 import { useExtensions } from '../../extensions/context';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import { normalizeApiError } from '../../lib/api';
-import { archiveQuestion, restoreQuestion, updateQuestion } from './api';
 import {
+	approveQuestion,
+	archiveQuestion,
+	duplicateQuestion,
+	restoreQuestion,
+	updateQuestion,
+} from './api';
+import {
+	approvalLabel,
+	canApproveCurrent,
 	DIFFICULTIES,
 	difficultyLabel,
 	editsOptions,
@@ -69,9 +83,10 @@ function BackLink() {
 
 /**
  * Single-question editor (`#/content-hub/question-bank/<id>`): name, text, points and difficulty for
- * every type; options for the built-in option types; a registered extension editor for add-on types.
- * Saves send only changed fields and are refused when someone else saved first. Leaving with unsaved
- * changes asks first.
+ * every type; options for the built-in option types; the registered `question-editor` for the other
+ * types (the built-in settings editors, which load lazily, and add-on editors). Saves send only
+ * changed fields and are refused when someone else saved first. Leaving with unsaved changes asks
+ * first. Approving and duplicating work on the saved question.
  */
 export default function QuestionEditorPage() {
 	const params = useParams();
@@ -145,6 +160,7 @@ function QuestionWorkspace( {
 	reload: () => void;
 } ) {
 	const { adminUrl } = useBootstrap();
+	const navigate = useNavigate();
 	const [ form, setForm ] = useState< FormState >( () =>
 		formFromQuestion( question )
 	);
@@ -296,6 +312,39 @@ function QuestionWorkspace( {
 					archiving
 						? __( 'Question archived.', 'ohmylms' )
 						: __( 'Question restored.', 'ohmylms' )
+				);
+			}
+		);
+	}
+
+	function approve() {
+		void perform(
+			( signal ) => approveQuestion( question.id, signal ),
+			( result ) => {
+				onSaved( result );
+				setVersionsKey( ( current ) => current + 1 );
+				setMessage(
+					sprintf(
+						/* translators: %d: version number. */
+						__( 'Version %d approved.', 'ohmylms' ),
+						result.version
+					)
+				);
+			}
+		);
+	}
+
+	function duplicate() {
+		void perform(
+			( signal ) => duplicateQuestion( question.id, signal ),
+			( copy ) => {
+				onSaved( copy );
+				navigate( `${ LIST }/${ copy.id }` );
+				setMessage(
+					__(
+						'Question duplicated. You are now editing the copy.',
+						'ohmylms'
+					)
 				);
 			}
 		);
@@ -479,11 +528,19 @@ function QuestionWorkspace( {
 							key={ `${ question.id }:${ extension.id }` }
 							id={ extension.id }
 						>
-							<ExtensionEditor
-								question={ question }
-								value={ form.settings }
-								onChange={ changeSettings }
-							/>
+							<Suspense
+								fallback={
+									<p role="status">
+										{ __( 'Loading editor…', 'ohmylms' ) }
+									</p>
+								}
+							>
+								<ExtensionEditor
+									question={ question }
+									value={ form.settings }
+									onChange={ changeSettings }
+								/>
+							</Suspense>
 						</ExtensionBoundary>
 					</fieldset>
 				) }
@@ -545,6 +602,59 @@ function QuestionWorkspace( {
 					</Button>
 				</section>
 			) }
+
+			{ question.permissions.can_approve && (
+				<section aria-labelledby="oml-question-approval">
+					<h3 id="oml-question-approval">
+						{ __( 'Approval', 'ohmylms' ) }
+					</h3>
+					<p>{ approvalLabel( question ) }</p>
+					{ canApproveCurrent( question ) && (
+						<>
+							{ dirty && (
+								<p>
+									{ __(
+										'Save or undo your changes first.',
+										'ohmylms'
+									) }
+								</p>
+							) }
+							<Button
+								variant="secondary"
+								disabled={ busy || dirty }
+								onClick={ approve }
+							>
+								{ __( 'Approve this version', 'ohmylms' ) }
+							</Button>
+						</>
+					) }
+				</section>
+			) }
+
+			<section aria-labelledby="oml-question-copy">
+				<h3 id="oml-question-copy">{ __( 'Copy', 'ohmylms' ) }</h3>
+				<p>
+					{ __(
+						'Duplicating creates a new draft question with the same content, which you can change without affecting this one.',
+						'ohmylms'
+					) }
+				</p>
+				{ dirty && (
+					<p>
+						{ __(
+							'Save or undo your changes first; the copy is made from the saved question.',
+							'ohmylms'
+						) }
+					</p>
+				) }
+				<Button
+					variant="secondary"
+					disabled={ busy || dirty }
+					onClick={ duplicate }
+				>
+					{ __( 'Duplicate', 'ohmylms' ) }
+				</Button>
+			</section>
 
 			<Versions key={ versionsKey } id={ question.id } />
 

@@ -16,6 +16,7 @@ import { normalizeApiError } from '../../lib/api';
 import {
 	archiveQuestion,
 	createQuestion,
+	duplicateQuestion,
 	listQuestionTypes,
 	restoreQuestion,
 } from './api';
@@ -63,7 +64,8 @@ function defaultType( types: readonly QuestionType[] ): string {
 
 /**
  * Question bank list (`#/content-hub/question-bank`): paged and filtered by text, type, difficulty and
- * status, with archive/restore and create. The editor lives at `#/content-hub/question-bank/<id>`.
+ * status, with duplicate, archive/restore and create. Every listed question can be duplicated (the
+ * list shows only questions the user may use). The editor lives at `#/content-hub/question-bank/<id>`.
  */
 export default function QuestionsPage() {
 	const list = useQuestions();
@@ -76,6 +78,7 @@ export default function QuestionsPage() {
 	const [ type, setType ] = useState( '' );
 	const [ nameError, setNameError ] = useState< string | null >( null );
 	const [ message, setMessage ] = useState< string | null >( null );
+	const [ copyId, setCopyId ] = useState< number | null >( null );
 	const registered = types.data ?? [];
 	const chosenType = type || defaultType( registered );
 
@@ -129,9 +132,29 @@ export default function QuestionsPage() {
 			}
 		);
 	}
+	function duplicate( item: QuestionSummary ) {
+		setMessage( null );
+		setCopyId( null );
+		void operation.run(
+			( signal ) => duplicateQuestion( item.id, signal ),
+			( copy ) => {
+				setMessage(
+					sprintf(
+						/* translators: 1: question name, 2: name of the copy. */
+						__( 'Duplicated %1$s as %2$s.', 'ohmylms' ),
+						displayName( item ),
+						displayName( copy )
+					)
+				);
+				setCopyId( copy.id );
+				list.reload();
+			}
+		);
+	}
 	function changeLifecycle( item: QuestionSummary ) {
 		const archiving = 'archived' !== item.status;
 		setMessage( null );
+		setCopyId( null );
 		void operation.run(
 			( signal ) =>
 				archiving
@@ -244,8 +267,22 @@ export default function QuestionsPage() {
 				</Notice>
 			) }
 			{ message && (
-				<Notice status="success" onRemove={ () => setMessage( null ) }>
+				<Notice
+					status="success"
+					onRemove={ () => {
+						setMessage( null );
+						setCopyId( null );
+					} }
+				>
 					{ message }
+					{ null !== copyId && (
+						<>
+							{ ' ' }
+							<Link to={ `${ EDITOR }/${ copyId }` }>
+								{ __( 'Edit the copy', 'ohmylms' ) }
+							</Link>
+						</>
+					) }
 				</Notice>
 			) }
 			{ operation.error && ! creating && (
@@ -322,27 +359,52 @@ export default function QuestionsPage() {
 										</td>
 										<td>{ usageLabel( item ) }</td>
 										<td>
+											<Button
+												variant="link"
+												disabled={ operation.busy }
+												onClick={ () =>
+													duplicate( item )
+												}
+												aria-label={ sprintf(
+													/* translators: %s: question name. */
+													__(
+														'Duplicate %s',
+														'ohmylms'
+													),
+													displayName( item )
+												) }
+											>
+												{ __( 'Duplicate', 'ohmylms' ) }
+											</Button>
 											{ item.permissions.can_edit && (
-												<Button
-													variant="link"
-													disabled={ operation.busy }
-													onClick={ () =>
-														changeLifecycle( item )
-													}
-													aria-label={ lifecycleLabel(
-														item
-													) }
-												>
-													{ 'archived' === item.status
-														? __(
-																'Restore',
-																'ohmylms'
+												<>
+													{ ' ' }
+													<Button
+														variant="link"
+														disabled={
+															operation.busy
+														}
+														onClick={ () =>
+															changeLifecycle(
+																item
 															)
-														: __(
-																'Archive',
-																'ohmylms'
-															) }
-												</Button>
+														}
+														aria-label={ lifecycleLabel(
+															item
+														) }
+													>
+														{ 'archived' ===
+														item.status
+															? __(
+																	'Restore',
+																	'ohmylms'
+																)
+															: __(
+																	'Archive',
+																	'ohmylms'
+																) }
+													</Button>
+												</>
 											) }
 										</td>
 									</tr>

@@ -8,6 +8,8 @@
 namespace OhMyLMS\Assets;
 
 use OhMyLMS\Admin\AppPage;
+use OhMyLMS\Assessment\Interactive;
+use OhMyLMS\Assessment\MathLive;
 use OhMyLMS\Design\Ui;
 use OhMyLMS\Extensions\Registry;
 use OhMyLMS\Extensions\Settings;
@@ -89,8 +91,10 @@ final class AdminAppAssets {
 			wp_enqueue_style( self::HANDLE, $build['url'] . '/admin-app.css', $style_deps, $build['asset']['version'] );
 		}
 
-		$dependencies = array_merge( $build['asset']['dependencies'], self::enqueue_extension_host( $build ) );
+		$host         = self::enqueue_extension_host( $build );
+		$dependencies = array_merge( $build['asset']['dependencies'], $host );
 		wp_enqueue_script( self::HANDLE, $build['url'] . '/admin-app.js', array_values( array_unique( $dependencies ) ), $build['asset']['version'], true );
+		self::enqueue_question_editor_runtime( $host ? self::EXTENSIONS_HANDLE : self::HANDLE );
 		wp_set_script_translations( self::HANDLE, 'ohmylms', OHMYLMS_DIR . '/languages' );
 		wp_add_inline_script(
 			self::HANDLE,
@@ -122,6 +126,23 @@ final class AdminAppAssets {
 		$before  = $scripts->queue;
 		do_action( 'ohmylms_enqueue_extension_scripts', self::EXTENSIONS_HANDLE );
 		return array_merge( array( self::EXTENSIONS_HANDLE ), array_values( array_diff( $scripts->queue, $before ) ) );
+	}
+
+	/**
+	 * What the built-in question editors need at runtime, as on the existing admin's screen: the
+	 * learners' interactive widgets for previews (`window.OhMyLMSInteractive`, see
+	 * {@see \OhMyLMS\Assessment\Interactive::enqueue()}), the media library, the math field styles, and
+	 * the math configuration (`window.ohmylmsMath`) that the math input loader reads before it loads
+	 * the runtime on demand.
+	 *
+	 * @param string $handle Script that carries `window.ohmylmsMath`: the extension host when it is
+	 *                       built (so extension scripts can read it too), otherwise the app.
+	 */
+	private static function enqueue_question_editor_runtime( $handle ) {
+		wp_enqueue_media();
+		Interactive::enqueue();
+		MathLive::enqueue_style();
+		wp_localize_script( $handle, 'ohmylmsMath', MathLive::config() );
 	}
 
 	/**

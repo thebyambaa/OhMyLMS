@@ -27,6 +27,7 @@ import {
 import { QuestionMediaUpload as MediaUpload } from './QuestionMediaUpload';
 import { moveOption } from './model.mjs';
 import { RichContentControl } from '../math/RichContentControl';
+import { ExtensionBoundary } from '../../extensions/ExtensionBoundary';
 
 /**
  * Private answer controls used by the question block; they save through the assessment writer.
@@ -59,16 +60,22 @@ export function BankAnswerFields( {
 		typeof window !== 'undefined' &&
 		window.ohmylms?.extensions?.get?.( 'question-editor', type );
 	if ( custom ) {
-		return createElement( custom.render, {
-			question: question || {
-				name: prompt,
-				settings,
-				questions: options,
-			},
-			value: settings,
-			onChange: ( patch ) =>
-				onChange( { settings: { ...settings, ...patch, type } } ),
-		} );
+		return (
+			<ExtensionBoundary key={ type } id={ custom.id || type }>
+				{ createElement( custom.render, {
+					question: question || {
+						name: prompt,
+						settings,
+						questions: options,
+					},
+					value: settings,
+					onChange: ( patch ) =>
+						onChange( {
+							settings: { ...settings, ...patch, type },
+						} ),
+				} ) }
+			</ExtensionBoundary>
+		);
 	}
 	if ( isExtendedType( type ) ) {
 		return (

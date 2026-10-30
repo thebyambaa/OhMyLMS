@@ -53,6 +53,15 @@ export const types: QuestionType[] = [
 		builtin: true,
 	},
 	{
+		id: 'numerical',
+		label: 'Numerical',
+		format: 'ohmylms-settings',
+		answers: 'text',
+		manual: false,
+		snapshot: true,
+		builtin: true,
+	},
+	{
 		id: 'reorder',
 		label: 'Reorder',
 		format: 'ohmylms-options',

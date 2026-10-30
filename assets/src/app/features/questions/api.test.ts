@@ -1,8 +1,10 @@
 import { get, patch, post } from '../../lib/api';
 import { getCollection } from '../../lib/api/collection';
 import {
+	approveQuestion,
 	archiveQuestion,
 	createQuestion,
+	duplicateQuestion,
 	getQuestion,
 	listQuestions,
 	listQuestionTypes,
@@ -172,6 +174,32 @@ describe( 'typed questions API', () => {
 			undefined,
 			expect.any( Object )
 		);
+	} );
+
+	it( 'approves and duplicates with an empty POST and validates the result', async () => {
+		vi.mocked( post ).mockResolvedValue( question );
+		expect( await approveQuestion( 812 ) ).toEqual( question );
+		expect( post ).toHaveBeenLastCalledWith(
+			'/ohmylms/v1/questions/812/approve',
+			undefined,
+			expect.any( Object )
+		);
+		expect( await duplicateQuestion( 812 ) ).toEqual( question );
+		expect( post ).toHaveBeenLastCalledWith(
+			'/ohmylms/v1/questions/812/duplicate',
+			undefined,
+			expect.any( Object )
+		);
+		vi.mocked( post ).mockResolvedValueOnce( { ...question, id: 0 } );
+		await expect( duplicateQuestion( 812 ) ).rejects.toMatchObject(
+			invalid
+		);
+		vi.mocked( post ).mockClear();
+		await expect( approveQuestion( 0 ) ).rejects.toMatchObject( invalid );
+		await expect( duplicateQuestion( -3 ) ).rejects.toMatchObject(
+			invalid
+		);
+		expect( post ).not.toHaveBeenCalled();
 	} );
 
 	it( 'pages versions and validates them', async () => {

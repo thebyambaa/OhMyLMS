@@ -101,9 +101,21 @@ shared registry (`assets/src/extensions/registry.mjs`); it does not load the rec
 - Each entry renders inside `ExtensionBoundary`: a failure shows an alert for that extension only and emits
   `ohmylms:extension-error`.
 
-Question editors, lesson editors and membership settings are registered and listed but are not yet
-rendered: they need the rebuilt question authoring, lesson-type and membership extension-settings
-screens. Checkout fields and frontend slots still use the existing SDK.
+- Question editors render in the Question Bank editor (`#/content-hub/question-bank/<id>`) for types
+  whose `editor.format` is not `ohmylms-options`, inside `ExtensionBoundary` and `Suspense`, with
+  `{question, value, onChange}`. The app registers the 15 built-in settings editors (numerical,
+  structured and the interactive types) into the host in `bootstrap/mount.tsx`, after extension
+  scripts ran, through the same `registerCoreQuestionEditors()`
+  (`assets/src/features/question-editor/registerCoreEditors.js`) that the existing admin calls; an
+  editor an extension registered first is kept. The components are authored modules in the lazy
+  `admin-app-question-editors` chunk (`extensions/coreEditors.ts`). On the app screen
+  `AdminAppAssets` enqueues what they use: the learners' interactive widgets
+  (`Interactive::enqueue()`, `window.OhMyLMSInteractive`), the media library, the math field styles
+  and `window.ohmylmsMath` (`MathLive::config()`, on the host handle) for the on-demand math runtime.
+
+Lesson editors and membership settings are registered and listed but are not yet rendered: they need
+the rebuilt lesson-type and membership extension-settings screens. Checkout fields and frontend slots
+still use the existing SDK.
 
 ## Rebuild policy and checks
 

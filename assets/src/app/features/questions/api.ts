@@ -138,6 +138,37 @@ export async function restoreQuestion( id: number, signal?: AbortSignal ) {
 }
 
 /**
+ * Approve the current version of a question for shared use and practice. Content saved since the
+ * last version is captured as a new version first.
+ *
+ * @param id     Question id.
+ * @param signal Cancels the request.
+ * @return The question with its approved version.
+ */
+export async function approveQuestion( id: number, signal?: AbortSignal ) {
+	return parseQuestionDetail(
+		await post< unknown >( `${ itemPath( id ) }/approve`, undefined, {
+			signal,
+		} )
+	);
+}
+
+/**
+ * Copy a question as a new, unapproved question of the current user (same family, new uuid).
+ *
+ * @param id     Question id.
+ * @param signal Cancels the request.
+ * @return The copy.
+ */
+export async function duplicateQuestion( id: number, signal?: AbortSignal ) {
+	return parseQuestionDetail(
+		await post< unknown >( `${ itemPath( id ) }/duplicate`, undefined, {
+			signal,
+		} )
+	);
+}
+
+/**
  * List the saved versions of a question, newest first.
  *
  * @param id     Question id.
