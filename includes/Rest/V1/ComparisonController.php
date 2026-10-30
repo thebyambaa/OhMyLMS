@@ -11,6 +11,7 @@ use OhMyLMS\Abstracts\RestController;
 use OhMyLMS\Curriculum\Access;
 use OhMyLMS\Curriculum\Comparison;
 use OhMyLMS\Curriculum\SkillMappings;
+use OhMyLMS\Skills\SubjectProfileModel;
 use OhMyLMS\Skills\SubjectProfiles;
 use WP_REST_Request;
 
@@ -136,14 +137,10 @@ class ComparisonController extends RestController {
 			'/syllabus-comparison/mapping/remove'          => array( 'POST', 'remove_mapping' ),
 			'/syllabus-comparison/skill-placement'         => array( 'GET', 'skill_placement' ),
 			'/syllabus-comparison/subject-profiles'        => array( 'GET', 'subject_profiles' ),
-			'/syllabus-comparison/subject-profiles/save'   => array( 'POST', 'save_subject_profile' ),
-			'/syllabus-comparison/subject-profiles/remove' => array( 'POST', 'remove_subject_profile' ),
-			'/syllabus-comparison/subject-profiles/default' => array( 'POST', 'default_subject_profile' ),
 			'/syllabus-comparison/skill-links/(?P<id>\d+)' => array( 'GET', 'skill_links' ),
 			'/syllabus-comparison/skill-links'             => array( 'POST', 'save_skill_link' ),
 			'/syllabus-comparison/skill-links/remove'      => array( 'POST', 'remove_skill_link' ),
 			'/syllabus-comparison/skill-map/subjects'      => array( 'GET', 'skill_map_subjects' ),
-			'/syllabus-comparison/skill-map'               => array( 'GET', 'skill_map' ),
 			'/syllabus-comparison/compare'                 => array( 'GET', 'compare_syllabuses' ),
 			'/syllabus-comparison/ai/runs'                 => array( 'GET,POST', 'ai_runs' ),
 			'/syllabus-comparison/ai/runs/(?P<id>\d+)'     => array( 'GET', 'ai_run' ),
@@ -163,6 +160,7 @@ class ComparisonController extends RestController {
 				)
 			);
 		}
+		$this->register_workspace_routes();
 		register_rest_route(
 			$this->namespace,
 			'/me/subject-skills',
@@ -172,6 +170,136 @@ class ComparisonController extends RestController {
 				'permission_callback' => array( Access::class, 'learner' ),
 			)
 		);
+	}
+
+	/**
+	 * Skill map and subject profile routes with typed arguments. Legacy clients send an empty
+	 * string for "no syllabus" or "no learner", so those identifiers also accept ''.
+	 */
+	private function register_workspace_routes() {
+		$admin    = array( Access::class, 'admin' );
+		$optional = array(
+			'default'           => 0,
+			'validate_callback' => static function ( $value ) {
+				return '' === $value || ( is_scalar( $value ) && 1 === preg_match( '/^\d{1,19}$/', (string) $value ) );
+			},
+			'sanitize_callback' => 'absint',
+		);
+		register_rest_route(
+			$this->namespace,
+			'/syllabus-comparison/skill-map',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'skill_map' ),
+				'permission_callback' => $admin,
+				'args'                => array(
+					'subject'     => array(
+						'type'      => 'string',
+						'required'  => true,
+						'minLength' => 1,
+						'maxLength' => 190,
+					),
+					'syllabus_id' => $optional,
+					'student_id'  => $optional,
+				),
+			)
+		);
+		$revision = array(
+			'type'      => 'string',
+			'required'  => true,
+			'minLength' => 16,
+			'maxLength' => 16,
+		);
+		$key      = array(
+			'type'      => 'string',
+			'minLength' => 1,
+			'maxLength' => 100,
+		);
+		$text     = array(
+			'type'      => 'string',
+			'maxLength' => SubjectProfileModel::MAX_TEXT,
+		);
+		register_rest_route(
+			$this->namespace,
+			'/syllabus-comparison/subject-profiles/save',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'save_subject_profile' ),
+				'permission_callback' => $admin,
+				'args'                => array(
+					'expected_revision' => $revision,
+					'key'               => array(
+						'type'      => 'string',
+						'maxLength' => 100,
+					),
+					'label'             => array(
+						'type'      => 'string',
+						'required'  => true,
+						'minLength' => 1,
+						'maxLength' => SubjectProfileModel::MAX_LABEL,
+					),
+					'language'          => array(
+						'type'      => 'string',
+						'maxLength' => 20,
+					),
+					'domains'           => array(
+						'type'     => 'array',
+						'maxItems' => SubjectProfileModel::MAX_DOMAINS,
+						'items'    => array(
+							'type'       => 'object',
+							'required'   => array( 'id', 'label' ),
+							'properties' => array(
+								'id'    => array(
+									'type'      => 'string',
+									'maxLength' => 40,
+								),
+								'label' => array(
+									'type'      => 'string',
+									'maxLength' => SubjectProfileModel::MAX_LABEL,
+								),
+							),
+						),
+					),
+					'levels'            => array(
+						'type'     => 'array',
+						'required' => true,
+						'minItems' => 1,
+						'maxItems' => SubjectProfileModel::MAX_LEVELS,
+						'items'    => array(
+							'type'      => 'string',
+							'maxLength' => SubjectProfileModel::MAX_LEVEL,
+						),
+					),
+					'ai'                => array(
+						'type'                 => 'object',
+						'properties'           => array(
+							'role'        => $text,
+							'context'     => $text,
+							'level_hints' => $text,
+						),
+						'additionalProperties' => false,
+					),
+				),
+			)
+		);
+		foreach ( array(
+			'remove'  => 'remove_subject_profile',
+			'default' => 'default_subject_profile',
+		) as $action => $callback ) {
+			register_rest_route(
+				$this->namespace,
+				'/syllabus-comparison/subject-profiles/' . $action,
+				array(
+					'methods'             => 'POST',
+					'callback'            => array( $this, $callback ),
+					'permission_callback' => $admin,
+					'args'                => array(
+						'key'               => $key + array( 'required' => true ),
+						'expected_revision' => $revision,
+					),
+				)
+			);
+		}
 	}
 
 	/**
@@ -221,7 +349,13 @@ class ComparisonController extends RestController {
 	 * @return mixed
 	 */
 	public function remove_subject_profile( WP_REST_Request $request ) {
-		return rest_ensure_response( SubjectProfiles::remove( (string) $request['key'], (string) $request['expected_revision'] ) );
+		return rest_ensure_response(
+			\OhMyLMS\Curriculum\Items::exclusive(
+				static function () use ( $request ) {
+					return SubjectProfiles::remove( (string) $request['key'], (string) $request['expected_revision'] );
+				}
+			)
+		);
 	}
 
 	/**
@@ -231,7 +365,13 @@ class ComparisonController extends RestController {
 	 * @return mixed
 	 */
 	public function default_subject_profile( WP_REST_Request $request ) {
-		return rest_ensure_response( SubjectProfiles::set_default( (string) $request['key'], (string) $request['expected_revision'] ) );
+		return rest_ensure_response(
+			\OhMyLMS\Curriculum\Items::exclusive(
+				static function () use ( $request ) {
+					return SubjectProfiles::set_default( (string) $request['key'], (string) $request['expected_revision'] );
+				}
+			)
+		);
 	}
 
 	/**

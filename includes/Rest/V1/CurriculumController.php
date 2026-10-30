@@ -72,6 +72,22 @@ class CurriculumController extends RestController {
 					'methods'             => WP_REST_Server::DELETABLE,
 					'callback'            => array( $this, 'delete' ),
 					'permission_callback' => $admin,
+					'args'                => array(
+						'children'          => array(
+							'type'    => 'string',
+							'enum'    => array( '', 'promote', 'delete' ),
+							'default' => '',
+						),
+						'confirm'           => array(
+							'type'    => 'boolean',
+							'default' => false,
+						),
+						'expected_revision' => array(
+							'type'      => 'string',
+							'minLength' => 64,
+							'maxLength' => 64,
+						),
+					),
 				),
 			)
 		);
@@ -186,6 +202,7 @@ class CurriculumController extends RestController {
 				'items'      => Items::tree(),
 				'types'      => Items::types(),
 				'link_types' => Links::TYPES,
+				'icons'      => \OhMyLMS\Curriculum\Icons::options(),
 				'limits'     => array(
 					'max_depth' => Items::MAX_DEPTH,
 					'max_items' => Items::MAX_ITEMS,
@@ -234,11 +251,12 @@ class CurriculumController extends RestController {
 			$mappings[ $skill['id'] ] = SkillMappings::for_skill( $skill['id'] ); }
 		return rest_ensure_response(
 			array(
-				'item'           => Items::describe( $item ),
-				'path'           => Items::path_names( (int) $item['id'], false ),
-				'links'          => $links,
-				'skill_mappings' => (object) $mappings,
-				'dependents'     => Items::dependents( (int) $item['id'] ),
+				'item'            => Items::describe( $item ),
+				'path'            => Items::path_names( (int) $item['id'], false ),
+				'links'           => $links,
+				'skill_mappings'  => (object) $mappings,
+				'dependents'      => Items::dependents( (int) $item['id'] ),
+				'delete_revision' => Items::delete_revision( (int) $item['id'] ),
 			)
 		);
 	}
@@ -286,7 +304,7 @@ class CurriculumController extends RestController {
     */
     public function delete( WP_REST_Request $request ) {
 		$owner  = Syllabus::owner( (int) $request['id'] );
-		$result = Items::delete( (int) $request['id'], (string) $request->get_param( 'children' ), rest_sanitize_boolean( $request->get_param( 'confirm' ) ) );
+		$result = Items::delete( (int) $request['id'], (string) $request->get_param( 'children' ), rest_sanitize_boolean( $request->get_param( 'confirm' ) ), $request->has_param( 'expected_revision' ) ? (string) $request['expected_revision'] : null );
 		if ( is_wp_error( $result ) ) {
 			return $result; }
 		// The skill groups under a deleted item go with it, and so do their chapters in the syllabus's course.

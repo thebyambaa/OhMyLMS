@@ -14,5 +14,47 @@ export const curriculum: FeatureDefinition = {
 			)
 	),
 };
+export const skillMap: FeatureDefinition = {
+	id: 'curriculum-skill-map',
+	title: __( 'Skill map', 'ohmylms' ),
+	path: '/content-hub/curriculum/skill-map',
+	extensionRoute: '/content-hub/curriculum/skill-map',
+	capability: 'manage_options',
+	hidden: true,
+	component: lazy(
+		() =>
+			import(
+				/* webpackChunkName: "admin-app-curriculum-map" */ './SkillMapPage'
+			)
+	),
+};
+export const subjectProfiles: FeatureDefinition = {
+	id: 'curriculum-subjects',
+	title: __( 'Subject profiles', 'ohmylms' ),
+	path: '/content-hub/curriculum/subjects',
+	extensionRoute: '/content-hub/curriculum/subjects',
+	capability: 'manage_options',
+	hidden: true,
+	component: lazy(
+		() =>
+			import(
+				/* webpackChunkName: "admin-app-curriculum-subjects" */ './SubjectProfilesPage'
+			)
+	),
+};
+export const bundles: FeatureDefinition = {
+	id: 'bundles',
+	title: __( 'Course bundles', 'ohmylms' ),
+	path: '/content-hub/bundles',
+	extensionRoute: '/content-hub/bundles',
+	capability: 'manage_options',
+	hidden: true,
+	component: lazy(
+		() =>
+			import(
+				/* webpackChunkName: "admin-app-bundles" */ './BundlesPage'
+			)
+	),
+};
 export { CoursePlacement } from './CoursePlacement';
 export { readTree } from './api';

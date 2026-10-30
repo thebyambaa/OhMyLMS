@@ -97,9 +97,11 @@ stale review rejection, import apply, course draft mirroring and revision-checke
 App tests cover parsers, CSV, details failure recovery, confirmation, cancellation and stale
 mapping behavior. Current counts and live checks are recorded in the modularization roadmap.
 
-This is not complete legacy workspace parity: mind map/spreadsheet layouts, group/branch
-deletion, bulk/combined mapping editing, AI proposals, source configuration, rich skill
-objectives/translations, skill-owned resources, course requirement controls, publication and
-extension panels remain separate work. Simple group/skill field edits use the existing
+This is not complete legacy workspace parity: mind map/spreadsheet layouts, skill-group
+deletion, bulk/combined mapping editing, AI proposals, source configuration, course requirement
+controls, publication and extension panels remain separate work. Curriculum branch deletion is in
+the typed Curriculum page and rich objectives, translations and resource counts are in the Skills
+editor; see [curriculum workspace](curriculum-workspace.md) and [skills](skills.md).
+The syllabus's course is created through `POST /courses` with `title`, as that route now requires. Simple group/skill field edits use the existing
 field-write contract; they do not introduce a new optimistic revision protocol. No performance
 improvement is claimed without measurement.

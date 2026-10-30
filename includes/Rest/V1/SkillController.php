@@ -55,6 +55,18 @@ class SkillController extends RestController {
 				),
 			),
 			'public_practice' => array( 'type' => 'boolean' ),
+			'objective'       => array(
+				'type'      => 'string',
+				'maxLength' => 2000,
+			),
+			'translations'    => array(
+				'type'                 => 'object',
+				'properties'           => array(
+					'en' => $this->translation_schema(),
+					'mn' => $this->translation_schema(),
+				),
+				'additionalProperties' => false,
+			),
 		);
 		register_rest_route(
 			$this->namespace,
@@ -139,6 +151,14 @@ class SkillController extends RestController {
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'translate' ),
 				'permission_callback' => array( $this, 'author_permission' ),
+				'args'                => array(
+					'locale' => array(
+						'type'     => 'string',
+						'enum'     => array( 'en', 'mn' ),
+						'required' => true,
+					),
+					'source' => $this->translation_schema() + array( 'required' => true ),
+				),
 			)
 		);
 		register_rest_route(
@@ -243,6 +263,29 @@ class SkillController extends RestController {
 					'permission_callback' => array( $this, 'question_permission' ),
 				),
 			)
+		);
+	}
+
+	/**
+	 * One language's translatable skill text.
+	 *
+	 * @return array
+	 */
+	private function translation_schema() {
+		$text = static function ( $max ) {
+			return array(
+				'type'      => 'string',
+				'maxLength' => $max,
+			);
+		};
+		return array(
+			'type'                 => 'object',
+			'properties'           => array(
+				'name'        => $text( 190 ),
+				'description' => $text( 2000 ),
+				'objective'   => $text( 2000 ),
+			),
+			'additionalProperties' => false,
 		);
 	}
 

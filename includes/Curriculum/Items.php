@@ -409,12 +409,13 @@ final class Items {
 	 *   'promote' - children move up to the item's parent, keeping their order;
 	 *   'delete'  - the whole branch is removed.
 	 *
-	 * @param mixed  $id Id.
-	 * @param string $strategy Strategy.
-	 * @param bool   $confirm Confirm.
+	 * @param mixed       $id Id.
+	 * @param string      $strategy Strategy.
+	 * @param bool        $confirm Confirm.
+	 * @param string|null $expected_revision Optional delete_revision() the confirmation was shown for.
 	 * @throws \RuntimeException When the operation cannot be completed.
 	 */
-	public static function delete( $id, $strategy = '', $confirm = false ) {
+	public static function delete( $id, $strategy = '', $confirm = false, $expected_revision = null ) {
 		global $wpdb;
 		$item = self::get( $id );
 		if ( ! $item ) {
@@ -432,10 +433,13 @@ final class Items {
 			return Access::error( 'ohmylms_curriculum_needs_confirmation', __( 'Deleting this item removes its structure links and skill groups. Confirm to continue; linked courses, skills, banks and exams, and the skills inside skill groups, are not deleted.', 'ohmylms' ), 409, array( 'dependents' => $dependents ) );
 		}
 		return self::exclusive(
-			static function () use ( $wpdb, $id, $item, $strategy, $branch ) {
+			static function () use ( $wpdb, $id, $item, $strategy, $branch, $expected_revision ) {
 				$parents = self::parents();
 				if ( ! isset( $parents[ (int) $id ] ) ) {
 					return self::missing(); }
+				if ( null !== $expected_revision && ! hash_equals( self::delete_revision( $id ), (string) $expected_revision ) ) {
+					return Access::error( 'ohmylms_curriculum_stale', __( 'This item or the branch under it changed. Review the deletion again.', 'ohmylms' ), 409 );
+				}
 				$parent_id = (int) $item['parent_id'];
 				if ( 'promote' === $strategy ) {
 					$children = self::child_ids( $id );
@@ -470,6 +474,17 @@ final class Items {
 				) + $removal;
 			}
 		);
+	}
+
+	/**
+	 * Hash of an item's details and everything deleting it would affect.
+	 *
+	 * @param int $id Item ID.
+	 * @return string Empty for a missing item.
+	 */
+	public static function delete_revision( $id ) {
+		$item = self::get( $id );
+		return $item ? hash( 'sha256', (string) wp_json_encode( array( $item['updated_at'], self::with_descendants( $id ), self::dependents( $id ) ) ) ) : '';
 	}
 
 	/** Remove item rows plus every link and bundle membership that points at them.

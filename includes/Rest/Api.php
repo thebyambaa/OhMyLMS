@@ -63,6 +63,7 @@ class Api {
 			\OhMyLMS\Rest\V1\CourseStructureToolsController::class,
 			\OhMyLMS\Rest\V1\SkillAssessmentToolsController::class,
 			\OhMyLMS\Rest\V1\SkillController::class,
+			\OhMyLMS\Rest\V1\SkillAuthoringController::class,
 			\OhMyLMS\Rest\V1\AttemptController::class,
 			\OhMyLMS\Rest\V1\PracticeController::class,
 			\OhMyLMS\Rest\V1\PlacementController::class,

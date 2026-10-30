@@ -1,4 +1,4 @@
-import { get, post, put } from '../../lib/api';
+import { get, post, put, request } from '../../lib/api';
 import {
 	invalid,
 	positiveId,
@@ -17,12 +17,34 @@ export interface CurriculumItem {
 	version: string;
 	is_syllabus: boolean;
 	course_id: number;
+	icon: string;
 	updated_at: string;
 }
 export type ItemInput = Pick<
 	CurriculumItem,
-	'name' | 'item_type' | 'description' | 'code' | 'version' | 'is_syllabus'
+	| 'name'
+	| 'item_type'
+	| 'description'
+	| 'code'
+	| 'version'
+	| 'is_syllabus'
+	| 'icon'
 >;
+export interface IconOption {
+	id: string;
+	label: string;
+}
+export interface Dependents {
+	children: number;
+	descendants: number;
+	links: number;
+	own_links: number;
+	bundles: number;
+	own_bundles: number;
+	groups: number;
+	own_groups: number;
+}
+export type ChildStrategy = '' | 'promote' | 'delete';
 const BASE = '/ohmylms/v1';
 export function parseItem( value: unknown ): CurriculumItem {
 	const row = record( value );
@@ -48,7 +70,26 @@ export function parseItem( value: unknown ): CurriculumItem {
 		code: text( row.code ),
 		version: text( row.version ),
 		is_syllabus: row.is_syllabus,
+		icon: row.icon === undefined ? '' : text( row.icon ),
 		updated_at: text( row.updated_at ),
+	};
+}
+export async function readWorkspace( signal?: AbortSignal ): Promise< {
+	items: CurriculumItem[];
+	icons: IconOption[];
+} > {
+	const row = record(
+		await get< unknown >( `${ BASE }/curriculum/tree`, { signal } )
+	);
+	if ( ! Array.isArray( row.items ) || ! Array.isArray( row.icons ) ) {
+		return invalid();
+	}
+	return {
+		items: row.items.map( parseItem ),
+		icons: row.icons.map( ( value ) => {
+			const icon = record( value );
+			return { id: text( icon.id ), label: text( icon.label ) };
+		} ),
 	};
 }
 export async function readTree(
@@ -58,6 +99,72 @@ export async function readTree(
 		await get< unknown >( `${ BASE }/curriculum/tree`, { signal } )
 	);
 	return Array.isArray( row.items ) ? row.items.map( parseItem ) : invalid();
+}
+export function parseDependents( value: unknown ): Dependents {
+	const row = record( value );
+	const result: Record< string, number > = {};
+	for ( const key of [
+		'children',
+		'descendants',
+		'links',
+		'own_links',
+		'bundles',
+		'own_bundles',
+		'groups',
+		'own_groups',
+	] ) {
+		if (
+			! Number.isSafeInteger( row[ key ] ) ||
+			Number( row[ key ] ) < 0
+		) {
+			return invalid();
+		}
+		result[ key ] = Number( row[ key ] );
+	}
+	return result as unknown as Dependents;
+}
+/**
+ * What deleting an item would affect, and the revision the confirmation is valid for.
+ * @param id
+ * @param signal
+ */
+export async function readDeletion( id: number, signal?: AbortSignal ) {
+	const row = record(
+		await get< unknown >( `${ BASE }/curriculum/items/${ id }`, {
+			signal,
+		} )
+	);
+	const revision = text( row.delete_revision );
+	if ( revision.length !== 64 ) {
+		return invalid();
+	}
+	return {
+		item: parseItem( row.item ),
+		dependents: parseDependents( row.dependents ),
+		revision,
+	};
+}
+export async function deleteItem(
+	id: number,
+	children: ChildStrategy,
+	revision: string,
+	signal?: AbortSignal
+) {
+	const row = record(
+		await request< unknown >( {
+			path: `${ BASE }/curriculum/items/${ id }`,
+			method: 'DELETE',
+			query: { children, confirm: true, expected_revision: revision },
+			signal,
+		} )
+	);
+	if (
+		! Array.isArray( row.deleted ) ||
+		! row.deleted.every( ( value ) => Number.isSafeInteger( value ) )
+	) {
+		return invalid();
+	}
+	return row.deleted as number[];
 }
 export async function saveItem(
 	input: ItemInput,

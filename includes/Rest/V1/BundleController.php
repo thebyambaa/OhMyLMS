@@ -23,7 +23,22 @@ class BundleController extends RestController {
 	 * Register routes for Bundle controller.
 	 */
 	public function register_routes() {
-		$admin = array( Access::class, 'admin' );
+		$admin    = array( Access::class, 'admin' );
+		$expected = array(
+			'type'      => 'string',
+			'maxLength' => 32,
+		);
+		$fields   = array(
+			'title'       => array(
+				'type'      => 'string',
+				'minLength' => 1,
+				'maxLength' => 190,
+			),
+			'description' => array(
+				'type'      => 'string',
+				'maxLength' => 2000,
+			),
+		);
 		register_rest_route(
 			$this->namespace,
 			'/bundles',
@@ -37,6 +52,7 @@ class BundleController extends RestController {
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create' ),
 					'permission_callback' => $admin,
+					'args'                => array( 'title' => $fields['title'] + array( 'required' => true ) ) + $fields,
 				),
 			)
 		);
@@ -48,6 +64,18 @@ class BundleController extends RestController {
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'targets' ),
 					'permission_callback' => $admin,
+					'args'                => array(
+						'type'   => array(
+							'type'     => 'string',
+							'enum'     => array( 'course', 'curriculum' ),
+							'required' => true,
+						),
+						'search' => array(
+							'type'      => 'string',
+							'maxLength' => 200,
+							'default'   => '',
+						),
+					),
 				),
 			)
 		);
@@ -64,11 +92,19 @@ class BundleController extends RestController {
 					'methods'             => 'PUT,PATCH',
 					'callback'            => array( $this, 'update' ),
 					'permission_callback' => $admin,
+					'args'                => $fields + array( 'expected_updated_at' => $expected ),
 				),
 				array(
 					'methods'             => WP_REST_Server::DELETABLE,
 					'callback'            => array( $this, 'delete' ),
 					'permission_callback' => $admin,
+					'args'                => array(
+						'force'               => array(
+							'type'    => 'boolean',
+							'default' => false,
+						),
+						'expected_updated_at' => $expected,
+					),
 				),
 			)
 		);
@@ -80,6 +116,28 @@ class BundleController extends RestController {
 					'methods'             => 'PUT',
 					'callback'            => array( $this, 'set_members' ),
 					'permission_callback' => $admin,
+					'args'                => array(
+						'items'               => array(
+							'type'     => 'array',
+							'required' => true,
+							'maxItems' => Bundles::MAX_MEMBERS,
+							'items'    => array(
+								'type'       => 'object',
+								'required'   => array( 'type', 'id' ),
+								'properties' => array(
+									'type' => array(
+										'type' => 'string',
+										'enum' => Bundles::MEMBER_TYPES,
+									),
+									'id'   => array(
+										'type'    => 'integer',
+										'minimum' => 1,
+									),
+								),
+							),
+						),
+						'expected_updated_at' => $expected,
+					),
 				),
 			)
 		);
@@ -91,6 +149,13 @@ class BundleController extends RestController {
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'publish' ),
 					'permission_callback' => $admin,
+					'args'                => array(
+						'published'           => array(
+							'type'    => 'boolean',
+							'default' => true,
+						),
+						'expected_updated_at' => $expected,
+					),
 				),
 			)
 		);
@@ -107,6 +172,30 @@ class BundleController extends RestController {
 			'bundle'  => Bundles::describe( $bundle ),
 			'members' => Bundles::describe_members( $bundle_id ),
 		) : null;
+	}
+
+	/**
+	 * Run a bundle write under the curriculum lock, refusing it when the bundle changed since it was read.
+	 *
+	 * @param WP_REST_Request $request Request with id and optional expected_updated_at.
+	 * @param callable        $work Write returning a bundle row, a result array or a WP_Error.
+	 * @return mixed
+	 */
+	private function guarded( WP_REST_Request $request, callable $work ) {
+		$id       = (int) $request['id'];
+		$expected = $request->get_param( 'expected_updated_at' );
+		return Items::exclusive(
+			static function () use ( $id, $expected, $work ) {
+				$bundle = Bundles::get( $id );
+				if ( ! $bundle ) {
+					return Bundles::missing();
+				}
+				if ( null !== $expected && '' !== $expected && (string) $expected !== $bundle['updated_at'] ) {
+					return Access::error( 'ohmylms_bundle_stale', __( 'Someone else changed this bundle. Reload and try again.', 'ohmylms' ), 409 );
+				}
+				return $work( $id );
+			}
+		);
 	}
 
 	/**
@@ -155,7 +244,12 @@ class BundleController extends RestController {
 	 */
 	public function update( WP_REST_Request $request ) {
 		$params = $request->get_params();
-		$bundle = Bundles::update( (int) $request['id'], array_intersect_key( $params, array_flip( array( 'title', 'description' ) ) ), $params['expected_updated_at'] ?? null );
+		$bundle = $this->guarded(
+			$request,
+			static function ( $id ) use ( $params ) {
+				return Bundles::update( $id, array_intersect_key( $params, array_flip( array( 'title', 'description' ) ) ) );
+			}
+		);
 		return is_wp_error( $bundle ) ? $bundle : rest_ensure_response( $this->detail( (int) $bundle['id'] ) );
 	}
 
@@ -168,7 +262,12 @@ class BundleController extends RestController {
 		$items = $request->get_param( 'items' );
 		if ( ! is_array( $items ) ) {
 			return Access::error( 'ohmylms_bundle_invalid', __( 'Send the ordered list of members.', 'ohmylms' ) ); }
-		$bundle = Bundles::set_members( (int) $request['id'], $items, $request->get_param( 'expected_updated_at' ) );
+		$bundle = $this->guarded(
+			$request,
+			static function ( $id ) use ( $items ) {
+				return Bundles::set_members( $id, $items );
+			}
+		);
 		return is_wp_error( $bundle ) ? $bundle : rest_ensure_response( $this->detail( (int) $bundle['id'] ) );
 	}
 
@@ -178,8 +277,13 @@ class BundleController extends RestController {
 	 * @param WP_REST_Request $request REST request.
 	 */
 	public function publish( WP_REST_Request $request ) {
-		$published = $request->has_param( 'published' ) ? rest_sanitize_boolean( $request->get_param( 'published' ) ) : true;
-		$bundle    = Bundles::set_status( (int) $request['id'], $published );
+		$published = rest_sanitize_boolean( $request->get_param( 'published' ) );
+		$bundle    = $this->guarded(
+			$request,
+			static function ( $id ) use ( $published ) {
+				return Bundles::set_status( $id, $published );
+			}
+		);
 		return is_wp_error( $bundle ) ? $bundle : rest_ensure_response( $this->detail( (int) $bundle['id'] ) );
 	}
 
@@ -189,7 +293,13 @@ class BundleController extends RestController {
 	 * @param WP_REST_Request $request REST request.
 	 */
 	public function delete( WP_REST_Request $request ) {
-		$result = Bundles::delete( (int) $request['id'], rest_sanitize_boolean( $request->get_param( 'force' ) ) );
+		$force  = rest_sanitize_boolean( $request->get_param( 'force' ) );
+		$result = $this->guarded(
+			$request,
+			static function ( $id ) use ( $force ) {
+				return Bundles::delete( $id, $force );
+			}
+		);
 		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
 	}
 
@@ -206,7 +316,8 @@ class BundleController extends RestController {
 		if ( 'curriculum' !== $type ) {
 			return Access::error( 'ohmylms_bundle_invalid', __( 'Choose courses or curriculum items.', 'ohmylms' ) ); }
 		$like = '%' . $wpdb->esc_like( $search ) . '%';
-		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE name LIKE %s OR code LIKE %s ORDER BY name LIMIT 20', Items::table(), $like, $like ), ARRAY_A ) ?: array();
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE name LIKE %s OR code LIKE %s ORDER BY name LIMIT 20', Items::table(), $like, $like ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Bounded search of the plugin's curriculum table; results change with every edit.
+		$rows = is_array( $rows ) ? $rows : array();
 		return rest_ensure_response(
 			array_map(
 				static function ( $row ) {

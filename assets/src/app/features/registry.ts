@@ -16,7 +16,7 @@ import {
 	courses as courseStructures,
 	courseSettings,
 } from './course-structure';
-import { curriculum } from './curriculum';
+import { bundles, curriculum, skillMap, subjectProfiles } from './curriculum';
 import { courseReport, dashboard, earnings } from './dashboard';
 import { emails } from './emails';
 import { extensionPages } from './extensions';
@@ -47,6 +47,9 @@ export const features: readonly FeatureDefinition[] = [
 	setup,
 	contentHub,
 	curriculum,
+	skillMap,
+	subjectProfiles,
+	bundles,
 	syllabusEditor,
 	courseStructures,
 	courseStructureEditor,

@@ -6,14 +6,7 @@ import { useBootstrap } from '../../bootstrap/BootstrapContext';
 import { Pagination } from '../../components/Pagination';
 import { normalizeApiError } from '../../lib/api';
 import type { Collection } from '../../lib/api/collection';
-import {
-	changeArchive,
-	getSkillSummary,
-	listSkills,
-	saveSkill,
-	type SkillInput,
-	type SkillSummary,
-} from './api';
+import { changeArchive, listSkills, type SkillSummary } from './api';
 import { SkillEditor } from './SkillEditor';
 import { SkillLinks } from './SkillLinks';
 
@@ -30,7 +23,6 @@ export default function SkillsPage() {
 	} );
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState< string | null >( null );
-	const [ editError, setEditError ] = useState< string | null >( null );
 	const [ message, setMessage ] = useState< string | null >( null );
 	const [ editor, setEditor ] = useState< {
 		item: SkillSummary | null;
@@ -71,10 +63,7 @@ export default function SkillsPage() {
 		);
 		return () => controller.abort();
 	}, [ page, search, version ] );
-	async function run(
-		work: ( signal: AbortSignal ) => Promise< void >,
-		editing = false
-	) {
+	async function run( work: ( signal: AbortSignal ) => Promise< void > ) {
 		if ( operation.current ) {
 			return;
 		}
@@ -82,15 +71,12 @@ export default function SkillsPage() {
 		operation.current = controller;
 		setBusy( true );
 		setError( null );
-		setEditError( null );
 		setMessage( null );
 		try {
 			await work( controller.signal );
 		} catch ( failure ) {
 			if ( ! controller.signal.aborted ) {
-				( editing ? setEditError : setError )(
-					normalizeApiError( failure ).message
-				);
+				setError( normalizeApiError( failure ).message );
 			}
 		} finally {
 			if ( ! controller.signal.aborted ) {
@@ -98,16 +84,6 @@ export default function SkillsPage() {
 				operation.current = null;
 			}
 		}
-	}
-	function save( value: SkillInput ) {
-		void run( async ( signal ) => {
-			await saveSkill( value, editor?.item?.id ?? null, signal );
-			if ( ! signal.aborted ) {
-				setEditor( null );
-				setMessage( __( 'Skill saved.', 'ohmylms' ) );
-				setVersion( ( current ) => current + 1 );
-			}
-		}, true );
 	}
 	return (
 		<section aria-labelledby="skills-heading">
@@ -141,7 +117,7 @@ export default function SkillsPage() {
 				variant="primary"
 				disabled={ busy }
 				onClick={ () => {
-					setEditError( null );
+					setMessage( null );
 					setEditor( { item: null } );
 				} }
 			>
@@ -203,20 +179,10 @@ export default function SkillsPage() {
 										<Button
 											variant="tertiary"
 											disabled={ busy || loading }
-											onClick={ () =>
-												void run( async ( signal ) => {
-													const fresh =
-														await getSkillSummary(
-															item.id,
-															signal
-														);
-													if ( ! signal.aborted ) {
-														setEditor( {
-															item: fresh,
-														} );
-													}
-												} )
-											}
+											onClick={ () => {
+												setMessage( null );
+												setEditor( { item } );
+											} }
 											aria-label={ `${ __( 'Edit skill', 'ohmylms' ) }: ${ item.name }` }
 										>
 											{ __( 'Edit', 'ohmylms' ) }
@@ -259,11 +225,17 @@ export default function SkillsPage() {
 			) }
 			{ editor && (
 				<SkillEditor
-					item={ editor.item }
-					busy={ busy }
-					error={ editError }
+					id={ editor.item?.id ?? null }
 					onClose={ () => setEditor( null ) }
-					onSave={ save }
+					onSaved={ () => {
+						setEditor( null );
+						setMessage( __( 'Skill saved.', 'ohmylms' ) );
+						setVersion( ( current ) => current + 1 );
+					} }
+					onLinks={ () => {
+						setLinks( editor.item );
+						setEditor( null );
+					} }
 				/>
 			) }
 			{ links && (

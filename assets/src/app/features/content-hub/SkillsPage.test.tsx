@@ -1,14 +1,19 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { ApiError } from '../../lib/api';
 import { renderShell } from '../../test/render';
 import * as api from './api';
 import { contentHub } from './index';
 import SkillsPage from './SkillsPage';
 
-vi.mock( './api', () => ( {
+vi.mock( './api', async ( original ) => ( {
+	...( await original< typeof import( './api' ) >() ),
 	listSkills: vi.fn(),
 	getSkillSummary: vi.fn(),
 	saveSkill: vi.fn(),
+	readSkill: vi.fn(),
+	updateSkill: vi.fn(),
+	suggestTranslation: vi.fn(),
 	changeArchive: vi.fn(),
 	listTargets: vi.fn(),
 	changeLink: vi.fn(),
@@ -158,6 +163,129 @@ it( 'updates one relationship and retains errors in the links dialog', async () 
 		{ id: 9, title: 'Lesson A', linked: true },
 		expect.any( AbortSignal )
 	);
+} );
+function detail( overrides: Partial< api.SkillDetail[ 'skill' ] > = {} ) {
+	return {
+		skill: {
+			...skill,
+			objective: '',
+			effective_objective: 'Notes',
+			public_practice: false,
+			translations: {
+				en: { name: '', objective: '', description: '' },
+				mn: { name: '', objective: '', description: '' },
+			},
+			...overrides,
+		},
+		revision: 'a'.repeat( 64 ),
+		resources: { lessons: 2, courses: 1, questions: 4 },
+		canPublishPractice: true,
+	};
+}
+it( 'edits objectives and translations against the read revision', async () => {
+	const user = userEvent.setup();
+	vi.mocked( api.readSkill ).mockResolvedValue( detail() );
+	vi.mocked( api.updateSkill ).mockResolvedValue( detail() );
+	open();
+	await user.click(
+		await screen.findByRole( 'button', { name: 'Edit skill: Algebra' } )
+	);
+	const dialog = within(
+		screen.getByRole( 'dialog', { name: 'Edit skill' } )
+	);
+	await dialog.findByText( 'Linked lessons: 2' );
+	await user.type(
+		dialog.getByLabelText( 'Full learning objective' ),
+		'Solve x < 2'
+	);
+	await user.type( dialog.getByLabelText( 'Name (Mongolian)' ), 'Алгебр' );
+	await user.click( dialog.getByRole( 'button', { name: 'Save skill' } ) );
+	await within( screen.getByRole( 'main' ) ).findByText( 'Skill saved.' );
+	const [ id, draft, baseline, revision ] = vi.mocked( api.updateSkill ).mock
+		.calls[ 0 ]!;
+	expect( id ).toBe( 7 );
+	expect( revision ).toBe( 'a'.repeat( 64 ) );
+	expect( api.skillPatch( draft, baseline ) ).toEqual( {
+		objective: 'Solve x < 2',
+		translations: { mn: { name: 'Алгебр' } },
+	} );
+} );
+it( 'keeps edits after a stale save and reloads before saving again', async () => {
+	const user = userEvent.setup();
+	vi.mocked( api.readSkill )
+		.mockResolvedValueOnce( detail() )
+		.mockResolvedValueOnce( detail( { code: 'M2' } ) );
+	vi.mocked( api.updateSkill ).mockRejectedValueOnce(
+		new ApiError( {
+			status: 409,
+			code: 'ohmylms_skill_stale',
+			message: 'This skill changed since you opened it.',
+		} )
+	);
+	open();
+	await user.click(
+		await screen.findByRole( 'button', { name: 'Edit skill: Algebra' } )
+	);
+	const dialog = within(
+		screen.getByRole( 'dialog', { name: 'Edit skill' } )
+	);
+	await user.type(
+		await dialog.findByLabelText( 'Full learning objective' ),
+		'Mine'
+	);
+	await user.click( dialog.getByRole( 'button', { name: 'Save skill' } ) );
+	await dialog.findByText( /This skill changed/ );
+	expect(
+		dialog.getByRole( 'button', { name: 'Save skill' } )
+	).toBeDisabled();
+	await user.click(
+		dialog.getByRole( 'button', {
+			name: 'Reload latest and keep my edits',
+		} )
+	);
+	await dialog.findByText( /Your unsaved edits were kept/ );
+	expect( dialog.getByLabelText( 'Full learning objective' ) ).toHaveValue(
+		'Mine'
+	);
+	expect( dialog.getByLabelText( 'Code' ) ).toHaveValue( 'M2' );
+	expect(
+		dialog.getByRole( 'button', { name: 'Save skill' } )
+	).toBeEnabled();
+} );
+it( 'offers public practice only to administrators', async () => {
+	const user = userEvent.setup();
+	vi.mocked( api.readSkill ).mockResolvedValue( {
+		...detail(),
+		canPublishPractice: false,
+	} );
+	open( { edit_posts: true, manage_options: false } );
+	await user.click(
+		await screen.findByRole( 'button', { name: 'Edit skill: Algebra' } )
+	);
+	const dialog = within(
+		screen.getByRole( 'dialog', { name: 'Edit skill' } )
+	);
+	expect(
+		await dialog.findByRole( 'checkbox', {
+			name: /Allow public catalogue practice/,
+		} )
+	).toBeDisabled();
+} );
+it( 'asks before discarding unsaved skill edits', async () => {
+	const user = userEvent.setup();
+	vi.mocked( api.readSkill ).mockResolvedValue( detail() );
+	open();
+	await user.click(
+		await screen.findByRole( 'button', { name: 'Edit skill: Algebra' } )
+	);
+	const dialog = within(
+		screen.getByRole( 'dialog', { name: 'Edit skill' } )
+	);
+	await user.type( await dialog.findByLabelText( 'Code' ), 'X' );
+	await user.click( dialog.getByRole( 'button', { name: 'Cancel' } ) );
+	expect( dialog.getByText( 'Discard unsaved skill edits?' ) ).toBeVisible();
+	await user.click( dialog.getByRole( 'button', { name: 'Discard edits' } ) );
+	expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
 } );
 it( 'aborts obsolete catalogue requests on navigation away', async () => {
 	const view = open();

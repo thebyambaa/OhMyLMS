@@ -17,11 +17,12 @@ import {
 	itemPath,
 	moveItem,
 	parentChoices,
-	readTree,
+	readWorkspace,
 	saveItem,
 	type CurriculumItem,
 	type ItemInput,
 } from './api';
+import { DeleteItemDialog } from './DeleteItemDialog';
 
 const empty: ItemInput = {
 	name: '',
@@ -30,10 +31,11 @@ const empty: ItemInput = {
 	code: '',
 	version: '',
 	is_syllabus: false,
+	icon: '',
 };
 export default function CurriculumPage() {
 	const load = useCallback(
-		( signal: AbortSignal ) => readTree( signal ),
+		( signal: AbortSignal ) => readWorkspace( signal ),
 		[]
 	);
 	const request = useRequest( load );
@@ -48,6 +50,7 @@ export default function CurriculumPage() {
 	const [ switchTo, setSwitchTo ] = useState< {
 		item: CurriculumItem | null;
 	} | null >( null );
+	const [ deleting, setDeleting ] = useState< CurriculumItem | null >( null );
 	const dirty = JSON.stringify( input ) !== baseline;
 	const guard = useUnsavedChangesGuard( dirty );
 	const operation = useRef< AbortController | null >( null );
@@ -63,6 +66,7 @@ export default function CurriculumPage() {
 						code: item.code,
 						version: item.version,
 						is_syllabus: item.is_syllabus,
+						icon: item.icon,
 					}
 				: empty
 		);
@@ -77,6 +81,7 @@ export default function CurriculumPage() {
 							code: item.code,
 							version: item.version,
 							is_syllabus: item.is_syllabus,
+							icon: item.icon,
 						}
 					: empty
 			)
@@ -117,7 +122,8 @@ export default function CurriculumPage() {
 			}
 		}
 	}
-	const items = request.data ?? [];
+	const items = request.data?.items ?? [];
+	const icons = request.data?.icons ?? [];
 	const choices = [
 		{ value: '0', label: __( 'Top level', 'ohmylms' ) },
 		...parentChoices( items, editing?.id ?? 0 ).map( ( item ) => ( {
@@ -135,6 +141,18 @@ export default function CurriculumPage() {
 				·{ ' ' }
 				<Link to="/content-hub/skills">
 					{ __( 'Open skills', 'ohmylms' ) }
+				</Link>{ ' ' }
+				·{ ' ' }
+				<Link to="/content-hub/curriculum/skill-map">
+					{ __( 'Skill map', 'ohmylms' ) }
+				</Link>{ ' ' }
+				·{ ' ' }
+				<Link to="/content-hub/curriculum/subjects">
+					{ __( 'Subject profiles', 'ohmylms' ) }
+				</Link>{ ' ' }
+				·{ ' ' }
+				<Link to="/content-hub/bundles">
+					{ __( 'Course bundles', 'ohmylms' ) }
 				</Link>
 			</p>
 			{ request.loading && (
@@ -259,6 +277,21 @@ export default function CurriculumPage() {
 							setInput( { ...input, version } )
 						}
 					/>
+					<SelectControl
+						label={ __( 'Icon', 'ohmylms' ) }
+						value={ input.icon }
+						options={ [
+							{
+								value: '',
+								label: __( 'Default for this kind', 'ohmylms' ),
+							},
+							...icons.map( ( icon ) => ( {
+								value: icon.id,
+								label: icon.label,
+							} ) ),
+						] }
+						onChange={ ( icon ) => setInput( { ...input, icon } ) }
+					/>
 					<CheckboxControl
 						label={ __( 'This item is a syllabus', 'ohmylms' ) }
 						checked={ input.is_syllabus }
@@ -285,9 +318,19 @@ export default function CurriculumPage() {
 						{ __( 'Save item', 'ohmylms' ) }
 					</Button>
 					{ editing && (
-						<Button onClick={ () => choose( null ) }>
-							{ __( 'New item', 'ohmylms' ) }
-						</Button>
+						<>
+							<Button onClick={ () => choose( null ) }>
+								{ __( 'New item', 'ohmylms' ) }
+							</Button>
+							<Button
+								variant="secondary"
+								isDestructive
+								disabled={ dirty }
+								onClick={ () => setDeleting( editing ) }
+							>
+								{ __( 'Delete…', 'ohmylms' ) }
+							</Button>
+						</>
 					) }
 				</fieldset>
 			</form>
@@ -317,6 +360,20 @@ export default function CurriculumPage() {
 						) }
 					</p>
 				</fieldset>
+			) }
+			{ deleting && (
+				<DeleteItemDialog
+					item={ deleting }
+					onClose={ () => setDeleting( null ) }
+					onDeleted={ () => {
+						setDeleting( null );
+						edit( null );
+						request.retry();
+						setMessage(
+							__( 'Curriculum item deleted.', 'ohmylms' )
+						);
+					} }
+				/>
 			) }
 			{ switchTo && (
 				<Modal
