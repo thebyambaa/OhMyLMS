@@ -1,0 +1,24 @@
+.ohmylms-app .ohmylms-lesson-blocks {
+	border: 1px solid var(--oml-border);
+	margin-block: var(--oml-space-4);
+	padding: var(--oml-space-4);
+}
+
+.ohmylms-app .ohmylms-lesson-blocks-layout {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-4);
+	min-height: 240px;
+}
+
+.ohmylms-app .ohmylms-lesson-blocks .editor-styles-wrapper {
+	background: var(--oml-surface);
+	flex: 1 1 520px;
+	min-width: 0;
+	padding: var(--oml-space-4);
+}
+
+.ohmylms-app .ohmylms-lesson-blocks-layout > aside {
+	flex: 0 1 280px;
+	min-width: 0;
+}

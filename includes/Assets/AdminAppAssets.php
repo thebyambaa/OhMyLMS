@@ -69,6 +69,10 @@ final class AdminAppAssets {
 		}
 
 		$style_deps = array( 'wp-components' );
+		wp_enqueue_script( 'wp-format-library' );
+		foreach ( array( 'wp-block-editor', 'wp-block-library', 'wp-edit-blocks', 'wp-format-library' ) as $block_style ) {
+			wp_enqueue_style( $block_style );
+		}
 		foreach ( array( Ui::STYLE_HANDLE, 'ohmylms-admin-design-system' ) as $handle ) {
 			if ( wp_style_is( $handle, 'registered' ) ) {
 				$style_deps[] = $handle;

@@ -8,6 +8,8 @@ import { CoursePlacement } from '../curriculum';
 import { readOutline, saveOutline } from './api';
 import { LessonPicker } from './LessonPicker';
 import { UnitEditor } from './UnitEditor';
+import { LearningSettings } from './LearningSettings';
+import { PublicationPanel } from './PublicationPanel';
 import {
 	move,
 	moveActivity,
@@ -16,17 +18,7 @@ import {
 	type Activity,
 } from './model';
 import { useRequest } from '../../hooks/useRequest';
-
-/** UUIDs identify unsaved units and activity placements on HTTP test sites too. */
-export function newId(): string {
-	const bytes = crypto.getRandomValues( new Uint8Array( 16 ) );
-	bytes[ 6 ] = ( bytes[ 6 ]! % 16 ) + 64;
-	bytes[ 8 ] = ( bytes[ 8 ]! % 64 ) + 128;
-	const hex = Array.from( bytes, ( byte ) =>
-		byte.toString( 16 ).padStart( 2, '0' )
-	).join( '' );
-	return `${ hex.slice( 0, 8 ) }-${ hex.slice( 8, 12 ) }-${ hex.slice( 12, 16 ) }-${ hex.slice( 16, 20 ) }-${ hex.slice( 20 ) }`;
-}
+import { newId } from '../../lib/uuid';
 
 export default function CourseEditorPage() {
 	const id = Number( useParams().id );
@@ -163,6 +155,12 @@ export function OutlineWorkspace( {
 	return (
 		<section aria-label={ __( 'Outline editor', 'ohmylms' ) }>
 			<p>
+				<Link
+					to={ `/content-hub/courses/${ draft.course_id }/settings` }
+				>
+					{ __( 'Course settings', 'ohmylms' ) }
+				</Link>{ ' ' }
+				·{ ' ' }
 				<Link to="/content-hub/courses">
 					{ __( 'Back to courses', 'ohmylms' ) }
 				</Link>{ ' ' }
@@ -208,6 +206,11 @@ export function OutlineWorkspace( {
 			>
 				{ __( 'Reload saved outline', 'ohmylms' ) }
 			</Button>
+			<LearningSettings
+				draft={ draft }
+				change={ change }
+				disabled={ busy }
+			/>
 			<fieldset disabled={ busy }>
 				<legend>{ __( 'Units and lessons', 'ohmylms' ) }</legend>
 				{ draft.units.map( ( unit, index ) => (
@@ -371,6 +374,12 @@ export function OutlineWorkspace( {
 					</Button>
 				</Modal>
 			) }
+			<PublicationPanel
+				key={ draft.revision }
+				course={ draft.course_id }
+				disabled={ dirty || busy }
+				onPublished={ reload }
+			/>
 			<CoursePlacement course={ draft.course_id } />
 		</section>
 	);

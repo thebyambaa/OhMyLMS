@@ -76,9 +76,17 @@ of the outline, as stated beside the controls.
 The follow-up [syllabus authoring batch](syllabus-authoring.md) now provides skill groups,
 CSV review/apply and individual mapping/comparison in the typed preview.
 
+The follow-up [course settings batch](course-settings.md) adds metadata, pricing/access,
+learning mode/mastery controls, readiness preview and confirmed publication. Routine
+outline saves remain draft-only.
+
 Remaining: full syllabus workspace parity, deleting curriculum branches or
-units, moving lessons across units, new lesson content authoring, advanced course settings,
-assessment authoring, publication UI and extension editor panels. Course placement currently
+units, moving lessons across units, advanced lesson authoring, advanced course settings,
+assessment authoring and extension editor panels. Course placement currently
 uses the existing replace-list contract; it has no new optimistic concurrency token. The shared
 navigation guard covers link clicks and page unload; it does not block browser hash-history
 navigation. No speed-up is claimed without measurements.
+
+The [typed lesson editor](lesson-authoring.md) now creates/edits built-in lessons,
+block content and resource links. Unit placements link directly to it; creation and
+content saving remain independent of course placement and program publication.

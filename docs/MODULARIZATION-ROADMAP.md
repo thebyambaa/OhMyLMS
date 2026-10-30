@@ -166,8 +166,10 @@ test in `tests/php/` and component tests.
 | Settings (General, Branding, Account, Permalinks, Advanced, Currency, Tax) | Done | Payment gateway secrets still returned by the old route |
 | Dashboard, Earnings, Course report | Done | Mixed-currency totals; amounts still in postmeta |
 | Content Hub (skills and curriculum) | Partial | Skills catalogue, curriculum hierarchy/placement, syllabus skill groups/order/library assignment, CSV review/apply, draft-course sync and individual mapping/comparison. Rich objectives/translations, resources, combined mappings and full workspace parity remain |
-| Courses | Partial | Bounded list/draft creation, outline units and reusable lesson placements. Advanced metadata/settings, publication and extension panels remain |
-| Communities, Setup wizard, Gamification, Learning (lessons, assignments), Quizzes and question editors | Preview UI pending | Setup services, Gamification registry/store and quiz policy/settings are backend groundwork; no full-screen parity claim |
+| Courses | Partial | List/draft creation, units/lesson placements, core metadata/pricing/access, mastery settings, readiness preview and confirmed publication. Advanced settings, author/media pickers and extension panels remain |
+| Learner frontend TypeScript | Planned | Migrate learner-facing JavaScript after the authoring workflows; admin TypeScript completion does not complete the frontend migration |
+| Lessons | Partial | Typed library/draft creation, WordPress visual blocks/source, resources, explicit publication and course-unit editing links. Advanced media, inline question and extension controls remain native |
+| Communities, Setup wizard, Gamification, Assignments, Quizzes and question editors | Preview UI pending | Setup services, Gamification registry/store and quiz policy/settings are backend groundwork; no full-screen parity claim |
 | Cutover (menu points at the new app, recovered runtime deleted) | Not started | Old PHP tests for removed routes go with it |
 | PHP boundaries, page-by-page asset loading, CI enforcement checks | Partial | Named backend services and lazy preview chunks exist; complete boundaries, isolation and enforcement remain |
 
@@ -201,7 +203,7 @@ Stylesheet cleanup is intentionally skipped.
   lesson/assignment and assessment editors. See [the API/scope contract](api/course-authoring.md)
   for exact exclusions and verification instructions.
 
-## Current batch: Syllabus authoring (30 October 2026)
+## Completed batch: Syllabus authoring (30 October 2026)
 
 - Checkpointed the previous curriculum/course batch as `6e089892` on
   `codex/syllabus-authoring` before starting this work.
@@ -235,3 +237,70 @@ Stylesheet cleanup is intentionally skipped.
   mind-map/spreadsheet parity, combined mapping editing, lesson/assignment and assessment editors,
   publication and extension contexts, then production cutover/runtime retirement. CSS ownership
   remains unchanged. See [the syllabus API and scope](api/syllabus-authoring.md).
+
+## Completed batch: Course settings and publication (30 October 2026)
+
+- Started from local main `6d86825a` on `codex/course-settings`.
+- Added a lazy typed settings screen for title/description, author/image IDs, status,
+  free/paid pricing, public/password access, and enrollment capacity. Settings apply
+  immediately when saved; structure remains a separate draft.
+- Added an administrator-only settings boundary with per-course capabilities,
+  strict field/type validation, shared locking, transactions, and settings/program
+  revision checks. Invalid/stale saves preserve the existing saved course.
+- Added learning mode, prior mastery, evidence age and shared skill target controls
+  to the draft outline. Required flags, target levels and unit placement are editable.
+- Added saved-outline/readiness preview and explicit publication confirmation. Course
+  status and program version publish atomically; existing learner versions remain pinned.
+  Shared draft resources must be published separately.
+- Full app suite: 661 passed before final response-validation refinements; the final
+  focused authoring suite passed 31 checks. WordPress REST integration: 61 checks passed on
+  `800.local`, including forced publication rollback; scripted fixtures were removed.
+- TypeScript, source contracts and targeted JavaScript/PHP standards pass. SDK builds
+  retain the existing three performance warnings. All 38 shipped app files match the
+  final build; all 16 runtime chunk references resolve. Obsolete app hashes were removed.
+- Live browser verification created course `Course settings browser verification 1030`
+  (ID 983). Description with a mathematical backslash, paid/sale pricing, enrollment
+  capacity, blended mode, evidence age and a required shared skill target survived
+  full reloads. Preview correctly blocks publication for insufficient approved skill
+  questions/families. This draft remains for review; no existing course was changed.
+- Browser diagnostics again recorded generic asynchronous message-channel listener
+  errors without a source stack; the checked workflows completed, and their origin
+  remains undiagnosed. Existing repository-wide legacy lint/runtime-inventory debt remains.
+- See [the settings API and scope](api/course-settings.md) for remaining advanced
+  controls. Learner frontend TypeScript migration and old-menu cutover remain future work.
+
+## Current batch: Lesson content authoring (30 October 2026)
+
+- Started `codex/lesson-authoring` from course-settings commit `9e0de26d`; this branch
+  includes that completed batch and has not been merged into main.
+- Added lazy typed lesson library/editor routes and course-unit links. Owned drafts
+  are created with retry identifiers; existing lessons remain reusable shared posts.
+- The installed WordPress block editor supplies visual blocks, the inspector,
+  parsing/serialization and unsupported-block preservation. Typed controls add source
+  editing, format, external media, preview/comments and download resource links.
+- Added an administrator-only API over the native secured REST writer, with strict
+  payload validation, shared native/typed locks, revision checks and transactional
+  rollback. Saving does not change publication status; publishing requires a reviewed
+  saved revision, explicit confirmation and the registered publishing capability.
+- Existing drip/media/prerequisite settings and resource extension fields survive.
+  Published lesson edits apply immediately everywhere the lesson is used.
+- Verification: all 672 app tests passed; the final 39 focused lesson/course checks
+  passed after compatibility refinements. All 49 Local WordPress REST checks passed.
+  TypeScript and targeted JS/PHP/CSS standards pass. SDK builds retain the existing
+  three performance warnings; repository-wide legacy lint/inventory debt remains.
+- Live verification: lesson `Typed lesson browser verification 1030` (ID 1003) was
+  created in the visual editor, saved/reopened with mathematical backslashes and a
+  worksheet link, explicitly published and attached to `Typed lesson verification
+  unit` in the earlier disposable course 983. Placement survived a full reload and
+  its new edit link opened the same shared lesson. An opaque unsupported block also
+  survived a visual paragraph edit; that temporary probe was removed before saving.
+- Async feature stylesheets now use content hashes, like feature scripts, so updates
+  invalidate browser caches. Lesson block packages remain WordPress script externals.
+- All 42 shipped app assets match the final SDK build; the runtime resolves all 17
+  script chunks and the hashed lesson stylesheet. Obsolete generated app hashes were removed.
+- Browser diagnostics included Grammarly extension errors and one AbortError whose
+  stack points to the existing shared request hook's navigation cleanup. Checked saves,
+  publication and reopen flows completed; no console-error-free claim is made.
+- Remaining: advanced lesson media/inline assessments/extensions, assignments, quizzes,
+  advanced course settings, learner frontend TypeScript migration, then old-menu
+  cutover/runtime retirement. See [the lesson contract and limitations](api/lesson-authoring.md).

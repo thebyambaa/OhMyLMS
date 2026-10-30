@@ -1,5 +1,6 @@
 import { Button, TextareaControl, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { Link } from 'react-router-dom';
 import type { Activity, Unit } from './model';
 
 /**
@@ -67,6 +68,11 @@ export function UnitEditor( {
 						{ item.type })
 						{ item.type === 'lesson' && (
 							<>
+								<Link
+									to={ `/content-hub/lessons/${ item.content_id }` }
+								>
+									{ __( 'Edit lesson content', 'ohmylms' ) }
+								</Link>
 								<Button
 									onClick={ () =>
 										onMoveLesson( item.id, -1 )

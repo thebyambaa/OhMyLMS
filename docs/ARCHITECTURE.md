@@ -1,7 +1,9 @@
 # Authored admin architecture
 
-Current authoring batches are documented in [course authoring](api/course-authoring.md) and
-[syllabus authoring](api/syllabus-authoring.md). The historical first-batch notes below describe
+Current authoring batches are documented in [course authoring](api/course-authoring.md),
+[syllabus authoring](api/syllabus-authoring.md), [course settings](api/course-settings.md),
+and [lesson authoring](api/lesson-authoring.md).
+The historical first-batch notes below describe
 their original scope; use the [current roadmap](MODULARIZATION-ROADMAP.md) for present coverage.
 
 The preview app lives in `assets/src/app` and opens at

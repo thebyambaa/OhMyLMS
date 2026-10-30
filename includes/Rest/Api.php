@@ -40,6 +40,8 @@ class Api {
 			\OhMyLMS\Rest\V1\PluginController::class,
 			\OhMyLMS\Rest\V1\CourseController::class,
 			\OhMyLMS\Rest\V1\CourseCatalogController::class,
+			\OhMyLMS\Rest\V1\CourseSettingsController::class,
+			\OhMyLMS\Rest\V1\LessonAuthoringController::class,
 			\OhMyLMS\Rest\V1\SyllabusEditorController::class,
 			\OhMyLMS\Rest\V1\CourseStructureController::class,
 			\OhMyLMS\Rest\V1\LearningController::class,
