@@ -1,0 +1,117 @@
+# Admin redesign plan
+
+Plan for the admin's menu, look, dashboard and gradebook after the cutover ([CUTOVER](CUTOVER.md)). Work starts
+once the recovered admin is deleted, so it never has to keep two admins in step.
+
+Reference pack (fake data; ideas, not a blueprint): [design-reference/](design-reference/). It contains the clickable prototype
+(`ohmylms-prototype/index.html`; serve the folder over HTTP, for example `npx http-server docs/design-reference`), the
+agreed menu organisation (`ohmylms-redesign/PROPOSED-NAV.md`, `wp-native/WP-MENU-PROPOSAL.md`), today's map
+(`CURRENT-NAV-MAP.md`) and the enrolment/gradebook research (`GRADEBOOK-RESEARCH.md`, `KHAN-COMPARISON.md`).
+
+Decisions (31 October 2026): start after the cutover; six real WordPress pages with tabs addressed by query string;
+order: menu and WordPress look, then the dashboard, then the gradebook.
+
+## Principles
+
+- WordPress's own admin design: `.wrap`, `h1.wp-heading-inline` + `.page-title-action`, `nav-tab-wrapper`, `.subsubsub`,
+  `wp-list-table widefat striped` with `.tablenav`, bulk actions, `.row-actions` and pagination, WordPress notices and
+  postboxes; `@wordpress/components` for forms, dialogs and controls. No custom chrome.
+- Fit the existing code: the hardened feature template, the extension API v1 contract, design tokens and the
+  `.ohmylms-button` learner class stay. Every old address keeps working through `LegacyRoutes`.
+- Adapt where the real data says otherwise; the prototype's numbers and widgets are illustrations.
+
+## Phase A: menu and WordPress look
+
+### Pages and tabs
+
+| Submenu | Page slug | Tabs (`&tab=`) |
+| --- | --- | --- |
+| Dashboard | `ohmylms` | none (Home and Dashboard merged; Help & Feedback becomes a link here) |
+| Content Hub | `ohmylms-content` | courses, lessons, quizzes, exams, assignments, gradebook (phase C), question-bank, skills, curriculum |
+| Account Hub | `ohmylms-accounts` | students, schools, classes, teachers, parents, users (All accounts) |
+| Commerce | `ohmylms-commerce` | earnings, orders, memberships, subscriptions, coupons |
+| Engagement | `ohmylms-engagement` | gamification (sections incl. rewards and certificates), sessions (only with `ohmylms_show_sessions_menu`), emails |
+| Settings | `ohmylms-settings` | settings (sections = today's settings tabs incl. xAPI, AI tutor, migration), integrations, webhooks, setup |
+
+Detail screens add `&id=` and `&view=` (`page=ohmylms-content&tab=courses&id=12&view=settings`); second-level
+sections use `&section=`, rendered as `.subsubsub` under the tab (curriculum: bundles, skill-map, subjects, taxonomies;
+skills: assessments; question bank: import-review). Feature query parameters (filters, `action=new|import`, `add=1`)
+stay as they are.
+
+- **One source for tabs.** `includes/Admin/AdminNavigation.php` declares groups, tabs, sections, labels, capability
+  and flag per tab. PHP prints the tabs as real links (they work without JavaScript, keep the WordPress menu highlight
+  and can be bookmarked) and registers a submenu only when the user can see one of its tabs; a hidden or unknown tab
+  falls back to the group's default. `FeatureDefinition` gains `group`, `tab` and optional `section`/`view`, and a
+  contract test fails when the TypeScript registry and the PHP table disagree.
+- **Routing.** Replace `HashRouter` with a router keyed on the query string: an adapter turns
+  `page/tab/id/view/section` into the internal route (`/courses/12/settings`) and back, so feature code keeps
+  `useParams` and internal `Link` paths. Changing tab is a page load (the tab link); moving inside a tab uses
+  `history.pushState`/`replaceState`. The adapter is the only place that knows the URL format.
+- **Chrome.** Drop `AppLayout`'s header and navigation and the "OhMyLMS (new)" entry; each page prints `.wrap`, the
+  group heading, the tabs and the mount point. Restore the pending-orders badge on the top-level menu and Commerce.
+  `CommonHook.php` and `SkillAssessmentPage.php` stop adding their own submenus (they become tabs/sections).
+- **Merges** from PROPOSED-NAV: Home + Dashboard; one course editor (structure and settings as views of
+  `tab=courses&id=`); categories/tags as a curriculum section; Students under Account Hub; Certificates always a
+  Gamification section.
+- **Redirects.** `page=ohmylms#/…` (recovered admin) and `page=ohmylms-app#/…` (today's app) map to the new
+  addresses: the hash only reaches the browser, so the landing script maps it; `page=ohmylms-app` with no hash redirects
+  on the server. `LegacyRoutes::url()`/`app_url()` emit new addresses, so emails, the command palette, the admin bar
+  and the plugins screen follow. The map follows WP-MENU-PROPOSAL §4; the fixture and both redirect tests grow with it.
+- **Extensions.** `registerAdminPage` gains an optional `group` (default Settings) and appears as tab `ext-<id>`;
+  `context.route` and editor-panel slots keep their legacy names (EXTENSIONS.md v1 stays valid).
+
+### Look
+
+- Lists: `ui/Table` renders WordPress list-table markup (views, bulk actions, search box, sortable columns, row
+  actions, pagination); every list screen moves to it. Forms and dialogs stay on `@wordpress/components`.
+- Colours: admin screens follow the user's WordPress admin colour scheme (`--wp-admin-theme-color`); `--oml-*`
+  remains for learner pages. **Open decision:** the Design system setting (`ohmylms_design_system`, Khan Academy preset
+  by default) currently recolours plugin admin screens. Recommended: add a "WordPress" preset that reads the admin
+  colour scheme, make it the default for admin screens, and keep the other presets for sites that want a branded
+  admin.
+- Remove one-off values: every new-app stylesheet uses WordPress classes or tokens only
+  ([DESIGN-TOKENS](DESIGN-TOKENS.md), [STYLESHEET-OWNERSHIP](STYLESHEET-OWNERSHIP.md)); `check:architecture` gains a
+  rule against raw colours in `assets/src/app`.
+
+### Done when
+
+Every screen is reachable from the six submenus with the right menu highlight; every address in the redirect fixture
+(legacy hash, app hash, PHP links) lands on its new page; list screens use list-table markup; screenshots of each tab
+are reviewed; axe has no serious issues; asset budgets hold.
+
+## Phase B: dashboard
+
+Widgets from the prototype, each backed by a hardened, cached, scope-aware endpoint (scope = all schools, one
+school or one class from Account Hub; period 7/30/90 days):
+
+| Widget | Source | Notes |
+| --- | --- | --- |
+| Needs attention (with snooze) | assignments awaiting grading, failed payments, manual-approval orders, at-risk count, stalling courses, items most learners miss | ranked by urgency; snooze per user (user meta, expires) |
+| Pulse | earnings, weekly active learners, completions, renewals at risk | sparkline per metric vs the previous period |
+| At-risk learners | inactivity, falling mastery, overdue work | the reasons are shown; nudge uses the existing email templates, rate limited |
+| Mastery heatmap | class × skill from skill evidence | levels as in XP-MASTERY / Khan: mastered, proficient, familiar, attempted, not started |
+| Recommended next assignments | groups below Familiar per skill | "assign review set" creates a draft assignment |
+| Course health | completion × rating, drop-off lesson | links to the course report |
+| Insights | deterministic rules over the same data | plain sentences with the numbers; no AI calls |
+| Activity, site health, weekly goal | existing events and checks | optional cards |
+
+Before building: audit what [DASHBOARD-BENCHMARK](DASHBOARD-BENCHMARK.md) and
+[DASHBOARD-LATENCY-INVESTIGATION](DASHBOARD-LATENCY-INVESTIGATION.md) measured; each endpoint gets a latency budget
+on the test data and a PHP integration test.
+
+## Phase C: gradebook
+
+Content Hub › Gradebook with five views: Course × Students (audience filter: all / individuals only / one roster),
+Roster × Assignments, student transcript, skill mastery, org roll-up (district → school → class). Saved views,
+share link and CSV export; per-course weighting with a roster override.
+
+Start with an audit of how enrolments, classes and grades are stored today, then adopt the research's model:
+an enrolment records its source (purchase, self, manual, roster, seat); rosters are Account Hub classes; graded items
+are quizzes, assignments and exams; "missing" and "not assigned" are distinct states. Migrations must be reversible
+and tested on the test site.
+
+## Working method
+
+Same as the modularisation: parallel subagents per area (navigation and routing; list-table and look; one per
+dashboard widget group; gradebook model then views), each with tests, docs and a live check on 800.local;
+the coordinator owns `LegacyRoutes`, `Menu.php`, the registry and the combined build, and commits to `main`.
