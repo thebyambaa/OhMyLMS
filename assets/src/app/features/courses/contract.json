@@ -1,0 +1,218 @@
+{
+	"contract": "ohmylms/v1/courses",
+	"version": 1,
+	"namespace": "ohmylms/v1",
+	"restBase": "courses",
+	"capability": "edit_posts (list, create) plus edit_post / read_post / delete_post per course",
+	"auth": "WordPress REST authentication. Cookie auth requires the X-WP-Nonce header (wp_create_nonce('wp_rest')); application passwords also work.",
+	"statuses": {
+		"write": [ "draft", "pending", "publish", "future", "private" ],
+		"read": [ "draft", "pending", "publish", "future", "private", "trash" ],
+		"needsPublishCapability": [ "publish", "future", "private" ]
+	},
+	"routes": [
+		{
+			"method": "GET",
+			"path": "/courses",
+			"args": {
+				"page": { "type": "integer", "default": 1, "minimum": 1 },
+				"per_page": {
+					"type": "integer",
+					"default": 20,
+					"minimum": 1,
+					"maximum": 100
+				},
+				"search": { "type": "string" },
+				"status": {
+					"type": "string",
+					"default": "all",
+					"enum": [
+						"all",
+						"trash",
+						"publish",
+						"draft",
+						"pending",
+						"private",
+						"future"
+					]
+				},
+				"price_type": {
+					"type": "string",
+					"default": "all",
+					"enum": [ "all", "free", "paid" ]
+				},
+				"level": {
+					"type": "string",
+					"enum": [ "beginner", "experience", "expert", "all" ]
+				},
+				"author": {
+					"type": "integer",
+					"note": "only for users who can edit others' courses"
+				},
+				"created_after": { "type": "string", "pattern": "YYYY-MM-DD" },
+				"created_before": { "type": "string", "pattern": "YYYY-MM-DD" },
+				"include": {
+					"type": "array",
+					"items": "integer",
+					"maxItems": 100
+				},
+				"orderby": {
+					"type": "string",
+					"default": "created_at",
+					"enum": [
+						"id",
+						"title",
+						"status",
+						"created_at",
+						"updated_at",
+						"price"
+					]
+				},
+				"order": {
+					"type": "string",
+					"default": "desc",
+					"enum": [ "asc", "desc" ]
+				}
+			},
+			"success": {
+				"status": 200,
+				"body": "Course[]",
+				"headers": [ "X-WP-Total", "X-WP-TotalPages", "Link" ]
+			},
+			"errors": [ 400, 401, 403 ]
+		},
+		{
+			"method": "POST",
+			"path": "/courses",
+			"success": {
+				"status": 201,
+				"body": "CourseDetail",
+				"headers": [ "Location" ]
+			},
+			"errors": [ 400, 401, 403, 422, 500 ]
+		},
+		{
+			"method": "GET",
+			"path": "/courses/options",
+			"success": { "status": 200, "body": "CourseOptions" },
+			"errors": [ 401, 403 ]
+		},
+		{
+			"method": "GET",
+			"path": "/courses/{id}",
+			"args": {
+				"context": {
+					"type": "string",
+					"default": "view",
+					"enum": [ "view", "edit" ]
+				}
+			},
+			"success": { "status": 200, "body": "Course | CourseDetail" },
+			"errors": [ 401, 403, 404 ]
+		},
+		{
+			"method": [ "PUT", "PATCH", "POST" ],
+			"path": "/courses/{id}",
+			"success": { "status": 200, "body": "CourseDetail" },
+			"errors": [ 400, 401, 403, 404, 409, 422, 500 ]
+		},
+		{
+			"method": "DELETE",
+			"path": "/courses/{id}",
+			"args": { "force": { "type": "boolean", "default": false } },
+			"success": {
+				"status": 200,
+				"body": "CourseDetail (trashed) | { deleted, previous }"
+			},
+			"errors": [ 401, 403, 404, 409, 500 ]
+		},
+		{
+			"method": "POST",
+			"path": "/courses/{id}/duplicate",
+			"success": {
+				"status": 201,
+				"body": "CourseDetail",
+				"headers": [ "Location" ]
+			},
+			"errors": [ 401, 403, 404, 409, 500 ]
+		},
+		{
+			"method": "POST",
+			"path": "/courses/{id}/restore",
+			"success": { "status": 200, "body": "CourseDetail" },
+			"errors": [ 401, 403, 404, 409, 500 ]
+		}
+	],
+	"errorCodes": {
+		"400": [
+			"rest_invalid_param",
+			"rest_missing_callback_param",
+			"ohmylms_course_invalid_page"
+		],
+		"401/403": [
+			"ohmylms_course_cannot_view",
+			"ohmylms_course_cannot_create",
+			"ohmylms_course_cannot_edit",
+			"ohmylms_course_cannot_delete",
+			"ohmylms_course_cannot_publish",
+			"ohmylms_course_thumbnail_forbidden"
+		],
+		"404": [ "ohmylms_course_not_found" ],
+		"409": [
+			"ohmylms_course_trashed",
+			"ohmylms_course_already_trashed",
+			"ohmylms_course_not_trashed",
+			"ohmylms_course_has_students"
+		],
+		"422": [
+			"ohmylms_course_invalid_title",
+			"ohmylms_course_invalid_slug",
+			"ohmylms_course_invalid_text",
+			"ohmylms_course_invalid_price",
+			"ohmylms_course_paid_needs_price",
+			"ohmylms_course_sale_price_too_high",
+			"ohmylms_course_invalid_sale_dates",
+			"ohmylms_course_sale_dates_without_price",
+			"ohmylms_course_sale_dates_incomplete",
+			"ohmylms_course_sale_on_free",
+			"ohmylms_course_invalid_date",
+			"ohmylms_course_invalid_schedule",
+			"ohmylms_course_password_required",
+			"ohmylms_course_invalid_password",
+			"ohmylms_course_private_password",
+			"ohmylms_course_invalid_capacity",
+			"ohmylms_course_invalid_thumbnail"
+		],
+		"500": [
+			"ohmylms_course_create_failed",
+			"ohmylms_course_update_failed",
+			"ohmylms_course_delete_failed",
+			"ohmylms_course_duplicate_failed"
+		]
+	},
+	"fieldErrors": {
+		"ohmylms_course_invalid_title": "title",
+		"ohmylms_course_invalid_slug": "slug",
+		"ohmylms_course_paid_needs_price": "regular_price",
+		"ohmylms_course_sale_price_too_high": "sale_price",
+		"ohmylms_course_sale_dates_without_price": "sale_price",
+		"ohmylms_course_sale_on_free": "sale_price",
+		"ohmylms_course_invalid_sale_dates": "sale_end_date",
+		"ohmylms_course_sale_dates_incomplete": "sale_end_date",
+		"ohmylms_course_invalid_date": "available_date",
+		"ohmylms_course_invalid_schedule": "scheduled_at",
+		"ohmylms_course_password_required": "password",
+		"ohmylms_course_invalid_password": "password",
+		"ohmylms_course_private_password": "access_type",
+		"ohmylms_course_invalid_capacity": "capacity",
+		"ohmylms_course_invalid_thumbnail": "thumbnail_id",
+		"ohmylms_course_thumbnail_forbidden": "thumbnail_id"
+	},
+	"limits": {
+		"max_title": 200,
+		"max_text": 5000,
+		"max_price": 99999999.99,
+		"max_capacity": 1000000,
+		"max_password": 100
+	}
+}

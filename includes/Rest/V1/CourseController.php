@@ -11,7 +11,7 @@ use OhMyLMS\Abstracts\RestController;
 use OhMyLMS\Course\CourseHelper;
 use OhMyLMS\Data\Course;
 use OhMyLMS\Data\Chapter;
-use OhMyLMS\DataException;
+use WP_Post;
 use WP_Query;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -21,51 +21,135 @@ use WP_Error;
 /**
  * Controller for handling course REST API endpoints.
  *
- * This class extends the RESTController abstract class and defines REST API routes
- * for course-related CRUD operations and many more.
+ * Course CRUD under `ohmylms/v1/courses`. See docs/api/courses.md for the contract. Authentication is
+ * WordPress core's: cookie authentication requires the `X-WP-Nonce` header (verified by
+ * rest_cookie_check_errors() before any permission callback); application passwords also work.
+ *
+ * Every capability decision goes through {@see CourseController::can()}, per object with the
+ * `edit_post`, `read_post` and `delete_post` meta capabilities, so an author can never read or change
+ * another author's draft. The auxiliary routes at the end of register_routes() (enrolment, import,
+ * export, builder data) are not part of the CRUD contract; they only use the hardened permission
+ * callback {@see CourseController::check_legacy_permission()}.
  *
  * @since 1.0.0
  */
 class CourseController extends RestController {
 
+	/**
+	 * Largest accepted price.
+	 */
+	const MAX_PRICE = 99999999.99;
 
 	/**
-	 * The base route for course base endpoints.
+	 * Longest course title, in characters.
+	 */
+	const MAX_TITLE = 200;
+
+	/**
+	 * Longest free-text field (short description, outcomes, audience, requirements), in characters.
+	 */
+	const MAX_TEXT = 5000;
+
+	/**
+	 * Longest access password, in characters.
+	 */
+	const MAX_PASSWORD = 100;
+
+	/**
+	 * Largest seat capacity.
+	 */
+	const MAX_CAPACITY = 1000000;
+
+	/**
+	 * Course levels (stored in `_level`, filtered by the course loop).
+	 */
+	const LEVELS = array( 'beginner', 'experience', 'expert', 'all' );
+
+	/**
+	 * Statuses a client may set. Trash is reached through DELETE and left through /restore.
+	 */
+	const WRITE_STATUSES = array( 'draft', 'pending', 'publish', 'future', 'private' );
+
+	/**
+	 * Statuses listed by `status=all`.
+	 */
+	const LIST_STATUSES = array( 'publish', 'draft', 'pending', 'private', 'future' );
+
+	/**
+	 * Statuses that need the publish capability.
+	 */
+	const PUBLISHING_STATUSES = array( 'publish', 'future', 'private' );
+
+	/**
+	 * Image types accepted as a thumbnail.
+	 */
+	const THUMBNAIL_MIMES = array( 'image/jpeg', 'image/png', 'image/gif', 'image/webp' );
+
+	/**
+	 * Endpoint namespace.
 	 *
 	 * @var string
-	 * @since 1.0.0
+	 */
+	protected $namespace = 'ohmylms/v1';
+
+	/**
+	 * The base route for course endpoints.
+	 *
+	 * @var string
+	 */
+	protected $rest_base = 'courses';
+
+	/**
+	 * The base route (kept for the auxiliary routes).
+	 *
+	 * @var string
 	 */
 	protected $base = 'courses';
 
 	/**
-	 * Check course permission for Course controller.
+	 * Enrolled student counts for the courses of the current collection page, keyed by course ID.
+	 *
+	 * @var array<int,int>
 	 */
-	public function check_course_permission() {
-		return current_user_can( 'edit_posts' );
-	}
+	private $enrolled_counts = array();
 
 	/**
-	 * Check course scorm export permission for Course controller.
+	 * Single place that answers "may the current user do this?".
 	 *
-	 * @param mixed $request REST request.
+	 * @param string $action  `list`, `create`, `publish`, `list_others`, `read`, `edit` or `delete`.
+	 * @param int    $post_id Course ID for the object-level actions.
+	 * @return bool
 	 */
-	public function check_course_scorm_export_permission( $request ) {
-		// Allow cookie authentication with nonce for direct download links
-		// WordPress REST API automatically handles cookie + nonce authentication
-		// The nonce can be sent via X-WP-Nonce header or _wpnonce query parameter.
-		if ( ! is_user_logged_in() ) {
-			return false;
+	private function can( $action, $post_id = 0 ) {
+		$caps = get_post_type_object( OHMYLMS_COURSE_CPT )->cap;
+		switch ( $action ) {
+			case 'list':
+			case 'create':
+				return current_user_can( $caps->edit_posts );
+			case 'publish':
+				return current_user_can( $caps->publish_posts );
+			case 'list_others':
+				return current_user_can( $caps->edit_others_posts );
+			case 'read':
+				return current_user_can( 'read_post', $post_id );
+			case 'edit':
+				return current_user_can( 'edit_post', $post_id );
+			case 'delete':
+				return current_user_can( 'delete_post', $post_id );
 		}
 
-		return current_user_can( 'edit_posts' );
+		return false;
 	}
 
-
 	/**
-	 * Check course delete permission for Course controller.
+	 * Build the permission error: 401 when logged out, 403 otherwise.
+	 *
+	 * @param string $code    Error code.
+	 * @param string $message Message.
+	 * @return WP_Error
 	 */
-	public function check_course_delete_permission() {
-		return current_user_can( 'edit_posts' );
+	private function denied( $code, $message ) {
+		return new WP_Error( $code, $message, array( 'status' => rest_authorization_required_code() ) );
 	}
 
 	/**
@@ -74,562 +158,1745 @@ class CourseController extends RestController {
 	 * @since 1.0.0
 	 */
 	public function register_routes() {
+		$base = '/' . $this->rest_base;
+		$item = $base . '/(?P<id>[\d]+)';
+		$id   = array(
+			'description' => __( 'Unique identifier for the course.', 'ohmylms' ),
+			'type'        => 'integer',
+			'minimum'     => 1,
+		);
+
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->base . '/',
+			$base,
 			array(
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_items' ),
-					'permission_callback' => array( $this, 'check_course_permission' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
 					'args'                => $this->get_collection_params(),
 				),
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_item' ),
-					'permission_callback' => array( $this, 'check_course_permission' ),
+					'permission_callback' => array( $this, 'create_item_permissions_check' ),
 					'args'                => $this->get_endpoint_args_for_item_schema( WP_REST_Server::CREATABLE ),
+				),
+				'schema' => array( $this, 'get_public_item_schema' ),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			$base . '/options',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_options' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
 				),
 			)
 		);
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->base . '/(?P<id>[\d]+)',
+			$item,
 			array(
-				'args' => array(
-					'id' => array(
-						'description' => __( 'Unique identifier for the course.', 'ohmylms' ),
-						'type'        => 'integer',
-					),
-				),
+				'args'   => array( 'id' => $id ),
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_item' ),
-					'permission_callback' => array( $this, 'check_course_permission' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'args'                => array(
+						'context' => $this->get_context_param( array( 'default' => 'view' ) ),
+					),
 				),
 				array(
 					'methods'             => WP_REST_Server::EDITABLE,
 					'callback'            => array( $this, 'update_item' ),
-					'permission_callback' => array( $this, 'check_course_permission' ),
-					'args'                => $this->get_collection_params(),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => $this->get_update_args(),
 				),
 				array(
 					'methods'             => WP_REST_Server::DELETABLE,
 					'callback'            => array( $this, 'delete_item' ),
-					'permission_callback' => array( $this, 'check_course_delete_permission' ),
-				),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/(?P<id>\d+)/status',
-			array(
-				array(
-					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'update_status' ),
-					'permission_callback' => array( $this, 'check_course_permission' ),
+					'permission_callback' => array( $this, 'delete_item_permissions_check' ),
 					'args'                => array(
-						'status' => array(
-							'description' => __( 'The new status for the course.', 'ohmylms' ),
-							'type'        => 'string',
-							'required'    => true,
-						),
-						'id'     => array(
-							'description' => __( 'Unique identifier for the course.', 'ohmylms' ),
-							'type'        => 'integer',
-							'required'    => true,
+						'force' => array(
+							'description' => __( 'Delete permanently instead of moving to the trash.', 'ohmylms' ),
+							'type'        => 'boolean',
+							'default'     => false,
 						),
 					),
 				),
+				'schema' => array( $this, 'get_public_item_schema' ),
 			)
 		);
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->base . '/export',
+			$item . '/duplicate',
 			array(
-				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'export' ),
-				'permission_callback' => array( $this, 'check_course_permission' ),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/export-scorm',
-			array(
-				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'export_scorm' ),
-				'permission_callback' => array( $this, 'check_course_scorm_export_permission' ),
-				'args'                => array(
-					'course_ids'    => array(
-						'required'          => true,
-						'type'              => 'array',
-						'description'       => __( 'Array of course IDs to export', 'ohmylms' ),
-						'validate_callback' => function ( $param ) {
-							return is_array( $param ) && ! empty( $param );
-						},
-					),
-					'scorm_version' => array(
-						'required'    => false,
-						'type'        => 'string',
-						'default'     => '1.2',
-						'description' => __( 'SCORM version (1.2 or 2004)', 'ohmylms' ),
-						'enum'        => array( '1.2', '2004' ),
-					),
-					'_wpnonce'      => array(
-						'required'    => false,
-						'type'        => 'string',
-						'description' => __( 'WordPress nonce for authentication', 'ohmylms' ),
-					),
-				),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/(?P<id>\d+)/enroll',
-			array(
-				'methods'             => \WP_REST_Server::EDITABLE,
-				'callback'            => array( $this, 'enroll_manually' ),
-				'permission_callback' => array( $this, 'check_course_permission' ),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/(?P<id>\d+)/clone',
-			array(
-				'methods'             => \WP_REST_Server::EDITABLE,
-				'callback'            => array( $this, 'duplicate_item' ),
-				'permission_callback' => array( $this, 'check_course_permission' ),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/(?P<id>\d+)/enroll/(?P<student_id>\d+)',
-			array(
-				'methods'             => \WP_REST_Server::DELETABLE,
-				'callback'            => array( $this, 'delete_enroll_manually' ),
-				'permission_callback' => array( $this, 'check_course_permission' ),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/(?P<id>\d+)/enroll-by-email',
-			array(
-				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'enroll_by_email' ),
-				'permission_callback' => array( $this, 'check_course_permission' ),
-				'args'                => array(
-					'email'      => array(
-						'required'          => true,
-						'type'              => 'string',
-						'sanitize_callback' => 'sanitize_email',
-					),
-					'first_name' => array(
-						'required'          => false,
-						'type'              => 'string',
-						'sanitize_callback' => 'sanitize_text_field',
-					),
-					'last_name'  => array(
-						'required'          => false,
-						'type'              => 'string',
-						'sanitize_callback' => 'sanitize_text_field',
-					),
-				),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/import',
-			array(
-				'methods'             => \WP_REST_Server::EDITABLE,
-				'callback'            => array( $this, 'import' ),
-				'permission_callback' => array( $this, 'check_course_permission' ),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/import-scorm',
-			array(
-				'methods'             => \WP_REST_Server::EDITABLE,
-				'callback'            => array( $this, 'import_scorm' ),
-				'permission_callback' => array( $this, 'check_course_permission' ),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/trash-bulk/',
-			array(
+				'args' => array( 'id' => $id ),
 				array(
-					'methods'             => \WP_REST_Server::DELETABLE,
-					'callback'            => array( $this, 'trash_bulk' ),
-					'permission_callback' => array( $this, 'check_course_permission' ),
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'duplicate_item' ),
+					'permission_callback' => array( $this, 'duplicate_item_permissions_check' ),
 				),
 			)
 		);
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->base . '/(?P<id>[\d]+)/chapters',
+			$item . '/restore',
 			array(
-				'args' => array(
-					'id' => array(
-						'description' => __( 'Unique identifier for the course.', 'ohmylms' ),
-						'type'        => 'integer',
-					),
-				),
+				'args' => array( 'id' => $id ),
 				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_chapters' ),
-					'permission_callback' => array( $this, 'check_course_permission' ),
-				),
-				array(
-					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'update_chapters' ),
-					'permission_callback' => array( $this, 'check_course_permission' ),
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'restore_item' ),
+					'permission_callback' => array( $this, 'delete_item_permissions_check' ),
 				),
 			)
 		);
 
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/update-map/(?P<id>\d+)',
-			array(
-				array(
-					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'update_course_map' ),
-					'permission_callback' => array( $this, 'check_course_permission' ),
-					'args'                => $this->get_collection_params(),
-				),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/settings/(?P<id>\d+)',
-			array(
-				array(
-					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'save_course_settings' ),
-					'permission_callback' => array( $this, 'check_course_permission' ),
-					'args'                => $this->get_collection_params(),
-				),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/settings/(?P<id>\d+)',
-			array(
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_course_settings' ),
-					'permission_callback' => array( $this, 'check_course_permission' ),
-					'args'                => $this->get_collection_params(),
-				),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/get-map/(?P<id>\d+)',
-			array(
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_course_map' ),
-					'permission_callback' => array( $this, 'check_course_permission' ),
-					'args'                => $this->get_collection_params(),
-				),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/get-map/default',
-			array(
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_course_map_default' ),
-					'permission_callback' => array( $this, 'check_course_permission' ),
-					'args'                => $this->get_collection_params(),
-				),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/filtered-courses',
-			array(
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_filtered_courses' ),
-					'permission_callback' => array( $this, 'check_course_permission' ),
-					'args'                => $this->get_collection_params(),
-				),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/featured_image/(?P<id>\d+)',
-			array(
-				array(
-					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'save_featured_image' ),
-					'permission_callback' => array( $this, 'check_course_permission' ),
-				),
-				array(
-					'methods'             => WP_REST_Server::DELETABLE,
-					'callback'            => array( $this, 'remove_featured_image' ),
-					'permission_callback' => array( $this, 'check_course_permission' ),
-				),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/(?P<id>\d+)/terms',
-			array(
-				'methods'             => WP_REST_Server::EDITABLE,
-				'callback'            => array( $this, 'assign_terms_to_course' ),
-				'permission_callback' => array( $this, 'check_course_permission' ),
-				'args'                => array(
-					'taxonomy' => array(
-						'description' => __( 'The taxonomy to assign (e.g., course_tag, course_category).', 'ohmylms' ),
-						'type'        => 'string',
-						'required'    => true,
-					),
-					'terms'    => array(
-						'description' => __( 'The terms to assign.', 'ohmylms' ),
-						'type'        => 'array',
-						'items'       => array(
-							'type' => 'integer',
-						),
-						'required'    => true,
-					),
-				),
-			)
-		);
+		$this->register_auxiliary_routes();
 	}
 
 	/**
-	 * Check if a given request has access to read an item.
+	 * Resolve a course or return the 404 error.
+	 *
+	 * @param int $id Course ID.
+	 * @return WP_Post|WP_Error
+	 */
+	private function get_course_post( $id ) {
+		$post = get_post( absint( $id ) );
+		if ( ! $post || OHMYLMS_COURSE_CPT !== $post->post_type || 'auto-draft' === $post->post_status ) {
+			return new WP_Error( 'ohmylms_course_not_found', __( 'Course not found.', 'ohmylms' ), array( 'status' => 404 ) );
+		}
+
+		return $post;
+	}
+
+	/**
+	 * Check if the current user can list courses (also the options route).
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
-	 * @return WP_Error|boolean
-	 *
-	 * @since 1.0.0
+	 * @return true|WP_Error
 	 */
-	public function get_item_permissions_check( $request ) {
-		$post = get_post( (int) $request['id'] );
-
-		if ( $post && ! current_user_can( 'read_post', $post->ID ) ) {
-			return new WP_Error( 'ohmylms_rest_cannot_view', __( 'Sorry, you cannot view this resource.', 'ohmylms' ), array( 'status' => rest_authorization_required_code() ) );
+	public function get_items_permissions_check( $request ) {
+		if ( ! $this->can( 'list' ) ) {
+			return $this->denied( 'ohmylms_course_cannot_view', __( 'Sorry, you are not allowed to view courses.', 'ohmylms' ) );
 		}
 
 		return true;
 	}
 
 	/**
-	 * Get collection of courses with caching.
+	 * Check if the current user can read one course. The edit context (description, password) needs
+	 * the edit capability on that course.
 	 *
-	 * @param \WP_REST_Request $request The REST request object containing query parameters.
-	 * @return WP_Error|\WP_HTTP_Response|\WP_REST_Response The response object containing the courses data or an error.
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error
+	 */
+	public function get_item_permissions_check( $request ) {
+		if ( ! $this->can( 'list' ) ) {
+			return $this->denied( 'ohmylms_course_cannot_view', __( 'Sorry, you are not allowed to view courses.', 'ohmylms' ) );
+		}
+		$post = $this->get_course_post( $request['id'] );
+		if ( is_wp_error( $post ) ) {
+			return $post;
+		}
+		if ( 'edit' === $request['context'] && ! $this->can( 'edit', $post->ID ) ) {
+			return $this->denied( 'ohmylms_course_cannot_edit', __( 'Sorry, you are not allowed to edit this course.', 'ohmylms' ) );
+		}
+		if ( ! $this->can( 'read', $post->ID ) ) {
+			return $this->denied( 'ohmylms_course_cannot_view', __( 'Sorry, you are not allowed to view this course.', 'ohmylms' ) );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Check if the current user can create a course, including publishing it.
 	 *
-	 * @since 1.0.0
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error
+	 */
+	public function create_item_permissions_check( $request ) {
+		if ( ! $this->can( 'create' ) ) {
+			return $this->denied( 'ohmylms_course_cannot_create', __( 'Sorry, you are not allowed to create courses.', 'ohmylms' ) );
+		}
+
+		return $this->check_publish_permission( $request );
+	}
+
+	/**
+	 * Check if the current user can edit this course (and publish when the request asks for it).
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error
+	 */
+	public function update_item_permissions_check( $request ) {
+		if ( ! $this->can( 'list' ) ) {
+			return $this->denied( 'ohmylms_course_cannot_edit', __( 'Sorry, you are not allowed to edit courses.', 'ohmylms' ) );
+		}
+		$post = $this->get_course_post( $request['id'] );
+		if ( is_wp_error( $post ) ) {
+			return $post;
+		}
+		if ( ! $this->can( 'edit', $post->ID ) ) {
+			return $this->denied( 'ohmylms_course_cannot_edit', __( 'Sorry, you are not allowed to edit this course.', 'ohmylms' ) );
+		}
+
+		return $this->check_publish_permission( $request );
+	}
+
+	/**
+	 * Check if the current user can delete (or trash) this course.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error
+	 */
+	public function delete_item_permissions_check( $request ) {
+		if ( ! $this->can( 'list' ) ) {
+			return $this->denied( 'ohmylms_course_cannot_delete', __( 'Sorry, you are not allowed to delete courses.', 'ohmylms' ) );
+		}
+		$post = $this->get_course_post( $request['id'] );
+		if ( is_wp_error( $post ) ) {
+			return $post;
+		}
+		if ( ! $this->can( 'delete', $post->ID ) ) {
+			return $this->denied( 'ohmylms_course_cannot_delete', __( 'Sorry, you are not allowed to delete this course.', 'ohmylms' ) );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Check if the current user can copy this course: create rights plus edit rights on the source,
+	 * so an author cannot copy another author's draft.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error
+	 */
+	public function duplicate_item_permissions_check( $request ) {
+		if ( ! $this->can( 'create' ) ) {
+			return $this->denied( 'ohmylms_course_cannot_create', __( 'Sorry, you are not allowed to create courses.', 'ohmylms' ) );
+		}
+		$post = $this->get_course_post( $request['id'] );
+		if ( is_wp_error( $post ) ) {
+			return $post;
+		}
+		if ( ! $this->can( 'edit', $post->ID ) ) {
+			return $this->denied( 'ohmylms_course_cannot_edit', __( 'Sorry, you are not allowed to copy this course.', 'ohmylms' ) );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Deny publishing, scheduling and making private to users without the publish capability.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error
+	 */
+	private function check_publish_permission( $request ) {
+		if ( $request->has_param( 'status' ) && in_array( $request['status'], self::PUBLISHING_STATUSES, true ) && ! $this->can( 'publish' ) ) {
+			return $this->denied( 'ohmylms_course_cannot_publish', __( 'Sorry, you are not allowed to publish courses. Submit it for review instead.', 'ohmylms' ) );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Get courses.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_items( $request ) {
+		$page     = max( 1, (int) $request['page'] );
+		$per_page = min( 100, max( 1, (int) $request['per_page'] ) );
+		$orderby  = array(
+			'id'         => 'ID',
+			'title'      => 'title',
+			'status'     => 'post_status',
+			'created_at' => 'date',
+			'updated_at' => 'modified',
+			'price'      => 'meta_value_num',
+		);
+		$statuses = 'all' === $request['status'] ? self::LIST_STATUSES : array( (string) $request['status'] );
 
 		$args = array(
-			'offset'              => isset( $request['offset'] ) ? intval( $request['offset'] ) : 0,
-			'order'               => isset( $request['order'] ) ? sanitize_text_field( $request['order'] ) : 'DESC',
-			'orderby'             => isset( $request['orderby'] ) ? sanitize_text_field( $request['orderby'] ) : 'date',
-			'paged'               => isset( $request['page'] ) ? intval( $request['page'] ) : 1,
-			'post__in'            => isset( $request['include'] ) ? array_map( 'intval', (array) $request['include'] ) : array(),
-			'post__not_in'        => isset( $request['exclude'] ) ? array_map( 'intval', (array) $request['exclude'] ) : array(),
-			'posts_per_page'      => isset( $request['per_page'] ) ? intval( $request['per_page'] ) : 10,
-			'name'                => isset( $request['slug'] ) ? sanitize_text_field( $request['slug'] ) : '',
-			'post_parent__in'     => isset( $request['parent'] ) ? array_map( 'intval', (array) $request['parent'] ) : array(),
-			'post_parent__not_in' => isset( $request['parent_exclude'] ) ? array_map( 'intval', (array) $request['parent_exclude'] ) : array(),
-			's'                   => isset( $request['search'] ) ? sanitize_text_field( $request['search'] ) : '',
-			'post_type'           => OHMYLMS_COURSE_CPT,
-			'post_status'         => isset( $request['post_status'] ) ? sanitize_text_field( $request['post_status'] ) : array( 'draft', 'publish', 'future' ),
-			'meta_query'          => isset( $request['price_type'] ) && 'all' !== $request['price_type'] ? array(
+			'post_type'              => OHMYLMS_COURSE_CPT,
+			'post_status'            => $statuses,
+			'posts_per_page'         => $per_page,
+			'paged'                  => $page,
+			'orderby'                => $orderby[ $request['orderby'] ],
+			'order'                  => strtoupper( (string) $request['order'] ),
+			'ignore_sticky_posts'    => true,
+			'update_post_term_cache' => false,
+		);
+		if ( 'price' === $request['orderby'] ) {
+			$args['meta_key'] = '_price'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Needed to sort by price.
+		}
+		if ( '' !== (string) $request['search'] ) {
+			$args['s'] = (string) $request['search'];
+		}
+		if ( ! empty( $request['include'] ) ) {
+			$args['post__in'] = array_map( 'absint', (array) $request['include'] );
+		}
+
+		// Users who cannot edit others' courses only ever see their own, in every status.
+		if ( ! $this->can( 'list_others' ) ) {
+			$args['author'] = get_current_user_id();
+		} elseif ( ! empty( $request['author'] ) ) {
+			$args['author'] = absint( $request['author'] );
+		}
+
+		$meta_query = array();
+		if ( 'paid' === $request['price_type'] ) {
+			$meta_query[] = array(
+				'key'   => '_price_type',
+				'value' => 'paid',
+			);
+		} elseif ( 'free' === $request['price_type'] ) {
+			$meta_query[] = array(
+				'relation' => 'OR',
+				array(
+					'key'   => '_price_type',
+					'value' => 'free',
+				),
 				array(
 					'key'     => '_price_type',
-					'value'   => sanitize_text_field( $request['price_type'] ),
-					'compare' => 'LIKE',
+					'compare' => 'NOT EXISTS',
 				),
-			) : array(),
-		);
-
-		if ( 'any' === $args['post_status'] || ! in_array( $args['post_status'], array( 'draft', 'publish', 'future' ) ) ) {
-			$args['post_status'] = array( 'draft', 'publish', 'future' );
-		}
-
-		$args['date_query'] = array();
-
-		if ( ! empty( $request['date_filter'] ) ) {
-			$filter = sanitize_text_field( $request['date_filter'] );
-			$today  = current_time( 'Y-m-d' );
-
-			switch ( $filter ) {
-				case 'last_30_days':
-					$args['date_query'][] = array(
-						'after'     => date( 'Y-m-d', strtotime( '-30 days' ) ),
-						'before'    => $today,
-						'inclusive' => true,
-					);
-					break;
-
-				case 'current_month':
-					$args['date_query'][] = array(
-						'after'     => date( 'Y-m-01' ),
-						'before'    => $today,
-						'inclusive' => true,
-					);
-					break;
-
-				case 'previous_month':
-					$args['date_query'][] = array(
-						'after'     => date( 'Y-m-01', strtotime( 'first day of last month' ) ),
-						'before'    => date( 'Y-m-t', strtotime( 'last month' ) ),
-						'inclusive' => true,
-					);
-					break;
-
-				case 'current_year':
-					$args['date_query'][] = array(
-						'after'     => date( 'Y-01-01' ),
-						'before'    => $today,
-						'inclusive' => true,
-					);
-					break;
-
-				case 'last_12_months':
-					$args['date_query'][] = array(
-						'after'     => date( 'Y-m-d', strtotime( '-12 months' ) ),
-						'before'    => $today,
-						'inclusive' => true,
-					);
-					break;
-
-				case 'custom':
-					$start_date           = isset( $request['start_date'] ) ? sanitize_text_field( $request['start_date'] ) : '';
-					$end_date             = isset( $request['end_date'] ) ? sanitize_text_field( $request['end_date'] ) : '';
-					$args['date_query'][] = array(
-						'after'     => $start_date,
-						'before'    => $end_date,
-						'inclusive' => true,
-					);
-					break;
-			}
-		}
-
-		// If custom before/after are passed directly.
-		if ( isset( $request['before'] ) || isset( $request['after'] ) ) {
-			$manual_query = array();
-			if ( isset( $request['before'] ) ) {
-				$manual_query['before'] = sanitize_text_field( $request['before'] );
-			}
-			if ( isset( $request['after'] ) ) {
-				$manual_query['after'] = sanitize_text_field( $request['after'] );
-			}
-			$manual_query['inclusive'] = true;
-
-			$args['date_query'][] = $manual_query;
-		}
-
-		if ( isset( $request['filter'] ) && is_array( $request['filter'] ) ) {
-			$args = array_merge( $args, $request['filter'] );
-			unset( $args['filter'] );
-		}
-
-		if ( isset( $request['orderby'] ) && in_array( $request['orderby'], array( 'price' ) ) ) {
-			if ( 'price' === $request['orderby'] ) {
-				$args['meta_key'] = '_price'; // actual meta key in DB.
-				$args['orderby']  = 'meta_value_num'; // sort numerically.
-			}
-		}
-
-		// Filter by curriculum item (courses linked beneath it count too) and by course bundle.
-		// category_id and tag_id are the former category and tag parameters: they now mean a curriculum
-		// item ID and a course bundle ID, so existing list filters keep working.
-		$item_filter   = array_filter( array( $request['curriculum_id'] ?? null, $request['category_id'] ?? null ), 'is_numeric' );
-		$bundle_filter = array_filter( array( $request['bundle_id'] ?? null, $request['tag_id'] ?? null ), 'is_numeric' );
-		if ( $item_filter || $bundle_filter ) {
-			$args = \OhMyLMS\Curriculum\Placement::narrow_query( $args, array_map( 'intval', $item_filter ), array_map( 'intval', $bundle_filter ) );
-		}
-
-		$args       = apply_filters( 'ohmylms_rest_ohmylms_course_query', $args, $request );
-		$query_args = $this->prepare_items_query( $args, $request );
-
-		$posts_query  = new WP_Query();
-		$query_result = $posts_query->query( $query_args );
-
-		$posts = array();
-
-		foreach ( $query_result as $post ) {
-			if ( ! current_user_can( 'read_post', $post->ID ) ) {
-				continue;
-			}
-			$data    = $this->prepare_item_for_response( $post, $request );
-			$posts[] = $this->prepare_response_for_collection( $data );
-		}
-
-		$page        = (int) $query_args['paged'];
-		$total_posts = $posts_query->found_posts;
-
-		if ( 1 > $total_posts && 1 < $page ) {
-			unset( $query_args['paged'] );
-			$count_query = new WP_Query();
-			$count_query->query( $query_args );
-			$total_posts = $count_query->found_posts;
-		}
-
-		$max_pages            = ceil( $total_posts / (int) $query_args['posts_per_page'] );
-		$total_filtered_posts = $total_posts;
-
-		$args = array(
-			'post_type'      => 'ohmylms-course',
-			'post_status'    => array( 'publish', 'draft', 'future' ),
-			'posts_per_page' => -1,
-			'fields'         => 'ids', // Only retrieve IDs to improve performance.
-		);
-
-		$query       = new WP_Query( $args );
-		$total_posts = $query->found_posts;
-
-		if ( isset( $request['orderby'] ) && in_array( $request['orderby'], array( 'enrollment' ) ) ) {
-			usort(
-				$posts,
-				function ( $a, $b ) use ( $request ) {
-					if ( strtoupper( $request['order'] ) === 'DESC' ) {
-						return $a['total_enrollment'] <=> $b['total_enrollment'];
-					} else {
-						return $b['total_enrollment'] <=> $a['total_enrollment'];
-					}
-				}
 			);
 		}
+		if ( ! empty( $request['level'] ) ) {
+			$meta_query[] = array(
+				'key'   => '_level',
+				'value' => (string) $request['level'],
+			);
+		}
+		if ( $meta_query ) {
+			$args['meta_query'] = $meta_query; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Bounded by the post type and paging.
+		}
 
-		$response = rest_ensure_response( $posts );
-		$response->header( 'X-WP-Total', (int) $total_posts );
-		$response->header( 'X-WP-TotalCourses', (int) $total_posts );
-		$response->header( 'X-WP-NoOfFilteredCourses', (int) $total_filtered_posts );
-		$response->header( 'X-WP-TotalPages', (int) $max_pages );
+		$date_query = array();
+		if ( ! empty( $request['created_after'] ) ) {
+			$date_query['after'] = (string) $request['created_after'] . ' 00:00:00';
+		}
+		if ( ! empty( $request['created_before'] ) ) {
+			$date_query['before'] = (string) $request['created_before'] . ' 23:59:59';
+		}
+		if ( $date_query ) {
+			$date_query['inclusive'] = true;
+			$args['date_query']      = array( $date_query );
+		}
+
+		/**
+		 * Filters the WP_Query arguments used by GET /courses.
+		 *
+		 * @param array           $args    Query arguments.
+		 * @param WP_REST_Request $request The request.
+		 */
+		$args = apply_filters( 'ohmylms_rest_ohmylms_course_query', $args, $request );
+
+		$query = new WP_Query( $args );
+		$total = $this->found_posts( $query, $args );
+		$pages = (int) ceil( $total / $per_page );
+		if ( $page > $pages && $total > 0 ) {
+			return new WP_Error( 'ohmylms_course_invalid_page', __( 'The page number requested is larger than the number of pages available.', 'ohmylms' ), array( 'status' => 400 ) );
+		}
+
+		$this->prime_page( $query->posts );
+
+		$data = array();
+		foreach ( $query->posts as $post ) {
+			$data[] = $this->prepare_response_for_collection( $this->prepare_item_for_response( $post, $request ) );
+		}
+		$this->enrolled_counts = array();
+
+		$response = rest_ensure_response( $data );
+		$response->header( 'X-WP-Total', (string) $total );
+		$response->header( 'X-WP-TotalPages', (string) $pages );
+
+		$base = add_query_arg( urlencode_deep( $request->get_query_params() ), rest_url( $this->namespace . '/' . $this->rest_base ) );
+		if ( $page > 1 ) {
+			$response->link_header( 'prev', add_query_arg( 'page', $page - 1, $base ) );
+		}
+		if ( $page < $pages ) {
+			$response->link_header( 'next', add_query_arg( 'page', $page + 1, $base ) );
+		}
+
 		return $response;
 	}
 
+	/**
+	 * Total matches, also when the requested page is past the end (WP_Query then reports zero).
+	 *
+	 * @param WP_Query $query Executed query.
+	 * @param array    $args  Its arguments.
+	 * @return int
+	 */
+	private function found_posts( WP_Query $query, array $args ) {
+		if ( $query->found_posts > 0 || (int) $args['paged'] < 2 ) {
+			return (int) $query->found_posts;
+		}
+
+		$count = new WP_Query(
+			array_merge(
+				$args,
+				array(
+					'paged'          => 1,
+					'posts_per_page' => 1,
+					'fields'         => 'ids',
+				)
+			)
+		);
+
+		return (int) $count->found_posts;
+	}
+
+	/**
+	 * Warm every cache the page needs with one query each: thumbnails, authors and enrolment counts.
+	 *
+	 * @param WP_Post[] $posts Courses on the page.
+	 * @return void
+	 */
+	private function prime_page( array $posts ) {
+		$ids = wp_list_pluck( $posts, 'ID' );
+		if ( ! $ids ) {
+			return;
+		}
+		$thumbs = array();
+		foreach ( $ids as $id ) {
+			$thumb = (int) get_post_meta( $id, '_thumbnail_id', true );
+			if ( $thumb ) {
+				$thumbs[] = $thumb;
+			}
+		}
+		if ( $thumbs ) {
+			_prime_post_caches( array_values( array_unique( $thumbs ) ), false, true );
+		}
+		if ( $this->can( 'list_others' ) ) {
+			cache_users( array_values( array_unique( array_map( 'intval', wp_list_pluck( $posts, 'post_author' ) ) ) ) );
+		}
+		$this->enrolled_counts = $this->count_enrolled( $ids );
+	}
+
+	/**
+	 * Count enrolled students for several courses with one query.
+	 *
+	 * @param int[] $ids Course IDs.
+	 * @return array<int,int>
+	 */
+	private function count_enrolled( array $ids ) {
+		global $wpdb;
+
+		$ids = array_values( array_filter( array_map( 'absint', $ids ) ) );
+		if ( ! $ids ) {
+			return array();
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery
+		$rows   = $wpdb->get_results( $wpdb->prepare( "SELECT course_id, COUNT(*) AS total FROM %i WHERE status = 'enrolled' AND course_id IN ({$placeholders}) GROUP BY course_id", array_merge( array( $wpdb->prefix . 'ohmylms_user_enrollment' ), $ids ) ) );
+		$counts = array_fill_keys( $ids, 0 );
+		foreach ( (array) $rows as $row ) {
+			$counts[ (int) $row->course_id ] = (int) $row->total;
+		}
+
+		return $counts;
+	}
+
+	/**
+	 * Get a specific course.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_item( $request ) {
+		$post = $this->get_course_post( $request['id'] );
+		if ( is_wp_error( $post ) ) {
+			return $post;
+		}
+
+		$response = $this->prepare_item_for_response( $post, $request );
+		$response->link_header( 'alternate', get_permalink( $post ), array( 'type' => 'text/html' ) );
+
+		return $response;
+	}
+
+	/**
+	 * Create a course.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function create_item( $request ) {
+		if ( ! empty( $request['id'] ) ) {
+			return new WP_Error( 'ohmylms_course_exists', __( 'Cannot create an existing course.', 'ohmylms' ), array( 'status' => 400 ) );
+		}
+
+		$plan = $this->plan_write( $request, null );
+		if ( is_wp_error( $plan ) ) {
+			return $plan;
+		}
+
+		/**
+		 * Fires before a course is created via the REST API.
+		 *
+		 * @param WP_REST_Request $request The request.
+		 */
+		do_action( 'ohmylms_rest_before_create_course', $request );
+
+		$postarr                = $plan['post'];
+		$postarr['post_type']   = OHMYLMS_COURSE_CPT;
+		$postarr['post_author'] = get_current_user_id();
+		$course_id              = wp_insert_post( wp_slash( $postarr ), true );
+		if ( is_wp_error( $course_id ) || ! $course_id ) {
+			return new WP_Error( 'ohmylms_course_create_failed', __( 'The course could not be created.', 'ohmylms' ), array( 'status' => 500 ) );
+		}
+
+		$this->write_meta( $course_id, $plan );
+		clean_post_cache( $course_id );
+		$post   = get_post( $course_id );
+		$course = ohmylms_get_course( $course_id );
+
+		/**
+		 * Fires after a new course is created (data store event).
+		 *
+		 * @param int    $course_id Course ID.
+		 * @param Course $course    Course object.
+		 */
+		do_action( 'ohmylms_new_course', $course_id, $course );
+		if ( ! get_option( 'ohmylms_first_course_created', false ) ) {
+			do_action( 'ohmylms_after_creating_first_course', $course_id, $course );
+		}
+
+		/**
+		 * Fires after a course is inserted via the REST API.
+		 *
+		 * @param WP_Post         $post      The course post.
+		 * @param int             $course_id The course ID.
+		 * @param WP_REST_Request $request   The request.
+		 */
+		do_action( 'ohmylms_rest_insert_course', $post, $course_id, $request );
+
+		/**
+		 * Fires after a course is created via the REST API.
+		 *
+		 * @param WP_Post         $post      The course post.
+		 * @param int             $course_id The course ID.
+		 * @param WP_REST_Request $request   The request.
+		 */
+		do_action( 'ohmylms_rest_after_create_course', $post, $course_id, $request );
+
+		$request->set_param( 'context', 'edit' );
+		$response = $this->prepare_item_for_response( get_post( $course_id ), $request );
+		$response->set_status( 201 );
+		$response->header( 'Location', rest_url( sprintf( '%s/%s/%d', $this->namespace, $this->rest_base, $course_id ) ) );
+
+		return $response;
+	}
+
+	/**
+	 * Update a course. PUT, PATCH and POST all behave as a partial update.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function update_item( $request ) {
+		$post = $this->get_course_post( $request['id'] );
+		if ( is_wp_error( $post ) ) {
+			return $post;
+		}
+		if ( 'trash' === $post->post_status ) {
+			return new WP_Error( 'ohmylms_course_trashed', __( 'This course is in the trash. Restore it before editing.', 'ohmylms' ), array( 'status' => 409 ) );
+		}
+
+		$plan = $this->plan_write( $request, $post );
+		if ( is_wp_error( $plan ) ) {
+			return $plan;
+		}
+
+		/**
+		 * Fires before a course is updated via the REST API.
+		 *
+		 * @param int             $post_id The course ID.
+		 * @param WP_REST_Request $request The request.
+		 */
+		do_action( 'ohmylms_rest_before_update_course', $post->ID, $request );
+
+		if ( $plan['post'] ) {
+			$postarr = array_merge( $plan['post'], array( 'ID' => $post->ID ) );
+			$result  = wp_update_post( wp_slash( $postarr ), true );
+			if ( is_wp_error( $result ) || ! $result ) {
+				return new WP_Error( 'ohmylms_course_update_failed', __( 'The course could not be updated.', 'ohmylms' ), array( 'status' => 500 ) );
+			}
+		}
+		$this->write_meta( $post->ID, $plan );
+		clean_post_cache( $post->ID );
+		$post   = get_post( $post->ID );
+		$course = ohmylms_get_course( $post->ID );
+
+		/**
+		 * Fires after a course is updated (data store event).
+		 *
+		 * @param int    $course_id Course ID.
+		 * @param Course $course    Course object.
+		 */
+		do_action( 'ohmylms_update_course', $post->ID, $course );
+
+		/**
+		 * Fires after a course is updated via the REST API.
+		 *
+		 * @param WP_Post         $post      The course post.
+		 * @param int             $course_id The course ID.
+		 * @param WP_REST_Request $request   The request.
+		 */
+		do_action( 'ohmylms_rest_update_course', $post, $post->ID, $request );
+		do_action( 'ohmylms_rest_after_update_course', $post, $post->ID, $request );
+
+		$request->set_param( 'context', 'edit' );
+
+		return $this->prepare_item_for_response( $post, $request );
+	}
+
+	/**
+	 * Trash a course, or delete it permanently with `force=true` (refused while students are enrolled).
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function delete_item( $request ) {
+		$post = $this->get_course_post( $request['id'] );
+		if ( is_wp_error( $post ) ) {
+			return $post;
+		}
+		$id = $post->ID;
+
+		if ( ! $request['force'] ) {
+			if ( 'trash' === $post->post_status ) {
+				return new WP_Error( 'ohmylms_course_already_trashed', __( 'The course is already in the trash.', 'ohmylms' ), array( 'status' => 409 ) );
+			}
+			if ( ! wp_trash_post( $id ) ) {
+				return new WP_Error( 'ohmylms_course_delete_failed', __( 'The course could not be moved to the trash.', 'ohmylms' ), array( 'status' => 500 ) );
+			}
+			do_action( 'ohmylms_trash_course', $id );
+			$request->set_param( 'context', 'edit' );
+
+			return $this->prepare_item_for_response( get_post( $id ), $request );
+		}
+
+		$students = $this->count_enrolled( array( $id ) );
+		if ( ! empty( $students[ $id ] ) ) {
+			return new WP_Error(
+				'ohmylms_course_has_students',
+				__( 'This course has enrolled students and cannot be deleted permanently. Move it to the trash or unpublish it instead.', 'ohmylms' ),
+				array(
+					'status'   => 409,
+					'students' => $students[ $id ],
+				)
+			);
+		}
+
+		$request->set_param( 'context', 'edit' );
+		$previous = $this->prepare_item_for_response( $post, $request )->get_data();
+
+		/**
+		 * Fires before a course is deleted permanently via the REST API.
+		 *
+		 * @param int             $course_id Course ID.
+		 * @param Course|null     $course    Course object.
+		 * @param WP_REST_Request $request   The request.
+		 */
+		do_action( 'ohmylms_rest_before_delete_course', $id, ohmylms_get_course( $id ), $request );
+
+		if ( ! wp_delete_post( $id, true ) ) {
+			return new WP_Error( 'ohmylms_course_delete_failed', __( 'The course could not be deleted.', 'ohmylms' ), array( 'status' => 500 ) );
+		}
+		do_action( 'ohmylms_delete_course', $id );
+
+		/**
+		 * Fires after a course is deleted permanently via the REST API.
+		 *
+		 * @param int             $course_id Course ID.
+		 * @param WP_REST_Request $request   The request.
+		 */
+		do_action( 'ohmylms_rest_delete_course', $id, $request );
+		do_action( 'ohmylms_rest_after_delete_course', $id, null, $request );
+
+		return rest_ensure_response(
+			array(
+				'deleted'  => true,
+				'previous' => $previous,
+			)
+		);
+	}
+
+	/**
+	 * Restore a trashed course (WordPress puts it back as a draft).
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function restore_item( $request ) {
+		$post = $this->get_course_post( $request['id'] );
+		if ( is_wp_error( $post ) ) {
+			return $post;
+		}
+		if ( 'trash' !== $post->post_status ) {
+			return new WP_Error( 'ohmylms_course_not_trashed', __( 'The course is not in the trash.', 'ohmylms' ), array( 'status' => 409 ) );
+		}
+		if ( ! wp_untrash_post( $post->ID ) ) {
+			return new WP_Error( 'ohmylms_course_update_failed', __( 'The course could not be restored.', 'ohmylms' ), array( 'status' => 500 ) );
+		}
+		$request->set_param( 'context', 'edit' );
+
+		return $this->prepare_item_for_response( get_post( $post->ID ), $request );
+	}
+
+	/**
+	 * Duplicate a course as a draft owned by the current user (content, settings and thumbnail; no
+	 * students).
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function duplicate_item( $request ) {
+		$post = $this->get_course_post( $request['id'] );
+		if ( is_wp_error( $post ) ) {
+			return $post;
+		}
+		if ( 'trash' === $post->post_status ) {
+			return new WP_Error( 'ohmylms_course_trashed', __( 'This course is in the trash. Restore it before copying.', 'ohmylms' ), array( 'status' => 409 ) );
+		}
+
+		try {
+			$copier = new \OhMyLMS\Duplicate\Course( $post->ID );
+			$new_id = \OhMyLMS\Learning\UnitSnapshots::authoring( array( $copier, 'duplicate' ) );
+		} catch ( \Exception $e ) {
+			$new_id = 0;
+		}
+		if ( ! $new_id || is_wp_error( $new_id ) ) {
+			return new WP_Error( 'ohmylms_course_duplicate_failed', __( 'The course could not be duplicated.', 'ohmylms' ), array( 'status' => 500 ) );
+		}
+
+		// The copy keeps its access type, so it must keep the password too, and its address stays unique.
+		$copy = get_post( $new_id );
+		wp_update_post(
+			wp_slash(
+				array(
+					'ID'            => $new_id,
+					'post_password' => 'private' === $post->post_status ? '' : $post->post_password,
+					'post_name'     => wp_unique_post_slug( $copy->post_name, $new_id, 'publish', OHMYLMS_COURSE_CPT, 0 ),
+				)
+			)
+		);
+		clean_post_cache( $new_id );
+
+		$request->set_param( 'context', 'edit' );
+		$response = $this->prepare_item_for_response( get_post( $new_id ), $request );
+		$response->set_status( 201 );
+		$response->header( 'Location', rest_url( sprintf( '%s/%s/%d', $this->namespace, $this->rest_base, $new_id ) ) );
+
+		return $response;
+	}
+
+	/**
+	 * Choices, currency settings, limits and the current user's abilities for the editor.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response
+	 */
+	public function get_options( $request ) {
+		$can_publish = $this->can( 'publish' );
+		$statuses    = array(
+			array(
+				'value' => 'draft',
+				'label' => __( 'Draft', 'ohmylms' ),
+			),
+			array(
+				'value' => 'pending',
+				'label' => __( 'Pending review', 'ohmylms' ),
+			),
+		);
+		if ( $can_publish ) {
+			$statuses[] = array(
+				'value' => 'publish',
+				'label' => __( 'Published', 'ohmylms' ),
+			);
+			$statuses[] = array(
+				'value' => 'future',
+				'label' => __( 'Scheduled', 'ohmylms' ),
+			);
+			$statuses[] = array(
+				'value' => 'private',
+				'label' => __( 'Private', 'ohmylms' ),
+			);
+		}
+
+		return rest_ensure_response(
+			array(
+				'statuses'     => $statuses,
+				'levels'       => array(
+					array(
+						'value' => 'beginner',
+						'label' => __( 'Beginner', 'ohmylms' ),
+					),
+					array(
+						'value' => 'experience',
+						'label' => __( 'Intermediate', 'ohmylms' ),
+					),
+					array(
+						'value' => 'expert',
+						'label' => __( 'Expert', 'ohmylms' ),
+					),
+					array(
+						'value' => 'all',
+						'label' => __( 'All levels', 'ohmylms' ),
+					),
+				),
+				'price_types'  => array(
+					array(
+						'value' => 'free',
+						'label' => __( 'Free', 'ohmylms' ),
+					),
+					array(
+						'value' => 'paid',
+						'label' => __( 'Paid', 'ohmylms' ),
+					),
+				),
+				'access_types' => array(
+					array(
+						'value' => 'public',
+						'label' => __( 'Open to everyone who enrols', 'ohmylms' ),
+					),
+					array(
+						'value' => 'password_protected',
+						'label' => __( 'Protected by a password', 'ohmylms' ),
+					),
+				),
+				'currency'     => array(
+					'code'     => (string) get_ohmylms_currency(),
+					'symbol'   => html_entity_decode( (string) get_ohmylms_currency_symbol( get_ohmylms_currency() ), ENT_QUOTES, 'UTF-8' ),
+					'position' => (string) get_ohmylms_currency_position(),
+					'decimals' => (int) ohmylms_get_price_decimals(),
+				),
+				'limits'       => array(
+					'max_title'    => self::MAX_TITLE,
+					'max_text'     => self::MAX_TEXT,
+					'max_price'    => self::MAX_PRICE,
+					'max_capacity' => self::MAX_CAPACITY,
+					'max_password' => self::MAX_PASSWORD,
+				),
+				'abilities'    => array(
+					'publish'      => $can_publish,
+					'edit_others'  => $this->can( 'list_others' ),
+					'upload_files' => current_user_can( 'upload_files' ),
+					'builder_url'  => current_user_can( 'manage_options' ) ? admin_url( 'admin.php?page=ohmylms#/courses/' ) : '',
+				),
+			)
+		);
+	}
+
+	/**
+	 * Validate a create or update request as a whole and turn it into the writes to perform. Nothing is
+	 * written here, so a rejected request changes nothing.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @param WP_Post|null    $post    Existing course, or null when creating.
+	 * @return array|WP_Error `post` (wp_insert_post fields), `meta` (meta key => value or null to delete) and
+	 *                        `thumbnail` (attachment ID, 0 to remove, or null to leave).
+	 */
+	private function plan_write( WP_REST_Request $request, $post ) {
+		$is_new      = null === $post;
+		$decimals    = (int) ohmylms_get_price_decimals();
+		$id          = $is_new ? 0 : $post->ID;
+		$stored      = static function ( $key, $fallback = '' ) use ( $id ) {
+			$value = $id ? get_post_meta( $id, $key, true ) : '';
+			return '' === $value ? $fallback : $value;
+		};
+		$fail        = static function ( $code, $message, $status = 422, $extra = array() ) {
+			return new WP_Error( $code, $message, array_merge( array( 'status' => $status ), $extra ) );
+		};
+		$post_fields = array();
+		$meta        = array();
+
+		// Title, slug, description.
+		$title = $is_new ? '' : $post->post_title;
+		if ( $request->has_param( 'title' ) || $is_new ) {
+			$title = trim( sanitize_text_field( (string) $request['title'] ) );
+			if ( '' === $title || mb_strlen( $title ) > self::MAX_TITLE ) {
+				return $fail( 'ohmylms_course_invalid_title', __( 'Enter a title for the course.', 'ohmylms' ) );
+			}
+			$post_fields['post_title'] = $title;
+		}
+		if ( $request->has_param( 'description' ) ) {
+			$post_fields['post_content'] = wp_kses_post( (string) $request['description'] );
+		}
+		foreach ( array(
+			'excerpt'           => 'post_excerpt',
+			'learning_outcomes' => '_benefit_description',
+			'target_audience'   => '_benefiter_description',
+			'requirements'      => '_requirement',
+		) as $field => $target ) {
+			if ( ! $request->has_param( $field ) ) {
+				continue;
+			}
+			$text = sanitize_textarea_field( (string) $request[ $field ] );
+			if ( mb_strlen( $text ) > self::MAX_TEXT ) {
+				return $fail( 'ohmylms_course_invalid_text', __( 'The text is too long.', 'ohmylms' ), 422, array( 'field' => $field ) );
+			}
+			if ( 0 === strpos( $target, 'post_' ) ) {
+				$post_fields[ $target ] = $text;
+			} else {
+				$meta[ $target ] = '' === $text ? null : $text;
+			}
+		}
+
+		// Status and schedule.
+		$status      = $is_new ? 'draft' : $post->post_status;
+		$status_set  = $request->has_param( 'status' );
+		$schedule_in = $request->has_param( 'scheduled_at' ) ? $request['scheduled_at'] : null;
+		if ( $status_set ) {
+			$status = (string) $request['status'];
+		}
+		if ( 'future' === $status && ( $status_set || null !== $schedule_in ) ) {
+			$when = null === $schedule_in ? null : $this->parse_local_datetime( (string) $schedule_in );
+			if ( ! $when || $when <= current_datetime() ) {
+				return $fail( 'ohmylms_course_invalid_schedule', __( 'Choose a date and time in the future to schedule the course.', 'ohmylms' ), 422, array( 'field' => 'scheduled_at' ) );
+			}
+			$post_fields['post_date']     = $when->format( 'Y-m-d H:i:s' );
+			$post_fields['post_date_gmt'] = get_gmt_from_date( $post_fields['post_date'] );
+		} elseif ( null !== $schedule_in && 'future' !== $status ) {
+			return $fail( 'ohmylms_course_invalid_schedule', __( 'A schedule date only applies to scheduled courses.', 'ohmylms' ), 422, array( 'field' => 'scheduled_at' ) );
+		}
+		if ( $status_set || $is_new ) {
+			if ( ! $is_new && 'future' === $post->post_status && 'publish' === $status ) {
+				$post_fields['post_date']     = current_time( 'mysql' );
+				$post_fields['post_date_gmt'] = current_time( 'mysql', true );
+			}
+			$post_fields['post_status'] = $status;
+		}
+
+		// Slug: always unique across courses, drafts included.
+		if ( $request->has_param( 'slug' ) ) {
+			$slug = sanitize_title( (string) $request['slug'] );
+			if ( '' === $slug ) {
+				return $fail( 'ohmylms_course_invalid_slug', __( 'Enter a slug with letters or numbers.', 'ohmylms' ), 422, array( 'field' => 'slug' ) );
+			}
+			$post_fields['post_name'] = wp_unique_post_slug( $slug, $id, 'publish', OHMYLMS_COURSE_CPT, 0 );
+		} elseif ( $is_new || '' === $post->post_name ) {
+			$post_fields['post_name'] = wp_unique_post_slug( sanitize_title( $title ), $id, 'publish', OHMYLMS_COURSE_CPT, 0 );
+		}
+
+		// Level, reviews, availability, duration.
+		if ( $request->has_param( 'level' ) || $is_new ) {
+			$meta['_level'] = $request->has_param( 'level' ) ? (string) $request['level'] : 'beginner';
+		}
+		if ( $request->has_param( 'enable_reviews' ) || $is_new ) {
+			$meta['_enable_reviews'] = ( $request->has_param( 'enable_reviews' ) ? (bool) $request['enable_reviews'] : true ) ? '1' : '0';
+		}
+		if ( $request->has_param( 'available_date' ) ) {
+			$date = $request['available_date'];
+			if ( null !== $date && '' !== $date && $this->valid_date( (string) $date ) !== (string) $date ) {
+				return $fail( 'ohmylms_course_invalid_date', __( 'Dates must be real calendar dates (YYYY-MM-DD).', 'ohmylms' ), 422, array( 'field' => 'available_date' ) );
+			}
+			$meta['_available_date'] = ( null === $date || '' === $date ) ? null : (string) $date;
+		}
+		if ( $request->has_param( 'duration' ) ) {
+			$duration          = $request['duration'];
+			$hours             = is_array( $duration ) ? (int) ( $duration['hours'] ?? 0 ) : 0;
+			$minutes           = is_array( $duration ) ? (int) ( $duration['minutes'] ?? 0 ) : 0;
+			$meta['_duration'] = ( $hours || $minutes ) ? array(
+				'hour' => $hours,
+				'min'  => $minutes,
+			) : null;
+		}
+
+		// Pricing, merged with the stored values so a partial update is validated as a whole.
+		$price_type = $request->has_param( 'price_type' ) ? (string) $request['price_type'] : (string) $stored( '_price_type', 'free' );
+		$regular    = $request->has_param( 'regular_price' ) ? $request['regular_price'] : $stored( '_regular_price', null );
+		$sale       = $request->has_param( 'sale_price' ) ? $request['sale_price'] : $stored( '_sale_price', null );
+		$from       = $request->has_param( 'sale_start_date' ) ? $request['sale_start_date'] : $this->date_from_timestamp( $stored( '_sale_price_dates_from', '' ) );
+		$to         = $request->has_param( 'sale_end_date' ) ? $request['sale_end_date'] : $this->date_from_timestamp( $stored( '_sale_price_dates_to', '' ) );
+		$regular    = ( null === $regular || '' === (string) $regular ) ? null : (string) $regular;
+		$sale       = ( null === $sale || '' === (string) $sale ) ? null : (string) $sale;
+		$from       = ( null === $from || '' === (string) $from ) ? null : (string) $from;
+		$to         = ( null === $to || '' === (string) $to ) ? null : (string) $to;
+
+		if ( 'paid' === $price_type ) {
+			foreach ( array(
+				'regular_price' => $regular,
+				'sale_price'    => $sale,
+			) as $field => $value ) {
+				if ( null !== $value && ! $this->valid_price( $value, $decimals ) ) {
+					return $fail(
+						'ohmylms_course_invalid_price',
+						/* translators: %d: number of decimal places. */
+						sprintf( __( 'Prices must be zero or greater with at most %d decimal places.', 'ohmylms' ), $decimals ),
+						422,
+						array( 'field' => $field )
+					);
+				}
+			}
+			if ( null === $regular || (float) $regular <= 0 ) {
+				return $fail( 'ohmylms_course_paid_needs_price', __( 'A paid course needs a regular price above zero.', 'ohmylms' ), 422, array( 'field' => 'regular_price' ) );
+			}
+			if ( null !== $sale && (float) $sale > (float) $regular ) {
+				return $fail( 'ohmylms_course_sale_price_too_high', __( 'The sale price cannot be higher than the regular price.', 'ohmylms' ), 422, array( 'field' => 'sale_price' ) );
+			}
+			foreach ( array( $from, $to ) as $date ) {
+				if ( null !== $date && $this->valid_date( $date ) !== $date ) {
+					return $fail( 'ohmylms_course_invalid_sale_dates', __( 'Sale dates must be real calendar dates (YYYY-MM-DD).', 'ohmylms' ) );
+				}
+			}
+			if ( null !== $from && null !== $to && $from > $to ) {
+				return $fail( 'ohmylms_course_invalid_sale_dates', __( 'The sale end date must be on or after its start date.', 'ohmylms' ) );
+			}
+			if ( null === $sale && ( null !== $from || null !== $to ) ) {
+				return $fail( 'ohmylms_course_sale_dates_without_price', __( 'Sale dates need a sale price.', 'ohmylms' ), 422, array( 'field' => 'sale_price' ) );
+			}
+			if ( null !== $sale && ( null === $from ) !== ( null === $to ) ) {
+				return $fail( 'ohmylms_course_sale_dates_incomplete', __( 'A sale needs both a start and an end date, or neither.', 'ohmylms' ), 422, array( 'field' => 'sale_end_date' ) );
+			}
+		} elseif ( null !== $sale || null !== $from || null !== $to ) {
+			if ( $request->has_param( 'sale_price' ) || $request->has_param( 'sale_start_date' ) || $request->has_param( 'sale_end_date' ) ) {
+				return $fail( 'ohmylms_course_sale_on_free', __( 'A free course cannot have a sale price.', 'ohmylms' ), 422, array( 'field' => 'sale_price' ) );
+			}
+			// Switching to free clears the stored sale.
+			$sale = null;
+			$from = null;
+			$to   = null;
+		}
+
+		$touches_price = $is_new || $request->has_param( 'price_type' ) || $request->has_param( 'regular_price' ) || $request->has_param( 'sale_price' ) || $request->has_param( 'sale_start_date' ) || $request->has_param( 'sale_end_date' );
+		if ( $touches_price ) {
+			$free                           = 'paid' !== $price_type;
+			$regular_out                    = $free ? 0 : $regular;
+			$meta['_price_type']            = $price_type;
+			$meta['_regular_price']         = number_format( (float) $regular_out, $decimals, '.', '' );
+			$meta['_sale_price']            = null === $sale ? null : number_format( (float) $sale, $decimals, '.', '' );
+			$meta['_sale_price_dates_from'] = null === $from ? null : $this->timestamp_of_date( $from );
+			$meta['_sale_price_dates_to']   = null === $to ? null : $this->timestamp_of_date( $to );
+			$meta['_price']                 = $this->current_price( $free, $meta['_regular_price'], $meta['_sale_price'], $from, $to, $decimals );
+		}
+
+		// Access and password.
+		$access = $request->has_param( 'access_type' ) ? (string) $request['access_type'] : (string) $stored( '_access_type', 'public' );
+		if ( $is_new && ! $request->has_param( 'access_type' ) ) {
+			$access = 'public';
+		}
+		$existing_password = $is_new ? '' : (string) $post->post_password;
+		$password          = $existing_password;
+		if ( $request->has_param( 'password' ) && '' !== (string) $request['password'] ) {
+			$password = (string) $request['password'];
+			if ( '' === trim( $password ) || mb_strlen( $password ) > self::MAX_PASSWORD ) {
+				return $fail( 'ohmylms_course_invalid_password', __( 'Enter a password of 1 to 100 characters.', 'ohmylms' ), 422, array( 'field' => 'password' ) );
+			}
+		}
+		if ( 'password_protected' === $access ) {
+			if ( '' === $password ) {
+				return $fail( 'ohmylms_course_password_required', __( 'Enter a password for this course.', 'ohmylms' ), 422, array( 'field' => 'password' ) );
+			}
+			if ( 'private' === $status ) {
+				return $fail( 'ohmylms_course_private_password', __( 'A private course cannot also be protected by a password.', 'ohmylms' ), 422, array( 'field' => 'access_type' ) );
+			}
+		} else {
+			$password = '';
+		}
+		if ( $is_new || $request->has_param( 'access_type' ) || $request->has_param( 'password' ) || 'private' === $status ) {
+			$meta['_access_type']         = $access;
+			$post_fields['post_password'] = 'private' === $status ? '' : $password;
+		}
+
+		// Capacity.
+		$has_capacity = $request->has_param( 'has_capacity' ) ? (bool) $request['has_capacity'] : (bool) $stored( '_has_capacity', false );
+		$capacity     = $request->has_param( 'capacity' ) ? $request['capacity'] : $stored( '_capacity', null );
+		$capacity     = ( null === $capacity || '' === $capacity ) ? null : (int) $capacity;
+		if ( $has_capacity && ( null === $capacity || $capacity < 1 || $capacity > self::MAX_CAPACITY ) ) {
+			return $fail( 'ohmylms_course_invalid_capacity', __( 'Enter how many students can enrol.', 'ohmylms' ), 422, array( 'field' => 'capacity' ) );
+		}
+		if ( $is_new || $request->has_param( 'has_capacity' ) || $request->has_param( 'capacity' ) ) {
+			$meta['_has_capacity'] = $has_capacity ? '1' : null;
+			$meta['_capacity']     = $has_capacity ? $capacity : null;
+		}
+
+		// Thumbnail.
+		$thumbnail = null;
+		if ( $request->has_param( 'thumbnail_id' ) ) {
+			$thumbnail = (int) $request['thumbnail_id'];
+			if ( $thumbnail ) {
+				$attachment = get_post( $thumbnail );
+				if ( ! $attachment || 'attachment' !== $attachment->post_type || ! in_array( get_post_mime_type( $attachment ), self::THUMBNAIL_MIMES, true ) ) {
+					return $fail( 'ohmylms_course_invalid_thumbnail', __( 'The thumbnail must be a JPEG, PNG, GIF or WebP image from the media library.', 'ohmylms' ), 422, array( 'field' => 'thumbnail_id' ) );
+				}
+				if ( ! current_user_can( 'edit_post', $thumbnail ) ) {
+					return $this->denied( 'ohmylms_course_thumbnail_forbidden', __( 'Sorry, you are not allowed to use this image.', 'ohmylms' ) );
+				}
+			}
+		}
+
+		return array(
+			'post'      => $post_fields,
+			'meta'      => $meta,
+			'thumbnail' => $thumbnail,
+		);
+	}
+
+	/**
+	 * Write the metadata and thumbnail of a validated plan.
+	 *
+	 * @param int   $course_id Course ID.
+	 * @param array $plan      Result of plan_write().
+	 * @return void
+	 */
+	private function write_meta( $course_id, array $plan ) {
+		foreach ( $plan['meta'] as $key => $value ) {
+			if ( null === $value ) {
+				delete_post_meta( $course_id, $key );
+			} else {
+				update_post_meta( $course_id, $key, is_string( $value ) ? wp_slash( $value ) : $value );
+			}
+		}
+		if ( null !== $plan['thumbnail'] ) {
+			if ( $plan['thumbnail'] ) {
+				update_post_meta( $course_id, '_thumbnail_id', $plan['thumbnail'] );
+			} else {
+				delete_post_meta( $course_id, '_thumbnail_id' );
+			}
+		}
+	}
+
+	/**
+	 * Whether a string is a fixed-decimal money amount within the allowed range.
+	 *
+	 * @param string $value    Candidate.
+	 * @param int    $decimals Decimal places allowed.
+	 * @return bool
+	 */
+	private function valid_price( $value, $decimals ) {
+		if ( ! preg_match( '/^\d{1,8}(\.\d+)?$/', $value ) ) {
+			return false;
+		}
+		$places = strlen( (string) ( explode( '.', $value )[1] ?? '' ) );
+
+		return $places <= $decimals && (float) $value <= self::MAX_PRICE;
+	}
+
+	/**
+	 * Return the date unchanged when it is a real `YYYY-MM-DD` calendar date, otherwise an empty string.
+	 *
+	 * @param string $value Candidate.
+	 * @return string
+	 */
+	private function valid_date( $value ) {
+		if ( ! preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', (string) $value, $parts ) || ! checkdate( (int) $parts[2], (int) $parts[3], (int) $parts[1] ) ) {
+			return '';
+		}
+
+		return (string) $value;
+	}
+
+	/**
+	 * Parse a site-local `YYYY-MM-DDTHH:MM[:SS]` string.
+	 *
+	 * @param string $value Candidate.
+	 * @return \DateTimeImmutable|null
+	 */
+	private function parse_local_datetime( $value ) {
+		if ( ! preg_match( '/^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/', $value, $parts ) || ! $this->valid_date( $parts[1] ) || (int) $parts[2] > 23 || (int) $parts[3] > 59 ) {
+			return null;
+		}
+		$date = date_create_immutable( $parts[1] . ' ' . $parts[2] . ':' . $parts[3] . ':' . ( $parts[4] ?? '00' ), wp_timezone() );
+
+		return $date ? $date : null;
+	}
+
+	/**
+	 * Timestamp of the start of a site-local calendar day.
+	 *
+	 * @param string $date `YYYY-MM-DD`.
+	 * @return int
+	 */
+	private function timestamp_of_date( $date ) {
+		$value = date_create_immutable( $date . ' 00:00:00', wp_timezone() );
+
+		return $value ? $value->getTimestamp() : 0;
+	}
+
+	/**
+	 * Site-local calendar date of a stored timestamp, or an empty string.
+	 *
+	 * @param mixed $timestamp Stored `_sale_price_dates_*` value.
+	 * @return string
+	 */
+	private function date_from_timestamp( $timestamp ) {
+		if ( ! is_numeric( $timestamp ) || (int) $timestamp <= 0 ) {
+			return '';
+		}
+
+		return wp_date( 'Y-m-d', (int) $timestamp );
+	}
+
+	/**
+	 * The price that applies today.
+	 *
+	 * @param bool        $free     Whether the course is free.
+	 * @param string      $regular  Regular price.
+	 * @param string|null $sale     Sale price.
+	 * @param string|null $from     Sale start date.
+	 * @param string|null $to       Sale end date.
+	 * @param int         $decimals Decimal places.
+	 * @return string
+	 */
+	private function current_price( $free, $regular, $sale, $from, $to, $decimals ) {
+		if ( $free ) {
+			return number_format( 0, $decimals, '.', '' );
+		}
+		if ( null !== $sale ) {
+			$today = current_time( 'Y-m-d' );
+			if ( ( null === $from || $today >= $from ) && ( null === $to || $today <= $to ) ) {
+				return $sale;
+			}
+		}
+
+		return $regular;
+	}
+
+	/**
+	 * Format a stored price as a fixed-decimal string, or null when empty.
+	 *
+	 * @param mixed $value Stored price.
+	 * @return string|null
+	 */
+	private function price_string( $value ) {
+		if ( null === $value || '' === (string) $value || ! is_numeric( $value ) ) {
+			return null;
+		}
+
+		return number_format( (float) $value, (int) ohmylms_get_price_decimals(), '.', '' );
+	}
+
+	/**
+	 * Prepare a course for the response.
+	 *
+	 * @param WP_Post         $item    Course post.
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	public function prepare_item_for_response( $item, $request ) {
+		$post     = $item;
+		$id       = $post->ID;
+		$meta     = static function ( $key, $fallback = '' ) use ( $id ) {
+			$value = get_post_meta( $id, $key, true );
+			return '' === $value ? $fallback : $value;
+		};
+		$free     = 'paid' !== $meta( '_price_type', 'free' );
+		$regular  = $free ? $this->price_string( 0 ) : $this->price_string( $meta( '_regular_price', 0 ) );
+		$sale     = $free ? null : $this->price_string( $meta( '_sale_price', null ) );
+		$from     = $this->date_from_timestamp( $meta( '_sale_price_dates_from' ) );
+		$to       = $this->date_from_timestamp( $meta( '_sale_price_dates_to' ) );
+		$decimals = (int) ohmylms_get_price_decimals();
+		$thumb_id = (int) $meta( '_thumbnail_id', 0 );
+		$thumb    = $thumb_id ? wp_get_attachment_image_url( $thumb_id, 'medium' ) : false;
+		$duration = $meta( '_duration', array() );
+		$hours    = is_array( $duration ) ? (int) ( $duration['hour'] ?? 0 ) : 0;
+		$minutes  = is_array( $duration ) ? (int) ( $duration['min'] ?? 0 ) : 0;
+		$access   = 'password_protected' === $meta( '_access_type', 'public' ) ? 'password_protected' : 'public';
+		$capacity = (bool) $meta( '_has_capacity', false );
+		$level    = (string) $meta( '_level', 'beginner' );
+		$can_edit = $this->can( 'edit', $id );
+		$status   = in_array( $post->post_status, array_merge( self::LIST_STATUSES, array( 'trash' ) ), true ) ? $post->post_status : 'draft';
+
+		$data = array(
+			'id'                => $id,
+			'title'             => html_entity_decode( get_the_title( $post ), ENT_QUOTES, 'UTF-8' ),
+			'slug'              => (string) $post->post_name,
+			'status'            => $status,
+			'permalink'         => (string) get_permalink( $post ),
+			'author_id'         => (int) $post->post_author,
+			'author_name'       => $this->can( 'list_others' ) ? (string) get_the_author_meta( 'display_name', $post->post_author ) : '',
+			'description'       => (string) $post->post_content,
+			'excerpt'           => (string) $post->post_excerpt,
+			'level'             => in_array( $level, self::LEVELS, true ) ? $level : 'beginner',
+			'price_type'        => $free ? 'free' : 'paid',
+			'regular_price'     => $regular,
+			'sale_price'        => $sale,
+			'sale_start_date'   => $sale && $from ? $from : null,
+			'sale_end_date'     => $sale && $to ? $to : null,
+			'price'             => $this->current_price( $free, (string) $regular, $sale, $from ? $from : null, $to ? $to : null, $decimals ),
+			'currency'          => (string) get_ohmylms_currency(),
+			'access_type'       => $access,
+			'has_password'      => '' !== (string) $post->post_password,
+			'available_date'    => $meta( '_available_date', null ) ? (string) $meta( '_available_date' ) : null,
+			'duration'          => ( $hours || $minutes ) ? array(
+				'hours'   => $hours,
+				'minutes' => $minutes,
+			) : null,
+			'has_capacity'      => $capacity,
+			'capacity'          => $capacity ? (int) $meta( '_capacity', 0 ) : null,
+			'enable_reviews'    => (bool) $meta( '_enable_reviews', false ),
+			'learning_outcomes' => (string) $meta( '_benefit_description' ),
+			'target_audience'   => (string) $meta( '_benefiter_description' ),
+			'requirements'      => (string) $meta( '_requirement' ),
+			'thumbnail_id'      => $thumb_id ? $thumb_id : null,
+			'thumbnail_url'     => $thumb ? $thumb : null,
+			'enrolled_count'    => isset( $this->enrolled_counts[ $id ] ) ? $this->enrolled_counts[ $id ] : ( $this->count_enrolled( array( $id ) )[ $id ] ?? 0 ),
+			'scheduled_at'      => 'future' === $post->post_status ? str_replace( ' ', 'T', $post->post_date ) : null,
+			'created_at'        => mysql_to_rfc3339( $post->post_date ),
+			'updated_at'        => mysql_to_rfc3339( $post->post_modified ),
+		);
+		// The password is shown only to users who may edit this course, and never in a list.
+		if ( $can_edit && 'edit' === $request['context'] ) {
+			$data['password'] = (string) $post->post_password;
+		}
+
+		/**
+		 * Filters the course data before the context is applied (extensions add fields here).
+		 *
+		 * @param array       $data   Response data.
+		 * @param Course|null $course Course object.
+		 */
+		$data = apply_filters( 'ohmylms_rest_get_course_data', $data, ohmylms_get_course( $post ) );
+
+		$context = ! empty( $request['context'] ) ? $request['context'] : 'view';
+		$data    = $this->add_additional_fields_to_object( $data, $request );
+		$data    = $this->filter_response_by_context( $data, $context );
+
+		$response = rest_ensure_response( $data );
+		$response->add_links(
+			array(
+				'self'       => array( 'href' => rest_url( sprintf( '%s/%s/%d', $this->namespace, $this->rest_base, $id ) ) ),
+				'collection' => array( 'href' => rest_url( sprintf( '%s/%s', $this->namespace, $this->rest_base ) ) ),
+			)
+		);
+
+		/**
+		 * Filters the response for the course in the REST API.
+		 *
+		 * @param WP_REST_Response $response The response.
+		 * @param WP_Post          $post     The course post.
+		 * @param WP_REST_Request  $request  The request.
+		 */
+		return apply_filters( 'ohmylms_rest_prepare_course', $response, $post, $request );
+	}
+
+	/**
+	 * Get the course schema (JSON Schema draft 4).
+	 *
+	 * @return array
+	 */
+	public function get_item_schema() {
+		if ( $this->schema ) {
+			return $this->add_additional_fields_schema( $this->schema );
+		}
+
+		$both  = array( 'view', 'edit' );
+		$edit  = array( 'edit' );
+		$text  = static function ( $description, $context, $extra = array() ) {
+			return array_merge(
+				array(
+					'description' => $description,
+					'type'        => 'string',
+					'context'     => $context,
+				),
+				$extra
+			);
+		};
+		$price = static function ( $description, $nullable ) use ( $both ) {
+			return array(
+				'description' => $description,
+				'type'        => $nullable ? array( 'string', 'null' ) : 'string',
+				'pattern'     => '^\d{1,8}(\.\d+)?$',
+				'context'     => $both,
+			);
+		};
+		$date  = static function ( $description ) use ( $both ) {
+			return array(
+				'description' => $description,
+				'type'        => array( 'string', 'null' ),
+				'pattern'     => '^\d{4}-\d{2}-\d{2}$',
+				'context'     => $both,
+			);
+		};
+
+		$this->schema = array(
+			'$schema'    => 'http://json-schema.org/draft-04/schema#',
+			'title'      => 'ohmylms_course',
+			'type'       => 'object',
+			'properties' => array(
+				'id'                => array(
+					'description' => __( 'Unique identifier for the course.', 'ohmylms' ),
+					'type'        => 'integer',
+					'context'     => $both,
+					'readonly'    => true,
+				),
+				'title'             => $text(
+					__( 'Course title.', 'ohmylms' ),
+					$both,
+					array(
+						'minLength' => 1,
+						'maxLength' => self::MAX_TITLE,
+						'required'  => true,
+					)
+				),
+				'slug'              => $text( __( 'Course address. Made unique among courses.', 'ohmylms' ), $both, array( 'maxLength' => 200 ) ),
+				'status'            => $text(
+					__( 'Publication status.', 'ohmylms' ),
+					$both,
+					array( 'enum' => self::WRITE_STATUSES )
+				),
+				'scheduled_at'      => array(
+					'description' => __( 'Site-local publish time (YYYY-MM-DDTHH:MM) of a scheduled course.', 'ohmylms' ),
+					'type'        => array( 'string', 'null' ),
+					'pattern'     => '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$',
+					'context'     => $both,
+				),
+				'permalink'         => $text( __( 'Public address of the course.', 'ohmylms' ), $both, array( 'readonly' => true ) ),
+				'author_id'         => array(
+					'description' => __( 'Author user ID.', 'ohmylms' ),
+					'type'        => 'integer',
+					'context'     => $both,
+					'readonly'    => true,
+				),
+				'author_name'       => $text( __( 'Author display name (only for users who can edit others\' courses).', 'ohmylms' ), $both, array( 'readonly' => true ) ),
+				'description'       => $text( __( 'Course description (HTML limited to post content).', 'ohmylms' ), $edit ),
+				'excerpt'           => $text( __( 'Short description.', 'ohmylms' ), $edit, array( 'maxLength' => self::MAX_TEXT ) ),
+				'level'             => $text( __( 'Course level.', 'ohmylms' ), $both, array( 'enum' => self::LEVELS ) ),
+				'price_type'        => $text( __( 'Free or paid.', 'ohmylms' ), $both, array( 'enum' => array( 'free', 'paid' ) ) ),
+				'regular_price'     => $price( __( 'Regular price as a fixed-decimal string.', 'ohmylms' ), false ),
+				'sale_price'        => $price( __( 'Sale price, or null for no sale.', 'ohmylms' ), true ),
+				'sale_start_date'   => $date( __( 'First day of the sale (site timezone).', 'ohmylms' ) ),
+				'sale_end_date'     => $date( __( 'Last day of the sale (site timezone).', 'ohmylms' ) ),
+				'price'             => array_merge( $price( __( 'Price that applies today.', 'ohmylms' ), false ), array( 'readonly' => true ) ),
+				'currency'          => $text( __( 'Site currency code.', 'ohmylms' ), $both, array( 'readonly' => true ) ),
+				'access_type'       => $text( __( 'Who can open the course.', 'ohmylms' ), $both, array( 'enum' => array( 'public', 'password_protected' ) ) ),
+				'password'          => $text(
+					__( 'Course password. Write-only except in the edit context for users who can edit the course.', 'ohmylms' ),
+					$edit,
+					array( 'maxLength' => self::MAX_PASSWORD )
+				),
+				'has_password'      => array(
+					'description' => __( 'Whether a password is set.', 'ohmylms' ),
+					'type'        => 'boolean',
+					'context'     => $both,
+					'readonly'    => true,
+				),
+				'available_date'    => $date( __( 'Date the course opens, or null.', 'ohmylms' ) ),
+				'duration'          => array(
+					'description'          => __( 'Estimated duration, or null.', 'ohmylms' ),
+					'type'                 => array( 'object', 'null' ),
+					'context'              => $both,
+					'additionalProperties' => false,
+					'properties'           => array(
+						'hours'   => array(
+							'type'    => 'integer',
+							'minimum' => 0,
+							'maximum' => 9999,
+						),
+						'minutes' => array(
+							'type'    => 'integer',
+							'minimum' => 0,
+							'maximum' => 59,
+						),
+					),
+				),
+				'has_capacity'      => array(
+					'description' => __( 'Whether enrolment is limited.', 'ohmylms' ),
+					'type'        => 'boolean',
+					'context'     => $both,
+				),
+				'capacity'          => array(
+					'description' => __( 'Seats when enrolment is limited.', 'ohmylms' ),
+					'type'        => array( 'integer', 'null' ),
+					'minimum'     => 1,
+					'maximum'     => self::MAX_CAPACITY,
+					'context'     => $both,
+				),
+				'enable_reviews'    => array(
+					'description' => __( 'Whether students can review the course.', 'ohmylms' ),
+					'type'        => 'boolean',
+					'context'     => $both,
+				),
+				'learning_outcomes' => $text( __( 'What students will learn.', 'ohmylms' ), $edit, array( 'maxLength' => self::MAX_TEXT ) ),
+				'target_audience'   => $text( __( 'Who the course is for.', 'ohmylms' ), $edit, array( 'maxLength' => self::MAX_TEXT ) ),
+				'requirements'      => $text( __( 'What students need beforehand.', 'ohmylms' ), $edit, array( 'maxLength' => self::MAX_TEXT ) ),
+				'thumbnail_id'      => array(
+					'description' => __( 'Thumbnail attachment ID, or null.', 'ohmylms' ),
+					'type'        => array( 'integer', 'null' ),
+					'minimum'     => 0,
+					'context'     => $both,
+				),
+				'thumbnail_url'     => array(
+					'description' => __( 'Medium thumbnail address.', 'ohmylms' ),
+					'type'        => array( 'string', 'null' ),
+					'context'     => $both,
+					'readonly'    => true,
+				),
+				'enrolled_count'    => array(
+					'description' => __( 'Enrolled students.', 'ohmylms' ),
+					'type'        => 'integer',
+					'context'     => $both,
+					'readonly'    => true,
+				),
+				'created_at'        => $text( __( 'Creation time (site-local, RFC 3339).', 'ohmylms' ), $both, array( 'readonly' => true ) ),
+				'updated_at'        => $text( __( 'Last change (site-local, RFC 3339).', 'ohmylms' ), $both, array( 'readonly' => true ) ),
+			),
+		);
+
+		return $this->add_additional_fields_schema( $this->schema );
+	}
+
+	/**
+	 * Arguments for the update route: every writable field, optional, without defaults.
+	 *
+	 * @return array
+	 */
+	private function get_update_args() {
+		$args = $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE );
+		foreach ( $args as $name => $arg ) {
+			unset( $args[ $name ]['default'], $args[ $name ]['required'] );
+		}
+
+		return $args;
+	}
+
+	/**
+	 * Get collection parameters.
+	 *
+	 * @return array
+	 */
+	public function get_collection_params() {
+		$params = array_intersect_key( parent::get_collection_params(), array_flip( array( 'context', 'page', 'per_page', 'search' ) ) );
+
+		$params['context']['default']    = 'view';
+		$params['context']['enum']       = array( 'view' );
+		$params['per_page']['default']   = 20;
+		$params['per_page']['maximum']   = 100;
+		$params['search']['description'] = __( 'Limit results to courses whose title, description or excerpt matches the string.', 'ohmylms' );
+
+		$params['status']         = array(
+			'description' => __( 'Limit result set to a status (`all` excludes the trash).', 'ohmylms' ),
+			'type'        => 'string',
+			'default'     => 'all',
+			'enum'        => array_merge( array( 'all', 'trash' ), self::LIST_STATUSES ),
+		);
+		$params['price_type']     = array(
+			'description' => __( 'Limit result set to free or paid courses.', 'ohmylms' ),
+			'type'        => 'string',
+			'default'     => 'all',
+			'enum'        => array( 'all', 'free', 'paid' ),
+		);
+		$params['level']          = array(
+			'description' => __( 'Limit result set to a level.', 'ohmylms' ),
+			'type'        => 'string',
+			'enum'        => self::LEVELS,
+		);
+		$params['author']         = array(
+			'description' => __( 'Limit result set to one author (only for users who can edit others\' courses).', 'ohmylms' ),
+			'type'        => 'integer',
+			'minimum'     => 1,
+		);
+		$params['created_after']  = array(
+			'description' => __( 'Courses created on or after this date (YYYY-MM-DD).', 'ohmylms' ),
+			'type'        => 'string',
+			'pattern'     => '^\d{4}-\d{2}-\d{2}$',
+		);
+		$params['created_before'] = array(
+			'description' => __( 'Courses created on or before this date (YYYY-MM-DD).', 'ohmylms' ),
+			'type'        => 'string',
+			'pattern'     => '^\d{4}-\d{2}-\d{2}$',
+		);
+		$params['include']        = array(
+			'description' => __( 'Limit result set to specific course IDs.', 'ohmylms' ),
+			'type'        => 'array',
+			'items'       => array( 'type' => 'integer' ),
+			'maxItems'    => 100,
+			'default'     => array(),
+		);
+		$params['orderby']        = array(
+			'description' => __( 'Sort collection by attribute.', 'ohmylms' ),
+			'type'        => 'string',
+			'default'     => 'created_at',
+			'enum'        => array( 'id', 'title', 'status', 'created_at', 'updated_at', 'price' ),
+		);
+		$params['order']          = array(
+			'description' => __( 'Order sort attribute ascending or descending.', 'ohmylms' ),
+			'type'        => 'string',
+			'default'     => 'desc',
+			'enum'        => array( 'asc', 'desc' ),
+		);
+
+		return $params;
+	}
+
+	/**
+	 * Permission check for the auxiliary routes (enrolment, import, export, builder data). Routes with a
+	 * course ID need the edit capability on that course; enrolment also needs user rights, and
+	 * import/export are administrator-only.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return true|WP_Error
+	 */
+	public function check_legacy_permission( $request ) {
+		if ( ! $this->can( 'list' ) ) {
+			return $this->denied( 'ohmylms_course_cannot_edit', __( 'Sorry, you are not allowed to manage courses.', 'ohmylms' ) );
+		}
+		$route = $request->get_route();
+		if ( preg_match( '#/(import|import-scorm|export|export-scorm)$#', $route ) && ! current_user_can( 'manage_options' ) ) {
+			return $this->denied( 'ohmylms_course_cannot_exchange', __( 'Only administrators can import or export courses.', 'ohmylms' ) );
+		}
+		if ( $request['id'] ) {
+			$post = $this->get_course_post( $request['id'] );
+			if ( is_wp_error( $post ) ) {
+				return $post;
+			}
+			if ( ! $this->can( 'edit', $post->ID ) ) {
+				return $this->denied( 'ohmylms_course_cannot_edit', __( 'Sorry, you are not allowed to edit this course.', 'ohmylms' ) );
+			}
+		}
+		if ( preg_match( '#/enroll-by-email$#', $route ) && ! current_user_can( 'create_users' ) ) {
+			return $this->denied( 'ohmylms_course_cannot_create_users', __( 'Sorry, you are not allowed to create users.', 'ohmylms' ) );
+		}
+		if ( preg_match( '#/enroll(/\d+)?$#', $route ) && ! current_user_can( 'list_users' ) ) {
+			return $this->denied( 'ohmylms_course_cannot_enroll', __( 'Sorry, you are not allowed to enrol students.', 'ohmylms' ) );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Register the auxiliary routes. They are outside the CRUD contract and keep their old shapes.
+	 *
+	 * @return void
+	 */
+	private function register_auxiliary_routes() {
+		$cb  = array( $this, 'check_legacy_permission' );
+		$any = static function ( $methods, $callback, $extra = array() ) use ( $cb ) {
+			return array_merge(
+				array(
+					'methods'             => $methods,
+					'callback'            => $callback,
+					'permission_callback' => $cb,
+				),
+				$extra
+			);
+		};
+		$b   = '/' . $this->base;
+
+		register_rest_route( $this->namespace, $b . '/export', $any( WP_REST_Server::READABLE, array( $this, 'export' ) ) );
+		register_rest_route(
+			$this->namespace,
+			$b . '/export-scorm',
+			$any(
+				WP_REST_Server::READABLE,
+				array( $this, 'export_scorm' ),
+				array(
+					'args' => array(
+						'course_ids'    => array(
+							'required'          => true,
+							'type'              => 'array',
+							'description'       => __( 'Array of course IDs to export', 'ohmylms' ),
+							'validate_callback' => static function ( $param ) {
+								return is_array( $param ) && ! empty( $param );
+							},
+						),
+						'scorm_version' => array(
+							'required'    => false,
+							'type'        => 'string',
+							'default'     => '1.2',
+							'description' => __( 'SCORM version (1.2 or 2004)', 'ohmylms' ),
+							'enum'        => array( '1.2', '2004' ),
+						),
+						'_wpnonce'      => array(
+							'required'    => false,
+							'type'        => 'string',
+							'description' => __( 'WordPress nonce for authentication', 'ohmylms' ),
+						),
+					),
+				)
+			)
+		);
+		register_rest_route( $this->namespace, $b . '/import', $any( WP_REST_Server::EDITABLE, array( $this, 'import' ) ) );
+		register_rest_route( $this->namespace, $b . '/import-scorm', $any( WP_REST_Server::EDITABLE, array( $this, 'import_scorm' ) ) );
+		register_rest_route( $this->namespace, $b . '/(?P<id>\d+)/enroll', $any( WP_REST_Server::EDITABLE, array( $this, 'enroll_manually' ) ) );
+		register_rest_route( $this->namespace, $b . '/(?P<id>\d+)/enroll/(?P<student_id>\d+)', $any( WP_REST_Server::DELETABLE, array( $this, 'delete_enroll_manually' ) ) );
+		register_rest_route(
+			$this->namespace,
+			$b . '/(?P<id>\d+)/enroll-by-email',
+			$any(
+				WP_REST_Server::CREATABLE,
+				array( $this, 'enroll_by_email' ),
+				array(
+					'args' => array(
+						'email'      => array(
+							'required'          => true,
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_email',
+						),
+						'first_name' => array(
+							'required'          => false,
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'last_name'  => array(
+							'required'          => false,
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+					),
+				)
+			)
+		);
+		register_rest_route(
+			$this->namespace,
+			$b . '/(?P<id>[\d]+)/chapters',
+			array(
+				$any( WP_REST_Server::READABLE, array( $this, 'get_chapters' ) ),
+				$any( WP_REST_Server::EDITABLE, array( $this, 'update_chapters' ) ),
+			)
+		);
+		register_rest_route( $this->namespace, $b . '/update-map/(?P<id>\d+)', $any( WP_REST_Server::EDITABLE, array( $this, 'update_course_map' ) ) );
+		register_rest_route(
+			$this->namespace,
+			$b . '/settings/(?P<id>\d+)',
+			array(
+				$any( WP_REST_Server::EDITABLE, array( $this, 'save_course_settings' ) ),
+				$any( WP_REST_Server::READABLE, array( $this, 'get_course_settings' ) ),
+			)
+		);
+		register_rest_route( $this->namespace, $b . '/get-map/(?P<id>\d+)', $any( WP_REST_Server::READABLE, array( $this, 'get_course_map' ) ) );
+		register_rest_route( $this->namespace, $b . '/get-map/default', $any( WP_REST_Server::READABLE, array( $this, 'get_course_map_default' ) ) );
+		register_rest_route( $this->namespace, $b . '/filtered-courses', $any( WP_REST_Server::READABLE, array( $this, 'get_filtered_courses' ) ) );
+		register_rest_route(
+			$this->namespace,
+			$b . '/(?P<id>\d+)/terms',
+			$any(
+				WP_REST_Server::EDITABLE,
+				array( $this, 'assign_terms_to_course' ),
+				array(
+					'args' => array(
+						'taxonomy' => array(
+							'description' => __( 'The taxonomy to assign.', 'ohmylms' ),
+							'type'        => 'string',
+							'required'    => true,
+						),
+						'terms'    => array(
+							'description' => __( 'The terms to assign.', 'ohmylms' ),
+							'type'        => 'array',
+							'items'       => array( 'type' => 'integer' ),
+							'required'    => true,
+						),
+					),
+				)
+			)
+		);
+	}
 
 	/**
 	 * Import a course from a JSON file.
@@ -637,7 +1904,7 @@ class CourseController extends RestController {
 	 * @param WP_REST_Request $request The REST API request object.
 	 * @return WP_REST_Response|WP_Error The result of the import operation or an error.
 	 */
-	public function import( \WP_REST_Request $request ) {
+	public function import( WP_REST_Request $request ) {
 		if ( ! ohmylms_is_pro() ) {
 			return new \WP_Error( 'pro_feature', __( 'This is pro feature.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
@@ -672,7 +1939,7 @@ class CourseController extends RestController {
 	 * @param WP_REST_Request $request The REST API request object.
 	 * @return WP_REST_Response|WP_Error The result of the import operation or an error.
 	 */
-	public function import_scorm( \WP_REST_Request $request ) {
+	public function import_scorm( WP_REST_Request $request ) {
 		$file = $request->get_file_params();
 		if ( ! isset( $file['file'] ) || empty( $file['file']['tmp_name'] ) ) {
 			return new \WP_Error( 'file_missing', __( 'No file uploaded.', 'ohmylms' ), array( 'status' => 400 ) );
@@ -713,14 +1980,13 @@ class CourseController extends RestController {
 		}
 	}
 
-
 	/**
 	 * Export a course by ID.
 	 *
 	 * @param WP_REST_Request $request The REST API request object.
 	 * @return WP_REST_Response|WP_Error The exported course data or an error.
 	 */
-	public function export( \WP_REST_Request $request ) {
+	public function export( WP_REST_Request $request ) {
 		$course_ids = $request->get_param( 'course_ids' );
 		if ( ! ohmylms_is_pro() ) {
 			return new \WP_Error( 'pro_feature', __( 'This is pro feature.', 'ohmylms' ), array( 'status' => 400 ) );
@@ -738,14 +2004,13 @@ class CourseController extends RestController {
 		}
 	}
 
-
 	/**
 	 * Export courses as SCORM package.
 	 *
 	 * @param WP_REST_Request $request The REST API request object.
 	 * @return WP_REST_Response|WP_Error The SCORM package or an error.
 	 */
-	public function export_scorm( \WP_REST_Request $request ) {
+	public function export_scorm( WP_REST_Request $request ) {
 		$course_ids    = $request->get_param( 'course_ids' );
 		$scorm_version = $request->get_param( 'scorm_version' );
 
@@ -763,15 +2028,15 @@ class CourseController extends RestController {
 			if ( ! $course || OHMYLMS_COURSE_CPT !== $course->post_type ) {
 				return new \WP_Error(
 					'invalid_course',
-					sprintf( /* translators: %d: number. */
-					__( 'Invalid course ID: %d', 'ohmylms' ), $course_id ),
+					/* translators: %d: course ID. */
+					sprintf( __( 'Invalid course ID: %d', 'ohmylms' ), $course_id ),
 					array( 'status' => 400 )
 				);
 			}
 		}
 
 		// Default to SCORM 1.2 if not specified.
-		if ( empty( $scorm_version ) || ! in_array( $scorm_version, array( '1.2', '2004' ) ) ) {
+		if ( empty( $scorm_version ) || ! in_array( $scorm_version, array( '1.2', '2004' ), true ) ) {
 			$scorm_version = '1.2';
 		}
 
@@ -791,13 +2056,12 @@ class CourseController extends RestController {
 		} catch ( \Exception $e ) {
 			return new \WP_Error(
 				'scorm_export_error',
-				sprintf( /* translators: %s: text value. */
-				__( 'SCORM export failed: %s', 'ohmylms' ), $e->getMessage() ),
+				/* translators: %s: error message. */
+				sprintf( __( 'SCORM export failed: %s', 'ohmylms' ), $e->getMessage() ),
 				array( 'status' => 500 )
 			);
 		}
 	}
-
 
 	/**
 	 * Enroll student manually to a course.
@@ -805,7 +2069,7 @@ class CourseController extends RestController {
 	 * @param WP_REST_Request $request The REST API request object.
 	 * @return WP_REST_Response|WP_Error The exported course data or an error.
 	 */
-	public function enroll_manually( \WP_REST_Request $request ) {
+	public function enroll_manually( WP_REST_Request $request ) {
 		$course_id  = isset( $request['id'] ) ? (int) $request['id'] : '';
 		$student_id = isset( $request['student_id'] ) ? (int) $request['student_id'] : '';
 
@@ -870,14 +2134,13 @@ class CourseController extends RestController {
 		}
 	}
 
-
 	/**
 	 * Delete a student's enrollment from a course.
 	 *
 	 * @param WP_REST_Request $request The REST API request object.
 	 * @return WP_REST_Response|WP_Error Success message or an error.
 	 */
-	public function delete_enroll_manually( \WP_REST_Request $request ) {
+	public function delete_enroll_manually( WP_REST_Request $request ) {
 		$course_id  = isset( $request['id'] ) ? (int) $request['id'] : '';
 		$student_id = isset( $request['student_id'] ) ? (int) $request['student_id'] : '';
 
@@ -937,8 +2200,6 @@ class CourseController extends RestController {
 		}
 	}
 
-
-
 	/**
 	 * Generate a unique alphanumeric-only username from a name or email fallback.
 	 *
@@ -973,7 +2234,6 @@ class CourseController extends RestController {
 		return $username;
 	}
 
-
 	/**
 	 * Enroll a student by email. Creates a new account if no user with that email exists.
 	 * Fires ohmylms_manual_enrollment_by_email after enrollment so emails can be sent.
@@ -981,7 +2241,7 @@ class CourseController extends RestController {
 	 * @param WP_REST_Request $request REST request.
 	 * @return WP_REST_Response|WP_Error
 	 */
-	public function enroll_by_email( \WP_REST_Request $request ) {
+	public function enroll_by_email( WP_REST_Request $request ) {
 		$course_id  = isset( $request['id'] ) ? (int) $request['id'] : 0;
 		$email      = isset( $request['email'] ) ? sanitize_email( $request['email'] ) : '';
 		$first_name = isset( $request['first_name'] ) ? sanitize_text_field( $request['first_name'] ) : '';
@@ -1095,280 +2355,6 @@ class CourseController extends RestController {
 		}
 	}
 
-
-	/**
-	 * Create a single course
-	 *
-	 * @param WP_REST_Request $request REST request.
-	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
-	 *
-	 * @since 1.0.0
-	 */
-	public function create_item( $request ) {
-		if ( ! empty( $request['id'] ) ) {
-			// Translators: %s is replaced with object name.
-			return new WP_Error( 'ohmylms_rest_course_exists', sprintf( __( 'Cannot create existing %s.', 'ohmylms' ), 'course' ), array( 'status' => 400 ) );
-		}
-
-		try {
-			/**
-			 * Fires before a course is created via the REST API.
-			 *
-			 * @param \WP_REST_Request $request The request object.
-			 *
-			 * @since 1.0.0
-			 */
-			do_action( 'ohmylms_rest_before_create_course', $request );
-
-			$course_id = $this->save_course( $request );
-			$post      = get_post( $course_id );
-
-			/**
-			 * Fires after a course is inserted via the REST API.
-			 *
-			 * @param \WP_Post         $post    The post object for the course.
-			 * @param int              $course_id The course ID.
-			 * @param \WP_REST_Request $request The request object.
-			 *
-			 * @since 1.0.0
-			 */
-			do_action( 'ohmylms_rest_insert_course', $post, $course_id, $request );
-
-			/**
-			 * Fires after a course is created via the REST API.
-			 *
-			 * @param \WP_Post         $post    The post object for the course.
-			 * @param int              $course_id The course ID.
-			 * @param \WP_REST_Request $request The request object.
-			 *
-			 * @since 1.0.0
-			 */
-			do_action( 'ohmylms_rest_after_create_course', $post, $course_id, $request );
-
-			$request->set_param( 'context', 'edit' );
-			$response = $this->prepare_item_for_response( $post, $request );
-			$response = rest_ensure_response( $response );
-			$response->set_status( 201 );
-			return $response;
-		} catch ( DataException $e ) {
-			return new WP_Error( 400, $e->getMessage(), array( 'status' => $e->getCode() ) );
-		}
-	}
-
-
-	/**
-	 * Retrieves a single course by ID.
-	 *
-	 * @param \WP_REST_Request $request The REST request object containing the course ID.
-	 * @return WP_Error|\WP_HTTP_Response|\WP_REST_Response The response object containing the course data or an error.
-	 *
-	 * @since 1.0.0
-	 */
-	public function get_item( $request ) {
-		$id   = (int) $request['id'];
-		$post = get_post( $id );
-		if ( empty( $id ) || empty( $post->ID ) || OHMYLMS_COURSE_CPT !== $post->post_type ) {
-			return new WP_Error( 'ohmylms_rest_invalid_course_id', __( 'Invalid ID.', 'ohmylms' ), array( 'status' => 404 ) );
-		}
-
-		$data = $this->prepare_item_for_response( $post, $request );
-
-		$response = rest_ensure_response( $data );
-
-		$response->link_header( 'alternate', get_permalink( $id ), array( 'type' => 'text/html' ) );
-
-		return $response;
-	}
-
-
-	/**
-	 * Updates a single course.
-	 *
-	 * @param \WP_REST_Request $request The REST request object containing the course ID and data.
-	 * @return WP_Error|\WP_REST_Response|\WP_HTTP_Response The response object containing the updated course data or an error.
-	 *
-	 * @since 1.0.0
-	 */
-	public function update_item( $request ) {
-		$post_id = (int) $request['id'];
-		if ( empty( $post_id ) || get_post_type( $post_id ) !== OHMYLMS_COURSE_CPT ) {
-			return new WP_Error( 'ohmylms_rest_course_invalid_id', __( 'ID is invalid.', 'ohmylms' ), array( 'status' => 400 ) );
-		}
-
-		try {
-			/**
-			 * Fires before a course is updated via the REST API.
-			 *
-			 * @param int              $post_id The course ID.
-			 * @param \WP_REST_Request $request The request object.
-			 *
-			 * @since 1.0.0
-			 */
-			do_action( 'ohmylms_rest_before_update_course', $post_id, $request );
-
-			$course_id = $this->save_course( $request );
-			$post      = get_post( $course_id );
-
-			/**
-			 * Fires after a course is updated via the REST API.
-			 *
-			 * @param \WP_Post         $post    The post object for the course.
-			 * @param int              $course_id The course ID.
-			 * @param \WP_REST_Request $request The request object.
-			 *
-			 * @since 1.0.0
-			 */
-			do_action( 'ohmylms_rest_update_course', $post, $course_id, $request );
-
-			/**
-			 * Fires after a course is updated via the REST API.
-			 *
-			 * @param \WP_Post         $post    The post object for the course.
-			 * @param int              $course_id The course ID.
-			 * @param \WP_REST_Request $request The request object.
-			 *
-			 * @since 1.0.0
-			 */
-			do_action( 'ohmylms_rest_after_update_course', $post, $course_id, $request );
-
-			$this->update_course_status_and_password( $course_id, $request );
-
-			$this->update_additional_fields_for_object( $post, $request );
-			$this->update_post_meta_fields( $post, $request );
-			$course = ohmylms_get_course( $course_id );
-			if ( $course && 'cohort-based' === $course->get_type() ) {
-				$this->save_cohort_settings( $course_id, $request );
-			}
-			$terms_update = $this->handle_terms( $post->ID, $request );
-			if ( is_wp_error( $terms_update ) ) {
-				return $terms_update;
-			}
-
-			$request->set_param( 'context', 'edit' );
-			$response = $this->prepare_item_for_response( $post, $request );
-			return rest_ensure_response( $response );
-		} catch ( DataException $e ) {
-			return new WP_Error( $e->getErrorCode(), $e->getMessage(), $e->getErrorData() );
-		}
-	}
-
-
-	/**
-	 * Delete course
-	 *
-	 * @param WP_REST_Request $request REST request.
-	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
-	 * @since 1.0.0
-	 */
-	public function delete_item( $request ) {
-		// Get course id.
-		$course_id = isset( $request['id'] ) ? (int) $request['id'] : 0;
-
-		// Check the course id exist or not.
-		if ( ! $course_id ) {
-			return new WP_Error( 'ohmylms_rest_course_empty_id', __( 'ID is required.', 'ohmylms' ), array( 'status' => 400 ) );
-		}
-
-		// Get existing course by course id.
-		$course = ohmylms_get_course( $course_id );
-
-		// Check the course exist or not.
-		if ( ! ( $course instanceof Course ) ) {
-			return new WP_Error( 'ohmylms_rest_course_invalid_id', __( 'ID is invalid.', 'ohmylms' ), array( 'status' => 400 ) );
-		}
-
-		/**
-		 * Fires before a course is deleted via the REST API.
-		 *
-		 * @param int              $course_id The course ID.
-		 * @param Course           $course    The course object.
-		 * @param \WP_REST_Request $request   The request object.
-		 *
-		 * @since 1.0.0
-		 */
-		do_action( 'ohmylms_rest_before_delete_course', $course_id, $course, $request );
-
-		// Delete the course.
-		$course->delete();
-
-		/**
-		 * Fires after a course is deleted via the REST API.
-		 *
-		 * @param int              $course_id The course ID.
-		 * @param \WP_REST_Request $request   The request object.
-		 *
-		 * @since 1.0.0
-		 */
-		do_action( 'ohmylms_rest_delete_course', $course_id, $request );
-
-		/**
-		 * Fires after a course is deleted via the REST API.
-		 *
-		 * @param int $course_id The course ID.
-		 *
-		 * @since 1.0.0
-		 */
-		do_action( 'ohmylms_rest_delete_course', $course_id );
-
-		/**
-		 * Fires after a course is deleted via the REST API.
-		 *
-		 * @param int              $course_id The course ID.
-		 * @param Course           $course    The course object.
-		 * @param \WP_REST_Request $request   The request object.
-		 *
-		 * @since 1.0.0
-		 */
-		do_action( 'ohmylms_rest_after_delete_course', $course_id, $course, $request );
-
-		$response = array(
-			'status'  => 'success',
-			'message' => __( 'Course deleted successfully', 'ohmylms' ),
-		);
-		return rest_ensure_response( $response );
-	}
-
-
-	/**
-	 * Duplicate a course
-	 *
-	 * @param WP_REST_Request $request REST request.
-	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
-	 *
-	 * @since 1.0.0
-	 */
-	public function duplicate_item( $request ) {
-		if ( ! ohmylms_is_pro() ) {
-			return new \WP_Error( 'pro_feature', __( 'This is pro feature.', 'ohmylms' ), array( 'status' => 400 ) );
-		}
-
-		// Get course id.
-		$course_id = isset( $request['id'] ) ? (int) $request['id'] : 0;
-
-		// Check the course id exist or not.
-		if ( ! $course_id ) {
-			return new WP_Error( 'ohmylms_rest_course_empty_id', __( 'ID is required.', 'ohmylms' ), array( 'status' => 400 ) );
-		}
-		// Get existing course by course id.
-		$course = ohmylms_get_course( $course_id );
-		// Check the course exist or not.
-		if ( ! ( $course instanceof Course ) ) {
-			return new WP_Error( 'ohmylms_rest_course_invalid_id', __( 'ID is invalid.', 'ohmylms' ), array( 'status' => 400 ) );
-		}
-
-		$duplicate_course_obj = new \OhMyLMS\Duplicate\Course( $course_id );
-		$new_course_id        = \OhMyLMS\Learning\UnitSnapshots::authoring( array( $duplicate_course_obj, 'duplicate' ) );
-		$response             = array(
-			'status'  => 'success',
-			'message' => __( 'Course duplicated successfully', 'ohmylms' ),
-			'data'    => array(
-				'id' => $new_course_id,
-			),
-		);
-		return rest_ensure_response( $response );
-	}
-
-
 	/**
 	 * Retrieves the chapters of a course.
 	 *
@@ -1406,7 +2392,6 @@ class CourseController extends RestController {
 
 		return rest_ensure_response( $response );
 	}
-
 
 	/**
 	 * Updates the chapters of a course.
@@ -1462,411 +2447,6 @@ class CourseController extends RestController {
 		}
 		return rest_ensure_response( $response );
 	}
-
-	/**
-	 * Delete bulk courses.
-	 *
-	 * @param \WP_REST_Request $request The REST request object.
-	 * @return \WP_REST_Response The response object indicating success or failure.
-	 *
-	 * @since 1.0.0
-	 */
-	public function trash_bulk( $request ) {
-		$course_ids = $request->get_param( 'course_ids' );
-
-		/**
-		 * Fires before bulk courses are deleted via the REST API.
-		 *
-		 * @param array            $course_ids Array of course IDs to be deleted.
-		 * @param \WP_REST_Request $request    The request object.
-		 *
-		 * @since 1.0.0
-		 */
-		do_action( 'ohmylms_rest_before_bulk_delete_courses', $course_ids, $request );
-
-		if ( is_array( $course_ids ) ) {
-			foreach ( $course_ids as $course_id ) {
-				if ( get_post_type( $course_id ) !== 'ohmylms-course' ) {
-					return new \WP_REST_Response( array( 'message' => 'Invalid course ID.' ), 400 );
-				}
-
-				/**
-				 * Fires before a single course is deleted in bulk operation.
-				 *
-				 * @param int $course_id The course ID being deleted.
-				 *
-				 * @since 1.0.0
-				 */
-				do_action( 'ohmylms_rest_before_bulk_delete_single_course', $course_id );
-
-				wp_trash_post( $course_id );
-
-				/**
-				 * Fires after a single course is deleted in bulk operation.
-				 *
-				 * @param int $course_id The course ID that was deleted.
-				 *
-				 * @since 1.0.0
-				 */
-				do_action( 'ohmylms_rest_delete_course', $course_id );
-			}
-
-			/**
-			 * Fires after bulk courses are deleted via the REST API.
-			 *
-			 * @param array            $course_ids Array of course IDs that were deleted.
-			 * @param \WP_REST_Request $request    The request object.
-			 *
-			 * @since 1.0.0
-			 */
-			do_action( 'ohmylms_rest_after_bulk_delete_courses', $course_ids, $request );
-
-			return new \WP_REST_Response( array( 'message' => 'Deleted Successfully' ), 200 );
-		}
-		return new \WP_REST_Response( array( 'message' => 'Failed to trash the course.' ), 500 );
-	}
-
-
-	/**
-	 * Prepares the query arguments for fetching items.
-	 *
-	 * This function filters and constructs the query arguments based on the allowed query variables.
-	 * It ensures that only valid query variables are included in the final query arguments.
-	 *
-	 * @param array                $prepared_args The prepared arguments for the query.
-	 * @param WP_REST_Request|null $request The REST request object.
-	 * .
-	 * @return array The filtered and prepared query arguments.
-	 * @since 1.0.0
-	 */
-	protected function prepare_items_query( $prepared_args = array(), $request = null ) {
-
-		$valid_vars = array_flip( $this->get_allowed_query_vars() );
-		$query_args = array();
-		foreach ( $valid_vars as $var => $index ) {
-			if ( isset( $prepared_args[ $var ] ) ) {
-				/**
-				 * Filter the query_vars used in `get_items` for the constructed query.
-				 *
-				 * The dynamic portion of the hook name, $var, refers to the query_var key.
-				 *
-				 * @param mixed $prepared_args[ $var ] The query_var value.
-				 */
-				$query_args[ $var ] = apply_filters( "ohmylms_rest_query_var-{$var}", $prepared_args[ $var ] );
-			}
-		}
-
-		$query_args['ignore_sticky_posts'] = true;
-
-		if ( 'include' === $query_args['orderby'] ) {
-			$query_args['orderby'] = 'post__in';
-		} elseif ( 'id' === $query_args['orderby'] ) {
-			$query_args['orderby'] = 'ID'; // ID must be capitalized.
-		} elseif ( 'slug' === $query_args['orderby'] ) {
-			$query_args['orderby'] = 'name';
-		}
-
-		return $query_args;
-	}
-
-
-	/**
-	 * Get the allowed query variables for the REST API.
-	 *
-	 * This method retrieves the list of query variables that are allowed to be used
-	 * in REST API requests for courses. It merges the public and private query variables
-	 * and applies filters to allow customization.
-	 *
-	 * @return array The array of allowed query variables.
-	 *
-	 * @since 1.0.0
-	 */
-	protected function get_allowed_query_vars() {
-		global $wp;
-
-		/**
-		 * Filter the publicly allowed query vars.
-		 *
-		 * Allows adjusting of the default query vars that are made public.
-		 *
-		 * @param array  Array of allowed WP_Query query vars.
-		 */
-		$valid_vars = apply_filters( 'query_vars', $wp->public_query_vars );
-
-		$post_type_obj = get_post_type_object( OHMYLMS_COURSE_CPT );
-		if ( current_user_can( $post_type_obj->cap->edit_posts ) ) {
-			$valid_vars = array_merge( $valid_vars, $wp->private_query_vars );
-		}
-		$rest_valid = array(
-			'date_query',
-			'ignore_sticky_posts',
-			'offset',
-			'post__in',
-			'post__not_in',
-			'post_parent',
-			'post_parent__in',
-			'post_parent__not_in',
-			'posts_per_page',
-			'meta_query',
-			'tax_query',
-			'meta_key',
-			'meta_value',
-			'meta_compare',
-			'meta_value_num',
-			'orderby',
-		);
-		$valid_vars = array_merge( $valid_vars, $rest_valid );
-
-		/**
-		 * Filter the valid query variables for the REST API.
-		 *
-		 * This filter allows developers to modify the list of valid query variables
-		 * that can be used in REST API requests for courses.
-		 *
-		 * @param array $valid_vars The array of valid query variables.
-		 */
-		$valid_vars = apply_filters( 'ohmylms_rest_query_vars', $valid_vars );
-
-		return $valid_vars;
-	}
-
-
-	/**
-	 * Saves a course to the database.
-	 *
-	 * @param WP_REST_Request $request Full details about the request.
-	 * @return int
-	 *
-	 * @since 1.0.0
-	 */
-	public function save_course( $request ) {
-		$course = $this->prepare_item_for_database( $request );
-
-		if ( $course->get_slug() === '' ) {
-			$course->set_slug( 'untitled' );
-		}
-
-		/**
-		 * Fires before a course is saved to the database.
-		 *
-		 * @param Course           $course  The course object.
-		 * @param \WP_REST_Request $request The request object.
-		 *
-		 * @since 1.0.0
-		 */
-		do_action( 'ohmylms_rest_before_save_course', $course, $request );
-
-		// Save the course.
-		$course_id = $course->save();
-
-		/**
-		 * Fires after a course is saved to the database.
-		 *
-		 * @param int              $course_id The course ID.
-		 * @param Course           $course    The course object.
-		 * @param \WP_REST_Request $request   The request object.
-		 *
-		 * @since 1.0.0
-		 */
-		do_action( 'ohmylms_rest_after_save_course', $course_id, $course, $request );
-
-		return $course_id;
-	}
-
-
-	/**
-	 * Update post meta fields for a course.
-	 *
-	 * This method updates the meta fields for a given course post based on the provided request data.
-	 *
-	 * @param \WP_Post         $post The post object representing the course.
-	 * @param \WP_REST_Request $request The REST request object containing the meta data.
-	 * @return bool True on success, false on failure.
-	 *
-	 * @throws DataException When the operation cannot be completed.
-	 * @since 1.0.0
-	 */
-	protected function update_post_meta_fields( $post, $request ) {
-		$course = ohmylms_get_course( $post );
-		if ( isset( $request['image_id'] ) && intval( $request['image_id'] ) > 0 ) {
-			$course = $this->set_course_cover_image( $course, $request['image_id'] );
-		}
-
-		if ( isset( $request['thumbnail_id'] ) && intval( $request['thumbnail_id'] ) > 0 ) {
-			$course = $this->set_course_cover_image( $course, $request['thumbnail_id'] );
-		}
-
-		// Save course meta fields.
-		$course = $this->set_course_meta( $course, $request );
-
-		// Set tracking meta fields if this is a new course creation.
-		if ( isset( $request['creation_source'] ) ) {
-			update_post_meta( $course->get_id(), '_ohmylms_creation_source', sanitize_text_field( $request['creation_source'] ) );
-		}
-		if ( isset( $request['course_type'] ) ) {
-			update_post_meta( $course->get_id(), '_ohmylms_course_type', sanitize_text_field( $request['course_type'] ) );
-		}
-
-		// Save the course data.
-		$course->save();
-		do_action( 'ohmylms_rest_after_save_course_meta', $course, $request );
-		return true;
-	}
-
-
-	/**
-	 * Set product meta data for a course.
-	 *
-	 * @param Course          $course The course object.
-	 * @param WP_REST_Request $request The REST request object containing the meta data.
-	 * @return Course The updated course object.
-	 *
-	 * @since 1.0.0
-	 */
-	protected function set_course_meta( $course, $request ) {
-		if ( isset( $request['price_type'] ) ) {
-			$course->set_price_type( $request['price_type'] );
-		}
-
-		if ( isset( $request['regular_price'] ) ) {
-			$course->set_regular_price( $request['regular_price'] );
-		}
-
-		if ( isset( $request['purchase_point'] ) ) {
-			if ( method_exists( $course, 'set_purchase_point' ) ) {
-				$course->set_purchase_point( $request['purchase_point'] );
-			}
-		}
-
-		if ( isset( $request['sale_price'] ) ) {
-			$course->set_sale_price( $request['sale_price'] );
-		}
-
-		if ( isset( $request['level'] ) ) {
-			$course->set_level( trim( $request['level'] ) );
-		}
-
-		if ( isset( $request['availability'] ) ) {
-			$course->set_availability( $request['availability'] );
-		}
-
-		if ( isset( $request['available_date'] ) ) {
-			$course->set_available_date( $request['available_date'] );
-		}
-
-		if ( isset( $request['access_type'] ) ) {
-			$course->set_access_type( $request['access_type'] );
-		}
-
-		if ( isset( $request['has_capacity'] ) ) {
-			$course->set_has_capacity( $request['has_capacity'] );
-		}
-
-		if ( isset( $request['capacity'] ) ) {
-			$course->set_capacity( $request['capacity'] );
-		}
-		if ( isset( $request['password_protected'] ) ) {
-			$course->set_password_protected( $request['password_protected'] );
-		}
-		if ( isset( $request['duration'] ) ) {
-			$course->set_duration( $request['duration'] );
-		}
-		if ( isset( $request['enable_reviews'] ) ) {
-			$course->set_enable_reviews( $request['enable_reviews'] );
-		}
-		if ( isset( $request['benefit_description'] ) ) {
-			$course->set_benefit_description( $request['benefit_description'] );
-		}
-		if ( isset( $request['benefiter_description'] ) ) {
-			$course->set_benefiter_description( $request['benefiter_description'] );
-		}
-		if ( isset( $request['requirement'] ) ) {
-			$course->set_requirement( $request['requirement'] );
-		}
-		if ( isset( $request['sale_price_dates_from'] ) && ! empty( $request['sale_price_dates_from'] ) ) {
-			$course->set_sale_price_dates_from( $request['sale_price_dates_from']['date'] );
-		}
-		if ( isset( $request['sale_price_dates_to'] ) && ! empty( $request['sale_price_dates_to'] ) ) {
-			$course->set_sale_price_dates_to( $request['sale_price_dates_to']['date'] );
-		}
-		if ( isset( $request['download_resource'] ) ) {
-			$course->set_download_resource( $request['download_resource'] );
-		}
-
-		if ( isset( $request['leaderboard_disabled'] ) ) {
-			if ( method_exists( $course, 'set_leaderboard_disabled' ) ) {
-				$course->set_leaderboard_disabled( $request['leaderboard_disabled'] );
-			}
-		}
-
-		if ( isset( $request['point_disabled'] ) ) {
-			if ( method_exists( $course, 'set_point_disabled' ) ) {
-				$course->set_point_disabled( $request['point_disabled'] );
-			}
-		}
-		if ( isset( $request['reward_disabled'] ) ) {
-			if ( method_exists( $course, 'set_reward_disabled' ) ) {
-				$course->set_reward_disabled( $request['reward_disabled'] );
-			}
-		}
-
-		if ( isset( $request['sequential_mode'] ) && apply_filters( 'ohmylms_can_save_sequential_mode', false ) ) {
-			if ( method_exists( $course, 'set_sequential_mode' ) ) {
-				$course->set_sequential_mode( $request['sequential_mode'] );
-			}
-		}
-
-		if ( isset( $request['certificate_id'] ) ) {
-			$course->set_certificate( $request['certificate_id'] );
-			// Track certificate enabled status.
-			$has_certificate = ! empty( $request['certificate_id'] ) ? 'yes' : 'no';
-			update_post_meta( $course->get_id(), '_ohmylms_certificate_enabled', $has_certificate );
-		}
-		if ( isset( $request['has_community'] ) ) {
-			$course->set_has_community( $request['has_community'] );
-		}
-
-		if ( isset( $request['space_title'] ) ) {
-			$course->set_space_title( $request['space_title'] );
-		}
-
-		if ( isset( $request['space_description'] ) ) {
-			$course->set_space_description( $request['space_description'] );
-		}
-		if ( isset( $request['funnel_steps'] ) && is_array( $request['funnel_steps'] ) ) {
-			if ( method_exists( $course, 'set_funnel_steps' ) ) {
-				$course->set_funnel_steps( $request['funnel_steps'] );
-				// Track automation enabled status.
-				$has_automation = ! empty( $request['funnel_steps'] ) ? 'yes' : 'no';
-				update_post_meta( $course->get_id(), '_ohmylms_automation_enabled', $has_automation );
-			}
-		}
-
-		return $course;
-	}
-
-
-	/**
-	 * Set the cover image for a course.
-	 *
-	 * @param Course $course The course object.
-	 * @param int    $attachment_id The attachment ID of the image.
-	 * @return Course The updated course object.
-	 * @throws DataException If the attachment ID is not a valid image.
-	 *
-	 * @since 1.0.0
-	 */
-	protected function set_course_cover_image( $course, $attachment_id ) {
-		if ( ! wp_attachment_is_image( $attachment_id ) ) {
-			// Translators: %s is replaced with attachment_id.
-			throw new DataException( 'ohmylms_course_invalid_image_id', sprintf( __( '#%s is an invalid image ID.', 'ohmylms' ), $attachment_id ), 400 );
-		}
-
-		$course->set_thumbnail_id( $attachment_id );
-
-		return $course;
-	}
-
 
 	/**
 	 * Update course map
@@ -1962,10 +2542,14 @@ class CourseController extends RestController {
 	 */
 	public function get_filtered_courses( $request ) {
 		$args = array(
-			'post_type'    => 'ohmylms-course',
-			's'            => isset( $request['search'] ) ? $request['search'] : '',
-			'post__not_in' => isset( $request['exclude'] ) ? explode( ',', $request['exclude'] ) : array(),
+			'post_type'      => OHMYLMS_COURSE_CPT,
+			's'              => isset( $request['search'] ) ? sanitize_text_field( (string) $request['search'] ) : '',
+			'post__not_in'   => isset( $request['exclude'] ) ? array_map( 'absint', explode( ',', (string) $request['exclude'] ) ) : array(),
+			'posts_per_page' => 50,
 		);
+		if ( ! $this->can( 'list_others' ) ) {
+			$args['author'] = get_current_user_id();
+		}
 
 		$query = new WP_Query( $args );
 
@@ -1987,360 +2571,6 @@ class CourseController extends RestController {
 		return rest_ensure_response( $courses );
 	}
 
-
-	/**
-	 * Save featured image for a course.
-	 *
-	 * @param WP_REST_Request $request REST request.
-	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
-	 * @since 1.0.0
-	 */
-	public function save_featured_image( \WP_REST_Request $request ) {
-		$course_id     = (int) $request['id'];
-		$attachment_id = (int) $request->get_param( 'attachment_id' );
-		$media_type    = $request->get_param( 'type' );
-		if ( ! $course_id || ! $attachment_id ) {
-			return new \WP_Error( 'invalid_data', __( 'Invalid course ID or attachment ID.', 'ohmylms' ), array( 'status' => 400 ) );
-		}
-
-		if ( 'video' === $media_type ) {
-			$course = ohmylms_get_course( $course_id );
-			$course->set_video_id( $attachment_id );
-			$course->save();
-			return rest_ensure_response(
-				array(
-					'status'  => 'success',
-					'message' => __( 'Cover Video set successfully.', 'ohmylms' ),
-				)
-			);
-		}
-
-		$result = set_post_thumbnail( $course_id, $attachment_id );
-		if ( is_wp_error( $result ) ) {
-			return new \WP_Error( 'failed_to_set_thumbnail', __( 'Failed to set featured image.', 'ohmylms' ), array( 'status' => 500 ) );
-		}
-
-		return rest_ensure_response(
-			array(
-				'status'  => 'success',
-				'message' => __( 'Cover image set successfully.', 'ohmylms' ),
-			)
-		);
-	}
-
-
-	/**
-	 * Remove featured image for a course.
-	 *
-	 * @param WP_REST_Request $request REST request.
-	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
-	 * @since 1.0.0
-	 */
-	public function remove_featured_image( \WP_REST_Request $request ) {
-		$course_id = (int) $request['id'];
-		$type      = $request->get_param( 'type' );
-		$course    = ohmylms_get_course( $course_id );
-
-		if ( ! $course_id ) {
-			return new \WP_Error( 'invalid_data', __( 'Invalid course ID.', 'ohmylms' ), array( 'status' => 400 ) );
-		}
-
-		if ( 'video' === $type ) {
-			$course->set_video_id( 0 );
-			$course->save();
-			$message = __( 'Cover Video removed successfully.', 'ohmylms' );
-		} else {
-			$course->set_thumbnail_id( '' );
-			$course->save();
-			$result = delete_post_thumbnail( $course_id );
-			if ( is_wp_error( $result ) ) {
-				return new \WP_Error( 'failed_to_remove_thumbnail', __( 'Failed to remove featured image.', 'ohmylms' ), array( 'status' => 500 ) );
-			}
-			$message = __( 'Cover image removed successfully.', 'ohmylms' );
-		}
-
-		return rest_ensure_response(
-			array(
-				'status'  => 'success',
-				'message' => $message,
-			)
-		);
-	}
-
-
-	/**
-	 * Get course data.
-	 *
-	 * @param Course $course Course.
-	 * @return array
-	 *
-	 * @since 1.0.0
-	 */
-	protected function get_course_data( $course ) {
-		// Get WP timezone as DateTimeZone object.
-		$wp_timezone = wp_timezone();
-		// Get post datetime in WP timezone.
-		$datetime = get_post_datetime( $course->get_id(), 'date', $wp_timezone );
-
-		$data = array(
-			'id'                    => $course->get_id(),
-			'name'                  => $course->get_name(),
-			'slug'                  => $course->get_slug(),
-			'status'                => $course->get_status(),
-			'password_protected'    => $course->get_password_protected(),
-			'post_date'             => $datetime,
-			'description'           => $course->get_description(),
-			'price_type'            => $course->get_price_type(),
-			'price'                 => $course->get_price(),
-			'regular_price'         => $course->get_regular_price(),
-			'sale_price'            => $course->get_sale_price(),
-			'sale_price_dates_from' => $course->get_sale_price_dates_from(),
-			'sale_price_dates_to'   => $course->get_sale_price_dates_to(),
-			'availability'          => $course->get_availability(),
-			'available_date'        => $course->get_available_date(),
-			'access_type'           => $course->get_access_type(),
-			'has_capacity'          => $course->get_has_capacity(),
-			'capacity'              => $course->get_capacity(),
-			'image_id'              => $course->get_thumbnail_id(),
-			'date_created'          => $course->get_date_created(),
-			'date_modified'         => $course->get_date_modified(),
-			'type'                  => $course->get_type(),
-			'creation_method'       => $course->get_creation_method(),
-			'image_src'             => wp_get_attachment_image_src( $course->get_thumbnail_id(), 'large' ) ? wp_get_attachment_image_src( $course->get_thumbnail_id(), 'large' )[0] : '',
-			'level'                 => $course->get_level(),
-			'thumbnail_id'          => $course->get_thumbnail_id(),
-			'video_id'              => $course->get_video_id(),
-			'video_src'             => wp_get_attachment_url( $course->get_video_id() ),
-			'categories'            => $this->get_taxonomy_terms( $course ),
-			'tags'                  => $this->get_taxonomy_terms( $course, 'tag' ),
-			'curriculum'            => \OhMyLMS\Curriculum\Placement::items( $course->get_id() ),
-			'learning_bundles'      => \OhMyLMS\Curriculum\Placement::bundles( $course->get_id() ),
-			'course_url'            => get_permalink( $course->get_id() ),
-			'content'               => array(
-				'chapters' => count( $course->get_chapters() ),
-				'lessons'  => intval( $course->get_lessons_count() ),
-				'quizzes'  => intval( $course->get_quiz_count() ),
-			),
-			'total_enrollment'      => $course->get_total_enrolled_users(),
-			'duration'              => $course->get_duration(),
-			'enable_reviews'        => $course->get_enable_reviews(),
-			'benefit_description'   => $course->get_benefit_description(),
-			'benefiter_description' => $course->get_benefiter_description(),
-			'requirement'           => $course->get_requirement(),
-			'download_resource'     => method_exists( $course, 'get_download_resource' ) ? $course->get_download_resource() : '',
-			'leaderboard_disabled'  => method_exists( $course, 'get_leaderboard_disabled' ) ? $course->get_leaderboard_disabled() : 'no',
-			'point_disabled'        => method_exists( $course, 'get_point_disabled' ) ? $course->get_point_disabled() : 'no',
-			'reward_disabled'       => method_exists( $course, 'get_reward_disabled' ) ? $course->get_reward_disabled() : 'no',
-			'sequential_mode'       => method_exists( $course, 'get_sequential_mode' ) ? $course->get_sequential_mode() : 'no',
-			'purchase_point'        => method_exists( $course, 'get_purchase_point' ) ? $course->get_purchase_point() : '',
-			'currency'              => html_entity_decode( get_ohmylms_currency_symbol( get_ohmylms_currency() ) ),
-			'currency_pos'          => get_ohmylms_currency_position(),
-			'is_cohort'             => 'cohort-based' === $course->get_type(),
-			'cohort'                => $course->get_cohort(),
-			'funnel_steps'          => method_exists( $course, 'get_funnel_steps' ) ? $course->get_funnel_steps() : array(),
-		);
-		return $data;
-	}
-
-
-	/**
-	 * Prepare links for the request.
-	 *
-	 * @param mixed $course Course.
-	 * @param mixed $request REST request.
-	 * @return array[]
-	 *
-	 * @since 1.0.0
-	 */
-	protected function prepare_links( $course, $request ) {
-		$links = array(
-			'self'       => array(
-				'href' => rest_url( sprintf( '%s/%s/%d', $this->namespace, $this->base, $course->get_id() ) ),
-			),
-			'collection' => array(
-				'href' => rest_url( sprintf( '%s/%s', $this->namespace, $this->base ) ),
-			),
-		);
-
-		return $links;
-	}
-
-
-	/**
-	 * Prepare a single course for create or update.
-	 *
-	 * @param mixed $request REST request.
-	 * @return bool|Course|object|WP_Error
-	 * @throws \Exception When the operation cannot be completed.
-	 * @since 1.0.0
-	 */
-	protected function prepare_item_for_database( $request ) {
-		$id = isset( $request['id'] ) ? absint( $request['id'] ) : 0;
-
-		if ( isset( $request['id'] ) ) {
-			$course = ohmylms_get_course( $id );
-		} else {
-			$course = ohmylms_is_pro() ? new \OhMyLMS\Data\Course() : new Course();
-		}
-
-		if ( isset( $request['name'] ) ) {
-			$course->set_name( sanitize_text_field( wp_unslash( $request['name'] ) ) );
-		}
-
-		if ( isset( $request['slug'] ) ) {
-			$course->set_slug( sanitize_text_field( wp_unslash( $request['slug'] ) ) );
-		}
-
-		if ( isset( $request['description'] ) ) {
-			$course->set_description( $request['description'] );
-		}
-
-		if ( isset( $request['status'] ) ) {
-			$course->set_status( get_post_status_object( $request['status'] ) ? $request['status'] : 'draft' );
-		}
-
-		if ( isset( $request['certificate_id'] ) ) {
-			$course->set_certificate( (int) $request['certificate_id'] );
-		}
-
-		if ( isset( $request['course_type'] ) ) {
-			$course->set_type( $request['course_type'] );
-		}
-
-		if ( isset( $request['creation_method'] ) ) {
-			$course->set_creation_method( $request['creation_method'] );
-		}
-
-		return $course;
-	}
-
-
-	/**
-	 * Prepare a single course for response.
-	 *
-	 * @param \WP_Post         $post The post object.
-	 * @param \WP_REST_Request $request REST request.
-	 * @return WP_REST_Response
-	 *
-	 * @since 1.0.0
-	 */
-	public function prepare_item_for_response( $post, $request ) {
-
-		$course              = ohmylms_get_course( $post );
-		$data                = $this->get_course_data( $course );
-		$data['syllabus_id'] = \OhMyLMS\Curriculum\SyllabusCourse::owner( $course->get_id() );
-		$chapters            = $course->get_chapters();
-		$certificate         = $course->get_certificate();
-		if ( $certificate ) {
-			$data['certificate'] = array(
-				'name'         => $certificate->get_name(),
-				'id'           => $certificate->get_id(),
-				'date_created' => $certificate->get_date_created(),
-				'status'       => $certificate->get_status(),
-				'thumbnail_id' => $certificate->get_thumbnail_id(),
-				'image_src'    => wp_get_attachment_image_src( $certificate->get_thumbnail_id(), 'large' ) ? wp_get_attachment_image_src( $certificate->get_thumbnail_id(), 'large' )[0] : '',
-			);
-		}
-		if ( $chapters ) {
-			foreach ( $chapters as $key => $chapter ) {
-				$chapter_obj                  = ohmylms_get_chapter( $chapter['id'] );
-				$chapters[ $key ]['contents'] = array();
-				if ( ( $chapter_obj instanceof Chapter ) ) {
-					$chapters[ $key ]['contents'] = $chapter_obj->get_lessons();
-				}
-			}
-		}
-		$data['chapters']              = $chapters ? $chapters : array();
-		$data['first_chapter_content'] = array();
-		$automation                    = get_post_meta( $course->get_id(), '_mm_automation_id', true );
-
-		$data['has_automation'] = is_array( $automation ) && count( $automation ) ? true : false;
-		$chapter_id             = is_array( $chapters ) && count( $chapters ) ? $chapters[0]['id'] : '';
-		if ( $chapter_id ) {
-			$chapter = ohmylms_get_chapter( $chapter_id );
-			if ( ( $chapter instanceof Chapter ) ) {
-				$lessons                       = $chapter->get_lessons();
-				$data['first_chapter_content'] = $lessons;
-				$data['first_chapter_id']      = $chapter_id;
-			}
-		}
-		$data     = apply_filters( 'ohmylms_rest_get_course_data', $data, $course );
-		$response = rest_ensure_response( $data );
-		$response->add_links( $this->prepare_links( $course, $request ) );
-
-		/**
-		 * Filters the response for the course in the REST API.
-		 *
-		 * This filter allows developers to modify the course response data before it is returned by the REST API.
-		 *
-		 * @param array $response The response data for the course.
-		 * @param \WP_Post $post The WP_Post object representing the course.
-		 * @param \WP_REST_Request $request The request object containing information about the API request.
-		 *
-		 * @since 1.0.0
-		 */
-		return apply_filters( 'ohmylms_rest_prepare_course', $response, $post, $request );
-	}
-
-	/**
-	 * Update the status of a course.
-	 *
-	 * @param WP_REST_Request $request The REST request object.
-	 * @return WP_Error|WP_REST_Response
-	 *
-	 * @since 1.0.0
-	 */
-	public function update_status( $request ) {
-		// Get the status and course ID from the request.
-		$status    = sanitize_text_field( $request['status'] );
-		$course_id = (int) $request['id'];
-
-		// Get the course object.
-		$course = ohmylms_get_course( $course_id );
-
-		if ( ! $course ) {
-			return new WP_Error( 'rest_course_not_found', __( 'Course not found.', 'ohmylms' ), array( 'status' => 404 ) );
-		}
-
-		// Get the current post to check previous status.
-		$post         = get_post( $course_id );
-		$current_time = current_time( 'mysql' );
-
-		// Handle post_date update when changing from 'future' status.
-		$update_data = array(
-			'ID'          => $course_id,
-			'post_status' => $status,
-		);
-
-		// If changing from future status to publish/draft, update post_date.
-		if ( 'future' === $post->post_status && in_array( $status, array( 'publish', 'draft' ) ) ) {
-			$update_data['post_date']     = current_time( 'mysql' );
-			$update_data['post_date_gmt'] = get_gmt_from_date( current_time( 'mysql' ) );
-		}
-		$updated = wp_update_post( $update_data, true );
-		if ( ! $updated || is_wp_error( $updated ) ) {
-			return new WP_Error( 'rest_course_status_update_failed', __( 'Failed to update course status.', 'ohmylms' ), array( 'status' => 500 ) );
-		}
-
-		/*
-		 * Fires after a course status is updated via the REST API.
-		 *
-		 * @param int $course_id The course ID.
-		 * @param string $status The new status for the course.
-		 *
-		 * @since 1.0.0
-		 */
-		do_action( 'ohmylms_rest_course_status_updated', $course_id, $status );
-
-		return rest_ensure_response(
-			array(
-				'status'  => 'success',
-				'message' => __( 'Course status updated.', 'ohmylms' ),
-			)
-		);
-	}
-
-
 	/**
 	 * Assign terms to a course.
 	 *
@@ -2360,7 +2590,10 @@ class CourseController extends RestController {
 		if ( in_array( $taxonomy, array( 'course_category', 'course_tag' ), true ) ) {
 			return new WP_Error( 'ohmylms_taxonomy_replaced', __( 'Course categories and tags were replaced by curriculum items and course bundles. Use /courses/{id}/organization.', 'ohmylms' ), array( 'status' => 410 ) );
 		}
-		$result = wp_set_object_terms( $course_id, $terms, $taxonomy );
+		if ( ! is_object_in_taxonomy( OHMYLMS_COURSE_CPT, (string) $taxonomy ) ) {
+			return new WP_Error( 'ohmylms_course_invalid_taxonomy', __( 'That taxonomy does not apply to courses.', 'ohmylms' ), array( 'status' => 400 ) );
+		}
+		$result = wp_set_object_terms( $course_id, array_map( 'absint', (array) $terms ), (string) $taxonomy );
 
 		if ( is_wp_error( $result ) ) {
 			return $result;
@@ -2372,189 +2605,5 @@ class CourseController extends RestController {
 				'terms'   => $result,
 			)
 		);
-	}
-
-	/**
-	 * Get taxonomy terms for a course.
-	 *
-	 * @param Course $course The course object.
-	 * @param string $taxonomy The taxonomy to retrieve terms for. Default is 'category'.
-	 * @return array The array of terms with their IDs and names.
-	 *
-	 * @since 1.0.0
-	 */
-	protected function get_taxonomy_terms( $course, $taxonomy = 'category' ) {
-		$terms = array();
-		// Course categories and tags were replaced by curriculum items and course bundles. The admin app still
-		// reads categories and tags from the course, so these keys now carry the replacements.
-		if ( 'tag' === $taxonomy ) {
-			foreach ( \OhMyLMS\Curriculum\Placement::bundles( $course->get_id() ) as $bundle ) {
-				$terms[] = array(
-					'id'   => $bundle['id'],
-					'name' => $bundle['title'],
-					'slug' => $bundle['slug'],
-				);
-			}
-			return $terms;
-		}
-		foreach ( \OhMyLMS\Curriculum\Placement::items( $course->get_id() ) as $item ) {
-			$terms[] = array(
-				'id'   => $item['id'],
-				'name' => $item['name'],
-				'slug' => $item['slug'],
-			);
-		}
-		return $terms;
-	}
-
-
-	/**
-	 * Handle terms for a course.
-	 *
-	 * This method processes and assigns terms to a course based on the provided request data.
-	 *
-	 * @param int              $post_id The ID of the course post.
-	 * @param \WP_REST_Request $request The REST request object containing the term data.
-	 * .
-	 * @since 1.0.0
-	 */
-	protected function handle_terms( $post_id, $request ) {
-		$taxonomies = wp_list_filter( get_object_taxonomies( OHMYLMS_COURSE_CPT, 'objects' ), array( 'show_in_rest' => true ) );
-		foreach ( $taxonomies as $taxonomy ) {
-			// Categories and tags are replaced by curriculum and course bundles (see CourseOrganizationController).
-			if ( in_array( $taxonomy->name, array( 'course_category', 'course_tag' ), true ) ) {
-				continue;
-			}
-			$base = ! empty( $taxonomy->rest_base ) ? $taxonomy->rest_base : $taxonomy->name;
-			if ( 'course_category' === $base ) {
-				$base = 'categories';
-			} elseif ( 'course_tag' === $base ) {
-				$base = 'tags';
-			}
-			if ( ! isset( $request[ $base ] ) ) {
-				continue;
-			}
-
-			$result = wp_set_object_terms( $post_id, array_column( $request[ $base ], 'id' ), $taxonomy->name );
-
-			if ( is_wp_error( $result ) ) {
-				return $result;
-			}
-		}
-	}
-	/**
-	 * Updates the status and password of a course.
-	 *
-	 * @param int             $course_id The ID of the course to update.
-	 * @param WP_REST_Request $request The request object containing the updated data.
-	 * @return void
-	 */
-	protected function update_course_status_and_password( $course_id, $request ) {
-		$current_time = current_time( 'mysql' ); // Get the current date and time.
-		$post         = get_post( $course_id ); // Retrieve the post details.
-
-		if ( ! $post ) {
-			return;
-		}
-
-		// Get the current post_date.
-		$existing_post_date = $post->post_date;
-
-		if ( isset( $request['status'] ) ) {
-			$status      = $request['status'];
-			$update_data = array(
-				'ID'          => $course_id,
-				'post_status' => $status,
-			);
-
-			if ( 'future' === $status && isset( $request['post_date']['date'] ) ) {
-				$update_data['post_date'] = $request['post_date']['date'];
-			} elseif ( in_array( $status, array( 'publish', 'draft' ) ) ) {
-				$update_data['post_date'] = ( $existing_post_date < $current_time ) ? $existing_post_date : $current_time;
-			}
-
-			wp_update_post( $update_data );
-		}
-	}
-
-
-	/**
-	 * Save cohort settings for a course.
-	 *
-	 * @param int             $course_id Course identifier.
-	 * @param WP_REST_Request $request REST request.
-	 * @return bool
-	 */
-	protected function save_cohort_settings( $course_id, $request ) {
-		global $wpdb;
-		$table        = $wpdb->prefix . 'ohmylms_cohorts';
-		$cohorts      = isset( $request['cohort'] ) && is_array( $request['cohort'] ) ? $request['cohort'] : array();
-		$existing_ids = array();
-		$course       = ohmylms_get_course( $course_id );
-		foreach ( $cohorts as $cohort ) {
-			$data = array(
-				'course_id'      => $course_id,
-				'title'          => isset( $cohort['title'] ) ? sanitize_text_field( $cohort['title'] ) : 'Untitled Cohort',
-				'start_date'     => ! empty( $cohort['start_date'] ) ? date( 'Y-m-d H:i:s', strtotime( $cohort['start_date'] ) ) : null,
-				'end_date'       => ! empty( $cohort['end_date'] ) ? date( 'Y-m-d H:i:s', strtotime( $cohort['end_date'] ) ) : null,
-				'enrollment_end' => ! empty( $cohort['enrollment_deadline'] ) ? date( 'Y-m-d H:i:s', strtotime( $cohort['enrollment_deadline'] ) ) : null,
-				'has_capacity'   => ! empty( $cohort['has_capacity'] ) ? 1 : 0,
-				'capacity'       => isset( $cohort['capacity'] ) ? intval( $cohort['capacity'] ) : null,
-				'status'         => isset( $cohort['status'] ) ? sanitize_text_field( $cohort['status'] ) : 'active',
-				'meta'           => isset( $cohort['meta'] ) ? maybe_serialize( $cohort['meta'] ) : null,
-			);
-
-			if ( ! empty( $cohort['id'] ) ) {
-				$wpdb->update(
-					$table,
-					$data,
-					array( 'id' => intval( $cohort['id'] ) ),
-					array(
-						'%d',
-						'%s',
-						'%s',
-						'%s',
-						'%s',
-						'%d',
-						'%f',
-						'%s',
-						'%s',
-					),
-					array( '%d' )
-				);
-				$existing_ids[] = intval( $cohort['id'] );
-			} else {
-				$wpdb->insert(
-					$table,
-					$data,
-					array(
-						'%d',
-						'%s',
-						'%s',
-						'%s',
-						'%s',
-						'%d',
-						'%f',
-						'%s',
-						'%s',
-					)
-				);
-				$existing_ids[] = $wpdb->insert_id;
-			}
-		}
-
-		if ( ! empty( $existing_ids ) ) {
-			$ids_placeholder = implode( ',', array_fill( 0, count( $existing_ids ), '%d' ) );
-			$wpdb->query(
-				$wpdb->prepare(
-					"DELETE FROM %i WHERE course_id = %d AND id NOT IN ($ids_placeholder)",
-					array_merge( array( $table, $course_id ), $existing_ids )
-				)
-			);
-		} else {
-			$wpdb->delete( $table, array( 'course_id' => $course_id ), array( '%d' ) );
-		}
-
-		return true;
 	}
 }
