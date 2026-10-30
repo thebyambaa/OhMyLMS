@@ -8,6 +8,7 @@ import {
 } from './assignments';
 import { certificateEditor, certificates } from './certificates';
 import { coupons, orderDetail, orders } from './commerce';
+import { subscriptionDetail, subscriptions } from './commerce/subscriptions';
 import { contentHub } from './content-hub';
 import { courseEditor, courses } from './courses';
 import {
@@ -66,6 +67,8 @@ export const features: readonly FeatureDefinition[] = [
 	orders,
 	orderDetail,
 	coupons,
+	subscriptions,
+	subscriptionDetail,
 	memberships,
 	membershipEditor,
 	students,

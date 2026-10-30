@@ -22,7 +22,7 @@ import type { CouponQuery, OrderQuery } from './types';
  * @param invalid  Server code for a page past the end.
  * @param stepBack Called to move to the previous page.
  */
-function useStepBack(
+export function useStepBack(
 	error: ApiError | null,
 	page: number,
 	invalid: string,

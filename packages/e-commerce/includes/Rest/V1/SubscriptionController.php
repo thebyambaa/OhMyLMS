@@ -6,7 +6,7 @@ use OhMyLMS\Commerce\Abstracts\RestController;
 use OhMyLMS\Commerce\Data\Subscription;
 use function OhMyLMS\Commerce\ecommerce;
 use OhMyLMS\Commerce\SubscriptionManager;
-
+use WP_Error;
 
 /**
  * Plugin subscription controller implementation.

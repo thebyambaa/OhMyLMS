@@ -180,3 +180,69 @@ export interface CourseOption {
 	title: string;
 	status: string;
 }
+
+export type SubscriptionStatus =
+	| 'pending'
+	| 'active'
+	| 'on-hold'
+	| 'pending-cancel'
+	| 'cancelled'
+	| 'expired';
+export type SubscriptionAction = 'pause' | 'resume' | 'cancel';
+export type BillingPeriod = '' | 'day' | 'week' | 'month' | 'year';
+export type SubscriptionOrderBy = 'date' | 'id';
+
+/** A row of `GET /ohmylms/v1/subscriptions`. No email: that is in the detail only. */
+export interface SubscriptionSummary {
+	id: number;
+	status: SubscriptionStatus;
+	plan_id: number;
+	plan_name: string;
+	customer_id: number;
+	customer_name: string;
+	start_date: string | null;
+	next_payment_date: string | null;
+	end_date: string | null;
+	billing_period: BillingPeriod;
+	billing_interval: number;
+	recurring_amount: string;
+	currency: string;
+	allowed_actions: SubscriptionAction[];
+}
+
+export interface SubscriptionOrder {
+	id: number;
+	relationship: 'parent' | 'renewal';
+	status: string;
+	total: string;
+	currency: string;
+	date_created: string | null;
+}
+
+export interface SubscriptionNote {
+	id: number;
+	content: string;
+	added_by: string;
+	date_created: string | null;
+}
+
+/** The body of `GET /ohmylms/v1/subscriptions/{id}`. */
+export interface SubscriptionDetail extends SubscriptionSummary {
+	customer_email: string;
+	original_order_id: number;
+	payment_method: string;
+	payment_method_title: string;
+	last_payment_date: string | null;
+	cancelled_date: string | null;
+	date_created: string | null;
+	related_orders: SubscriptionOrder[];
+	notes: SubscriptionNote[];
+}
+
+export interface SubscriptionQuery {
+	page: number;
+	search: string;
+	status: SubscriptionStatus | 'any';
+	orderby: SubscriptionOrderBy;
+	order: SortOrder;
+}

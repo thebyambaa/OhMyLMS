@@ -92,6 +92,7 @@ class Api {
 			\OhMyLMS\Rest\V1\IntegrationsController::class,
 			\OhMyLMS\Rest\V1\AppController::class,
 			\OhMyLMS\Rest\V1\WebhookController::class,
+			\OhMyLMS\Rest\V1\SubscriptionsController::class,
 			\OhMyLMS\Rest\V1\AssignmentsController::class,
 			\OhMyLMS\Rest\V1\AccountHubController::class,
 		);

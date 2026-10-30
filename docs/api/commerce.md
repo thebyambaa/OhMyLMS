@@ -5,9 +5,9 @@ compatibility layer for the recovered admin (its order and coupon screens will n
 these shapes). The machine-readable form is `assets/src/app/features/commerce/contract.json`.
 Server code: `packages/e-commerce/includes/Rest/V1/OrdersController.php`, `CouponController.php`,
 `OrderRefundController.php` on `Abstracts/RestController.php` (capability, locks). Test:
-`tests/php/commerce-rest-integration.php`. Subscriptions (`SubscriptionController`) are out of scope
-and unchanged. The namespace `cx-ecommerce/v1` is still registered with the same controllers on sites
-without CreatorLMS (see `docs/CREATORLMS-COEXISTENCE.md`).
+`tests/php/commerce-rest-integration.php`. Subscriptions have their own hardened API under
+`ohmylms/v1/subscriptions`; see [Subscriptions](#subscriptions) below. The namespace `cx-ecommerce/v1` is
+still registered with the same controllers on sites without CreatorLMS (see `docs/CREATORLMS-COEXISTENCE.md`).
 
 ## Audit before
 
@@ -187,10 +187,121 @@ and `rest_missing_callback_param` (400).
 - Money-moving and state-changing actions take a lock via `add_option()` (atomic on the unique
   `option_name`); a lock older than 60 s is treated as abandoned. This is not a database transaction.
 - Notes and coupon text are stored as plain text; the React client renders them as text.
-- Not covered: refunds through live gateways, creating orders by hand, subscriptions.
+- Not covered: refunds through live gateways, creating orders by hand.
 
 ## Verification
 
 `tests/php/commerce-rest-integration.php` (run with `OHMYLMS_COMMERCE_TEST=1` against the Local site)
 creates tagged offline orders, coupons, a course and users, checks denied callers on every route,
 validation, transitions, hooks, notes, the refund guards and cleans up everything it created.
+
+## Subscriptions
+
+Read-mostly API under **`ohmylms/v1/subscriptions`** (contract version 1). Server code:
+`includes/Rest/V1/SubscriptionsController.php` (registered in `includes/Rest/Api.php`; nothing is registered
+when the commerce package is not loaded). Status changes go through the existing
+`OhMyLMS\Commerce\SubscriptionManager`; no new storage. Screens: `#/subscriptions` and `#/subscriptions/:id`
+in `assets/src/app/features/commerce` (extension routes `/subscriptions` and `/subscription-edit/:id`).
+Test: `tests/php/subscriptions-rest-integration.php` (`OHMYLMS_SUBSCRIPTIONS_TEST=1`).
+
+The legacy route `ohmylms-commerce/v1/subscriptions` (`packages/e-commerce/includes/Rest/V1/SubscriptionController.php`)
+is still registered for the recovered `#/subscriptions`, `#/subscriptions/:page`, `#/memberships/subscriptions`
+and `#/subscription-edit/:id` screens. Apart from the missing `WP_Error` import (fixed) it is unchanged; the
+findings below apply to it.
+
+### Audit before
+
+| Severity | Finding |
+| --- | --- |
+| High | **Any field and any status could be written.** `PUT /subscriptions/{id}` copied ~15 body fields (student, membership, gateway ID, recurring amount, dates, status) onto the subscription without validation and allowed any status from any status, including `active` for an unpaid `pending` subscription. The data store wrote `post_status` with a raw `$wpdb->update()`, so renewals were neither scheduled nor cleared and `SubscriptionManager`'s hooks did not fire. |
+| High | **Creation route.** `POST /subscriptions` cast a `Subscription` object to an array and passed it to `wp_insert_post()`, then copied every `_`-prefixed schema field into post meta (gateway customer ID and payment token included). Subscriptions come from checkout. |
+| High | **Fatal errors.** The controller used `WP_Error` without importing it, so a missing ID (`GET /subscriptions/999`) and an unknown post type crashed with `Class "OhMyLMS\Commerce\Rest\V1\WP_Error" not found`. `get_subscription_data()` called `$order->get_tax_rate()` on a missing original order. |
+| High | **`pending-cancel` cannot be stored.** `ohmylms-pending-cancel` has 22 characters; `post_status` is `varchar(20)`, so `wp_update_post()` fails, `mark_subscription_pending_cancellation()` returns false and adds a failure note. The status is registered and listed but never reached. |
+| Medium | **Unbounded, injectable queries.** The list accepted `offset`, `include`/`exclude`, `before`/`after` and an `orderby` enum extended with meta keys (including `_gateway_payment_method_token`), passed straight to `WP_Query`, and ran the filter `cx_ecommerce_rest_{post_type}_query`. Search matched only the generated post title. |
+| Medium | **Personal data and N+1.** Each list row loaded the student (`ohmylms_get_student()`), the original order, its items, every related order and every note, and returned email and profile URLs. `get_related_orders()` ran an unbounded query and returned display strings (`"Renewal Order"`, `ucfirst` statuses). |
+| Medium | **Hooks.** `ohmylms_update_subscription_status_to_{active,cancelled,expired}` fired only from this controller; no plugin code listens to them or to `SubscriptionManager`'s `ohmylms_subscription_*` hooks, so cancelling does not by itself change membership rows (access follows the membership records). |
+| Low | Permission callbacks returned `false` (generic `rest_forbidden`), not typed errors; `prepare_item_for_database()` set `student_name`, `student_email`, `student_profile`; statuses were exposed with and without the `ohmylms-` prefix; schema keys (`_student_id`) differed from response keys (`student_id`). |
+| OK | Every route required `manage_options`; cookie requests need the core REST nonce. |
+
+### Routes
+
+All routes require `manage_options`. Anonymous callers get `401`, logged-in users without it `403`
+(`ohmylms_subscription_cannot_view|edit`). Argument validation runs before the permission callback (core).
+
+| Method | Path | Purpose | Success | Errors |
+| --- | --- | --- | --- | --- |
+| GET | `/subscriptions` | Paged list (light rows) | 200 + `X-WP-Total`, `X-WP-TotalPages`, `Link` | 400, 401, 403 |
+| GET | `/subscriptions/{id}` | One subscription with orders and notes | 200 | 401, 403, 404 |
+| POST | `/subscriptions/{id}/pause` | Put on hold (`mark_subscription_on_hold`) | 200 detail | 400, 401, 403, 404, 409, 500 |
+| POST | `/subscriptions/{id}/resume` | Reactivate (`mark_subscription_active`) | 200 detail | 400, 401, 403, 404, 409, 500 |
+| POST | `/subscriptions/{id}/cancel` | Cancel now (`mark_subscription_cancelled`) | 200 detail | 400, 401, 403, 404, 409, 500 |
+
+There is no create, update or delete route.
+
+**List arguments:** `page` (>= 1), `per_page` (1-100, default 20), `search` (at most 100 characters:
+subscription or order number, customer display name or email, plan name; at most 1000 matches considered),
+`status` (`any` or a status), `orderby` (`date|id`), `order` (`asc|desc`). A page past the end answers 400
+`ohmylms_subscription_invalid_page`. Post meta, users and plans are primed, so a page costs a constant
+number of queries.
+
+**Row:** `id, status, plan_id, plan_name, customer_id, customer_name, start_date, next_payment_date,
+end_date, billing_period, billing_interval, recurring_amount, currency, allowed_actions`. No email, no gateway
+data. `customer_name` is first and last name, else the display name (as the legacy screen shows it).
+`recurring_amount` includes the subscription's tax rate, as before. **Detail** adds `customer_email,
+original_order_id, payment_method, payment_method_title, last_payment_date, cancelled_date, date_created,
+related_orders[] {id, relationship: parent|renewal, status, total, currency, date_created}` (at most 50, newest
+first) and `notes[] {id, content, added_by, date_created}` (plain text, at most 50). Dates are site time,
+ISO 8601 without offset, or `null`; money is a decimal string.
+
+### Status changes
+
+| Action | Allowed from | Result |
+| --- | --- | --- |
+| `pause` | active | on-hold; scheduled renewals are cleared |
+| `resume` | on-hold, pending-cancel | active; the next renewal is scheduled when its date is in the future |
+| `cancel` | pending, active, on-hold, pending-cancel | cancelled; renewals cleared, `_end_date` recorded |
+
+`pending` (unpaid) cannot be activated here and `cancelled`/`expired` are final. Cancelling at the end of the
+term is not offered because `pending-cancel` cannot be stored (see the audit).
+
+- **Confirmation:** the body must be `{"confirm": true}`. Without it the answer is 400
+  `ohmylms_subscription_confirm_required` and nothing changes. The admin screen asks first in a dialog.
+- **Invalid transition:** 409 `ohmylms_subscription_invalid_transition` with `data.current_status` and
+  `data.allowed_actions`; nothing changes, no hook fires. Resuming past `_schedule_end_date` answers 409
+  `ohmylms_subscription_ended`.
+- **Concurrency:** a per-subscription lock (`ohmylms_lock_subscription-{id}` option, 60 s) answers 409
+  `ohmylms_subscription_busy`; the status is re-read after taking it.
+- **Hooks:** the manager's `ohmylms_subscription_status_{status}`, `ohmylms_subscription_status_changed`,
+  `ohmylms_subscription_on_hold`, `ohmylms_subscription_cancelled`, plus the legacy
+  `ohmylms_update_subscription_status_to_active` / `_to_cancelled` (resume / cancel) and the new
+  `ohmylms_rest_subscription_action( $id, $action, $previous_status )`. Filter: `ohmylms_rest_prepare_subscription`.
+  The manager adds a note for each change, attributed to the administrator.
+
+```http
+POST /wp-json/ohmylms/v1/subscriptions/501/pause
+X-WP-Nonce: <wp_rest nonce>
+{ "confirm": true }
+
+HTTP/1.1 409 Conflict
+{ "code": "ohmylms_subscription_invalid_transition", "message": "A subscription cannot pause while it is on-hold.",
+  "data": { "status": 409, "current_status": "on-hold", "allowed_actions": [ "resume", "cancel" ] } }
+```
+
+### Security notes
+
+- One capability constant; no `__return_true`. Client values never reach `WP_Query` except the allow-listed
+  status, sort and an ID list produced by a prepared, bounded search.
+- Lists carry no email; gateway customer IDs and payment tokens are never returned.
+- Status changes run only through `SubscriptionManager` after the transition and confirmation checks, under a
+  lock. Notes are returned as plain text and rendered as text.
+- Not covered: renewals and payments (Action Scheduler job), editing schedule dates or amounts, the legacy
+  `ohmylms-commerce/v1/subscriptions` route, and the `#/memberships/subscriptions` tab (owned by the
+  memberships screen).
+
+### Verification
+
+`tests/php/subscriptions-rest-integration.php` creates a tagged plan, customer, offline orders and six
+subscriptions, and checks: routes and permission callbacks; anonymous, subscriber, contributor and editor denied
+on every route with nothing changed; list totals, paging, filters, search, sorting and the absence of email;
+the detail; confirmation; every invalid transition (409, post, meta and notes unchanged); the lock; pause,
+resume and cancel with their hooks; the schema. It removes everything it created.
