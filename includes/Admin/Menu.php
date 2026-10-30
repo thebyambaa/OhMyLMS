@@ -50,33 +50,34 @@ class Menu {
 		$pending_count = 0;
 		$badge_html    = $pending_count > 0 ? " <span class='update-plugins count-$pending_count'><span class='plugin-count'>$pending_count</span></span>" : '';
 		if ( current_user_can( $capability ) ) {
-			$submenu[ $slug ][] = array( esc_attr__( 'Dashboard', 'ohmylms' ), $capability, 'admin.php?page=' . $slug . '#/dashboard' );
+			// Each entry names its legacy route; LegacyRoutes opens the new app where it replaces the screen.
+			$submenu[ $slug ][] = array( esc_attr__( 'Dashboard', 'ohmylms' ), $capability, LegacyRoutes::url( '/dashboard' ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 			// Courses, lessons, quizzes, the question bank, assignments, skills, the curriculum and Learning
 			// Bundles are managed together in the Content Hub; the old #/courses, #/quizzes, #/assignments,
 			// #/assessments, #/extensions/skills, #/extensions/question-bank, #/extensions/curriculum,
 			// #/extensions/bundles, #/categories and #/tags addresses open the matching tabs. Curriculum
 			// replaces course categories and Course Bundles replace course tags.
-			$submenu[ $slug ][] = array( esc_attr__( 'Content Hub', 'ohmylms' ), $capability, 'admin.php?page=' . $slug . '#/content-hub' ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+			$submenu[ $slug ][] = array( esc_attr__( 'Content Hub', 'ohmylms' ), $capability, LegacyRoutes::url( '/content-hub' ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 			// With Gamification on, Certificates is a tab of the Gamification screen (#/gamification/certificates)
 				// and #/certificates opens it; without Gamification it keeps its own entry.
 				$gamification_enabled = apply_filters( 'ohmylms_show_gamification_menu', false );
 			if ( ! $gamification_enabled ) {
-				$submenu[ $slug ][] = array( esc_attr__( 'Certificates', 'ohmylms' ), $capability, 'admin.php?page=' . $slug . '#/certificates' ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+				$submenu[ $slug ][] = array( esc_attr__( 'Certificates', 'ohmylms' ), $capability, LegacyRoutes::url( '/certificates' ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 			}
 
 			if ( apply_filters( 'ohmylms_show_sessions_menu', false ) ) {
-				$submenu[ $slug ][] = array( esc_attr__( 'Sessions', 'ohmylms' ), $capability, 'admin.php?page=' . $slug . '#/sessions' );
+				$submenu[ $slug ][] = array( esc_attr__( 'Sessions', 'ohmylms' ), $capability, LegacyRoutes::url( '/sessions' ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 			}
 
 			// Plans, coupons, orders and subscriptions share the Membership screen; old links remain available.
-			$submenu[ $slug ][] = array( esc_attr__( 'Membership', 'ohmylms' ) . $badge_html, $capability, 'admin.php?page=' . $slug . '#/memberships' ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
-			$submenu[ $slug ][] = array( esc_attr__( 'Account Hub', 'ohmylms' ), $capability, 'admin.php?page=' . $slug . '#/accounthub' );
+			$submenu[ $slug ][] = array( esc_attr__( 'Membership', 'ohmylms' ) . $badge_html, $capability, LegacyRoutes::url( '/memberships' ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+			$submenu[ $slug ][] = array( esc_attr__( 'Account Hub', 'ohmylms' ), $capability, LegacyRoutes::url( '/accounthub' ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 			if ( $gamification_enabled ) {
-				$submenu[ $slug ][] = array( esc_attr__( 'Gamification', 'ohmylms' ), $capability, 'admin.php?page=' . $slug . '#/gamification/point-settings' ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+				$submenu[ $slug ][] = array( esc_attr__( 'Gamification', 'ohmylms' ), $capability, LegacyRoutes::url( '/gamification/point-settings' ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 			}
 
 			if ( apply_filters( 'ohmylms_should_enable_webhooks', false ) ) {
-				$submenu[ $slug ][] = array( esc_attr__( 'Webhooks', 'ohmylms' ), $capability, 'admin.php?page=' . $slug . '#/webhooks' ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+				$submenu[ $slug ][] = array( esc_attr__( 'Webhooks', 'ohmylms' ), $capability, LegacyRoutes::url( '/webhooks' ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 			}
 		}
 	}
@@ -121,7 +122,7 @@ class Menu {
 			__( 'Settings', 'ohmylms' ),
 			__( 'Settings', 'ohmylms' ),
 			'manage_options',
-			admin_url( 'admin.php?page=ohmylms#/settings/general-settings' ),
+			LegacyRoutes::url( '/settings/general-settings' ),
 			null
 		);
 

@@ -14,8 +14,10 @@ Only users who can manage OhMyLMS see them.
 
 - `includes/Admin/Commands.php` builds the list and loads `assets/js/commands.js`, which registers each command with
   the `core/commands` store. There is no build step for the script.
-- Every command is a hash route of the admin app. On the OhMyLMS screen the palette changes the hash; elsewhere it
-  opens `admin.php?page=ohmylms#<route>`.
+- Every command is a legacy hash route. `Commands::all()` sends it through `LegacyRoutes::target()`
+  ([legacy routes](LEGACY-ROUTES.md)), so each command also carries `page`: `ohmylms-app` with the new route where the
+  new app replaces the screen, otherwise `ohmylms` with the route unchanged. A command that sets its own `page` keeps
+  it. On that page the palette changes the hash; elsewhere it opens `admin.php?page=<page>#<route>`.
 - An action is a route with `?action=`: `#/content-hub/exams?action=new` opens the Exams tab with the New exam
   dialog open. Screens handle it with `useHubAction( { new: ..., import: ... } )`
   (`assets/src/features/content-hub/useHubAction.js`), which removes the parameter once handled.

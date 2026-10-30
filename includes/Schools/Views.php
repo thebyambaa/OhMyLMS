@@ -93,7 +93,7 @@ final class Views {
 		$tab = sanitize_key( self::query_value( 'tab', 'schools' ) );
 		if ( ! in_array( $tab, array( 'home', 'students', 'teachers', 'parents', 'users', 'classes', 'schools' ), true ) ) {
 			$tab = 'schools'; }
-		wp_safe_redirect( admin_url( 'admin.php?page=' . OHMYLMS_SLUG ) . '#/accounthub' . ( 'home' === $tab ? '' : '?tab=' . $tab ) );
+		wp_safe_redirect( \OhMyLMS\Admin\LegacyRoutes::url( '/accounthub' . ( 'home' === $tab ? '' : '?tab=' . $tab ) ) );
 		exit;
 	}
 	/** Register the hidden platform school editor. */
@@ -108,7 +108,7 @@ final class Views {
 			add_filter(
 				'submenu_file',
 				function () {
-					return 'admin.php?page=' . OHMYLMS_SLUG . '#/accounthub';
+					return \OhMyLMS\Admin\LegacyRoutes::url( '/accounthub' );
 				}
 			);
 		}
@@ -148,7 +148,7 @@ final class Views {
 			);
 			if ( is_admin() ) {
 				$config['usersUrl']    = current_user_can( 'create_users' ) ? admin_url( 'user-new.php' ) : '';
-				$config['studentsUrl'] = current_user_can( 'manage_options' ) ? admin_url( 'admin.php?page=' . OHMYLMS_SLUG . '#/accounthub' ) : '';
+				$config['studentsUrl'] = current_user_can( 'manage_options' ) ? \OhMyLMS\Admin\LegacyRoutes::url( '/accounthub' ) : '';
 			}
 			wp_add_inline_script( 'ohmylms-schools', 'window.ohmylmsSchools=' . wp_json_encode( $config, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ) . ';', 'before' );
 			$configured = true;

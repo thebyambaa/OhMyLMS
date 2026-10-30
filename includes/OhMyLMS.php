@@ -463,7 +463,7 @@ final class OhMyLMS {
 		add_action( 'init', array( $this, 'localization_setup' ) );
 
 		// Add the plugin page links.
-		add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( $this, 'plugin_action_links' ) );
+		add_filter( 'plugin_action_links_' . plugin_basename( OHMYLMS_FILE ), array( $this, 'plugin_action_links' ) );
 
 		add_action( 'plugins_loaded', array( $this, 'on_plugins_loaded' ) );
 		add_action( 'init', array( $this, 'init' ) );
@@ -699,8 +699,7 @@ final class OhMyLMS {
 	 * @return array
 	 */
 	public function plugin_action_links( $links ) {
-		$links[] = '<a href="' . admin_url( 'admin.php?page=plugin_name#/settings' ) . '">' . __( 'Settings', 'ohmylms' ) . '</a>';
-		$links[] = '<a href="#" target="_blank">' . __( 'Documentation', 'ohmylms' ) . '</a>';
+		$links[] = '<a href="' . esc_url( \OhMyLMS\Admin\LegacyRoutes::url( '/settings/general-settings' ) ) . '">' . esc_html__( 'Settings', 'ohmylms' ) . '</a>';
 
 		return $links;
 	}

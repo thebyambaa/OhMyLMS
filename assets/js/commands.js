@@ -8,17 +8,20 @@
 		return;
 	}
 	var dispatch = wp.data.dispatch( wp.commands.store );
-	var base = window.location.pathname.replace( /[^/]*$/, '' ) + 'admin.php?page=' + config.page;
+	var base =
+		window.location.pathname.replace( /[^/]*$/, '' ) + 'admin.php?page=';
 
-	function open( route, close ) {
+	// Each command names its admin page: the new app (ohmylms-app) or the legacy app (config.page).
+	function open( page, route, close ) {
 		var onApp =
 			window.location.pathname.slice( -9 ) === 'admin.php' &&
-			new URLSearchParams( window.location.search ).get( 'page' ) === config.page;
+			new URLSearchParams( window.location.search ).get( 'page' ) ===
+				page;
 		if ( onApp ) {
 			// The admin app routes on the hash, so changing it opens the screen without a reload.
 			window.location.hash = '#' + route;
 		} else {
-			window.location.assign( base + '#' + route );
+			window.location.assign( base + page + '#' + route );
 		}
 		close();
 	}
@@ -27,9 +30,11 @@
 		dispatch.registerCommand( {
 			name: command.name,
 			label: command.label,
-			searchLabel: [ command.label ].concat( command.keywords || [] ).join( ' ' ),
+			searchLabel: [ command.label ]
+				.concat( command.keywords || [] )
+				.join( ' ' ),
 			callback: function ( args ) {
-				open( command.route, args.close );
+				open( command.page || config.page, command.route, args.close );
 			},
 		} );
 	} );

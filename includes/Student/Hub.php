@@ -365,7 +365,7 @@ final class Hub {
 	 * @return string
 	 */
 	public static function admin_home_url() {
-		return admin_url( 'admin.php?page=' . OHMYLMS_SLUG . '#/accounthub' );
+		return \OhMyLMS\Admin\LegacyRoutes::url( '/accounthub' );
 	}
 
 	/** Send the retired Student Home admin address to the Account Hub home tab. */

@@ -16,6 +16,7 @@ class AdminAssets extends Assets {
 	 * Init for Admin assets.
 	 */
 	public function init() {
+		add_action( 'admin_enqueue_scripts', array( \OhMyLMS\Admin\LegacyRoutes::class, 'enqueue_redirect' ), 1 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_benchmark' ), 9 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'load_scripts' ) );
 		add_action( 'admin_print_scripts', array( $this, 'localize_printed_scripts' ) );

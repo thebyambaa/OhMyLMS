@@ -1,0 +1,690 @@
+{
+	"cases": [
+		[
+			"",
+			"/dashboard"
+		],
+		[
+			"/",
+			"/dashboard"
+		],
+		[
+			"/dashboard",
+			"/dashboard"
+		],
+		[
+			"/earnings-report",
+			"/earnings"
+		],
+		[
+			"/course/12/report",
+			"/reports/courses/12"
+		],
+		[
+			"/orders",
+			"/orders"
+		],
+		[
+			"/orders/",
+			"/orders"
+		],
+		[
+			"#/orders",
+			"/orders"
+		],
+		[
+			"/orders/3",
+			"/orders"
+		],
+		[
+			"/orders?status=completed",
+			"/orders?status=completed"
+		],
+		[
+			"/memberships/orders",
+			"/orders"
+		],
+		[
+			"/memberships/orders/2",
+			"/orders"
+		],
+		[
+			"/order-edit/45",
+			"/orders/45"
+		],
+		[
+			"/coupons",
+			"/coupons"
+		],
+		[
+			"/memberships/coupons",
+			"/coupons"
+		],
+		[
+			"/subscriptions",
+			"/subscriptions"
+		],
+		[
+			"/subscriptions/2",
+			"/subscriptions"
+		],
+		[
+			"/memberships/subscriptions",
+			"/subscriptions"
+		],
+		[
+			"/subscription-edit/9",
+			"/subscriptions/9"
+		],
+		[
+			"/memberships",
+			"/memberships"
+		],
+		[
+			"/certificates",
+			"/certificates"
+		],
+		[
+			"/gamification/certificates",
+			"/certificates"
+		],
+		[
+			"/certificate-edit/7",
+			"/certificates/7"
+		],
+		[
+			"/emails",
+			"/emails"
+		],
+		[
+			"/emails/student_enrolled",
+			"/emails?email=student_enrolled"
+		],
+		[
+			"/emails/a%20b",
+			"/emails?email=a%20b"
+		],
+		[
+			"/settings/emails-settings",
+			"/emails"
+		],
+		[
+			"/webhooks",
+			"/webhooks"
+		],
+		[
+			"/settings/webhooks-settings",
+			"/webhooks"
+		],
+		[
+			"/integrations",
+			"/integrations"
+		],
+		[
+			"/settings/general-settings",
+			"/settings?tab=general"
+		],
+		[
+			"/settings/branding-settings",
+			"/settings?tab=branding"
+		],
+		[
+			"/settings/account-privacy-settings",
+			"/settings?tab=account-and-privacy"
+		],
+		[
+			"/settings/parmalink-settings",
+			"/settings?tab=permalink"
+		],
+		[
+			"/settings/advanced-settings",
+			"/settings?tab=advanced"
+		],
+		[
+			"/settings/ai-tutor-settings",
+			"/settings?tab=ai-tutor"
+		],
+		[
+			"/settings/design-system-settings",
+			"/settings?tab=design-system"
+		],
+		[
+			"/settings/xapi-settings",
+			"/settings?tab=xapi"
+		],
+		[
+			"/settings/payments-settings",
+			"/settings?tab=payment-gateways"
+		],
+		[
+			"/settings/payments-settings/payments",
+			"/settings?tab=payment-gateways"
+		],
+		[
+			"/settings/payments-settings/payments/stripe",
+			"/settings?tab=payment-gateways"
+		],
+		[
+			"/settings/payments-settings/currency",
+			"/settings?tab=currency"
+		],
+		[
+			"/settings/payments-settings/tax",
+			"/settings?tab=tax"
+		],
+		[
+			"/settings/gamification-settings",
+			"/gamification"
+		],
+		[
+			"/settings/gamification-settings/badge-settings",
+			"/gamification?tab=badges"
+		],
+		[
+			"/gamification/point-settings",
+			"/gamification?tab=points"
+		],
+		[
+			"/gamification/level-settings",
+			"/gamification?tab=levels"
+		],
+		[
+			"/gamification/leaderboard-settings",
+			"/gamification?tab=leaderboard"
+		],
+		[
+			"/gamification/streak-settings",
+			"/gamification?tab=streaks"
+		],
+		[
+			"/gamification/xp-settings",
+			"/gamification?tab=xp"
+		],
+		[
+			"/setup-wizard",
+			"/setup"
+		],
+		[
+			"/setup-wizard/payments",
+			"/setup"
+		],
+		[
+			"/assignments",
+			"/assignments"
+		],
+		[
+			"/content-hub/assignments",
+			"/assignments"
+		],
+		[
+			"/assessments/assignments",
+			"/assignments"
+		],
+		[
+			"/assignment-edit/31",
+			"/assignments/31"
+		],
+		[
+			"/assignment-report",
+			"/assignments"
+		],
+		[
+			"/assignment-report/31",
+			"/assignments/31/submissions"
+		],
+		[
+			"/assignment-report/31/grade-assignment/9",
+			"/assignments/31/submissions?student=9"
+		],
+		[
+			"/content-hub/question-bank",
+			"/content-hub/question-bank"
+		],
+		[
+			"/extensions/question-bank",
+			"/content-hub/question-bank"
+		],
+		[
+			"/assessments/question-bank",
+			"/content-hub/question-bank"
+		],
+		[
+			"/accounthub",
+			"/account-hub"
+		],
+		[
+			"/accounthub?tab=home",
+			"/account-hub"
+		],
+		[
+			"/accounthub?tab=schools",
+			"/account-hub"
+		],
+		[
+			"/accounthub?tab=classes",
+			"/account-hub?tab=classes"
+		],
+		[
+			"/accounthub?tab=teachers",
+			"/account-hub?tab=teachers"
+		],
+		[
+			"/accounthub?tab=parents&page=2",
+			"/account-hub?tab=parents&page=2"
+		],
+		[
+			"/accounthub?tab=students",
+			"/students"
+		],
+		[
+			"/quiz-report/5",
+			"/quizzes/5/attempts"
+		],
+		[
+			"/quiz-report/5/grade-quiz/77",
+			"/quizzes/5/attempts"
+		],
+		[
+			"/content-hub/question-bank?action=new",
+			null
+		],
+		[
+			"/content-hub/question-bank?action=import",
+			null
+		],
+		[
+			"/accounthub?tab=users",
+			null
+		],
+		[
+			"/settings/design-settings",
+			null
+		],
+		[
+			"/settings/design-settings/course-details",
+			null
+		],
+		[
+			"/settings/migration-settings",
+			null
+		],
+		[
+			"/gamification/reward-settings",
+			null
+		],
+		[
+			"/quiz-report",
+			null
+		],
+		[
+			"/quiz-edit/5",
+			null
+		],
+		[
+			"/quizzes",
+			null
+		],
+		[
+			"/course-edit/12",
+			null
+		],
+		[
+			"/course-edit/12/settings/general",
+			null
+		],
+		[
+			"/lesson-edit/3",
+			null
+		],
+		[
+			"/courses",
+			null
+		],
+		[
+			"/courses/12/students",
+			null
+		],
+		[
+			"/students/4/report",
+			null
+		],
+		[
+			"/content-hub",
+			null
+		],
+		[
+			"/content-hub/courses",
+			null
+		],
+		[
+			"/content-hub/lessons",
+			null
+		],
+		[
+			"/content-hub/quizzes?action=new",
+			null
+		],
+		[
+			"/content-hub/exams",
+			null
+		],
+		[
+			"/content-hub/skills",
+			null
+		],
+		[
+			"/content-hub/curriculum",
+			null
+		],
+		[
+			"/content-hub/bundles",
+			null
+		],
+		[
+			"/communities",
+			null
+		],
+		[
+			"/sessions",
+			null
+		],
+		[
+			"/extensions/skills",
+			null
+		],
+		[
+			"/extensions/curriculum",
+			null
+		],
+		[
+			"/categories",
+			null
+		],
+		[
+			"/order-edit",
+			null
+		],
+		[
+			"/order-edit/45/extra",
+			null
+		]
+	],
+	"routes": [
+		{
+			"from": "/",
+			"to": "/dashboard"
+		},
+		{
+			"from": "/dashboard",
+			"to": "/dashboard"
+		},
+		{
+			"from": "/earnings-report",
+			"to": "/earnings"
+		},
+		{
+			"from": "/course/:id/report",
+			"to": "/reports/courses/:id"
+		},
+		{
+			"from": "/orders/:page?",
+			"to": "/orders"
+		},
+		{
+			"from": "/memberships/orders/:page?",
+			"to": "/orders"
+		},
+		{
+			"from": "/order-edit/:id",
+			"to": "/orders/:id"
+		},
+		{
+			"from": "/coupons",
+			"to": "/coupons"
+		},
+		{
+			"from": "/memberships/coupons",
+			"to": "/coupons"
+		},
+		{
+			"from": "/subscriptions/:page?",
+			"to": "/subscriptions"
+		},
+		{
+			"from": "/memberships/subscriptions/:page?",
+			"to": "/subscriptions"
+		},
+		{
+			"from": "/subscription-edit/:id",
+			"to": "/subscriptions/:id"
+		},
+		{
+			"from": "/memberships",
+			"to": "/memberships"
+		},
+		{
+			"from": "/certificates",
+			"to": "/certificates"
+		},
+		{
+			"from": "/gamification/certificates",
+			"to": "/certificates"
+		},
+		{
+			"from": "/certificate-edit/:id",
+			"to": "/certificates/:id"
+		},
+		{
+			"from": "/emails",
+			"to": "/emails"
+		},
+		{
+			"from": "/emails/:id",
+			"to": "/emails?email=:id"
+		},
+		{
+			"from": "/settings/emails-settings/*",
+			"to": "/emails"
+		},
+		{
+			"from": "/webhooks",
+			"to": "/webhooks"
+		},
+		{
+			"from": "/settings/webhooks-settings/*",
+			"to": "/webhooks"
+		},
+		{
+			"from": "/integrations",
+			"to": "/integrations"
+		},
+		{
+			"from": "/settings/payments-settings",
+			"to": "/settings?tab=payment-gateways"
+		},
+		{
+			"from": "/settings/payments-settings/payments/*",
+			"to": "/settings?tab=payment-gateways"
+		},
+		{
+			"from": "/settings/payments-settings/currency/*",
+			"to": "/settings?tab=currency"
+		},
+		{
+			"from": "/settings/payments-settings/tax/*",
+			"to": "/settings?tab=tax"
+		},
+		{
+			"from": "/settings/gamification-settings",
+			"to": "/gamification"
+		},
+		{
+			"from": "/setup-wizard/:tab?",
+			"to": "/setup"
+		},
+		{
+			"from": "/assignments",
+			"to": "/assignments"
+		},
+		{
+			"from": "/content-hub/assignments",
+			"to": "/assignments"
+		},
+		{
+			"from": "/assessments/assignments",
+			"to": "/assignments"
+		},
+		{
+			"from": "/assignment-edit/:id",
+			"to": "/assignments/:id"
+		},
+		{
+			"from": "/assignment-report",
+			"to": "/assignments"
+		},
+		{
+			"from": "/assignment-report/:id",
+			"to": "/assignments/:id/submissions"
+		},
+		{
+			"from": "/assignment-report/:id/grade-assignment/:student",
+			"to": "/assignments/:id/submissions?student=:student"
+		},
+		{
+			"from": "/content-hub/question-bank",
+			"to": "/content-hub/question-bank",
+			"skip": [
+				"action"
+			]
+		},
+		{
+			"from": "/extensions/question-bank",
+			"to": "/content-hub/question-bank",
+			"skip": [
+				"action"
+			]
+		},
+		{
+			"from": "/assessments/question-bank",
+			"to": "/content-hub/question-bank",
+			"skip": [
+				"action"
+			]
+		},
+		{
+			"from": "/accounthub",
+			"to": "/account-hub",
+			"query": {
+				"tab": [
+					"",
+					"home",
+					"schools"
+				]
+			}
+		},
+		{
+			"from": "/accounthub",
+			"to": "/account-hub?tab=:tab",
+			"query": {
+				"tab": [
+					"classes",
+					"teachers",
+					"parents"
+				]
+			}
+		},
+		{
+			"from": "/accounthub",
+			"to": "/students",
+			"query": {
+				"tab": [
+					"students"
+				]
+			}
+		},
+		{
+			"from": "/quiz-report/:id/*",
+			"to": "/quizzes/:id/attempts"
+		},
+		{
+			"from": "/settings/general-settings/*",
+			"to": "/settings?tab=general"
+		},
+		{
+			"from": "/settings/branding-settings/*",
+			"to": "/settings?tab=branding"
+		},
+		{
+			"from": "/settings/account-privacy-settings/*",
+			"to": "/settings?tab=account-and-privacy"
+		},
+		{
+			"from": "/settings/parmalink-settings/*",
+			"to": "/settings?tab=permalink"
+		},
+		{
+			"from": "/settings/advanced-settings/*",
+			"to": "/settings?tab=advanced"
+		},
+		{
+			"from": "/settings/ai-tutor-settings/*",
+			"to": "/settings?tab=ai-tutor"
+		},
+		{
+			"from": "/settings/design-system-settings/*",
+			"to": "/settings?tab=design-system"
+		},
+		{
+			"from": "/settings/xapi-settings/*",
+			"to": "/settings?tab=xapi"
+		},
+		{
+			"from": "/gamification/point-settings",
+			"to": "/gamification?tab=points"
+		},
+		{
+			"from": "/settings/gamification-settings/point-settings/*",
+			"to": "/gamification?tab=points"
+		},
+		{
+			"from": "/gamification/badge-settings",
+			"to": "/gamification?tab=badges"
+		},
+		{
+			"from": "/settings/gamification-settings/badge-settings/*",
+			"to": "/gamification?tab=badges"
+		},
+		{
+			"from": "/gamification/level-settings",
+			"to": "/gamification?tab=levels"
+		},
+		{
+			"from": "/settings/gamification-settings/level-settings/*",
+			"to": "/gamification?tab=levels"
+		},
+		{
+			"from": "/gamification/leaderboard-settings",
+			"to": "/gamification?tab=leaderboard"
+		},
+		{
+			"from": "/settings/gamification-settings/leaderboard-settings/*",
+			"to": "/gamification?tab=leaderboard"
+		},
+		{
+			"from": "/gamification/streak-settings",
+			"to": "/gamification?tab=streaks"
+		},
+		{
+			"from": "/settings/gamification-settings/streak-settings/*",
+			"to": "/gamification?tab=streaks"
+		},
+		{
+			"from": "/gamification/xp-settings",
+			"to": "/gamification?tab=xp"
+		},
+		{
+			"from": "/settings/gamification-settings/xp-settings/*",
+			"to": "/gamification?tab=xp"
+		}
+	]
+}

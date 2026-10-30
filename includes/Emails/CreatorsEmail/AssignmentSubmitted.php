@@ -2,6 +2,7 @@
 
 namespace OhMyLMS\Emails\CreatorsEmail;
 
+use OhMyLMS\Admin\LegacyRoutes;
 use OhMyLMS\Emails\Emails;
 
 /**
@@ -135,7 +136,7 @@ class AssignmentSubmitted {
 		$subject = isset( $settings['subject'] ) ? $settings['subject'] : '';
 		$subject = $this->replace_tags( $subject, $student->display_name, $course->get_name(), $assignment_title );
 
-		$settings['button_link'] = admin_url( 'admin.php?page=ohmylms#/assignment-report/' . $assignment_id . '/grade-assignment/' . $student_id );
+		$settings['button_link'] = LegacyRoutes::assignment_grading_url( $assignment_id, $student_id );
 
 		ob_start();
 		ohmylms_get_template(
@@ -192,12 +193,12 @@ class AssignmentSubmitted {
 				'student_name'     => $s ? $s->display_name : __( 'Unknown Student', 'ohmylms' ),
 				'assignment_title' => $a ? $a->post_title : __( 'Unknown Assignment', 'ohmylms' ),
 				'time'             => $item['time'],
-				'grade_link'       => admin_url( 'admin.php?page=ohmylms#/assignment-report/' . $item['assignment_id'] . '/grade-assignment/' . $item['student_id'] ),
+				'grade_link'       => LegacyRoutes::assignment_grading_url( $item['assignment_id'], $item['student_id'] ),
 			);
 		}
 
 		$digest_settings                = $settings;
-		$digest_settings['button_link'] = admin_url( 'admin.php?page=ohmylms#/assignment-report' );
+		$digest_settings['button_link'] = LegacyRoutes::url( '/assignment-report' );
 
 		ob_start();
 		ohmylms_get_template(

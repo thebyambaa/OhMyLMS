@@ -2,6 +2,7 @@
 
 namespace OhMyLMS\Emails\CreatorsEmail;
 
+use OhMyLMS\Admin\LegacyRoutes;
 use OhMyLMS\Emails\Emails;
 
 /**
@@ -147,7 +148,7 @@ class QuizSubmitted {
 		$subject = isset( $settings['subject'] ) ? $settings['subject'] : '';
 		$subject = $this->replace_tags( $subject, $student->display_name, $course->get_name(), $quiz_title );
 
-		$settings['button_link'] = admin_url( 'admin.php?page=ohmylms#/quiz-report/' . $quiz_id . '/grade-quiz/' . $attempt_id );
+		$settings['button_link'] = LegacyRoutes::url( '/quiz-report/' . absint( $quiz_id ) . '/grade-quiz/' . absint( $attempt_id ) );
 
 		ob_start();
 		ohmylms_get_template(
@@ -205,13 +206,13 @@ class QuizSubmitted {
 				'quiz_title'   => $q ? $q->post_title : __( 'Unknown Quiz', 'ohmylms' ),
 				'time'         => $item['time'],
 				'grade_link'   => ! empty( $item['attempt_id'] )
-					? admin_url( 'admin.php?page=ohmylms#/quiz-report/' . $item['quiz_id'] . '/grade-quiz/' . $item['attempt_id'] )
+					? LegacyRoutes::url( '/quiz-report/' . absint( $item['quiz_id'] ) . '/grade-quiz/' . absint( $item['attempt_id'] ) )
 					: '',
 			);
 		}
 
 		$digest_settings                = $settings;
-		$digest_settings['button_link'] = admin_url( 'admin.php?page=ohmylms#/quiz-report' );
+		$digest_settings['button_link'] = LegacyRoutes::url( '/quiz-report' );
 
 		ob_start();
 		ohmylms_get_template(

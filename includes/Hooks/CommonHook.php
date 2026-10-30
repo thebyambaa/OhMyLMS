@@ -105,7 +105,7 @@ class CommonHook extends HookHandler {
 			$node = $admin_bar->get_node( 'new-ohmylms-course' ); // This targets the "New Course" button in the admin bar.
 			if ( $node ) {
 				// Update the URL with your custom link (e.g., redirecting to a different page).
-				$new_url = admin_url( 'admin.php?page=ohmylms#/courses' );
+				$new_url = \OhMyLMS\Admin\LegacyRoutes::url( '/courses' );
 				// Add the updated node back to the admin bar with the new URL.
 				$admin_bar->add_node(
 					array(
@@ -124,7 +124,7 @@ class CommonHook extends HookHandler {
 				if ( $post && 'ohmylms-course' === $post->post_type ) {
 					// Find the "Edit" menu item
 					// Modify the URL of the "Edit Course" link.
-					$new_url = admin_url( "admin.php?page=ohmylms#/course-edit/{$post->ID}" );
+					$new_url = \OhMyLMS\Admin\LegacyRoutes::url( '/course-edit/' . $post->ID );
 
 					// Update the existing "Edit" node with the new URL.
 					$admin_bar->add_node(
@@ -1927,7 +1927,7 @@ class CommonHook extends HookHandler {
 			__( 'Add-ons', 'ohmylms' ),
 			__( 'Add-ons', 'ohmylms' ),
 			$capability,
-			admin_url( 'admin.php?page=ohmylms#/integrations' ),
+			\OhMyLMS\Admin\LegacyRoutes::url( '/integrations' ),
 			null
 		);
 	}

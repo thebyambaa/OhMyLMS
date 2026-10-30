@@ -32,7 +32,7 @@ final class AdminPage {
 
 	/** URL of the Settings tab. */
 	public static function url() {
-		return admin_url( 'admin.php?page=ohmylms#/settings/' . self::TAB );
+		return \OhMyLMS\Admin\LegacyRoutes::url( '/settings/' . self::TAB );
 	}
 
 	/** Keep old bookmarks working: a hidden page that forwards to the tab. */
