@@ -8,10 +8,13 @@ namespace OhMyLMS\Extensions;
 
 /** Source asset overrides and the SDK used by the shipped admin application. */
 final class SourceAssets {
+	/** Script handle of the extension SDK. */
+	const HANDLE = 'ohmylms-extension-sdk';
+
 	/** Register asset hooks for the LMS application. */
 	public static function init() {
-		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue' ), 11 );
-		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue' ), 11 );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'admin' ), 11 );
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register' ), 11 );
 		if ( ! defined( 'OHMYLMS_SOURCE_ASSETS' ) || ! OHMYLMS_SOURCE_ASSETS ) {
 			return; }
 		add_filter( 'script_loader_src', array( __CLASS__, 'url' ), 20 );
@@ -33,28 +36,57 @@ final class SourceAssets {
 			return $url; }
 		return $base . 'build/' . $relative . '?ver=' . substr( hash_file( 'sha256', $file ), 0, 12 );
 	}
-	/** Load the application SDK; native screens use their dedicated editor bundle. */
-	public static function enqueue() {
-		$screen = is_admin() ? get_current_screen() : null;
-		// The authored preview owns its bootstrap. Keep the recovered SDK on existing screens
-		// until the new app implements the documented extension surfaces before cutover.
-		if ( $screen && \OhMyLMS\Admin\AppPage::is_app_screen( $screen->id ) ) {
-			return;
-		}
-		if ( $screen && in_array( $screen->post_type, array( 'ohmylms-lesson', 'ohmylms-quiz', 'ohmylms-question' ), true ) && $screen->is_block_editor() ) {
-			return;
+
+	/**
+	 * Register the SDK without loading it, so data and dependants can attach to the handle on any screen.
+	 *
+	 * @return bool Whether the SDK is available.
+	 */
+	public static function register() {
+		if ( wp_script_is( self::HANDLE, 'registered' ) ) {
+			return true;
 		}
 		$directory  = defined( 'OHMYLMS_SOURCE_ASSETS' ) && OHMYLMS_SOURCE_ASSETS ? 'build/sdk' : 'assets/dist/admin';
 		$asset_file = OHMYLMS_DIR . '/' . $directory . '/extensions.asset.php';
 		if ( ! is_file( $asset_file ) ) {
-			return; }
+			return false;
+		}
 		$asset = require $asset_file;
-		wp_enqueue_script( 'ohmylms-extension-sdk', plugins_url( $directory . '/extensions.js', OHMYLMS_FILE ), $asset['dependencies'], $asset['version'], true );
-		wp_localize_script( 'ohmylms-extension-sdk', 'ohmylmsTabPreferences', TabPreferences::read() );
-		wp_localize_script( 'ohmylms-extension-sdk', 'ohmylmsPlayerTemplates', \OhMyLMS\Quiz\PlayerTemplates::choices() );
-		wp_localize_script( 'ohmylms-extension-sdk', 'ohmylmsExtensionManifest', array_merge( Registry::manifest(), array( 'settings' => Settings::manifest() ) ) );
+		return wp_register_script( self::HANDLE, plugins_url( $directory . '/extensions.js', OHMYLMS_FILE ), $asset['dependencies'], $asset['version'], true );
+	}
+
+	/**
+	 * Load the SDK on the recovered LMS application only.
+	 *
+	 * The authored preview owns its bootstrap and native block editors load their own bundle, so
+	 * neither receives this SDK; other wp-admin screens have no extension surfaces.
+	 *
+	 * @param string $hook_suffix Current admin page hook suffix.
+	 */
+	public static function admin( $hook_suffix ) {
+		self::register();
+		if ( 'toplevel_page_' . OHMYLMS_SLUG === $hook_suffix ) {
+			self::enqueue();
+		}
+	}
+
+	/**
+	 * Load the SDK, its data and the scripts extensions add through `ohmylms_enqueue_extension_scripts`.
+	 *
+	 * Runs once per request. Frontend slots call this while rendering; the SDK prints in the footer.
+	 */
+	public static function enqueue() {
+		static $enqueued = false;
+		if ( $enqueued || ! self::register() ) {
+			return;
+		}
+		$enqueued = true;
+		wp_enqueue_script( self::HANDLE );
+		wp_localize_script( self::HANDLE, 'ohmylmsTabPreferences', TabPreferences::read() );
+		wp_localize_script( self::HANDLE, 'ohmylmsPlayerTemplates', \OhMyLMS\Quiz\PlayerTemplates::choices() );
+		wp_localize_script( self::HANDLE, 'ohmylmsExtensionManifest', array_merge( Registry::manifest(), array( 'settings' => Settings::manifest() ) ) );
 		wp_localize_script(
-			'ohmylms-extension-sdk',
+			self::HANDLE,
 			'ohmylmsAssessment',
 			array(
 				'versioned'     => \OhMyLMS\Assessment\Engine::versioned(),
@@ -70,9 +102,9 @@ final class SourceAssets {
 			$scripts->registered['ohmylms-vendor']->deps = array_values( array_unique( array_merge( $scripts->registered['ohmylms-vendor']->deps, array( 'wp-preferences', 'wp-keyboard-shortcuts' ) ) ) );
 		}
 		$before = $scripts->queue;
-		do_action( 'ohmylms_enqueue_extension_scripts', 'ohmylms-extension-sdk' );
+		do_action( 'ohmylms_enqueue_extension_scripts', self::HANDLE );
 		if ( isset( $scripts->registered['ohmylms'] ) ) {
-			$scripts->registered['ohmylms']->deps = array_values( array_unique( array_merge( $scripts->registered['ohmylms']->deps, array( 'ohmylms-extension-sdk' ), array_diff( $scripts->queue, $before ) ) ) );
+			$scripts->registered['ohmylms']->deps = array_values( array_unique( array_merge( $scripts->registered['ohmylms']->deps, array( self::HANDLE ), array_diff( $scripts->queue, $before ) ) ) );
 		}
 	}
 }
