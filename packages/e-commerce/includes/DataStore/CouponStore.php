@@ -181,6 +181,10 @@ class CouponStore extends DataStore {
 					$value = is_array( $value ) ? $value : array();
 					$value = implode( ',', array_filter( array_map( 'intval', $value ) ) );
 					break;
+				case 'individual_use':
+				case 'exclude_sale_items':
+					$value = in_array( $value, array( true, 'yes', 1, '1' ), true ) ? 'yes' : 'no';
+					break;
 				case 'date_expires':
 				case 'date_start':
 					$value = $value ? $value->getTimestamp() : null;
