@@ -1,0 +1,335 @@
+{
+	"contract": "ohmylms/v1/memberships",
+	"version": 1,
+	"namespace": "ohmylms/v1",
+	"restBase": "memberships",
+	"capability": "manage_options",
+	"auth": "WordPress REST authentication. Cookie auth requires the X-WP-Nonce header (wp_create_nonce('wp_rest')); application passwords also work.",
+	"routes": [
+		{
+			"name": "list",
+			"method": "GET",
+			"path": "/memberships",
+			"args": {
+				"page": { "type": "integer", "default": 1, "minimum": 1 },
+				"per_page": {
+					"type": "integer",
+					"default": 20,
+					"minimum": 1,
+					"maximum": 100
+				},
+				"search": { "type": "string" },
+				"status": {
+					"type": "string",
+					"default": "all",
+					"enum": [ "all", "publish", "draft" ]
+				},
+				"include": {
+					"type": "array",
+					"items": "integer",
+					"maxItems": 100
+				},
+				"orderby": {
+					"type": "string",
+					"default": "created_at",
+					"enum": [
+						"id",
+						"name",
+						"status",
+						"created_at",
+						"updated_at"
+					]
+				},
+				"order": {
+					"type": "string",
+					"default": "desc",
+					"enum": [ "asc", "desc" ]
+				},
+				"context": {
+					"type": "string",
+					"default": "view",
+					"enum": [ "view", "edit" ]
+				}
+			},
+			"success": {
+				"status": 200,
+				"body": "Membership[]",
+				"headers": [ "X-WP-Total", "X-WP-TotalPages", "Link" ]
+			},
+			"errors": [ 400, 401, 403 ]
+		},
+		{
+			"name": "create",
+			"method": "POST",
+			"path": "/memberships",
+			"args": {
+				"$ref": "#/definitions/MembershipWrite",
+				"required": [ "name" ]
+			},
+			"success": {
+				"status": 201,
+				"body": "Membership (edit context)",
+				"headers": [ "Location" ]
+			},
+			"errors": [ 400, 401, 403, 422, 500 ]
+		},
+		{
+			"name": "read",
+			"method": "GET",
+			"path": "/memberships/{id}",
+			"args": {
+				"context": {
+					"type": "string",
+					"default": "view",
+					"enum": [ "view", "edit" ]
+				}
+			},
+			"success": { "status": 200, "body": "Membership" },
+			"errors": [ 401, 403, 404 ]
+		},
+		{
+			"name": "update",
+			"method": "PUT | PATCH | POST",
+			"path": "/memberships/{id}",
+			"args": {
+				"$ref": "#/definitions/MembershipWrite",
+				"note": "partial update; omitted fields are unchanged"
+			},
+			"success": { "status": 200, "body": "Membership (edit context)" },
+			"errors": [ 400, 401, 403, 404, 422, 500 ]
+		},
+		{
+			"name": "delete",
+			"method": "DELETE",
+			"path": "/memberships/{id}",
+			"success": {
+				"status": 200,
+				"body": "{ deleted: true, previous: Membership }"
+			},
+			"errors": [ 401, 403, 404, 409, 500 ]
+		},
+		{
+			"name": "duplicate",
+			"method": "POST",
+			"path": "/memberships/{id}/duplicate",
+			"success": {
+				"status": 201,
+				"body": "Membership (edit context, draft)",
+				"headers": [ "Location" ]
+			},
+			"errors": [ 401, 403, 404, 500 ]
+		},
+		{
+			"name": "members",
+			"method": "GET",
+			"path": "/memberships/{id}/members",
+			"args": {
+				"page": { "type": "integer", "default": 1, "minimum": 1 },
+				"per_page": {
+					"type": "integer",
+					"default": 20,
+					"minimum": 1,
+					"maximum": 100
+				},
+				"status": {
+					"type": "string",
+					"default": "all",
+					"enum": [
+						"all",
+						"enrolled",
+						"pending",
+						"cancelled",
+						"expired"
+					]
+				}
+			},
+			"success": {
+				"status": 200,
+				"body": "Member[]",
+				"headers": [ "X-WP-Total", "X-WP-TotalPages" ]
+			},
+			"errors": [ 400, 401, 403, 404 ]
+		},
+		{
+			"name": "options",
+			"method": "GET",
+			"path": "/memberships/options",
+			"success": { "status": 200, "body": "Options" },
+			"errors": [ 401, 403 ]
+		},
+		{
+			"name": "courses",
+			"method": "GET",
+			"path": "/memberships/courses",
+			"args": {
+				"page": { "type": "integer", "default": 1, "minimum": 1 },
+				"per_page": {
+					"type": "integer",
+					"default": 10,
+					"minimum": 1,
+					"maximum": 50
+				},
+				"search": { "type": "string" },
+				"include": {
+					"type": "array",
+					"items": "integer",
+					"maxItems": 50
+				}
+			},
+			"success": {
+				"status": 200,
+				"body": "CourseChoice[]",
+				"headers": [ "X-WP-Total", "X-WP-TotalPages", "Link" ]
+			},
+			"errors": [ 400, 401, 403 ]
+		}
+	],
+	"definitions": {
+		"MembershipWrite": {
+			"name": { "type": "string", "minLength": 1, "maxLength": 200 },
+			"status": {
+				"type": "string",
+				"enum": [ "draft", "publish" ],
+				"default": "draft"
+			},
+			"description": {
+				"type": "string",
+				"maxLength": 50000,
+				"note": "sanitised with wp_kses_post"
+			},
+			"regular_price": {
+				"type": "string",
+				"pattern": "^\\d{1,8}(\\.\\d{1,4})?$",
+				"default": "0"
+			},
+			"sale_price": {
+				"type": [ "string", "null" ],
+				"pattern": "^\\d{1,8}(\\.\\d{1,4})?$"
+			},
+			"sale_start_date": {
+				"type": [ "string", "null" ],
+				"pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+			},
+			"sale_end_date": {
+				"type": [ "string", "null" ],
+				"pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+			},
+			"sign_up_fee": {
+				"type": [ "string", "null" ],
+				"pattern": "^\\d{1,8}(\\.\\d{1,4})?$"
+			},
+			"billing_period": {
+				"type": "string",
+				"enum": [ "one_time", "year", "month", "week", "day" ],
+				"default": "one_time"
+			},
+			"billing_interval": {
+				"type": "integer",
+				"minimum": 1,
+				"maximum": 365,
+				"default": 1
+			},
+			"all_learning_content": { "type": "boolean", "default": false },
+			"course_ids": {
+				"type": "array",
+				"items": "integer >= 1",
+				"maxItems": 500,
+				"uniqueItems": true
+			},
+			"excluded_course_ids": {
+				"type": "array",
+				"items": "integer >= 1",
+				"maxItems": 500,
+				"uniqueItems": true
+			},
+			"curriculum_item_ids": {
+				"type": "array",
+				"items": "integer >= 1",
+				"maxItems": 200,
+				"uniqueItems": true
+			}
+		},
+		"Membership": {
+			"id": "integer",
+			"name": "string",
+			"slug": "string",
+			"status": "draft | publish",
+			"description": "string (edit)",
+			"permalink": "string",
+			"regular_price": "string",
+			"sale_price": "string | null",
+			"sale_start_date": "YYYY-MM-DD | null",
+			"sale_end_date": "YYYY-MM-DD | null",
+			"price": "string (price that applies today)",
+			"sign_up_fee": "string | null",
+			"billing_period": "one_time | year | month | week | day",
+			"billing_interval": "integer",
+			"currency": "string (site currency code)",
+			"all_learning_content": "boolean",
+			"course_ids": "integer[] (edit)",
+			"courses": "{ id, title, status }[] (edit)",
+			"excluded_course_ids": "integer[] (edit)",
+			"excluded_courses": "{ id, title, status }[] (edit)",
+			"curriculum_item_ids": "integer[] (edit)",
+			"course_count": "integer",
+			"member_count": "integer",
+			"created_at": "string",
+			"updated_at": "string"
+		},
+		"Member": {
+			"id": "integer",
+			"user_id": "integer",
+			"display_name": "string",
+			"email": "string",
+			"status": "string",
+			"order_id": "integer",
+			"start_date": "ISO 8601 UTC | null",
+			"end_date": "ISO 8601 UTC | null"
+		},
+		"CourseChoice": {
+			"id": "integer",
+			"title": "string",
+			"status": "string"
+		},
+		"Options": {
+			"statuses": "{ value, label }[]",
+			"billing_periods": "{ value, label }[]",
+			"currency": "{ code, symbol, position, decimals }",
+			"limits": "{ max_courses, max_curriculum_items, max_price, max_name }"
+		}
+	},
+	"errorCodes": {
+		"400": [
+			"rest_invalid_param",
+			"rest_missing_callback_param",
+			"ohmylms_membership_invalid_page",
+			"ohmylms_membership_exists"
+		],
+		"401/403": [
+			"ohmylms_membership_cannot_view",
+			"ohmylms_membership_cannot_create",
+			"ohmylms_membership_cannot_edit",
+			"ohmylms_membership_cannot_delete",
+			"rest_cookie_invalid_nonce"
+		],
+		"404": [ "ohmylms_membership_not_found" ],
+		"409": [ "ohmylms_membership_has_members" ],
+		"422": [
+			"ohmylms_membership_invalid_name",
+			"ohmylms_membership_invalid_price",
+			"ohmylms_membership_sale_price_too_high",
+			"ohmylms_membership_invalid_sale_dates",
+			"ohmylms_membership_sale_dates_without_price",
+			"ohmylms_membership_sale_dates_incomplete",
+			"ohmylms_membership_free_needs_end",
+			"ohmylms_membership_invalid_courses",
+			"ohmylms_membership_course_conflict",
+			"ohmylms_membership_invalid_curriculum"
+		],
+		"500": [
+			"ohmylms_membership_create_failed",
+			"ohmylms_membership_update_failed",
+			"ohmylms_membership_delete_failed"
+		]
+	}
+}
