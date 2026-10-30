@@ -333,9 +333,11 @@ class AdminAssets extends Assets {
 					'timezone'                     => $this->default_timezone(),
 					'date_format'                  => get_option( 'date_format' ),
 					'time_format'                  => get_option( 'time_format' ),
-					'payment_gateways'             => apply_filters(
-						'ohmylms_payment_gateways',
-						ecommerce()->gateways()->get_payment_gateway_settings()
+					'payment_gateways'             => \OhMyLMS\Settings\PaymentGatewaySettings::redact(
+						(array) apply_filters(
+							'ohmylms_payment_gateways',
+							ecommerce()->gateways()->get_payment_gateway_settings()
+						)
 					),
 					'integrations'                 => apply_filters( 'ohmylms_integrations', array() ),
 					'is_cohort_enabled'            => apply_filters( 'ohmylms_should_show_cohort', false ),

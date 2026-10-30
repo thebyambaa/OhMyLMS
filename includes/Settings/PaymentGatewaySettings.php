@@ -163,6 +163,40 @@ final class PaymentGatewaySettings {
 	}
 
 	/**
+	 * Gateway settings arrays (as returned by `get_settings()`) with every credential value removed.
+	 *
+	 * Credential fields keep their definition and gain `has_value`; their `value` and `default_value` are
+	 * emptied. Uses the same credential rule as {@see self::definition()}.
+	 *
+	 * @param array $settings Gateway settings keyed by gateway id.
+	 * @return array
+	 */
+	public static function redact( array $settings ) {
+		foreach ( $settings as $id => $gateway ) {
+			if ( ! is_array( $gateway ) || empty( $gateway['settings_fields'] ) || ! is_array( $gateway['settings_fields'] ) ) {
+				continue;
+			}
+			foreach ( $gateway['settings_fields'] as $index => $field ) {
+				$name = is_array( $field ) && isset( $field['option_name'] ) ? (string) $field['option_name'] : '';
+				$type = is_array( $field ) && isset( $field['input_type'] ) ? (string) $field['input_type'] : '';
+				if ( 'text' !== $type || '' === $name ) {
+					continue;
+				}
+				$secret = isset( $field['secret'] ) ? (bool) $field['secret'] : (bool) preg_match( self::SECRET_PATTERN, $name );
+				if ( ! $secret ) {
+					continue;
+				}
+				$value = isset( $field['value'] ) && is_string( $field['value'] ) ? $field['value'] : '';
+
+				$settings[ $id ]['settings_fields'][ $index ]['has_value']     = '' !== trim( $value );
+				$settings[ $id ]['settings_fields'][ $index ]['value']         = '';
+				$settings[ $id ]['settings_fields'][ $index ]['default_value'] = '';
+			}
+		}
+		return $settings;
+	}
+
+	/**
 	 * Stored settings of a gateway.
 	 *
 	 * @param string $id Gateway id.

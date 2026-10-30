@@ -304,14 +304,14 @@ settings pages until those are retired.
 
 ## Remaining work
 
-- **Legacy gateway secret exposure (High, not fixed here).** `includes/Assets/AdminAssets.php`
-  localizes `payment_gateways` (`ecommerce()->gateways()->get_payment_gateway_settings()`) into
-  `window.ohmylms_params` for the legacy `ohmylms` admin bundle. Each gateway's `get_settings()`
-  puts the stored value of every field in `settings_fields[].value`, so Stripe secret keys, PayPal
-  client secrets, QPay client secrets and Authorize.Net transaction/signature keys are printed into
-  the HTML of every legacy admin page load. `ohmylms_get_payment_gateways_settings()` returns the same
-  data to PHP callers. Fix (owner of `includes/Assets`): localize only `id`, `title`, `enabled` or
-  build the list from `PaymentGatewaySettings::read()`. The legacy bundle's gateway screens
+- **Legacy gateway secret exposure (High, fixed).** `includes/Assets/AdminAssets.php` localizes
+  `payment_gateways` into `window.ohmylms_params` for the legacy `ohmylms` admin bundle. Each
+  gateway's `get_settings()` puts the stored value of every field in `settings_fields[].value`, so
+  this printed Stripe, PayPal, QPay and Authorize.Net credentials into every legacy admin page load.
+  The localized list now goes through `PaymentGatewaySettings::redact()`: credential fields keep
+  their definition, gain `has_value`, and have `value`/`default_value` emptied, using the same
+  credential rule as the REST API (`tests/php/settings-secrets-integration.php` checks it).
+  `ohmylms_get_payment_gateways_settings()` still returns raw values to trusted PHP callers. The legacy bundle's gateway screens
   (`payment-gateway-settings.js`, `PaymentGatewaysSettings.jsx`, `checkout-page-settings.js`,
   `monetization-settings-tabs.js`) still call the removed `/settings/payment-gateway` route and fail;
   they should be retired in favour of the new tab.
