@@ -1,0 +1,22 @@
+.ohmylms-app .ohmylms-question-options {
+	display: grid;
+	gap: var(--oml-space-3);
+	list-style: none;
+	margin: 0 0 var(--oml-space-4);
+	padding: 0;
+}
+
+.ohmylms-app .ohmylms-question-option {
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card);
+	padding: var(--oml-space-3);
+}
+
+.ohmylms-app .ohmylms-question-option-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-2);
+}
+
+
+/*# sourceMappingURL=admin-app-questions.5bfe1b45db73.css.map*/

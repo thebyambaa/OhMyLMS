@@ -17,6 +17,7 @@ import { home } from './home';
 import { integrations } from './integrations';
 import { lessons, lessonEditor } from './lessons';
 import { membershipEditor, memberships } from './memberships';
+import { questionEditor, questions } from './questions';
 import { quizAttempts, quizEditor, quizzes } from './quizzes';
 import { settings } from './settings';
 import { setup } from './setup';
@@ -49,6 +50,8 @@ export const features: readonly FeatureDefinition[] = [
 	courseSettings,
 	lessons,
 	lessonEditor,
+	questions,
+	questionEditor,
 	orders,
 	orderDetail,
 	coupons,
