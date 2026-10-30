@@ -2,6 +2,8 @@ import { hasCapability } from '../bootstrap/config';
 import { certificateEditor, certificates } from './certificates';
 import { coupons, orderDetail, orders } from './commerce';
 import { contentHub } from './content-hub';
+import { courses, courseEditor } from './course-structure';
+import { curriculum } from './curriculum';
 import { courseReport, dashboard, earnings } from './dashboard';
 import { emails } from './emails';
 import { home } from './home';
@@ -23,6 +25,9 @@ export const features: readonly FeatureDefinition[] = [
 	courseReport,
 	home,
 	contentHub,
+	curriculum,
+	courses,
+	courseEditor,
 	orders,
 	orderDetail,
 	coupons,

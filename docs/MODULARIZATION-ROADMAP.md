@@ -4,9 +4,11 @@
 
 The new admin is a typed application in `assets/src/app`, developed at
 `admin.php?page=ohmylms-app`. Its foundation, feature registry, REST client and tests are present.
-Webhooks (`#/webhooks`) and the core Skills catalogue (`#/content-hub/skills`) now have authored
-preview screens using their PHP controllers directly. See [architecture](ARCHITECTURE.md) for the
-implemented scope and remaining work, and the [Webhooks API](api/webhooks.md).
+The preview includes Skills, Webhooks, Students, Taxonomies, Certificates, Emails, Integrations,
+Commerce, Memberships, Settings, Dashboard/analytics, and now Curriculum hierarchy and Course
+structure screens. These are bounded feature batches, not full product parity. The current
+batch/status sections below are authoritative; the recovered-runtime sections are reference.
+See [architecture](ARCHITECTURE.md) and [course authoring](api/course-authoring.md).
 
 The stored-data compatibility requirement below has been superseded by the user's rebuild policy:
 stored data, REST shapes, option names and tables may be redesigned with PHP and TypeScript changed
@@ -54,12 +56,12 @@ report is stale.
 | --- | --- | --- | --- |
 | 1 | Dependency inventory | Every recovered library and LMS-owned module has an owner and plan | **Done**: generated report, zero unassigned bindings, drift test |
 | 2 | Easy Email and remaining libraries | Email UI, editor core, source editor, html2canvas and embedded vendor copies use maintained packages or documented replacements; saved templates still open | Partly done (MJML, Arco shared factory, Chart.js, Emotion, Tiptap, Lowlight) |
-| 3 | Shared application infrastructure | Routing, controls, notifications, permissions, configuration and utilities have named modules and public exports | In progress: notices, skeleton, avatar, spinner, tooltip, copy button, table, icons and 41 of 43 used controls are authored modules under `assets/src/shared`. Routing, permissions, configuration, `AdvancedSelectWP`, `SearchSelectWP` and the admin-menu, HTML-text and media helpers remain |
-| 4 | State and API access | Features import their stores, hooks and API clients directly | New typed client and home reference store present; Webhooks uses a typed, validated client and page-owned cancellable state |
-| 5 | Feature independence | Features use normal components and explicit imports, not `createComponent(readRuntime)` | Webhooks and core Skills catalogue previews are authored TypeScript with no recovered imports; advanced Skills tools and remaining business features still need rebuilding |
+| 3 | Shared application infrastructure | Routing, controls, notifications, permissions, configuration and utilities have named modules and public exports | Typed app bootstrap/router/API/layout are present. Shared controls include npm-backed advanced/search selects. Cancellable request and unsaved-change hooks are shared by the new authoring batch. Legacy consumers still need extraction |
+| 4 | State and API access | Features import their stores, hooks and API clients directly | Preview feature batches own typed APIs and page state; the new authoring batch reuses existing transactional services. Legacy store/client dependencies remain |
+| 5 | Feature independence | Features use normal components and explicit imports, not `createComponent(readRuntime)` | 14 preview feature folders, including Home, with 21 registered route entries. Curriculum hierarchy and course outline batch added. Full workflow and extension parity remain |
 | 6 | Authored entry point | A small bootstrap registers routes, initializes services and loads features. Production startup needs no numeric Webpack IDs or adapters | New preview bootstrap exists beside the old admin; production cutover and runtime deletion remain pending |
 | 7 | Stylesheet ownership | Tokens and controls are centralized; feature styles load with their features; recovered CSS snapshots are retired | Separate CSS work completed; excluded from this app rebuild. See [stylesheet ownership](STYLESHEET-OWNERSHIP.md) |
-| 8 | Backend boundaries | PHP modules separate REST controllers, business rules and persistence; cross-feature access goes through services | Not started |
+| 8 | Backend boundaries | PHP modules separate REST controllers, business rules and persistence; cross-feature access goes through services | Partial: Analytics repository/date/cache, Settings registry/service, Setup services, Gamification registry/store, quiz policy/settings, and course catalogue/structure services exist. Repository-wide separation remains |
 | 9 | Asset and dependency isolation | Each page type loads only its modules; one deliberate React; no accidental duplicate runtimes | Partly done (lazy email/editor chunks) |
 | 10 | Enforcement and release checks | Automated checks catch circular imports, forbidden cross-feature imports, compatibility regressions, security findings and build drift | Inventory drift check added |
 
@@ -163,9 +165,38 @@ test in `tests/php/` and component tests.
 | Memberships | Done | Old membership routes removed |
 | Settings (General, Branding, Account, Permalinks, Advanced, Currency, Tax) | Done | Payment gateway secrets still returned by the old route |
 | Dashboard, Earnings, Course report | Done | Mixed-currency totals; amounts still in postmeta |
-| Content Hub (skills) | Partial | Skills catalogue only |
-| Communities, Setup wizard, Gamification, Learning (lessons, assignments), Courses, Quizzes and question editors | Not started | |
+| Content Hub (skills and curriculum) | Partial | Skills catalogue; curriculum hierarchy creation/editing/parent moves and course placement. Advanced syllabus/CSV/comparison workflows remain |
+| Courses | Partial | Bounded list/draft creation, outline units and reusable lesson placements. Advanced metadata/settings, publication and extension panels remain |
+| Communities, Setup wizard, Gamification, Learning (lessons, assignments), Quizzes and question editors | Preview UI pending | Setup services, Gamification registry/store and quiz policy/settings are backend groundwork; no full-screen parity claim |
 | Cutover (menu points at the new app, recovered runtime deleted) | Not started | Old PHP tests for removed routes go with it |
-| PHP boundaries, page-by-page asset loading, CI enforcement checks | Not started | |
+| PHP boundaries, page-by-page asset loading, CI enforcement checks | Partial | Named backend services and lazy preview chunks exist; complete boundaries, isolation and enforcement remain |
 
 Stylesheet cleanup is intentionally skipped.
+
+## Current batch: Curriculum hierarchy and course outlines (30 October 2026)
+
+- Added `#/content-hub/curriculum`, `#/content-hub/courses` and
+  `#/content-hub/courses/:id` to the typed preview. Existing routes are retained.
+- Curriculum fields and parent moves use the established validated services. The course editor
+  exposes its curriculum placement through Curriculum's public component, with immediate saves.
+- Course discovery is bounded to 20 summaries per page; creation accepts only a title and always
+  creates a draft owned by the caller. UI, API transport and model concerns are separate modules.
+- Outline editing adds/renames/reorders units and attaches/reorders/detaches reusable block lessons.
+  It carries the full program through the existing revision lock and transaction. Stale writes
+  retain local edits; draft saves do not publish. Retired lesson folders are not reintroduced.
+- No recovered runtime was removed and no main-menu cutover was made. CSS ownership is unchanged.
+- Verification: the full app suite passed 627 tests; 22 focused Node checks, TypeScript, source
+  contracts and targeted JavaScript/PHP standards checks passed. WordPress REST integration passed
+  33 checks on `800.local`, including allowed/denied users, save/reopen and stale-write rejection.
+  The SDK compiles with its existing three performance warnings.
+- After the final refinements, all 37 focused authoring/shared-guard tests passed again. All 34
+  published app files were checked against the final SDK output; obsolete generated app chunks
+  were removed. Targeted standards checks are clean; this does not erase repository-wide legacy
+  formatting/PHP debt or the previously recorded stale runtime-inventory report.
+- Live browser verification created and reopened `Modularization verification 1030` and draft
+  course `Modularization verification course 1030` (ID 938). Unit title/number/description,
+  curriculum placement and an existing reusable lesson persisted across a full reload, with no
+  console errors. These browser examples remain for review; scripted fixtures were cleaned up.
+- Next authoring batch: advanced syllabus/skill workflows and course metadata, followed by
+  lesson/assignment and assessment editors. See [the API/scope contract](api/course-authoring.md)
+  for exact exclusions and verification instructions.
