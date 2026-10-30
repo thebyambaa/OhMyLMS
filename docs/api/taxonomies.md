@@ -18,7 +18,7 @@ curriculum and course tags by Course Bundles (`docs/MODULARIZATION-ROADMAP.md`;
 Usage found in the repository: the only readers were the recovered admin's course-list filter
 (`assets/src/application/routes.js`) and the recovered `Categories`/`Tags` pages
 (`assets/src/features/taxonomies`), which the app already redirects to the curriculum
-(`assets/src/extensions/index.jsx`) and which could only receive `410`. No template or PHP class
+(`assets/src/extensions/index.jsx`) and which could only receive `410`; all of these were deleted at the cutover. No template or PHP class
 calls these routes. Writes belong to `/curriculum/items` (administrators) and `/bundles`.
 
 ## Audit before

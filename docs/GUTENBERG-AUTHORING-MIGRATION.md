@@ -13,7 +13,7 @@ This is an authoring migration. Preserve question IDs, UUIDs, bank memberships, 
 - `includes/Learning/NativeQuizEditor.php` already exposes native editor URLs, synthesizes blocks for existing quiz placements, validates references and synchronizes placement order. Its editable-type allowlist is narrower than the full question-type inventory; other questions become reference blocks.
 - `assets/src/features/question-editor/MultipleChoiceBlock.jsx` already provides shared question fields, several answer types, media, equations and randomized templates. Preserve the existing serialized block name for compatibility even if its visible name becomes Question.
 - `assets/src/features/learning/NativeQuizSettings.jsx` currently sends authors back to the existing quiz editor for settings. It is not complete settings parity.
-- `assets/src/features/question-bank/QuestionBankPage.jsx` and `NewQuestionModal.jsx` still use `QuestionForm` for bank authoring.
+- The recovered Question Bank screens (`QuestionBankPage.jsx`, `NewQuestionModal.jsx`) that used `QuestionForm` were deleted at the cutover; bank authoring is the typed `#/content-hub/question-bank` screen.
 - `includes/PostTypes/QuestionPostType.php` currently hides the question post UI and does not opt into the core REST editor. Standalone native question editing needs a deliberately secured integration.
 - Course quiz links, reports, bank usage links, content actions and extension panels still depend on `/quiz-edit/:id`.
 - Existing native integration tests and documented browser checks provide a starting point. Re-run them against the current site; historical verification does not establish full migration readiness.

@@ -6,8 +6,8 @@ per-quiz attempts and grading screen is `#/quizzes/:id/attempts` (see [quizzes](
 
 ## Audit before
 
-The legacy address `#/quiz-report` (without an id) has **no route** in the recovered router
-(`assets/src/application/routes.js` defines only `/quiz-report/:id` and `/quiz-report/:id/grade-quiz/:quizId`).
+Before the cutover deleted the recovered router, the legacy address `#/quiz-report` (without an id) had **no route** in it
+(`assets/src/application/routes.js` defined only `/quiz-report/:id` and `/quiz-report/:id/grade-quiz/:quizId`).
 The daily instructor digest (`Emails\CreatorsEmail\QuizSubmitted`) links to it anyway. Quiz statistics across
 quizzes existed only as the "No. of Submissions" column of the legacy quiz list
 (`assets/src/application/shared/quiz-list.js`). That column had search, course and status filters, sorting by

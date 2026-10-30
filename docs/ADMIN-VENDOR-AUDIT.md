@@ -1,5 +1,8 @@
 # Admin vendor audit — 29 October 2026
 
+> **Historical.** The recovered admin and the vendor code audited here were deleted on 31 October 2026
+> ([CUTOVER.md](CUTOVER.md)); paths and commands below may no longer exist.
+
 The shared MJML and Arco APIs now use lazy npm packages; see the
 [email package migration](EMAIL-PACKAGE-MIGRATION.md) for scope and saved-template checks.
 

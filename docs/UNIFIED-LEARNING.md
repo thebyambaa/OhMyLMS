@@ -61,9 +61,9 @@ This release provides the authoring workflow, course-scoped learning path, exist
 ## Verification
 
 - `npm test`: asset parity and JavaScript unit tests.
-- `npm run build`: application assets, lazy SDK chunks, and admin synchronization.
+- `npm run build`: application assets, lazy app chunks, and admin synchronization.
 - `php tests/php/learning-integration.php`: disposable WordPress database only; configured through `OHMYLMS_TEST_CREDENTIALS`.
-- `npx playwright test tests/browser/learning-program.spec.cjs --workers=1`: teacher publication, reused lesson, learner completion, practice resume, desktop and narrow mobile layouts. Use `OHMYLMS_CHROMIUM_PATH` for an installed Chromium browser if Playwright's bundled browser is unavailable.
+- The `learning-program` browser spec drove the recovered admin and was deleted at the cutover.
 
 Do not run database integration or browser fixture suites concurrently against the same disposable site: fixtures temporarily change add-on settings. Never point these tests at a production database.
 

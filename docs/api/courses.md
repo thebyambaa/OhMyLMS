@@ -180,7 +180,7 @@ calls `Course::save()`: `ohmylms_rest_before_save_course`, `ohmylms_rest_after_s
 
 ## Old callers broken by the new shapes
 
-The recovered admin calls `GET|POST|PUT|DELETE /courses`, `/courses/{id}/status`, `/courses/trash-bulk`,
+The recovered admin (deleted at the cutover) called `GET|POST|PUT|DELETE /courses`, `/courses/{id}/status`, `/courses/trash-bulk`,
 `/courses/{id}/clone` and `/courses/featured_image/{id}` with the old field names (`name`, `image_id`,
 `chapters`, `curriculum`, `cohort`, `funnel_steps`, ...). The file list is in the feature report.
 

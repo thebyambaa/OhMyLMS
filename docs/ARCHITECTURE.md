@@ -67,8 +67,8 @@ it is not a database transaction or a guarantee against concurrent prerequisite 
 
 This is the catalogue batch, not full Content Hub parity. Learning-objective/translation and public
 practice controls, source review/comparison/mapping tools, syllabus/curriculum workflows, courses,
-lessons, quizzes, Question Bank, assignments and bundles still need authored screens. Existing
-assessment versioning and extension surfaces remain in the current admin. No old runtime is retired.
+lessons, quizzes, Question Bank, assignments and bundles still needed authored screens at the time; typed
+screens for them now exist (parity per feature is in the roadmap) and the old runtime was deleted at the cutover.
 
 The app suite now passes 66 tests. `tests/php/skills-catalog-rest-integration.php` exercises real
 WordPress catalogue paging, create/update/reopen, validation failures without data changes, denied

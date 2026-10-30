@@ -48,10 +48,9 @@ other placements. **Close details** returns the spreadsheet to full width. Struc
 actions use the workspace's existing save operations and refresh the sheet from the
 returned outline. Unsaved new rows have a local remove action instead.
 
-`tests/browser/syllabus-spreadsheet.spec.cjs` covers the actual view switcher, sheet
-and row-action components with fixture controls and persistence. It checks shared
-skill edits, failed-save recovery, draft guards, branch-aware additions, removal of
-one placement, details beside the sheet, and mobile scrolling.
+The spreadsheet view above belonged to the recovered syllabus workspace and was deleted with it, and with its
+browser spec, at the cutover ([CUTOVER.md](CUTOVER.md)). The typed syllabus screen is
+`#/content-hub/curriculum/syllabus/:id` (`assets/src/app/features/syllabus/`).
 
 ### Mind map
 
@@ -85,11 +84,8 @@ its details, learning resources and assessment connections in the existing right
   inside its own region. Map position, zoom, search and collapsed branches are local UI
   state; the map does not add another syllabus structure or change learner evidence.
 
-Verification: `node --test tests/js/syllabus-map.test.mjs tests/js/workspace.test.mjs`
-and `playwright test tests/browser/syllabus-mindmap.spec.cjs`. The browser suite runs
-the authored map and QuickAdd components with local WordPress React scripts and a
-workspace fixture recording writes; database persistence still requires the existing
-isolated WordPress syllabus integration suite.
+The map, its QuickAdd components and their tests belonged to the recovered workspace and were deleted at the
+cutover ([CUTOVER.md](CUTOVER.md)).
 
 ### Outline and detail editor
 
@@ -233,18 +229,18 @@ Skills created here get a short slug of their own. WordPress derives one from th
 ## Source
 
 - PHP: `includes/Curriculum/Syllabus.php` (outline, groups, skills, import), `SyllabusCourse.php` (the course a syllabus is: creating it and mirroring chapters and skills, with the planning kept pure), `SyllabusRows.php` (cleans and checks rows), `SyllabusPlan.php` (matches rows against the syllabus and plans the operations; shared by the dry run and the import), controller `includes/Rest/V1/SyllabusController.php`. `Links::object_ids()` and `Links::memberships()` include syllabus skills. `CourseProgram::too_many_outcomes()` lifts the 200-skill limit for a syllabus's course.
-- Admin UI: `assets/src/features/curriculum/`. The editor is `SyllabusWorkspace.jsx` (the page and its route component), `WorkspaceSidebar.jsx` (the outline), `TopicPane.jsx`, `ChapterPane.jsx`, `SkillPane.jsx` and `SkillResources.jsx` (the panes), `CoursePanel.jsx`, `WorkspaceParts.jsx` (autosaving fields, quick add, rows, menus), `WorkspaceDialogs.jsx`, `AddContentMenu.jsx`, `useSyllabusWorkspace.js` (loading and guarded changes), `useCourseCatalog.js` (the course's attachments), `workspaceActions.js` (every change), `workspace.mjs` (the pure model: nested outline, selection, ordering). `SyllabusSummary.jsx` is what the item panel shows, `ImportDialog.jsx`, `csv.mjs` (parser, column detection, export), `syllabus.mjs` (helpers) and `download.mjs` are shared. The route is `SYLLABUS_ROUTE` in `assets/src/features/content-hub/hubRoutes.mjs`, wired in `assets/src/extensions/index.jsx`; the page loads lazily from the `curriculum` chunk. Styles are `.ohmylms-ws-*` in `assets/css/admin-ui.css`.
+- Admin UI: the typed app's `assets/src/app/features/syllabus/` (`SyllabusPage.tsx`, the group list, CSV import, field, mapping, comparison and move dialogs) at `#/content-hub/curriculum/syllabus/:id`; `assets/src/features/curriculum/` keeps the shared CSV parser, model and API helpers. The recovered workspace described next was deleted at the cutover. It was `SyllabusWorkspace.jsx` (the page and its route component), `WorkspaceSidebar.jsx` (the outline), `TopicPane.jsx`, `ChapterPane.jsx`, `SkillPane.jsx` and `SkillResources.jsx` (the panes), `CoursePanel.jsx`, `WorkspaceParts.jsx` (autosaving fields, quick add, rows, menus), `WorkspaceDialogs.jsx`, `AddContentMenu.jsx`, `useSyllabusWorkspace.js` (loading and guarded changes), `useCourseCatalog.js` (the course's attachments), `workspaceActions.js` (every change), `workspace.mjs` (the pure model: nested outline, selection, ordering). `SyllabusSummary.jsx` is what the item panel shows, `ImportDialog.jsx`, `csv.mjs` (parser, column detection, export), `syllabus.mjs` (helpers) and `download.mjs` are shared. The route is `SYLLABUS_ROUTE` in `assets/src/features/content-hub/hubRoutes.mjs`, wired in `assets/src/extensions/index.jsx`; the page loads lazily from the `curriculum` chunk. Styles are `.ohmylms-ws-*` in `assets/css/admin-ui.css`.
 
 ## Validation
 
 ```sh
-node --test tests/js/workspace.test.mjs tests/js/syllabus.test.mjs tests/js/curriculum.test.mjs tests/js/content-hub.test.mjs
+node --test tests/js/syllabus.test.mjs tests/js/curriculum.test.mjs tests/js/content-hub.test.mjs
+npm run test:app
 php tests/php/syllabus-unit.php
 OHMYLMS_TEST_CREDENTIALS=/path/test-credentials.json php tests/php/syllabus-integration.php
-OHMYLMS_TEST_CREDENTIALS=... OHMYLMS_CHROMIUM_PATH=... npx playwright test tests/browser/syllabus.spec.cjs --workers=1
 ```
 
-The integration suite refuses any database other than `ohmylms_source_test`. It covers the flag and its guard, group and skill editing, equal names and unique codes, maths and Cyrillic text, long names that begin alike, a dry run that changes nothing, an import applied, repeated and edited, a refused file, an import that fails part-way and rolls back (including the library skills it created), the Bundles and membership integration, deletion, permissions, and the course: it is made, named, linked and rebuilt, chapters and skills follow every change (rename, reorder, move, delete, import), what was added to the course by hand survives, more than 200 skills fit, and deleting a syllabus keeps its course. The browser spec opens the editor from the syllabus's name and builds chapters and skills from the keyboard, attaches a lesson to a chapter, tags lessons to a skill, and runs the CSV import and export.
+The integration suite refuses any database other than `ohmylms_source_test`. It covers the flag and its guard, group and skill editing, equal names and unique codes, maths and Cyrillic text, long names that begin alike, a dry run that changes nothing, an import applied, repeated and edited, a refused file, an import that fails part-way and rolls back (including the library skills it created), the Bundles and membership integration, deletion, permissions, and the course: it is made, named, linked and rebuilt, chapters and skills follow every change (rename, reorder, move, delete, import), what was added to the course by hand survives, more than 200 skills fit, and deleting a syllabus keeps its course. The browser spec of the recovered workspace was deleted at the cutover; the typed screen's behaviour is covered by its Vitest tests (`SyllabusPage.test.tsx`, `CsvImportDialog.test.tsx`, `MappingDialog.test.tsx`).
 
 ## Known limitations
 

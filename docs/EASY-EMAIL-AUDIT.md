@@ -1,5 +1,9 @@
 # Easy Email audit — 29 October 2026
 
+> **Historical.** The recovered email runtime, its tools and tests were deleted on 31 October 2026
+> ([CUTOVER.md](CUTOVER.md)); paths and commands below may no longer exist. Current admin code:
+> [ARCHITECTURE.md](ARCHITECTURE.md), [REACT-DEVELOPMENT.md](REACT-DEVELOPMENT.md).
+
 Roadmap step 2, first increment. It answers one question before any code is swapped: is the
 recovered Easy Email code a published release, and what has been changed locally? Run
 `node tools/easy-email-audit.mjs [version]` to reproduce the numbers. The script downloads the

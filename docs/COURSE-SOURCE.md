@@ -1,5 +1,8 @@
 # Course source — 2026-09-24
 
+> **Historical.** The converted components, `components.json` and adapters described here were deleted with
+> the recovered admin on 31 October 2026 ([CUTOVER.md](CUTOVER.md)); see [REACT-DEVELOPMENT.md](REACT-DEVELOPMENT.md).
+
 The source build now loads 25 named course React components from `assets/src/features/courses/`. They run in the isolated WordPress installation. The working math site still uses the shipped JavaScript.
 
 ## Source inventory

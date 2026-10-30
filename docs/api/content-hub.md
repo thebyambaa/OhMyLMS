@@ -5,7 +5,7 @@ Contract version 1. Server code: `includes/Rest/V1/ContentHubOverviewController.
 
 ## Audit before
 
-The legacy route `#/content-hub` (`assets/src/features/content-hub/ContentHub.jsx`, `hubRoutes.mjs`) is a frame
+Before the cutover, the legacy route `#/content-hub` (`assets/src/features/content-hub/ContentHub.jsx`, `hubRoutes.mjs`; deleted) was a frame
 with a title and movable section tabs (Courses, Lessons, Quizzes, Exams, Question Bank, Assignments, Skills,
 Curriculum). The hub address itself renders the first tab, the legacy course list. It shows no counts and no
 recent items, and it has no endpoint of its own. It calls these routes:

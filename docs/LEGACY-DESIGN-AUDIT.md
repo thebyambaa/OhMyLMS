@@ -27,9 +27,7 @@ navigation and toolbar entries. Explicit feature-loading calls remain supported.
 | --- | --- |
 | Public `.ohmylms-*` selectors and legacy token aliases | Templates, scripts, builders and add-ons consume these contracts. They resolve to shared components/tokens rather than a second palette. |
 | Generated `style.css`, `style-rtl.css` and admin compatibility entrypoints | Integrations may request the old URLs. Normal plugin requests use modules. |
-| Recovered application/runtime inputs | They still supply application behavior. CSS modularization does not replace their business logic. |
-| On-demand email editor, email shell and automation vendor styles | Active third-party dependencies; do not edit recovered vendor styles to fix first-party design. |
-| Recovery admin CSS and WordPress CSS under test fixtures | Selector/parity evidence, not additional runtime enqueues. |
+| Recovered front-end, block and theme assets in `runtimes`/`static` | The 79 assets `manifest.json` still lists. The recovered admin application, its email editor, email shell, automation vendor styles and admin CSS were deleted at the cutover ([CUTOVER.md](CUTOVER.md)). |
 | Assessment canvas, artwork and media palettes | Intentional visual contracts documented in the design language. |
 
 See `STYLESHEET-OWNERSHIP.md` for ownership, measurements and remaining optimization boundaries.

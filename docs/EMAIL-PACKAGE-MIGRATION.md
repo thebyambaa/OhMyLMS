@@ -1,5 +1,9 @@
 # Shared email package migration — 29 October 2026
 
+> **Historical.** The recovered email designer, its bridges and these npm packages were removed on
+> 31 October 2026 ([CUTOVER.md](CUTOVER.md)); paths and commands below may no longer exist. Current admin
+> code: [ARCHITECTURE.md](ARCHITECTURE.md), [REACT-DEVELOPMENT.md](REACT-DEVELOPMENT.md).
+
 The shared Arco UI namespace and MJML renderer now come from pinned npm packages:
 `@arco-design/web-react` **2.66.5** and `mjml-browser` **4.16.1**. Existing saved email
 JSON and synchronous conversion APIs are preserved.

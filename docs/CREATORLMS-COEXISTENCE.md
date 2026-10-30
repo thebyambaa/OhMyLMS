@@ -57,7 +57,7 @@ composer dump-autoload --no-plugins --no-scripts --working-dir=packages/e-commer
 npm run build
 ```
 
-Do not edit Composer-generated loaders or recovered JavaScript runtime bundles directly. The authored `tools/commerce-adapters.mjs` transformation rewrites commerce API path literals during the production application build.
+Do not edit Composer-generated loaders directly. The recovered admin bundles and the `tools/commerce-adapters.mjs` path rewriting they needed were deleted at the cutover ([CUTOVER.md](CUTOVER.md)); the typed app calls the commerce routes directly.
 
 Run `tests/php/creatorlms-coexistence.php` in fresh PHP processes with `OHMYLMS_TEST_CREDENTIALS` pointing to the isolated fixture site's credentials, using these scenarios: `activate-creatorlms`, `activate-ohmylms`, `ohmylms-first`, `creatorlms-first`, `ohmylms-only`, and `ohmylms-legacy`. The fixture must use the `ohmylms_source_test` database and contain both plugin checkouts. The legacy-only case uses `wp-content/standalone-plugins` containing only OhMyLMS. Test credential access uses local CLI file streams; the two filesystem standards warnings are limited to that fixture input.
 

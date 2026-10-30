@@ -1,5 +1,8 @@
 # Dashboard measurements and deferred email runtime — 29 October 2026
 
+> **Historical.** These measurements are of the recovered admin, deleted on 31 October 2026
+> ([CUTOVER.md](CUTOVER.md)).
+
 Follow-up: [the latency investigation](DASHBOARD-LATENCY-INVESTIGATION.md) identified
 slow local DNS resolution. The original first-byte figures below include DNS time; they
 are not isolated server wait. The opt-in diagnostic now reports those measurements separately.

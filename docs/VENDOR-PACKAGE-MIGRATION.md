@@ -1,5 +1,9 @@
 # Chart.js and Emotion npm migration — 29 October 2026
 
+> **Historical.** The recovered admin that used these packages, the `vendor-charts`/`vendor-emotion` bridges
+> and the packages themselves were removed on 31 October 2026 ([CUTOVER.md](CUTOVER.md)); paths and commands
+> below may no longer exist.
+
 Chart.js, its React wrapper and Emotion now build from pinned npm packages instead of
 recovered library implementations. The existing chart and select components remain intact.
 

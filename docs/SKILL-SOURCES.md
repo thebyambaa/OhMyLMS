@@ -103,7 +103,6 @@ The structure response adds `subject` (the most common subject of the outline's 
   - pending and rejected readiness, administrator review, and deleting an unused skill;
   - the course suggestion run, listing, accepting reuse and new skills, and course isolation;
   - backfill, MCP definitions and anonymous denial.
-- `node --test tests/js/skill-provenance.test.mjs`: badges, suggestions per lesson, accepted skills and saved-lesson checks.
 - Live check on 800.local:
   - A course-content run on a fractions lesson proposed three new skills.
   - Adding one linked it with an "AI · pending review" badge.

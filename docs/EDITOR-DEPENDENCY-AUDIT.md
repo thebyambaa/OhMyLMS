@@ -1,5 +1,8 @@
 # Editor dependency audit and npm Lowlight migration — 29 October 2026
 
+> **Historical.** The recovered editor runtime and its bridges were removed on 31 October 2026
+> ([CUTOVER.md](CUTOVER.md)); paths below may no longer exist.
+
 This historical snapshot is superseded by [the completed editor runtime migration](EDITOR-MODULARIZATION.md),
 which also replaces Tiptap, ProseMirror and Lucide with npm packages and preserves their contracts.
 

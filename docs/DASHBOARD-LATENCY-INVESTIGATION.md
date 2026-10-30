@@ -62,7 +62,7 @@ The site's domain and Windows network settings were not changed during this inve
 
 ## Diagnostic correction and cleanup
 
-`assets/js/admin-benchmark.js` now reports actual server wait, DNS, connection time and
+`assets/js/admin-benchmark.js` (deleted with the recovered admin at the cutover) reported actual server wait, DNS, connection time and
 navigation-to-first-byte separately, along with slow resource requests. The old `ttfbMs`
 values in `2026-10-29.json` were navigation-to-first-byte values; they must not be interpreted
 as isolated PHP/server time. New results use the corrected definition.

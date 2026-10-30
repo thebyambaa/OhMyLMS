@@ -1,5 +1,9 @@
 # On-demand extension SDK
 
+> **Historical.** The legacy extension SDK described here was deleted on 31 October 2026
+> ([CUTOVER.md](CUTOVER.md)). Extensions now use the app's host (`assets/src/app/extensions`, under 5 KB);
+> see [EXTENSIONS.md](EXTENSIONS.md) and [ARCHITECTURE.md](ARCHITECTURE.md).
+
 The SDK now registers synchronous component factories backed by React lazy
 components. A feature loads only when one of its components renders. Each feature
 shares one import promise, so opening sibling components does not download it again.

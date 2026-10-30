@@ -1,5 +1,8 @@
 # Acceptance status — 2026-09-24
 
+> **Historical.** The converted components, adapters and recovered admin this log accepts were deleted on
+> 31 October 2026 ([CUTOVER.md](CUTOVER.md)); paths and commands below may no longer exist.
+
 Status (checked October 19, 2026): this file is the acceptance log of the source-recovery and extension work,
 written increment by increment between September 24 and October 6, 2026; counts and "not verified" lists are
 the figures of those dates. It does not cover the learner hub, schools and families, the Khan-style practice and

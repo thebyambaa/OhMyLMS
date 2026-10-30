@@ -95,7 +95,7 @@ unconditional (scripts, MCP). A save that changes nothing keeps the revision.
 
 Screen: `RewardsTab.tsx` in `assets/src/app/features/gamification`, its own tab (it used to share the leaderboard
 tab). It replaces the legacy `#/gamification/reward-settings` and `#/settings/gamification-settings/reward-settings`
-screen (`assets/src/features/gamification/RewardSettings.jsx`). The tab saves with the loaded `revision`, offers a
+screen (`RewardSettings.jsx`, deleted with the recovered admin). The tab saves with the loaded `revision`, offers a
 reload after a 409, and warns when the Points section is off (learners could not earn anything to spend).
 
 What the front end reads: a course is sold for points only when the Gamification add-on is on, `enabled` and

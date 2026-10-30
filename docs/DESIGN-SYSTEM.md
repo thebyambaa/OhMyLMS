@@ -9,9 +9,8 @@ One look for every OhMyLMS admin screen: the React app (Dashboard, Content Hub, 
 | Data, sanitizing, presets, contrast, CSS variables | `includes/Design/DesignSystem.php` |
 | REST (`GET/POST/DELETE /ohmylms/v1/design-system`, `manage_options`, REST nonce) | `includes/Rest/V1/DesignSystemController.php` |
 | Shared stylesheet (reads the variables) | `assets/css/admin-design-system.css` |
-| Settings tab "Design system" | `assets/src/features/settings/DesignSystemSettings.jsx`, model helpers in `designSystem.mjs` |
-| New admin tab (`#/settings?tab=design-system`) | `assets/src/app/features/settings/DesignSystemForm.tsx`, model in `designSystem.ts` (see `docs/api/settings.md`) |
-| Tests | `tests/php/design-system-unit.php`, `tests/js/design-system.test.mjs` |
+| Settings tab "Design system" (`#/settings?tab=design-system`) | `assets/src/app/features/settings/DesignSystemForm.tsx`, model in `designSystem.ts` (see `docs/api/settings.md`) |
+| Tests | `tests/php/design-system-unit.php`, `assets/src/app/features/settings/DesignTabs.test.tsx` |
 
 Stored in one option, `ohmylms_design_system`: `preset`, `colors` (13 keys), `button_radius`, `density`. A site that never saved it gets the **Khan Academy** preset. The preset name is recomputed on every save, so editing any value gives `custom`.
 
@@ -68,10 +67,10 @@ Deviating screens: PHP pages (Skill assessments, Import questions, Schools, xAPI
 
 - The shared stylesheet restyles `.button*`, `.page-title-action`, `.components-button` (primary, secondary, tertiary, link, destructive, small/large, disabled), Arco `.arco-btn*`, inputs and selects, cards, notices, tables, headings and page padding, with one `:focus-visible` ring.
 - In `admin-ui.css`, `question-editor`, `skill-studio`, `course-objectives`, `skill-matrix`, `quiz-overview`, `quiz-design`, `question-stage`, `admin-assistant`, `syllabus-comparison` and `learning-program`, hard-coded purple hover shades, red, borders, and 4/6/7/8px radii now read the variables (with the old value as fallback, so the files still work off-screen).
+- Those legacy-screen stylesheets (`admin-ui.css` and the others listed) and the Arco/Tailwind styles were deleted with the recovered admin at the cutover ([CUTOVER.md](CUTOVER.md)); the typed app styles itself through `@wordpress/components`, `assets/src/ui` and the `--oml-*` variables.
 
 ## Known gaps
 
-- The recovered application bundle (`assets/src/application/**`, generated) still hard-codes `#6e42d3`/`#6E42D3` in some inline icon fills and borders (earnings icons, a few selected-state borders, badge editors). These are not edited by hand; they stay purple until the recovered source is rebuilt from authored source.
 - Remaining one-off values in feature CSS (10px/12px radii, 6/10/14px gaps, assorted greys and tints such as `#efe9fb`, `#e3e6eb`) are not yet on the tokens.
 - Small inline `style=""` attributes on PHP pages (e.g. the xAPI delivery table `max-width`) are layout only and were left.
 - Cart/checkout-style learner screens and learner pages are out of scope.

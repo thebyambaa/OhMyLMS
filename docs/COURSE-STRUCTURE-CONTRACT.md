@@ -37,7 +37,7 @@ Unit titles, descriptions, numbers and ordering now have draft/live separation. 
 
 ## Verification
 
-`tests/php/course-structure-integration.php` requires an explicit `OHMYLMS_STRUCTURE_INTEGRATION=1` and a running local WordPress database. It creates and cleans up temporary records. It covers revision/authorization checks, native and program saves, rollback, ordering, stable identities, deletion safety and preserved learner history. `tests/js/course-structure-client.test.mjs` covers apiFetch transport and tab isolation.
+`tests/php/course-structure-integration.php` requires an explicit `OHMYLMS_STRUCTURE_INTEGRATION=1` and a running local WordPress database. It creates and cleans up temporary records. It covers revision/authorization checks, native and program saves, rollback, ordering, stable identities, deletion safety and preserved learner history. The typed course-structure screens are covered by `npm run test:app` (`assets/src/app/features/course-structure/`).
 
 The browser fixture uses the same explicit environment switch. Run `tests/php/course-structure-browser-fixture.php` to create temporary records and an expiring session, run Playwright with `tests/course-structure.config.cjs`, then run the fixture with `cleanup`. Its ignored session file must never be committed. The browser test exercises the existing dashboard Save button and a stale edit across two tabs.
 

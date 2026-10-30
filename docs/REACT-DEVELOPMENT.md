@@ -1,47 +1,107 @@
 # React development guide
 
-Start in `assets/src/features/<feature>/`. These files are editable source; the recovered application is the compatibility baseline. The SDK entry point in `assets/src/extensions/index.jsx` exposes feature factories to that application.
+The admin UI is one typed React app in `assets/src/app`, opened at `admin.php?page=ohmylms-app#/…`. It is the only
+admin: the recovered runtime and its `createComponent(readRuntime)` factories, `components.json` contracts, adapters
+and extension SDK were deleted at the cutover ([CUTOVER.md](CUTOVER.md)). Read [ARCHITECTURE.md](ARCHITECTURE.md) for
+the boundaries, [EXTENSIONS.md](EXTENSIONS.md) for the public extension contract and [ENFORCEMENT.md](ENFORCEMENT.md)
+for the checks CI runs.
 
-## Where new code belongs
+## App layout
 
-- Components (`*.jsx`): rendering, accessible controls and event wiring. Use descriptive names for new props and local variables.
-- Hooks (`use*.js`): editor state, effects and asynchronous orchestration. Ignore stale responses after navigation/unmount; preserve edits made while saves are pending. Follow `courses/useCourseEditor.js` for the existing save-generation pattern.
-- API modules (`api.mjs`): REST calls and response handling. Accept an injected request function for tests. Keep WordPress permissions and validation on the server.
-- Model modules (`model.mjs`): pure validation, transformations and payload preparation. Preserve unknown extension fields and avoid mutating store values.
-- `index.js`: the feature's public component-factory registry. Import siblings directly within a feature to avoid circular imports through its registry.
+| Path | Owns |
+| --- | --- |
+| `main.tsx`, `bootstrap/` | Validates the PHP bootstrap data, configures `@wordpress/api-fetch`, registers built-in question editors, mounts the app |
+| `routes.tsx`, `App.tsx` | Builds routes from the feature registry; each route sits in its own `ErrorBoundary` and `Suspense` |
+| `layout/` | Navigation, the `main` landmark, route focus, `NoticesRegion` (the `core/notices` store), loading, error and "Page not found" states |
+| `features/<name>/` | One feature: route pages, API client, model, hooks, tests |
+| `features/registry.ts`, `features/types.ts` | The explicit feature list and `FeatureDefinition` |
+| `lib/api/` | REST client (`get`, `post`, `put`, `patch`, `del`), `ApiError`/`normalizeApiError`, query strings, paged collections (`getCollection`) |
+| `components/` | App-only shared components (`Pagination`) |
+| `extensions/` | The extension host: registry, slots, `ExtensionBoundary`, DOM mounting |
+| `styles/` | App stylesheets; they read the `--oml-*` design tokens |
+| `test/` | Vitest setup and `render.tsx` helpers (`createBootstrap`, rendering with router, bootstrap and extensions) |
 
-Use WordPress-provided React (`@wordpress/element`), data and translation packages. Do not introduce a second React runtime. Keep hooks unconditional and include their reactive dependencies; stabilize callbacks when needed instead of suppressing dependency warnings. The current syntax/contract checker does not enforce React hook rules.
+Shared React UI lives outside the app in `assets/src/ui/` (`Table`, `Button`, `Card`, `Alert`, `Modal`, `Tabs`,
+`EmptyState`, form controls) with a PHP twin in `includes/Design/Ui.php`. Prefer `@wordpress/components` and these
+shared components to new markup.
 
-## Working with converted components
+## Adding a feature
 
-Converted components export `create<Component>(readRuntime)`. The factory returns a stable React component; it reads `readRuntime()` when rendered. Keep reads lazy because the recovered application's sibling bindings may not exist during factory registration. Instantiate factories only through the build adapters, never during another component's render.
+Copy the shape of an existing feature; `features/webhooks/` is a complete, small example.
 
-`components.json` maps each recovered binding to its component name, file and dependency identifiers. The keys are compatibility identifiers, not recommended names for new application code. Destructure them with meaningful local aliases. When changing a dependency, update both the manifest and the component. Some manifests retain unused baseline dependencies deliberately.
+```text
+features/<name>/
+  index.ts          FeatureDefinition(s): the only file other features may import (or public.ts)
+  <Name>Page.tsx    route component, loaded lazily
+  api.ts            REST calls through lib/api; validates every response
+  model.ts          pure parsing, validation and payload building
+  types.ts          TypeScript shapes
+  use<Name>.ts      data loading, cancellation, stale-response handling
+  contract.json     machine-readable REST contract (when the feature owns an API)
+  *.test.ts(x)      Vitest tests next to the code
+```
 
-To replace an existing recovered component:
+1. Export a `FeatureDefinition` from `index.ts`: a stable kebab-case `id`, a translated `title`, an absolute `path`, an
+   optional `icon`, the `capability` the server routes require, `hidden` for routes that should not appear in the
+   navigation (editors, detail pages), and `extensionRoute` when extensions know the screen by an older route such as
+   `/quiz-edit/:id`. The `component` must be `lazy( () => import( /* webpackChunkName: "admin-app-<name>" */ './Page' ) )`
+   so each feature is its own chunk.
+2. Import it in `features/registry.ts` and add it to `features` in navigation order. Nothing is discovered
+   automatically; `findRegistryProblems()` rejects duplicate ids or paths and relative or wildcard paths.
+3. Read and write data only through `lib/api`. Generic type parameters do not validate JSON, so parse responses in
+   `api.ts`/`model.ts`. Cancel requests on unmount or navigation, ignore stale responses and keep the user's edits when
+   a save fails.
+4. Raise notices through the `core/notices` store; `NoticesRegion` shows them. Do not render a second notice area.
+5. Features import another feature only through its `index.ts` or `public.ts`, and never import deleted runtime code
+   (`assets/src/application`, `modules`, `components.json` files, `readRuntime`, numeric Webpack IDs). The architecture
+   check enforces both.
 
-1. Add the named factory in the feature folder and register it in `index.js`.
-2. Add its original binding, file and runtime dependencies to `components.json`.
-3. Use the feature's existing adapter. Ordinary top-level bindings use `tools/component-adapter.mjs`; its `declarations` option permits function declarations. Integrations, taxonomies and webhooks retain specialized adapters for object members, routes and wrappers.
-4. Add behavior tests for the affected API/model and browser coverage for user-visible interactions.
+Capability checks in the client only decide what is shown. The REST permission callbacks are the real check.
 
-For a new child component, use normal imports and props; no recovered binding or manifest entry is needed. For an entirely new feature, prefer the extension registry described in `EXTENSIONS.md`. If it must replace recovered functionality, add its adapter to `tools/build-assets.mjs` and expose its registry in `assets/src/extensions/index.jsx`.
+## REST APIs
 
-Do not rerun the one-time `extract-*`, `recover` or `split-admin` tools over authored changes. Never edit `build/` by hand. `commerce-reference/` is reference material and is excluded from formatting, as is `recovered/`.
+Every rebuilt feature ships, together with its screen:
 
-## Daily workflow
+- a hardened `WP_REST_Controller` in `includes/Rest/V1/` (or the package's `Rest/V1`): argument schemas with types,
+  limits and enums, a permission callback on every route, `WP_Error` responses with correct status codes, an item
+  schema and `X-WP-Total`/`X-WP-TotalPages` headers on lists;
+- `docs/api/<feature>.md` describing routes, shapes, errors and security notes, with `contract.json` as its
+  machine-readable form; contract tests (`contract.test.ts`) check that the client's field rules match it;
+- a PHP integration test, `tests/php/<feature>-rest-integration.php`, that runs against a real WordPress, covers
+  allowed and denied users and validation failures, and removes only the fixtures it tagged.
+
+Change the PHP, TypeScript, docs and tests together when a shape changes. Stored data is test data before release, so
+no compatibility layer is needed; keep documented hooks and extension points.
+
+## Design tokens and styles
+
+Colors, spacing, radius and control heights come from the `--oml-*` variables that `DesignSystem::variables()` emits
+for admin and learner pages ([DESIGN-TOKENS.md](DESIGN-TOKENS.md), [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md)). Do not
+hard-code colors; `npm run lint:css` rejects them in the shared UI styles. Add a missing token to the design system
+instead of a one-off value.
+
+## Translations
+
+Use `__`, `_n`, `_x` and `sprintf` from `@wordpress/i18n` with the `ohmylms` domain and literal strings, so
+`wp i18n make-pot` can extract them from the built bundles. See "Translations" in [DEVELOPMENT.md](DEVELOPMENT.md).
+
+## Commands
 
 ```sh
 npm ci
-npm run dev
-npm run format
-npm run check
+npm run dev          # webpack watch of the admin app and the other entries into build/sdk
+npm run typecheck    # tsc for assets/src/app
+npm run test:app     # Vitest: app unit and component tests
+npm run lint:js
+npm run check:ci     # what CI runs: typecheck, test:app, architecture check and its tests
+npm run build        # production build, synced into assets/dist/admin
 ```
 
-`format` applies the pinned Prettier configuration to authored features, extensions and adapter/check tooling. `format:check` reports drift without writing. `lint` parses all source and checks local module paths, unique manifest bindings/names, component files, exported factories and registry imports. These are structural checks, not a type checker or a hooks linter.
+A site loads `build/sdk` only when `OHMYLMS_SOURCE_ASSETS` is true; otherwise it uses the published
+`assets/dist/admin`. After a build, run `npm run check:architecture` again: it checks the published bundles against
+`tools/asset-budgets.json`.
 
-`check` runs formatting, contracts, the parity/behavior tests and the production build. For release work, also run `npm run test:reproducible` and the relevant browser suite on the isolated test site described in `DEVELOPMENT.md`. Browser tests require `OHMYLMS_TEST_CREDENTIALS`; they are not part of the default check.
-
-Source assets still require `OHMYLMS_SOURCE_ASSETS`. A successful build alone does not enable them on a site. Much of the converted UI still relies on recovered stores, controls and transpiler helpers; migrate those boundaries incrementally with behavior coverage.
-
-The adapted vendor build shares WordPress's preferences store and keyboard-shortcut exports, with their script handles declared as dependencies by `SourceAssets`. The connection-status label helper uses the provider's string values without importing the unused collaboration provider and its second Yjs runtime. These adaptations live in `tools/vendor-adapters.mjs`; recovered baseline files stay unchanged for parity checks.
+Browser specs in `tests/browser/` run with `npm run test:browser` against a disposable site. They need
+`OHMYLMS_TEST_URL`, an administrator in the JSON file named by `OHMYLMS_TEST_CREDENTIALS`
+(`{"username": "…", "password": "…"}`) and, without Playwright's own browsers, `OHMYLMS_CHROMIUM_PATH`.
+`admin-app-smoke.spec.cjs` opens the main app screens and checks the legacy order redirect.

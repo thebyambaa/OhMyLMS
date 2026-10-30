@@ -57,7 +57,7 @@ Placement changes fire `ohmylms_curriculum_changed`, which re-resolves membershi
 
 ### Labels in the admin app
 
-The recovered admin app still has the strings "Category", "Categories", "Tag" and "Tags" in places that are not authored source (course list filter, archive and course-page settings). `assets/src/extensions/labels.mjs` lists the exact strings that are replaced with "Curriculum" and "Course bundle(s)" through the `i18n.gettext_ohmylms` filter. Other tag labels (contacts and automation: "Add Tag", "Apply Tags", ...) are different strings and are untouched. `tests/js/labels.test.mjs` checks that every listed string is still used by the app.
+The exact-string relabeling of the recovered admin (`labels.mjs` and its `i18n.gettext_ohmylms` filter) was deleted with that admin at the cutover ([CUTOVER.md](CUTOVER.md)). The typed app writes "Curriculum" and "Course bundle(s)" in its own strings; only the read-only `#/taxonomies` screen ("Categories and tags") still uses the old names.
 
 ## What learners see (per followed bundle)
 
@@ -101,8 +101,8 @@ Hook: `do_action('ohmylms_lms_student_dashboard_sections')` fires at the end of 
 ## Source
 
 - PHP: `includes/Curriculum/` (Schema, Tree, Items, Links, SkillMappings, Access, Bootstrap, and `Placement`, the one place that knows how courses sit in the curriculum and bundles), `includes/Bundles/` (Bundles, Follows, Progress, Combined, Frontend), controllers `CurriculumController`, `CourseOrganizationController`, `SkillMappingController`, `BundleController`, `MyBundlesController` in `includes/Rest/V1/`. `CategoryController` and `TagController` are now read-only compatibility views. Public lists use `ohmylms_course_ids_for_group()` in `includes/Utility/course-functions.php`.
-- Admin UI: `assets/src/features/curriculum/` and `assets/src/features/bundles/`, registered through `registerCurriculumPages` and lazy chunks in `assets/src/extensions/lazyFeatures.js`; styles in `assets/css/admin-ui.css`.
-- Course editor Organize tab: `assets/src/features/courses/CourseOrganization.jsx` and `organization.mjs`. Membership plan picker: `assets/src/features/memberships/MembershipCourses.jsx` and `CurriculumMindmap.jsx`. Old category and tag screens: `assets/src/features/taxonomies/` is kept for reference but its routes are replaced in `assets/src/extensions/index.jsx`.
+- Admin UI: the typed app's `assets/src/app/features/curriculum/` (`#/content-hub/curriculum`, skill map, subjects, compare and `#/content-hub/bundles`), with shared helpers in `assets/src/features/curriculum/`.
+- Course placement: the course editors in `assets/src/app/features/course-structure/` and `courses/`. Memberships: `assets/src/app/features/memberships/`. The old category and tag screens were deleted; `#/taxonomies` is a read-only view.
 - Learner UI: server-rendered by `Bundles\Frontend`, with the `ohmylms/bundles` Interactivity API module (`assets/interactivity/bundles.js`) and `assets/css/learning-bundles.css`.
 
 ## Validation
@@ -110,14 +110,14 @@ Hook: `do_action('ohmylms_lms_student_dashboard_sections')` fires at the end of 
 Syllabuses (skill groups, skills and CSV import) have their own checks, listed in [SYLLABUS.md](SYLLABUS.md).
 
 ```sh
-node --test tests/js/curriculum.test.mjs tests/js/bundles.test.mjs tests/js/course-organization.test.mjs tests/js/membership-selection.test.mjs tests/js/labels.test.mjs
+node --test tests/js/curriculum.test.mjs tests/js/curriculum-api.test.mjs
+npm run test:app
 php tests/php/curriculum-unit.php
 OHMYLMS_TEST_CREDENTIALS=/path/test-credentials.json php tests/php/curriculum-integration.php
 OHMYLMS_TEST_CREDENTIALS=/path/test-credentials.json php tests/php/placement-integration.php
-OHMYLMS_TEST_CREDENTIALS=... OHMYLMS_CHROMIUM_PATH=... OHMYLMS_PHP=... npx playwright test tests/browser/curriculum.spec.cjs tests/browser/placement.spec.cjs --workers=1
 ```
 
-The PHP integration suite refuses any database other than `ohmylms_source_test`. It covers hierarchy creation at different depths, ordering, moves, circular and over-deep moves, stale saves, lock contention, deletion safety, links and cleanup hooks, a permission matrix for guests, learners and authors, bundle membership across bundles, follow versus enrollment and access, read-only progress, strengths, gaps and "Not assessed", practice availability, mapping rules, de-duplicated pooling, no leakage into other courses' completion, escaping, and repeatable migration with existing records unchanged. The browser spec drives the admin editors and the learner dashboard, including keyboard operation and 390 px and 320 px layouts.
+The PHP integration suite refuses any database other than `ohmylms_source_test`. It covers hierarchy creation at different depths, ordering, moves, circular and over-deep moves, stale saves, lock contention, deletion safety, links and cleanup hooks, a permission matrix for guests, learners and authors, bundle membership across bundles, follow versus enrollment and access, read-only progress, strengths, gaps and "Not assessed", practice availability, mapping rules, de-duplicated pooling, no leakage into other courses' completion, escaping, and repeatable migration with existing records unchanged. The curriculum and placement browser specs were deleted with the recovered admin editors they drove.
 
 `placement-integration.php` covers the replacement: placing and removing a course, validation, the administrator-only rule for bundles, the published-bundle guard, the course list filter and its old parameters, the compatibility and 410 endpoints, slug parsing, `narrow_query`, public lists, carousel and filter templates, the single course sidebar, shortcodes, membership resolution and the old-rule safeguard, duplicate, export and import (including old export files), imports from other plugins, the setup wizard, and that old terms and archive queries are untouched. `placement.spec.cjs` drives the admin menu and old routes, the Organize tab, the course list filter, the membership editor (including removing an old rule), the public filters with AJAX, and old archive addresses.
 
@@ -129,7 +129,6 @@ The PHP integration suite refuses any database other than `ohmylms_source_test`.
 - A course in a bundle by way of a curriculum member shows in that bundle's lists but is not marked as a direct member in the Organize tab.
 - Bundle membership is not copied when a course is duplicated, and the admin course list has no Course Bundle filter control (the `bundle_id` parameter works).
 - The old `category` shortcode, block and builder attribute is ignored, and the `Category Base` / `Tag Base` permalink settings still describe only the old term URLs.
-- Strings in the recovered admin app that mention categories and tags are relabeled by an exact-string list; a new app string with those words would need an entry in `labels.mjs`.
 - Only administrators manage structure, bundles and mappings. Teachers cannot yet.
 - Bundle order is creation order; there is no reorder control for bundles themselves (members can be reordered).
 - Suggested bundles rank only by how many of the learner's enrolled courses a bundle includes.

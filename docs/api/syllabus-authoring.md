@@ -4,7 +4,7 @@ The typed preview opens at `admin.php?page=ohmylms-app#/content-hub/curriculum/s
 Curriculum syllabus rows link to it. It owns skill-group fields and order, new/library skill
 assignment, skill fields and placement order/moves, CSV review/apply, course creation/sync,
 individual shared-skill mappings and pairwise syllabus comparison. It uses WordPress controls
-and existing styles. The main admin and recovered runtime remain in place.
+and existing styles. The recovered runtime it was built beside was deleted at the cutover ([CUTOVER.md](../CUTOVER.md)).
 
 ## Boundaries
 

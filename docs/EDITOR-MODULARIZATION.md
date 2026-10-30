@@ -1,5 +1,9 @@
 # Editor runtime modularization — 29 October 2026
 
+> **Historical.** The recovered editor runtime, its `editor-tiptap`/`editor-lowlight` bridges and the Tiptap
+> packages were removed on 31 October 2026 ([CUTOVER.md](CUTOVER.md)); paths and commands below may no longer
+> exist. Current admin code: [ARCHITECTURE.md](ARCHITECTURE.md), [REACT-DEVELOPMENT.md](REACT-DEVELOPMENT.md).
+
 The recovered editor dependency runtime now comes from pinned npm packages: Tiptap
 2.27.3, its React adapter and extensions, ProseMirror through `@tiptap/pm`, Lucide React
 0.468.0, Lowlight 3.3.0 and Highlight.js 11.11.1. Built-in lesson and question authoring

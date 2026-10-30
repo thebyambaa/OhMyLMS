@@ -119,6 +119,6 @@ Storage: curriculum schema 8 adds `ai_analysis_runs`, `ai_suggestions`, and `sou
 
 ## Tests
 
-`php tests/php/ai-analysis-unit.php`, `node --test tests/js/ai-analysis.test.mjs`, and
+`php tests/php/ai-analysis-unit.php` and
 `OHMYLMS_TEST_CREDENTIALS=... php tests/php/ai-analysis-integration.php` (a fake provider; the isolated site
 blocks real network calls).

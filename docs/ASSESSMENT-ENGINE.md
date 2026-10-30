@@ -216,7 +216,8 @@ Roll back with the switches, not by reinstalling older plugin code. The rollback
 ```sh
 OHMYLMS_TEST_CREDENTIALS=/path/test-credentials.json php tests/php/assessment-integration.php authoring versioning bank deadlines evidence math completion
 php tests/assessment-unit.php
-node --test tests/js/assessment.test.mjs tests/js/question-bank.test.mjs tests/js/quizzes.test.mjs tests/js/quiz-reports.test.mjs
+node --test tests/js/assessment.test.mjs tests/js/question-bank.test.mjs
+npm run test:app
 ```
 
 Latest run: 306 integration checks (phases above plus `completion`), 49 unit checks, `php tests/unit.php`,

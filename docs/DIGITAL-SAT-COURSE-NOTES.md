@@ -66,4 +66,4 @@ One chain handles every quiz, exam, practice session and lesson check, so there 
 11. **Skill search.** Skill choices page ("Show more skills", 40 at a time) and the question-paper skill search takes a page. Not done: flagging which uncoded skills are the same skill as a coded one (the library has no reliable link to show).
 12. **Course 509.** Its four quizzes are now also in its units in the builder (they had been attached only through the catalog).
 
-Still open: the course builder's own Add Content dialog (recovered runtime code) still only creates new content; the new panel is the way to add existing content. Publishing a course for learners still needs its Preview step.
+The recovered course builder and its Add Content dialog were deleted at the cutover; the new panel is the way to add existing content. Publishing a course for learners still needs its Preview step.

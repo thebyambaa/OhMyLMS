@@ -6,7 +6,8 @@ They load on demand independently of the opt-in admin source build. The maintain
 `Extensions/Interactivity.php`. Original compiled frontend assets remain provenance, so turning off
 `OHMYLMS_SOURCE_ASSETS` restores the admin asset selection but does not disable the migrated frontend.
 
-The source build is opt-in. Read ACCEPTANCE.md before enabling it on a working site.
+The source build is opt-in: `OHMYLMS_SOURCE_ASSETS` makes the site load `build/sdk` instead of the published
+`assets/dist/admin`. Use it on development sites only.
 
 The admin is the typed app in `assets/src/app` ([ARCHITECTURE.md](ARCHITECTURE.md)); for its conventions and the feature workflow, read [REACT-DEVELOPMENT.md](REACT-DEVELOPMENT.md). Run `npm run check` before delivering source changes.
 

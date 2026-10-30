@@ -330,7 +330,7 @@ trashed quiz. App tests: `QuizQuestions.test.tsx`, `questionsApi.test.ts`, `ques
 ## Old callers that break
 
 `assets/src/features/quiz-reports/*` and `assets/src/application/screens/quiz-report*` (report and grading
-routes), the old quiz list (`GET /quiz`, `trash-bulk`), `tests/php/assessment/versioning.php` (calls
+routes; both deleted at the cutover), the old quiz list (`GET /quiz`, `trash-bulk`), `tests/php/assessment/versioning.php` (calls
 `GET quiz/{id}/report/{attempt}`; `Review::save()` is unchanged and still tested directly). The question editor
 and internal callers (`SkillAssessment`, `ExamImport\Workflow`, `Learning\ActivityDrafts`) keep working on the
 authoring routes.

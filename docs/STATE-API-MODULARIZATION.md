@@ -1,5 +1,9 @@
 # State and API modularization (roadmap step 4)
 
+> **Historical.** The recovered store, adapters and SDK analysed here were deleted on 31 October 2026
+> ([CUTOVER.md](CUTOVER.md)); paths and commands below may no longer exist. Current admin code:
+> [ARCHITECTURE.md](ARCHITECTURE.md), [REACT-DEVELOPMENT.md](REACT-DEVELOPMENT.md).
+
 **Rebuild update, 30 October 2026:** this document analyzes the recovered store. Its W1/W2 adapter
 proposal below is historical, not the active new-app plan. The new Webhooks screen in
 `assets/src/app/features/webhooks` uses typed API calls and cancellable page-owned state directly;

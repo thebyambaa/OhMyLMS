@@ -164,7 +164,7 @@ retire them or reimplement them.
 
 All stored data is test data, so the rebuild changes REST shapes, options and storage freely and fixes
 recovered defects instead of reproducing them. The new TypeScript app lives in `assets/src/app` (see
-[ARCHITECTURE](ARCHITECTURE.md)) and opens at `admin.php?page=ohmylms-app` beside the recovered admin.
+[ARCHITECTURE](ARCHITECTURE.md)) and opens at `admin.php?page=ohmylms-app`; it replaced the recovered admin at the cutover.
 Every rebuilt feature ships a hardened `WP_REST_Controller` API, `docs/api/<feature>.md`, a PHP integration
 test in `tests/php/` and component tests.
 
@@ -187,9 +187,9 @@ test in `tests/php/` and component tests.
 | Assignments | Done | List, editor, submissions and grading through the legacy grading pipeline ([assignments](api/assignments.md)); placement is read-only and instructor emails still link to legacy screens |
 | Account Hub | Partial | Schools, classes, teachers and parents ([account hub](api/account-hub.md)); roster intake (invitations, CSV, managed students) and school archiving remain in the legacy admin |
 | Communities | Retired | OhMyLMS has no communities backend; the screen only worked with the separate add-on. Legacy `#/communities` opens Integrations; the course flag, integration switch and enrolment hook remain for an add-on, which can add its own page through the extension API |
-| Cutover (menu points at the new app, recovered runtime deleted) | Not started | Old PHP tests for removed routes go with it |
+| Cutover (menu points at the new app, recovered runtime deleted) | Done | 31 October 2026, see [CUTOVER](CUTOVER.md); old addresses redirect through `LegacyRoutes` |
 | PHP boundaries, page-by-page asset loading, CI enforcement checks | Partial | Named backend services and lazy preview chunks exist. The extension SDK, classic editor, media library and TinyMCE no longer load on every page (logged-out home page on `800.local`: 49 scripts, 1,030 KB gzip before; 2 scripts, 2 KB after). Complete boundaries and enforcement remain |
-| Extension host in the new app | Partial | Authored host: admin pages, screen slots, editor panels by original route, integration panels, readiness event and per-extension error isolation, verified with the examples module and graded-reader on `800.local`. Question, lesson and membership surfaces wait for their rebuilt screens; checkout and frontend slots still use the existing SDK |
+| Extension host in the new app | Partial | Authored host: admin pages, screen slots, editor panels by original route, integration panels, readiness event and per-extension error isolation, verified with the examples module and graded-reader on `800.local`. Question editors render in the Question Bank; lesson and membership surfaces wait for their rebuilt screens. Checkout fields and frontend slots use the same host (the old SDK is deleted) |
 
 Stylesheet cleanup is intentionally skipped.
 
