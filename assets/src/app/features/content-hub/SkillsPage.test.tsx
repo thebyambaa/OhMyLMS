@@ -287,6 +287,16 @@ it( 'asks before discarding unsaved skill edits', async () => {
 	await user.click( dialog.getByRole( 'button', { name: 'Discard edits' } ) );
 	expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
 } );
+it( 'opens the create dialog from ?add=1', async () => {
+	renderShell( [ feature ], {
+		route: '/content-hub/skills?add=1',
+		capabilities: { edit_posts: true, manage_options: true },
+	} );
+	expect(
+		await screen.findByRole( 'dialog', { name: 'Add skill' } )
+	).toBeVisible();
+	expect( api.listSkills ).toHaveBeenCalled();
+} );
 it( 'aborts obsolete catalogue requests on navigation away', async () => {
 	const view = open();
 	await screen.findByText( 'Algebra' );

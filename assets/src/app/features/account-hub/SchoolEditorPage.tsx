@@ -191,12 +191,18 @@ function SchoolEditor( {
 				{ sprintf(
 					/* translators: 1: students, 2: teachers. */
 					__(
-						'%1$d students and %2$d teachers on the roster. People join a school through an invitation from the School workspace.',
+						'%1$d students and %2$d teachers on the roster.',
 						'ohmylms'
 					),
 					school.student_count,
 					school.teacher_count
-				) }
+				) }{ ' ' }
+				<Link to={ `/account-hub/schools/${ school.id }/roster` }>
+					{ __(
+						'Invitations, managed students and CSV import',
+						'ohmylms'
+					) }
+				</Link>
 			</p>
 			<Years
 				school={ school }

@@ -291,10 +291,23 @@ class QuizController extends RestController {
 					'args'                => array(
 						'name'       => array(
 							'type'              => 'string',
+							'maxLength'         => self::MAX_TITLE,
+							'validate_callback' => 'rest_validate_request_arg',
 							'sanitize_callback' => 'sanitize_text_field',
 						),
-						'content'    => array( 'type' => 'string' ),
-						'csv'        => array( 'type' => 'string' ),
+						'content'    => array(
+							'type'      => 'string',
+							'maxLength' => \OhMyLMS\Quiz\Exchange\Document::MAX_BYTES,
+						),
+						'csv'        => array(
+							'type'      => 'string',
+							'maxLength' => \OhMyLMS\Quiz\Exchange\Document::MAX_BYTES,
+						),
+						'review'     => array(
+							'description' => __( 'Review token from the dry run; when sent, the import must be the checked file and name.', 'ohmylms' ),
+							'type'        => 'string',
+							'pattern'     => '^[a-f0-9]{64}$',
+						),
 						'format'     => array(
 							'type'    => 'string',
 							'enum'    => array( 'auto', 'ohmylms', 'csv' ),
@@ -1888,20 +1901,31 @@ class QuizController extends RestController {
 		if ( '' === trim( $content ) ) {
 			return new WP_Error( 'ohmylms_quiz_import_empty', __( 'The file is empty.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
+		$name    = (string) $request['name'];
+		$format  = empty( $request['format'] ) ? 'auto' : (string) $request['format'];
+		$dry_run = rest_sanitize_boolean( $request['dry_run'] );
+		$review  = hash_hmac( 'sha256', wp_json_encode( array( get_current_user_id(), $content, $name, $format ) ), wp_salt( 'nonce' ) );
+		if ( ! $dry_run && is_string( $request['review'] ) && ! hash_equals( $review, $request['review'] ) ) {
+			return new WP_Error( 'ohmylms_quiz_import_review_stale', __( 'This is not the file that was checked. Check it again before importing.', 'ohmylms' ), array( 'status' => 409 ) );
+		}
 		$result = \OhMyLMS\Quiz\Exchange\Importer::run(
 			$content,
 			array(
-				'name'       => (string) $request['name'],
-				'format'     => empty( $request['format'] ) ? 'auto' : (string) $request['format'],
-				'dry_run'    => rest_sanitize_boolean( $request['dry_run'] ),
+				'name'       => $name,
+				'format'     => $format,
+				'dry_run'    => $dry_run,
 				'copy_media' => null === $request['copy_media'] ? true : rest_sanitize_boolean( $request['copy_media'] ),
 			)
 		);
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
+		if ( $result['dry_run'] ) {
+			$result['review'] = $review;
+		}
 		$response = rest_ensure_response( $result + array( 'status' => $result['dry_run'] ? 'ok' : 'success' ) );
 		$response->set_status( $result['dry_run'] ? 200 : 201 );
+		$response->header( 'Cache-Control', 'private, no-store' );
 
 		return $response;
 	}
@@ -1914,8 +1938,14 @@ class QuizController extends RestController {
 	 */
 	public function export_file( $request ) {
 		$result = \OhMyLMS\Quiz\Exchange\Exporter::export( (int) $request['id'] );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		// The file holds every answer key.
+		$response = rest_ensure_response( $result );
+		$response->header( 'Cache-Control', 'private, no-store' );
 
-		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+		return $response;
 	}
 
 	/**

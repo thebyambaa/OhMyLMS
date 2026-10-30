@@ -73,14 +73,37 @@ screen lists bundles, creates them, edits details, orders/adds/removes members (
 publishes/unpublishes and deletes with a follower warning. Stale saves keep local edits behind
 "Reload bundle and keep my edits". Learner-facing bundle pages are unchanged.
 
-## Comparison groups and roadmaps (not rebuilt)
+## Compare syllabuses (`#/content-hub/curriculum/compare`)
 
-`#/content-hub/curriculum/compare` beyond the pairwise dialog (combined mapping groups, AI runs
-and suggestions, roadmap drafts) remains in the legacy workspace. Its routes
-(`/syllabus-comparison/mapping-groups*`, `/roadmaps*`, `/ai/*`) are unchanged and were not
-hardened in this batch; they still validate in their domain services only. Rebuilding them needs
-a typed contract for mapping-group payloads and roadmap steps, revision checks for group saves,
-and explicit confirmation for AI acceptance.
+`features/curriculum/ComparePage` with `?tab=groups|roadmaps|shared|audit`; the legacy
+`?roadmap=<id>` bookmark redirects to that roadmap's syllabus editor. Routes are registered with
+typed arguments in `ComparisonController::register_compare_routes()`; malformed input answers 400
+(`rest_invalid_param` / `rest_missing_callback_param`) before any domain code runs. All except the
+learner `GET /audit` require `Curriculum\Access::admin` (401 anonymous, 403 others).
+
+| Route | Contract |
+| --- | --- |
+| `GET /syllabus-comparison/syllabuses` | `items[]` (now with `item_type` `syllabus`/`roadmap`), `selected` (subject => IDs) and a 16-character `revision`. |
+| `PUT /syllabus-comparison/configuration` | Required `subject` 1–100, `syllabus_ids` (≤ 10 unique positive integers; existing syllabuses) and `expected_revision`. Compared inside the curriculum lock: 409 `ohmylms_comparison_stale` (`data.revision`), nothing written. An empty list removes the subject's group. |
+| `GET /syllabus-comparison/shared-skills` | `search`, `subject` ≤ 100, `domain` ≤ 40, `grade` 0–100, `roadmap_id` ≥ 0, `page` 1–10000; 30 per page. |
+| `GET /syllabus-comparison/shared-skills/:id` | Skill with `mappings` and a 64-character `revision`. |
+| `POST /syllabus-comparison/shared-skills/save` | `id` ≥ 0, required `name` 1–190, `description` ≤ 2000, `topic`/`subject` ≤ 100, `domain` ≤ 40, `grade_from`/`grade_to` 0–100, `roadmap_id` (integer or null), `expected_revision` (64 hex; required by the service for updates: 409 `ohmylms_shared_stale`). |
+| `POST /syllabus-comparison/roadmaps/preview` | Required `syllabus_ids` (1–10 unique). |
+| `POST /syllabus-comparison/roadmaps` | Required `name` 1–190; `subject` ≤ 100, `grade` ≤ 50, `syllabus_ids` 1–10, `skill_ids` ≤ 200. |
+| `GET /syllabus-comparison/roadmaps/:id` | Name, sources, ordered skills, folders, `revision`. |
+| `PUT /syllabus-comparison/roadmaps/:id` | Required `name`, `syllabus_ids` (1–10), `skill_ids` (≤ 200), `expected_revision`; optional `folders` (objects `{id ≥ 0, name 1–190, skill_ids}`). Stale: 409 `ohmylms_roadmap_stale`. |
+| `GET /syllabus-comparison/audit/:student_id` | One learner's subject audit (404 `ohmylms_student_missing`). `GET /syllabus-comparison/audit` stays the signed-in learner's own. |
+
+The screen: **groups** lists subjects and their sources, saves with the loaded revision and on a
+stale refusal offers "Reload groups and keep my edits"; **roadmaps** previews the shared skills of
+chosen sources before creating a draft, and edits name, sources and step order (up, down, remove,
+add from sources; folders are kept and new steps join the first) with the same keep-edits reload;
+**shared skills** searches, shows the mapped objectives and edits against the revision; **audit**
+shows one learner's shared mastery and per-syllabus coverage by user ID.
+
+Not rebuilt: combined mapping groups (`/mapping-groups*`), AI runs and suggestions (`/ai/*`),
+shared content links and domain/level placement stay in the legacy workspace and syllabus editor;
+those routes are unchanged.
 
 ## Verification
 
@@ -90,3 +113,8 @@ denial, skill map validation and legacy empty IDs, profile schema rejections wit
 stale save/default, removal, bundle schema rejections, member validation, stale update/publish/
 delete, published-bundle emptying and editor denial. Fixtures are tagged and removed in `finally`;
 the subject profile option is restored. `features/curriculum/*.test.tsx` cover the screens.
+
+`OHMYLMS_CURRICULUM_COMPARE_TEST=1` runs `tests/php/curriculum-compare-rest-integration.php`:
+route registration, editor/subscriber/anonymous refusal, schema rejections, group save and stale
+refusal without writes, group removal, shared skill search/detail/stale/save, roadmap preview,
+creation, stale and current saves, and the learner audit. The comparison option is restored.

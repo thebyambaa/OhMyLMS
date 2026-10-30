@@ -1,14 +1,15 @@
 import { Table } from '../../../ui/Table';
 import {
 	Button,
+	CheckboxControl,
 	Modal,
 	Notice,
 	SelectControl,
 	TextControl,
 } from '@wordpress/components';
-import { useState } from '@wordpress/element';
+import { useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Pagination } from '../../components/Pagination';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
@@ -27,6 +28,8 @@ import {
 	usageLabel,
 	versionLabel,
 } from './model';
+import { exportQuestions, saveFile, type ExportFormat } from './exchange';
+import { ImportQuestionsDialog } from './ImportQuestionsDialog';
 import { useQuestions } from './useQuestions';
 import type { QuestionSummary, QuestionType, StatusFilter } from './types';
 
@@ -63,13 +66,17 @@ function defaultType( types: readonly QuestionType[] ): string {
  * status, with duplicate and archive/restore. Every listed question can be duplicated (the list shows
  * only questions the user may use). "New question" asks for a name and type and opens an unsaved
  * draft (`#/content-hub/question-bank/new`), which the first save creates. The editor lives at
- * `#/content-hub/question-bank/<id>`.
+ * `#/content-hub/question-bank/<id>`. `?action=new` opens the "New question" dialog and
+ * `?action=import` the import dialog; selected or filtered questions export as CSV or JSON.
  */
 export default function QuestionsPage() {
 	const list = useQuestions();
 	const types = useRequest( listQuestionTypes );
 	const navigate = useNavigate();
 	const operation = useOperation();
+	const [ params, setParams ] = useSearchParams();
+	const [ importing, setImporting ] = useState( false );
+	const [ selected, setSelected ] = useState< number[] >( [] );
 	const [ search, setSearch ] = useState( '' );
 	const [ creating, setCreating ] = useState( false );
 	const [ name, setName ] = useState( '' );
@@ -91,6 +98,73 @@ export default function QuestionsPage() {
 	function closeCreate() {
 		setCreating( false );
 		setNameError( null );
+	}
+	const action = params.get( 'action' );
+	useEffect( () => {
+		if ( 'import' === action ) {
+			setImporting( true );
+		} else if ( 'new' === action ) {
+			setName( '' );
+			setType( '' );
+			setNameError( null );
+			setCreating( true );
+		} else {
+			return;
+		}
+		setParams(
+			( current ) => {
+				const next = new URLSearchParams( current );
+				next.delete( 'action' );
+				return next;
+			},
+			{ replace: true }
+		);
+	}, [ action, setParams ] );
+	function download( scope: 'selected' | 'filtered', format: ExportFormat ) {
+		setMessage( null );
+		setCopyId( null );
+		void operation.run(
+			( signal ) =>
+				exportQuestions(
+					'selected' === scope
+						? { ids: selected }
+						: { filters: list.query },
+					format,
+					signal
+				),
+			( file ) => {
+				saveFile( file );
+				setMessage(
+					file.skipped
+						? sprintf(
+								/* translators: 1: exported questions, 2: skipped questions. */
+								__(
+									'Exported %1$d questions. %2$d you cannot edit were left out, because the file holds answer keys.',
+									'ohmylms'
+								),
+								file.count,
+								file.skipped
+							)
+						: sprintf(
+								/* translators: %d: exported questions. */
+								_n(
+									'Exported %d question.',
+									'Exported %d questions.',
+									file.count,
+									'ohmylms'
+								),
+								file.count
+							)
+				);
+			}
+		);
+	}
+	function toggle( id: number, on: boolean ) {
+		setSelected( ( current ) =>
+			on
+				? [ ...current.filter( ( entry ) => entry !== id ), id ]
+				: current.filter( ( entry ) => entry !== id )
+		);
 	}
 	function create() {
 		const value = name.trim();
@@ -175,7 +249,51 @@ export default function QuestionsPage() {
 				onClick={ openCreate }
 			>
 				{ __( 'New question', 'ohmylms' ) }
+			</Button>{ ' ' }
+			<Button
+				variant="secondary"
+				disabled={ operation.busy }
+				onClick={ () => {
+					setMessage( null );
+					setImporting( true );
+				} }
+			>
+				{ __( 'Import questions', 'ohmylms' ) }
 			</Button>
+			<div
+				role="group"
+				aria-label={ __( 'Export questions', 'ohmylms' ) }
+			>
+				{ ( [ 'csv', 'json' ] as const ).map( ( format ) => (
+					<Button
+						key={ `selected-${ format }` }
+						variant="tertiary"
+						disabled={ operation.busy || ! selected.length }
+						onClick={ () => download( 'selected', format ) }
+					>
+						{ sprintf(
+							/* translators: 1: number of selected questions, 2: CSV or JSON. */
+							__( 'Export %1$d selected (%2$s)', 'ohmylms' ),
+							selected.length,
+							format.toUpperCase()
+						) }
+					</Button>
+				) ) }
+				{ ( [ 'csv', 'json' ] as const ).map( ( format ) => (
+					<Button
+						key={ `filtered-${ format }` }
+						variant="tertiary"
+						disabled={ operation.busy || ! list.data.total }
+						onClick={ () => download( 'filtered', format ) }
+					>
+						{ sprintf(
+							/* translators: %s: CSV or JSON. */
+							__( 'Export all matching (%s)', 'ohmylms' ),
+							format.toUpperCase()
+						) }
+					</Button>
+				) ) }
+			</div>
 			<form
 				role="search"
 				aria-label={ __( 'Search questions', 'ohmylms' ) }
@@ -301,6 +419,9 @@ export default function QuestionsPage() {
 						<Table caption={ __( 'Questions', 'ohmylms' ) } striped>
 							<thead>
 								<tr>
+									<th scope="col">
+										{ __( 'Select', 'ohmylms' ) }
+									</th>
 									{ [
 										__( 'Question', 'ohmylms' ),
 										__( 'Type', 'ohmylms' ),
@@ -318,6 +439,26 @@ export default function QuestionsPage() {
 							<tbody>
 								{ list.data.items.map( ( item ) => (
 									<tr key={ item.id }>
+										<td>
+											{ item.permissions.can_edit && (
+												<CheckboxControl
+													label={ sprintf(
+														/* translators: %s: question name. */
+														__(
+															'Select %s',
+															'ohmylms'
+														),
+														displayName( item )
+													) }
+													checked={ selected.includes(
+														item.id
+													) }
+													onChange={ ( on ) =>
+														toggle( item.id, on )
+													}
+												/>
+											) }
+										</td>
 										<th scope="row">
 											<Link
 												to={ `${ EDITOR }/${ item.id }` }
@@ -402,6 +543,12 @@ export default function QuestionsPage() {
 				) : (
 					<p>{ __( 'No questions found.', 'ohmylms' ) }</p>
 				) ) }
+			{ importing && (
+				<ImportQuestionsDialog
+					onClose={ () => setImporting( false ) }
+					onImported={ () => list.reload() }
+				/>
+			) }
 			{ creating && (
 				<Modal
 					title={ __( 'New question', 'ohmylms' ) }

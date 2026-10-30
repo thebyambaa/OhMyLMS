@@ -42,6 +42,21 @@ export const subjectProfiles: FeatureDefinition = {
 			)
 	),
 };
+/** Syllabus comparison (groups, roadmaps, shared skills, learner audit) at `#/content-hub/curriculum/compare`. */
+export const curriculumCompare: FeatureDefinition = {
+	id: 'curriculum-compare',
+	title: __( 'Compare syllabuses', 'ohmylms' ),
+	path: '/content-hub/curriculum/compare',
+	extensionRoute: '/content-hub/curriculum/compare',
+	capability: 'manage_options',
+	hidden: true,
+	component: lazy(
+		() =>
+			import(
+				/* webpackChunkName: "admin-app-curriculum-compare" */ './ComparePage'
+			)
+	),
+};
 export const bundles: FeatureDefinition = {
 	id: 'bundles',
 	title: __( 'Course bundles', 'ohmylms' ),

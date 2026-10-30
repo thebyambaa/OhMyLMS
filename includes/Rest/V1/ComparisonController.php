@@ -58,58 +58,7 @@ class ComparisonController extends RestController {
 				'permission_callback' => array( Access::class, 'admin' ),
 			)
 		);
-		register_rest_route(
-			$this->namespace,
-			'/syllabus-comparison/roadmaps/(?P<id>\d+)',
-			array(
-				array(
-					'methods'             => 'GET',
-					'callback'            => array( $this, 'get_roadmap' ),
-					'permission_callback' => array( Access::class, 'admin' ),
-				),
-				array(
-					'methods'             => 'PUT',
-					'callback'            => array( $this, 'save_roadmap' ),
-					'permission_callback' => array( Access::class, 'admin' ),
-				),
-			)
-		);
-		register_rest_route(
-			$this->namespace,
-			'/syllabus-comparison/roadmaps/preview',
-			array(
-				'methods'             => 'POST',
-				'callback'            => array( $this, 'preview_roadmap' ),
-				'permission_callback' => array( Access::class, 'admin' ),
-			)
-		);
-		register_rest_route(
-			$this->namespace,
-			'/syllabus-comparison/audit/(?P<student_id>\d+)',
-			array(
-				'methods'             => 'GET',
-				'callback'            => array( $this, 'student_audit' ),
-				'permission_callback' => array( Access::class, 'admin' ),
-			)
-		);
-		register_rest_route(
-			$this->namespace,
-			'/syllabus-comparison/audit',
-			array(
-				'methods'             => 'GET',
-				'callback'            => array( $this, 'progress' ),
-				'permission_callback' => array( Access::class, 'learner' ),
-			)
-		);
-		register_rest_route(
-			$this->namespace,
-			'/syllabus-comparison/roadmaps',
-			array(
-				'methods'             => 'POST',
-				'callback'            => array( $this, 'create_roadmap' ),
-				'permission_callback' => array( Access::class, 'admin' ),
-			)
-		);
+		$this->register_compare_routes();
 		register_rest_route(
 			$this->namespace,
 			'/syllabus-comparison/shared-skills/(?P<id>\d+)/content',
@@ -127,12 +76,7 @@ class ComparisonController extends RestController {
 			)
 		);
 		foreach ( array(
-			'/syllabus-comparison/syllabuses'              => array( 'GET', 'syllabuses' ),
-			'/syllabus-comparison/configuration'           => array( 'PUT', 'configure' ),
 			'/syllabus-comparison/objectives/(?P<id>\d+)'  => array( 'GET', 'objectives' ),
-			'/syllabus-comparison/shared-skills'           => array( 'GET', 'shared_skills' ),
-			'/syllabus-comparison/shared-skills/(?P<id>\d+)' => array( 'GET', 'shared_skill' ),
-			'/syllabus-comparison/shared-skills/save'      => array( 'POST', 'save_shared' ),
 			'/syllabus-comparison/mapping'                 => array( 'PUT', 'save_mapping' ),
 			'/syllabus-comparison/mapping/remove'          => array( 'POST', 'remove_mapping' ),
 			'/syllabus-comparison/skill-placement'         => array( 'GET', 'skill_placement' ),
@@ -170,6 +114,209 @@ class ComparisonController extends RestController {
 				'permission_callback' => array( Access::class, 'learner' ),
 			)
 		);
+	}
+
+	/**
+	 * Routes of the comparison screen (`#/content-hub/curriculum/compare`): comparison groups, roadmaps,
+	 * shared skills and the learner audit, with typed arguments. Domain services still validate and
+	 * check revisions; the schema rejects malformed input before they run. See
+	 * docs/api/curriculum-workspace.md.
+	 */
+	private function register_compare_routes() {
+		$admin  = array( Access::class, 'admin' );
+		$id     = array(
+			'type'     => 'integer',
+			'minimum'  => 1,
+			'required' => true,
+		);
+		$ids    = static function ( $max, $min = 0 ) {
+			return array(
+				'type'        => 'array',
+				'minItems'    => $min,
+				'maxItems'    => $max,
+				'uniqueItems' => true,
+				'items'       => array(
+					'type'    => 'integer',
+					'minimum' => 1,
+				),
+			);
+		};
+		$text   = static function ( $max, $min = 0 ) {
+			return array(
+				'type'      => 'string',
+				'minLength' => $min,
+				'maxLength' => $max,
+			);
+		};
+		$sha256 = array(
+			'type'    => 'string',
+			'pattern' => '^[a-f0-9]{64}$',
+		);
+		$level  = array(
+			'type'    => 'integer',
+			'minimum' => 0,
+			'maximum' => 100,
+		);
+		$routes = array(
+			'/syllabus-comparison/syllabuses'           => array(
+				array( 'GET', 'syllabuses', $admin, array() ),
+			),
+			'/syllabus-comparison/configuration'        => array(
+				array(
+					'PUT',
+					'configure',
+					$admin,
+					array(
+						'subject'           => $text( 100, 1 ) + array( 'required' => true ),
+						'syllabus_ids'      => $ids( 10 ) + array( 'required' => true ),
+						'expected_revision' => array(
+							'type'     => 'string',
+							'pattern'  => '^[a-f0-9]{16}$',
+							'required' => true,
+						),
+					),
+				),
+			),
+			'/syllabus-comparison/shared-skills'        => array(
+				array(
+					'GET',
+					'shared_skills',
+					$admin,
+					array(
+						'search'     => $text( 100 ),
+						'subject'    => $text( 100 ),
+						'domain'     => $text( 40 ),
+						'grade'      => $level,
+						'roadmap_id' => array(
+							'type'    => 'integer',
+							'minimum' => 0,
+						),
+						'page'       => array(
+							'type'    => 'integer',
+							'minimum' => 1,
+							'maximum' => 10000,
+							'default' => 1,
+						),
+					),
+				),
+			),
+			'/syllabus-comparison/shared-skills/(?P<id>\d+)' => array(
+				array( 'GET', 'shared_skill', $admin, array( 'id' => $id ) ),
+			),
+			'/syllabus-comparison/shared-skills/save'   => array(
+				array(
+					'POST',
+					'save_shared',
+					$admin,
+					array(
+						'id'                => array(
+							'type'    => 'integer',
+							'minimum' => 0,
+							'default' => 0,
+						),
+						'roadmap_id'        => array(
+							'type'    => array( 'integer', 'null' ),
+							'minimum' => 0,
+						),
+						'name'              => $text( 190, 1 ) + array( 'required' => true ),
+						'description'       => $text( 2000 ),
+						'topic'             => $text( 100 ),
+						'subject'           => $text( 100 ),
+						'domain'            => $text( 40 ),
+						'grade_from'        => $level,
+						'grade_to'          => $level,
+						'expected_revision' => $sha256,
+					),
+				),
+			),
+			'/syllabus-comparison/roadmaps'             => array(
+				array(
+					'POST',
+					'create_roadmap',
+					$admin,
+					array(
+						'name'         => $text( 190, 1 ) + array( 'required' => true ),
+						'subject'      => $text( 100 ),
+						'grade'        => $text( 50 ),
+						'syllabus_ids' => $ids( 10, 1 ),
+						'skill_ids'    => $ids( 200 ),
+					),
+				),
+			),
+			'/syllabus-comparison/roadmaps/preview'     => array(
+				array(
+					'POST',
+					'preview_roadmap',
+					$admin,
+					array( 'syllabus_ids' => $ids( 10, 1 ) + array( 'required' => true ) ),
+				),
+			),
+			'/syllabus-comparison/roadmaps/(?P<id>\d+)' => array(
+				array( 'GET', 'get_roadmap', $admin, array( 'id' => $id ) ),
+				array(
+					'PUT',
+					'save_roadmap',
+					$admin,
+					array(
+						'id'                => $id,
+						'name'              => $text( 190, 1 ) + array( 'required' => true ),
+						'syllabus_ids'      => $ids( 10, 1 ) + array( 'required' => true ),
+						'skill_ids'         => $ids( 200 ) + array( 'required' => true ),
+						'folders'           => array(
+							'type'     => 'array',
+							'minItems' => 1,
+							'maxItems' => \OhMyLMS\Curriculum\Syllabus::MAX_GROUPS,
+							'items'    => array(
+								'type'       => 'object',
+								'required'   => array( 'id', 'name', 'skill_ids' ),
+								'properties' => array(
+									'id'        => array(
+										'type'    => 'integer',
+										'minimum' => 0,
+									),
+									'name'      => $text( 190, 1 ),
+									'skill_ids' => $ids( 200 ),
+								),
+							),
+						),
+						'expected_revision' => $sha256 + array( 'required' => true ),
+					),
+				),
+			),
+			'/syllabus-comparison/audit/(?P<student_id>\d+)' => array(
+				array( 'GET', 'student_audit', $admin, array( 'student_id' => $id ) ),
+			),
+			'/syllabus-comparison/audit'                => array(
+				array( 'GET', 'progress', array( Access::class, 'learner' ), array() ),
+			),
+		);
+		foreach ( $routes as $route => $endpoints ) {
+			register_rest_route(
+				$this->namespace,
+				$route,
+				array_map(
+					function ( $endpoint ) {
+						return array(
+							'methods'             => $endpoint[0],
+							'callback'            => array( $this, $endpoint[1] ),
+							'permission_callback' => $endpoint[2],
+							'args'                => $endpoint[3],
+						);
+					},
+					$endpoints
+				)
+			);
+		}
+	}
+
+	/**
+	 * Revision of the comparison groups (subject => source syllabus IDs).
+	 *
+	 * @param mixed $config Stored option.
+	 * @return string 16 hexadecimal characters.
+	 */
+	public static function configuration_revision( $config ) {
+		return substr( Comparison::revision( is_array( $config ) ? $config : array() ), 0, 16 );
 	}
 
 	/**
@@ -600,25 +747,42 @@ class ComparisonController extends RestController {
 		return rest_ensure_response( \OhMyLMS\Curriculum\SharedContent::link( absint( $request['id'] ), absint( $request['content_id'] ), rest_sanitize_boolean( $request['linked'] ) ) );
 	}
 
-	/** Return selectors and the explicitly configured learner sources. */
+	/**
+	 * Return selectors (with `item_type`, `syllabus` or `roadmap`), the configured learner sources and
+	 * their `revision`, which configuration writes must send back.
+	 */
 	public function syllabuses() {
+		$types = array();
+		foreach ( \OhMyLMS\Curriculum\Items::all() as $item ) {
+			$types[ (int) $item['id'] ] = (string) $item['item_type'];
+		}
+		$config = get_option( Comparison::OPTION, array() );
 		return rest_ensure_response(
 			array(
-				'items'    => Comparison::syllabuses(),
-				'selected' => (array) get_option( Comparison::OPTION, array() ),
+				'items'    => array_map(
+					static function ( $row ) use ( $types ) {
+						return $row + array( 'item_type' => 'roadmap' === ( $types[ $row['id'] ] ?? '' ) ? 'roadmap' : 'syllabus' );
+					},
+					Comparison::syllabuses()
+				),
+				'selected' => (array) $config,
+				'revision' => self::configuration_revision( $config ),
 			)
 		);
 	}
 
 	/**
-	 * Designate reviewed profile sources without publishing any course.
+	 * Designate reviewed profile sources without publishing any course. The groups' `expected_revision`
+	 * is compared inside the curriculum lock (409 `ohmylms_comparison_stale`); an empty list removes the
+	 * subject's group.
 	 *
-	 * @param WP_REST_Request $request Syllabus IDs.
+	 * @param WP_REST_Request $request Subject, syllabus IDs and expected_revision.
 	 * @return mixed
 	 */
 	public function configure( WP_REST_Request $request ) {
-		$ids     = $request->get_param( 'syllabus_ids' );
-		$subject = sanitize_text_field( (string) $request->get_param( 'subject' ) );
+		$ids      = $request->get_param( 'syllabus_ids' );
+		$subject  = sanitize_text_field( (string) $request->get_param( 'subject' ) );
+		$expected = (string) $request->get_param( 'expected_revision' );
 		if ( '' === $subject || mb_strlen( $subject ) > 100 ) {
 			return Access::error( 'ohmylms_subject_invalid', __( 'Enter a subject up to 100 characters.', 'ohmylms' ) );
 		}
@@ -632,9 +796,16 @@ class ComparisonController extends RestController {
 			}
 		}
 		$saved = \OhMyLMS\Curriculum\Items::exclusive(
-			static function () use ( $subject, $ids ) {
-				$config             = (array) get_option( Comparison::OPTION, array() );
-				$config[ $subject ] = $ids;
+			static function () use ( $subject, $ids, $expected ) {
+				$config = (array) get_option( Comparison::OPTION, array() );
+				if ( ! hash_equals( self::configuration_revision( $config ), $expected ) ) {
+					return Access::error( 'ohmylms_comparison_stale', __( 'The comparison groups changed. Reload them before saving.', 'ohmylms' ), 409, array( 'revision' => self::configuration_revision( $config ) ) );
+				}
+				if ( $ids ) {
+					$config[ $subject ] = $ids;
+				} else {
+					unset( $config[ $subject ] );
+				}
 				update_option( Comparison::OPTION, $config, false );
 				return true;
 			}

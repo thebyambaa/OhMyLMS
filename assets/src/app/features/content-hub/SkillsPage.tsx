@@ -1,6 +1,7 @@
 import { Button, Modal, Notice, TextControl } from '@wordpress/components';
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import { useSearchParams } from 'react-router-dom';
 import { Table } from '../../../ui/Table';
 import { useBootstrap } from '../../bootstrap/BootstrapContext';
 import { Pagination } from '../../components/Pagination';
@@ -34,6 +35,22 @@ export default function SkillsPage() {
 	const [ busy, setBusy ] = useState( false );
 	const operation = useRef< AbortController | null >( null );
 	useEffect( () => () => operation.current?.abort(), [] );
+	const [ params, setParams ] = useSearchParams();
+	const add = params.get( 'add' );
+	useEffect( () => {
+		if ( '1' !== add ) {
+			return;
+		}
+		setEditor( { item: null } );
+		setParams(
+			( current ) => {
+				const next = new URLSearchParams( current );
+				next.delete( 'add' );
+				return next;
+			},
+			{ replace: true }
+		);
+	}, [ add, setParams ] );
 	useEffect( () => {
 		const controller = new AbortController();
 		setLoading( true );

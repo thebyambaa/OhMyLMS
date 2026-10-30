@@ -107,6 +107,55 @@ account and accepts it (`Service::accept`), and then appears under `children`. U
 `pending` and can be revoked. One pending invitation per parent and student (`409 _invitation_pending`); an
 existing link answers `409 _already_linked`; the student must be on the school's roster (`422 _not_on_roster`).
 
+## Roster intake
+
+Server code: `includes/Rest/V1/AccountHubRosterController.php` (extends the Account Hub controller, same
+permissions and scope). Writes go through `Service::invite`, `Service::revoke_invite`, `Service::create_student`
+and `Lifecycle::recovery`, which re-check the school relationship. Writes into a school that is not active answer
+`409 _school_inactive`. Responses that carry links or sign-in names send `Cache-Control: private, no-store`.
+
+| Method | Path (below `/schools/{id}`) | Purpose | Success |
+| --- | --- | --- | --- |
+| GET | `/invitations` | Invitations, newest first (`status=pending` default, or `all`; `search` matches the email) | 200 + totals |
+| POST | `/invitations` | `{ role: school_admin\|teacher\|student, email, class_id?, send_email? }` | 201 `{ id, role, url, expires_at, email_sent }` |
+| DELETE | `/invitations/{invitation}` | Revoke an open invitation (kept as `revoked`) | 200 `{ revoked: true }` |
+| GET | `/managed-students` | School-managed accounts (no email) with an active student membership; `search` matches name or school student ID | 200 + totals |
+| POST | `/managed-students` | `{ name (1-190), external_student_id (1-100) }` | 201 student |
+| POST | `/managed-students/{user_id}/setup-link` | New password-setup link; earlier unused links are revoked | 201 `{ id, student_id, url, expires_at }` |
+| POST | `/roster-import` | `{ csv (≤ 100 000 bytes), dry_run (default true), review?, send_email? }` | 200 report |
+
+Fields: invitation `id, role, email, email_hint, class_id, class_name, student_id, student_name, status
+(pending|accepted|revoked|expired), expires_at, created_at`. `email` is `null` without `list_users`; `email_hint` is
+always masked (`a***@example.org`). Token hashes and links are never listed; a link is returned once, at creation.
+Managed student: `id, display_name, username, external_student_id, joined_at, setup_expires_at` — the sign-in name
+and school student ID are school-issued identifiers the administrator hands to the student; no email exists.
+
+Invitation rules: guardians use `/parents/{id}/children`, password setup uses the setup-link route (schema
+`400` for other roles). An account with that email already on the roster in that role answers `409
+_already_member`; an open invitation for the same email and role `409 _invitation_pending` (`data.invitation`).
+`class_id` must be an active class of this school, teacher or student only (`422 _invalid_class`).
+
+### CSV import
+
+UTF-8 (a BOM is accepted) with a header row; columns `role` (`student` default, or `teacher`), `name`
+(required), `email`, `external_student_id` (alias `student_id`). Other columns are ignored and listed in
+`ignored`. At most 200 people. File errors answer `422 _csv_invalid` (no `name` column, duplicate columns,
+invalid UTF-8), `_csv_empty` or `_csv_too_long`; the size limit is schema `400`.
+
+Each row is planned against the current roster: without email a student becomes a managed account
+(`create_student`, or `existing` when the school student ID is taken); with email the person is invited
+(`invite`, or `existing` when already on the roster in that role, `pending` when an invitation is open). Errors
+(`error` with a message): unknown role, missing name, invalid email, a teacher without email, a student without
+email or school student ID, a repeated row.
+
+The dry run writes nothing and answers `{ dry_run: true, review, counts, ignored, rows[] }`, each row `{ line, role,
+name, email, external_student_id, action, error }`. `review` is an HMAC of the caller, the school and every planned
+row. Applying (`dry_run: false`) requires it (`400 _review_required`); the plan is recomputed under a per-school
+lock and a different plan — another file, a roster change, another reviewer — answers `409 _review_stale` without
+writing. Only `create_student` and `invite` rows are written (`created` with `user_id` and `username`, `invited`
+with its one-time `url`); a row that fails becomes `error` and the rest continue. Applying the same file again finds
+everyone as `existing` or `pending`, so nothing is created twice; the old review token is stale by then.
+
 ## Examples
 
 ```http
@@ -142,6 +191,7 @@ HTTP/1.1 201 Created
 | 404 | `_school_not_found`, `_class_not_found`, `_parent_not_found`, `_member_not_found`, `_link_not_found`, `_invitation_not_found` | Unknown or out-of-relationship ids. |
 | 409 | `_conflict`, `_class_archived`, `_class_active`, `_already_member`, `_already_linked`, `_invitation_pending`, `_duplicate` | Stale save or state conflict. |
 | 422 | `_invalid_name`, `_invalid_timezone`, `_invalid_dates`, `_invalid_year`, `_not_on_roster`, `_independent_class`, `_parent_without_email`, `_rejected` | Validation and roster rules (`_rejected` carries a service message). |
+| 400 / 404 / 409 / 422 | `_review_required`; `_student_not_found`; `_school_inactive`, `_duplicate_student_id`, `_review_stale`, `_import_busy`; `_invalid_email`, `_invalid_class`, `_invalid_student`, `_csv_invalid`, `_csv_empty`, `_csv_too_long` | Roster intake (see above). |
 | 500 | `_failed` | Database failure; nothing was changed. |
 
 ## UI
@@ -149,16 +199,19 @@ HTTP/1.1 201 Created
 `assets/src/app/features/account-hub`: `#/account-hub` (tabs Schools, Classes, Teachers, Parents via `?tab=`, and
 a link to `#/students`), `#/account-hub/schools/<id>` (details, academic years, the school's classes, add class)
 and `#/account-hub/classes/<id>` (details, archive/restore, roster, add students or teachers by searching the
-school roster). Extensions see these screens as the original `/accounthub` route.
+school roster), and `#/account-hub/schools/<id>/roster` (invitations with revoke, managed students with
+confirmed setup links, CSV review then import; linked from the school). Extensions see these screens as the
+original `/accounthub` route. It replaces the legacy school view's Invitations, Import and managed-student
+forms (`#/accounthub?tab=schools` → school → Invitations / Import / Roster).
 
 ## Not in this slice
 
-School roster management (invitations, managed students, CSV import, removal from a school), assignments,
-reports, gradebook, rollover, recovery links, View as and sample preview stay in the legacy Account Hub
-(`#/accounthub`) and the hub School workspace. Schools cannot be archived (the code base has no school
-archive). Adding students to an independent class stays the teacher's invitation link.
+Removal from a school, guardian listing per school, assignments, reports, gradebook, rollover, View as and
+sample preview stay in the legacy Account Hub (`#/accounthub`) and the hub School workspace. Schools cannot be
+archived (the code base has no school archive). Adding students to an independent class stays the teacher's
+invitation link. The CSV import does not place people in classes.
 
 ## Tests
 
-`tests/php/account-hub-rest-integration.php` (set `OHMYLMS_ACCOUNT_HUB_TEST=1`; see the file header) and
-`npx vitest run --configLoader runner features/account-hub`.
+`tests/php/account-hub-rest-integration.php` and `tests/php/account-hub-roster-rest-integration.php` (set
+`OHMYLMS_ACCOUNT_HUB_TEST=1`; see the file headers) and `npx vitest run --configLoader runner features/account-hub`.

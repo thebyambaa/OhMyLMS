@@ -8,9 +8,12 @@ import {
 } from '@wordpress/components';
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Pagination } from '../../components/Pagination';
 import { normalizeApiError } from '../../lib/api';
+import { saveFile } from '../questions/public';
+import { exportQuiz } from './exchange';
+import { ImportQuizDialog } from './ImportQuizDialog';
 import {
 	createQuiz,
 	deleteQuiz,
@@ -24,16 +27,21 @@ import { usePagedList } from './usePagedList';
 import type { Quiz } from './types';
 
 type Dialog =
-	{ kind: 'create' } | { kind: 'trash' | 'delete'; item: Quiz } | null;
+	| { kind: 'create' | 'import' }
+	| { kind: 'trash' | 'delete'; item: Quiz }
+	| null;
 
 /**
- * Quiz list (`#/quizzes`): paged and searchable, filtered by status and course, with create, trash,
- * restore and confirmed permanent delete. Settings live at `#/quizzes/<id>`, attempts at
+ * Quiz list (`#/quizzes`): paged and searchable, filtered by status and course, with create, import,
+ * export, trash, restore and confirmed permanent delete. `?action=new` opens the create dialog and
+ * `?action=import` the import dialog. Settings live at `#/quizzes/<id>`, attempts at
  * `#/quizzes/<id>/attempts`.
  */
 export default function QuizzesPage() {
 	const list = useQuizzes();
 	const navigate = useNavigate();
+	const [ params, setParams ] = useSearchParams();
+	const action = params.get( 'action' );
 	const [ query, setQuery ] = useState( '' );
 	const [ courseQuery, setCourseQuery ] = useState( '' );
 	const [ dialog, setDialog ] = useState< Dialog >( null );
@@ -44,6 +52,22 @@ export default function QuizzesPage() {
 	const [ message, setMessage ] = useState< string | null >( null );
 	const operation = useRef< AbortController | null >( null );
 	useEffect( () => () => operation.current?.abort(), [] );
+	useEffect( () => {
+		if ( 'new' !== action && 'import' !== action ) {
+			return;
+		}
+		setTitle( '' );
+		setError( null );
+		setDialog( { kind: 'new' === action ? 'create' : 'import' } );
+		setParams(
+			( current ) => {
+				const next = new URLSearchParams( current );
+				next.delete( 'action' );
+				return next;
+			},
+			{ replace: true }
+		);
+	}, [ action, setParams ] );
 	const courses = usePagedList(
 		( signal ) => listCourses( courseQuery, 1, signal ),
 		[ courseQuery ]
@@ -114,6 +138,27 @@ export default function QuizzesPage() {
 			list.afterRemove();
 		} );
 	}
+	function download( item: Quiz ) {
+		void run( async ( signal ) => {
+			const file = await exportQuiz( item.id, signal );
+			if ( signal.aborted ) {
+				return;
+			}
+			saveFile( file );
+			setMessage(
+				file.warnings.length
+					? sprintf(
+							/* translators: %s: problems found. */
+							__(
+								'Quiz exported. Some questions are unfinished and will be refused on import until fixed: %s',
+								'ohmylms'
+							),
+							file.warnings.join( ' ' )
+						)
+					: __( 'Quiz exported.', 'ohmylms' )
+			);
+		} );
+	}
 	function remove( item: Quiz ) {
 		void run( async ( signal ) => {
 			await deleteQuiz( item.id, signal );
@@ -177,6 +222,16 @@ export default function QuizzesPage() {
 				} }
 			>
 				{ __( 'Add quiz', 'ohmylms' ) }
+			</Button>{ ' ' }
+			<Button
+				variant="secondary"
+				disabled={ busy }
+				onClick={ () => {
+					setError( null );
+					setDialog( { kind: 'import' } );
+				} }
+			>
+				{ __( 'Import quiz', 'ohmylms' ) }
 			</Button>
 			<form
 				role="search"
@@ -397,6 +452,30 @@ export default function QuizzesPage() {
 																	'ohmylms'
 																) }
 															</Link>{ ' ' }
+															<Button
+																variant="link"
+																disabled={
+																	busy
+																}
+																onClick={ () =>
+																	download(
+																		item
+																	)
+																}
+																aria-label={ sprintf(
+																	/* translators: %s: quiz title. */
+																	__(
+																		'Export %s',
+																		'ohmylms'
+																	),
+																	item.title
+																) }
+															>
+																{ __(
+																	'Export',
+																	'ohmylms'
+																) }
+															</Button>{ ' ' }
 														</>
 													) }
 													{ item.can_grade && (
@@ -519,6 +598,12 @@ export default function QuizzesPage() {
 						</Button>
 					</form>
 				</Modal>
+			) }
+			{ dialog?.kind === 'import' && (
+				<ImportQuizDialog
+					onClose={ close }
+					onImported={ ( id ) => navigate( `/quizzes/${ id }` ) }
+				/>
 			) }
 			{ ( dialog?.kind === 'trash' || dialog?.kind === 'delete' ) && (
 				<Modal

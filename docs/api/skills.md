@@ -57,6 +57,11 @@ the author's edits, offers "Reload latest and keep my edits" (fields the author 
 the server value) and requires another explicit save. A busy lock returns 409 `ohmylms_skill_busy`.
 The response to a successful write is the new editor state. Only changed fields are sent.
 
+## Deep link
+
+`#/content-hub/skills?add=1` (the legacy "Add skill" address) opens the create dialog on load; the
+parameter is then removed from the address so a reload or Back does not reopen it.
+
 ## Verification and remaining scope
 
 `OHMYLMS_SKILL_AUTHORING_TEST=1` runs `tests/php/skill-authoring-rest-integration.php` (denied

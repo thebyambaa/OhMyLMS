@@ -36,6 +36,22 @@ export const accountHubSchool: FeatureDefinition = {
 	),
 };
 
+/** School roster intake (invitations, managed students, CSV import) at `#/account-hub/schools/<id>/roster`. */
+export const accountHubRoster: FeatureDefinition = {
+	id: 'account-hub-roster',
+	title: __( 'School roster', 'ohmylms' ),
+	path: '/account-hub/schools/:id/roster',
+	extensionRoute: '/accounthub',
+	hidden: true,
+	capability: 'manage_options',
+	component: lazy(
+		() =>
+			import(
+				/* webpackChunkName: "admin-app-account-hub" */ './SchoolRosterPage'
+			)
+	),
+};
+
 /** Class editor and roster at `#/account-hub/classes/<id>`. */
 export const accountHubClass: FeatureDefinition = {
 	id: 'account-hub-class',

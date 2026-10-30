@@ -261,6 +261,43 @@ Stale save:
 | 500 | `ohmylms_question_storage` | Storage failure; DraftWriter rolled the save back. |
 | 503 | `ohmylms_question_bank_unavailable` | Question bank tables not installed. |
 
+## Import and export
+
+Server code: `includes/Rest/V1/QuestionImportController.php`, over `QuestionBank\BulkImport` (parse, check,
+write through `DraftWriter`) and `QuestionBank\RowExporter`. Both routes need `edit_posts` (401 anonymous,
+403 `ohmylms_question_cannot_import` / `_cannot_export`) and answer `Cache-Control: private, no-store`; the
+row format is described in [QUESTION-BULK-IMPORT](../QUESTION-BULK-IMPORT.md).
+
+**`POST /question-bank/import`** — `text` (≤ 2 000 000 bytes) or `rows` (≤ 200 objects), `format`
+(`auto`, `csv`, `json`), `dry_run` (default true), `approve`, `update_existing` (default true), `skip_invalid`,
+`bank_id` (≥ 0; must be a bank the user can edit), `default_skills` (≤ 2000), `review` (64 hex). Rows are
+matched to earlier imports by exam, paper, year, section, number and language: `create`, `update`,
+`unchanged` or `error` per row, so the same file imported twice changes nothing. A dry run writes nothing
+and adds `review`, an HMAC of the caller, the rows, `bank_id`, `update_existing`, `default_skills` and every
+row's planned status, target and errors. An import that sends `review` re-checks first and answers 409
+`ohmylms_import_review_stale` without writing when anything differs (another file or option, a question
+edited or imported meanwhile, another user); a used review is stale by construction. Without `skip_invalid`
+any row error stops the whole import (`stopped`). The legacy Content Hub dialog still imports without
+`review`; the new screen always sends it.
+
+**`POST /questions/export`** — required `format` (`csv`, `json`) and exactly one of `ids` (1–200 unique
+IDs, file order) or `filters` (`search` ≤ 100, `type` (registered), `difficulty`, `status`
+`active|draft|approved|archived`, `bank` ≥ 0 visible to the user, `skill`; no other keys); optional `label`
+≤ 190 (the exam name written into every row). Answers `{ filename, mime, content, count, warnings, skipped }`.
+The file holds answer keys, so only questions the user may edit are written: selected IDs answer 404
+`ohmylms_question_not_found` for an unknown or trashed ID and 403 `ohmylms_question_cannot_export` if any
+cannot be edited; filters skip such questions and report them in `skipped`. Filters matching nothing answer
+422 `ohmylms_question_export_empty`, more than 200 answer 422 `_export_too_many`. Re-importing an export on
+the same site plans copies (the exporter writes the label as the exam, without paper or year).
+
+UI: `#/content-hub/question-bank` has **Import questions** (paste or choose a file, **Check file**, review
+every row, then **Import checked rows**; changing the text requires a new check; a stale refusal asks for a new
+check), a selection checkbox on rows the user may edit, **Export N selected (CSV/JSON)** and **Export all
+matching (CSV/JSON)** with the list's current filters. Deep links: `?action=new` opens the New question dialog
+(which continues into the draft editor), `?action=import` the import dialog; the parameter is removed once
+the dialog is open. Tests: `tests/php/question-exchange-rest-integration.php` (`OHMYLMS_QUESTIONS_TEST=1`) and
+`features/questions/QuestionExchange.test.tsx`.
+
 ## Hooks
 
 - Filter `ohmylms_rest_questions_query` ($filters, $request): list filters before `Search::query()`;

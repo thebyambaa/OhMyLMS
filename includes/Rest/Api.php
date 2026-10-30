@@ -54,10 +54,6 @@ class Api {
 			\OhMyLMS\Rest\V1\LessonController::class,
 			\OhMyLMS\Rest\V1\QuizController::class,
 			\OhMyLMS\Rest\V1\QuizQuestionsController::class,
-			\OhMyLMS\Rest\V1\DesignSettingsController::class,
-			\OhMyLMS\Rest\V1\CourseRosterController::class,
-			\OhMyLMS\Rest\V1\StudentReportController::class,
-			\OhMyLMS\Rest\V1\SessionsController::class,
 			\OhMyLMS\Rest\V1\QuestionController::class,
 			\OhMyLMS\Rest\V1\AssessmentController::class,
 			\OhMyLMS\Rest\V1\QuestionBankController::class,
@@ -85,6 +81,7 @@ class Api {
 			\OhMyLMS\Rest\V1\TemplateController::class,
 			\OhMyLMS\Rest\V1\SettingsController::class,
 			\OhMyLMS\Rest\V1\PaymentGatewaySettingsController::class,
+			\OhMyLMS\Rest\V1\DesignSettingsController::class,
 			\OhMyLMS\Rest\V1\DesignSystemController::class,
 			\OhMyLMS\Rest\V1\HubIconsController::class,
 			\OhMyLMS\Rest\V1\CategoryController::class,
@@ -92,6 +89,9 @@ class Api {
 			\OhMyLMS\Rest\V1\EmailController::class,
 			\OhMyLMS\Rest\V1\DashboardController::class,
 			\OhMyLMS\Rest\V1\AnalyticsController::class,
+			\OhMyLMS\Rest\V1\CourseRosterController::class,
+			\OhMyLMS\Rest\V1\StudentReportController::class,
+			\OhMyLMS\Rest\V1\SessionsController::class,
 			\OhMyLMS\Rest\V1\CertificateController::class,
 			\OhMyLMS\Rest\V1\MigrationController::class,
 			\OhMyLMS\Rest\V1\NotificationController::class,
@@ -101,6 +101,7 @@ class Api {
 			\OhMyLMS\Rest\V1\SubscriptionsController::class,
 			\OhMyLMS\Rest\V1\AssignmentsController::class,
 			\OhMyLMS\Rest\V1\AccountHubController::class,
+			\OhMyLMS\Rest\V1\AccountHubRosterController::class,
 		);
 		$controllers_v1  = apply_filters( 'ohmylms_rest_v1_controllers', $controllers_v1 );
 		$controllers_v2  = array();

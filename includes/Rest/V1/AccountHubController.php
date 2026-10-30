@@ -443,7 +443,7 @@ class AccountHubController extends RestController {
 	 *
 	 * @return int[]|null
 	 */
-	private function managed_schools() {
+	protected function managed_schools() {
 		if ( current_user_can( self::CAPABILITY ) ) {
 			return null;
 		}
@@ -479,7 +479,7 @@ class AccountHubController extends RestController {
 	 * @param int $school_id School id.
 	 * @return bool
 	 */
-	private function in_scope( $school_id ) {
+	protected function in_scope( $school_id ) {
 		$managed = $this->managed_schools();
 
 		return null === $managed || in_array( (int) $school_id, $managed, true );
@@ -490,7 +490,7 @@ class AccountHubController extends RestController {
 	 *
 	 * @return bool
 	 */
-	private function can_see_email() {
+	protected function can_see_email() {
 		return current_user_can( 'list_users' );
 	}
 
@@ -507,7 +507,7 @@ class AccountHubController extends RestController {
 	 * @param array  $data    Extra error data.
 	 * @return WP_Error
 	 */
-	private function error( $code, $message, $status, array $data = array() ) {
+	protected function error( $code, $message, $status, array $data = array() ) {
 		return new WP_Error( 'ohmylms_account_hub_' . $code, $message, array_merge( array( 'status' => $status ), $data ) );
 	}
 
@@ -516,7 +516,7 @@ class AccountHubController extends RestController {
 	 *
 	 * @return WP_Error
 	 */
-	private function forbidden() {
+	protected function forbidden() {
 		return $this->error( 'forbidden', __( 'Sorry, you can only manage your own schools.', 'ohmylms' ), 403 );
 	}
 
@@ -526,7 +526,7 @@ class AccountHubController extends RestController {
 	 * @param \Throwable $failure Thrown error.
 	 * @return WP_Error
 	 */
-	private function service_error( \Throwable $failure ) {
+	protected function service_error( \Throwable $failure ) {
 		$status = $failure instanceof \RuntimeException ? (int) $failure->getCode() : 500;
 		if ( 403 === $status ) {
 			return $this->forbidden();
@@ -547,7 +547,7 @@ class AccountHubController extends RestController {
 	 * @param array $extra Extra arguments.
 	 * @return array
 	 */
-	private function collection_args( array $extra = array() ) {
+	protected function collection_args( array $extra = array() ) {
 		return array_merge(
 			array(
 				'page'     => array(
@@ -683,7 +683,7 @@ class AccountHubController extends RestController {
 	 * @param int   $max   Maximum length.
 	 * @return string
 	 */
-	private function clean( $value, $max = 190 ) {
+	protected function clean( $value, $max = 190 ) {
 		return Service::text( trim( (string) $value ), $max );
 	}
 
@@ -694,7 +694,7 @@ class AccountHubController extends RestController {
 	 * @param int             $total   Total rows.
 	 * @return array{0:int,1:int,2:int}|WP_Error Page, per page, pages.
 	 */
-	private function paging( $request, $total ) {
+	protected function paging( $request, $total ) {
 		$page     = max( 1, (int) $request['page'] );
 		$per_page = min( 100, max( 1, (int) $request['per_page'] ) );
 		$pages    = (int) ceil( $total / $per_page );
@@ -713,7 +713,7 @@ class AccountHubController extends RestController {
 	 * @param int   $pages Total pages.
 	 * @return WP_REST_Response
 	 */
-	private function collection( array $rows, $total, $pages ) {
+	protected function collection( array $rows, $total, $pages ) {
 		$response = rest_ensure_response( $rows );
 		$response->header( 'X-WP-Total', (string) $total );
 		$response->header( 'X-WP-TotalPages', (string) $pages );
@@ -727,7 +727,7 @@ class AccountHubController extends RestController {
 	 * @param WP_REST_Request $request Request.
 	 * @return string
 	 */
-	private function like( $request ) {
+	protected function like( $request ) {
 		global $wpdb;
 
 		return '%' . $wpdb->esc_like( $this->clean( $request['search'], 100 ) ) . '%';
@@ -739,7 +739,7 @@ class AccountHubController extends RestController {
 	 * @param mixed $value Database datetime.
 	 * @return string|null
 	 */
-	private function iso( $value ) {
+	protected function iso( $value ) {
 		$value = (string) $value;
 
 		return ( '' === $value || 0 === strpos( $value, '0000-00-00' ) ) ? null : str_replace( ' ', 'T', $value ) . 'Z';
@@ -752,7 +752,7 @@ class AccountHubController extends RestController {
 	 * @param string $path Path below the base.
 	 * @return WP_REST_Response
 	 */
-	private function created( array $data, $path ) {
+	protected function created( array $data, $path ) {
 		$response = rest_ensure_response( $data );
 		$response->set_status( 201 );
 		$response->header( 'Location', rest_url( $this->namespace . '/' . $this->rest_base . $path ) );
@@ -770,7 +770,7 @@ class AccountHubController extends RestController {
 	 * @param int $id School id.
 	 * @return array|WP_Error
 	 */
-	private function school_or_error( $id ) {
+	protected function school_or_error( $id ) {
 		$school = Service::row( 'schools', absint( $id ) );
 		if ( ! $school ) {
 			return $this->error( 'school_not_found', __( 'School not found.', 'ohmylms' ), 404 );

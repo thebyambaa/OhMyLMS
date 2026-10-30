@@ -246,6 +246,28 @@ leave guard. The legacy "Edit questions" link to `#/quiz-edit/<id>` was removed 
   `DELETE /quiz/{id}/questions/{qid}` routes are unchanged (still used by the old editor, import and internal
   callers) and keep the findings above until they retire.
 
+## Import and export
+
+The file format and importer are described in [QUIZ-IMPORT-EXPORT](../QUIZ-IMPORT-EXPORT.md); the routes stay
+under `ohmylms/v1/quiz` and are hardened here:
+
+- `POST /quiz/import`: `content` / `csv` at most 10 MB (`Document::MAX_BYTES`), `name` at most 200 characters
+  (schema-validated before sanitizing), `format` `auto|ohmylms|csv`, `dry_run`, `copy_media`, and `review`
+  (64 hex). A dry run answers `review`, an HMAC of the caller, the file text, the name and the format; an import
+  that sends it must be exactly the checked file and name (409 `ohmylms_quiz_import_review_stale`, nothing
+  created). Import always creates a new draft quiz, so it is never idempotent by design; the review only
+  guarantees that what is created is what was checked. `edit_posts` (`AccessPolicy::can_author`).
+- `GET /quiz/{id}/export`: edit rights on the quiz (`AccessPolicy::can_edit_quiz`); the file holds every
+  answer key.
+- Both answer `Cache-Control: private, no-store`.
+
+UI on `#/quizzes`: **Import quiz** (choose or paste a file, optional name, **Check file** lists the summary
+and warnings or every problem with its question number, **Import as a new draft quiz** opens the new quiz;
+changing the file or name requires a new check) and an **Export** row action for quizzes the user can edit.
+Deep links: `?action=new` opens **Add quiz**, `?action=import` opens **Import quiz**; the parameter is removed
+once the dialog is open. Tests: `tests/php/quiz-import-export-rest-integration.php` (`OHMYLMS_QUIZZES_TEST=1`)
+and `features/quizzes/QuizExchange.test.tsx`.
+
 ## Error codes
 
 | HTTP | Code | When |

@@ -1,5 +1,10 @@
 import { hasCapability } from '../bootstrap/config';
-import { accountHub, accountHubClass, accountHubSchool } from './account-hub';
+import {
+	accountHub,
+	accountHubClass,
+	accountHubRoster,
+	accountHubSchool,
+} from './account-hub';
 import {
 	assignmentEditor,
 	assignmentGrading,
@@ -16,7 +21,13 @@ import {
 	courses as courseStructures,
 	courseSettings,
 } from './course-structure';
-import { bundles, curriculum, skillMap, subjectProfiles } from './curriculum';
+import {
+	bundles,
+	curriculum,
+	curriculumCompare,
+	skillMap,
+	subjectProfiles,
+} from './curriculum';
 import { courseReport, courseRoster, dashboard, earnings } from './dashboard';
 import { emails } from './emails';
 import { extensionPages } from './extensions';
@@ -27,9 +38,9 @@ import { lessons, lessonEditor } from './lessons';
 import { membershipEditor, memberships } from './memberships';
 import { questionEditor, questions } from './questions';
 import { quizAttempts, quizEditor, quizzes } from './quizzes';
+import { sessionEditor, sessions } from './sessions';
 import { settings } from './settings';
 import { setup } from './setup';
-import { sessionEditor, sessions } from './sessions';
 import { studentReport, students } from './students';
 import { syllabusEditor } from './syllabus';
 import { taxonomies } from './taxonomies';
@@ -51,6 +62,7 @@ export const features: readonly FeatureDefinition[] = [
 	curriculum,
 	skillMap,
 	subjectProfiles,
+	curriculumCompare,
 	bundles,
 	syllabusEditor,
 	courseStructures,
@@ -80,6 +92,7 @@ export const features: readonly FeatureDefinition[] = [
 	studentReport,
 	accountHub,
 	accountHubSchool,
+	accountHubRoster,
 	accountHubClass,
 	certificates,
 	certificateEditor,
