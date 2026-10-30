@@ -59,14 +59,14 @@ final class GradingPolicy {
 			return array();
 		}
 		$own    = $wpdb->get_col(
-			$wpdb->prepare( 'SELECT ID FROM %i WHERE post_type = %s AND post_author = %d AND post_status NOT IN ( \'trash\', \'auto-draft\' ) LIMIT 5000', $wpdb->posts, OHMYLMS_QUIZ_CPT, $user_id )
+			$wpdb->prepare( 'SELECT ID FROM %i WHERE post_type = %s AND post_author = %d AND post_status <> \'auto-draft\' LIMIT 5000', $wpdb->posts, OHMYLMS_QUIZ_CPT, $user_id )
 		);
 		$course = $wpdb->get_col(
 			$wpdb->prepare(
 				'SELECT DISTINCT content.content_id FROM %i content
 				INNER JOIN %i chapter ON chapter.chapter_id = content.chapter_id
 				INNER JOIN %i course ON course.ID = chapter.course_id AND course.post_author = %d
-				INNER JOIN %i quiz ON quiz.ID = content.content_id AND quiz.post_type = %s AND quiz.post_status NOT IN ( \'trash\', \'auto-draft\' )
+				INNER JOIN %i quiz ON quiz.ID = content.content_id AND quiz.post_type = %s AND quiz.post_status <> \'auto-draft\'
 				LIMIT 5000',
 				$wpdb->prefix . 'ohmylms_content_relationship',
 				$wpdb->prefix . 'ohmylms_chapter_relationship',

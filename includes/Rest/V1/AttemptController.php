@@ -51,15 +51,36 @@ class AttemptController extends RestController {
 						'question_id' => array(
 							'required' => true,
 							'type'     => 'integer',
+							'minimum'  => 1,
 						),
 						'sequence'    => array(
 							'type'    => 'integer',
 							'default' => 0,
+							'minimum' => 0,
+							'maximum' => 2147483647,
+						),
+						'response'    => array(
+							'description'       => 'The answer: text, a number, a boolean, a list or an object; at most 64 KB when encoded.',
+							'type'              => array( 'string', 'number', 'integer', 'boolean', 'array', 'object', 'null' ),
+							'validate_callback' => array( $this, 'validate_response_size' ),
 						),
 					),
 				),
 			)
 		);
+	}
+
+	/**
+	 * Reject an oversized answer before it is sanitised or stored.
+	 *
+	 * @param mixed $value Submitted answer.
+	 * @return true|WP_Error
+	 */
+	public function validate_response_size( $value ) {
+		if ( strlen( (string) wp_json_encode( $value ) ) > 65535 ) {
+			return new WP_Error( 'quiz_answer', __( 'This answer is too long.', 'ohmylms' ), array( 'status' => 400 ) );
+		}
+		return true;
 	}
 
 	/** The current user must own an in-progress versioned attempt they can still access.
@@ -71,7 +92,7 @@ class AttemptController extends RestController {
 		if ( ! is_user_logged_in() ) {
 			return new WP_Error( 'ohmylms_login_required', __( 'Please log in.', 'ohmylms' ), array( 'status' => 401 ) ); }
 		$attempt = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}ohmylms_quiz_attempts WHERE id=%d", (int) $request['id'] ), ARRAY_A );
-		if ( ! $attempt || (int) $attempt['student_id'] !== get_current_user_id() ) {
+		if ( ! $attempt || get_current_user_id() !== (int) $attempt['student_id'] ) {
 			return new WP_Error( 'ohmylms_attempt_missing', __( 'Attempt not found.', 'ohmylms' ), array( 'status' => 404 ) );
 		}
 		$access = Submission::access( (int) $attempt['quiz_id'], get_current_user_id() );
@@ -101,9 +122,12 @@ class AttemptController extends RestController {
 	public function resume( WP_REST_Request $request ) {
 		$attempt_id = (int) $request['id'];
 		$attempt    = $this->attempt( $attempt_id );
-		$context    = AttemptItems::context( $attempt_id );
-		$saved      = Responses::for_resume( $attempt_id );
-		$responses  = array();
+		if ( ! $attempt ) {
+			return new WP_Error( 'ohmylms_attempt_missing', __( 'Attempt not found.', 'ohmylms' ), array( 'status' => 404 ) );
+		}
+		$context   = AttemptItems::context( $attempt_id );
+		$saved     = Responses::for_resume( $attempt_id );
+		$responses = array();
 		foreach ( AttemptItems::items( $attempt_id ) as $item ) {
 			if ( ! isset( $saved[ (int) $item['id'] ] ) ) {
 				continue; }
@@ -132,6 +156,9 @@ class AttemptController extends RestController {
 	public function save( WP_REST_Request $request ) {
 		$attempt_id = (int) $request['id'];
 		$attempt    = $this->attempt( $attempt_id );
+		if ( ! $attempt ) {
+			return new WP_Error( 'ohmylms_attempt_missing', __( 'Attempt not found.', 'ohmylms' ), array( 'status' => 404 ) );
+		}
 		if ( 'in-progress' !== $attempt['status'] ) {
 			return new WP_Error( 'quiz_attempt', __( 'This attempt has already been submitted.', 'ohmylms' ), array( 'status' => 409 ) );
 		}

@@ -99,15 +99,15 @@ final class QuizSettings {
 		}
 		$out['randomize_questions'] = ! empty( $raw['randomize_questions'] );
 
-		$show                         = array_key_exists( 'show_correct_answers', $raw ) ? (bool) $raw['show_correct_answers'] : true;
-		$out['show_correct_answers']  = $show && empty( $raw['hide_answers'] );
-		$out['layout']                = isset( $raw['layout'] ) && in_array( $raw['layout'], self::LAYOUTS, true ) ? $raw['layout'] : 'one_question_per_page';
-		$per_page                     = isset( $raw['question_in_one_page'] ) && is_numeric( $raw['question_in_one_page'] ) ? (int) $raw['question_in_one_page'] : 1;
-		$out['questions_per_page']    = max( 1, min( self::MAX_PER_PAGE, $per_page ) );
-		$assessment                   = AssessmentSettings::get( $quiz_id );
-		$out['feedback_mode']         = in_array( $assessment['feedback_release'], AssessmentSettings::FEEDBACK, true ) ? $assessment['feedback_release'] : 'immediate';
-		$out['available_from']        = self::to_iso( $assessment['available_from'] );
-		$out['available_until']       = self::to_iso( $assessment['available_until'] );
+		$show                        = array_key_exists( 'show_correct_answers', $raw ) ? (bool) $raw['show_correct_answers'] : true;
+		$out['show_correct_answers'] = $show && empty( $raw['hide_answers'] );
+		$out['layout']               = isset( $raw['layout'] ) && in_array( $raw['layout'], self::LAYOUTS, true ) ? $raw['layout'] : 'one_question_per_page';
+		$per_page                    = isset( $raw['question_in_one_page'] ) && is_numeric( $raw['question_in_one_page'] ) ? (int) $raw['question_in_one_page'] : 1;
+		$out['questions_per_page']   = max( 1, min( self::MAX_PER_PAGE, $per_page ) );
+		$assessment                  = AssessmentSettings::get( $quiz_id );
+		$out['feedback_mode']        = in_array( $assessment['feedback_release'], AssessmentSettings::FEEDBACK, true ) ? $assessment['feedback_release'] : 'immediate';
+		$out['available_from']       = self::to_iso( $assessment['available_from'] );
+		$out['available_until']      = self::to_iso( $assessment['available_until'] );
 
 		return $out;
 	}
@@ -135,7 +135,7 @@ final class QuizSettings {
 		if ( ! self::is_int_between( $merged['time_limit_minutes'], 0, self::MAX_TIME_LIMIT ) ) {
 			return self::invalid( 'ohmylms_quiz_invalid_time_limit', __( 'The time limit must be a whole number of minutes from 0 (no limit) to 10080.', 'ohmylms' ) );
 		}
-		if ( ! is_int( $merged['passing_score'] ) && ! is_float( $merged['passing_score'] ) || $merged['passing_score'] < 0 || $merged['passing_score'] > 100 || ! is_finite( (float) $merged['passing_score'] ) ) {
+		if ( ( ! is_int( $merged['passing_score'] ) && ! is_float( $merged['passing_score'] ) ) || $merged['passing_score'] < 0 || $merged['passing_score'] > 100 || ! is_finite( (float) $merged['passing_score'] ) ) {
 			return self::invalid( 'ohmylms_quiz_invalid_passing_score', __( 'The passing score must be a number from 0 to 100.', 'ohmylms' ) );
 		}
 		if ( ! self::is_int_between( $merged['attempts_allowed'], 0, self::MAX_ATTEMPTS ) ) {
@@ -205,7 +205,7 @@ final class QuizSettings {
 			// `hide_answers` is the older switch and wins over `show_correct_answers`; keep them in agreement.
 			$raw['hide_answers'] = false;
 		}
-		$raw['layout']              = $settings['layout'];
+		$raw['layout']               = $settings['layout'];
 		$raw['question_in_one_page'] = (int) $settings['questions_per_page'];
 
 		$assessment = AssessmentSettings::validate(

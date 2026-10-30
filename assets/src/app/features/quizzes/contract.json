@@ -1,0 +1,291 @@
+{
+	"contract": "ohmylms/v1/quizzes",
+	"version": 1,
+	"namespace": "ohmylms/v1",
+	"restBase": "quizzes",
+	"auth": "WordPress REST authentication. Cookie auth requires the X-WP-Nonce header (wp_create_nonce('wp_rest')); application passwords also work.",
+	"capabilities": {
+		"list": "edit_posts on the quiz post type; rows are limited to quizzes the user wrote or that sit in a course the user wrote, unless the user may edit others' quizzes",
+		"read": "edit_post on the quiz, or may grade it",
+		"create": "edit_posts (publish_posts to publish)",
+		"update": "edit_post on the quiz",
+		"delete": "delete_post on the quiz",
+		"attempts": "administrator (manage_options), the quiz author, or the author of the course containing the quiz"
+	},
+	"routes": [
+		{
+			"name": "list",
+			"method": "GET",
+			"path": "/quizzes",
+			"args": {
+				"page": { "type": "integer", "default": 1, "minimum": 1 },
+				"per_page": {
+					"type": "integer",
+					"default": 20,
+					"minimum": 1,
+					"maximum": 100
+				},
+				"search": { "type": "string" },
+				"status": {
+					"type": "string",
+					"default": "all",
+					"enum": [ "all", "publish", "draft", "trash" ]
+				},
+				"course": { "type": "integer", "minimum": 1 },
+				"include": {
+					"type": "array",
+					"items": "integer",
+					"maxItems": 100
+				},
+				"orderby": {
+					"type": "string",
+					"default": "created_at",
+					"enum": [ "id", "title", "created_at", "updated_at" ]
+				},
+				"order": {
+					"type": "string",
+					"default": "desc",
+					"enum": [ "asc", "desc" ]
+				},
+				"context": {
+					"type": "string",
+					"default": "view",
+					"enum": [ "view", "edit" ]
+				}
+			},
+			"success": {
+				"status": 200,
+				"body": "Quiz[]",
+				"headers": [ "X-WP-Total", "X-WP-TotalPages", "Link" ]
+			},
+			"errors": [ 400, 401, 403 ]
+		},
+		{
+			"name": "create",
+			"method": "POST",
+			"path": "/quizzes",
+			"args": {
+				"$ref": "#/definitions/QuizWrite",
+				"required": [ "title" ]
+			},
+			"success": {
+				"status": 201,
+				"body": "Quiz (edit context, draft by default)",
+				"headers": [ "Location" ]
+			},
+			"errors": [ 400, 401, 403, 422, 500 ]
+		},
+		{
+			"name": "courses",
+			"method": "GET",
+			"path": "/quizzes/courses",
+			"args": {
+				"page": { "type": "integer", "default": 1, "minimum": 1 },
+				"per_page": {
+					"type": "integer",
+					"default": 10,
+					"minimum": 1,
+					"maximum": 50
+				},
+				"search": { "type": "string" }
+			},
+			"success": {
+				"status": 200,
+				"body": "CourseChoice[]",
+				"headers": [ "X-WP-Total", "X-WP-TotalPages" ]
+			},
+			"errors": [ 400, 401, 403 ]
+		},
+		{
+			"name": "read",
+			"method": "GET",
+			"path": "/quizzes/{id}",
+			"args": {
+				"context": {
+					"type": "string",
+					"default": "view",
+					"enum": [ "view", "edit" ]
+				}
+			},
+			"success": { "status": 200, "body": "Quiz" },
+			"errors": [ 401, 403, 404 ]
+		},
+		{
+			"name": "update",
+			"method": "PUT | PATCH | POST",
+			"path": "/quizzes/{id}",
+			"args": {
+				"$ref": "#/definitions/QuizWrite",
+				"note": "partial update; omitted fields and omitted settings are unchanged; a status on a trashed quiz restores it"
+			},
+			"success": { "status": 200, "body": "Quiz (edit context)" },
+			"errors": [ 400, 401, 403, 404, 409, 422, 500 ]
+		},
+		{
+			"name": "delete",
+			"method": "DELETE",
+			"path": "/quizzes/{id}",
+			"args": { "force": { "type": "boolean", "default": false } },
+			"success": {
+				"status": 200,
+				"body": "{ deleted: boolean, trashed: boolean, previous: Quiz }"
+			},
+			"errors": [ 401, 403, 404, 409, 500 ]
+		},
+		{
+			"name": "attempts",
+			"method": "GET",
+			"path": "/quizzes/{id}/attempts",
+			"args": {
+				"page": { "type": "integer", "default": 1, "minimum": 1 },
+				"per_page": {
+					"type": "integer",
+					"default": 20,
+					"minimum": 1,
+					"maximum": 100
+				},
+				"search": { "type": "string" },
+				"status": {
+					"type": "string",
+					"default": "all",
+					"enum": [ "all", "in-progress", "in-review", "completed" ]
+				},
+				"student_id": { "type": "integer", "minimum": 1 },
+				"orderby": {
+					"type": "string",
+					"default": "started_at",
+					"enum": [ "started_at", "score", "student" ]
+				},
+				"order": {
+					"type": "string",
+					"default": "desc",
+					"enum": [ "asc", "desc" ]
+				}
+			},
+			"success": {
+				"status": 200,
+				"body": "Attempt[]",
+				"headers": [ "X-WP-Total", "X-WP-TotalPages", "Link" ]
+			},
+			"errors": [ 400, 401, 403, 404 ]
+		},
+		{
+			"name": "attempt",
+			"method": "GET",
+			"path": "/quizzes/{id}/attempts/{attempt_id}",
+			"success": { "status": 200, "body": "AttemptDetail" },
+			"errors": [ 401, 403, 404 ]
+		},
+		{
+			"name": "grade",
+			"method": "POST",
+			"path": "/quizzes/{id}/attempts/{attempt_id}/grades",
+			"args": {
+				"grades": {
+					"type": "array",
+					"minItems": 1,
+					"maxItems": 200,
+					"items": {
+						"question_id": { "type": "integer", "minimum": 1 },
+						"marks": "number >= 0, or { partId: number } for structured questions"
+					}
+				},
+				"reason": { "type": "string", "maxLength": 500 },
+				"note": "any other field, including a total, is refused with 400"
+			},
+			"success": {
+				"status": 200,
+				"body": "AttemptDetail & { changed: integer }"
+			},
+			"errors": [ 400, 401, 403, 404, 409, 422, 500 ]
+		}
+	],
+	"definitions": {
+		"QuizWrite": {
+			"title": { "type": "string", "minLength": 1, "maxLength": 200 },
+			"status": { "type": "string", "enum": [ "draft", "publish" ] },
+			"description": { "type": "string" },
+			"base_modified": {
+				"type": "string",
+				"format": "date-time",
+				"note": "updated_at as loaded; a newer saved version answers 409"
+			},
+			"settings": {
+				"time_limit_minutes": {
+					"type": "integer",
+					"minimum": 0,
+					"maximum": 10080
+				},
+				"passing_score": {
+					"type": "number",
+					"minimum": 0,
+					"maximum": 100
+				},
+				"attempts_allowed": {
+					"type": "integer",
+					"minimum": 0,
+					"maximum": 1000
+				},
+				"randomize_questions": { "type": "boolean" },
+				"show_correct_answers": { "type": "boolean" },
+				"layout": {
+					"type": "string",
+					"enum": [
+						"one_question_per_page",
+						"all_questions_in_one_page",
+						"number_of_questions_per_page"
+					]
+				},
+				"questions_per_page": {
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 100
+				},
+				"feedback_mode": {
+					"type": "string",
+					"enum": [ "immediate", "after_close", "manual" ]
+				},
+				"available_from": {
+					"type": [ "string", "null" ],
+					"format": "date-time"
+				},
+				"available_until": {
+					"type": [ "string", "null" ],
+					"format": "date-time",
+					"note": "must be after available_from"
+				}
+			}
+		}
+	},
+	"errorCodes": [
+		"rest_invalid_param",
+		"rest_missing_callback_param",
+		"ohmylms_quiz_invalid_page",
+		"ohmylms_attempt_invalid_page",
+		"ohmylms_quiz_cannot_view",
+		"ohmylms_quiz_cannot_create",
+		"ohmylms_quiz_cannot_publish",
+		"ohmylms_quiz_cannot_edit",
+		"ohmylms_quiz_cannot_delete",
+		"ohmylms_quiz_cannot_grade",
+		"ohmylms_quiz_not_found",
+		"ohmylms_attempt_not_found",
+		"ohmylms_quiz_conflict",
+		"ohmylms_quiz_has_attempts",
+		"ohmylms_attempt_not_submitted",
+		"ohmylms_attempt_not_versioned",
+		"ohmylms_quiz_invalid_title",
+		"ohmylms_quiz_invalid_time_limit",
+		"ohmylms_quiz_invalid_passing_score",
+		"ohmylms_quiz_invalid_attempts",
+		"ohmylms_quiz_invalid_layout",
+		"ohmylms_quiz_invalid_questions_per_page",
+		"ohmylms_quiz_invalid_feedback_mode",
+		"ohmylms_quiz_invalid_availability",
+		"ohmylms_grade_unexpected_field",
+		"ohmylms_grade_unknown_question",
+		"ohmylms_grade_duplicate_question",
+		"ohmylms_grade_exceeds_max",
+		"quiz_marks"
+	]
+}
