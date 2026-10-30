@@ -61,6 +61,22 @@ module.exports = {
 		clean: true,
 	},
 	devtool: 'source-map',
+	optimization: {
+		splitChunks: {
+			cacheGroups: {
+				// Shared admin components (ListTable and friends) load once instead of in every screen chunk.
+				adminAppUi: {
+					test: /[\\/]assets[\\/]src[\\/]ui[\\/]/,
+					name: 'admin-app-ui',
+					chunks: 'async',
+					minChunks: 2,
+					minSize: 0,
+					priority: 10,
+					reuseExistingChunk: true,
+				},
+			},
+		},
+	},
 	resolve: {
 		extensions: [ '.js', '.jsx', '.mjs', '.ts', '.tsx' ],
 	},
