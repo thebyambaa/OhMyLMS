@@ -359,7 +359,7 @@ moves into that feature as an authored module.
 | Binding | Kind | Fragment | Size | Used by |
 | --- | --- | --- | --- | --- |
 | `G7` | helper | IntegrationsScreen.js | 32 B | IntegrationsPage |
-| `H7` | data | IntegrationsScreen.js | 555 B | IntegrationsPage |
+| `H7` | data | IntegrationsScreen.js | 533 B | IntegrationsPage |
 
 ### learning
 
