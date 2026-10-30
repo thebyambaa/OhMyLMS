@@ -845,6 +845,275 @@ try {
 		ok( in_array( call_api( $method, $path )->get_status(), array( 404, 405 ), true ), "removed route $removed" );
 	}
 
+	// Questions of a quiz (`quizzes/{id}/questions`).
+	if ( Schema::ready() ) {
+		$routes = rest_get_server()->get_routes();
+		foreach ( array( '/questions', '/questions/new', '/questions/order', '/questions/(?P<question_id>[\d]+)', '/questions/(?P<question_id>[\d]+)/pin' ) as $suffix ) {
+			ok( isset( $routes[ '/ohmylms/v1/quizzes/(?P<id>[\d]+)' . $suffix ] ), "route quizzes/{id}$suffix registered" );
+		}
+		$question_body = static function ( $name, $marks, array $extra = array() ) {
+			return array_merge(
+				array(
+					'name'     => $name,
+					'settings' => array(
+						'type'  => 'single-choice',
+						'score' => array(
+							'enabled' => true,
+							'value'   => $marks,
+						),
+					),
+					'options'  => array(
+						array(
+							'answer'     => 'SECRET-KEY',
+							'is_correct' => true,
+						),
+						array(
+							'answer'     => 'Wrong',
+							'is_correct' => false,
+						),
+					),
+				),
+				$extra
+			);
+		};
+		$make_question = static function ( $name, $marks, array $extra = array() ) use ( $question_body ) {
+			$response = call_api( 'POST', 'questions', $question_body( $name, $marks, $extra ) );
+			ok( 201 === $response->get_status(), "question $name created: " . $response->get_status() . ' ' . wp_json_encode( $response->get_data() ) );
+			return (int) $response->get_data()['id'];
+		};
+		$list          = static function ( $quiz ) {
+			return call_api( 'GET', "quizzes/$quiz/questions" );
+		};
+		$ids_of        = static function ( WP_REST_Response $response ) {
+			return array_map( 'intval', wp_list_pluck( $response->get_data()['questions'], 'question_id' ) );
+		};
+		$stored_order  = static function ( $quiz ) use ( $wpdb ) {
+			return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT question_id FROM %i WHERE quiz_id = %d ORDER BY order_number ASC, id ASC', $wpdb->prefix . 'ohmylms_quiz_questions_relationship', $quiz ) ) );
+		};
+
+		wp_set_current_user( $author_a );
+		$qq_quiz = (int) call_api( 'POST', 'quizzes', array( 'title' => "$tag Questions quiz" ) )->get_data()['id'];
+		ok( $qq_quiz > 0, 'questions quiz created' );
+		$qa1 = $make_question( "$tag QA1", 2 );
+		$qa2 = $make_question( "$tag QA2", 3 );
+		$qa3 = $make_question( "$tag QA3", 1 );
+
+		// Author B: a private bank shared with author A for use only, plus an unshared question.
+		wp_set_current_user( $author_b );
+		$bank = \OhMyLMS\QuestionBank\Banks::create( "$tag bank", 0, 'private' );
+		ok( is_array( $bank ) && ! empty( $bank['id'] ), 'bank created' );
+		$bank_id = (int) $bank['id'];
+		ok( is_array( \OhMyLMS\QuestionBank\Banks::grant( $bank_id, $author_a, 'use' ) ), 'use grant for author A' );
+		$qb_shared  = $make_question( "$tag QB shared", 4, array( 'bank' => array( 'bank_id' => $bank_id ) ) );
+		$qb_private = $make_question( "$tag QB private", 1 );
+		$other_quiz = (int) call_api( 'POST', 'quizzes', array( 'title' => "$tag Other questions quiz" ) )->get_data()['id'];
+
+		// Who may read and write.
+		wp_set_current_user( 0 );
+		ok_error( $list( $qq_quiz ), 401, 'ohmylms_quiz_cannot_edit', 'anonymous questions read' );
+		wp_set_current_user( $student );
+		ok_error( $list( $qq_quiz ), 403, 'ohmylms_quiz_cannot_edit', 'student questions read' );
+		wp_set_current_user( $author_c );
+		ok_error( $list( $qq_quiz ), 403, 'ohmylms_quiz_cannot_edit', 'unrelated author questions read' );
+		ok_error( call_api( 'POST', "quizzes/$qq_quiz/questions", array( 'question_ids' => array( $qa1 ), 'revision' => str_repeat( '0', 16 ) ) ), 403, 'ohmylms_quiz_cannot_edit', 'unrelated author add' );
+		wp_set_current_user( $author_b );
+		ok_error( call_api( 'POST', "quizzes/$qq_quiz/questions", array( 'question_ids' => array( $qb_shared ), 'revision' => str_repeat( '0', 16 ) ) ), 403, 'ohmylms_quiz_cannot_edit', 'cross-author add to A quiz' );
+		wp_set_current_user( $author_a );
+		ok_error( $list( 999999999 ), 404, 'ohmylms_quiz_not_found', 'unknown quiz' );
+		ok_error( $list( $qa1 ), 404, 'ohmylms_quiz_not_found', 'question id as quiz id' );
+
+		$empty = $list( $qq_quiz );
+		ok( 200 === $empty->get_status() && array() === $empty->get_data()['questions'] && 1 === preg_match( '/^[0-9a-f]{16}$/', $empty->get_data()['revision'] ), 'empty list with a revision' );
+		ok( 'private, no-store' === ( $empty->get_headers()['Cache-Control'] ?? '' ), 'no-store on the list' );
+		$revision = $empty->get_data()['revision'];
+
+		// Validation.
+		ok_error( call_api( 'POST', "quizzes/$qq_quiz/questions", array( 'question_ids' => array( $qa1 ) ) ), 400, 'rest_missing_callback_param', 'revision required' );
+		ok_error( call_api( 'POST', "quizzes/$qq_quiz/questions", array( 'question_ids' => array( $qa1 ), 'revision' => 'nothex' ) ), 400, 'rest_invalid_param', 'revision format' );
+		ok_error( call_api( 'POST', "quizzes/$qq_quiz/questions", array( 'question_ids' => array(), 'revision' => $revision ) ), 400, 'rest_invalid_param', 'empty id list' );
+		ok_error( call_api( 'POST', "quizzes/$qq_quiz/questions", array( 'question_ids' => array( $qa1, $qa1 ), 'revision' => $revision ) ), 400, 'rest_invalid_param', 'duplicate ids' );
+		ok_error( call_api( 'POST', "quizzes/$qq_quiz/questions", array( 'question_ids' => range( 1, 51 ), 'revision' => $revision ) ), 400, 'rest_invalid_param', 'too many ids' );
+		ok_error(
+			call_api(
+				'POST',
+				"quizzes/$qq_quiz/questions",
+				array(
+					'question_ids' => array( $qa1 ),
+					'revision'     => $revision,
+					'order'        => 1,
+				)
+			),
+			400,
+			'ohmylms_quiz_questions_unknown_field',
+			'unknown field'
+		);
+		ok_error( call_api( 'POST', "quizzes/$qq_quiz/questions", array( 'question_ids' => array( $qa1 ), 'revision' => str_repeat( 'a', 16 ) ) ), 409, 'ohmylms_quiz_questions_conflict', 'stale revision on add' );
+		ok_error( call_api( 'POST', "quizzes/$qq_quiz/questions", array( 'question_ids' => array( 999999999 ), 'revision' => $revision ) ), 404, 'ohmylms_question_not_found', 'unknown question' );
+		ok_error( call_api( 'POST', "quizzes/$qq_quiz/questions", array( 'question_ids' => array( $qa1, $qb_private ), 'revision' => $revision ) ), 403, 'ohmylms_quiz_question_forbidden', 'unshared question of another author' );
+		ok_error( call_api( 'POST', "quizzes/$qq_quiz/questions", array( 'question_ids' => array( $qa1, $qb_shared ), 'revision' => $revision ) ), 409, 'quiz_question_unapproved', 'use-only question without an approved version' );
+		ok( array() === $stored_order( $qq_quiz ), 'rejected adds wrote nothing' );
+
+		// Add two bank questions.
+		$added = call_api( 'POST', "quizzes/$qq_quiz/questions", array( 'question_ids' => array( $qa1, $qa2 ), 'revision' => $revision ) );
+		ok( 200 === $added->get_status() && array( $qa1, $qa2 ) === $ids_of( $added ), 'two questions added in order' );
+		ok( array( $qa1, $qa2 ) === $stored_order( $qq_quiz ), 'stored order after add' );
+		ok( 5.0 === (float) $added->get_data()['totals']['total_marks'] && 2 === $added->get_data()['totals']['questions'], 'totals after add' );
+		$slot = $added->get_data()['questions'][0];
+		ok( "$tag QA1" === $slot['name'] && 'single-choice' === $slot['type'] && 2.0 === (float) $slot['marks'] && 1 === $slot['position'] && true === $slot['permissions']['can_edit'] && 'current' === $slot['delivery']['source'] && 0 === $slot['pinned_version_id'], 'slot summary' );
+		ok( false === strpos( wp_json_encode( $added->get_data() ), 'SECRET-KEY' ) && ! isset( $slot['settings'] ) && ! isset( $slot['options'] ), 'no answer keys in slots' );
+		ok( $revision !== $added->get_data()['revision'], 'revision changes after a write' );
+		ok_error( call_api( 'POST', "quizzes/$qq_quiz/questions", array( 'question_ids' => array( $qa3 ), 'revision' => $revision ) ), 409, 'ohmylms_quiz_questions_conflict', 'old revision after add' );
+		$revision = $added->get_data()['revision'];
+		ok_error( call_api( 'POST', "quizzes/$qq_quiz/questions", array( 'question_ids' => array( $qa1 ), 'revision' => $revision ) ), 409, 'ohmylms_quiz_question_exists', 'question already in quiz' );
+
+		// Use-only question: allowed once approved; its pin is the approved version.
+		wp_set_current_user( $author_b );
+		$approved = call_api( 'POST', "questions/$qb_shared/approve" );
+		ok( 200 === $approved->get_status(), 'owner approves the shared question' );
+		$approved_version = (int) $approved->get_data()['approved_version_id'];
+		wp_set_current_user( $author_a );
+		$shared = call_api(
+			'POST',
+			"quizzes/$qq_quiz/questions",
+			array(
+				'question_ids' => array( $qb_shared ),
+				'pin'          => true,
+				'revision'     => $revision,
+			)
+		);
+		ok( 200 === $shared->get_status() && array( $qa1, $qa2, $qb_shared ) === $ids_of( $shared ), 'approved use-only question added' );
+		$slot = $shared->get_data()['questions'][2];
+		ok( $approved_version === $slot['pinned_version_id'] && 'pinned' === $slot['delivery']['source'] && false === $slot['permissions']['can_edit'] && true === $slot['permissions']['can_use'] && "$tag QB shared" === $slot['name'], 'use-only question pinned to its approved version' );
+		$revision = $shared->get_data()['revision'];
+
+		// A later, unapproved version of the shared question cannot be pinned by a use-only user.
+		wp_set_current_user( $author_b );
+		$edited = call_api(
+			'PATCH',
+			"questions/$qb_shared",
+			array(
+				'base_modified' => $approved->get_data()['modified'],
+				'name'          => "$tag QB shared v2",
+			)
+		);
+		ok( 200 === $edited->get_status() && (int) $edited->get_data()['current_version_id'] !== $approved_version, 'owner saves a new version' );
+		$new_version = (int) $edited->get_data()['current_version_id'];
+		wp_set_current_user( $author_a );
+		ok_error( call_api( 'PUT', "quizzes/$qq_quiz/questions/$qb_shared/pin", array( 'version_id' => $new_version, 'revision' => $revision ) ), 403, 'ohmylms_quiz_pin_forbidden', 'use-only user pins an unapproved version' );
+		ok_error( call_api( 'PUT', "quizzes/$qq_quiz/questions/$qa1/pin", array( 'version_id' => $new_version, 'revision' => $revision ) ), 404, 'ohmylms_version_missing', 'version of another question' );
+		ok_error( call_api( 'PUT', "quizzes/$qq_quiz/questions/$qa1/pin", array( 'revision' => $revision ) ), 400, 'ohmylms_quiz_pin_invalid', 'pin needs a version or current' );
+		ok_error(
+			call_api(
+				'PUT',
+				"quizzes/$qq_quiz/questions/$qa1/pin",
+				array(
+					'version_id' => 1,
+					'current'    => true,
+					'revision'   => $revision,
+				)
+			),
+			400,
+			'ohmylms_quiz_pin_invalid',
+			'pin takes one of version or current'
+		);
+		ok_error( call_api( 'PUT', "quizzes/$qq_quiz/questions/$qa3/pin", array( 'current' => true, 'revision' => $revision ) ), 404, 'ohmylms_question_not_in_quiz', 'pin a question outside the quiz' );
+
+		// Pin and unpin.
+		$pinned = call_api( 'PUT', "quizzes/$qq_quiz/questions/$qa1/pin", array( 'current' => true, 'revision' => $revision ) );
+		$slot   = $pinned->get_data()['questions'][0];
+		ok( 200 === $pinned->get_status() && $slot['pinned_version_id'] > 0 && $slot['pinned_version_id'] === $slot['current_version_id'] && 'pinned' === $slot['delivery']['source'] && $slot['pinned_version_no'] > 0, 'pin the current version' );
+		$stored_pins = get_post_meta( $qq_quiz, '_ohmylms_version_pins', true );
+		ok( is_array( $stored_pins ) && $slot['pinned_version_id'] === (int) $stored_pins[ $qa1 ] && $approved_version === (int) $stored_pins[ $qb_shared ], 'pins stored in quiz meta' );
+		ok_error( call_api( 'PUT', "quizzes/$qq_quiz/questions/$qa1/pin", array( 'version_id' => null, 'revision' => $revision ) ), 409, 'ohmylms_quiz_questions_conflict', 'stale revision on pin' );
+		$revision = $pinned->get_data()['revision'];
+		$unpinned = call_api( 'PUT', "quizzes/$qq_quiz/questions/$qa1/pin", array( 'version_id' => null, 'revision' => $revision ) );
+		ok( 200 === $unpinned->get_status() && 0 === $unpinned->get_data()['questions'][0]['pinned_version_id'] && 'current' === $unpinned->get_data()['questions'][0]['delivery']['source'], 'unpin' );
+		$revision = $unpinned->get_data()['revision'];
+
+		// Reorder.
+		ok_error( call_api( 'PUT', "quizzes/$qq_quiz/questions/order", array( 'question_ids' => array( $qb_shared, $qa1 ), 'revision' => $revision ) ), 409, 'ohmylms_quiz_questions_mismatch', 'order missing a question' );
+		ok_error( call_api( 'PUT', "quizzes/$qq_quiz/questions/order", array( 'question_ids' => array( $qb_shared, $qa1, $qa3 ), 'revision' => $revision ) ), 409, 'ohmylms_quiz_questions_mismatch', 'order with a foreign question' );
+		ok_error( call_api( 'PUT', "quizzes/$qq_quiz/questions/order", array( 'question_ids' => array( $qb_shared, $qa1, $qa1 ), 'revision' => $revision ) ), 400, 'rest_invalid_param', 'order with a duplicate' );
+		ok_error( call_api( 'PUT', "quizzes/$qq_quiz/questions/order", array( 'question_ids' => array( $qb_shared, $qa2, $qa1 ), 'revision' => str_repeat( 'b', 16 ) ) ), 409, 'ohmylms_quiz_questions_conflict', 'stale revision on reorder' );
+		ok( array( $qa1, $qa2, $qb_shared ) === $stored_order( $qq_quiz ), 'rejected reorders wrote nothing' );
+		$reordered = call_api( 'PUT', "quizzes/$qq_quiz/questions/order", array( 'question_ids' => array( $qb_shared, $qa2, $qa1 ), 'revision' => $revision ) );
+		ok( 200 === $reordered->get_status() && array( $qb_shared, $qa2, $qa1 ) === $ids_of( $reordered ) && array( $qb_shared, $qa2, $qa1 ) === $stored_order( $qq_quiz ), 'reorder stored' );
+		ok( array( $qb_shared, $qa2, $qa1 ) === array_map( 'intval', array_column( ohmylms_get_quiz( $qq_quiz )->get_questions(), 'id' ) ), 'learner order follows' );
+		$revision = $reordered->get_data()['revision'];
+
+		// Remove (the question stays in the bank; its pin in this quiz goes).
+		ok_error( call_api( 'DELETE', "quizzes/$qq_quiz/questions/$qa3", array( 'revision' => $revision ) ), 404, 'ohmylms_question_not_in_quiz', 'remove a question outside the quiz' );
+		ok_error( call_api( 'DELETE', "quizzes/$qq_quiz/questions/$qb_shared" ), 400, 'rest_missing_callback_param', 'remove needs a revision' );
+		$removed = call_api( 'DELETE', "quizzes/$qq_quiz/questions/$qb_shared", array( 'revision' => $revision ) );
+		ok( 200 === $removed->get_status() && array( $qa2, $qa1 ) === $ids_of( $removed ), 'question removed from the quiz' );
+		ok( OHMYLMS_QUESTION_CPT === get_post_type( $qb_shared ) && ! in_array( get_post_status( $qb_shared ), array( 'trash', \OhMyLMS\QuestionBank\Usage::ARCHIVED ), true ), 'removed question stays in the bank: ' . get_post_status( $qb_shared ) );
+		$stored_pins = get_post_meta( $qq_quiz, '_ohmylms_version_pins', true );
+		ok( ! is_array( $stored_pins ) || ! isset( $stored_pins[ $qb_shared ] ), 'pin of the removed question dropped' );
+		$revision = $removed->get_data()['revision'];
+
+		// Create a question inside the quiz.
+		ok_error( call_api( 'POST', "quizzes/$qq_quiz/questions/new", array( 'revision' => $revision ) ), 400, 'rest_missing_callback_param', 'create needs a question' );
+		ok_error( call_api( 'POST', "quizzes/$qq_quiz/questions/new", array( 'question' => array( 'name' => "$tag QNEW bad" ), 'revision' => $revision ) ), 400, 'rest_missing_callback_param', 'create validates like POST /questions' );
+		ok_error( call_api( 'POST', "quizzes/$qq_quiz/questions/new", array( 'question' => $question_body( "$tag QNEW stale", 1 ), 'revision' => str_repeat( 'c', 16 ) ) ), 409, 'ohmylms_quiz_questions_conflict', 'stale revision on create' );
+		$bad_options = $question_body( "$tag QNEW options", 1 );
+		$bad_options['options'][1]['is_correct'] = true;
+		ok_error( call_api( 'POST', "quizzes/$qq_quiz/questions/new", array( 'question' => $bad_options, 'revision' => $revision ) ), 422, 'ohmylms_question_invalid_options', 'create applies the option rules' );
+		ok( 0 === (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = %s AND post_title LIKE %s", OHMYLMS_QUESTION_CPT, $wpdb->esc_like( "$tag QNEW" ) . '%' ) ), 'rejected creates wrote no question' );
+		$created = call_api( 'POST', "quizzes/$qq_quiz/questions/new", array( 'question' => $question_body( "$tag QNEW good", 5 ), 'revision' => $revision ) );
+		$new_id  = (int) ( $created->get_data()['created_id'] ?? 0 );
+		ok( 201 === $created->get_status() && $new_id > 0 && array( $qa2, $qa1, $new_id ) === $ids_of( $created ), 'question created at the end of the quiz' );
+		ok( str_ends_with( (string) ( $created->get_headers()['Location'] ?? '' ), "/ohmylms/v1/questions/$new_id" ), 'Location of the new question' );
+		ok( 10.0 === (float) $created->get_data()['totals']['total_marks'], 'total marks include the new question' );
+		ok( (int) get_post_field( 'post_author', $new_id ) === $author_a, 'new question belongs to the author' );
+		$revision = $created->get_data()['revision'];
+
+		// Create is atomic: a failed placement leaves no question behind.
+		$explode = static function () {
+			throw new RuntimeException( 'placement failed' );
+		};
+		add_action( 'ohmylms_quiz_question_relationship_created', $explode );
+		ok_error( call_api( 'POST', "quizzes/$qq_quiz/questions/new", array( 'question' => $question_body( "$tag QNEW atomic", 1 ), 'revision' => $revision ) ), 500, 'ohmylms_quiz_questions_storage', 'failed placement' );
+		remove_action( 'ohmylms_quiz_question_relationship_created', $explode );
+		ok( 0 === (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = %s AND post_title = %s", OHMYLMS_QUESTION_CPT, "$tag QNEW atomic" ) ), 'failed placement rolled the question back' );
+		ok( array( $qa2, $qa1, $new_id ) === $stored_order( $qq_quiz ), 'failed placement changed no slot' );
+
+		// Another writer (legacy route) changes the revision.
+		$legacy = call_api( 'DELETE', "quiz/$qq_quiz/questions/$qa1" );
+		ok( 200 === $legacy->get_status(), 'legacy remove' );
+		ok_error( call_api( 'PUT', "quizzes/$qq_quiz/questions/order", array( 'question_ids' => array( $new_id, $qa2 ), 'revision' => $revision ) ), 409, 'ohmylms_quiz_questions_conflict', 'legacy change detected' );
+		$revision = $list( $qq_quiz )->get_data()['revision'];
+
+		// Read-only pools.
+		$skill = wp_insert_term( "$tag skill", \OhMyLMS\Skills\Taxonomy::NAME );
+		ok( is_array( $skill ), 'skill created' );
+		update_post_meta(
+			$qq_quiz,
+			'_ohmylms_pools',
+			array(
+				array(
+					'id'             => 'pool-1',
+					'title'          => 'Warm-up',
+					'term_id'        => (int) $skill['term_id'],
+					'count'          => 3,
+					'marks'          => 2,
+					'difficulty'     => '',
+					'bank_id'        => 0,
+					'include_secure' => true,
+				),
+			)
+		);
+		$with_pools = $list( $qq_quiz )->get_data();
+		ok( 1 === count( $with_pools['pools'] ) && "$tag skill" === $with_pools['pools'][0]['skill']['name'] && 3 === $with_pools['pools'][0]['count'] && 6.0 === (float) $with_pools['totals']['pool_marks'] && 3 === $with_pools['totals']['pool_questions'] && 14.0 === (float) $with_pools['totals']['total_marks'], 'pools listed and counted' );
+		ok( $revision === $with_pools['revision'], 'pools do not change the question revision' );
+
+		// A trashed quiz is read-only.
+		wp_trash_post( $qq_quiz );
+		ok_error( call_api( 'PUT', "quizzes/$qq_quiz/questions/order", array( 'question_ids' => array( $new_id, $qa2 ), 'revision' => $revision ) ), 409, 'ohmylms_quiz_trashed', 'trashed quiz' );
+		ok( 200 === $list( $qq_quiz )->get_status(), 'trashed quiz still readable' );
+
+		ok( array() === $stored_order( $other_quiz ), 'other quiz untouched' );
+	}
+
 	fwrite( STDOUT, "OK quizzes-rest-integration: {$checks} checks\n" );
 } catch ( Throwable $failure ) {
 	fwrite( STDERR, $failure->getMessage() . ' (' . basename( $failure->getFile() ) . ':' . $failure->getLine() . ")\n" );
@@ -855,6 +1124,14 @@ try {
 	$post_ids = array_map( 'intval', $post_ids );
 	$post_ids = array_merge( $post_ids, array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type IN ('ohmylms-quiz','ohmylms-course','ohmylms-chapter','ohmylms-question') AND post_title LIKE %s", $wpdb->esc_like( $tag ) . '%' ) ) ) );
 	if ( Schema::ready() ) {
+		foreach ( (array) $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE name LIKE %s', Schema::table( 'qb_banks' ), $wpdb->esc_like( $tag ) . '%' ) ) as $bank ) {
+			$wpdb->delete( Schema::table( 'qb_grants' ), array( 'bank_id' => (int) $bank ) );
+			$wpdb->delete( Schema::table( 'qb_banks' ), array( 'id' => (int) $bank ) );
+		}
+		$skill = get_term_by( 'name', "$tag skill", \OhMyLMS\Skills\Taxonomy::NAME );
+		if ( $skill ) {
+			wp_delete_term( $skill->term_id, \OhMyLMS\Skills\Taxonomy::NAME );
+		}
 		foreach ( $user_ids as $user_id ) {
 			foreach ( (array) $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE student_id = %d', Schema::table( 'grade_events' ), $user_id ) ) as $event ) {
 				$wpdb->delete( Schema::table( 'evidence_outbox' ), array( 'grade_event_id' => (int) $event ) );

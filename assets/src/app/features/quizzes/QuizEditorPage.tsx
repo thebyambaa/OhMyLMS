@@ -10,10 +10,10 @@ import {
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link, useParams } from 'react-router-dom';
-import { useBootstrap } from '../../bootstrap/BootstrapContext';
 import { normalizeApiError } from '../../lib/api';
 import { updateQuiz } from './api';
 import {
+	formatMarks,
 	formFromQuiz,
 	isDirty,
 	isValid,
@@ -21,6 +21,7 @@ import {
 	toInput,
 	validateForm,
 } from './model';
+import { QuizQuestions } from './QuizQuestions';
 import { useQuizEditor } from './useQuizEditor';
 import { useUnsavedChangesGuard } from './useUnsavedChangesGuard';
 import type { QuizForm, QuizFormErrors } from './types';
@@ -38,13 +39,13 @@ function FieldError( { id, message }: { id: string; message?: string } ) {
 }
 
 /**
- * Quiz settings editor (`#/quizzes/<id>`): title, status, introduction, time limit, passing score,
- * attempts, randomisation, answer review, layout, feedback and availability. Questions are edited in
- * the question screens. Edits survive failed saves, a quiz changed by someone else is reported before it
- * is overwritten, and leaving with unsaved changes asks first.
+ * Quiz editor (`#/quizzes/<id>`): title, status, introduction, time limit, passing score, attempts,
+ * randomisation, answer review, layout, feedback and availability, and the Questions section (add from
+ * the question bank, create, reorder, pin and remove). Edits survive failed saves, a quiz changed by
+ * someone else is reported before it is overwritten, and leaving with unsaved changes (settings or a
+ * question draft) asks first.
  */
 export default function QuizEditorPage() {
-	const { adminUrl } = useBootstrap();
 	const params = useParams();
 	const id = routeId( params.id );
 	const editor = useQuizEditor( id );
@@ -55,10 +56,12 @@ export default function QuizEditorPage() {
 	const [ message, setMessage ] = useState< string | null >( null );
 	const [ failure, setFailure ] = useState< string | null >( null );
 	const [ conflict, setConflict ] = useState( false );
+	const [ questionDraft, setQuestionDraft ] = useState( false );
+	const [ totalMarks, setTotalMarks ] = useState< number | null >( null );
 	const summary = useRef< HTMLDivElement >( null );
 	const operation = useRef< AbortController | null >( null );
 	const dirty = Boolean( form && saved && isDirty( form, saved ) );
-	const guard = useUnsavedChangesGuard( dirty );
+	const guard = useUnsavedChangesGuard( dirty || questionDraft );
 	const quiz = editor.quiz;
 
 	useEffect( () => () => operation.current?.abort(), [] );
@@ -214,18 +217,10 @@ export default function QuizEditorPage() {
 						</Link>{ ' ' }
 					</>
 				) }
-				<a
-					href={ `${ adminUrl }admin.php?page=ohmylms#/quiz-edit/${ quiz.id }` }
-				>
-					{ __( 'Edit questions', 'ohmylms' ) }
-				</a>
 				{ quiz.native_editor_url && (
-					<>
-						{ ' ' }
-						<a href={ quiz.native_editor_url }>
-							{ __( 'Open in the block editor', 'ohmylms' ) }
-						</a>
-					</>
+					<a href={ quiz.native_editor_url }>
+						{ __( 'Open in the block editor', 'ohmylms' ) }
+					</a>
 				) }
 			</p>
 			{ 'trash' === quiz.status && (
@@ -342,7 +337,7 @@ export default function QuizEditorPage() {
 								'Marks a learner needs to pass, 0 to 100 (0 means no pass mark). The quiz is worth %s marks in total.',
 								'ohmylms'
 							),
-							String( quiz.total_marks )
+							formatMarks( totalMarks ?? quiz.total_marks )
 						) }
 						aria-invalid={ invalid( 'passing_score' ) }
 						aria-describedby={ described( 'passing_score' ) }
@@ -533,6 +528,13 @@ export default function QuizEditorPage() {
 					{ __( 'Save quiz', 'ohmylms' ) }
 				</Button>
 			</form>
+
+			<QuizQuestions
+				quizId={ quiz.id }
+				readOnly={ readOnly }
+				onDirtyChange={ setQuestionDraft }
+				onTotalChange={ setTotalMarks }
+			/>
 
 			{ guard.pendingPath && (
 				<Modal

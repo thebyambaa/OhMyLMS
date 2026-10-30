@@ -3,6 +3,8 @@ import type {
 	AttemptDetail,
 	Quiz,
 	QuizDetail,
+	QuizQuestions,
+	QuizQuestionSlot,
 	QuizSettings,
 } from './types';
 
@@ -95,4 +97,52 @@ export const attemptDetail: AttemptDetail = {
 			history: [],
 		},
 	],
+};
+
+export const slot: QuizQuestionSlot = {
+	question_id: 101,
+	position: 1,
+	name: 'Pick the larger fraction',
+	type: 'single-choice',
+	type_label: 'Single Choice',
+	marks: 2,
+	section: '',
+	status: 'draft',
+	version: 3,
+	current_version_id: 31,
+	approved_version_id: 0,
+	pinned_version_id: 0,
+	pinned_version_no: 0,
+	delivery: { source: 'current', version_id: 31, version_no: 3 },
+	usage: { quizzes: 1, responses: 0 },
+	permissions: { can_edit: true, can_use: true },
+	modified: '2026-10-30T09:00:00Z',
+};
+
+export const sharedSlot: QuizQuestionSlot = {
+	...slot,
+	question_id: 102,
+	position: 2,
+	name: 'Explain why 1/2 is 2/4',
+	marks: 3,
+	status: 'approved',
+	approved_version_id: 40,
+	pinned_version_id: 40,
+	pinned_version_no: 1,
+	delivery: { source: 'pinned', version_id: 40, version_no: 1 },
+	permissions: { can_edit: false, can_use: true },
+};
+
+export const questionList: QuizQuestions = {
+	quiz_id: 11,
+	revision: '0123456789abcdef',
+	questions: [ slot, sharedSlot ],
+	pools: [],
+	totals: {
+		questions: 2,
+		fixed_marks: 5,
+		pool_questions: 0,
+		pool_marks: 0,
+		total_marks: 5,
+	},
 };

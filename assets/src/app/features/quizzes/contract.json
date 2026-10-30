@@ -198,9 +198,100 @@
 				"body": "AttemptDetail & { changed: integer }"
 			},
 			"errors": [ 400, 401, 403, 404, 409, 422, 500 ]
+		},
+		{
+			"name": "questions",
+			"method": "GET",
+			"path": "/quizzes/{id}/questions",
+			"success": { "status": 200, "body": "QuizQuestions" },
+			"errors": [ 401, 403, 404, 503 ]
+		},
+		{
+			"name": "add-questions",
+			"method": "POST",
+			"path": "/quizzes/{id}/questions",
+			"args": {
+				"question_ids": {
+					"type": "array",
+					"items": "integer >= 1",
+					"minItems": 1,
+					"maxItems": 50,
+					"uniqueItems": true
+				},
+				"pin": { "type": "boolean", "default": false },
+				"revision": { "$ref": "#/definitions/Revision" }
+			},
+			"success": { "status": 200, "body": "QuizQuestions" },
+			"errors": [ 400, 401, 403, 404, 409, 413, 422, 500, 503 ]
+		},
+		{
+			"name": "create-question",
+			"method": "POST",
+			"path": "/quizzes/{id}/questions/new",
+			"args": {
+				"question": {
+					"type": "object",
+					"note": "the POST /questions body, validated by that route"
+				},
+				"revision": { "$ref": "#/definitions/Revision" }
+			},
+			"success": {
+				"status": 201,
+				"body": "QuizQuestions & { created_id: integer }",
+				"headers": [ "Location" ]
+			},
+			"errors": [ 400, 401, 403, 409, 413, 422, 500, 503 ]
+		},
+		{
+			"name": "reorder-questions",
+			"method": "PUT | PATCH | POST",
+			"path": "/quizzes/{id}/questions/order",
+			"args": {
+				"question_ids": {
+					"type": "array",
+					"items": "integer >= 1",
+					"minItems": 1,
+					"maxItems": 500,
+					"uniqueItems": true,
+					"note": "every question of the quiz exactly once"
+				},
+				"revision": { "$ref": "#/definitions/Revision" }
+			},
+			"success": { "status": 200, "body": "QuizQuestions" },
+			"errors": [ 400, 401, 403, 404, 409, 500, 503 ]
+		},
+		{
+			"name": "remove-question",
+			"method": "DELETE",
+			"path": "/quizzes/{id}/questions/{question_id}",
+			"args": { "revision": { "$ref": "#/definitions/Revision" } },
+			"success": { "status": 200, "body": "QuizQuestions" },
+			"errors": [ 400, 401, 403, 404, 409, 500, 503 ]
+		},
+		{
+			"name": "pin-question",
+			"method": "PUT | PATCH | POST",
+			"path": "/quizzes/{id}/questions/{question_id}/pin",
+			"args": {
+				"version_id": {
+					"type": [ "integer", "null" ],
+					"minimum": 1,
+					"note": "null unpins; send either version_id or current"
+				},
+				"current": { "type": "boolean", "default": false },
+				"revision": { "$ref": "#/definitions/Revision" }
+			},
+			"success": { "status": 200, "body": "QuizQuestions" },
+			"errors": [ 400, 401, 403, 404, 409, 500, 503 ]
 		}
 	],
 	"definitions": {
+		"Revision": {
+			"type": "string",
+			"pattern": "^[0-9a-f]{16}$",
+			"required": true,
+			"note": "revision of the loaded question list; a different stored list answers 409 ohmylms_quiz_questions_conflict"
+		},
 		"QuizWrite": {
 			"title": { "type": "string", "minLength": 1, "maxLength": 200 },
 			"status": { "type": "string", "enum": [ "draft", "publish" ] },
@@ -286,6 +377,23 @@
 		"ohmylms_grade_unknown_question",
 		"ohmylms_grade_duplicate_question",
 		"ohmylms_grade_exceeds_max",
-		"quiz_marks"
+		"quiz_marks",
+		"ohmylms_question_bank_unavailable",
+		"ohmylms_quiz_questions_unknown_field",
+		"ohmylms_quiz_questions_conflict",
+		"ohmylms_quiz_questions_mismatch",
+		"ohmylms_quiz_questions_limit",
+		"ohmylms_quiz_questions_too_large",
+		"ohmylms_quiz_questions_storage",
+		"ohmylms_quiz_question_exists",
+		"ohmylms_quiz_question_forbidden",
+		"ohmylms_quiz_pin_invalid",
+		"ohmylms_quiz_pin_forbidden",
+		"ohmylms_quiz_trashed",
+		"ohmylms_question_not_found",
+		"ohmylms_question_not_in_quiz",
+		"ohmylms_question_archived",
+		"ohmylms_version_missing",
+		"quiz_question_unapproved"
 	]
 }

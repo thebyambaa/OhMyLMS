@@ -19,6 +19,10 @@ import type {
 	QuizFormErrors,
 	QuizInput,
 	QuizLayout,
+	QuizPool,
+	QuizQuestionCreated,
+	QuizQuestions,
+	QuizQuestionSlot,
 	QuizSettings,
 	QuizStatus,
 } from './types';
@@ -822,6 +826,240 @@ export function attemptStatusLabel( status: AttemptStatus ): string {
 		default:
 			return __( 'Completed', 'ohmylms' );
 	}
+}
+
+const SLOT_STATUSES = [
+	'draft',
+	'approved',
+	'archived',
+	'unavailable',
+] as const;
+const DELIVERY_SOURCES = [
+	'pinned',
+	'current',
+	'approved',
+	'unavailable',
+] as const;
+
+function parseSlot( value: unknown ): QuizQuestionSlot {
+	const item = record( value );
+	const delivery = record( item.delivery );
+	const usage = record( item.usage );
+	const permissions = record( item.permissions );
+	return {
+		question_id: positiveId( item.question_id ),
+		position: positiveId( item.position ),
+		name: text( item.name ),
+		type: text( item.type ),
+		type_label: text( item.type_label ),
+		marks: finite( item.marks ),
+		section: text( item.section ),
+		status: oneOf( item.status, SLOT_STATUSES ),
+		version: count( item.version ),
+		current_version_id: count( item.current_version_id ),
+		approved_version_id: count( item.approved_version_id ),
+		pinned_version_id: count( item.pinned_version_id ),
+		pinned_version_no: count( item.pinned_version_no ),
+		delivery: {
+			source: oneOf( delivery.source, DELIVERY_SOURCES ),
+			version_id: count( delivery.version_id ),
+			version_no: count( delivery.version_no ),
+		},
+		usage: {
+			quizzes: count( usage.quizzes ),
+			responses: count( usage.responses ),
+		},
+		permissions: {
+			can_edit: boolean( permissions.can_edit ),
+			can_use: boolean( permissions.can_use ),
+		},
+		modified: text( item.modified ),
+	};
+}
+
+function parsePool( value: unknown ): QuizPool {
+	const item = record( value );
+	const skill = record( item.skill );
+	return {
+		id: text( item.id ),
+		title: text( item.title ),
+		skill: { id: count( skill.id ), name: text( skill.name ) },
+		count: count( item.count ),
+		marks: finite( item.marks ),
+		difficulty: text( item.difficulty ),
+		bank_id: count( item.bank_id ),
+		include_secure: boolean( item.include_secure ),
+	};
+}
+
+/**
+ * Validate the question list of a quiz.
+ *
+ * @param value Parsed JSON.
+ * @return The slots, pools, totals and revision.
+ */
+export function parseQuizQuestions( value: unknown ): QuizQuestions {
+	const item = record( value );
+	const totals = record( item.totals );
+	const revision = text( item.revision );
+	if ( ! /^[0-9a-f]{16}$/.test( revision ) ) {
+		throw invalidResponse();
+	}
+	return {
+		quiz_id: positiveId( item.quiz_id ),
+		revision,
+		questions: list( item.questions ).map( parseSlot ),
+		pools: list( item.pools ).map( parsePool ),
+		totals: {
+			questions: count( totals.questions ),
+			fixed_marks: finite( totals.fixed_marks ),
+			pool_questions: count( totals.pool_questions ),
+			pool_marks: finite( totals.pool_marks ),
+			total_marks: finite( totals.total_marks ),
+		},
+	};
+}
+
+/**
+ * Validate the answer to creating a question in a quiz.
+ *
+ * @param value Parsed JSON.
+ * @return The list and the id of the new question, which must be in it.
+ */
+export function parseQuizQuestionCreated(
+	value: unknown
+): QuizQuestionCreated {
+	const parsed = parseQuizQuestions( value );
+	const created = positiveId( record( value ).created_id );
+	if ( ! parsed.questions.some( ( slot ) => slot.question_id === created ) ) {
+		throw invalidResponse();
+	}
+	return { ...parsed, created_id: created };
+}
+
+/**
+ * Question ids with one moved up or down.
+ *
+ * @param ids   Ids in order.
+ * @param index Position of the question to move.
+ * @param delta -1 to move up, 1 to move down.
+ * @return The new order, or `null` when the move leaves the list.
+ */
+export function moveQuestion(
+	ids: readonly number[],
+	index: number,
+	delta: -1 | 1
+): number[] | null {
+	const target = index + delta;
+	if ( index < 0 || target < 0 || Math.max( index, target ) >= ids.length ) {
+		return null;
+	}
+	const next = [ ...ids ];
+	const [ moved ] = next.splice( index, 1 );
+	next.splice( target, 0, moved as number );
+	return next;
+}
+
+/**
+ * Display name of a slot.
+ *
+ * @param slot Slot.
+ * @return The name, or a placeholder for untitled and restricted questions.
+ */
+export function slotName( slot: QuizQuestionSlot ): string {
+	if ( ! slot.permissions.can_use ) {
+		return sprintf(
+			/* translators: %d: question id. */
+			__( 'Restricted question #%d', 'ohmylms' ),
+			slot.question_id
+		);
+	}
+	return slot.name.trim() || __( 'Untitled question', 'ohmylms' );
+}
+
+/**
+ * Which version learners get, in words.
+ *
+ * @param slot Slot.
+ * @return Text such as "Pinned to version 2".
+ */
+export function deliveryLabel( slot: QuizQuestionSlot ): string {
+	const { source, version_no: number } = slot.delivery;
+	switch ( source ) {
+		case 'pinned':
+			return sprintf(
+				/* translators: %d: version number. */
+				__( 'Pinned to version %d', 'ohmylms' ),
+				number
+			);
+		case 'approved':
+			return sprintf(
+				/* translators: %d: version number. */
+				__( 'Approved version %d', 'ohmylms' ),
+				number
+			);
+		case 'current':
+			return number
+				? sprintf(
+						/* translators: %d: version number. */
+						__( 'Latest version (%d)', 'ohmylms' ),
+						number
+					)
+				: __( 'Latest version', 'ohmylms' );
+		default:
+			return __(
+				'No approved version: learners cannot get it',
+				'ohmylms'
+			);
+	}
+}
+
+/**
+ * Status of a slot when it needs attention.
+ *
+ * @param slot Slot.
+ * @return A warning, or an empty string.
+ */
+export function slotWarning( slot: QuizQuestionSlot ): string {
+	switch ( slot.status ) {
+		case 'archived':
+			return __( 'Archived', 'ohmylms' );
+		case 'unavailable':
+			return __( 'Deleted or in the trash', 'ohmylms' );
+		default:
+			return '';
+	}
+}
+
+/**
+ * Whether a bank question can be added, and why not.
+ *
+ * @param item                      List row of the question bank.
+ * @param item.id                   Question id.
+ * @param item.status               Lifecycle status.
+ * @param item.permissions          Permissions of the current user.
+ * @param item.permissions.can_edit Whether the user may edit the question.
+ * @param inQuiz                    Ids already in the quiz.
+ * @return `null` when it can be added, otherwise the reason.
+ */
+export function addBlocker(
+	item: {
+		id: number;
+		status: string;
+		permissions: { can_edit: boolean };
+	},
+	inQuiz: ReadonlySet< number >
+): string | null {
+	if ( inQuiz.has( item.id ) ) {
+		return __( 'Already in this quiz', 'ohmylms' );
+	}
+	if ( 'archived' === item.status ) {
+		return __( 'Archived', 'ohmylms' );
+	}
+	if ( ! item.permissions.can_edit && 'approved' !== item.status ) {
+		return __( 'Shared question without an approved version', 'ohmylms' );
+	}
+	return null;
 }
 
 /**
