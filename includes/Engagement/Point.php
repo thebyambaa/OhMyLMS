@@ -46,13 +46,38 @@ class Point {
 	}
 
 	/**
-	 * Get the point settings.
+	 * Get the point settings: `enabled` and one rule per event (see GamificationRegistry::events()).
 	 *
 	 * @return array
 	 */
 	public static function get_rules() {
-		$settings = get_option( 'ohmylms_point_settings', array() );
-		return apply_filters( 'ohmylms_point_settings', $settings );
+		return GamificationStore::get( 'points' );
+	}
+
+	/**
+	 * Find the rule of an event.
+	 *
+	 * @param string $event Event id.
+	 * @return array|null
+	 */
+	private static function rule( $event ) {
+		$settings = self::get_rules();
+		foreach ( (array) ( isset( $settings['rules'] ) ? $settings['rules'] : array() ) as $rule ) {
+			if ( is_array( $rule ) && isset( $rule['event'] ) && (string) $rule['event'] === (string) $event ) {
+				return $rule;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Whether a points amount is a whole number in the allowed range.
+	 *
+	 * @param mixed $points Points.
+	 * @return bool
+	 */
+	public static function valid_amount( $points ) {
+		return is_numeric( $points ) && (int) $points == $points && $points > 0 && $points <= GamificationRegistry::MAX_POINTS; // phpcs:ignore Universal.Operators.StrictComparisons.LooseEqual -- Accepts "5" and 5.0, rejects 5.5.
 	}
 
 	/**
@@ -75,19 +100,13 @@ class Point {
 	 */
 	public static function maybe_met_rules( $event, $threshold = 0 ) {
 		if ( ! self::maybe_enable() ) {
-			return false; }
-		$settings = self::get_rules();
-
-		if ( ! empty( $settings['rules'] ) && is_array( $settings['rules'] ) ) {
-			foreach ( $settings['rules'] as $rule ) {
-				if ( isset( $rule['slug'], $rule['value'] ) && $rule['slug'] === $event && $rule['value'] ) {
-					if ( ! isset( $rule['threshold'] ) || ( isset( $rule['threshold'] ) && $rule['threshold'] <= $threshold ) ) {
-						return true;
-					}
-				}
-			}
+			return false;
 		}
-		return false;
+		$rule = self::rule( $event );
+		if ( ! $rule || empty( $rule['enabled'] ) ) {
+			return false;
+		}
+		return null === $rule['threshold'] || ( is_numeric( $threshold ) && $rule['threshold'] <= $threshold );
 	}
 
 	/**
@@ -104,9 +123,10 @@ class Point {
 	 * @since 1.0.0
 	 */
 	public static function add_points( $user_id, $type, $points, $reason = '', $course_id = null, $membership_id = null, $content_id = null ) {
-		if ( ! self::maybe_enable() || ! is_numeric( $points ) || $points <= 0 || ! $user_id ) {
-			return false; // Point system is not enabled.
+		if ( ! self::maybe_enable() || ! self::valid_amount( $points ) || ! $user_id || ! get_userdata( $user_id ) ) {
+			return false; // Points are off, the amount is not a whole number in range, or the user is unknown.
 		}
+		$points = (int) $points;
 
 		$data     = array(
 			'user_id'       => $user_id,
@@ -142,15 +162,8 @@ class Point {
 	 * @param mixed $slug Slug.
 	 */
 	public static function maybe_enable_email_for_a_slug( $slug ) {
-		$settings = self::get_rules();
-		if ( ! empty( $settings['rules'] ) && is_array( $settings['rules'] ) ) {
-			foreach ( $settings['rules'] as $rule ) {
-				if ( isset( $rule['email'], $rule['email']['enable'] ) && (string) $rule['slug'] === (string) $slug && $rule['email']['enable'] ) {
-					return true;
-				}
-			}
-		}
-		return false;
+		$rule = self::rule( $slug );
+		return $rule && ! empty( $rule['email']['enabled'] );
 	}
 
 	/**
@@ -162,7 +175,7 @@ class Point {
 	 */
 	public static function send_email( $body, $to, $subject ) {
 		$headers = array( 'MIME-Version: 1.0', 'Content-Type: text/html; charset=UTF-8' );
-		wp_mail( $to, $subject, $body, $headers );
+		wp_mail( sanitize_email( $to ), sanitize_text_field( $subject ), wp_kses_post( $body ), $headers );
 	}
 
 
@@ -180,9 +193,10 @@ class Point {
 	 * @since 1.0.0
 	 */
 	public static function deduct_points( $user_id, $type, $points, $reason = '', $course_id = null, $membership_id = null, $content_id = null ) {
-		if ( ! Reward::maybe_enable() || ! is_numeric( $points ) || $points <= 0 || ! $user_id ) {
-			return false; // Point system is not enabled.
+		if ( ! Reward::maybe_enable() || ! self::valid_amount( $points ) || ! $user_id ) {
+			return false; // Rewards are off or the amount is not a whole number in range.
 		}
+		$points = (int) $points;
 
 		$data     = array(
 			'user_id'       => $user_id,
@@ -217,36 +231,19 @@ class Point {
 	 * @param mixed $slug Slug.
 	 */
 	public static function get_points_for_slug( $slug ) {
-		$settings = self::get_rules();
-		if ( ! empty( $settings['rules'] ) && is_array( $settings['rules'] ) ) {
-			foreach ( $settings['rules'] as $rule ) {
-				if ( isset( $rule['point'], $rule['point'] ) && $rule['slug'] === $slug ) {
-					return intval( $rule['point'] ?? 0 );
-				}
-			}
-		}
-		return 0; // Default points if not found.
+		$rule = self::rule( $slug );
+		return $rule ? (int) $rule['points'] : 0;
 	}
 
-
 	/**
-	 * Get points for a rules slug.
-	 * * @param string $slug Slug.
+	 * Get the email settings (`enabled`, `subject`, `body`) of a rule.
 	 *
-	 * @return int
-	 * @since 1.0.0
-	 * @param mixed $slug Slug.
+	 * @param mixed $slug Event id.
+	 * @return array
 	 */
 	public static function get_email_settings_for_slug( $slug ) {
-		$settings = self::get_rules();
-		if ( ! empty( $settings['rules'] ) && is_array( $settings['rules'] ) ) {
-			foreach ( $settings['rules'] as $rule ) {
-				if ( isset( $rule['email'] ) && $rule['slug'] === $slug ) {
-					return $rule['email'];
-				}
-			}
-		}
-		return array();
+		$rule = self::rule( $slug );
+		return $rule && isset( $rule['email'] ) ? $rule['email'] : array();
 	}
 
 	/**
