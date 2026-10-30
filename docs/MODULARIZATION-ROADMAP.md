@@ -146,3 +146,26 @@ retire them or reimplement them.
 - Benchmark startup, navigation, editors, API requests and database queries before and after
   each step.
 - Fix the local DNS delays found earlier on their own; they are unrelated to modularization.
+
+## Rebuild status (clean rebuild, updated 30 October 2026)
+
+All stored data is test data, so the rebuild changes REST shapes, options and storage freely and fixes
+recovered defects instead of reproducing them. The new TypeScript app lives in `assets/src/app` (see
+[ARCHITECTURE](ARCHITECTURE.md)) and opens at `admin.php?page=ohmylms-app` beside the recovered admin.
+Every rebuilt feature ships a hardened `WP_REST_Controller` API, `docs/api/<feature>.md`, a PHP integration
+test in `tests/php/` and component tests.
+
+| Feature | State | Notes |
+| --- | --- | --- |
+| Webhooks, Integrations, Emails, Certificates (templates) | Done | Issued certificates and learner download not built; Google Meet, xAPI and MCP settings not built |
+| Students, Categories and tags (read-only) | Done | Student reminder route (open mail relay) must be rebuilt before any UI |
+| Orders, Coupons | Done | Refund UI deliberately absent; gateway list route missing |
+| Memberships | Done | Old membership routes removed |
+| Settings (General, Branding, Account, Permalinks, Advanced, Currency, Tax) | Done | Payment gateway secrets still returned by the old route |
+| Dashboard, Earnings, Course report | Done | Mixed-currency totals; amounts still in postmeta |
+| Content Hub (skills) | Partial | Skills catalogue only |
+| Communities, Setup wizard, Gamification, Learning (lessons, assignments), Courses, Quizzes and question editors | Not started | |
+| Cutover (menu points at the new app, recovered runtime deleted) | Not started | Old PHP tests for removed routes go with it |
+| PHP boundaries, page-by-page asset loading, CI enforcement checks | Not started | |
+
+Stylesheet cleanup is intentionally skipped.

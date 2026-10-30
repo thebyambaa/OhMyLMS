@@ -1,1059 +1,1513 @@
 <?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
- * Controller for handling membership REST API endpoints.
+ * MembershipController class.
  *
  * @package OhMyLMS
  */
+
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
 use OhMyLMS\Data\Membership;
-use OhMyLMS\DataException;
+use OhMyLMS\Membership\CourseSelection;
+use OhMyLMS\Membership\FreeSale;
+use WP_Error;
+use WP_Query;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
-use WP_Error;
-use WP_Query;
 
 /**
- * Controller for handling membership REST API endpoints.
+ * MembershipController class.
  *
- * This class extends the RESTController abstract class and defines REST API routes
- * for membership-related CRUD operations and many more.
+ * REST API for membership plans under `ohmylms/v1/memberships`. See docs/api/memberships.md for the
+ * contract. Billing, renewals and gateways are outside this controller: it only edits the plan.
+ *
+ * Authentication is WordPress core's: cookie authentication requires the `X-WP-Nonce` header
+ * (verified by rest_cookie_check_errors()); application passwords also work. Every route requires
+ * the CAPABILITY below.
  *
  * @since 1.0.0
  */
 class MembershipController extends RestController {
 
 	/**
-	 * The base route for membership base endpoints.
+	 * Capability required by every membership route.
+	 */
+	const CAPABILITY = 'manage_options';
+
+	/**
+	 * Maximum individually selected (or excluded) courses per plan.
+	 */
+	const MAX_COURSES = 500;
+
+	/**
+	 * Maximum curriculum items per plan.
+	 */
+	const MAX_CURRICULUM_ITEMS = 200;
+
+	/**
+	 * Largest accepted price.
+	 */
+	const MAX_PRICE = 99999999.99;
+
+	/**
+	 * Membership statuses that count as having members.
+	 */
+	const ACTIVE_MEMBER_STATUSES = array( 'enrolled', 'pending' );
+
+	/**
+	 * Endpoint namespace.
 	 *
 	 * @var string
-	 * @since 1.0.0
 	 */
-	protected $base = 'membership';
+	protected $namespace = 'ohmylms/v1';
 
 	/**
-	 * Check membership permission for Membership controller.
+	 * The base route for membership endpoints.
+	 *
+	 * @var string
 	 */
-	public function check_membership_permission() {
-		return current_user_can( 'edit_posts' );
-	}
+	protected $rest_base = 'memberships';
 
 	/**
-	 * Permission check for reading a single membership.
+	 * Enrolled member counts for the plans of the current collection page, keyed by plan ID.
 	 *
-	 * @since 1.2.20
-	 *
-	 * @param \WP_REST_Request $request Full details about the request.
-	 * .
-	 * @return true|\WP_Error
+	 * @var array<int,int>
 	 */
-	public function check_membership_read_permission( $request ) {
-		if ( ! current_user_can( 'edit_posts' ) ) {
-			return new \WP_Error( 'ohmylms_rest_forbidden', __( 'Sorry, you are not allowed to manage this resource.', 'ohmylms' ), array( 'status' => rest_authorization_required_code() ) );
-		}
-
-		return $this->check_object_permission( $request, 'read', 'ohmylms-membership' );
-	}
+	private $member_counts = array();
 
 	/**
-	 * Permission check for editing a single membership.
-	 *
-	 * @since 1.2.20
-	 *
-	 * @param \WP_REST_Request $request Full details about the request.
-	 * .
-	 * @return true|\WP_Error
-	 */
-	public function check_membership_edit_permission( $request ) {
-		return $this->check_object_permission( $request, 'edit', 'ohmylms-membership' );
-	}
-
-	/**
-	 * Permission check for deleting a single membership.
-	 *
-	 * @since 1.2.20
-	 *
-	 * @param \WP_REST_Request $request Full details about the request.
-	 * .
-	 * @return true|\WP_Error
-	 */
-	public function check_membership_delete_permission( $request ) {
-		return $this->check_object_permission( $request, 'delete', 'ohmylms-membership' );
-	}
-
-
-	/**
-	 * Registers REST API routes for membership operations.
+	 * Register the routes for the membership endpoints.
 	 *
 	 * @since 1.0.0
 	 */
 	public function register_routes() {
-		register_rest_route(
-			$this->namespace,
-			'/membership/course-preview',
-			array(
-				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'course_preview' ),
-				'permission_callback' => array( $this, 'check_membership_permission' ),
-			)
+		$base = '/' . $this->rest_base;
+		$item = $base . '/(?P<id>[\d]+)';
+		$id   = array(
+			'description' => __( 'Unique identifier for the membership plan.', 'ohmylms' ),
+			'type'        => 'integer',
+			'minimum'     => 1,
 		);
+
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->base . '/',
+			$base,
 			array(
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_items' ),
-					'permission_callback' => array( $this, 'check_membership_permission' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
 					'args'                => $this->get_collection_params(),
 				),
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_item' ),
-					'permission_callback' => array( $this, 'check_membership_permission' ),
+					'permission_callback' => array( $this, 'create_item_permissions_check' ),
 					'args'                => $this->get_endpoint_args_for_item_schema( WP_REST_Server::CREATABLE ),
 				),
+				'schema' => array( $this, 'get_public_item_schema' ),
 			)
 		);
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->base . '/trash-bulk/',
+			$item,
 			array(
-				array(
-					'methods'             => \WP_REST_Server::DELETABLE,
-					'callback'            => array( $this, 'trash_bulk' ),
-					'permission_callback' => array( $this, 'check_membership_permission' ),
-				),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/(?P<id>[\d]+)',
-			array(
-				'args' => array(
-					'id' => array(
-						'description' => __( 'Unique identifier for the membership.', 'ohmylms' ),
-						'type'        => 'integer',
-					),
-				),
+				'args'   => array( 'id' => $id ),
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_item' ),
-					'permission_callback' => array( $this, 'check_membership_read_permission' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'args'                => array(
+						'context' => $this->get_context_param( array( 'default' => 'view' ) ),
+					),
 				),
 				array(
 					'methods'             => WP_REST_Server::EDITABLE,
 					'callback'            => array( $this, 'update_item' ),
-					'permission_callback' => array( $this, 'check_membership_edit_permission' ),
-					'args'                => $this->get_collection_params(),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => $this->get_update_args(),
 				),
 				array(
 					'methods'             => WP_REST_Server::DELETABLE,
 					'callback'            => array( $this, 'delete_item' ),
-					'permission_callback' => array( $this, 'check_membership_delete_permission' ),
+					'permission_callback' => array( $this, 'delete_item_permissions_check' ),
+				),
+				'schema' => array( $this, 'get_public_item_schema' ),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			$item . '/duplicate',
+			array(
+				'args' => array( 'id' => $id ),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'duplicate_item' ),
+					'permission_callback' => array( $this, 'create_item_permissions_check' ),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			$item . '/members',
+			array(
+				'args' => array( 'id' => $id ),
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_members' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'args'                => $this->get_members_collection_params(),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			$base . '/options',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_options' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			$base . '/courses',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_courses' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => $this->get_course_collection_params(),
 				),
 			)
 		);
 	}
 
 	/**
-	 * Check if a given request has access to read an item.
+	 * Check the capability shared by every route.
 	 *
-	 * @param WP_REST_Request $request Full details about the request.
-	 * @return WP_Error|boolean
-	 *
-	 * @since 1.0.0
+	 * @param string $code    Error code.
+	 * @param string $message Error message used when access is denied.
+	 * @return true|WP_Error
 	 */
-	public function get_item_permissions_check( $request ) {
-		$post = get_post( (int) $request['id'] );
-
-		if ( $post && ! current_user_can( 'read_post', $post->ID ) ) {
-			return new WP_Error( 'ohmylms_rest_cannot_view', __( 'Sorry, you cannot view this resource.', 'ohmylms' ), array( 'status' => rest_authorization_required_code() ) );
+	private function require_capability( $code, $message ) {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			return new WP_Error( $code, $message, array( 'status' => rest_authorization_required_code() ) );
 		}
 
 		return true;
 	}
 
+	/**
+	 * Check if the current user can list memberships (also options and the course search).
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error
+	 */
+	public function get_items_permissions_check( $request ) {
+		return $this->require_capability( 'ohmylms_membership_cannot_view', __( 'Sorry, you are not allowed to view membership plans.', 'ohmylms' ) );
+	}
 
 	/**
-	 * Get collection of memberships.
+	 * Check if the current user can read a single membership (also its members).
 	 *
-	 * This method handles the retrieval of memberships based on the provided request parameters.
-	 * It supports various filters and pagination options to customize the query.
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error
+	 */
+	public function get_item_permissions_check( $request ) {
+		return $this->require_capability( 'ohmylms_membership_cannot_view', __( 'Sorry, you are not allowed to view membership plans.', 'ohmylms' ) );
+	}
+
+	/**
+	 * Check if the current user can create (or duplicate) a membership.
 	 *
-	 * @param \WP_REST_Request $request The REST request object containing query parameters.
-	 * @return WP_Error|\WP_HTTP_Response|\WP_REST_Response The response object containing the memberships data or an error.
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error
+	 */
+	public function create_item_permissions_check( $request ) {
+		return $this->require_capability( 'ohmylms_membership_cannot_create', __( 'Sorry, you are not allowed to create membership plans.', 'ohmylms' ) );
+	}
+
+	/**
+	 * Check if the current user can update a membership.
 	 *
-	 * @since 1.0.0
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error
+	 */
+	public function update_item_permissions_check( $request ) {
+		return $this->require_capability( 'ohmylms_membership_cannot_edit', __( 'Sorry, you are not allowed to edit membership plans.', 'ohmylms' ) );
+	}
+
+	/**
+	 * Check if the current user can delete a membership.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error
+	 */
+	public function delete_item_permissions_check( $request ) {
+		return $this->require_capability( 'ohmylms_membership_cannot_delete', __( 'Sorry, you are not allowed to delete membership plans.', 'ohmylms' ) );
+	}
+
+	/**
+	 * Build the not-found error.
+	 *
+	 * @return WP_Error
+	 */
+	private function not_found_error() {
+		return new WP_Error( 'ohmylms_membership_not_found', __( 'Membership plan not found.', 'ohmylms' ), array( 'status' => 404 ) );
+	}
+
+	/**
+	 * Load a plan or return a 404 error.
+	 *
+	 * @param int $id Membership post ID.
+	 * @return Membership|WP_Error
+	 */
+	private function get_membership( $id ) {
+		$post = get_post( absint( $id ) );
+		if ( ! $post || OHMYLMS_MEMBERSHIP_CPT !== $post->post_type || in_array( $post->post_status, array( 'trash', 'auto-draft' ), true ) ) {
+			return $this->not_found_error();
+		}
+
+		try {
+			return new Membership( $post );
+		} catch ( \Exception $e ) {
+			return $this->not_found_error();
+		}
+	}
+
+	/**
+	 * Get memberships.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
 	 */
 	public function get_items( $request ) {
-		$args = array(
-			'offset'              => isset( $request['offset'] ) ? intval( $request['offset'] ) : 0,
-			'order'               => isset( $request['order'] ) ? sanitize_text_field( $request['order'] ) : 'DESC',
-			'orderby'             => isset( $request['orderby'] ) ? sanitize_text_field( $request['orderby'] ) : 'date',
-			'paged'               => isset( $request['page'] ) ? intval( $request['page'] ) : 1,
-			'post__in'            => isset( $request['include'] ) ? array_map( 'intval', (array) $request['include'] ) : array(),
-			'post__not_in'        => isset( $request['exclude'] ) ? array_map( 'intval', (array) $request['exclude'] ) : array(),
-			'posts_per_page'      => isset( $request['per_page'] ) ? intval( $request['per_page'] ) : 10,
-			'name'                => isset( $request['slug'] ) ? sanitize_text_field( $request['slug'] ) : '',
-			'post_parent__in'     => isset( $request['parent'] ) ? array_map( 'intval', (array) $request['parent'] ) : array(),
-			'post_parent__not_in' => isset( $request['parent_exclude'] ) ? array_map( 'intval', (array) $request['parent_exclude'] ) : array(),
-			's'                   => isset( $request['search'] ) ? sanitize_text_field( $request['search'] ) : '',
-			'post_type'           => OHMYLMS_MEMBERSHIP_CPT,
-			'post_status'         => isset( $request['post_status'] ) ? sanitize_text_field( $request['post_status'] ) : 'any',
-			'meta_query'          => isset( $request['meta_key'] ) && isset( $request['meta_value'] ) ? array(
-				array(
-					'key'     => sanitize_text_field( $request['meta_key'] ),
-					'value'   => sanitize_text_field( $request['meta_value'] ),
-					'compare' => 'LIKE',
-				),
-			) : array(),
+		$page     = max( 1, (int) $request['page'] );
+		$per_page = min( 100, max( 1, (int) $request['per_page'] ) );
+		$orderby  = array(
+			'id'         => 'ID',
+			'name'       => 'title',
+			'status'     => 'post_status',
+			'created_at' => 'date',
+			'updated_at' => 'modified',
 		);
+		$statuses = 'all' === $request['status'] ? array( 'publish', 'draft', 'pending', 'private', 'future' ) : array( (string) $request['status'] );
 
-		if ( 'any' === $args['post_status'] || ! in_array( $args['post_status'], array( 'draft', 'publish', 'future' ) ) ) {
-			$args['post_status'] = array( 'draft', 'publish', 'future' );
+		$args = array(
+			'post_type'              => OHMYLMS_MEMBERSHIP_CPT,
+			'post_status'            => $statuses,
+			'posts_per_page'         => $per_page,
+			'paged'                  => $page,
+			'orderby'                => $orderby[ $request['orderby'] ],
+			'order'                  => strtoupper( (string) $request['order'] ),
+			'ignore_sticky_posts'    => true,
+			'update_post_term_cache' => false,
+		);
+		if ( '' !== (string) $request['search'] ) {
+			$args['s'] = (string) $request['search'];
+		}
+		if ( ! empty( $request['include'] ) ) {
+			$args['post__in'] = array_map( 'absint', (array) $request['include'] );
 		}
 
-		$args['date_query'] = array();
+		/**
+		 * Filters the WP_Query arguments used by GET /memberships.
+		 *
+		 * @param array            $args    Query arguments.
+		 * @param WP_REST_Request  $request The request.
+		 */
+		$args = apply_filters( 'ohmylms_rest_ohmylms_membership_query', $args, $request );
 
-		if ( ! empty( $request['date_filter'] ) ) {
-			$filter = sanitize_text_field( $request['date_filter'] );
-			$today  = current_time( 'Y-m-d' );
+		$query = new WP_Query( $args );
+		$total = $this->found_posts( $query, $args );
+		$pages = (int) ceil( $total / $per_page );
 
-			switch ( $filter ) {
-				case 'last_30_days':
-					$args['date_query'][] = array(
-						'after'     => date( 'Y-m-d', strtotime( '-30 days' ) ),
-						'before'    => $today,
-						'inclusive' => true,
-					);
-					break;
-
-				case 'current_month':
-					$args['date_query'][] = array(
-						'after'     => date( 'Y-m-01' ),
-						'before'    => $today,
-						'inclusive' => true,
-					);
-					break;
-
-				case 'previous_month':
-					$args['date_query'][] = array(
-						'after'     => date( 'Y-m-01', strtotime( 'first day of last month' ) ),
-						'before'    => date( 'Y-m-t', strtotime( 'last month' ) ),
-						'inclusive' => true,
-					);
-					break;
-
-				case 'current_year':
-					$args['date_query'][] = array(
-						'after'     => date( 'Y-01-01' ),
-						'before'    => $today,
-						'inclusive' => true,
-					);
-					break;
-
-				case 'last_12_months':
-					$args['date_query'][] = array(
-						'after'     => date( 'Y-m-d', strtotime( '-12 months' ) ),
-						'before'    => $today,
-						'inclusive' => true,
-					);
-					break;
-
-				case 'custom':
-					$start_date           = isset( $request['start_date'] ) ? sanitize_text_field( $request['start_date'] ) : '';
-					$end_date             = isset( $request['end_date'] ) ? sanitize_text_field( $request['end_date'] ) : '';
-					$args['date_query'][] = array(
-						'after'     => $start_date,
-						'before'    => $end_date,
-						'inclusive' => true,
-					);
-					break;
-			}
+		if ( $page > $pages && $total > 0 ) {
+			return new WP_Error( 'ohmylms_membership_invalid_page', __( 'The page number requested is larger than the number of pages available.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
 
-		$args       = apply_filters( 'ohmylms_rest_ohmylms_membership_query', $args, $request );
-		$query_args = $this->prepare_items_query( $args, $request );
+		$this->member_counts = $this->count_members( wp_list_pluck( $query->posts, 'ID' ) );
+		$this->prime_course_posts( $query->posts );
 
-		$posts_query  = new WP_Query();
-		$query_result = $posts_query->query( $query_args );
-
-		$posts = array();
-
-		foreach ( $query_result as $post ) {
-			if ( ! current_user_can( 'read_post', $post->ID ) ) {
+		$data = array();
+		foreach ( $query->posts as $post ) {
+			$membership = $this->get_membership( $post->ID );
+			if ( is_wp_error( $membership ) ) {
 				continue;
 			}
-			$data    = $this->prepare_item_for_response( $post, $request );
-			$posts[] = $this->prepare_response_for_collection( $data );
+			$data[] = $this->prepare_response_for_collection( $this->prepare_item_for_response( $membership, $request ) );
+		}
+		$this->member_counts = array();
+
+		$response = rest_ensure_response( $data );
+		$response->header( 'X-WP-Total', (string) $total );
+		$response->header( 'X-WP-TotalPages', (string) $pages );
+
+		$base = add_query_arg( urlencode_deep( $request->get_query_params() ), rest_url( $this->namespace . '/' . $this->rest_base ) );
+		if ( $page > 1 ) {
+			$response->link_header( 'prev', add_query_arg( 'page', $page - 1, $base ) );
+		}
+		if ( $page < $pages ) {
+			$response->link_header( 'next', add_query_arg( 'page', $page + 1, $base ) );
 		}
 
-		$page        = (int) $query_args['paged'];
-		$total_posts = $posts_query->found_posts;
-
-		if ( 1 > $total_posts && 1 < $page ) {
-			unset( $query_args['paged'] );
-			$count_query = new WP_Query();
-			$count_query->query( $query_args );
-			$total_posts = $count_query->found_posts;
-		}
-
-		$max_pages = ceil( $total_posts / (int) $query_args['posts_per_page'] );
-
-		$response = rest_ensure_response( $posts );
-		$response->header( 'X-WP-Total', (int) $total_posts );
-		$response->header( 'X-WP-TotalPages', (int) $max_pages );
-
-		$request_params = $request->get_query_params();
-		if ( ! empty( $request_params['filter'] ) ) {
-			unset( $request_params['filter']['posts_per_page'] );
-			unset( $request_params['filter']['paged'] );
-		}
-		$base = add_query_arg( $request_params, rest_url( sprintf( '/%s/%s', $this->namespace, $this->rest_base ) ) );
-
-		if ( 1 < $page ) {
-			$prev_page = $page - 1;
-			if ( $prev_page > $max_pages ) {
-				$prev_page = $max_pages;
-			}
-			$prev_link = add_query_arg( 'page', $prev_page, $base );
-			$response->link_header( 'prev', $prev_link );
-		}
-		if ( $max_pages > $page ) {
-			$next_page = $page + 1;
-			$next_link = add_query_arg( 'page', $next_page, $base );
-			$response->link_header( 'next', $next_link );
-		}
 		return $response;
 	}
 
+	/**
+	 * Get a specific membership plan.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
+	 */
+	public function get_item( $request ) {
+		$membership = $this->get_membership( $request['id'] );
+		if ( is_wp_error( $membership ) ) {
+			return $membership;
+		}
+
+		return $this->prepare_item_for_response( $membership, $request );
+	}
 
 	/**
-	 * Create a single membership
+	 * Create a membership plan.
 	 *
-	 * @param WP_REST_Request $request REST request.
-	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
-	 *
-	 * @since 1.0.0
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
 	 */
 	public function create_item( $request ) {
 		if ( ! empty( $request['id'] ) ) {
-			// Translators: %s is replaced with error name.
-			return new WP_Error( 'ohmylms_rest_membership_exists', sprintf( __( 'Cannot create existing %s.', 'ohmylms' ), 'membership' ), array( 'status' => 400 ) );
+			return new WP_Error( 'ohmylms_membership_exists', __( 'Cannot create an existing membership plan.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
 
-		try {
-			$membership_id = $this->save_membership( $request );
-			$post          = get_post( $membership_id );
-			/**
-			 * Fires after a membership is inserted via the REST API.
-			 *
-			 * @param \WP_Post         $post    The post object for the membership.
-			 * @param \WP_REST_Request $request The request object.
-			 *
-			 * @since 1.0.0
-			 */
-			do_action( 'ohmylms_rest_insert_membership', $post, $request );
-
-			// Trigger membership created event for tracking.
-			do_action( 'ohmylms_membership_created', $membership_id, $request );
-
-			$this->update_additional_fields_for_object( $post, $request );
-			$this->update_post_meta_fields( $post, $request );
-
-			$request->set_param( 'context', 'edit' );
-			$response = $this->prepare_item_for_response( $post, $request );
-			$response = rest_ensure_response( $response );
-			$response->set_status( 201 );
-			return $response;
-		} catch ( DataException $e ) {
-			return new WP_Error( 400, $e->getMessage(), array( 'status' => $e->getCode() ) );
-		}
-	}
-
-
-	/**
-	 * Retrieves a single membership by ID.
-	 *
-	 * @param \WP_REST_Request $request The REST request object containing the membership ID.
-	 * @return WP_Error|\WP_HTTP_Response|\WP_REST_Response The response object containing the membership data or an error.
-	 *
-	 * @since 1.0.0
-	 */
-	public function get_item( $request ) {
-		$id   = (int) $request['id'];
-		$post = get_post( $id );
-		if ( empty( $id ) || empty( $post->ID ) || OHMYLMS_MEMBERSHIP_CPT !== $post->post_type ) {
-			return new WP_Error( 'ohmylms_rest_invalid_membership_id', __( 'Invalid ID.', 'ohmylms' ), array( 'status' => 404 ) );
+		$membership = new Membership();
+		$valid      = $this->apply_request( $membership, $request );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
 		}
 
-		$data     = $this->prepare_item_for_response( $post, $request );
-		$response = rest_ensure_response( $data );
+		$saved = $this->save( $membership );
+		if ( ! $saved ) {
+			return new WP_Error( 'ohmylms_membership_create_failed', __( 'The membership plan could not be created.', 'ohmylms' ), array( 'status' => 500 ) );
+		}
 
-		$response->link_header( 'alternate', get_permalink( $id ), array( 'type' => 'text/html' ) );
+		$post = get_post( $membership->get_id() );
+
+		/**
+		 * Fires after a membership plan is inserted through the REST API.
+		 *
+		 * @param \WP_Post        $post    The membership post.
+		 * @param WP_REST_Request $request The request.
+		 */
+		do_action( 'ohmylms_rest_insert_membership', $post, $request );
+
+		/**
+		 * Fires after a membership plan is created through the REST API.
+		 *
+		 * @param int             $membership_id Membership ID.
+		 * @param WP_REST_Request $request       The request.
+		 */
+		do_action( 'ohmylms_membership_created', $membership->get_id(), $request );
+
+		$this->after_courses_saved( $membership );
+
+		$request->set_param( 'context', 'edit' );
+		$response = $this->prepare_item_for_response( $this->get_membership( $membership->get_id() ), $request );
+		$response->set_status( 201 );
+		$response->header( 'Location', rest_url( sprintf( '%s/%s/%d', $this->namespace, $this->rest_base, $membership->get_id() ) ) );
 
 		return $response;
 	}
 
-
 	/**
-	 * Delete bulk memberships.
-	 *
-	 * @param \WP_REST_Request $request The REST request object.
-	 * @return \WP_REST_Response The response object indicating success or failure.
-	 *
-	 * @since 1.0.0
-	 */
-	public function trash_bulk( $request ) {
-		$membership_ids = $request->get_param( 'membership_ids' );
-		if ( is_array( $membership_ids ) ) {
-			$membership_ids = $this->filter_allowed_post_ids( $membership_ids, 'delete', 'ohmylms-membership' );
-
-			if ( is_wp_error( $membership_ids ) ) {
-				return $membership_ids;
-			}
-
-			foreach ( $membership_ids as $membership_id ) {
-				wp_trash_post( $membership_id );
-				do_action( 'ohmylms_rest_delete_membership', $membership_id );
-			}
-			return new \WP_REST_Response( array( 'message' => 'Deleted Successfully' ), 200 );
-		}
-		return new \WP_REST_Response( array( 'message' => 'Failed to trash the membership.' ), 500 );
-	}
-
-
-	/**
-	 * Updates a single membership.
-	 *
-	 * @param \WP_REST_Request $request The REST request object containing the membership ID and data.
-	 * @return WP_Error|\WP_REST_Response|\WP_HTTP_Response The response object containing the updated membership data or an error.
-	 *
-	 * @since 1.0.0
-	 */
-	public function update_item( $request ) {
-		$post_id = (int) $request['id'];
-		if ( empty( $post_id ) || get_post_type( $post_id ) !== OHMYLMS_MEMBERSHIP_CPT ) {
-			return new WP_Error( 'ohmylms_rest_membership_invalid_id', __( 'ID is invalid.', 'ohmylms' ), array( 'status' => 400 ) );
-		}
-
-		try {
-			$membership_id = $this->save_membership( $request );
-			$post          = get_post( $membership_id );
-
-			$this->update_additional_fields_for_object( $post, $request );
-			$this->update_post_meta_fields( $post, $request );
-
-			$request->set_param( 'context', 'edit' );
-			$response = $this->prepare_item_for_response( $post, $request );
-
-			return rest_ensure_response( $response );
-
-		} catch ( DataException $e ) {
-			return new WP_Error( $e->getErrorCode(), $e->getMessage(), $e->getErrorData() );
-		}
-	}
-
-
-	/**
-	 * Delete membership
-	 *
-	 * @param WP_REST_Request $request REST request.
-	 * @return WP_Error|\WP_HTTP_Response|WP_REST_Response
-	 * @since 1.0.0
-	 */
-	public function delete_item( $request ) {
-		// Get membership id.
-		$membership_id = isset( $request['id'] ) ? (int) $request['id'] : 0;
-
-		// Check the membership id exist or not.
-		if ( ! $membership_id ) {
-			return new WP_Error( 'ohmylms_rest_membership_empty_id', __( 'ID is required.', 'ohmylms' ), array( 'status' => 400 ) );
-		}
-
-		// Get existing membership by membership id.
-		$membership = ohmylms_get_membership( $membership_id );
-
-		// Check the membership exist or not.
-		if ( ! ( $membership instanceof Membership ) ) {
-			return new WP_Error( 'ohmylms_rest_membership_invalid_id', __( 'ID is invalid.', 'ohmylms' ), array( 'status' => 400 ) );
-		}
-
-		// Delete the membership.
-		$membership->delete();
-
-		/**
-		 * Executes the 'ohmylms_rest_delete_membership' action hook.
-		 * This hook is triggered when a membership is being deleted via the REST API.
-		 *
-		 * @param string $membership_id Membership ID.
-		 *
-		 * @since 1.0.0
-		 */
-		do_action( 'ohmylms_rest_delete_membership', $membership_id );
-
-		$response = array(
-			'status'  => 'success',
-			'message' => __( 'Membership deleted successfully', 'ohmylms' ),
-		);
-		return rest_ensure_response( $response );
-	}
-
-	/**
-	 * Prepares the query arguments for fetching items.
-	 *
-	 * This function filters and constructs the query arguments based on the allowed query variables.
-	 * It ensures that only valid query variables are included in the final query arguments.
-	 *
-	 * @param array                $prepared_args The prepared arguments for the query.
-	 * @param WP_REST_Request|null $request The REST request object.
-	 * .
-	 * @return array The filtered and prepared query arguments.
-	 * @since 1.0.0
-	 */
-	protected function prepare_items_query( $prepared_args = array(), $request = null ) {
-
-		$valid_vars = array_flip( $this->get_allowed_query_vars() );
-		$query_args = array();
-		foreach ( $valid_vars as $var => $index ) {
-			if ( isset( $prepared_args[ $var ] ) ) {
-				/**
-				 * Filter the query_vars used in `get_items` for the constructed query.
-				 *
-				 * The dynamic portion of the hook name, $var, refers to the query_var key.
-				 *
-				 * @param mixed $prepared_args[ $var ] The query_var value.
-				 */
-				$query_args[ $var ] = apply_filters( "woocommerce_rest_query_var-{$var}", $prepared_args[ $var ] );
-			}
-		}
-
-		$query_args['ignore_sticky_posts'] = true;
-
-		if ( 'include' === $query_args['orderby'] ) {
-			$query_args['orderby'] = 'post__in';
-		} elseif ( 'id' === $query_args['orderby'] ) {
-			$query_args['orderby'] = 'ID'; // ID must be capitalized.
-		} elseif ( 'slug' === $query_args['orderby'] ) {
-			$query_args['orderby'] = 'name';
-		}
-
-		return $query_args;
-	}
-
-
-	/**
-	 * Get the allowed query variables for the REST API.
-	 *
-	 * This method retrieves the list of query variables that are allowed to be used
-	 * in REST API requests for memberships. It merges the public and private query variables
-	 * and applies filters to allow customization.
-	 *
-	 * @return array The array of allowed query variables.
-	 *
-	 * @since 1.0.0
-	 */
-	protected function get_allowed_query_vars() {
-		global $wp;
-
-		/**
-		 * Filter the publicly allowed query vars.
-		 *
-		 * Allows adjusting of the default query vars that are made public.
-		 *
-		 * @param array  Array of allowed WP_Query query vars.
-		 */
-		$valid_vars = apply_filters( 'query_vars', $wp->public_query_vars );
-
-		$post_type_obj = get_post_type_object( OHMYLMS_MEMBERSHIP_CPT );
-		if ( current_user_can( $post_type_obj->cap->edit_posts ) ) {
-			$valid_vars = array_merge( $valid_vars, $wp->private_query_vars );
-		}
-		$rest_valid = array(
-			'date_query',
-			'ignore_sticky_posts',
-			'offset',
-			'post__in',
-			'post__not_in',
-			'post_parent',
-			'post_parent__in',
-			'post_parent__not_in',
-			'posts_per_page',
-			'meta_query',
-			'tax_query',
-			'meta_key',
-			'meta_value',
-			'meta_compare',
-			'meta_value_num',
-		);
-		$valid_vars = array_merge( $valid_vars, $rest_valid );
-
-		/**
-		 * Filter the valid query variables for the REST API.
-		 *
-		 * This filter allows developers to modify the list of valid query variables
-		 * that can be used in REST API requests for memberships.
-		 *
-		 * @param array $valid_vars The array of valid query variables.
-		 */
-		$valid_vars = apply_filters( 'ohmylms_rest_query_vars', $valid_vars );
-
-		return $valid_vars;
-	}
-
-
-	/**
-	 * Saves a membership to the database.
+	 * Update a membership plan. PUT, PATCH and POST all behave as a partial update.
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
-	 * @return int
-	 *
-	 * @since 1.0.0
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
 	 */
-	public function save_membership( $request ) {
-		$membership = $this->prepare_item_for_database( $request );
-		$this->validate_sale_schedule( $request, $membership );
-		return $membership->save();
-	}
-
-	/**
-	 * Validate calendar sale fields before creating or changing a plan.
-	 *
-	 * @param WP_REST_Request $request Submitted fields.
-	 * @param Membership      $membership Existing membership values.
-	 * @throws DataException When the date range or free-access end is invalid.
-	 */
-	private function validate_sale_schedule( $request, $membership ) {
-		$sale  = isset( $request['sale_price'] ) ? $request['sale_price'] : $membership->get_sale_price( 'edit' );
-		$dates = array();
-		foreach ( array( 'from', 'to' ) as $side ) {
-			$field          = 'sale_price_dates_' . $side;
-			$value          = isset( $request[ $field ] ) ? $request[ $field ] : $membership->{'get_' . $field}();
-			$dates[ $side ] = \OhMyLMS\Membership\FreeSale::date( $value );
-			if ( ! empty( $value ) && ! $dates[ $side ] ) {
-				throw new DataException( 'membership_sale_date', esc_html__( 'Choose a valid sale date from the calendar.', 'ohmylms' ), 400 );
-			}
-		}
-		if ( $dates['from'] && $dates['to'] && $dates['from'] > $dates['to'] ) {
-			throw new DataException( 'membership_sale_date', esc_html__( 'The sale end date must be on or after its start date.', 'ohmylms' ), 400 );
-		}
-		if ( '' !== (string) $sale && ( ! is_numeric( $sale ) || 0 > (float) $sale ) ) {
-			throw new DataException( 'membership_sale_price', esc_html__( 'Sale price must be zero or greater.', 'ohmylms' ), 400 );
-		}
-		if ( '' !== (string) $sale && is_numeric( $sale ) && 0.0 === (float) $sale && ! $dates['to'] ) {
-			throw new DataException( 'membership_free_until', esc_html__( 'Choose a Free until date for a zero-price sale.', 'ohmylms' ), 400 );
-		}
-	}
-
-
-	/**
-	 * Update post meta fields for a membership.
-	 *
-	 * This method updates the meta fields for a given membership post based on the provided request data.
-	 *
-	 * @param \WP_Post         $post The post object representing the membership.
-	 * @param \WP_REST_Request $request The REST request object containing the meta data.
-	 * @return bool True on success, false on failure.
-	 *
-	 * @throws DataException When the operation cannot be completed.
-	 * @since 1.0.0
-	 */
-	protected function update_post_meta_fields( $post, $request ) {
-		$membership = ohmylms_get_membership( $post );
-		// Save membership meta fields.
-		$membership = $this->set_membership_meta( $membership, $request );
-
-		// Save the membership data.
-		$membership->save();
-		$products = $membership->get_products();
-		// Notify on empty selections too, so removed courses lose this plan's access.
-		do_action( 'ohmylms_rest_after_adding_products_on_membership', $products, $membership->get_id() );
-		return true;
-	}
-
-
-	/**
-	 * Set product meta data for a membership.
-	 *
-	 * @param Membership      $membership The membership object.
-	 * @param WP_REST_Request $request The REST request object containing the meta data.
-	 * @return Membership The updated membership object.
-	 *
-	 * @since 1.0.0
-	 * @throws DataException When the operation cannot be completed.
-	 */
-	protected function set_membership_meta( $membership, $request ) {
-		if ( isset( $request['all_learning_content'] ) ) {
-			$membership->set_all_learning_content( $request['all_learning_content'] );
-		}
-		$error = $this->validate_course_selection( $request, $membership );
-		if ( is_wp_error( $error ) ) {
-			throw new DataException( $error->get_error_code(), $error->get_error_message(), 400 );
-		}
-		foreach ( array( 'course_categories', 'course_tags', 'course_curriculum', 'course_bundles', 'excluded_courses' ) as $field ) {
-			if ( isset( $request[ $field ] ) ) {
-				$membership->{'set_' . $field}( $request[ $field ] );
-			}
-		}
-		if ( isset( $request['regular_price'] ) ) {
-			$membership->set_regular_price( $request['regular_price'] );
-		}
-		if ( isset( $request['sale_price'] ) ) {
-			$membership->set_sale_price( $request['sale_price'] );
-		}
-		if ( isset( $request['sale_price_dates_from'] ) ) {
-			$date = \OhMyLMS\Membership\FreeSale::date( $request['sale_price_dates_from'] );
-			$membership->set_sale_price_dates_from( $date ? $date : null );
-		}
-		if ( isset( $request['sale_price_dates_to'] ) ) {
-			$date = \OhMyLMS\Membership\FreeSale::date( $request['sale_price_dates_to'] );
-			$membership->set_sale_price_dates_to( $date ? $date : null );
-		}
-		if ( isset( $request['subscription_length'] ) ) {
-			$membership->set_subscription_length( $request['subscription_length'] );
-		}
-		if ( isset( $request['subscription_period'] ) ) {
-			$membership->set_subscription_period( $request['subscription_period'] );
-		}
-		if ( isset( $request['subscription_period_interval'] ) ) {
-			$membership->set_subscription_period_interval( $request['subscription_period_interval'] );
-		}
-		if ( isset( $request['products'] ) ) {
-			$membership->set_products( $request['products'] );
-		}
-		if ( isset( $request['sign_up_fee'] ) ) {
-			$membership->set_sign_up_fee( $request['sign_up_fee'] );
-		}
-		return $membership;
-	}
-
-
-	/**
-	 * Set the cover image for a membership.
-	 *
-	 * @param Membership $membership The membership object.
-	 * @param int        $attachment_id The attachment ID of the image.
-	 * @return Membership The updated membership object.
-	 * @throws DataException If the attachment ID is not a valid image.
-	 *
-	 * @since 1.0.0
-	 */
-	protected function set_membership_cover_image( $membership, $attachment_id ) {
-		if ( ! wp_attachment_is_image( $attachment_id ) ) {
-			// Translators: %s is replaced with error name.
-			throw new DataException( 'ohmylms_membership_invalid_image_id', sprintf( __( '#%s is an invalid image ID.', 'ohmylms' ), $attachment_id ), 400 );
+	public function update_item( $request ) {
+		$membership = $this->get_membership( $request['id'] );
+		if ( is_wp_error( $membership ) ) {
+			return $membership;
 		}
 
-		$membership->set_thumbnail_id( $attachment_id );
-
-		return $membership;
-	}
-
-	/**
-	 * Get membership data.
-	 *
-	 * @param Membership $membership Membership.
-	 * @return array
-	 *
-	 * @since 1.0.0
-	 */
-	protected function get_membership_data( $membership ) {
-		$data = array(
-			'id'                           => $membership->get_id(),
-			'name'                         => $membership->get_name(),
-			'slug'                         => $membership->get_slug(),
-			'status'                       => $membership->get_status(),
-			'description'                  => $membership->get_description(),
-			'price'                        => $membership->get_price(),
-			'regular_price'                => $membership->get_regular_price(),
-			'sale_price'                   => $membership->get_sale_price(),
-			'sale_price_dates_from'        => $membership->get_sale_price_dates_from(),
-			'sale_price_dates_to'          => $membership->get_sale_price_dates_to(),
-			'date_created'                 => $membership->get_date_created(),
-			'date_modified'                => $membership->get_date_modified(),
-			'membership_url'               => get_permalink( $membership->get_id() ),
-			'sign_up_fee'                  => $membership->get_sign_up_fee(),
-			'free_trial'                   => $membership->get_free_trial(),
-			'stop_renew'                   => $membership->get_stop_renew(),
-			'subscription_length'          => $membership->get_subscription_length(),
-			'subscription_period'          => $membership->get_subscription_period(),
-			'subscription_period_interval' => $membership->get_subscription_period_interval(),
-			'products'                     => $membership->get_products( 'edit' ),
-			'course_categories'            => $membership->get_course_categories(),
-			'course_tags'                  => $membership->get_course_tags(),
-			'all_learning_content'         => $membership->get_all_learning_content(),
-			'course_curriculum'            => $membership->get_course_curriculum(),
-			'course_bundles'               => $membership->get_course_bundles(),
-			'legacy_rules'                 => $this->legacy_rules( $membership ),
-			'excluded_courses'             => $membership->get_excluded_courses(),
-			'courses'                      => count( $membership->get_products() ),
-			'members'                      => $membership->count_membership_members(),
-			'currency'                     => html_entity_decode( get_ohmylms_currency_symbol( get_ohmylms_currency() ) ),
-			'currency_pos'                 => get_ohmylms_currency_position(),
-
-		);
-		return $data;
-	}
-
-	/**
-	 * Course rules. Curriculum items and course bundles are the rules to choose from. Legacy category and
-	 * tag rules, saved before those were replaced, can only be kept or removed, never extended: members keep
-	 * the access they were granted until an administrator removes the rule, yet nothing new is organized by
-	 * categories or tags.
-	 *
-	 * @param mixed $request REST request.
-	 * @param mixed $membership Membership.
-	 */
-	private function validate_course_selection( $request, $membership = null ) {
-		if ( isset( $request['all_learning_content'] ) && ! is_bool( $request['all_learning_content'] ) && ! in_array( $request['all_learning_content'], array( 0, 1, '0', '1', 'true', 'false' ), true ) ) {
-			return new WP_Error( 'membership_all_learning_content', __( 'All learning content must be a checkbox value.', 'ohmylms' ), array( 'status' => 400 ) );
-		}
-		$rules = array(
-			'course_categories' => 'course_category',
-			'course_tags'       => 'course_tag',
-			'course_curriculum' => 'curriculum',
-			'course_bundles'    => 'bundles',
-			'excluded_courses'  => null,
-		);
-		foreach ( $rules as $field => $kind ) {
-			if ( ! isset( $request[ $field ] ) ) {
-				continue;
-			}
-			if ( ! is_array( $request[ $field ] ) ) {
-				return new WP_Error( 'membership_selection_invalid', __( 'Course selections must be lists.', 'ohmylms' ), array( 'status' => 400 ) );
-			}
-			foreach ( $request[ $field ] as $id ) {
-				if ( ! is_numeric( $id ) || (int) $id <= 0 || (string) (int) $id !== (string) $id ) {
-					return new WP_Error( 'membership_selection_invalid', __( 'A selected course rule or exclusion no longer exists.', 'ohmylms' ), array( 'status' => 400 ) );
-				}
-				$id = (int) $id;
-				if ( 'curriculum' === $kind ) {
-					$exists = \OhMyLMS\Curriculum\Items::get( $id ) !== null;
-				} elseif ( 'bundles' === $kind ) {
-					$exists = \OhMyLMS\Bundles\Bundles::get( $id ) !== null;
-				} elseif ( $kind ) {
-					$exists = (bool) term_exists( $id, $kind );
-				} else {
-					$exists = get_post_type( $id ) === 'ohmylms-course';
-				}
-				if ( ! $exists ) {
-					return new WP_Error( 'membership_selection_invalid', __( 'A selected course rule or exclusion no longer exists.', 'ohmylms' ), array( 'status' => 400 ) );
-				}
-			}
-			if ( $membership && in_array( $kind, array( 'course_category', 'course_tag' ), true ) ) {
-				$saved = 'course_category' === $kind ? $membership->get_course_categories( 'edit' ) : $membership->get_course_tags( 'edit' );
-				if ( array_diff( array_map( 'intval', $request[ $field ] ), array_map( 'intval', (array) $saved ) ) ) {
-					return new WP_Error( 'membership_legacy_rules', __( 'Category and tag rules were replaced by curriculum items and course bundles. Existing rules can only be removed.', 'ohmylms' ), array( 'status' => 400 ) );
-				}
-			}
-		}
-		if ( isset( $request['products'] ) ) {
-			if ( ! is_array( $request['products'] ) ) {
-				return new WP_Error( 'membership_selection_invalid', __( 'Courses must be a list.', 'ohmylms' ), array( 'status' => 400 ) );
-			}
-			foreach ( $request['products'] as $product ) {
-				if ( ! is_array( $product ) || empty( $product['id'] ) || ! is_numeric( $product['id'] ) || (string) (int) $product['id'] !== (string) $product['id'] || get_post_type( (int) $product['id'] ) !== 'ohmylms-course' ) {
-					return new WP_Error( 'membership_selection_invalid', __( 'A selected course no longer exists.', 'ohmylms' ), array( 'status' => 400 ) );
-				}
-			}
-		}
-		return true;
-	}
-
-	/** Legacy category and tag rules still saved on a plan, with their names, so they can be shown and removed.
-	 *
-	 * @param mixed $membership Membership.
-	 */
-	private function legacy_rules( $membership ) {
-		$named = static function ( $ids, $taxonomy ) {
-			$rows = array();
-			foreach ( (array) $ids as $id ) {
-				$term   = taxonomy_exists( $taxonomy ) ? get_term( (int) $id, $taxonomy ) : null;
-				$rows[] = array(
-					'id'   => (int) $id,
-					'name' => $term && ! is_wp_error( $term ) ? $term->name : '#' . (int) $id,
-				);
-			}
-			return $rows;
-		};
-		return array(
-			'categories' => $named( $membership->get_course_categories(), 'course_category' ),
-			'tags'       => $named( $membership->get_course_tags(), 'course_tag' ),
-		);
-	}
-
-	/**
-	 * Course preview for Membership controller.
-	 *
-	 * @param mixed $request REST request.
-	 */
-	public function course_preview( $request ) {
-		$valid = $this->validate_course_selection( $request );
+		$valid = $this->apply_request( $membership, $request );
 		if ( is_wp_error( $valid ) ) {
 			return $valid;
 		}
-		$curriculum   = $request['course_curriculum'] ?? array();
-		$bundles      = $request['course_bundles'] ?? array();
-		$courses      = \OhMyLMS\Membership\CourseSelection::resolve( $request['products'] ?? array(), $request['course_categories'] ?? array(), $request['course_tags'] ?? array(), $request['excluded_courses'] ?? array(), $curriculum, $bundles, rest_sanitize_boolean( $request['all_learning_content'] ?? false ) );
-		$direct       = array_column( $request['products'] ?? array(), 'id' );
-		$categories   = $request['course_categories'] ?? array();
-		$category_ids = $categories;
-		foreach ( $categories as $category ) {
-			$children = get_term_children( $category, 'course_category' );
-			if ( ! is_wp_error( $children ) ) {
-				$category_ids = array_merge( $category_ids, $children );
-			}
+
+		if ( ! $this->save( $membership ) ) {
+			return new WP_Error( 'ohmylms_membership_update_failed', __( 'The membership plan could not be updated.', 'ohmylms' ), array( 'status' => 500 ) );
 		}
-		// Curriculum rules include everything beneath a selected item; a bundle includes its courses and the courses under its curriculum members.
-		$item_scope = array();
-		if ( $curriculum ) {
-			$parents    = \OhMyLMS\Curriculum\Items::parents();
-			$item_scope = array_map( 'intval', $curriculum );
-			foreach ( $item_scope as $item ) {
-				$item_scope = array_merge( $item_scope, \OhMyLMS\Curriculum\Tree::descendants( $parents, $item ) );
-			}
+
+		$this->after_courses_saved( $membership );
+
+		$request->set_param( 'context', 'edit' );
+
+		return $this->prepare_item_for_response( $this->get_membership( $membership->get_id() ), $request );
+	}
+
+	/**
+	 * Delete a membership plan. Refused while it has enrolled or pending members.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
+	 */
+	public function delete_item( $request ) {
+		$membership = $this->get_membership( $request['id'] );
+		if ( is_wp_error( $membership ) ) {
+			return $membership;
 		}
-		$bundle_courses = array();
-		foreach ( $bundles as $bundle_id ) {
-			$bundle = \OhMyLMS\Bundles\Bundles::get( (int) $bundle_id );
-			if ( $bundle ) {
-				$bundle_courses[] = array(
-					'title'   => $bundle['title'],
-					'courses' => \OhMyLMS\Curriculum\Placement::course_ids_for_bundles( array( (int) $bundle_id ) ),
-				);
-			}
+
+		$members = $this->count_active_members( $membership->get_id() );
+		if ( $members > 0 ) {
+			return new WP_Error(
+				'ohmylms_membership_has_members',
+				__( 'This plan has active members. Cancel their memberships or set the plan to draft instead of deleting it.', 'ohmylms' ),
+				array(
+					'status'  => 409,
+					'members' => $members,
+				)
+			);
 		}
-		foreach ( $courses as &$course ) {
-			$course['reasons'] = array();
-			if ( rest_sanitize_boolean( $request['all_learning_content'] ?? false ) ) {
-				$course['reasons'][] = __( 'All learning content', 'ohmylms' );
-			}
-			if ( in_array( $course['id'], $direct ) ) {
-				$course['reasons'][] = __( 'Individual course', 'ohmylms' );
-			}
-			foreach ( array(
-				'course_category' => $category_ids,
-				'course_tag'      => $request['course_tags'] ?? array(),
-			) as $taxonomy => $ids ) {
-				$terms = wp_get_post_terms( $course['id'], $taxonomy );
-				if ( is_wp_error( $terms ) ) {
-					continue;
-				}
-				foreach ( $terms as $term ) {
-					if ( in_array( $term->term_id, $ids ) ) {
-						$course['reasons'][] = $term->name;
-					}
-				}
-			}
-			if ( $item_scope ) {
-				foreach ( \OhMyLMS\Curriculum\Placement::items( $course['id'] ) as $item ) {
-					if ( in_array( $item['id'], $item_scope, true ) ) {
-										$course['reasons'][] = $item['name'];
-					}
-				}
-			}
-			foreach ( $bundle_courses as $bundle ) {
-				if ( in_array( (int) $course['id'], $bundle['courses'], true ) ) {
-					$course['reasons'][] = $bundle['title'];
-				}
-			}
+
+		$request->set_param( 'context', 'edit' );
+		$previous = $this->prepare_item_for_response( $membership, $request )->get_data();
+		$id       = $membership->get_id();
+
+		$membership->delete();
+		if ( get_post( $id ) ) {
+			return new WP_Error( 'ohmylms_membership_delete_failed', __( 'The membership plan could not be deleted.', 'ohmylms' ), array( 'status' => 500 ) );
 		}
-		unset( $course );
+
+		/**
+		 * Fires after a membership plan is deleted through the REST API.
+		 *
+		 * @param int $membership_id Membership ID.
+		 */
+		do_action( 'ohmylms_rest_delete_membership', $id );
+
 		return rest_ensure_response(
 			array(
-				'courses' => $courses,
-				'total'   => count( $courses ),
+				'deleted'  => true,
+				'previous' => $previous,
 			)
 		);
 	}
 
 	/**
-	 * Prepare links for the request.
+	 * Duplicate a plan as a draft with the same price, access rules and courses, and no members.
 	 *
-	 * @param mixed $membership Membership.
-	 * @param mixed $request REST request.
-	 * @return array[]
-	 *
-	 * @since 1.0.0
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
 	 */
-	protected function prepare_links( $membership, $request ) {
-		$links = array(
-			'self'       => array(
-				'href' => rest_url( sprintf( '%s/%s/%d', $this->namespace, $this->base, $membership->get_id() ) ),
-			),
-			'collection' => array(
-				'href' => rest_url( sprintf( '%s/%s', $this->namespace, $this->base ) ),
+	public function duplicate_item( $request ) {
+		$source = $this->get_membership( $request['id'] );
+		if ( is_wp_error( $source ) ) {
+			return $source;
+		}
+
+		$copy = new Membership();
+		$copy->set_name(
+			mb_substr(
+				/* translators: %s: membership plan name. */
+				sprintf( __( '%s (copy)', 'ohmylms' ), $source->get_name( 'edit' ) ),
+				0,
+				200
+			)
+		);
+		$copy->set_description( $source->get_description( 'edit' ) );
+		$copy->set_status( 'draft' );
+		$copy->set_regular_price( $source->get_regular_price( 'edit' ) );
+		$copy->set_sale_price( $source->get_sale_price( 'edit' ) );
+		$from = FreeSale::date( $source->get_sale_price_dates_from( 'edit' ) );
+		$to   = FreeSale::date( $source->get_sale_price_dates_to( 'edit' ) );
+		$copy->set_sale_price_dates_from( $from ? $from : null );
+		$copy->set_sale_price_dates_to( $to ? $to : null );
+		$copy->set_sign_up_fee( $source->get_sign_up_fee() );
+		$copy->set_subscription_period( $source->get_subscription_period() );
+		$copy->set_subscription_period_interval( $source->get_subscription_period_interval() );
+		$copy->set_subscription_length( $source->get_subscription_length() );
+		$copy->set_all_learning_content( $source->get_all_learning_content( 'edit' ) );
+		$copy->set_products( $source->get_products( 'edit' ) );
+		$copy->set_excluded_courses( $source->get_excluded_courses( 'edit' ) );
+		$copy->set_course_curriculum( $source->get_course_curriculum( 'edit' ) );
+
+		if ( ! $this->save( $copy ) ) {
+			return new WP_Error( 'ohmylms_membership_create_failed', __( 'The membership plan could not be created.', 'ohmylms' ), array( 'status' => 500 ) );
+		}
+
+		$this->after_courses_saved( $copy );
+
+		$request->set_param( 'context', 'edit' );
+		$response = $this->prepare_item_for_response( $this->get_membership( $copy->get_id() ), $request );
+		$response->set_status( 201 );
+		$response->header( 'Location', rest_url( sprintf( '%s/%s/%d', $this->namespace, $this->rest_base, $copy->get_id() ) ) );
+
+		return $response;
+	}
+
+	/**
+	 * Read-only list of a plan's members (one page).
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
+	 */
+	public function get_members( $request ) {
+		global $wpdb;
+
+		$membership = $this->get_membership( $request['id'] );
+		if ( is_wp_error( $membership ) ) {
+			return $membership;
+		}
+
+		$table    = $wpdb->prefix . 'ohmylms_user_membership';
+		$page     = max( 1, (int) $request['page'] );
+		$per_page = min( 100, max( 1, (int) $request['per_page'] ) );
+		$status   = (string) $request['status'];
+		$where    = 'WHERE m.membership_id = %d';
+		$params   = array( $table, $membership->get_id() );
+		if ( 'all' !== $status ) {
+			$where   .= ' AND m.status = %s';
+			$params[] = $status;
+		}
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery
+		$total = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i m {$where}", $params ) );
+		$pages = (int) ceil( $total / $per_page );
+		if ( $page > $pages && $total > 0 ) {
+			return new WP_Error( 'ohmylms_membership_invalid_page', __( 'The page number requested is larger than the number of pages available.', 'ohmylms' ), array( 'status' => 400 ) );
+		}
+
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT m.id, m.user_id, m.status, m.order_id, m.start_date, m.end_date, u.display_name, u.user_email
+				FROM %i m LEFT JOIN %i u ON u.ID = m.user_id {$where}
+				ORDER BY m.id DESC LIMIT %d OFFSET %d",
+				array_merge( array( $table, $wpdb->users ), array_slice( $params, 1 ), array( $per_page, ( $page - 1 ) * $per_page ) )
+			)
+		);
+		// phpcs:enable
+
+		$to_date = static function ( $value ) {
+			$value = (string) $value;
+			return ( '' === $value || 0 === strpos( $value, '0000-00-00' ) ) ? null : str_replace( ' ', 'T', $value ) . 'Z';
+		};
+		$data    = array();
+		foreach ( (array) $rows as $row ) {
+			$data[] = array(
+				'id'           => (int) $row->id,
+				'user_id'      => (int) $row->user_id,
+				'display_name' => (string) $row->display_name,
+				'email'        => (string) $row->user_email,
+				'status'       => (string) $row->status,
+				'order_id'     => (int) $row->order_id,
+				'start_date'   => $to_date( $row->start_date ),
+				'end_date'     => $to_date( $row->end_date ),
+			);
+		}
+
+		$response = rest_ensure_response( $data );
+		$response->header( 'X-WP-Total', (string) $total );
+		$response->header( 'X-WP-TotalPages', (string) $pages );
+
+		return $response;
+	}
+
+	/**
+	 * Choices and limits for the editor: statuses, billing periods and the site's currency settings.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response
+	 */
+	public function get_options( $request ) {
+		$code = (string) get_ohmylms_currency();
+
+		return rest_ensure_response(
+			array(
+				'statuses'        => array(
+					array(
+						'value' => 'draft',
+						'label' => __( 'Draft', 'ohmylms' ),
+					),
+					array(
+						'value' => 'publish',
+						'label' => __( 'Published', 'ohmylms' ),
+					),
+				),
+				'billing_periods' => array(
+					array(
+						'value' => 'one_time',
+						'label' => __( 'One time', 'ohmylms' ),
+					),
+					array(
+						'value' => 'year',
+						'label' => __( 'Every year', 'ohmylms' ),
+					),
+					array(
+						'value' => 'month',
+						'label' => __( 'Every month', 'ohmylms' ),
+					),
+					array(
+						'value' => 'week',
+						'label' => __( 'Every week', 'ohmylms' ),
+					),
+					array(
+						'value' => 'day',
+						'label' => __( 'Every day', 'ohmylms' ),
+					),
+				),
+				'currency'        => array(
+					'code'     => $code,
+					'symbol'   => html_entity_decode( (string) get_ohmylms_currency_symbol( $code ), ENT_QUOTES, 'UTF-8' ),
+					'position' => (string) get_ohmylms_currency_position(),
+					'decimals' => (int) ohmylms_get_price_decimals(),
+				),
+				'limits'          => array(
+					'max_courses'          => self::MAX_COURSES,
+					'max_curriculum_items' => self::MAX_CURRICULUM_ITEMS,
+					'max_price'            => self::MAX_PRICE,
+					'max_name'             => 200,
+				),
+			)
+		);
+	}
+
+	/**
+	 * Search courses that can be added to a plan (bounded, one page).
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
+	 */
+	public function get_courses( $request ) {
+		$page     = max( 1, (int) $request['page'] );
+		$per_page = min( 50, max( 1, (int) $request['per_page'] ) );
+		$args     = array(
+			'post_type'              => 'ohmylms-course',
+			'post_status'            => array( 'publish', 'draft', 'pending', 'private', 'future' ),
+			'posts_per_page'         => $per_page,
+			'paged'                  => $page,
+			'orderby'                => 'title',
+			'order'                  => 'ASC',
+			'ignore_sticky_posts'    => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+		);
+		if ( '' !== (string) $request['search'] ) {
+			$args['s'] = (string) $request['search'];
+		}
+		if ( ! empty( $request['include'] ) ) {
+			$args['post__in'] = array_map( 'absint', (array) $request['include'] );
+		}
+
+		$query = new WP_Query( $args );
+		$total = $this->found_posts( $query, $args );
+		$pages = (int) ceil( $total / $per_page );
+		if ( $page > $pages && $total > 0 ) {
+			return new WP_Error( 'ohmylms_membership_invalid_page', __( 'The page number requested is larger than the number of pages available.', 'ohmylms' ), array( 'status' => 400 ) );
+		}
+
+		$response = rest_ensure_response( array_map( array( $this, 'course_ref' ), $query->posts ) );
+		$response->header( 'X-WP-Total', (string) $total );
+		$response->header( 'X-WP-TotalPages', (string) $pages );
+
+		return $response;
+	}
+
+	/**
+	 * Total matches of a query. WordPress reports zero for a page past the end, so the total is
+	 * counted again without paging in that case.
+	 *
+	 * @param WP_Query $query Executed query.
+	 * @param array    $args  Its arguments.
+	 * @return int
+	 */
+	private function found_posts( WP_Query $query, array $args ) {
+		if ( $query->found_posts > 0 || (int) $args['paged'] < 2 ) {
+			return (int) $query->found_posts;
+		}
+
+		$count = new WP_Query(
+			array_merge(
+				$args,
+				array(
+					'paged'          => 1,
+					'posts_per_page' => 1,
+					'fields'         => 'ids',
+				)
+			)
+		);
+
+		return (int) $count->found_posts;
+	}
+
+	/**
+	 * Describe a course post.
+	 *
+	 * @param \WP_Post $post Course post.
+	 * @return array
+	 */
+	private function course_ref( $post ) {
+		return array(
+			'id'     => (int) $post->ID,
+			'title'  => html_entity_decode( get_the_title( $post ), ENT_QUOTES, 'UTF-8' ),
+			'status' => (string) $post->post_status,
+		);
+	}
+
+	/**
+	 * Count enrolled members for several plans with one query.
+	 *
+	 * @param int[] $ids Membership IDs.
+	 * @return array<int,int>
+	 */
+	private function count_members( array $ids ) {
+		global $wpdb;
+
+		$ids = array_values( array_filter( array_map( 'absint', $ids ) ) );
+		if ( ! $ids ) {
+			return array();
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery
+		$rows   = $wpdb->get_results( $wpdb->prepare( "SELECT membership_id, COUNT(*) AS total FROM %i WHERE status = 'enrolled' AND membership_id IN ({$placeholders}) GROUP BY membership_id", array_merge( array( $wpdb->prefix . 'ohmylms_user_membership' ), $ids ) ) );
+		$counts = array_fill_keys( $ids, 0 );
+		foreach ( (array) $rows as $row ) {
+			$counts[ (int) $row->membership_id ] = (int) $row->total;
+		}
+
+		return $counts;
+	}
+
+	/**
+	 * Count members that block deletion.
+	 *
+	 * @param int $id Membership ID.
+	 * @return int
+	 */
+	private function count_active_members( $id ) {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE membership_id = %d AND status IN (%s, %s)', $wpdb->prefix . 'ohmylms_user_membership', $id, self::ACTIVE_MEMBER_STATUSES[0], self::ACTIVE_MEMBER_STATUSES[1] ) );
+	}
+
+	/**
+	 * Warm the post cache for the explicitly selected courses of a page of plans, so counting them
+	 * does not query once per course.
+	 *
+	 * @param \WP_Post[] $posts Membership posts.
+	 * @return void
+	 */
+	private function prime_course_posts( array $posts ) {
+		$ids = array();
+		foreach ( $posts as $post ) {
+			$ids = array_merge( $ids, $this->course_ids_of( new Membership( $post ) ) );
+		}
+		$ids = array_values( array_unique( $ids ) );
+		if ( $ids ) {
+			_prime_post_caches( $ids, false, false );
+		}
+	}
+
+	/**
+	 * Explicitly selected course IDs of a plan.
+	 *
+	 * @param Membership $membership Plan.
+	 * @return int[]
+	 */
+	private function course_ids_of( Membership $membership ) {
+		$products = $membership->get_products( 'edit' );
+		$ids      = is_array( $products ) ? array_map( 'absint', array_column( array_filter( $products, 'is_array' ), 'id' ) ) : array();
+
+		return array_values( array_unique( array_filter( $ids ) ) );
+	}
+
+	/**
+	 * Number of published courses the plan currently grants.
+	 *
+	 * @param Membership $membership Plan.
+	 * @return int
+	 */
+	private function resolved_course_count( Membership $membership ) {
+		if ( $membership->get_all_learning_content( 'edit' ) ) {
+			static $published = null;
+			if ( null === $published ) {
+				$published = (int) wp_count_posts( 'ohmylms-course' )->publish;
+			}
+			$excluded = array_map( 'absint', (array) $membership->get_excluded_courses( 'edit' ) );
+			$hidden   = $excluded ? count(
+				get_posts(
+					array(
+						'post_type'      => 'ohmylms-course',
+						'post_status'    => 'publish',
+						'post__in'       => $excluded,
+						'fields'         => 'ids',
+						'posts_per_page' => count( $excluded ),
+					)
+				)
+			) : 0;
+
+			return max( 0, $published - $hidden );
+		}
+
+		return count( $membership->get_products() );
+	}
+
+	/**
+	 * Course references (id, title, status) for IDs, in the given order, with one query.
+	 *
+	 * @param int[] $ids Course IDs.
+	 * @return array[]
+	 */
+	private function course_refs( array $ids ) {
+		if ( ! $ids ) {
+			return array();
+		}
+
+		$posts = get_posts(
+			array(
+				'post_type'      => 'ohmylms-course',
+				'post_status'    => 'any',
+				'post__in'       => $ids,
+				'orderby'        => 'post__in',
+				'posts_per_page' => count( $ids ),
+			)
+		);
+
+		return array_map( array( $this, 'course_ref' ), $posts );
+	}
+
+	/**
+	 * Apply the request to a plan after validating every field. Nothing is written until the whole
+	 * request is valid, so a rejected request leaves the plan unchanged.
+	 *
+	 * @param Membership      $membership Plan to change (new or loaded).
+	 * @param WP_REST_Request $request    Request.
+	 * @return true|WP_Error
+	 */
+	private function apply_request( Membership $membership, WP_REST_Request $request ) {
+		$decimals = (int) ohmylms_get_price_decimals();
+
+		// Name and description.
+		$name = null;
+		if ( $request->has_param( 'name' ) ) {
+			$name = trim( sanitize_text_field( (string) $request['name'] ) );
+			if ( '' === $name ) {
+				return new WP_Error( 'ohmylms_membership_invalid_name', __( 'Enter a name for the plan.', 'ohmylms' ), array( 'status' => 422 ) );
+			}
+		}
+
+		// Pricing, merged with the stored values so a partial update is validated as a whole.
+		$regular = $request->has_param( 'regular_price' ) ? $request['regular_price'] : $membership->get_regular_price( 'edit' );
+		$sale    = $request->has_param( 'sale_price' ) ? $request['sale_price'] : $membership->get_sale_price( 'edit' );
+		$from    = $request->has_param( 'sale_start_date' ) ? $request['sale_start_date'] : FreeSale::date( $membership->get_sale_price_dates_from( 'edit' ) );
+		$to      = $request->has_param( 'sale_end_date' ) ? $request['sale_end_date'] : FreeSale::date( $membership->get_sale_price_dates_to( 'edit' ) );
+		$sale    = ( null === $sale || '' === (string) $sale ) ? null : $sale;
+		$from    = ( null === $from || '' === (string) $from ) ? null : (string) $from;
+		$to      = ( null === $to || '' === (string) $to ) ? null : (string) $to;
+
+		$prices = array(
+			'regular_price' => $regular,
+			'sale_price'    => $sale,
+		);
+		if ( $request->has_param( 'sign_up_fee' ) && null !== $request['sign_up_fee'] && '' !== $request['sign_up_fee'] ) {
+			$prices['sign_up_fee'] = $request['sign_up_fee'];
+		}
+		foreach ( $prices as $field => $value ) {
+			if ( null === $value ) {
+				continue;
+			}
+			if ( ! is_numeric( $value ) || (float) $value < 0 || (float) $value > self::MAX_PRICE || strlen( (string) ( explode( '.', (string) $value )[1] ?? '' ) ) > $decimals ) {
+				return new WP_Error(
+					'ohmylms_membership_invalid_price',
+					/* translators: %d: number of decimal places. */
+					sprintf( __( 'Prices must be zero or greater with at most %d decimal places.', 'ohmylms' ), $decimals ),
+					array(
+						'status' => 422,
+						'field'  => $field,
+					)
+				);
+			}
+		}
+
+		if ( null !== $sale && (float) $sale > (float) $regular ) {
+			return new WP_Error( 'ohmylms_membership_sale_price_too_high', __( 'The sale price cannot be higher than the regular price.', 'ohmylms' ), array( 'status' => 422 ) );
+		}
+		foreach ( array( $from, $to ) as $date ) {
+			if ( null !== $date && FreeSale::date( $date ) !== $date ) {
+				return new WP_Error( 'ohmylms_membership_invalid_sale_dates', __( 'Sale dates must be real calendar dates (YYYY-MM-DD).', 'ohmylms' ), array( 'status' => 422 ) );
+			}
+		}
+		if ( null !== $from && null !== $to && $from > $to ) {
+			return new WP_Error( 'ohmylms_membership_invalid_sale_dates', __( 'The sale end date must be on or after its start date.', 'ohmylms' ), array( 'status' => 422 ) );
+		}
+		if ( null === $sale && ( null !== $from || null !== $to ) ) {
+			return new WP_Error( 'ohmylms_membership_sale_dates_without_price', __( 'Sale dates need a sale price.', 'ohmylms' ), array( 'status' => 422 ) );
+		}
+		if ( null !== $sale && 0.0 === (float) $sale && null === $to ) {
+			return new WP_Error( 'ohmylms_membership_free_needs_end', __( 'A free promotion (sale price 0) needs an end date.', 'ohmylms' ), array( 'status' => 422 ) );
+		}
+		if ( null !== $sale && (float) $sale > 0 && ( ( null === $from ) !== ( null === $to ) ) ) {
+			return new WP_Error( 'ohmylms_membership_sale_dates_incomplete', __( 'A discounted sale needs both a start and an end date, or neither.', 'ohmylms' ), array( 'status' => 422 ) );
+		}
+
+		// Courses and rules.
+		$course_ids   = $request->has_param( 'course_ids' ) ? $this->unique_ids( $request['course_ids'] ) : null;
+		$excluded_ids = $request->has_param( 'excluded_course_ids' ) ? $this->unique_ids( $request['excluded_course_ids'] ) : null;
+		$curriculum   = $request->has_param( 'curriculum_item_ids' ) ? $this->unique_ids( $request['curriculum_item_ids'] ) : null;
+
+		$missing = $this->missing_courses( array_merge( (array) $course_ids, (array) $excluded_ids ) );
+		if ( $missing ) {
+			return new WP_Error(
+				'ohmylms_membership_invalid_courses',
+				__( 'Some selected courses no longer exist.', 'ohmylms' ),
+				array(
+					'status'      => 422,
+					'invalid_ids' => $missing,
+				)
+			);
+		}
+		$overlap = array_values( array_intersect( null === $course_ids ? $this->course_ids_of( $membership ) : $course_ids, null === $excluded_ids ? array_map( 'absint', (array) $membership->get_excluded_courses( 'edit' ) ) : $excluded_ids ) );
+		if ( $overlap ) {
+			return new WP_Error(
+				'ohmylms_membership_course_conflict',
+				__( 'A course cannot be both included and excluded.', 'ohmylms' ),
+				array(
+					'status'      => 422,
+					'invalid_ids' => $overlap,
+				)
+			);
+		}
+		if ( $curriculum ) {
+			$unknown = array_values( array_diff( $curriculum, array_keys( \OhMyLMS\Curriculum\Items::parents() ) ) );
+			if ( $unknown ) {
+				return new WP_Error(
+					'ohmylms_membership_invalid_curriculum',
+					__( 'Some selected curriculum items no longer exist.', 'ohmylms' ),
+					array(
+						'status'      => 422,
+						'invalid_ids' => $unknown,
+					)
+				);
+			}
+		}
+
+		// Everything is valid: write to the object.
+		if ( null !== $name ) {
+			$membership->set_name( $name );
+		}
+		if ( $request->has_param( 'description' ) ) {
+			$membership->set_description( wp_kses_post( (string) $request['description'] ) );
+		}
+		if ( $request->has_param( 'status' ) ) {
+			$membership->set_status( (string) $request['status'] );
+		}
+		$membership->set_regular_price( number_format( (float) $regular, $decimals, '.', '' ) );
+		$membership->set_sale_price( null === $sale ? '' : number_format( (float) $sale, $decimals, '.', '' ) );
+		$membership->set_sale_price_dates_from( $from );
+		$membership->set_sale_price_dates_to( $to );
+		if ( $request->has_param( 'sign_up_fee' ) ) {
+			$fee = $request['sign_up_fee'];
+			$membership->set_sign_up_fee( ( null === $fee || '' === $fee ) ? '' : number_format( (float) $fee, $decimals, '.', '' ) );
+		}
+		if ( $request->has_param( 'billing_period' ) ) {
+			$membership->set_subscription_period( (string) $request['billing_period'] );
+		}
+		if ( $request->has_param( 'billing_interval' ) ) {
+			$membership->set_subscription_period_interval( (int) $request['billing_interval'] );
+		}
+		if ( $request->has_param( 'all_learning_content' ) ) {
+			$membership->set_all_learning_content( (bool) $request['all_learning_content'] );
+		}
+		if ( null !== $course_ids ) {
+			$membership->set_products(
+				array_map(
+					static function ( $id ) {
+						return array( 'id' => $id );
+					},
+					$course_ids
+				)
+			);
+		}
+		if ( null !== $excluded_ids ) {
+			$membership->set_excluded_courses( $excluded_ids );
+		}
+		if ( null !== $curriculum ) {
+			$membership->set_course_curriculum( $curriculum );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Save a plan.
+	 *
+	 * @param Membership $membership Plan.
+	 * @return bool Whether the plan was stored.
+	 */
+	private function save( Membership $membership ) {
+		try {
+			$membership->save();
+		} catch ( \Exception $e ) {
+			return false;
+		}
+
+		return $membership->get_id() > 0 && null !== get_post( $membership->get_id() );
+	}
+
+	/**
+	 * Tell the enrolment sync about the (possibly empty) course list, so removed courses lose this
+	 * plan's access.
+	 *
+	 * @param Membership $membership Saved plan.
+	 * @return void
+	 */
+	private function after_courses_saved( Membership $membership ) {
+		/**
+		 * Fires after a plan's courses and rules were saved through the REST API (also when empty).
+		 *
+		 * @param array $products      Courses the plan currently grants.
+		 * @param int   $membership_id Membership ID.
+		 */
+		do_action( 'ohmylms_rest_after_adding_products_on_membership', $membership->get_products(), $membership->get_id() );
+	}
+
+	/**
+	 * De-duplicate and sanitise a list of IDs.
+	 *
+	 * @param mixed $values IDs.
+	 * @return int[]
+	 */
+	private function unique_ids( $values ) {
+		return CourseSelection::ids( $values );
+	}
+
+	/**
+	 * IDs that are not course posts.
+	 *
+	 * @param int[] $ids Course IDs.
+	 * @return int[]
+	 */
+	private function missing_courses( array $ids ) {
+		$ids = array_values( array_unique( $ids ) );
+		if ( ! $ids ) {
+			return array();
+		}
+
+		$found = get_posts(
+			array(
+				'post_type'      => 'ohmylms-course',
+				'post_status'    => 'any',
+				'post__in'       => $ids,
+				'fields'         => 'ids',
+				'posts_per_page' => count( $ids ),
+			)
+		);
+
+		return array_values( array_diff( $ids, array_map( 'intval', $found ) ) );
+	}
+
+	/**
+	 * Format a stored price as a fixed-decimal string, or null when empty.
+	 *
+	 * @param mixed $value Stored price.
+	 * @return string|null
+	 */
+	private function price_string( $value ) {
+		if ( null === $value || '' === (string) $value || ! is_numeric( $value ) ) {
+			return null;
+		}
+
+		return number_format( (float) $value, (int) ohmylms_get_price_decimals(), '.', '' );
+	}
+
+	/**
+	 * Prepare a membership for the response.
+	 *
+	 * @param Membership      $item    Plan.
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	public function prepare_item_for_response( $item, $request ) {
+		$membership = $item;
+		$id         = $membership->get_id();
+		$post       = get_post( $id );
+		$edit       = $this->course_ids_of( $membership );
+		$excluded   = array_values( array_filter( array_map( 'absint', (array) $membership->get_excluded_courses( 'edit' ) ) ) );
+		$from       = FreeSale::date( $membership->get_sale_price_dates_from( 'edit' ) );
+		$to         = FreeSale::date( $membership->get_sale_price_dates_to( 'edit' ) );
+		$status     = (string) $membership->get_status( 'edit' );
+		$regular    = $this->price_string( $membership->get_regular_price( 'edit' ) );
+		$sale       = $this->price_string( $membership->get_sale_price( 'edit' ) );
+
+		if ( FreeSale::active( $membership ) ) {
+			$current = $this->price_string( 0 );
+		} elseif ( $membership->is_on_sale( 'edit' ) && $membership->validate_on_sale() ) {
+			$current = $sale;
+		} else {
+			$current = $regular;
+		}
+
+		$data = array(
+			'id'                   => $id,
+			'name'                 => html_entity_decode( (string) $membership->get_name( 'edit' ), ENT_QUOTES, 'UTF-8' ),
+			'slug'                 => (string) $membership->get_slug( 'edit' ),
+			'status'               => 'publish' === $status ? 'publish' : 'draft',
+			'description'          => (string) $membership->get_description( 'edit' ),
+			'permalink'            => (string) get_permalink( $id ),
+			'regular_price'        => null === $regular ? $this->price_string( 0 ) : $regular,
+			'sale_price'           => $sale,
+			'sale_start_date'      => $from ? $from : null,
+			'sale_end_date'        => $to ? $to : null,
+			'price'                => null === $current ? $this->price_string( 0 ) : $current,
+			'sign_up_fee'          => $this->price_string( $membership->get_sign_up_fee() ),
+			'billing_period'       => $this->billing_period( $membership ),
+			'billing_interval'     => max( 1, (int) $membership->get_subscription_period_interval() ),
+			'currency'             => (string) get_ohmylms_currency(),
+			'all_learning_content' => (bool) $membership->get_all_learning_content( 'edit' ),
+			'course_ids'           => $edit,
+			'courses'              => $this->course_refs( $edit ),
+			'excluded_course_ids'  => $excluded,
+			'excluded_courses'     => $this->course_refs( $excluded ),
+			'curriculum_item_ids'  => array_values( array_filter( array_map( 'absint', (array) $membership->get_course_curriculum( 'edit' ) ) ) ),
+			'course_count'         => $this->resolved_course_count( $membership ),
+			'member_count'         => isset( $this->member_counts[ $id ] ) ? $this->member_counts[ $id ] : (int) $membership->count_membership_members(),
+			'created_at'           => $post ? mysql_to_rfc3339( $post->post_date ) : '',
+			'updated_at'           => $post ? mysql_to_rfc3339( $post->post_modified ) : '',
+		);
+
+		$context = ! empty( $request['context'] ) ? $request['context'] : 'view';
+		$data    = $this->add_additional_fields_to_object( $data, $request );
+		$data    = $this->filter_response_by_context( $data, $context );
+
+		$response = rest_ensure_response( $data );
+		$response->add_links(
+			array(
+				'self'       => array( 'href' => rest_url( sprintf( '%s/%s/%d', $this->namespace, $this->rest_base, $id ) ) ),
+				'collection' => array( 'href' => rest_url( sprintf( '%s/%s', $this->namespace, $this->rest_base ) ) ),
+				'members'    => array( 'href' => rest_url( sprintf( '%s/%s/%d/members', $this->namespace, $this->rest_base, $id ) ) ),
+			)
+		);
+
+		/**
+		 * Filters the membership response.
+		 *
+		 * @param WP_REST_Response $response Response.
+		 * @param \WP_Post|null    $post     Membership post.
+		 * @param WP_REST_Request  $request  Request.
+		 */
+		return apply_filters( 'ohmylms_rest_prepare_membership', $response, $post, $request );
+	}
+
+	/**
+	 * Stored billing period, limited to the supported values.
+	 *
+	 * @param Membership $membership Plan.
+	 * @return string
+	 */
+	private function billing_period( Membership $membership ) {
+		$period = (string) $membership->get_subscription_period();
+
+		return in_array( $period, array( 'one_time', 'year', 'month', 'week', 'day' ), true ) ? $period : 'one_time';
+	}
+
+	/**
+	 * Get the membership schema (JSON Schema draft 4).
+	 *
+	 * @return array
+	 */
+	public function get_item_schema() {
+		if ( $this->schema ) {
+			return $this->add_additional_fields_schema( $this->schema );
+		}
+
+		$price = static function ( $description, $extra = array() ) {
+			return array_merge(
+				array(
+					'description' => $description,
+					'type'        => 'string',
+					'pattern'     => '^\d{1,8}(\.\d{1,4})?$',
+					'context'     => array( 'view', 'edit' ),
+				),
+				$extra
+			);
+		};
+		$date  = static function ( $description ) {
+			return array(
+				'description' => $description,
+				'type'        => array( 'string', 'null' ),
+				'pattern'     => '^\d{4}-\d{2}-\d{2}$',
+				'context'     => array( 'view', 'edit' ),
+			);
+		};
+		$ids   = static function ( $description, $max ) {
+			return array(
+				'description' => $description,
+				'type'        => 'array',
+				'items'       => array(
+					'type'    => 'integer',
+					'minimum' => 1,
+				),
+				'maxItems'    => $max,
+				'uniqueItems' => true,
+				'default'     => array(),
+				'context'     => array( 'edit' ),
+			);
+		};
+		$refs  = static function ( $description ) {
+			return array(
+				'description' => $description,
+				'type'        => 'array',
+				'context'     => array( 'edit' ),
+				'readonly'    => true,
+				'items'       => array(
+					'type'       => 'object',
+					'properties' => array(
+						'id'     => array( 'type' => 'integer' ),
+						'title'  => array( 'type' => 'string' ),
+						'status' => array( 'type' => 'string' ),
+					),
+				),
+			);
+		};
+
+		$this->schema = array(
+			'$schema'    => 'http://json-schema.org/draft-04/schema#',
+			'title'      => 'membership',
+			'type'       => 'object',
+			'properties' => array(
+				'id'                   => array(
+					'description' => __( 'Unique identifier for the plan.', 'ohmylms' ),
+					'type'        => 'integer',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
+				'name'                 => array(
+					'description' => __( 'Plan name.', 'ohmylms' ),
+					'type'        => 'string',
+					'minLength'   => 1,
+					'maxLength'   => 200,
+					'context'     => array( 'view', 'edit' ),
+					'required'    => true,
+				),
+				'slug'                 => array(
+					'description' => __( 'Plan slug. Never changes when the name changes.', 'ohmylms' ),
+					'type'        => 'string',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
+				'status'               => array(
+					'description' => __( 'Draft plans are not sold; published plans are.', 'ohmylms' ),
+					'type'        => 'string',
+					'enum'        => array( 'draft', 'publish' ),
+					'default'     => 'draft',
+					'context'     => array( 'view', 'edit' ),
+				),
+				'description'          => array(
+					'description' => __( 'Plan description (post-safe HTML).', 'ohmylms' ),
+					'type'        => 'string',
+					'maxLength'   => 50000,
+					'default'     => '',
+					'context'     => array( 'edit' ),
+				),
+				'permalink'            => array(
+					'description' => __( 'Public plan URL.', 'ohmylms' ),
+					'type'        => 'string',
+					'format'      => 'uri',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
+				'regular_price'        => $price(
+					__( 'Regular price as a decimal string, 0 or greater, at most 99999999.99.', 'ohmylms' ),
+					array( 'default' => '0' )
+				),
+				'sale_price'           => $price(
+					__( 'Sale price (at most the regular price), or null for none. 0 is a free promotion that needs an end date.', 'ohmylms' ),
+					array( 'type' => array( 'string', 'null' ) )
+				),
+				'sale_start_date'      => $date( __( 'First day of the sale (site timezone), or null.', 'ohmylms' ) ),
+				'sale_end_date'        => $date( __( 'Last day of the sale (site timezone), or null.', 'ohmylms' ) ),
+				'price'                => array(
+					'description' => __( 'The price that applies today.', 'ohmylms' ),
+					'type'        => 'string',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
+				'sign_up_fee'          => $price(
+					__( 'One-off sign-up fee, or null for none.', 'ohmylms' ),
+					array( 'type' => array( 'string', 'null' ) )
+				),
+				'billing_period'       => array(
+					'description' => __( 'How often the price is charged.', 'ohmylms' ),
+					'type'        => 'string',
+					'enum'        => array( 'one_time', 'year', 'month', 'week', 'day' ),
+					'default'     => 'one_time',
+					'context'     => array( 'view', 'edit' ),
+				),
+				'billing_interval'     => array(
+					'description' => __( 'Number of billing periods between charges.', 'ohmylms' ),
+					'type'        => 'integer',
+					'minimum'     => 1,
+					'maximum'     => 365,
+					'default'     => 1,
+					'context'     => array( 'view', 'edit' ),
+				),
+				'currency'             => array(
+					'description' => __( 'Site currency code (a site setting, not stored on the plan).', 'ohmylms' ),
+					'type'        => 'string',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
+				'all_learning_content' => array(
+					'description' => __( 'Include every published course, now and in the future.', 'ohmylms' ),
+					'type'        => 'boolean',
+					'default'     => false,
+					'context'     => array( 'view', 'edit' ),
+				),
+				'course_ids'           => $ids( __( 'Individually included courses (replaced as a whole).', 'ohmylms' ), self::MAX_COURSES ),
+				'courses'              => $refs( __( 'Included courses with titles.', 'ohmylms' ) ),
+				'excluded_course_ids'  => $ids( __( 'Courses never included, even by the other rules.', 'ohmylms' ), self::MAX_COURSES ),
+				'excluded_courses'     => $refs( __( 'Excluded courses with titles.', 'ohmylms' ) ),
+				'curriculum_item_ids'  => $ids( __( 'Curriculum items; everything beneath them is included.', 'ohmylms' ), self::MAX_CURRICULUM_ITEMS ),
+				'course_count'         => array(
+					'description' => __( 'Published courses the plan grants today.', 'ohmylms' ),
+					'type'        => 'integer',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
+				'member_count'         => array(
+					'description' => __( 'Enrolled members.', 'ohmylms' ),
+					'type'        => 'integer',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
+				'created_at'           => array(
+					'description' => __( 'Creation time, in the site timezone.', 'ohmylms' ),
+					'type'        => 'string',
+					'format'      => 'date-time',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
+				'updated_at'           => array(
+					'description' => __( 'Last modification time, in the site timezone.', 'ohmylms' ),
+					'type'        => 'string',
+					'format'      => 'date-time',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
 			),
 		);
 
-		return $links;
+		return $this->add_additional_fields_schema( $this->schema );
 	}
 
-
 	/**
-	 * Prepare a single membership for create or update.
+	 * Arguments for the update route: every writable field, optional, without defaults (schema
+	 * defaults would otherwise reset fields in a partial update).
 	 *
-	 * @param mixed $request REST request.
-	 * @return bool|Membership|object|WP_Error
-	 * @throws \Exception When the operation cannot be completed.
-	 * @since 1.0.0
+	 * @return array
 	 */
-	protected function prepare_item_for_database( $request ) {
-		$id = isset( $request['id'] ) ? absint( $request['id'] ) : 0;
-
-		if ( isset( $request['id'] ) ) {
-			$membership = ohmylms_get_membership( $id );
-		} else {
-			$membership = new Membership();
+	private function get_update_args() {
+		$args = $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE );
+		foreach ( $args as $name => $arg ) {
+			unset( $args[ $name ]['default'], $args[ $name ]['required'] );
 		}
 
-		if ( isset( $request['name'] ) ) {
-			$membership->set_name( wp_filter_post_kses( $request['name'] ) );
-		}
-
-		if ( isset( $request['description'] ) ) {
-			$membership->set_description( wp_filter_post_kses( $request['description'] ) );
-		}
-
-		if ( isset( $request['status'] ) ) {
-			$membership->set_status( get_post_status_object( $request['status'] ) ? $request['status'] : 'draft' );
-		}
-		return $membership;
+		return $args;
 	}
 
+	/**
+	 * Get collection parameters.
+	 *
+	 * @return array
+	 */
+	public function get_collection_params() {
+		$params = array_intersect_key( parent::get_collection_params(), array_flip( array( 'context', 'page', 'per_page', 'search' ) ) );
+
+		$params['per_page']['default']   = 20;
+		$params['per_page']['maximum']   = 100;
+		$params['search']['description'] = __( 'Limit results to plans whose name or description matches the string.', 'ohmylms' );
+
+		$params['status']  = array(
+			'description' => __( 'Limit result set to plans with a status.', 'ohmylms' ),
+			'type'        => 'string',
+			'default'     => 'all',
+			'enum'        => array( 'all', 'publish', 'draft' ),
+		);
+		$params['include'] = array(
+			'description' => __( 'Limit result set to specific plan IDs.', 'ohmylms' ),
+			'type'        => 'array',
+			'items'       => array( 'type' => 'integer' ),
+			'maxItems'    => 100,
+			'default'     => array(),
+		);
+		$params['orderby'] = array(
+			'description' => __( 'Sort collection by attribute.', 'ohmylms' ),
+			'type'        => 'string',
+			'default'     => 'created_at',
+			'enum'        => array( 'id', 'name', 'status', 'created_at', 'updated_at' ),
+		);
+		$params['order']   = array(
+			'description' => __( 'Order sort attribute ascending or descending.', 'ohmylms' ),
+			'type'        => 'string',
+			'default'     => 'desc',
+			'enum'        => array( 'asc', 'desc' ),
+		);
+
+		return $params;
+	}
 
 	/**
-	 * Prepare a single membership for response.
+	 * Collection parameters for the course search.
 	 *
-	 * @param \WP_Post         $post The post object.
-	 * @param \WP_REST_Request $request REST request.
-	 * @return WP_REST_Response
-	 *
-	 * @since 1.0.0
+	 * @return array
 	 */
-	public function prepare_item_for_response( $post, $request ) {
+	private function get_course_collection_params() {
+		$params = array_intersect_key( parent::get_collection_params(), array_flip( array( 'context', 'page', 'per_page', 'search' ) ) );
 
-		$membership = ohmylms_get_membership( $post );
-		$data       = $this->get_membership_data( $membership );
-		$response   = rest_ensure_response( $data );
-		$response->add_links( $this->prepare_links( $membership, $request ) );
+		$params['per_page']['default']   = 10;
+		$params['per_page']['maximum']   = 50;
+		$params['search']['description'] = __( 'Limit results to courses whose title or content matches the string.', 'ohmylms' );
+		$params['include']               = array(
+			'description' => __( 'Limit result set to specific course IDs.', 'ohmylms' ),
+			'type'        => 'array',
+			'items'       => array( 'type' => 'integer' ),
+			'maxItems'    => 50,
+			'default'     => array(),
+		);
 
-		/**
-		 * Filters the response for the membership in the REST API.
-		 *
-		 * This filter allows developers to modify the membership response data before it is returned by the REST API.
-		 *
-		 * @param array $response The response data for the membership.
-		 * @param \WP_Post $post The WP_Post object representing the membership.
-		 * @param \WP_REST_Request $request The request object containing information about the API request.
-		 *
-		 * @since 1.0.0
-		 */
-		return apply_filters( 'ohmylms_rest_prepare_membership', $response, $post, $request );
+		return $params;
+	}
+
+	/**
+	 * Collection parameters for the members route.
+	 *
+	 * @return array
+	 */
+	private function get_members_collection_params() {
+		$params = array_intersect_key( parent::get_collection_params(), array_flip( array( 'context', 'page', 'per_page' ) ) );
+
+		$params['per_page']['default'] = 20;
+		$params['per_page']['maximum'] = 100;
+		$params['status']              = array(
+			'description' => __( 'Limit result set to members with a status.', 'ohmylms' ),
+			'type'        => 'string',
+			'default'     => 'all',
+			'enum'        => array( 'all', 'enrolled', 'pending', 'cancelled', 'expired' ),
+		);
+
+		return $params;
 	}
 }

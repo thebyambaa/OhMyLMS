@@ -1,9 +1,13 @@
 import { hasCapability } from '../bootstrap/config';
 import { certificateEditor, certificates } from './certificates';
+import { coupons, orderDetail, orders } from './commerce';
 import { contentHub } from './content-hub';
+import { courseReport, dashboard, earnings } from './dashboard';
 import { emails } from './emails';
 import { home } from './home';
 import { integrations } from './integrations';
+import { membershipEditor, memberships } from './memberships';
+import { settings } from './settings';
 import { students } from './students';
 import { taxonomies } from './taxonomies';
 import { webhooks } from './webhooks';
@@ -14,13 +18,22 @@ import type { FeatureDefinition } from './types';
  * nothing is discovered automatically.
  */
 export const features: readonly FeatureDefinition[] = [
+	dashboard,
+	earnings,
+	courseReport,
 	home,
 	contentHub,
+	orders,
+	orderDetail,
+	coupons,
+	memberships,
+	membershipEditor,
 	students,
 	certificates,
 	certificateEditor,
 	emails,
 	integrations,
+	settings,
 	taxonomies,
 	webhooks,
 ];

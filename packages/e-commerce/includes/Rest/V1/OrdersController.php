@@ -1,103 +1,91 @@
 <?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
+/**
+ * Orders REST controller.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Commerce\Rest\V1;
 
 use OhMyLMS\Commerce\Abstracts\RestController;
-use OhMyLMS\Commerce\Data\Order;
-use OhMyLMS\Commerce\Data\OrderRefund;
-use function OhMyLMS\Commerce\ecommerce;
+use WP_Error;
+use WP_Post;
+use WP_Query;
+use WP_REST_Request;
+use WP_REST_Response;
+use WP_REST_Server;
 
 /**
- * Plugin orders controller implementation.
+ * Orders under `ohmylms-commerce/v1/orders`. See docs/api/commerce.md for the contract.
+ *
+ * Orders are created by checkout only; this API lists, reads, changes the status of, annotates and
+ * trashes them. Lists carry no email or address. Money is a decimal string in the order currency.
+ *
+ * @since 1.0.0
  */
 class OrdersController extends RestController {
 
 	/**
-	 * Base.
-	 *
-	 * @var mixed
+	 * Post type of orders.
 	 */
-	protected $base = 'orders';
+	const POST_TYPE = 'ohmylms-order';
 
 	/**
-	 * Check order permission for Orders controller.
+	 * Order statuses (without the `ohmylms-` post status prefix).
 	 */
-	public function check_order_permission() {
-		return current_user_can( 'edit_posts' );
-	}
+	const STATUSES = array( 'pending', 'processing', 'on-hold', 'completed', 'cancelled', 'failed', 'refunded' );
 
 	/**
-	 * Register the routes for handling orders.
+	 * Statuses an administrator may set by hand. `refunded` is reached only through a refund.
+	 */
+	const SETTABLE_STATUSES = array( 'pending', 'processing', 'on-hold', 'completed', 'cancelled', 'failed' );
+
+	/**
+	 * Allowed manual status changes: from => to[].
+	 */
+	const TRANSITIONS = array(
+		'pending'    => array( 'processing', 'on-hold', 'completed', 'cancelled', 'failed' ),
+		'processing' => array( 'on-hold', 'completed', 'cancelled', 'failed' ),
+		'on-hold'    => array( 'pending', 'processing', 'completed', 'cancelled', 'failed' ),
+		'failed'     => array( 'pending', 'processing', 'cancelled' ),
+		'completed'  => array( 'cancelled' ),
+		'cancelled'  => array( 'pending' ),
+		'refunded'   => array(),
+	);
+
+	/**
+	 * Maximum characters of an order note.
+	 */
+	const NOTE_MAX_LENGTH = 2000;
+
+	/**
+	 * Route base.
 	 *
-	 * @since 1.0.0
+	 * @var string
+	 */
+	protected $rest_base = 'orders';
+
+	/**
+	 * Register the routes.
 	 */
 	public function register_routes() {
+		$id_args = array(
+			'id' => array(
+				'description' => __( 'Unique identifier for the order.', 'ohmylms' ),
+				'type'        => 'integer',
+				'minimum'     => 1,
+			),
+		);
+
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->base . '/',
+			'/' . $this->rest_base,
 			array(
 				array(
-					'methods'             => \WP_REST_Server::READABLE,
+					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_items' ),
-					'permission_callback' => array( $this, 'check_order_permission' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
 					'args'                => $this->get_collection_params(),
-				),
-				array(
-					'methods'             => \WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'create_item' ),
-					'permission_callback' => array( $this, 'check_order_permission' ),
-					'args'                => $this->get_endpoint_args_for_item_schema( \WP_REST_Server::CREATABLE ),
-				),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/trash-bulk/',
-			array(
-				array(
-					'methods'             => \WP_REST_Server::DELETABLE,
-					'callback'            => array( $this, 'trash_bulk' ),
-					'permission_callback' => array( $this, 'check_order_permission' ),
-				),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/(?P<id>[\d]+)',
-			array(
-				'args'   => array(
-					'id' => array(
-						'description' => __( 'Unique identifier for the resource.', 'ohmylms' ),
-						'type'        => 'integer',
-					),
-				),
-				array(
-					'methods'             => \WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_item' ),
-					'permission_callback' => array( $this, 'check_order_permission' ),
-					'args'                => array(
-						'context' => $this->get_context_param( array( 'default' => 'view' ) ),
-					),
-				),
-				array(
-					'methods'             => \WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'update_item' ),
-					'permission_callback' => array( $this, 'check_order_permission' ),
-					'args'                => $this->get_endpoint_args_for_item_schema( \WP_REST_Server::EDITABLE ),
-				),
-				array(
-					'methods'             => \WP_REST_Server::DELETABLE,
-					'callback'            => array( $this, 'delete_item' ),
-					'permission_callback' => array( $this, 'check_order_permission' ),
-					'args'                => array(
-						'force' => array(
-							'default'     => false,
-							'type'        => 'boolean',
-							'description' => __( 'Whether to bypass trash and force deletion.', 'ohmylms' ),
-						),
-					),
 				),
 				'schema' => array( $this, 'get_public_item_schema' ),
 			)
@@ -105,825 +93,885 @@ class OrdersController extends RestController {
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->base . '/(?P<id>[\d]+)' . '/notes',
+			'/' . $this->rest_base . '/status-counts',
 			array(
-				'args' => array(
-					'id' => array(
-						'description' => __( 'Unique identifier for the resource.', 'ohmylms' ),
-						'type'        => 'integer',
-					),
-				),
 				array(
-					'methods'             => \WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'create_note' ),
-					'permission_callback' => array( $this, 'check_order_permission' ),
-					'args'                => $this->get_endpoint_args_for_item_schema( \WP_REST_Server::EDITABLE ),
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_status_counts' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
 				),
 			)
 		);
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->base . '/stats/',
+			'/' . $this->rest_base . '/(?P<id>[\d]+)',
 			array(
+				'args'   => $id_args,
 				array(
-					'methods'             => \WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_order_stats' ),
-					'permission_callback' => array( $this, 'check_order_permission' ),
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_item' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'args'                => array(
+						'context' => $this->get_context_param( array( 'default' => 'view' ) ),
+					),
+				),
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'update_item' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'status' => array(
+							'description' => __( 'The new order status.', 'ohmylms' ),
+							'type'        => 'string',
+							'enum'        => self::SETTABLE_STATUSES,
+							'required'    => true,
+						),
+					),
+				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'delete_item' ),
+					'permission_callback' => array( $this, 'delete_item_permissions_check' ),
+				),
+				'schema' => array( $this, 'get_public_item_schema' ),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/notes',
+			array(
+				'args' => $id_args,
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_notes' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'create_note' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'note' => array(
+							'description' => __( 'Plain text note. Markup is removed.', 'ohmylms' ),
+							'type'        => 'string',
+							'required'    => true,
+							'minLength'   => 1,
+							'maxLength'   => self::NOTE_MAX_LENGTH,
+						),
+					),
 				),
 			)
 		);
 	}
 
 	/**
-	 * Retrieve a collection of orders.
+	 * Permission: list or read orders.
 	 *
-	 * @param \WP_REST_Request $request The REST request object.
-	 * @return \WP_REST_Response The response object containing the list of orders.
-	 *
-	 * @since 1.0.0
+	 * @param WP_REST_Request $request Request.
+	 * @return true|WP_Error
 	 */
-	public function get_items( $request ) {
-		$args = array(
-			'offset'              => isset( $request['offset'] ) ? intval( $request['offset'] ) : 0,
-			'order'               => isset( $request['order'] ) ? sanitize_text_field( $request['order'] ) : 'DESC',
-			'orderby'             => isset( $request['orderby'] ) ? sanitize_text_field( $request['orderby'] ) : 'date',
-			'paged'               => isset( $request['page'] ) ? intval( $request['page'] ) : 1,
-			'post__in'            => isset( $request['include'] ) ? array_map( 'intval', (array) $request['include'] ) : array(),
-			'post__not_in'        => isset( $request['exclude'] ) ? array_map( 'intval', (array) $request['exclude'] ) : array(),
-			'posts_per_page'      => isset( $request['per_page'] ) ? intval( $request['per_page'] ) : 10,
-			'name'                => isset( $request['slug'] ) ? sanitize_text_field( $request['slug'] ) : '',
-			'post_parent__in'     => isset( $request['parent'] ) ? array_map( 'intval', (array) $request['parent'] ) : array(),
-			'post_parent__not_in' => isset( $request['parent_exclude'] ) ? array_map( 'intval', (array) $request['parent_exclude'] ) : array(),
-			'post_type'           => 'ohmylms-order',
-			'post_status'         => isset( $request['post_status'] ) ? sanitize_text_field( $request['post_status'] ) : 'any',
-			'meta_query'          => isset( $request['meta_key'] ) && isset( $request['meta_value'] ) ? array(
-				array(
-					'key'     => sanitize_text_field( $request['meta_key'] ),
-					'value'   => sanitize_text_field( $request['meta_value'] ),
-					'compare' => 'LIKE',
-				),
-			) : array(),
-		);
-
-		$args['date_query'] = array();
-		// if (isset($request['before'])) {
-		// $args['date_query'][0]['before'] = sanitize_text_field($request['before']);
-		// }
-		// if (!empty($request['start_date'])) {
-		// $args['date_query'][0] = array(
-		// 'year'  => date('Y', strtotime(sanitize_text_field($request['start_date']))),
-		// 'month' => date('m', strtotime(sanitize_text_field($request['start_date']))),
-		// 'day'   => date('d', strtotime(sanitize_text_field($request['start_date']))),
-		// );
-		// $args['paged']  = 1;
-		// $args['offset'] = 0;.
-
-		// }
-		// if (isset($request['after'])) {
-		// $args['date_query'][0]['after'] = sanitize_text_field($request['after']);
-		// }
-
-		// Check if 's' is provided, and if so, add the meta_query.
-		if ( ! empty( $request['search'] ) ) {
-			$search_value = sanitize_text_field( $request['search'] );
-			if ( is_numeric( $search_value ) ) {
-				$args['post__in'] = array( intval( $search_value ) );
-			} else {
-				// Otherwise, add it to the meta_query for searching by first name, last name, or email.
-				$args['meta_query'][] = array(
-					'relation' => 'OR',
-					array(
-						'key'     => '_first_name',
-						'value'   => $search_value,
-						'compare' => 'LIKE',
-					),
-					array(
-						'key'     => '_last_name',
-						'value'   => $search_value,
-						'compare' => 'LIKE',
-					),
-					array(
-						'key'     => '_email',
-						'value'   => $search_value,
-						'compare' => 'LIKE',
-					),
-				);
-			}
-			$args['paged']  = 1;
-			$args['offset'] = 0;
-		}
-
-		if ( isset( $request['filter'] ) && is_array( $request['filter'] ) ) {
-			$args = array_merge( $args, $request['filter'] );
-			unset( $args['filter'] );
-		}
-
-		if ( ! empty( $request['date_filter'] ) ) {
-			$filter = sanitize_text_field( $request['date_filter'] );
-			$today  = current_time( 'Y-m-d' );
-
-			switch ( $filter ) {
-				case 'last_30_days':
-					$args['date_query'][] = array(
-						'after'     => date( 'Y-m-d', strtotime( '-30 days' ) ),
-						'before'    => $today,
-						'inclusive' => true,
-					);
-					break;
-
-				case 'current_month':
-					$args['date_query'][] = array(
-						'after'     => date( 'Y-m-01' ),
-						'before'    => $today,
-						'inclusive' => true,
-					);
-					break;
-
-				case 'previous_month':
-					$args['date_query'][] = array(
-						'after'     => date( 'Y-m-01', strtotime( 'first day of last month' ) ),
-						'before'    => date( 'Y-m-t', strtotime( 'last month' ) ),
-						'inclusive' => true,
-					);
-					break;
-
-				case 'current_year':
-					$args['date_query'][] = array(
-						'after'     => date( 'Y-01-01' ),
-						'before'    => $today,
-						'inclusive' => true,
-					);
-					break;
-
-				case 'last_12_months':
-					$args['date_query'][] = array(
-						'after'     => date( 'Y-m-d', strtotime( '-12 months' ) ),
-						'before'    => $today,
-						'inclusive' => true,
-					);
-					break;
-
-				case 'custom':
-					$start_date           = isset( $request['start_date'] ) ? sanitize_text_field( $request['start_date'] ) : '';
-					$end_date             = isset( $request['end_date'] ) ? sanitize_text_field( $request['end_date'] ) : '';
-					$args['date_query'][] = array(
-						'after'     => $start_date,
-						'before'    => $end_date,
-						'inclusive' => true,
-					);
-					break;
-			}
-		}
-
-		if ( ! empty( $request['payment_method'] ) ) {
-			$args['meta_query'][] = array(
-				'key'     => '_payment_method', // Adjust key if different.
-				'value'   => sanitize_text_field( $request['payment_method'] ),
-				'compare' => '=',
-			);
-		}
-
-		$query_args = $this->prepare_items_query( $args, $request );
-
-		$posts_query  = new \WP_Query();
-		$query_result = $posts_query->query( $query_args );
-		$posts        = array();
-
-		foreach ( $query_result as $post ) {
-			$data    = $this->prepare_item_for_response( $post, $request );
-			$posts[] = $this->prepare_response_for_collection( $data );
-		}
-
-		$status_count = $this->get_post_status_counts();
-
-		$page        = (int) $query_args['paged'];
-		$total_posts = $posts_query->found_posts;
-
-		if ( $total_posts < 1 && $page > 1 ) {
-			unset( $query_args['paged'] );
-			$count_query = new \WP_Query();
-			$count_query->query( $query_args );
-			$total_posts = $count_query->found_posts;
-		}
-		$max_pages = ceil( $total_posts / (int) $query_args['posts_per_page'] );
-
-		if ( isset( $request['orderby'] ) && in_array( $request['orderby'], array( 'id', 'total', 'student_name' ) ) ) {
-			$orderby = $request['orderby'];
-			$order   = strtoupper( $request['order'] ?? 'ASC' ); // default to ASC if not provided.
-
-			usort(
-				$posts,
-				function ( $a, $b ) use ( $orderby, $order ) {
-					$a_val = $a[ $orderby ];
-					$b_val = $b[ $orderby ];
-
-					// For strings like student_name, use strcasecmp to sort case-insensitively.
-					if ( is_string( $a_val ) ) {
-						$result = strcasecmp( $a_val, $b_val );
-					} else {
-						$result = $a_val <=> $b_val;
-					}
-
-					return 'DESC' === $order ? -$result : $result;
-				}
-			);
-		}
-
-		$response = rest_ensure_response(
-			array(
-				'orders'        => $posts,
-				'status_counts' => $status_count,
-				'currency'      => array(
-					'currency'     => html_entity_decode( get_ohmylms_currency_symbol( get_ohmylms_currency() ) ),
-					'currency_pos' => get_ohmylms_currency_position(),
-				),
-			)
-		);
-
-		$response->header( 'X-WP-Total', (int) $total_posts );
-		$response->header( 'X-WP-TotalPages', (int) $max_pages );
-		$response->header( 'X-WP-Page', (int) $page );
-
-		$request_params = $request->get_query_params();
-		if ( ! empty( $request_params['filter'] ) ) {
-			unset( $request_params['filter']['posts_per_page'] );
-			unset( $request_params['filter']['paged'] );
-		}
-		return $response;
+	public function get_items_permissions_check( $request ) {
+		return $this->authorize( 'ohmylms_order_cannot_view', __( 'Sorry, you are not allowed to view orders.', 'ohmylms' ) );
 	}
 
 	/**
-	 * Retrieve a single order.
+	 * Permission: read one order.
 	 *
-	 * @param \WP_REST_Request $request The REST request object.
-	 * @return \WP_REST_Response|\WP_Error The response object containing the order data or an error object.
-	 *
-	 * @since 1.0.0
+	 * @param WP_REST_Request $request Request.
+	 * @return true|WP_Error
 	 */
-	public function get_item( $request ) {
-
-		$id   = (int) $request['id'];
-		$post = get_post( $id );
-		if ( ! empty( $post->post_type ) && 'ohmylms-order' !== $post->post_type ) {
-			return new \WP_Error( 'ohmylms_rest_invalid_ohmylms-order_id', __( 'To manipulate order you should use the /orders/&lt;order_id&gt; endpoint.', 'ohmylms' ), array( 'status' => 404 ) );
-		} elseif ( empty( $id ) || empty( $post->ID ) ) {
-			return new \WP_Error( 'ohmylms_rest_invalid_ohmylms-order_id', __( 'Invalid ID.', 'ohmylms' ), array( 'status' => 404 ) );
-		}
-
-		$response_data = $this->prepare_item_for_response( $post, $request );
-		$data          = $response_data->get_data();
-		$order         = ohmylms_ecommerce_get_order( $post );
-		// get the line items.
-		foreach ( $order->get_items() as $item_id => $item ) {
-			$item_meta            = array(
-				'key'      => 'course_id',
-				'name'     => $item->get_name(),
-				'price'    => ohmylms_format_decimal( $item->get_total(), ohmylms_get_price_decimals() ),
-				'quantity' => 1,
-			);
-			$data['line_items'][] = $item_meta;
-		}
-
-		// get the coupon line items.
-		foreach ( $order->get_items( 'coupon' ) as $item_id => $item ) {
-			$coupon_line          = array(
-				'title'    => $item->get_name(),
-				'code'     => $item->get_code(),
-				'discount' => ohmylms_format_decimal( $item->get_discount(), ohmylms_get_price_decimals() ),
-			);
-			$data['coupon_lines'] = $coupon_line;
-		}
-
-		foreach ( $order->get_refunds() as $refund ) {
-			$refund_id         = $refund->ID;
-			$data['refunds'][] = array(
-				'id'     => $refund_id,
-				'refund' => get_post_meta( $refund_id, '_refund_reason', true ),
-				'total'  => '-' . ohmylms_format_decimal( get_post_meta( $refund_id, '_refund_amount', true ), ohmylms_get_price_decimals() ),
-			);
-		}
-
-		$data['currency'] = array(
-			'currency'     => html_entity_decode( get_ohmylms_currency_symbol( get_ohmylms_currency() ) ),
-			'currency_pos' => get_ohmylms_currency_position(),
-		);
-
-		// Save tracking meta data to check this order is already opened or not.
-		update_post_meta( $order->get_id(), '_is_open', 'yes' );
-		$response_data->set_data( $data );
-
-		$response = rest_ensure_response( $data );
-		return $response;
+	public function get_item_permissions_check( $request ) {
+		return $this->authorize( 'ohmylms_order_cannot_view', __( 'Sorry, you are not allowed to view orders.', 'ohmylms' ) );
 	}
 
 	/**
-	 * Get refund for Orders controller.
+	 * Permission: change an order.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return true|WP_Error
 	 */
-	public function get_refund() {
+	public function update_item_permissions_check( $request ) {
+		return $this->authorize( 'ohmylms_order_cannot_edit', __( 'Sorry, you are not allowed to edit orders.', 'ohmylms' ) );
 	}
 
 	/**
-	 * Update an existing order.
+	 * Permission: trash an order.
 	 *
-	 * @param \WP_REST_Request $request The REST request object.
-	 * @return \WP_REST_Response|\WP_Error The response object containing the updated order data or an error object.
-	 *
-	 * @since 1.0.0
+	 * @param WP_REST_Request $request Request.
+	 * @return true|WP_Error
 	 */
-	public function update_item( $request ) {
-		try {
-			$post_id = (int) $request['id'];
-
-			if ( empty( $post_id ) ) {
-				return new \WP_Error( 'ohmylms_rest_ohmylms-order_invalid_id', __( 'ID is invalid.', 'ohmylms' ), array( 'status' => 400 ) );
-			}
-			$previous_order      = ohmylms_ecommerce_get_order( $post_id );
-			$get_previous_status = $previous_order->get_status();
-			$order_id            = $this->update_order( $request );
-			$current_order       = ohmylms_ecommerce_get_order( $order_id );
-
-			if ( is_wp_error( $order_id ) ) {
-				return $order_id;
-			}
-
-			$post = get_post( $order_id );
-			$this->update_additional_fields_for_object( $post, $request );
-			$response           = $this->prepare_item_for_response( $post, $request );
-			$get_current_status = $current_order->get_status();
-
-			if ( $get_previous_status !== $get_current_status ) {
-				$note = sprintf(
-					/* translators: 1: old status 2: new status */
-					__( 'Order status changed from %1$s to %2$s.', 'ohmylms' ),
-					$get_previous_status,
-					$get_current_status
-				);
-				$current_order->add_order_note( $note );
-			}
-
-			if ( 'completed' !== $get_previous_status && 'completed' === $get_current_status ) {
-				do_action( 'ohmylms_update_order_status_to_completed', $current_order );
-			}
-			if ( 'cancelled' !== $get_previous_status && 'cancelled' === $get_current_status ) {
-				do_action( 'ohmylms_update_order_status_to_cancelled', $current_order );
-				$student_data_instance = new \OhMyLMS\DataStores\StudentStore();
-				$student_data_instance->delete_enrollment( $current_order->get_student_id(), $current_order->get_id() );
-			}
-
-			return rest_ensure_response( $response );
-		} catch ( \Exception $e ) {
-			return new \WP_Error( $e->getErrorCode(), $e->getMessage(), array( 'status' => $e->getCode() ) );
-		}
+	public function delete_item_permissions_check( $request ) {
+		return $this->authorize( 'ohmylms_order_cannot_delete', __( 'Sorry, you are not allowed to delete orders.', 'ohmylms' ) );
 	}
 
 	/**
-	 * Delete an existing order.
+	 * Manual status changes allowed from a status.
 	 *
-	 * @param \WP_REST_Request $request The REST request object.
-	 * @return \WP_REST_Response The response object indicating success or failure.
-	 *
-	 * @since 1.0.0
+	 * @param string $from Current status.
+	 * @return string[]
 	 */
-	public function delete_item( $request ) {
-		$order_id = $request->get_param( 'id' );
-
-		if ( get_post_type( $order_id ) !== 'ohmylms-order' ) {
-			return new \WP_REST_Response( array( 'message' => 'Invalid order ID.' ), 400 );
-		}
-		do_action( 'ohmylms_rest_before_delete_order', $order_id );
-		if ( wp_trash_post( $order_id ) ) {
-			do_action( 'ohmylms_rest_delete_order', $order_id );
-			return new \WP_REST_Response( array( 'message' => 'Order trashed successfully.' ), 200 );
-		}
-
-		return new \WP_REST_Response( array( 'message' => 'Failed to trash the order.' ), 500 );
-	}
-
-
-	/**
-	 * Delete bulk orders.
-	 *
-	 * @param \WP_REST_Request $request The REST request object.
-	 * @return \WP_REST_Response The response object indicating success or failure.
-	 *
-	 * @since 1.0.0
-	 */
-	public function trash_bulk( $request ) {
-		$order_ids = $request->get_param( 'order_ids' );
-		if ( is_array( $order_ids ) ) {
-			foreach ( $order_ids as $order_id ) {
-				if ( get_post_type( $order_id ) !== 'ohmylms-order' ) {
-					return new \WP_REST_Response( array( 'message' => 'Invalid order ID.' ), 400 );
-				}
-				do_action( 'ohmylms_rest_before_delete_order', $order_id );
-				wp_trash_post( $order_id );
-				do_action( 'ohmylms_rest_delete_order', $order_id );
-			}
-			return new \WP_REST_Response( array( 'message' => 'Order trashed successfully.' ), 200 );
-		}
-		return new \WP_REST_Response( array( 'message' => 'Failed to trash the order.' ), 500 );
-	}
-
-
-	/**
-	 * Update an existing order in the database.
-	 *
-	 * @param \WP_REST_Request $request The REST request object.
-	 * @return int|\WP_Error The ID of the updated order or a WP_Error object on failure.
-	 *
-	 * @since 1.0.0
-	 */
-	protected function update_order( $request ) {
-		try {
-			$order = $this->prepare_item_for_database( $request );
-			$order->save();
-			if ( $order->needs_payment() && true === $request['set_paid'] ) {
-				$order->payment_complete( $request['transaction_id'] );
-			}
-			return $order->get_id();
-		} catch ( \Exception $e ) {
-			return new \WP_Error( $e->getErrorCode(), $e->getMessage(), $e->getErrorData() );
-		}
+	public static function allowed_transitions( $from ) {
+		$map = apply_filters( 'ohmylms_order_allowed_status_transitions', self::TRANSITIONS );
+		return isset( $map[ $from ] ) ? array_values( array_intersect( (array) $map[ $from ], self::SETTABLE_STATUSES ) ) : array();
 	}
 
 	/**
-	 * Get the count of posts by status.
+	 * Load an order post.
 	 *
-	 * This method retrieves the count of posts grouped by their status for the 'ohmylms-order' post type.
-	 *
-	 * @return array The array containing the count of posts for each status.
-	 *
-	 * @since 1.0.0
+	 * @param int $id Order ID.
+	 * @return WP_Post|WP_Error
 	 */
-	private function get_post_status_counts() {
+	private function get_post( $id ) {
+		$post = $id ? get_post( (int) $id ) : null;
+		if ( ! $post instanceof WP_Post || self::POST_TYPE !== $post->post_type || 'trash' === $post->post_status ) {
+			return new WP_Error( 'ohmylms_order_not_found', __( 'Order not found.', 'ohmylms' ), array( 'status' => 404 ) );
+		}
+		return $post;
+	}
+
+	/**
+	 * Format money as a decimal string with the shop's number of decimals.
+	 *
+	 * @param mixed $value Amount.
+	 * @return string
+	 */
+	private function money( $value ) {
+		return number_format( (float) $value, ohmylms_get_price_decimals(), '.', '' );
+	}
+
+	/**
+	 * Convert a post date (site time) to ISO 8601 without offset.
+	 *
+	 * @param string $value MySQL date.
+	 * @return string|null
+	 */
+	private function date( $value ) {
+		return ( $value && '0000-00-00 00:00:00' !== $value ) ? str_replace( ' ', 'T', $value ) : null;
+	}
+
+	/**
+	 * Order IDs matching a search text (student name, email or order number).
+	 *
+	 * @param string $term Search text.
+	 * @return int[] At most 1000 IDs.
+	 */
+	private function search_ids( $term ) {
 		global $wpdb;
 
-		$post_type      = 'ohmylms-order';
-		$prefix         = 'ohmylms-';
-		$valid_statuses = array( 'pending', 'processing', 'completed', 'on-hold', 'failed', 'refunded', 'cancelled' );
+		$like = '%' . $wpdb->esc_like( $term ) . '%';
+		$id   = ctype_digit( $term ) ? (int) $term : 0;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Prepared; joins the three meta rows once instead of a meta_query per field.
+		$ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT p.ID FROM {$wpdb->posts} p
+				LEFT JOIN {$wpdb->postmeta} f ON f.post_id = p.ID AND f.meta_key = '_first_name'
+				LEFT JOIN {$wpdb->postmeta} l ON l.post_id = p.ID AND l.meta_key = '_last_name'
+				LEFT JOIN {$wpdb->postmeta} e ON e.post_id = p.ID AND e.meta_key = '_email'
+				WHERE p.post_type = %s AND ( CONCAT_WS( ' ', f.meta_value, l.meta_value ) LIKE %s OR e.meta_value LIKE %s OR p.ID = %d )
+				LIMIT 1000",
+				self::POST_TYPE,
+				$like,
+				$like,
+				$id
+			)
+		);
+		return array_map( 'intval', $ids );
+	}
 
-		$prefixed_statuses = array_map(
-			function ( $status ) use ( $prefix ) {
-				return $prefix . $status;
-			},
-			$valid_statuses
+	/**
+	 * Get orders.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_items( $request ) {
+		$page     = max( 1, (int) $request['page'] );
+		$per_page = min( 100, max( 1, (int) $request['per_page'] ) );
+		$orderby  = array(
+			'date' => 'date',
+			'id'   => 'ID',
+		);
+		$args     = array(
+			'post_type'              => self::POST_TYPE,
+			'post_status'            => 'any' === $request['status'] ? array_map( array( $this, 'post_status' ), self::STATUSES ) : array( $this->post_status( $request['status'] ) ),
+			'posts_per_page'         => $per_page,
+			'paged'                  => $page,
+			'ignore_sticky_posts'    => true,
+			'update_post_term_cache' => false,
 		);
 
-		$placeholders = implode( ',', array_fill( 0, count( $prefixed_statuses ), '%s' ) );
-
-		$query = "
-			SELECT post_status, COUNT(*) as count
-			FROM {$wpdb->posts}
-			WHERE post_type = %s
-			AND post_status IN ($placeholders)
-			GROUP BY post_status
-		";
-
-		$query_params = array_merge( array( $post_type ), $prefixed_statuses );
-		$results      = $wpdb->get_results( $wpdb->prepare( $query, ...$query_params ) );
-
-		// Format the response.
-		$response = array();
-		foreach ( $results as $result ) {
-			$status     = ucfirst( str_replace( $prefix, '', $result->post_status ) );
-			$response[] = array(
-				'key'    => str_replace( $prefix, '', $result->post_status ),
-				'status' => $status,
-				'count'  => (int) $result->count,
+		if ( 'total' === $request['orderby'] ) {
+			$args['meta_key'] = '_order_total'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Sorting by a single key.
+			$args['orderby']  = array(
+				'meta_value_num' => strtoupper( $request['order'] ),
+				'ID'             => 'DESC',
+			);
+		} else {
+			$args['orderby'] = array(
+				$orderby[ $request['orderby'] ] => strtoupper( $request['order'] ),
+				'ID'                            => strtoupper( $request['order'] ),
 			);
 		}
 
+		if ( '' !== (string) $request['payment_method'] ) {
+			$args['meta_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Exact match on one key.
+				array(
+					'key'   => '_payment_method',
+					'value' => $request['payment_method'],
+				),
+			);
+		}
+
+		$range = array();
+		foreach ( array(
+			'after'  => $request['after'],
+			'before' => $request['before'],
+		) as $key => $day ) {
+			if ( '' === (string) $day ) {
+				continue;
+			}
+			$parts = array_map( 'intval', explode( '-', $day ) );
+			if ( 3 !== count( $parts ) || ! checkdate( $parts[1], $parts[2], $parts[0] ) ) {
+				return new WP_Error(
+					'ohmylms_order_invalid_date',
+					__( 'Dates must be real calendar days in the form YYYY-MM-DD.', 'ohmylms' ),
+					array(
+						'status' => 400,
+						'field'  => $key,
+					)
+				);
+			}
+			$range[ $key ] = array(
+				'year'  => $parts[0],
+				'month' => $parts[1],
+				'day'   => $parts[2],
+			);
+		}
+		if ( $range ) {
+			if ( isset( $range['after'], $range['before'] ) && $request['after'] > $request['before'] ) {
+				return new WP_Error(
+					'ohmylms_order_invalid_date',
+					__( 'The start date must not be after the end date.', 'ohmylms' ),
+					array(
+						'status' => 400,
+						'field'  => 'before',
+					)
+				);
+			}
+			$args['date_query'] = array_merge( $range, array( 'inclusive' => true ) );
+		}
+
+		if ( '' !== (string) $request['search'] ) {
+			$ids              = $this->search_ids( (string) $request['search'] );
+			$args['post__in'] = $ids ? $ids : array( 0 );
+		}
+
+		$query = new WP_Query( $args );
+		$total = (int) $query->found_posts;
+		if ( $total < 1 && $page > 1 ) {
+			// Past the last page WP_Query reports no total; count again without paging.
+			$count_args = array_merge(
+				$args,
+				array(
+					'paged'          => 1,
+					'posts_per_page' => 1,
+				)
+			);
+			$total      = (int) ( new WP_Query( $count_args ) )->found_posts;
+		}
+		$total_pages = (int) ceil( $total / $per_page );
+		if ( $total > 0 && $page > $total_pages ) {
+			return new WP_Error( 'ohmylms_order_invalid_page', __( 'The page number requested is larger than the number of pages available.', 'ohmylms' ), array( 'status' => 400 ) );
+		}
+
+		// Post meta is primed by WP_Query, so these reads cost no extra queries.
+		$items = array();
+		foreach ( $query->posts as $post ) {
+			$items[] = $this->prepare_response_for_collection( $this->prepare_item_for_response( $post, $request ) );
+		}
+		$response = rest_ensure_response( $items );
+		$response->header( 'X-WP-Total', $total );
+		$response->header( 'X-WP-TotalPages', $total_pages );
 		return $response;
 	}
 
-
 	/**
-	 * Create a new note for an order.
+	 * Post status name of an order status.
 	 *
-	 * @param \WP_REST_Request $request The REST request object.
-	 * @return \WP_REST_Response|\WP_Error The response object containing the created note or an error object.
-	 *
-	 * @since 1.0.0
+	 * @param string $status Order status.
+	 * @return string
 	 */
-	public function create_note( $request ) {
-		$order = ohmylms_ecommerce_get_order( (int) $request['id'] );
-
-		// Create the note.
-		$note_id = $order->add_order_note( $request['note'] );
-
-		$note = get_comment( $note_id );
-
-		$response = array(
-			'success' => true,
-		);
-
-		return rest_ensure_response( $response );
+	public function post_status( $status ) {
+		return 'ohmylms-' . $status;
 	}
 
 	/**
-	 * Get order statistics: total orders, total revenue, average order value.
+	 * Order counts per status.
 	 *
-	 * @return \WP_REST_Response
-	 * @param mixed $request REST request.
+	 * @return WP_REST_Response
 	 */
-	public function get_order_stats( $request ) {
-		$args          = array(
-			'post_type'      => 'ohmylms-order',
-			'post_status'    => 'ohmylms-completed',
-			'posts_per_page' => -1,
-			'fields'         => 'ids',
-		);
-		$query         = new \WP_Query( $args );
-		$order_ids     = $query->posts;
-		$total_orders  = count( $order_ids );
-		$total_revenue = 0;
-		foreach ( $order_ids as $order_id ) {
-			$order          = new \OhMyLMS\Commerce\Data\Order( $order_id );
-			$total_revenue += floatval( $order->get_total() );
+	public function get_status_counts() {
+		global $wpdb;
+
+		$counts = array_fill_keys( self::STATUSES, 0 );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Prepared aggregate; WP_Query cannot group.
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT post_status, COUNT(*) AS total FROM {$wpdb->posts} WHERE post_type = %s GROUP BY post_status", self::POST_TYPE ), ARRAY_A );
+		foreach ( (array) $rows as $row ) {
+			$status = preg_replace( '/^ohmylms-/', '', $row['post_status'] );
+			if ( isset( $counts[ $status ] ) ) {
+				$counts[ $status ] = (int) $row['total'];
+			}
 		}
-		$average_order_value = $total_orders > 0 ? $total_revenue / $total_orders : 0;
-		$data                = array(
-			'total_orders'        => $total_orders,
-			'total_revenue'       => round( $total_revenue, 2 ),
-			'average_order_value' => round( $average_order_value, 2 ),
-		);
-		return rest_ensure_response( $data );
+		return rest_ensure_response( $counts );
 	}
 
 	/**
-	 * Prepare an order item for database insertion.
+	 * Get one order.
 	 *
-	 * This method prepares the order item data from the request for insertion into the database.
+	 * Opening an order marks it as seen (the `_is_open` flag drives the new-orders badge).
 	 *
-	 * @param \WP_REST_Request $request The REST request object containing the order data.
-	 * @return \OhMyLMS\Commerce\Data\Order The prepared order object.
-	 *
-	 * @since 1.0.0
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
 	 */
-	protected function prepare_item_for_database( $request ) {
-		$id        = isset( $request['id'] ) ? absint( $request['id'] ) : 0;
-		$order     = new Order( $id );
-		$data_keys = array(
-			'parent_id',
-			'status',
-			'order_key',
-			'number',
-			'currency',
-			'date_created',
-			'date_modified',
-			'student_id',
-			'student_name',
-			'student_email',
-			'address',
-			'country',
-			'cart_discount',
-			'total',
-			'subtotal',
-			'payment_method',
-			'payment_method_title',
-			'transaction_id',
-			'date_completed',
-			'date_created',
-			'date_paid',
-			'cart_hash',
-			'line_items',
-			'shipping_lines',
-			'fee_lines',
-			'coupon_lines',
-			'refunds',
-			'tax_amount',
-			'tax_rate',
-		);
-		foreach ( $data_keys as $key ) {
-			$value = $request[ $key ];
-			if ( ! is_null( $value ) ) {
-				if ( is_callable( array( $order, "set_{$key}" ) ) ) {
-					$order->{"set_{$key}"}( $value );
+	public function get_item( $request ) {
+		$post = $this->get_post( (int) $request['id'] );
+		if ( is_wp_error( $post ) ) {
+			return $post;
+		}
+		if ( 'yes' !== get_post_meta( $post->ID, '_is_open', true ) ) {
+			update_post_meta( $post->ID, '_is_open', 'yes' );
+		}
+		return $this->prepare_item_for_response( $post, $request );
+	}
+
+	/**
+	 * Change the status of an order.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function update_item( $request ) {
+		$post = $this->get_post( (int) $request['id'] );
+		if ( is_wp_error( $post ) ) {
+			return $post;
+		}
+		$lock = 'order-' . $post->ID;
+		if ( ! $this->acquire_lock( $lock ) ) {
+			return new WP_Error( 'ohmylms_order_busy', __( 'This order is being changed by another request. Try again.', 'ohmylms' ), array( 'status' => 409 ) );
+		}
+		try {
+			clean_post_cache( $post->ID );
+			$order    = ohmylms_ecommerce_get_order( $post->ID );
+			$previous = $order->get_status( 'edit' );
+			$target   = $request['status'];
+
+			if ( $previous !== $target ) {
+				if ( ! in_array( $target, self::allowed_transitions( $previous ), true ) ) {
+					return new WP_Error(
+						'ohmylms_order_invalid_transition',
+						sprintf(
+							/* translators: 1: current status, 2: requested status. */
+							__( 'An order cannot change from %1$s to %2$s.', 'ohmylms' ),
+							$previous,
+							$target
+						),
+						array( 'status' => 409 )
+					);
+				}
+				if ( ! $order->update_status( $target, '', true ) ) {
+					return new WP_Error( 'ohmylms_order_not_saved', __( 'The order status could not be saved.', 'ohmylms' ), array( 'status' => 500 ) );
+				}
+				$order = ohmylms_ecommerce_get_order( $post->ID );
+
+				if ( 'completed' === $target ) {
+					/** Fires when an order is set to completed through the API (enrols the student). */
+					do_action( 'ohmylms_update_order_status_to_completed', $order );
+				}
+				if ( 'cancelled' === $target ) {
+					/** Fires when an order is set to cancelled through the API. */
+					do_action( 'ohmylms_update_order_status_to_cancelled', $order );
+					$students = new \OhMyLMS\DataStores\StudentStore();
+					$students->delete_enrollment( $order->get_student_id(), $order->get_id() );
 				}
 			}
+			clean_post_cache( $post->ID );
+			return $this->prepare_item_for_response( get_post( $post->ID ), $request );
+		} finally {
+			$this->release_lock( $lock );
 		}
-		return $order;
 	}
 
 	/**
-	 * Prepare the query arguments for retrieving items.
+	 * Move an order to the trash. Enrolments created by the order are removed.
 	 *
-	 * @param array                 $prepared_args The prepared arguments for the query.
-	 * @param \WP_REST_Request|null $request The REST request object.
-	 * @return array The query arguments.
-	 *
-	 * @since 1.0.0
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
 	 */
-	protected function prepare_items_query( $prepared_args = array(), $request = null ) {
-		$valid_vars = array_flip( $this->get_allowed_query_vars() );
-		$query_args = array();
-		foreach ( $valid_vars as $var => $index ) {
-			if ( isset( $prepared_args[ $var ] ) ) {
-				/**
-				 * Filter the query_vars used in `get_items` for the constructed query.
-				 *
-				 * The dynamic portion of the hook name, $var, refers to the query_var key.
-				 *
-				 * @param mixed $prepared_args[ $var ] The query_var value.
-				 */
-				$query_args[ $var ] = apply_filters( "ohmylms_rest_query_var-{$var}", $prepared_args[ $var ] );
-			}
+	public function delete_item( $request ) {
+		$post = $this->get_post( (int) $request['id'] );
+		if ( is_wp_error( $post ) ) {
+			return $post;
 		}
-
-		$query_args['ignore_sticky_posts'] = true;
-
-		if ( 'include' === $query_args['orderby'] ) {
-			$query_args['orderby'] = 'post__in';
-		} elseif ( 'id' === $query_args['orderby'] ) {
-			$query_args['orderby'] = 'ID'; // ID must be capitalized.
-		} elseif ( 'slug' === $query_args['orderby'] ) {
-			$query_args['orderby'] = 'name';
+		$previous = $this->prepare_item_for_response( $post, $request )->get_data();
+		do_action( 'ohmylms_rest_before_delete_order', $post->ID );
+		if ( ! wp_trash_post( $post->ID ) ) {
+			return new WP_Error( 'ohmylms_order_not_deleted', __( 'The order could not be deleted.', 'ohmylms' ), array( 'status' => 500 ) );
 		}
-
-		return $query_args;
+		do_action( 'ohmylms_rest_delete_order', $post->ID );
+		return rest_ensure_response(
+			array(
+				'deleted'  => true,
+				'previous' => $previous,
+			)
+		);
 	}
 
 	/**
-	 * Prepare a single course item for response.
+	 * Get the notes of an order, newest first.
 	 *
-	 * @param \WP_Post         $post The post object representing the course.
-	 * @param \WP_REST_Request $request The REST request object.
-	 * @return \WP_REST_Response The response object containing the course data.
-	 *
-	 * @since 1.0.0
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
 	 */
-	public function prepare_item_for_response( $post, $request ) {
-		$order    = ohmylms_ecommerce_get_order( $post );
-		$data     = $this->get_order_data( $order );
-		$response = rest_ensure_response( $data );
-		$response->add_links( $this->prepare_links( $order, $request ) );
-		return apply_filters( 'ohmylms_rest_prepare_order', $response, $post, $request );
+	public function get_notes( $request ) {
+		$post = $this->get_post( (int) $request['id'] );
+		if ( is_wp_error( $post ) ) {
+			return $post;
+		}
+		return rest_ensure_response( $this->notes_of( $post->ID ) );
 	}
 
 	/**
-	 * Retrieve the data for a specific order.
+	 * Notes of an order.
 	 *
-	 * @param \OhMyLMS\Commerce\Data\Order $order The order object.
-	 * @return array The array containing order data.
-	 *
-	 * @since 1.0.0
+	 * @param int $order_id Order ID.
+	 * @return array[]
 	 */
-	protected function get_order_data( $order ) {
-		$payment_method_title = $order->get_payment_method_title();
-		$payment_method       = $order->get_payment_method();
-		$transaction_id       = $order->get_transaction_id();
-		if ( ecommerce()->gateways() ) {
-			$payment_gateways = ecommerce()->gateways()->get_payment_gateways();
-		} else {
-			$payment_gateways = array();
+	private function notes_of( $order_id ) {
+		$notes = ohmylms_ecommerce_get_order_notes(
+			array(
+				'order_id' => $order_id,
+				'limit'    => 100,
+			)
+		);
+		return array_values( array_map( array( $this, 'prepare_note' ), $notes ) );
+	}
+
+	/**
+	 * Shape one note.
+	 *
+	 * @param object $note Note from ohmylms_ecommerce_get_order_note().
+	 * @return array
+	 */
+	private function prepare_note( $note ) {
+		return array(
+			'id'           => (int) $note->id,
+			'content'      => wp_strip_all_tags( (string) $note->content ),
+			'added_by'     => (string) $note->added_by,
+			'date_created' => wp_date( 'Y-m-d\TH:i:s', $note->date_created->getTimestamp() ),
+		);
+	}
+
+	/**
+	 * Add a plain text note.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function create_note( $request ) {
+		$post = $this->get_post( (int) $request['id'] );
+		if ( is_wp_error( $post ) ) {
+			return $post;
 		}
-		$payment_method_title = $order->get_payment_method_title();
-		$student              = \ohmylms_get_student( $order->get_student_id() );
-		$related_orders       = $order->get_related_orders();
-		$purchased_by         = get_post_meta( $order->get_id(), '_purchased_by', true );
-		$post                 = get_post( $order->get_id() );
-		$data                 = array(
-			'id'                   => $order->get_id(),
-			'parent_id'            => $order->get_parent_id(),
-			'status'               => $order->get_status(),
-			'order_key'            => $order->get_order_key(),
-			'number'               => $order->get_order_number(),
-			'currency'             => $order->get_currency(),
-			'date_created'         => $post->post_date,
-			'date_modified'        => $post->post_modified,
-			'student_id'           => $order->get_student_id(),
-			'student_name'         => $order->get_student_name(),
-			'student_email'        => $order->get_email(),
-			'student_image'        => $order->get_student_image(),
-			'student_profile'      => $order->get_student_profile_url(),
-			'student_phone'        => $student ? $student->get_phone() : '',
-			'student_whatsapp'     => $student ? $student->get_whatsapp() : '',
-			'student_timezone'     => $student ? $student->get_timezone() : '',
-			'address'              => $order->get_address(),
-			'country'              => $order->get_country(),
-			'cart_discount'        => ohmylms_format_decimal( $order->get_cart_discount(), ohmylms_get_price_decimals() ),
-			'total'                => ohmylms_format_decimal( $order->get_total(), ohmylms_get_price_decimals() ),
-			'formattedTotal'       => $order->get_formatted_order_total(),
-			'subtotal'             => ohmylms_format_decimal( $order->get_cart_subtotal(), ohmylms_get_price_decimals() ),
-			'payment_method'       => $payment_method,
-			'purchased_by'         => $purchased_by ? $purchased_by : 'currency',
-			'payment_method_title' => $payment_method_title ? $payment_method_title : 'N/A',
-			'transaction_id'       => $transaction_id,
-			'date_completed'       => ohmylms_ecommerce_rest_prepare_date_response( $order->get_date_completed(), false ),
-			'date_paid'            => ohmylms_ecommerce_rest_prepare_date_response( $order->get_date_paid(), false ),
-			'cart_hash'            => $order->get_cart_hash(),
-			'order_notes'          => ohmylms_ecommerce_get_order_notes(
+		$text = trim( sanitize_textarea_field( (string) $request['note'] ) );
+		if ( '' === $text ) {
+			return new WP_Error(
+				'ohmylms_order_note_empty',
+				__( 'The note is empty.', 'ohmylms' ),
 				array(
-					'order_id' => $order->get_id(),
+					'status' => 422,
+					'field'  => 'note',
 				)
-			),
-			'line_items'           => array(),
-			'coupon_lines'         => array(),
-			'refunds'              => array(),
-			'total_orders'         => $student ? $student->get_total_orders() : 0,
-			'total_revenue'        => $student ? $student->get_total_revenue() : 0,
-			'aov'                  => $student ? $student->get_aov() : 0,
-			'related_orders'       => $related_orders,
-			'is_renewal_order'     => $order->is_renewal_order(),
-			'is_parent_order'      => $order->is_parent_order(),
-			'is_normal_order'      => ! $order->is_renewal_order() && ! $order->is_parent_order(),
-			'tax_amount'           => ohmylms_format_decimal( $order->get_tax_amount(), ohmylms_get_price_decimals() ),
-			'tax_rate'             => $order->get_tax_rate(),
-			'is_included_tax'      => \OhMyLMS\Commerce\Includes\Tax\TaxService::get_instance()->prices_include_tax(),
-		);
-		if ( $transaction_id ) {
-			if ( isset( $payment_gateways[ $payment_method ] ) ) {
-				$data['transaction_url'] = $payment_gateways[ $payment_method ]->get_transaction_url( $order );
-			} else {
-				$data['transaction_url'] = '';
-			}
+			);
 		}
-
-		$data['payment_gateway_meta'] = isset( $payment_gateways[ $payment_method ] ) ? $payment_gateways[ $payment_method ]->get_payment_gateway_meta( $order ) : array();
-		return $data;
+		$order   = ohmylms_ecommerce_get_order( $post->ID );
+		$note_id = $order->add_order_note( $text, 0, true );
+		$note    = $note_id ? ohmylms_ecommerce_get_order_note( $note_id ) : null;
+		if ( ! $note ) {
+			return new WP_Error( 'ohmylms_order_note_failed', __( 'The note could not be saved.', 'ohmylms' ), array( 'status' => 500 ) );
+		}
+		$response = rest_ensure_response( $this->prepare_note( $note ) );
+		$response->set_status( 201 );
+		return $response;
 	}
 
 	/**
-	 * Prepare links for the order item.
+	 * Prepare an order for the response: a light row for lists, the full order for `context=edit`
+	 * and single requests.
 	 *
-	 * This method generates the self and collection links for the order item.
-	 *
-	 * @param \OhMyLMS\Commerce\Data\Order $order The order object.
-	 * @param \WP_REST_Request             $request The REST request object.
-	 * @return array The array containing the links for the order item.
-	 *
-	 * @since 1.0.0
+	 * @param WP_Post         $item    Order post.
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
 	 */
-	protected function prepare_links( $order, $request ) {
-		$links = array(
-			'self'       => array(
-				'href' => rest_url( sprintf( '%s/%s/%d', $this->namespace, $this->base, $order->get_id() ) ),
-			),
-			'collection' => array(
-				'href' => rest_url( sprintf( '%s/%s', $this->namespace, $this->base ) ),
-			),
+	public function prepare_item_for_response( $item, $request ) {
+		$id     = (int) $item->ID;
+		$status = preg_replace( '/^ohmylms-/', '', $item->post_status );
+		$meta   = static function ( $key ) use ( $id ) {
+			return (string) get_post_meta( $id, $key, true );
+		};
+		$name   = trim( $meta( '_first_name' ) . ' ' . $meta( '_last_name' ) );
+		$data   = array(
+			'id'                   => $id,
+			'number'               => (string) $id,
+			'status'               => $status,
+			'currency'             => $meta( '_order_currency' ) ? $meta( '_order_currency' ) : get_ohmylms_currency(),
+			'total'                => $this->money( $meta( '_order_total' ) ),
+			'date_created'         => $this->date( $item->post_date ),
+			'payment_method'       => $meta( '_payment_method' ),
+			'payment_method_title' => $meta( '_payment_method_title' ),
+			'student_id'           => (int) $meta( '_student_id' ),
+			'student_name'         => $name,
 		);
 
-		return $links;
+		if ( ! $this->is_detail( $request ) ) {
+			return $this->wrap( $data, $item, $request );
+		}
+
+		$order  = ohmylms_ecommerce_get_order( $item );
+		$refund = $this->refunds_of( $id );
+
+		$lines = array();
+		foreach ( $order->get_items() as $line ) {
+			$lines[] = array(
+				'id'        => (int) $line->get_id(),
+				'course_id' => (int) $line->get_course_id(),
+				'name'      => (string) $line->get_name(),
+				'quantity'  => (int) $line->get_quantity(),
+				'subtotal'  => $this->money( $line->get_subtotal() ),
+				'total'     => $this->money( $line->get_total() ),
+			);
+		}
+		$coupons = array();
+		foreach ( $order->get_items( 'coupon' ) as $line ) {
+			$coupons[] = array(
+				'code'     => (string) $line->get_code(),
+				'discount' => $this->money( $line->get_discount() ),
+			);
+		}
+
+		$data = array_merge(
+			$data,
+			array(
+				'parent_id'            => (int) $item->post_parent,
+				'subtotal'             => $this->money( $order->get_cart_subtotal() ),
+				'discount_total'       => $this->money( $order->get_cart_discount() ),
+				'tax_amount'           => $this->money( $order->get_tax_amount() ),
+				'date_paid'            => $this->timestamp_date( $order->get_date_paid( 'edit' ) ),
+				'date_completed'       => $this->timestamp_date( $order->get_date_completed( 'edit' ) ),
+				'transaction_id'       => $meta( '_transaction_id' ),
+				'billing'              => array(
+					'first_name' => $meta( '_first_name' ),
+					'last_name'  => $meta( '_last_name' ),
+					'email'      => $meta( '_email' ),
+					'phone'      => $meta( '_phone' ),
+					'address'    => $meta( '_address' ),
+					'city'       => $meta( '_city' ),
+					'state'      => $meta( '_state' ),
+					'postcode'   => $meta( '_postcode' ),
+					'country'    => $meta( '_country' ),
+					'vat_number' => $meta( '_vat_number' ),
+				),
+				'line_items'           => $lines,
+				'coupon_lines'         => $coupons,
+				'refunds'              => $refund['items'],
+				'total_refunded'       => $this->money( $refund['total'] ),
+				'remaining_refundable' => $this->money( max( 0, (float) $meta( '_order_total' ) - $refund['total'] ) ),
+				'related_orders'       => $this->related_of( $order ),
+				'allowed_statuses'     => self::allowed_transitions( $status ),
+			)
+		);
+		return $this->wrap( $data, $item, $request );
 	}
 
 	/**
-	 * Get the allowed query variables for the REST API.
+	 * Whether the request wants the full order.
 	 *
-	 * This method retrieves the list of query variables that are allowed
-	 * to be used in REST API requests for courses.
-	 *
-	 * @return array The array of allowed query variables.
-	 *
-	 * @since 1.0.0
+	 * @param WP_REST_Request $request Request.
+	 * @return bool
 	 */
-	protected function get_allowed_query_vars() {
-		global $wp;
+	private function is_detail( $request ) {
+		return ! empty( $request['id'] );
+	}
 
-		/**
-		 * Filter the publicly allowed query vars.
-		 *
-		 * Allows adjusting of the default query vars that are made public.
-		 *
-		 * @param array  Array of allowed WP_Query query vars.
-		 */
-		$valid_vars = apply_filters( 'query_vars', $wp->public_query_vars );
+	/**
+	 * Format a stored timestamp.
+	 *
+	 * @param mixed $value Date object or empty.
+	 * @return string|null
+	 */
+	private function timestamp_date( $value ) {
+		return ( is_object( $value ) && method_exists( $value, 'getTimestamp' ) ) ? wp_date( 'Y-m-d\TH:i:s', $value->getTimestamp() ) : null;
+	}
 
-		$post_type_obj = get_post_type_object( OHMYLMS_COURSE_CPT );
-		if ( current_user_can( $post_type_obj->cap->edit_posts ) ) {
-			$valid_vars = array_merge( $valid_vars, $wp->private_query_vars );
-		}
-		$rest_valid = array(
-			'date_query',
-			'ignore_sticky_posts',
-			'offset',
-			'post_status',
-			'post__in',
-			'post__not_in',
-			'post_parent',
-			'post_parent__in',
-			'post_parent__not_in',
-			'posts_per_page',
-			'meta_query',
-			'tax_query',
-			'meta_key',
-			'meta_value',
-			'meta_compare',
-			'meta_value_num',
+	/**
+	 * Attach links and the extension filter.
+	 *
+	 * @param array           $data Response data.
+	 * @param WP_Post         $item Order post.
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	private function wrap( array $data, $item, $request ) {
+		$response = rest_ensure_response( $data );
+		$response->add_links(
+			array(
+				'self'       => array( 'href' => rest_url( sprintf( '%s/%s/%d', $this->namespace, $this->rest_base, $item->ID ) ) ),
+				'collection' => array( 'href' => rest_url( sprintf( '%s/%s', $this->namespace, $this->rest_base ) ) ),
+			)
 		);
-		$valid_vars = array_merge( $valid_vars, $rest_valid );
+		return apply_filters( 'ohmylms_rest_prepare_order', $response, $item, $request );
+	}
 
-		/**
-		 * Filter the valid query variables for the REST API.
-		 *
-		 * This filter allows developers to modify the list of valid query variables
-		 * that can be used in REST API requests for courses.
-		 *
-		 * @param array $valid_vars The array of valid query variables.
-		 */
-		$valid_vars = apply_filters( 'ohmylms_rest_query_vars', $valid_vars );
+	/**
+	 * Refunds recorded for an order.
+	 *
+	 * @param int $order_id Order ID.
+	 * @return array{items:array[],total:float}
+	 */
+	private function refunds_of( $order_id ) {
+		$posts = get_posts(
+			array(
+				'post_type'      => 'ohmylms_order_refund',
+				'post_status'    => 'any',
+				'post_parent'    => $order_id,
+				'posts_per_page' => 100,
+				'orderby'        => 'ID',
+				'order'          => 'DESC',
+			)
+		);
+		$items = array();
+		$total = 0.0;
+		foreach ( $posts as $post ) {
+			$amount  = (float) get_post_meta( $post->ID, '_refund_amount', true );
+			$total  += $amount;
+			$items[] = array(
+				'id'           => (int) $post->ID,
+				'amount'       => $this->money( $amount ),
+				'reason'       => (string) get_post_meta( $post->ID, '_refund_reason', true ),
+				'date_created' => $this->date( $post->post_date ),
+			);
+		}
+		return array(
+			'items' => $items,
+			'total' => $total,
+		);
+	}
 
-		return $valid_vars;
+	/**
+	 * Related orders and subscription of an order.
+	 *
+	 * @param object $order Order.
+	 * @return array[]
+	 */
+	private function related_of( $order ) {
+		$out = array();
+		foreach ( (array) $order->get_related_orders() as $row ) {
+			$type  = get_post_type( (int) $row['id'] );
+			$out[] = array(
+				'id'           => (int) $row['id'],
+				'type'         => self::POST_TYPE === $type ? 'order' : 'subscription',
+				'relationship' => (string) $row['relationship'],
+				'status'       => strtolower( (string) $row['status'] ),
+				'total'        => $this->money( $row['total'] ),
+				'date_created' => $this->date( (string) $row['date'] ),
+			);
+		}
+		return $out;
+	}
+
+	/**
+	 * Collection parameters.
+	 *
+	 * @return array
+	 */
+	public function get_collection_params() {
+		$params = array(
+			'context'        => $this->get_context_param( array( 'default' => 'view' ) ),
+			'page'           => array(
+				'description' => __( 'Current page of the collection.', 'ohmylms' ),
+				'type'        => 'integer',
+				'default'     => 1,
+				'minimum'     => 1,
+			),
+			'per_page'       => array(
+				'description' => __( 'Maximum number of items per page.', 'ohmylms' ),
+				'type'        => 'integer',
+				'default'     => 20,
+				'minimum'     => 1,
+				'maximum'     => 100,
+			),
+			'search'         => array(
+				'description'       => __( 'Order number, student name or email (at most 1000 matches are considered).', 'ohmylms' ),
+				'type'              => 'string',
+				'maxLength'         => 100,
+				'sanitize_callback' => 'sanitize_text_field',
+			),
+			'status'         => array(
+				'description' => __( 'Limit results to one order status.', 'ohmylms' ),
+				'type'        => 'string',
+				'default'     => 'any',
+				'enum'        => array_merge( array( 'any' ), self::STATUSES ),
+			),
+			'payment_method' => array(
+				'description'       => __( 'Limit results to one payment method id.', 'ohmylms' ),
+				'type'              => 'string',
+				'maxLength'         => 50,
+				'sanitize_callback' => 'sanitize_key',
+			),
+			'after'          => array(
+				'description' => __( 'First day, YYYY-MM-DD (inclusive, site time).', 'ohmylms' ),
+				'type'        => 'string',
+				'pattern'     => '^\d{4}-\d{2}-\d{2}$',
+			),
+			'before'         => array(
+				'description' => __( 'Last day, YYYY-MM-DD (inclusive, site time).', 'ohmylms' ),
+				'type'        => 'string',
+				'pattern'     => '^\d{4}-\d{2}-\d{2}$',
+			),
+			'orderby'        => array(
+				'description' => __( 'Sort the collection by this field.', 'ohmylms' ),
+				'type'        => 'string',
+				'default'     => 'date',
+				'enum'        => array( 'date', 'id', 'total' ),
+			),
+			'order'          => array(
+				'description' => __( 'Sort direction.', 'ohmylms' ),
+				'type'        => 'string',
+				'default'     => 'desc',
+				'enum'        => array( 'asc', 'desc' ),
+			),
+		);
+		return $params;
+	}
+
+	/**
+	 * Order schema (the single order; lists carry the first group of properties).
+	 *
+	 * @return array
+	 */
+	public function get_item_schema() {
+		if ( $this->schema ) {
+			return $this->add_additional_fields_schema( $this->schema );
+		}
+		$string = static function ( $description, $extra = array() ) {
+			return array_merge(
+				array(
+					'description' => $description,
+					'type'        => 'string',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
+				$extra
+			);
+		};
+		$money  = static function ( $description ) {
+			return array(
+				'description' => $description,
+				'type'        => 'string',
+				'pattern'     => '^-?\d+(\.\d+)?$',
+				'context'     => array( 'view', 'edit' ),
+				'readonly'    => true,
+			);
+		};
+		$date   = static function ( $description ) {
+			return array(
+				'description' => $description,
+				'type'        => array( 'string', 'null' ),
+				'format'      => 'date-time',
+				'context'     => array( 'view', 'edit' ),
+				'readonly'    => true,
+			);
+		};
+
+		$this->schema = array(
+			'$schema'    => 'http://json-schema.org/draft-04/schema#',
+			'title'      => 'order',
+			'type'       => 'object',
+			'properties' => array(
+				'id'                   => array(
+					'description' => __( 'Unique identifier for the order.', 'ohmylms' ),
+					'type'        => 'integer',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
+				'number'               => $string( __( 'Order number.', 'ohmylms' ) ),
+				'status'               => $string( __( 'Order status.', 'ohmylms' ), array( 'enum' => self::STATUSES ) ),
+				'currency'             => $string( __( 'ISO 4217 currency code of every amount.', 'ohmylms' ) ),
+				'total'                => $money( __( 'Order total.', 'ohmylms' ) ),
+				'date_created'         => $date( __( 'When the order was placed, in site time.', 'ohmylms' ) ),
+				'payment_method'       => $string( __( 'Payment gateway id.', 'ohmylms' ) ),
+				'payment_method_title' => $string( __( 'Payment gateway label.', 'ohmylms' ) ),
+				'student_id'           => array(
+					'description' => __( 'User ID of the student, 0 when unknown.', 'ohmylms' ),
+					'type'        => 'integer',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
+				'student_name'         => $string( __( 'Billing name.', 'ohmylms' ) ),
+				'parent_id'            => array(
+					'description' => __( 'Parent order (detail only).', 'ohmylms' ),
+					'type'        => 'integer',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
+				'subtotal'             => $money( __( 'Sum of line subtotals (detail only).', 'ohmylms' ) ),
+				'discount_total'       => $money( __( 'Coupon discount (detail only).', 'ohmylms' ) ),
+				'tax_amount'           => $money( __( 'Tax (detail only).', 'ohmylms' ) ),
+				'date_paid'            => $date( __( 'When payment was received (detail only).', 'ohmylms' ) ),
+				'date_completed'       => $date( __( 'When the order completed (detail only).', 'ohmylms' ) ),
+				'transaction_id'       => $string( __( 'Gateway transaction id (detail only).', 'ohmylms' ) ),
+				'billing'              => array(
+					'description' => __( 'Billing details (detail only).', 'ohmylms' ),
+					'type'        => 'object',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
+				'line_items'           => array(
+					'description' => __( 'Purchased courses (detail only).', 'ohmylms' ),
+					'type'        => 'array',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
+				'coupon_lines'         => array(
+					'description' => __( 'Coupons used (detail only).', 'ohmylms' ),
+					'type'        => 'array',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
+				'refunds'              => array(
+					'description' => __( 'Refunds recorded (detail only).', 'ohmylms' ),
+					'type'        => 'array',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
+				'total_refunded'       => $money( __( 'Sum of refunds (detail only).', 'ohmylms' ) ),
+				'remaining_refundable' => $money( __( 'Total minus refunds (detail only).', 'ohmylms' ) ),
+				'related_orders'       => array(
+					'description' => __( 'Renewal orders and subscription (detail only).', 'ohmylms' ),
+					'type'        => 'array',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
+				'allowed_statuses'     => array(
+					'description' => __( 'Statuses this order may be changed to (detail only).', 'ohmylms' ),
+					'type'        => 'array',
+					'items'       => array( 'type' => 'string' ),
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
+			),
+		);
+		return $this->add_additional_fields_schema( $this->schema );
 	}
 }

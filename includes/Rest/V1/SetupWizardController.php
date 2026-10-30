@@ -1,90 +1,128 @@
 <?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
- * Controller for handling user REST API endpoints.
+ * Setup wizard REST controller.
  *
  * @package OhMyLMS
  */
+
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
+use OhMyLMS\Curriculum\Placement;
+use OhMyLMS\SetupWizard\SetupService;
+use OhMyLMS\SetupWizard\SetupSteps;
+use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
-use WP_Error;
 
 /**
- * Controller for handling user REST API endpoints.
+ * REST API for the first-run setup wizard under `ohmylms/v1/setup`.
  *
- * This class extends the RESTController abstract class and defines REST API routes
- * for User-related CRUD operations and many more.
+ * Logic lives in {@see SetupService}; this class owns routes, permissions and schema. Cookie
+ * authentication is verified by WordPress core (`X-WP-Nonce`). See docs/api/setup.md.
  *
  * @since 1.0.0
  */
 class SetupWizardController extends RestController {
 
 	/**
-	 * The base route for user base endpoints.
+	 * Capability required by every setup route.
+	 */
+	const CAPABILITY = 'manage_options';
+
+	/**
+	 * Endpoint namespace.
 	 *
 	 * @var string
-	 * @since 1.0.0
 	 */
-	protected $base = 'setup-wizard';
+	protected $namespace = 'ohmylms/v1';
 
 	/**
-	 * Check setup permission for Setup wizard controller.
+	 * Route base.
+	 *
+	 * @var string
 	 */
-	public function check_setup_permission() {
-		return current_user_can( 'edit_posts' );
-	}
+	protected $rest_base = 'setup';
 
 	/**
-	 * Verify the nonce for incoming REST API requests.
-	 * This method checks the 'nonce' header in the request against the expected nonce value for the setup wizard.
+	 * Register the routes.
 	 *
-	 * @param WP_REST_Request $request The REST API request object.
-	 * @return bool|WP_Error True if the nonce is valid, WP_Error otherwise.
-	 *
-	 * @since 1.1.18
-	 */
-	public function verify_nonce( WP_REST_Request $request ) {
-		$nonce = $request->get_header( 'nonce' );
-		if ( ! wp_verify_nonce( $nonce, 'ohmylms_setup_wizard' ) ) {
-			return new WP_Error( 'invalid_nonce', __( 'Invalid nonce.', 'ohmylms' ), array( 'status' => 403 ) );
-		}
-		return true;
-	}
-
-	/**
-	 * Registers REST API routes for user operations.
-	 *
-	 * @since 1.0.0
+	 * @return void
 	 */
 	public function register_routes() {
+		$base  = '/' . $this->rest_base;
+		$steps = implode( '|', SetupSteps::ids() );
+		$step  = array(
+			'description' => __( 'Setup step id.', 'ohmylms' ),
+			'type'        => 'string',
+			'enum'        => SetupSteps::ids(),
+		);
+
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->base . '/',
+			$base,
 			array(
 				array(
-					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'update_data' ),
-					'permission_callback' => array( $this, 'check_setup_permission' ),
-					'args'                => $this->get_collection_params(),
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_item' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+				),
+				'schema' => array( $this, 'get_public_item_schema' ),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			$base . '/steps/(?P<step>' . $steps . ')',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'save_step' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array( 'step' => $step ),
 				),
 			)
 		);
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->base . '/activate-addon',
+			$base . '/steps/(?P<step>' . $steps . ')/skip',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'activate_addon' ),
-					'permission_callback' => array( $this, 'check_setup_permission' ),
+					'callback'            => array( $this, 'skip_step' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array( 'step' => $step ),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			$base . '/complete',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'complete' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			$base . '/dismiss',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'dismiss' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 					'args'                => array(
-						'slug' => array(
-							'required' => true,
-							'type'     => 'string',
+						'step' => array(
+							'description' => __( 'The step the administrator was on.', 'ohmylms' ),
+							'type'        => 'string',
+							'enum'        => SetupSteps::ids(),
 						),
 					),
 				),
@@ -93,560 +131,277 @@ class SetupWizardController extends RestController {
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->base . '/onboarding-started',
+			$base . '/reset',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'onboarding_started' ),
-					'permission_callback' => array( $this, 'check_setup_permission' ),
-				),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/onboarding-completed',
-			array(
-				array(
-					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'onboarding_completed' ),
-					'permission_callback' => array( $this, 'check_setup_permission' ),
-				),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/onboarding-skipped',
-			array(
-				array(
-					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'onboarding_skipped' ),
-					'permission_callback' => array( $this, 'check_setup_permission' ),
-				),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/import-course',
-			array(
-				array(
-					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'import_course' ),
-					'permission_callback' => array( $this, 'check_setup_permission' ),
+					'callback'            => array( $this, 'reset' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 				),
 			)
 		);
 	}
 
 	/**
-	 * Fires the onboarding started telemetry event.
+	 * Check that the user may read the wizard state.
 	 *
-	 * @since  1.1.16
-	 * @param WP_REST_Request $request REST request.
-	 * @return WP_REST_Response
+	 * @param WP_REST_Request $request Request.
+	 * @return true|WP_Error
 	 */
-	public function onboarding_started( WP_REST_Request $request ) {
-		$nonce_verification = $this->verify_nonce( $request );
-
-		if ( is_wp_error( $nonce_verification ) ) {
-			return rest_ensure_response( $nonce_verification );
+	public function get_item_permissions_check( $request ) {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			return new WP_Error( 'ohmylms_setup_cannot_view', __( 'Sorry, you are not allowed to view the setup.', 'ohmylms' ), array( 'status' => rest_authorization_required_code() ) );
 		}
 
-		/**
-		 * Fires when the setup wizard onboarding starts.
-		 *
-		 * @since 1.1.16
-		 */
-		do_action( 'ohmylms_onboarding_started' );
-
-		return rest_ensure_response(
-			array(
-				'status'  => 'success',
-				'message' => __( 'Onboarding started event tracked.', 'ohmylms' ),
-			)
-		);
+		return true;
 	}
 
 	/**
-	 * Fires the onboarding completed telemetry event.
+	 * Check that the user may run the wizard.
 	 *
-	 * @since  1.1.16
-	 * @param WP_REST_Request $request REST request.
-	 * @return WP_REST_Response
+	 * @param WP_REST_Request $request Request.
+	 * @return true|WP_Error
 	 */
-	public function onboarding_completed( WP_REST_Request $request ) {
-		$nonce_verification = $this->verify_nonce( $request );
-
-		if ( is_wp_error( $nonce_verification ) ) {
-			return rest_ensure_response( $nonce_verification );
+	public function update_item_permissions_check( $request ) {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			return new WP_Error( 'ohmylms_setup_cannot_manage', __( 'Sorry, you are not allowed to run the setup.', 'ohmylms' ), array( 'status' => rest_authorization_required_code() ) );
 		}
 
-		/**
-		 * Fires when the setup wizard onboarding is completed.
-		 *
-		 * @since 1.1.16
-		 */
-		do_action( 'ohmylms_onboarding_completed' );
-
-		return rest_ensure_response(
-			array(
-				'status'  => 'success',
-				'message' => __( 'Onboarding completed event tracked.', 'ohmylms' ),
-			)
-		);
+		return true;
 	}
 
 	/**
-	 * Fires the onboarding skipped telemetry event.
+	 * Current wizard state.
 	 *
-	 * @since  1.1.17
-	 * @param WP_REST_Request $request REST request.
+	 * @param WP_REST_Request $request Request.
 	 * @return WP_REST_Response
 	 */
-	public function onboarding_skipped( WP_REST_Request $request ) {
-		$nonce_verification = $this->verify_nonce( $request );
-
-		if ( is_wp_error( $nonce_verification ) ) {
-			return rest_ensure_response( $nonce_verification );
-		}
-
-		$step = sanitize_text_field( (string) ( $request->get_param( 'step' ) ?? '' ) );
-
-		/**
-		 * Fires when the user exits the setup wizard without completing it.
-		 *
-		 * @since 1.1.17
-		 * @param string $step The wizard step ID the user was on when they exited.
-		 */
-		do_action( 'ohmylms_onboarding_skipped', $step );
-
-		return rest_ensure_response(
-			array(
-				'status'  => 'success',
-				'message' => __( 'Onboarding skipped event tracked.', 'ohmylms' ),
-			)
-		);
+	public function get_item( $request ) {
+		return rest_ensure_response( SetupService::state() );
 	}
 
 	/**
-	 * Import a sample course from JSON data.
+	 * Save one step and mark it done.
 	 *
-	 * @param WP_REST_Request $request REST request.
+	 * @param WP_REST_Request $request Request.
 	 * @return WP_REST_Response|WP_Error
 	 */
-	public function import_course( WP_REST_Request $request ) {
-		$nonce_verification = $this->verify_nonce( $request );
-
-		if ( is_wp_error( $nonce_verification ) ) {
-			return rest_ensure_response( $nonce_verification );
+	public function save_step( $request ) {
+		$body = $this->read_body( $request );
+		if ( is_wp_error( $body ) ) {
+			return $body;
 		}
+		$result = SetupService::save_step( (string) $request['step'], $body );
 
-		$courses_data = $request->get_json_params();
-
-		if ( empty( $courses_data ) || ! is_array( $courses_data ) ) {
-			return new WP_Error( 'invalid_course_data', __( 'Invalid course data provided.', 'ohmylms' ), array( 'status' => 400 ) );
-		}
-
-		$course_ids = array();
-		$is_first   = ! get_option( 'ohmylms_first_course_created', false );
-
-		foreach ( $courses_data as $course_data ) {
-			if ( ! isset( $course_data['title'] ) ) {
-				continue;
-			}
-
-			// Create the course.
-			$course_id = wp_insert_post(
-				array(
-					'post_title'   => sanitize_text_field( $course_data['title'] ),
-					'post_content' => wp_kses_post( $course_data['content'] ),
-					'post_status'  => 'draft',
-					'post_type'    => 'ohmylms-course',
-					'post_author'  => get_current_user_id(),
-				)
-			);
-
-			if ( is_wp_error( $course_id ) ) {
-				continue;
-			}
-			$this->update_default_meta_data( $course_id );
-
-			$course_ids[] = $course_id;
-
-			// Import chapters and lessons.
-			if ( ! empty( $course_data['contents'] ) && is_array( $course_data['contents'] ) ) {
-				$chapter_order = 0;
-				foreach ( $course_data['contents'] as $chapter_data ) {
-					$this->import_chapter( $course_id, $chapter_data, $chapter_order++ );
-				}
-			}
-		}
-
-		if ( empty( $course_ids ) ) {
-			return new WP_Error( 'course_import_failed', __( 'Failed to import sample course.', 'ohmylms' ), array( 'status' => 500 ) );
-		}
-
-		if ( $is_first ) {
-			do_action( 'ohmylms_after_creating_first_course', $course_ids[0], null );
-		}
-
-		return rest_ensure_response(
-			array(
-				'status'     => 'success',
-				'message'    => __( 'Sample course imported successfully.', 'ohmylms' ),
-				'course_ids' => $course_ids,
-			)
-		);
-	}
-
-
-	/**
-	 * Update default meta data
-	 *
-	 * @param int $course_id Course identifier.
-	 */
-	private function update_default_meta_data( $course_id ) {
-		update_post_meta( $course_id, '_access_type', 'public' );
-		update_post_meta( $course_id, '_level', 'beginner' );
-		update_post_meta( $course_id, '_type', 'self-paced' );
-		update_post_meta( $course_id, '_price_type', 'free' );
-		update_post_meta( $course_id, '_price', 0 );
-		update_post_meta( $course_id, '_regular_price', 0 );
+		return $this->step_response( $result );
 	}
 
 	/**
-	 * Import a chapter and its contents.
+	 * Skip one step.
 	 *
-	 * @param int   $course_id Course identifier.
-	 * @param array $chapter_data Chapter data.
-	 * @param int   $order Order.
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
 	 */
-	private function import_chapter( $course_id, $chapter_data, $order ) {
-		if ( empty( $chapter_data['title'] ) ) {
-			return;
-		}
+	public function skip_step( $request ) {
+		return $this->step_response( SetupService::skip_step( (string) $request['step'] ) );
+	}
 
-		// Create the chapter.
-		$chapter_id = wp_insert_post(
-			array(
-				'post_title'   => sanitize_text_field( $chapter_data['title'] ),
-				'post_content' => '',
-				'post_status'  => 'publish',
-				'post_type'    => 'ohmylms-chapter',
-				'post_author'  => get_current_user_id(),
-			)
-		);
+	/**
+	 * Complete the wizard.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function complete( $request ) {
+		return $this->state_response( SetupService::complete() );
+	}
 
-		if ( is_wp_error( $chapter_id ) ) {
-			return;
-		}
+	/**
+	 * Leave the wizard without completing it.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function dismiss( $request ) {
+		$step = $request->get_param( 'step' );
 
-		// Associate chapter with course.
-		global $wpdb;
-		$table_name = $wpdb->prefix . 'ohmylms_chapter_relationship';
-		$wpdb->insert(
-			$table_name,
-			array(
-				'course_id'    => $course_id,
-				'chapter_id'   => $chapter_id,
-				'order_number' => $order,
-			)
-		);
+		return $this->state_response( SetupService::dismiss( is_string( $step ) ? $step : '' ) );
+	}
 
-		// Import lessons for the chapter.
-		if ( ! empty( $chapter_data['contents'] ) && is_array( $chapter_data['contents'] ) ) {
-			$content_order = 0;
-			foreach ( $chapter_data['contents'] as $content_data ) {
-				$this->import_content( $chapter_id, $content_data, $content_order++ );
-			}
+	/**
+	 * Reset the wizard progress.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function reset( $request ) {
+		return $this->state_response( SetupService::reset() );
+	}
+
+	/**
+	 * The wizard's category names become top-level curriculum items (course categories were replaced by
+	 * the curriculum). Names that already exist are left alone. Kept for the placement integration test.
+	 *
+	 * @param array $request Array with an optional `category` list of names.
+	 * @return void
+	 */
+	private function save_terms( $request ) {
+		if ( isset( $request['category'] ) && is_array( $request['category'] ) ) {
+			Placement::ensure_items( array_map( 'sanitize_text_field', array_map( 'strval', $request['category'] ) ) );
 		}
 	}
 
 	/**
-	 * Import a content item (lesson, quiz, etc.) and associate it with a chapter.
+	 * Decode the JSON body (an empty body is an empty object).
 	 *
-	 * @param int   $chapter_id Chapter identifier.
-	 * @param array $content_data Content data.
-	 * @param int   $order Order.
+	 * @param WP_REST_Request $request Request.
+	 * @return array|null|WP_Error Decoded object, null for no body.
 	 */
-	private function import_content( $chapter_id, $content_data, $order ) {
-		if ( empty( $content_data['title'] ) || empty( $content_data['type'] ) ) {
-			return;
+	private function read_body( $request ) {
+		if ( '' === trim( (string) $request->get_body() ) ) {
+			return null;
+		}
+		$body = $request->get_json_params();
+		if ( ! is_array( $body ) ) {
+			return new WP_Error( 'ohmylms_setup_invalid_body', __( 'Send a JSON object.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
 
-		$post_type = '';
-		switch ( $content_data['type'] ) {
-			case 'ohmylms-lesson':
-				$post_type = 'ohmylms-lesson';
-				break;
-			case 'ohmylms-quiz':
-				$post_type = 'ohmylms-quiz';
-				break;
-			// Add other content types here if needed.
-			default:
-				return;
-		}
-
-		// Create the content post.
-		$content_id = wp_insert_post(
-			array(
-				'post_title'   => sanitize_text_field( $content_data['title'] ),
-				'post_content' => wp_kses_post( $content_data['content'] ),
-				'post_status'  => 'publish',
-				'post_type'    => $post_type,
-				'post_author'  => get_current_user_id(),
-			)
-		);
-
-		if ( is_wp_error( $content_id ) ) {
-			return;
-		}
-
-		// Associate content with chapter.
-		global $wpdb;
-		$table_name = $wpdb->prefix . 'ohmylms_content_relationship';
-
-		$content_type_for_db = isset( $content_data['content_type'] ) ? $content_data['content_type'] : '';
-		if ( 'ohmylms-quiz' === $post_type ) {
-			$content_type_for_db = 'quiz';
-		}
-
-		$wpdb->insert(
-			$table_name,
-			array(
-				'chapter_id'   => $chapter_id,
-				'content_id'   => $content_id,
-				'content_type' => $content_type_for_db,
-				'order_number' => $order,
-			)
-		);
-	}
-
-
-	/**
-	 * Save setup wizard data
-	 *
-	 * @param mixed $request REST request.
-	 */
-	public function update_data( $request ) {
-		$nonce_verification = $this->verify_nonce( $request );
-
-		if ( is_wp_error( $nonce_verification ) ) {
-			return rest_ensure_response( $nonce_verification );
-		}
-
-		$this->save_currency_data( $request );
-		$this->create_contact( $request );
-		$this->save_layout_settings( $request );
-		$this->save_design_data( $request );
-
-		if ( isset( $request['optin'] ) && is_array( $request['optin'] ) ) {
-			foreach ( $request['optin'] as $key => $payment ) {
-				update_option( $key, $payment );
-			}
-		}
-
-		// Save full wizard data.
-		if ( isset( $request['wizard_data'] ) ) {
-			update_option( 'ohmylms_setup_wizard_data', $request['wizard_data'] );
-		}
-
-		// Save certificate ID if provided.
-		if ( isset( $request['certificate_id'] ) ) {
-			update_option( 'ohmylms_setup_wizard_certificate_id', $request['certificate_id'] );
-		}
-
-		flush_rewrite_rules( true );
-
-		if ( 'yes' === get_option( 'ohmylms_allow_tracking', 'no' ) ) {
-			/**
-			 * Fires after tracking consent is accepted.
-			 *
-			 * @since 1.1.10
-			 */
-			do_action( 'ohmylms_after_accept_consent' );
-		}
-
-		return rest_ensure_response(
-			array(
-				'status'  => 'success',
-				'message' => __( 'Save data successfully.', 'ohmylms' ),
-			)
-		);
+		return $body;
 	}
 
 	/**
-	 * Activate addon
+	 * Response of a step action: the new state and the step result.
 	 *
-	 * @param mixed $request REST request.
+	 * @param array|WP_Error $result Step result or error.
+	 * @return WP_REST_Response|WP_Error
 	 */
-	public function activate_addon( $request ) {
-		$slug = sanitize_text_field( $request['slug'] );
-
-		if ( ! current_user_can( 'activate_plugins' ) ) {
-			return new WP_Error( 'rest_forbidden', __( 'You do not have permissions to activate plugins.', 'ohmylms' ), array( 'status' => 403 ) );
-		}
-
-		$result = activate_plugin( $slug );
-
+	private function step_response( $result ) {
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
 
 		return rest_ensure_response(
 			array(
-				'status'  => 'success',
-				'message' => __( 'Plugin activated successfully.', 'ohmylms' ),
+				'state'  => SetupService::state(),
+				'result' => $result,
 			)
 		);
 	}
 
-
 	/**
-	 * Save email settings for Setup wizard controller.
+	 * Response of a wizard-level action: the new state.
 	 *
-	 * @param mixed $request REST request.
+	 * @param true|WP_Error $outcome Outcome of the service call.
+	 * @return WP_REST_Response|WP_Error
 	 */
-	private function save_email_settings( $request ) {
-
-		if ( isset( $request['logo'] ) ) {
-			update_option( 'ohmylms_email_branding_image', sanitize_text_field( $request['logo'] ) );
+	private function state_response( $outcome ) {
+		if ( is_wp_error( $outcome ) ) {
+			return $outcome;
 		}
 
-		if ( isset( $request['branding_title'] ) ) {
-			update_option( 'ohmylms_branding_title', sanitize_text_field( $request['branding_title'] ) );
-		}
-
-		if ( isset( $request['background_color'] ) ) {
-			update_option( 'ohmylms_email_background_color', sanitize_text_field( $request['background_color'] ) );
-		}
-
-		if ( isset( $request['base_color'] ) ) {
-			update_option( 'ohmylms_email_base_color', sanitize_text_field( $request['base_color'] ) );
-		}
-
-		if ( isset( $request['body_background_color'] ) ) {
-			update_option( 'ohmylms_email_body_background_color', sanitize_text_field( $request['body_background_color'] ) );
-		}
-
-		if ( isset( $request['body_text_color'] ) ) {
-			update_option( 'ohmylms_email_body_text_color', sanitize_text_field( $request['body_text_color'] ) );
-		}
-
-		if ( isset( $request['sender_name'] ) ) {
-			update_option( 'ohmylms_email_sender_name', sanitize_text_field( $request['sender_name'] ) );
-		}
-
-		if ( isset( $request['sender_email_address'] ) ) {
-			update_option( 'ohmylms_email_sender_email_address', sanitize_text_field( $request['sender_email_address'] ) );
-		}
-
-		if ( isset( $request['email_footer_text'] ) ) {
-			update_option( 'ohmylms_email_footer_text', sanitize_text_field( $request['email_footer_text'] ) );
-		}
+		return rest_ensure_response( array( 'state' => SetupService::state() ) );
 	}
 
 	/**
-	 * The wizard's "category" names become top-level curriculum items (course categories were replaced
-	 * by the curriculum). Names that already exist are left alone.
+	 * JSON schema of the wizard state.
 	 *
-	 * @param mixed $request REST request.
+	 * @return array
 	 */
-	private function save_terms( $request ) {
-		if ( isset( $request['category'] ) && is_array( $request['category'] ) ) {
-			\OhMyLMS\Curriculum\Placement::ensure_items( array_map( 'sanitize_text_field', array_map( 'strval', $request['category'] ) ) );
+	public function get_item_schema() {
+		if ( $this->schema ) {
+			return $this->add_additional_fields_schema( $this->schema );
 		}
-	}
+		$nullable_string = array(
+			'type'     => array( 'string', 'null' ),
+			'readonly' => true,
+		);
+		$this->schema    = array(
+			'$schema'    => 'http://json-schema.org/draft-04/schema#',
+			'title'      => 'ohmylms-setup',
+			'type'       => 'object',
+			'properties' => array(
+				'version'       => array(
+					'type'     => 'integer',
+					'readonly' => true,
+				),
+				'status'        => array(
+					'type'     => 'string',
+					'enum'     => array( 'not_started', 'in_progress', 'completed', 'dismissed' ),
+					'readonly' => true,
+				),
+				'current_step'  => array(
+					'type'     => array( 'string', 'null' ),
+					'enum'     => array_merge( SetupSteps::ids(), array( null ) ),
+					'readonly' => true,
+				),
+				'steps'         => array(
+					'type'     => 'array',
+					'readonly' => true,
+					'items'    => array(
+						'type'       => 'object',
+						'properties' => array(
+							'id'        => array(
+								'type' => 'string',
+								'enum' => SetupSteps::ids(),
+							),
+							'status'    => array(
+								'type' => 'string',
+								'enum' => array( 'pending', 'done', 'skipped' ),
+							),
+							'skippable' => array( 'type' => 'boolean' ),
+							'available' => array( 'type' => 'boolean' ),
+						),
+					),
+				),
+				'answers'       => array(
+					'type'       => 'object',
+					'readonly'   => true,
+					'properties' => array(
+						'experience' => array(
+							'type' => array( 'string', 'null' ),
+							'enum' => array_merge( SetupSteps::EXPERIENCES, array( null ) ),
+						),
+						'niche'      => array(
+							'type' => array( 'string', 'null' ),
+							'enum' => array_merge( SetupSteps::NICHES, array( null ) ),
+						),
+						'topics'     => array(
+							'type'  => 'array',
+							'items' => array( 'type' => 'string' ),
+						),
+					),
+				),
+				'preferences'   => array(
+					'type'       => 'object',
+					'readonly'   => true,
+					'properties' => array(
+						'currency'           => array( 'type' => 'string' ),
+						'currency_pos'       => array( 'type' => 'string' ),
+						'price_num_decimals' => array( 'type' => 'integer' ),
+					),
+				),
+				'starter_pages' => array(
+					'type'     => 'array',
+					'readonly' => true,
+					'items'    => array(
+						'type'       => 'object',
+						'properties' => array(
+							'key'     => array( 'type' => 'string' ),
+							'title'   => array( 'type' => 'string' ),
+							'slug'    => array( 'type' => 'string' ),
+							'page_id' => array( 'type' => 'integer' ),
+							'status'  => array(
+								'type' => 'string',
+								'enum' => array( 'ready', 'adoptable', 'missing' ),
+							),
+						),
+					),
+				),
+				'started_at'    => $nullable_string,
+				'completed_at'  => $nullable_string,
+			),
+		);
 
-	/**
-	 * Save payment data for Setup wizard controller.
-	 *
-	 * @param mixed $request REST request.
-	 */
-	private function save_payment_data( $request ) {
-		if ( isset( $request['payment'] ) && is_array( $request['payment'] ) ) {
-			foreach ( $request['payment'] as $key => $payment ) {
-				update_option( "{$key}", $payment );
-			}
-		}
-	}
-
-	/**
-	 * Save permalink data for Setup wizard controller.
-	 *
-	 * @param mixed $request REST request.
-	 */
-	private function save_permalink_data( $request ) {
-		if ( isset( $request['permalink'] ) && is_array( $request['permalink'] ) ) {
-			foreach ( $request['permalink'] as $key => $payment ) {
-				update_option( $key, $payment );
-			}
-			flush_rewrite_rules( true );
-		}
-	}
-
-	/**
-	 * Save currency data for Setup wizard controller.
-	 *
-	 * @param mixed $request REST request.
-	 */
-	private function save_currency_data( $request ) {
-		if ( isset( $request['currency'] ) && is_array( $request['currency'] ) ) {
-			foreach ( $request['currency'] as $key => $payment ) {
-				update_option( $key, $payment );
-			}
-		}
-	}
-
-	/**
-	 * Save design data for Setup wizard controller.
-	 *
-	 * @param mixed $request REST request.
-	 */
-	private function save_design_data( $request ) {
-		if ( isset( $request['design'] ) && is_array( $request['design'] ) ) {
-			foreach ( $request['design'] as $key => $design ) {
-				update_option( $key, $design );
-			}
-		}
-	}
-
-
-	/**
-	 * Create contact for Setup wizard controller.
-	 *
-	 * @param mixed $request REST request.
-	 */
-	private function create_contact( $request ) {
-		if ( isset( $request['contact'] ) ) {
-			$email      = isset( $request['contact']['email'] ) ? sanitize_text_field( $request['contact']['email'] ) : '';
-			$name       = isset( $request['contact']['name'] ) ? sanitize_text_field( $request['contact']['name'] ) : '';
-			$setup_data = isset( $request['wizard_data'] ) ? $request['wizard_data'] : array();
-
-			$createContactInstance = new \OhMyLMS\SetupWizard\CreateContact( $email, $name, $setup_data );
-			$response              = $createContactInstance->create_contact_via_webhook();
-		}
-	}
-
-	/**
-	 * Save layout settings for Setup wizard controller.
-	 *
-	 * @param mixed $request REST request.
-	 */
-	private function save_layout_settings( $request ) {
-		$design_obj = new \OhMyLMS\Admin\Settings\Design();
-		$settings   = $design_obj->get_settings();
-		if ( is_array( $settings ) ) {
-			foreach ( $settings as $setting ) {
-				if ( isset( $setting['id'], $setting['value'] ) ) {
-					if ( 'ohmylms_archive_page_row' == $setting['id'] ) {
-						$setting['value'] = array();
-					}
-					update_option( $setting['id'], $setting['value'] );
-				}
-			}
-		}
+		return $this->add_additional_fields_schema( $this->schema );
 	}
 }

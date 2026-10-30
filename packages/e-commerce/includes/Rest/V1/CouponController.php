@@ -1,600 +1,714 @@
 <?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer classmap path; see docs/CODING-STANDARDS.md.
+/**
+ * Coupon REST controller.
+ *
+ * @package OhMyLMS
+ */
 
 namespace OhMyLMS\Commerce\Rest\V1;
 
 use OhMyLMS\Commerce\Abstracts\RestController;
 use OhMyLMS\Commerce\Data\Coupon;
-use OhMyLMS\Commerce\EcommerceDateTime;
+use WP_Error;
+use WP_Post;
+use WP_Query;
+use WP_REST_Request;
+use WP_REST_Response;
+use WP_REST_Server;
 
 /**
- * Plugin coupon controller implementation.
+ * Coupons under `ohmylms-commerce/v1/coupons`. See docs/api/commerce.md for the contract.
+ *
+ * Only rules the cart enforces are exposed: discount type and amount, start and expiry date, total
+ * and per-user usage limits, individual use and the course scope.
+ *
+ * @since 1.0.0
  */
 class CouponController extends RestController {
 
 	/**
-	 * Base.
+	 * Post type of coupons.
+	 */
+	const POST_TYPE = 'ohmylms_coupon';
+
+	/**
+	 * Discount types understood by the cart (Discounts::apply_coupon).
+	 */
+	const DISCOUNT_TYPES = array( 'percent', 'flat-rate' );
+
+	/**
+	 * Sort keys and the WP_Query orderby behind each.
+	 */
+	const ORDERBY = array(
+		'date'        => 'date',
+		'code'        => 'title',
+		'usage_count' => 'meta_value_num',
+	);
+
+	/**
+	 * Route base.
 	 *
-	 * @var mixed
+	 * @var string
 	 */
-	protected $base = 'coupons';
+	protected $rest_base = 'coupons';
 
 	/**
-	 * Check coupon permission for Coupon controller.
-	 */
-	public function check_coupon_permission() {
-		return current_user_can( 'edit_posts' );
-	}
-
-	/**
-	 * Register routes for Coupon controller.
+	 * Register the routes.
 	 */
 	public function register_routes() {
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->base . '/',
+			'/' . $this->rest_base,
 			array(
 				array(
-					'methods'             => \WP_REST_Server::READABLE,
+					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_items' ),
-					'permission_callback' => array( $this, 'check_coupon_permission' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
 					'args'                => $this->get_collection_params(),
 				),
 				array(
-					'methods'             => \WP_REST_Server::CREATABLE,
+					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_item' ),
-					'permission_callback' => array( $this, 'check_coupon_permission' ),
+					'permission_callback' => array( $this, 'create_item_permissions_check' ),
+					'args'                => $this->get_endpoint_args_for_item_schema( WP_REST_Server::CREATABLE ),
 				),
-				array(
-					'methods'             => \WP_REST_Server::DELETABLE,
-					'callback'            => array( $this, 'delete_item' ),
-					'permission_callback' => array( $this, 'check_coupon_permission' ),
-				),
+				'schema' => array( $this, 'get_public_item_schema' ),
 			)
 		);
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->base . '/(?P<id>[\d]+)',
+			'/' . $this->rest_base . '/(?P<id>[\d]+)',
 			array(
-				'args' => array(
+				'args'   => array(
 					'id' => array(
 						'description' => __( 'Unique identifier for the coupon.', 'ohmylms' ),
 						'type'        => 'integer',
+						'minimum'     => 1,
 					),
 				),
 				array(
-					'methods'             => \WP_REST_Server::READABLE,
+					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_item' ),
-					'permission_callback' => array( $this, 'check_coupon_permission' ),
-				),
-				array(
-					'methods'             => \WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'update_item' ),
-					'permission_callback' => array( $this, 'check_coupon_permission' ),
-				),
-				array(
-					'methods'             => \WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'update_item_status' ),
-					'permission_callback' => array( $this, 'check_coupon_permission' ),
-				),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/(?P<id>[\d]+)/status',
-			array(
-				'args' => array(
-					'id' => array(
-						'description' => __( 'Unique identifier for the coupon.', 'ohmylms' ),
-						'type'        => 'integer',
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'args'                => array(
+						'context' => $this->get_context_param( array( 'default' => 'view' ) ),
 					),
 				),
 				array(
-					'methods'             => \WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'update_item_status' ),
-					'permission_callback' => array( $this, 'check_coupon_permission' ),
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'update_item' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
 				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'delete_item' ),
+					'permission_callback' => array( $this, 'delete_item_permissions_check' ),
+				),
+				'schema' => array( $this, 'get_public_item_schema' ),
 			)
 		);
 	}
 
 	/**
-	 * Get items for Coupon controller.
+	 * Permission: list coupons.
 	 *
-	 * @param mixed $request REST request.
+	 * @param WP_REST_Request $request Request.
+	 * @return true|WP_Error
+	 */
+	public function get_items_permissions_check( $request ) {
+		return $this->authorize( 'ohmylms_coupon_cannot_view', __( 'Sorry, you are not allowed to view coupons.', 'ohmylms' ) );
+	}
+
+	/**
+	 * Permission: read a coupon.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return true|WP_Error
+	 */
+	public function get_item_permissions_check( $request ) {
+		return $this->authorize( 'ohmylms_coupon_cannot_view', __( 'Sorry, you are not allowed to view coupons.', 'ohmylms' ) );
+	}
+
+	/**
+	 * Permission: create a coupon.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return true|WP_Error
+	 */
+	public function create_item_permissions_check( $request ) {
+		return $this->authorize( 'ohmylms_coupon_cannot_create', __( 'Sorry, you are not allowed to create coupons.', 'ohmylms' ) );
+	}
+
+	/**
+	 * Permission: update a coupon.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return true|WP_Error
+	 */
+	public function update_item_permissions_check( $request ) {
+		return $this->authorize( 'ohmylms_coupon_cannot_edit', __( 'Sorry, you are not allowed to edit coupons.', 'ohmylms' ) );
+	}
+
+	/**
+	 * Permission: delete a coupon.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return true|WP_Error
+	 */
+	public function delete_item_permissions_check( $request ) {
+		return $this->authorize( 'ohmylms_coupon_cannot_delete', __( 'Sorry, you are not allowed to delete coupons.', 'ohmylms' ) );
+	}
+
+	/**
+	 * Build the not-found error.
+	 *
+	 * @return WP_Error
+	 */
+	private function not_found() {
+		return new WP_Error( 'ohmylms_coupon_not_found', __( 'Coupon not found.', 'ohmylms' ), array( 'status' => 404 ) );
+	}
+
+	/**
+	 * Load a coupon post.
+	 *
+	 * @param int $id Coupon ID.
+	 * @return WP_Post|WP_Error
+	 */
+	private function get_post( $id ) {
+		$post = $id ? get_post( (int) $id ) : null;
+		if ( ! $post instanceof WP_Post || self::POST_TYPE !== $post->post_type || ! in_array( $post->post_status, array( 'publish', 'draft' ), true ) ) {
+			return $this->not_found();
+		}
+		return $post;
+	}
+
+	/**
+	 * Get coupons.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_items( $request ) {
-		$args = array(
-			'post_type'      => 'ohmylms_coupon',
-			'posts_per_page' => ! empty( $request['per_page'] ) ? intval( $request['per_page'] ) : -1,
-			'paged'          => ! empty( $request['page'] ) ? intval( $request['page'] ) : 1,
-			'post_status'    => array( 'draft', 'publish' ),
-		);
-
-		// Add meta_query for title search if provided.
-		if ( ! empty( $request['search'] ) ) {
-			$args['meta_query'] = array(
-				array(
-					'key'     => 'title',
-					'value'   => esc_html( $request['search'] ),
-					'compare' => 'LIKE',
-				),
-			);
-		}
-
-		$query   = new \WP_Query( $args );
-		$coupons = array();
-
-		foreach ( $query->posts as $post ) {
-			$response  = $this->prepare_item_for_response( $post, $request );
-			$coupons[] = $response->get_data();
-		}
-
-		$rest_response = rest_ensure_response( $coupons );
-
-		// Add the total found posts header.
-		$rest_response->header( 'X-WP-Total', (int) $query->found_posts );
-
-		return $rest_response;
-	}
-
-	/**
-	 * Create a new coupon item.
-	 *
-	 * @param \WP_REST_Request $request The REST request object.
-	 * @return \WP_Error|\WP_REST_Response The response object containing the result of the coupon creation or an error.
-	 *
-	 * @since 1.0.0
-	 */
-	public function create_item( $request ) {
-		if ( ! empty( $request['id'] ) ) {
-			/* translators: %s: post type */
-			return new \WP_Error( 'ohmylms_rest_ohmylms_coupon_exists', __( 'Cannot create existing %s.', 'ohmylms' ), array( 'status' => 400 ) );
-		}
-
-		$coupon_id = $this->save_coupon( $request );
-		if ( is_wp_error( $coupon_id ) ) {
-			return $coupon_id;
-		}
-
-		$post = get_post( $coupon_id );
-
-		$this->update_additional_fields_for_object( $post, $request );
-
-		$request->set_param( 'context', 'edit' );
-		$response = $this->prepare_item_for_response( $post, $request );
-		$response = rest_ensure_response( $response );
-		$response->set_status( 201 );
-		$response->header( 'Location', rest_url( sprintf( '/%s/%s/%d', $this->namespace, $this->rest_base, $post->ID ) ) );
-
-		return $response;
-	}
-
-	/**
-	 * Update item status for Coupon controller.
-	 *
-	 * @param mixed $request REST request.
-	 */
-	public function update_item_status( $request ) {
-		$id     = isset( $request['id'] ) ? absint( $request['id'] ) : 0;
-		$status = isset( $request['status'] ) ? sanitize_key( $request['status'] ) : 'publish';
-
-		if ( ! $id || empty( $status ) ) {
-			return new \WP_Error( 'ohmylms_rest_invalid_params', __( 'Invalid coupon ID or status.', 'ohmylms' ), array( 'status' => 400 ) );
-		}
-
-		$post = get_post( $id );
-		if ( ! $post || 'ohmylms_coupon' !== $post->post_type ) {
-			return new \WP_Error( 'ohmylms_rest_coupon_not_found', __( 'Coupon not found.', 'ohmylms' ), array( 'status' => 404 ) );
-		}
-
-		$updated = wp_update_post(
-			array(
-				'ID'          => $id,
-				'post_status' => $status,
+		$page     = max( 1, (int) $request['page'] );
+		$per_page = min( 100, max( 1, (int) $request['per_page'] ) );
+		$orderby  = self::ORDERBY[ $request['orderby'] ];
+		$args     = array(
+			'post_type'              => self::POST_TYPE,
+			'post_status'            => 'any' === $request['status'] ? array( 'publish', 'draft' ) : $request['status'],
+			'posts_per_page'         => $per_page,
+			'paged'                  => $page,
+			'orderby'                => array(
+				$orderby => strtoupper( $request['order'] ),
+				'ID'     => 'DESC',
 			),
-			true
+			'ignore_sticky_posts'    => true,
+			'no_found_rows'          => false,
+			'update_post_term_cache' => false,
 		);
-
-		if ( is_wp_error( $updated ) ) {
-			return $updated;
+		if ( 'meta_value_num' === $orderby ) {
+			$args['meta_key'] = 'usage_count'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Sorting by a single indexed key.
+		}
+		if ( '' !== (string) $request['search'] ) {
+			$args['s'] = (string) $request['search'];
 		}
 
-		// Return the updated coupon data.
-		$post     = get_post( $id );
-		$response = $this->prepare_item_for_response( $post, $request );
-		return rest_ensure_response( $response );
-	}
-
-
-	/**
-	 * Create a new coupon item.
-	 *
-	 * @param \WP_REST_Request $request The REST request object.
-	 * @return \WP_Error|\WP_REST_Response The response object containing the result of the coupon creation or an error.
-	 *
-	 * @since 1.0.0
-	 */
-	public function update_item( $request ) {
-		if ( empty( $request['id'] ) ) {
-			/* translators: %s: post type */
-			return new \WP_Error( 'ohmylms_rest_ohmylms_coupon_not_exists', __( 'Cannot update %s.', 'ohmylms' ), array( 'status' => 400 ) );
+		$query = new WP_Query( $args );
+		$total = (int) $query->found_posts;
+		if ( $total < 1 && $page > 1 ) {
+			// Past the last page WP_Query reports no total; count again without paging.
+			$count_args = array_merge(
+				$args,
+				array(
+					'paged'          => 1,
+					'posts_per_page' => 1,
+				)
+			);
+			$total      = (int) ( new WP_Query( $count_args ) )->found_posts;
+		}
+		$total_pages = (int) ceil( $total / $per_page );
+		if ( $total > 0 && $page > $total_pages ) {
+			return new WP_Error( 'ohmylms_coupon_invalid_page', __( 'The page number requested is larger than the number of pages available.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
 
-		$coupon_id = $this->save_coupon( $request );
-		if ( is_wp_error( $coupon_id ) ) {
-			return $coupon_id;
+		$items = array();
+		foreach ( $query->posts as $post ) {
+			$items[] = $this->prepare_response_for_collection( $this->prepare_item_for_response( $post, $request ) );
 		}
-
-		$post = get_post( $coupon_id );
-
-		$this->update_additional_fields_for_object( $post, $request );
-
-		$request->set_param( 'context', 'edit' );
-		$response = $this->prepare_item_for_response( $post, $request );
-		$response = rest_ensure_response( $response );
-		$response->set_status( 201 );
-		$response->header( 'Location', rest_url( sprintf( '/%s/%s/%d', $this->namespace, $this->rest_base, $post->ID ) ) );
-
+		$response = rest_ensure_response( $items );
+		$response->header( 'X-WP-Total', $total );
+		$response->header( 'X-WP-TotalPages', $total_pages );
 		return $response;
 	}
 
 	/**
-	 * Get a coupon item.
+	 * Get one coupon.
 	 *
-	 * @param \WP_REST_Request $request The REST request object.
-	 * @return \WP_Error|\WP_REST_Response The response object containing the result of the coupon creation or an error.
-	 *
-	 * @since 1.0.0
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_item( $request ) {
-		$id = isset( $request['id'] ) ? absint( $request['id'] ) : 0;
-		if ( ! $id ) {
-			return new \WP_Error( 'ohmylms_rest_invalid_id', __( 'Invalid coupon ID.', 'ohmylms' ), array( 'status' => 404 ) );
-		}
-
-		$post = get_post( $id );
-		if ( ! $post || 'ohmylms_coupon' !== $post->post_type ) {
-			return new \WP_Error( 'ohmylms_rest_coupon_not_found', __( 'Coupon not found.', 'ohmylms' ), array( 'status' => 404 ) );
-		}
-
-		$response = $this->prepare_item_for_response( $post, $request );
-		return rest_ensure_response( $response );
+		$post = $this->get_post( (int) $request['id'] );
+		return is_wp_error( $post ) ? $post : $this->prepare_item_for_response( $post, $request );
 	}
 
 	/**
-	 * Delete a coupon item.
+	 * Create a coupon.
 	 *
-	 * @param \WP_REST_Request $request The REST request object.
-	 * @return \WP_Error|\WP_REST_Response The response object containing the result of the coupon deletion or an error.
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function create_item( $request ) {
+		$coupon = new Coupon();
+		$error  = $this->apply_request( $coupon, $request, true );
+		if ( is_wp_error( $error ) ) {
+			return $error;
+		}
+		$coupon->save();
+		if ( ! $coupon->get_id() ) {
+			return new WP_Error( 'ohmylms_coupon_not_saved', __( 'The coupon could not be saved.', 'ohmylms' ), array( 'status' => 500 ) );
+		}
+		$this->apply_status( $coupon->get_id(), $request );
+		$post     = get_post( $coupon->get_id() );
+		$response = $this->prepare_item_for_response( $post, $request );
+		$response->set_status( 201 );
+		$response->header( 'Location', rest_url( sprintf( '%s/%s/%d', $this->namespace, $this->rest_base, $post->ID ) ) );
+		return $response;
+	}
+
+	/**
+	 * Update a coupon. Only the fields in the request change.
 	 *
-	 * @since 1.0.0
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function update_item( $request ) {
+		$post = $this->get_post( (int) $request['id'] );
+		if ( is_wp_error( $post ) ) {
+			return $post;
+		}
+		$coupon = new Coupon( (int) $post->ID );
+		$error  = $this->apply_request( $coupon, $request, false );
+		if ( is_wp_error( $error ) ) {
+			return $error;
+		}
+		$coupon->save();
+		$this->apply_status( $post->ID, $request );
+		clean_post_cache( $post->ID );
+		return $this->prepare_item_for_response( get_post( $post->ID ), $request );
+	}
+
+	/**
+	 * Delete a coupon permanently. Past orders keep the code they used.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
 	 */
 	public function delete_item( $request ) {
-		$ids = isset( $request['ids'] ) ? $request['ids'] : array();
-		if ( ! $ids ) {
-			return new \WP_Error( 'ohmylms_rest_invalid_id', __( 'Invalid coupon ID.', 'ohmylms' ), array( 'status' => 404 ) );
+		$post = $this->get_post( (int) $request['id'] );
+		if ( is_wp_error( $post ) ) {
+			return $post;
 		}
-
-		foreach ( $ids as $id ) {
-			$post = get_post( $id );
-			if ( ! $post || 'ohmylms_coupon' !== $post->post_type ) {
-				return new \WP_Error( 'ohmylms_rest_coupon_not_found', __( 'Coupon not found.', 'ohmylms' ), array( 'status' => 404 ) );
-			}
-
-			$deleted = wp_delete_post( $id, true );
-			if ( ! $deleted ) {
-				return new \WP_Error( 'ohmylms_rest_cannot_delete', __( 'Could not delete coupon.', 'ohmylms' ), array( 'status' => 500 ) );
-			}
+		$previous = $this->prepare_item_for_response( $post, $request )->get_data();
+		if ( ! wp_delete_post( $post->ID, true ) ) {
+			return new WP_Error( 'ohmylms_coupon_not_deleted', __( 'The coupon could not be deleted.', 'ohmylms' ), array( 'status' => 500 ) );
 		}
-
 		return rest_ensure_response(
 			array(
-				'deleted' => true,
+				'deleted'  => true,
+				'previous' => $previous,
 			)
 		);
 	}
 
 	/**
-	 * Save a coupon item to the database.
+	 * Check that no other coupon uses a code.
 	 *
-	 * @param \WP_REST_Request $request The REST request object containing the coupon data.
-	 * @return int|\WP_Error The ID of the saved coupon or a WP_Error object on failure.
-	 *
-	 * @since 1.0.0
+	 * @param string $code       Formatted code.
+	 * @param int    $exclude_id Coupon to ignore (the one being edited).
+	 * @return bool
 	 */
-	protected function save_coupon( $request ) {
-		try {
-			$coupon = $this->prepare_item_for_database( $request );
-			if ( is_wp_error( $coupon ) ) {
-				return $coupon;
-			}
-			$coupon->save();
-			return $coupon->get_id();
-		} catch ( \Exception $e ) {
-			return new \WP_Error( $e->getErrorCode(), $e->getMessage(), $e->getErrorData() );
-		}
+	private function code_in_use( $code, $exclude_id ) {
+		$ids = get_posts(
+			array(
+				'post_type'      => self::POST_TYPE,
+				'post_status'    => array( 'publish', 'draft' ),
+				'title'          => $code,
+				'fields'         => 'ids',
+				'posts_per_page' => 5,
+				'post__not_in'   => array( (int) $exclude_id ),
+				'no_found_rows'  => true,
+			)
+		);
+		return ! empty( $ids );
 	}
 
 	/**
-	 * Prepare a coupon item for the database.
+	 * Validate the request against the business rules and copy it onto the coupon.
 	 *
-	 * @param \WP_REST_Request $request The REST request object containing the coupon data.
-	 * @return \OhMyLMS\Commerce\Data\Coupon|\WP_Error The coupon object or a WP_Error object on failure.
+	 * Schema validation (types, enums, minimums) has already run. This checks rules that need several
+	 * fields together, so a rejected request changes nothing.
 	 *
-	 * @since 1.0.0
+	 * @param Coupon          $coupon   Coupon to fill.
+	 * @param WP_REST_Request $request  Request.
+	 * @param bool            $creating True when creating.
+	 * @return true|WP_Error
 	 */
-	protected function prepare_item_for_database( $request ) {
-		$id        = isset( $request['id'] ) ? absint( $request['id'] ) : 0;
-		$coupon    = new Coupon( $id );
-		$schema    = $this->get_item_schema();
-		$data_keys = array_keys( $schema['properties'] );
+	private function apply_request( Coupon $coupon, $request, $creating ) {
+		$fail = static function ( $code, $message, $field ) {
+			return new WP_Error(
+				$code,
+				$message,
+				array(
+					'status' => 422,
+					'field'  => $field,
+				)
+			);
+		};
 
-		// Handle all writable props.
-		foreach ( $data_keys as $key ) {
-			$value = $request[ $key ];
-			if ( ! is_null( $value ) ) {
-				switch ( $key ) {
-					case 'code':
-						$coupon_code  = ohmylms_ecommerce_format_coupon_code( $value );
-						$id           = $coupon->get_id() ? $coupon->get_id() : 0;
-						$id_from_code = ohmylms_ecommerce_get_coupon_id_by_code( $coupon_code, $id );
+		$type   = $request->has_param( 'discount_type' ) ? $request['discount_type'] : $coupon->get_discount_type( 'edit' );
+		$amount = $request->has_param( 'amount' ) ? (float) $request['amount'] : (float) $coupon->get_amount( 'edit' );
+		if ( $creating && ! $request->has_param( 'amount' ) ) {
+			return $fail( 'ohmylms_coupon_amount_required', __( 'A discount amount is required.', 'ohmylms' ), 'amount' );
+		}
+		if ( $amount <= 0 ) {
+			return $fail( 'ohmylms_coupon_amount_invalid', __( 'The discount amount must be greater than zero.', 'ohmylms' ), 'amount' );
+		}
+		if ( 'percent' === $type && $amount > 100 ) {
+			return $fail( 'ohmylms_coupon_amount_invalid', __( 'A percentage discount cannot exceed 100.', 'ohmylms' ), 'amount' );
+		}
 
-						if ( $id_from_code ) {
-							return new \WP_Error( 'ohmylms_rest_coupon_code_already_exists', __( 'The coupon code already exists', 'ohmylms' ), array( 'status' => 400 ) );
-						}
-						$coupon->set_code( $coupon_code );
-						break;
-					case 'description':
-						$coupon->set_description( wp_filter_post_kses( $value ) );
-						break;
-					case 'title':
-						$coupon->set_title( esc_html( $value ) );
-						break;
-					case 'course_id_type':
-						$coupon->set_course_id_type( esc_html( $value ) );
-						break;
-					case 'date_expires':
-						// Handle DateTime array format.
-						if ( is_array( $value ) && isset( $value['date'] ) ) {
-							$coupon->set_date_expires( $value['date'] );
-						} else {
-							$coupon->set_date_expires( $value );
-						}
-						break;
-					case 'date_start':
-						// Handle DateTime array format.
-						if ( is_array( $value ) && isset( $value['date'] ) ) {
-							$coupon->set_date_start( $value['date'] );
-						} else {
-							$coupon->set_date_start( $value );
-						}
-						break;
-					default:
-						if ( is_callable( array( $coupon, "set_{$key}" ) ) ) {
-							$coupon->{"set_{$key}"}( $value );
-						}
-						break;
+		if ( $request->has_param( 'code' ) || $creating ) {
+			$code = trim( ohmylms_ecommerce_format_coupon_code( (string) $request['code'] ) );
+			if ( '' === $code || strlen( $code ) > 50 ) {
+				return $fail( 'ohmylms_coupon_code_invalid', __( 'The coupon code is required and can have at most 50 characters.', 'ohmylms' ), 'code' );
+			}
+			if ( $this->code_in_use( $code, $coupon->get_id() ) ) {
+				return new WP_Error(
+					'ohmylms_coupon_code_exists',
+					__( 'A coupon with this code already exists.', 'ohmylms' ),
+					array(
+						'status' => 409,
+						'field'  => 'code',
+					)
+				);
+			}
+			$coupon->set_code( $code );
+		}
+
+		$start   = $request->has_param( 'date_start' ) ? $this->parse_date( $request['date_start'] ) : $coupon->get_date_start( 'edit' );
+		$expires = $request->has_param( 'date_expires' ) ? $this->parse_date( $request['date_expires'] ) : $coupon->get_date_expires( 'edit' );
+		if ( false === $start || false === $expires ) {
+			return $fail( 'ohmylms_coupon_date_invalid', __( 'Dates must be valid ISO 8601 date-times.', 'ohmylms' ), false === $start ? 'date_start' : 'date_expires' );
+		}
+		$start_ts   = $this->timestamp_of( $start );
+		$expires_ts = $this->timestamp_of( $expires );
+		if ( $start_ts && $expires_ts && $expires_ts <= $start_ts ) {
+			return $fail( 'ohmylms_coupon_date_range', __( 'The expiry date must be after the start date.', 'ohmylms' ), 'date_expires' );
+		}
+
+		$limit_per_user = $request->has_param( 'usage_limit_per_user' ) ? (int) $request['usage_limit_per_user'] : (int) $coupon->get_usage_limit_per_user( 'edit' );
+		$limit          = $request->has_param( 'usage_limit' ) ? (int) $request['usage_limit'] : (int) $coupon->get_usage_limit( 'edit' );
+		if ( $limit && $limit_per_user && $limit_per_user > $limit ) {
+			return $fail( 'ohmylms_coupon_usage_limit', __( 'The per-customer limit cannot exceed the total usage limit.', 'ohmylms' ), 'usage_limit_per_user' );
+		}
+
+		$scope      = $request->has_param( 'course_id_type' ) ? $request['course_id_type'] : ( $coupon->get_course_id_type( 'edit' ) ? $coupon->get_course_id_type( 'edit' ) : 'all' );
+		$course_ids = $request->has_param( 'course_ids' ) ? array_values( array_unique( array_map( 'absint', (array) $request['course_ids'] ) ) ) : array_map( 'absint', (array) $coupon->get_course_ids( 'edit' ) );
+		if ( 'selected_course' === $scope ) {
+			if ( empty( $course_ids ) ) {
+				return $fail( 'ohmylms_coupon_courses_required', __( 'Choose at least one course, or apply the coupon to all courses.', 'ohmylms' ), 'course_ids' );
+			}
+			foreach ( $course_ids as $course_id ) {
+				if ( ! $course_id || OHMYLMS_COURSE_CPT !== get_post_type( $course_id ) ) {
+					return $fail( 'ohmylms_coupon_course_invalid', __( 'One of the selected courses does not exist.', 'ohmylms' ), 'course_ids' );
 				}
 			}
+		} else {
+			$course_ids = array();
 		}
 
-		return $coupon;
+		// All rules passed: write.
+		$coupon->set_discount_type( $type );
+		$coupon->set_amount( $amount );
+		$coupon->set_date_start( $start_ts ? $start_ts : null );
+		$coupon->set_date_expires( $expires_ts ? $expires_ts : null );
+		$coupon->set_usage_limit( $limit );
+		$coupon->set_usage_limit_per_user( $limit_per_user );
+		$coupon->set_course_id_type( $scope );
+		$coupon->set_course_ids( $course_ids );
+		if ( $request->has_param( 'title' ) ) {
+			$coupon->set_title( sanitize_text_field( (string) $request['title'] ) );
+		}
+		if ( $request->has_param( 'description' ) ) {
+			$coupon->set_description( sanitize_textarea_field( (string) $request['description'] ) );
+		}
+		if ( $request->has_param( 'individual_use' ) ) {
+			$coupon->set_individual_use( (bool) $request['individual_use'] );
+		}
+		return true;
 	}
 
 	/**
-	 * Prepare a coupon item for the REST API response.
+	 * Parse an incoming date.
 	 *
-	 * @param \WP_Post         $post The post object.
-	 * @param \WP_REST_Request $request The REST request object.
-	 * @return \WP_REST_Response The response object containing the coupon data.
-	 *
-	 * @since 1.0.0
+	 * @param mixed $value ISO 8601 string or null.
+	 * @return int|null|false Timestamp, null to clear, false when invalid.
 	 */
-	public function prepare_item_for_response( $post, $request ) {
-		$coupon = new Coupon( (int) $post->ID );
-		$_data  = $coupon->get_data();
-
-		$format_decimal = array( 'amount', 'minimum_amount', 'maximum_amount' );
-		$format_date    = array( 'date_created', 'date_modified', 'date_start', 'date_expires' );
-		$format_null    = array( 'usage_limit', 'usage_limit_per_user' );
-
-		// Format decimal values.
-		foreach ( $format_decimal as $key ) {
-			$_data[ $key ] = ohmylms_format_decimal( $_data[ $key ], 2 );
+	private function parse_date( $value ) {
+		if ( null === $value || '' === $value ) {
+			return null;
 		}
+		$timestamp = rest_parse_date( (string) $value );
+		return $timestamp ? $timestamp : false;
+	}
 
-		// Format null values.
-		foreach ( $format_null as $key ) {
-			$_data[ $key ] = $_data[ $key ] ? $_data[ $key ] : null;
+	/**
+	 * Timestamp of a stored date.
+	 *
+	 * @param mixed $value Timestamp, date object or empty.
+	 * @return int 0 when unset.
+	 */
+	private function timestamp_of( $value ) {
+		if ( is_object( $value ) && method_exists( $value, 'getTimestamp' ) ) {
+			return (int) $value->getTimestamp();
 		}
+		return $value ? (int) $value : 0;
+	}
 
-		$data = array(
-			'id'                   => $_data['id'],
-			'title'                => isset( $_data['title'] ) ? $_data['title'] : '',
-			'course_id_type'       => isset( $_data['course_id_type'] ) ? $_data['course_id_type'] : 'all',
-			'code'                 => $_data['code'],
-			'date_created'         => $_data['date_created'],
-			'date_modified'        => $_data['date_modified'],
-			'discount_type'        => $_data['discount_type'],
-			'description'          => $_data['description'],
-			'amount'               => $_data['amount'],
-			'date_expires'         => $_data['date_expires'],
-			'date_start'           => isset( $_data['date_start'] ) ? $_data['date_start'] : null,
-			'usage_count'          => $_data['usage_count'],
-			'individual_use'       => $_data['individual_use'],
-			'course_ids'           => $_data['course_ids'],
-			'excluded_course_ids'  => isset( $_data['excluded_course_ids'] ) ? $_data['excluded_course_ids'] : array(),
-			'usage_limit'          => $_data['usage_limit'],
-			'usage_limit_per_user' => $_data['usage_limit_per_user'],
-			'exclude_sale_items'   => $_data['exclude_sale_items'],
-			'minimum_amount'       => $_data['minimum_amount'],
-			'maximum_amount'       => $_data['maximum_amount'],
-			'email_restrictions'   => isset( $_data['email_restrictions'] ) ? ( $_data['email_restrictions'] ) : array(),
-			'used_by'              => $_data['used_by'],
-			'status'               => $_data['status'],
+	/**
+	 * Publish or draft the coupon when the request asks for it.
+	 *
+	 * @param int             $id      Coupon ID.
+	 * @param WP_REST_Request $request Request.
+	 * @return void
+	 */
+	private function apply_status( $id, $request ) {
+		if ( $request->has_param( 'status' ) && get_post_status( $id ) !== $request['status'] ) {
+			wp_update_post(
+				array(
+					'ID'          => $id,
+					'post_status' => $request['status'],
+				)
+			);
+		}
+	}
+
+	/**
+	 * Format a stored date for the API (site time, ISO 8601 without offset).
+	 *
+	 * @param mixed $value Stored date.
+	 * @return string|null
+	 */
+	private function format_date( $value ) {
+		$timestamp = $this->timestamp_of( $value );
+		return $timestamp ? wp_date( 'Y-m-d\TH:i:s', $timestamp ) : null;
+	}
+
+	/**
+	 * Prepare a coupon for the response.
+	 *
+	 * @param WP_Post         $item    Coupon post.
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	public function prepare_item_for_response( $item, $request ) {
+		$coupon   = new Coupon( (int) $item->ID );
+		$limit    = (int) $coupon->get_usage_limit( 'edit' );
+		$each     = (int) $coupon->get_usage_limit_per_user( 'edit' );
+		$scope    = $coupon->get_course_id_type( 'edit' );
+		$data     = array(
+			'id'                   => (int) $item->ID,
+			'code'                 => (string) $coupon->get_code( 'edit' ),
+			'title'                => (string) $coupon->get_title( 'edit' ),
+			'description'          => (string) $coupon->get_description( 'edit' ),
+			'status'               => $item->post_status,
+			'discount_type'        => in_array( $coupon->get_discount_type( 'edit' ), self::DISCOUNT_TYPES, true ) ? $coupon->get_discount_type( 'edit' ) : 'flat-rate',
+			'amount'               => number_format( (float) $coupon->get_amount( 'edit' ), 'percent' === $coupon->get_discount_type( 'edit' ) ? 2 : ohmylms_get_price_decimals(), '.', '' ),
+			'date_start'           => $this->format_date( $coupon->get_date_start( 'edit' ) ),
+			'date_expires'         => $this->format_date( $coupon->get_date_expires( 'edit' ) ),
+			'usage_count'          => (int) $coupon->get_usage_count( 'edit' ),
+			'usage_limit'          => $limit ? $limit : null,
+			'usage_limit_per_user' => $each ? $each : null,
+			'individual_use'       => in_array( $coupon->get_individual_use( 'edit' ), array( true, 'yes', 1, '1' ), true ),
+			'course_id_type'       => 'selected_course' === $scope ? 'selected_course' : 'all',
+			'course_ids'           => array_values( array_map( 'absint', (array) $coupon->get_course_ids( 'edit' ) ) ),
+			'date_created'         => wp_date( 'Y-m-d\TH:i:s', strtotime( $item->post_date_gmt . ' UTC' ) ),
+			'currency'             => get_ohmylms_currency(),
 		);
-
-		$context  = ! empty( $request['context'] ) ? $request['context'] : 'view';
-		$data     = $this->add_additional_fields_to_object( $data, $request );
-		$data     = $this->filter_response_by_context( $data, $context );
+		$data     = $this->filter_response_by_context( $data, ! empty( $request['context'] ) ? $request['context'] : 'view' );
 		$response = rest_ensure_response( $data );
-		$response->add_links( $this->prepare_links( $post, $request ) );
+		$response->add_links(
+			array(
+				'self'       => array( 'href' => rest_url( sprintf( '%s/%s/%d', $this->namespace, $this->rest_base, $item->ID ) ) ),
+				'collection' => array( 'href' => rest_url( sprintf( '%s/%s', $this->namespace, $this->rest_base ) ) ),
+			)
+		);
 		return $response;
 	}
 
-
 	/**
-	 * Prepare links for the REST API response.
+	 * Collection parameters.
 	 *
-	 * @param \WP_Post         $post The post object.
-	 * @param \WP_REST_Request $request The REST request object.
-	 * @return array The prepared links.
+	 * @return array
 	 */
-	protected function prepare_links( $post, $request ) {
-		$links = array(
-			'self'       => array(
-				'href' => rest_url( sprintf( '/%s/%s/%d', $this->namespace, $this->rest_base, $post->ID ) ),
-			),
-			'collection' => array(
-				'href' => rest_url( sprintf( '/%s/%s', $this->namespace, $this->rest_base ) ),
-			),
+	public function get_collection_params() {
+		$params = parent::get_collection_params();
+		unset( $params['context'] );
+		$params['context']  = $this->get_context_param( array( 'default' => 'view' ) );
+		$params['page']     = array_merge( $params['page'], array( 'minimum' => 1 ) );
+		$params['per_page'] = array_merge( $params['per_page'], array( 'default' => 20 ) );
+		$params['search']   = array(
+			'description'       => __( 'Limit results to coupons whose code, title or description contains this text.', 'ohmylms' ),
+			'type'              => 'string',
+			'maxLength'         => 100,
+			'sanitize_callback' => 'sanitize_text_field',
 		);
-		return $links;
+		$params['status']   = array(
+			'description' => __( 'Limit results to one status.', 'ohmylms' ),
+			'type'        => 'string',
+			'default'     => 'any',
+			'enum'        => array( 'any', 'publish', 'draft' ),
+		);
+		$params['orderby']  = array(
+			'description' => __( 'Sort the collection by this field.', 'ohmylms' ),
+			'type'        => 'string',
+			'default'     => 'date',
+			'enum'        => array_keys( self::ORDERBY ),
+		);
+		$params['order']    = array(
+			'description' => __( 'Sort direction.', 'ohmylms' ),
+			'type'        => 'string',
+			'default'     => 'desc',
+			'enum'        => array( 'asc', 'desc' ),
+		);
+		return $params;
 	}
 
-
 	/**
-	 * Get the schema for a single coupon item.
+	 * Coupon schema.
 	 *
-	 * @return array The schema for a REST API coupon item.
-	 *
-	 * @since 1.0.0
+	 * @return array
 	 */
 	public function get_item_schema() {
-		$schema = array(
+		if ( $this->schema ) {
+			return $this->add_additional_fields_schema( $this->schema );
+		}
+		$date = static function ( $description ) {
+			return array(
+				'description' => $description,
+				'type'        => array( 'string', 'null' ),
+				'format'      => 'date-time',
+				'context'     => array( 'view', 'edit' ),
+			);
+		};
+
+		$this->schema = array(
 			'$schema'    => 'http://json-schema.org/draft-04/schema#',
-			'title'      => 'Coupon Schema',
+			'title'      => 'coupon',
 			'type'       => 'object',
 			'properties' => array(
 				'id'                   => array(
-					'description' => __( 'Unique identifier for the object.', 'ohmylms' ),
+					'description' => __( 'Unique identifier for the coupon.', 'ohmylms' ),
 					'type'        => 'integer',
 					'context'     => array( 'view', 'edit' ),
 					'readonly'    => true,
 				),
 				'code'                 => array(
-					'description' => __( 'Coupon code.', 'ohmylms' ),
+					'description' => __( 'Coupon code. Unique, at most 50 characters.', 'ohmylms' ),
 					'type'        => 'string',
-					'default'     => '',
+					'maxLength'   => 50,
 					'context'     => array( 'view', 'edit' ),
+					'required'    => true,
 				),
 				'title'                => array(
-					'description' => __( 'Coupon title.', 'ohmylms' ),
+					'description' => __( 'Internal label.', 'ohmylms' ),
 					'type'        => 'string',
-					'default'     => '',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'amount'               => array(
-					'description' => __( 'Discount amount.', 'ohmylms' ),
-					'type'        => 'number',
-					'default'     => 0,
-					'context'     => array( 'view', 'edit' ),
-				),
-				'status'               => array(
-					'description' => __( 'Status of the coupon.', 'ohmylms' ),
-					'type'        => array( 'null', 'string' ),
-					'default'     => null,
-					'context'     => array( 'view', 'edit' ),
-				),
-				'date_created'         => array(
-					'description' => __( "The date the coupon was created, in the site's timezone.", 'ohmylms' ),
-					'type'        => array( 'null', 'string' ),
-					'format'      => 'date-time',
-					'default'     => null,
-					'context'     => array( 'view', 'edit' ),
-				),
-				'date_modified'        => array(
-					'description' => __( "The date the coupon was last modified, in the site's timezone.", 'ohmylms' ),
-					'type'        => array( 'null', 'string' ),
-					'format'      => 'date-time',
-					'default'     => null,
-					'context'     => array( 'view', 'edit' ),
-				),
-				'date_expires'         => array(
-					'description' => __( "The date the coupon expires, in the site's timezone.", 'ohmylms' ),
-					'type'        => array( 'null', 'string' ),
-					'format'      => 'date-time',
-					'default'     => null,
-					'context'     => array( 'view', 'edit' ),
-				),
-				'date_start'           => array(
-					'description' => __( "The date the coupon starts, in the site's timezone.", 'ohmylms' ),
-					'type'        => array( 'null', 'string' ),
-					'format'      => 'date-time',
-					'default'     => null,
-					'context'     => array( 'view', 'edit' ),
-				),
-				'discount_type'        => array(
-					'description' => __( 'Type of discount.', 'ohmylms' ),
-					'type'        => 'string',
-					'enum'        => array( 'fixed_cart', 'percent', 'fixed_course', 'other' ),
-					'default'     => 'fixed_cart',
+					'maxLength'   => 200,
 					'context'     => array( 'view', 'edit' ),
 				),
 				'description'          => array(
-					'description' => __( 'Description of the coupon.', 'ohmylms' ),
+					'description' => __( 'Internal description (plain text).', 'ohmylms' ),
 					'type'        => 'string',
-					'default'     => '',
+					'maxLength'   => 1000,
 					'context'     => array( 'view', 'edit' ),
 				),
+				'status'               => array(
+					'description' => __( 'publish = usable at checkout, draft = disabled.', 'ohmylms' ),
+					'type'        => 'string',
+					'enum'        => array( 'publish', 'draft' ),
+					'context'     => array( 'view', 'edit' ),
+				),
+				'discount_type'        => array(
+					'description' => __( 'percent = percentage of the price, flat-rate = fixed amount per cart item.', 'ohmylms' ),
+					'type'        => 'string',
+					'enum'        => self::DISCOUNT_TYPES,
+					'context'     => array( 'view', 'edit' ),
+					'required'    => true,
+				),
+				'amount'               => array(
+					'description' => __( 'Discount: a percentage (0-100] or a money amount (> 0), as a decimal string.', 'ohmylms' ),
+					'type'        => array( 'string', 'number' ),
+					'context'     => array( 'view', 'edit' ),
+					'required'    => true,
+				),
+				'date_start'           => $date( __( 'First moment the coupon works, in site time.', 'ohmylms' ) ),
+				'date_expires'         => $date( __( 'Last moment the coupon works, in site time.', 'ohmylms' ) ),
 				'usage_count'          => array(
-					'description' => __( 'Number of times the coupon has been used.', 'ohmylms' ),
+					'description' => __( 'Times the coupon has been redeemed.', 'ohmylms' ),
 					'type'        => 'integer',
-					'default'     => 0,
 					'context'     => array( 'view', 'edit' ),
-				),
-				'individual_use'       => array(
-					'description' => __( 'If true, the coupon can only be used individually.', 'ohmylms' ),
-					'type'        => 'string',
-					'default'     => 'no',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'exclude_sale_items'   => array(
-					'description' => __( 'If true, this coupon will not be applied to items that have sale prices.', 'ohmylms' ),
-					'type'        => 'string',
-					'default'     => 'no',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'course_ids'           => array(
-					'description' => __( 'List of course IDs the coupon can be used on.', 'ohmylms' ),
-					'type'        => 'array',
-					'items'       => array( 'type' => 'integer' ),
-					'default'     => array(),
-					'context'     => array( 'view', 'edit' ),
-				),
-				'excluded_course_ids'  => array(
-					'description' => __( 'List of course IDs the coupon cannot be used on.', 'ohmylms' ),
-					'type'        => 'array',
-					'items'       => array( 'type' => 'integer' ),
-					'default'     => array(),
-					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
 				),
 				'usage_limit'          => array(
-					'description' => __( 'How many times the coupon can be used in total.', 'ohmylms' ),
-					'type'        => 'integer',
-					'default'     => 0,
+					'description' => __( 'Total redemptions allowed; null is unlimited.', 'ohmylms' ),
+					'type'        => array( 'integer', 'null' ),
+					'minimum'     => 0,
 					'context'     => array( 'view', 'edit' ),
 				),
 				'usage_limit_per_user' => array(
-					'description' => __( 'How many times the coupon can be used per customer.', 'ohmylms' ),
-					'type'        => 'integer',
-					'default'     => 0,
+					'description' => __( 'Redemptions allowed per customer; null is unlimited.', 'ohmylms' ),
+					'type'        => array( 'integer', 'null' ),
+					'minimum'     => 0,
 					'context'     => array( 'view', 'edit' ),
+				),
+				'individual_use'       => array(
+					'description' => __( 'When true, the coupon cannot be combined with other coupons.', 'ohmylms' ),
+					'type'        => 'boolean',
+					'context'     => array( 'view', 'edit' ),
+				),
+				'course_id_type'       => array(
+					'description' => __( 'all = every course, selected_course = only course_ids.', 'ohmylms' ),
+					'type'        => 'string',
+					'enum'        => array( 'all', 'selected_course' ),
+					'context'     => array( 'view', 'edit' ),
+				),
+				'course_ids'           => array(
+					'description' => __( 'Courses the coupon applies to when course_id_type is selected_course.', 'ohmylms' ),
+					'type'        => 'array',
+					'items'       => array(
+						'type'    => 'integer',
+						'minimum' => 1,
+					),
+					'maxItems'    => 200,
+					'context'     => array( 'view', 'edit' ),
+				),
+				'currency'             => array(
+					'description' => __( 'ISO 4217 currency of flat-rate amounts.', 'ohmylms' ),
+					'type'        => 'string',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
+				'date_created'         => array(
+					'description' => __( 'When the coupon was created, in site time.', 'ohmylms' ),
+					'type'        => 'string',
+					'format'      => 'date-time',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
 				),
 			),
 		);
-		return $schema;
+		return $this->add_additional_fields_schema( $this->schema );
 	}
 }

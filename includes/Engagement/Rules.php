@@ -6,38 +6,53 @@
  */
 namespace OhMyLMS\Engagement;
 
-/** Shared, fail-closed achievement conditions. Points remain the spendable balance. */
+/** Shared, fail-closed achievement criteria. Points remain the spendable balance. */
 final class Rules {
-	const FIELDS = array( 'points', 'completed_lesson', 'completed_courses' );
-	const SIGNS  = array( '>=', '<=', '>', '<', '!=', '==', '=' );
+	/**
+	 * Group names used by the readers, mapped to gamification sections.
+	 */
+	const SECTIONS = array(
+		'point'       => 'points',
+		'badge'       => 'badges',
+		'level'       => 'levels',
+		'reward'      => 'rewards',
+		'leaderboard' => 'leaderboard',
+	);
 
 	/**
-	 * Enabled for Rules.
+	 * Whether a group (point, badge, level, reward or leaderboard) is usable.
 	 *
-	 * @param mixed $group Group.
+	 * Gamification must be on in Add-ons and the group switched on in its own settings.
+	 *
+	 * @param string $group Group name.
+	 * @return bool
 	 */
 	public static function enabled( $group ) {
-		$integrations = get_option( 'ohmylms_integrations', array() );
-		$settings     = get_option( 'ohmylms_' . $group . '_settings', array() );
-		// Legacy "enable" fields were placeholders with no UI; preserve their old behavior.
-		// The explicit switch introduced here defaults on for existing configurations.
-		return ! empty( $integrations['gamification']['is_enable'] ) && ( ! isset( $settings['feature_enabled'] ) || in_array( $settings['feature_enabled'], array( true, 1, '1' ), true ) );
+		return isset( self::SECTIONS[ $group ] ) && GamificationStore::enabled( self::SECTIONS[ $group ] );
 	}
 
 	/**
-	 * Valid for Rules.
+	 * Whether a list of criteria is non-empty and every criterion is allowed.
 	 *
-	 * @param mixed $rules Rules.
+	 * Metrics and operators come from fixed allow-lists and the value must be an integer in range,
+	 * so stored criteria can never run arbitrary comparisons.
+	 *
+	 * @param mixed $rules Criteria: a list of `metric`, `operator` and `value`.
+	 * @return bool
 	 */
 	public static function valid( $rules ) {
-		if ( ! is_array( $rules ) || ! $rules ) {
-			return false; }
+		if ( ! is_array( $rules ) || ! $rules || count( $rules ) > GamificationRegistry::MAX_CRITERIA ) {
+			return false;
+		}
 		foreach ( $rules as $rule ) {
-			if ( ! is_array( $rule ) || ! in_array( $rule['dataValue'] ?? '', self::FIELDS, true )
-				|| ! in_array( $rule['compareSign'] ?? '', self::SIGNS, true )
-				|| ! isset( $rule['compareData'] ) || ! is_numeric( $rule['compareData'] )
-				|| ! is_finite( (float) $rule['compareData'] ) || $rule['compareData'] < 0 ) {
-				return false; }
+			if ( ! is_array( $rule )
+				|| ! isset( $rule['metric'], $rule['operator'], $rule['value'] )
+				|| ! is_string( $rule['metric'] ) || ! isset( GamificationRegistry::metrics()[ $rule['metric'] ] )
+				|| ! in_array( $rule['operator'], GamificationRegistry::operators(), true )
+				|| ! ( is_int( $rule['value'] ) || ( is_string( $rule['value'] ) && ctype_digit( $rule['value'] ) ) )
+				|| $rule['value'] < 0 || $rule['value'] > GamificationRegistry::MAX_CRITERION_VALUE ) {
+				return false;
+			}
 		}
 		return true;
 	}
@@ -49,6 +64,7 @@ final class Rules {
 	 * @param mixed $user User.
 	 */
 	public static function value( $field, $user ) {
+		$user = (int) $user;
 		if ( 'points' === $field ) {
 			return Point::get_total_points( $user ); }
 		if ( 'completed_courses' === $field ) {
@@ -86,7 +102,6 @@ final class Rules {
 				return $value < $required;
 			case '!=':
 				return ! $equal;
-			case '=':
 			case '==':
 				return $equal;
 		}
@@ -94,17 +109,24 @@ final class Rules {
 	}
 
 	/**
-	 * Met for Rules.
+	 * Whether a learner meets every criterion.
 	 *
-	 * @param mixed $rules Rules.
-	 * @param mixed $user User.
+	 * @param mixed $rules Criteria.
+	 * @param mixed $user  User id.
+	 * @param array $cache Metric values already read for this learner (filled in).
+	 * @return bool
 	 */
-	public static function met( $rules, $user ) {
+	public static function met( $rules, $user, array &$cache = array() ) {
 		if ( ! $user || ! self::valid( $rules ) ) {
-			return false; }
+			return false;
+		}
 		foreach ( $rules as $rule ) {
-			if ( ! self::compare( self::value( $rule['dataValue'], $user ), $rule['compareSign'], $rule['compareData'] ) ) {
-				return false; }
+			if ( ! array_key_exists( $rule['metric'], $cache ) ) {
+				$cache[ $rule['metric'] ] = self::value( $rule['metric'], $user );
+			}
+			if ( ! self::compare( $cache[ $rule['metric'] ], $rule['operator'], $rule['value'] ) ) {
+				return false;
+			}
 		}
 		return true;
 	}

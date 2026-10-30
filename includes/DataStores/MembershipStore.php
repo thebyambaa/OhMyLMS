@@ -106,6 +106,7 @@ class MembershipStore extends DataStore {
 	 *
 	 * @param Membership $membership The membership object to update.
 	 * @return void
+	 * @throws \RuntimeException When WordPress cannot update the post.
 	 *
 	 * @since 1.0.0
 	 */
@@ -115,10 +116,13 @@ class MembershipStore extends DataStore {
 			'post_excerpt' => $membership->get_short_description( 'edit' ),
 			'post_title'   => $membership->get_name( 'edit' ),
 			'post_status'  => $membership->get_status( 'edit' ) ? $membership->get_status( 'edit' ) : 'publish',
-			'post_name'    => sanitize_title( $membership->get_name() ),
 			'post_type'    => OHMYLMS_MEMBERSHIP_CPT,
 		);
-		wp_update_post( array_merge( array( 'ID' => $membership->get_id() ), $post_data ) );
+		// The slug is never rewritten from the title, so permalinks stay stable after a rename.
+		$updated = wp_update_post( array_merge( array( 'ID' => $membership->get_id() ), $post_data ), true );
+		if ( is_wp_error( $updated ) ) {
+			throw new \RuntimeException( esc_html( $updated->get_error_message() ) );
+		}
 
 		$this->update_post_meta( $membership );
 

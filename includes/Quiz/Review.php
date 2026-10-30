@@ -36,8 +36,8 @@ final class Review {
 	 */
 	public static function save( $quiz_id, $attempt_id, array $marks, $reason = '' ) {
 		global $wpdb;
-		if ( ! current_user_can( 'edit_post', $quiz_id ) ) {
-			return new \WP_Error( 'quiz_permission', 'You cannot grade this quiz.', array( 'status' => 403 ) );
+		if ( ! GradingPolicy::can_grade( $quiz_id ) ) {
+			return new \WP_Error( 'quiz_permission', 'You cannot grade this quiz.', array( 'status' => rest_authorization_required_code() ) );
 		}
 		$quiz = ohmylms_get_quiz( $quiz_id );
 		if ( ! $quiz ) {
@@ -59,7 +59,7 @@ final class Review {
 						// Structured questions may be marked per part: [part_id => marks].
 						$sum = is_array( $mark ) ? array_sum( array_map( 'floatval', array_filter( $mark, 'is_numeric' ) ) ) : $mark;
 						if ( ! isset( $by_question[ $id ] ) || ! is_numeric( $sum ) || ! is_finite( (float) $sum ) || $sum < 0 || $sum > $by_question[ $id ]['question_marks'] + 0.00005 || ( is_array( $mark ) && count( array_filter( $mark, 'is_numeric' ) ) !== count( $mark ) ) ) {
-							throw new ErrorException( new \WP_Error( 'quiz_marks', 'Invalid question or marks.', array( 'status' => 400 ) ) );
+							throw new ErrorException( new \WP_Error( 'quiz_marks', 'Invalid question or marks.', array( 'status' => 422 ) ) );
 						}
 					}
 					$context = AttemptItems::context( $attempt_id );
@@ -308,11 +308,11 @@ final class Review {
 		if ( is_array( $mark ) ) {
 			foreach ( $mark as $part_id => $value ) {
 				if ( ! isset( $weights[ $part_id ] ) ) {
-					return new \WP_Error( 'quiz_marks', 'Unknown question part.', array( 'status' => 400 ) );
+					return new \WP_Error( 'quiz_marks', 'Unknown question part.', array( 'status' => 422 ) );
 				}
 				$max = $question_marks * $weights[ $part_id ];
 				if ( (float) $value > $max + 0.00005 ) {
-					return new \WP_Error( 'quiz_marks', 'Part marks exceed the part maximum.', array( 'status' => 400 ) );
+					return new \WP_Error( 'quiz_marks', 'Part marks exceed the part maximum.', array( 'status' => 422 ) );
 				}
 				$result[ $part_id ] = Scoring::manual( $value, $max, Scoring::DECIMAL ); // part marks are always decimal; the item total follows the attempt policy.
 			}
