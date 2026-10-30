@@ -415,19 +415,23 @@ class AdminAssets extends Assets {
 			}
 		}
 
-		$screen    = get_current_screen();
-		$screen_id = $screen ? $screen->id : '';
-		if ( \OhMyLMS\Design\DesignSystem::is_plugin_screen() && $this->get_style_modules() ) {
+		$screen         = get_current_screen();
+		$screen_id      = $screen ? $screen->id : '';
+		$is_plugin_page = \OhMyLMS\Design\DesignSystem::is_plugin_screen();
+		if ( $is_plugin_page && $this->get_style_modules() ) {
 			wp_enqueue_script( 'ohmylms-admin-styles', self::get_asset_url( 'assets/js/admin-styles.js' ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/js/admin-styles.js' ), false );
 		}
-		wp_tinymce_inline_scripts();
-		wp_enqueue_editor();
-		wp_enqueue_media();
-		wp_enqueue_script( 'wp-element' );
-		wp_enqueue_script( 'wp-components' );
-		wp_enqueue_script( 'wp-data' );
-		// WordPress owns these editor stylesheets. Only the LMS application needs them; other admin screens must not download them.
+		if ( $is_plugin_page ) {
+			wp_enqueue_script( 'wp-element' );
+			wp_enqueue_script( 'wp-components' );
+			wp_enqueue_script( 'wp-data' );
+		}
+		// The recovered LMS application uses the classic editor, TinyMCE and the media library, and WordPress
+		// owns these editor stylesheets. Other admin screens must not download them.
 		if ( 'toplevel_page_ohmylms' === $screen_id ) {
+			wp_tinymce_inline_scripts();
+			wp_enqueue_editor();
+			wp_enqueue_media();
 			wp_enqueue_style( 'wp-interface' );
 			wp_enqueue_style( 'wp-block-editor' );
 		}

@@ -6,7 +6,7 @@ Feature code can live in `modules/<id>/` or a separate plugin. Internal modules 
 
 ## Load and register
 
-Register PHP definitions on `ohmylms_register_extensions`. Enqueue editor scripts on `ohmylms_enqueue_extension_scripts`, depending on its SDK handle argument. Those scripts load before the admin app.
+Register PHP definitions on `ohmylms_register_extensions`. Enqueue editor scripts on `ohmylms_enqueue_extension_scripts`, depending on its SDK handle argument. Those scripts load before the admin app. The action fires only where extension surfaces exist: the LMS admin application, the native block editors (with their own bundle handle) and frontend pages that render a slot. Other wp-admin screens and ordinary frontend pages do not load the SDK or your editor scripts.
 
 ```php
 add_action('ohmylms_enqueue_extension_scripts', function ($sdk) {
