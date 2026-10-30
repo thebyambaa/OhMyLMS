@@ -78,8 +78,6 @@ add_action( 'init', array( 'OhMyLMS\\Extensions\\Bootstrap', 'init' ), 5 );
 \OhMyLMS\Extensions\Authoring::init();
 \OhMyLMS\Schools\Bootstrap::init();
 \OhMyLMS\Extensions\Addons::init();
-\OhMyLMS\Extensions\Slots::init();
-\OhMyLMS\Extensions\Authoring::init();
 \OhMyLMS\Assessment\Bootstrap::init();
 \OhMyLMS\Assessment\Profiles::init();
 \OhMyLMS\Admin\Commands::init();
