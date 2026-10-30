@@ -160,4 +160,128 @@ class Achievements {
 
 		return $count > 0;
 	}
+
+	/**
+	 * Give a badge by hand. Idempotent: a learner who already holds it is left unchanged.
+	 *
+	 * The reason column records who awarded it (`manual:<admin id>`).
+	 *
+	 * @param int    $user_id  Learner.
+	 * @param string $slug     Badge slug.
+	 * @param int    $admin_id Administrator who awards the badge.
+	 * @return bool|null True when awarded now, false when already held, null when it could not be saved.
+	 */
+	public static function award_badge_manually( $user_id, $slug, $admin_id ) {
+		global $wpdb;
+		$result = self::locked(
+			$user_id,
+			static function () use ( $wpdb, $user_id, $slug, $admin_id ) {
+				if ( self::achievement_exists( $user_id, 'badge', null, null, null, $slug ) ) {
+					return 'held';
+				}
+				$inserted = $wpdb->insert(
+					$wpdb->prefix . 'ohmylms_user_achievement',
+					array(
+						'user_id'      => $user_id,
+						'type'         => 'badge',
+						'badge_id'     => $slug,
+						'reason'       => 'manual:' . (int) $admin_id,
+						'status'       => 'active',
+						'date_created' => current_time( 'mysql' ),
+					)
+				);
+				return $inserted ? 'awarded' : 'failed';
+			}
+		);
+		if ( 'awarded' === $result ) {
+			do_action( 'ohmylms_after_badge_added', $user_id, $slug, 'badge' );
+			return true;
+		}
+		return 'held' === $result ? false : null;
+	}
+
+	/**
+	 * Take a badge back. Idempotent: revoking a badge that is not held changes nothing.
+	 *
+	 * The row stays for the record: its status becomes `revoked` and the reason notes who revoked it and when.
+	 *
+	 * @param int    $user_id  Learner.
+	 * @param string $slug     Badge slug.
+	 * @param int    $admin_id Administrator who revokes the badge.
+	 * @return int Number of awards revoked.
+	 */
+	public static function revoke_badge( $user_id, $slug, $admin_id ) {
+		global $wpdb;
+		$count = self::locked(
+			$user_id,
+			static function () use ( $wpdb, $user_id, $slug, $admin_id ) {
+				$note = sprintf( ' | revoked:%d:%s', (int) $admin_id, gmdate( 'Y-m-d\TH:i:s\Z' ) );
+				return $wpdb->query(
+					$wpdb->prepare(
+						"UPDATE %i SET status = 'revoked', reason = CONCAT(reason, %s) WHERE user_id = %d AND type = 'badge' AND badge_id = %s AND status = 'active'",
+						$wpdb->prefix . 'ohmylms_user_achievement',
+						$note,
+						$user_id,
+						$slug
+					)
+				);
+			}
+		);
+		return (int) $count;
+	}
+
+	/**
+	 * Add or remove points by hand, once per reference.
+	 *
+	 * The reference is the idempotency key: repeating a request with the same reference returns the
+	 * first result without a second row. The reason records `manual:<reference>:<admin id>:<note>`.
+	 * A deduction cannot take the balance below zero.
+	 *
+	 * @param int    $user_id   Learner.
+	 * @param int    $points    Signed whole number, not zero.
+	 * @param string $reference Idempotency key.
+	 * @param string $note      Why.
+	 * @param int    $admin_id  Administrator who adjusts.
+	 * @return array|\WP_Error `created` (bool) and the new `balance`.
+	 */
+	public static function adjust_points( $user_id, $points, $reference, $note, $admin_id ) {
+		global $wpdb;
+		$table  = $wpdb->prefix . 'ohmylms_user_achievement';
+		$result = self::locked(
+			$user_id,
+			static function () use ( $wpdb, $table, $user_id, $points, $reference, $note, $admin_id ) {
+				$prefix = 'manual:' . $reference . ':';
+				$found  = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE user_id = %d AND type = 'point' AND reason LIKE %s", $table, $user_id, $wpdb->esc_like( $prefix ) . '%' ) );
+				if ( (int) $found > 0 ) {
+					return array( 'created' => false );
+				}
+				if ( $points < 0 && Point::get_total_points( $user_id ) + $points < 0 ) {
+					return new \WP_Error( 'ohmylms_points_insufficient', __( 'The learner does not have enough points for this deduction.', 'ohmylms' ), array( 'status' => 422 ) );
+				}
+				$inserted = $wpdb->insert(
+					$table,
+					array(
+						'user_id'      => $user_id,
+						'type'         => 'point',
+						'points'       => $points,
+						'reason'       => $prefix . (int) $admin_id . ':' . $note,
+						'status'       => 'active',
+						'date_created' => current_time( 'mysql' ),
+					)
+				);
+				return $inserted ? array( 'created' => true ) : new \WP_Error( 'ohmylms_points_adjust_failed', __( 'Could not save the adjustment.', 'ohmylms' ), array( 'status' => 500 ) );
+			}
+		);
+		if ( false === $result ) {
+			return new \WP_Error( 'ohmylms_points_busy', __( 'Another update is in progress. Try again.', 'ohmylms' ), array( 'status' => 409 ) );
+		}
+		if ( is_array( $result ) && $result['created'] ) {
+			if ( $points > 0 ) {
+				do_action( 'ohmylms_after_point_added', $user_id, $points, 'point' );
+			} else {
+				do_action( 'ohmylms_after_point_deduct', $user_id, -$points, 'point' );
+			}
+		}
+		return is_array( $result ) ? array_merge( $result, array( 'balance' => Point::get_total_points( $user_id ) ) ) : $result;
+	}
 }

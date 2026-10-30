@@ -6,7 +6,7 @@ if ( ! defined( 'OHMYLMS_TEST_SITE' ) || DB_NAME !== 'ohmylms_source_test' ) { e
 use OhMyLMS\Engagement\Leaderboard;
 $checks = 0;
 function lbcheck( $ok ) { global $checks; if ( ! $ok ) { throw new RuntimeException( 'Leaderboard check failed: ' . ($checks + 1) ); } $checks++; }
-$settings = array( 'threshold' => 0, 'students_number' => 10 );
+$settings = array( 'threshold' => 0, 'limit' => 10 );
 add_filter( 'ohmylms_leaderboard_settings', function () use ( &$settings ) { return $settings; } );
 $wpdb->query( 'START TRANSACTION' );
 try {

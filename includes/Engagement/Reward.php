@@ -35,17 +35,16 @@ class Reward {
 	}
 
 	/**
-	 * Get the point settings.
+	 * Get the reward settings: `enabled` and `purchase_with_points`.
 	 *
 	 * @return array
 	 */
 	public static function get_rules() {
-		$settings = get_option( 'ohmylms_reward_settings', array() );
-		return apply_filters( 'ohmylms_reward_settings', $settings );
+		return GamificationStore::get( 'rewards' );
 	}
 
 	/**
-	 * Maybe enable the point system.
+	 * Whether rewards are usable.
 	 *
 	 * @return bool
 	 * @since 1.0.0
@@ -55,26 +54,19 @@ class Reward {
 	}
 
 	/**
-	 * Maybe met rules for a specific event.
+	 * Whether a reward event is on. `purchase_course` is the only reward event.
 	 *
+	 * @param string $event     Event id.
+	 * @param int    $threshold Unused; kept for existing callers.
 	 * @return bool
 	 * @since 1.0.0
-	 * @param mixed $event Event.
-	 * @param int   $threshold Threshold.
 	 */
 	public static function maybe_met_rules( $event, $threshold = 0 ) {
-		if ( ! self::maybe_enable() ) {
-			return false; }
-		$settings = self::get_rules();
-		if ( ! empty( $settings['rules'] ) && is_array( $settings['rules'] ) ) {
-			foreach ( $settings['rules'] as $rule ) {
-				if ( isset( $rule['slug'], $rule['value'] ) && $rule['slug'] === $event && $rule['value'] ) {
-					if ( ! isset( $rule['threshold'] ) || ( isset( $rule['threshold'] ) && Rules::compare( $rule['threshold'], '==', $threshold ) ) ) {
-						return true;
-					}
-				}
-			}
+		unset( $threshold );
+		if ( 'purchase_course' !== $event || ! self::maybe_enable() ) {
+			return false;
 		}
-		return false;
+		$settings = self::get_rules();
+		return ! empty( $settings['purchase_with_points'] );
 	}
 }

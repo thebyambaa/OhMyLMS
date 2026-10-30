@@ -225,7 +225,10 @@ final class GamificationStore {
 					$rule['threshold'] = null === $patch['threshold'] ? $events[ $event ]['threshold'] : (int) $patch['threshold'];
 				}
 			}
-			foreach ( array( 'enabled' => 'bool', 'points' => 'int' ) as $key => $type ) {
+			foreach ( array(
+				'enabled' => 'bool',
+				'points'  => 'int',
+			) as $key => $type ) {
 				if ( isset( $patch[ $key ] ) ) {
 					$rule[ $key ] = 'bool' === $type ? (bool) $patch[ $key ] : (int) $patch[ $key ];
 				}

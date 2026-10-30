@@ -1,0 +1,183 @@
+import { Button, Notice } from '@wordpress/components';
+import { __ } from '@wordpress/i18n';
+import { useSearchParams } from 'react-router-dom';
+import {
+	createBadge,
+	createLevel,
+	deleteBadge,
+	deleteLevel,
+	listBadges,
+	listLevels,
+	updateBadge,
+	updateLevel,
+} from './api';
+import { BadgesTab } from './BadgesTab';
+import { useOptions, useResource, useSection, type ResourceApi } from './hooks';
+import { LeaderboardTab } from './LeaderboardTab';
+import { LevelsTab } from './LevelsTab';
+import { DEFAULT_LIMITS, tabFromParam } from './model';
+import { PointsTab } from './PointsTab';
+import { Tabs, tabId, tabPanelId, type TabItem } from './Tabs';
+import {
+	TAB_IDS,
+	type Badge,
+	type BadgeDraft,
+	type Level,
+	type LevelDraft,
+	type TabId,
+} from './types';
+import { useUnsavedChangesGuard } from './useUnsavedChangesGuard';
+
+const LABELS: Record< TabId, string > = {
+	points: __( 'Points', 'ohmylms' ),
+	levels: __( 'Levels', 'ohmylms' ),
+	badges: __( 'Badges', 'ohmylms' ),
+	leaderboard: __( 'Leaderboard and rewards', 'ohmylms' ),
+};
+
+const LEVELS_API: ResourceApi< Level, LevelDraft > = {
+	list: listLevels,
+	create: createLevel,
+	update: updateLevel,
+	remove: deleteLevel,
+};
+
+const BADGES_API: ResourceApi< Badge, BadgeDraft > = {
+	list: listBadges,
+	create: createBadge,
+	update: updateBadge,
+	remove: deleteBadge,
+};
+
+/**
+ * Gamification screen at `#/gamification`. The selected tab is the `tab` query parameter
+ * (`#/gamification?tab=badges`), so a tab can be linked and survives a reload. Each tab loads the
+ * first time it is opened and keeps its own draft while other tabs are shown.
+ */
+export default function GamificationPage() {
+	const [ params, setParams ] = useSearchParams();
+	const selected = tabFromParam( params.get( 'tab' ) );
+	const { options } = useOptions();
+	const limits = options?.limits ?? DEFAULT_LIMITS;
+
+	const points = useSection( 'points', 'points' === selected, limits );
+	const levels = useSection( 'levels', 'levels' === selected, limits );
+	const badges = useSection( 'badges', 'badges' === selected, limits );
+	const board = useSection(
+		'leaderboard',
+		'leaderboard' === selected,
+		limits
+	);
+	const rewards = useSection( 'rewards', 'leaderboard' === selected, limits );
+	const levelList = useResource( LEVELS_API, 'levels' === selected );
+	const badgeList = useResource( BADGES_API, 'badges' === selected );
+
+	const dirty: Record< string, boolean > = {
+		points: points.dirty,
+		levels: levels.dirty,
+		badges: badges.dirty,
+		leaderboard: board.dirty || rewards.dirty,
+	};
+	const guard = useUnsavedChangesGuard(
+		Object.values( dirty ).some( Boolean )
+	);
+
+	const tabs: TabItem[] = TAB_IDS.map( ( id ) => ( {
+		id,
+		label: LABELS[ id ],
+		badge: dirty[ id ] ? __( '(unsaved)', 'ohmylms' ) : undefined,
+	} ) );
+	const visited: Record< string, boolean > = {
+		points: points.loaded || points.loading,
+		levels: levels.loaded || levels.loading,
+		badges: badges.loaded || badges.loading,
+		leaderboard: board.loaded || board.loading,
+	};
+	const panels: Record< string, JSX.Element > = {
+		points: <PointsTab state={ points } limits={ limits } />,
+		levels: (
+			<LevelsTab
+				section={ levels }
+				resource={ levelList }
+				limits={ limits }
+			/>
+		),
+		badges: (
+			<BadgesTab
+				section={ badges }
+				resource={ badgeList }
+				options={ options }
+				limits={ limits }
+			/>
+		),
+		leaderboard: (
+			<LeaderboardTab
+				leaderboard={ board }
+				rewards={ rewards }
+				options={ options }
+			/>
+		),
+	};
+
+	return (
+		<>
+			<h2>{ __( 'Gamification', 'ohmylms' ) }</h2>
+			{ options && ! options.integration_enabled && (
+				<Notice status="warning" isDismissible={ false }>
+					{ __(
+						'Gamification is switched off in Add-ons, so nothing below takes effect yet.',
+						'ohmylms'
+					) }
+				</Notice>
+			) }
+			{ guard.pendingPath && (
+				<Notice status="warning" isDismissible={ false }>
+					<p>
+						{ __(
+							'You have unsaved changes. Leave this page and discard them?',
+							'ohmylms'
+						) }
+					</p>
+					<Button
+						variant="primary"
+						isDestructive
+						onClick={ guard.leave }
+					>
+						{ __( 'Discard and leave', 'ohmylms' ) }
+					</Button>{ ' ' }
+					<Button variant="secondary" onClick={ guard.stay }>
+						{ __( 'Stay on this page', 'ohmylms' ) }
+					</Button>
+				</Notice>
+			) }
+			<Tabs
+				label={ __( 'Gamification sections', 'ohmylms' ) }
+				tabs={ tabs }
+				selected={ selected }
+				onSelect={ ( id ) =>
+					setParams( { tab: id }, { replace: true } )
+				}
+			/>
+			{ TAB_IDS.map( ( id ) => (
+				<div
+					key={ id }
+					role="tabpanel"
+					id={ tabPanelId( id ) }
+					aria-labelledby={ tabId( id ) }
+					hidden={ id !== selected }
+				>
+					{ ( id === selected || visited[ id ] ) && panels[ id ] }
+				</div>
+			) ) }
+			<p>
+				{ __(
+					'Certificates are managed on their own screen:',
+					'ohmylms'
+				) }{ ' ' }
+				<a href="#/certificates">
+					{ __( 'Open certificates', 'ohmylms' ) }
+				</a>
+			</p>
+		</>
+	);
+}

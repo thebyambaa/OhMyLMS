@@ -1,0 +1,292 @@
+{
+	"contract": "ohmylms/v1/gamification",
+	"version": 1,
+	"namespace": "ohmylms/v1",
+	"restBase": "gamification",
+	"capability": "manage_options",
+	"auth": "WordPress REST authentication. Cookie auth requires the X-WP-Nonce header (wp_create_nonce('wp_rest')); application passwords also work.",
+	"limits": {
+		"max_points": 100000,
+		"max_criterion_value": 1000000,
+		"max_levels": 50,
+		"max_badges": 100,
+		"max_criteria": 10
+	},
+	"enums": {
+		"sections": [ "points", "levels", "badges", "leaderboard", "rewards" ],
+		"leaderboard_modes": [
+			"completion_rate",
+			"highest_quiz",
+			"fastest_time"
+		],
+		"metrics": [ "points", "completed_lesson", "completed_courses" ],
+		"operators": [ ">=", ">", "<=", "<", "==", "!=" ],
+		"award_sources": [ "criteria", "streak" ],
+		"badge_sources": [ "custom", "streak", "all" ],
+		"image_mime_types": [
+			"image/jpeg",
+			"image/png",
+			"image/gif",
+			"image/webp"
+		]
+	},
+	"routes": [
+		{
+			"name": "settings",
+			"method": "GET",
+			"path": "/gamification/settings",
+			"success": {
+				"status": 200,
+				"body": "integration_enabled + one object per section"
+			},
+			"errors": [ 401, 403 ]
+		},
+		{
+			"name": "section",
+			"method": "GET",
+			"path": "/gamification/settings/{section}",
+			"success": { "status": 200, "body": "Section" },
+			"errors": [ 401, 403 ]
+		},
+		{
+			"name": "saveSection",
+			"method": "PATCH",
+			"path": "/gamification/settings/{section}",
+			"args": { "$ref": "#/definitions/Section" },
+			"success": { "status": 200, "body": "Section" },
+			"errors": [ 400, 401, 403, 422, 500 ]
+		},
+		{
+			"name": "options",
+			"method": "GET",
+			"path": "/gamification/options",
+			"success": { "status": 200, "body": "GamificationOptions" },
+			"errors": [ 401, 403 ]
+		},
+		{
+			"name": "listLevels",
+			"method": "GET",
+			"path": "/gamification/levels",
+			"args": {
+				"page": { "type": "integer", "default": 1, "minimum": 1 },
+				"per_page": {
+					"type": "integer",
+					"default": 20,
+					"minimum": 1,
+					"maximum": 100
+				}
+			},
+			"success": {
+				"status": 200,
+				"body": "Level[]",
+				"headers": [ "X-WP-Total", "X-WP-TotalPages", "Link" ]
+			},
+			"errors": [ 400, 401, 403 ]
+		},
+		{
+			"name": "createLevel",
+			"method": "POST",
+			"path": "/gamification/levels",
+			"args": {
+				"$ref": "#/definitions/LevelWrite",
+				"required": [ "name", "points" ]
+			},
+			"success": {
+				"status": 201,
+				"body": "Level",
+				"headers": [ "Location" ]
+			},
+			"errors": [ 400, 401, 403, 422 ]
+		},
+		{
+			"name": "updateLevel",
+			"method": "PATCH",
+			"path": "/gamification/levels/{slug}",
+			"args": { "$ref": "#/definitions/LevelWrite" },
+			"success": { "status": 200, "body": "Level" },
+			"errors": [ 400, 401, 403, 404, 422 ]
+		},
+		{
+			"name": "deleteLevel",
+			"method": "DELETE",
+			"path": "/gamification/levels/{slug}",
+			"success": {
+				"status": 200,
+				"body": "{ deleted: true, previous: Level }"
+			},
+			"errors": [ 401, 403, 404 ]
+		},
+		{
+			"name": "listBadges",
+			"method": "GET",
+			"path": "/gamification/badges",
+			"args": {
+				"source": {
+					"type": "string",
+					"default": "custom",
+					"enum": [ "custom", "streak", "all" ]
+				},
+				"page": { "type": "integer", "default": 1, "minimum": 1 },
+				"per_page": {
+					"type": "integer",
+					"default": 20,
+					"minimum": 1,
+					"maximum": 100
+				}
+			},
+			"success": {
+				"status": 200,
+				"body": "Badge[]",
+				"headers": [ "X-WP-Total", "X-WP-TotalPages", "Link" ]
+			},
+			"errors": [ 400, 401, 403 ]
+		},
+		{
+			"name": "createBadge",
+			"method": "POST",
+			"path": "/gamification/badges",
+			"args": {
+				"$ref": "#/definitions/BadgeWrite",
+				"required": [ "name" ]
+			},
+			"success": {
+				"status": 201,
+				"body": "Badge",
+				"headers": [ "Location" ]
+			},
+			"errors": [ 400, 401, 403, 422 ]
+		},
+		{
+			"name": "updateBadge",
+			"method": "PATCH",
+			"path": "/gamification/badges/{slug}",
+			"args": { "$ref": "#/definitions/BadgeWrite" },
+			"success": { "status": 200, "body": "Badge" },
+			"errors": [ 400, 401, 403, 404, 409, 422 ]
+		},
+		{
+			"name": "deleteBadge",
+			"method": "DELETE",
+			"path": "/gamification/badges/{slug}",
+			"success": {
+				"status": 200,
+				"body": "{ deleted: true, previous: Badge }"
+			},
+			"errors": [ 401, 403, 404, 409 ]
+		},
+		{
+			"name": "awardBadge",
+			"method": "POST",
+			"path": "/gamification/badges/{slug}/awards",
+			"args": {
+				"user_id": { "type": "integer", "minimum": 1, "required": true }
+			},
+			"success": {
+				"status": 201,
+				"body": "{ badge, user_id, awarded: true }",
+				"note": "200 with awarded: false when already held"
+			},
+			"errors": [ 400, 401, 403, 404, 500 ]
+		},
+		{
+			"name": "revokeBadge",
+			"method": "DELETE",
+			"path": "/gamification/badges/{slug}/awards/{user_id}",
+			"success": {
+				"status": 200,
+				"body": "{ badge, user_id, revoked: number }"
+			},
+			"errors": [ 401, 403, 404 ]
+		},
+		{
+			"name": "adjustPoints",
+			"method": "POST",
+			"path": "/gamification/points/adjustments",
+			"args": {
+				"user_id": {
+					"type": "integer",
+					"minimum": 1,
+					"required": true
+				},
+				"points": {
+					"type": "integer",
+					"minimum": -100000,
+					"maximum": 100000,
+					"required": true
+				},
+				"reference": {
+					"type": "string",
+					"pattern": "^[A-Za-z0-9_.-]{1,60}$",
+					"required": true
+				},
+				"note": { "type": "string", "maxLength": 200 }
+			},
+			"success": {
+				"status": 201,
+				"body": "{ user_id, points, reference, created, balance }",
+				"note": "200 with created: false on a repeated reference"
+			},
+			"errors": [ 400, 401, 403, 404, 409, 422, 500 ]
+		}
+	],
+	"definitions": {
+		"Section": {
+			"points": {
+				"enabled": "boolean",
+				"rules": "{ event, enabled, points 0-100000, threshold 0-100|null, email { enabled, subject <=150, body <=5000 } }[] (label, description, supports_threshold are read-only)"
+			},
+			"levels": { "enabled": "boolean" },
+			"badges": { "enabled": "boolean" },
+			"leaderboard": {
+				"enabled": "boolean",
+				"mode": "completion_rate|highest_quiz|fastest_time",
+				"threshold": "integer 0-100",
+				"limit": "integer 1-100"
+			},
+			"rewards": {
+				"enabled": "boolean",
+				"purchase_with_points": "boolean"
+			}
+		},
+		"LevelWrite": {
+			"name": { "type": "string", "minLength": 1, "maxLength": 60 },
+			"description": { "type": "string", "maxLength": 200 },
+			"color": {
+				"type": "string",
+				"pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+			},
+			"text_color": {
+				"type": "string",
+				"pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+			},
+			"points": {
+				"type": "integer",
+				"minimum": 0,
+				"maximum": 1000000,
+				"note": "unique across levels"
+			}
+		},
+		"BadgeWrite": {
+			"name": { "type": "string", "minLength": 1, "maxLength": 60 },
+			"description": { "type": "string", "maxLength": 200 },
+			"image_id": {
+				"type": [ "integer", "null" ],
+				"minimum": 0,
+				"note": "media library attachment; JPEG, PNG, GIF or WebP"
+			},
+			"color": {
+				"type": "string",
+				"pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+			},
+			"award_source": {
+				"type": "string",
+				"enum": [ "criteria", "streak" ]
+			},
+			"criteria": {
+				"type": "array",
+				"maxItems": 10,
+				"items": "{ metric, operator, value 0-1000000 }"
+			}
+		}
+	}
+}

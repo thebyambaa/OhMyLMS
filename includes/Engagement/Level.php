@@ -17,27 +17,26 @@ use OhMyLMS\Engagement\Achievements;
 class Level {
 
 	/**
-	 * Get the point settings.
+	 * Get the level settings.
 	 *
 	 * @return array
 	 */
 	public static function get_rules() {
-		$settings = get_option( 'ohmylms_level_settings', array() );
-		return apply_filters( 'ohmylms_level_settings', $settings );
+		return GamificationStore::get( 'levels' );
 	}
 
 	/**
-	 * Get all levels.
+	 * Get all levels, lowest threshold first.
 	 *
 	 * @return array
 	 * @since 1.0.0
 	 */
 	public static function get_levels() {
-		return get_option( 'ohmylms_levels', array() );
+		return GamificationStore::levels();
 	}
 
 	/**
-	 * Maybe enable the point system.
+	 * Whether levels are usable.
 	 *
 	 * @return bool
 	 * @since 1.0.0
@@ -47,8 +46,7 @@ class Level {
 	}
 
 	/**
-	 * Maybe met rules for a specific event.
-	 * Returns the levels that should be assigned to the user, if any.
+	 * Slugs of the levels a learner has reached and not yet been given, lowest first.
 	 *
 	 * @return array|false
 	 * @since 1.0.0
@@ -59,62 +57,15 @@ class Level {
 		if ( ! $user_id || ! self::maybe_enable() ) {
 			return false;
 		}
-
-		$levels = self::get_levels();
-		if ( empty( $levels ) || ! is_array( $levels ) ) {
-			return false;
-		}
-
-		// Sort levels by progression.
-		$sorted_levels = self::sort_levels_by_progression( $levels );
-
-		// Get current level data.
-		$current_level_data = self::get_current_level_of_a_user( $user_id );
-		$current_level_slug = $current_level_data ? $current_level_data['level_id'] : null;
-
-		$levels_to_assign = array();
-
-		// If user has no level, find ALL levels they qualify for in progression order.
-		if ( ! $current_level_slug ) {
-			foreach ( $sorted_levels as $level ) {
-				if ( self::user_qualifies_for_level( $user_id, $level ) && isset( $level['slug'] ) ) {
-					$levels_to_assign[] = $level['slug'];
-				}
-			}
-			return empty( $levels_to_assign ) ? false : $levels_to_assign;
-		}
-
-		// User has a current level, find ALL levels in progression they qualify for after current.
-		$found_current = false;
-		foreach ( $sorted_levels as $level ) {
-			if ( isset( $level['slug'] ) && $level['slug'] === $current_level_slug ) {
-				$found_current = true;
-				continue; // Skip current level.
-			}
-
-			// Only check levels after the current one.
-			if ( $found_current ) {
-				if ( self::user_qualifies_for_level( $user_id, $level ) && isset( $level['slug'] ) ) {
-					$levels_to_assign[] = $level['slug'];
-				} else {
-					// If user doesn't qualify for this next level, they won't qualify for higher ones.
-					break;
-				}
+		$points   = Point::get_total_points( $user_id );
+		$awarded  = array_column( self::get_all_levels_of_a_user( $user_id ), 'slug' );
+		$to_award = array();
+		foreach ( self::get_levels() as $level ) {
+			if ( $level['points'] <= $points && ! in_array( $level['slug'], $awarded, true ) ) {
+				$to_award[] = $level['slug'];
 			}
 		}
-
-		return empty( $levels_to_assign ) ? false : $levels_to_assign;
-	}
-
-	/**
-	 * Helper to compare values with a sign
-	 *
-	 * @param mixed $value Value to process.
-	 * @param mixed $compare_sign Comparesign.
-	 * @param mixed $compare_data Comparedata.
-	 */
-	private static function compare_with_sign( $value, $compare_sign, $compare_data ) {
-		return Rules::compare( $value, $compare_sign, $compare_data );
+		return $to_award ? $to_award : false;
 	}
 
 	/**
@@ -157,301 +108,96 @@ class Level {
 	}
 
 	/**
-	 * Get current level of a user (highest level achieved).
-	 * * @param string $slug
+	 * Get the highest level a learner has been given.
 	 *
-	 * @return int
+	 * @return array|false
 	 * @since 1.0.0
 	 * @param mixed $user_id User identifier.
 	 */
 	public static function get_current_level_of_a_user( $user_id = null ) {
-		global $wpdb;
-
 		if ( ! self::maybe_enable() ) {
-			return false; // Level system is not enabled.
-		}
-
-		$user_id = null === $user_id ? get_current_user_id() : (int) $user_id;
-		if ( ! $user_id ) {
-			return false; // No user logged in.
-		}
-
-		$table_name = $wpdb->prefix . 'ohmylms_user_achievement';
-
-		// Get all user's level achievements.
-		$level_achievements = $wpdb->get_results(
-			$wpdb->prepare(
-				'SELECT level_id, date_created FROM %i
-             WHERE user_id = %d 
-             AND type = \'level\'
-             AND status = \'active\'
-             ORDER BY date_created ASC',
-				$table_name,
-				$user_id
-			)
-		);
-
-		if ( empty( $level_achievements ) ) {
-			return false; // User doesn't have any levels.
-		}
-
-		// Get all levels to find the level details and determine highest level.
-		$levels = get_option( 'ohmylms_levels', array() );
-		if ( empty( $levels ) || ! is_array( $levels ) ) {
 			return false;
 		}
-
-		// Sort levels by progression to find the highest level.
-		$sorted_levels    = self::sort_levels_by_progression( $levels );
-		$user_level_slugs = array_map( 'strval', array_column( $level_achievements, 'level_id' ) );
-
-		// Find the highest level the user has achieved.
-		$highest_level      = null;
-		$highest_level_date = null;
-
-		// Go through sorted levels in reverse order (highest to lowest).
-		for ( $i = count( $sorted_levels ) - 1; $i >= 0; $i-- ) {
-			$level = $sorted_levels[ $i ];
-			if ( isset( $level['slug'] ) && in_array( (string) $level['slug'], $user_level_slugs, true ) ) {
-				// Find the date this level was achieved.
-				foreach ( $level_achievements as $achievement ) {
-					if ( $achievement->level_id === $level['slug'] ) {
-						$highest_level      = $level;
-						$highest_level_date = $achievement->date_created;
-						break 2; // Break both loops.
-					}
-				}
+		$user_id = null === $user_id ? get_current_user_id() : (int) $user_id;
+		if ( ! $user_id ) {
+			return false;
+		}
+		global $wpdb;
+		$rows  = $wpdb->get_results(
+			$wpdb->prepare( "SELECT level_id, MIN(date_created) AS date_created FROM %i WHERE user_id = %d AND type = 'level' AND status = 'active' GROUP BY level_id", $wpdb->prefix . 'ohmylms_user_achievement', $user_id )
+		);
+		$dates = array();
+		foreach ( (array) $rows as $row ) {
+			$dates[ (string) $row->level_id ] = $row->date_created;
+		}
+		$highest = null;
+		foreach ( self::get_levels() as $level ) {
+			if ( isset( $dates[ $level['slug'] ] ) ) {
+				$highest = $level;
 			}
 		}
-
-		if ( ! $highest_level ) {
-			return false; // No valid level found.
+		if ( ! $highest ) {
+			return false;
 		}
-
 		return array(
-			'level_id'         => $highest_level['slug'],
-			'level_name'       => isset( $highest_level['name'] ) ? $highest_level['name'] : '',
-			'level_color'      => isset( $highest_level['color'] ) ? $highest_level['color'] : '',
-			'level_text_color' => isset( $highest_level['textColor'] ) ? $highest_level['textColor'] : '',
-			'date_achieved'    => $highest_level_date,
+			'level_id'         => $highest['slug'],
+			'level_name'       => $highest['name'],
+			'level_color'      => $highest['color'],
+			'level_text_color' => $highest['text_color'],
+			'date_achieved'    => $dates[ $highest['slug'] ],
 		);
 	}
 
-
 	/**
-	 * Get next level for a user with points and rules information.
+	 * Get the next level to work towards, with a progress summary.
 	 *
 	 * @param int $user_id User identifier.
 	 * @return array|false
 	 * @since 1.0.0
 	 */
 	public static function get_next_level_of_a_user( $user_id = null ) {
-		global $wpdb;
-
 		if ( ! self::maybe_enable() ) {
-			return false; // Level system is not enabled.
+			return false;
 		}
-
+		$user_id = null === $user_id ? get_current_user_id() : (int) $user_id;
 		if ( ! $user_id ) {
-			$user_id = null === $user_id ? get_current_user_id() : (int) $user_id;
+			return false;
 		}
-
-		if ( ! $user_id ) {
-			return false; // No user logged in.
-		}
-
-		// Get current level data.
-		$current_level_data = self::get_current_level_of_a_user( $user_id );
-
-		// Get all levels and sort them by minimum points requirement.
-		$levels = get_option( 'ohmylms_levels', array() );
-
-		if ( empty( $levels ) || ! is_array( $levels ) ) {
-			return false; // No levels configured.
-		}
-
-		// Sort levels by minimum points requirement for proper progression.
-		$sorted_levels = self::sort_levels_by_progression( $levels );
-
-		$current_points = Point::get_total_points( $user_id );
-
-		// If no current level, find the first level the user should qualify for.
-		if ( ! $current_level_data ) {
-			foreach ( $sorted_levels as $level ) {
-				if ( self::user_qualifies_for_level( $user_id, $level ) ) {
-					continue; // User already qualifies for this level.
-				}
-
-				// This is the next level they should work towards.
-				return self::format_next_level_data( $level, $user_id, $current_points );
-			}
-			return false; // User doesn't qualify for any level or all levels achieved.
-		}
-
-		// Find current level in sorted array and get the next one.
-		$current_level_found = false;
-		foreach ( $sorted_levels as $index => $level ) {
-			if ( $current_level_found ) {
-				// This is the next level after current.
-				return self::format_next_level_data( $level, $user_id, $current_points );
-			}
-
-			if ( isset( $level['slug'] ) && $level['slug'] === $current_level_data['level_id'] ) {
-				$current_level_found = true;
+		$points = Point::get_total_points( $user_id );
+		foreach ( self::get_levels() as $level ) {
+			if ( $level['points'] > $points ) {
+				return self::format_next_level_data( $level, $points );
 			}
 		}
-
-		return false; // No next level available (user is at highest level).
+		return false;
 	}
 
 	/**
-	 * Sort levels by progression based on minimum points requirement.
+	 * Format next level data for templates.
 	 *
-	 * @param array $levels Levels.
-	 * @return array
-	 * @since 1.0.0
-	 */
-	private static function sort_levels_by_progression( $levels ) {
-		usort(
-			$levels,
-			function ( $a, $b ) {
-				$min_points_a = self::get_minimum_points_for_level( $a );
-				$min_points_b = self::get_minimum_points_for_level( $b );
-				return $min_points_a - $min_points_b;
-			}
-		);
-
-		return $levels;
-	}
-
-	/**
-	 * Get minimum points requirement for a level.
-	 *
-	 * @param array $level Level.
-	 * @return int
-	 * @since 1.0.0
-	 */
-	private static function get_minimum_points_for_level( $level ) {
-		if ( ! isset( $level['rules'] ) || ! is_array( $level['rules'] ) ) {
-			return 0;
-		}
-
-		$min_points = 0;
-		foreach ( $level['rules'] as $rule ) {
-			if ( isset( $rule['dataValue'], $rule['compareData'], $rule['compareSign'] ) && 'points' === $rule['dataValue'] ) {
-				// For >= or > operators, this is a minimum requirement.
-				if ( in_array( $rule['compareSign'], array( '>=', '>' ), true ) ) {
-					$required_points = intval( $rule['compareData'] );
-					if ( '>' === $rule['compareSign'] ) {
-						++$required_points; // For strict greater than.
-					}
-					$min_points = max( $min_points, $required_points );
-				}
-			}
-		}
-
-		return $min_points;
-	}
-
-	/**
-	 * Check if user qualifies for a specific level.
-	 *
-	 * @param int   $user_id User identifier.
-	 * @param array $level Level.
-	 * @return bool
-	 * @since 1.0.0
-	 */
-	private static function user_qualifies_for_level( $user_id, $level ) {
-		return Rules::met( $level['rules'] ?? array(), $user_id );
-	}
-
-	/**
-	 * Format next level data for return.
-	 *
-	 * @param array $next_level Next level.
-	 * @param int   $user_id User identifier.
+	 * @param array $next_level     Next level.
 	 * @param int   $current_points Current points.
 	 * @return array
 	 * @since 1.0.0
 	 */
-	private static function format_next_level_data( $next_level, $user_id, $current_points ) {
-		$points_needed = 0;
-		$rules_summary = array();
-
-		if ( Rules::valid( $next_level['rules'] ?? array() ) ) {
-			foreach ( $next_level['rules'] as $rule ) {
-				if ( isset( $rule['dataValue'], $rule['compareData'], $rule['compareSign'] ) ) {
-					$rule_summary = array(
-						'type'     => $rule['dataValue'],
-						'operator' => $rule['compareSign'],
-						'required' => $rule['compareData'],
-						'current'  => 0,
-						'met'      => false,
-					);
-
-					// Get current value based on rule type.
-					switch ( $rule['dataValue'] ) {
-						case 'points':
-							$rule_summary['current'] = $current_points;
-							// Calculate points needed for >= or > operators.
-							if ( in_array( $rule['compareSign'], array( '>=', '>' ), true ) ) {
-								$required_points = intval( $rule['compareData'] );
-								if ( '>' === $rule['compareSign'] ) {
-									++$required_points;
-								}
-								$points_needed = max( $points_needed, $required_points - $current_points );
-							}
-							break;
-
-						case 'completed_courses':
-							$student = new \OhMyLMS\Data\Student( $user_id );
-							if ( $student ) {
-								$completed_courses       = $student->get_completed_course_count();
-								$rule_summary['current'] = $completed_courses;
-							}
-							break;
-
-						case 'completed_lesson':
-							$rule_summary['current'] = Rules::value( 'completed_lesson', $user_id );
-							break;
-					}
-
-					// Check if rule is met.
-					$rule_summary['met'] = self::compare_with_sign(
-						$rule_summary['current'],
-						$rule['compareSign'],
-						$rule['compareData']
-					);
-
-					$rules_summary[] = $rule_summary;
-				}
-			}
-		}
-
+	private static function format_next_level_data( $next_level, $current_points ) {
+		$required = (int) $next_level['points'];
 		return array(
 			'level_id'            => $next_level['slug'],
 			'level_data'          => $next_level,
-			'points_needed'       => max( 0, $points_needed ),
+			'points_needed'       => max( 0, $required - $current_points ),
 			'current_points'      => $current_points,
-			'rules'               => $rules_summary,
-			'progress_percentage' => self::rule_progress( $rules_summary ),
+			'rules'               => array(
+				array(
+					'type'     => 'points',
+					'operator' => '>=',
+					'required' => $required,
+					'current'  => $current_points,
+					'met'      => $current_points >= $required,
+				),
+			),
+			'progress_percentage' => $required > 0 ? min( 99, (int) floor( 100 * $current_points / $required ) ) : 100,
 		);
-	}
-
-	/**
-	 * Rule progress for Level.
-	 *
-	 * @param mixed $rules Rules.
-	 */
-	private static function rule_progress( $rules ) {
-		if ( ! $rules ) {
-			return 0; }
-		$progress = array();
-		foreach ( $rules as $rule ) {
-			$required   = (float) $rule['required'] + ( '>' === $rule['operator'] ? 1 : 0 );
-			$progress[] = $rule['met'] ? 100 : ( in_array( $rule['operator'], array( '>', '>=', '=', '==' ), true ) && $required > 0 ? min( 99, 100 * $rule['current'] / $required ) : 0 );
-		}
-		return min( $progress );
 	}
 
 	/**
@@ -485,12 +231,13 @@ class Level {
 
 		$formatted_levels = array();
 		if ( is_array( $results ) && ! empty( $results ) ) {
-			$levels = self::get_levels();
+			$levels = array();
+			foreach ( self::get_levels() as $level ) {
+				$levels[ $level['slug'] ] = $level;
+			}
 			foreach ( $results as $result ) {
-				foreach ( $levels as $level ) {
-					if ( (string) $result->level_id === (string) $level['slug'] ) {
-						$formatted_levels[] = $level;
-					}
+				if ( isset( $levels[ (string) $result->level_id ] ) ) {
+					$formatted_levels[] = $levels[ (string) $result->level_id ];
 				}
 			}
 		}

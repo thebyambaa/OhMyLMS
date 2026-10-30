@@ -20,8 +20,7 @@ class Leaderboard {
 	 * @return array
 	 */
 	public static function get_settings() {
-		$settings = get_option( 'ohmylms_leaderboard_settings', array() );
-		return apply_filters( 'ohmylms_leaderboard_settings', $settings );
+		return GamificationStore::get( 'leaderboard' );
 	}
 
 	/**
@@ -58,7 +57,7 @@ class Leaderboard {
 	 */
 	public static function get_leaderboard_rule() {
 		$settings = self::get_settings();
-		return ! empty( $settings['rules'] ) ? $settings['rules'] : 'completion_rate';
+		return ! empty( $settings['mode'] ) ? $settings['mode'] : 'completion_rate';
 	}
 
 	/**
@@ -69,7 +68,7 @@ class Leaderboard {
 	 */
 	public static function get_students_number() {
 		$settings = self::get_settings();
-		return ! empty( $settings['students_number'] ) ? (int) $settings['students_number'] : 10;
+		return ! empty( $settings['limit'] ) ? (int) $settings['limit'] : 10;
 	}
 
 	/**
@@ -118,27 +117,19 @@ class Leaderboard {
 				return $b['completion_rate'] <=> $a['completion_rate'];
 			}
 		);
-		$students = self::set_student_position( $students );
-		$limit    = self::get_students_number();
-		$students = array_slice( $students, 0, $limit );
-
 		$threshold = self::get_threshold();
 		if ( $threshold > 0 ) {
-			$filtered_students = array_filter(
-				$students,
-				function ( $student ) use ( $threshold ) {
-
-					return isset( $student['completion_rate'] ) && self::maybe_met_threshold( $student['completion_rate'] );
-				}
+			$students = array_values(
+				array_filter(
+					$students,
+					static function ( $student ) {
+						return isset( $student['completion_rate'] ) && self::maybe_met_threshold( $student['completion_rate'] );
+					}
+				)
 			);
-			$filtered_students = array_values( $filtered_students ); // reindex array.
-			if ( $limit && count( $filtered_students ) >= (int) $limit ) {
-				return $filtered_students;
-			} else {
-				return array();
-			}
 		}
-		return $students;
+		$students = self::set_student_position( $students );
+		return self::public_rows( array_slice( $students, 0, self::get_students_number() ) );
 	}
 
 	/**
@@ -314,7 +305,7 @@ class Leaderboard {
 			);
 			$students = array_values( $students ); // reindex array.
 		}
-		return $students;
+		return self::public_rows( $students );
 	}
 
 	/**
@@ -346,9 +337,27 @@ class Leaderboard {
 		$limit    = self::get_students_number();
 		$students = array_slice( $students, 0, $limit );
 
-		return $students;
+		return self::public_rows( $students );
 	}
 
+
+	/**
+	 * Reduce ranked students to what a learner may see: id, rank, display name and score.
+	 *
+	 * Emails, ids and every other field of the student record are removed so a leaderboard shown
+	 * to learners cannot leak private data.
+	 *
+	 * @param array $students Ranked students.
+	 * @return array
+	 */
+	public static function public_rows( $students ) {
+		$allowed = array( 'student_id', 'position', 'position_in_text', 'name', 'completion_rate', 'highest_quiz_score' );
+		$rows    = array();
+		foreach ( (array) $students as $student ) {
+			$rows[] = array_intersect_key( (array) $student, array_flip( $allowed ) );
+		}
+		return $rows;
+	}
 
 	/**
 	 * Set the position for each student in the leaderboard.

@@ -279,25 +279,25 @@ final class GamificationRegistry {
 						'additionalProperties' => false,
 						'required'             => array( 'event' ),
 						'properties'           => array(
-							'event'          => array(
+							'event'              => array(
 								'type' => 'string',
 								'enum' => array_keys( self::events() ),
 							),
-							'label'          => array(
+							'label'              => array(
 								'type'     => 'string',
 								'readonly' => true,
 							),
-							'description'    => array(
+							'description'        => array(
 								'type'     => 'string',
 								'readonly' => true,
 							),
-							'enabled'        => array( 'type' => 'boolean' ),
-							'points'         => array(
+							'enabled'            => array( 'type' => 'boolean' ),
+							'points'             => array(
 								'type'    => 'integer',
 								'minimum' => 0,
 								'maximum' => self::MAX_POINTS,
 							),
-							'threshold'      => array(
+							'threshold'          => array(
 								'description' => __( 'Minimum percentage (0-100) for events that have one, otherwise null.', 'ohmylms' ),
 								'type'        => array( 'integer', 'null' ),
 								'minimum'     => 0,
@@ -307,7 +307,7 @@ final class GamificationRegistry {
 								'type'     => 'boolean',
 								'readonly' => true,
 							),
-							'email'          => array(
+							'email'              => array(
 								'type'                 => 'object',
 								'additionalProperties' => false,
 								'properties'           => array(

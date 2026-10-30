@@ -14,7 +14,7 @@ if (($argv[2] ?? '') === '--worker') {
 $checks = 0;
 function gamification_check($condition, $message) { global $checks; if (!$condition) { throw new RuntimeException($message); } $checks++; }
 function engagement_request($method, $path, $body = []) {
-    $request = new WP_REST_Request($method, '/ohmylms/v1/engagement/' . $path);
+    $request = new WP_REST_Request($method, '/' === $path[0] ? '/ohmylms/v1' . $path : '/ohmylms/v1/engagement/' . $path);
     $request->set_header('Content-Type', 'application/json'); $request->set_body(wp_json_encode($body));
     return rest_do_request($request);
 }
@@ -26,7 +26,7 @@ try {
     gamification_check(StreakSchema::ready() && StreakSchema::install(), 'Versioned schema installation is idempotent');
     update_option('timezone_string', 'UTC');
     update_option('ohmylms_integrations', ['gamification' => ['is_enable' => true]]);
-    foreach (['point', 'badge', 'level', 'reward'] as $group) { update_option('ohmylms_' . $group . '_settings', ['feature_enabled' => true, 'rules' => []]); }
+    foreach (['point', 'badge', 'level', 'reward'] as $group) { update_option(\OhMyLMS\Engagement\GamificationRegistry::option(['point' => 'points', 'badge' => 'badges', 'level' => 'levels', 'reward' => 'rewards'][$group]), ['enabled' => true]); }
     update_option('ohmylms_streak_settings', array_replace(StreakSettings::defaults(), ['enable' => true]));
     foreach (['learner', 'other', 'teacher', 'concurrent', 'custom'] as $kind) {
         $id = wp_create_user('streak-' . $kind . '-' . wp_generate_password(10, false), wp_generate_password(30));
@@ -36,11 +36,10 @@ try {
     wp_set_current_user($admin->ID);
     gamification_check(engagement_request('POST', 'settings/streak', array_replace(StreakSettings::defaults(), ['enable' => true]))->get_status() === 200, 'Streak settings persist');
     gamification_check(engagement_request('POST', 'settings/streak', ['practice_minimum' => 0])->get_status() === 400, 'Invalid settings rejected');
-    gamification_check(engagement_request('POST', 'settings/anything', [])->get_status() === 400, 'Unknown setting group rejected');
-    gamification_check(engagement_request('POST', 'badges', ['name' => 'Broken', 'rules' => [['dataValue' => 'unknown']]])->get_status() === 400, 'Invalid badge rules rejected');
-    $custom_badge = engagement_request('POST', 'badges', ['name' => 'Custom streak fixture', 'award_source' => 'streak', 'rules' => []]);
-    $custom_badge_data = $custom_badge->get_data()['badge'] ?? [];
-    gamification_check($custom_badge->get_status() === 200 && ($custom_badge_data['slug'] ?? '') === 'custom-streak-fixture', 'Existing badge endpoint creates a streak badge and returns its identity');
+    gamification_check(engagement_request('POST', 'settings/anything', [])->get_status() === 404, 'Unknown setting group rejected');
+    gamification_check(engagement_request('POST', '/gamification/badges', ['name' => 'Broken', 'criteria' => [['metric' => 'unknown']]])->get_status() === 400, 'Invalid badge rules rejected');
+    $custom_badge = engagement_request('POST', '/gamification/badges', ['name' => 'Custom streak fixture', 'award_source' => 'streak']);
+        gamification_check($custom_badge->get_status() === 201 && ($custom_badge->get_data()['slug'] ?? '') === 'custom-streak-fixture', 'Existing badge endpoint creates a streak badge and returns its identity');
     gamification_check(!in_array('custom-streak-fixture', Badge::maybe_met_rules($users['learner']), true), 'Streak badge cannot be awarded by ordinary achievement rules');
     update_option('ohmylms_streak_settings', array_replace(StreakSettings::defaults(), ['enable' => true, 'milestones' => [['days' => 1, 'badge' => 'custom-streak-fixture', 'points' => 0]]]));
     Streak::record($users['custom'], 'practice', 'custom-badge-fixture');
@@ -85,9 +84,9 @@ try {
     $enrollment = (int) $wpdb->insert_id; $enrollments[] = $enrollment;
     $wpdb->insert($wpdb->prefix . 'ohmylms_user_progress', ['enrollment_id' => $enrollment, 'content_id' => $lesson, 'content_type' => 'text', 'status' => 'completed', 'start_date' => current_time('mysql')]);
     $progress = (int) $wpdb->insert_id;
-    $rule = ['dataValue' => 'completed_lesson', 'compareSign' => '>=', 'compareData' => 1];
-    update_option('ohmylms_badges', [['slug' => 'lesson-fixture', 'name' => 'Lesson fixture', 'rules' => [$rule]]]);
-    update_option('ohmylms_levels', [['slug' => 'lesson-level', 'name' => 'Lesson level', 'rules' => [$rule]], ['slug' => 'next-lesson', 'name' => 'Next', 'rules' => [array_replace($rule, ['compareData' => 2])]]]);
+    $rule = ['metric' => 'completed_lesson', 'operator' => '>=', 'value' => 1];
+    update_option('ohmylms_badges', [['slug' => 'lesson-fixture', 'name' => 'Lesson fixture', 'criteria' => [$rule]]]);
+    update_option('ohmylms_levels', [['slug' => 'lesson-level', 'name' => 'Lesson level', 'points' => 0], ['slug' => 'next-lesson', 'name' => 'Next', 'points' => 10]]);
     wp_set_current_user($users['teacher']);
     gamification_check(in_array('lesson-fixture', Badge::maybe_met_rules($u), true) && Badge::maybe_met_rules($users['teacher']) === [], 'Lesson badge uses target learner instead of teacher or points');
     gamification_check(in_array('lesson-level', Level::maybe_met_rules($u), true), 'Lesson level has real counts');
@@ -98,16 +97,16 @@ try {
     ob_start(); include OHMYLMS_DIR . '/templates/profile/profile.php'; $profile = ob_get_clean();
     gamification_check(strpos($profile, 'Completed lessons: 1') !== false && strpos($profile, '--fill-width: 50%') !== false, 'Profile renders lesson progress instead of point-only progress');
     wp_set_current_user($users['teacher']);
-    gamification_check(!Rules::met([], $u) && !Rules::met([['dataValue' => 'unknown', 'compareSign' => '>=', 'compareData' => 0]], $u), 'Empty or unsupported rules fail closed');
+    gamification_check(!Rules::met([], $u) && !Rules::met([['metric' => 'unknown', 'operator' => '>=', 'value' => 0]], $u), 'Empty or unsupported rules fail closed');
     $clock = strtotime('2026-01-15 12:00:00 UTC');
-    update_option('ohmylms_point_settings', ['feature_enabled' => false, 'rules' => []]);
+    update_option('ohmylms_point_settings', ['enabled' => false]);
     StreakHooks::lesson($progress, $lesson, 2147483646, $u);
     gamification_check(Streak::snapshot($u)['today_complete'], 'Verified lesson counts with points disabled');
     $wrong = Streak::snapshot($users['other']);
     StreakHooks::lesson($progress, $lesson, 2147483646, $users['other']);
     gamification_check(Streak::snapshot($users['other'])['current_streak'] === $wrong['current_streak'], 'Lesson identity cannot be forged');
-    update_option('ohmylms_point_settings', ['feature_enabled' => true, 'rules' => []]);
-    update_option('ohmylms_reward_settings', ['feature_enabled' => true, 'rules' => [['slug' => 'purchase_course', 'value' => true]]]);
+    update_option('ohmylms_point_settings', ['enabled' => true]);
+    update_option('ohmylms_reward_settings', ['enabled' => true, 'purchase_with_points' => true]);
     $reward_course = wp_insert_post(['post_type' => OHMYLMS_COURSE_CPT, 'post_title' => 'Point reward fixture', 'post_status' => 'publish']); $posts[] = $reward_course;
     update_post_meta($reward_course, '_purchase_point', 5);
     $point_cart = [['course_id' => $reward_course, 'purchase_by' => 'point']];
@@ -121,10 +120,10 @@ try {
     gamification_check(!Point::deduct_points($u, 'point', 7, 'purchase_course', null, null, 102), 'Atomic balance check prevents overspending');
     gamification_check(Point::deduct_points($u, 'point', 2, 'purchase_course', null, null, 102) === 1, 'Different orders have distinct spend identities');
     gamification_check(!Point::deduct_points($u, 'point', 1, 'purchase_course', null, null, 102), 'Order cannot spend twice');
-    update_option('ohmylms_point_settings', ['feature_enabled' => false]);
+    update_option('ohmylms_point_settings', ['enabled' => false]);
     gamification_check(Point::refund_purchase($u, 102) === 1 && Point::get_total_points($u) === 3, 'Failed point order refunds actual debit even with earning disabled');
     gamification_check(!Point::refund_purchase($u, 102) && !Point::refund_purchase($u, 999), 'Refund identity is one-time and requires a real debit');
-    update_option('ohmylms_point_settings', ['feature_enabled' => true, 'rules' => []]);
+    update_option('ohmylms_point_settings', ['enabled' => true]);
     gamification_check(!Badge::add_badge($u, 'badge', 'lesson-fixture') && !Level::add_level($u, 'level', 'lesson-level'), 'Duplicate awards return real false result');
     gamification_check(!Badge::add_badge($u, 'badge', '') && !Level::add_level($u, 'level', '') && !Badge::add_badge(0, 'badge', 'lesson-fixture'), 'Invalid award targets and identifiers rejected');
 
@@ -164,10 +163,10 @@ try {
     gamification_check(!Streak::snapshot($other)['today_complete'], 'Old completed session cannot count again on a following date');
 
     update_option('ohmylms_streak_settings', array_replace(StreakSettings::get(), ['milestones' => [['days' => 1, 'badge' => '', 'points' => 3]]]));
-    update_option('ohmylms_point_settings', ['feature_enabled' => false, 'rules' => []]);
+    update_option('ohmylms_point_settings', ['enabled' => false]);
     Streak::record($users['teacher'], 'practice', 'pending-milestone');
     gamification_check(Point::get_total_points($users['teacher']) === 0, 'Disabled points leave milestone reward pending');
-    update_option('ohmylms_point_settings', ['feature_enabled' => true, 'rules' => []]);
+    update_option('ohmylms_point_settings', ['enabled' => true]);
     Streak::snapshot($users['teacher']); Streak::snapshot($users['teacher']);
     gamification_check(Point::get_total_points($users['teacher']) === 3, 'Pending points retry once when feature is enabled');
 
@@ -181,8 +180,8 @@ try {
     remove_filter('query', $break_write); $wpdb->suppress_errors($suppressed); remove_action('ohmylms_after_badge_added', $watch);
     gamification_check(!$failed && $awarded === 0 && !get_transient('badge_added_for_user_' . $other), 'Failed persistence cannot announce success');
 
-    update_option('ohmylms_badge_settings', ['feature_enabled' => false]);
-    update_option('ohmylms_level_settings', ['feature_enabled' => false]);
+    update_option('ohmylms_badge_settings', ['enabled' => false]);
+    update_option('ohmylms_level_settings', ['enabled' => false]);
     gamification_check(Badge::maybe_met_rules($u) === [] && Level::maybe_met_rules($u) === false, 'Explicit badge and level switches disable evaluation');
 
     $commands = [];

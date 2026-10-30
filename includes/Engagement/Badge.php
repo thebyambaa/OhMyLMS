@@ -18,27 +18,35 @@ class Badge {
 
 
 	/**
-	 * Get badges for Badge.
+	 * Get badges: the custom badges and, optionally, the system streak badges.
 	 *
-	 * @param mixed $include_streak Include streak.
+	 * Each badge carries `image`, the image URL resolved from `image_id`, for templates.
+	 *
+	 * @param mixed $include_streak Include streak badges; null follows the streak setting.
+	 * @return array[]
 	 */
 	public static function get_badges( $include_streak = null ) {
 		$include_streak = null === $include_streak ? StreakSettings::enabled() : $include_streak;
-		return array_merge( (array) get_option( 'ohmylms_badges', array() ), $include_streak ? StreakSettings::badges() : array() );
+		$badges         = array();
+		foreach ( GamificationStore::badges() as $badge ) {
+			$url            = $badge['image_id'] ? wp_get_attachment_image_url( $badge['image_id'], 'thumbnail' ) : '';
+			$badge['image'] = $url ? $url : '';
+			$badges[]       = $badge;
+		}
+		return array_merge( $badges, $include_streak ? StreakSettings::badges() : array() );
 	}
 
 	/**
-	 * Get the point settings.
+	 * Get the badge settings.
 	 *
 	 * @return array
 	 */
 	public static function get_rules() {
-		$settings = get_option( 'ohmylms_badge_settings', array() );
-		return apply_filters( 'ohmylms_badge_settings', $settings );
+		return GamificationStore::get( 'badges' );
 	}
 
 	/**
-	 * Maybe enable the point system.
+	 * Whether badges are usable.
 	 *
 	 * @return bool
 	 * @since 1.0.0
@@ -48,35 +56,26 @@ class Badge {
 	}
 
 	/**
-	 * Helper to compare values with a sign
+	 * Slugs of the badges a learner qualifies for by criteria.
 	 *
-	 * @param mixed $value Value to process.
-	 * @param mixed $compare_sign Comparesign.
-	 * @param mixed $compare_data Comparedata.
-	 */
-	private static function compare_with_sign( $value, $compare_sign, $compare_data ) {
-		return Rules::compare( $value, $compare_sign, $compare_data );
-	}
-
-	/**
-	 * Maybe met rules for a specific event.
-	 *
-	 * @return bool
+	 * @return array
 	 * @since 1.0.0
 	 * @param mixed $user_id User identifier.
 	 */
 	public static function maybe_met_rules( $user_id = null ) {
 		$user_id = null === $user_id ? get_current_user_id() : (int) $user_id;
 		if ( ! self::maybe_enable() || ! $user_id ) {
-			return array(); }
+			return array();
+		}
 		$earned = array();
-		foreach ( (array) self::get_badges() as $badge ) {
-			if ( isset( $badge['slug'] ) && Rules::met( $badge['rules'] ?? array(), $user_id ) ) {
-				$earned[] = $badge['slug']; }
+		$cache  = array();
+		foreach ( GamificationStore::badges() as $badge ) {
+			if ( 'criteria' === $badge['award_source'] && Rules::met( $badge['criteria'], $user_id, $cache ) ) {
+				$earned[] = $badge['slug'];
+			}
 		}
 		return $earned;
 	}
-
 
 	/**
 	 * Add badge to a user.

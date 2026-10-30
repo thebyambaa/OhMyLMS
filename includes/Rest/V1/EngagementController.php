@@ -6,569 +6,368 @@
  */
 namespace OhMyLMS\Rest\V1;
 
-use OhMyLMS\Abstracts\RestController;
-use WP_REST_Server;
-use WP_REST_Request;
+use OhMyLMS\Engagement\Achievements;
+use OhMyLMS\Engagement\GamificationRegistry;
+use OhMyLMS\Engagement\GamificationStore;
+use OhMyLMS\Engagement\Point;
+use OhMyLMS\Engagement\Rest\BadgesController;
+use OhMyLMS\Engagement\Rest\GamificationController;
+use OhMyLMS\Engagement\Rest\LevelsController;
+use OhMyLMS\Engagement\StreakSettings;
 use WP_Error;
+use WP_REST_Request;
+use WP_REST_Server;
 
 /**
- * EngagementController class.
+ * REST API for gamification under `ohmylms/v1/gamification`.
  *
- * Handles REST API endpoints for engagement features, such as leaderboard settings.
+ * This controller owns the section settings (points, levels, badges, leaderboard and rewards),
+ * the options route and manual point adjustments; levels and badges are collections handled by
+ * {@see LevelsController} and {@see BadgesController}. Definitions, schema and defaults come from
+ * {@see GamificationRegistry}; storage and validation from {@see GamificationStore}.
+ *
+ * The streak, XP, score and mastery settings keep their routes under `engagement/settings/<group>`
+ * until they are rebuilt. Every route requires CAPABILITY. See docs/api/gamification.md.
  *
  * @since 1.0.0
  */
-class EngagementController extends RestController {
-	/**
-	 * Valid group for Engagement controller.
-	 *
-	 * @param mixed $group Group.
-	 */
-	private function valid_group( $group ) {
-		return in_array( $group, apply_filters( 'ohmylms_engagement_setting_groups', array( 'point', 'badge', 'level', 'reward', 'leaderboard', 'streak', 'xp', 'score', 'mastery' ) ), true );
-	}
+class EngagementController extends GamificationController {
 
 	/**
-	 * Validate settings for Engagement controller.
-	 *
-	 * @param mixed $group Group.
-	 * @param mixed $settings Configuration settings.
-	 */
-	private function validate_settings( $group, $settings ) {
-		if ( 'xp' === $group ) {
-			return \OhMyLMS\Engagement\XpSettings::validate( $settings ); }
-		if ( 'score' === $group ) {
-			return \OhMyLMS\Skills\Score::validate( $settings ); }
-		if ( 'mastery' === $group ) {
-			return \OhMyLMS\Performance\Settings::validate( $settings ); }
-		if ( 'streak' === $group ) {
-			$validated = \OhMyLMS\Engagement\StreakSettings::validate( $settings );
-			if ( is_wp_error( $validated ) ) {
-				return $validated; }
-			$badges = array_column( \OhMyLMS\Engagement\Badge::get_badges( true ), 'slug' );
-			foreach ( $validated['milestones'] as $reward ) {
-				if ( $reward['badge'] && ! in_array( $reward['badge'], $badges, true ) ) {
-					return new WP_Error( 'streak_badge', __( 'Choose an existing milestone badge.', 'ohmylms' ), array( 'status' => 400 ) ); }
-			}
-			return $validated;
-		}
-		$error = new WP_Error( 'engagement_settings', __( 'Invalid gamification settings.', 'ohmylms' ), array( 'status' => 400 ) );
-		if ( ! is_array( $settings ) ) {
-			return $error; }
-		foreach ( array( 'enable', 'feature_enabled' ) as $key ) {
-			if ( isset( $settings[ $key ] ) ) {
-				if ( ! in_array( $settings[ $key ], array( true, false, 0, 1, '0', '1' ), true ) ) {
-					return $error; }
-				$settings[ $key ] = in_array( $settings[ $key ], array( true, 1, '1' ), true );
-			}
-		}
-		if ( in_array( $group, array( 'point', 'reward' ), true ) ) {
-			if ( isset( $settings['rules'] ) && ! is_array( $settings['rules'] ) ) {
-				return $error; }
-			foreach ( $settings['rules'] ?? array() as $rule ) {
-				if ( ! is_array( $rule ) || empty( $rule['slug'] ) || ! isset( $rule['value'] ) || ! in_array( $rule['value'], array( true, false, 0, 1, '0', '1' ), true ) ) {
-					return $error; }
-				foreach ( array( 'point', 'threshold' ) as $field ) {
-					if ( isset( $rule[ $field ] ) && ( ! is_numeric( $rule[ $field ] ) || ! is_finite( (float) $rule[ $field ] ) || $rule[ $field ] < 0 || $rule[ $field ] > 1000000 ) ) {
-						return $error; }
-				}
-			}
-		}
-		if ( 'level' === $group && isset( $settings['levels'] ) ) {
-			if ( ! is_array( $settings['levels'] ) ) {
-				return $error; }
-			foreach ( $settings['levels'] as $level ) {
-				if ( ! \OhMyLMS\Engagement\Rules::valid( $level['rules'] ?? array() ) ) {
-					return $error; }
-			}
-		}
-		if ( 'leaderboard' === $group ) {
-			if ( isset( $settings['rules'] ) && ! in_array( $settings['rules'], array( 'completion_rate', 'highest_quiz', 'fastest_time' ), true ) ) {
-				return $error; }
-			if ( isset( $settings['threshold'] ) && '' !== $settings['threshold'] && ( ! is_numeric( $settings['threshold'] ) || $settings['threshold'] < 0 || $settings['threshold'] > 100 ) ) {
-				return $error; }
-			if ( isset( $settings['students_number'] ) && '' !== $settings['students_number'] && ( ! is_numeric( $settings['students_number'] ) || $settings['students_number'] < 1 || $settings['students_number'] > 100 ) ) {
-				return $error; }
-		}
-		return $settings;
-	}
-	/**
-	 * The base route for the controller.
+	 * Route base.
 	 *
 	 * @var string
 	 */
-	protected $base = 'engagement';
+	protected $rest_base = 'gamification';
 
 	/**
-	 * Register the routes for the controller.
+	 * Settings groups that still live under `engagement/settings/<group>`.
 	 *
-	 * @since 1.0.0
+	 * @var string[]
+	 */
+	const LEGACY_GROUPS = array( 'streak', 'xp', 'score', 'mastery' );
+
+	/**
+	 * Register the routes.
+	 *
+	 * @return void
 	 */
 	public function register_routes() {
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/settings/(?P<group_id>[\w-]+)',
-			array(
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_settings' ),
-					'permission_callback' => array( $this, 'has_permission' ),
-				),
-				array(
-					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'save_settings' ),
-					'permission_callback' => array( $this, 'has_permission' ),
-				),
-			)
-		);
+		$base = '/' . $this->rest_base;
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->base . '/badges',
+			$base . '/settings',
 			array(
 				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_badges' ),
-					'permission_callback' => array( $this, 'has_permission' ),
-				),
-				array(
-					'methods'             => WP_REST_Server::DELETABLE,
-					'callback'            => array( $this, 'delete_badges' ),
-					'permission_callback' => array( $this, 'has_permission' ),
-				),
-				array(
-					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'save_badges' ),
-					'permission_callback' => array( $this, 'has_permission' ),
+					'callback'            => array( $this, 'get_items' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
 				),
 			)
 		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->base . '/levels',
-			array(
+		foreach ( GamificationRegistry::sections() as $section ) {
+			$schema = GamificationRegistry::schema( $section );
+			$args   = array();
+			foreach ( $schema['properties'] as $name => $property ) {
+				if ( empty( $property['readonly'] ) ) {
+					$args[ $name ] = array_merge(
+						$property,
+						array(
+							'validate_callback' => 'rest_validate_request_arg',
+							'sanitize_callback' => 'rest_sanitize_request_arg',
+						)
+					);
+				}
+			}
+			register_rest_route(
+				$this->namespace,
+				$base . '/settings/' . $section,
 				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_levels' ),
-					'permission_callback' => array( $this, 'has_permission' ),
-				),
-				array(
-					'methods'             => WP_REST_Server::DELETABLE,
-					'callback'            => array( $this, 'delete_levels' ),
-					'permission_callback' => array( $this, 'has_permission' ),
-				),
-				array(
-					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'save_levels' ),
-					'permission_callback' => array( $this, 'has_permission' ),
-				),
-			)
-		);
-	}
-
-	/**
-	 * Get the leaderboard settings.
-	 *
-	 * @param WP_REST_Request $request The request object.
-	 * @return \WP_REST_Response|\WP_Error The response or error object.
-	 *
-	 * @since 1.0.0
-	 */
-	public function get_settings( WP_REST_Request $request ) {
-		if ( ! isset( $request['group_id'] ) || empty( $request['group_id'] ) ) {
-			return new WP_Error(
-				'rest_invalid_group_id',
-				__( 'Invalid group ID.', 'ohmylms' ),
-				array( 'status' => 400 )
-			);
-		}
-		$group_id = $request['group_id'];
-		if ( ! $this->valid_group( $group_id ) ) {
-			return new WP_Error( 'rest_invalid_group_id', __( 'Invalid group ID.', 'ohmylms' ), array( 'status' => 400 ) ); }
-		if ( 'streak' === $group_id ) {
-			return rest_ensure_response( \OhMyLMS\Engagement\StreakSettings::get() ); }
-		if ( 'xp' === $group_id ) {
-			return rest_ensure_response( \OhMyLMS\Engagement\XpSettings::get() ); }
-		if ( 'score' === $group_id ) {
-			return rest_ensure_response( \OhMyLMS\Skills\Score::get() ); }
-		if ( 'mastery' === $group_id ) {
-			return rest_ensure_response( \OhMyLMS\Performance\Settings::payload() ); }
-		$function_name = 'get_' . $group_id . '_default_settings';
-		$settings      = get_option( 'ohmylms_' . $group_id . '_settings' );
-		return rest_ensure_response( $settings );
-	}
-
-	/**
-	 * Save the leaderboard settings.
-	 *
-	 * @param WP_REST_Request $request The request object.
-	 * @return \WP_REST_Response|\WP_Error The response or error object.
-	 *
-	 * @since 1.0.0
-	 */
-	public function save_settings( WP_REST_Request $request ) {
-		if ( ! isset( $request['group_id'] ) || empty( $request['group_id'] ) ) {
-			return new WP_Error(
-				'rest_invalid_group_id',
-				__( 'Invalid group ID.', 'ohmylms' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		$settings = $request->get_json_params();
-		$group_id = $request['group_id'];
-		if ( ! $this->valid_group( $group_id ) ) {
-			return new WP_Error( 'rest_invalid_group_id', __( 'Invalid group ID.', 'ohmylms' ), array( 'status' => 400 ) ); }
-		$settings = $this->validate_settings( $group_id, $settings );
-		if ( is_wp_error( $settings ) ) {
-			return $settings; }
-		if ( 'streak' === $group_id && $settings['enable'] && ! \OhMyLMS\Engagement\StreakSchema::install() ) {
-			return new WP_Error( 'streak_schema', __( 'Could not install streak storage.', 'ohmylms' ), array( 'status' => 500 ) );
-		}
-		if ( in_array( $group_id, array( 'xp', 'score' ), true ) && $settings['enable'] && ! \OhMyLMS\Engagement\XpSchema::install() ) {
-			return new WP_Error( 'xp_schema', __( 'Could not install XP and mastery score storage.', 'ohmylms' ), array( 'status' => 500 ) );
-		}
-		if ( 'mastery' === $group_id ) {
-			// Skill tracking has its own option; a change of policy rebuilds the states in the background.
-			$saved = \OhMyLMS\Performance\Settings::save( $settings );
-			return is_wp_error( $saved ) ? $saved : rest_ensure_response(
-				array(
-					'success' => true,
-					'message' => __( 'Settings saved successfully.', 'ohmylms' ),
+					array(
+						'methods'             => WP_REST_Server::READABLE,
+						'callback'            => function () use ( $section ) {
+							return rest_ensure_response( GamificationStore::for_response( $section ) );
+						},
+						'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					),
+					array(
+						'methods'             => WP_REST_Server::EDITABLE,
+						'callback'            => function ( $request ) use ( $section ) {
+							return $this->update_section( $section, $request );
+						},
+						'permission_callback' => array( $this, 'update_item_permissions_check' ),
+						'args'                => $args,
+					),
+					'schema' => static function () use ( $section ) {
+						return GamificationRegistry::schema( $section );
+					},
 				)
 			);
 		}
-		update_option( 'ohmylms_' . $group_id . '_settings', $settings );
-		if ( 'level' === $group_id ) {
-			$levels = isset( $settings['levels'] ) ? $settings['levels'] : array();
-			update_option( 'ohmylms_levels', $levels );
-		}
+		register_rest_route(
+			$this->namespace,
+			$base . '/options',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_options' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+				),
+			)
+		);
+		register_rest_route(
+			$this->namespace,
+			$base . '/points/adjustments',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'adjust_points' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'user_id'   => array(
+							'description' => __( 'Learner user id.', 'ohmylms' ),
+							'type'        => 'integer',
+							'minimum'     => 1,
+							'required'    => true,
+						),
+						'points'    => array(
+							'description' => __( 'Whole number to add (positive) or remove (negative); not zero.', 'ohmylms' ),
+							'type'        => 'integer',
+							'minimum'     => -GamificationRegistry::MAX_POINTS,
+							'maximum'     => GamificationRegistry::MAX_POINTS,
+							'required'    => true,
+						),
+						'reference' => array(
+							'description' => __( 'Idempotency key. Repeating a request with the same reference changes nothing.', 'ohmylms' ),
+							'type'        => 'string',
+							'pattern'     => '^[A-Za-z0-9_.-]{1,60}$',
+							'required'    => true,
+						),
+						'note'      => array(
+							'description'       => __( 'Why the points were changed.', 'ohmylms' ),
+							'type'              => 'string',
+							'maxLength'         => 200,
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+					),
+				),
+			)
+		);
 
-		if ( 'point' === $group_id ) {
-			do_action( 'ohmylms_point_settings_updated', $settings );
-		}
+		( new LevelsController() )->register_routes();
+		( new BadgesController() )->register_routes();
 
+		register_rest_route(
+			$this->namespace,
+			'/engagement/settings/(?P<group_id>' . implode( '|', self::LEGACY_GROUPS ) . ')',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_legacy_settings' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'save_legacy_settings' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+				),
+			)
+		);
+	}
+
+	/**
+	 * All sections in one response.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return \WP_REST_Response
+	 */
+	public function get_items( $request ) {
+		unset( $request );
+		$all = array( 'integration_enabled' => GamificationStore::integration_enabled() );
+		foreach ( GamificationRegistry::sections() as $section ) {
+			$all[ $section ] = GamificationStore::for_response( $section );
+		}
+		return rest_ensure_response( $all );
+	}
+
+	/**
+	 * Update a section. Only the fields sent change.
+	 *
+	 * @param string          $section Section id.
+	 * @param WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	private function update_section( $section, $request ) {
+		$body    = $request->get_json_params();
+		$body    = is_array( $body ) ? $body : $request->get_params();
+		$known   = GamificationRegistry::schema( $section )['properties'];
+		$unknown = array_diff_key( $body, $known );
+		if ( $unknown ) {
+			return new WP_Error(
+				'rest_invalid_param',
+				/* translators: %s: field names. */
+				sprintf( __( 'Unknown settings: %s.', 'ohmylms' ), implode( ', ', array_map( 'sanitize_key', array_keys( $unknown ) ) ) ),
+				array( 'status' => 400 )
+			);
+		}
+		$data = $body;
+		$next = GamificationStore::prepare( $section, $data );
+		if ( is_wp_error( $next ) ) {
+			return $next;
+		}
+		if ( ! GamificationStore::save( $section, $next ) ) {
+			return new WP_Error( 'ohmylms_gamification_save_failed', __( 'Could not save the settings.', 'ohmylms' ), array( 'status' => 500 ) );
+		}
+		if ( 'points' === $section ) {
+			/**
+			 * Fires after the point rules were saved.
+			 *
+			 * @param array $settings The saved points section.
+			 */
+			do_action( 'ohmylms_point_settings_updated', GamificationStore::get( 'points' ) );
+		}
+		return rest_ensure_response( GamificationStore::for_response( $section ) );
+	}
+
+	/**
+	 * Allow-lists and limits the editor needs.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return \WP_REST_Response
+	 */
+	public function get_options( $request ) {
+		unset( $request );
+		$list      = static function ( array $labels ) {
+			$items = array();
+			foreach ( $labels as $value => $label ) {
+				$items[] = array(
+					'value' => $value,
+					'label' => $label,
+				);
+			}
+			return $items;
+		};
+		$operators = array();
+		foreach ( GamificationRegistry::operators() as $operator ) {
+			$operators[] = array(
+				'value' => $operator,
+				'label' => $operator,
+			);
+		}
+		return rest_ensure_response(
+			array(
+				'integration_enabled' => GamificationStore::integration_enabled(),
+				'metrics'             => $list( GamificationRegistry::metrics() ),
+				'operators'           => $operators,
+				'leaderboard_modes'   => $list( GamificationRegistry::leaderboard_modes() ),
+				'image_mime_types'    => GamificationStore::image_mime_types(),
+				'limits'              => array(
+					'max_points'          => GamificationRegistry::MAX_POINTS,
+					'max_criterion_value' => GamificationRegistry::MAX_CRITERION_VALUE,
+					'max_levels'          => GamificationRegistry::MAX_LEVELS,
+					'max_badges'          => GamificationRegistry::MAX_BADGES,
+					'max_criteria'        => GamificationRegistry::MAX_CRITERIA,
+				),
+			)
+		);
+	}
+
+	/**
+	 * Add or remove points by hand, once per reference.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function adjust_points( $request ) {
+		$user_id = (int) $request['user_id'];
+		$points  = (int) $request['points'];
+		if ( 0 === $points ) {
+			return GamificationStore::error( 'ohmylms_points_zero', __( 'The number of points cannot be zero.', 'ohmylms' ) );
+		}
+		if ( ! get_userdata( $user_id ) ) {
+			return new WP_Error( 'ohmylms_gamification_user_not_found', __( 'User not found.', 'ohmylms' ), array( 'status' => 404 ) );
+		}
+		$result = Achievements::adjust_points( $user_id, $points, $request['reference'], $request['note'], get_current_user_id() );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		$response = rest_ensure_response(
+			array(
+				'user_id'   => $user_id,
+				'points'    => $points,
+				'reference' => $request['reference'],
+				'created'   => $result['created'],
+				'balance'   => $result['balance'],
+			)
+		);
+		$response->set_status( $result['created'] ? 201 : 200 );
+		return $response;
+	}
+
+	/**
+	 * Read a streak, XP, score or mastery group.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return \WP_REST_Response
+	 */
+	public function get_legacy_settings( $request ) {
+		switch ( $request['group_id'] ) {
+			case 'streak':
+				return rest_ensure_response( StreakSettings::get() );
+			case 'xp':
+				return rest_ensure_response( \OhMyLMS\Engagement\XpSettings::get() );
+			case 'score':
+				return rest_ensure_response( \OhMyLMS\Skills\Score::get() );
+		}
+		return rest_ensure_response( \OhMyLMS\Performance\Settings::payload() );
+	}
+
+	/**
+	 * Validate and save a streak, XP, score or mastery group.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function save_legacy_settings( $request ) {
+		$group    = $request['group_id'];
+		$settings = $request->get_json_params();
+		if ( 'mastery' === $group ) {
+			$saved = \OhMyLMS\Performance\Settings::validate( $settings );
+			$saved = is_wp_error( $saved ) ? $saved : \OhMyLMS\Performance\Settings::save( $saved );
+			return is_wp_error( $saved ) ? $saved : rest_ensure_response( array( 'success' => true ) );
+		}
+		if ( 'xp' === $group ) {
+			$settings = \OhMyLMS\Engagement\XpSettings::validate( $settings );
+		} elseif ( 'score' === $group ) {
+			$settings = \OhMyLMS\Skills\Score::validate( $settings );
+		} else {
+			$settings = StreakSettings::validate( $settings );
+			if ( ! is_wp_error( $settings ) ) {
+				$badges = array_column( \OhMyLMS\Engagement\Badge::get_badges( true ), 'slug' );
+				foreach ( $settings['milestones'] as $reward ) {
+					if ( $reward['badge'] && ! in_array( $reward['badge'], $badges, true ) ) {
+						return new WP_Error( 'streak_badge', __( 'Choose an existing milestone badge.', 'ohmylms' ), array( 'status' => 400 ) );
+					}
+				}
+			}
+		}
+		if ( is_wp_error( $settings ) ) {
+			return $settings;
+		}
+		if ( 'streak' === $group && $settings['enable'] && ! \OhMyLMS\Engagement\StreakSchema::install() ) {
+			return new WP_Error( 'streak_schema', __( 'Could not install streak storage.', 'ohmylms' ), array( 'status' => 500 ) );
+		}
+		if ( in_array( $group, array( 'xp', 'score' ), true ) && $settings['enable'] && ! \OhMyLMS\Engagement\XpSchema::install() ) {
+			return new WP_Error( 'xp_schema', __( 'Could not install XP and mastery score storage.', 'ohmylms' ), array( 'status' => 500 ) );
+		}
+		update_option( 'ohmylms_' . $group . '_settings', $settings );
 		return rest_ensure_response(
 			array(
 				'success' => true,
 				'message' => __( 'Settings saved successfully.', 'ohmylms' ),
 			)
 		);
-	}
-
-	/**
-	 * Get the badges.
-	 *
-	 * @param WP_REST_Request $request The request object.
-	 * @return \WP_REST_Response|\WP_Error The response or error object.
-	 *
-	 * @since 1.0.0
-	 */
-	public function get_badges( WP_REST_Request $request ) {
-		$badges = $request->get_param( 'include_streak' ) ? \OhMyLMS\Engagement\Badge::get_badges( true ) : get_option( 'ohmylms_badges', array() );
-		return rest_ensure_response( $badges );
-	}
-
-
-	/**
-	 * Save the badges.
-	 *
-	 * @param WP_REST_Request $request The request object.
-	 * @return \WP_REST_Response|\WP_Error The response or error object.
-	 *
-	 * @since 1.0.0
-	 */
-	public function save_badges( WP_REST_Request $request ) {
-		$new_badge = $request->get_json_params();
-		if ( ! is_array( $new_badge ) || empty( $new_badge ) ) {
-			return new WP_Error(
-				'rest_invalid_badges',
-				__( 'Invalid badges data.', 'ohmylms' ),
-				array( 'status' => 400 )
-			);
-		}
-		$streak_badge = ( $new_badge['award_source'] ?? '' ) === 'streak';
-		if ( $streak_badge ) {
-			$new_badge['rules'] = array();
-		} elseif ( ! \OhMyLMS\Engagement\Rules::valid( $new_badge['rules'] ?? array() ) ) {
-			return new WP_Error( 'badge_rules', __( 'Define valid badge conditions.', 'ohmylms' ), array( 'status' => 400 ) );
-		}
-		$existing_badges = get_option( 'ohmylms_badges', array() );
-		$is_exist        = false;
-		foreach ( $existing_badges as $key => $badge ) {
-			if ( isset( $badge['slug'], $new_badge['slug'] ) && ( $new_badge['slug'] === $badge['slug'] ) ) {
-				$existing_badges[ $key ] = $new_badge;
-				$is_exist                = true;
-			}
-		}
-
-		if ( ! $is_exist ) {
-			if ( isset( $new_badge['name'] ) ) {
-				$new_badge['slug'] = $this->generate_slug( $new_badge['name'] );
-			}
-
-			array_push( $existing_badges, $new_badge );
-		}
-
-		update_option( 'ohmylms_badges', $existing_badges );
-		return rest_ensure_response(
-			array(
-				'success' => true,
-				'message' => __( 'Badges saved successfully.', 'ohmylms' ),
-				'badge'   => $new_badge,
-			)
-		);
-	}
-
-	/**
-	 * Generate slug for Engagement controller.
-	 *
-	 * @param mixed $string String.
-	 */
-	public function generate_slug( $string ) {
-		// Convert to lowercase.
-		$slug = strtolower( $string );
-
-		// Replace spaces and underscores with hyphens.
-		$slug = preg_replace( '/[\s_]+/', '-', $slug );
-
-		// Remove non-alphanumeric characters (except hyphens).
-		$slug = preg_replace( '/[^a-z0-9\-]/', '', $slug );
-
-		// Remove multiple hyphens.
-		$slug = preg_replace( '/-+/', '-', $slug );
-
-		// Trim hyphens from both ends.
-		$slug = trim( $slug, '-' );
-
-		return $slug;
-	}
-
-
-	/**
-	 * Save the badges.
-	 *
-	 * @param WP_REST_Request $request The request object.
-	 * @return \WP_REST_Response|\WP_Error The response or error object.
-	 *
-	 * @since 1.0.0
-	 */
-	public function delete_badges( WP_REST_Request $request ) {
-		$badges = $request->get_json_params();
-		if ( ! is_array( $badges ) ) {
-			return new WP_Error(
-				'rest_invalid_badges',
-				__( 'Invalid badges data.', 'ohmylms' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		update_option( 'ohmylms_badges', $badges );
-
-		return rest_ensure_response(
-			array(
-				'success' => true,
-				'message' => __( 'Badges deleted successfully.', 'ohmylms' ),
-			)
-		);
-	}
-
-
-
-	/**
-	 * Get the levels.
-	 *
-	 * @param WP_REST_Request $request The request object.
-	 * @return \WP_REST_Response|\WP_Error The response or error object.
-	 *
-	 * @since 1.0.0
-	 */
-	public function get_levels( WP_REST_Request $request ) {
-		$levels = get_option( 'ohmylms_levels', array() );
-		return rest_ensure_response( $levels );
-	}
-
-
-	/**
-	 * Save the levels.
-	 *
-	 * @param WP_REST_Request $request The request object.
-	 * @return \WP_REST_Response|\WP_Error The response or error object.
-	 *
-	 * @since 1.0.0
-	 */
-	public function save_levels( WP_REST_Request $request ) {
-		$new_level = $request->get_json_params();
-		if ( ! \OhMyLMS\Engagement\Rules::valid( $new_level['rules'] ?? array() ) ) {
-			return new WP_Error( 'level_rules', __( 'Define valid level conditions.', 'ohmylms' ), array( 'status' => 400 ) ); }
-		if ( ! is_array( $new_level ) || empty( $new_level ) ) {
-			return new WP_Error(
-				'rest_invalid_levels',
-				__( 'Invalid levels data.', 'ohmylms' ),
-				array( 'status' => 400 )
-			);
-		}
-		$existing_levels = get_option( 'ohmylms_levels', array() );
-		$is_exist        = false;
-		foreach ( $existing_levels as $key => $level ) {
-			if ( isset( $new_level['slug'] ) && $new_level['slug'] === $level['slug'] ) {
-				$existing_levels[ $key ] = $new_level;
-				$is_exist                = true;
-			}
-		}
-
-		if ( ! $is_exist ) {
-			if ( isset( $new_level['name'] ) ) {
-				$new_level['slug'] = $this->generate_slug( $new_level['name'] );
-			}
-
-			array_push( $existing_levels, $new_level );
-		}
-		update_option( 'ohmylms_levels', $existing_levels );
-		return rest_ensure_response(
-			array(
-				'success' => true,
-				'message' => __( 'Badges saved successfully.', 'ohmylms' ),
-			)
-		);
-	}
-
-	/**
-	 * Save the badges.
-	 *
-	 * @param WP_REST_Request $request The request object.
-	 * @return \WP_REST_Response|\WP_Error The response or error object.
-	 *
-	 * @since 1.0.0
-	 */
-	public function delete_levels( WP_REST_Request $request ) {
-		$levels = $request->get_json_params();
-		if ( ! is_array( $levels ) ) {
-			return new WP_Error(
-				'rest_invalid_levels',
-				__( 'Invalid levels data.', 'ohmylms' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		update_option( 'ohmylms_levels', $levels );
-
-		return rest_ensure_response(
-			array(
-				'success' => true,
-				'message' => __( 'Badges deleted successfully.', 'ohmylms' ),
-			)
-		);
-	}
-
-	/**
-	 * Check if the current user has permission to manage options.
-	 *
-	 * @return bool
-	 * @since 1.0.0
-	 */
-	public function has_permission() {
-		return current_user_can( 'manage_options' );
-	}
-
-	/**
-	 * Get the default leaderboard settings.
-	 *
-	 * @return array
-	 * @since 1.0.0
-	 */
-	private function get_leaderboard_default_settings() {
-		return array(
-			'enable'          => false,
-			'rules'           => 'completion_rate',
-			'students_number' => 10,
-		);
-	}
-
-
-	/**
-	 * Get the default point settings.
-	 *
-	 * @return array
-	 * @since 1.0.0
-	 */
-	private function get_point_default_settings() {
-		return array(
-			'enable' => false,
-			'rules'  => array(
-				array(
-					'label'     => __( 'Course completion rate', 'ohmylms' ),
-					'tooltip'   => '',
-					'slug'      => 'course_completion_rate',
-					'value'     => true,
-					'threshold' => 100,
-				),
-				array(
-					'label'   => __( 'Complete lesson', 'ohmylms' ),
-					'tooltip' => '',
-					'slug'    => 'lesson_complete',
-					'value'   => true,
-				),
-				array(
-					'label'     => __( 'Quiz passing mark', 'ohmylms' ),
-					'tooltip'   => '',
-					'slug'      => 'quiz_passing_mark',
-					'value'     => true,
-					'threshold' => 30,
-				),
-				array(
-					'label'     => __( 'Assignment passing mark', 'ohmylms' ),
-					'tooltip'   => '',
-					'slug'      => 'assignment_passing_mark',
-					'value'     => true,
-					'threshold' => 30,
-				),
-				array(
-					'label'   => __( 'Submit quiz', 'ohmylms' ),
-					'tooltip' => '',
-					'slug'    => 'submit_quiz',
-					'value'   => true,
-				),
-				array(
-					'label'   => __( 'Submit assignment', 'ohmylms' ),
-					'tooltip' => '',
-					'slug'    => 'submit_assignment',
-					'value'   => true,
-				),
-			),
-		);
-	}
-
-
-	/**
-	 * Get the default reward settings.
-	 *
-	 * @return array
-	 * @since 1.0.0
-	 */
-	private function get_reward_default_settings() {
-		return false;
-	}
-
-
-	/**
-	 * Get the default leaderboard settings.
-	 *
-	 * @return array
-	 * @since 1.0.0
-	 */
-	private function get_badge_default_settings() {
-		return false;
-	}
-
-	/**
-	 * Get the default level settings.
-	 *
-	 * @return array
-	 * @since 1.0.0
-	 */
-	private function get_level_default_settings() {
-		return false;
 	}
 }
