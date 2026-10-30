@@ -12,7 +12,7 @@ test('Students tabs share the native table and stay in the admin application', a
   await page.locator('#user_pass').fill(credentials.password);
   await page.locator('#wp-submit').click();
   await page.waitForURL(/wp-admin/);
-  await page.goto('/wp-admin/admin.php?page=ohmylms#/students');
+  await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/students');
   await expect(page.getByRole('heading', { name: 'Students', exact: true })).toBeVisible();
   const tabs = page.getByRole('navigation', { name: 'Students and schools' });
   await page.evaluate(() => { window.tableNavigationMarker = 'same-document'; });

@@ -21,7 +21,7 @@ test('admin colors and font are chosen under Design and applied everywhere', asy
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await login(page);
-  await page.goto('/wp-admin/admin.php?page=ohmylms#/settings/design-settings/course-list');
+  await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/settings/design-settings/course-list');
   const before = await page.evaluate(() => wp.apiFetch({ path: '/ohmylms/v1/settings/design' }));
   try {
     await page.getByRole('tab', { name: 'Colors & fonts' }).click();
@@ -47,7 +47,7 @@ test('admin colors and font are chosen under Design and applied everywhere', asy
     expect((await saved).ok()).toBe(true);
 
     // Native screens and SDK pages both follow the saved tokens.
-    await page.goto('/wp-admin/admin.php?page=ohmylms#/courses');
+    await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/courses');
     await page.reload();
     const add = page.getByRole('button', { name: /Add Course/ });
     await expect(add).toHaveCSS('background-color', 'rgb(15, 118, 110)');
@@ -56,7 +56,7 @@ test('admin colors and font are chosen under Design and applied everywhere', asy
       /Noto Sans/,
     );
     // The old Skills address opens the Content Hub's Skills tab.
-    await page.goto('/wp-admin/admin.php?page=ohmylms#/extensions/skills');
+    await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/extensions/skills');
     const title = page.locator('.ohmylms-content-hub-header h1');
     await expect(title).toHaveText('Content Hub');
     await expect(title).toHaveCSS('font-size', '20px');

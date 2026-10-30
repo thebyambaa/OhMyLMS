@@ -16,7 +16,7 @@ test( 'memory recall saves study deadline, choices and practice-only feedback', 
 	await page.locator( '#user_pass' ).fill( credentials.password );
 	await page.locator( '#wp-submit' ).click();
 	await page.waitForURL( ( u ) => ! u.pathname.endsWith( 'wp-login.php' ) );
-	await page.goto( '/wp-admin/admin.php?page=ohmylms' );
+	await page.goto( '/wp-admin/admin.php?page=ohmylms-app' );
 	await page.waitForFunction( () => Boolean( window.wp?.apiFetch ) );
 	const fixture = await page.evaluate( async () => {
 		const api = ( path, data ) =>
@@ -132,7 +132,7 @@ test( 'memory recall saves study deadline, choices and practice-only feedback', 
 			} )
 		).toHaveValue( '2' );
 	} finally {
-		await page.goto( '/wp-admin/admin.php?page=ohmylms' );
+		await page.goto( '/wp-admin/admin.php?page=ohmylms-app' );
 		await page.waitForFunction( () => Boolean( window.wp?.apiFetch ) );
 		await page.evaluate( async ( { post, question } ) => {
 			await wp.apiFetch( {

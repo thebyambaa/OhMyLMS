@@ -27,6 +27,10 @@ defined( 'ABSPATH' ) || exit;
  * - `skip` (optional): query parameters whose presence keeps the legacy screen.
  *
  * Rules are tried in order and the first match wins. Other query parameters are copied unchanged.
+ *
+ * Cutover switch: while {@see LegacyRoutes::legacy_admin_enabled()} is false (constant
+ * `OHMYLMS_LEGACY_ADMIN` or filter `ohmylms_legacy_admin_enabled`), the legacy page redirects to the new
+ * app on the server, and the app maps the carried-over hash. See docs/CUTOVER.md.
  */
 final class LegacyRoutes {
 
@@ -34,6 +38,26 @@ final class LegacyRoutes {
 	 * Query parameter that keeps an administrator on the legacy screen (`&ohmylms_legacy=1`).
 	 */
 	const OPT_OUT = 'ohmylms_legacy';
+
+	/**
+	 * Query parameter the server redirect adds, so the app maps the legacy hash it receives.
+	 */
+	const FROM_LEGACY = 'ohmylms_from_legacy';
+
+	/**
+	 * Constant that turns the legacy admin off when defined as false (`wp-config.php`).
+	 */
+	const LEGACY_ADMIN_CONSTANT = 'OHMYLMS_LEGACY_ADMIN';
+
+	/**
+	 * New-app route that unmapped legacy routes open after the cutover.
+	 */
+	const APP_HOME = '/';
+
+	/**
+	 * Id of the notice that names a legacy screen the new app does not have yet.
+	 */
+	const NOTICE_ID = 'ohmylms-legacy-unavailable';
 
 	/**
 	 * Script handle of the browser redirect.
@@ -72,6 +96,13 @@ final class LegacyRoutes {
 	 * @var bool|null
 	 */
 	private static $enabled = null;
+
+	/**
+	 * Cached result of {@see LegacyRoutes::legacy_admin_enabled()}.
+	 *
+	 * @var bool|null
+	 */
+	private static $legacy_admin = null;
 
 	/**
 	 * Cached rules.
@@ -391,7 +422,8 @@ final class LegacyRoutes {
 	}
 
 	/**
-	 * Whether links go to the new app. False when the app has not been built.
+	 * Whether links go to the new app. False when the app has not been built; always true once the
+	 * legacy admin is switched off.
 	 *
 	 * @return bool
 	 */
@@ -402,17 +434,141 @@ final class LegacyRoutes {
 			 *
 			 * @param bool $enabled True when the app's assets are present.
 			 */
-			self::$enabled = (bool) apply_filters( 'ohmylms_legacy_routes_enabled', null !== AdminAppAssets::locate() );
+			$enabled       = (bool) apply_filters( 'ohmylms_legacy_routes_enabled', null !== AdminAppAssets::locate() );
+			self::$enabled = $enabled || ! self::legacy_admin_enabled();
 		}
 		return self::$enabled;
 	}
 
 	/**
-	 * Forget cached rules and the enabled flag (after changing the filters).
+	 * Whether the recovered legacy admin (`admin.php?page=ohmylms`) is still served and linked.
+	 *
+	 * Defaults to true. Define `OHMYLMS_LEGACY_ADMIN` as false, or return false from the
+	 * `ohmylms_legacy_admin_enabled` filter, to cut over to the new app. The legacy admin stays on while
+	 * the new app is not built, because there would be nothing to open instead.
+	 *
+	 * @return bool
+	 */
+	public static function legacy_admin_enabled() {
+		if ( null === self::$legacy_admin ) {
+			$default = defined( self::LEGACY_ADMIN_CONSTANT ) ? (bool) constant( self::LEGACY_ADMIN_CONSTANT ) : true;
+			/**
+			 * Filters whether the recovered legacy admin is still served. When false, the OhMyLMS menu
+			 * opens the new app, `admin.php?page=ohmylms` redirects to it and only `&ohmylms_legacy=1`
+			 * keeps the legacy screen. See docs/CUTOVER.md.
+			 *
+			 * @param bool $enabled Value of OHMYLMS_LEGACY_ADMIN, true when it is not defined.
+			 */
+			$enabled            = (bool) apply_filters( 'ohmylms_legacy_admin_enabled', $default );
+			self::$legacy_admin = $enabled || null === AdminAppAssets::locate();
+		}
+		return self::$legacy_admin;
+	}
+
+	/**
+	 * Forget cached rules and flags (after changing the filters).
 	 */
 	public static function reset() {
-		self::$enabled = null;
-		self::$routes  = null;
+		self::$enabled      = null;
+		self::$legacy_admin = null;
+		self::$routes       = null;
+	}
+
+	/**
+	 * Legacy screens the new app does not have yet, listed in the notice shown after the cutover.
+	 *
+	 * @return array<string, string> Legacy route => screen name.
+	 */
+	public static function unavailable() {
+		$screens = array(
+			'/content-hub'                          => __( 'Content Hub overview', 'ohmylms' ),
+			'/content-hub/exams'                    => __( 'Exams', 'ohmylms' ),
+			'/content-hub/curriculum/compare'       => __( 'Curriculum comparison', 'ohmylms' ),
+			'/communities'                          => __( 'Communities', 'ohmylms' ),
+			'/sessions'                             => __( 'Live sessions', 'ohmylms' ),
+			'/students/:id/report'                  => __( 'Student report', 'ohmylms' ),
+			'/courses/:id/students'                 => __( 'Course students', 'ohmylms' ),
+			'/settings/design-settings'             => __( 'Design settings', 'ohmylms' ),
+			'/settings/migration-settings'          => __( 'Migration', 'ohmylms' ),
+			'/gamification/reward-settings'         => __( 'Rewards', 'ohmylms' ),
+			'/accounthub?tab=users'                 => __( 'All accounts', 'ohmylms' ),
+			'/quiz-report'                          => __( 'Quiz reports overview', 'ohmylms' ),
+			'/content-hub/question-bank?action=new' => __( 'Question create and import dialogs', 'ohmylms' ),
+			'/content-hub/skills?add=1'             => __( 'Add skill dialog', 'ohmylms' ),
+		);
+		/**
+		 * Filters the legacy screens listed as not yet available in the new app.
+		 *
+		 * @param array<string, string> $screens Legacy route => screen name.
+		 */
+		return (array) apply_filters( 'ohmylms_legacy_unavailable_screens', $screens );
+	}
+
+	/**
+	 * Where a request for the legacy page goes after the cutover: the new app, marked with
+	 * {@see LegacyRoutes::FROM_LEGACY}. The browser keeps the `#/route` fragment across the redirect, and
+	 * the app maps it (assets/js/legacy-redirects.js). Other query parameters are kept.
+	 *
+	 * @return string|null Absolute URL, or null to serve the legacy screen.
+	 */
+	public static function legacy_redirect_url() {
+		if ( self::legacy_admin_enabled() || self::opted_out() ) {
+			return null;
+		}
+		$query = array();
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Navigation only; the values are passed on unchanged.
+		foreach ( wp_unslash( $_GET ) as $name => $value ) {
+			$name = sanitize_key( $name );
+			if ( is_string( $value ) && '' !== $name && ! in_array( $name, array( 'page', self::OPT_OUT, self::FROM_LEGACY ), true ) ) {
+				$query[ $name ] = rawurlencode( sanitize_text_field( $value ) );
+			}
+		}
+		$query['page']              = AppPage::SLUG;
+		$query[ self::FROM_LEGACY ] = '1';
+		return add_query_arg( $query, admin_url( 'admin.php' ) );
+	}
+
+	/**
+	 * Redirect the legacy page to the new app after the cutover (`load-toplevel_page_ohmylms`).
+	 */
+	public static function redirect_legacy_page() {
+		$url = self::legacy_redirect_url();
+		if ( null === $url ) {
+			return;
+		}
+		wp_safe_redirect( $url, 302, 'OhMyLMS' );
+		exit;
+	}
+
+	/**
+	 * Whether the new app was opened by the cutover redirect.
+	 *
+	 * @return bool
+	 */
+	public static function from_legacy() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display flag.
+		return isset( $_GET[ self::FROM_LEGACY ] ) && '1' === sanitize_key( wp_unslash( $_GET[ self::FROM_LEGACY ] ) );
+	}
+
+	/**
+	 * Load the hash mapping in the head of the new app when the cutover redirect opened it, before the
+	 * app's router reads the hash.
+	 *
+	 * @param string $hook Current admin page hook suffix.
+	 */
+	public static function enqueue_landing( $hook ) {
+		if ( ! AppPage::is_app_screen( $hook ) || ! self::from_legacy() || ! current_user_can( AppPage::CAPABILITY ) ) {
+			return;
+		}
+		$file = OHMYLMS_DIR . '/assets/js/legacy-redirects.js';
+		wp_enqueue_script( self::HANDLE, OHMYLMS_URL . '/assets/js/legacy-redirects.js', array(), (string) filemtime( $file ), false );
+		$data            = self::script_data();
+		$data['landing'] = array(
+			'param'    => self::FROM_LEGACY,
+			'home'     => self::APP_HOME,
+			'noticeId' => self::NOTICE_ID,
+		);
+		wp_add_inline_script( self::HANDLE, 'window.ohmylmsLegacyRoutes = ' . wp_json_encode( $data ) . ';', 'before' );
 	}
 
 	/**

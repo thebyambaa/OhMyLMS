@@ -10,7 +10,7 @@ test('capture admin baseline and membership entry point',async({page},testInfo)=
  await page.locator('#user_pass').fill(credentials.password);
  await page.locator('#wp-submit').click();
  await page.waitForURL(/wp-admin/);
- await page.goto('/wp-admin/admin.php?page=ohmylms');
+ await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1');
  await page.waitForLoadState('networkidle');
  await page.screenshot({path:testInfo.outputPath('admin.png'),fullPage:true});
  const inventory=await page.evaluate(()=>({scripts:[...document.scripts].map(s=>({id:s.id,src:s.src})).filter(s=>s.src),styles:[...document.querySelectorAll('link[rel=stylesheet]')].map(s=>({id:s.id,href:s.href})),globals:Object.keys(window).filter(k=>/^(wp$|React|jQuery|ohmylms|ohmylms|creator|webpack)/i.test(k)),resources:performance.getEntriesByType('resource').map(r=>({url:r.name,type:r.initiatorType}))}));

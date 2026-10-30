@@ -22,6 +22,12 @@ legacy and the redirect script is not loaded. The `ohmylms_legacy_routes` filter
 **Opt-out.** An administrator can keep any legacy screen by adding `&ohmylms_legacy=1`, for example
 `admin.php?page=ohmylms&ohmylms_legacy=1#/orders`. Nothing is unreachable during the migration.
 
+**Cutover switch.** `OHMYLMS_LEGACY_ADMIN` (constant) and `ohmylms_legacy_admin_enabled` (filter), true by default,
+turn the legacy admin off: the OhMyLMS menu then opens only new-app routes, "OhMyLMS (new)" disappears, and
+`admin.php?page=ohmylms` redirects on the server to the new app, which maps the carried-over hash with the same rules
+(unmapped routes open the app home with a notice; `LegacyRoutes::unavailable()` lists them). The opt-out still works.
+See [CUTOVER](CUTOVER.md).
+
 ## Rule format
 
 Each rule has `from` (path pattern), `to` (new route) and optionally `query` and `skip`:
@@ -91,22 +97,25 @@ Not at parity, so not mapped: the `/content-hub` frame and its Exams tab, `/cont
 `?action=` and `?add=` dialogs, `/communities`, `/sessions`, `/students/:id/report`, `/courses/:id/students`, other
 `/extensions/<id>` pages, `/settings/design-settings` (layout, archive and quiz design), `/settings/migration-settings`,
 `/gamification/reward-settings`, `/accounthub?tab=users` and `/quiz-report` without an id. The Content Hub and
-Sessions menu entries therefore still open the legacy admin; the "OhMyLMS (new)" entry is kept.
+Sessions menu entries therefore still open the legacy admin; the "OhMyLMS (new)" entry is kept. After the cutover the
+Content Hub entry opens `/courses`, and Sessions and "OhMyLMS (new)" are removed.
 
 ## Known gaps
 
 - The browser cannot turn a legacy student-keyed grading address into a submission, so old grading bookmarks open the
   submission list. Quiz grading links open the attempts list; the new screen has no per-attempt address.
 - On the new app the WordPress menu highlights "OhMyLMS (new)" rather than the matching entry.
-- Legacy browser specs in `tests/browser/` that open mapped legacy routes now land on the new app; add
-  `&ohmylms_legacy=1` to keep testing the legacy screen.
+- Browser specs in `tests/browser/` that test a legacy screen open it with `&ohmylms_legacy=1`; specs that only need an
+  authenticated page for REST fixtures open the new app. `node tools/cutover-inventory.mjs --check` fails when a spec
+  opens `page=ohmylms` without the opt-out. CUTOVER.md lists the legacy-only specs.
 
 ## Tests
 
 - `tests/fixtures/legacy-routes.json`: the rules (generated from PHP) and the shared case table.
 - `tests/php/legacy-routes-integration.php` (`OHMYLMS_LEGACY_ROUTES_TEST=1`): fixture equals `LegacyRoutes::routes()`,
   every case, every target and tab exists in `assets/src/app/features`, `url()`/`target()`, commands, menu URLs, the
-  plugins screen link, the redirect enqueue and opt-out, and rendered instructor emails. After changing the map, run it
-  once with `OHMYLMS_LEGACY_ROUTES_WRITE=1` to refresh the fixture.
+  plugins screen link, the redirect enqueue and opt-out, both states of the cutover switch (menu, add-on entries,
+  server redirect, landing script, notice, constant and filter) and rendered instructor emails. After changing the
+  map, run it once with `OHMYLMS_LEGACY_ROUTES_WRITE=1` to refresh the fixture.
 - `tests/js/legacy-redirects.test.mjs`: the script's matcher against the same cases, URL building, opt-out and
-  redirects on load, `hashchange` and `pushState`.
+  redirects on load, `hashchange` and `pushState`, and the landing mode after the cutover redirect.

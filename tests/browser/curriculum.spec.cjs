@@ -43,7 +43,7 @@ test('administrator builds, edits, searches, reorders, moves and deletes curricu
   const problems = watch(page);
   const tag = state.tag;
   await login(page, admin().username, admin().password);
-  await page.goto('/wp-admin/admin.php?page=ohmylms#/extensions/curriculum');
+  await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/extensions/curriculum');
   await expect(page.getByRole('heading', { name: 'Curriculum', exact: true })).toBeVisible({ timeout: 30000 });
   const tree = page.locator('ul.ohmylms-cur-tree').first();
   await expect(rowName(page, `Exam board ${tag}`)).toBeVisible();
@@ -208,7 +208,7 @@ test('administrator creates, fills and publishes a Course Bundle inline', async 
   const problems = watch(page);
   const tag = state.tag;
   await login(page, admin().username, admin().password);
-  await page.goto('/wp-admin/admin.php?page=ohmylms#/extensions/bundles');
+  await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/extensions/bundles');
   await expect(page.getByRole('heading', { name: 'Course Bundles', exact: true })).toBeVisible({ timeout: 30000 });
   await expect(page.getByText(`English exam preparation ${tag}`, { exact: true })).toBeVisible();
   await expect(page.locator('li', { hasText: `English exam preparation ${tag}` }).getByText('3 members')).toBeVisible();

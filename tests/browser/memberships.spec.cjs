@@ -5,7 +5,7 @@ test.beforeEach(async({page})=>{
  const credentials=JSON.parse(fs.readFileSync(process.env.OHMYLMS_TEST_CREDENTIALS,'utf8'));
  await page.goto('/wp-login.php');await page.locator('#user_login').fill(credentials.username);await page.locator('#user_pass').fill(credentials.password);await page.locator('#wp-submit').click();await page.waitForURL(/wp-admin/);
  for(const file of ['sdk/extensions.js','assets/dist/admin/ohmylms.js'])await page.route('**/build/'+file+'*',route=>route.fulfill({path:path.resolve('build/'+file),contentType:'application/javascript'}));
- await page.goto('/wp-admin/admin.php?page=ohmylms#/memberships');
+ await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/memberships');
  await expect.poll(()=>page.evaluate(()=>Object.keys(window.ohmylms?.extensions?.membershipComponents||{}).length)).toBe(7);
 });
 

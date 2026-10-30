@@ -145,7 +145,7 @@ test( 'legacy quiz links open Gutenberg and save quiz settings with the document
 } ) => {
 	const errors = [];
 	page.on( 'pageerror', ( error ) => errors.push( error.message ) );
-	await page.goto( '/wp-admin/admin.php?page=ohmylms#/content-hub/quizzes' );
+	await page.goto( '/wp-admin/admin.php?page=ohmylms-app#/quizzes' );
 	await page.waitForFunction( () => window.wp?.apiFetch );
 	const quiz = await page.evaluate( () =>
 		wp.apiFetch( {
@@ -159,7 +159,7 @@ test( 'legacy quiz links open Gutenberg and save quiz settings with the document
 	);
 	try {
 		await page.goto(
-			`/wp-admin/admin.php?page=ohmylms#/quiz-edit/${ quiz.id }`
+			`/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/quiz-edit/${ quiz.id }`
 		);
 		await page.waitForURL(
 			( url ) =>
@@ -227,7 +227,7 @@ test( 'legacy quiz links open Gutenberg and save quiz settings with the document
 test( 'bank insertion stays in the native draft and unsaved assessment settings block publication', async ( {
 	page,
 } ) => {
-	await page.goto( '/wp-admin/admin.php?page=ohmylms#/content-hub/quizzes' );
+	await page.goto( '/wp-admin/admin.php?page=ohmylms-app#/quizzes' );
 	await page.waitForFunction( () => window.wp?.apiFetch );
 	const fixture = await page.evaluate( async () => {
 		const quiz = await wp.apiFetch( {

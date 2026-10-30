@@ -18,7 +18,7 @@ test('Communities React source loads, edits, validates and retries saving',async
  });
  await page.route(/\/courses\?search=/,route=>route.fulfill({json:[{id:913,name:'React course fixture',has_community:'no'}]}));
  const errors=[];page.on('pageerror',error=>errors.push(error.message));
- await page.goto('/wp-admin/admin.php?page=ohmylms#/communities');
+ await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/communities');
  await expect.poll(()=>page.evaluate(()=>Object.keys(window.ohmylms?.extensions?.communityComponents||{}).length)).toBe(5);
  await expect(page.getByText('Community Spaces',{exact:true})).toBeVisible();
  await page.getByText('React community fixture',{exact:true}).click();

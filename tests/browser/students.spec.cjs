@@ -3,7 +3,7 @@ const fs=require('node:fs');
 async function login(page){
  const credentials=JSON.parse(fs.readFileSync(process.env.OHMYLMS_TEST_CREDENTIALS,'utf8'));
  await page.goto('/wp-login.php');await page.locator('#user_login').fill(credentials.username);await page.locator('#user_pass').fill(credentials.password);await page.locator('#wp-submit').click();await page.waitForURL(/wp-admin/);
- await page.goto('/wp-admin/admin.php?page=ohmylms');
+ await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1');
 }
 async function registration(page){
  await page.goto('/?page_id=210');
@@ -65,7 +65,7 @@ test('student list sorts, searches, and blocks the current bulk selection',async
   lastQuery=new URL(route.request().url()).searchParams;
   return route.fulfill({headers:{'X-WP-Total':'2'},json:[1,2].map(id=>({user_id:id,student_name:`Fixture ${id}`,student_email:`fixture${id}@example.invalid`,is_banned:blocked,courses_enrolled:1}))});
  });
- await page.goto('/wp-admin/admin.php?page=ohmylms#/students');
+ await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/students');
  await expect(page.getByText('Fixture 1',{exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Email',exact:true}).click();
  await expect.poll(()=>lastQuery?.get('order_by')).toBe('email');

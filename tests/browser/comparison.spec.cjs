@@ -26,7 +26,7 @@ test( 'roadmaps open the syllabus home, preserve steps when sources change, and 
 	await page.waitForURL(
 		( url ) => ! url.pathname.endsWith( 'wp-login.php' )
 	);
-	await page.goto( '/wp-admin/admin.php?page=ohmylms' );
+	await page.goto( '/wp-admin/admin.php?page=ohmylms-app' );
 	await page.waitForFunction( () => window.wp?.apiFetch );
 	const items = [];
 	const terms = [];
@@ -86,7 +86,7 @@ test( 'roadmaps open the syllabus home, preserve steps when sources change, and 
 			`syllabus-comparison/roadmaps/${ roadmapId }`
 		);
 		await page.goto(
-			'/wp-admin/admin.php?page=ohmylms#/content-hub/curriculum'
+			'/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/content-hub/curriculum'
 		);
 		await page
 			.getByRole( 'link', { name: `Roadmap ${ tag }`, exact: true } )
@@ -152,7 +152,7 @@ test( 'roadmaps open the syllabus home, preserve steps when sources change, and 
 			.click();
 		// Existing bookmarks now open the same home instead of comparison columns.
 		await page.goto(
-			`/wp-admin/admin.php?page=ohmylms#/content-hub/curriculum/compare?roadmap=${ roadmapId }`
+			`/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/content-hub/curriculum/compare?roadmap=${ roadmapId }`
 		);
 		await expect(
 			page.getByRole( 'region', { name: 'Roadmap sources', exact: true } )

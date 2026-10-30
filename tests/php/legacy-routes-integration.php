@@ -4,9 +4,11 @@
  *
  * Runs against a WordPress install (the Local site by default). Checks the route map against the shared
  * fixture tests/fixtures/legacy-routes.json (also used by tests/js/legacy-redirects.test.mjs), that every
- * target exists in the new app, the URLs of menus, commands and helpers, the redirect script enqueue and
- * a rendered instructor email. It creates a tagged course, assignment, learner and submission and
- * removes them in `finally`; mail is intercepted with `pre_wp_mail`, so nothing is sent.
+ * target exists in the new app, the URLs of menus, commands and helpers, the redirect script enqueue,
+ * both states of the cutover switch (OHMYLMS_LEGACY_ADMIN / ohmylms_legacy_admin_enabled: menu, server
+ * redirect, hash mapping on the app, unavailable notice; see docs/CUTOVER.md) and a rendered instructor
+ * email. It creates a tagged course, assignment, learner and submission and removes them in `finally`;
+ * mail is intercepted with `pre_wp_mail` and redirects with `wp_redirect`, so nothing is sent.
  *
  * Usage (set OHMYLMS_LEGACY_ROUTES_TEST=1; PHP needs mysqli, mbstring, openssl, curl):
  *   php -n -d extension_dir=<php>/ext -d extension=mysqli -d extension=mbstring -d extension=openssl \
@@ -264,6 +266,159 @@ try {
 	LegacyRoutes::enqueue_redirect( 'toplevel_page_' . OHMYLMS_SLUG );
 	ok( ! wp_script_is( LegacyRoutes::HANDLE, 'enqueued' ), 'opt-out keeps the legacy screen' );
 	unset( $_GET[ LegacyRoutes::OPT_OUT ] );
+
+	// Cutover switch, enabled (the default): the legacy admin is served and linked as before.
+	$legacy_page_hook = 'load-toplevel_page_' . OHMYLMS_SLUG;
+	$app_hook         = 'ohmylms_page_' . AppPage::SLUG;
+	$redirect_to      = static function ( $location ) {
+		throw new RuntimeException( 'redirect:' . $location );
+	};
+	ok( defined( LegacyRoutes::LEGACY_ADMIN_CONSTANT ) || LegacyRoutes::legacy_admin_enabled(), 'cutover: the legacy admin is on by default' );
+	ok( LegacyRoutes::legacy_admin_enabled(), 'cutover: the legacy admin is on for the rest of this test' );
+	ok( false !== has_action( $legacy_page_hook, array( LegacyRoutes::class, 'redirect_legacy_page' ) ), 'cutover: the legacy page has the redirect hook' );
+	ok( false !== has_action( 'admin_head', array( AppPage::class, 'hide_menu_entry' ) ), 'cutover: the app page hides its entry on admin_head' );
+	$_GET = array(
+		'page'        => OHMYLMS_SLUG,
+		'xapi_notice' => 'saved',
+	);
+	ok( null === LegacyRoutes::legacy_redirect_url(), 'cutover off: the legacy page is served' );
+	add_filter( 'wp_redirect', $redirect_to );
+	LegacyRoutes::redirect_legacy_page();
+	remove_filter( 'wp_redirect', $redirect_to );
+	ok( true, 'cutover off: redirect_legacy_page() does not redirect' );
+	add_filter( 'ohmylms_show_sessions_menu', '__return_true' );
+	$build_menu = static function () use ( $menu_object ) {
+		$GLOBALS['menu']              = array();
+		$GLOBALS['submenu']           = array();
+		$GLOBALS['admin_page_hooks']  = array();
+		$GLOBALS['_registered_pages'] = array();
+		$GLOBALS['_parent_pages']     = array();
+		$menu_object->init_menu();
+		$menu_object->register_submenu();
+		( new ReflectionClass( \OhMyLMS\Hooks\CommonHook::class ) )->newInstanceWithoutConstructor()->register_submenu();
+		AppPage::register_menu();
+		// Entries an add-on might add: mapped and unmapped legacy routes, another page, an external link.
+		$GLOBALS['submenu'][ OHMYLMS_SLUG ][] = array( 'Add-on orders', 'manage_options', admin_url( 'admin.php?page=' . OHMYLMS_SLUG . '#/orders' ) );
+		$GLOBALS['submenu'][ OHMYLMS_SLUG ][] = array( 'Add-on communities', 'manage_options', 'admin.php?page=' . OHMYLMS_SLUG . '#/communities' );
+		$GLOBALS['submenu'][ OHMYLMS_SLUG ][] = array( 'Add-on page', 'manage_options', 'ohmylms-addon-page' );
+		$menu_object->cutover_submenu();
+		AppPage::hide_menu_entry();
+	};
+	$build_menu();
+	ok( submenu_url( 'Content Hub' ) === $legacy . '#/content-hub', 'cutover off: Content Hub opens the legacy hub' );
+	ok( submenu_url( 'Sessions' ) === $legacy . '#/sessions', 'cutover off: Sessions stays' );
+	ok( submenu_url( 'OhMyLMS (new)' ) === AppPage::SLUG, 'cutover off: OhMyLMS (new) stays' );
+	ok( submenu_url( 'Add-on communities' ) === 'admin.php?page=' . OHMYLMS_SLUG . '#/communities', 'cutover off: add-on entries are untouched' );
+	ok( array_values( $GLOBALS['submenu'][ OHMYLMS_SLUG ] )[0][2] === $app . '#/dashboard', 'cutover off: the top-level entry opens the first submenu, the new dashboard' );
+	wp_dequeue_script( LegacyRoutes::HANDLE );
+	LegacyRoutes::enqueue_landing( $app_hook );
+	ok( ! wp_script_is( LegacyRoutes::HANDLE, 'enqueued' ), 'the hash mapping does not load on a normal app visit' );
+
+	// Cutover switch, disabled: the menu opens the new app and the legacy page redirects to it.
+	add_filter( 'ohmylms_legacy_admin_enabled', '__return_false' );
+	add_filter( 'ohmylms_legacy_routes_enabled', '__return_false' );
+	LegacyRoutes::reset();
+	ok( ! LegacyRoutes::legacy_admin_enabled(), 'cutover on: the filter turns the legacy admin off' );
+	ok( LegacyRoutes::enabled(), 'cutover on: links open the new app even when ohmylms_legacy_routes_enabled is false' );
+	remove_filter( 'ohmylms_legacy_routes_enabled', '__return_false' );
+	LegacyRoutes::reset();
+	$build_menu();
+	ok( submenu_url( 'Dashboard' ) === $app . '#/dashboard', 'cutover on: Dashboard' );
+	ok( array_values( $GLOBALS['submenu'][ OHMYLMS_SLUG ] )[0][2] === $app . '#/dashboard', 'cutover on: the top-level entry opens the new dashboard' );
+	ok( submenu_url( 'Content Hub' ) === $app . '#/courses', 'cutover on: Content Hub opens the new course list' );
+	ok( null === submenu_url( 'Sessions' ), 'cutover on: Sessions has no new screen, so no entry' );
+	ok( null === submenu_url( 'OhMyLMS (new)' ), 'cutover on: OhMyLMS (new) is removed' );
+	ok( submenu_url( 'Settings' ) === $app . '#/settings?tab=general', 'cutover on: Settings' );
+	ok( submenu_url( 'Add-ons' ) === $app . '#/integrations', 'cutover on: Add-ons' );
+	ok( submenu_url( 'Add-on orders' ) === $app . '#/orders', 'cutover on: a mapped add-on entry opens the new app' );
+	ok( null === submenu_url( 'Add-on communities' ), 'cutover on: an unmapped add-on entry is dropped' );
+	ok( submenu_url( 'Add-on page' ) === 'ohmylms-addon-page', 'cutover on: entries for other pages are kept' );
+	foreach ( $GLOBALS['submenu'][ OHMYLMS_SLUG ] as $item ) {
+		ok( ! preg_match( '#admin\.php\?page=' . preg_quote( OHMYLMS_SLUG, '#' ) . '(?:[&\#]|$)#', (string) $item[2] ), 'cutover on: no submenu entry opens the legacy page: ' . $item[2] );
+	}
+	if ( apply_filters( 'ohmylms_show_gamification_menu', false ) ) {
+		ok( submenu_url( 'Gamification' ) === $app . '#/gamification?tab=points', 'cutover on: Gamification' );
+	} else {
+		ok( submenu_url( 'Certificates' ) === $app . '#/certificates', 'cutover on: Certificates' );
+	}
+	ok( LegacyRoutes::url( '/content-hub/exams' ) === $legacy . '#/content-hub/exams', 'cutover on: unmapped links still name the legacy route, which the redirect sends home' );
+
+	$expected_redirect = add_query_arg(
+		array(
+			'xapi_notice'             => 'saved',
+			'page'                    => AppPage::SLUG,
+			LegacyRoutes::FROM_LEGACY => '1',
+		),
+		admin_url( 'admin.php' )
+	);
+	ok( LegacyRoutes::legacy_redirect_url() === $expected_redirect, 'cutover on: the legacy page redirects to the app and keeps other parameters, got ' . LegacyRoutes::legacy_redirect_url() );
+	ok( false === strpos( $expected_redirect, '#' ), 'cutover on: the redirect has no fragment, so the browser keeps the legacy one' );
+	$redirected = '';
+	add_filter( 'wp_redirect', $redirect_to );
+	try {
+		LegacyRoutes::redirect_legacy_page();
+	} catch ( RuntimeException $redirect ) {
+		$redirected = $redirect->getMessage();
+	}
+	remove_filter( 'wp_redirect', $redirect_to );
+	ok( 'redirect:' . $expected_redirect === $redirected, 'cutover on: redirect_legacy_page() sends the redirect' );
+	$_GET[ LegacyRoutes::OPT_OUT ] = '1';
+	ok( null === LegacyRoutes::legacy_redirect_url(), 'cutover on: &ohmylms_legacy=1 still opens the legacy screen' );
+	unset( $_GET[ LegacyRoutes::OPT_OUT ] );
+
+	$_GET[ LegacyRoutes::FROM_LEGACY ] = '1';
+	wp_dequeue_script( LegacyRoutes::HANDLE );
+	LegacyRoutes::enqueue_landing( 'toplevel_page_' . OHMYLMS_SLUG );
+	ok( ! wp_script_is( LegacyRoutes::HANDLE, 'enqueued' ), 'cutover on: the hash mapping only loads on the app' );
+	LegacyRoutes::enqueue_landing( $app_hook );
+	ok( wp_script_is( LegacyRoutes::HANDLE, 'enqueued' ), 'cutover on: the hash mapping loads on the app' );
+	ok( ! wp_scripts()->get_data( LegacyRoutes::HANDLE, 'group' ), 'cutover on: the hash mapping prints in the head, before the app' );
+	$landing      = implode( "\n", (array) wp_scripts()->get_data( LegacyRoutes::HANDLE, 'before' ) );
+	$landing_data = array(
+		'param'    => LegacyRoutes::FROM_LEGACY,
+		'home'     => LegacyRoutes::APP_HOME,
+		'noticeId' => LegacyRoutes::NOTICE_ID,
+	);
+	ok( false !== strpos( $landing, '"landing":' . wp_json_encode( $landing_data ) ), 'cutover on: the mapping knows the marker, the home route and the notice' );
+	ok( false !== strpos( $landing, '"routes":' . wp_json_encode( LegacyRoutes::routes() ) ), 'cutover on: the mapping receives the route map' );
+	wp_dequeue_script( LegacyRoutes::HANDLE );
+	ob_start();
+	AppPage::render();
+	$page_html = ob_get_clean();
+	ok( false !== strpos( $page_html, 'id="' . LegacyRoutes::NOTICE_ID . '"' ) && false !== strpos( $page_html, 'hidden' ), 'cutover on: the app prints the hidden unavailable notice' );
+	ok( false !== strpos( $page_html, esc_html( LegacyRoutes::unavailable()['/communities'] ) ), 'cutover on: the notice lists the screens that are not available yet' );
+	ok(
+		false !== strpos(
+			$page_html,
+			esc_url(
+				add_query_arg(
+					array(
+						'page'                => OHMYLMS_SLUG,
+						LegacyRoutes::OPT_OUT => '1',
+					),
+					admin_url( 'admin.php' )
+				)
+			)
+		),
+		'cutover on: the notice links to the legacy opt-out'
+	);
+	unset( $_GET[ LegacyRoutes::FROM_LEGACY ] );
+	ob_start();
+	AppPage::render();
+	ok( false === strpos( ob_get_clean(), LegacyRoutes::NOTICE_ID ), 'cutover on: a normal app visit has no notice' );
+
+	// The constant turns the legacy admin off too; the filter can still turn it back on.
+	remove_filter( 'ohmylms_legacy_admin_enabled', '__return_false' );
+	remove_filter( 'ohmylms_show_sessions_menu', '__return_true' );
+	LegacyRoutes::reset();
+	if ( ! defined( LegacyRoutes::LEGACY_ADMIN_CONSTANT ) ) {
+		define( LegacyRoutes::LEGACY_ADMIN_CONSTANT, false );
+	}
+	ok( ! LegacyRoutes::legacy_admin_enabled(), 'cutover on: OHMYLMS_LEGACY_ADMIN false turns the legacy admin off' );
+	add_filter( 'ohmylms_legacy_admin_enabled', '__return_true' );
+	LegacyRoutes::reset();
+	ok( LegacyRoutes::legacy_admin_enabled(), 'the filter overrides the constant' );
+	$_GET = array();
 
 	// Rendered instructor email links to the exact submission in the new grading screen.
 	$student = wp_insert_user(

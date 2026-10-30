@@ -5,14 +5,14 @@ test.beforeEach(async({page})=>{
  const credentials=JSON.parse(fs.readFileSync(process.env.OHMYLMS_TEST_CREDENTIALS,'utf8'));
  await page.goto('/wp-login.php');await page.locator('#user_login').fill(credentials.username);await page.locator('#user_pass').fill(credentials.password);await page.locator('#wp-submit').click();await page.waitForURL(/wp-admin/);
  for(const file of ['sdk/extensions.js','assets/dist/admin/ohmylms.js'])await page.route('**/build/'+file+'*',route=>route.fulfill({path:path.resolve('build/'+file),contentType:'application/javascript'}));
- await page.goto('/wp-admin/admin.php?page=ohmylms');
+ await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1');
  await expect.poll(()=>page.evaluate(()=>Object.keys(window.ohmylms?.extensions?.learningComponents||{}).length)).toBe(25);
 });
 
 test('learning lists mount from editable React source',async({page})=>{
  const errors=[];page.on('pageerror',error=>errors.push(error.message));
  for(const [route,label] of [['quizzes','All Quizzes'],['assignments','All Assignments'],['sessions','Sessions']]){
-  await page.goto('/wp-admin/admin.php?page=ohmylms#/'+route);
+  await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/'+route);
   await expect(page.getByText(label,{exact:true}).last()).toBeVisible();
  }
  expect(errors).toEqual([]);
@@ -23,7 +23,7 @@ test('assignment editor persists title changes',async({page})=>{
  for(const kind of ['assignment']){
   const item=await page.evaluate(async kind=>wp.apiFetch({path:`/ohmylms/v1/${kind === 'lesson' ? 'lessons' : 'assignment'}`,method:'POST',data:{name:`React ${kind} fixture`,type:'text',description:'Learning fixture body',status:'draft',total_points:100,maximum_pass_points:50,time_limit:0,number_of_files:1,max_file_size_limit:10}}),kind);
   try{
-   await page.goto(`/wp-admin/admin.php?page=ohmylms#/${kind}-edit/${item.id}`);
+   await page.goto(`/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/${kind}-edit/${item.id}`);
    const title=page.getByPlaceholder(`Enter ${kind} title`);
    await expect(title).toHaveValue(`React ${kind} fixture`);
    await title.fill(`Saved React ${kind}`);
@@ -43,7 +43,7 @@ test('assignment grading loads prior marks and submits edited score',async({page
   if(route.request().method()==='POST'){posted=route.request().postDataJSON();Object.assign(report.report[0].submissions[0],posted[0]);}
   await route.fulfill({json:report});
  });
- await page.goto('/wp-admin/admin.php?page=ohmylms#/assignment-report/987/grade-assignment/123');
+ await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/assignment-report/987/grade-assignment/123');
  await expect(page.getByRole('spinbutton')).toHaveValue('20');
  await expect(page.getByText('Submitted work',{exact:true})).toBeVisible();
  await page.getByRole('spinbutton').fill('75');

@@ -16,7 +16,7 @@ test( 'image quiz persists the buzzer, scores once and supports mobile and autho
 	await page.locator( '#user_pass' ).fill( credentials.password );
 	await page.locator( '#wp-submit' ).click();
 	await page.waitForURL( ( u ) => ! u.pathname.endsWith( 'wp-login.php' ) );
-	await page.goto( '/wp-admin/admin.php?page=ohmylms' );
+	await page.goto( '/wp-admin/admin.php?page=ohmylms-app' );
 	await page.waitForFunction( () => Boolean( window.wp?.apiFetch ) );
 
 	const imageBytes = Array.from(
@@ -201,7 +201,7 @@ test( 'image quiz persists the buzzer, scores once and supports mobile and autho
 			} )
 		).toHaveValue( '10' );
 	} finally {
-		await page.goto( '/wp-admin/admin.php?page=ohmylms' );
+		await page.goto( '/wp-admin/admin.php?page=ohmylms-app' );
 		await page.waitForFunction( () => Boolean( window.wp?.apiFetch ) );
 		await page.evaluate( async ( fixture ) => {
 			await wp.apiFetch( {

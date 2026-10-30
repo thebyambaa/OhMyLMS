@@ -35,7 +35,7 @@ const watch = (page) => {
   page.on('console', (message) => { if (message.type() === 'error' && !known.test(message.text())) problems.push(`console: ${message.text()}`); });
   return problems;
 };
-const app = (hash) => `/wp-admin/admin.php?page=ohmylms#${hash}`;
+const app = (hash) => `/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#${hash}`;
 // wp.apiFetch sends PUT as POST with an override header, so any write to the route counts.
 const saved = (page, route) => page.waitForResponse((response) => decodeURIComponent(response.url()).includes(route) && ['POST', 'PUT'].includes(response.request().method()) && response.ok());
 

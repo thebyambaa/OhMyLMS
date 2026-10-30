@@ -8,7 +8,7 @@ test('single workspace searches, edits connections, protects drafts and opens bu
   await page.locator('#user_pass').fill(credentials.password);
   await page.locator('#wp-submit').click();
   await page.waitForURL(url => !url.pathname.endsWith('wp-login.php'));
-  await page.goto('/wp-admin/admin.php?page=ohmylms');
+  await page.goto('/wp-admin/admin.php?page=ohmylms-app');
   await page.waitForFunction(() => Boolean(window.wp?.apiFetch));
   const request = options => page.evaluate(async o => { try { return await wp.apiFetch(o); } catch(e) { throw new Error(JSON.stringify(e)); } }, options);
   const base='/ohmylms/v1';
@@ -23,7 +23,7 @@ test('single workspace searches, edits connections, protects drafts and opens bu
   const road=await request({path:base+`/syllabus-comparison/roadmaps/${roadmapItem.id}`});
   await make(`syllabus-comparison/roadmaps/${roadmapItem.id}`,{name:road.name,syllabus_ids:[sourceItem.id],skill_ids:[shared.id],folders:road.folders.map((folder,index)=>({...folder,skill_ids:index===0?[shared.id]:[]})),expected_revision:road.revision},'PUT');
   await make('syllabus-comparison/mapping',{specific_id:sourceSkill.term_id,shared_id:shared.id,relation:'narrower',note:'Original note',expected_revision:''},'PUT');
-  await page.goto(`/wp-admin/admin.php?page=ohmylms#/content-hub/curriculum/syllabus/${roadmapItem.id}`);
+  await page.goto(`/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/content-hub/curriculum/syllabus/${roadmapItem.id}`);
   await expect(page.getByRole('button', {name:'Bulk edit',exact:true})).toBeVisible({timeout:30000});
   await expect(page.getByRole('button', {name:'Mind map',exact:true})).toHaveCount(0);
   await page.getByLabel('Search skills',{exact:true}).fill('Types of number');

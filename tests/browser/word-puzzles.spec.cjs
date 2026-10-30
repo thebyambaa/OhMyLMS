@@ -22,7 +22,7 @@ test( 'puzzle builders save in Gutenberg and players support keyboard, selection
 	await page.waitForURL(
 		( url ) => ! url.pathname.endsWith( 'wp-login.php' )
 	);
-	await page.goto( '/wp-admin/admin.php?page=ohmylms' );
+	await page.goto( '/wp-admin/admin.php?page=ohmylms-app' );
 	await page.waitForFunction( () => Boolean( window.wp?.apiFetch ) );
 	const fixture = await page.evaluate( async ( definitions ) => {
 		const api = ( path, data ) =>
@@ -141,7 +141,7 @@ test( 'puzzle builders save in Gutenberg and players support keyboard, selection
 				exact: true,
 			} )
 		).toBeVisible();
-		await page.goto( '/wp-admin/admin.php?page=ohmylms' );
+		await page.goto( '/wp-admin/admin.php?page=ohmylms-app' );
 		await page.waitForFunction( () => Boolean( window.wp?.apiFetch ) );
 		await page.evaluate(
 			( id ) =>
@@ -268,7 +268,7 @@ test( 'puzzle builders save in Gutenberg and players support keyboard, selection
 		).toBeVisible();
 		expect( errors ).toEqual( [] );
 	} finally {
-		await page.goto( '/wp-admin/admin.php?page=ohmylms' );
+		await page.goto( '/wp-admin/admin.php?page=ohmylms-app' );
 		await page.waitForFunction( () => Boolean( window.wp?.apiFetch ) );
 		await page.evaluate( async ( { post, questions } ) => {
 			await wp.apiFetch( {

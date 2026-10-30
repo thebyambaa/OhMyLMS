@@ -18,7 +18,7 @@ test('course objectives support search, persistence, failed saves and removal', 
   await page.locator('#user_pass').fill(credentials.password);
   await page.locator('#wp-submit').click();
   await page.waitForURL(/wp-admin/);
-  await page.goto(`/wp-admin/admin.php?page=ohmylms#/course-edit/${state.course}/content`);
+  await page.goto(`/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/course-edit/${state.course}/content`);
   await page.getByRole('tab', { name: 'Syllabus alignment', exact: true }).click();
   const panel = page.getByRole('region', { name: 'Syllabus objectives', exact: true });
   await expect(panel.getByText('No target objectives selected yet.', { exact: true })).toBeVisible();

@@ -4,7 +4,7 @@ test('automatic text, language tiles and matching study blocks play and resume',
  test.skip(baseURL!=='http://127.0.0.1:8100','Requires disposable migration clone');
  const credentials=JSON.parse(fs.readFileSync(process.env.OHMYLMS_TEST_CREDENTIALS,'utf8'));
  await page.goto('/wp-login.php'); await page.locator('#user_login').fill(credentials.username); await page.locator('#user_pass').fill(credentials.password); await page.locator('#wp-submit').click(); await page.waitForURL(u=>!u.pathname.endsWith('wp-login.php'));
- await page.goto('/wp-admin/admin.php?page=ohmylms'); await page.waitForFunction(()=>Boolean(window.wp?.apiFetch));
+ await page.goto('/wp-admin/admin.php?page=ohmylms-app'); await page.waitForFunction(()=>Boolean(window.wp?.apiFetch));
  const fixture=await page.evaluate(async()=>{
   const api=async(path,data,method='POST')=>{try{return await wp.apiFetch({path,method,data});}catch(e){throw new Error(JSON.stringify(e));}};
   const question=async(settings,questions=[])=>{const q=await api('/ohmylms/v1/question',{name:'Wordwall browser fixture',quiz_id:0,settings:{...settings,required:true,score:{enabled:true,value:1}},questions});await api(`/ohmylms/v1/question-bank/${q.id}/approve`,{});return q.id;};
@@ -41,6 +41,6 @@ test('automatic text, language tiles and matching study blocks play and resume',
  await expect(canvas.getByLabel('Accepted answers (one per line)',{exact:true})).toHaveValue('үүл',{timeout:30000});
  await page.goto(`/wp-admin/post.php?post=${fixture.questions[1]}&action=edit`);
  await expect(canvas.getByLabel('Build from',{exact:true})).toHaveValue('letters',{timeout:30000});
- await page.goto('/wp-admin/admin.php?page=ohmylms');await page.waitForFunction(()=>Boolean(window.wp?.apiFetch));
+ await page.goto('/wp-admin/admin.php?page=ohmylms-app');await page.waitForFunction(()=>Boolean(window.wp?.apiFetch));
  await page.evaluate(async fixture=>{for(const p of fixture.pages)await wp.apiFetch({path:`/wp/v2/pages/${p.id}?force=true`,method:'DELETE'});for(const id of fixture.questions)await wp.apiFetch({path:`/ohmylms/v1/question/${id}`,method:'DELETE'});},fixture);
 });

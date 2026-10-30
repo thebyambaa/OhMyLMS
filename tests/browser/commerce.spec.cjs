@@ -17,7 +17,7 @@ test.beforeEach(async({page})=>{
 test('commerce routes load editable source without runtime errors',async({page})=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  for(const route of ['orders','order-edit/9321','subscriptions','subscription-edit/9322','coupons']){
-  await page.goto('/wp-admin/admin.php?page=ohmylms#/'+route);
+  await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/'+route);
   await expect.poll(()=>page.evaluate(()=>Object.keys(window.ohmylms?.extensions?.commerceComponents||{}).length)).toBe(22);
   await expect(page.locator('.ohmylms-admin, #ohmylms, #ohmylms-app, #root').first()).toBeAttached().catch(()=>{});
   await page.waitForTimeout(1500);

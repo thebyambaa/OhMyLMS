@@ -18,7 +18,7 @@ test('authors build, save and publish a unified outline without overwriting shar
   const bulkWrites = [];
   page.on('pageerror', error => errors.push(error.message));
   page.on('request', request => { if (request.url().includes(`/courses/${state.course}/chapters`) && request.method() === 'POST') bulkWrites.push(request.url()); });
-  const url = `${state.base}/wp-admin/admin.php?page=ohmylms#/course-edit/${state.course}/content`;
+  const url = `${state.base}/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/course-edit/${state.course}/content`;
   await page.goto(url);
   await expect(page.getByPlaceholder('Enter Course Title')).toBeVisible();
   const outline = page.getByRole('region', { name: 'Course outline editor' });
@@ -120,7 +120,7 @@ test('authors build, save and publish a unified outline without overwriting shar
 });
 
 test('completion blockers lead to editable course rules', async ({ page }) => {
-  const url = state.base + '/wp-admin/admin.php?page=ohmylms#/course-edit/' + state.course + '/content';
+  const url = state.base + '/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/course-edit/' + state.course + '/content';
   await page.goto(url);
   await expect(page.getByPlaceholder('Enter Course Title')).toBeVisible();
   await page.evaluate(async id => {
@@ -142,7 +142,7 @@ test('completion blockers lead to editable course rules', async ({ page }) => {
 });
 
 test('shared skills connect block lessons and quiz plans and survive reload', async ({ page }, testInfo) => {
-  await page.goto(`${state.base}/wp-admin/admin.php?page=ohmylms#/course-edit/${state.course}/content`);
+  await page.goto(`${state.base}/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/course-edit/${state.course}/content`);
   const outline = page.getByRole('region', { name: 'Course outline editor' });
   const tree = page.getByRole('navigation', { name: 'Units, lessons and activities' });
   await tree.getByRole('button', { name: 'Other author unit', exact: true }).click();
@@ -180,7 +180,7 @@ test('shared skills connect block lessons and quiz plans and survive reload', as
 });
 
 test('skills can start without units and be added to a lesson from a syllabus in the outline', async ({ page }, testInfo) => {
-  await page.goto(`${state.base}/wp-admin/admin.php?page=ohmylms#/course-edit/${state.empty_course}/content`);
+  await page.goto(`${state.base}/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/course-edit/${state.empty_course}/content`);
   const outline = page.getByRole('region', { name: 'Course outline editor' });
   let courseSkills = page.getByRole('region', { name: 'Course skills', exact: true });
   await expect(courseSkills).toBeVisible();
@@ -226,7 +226,7 @@ test('skills can start without units and be added to a lesson from a syllabus in
 
 test('readiness suggestions expand inside the outline', async ({ page }) => {
   await page.route('**/content-hub/catalog/*', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ attachments: [], readiness: { ready: true, completion: [], resources: [], skills: [], practice_skills: [{ term_id: state.skills[0], name: 'Optional guidance fixture', ready: false, required: false, questions: 0, questions_need: 3, families: 0, families_need: 2 }] } }) }));
-  await page.goto(`${state.base}/wp-admin/admin.php?page=ohmylms#/course-edit/${state.course}/content`);
+  await page.goto(`${state.base}/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/course-edit/${state.course}/content`);
   const indicator = page.getByRole('button', { name: 'Course readiness: Ready with suggestions', exact: true });
   await expect(indicator).toBeVisible();
   await expect(indicator).toHaveAttribute('aria-expanded','false');

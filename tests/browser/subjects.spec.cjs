@@ -41,7 +41,7 @@ test('an author reorders subject courses and learners get the authored order', a
   await context.addCookies(state.cookies);
   const problems = [];
   page.on('pageerror', error => problems.push(error.message));
-  await page.goto(`${state.base}/wp-admin/admin.php?page=ohmylms#/extensions/curriculum`);
+  await page.goto(`${state.base}/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/extensions/curriculum`);
   await page.getByRole('button', { name: 'Edit Subject browser fixture', exact: true }).click();
   const order = page.getByRole('region', { name: 'Subject course order', exact: true });
   await expect(order).toBeVisible();

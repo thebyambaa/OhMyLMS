@@ -56,7 +56,7 @@ function trackErrors(page) {
 test('author adds a page break and publishes the exam', async ({ page }) => {
   const errors = trackErrors(page);
   await login(page, admin().username, admin().password);
-  await page.goto(`/wp-admin/admin.php?page=ohmylms#/quiz-edit/${state.quiz}`);
+  await page.goto(`/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/quiz-edit/${state.quiz}`);
   await page.waitForURL((url) => url.pathname.endsWith('/post.php'));
   await page.waitForFunction(() => window.wp?.plugins?.getPlugin('ohmylms-native-quiz-settings'));
   await page.evaluate(() => wp.data.dispatch('core/edit-post').openGeneralSidebar('edit-post/document'));
@@ -201,7 +201,7 @@ test('guardian sees the child skills on a phone and the teacher sees the class m
 test('author writes a new question directly in the bank', async ({ page }) => {
   const errors = trackErrors(page);
   await login(page, admin().username, admin().password);
-  await page.goto('/wp-admin/admin.php?page=ohmylms#/extensions/question-bank');
+  await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/extensions/question-bank');
   await page.getByRole('button', { name: 'New question', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'New question' });
   await dialog.getByRole('button', { name: 'Save question' }).click();
@@ -242,7 +242,7 @@ test('author writes a new question directly in the bank', async ({ page }) => {
 test('admin links the skill to a course and finds the questions in the bank', async ({ page }) => {
   const errors = trackErrors(page);
   await login(page, admin().username, admin().password);
-  await page.goto('/wp-admin/admin.php?page=ohmylms#/content-hub');
+  await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/content-hub');
   await page.getByRole('navigation', { name: 'Content Hub sections' }).getByRole('link', { name: 'Skills', exact: true }).click();
   await page.getByRole('button', { name: new RegExp(state.tag) }).first().click();
   await page.getByLabel('Find courses').fill(state.tag);
@@ -254,7 +254,7 @@ test('admin links the skill to a course and finds the questions in the bank', as
     `Browser exam course ${state.tag}`,
   );
 
-  await page.goto('/wp-admin/admin.php?page=ohmylms#/extensions/question-bank');
+  await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/extensions/question-bank');
   await page.getByRole('textbox', { name: /Search/ }).first().fill('of 8?');
   await expect(page.getByText('Which is ½ of 8?')).toBeVisible();
   expect(errors).toEqual([]);
@@ -263,7 +263,7 @@ test('admin links the skill to a course and finds the questions in the bank', as
 test('Quizzes, Question Bank and Assignments are Content Hub tabs, and the old Assessments addresses open them', async ({ page }) => {
   const errors = trackErrors(page);
   await login(page, admin().username, admin().password);
-  await page.goto('/wp-admin/admin.php?page=ohmylms#/content-hub');
+  await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/content-hub');
   const tabs = page.getByRole('navigation', { name: 'Content Hub sections' });
   await expect(tabs.getByRole('link')).toHaveText(['Courses', 'Lessons', 'Quizzes', 'Question Bank', 'Assignments', 'Skills', 'Curriculum', 'Course Bundles'], { timeout: 30000 });
   // There is no Assessments entry (or one for any of its sections) in the admin menu any more.
@@ -273,7 +273,7 @@ test('Quizzes, Question Bank and Assignments are Content Hub tabs, and the old A
   for (const retired of ['Assessments', 'Quizzes', 'Question Bank', 'Assignments']) expect(labels).not.toContain(retired);
   const highlighted = page.locator('#toplevel_page_ohmylms .wp-submenu li.current');
   const open = async (hash, tab, heading) => {
-    await page.goto(`/wp-admin/admin.php?page=ohmylms#${hash}`);
+    await page.goto(`/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#${hash}`);
     await expect(tabs.locator('a[aria-current="page"]')).toHaveText(tab, { timeout: 30000 });
     await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible({ timeout: 30000 });
     await expect(highlighted).toHaveText('Content Hub');
@@ -294,11 +294,11 @@ test('Quizzes, Question Bank and Assignments are Content Hub tabs, and the old A
   await tabs.getByRole('link', { name: 'Assignments', exact: true }).click();
   await expect(page).toHaveURL(/#\/content-hub\/assignments$/);
   // The quiz editor, opened from the Quizzes tab, keeps the hub highlighted.
-  await page.goto(`/wp-admin/admin.php?page=ohmylms#/quiz-edit/${state.quiz}`);
+  await page.goto(`/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/quiz-edit/${state.quiz}`);
   await expect(highlighted).toHaveText('Content Hub', { timeout: 30000 });
   // Nine tabs still fit a phone: they wrap instead of running off the screen.
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/wp-admin/admin.php?page=ohmylms#/content-hub/question-bank');
+  await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/content-hub/question-bank');
   await expect(tabs.getByRole('link', { name: 'Course Bundles', exact: true })).toBeVisible({ timeout: 30000 });
   const box = await tabs.boundingBox();
   expect(box.x + box.width).toBeLessThanOrEqual(390);

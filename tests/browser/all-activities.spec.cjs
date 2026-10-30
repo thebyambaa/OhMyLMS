@@ -17,7 +17,7 @@ test( 'all remaining activity modes play and the maths generator saves in Gutenb
 	await page.locator( '#user_pass' ).fill( credentials.password );
 	await page.locator( '#wp-submit' ).click();
 	await page.waitForURL( ( u ) => ! u.pathname.endsWith( 'wp-login.php' ) );
-	await page.goto( '/wp-admin/admin.php?page=ohmylms' );
+	await page.goto( '/wp-admin/admin.php?page=ohmylms-app' );
 	await page.waitForFunction( () => Boolean( window.wp?.apiFetch ) );
 
 	test.setTimeout( 300000 );
@@ -398,7 +398,7 @@ test( 'all remaining activity modes play and the maths generator saves in Gutenb
 		).toBeVisible();
 		expect( errors ).toEqual( [] );
 	} finally {
-		await page.goto( '/wp-admin/admin.php?page=ohmylms' );
+		await page.goto( '/wp-admin/admin.php?page=ohmylms-app' );
 		await page.waitForFunction( () => Boolean( window.wp?.apiFetch ) );
 		await page.evaluate( async ( fixture ) => {
 			for ( const post of [ fixture.post, fixture.mathPost ] )

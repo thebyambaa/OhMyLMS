@@ -8,7 +8,7 @@ test('selects syllabus skills, reviews lessons and opens an independent draft', 
   await context.addCookies(state.cookies);
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto(`${state.base}/wp-admin/admin.php?page=ohmylms#/content-hub/curriculum/syllabus/${state.syllabus}`);
+  await page.goto(`${state.base}/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/content-hub/curriculum/syllabus/${state.syllabus}`);
   await page.getByRole('button', { name: 'Create course from syllabus', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Create course from syllabus', exact: true });
   await expect(dialog.getByLabel('Course title')).toHaveValue('Course generation syllabus');

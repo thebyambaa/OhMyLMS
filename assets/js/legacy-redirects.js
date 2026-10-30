@@ -5,6 +5,11 @@
  * prints the rules as `window.ohmylmsLegacyRoutes`. The matching mirrors LegacyRoutes::resolve().
  * `&ohmylms_legacy=1` keeps the legacy screen. See docs/LEGACY-ROUTES.md.
  *
+ * After the cutover (docs/CUTOVER.md) the server redirects the legacy page to the new app with
+ * `&ohmylms_from_legacy=1`, and the browser carries the legacy `#/route` over. The config then has a
+ * `landing` entry: before the app reads the hash, a mapped route is replaced by its new route and an
+ * unmapped one by the app home, with the notice that names the screen shown.
+ *
  * In Node the matcher is exported (`require( 'assets/js/legacy-redirects.js' )`) instead of running.
  */
 ( function ( root, factory ) {
@@ -158,12 +163,101 @@
 	}
 
 	/**
-	 * Redirect now and whenever the legacy app changes its route.
+	 * Address of the new app after the cutover redirect, for the legacy hash it carried over.
+	 *
+	 * @param {Object} config   `window.ohmylmsLegacyRoutes` with a `landing` entry (param, home).
+	 * @param {Object} location Object with `pathname`, `search` and `hash`.
+	 * @return {{url: string, unavailable: string|null}|null} Relative URL without the marker, and the
+	 * legacy route when the new app cannot open it; null when the page was not opened by the redirect.
+	 */
+	function landingUrl( config, location ) {
+		if ( ! config || ! config.landing || ! location ) {
+			return null;
+		}
+		const params = new URLSearchParams( location.search || '' );
+		if ( '1' !== params.get( config.landing.param ) ) {
+			return null;
+		}
+		params.delete( config.landing.param );
+		const legacy =
+			'/' + String( location.hash || '' ).replace( /^#?\/?/, '' );
+		const route = resolve( config.routes, legacy );
+		return {
+			url:
+				location.pathname +
+				'?' +
+				params.toString() +
+				'#' +
+				( null === route ? config.landing.home : route ),
+			unavailable: null === route ? legacy : null,
+		};
+	}
+
+	/**
+	 * Show the notice that names a legacy screen the new app cannot open, with a link that keeps it.
+	 *
+	 * @param {Document} doc      Document.
+	 * @param {string}   noticeId Id of the notice printed by AppPage.
+	 * @param {string}   legacy   Legacy route.
+	 */
+	function showUnavailable( doc, noticeId, legacy ) {
+		const notice = doc.getElementById( noticeId );
+		if ( ! notice ) {
+			return;
+		}
+		const code = notice.querySelector( '[data-ohmylms-legacy-route]' );
+		if ( code ) {
+			code.textContent = legacy;
+		}
+		const link = notice.querySelector( '[data-ohmylms-legacy-link]' );
+		if ( link ) {
+			link.hash = legacy;
+		}
+		notice.hidden = false;
+	}
+
+	/**
+	 * Map the carried-over legacy hash once, before the app's router starts.
+	 *
+	 * @param {Window} win Browser window.
+	 */
+	function land( win ) {
+		const config = win.ohmylmsLegacyRoutes;
+		const target = landingUrl( config, win.location );
+		if ( ! target ) {
+			return;
+		}
+		win.history.replaceState( win.history.state, '', target.url );
+		if ( null === target.unavailable ) {
+			return;
+		}
+		const show = () =>
+			showUnavailable(
+				win.document,
+				config.landing.noticeId,
+				target.unavailable
+			);
+		if ( 'loading' === win.document.readyState ) {
+			win.document.addEventListener( 'DOMContentLoaded', show, {
+				once: true,
+			} );
+		} else {
+			show();
+		}
+	}
+
+	/**
+	 * Redirect now and whenever the legacy app changes its route; on the new app after the cutover
+	 * redirect, map the carried-over hash instead.
 	 *
 	 * @param {Window|null} win Browser window.
 	 */
 	function start( win ) {
 		if ( ! win || ! win.ohmylmsLegacyRoutes ) {
+			return;
+		}
+		if ( win.ohmylmsLegacyRoutes.landing ) {
+			land( win );
 			return;
 		}
 		const check = () => {
@@ -186,5 +280,5 @@
 		check();
 	}
 
-	return { resolve, redirectUrl, start };
+	return { resolve, redirectUrl, landingUrl, showUnavailable, start };
 } );

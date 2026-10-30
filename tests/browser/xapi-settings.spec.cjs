@@ -33,7 +33,7 @@ async function mockApi(page, data = snapshot()) {
 
 test('xAPI settings save and delivery actions stay in the Settings tab', async ({ page }) => {
   const calls = await mockApi(page);
-  await page.goto('/wp-admin/admin.php?page=ohmylms#/settings/xapi-settings');
+  await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/settings/xapi-settings');
   const panel = page.locator('.ohmylms-tab-panel-body');
   await expect(panel.getByRole('heading', { name: 'xAPI', exact: true })).toBeVisible();
   await expect(page.locator('#toplevel_page_ohmylms .wp-submenu a[href*="page=ohmylms-xapi"]')).toHaveCount(0);
@@ -65,7 +65,7 @@ test('configuration constants lock connection inputs', async ({ page }) => {
   const data = snapshot();
   data.locked = { endpoint: true, key: true, secret: true };
   await mockApi(page, data);
-  await page.goto('/wp-admin/admin.php?page=ohmylms#/settings/xapi-settings');
+  await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/settings/xapi-settings');
   for (const label of ['LRS endpoint', 'Key (username)', 'Secret (password)']) {
     await expect(page.getByLabel(label, { exact: true })).toBeDisabled();
   }
@@ -73,7 +73,7 @@ test('configuration constants lock connection inputs', async ({ page }) => {
 
 test('the add-on Manage button opens the xAPI Settings tab without navigation', async ({ page }) => {
   await mockApi(page);
-  await page.goto('/wp-admin/admin.php?page=ohmylms#/integrations');
+  await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/integrations');
   const heading = page.getByRole('heading', { name: 'xAPI', exact: true });
   await expect(heading).toBeVisible();
   const card = heading.locator('xpath=ancestor::div[.//button[@aria-label="Manage"]][1]');

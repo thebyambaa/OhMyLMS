@@ -17,7 +17,7 @@ test( 'Hangman and spelling preserve private answers and resume word progress', 
 	await page.locator( '#user_pass' ).fill( credentials.password );
 	await page.locator( '#wp-submit' ).click();
 	await page.waitForURL( ( u ) => ! u.pathname.endsWith( 'wp-login.php' ) );
-	await page.goto( '/wp-admin/admin.php?page=ohmylms' );
+	await page.goto( '/wp-admin/admin.php?page=ohmylms-app' );
 	await page.waitForFunction( () => Boolean( window.wp?.apiFetch ) );
 	const fixture = await page.evaluate( async () => {
 		const api = ( path, data ) =>
@@ -171,7 +171,7 @@ test( 'Hangman and spelling preserve private answers and resume word progress', 
 		).toHaveCount( 1 );
 		expect( errors ).toEqual( [] );
 	} finally {
-		await page.goto( '/wp-admin/admin.php?page=ohmylms' );
+		await page.goto( '/wp-admin/admin.php?page=ohmylms-app' );
 		await page.waitForFunction( () => Boolean( window.wp?.apiFetch ) );
 		await page.evaluate( async ( { pages, questions } ) => {
 			for ( const p of pages )

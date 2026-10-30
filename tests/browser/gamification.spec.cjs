@@ -11,10 +11,10 @@ test('gamification React panels mount and track direct routes',async({page})=>{
  // Exercise the current workspace builds even when the isolated PHP fixture uses a copied plugin.
  await page.route('**/build/sdk/extensions.js*',route=>route.fulfill({path:path.resolve('build/sdk/extensions.js'),contentType:'application/javascript'}));
  await page.route('**/build/assets/dist/admin/ohmylms.js*',route=>route.fulfill({path:path.resolve('build/assets/dist/admin/ohmylms.js'),contentType:'application/javascript'}));
- await page.goto('/wp-admin/admin.php?page=ohmylms#/gamification/point-settings');
+ await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/gamification/point-settings');
  await expect.poll(()=>page.evaluate(()=>Object.keys(window.ohmylms?.extensions?.gamificationComponents||{}).length)).toBe(13);
  for(const [key,label] of [['point-settings','Bonus Point'],['badge-settings','Achievement Badges'],['level-settings','Learner Levels'],['reward-settings','Reward'],['leaderboard-settings','Leaderboard'],['streak-settings','Streaks']]){
-   await page.goto('/wp-admin/admin.php?page=ohmylms#/gamification/'+key);
+   await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/gamification/'+key);
    await expect(page.getByRole('tab',{name:label,exact:true})).toHaveAttribute('aria-selected','true');
  }
  await expect(page.getByRole('heading',{name:'Daily learning streaks',exact:true})).toBeVisible();
@@ -48,7 +48,7 @@ const fixture=(...args)=>{
   const output=execFileSync(php,[...ini,'-d','display_startup_errors=0','-d','error_reporting=22527','tests/php/gamification-browser-fixture.php',...args],{env:process.env,encoding:'utf8',timeout:120000});
   return JSON.parse(output.trim().split('\n').filter((line)=>line.startsWith('{')).pop());
 };
-const hash=(route)=>`/wp-admin/admin.php?page=ohmylms#${route}`;
+const hash=(route)=>`/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#${route}`;
 const settingsTabs=['Bonus Point','Achievement Badges','Learner Levels','Reward','Leaderboard','Streaks'];
 
 test('Certificates is a Gamification tab while Gamification is on, and keeps its own menu entry while it is off',async({page})=>{

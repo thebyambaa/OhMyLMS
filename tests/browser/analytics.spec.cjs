@@ -13,7 +13,7 @@ test.beforeEach(async({page})=>{
 test('dashboard source renders data, opens course creation and recovers after request failure',async({page})=>{
  const errors=[];page.on('pageerror',error=>errors.push(error.message));let fail=false;
  await page.route(/\/dashboard\?/,route=>route.fulfill(fail?{status:503,json:{message:'Simulated failure'}}:{json:{currency:'$',currency_pos:'left',earning:{total_earning:160,refund:10,net_income:150,growth:{earning:0,refund:0,net:0}},recent_courses:[course],top_course:null,total_course:1,course_sold:3,total_enrollments:12,sales_growth_rate:0,enrollment_growth_rate:0}}));
- await page.goto('/wp-admin/admin.php?page=ohmylms#/dashboard');
+ await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/dashboard');
  await expect.poll(()=>page.evaluate(()=>Object.keys(window.ohmylms?.extensions?.analyticsComponents||{}).length)).toBe(18);
  await expect(page.getByRole('link',{name:course.name,exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Add Course',exact:true}).first().click();await expect(page.getByRole('dialog')).toBeVisible();await page.keyboard.press('Escape');
@@ -26,13 +26,13 @@ test('course and earnings reports render charts, filter requests and keep naviga
  const errors=[];page.on('pageerror',error=>errors.push(error.message));const courseRequests=[],earningRequests=[];
  await page.route('**/analytics/course/912*',route=>{courseRequests.push(route.request().url());return route.fulfill({json:courseReport});});
  await page.route('**/analytics/earnings*',route=>{earningRequests.push(route.request().url());return route.fulfill({json:earnings});});
- await page.goto('/wp-admin/admin.php?page=ohmylms#/course/912/report');
+ await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/course/912/report');
  await expect(page.getByText('Journey Mapping',{exact:true})).toBeVisible();await expect(page.getByText(student.name,{exact:true})).toBeVisible();
  await expect(page.locator('canvas').first()).toBeVisible();
  await page.getByPlaceholder('Search',{exact:true}).fill('Analytics');
  await expect.poll(()=>courseRequests.some(url=>url.includes('search=Analytics')&&url.includes('data_type=student'))).toBe(true);
  await page.screenshot({path:'test-results/analytics-course-report.png',fullPage:true});
- await page.goto('/wp-admin/admin.php?page=ohmylms#/earnings-report');
+ await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/earnings-report');
  await expect(page.getByRole('heading',{name:'Earnings Report',exact:true})).toBeVisible();await expect(page.getByText('Mongolia',{exact:true})).toBeVisible();
  await expect(page.locator('canvas').first()).toBeVisible();
  await page.locator('.ohmylms-dashboard-filter select').selectOption('current_year');

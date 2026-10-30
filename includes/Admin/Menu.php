@@ -18,6 +18,7 @@ class Menu {
 		add_action( 'admin_menu', array( $this, 'init_menu' ) );
 		add_action( 'admin_menu', array( $this, 'register_submenu' ) );
 		add_action( 'admin_menu', array( $this, 'menu_highlight' ) );
+		add_action( 'admin_menu', array( $this, 'cutover_submenu' ), 9999 );
 		add_action( 'wp_loaded', array( $this, 'save_settings' ) );
 		add_action( 'admin_footer', array( $this, 'open_link_with_new_page' ) );
 		add_action( 'admin_bar_menu', array( $this, 'lms_admin_menu_option' ), 100 );
@@ -49,6 +50,7 @@ class Menu {
 		$pending_count = apply_filters( 'ohmylms_pending_orders_count', $pending_count );
 		$pending_count = 0;
 		$badge_html    = $pending_count > 0 ? " <span class='update-plugins count-$pending_count'><span class='plugin-count'>$pending_count</span></span>" : '';
+		$legacy_admin  = LegacyRoutes::legacy_admin_enabled();
 		if ( current_user_can( $capability ) ) {
 			// Each entry names its legacy route; LegacyRoutes opens the new app where it replaces the screen.
 			$submenu[ $slug ][] = array( esc_attr__( 'Dashboard', 'ohmylms' ), $capability, LegacyRoutes::url( '/dashboard' ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
@@ -56,8 +58,9 @@ class Menu {
 			// Bundles are managed together in the Content Hub; the old #/courses, #/quizzes, #/assignments,
 			// #/assessments, #/extensions/skills, #/extensions/question-bank, #/extensions/curriculum,
 			// #/extensions/bundles, #/categories and #/tags addresses open the matching tabs. Curriculum
-			// replaces course categories and Course Bundles replace course tags.
-			$submenu[ $slug ][] = array( esc_attr__( 'Content Hub', 'ohmylms' ), $capability, LegacyRoutes::url( '/content-hub' ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+			// replaces course categories and Course Bundles replace course tags. The new app has no hub frame,
+			// so after the cutover the entry opens its course list.
+			$submenu[ $slug ][] = array( esc_attr__( 'Content Hub', 'ohmylms' ), $capability, LegacyRoutes::url( $legacy_admin ? '/content-hub' : '/content-hub/courses' ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 			// With Gamification on, Certificates is a tab of the Gamification screen (#/gamification/certificates)
 				// and #/certificates opens it; without Gamification it keeps its own entry.
 				$gamification_enabled = apply_filters( 'ohmylms_show_gamification_menu', false );
@@ -65,7 +68,8 @@ class Menu {
 				$submenu[ $slug ][] = array( esc_attr__( 'Certificates', 'ohmylms' ), $capability, LegacyRoutes::url( '/certificates' ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 			}
 
-			if ( apply_filters( 'ohmylms_show_sessions_menu', false ) ) {
+			// Sessions has no new-app screen yet.
+			if ( $legacy_admin && apply_filters( 'ohmylms_show_sessions_menu', false ) ) {
 				$submenu[ $slug ][] = array( esc_attr__( 'Sessions', 'ohmylms' ), $capability, LegacyRoutes::url( '/sessions' ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 			}
 
@@ -147,6 +151,35 @@ class Menu {
 			'https://ohmylms.com/contact-us/',
 			null
 		);
+	}
+
+	/**
+	 * After the cutover, point every OhMyLMS submenu entry that still opens the legacy page (including
+	 * entries added by add-ons) at its new-app route, and drop the ones the new app cannot open yet.
+	 * Entries for other pages and external links are kept.
+	 */
+	public function cutover_submenu() {
+		global $submenu;
+		if ( LegacyRoutes::legacy_admin_enabled() || empty( $submenu[ OHMYLMS_SLUG ] ) ) {
+			return;
+		}
+		$pattern = '#(?:^|/)admin\.php\?page=' . preg_quote( OHMYLMS_SLUG, '#' ) . '(?=[&\#]|$)[^\#]*(?:\#(.*))?$#';
+		foreach ( $submenu[ OHMYLMS_SLUG ] as $index => $item ) {
+			$url = (string) ( $item[2] ?? '' );
+			if ( OHMYLMS_SLUG === $url ) {
+				$route = '/';
+			} elseif ( preg_match( $pattern, $url, $found ) ) {
+				$route = '' === ( $found[1] ?? '' ) ? '/' : $found[1];
+			} else {
+				continue;
+			}
+			$mapped = LegacyRoutes::resolve( $route );
+			if ( null === $mapped ) {
+				unset( $submenu[ OHMYLMS_SLUG ][ $index ] );
+			} else {
+				$submenu[ OHMYLMS_SLUG ][ $index ][2] = LegacyRoutes::app_url( $mapped ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+			}
+		}
 	}
 
 	/**

@@ -104,7 +104,7 @@ async function cleanup(page) {
   created.lessons.length = 0;
 }
 async function openCurriculum(page) {
-  await page.goto('/wp-admin/admin.php?page=ohmylms#/content-hub/curriculum');
+  await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/content-hub/curriculum');
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Curriculum', exact: true })).toBeVisible({
     timeout: 30000,
@@ -116,7 +116,7 @@ async function openEditor(page, framework, subject) {
   await page.getByRole('button', { name: `Edit ${subject}`, exact: true }).click();
 }
 async function openWorkspace(page, id) {
-  await page.goto(`/wp-admin/admin.php?page=ohmylms#/content-hub/curriculum/syllabus/${id}`);
+  await page.goto(`/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/content-hub/curriculum/syllabus/${id}`);
   await page.reload();
   await expect(page.locator('.ohmylms-ws-header h1')).toBeVisible({ timeout: 60000 });
 }
@@ -446,7 +446,7 @@ test('lessons are attached to a chapter, and a skill owns its lessons', async ({
     expect(draft.status).toBe('draft');
     expect(draft.type).toBe('text');
     const returnTo = new URLSearchParams(new URL(page.url()).hash.split('?')[1]).get('returnTo');
-    await page.goto(`/wp-admin/admin.php?page=ohmylms#${returnTo}`);
+    await page.goto(`/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#${returnTo}`);
     await expect(title(page)).toHaveValue('Add fractions');
     await expect(owns.getByRole('link', { name: `Fraction games ${tag}` })).toBeVisible({
       timeout: 30000,

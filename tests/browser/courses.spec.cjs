@@ -3,11 +3,11 @@ const fs=require('node:fs');
 test.beforeEach(async({page})=>{
  const credentials=JSON.parse(fs.readFileSync(process.env.OHMYLMS_TEST_CREDENTIALS,'utf8'));
  await page.goto('/wp-login.php');await page.locator('#user_login').fill(credentials.username);await page.locator('#user_pass').fill(credentials.password);await page.locator('#wp-submit').click();await page.waitForURL(/wp-admin/);
- await page.goto('/wp-admin/admin.php?page=ohmylms');
+ await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1');
 });
 test('course list creates a course through the source dialog',async({page})=>{
  const errors=[];page.on('pageerror',error=>errors.push(error.message));
- await page.goto('/wp-admin/admin.php?page=ohmylms#/courses');
+ await page.goto('/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/courses');
  await page.getByRole('button',{name:'Add Course',exact:true}).first().click();
  const selfPaced=page.getByRole('button',{name:/Self.Paced/});
  if(await selfPaced.count())await selfPaced.first().click();
@@ -50,7 +50,7 @@ test('course source authoring preserves curriculum and settings',async({page},te
   return {course,chapter,lesson};
  });
  try{
-  await page.goto(`/wp-admin/admin.php?page=ohmylms#/course-edit/${fixture.course.id}/content`);
+  await page.goto(`/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/course-edit/${fixture.course.id}/content`);
   await expect(page.getByPlaceholder('Enter Course Title')).toHaveValue('Course source fixture',{timeout:20000});
   await expect(page.locator('.ohmylms-course-builder-wrapper')).toBeVisible();
   expect(await page.evaluate(()=>Object.keys(window.ohmylms.extensions.courseComponents).length)).toBe(25);

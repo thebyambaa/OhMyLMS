@@ -18,7 +18,7 @@ test('teacher publishes a blended path with a reused lesson and explicit skill t
   await page.addInitScript(() => Object.defineProperty(window.crypto, 'randomUUID', { value: undefined }));
   const errors = []; page.on('pageerror', (error) => errors.push(error.message));
   await login(page, admin().username, admin().password);
-  await page.goto(`/wp-admin/admin.php?page=ohmylms#/course-edit/${state.course}/settings/learning`);
+  await page.goto(`/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/course-edit/${state.course}/settings/learning`);
   await expect(page.getByRole('heading', { name: 'Learning program', exact: true })).toBeVisible({ timeout: 25000 });
   await page.getByRole('radio', { name: 'Blended', exact: true }).check();
   await page.getByLabel('Select skill', { exact: true }).selectOption(String(state.skill));
