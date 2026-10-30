@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Typecheck, app tests and architecture (npm run check:ci)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run check:ci
+
+  php-lint:
+    name: PHP syntax (php -l)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: none
+
+      # Parse errors go to stderr; xargs exits non-zero if any file fails.
+      - name: Lint includes/ and tests/php
+        run: |
+          find includes tests/php -type f -name '*.php' -print0 \
+            | xargs -0 -n 1 -P 4 php -d display_errors=stderr -l > /dev/null

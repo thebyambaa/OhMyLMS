@@ -1,0 +1,8 @@
+[
+	{
+		"binding": "Wg",
+		"name": "Widget",
+		"file": "Widget.jsx",
+		"dependencies": [ "React" ]
+	}
+]

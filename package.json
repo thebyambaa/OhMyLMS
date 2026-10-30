@@ -24,6 +24,8 @@
 		"format": "prettier --write \"assets/src/{features,extensions,shared}/**/*.{js,jsx,mjs,json}\" \"tools/*adapters.mjs\" tools/component-adapter.mjs tools/source-contracts.mjs tools/check-source.mjs \"tests/js/{component-adapter,source-contracts}.test.mjs\"",
 		"format:check": "prettier --check assets/src/app \"assets/src/{features,extensions,shared}/**/*.{js,jsx,mjs,json}\" \"tools/*adapters.mjs\" tools/component-adapter.mjs tools/source-contracts.mjs tools/check-source.mjs \"tests/js/{component-adapter,source-contracts}.test.mjs\"",
 		"check": "npm run format:check && npm run lint && npm run typecheck && npm run test:app && npm test && npm run build",
+		"check:architecture": "node tools/check-architecture.mjs",
+		"check:ci": "npm run typecheck && npm run test:app && npm run check:architecture && node --test tests/js/runtime-inventory.test.mjs tests/js/check-architecture.test.mjs",
 		"lint:php": "node tools/wp-standards.mjs",
 		"lint:php:fix": "node tools/wp-standards.mjs fix",
 		"lint:js": "eslint assets/src/app assets/src/features assets/src/ui assets/src/shared assets/src/extensions assets/src/blocks assets/interactivity assets/js/student-hub.js assets/js/player-context.js assets/js/practice-guidance.js assets/js/import-figures.js assets/js/admin-benchmark.js assets/js/admin-styles.js assets/js/ui.js",

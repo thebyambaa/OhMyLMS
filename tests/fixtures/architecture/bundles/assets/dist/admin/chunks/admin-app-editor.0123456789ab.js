@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkfixture=self.webpackChunkfixture||[]).push([[2],{"./node_modules/@wordpress/components/build-module/index.js":()=>{},"./node_modules/@wordpress/icons/build-module/index.js":()=>{}}]);

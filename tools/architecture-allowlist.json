@@ -1,0 +1,6 @@
+{
+	"description": "Known, justified exceptions to tools/check-architecture.mjs. Every entry needs a reason; entries that no longer match a violation fail the check. See docs/ENFORCEMENT.md. Format: recoveredRuntime and crossFeature entries are { \"from\": \"assets/src/app/...\", \"to\": \"assets/src/...\", \"reason\": \"...\" }; cycles entries are { \"files\": [ \"assets/src/app/...\", ... ], \"reason\": \"...\" }.",
+	"recoveredRuntime": [],
+	"cycles": [],
+	"crossFeature": []
+}

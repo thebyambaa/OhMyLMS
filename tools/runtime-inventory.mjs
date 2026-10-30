@@ -114,6 +114,11 @@ const externalPatterns = [
 	],
 ];
 
+// Sizes and signatures must not depend on the checkout's line endings (core.autocrlf).
+export function readText( file ) {
+	return fs.readFileSync( file, 'utf8' ).replace( /\r\n/g, '\n' );
+}
+
 function kebab( name ) {
 	return name.replace( /[A-Z]/g, ( c ) => '-' + c.toLowerCase() );
 }
@@ -296,15 +301,12 @@ function moduleHint( id, source ) {
 export function buildInventory( root ) {
 	const sourceRoot = path.join( root, 'assets/src' );
 	const manifest = JSON.parse(
-		fs.readFileSync( path.join( sourceRoot, 'manifest.json' ), 'utf8' )
+		readText( path.join( sourceRoot, 'manifest.json' ) )
 	);
 	const sources = new Map();
 	const read = ( name ) => {
 		if ( ! sources.has( name ) )
-			sources.set(
-				name,
-				fs.readFileSync( path.join( sourceRoot, name ), 'utf8' )
-			);
+			sources.set( name, readText( path.join( sourceRoot, name ) ) );
 		return sources.get( name );
 	};
 
@@ -363,7 +365,7 @@ export function buildInventory( root ) {
 		)
 		.map( ( file ) => [
 			file,
-			fs.readFileSync( path.join( root, 'tools', file ), 'utf8' ),
+			readText( path.join( root, 'tools', file ) ),
 		] );
 	const childRefs = ( module ) =>
 		[ ...read( module.source ).matchAll( /\bn\((\d+)\)/g ) ].map(
@@ -464,10 +466,7 @@ export function buildInventory( root ) {
 		.readdirSync( path.join( sourceRoot, 'extensions' ) )
 		.filter( ( file ) => /\.(?:js|jsx|mjs)$/.test( file ) )
 		.map( ( file ) =>
-			fs.readFileSync(
-				path.join( sourceRoot, 'extensions', file ),
-				'utf8'
-			)
+			readText( path.join( sourceRoot, 'extensions', file ) )
 		)
 		.join( '\n' );
 	const components = [];
@@ -480,18 +479,13 @@ export function buildInventory( root ) {
 		) {
 			unwired.push( {
 				feature,
-				components: JSON.parse( fs.readFileSync( contract, 'utf8' ) )
-					.length,
+				components: JSON.parse( readText( contract ) ).length,
 			} );
 			continue;
 		}
-		for ( const component of JSON.parse(
-			fs.readFileSync( contract, 'utf8' )
-		) ) {
+		for ( const component of JSON.parse( readText( contract ) ) ) {
 			const file = path.join( featuresRoot, feature, component.file );
-			const text = fs.existsSync( file )
-				? fs.readFileSync( file, 'utf8' )
-				: '';
+			const text = fs.existsSync( file ) ? readText( file ) : '';
 			const destructured = new Set(
 				[
 					...text.matchAll(
