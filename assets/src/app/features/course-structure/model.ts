@@ -178,6 +178,72 @@ export function savePayload( outline: Outline ) {
 	};
 }
 
+const TERMINAL = [ 'unit-test', 'course-challenge' ];
+
+/**
+ * Move an activity to the end of another unit, before that unit's terminal assessments. Lesson groups
+ * belong to one unit, so the group link is dropped; placement identity and skills are kept.
+ * @param items
+ * @param id
+ * @param unit
+ */
+export function moveToUnit(
+	items: Activity[],
+	id: string,
+	unit: number | string
+): Activity[] {
+	const current = items.find( ( item ) => item.id === id );
+	if ( ! current || current.chapter_id === unit ) {
+		return items;
+	}
+	const moved: Activity = { ...current, chapter_id: unit };
+	delete moved.group_id;
+	const others = items.filter( ( item ) => item.id !== id );
+	const terminal = others.findIndex(
+		( item ) =>
+			item.chapter_id === unit && TERMINAL.includes( item.style ?? '' )
+	);
+	let at = others.length;
+	if ( terminal >= 0 ) {
+		at = terminal;
+	} else {
+		others.forEach( ( item, index ) => {
+			if ( item.chapter_id === unit ) {
+				at = index + 1;
+			}
+		} );
+	}
+	return [ ...others.slice( 0, at ), moved, ...others.slice( at ) ];
+}
+
+/**
+ * Remove a unit that was never saved. Its activities and skill targets stay in the program, unplaced.
+ * @param outline
+ * @param unit
+ */
+export function removeNewUnit( outline: Outline, unit: string ): Outline {
+	const detach = < T extends Row >( row: T ): T => {
+		if ( row.chapter_id !== unit ) {
+			return row;
+		}
+		const next: Row = { ...row, chapter_id: 0 };
+		delete next.group_id;
+		return next as T;
+	};
+	return {
+		...outline,
+		units: outline.units.filter( ( row ) => row.id !== unit ),
+		program: {
+			...outline.program,
+			items: outline.program.items.map( detach ),
+			outcomes: outline.program.outcomes.map( detach ),
+			groups: outline.program.groups.filter(
+				( group ) => group.chapter_id !== unit
+			),
+		},
+	};
+}
+
 /**
  * Move only within a unit; terminal assessments keep their position.
  * @param items
@@ -192,7 +258,7 @@ export function moveActivity( items: Activity[], id: string, offset: number ) {
 	const siblings = items.filter(
 		( item ) =>
 			item.chapter_id === current.chapter_id &&
-			! [ 'unit-test', 'course-challenge' ].includes( item.style ?? '' )
+			! TERMINAL.includes( item.style ?? '' )
 	);
 	const index = siblings.findIndex( ( item ) => item.id === id );
 	const other = siblings[ index + offset ];

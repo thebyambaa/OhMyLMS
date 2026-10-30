@@ -62,6 +62,23 @@ function settings_payload( $data ) {
 }
 
 /**
+ * Dispatch the course certificate contract.
+ *
+ * @param string $method Method.
+ * @param int    $course Course ID.
+ * @param array  $data JSON.
+ * @return WP_REST_Response
+ */
+function settings_certificate( $method, $course, $data = array() ) {
+	$request = new WP_REST_Request( $method, '/ohmylms/v1/authoring/courses/' . $course . '/certificate' );
+	$request->set_header( 'Content-Type', 'application/json' );
+	if ( 'GET' !== $method ) {
+		$request->set_body( wp_json_encode( $data ) );
+	}
+	return rest_do_request( $request );
+}
+
+/**
  * Dispatch the explicit preview/publication contract.
  *
  * @param string $method Method.
@@ -278,8 +295,109 @@ try {
 		)->get_status(),
 		'Replaying an old confirmation cannot create another program version.'
 	);
+	$settings_certificates = array();
+	foreach ( array( 'First', 'Second' ) as $settings_name ) {
+		$settings_certificates[] = wp_insert_post(
+			array(
+				'post_type'   => OHMYLMS_CERTIFICATE_CPT,
+				'post_status' => 'publish',
+				'post_title'  => 'Settings fixture certificate ' . $settings_name,
+				'post_author' => get_current_user_id(),
+			),
+			true
+		);
+	}
+	$settings_posts = array_merge( $settings_posts, $settings_certificates );
+	list( $settings_first_certificate, $settings_second_certificate ) = $settings_certificates;
+	$settings_certificate = settings_certificate( 'GET', $settings_course );
+	settings_check( 200 === $settings_certificate->get_status() && 0 === $settings_certificate->get_data()['certificate_id'], 'Course certificate reads as none.' );
+	settings_check( ! array_diff( $settings_certificates, array_column( $settings_certificate->get_data()['choices'], 'id' ) ), 'Certificate choices include editable templates.' );
+	$settings_assigned = settings_certificate(
+		'PUT',
+		$settings_course,
+		array(
+			'certificate_id'          => $settings_first_certificate,
+			'expected_certificate_id' => 0,
+		)
+	);
+	settings_check( 200 === $settings_assigned->get_status() && $settings_first_certificate === $settings_assigned->get_data()['certificate_id'], 'Certificate assignment saves: ' . wp_json_encode( $settings_assigned->get_data() ) );
+	settings_check( settings_certificate( 'GET', $settings_course )->get_data()['certificate_id'] === $settings_first_certificate, 'Certificate assignment survives reopen.' );
+	settings_check(
+		409 === settings_certificate(
+			'PUT',
+			$settings_course,
+			array(
+				'certificate_id'          => $settings_second_certificate,
+				'expected_certificate_id' => 0,
+			)
+		)->get_status(),
+		'Stale certificate assignment rejected.'
+	);
+	foreach ( array(
+		array(
+			'certificate_id'          => $settings_course,
+			'expected_certificate_id' => $settings_first_certificate,
+		),
+		array(
+			'certificate_id'          => 'first',
+			'expected_certificate_id' => $settings_first_certificate,
+		),
+		array(
+			'certificate_id'          => $settings_second_certificate,
+			'expected_certificate_id' => $settings_first_certificate,
+			'extra'                   => true,
+		),
+	) as $settings_invalid ) {
+		settings_check( settings_certificate( 'PUT', $settings_course, $settings_invalid )->get_status() >= 400, 'Invalid certificate input rejected.' );
+		settings_check( \OhMyLMS\Learning\CourseCertificate::current( $settings_course ) === $settings_first_certificate, 'Rejected certificate input changes nothing.' );
+	}
+	$settings_break_insert = static function ( $query ) use ( $wpdb ) {
+		return 0 === strpos( $query, 'INSERT INTO `' . $wpdb->prefix . 'ohmylms_certificate_relationship`' ) ? 'INSERT INTO `' . $wpdb->prefix . 'ohmylms_missing_fixture_table` (id) VALUES (1)' : $query;
+	};
+	add_filter( 'query', $settings_break_insert );
+	$settings_suppress = $wpdb->suppress_errors( true );
+	try {
+		settings_check(
+			500 === settings_certificate(
+				'PUT',
+				$settings_course,
+				array(
+					'certificate_id'          => $settings_second_certificate,
+					'expected_certificate_id' => $settings_first_certificate,
+				)
+			)->get_status(),
+			'Failed certificate write is reported.'
+		);
+	} finally {
+		remove_filter( 'query', $settings_break_insert );
+		$wpdb->suppress_errors( $settings_suppress );
+	}
+	settings_check( \OhMyLMS\Learning\CourseCertificate::current( $settings_course ) === $settings_first_certificate, 'Failed certificate write rolls back the removal.' );
+	settings_check(
+		0 === settings_certificate(
+			'PUT',
+			$settings_course,
+			array(
+				'certificate_id'          => 0,
+				'expected_certificate_id' => $settings_first_certificate,
+			)
+		)->get_data()['certificate_id'],
+		'Certificate can be removed.'
+	);
 	foreach ( array( 'author', 'subscriber' ) as $settings_role ) {
 		wp_set_current_user( $settings_users[ $settings_role ] );
+		settings_check( 403 === settings_certificate( 'GET', $settings_course )->get_status(), 'Unprivileged certificate read rejected.' );
+		settings_check(
+			403 === settings_certificate(
+				'PUT',
+				$settings_course,
+				array(
+					'certificate_id'          => $settings_second_certificate,
+					'expected_certificate_id' => 0,
+				)
+			)->get_status(),
+			'Unprivileged certificate write rejected.'
+		);
 		settings_check( 403 === settings_request( 'GET', $settings_course )->get_status(), 'Unprivileged settings read rejected.' );
 		settings_check( 403 === settings_request( 'PUT', $settings_course, $settings_body )->get_status(), 'Unprivileged settings write rejected.' );
 		settings_check( 403 === settings_publication( 'GET', $settings_course )->get_status(), 'Unprivileged preview rejected.' );
@@ -293,6 +411,7 @@ try {
 	}
 	// Remove immutable versions belonging only to the deleted fixture course.
 	if ( ! empty( $settings_course ) ) {
+		$wpdb->delete( $wpdb->prefix . 'ohmylms_certificate_relationship', array( 'course_id' => $settings_course ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Delete only the fixture course's certificate assignment.
 		$settings_versions = $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE course_id=%d', \OhMyLMS\Learning\Schema::table( 'programs' ), $settings_course ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Read only this fixture course's program IDs for cleanup.
 		foreach ( $settings_versions as $settings_version ) {
 			$wpdb->delete( \OhMyLMS\Learning\Schema::table( 'outcomes' ), array( 'program_id' => $settings_version ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Delete only the fixture program's outcome rows.

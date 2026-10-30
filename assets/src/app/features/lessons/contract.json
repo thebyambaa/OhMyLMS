@@ -21,7 +21,21 @@
 			"enable_comments",
 			"resources"
 		],
+		"optionalWriteFields": [
+			"drip",
+			"prerequisites",
+			"cover_image_id",
+			"video_id",
+			"audio_id"
+		],
+		"dripTypes": [
+			"enrollment-from-x-days",
+			"specific-date",
+			"cohort-start",
+			"cohort-from-x-days"
+		],
 		"types": [ "text", "video", "audio" ],
+		"extensionTypes": "registered lesson types keep their type; edited through their lesson-editor entry",
 		"conflictStatus": 409,
 		"changesStatus": false
 	},

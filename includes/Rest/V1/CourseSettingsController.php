@@ -8,6 +8,7 @@
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Learning\Catalog;
+use OhMyLMS\Learning\CourseCertificate;
 use OhMyLMS\Learning\CourseSettings;
 use OhMyLMS\Learning\CourseStructure;
 
@@ -31,6 +32,22 @@ class CourseSettingsController extends \WP_REST_Controller {
 					'permission_callback' => array( $this, 'permission' ),
 					'methods'             => 'PUT',
 					'callback'            => array( $this, 'update_item' ),
+				),
+			)
+		);
+		register_rest_route(
+			'ohmylms/v1',
+			'/authoring/courses/(?P<id>\d+)/certificate',
+			array(
+				array(
+					'permission_callback' => array( $this, 'permission' ),
+					'methods'             => 'GET',
+					'callback'            => array( $this, 'get_certificate' ),
+				),
+				array(
+					'permission_callback' => array( $this, 'permission' ),
+					'methods'             => 'PUT',
+					'callback'            => array( $this, 'update_certificate' ),
 				),
 			)
 		);
@@ -96,6 +113,46 @@ class CourseSettingsController extends \WP_REST_Controller {
 					Catalog::revision( $id ),
 					static function () use ( $id, $request ) {
 						return CourseSettings::save( $id, $request->get_json_params() );
+					}
+				);
+			}
+		);
+	}
+
+	/**
+	 * Read the assigned certificate template and the templates the user may assign.
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return mixed
+	 */
+	public function get_certificate( $request ) {
+		$id = (int) $request['id'];
+		return CourseStructure::read(
+			$id,
+			static function () use ( $id ) {
+				$response = rest_ensure_response( CourseCertificate::get( $id ) );
+				$response->header( 'Cache-Control', 'private, no-store' );
+				return $response;
+			}
+		);
+	}
+
+	/**
+	 * Replace the certificate template under the course lock and transaction.
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return mixed
+	 */
+	public function update_certificate( $request ) {
+		$id = (int) $request['id'];
+		return CourseStructure::read(
+			$id,
+			static function () use ( $id, $request ) {
+				return CourseStructure::change(
+					$id,
+					Catalog::revision( $id ),
+					static function () use ( $id, $request ) {
+						return CourseCertificate::assign( $id, $request->get_json_params() );
 					}
 				);
 			}

@@ -65,6 +65,19 @@ function lesson_payload( $data ) {
 	return array_intersect_key( $data, array_flip( array( 'revision', 'title', 'content', 'type', 'external_url', 'preview_enable', 'enable_comments', 'resources' ) ) );
 }
 
+// Register before the REST server builds the lesson settings schema, whose type enum lists registered types.
+$lesson_custom_type = 'example-reading';
+if ( ! \OhMyLMS\Extensions\Registry::get( 'lesson', $lesson_custom_type ) ) {
+	$lesson_custom_type = 'fixture-reading';
+	ohmylms_register_lesson_type(
+		$lesson_custom_type,
+		array(
+			'label'  => 'Fixture reading',
+			'render' => '__return_empty_string',
+		)
+	);
+}
+
 try {
 	foreach ( array( 'administrator', 'author', 'subscriber' ) as $lesson_role ) {
 		$lesson_user = wp_insert_user(
@@ -273,6 +286,159 @@ try {
 			$lesson_posts[] = $lesson_unit['id']; }
 	}
 	lesson_check( $lesson_fixture === $lesson_placement->get_data()['program']['items'][0]['content_id'] && 'draft' === get_post_status( $lesson_course ) && ! get_post_meta( $lesson_course, CourseProgram::CURRENT, true ), 'Lesson placement persists without publishing the course.' );
+	$lesson_other   = wp_insert_post(
+		array(
+			'post_type'   => OHMYLMS_LESSON_CPT,
+			'post_status' => 'draft',
+			'post_title'  => 'Prerequisite fixture',
+			'post_author' => get_current_user_id(),
+		),
+		true
+	);
+	$lesson_posts[] = $lesson_other;
+	$lesson_image   = wp_insert_attachment(
+		array(
+			'post_mime_type' => 'image/png',
+			'post_title'     => 'Lesson cover fixture',
+			'post_status'    => 'inherit',
+		)
+	);
+	$lesson_posts[] = $lesson_image;
+	update_post_meta( $lesson_fixture, '_drip_settings', array_merge( get_post_meta( $lesson_fixture, '_drip_settings', true ), array( 'legacy' => 'kept' ) ) );
+	$lesson_advanced = lesson_request( 'GET', $lesson_path )->get_data();
+	lesson_check( true === $lesson_advanced['drip']['enable'] && 5 === $lesson_advanced['drip']['days'] && 'enrollment-from-x-days' === $lesson_advanced['drip']['type'], 'Stored drip settings are readable.' );
+	lesson_check(
+		array(
+			'enable' => false,
+			'items'  => array(),
+		) === $lesson_advanced['prerequisites'] && 0 === $lesson_advanced['cover_image_id'] && false === $lesson_advanced['custom_type'],
+		'Prerequisites, media and type flags are readable.'
+	);
+	$lesson_advanced_data = lesson_payload( $lesson_advanced ) + array(
+		'drip'           => array(
+			'enable' => true,
+			'type'   => 'specific-date',
+			'days'   => 0,
+			'date'   => '2026-12-01',
+			'time'   => '08:30',
+		),
+		'prerequisites'  => array(
+			'enable' => true,
+			'ids'    => array( $lesson_other ),
+		),
+		'cover_image_id' => $lesson_image,
+		'video_id'       => 0,
+		'audio_id'       => 0,
+	);
+	foreach ( array(
+		array(
+			'drip' => array(
+				'enable' => true,
+				'type'   => 'specific-date',
+				'days'   => 0,
+				'date'   => '',
+				'time'   => '',
+			),
+		),
+		array(
+			'drip' => array(
+				'enable' => true,
+				'type'   => 'enrollment-from-x-days',
+				'days'   => -1,
+				'date'   => '',
+				'time'   => '',
+			),
+		),
+		array(
+			'drip' => array(
+				'enable' => true,
+				'type'   => 'weekly',
+				'days'   => 1,
+				'date'   => '',
+				'time'   => '',
+			),
+		),
+		array(
+			'prerequisites' => array(
+				'enable' => true,
+				'ids'    => array( $lesson_fixture ),
+			),
+		),
+		array(
+			'prerequisites' => array(
+				'enable' => true,
+				'ids'    => array( $lesson_course ),
+			),
+		),
+		array( 'cover_image_id' => $lesson_other ),
+		array( 'video_id' => $lesson_image ),
+	) as $lesson_invalid ) {
+		lesson_check( 400 === lesson_request( 'PUT', $lesson_path, array_merge( $lesson_advanced_data, $lesson_invalid ) )->get_status(), 'Invalid drip, prerequisite or media input rejected.' );
+		lesson_check( lesson_request( 'GET', $lesson_path )->get_data() === $lesson_advanced, 'Rejected advanced input changes nothing.' );
+	}
+	$lesson_advanced_saved = lesson_request( 'PUT', $lesson_path, $lesson_advanced_data );
+	lesson_check( 200 === $lesson_advanced_saved->get_status(), 'Drip, prerequisites and media save: ' . wp_json_encode( $lesson_advanced_saved->get_data() ) );
+	$lesson_advanced_reopen = lesson_request( 'GET', $lesson_path )->get_data();
+	lesson_check( $lesson_advanced_data['drip'] === $lesson_advanced_reopen['drip'], 'Drip settings survive reopen.' );
+	lesson_check(
+		array(
+			'enable' => true,
+			'items'  => array(
+				array(
+					'id'    => $lesson_other,
+					'title' => 'Prerequisite fixture',
+				),
+			),
+		) === $lesson_advanced_reopen['prerequisites'],
+		'Prerequisites survive reopen.'
+	);
+	lesson_check( $lesson_image === $lesson_advanced_reopen['cover_image_id'], 'Cover image survives reopen.' );
+	$lesson_drip_meta = get_post_meta( $lesson_fixture, '_drip_settings', true );
+	$lesson_prereq    = get_post_meta( $lesson_fixture, '_prerequisites', true );
+	lesson_check( '08:30:00' === $lesson_drip_meta['time'] && '2026-12-01' === $lesson_drip_meta['date'] && 'kept' === $lesson_drip_meta['legacy'], 'Drip storage keeps the learner gate format and unrelated keys.' );
+	lesson_check( $lesson_other === $lesson_prereq['data'][0]['value'] && 'Prerequisite fixture' === $lesson_prereq['data'][0]['label'], 'Prerequisites keep the learner gate value/label format.' );
+	lesson_check( 409 === lesson_request( 'PUT', $lesson_path, $lesson_advanced_data )->get_status(), 'Stale drip save rejected.' );
+	$lesson_rollback_data        = lesson_payload( $lesson_advanced_reopen ) + array(
+		'drip' => array(
+			'enable' => false,
+			'type'   => 'enrollment-from-x-days',
+			'days'   => 9,
+			'date'   => '',
+			'time'   => '',
+		),
+	);
+	$lesson_after_insert_failure = static function () {
+		throw new RuntimeException( 'Fixture failure after the settings write.' );
+	};
+	add_action( 'rest_after_insert_' . OHMYLMS_LESSON_CPT, $lesson_after_insert_failure, 1 );
+	try {
+		lesson_check( 500 === lesson_request( 'PUT', $lesson_path, $lesson_rollback_data )->get_status(), 'Failure after the drip write is surfaced.' );
+	} finally {
+		remove_action( 'rest_after_insert_' . OHMYLMS_LESSON_CPT, $lesson_after_insert_failure, 1 );
+	}
+	wp_cache_delete( $lesson_fixture, 'post_meta' );
+	lesson_check( get_post_meta( $lesson_fixture, '_drip_settings', true ) === $lesson_drip_meta, 'Failed save rolls back drip settings.' );
+	$lesson_custom       = wp_insert_post(
+		array(
+			'post_type'   => OHMYLMS_LESSON_CPT,
+			'post_status' => 'draft',
+			'post_title'  => 'Custom lesson fixture',
+			'post_author' => get_current_user_id(),
+			'meta_input'  => array( '_type' => $lesson_custom_type ),
+		),
+		true
+	);
+	$lesson_posts[]      = $lesson_custom;
+	$lesson_custom_read  = lesson_request( 'GET', $lesson_base . '/' . $lesson_custom )->get_data();
+	$lesson_custom_data  = lesson_payload( $lesson_custom_read );
+	$lesson_custom_wrong = array_merge( $lesson_custom_data, array( 'type' => 'text' ) );
+	lesson_check( true === $lesson_custom_read['custom_type'] && $lesson_custom_read['type'] === $lesson_custom_type, 'Registered extension lessons are flagged for their lesson editor.' );
+	lesson_check( 400 === lesson_request( 'PUT', $lesson_base . '/' . $lesson_custom, $lesson_custom_wrong )->get_status(), 'Extension lessons keep their type.' );
+	lesson_check( 400 === lesson_request( 'PUT', $lesson_path, array_merge( lesson_payload( $lesson_advanced_reopen ), array( 'type' => $lesson_custom_type ) ) )->get_status(), 'Built-in lessons cannot switch to an extension type.' );
+	$lesson_custom_data['title']   = 'Custom lesson renamed';
+	$lesson_custom_data['content'] = '<p>Extension description</p>';
+	lesson_check( 200 === lesson_request( 'PUT', $lesson_base . '/' . $lesson_custom, $lesson_custom_data )->get_status(), 'Extension lesson name and description save.' );
+	lesson_check( 'Custom lesson renamed' === get_the_title( $lesson_custom ) && get_post_meta( $lesson_custom, '_type', true ) === $lesson_custom_type, 'Extension lesson keeps its type after saving.' );
 	update_post_meta( $lesson_fixture, '_type', 'fixture-extension' );
 	$lesson_extension = lesson_request( 'GET', $lesson_path )->get_data();
 	lesson_check( 'fixture-extension' === $lesson_extension['type'] && '' === $lesson_extension['native_editor_url'], 'Extension lessons remain discoverable without a forced native editing link.' );

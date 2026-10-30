@@ -17,13 +17,13 @@ export const courses: FeatureDefinition = {
 };
 
 /**
- * Course settings editor at `#/courses/<id>`. A separate hidden route entry because the registry does
- * not accept wildcard paths; it shares the chunk with the list.
+ * Course editor at `#/courses/<id>/<tab>` (Details, Outline, Settings, Publish). A separate hidden route
+ * entry because the registry does not accept wildcard paths; it shares the chunk with the list.
  */
 export const courseEditor: FeatureDefinition = {
 	id: 'courses-editor',
 	title: __( 'Course', 'ohmylms' ),
-	path: '/courses/:id',
+	path: '/courses/:id/:tab?',
 	extensionRoute: '/course-edit/:id/:step?/:subStep?',
 	hidden: true,
 	capability: 'edit_posts',

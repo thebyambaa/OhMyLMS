@@ -60,6 +60,15 @@ class CourseStructureController extends RestController {
 		);
 		register_rest_route(
 			$this->namespace,
+			'/courses/(?P<id>\d+)/structure/units/(?P<unit>\d+)',
+			array(
+				'methods'             => 'DELETE',
+				'permission_callback' => array( $this, 'permission' ),
+				'callback'            => array( $this, 'delete_unit' ),
+			)
+		);
+		register_rest_route(
+			$this->namespace,
 			'/courses/(?P<id>\d+)/structure/skill-suggestions',
 			array(
 				array(
@@ -274,6 +283,18 @@ class CourseStructureController extends RestController {
 	}
 
 	/**
+	 * Delete one unit under the dispatch transaction. The catalog refuses units that still hold native
+	 * placements or that the published program uses; draft activities of the unit become unplaced.
+	 *
+	 * @param \WP_REST_Request $request Request with the course and unit IDs.
+	 * @return array|\WP_Error Fresh outline snapshot.
+	 */
+	public function delete_unit( $request ) {
+		$deleted = Catalog::delete_chapter( (int) $request['id'], (int) $request['unit'] );
+		return is_wp_error( $deleted ) ? $deleted : $this->show( $request );
+	}
+
+	/**
 	 * Create a reusable draft without saving any pending outline edits.
 	 *
 	 * @param \WP_REST_Request $request Resource request.
@@ -373,7 +394,7 @@ class CourseStructureController extends RestController {
 	 */
 	private function target( $request ) {
 		$route = $request->get_route();
-		if ( preg_match( '#^/ohmylms/v1/courses/(\d+)(/(?:structure(?:/publish|/preview|/resources)?|chapters|learning(?:/publish|/preview)?))?/?$#', $route, $match ) ) {
+		if ( preg_match( '#^/ohmylms/v1/courses/(\d+)(/(?:structure(?:/publish|/preview|/resources|/units/\d+)?|chapters|learning(?:/publish|/preview)?))?/?$#', $route, $match ) ) {
 			$suffix = $match[2] ?? '';
 			return array( (int) $match[1], 0, '/chapters' === $suffix ? 'units' : ( '' === $suffix ? 'course' : 'callback' ) );
 		}

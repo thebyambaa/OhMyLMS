@@ -14,6 +14,30 @@ defined( 'ABSPATH' ) || exit;
 final class LessonAuthoring {
 	const TYPES = array( 'text', 'video', 'audio' );
 
+	const DRIP_TYPES = array( 'enrollment-from-x-days', 'specific-date', 'cohort-start', 'cohort-from-x-days' );
+
+	const PREREQUISITE_TYPES = array( 'ohmylms-lesson', 'ohmylms-quiz', 'ohmylms-assignment' );
+
+	/** Attachment field => required MIME type prefix. */
+	const MEDIA = array(
+		'cover_image_id' => 'image/',
+		'video_id'       => 'video/',
+		'audio_id'       => 'audio/',
+	);
+
+	/** Optional fields; when omitted their stored values are preserved. */
+	const OPTIONAL = array( 'drip', 'prerequisites', 'cover_image_id', 'video_id', 'audio_id' );
+
+	/**
+	 * Whether a lesson type is an extension type edited through its registered lesson editor.
+	 *
+	 * @param string $type Stored lesson type.
+	 * @return bool
+	 */
+	public static function is_custom_type( $type ) {
+		return ! in_array( $type, self::TYPES, true ) && null !== \OhMyLMS\Extensions\Registry::get( 'lesson', $type );
+	}
+
 	/**
 	 * Shared lock for typed and native lesson writers.
 	 *
@@ -70,7 +94,157 @@ final class LessonAuthoring {
 				)
 			),
 			'native_editor_url' => NativeLessonEditor::edit_url( $lesson_id ),
+			'custom_type'       => self::is_custom_type( $settings['type'] ),
+			'drip'              => self::read_drip( $settings['drip_settings'] ),
+			'prerequisites'     => self::read_prerequisites( $settings['prerequisites'] ),
+			'cover_image_id'    => $settings['cover_image_id'],
+			'video_id'          => $settings['video_id'],
+			'audio_id'          => $settings['audio_id'],
+			'media_urls'        => array(
+				'cover_image_id' => self::media_url( $settings['cover_image_id'] ),
+				'video_id'       => self::media_url( $settings['video_id'] ),
+				'audio_id'       => self::media_url( $settings['audio_id'] ),
+			),
 		);
+	}
+
+	/**
+	 * Attachment URL for display, or empty.
+	 *
+	 * @param int $attachment_id Attachment ID.
+	 * @return string
+	 */
+	private static function media_url( $attachment_id ) {
+		return $attachment_id && 'attachment' === get_post_type( $attachment_id ) ? (string) wp_get_attachment_url( $attachment_id ) : '';
+	}
+
+	/**
+	 * Normalize stored drip settings, including the native editor's `date` + `dateTtime` time format.
+	 *
+	 * @param mixed $value Stored drip settings.
+	 * @return array{enable:bool,type:string,days:int,date:string,time:string}
+	 */
+	private static function read_drip( $value ) {
+		$value = (array) $value;
+		$type  = (string) ( $value['type'] ?? '' );
+		$date  = (string) ( $value['date'] ?? '' );
+		$time  = (string) ( $value['time'] ?? '' );
+		if ( preg_match( '/T(\d{2}:\d{2})/', $time, $match ) ) {
+			$time = $match[1];
+		}
+		return array(
+			'enable' => ! empty( $value['enable'] ),
+			'type'   => in_array( $type, self::DRIP_TYPES, true ) ? $type : self::DRIP_TYPES[0],
+			'days'   => absint( $value['days'] ?? 0 ),
+			'date'   => preg_match( '/^\d{4}-\d{2}-\d{2}/', $date ) ? substr( $date, 0, 10 ) : '',
+			'time'   => preg_match( '/^\d{2}:\d{2}/', $time ) ? substr( $time, 0, 5 ) : '',
+		);
+	}
+
+	/**
+	 * Stored prerequisites as `{enable, items:[{id,title}]}`; titles are read fresh when the post exists.
+	 *
+	 * @param mixed $value Stored prerequisite settings.
+	 * @return array
+	 */
+	private static function read_prerequisites( $value ) {
+		$value = (array) $value;
+		$items = array();
+		foreach ( (array) ( $value['data'] ?? array() ) as $row ) {
+			$row = (array) $row;
+			$id  = absint( $row['value'] ?? 0 );
+			if ( $id ) {
+				$items[] = array(
+					'id'    => $id,
+					'title' => get_post( $id ) ? html_entity_decode( get_the_title( $id ), ENT_QUOTES, 'UTF-8' ) : (string) ( $row['label'] ?? '' ),
+				);
+			}
+		}
+		return array(
+			'enable' => ! empty( $value['enable'] ),
+			'items'  => $items,
+		);
+	}
+
+	/**
+	 * Validate submitted drip settings.
+	 *
+	 * @param mixed $drip Submitted value.
+	 * @return array|\WP_Error Stored shape.
+	 */
+	private static function clean_drip( $drip ) {
+		$keys = array( 'enable', 'type', 'days', 'date', 'time' );
+		if ( ! is_array( $drip ) || array_diff( array_keys( $drip ), $keys ) || array_diff( $keys, array_keys( $drip ) ) || ! is_bool( $drip['enable'] ) || ! in_array( $drip['type'], self::DRIP_TYPES, true ) || ! is_int( $drip['days'] ) || $drip['days'] < 0 || $drip['days'] > 3650 || ! is_string( $drip['date'] ) || ! is_string( $drip['time'] ) ) {
+			return Catalog::error( __( 'Send drip settings with a release type, 0 to 3650 days, a date and a time.', 'ohmylms' ) );
+		}
+		if ( '' !== $drip['date'] && ( ! preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/D', $drip['date'], $date ) || ! checkdate( (int) $date[2], (int) $date[3], (int) $date[1] ) ) ) {
+			return Catalog::error( __( 'Use a YYYY-MM-DD release date.', 'ohmylms' ) );
+		}
+		if ( '' !== $drip['time'] && ! preg_match( '/^([01]\d|2[0-3]):[0-5]\d$/D', $drip['time'] ) ) {
+			return Catalog::error( __( 'Use an HH:MM release time.', 'ohmylms' ) );
+		}
+		if ( $drip['enable'] && 'specific-date' === $drip['type'] && '' === $drip['date'] ) {
+			return Catalog::error( __( 'A release on a specific date needs that date.', 'ohmylms' ) );
+		}
+		return array(
+			'enable' => $drip['enable'],
+			'type'   => $drip['type'],
+			'days'   => $drip['days'],
+			'date'   => $drip['date'],
+			'time'   => '' === $drip['time'] ? '' : $drip['time'] . ':00',
+		);
+	}
+
+	/**
+	 * Validate submitted prerequisites. Newly added content must be editable by the author; content that is
+	 * already a prerequisite stays allowed so an unrelated save never fails on someone else's resource.
+	 *
+	 * @param int   $lesson_id Lesson ID.
+	 * @param mixed $data Submitted `{enable, ids}`.
+	 * @param array $stored Stored `{enable, items}`.
+	 * @return array|\WP_Error Stored shape.
+	 */
+	private static function clean_prerequisites( $lesson_id, $data, array $stored ) {
+		if ( ! is_array( $data ) || array_diff( array_keys( $data ), array( 'enable', 'ids' ) ) || ! is_bool( $data['enable'] ?? null ) || ! is_array( $data['ids'] ?? null ) || count( $data['ids'] ) > 50 ) {
+			return Catalog::error( __( 'Send prerequisites as an enabled flag and up to 50 content IDs.', 'ohmylms' ) );
+		}
+		$known = array_column( $stored['items'], 'id' );
+		$rows  = array();
+		foreach ( $data['ids'] as $id ) {
+			$post = is_int( $id ) && $id > 0 ? get_post( $id ) : null;
+			if ( ! $post || (int) $lesson_id === $id || isset( $rows[ $id ] ) || ! in_array( $post->post_type, self::PREREQUISITE_TYPES, true ) || in_array( $post->post_status, array( 'trash', 'auto-draft' ), true ) || ( ! in_array( $id, $known, true ) && ! current_user_can( 'edit_post', $id ) ) ) {
+				return Catalog::error( __( 'Prerequisites must be other lessons, quizzes or assignments you can edit, each listed once.', 'ohmylms' ) );
+			}
+			$rows[ $id ] = array(
+				'value' => $id,
+				'label' => html_entity_decode( get_the_title( $id ), ENT_QUOTES, 'UTF-8' ),
+			);
+		}
+		return array(
+			'enable' => $data['enable'],
+			'data'   => array_values( $rows ),
+		);
+	}
+
+	/**
+	 * Validate one media attachment reference; an unchanged stored reference stays allowed.
+	 *
+	 * @param string $field Field name.
+	 * @param mixed  $value Submitted attachment ID.
+	 * @param int    $stored Stored attachment ID.
+	 * @return int|\WP_Error
+	 */
+	private static function clean_media( $field, $value, $stored ) {
+		if ( ! is_int( $value ) || $value < 0 ) {
+			return Catalog::error( __( 'Lesson media must be an attachment ID or 0.', 'ohmylms' ) );
+		}
+		if ( 0 === $value || $value === (int) $stored ) {
+			return $value;
+		}
+		if ( 'attachment' !== get_post_type( $value ) || 0 !== strpos( (string) get_post_mime_type( $value ), self::MEDIA[ $field ] ) || ! current_user_can( 'edit_post', $value ) ) {
+			return Catalog::error( __( 'Choose a media library file of the matching type that you can edit.', 'ohmylms' ) );
+		}
+		return $value;
 	}
 
 	/**
@@ -180,15 +354,16 @@ final class LessonAuthoring {
 		return self::locked(
 			$lesson_id,
 			static function () use ( $lesson_id, $data, $publish ) {
-				$current = self::get( $lesson_id );
-				$fields  = $publish ? array( 'revision', 'confirmed' ) : array( 'revision', 'title', 'content', 'type', 'external_url', 'preview_enable', 'enable_comments', 'resources' );
-				if ( ! is_array( $data ) || array_diff( array_keys( $data ), $fields ) || array_diff( $fields, array_keys( $data ) ) ) {
+				$current  = self::get( $lesson_id );
+				$fields   = $publish ? array( 'revision', 'confirmed' ) : array( 'revision', 'title', 'content', 'type', 'external_url', 'preview_enable', 'enable_comments', 'resources' );
+				$optional = $publish ? array() : self::OPTIONAL;
+				if ( ! is_array( $data ) || array_diff( array_keys( $data ), $fields, $optional ) || array_diff( $fields, array_keys( $data ) ) ) {
 					return Catalog::error( __( 'Send exactly the expected lesson fields.', 'ohmylms' ) );
 				}
 				if ( ! is_string( $data['revision'] ) || ! hash_equals( $current['revision'], $data['revision'] ) ) {
 					return Catalog::error( __( 'This lesson changed in another session. Your edits are kept. Reload the saved lesson before trying again.', 'ohmylms' ), 409 );
 				}
-				if ( ! in_array( $current['type'], self::TYPES, true ) || ! in_array( $current['status'], array( 'draft', 'pending', 'private', 'publish' ), true ) ) {
+				if ( ( ! in_array( $current['type'], self::TYPES, true ) && ! $current['custom_type'] ) || ! in_array( $current['status'], array( 'draft', 'pending', 'private', 'publish' ), true ) ) {
 					return Catalog::error( __( 'Use the native or extension editor for this lesson.', 'ohmylms' ) );
 				}
 				if ( $publish ) {
@@ -203,8 +378,35 @@ final class LessonAuthoring {
 						}
 					);
 				}
-				if ( ! is_string( $data['title'] ) || '' === trim( sanitize_text_field( $data['title'] ) ) || mb_strlen( $data['title'] ) > 190 || ! is_string( $data['content'] ) || strlen( $data['content'] ) > 1000000 || ! in_array( $data['type'], self::TYPES, true ) || ! is_bool( $data['preview_enable'] ) || ! is_bool( $data['enable_comments'] ) || ! is_array( $data['resources'] ) || count( $data['resources'] ) > 50 || ! is_string( $data['external_url'] ) ) {
+				// Extension lesson types keep their type; built-in lessons switch only between built-in formats.
+				$valid_type = $current['custom_type'] ? $current['type'] === $data['type'] : in_array( $data['type'], self::TYPES, true );
+				if ( ! is_string( $data['title'] ) || '' === trim( sanitize_text_field( $data['title'] ) ) || mb_strlen( $data['title'] ) > 190 || ! is_string( $data['content'] ) || strlen( $data['content'] ) > 1000000 || ! $valid_type || ! is_bool( $data['preview_enable'] ) || ! is_bool( $data['enable_comments'] ) || ! is_array( $data['resources'] ) || count( $data['resources'] ) > 50 || ! is_string( $data['external_url'] ) ) {
 					return Catalog::error( __( 'Check the lesson title, content, format and resource limits.', 'ohmylms' ) );
+				}
+				$stored   = NativeLessonEditor::read_settings( array( 'id' => $lesson_id ) );
+				$advanced = array();
+				if ( array_key_exists( 'drip', $data ) ) {
+					$drip = self::clean_drip( $data['drip'] );
+					if ( is_wp_error( $drip ) ) {
+						return $drip;
+					}
+					$advanced['drip_settings'] = array_merge( (array) $stored['drip_settings'], $drip );
+				}
+				if ( array_key_exists( 'prerequisites', $data ) ) {
+					$prerequisites = self::clean_prerequisites( $lesson_id, $data['prerequisites'], $current['prerequisites'] );
+					if ( is_wp_error( $prerequisites ) ) {
+						return $prerequisites;
+					}
+					$advanced['prerequisites'] = array_merge( (array) $stored['prerequisites'], $prerequisites );
+				}
+				foreach ( array_keys( self::MEDIA ) as $field ) {
+					if ( array_key_exists( $field, $data ) ) {
+						$media = self::clean_media( $field, $data[ $field ], $current[ $field ] );
+						if ( is_wp_error( $media ) ) {
+							return $media;
+						}
+						$advanced[ $field ] = $media;
+					}
 				}
 				if ( '' !== $data['external_url'] && ! self::valid_url( $data['external_url'] ) ) {
 					return Catalog::error( __( 'Media URLs must use HTTP or HTTPS.', 'ohmylms' ) );
@@ -231,7 +433,7 @@ final class LessonAuthoring {
 					'preview_enable'    => $data['preview_enable'],
 					'enable_comments'   => $data['enable_comments'],
 					'download_resource' => array_merge( $previous_resources, array( 'file' => $resources ) ),
-				);
+				) + $advanced;
 				return self::atomic(
 					$lesson_id,
 					static function () use ( $lesson_id, $data, $settings ) {

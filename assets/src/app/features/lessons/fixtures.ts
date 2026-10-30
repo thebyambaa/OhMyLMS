@@ -13,4 +13,17 @@ export const lesson: Lesson = {
 	enable_comments: false,
 	resources: [],
 	native_editor_url: 'http://800.local/wp-admin/post.php?post=12&action=edit',
+	custom_type: false,
+	drip: {
+		enable: false,
+		type: 'enrollment-from-x-days',
+		days: 0,
+		date: '',
+		time: '',
+	},
+	prerequisites: { enable: false, items: [] },
+	cover_image_id: 0,
+	video_id: 0,
+	audio_id: 0,
+	media_urls: { cover_image_id: '', video_id: '', audio_id: '' },
 };

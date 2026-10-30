@@ -17,6 +17,33 @@
 		"conflictStatus": 409,
 		"publishes": false
 	},
+	"unitDelete": {
+		"path": "/courses/{id}/structure/units/{unit}",
+		"methods": [ "DELETE" ],
+		"revisionHeader": "X-OhMyLMS-Structure-Revision",
+		"conflictStatus": 409,
+		"refusedCodes": [
+			"ohmylms_chapter_in_use",
+			"ohmylms_chapter_published"
+		],
+		"draftActivities": "kept, unplaced"
+	},
+	"resources": {
+		"path": "/courses/{id}/structure/resources",
+		"methods": [ "GET" ],
+		"types": [ "lesson", "quiz", "assignment" ],
+		"createDrafts": {
+			"quiz": "POST /quizzes",
+			"assignment": "POST /assignments"
+		}
+	},
+	"certificate": {
+		"path": "/authoring/courses/{id}/certificate",
+		"methods": [ "GET", "PUT" ],
+		"writeFields": [ "certificate_id", "expected_certificate_id" ],
+		"permission": "manage_options and edit_post",
+		"conflictStatus": 409
+	},
 	"settings": {
 		"path": "/authoring/courses/{id}/settings",
 		"methods": [ "GET", "PUT" ],
@@ -31,5 +58,8 @@
 		"confirmed": true,
 		"existingEnrollments": "retain current program version"
 	},
-	"documentation": "docs/api/course-settings.md"
+	"documentation": [
+		"docs/api/course-authoring.md",
+		"docs/api/course-settings.md"
+	]
 }

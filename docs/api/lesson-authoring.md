@@ -47,7 +47,17 @@ requests. These checks run on the server independently of navigation visibility.
 | `POST /ohmylms/v1/authoring/lessons/:id/publish` | Exactly `{revision,confirmed:true}`; publishes the reviewed saved lesson, without changing a course draft or program pointer |
 
 Editable fields are `title`, `content`, `type` (`text`, `video`, `audio`),
-`external_url`, boolean `preview_enable`/`enable_comments`, and `resources`.
+`external_url`, boolean `preview_enable`/`enable_comments`, and `resources`. The optional
+fields `drip`, `prerequisites`, `cover_image_id`, `video_id` and `audio_id` may be sent too;
+an omitted optional field keeps its stored value.
+
+| Field | Read | Write and validation | Storage |
+| --- | --- | --- | --- |
+| `drip` | `{enable, type, days, date, time}` | Exactly those keys; `type` is `enrollment-from-x-days`, `specific-date`, `cohort-start` or `cohort-from-x-days`; `days` 0–3650; `date` empty or a real `YYYY-MM-DD`; `time` empty or `HH:MM`; a specific-date release needs a date | `_drip_settings` (`time` as `HH:MM:SS`, unrelated keys kept), read by the learner drip gate |
+| `prerequisites` | `{enable, items:[{id,title}]}` | `{enable, ids}`, up to 50 distinct lessons, quizzes or assignments other than the lesson itself; newly added content must be editable by the author | `_prerequisites` as `{enable, data:[{value,label}]}` (the learner gate's format) |
+| `cover_image_id`, `video_id`, `audio_id` | Attachment ID or 0, plus read-only `media_urls` | 0 or an image/video/audio attachment the author can edit; an unchanged stored ID stays allowed | `_cover_image_id`, `_video_id`, `_audio_id` |
+
+Reads also return `custom_type`: true for a registered extension lesson type (see below).
 Each resource has `name`, `url`, and `size`. Content is limited to 1 MB; there are
 at most 50 resources, with names up to 200 bytes, size labels up to 50 bytes and
 absolute HTTP/HTTPS URLs up to 2048 bytes. Download link removal does not delete a
@@ -66,6 +76,25 @@ core autosaves and direct post writers retain their existing protocol and do not
 participate in the new lock; full
 legacy-writer retirement remains part of cutover.
 
+## Media, drip, prerequisites and extension lesson types
+
+The editor's Lesson media section opens the WordPress media library (`wp.media`, which
+the app screen enqueues) to upload or choose a cover image and, for video or audio lessons,
+the uploaded file; choosing an uploaded file clears the external URL and entering an
+external URL clears the uploaded file, as in the native editor. Drip and prerequisite
+sections edit the fields above; the prerequisite picker searches the lesson library, and
+existing quiz or assignment prerequisites are shown and kept.
+
+Lessons whose type is a registered extension lesson type (`ohmylms_register_lesson_type`)
+are editable here. The editor renders the `lesson-editor` entry with the same id
+(`registerLessonEditor`, see [EXTENSIONS.md](../EXTENSIONS.md)) inside an
+`ExtensionBoundary`, with the props `{lesson, value: {name, description}, onChange(patch)}`;
+`name` and `description` map to the lesson title and content and are saved with the other
+fields. A render error replaces only the extension with an alert. Without a registered entry
+the editor falls back to title and source fields. The server keeps the extension type: a
+typed save cannot change it, and built-in lessons cannot switch to an extension type.
+Unregistered custom types remain read-only here.
+
 Saving an already published shared lesson changes it immediately everywhere it
 is used. The editor states this before editing. This batch introduces no separate
 immutable lesson-content version or staged edits to a published resource.
@@ -78,13 +107,18 @@ course units are created/deleted; it never resets the database. It checks bounde
 summaries, idempotent drafts, raw block/math/reference round-trips, resource and
 advanced-setting preservation, invalid input, stale/native writes, rollback after
 a post write, publication permissions/confirmation/replay and draft course attachment.
+It also covers drip, prerequisite and media save/reopen and storage format, invalid
+values (unchanged after rejection), a stale 409, rollback of drip settings when a
+failure follows the settings write, and extension lesson types (flag, name/description
+save, type kept, no type switching).
 
 App tests cover transport/identity validation, source mode, resource edits,
-conflict recovery, explicit publication, duplicate-save prevention and cancellation.
+conflict recovery, explicit publication, duplicate-save prevention, cancellation, drip
+and prerequisite payloads, media library selection, and the extension lesson editor
+(props, saved changes, error isolation, fallback).
 Browser verification exercises the installed WordPress visual editor, since DOM
 unit tests intentionally mock the canvas rather than reimplementing WordPress.
 
-Advanced media upload, inline question insertion/editing, extension lesson panels,
-lesson objective controls, drip/prerequisite editing and a full learner rendering
-preview remain native/future work. The shared unsaved guard covers links and page
+Inline question insertion/editing, video player settings (`_video_settings`), lesson
+objective controls and a full learner rendering preview remain native/future work. The shared unsaved guard covers links and page
 unload, not browser hash-history navigation. The old admin menu remains in place.

@@ -1,9 +1,37 @@
 # Typed course settings and publication
 
-The administrator preview links the structure editor to
-`#/content-hub/courses/:id/settings`. Source lives in the course-structure feature;
-settings transport, publication transport, mastery controls and screen components
-are separate modules. No recovered runtime adapter is loaded by these screens.
+Course settings are edited on the Settings tab of the merged course editor
+(`#/courses/:id/settings`; the old `#/content-hub/courses/:id/settings` link redirects there).
+That tab saves pricing with the sale price and sale start/end dates, access and password,
+reviews, availability date, duration and capacity through `PUT /courses/:id`
+([courses.md](courses.md)), and the certificate through the endpoint below. Publication is
+the Publish tab. The separate typed settings screen was removed; the settings endpoint below
+remains for API clients. No recovered runtime adapter is loaded by these screens.
+
+## Certificate
+
+`GET /ohmylms/v1/authoring/courses/:id/certificate` returns `{course_id, certificate_id,
+choices:[{id,title,status}]}`: the assigned template (0 for none) and up to 100 published or
+draft certificate templates the user can edit, ordered by title (the assigned template is
+always included). Responses are private/no-store.
+
+`PUT` takes exactly `{certificate_id, expected_certificate_id}` (integers; 0 removes the
+certificate). It requires `manage_options`, `edit_post` on the course and, for a template,
+`edit_post` on that certificate template (403 otherwise). It runs under the shared course
+lock and transaction: when the stored assignment differs from `expected_certificate_id` it
+answers 409 `ohmylms_course_certificate_stale`; a failed write rolls back. A course awards
+at most one template, so assigning one replaces the previous relationship row in
+`ohmylms_certificate_relationship`, the same table the certificate editor's `course_ids` use.
+
+## Cohort and scheduled availability
+
+Scheduled availability is covered by the courses API: `status: future` with `scheduled_at`
+publishes the course automatically, and `available_date` stores the course's availability
+date. Cohorts are stored by the cohorts integration (`ohmylms_cohorts`, read through
+`CourseStore::get_cohort()` for cohort-based courses), which has no transactional authoring
+service or REST write contract. The course editor therefore does not edit cohorts; lesson
+drip schedules can still release lessons at or after the first cohort's start
+([lesson-authoring.md](lesson-authoring.md)).
 
 ## Settings
 
@@ -67,13 +95,14 @@ resource policy; this endpoint does not introduce resource versioning.
 the named Local database. It creates and removes only its own tagged fixtures and
 checks save/reopen, math escaping, HTML sanitization, effective pricing, password
 secrecy, invalid input, denied users, stale reviews, readiness, confirmed publication,
-replay rejection, and rollback when the final course status write is forced to fail.
-App component/transport tests cover failed saves, explicit discard, the confirmation
-flow, readiness and unsaved-state gating, and malformed/cross-course responses.
+replay rejection, and rollback when the final course status write is forced to fail. It also
+checks certificate assignment, reopen, stale 409, invalid and foreign IDs, rollback when the
+relationship insert is forced to fail, removal, and denied authors and subscribers.
+App tests cover the tabbed editor, the settings form, certificate save/conflict, the
+publication confirmation flow, readiness, and malformed/cross-course responses.
 
-The current UI uses existing user/attachment IDs rather than author/media pickers.
-Sale date editing, purchase points, cohort/scheduled availability, certificates,
-communities, automations, extension panels, lesson/assessment content authoring and
-full syllabus workspace parity remain. No old-menu cutover or learner frontend
+Author reassignment is available only through the settings endpoint. Purchase points,
+cohort editing, communities, automations and full syllabus workspace parity remain. No
+old-menu cutover or learner frontend
 TypeScript migration is claimed. The shared unsaved guard covers link clicks and
 unload, but not browser hash-history navigation.

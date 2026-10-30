@@ -184,6 +184,16 @@ The recovered admin calls `GET|POST|PUT|DELETE /courses`, `/courses/{id}/status`
 `/courses/{id}/clone` and `/courses/featured_image/{id}` with the old field names (`name`, `image_id`,
 `chapters`, `curriculum`, `cohort`, `funnel_steps`, ...). The file list is in the feature report.
 
+## Admin app screens
+
+`#/courses` lists courses through this API. `#/courses/:id/:tab?` is the merged course editor
+(see [course-authoring.md](course-authoring.md)): its Details tab edits the title, slug, status,
+schedule, level, texts and thumbnail, and its Settings tab edits pricing (including the sale
+price and sale start/end dates), access, reviews, availability, duration and capacity. Both
+send the complete `PUT /courses/{id}` payload. `abilities.builder_url` in `/courses/options`
+is kept for compatibility; the app no longer links to it because the Outline tab replaces the
+classic builder.
+
 ## Tests
 
 `tests/php/courses-rest-integration.php` (set `OHMYLMS_COURSES_TEST=1`; see the file header).

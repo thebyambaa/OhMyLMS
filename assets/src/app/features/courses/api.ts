@@ -2,6 +2,7 @@ import { del, get, post, put } from '../../lib/api';
 import { getCollection } from '../../lib/api/collection';
 import {
 	invalidResponse,
+	parseCertificateAssignment,
 	parseCourse,
 	parseCourseDetail,
 	parseMedia,
@@ -173,6 +174,57 @@ export async function duplicateCourse( id: number, signal?: AbortSignal ) {
 			signal,
 		} )
 	);
+}
+
+const certificatePath = ( id: number ) =>
+	`/ohmylms/v1/authoring/courses/${ positiveId( id ) }/certificate`;
+
+/**
+ * Read the certificate template a course awards and the templates the user may assign.
+ *
+ * @param id     Course id.
+ * @param signal Cancels the request.
+ * @return The validated assignment.
+ */
+export async function getCourseCertificate( id: number, signal?: AbortSignal ) {
+	const result = parseCertificateAssignment(
+		await get< unknown >( certificatePath( id ), { signal } )
+	);
+	if ( result.course_id !== id ) {
+		throw invalidResponse();
+	}
+	return result;
+}
+
+/**
+ * Replace the course's certificate template. A change made elsewhere since `expected` answers 409.
+ *
+ * @param id            Course id.
+ * @param certificateId Template id, or 0 for none.
+ * @param expected      Template id that was read.
+ * @param signal        Cancels the request.
+ * @return The stored assignment.
+ */
+export async function saveCourseCertificate(
+	id: number,
+	certificateId: number,
+	expected: number,
+	signal?: AbortSignal
+) {
+	const result = parseCertificateAssignment(
+		await put< unknown >(
+			certificatePath( id ),
+			{
+				certificate_id: certificateId,
+				expected_certificate_id: expected,
+			},
+			{ signal }
+		)
+	);
+	if ( result.course_id !== id ) {
+		throw invalidResponse();
+	}
+	return result;
 }
 
 /**

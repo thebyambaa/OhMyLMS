@@ -1,15 +1,20 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { createElement } from '@wordpress/element';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
+import { createRegistry } from '../../../extensions/registry.mjs';
+import { ExtensionsProvider } from '../../extensions/context';
 import { ApiError } from '../../lib/api';
 import * as api from './api';
 import { lesson } from './fixtures';
 import { LessonWorkspace } from './LessonEditorPage';
+import type { Lesson } from './model';
 
 vi.mock( './api', () => ( {
 	readLesson: vi.fn(),
 	saveLesson: vi.fn(),
 	publishLesson: vi.fn(),
+	listLessons: vi.fn(),
 } ) );
 vi.mock( './LessonBlocks', () => ( {
 	default: ( {
@@ -30,16 +35,27 @@ vi.mock( './LessonBlocks', () => ( {
 	),
 } ) );
 beforeEach( () => vi.resetAllMocks() );
-function open() {
+function open( initial: Lesson = lesson, registry = createRegistry() ) {
 	const reload = vi.fn();
 	return {
 		reload,
 		...render(
-			<MemoryRouter>
-				<LessonWorkspace initial={ lesson } reload={ reload } />
-			</MemoryRouter>
+			<ExtensionsProvider value={ registry }>
+				<MemoryRouter>
+					<LessonWorkspace initial={ initial } reload={ reload } />
+				</MemoryRouter>
+			</ExtensionsProvider>
 		),
 	};
+}
+async function savedPayload( user: ReturnType< typeof userEvent.setup > ) {
+	vi.mocked( api.saveLesson ).mockResolvedValue( {
+		...lesson,
+		revision: 'saved',
+	} );
+	await user.click( screen.getByRole( 'button', { name: 'Save lesson' } ) );
+	await waitFor( () => expect( api.saveLesson ).toHaveBeenCalledOnce() );
+	return vi.mocked( api.saveLesson ).mock.calls[ 0 ]![ 0 ];
 }
 
 it( 'saves content and resource links without changing publication or placement', async () => {
@@ -160,4 +176,241 @@ it( 'supports block source edits without dropping opaque custom markup', async (
 	expect( screen.getByLabelText( 'Visual block content' ) ).toHaveValue(
 		source
 	);
+} );
+
+describe( 'advanced lesson settings', () => {
+	afterEach( () => {
+		delete ( window as unknown as { wp?: unknown } ).wp;
+	} );
+	it( 'saves a dated drip schedule', async () => {
+		const user = userEvent.setup();
+		open();
+		await user.click(
+			screen.getByRole( 'checkbox', {
+				name: 'Release this lesson on a schedule',
+			} )
+		);
+		await user.selectOptions(
+			screen.getByLabelText( 'Release lesson' ),
+			'specific-date'
+		);
+		await user.type(
+			screen.getByLabelText( 'Release date' ),
+			'2026-12-01'
+		);
+		await user.type( screen.getByLabelText( 'Release time' ), '08:30' );
+		const payload = await savedPayload( user );
+		expect( payload.drip ).toEqual( {
+			enable: true,
+			type: 'specific-date',
+			days: 0,
+			date: '2026-12-01',
+			time: '08:30',
+		} );
+	} );
+	it( 'saves days after enrollment', async () => {
+		const user = userEvent.setup();
+		open();
+		await user.click(
+			screen.getByRole( 'checkbox', {
+				name: 'Release this lesson on a schedule',
+			} )
+		);
+		await user.clear( screen.getByLabelText( 'Days' ) );
+		await user.type( screen.getByLabelText( 'Days' ), '7' );
+		const payload = await savedPayload( user );
+		expect( payload.drip ).toMatchObject( {
+			enable: true,
+			type: 'enrollment-from-x-days',
+			days: 7,
+		} );
+	} );
+	it( 'adds and removes prerequisites found in the lesson library', async () => {
+		const user = userEvent.setup();
+		vi.mocked( api.listLessons ).mockResolvedValue( {
+			pages: 1,
+			items: [
+				{ id: 12, title: 'Algebra lesson', status: 'draft' },
+				{ id: 30, title: 'Numbers', status: 'publish' },
+			],
+		} );
+		open( {
+			...lesson,
+			prerequisites: {
+				enable: true,
+				items: [ { id: 44, title: 'Entry quiz' } ],
+			},
+		} );
+		await user.type(
+			screen.getByLabelText( 'Find a lesson to require' ),
+			'Num'
+		);
+		await user.click(
+			screen.getByRole( 'button', { name: 'Search lessons' } )
+		);
+		const results = await screen.findByRole( 'list', {
+			name: 'Matching lessons',
+		} );
+		expect(
+			within( results ).queryByText( /Algebra lesson/ )
+		).not.toBeInTheDocument();
+		await user.click(
+			within( results ).getByRole( 'button', { name: 'Require Numbers' } )
+		);
+		const payload = await savedPayload( user );
+		expect( payload.prerequisites ).toEqual( {
+			enable: true,
+			items: [
+				{ id: 44, title: 'Entry quiz' },
+				{ id: 30, title: 'Numbers' },
+			],
+		} );
+		expect( api.listLessons ).toHaveBeenCalledWith(
+			1,
+			'Num',
+			expect.any( AbortSignal )
+		);
+	} );
+	it( 'chooses a cover image through the WordPress media library', async () => {
+		const handlers: Record< string, () => void > = {};
+		const frame = {
+			on: ( event: string, callback: () => void ) => {
+				handlers[ event ] = callback;
+			},
+			open: () => {
+				handlers.close?.();
+				handlers.select?.();
+			},
+			state: () => ( {
+				get: () => ( {
+					first: () => ( {
+						toJSON: () => ( {
+							id: 77,
+							url: 'https://example.test/cover.png',
+						} ),
+					} ),
+				} ),
+			} ),
+		};
+		const media = vi.fn( () => frame );
+		( window as unknown as { wp: unknown } ).wp = { media };
+		const user = userEvent.setup();
+		open();
+		await user.click(
+			screen.getByRole( 'button', { name: 'Choose Cover image' } )
+		);
+		expect(
+			await screen.findByRole( 'link', {
+				name: 'https://example.test/cover.png',
+			} )
+		).toBeInTheDocument();
+		expect( media ).toHaveBeenCalledWith(
+			expect.objectContaining( { library: { type: 'image' } } )
+		);
+		const payload = await savedPayload( user );
+		expect( payload.cover_image_id ).toBe( 77 );
+	} );
+	it( 'explains when the media library is not loaded', () => {
+		open();
+		expect(
+			screen.getAllByText( /media library is not available/ )
+		).not.toHaveLength( 0 );
+		expect(
+			screen.getByRole( 'button', { name: 'Choose Cover image' } )
+		).toBeDisabled();
+	} );
+} );
+
+describe( 'extension lesson types', () => {
+	const custom: Lesson = {
+		...lesson,
+		type: 'example-reading',
+		custom_type: true,
+		content: 'Old description',
+		native_editor_url: '',
+	};
+	it( 'renders the registered lesson editor and saves its name and description', async () => {
+		const registry = createRegistry();
+		const editor = vi.fn(
+			( props: {
+				lesson: { type: string };
+				value: { name: string; description: string };
+				onChange: ( patch: Record< string, string > ) => void;
+			} ) =>
+				createElement(
+					'div',
+					null,
+					createElement( 'input', {
+						'aria-label': 'Reading title',
+						value: props.value.name,
+						onChange: ( event: { target: { value: string } } ) =>
+							props.onChange( { name: event.target.value } ),
+					} ),
+					createElement( 'textarea', {
+						'aria-label': 'Reading content',
+						value: props.value.description,
+						onChange: ( event: { target: { value: string } } ) =>
+							props.onChange( {
+								description: event.target.value,
+							} ),
+					} )
+				)
+		);
+		registry.registerLessonEditor( 'example-reading', {
+			label: 'Example reading',
+			render: editor,
+		} );
+		const user = userEvent.setup();
+		open( custom, registry );
+		expect( screen.queryByLabelText( 'Lesson format' ) ).toBeNull();
+		expect( screen.queryByLabelText( 'Lesson title' ) ).toBeNull();
+		expect( editor.mock.calls[ 0 ]![ 0 ] ).toMatchObject( {
+			lesson: { id: 12, type: 'example-reading' },
+			value: { name: 'Algebra lesson', description: 'Old description' },
+		} );
+		await user.type( screen.getByLabelText( 'Reading title' ), ' two' );
+		await user.clear( screen.getByLabelText( 'Reading content' ) );
+		await user.type(
+			screen.getByLabelText( 'Reading content' ),
+			'New text'
+		);
+		const payload = await savedPayload( user );
+		expect( payload ).toMatchObject( {
+			type: 'example-reading',
+			title: 'Algebra lesson two',
+			content: 'New text',
+		} );
+	} );
+	it( 'isolates a failing extension editor', () => {
+		const registry = createRegistry();
+		registry.registerLessonEditor( 'example-reading', {
+			label: 'Broken',
+			render: () => {
+				throw new Error( 'broken' );
+			},
+		} );
+		const error = vi
+			.spyOn( console, 'error' )
+			.mockImplementation( () => {} );
+		open( custom, registry );
+		error.mockRestore();
+		expect(
+			screen.getByText( 'This extension could not be displayed.' )
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Reload saved lesson' } )
+		).toBeInTheDocument();
+	} );
+	it( 'falls back to name and source fields without a registered editor', () => {
+		open( custom );
+		expect(
+			screen.getByText( /No editor is registered for this lesson type/ )
+		).toBeInTheDocument();
+		expect( screen.getByLabelText( 'Lesson title' ) ).toHaveValue(
+			'Algebra lesson'
+		);
+		expect( screen.getByLabelText( 'Lesson source' ) ).toHaveValue(
+			'Old description'
+		);
+	} );
 } );
