@@ -27,6 +27,7 @@ final class Bootstrap {
 				)
 			);
 		}
+		Registry::mark_core();
 		do_action( 'ohmylms_register_extensions' );
 		add_filter(
 			'ohmylms_supported_question_types',

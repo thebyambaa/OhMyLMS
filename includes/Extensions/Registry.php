@@ -21,6 +21,34 @@ final class Registry {
 	);
 
 	/**
+	 * IDs registered by OhMyLMS itself, by kind.
+	 *
+	 * @var array<string,string[]>
+	 */
+	private static $core = array();
+
+	/**
+	 * Remember everything registered so far as shipped with OhMyLMS. Called once, before
+	 * `ohmylms_register_extensions` lets add-ons register their own items.
+	 */
+	public static function mark_core() {
+		foreach ( self::$items as $kind => $items ) {
+			self::$core[ $kind ] = array_keys( $items );
+		}
+	}
+
+	/**
+	 * Whether an item ships with OhMyLMS rather than an add-on.
+	 *
+	 * @param string $kind Kind.
+	 * @param string $id   Id.
+	 * @return bool
+	 */
+	public static function is_core( $kind, $id ) {
+		return in_array( $id, self::$core[ $kind ] ?? array(), true );
+	}
+
+	/**
 	 * Register for Registry.
 	 *
 	 * @param mixed $kind Kind.

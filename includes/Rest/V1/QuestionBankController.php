@@ -14,10 +14,10 @@ use OhMyLMS\QuestionBank\BankAttributes;
 use OhMyLMS\QuestionBank\Banks;
 use OhMyLMS\QuestionBank\DraftWriter;
 use OhMyLMS\QuestionBank\RowExporter;
+use OhMyLMS\QuestionBank\Search;
 use OhMyLMS\QuestionBank\SkillMap;
 use OhMyLMS\QuestionBank\Usage;
 use OhMyLMS\QuestionBank\VersionPublisher;
-use OhMyLMS\Skills\Taxonomy;
 use OhMyLMS\Utility\Transaction;
 use WP_Error;
 use WP_REST_Request;
@@ -245,85 +245,16 @@ class QuestionBankController extends RestController {
 	 * @param WP_REST_Request $request REST request.
 	 */
 	public function search( WP_REST_Request $request ) {
-		global $wpdb;
-		$q     = Schema::table( 'qb_questions' );
-		$where = array( 'p.post_type=%s', "p.post_status NOT IN ('auto-draft','trash')" );
-		$args  = array( $wpdb->posts, $q, OHMYLMS_QUESTION_CPT );
-
-		$organisation = \OhMyLMS\QuestionBank\Organisation::condition( $request );
-		if ( is_wp_error( $organisation ) ) {
-			return $organisation;
+		$per_page = max( 1, min( 100, (int) ( $request['per_page'] ? $request['per_page'] : 20 ) ) );
+		$page     = max( 1, (int) ( $request['page'] ? $request['page'] : 1 ) );
+		$result   = Search::query( $request->get_params(), $page, $per_page );
+		if ( is_wp_error( $result ) ) {
+			return $result;
 		}
-		if ( $organisation['where'] ) {
-			$where[] = $organisation['where'];
-			$args    = array_merge( $args, $organisation['args'] );
-		}
-
-		$status = (string) $request['status'];
-		if ( 'archived' === $status ) {
-			$where[] = 'p.post_status=%s';
-			$args[]  = Usage::ARCHIVED; } else {
-			$where[] = 'p.post_status<>%s';
-			$args[]  = Usage::ARCHIVED;
-			if ( in_array( $status, array( 'draft', 'approved' ), true ) ) {
-				$where[] = 'approved' === $status ? 'q.approved_version_id>0' : '(q.approved_version_id IS NULL OR q.approved_version_id=0)'; }
-			}
-			foreach ( array(
-				'type'       => 'q.type',
-				'difficulty' => 'q.difficulty',
-				'family'     => 'q.family_id',
-			) as $param => $column ) {
-				if ( '' !== (string) $request[ $param ] ) {
-					$where[] = "$column=%s";
-					$args[]  = sanitize_text_field( (string) $request[ $param ] ); }
-			}
-			if ( null !== $request['bank'] && '' !== $request['bank'] ) {
-				$where[] = 'COALESCE(q.bank_id,0)=%d';
-				$args[]  = (int) $request['bank']; }
-			if ( null !== $request['secure'] && '' !== $request['secure'] ) {
-				$where[] = 'COALESCE(q.secure,0)=%d';
-				$args[]  = rest_sanitize_boolean( $request['secure'] ) ? 1 : 0; }
-			if ( '' !== (string) $request['search'] ) {
-				$where[] = '(p.post_title LIKE %s OR p.post_content LIKE %s)';
-				$like    = '%' . $wpdb->esc_like( sanitize_text_field( (string) $request['search'] ) ) . '%';
-				$args[]  = $like;
-				$args[]  = $like; }
-			if ( (int) $request['skill'] ) {
-				$where[] = "EXISTS (SELECT 1 FROM {$wpdb->term_relationships} tr JOIN {$wpdb->term_taxonomy} tt ON tt.term_taxonomy_id=tr.term_taxonomy_id WHERE tr.object_id=p.ID AND tt.taxonomy=%s AND tt.term_id=%d)";
-				$args[]  = Taxonomy::NAME;
-				$args[]  = (int) $request['skill'];
-			}
-			if ( (int) $request['exclude_quiz'] ) {
-				$where[] = "p.ID NOT IN (SELECT question_id FROM {$wpdb->prefix}ohmylms_quiz_questions_relationship WHERE quiz_id=%d)";
-				$args[]  = (int) $request['exclude_quiz'];
-			}
-			if ( ! current_user_can( 'edit_others_posts' ) ) {
-				$bank_ids = array_map( 'intval', array_column( Banks::for_user(), 'id' ) );
-				$visible  = array( 'p.post_author=%d' );
-				$args[]   = get_current_user_id();
-				if ( $bank_ids ) {
-					$visible[] = 'q.bank_id IN (' . implode( ',', $bank_ids ) . ')'; }
-				$where[] = '(' . implode( ' OR ', $visible ) . ')';
-			}
-			$per_page  = max( 1, min( 100, (int) ( $request['per_page'] ? $request['per_page'] : 20 ) ) );
-			$page      = max( 1, (int) ( $request['page'] ? $request['page'] : 1 ) );
-			$sql_where = implode( ' AND ', $where );
-			$total     = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i p LEFT JOIN %i q ON q.question_id=p.ID WHERE $sql_where", $args ) );
-			$rows      = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT p.ID FROM %i p LEFT JOIN %i q ON q.question_id=p.ID WHERE $sql_where ORDER BY p.post_modified_gmt DESC, p.ID DESC LIMIT %d OFFSET %d",
-					array_merge( $args, array( $per_page, ( $page - 1 ) * $per_page ) )
-				)
-			);
-		$items         = array_map(
-			function ( $row ) {
-				return $this->summary( (int) $row->ID );
-			},
-			$rows
-		);
-		$response      = rest_ensure_response(
+		$total    = $result['total'];
+		$response = rest_ensure_response(
 			array(
-				'items'    => $items,
+				'items'    => array_map( array( Search::class, 'summary' ), $result['ids'] ),
 				'total'    => $total,
 				'page'     => $page,
 				'per_page' => $per_page,
@@ -340,34 +271,7 @@ class QuestionBankController extends RestController {
 	 * @param mixed $question_id Question identifier.
 	 */
 	private function summary( $question_id ) {
-		$attributes = BankAttributes::get( $question_id );
-		$settings   = (array) get_post_meta( $question_id, '_question_settings', true );
-		$skills     = wp_get_object_terms( $question_id, Taxonomy::NAME, array( 'fields' => 'ids' ) );
-		return array(
-			'id'                  => $question_id,
-			'uuid'                => $attributes['uuid'] ?? '',
-			'name'                => get_the_title( $question_id ),
-			'type'                => (string) ( $settings['type'] ?? '' ),
-			'marks'               => ! empty( $settings['score']['enabled'] ) ? (float) ( $settings['score']['value'] ?? 0 ) : 0,
-			'post_status'         => get_post_status( $question_id ),
-			'status'              => ! empty( $attributes['approved_version_id'] ) ? 'approved' : ( get_post_status( $question_id ) === Usage::ARCHIVED ? 'archived' : 'draft' ),
-			'bank_id'             => (int) ( $attributes['bank_id'] ?? 0 ),
-			'difficulty'          => $attributes['difficulty'] ?? 'standard',
-			'source'              => $attributes['source'] ?? '',
-			'family_id'           => $attributes['family_id'] ?? '',
-			'secure'              => (bool) ( $attributes['secure'] ?? 0 ),
-			'version'             => (int) ( $attributes['latest_version_no'] ?? 0 ),
-			'current_version_id'  => (int) ( $attributes['current_version_id'] ?? 0 ),
-			'approved_version_id' => (int) ( $attributes['approved_version_id'] ?? 0 ),
-			'approved_is_current' => ! empty( $attributes['approved_version_id'] ) && (int) $attributes['approved_version_id'] === (int) $attributes['current_version_id'],
-			'skills'              => is_array( $skills ) ? array_map( 'intval', $skills ) : array(),
-			'usage'               => Usage::summary( $question_id ),
-			'author'              => (int) get_post_field( 'post_author', $question_id ),
-			'modified'            => get_post_field( 'post_modified_gmt', $question_id ),
-			'native_editor_url'   => AccessPolicy::can_edit_question( $question_id ) ? (string) get_edit_post_link( $question_id, 'raw' ) : '',
-			'can_edit'            => AccessPolicy::can_edit_question( $question_id ),
-			'can_approve'         => AccessPolicy::can_approve_question( $question_id ),
-		);
+		return Search::summary( (int) $question_id );
 	}
 
 	/**

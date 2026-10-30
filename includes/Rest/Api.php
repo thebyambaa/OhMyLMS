@@ -56,6 +56,7 @@ class Api {
 			\OhMyLMS\Rest\V1\QuestionController::class,
 			\OhMyLMS\Rest\V1\AssessmentController::class,
 			\OhMyLMS\Rest\V1\QuestionBankController::class,
+			\OhMyLMS\Rest\V1\QuestionsController::class,
 			\OhMyLMS\Rest\V1\QuestionImportController::class,
 			\OhMyLMS\Rest\V1\QuestionBankToolsController::class,
 			\OhMyLMS\Rest\V1\CourseStructureToolsController::class,
