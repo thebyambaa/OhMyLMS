@@ -2,12 +2,16 @@ import { hasCapability } from '../bootstrap/config';
 import { certificateEditor, certificates } from './certificates';
 import { coupons, orderDetail, orders } from './commerce';
 import { contentHub } from './content-hub';
+import { courseEditor, courses } from './courses';
 import { courseReport, dashboard, earnings } from './dashboard';
 import { emails } from './emails';
+import { gamification } from './gamification';
 import { home } from './home';
 import { integrations } from './integrations';
 import { membershipEditor, memberships } from './memberships';
+import { quizAttempts, quizEditor, quizzes } from './quizzes';
 import { settings } from './settings';
+import { setup } from './setup';
 import { students } from './students';
 import { taxonomies } from './taxonomies';
 import { webhooks } from './webhooks';
@@ -22,7 +26,13 @@ export const features: readonly FeatureDefinition[] = [
 	earnings,
 	courseReport,
 	home,
+	setup,
 	contentHub,
+	courses,
+	courseEditor,
+	quizzes,
+	quizEditor,
+	quizAttempts,
 	orders,
 	orderDetail,
 	coupons,
@@ -31,6 +41,7 @@ export const features: readonly FeatureDefinition[] = [
 	students,
 	certificates,
 	certificateEditor,
+	gamification,
 	emails,
 	integrations,
 	settings,
