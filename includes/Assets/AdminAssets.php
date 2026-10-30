@@ -320,7 +320,7 @@ class AdminAssets extends Assets {
 					'currency_format_trim_zeros'   => ohmylms_get_price_thousand_separator(),
 					'currency_format_num_decimals' => ohmylms_get_price_decimals(),
 					'price_format'                 => ohmylms_get_price_format(),
-					'ohmylms_home_page'            => admin_url( 'admin.php?page=ohmylms' ),
+					'ohmylms_home_page'            => \OhMyLMS\Admin\LegacyRoutes::url( '/' ),
 					'plugin_assets'                => plugin_dir_url( __FILE__ ),
 					'admin_name'                   => $admin_name,
 					'admin_email'                  => $admin_email,

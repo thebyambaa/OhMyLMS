@@ -14,6 +14,7 @@ if ( ! $test_site_path || ! is_file( $test_site_path . '/wp-load.php' ) ) {
 	throw new RuntimeException( 'Set OHMYLMS_TEST_SITE_PATH to a local WordPress checkout.' );
 }
 require $test_site_path . '/wp-load.php';
+require_once ABSPATH . 'wp-admin/includes/screen.php';
 
 use OhMyLMS\Learning\NativeLessonEditor;
 

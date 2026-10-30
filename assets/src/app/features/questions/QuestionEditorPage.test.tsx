@@ -4,7 +4,7 @@ import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import {
 	createRegistry,
 	type ExtensionRegistry,
-} from '../../../extensions/registry.mjs';
+} from '../../extensions/registry.mjs';
 import { BootstrapProvider } from '../../bootstrap/BootstrapContext';
 import {
 	registerAppQuestionEditors,

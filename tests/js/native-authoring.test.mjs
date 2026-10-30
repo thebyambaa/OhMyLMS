@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createRegistry } from '../../assets/src/extensions/registry.mjs';
+import { createRegistry } from '../../assets/src/app/extensions/registry.mjs';
 import { nativeQuestionTypes } from '../../assets/src/features/learning/nativeAuthoring.mjs';
 import { choiceReadyToSave } from '../../assets/src/features/learning/choiceAutosave.mjs';
 import {

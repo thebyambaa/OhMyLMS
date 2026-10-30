@@ -1,5 +1,5 @@
 import { createElement, createRoot, render } from '@wordpress/element';
-import { createRegistry } from './registry.mjs';
+import { createRegistry } from '../app/extensions/registry.mjs';
 import { lazyEmailComponent } from './LazyFeature';
 import { registerBuiltinSlashCommands, slashGroups } from './slashCommands.mjs';
 import { registerCurriculumLabels } from './curriculumLabels';
@@ -367,7 +367,7 @@ window.ohmylms = {
 window.dispatchEvent(
 	new CustomEvent( 'ohmylms:extensions-ready', { detail: publicApi } )
 );
-function mountSlots() {
+function mountAssistantRoot() {
 	const assistant = document.getElementById( 'ohmylms-admin-assistant-root' );
 	if ( assistant ) {
 		import(
@@ -379,37 +379,12 @@ function mountSlots() {
 					'The administrator assistant could not load. Refresh to retry.';
 			} );
 	}
-	if ( document.querySelector( '[data-ohmylms-registration-fields]' ) ) {
-		import(
-			/* webpackChunkName: "registration" */ '../features/students/mountRegistration'
-		)
-			.then( ( { mountRegistration } ) => mountRegistration() )
-			.catch( ( error ) =>
-				window.dispatchEvent(
-					new CustomEvent( 'ohmylms:extension-error', {
-						detail: { id: 'registration', message: error.message },
-					} )
-				)
-			);
-	}
-	document.querySelectorAll( '[data-ohmylms-slot]' ).forEach( ( element ) => {
-		let context = {};
-		try {
-			context = JSON.parse( element.dataset.ohmylmsContext || '{}' );
-		} catch {
-			return;
-		}
-		publicApi.mount(
-			element,
-			element.dataset.ohmylmsSlot,
-			context,
-			element.dataset.ohmylmsKind || 'slot'
-		);
-	} );
 }
 if ( document.readyState === 'loading' ) {
-	document.addEventListener( 'DOMContentLoaded', mountSlots, { once: true } );
+	document.addEventListener( 'DOMContentLoaded', mountAssistantRoot, {
+		once: true,
+	} );
 } else {
-	mountSlots();
+	mountAssistantRoot();
 }
 export default publicApi;

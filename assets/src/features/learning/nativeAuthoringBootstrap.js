@@ -1,5 +1,5 @@
 import * as api from '../../extensions/api.mjs';
-import { createRegistry } from '../../extensions/registry.mjs';
+import { createRegistry } from '../../app/extensions/registry.mjs';
 
 // Native screens expose the same registration contract without loading the LMS app.
 if ( typeof window !== 'undefined' && ! window.ohmylms?.extensions ) {

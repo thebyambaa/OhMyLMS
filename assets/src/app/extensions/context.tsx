@@ -8,7 +8,7 @@ import {
 	type ExtensionEntry,
 	type ExtensionKind,
 	type ExtensionRegistry,
-} from '../../extensions/registry.mjs';
+} from './registry.mjs';
 
 const ExtensionsContext =
 	createContext< ExtensionRegistry >( createRegistry() );

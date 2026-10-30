@@ -26,6 +26,7 @@ import apiFetch from '@wordpress/api-fetch';
 import { createBlock } from '@wordpress/blocks';
 import { searchBank } from '../question-bank/api.mjs';
 import { installNativeCanvasRecovery } from './nativeCanvas.mjs';
+import { isCourseReturn, isReturnUrl } from './returnLink.mjs';
 
 installNativeCanvasRecovery();
 
@@ -172,7 +173,7 @@ function LessonSettings() {
 	const [ returnUrl, setReturnUrl ] = useState(
 		window.ohmylmsNativeLesson.returnUrl
 	);
-	const backLabel = returnUrl.includes( '#/course-edit' )
+	const backLabel = isCourseReturn( returnUrl )
 		? __( 'Back to course', 'ohmylms' )
 		: __( 'Back to Content Hub', 'ohmylms' );
 	useEffect( () => {
@@ -189,15 +190,8 @@ function LessonSettings() {
 				setReturnUrl( window.ohmylmsNativeLesson.returnUrl );
 			} else {
 				const saved = window.sessionStorage.getItem( key );
-				if ( saved ) {
-					const url = new URL( saved );
-					if (
-						url.origin === window.location.origin &&
-						url.searchParams.get( 'page' ) === 'ohmylms' &&
-						/^#\/(content-hub|course-edit)(\/|$)/.test( url.hash )
-					) {
-						setReturnUrl( saved );
-					}
+				if ( saved && isReturnUrl( saved, window.location.origin ) ) {
+					setReturnUrl( saved );
 				}
 			}
 		} catch {

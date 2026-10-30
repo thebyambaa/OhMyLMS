@@ -1,6 +1,6 @@
 import { createElement, lazy } from '@wordpress/element';
 import type { ComponentType } from 'react';
-import type { ExtensionRegistry } from '../../extensions/registry.mjs';
+import type { ExtensionRegistry } from './registry.mjs';
 import {
 	registerCoreQuestionEditors,
 	type CoreQuestionEditorComponents,

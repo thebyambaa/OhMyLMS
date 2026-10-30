@@ -45,14 +45,18 @@ final class MathLive {
 		);
 	}
 
-	/** Register a lazy runtime and make its local URLs available to editors. */
+	/**
+	 * Register a lazy runtime and make its local URLs available to editors.
+	 *
+	 * The extension host carries `window.ohmylmsMath` where it loads: `AdminAppAssets` adds it on the app
+	 * page and `SourceAssets` on frontend slot pages (and on the recovered SDK, on its own page).
+	 */
 	public static function configure() {
 		$config = self::config();
 		wp_register_script( 'ohmylms-mathlive', $config['runtime'], array(), '0.111.1', true );
 		wp_register_script( 'ohmylms-mathlive-loader', plugins_url( 'assets/interactivity/math-loader.js', OHMYLMS_FILE ), array(), '0.111.1', true );
 		wp_localize_script( 'ohmylms-mathlive-loader', 'ohmylmsMath', $config );
 		wp_add_inline_script( 'ohmylms-mathlive', 'window.ohmylmsMath = ' . wp_json_encode( $config ) . ';', 'before' );
-		wp_localize_script( 'ohmylms-extension-sdk', 'ohmylmsMath', $config );
 	}
 
 	/** Enqueue on question/practice pages only; editor fields load on demand. */

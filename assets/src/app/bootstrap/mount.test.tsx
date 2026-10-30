@@ -1,5 +1,5 @@
 import { act } from '@testing-library/react';
-import type { ExtensionRegistry } from '../../extensions/registry.mjs';
+import type { ExtensionRegistry } from '../extensions/registry.mjs';
 import { CORE_QUESTION_EDITOR_IDS } from '../../features/question-editor/registerCoreEditors';
 import { installExtensionHost } from '../extensions/host';
 import { createBootstrap } from '../test/render';

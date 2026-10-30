@@ -140,7 +140,7 @@ test( 'standalone questions use the native canvas and survive document saves', a
 	}
 } );
 
-test( 'legacy quiz links open Gutenberg and save quiz settings with the document', async ( {
+test( 'quizzes open in Gutenberg and save quiz settings with the document', async ( {
 	page,
 } ) => {
 	const errors = [];
@@ -158,14 +158,7 @@ test( 'legacy quiz links open Gutenberg and save quiz settings with the document
 		} )
 	);
 	try {
-		await page.goto(
-			`/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/quiz-edit/${ quiz.id }`
-		);
-		await page.waitForURL(
-			( url ) =>
-				url.pathname.endsWith( '/post.php' ) &&
-				url.searchParams.get( 'post' ) === String( quiz.id )
-		);
+		await page.goto( `/wp-admin/post.php?post=${ quiz.id }&action=edit` );
 		await page.waitForFunction( () =>
 			window.wp?.plugins?.getPlugin( 'ohmylms-native-quiz-settings' )
 		);

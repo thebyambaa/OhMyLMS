@@ -73,17 +73,24 @@ These must move before anything is deleted, in this order.
    `registration` chunk into the new app's 4 KB extension host (`assets/src/app/extensions/host-entry.ts`; `host.ts`
    already has `mount()`), make `SourceAssets::enqueue()` load the `ohmylms-app-extensions` handle, and keep the
    `ohmylms_enqueue_extension_scripts` action so add-ons keep registering. Measure the host stays small.
+   *Done (31 October 2026):* the host mounts the slots (`extensions/dom.ts`; 4,317 → 4,653 B, gzip 1,932 → 2,102 B);
+   the registration fields are their own entry, `admin-app-registration` (6,060 B, gzip 2,227 B), enqueued by
+   `SourceAssets::enqueue_registration()` on `ohmylms_signup_form_start`, because a lazy chunk would add webpack's
+   chunk loader (about 2.8 KB) to the host. The recovered SDK loads only on `page=ohmylms`. Covered by
+   `tests/php/extension-host-assets-integration.php` (`OHMYLMS_EXTENSION_HOST_TEST=1`, both asset modes).
 2. **MathLive configuration.** `MathLive::configure()` localizes `ohmylmsMath` on `ohmylms-extension-sdk`; move it to
    the host handle (`AdminAppAssets` already does this on the app page).
+   *Done:* `SourceAssets::enqueue()` localizes it on the host; the legacy page's SDK gets it from `enqueue_legacy()`.
 3. **Native lesson and quiz editors.** They do not need the SDK (`nativeAuthoringBootstrap.js` creates a registry when
    `window.ohmylms.extensions` is missing), but they import `assets/src/extensions/registry.mjs`, which the new host also
    imports. Move `registry.mjs` and `registry.d.mts` into `assets/src/app/extensions/` before deleting
-   `assets/src/extensions/`.
+   `assets/src/extensions/`. *Done;* they still import `assets/src/extensions/api.mjs`.
 4. **Hard-coded legacy links** (`tools/cutover-inventory.mjs --details`, section 4): `PreviewPlayer.php`,
    `NativeQuizEditor.php`, `NativeLessonEditor.php` (`#/question-bank` is not even a legacy route), the Google Meet OAuth
    redirects, `AdminAssets.php` (`ohmylms_home_page`) and `Rest/V1/CourseController.php` (`builder_url`). Use
    `LegacyRoutes::url()` or `LegacyRoutes::app_url()`. With the switch off they still land through the redirect, but
-   unmapped ones end on the home screen with the notice.
+   unmapped ones end on the home screen with the notice. *Done;* left: `Schools/ViewAs.php` (`#/accounthub`) and
+   `templates/admin/skill-assessments.php`, which the inventory does not scan.
 5. **Screens the new app does not have:** none (31 October 2026). Exams, comparison, sessions, the student report,
    course students, design settings, migration, rewards, All accounts, the Content Hub overview, the quiz reports
    overview and the `?action=`/`?add=` dialogs all have new screens and rules; `LegacyRoutes::unavailable()` is empty.
@@ -95,6 +102,7 @@ These must move before anything is deleted, in this order.
    builds and the new-app sync, drop the recovered parts.
 8. **Browser specs that reach native editors through a legacy redirect** (`assessment`, `lesson-block-editor`,
    `native-authoring`, `quizzes`): open `post.php?post=<id>&action=edit` directly, so the native editor coverage stays.
+   *Done.* `assessment` still opens legacy Content Hub screens (with the opt-out) in three tests.
 
 ## Ordered deletion plan
 
@@ -141,8 +149,10 @@ Specs now open the legacy admin only on purpose. `--check` fails if one opens `p
   `single-workspace`, `students`, `subjects`, `syllabus-course`, `syllabus`, `xapi-settings`, and the harness specs on
   the recovered bundles `editor-packages`, `editor-runtime`, `email-vendor-chunks`, `vendor-packages`. Write new-app
   specs for the screens that survive before deleting them; none exists yet for `page=ohmylms-app`.
-- **Legacy, retarget at cutover** (4): `assessment`, `lesson-block-editor`, `native-authoring`, `quizzes` (see
-  "Replace first", item 8).
+- **Retargeted to `post.php`** (4): `assessment`, `lesson-block-editor`, `native-authoring`, `quizzes` (see
+  "Replace first", item 8). On 800.local (temporary administrator) they reach the native editors directly; their
+  remaining failures are editor UI the specs do not match yet (question blocks show "Edit question" previews, no
+  "Quiz authoring" panel) and a `MutationObserver` error from `assets/js/interactive-controls.js` on `post.php`.
 
 The specs were checked with `node --check`; they were not run against 800.local (no credentials in this environment).
 
@@ -150,8 +160,8 @@ The specs were checked with `node --check`; they were not run against 800.local 
 
 - `assets/src/runtimes` and `assets/src/static` are not admin-only: 80 files feed the front end (checkout, Stripe,
   video player, blocks, Elementor/WPBakery, theme support, images). Delete by manifest output, never by folder.
-- The front-end slots and registration fields load the legacy SDK only in source mode today (`OHMYLMS_SOURCE_ASSETS`);
-  test both modes after moving them.
+- The front-end slots and registration fields load the extension host only in source mode (`OHMYLMS_SOURCE_ASSETS`);
+  in shipped mode `Slots::render()` fires only the server hook and the signup form keeps its PHP fields.
 - Add-ons may register submenu entries or link to `page=ohmylms#/…`. Entries are mapped or dropped, and links land
   through the redirect, but add-on admin pages built on the legacy SDK (`/extensions/<id>` with
   `registerAdminPage`) need the new app's `/extensions/:id` route to be at parity.

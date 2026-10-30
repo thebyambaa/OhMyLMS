@@ -87,12 +87,20 @@ tracked PHP and roadmap changes passes.
 
 [EXTENSIONS.md](EXTENSIONS.md) remains the public API v1 contract. The existing admin retains its
 extension SDK. The new app has its own authored host, `assets/src/app/extensions`, built from the
-shared registry (`assets/src/extensions/registry.mjs`); it does not load the recovered SDK.
+shared registry (`assets/src/app/extensions/registry.mjs`, which the recovered SDK and the native
+editors import too); it does not load the recovered SDK.
 
-- `admin-app-extensions` (4 KB) publishes the frozen `window.ohmylms.extensions` (registry methods,
+- `admin-app-extensions` (under 5 KB) publishes the frozen `window.ohmylms.extensions` (registry methods,
   `api`, `renderSlot`, `renderEditor`, `mount`) and fires `ohmylms:extensions-ready`.
   `AdminAppAssets` loads it first, then fires `ohmylms_enqueue_extension_scripts` with its handle and
   makes the app depend on every script that action queued, so extensions register before the app renders.
+- The front end uses the same host: `Slots::render()` calls `SourceAssets::enqueue()`, which loads
+  `ohmylms-app-extensions` with `ohmylmsExtensionManifest` and `ohmylmsMath` and fires
+  `ohmylms_enqueue_extension_scripts` with that handle; on `DOMContentLoaded` the host mounts every
+  `[data-ohmylms-slot]` element (`extensions/dom.ts`, `checkout-field` kind included). The signup form's
+  React fields are a separate entry, `admin-app-registration` (`ohmylms-app-registration`), enqueued on
+  `ohmylms_signup_form_start`, so the host carries no chunk loader. Both are source-build only, as before;
+  the recovered SDK loads only on `admin.php?page=ohmylms`.
 - `/extensions/<id>` renders registered admin pages, which the navigation lists. Every route renders the
   `admin.screen.before`/`after` slots and the editor panels whose slot is the feature's
   `extensionRoute`: the original admin route pattern (for example `/quiz-edit/:id` for `#/quizzes/:id`),
@@ -115,7 +123,7 @@ shared registry (`assets/src/extensions/registry.mjs`); it does not load the rec
 
 Lesson editors and membership settings are registered and listed but are not yet rendered: they need
 the rebuilt lesson-type and membership extension-settings screens. Checkout fields and frontend slots
-still use the existing SDK.
+render through the host (see above).
 
 ## Rebuild policy and checks
 

@@ -15,7 +15,7 @@ test.beforeEach( async ( { page } ) => {
 	await page.goto( '/wp-admin/admin.php?page=ohmylms-app' );
 } );
 
-test( 'former quiz routes always open Gutenberg and preserve existing question types despite rollback settings', async ( {
+test( 'quizzes open in Gutenberg and preserve existing question types despite rollback settings', async ( {
 	page,
 } ) => {
 	const errors = [];
@@ -79,12 +79,7 @@ test( 'former quiz routes always open Gutenberg and preserve existing question t
 	} );
 	try {
 		await page.goto(
-			`/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/quiz-edit/${ fixture.quiz.id }`
-		);
-		await page.waitForURL(
-			( url ) =>
-				url.pathname.endsWith( '/post.php' ) &&
-				url.searchParams.get( 'post' ) === String( fixture.quiz.id )
+			`/wp-admin/post.php?post=${ fixture.quiz.id }&action=edit`
 		);
 		await page.waitForFunction( () =>
 			window.wp?.plugins?.getPlugin( 'ohmylms-native-quiz-settings' )

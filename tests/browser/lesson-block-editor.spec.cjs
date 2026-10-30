@@ -39,12 +39,7 @@ test( 'native Gutenberg edits lessons and saves LMS settings together', async ( 
 	);
 	try {
 		await page.goto(
-			`/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/lesson-edit/${ lesson.id }?returnTo=${ encodeURIComponent( '/content-hub/curriculum/syllabus/24?node=s%3A1' ) }`
-		);
-		await page.waitForURL(
-			( url ) =>
-				url.pathname.endsWith( '/post.php' ) &&
-				url.searchParams.get( 'post' ) === String( lesson.id )
+			`/wp-admin/post.php?post=${ lesson.id }&action=edit&ohmylms_return=${ encodeURIComponent( '/content-hub/curriculum/syllabus/24?node=s%3A1' ) }`
 		);
 		const canvas = page.frameLocator( 'iframe[name="editor-canvas"]' );
 		const paragraph = canvas.locator( '[data-type="core/paragraph"]' );

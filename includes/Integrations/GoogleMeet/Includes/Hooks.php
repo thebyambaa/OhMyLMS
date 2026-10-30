@@ -465,7 +465,7 @@ class Hooks {
 
 			if ( empty( $creds['client_id'] ) || empty( $creds['client_secret'] ) ) {
 				// Redirect back with error.
-				wp_safe_redirect( admin_url( 'admin.php?page=ohmylms#/integrations?auth=error&message=missing_credentials' ) );
+				wp_safe_redirect( \OhMyLMS\Admin\LegacyRoutes::url( '/integrations?auth=error&message=missing_credentials' ) );
 				exit;
 			}
 
@@ -484,7 +484,7 @@ class Hooks {
 
 			if ( is_wp_error( $response ) ) {
 				// Redirect back with error.
-				wp_safe_redirect( admin_url( 'admin.php?page=ohmylms#/integrations?auth=error&message=oauth_failed' ) );
+				wp_safe_redirect( \OhMyLMS\Admin\LegacyRoutes::url( '/integrations?auth=error&message=oauth_failed' ) );
 				exit;
 			}
 
@@ -501,11 +501,11 @@ class Hooks {
 				);
 
 				// Redirect back to integrations page with success.
-				wp_safe_redirect( admin_url( 'admin.php?page=ohmylms#/integrations?auth=success' ) );
+				wp_safe_redirect( \OhMyLMS\Admin\LegacyRoutes::url( '/integrations?auth=success' ) );
 				exit;
 			} else {
 				// Redirect back with error.
-				wp_safe_redirect( admin_url( 'admin.php?page=ohmylms#/integrations?auth=error&message=no_access_token' ) );
+				wp_safe_redirect( \OhMyLMS\Admin\LegacyRoutes::url( '/integrations?auth=error&message=no_access_token' ) );
 				exit;
 			}
 		}

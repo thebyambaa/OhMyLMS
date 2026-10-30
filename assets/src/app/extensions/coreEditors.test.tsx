@@ -1,7 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import { Suspense } from '@wordpress/element';
 import type { ComponentType } from 'react';
-import { createRegistry } from '../../extensions/registry.mjs';
+import { createRegistry } from './registry.mjs';
 import { CORE_QUESTION_EDITOR_IDS } from '../../features/question-editor/registerCoreEditors';
 import {
 	CORE_EDITOR_COMPONENTS,

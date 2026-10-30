@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createRegistry } from '../../assets/src/extensions/registry.mjs';
+import { createRegistry } from '../../assets/src/app/extensions/registry.mjs';
 import {
 	CORE_QUESTION_EDITOR_IDS,
 	registerCoreQuestionEditors,

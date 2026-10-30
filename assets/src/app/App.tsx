@@ -1,5 +1,5 @@
 import { HashRouter } from 'react-router-dom';
-import type { ExtensionRegistry } from '../extensions/registry.mjs';
+import type { ExtensionRegistry } from './extensions/registry.mjs';
 import { BootstrapProvider } from './bootstrap/BootstrapContext';
 import type { AppBootstrap } from './bootstrap/config';
 import { ExtensionsProvider } from './extensions/context';

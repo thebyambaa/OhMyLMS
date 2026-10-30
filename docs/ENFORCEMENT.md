@@ -42,8 +42,9 @@ imports are skipped because the build erases them. It fails when one of these fi
   `webpackChunkohmylms`, or loads numeric webpack module IDs (`__webpack_require__(N)`, or `n(N)`
   next to the `n.d`/`n.r` helpers).
 
-`assets/src/extensions/registry.mjs` and `assets/src/ui/**` are never flagged for their own
-content, but the checker still follows their imports. Authored modules elsewhere in `assets/src`
+`assets/src/ui/**` is never flagged for its own
+content, but the checker still follows its imports. The extension registry lives in the app
+(`assets/src/app/extensions/registry.mjs`). Authored modules elsewhere in `assets/src`
 (for example `features/question-editor/coreEditorComponents.js`) are allowed as long as nothing
 they import reaches the list above. Nothing is allowed by name.
 

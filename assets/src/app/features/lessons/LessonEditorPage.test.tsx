@@ -2,7 +2,7 @@ import { createElement } from '@wordpress/element';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { createRegistry } from '../../../extensions/registry.mjs';
+import { createRegistry } from '../../extensions/registry.mjs';
 import { ExtensionsProvider } from '../../extensions/context';
 import { ApiError } from '../../lib/api';
 import * as api from './api';

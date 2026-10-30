@@ -3,7 +3,7 @@ import type {
 	ExtensionContext,
 	ExtensionEntry,
 	ExtensionKind,
-} from '../../extensions/registry.mjs';
+} from './registry.mjs';
 import { ExtensionBoundary } from './ExtensionBoundary';
 import { useExtensions } from './context';
 

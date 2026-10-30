@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
 	createRegistry,
 	KINDS,
-} from '../../assets/src/extensions/registry.mjs';
+} from '../../assets/src/app/extensions/registry.mjs';
 const item = { label: 'Example', render: () => null, action: () => {} };
 test( 'all extension categories register, unregister and enforce duplicate IDs', () => {
 	const r = createRegistry();

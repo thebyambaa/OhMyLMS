@@ -65,7 +65,7 @@ final class PreviewPlayer {
 		if ( 'gutenberg' === $editor ) {
 			return (string) get_edit_post_link( $id, 'raw' );
 		}
-		return admin_url( 'admin.php?page=ohmylms#/quiz-edit/' . absint( $id ) );
+		return \OhMyLMS\Admin\LegacyRoutes::url( '/quiz-edit/' . absint( $id ) );
 	}
 	/**
 	 * Render for Preview player.

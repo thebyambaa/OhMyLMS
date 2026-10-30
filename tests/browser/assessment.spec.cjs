@@ -56,8 +56,7 @@ function trackErrors(page) {
 test('author adds a page break and publishes the exam', async ({ page }) => {
   const errors = trackErrors(page);
   await login(page, admin().username, admin().password);
-  await page.goto(`/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/quiz-edit/${state.quiz}`);
-  await page.waitForURL((url) => url.pathname.endsWith('/post.php'));
+  await page.goto(`/wp-admin/post.php?post=${state.quiz}&action=edit`);
   await page.waitForFunction(() => window.wp?.plugins?.getPlugin('ohmylms-native-quiz-settings'));
   await page.evaluate(() => wp.data.dispatch('core/edit-post').openGeneralSidebar('edit-post/document'));
   const assessmentPanel = page.getByRole('button', {name: 'Assessment and pools', exact: true});
@@ -294,7 +293,7 @@ test('Quizzes, Question Bank and Assignments are Content Hub tabs, and the old A
   await tabs.getByRole('link', { name: 'Assignments', exact: true }).click();
   await expect(page).toHaveURL(/#\/content-hub\/assignments$/);
   // The quiz editor, opened from the Quizzes tab, keeps the hub highlighted.
-  await page.goto(`/wp-admin/admin.php?page=ohmylms&ohmylms_legacy=1#/quiz-edit/${state.quiz}`);
+  await page.goto(`/wp-admin/post.php?post=${state.quiz}&action=edit`);
   await expect(highlighted).toHaveText('Content Hub', { timeout: 30000 });
   // Nine tabs still fit a phone: they wrap instead of running off the screen.
   await page.setViewportSize({ width: 390, height: 844 });

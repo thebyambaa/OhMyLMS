@@ -5,7 +5,7 @@ import vm from 'node:vm';
 import { parse } from '@babel/parser';
 import generatorModule from '@babel/generator';
 import { adaptSlashCommands } from '../../tools/slash-adapters.mjs';
-import { createRegistry } from '../../assets/src/extensions/registry.mjs';
+import { createRegistry } from '../../assets/src/app/extensions/registry.mjs';
 import {
 	registerBuiltinSlashCommands,
 	slashGroups,

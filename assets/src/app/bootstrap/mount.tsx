@@ -1,6 +1,6 @@
 import { createRoot } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { createRegistry } from '../../extensions/registry.mjs';
+import { createRegistry } from '../extensions/registry.mjs';
 import { App } from '../App';
 import { registerAppQuestionEditors } from '../extensions/coreEditors';
 import { isExtensionHost } from '../extensions/host';

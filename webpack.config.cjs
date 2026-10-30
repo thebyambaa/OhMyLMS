@@ -42,6 +42,11 @@ module.exports = {
 			__dirname,
 			'assets/src/app/extensions/host-entry.ts'
 		),
+		// The signup form's React fields; enqueued only where the form renders.
+		'admin-app-registration': path.resolve(
+			__dirname,
+			'assets/src/app/extensions/registration-entry.ts'
+		),
 		'email-packages': path.resolve(
 			__dirname,
 			'assets/src/features/vendor-packages/email-loader.js'

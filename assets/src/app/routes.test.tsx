@@ -1,7 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { lazy } from '@wordpress/element';
-import { createRegistry } from '../extensions/registry.mjs';
+import { createRegistry } from './extensions/registry.mjs';
 import type { FeatureDefinition } from './features/types';
 import { renderShell } from './test/render';
 

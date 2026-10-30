@@ -5,7 +5,7 @@ import {
 	type ExtensionContext,
 	type ExtensionKind,
 	type ExtensionRegistry,
-} from '../../extensions/registry.mjs';
+} from './registry.mjs';
 import * as api from './api';
 import { ExtensionSlot } from './ExtensionSlot';
 import { ExtensionsProvider } from './context';

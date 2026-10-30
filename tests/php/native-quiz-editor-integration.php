@@ -124,7 +124,7 @@ try {
 	$quiz_id = (int) $created->get_data()['id'];
 	native_quiz_check( str_contains( PreviewPlayer::url( $quiz_id, 'gutenberg' ), 'quiz_editor=gutenberg' ), 'Native previews lost their editor origin.' );
 	native_quiz_check( get_edit_post_link( $quiz_id, 'raw' ) === PreviewPlayer::editor_url( $quiz_id, 'gutenberg' ), 'Closing a native preview does not return to Gutenberg.' );
-	native_quiz_check( str_contains( PreviewPlayer::editor_url( $quiz_id ), '#/quiz-edit/' . $quiz_id ), 'Original editor previews lost their return path.' );
+	native_quiz_check( \OhMyLMS\Admin\LegacyRoutes::url( '/quiz-edit/' . $quiz_id ) === PreviewPlayer::editor_url( $quiz_id ), 'Original editor previews lost their return path.' );
 	native_quiz_check( PreviewPlayer::editor_url( $quiz_id ) === PreviewPlayer::editor_url( $quiz_id, 'https://example.com' ), 'An arbitrary preview return destination was accepted.' );
 	$native_posts[] = $quiz_id;
 	$preview_draft  = array(

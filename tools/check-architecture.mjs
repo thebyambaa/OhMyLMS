@@ -31,7 +31,7 @@ const RECOVERED_SDK = [
 	'extensions/LazyFeature.jsx',
 ];
 // Never forbidden by their own content; their imports are still followed.
-const ALLOWED = [ 'extensions/registry.mjs', 'ui/' ];
+const ALLOWED = [ 'ui/' ];
 
 const toPosix = ( file ) => file.split( path.sep ).join( '/' );
 const isSource = ( file ) => SOURCE_EXTENSIONS.includes( path.extname( file ) );
