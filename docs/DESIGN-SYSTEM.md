@@ -10,6 +10,7 @@ One look for every OhMyLMS admin screen: the React app (Dashboard, Content Hub, 
 | REST (`GET/POST/DELETE /ohmylms/v1/design-system`, `manage_options`, REST nonce) | `includes/Rest/V1/DesignSystemController.php` |
 | Shared stylesheet (reads the variables) | `assets/css/admin-design-system.css` |
 | Settings tab "Design system" | `assets/src/features/settings/DesignSystemSettings.jsx`, model helpers in `designSystem.mjs` |
+| New admin tab (`#/settings?tab=design-system`) | `assets/src/app/features/settings/DesignSystemForm.tsx`, model in `designSystem.ts` (see `docs/api/settings.md`) |
 | Tests | `tests/php/design-system-unit.php`, `tests/js/design-system.test.mjs` |
 
 Stored in one option, `ohmylms_design_system`: `preset`, `colors` (13 keys), `button_radius`, `density`. A site that never saved it gets the **Khan Academy** preset. The preset name is recomputed on every save, so editing any value gives `custom`.
