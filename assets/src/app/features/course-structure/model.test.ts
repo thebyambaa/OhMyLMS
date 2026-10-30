@@ -34,6 +34,14 @@ it.each( [
 		},
 	},
 	{ ...outline, units: [ outline.units[ 0 ], outline.units[ 0 ] ] },
+	{ ...outline, program: { ...outline.program, recognize_prior: 'yes' } },
+	{
+		...outline,
+		program: {
+			...outline.program,
+			outcomes: [ { term_id: 7, target: 'unknown', required: true } ],
+		},
+	},
 ] )( 'rejects malformed or ambiguous snapshots', ( value ) => {
 	expect( () => parseOutline( value ) ).toThrow();
 } );

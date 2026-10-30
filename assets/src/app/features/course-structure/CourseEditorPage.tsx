@@ -8,6 +8,8 @@ import { CoursePlacement } from '../curriculum';
 import { readOutline, saveOutline } from './api';
 import { LessonPicker } from './LessonPicker';
 import { UnitEditor } from './UnitEditor';
+import { LearningSettings } from './LearningSettings';
+import { PublicationPanel } from './PublicationPanel';
 import {
 	move,
 	moveActivity,
@@ -163,6 +165,12 @@ export function OutlineWorkspace( {
 	return (
 		<section aria-label={ __( 'Outline editor', 'ohmylms' ) }>
 			<p>
+				<Link
+					to={ `/content-hub/courses/${ draft.course_id }/settings` }
+				>
+					{ __( 'Course settings', 'ohmylms' ) }
+				</Link>{ ' ' }
+				·{ ' ' }
 				<Link to="/content-hub/courses">
 					{ __( 'Back to courses', 'ohmylms' ) }
 				</Link>{ ' ' }
@@ -208,6 +216,11 @@ export function OutlineWorkspace( {
 			>
 				{ __( 'Reload saved outline', 'ohmylms' ) }
 			</Button>
+			<LearningSettings
+				draft={ draft }
+				change={ change }
+				disabled={ busy }
+			/>
 			<fieldset disabled={ busy }>
 				<legend>{ __( 'Units and lessons', 'ohmylms' ) }</legend>
 				{ draft.units.map( ( unit, index ) => (
@@ -371,6 +384,12 @@ export function OutlineWorkspace( {
 					</Button>
 				</Modal>
 			) }
+			<PublicationPanel
+				key={ draft.revision }
+				course={ draft.course_id }
+				disabled={ dirty || busy }
+				onPublished={ reload }
+			/>
 			<CoursePlacement course={ draft.course_id } />
 		</section>
 	);

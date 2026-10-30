@@ -17,5 +17,19 @@
 		"conflictStatus": 409,
 		"publishes": false
 	},
-	"documentation": "docs/api/course-authoring.md"
+	"settings": {
+		"path": "/authoring/courses/{id}/settings",
+		"methods": [ "GET", "PUT" ],
+		"permission": "manage_options and edit_post",
+		"revision": "private settings and structure fingerprint",
+		"publishes": false
+	},
+	"publication": {
+		"path": "/authoring/courses/{id}/publication",
+		"methods": [ "GET", "POST" ],
+		"writeFields": [ "revision", "confirmed" ],
+		"confirmed": true,
+		"existingEnrollments": "retain current program version"
+	},
+	"documentation": "docs/api/course-settings.md"
 }
