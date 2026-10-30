@@ -4,7 +4,7 @@ import type { FeatureDefinition } from '../types';
 
 export const courses: FeatureDefinition = {
 	id: 'course-structures',
-	title: __( 'Courses', 'ohmylms' ),
+	title: __( 'Course structure', 'ohmylms' ),
 	path: '/content-hub/courses',
 	capability: 'manage_options',
 	component: lazy(
