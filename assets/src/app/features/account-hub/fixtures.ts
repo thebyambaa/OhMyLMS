@@ -1,5 +1,8 @@
 import type {
+	Account,
+	AccountOptions,
 	ClassMember,
+	EditableAccount,
 	GuardianInvitation,
 	Parent,
 	ParentChildren,
@@ -101,6 +104,42 @@ export const invitation: GuardianInvitation = {
 	url: 'https://example.test/profile/?ohmylms_invite=abc',
 	expires_at: '2026-11-01T09:30:00Z',
 	email_sent: false,
+};
+
+export const account: Account = {
+	id: 41,
+	display_name: 'Tess Teacher',
+	username: 'tess',
+	email: 'tess@example.org',
+	roles: [ { slug: 'ohmylms_teacher', label: 'Teacher' } ],
+	registered_at: '2026-10-01T08:00:00Z',
+	last_login: null,
+	blocked: false,
+	can_edit: true,
+};
+
+export const editableAccount: EditableAccount = {
+	id: 41,
+	username: 'tess',
+	display_name: 'Tess Teacher',
+	first_name: 'Tess',
+	last_name: 'Teacher',
+	email: 'tess@example.org',
+	roles: [ { slug: 'ohmylms_teacher', label: 'Teacher' } ],
+	version: '0123456789abcdef',
+};
+
+export const accountOptions: AccountOptions = {
+	roles: [
+		{ slug: 'administrator', label: 'Administrator' },
+		{ slug: 'ohmylms_teacher', label: 'Teacher' },
+	],
+	types: [
+		{ value: 'student', label: 'Student' },
+		{ value: 'teacher', label: 'Teacher' },
+		{ value: 'parent', label: 'Parent' },
+	],
+	can_create: true,
 };
 
 /**

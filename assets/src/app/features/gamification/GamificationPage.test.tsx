@@ -113,9 +113,7 @@ describe( 'GamificationPage', () => {
 			await screen.findByRole( 'table', { name: 'Levels' } )
 		).toBeVisible();
 		await user.keyboard( '{End}' );
-		expect(
-			screen.getByRole( 'tab', { name: 'Leaderboard and rewards' } )
-		).toHaveFocus();
+		expect( screen.getByRole( 'tab', { name: 'Rewards' } ) ).toHaveFocus();
 		await user.keyboard( '{ArrowRight}' );
 		expect( screen.getByRole( 'tab', { name: 'Points' } ) ).toHaveFocus();
 	} );
@@ -618,16 +616,34 @@ describe( 'GamificationPage', () => {
 			} );
 		} );
 
-		it( 'saves rewards on their own', async () => {
+		it( 'no longer carries the rewards', async () => {
+			renderPage( 'leaderboard' );
+			await screen.findByRole( 'form', { name: 'Leaderboard' } );
+			expect(
+				screen.queryByRole( 'form', { name: 'Point rewards' } )
+			).not.toBeInTheDocument();
+			expect( api.getSection ).not.toHaveBeenCalledWith(
+				'rewards',
+				expect.anything()
+			);
+		} );
+	} );
+
+	describe( 'rewards', () => {
+		it( 'opens from ?tab=rewards and saves with the loaded revision', async () => {
 			const user = userEvent.setup();
 			vi.mocked( api.saveSection ).mockResolvedValue( {
 				enabled: true,
 				purchase_with_points: true,
+				revision: 'fedcba9876543210',
 			} as never );
-			renderPage( 'leaderboard' );
+			renderPage( 'rewards' );
+			expect(
+				screen.getByRole( 'tab', { name: 'Rewards' } )
+			).toHaveAttribute( 'aria-selected', 'true' );
 			await user.click(
 				await screen.findByRole( 'checkbox', {
-					name: 'Enable rewards',
+					name: 'Enable point rewards',
 				} )
 			);
 			await user.click(
@@ -635,19 +651,96 @@ describe( 'GamificationPage', () => {
 					name: 'Allow course purchases with bonus points',
 				} )
 			);
-			const rewardsForm = screen.getByRole( 'form', { name: 'Rewards' } );
+			expect(
+				screen.getByRole( 'tab', { name: 'Rewards (unsaved)' } )
+			).toBeVisible();
+			const form = screen.getByRole( 'form', { name: 'Point rewards' } );
 			await user.click(
-				within( rewardsForm ).getByRole( 'button', {
-					name: 'Save changes',
-				} )
+				within( form ).getByRole( 'button', { name: 'Save changes' } )
 			);
 			await waitFor( () =>
 				expect( api.saveSection ).toHaveBeenCalledWith(
 					'rewards',
-					{ enabled: true, purchase_with_points: true },
+					{
+						enabled: true,
+						purchase_with_points: true,
+						revision: '0123456789abcdef',
+					},
 					expect.anything()
 				)
 			);
+			expect(
+				( await screen.findAllByText( 'Settings saved.' ) )[ 0 ]
+			).toBeVisible();
+		} );
+
+		it( 'offers a reload when someone else saved first', async () => {
+			const user = userEvent.setup();
+			vi.mocked( api.saveSection ).mockRejectedValue(
+				new ApiError( {
+					status: 409,
+					code: 'ohmylms_gamification_conflict',
+					message:
+						'These settings were changed by someone else. Reload them before saving.',
+				} )
+			);
+			renderPage( 'rewards' );
+			await user.click(
+				await screen.findByRole( 'checkbox', {
+					name: 'Enable point rewards',
+				} )
+			);
+			await user.click(
+				screen.getByRole( 'button', { name: 'Save changes' } )
+			);
+			const reload = await screen.findByRole( 'button', {
+				name: 'Reload settings',
+			} );
+			const calls = vi
+				.mocked( api.getSection )
+				.mock.calls.filter(
+					( call ) => 'rewards' === call[ 0 ]
+				).length;
+			await user.click( reload );
+			await waitFor( () =>
+				expect(
+					vi
+						.mocked( api.getSection )
+						.mock.calls.filter(
+							( call ) => 'rewards' === call[ 0 ]
+						).length
+				).toBe( calls + 1 )
+			);
+			expect(
+				await screen.findByRole( 'checkbox', {
+					name: 'Enable point rewards',
+				} )
+			).not.toBeChecked();
+		} );
+
+		it( 'warns when learners cannot earn points', async () => {
+			const user = userEvent.setup();
+			vi.mocked( api.getSection ).mockImplementation( ( async (
+				section: SectionId
+			) =>
+				'points' === section
+					? { ...points, enabled: false }
+					: JSON.parse(
+							JSON.stringify( sections[ section ] )
+						) ) as never );
+			renderPage( 'rewards' );
+			await user.click(
+				await screen.findByRole( 'checkbox', {
+					name: 'Enable point rewards',
+				} )
+			);
+			expect(
+				(
+					await screen.findAllByText(
+						/switched off on the Points tab/
+					)
+				)[ 0 ]
+			).toBeVisible();
 		} );
 	} );
 } );

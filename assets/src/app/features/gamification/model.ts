@@ -38,6 +38,7 @@ export const IMAGE_MIME_TYPES: readonly string[] = [
 ];
 
 const HEX_COLOR = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+const REVISION = /^[a-f0-9]{16}$/;
 
 export const DEFAULT_LIMITS: Limits = {
 	max_points: 100000,
@@ -150,9 +151,14 @@ export function parseSection< S extends SectionId >(
 			limit: integer( data.limit ),
 		};
 	} else if ( 'rewards' === kind ) {
+		const revision = text( data.revision );
+		if ( ! REVISION.test( revision ) ) {
+			throw invalidResponse();
+		}
 		result = {
 			enabled: boolean( data.enabled ),
 			purchase_with_points: boolean( data.purchase_with_points ),
+			revision,
 		};
 	} else {
 		result = { enabled: boolean( data.enabled ) };
@@ -619,6 +625,16 @@ export function describeFailure( error: ApiError ): FailureView {
 		code: error.code,
 		fieldErrors: messagesFrom( error.details ),
 	};
+}
+
+/**
+ * Whether a failed save was refused because someone else saved first.
+ *
+ * @param failure Reduced failure, if any.
+ * @return True for 409 `ohmylms_gamification_conflict`.
+ */
+export function isStale( failure: FailureView | null ): boolean {
+	return 'ohmylms_gamification_conflict' === failure?.code;
 }
 
 /**

@@ -17,6 +17,7 @@ import { LeaderboardTab } from './LeaderboardTab';
 import { LevelsTab } from './LevelsTab';
 import { DEFAULT_LIMITS, tabFromParam } from './model';
 import { PointsTab } from './PointsTab';
+import { RewardsTab } from './RewardsTab';
 import { StreaksTab } from './StreaksTab';
 import { Tabs, tabId, tabPanelId, type TabItem } from './Tabs';
 import {
@@ -37,7 +38,8 @@ const LABELS: Record< TabId, string > = {
 	badges: __( 'Badges', 'ohmylms' ),
 	streaks: __( 'Streaks', 'ohmylms' ),
 	xp: __( 'XP and mastery', 'ohmylms' ),
-	leaderboard: __( 'Leaderboard and rewards', 'ohmylms' ),
+	leaderboard: __( 'Leaderboard', 'ohmylms' ),
+	rewards: __( 'Rewards', 'ohmylms' ),
 };
 
 const LEVELS_API: ResourceApi< Level, LevelDraft > = {
@@ -65,7 +67,11 @@ export default function GamificationPage() {
 	const { options } = useOptions();
 	const limits = options?.limits ?? DEFAULT_LIMITS;
 
-	const points = useSection( 'points', 'points' === selected, limits );
+	const points = useSection(
+		'points',
+		'points' === selected || 'rewards' === selected,
+		limits
+	);
 	const levels = useSection( 'levels', 'levels' === selected, limits );
 	const badges = useSection( 'badges', 'badges' === selected, limits );
 	const board = useSection(
@@ -73,7 +79,7 @@ export default function GamificationPage() {
 		'leaderboard' === selected,
 		limits
 	);
-	const rewards = useSection( 'rewards', 'leaderboard' === selected, limits );
+	const rewards = useSection( 'rewards', 'rewards' === selected, limits );
 	const streak = useEngagement( 'streak', 'streaks' === selected );
 	const xp = useEngagement( 'xp', 'xp' === selected );
 	const score = useEngagement( 'score', 'xp' === selected );
@@ -87,7 +93,8 @@ export default function GamificationPage() {
 		badges: badges.dirty,
 		streaks: streak.dirty,
 		xp: xp.dirty || score.dirty || mastery.dirty,
-		leaderboard: board.dirty || rewards.dirty,
+		leaderboard: board.dirty,
+		rewards: rewards.dirty,
 	};
 	const guard = useUnsavedChangesGuard(
 		Object.values( dirty ).some( Boolean )
@@ -105,6 +112,7 @@ export default function GamificationPage() {
 		streaks: streak.loaded || streak.loading,
 		xp: xp.loaded || xp.loading,
 		leaderboard: board.loaded || board.loading,
+		rewards: rewards.loaded || rewards.loading,
 	};
 	const panels: Record< string, JSX.Element > = {
 		points: <PointsTab state={ points } limits={ limits } />,
@@ -126,12 +134,9 @@ export default function GamificationPage() {
 		streaks: <StreaksTab state={ streak } />,
 		xp: <XpTab xp={ xp } score={ score } mastery={ mastery } />,
 		leaderboard: (
-			<LeaderboardTab
-				leaderboard={ board }
-				rewards={ rewards }
-				options={ options }
-			/>
+			<LeaderboardTab leaderboard={ board } options={ options } />
 		),
+		rewards: <RewardsTab rewards={ rewards } points={ points } />,
 	};
 
 	return (

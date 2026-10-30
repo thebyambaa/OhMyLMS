@@ -8,7 +8,7 @@ export const SECTION_IDS = [
 ] as const;
 export type SectionId = ( typeof SECTION_IDS )[ number ];
 
-/** Tabs of the screen; rewards share the leaderboard tab, score and mastery the XP tab. */
+/** Tabs of the screen; score and mastery share the XP tab. */
 export const TAB_IDS = [
 	'points',
 	'levels',
@@ -16,6 +16,7 @@ export const TAB_IDS = [
 	'streaks',
 	'xp',
 	'leaderboard',
+	'rewards',
 ] as const;
 export type TabId = ( typeof TAB_IDS )[ number ];
 
@@ -70,9 +71,11 @@ export interface LeaderboardSettings {
 	limit: number;
 }
 
+/** `revision` is sent back on save; a different stored revision answers 409. */
 export interface RewardsSettings {
 	enabled: boolean;
 	purchase_with_points: boolean;
+	revision: string;
 }
 
 export interface SectionMap {

@@ -80,9 +80,10 @@ final class LegacyRoutes {
 	);
 
 	/**
-	 * Legacy gamification tab => new gamification tab. The legacy Reward tab has no new equivalent.
+	 * Legacy gamification tab => new gamification tab.
 	 */
 	const GAMIFICATION_TABS = array(
+		'reward-settings'      => 'rewards',
 		'point-settings'       => 'points',
 		'badge-settings'       => 'badges',
 		'level-settings'       => 'levels',
@@ -272,7 +273,7 @@ final class LegacyRoutes {
 			array(
 				'from'  => '/accounthub',
 				'to'    => '/account-hub?tab=:tab',
-				'query' => array( 'tab' => array( 'classes', 'teachers', 'parents' ) ),
+				'query' => array( 'tab' => array( 'classes', 'teachers', 'parents', 'users' ) ),
 			),
 			array(
 				'from'  => '/accounthub',
@@ -514,10 +515,8 @@ final class LegacyRoutes {
 	 */
 	public static function unavailable() {
 		$screens = array(
-			'/content-hub'                  => __( 'Content Hub overview', 'ohmylms' ),
-			'/gamification/reward-settings' => __( 'Rewards', 'ohmylms' ),
-			'/accounthub?tab=users'         => __( 'All accounts', 'ohmylms' ),
-			'/quiz-report'                  => __( 'Quiz reports overview', 'ohmylms' ),
+			'/content-hub' => __( 'Content Hub overview', 'ohmylms' ),
+			'/quiz-report' => __( 'Quiz reports overview', 'ohmylms' ),
 		);
 		/**
 		 * Filters the legacy screens listed as not yet available in the new app.

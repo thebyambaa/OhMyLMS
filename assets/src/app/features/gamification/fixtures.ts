@@ -50,6 +50,7 @@ export const leaderboard: LeaderboardSettings = {
 export const rewards: RewardsSettings = {
 	enabled: false,
 	purchase_with_points: false,
+	revision: '0123456789abcdef',
 };
 
 export const bronze: Level = {

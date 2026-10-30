@@ -156,6 +156,51 @@ writing. Only `create_student` and `invite` rows are written (`created` with `us
 with its one-time `url`); a row that fails becomes `error` and the rest continue. Applying the same file again finds
 everyone as `existing` or `pending`, so nothing is created twice; the old review token is stale by then.
 
+## All accounts
+
+Server code: `includes/Rest/V1/AccountHubUsersController.php` (extends the Account Hub controller for paging and
+errors, with its own permissions). Screen: `#/account-hub?tab=users` (`UsersTab.tsx`, `AccountDialog.tsx`,
+`accounts.ts`, `accountsApi.ts`). It replaces the legacy `#/accounthub?tab=users` tab (`PeopleDirectory.jsx` with
+`AddModal.jsx`/`EditModal`), which used `GET/POST ohmylms/v1/school/users` and `GET/POST /school/users/{id}`; those
+legacy routes are unchanged.
+
+| Severity | Finding (legacy All accounts tab and `school/users`) |
+| --- | --- |
+| High | **No privilege boundary on edits.** `POST /school/users/{id}` changed the email of any account the caller could `edit_user`, so a delegated user manager (`edit_users` without `manage_options`) could set an administrator's email and send it a reset link: account takeover. It also changed the caller's own email without core's confirmation mail, and had no stale-save check. |
+| Medium | **Directory PII and size.** Each row carried avatar URL (an email hash), edit URL, last login and roles; the tab downloaded every 50-row page (no totals) and searched, date-filtered and paged in the browser. |
+| Medium | **Account creation trusted the role map.** Student/teacher/parent roles were assigned without checking the role was editable by the caller or held no capability beyond the caller's; an explicit username that was taken was silently changed to `name2`. |
+| Low | `is_banned` cast any non-empty meta (including `no`) to "Blocked"; `last_login` was site-local time without a zone. |
+| OK | Core REST nonce; listing needs `list_users`, creating `create_users`; roles were limited to student, teacher and parent; new accounts get a random password and the standard WordPress set-password mail. |
+
+Permissions: anonymous `401`, otherwise `403` without the core capability: `list_users` for the list and options
+(`_cannot_list_users`), `create_users` to create (`_cannot_create_users`), `edit_users` to open or save an account
+(`_cannot_edit_users`). On top of core, an account can be opened or saved only when it is not the caller's own
+(`403 _own_account`; use the profile page) and every capability it holds (role names aside) is also held by the
+caller (`403 _cannot_manage_user`), so an administrator can never be edited by a lesser user manager. An account type
+is offered and accepted only when its role is in `get_editable_roles()` for the caller, is not `administrator` and
+holds no capability the caller lacks (`403 _type_not_allowed`). No route assigns or changes roles or capabilities;
+an extra `role` parameter is ignored.
+
+| Method | Path (below `/account-hub`) | Purpose | Success |
+| --- | --- | --- | --- |
+| GET | `/users` | Accounts by name; `search` (name, username, email), `role` (a site role slug), `registered` (`all`, `last_30_days`, `current_month`, `previous_month`, `current_year`, `last_12_months`, site time zone), `status` (`all`, `active`, `blocked`), `page`, `per_page` ≤ 100 | 200 + totals, `no-store` |
+| GET | `/users/options` | `{ roles[] {slug, label}, types[] {value, label}, can_create }` | 200 |
+| POST | `/users` | `{ type: student\|teacher\|parent, first_name, last_name?, email, username?, send_email (default true) }` | 201 account + `Location` |
+| GET | `/users/{id}` | `{ id, username, display_name, first_name, last_name, email, roles, version }` | 200, `no-store` |
+| PUT / PATCH / POST | `/users/{id}` | Partial update of `first_name`, `last_name`, `email`; `send_reset`; send `version` | 200 |
+
+Listed account: `id, display_name, username, email, roles[] {slug, label}, registered_at, last_login, blocked,
+can_edit` (times UTC ISO 8601; `can_edit` applies the rules above). No avatar, edit URL or other profile data.
+Creating: first name 1-190, last name ≤ 190, email valid and unused (`409 _email_exists`, `data.field`); an explicit
+username must be valid (`422 _invalid_username`) and free (`409 _username_exists`), otherwise it is derived from the
+email with a numeric suffix. The display name is first plus last name; the person sets the password from the mailed
+link. Saving locks the user row inside a transaction; a different `version` (hash of email, display name, first and
+last name) answers `409 _conflict` with `data.version`, writing nothing; another account's email answers
+`409 _email_exists`. `send_reset` mails a reset link after a successful save. Creates and edits are recorded in the
+school audit log (`account_created_by_admin`, `account_updated_by_admin`).
+
+Not carried over: the legacy row checkboxes had no bulk action; blocking and unblocking stay on the Students screen.
+
 ## Examples
 
 ```http
@@ -196,7 +241,7 @@ HTTP/1.1 201 Created
 
 ## UI
 
-`assets/src/app/features/account-hub`: `#/account-hub` (tabs Schools, Classes, Teachers, Parents via `?tab=`, and
+`assets/src/app/features/account-hub`: `#/account-hub` (tabs Schools, Classes, Teachers, Parents, All accounts via `?tab=`, and
 a link to `#/students`), `#/account-hub/schools/<id>` (details, academic years, the school's classes, add class)
 and `#/account-hub/classes/<id>` (details, archive/restore, roster, add students or teachers by searching the
 school roster), and `#/account-hub/schools/<id>/roster` (invitations with revoke, managed students with
@@ -213,5 +258,8 @@ invitation link. The CSV import does not place people in classes.
 
 ## Tests
 
-`tests/php/account-hub-rest-integration.php` and `tests/php/account-hub-roster-rest-integration.php` (set
-`OHMYLMS_ACCOUNT_HUB_TEST=1`; see the file headers) and `npx vitest run --configLoader runner features/account-hub`.
+`tests/php/account-hub-rest-integration.php`, `tests/php/account-hub-roster-rest-integration.php` and
+`tests/php/account-hub-users-rest-integration.php` (set `OHMYLMS_ACCOUNT_HUB_TEST=1`; see the file headers) and
+`npx vitest run --configLoader runner features/account-hub`. The users test creates tagged accounts and two tagged
+roles, intercepts mail, and checks denied callers, paging, filters, minimal fields, creation rules, stale saves and
+that a user manager cannot edit administrators or richer roles nor create a type whose role exceeds their own.

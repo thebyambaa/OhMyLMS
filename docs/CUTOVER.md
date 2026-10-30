@@ -84,8 +84,8 @@ These must move before anything is deleted, in this order.
    redirects, `AdminAssets.php` (`ohmylms_home_page`) and `Rest/V1/CourseController.php` (`builder_url`). Use
    `LegacyRoutes::url()` or `LegacyRoutes::app_url()`. With the switch off they still land through the redirect, but
    unmapped ones end on the home screen with the notice.
-5. **Screens the new app does not have** (`LegacyRoutes::unavailable()`): the Content Hub overview, rewards, the All
-   accounts tab and the quiz reports overview (exams, comparison, sessions, the student report, course students, design
+5. **Screens the new app does not have** (`LegacyRoutes::unavailable()`): the Content Hub overview and the quiz reports
+   overview (rewards and the All accounts tab landed too; exams, comparison, sessions, the student report, course students, design
    settings, migration and the `?action=`/`?add=` dialogs landed on 31 October 2026). Build or consciously drop each one; add a rule to `LegacyRoutes::routes()` (and regenerate the fixture) when a screen lands.
 6. **Features only the legacy SDK loads** (543 files, 41 `tests/js` files): port what the new app needs, then delete
    the rest with its tests.

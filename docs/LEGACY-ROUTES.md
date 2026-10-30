@@ -68,7 +68,7 @@ Each rule has `from` (path pattern), `to` (new route) and optionally `query` and
 | `/assignment-report/:id/grade-assignment/:student` | `/assignments/:id/submissions?student=:student` in the browser; the exact `/assignments/:id/submissions/:submission` from PHP |
 | `/content-hub/question-bank`, `/extensions/question-bank`, `/assessments/question-bank` (no `?action=`, or `new`/`import`) | `/content-hub/question-bank(?action=<same>)` |
 | `/accounthub` (no tab, `home`, `schools`) | `/account-hub` |
-| `/accounthub?tab=classes\|teachers\|parents` | `/account-hub?tab=<same>` |
+| `/accounthub?tab=classes\|teachers\|parents\|users` | `/account-hub?tab=<same>` |
 | `/accounthub?tab=students` | `/students` |
 | `/quiz-report/:id/...` (including `/grade-quiz/:attempt`) | `/quizzes/:id/attempts` |
 | `/quiz-edit/:id` | `/quizzes/:id` (settings and questions) |
@@ -99,12 +99,12 @@ Settings tabs: `general-settings` → `general`, `branding-settings` → `brandi
 `tax`.
 
 Gamification tabs: `point-settings` → `points`, `badge-settings` → `badges`, `level-settings` → `levels`,
-`leaderboard-settings` → `leaderboard`, `streak-settings` → `streaks`, `xp-settings` → `xp`.
+`leaderboard-settings` → `leaderboard`, `streak-settings` → `streaks`, `xp-settings` → `xp`, `reward-settings` → `rewards`.
 
 ## Kept on the legacy admin
 
 Not at parity, so not mapped: the `/content-hub` frame, other `?action=`/`?add=` values, other `/extensions/<id>`
-pages, `/gamification/reward-settings`, `/accounthub?tab=users` and `/quiz-report` without an id. The Content Hub
+pages and `/quiz-report` without an id. The Content Hub
 menu entry therefore still opens the legacy admin; the "OhMyLMS (new)" entry is kept. After the cutover the Content Hub
 entry opens `/courses` and "OhMyLMS (new)" is removed. The Sessions entry (when shown) opens `/sessions` in both
 states.

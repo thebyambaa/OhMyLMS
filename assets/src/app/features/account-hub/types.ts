@@ -1,5 +1,11 @@
 /** Tabs of the Account Hub landing page (`#/account-hub?tab=<id>`). */
-export const TAB_IDS = [ 'schools', 'classes', 'teachers', 'parents' ] as const;
+export const TAB_IDS = [
+	'schools',
+	'classes',
+	'teachers',
+	'parents',
+	'users',
+] as const;
 
 export type TabId = ( typeof TAB_IDS )[ number ];
 
@@ -142,3 +148,80 @@ export interface YearInput {
 
 /** Field errors keyed by field name. */
 export type FormErrors< T > = Partial< Record< keyof T, string > >;
+
+/** Account types the All accounts tab creates. */
+export const ACCOUNT_TYPES = [ 'student', 'teacher', 'parent' ] as const;
+
+export type AccountType = ( typeof ACCOUNT_TYPES )[ number ];
+
+/** Registration period filters of the All accounts tab. */
+export const REGISTERED_PERIODS = [
+	'all',
+	'last_30_days',
+	'current_month',
+	'previous_month',
+	'current_year',
+	'last_12_months',
+] as const;
+
+export type RegisteredPeriod = ( typeof REGISTERED_PERIODS )[ number ];
+
+export type AccountStatusFilter = 'all' | 'active' | 'blocked';
+
+export interface RoleRef {
+	slug: string;
+	label: string;
+}
+
+/**
+ * One account in the All accounts list. Only the fields the directory shows; `can_edit` is false
+ * for the caller's own account and for accounts with privileges the caller lacks.
+ */
+export interface Account {
+	id: number;
+	display_name: string;
+	username: string;
+	email: string;
+	roles: RoleRef[];
+	registered_at: string | null;
+	last_login: string | null;
+	blocked: boolean;
+	can_edit: boolean;
+}
+
+/** An account opened for editing. `version` is sent back on save to detect concurrent edits. */
+export interface EditableAccount {
+	id: number;
+	username: string;
+	display_name: string;
+	first_name: string;
+	last_name: string;
+	email: string;
+	roles: RoleRef[];
+	version: string;
+}
+
+/** Filter choices and the account types the current user may create. */
+export interface AccountOptions {
+	roles: RoleRef[];
+	types: { value: AccountType; label: string }[];
+	can_create: boolean;
+}
+
+export interface AccountFilters {
+	role: string;
+	registered: RegisteredPeriod;
+	status: AccountStatusFilter;
+}
+
+export interface AccountInput {
+	first_name: string;
+	last_name: string;
+	email: string;
+}
+
+export interface NewAccountInput extends AccountInput {
+	type: AccountType;
+	username: string;
+	send_email: boolean;
+}

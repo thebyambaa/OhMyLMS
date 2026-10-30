@@ -4,7 +4,7 @@ import type { FeatureDefinition } from '../types';
 
 /**
  * Account Hub at `#/account-hub`; the tab is the `tab` query parameter (`schools`, `classes`,
- * `teachers`, `parents`). Extensions keep seeing the original `/accounthub` screen route.
+ * `teachers`, `parents`, `users`). Extensions keep seeing the original `/accounthub` screen route.
  */
 export const accountHub: FeatureDefinition = {
 	id: 'account-hub',

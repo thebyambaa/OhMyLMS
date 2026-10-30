@@ -45,8 +45,37 @@ describe( 'parsing', () => {
 			parseSection( 'rewards', {
 				enabled: false,
 				purchase_with_points: true,
+				revision: '0123456789abcdef',
 			} )
-		).toEqual( { enabled: false, purchase_with_points: true } );
+		).toEqual( {
+			enabled: false,
+			purchase_with_points: true,
+			revision: '0123456789abcdef',
+		} );
+		expect( () =>
+			parseSection( 'rewards', {
+				enabled: false,
+				purchase_with_points: true,
+			} )
+		).toThrow( ApiError );
+		expect( () =>
+			parseSection( 'rewards', {
+				enabled: false,
+				purchase_with_points: true,
+				revision: 'not-a-revision',
+			} )
+		).toThrow( ApiError );
+		expect(
+			buildPayload( 'rewards', {
+				enabled: true,
+				purchase_with_points: false,
+				revision: '0123456789abcdef',
+			} )
+		).toEqual( {
+			enabled: true,
+			purchase_with_points: false,
+			revision: '0123456789abcdef',
+		} );
 		expect( () =>
 			parseSection( 'leaderboard', {
 				enabled: true,
@@ -326,7 +355,8 @@ describe( 'display and errors', () => {
 
 	it( 'maps the tab parameter', () => {
 		expect( tabFromParam( 'badges' ) ).toBe( 'badges' );
-		expect( tabFromParam( 'rewards' ) ).toBe( 'points' );
+		expect( tabFromParam( 'rewards' ) ).toBe( 'rewards' );
+		expect( tabFromParam( 'reward-settings' ) ).toBe( 'points' );
 		expect( tabFromParam( null ) ).toBe( 'points' );
 	} );
 } );

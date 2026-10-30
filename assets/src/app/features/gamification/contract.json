@@ -54,7 +54,8 @@
 			"path": "/gamification/settings/{section}",
 			"args": { "$ref": "#/definitions/Section" },
 			"success": { "status": 200, "body": "Section" },
-			"errors": [ 400, 401, 403, 422, 500 ]
+			"errors": [ 400, 401, 403, 409, 422, 500 ],
+			"note": "Send the loaded revision; a different stored revision answers 409 ohmylms_gamification_conflict with data.revision"
 		},
 		{
 			"name": "options",
@@ -246,7 +247,8 @@
 			"rewards": {
 				"enabled": "boolean",
 				"purchase_with_points": "boolean"
-			}
+			},
+			"revision": "string ^[a-f0-9]{16}$, on every single-section answer; optional on save"
 		},
 		"LevelWrite": {
 			"name": { "type": "string", "minLength": 1, "maxLength": 60 },

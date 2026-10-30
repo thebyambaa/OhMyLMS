@@ -48,7 +48,7 @@ before the permission callback (core behaviour).
 | --- | --- | --- | --- | --- |
 | GET | `/gamification/settings` | All sections plus `integration_enabled` | 200 | 401, 403 |
 | GET | `/gamification/settings/{section}` | One section (`points`, `levels`, `badges`, `leaderboard`, `rewards`) | 200 | 401, 403 |
-| PUT / PATCH / POST | `/gamification/settings/{section}` | Partial update; only fields sent change | 200 (section) | 400, 401, 403, 422, 500 |
+| PUT / PATCH / POST | `/gamification/settings/{section}` | Partial update; only fields sent change; optional `revision` | 200 (section) | 400, 401, 403, 409, 422, 500 |
 | GET | `/gamification/options` | Metrics, operators, leaderboard modes, image types, limits | 200 | 401, 403 |
 | GET | `/gamification/levels` | List, lowest threshold first (`page`, `per_page`) | 200 + `X-WP-Total`, `X-WP-TotalPages`, `Link` | 400, 401, 403 |
 | POST | `/gamification/levels` | Create | 201 + `Location` | 400, 401, 403, 422 |
@@ -84,6 +84,32 @@ Collections accept `page` (>= 1), `per_page` (1-100, default 20) and `context`. 
 - **levels**, **badges**: `{ "enabled": bool }`.
 - **leaderboard**: `{ "enabled", "mode": "completion_rate|highest_quiz|fastest_time", "threshold": 0-100, "limit": 1-100 }`.
 - **rewards**: `{ "enabled", "purchase_with_points" }`.
+
+Every single-section GET and save answer also carries `revision` (16 hex characters of a hash of the stored option;
+not part of `GET /gamification/settings`). Send the loaded `revision` with a save: the option row is locked
+(`SELECT … FOR UPDATE` inside `OhMyLMS\Utility\Transaction`) and a different stored revision answers
+`409 ohmylms_gamification_conflict` with `data.revision`, writing nothing. Without `revision` the save is
+unconditional (scripts, MCP). A save that changes nothing keeps the revision.
+
+## Rewards (`#/gamification?tab=rewards`)
+
+Screen: `RewardsTab.tsx` in `assets/src/app/features/gamification`, its own tab (it used to share the leaderboard
+tab). It replaces the legacy `#/gamification/reward-settings` and `#/settings/gamification-settings/reward-settings`
+screen (`assets/src/features/gamification/RewardSettings.jsx`). The tab saves with the loaded `revision`, offers a
+reload after a 409, and warns when the Points section is off (learners could not earn anything to spend).
+
+What the front end reads: a course is sold for points only when the Gamification add-on is on, `enabled` and
+`purchase_with_points` are both true (`Reward::maybe_met_rules( 'purchase_course' )`, used by
+`template-functions.php`, `Point` and `Reward::valid_point_cart()`), and the course has a point price above 0 and is
+not opted out (`_purchase_point`, `_reward_disabled`, edited in the course settings, not here). Both flags are
+booleans in the schema; unknown fields (including the legacy `enable`/`rules` shape) answer 400.
+
+| Severity | Finding (legacy reward screen) |
+| --- | --- |
+| Medium | **The legacy screen no longer worked.** It read and posted `engagement/settings/reward` with `{ enable, rules: [ { slug: "purchase_course", value } ] }`; contract v1 removed that group, so it showed the defaults and every save failed with a generic "Something went wrong". |
+| Medium | **Concurrent saves overwrote each other** silently (no revision); now 409 for any section when `revision` is sent. |
+| Low | The screen merged a client-side default rule list into the server answer and showed a threshold input the server never used; the rule tooltip described course completion points instead of purchases. |
+| OK | `manage_options` and the core REST nonce; the per-course price and opt-out stay on the course. |
 
 ## Levels and badges
 
@@ -180,6 +206,7 @@ HTTP/1.1 422 Unprocessable Entity
 | 403 | `rest_cookie_invalid_nonce` | Cookie auth without a valid `X-WP-Nonce` (core). |
 | 404 | `ohmylms_level_not_found`, `ohmylms_badge_not_found`, `ohmylms_gamification_user_not_found` | Unknown slug or user. |
 | 409 | `ohmylms_badge_system`, `ohmylms_points_busy` | System badge change; another award is running. |
+| 409 | `ohmylms_gamification_conflict` (`data.revision`) | A section save with a stale `revision`. |
 | 422 | `ohmylms_gamification_duplicate_event`, `_threshold_unsupported`, `_email_incomplete` | Points section rules. |
 | 422 | `ohmylms_level_invalid_name`, `_invalid_points`, `_points_taken` (`data.conflicting_slug`), `_limit` | Level rules. |
 | 422 | `ohmylms_badge_invalid_name`, `_invalid_criteria`, `_criteria_not_allowed`, `_invalid_image`, `_limit` | Badge rules. |
@@ -209,3 +236,8 @@ restores every option it touches (including `ohmylms_streak_settings`, `ohmylms_
 `ohmylms_performance`) and removes its temporary users and attachments. For the four engagement groups it checks denied
 callers, the legacy full POST, partial updates, string normalisation, every schema and 422 rule with the option unchanged
 afterwards, the mastery round trip and the group schemas. It never enables streaks or XP, so no table is installed.
+
+`tests/php/gamification-rewards-rest-integration.php` (same flag) covers the rewards section: denied callers, the
+revision on GET and saves, a stale revision refused with nothing written, partial and unconditional saves, the
+legacy shape refused, and the front-end readers following the flags and the add-on switch. It restores the reward
+and integration options.

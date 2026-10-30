@@ -7,12 +7,14 @@ import { SchoolsTab } from './SchoolsTab';
 import { Tabs, tabId, tabPanelId } from './Tabs';
 import { TeachersTab } from './TeachersTab';
 import { TAB_IDS, type TabId } from './types';
+import { UsersTab } from './UsersTab';
 
 const LABELS: Record< TabId, string > = {
 	schools: __( 'Schools', 'ohmylms' ),
 	classes: __( 'Classes', 'ohmylms' ),
 	teachers: __( 'Teachers', 'ohmylms' ),
 	parents: __( 'Parents', 'ohmylms' ),
+	users: __( 'All accounts', 'ohmylms' ),
 };
 
 const PANELS: Record< TabId, () => JSX.Element > = {
@@ -20,6 +22,7 @@ const PANELS: Record< TabId, () => JSX.Element > = {
 	classes: ClassesTab,
 	teachers: TeachersTab,
 	parents: ParentsTab,
+	users: UsersTab,
 };
 
 /**
@@ -36,7 +39,7 @@ export default function AccountHubPage() {
 			<h2>{ __( 'Account Hub', 'ohmylms' ) }</h2>
 			<p>
 				{ __(
-					'Schools, classes, teachers and parents. Student accounts are managed on the Students screen:',
+					'Schools, classes, teachers, parents and all accounts. Student enrolments are managed on the Students screen:',
 					'ohmylms'
 				) }{ ' ' }
 				<Link to="/students">{ __( 'Open students', 'ohmylms' ) }</Link>

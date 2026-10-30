@@ -294,7 +294,7 @@
 		],
 		[
 			"/accounthub?tab=users",
-			null
+			"/account-hub?tab=users"
 		],
 		[
 			"/settings/design-settings",
@@ -310,7 +310,7 @@
 		],
 		[
 			"/gamification/reward-settings",
-			null
+			"/gamification?tab=rewards"
 		],
 		[
 			"/quiz-report",
@@ -467,6 +467,14 @@
 		[
 			"/content-hub/curriculum/compare?roadmap=20",
 			"/content-hub/curriculum/compare?roadmap=20"
+		],
+		[
+			"/settings/gamification-settings/reward-settings",
+			"/gamification?tab=rewards"
+		],
+		[
+			"/accounthub?tab=users&page=2",
+			"/account-hub?tab=users&page=2"
 		]
 	],
 	"routes": [
@@ -628,7 +636,8 @@
 				"tab": [
 					"classes",
 					"teachers",
-					"parents"
+					"parents",
+					"users"
 				]
 			}
 		},
@@ -945,6 +954,14 @@
 		{
 			"from": "/settings/migration-settings/*",
 			"to": "/settings?tab=migration"
+		},
+		{
+			"from": "/gamification/reward-settings",
+			"to": "/gamification?tab=rewards"
+		},
+		{
+			"from": "/settings/gamification-settings/reward-settings/*",
+			"to": "/gamification?tab=rewards"
 		},
 		{
 			"from": "/gamification/point-settings",
