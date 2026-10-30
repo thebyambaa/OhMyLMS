@@ -11,6 +11,7 @@ import {
 import { curriculum } from './curriculum';
 import { courseReport, dashboard, earnings } from './dashboard';
 import { emails } from './emails';
+import { extensionPages } from './extensions';
 import { gamification } from './gamification';
 import { home } from './home';
 import { integrations } from './integrations';
@@ -62,6 +63,7 @@ export const features: readonly FeatureDefinition[] = [
 	settings,
 	taxonomies,
 	webhooks,
+	extensionPages,
 ];
 
 /**

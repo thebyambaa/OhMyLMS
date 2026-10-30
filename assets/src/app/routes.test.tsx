@@ -1,6 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { lazy } from '@wordpress/element';
+import { createRegistry } from '../extensions/registry.mjs';
 import type { FeatureDefinition } from './features/types';
 import { renderShell } from './test/render';
 
@@ -113,6 +114,132 @@ describe( 'app shell', () => {
 		expect(
 			screen.queryByRole( 'link', { name: 'Courses' } )
 		).not.toBeInTheDocument();
+	} );
+} );
+
+describe( 'extension surfaces', () => {
+	function withExtensionPages(
+		overrides: Partial< FeatureDefinition > = {}
+	): FeatureDefinition[] {
+		return [
+			...createFeatures( overrides ),
+			{
+				id: 'extension-pages',
+				title: 'Extensions',
+				path: '/extensions/:id',
+				hidden: true,
+				component: lazy(
+					() => import( './features/extensions/ExtensionPage' )
+				),
+			},
+		];
+	}
+
+	it( 'routes and links registered admin pages', async () => {
+		const user = userEvent.setup();
+		const extensions = createRegistry();
+		extensions.registerAdminPage( 'example-page', {
+			label: 'Example page',
+			render: () => <h2>Example extension page</h2>,
+		} );
+		renderShell( withExtensionPages(), { extensions } );
+		await screen.findByRole( 'heading', { name: 'Home page' } );
+
+		await user.click(
+			screen.getByRole( 'link', { name: 'Example page' } )
+		);
+
+		expect(
+			await screen.findByRole( 'heading', {
+				name: 'Example extension page',
+			} )
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'link', { name: 'Example page' } )
+		).toHaveAttribute( 'aria-current', 'page' );
+	} );
+
+	it( '404s an unknown or disabled extension page', async () => {
+		const extensions = createRegistry();
+		extensions.registerAdminPage( 'off', {
+			label: 'Off',
+			enabled: false,
+			render: () => <h2>Disabled page</h2>,
+		} );
+		renderShell( withExtensionPages(), {
+			route: '/extensions/off',
+			extensions,
+		} );
+
+		expect(
+			await screen.findByRole( 'heading', { name: 'Page not found' } )
+		).toBeInTheDocument();
+		expect( screen.queryByText( 'Disabled page' ) ).not.toBeInTheDocument();
+	} );
+
+	it( 'renders screen slots and editor panels with the extension route and params', async () => {
+		const extensions = createRegistry();
+		extensions.registerSlot( 'before', {
+			label: 'Before',
+			slot: 'admin.screen.before',
+			when: ( context ) => context.route === '/course-edit/:id',
+			render: ( { id }: { id: string } ) => <p>Before course { id }</p>,
+		} );
+		extensions.registerSlot( 'after', {
+			label: 'After',
+			slot: 'admin.screen.after',
+			render: () => <p>After every screen</p>,
+		} );
+		extensions.registerEditorPanel( 'panel', {
+			label: 'Panel',
+			slot: '/course-edit/:id',
+			render: ( { route }: { route: string } ) => (
+				<p>Panel for { route }</p>
+			),
+		} );
+		extensions.registerEditorPanel( 'other-panel', {
+			label: 'Other panel',
+			slot: '/quiz-edit/:id',
+			render: () => <p>Quiz panel</p>,
+		} );
+		renderShell(
+			createFeatures( {
+				path: '/courses/:id',
+				extensionRoute: '/course-edit/:id',
+			} ),
+			{ route: '/courses/12', extensions }
+		);
+
+		expect(
+			await screen.findByRole( 'heading', { name: 'Courses page' } )
+		).toBeInTheDocument();
+		expect( screen.getByText( 'Before course 12' ) ).toBeInTheDocument();
+		expect( screen.getByText( 'After every screen' ) ).toBeInTheDocument();
+		expect(
+			screen.getByText( 'Panel for /course-edit/:id' )
+		).toBeInTheDocument();
+		expect( screen.queryByText( 'Quiz panel' ) ).not.toBeInTheDocument();
+	} );
+
+	it( 'keeps the screen when an extension slot fails', async () => {
+		vi.spyOn( console, 'error' ).mockImplementation( () => undefined );
+		window.addEventListener( 'error', ( event ) => event.preventDefault() );
+		const extensions = createRegistry();
+		extensions.registerSlot( 'broken', {
+			label: 'Broken',
+			slot: 'admin.screen.after',
+			render: () => {
+				throw new Error( 'Slot failure' );
+			},
+		} );
+		renderShell( createFeatures(), { route: '/courses', extensions } );
+
+		expect(
+			await screen.findByRole( 'heading', { name: 'Courses page' } )
+		).toBeInTheDocument();
+		expect( screen.getByRole( 'alert' ) ).toHaveTextContent(
+			'This extension could not be displayed.'
+		);
 	} );
 } );
 

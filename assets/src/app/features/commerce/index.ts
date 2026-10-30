@@ -21,6 +21,7 @@ export const orderDetail: FeatureDefinition = {
 	id: 'order-detail',
 	title: __( 'Order', 'ohmylms' ),
 	path: '/orders/:id',
+	extensionRoute: '/order-edit/:id',
 	hidden: true,
 	capability: 'manage_options',
 	component: lazy(

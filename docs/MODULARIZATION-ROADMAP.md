@@ -173,7 +173,8 @@ test in `tests/php/` and component tests.
 | Quizzes, attempts and grading | Partial | Upstream hardened APIs and typed screens are merged; full question/content editor parity remains |
 | Communities, Assignments and question editors | Preview UI pending | Backend groundwork exists; no full-screen parity claim |
 | Cutover (menu points at the new app, recovered runtime deleted) | Not started | Old PHP tests for removed routes go with it |
-| PHP boundaries, page-by-page asset loading, CI enforcement checks | Partial | Named backend services and lazy preview chunks exist; complete boundaries, isolation and enforcement remain |
+| PHP boundaries, page-by-page asset loading, CI enforcement checks | Partial | Named backend services and lazy preview chunks exist. The extension SDK, classic editor, media library and TinyMCE no longer load on every page (logged-out home page on `800.local`: 49 scripts, 1,030 KB gzip before; 2 scripts, 2 KB after). Complete boundaries and enforcement remain |
+| Extension host in the new app | Partial | Authored host: admin pages, screen slots, editor panels by original route, integration panels, readiness event and per-extension error isolation, verified with the examples module and graded-reader on `800.local`. Question, lesson and membership surfaces wait for their rebuilt screens; checkout and frontend slots still use the existing SDK |
 
 Stylesheet cleanup is intentionally skipped.
 

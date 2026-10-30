@@ -10,6 +10,7 @@ export const gamification: FeatureDefinition = {
 	id: 'gamification',
 	title: __( 'Gamification', 'ohmylms' ),
 	path: '/gamification',
+	extensionRoute: '/gamification/:tab',
 	capability: 'manage_options',
 	component: lazy(
 		() =>

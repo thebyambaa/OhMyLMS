@@ -1,6 +1,7 @@
 import { createRoot } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { App } from '../App';
+import { isExtensionHost } from '../extensions/host';
 import { parseBootstrap } from './config';
 import { configureApiFetch } from './configure-api-fetch';
 
@@ -31,6 +32,12 @@ export function mountApp( doc: Document, raw: unknown ): boolean {
 		return false;
 	}
 	configureApiFetch( bootstrap );
-	createRoot( container ).render( <App bootstrap={ bootstrap } /> );
+	const host = doc.defaultView?.ohmylms?.extensions;
+	createRoot( container ).render(
+		<App
+			bootstrap={ bootstrap }
+			extensions={ isExtensionHost( host ) ? host : undefined }
+		/>
+	);
 	return true;
 }

@@ -18,6 +18,7 @@ export const lessonEditor: FeatureDefinition = {
 	id: 'lesson-editor',
 	title: __( 'Lesson editor', 'ohmylms' ),
 	path: '/content-hub/lessons/:id',
+	extensionRoute: '/lesson-edit/:id',
 	capability: 'manage_options',
 	hidden: true,
 	component: lazy(

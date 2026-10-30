@@ -24,6 +24,7 @@ export const certificateEditor: FeatureDefinition = {
 	id: 'certificates-editor',
 	title: __( 'Certificate template', 'ohmylms' ),
 	path: '/certificates/:id',
+	extensionRoute: '/certificate-edit/:id',
 	hidden: true,
 	capability: 'manage_options',
 	component: lazy(

@@ -9,6 +9,8 @@ namespace OhMyLMS\Assets;
 
 use OhMyLMS\Admin\AppPage;
 use OhMyLMS\Design\Ui;
+use OhMyLMS\Extensions\Registry;
+use OhMyLMS\Extensions\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -21,6 +23,11 @@ final class AdminAppAssets {
 	 * Script and style handle.
 	 */
 	const HANDLE = 'ohmylms-admin-app';
+
+	/**
+	 * Extension host handle, passed to `ohmylms_enqueue_extension_scripts` on this page.
+	 */
+	const EXTENSIONS_HANDLE = 'ohmylms-app-extensions';
 
 	/**
 	 * Register hooks. Runs after the design system stylesheet (priority 30) so it can depend on it.
@@ -82,13 +89,39 @@ final class AdminAppAssets {
 			wp_enqueue_style( self::HANDLE, $build['url'] . '/admin-app.css', $style_deps, $build['asset']['version'] );
 		}
 
-		wp_enqueue_script( self::HANDLE, $build['url'] . '/admin-app.js', $build['asset']['dependencies'], $build['asset']['version'], true );
+		$dependencies = array_merge( $build['asset']['dependencies'], self::enqueue_extension_host( $build ) );
+		wp_enqueue_script( self::HANDLE, $build['url'] . '/admin-app.js', array_values( array_unique( $dependencies ) ), $build['asset']['version'], true );
 		wp_set_script_translations( self::HANDLE, 'ohmylms', OHMYLMS_DIR . '/languages' );
 		wp_add_inline_script(
 			self::HANDLE,
 			'window.ohmylmsApp = ' . wp_json_encode( self::bootstrap_data(), JSON_HEX_TAG | JSON_HEX_AMP ) . ';',
 			'before'
 		);
+	}
+
+	/**
+	 * Load the extension host (`window.ohmylms.extensions`) and the scripts extensions add for it.
+	 *
+	 * The host loads first, then everything queued on `ohmylms_enqueue_extension_scripts`, then the app, so
+	 * extensions register before the app renders (docs/EXTENSIONS.md).
+	 *
+	 * @param array $build Located build, from {@see self::locate()}.
+	 * @return string[] Handles the app must load after; empty when the host is not built.
+	 */
+	private static function enqueue_extension_host( array $build ) {
+		$asset_file = $build['dir'] . '/admin-app-extensions.asset.php';
+		if ( ! is_file( $asset_file ) || ! is_file( $build['dir'] . '/admin-app-extensions.js' ) ) {
+			return array();
+		}
+		$asset = require $asset_file;
+		// Extension editors may open the media library.
+		wp_enqueue_media();
+		wp_enqueue_script( self::EXTENSIONS_HANDLE, $build['url'] . '/admin-app-extensions.js', $asset['dependencies'], $asset['version'], true );
+		wp_localize_script( self::EXTENSIONS_HANDLE, 'ohmylmsExtensionManifest', array_merge( Registry::manifest(), array( 'settings' => Settings::manifest() ) ) );
+		$scripts = wp_scripts();
+		$before  = $scripts->queue;
+		do_action( 'ohmylms_enqueue_extension_scripts', self::EXTENSIONS_HANDLE );
+		return array_merge( array( self::EXTENSIONS_HANDLE ), array_values( array_diff( $scripts->queue, $before ) ) );
 	}
 
 	/**

@@ -24,6 +24,7 @@ export const courseEditor: FeatureDefinition = {
 	id: 'courses-editor',
 	title: __( 'Course', 'ohmylms' ),
 	path: '/courses/:id',
+	extensionRoute: '/course-edit/:id/:step?/:subStep?',
 	hidden: true,
 	capability: 'edit_posts',
 	component: lazy(

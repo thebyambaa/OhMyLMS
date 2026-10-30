@@ -17,6 +17,8 @@ final class SourceAssets {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register' ), 11 );
 		if ( ! defined( 'OHMYLMS_SOURCE_ASSETS' ) || ! OHMYLMS_SOURCE_ASSETS ) {
 			return; }
+		// The source-build signup form marks its fields for the SDK's registration form.
+		add_action( 'ohmylms_signup_form_start', array( __CLASS__, 'enqueue' ) );
 		add_filter( 'script_loader_src', array( __CLASS__, 'url' ), 20 );
 		add_filter( 'style_loader_src', array( __CLASS__, 'url' ), 20 );
 	}

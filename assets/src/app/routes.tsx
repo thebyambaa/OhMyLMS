@@ -1,6 +1,7 @@
 import { Suspense } from '@wordpress/element';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { useBootstrap } from './bootstrap/BootstrapContext';
+import { ExtensionSlot } from './extensions/ExtensionSlot';
 import { getVisibleFeatures } from './features/registry';
 import type { FeatureDefinition } from './features/types';
 import { AppLayout } from './layout/AppLayout';
@@ -8,13 +9,39 @@ import { ErrorBoundary } from './layout/ErrorBoundary';
 import { NotFound } from './layout/NotFound';
 import { RouteFallback } from './layout/RouteFallback';
 
+/**
+ * One screen with its extension surfaces: `admin.screen.before`/`after` slots, the editor panels registered
+ * for its extension route and, on Integrations, integration panels. Extensions receive the route params,
+ * `route` (the extension route pattern) and `hash`.
+ *
+ * @param props         Component props.
+ * @param props.feature Feature to render.
+ */
 function FeatureRoute( { feature }: { feature: FeatureDefinition } ) {
 	const Page = feature.component;
+	const params = useParams();
+	useLocation();
+	const route = feature.extensionRoute ?? feature.path;
+	const context = { ...params, route, hash: window.location.hash };
 	return (
 		<ErrorBoundary resetKey={ feature.id }>
+			<ExtensionSlot name="admin.screen.before" context={ context } />
 			<Suspense fallback={ <RouteFallback /> }>
 				<Page />
 			</Suspense>
+			<ExtensionSlot name="admin.screen.after" context={ context } />
+			<ExtensionSlot
+				kind="editor-panel"
+				name={ route }
+				context={ context }
+			/>
+			{ '/integrations' === route && (
+				<ExtensionSlot
+					kind="integration"
+					name="integrations"
+					context={ context }
+				/>
+			) }
 		</ErrorBoundary>
 	);
 }

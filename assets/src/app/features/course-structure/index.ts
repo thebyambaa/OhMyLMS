@@ -18,6 +18,7 @@ export const courseEditor: FeatureDefinition = {
 	id: 'course-structure-editor',
 	title: __( 'Course structure', 'ohmylms' ),
 	path: '/content-hub/courses/:id',
+	extensionRoute: '/course-edit/:id/:step?/:subStep?',
 	capability: 'manage_options',
 	hidden: true,
 	component: lazy(
@@ -31,6 +32,7 @@ export const courseSettings: FeatureDefinition = {
 	id: 'course-settings-editor',
 	title: __( 'Course settings', 'ohmylms' ),
 	path: '/content-hub/courses/:id/settings',
+	extensionRoute: '/course-edit/:id/:step?/:subStep?',
 	capability: 'manage_options',
 	hidden: true,
 	component: lazy(

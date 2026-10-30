@@ -19,4 +19,10 @@ export interface FeatureDefinition {
 	readonly hidden?: boolean;
 	/** Capability the user needs (as exposed by `ohmylms_app_capabilities`). Omit for everyone. */
 	readonly capability?: string;
+	/**
+	 * Route pattern extensions see as `context.route` and use as this screen's editor-panel slot. The public
+	 * extension contract (docs/EXTENSIONS.md) names screens by their original admin routes, such as
+	 * `/quiz-edit/:id`. Defaults to `path`.
+	 */
+	readonly extensionRoute?: string;
 }

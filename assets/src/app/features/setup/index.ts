@@ -11,6 +11,7 @@ export const setup: FeatureDefinition = {
 	id: 'setup',
 	title: __( 'Setup', 'ohmylms' ),
 	path: '/setup',
+	extensionRoute: '/setup-wizard/:tab?',
 	capability: 'manage_options',
 	component: lazy(
 		() => import( /* webpackChunkName: "admin-app-setup" */ './SetupPage' )

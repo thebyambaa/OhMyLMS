@@ -37,6 +37,11 @@ module.exports = {
 	entry: {
 		// New typed admin app (see docs/ARCHITECTURE.md). Self-contained; it imports nothing from the recovered app.
 		'admin-app': path.resolve( __dirname, 'assets/src/app/main.tsx' ),
+		// Publishes window.ohmylms.extensions before extension scripts and the app load.
+		'admin-app-extensions': path.resolve(
+			__dirname,
+			'assets/src/app/extensions/host-entry.ts'
+		),
 		'email-packages': path.resolve(
 			__dirname,
 			'assets/src/features/vendor-packages/email-loader.js'

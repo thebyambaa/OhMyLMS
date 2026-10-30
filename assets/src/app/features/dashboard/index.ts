@@ -21,6 +21,7 @@ export const earnings: FeatureDefinition = {
 	id: 'earnings',
 	title: __( 'Earnings', 'ohmylms' ),
 	path: '/earnings',
+	extensionRoute: '/earnings-report',
 	capability: 'manage_options',
 	component: lazy(
 		() =>
@@ -38,6 +39,7 @@ export const courseReport: FeatureDefinition = {
 	id: 'course-report',
 	title: __( 'Course report', 'ohmylms' ),
 	path: '/reports/courses/:id',
+	extensionRoute: '/course/:id/report',
 	hidden: true,
 	capability: 'manage_options',
 	component: lazy(

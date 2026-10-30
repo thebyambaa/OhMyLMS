@@ -86,11 +86,24 @@ tracked PHP and roadmap changes passes.
 ## Public extension contract
 
 [EXTENSIONS.md](EXTENSIONS.md) remains the public API v1 contract. The existing admin retains its
-extension SDK. Before switching the main admin, the new shell must support early page registration,
-`/extensions/<id>` routes, reactive slots, editor panels, extension error isolation and the readiness
-event, with the documented render contexts. Question/lesson, checkout and membership extension
-surfaces must be verified with their corresponding rebuilt features. Do not load the recovered SDK
-into the preview just to mask missing implementations.
+extension SDK. The new app has its own authored host, `assets/src/app/extensions`, built from the
+shared registry (`assets/src/extensions/registry.mjs`); it does not load the recovered SDK.
+
+- `admin-app-extensions` (4 KB) publishes the frozen `window.ohmylms.extensions` (registry methods,
+  `api`, `renderSlot`, `renderEditor`, `mount`) and fires `ohmylms:extensions-ready`.
+  `AdminAppAssets` loads it first, then fires `ohmylms_enqueue_extension_scripts` with its handle and
+  makes the app depend on every script that action queued, so extensions register before the app renders.
+- `/extensions/<id>` renders registered admin pages, which the navigation lists. Every route renders the
+  `admin.screen.before`/`after` slots and the editor panels whose slot is the feature's
+  `extensionRoute`: the original admin route pattern (for example `/quiz-edit/:id` for `#/quizzes/:id`),
+  so existing extensions keep their keys. Context is the route params plus `route` and `hash`.
+  Integrations renders `integration` panels.
+- Each entry renders inside `ExtensionBoundary`: a failure shows an alert for that extension only and emits
+  `ohmylms:extension-error`.
+
+Question editors, lesson editors and membership settings are registered and listed but are not yet
+rendered: they need the rebuilt question authoring, lesson-type and membership extension-settings
+screens. Checkout fields and frontend slots still use the existing SDK.
 
 ## Rebuild policy and checks
 

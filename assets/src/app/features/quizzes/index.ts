@@ -24,6 +24,7 @@ export const quizEditor: FeatureDefinition = {
 	id: 'quizzes-editor',
 	title: __( 'Quiz settings', 'ohmylms' ),
 	path: '/quizzes/:id',
+	extensionRoute: '/quiz-edit/:id',
 	hidden: true,
 	capability: 'edit_posts',
 	component: lazy(
@@ -39,6 +40,7 @@ export const quizAttempts: FeatureDefinition = {
 	id: 'quizzes-attempts',
 	title: __( 'Quiz attempts', 'ohmylms' ),
 	path: '/quizzes/:id/attempts',
+	extensionRoute: '/quiz-report/:id',
 	hidden: true,
 	capability: 'edit_posts',
 	component: lazy(

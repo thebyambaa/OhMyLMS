@@ -10,6 +10,7 @@ export const settings: FeatureDefinition = {
 	id: 'settings',
 	title: __( 'Settings', 'ohmylms' ),
 	path: '/settings',
+	extensionRoute: '/settings/:tab/:subTab?/:subPanel?',
 	capability: 'manage_options',
 	component: lazy(
 		() =>
