@@ -11,16 +11,24 @@
 			"gzip": 1000
 		},
 		"admin-app.js": {
-			"raw": 62800,
-			"gzip": 21500
+			"raw": 65300,
+			"gzip": 21900
+		},
+		"chunks/admin-app-account-hub.js": {
+			"raw": 43300,
+			"gzip": 10700
+		},
+		"chunks/admin-app-assignments.js": {
+			"raw": 34400,
+			"gzip": 9300
 		},
 		"chunks/admin-app-certificates.js": {
 			"raw": 38500,
 			"gzip": 10700
 		},
 		"chunks/admin-app-commerce.js": {
-			"raw": 39100,
-			"gzip": 9900
+			"raw": 54400,
+			"gzip": 12600
 		},
 		"chunks/admin-app-content-hub.js": {
 			"raw": 13900,
@@ -55,8 +63,8 @@
 			"gzip": 400
 		},
 		"chunks/admin-app-gamification.js": {
-			"raw": 40900,
-			"gzip": 10900
+			"raw": 58300,
+			"gzip": 15000
 		},
 		"chunks/admin-app-home.js": {
 			"raw": 3400,
@@ -79,24 +87,24 @@
 			"gzip": 9300
 		},
 		"chunks/admin-app-question-editors.js": {
-			"raw": 119600,
-			"gzip": 34300
+			"raw": 101200,
+			"gzip": 28000
 		},
 		"chunks/admin-app-questions.css": {
 			"raw": 600,
 			"gzip": 300
 		},
 		"chunks/admin-app-questions.js": {
-			"raw": 39500,
-			"gzip": 11400
+			"raw": 43100,
+			"gzip": 12400
 		},
 		"chunks/admin-app-quizzes.js": {
 			"raw": 45600,
 			"gzip": 12200
 		},
 		"chunks/admin-app-settings.js": {
-			"raw": 35700,
-			"gzip": 10600
+			"raw": 79500,
+			"gzip": 22600
 		},
 		"chunks/admin-app-setup.js": {
 			"raw": 20000,
