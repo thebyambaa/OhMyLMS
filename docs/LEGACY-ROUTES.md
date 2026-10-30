@@ -35,8 +35,8 @@ Each rule has `from` (path pattern), `to` (new route) and optionally `query` and
 - Pattern segments are literals, `:name` (required), `:name?` (optional, at the end) or a final `*` (any remaining
   segments). `:name` in `to` is replaced by the URL-encoded value.
 - `query` lists allowed values per query parameter (`''` = absent); the value is usable in `to` and not copied.
-- `skip` lists query parameters whose presence keeps the legacy screen (the new question bank cannot open its
-  create/import dialog from `?action=`).
+- `skip` lists query parameters whose presence keeps the legacy screen. No built-in rule uses it any more; list dialogs
+  are mapped with `query` allow-lists, so unknown `?action=` values keep the legacy screen.
 - The first matching rule wins. PHP (`LegacyRoutes::resolve()`) and JavaScript (`resolve()` in the script) implement
   the same matcher.
 
@@ -66,25 +66,35 @@ Each rule has `from` (path pattern), `to` (new route) and optionally `query` and
 | `/assignment-edit/:id` | `/assignments/:id` |
 | `/assignment-report/:id` | `/assignments/:id/submissions` |
 | `/assignment-report/:id/grade-assignment/:student` | `/assignments/:id/submissions?student=:student` in the browser; the exact `/assignments/:id/submissions/:submission` from PHP |
-| `/content-hub/question-bank`, `/extensions/question-bank`, `/assessments/question-bank` (without `?action=`) | `/content-hub/question-bank` |
+| `/content-hub/question-bank`, `/extensions/question-bank`, `/assessments/question-bank` (no `?action=`, or `new`/`import`) | `/content-hub/question-bank(?action=<same>)` |
 | `/accounthub` (no tab, `home`, `schools`) | `/account-hub` |
 | `/accounthub?tab=classes\|teachers\|parents` | `/account-hub?tab=<same>` |
 | `/accounthub?tab=students` | `/students` |
 | `/quiz-report/:id/...` (including `/grade-quiz/:attempt`) | `/quizzes/:id/attempts` |
 | `/quiz-edit/:id` | `/quizzes/:id` (settings and questions) |
-| `/quizzes`, `/content-hub/quizzes`, `/assessments` (without `?action=`) | `/quizzes` |
+| `/quizzes`, `/content-hub/quizzes`, `/assessments` (no `?action=`, or `new`/`import`) | `/quizzes(?action=<same>)` |
 | `/course-edit/:id/...` | `/courses/:id` |
 | `/courses`, `/content-hub/courses` | `/courses` |
 | `/lesson-edit/:id` | `/content-hub/lessons/:id` |
 | `/content-hub/lessons` | `/content-hub/lessons` |
-| `/content-hub/skills`, `/extensions/skills` (without `?add=`) | `/content-hub/skills` |
+| `/content-hub/skills`, `/extensions/skills` (no `?add=`, or `add=1`) | `/content-hub/skills(?add=1)` |
 | `/content-hub/curriculum`, `/extensions/curriculum`, `/categories`, `/tags` | `/content-hub/curriculum` |
 | `/content-hub/curriculum/skill-map`, `/subjects`, `/syllabus/:id` | the same paths |
 | `/content-hub/bundles`, `/extensions/bundles` | `/content-hub/bundles` |
+| `/content-hub/curriculum/compare` (`?roadmap=:id` opens the syllabus editor) | the same path |
+| `/content-hub/exams` (no `?action=`, or `new`/`import`) | `/exams(?action=<same>)` |
+| `/communities` (retired) | `/integrations` |
+| `/students/:id/report` | `/students/:id/report` |
+| `/courses/:id/students` | `/reports/courses/:id/students` |
+| `/sessions` | `/sessions` |
+| `/settings/design-settings/quiz-editor` | `/settings?tab=quiz-design` |
+| `/settings/design-settings/colors-fonts` | `/settings?tab=design-system` |
+| `/settings/design-settings/checkout-page` | `/settings?tab=payment-gateways` |
+| `/settings/design-settings(/course-list\|course-details)` | `/settings?tab=course-archive` (course details stored options nothing reads) |
 
 Settings tabs: `general-settings` → `general`, `branding-settings` → `branding`, `account-privacy-settings` →
 `account-and-privacy`, `parmalink-settings` → `permalink`, `advanced-settings` → `advanced`, `ai-tutor-settings` →
-`ai-tutor`, `design-system-settings` → `design-system`, `xapi-settings` → `xapi`, `payments-settings` and
+`ai-tutor`, `design-system-settings` → `design-system`, `xapi-settings` → `xapi`, `migration-settings` → `migration`, `payments-settings` and
 `payments-settings/payments` → `payment-gateways`, `payments-settings/currency` → `currency`, `payments-settings/tax` →
 `tax`.
 
@@ -93,12 +103,11 @@ Gamification tabs: `point-settings` → `points`, `badge-settings` → `badges`,
 
 ## Kept on the legacy admin
 
-Not at parity, so not mapped: the `/content-hub` frame and its Exams tab, `/content-hub/curriculum/compare`,
-`?action=` and `?add=` dialogs, `/communities`, `/sessions`, `/students/:id/report`, `/courses/:id/students`, other
-`/extensions/<id>` pages, `/settings/design-settings` (layout, archive and quiz design), `/settings/migration-settings`,
-`/gamification/reward-settings`, `/accounthub?tab=users` and `/quiz-report` without an id. The Content Hub and
-Sessions menu entries therefore still open the legacy admin; the "OhMyLMS (new)" entry is kept. After the cutover the
-Content Hub entry opens `/courses`, and Sessions and "OhMyLMS (new)" are removed.
+Not at parity, so not mapped: the `/content-hub` frame, other `?action=`/`?add=` values, other `/extensions/<id>`
+pages, `/gamification/reward-settings`, `/accounthub?tab=users` and `/quiz-report` without an id. The Content Hub
+menu entry therefore still opens the legacy admin; the "OhMyLMS (new)" entry is kept. After the cutover the Content Hub
+entry opens `/courses` and "OhMyLMS (new)" is removed. The Sessions entry (when shown) opens `/sessions` in both
+states.
 
 ## Known gaps
 

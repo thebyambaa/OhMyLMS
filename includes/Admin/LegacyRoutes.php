@@ -76,6 +76,7 @@ final class LegacyRoutes {
 		'ai-tutor-settings'        => 'ai-tutor',
 		'design-system-settings'   => 'design-system',
 		'xapi-settings'            => 'xapi',
+		'migration-settings'       => 'migration',
 	);
 
 	/**
@@ -263,22 +264,6 @@ final class LegacyRoutes {
 				'from' => '/assignment-report/:id/grade-assignment/:student',
 				'to'   => '/assignments/:id/submissions?student=:student',
 			),
-			// The new question bank does not open the create or import dialog from the address.
-			array(
-				'from' => '/content-hub/question-bank',
-				'to'   => '/content-hub/question-bank',
-				'skip' => array( 'action' ),
-			),
-			array(
-				'from' => '/extensions/question-bank',
-				'to'   => '/content-hub/question-bank',
-				'skip' => array( 'action' ),
-			),
-			array(
-				'from' => '/assessments/question-bank',
-				'to'   => '/content-hub/question-bank',
-				'skip' => array( 'action' ),
-			),
 			array(
 				'from'  => '/accounthub',
 				'to'    => '/account-hub',
@@ -298,26 +283,11 @@ final class LegacyRoutes {
 				'from' => '/quiz-report/:id/*',
 				'to'   => '/quizzes/:id/attempts',
 			),
-			// Quizzes, courses, lessons and the curriculum workspace. The Content Hub frame itself and its
-			// Exams tab stay legacy until exams are rebuilt; list dialogs opened by `?action=` stay legacy too.
+			// Quizzes, courses, lessons and the curriculum workspace. The Content Hub frame itself stays
+			// legacy.
 			array(
 				'from' => '/quiz-edit/:id',
 				'to'   => '/quizzes/:id',
-			),
-			array(
-				'from' => '/quizzes',
-				'to'   => '/quizzes',
-				'skip' => array( 'action' ),
-			),
-			array(
-				'from' => '/content-hub/quizzes',
-				'to'   => '/quizzes',
-				'skip' => array( 'action' ),
-			),
-			array(
-				'from' => '/assessments',
-				'to'   => '/quizzes',
-				'skip' => array( 'action' ),
 			),
 			array(
 				'from' => '/course-edit/:id/*',
@@ -340,18 +310,13 @@ final class LegacyRoutes {
 				'to'   => '/content-hub/lessons',
 			),
 			array(
-				'from' => '/content-hub/skills',
-				'to'   => '/content-hub/skills',
-				'skip' => array( 'add' ),
-			),
-			array(
-				'from' => '/extensions/skills',
-				'to'   => '/content-hub/skills',
-				'skip' => array( 'add' ),
-			),
-			array(
 				'from' => '/content-hub/curriculum',
 				'to'   => '/content-hub/curriculum',
+			),
+			// The page itself opens `?roadmap=:id` bookmarks in the syllabus editor.
+			array(
+				'from' => '/content-hub/curriculum/compare',
+				'to'   => '/content-hub/curriculum/compare',
 			),
 			array(
 				'from' => '/extensions/curriculum',
@@ -385,12 +350,75 @@ final class LegacyRoutes {
 				'from' => '/extensions/bundles',
 				'to'   => '/content-hub/bundles',
 			),
+			array(
+				'from'  => '/content-hub/exams',
+				'to'    => '/exams',
+				'query' => array( 'action' => array( '' ) ),
+			),
+			array(
+				'from'  => '/content-hub/exams',
+				'to'    => '/exams?action=:action',
+				'query' => array( 'action' => array( 'new', 'import' ) ),
+			),
 			// The Communities screen is retired; its add-on switch lives on Integrations.
 			array(
 				'from' => '/communities',
 				'to'   => '/integrations',
 			),
+			array(
+				'from' => '/students/:id/report',
+				'to'   => '/students/:id/report',
+			),
+			array(
+				'from' => '/courses/:id/students',
+				'to'   => '/reports/courses/:id/students',
+			),
+			array(
+				'from' => '/sessions',
+				'to'   => '/sessions',
+			),
+			// Legacy Design sub-tabs. Course details stored options nothing reads, so it opens the
+			// archive tab; checkout gateways moved to the payment gateways tab.
+			array(
+				'from' => '/settings/design-settings/quiz-editor/*',
+				'to'   => '/settings?tab=quiz-design',
+			),
+			array(
+				'from' => '/settings/design-settings/colors-fonts/*',
+				'to'   => '/settings?tab=design-system',
+			),
+			array(
+				'from' => '/settings/design-settings/checkout-page/*',
+				'to'   => '/settings?tab=payment-gateways',
+			),
+			array(
+				'from' => '/settings/design-settings/*',
+				'to'   => '/settings?tab=course-archive',
+			),
 		);
+		// List dialogs the new screens open from the address; other values keep the legacy screen.
+		$dialogs = array(
+			array( '/content-hub/question-bank', '/content-hub/question-bank', 'action', array( 'new', 'import' ) ),
+			array( '/extensions/question-bank', '/content-hub/question-bank', 'action', array( 'new', 'import' ) ),
+			array( '/assessments/question-bank', '/content-hub/question-bank', 'action', array( 'new', 'import' ) ),
+			array( '/quizzes', '/quizzes', 'action', array( 'new', 'import' ) ),
+			array( '/content-hub/quizzes', '/quizzes', 'action', array( 'new', 'import' ) ),
+			array( '/assessments', '/quizzes', 'action', array( 'new', 'import' ) ),
+			array( '/content-hub/skills', '/content-hub/skills', 'add', array( '1' ) ),
+			array( '/extensions/skills', '/content-hub/skills', 'add', array( '1' ) ),
+		);
+		foreach ( $dialogs as list( $from, $to, $param, $values ) ) {
+			$routes[] = array(
+				'from'  => $from,
+				'to'    => $to,
+				'query' => array( $param => array( '' ) ),
+			);
+			$routes[] = array(
+				'from'  => $from,
+				'to'    => $to . '?' . $param . '=:' . $param,
+				'query' => array( $param => $values ),
+			);
+		}
 		foreach ( self::SETTINGS_TABS as $legacy => $tab ) {
 			$routes[] = array(
 				'from' => '/settings/' . $legacy . '/*',
@@ -486,19 +514,10 @@ final class LegacyRoutes {
 	 */
 	public static function unavailable() {
 		$screens = array(
-			'/content-hub'                          => __( 'Content Hub overview', 'ohmylms' ),
-			'/content-hub/exams'                    => __( 'Exams', 'ohmylms' ),
-			'/content-hub/curriculum/compare'       => __( 'Curriculum comparison', 'ohmylms' ),
-			'/sessions'                             => __( 'Live sessions', 'ohmylms' ),
-			'/students/:id/report'                  => __( 'Student report', 'ohmylms' ),
-			'/courses/:id/students'                 => __( 'Course students', 'ohmylms' ),
-			'/settings/design-settings'             => __( 'Design settings', 'ohmylms' ),
-			'/settings/migration-settings'          => __( 'Migration', 'ohmylms' ),
-			'/gamification/reward-settings'         => __( 'Rewards', 'ohmylms' ),
-			'/accounthub?tab=users'                 => __( 'All accounts', 'ohmylms' ),
-			'/quiz-report'                          => __( 'Quiz reports overview', 'ohmylms' ),
-			'/content-hub/question-bank?action=new' => __( 'Question create and import dialogs', 'ohmylms' ),
-			'/content-hub/skills?add=1'             => __( 'Add skill dialog', 'ohmylms' ),
+			'/content-hub'                  => __( 'Content Hub overview', 'ohmylms' ),
+			'/gamification/reward-settings' => __( 'Rewards', 'ohmylms' ),
+			'/accounthub?tab=users'         => __( 'All accounts', 'ohmylms' ),
+			'/quiz-report'                  => __( 'Quiz reports overview', 'ohmylms' ),
 		);
 		/**
 		 * Filters the legacy screens listed as not yet available in the new app.

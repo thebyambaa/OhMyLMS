@@ -30,6 +30,7 @@ import {
 } from './curriculum';
 import { courseReport, courseRoster, dashboard, earnings } from './dashboard';
 import { emails } from './emails';
+import { examEditor, examImportReview, exams } from './exams';
 import { extensionPages } from './extensions';
 import { gamification } from './gamification';
 import { home } from './home';
@@ -76,6 +77,9 @@ export const features: readonly FeatureDefinition[] = [
 	assignmentEditor,
 	assignmentSubmissions,
 	assignmentGrading,
+	exams,
+	examImportReview,
+	examEditor,
 	courseSettings,
 	lessons,
 	lessonEditor,

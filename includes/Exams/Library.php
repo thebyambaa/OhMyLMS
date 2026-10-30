@@ -203,7 +203,7 @@ final class Library {
 		$course = self::create_content(
 			'courses',
 			array(
-				'name'   => $title,
+				'title'  => $title,
 				'status' => 'draft',
 			)
 		);

@@ -68,8 +68,7 @@ class Menu {
 				$submenu[ $slug ][] = array( esc_attr__( 'Certificates', 'ohmylms' ), $capability, LegacyRoutes::url( '/certificates' ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 			}
 
-			// Sessions has no new-app screen yet.
-			if ( $legacy_admin && apply_filters( 'ohmylms_show_sessions_menu', false ) ) {
+			if ( apply_filters( 'ohmylms_show_sessions_menu', false ) ) {
 				$submenu[ $slug ][] = array( esc_attr__( 'Sessions', 'ohmylms' ), $capability, LegacyRoutes::url( '/sessions' ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 			}
 

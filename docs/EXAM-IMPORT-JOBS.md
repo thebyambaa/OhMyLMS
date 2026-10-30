@@ -36,6 +36,10 @@ cookie nonce verification remain in effect. Request IDs are job IDs, not source-
 | `POST /wp-json/ohmylms/v1/exam-imports/{id}/commit` | Validate and commit reviewed rows through the existing bank writer. |
 | `GET /wp-json/ohmylms/v1/exam-import-skills?search=algebra` | Search the existing skill catalogue during review. |
 
+The new admin uses the typed `exam-imports/jobs` routes instead (row-by-row edit, accept, reject and an
+idempotent apply); see [api/exams.md](api/exams.md). Rows rejected there are left out of every commit,
+including this legacy commit route, and are listed in the status as `rejected`.
+
 Job records use a nonpublic `ohmylms-import` persistence type. It is separate from the
 Exam content type and is absent from WordPress's generic REST API, search, rewrite and admin UI.
 Owner status includes review candidates and private answer/rubric fields. It never includes

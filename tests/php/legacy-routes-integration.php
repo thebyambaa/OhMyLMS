@@ -163,9 +163,11 @@ try {
 	ok( LegacyRoutes::url( '/orders' ) === $app . '#/orders', 'mapped url' );
 	ok( LegacyRoutes::url( '#/order-edit/45' ) === $app . '#/orders/45', 'mapped url keeps the id' );
 	ok( LegacyRoutes::url( 'accounthub?tab=classes' ) === $app . '#/account-hub?tab=classes', 'mapped url maps the tab' );
-	ok( LegacyRoutes::url( '/content-hub/exams' ) === $legacy . '#/content-hub/exams', 'unmapped url stays legacy' );
+	ok( LegacyRoutes::url( '/extensions/unknown-addon-page' ) === $legacy . '#/extensions/unknown-addon-page', 'unmapped url stays legacy' );
+	ok( LegacyRoutes::url( '/content-hub/exams?action=import' ) === $app . '#/exams?action=import', 'exam dialogs open the new exams screen' );
 	ok( LegacyRoutes::url( '/quiz-edit/5' ) === $app . '#/quizzes/5', 'quiz edit opens the new quiz editor' );
-	ok( LegacyRoutes::url( '/content-hub/question-bank?action=new' ) === $legacy . '#/content-hub/question-bank?action=new', 'dialog route stays legacy' );
+	ok( LegacyRoutes::url( '/content-hub/question-bank?action=new' ) === $app . '#/content-hub/question-bank?action=new', 'question dialogs open the new question bank' );
+	ok( LegacyRoutes::url( '/quizzes?action=bulk' ) === $legacy . '#/quizzes?action=bulk', 'an unknown dialog stays legacy' );
 	ok( LegacyRoutes::app_url( 'orders/3' ) === $app . '#/orders/3', 'app_url' );
 	ok(
 		array(
@@ -205,14 +207,14 @@ try {
 	$expect = array(
 		'ohmylms/go-dashboard'      => array( AppPage::SLUG, '/dashboard' ),
 		'ohmylms/go-courses'        => array( AppPage::SLUG, '/courses' ),
-		'ohmylms/go-exams'          => array( OHMYLMS_SLUG, '/content-hub/exams' ),
+		'ohmylms/go-exams'          => array( AppPage::SLUG, '/exams' ),
 		'ohmylms/go-question-bank'  => array( AppPage::SLUG, '/content-hub/question-bank' ),
 		'ohmylms/go-assignments'    => array( AppPage::SLUG, '/assignments' ),
 		'ohmylms/go-account-hub'    => array( AppPage::SLUG, '/account-hub' ),
 		'ohmylms/go-settings-pay'   => array( AppPage::SLUG, '/settings?tab=payment-gateways' ),
 		'ohmylms/go-settings-email' => array( AppPage::SLUG, '/emails' ),
-		'ohmylms/new-question'      => array( OHMYLMS_SLUG, '/content-hub/question-bank?action=new' ),
-		'ohmylms/new-exam'          => array( OHMYLMS_SLUG, '/content-hub/exams?action=new' ),
+		'ohmylms/new-question'      => array( AppPage::SLUG, '/content-hub/question-bank?action=new' ),
+		'ohmylms/new-exam'          => array( AppPage::SLUG, '/exams?action=new' ),
 		'addon/orders'              => array( AppPage::SLUG, '/orders' ),
 		'addon/own'                 => array( 'my-addon', '/orders' ),
 	);
@@ -299,16 +301,16 @@ try {
 		AppPage::register_menu();
 		// Entries an add-on might add: mapped and unmapped legacy routes, another page, an external link.
 		$GLOBALS['submenu'][ OHMYLMS_SLUG ][] = array( 'Add-on orders', 'manage_options', admin_url( 'admin.php?page=' . OHMYLMS_SLUG . '#/orders' ) );
-		$GLOBALS['submenu'][ OHMYLMS_SLUG ][] = array( 'Add-on exams', 'manage_options', 'admin.php?page=' . OHMYLMS_SLUG . '#/content-hub/exams' );
+		$GLOBALS['submenu'][ OHMYLMS_SLUG ][] = array( 'Add-on page link', 'manage_options', 'admin.php?page=' . OHMYLMS_SLUG . '#/extensions/unknown-addon-page' );
 		$GLOBALS['submenu'][ OHMYLMS_SLUG ][] = array( 'Add-on page', 'manage_options', 'ohmylms-addon-page' );
 		$menu_object->cutover_submenu();
 		AppPage::hide_menu_entry();
 	};
 	$build_menu();
 	ok( submenu_url( 'Content Hub' ) === $legacy . '#/content-hub', 'cutover off: Content Hub opens the legacy hub' );
-	ok( submenu_url( 'Sessions' ) === $legacy . '#/sessions', 'cutover off: Sessions stays' );
+	ok( submenu_url( 'Sessions' ) === $app . '#/sessions', 'cutover off: Sessions opens the new sessions screen' );
 	ok( submenu_url( 'OhMyLMS (new)' ) === AppPage::SLUG, 'cutover off: OhMyLMS (new) stays' );
-	ok( submenu_url( 'Add-on exams' ) === 'admin.php?page=' . OHMYLMS_SLUG . '#/content-hub/exams', 'cutover off: add-on entries are untouched' );
+	ok( submenu_url( 'Add-on page link' ) === 'admin.php?page=' . OHMYLMS_SLUG . '#/extensions/unknown-addon-page', 'cutover off: add-on entries are untouched' );
 	ok( array_values( $GLOBALS['submenu'][ OHMYLMS_SLUG ] )[0][2] === $app . '#/dashboard', 'cutover off: the top-level entry opens the first submenu, the new dashboard' );
 	wp_dequeue_script( LegacyRoutes::HANDLE );
 	LegacyRoutes::enqueue_landing( $app_hook );
@@ -326,12 +328,12 @@ try {
 	ok( submenu_url( 'Dashboard' ) === $app . '#/dashboard', 'cutover on: Dashboard' );
 	ok( array_values( $GLOBALS['submenu'][ OHMYLMS_SLUG ] )[0][2] === $app . '#/dashboard', 'cutover on: the top-level entry opens the new dashboard' );
 	ok( submenu_url( 'Content Hub' ) === $app . '#/courses', 'cutover on: Content Hub opens the new course list' );
-	ok( null === submenu_url( 'Sessions' ), 'cutover on: Sessions has no new screen, so no entry' );
+	ok( submenu_url( 'Sessions' ) === $app . '#/sessions', 'cutover on: Sessions' );
 	ok( null === submenu_url( 'OhMyLMS (new)' ), 'cutover on: OhMyLMS (new) is removed' );
 	ok( submenu_url( 'Settings' ) === $app . '#/settings?tab=general', 'cutover on: Settings' );
 	ok( submenu_url( 'Add-ons' ) === $app . '#/integrations', 'cutover on: Add-ons' );
 	ok( submenu_url( 'Add-on orders' ) === $app . '#/orders', 'cutover on: a mapped add-on entry opens the new app' );
-	ok( null === submenu_url( 'Add-on exams' ), 'cutover on: an unmapped add-on entry is dropped' );
+	ok( null === submenu_url( 'Add-on page link' ), 'cutover on: an unmapped add-on entry is dropped' );
 	ok( submenu_url( 'Add-on page' ) === 'ohmylms-addon-page', 'cutover on: entries for other pages are kept' );
 	foreach ( $GLOBALS['submenu'][ OHMYLMS_SLUG ] as $item ) {
 		ok( ! preg_match( '#admin\.php\?page=' . preg_quote( OHMYLMS_SLUG, '#' ) . '(?:[&\#]|$)#', (string) $item[2] ), 'cutover on: no submenu entry opens the legacy page: ' . $item[2] );
@@ -341,7 +343,7 @@ try {
 	} else {
 		ok( submenu_url( 'Certificates' ) === $app . '#/certificates', 'cutover on: Certificates' );
 	}
-	ok( LegacyRoutes::url( '/content-hub/exams' ) === $legacy . '#/content-hub/exams', 'cutover on: unmapped links still name the legacy route, which the redirect sends home' );
+	ok( LegacyRoutes::url( '/extensions/unknown-addon-page' ) === $legacy . '#/extensions/unknown-addon-page', 'cutover on: unmapped links still name the legacy route, which the redirect sends home' );
 
 	$expected_redirect = add_query_arg(
 		array(
@@ -386,7 +388,7 @@ try {
 	AppPage::render();
 	$page_html = ob_get_clean();
 	ok( false !== strpos( $page_html, 'id="' . LegacyRoutes::NOTICE_ID . '"' ) && false !== strpos( $page_html, 'hidden' ), 'cutover on: the app prints the hidden unavailable notice' );
-	ok( false !== strpos( $page_html, esc_html( LegacyRoutes::unavailable()['/sessions'] ) ), 'cutover on: the notice lists the screens that are not available yet' );
+	ok( false !== strpos( $page_html, esc_html( LegacyRoutes::unavailable()['/content-hub'] ) ), 'cutover on: the notice lists the screens that are not available yet' );
 	ok(
 		false !== strpos(
 			$page_html,

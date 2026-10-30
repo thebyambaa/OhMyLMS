@@ -520,7 +520,7 @@ try {
 			$course  = $call(
 				'courses',
 				array(
-					'name'   => $fixture_tag,
+					'title'  => $fixture_tag,
 					'status' => 'publish',
 				)
 			)['id'];

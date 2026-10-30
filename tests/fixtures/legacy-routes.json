@@ -286,11 +286,11 @@
 		],
 		[
 			"/content-hub/question-bank?action=new",
-			null
+			"/content-hub/question-bank?action=new"
 		],
 		[
 			"/content-hub/question-bank?action=import",
-			null
+			"/content-hub/question-bank?action=import"
 		],
 		[
 			"/accounthub?tab=users",
@@ -298,15 +298,15 @@
 		],
 		[
 			"/settings/design-settings",
-			null
+			"/settings?tab=course-archive"
 		],
 		[
 			"/settings/design-settings/course-details",
-			null
+			"/settings?tab=course-archive"
 		],
 		[
 			"/settings/migration-settings",
-			null
+			"/settings?tab=migration"
 		],
 		[
 			"/gamification/reward-settings",
@@ -342,11 +342,11 @@
 		],
 		[
 			"/courses/12/students",
-			null
+			"/reports/courses/12/students"
 		],
 		[
 			"/students/4/report",
-			null
+			"/students/4/report"
 		],
 		[
 			"/content-hub",
@@ -362,10 +362,18 @@
 		],
 		[
 			"/content-hub/quizzes?action=new",
-			null
+			"/quizzes?action=new"
 		],
 		[
 			"/content-hub/exams",
+			"/exams"
+		],
+		[
+			"/content-hub/exams?action=import",
+			"/exams?action=import"
+		],
+		[
+			"/extensions/unknown-addon-page",
 			null
 		],
 		[
@@ -386,7 +394,7 @@
 		],
 		[
 			"/sessions",
-			null
+			"/sessions"
 		],
 		[
 			"/extensions/skills",
@@ -407,6 +415,58 @@
 		[
 			"/order-edit/45/extra",
 			null
+		],
+		[
+			"/settings/design-settings/quiz-editor",
+			"/settings?tab=quiz-design"
+		],
+		[
+			"/settings/design-settings/colors-fonts",
+			"/settings?tab=design-system"
+		],
+		[
+			"/settings/design-settings/checkout-page",
+			"/settings?tab=payment-gateways"
+		],
+		[
+			"/extensions/question-bank?action=import",
+			"/content-hub/question-bank?action=import"
+		],
+		[
+			"/content-hub/question-bank?action=bulk",
+			null
+		],
+		[
+			"/quizzes?action=import",
+			"/quizzes?action=import"
+		],
+		[
+			"/assessments?action=new&course=4",
+			"/quizzes?action=new&course=4"
+		],
+		[
+			"/quizzes?action=bulk",
+			null
+		],
+		[
+			"/content-hub/skills?add=1",
+			"/content-hub/skills?add=1"
+		],
+		[
+			"/extensions/skills?add=1",
+			"/content-hub/skills?add=1"
+		],
+		[
+			"/content-hub/skills?add=yes",
+			null
+		],
+		[
+			"/content-hub/curriculum/compare",
+			"/content-hub/curriculum/compare"
+		],
+		[
+			"/content-hub/curriculum/compare?roadmap=20",
+			"/content-hub/curriculum/compare?roadmap=20"
 		]
 	],
 	"routes": [
@@ -551,27 +611,6 @@
 			"to": "/assignments/:id/submissions?student=:student"
 		},
 		{
-			"from": "/content-hub/question-bank",
-			"to": "/content-hub/question-bank",
-			"skip": [
-				"action"
-			]
-		},
-		{
-			"from": "/extensions/question-bank",
-			"to": "/content-hub/question-bank",
-			"skip": [
-				"action"
-			]
-		},
-		{
-			"from": "/assessments/question-bank",
-			"to": "/content-hub/question-bank",
-			"skip": [
-				"action"
-			]
-		},
-		{
 			"from": "/accounthub",
 			"to": "/account-hub",
 			"query": {
@@ -611,27 +650,6 @@
 			"to": "/quizzes/:id"
 		},
 		{
-			"from": "/quizzes",
-			"to": "/quizzes",
-			"skip": [
-				"action"
-			]
-		},
-		{
-			"from": "/content-hub/quizzes",
-			"to": "/quizzes",
-			"skip": [
-				"action"
-			]
-		},
-		{
-			"from": "/assessments",
-			"to": "/quizzes",
-			"skip": [
-				"action"
-			]
-		},
-		{
 			"from": "/course-edit/:id/*",
 			"to": "/courses/:id"
 		},
@@ -652,22 +670,12 @@
 			"to": "/content-hub/lessons"
 		},
 		{
-			"from": "/content-hub/skills",
-			"to": "/content-hub/skills",
-			"skip": [
-				"add"
-			]
-		},
-		{
-			"from": "/extensions/skills",
-			"to": "/content-hub/skills",
-			"skip": [
-				"add"
-			]
-		},
-		{
 			"from": "/content-hub/curriculum",
 			"to": "/content-hub/curriculum"
+		},
+		{
+			"from": "/content-hub/curriculum/compare",
+			"to": "/content-hub/curriculum/compare"
 		},
 		{
 			"from": "/extensions/curriculum",
@@ -702,8 +710,205 @@
 			"to": "/content-hub/bundles"
 		},
 		{
+			"from": "/content-hub/exams",
+			"to": "/exams",
+			"query": {
+				"action": [
+					""
+				]
+			}
+		},
+		{
+			"from": "/content-hub/exams",
+			"to": "/exams?action=:action",
+			"query": {
+				"action": [
+					"new",
+					"import"
+				]
+			}
+		},
+		{
 			"from": "/communities",
 			"to": "/integrations"
+		},
+		{
+			"from": "/students/:id/report",
+			"to": "/students/:id/report"
+		},
+		{
+			"from": "/courses/:id/students",
+			"to": "/reports/courses/:id/students"
+		},
+		{
+			"from": "/sessions",
+			"to": "/sessions"
+		},
+		{
+			"from": "/settings/design-settings/quiz-editor/*",
+			"to": "/settings?tab=quiz-design"
+		},
+		{
+			"from": "/settings/design-settings/colors-fonts/*",
+			"to": "/settings?tab=design-system"
+		},
+		{
+			"from": "/settings/design-settings/checkout-page/*",
+			"to": "/settings?tab=payment-gateways"
+		},
+		{
+			"from": "/settings/design-settings/*",
+			"to": "/settings?tab=course-archive"
+		},
+		{
+			"from": "/content-hub/question-bank",
+			"to": "/content-hub/question-bank",
+			"query": {
+				"action": [
+					""
+				]
+			}
+		},
+		{
+			"from": "/content-hub/question-bank",
+			"to": "/content-hub/question-bank?action=:action",
+			"query": {
+				"action": [
+					"new",
+					"import"
+				]
+			}
+		},
+		{
+			"from": "/extensions/question-bank",
+			"to": "/content-hub/question-bank",
+			"query": {
+				"action": [
+					""
+				]
+			}
+		},
+		{
+			"from": "/extensions/question-bank",
+			"to": "/content-hub/question-bank?action=:action",
+			"query": {
+				"action": [
+					"new",
+					"import"
+				]
+			}
+		},
+		{
+			"from": "/assessments/question-bank",
+			"to": "/content-hub/question-bank",
+			"query": {
+				"action": [
+					""
+				]
+			}
+		},
+		{
+			"from": "/assessments/question-bank",
+			"to": "/content-hub/question-bank?action=:action",
+			"query": {
+				"action": [
+					"new",
+					"import"
+				]
+			}
+		},
+		{
+			"from": "/quizzes",
+			"to": "/quizzes",
+			"query": {
+				"action": [
+					""
+				]
+			}
+		},
+		{
+			"from": "/quizzes",
+			"to": "/quizzes?action=:action",
+			"query": {
+				"action": [
+					"new",
+					"import"
+				]
+			}
+		},
+		{
+			"from": "/content-hub/quizzes",
+			"to": "/quizzes",
+			"query": {
+				"action": [
+					""
+				]
+			}
+		},
+		{
+			"from": "/content-hub/quizzes",
+			"to": "/quizzes?action=:action",
+			"query": {
+				"action": [
+					"new",
+					"import"
+				]
+			}
+		},
+		{
+			"from": "/assessments",
+			"to": "/quizzes",
+			"query": {
+				"action": [
+					""
+				]
+			}
+		},
+		{
+			"from": "/assessments",
+			"to": "/quizzes?action=:action",
+			"query": {
+				"action": [
+					"new",
+					"import"
+				]
+			}
+		},
+		{
+			"from": "/content-hub/skills",
+			"to": "/content-hub/skills",
+			"query": {
+				"add": [
+					""
+				]
+			}
+		},
+		{
+			"from": "/content-hub/skills",
+			"to": "/content-hub/skills?add=:add",
+			"query": {
+				"add": [
+					"1"
+				]
+			}
+		},
+		{
+			"from": "/extensions/skills",
+			"to": "/content-hub/skills",
+			"query": {
+				"add": [
+					""
+				]
+			}
+		},
+		{
+			"from": "/extensions/skills",
+			"to": "/content-hub/skills?add=:add",
+			"query": {
+				"add": [
+					"1"
+				]
+			}
 		},
 		{
 			"from": "/settings/general-settings/*",
@@ -736,6 +941,10 @@
 		{
 			"from": "/settings/xapi-settings/*",
 			"to": "/settings?tab=xapi"
+		},
+		{
+			"from": "/settings/migration-settings/*",
+			"to": "/settings?tab=migration"
 		},
 		{
 			"from": "/gamification/point-settings",

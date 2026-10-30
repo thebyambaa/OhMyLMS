@@ -59,7 +59,7 @@ test( 'redirectUrl stays on unmapped screens and when opted out', () => {
 	const location = {
 		pathname: '/wp-admin/admin.php',
 		search: '?page=ohmylms',
-		hash: '#/content-hub/exams',
+		hash: '#/extensions/unknown-addon-page',
 	};
 	assert.equal( redirectUrl( config, location ), null );
 	assert.equal(
@@ -153,16 +153,16 @@ test( 'landingUrl maps a carried-over legacy hash and drops the marker', () => {
 } );
 
 test( 'landingUrl sends unmapped legacy routes home and names them', () => {
-	assert.deepEqual( landingUrl( landing, arrived( '#/content-hub/exams' ) ), {
+	assert.deepEqual( landingUrl( landing, arrived( '#/extensions/unknown-addon-page' ) ), {
 		url: '/wp-admin/admin.php?page=ohmylms-app#/',
-		unavailable: '/content-hub/exams',
+		unavailable: '/extensions/unknown-addon-page',
 	} );
 	assert.equal(
 		landingUrl(
 			landing,
-			arrived( '#/content-hub/question-bank?action=new' )
+			arrived( '#/quizzes?action=bulk' )
 		).unavailable,
-		'/content-hub/question-bank?action=new'
+		'/quizzes?action=bulk'
 	);
 } );
 
@@ -208,10 +208,10 @@ function fakeDocument( readyState ) {
 
 test( 'showUnavailable fills in the route and the legacy link', () => {
 	const doc = fakeDocument( 'complete' );
-	showUnavailable( doc, 'ohmylms-legacy-unavailable', '/sessions' );
+	showUnavailable( doc, 'ohmylms-legacy-unavailable', '/content-hub' );
 	assert.equal( doc.notice.hidden, false );
-	assert.equal( doc.code.textContent, '/sessions' );
-	assert.equal( doc.link.hash, '/sessions' );
+	assert.equal( doc.code.textContent, '/content-hub' );
+	assert.equal( doc.link.hash, '/content-hub' );
 	assert.doesNotThrow( () => showUnavailable( doc, 'missing', '/x' ) );
 } );
 
@@ -221,7 +221,7 @@ test( 'start lands once with replaceState and shows the notice after load', () =
 	const win = {
 		ohmylmsLegacyRoutes: landing,
 		document: doc,
-		location: { ...arrived( '#/sessions' ), replace: assert.fail },
+		location: { ...arrived( '#/content-hub' ), replace: assert.fail },
 		history: {
 			state: null,
 			replaceState: ( state, title, url ) => replaced.push( url ),
@@ -234,7 +234,7 @@ test( 'start lands once with replaceState and shows the notice after load', () =
 	assert.equal( doc.notice.hidden, true, 'waits for the notice markup' );
 	doc.listeners.DOMContentLoaded();
 	assert.equal( doc.notice.hidden, false );
-	assert.equal( doc.code.textContent, '/sessions' );
+	assert.equal( doc.code.textContent, '/content-hub' );
 
 	const mapped = fakeDocument( 'complete' );
 	replaced.length = 0;

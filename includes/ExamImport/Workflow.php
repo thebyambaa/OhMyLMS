@@ -81,6 +81,7 @@ final class Workflow {
 			'has_mark_scheme' => ! empty( $job['mark_scheme'] ),
 			'draft_revision'  => 0,
 			'draft'           => array(),
+			'rejected'        => Review::rejected( $job ),
 		);
 	}
 
@@ -306,17 +307,26 @@ final class Workflow {
 				if ( ! empty( $job['question_ids'] ) ) {
 					return Jobs::status( $request );
 				}
-				if ( 'ready_for_review' !== $job['state'] || (int) $request['revision'] !== (int) $job['draft_revision'] || count(
+				// Rows a teacher rejected in the review screen are left out of the commit.
+				$rejected = Review::rejected( $job );
+				$kept     = array_values(
 					array_filter(
-						$job['draft'],
+						(array) ( $job['draft'] ?? array() ),
+						static function ( $row ) use ( $rejected ) {
+							return ! in_array( (string) $row['number'], $rejected, true ); }
+					)
+				);
+				if ( 'ready_for_review' !== $job['state'] || (int) $request['revision'] !== (int) $job['draft_revision'] || ! $kept || count(
+					array_filter(
+						$kept,
 						static function ( $row ) {
 							return ! empty( $row['reviewed'] ); }
 					)
-				) !== count( $job['draft'] ) ) {
+				) !== count( $kept ) ) {
 					return new \WP_Error( 'exam_review', __( 'Save and confirm review of every question first.', 'ohmylms' ), array( 'status' => 409 ) );
 				}
 				$rows = array();
-				foreach ( $job['draft'] as $row ) {
+				foreach ( $kept as $row ) {
 					$figure_settings = array(
 						'figures'       => $row['figures'] ?? array(),
 						'figure_review' => array(
