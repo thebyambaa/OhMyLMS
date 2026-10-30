@@ -11,6 +11,7 @@ import { integrations } from './integrations';
 import { membershipEditor, memberships } from './memberships';
 import { settings } from './settings';
 import { students } from './students';
+import { syllabusEditor } from './syllabus';
 import { taxonomies } from './taxonomies';
 import { webhooks } from './webhooks';
 import type { FeatureDefinition } from './types';
@@ -26,6 +27,7 @@ export const features: readonly FeatureDefinition[] = [
 	home,
 	contentHub,
 	curriculum,
+	syllabusEditor,
 	courses,
 	courseEditor,
 	orders,

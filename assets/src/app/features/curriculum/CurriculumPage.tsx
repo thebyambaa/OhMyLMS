@@ -179,6 +179,13 @@ export default function CurriculumPage() {
 								{ itemPath( items, item ) }
 							</Button>{ ' ' }
 							({ item.item_type })
+							{ item.is_syllabus && (
+								<Link
+									to={ `/content-hub/curriculum/syllabus/${ item.id }` }
+								>
+									{ __( 'Open syllabus editor', 'ohmylms' ) }
+								</Link>
+							) }
 							{ item.course_id > 0 && (
 								<>
 									{ ' ' }

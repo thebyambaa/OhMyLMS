@@ -2,6 +2,8 @@ import { lazy } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import type { FeatureDefinition } from '../types';
 
+export { listSkills } from './api';
+
 export const contentHub: FeatureDefinition = {
 	id: 'content-hub',
 	title: __( 'Content Hub', 'ohmylms' ),

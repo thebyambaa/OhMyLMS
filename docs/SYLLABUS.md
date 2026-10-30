@@ -1,5 +1,9 @@
 # Syllabuses: topics, chapters, skills, and the course a syllabus is
 
+This page describes the established workspace, including its mind-map/spreadsheet surfaces.
+The independent TypeScript preview's current scope and validation are documented in
+[syllabus authoring](api/syllabus-authoring.md); full workspace parity is still in progress.
+
 Any item in the **Curriculum** tab of the [Content Hub](CONTENT-HUB.md) can be a **syllabus**: Cambridge → IGCSE → Mathematics 0580, or a national grade 11 programme. A syllabus has its **topics**, its **chapters** (skill groups) and its **skills**, it is edited in its own full-page editor, the whole thing can be loaded from a CSV file, and **a syllabus is also a course**. Syllabus names, codes and examples in this page and in the tests are made up to show shapes; they are not syllabus definitions.
 
 ## How a syllabus is laid out

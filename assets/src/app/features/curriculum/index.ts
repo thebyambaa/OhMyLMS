@@ -15,3 +15,4 @@ export const curriculum: FeatureDefinition = {
 	),
 };
 export { CoursePlacement } from './CoursePlacement';
+export { readTree } from './api';

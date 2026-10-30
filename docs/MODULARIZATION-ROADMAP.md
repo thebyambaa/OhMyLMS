@@ -5,8 +5,8 @@
 The new admin is a typed application in `assets/src/app`, developed at
 `admin.php?page=ohmylms-app`. Its foundation, feature registry, REST client and tests are present.
 The preview includes Skills, Webhooks, Students, Taxonomies, Certificates, Emails, Integrations,
-Commerce, Memberships, Settings, Dashboard/analytics, and now Curriculum hierarchy and Course
-structure screens. These are bounded feature batches, not full product parity. The current
+Commerce, Memberships, Settings, Dashboard/analytics, Curriculum hierarchy, Course structure
+and Syllabus authoring screens. These are bounded feature batches, not full product parity. The current
 batch/status sections below are authoritative; the recovered-runtime sections are reference.
 See [architecture](ARCHITECTURE.md) and [course authoring](api/course-authoring.md).
 
@@ -58,7 +58,7 @@ report is stale.
 | 2 | Easy Email and remaining libraries | Email UI, editor core, source editor, html2canvas and embedded vendor copies use maintained packages or documented replacements; saved templates still open | Partly done (MJML, Arco shared factory, Chart.js, Emotion, Tiptap, Lowlight) |
 | 3 | Shared application infrastructure | Routing, controls, notifications, permissions, configuration and utilities have named modules and public exports | Typed app bootstrap/router/API/layout are present. Shared controls include npm-backed advanced/search selects. Cancellable request and unsaved-change hooks are shared by the new authoring batch. Legacy consumers still need extraction |
 | 4 | State and API access | Features import their stores, hooks and API clients directly | Preview feature batches own typed APIs and page state; the new authoring batch reuses existing transactional services. Legacy store/client dependencies remain |
-| 5 | Feature independence | Features use normal components and explicit imports, not `createComponent(readRuntime)` | 14 preview feature folders, including Home, with 21 registered route entries. Curriculum hierarchy and course outline batch added. Full workflow and extension parity remain |
+| 5 | Feature independence | Features use normal components and explicit imports, not `createComponent(readRuntime)` | 15 preview feature folders, including Home, with 22 registered route entries. Curriculum/course and syllabus authoring batches added. Full workflow and extension parity remain |
 | 6 | Authored entry point | A small bootstrap registers routes, initializes services and loads features. Production startup needs no numeric Webpack IDs or adapters | New preview bootstrap exists beside the old admin; production cutover and runtime deletion remain pending |
 | 7 | Stylesheet ownership | Tokens and controls are centralized; feature styles load with their features; recovered CSS snapshots are retired | Separate CSS work completed; excluded from this app rebuild. See [stylesheet ownership](STYLESHEET-OWNERSHIP.md) |
 | 8 | Backend boundaries | PHP modules separate REST controllers, business rules and persistence; cross-feature access goes through services | Partial: Analytics repository/date/cache, Settings registry/service, Setup services, Gamification registry/store, quiz policy/settings, and course catalogue/structure services exist. Repository-wide separation remains |
@@ -165,7 +165,7 @@ test in `tests/php/` and component tests.
 | Memberships | Done | Old membership routes removed |
 | Settings (General, Branding, Account, Permalinks, Advanced, Currency, Tax) | Done | Payment gateway secrets still returned by the old route |
 | Dashboard, Earnings, Course report | Done | Mixed-currency totals; amounts still in postmeta |
-| Content Hub (skills and curriculum) | Partial | Skills catalogue; curriculum hierarchy creation/editing/parent moves and course placement. Advanced syllabus/CSV/comparison workflows remain |
+| Content Hub (skills and curriculum) | Partial | Skills catalogue, curriculum hierarchy/placement, syllabus skill groups/order/library assignment, CSV review/apply, draft-course sync and individual mapping/comparison. Rich objectives/translations, resources, combined mappings and full workspace parity remain |
 | Courses | Partial | Bounded list/draft creation, outline units and reusable lesson placements. Advanced metadata/settings, publication and extension panels remain |
 | Communities, Setup wizard, Gamification, Learning (lessons, assignments), Quizzes and question editors | Preview UI pending | Setup services, Gamification registry/store and quiz policy/settings are backend groundwork; no full-screen parity claim |
 | Cutover (menu points at the new app, recovered runtime deleted) | Not started | Old PHP tests for removed routes go with it |
@@ -173,7 +173,7 @@ test in `tests/php/` and component tests.
 
 Stylesheet cleanup is intentionally skipped.
 
-## Current batch: Curriculum hierarchy and course outlines (30 October 2026)
+## Completed batch: Curriculum hierarchy and course outlines (30 October 2026)
 
 - Added `#/content-hub/curriculum`, `#/content-hub/courses` and
   `#/content-hub/courses/:id` to the typed preview. Existing routes are retained.
@@ -197,6 +197,41 @@ Stylesheet cleanup is intentionally skipped.
   course `Modularization verification course 1030` (ID 938). Unit title/number/description,
   curriculum placement and an existing reusable lesson persisted across a full reload, with no
   console errors. These browser examples remain for review; scripted fixtures were cleaned up.
-- Next authoring batch: advanced syllabus/skill workflows and course metadata, followed by
+- Follow-up authoring batches: syllabus/skill workflows and course metadata, followed by
   lesson/assignment and assessment editors. See [the API/scope contract](api/course-authoring.md)
   for exact exclusions and verification instructions.
+
+## Current batch: Syllabus authoring (30 October 2026)
+
+- Checkpointed the previous curriculum/course batch as `6e089892` on
+  `codex/syllabus-authoring` before starting this work.
+- Added the lazy typed syllabus editor at `#/content-hub/curriculum/syllabus/:id`, linked from
+  Curriculum rows. Group fields/order/moves, new/library skill assignment, skill fields/order/
+  moves and confirmed placement detachment use the existing domain services.
+- Added an administrator-only validated command boundary. Unexpected fields, invalid types,
+  oversized payloads and cross-syllabus moves are rejected before domain writes.
+- CSV reuses the established pure parser with a TypeScript declaration. Column mapping, UTF-8,
+  limits, server review, planned counts and explicit apply are implemented. Source/mapping
+  changes invalidate the review; applying a changed syllabus/row set requires a fresh review.
+- Explicit course creation/sync keeps the same associated course and updates only the draft.
+  A synchronization warning does not hide a successful syllabus write.
+- Individual mapping edits/removal use read revisions and explicit confirmation. Pairwise
+  comparison shows shared coverage and separate unmapped counts; combined mappings are read-only.
+- Full app suite: 653 tests passed; the final 28 focused syllabus tests passed after adding
+  BOM/record-limit cases. Focused Node suites: 31 passed. WordPress REST integration:
+  47 checks passed on `800.local`, with tagged fixtures removed. TypeScript, source contracts
+  and targeted JavaScript/PHP standards checks pass. Existing repository-wide debt remains.
+- Live verification: syllabus `Syllabus browser verification 1030` (ID 82), its draft course
+  (ID 958) and shared verification skill (ID 335) remain for review. Group creation, new skill
+  creation, CSV preview/apply, skill reordering, explicit course sync and a confirmed mapping
+  persisted across a full reload. Pairwise comparison with Digital SAT Math rendered mapped
+  coverage and separate unmapped counts. No existing syllabus was edited. The browser console
+  also recorded generic message-channel listener errors without a source stack; their origin
+  was not diagnosed in this batch, and the checked workflows completed successfully.
+- The SDK builds with the existing three performance warnings. All 36 shipped app files
+  match the final build; all 15 runtime chunk references resolve to shipped files. Obsolete
+  generated app chunks/maps were removed.
+- Remaining: course metadata/settings, rich skill objectives/translations and resources,
+  mind-map/spreadsheet parity, combined mapping editing, lesson/assignment and assessment editors,
+  publication and extension contexts, then production cutover/runtime retirement. CSS ownership
+  remains unchanged. See [the syllabus API and scope](api/syllabus-authoring.md).

@@ -73,7 +73,10 @@ of the outline, as stated beside the controls.
   capability-gated navigation. Existing membership guard tests exercise the shared guard.
 - Live browser checks and final counts are recorded in the roadmap's current batch section.
 
-Remaining: syllabus skill-group/CSV/comparison workflows, deleting curriculum branches or
+The follow-up [syllabus authoring batch](syllabus-authoring.md) now provides skill groups,
+CSV review/apply and individual mapping/comparison in the typed preview.
+
+Remaining: full syllabus workspace parity, deleting curriculum branches or
 units, moving lessons across units, new lesson content authoring, advanced course settings,
 assessment authoring, publication UI and extension editor panels. Course placement currently
 uses the existing replace-list contract; it has no new optimistic concurrency token. The shared
