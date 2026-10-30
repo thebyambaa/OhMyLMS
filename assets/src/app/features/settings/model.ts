@@ -1,7 +1,10 @@
 import { __, sprintf } from '@wordpress/i18n';
 import { ApiError } from '../../lib/api';
 import {
+	EXTRA_TAB_IDS,
 	FIELD_NAMES,
+	GROUP_IDS,
+	type TabId,
 	type CodeName,
 	type CurrencyOption,
 	type FailureView,
@@ -154,7 +157,7 @@ export function invalidResponse(): ApiError {
 	} );
 }
 
-function isRecord( value: unknown ): value is Record< string, unknown > {
+export function isRecord( value: unknown ): value is Record< string, unknown > {
 	return (
 		Boolean( value ) &&
 		'object' === typeof value &&
@@ -162,35 +165,35 @@ function isRecord( value: unknown ): value is Record< string, unknown > {
 	);
 }
 
-function asRecord( value: unknown ): Record< string, unknown > {
+export function asRecord( value: unknown ): Record< string, unknown > {
 	if ( ! isRecord( value ) ) {
 		throw invalidResponse();
 	}
 	return value;
 }
 
-function asArray( value: unknown ): unknown[] {
+export function asArray( value: unknown ): unknown[] {
 	if ( ! Array.isArray( value ) ) {
 		throw invalidResponse();
 	}
 	return value;
 }
 
-function asString( value: unknown ): string {
+export function asString( value: unknown ): string {
 	if ( 'string' !== typeof value ) {
 		throw invalidResponse();
 	}
 	return value;
 }
 
-function asNumber( value: unknown ): number {
+export function asNumber( value: unknown ): number {
 	if ( 'number' !== typeof value || ! Number.isFinite( value ) ) {
 		throw invalidResponse();
 	}
 	return value;
 }
 
-function asBoolean( value: unknown ): boolean {
+export function asBoolean( value: unknown ): boolean {
 	if ( 'boolean' !== typeof value ) {
 		throw invalidResponse();
 	}
@@ -629,12 +632,17 @@ export function toSwatch( value: string ): string {
 	return /^#[0-9a-fA-F]{6}$/.test( value ) ? value.toLowerCase() : '#000000';
 }
 
+// Field messages from `data.params` (settings API) or `data.fields` (design system route).
 function messagesFrom( details: unknown ): FieldErrors {
-	if ( ! isRecord( details ) || ! isRecord( details.params ) ) {
+	if ( ! isRecord( details ) ) {
+		return {};
+	}
+	const source = isRecord( details.params ) ? details.params : details.fields;
+	if ( ! isRecord( source ) ) {
 		return {};
 	}
 	const errors: FieldErrors = {};
-	for ( const [ name, message ] of Object.entries( details.params ) ) {
+	for ( const [ name, message ] of Object.entries( source ) ) {
 		if ( 'string' === typeof message ) {
 			errors[ name ] = message;
 		}
@@ -660,11 +668,9 @@ export function describeFailure( error: ApiError ): FailureView {
  * Tab id from the `tab` query parameter.
  *
  * @param value Raw parameter.
- * @return A known group id, `general` otherwise.
+ * @return A known tab id, `general` otherwise.
  */
-export function tabFromParam( value: string | null ): GroupId {
-	const match = ( Object.keys( FIELD_NAMES ) as GroupId[] ).find(
-		( id ) => id === value
-	);
-	return match ?? 'general';
+export function tabFromParam( value: string | null ): TabId {
+	const ids: readonly TabId[] = [ ...GROUP_IDS, ...EXTRA_TAB_IDS ];
+	return ids.find( ( id ) => id === value ) ?? 'general';
 }

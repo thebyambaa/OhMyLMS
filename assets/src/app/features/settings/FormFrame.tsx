@@ -50,7 +50,7 @@ export function FormFrame( {
 				<Spinner />{ ' ' }
 				{ sprintf(
 					/* translators: %s: settings group name. */
-					__( 'Loading %s settings�', 'ohmylms' ),
+					__( 'Loading %s settings…', 'ohmylms' ),
 					title
 				) }
 			</p>

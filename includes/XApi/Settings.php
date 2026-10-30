@@ -143,7 +143,8 @@ final class Settings {
 	/**
 	 * Validate and store settings from the admin form.
 	 *
-	 * A blank secret keeps the stored one, so the form never has to show it.
+	 * A blank secret keeps the stored one, so the form never has to show it; a truthy
+	 * `clear_secret` removes it.
 	 *
 	 * @param array $input Raw (already unslashed) form values.
 	 * @return array The stored settings.
@@ -159,7 +160,9 @@ final class Settings {
 		if ( ! self::locked( 'key' ) ) {
 			$values['key'] = sanitize_text_field( isset( $input['key'] ) ? $input['key'] : '' );
 		}
-		if ( ! self::locked( 'secret' ) && isset( $input['secret'] ) && '' !== $input['secret'] ) {
+		if ( ! self::locked( 'secret' ) && ! empty( $input['clear_secret'] ) ) {
+			$values['secret'] = '';
+		} elseif ( ! self::locked( 'secret' ) && isset( $input['secret'] ) && '' !== $input['secret'] ) {
 			$values['secret'] = trim( (string) $input['secret'] );
 		}
 		$values['enabled']        = empty( $input['enabled'] ) ? 0 : 1;

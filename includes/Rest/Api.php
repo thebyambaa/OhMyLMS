@@ -78,6 +78,7 @@ class Api {
 			\OhMyLMS\Rest\V1\PreviewController::class,
 			\OhMyLMS\Rest\V1\TemplateController::class,
 			\OhMyLMS\Rest\V1\SettingsController::class,
+			\OhMyLMS\Rest\V1\PaymentGatewaySettingsController::class,
 			\OhMyLMS\Rest\V1\DesignSystemController::class,
 			\OhMyLMS\Rest\V1\HubIconsController::class,
 			\OhMyLMS\Rest\V1\CategoryController::class,

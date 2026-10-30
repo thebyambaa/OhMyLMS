@@ -11,6 +11,20 @@ export const GROUP_IDS = [
 
 export type GroupId = ( typeof GROUP_IDS )[ number ];
 
+/** Tabs backed by their own routes instead of a registry group, in tab order after the groups. */
+export const EXTRA_TAB_IDS = [
+	'payment-gateways',
+	'design-system',
+	'hub-icons',
+	'xapi',
+	'ai-tutor',
+	'mcp',
+] as const;
+
+export type ExtraTabId = ( typeof EXTRA_TAB_IDS )[ number ];
+
+export type TabId = GroupId | ExtraTabId;
+
 /** Field names per group; the server rejects any other key with 400. */
 export const FIELD_NAMES = {
 	general: [

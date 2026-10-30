@@ -38,8 +38,28 @@
 		{
 			"method": "POST",
 			"path": "/settings/advanced/clear-cache"
+		},
+		{
+			"method": "GET",
+			"path": "/settings/payment-gateways"
+		},
+		{
+			"method": "GET",
+			"path": "/settings/payment-gateways/{gateway}"
+		},
+		{
+			"method": [ "PUT", "PATCH", "POST" ],
+			"path": "/settings/payment-gateways/{gateway}"
 		}
 	],
+	"paymentGateways": {
+		"fieldTypes": [ "text", "textarea", "toggle", "secret" ],
+		"writeKeys": [ "enabled", "mode", "values", "secrets", "clear_secrets" ],
+		"modes": [ "test", "live" ],
+		"maxLength": { "text": 200, "textarea": 2000, "secret": 500 },
+		"secretPattern": "^[\\x21-\\x7E]+$",
+		"option": "ohmylms_{gateway}_settings"
+	},
 	"groupIds": [
 		"general",
 		"branding",
@@ -55,6 +75,7 @@
 		"ohmylms_settings_unknown_field": 400,
 		"ohmylms_settings_invalid_value": 422,
 		"ohmylms_settings_country_not_found": 404,
+		"ohmylms_settings_gateway_not_found": 404,
 		"ohmylms_settings_save_failed": 500,
 		"ohmylms_settings_restore_failed": 500,
 		"ohmylms_settings_cannot_view": "401|403",

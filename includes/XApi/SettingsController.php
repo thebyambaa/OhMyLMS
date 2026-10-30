@@ -45,6 +45,7 @@ final class SettingsController {
 							'required' => true,
 						),
 						'secret'         => array( 'type' => 'string' ),
+						'clear_secret'   => array( 'type' => 'boolean' ),
 						'actor'          => array(
 							'type'     => 'string',
 							'enum'     => array( 'pseudonym', 'user_id', 'mbox' ),

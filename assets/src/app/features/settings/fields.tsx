@@ -1,9 +1,11 @@
 import {
+	CheckboxControl,
 	SelectControl,
 	TextControl,
 	TextareaControl,
 	ToggleControl,
 } from '@wordpress/components';
+import { __, sprintf } from '@wordpress/i18n';
 import type { ReactNode } from 'react';
 import { toSwatch } from './model';
 import type { SettingValue } from './types';
@@ -164,6 +166,72 @@ export function TextAreaField( {
 			disabled={ field.disabled }
 			aria-invalid={ field.error ? true : undefined }
 		/>
+	);
+}
+
+// A write-only credential: the stored value is never shown; empty keeps it, the checkbox removes it.
+export function SecretField( {
+	value,
+	onChange,
+	hasValue,
+	hint,
+	cleared,
+	onClear,
+	...field
+}: FieldProps & {
+	value: string;
+	onChange: ( value: string ) => void;
+	hasValue: boolean;
+	hint?: string;
+	cleared: boolean;
+	onClear: ( cleared: boolean ) => void;
+} ) {
+	let status: string = __( 'Not set.', 'ohmylms' );
+	if ( cleared ) {
+		status = __(
+			'The saved value will be removed when you save.',
+			'ohmylms'
+		);
+	} else if ( hasValue ) {
+		status = hint
+			? sprintf(
+					/* translators: %s: last characters of the saved value. */
+					__( 'Saved (%s). Leave empty to keep it.', 'ohmylms' ),
+					hint
+				)
+			: __( 'Saved. Leave empty to keep it.', 'ohmylms' );
+	}
+	return (
+		<div>
+			<TextControl
+				__next40pxDefaultSize
+				__nextHasNoMarginBottom
+				type="password"
+				autoComplete="new-password"
+				spellCheck={ false }
+				label={ field.label }
+				value={ cleared ? '' : value }
+				onChange={ onChange }
+				help={
+					field.error ??
+					( field.help ? `${ field.help } ${ status }` : status )
+				}
+				disabled={ field.disabled || cleared }
+				aria-invalid={ field.error ? true : undefined }
+			/>
+			{ hasValue && ! field.disabled && (
+				<CheckboxControl
+					__nextHasNoMarginBottom
+					label={ sprintf(
+						/* translators: %s: field label. */
+						__( 'Remove the saved %s', 'ohmylms' ),
+						field.label
+					) }
+					checked={ cleared }
+					onChange={ onClear }
+				/>
+			) }
+		</div>
 	);
 }
 

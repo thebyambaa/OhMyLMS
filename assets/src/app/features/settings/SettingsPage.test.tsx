@@ -29,6 +29,10 @@ vi.mock( './api', () => ( {
 	restoreDefaultPages: vi.fn(),
 	clearCache: vi.fn(),
 } ) );
+vi.mock( './mcp', async ( original ) => ( {
+	...( await original< typeof import( './mcp' ) >() ),
+	getMcp: vi.fn( () => new Promise( () => undefined ) ),
+} ) );
 
 beforeEach( () => {
 	vi.clearAllMocks();
@@ -123,11 +127,11 @@ describe( 'tabs', () => {
 			await screen.findByRole( 'form', { name: 'Branding' } )
 		).toBeInTheDocument();
 		await user.keyboard( '{End}' );
-		expect( screen.getByRole( 'tab', { name: 'Tax' } ) ).toHaveFocus();
+		expect( screen.getByRole( 'tab', { name: 'MCP' } ) ).toHaveFocus();
 		await user.keyboard( '{ArrowRight}' );
 		expect( screen.getByRole( 'tab', { name: 'General' } ) ).toHaveFocus();
 		await user.keyboard( '{ArrowLeft}' );
-		expect( screen.getByRole( 'tab', { name: 'Tax' } ) ).toHaveFocus();
+		expect( screen.getByRole( 'tab', { name: 'MCP' } ) ).toHaveFocus();
 		await user.keyboard( '{Home}' );
 		expect( screen.getByRole( 'tab', { name: 'General' } ) ).toHaveFocus();
 		expect(
