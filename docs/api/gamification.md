@@ -25,9 +25,9 @@ Server code: `includes/Rest/V1/EngagementController.php` (settings, options, poi
 | Low | `Rules::valid()` accepted `=` and `==`, float strings and `INF`-like values; `get_option()` was called per rule; `Badge::maybe_met_rules()` ran the lesson-count SQL once per badge (now once per learner per call). `Reward` rules had an unused threshold comparison. |
 | OK | Cookie authentication: core verifies `X-WP-Nonce` before any permission callback. SQL uses `$wpdb->prepare()` and `%i`. Award rows are inserted under a per-learner `GET_LOCK`. |
 
-Not part of this API (unchanged): streak, XP, score and mastery settings, still at
-`engagement/settings/<streak|xp|score|mastery>` (same validation and capability; they have no authored screen yet), and
-the learner-facing templates. `student-dashboard.php` builds the learner leaderboard from
+The streak, XP, score and mastery settings stay at `engagement/settings/<streak|xp|score|mastery>` and were hardened in
+place; see [Streak, XP, score and mastery settings](#streak-xp-score-and-mastery-settings). Not part of this API: the
+learner-facing templates. `student-dashboard.php` builds the learner leaderboard from
 `Course::get_students()`, which loads every student of a course: that is an unbounded query outside this API.
 
 ## Storage
@@ -59,7 +59,8 @@ before the permission callback (core behaviour).
 | POST | `/gamification/badges/{slug}/awards` | Award by hand (`user_id`); idempotent | 201 new, 200 already held | 400, 401, 403, 404, 500 |
 | DELETE | `/gamification/badges/{slug}/awards/{user_id}` | Revoke; idempotent | 200 `{revoked: 0|n}` | 401, 403, 404 |
 | POST | `/gamification/points/adjustments` | Add or remove points by hand, once per `reference` | 201 new, 200 replay | 400, 401, 403, 404, 409, 422, 500 |
-| GET / POST | `/engagement/settings/{streak|xp|score|mastery}` | Existing groups, unchanged | 200 | 400, 401, 403, 500 |
+| GET | `/engagement/settings/{streak|xp|score|mastery}` | One group (mastery adds its choices) | 200 | 401, 403 |
+| POST / PUT / PATCH | `/engagement/settings/{streak|xp|score|mastery}` | Partial update; only fields sent change | 200 `{success, message, settings}` | 400, 401, 403, 422, 500 |
 
 Collections accept `page` (>= 1), `per_page` (1-100, default 20) and `context`. A page past the end answers 400
 `ohmylms_gamification_invalid_page`. Levels and badges are capped at 50 and 100.
@@ -106,6 +107,55 @@ threshold. A level may start at 0. Deleting a level keeps earlier awards in the 
 - `image_id` is a media-library attachment id. It must be a JPEG, PNG, GIF or WebP attachment (422 `ohmylms_badge_invalid_image`);
   `image_url` is derived and read-only. Remote URLs are not accepted. `null` or `0` removes the image.
 - Slugs come from the name, are unique among custom and system badges (`-2`, `-3`, ...) and never change.
+
+## Streak, XP, score and mastery settings
+
+Screens: `#/gamification?tab=streaks` (streak group) and `#/gamification?tab=xp` (XP, mastery score and mastery model, each
+saved on its own) in `assets/src/app/features/gamification` (`StreaksTab.tsx`, `XpTab.tsx`, `engagementApi.ts`,
+`engagementModel.ts`, `useEngagement.ts`). The recovered `streak-settings` and `xp-settings` tabs and the MCP
+`get/set_performance_settings` tools keep working: they post whole groups and read `success`/`message`.
+
+### Audit before
+
+| Severity | Finding |
+| --- | --- |
+| Medium | **No schema or argument validation.** One regex route served the four groups with no `args` and no `schema`; the body went straight to each group's `validate()`. Types were checked there, but every failure was one generic 400 (`streak_settings`, `xp_settings`, `score_settings`) without the field. |
+| Medium | **A partial request reset the rest to the defaults.** `StreakSettings`, `XpSettings` and `Score::validate()` merge the body over the *defaults*, so `POST {"refill_days": 9}` silently reset every other streak setting (including milestones). |
+| Medium | **Unknown keys were dropped silently** and the mastery group's read-only GET keys (`policies`, `surface_options`, `ai_ready`) were accepted without notice. |
+| Low | Cross-field rules (initial vs maximum freezes, duplicate milestone days, the default goal outside the goals, unknown badges) answered the generic 400 or `streak_badge` 400. Only POST/PUT/PATCH (`EDITABLE`) existed; the save answer did not carry the stored values, so clients re-read every group. |
+| OK | `manage_options` on both methods (401 anonymous, 403 others), core REST nonce; values are bounded integers, flags and allow-listed policies; storage tables install only when a group is enabled. The learner routes `GET/PUT engagement/xp` and `engagement/streak` are per-user (`is_user_logged_in`), bound `history_days` (7-90 / 7-366) and validate `goal` and `timezone`; they are unchanged. |
+
+### Contract
+
+- One route per group (`/engagement/settings/(?P<group_id>streak)` and so on) with a draft-04 schema (`OPTIONS`, title
+  `engagement-<group>-settings`) whose writable properties are the route `args`. Types and ranges fail with core
+  `rest_invalid_param` (400, `data.params` per field); unknown keys with `rest_invalid_param` (400). Numeric and flag strings
+  (`"10"`, `"0"`) from the recovered screens are still accepted and normalised.
+- **Partial updates:** only the fields sent change; the rest keep their *stored* values. The group's own `validate()` runs
+  last, so nothing weaker than before is stored. Nothing is written unless the whole request is valid.
+- **422 with `data.field`:** `ohmylms_streak_freezes` (`initial_freezes` above `maximum_freezes`), `ohmylms_streak_milestone_days`
+  (two milestones on the same day), `ohmylms_streak_badge` (a milestone badge that is neither a custom nor a built-in badge;
+  empty means no badge), `ohmylms_xp_default_goal` (default goal not among the goals). These replace the old 400 `streak_badge`.
+- **Answer:** `{ "success": true, "message": "Settings saved successfully.", "settings": { ...same shape as GET } }`.
+- **Mastery:** read-only `policies`, `surface_options` and `ai_ready` may be posted back and are ignored; `policy` is an enum of
+  the registered policies; unknown `surfaces` keys are dropped as before. Changing the policy or the surfaces still schedules
+  the background rebuild.
+
+| Group | Fields (ranges) |
+| --- | --- |
+| streak | `enable, lesson, quiz, practice, freezes` (booleans); `practice_minimum` 1-30; `initial_freezes` 0-10 (<= maximum); `maximum_freezes` 0-10; `refill_days` 1-365; `milestones` <= 20 of `{days 1-10000 (unique), badge (slug or ""), points 0-100000}` |
+| xp | `enable`; `lesson`, `perfect` 0-1000; `challenge` 0-100; `min_answered` 1-30; `goals` 1-6 integers 1-10000 (de-duplicated, sorted); `default_goal` one of the goals; `goal_bonus` 0-1000; `daily_cap` 10-100000 |
+| score | `enable`; `bands` exactly 4 of `{gain, loss}` 0-50; `hint_gain` 0-1; `unlock` 50-100; `decay_grace_days` 0-365; `decay_per_week` 0-20 |
+| mastery | `policy` (registered policy); `surfaces` {activity: boolean}; `show_score`, `ai_insights` (booleans) |
+
+```http
+PATCH /wp-json/ohmylms/v1/engagement/settings/xp
+{ "goals": [ 30 ] }
+
+HTTP/1.1 422 Unprocessable Entity
+{ "code": "ohmylms_xp_default_goal", "message": "The default goal must be one of the goal choices.",
+  "data": { "status": 422, "field": "default_goal" } }
+```
 
 ## Awards and adjustments
 
@@ -155,4 +205,7 @@ Filters `ohmylms_point_settings`, `ohmylms_level_settings`, `ohmylms_badge_setti
 ## Tests
 
 `tests/php/gamification-rest-integration.php` (set `OHMYLMS_GAMIFICATION_TEST=1`; see the file header). It snapshots and
-restores every option it touches and removes its temporary users and attachments.
+restores every option it touches (including `ohmylms_streak_settings`, `ohmylms_xp_settings`, `ohmylms_score_settings` and
+`ohmylms_performance`) and removes its temporary users and attachments. For the four engagement groups it checks denied
+callers, the legacy full POST, partial updates, string normalisation, every schema and 422 rule with the option unchanged
+afterwards, the mastery round trip and the group schemas. It never enables streaks or XP, so no table is installed.

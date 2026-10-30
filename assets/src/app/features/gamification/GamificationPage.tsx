@@ -17,6 +17,7 @@ import { LeaderboardTab } from './LeaderboardTab';
 import { LevelsTab } from './LevelsTab';
 import { DEFAULT_LIMITS, tabFromParam } from './model';
 import { PointsTab } from './PointsTab';
+import { StreaksTab } from './StreaksTab';
 import { Tabs, tabId, tabPanelId, type TabItem } from './Tabs';
 import {
 	TAB_IDS,
@@ -26,12 +27,16 @@ import {
 	type LevelDraft,
 	type TabId,
 } from './types';
+import { useEngagement } from './useEngagement';
 import { useUnsavedChangesGuard } from './useUnsavedChangesGuard';
+import { XpTab } from './XpTab';
 
 const LABELS: Record< TabId, string > = {
 	points: __( 'Points', 'ohmylms' ),
 	levels: __( 'Levels', 'ohmylms' ),
 	badges: __( 'Badges', 'ohmylms' ),
+	streaks: __( 'Streaks', 'ohmylms' ),
+	xp: __( 'XP and mastery', 'ohmylms' ),
 	leaderboard: __( 'Leaderboard and rewards', 'ohmylms' ),
 };
 
@@ -69,6 +74,10 @@ export default function GamificationPage() {
 		limits
 	);
 	const rewards = useSection( 'rewards', 'leaderboard' === selected, limits );
+	const streak = useEngagement( 'streak', 'streaks' === selected );
+	const xp = useEngagement( 'xp', 'xp' === selected );
+	const score = useEngagement( 'score', 'xp' === selected );
+	const mastery = useEngagement( 'mastery', 'xp' === selected );
 	const levelList = useResource( LEVELS_API, 'levels' === selected );
 	const badgeList = useResource( BADGES_API, 'badges' === selected );
 
@@ -76,6 +85,8 @@ export default function GamificationPage() {
 		points: points.dirty,
 		levels: levels.dirty,
 		badges: badges.dirty,
+		streaks: streak.dirty,
+		xp: xp.dirty || score.dirty || mastery.dirty,
 		leaderboard: board.dirty || rewards.dirty,
 	};
 	const guard = useUnsavedChangesGuard(
@@ -91,6 +102,8 @@ export default function GamificationPage() {
 		points: points.loaded || points.loading,
 		levels: levels.loaded || levels.loading,
 		badges: badges.loaded || badges.loading,
+		streaks: streak.loaded || streak.loading,
+		xp: xp.loaded || xp.loading,
 		leaderboard: board.loaded || board.loading,
 	};
 	const panels: Record< string, JSX.Element > = {
@@ -110,6 +123,8 @@ export default function GamificationPage() {
 				limits={ limits }
 			/>
 		),
+		streaks: <StreaksTab state={ streak } />,
+		xp: <XpTab xp={ xp } score={ score } mastery={ mastery } />,
 		leaderboard: (
 			<LeaderboardTab
 				leaderboard={ board }

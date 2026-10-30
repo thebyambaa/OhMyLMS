@@ -45,6 +45,10 @@ $options  = array(
 	'ohmylms_leaderboard_settings',
 	'ohmylms_levels',
 	'ohmylms_badges',
+	'ohmylms_streak_settings',
+	'ohmylms_xp_settings',
+	'ohmylms_score_settings',
+	'ohmylms_performance',
 );
 $snapshot = array();
 foreach ( $options as $name ) {
@@ -197,7 +201,10 @@ try {
 		'/gamification/badges/(?P<slug>[a-z0-9]+(?:-[a-z0-9]+)*)',
 		'/gamification/badges/(?P<slug>[a-z0-9]+(?:-[a-z0-9]+)*)/awards',
 		'/gamification/badges/(?P<slug>[a-z0-9]+(?:-[a-z0-9]+)*)/awards/(?P<user_id>[\d]+)',
-		'/engagement/settings/(?P<group_id>streak|xp|score|mastery)',
+		'/engagement/settings/(?P<group_id>streak)',
+		'/engagement/settings/(?P<group_id>xp)',
+		'/engagement/settings/(?P<group_id>score)',
+		'/engagement/settings/(?P<group_id>mastery)',
 	);
 	foreach ( $new as $route ) {
 		ok( isset( $routes[ '/ohmylms/v1' . $route ] ), 'route registered: ' . $route );
@@ -205,7 +212,7 @@ try {
 			ok( is_callable( $endpoint['permission_callback'] ) && '__return_true' !== $endpoint['permission_callback'], "real permission_callback on $route" );
 		}
 	}
-	foreach ( array( '/engagement/badges', '/engagement/levels', '/engagement/settings/(?P<group_id>[\w-]+)' ) as $gone ) {
+	foreach ( array( '/engagement/badges', '/engagement/levels', '/engagement/settings/(?P<group_id>[\w-]+)', '/engagement/settings/(?P<group_id>streak|xp|score|mastery)' ) as $gone ) {
 		ok( ! isset( $routes[ '/ohmylms/v1' . $gone ] ), "old route is gone: $gone" );
 	}
 
@@ -227,6 +234,13 @@ try {
 		array( 'DELETE', 'gamification/badges/x/awards/1' ),
 		array( 'GET', 'engagement/settings/streak' ),
 		array( 'POST', 'engagement/settings/streak' ),
+		array( 'PUT', 'engagement/settings/streak' ),
+		array( 'GET', 'engagement/settings/xp' ),
+		array( 'POST', 'engagement/settings/xp' ),
+		array( 'GET', 'engagement/settings/score' ),
+		array( 'PUT', 'engagement/settings/score' ),
+		array( 'GET', 'engagement/settings/mastery' ),
+		array( 'POST', 'engagement/settings/mastery' ),
 	);
 	foreach ( array(
 		0           => 401,
@@ -907,10 +921,220 @@ try {
 	ok( 200 === call_api( 'DELETE', 'gamification/badges/' . $twin_slug )->get_status(), 'badge deleted' );
 	ok_error( call_api( 'DELETE', 'gamification/badges/' . $twin_slug ), 404, 'ohmylms_badge_not_found', 'badge deleted twice' );
 
-	// Streak milestones still validate against the badge list; the legacy group routes still work.
+	// Streak, XP, score and mastery groups: schema-validated, partial, nothing stored on errors.
+	foreach ( array( 'ohmylms_streak_settings', 'ohmylms_xp_settings', 'ohmylms_score_settings' ) as $name ) {
+		delete_option( $name );
+	}
 	$streak = call_api( 'GET', 'engagement/settings/streak' );
-	ok( 200 === $streak->get_status() && isset( $streak->get_data()['milestones'] ), 'streak settings route kept' );
+	ok( 200 === $streak->get_status() && \OhMyLMS\Engagement\StreakSettings::get() === $streak->get_data() && false === $streak->get_data()['enable'] && 2 === $streak->get_data()['initial_freezes'], 'streak defaults' );
 	ok( 404 === call_api( 'GET', 'engagement/settings/point' )->get_status(), 'the point group is no longer served by the engagement route' );
+
+	// The legacy screens post the whole group and read success/message.
+	$full                     = $streak->get_data();
+	$full['practice_minimum'] = 5;
+	$full['milestones'][0]    = array(
+		'days'   => 7,
+		'badge'  => 'streak-7',
+		'points' => 15,
+	);
+	$saved = call_api( 'POST', 'engagement/settings/streak', $full );
+	ok( 200 === $saved->get_status() && true === $saved->get_data()['success'] && '' !== $saved->get_data()['message'], 'legacy full POST: ' . wp_json_encode( $saved->get_data() ) );
+	ok( 5 === $saved->get_data()['settings']['practice_minimum'] && 15 === $saved->get_data()['settings']['milestones'][0]['points'], 'save answers with the stored group' );
+	ok( 5 === \OhMyLMS\Engagement\StreakSettings::get()['practice_minimum'], 'legacy POST stored' );
+
+	// Partial update keeps the other stored values (it used to reset them to the defaults).
+	$patched = call_api( 'PATCH', 'engagement/settings/streak', array( 'refill_days' => 9 ) );
+	ok( 200 === $patched->get_status() && 9 === $patched->get_data()['settings']['refill_days'] && 5 === $patched->get_data()['settings']['practice_minimum'], 'partial update keeps practice_minimum' );
+	ok( 15 === \OhMyLMS\Engagement\StreakSettings::get()['milestones'][0]['points'], 'partial update keeps milestones' );
+	$strings = call_api(
+		'PUT',
+		'engagement/settings/streak',
+		array(
+			'lesson'      => '0',
+			'refill_days' => '10',
+		)
+	);
+	ok( 200 === $strings->get_status() && false === $strings->get_data()['settings']['lesson'] && 10 === $strings->get_data()['settings']['refill_days'], 'numeric and flag strings from old clients are normalised' );
+
+	$stored = get_option( 'ohmylms_streak_settings' );
+	foreach ( array(
+		array( array( 'practice_minimum' => 0 ), 400, 'rest_invalid_param', 'practice_minimum below 1' ),
+		array( array( 'refill_days' => 366 ), 400, 'rest_invalid_param', 'refill_days above 365' ),
+		array( array( 'enable' => 'yes' ), 400, 'rest_invalid_param', 'flag that is not a boolean' ),
+		array( array( 'practice_minimum' => '' ), 400, 'rest_invalid_param', 'empty number' ),
+		array( array( 'bonus' => 1 ), 400, 'rest_invalid_param', 'unknown field' ),
+		array( array( 'milestones' => array( array( 'days' => 3 ) ) ), 400, 'rest_invalid_param', 'milestone without badge and points' ),
+		array(
+			array(
+				'milestones' => array(
+					array(
+						'days'   => 3,
+						'badge'  => '',
+						'points' => 0,
+						'extra'  => 1,
+					),
+				),
+			),
+			400,
+			'rest_invalid_param',
+			'milestone with an extra key',
+		),
+		array(
+			array(
+				'milestones' => array(
+					array(
+						'days'   => 3,
+						'badge'  => 'Bad Slug',
+						'points' => 0,
+					),
+				),
+			),
+			400,
+			'rest_invalid_param',
+			'badge that is not a slug',
+		),
+		array( array( 'milestones' => array_fill( 0, 21, array( 'days' => 1, 'badge' => '', 'points' => 0 ) ) ), 400, 'rest_invalid_param', 'more than 20 milestones' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		array(
+			array(
+				'initial_freezes' => 4,
+				'maximum_freezes' => 3,
+			),
+			422,
+			'ohmylms_streak_freezes',
+			'more initial than maximum freezes',
+		),
+		array( array( 'initial_freezes' => 9 ), 422, 'ohmylms_streak_freezes', 'initial freezes above the stored maximum' ),
+		array(
+			array(
+				'milestones' => array(
+					array(
+						'days'   => 5,
+						'badge'  => '',
+						'points' => 0,
+					),
+					array(
+						'days'   => 5,
+						'badge'  => '',
+						'points' => 1,
+					),
+				),
+			),
+			422,
+			'ohmylms_streak_milestone_days',
+			'two milestones on the same day',
+		),
+		array(
+			array(
+				'milestones' => array(
+					array(
+						'days'   => 5,
+						'badge'  => 'no-such-badge-' . $tag,
+						'points' => 0,
+					),
+				),
+			),
+			422,
+			'ohmylms_streak_badge',
+			'unknown badge',
+		),
+	) as $case ) {
+		$response = call_api( 'PATCH', 'engagement/settings/streak', $case[0] );
+		ok_error( $response, $case[1], $case[2], 'streak: ' . $case[3] );
+		if ( 422 === $case[1] ) {
+			ok( isset( $response->get_data()['data']['field'] ), 'streak 422 names the field: ' . $case[3] );
+		}
+		ok( get_option( 'ohmylms_streak_settings' ) === $stored, 'streak unchanged after: ' . $case[3] );
+	}
+	$no_badge = call_api(
+		'PATCH',
+		'engagement/settings/streak',
+		array(
+			'milestones' => array(
+				array(
+					'days'   => 12,
+					'badge'  => '',
+					'points' => 3,
+				),
+			),
+		)
+	);
+	ok( 200 === $no_badge->get_status() && array( array( 'days' => 12, 'points' => 3, 'badge' => '' ) ) === $no_badge->get_data()['settings']['milestones'], 'a milestone may have no badge' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+	ok( false === \OhMyLMS\Engagement\StreakSettings::get()['enable'], 'streaks stay off' );
+
+	// XP.
+	$xp = call_api( 'GET', 'engagement/settings/xp' );
+	ok( 200 === $xp->get_status() && \OhMyLMS\Engagement\XpSettings::get() === $xp->get_data() && array( 10, 20, 30 ) === $xp->get_data()['goals'], 'xp defaults' );
+	$xp_saved = call_api(
+		'PATCH',
+		'engagement/settings/xp',
+		array(
+			'goals'        => array( 30, 15, 15 ),
+			'default_goal' => '15',
+			'daily_cap'    => 200,
+		)
+	);
+	ok( 200 === $xp_saved->get_status() && array( 15, 30 ) === $xp_saved->get_data()['settings']['goals'] && 15 === $xp_saved->get_data()['settings']['default_goal'], 'xp goals are de-duplicated and sorted: ' . wp_json_encode( $xp_saved->get_data() ) );
+	ok( 10 === $xp_saved->get_data()['settings']['lesson'] && 200 === \OhMyLMS\Engagement\XpSettings::get()['daily_cap'], 'xp partial update' );
+	$stored = get_option( 'ohmylms_xp_settings' );
+	foreach ( array(
+		array( array( 'goals' => array() ), 400, 'rest_invalid_param', 'no goals' ),
+		array( array( 'goals' => array( 1, 2, 3, 4, 5, 6, 7 ) ), 400, 'rest_invalid_param', 'seven goals' ),
+		array( array( 'goals' => array( 0 ) ), 400, 'rest_invalid_param', 'goal of zero' ),
+		array( array( 'daily_cap' => 5 ), 400, 'rest_invalid_param', 'daily cap below 10' ),
+		array( array( 'lesson' => 1.5 ), 400, 'rest_invalid_param', 'fractional XP' ),
+		array( array( 'default_goal' => 20 ), 422, 'ohmylms_xp_default_goal', 'default goal not among the goals' ),
+		array( array( 'goals' => array( 40 ) ), 422, 'ohmylms_xp_default_goal', 'goals without the stored default' ),
+	) as $case ) {
+		$response = call_api( 'PATCH', 'engagement/settings/xp', $case[0] );
+		ok_error( $response, $case[1], $case[2], 'xp: ' . $case[3] );
+		ok( get_option( 'ohmylms_xp_settings' ) === $stored, 'xp unchanged after: ' . $case[3] );
+	}
+	ok( 'default_goal' === call_api( 'PATCH', 'engagement/settings/xp', array( 'default_goal' => 20 ) )->get_data()['data']['field'], 'xp 422 names default_goal' );
+
+	// Mastery score.
+	$score = call_api( 'GET', 'engagement/settings/score' );
+	ok( 200 === $score->get_status() && 4 === count( $score->get_data()['bands'] ), 'score defaults' );
+	$bands             = $score->get_data()['bands'];
+	$bands[3]['loss']  = 7.5;
+	$score_saved       = call_api(
+		'PUT',
+		'engagement/settings/score',
+		array(
+			'bands'     => $bands,
+			'hint_gain' => 0.25,
+		)
+	);
+	ok( 200 === $score_saved->get_status() && 7.5 === $score_saved->get_data()['settings']['bands'][3]['loss'] && 0.25 === $score_saved->get_data()['settings']['hint_gain'], 'score saved: ' . wp_json_encode( $score_saved->get_data() ) );
+	ok( $score->get_data()['unlock'] === $score_saved->get_data()['settings']['unlock'], 'score partial update keeps unlock' );
+	$stored = get_option( 'ohmylms_score_settings' );
+	foreach ( array(
+		array( array( 'bands' => array_slice( $bands, 0, 3 ) ), 'three bands' ),
+		array( array( 'bands' => array_merge( array_slice( $bands, 0, 3 ), array( array( 'gain' => 51, 'loss' => 1 ) ) ) ), 'gain above 50' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		array( array( 'hint_gain' => 1.5 ), 'hint gain above 1' ),
+		array( array( 'unlock' => 40 ), 'unlock below 50' ),
+		array( array( 'decay_per_week' => -1 ), 'negative decay' ),
+	) as $case ) {
+		ok_error( call_api( 'PATCH', 'engagement/settings/score', $case[0] ), 400, 'rest_invalid_param', 'score: ' . $case[1] );
+		ok( get_option( 'ohmylms_score_settings' ) === $stored, 'score unchanged after: ' . $case[1] );
+	}
+
+	// Mastery model: the GET payload can be posted back; read-only keys are ignored.
+	$mastery = call_api( 'GET', 'engagement/settings/mastery' );
+	$payload = $mastery->get_data();
+	ok( 200 === $mastery->get_status() && isset( $payload['policy'], $payload['policies'], $payload['surface_options'] ), 'mastery payload' );
+	$payload['show_score'] = ! $payload['show_score'];
+	$mastery_saved         = call_api( 'POST', 'engagement/settings/mastery', $payload );
+	ok( 200 === $mastery_saved->get_status() && $payload['show_score'] === $mastery_saved->get_data()['settings']['show_score'] && $payload['policy'] === $mastery_saved->get_data()['settings']['policy'], 'mastery round trip' );
+	$stored = get_option( 'ohmylms_performance' );
+	ok_error( call_api( 'PATCH', 'engagement/settings/mastery', array( 'policy' => 'bogus' ) ), 400, 'rest_invalid_param', 'unknown policy' );
+	ok_error( call_api( 'PATCH', 'engagement/settings/mastery', array( 'surfaces' => array( 'quiz' => 'often' ) ) ), 400, 'rest_invalid_param', 'surface flag not a boolean' );
+	ok_error( call_api( 'PATCH', 'engagement/settings/mastery', array( 'level' => 1 ) ), 400, 'rest_invalid_param', 'unknown mastery field' );
+	ok( get_option( 'ohmylms_performance' ) === $stored, 'mastery unchanged after errors' );
+
+	foreach ( array( 'streak', 'xp', 'score', 'mastery' ) as $group ) {
+		$group_schema = rest_do_request( new WP_REST_Request( 'OPTIONS', '/ohmylms/v1/engagement/settings/' . $group ) )->get_data()['schema'];
+		ok( 'engagement-' . $group . '-settings' === $group_schema['title'] && 'http://json-schema.org/draft-04/schema#' === $group_schema['$schema'], "$group schema" );
+	}
 
 	// Schema.
 	$schema = rest_do_request( new WP_REST_Request( 'OPTIONS', '/ohmylms/v1/gamification/badges' ) )->get_data()['schema'];

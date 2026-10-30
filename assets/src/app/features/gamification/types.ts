@@ -8,8 +8,15 @@ export const SECTION_IDS = [
 ] as const;
 export type SectionId = ( typeof SECTION_IDS )[ number ];
 
-/** Tabs of the screen; rewards share the leaderboard tab. */
-export const TAB_IDS = [ 'points', 'levels', 'badges', 'leaderboard' ] as const;
+/** Tabs of the screen; rewards share the leaderboard tab, score and mastery the XP tab. */
+export const TAB_IDS = [
+	'points',
+	'levels',
+	'badges',
+	'streaks',
+	'xp',
+	'leaderboard',
+] as const;
 export type TabId = ( typeof TAB_IDS )[ number ];
 
 export const LEADERBOARD_MODES = [
@@ -207,4 +214,151 @@ export interface Page< T > {
 	items: T[];
 	total: number;
 	totalPages: number;
+}
+
+/** Settings groups under `engagement/settings/<group>`. */
+export const ENGAGEMENT_GROUPS = [
+	'streak',
+	'xp',
+	'score',
+	'mastery',
+] as const;
+export type EngagementGroup = ( typeof ENGAGEMENT_GROUPS )[ number ];
+
+export interface StreakMilestone {
+	days: number;
+	/** Badge slug, or empty for no badge. */
+	badge: string;
+	points: number;
+}
+
+export interface StreakSettings {
+	enable: boolean;
+	lesson: boolean;
+	quiz: boolean;
+	practice: boolean;
+	practice_minimum: number;
+	freezes: boolean;
+	initial_freezes: number;
+	maximum_freezes: number;
+	refill_days: number;
+	milestones: StreakMilestone[];
+}
+
+export interface XpSettings {
+	enable: boolean;
+	lesson: number;
+	perfect: number;
+	challenge: number;
+	min_answered: number;
+	goals: number[];
+	default_goal: number;
+	goal_bonus: number;
+	daily_cap: number;
+}
+
+export interface ScoreBand {
+	gain: number;
+	loss: number;
+}
+
+export interface ScoreSettings {
+	enable: boolean;
+	bands: ScoreBand[];
+	hint_gain: number;
+	unlock: number;
+	decay_grace_days: number;
+	decay_per_week: number;
+}
+
+export interface MasteryPolicy {
+	id: string;
+	label: string;
+	description: string;
+}
+
+export interface MasterySurface {
+	id: string;
+	label: string;
+	/** Whether the activity counts when the site has not chosen. */
+	counts: boolean;
+}
+
+/** The mastery group as GET returns it: the settings plus read-only choices. */
+export interface MasterySettings {
+	policy: string;
+	surfaces: Record< string, boolean >;
+	show_score: boolean;
+	ai_insights: boolean;
+	policies: MasteryPolicy[];
+	surface_options: MasterySurface[];
+	ai_ready: boolean;
+}
+
+export interface EngagementMap {
+	streak: StreakSettings;
+	xp: XpSettings;
+	score: ScoreSettings;
+	mastery: MasterySettings;
+}
+
+export interface StreakMilestoneDraft {
+	days: number | null;
+	badge: string;
+	points: number | null;
+}
+
+/** Editable copies: numbers stay `null` while the field is empty. */
+export interface StreakDraft {
+	enable: boolean;
+	lesson: boolean;
+	quiz: boolean;
+	practice: boolean;
+	practice_minimum: number | null;
+	freezes: boolean;
+	initial_freezes: number | null;
+	maximum_freezes: number | null;
+	refill_days: number | null;
+	milestones: StreakMilestoneDraft[];
+}
+
+export interface XpDraft {
+	enable: boolean;
+	lesson: number | null;
+	perfect: number | null;
+	challenge: number | null;
+	min_answered: number | null;
+	/** Goal choices as typed, for example `10, 20, 30`. */
+	goals: string;
+	default_goal: number | null;
+	goal_bonus: number | null;
+	daily_cap: number | null;
+}
+
+export interface ScoreBandDraft {
+	gain: number | null;
+	loss: number | null;
+}
+
+export interface ScoreDraft {
+	enable: boolean;
+	bands: ScoreBandDraft[];
+	hint_gain: number | null;
+	unlock: number | null;
+	decay_grace_days: number | null;
+	decay_per_week: number | null;
+}
+
+export interface MasteryDraft {
+	policy: string;
+	surfaces: Record< string, boolean >;
+	show_score: boolean;
+	ai_insights: boolean;
+}
+
+export interface EngagementDraftMap {
+	streak: StreakDraft;
+	xp: XpDraft;
+	score: ScoreDraft;
+	mastery: MasteryDraft;
 }
