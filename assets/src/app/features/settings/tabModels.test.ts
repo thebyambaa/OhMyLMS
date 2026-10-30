@@ -154,7 +154,16 @@ describe( 'design system model', () => {
 	it( 'parses, recognises presets and applies one', () => {
 		const snapshot = parseDesign( designRaw );
 		const draft = designDraft( snapshot );
-		expect( matchingPreset( draft, snapshot.presets ) ).toBe( 'khan' );
+		expect( matchingPreset( draft, snapshot.presets ) ).toBe( 'wordpress' );
+		expect( snapshot.admin_scheme ).toBe( 'ocean' );
+		expect( snapshot.admin_colors.primary ).toBe( '#567958' );
+		const khan = applyPreset( draft, snapshot.presets, 'khan' );
+		expect( matchingPreset( khan, snapshot.presets ) ).toBe( 'khan' );
+		expect( designChanged( draft, khan ) ).toBe( true );
+		expect(
+			parseDesign( { ...designRaw, admin_colors: undefined } )
+				.admin_colors
+		).toEqual( snapshot.colors );
 		const classic = applyPreset( draft, snapshot.presets, 'classic' );
 		expect( classic.colors.primary ).toBe( '#6e42d3' );
 		expect( matchingPreset( classic, snapshot.presets ) ).toBe( 'classic' );

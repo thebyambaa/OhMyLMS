@@ -1,25 +1,16 @@
 import { useEffect, useRef } from '@wordpress/element';
 import { Outlet, useLocation } from 'react-router-dom';
-import { __ } from '@wordpress/i18n';
-import type { MouseEvent } from 'react';
-import type { FeatureDefinition } from '../features/types';
-import { Navigation } from './Navigation';
+import { ExtensionTabs } from './ExtensionTabs';
 import { NoticesRegion } from './NoticesRegion';
 
 /**
- * Page chrome: skip link, banner, navigation and the main landmark that routes render into.
+ * The main landmark that routes render into. The admin page around it (heading, tabs and sections) is
+ * printed by includes/Admin/AdminNavigation.php.
  *
- * The skip link is a handler, not a `#fragment` jump, because the hash is owned by the router.
- * After a navigation, focus moves to `main` so keyboard and screen reader users land on the new page.
- *
- * @param props          Component props.
- * @param props.features Features to show in the navigation.
+ * After a move inside the tab, focus moves to `main` so keyboard and screen reader users land on the
+ * new screen.
  */
-export function AppLayout( {
-	features,
-}: {
-	features: readonly FeatureDefinition[];
-} ) {
+export function AppLayout() {
 	const mainRef = useRef< HTMLElement >( null );
 	const { pathname } = useLocation();
 	const isFirstRender = useRef( true );
@@ -42,33 +33,16 @@ export function AppLayout( {
 		mainRef.current?.focus();
 	}, [ pathname ] );
 
-	const skipToContent = ( event: MouseEvent< HTMLAnchorElement > ) => {
-		event.preventDefault();
-		mainRef.current?.focus();
-	};
-
 	return (
-		<div className="ohmylms-app-layout">
-			<a
-				className="ohmylms-app-skip-link"
-				href="#ohmylms-app-main"
-				onClick={ skipToContent }
-			>
-				{ __( 'Skip to content', 'ohmylms' ) }
-			</a>
-			<header className="ohmylms-app-header">
-				<h1>{ __( 'OhMyLMS', 'ohmylms' ) }</h1>
-				<Navigation features={ features } />
-			</header>
-			<main
-				id="ohmylms-app-main"
-				ref={ mainRef }
-				tabIndex={ -1 }
-				className="ohmylms-app-main"
-			>
-				<NoticesRegion />
-				<Outlet />
-			</main>
-		</div>
+		<main
+			id="ohmylms-app-main"
+			ref={ mainRef }
+			tabIndex={ -1 }
+			className="ohmylms-app-main"
+		>
+			<ExtensionTabs />
+			<NoticesRegion />
+			<Outlet />
+		</main>
 	);
 }

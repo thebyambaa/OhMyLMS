@@ -55,11 +55,19 @@ export interface DesignPreset extends DesignValues {
 	label: string;
 }
 
-/** `GET /design-system`: the values, the contrast verdict for the primary colour and the presets. */
+/** Preset whose admin screens follow the user's WordPress admin colour scheme (the default). */
+export const WORDPRESS_PRESET = 'wordpress';
+
+/**
+ * `GET /design-system`: the values, the contrast verdict for the primary colour, the presets and the
+ * colours admin screens use under the WordPress preset (the requesting user's admin colour scheme).
+ */
 export interface DesignSnapshot extends DesignValues {
 	on_primary: string;
 	primary_passes: boolean;
 	white_passes: boolean;
+	admin_scheme: string;
+	admin_colors: Record< ColorKey, string >;
 	presets: DesignPreset[];
 }
 
@@ -96,6 +104,9 @@ export function parseDesign( raw: unknown ): DesignSnapshot {
 		on_primary: asString( body.on_primary ),
 		primary_passes: asBoolean( body.primary_passes ),
 		white_passes: asBoolean( body.white_passes ),
+		admin_scheme:
+			'string' === typeof body.admin_scheme ? body.admin_scheme : '',
+		admin_colors: parseColors( body.admin_colors ?? body.colors ),
 		presets: asArray( body.presets ).map( ( item ) => {
 			const row = asRecord( item );
 			return { ...parseValues( row ), label: asString( row.label ) };
@@ -136,7 +147,8 @@ export function designDraft( snapshot: DesignSnapshot ): DesignValues {
 }
 
 /**
- * Name of the preset whose values equal these, else `custom` (as the server computes it).
+ * Name of the preset whose values equal these, else `custom` (as the server computes it). The
+ * WordPress and Khan Academy presets share a palette, so the chosen name wins when it matches.
  *
  * @param values  Values.
  * @param presets Presets.
@@ -146,15 +158,20 @@ export function matchingPreset(
 	values: DesignValues,
 	presets: readonly DesignPreset[]
 ): string {
-	const match = presets.find(
-		( preset ) =>
-			preset.button_radius === values.button_radius &&
-			preset.density === values.density &&
-			COLOR_KEYS.every(
-				( key ) =>
-					preset.colors[ key ] === values.colors[ key ].toLowerCase()
-			)
+	const same = ( preset: DesignPreset ) =>
+		preset.button_radius === values.button_radius &&
+		preset.density === values.density &&
+		COLOR_KEYS.every(
+			( key ) =>
+				preset.colors[ key ] === values.colors[ key ].toLowerCase()
+		);
+	const chosen = presets.find(
+		( preset ) => preset.preset === values.preset
 	);
+	if ( chosen && same( chosen ) ) {
+		return chosen.preset;
+	}
+	const match = presets.find( same );
 	return match ? match.preset : 'custom';
 }
 
@@ -176,6 +193,7 @@ export function applyPreset(
 
 export function designChanged( a: DesignValues, b: DesignValues ): boolean {
 	return (
+		a.preset !== b.preset ||
 		a.button_radius !== b.button_radius ||
 		a.density !== b.density ||
 		COLOR_KEYS.some(
@@ -255,6 +273,10 @@ export function contrast( a: string, b: string ): number {
 	const lb = luminance( b );
 	return ( Math.max( la, lb ) + 0.05 ) / ( Math.min( la, lb ) + 0.05 );
 }
+
+/** Text colours `contrastOn()` chooses between. */
+export const WHITE = '#ffffff';
+export const BLACK = '#000000';
 
 /**
  * Contrast verdict for button text on a background, as the server computes it.

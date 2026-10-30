@@ -2,7 +2,12 @@
 
 The recovered admin (`admin.php?page=ohmylms`, the webpack runtime rebuilt from shipped bundles) was replaced by the
 typed admin app (`admin.php?page=ohmylms-app`, see [ARCHITECTURE](ARCHITECTURE.md)) and deleted on 31 October 2026.
-This document records how the switch works now, what was removed and how it was verified.
+This document records how the switch worked, what was removed and how it was verified.
+
+Since the admin redesign's Phase A ([ADMIN-REDESIGN](ADMIN-REDESIGN.md)) the app is mounted by six admin pages with
+query-string addresses: `admin.php?page=ohmylms` is the Dashboard itself (no longer a redirect), `page=ohmylms-app`
+redirects to it, and `LegacyRoutes::url()`/`app_url()` emit the new addresses. The tables below describe the state at
+the cutover; [LEGACY-ROUTES](LEGACY-ROUTES.md) describes the current redirects.
 
 Inputs: [LEGACY-ROUTES](LEGACY-ROUTES.md) (which legacy addresses open which new screens).
 

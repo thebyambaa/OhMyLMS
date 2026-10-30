@@ -171,6 +171,85 @@ final class Snapshot {
 	}
 
 	/**
+	 * How many skills a learner has a state for, and how many are due for review or struggling.
+	 *
+	 * @param int $student_id Learner ID.
+	 * @return array{total:int,review_due:int,struggling:int} Zeros before the assessment tables exist.
+	 */
+	public static function review_counts( $student_id ) {
+		global $wpdb;
+		$counts = array(
+			'total'      => 0,
+			'review_due' => 0,
+			'struggling' => 0,
+		);
+		if ( ! Schema::ready() ) {
+			return $counts;
+		}
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT COUNT(*) AS total, SUM(review_due = 1) AS review_due, SUM(struggling = 1) AS struggling FROM %i WHERE student_id = %d', Schema::table( 'student_skill_state' ), (int) $student_id ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Fresh read of the learner's own states.
+		return array(
+			'total'      => (int) ( $row['total'] ?? 0 ),
+			'review_due' => (int) ( $row['review_due'] ?? 0 ),
+			'struggling' => (int) ( $row['struggling'] ?? 0 ),
+		);
+	}
+
+	/**
+	 * FROM and WHERE of a learner's skill states joined with the skill name, with its arguments.
+	 *
+	 * @param int    $student_id Learner ID.
+	 * @param string $filter     `all`, `review_due` or `struggling`.
+	 * @return array{0:string,1:array}
+	 */
+	private static function states_from( $student_id, $filter ) {
+		global $wpdb;
+		$where = 's.student_id = %d';
+		if ( 'review_due' === $filter ) {
+			$where .= ' AND s.review_due = 1';
+		} elseif ( 'struggling' === $filter ) {
+			$where .= ' AND s.struggling = 1';
+		}
+		return array( ' FROM %i s INNER JOIN %i t ON t.term_id = s.term_id WHERE ' . $where, array( Schema::table( 'student_skill_state' ), $wpdb->terms, (int) $student_id ) );
+	}
+
+	/**
+	 * Number of a learner's skill states.
+	 *
+	 * @param int    $student_id Learner ID.
+	 * @param string $filter     `all`, `review_due` or `struggling`.
+	 * @return int 0 before the assessment tables exist.
+	 */
+	public static function count_states( $student_id, $filter = 'all' ) {
+		global $wpdb;
+		if ( ! Schema::ready() ) {
+			return 0;
+		}
+		list( $from, $args ) = self::states_from( $student_id, $filter );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Prepared with %i identifiers and an argument array; the WHERE clause is built from constants.
+		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*)' . $from, $args ) );
+	}
+
+	/**
+	 * One page of a learner's skill states, by skill name.
+	 *
+	 * @param int    $student_id Learner ID.
+	 * @param string $filter     `all`, `review_due` or `struggling`.
+	 * @param int    $page       Page, from 1.
+	 * @param int    $per_page   Page size.
+	 * @return array[] Rows with term_id, name, level, review_due, struggling, evidence_count, accuracy and last_evidence_at.
+	 */
+	public static function state_page( $student_id, $filter, $page, $per_page ) {
+		global $wpdb;
+		if ( ! Schema::ready() ) {
+			return array();
+		}
+		list( $from, $args ) = self::states_from( $student_id, $filter );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Prepared with %i identifiers and an argument array; the WHERE clause is built from constants.
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT s.term_id, t.name, s.level, s.review_due, s.struggling, s.evidence_count, s.accuracy, s.last_evidence_at' . $from . ' ORDER BY t.name ASC, s.term_id ASC LIMIT %d OFFSET %d', array_merge( $args, array( (int) $per_page, ( (int) $page - 1 ) * (int) $per_page ) ) ), ARRAY_A );
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
 	 * Mastery score band names, for display beside a level.
 	 *
 	 * @param float $mastery Score.

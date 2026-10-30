@@ -8,6 +8,8 @@
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
+use OhMyLMS\Student\Directory;
+use OhMyLMS\Student\Enrollments;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -125,16 +127,6 @@ class StudentProController extends RestController {
 	}
 
 	/**
-	 * Enrolments table name.
-	 *
-	 * @return string
-	 */
-	private function table() {
-		global $wpdb;
-		return $wpdb->prefix . 'ohmylms_user_enrollment';
-	}
-
-	/**
 	 * Build the not-found error for an enrolment.
 	 *
 	 * @return WP_Error
@@ -150,8 +142,6 @@ class StudentProController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_items( $request ) {
-		global $wpdb;
-
 		$students = new StudentController();
 		$student  = $students->find_student( $request['id'] );
 		if ( is_wp_error( $student ) ) {
@@ -161,32 +151,19 @@ class StudentProController extends RestController {
 		$user_id  = (int) $student['id'];
 		$page     = max( 1, (int) $request['page'] );
 		$per_page = min( 100, max( 1, (int) $request['per_page'] ) );
+		$progress = (string) $request['progress'];
+		$search   = (string) $request['search'];
 
-		$from = " FROM %i e INNER JOIN %i p ON p.ID = e.course_id AND p.post_type = %s WHERE e.user_id = %d AND e.status IN ('enrolled','banned')";
-		$args = array( $this->table(), $wpdb->posts, StudentController::COURSE_POST_TYPE, $user_id );
-		if ( in_array( $request['progress'], array( 'running', 'completed' ), true ) ) {
-			$from  .= ' AND e.progress = %s';
-			$args[] = $request['progress'];
-		}
-		if ( '' !== (string) $request['search'] ) {
-			$from  .= ' AND p.post_title LIKE %s';
-			$args[] = '%' . $wpdb->esc_like( (string) $request['search'] ) . '%';
-		}
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery -- Prepared with %i identifiers.
-		$total       = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*)' . $from, $args ) );
+		$total       = Enrollments::count( $user_id, StudentController::COURSE_POST_TYPE, $progress, $search );
 		$total_pages = (int) ceil( $total / $per_page );
 		if ( $total > 0 && $page > $total_pages ) {
 			return new WP_Error( 'ohmylms_enrollment_invalid_page', __( 'The page number requested is larger than the number of pages available.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
 
-		$args[] = $per_page;
-		$args[] = ( $page - 1 ) * $per_page;
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery -- Prepared with %i identifiers.
-		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT e.id, e.course_id, e.status, e.progress, e.start_date, e.end_date, p.post_title' . $from . ' ORDER BY e.start_date DESC, e.id DESC LIMIT %d OFFSET %d', $args ), ARRAY_A );
+		$rows = Enrollments::page( $user_id, StudentController::COURSE_POST_TYPE, $progress, $search, $page, $per_page );
 
 		$data = array();
-		foreach ( $this->describe_rows( is_array( $rows ) ? $rows : array() ) as $item ) {
+		foreach ( $this->describe_rows( $rows ) as $item ) {
 			$data[] = $this->prepare_response_for_collection( $this->prepare_item_for_response( $item, $request ) );
 		}
 
@@ -202,23 +179,11 @@ class StudentProController extends RestController {
 	 * @return array[]
 	 */
 	private function describe_rows( array $rows ) {
-		global $wpdb;
-
 		if ( ! $rows ) {
 			return array();
 		}
 
-		$ids          = array_map( 'intval', wp_list_pluck( $rows, 'id' ) );
-		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery -- Placeholders are generated from the id count.
-		$done = $wpdb->get_results( $wpdb->prepare( "SELECT enrollment_id, content_type, COUNT(DISTINCT content_id) AS total FROM %i WHERE status = 'completed' AND enrollment_id IN ($placeholders) GROUP BY enrollment_id, content_type", array_merge( array( $wpdb->prefix . 'ohmylms_user_progress' ), $ids ) ), ARRAY_A );
-
-		$completed = array();
-		foreach ( is_array( $done ) ? $done : array() as $row ) {
-			$kind = in_array( $row['content_type'], array( 'quiz', 'assignment' ), true ) ? $row['content_type'] : 'lesson';
-
-			$completed[ (int) $row['enrollment_id'] ][ $kind ] = ( $completed[ (int) $row['enrollment_id'] ][ $kind ] ?? 0 ) + (int) $row['total'];
-		}
+		$completed = Enrollments::completed_items( wp_list_pluck( $rows, 'id' ) );
 
 		$items = array();
 		foreach ( $rows as $row ) {
@@ -271,10 +236,7 @@ class StudentProController extends RestController {
 	 * @return array|null
 	 */
 	private function find_enrollment( $user_id, $course_id ) {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- No API for enrolment rows.
-		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT e.id, e.course_id, e.status, e.progress, e.start_date, e.end_date, p.post_title FROM %i e LEFT JOIN %i p ON p.ID = e.course_id WHERE e.user_id = %d AND e.course_id = %d ORDER BY e.id ASC LIMIT 1', $this->table(), $wpdb->posts, $user_id, $course_id ), ARRAY_A );
+		$row = Enrollments::find( $user_id, $course_id );
 		if ( ! $row ) {
 			return null;
 		}
@@ -289,8 +251,6 @@ class StudentProController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function create_item( $request ) {
-		global $wpdb;
-
 		$user_id   = absint( $request['id'] );
 		$course_id = absint( $request['course_id'] );
 
@@ -303,51 +263,14 @@ class StudentProController extends RestController {
 			return new WP_Error( 'ohmylms_course_not_found', __( 'Course not found.', 'ohmylms' ), array( 'status' => 404 ) );
 		}
 
-		if ( 'yes' === get_user_meta( $user_id, StudentController::BLOCKED_META, true ) ) {
+		if ( Directory::is_blocked( $user_id ) ) {
 			return new WP_Error( 'ohmylms_student_blocked', __( 'This student is blocked. Unblock the student before enrolling them.', 'ohmylms' ), array( 'status' => 409 ) );
 		}
 
-		$table = $this->table();
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- No API for enrolment rows.
-		if ( (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE user_id = %d AND course_id = %d', $table, $user_id, $course_id ) ) > 0 ) {
-			return new WP_Error( 'ohmylms_student_already_enrolled', __( 'The student is already enrolled in this course.', 'ohmylms' ), array( 'status' => 409 ) );
+		$enrolled = Enrollments::enroll_manually( $user_id, $course_id );
+		if ( is_wp_error( $enrolled ) ) {
+			return $enrolled;
 		}
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- No API for enrolment rows.
-		$inserted = $wpdb->insert(
-			$table,
-			array(
-				'user_id'    => $user_id,
-				'course_id'  => $course_id,
-				'status'     => 'enrolled',
-				'progress'   => 'running',
-				'start_date' => current_time( 'mysql' ),
-			),
-			array( '%d', '%d', '%s', '%s', '%s' )
-		);
-		if ( ! $inserted ) {
-			return new WP_Error( 'ohmylms_enrollment_create_failed', __( 'The enrolment could not be saved.', 'ohmylms' ), array( 'status' => 500 ) );
-		}
-
-		// Two simultaneous requests can both pass the check above: the later row gives way.
-		$row_id = (int) $wpdb->insert_id;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- No API for enrolment rows.
-		if ( (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE user_id = %d AND course_id = %d', $table, $user_id, $course_id ) ) > 1 ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- No API for enrolment rows.
-			$wpdb->delete( $table, array( 'id' => $row_id ), array( '%d' ) );
-			return new WP_Error( 'ohmylms_student_already_enrolled', __( 'The student is already enrolled in this course.', 'ohmylms' ), array( 'status' => 409 ) );
-		}
-
-		update_user_meta( $user_id, '_is_ohmylms_student', 'yes' );
-		update_user_meta( $user_id, '_is_ohmylms_user', 'yes' );
-
-		/**
-		 * Fires after an administrator enrolled a student by hand.
-		 *
-		 * @param int $user_id   Student (user) ID.
-		 * @param int $course_id Course ID.
-		 */
-		do_action( 'ohmylms_manual_student_enrollment', $user_id, $course_id );
 
 		$response = $this->prepare_item_for_response( $this->find_enrollment( $user_id, $course_id ), $request );
 		$response->set_status( 201 );
@@ -362,8 +285,6 @@ class StudentProController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function delete_item( $request ) {
-		global $wpdb;
-
 		$user_id   = absint( $request['id'] );
 		$course_id = absint( $request['course_id'] );
 
@@ -372,35 +293,10 @@ class StudentProController extends RestController {
 			return $this->enrollment_not_found();
 		}
 
-		$table = $this->table();
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- No API for enrolment rows.
-		$ids = array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE user_id = %d AND course_id = %d', $table, $user_id, $course_id ) ) );
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- No API for enrolment rows.
-		if ( false === $wpdb->delete(
-			$table,
-			array(
-				'user_id'   => $user_id,
-				'course_id' => $course_id,
-			),
-			array( '%d', '%d' )
-		) ) { // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment
-			return new WP_Error( 'ohmylms_enrollment_delete_failed', __( 'The enrolment could not be removed.', 'ohmylms' ), array( 'status' => 500 ) );
+		$removed = Enrollments::remove( $user_id, $course_id );
+		if ( is_wp_error( $removed ) ) {
+			return $removed;
 		}
-
-		// Progress records of a removed enrolment would be orphans; an unfinished delete leaves only those.
-		foreach ( $ids as $enrollment_id ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- No API for progress rows.
-			$wpdb->delete( $wpdb->prefix . 'ohmylms_user_progress', array( 'enrollment_id' => $enrollment_id ), array( '%d' ) );
-		}
-
-		/**
-		 * Fires after a student's enrolment was removed.
-		 *
-		 * @param int $user_id   Student (user) ID.
-		 * @param int $course_id Course ID.
-		 */
-		do_action( 'ohmylms_student_unenrolled', $user_id, $course_id );
 
 		$response = new WP_REST_Response(
 			array(

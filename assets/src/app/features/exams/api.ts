@@ -1,5 +1,4 @@
-import apiFetch from '@wordpress/api-fetch';
-import { del, get, normalizeApiError, patch, post, put } from '../../lib/api';
+import { del, get, patch, post, put, request } from '../../lib/api';
 import { getCollection } from '../../lib/api/collection';
 import {
 	invalidResponse,
@@ -237,20 +236,8 @@ function startBody( input: ImportStart, dryRun: boolean ): FormData {
 	return body;
 }
 
-async function upload(
-	body: FormData,
-	signal?: AbortSignal
-): Promise< unknown > {
-	try {
-		return await apiFetch< unknown >( {
-			path: JOBS,
-			method: 'POST',
-			body,
-			...( signal ? { signal } : {} ),
-		} );
-	} catch ( error ) {
-		throw normalizeApiError( error );
-	}
+function upload( body: FormData, signal?: AbortSignal ): Promise< unknown > {
+	return request< unknown >( { path: JOBS, method: 'POST', body, signal } );
 }
 
 /**

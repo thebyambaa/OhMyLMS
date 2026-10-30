@@ -60,8 +60,8 @@ describe( 'WebhooksPage', () => {
 			await screen.findByRole( 'table', { name: 'Configured webhooks' } )
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole( 'region', { name: 'Configured webhooks' } )
-		).toHaveAttribute( 'tabindex', '0' );
+			screen.getByRole( 'table', { name: 'Configured webhooks' } )
+		).toHaveClass( 'wp-list-table', 'widefat', 'striped' );
 		expect( screen.getByText( 'Course Enrollment' ) ).toBeInTheDocument();
 		expect(
 			screen.queryByDisplayValue( webhook.secret_hint )
@@ -99,7 +99,9 @@ describe( 'WebhooksPage', () => {
 		).toBeInTheDocument();
 		expect( dialog.querySelector( 'script' ) ).toBeNull();
 		await user.click(
-			within( dialog ).getByRole( 'button', { name: 'Next page' } )
+			within( dialog ).getAllByRole( 'button', {
+				name: 'Next page',
+			} )[ 0 ]!
 		);
 		await waitFor( () =>
 			expect( api.listDeliveries ).toHaveBeenLastCalledWith(
@@ -204,7 +206,7 @@ describe( 'WebhooksPage', () => {
 		await user.click( screen.getByRole( 'button', { name: 'Try again' } ) );
 		await screen.findByText( webhook.name );
 		await user.type(
-			screen.getByRole( 'textbox', { name: 'Search webhooks' } ),
+			screen.getByRole( 'searchbox', { name: 'Search webhooks' } ),
 			'example'
 		);
 		await user.click( screen.getByRole( 'button', { name: 'Search' } ) );

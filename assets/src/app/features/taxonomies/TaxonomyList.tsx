@@ -1,9 +1,8 @@
-import { Table } from '../../../ui/Table';
-import { Button, Modal, Notice, TextControl } from '@wordpress/components';
+import { ListTable } from '../../../ui/ListTable';
+import { Button, Modal, Notice } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { useBootstrap } from '../../bootstrap/BootstrapContext';
-import { Pagination } from '../../components/Pagination';
 import { parentLabel } from './model';
 import { useTermDetail, useTerms } from './useTerms';
 import type { TaxonomyInfo } from './model';
@@ -69,6 +68,11 @@ export function TaxonomyList( { info }: { info: TaxonomyInfo } ) {
 	const total = list.data?.total ?? 0;
 	const hierarchical = 'categories' === info.kind;
 	const canManage = true === user.capabilities.manage_options;
+	const searchLabel = sprintf(
+		/* translators: %s: Categories or Tags. */
+		__( 'Search %s', 'ohmylms' ),
+		info.title
+	);
 
 	return (
 		<>
@@ -78,35 +82,6 @@ export function TaxonomyList( { info }: { info: TaxonomyInfo } ) {
 					<a href={ info.manageUrl }>{ info.manageLabel }</a>
 				</p>
 			) }
-			<form
-				role="search"
-				aria-label={ sprintf(
-					/* translators: %s: Categories or Tags. */
-					__( 'Search %s', 'ohmylms' ),
-					info.title
-				) }
-				onSubmit={ ( event ) => {
-					event.preventDefault();
-					list.setSearch( text );
-				} }
-			>
-				<TextControl
-					label={ sprintf(
-						/* translators: %s: Categories or Tags. */
-						__( 'Search %s', 'ohmylms' ),
-						info.title
-					) }
-					value={ text }
-					onChange={ setText }
-				/>
-				<Button
-					type="submit"
-					variant="secondary"
-					disabled={ list.loading }
-				>
-					{ __( 'Search', 'ohmylms' ) }
-				</Button>
-			</form>
 			{ list.error && (
 				<Notice status="error" isDismissible={ false }>
 					{ list.error.message }{ ' ' }
@@ -124,94 +99,79 @@ export function TaxonomyList( { info }: { info: TaxonomyInfo } ) {
 					) }
 				</p>
 			) }
-			{ ! list.loading &&
-				! list.error &&
-				( items.length ? (
-					<>
-						<p role="status">
-							{ sprintf(
-								/* translators: %d: number of items. */
-								_n(
-									'%d item found.',
-									'%d items found.',
-									total,
-									'ohmylms'
-								),
-								total
-							) }
-						</p>
-						<Table caption={ info.title } striped>
-							<thead>
-								<tr>
-									<th scope="col">
-										{ __( 'Name', 'ohmylms' ) }
-									</th>
-									<th scope="col">
-										{ __( 'Slug', 'ohmylms' ) }
-									</th>
-									{ hierarchical && (
-										<th scope="col">
-											{ __( 'Parent', 'ohmylms' ) }
-										</th>
-									) }
-									<th scope="col">
-										{ __( 'Courses', 'ohmylms' ) }
-									</th>
-									{ canManage && (
-										<th scope="col">
-											{ __( 'Actions', 'ohmylms' ) }
-										</th>
-									) }
-								</tr>
-							</thead>
-							<tbody>
-								{ items.map( ( item ) => (
-									<tr key={ item.id }>
-										<th scope="row">{ item.name }</th>
-										<td>{ item.slug }</td>
-										{ hierarchical && (
-											<td>
-												{ parentLabel( item, items ) }
-											</td>
-										) }
-										<td>{ item.count }</td>
-										{ canManage && (
-											<td>
-												<Button
-													variant="link"
-													aria-label={ sprintf(
-														/* translators: %s: category or tag name. */
-														__(
-															'Show courses in %s',
-															'ohmylms'
-														),
-														item.name
-													) }
-													onClick={ () =>
-														setOpened( item )
-													}
-												>
-													{ __(
-														'Show courses',
-														'ohmylms'
-													) }
-												</Button>
-											</td>
-										) }
-									</tr>
-								) ) }
-							</tbody>
-						</Table>
-						<Pagination
-							page={ list.query.page }
-							pages={ list.data?.totalPages ?? 1 }
-							busy={ list.loading }
-							onChange={ list.setPage }
-						/>
-					</>
-				) : (
-					<p>{ __( 'Nothing found.', 'ohmylms' ) }</p>
-				) ) }
+			{ ! list.loading && ! list.error && (
+				<ListTable< Term >
+					caption={ info.title }
+					formLabel={ searchLabel }
+					rows={ items }
+					rowKey={ ( item ) => item.id }
+					emptyMessage={ __( 'Nothing found.', 'ohmylms' ) }
+					search={ {
+						label: searchLabel,
+						submitLabel: __( 'Search', 'ohmylms' ),
+						value: text,
+						onChange: setText,
+						onSubmit: () => list.setSearch( text ),
+					} }
+					pagination={ {
+						page: list.query.page,
+						totalPages: list.data?.totalPages ?? 1,
+						totalItems: total,
+						itemsLabel: sprintf(
+							/* translators: %d: number of items. */
+							_n(
+								'%d item found.',
+								'%d items found.',
+								total,
+								'ohmylms'
+							),
+							total
+						),
+						onChange: list.setPage,
+					} }
+					columns={ [
+						{
+							id: 'name',
+							label: __( 'Name', 'ohmylms' ),
+							primary: true,
+							render: ( item ) => (
+								<strong className="row-title">
+									{ item.name }
+								</strong>
+							),
+						},
+						{
+							id: 'slug',
+							label: __( 'Slug', 'ohmylms' ),
+							render: ( item ) => item.slug,
+						},
+						{
+							id: 'parent',
+							label: __( 'Parent', 'ohmylms' ),
+							hidden: ! hierarchical,
+							render: ( item ) => parentLabel( item, items ),
+						},
+						{
+							id: 'posts',
+							label: __( 'Courses', 'ohmylms' ),
+							className: 'num',
+							render: ( item ) => item.count,
+						},
+					] }
+					rowActions={ ( item ) => [
+						canManage && {
+							key: 'view',
+							label: __( 'Show courses', 'ohmylms' ),
+							ariaLabel: sprintf(
+								/* translators: %s: category or tag name. */
+								__( 'Show courses in %s', 'ohmylms' ),
+								item.name
+							),
+							onClick: () => setOpened( item ),
+						},
+					] }
+				/>
+			) }
 			{ opened && (
 				<CoursesDialog
 					info={ info }

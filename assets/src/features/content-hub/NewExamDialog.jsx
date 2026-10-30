@@ -4,6 +4,7 @@ import { Button, TextControl } from '@wordpress/components';
 import { Modal } from '../../ui/Modal';
 import { Alert } from '../../ui/Alert';
 import { examEditorHref } from './examEditor.mjs';
+import { request } from '../rest.mjs';
 
 /**
  * Name a new exam and open its questions in the Gutenberg quiz editor.
@@ -19,7 +20,7 @@ export function NewExamDialog( { onClose } ) {
 		setBusy( true );
 		setError( '' );
 		try {
-			const exam = await window.wp.apiFetch( {
+			const exam = await request( {
 				path: '/ohmylms/v1/exams/compose',
 				method: 'POST',
 				data: { title, duration_minutes: Number( minutes ) },

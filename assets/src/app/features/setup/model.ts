@@ -6,7 +6,6 @@ import {
 	NICHES,
 	STATUSES,
 	STEP_IDS,
-	type CurrencyOption,
 	type Experience,
 	type FailureView,
 	type FieldErrors,
@@ -225,19 +224,6 @@ export function parseStateResponse( raw: unknown ): SetupState {
 		throw invalidResponse();
 	}
 	return parseState( raw.state );
-}
-
-export function parseCurrencies( raw: unknown ): CurrencyOption[] {
-	return asList( raw ).map( ( item ) => {
-		if ( ! isRow( item ) ) {
-			throw invalidResponse();
-		}
-		return {
-			code: text( item.code ),
-			name: text( item.name ),
-			symbol: text( item.symbol ),
-		};
-	} );
 }
 
 // ---- State machine -------------------------------------------------------------------------

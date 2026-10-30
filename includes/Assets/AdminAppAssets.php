@@ -7,7 +7,7 @@
 
 namespace OhMyLMS\Assets;
 
-use OhMyLMS\Admin\AppPage;
+use OhMyLMS\Admin\AdminNavigation;
 use OhMyLMS\Assessment\Interactive;
 use OhMyLMS\Assessment\MathLive;
 use OhMyLMS\Design\Ui;
@@ -17,7 +17,8 @@ use OhMyLMS\Extensions\Settings;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Enqueues the built `admin-app` entry on its own admin page only.
+ * Enqueues the built `admin-app` entry (one bundle) on the six OhMyLMS admin pages, except on sections the
+ * server renders itself.
  */
 final class AdminAppAssets {
 
@@ -69,7 +70,7 @@ final class AdminAppAssets {
 	 * @param string $hook_suffix Current admin page hook suffix.
 	 */
 	public static function enqueue( $hook_suffix ) {
-		if ( ! AppPage::is_app_screen( $hook_suffix ) || ! current_user_can( AppPage::CAPABILITY ) ) {
+		if ( ! AdminNavigation::shows_app( $hook_suffix ) || ! current_user_can( AdminNavigation::CAPABILITY ) ) {
 			return;
 		}
 		$build = self::locate();

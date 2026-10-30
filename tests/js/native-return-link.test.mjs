@@ -17,8 +17,22 @@ test( 'native editors restore return links to the legacy page and the new app', 
 		`${ admin }?page=ohmylms-app#/quizzes`,
 		`${ admin }?page=ohmylms-app#/exams`,
 		`${ admin }?page=ohmylms-app#/content-hub/question-bank`,
+		`${ admin }?page=ohmylms-content&tab=lessons`,
+		`${ admin }?page=ohmylms-content&tab=courses&id=5&view=outline`,
+		`${ admin }?page=ohmylms-content&tab=curriculum&id=24&view=syllabus&node=s%3A1`,
+		`${ admin }?page=ohmylms-content&tab=question-bank`,
 	] ) {
 		assert.equal( isReturnUrl( url, origin ), true, url );
+	}
+} );
+
+test( 'native editors reject admin addresses outside the Content Hub', () => {
+	for ( const url of [
+		`${ admin }?page=ohmylms-settings&tab=settings`,
+		`${ admin }?page=ohmylms-content&tab=nope`,
+		`${ origin }/wp-admin/edit.php?page=ohmylms-content&tab=lessons`,
+	] ) {
+		assert.equal( isReturnUrl( url, origin ), false, url );
 	}
 } );
 
@@ -35,9 +49,26 @@ test( 'native editors reject foreign, non-LMS and malformed return links', () =>
 } );
 
 test( 'course return links are labelled as courses in both admins', () => {
-	assert.equal( isCourseReturn( `${ admin }?page=ohmylms#/course-edit/5` ), true );
-	assert.equal( isCourseReturn( `${ admin }?page=ohmylms-app#/courses/5` ), true );
-	assert.equal( isCourseReturn( `${ admin }?page=ohmylms-app#/courses` ), false );
+	assert.equal(
+		isCourseReturn( `${ admin }?page=ohmylms#/course-edit/5` ),
+		true
+	);
+	assert.equal(
+		isCourseReturn( `${ admin }?page=ohmylms-app#/courses/5` ),
+		true
+	);
+	assert.equal(
+		isCourseReturn( `${ admin }?page=ohmylms-content&tab=courses&id=5` ),
+		true
+	);
+	assert.equal(
+		isCourseReturn( `${ admin }?page=ohmylms-content&tab=courses` ),
+		false
+	);
+	assert.equal(
+		isCourseReturn( `${ admin }?page=ohmylms-app#/courses` ),
+		false
+	);
 	assert.equal(
 		isCourseReturn( `${ admin }?page=ohmylms-app#/content-hub/lessons` ),
 		false

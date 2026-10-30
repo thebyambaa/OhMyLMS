@@ -490,12 +490,7 @@ function Editor( {
 							title={ __( 'Email preview', 'ohmylms' ) }
 							sandbox=""
 							srcDoc={ `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head><body style="margin:0">${ preview.preview.html }</body></html>` }
-							style={ {
-								width: '100%',
-								height: '640px',
-								border: '1px solid #c3c4c7',
-								background: '#fff',
-							} }
+							className="ohmylms-email-preview"
 						/>
 					</>
 				) }

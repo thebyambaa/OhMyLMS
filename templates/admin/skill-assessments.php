@@ -20,7 +20,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$page_url            = admin_url( 'admin.php?page=' . \OhMyLMS\Assessment\SkillAssessmentPage::SLUG );
+$page_url            = \OhMyLMS\Assessment\SkillAssessmentPage::url();
 $assessment_form_url = add_query_arg(
 	array(
 		'course'  => $course_id,
@@ -32,8 +32,8 @@ $assessment_form_url = add_query_arg(
 // A skill is ticked when the unit teaches it, or when the form was sent with it ticked.
 $ticked = $form['skills'];
 ?>
-<div class="wrap">
-	<h1><?php esc_html_e( 'Skill assessments', 'ohmylms' ); ?></h1>
+<div class="ohmylms-admin-section ohmylms-skill-assessments">
+	<h2><?php esc_html_e( 'Skill assessments', 'ohmylms' ); ?></h2>
 	<p><?php esc_html_e( 'Build a quiz, unit test or course challenge that draws a few approved questions for each skill you choose. Each attempt gets its own questions, and every question keeps its own skill, so results update the learner’s skill levels.', 'ohmylms' ); ?></p>
 
 	<?php if ( $created ) : ?>
@@ -84,7 +84,9 @@ $ticked = $form['skills'];
 
 	<h2><?php esc_html_e( '1. Choose a unit (optional)', 'ohmylms' ); ?></h2>
 	<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
-		<input type="hidden" name="page" value="<?php echo esc_attr( \OhMyLMS\Assessment\SkillAssessmentPage::SLUG ); ?>">
+		<input type="hidden" name="page" value="<?php echo esc_attr( \OhMyLMS\Admin\AdminNavigation::page_slug( 'content' ) ); ?>">
+		<input type="hidden" name="tab" value="skills">
+		<input type="hidden" name="section" value="assessments">
 		<p>
 			<label for="oml-sa-course"><?php esc_html_e( 'Course', 'ohmylms' ); ?></label>
 			<select id="oml-sa-course" name="course">

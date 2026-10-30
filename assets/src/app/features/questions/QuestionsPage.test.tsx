@@ -84,7 +84,7 @@ describe( 'QuestionsPage', () => {
 		);
 		const table = await screen.findByRole( 'table', { name: 'Questions' } );
 		const rows = within( table ).getAllByRole( 'row' );
-		expect( rows ).toHaveLength( 3 );
+		expect( rows ).toHaveLength( 4 );
 		const first = within( rows[ 1 ]! );
 		expect(
 			first.getByRole( 'link', { name: 'Solve 2x = 6' } )
@@ -105,7 +105,9 @@ describe( 'QuestionsPage', () => {
 		expect(
 			second.getByRole( 'button', { name: 'Restore Untitled question' } )
 		).toBeInTheDocument();
-		expect( screen.getByText( '2 questions found.' ) ).toBeInTheDocument();
+		expect(
+			screen.getAllByText( '2 questions found.' )[ 0 ]
+		).toBeInTheDocument();
 		expect( lastQuery() ).toEqual( {
 			page: 1,
 			search: '',
@@ -138,23 +140,22 @@ describe( 'QuestionsPage', () => {
 		renderPage();
 		await screen.findByRole( 'table' );
 		await user.type(
-			screen.getByRole( 'textbox', { name: 'Search questions' } ),
+			screen.getByRole( 'searchbox', { name: 'Search questions' } ),
 			'solve{Enter}'
 		);
 		await waitFor( () =>
 			expect( lastQuery() ).toMatchObject( { search: 'solve' } )
 		);
 		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Type' } ),
+			await screen.findByRole( 'combobox', { name: 'Type' } ),
 			'multiple-choice'
 		);
 		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Difficulty' } ),
+			await screen.findByRole( 'combobox', { name: 'Difficulty' } ),
 			'challenge'
 		);
-		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Status' } ),
-			'draft'
+		await user.click(
+			await screen.findByRole( 'link', { name: 'Not approved' } )
 		);
 		await waitFor( () =>
 			expect( lastQuery() ).toEqual( {
@@ -166,8 +167,8 @@ describe( 'QuestionsPage', () => {
 			} )
 		);
 		expect(
-			screen.getByRole( 'option', { name: 'Not approved' } )
-		).toBeInTheDocument();
+			await screen.findByRole( 'link', { name: /^Not approved/ } )
+		).toHaveAttribute( 'aria-current', 'page' );
 	} );
 
 	it( 'steps back a page when the page is past the end', async () => {
@@ -186,7 +187,9 @@ describe( 'QuestionsPage', () => {
 				message: 'Past the end.',
 			} )
 		);
-		await user.click( screen.getByRole( 'button', { name: 'Next page' } ) );
+		await user.click(
+			screen.getAllByRole( 'button', { name: 'Next page' } )[ 0 ]!
+		);
 		await waitFor( () => expect( lastQuery().page ).toBe( 1 ) );
 		expect( api.listQuestions ).toHaveBeenCalledTimes( 3 );
 		expect( screen.queryByText( 'Past the end.' ) ).not.toBeInTheDocument();

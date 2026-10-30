@@ -8,7 +8,7 @@ import {
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
-import { Table } from '../../../ui/Table';
+import { ListTable } from '../../../ui/ListTable';
 import { useOperation } from '../../hooks/useOperation';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import { normalizeApiError } from '../../lib/api';
@@ -208,102 +208,75 @@ export default function SubjectProfilesPage() {
 					>
 						{ __( 'Add profile', 'ohmylms' ) }
 					</Button>
-					<Table caption={ __( 'Profiles', 'ohmylms' ) }>
-						<thead>
-							<tr>
-								<th scope="col">
-									{ __( 'Profile', 'ohmylms' ) }
-								</th>
-								<th scope="col">
-									{ __( 'Levels', 'ohmylms' ) }
-								</th>
-								<th scope="col">
-									{ __( 'Status', 'ohmylms' ) }
-								</th>
-								<th scope="col">
-									{ __( 'Actions', 'ohmylms' ) }
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							{ data.profiles.map( ( profile ) => (
-								<tr key={ profile.key }>
-									<th scope="row">{ profile.label }</th>
-									<td>{ profile.levels.length }</td>
-									<td>
-										{ [
-											profile.builtin
-												? __( 'Built-in', 'ohmylms' )
-												: __( 'Custom', 'ohmylms' ),
-											profile.builtin &&
-											profile.customized
-												? __( 'customised', 'ohmylms' )
-												: '',
-											data.default === profile.key
-												? __( 'default', 'ohmylms' )
-												: '',
-										]
-											.filter( Boolean )
-											.join( ', ' ) }
-									</td>
-									<td>
-										<Button
-											variant="tertiary"
-											disabled={ busy || dirty }
-											aria-label={ sprintf(
-												/* translators: %s: profile name. */
-												__(
-													'Edit profile: %s',
-													'ohmylms'
-												),
-												profile.label
-											) }
-											onClick={ () => open( profile ) }
-										>
-											{ __( 'Edit', 'ohmylms' ) }
-										</Button>
-										{ data.default !== profile.key && (
-											<Button
-												variant="tertiary"
-												disabled={ busy }
-												onClick={ () =>
-													command(
-														'default',
-														profile
-													)
-												}
-											>
-												{ __(
-													'Make default',
-													'ohmylms'
-												) }
-											</Button>
-										) }
-										{ profile.customized && (
-											<Button
-												variant="tertiary"
-												isDestructive
-												disabled={ busy }
-												onClick={ () =>
-													setRemoving( profile )
-												}
-											>
-												{ profile.builtin
-													? __(
-															'Restore built-in',
-															'ohmylms'
-														)
-													: __(
-															'Remove',
-															'ohmylms'
-														) }
-											</Button>
-										) }
-									</td>
-								</tr>
-							) ) }
-						</tbody>
-					</Table>
+					<ListTable
+						caption={ __( 'Profiles', 'ohmylms' ) }
+						rows={ data.profiles }
+						rowKey={ ( profile ) => profile.key }
+						columns={ [
+							{
+								id: 'profile',
+								label: __( 'Profile', 'ohmylms' ),
+								primary: true,
+								render: ( profile ) => (
+									<strong className="row-title">
+										{ profile.label }
+									</strong>
+								),
+							},
+							{
+								id: 'levels',
+								label: __( 'Levels', 'ohmylms' ),
+								className: 'num',
+								render: ( profile ) => profile.levels.length,
+							},
+							{
+								id: 'status',
+								label: __( 'Status', 'ohmylms' ),
+								render: ( profile ) =>
+									[
+										profile.builtin
+											? __( 'Built-in', 'ohmylms' )
+											: __( 'Custom', 'ohmylms' ),
+										profile.builtin && profile.customized
+											? __( 'customised', 'ohmylms' )
+											: '',
+										data.default === profile.key
+											? __( 'default', 'ohmylms' )
+											: '',
+									]
+										.filter( Boolean )
+										.join( ', ' ),
+							},
+						] }
+						rowActions={ ( profile ) => [
+							{
+								key: 'edit',
+								label: __( 'Edit', 'ohmylms' ),
+								disabled: busy || dirty,
+								ariaLabel: sprintf(
+									/* translators: %s: profile name. */
+									__( 'Edit profile: %s', 'ohmylms' ),
+									profile.label
+								),
+								onClick: () => open( profile ),
+							},
+							data.default !== profile.key && {
+								key: 'default',
+								label: __( 'Make default', 'ohmylms' ),
+								disabled: busy,
+								onClick: () => command( 'default', profile ),
+							},
+							profile.customized && {
+								key: 'delete',
+								label: profile.builtin
+									? __( 'Restore built-in', 'ohmylms' )
+									: __( 'Remove', 'ohmylms' ),
+								destructive: true,
+								disabled: busy,
+								onClick: () => setRemoving( profile ),
+							},
+						] }
+					/>
 					{ data.subjects.length > 0 && (
 						<>
 							<h2>{ __( 'Subjects in use', 'ohmylms' ) }</h2>

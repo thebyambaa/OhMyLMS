@@ -624,11 +624,8 @@ export default function CertificateEditorPage() {
 					title={ __( 'Certificate preview', 'ohmylms' ) }
 					sandbox=""
 					srcDoc={ preview.html }
+					className="ohmylms-certificate-preview"
 					style={ {
-						border: '1px solid currentColor',
-						display: 'block',
-						maxWidth: '100%',
-						width: '100%',
 						aspectRatio: `${ preview.width_mm } / ${ preview.height_mm }`,
 					} }
 				/>

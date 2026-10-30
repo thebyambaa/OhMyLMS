@@ -22,9 +22,9 @@ import {
 } from '@wordpress/components';
 import { SVG, Path } from '@wordpress/primitives';
 import { __ } from '@wordpress/i18n';
-import apiFetch from '@wordpress/api-fetch';
 import { createBlock } from '@wordpress/blocks';
 import { searchBank } from '../question-bank/api.mjs';
+import { searchChapterContents } from './api.mjs';
 import { installNativeCanvasRecovery } from './nativeCanvas.mjs';
 import { isCourseReturn, isReturnUrl } from './returnLink.mjs';
 
@@ -227,9 +227,10 @@ function LessonSettings() {
 			return;
 		}
 		try {
-			const result = await apiFetch( {
-				path: `/ohmylms/v1/chapters/${ window.ohmylmsNativeLesson.chapterId }/search-contents?term=${ encodeURIComponent( search ) }`,
-			} );
+			const result = await searchChapterContents(
+				window.ohmylmsNativeLesson.chapterId,
+				search
+			);
 			setPrerequisites(
 				( Array.isArray( result ) ? result : result.data || [] ).filter(
 					( item ) => Number( item.value ) !== Number( postId )

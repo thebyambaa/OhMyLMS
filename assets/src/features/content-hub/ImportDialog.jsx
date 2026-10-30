@@ -11,6 +11,7 @@ import { editPath, importQuiz } from './api.mjs';
 import { downloadText, exampleFile, problemLines } from './quizExchange.mjs';
 import { CSV_TEMPLATE, ImportPreview } from './QuizActions.jsx';
 import { SkillPicker } from './SkillPicker';
+import { request } from '../rest.mjs';
 
 export const IMPORT_TARGETS = [ 'questions', 'quiz', 'exam' ];
 
@@ -36,7 +37,7 @@ const targetInfo = () => ( {
 } );
 
 const api = ( path, data ) =>
-	window.wp.apiFetch( {
+	request( {
 		path: `/ohmylms/v1/${ path }`,
 		method: 'POST',
 		data,
@@ -241,7 +242,7 @@ export function ImportDialog( {
 				if ( scheme ) {
 					body.append( 'mark_scheme', scheme );
 				}
-				const job = await window.wp.apiFetch( {
+				const job = await request( {
 					path: '/ohmylms/v1/exam-imports',
 					method: 'POST',
 					body,

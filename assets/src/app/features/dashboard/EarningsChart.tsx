@@ -44,7 +44,7 @@ export function EarningsChart( {
 	return (
 		<figure
 			aria-labelledby={ `${ id }-title` }
-			style={ { margin: '0 0 16px' } }
+			className="ohmylms-earnings-chart"
 		>
 			<figcaption id={ `${ id }-title` }>
 				<strong>{ title }</strong>
@@ -56,11 +56,6 @@ export function EarningsChart( {
 						role="img"
 						aria-labelledby={ `${ id }-svg-title ${ id }-svg-desc` }
 						viewBox={ `0 0 ${ chart.width } ${ chart.height }` }
-						style={ {
-							width: '100%',
-							maxWidth: 720,
-							height: 'auto',
-						} }
 					>
 						<title id={ `${ id }-svg-title` }>{ title }</title>
 						<desc id={ `${ id }-svg-desc` }>{ description }</desc>
@@ -92,14 +87,14 @@ export function EarningsChart( {
 									y={ bar.netY }
 									width={ bar.width }
 									height={ bar.netHeight }
-									fill="#2271b1"
+									className="ohmylms-earnings-chart-net"
 								/>
 								<rect
 									x={ bar.x }
 									y={ bar.refundY }
 									width={ bar.width }
 									height={ bar.refundHeight }
-									fill="#d63638"
+									className="ohmylms-earnings-chart-refund"
 								/>
 							</g>
 						) ) }
@@ -121,9 +116,9 @@ export function EarningsChart( {
 						} ) }
 					</svg>
 					<p aria-hidden="true">
-						<span style={ { color: '#2271b1' } }>■</span>{ ' ' }
+						<span className="ohmylms-earnings-chart-net">■</span>{ ' ' }
 						{ __( 'Net income', 'ohmylms' ) }{ ' ' }
-						<span style={ { color: '#d63638' } }>■</span>{ ' ' }
+						<span className="ohmylms-earnings-chart-refund">■</span>{ ' ' }
 						{ __( 'Refunds', 'ohmylms' ) }
 					</p>
 				</>

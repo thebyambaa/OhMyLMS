@@ -1,11 +1,9 @@
 import { del, get, patch, post } from '../../lib/api';
 import { getCollection } from '../../lib/api/collection';
 import {
-	COURSE_OPTION_LIMIT,
 	buildCouponQuery,
 	buildOrderQuery,
 	parseCoupon,
-	parseCourseOption,
 	parseDeletedId,
 	parseNote,
 	parseNotes,
@@ -103,21 +101,5 @@ export async function deleteCoupon( id: number, signal?: AbortSignal ) {
 	);
 }
 
-/**
- * Course choices for the coupon editor. This reuses the bounded, administrator-only course list of
- * the students API.
- *
- * @param search Title search.
- * @param signal Cancels the request.
- */
-export function listCourses( search: string, signal?: AbortSignal ) {
-	const term = search.trim();
-	return getCollection( '/ohmylms/v1/students/courses', parseCourseOption, {
-		signal,
-		query: {
-			page: 1,
-			per_page: COURSE_OPTION_LIMIT,
-			...( term ? { search: term } : {} ),
-		},
-	} );
-}
+/** Course choices for the coupon editor: the students feature's bounded course list. */
+export { listCourses } from '../students/public';

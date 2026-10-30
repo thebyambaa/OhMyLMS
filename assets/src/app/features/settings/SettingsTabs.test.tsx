@@ -267,8 +267,16 @@ describe( 'Design system tab', () => {
 			name: 'Design system',
 		} );
 		expect( within( form ).getByLabelText( 'Preset' ) ).toHaveValue(
+			'wordpress'
+		);
+		expect( form ).toHaveTextContent(
+			/follow each user’s WordPress admin colour scheme \(yours: ocean, #567958\)/
+		);
+		await user.selectOptions(
+			within( form ).getByLabelText( 'Preset' ),
 			'khan'
 		);
+		expect( form ).not.toHaveTextContent( /yours: ocean/ );
 		await user.selectOptions(
 			within( form ).getByLabelText( 'Preset' ),
 			'classic'

@@ -1,15 +1,13 @@
-import { Table } from '../../../ui/Table';
 import {
-	Button,
-	Modal,
-	Notice,
-	SelectControl,
-	TextControl,
-} from '@wordpress/components';
+	ListTable,
+	ListTableInput,
+	ListTableSelect,
+} from '../../../ui/ListTable';
+import { Button, Modal, Notice, TextControl } from '@wordpress/components';
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useNavigate } from 'react-router-dom';
-import { Pagination } from '../../components/Pagination';
+import { statusViews } from '../../components/listViews';
 import { normalizeApiError } from '../../lib/api';
 import {
 	createCourse,
@@ -195,73 +193,6 @@ export default function CoursesPage() {
 			>
 				{ __( 'Add course', 'ohmylms' ) }
 			</Button>
-			<form
-				role="search"
-				aria-label={ __( 'Filter courses', 'ohmylms' ) }
-				onSubmit={ ( event ) => {
-					event.preventDefault();
-					list.applyFilters( {
-						...draft,
-						search: draft.search.trim(),
-					} );
-				} }
-			>
-				<TextControl
-					label={ __( 'Search courses', 'ohmylms' ) }
-					value={ draft.search }
-					onChange={ ( search ) =>
-						setDraft( ( current ) => ( { ...current, search } ) )
-					}
-				/>
-				<SelectControl
-					label={ __( 'Status', 'ohmylms' ) }
-					value={ draft.status }
-					options={ statusFilters() }
-					onChange={ ( status ) =>
-						setDraft( ( current ) => ( { ...current, status } ) )
-					}
-				/>
-				<SelectControl
-					label={ __( 'Price', 'ohmylms' ) }
-					value={ draft.price_type }
-					options={ priceFilters() }
-					onChange={ ( value ) =>
-						setDraft( ( current ) => ( {
-							...current,
-							price_type: value,
-						} ) )
-					}
-				/>
-				<TextControl
-					label={ __( 'Created from', 'ohmylms' ) }
-					type="date"
-					value={ draft.created_after }
-					onChange={ ( value ) =>
-						setDraft( ( current ) => ( {
-							...current,
-							created_after: value,
-						} ) )
-					}
-				/>
-				<TextControl
-					label={ __( 'Created until', 'ohmylms' ) }
-					type="date"
-					value={ draft.created_before }
-					onChange={ ( value ) =>
-						setDraft( ( current ) => ( {
-							...current,
-							created_before: value,
-						} ) )
-					}
-				/>
-				<Button
-					type="submit"
-					variant="secondary"
-					disabled={ busy || list.loading }
-				>
-					{ __( 'Apply filters', 'ohmylms' ) }
-				</Button>
-			</form>
 			{ message && (
 				<Notice status="success" onRemove={ () => setMessage( null ) }>
 					{ message }
@@ -283,218 +214,266 @@ export default function CoursesPage() {
 			{ list.loading && (
 				<p role="status">{ __( 'Loading courses…', 'ohmylms' ) }</p>
 			) }
-			{ ! list.loading &&
-				! list.error &&
-				( list.data.items.length ? (
-					<>
-						<p role="status">
-							{ sprintf(
-								/* translators: %d: total course count. */
-								_n(
-									'%d course found.',
-									'%d courses found.',
-									list.data.total,
-									'ohmylms'
-								),
-								list.data.total
-							) }
-						</p>
-						<Table caption={ __( 'Courses', 'ohmylms' ) } striped>
-							<thead>
-								<tr>
-									{ [
-										__( 'Title', 'ohmylms' ),
-										__( 'Status', 'ohmylms' ),
-										__( 'Level', 'ohmylms' ),
-										__( 'Price', 'ohmylms' ),
-										__( 'Students', 'ohmylms' ),
-										__( 'Created', 'ohmylms' ),
-										__( 'Actions', 'ohmylms' ),
-									].map( ( heading ) => (
-										<th key={ heading } scope="col">
-											{ heading }
-										</th>
-									) ) }
-								</tr>
-							</thead>
-							<tbody>
-								{ list.data.items.map( ( item ) => (
-									<tr key={ item.id }>
-										<th scope="row">
-											{ inTrash ? (
-												item.title
-											) : (
-												<Link
-													to={ `/courses/${ item.id }` }
-												>
-													{ item.title }
-												</Link>
+			{ ! list.loading && ! list.error && (
+				<ListTable< Course >
+					caption={ __( 'Courses', 'ohmylms' ) }
+					formLabel={ __( 'Filter courses', 'ohmylms' ) }
+					busy={ busy }
+					rows={ list.data.items }
+					rowKey={ ( item ) => item.id }
+					rowLabel={ ( item ) => item.title }
+					emptyMessage={ __( 'No courses found.', 'ohmylms' ) }
+					views={ statusViews(
+						statusFilters(),
+						list.filters.status,
+						list.data.total,
+						( status ) => {
+							setDraft( ( current ) => ( {
+								...current,
+								status,
+							} ) );
+							list.applyFilters( {
+								...draft,
+								search: draft.search.trim(),
+								status,
+							} );
+						}
+					) }
+					search={ {
+						label: __( 'Search courses', 'ohmylms' ),
+						submitLabel: __( 'Search Courses', 'ohmylms' ),
+						value: draft.search,
+						onChange: ( search ) =>
+							setDraft( ( current ) => ( {
+								...current,
+								search,
+							} ) ),
+					} }
+					filters={
+						<>
+							<ListTableSelect
+								label={ __( 'Price', 'ohmylms' ) }
+								value={ draft.price_type }
+								options={ priceFilters() }
+								onChange={ ( value ) =>
+									setDraft( ( current ) => ( {
+										...current,
+										price_type: value,
+									} ) )
+								}
+							/>
+							<ListTableInput
+								label={ __( 'Created from', 'ohmylms' ) }
+								type="date"
+								value={ draft.created_after }
+								onChange={ ( value ) =>
+									setDraft( ( current ) => ( {
+										...current,
+										created_after: value,
+									} ) )
+								}
+							/>
+							<ListTableInput
+								label={ __( 'Created until', 'ohmylms' ) }
+								type="date"
+								value={ draft.created_before }
+								onChange={ ( value ) =>
+									setDraft( ( current ) => ( {
+										...current,
+										created_before: value,
+									} ) )
+								}
+							/>
+						</>
+					}
+					onFilter={ () =>
+						list.applyFilters( {
+							...draft,
+							status: list.filters.status,
+							search: draft.search.trim(),
+						} )
+					}
+					pagination={ {
+						page: list.page,
+						totalPages: list.data.totalPages,
+						totalItems: list.data.total,
+						itemsLabel: sprintf(
+							/* translators: %d: total course count. */
+							_n(
+								'%d course found.',
+								'%d courses found.',
+								list.data.total,
+								'ohmylms'
+							),
+							list.data.total
+						),
+						onChange: list.setPage,
+					} }
+					columns={ [
+						{
+							id: 'title',
+							label: __( 'Title', 'ohmylms' ),
+							primary: true,
+							render: ( item ) => (
+								<strong>
+									{ inTrash ? (
+										item.title
+									) : (
+										<Link
+											className="row-title"
+											to={ `/courses/${ item.id }` }
+										>
+											{ item.title }
+										</Link>
+									) }
+								</strong>
+							),
+						},
+						{
+							id: 'author',
+							label: __( 'Author', 'ohmylms' ),
+							render: ( item ) => item.author_name || '—',
+						},
+						{
+							id: 'status',
+							label: __( 'Status', 'ohmylms' ),
+							render: ( item ) => statusLabel( item.status ),
+						},
+						{
+							id: 'level',
+							label: __( 'Level', 'ohmylms' ),
+							render: ( item ) => levelLabel( item.level ),
+						},
+						{
+							id: 'price',
+							label: __( 'Price', 'ohmylms' ),
+							render: ( item ) => (
+								<>
+									{ 'free' === item.price_type
+										? __( 'Free', 'ohmylms' )
+										: formatPrice(
+												item.price,
+												item.currency
 											) }
-											{ item.author_name && (
-												<>
-													<br />
-													<small>
-														{ item.author_name }
-													</small>
-												</>
-											) }
-										</th>
-										<td>{ statusLabel( item.status ) }</td>
-										<td>{ levelLabel( item.level ) }</td>
-										<td>
-											{ 'free' === item.price_type
-												? __( 'Free', 'ohmylms' )
-												: formatPrice(
-														item.price,
+									{ 'paid' === item.price_type &&
+										item.price !== item.regular_price && (
+											<>
+												{ ' ' }
+												<s>
+													{ formatPrice(
+														item.regular_price,
 														item.currency
 													) }
-											{ 'paid' === item.price_type &&
-												item.price !==
-													item.regular_price && (
-													<>
-														{ ' ' }
-														<s>
-															{ formatPrice(
-																item.regular_price,
-																item.currency
-															) }
-														</s>
-													</>
+												</s>
+											</>
+										) }
+								</>
+							),
+						},
+						{
+							id: 'students',
+							label: __( 'Students', 'ohmylms' ),
+							className: 'num',
+							render: ( item ) => item.enrolled_count,
+						},
+						{
+							id: 'date',
+							label: __( 'Created', 'ohmylms' ),
+							render: ( item ) => item.created_at.slice( 0, 10 ),
+						},
+					] }
+					rowActions={ ( item ) =>
+						inTrash
+							? [
+									{
+										key: 'untrash',
+										label: __( 'Restore', 'ohmylms' ),
+										disabled: busy,
+										onClick: () => restore( item ),
+										ariaLabel: sprintf(
+											/* translators: %s: course title. */
+											__( 'Restore %s', 'ohmylms' ),
+											item.title
+										),
+									},
+									{
+										key: 'delete',
+										label: __(
+											'Delete permanently',
+											'ohmylms'
+										),
+										destructive: true,
+										disabled: busy,
+										onClick: () => {
+											setError( null );
+											setDialog( {
+												kind: 'delete',
+												item,
+											} );
+										},
+										ariaLabel: sprintf(
+											/* translators: %s: course title. */
+											__(
+												'Delete %s permanently',
+												'ohmylms'
+											),
+											item.title
+										),
+									},
+								]
+							: [
+									{
+										key: 'edit',
+										label: __( 'Edit', 'ohmylms' ),
+										render: (
+											<Link
+												to={ `/courses/${ item.id }` }
+												aria-label={ sprintf(
+													/* translators: %s: course title. */
+													__( 'Edit %s', 'ohmylms' ),
+													item.title
 												) }
-										</td>
-										<td>{ item.enrolled_count }</td>
-										<td>
-											{ item.created_at.slice( 0, 10 ) }
-										</td>
-										<td>
-											{ inTrash ? (
-												<>
-													<Button
-														variant="link"
-														disabled={ busy }
-														onClick={ () =>
-															restore( item )
-														}
-														aria-label={ sprintf(
-															/* translators: %s: course title. */
-															__(
-																'Restore %s',
-																'ohmylms'
-															),
-															item.title
-														) }
-													>
-														{ __(
-															'Restore',
-															'ohmylms'
-														) }
-													</Button>{ ' ' }
-													<Button
-														variant="link"
-														isDestructive
-														disabled={ busy }
-														onClick={ () => {
-															setError( null );
-															setDialog( {
-																kind: 'delete',
-																item,
-															} );
-														} }
-														aria-label={ sprintf(
-															/* translators: %s: course title. */
-															__(
-																'Delete %s permanently',
-																'ohmylms'
-															),
-															item.title
-														) }
-													>
-														{ __(
-															'Delete permanently',
-															'ohmylms'
-														) }
-													</Button>
-												</>
-											) : (
-												<>
-													<Link
-														to={ `/courses/${ item.id }` }
-														aria-label={ sprintf(
-															/* translators: %s: course title. */
-															__(
-																'Edit %s',
-																'ohmylms'
-															),
-															item.title
-														) }
-													>
-														{ __(
-															'Edit',
-															'ohmylms'
-														) }
-													</Link>{ ' ' }
-													<Button
-														variant="link"
-														disabled={ busy }
-														onClick={ () =>
-															duplicate( item )
-														}
-														aria-label={ sprintf(
-															/* translators: %s: course title. */
-															__(
-																'Duplicate %s',
-																'ohmylms'
-															),
-															item.title
-														) }
-													>
-														{ __(
-															'Duplicate',
-															'ohmylms'
-														) }
-													</Button>{ ' ' }
-													<Button
-														variant="link"
-														isDestructive
-														disabled={ busy }
-														onClick={ () => {
-															setError( null );
-															setDialog( {
-																kind: 'trash',
-																item,
-															} );
-														} }
-														aria-label={ sprintf(
-															/* translators: %s: course title. */
-															__(
-																'Move %s to the trash',
-																'ohmylms'
-															),
-															item.title
-														) }
-													>
-														{ __(
-															'Trash',
-															'ohmylms'
-														) }
-													</Button>
-												</>
-											) }
-										</td>
-									</tr>
-								) ) }
-							</tbody>
-						</Table>
-						<Pagination
-							page={ list.page }
-							pages={ list.data.totalPages }
-							busy={ busy || list.loading }
-							onChange={ list.setPage }
-						/>
-					</>
-				) : (
-					<p>{ __( 'No courses found.', 'ohmylms' ) }</p>
-				) ) }
+											>
+												{ __( 'Edit', 'ohmylms' ) }
+											</Link>
+										),
+									},
+									{
+										key: 'duplicate',
+										label: __( 'Duplicate', 'ohmylms' ),
+										disabled: busy,
+										onClick: () => duplicate( item ),
+										ariaLabel: sprintf(
+											/* translators: %s: course title. */
+											__( 'Duplicate %s', 'ohmylms' ),
+											item.title
+										),
+									},
+									{
+										key: 'trash',
+										label: __( 'Trash', 'ohmylms' ),
+										destructive: true,
+										disabled: busy,
+										onClick: () => {
+											setError( null );
+											setDialog( {
+												kind: 'trash',
+												item,
+											} );
+										},
+										ariaLabel: sprintf(
+											/* translators: %s: course title. */
+											__(
+												'Move %s to the trash',
+												'ohmylms'
+											),
+											item.title
+										),
+									},
+								]
+					}
+				/>
+			) }
 			{ dialog?.kind === 'create' && (
 				<Modal
 					title={ __( 'Add course', 'ohmylms' ) }

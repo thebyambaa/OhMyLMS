@@ -1,0 +1,956 @@
+{
+	"groups": [
+		{
+			"id": "dashboard",
+			"page": "ohmylms",
+			"tabs": []
+		},
+		{
+			"id": "content",
+			"page": "ohmylms-content",
+			"tabs": [
+				{
+					"id": "courses",
+					"capability": "edit_posts",
+					"flag": "",
+					"sections": [
+						"",
+						"overview"
+					],
+					"serverSections": [],
+					"defaultSection": ""
+				},
+				{
+					"id": "lessons",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
+				},
+				{
+					"id": "quizzes",
+					"capability": "edit_posts",
+					"flag": "",
+					"sections": [
+						"",
+						"reports"
+					],
+					"serverSections": [],
+					"defaultSection": ""
+				},
+				{
+					"id": "exams",
+					"capability": "edit_posts",
+					"flag": "",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
+				},
+				{
+					"id": "assignments",
+					"capability": "edit_posts",
+					"flag": "",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
+				},
+				{
+					"id": "question-bank",
+					"capability": "edit_posts",
+					"flag": "",
+					"sections": [
+						"",
+						"import-review"
+					],
+					"serverSections": [
+						"import-review"
+					],
+					"defaultSection": ""
+				},
+				{
+					"id": "skills",
+					"capability": "edit_posts",
+					"flag": "",
+					"sections": [
+						"",
+						"assessments"
+					],
+					"serverSections": [
+						"assessments"
+					],
+					"defaultSection": ""
+				},
+				{
+					"id": "curriculum",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [
+						"",
+						"bundles",
+						"skill-map",
+						"subjects",
+						"taxonomies"
+					],
+					"serverSections": [],
+					"defaultSection": ""
+				}
+			]
+		},
+		{
+			"id": "accounts",
+			"page": "ohmylms-accounts",
+			"tabs": [
+				{
+					"id": "students",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
+				},
+				{
+					"id": "schools",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
+				},
+				{
+					"id": "classes",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
+				},
+				{
+					"id": "teachers",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
+				},
+				{
+					"id": "parents",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
+				},
+				{
+					"id": "users",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
+				}
+			]
+		},
+		{
+			"id": "commerce",
+			"page": "ohmylms-commerce",
+			"tabs": [
+				{
+					"id": "earnings",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
+				},
+				{
+					"id": "orders",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
+				},
+				{
+					"id": "memberships",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
+				},
+				{
+					"id": "subscriptions",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
+				},
+				{
+					"id": "coupons",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
+				}
+			]
+		},
+		{
+			"id": "engagement",
+			"page": "ohmylms-engagement",
+			"tabs": [
+				{
+					"id": "gamification",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [
+						"points",
+						"levels",
+						"badges",
+						"streaks",
+						"xp",
+						"leaderboard",
+						"rewards",
+						"certificates"
+					],
+					"serverSections": [],
+					"defaultSection": ""
+				},
+				{
+					"id": "sessions",
+					"capability": "edit_posts",
+					"flag": "ohmylms_show_sessions_menu",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
+				},
+				{
+					"id": "emails",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
+				}
+			]
+		},
+		{
+			"id": "settings",
+			"page": "ohmylms-settings",
+			"tabs": [
+				{
+					"id": "settings",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [
+						"general",
+						"branding",
+						"account-and-privacy",
+						"permalink",
+						"advanced",
+						"currency",
+						"tax",
+						"payment-gateways",
+						"design-system",
+						"course-archive",
+						"quiz-design",
+						"hub-icons",
+						"xapi",
+						"ai-tutor",
+						"mcp",
+						"migration"
+					],
+					"serverSections": [],
+					"defaultSection": "general"
+				},
+				{
+					"id": "integrations",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
+				},
+				{
+					"id": "webhooks",
+					"capability": "manage_options",
+					"flag": "ohmylms_should_enable_webhooks",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
+				},
+				{
+					"id": "setup",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
+				}
+			]
+		}
+	],
+	"routes": [
+		{
+			"id": "dashboard",
+			"path": "/dashboard",
+			"group": "dashboard"
+		},
+		{
+			"id": "earnings",
+			"path": "/earnings",
+			"group": "commerce",
+			"tab": "earnings"
+		},
+		{
+			"id": "course-report",
+			"path": "/reports/courses/:id",
+			"group": "content",
+			"tab": "courses",
+			"view": "report"
+		},
+		{
+			"id": "course-roster",
+			"path": "/reports/courses/:id/students",
+			"group": "content",
+			"tab": "courses",
+			"view": "students"
+		},
+		{
+			"id": "setup",
+			"path": "/setup",
+			"group": "settings",
+			"tab": "setup"
+		},
+		{
+			"id": "content-hub-overview",
+			"path": "/content-hub",
+			"group": "content",
+			"tab": "courses",
+			"section": "overview"
+		},
+		{
+			"id": "content-hub",
+			"path": "/content-hub/skills",
+			"group": "content",
+			"tab": "skills"
+		},
+		{
+			"id": "curriculum",
+			"path": "/content-hub/curriculum",
+			"group": "content",
+			"tab": "curriculum"
+		},
+		{
+			"id": "curriculum-skill-map",
+			"path": "/content-hub/curriculum/skill-map",
+			"group": "content",
+			"tab": "curriculum",
+			"section": "skill-map"
+		},
+		{
+			"id": "curriculum-subjects",
+			"path": "/content-hub/curriculum/subjects",
+			"group": "content",
+			"tab": "curriculum",
+			"section": "subjects"
+		},
+		{
+			"id": "curriculum-compare",
+			"path": "/content-hub/curriculum/compare",
+			"group": "content",
+			"tab": "curriculum",
+			"view": "compare",
+			"params": {
+				"tab": "compare"
+			}
+		},
+		{
+			"id": "bundles",
+			"path": "/content-hub/bundles",
+			"group": "content",
+			"tab": "curriculum",
+			"section": "bundles"
+		},
+		{
+			"id": "syllabus-editor",
+			"path": "/content-hub/curriculum/syllabus/:id",
+			"group": "content",
+			"tab": "curriculum",
+			"view": "syllabus"
+		},
+		{
+			"id": "course-structures",
+			"path": "/content-hub/courses",
+			"group": "content",
+			"tab": "courses",
+			"view": "structure"
+		},
+		{
+			"id": "course-structure-editor",
+			"path": "/content-hub/courses/:id",
+			"group": "content",
+			"tab": "courses",
+			"view": "structure"
+		},
+		{
+			"id": "courses",
+			"path": "/courses",
+			"group": "content",
+			"tab": "courses"
+		},
+		{
+			"id": "courses-editor",
+			"path": "/courses/:id/:tab?",
+			"group": "content",
+			"tab": "courses",
+			"params": {
+				"tab": "view"
+			}
+		},
+		{
+			"id": "quizzes",
+			"path": "/quizzes",
+			"group": "content",
+			"tab": "quizzes"
+		},
+		{
+			"id": "quizzes-editor",
+			"path": "/quizzes/:id",
+			"group": "content",
+			"tab": "quizzes"
+		},
+		{
+			"id": "quizzes-attempts",
+			"path": "/quizzes/:id/attempts",
+			"group": "content",
+			"tab": "quizzes",
+			"view": "attempts"
+		},
+		{
+			"id": "quiz-reports",
+			"path": "/reports/quizzes",
+			"group": "content",
+			"tab": "quizzes",
+			"section": "reports"
+		},
+		{
+			"id": "assignments",
+			"path": "/assignments",
+			"group": "content",
+			"tab": "assignments"
+		},
+		{
+			"id": "assignments-editor",
+			"path": "/assignments/:id",
+			"group": "content",
+			"tab": "assignments"
+		},
+		{
+			"id": "assignments-submissions",
+			"path": "/assignments/:id/submissions",
+			"group": "content",
+			"tab": "assignments",
+			"view": "submissions"
+		},
+		{
+			"id": "assignments-grading",
+			"path": "/assignments/:id/submissions/:submissionId",
+			"group": "content",
+			"tab": "assignments",
+			"view": "submissions"
+		},
+		{
+			"id": "exams",
+			"path": "/exams",
+			"group": "content",
+			"tab": "exams"
+		},
+		{
+			"id": "exams-import-review",
+			"path": "/exams/imports/:jobId",
+			"group": "content",
+			"tab": "exams",
+			"view": "import"
+		},
+		{
+			"id": "exams-editor",
+			"path": "/exams/:id",
+			"group": "content",
+			"tab": "exams"
+		},
+		{
+			"id": "course-settings-editor",
+			"path": "/content-hub/courses/:id/settings",
+			"group": "content",
+			"tab": "courses",
+			"view": "structure-settings"
+		},
+		{
+			"id": "lessons",
+			"path": "/content-hub/lessons",
+			"group": "content",
+			"tab": "lessons"
+		},
+		{
+			"id": "lesson-editor",
+			"path": "/content-hub/lessons/:id",
+			"group": "content",
+			"tab": "lessons"
+		},
+		{
+			"id": "questions",
+			"path": "/content-hub/question-bank",
+			"group": "content",
+			"tab": "question-bank"
+		},
+		{
+			"id": "questions-editor",
+			"path": "/content-hub/question-bank/:id",
+			"group": "content",
+			"tab": "question-bank"
+		},
+		{
+			"id": "orders",
+			"path": "/orders",
+			"group": "commerce",
+			"tab": "orders"
+		},
+		{
+			"id": "order-detail",
+			"path": "/orders/:id",
+			"group": "commerce",
+			"tab": "orders"
+		},
+		{
+			"id": "coupons",
+			"path": "/coupons",
+			"group": "commerce",
+			"tab": "coupons"
+		},
+		{
+			"id": "subscriptions",
+			"path": "/subscriptions",
+			"group": "commerce",
+			"tab": "subscriptions"
+		},
+		{
+			"id": "subscription-detail",
+			"path": "/subscriptions/:id",
+			"group": "commerce",
+			"tab": "subscriptions"
+		},
+		{
+			"id": "memberships",
+			"path": "/memberships",
+			"group": "commerce",
+			"tab": "memberships"
+		},
+		{
+			"id": "memberships-editor",
+			"path": "/memberships/:id",
+			"group": "commerce",
+			"tab": "memberships"
+		},
+		{
+			"id": "students",
+			"path": "/students",
+			"group": "accounts",
+			"tab": "students"
+		},
+		{
+			"id": "student-report",
+			"path": "/students/:id/report",
+			"group": "accounts",
+			"tab": "students",
+			"view": "report"
+		},
+		{
+			"id": "account-hub",
+			"path": "/account-hub",
+			"group": "accounts",
+			"tab": "schools",
+			"tabs": [
+				"classes",
+				"teachers",
+				"parents",
+				"users"
+			],
+			"params": {
+				"tab": "tab"
+			}
+		},
+		{
+			"id": "account-hub-school",
+			"path": "/account-hub/schools/:id",
+			"group": "accounts",
+			"tab": "schools"
+		},
+		{
+			"id": "account-hub-roster",
+			"path": "/account-hub/schools/:id/roster",
+			"group": "accounts",
+			"tab": "schools",
+			"view": "roster"
+		},
+		{
+			"id": "account-hub-class",
+			"path": "/account-hub/classes/:id",
+			"group": "accounts",
+			"tab": "classes"
+		},
+		{
+			"id": "certificates",
+			"path": "/certificates",
+			"group": "engagement",
+			"tab": "gamification",
+			"section": "certificates"
+		},
+		{
+			"id": "certificates-editor",
+			"path": "/certificates/:id",
+			"group": "engagement",
+			"tab": "gamification",
+			"section": "certificates"
+		},
+		{
+			"id": "sessions",
+			"path": "/sessions",
+			"group": "engagement",
+			"tab": "sessions"
+		},
+		{
+			"id": "session-editor",
+			"path": "/sessions/:id",
+			"group": "engagement",
+			"tab": "sessions"
+		},
+		{
+			"id": "gamification",
+			"path": "/gamification",
+			"group": "engagement",
+			"tab": "gamification",
+			"params": {
+				"tab": "section"
+			}
+		},
+		{
+			"id": "emails",
+			"path": "/emails",
+			"group": "engagement",
+			"tab": "emails"
+		},
+		{
+			"id": "integrations",
+			"path": "/integrations",
+			"group": "settings",
+			"tab": "integrations"
+		},
+		{
+			"id": "settings",
+			"path": "/settings",
+			"group": "settings",
+			"tab": "settings",
+			"params": {
+				"tab": "section"
+			}
+		},
+		{
+			"id": "taxonomies",
+			"path": "/taxonomies",
+			"group": "content",
+			"tab": "curriculum",
+			"section": "taxonomies"
+		},
+		{
+			"id": "webhooks",
+			"path": "/webhooks",
+			"group": "settings",
+			"tab": "webhooks"
+		},
+		{
+			"id": "extension-pages",
+			"path": "/extensions/:id",
+			"group": "settings",
+			"tab": "ext-:id"
+		}
+	],
+	"cases": [
+		[
+			"/",
+			"page=ohmylms",
+			"/dashboard"
+		],
+		[
+			"/dashboard",
+			"page=ohmylms"
+		],
+		[
+			"/dashboard?range=30",
+			"page=ohmylms&range=30"
+		],
+		[
+			"/earnings",
+			"page=ohmylms-commerce&tab=earnings"
+		],
+		[
+			"/reports/courses/12",
+			"page=ohmylms-content&tab=courses&id=12&view=report"
+		],
+		[
+			"/reports/courses/12/students",
+			"page=ohmylms-content&tab=courses&id=12&view=students"
+		],
+		[
+			"/setup?step=pages",
+			"page=ohmylms-settings&tab=setup&step=pages"
+		],
+		[
+			"/content-hub",
+			"page=ohmylms-content&tab=courses&section=overview"
+		],
+		[
+			"/content-hub/skills",
+			"page=ohmylms-content&tab=skills"
+		],
+		[
+			"/content-hub/skills?add=1",
+			"page=ohmylms-content&tab=skills&add=1"
+		],
+		[
+			"/content-hub/curriculum",
+			"page=ohmylms-content&tab=curriculum"
+		],
+		[
+			"/content-hub/curriculum/skill-map",
+			"page=ohmylms-content&tab=curriculum&section=skill-map"
+		],
+		[
+			"/content-hub/curriculum/subjects",
+			"page=ohmylms-content&tab=curriculum&section=subjects"
+		],
+		[
+			"/content-hub/curriculum/compare?tab=roadmaps&roadmap=3",
+			"page=ohmylms-content&tab=curriculum&view=compare&compare=roadmaps&roadmap=3"
+		],
+		[
+			"/content-hub/bundles",
+			"page=ohmylms-content&tab=curriculum&section=bundles"
+		],
+		[
+			"/content-hub/curriculum/syllabus/24?node=s%3A1",
+			"page=ohmylms-content&tab=curriculum&id=24&view=syllabus&node=s%3A1"
+		],
+		[
+			"/taxonomies",
+			"page=ohmylms-content&tab=curriculum&section=taxonomies"
+		],
+		[
+			"/content-hub/courses",
+			"page=ohmylms-content&tab=courses&view=structure"
+		],
+		[
+			"/content-hub/courses/5",
+			"page=ohmylms-content&tab=courses&id=5&view=structure"
+		],
+		[
+			"/content-hub/courses/5/settings",
+			"page=ohmylms-content&tab=courses&id=5&view=structure-settings"
+		],
+		[
+			"/courses",
+			"page=ohmylms-content&tab=courses"
+		],
+		[
+			"/courses?status=draft&page=2",
+			"page=ohmylms-content&tab=courses&status=draft&paged=2"
+		],
+		[
+			"/courses/12",
+			"page=ohmylms-content&tab=courses&id=12"
+		],
+		[
+			"/courses/12/settings",
+			"page=ohmylms-content&tab=courses&id=12&view=settings"
+		],
+		[
+			"/quizzes?action=new",
+			"page=ohmylms-content&tab=quizzes&action=new"
+		],
+		[
+			"/quizzes/5",
+			"page=ohmylms-content&tab=quizzes&id=5"
+		],
+		[
+			"/quizzes/5/attempts",
+			"page=ohmylms-content&tab=quizzes&id=5&view=attempts"
+		],
+		[
+			"/reports/quizzes?search=unit%201&page=3",
+			"page=ohmylms-content&tab=quizzes&section=reports&search=unit%201&paged=3"
+		],
+		[
+			"/assignments",
+			"page=ohmylms-content&tab=assignments"
+		],
+		[
+			"/assignments/7",
+			"page=ohmylms-content&tab=assignments&id=7"
+		],
+		[
+			"/assignments/7/submissions?student=3",
+			"page=ohmylms-content&tab=assignments&id=7&view=submissions&student=3"
+		],
+		[
+			"/assignments/7/submissions/9",
+			"page=ohmylms-content&tab=assignments&id=7&view=submissions&submissionId=9"
+		],
+		[
+			"/exams?action=import",
+			"page=ohmylms-content&tab=exams&action=import"
+		],
+		[
+			"/exams/4",
+			"page=ohmylms-content&tab=exams&id=4"
+		],
+		[
+			"/exams/imports/8",
+			"page=ohmylms-content&tab=exams&view=import&jobId=8"
+		],
+		[
+			"/content-hub/lessons",
+			"page=ohmylms-content&tab=lessons"
+		],
+		[
+			"/content-hub/lessons/3",
+			"page=ohmylms-content&tab=lessons&id=3"
+		],
+		[
+			"/content-hub/question-bank?action=new",
+			"page=ohmylms-content&tab=question-bank&action=new"
+		],
+		[
+			"/content-hub/question-bank/new?type=numerical",
+			"page=ohmylms-content&tab=question-bank&id=new&type=numerical"
+		],
+		[
+			"/orders",
+			"page=ohmylms-commerce&tab=orders"
+		],
+		[
+			"/orders/45",
+			"page=ohmylms-commerce&tab=orders&id=45"
+		],
+		[
+			"/coupons",
+			"page=ohmylms-commerce&tab=coupons"
+		],
+		[
+			"/subscriptions",
+			"page=ohmylms-commerce&tab=subscriptions"
+		],
+		[
+			"/subscriptions/6",
+			"page=ohmylms-commerce&tab=subscriptions&id=6"
+		],
+		[
+			"/memberships",
+			"page=ohmylms-commerce&tab=memberships"
+		],
+		[
+			"/memberships/2",
+			"page=ohmylms-commerce&tab=memberships&id=2"
+		],
+		[
+			"/students",
+			"page=ohmylms-accounts&tab=students"
+		],
+		[
+			"/students/9/report",
+			"page=ohmylms-accounts&tab=students&id=9&view=report"
+		],
+		[
+			"/account-hub",
+			"page=ohmylms-accounts&tab=schools"
+		],
+		[
+			"/account-hub?tab=schools",
+			"page=ohmylms-accounts&tab=schools",
+			"/account-hub"
+		],
+		[
+			"/account-hub?tab=classes",
+			"page=ohmylms-accounts&tab=classes"
+		],
+		[
+			"/account-hub?tab=users",
+			"page=ohmylms-accounts&tab=users"
+		],
+		[
+			"/account-hub/schools/3",
+			"page=ohmylms-accounts&tab=schools&id=3"
+		],
+		[
+			"/account-hub/schools/3/roster",
+			"page=ohmylms-accounts&tab=schools&id=3&view=roster"
+		],
+		[
+			"/account-hub/classes/4",
+			"page=ohmylms-accounts&tab=classes&id=4"
+		],
+		[
+			"/certificates",
+			"page=ohmylms-engagement&tab=gamification&section=certificates"
+		],
+		[
+			"/certificates/5",
+			"page=ohmylms-engagement&tab=gamification&section=certificates&id=5"
+		],
+		[
+			"/sessions",
+			"page=ohmylms-engagement&tab=sessions"
+		],
+		[
+			"/sessions/new",
+			"page=ohmylms-engagement&tab=sessions&id=new"
+		],
+		[
+			"/gamification",
+			"page=ohmylms-engagement&tab=gamification"
+		],
+		[
+			"/gamification?tab=badges",
+			"page=ohmylms-engagement&tab=gamification&section=badges"
+		],
+		[
+			"/emails?email=new-order",
+			"page=ohmylms-engagement&tab=emails&email=new-order"
+		],
+		[
+			"/integrations?auth=success",
+			"page=ohmylms-settings&tab=integrations&auth=success"
+		],
+		[
+			"/settings",
+			"page=ohmylms-settings&tab=settings"
+		],
+		[
+			"/settings?tab=tax",
+			"page=ohmylms-settings&tab=settings&section=tax"
+		],
+		[
+			"/webhooks",
+			"page=ohmylms-settings&tab=webhooks"
+		],
+		[
+			"/extensions/example-page",
+			"page=ohmylms-settings&tab=ext-example-page"
+		],
+		[
+			"/no-such-screen",
+			null
+		]
+	]
+}

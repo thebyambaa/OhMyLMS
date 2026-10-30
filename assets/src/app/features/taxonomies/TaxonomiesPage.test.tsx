@@ -42,7 +42,7 @@ describe( 'taxonomies route', () => {
 			name: 'Categories',
 		} );
 		expect(
-			within( table ).getByRole( 'rowheader', { name: 'Mathematics' } )
+			within( table ).getByRole( 'cell', { name: 'Mathematics' } )
 		).toBeInTheDocument();
 		expect( within( table ).getByText( 'Top level' ) ).toBeInTheDocument();
 		expect( within( table ).getAllByText( 'Mathematics' ) ).toHaveLength(
@@ -118,7 +118,7 @@ describe( 'taxonomies route', () => {
 		).toBeInTheDocument();
 		await user.click( screen.getByRole( 'button', { name: 'Try again' } ) );
 		expect(
-			await screen.findByRole( 'rowheader', { name: 'Mathematics' } )
+			await screen.findByRole( 'cell', { name: 'Mathematics' } )
 		).toBeInTheDocument();
 	} );
 
@@ -143,9 +143,9 @@ describe( 'taxonomies route', () => {
 	it( 'searches by submitting the form with the keyboard', async () => {
 		const user = userEvent.setup();
 		show( { edit_posts: true } );
-		await screen.findByRole( 'rowheader', { name: 'Mathematics' } );
+		await screen.findAllByRole( 'cell', { name: /^Mathematics/ } );
 		await user.type(
-			screen.getByRole( 'textbox', { name: 'Search Categories' } ),
+			screen.getByRole( 'searchbox', { name: 'Search Categories' } ),
 			'alg{Enter}'
 		);
 		await waitFor( () =>
@@ -161,8 +161,10 @@ describe( 'taxonomies route', () => {
 		const user = userEvent.setup();
 		list.mockResolvedValue( { items: [ root ], total: 45, totalPages: 3 } );
 		show( { edit_posts: true } );
-		await screen.findByRole( 'rowheader', { name: 'Mathematics' } );
-		await user.click( screen.getByRole( 'button', { name: 'Next page' } ) );
+		await screen.findAllByRole( 'cell', { name: /^Mathematics/ } );
+		await user.click(
+			screen.getAllByRole( 'button', { name: 'Next page' } )[ 0 ]!
+		);
 		await waitFor( () =>
 			expect( list ).toHaveBeenLastCalledWith(
 				'categories',

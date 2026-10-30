@@ -6,6 +6,8 @@ export const emails: FeatureDefinition = {
 	id: 'emails',
 	title: __( 'Emails', 'ohmylms' ),
 	path: '/emails',
+	group: 'engagement',
+	tab: 'emails',
 	capability: 'manage_options',
 	component: lazy(
 		() =>

@@ -18,8 +18,8 @@ if ( $result && ! $result['dry_run'] ) {
 	$hub_status['update'] = __( 'Updated', 'ohmylms' );
 }
 ?>
-<div class="wrap">
-	<h1><?php esc_html_e( 'Import questions', 'ohmylms' ); ?></h1>
+<div class="ohmylms-admin-section ohmylms-import-questions">
+	<h2><?php esc_html_e( 'Import questions', 'ohmylms' ); ?></h2>
 	<p><?php esc_html_e( 'Add past papers or any other questions to the question bank. Every row is checked first, and nothing is written until you choose Import. Uploading the same rows again updates questions instead of duplicating them.', 'ohmylms' ); ?></p>
 
 	<?php if ( $reviewed ) : ?>

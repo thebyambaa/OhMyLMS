@@ -1,4 +1,6 @@
-import { del, get, post, put } from '../../lib/api';
+import { del, get, put } from '../../lib/api';
+import { createAssignment } from '../assignments/public';
+import { createQuiz } from '../quizzes/public';
 import { parseOutline, type Outline } from './model';
 import {
 	invalid,
@@ -118,12 +120,9 @@ export async function createResource(
 	title: string,
 	signal?: AbortSignal
 ) {
-	const item = record(
-		await post< unknown >(
-			`${ BASE }/${ 'quiz' === type ? 'quizzes' : 'assignments' }`,
-			{ title: title.trim() },
-			{ signal }
-		)
-	);
-	return { id: positiveId( item.id ), title: text( item.title ) };
+	const item =
+		'quiz' === type
+			? await createQuiz( title, signal )
+			: await createAssignment( title, signal );
+	return { id: item.id, title: item.title };
 }

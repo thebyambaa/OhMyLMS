@@ -80,9 +80,11 @@ describe( 'CertificatesPage', () => {
 				name: 'Certificate templates',
 			} )
 		).toBeInTheDocument();
-		expect(
-			screen.getByRole( 'link', { name: 'Certificates' } )
-		).toBeInTheDocument();
+		expect( certificates ).toMatchObject( {
+			group: 'engagement',
+			tab: 'gamification',
+			section: 'certificates',
+		} );
 	} );
 	it( 'shows loading, then a named table with thumbnails, links and counts', async () => {
 		renderPage();
@@ -102,7 +104,9 @@ describe( 'CertificatesPage', () => {
 		const image = table.querySelector( 'img' );
 		expect( image ).toHaveAttribute( 'src', 'https://example.test/bg.png' );
 		expect( image ).toHaveAttribute( 'alt', '' );
-		expect( screen.getByText( '1 template found.' ) ).toBeInTheDocument();
+		expect(
+			screen.getAllByText( '1 template found.' )[ 0 ]
+		).toBeInTheDocument();
 	} );
 	it( 'shows an empty state', async () => {
 		listMock.mockResolvedValue( { items: [], total: 0, totalPages: 0 } );
@@ -129,7 +133,7 @@ describe( 'CertificatesPage', () => {
 		await user.click( screen.getByRole( 'button', { name: 'Try again' } ) );
 		await screen.findByText( 'Completion' );
 		await user.type(
-			screen.getByRole( 'textbox', {
+			screen.getByRole( 'searchbox', {
 				name: 'Search certificate templates',
 			} ),
 			'gold{Enter}'
@@ -142,9 +146,8 @@ describe( 'CertificatesPage', () => {
 				expect.any( AbortSignal )
 			)
 		);
-		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Status' } ),
-			'publish'
+		await user.click(
+			await screen.findByRole( 'link', { name: 'Published' } )
 		);
 		await waitFor( () =>
 			expect( listMock ).toHaveBeenLastCalledWith(
@@ -342,7 +345,9 @@ describe( 'CertificatesPage', () => {
 		vi.mocked( api.deleteCertificate ).mockResolvedValue( undefined );
 		renderPage();
 		await screen.findByText( 'Completion' );
-		await user.click( screen.getByRole( 'button', { name: 'Next page' } ) );
+		await user.click(
+			screen.getAllByRole( 'button', { name: 'Next page' } )[ 0 ]!
+		);
 		await waitFor( () =>
 			expect( listMock ).toHaveBeenLastCalledWith(
 				2,

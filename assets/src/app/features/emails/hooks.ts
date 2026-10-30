@@ -21,6 +21,7 @@ import type {
 	EmailSettings,
 	EmailTemplate,
 } from './types';
+import { routeFromHref } from '../../routing/links';
 
 /** Delay before a changed draft is rendered again. */
 export const PREVIEW_DELAY_MS = 500;
@@ -286,8 +287,8 @@ export function useUnsavedChangesGuard( dirty: boolean ) {
 			}
 			const anchor = event.target.closest( 'a[href]' );
 			const href = anchor?.getAttribute( 'href' ) ?? '';
-			const path = href.startsWith( '#/' ) ? href.slice( 1 ) : href;
-			if ( ! path.startsWith( '/' ) || path.startsWith( '//' ) ) {
+			const path = routeFromHref( href );
+			if ( ! path ) {
 				return;
 			}
 			event.preventDefault();

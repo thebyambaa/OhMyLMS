@@ -1,4 +1,4 @@
-import { Table } from '../../../ui/Table';
+import { ListTable } from '../../../ui/ListTable';
 import {
 	Button,
 	CheckboxControl,
@@ -12,7 +12,7 @@ import {
 import { useCallback, useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Pagination } from '../../components/Pagination';
+import { statusViews } from '../../components/listViews';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
 import {
@@ -421,55 +421,6 @@ export default function ExamsPage() {
 					{ __( 'Import exam', 'ohmylms' ) }
 				</Button>
 			</p>
-			<form
-				role="search"
-				aria-label={ __( 'Search exams', 'ohmylms' ) }
-				onSubmit={ ( event ) => {
-					event.preventDefault();
-					setFilters( ( current ) => ( {
-						...current,
-						search: query.trim(),
-					} ) );
-					setPage( 1 );
-				} }
-			>
-				<TextControl
-					label={ __( 'Search exams', 'ohmylms' ) }
-					value={ query }
-					onChange={ setQuery }
-				/>
-				<SelectControl
-					label={ __( 'Status', 'ohmylms' ) }
-					value={ filters.status }
-					options={ [
-						{ value: 'all', label: __( 'All', 'ohmylms' ) },
-						{ value: 'draft', label: __( 'Draft', 'ohmylms' ) },
-						{
-							value: 'publish',
-							label: __( 'Published', 'ohmylms' ),
-						},
-					] }
-					onChange={ ( value ) => {
-						const status = (
-							[ 'all', 'draft', 'publish' ] as StatusFilter[]
-						 ).find( ( item ) => item === value );
-						if ( status ) {
-							setFilters( ( current ) => ( {
-								...current,
-								status,
-							} ) );
-							setPage( 1 );
-						}
-					} }
-				/>
-				<Button
-					type="submit"
-					variant="secondary"
-					disabled={ exams.loading }
-				>
-					{ __( 'Search', 'ohmylms' ) }
-				</Button>
-			</form>
 			{ exams.error && (
 				<Notice status="error" isDismissible={ false }>
 					{ exams.error }{ ' ' }
@@ -481,95 +432,136 @@ export default function ExamsPage() {
 			{ exams.loading && (
 				<p role="status">{ __( 'Loading exams…', 'ohmylms' ) }</p>
 			) }
-			{ ! exams.loading &&
-				exams.data &&
-				( exams.data.items.length ? (
-					<>
-						<p role="status">
-							{ sprintf(
-								/* translators: %d: number of exams. */
-								_n(
-									'%d exam found.',
-									'%d exams found.',
-									exams.data.total,
-									'ohmylms'
+			{ ! exams.loading && exams.data && (
+				<ListTable
+					caption={ __( 'Exams', 'ohmylms' ) }
+					formLabel={ __( 'Search exams', 'ohmylms' ) }
+					rows={ exams.data.items }
+					rowKey={ ( exam ) => exam.id }
+					emptyMessage={ __( 'No exams found.', 'ohmylms' ) }
+					views={ statusViews(
+						[
+							{ value: 'all', label: __( 'All', 'ohmylms' ) },
+							{ value: 'draft', label: __( 'Draft', 'ohmylms' ) },
+							{
+								value: 'publish',
+								label: __( 'Published', 'ohmylms' ),
+							},
+						],
+						filters.status,
+						exams.data.total,
+						( value ) => {
+							const status = (
+								[ 'all', 'draft', 'publish' ] as StatusFilter[]
+							 ).find( ( item ) => item === value );
+							if ( status ) {
+								setFilters( ( current ) => ( {
+									...current,
+									status,
+								} ) );
+								setPage( 1 );
+							}
+						}
+					) }
+					search={ {
+						label: __( 'Search exams', 'ohmylms' ),
+						submitLabel: __( 'Search', 'ohmylms' ),
+						value: query,
+						onChange: setQuery,
+						onSubmit: () => {
+							setFilters( ( current ) => ( {
+								...current,
+								search: query.trim(),
+							} ) );
+							setPage( 1 );
+						},
+					} }
+					pagination={ {
+						page,
+						totalPages: exams.data.totalPages,
+						totalItems: exams.data.total,
+						itemsLabel: sprintf(
+							/* translators: %d: number of exams. */
+							_n(
+								'%d exam found.',
+								'%d exams found.',
+								exams.data.total,
+								'ohmylms'
+							),
+							exams.data.total
+						),
+						onChange: setPage,
+					} }
+					columns={ [
+						{
+							id: 'title',
+							label: __( 'Title', 'ohmylms' ),
+							primary: true,
+							render: ( exam ) => (
+								<strong>
+									<Link
+										className="row-title"
+										to={ examPath( exam.id ) }
+									>
+										{ exam.title ||
+											__( '(no title)', 'ohmylms' ) }
+									</Link>
+								</strong>
+							),
+						},
+						{
+							id: 'status',
+							label: __( 'Status', 'ohmylms' ),
+							render: ( exam ) => statusLabel( exam.status ),
+						},
+						{
+							id: 'questions',
+							label: __( 'Questions', 'ohmylms' ),
+							className: 'num',
+							render: ( exam ) => exam.question_count,
+						},
+						{
+							id: 'marks',
+							label: __( 'Marks', 'ohmylms' ),
+							className: 'num',
+							render: ( exam ) => exam.total_marks,
+						},
+						{
+							id: 'duration',
+							label: __( 'Duration', 'ohmylms' ),
+							render: ( exam ) =>
+								sprintf(
+									/* translators: %d: minutes. */
+									__( '%d min', 'ohmylms' ),
+									exam.duration_minutes
 								),
-								exams.data.total
-							) }
-						</p>
-						<Table caption={ __( 'Exams', 'ohmylms' ) } striped>
-							<thead>
-								<tr>
-									{ [
-										__( 'Title', 'ohmylms' ),
-										__( 'Status', 'ohmylms' ),
-										__( 'Questions', 'ohmylms' ),
-										__( 'Marks', 'ohmylms' ),
-										__( 'Duration', 'ohmylms' ),
-										__( 'Source', 'ohmylms' ),
-									].map( ( heading ) => (
-										<th key={ heading } scope="col">
-											{ heading }
-										</th>
-									) ) }
-								</tr>
-							</thead>
-							<tbody>
-								{ exams.data.items.map( ( exam ) => (
-									<tr key={ exam.id }>
-										<th scope="row">
-											<Link to={ examPath( exam.id ) }>
-												{ exam.title ||
-													__(
-														'(no title)',
-														'ohmylms'
-													) }
-											</Link>
-										</th>
-										<td>{ statusLabel( exam.status ) }</td>
-										<td>{ exam.question_count }</td>
-										<td>{ exam.total_marks }</td>
-										<td>
-											{ sprintf(
-												/* translators: %d: minutes. */
-												__( '%d min', 'ohmylms' ),
-												exam.duration_minutes
-											) }
-										</td>
-										<td>
-											{ 'imported' === exam.origin &&
-											exam.job_id ? (
-												<Link
-													to={ reviewPath(
-														exam.job_id
-													) }
-												>
-													{ __(
-														'Imported paper',
-														'ohmylms'
-													) }
-												</Link>
-											) : (
-												__(
-													'Written in OhMyLMS',
-													'ohmylms'
-												)
-											) }
-										</td>
-									</tr>
-								) ) }
-							</tbody>
-						</Table>
-						<Pagination
-							page={ page }
-							pages={ exams.data.totalPages }
-							busy={ exams.loading }
-							onChange={ setPage }
-						/>
-					</>
-				) : (
-					<p>{ __( 'No exams found.', 'ohmylms' ) }</p>
-				) ) }
+						},
+						{
+							id: 'source',
+							label: __( 'Source', 'ohmylms' ),
+							render: ( exam ) =>
+								'imported' === exam.origin && exam.job_id ? (
+									<Link to={ reviewPath( exam.job_id ) }>
+										{ __( 'Imported paper', 'ohmylms' ) }
+									</Link>
+								) : (
+									__( 'Written in OhMyLMS', 'ohmylms' )
+								),
+						},
+					] }
+					rowActions={ ( exam ) => [
+						{
+							key: 'edit',
+							label: __( 'Edit', 'ohmylms' ),
+							render: (
+								<Link to={ examPath( exam.id ) }>
+									{ __( 'Edit', 'ohmylms' ) }
+								</Link>
+							),
+						},
+					] }
+				/>
+			) }
 
 			<section aria-labelledby="oml-exam-imports">
 				<h3 id="oml-exam-imports">{ __( 'Imports', 'ohmylms' ) }</h3>
@@ -584,75 +576,65 @@ export default function ExamsPage() {
 				{ jobs.loading && (
 					<p role="status">{ __( 'Loading imports…', 'ohmylms' ) }</p>
 				) }
-				{ ! jobs.loading &&
-					jobs.data &&
-					( jobs.data.items.length ? (
-						<>
-							<Table
-								caption={ __( 'Imports', 'ohmylms' ) }
-								striped
-							>
-								<thead>
-									<tr>
-										{ [
-											__( 'Import', 'ohmylms' ),
-											__( 'State', 'ohmylms' ),
-											__( 'Creates', 'ohmylms' ),
-											__( 'Reviewed', 'ohmylms' ),
-											__( 'Updated', 'ohmylms' ),
-										].map( ( heading ) => (
-											<th key={ heading } scope="col">
-												{ heading }
-											</th>
-										) ) }
-									</tr>
-								</thead>
-								<tbody>
-									{ jobs.data.items.map( ( job ) => (
-										<tr key={ job.id }>
-											<th scope="row">
-												<Link
-													to={ reviewPath( job.id ) }
-												>
-													{ job.title ||
-														job.source.name }
-												</Link>
-											</th>
-											<td>{ stateLabel( job.state ) }</td>
-											<td>
-												{ targetLabel( job.target ) }
-											</td>
-											<td>
-												{ job.row_count
-													? sprintf(
-															/* translators: 1: accepted rows; 2: all rows. */
-															__(
-																'%1$d of %2$d',
-																'ohmylms'
-															),
-															job.accepted_count +
-																job.rejected_count,
-															job.row_count
-														)
-													: '—' }
-											</td>
-											<td>
-												{ formatDate( job.updated_at ) }
-											</td>
-										</tr>
-									) ) }
-								</tbody>
-							</Table>
-							<Pagination
-								page={ jobPage }
-								pages={ jobs.data.totalPages }
-								busy={ jobs.loading }
-								onChange={ setJobPage }
-							/>
-						</>
-					) : (
-						<p>{ __( 'No imports yet.', 'ohmylms' ) }</p>
-					) ) }
+				{ ! jobs.loading && jobs.data && (
+					<ListTable
+						caption={ __( 'Imports', 'ohmylms' ) }
+						rows={ jobs.data.items }
+						rowKey={ ( job ) => job.id }
+						emptyMessage={ __( 'No imports yet.', 'ohmylms' ) }
+						pagination={ {
+							page: jobPage,
+							totalPages: jobs.data.totalPages,
+							onChange: setJobPage,
+						} }
+						columns={ [
+							{
+								id: 'import',
+								label: __( 'Import', 'ohmylms' ),
+								primary: true,
+								render: ( job ) => (
+									<strong>
+										<Link
+											className="row-title"
+											to={ reviewPath( job.id ) }
+										>
+											{ job.title || job.source.name }
+										</Link>
+									</strong>
+								),
+							},
+							{
+								id: 'state',
+								label: __( 'State', 'ohmylms' ),
+								render: ( job ) => stateLabel( job.state ),
+							},
+							{
+								id: 'creates',
+								label: __( 'Creates', 'ohmylms' ),
+								render: ( job ) => targetLabel( job.target ),
+							},
+							{
+								id: 'reviewed',
+								label: __( 'Reviewed', 'ohmylms' ),
+								render: ( job ) =>
+									job.row_count
+										? sprintf(
+												/* translators: 1: accepted rows; 2: all rows. */
+												__( '%1$d of %2$d', 'ohmylms' ),
+												job.accepted_count +
+													job.rejected_count,
+												job.row_count
+											)
+										: '—',
+							},
+							{
+								id: 'date',
+								label: __( 'Updated', 'ohmylms' ),
+								render: ( job ) => formatDate( job.updated_at ),
+							},
+						] }
+					/>
+				) }
 			</section>
 
 			{ 'new' === dialog && (

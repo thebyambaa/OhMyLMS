@@ -23,7 +23,6 @@ import {
 import { nativeQuestionTypes } from './nativeAuthoring.mjs';
 import { NativeQuestionDetails } from './NativeQuestionDetails';
 import { __ } from '@wordpress/i18n';
-import apiFetch from '@wordpress/api-fetch';
 import {
 	registerBlockType,
 	getBlockType,
@@ -175,7 +174,7 @@ function LessonChoiceEdit( {
 			return undefined;
 		}
 		setQuestion( null );
-		loadBankQuestion( attributes.questionId, apiFetch )
+		loadBankQuestion( attributes.questionId )
 			.then( ( data ) => {
 				if ( active ) {
 					loadedId.current = attributes.questionId;
@@ -213,7 +212,7 @@ function LessonChoiceEdit( {
 			return undefined;
 		}
 		let active = true;
-		loadBankQuestion( attributes.questionId, apiFetch )
+		loadBankQuestion( attributes.questionId )
 			.then( ( fresh ) => active && setDetail( fresh ) )
 			.catch( ( cause ) => active && setError( cause.message ) );
 		return () => {
@@ -228,10 +227,7 @@ function LessonChoiceEdit( {
 			try {
 				const base = attributes.questionId
 					? detail ||
-						( await loadBankQuestion(
-							attributes.questionId,
-							apiFetch
-						) )
+						( await loadBankQuestion( attributes.questionId ) )
 					: null;
 				const payload = {
 					...( standalone && ! detail?.type
@@ -264,15 +260,14 @@ function LessonChoiceEdit( {
 				const saved = attributes.questionId
 					? await saveQuestionAttributes(
 							attributes.questionId,
-							payload,
-							apiFetch
+							payload
 						)
-					: await createBankQuestion( payload, apiFetch );
+					: await createBankQuestion( payload );
 				const id = attributes.questionId || saved.id;
 				// Keep the created identity even if refreshing its private details fails.
 				loadedId.current = id;
 				setAttributes( { questionId: id } );
-				const fresh = await loadBankQuestion( id, apiFetch );
+				const fresh = await loadBankQuestion( id );
 				setDetail( fresh );
 				const current = latestQuestion.current || question;
 				const unchanged = revision.current === submittedRevision;
@@ -294,12 +289,8 @@ function LessonChoiceEdit( {
 				} );
 				setDirty( ! unchanged );
 				if ( approve ) {
-					await approveQuestion(
-						id,
-						fresh.current_version_id,
-						apiFetch
-					);
-					setDetail( await loadBankQuestion( id, apiFetch ) );
+					await approveQuestion( id, fresh.current_version_id );
+					setDetail( await loadBankQuestion( id ) );
 				}
 			} catch ( failure ) {
 				setError( failure.message );
@@ -331,12 +322,8 @@ function LessonChoiceEdit( {
 	}, [ dirty, busy, error, question, detail?.can_edit, save ] );
 	async function duplicate() {
 		try {
-			const created = await duplicateQuestion(
-				attributes.questionId,
-				0,
-				apiFetch
-			);
-			const fresh = await loadBankQuestion( created.id, apiFetch );
+			const created = await duplicateQuestion( attributes.questionId, 0 );
+			const fresh = await loadBankQuestion( created.id );
 			const editor = select( 'core/block-editor' );
 			insertBlock(
 				createBlock( 'ohmylms/shared-multiple-choice', {

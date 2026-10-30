@@ -109,7 +109,7 @@ final class Views {
 			add_filter(
 				'submenu_file',
 				function () {
-					return \OhMyLMS\Admin\LegacyRoutes::url( '/accounthub' );
+					return \OhMyLMS\Admin\AdminNavigation::page_slug( 'accounts' );
 				}
 			);
 		}

@@ -10,8 +10,9 @@ namespace OhMyLMS\Admin;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The one list of retired legacy screens (`admin.php?page=ohmylms#/...`) and the new-app routes
- * (`admin.php?page=ohmylms-app#/...`) that replace them. PHP links use {@see LegacyRoutes::url()}, and
+ * The one list of retired legacy screens (`admin.php?page=ohmylms#/...`) and the app routes that replace
+ * them; {@see AdminNavigation::url()} gives each route its address (`admin.php?page=ohmylms-commerce&tab=orders&id=12`).
+ * PHP links use {@see LegacyRoutes::url()} and {@see LegacyRoutes::app_url()}, and
  * assets/js/legacy-redirects.js applies the same rules in the browser. See docs/LEGACY-ROUTES.md.
  *
  * A rule has:
@@ -25,15 +26,23 @@ defined( 'ABSPATH' ) || exit;
  *
  * Rules are tried in order and the first match wins. Other query parameters are copied unchanged.
  *
- * The legacy page itself only redirects: {@see LegacyRoutes::redirect_legacy_page()} sends it to the new
- * app on the server, and the app maps the carried-over hash. See docs/CUTOVER.md.
+ * `admin.php?page=ohmylms` is the Dashboard now; a legacy `#/route` it receives is mapped in the browser.
+ * The retired app page `admin.php?page=ohmylms-app` redirects to the Dashboard on the server
+ * ({@see LegacyRoutes::redirect_app_page()}), marked with {@see LegacyRoutes::FROM_APP}, and the browser
+ * carries its `#/route` over. Both redirects stay forever. See docs/LEGACY-ROUTES.md.
  */
 final class LegacyRoutes {
 
 	/**
-	 * Query parameter the server redirect adds, so the app maps the legacy hash it receives.
+	 * Query parameter of addresses that carry a legacy hash route (older links; the hash on the Dashboard is
+	 * read as legacy anyway).
 	 */
 	const FROM_LEGACY = 'ohmylms_from_legacy';
+
+	/**
+	 * Query parameter the server redirect of the retired app page adds: the hash it carries is an app route.
+	 */
+	const FROM_APP = 'ohmylms_from_app';
 
 	/**
 	 * Retired query parameter that used to keep the legacy screen; dropped by the redirect.
@@ -41,7 +50,7 @@ final class LegacyRoutes {
 	const RETIRED_OPT_OUT = 'ohmylms_legacy';
 
 	/**
-	 * New-app route that unmapped legacy routes open, with the notice naming them.
+	 * App route that unmapped legacy routes open (the Dashboard), with the notice naming them.
 	 */
 	const APP_HOME = '/';
 
@@ -51,7 +60,7 @@ final class LegacyRoutes {
 	const NOTICE_ID = 'ohmylms-legacy-unavailable';
 
 	/**
-	 * Script handle of the hash mapping that runs on the new app after the redirect.
+	 * Script handle of the hash mapping that runs on the Dashboard.
 	 */
 	const HANDLE = 'ohmylms-legacy-redirects';
 
@@ -471,58 +480,62 @@ final class LegacyRoutes {
 	}
 
 	/**
-	 * Where a request for the legacy page goes: the new app, marked with {@see LegacyRoutes::FROM_LEGACY}.
-	 * The browser keeps the `#/route` fragment across the redirect, and the app maps it
-	 * (assets/js/legacy-redirects.js). Other query parameters are kept.
+	 * Where a request for the retired app page (`admin.php?page=ohmylms-app`) goes: the Dashboard, marked
+	 * with {@see LegacyRoutes::FROM_APP} (or keeping {@see LegacyRoutes::FROM_LEGACY} from older unmapped
+	 * links). The browser keeps the `#/route` fragment across the redirect, and the Dashboard maps it
+	 * (assets/js/legacy-redirects.js, then the app's router). Other query parameters are kept.
 	 *
 	 * @return string Absolute URL.
 	 */
-	public static function legacy_redirect_url() {
+	public static function app_redirect_url() {
 		$query = array();
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Navigation only; the values are passed on unchanged.
 		foreach ( wp_unslash( $_GET ) as $name => $value ) {
 			$name = sanitize_key( $name );
-			if ( is_string( $value ) && '' !== $name && ! in_array( $name, array( 'page', self::RETIRED_OPT_OUT, self::FROM_LEGACY ), true ) ) {
+			if ( is_string( $value ) && '' !== $name && ! in_array( $name, array( 'page', self::RETIRED_OPT_OUT, self::FROM_APP ), true ) ) {
 				$query[ $name ] = rawurlencode( sanitize_text_field( $value ) );
 			}
 		}
-		$query['page']              = AppPage::SLUG;
-		$query[ self::FROM_LEGACY ] = '1';
+		$query = array_merge( array( 'page' => OHMYLMS_SLUG ), $query );
+		if ( ! isset( $query[ self::FROM_LEGACY ] ) ) {
+			$query[ self::FROM_APP ] = '1';
+		}
 		return add_query_arg( $query, admin_url( 'admin.php' ) );
 	}
 
 	/**
-	 * Redirect the legacy page to the new app (`load-toplevel_page_ohmylms`).
+	 * Redirect the retired app page to the Dashboard (on its `load-` hook).
 	 */
-	public static function redirect_legacy_page() {
-		wp_safe_redirect( self::legacy_redirect_url(), 302, 'OhMyLMS' );
+	public static function redirect_app_page() {
+		wp_safe_redirect( self::app_redirect_url(), 302, 'OhMyLMS' );
 		exit;
 	}
 
 	/**
-	 * Fallback body of the legacy page, which WordPress needs to register it. The page redirects on
-	 * `load-toplevel_page_ohmylms`, before anything is printed.
+	 * Hidden notice for a legacy address no screen replaces. Only the browser knows the address (it is in
+	 * the `#` fragment), so assets/js/legacy-redirects.js fills in the route and shows it. Printed on the
+	 * Dashboard, where those addresses land.
 	 */
-	public static function render_legacy_page() {
+	public static function render_unavailable_notice() {
 		?>
-		<div class="wrap">
-			<p><a href="<?php echo esc_url( self::app_url( self::APP_HOME ) ); ?>"><?php echo esc_html__( 'Open OhMyLMS', 'ohmylms' ); ?></a></p>
+		<div id="<?php echo esc_attr( self::NOTICE_ID ); ?>" class="notice notice-warning inline" role="status" hidden>
+			<p>
+				<?php echo esc_html__( 'This screen is not available in OhMyLMS:', 'ohmylms' ); ?>
+				<code data-ohmylms-legacy-route></code>
+			</p>
+			<?php $unavailable = self::unavailable(); ?>
+			<?php if ( $unavailable ) : ?>
+				<p>
+					<?php echo esc_html__( 'Not available:', 'ohmylms' ); ?>
+					<?php echo esc_html( implode( ', ', array_values( $unavailable ) ) ); ?>
+				</p>
+			<?php endif; ?>
 		</div>
 		<?php
 	}
 
 	/**
-	 * Whether the new app was opened by the legacy redirect or by an unmapped legacy link.
-	 *
-	 * @return bool
-	 */
-	public static function from_legacy() {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display flag.
-		return isset( $_GET[ self::FROM_LEGACY ] ) && '1' === sanitize_key( wp_unslash( $_GET[ self::FROM_LEGACY ] ) );
-	}
-
-	/**
-	 * Drop the marker from WordPress' canonical admin address (`removable_query_args`). WordPress rewrites
+	 * Drop the markers from WordPress' canonical admin address (`removable_query_args`). WordPress rewrites
 	 * the address to the canonical one after the hash mapping has removed the marker, and would put it back.
 	 *
 	 * @param string[] $args Query parameters WordPress removes from the address.
@@ -531,17 +544,18 @@ final class LegacyRoutes {
 	public static function removable_query_args( $args ) {
 		$args   = (array) $args;
 		$args[] = self::FROM_LEGACY;
+		$args[] = self::FROM_APP;
 		return $args;
 	}
 
 	/**
-	 * Load the hash mapping in the head of the new app when it was opened from a legacy address, before
-	 * the app's router reads the hash.
+	 * Load the hash mapping in the head of the Dashboard, before the app's router reads the hash. The
+	 * server cannot see the hash, so it loads on every Dashboard visit and does nothing without one.
 	 *
 	 * @param string $hook Current admin page hook suffix.
 	 */
 	public static function enqueue_landing( $hook ) {
-		if ( ! AppPage::is_app_screen( $hook ) || ! self::from_legacy() || ! current_user_can( AppPage::CAPABILITY ) ) {
+		if ( 'toplevel_page_' . OHMYLMS_SLUG !== $hook || ! current_user_can( AdminNavigation::CAPABILITY ) ) {
 			return;
 		}
 		$file = OHMYLMS_DIR . '/assets/js/legacy-redirects.js';
@@ -587,23 +601,28 @@ final class LegacyRoutes {
 	}
 
 	/**
-	 * Where a legacy route opens in the new app: its mapped route, or the app home when unmapped.
+	 * Where a legacy route opens: the admin page, tab and app route of its new screen, and the address;
+	 * an unmapped route opens the Dashboard.
 	 *
 	 * @param string $legacy Legacy hash route.
-	 * @return array{page: string, route: string}
+	 * @return array{page: string, tab: string, route: string, url: string}
 	 */
 	public static function target( $legacy ) {
 		$mapped = self::resolve( self::normalize( $legacy ) );
+		$route  = null === $mapped ? self::APP_HOME : $mapped;
+		$pairs  = AdminNavigation::address( $route ) ?? AdminNavigation::address( self::APP_HOME );
+		$query  = array_column( $pairs, 1, 0 );
 		return array(
-			'page'  => AppPage::SLUG,
-			'route' => null === $mapped ? self::APP_HOME : $mapped,
+			'page'  => (string) $query['page'],
+			'tab'   => (string) ( $query['tab'] ?? '' ),
+			'route' => $route,
+			'url'   => admin_url( 'admin.php?' . AdminNavigation::format_query( $pairs ) ),
 		);
 	}
 
 	/**
-	 * Absolute new-app URL for a legacy route. An unmapped route opens the app home, marked with
-	 * {@see LegacyRoutes::FROM_LEGACY} and keeping the legacy route in the hash, so the app shows the
-	 * notice that names it.
+	 * Absolute address for a legacy route. An unmapped route opens the Dashboard with the legacy route in
+	 * the hash, so the Dashboard shows the notice that names it.
 	 *
 	 * @param string $legacy Legacy hash route such as `/orders` or `/quiz-edit/5`.
 	 * @return string
@@ -614,17 +633,21 @@ final class LegacyRoutes {
 		if ( null !== $mapped ) {
 			return self::app_url( $mapped );
 		}
-		return admin_url( 'admin.php?page=' . AppPage::SLUG . '&' . self::FROM_LEGACY . '=1#' . $route );
+		return admin_url( 'admin.php?page=' . OHMYLMS_SLUG . '#' . $route );
 	}
 
 	/**
-	 * Absolute URL of a route in the new app.
+	 * Absolute address of an app route (`/orders/12` opens `admin.php?page=ohmylms-commerce&tab=orders&id=12`).
+	 * A route no screen serves opens the Dashboard with the route in the hash, where the app shows its
+	 * "not found" screen.
 	 *
-	 * @param string $route New-app route such as `/orders/12`.
+	 * @param string $route App route such as `/orders/12`.
 	 * @return string
 	 */
 	public static function app_url( $route ) {
-		return admin_url( 'admin.php?page=' . AppPage::SLUG . '#/' . ltrim( (string) $route, '/' ) );
+		$route = '/' . ltrim( (string) $route, '/' );
+		$url   = AdminNavigation::url( $route );
+		return null === $url ? admin_url( 'admin.php?page=' . OHMYLMS_SLUG . '&' . self::FROM_APP . '=1#' . $route ) : $url;
 	}
 
 	/**
@@ -656,13 +679,14 @@ final class LegacyRoutes {
 	/**
 	 * Data for assets/js/legacy-redirects.js.
 	 *
-	 * @return array{routes: array[], landing: array{param: string, home: string, noticeId: string}}
+	 * @return array{routes: array[], landing: array{param: string, appParam: string, home: string, noticeId: string}}
 	 */
 	public static function script_data() {
 		return array(
 			'routes'  => self::routes(),
 			'landing' => array(
 				'param'    => self::FROM_LEGACY,
+				'appParam' => self::FROM_APP,
 				'home'     => self::APP_HOME,
 				'noticeId' => self::NOTICE_ID,
 			),

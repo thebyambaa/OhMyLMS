@@ -1,7 +1,6 @@
-import { Table } from '../../../ui/Table';
+import { ListTable, ListTableSelect } from '../../../ui/ListTable';
 import {
 	Button,
-	CheckboxControl,
 	Modal,
 	Notice,
 	SelectControl,
@@ -10,7 +9,7 @@ import {
 import { useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Pagination } from '../../components/Pagination';
+import { statusViews } from '../../components/listViews';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
 import {
@@ -159,13 +158,6 @@ export default function QuestionsPage() {
 			}
 		);
 	}
-	function toggle( id: number, on: boolean ) {
-		setSelected( ( current ) =>
-			on
-				? [ ...current.filter( ( entry ) => entry !== id ), id ]
-				: current.filter( ( entry ) => entry !== id )
-		);
-	}
 	function create() {
 		const value = name.trim();
 		if ( ! value || Array.from( value ).length > MAX_NAME ) {
@@ -294,68 +286,6 @@ export default function QuestionsPage() {
 					</Button>
 				) ) }
 			</div>
-			<form
-				role="search"
-				aria-label={ __( 'Search questions', 'ohmylms' ) }
-				onSubmit={ ( event ) => {
-					event.preventDefault();
-					list.search( search );
-				} }
-			>
-				<TextControl
-					label={ __( 'Search questions', 'ohmylms' ) }
-					value={ search }
-					maxLength={ 100 }
-					onChange={ setSearch }
-				/>
-				<SelectControl
-					label={ __( 'Type', 'ohmylms' ) }
-					value={ list.query.type }
-					options={ [
-						{ value: '', label: __( 'All types', 'ohmylms' ) },
-						...registered.map( ( item ) => ( {
-							value: item.id,
-							label: item.label,
-						} ) ),
-					] }
-					onChange={ list.setType }
-				/>
-				<SelectControl< string >
-					label={ __( 'Difficulty', 'ohmylms' ) }
-					value={ list.query.difficulty }
-					options={ [
-						{
-							value: '',
-							label: __( 'All difficulties', 'ohmylms' ),
-						},
-						...DIFFICULTIES.map( ( value ) => ( {
-							value,
-							label: difficultyLabel( value ),
-						} ) ),
-					] }
-					onChange={ list.setDifficulty }
-				/>
-				<SelectControl
-					label={ __( 'Status', 'ohmylms' ) }
-					value={ list.query.status }
-					options={ statusFilters() }
-					onChange={ ( value ) => {
-						const found = statusFilters().find(
-							( option ) => option.value === value
-						);
-						if ( found ) {
-							list.setStatus( found.value as StatusFilter );
-						}
-					} }
-				/>
-				<Button
-					type="submit"
-					variant="secondary"
-					disabled={ list.loading }
-				>
-					{ __( 'Search', 'ohmylms' ) }
-				</Button>
-			</form>
 			{ types.error && (
 				<Notice status="warning" isDismissible={ false }>
 					{ __( 'Question types could not be loaded.', 'ohmylms' ) }{ ' ' }
@@ -400,149 +330,176 @@ export default function QuestionsPage() {
 			{ list.loading && (
 				<p role="status">{ __( 'Loading questions…', 'ohmylms' ) }</p>
 			) }
-			{ ! list.loading &&
-				! list.error &&
-				( list.data.items.length ? (
-					<>
-						<p role="status">
-							{ sprintf(
-								/* translators: %d: total question count. */
-								_n(
-									'%d question found.',
-									'%d questions found.',
-									list.data.total,
-									'ohmylms'
+			{ ! list.loading && ! list.error && (
+				<ListTable< QuestionSummary >
+					caption={ __( 'Questions', 'ohmylms' ) }
+					formLabel={ __( 'Search questions', 'ohmylms' ) }
+					busy={ operation.busy }
+					rows={ list.data.items }
+					rowKey={ ( item ) => item.id }
+					rowLabel={ displayName }
+					isSelectable={ ( item ) => item.permissions.can_edit }
+					selected={ selected }
+					onSelectedChange={ ( keys ) =>
+						setSelected( keys.map( Number ) )
+					}
+					emptyMessage={ __( 'No questions found.', 'ohmylms' ) }
+					views={ statusViews(
+						statusFilters(),
+						list.query.status,
+						list.data.total,
+						( value ) => {
+							const found = statusFilters().find(
+								( option ) => option.value === value
+							);
+							if ( found ) {
+								list.setStatus( found.value as StatusFilter );
+							}
+						}
+					) }
+					search={ {
+						label: __( 'Search questions', 'ohmylms' ),
+						submitLabel: __( 'Search', 'ohmylms' ),
+						value: search,
+						maxLength: 100,
+						onChange: setSearch,
+					} }
+					onFilter={ () => list.search( search ) }
+					filterLabel={ null }
+					filters={
+						<>
+							<ListTableSelect
+								label={ __( 'Type', 'ohmylms' ) }
+								value={ list.query.type }
+								options={ [
+									{
+										value: '',
+										label: __( 'All types', 'ohmylms' ),
+									},
+									...registered.map( ( item ) => ( {
+										value: item.id,
+										label: item.label,
+									} ) ),
+								] }
+								onChange={ list.setType }
+							/>
+							<ListTableSelect
+								label={ __( 'Difficulty', 'ohmylms' ) }
+								value={ list.query.difficulty }
+								options={ [
+									{
+										value: '',
+										label: __(
+											'All difficulties',
+											'ohmylms'
+										),
+									},
+									...DIFFICULTIES.map( ( value ) => ( {
+										value,
+										label: difficultyLabel( value ),
+									} ) ),
+								] }
+								onChange={ list.setDifficulty }
+							/>
+						</>
+					}
+					pagination={ {
+						page: list.query.page,
+						totalPages: list.data.totalPages,
+						totalItems: list.data.total,
+						itemsLabel: sprintf(
+							/* translators: %d: total question count. */
+							_n(
+								'%d question found.',
+								'%d questions found.',
+								list.data.total,
+								'ohmylms'
+							),
+							list.data.total
+						),
+						onChange: list.setPage,
+					} }
+					columns={ [
+						{
+							id: 'question',
+							label: __( 'Question', 'ohmylms' ),
+							primary: true,
+							render: ( item ) => (
+								<strong>
+									<Link
+										className="row-title"
+										to={ `${ EDITOR }/${ item.id }` }
+									>
+										{ displayName( item ) }
+									</Link>
+								</strong>
+							),
+						},
+						{
+							id: 'type',
+							label: __( 'Type', 'ohmylms' ),
+							render: ( item ) =>
+								typeLabel(
+									registered,
+									item.type,
+									item.type_label
 								),
-								list.data.total
-							) }
-						</p>
-						<Table caption={ __( 'Questions', 'ohmylms' ) } striped>
-							<thead>
-								<tr>
-									<th scope="col">
-										{ __( 'Select', 'ohmylms' ) }
-									</th>
-									{ [
-										__( 'Question', 'ohmylms' ),
-										__( 'Type', 'ohmylms' ),
-										__( 'Version', 'ohmylms' ),
-										__( 'Difficulty', 'ohmylms' ),
-										__( 'Used in', 'ohmylms' ),
-										__( 'Actions', 'ohmylms' ),
-									].map( ( title ) => (
-										<th key={ title } scope="col">
-											{ title }
-										</th>
-									) ) }
-								</tr>
-							</thead>
-							<tbody>
-								{ list.data.items.map( ( item ) => (
-									<tr key={ item.id }>
-										<td>
-											{ item.permissions.can_edit && (
-												<CheckboxControl
-													label={ sprintf(
-														/* translators: %s: question name. */
-														__(
-															'Select %s',
-															'ohmylms'
-														),
-														displayName( item )
-													) }
-													checked={ selected.includes(
-														item.id
-													) }
-													onChange={ ( on ) =>
-														toggle( item.id, on )
-													}
-												/>
-											) }
-										</td>
-										<th scope="row">
-											<Link
-												to={ `${ EDITOR }/${ item.id }` }
-											>
-												{ displayName( item ) }
-											</Link>
-										</th>
-										<td>
-											{ typeLabel(
-												registered,
-												item.type,
-												item.type_label
-											) }
-										</td>
-										<td>{ versionLabel( item ) }</td>
-										<td>
-											{ difficultyLabel(
-												item.difficulty
-											) }
-										</td>
-										<td>{ usageLabel( item ) }</td>
-										<td>
-											<Button
-												variant="link"
-												disabled={ operation.busy }
-												onClick={ () =>
-													duplicate( item )
-												}
-												aria-label={ sprintf(
-													/* translators: %s: question name. */
-													__(
-														'Duplicate %s',
-														'ohmylms'
-													),
-													displayName( item )
-												) }
-											>
-												{ __( 'Duplicate', 'ohmylms' ) }
-											</Button>
-											{ item.permissions.can_edit && (
-												<>
-													{ ' ' }
-													<Button
-														variant="link"
-														disabled={
-															operation.busy
-														}
-														onClick={ () =>
-															changeLifecycle(
-																item
-															)
-														}
-														aria-label={ lifecycleLabel(
-															item
-														) }
-													>
-														{ 'archived' ===
-														item.status
-															? __(
-																	'Restore',
-																	'ohmylms'
-																)
-															: __(
-																	'Archive',
-																	'ohmylms'
-																) }
-													</Button>
-												</>
-											) }
-										</td>
-									</tr>
-								) ) }
-							</tbody>
-						</Table>
-						<Pagination
-							page={ list.query.page }
-							pages={ list.data.totalPages }
-							busy={ operation.busy || list.loading }
-							onChange={ list.setPage }
-						/>
-					</>
-				) : (
-					<p>{ __( 'No questions found.', 'ohmylms' ) }</p>
-				) ) }
+						},
+						{
+							id: 'version',
+							label: __( 'Version', 'ohmylms' ),
+							render: versionLabel,
+						},
+						{
+							id: 'difficulty',
+							label: __( 'Difficulty', 'ohmylms' ),
+							render: ( item ) =>
+								difficultyLabel( item.difficulty ),
+						},
+						{
+							id: 'usage',
+							label: __( 'Used in', 'ohmylms' ),
+							render: usageLabel,
+						},
+					] }
+					rowActions={ ( item ) => [
+						item.permissions.can_edit && {
+							key: 'edit',
+							label: __( 'Edit', 'ohmylms' ),
+							render: (
+								<Link to={ `${ EDITOR }/${ item.id }` }>
+									{ __( 'Edit', 'ohmylms' ) }
+								</Link>
+							),
+						},
+						{
+							key: 'duplicate',
+							label: __( 'Duplicate', 'ohmylms' ),
+							disabled: operation.busy,
+							onClick: () => duplicate( item ),
+							ariaLabel: sprintf(
+								/* translators: %s: question name. */
+								__( 'Duplicate %s', 'ohmylms' ),
+								displayName( item )
+							),
+						},
+						item.permissions.can_edit && {
+							key:
+								'archived' === item.status
+									? 'untrash'
+									: 'archive',
+							label:
+								'archived' === item.status
+									? __( 'Restore', 'ohmylms' )
+									: __( 'Archive', 'ohmylms' ),
+							destructive: 'archived' !== item.status,
+							disabled: operation.busy,
+							onClick: () => changeLifecycle( item ),
+							ariaLabel: lifecycleLabel( item ),
+						},
+					] }
+				/>
+			) }
 			{ importing && (
 				<ImportQuestionsDialog
 					onClose={ () => setImporting( false ) }

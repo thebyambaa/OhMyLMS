@@ -1,4 +1,5 @@
 import { useRef, type KeyboardEvent } from 'react';
+import { useAdminPlace } from '../../routing/place';
 
 export interface TabItem {
 	id: string;
@@ -30,6 +31,8 @@ export function Tabs( {
 	onSelect: ( id: string ) => void;
 } ) {
 	const refs = useRef< Record< string, HTMLButtonElement | null > >( {} );
+	// On an admin page the server prints these as tabs or sections already.
+	const place = useAdminPlace();
 
 	function move( event: KeyboardEvent< HTMLButtonElement >, index: number ) {
 		const last = tabs.length - 1;
@@ -60,6 +63,9 @@ export function Tabs( {
 		}
 	}
 
+	if ( place ) {
+		return null;
+	}
 	return (
 		<div role="tablist" aria-label={ label } className="nav-tab-wrapper">
 			{ tabs.map( ( tab, index ) => {

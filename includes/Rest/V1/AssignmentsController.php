@@ -9,6 +9,7 @@ namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
 use OhMyLMS\Data\Assignment;
+use OhMyLMS\Learning\CourseStructure;
 use OhMyLMS\Learning\Placements;
 use OhMyLMS\Utility\Transaction;
 use WP_Error;
@@ -634,11 +635,8 @@ class AssignmentsController extends RestController {
 				'pending' => (int) $row->pending,
 			);
 		}
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT content.content_id, MIN(chapter.course_id) AS course_id FROM %i content INNER JOIN %i chapter ON chapter.chapter_id = content.chapter_id WHERE content.content_id IN ({$holders}) GROUP BY content.content_id", array_merge( array( $wpdb->prefix . 'ohmylms_content_relationship', $wpdb->prefix . 'ohmylms_chapter_relationship' ), $ids ) ) );
 		// phpcs:enable
-		foreach ( (array) $rows as $row ) {
-			$stats['courses'][ (int) $row->content_id ] = (int) $row->course_id;
-		}
+		$stats['courses'] = CourseStructure::first_courses( $ids );
 		foreach ( $ids as $id ) {
 			if ( empty( $stats['courses'][ $id ] ) ) {
 				$placed                   = Placements::courses_for( $id );

@@ -104,7 +104,9 @@ describe( 'student list', () => {
 			expect.stringContaining( '/students?student=12' )
 		);
 		expect( within( table ).getByText( 'Blocked' ) ).toBeInTheDocument();
-		expect( screen.getByText( '2 students found.' ) ).toBeInTheDocument();
+		expect(
+			screen.getAllByText( '2 students found.' )[ 0 ]
+		).toBeInTheDocument();
 	} );
 
 	it( 'shows an empty state', async () => {
@@ -114,10 +116,9 @@ describe( 'student list', () => {
 			totalPages: 0,
 		} );
 		show( '/students' );
-		expect(
-			await screen.findByText( 'No students found.' )
-		).toBeInTheDocument();
-		expect( screen.queryByRole( 'table' ) ).not.toBeInTheDocument();
+		expect( await screen.findByText( 'No students found.' ) ).toHaveClass(
+			'colspanchange'
+		);
 	} );
 
 	it( 'shows a server error and retries', async () => {
@@ -156,7 +157,7 @@ describe( 'student list', () => {
 		show( '/students' );
 		await screen.findByText( 'Ada Lovelace' );
 		await user.type(
-			screen.getByRole( 'textbox', { name: 'Search students' } ),
+			screen.getByRole( 'searchbox', { name: 'Search students' } ),
 			'ada{Enter}'
 		);
 		await waitFor( () =>
@@ -199,7 +200,9 @@ describe( 'student list', () => {
 		} );
 		show( '/students' );
 		await screen.findByText( 'Ada Lovelace' );
-		await user.click( screen.getByRole( 'button', { name: 'Next page' } ) );
+		await user.click(
+			screen.getAllByRole( 'button', { name: 'Next page' } )[ 0 ]!
+		);
 		await waitFor( () =>
 			expect( as.listStudents ).toHaveBeenLastCalledWith(
 				expect.objectContaining( { page: 2 } ),

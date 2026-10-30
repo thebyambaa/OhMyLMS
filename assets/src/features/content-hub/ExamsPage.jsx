@@ -17,6 +17,7 @@ import { ExamPaperDialog } from './ExamPaperDialog.jsx';
 import { ImportDialog } from './ImportDialog.jsx';
 import { useHubAction } from './useHubAction.js';
 import { ImportFigures } from './ImportFigures.jsx';
+import { request } from '../rest.mjs';
 
 /**
  * Associate each repeated question/part control with its own accessible label.
@@ -38,7 +39,7 @@ function ExamField( { children } ) {
 }
 
 const api = ( path, data ) =>
-	window.wp.apiFetch( {
+	request( {
 		path: `/ohmylms/v1/${ path }`,
 		...( data ? { method: 'POST', data } : {} ),
 	} );

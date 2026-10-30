@@ -1,11 +1,9 @@
-import { Table } from '../../../ui/Table';
-import { SelectControl } from '@wordpress/components';
 import { useCallback, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
-import { Pagination } from '../../components/Pagination';
+import { statusViews } from '../../components/listViews';
 import { listClasses, type ClassFilter } from './api';
-import { ListState, SearchForm } from './ListControls';
+import { HubListTable } from './ListControls';
 import { classStatusLabel } from './model';
 import { usePagedList } from './usePagedList';
 
@@ -30,86 +28,101 @@ export function ClassesTab() {
 					'ohmylms'
 				) }
 			</p>
-			<SearchForm
-				label={ __( 'Search classes', 'ohmylms' ) }
-				busy={ list.loading }
-				onSearch={ list.setSearch }
-			>
-				<SelectControl
-					label={ __( 'Status', 'ohmylms' ) }
-					value={ status }
-					options={ [
+			<HubListTable
+				caption={ __( 'Classes', 'ohmylms' ) }
+				searchLabel={ __( 'Search classes', 'ohmylms' ) }
+				list={ list }
+				loadingText={ __( 'Loading classes…', 'ohmylms' ) }
+				emptyText={ __( 'No classes found.', 'ohmylms' ) }
+				views={ statusViews(
+					[
 						{ value: 'all', label: __( 'All', 'ohmylms' ) },
 						{ value: 'active', label: __( 'Active', 'ohmylms' ) },
 						{
 							value: 'archived',
 							label: __( 'Archived', 'ohmylms' ),
 						},
-					] }
-					onChange={ ( value ) => {
+					],
+					status,
+					list.data.total,
+					( value ) => {
 						setStatus( value as ClassFilter );
 						list.setPage( 1 );
-					} }
-				/>
-			</SearchForm>
-			<ListState
-				loading={ list.loading }
-				error={ list.error }
-				total={ list.data.total }
-				loadingText={ __( 'Loading classes…', 'ohmylms' ) }
-				emptyText={ __( 'No classes found.', 'ohmylms' ) }
-				onRetry={ list.reload }
-			>
-				<Table caption={ __( 'Classes', 'ohmylms' ) } striped>
-					<thead>
-						<tr>
-							{ [
-								__( 'Name', 'ohmylms' ),
-								__( 'School', 'ohmylms' ),
-								__( 'Academic year', 'ohmylms' ),
-								__( 'Subject', 'ohmylms' ),
-								__( 'Grade', 'ohmylms' ),
-								__( 'Students', 'ohmylms' ),
-								__( 'Teachers', 'ohmylms' ),
-								__( 'Status', 'ohmylms' ),
-							].map( ( title ) => (
-								<th key={ title } scope="col">
-									{ title }
-								</th>
-							) ) }
-						</tr>
-					</thead>
-					<tbody>
-						{ list.data.items.map( ( item ) => (
-							<tr key={ item.id }>
-								<th scope="row">
+					}
+				) }
+				table={ {
+					rowKey: ( item ) => item.id,
+					columns: [
+						{
+							id: 'name',
+							label: __( 'Name', 'ohmylms' ),
+							primary: true,
+							render: ( item ) => (
+								<strong>
 									<Link
+										className="row-title"
 										to={ `/account-hub/classes/${ item.id }` }
 									>
 										{ item.name }
 									</Link>
-								</th>
-								<td>
-									{ item.school_name ??
-										__( 'Independent', 'ohmylms' ) }
-								</td>
-								<td>{ item.academic_year_label ?? '—' }</td>
-								<td>{ item.subject || '—' }</td>
-								<td>{ item.grade || '—' }</td>
-								<td>{ item.student_count }</td>
-								<td>{ item.teacher_count }</td>
-								<td>{ classStatusLabel( item.status ) }</td>
-							</tr>
-						) ) }
-					</tbody>
-				</Table>
-				<Pagination
-					page={ list.page }
-					pages={ list.data.totalPages }
-					busy={ list.loading }
-					onChange={ list.setPage }
-				/>
-			</ListState>
+								</strong>
+							),
+						},
+						{
+							id: 'school',
+							label: __( 'School', 'ohmylms' ),
+							render: ( item ) =>
+								item.school_name ??
+								__( 'Independent', 'ohmylms' ),
+						},
+						{
+							id: 'year',
+							label: __( 'Academic year', 'ohmylms' ),
+							render: ( item ) => item.academic_year_label ?? '—',
+						},
+						{
+							id: 'subject',
+							label: __( 'Subject', 'ohmylms' ),
+							render: ( item ) => item.subject || '—',
+						},
+						{
+							id: 'grade',
+							label: __( 'Grade', 'ohmylms' ),
+							render: ( item ) => item.grade || '—',
+						},
+						{
+							id: 'students',
+							label: __( 'Students', 'ohmylms' ),
+							className: 'num',
+							render: ( item ) => item.student_count,
+						},
+						{
+							id: 'teachers',
+							label: __( 'Teachers', 'ohmylms' ),
+							className: 'num',
+							render: ( item ) => item.teacher_count,
+						},
+						{
+							id: 'status',
+							label: __( 'Status', 'ohmylms' ),
+							render: ( item ) => classStatusLabel( item.status ),
+						},
+					],
+					rowActions: ( item ) => [
+						{
+							key: 'edit',
+							label: __( 'Edit', 'ohmylms' ),
+							render: (
+								<Link
+									to={ `/account-hub/classes/${ item.id }` }
+								>
+									{ __( 'Edit', 'ohmylms' ) }
+								</Link>
+							),
+						},
+					],
+				} }
+			/>
 		</>
 	);
 }

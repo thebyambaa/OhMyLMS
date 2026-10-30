@@ -5,7 +5,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useRequest } from '../../hooks/useRequest';
 import { useOperation } from '../../hooks/useOperation';
 import { newId } from '../../lib/uuid';
+import { ListTable } from '../../../ui/ListTable';
 import { createLesson, listLessons } from './api';
+
+type LessonRow = Awaited<
+	ReturnType< typeof listLessons >
+>[ 'items' ][ number ];
 
 export default function LessonsPage() {
 	const [ search, setSearch ] = useState( '' );
@@ -22,15 +27,6 @@ export default function LessonsPage() {
 	return (
 		<section>
 			<h1>{ __( 'Lessons', 'ohmylms' ) }</h1>
-			<TextControl
-				label={ __( 'Search lessons', 'ohmylms' ) }
-				value={ search }
-				onChange={ ( value ) => {
-					setSearch( value );
-					setPage( 1 );
-				} }
-				maxLength={ 100 }
-			/>
 			{ request.loading && (
 				<p role="status">{ __( 'Loading lessons…', 'ohmylms' ) }</p>
 			) }
@@ -42,39 +38,68 @@ export default function LessonsPage() {
 					</Button>
 				</Notice>
 			) }
-			{ ! request.loading && request.data && (
-				<>
-					<ul>
-						{ request.data.items.map( ( lesson ) => (
-							<li key={ lesson.id }>
+			{ ( request.loading || request.data ) && (
+				<ListTable< LessonRow >
+					caption={ __( 'Lessons', 'ohmylms' ) }
+					busy={ request.loading }
+					rows={ request.data?.items ?? [] }
+					rowKey={ ( lesson ) => lesson.id }
+					emptyMessage={
+						request.loading
+							? ''
+							: __( 'No lessons found.', 'ohmylms' )
+					}
+					search={ {
+						label: __( 'Search lessons', 'ohmylms' ),
+						submitLabel: __( 'Search Lessons', 'ohmylms' ),
+						value: search,
+						maxLength: 100,
+						onChange: ( value ) => {
+							setSearch( value );
+							setPage( 1 );
+						},
+					} }
+					pagination={ {
+						page,
+						totalPages: request.data?.pages ?? 1,
+						onChange: setPage,
+					} }
+					columns={ [
+						{
+							id: 'title',
+							label: __( 'Title', 'ohmylms' ),
+							primary: true,
+							render: ( lesson ) => (
+								<strong>
+									<Link
+										className="row-title"
+										to={ `/content-hub/lessons/${ lesson.id }` }
+									>
+										{ lesson.title }
+									</Link>
+								</strong>
+							),
+						},
+						{
+							id: 'status',
+							label: __( 'Status', 'ohmylms' ),
+							render: ( lesson ) => lesson.status,
+						},
+					] }
+					rowActions={ ( lesson ) => [
+						{
+							key: 'edit',
+							label: __( 'Edit', 'ohmylms' ),
+							render: (
 								<Link
 									to={ `/content-hub/lessons/${ lesson.id }` }
 								>
-									{ lesson.title }
-								</Link>{ ' ' }
-								— { lesson.status }
-							</li>
-						) ) }
-					</ul>
-					{ ! request.data.items.length && (
-						<p>{ __( 'No lessons found.', 'ohmylms' ) }</p>
-					) }
-					<Button
-						disabled={ page <= 1 }
-						onClick={ () => setPage( page - 1 ) }
-					>
-						{ __( 'Previous', 'ohmylms' ) }
-					</Button>
-					<span>
-						{ page } / { Math.max( 1, request.data.pages ) }
-					</span>
-					<Button
-						disabled={ page >= request.data.pages }
-						onClick={ () => setPage( page + 1 ) }
-					>
-						{ __( 'Next', 'ohmylms' ) }
-					</Button>
-				</>
+									{ __( 'Edit', 'ohmylms' ) }
+								</Link>
+							),
+						},
+					] }
+				/>
 			) }
 			<h2>{ __( 'Create a draft lesson', 'ohmylms' ) }</h2>
 			{ operation.error && (

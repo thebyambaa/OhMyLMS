@@ -12,9 +12,15 @@ One look for every OhMyLMS admin screen: the React app (Dashboard, Content Hub, 
 | Settings tab "Design system" (`#/settings?tab=design-system`) | `assets/src/app/features/settings/DesignSystemForm.tsx`, model in `designSystem.ts` (see `docs/api/settings.md`) |
 | Tests | `tests/php/design-system-unit.php`, `assets/src/app/features/settings/DesignTabs.test.tsx` |
 
-Stored in one option, `ohmylms_design_system`: `preset`, `colors` (13 keys), `button_radius`, `density`. A site that never saved it gets the **Khan Academy** preset. The preset name is recomputed on every save, so editing any value gives `custom`.
+Stored in one option, `ohmylms_design_system`: `preset`, `colors` (13 keys), `button_radius`, `density`. A site that never saved it gets the **WordPress** preset. The preset name is recomputed on every save, so editing any value gives `custom`; when two presets have the same values (WordPress and Khan Academy share a palette) the requested name wins.
 
-Scope: a `oml-ds` class is added to `<body>` on screens whose id contains `ohmylms` or whose post type is a plugin type. Every variable and rule is under `body.oml-ds`, so other wp-admin pages are untouched. The variables also override the older `--wp-admin-theme-color`, `--wp-components-color-accent`, Arco `--primary-1..9` and `--ohmylms-*` names on those screens, so existing feature CSS follows the choice. (The older `ohmylms_admin_*` colour options therefore no longer change plugin screens; the font option still does.)
+Scope: a `oml-ds` class is added to `<body>` on screens whose id contains `ohmylms` or whose post type is a plugin type, and the variables are under `body.oml-ds`, so other wp-admin pages are untouched. A branded preset (Khan Academy, Classic, custom) also adds `oml-ds-branded`; the restyle in `admin-design-system.css` (buttons, inputs, notices, cards, tables, headings, links, page background) is scoped to it, and its variables override `--wp-admin-theme-color`, `--wp-components-color-accent`, Arco `--primary-1..9` and the `--ohmylms-*` names so existing feature CSS follows the choice. (The older `ohmylms_admin_*` colour options no longer change plugin screens; the font option still does.)
+
+## WordPress preset (default)
+
+Admin screens follow each user's WordPress admin colour scheme (Users › Profile › Admin Color Scheme), like the rest of wp-admin. `DesignSystem::admin_scheme()` reads the user's `admin_color` (`modern` when unset, as WordPress prints `admin-color-modern`); `scheme_theme_color()` maps the core schemes to their `--wp-admin-theme-color` (Default/modern `#3858e9`, Fresh `#2271b1`, Light `#007cba`, Blue `#437aa8`, Coffee `#916745`, Ectoplasm `#646c3e`, Midnight `#cf4339`, Ocean `#567958`, Sunrise `#ad631e`, from `wp-includes/css/dist/base-styles/admin-schemes.css`) and uses a plugin-registered scheme's highlight colour (`$_wp_admin_css_colors[ $scheme ]->colors[2]`). `admin_colors()` puts that theme colour (primary, secondary, info) on WordPress's neutrals and notice colours (text `#3c434a`, headings `#1d2327`, muted `#646970`, borders `#c3c4c7`, page `#f0f0f1`, links `#2271b1`, success `#00a32a`, warning `#dba617`, danger `#d63638`), with the 2px WordPress radius, so `--oml-*` in the app matches the scheme. `--wp-admin-theme-color` and the `@wordpress/components` variables are not printed, so WordPress's scheme CSS applies, and `oml-ds-branded` is absent, so WordPress's own button, form, notice and list-table styles apply.
+
+The stored palette of this preset is the Khan Academy one, so learner pages look as before. The REST snapshot adds `admin_scheme` and `admin_colors` (the requesting user's), which the Design system tab shows in the preset help; choosing Khan Academy, Classic or editing a colour brands the admin again.
 
 ## Variables
 
@@ -29,7 +35,7 @@ Roundness presets: Square 0, Slightly rounded 4, Rounded 8, Pill 999 (the slider
 
 Sanitizing: colors through a strict `#rrggbb` check (3-digit expands), radius clamped, density and preset whitelisted. The generated CSS contains only validated `--name:value;` declarations: colors, numeric dimensions/type/motion, generated shadows, and the fixed `light`/`dark` native color-scheme keywords.
 
-## Khan Academy preset (default)
+## Khan Academy preset
 
 Source: Khan Academy Wonder Blocks tokens, `packages/wonder-blocks-tokens/src/tokens/color.ts` and `spacing.ts` (github.com/Khan/wonder-blocks, read 2026-10-17). khanacademy.org itself was not needed: the design system repository is the source of the brand colors.
 

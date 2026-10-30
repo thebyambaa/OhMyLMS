@@ -3,28 +3,30 @@
  *
  * One look for every plugin admin screen: the React app, the Content Hub, the editors and the PHP pages
  * (Skill assessments, Import questions, Schools...). Every value is a --oml-* variable written by
- * includes/Design/DesignSystem.php from Settings > Design system. All rules are scoped to
- * body.oml-ds, a class added only on this plugin's screens, so other wp-admin pages are untouched.
+ * includes/Design/DesignSystem.php from Settings > Design system. The restyle is scoped to
+ * body.oml-ds-branded, added only on this plugin's screens and only for a branded preset (Khan Academy,
+ * Classic, custom). Under the default WordPress preset these rules are off and the screens keep
+ * WordPress's own styles and the user's admin colour scheme.
  */
 
-body.oml-ds {
+body.oml-ds-branded {
 	background: var(--oml-background);
 	color: var(--oml-text);
 	font-family: var(--oml-font-family);
 }
 
-body.oml-ds #wpcontent {
+body.oml-ds-branded #wpcontent {
 	background: var(--oml-background);
 }
 
 /* Page rhythm: the same padding, heading scale and gaps on native pages. */
-body.oml-ds .wrap {
+body.oml-ds-branded .wrap {
 	margin: var(--oml-space-5) var(--oml-page-pad) 0;
 }
 
-body.oml-ds .wrap > h1,
-body.oml-ds .wrap > h2,
-body.oml-ds .wrap h1.wp-heading-inline {
+body.oml-ds-branded .wrap > h1,
+body.oml-ds-branded .wrap > h2,
+body.oml-ds-branded .wrap h1.wp-heading-inline {
 	color: var(--oml-heading);
 	font-size: 24px;
 	font-weight: 700;
@@ -32,43 +34,43 @@ body.oml-ds .wrap h1.wp-heading-inline {
 	margin: 0 0 var(--oml-space-4);
 }
 
-body.oml-ds .wrap h2,
-body.oml-ds .wrap h3 {
+body.oml-ds-branded .wrap h2,
+body.oml-ds-branded .wrap h3 {
 	color: var(--oml-heading);
 }
 
-body.oml-ds .wrap h2 {
+body.oml-ds-branded .wrap h2 {
 	font-size: 18px;
 	margin: var(--oml-space-5) 0 var(--oml-space-3);
 }
 
-body.oml-ds .wrap p,
-body.oml-ds .wrap .description {
+body.oml-ds-branded .wrap p,
+body.oml-ds-branded .wrap .description {
 	color: var(--oml-text);
 }
 
-body.oml-ds .wrap .description,
-body.oml-ds .wrap p.description {
+body.oml-ds-branded .wrap .description,
+body.oml-ds-branded .wrap p.description {
 	color: var(--oml-muted);
 }
 
-body.oml-ds a {
+body.oml-ds-branded a {
 	color: var(--oml-link);
 }
 
-body.oml-ds a:hover,
-body.oml-ds a:active {
+body.oml-ds-branded a:hover,
+body.oml-ds-branded a:active {
 	color: var(--oml-link-hover);
 }
 
 /* ---- Buttons: native WordPress ---- */
-body.oml-ds .button,
-body.oml-ds .button-secondary,
-body.oml-ds .button-primary,
-body.oml-ds .button-small,
-body.oml-ds .button-large,
-body.oml-ds input[type="submit"].button,
-body.oml-ds .page-title-action {
+body.oml-ds-branded .button,
+body.oml-ds-branded .button-secondary,
+body.oml-ds-branded .button-primary,
+body.oml-ds-branded .button-small,
+body.oml-ds-branded .button-large,
+body.oml-ds-branded input[type="submit"].button,
+body.oml-ds-branded .page-title-action {
 	align-items: center;
 	border-style: solid;
 	border-width: 1px;
@@ -90,62 +92,62 @@ body.oml-ds .page-title-action {
 	vertical-align: middle;
 }
 
-body.oml-ds .button-small {
+body.oml-ds-branded .button-small {
 	min-height: var(--oml-button-height-sm);
 	padding: 0 var(--oml-button-pad-sm);
 }
 
-body.oml-ds .button-large {
+body.oml-ds-branded .button-large {
 	min-height: var(--oml-button-height-lg);
 	padding: 0 var(--oml-button-pad-lg);
 }
 
-body.oml-ds .button,
-body.oml-ds .button-secondary,
-body.oml-ds .page-title-action {
+body.oml-ds-branded .button,
+body.oml-ds-branded .button-secondary,
+body.oml-ds-branded .page-title-action {
 	background: var(--oml-surface);
 	border-color: var(--oml-secondary);
 	color: var(--oml-primary);
 }
 
-body.oml-ds .button:hover,
-body.oml-ds .button-secondary:hover,
-body.oml-ds .page-title-action:hover {
+body.oml-ds-branded .button:hover,
+body.oml-ds-branded .button-secondary:hover,
+body.oml-ds-branded .page-title-action:hover {
 	background: var(--oml-primary-soft);
 	border-color: var(--oml-secondary-hover);
 	color: var(--oml-primary-hover);
 }
 
-body.oml-ds .button:active,
-body.oml-ds .button-secondary:active {
+body.oml-ds-branded .button:active,
+body.oml-ds-branded .button-secondary:active {
 	background: var(--oml-primary-soft);
 	color: var(--oml-primary-active);
 }
 
-body.oml-ds .button-primary,
-body.oml-ds .button.button-primary {
+body.oml-ds-branded .button-primary,
+body.oml-ds-branded .button.button-primary {
 	background: var(--oml-primary);
 	border-color: var(--oml-primary);
 	color: var(--oml-on-primary);
 }
 
-body.oml-ds .button-primary:hover,
-body.oml-ds .button-primary:focus,
-body.oml-ds .button.button-primary:hover {
+body.oml-ds-branded .button-primary:hover,
+body.oml-ds-branded .button-primary:focus,
+body.oml-ds-branded .button.button-primary:hover {
 	background: var(--oml-primary-hover);
 	border-color: var(--oml-primary-hover);
 	color: var(--oml-on-primary);
 }
 
-body.oml-ds .button-primary:active,
-body.oml-ds .button.button-primary:active {
+body.oml-ds-branded .button-primary:active,
+body.oml-ds-branded .button.button-primary:active {
 	background: var(--oml-primary-active);
 	border-color: var(--oml-primary-active);
 	color: var(--oml-on-primary);
 }
 
-body.oml-ds .button-link,
-body.oml-ds .button-link-delete {
+body.oml-ds-branded .button-link,
+body.oml-ds-branded .button-link-delete {
 	background: transparent;
 	border: 0;
 	border-radius: var(--oml-radius-button);
@@ -156,22 +158,22 @@ body.oml-ds .button-link-delete {
 	text-decoration: underline;
 }
 
-body.oml-ds .button-link-delete,
-body.oml-ds .submitdelete,
-body.oml-ds a.delete {
+body.oml-ds-branded .button-link-delete,
+body.oml-ds-branded .submitdelete,
+body.oml-ds-branded a.delete {
 	color: var(--oml-danger);
 }
 
-body.oml-ds .button-link-delete:hover,
-body.oml-ds .submitdelete:hover {
+body.oml-ds-branded .button-link-delete:hover,
+body.oml-ds-branded .submitdelete:hover {
 	color: var(--oml-danger-hover);
 }
 
-body.oml-ds .button[disabled],
-body.oml-ds .button.disabled,
-body.oml-ds .button-primary[disabled],
-body.oml-ds .button-primary.disabled,
-body.oml-ds .button:disabled {
+body.oml-ds-branded .button[disabled],
+body.oml-ds-branded .button.disabled,
+body.oml-ds-branded .button-primary[disabled],
+body.oml-ds-branded .button-primary.disabled,
+body.oml-ds-branded .button:disabled {
 	background: var(--oml-subtle);
 	border-color: var(--oml-border);
 	color: var(--oml-muted);
@@ -180,7 +182,7 @@ body.oml-ds .button:disabled {
 }
 
 /* ---- Buttons: @wordpress/components (not inside the block editor, which keeps its own sizing) ---- */
-body.oml-ds:not(.block-editor-page) .components-button {
+body.oml-ds-branded:not(.block-editor-page) .components-button {
 	align-items: center;
 	font-size: 14px;
 	gap: var(--oml-space-2);
@@ -191,194 +193,194 @@ body.oml-ds:not(.block-editor-page) .components-button {
 		color 0.12s ease;
 }
 
-body.oml-ds:not(.block-editor-page) .components-button.is-small {
+body.oml-ds-branded:not(.block-editor-page) .components-button.is-small {
 	min-height: var(--oml-button-height-sm);
 	padding: 0 var(--oml-button-pad-sm);
 }
 
-body.oml-ds:not(.block-editor-page) .components-button.is-large {
+body.oml-ds-branded:not(.block-editor-page) .components-button.is-large {
 	min-height: var(--oml-button-height-lg);
 	padding: 0 var(--oml-button-pad-lg);
 }
 
-body.oml-ds:not(.block-editor-page) .components-button.has-icon:not(.has-text) {
+body.oml-ds-branded:not(.block-editor-page) .components-button.has-icon:not(.has-text) {
 	min-width: var(--oml-button-height-md);
 	padding: 0;
 }
 
-body.oml-ds:not(.block-editor-page)
+body.oml-ds-branded:not(.block-editor-page)
 	.components-button.has-icon.is-small:not(.has-text) {
 	min-width: var(--oml-button-height-sm);
 }
 
-body.oml-ds:not(.block-editor-page) .components-button.is-primary {
+body.oml-ds-branded:not(.block-editor-page) .components-button.is-primary {
 	background: var(--oml-primary);
 	color: var(--oml-on-primary);
 }
 
-body.oml-ds:not(.block-editor-page) .components-button.is-primary:disabled,
-body.oml-ds:not(.block-editor-page)
+body.oml-ds-branded:not(.block-editor-page) .components-button.is-primary:disabled,
+body.oml-ds-branded:not(.block-editor-page)
 	.components-button.is-primary[aria-disabled="true"] {
 	background: var(--oml-subtle);
 	color: var(--oml-muted);
 	opacity: 0.8;
 }
 
-body.oml-ds:not(.block-editor-page)
+body.oml-ds-branded:not(.block-editor-page)
 	.components-button.is-primary:hover:not(:disabled),
-body.oml-ds:not(.block-editor-page)
+body.oml-ds-branded:not(.block-editor-page)
 	.components-button.is-primary:focus:not(:disabled) {
 	background: var(--oml-primary-hover);
 	color: var(--oml-on-primary);
 }
 
-body.oml-ds:not(.block-editor-page)
+body.oml-ds-branded:not(.block-editor-page)
 	.components-button.is-primary:active:not(:disabled) {
 	background: var(--oml-primary-active);
 	color: var(--oml-on-primary);
 }
 
-body.oml-ds:not(.block-editor-page) .components-button.is-secondary {
+body.oml-ds-branded:not(.block-editor-page) .components-button.is-secondary {
 	background: var(--oml-surface);
 	box-shadow: inset 0 0 0 1px var(--oml-secondary);
 	color: var(--oml-primary);
 }
 
-body.oml-ds:not(.block-editor-page)
+body.oml-ds-branded:not(.block-editor-page)
 	.components-button.is-secondary:hover:not(:disabled) {
 	background: var(--oml-primary-soft);
 	box-shadow: inset 0 0 0 1px var(--oml-secondary-hover);
 	color: var(--oml-primary-hover);
 }
 
-body.oml-ds:not(.block-editor-page) .components-button.is-tertiary {
+body.oml-ds-branded:not(.block-editor-page) .components-button.is-tertiary {
 	background: transparent;
 	color: var(--oml-primary);
 }
 
-body.oml-ds:not(.block-editor-page)
+body.oml-ds-branded:not(.block-editor-page)
 	.components-button.is-tertiary:hover:not(:disabled) {
 	background: var(--oml-primary-soft);
 	color: var(--oml-primary-hover);
 }
 
-body.oml-ds:not(.block-editor-page) .components-button.is-link {
+body.oml-ds-branded:not(.block-editor-page) .components-button.is-link {
 	color: var(--oml-link);
 	font-weight: 600;
 	min-height: 0;
 	padding: 0;
 }
 
-body.oml-ds:not(.block-editor-page)
+body.oml-ds-branded:not(.block-editor-page)
 	.components-button.is-link:hover:not(:disabled) {
 	color: var(--oml-link-hover);
 }
 
-body.oml-ds:not(.block-editor-page)
+body.oml-ds-branded:not(.block-editor-page)
 	.components-button.is-destructive:not(.is-link):not(.is-primary) {
 	color: var(--oml-danger);
 }
 
-body.oml-ds:not(.block-editor-page)
+body.oml-ds-branded:not(.block-editor-page)
 	.components-button.is-destructive.is-primary {
 	background: var(--oml-danger);
 	color: var(--oml-on-danger);
 }
 
-body.oml-ds:not(.block-editor-page)
+body.oml-ds-branded:not(.block-editor-page)
 	.components-button.is-destructive.is-primary:hover:not(:disabled) {
 	background: var(--oml-danger-hover);
 	color: var(--oml-on-danger);
 }
 
-body.oml-ds:not(.block-editor-page)
+body.oml-ds-branded:not(.block-editor-page)
 	.components-button.is-destructive.is-secondary {
 	box-shadow: inset 0 0 0 1px var(--oml-danger);
 }
 
-body.oml-ds:not(.block-editor-page)
+body.oml-ds-branded:not(.block-editor-page)
 	.components-button.is-destructive.is-secondary:hover:not(:disabled),
-body.oml-ds:not(.block-editor-page)
+body.oml-ds-branded:not(.block-editor-page)
 	.components-button.is-destructive.is-tertiary:hover:not(:disabled) {
 	background: var(--oml-danger-soft);
 	color: var(--oml-danger-hover);
 }
 
-body.oml-ds:not(.block-editor-page) .components-button.is-destructive.is-link {
+body.oml-ds-branded:not(.block-editor-page) .components-button.is-destructive.is-link {
 	color: var(--oml-danger);
 }
 
-body.oml-ds:not(.block-editor-page) .components-button:disabled,
-body.oml-ds:not(.block-editor-page) .components-button[aria-disabled="true"] {
+body.oml-ds-branded:not(.block-editor-page) .components-button:disabled,
+body.oml-ds-branded:not(.block-editor-page) .components-button[aria-disabled="true"] {
 	cursor: not-allowed;
 	opacity: 0.55;
 }
 
 /* ---- Buttons: Arco (the React app) ---- */
-body.oml-ds .arco-btn-size-small {
+body.oml-ds-branded .arco-btn-size-small {
 	min-height: var(--oml-button-height-sm);
 	padding: 0 var(--oml-button-pad-sm);
 }
 
-body.oml-ds .arco-btn-size-large {
+body.oml-ds-branded .arco-btn-size-large {
 	min-height: var(--oml-button-height-lg);
 	padding: 0 var(--oml-button-pad-lg);
 }
 
-body.oml-ds .arco-btn-primary:not(.arco-btn-disabled) {
+body.oml-ds-branded .arco-btn-primary:not(.arco-btn-disabled) {
 	background-color: var(--oml-primary);
 	color: var(--oml-on-primary);
 }
 
-body.oml-ds .arco-btn-primary:not(.arco-btn-disabled):hover {
+body.oml-ds-branded .arco-btn-primary:not(.arco-btn-disabled):hover {
 	background-color: var(--oml-primary-hover);
 }
 
-body.oml-ds .arco-btn-primary:not(.arco-btn-disabled):active {
+body.oml-ds-branded .arco-btn-primary:not(.arco-btn-disabled):active {
 	background-color: var(--oml-primary-active);
 }
 
-body.oml-ds .arco-btn-secondary:not(.arco-btn-disabled),
-body.oml-ds .arco-btn-outline:not(.arco-btn-disabled) {
+body.oml-ds-branded .arco-btn-secondary:not(.arco-btn-disabled),
+body.oml-ds-branded .arco-btn-outline:not(.arco-btn-disabled) {
 	background-color: var(--oml-surface);
 	border: 1px solid var(--oml-secondary);
 	color: var(--oml-primary);
 }
 
-body.oml-ds .arco-btn-text:not(.arco-btn-disabled) {
+body.oml-ds-branded .arco-btn-text:not(.arco-btn-disabled) {
 	color: var(--oml-primary);
 }
 
-body.oml-ds .arco-btn-status-danger.arco-btn-primary:not(.arco-btn-disabled) {
+body.oml-ds-branded .arco-btn-status-danger.arco-btn-primary:not(.arco-btn-disabled) {
 	background-color: var(--oml-danger);
 	color: var(--oml-on-danger);
 }
 
-body.oml-ds
+body.oml-ds-branded
 	.arco-btn-status-danger:not(.arco-btn-primary):not(.arco-btn-disabled) {
 	color: var(--oml-danger);
 }
 
-body.oml-ds .arco-btn-disabled {
+body.oml-ds-branded .arco-btn-disabled {
 	cursor: not-allowed;
 	opacity: 0.55;
 }
 
 /* ---- Form controls ---- */
-body.oml-ds input[type="text"],
-body.oml-ds input[type="search"],
-body.oml-ds input[type="email"],
-body.oml-ds input[type="url"],
-body.oml-ds input[type="number"],
-body.oml-ds input[type="password"],
-body.oml-ds input[type="date"],
-body.oml-ds select,
-body.oml-ds textarea,
-body.oml-ds .components-text-control__input,
-body.oml-ds .components-select-control__input,
-body.oml-ds .arco-input,
-body.oml-ds .arco-input-wrapper,
-body.oml-ds .arco-select-view {
+body.oml-ds-branded input[type="text"],
+body.oml-ds-branded input[type="search"],
+body.oml-ds-branded input[type="email"],
+body.oml-ds-branded input[type="url"],
+body.oml-ds-branded input[type="number"],
+body.oml-ds-branded input[type="password"],
+body.oml-ds-branded input[type="date"],
+body.oml-ds-branded select,
+body.oml-ds-branded textarea,
+body.oml-ds-branded .components-text-control__input,
+body.oml-ds-branded .components-select-control__input,
+body.oml-ds-branded .arco-input,
+body.oml-ds-branded .arco-input-wrapper,
+body.oml-ds-branded .arco-select-view {
 	background-color: var(--oml-surface);
 	border: 1px solid var(--oml-border);
 	border-radius: var(--oml-radius-control);
@@ -386,83 +388,83 @@ body.oml-ds .arco-select-view {
 	color: var(--oml-text);
 }
 
-body.oml-ds input[type="text"],
-body.oml-ds input[type="search"],
-body.oml-ds input[type="email"],
-body.oml-ds input[type="url"],
-body.oml-ds input[type="number"],
-body.oml-ds input[type="password"],
-body.oml-ds select,
-body.oml-ds .components-text-control__input,
-body.oml-ds .components-select-control__input {
+body.oml-ds-branded input[type="text"],
+body.oml-ds-branded input[type="search"],
+body.oml-ds-branded input[type="email"],
+body.oml-ds-branded input[type="url"],
+body.oml-ds-branded input[type="number"],
+body.oml-ds-branded input[type="password"],
+body.oml-ds-branded select,
+body.oml-ds-branded .components-text-control__input,
+body.oml-ds-branded .components-select-control__input {
 	min-height: var(--oml-button-height-md);
 	padding: 0 var(--oml-space-3);
 }
 
-body.oml-ds textarea {
+body.oml-ds-branded textarea {
 	padding: var(--oml-space-2) var(--oml-space-3);
 }
 
-body.oml-ds input:focus,
-body.oml-ds select:focus,
-body.oml-ds textarea:focus,
-body.oml-ds .components-text-control__input:focus,
-body.oml-ds .arco-input-focus,
-body.oml-ds .arco-input-wrapper:focus-within {
+body.oml-ds-branded input:focus,
+body.oml-ds-branded select:focus,
+body.oml-ds-branded textarea:focus,
+body.oml-ds-branded .components-text-control__input:focus,
+body.oml-ds-branded .arco-input-focus,
+body.oml-ds-branded .arco-input-wrapper:focus-within {
 	border-color: var(--oml-primary);
 	box-shadow: 0 0 0 1px var(--oml-primary);
 	outline: 2px solid transparent;
 }
 
-body.oml-ds input::placeholder,
-body.oml-ds textarea::placeholder {
+body.oml-ds-branded input::placeholder,
+body.oml-ds-branded textarea::placeholder {
 	color: var(--oml-muted);
 }
 
-body.oml-ds input:disabled,
-body.oml-ds select:disabled,
-body.oml-ds textarea:disabled {
+body.oml-ds-branded input:disabled,
+body.oml-ds-branded select:disabled,
+body.oml-ds-branded textarea:disabled {
 	background-color: var(--oml-subtle);
 	color: var(--oml-muted);
 }
 
-body.oml-ds input[type="checkbox"]:checked,
-body.oml-ds input[type="radio"]:checked {
+body.oml-ds-branded input[type="checkbox"]:checked,
+body.oml-ds-branded input[type="radio"]:checked {
 	accent-color: var(--oml-primary);
 }
 
-body.oml-ds .form-table th {
+body.oml-ds-branded .form-table th {
 	color: var(--oml-heading);
 	font-weight: 600;
 	padding: var(--oml-space-4);
 	padding-inline-start: 0;
 }
 
-body.oml-ds .form-table td {
+body.oml-ds-branded .form-table td {
 	padding: var(--oml-space-3);
 	padding-inline-start: 0;
 }
 
 /* ---- Cards, notices, tables ---- */
-body.oml-ds .card,
-body.oml-ds .postbox,
-body.oml-ds .components-card,
-body.oml-ds .arco-card {
+body.oml-ds-branded .card,
+body.oml-ds-branded .postbox,
+body.oml-ds-branded .components-card,
+body.oml-ds-branded .arco-card {
 	background: var(--oml-surface);
 	border: 1px solid var(--oml-border);
 	border-radius: var(--oml-radius-card);
 	box-shadow: none;
 }
 
-body.oml-ds .card {
+body.oml-ds-branded .card {
 	max-width: none;
 	padding: var(--oml-space-4) var(--oml-space-5);
 }
 
-body.oml-ds .notice,
-body.oml-ds div.updated,
-body.oml-ds div.error,
-body.oml-ds .components-notice {
+body.oml-ds-branded .notice,
+body.oml-ds-branded div.updated,
+body.oml-ds-branded div.error,
+body.oml-ds-branded .components-notice {
 	background: var(--oml-surface);
 	border: 1px solid var(--oml-border);
 	border-inline-start-width: 4px;
@@ -473,34 +475,34 @@ body.oml-ds .components-notice {
 	padding: var(--oml-space-2) var(--oml-space-3);
 }
 
-body.oml-ds .notice-success,
-body.oml-ds div.updated,
-body.oml-ds .components-notice.is-success {
+body.oml-ds-branded .notice-success,
+body.oml-ds-branded div.updated,
+body.oml-ds-branded .components-notice.is-success {
 	background: var(--oml-success-soft);
 	border-inline-start-color: var(--oml-success);
 }
 
-body.oml-ds .notice-warning,
-body.oml-ds .components-notice.is-warning {
+body.oml-ds-branded .notice-warning,
+body.oml-ds-branded .components-notice.is-warning {
 	background: var(--oml-warning-soft);
 	border-inline-start-color: var(--oml-warning);
 }
 
-body.oml-ds .notice-error,
-body.oml-ds div.error,
-body.oml-ds .components-notice.is-error {
+body.oml-ds-branded .notice-error,
+body.oml-ds-branded div.error,
+body.oml-ds-branded .components-notice.is-error {
 	background: var(--oml-danger-soft);
 	border-inline-start-color: var(--oml-danger);
 }
 
-body.oml-ds .notice-info,
-body.oml-ds .components-notice.is-info {
+body.oml-ds-branded .notice-info,
+body.oml-ds-branded .components-notice.is-info {
 	background: var(--oml-info-soft);
 	border-inline-start-color: var(--oml-info);
 }
 
-body.oml-ds .widefat,
-body.oml-ds .wp-list-table {
+body.oml-ds-branded .widefat,
+body.oml-ds-branded .wp-list-table {
 	background: var(--oml-surface);
 	border: 1px solid var(--oml-border);
 	border-radius: var(--oml-radius-card);
@@ -510,43 +512,43 @@ body.oml-ds .wp-list-table {
 	overflow: hidden;
 }
 
-body.oml-ds .widefat th,
-body.oml-ds .widefat td {
+body.oml-ds-branded .widefat th,
+body.oml-ds-branded .widefat td {
 	border-bottom: 1px solid var(--oml-border);
 	color: var(--oml-text);
 	padding: var(--oml-space-3);
 }
 
-body.oml-ds .widefat thead th {
+body.oml-ds-branded .widefat thead th {
 	background: var(--oml-subtle);
 	color: var(--oml-heading);
 	font-weight: 600;
 }
 
-body.oml-ds .widefat.striped > tbody > :nth-child(odd) {
+body.oml-ds-branded .widefat.striped > tbody > :nth-child(odd) {
 	background-color: var(--oml-subtle);
 }
 
-body.oml-ds .widefat tr:last-child td {
+body.oml-ds-branded .widefat tr:last-child td {
 	border-bottom: 0;
 }
 
 /* Status colors reused by badges and tags. */
-body.oml-ds .arco-tag-green,
-body.oml-ds .arco-tag-arcoblue {
+body.oml-ds-branded .arco-tag-green,
+body.oml-ds-branded .arco-tag-arcoblue {
 	border-radius: var(--oml-radius-control);
 }
 
 /* ---- Focus: one accessible ring everywhere ---- */
-body.oml-ds .button:focus-visible,
-body.oml-ds .button-link:focus-visible,
-body.oml-ds:not(.block-editor-page) .components-button:focus-visible,
-body.oml-ds .arco-btn:focus-visible,
-body.oml-ds a:focus-visible,
-body.oml-ds input:focus-visible,
-body.oml-ds select:focus-visible,
-body.oml-ds textarea:focus-visible,
-body.oml-ds [role="tab"]:focus-visible {
+body.oml-ds-branded .button:focus-visible,
+body.oml-ds-branded .button-link:focus-visible,
+body.oml-ds-branded:not(.block-editor-page) .components-button:focus-visible,
+body.oml-ds-branded .arco-btn:focus-visible,
+body.oml-ds-branded a:focus-visible,
+body.oml-ds-branded input:focus-visible,
+body.oml-ds-branded select:focus-visible,
+body.oml-ds-branded textarea:focus-visible,
+body.oml-ds-branded [role="tab"]:focus-visible {
 	box-shadow: none;
 	outline: 2px solid var(--oml-focus);
 	outline-offset: 2px;
@@ -602,6 +604,12 @@ body.oml-ds .ohmylms-ds-color-inputs input[type="text"] {
 	margin-block-end: var(--oml-space-3, 12px);
 }
 
+.ohmylms-ds-swatch {
+	display: inline-block;
+	margin-inline-end: var(--oml-space-2, 8px);
+	padding: 2px var(--oml-space-2, 8px);
+}
+
 .ohmylms-ds-preview {
 	background: var(--oml-background);
 	border: 1px dashed var(--oml-border);
@@ -639,7 +647,7 @@ body.oml-ds .ohmylms-ds-preview h3 {
 
 @media (max-width: 782px) {
 
-	body.oml-ds .wrap {
+	body.oml-ds-branded .wrap {
 		margin-left: var(--oml-space-3);
 		margin-right: var(--oml-space-3);
 	}
@@ -647,8 +655,8 @@ body.oml-ds .ohmylms-ds-preview h3 {
 
 @media (prefers-reduced-motion: reduce) {
 
-	body.oml-ds .button,
-	body.oml-ds .components-button {
+	body.oml-ds-branded .button,
+	body.oml-ds-branded .components-button {
 		transition: none;
 	}
 }

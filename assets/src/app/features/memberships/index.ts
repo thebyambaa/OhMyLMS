@@ -7,6 +7,8 @@ export const memberships: FeatureDefinition = {
 	id: 'memberships',
 	title: __( 'Memberships', 'ohmylms' ),
 	path: '/memberships',
+	group: 'commerce',
+	tab: 'memberships',
 	capability: 'manage_options',
 	component: lazy(
 		() =>
@@ -24,6 +26,8 @@ export const membershipEditor: FeatureDefinition = {
 	id: 'memberships-editor',
 	title: __( 'Membership plan', 'ohmylms' ),
 	path: '/memberships/:id',
+	group: 'commerce',
+	tab: 'memberships',
 	hidden: true,
 	capability: 'manage_options',
 	component: lazy(

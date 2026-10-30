@@ -136,14 +136,31 @@ const classicColors = {
 };
 
 export const designRaw = {
-	preset: 'khan',
+	preset: 'wordpress',
 	colors: khanColors,
 	button_radius: 4,
 	density: 'comfortable',
 	on_primary: '#ffffff',
 	primary_passes: true,
 	white_passes: true,
+	admin_scheme: 'ocean',
+	admin_colors: {
+		...khanColors,
+		primary: '#567958',
+		secondary: '#567958',
+		info: '#567958',
+		link: '#2271b1',
+		border: '#c3c4c7',
+		background: '#f0f0f1',
+	},
 	presets: [
+		{
+			preset: 'wordpress',
+			label: 'WordPress',
+			colors: khanColors,
+			button_radius: 4,
+			density: 'comfortable',
+		},
 		{
 			preset: 'khan',
 			label: 'Khan Academy',

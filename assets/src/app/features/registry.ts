@@ -33,7 +33,6 @@ import { emails } from './emails';
 import { examEditor, examImportReview, exams } from './exams';
 import { extensionPages } from './extensions';
 import { gamification } from './gamification';
-import { home } from './home';
 import { integrations } from './integrations';
 import { lessons, lessonEditor } from './lessons';
 import { membershipEditor, memberships } from './memberships';
@@ -49,15 +48,15 @@ import { webhooks } from './webhooks';
 import type { FeatureDefinition } from './types';
 
 /**
- * Every feature of the app, in navigation order. Add new features with an explicit import and one entry;
- * nothing is discovered automatically.
+ * Every feature of the app. Add new features with an explicit import and one entry; nothing is discovered
+ * automatically. Each names its admin page and tab (`group`, `tab`), which must match
+ * includes/Admin/AdminNavigation.php (checked by routing/navigation-contract.test.ts).
  */
 export const features: readonly FeatureDefinition[] = [
 	dashboard,
 	earnings,
 	courseReport,
 	courseRoster,
-	home,
 	setup,
 	contentHubOverview,
 	contentHub,
@@ -129,8 +128,12 @@ export function getVisibleFeatures(
 	);
 }
 
+const ADDRESS_NAMES = [ 'page', 'tab', 'section', 'view' ];
+
 /**
- * Describe mistakes in a feature list: duplicate ids or paths, and malformed paths.
+ * Describe mistakes in a feature list: duplicate ids or paths, malformed paths, and addresses that
+ * cannot work (a Dashboard tab, a tab elsewhere missing, a path parameter named like an address slot
+ * without being mapped).
  *
  * @param all Feature list to check.
  * @return Human-readable problems; empty when the list is valid.
@@ -142,6 +145,24 @@ export function findRegistryProblems(
 	const ids = new Set< string >();
 	const paths = new Set< string >();
 	for ( const feature of all ) {
+		if ( ( 'dashboard' === feature.group ) === Boolean( feature.tab ) ) {
+			problems.push(
+				`Feature "${ feature.id }" needs a tab, except on the Dashboard.`
+			);
+		}
+		for ( const name of ( feature.path.match( /:[A-Za-z_]+/g ) ?? [] ).map(
+			( token ) => token.slice( 1 )
+		) ) {
+			if (
+				ADDRESS_NAMES.includes( name ) &&
+				! feature.params?.[ name ] &&
+				! feature.tab?.includes( `:${ name }` )
+			) {
+				problems.push(
+					`Feature "${ feature.id }" must map its ":${ name }" parameter in params.`
+				);
+			}
+		}
 		if ( ids.has( feature.id ) ) {
 			problems.push( `Duplicate feature id "${ feature.id }".` );
 		}

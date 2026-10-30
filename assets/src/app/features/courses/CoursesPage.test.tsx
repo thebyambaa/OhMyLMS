@@ -52,7 +52,7 @@ describe( 'CoursesPage', () => {
 		);
 		const table = await screen.findByRole( 'table', { name: 'Courses' } );
 		const rows = within( table ).getAllByRole( 'row' );
-		expect( rows ).toHaveLength( 3 );
+		expect( rows ).toHaveLength( 4 );
 		const first = within( rows[ 1 ]! );
 		expect(
 			first.getByRole( 'link', { name: 'Algebra I' } )
@@ -66,7 +66,9 @@ describe( 'CoursesPage', () => {
 		const second = within( rows[ 2 ]! );
 		expect( second.getByText( 'Draft' ) ).toBeInTheDocument();
 		expect( second.getByText( 'Free' ) ).toBeInTheDocument();
-		expect( screen.getByText( '2 courses found.' ) ).toBeInTheDocument();
+		expect( screen.getAllByText( '2 courses found.' )[ 0 ] ).toHaveClass(
+			'displaying-num'
+		);
 	} );
 	it( 'shows an empty state', async () => {
 		vi.mocked( api.listCourses ).mockResolvedValue( {
@@ -115,7 +117,8 @@ describe( 'CoursesPage', () => {
 		renderPage();
 		await screen.findByRole( 'table', { name: 'Courses' } );
 		await user.type( screen.getByLabelText( 'Search courses' ), ' alg ' );
-		await user.selectOptions( screen.getByLabelText( 'Status' ), 'draft' );
+		await user.click( screen.getByRole( 'link', { name: 'Draft' } ) );
+		await screen.findByRole( 'table', { name: 'Courses' } );
 		await user.selectOptions( screen.getByLabelText( 'Price' ), 'paid' );
 		await user.type(
 			screen.getByLabelText( 'Created from' ),
@@ -125,9 +128,7 @@ describe( 'CoursesPage', () => {
 			screen.getByLabelText( 'Created until' ),
 			'2026-02-01'
 		);
-		await user.click(
-			screen.getByRole( 'button', { name: 'Apply filters' } )
-		);
+		await user.click( screen.getByRole( 'button', { name: 'Filter' } ) );
 		await waitFor( () =>
 			expect( api.listCourses ).toHaveBeenLastCalledWith(
 				1,
@@ -165,7 +166,9 @@ describe( 'CoursesPage', () => {
 		const user = userEvent.setup();
 		renderPage();
 		await screen.findByRole( 'table', { name: 'Courses' } );
-		await user.click( screen.getByRole( 'button', { name: 'Next page' } ) );
+		await user.click(
+			screen.getAllByRole( 'button', { name: 'Next page' } )[ 0 ]!
+		);
 		await waitFor( () =>
 			expect( api.listCourses ).toHaveBeenLastCalledWith(
 				2,
@@ -371,12 +374,8 @@ describe( 'CoursesPage', () => {
 			vi.mocked( api.deleteCourse ).mockResolvedValue( undefined );
 			const user = userEvent.setup();
 			renderPage();
-			await user.selectOptions(
-				screen.getByLabelText( 'Status' ),
-				'trash'
-			);
 			await user.click(
-				screen.getByRole( 'button', { name: 'Apply filters' } )
+				await screen.findByRole( 'link', { name: 'Trash' } )
 			);
 			const table = await screen.findByRole( 'table', {
 				name: 'Courses',
@@ -440,12 +439,8 @@ describe( 'CoursesPage', () => {
 			);
 			const user = userEvent.setup();
 			renderPage();
-			await user.selectOptions(
-				screen.getByLabelText( 'Status' ),
-				'trash'
-			);
 			await user.click(
-				screen.getByRole( 'button', { name: 'Apply filters' } )
+				await screen.findByRole( 'link', { name: 'Trash' } )
 			);
 			await user.click(
 				await screen.findByRole( 'button', {

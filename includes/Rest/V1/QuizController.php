@@ -14,9 +14,11 @@ use OhMyLMS\Assessment\AttemptItems;
 use OhMyLMS\Assessment\Schema;
 use OhMyLMS\Data\Quiz;
 use OhMyLMS\DataException;
+use OhMyLMS\Learning\CourseStructure;
 use OhMyLMS\QuestionBank\AccessPolicy;
 use OhMyLMS\QuestionBank\DraftWriter;
 use OhMyLMS\QuestionBank\Usage;
+use OhMyLMS\Quiz\AttemptReports;
 use OhMyLMS\Quiz\GradingPolicy;
 use OhMyLMS\Quiz\QuizSettings;
 use OhMyLMS\Quiz\Review;
@@ -881,11 +883,8 @@ class QuizController extends RestController {
 		foreach ( (array) $rows as $row ) {
 			$stats['questions'][ (int) $row->quiz_id ] = (int) $row->total;
 		}
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT content.content_id, MIN(chapter.course_id) AS course_id FROM %i content INNER JOIN %i chapter ON chapter.chapter_id = content.chapter_id WHERE content.content_id IN ({$holders}) GROUP BY content.content_id", array_merge( array( $wpdb->prefix . 'ohmylms_content_relationship', $wpdb->prefix . 'ohmylms_chapter_relationship' ), $ids ) ) );
 		// phpcs:enable
-		foreach ( (array) $rows as $row ) {
-			$stats['courses'][ (int) $row->content_id ] = (int) $row->course_id;
-		}
+		$stats['courses'] = CourseStructure::first_courses( $ids );
 		if ( $stats['courses'] ) {
 			_prime_post_caches( array_values( array_unique( $stats['courses'] ) ), false, false );
 		}
@@ -1525,21 +1524,7 @@ class QuizController extends RestController {
 	 * @return array<int,float>
 	 */
 	private function attempt_max_marks( array $ids ) {
-		global $wpdb;
-
-		$ids = array_values( array_filter( array_map( 'absint', $ids ) ) );
-		if ( ! $ids ) {
-			return array();
-		}
-		$holders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT quiz_attempt_id, SUM(question_marks) AS max_marks FROM %i WHERE quiz_attempt_id IN ({$holders}) GROUP BY quiz_attempt_id", array_merge( array( $wpdb->prefix . 'ohmylms_quiz_attempts_answers' ), $ids ) ) );
-		$out  = array();
-		foreach ( (array) $rows as $row ) {
-			$out[ (int) $row->quiz_attempt_id ] = (float) $row->max_marks;
-		}
-
-		return $out;
+		return AttemptReports::max_marks( array_map( 'absint', $ids ) );
 	}
 
 	/**

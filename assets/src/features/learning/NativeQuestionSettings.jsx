@@ -2,7 +2,6 @@ import { createElement, useState } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
 import { registerPlugin } from '@wordpress/plugins';
 import { PluginDocumentSettingPanel } from '@wordpress/editor';
-import apiFetch from '@wordpress/api-fetch';
 import { loadBankQuestion } from '../question-bank/api.mjs';
 import { QuestionLivePreview } from '../question-editor/QuestionLivePreview';
 import { Button, Notice } from '@wordpress/components';
@@ -45,7 +44,7 @@ function NativeQuestionSettings() {
 				disabled={ locked }
 				onClick={ async () => {
 					try {
-						const fresh = await loadBankQuestion( id, apiFetch );
+						const fresh = await loadBankQuestion( id );
 						setPreview( { ...fresh, questions: fresh.options } );
 						setError( '' );
 					} catch ( cause ) {

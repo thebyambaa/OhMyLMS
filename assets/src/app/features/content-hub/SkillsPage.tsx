@@ -1,10 +1,9 @@
-import { Button, Modal, Notice, TextControl } from '@wordpress/components';
+import { Button, Modal, Notice } from '@wordpress/components';
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { useSearchParams } from 'react-router-dom';
-import { Table } from '../../../ui/Table';
+import { ListTable } from '../../../ui/ListTable';
 import { useBootstrap } from '../../bootstrap/BootstrapContext';
-import { Pagination } from '../../components/Pagination';
 import { normalizeApiError } from '../../lib/api';
 import type { Collection } from '../../lib/api/collection';
 import { changeArchive, listSkills, type SkillSummary } from './api';
@@ -140,103 +139,89 @@ export default function SkillsPage() {
 			>
 				{ __( 'Add skill', 'ohmylms' ) }
 			</Button>
-			<form
-				role="search"
-				aria-label={ __( 'Find skills', 'ohmylms' ) }
-				onSubmit={ ( event ) => {
-					event.preventDefault();
-					setSearch( query.trim() );
-					setPage( 1 );
-					setVersion( ( current ) => current + 1 );
-				} }
-			>
-				<TextControl
-					label={ __( 'Search skills by name', 'ohmylms' ) }
-					value={ query }
-					maxLength={ 200 }
-					onChange={ setQuery }
-				/>
-				<Button type="submit" variant="secondary">
-					{ __( 'Search', 'ohmylms' ) }
-				</Button>
-			</form>
 			<div aria-live="polite">
 				{ loading && __( 'Loading skills…', 'ohmylms' ) }
-				{ ! loading &&
-					! error &&
-					! data.items.length &&
-					__( 'No skills found.', 'ohmylms' ) }
 			</div>
 			{ ! error && (
 				<div aria-busy={ loading }>
-					<Table caption={ __( 'Skills library', 'ohmylms' ) }>
-						<thead>
-							<tr>
-								<th scope="col">{ __( 'Name', 'ohmylms' ) }</th>
-								<th scope="col">{ __( 'Code', 'ohmylms' ) }</th>
-								<th scope="col">
-									{ __( 'Status', 'ohmylms' ) }
-								</th>
-								<th scope="col">
-									{ __( 'Actions', 'ohmylms' ) }
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							{ data.items.map( ( item ) => (
-								<tr key={ item.id }>
-									<th scope="row">{ item.name }</th>
-									<td>{ item.code }</td>
-									<td>
-										{ item.archived
-											? __( 'Archived', 'ohmylms' )
-											: __( 'Active', 'ohmylms' ) }
-									</td>
-									<td>
-										<Button
-											variant="tertiary"
-											disabled={ busy || loading }
-											onClick={ () => {
-												setMessage( null );
-												setEditor( { item } );
-											} }
-											aria-label={ `${ __( 'Edit skill', 'ohmylms' ) }: ${ item.name }` }
-										>
-											{ __( 'Edit', 'ohmylms' ) }
-										</Button>
-										<Button
-											variant="tertiary"
-											disabled={ busy || loading }
-											onClick={ () => setLinks( item ) }
-										>
-											{ __( 'Links', 'ohmylms' ) }
-										</Button>
-										{ user.capabilities.manage_options && (
-											<Button
-												variant="tertiary"
-												disabled={ busy || loading }
-												onClick={ () =>
-													setConfirmation( item )
-												}
-											>
-												{ item.archived
-													? __( 'Restore', 'ohmylms' )
-													: __(
-															'Archive',
-															'ohmylms'
-														) }
-											</Button>
-										) }
-									</td>
-								</tr>
-							) ) }
-						</tbody>
-					</Table>
-					<Pagination
-						page={ page }
-						pages={ data.totalPages }
-						busy={ loading }
-						onChange={ setPage }
+					<ListTable< SkillSummary >
+						caption={ __( 'Skills library', 'ohmylms' ) }
+						formLabel={ __( 'Find skills', 'ohmylms' ) }
+						busy={ busy || loading }
+						rows={ data.items }
+						rowKey={ ( item ) => item.id }
+						emptyMessage={
+							loading ? '' : __( 'No skills found.', 'ohmylms' )
+						}
+						search={ {
+							label: __( 'Search skills by name', 'ohmylms' ),
+							submitLabel: __( 'Search', 'ohmylms' ),
+							value: query,
+							maxLength: 200,
+							onChange: setQuery,
+							onSubmit: () => {
+								setSearch( query.trim() );
+								setPage( 1 );
+								setVersion( ( current ) => current + 1 );
+							},
+						} }
+						pagination={ {
+							page,
+							totalPages: data.totalPages,
+							onChange: setPage,
+						} }
+						columns={ [
+							{
+								id: 'name',
+								label: __( 'Name', 'ohmylms' ),
+								primary: true,
+								render: ( item ) => (
+									<strong className="row-title">
+										{ item.name }
+									</strong>
+								),
+							},
+							{
+								id: 'code',
+								label: __( 'Code', 'ohmylms' ),
+								render: ( item ) => item.code,
+							},
+							{
+								id: 'status',
+								label: __( 'Status', 'ohmylms' ),
+								render: ( item ) =>
+									item.archived
+										? __( 'Archived', 'ohmylms' )
+										: __( 'Active', 'ohmylms' ),
+							},
+						] }
+						rowActions={ ( item ) => [
+							{
+								key: 'edit',
+								label: __( 'Edit', 'ohmylms' ),
+								disabled: busy || loading,
+								ariaLabel: `${ __( 'Edit skill', 'ohmylms' ) }: ${ item.name }`,
+								onClick: () => {
+									setMessage( null );
+									setEditor( { item } );
+								},
+							},
+							{
+								key: 'links',
+								label: __( 'Links', 'ohmylms' ),
+								disabled: busy || loading,
+								onClick: () => setLinks( item ),
+							},
+							user.capabilities.manage_options && {
+								key: item.archived ? 'untrash' : 'archive',
+								label: item.archived
+									? __( 'Restore', 'ohmylms' )
+									: __( 'Archive', 'ohmylms' ),
+								destructive: ! item.archived,
+								disabled: busy || loading,
+								onClick: () => setConfirmation( item ),
+							},
+						] }
 					/>
 				</div>
 			) }

@@ -11,19 +11,51 @@ use OhMyLMS\QuestionBank\SkillCatalogue;
 
 defined( 'ABSPATH' ) || exit;
 
-/** OhMyLMS -> Skill assessments. */
+/**
+ * Content Hub > Skills > Assessments (`admin.php?page=ohmylms-content&tab=skills&section=assessments`),
+ * a section the server renders ({@see \OhMyLMS\Admin\AdminNavigation}).
+ */
 final class SkillAssessmentPage {
 
+	/**
+	 * Former page slug; `admin.php?page=ohmylms-skill-assessments` redirects to the section.
+	 */
 	const SLUG = 'ohmylms-skill-assessments';
 
-	/** Register the menu entry. */
+	/** Register the redirect of the former page. */
 	public static function init() {
 		add_action( 'admin_menu', array( __CLASS__, 'menu' ), 33 );
 	}
 
-	/** Add the page under the OhMyLMS menu. */
+	/** Keep the former page registered, without a menu entry, so old links redirect to the section. */
 	public static function menu() {
-		add_submenu_page( 'ohmylms', __( 'Skill assessments', 'ohmylms' ), __( 'Skill assessments', 'ohmylms' ), 'edit_posts', self::SLUG, array( __CLASS__, 'render' ) );
+		$hook = add_submenu_page( 'options.php', __( 'Skill assessments', 'ohmylms' ), __( 'Skill assessments', 'ohmylms' ), 'edit_posts', self::SLUG, '__return_null' );
+		if ( $hook ) {
+			add_action( 'load-' . $hook, array( __CLASS__, 'redirect' ) );
+		}
+	}
+
+	/**
+	 * Address of the section, with the course, unit and search filters.
+	 *
+	 * @param array $args Query arguments to add.
+	 * @return string
+	 */
+	public static function url( array $args = array() ) {
+		return add_query_arg( $args, \OhMyLMS\Admin\AdminNavigation::tab_url( 'content', 'skills', 'assessments' ) );
+	}
+
+	/** Send the former page to the section, keeping its filters. */
+	public static function redirect() {
+		$args = array();
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Navigation only.
+		foreach ( array( 'course', 'chapter', 'q' ) as $name ) {
+			if ( isset( $_GET[ $name ] ) && is_string( $_GET[ $name ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Navigation only.
+				$args[ $name ] = rawurlencode( sanitize_text_field( wp_unslash( $_GET[ $name ] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Navigation only.
+			}
+		}
+		wp_safe_redirect( self::url( $args ) );
+		exit;
 	}
 
 	/**

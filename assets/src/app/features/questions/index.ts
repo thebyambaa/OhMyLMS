@@ -7,6 +7,8 @@ export const questions: FeatureDefinition = {
 	id: 'questions',
 	title: __( 'Question bank', 'ohmylms' ),
 	path: '/content-hub/question-bank',
+	group: 'content',
+	tab: 'question-bank',
 	capability: 'edit_posts',
 	extensionRoute: '/content-hub/question-bank',
 	component: lazy(
@@ -26,6 +28,8 @@ export const questionEditor: FeatureDefinition = {
 	id: 'questions-editor',
 	title: __( 'Question', 'ohmylms' ),
 	path: '/content-hub/question-bank/:id',
+	group: 'content',
+	tab: 'question-bank',
 	hidden: true,
 	capability: 'edit_posts',
 	extensionRoute: '/question-edit/:id',

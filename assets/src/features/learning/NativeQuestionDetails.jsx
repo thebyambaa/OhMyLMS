@@ -9,7 +9,6 @@ import {
 	ToggleControl,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import apiFetch from '@wordpress/api-fetch';
 import {
 	listBanks,
 	listSkills,
@@ -53,11 +52,7 @@ export function NativeQuestionDetails( {
 			return undefined;
 		}
 		let active = true;
-		Promise.all( [
-			loadBankQuestion( id, apiFetch ),
-			listBanks( apiFetch ),
-			listSkills( '', apiFetch ),
-		] )
+		Promise.all( [ loadBankQuestion( id ), listBanks(), listSkills( '' ) ] )
 			.then( ( [ loaded, catalogue, taxonomy ] ) => {
 				if ( ! active ) {
 					return;
@@ -95,7 +90,7 @@ export function NativeQuestionDetails( {
 		}
 	}
 	async function pin( versionId ) {
-		await pinQuestion( quizId, id, versionId, apiFetch );
+		await pinQuestion( quizId, id, versionId );
 		markNativeQuizDirty();
 	}
 	return (
@@ -216,23 +211,15 @@ export function NativeQuestionDetails( {
 								disabled={ ! dirty }
 								onClick={ () =>
 									act( async () => {
-										const current = await loadBankQuestion(
-											id,
-											apiFetch
-										);
-										await saveQuestionAttributes(
-											id,
-											{
-												bank,
-												skills: map,
-												base_modified: current.modified,
-											},
-											apiFetch
-										);
-										const fresh = await loadBankQuestion(
-											id,
-											apiFetch
-										);
+										const current =
+											await loadBankQuestion( id );
+										await saveQuestionAttributes( id, {
+											bank,
+											skills: map,
+											base_modified: current.modified,
+										} );
+										const fresh =
+											await loadBankQuestion( id );
 										setDetail( fresh );
 										onRefresh( fresh );
 										setDirty( false );
@@ -272,12 +259,7 @@ export function NativeQuestionDetails( {
 												...snapshot,
 												name: snapshot.title,
 												description: snapshot.body,
-											} ) )(
-												await loadVersion(
-													value,
-													apiFetch
-												)
-											)
+											} ) )( await loadVersion( value ) )
 										)
 									);
 								}
@@ -300,35 +282,27 @@ export function NativeQuestionDetails( {
 								disabled={ busy || saving || dirty }
 								onClick={ () =>
 									act( async () => {
-										const current = await loadBankQuestion(
-											id,
-											apiFetch
-										);
-										await saveQuestionAttributes(
-											id,
-											{
-												name: preview.name,
-												description:
-													preview.description || '',
-												settings: preview.settings,
-												questions: (
-													preview.options ||
-													preview.questions ||
-													[]
-												).map(
-													( {
-														id: optionId,
-														...option
-													} ) => option
-												),
-												base_modified: current.modified,
-											},
-											apiFetch
-										);
-										const fresh = await loadBankQuestion(
-											id,
-											apiFetch
-										);
+										const current =
+											await loadBankQuestion( id );
+										await saveQuestionAttributes( id, {
+											name: preview.name,
+											description:
+												preview.description || '',
+											settings: preview.settings,
+											questions: (
+												preview.options ||
+												preview.questions ||
+												[]
+											).map(
+												( {
+													id: optionId,
+													...option
+												} ) => option
+											),
+											base_modified: current.modified,
+										} );
+										const fresh =
+											await loadBankQuestion( id );
 										setDetail( fresh );
 										onRefresh( fresh, true );
 									} )

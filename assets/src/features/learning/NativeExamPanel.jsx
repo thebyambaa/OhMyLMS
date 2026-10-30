@@ -3,8 +3,8 @@ import { createElement, useState } from '@wordpress/element';
 import { select, useDispatch, useSelect } from '@wordpress/data';
 import { PluginDocumentSettingPanel } from '@wordpress/editor';
 import { Button, Notice, TextareaControl } from '@wordpress/components';
-import apiFetch from '@wordpress/api-fetch';
 import { __ } from '@wordpress/i18n';
+import { publishExam, saveExamInstructions } from './api.mjs';
 import { registerProfilePanel } from './ProfilePanel';
 
 /**
@@ -68,11 +68,7 @@ export function NativeExamPanel( { data: exam } ) {
 				);
 			}
 		}
-		await apiFetch( {
-			path: `/ohmylms/v1/exams/${ exam.id }/settings`,
-			method: 'POST',
-			data: { instructions },
-		} );
+		await saveExamInstructions( exam.id, instructions );
 	};
 	// Publishing makes the exam's questions exam-only, so practice sets and inline checks that use them
 	// stop working. The server says so first; confirming sends the publish again.
@@ -81,11 +77,7 @@ export function NativeExamPanel( { data: exam } ) {
 			async () => {
 				await saveAll();
 				try {
-					await apiFetch( {
-						path: `/ohmylms/v1/exams/${ exam.id }/publish`,
-						method: 'POST',
-						data: { confirm_overlap: confirm },
-					} );
+					await publishExam( exam.id, confirm );
 				} catch ( failure ) {
 					if ( failure.code === 'exam_overlap' ) {
 						setWarnings(

@@ -7,6 +7,8 @@ export const orders: FeatureDefinition = {
 	id: 'orders',
 	title: __( 'Orders', 'ohmylms' ),
 	path: '/orders',
+	group: 'commerce',
+	tab: 'orders',
 	capability: 'manage_options',
 	component: lazy(
 		() =>
@@ -21,6 +23,8 @@ export const orderDetail: FeatureDefinition = {
 	id: 'order-detail',
 	title: __( 'Order', 'ohmylms' ),
 	path: '/orders/:id',
+	group: 'commerce',
+	tab: 'orders',
 	extensionRoute: '/order-edit/:id',
 	hidden: true,
 	capability: 'manage_options',
@@ -37,6 +41,8 @@ export const coupons: FeatureDefinition = {
 	id: 'coupons',
 	title: __( 'Coupons', 'ohmylms' ),
 	path: '/coupons',
+	group: 'commerce',
+	tab: 'coupons',
 	capability: 'manage_options',
 	component: lazy(
 		() =>

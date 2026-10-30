@@ -9,7 +9,6 @@ import {
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { listSkills } from '../question-bank/api.mjs';
-import apiFetch from '@wordpress/api-fetch';
 
 /**
  * Shared configuration in Gutenberg's normal save and publishing transaction.
@@ -30,7 +29,7 @@ export function NativeQuizConfiguration( { exam = false } ) {
 	const [ skills, setSkills ] = useState( [] );
 	useEffect( () => {
 		let active = true;
-		listSkills( '', apiFetch )
+		listSkills( '' )
 			.then( ( data ) => active && setSkills( data.skills || [] ) )
 			.catch( () => {} );
 		return () => {

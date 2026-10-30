@@ -8,8 +8,11 @@
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
-use OhMyLMS\Assessment\Schema;
+use OhMyLMS\Assignment\Submissions;
 use OhMyLMS\Performance\Levels;
+use OhMyLMS\Performance\Snapshot;
+use OhMyLMS\Quiz\AttemptReports;
+use OhMyLMS\Student\Enrollments;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -216,65 +219,16 @@ class StudentReportController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_summary( $request ) {
-		global $wpdb;
-
 		$user_id = $this->student_id( $request );
 		if ( is_wp_error( $user_id ) ) {
 			return $user_id;
 		}
 
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery -- Aggregates over plugin tables; no API exists and the report must be fresh.
-		$courses     = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT COUNT(DISTINCT course_id) AS enrolled, COUNT(DISTINCT CASE WHEN progress = 'completed' THEN course_id END) AS completed FROM %i WHERE user_id = %d AND status IN ('enrolled','banned')",
-				$wpdb->prefix . 'ohmylms_user_enrollment',
-				$user_id
-			),
-			ARRAY_A
-		);
-		$quizzes     = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT COUNT(*) AS attempts, SUM(a.status = 'in-review') AS in_review, AVG(CASE WHEN m.max_marks > 0 THEN a.total / m.max_marks * 100 END) AS average FROM %i a LEFT JOIN ( SELECT quiz_attempt_id, SUM(question_marks) AS max_marks FROM %i WHERE student_id = %d GROUP BY quiz_attempt_id ) m ON m.quiz_attempt_id = a.id WHERE a.student_id = %d AND a.status <> 'in-progress'",
-				$wpdb->prefix . 'ohmylms_quiz_attempts',
-				$wpdb->prefix . 'ohmylms_quiz_attempts_answers',
-				$user_id,
-				$user_id
-			),
-			ARRAY_A
-		);
-		$assignments = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT COUNT(*) AS submitted, SUM(status <> 'submitted') AS graded, SUM(status = 'passed') AS passed, SUM(status = 'failed') AS failed FROM %i WHERE user_id = %d",
-				$wpdb->prefix . 'ohmylms_assignment_attempts',
-				$user_id
-			),
-			ARRAY_A
-		);
-		$skills      = array(
-			'total'      => 0,
-			'review_due' => 0,
-			'struggling' => 0,
-		);
-		if ( Schema::ready() ) {
-			$row    = $wpdb->get_row(
-				$wpdb->prepare(
-					'SELECT COUNT(*) AS total, SUM(review_due = 1) AS review_due, SUM(struggling = 1) AS struggling FROM %i WHERE student_id = %d',
-					Schema::table( 'student_skill_state' ),
-					$user_id
-				),
-				ARRAY_A
-			);
-			$skills = array(
-				'total'      => (int) ( $row['total'] ?? 0 ),
-				'review_due' => (int) ( $row['review_due'] ?? 0 ),
-				'struggling' => (int) ( $row['struggling'] ?? 0 ),
-			);
-		}
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery
-
-		$enrolled  = (int) ( $courses['enrolled'] ?? 0 );
-		$completed = (int) ( $courses['completed'] ?? 0 );
-		$average   = $quizzes['average'] ?? null;
+		$courses   = Enrollments::course_counts( $user_id );
+		$quizzes   = AttemptReports::student_summary( $user_id );
+		$enrolled  = $courses['enrolled'];
+		$completed = $courses['completed'];
+		$average   = $quizzes['average'];
 
 		return rest_ensure_response(
 			array(
@@ -285,17 +239,12 @@ class StudentReportController extends RestController {
 					'in_progress' => max( 0, $enrolled - $completed ),
 				),
 				'quizzes'     => array(
-					'attempts'        => (int) ( $quizzes['attempts'] ?? 0 ),
-					'in_review'       => (int) ( $quizzes['in_review'] ?? 0 ),
+					'attempts'        => $quizzes['attempts'],
+					'in_review'       => $quizzes['in_review'],
 					'average_percent' => null === $average ? null : round( (float) $average, 1 ),
 				),
-				'assignments' => array(
-					'submitted' => (int) ( $assignments['submitted'] ?? 0 ),
-					'graded'    => (int) ( $assignments['graded'] ?? 0 ),
-					'passed'    => (int) ( $assignments['passed'] ?? 0 ),
-					'failed'    => (int) ( $assignments['failed'] ?? 0 ),
-				),
-				'skills'      => $skills,
+				'assignments' => Submissions::student_summary( $user_id ),
+				'skills'      => Snapshot::review_counts( $user_id ),
 			)
 		);
 	}
@@ -327,31 +276,18 @@ class StudentReportController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_quiz_attempts( $request ) {
-		global $wpdb;
-
 		$user_id = $this->student_id( $request );
 		if ( is_wp_error( $user_id ) ) {
 			return $user_id;
 		}
 		list( $page, $per_page ) = $this->paging( $request );
-		$table                   = $wpdb->prefix . 'ohmylms_quiz_attempts';
 
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery -- Plugin attempt tables have no API.
-		$total = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE student_id = %d', $table, $user_id ) );
+		$total = AttemptReports::count_student_attempts( $user_id );
 		if ( $total > 0 && $page > (int) ceil( $total / $per_page ) ) {
 			return $this->invalid_page();
 		}
-		$rows  = (array) $wpdb->get_results( $wpdb->prepare( 'SELECT id, quiz_id, course_id, status, total, start_date, end_date FROM %i WHERE student_id = %d ORDER BY start_date DESC, id DESC LIMIT %d OFFSET %d', $table, $user_id, $per_page, ( $page - 1 ) * $per_page ), ARRAY_A );
-		$maxes = array();
-		if ( $rows ) {
-			$ids     = array_map( 'intval', wp_list_pluck( $rows, 'id' ) );
-			$holders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Placeholders are generated from the id count.
-			foreach ( (array) $wpdb->get_results( $wpdb->prepare( "SELECT quiz_attempt_id, SUM(question_marks) AS max_marks FROM %i WHERE quiz_attempt_id IN ({$holders}) GROUP BY quiz_attempt_id", array_merge( array( $wpdb->prefix . 'ohmylms_quiz_attempts_answers' ), $ids ) ), ARRAY_A ) as $max ) {
-				$maxes[ (int) $max['quiz_attempt_id'] ] = (float) $max['max_marks'];
-			}
-		}
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery
+		$rows  = AttemptReports::student_attempts( $user_id, $page, $per_page );
+		$maxes = AttemptReports::max_marks( wp_list_pluck( $rows, 'id' ) );
 
 		$titles = $this->titles( array_merge( wp_list_pluck( $rows, 'quiz_id' ), wp_list_pluck( $rows, 'course_id' ) ) );
 		$items  = array();
@@ -383,26 +319,21 @@ class StudentReportController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_assignment_submissions( $request ) {
-		global $wpdb;
-
 		$user_id = $this->student_id( $request );
 		if ( is_wp_error( $user_id ) ) {
 			return $user_id;
 		}
 		list( $page, $per_page ) = $this->paging( $request );
-		$table                   = $wpdb->prefix . 'ohmylms_assignment_attempts';
 
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery -- Plugin attempt tables have no API.
-		$total = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE user_id = %d', $table, $user_id ) );
+		$total = Submissions::count_for_student( $user_id );
 		if ( $total > 0 && $page > (int) ceil( $total / $per_page ) ) {
 			return $this->invalid_page();
 		}
-		$rows = (array) $wpdb->get_results( $wpdb->prepare( 'SELECT id, assignment_id, course_id, status, score, total_attempt, start_date, end_date FROM %i WHERE user_id = %d ORDER BY start_date DESC, id DESC LIMIT %d OFFSET %d', $table, $user_id, $per_page, ( $page - 1 ) * $per_page ), ARRAY_A );
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery
+		$rows = Submissions::page_for_student( $user_id, $page, $per_page );
 
 		$assignment_ids = array_map( 'intval', wp_list_pluck( $rows, 'assignment_id' ) );
 		$titles         = $this->titles( array_merge( $assignment_ids, wp_list_pluck( $rows, 'course_id' ) ) );
-		update_meta_cache( 'post', $assignment_ids );
+		$max_scores     = Submissions::max_scores( $assignment_ids );
 
 		$items = array();
 		foreach ( $rows as $row ) {
@@ -416,7 +347,7 @@ class StudentReportController extends RestController {
 				'status'           => $graded ? 'graded' : 'submitted',
 				'result'           => in_array( (string) $row['status'], array( 'passed', 'failed' ), true ) ? (string) $row['status'] : null,
 				'score'            => $graded ? (int) $row['score'] : null,
-				'max_score'        => (int) get_post_meta( (int) $row['assignment_id'], '_total_points', true ),
+				'max_score'        => $max_scores[ (int) $row['assignment_id'] ] ?? 0,
 				'attempts'         => (int) $row['total_attempt'],
 				'submitted_at'     => StudentController::format_local( $row['start_date'] ),
 				'graded_at'        => $graded ? StudentController::format_local( $row['end_date'] ) : null,
@@ -432,34 +363,19 @@ class StudentReportController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_skills( $request ) {
-		global $wpdb;
-
 		$user_id = $this->student_id( $request );
 		if ( is_wp_error( $user_id ) ) {
 			return $user_id;
 		}
 		list( $page, $per_page ) = $this->paging( $request );
 		$route                   = $this->rest_base . '/' . $user_id . '/skills';
-		if ( ! Schema::ready() ) {
-			return $this->paged( $request, array(), 0, $page, $per_page, $route );
-		}
+		$filter                  = (string) $request['filter'];
 
-		$where = 's.student_id = %d';
-		if ( 'review_due' === $request['filter'] ) {
-			$where .= ' AND s.review_due = 1';
-		} elseif ( 'struggling' === $request['filter'] ) {
-			$where .= ' AND s.struggling = 1';
-		}
-		$from = ' FROM %i s INNER JOIN %i t ON t.term_id = s.term_id WHERE ' . $where;
-		$args = array( Schema::table( 'student_skill_state' ), $wpdb->terms, $user_id );
-
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Prepared with %i identifiers and an argument array; the WHERE clause is built from constants.
-		$total = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*)' . $from, $args ) );
+		$total = Snapshot::count_states( $user_id, $filter );
 		if ( $total > 0 && $page > (int) ceil( $total / $per_page ) ) {
 			return $this->invalid_page();
 		}
-		$rows = (array) $wpdb->get_results( $wpdb->prepare( 'SELECT s.term_id, t.name, s.level, s.review_due, s.struggling, s.evidence_count, s.accuracy, s.last_evidence_at' . $from . ' ORDER BY t.name ASC, s.term_id ASC LIMIT %d OFFSET %d', array_merge( $args, array( $per_page, ( $page - 1 ) * $per_page ) ) ), ARRAY_A );
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+		$rows = $total > 0 ? Snapshot::state_page( $user_id, $filter, $page, $per_page ) : array();
 
 		$items = array();
 		foreach ( $rows as $row ) {

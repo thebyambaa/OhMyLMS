@@ -62,7 +62,6 @@ class CommonHook extends HookHandler {
 		add_filter( 'ohmylms_modules', array( $this, 'pro_modules' ), 10 );
 		add_filter( 'ohmylms_is_pro', array( $this, 'ohmylms_is_pro' ), 10 );
 		add_action( 'template_redirect', array( $this, 'restrict_session_access' ), 10 );
-		add_action( 'ohmylms_after_settings_menu_item', array( $this, 'register_submenu' ) );
 		add_filter( 'post_type_link', array( $this, 'session_single_url' ), 1, 2 );
 		add_filter( 'ohmylms_is_lesson_sequentially_locked', array( $this, 'is_lesson_sequentially_locked' ), 10, 4 );
 		add_filter( 'ohmylms_can_save_sequential_mode', '__return_true' );
@@ -1887,22 +1886,6 @@ class CommonHook extends HookHandler {
 		$stores['lesson-pro']     = 'OhMyLMS\DataStores\LessonStore';
 		$stores['session-pro']    = 'OhMyLMS\DataStores\SessionStore';
 		return $stores;
-	}
-
-	/**
-	 * Register submenu for Common hook.
-	 */
-	public function register_submenu() {
-		$slug       = OHMYLMS_SLUG;
-		$capability = 'manage_options';
-		add_submenu_page(
-			$slug,
-			__( 'Add-ons', 'ohmylms' ),
-			__( 'Add-ons', 'ohmylms' ),
-			$capability,
-			\OhMyLMS\Admin\LegacyRoutes::url( '/integrations' ),
-			null
-		);
 	}
 
 	/**

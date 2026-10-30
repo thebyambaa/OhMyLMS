@@ -2,6 +2,11 @@ import { Button, Notice, TextControl } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import type { ReactNode } from 'react';
+import {
+	ListTable,
+	type ListTableProps,
+	type ListTableView,
+} from '../../../ui/ListTable';
 
 /**
  * Search form shared by the hub lists.
@@ -43,6 +48,100 @@ export function SearchForm( {
 				{ __( 'Search', 'ohmylms' ) }
 			</Button>
 		</form>
+	);
+}
+
+/** What `HubListTable` reads from `usePagedList`. */
+interface HubList< Row > {
+	page: number;
+	loading: boolean;
+	error: string;
+	data: { items: Row[]; total: number; totalPages: number };
+	setPage: ( page: number ) => void;
+	setSearch: ( value: string ) => void;
+	reload: () => void;
+}
+
+/**
+ * A hub list as a WordPress list table: search box, optional views and filters in the table
+ * navigation, loading and error states, and pagination over a `usePagedList` result.
+ *
+ * @param props             Component props.
+ * @param props.caption     Table name.
+ * @param props.searchLabel Accessible name of the search.
+ * @param props.list        Paged list state.
+ * @param props.loadingText Text while loading.
+ * @param props.emptyText   Text when there are no rows.
+ * @param props.views       Status views.
+ * @param props.filters     Filters for the table navigation (applied on change).
+ * @param props.table       Columns, row key and row actions.
+ */
+export function HubListTable< Row >( {
+	caption,
+	searchLabel,
+	list,
+	loadingText,
+	emptyText,
+	views,
+	filters,
+	table,
+}: {
+	caption: string;
+	searchLabel: string;
+	list: HubList< Row >;
+	loadingText: string;
+	emptyText: string;
+	views?: ListTableView[];
+	filters?: ReactNode;
+	table: Pick<
+		ListTableProps< Row >,
+		'columns' | 'rowKey' | 'rowActions' | 'rowLabel'
+	>;
+} ) {
+	const [ value, setValue ] = useState( '' );
+	if ( list.loading ) {
+		return <p role="status">{ loadingText }</p>;
+	}
+	if ( list.error ) {
+		return (
+			<Notice status="error" isDismissible={ false }>
+				{ list.error }{ ' ' }
+				<Button variant="link" onClick={ list.reload }>
+					{ __( 'Try again', 'ohmylms' ) }
+				</Button>
+			</Notice>
+		);
+	}
+	const total = list.data.total;
+	return (
+		<ListTable< Row >
+			{ ...table }
+			caption={ caption }
+			formLabel={ searchLabel }
+			rows={ list.data.items }
+			emptyMessage={ emptyText }
+			views={ views }
+			filters={ filters }
+			filterLabel={ null }
+			search={ {
+				label: searchLabel,
+				submitLabel: __( 'Search', 'ohmylms' ),
+				value,
+				onChange: setValue,
+				onSubmit: () => list.setSearch( value ),
+			} }
+			pagination={ {
+				page: list.page,
+				totalPages: list.data.totalPages,
+				totalItems: total,
+				itemsLabel: sprintf(
+					/* translators: %d: number of results. */
+					_n( '%d result.', '%d results.', total, 'ohmylms' ),
+					total
+				),
+				onChange: list.setPage,
+			} }
+		/>
 	);
 }
 

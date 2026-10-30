@@ -90,15 +90,21 @@ describe( 'routes', () => {
 		expect( mocks.getDashboard ).not.toHaveBeenCalled();
 	} );
 
-	it( 'keep the course report out of the navigation', async () => {
+	it( 'place the dashboard, earnings and the course report on their admin pages', async () => {
 		show( '/dashboard' );
 		await screen.findByRole( 'heading', { name: 'Dashboard' } );
-		expect(
-			screen.getByRole( 'link', { name: 'Earnings' } )
-		).toBeInTheDocument();
-		expect(
-			screen.queryByRole( 'link', { name: 'Course report' } )
-		).not.toBeInTheDocument();
+		expect( dashboardFeature ).toMatchObject( { group: 'dashboard' } );
+		expect( dashboardFeature.tab ).toBeUndefined();
+		expect( earningsFeature ).toMatchObject( {
+			group: 'commerce',
+			tab: 'earnings',
+		} );
+		expect( courseReportFeature ).toMatchObject( {
+			group: 'content',
+			tab: 'courses',
+			view: 'report',
+			hidden: true,
+		} );
 	} );
 } );
 
@@ -267,7 +273,7 @@ describe( 'date range filter', () => {
 		show( '/dashboard' );
 		await screen.findByRole( 'list', { name: 'Summary' } );
 		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Date range' } ),
+			await screen.findByRole( 'combobox', { name: 'Date range' } ),
 			'last_90_days'
 		);
 		await waitFor( () =>
@@ -284,7 +290,7 @@ describe( 'date range filter', () => {
 		show( '/dashboard' );
 		await screen.findByRole( 'list', { name: 'Summary' } );
 		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Date range' } ),
+			await screen.findByRole( 'combobox', { name: 'Date range' } ),
 			'custom'
 		);
 		expect( mocks.getDashboard ).toHaveBeenCalledTimes( 1 );
@@ -340,7 +346,9 @@ describe( 'earnings report', () => {
 		expect(
 			within( orders ).getByText( /\(refunded\)/ )
 		).toBeInTheDocument();
-		expect( screen.getByText( '2 orders found.' ) ).toBeInTheDocument();
+		expect(
+			screen.getAllByText( '2 orders found.' )[ 0 ]
+		).toBeInTheDocument();
 
 		const courses = await screen.findByRole( 'table', {
 			name: 'Course report',
@@ -360,12 +368,14 @@ describe( 'earnings report', () => {
 			name: 'Transactions',
 		} );
 		const dateHeader = within( orders )
-			.getByRole( 'button', { name: 'Sort by Date' } )
+			.getAllByRole( 'link', { name: /^Date Sort/ } )[ 0 ]!
 			.closest( 'th' );
 		expect( dateHeader ).toHaveAttribute( 'aria-sort', 'descending' );
 
 		await user.click(
-			within( orders ).getByRole( 'button', { name: 'Sort by Total' } )
+			within( orders ).getAllByRole( 'link', {
+				name: /^Total Sort/,
+			} )[ 0 ]!
 		);
 		await waitFor( () =>
 			expect(
@@ -376,7 +386,9 @@ describe( 'earnings report', () => {
 			} )
 		);
 		await user.click(
-			await screen.findByRole( 'button', { name: 'Sort by Total' } )
+			(
+				await screen.findAllByRole( 'link', { name: /^Total Sort/ } )
+			)[ 0 ]!
 		);
 		await waitFor( () =>
 			expect(
@@ -388,8 +400,8 @@ describe( 'earnings report', () => {
 		);
 		expect(
 			(
-				await screen.findByRole( 'button', { name: 'Sort by Total' } )
-			).closest( 'th' )
+				await screen.findAllByRole( 'link', { name: /^Total Sort/ } )
+			)[ 0 ]!.closest( 'th' )
 		).toHaveAttribute( 'aria-sort', 'ascending' );
 
 		const next = await screen.findAllByRole( 'button', {
@@ -414,7 +426,7 @@ describe( 'earnings report', () => {
 			).toBe( '77' )
 		);
 		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Payment method' } ),
+			await screen.findByRole( 'combobox', { name: 'Payment method' } ),
 			'paypal'
 		);
 		await waitFor( () =>
@@ -495,9 +507,8 @@ describe( 'course report', () => {
 		const user = userEvent.setup();
 		show( '/reports/courses/41' );
 		await screen.findByRole( 'table', { name: 'Students of this course' } );
-		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Progress' } ),
-			'completed'
+		await user.click(
+			await screen.findByRole( 'link', { name: 'Completed' } )
 		);
 		await waitFor( () =>
 			expect(

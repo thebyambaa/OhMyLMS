@@ -1,4 +1,8 @@
 import * as transport from '../../lib/api';
+import { createAssignment } from '../assignments/public';
+import { assignment } from '../assignments/fixtures';
+import { createQuiz } from '../quizzes/public';
+import { quiz } from '../quizzes/fixtures';
 import {
 	createResource,
 	deleteUnit,
@@ -16,6 +20,8 @@ vi.mock( '../../lib/api', async ( original ) => ( {
 	post: vi.fn(),
 	del: vi.fn(),
 } ) );
+vi.mock( '../quizzes/public', () => ( { createQuiz: vi.fn() } ) );
+vi.mock( '../assignments/public', () => ( { createAssignment: vi.fn() } ) );
 beforeEach( () => vi.resetAllMocks() );
 it( 'sends the original read revision and cancellation signal, never auto-publishes', async () => {
 	const controller = new AbortController();
@@ -77,24 +83,20 @@ it( 'searches the requested resource type and rejects invalid pagination', async
 	).rejects.toMatchObject( { code: 'invalid_response' } );
 } );
 it( 'creates draft quizzes and assignments through their own APIs', async () => {
-	vi.mocked( transport.post ).mockResolvedValue( {
-		id: 5,
-		title: 'Check',
-		status: 'draft',
+	const controller = new AbortController();
+	vi.mocked( createQuiz ).mockResolvedValue( { ...quiz, id: 5 } );
+	vi.mocked( createAssignment ).mockResolvedValue( {
+		...assignment,
+		id: 6,
 	} );
-	await expect( createResource( 'quiz', ' Check ' ) ).resolves.toEqual( {
-		id: 5,
-		title: 'Check',
+	await expect(
+		createResource( 'quiz', ' Check ', controller.signal )
+	).resolves.toEqual( { id: 5, title: quiz.title } );
+	expect( createQuiz ).toHaveBeenCalledWith( ' Check ', controller.signal );
+	await expect( createResource( 'assignment', 'Essay' ) ).resolves.toEqual( {
+		id: 6,
+		title: assignment.title,
 	} );
-	expect( transport.post ).toHaveBeenCalledWith(
-		'/ohmylms/v1/quizzes',
-		{ title: 'Check' },
-		{ signal: undefined }
-	);
-	await createResource( 'assignment', 'Essay' );
-	expect( transport.post ).toHaveBeenLastCalledWith(
-		'/ohmylms/v1/assignments',
-		{ title: 'Essay' },
-		{ signal: undefined }
-	);
+	expect( createAssignment ).toHaveBeenCalledWith( 'Essay', undefined );
+	expect( transport.post ).not.toHaveBeenCalled();
 } );

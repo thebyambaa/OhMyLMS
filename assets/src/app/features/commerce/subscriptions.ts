@@ -7,6 +7,8 @@ export const subscriptions: FeatureDefinition = {
 	id: 'subscriptions',
 	title: __( 'Subscriptions', 'ohmylms' ),
 	path: '/subscriptions',
+	group: 'commerce',
+	tab: 'subscriptions',
 	extensionRoute: '/subscriptions',
 	capability: 'manage_options',
 	component: lazy(
@@ -22,6 +24,8 @@ export const subscriptionDetail: FeatureDefinition = {
 	id: 'subscription-detail',
 	title: __( 'Subscription', 'ohmylms' ),
 	path: '/subscriptions/:id',
+	group: 'commerce',
+	tab: 'subscriptions',
 	extensionRoute: '/subscription-edit/:id',
 	hidden: true,
 	capability: 'manage_options',

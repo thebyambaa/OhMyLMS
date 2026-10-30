@@ -70,7 +70,10 @@ namespace {
     };
     require __DIR__ . '/../../includes/Schools/Access.php';
     require __DIR__ . '/../../includes/Schools/ViewAs.php';
+    function __($text, $domain = null) { return $text; }
+    function apply_filters($hook, $value, ...$args) { return $value; }
     require __DIR__ . '/../../includes/Admin/AppPage.php';
+    require __DIR__ . '/../../includes/Admin/AdminNavigation.php';
     require __DIR__ . '/../../includes/Admin/LegacyRoutes.php';
     use OhMyLMS\Schools\ViewAs;
     function check($value, $message) { if (!$value) { throw new \RuntimeException($message); } }
@@ -101,7 +104,7 @@ namespace {
     denied(fn() => ViewAs::return([]), 'Revoked admin session restored');
     WP_Session_Tokens::$tokens[1]['admin-session'] = true;
     $returned = ViewAs::return([]);
-    check($returned === ['url' => 'https://example.test/wp-admin/admin.php?page=ohmylms-app#/account-hub'], 'Return does not open Account Hub in the admin app');
+    check($returned === ['url' => 'https://example.test/wp-admin/admin.php?page=ohmylms-accounts&tab=schools'], 'Return does not open Account Hub: ' . json_encode($returned));
     check($current === 1 && $auth === [1, 'admin-session'] && $clears === 2, 'Original admin session not restored');
     check(!WP_Session_Tokens::get_instance(2)->verify('target-session') && !$transients, 'Target session or return token survived return');
     check($audit === [[1, 'view_as_started', 2], [1, 'view_as_returned', 2]], 'Switch audit attribution incorrect');

@@ -78,12 +78,11 @@ describe( 'ExamsPage', () => {
 		renderPage();
 		await screen.findByRole( 'table', { name: 'Exams' } );
 		await user.type(
-			screen.getByRole( 'textbox', { name: 'Search exams' } ),
+			screen.getByRole( 'searchbox', { name: 'Search exams' } ),
 			'mock{Enter}'
 		);
-		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Status' } ),
-			'publish'
+		await user.click(
+			await screen.findByRole( 'link', { name: 'Published' } )
 		);
 		await waitFor( () =>
 			expect( api.listExams ).toHaveBeenLastCalledWith(

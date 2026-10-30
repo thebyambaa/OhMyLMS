@@ -17,11 +17,50 @@ defined( 'ABSPATH' ) || exit;
  * contains validated hex colors, bounded integers and whitelisted keywords. The variables are scoped to
  * `body.oml-ds`, a class added only on this plugin's admin screens, so other wp-admin pages keep their
  * own look. The shared stylesheet assets/css/admin-design-system.css reads these variables.
+ *
+ * The WordPress preset (the default) leaves admin screens to the user's WordPress admin colour scheme:
+ * the admin tokens are derived from that scheme and the branded restyle (`body.oml-ds-branded`) is off.
+ * Its palette, the Khan Academy colors, still brands learner pages.
  */
 final class DesignSystem {
 	const OPTION         = 'ohmylms_design_system';
 	const BODY_CLASS     = 'oml-ds';
-	const DEFAULT_PRESET = 'khan';
+	const BRANDED_CLASS  = 'oml-ds-branded';
+	const DEFAULT_PRESET = 'wordpress';
+	const WORDPRESS      = 'wordpress';
+
+	/**
+	 * `--wp-admin-theme-color` of each core admin colour scheme (wp-includes/css/dist/base-styles/admin-schemes.css;
+	 * Fresh has no scheme rule there and keeps its #2271b1 highlight).
+	 */
+	const SCHEME_THEME_COLORS = array(
+		'modern'    => '#3858e9',
+		'fresh'     => '#2271b1',
+		'light'     => '#007cba',
+		'blue'      => '#437aa8',
+		'coffee'    => '#916745',
+		'ectoplasm' => '#646c3e',
+		'midnight'  => '#cf4339',
+		'ocean'     => '#567958',
+		'sunrise'   => '#ad631e',
+	);
+
+	/** WordPress admin neutrals and notice colors (wp-admin/css/common.css, list-tables.css). */
+	const WORDPRESS_ADMIN_COLORS = array(
+		'success'    => '#00a32a',
+		'danger'     => '#d63638',
+		'warning'    => '#dba617',
+		'link'       => '#2271b1',
+		'heading'    => '#1d2327',
+		'text'       => '#3c434a',
+		'muted'      => '#646970',
+		'border'     => '#c3c4c7',
+		'surface'    => '#ffffff',
+		'background' => '#f0f0f1',
+	);
+
+	/** WordPress buttons and inputs use a 2px radius ($radius-s). */
+	const WORDPRESS_RADIUS = 2;
 	const PILL           = 999;
 	const MAX_RADIUS     = 24;
 	const DENSITIES      = array( 'compact', 'comfortable', 'spacious' );
@@ -44,9 +83,32 @@ final class DesignSystem {
 	 * Khan Academy: Wonder Blocks color tokens (blue #1865f2, red #d92916, green #00a60e, gold #ffb100,
 	 * darkBlue #0b2149, offBlack #21242c, offWhite #f7f8fa; fadedOffBlack72 and fadedOffBlack16 mixed
 	 * with white give muted text and borders; offBlack50 gives the neutral outline). See docs/DESIGN-SYSTEM.md.
+	 *
+	 * WordPress: the stored palette (used by learner pages) is the Khan Academy one; admin screens take
+	 * their colors from the user's admin colour scheme instead (admin_colors()).
 	 */
 	const PRESETS = array(
-		'khan'    => array(
+		'wordpress' => array(
+			'label'         => 'WordPress',
+			'colors'        => array(
+				'primary'    => '#1865f2',
+				'secondary'  => '#909296',
+				'success'    => '#00a60e',
+				'danger'     => '#d92916',
+				'warning'    => '#ffb100',
+				'link'       => '#1865f2',
+				'heading'    => '#0b2149',
+				'text'       => '#21242c',
+				'muted'      => '#5f6167',
+				'info'       => '#1865f2',
+				'border'     => '#dcdcdd',
+				'surface'    => '#ffffff',
+				'background' => '#f7f8fa',
+			),
+			'button_radius' => 4,
+			'density'       => 'comfortable',
+		),
+		'khan'      => array(
 			'label'         => 'Khan Academy',
 			'colors'        => array(
 				'primary'    => '#1865f2',
@@ -66,7 +128,7 @@ final class DesignSystem {
 			'button_radius' => 4,
 			'density'       => 'comfortable',
 		),
-		'classic' => array(
+		'classic'   => array(
 			'label'         => 'Classic',
 			'colors'        => array(
 				'primary'    => '#6e42d3',
@@ -169,7 +231,7 @@ final class DesignSystem {
 			return array( 'settings' => __( 'The design system settings must be an object.', 'ohmylms' ) );
 		}
 		if ( isset( $input['preset'] ) && ( ! is_string( $input['preset'] ) || ! in_array( $input['preset'], array_merge( array_keys( self::PRESETS ), array( 'custom' ) ), true ) ) ) {
-			$errors['preset'] = __( 'Choose Khan Academy, Classic or Custom.', 'ohmylms' );
+			$errors['preset'] = __( 'Choose WordPress, Khan Academy, Classic or Custom.', 'ohmylms' );
 		}
 		if ( isset( $input['colors'] ) && ! is_array( $input['colors'] ) ) {
 			$errors['colors'] = __( 'Colors must be an object.', 'ohmylms' );
@@ -199,8 +261,9 @@ final class DesignSystem {
 	 * @return array{preset:string,colors:array<string,string>,button_radius:int,density:string}
 	 */
 	public static function sanitize( $input ) {
-		$input  = is_array( $input ) ? $input : array();
-		$base   = self::preset_values( isset( $input['preset'] ) && is_string( $input['preset'] ) ? $input['preset'] : self::DEFAULT_PRESET );
+		$input     = is_array( $input ) ? $input : array();
+		$requested = isset( $input['preset'] ) && is_string( $input['preset'] ) ? $input['preset'] : self::DEFAULT_PRESET;
+		$base      = self::preset_values( $requested );
 		$colors = $base['colors'];
 		if ( isset( $input['colors'] ) && is_array( $input['colors'] ) ) {
 			foreach ( self::COLOR_KEYS as $key ) {
@@ -218,18 +281,24 @@ final class DesignSystem {
 			'button_radius' => null === $radius ? $base['button_radius'] : $radius,
 			'density'       => $density,
 		);
-		$clean['preset'] = self::matching_preset( $clean );
+		$clean['preset'] = self::matching_preset( $clean, $requested );
 		return $clean;
 	}
 
 	/**
-	 * Name of the preset whose values equal the given settings, else 'custom'.
+	 * Name of the preset whose values equal the given settings, else 'custom'. The WordPress and Khan
+	 * Academy presets share a palette, so the requested name wins when its values match.
 	 *
-	 * @param array $settings Cleaned settings.
+	 * @param array  $settings  Cleaned settings.
+	 * @param string $requested Preset name the caller asked for.
 	 * @return string
 	 */
-	public static function matching_preset( $settings ) {
-		foreach ( array_keys( self::PRESETS ) as $name ) {
+	public static function matching_preset( $settings, $requested = '' ) {
+		$names = array_keys( self::PRESETS );
+		if ( isset( self::PRESETS[ $requested ] ) ) {
+			$names = array_values( array_unique( array_merge( array( $requested ), $names ) ) );
+		}
+		foreach ( $names as $name ) {
 			$preset = self::preset_values( $name );
 			if ( $preset['colors'] === $settings['colors'] && $preset['button_radius'] === $settings['button_radius'] && $preset['density'] === $settings['density'] ) {
 				return $name;
@@ -239,12 +308,69 @@ final class DesignSystem {
 	}
 
 	/**
-	 * The active settings. Sites that never saved the option get the Khan Academy preset.
+	 * The active settings. Sites that never saved the option get the WordPress preset (admin screens follow
+	 * the admin colour scheme; learner pages keep the Khan Academy palette).
 	 *
 	 * @return array{preset:string,colors:array<string,string>,button_radius:int,density:string}
 	 */
 	public static function get() {
 		return self::sanitize( get_option( self::OPTION, array() ) );
+	}
+
+	/**
+	 * Admin colour scheme of the current user, as WordPress prints it in the `admin-color-*` body class.
+	 *
+	 * @return string Scheme slug.
+	 */
+	public static function admin_scheme() {
+		$scheme = function_exists( 'get_user_option' ) ? get_user_option( 'admin_color' ) : '';
+		$scheme = is_string( $scheme ) ? sanitize_key( $scheme ) : '';
+		return '' === $scheme ? 'modern' : $scheme;
+	}
+
+	/**
+	 * Theme color of an admin colour scheme: the core value, else the registered scheme's highlight color.
+	 *
+	 * @param string $scheme Scheme slug.
+	 * @return string Hex color.
+	 */
+	public static function scheme_theme_color( $scheme ) {
+		if ( isset( self::SCHEME_THEME_COLORS[ $scheme ] ) ) {
+			return self::SCHEME_THEME_COLORS[ $scheme ];
+		}
+		global $_wp_admin_css_colors;
+		$registered = is_array( $_wp_admin_css_colors ) && isset( $_wp_admin_css_colors[ $scheme ]->colors ) ? (array) $_wp_admin_css_colors[ $scheme ]->colors : array();
+		$highlight  = self::hex( $registered[2] ?? '' );
+		return '' === $highlight ? self::SCHEME_THEME_COLORS['modern'] : $highlight;
+	}
+
+	/**
+	 * Colors of admin screens under the WordPress preset: the scheme's theme color on WordPress's neutrals.
+	 *
+	 * @param string|null $scheme Scheme slug; the current user's when null.
+	 * @return array<string,string> Colors keyed like COLOR_KEYS.
+	 */
+	public static function admin_colors( $scheme = null ) {
+		$theme = self::scheme_theme_color( null === $scheme ? self::admin_scheme() : $scheme );
+		return array_merge(
+			array(
+				'primary'   => $theme,
+				'secondary' => $theme,
+				'info'      => $theme,
+			),
+			self::WORDPRESS_ADMIN_COLORS
+		);
+	}
+
+	/**
+	 * Whether the settings restyle admin screens with their own palette (every preset but WordPress).
+	 *
+	 * @param array|null $settings Cleaned settings; the saved ones when null.
+	 * @return bool
+	 */
+	public static function is_branded( $settings = null ) {
+		$settings = is_array( $settings ) ? $settings : self::get();
+		return self::WORDPRESS !== $settings['preset'];
 	}
 
 	/**
@@ -545,42 +671,52 @@ final class DesignSystem {
 	/**
 	 * CSS custom properties for the settings, scoped to the plugin's admin screens.
 	 *
-	 * @param array|null $settings Cleaned settings; the saved ones when null.
+	 * Under the WordPress preset the tokens follow the admin colour scheme and the WordPress and
+	 * @wordpress/components color variables are left to WordPress.
+	 *
+	 * @param array|null  $settings Cleaned settings; the saved ones when null.
+	 * @param string|null $scheme   Admin colour scheme for the WordPress preset; the current user's when null.
 	 * @return string
 	 */
-	public static function css( $settings = null ) {
+	public static function css( $settings = null, $scheme = null ) {
 		$settings = is_array( $settings ) ? self::sanitize( $settings ) : self::get();
-		$c        = $settings['colors'];
+		$branded  = self::is_branded( $settings );
+		$c        = $branded ? $settings['colors'] : self::admin_colors( $scheme );
+		$radius   = $branded ? $settings['button_radius'] : self::WORDPRESS_RADIUS;
 		$primary  = $c['primary'];
 		$on       = self::text_on( $primary );
-		$radii    = self::radii( $settings['button_radius'] );
-		$vars     = self::variables( $c, $settings['button_radius'], $settings['density'] );
+		$radii    = self::radii( $radius );
+		$vars     = self::variables( $c, $radius, $settings['density'] );
 		// The existing admin stylesheets and WordPress/Arco components read these names.
+		if ( $branded ) {
+			$vars += array(
+				'wp-admin-theme-color'                      => $primary,
+				'wp-admin-theme-color--rgb'                 => Tokens::rgb( $primary ),
+				'wp-admin-theme-color-darker-10'            => Tokens::mix( $primary, '#000000', 0.15 ),
+				'wp-admin-theme-color-darker-20'            => Tokens::mix( $primary, '#000000', 0.3 ),
+				'wp-components-color-accent'                => $primary,
+				'wp-components-color-accent-darker-10'      => Tokens::mix( $primary, '#000000', 0.15 ),
+				'wp-components-color-accent-darker-20'      => Tokens::mix( $primary, '#000000', 0.3 ),
+				'wp-components-color-accent-inverted'       => $on,
+				'wp-components-color-foreground'            => $c['heading'],
+				'wp-components-color-subdued'               => $c['muted'],
+				'wp-components-button-color-secondary-text' => $primary,
+			);
+		}
 		$vars += array(
-			'wp-admin-theme-color'                      => $primary,
-			'wp-admin-theme-color--rgb'                 => Tokens::rgb( $primary ),
-			'wp-admin-theme-color-darker-10'            => Tokens::mix( $primary, '#000000', 0.15 ),
-			'wp-admin-theme-color-darker-20'            => Tokens::mix( $primary, '#000000', 0.3 ),
-			'wp-components-color-accent'                => $primary,
-			'wp-components-color-accent-darker-10'      => Tokens::mix( $primary, '#000000', 0.15 ),
-			'wp-components-color-accent-darker-20'      => Tokens::mix( $primary, '#000000', 0.3 ),
-			'wp-components-color-accent-inverted'       => $on,
-			'wp-components-color-foreground'            => $c['heading'],
-			'wp-components-color-subdued'               => $c['muted'],
-			'wp-components-button-color-secondary-text' => $primary,
-			'ohmylms-primary-color'                     => $primary,
-			'ohmylms-primary-color-rgb'                 => Tokens::rgb( $primary ),
-			'ohmylms-primary-hover-color'               => Tokens::mix( $primary, '#000000', 0.15 ),
-			'ohmylms-primary-soft-color'                => Tokens::mix( $primary, '#ffffff', 0.9 ),
-			'ohmylms-admin-heading-color'               => $c['heading'],
-			'ohmylms-admin-text-color'                  => $c['text'],
-			'ohmylms-admin-muted-color'                 => $c['muted'],
-			'ohmylms-admin-surface'                     => $c['surface'],
-			'ohmylms-admin-subtle'                      => Tokens::mix( $c['background'], '#ffffff', 0.5 ),
-			'ohmylms-admin-border'                      => $c['border'],
-			'ohmylms-admin-radius'                      => $radii['card'] . 'px',
+			'ohmylms-primary-color'       => $primary,
+			'ohmylms-primary-color-rgb'   => Tokens::rgb( $primary ),
+			'ohmylms-primary-hover-color' => Tokens::mix( $primary, '#000000', 0.15 ),
+			'ohmylms-primary-soft-color'  => Tokens::mix( $primary, '#ffffff', 0.9 ),
+			'ohmylms-admin-heading-color' => $c['heading'],
+			'ohmylms-admin-text-color'    => $c['text'],
+			'ohmylms-admin-muted-color'   => $c['muted'],
+			'ohmylms-admin-surface'       => $c['surface'],
+			'ohmylms-admin-subtle'        => Tokens::mix( $c['background'], '#ffffff', 0.5 ),
+			'ohmylms-admin-border'        => $c['border'],
+			'ohmylms-admin-radius'        => $radii['card'] . 'px',
 		);
-		$css   = 'body.' . self::BODY_CLASS . '{';
+		$css = 'body.' . self::BODY_CLASS . '{';
 		foreach ( $vars as $name => $value ) {
 			$css .= '--' . $name . ':' . $value . ';';
 		}
@@ -631,7 +767,10 @@ final class DesignSystem {
 	 * @return string
 	 */
 	public static function body_class( $classes ) {
-		return self::is_plugin_screen() ? trim( $classes . ' ' . self::BODY_CLASS ) : $classes;
+		if ( ! self::is_plugin_screen() ) {
+			return $classes;
+		}
+		return trim( $classes . ' ' . self::BODY_CLASS . ( self::is_branded() ? ' ' . self::BRANDED_CLASS : '' ) );
 	}
 
 	/** Enqueue the shared stylesheet and its variables on the plugin's admin screens. */

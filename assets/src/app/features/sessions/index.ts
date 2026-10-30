@@ -7,6 +7,8 @@ export const sessions: FeatureDefinition = {
 	id: 'sessions',
 	title: __( 'Sessions', 'ohmylms' ),
 	path: '/sessions',
+	group: 'engagement',
+	tab: 'sessions',
 	extensionRoute: '/sessions',
 	capability: 'edit_posts',
 	component: lazy(
@@ -22,6 +24,8 @@ export const sessionEditor: FeatureDefinition = {
 	id: 'session-editor',
 	title: __( 'Session', 'ohmylms' ),
 	path: '/sessions/:id',
+	group: 'engagement',
+	tab: 'sessions',
 	hidden: true,
 	capability: 'edit_posts',
 	component: lazy(

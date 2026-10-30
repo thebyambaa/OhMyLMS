@@ -1,4 +1,4 @@
-import { Table } from '../../../ui/Table';
+import { ListTable } from '../../../ui/ListTable';
 import {
 	Button,
 	Notice,
@@ -8,7 +8,6 @@ import {
 import { useCallback, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Pagination } from '../../components/Pagination';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
@@ -365,45 +364,54 @@ function SchoolClasses( { school }: { school: SchoolDetail } ) {
 				emptyText={ __( 'No classes yet.', 'ohmylms' ) }
 				onRetry={ list.reload }
 			>
-				<Table caption={ __( 'Classes of this school', 'ohmylms' ) }>
-					<thead>
-						<tr>
-							{ [
-								__( 'Name', 'ohmylms' ),
-								__( 'Academic year', 'ohmylms' ),
-								__( 'Students', 'ohmylms' ),
-								__( 'Teachers', 'ohmylms' ),
-								__( 'Status', 'ohmylms' ),
-							].map( ( title ) => (
-								<th key={ title } scope="col">
-									{ title }
-								</th>
-							) ) }
-						</tr>
-					</thead>
-					<tbody>
-						{ list.data.items.map( ( item ) => (
-							<tr key={ item.id }>
-								<th scope="row">
+				<ListTable
+					caption={ __( 'Classes of this school', 'ohmylms' ) }
+					rows={ list.data.items }
+					rowKey={ ( item ) => item.id }
+					pagination={ {
+						page: list.page,
+						totalPages: list.data.totalPages,
+						onChange: list.setPage,
+					} }
+					columns={ [
+						{
+							id: 'name',
+							label: __( 'Name', 'ohmylms' ),
+							primary: true,
+							render: ( item ) => (
+								<strong>
 									<Link
+										className="row-title"
 										to={ `/account-hub/classes/${ item.id }` }
 									>
 										{ item.name }
 									</Link>
-								</th>
-								<td>{ item.academic_year_label ?? '—' }</td>
-								<td>{ item.student_count }</td>
-								<td>{ item.teacher_count }</td>
-								<td>{ classStatusLabel( item.status ) }</td>
-							</tr>
-						) ) }
-					</tbody>
-				</Table>
-				<Pagination
-					page={ list.page }
-					pages={ list.data.totalPages }
-					busy={ list.loading }
-					onChange={ list.setPage }
+								</strong>
+							),
+						},
+						{
+							id: 'year',
+							label: __( 'Academic year', 'ohmylms' ),
+							render: ( item ) => item.academic_year_label ?? '—',
+						},
+						{
+							id: 'students',
+							label: __( 'Students', 'ohmylms' ),
+							className: 'num',
+							render: ( item ) => item.student_count,
+						},
+						{
+							id: 'teachers',
+							label: __( 'Teachers', 'ohmylms' ),
+							className: 'num',
+							render: ( item ) => item.teacher_count,
+						},
+						{
+							id: 'status',
+							label: __( 'Status', 'ohmylms' ),
+							render: ( item ) => classStatusLabel( item.status ),
+						},
+					] }
 				/>
 			</ListState>
 			<h4>{ __( 'Add class', 'ohmylms' ) }</h4>

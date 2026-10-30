@@ -57,6 +57,20 @@ final class Items {
 		return Access::error( 'ohmylms_curriculum_missing', __( 'Curriculum item not found.', 'ohmylms' ), 404 );
 	}
 
+	/**
+	 * Number of items of every level, and how many are syllabuses.
+	 *
+	 * @return array{total:int,syllabuses:int}
+	 */
+	public static function counts() {
+		global $wpdb;
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT COUNT(*) AS total, SUM(is_syllabus = 1) AS syllabuses FROM %i', self::table() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- One fresh aggregate.
+		return array(
+			'total'      => $row ? (int) $row->total : 0,
+			'syllabuses' => $row ? (int) $row->syllabuses : 0,
+		);
+	}
+
 	/** id => parent id for every item. */
 	public static function parents() {
 		global $wpdb;

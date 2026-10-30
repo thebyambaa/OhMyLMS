@@ -1,13 +1,13 @@
-import { Table } from '../../../ui/Table';
-import { Button, Notice, SelectControl } from '@wordpress/components';
+import { ListTableSelect } from '../../../ui/ListTable';
+import { Button, Notice } from '@wordpress/components';
 import { useCallback, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
-import { Pagination } from '../../components/Pagination';
+import { statusViews } from '../../components/listViews';
 import { useRequest } from '../../hooks/useRequest';
 import { CreateAccountDialog, EditAccountDialog } from './AccountDialog';
 import { formatDate } from './accounts';
 import { getAccountOptions, listAccounts } from './accountsApi';
-import { ListState, SearchForm } from './ListControls';
+import { HubListTable } from './ListControls';
 import type {
 	Account,
 	AccountFilters,
@@ -80,122 +80,116 @@ export function UsersTab() {
 					{ message }
 				</Notice>
 			) }
-			<SearchForm
-				label={ __( 'Search accounts', 'ohmylms' ) }
-				busy={ list.loading }
-				onSearch={ list.setSearch }
-			>
-				<SelectControl
-					label={ __( 'Role', 'ohmylms' ) }
-					value={ filters.role }
-					options={ [
-						{ value: '', label: __( 'All roles', 'ohmylms' ) },
+			<HubListTable
+				caption={ __( 'All accounts', 'ohmylms' ) }
+				searchLabel={ __( 'Search accounts', 'ohmylms' ) }
+				list={ list }
+				loadingText={ __( 'Loading accounts…', 'ohmylms' ) }
+				emptyText={ __( 'No accounts found.', 'ohmylms' ) }
+				views={ statusViews(
+					[
+						{ value: '', label: __( 'All', 'ohmylms' ) },
 						...( options.data?.roles ?? [] ).map( ( role ) => ( {
 							value: role.slug,
 							label: role.label,
 						} ) ),
-					] }
-					onChange={ ( role ) => filter( { role } ) }
-				/>
-				<SelectControl
-					label={ __( 'Registered', 'ohmylms' ) }
-					value={ filters.registered }
-					options={ PERIODS }
-					onChange={ ( registered ) =>
-						filter( { registered: registered as RegisteredPeriod } )
-					}
-				/>
-				<SelectControl
-					label={ __( 'Status', 'ohmylms' ) }
-					value={ filters.status }
-					options={ STATUSES }
-					onChange={ ( status ) =>
-						filter( { status: status as AccountStatusFilter } )
-					}
-				/>
-			</SearchForm>
-			<ListState
-				loading={ list.loading }
-				error={ list.error }
-				total={ list.data.total }
-				loadingText={ __( 'Loading accounts…', 'ohmylms' ) }
-				emptyText={ __( 'No accounts found.', 'ohmylms' ) }
-				onRetry={ list.reload }
-			>
-				<Table caption={ __( 'All accounts', 'ohmylms' ) } striped>
-					<thead>
-						<tr>
-							{ [
-								__( 'Name', 'ohmylms' ),
-								__( 'Username', 'ohmylms' ),
-								__( 'Email', 'ohmylms' ),
-								__( 'Roles', 'ohmylms' ),
-								__( 'Registered', 'ohmylms' ),
-								__( 'Last sign-in', 'ohmylms' ),
-								__( 'Status', 'ohmylms' ),
-								__( 'Actions', 'ohmylms' ),
-							].map( ( title ) => (
-								<th key={ title } scope="col">
-									{ title }
-								</th>
-							) ) }
-						</tr>
-					</thead>
-					<tbody>
-						{ list.data.items.map( ( account ) => (
-							<tr key={ account.id }>
-								<th scope="row">{ account.display_name }</th>
-								<td>{ account.username }</td>
-								<td>{ account.email }</td>
-								<td>
-									{ account.roles
-										.map( ( role ) => role.label )
-										.join( ', ' ) || '—' }
-								</td>
-								<td>
-									{ formatDate( account.registered_at ) ||
-										'—' }
-								</td>
-								<td>
-									{ formatDate( account.last_login ) ||
-										__( 'Never', 'ohmylms' ) }
-								</td>
-								<td>
-									{ account.blocked
-										? __( 'Blocked', 'ohmylms' )
-										: __( 'Active', 'ohmylms' ) }
-								</td>
-								<td>
-									{ account.can_edit ? (
-										<Button
-											variant="link"
-											aria-label={ sprintf(
-												/* translators: %s: account name. */
-												__( 'Edit %s', 'ohmylms' ),
-												account.display_name
-											) }
-											onClick={ () => {
-												setMessage( '' );
-												setEditing( account );
-											} }
-										>
-											{ __( 'Edit', 'ohmylms' ) }
-										</Button>
-									) : (
-										'—'
-									) }
-								</td>
-							</tr>
-						) ) }
-					</tbody>
-				</Table>
-				<Pagination
-					page={ list.page }
-					pages={ list.data.totalPages }
-					busy={ list.loading }
-					onChange={ list.setPage }
-				/>
-			</ListState>
+					],
+					filters.role,
+					list.data.total,
+					( role ) => filter( { role } )
+				) }
+				filters={
+					<>
+						<ListTableSelect
+							label={ __( 'Registered', 'ohmylms' ) }
+							value={ filters.registered }
+							options={ PERIODS }
+							onChange={ ( registered ) =>
+								filter( {
+									registered: registered as RegisteredPeriod,
+								} )
+							}
+						/>
+						<ListTableSelect
+							label={ __( 'Status', 'ohmylms' ) }
+							value={ filters.status }
+							options={ STATUSES }
+							onChange={ ( status ) =>
+								filter( {
+									status: status as AccountStatusFilter,
+								} )
+							}
+						/>
+					</>
+				}
+				table={ {
+					rowKey: ( account ) => account.id,
+					columns: [
+						{
+							id: 'name',
+							label: __( 'Name', 'ohmylms' ),
+							primary: true,
+							render: ( account ) => (
+								<strong>{ account.display_name }</strong>
+							),
+						},
+						{
+							id: 'username',
+							label: __( 'Username', 'ohmylms' ),
+							render: ( account ) => account.username,
+						},
+						{
+							id: 'email',
+							label: __( 'Email', 'ohmylms' ),
+							render: ( account ) => account.email,
+						},
+						{
+							id: 'roles',
+							label: __( 'Roles', 'ohmylms' ),
+							render: ( account ) =>
+								account.roles
+									.map( ( role ) => role.label )
+									.join( ', ' ) || '—',
+						},
+						{
+							id: 'registered',
+							label: __( 'Registered', 'ohmylms' ),
+							render: ( account ) =>
+								formatDate( account.registered_at ) || '—',
+						},
+						{
+							id: 'last_login',
+							label: __( 'Last sign-in', 'ohmylms' ),
+							render: ( account ) =>
+								formatDate( account.last_login ) ||
+								__( 'Never', 'ohmylms' ),
+						},
+						{
+							id: 'status',
+							label: __( 'Status', 'ohmylms' ),
+							render: ( account ) =>
+								account.blocked
+									? __( 'Blocked', 'ohmylms' )
+									: __( 'Active', 'ohmylms' ),
+						},
+					],
+					rowActions: ( account ) => [
+						account.can_edit && {
+							key: 'edit',
+							label: __( 'Edit', 'ohmylms' ),
+							ariaLabel: sprintf(
+								/* translators: %s: account name. */
+								__( 'Edit %s', 'ohmylms' ),
+								account.display_name
+							),
+							onClick: () => {
+								setMessage( '' );
+								setEditing( account );
+							},
+						},
+					],
+				} }
+			/>
 			{ creating && options.data && (
 				<CreateAccountDialog
 					options={ options.data }

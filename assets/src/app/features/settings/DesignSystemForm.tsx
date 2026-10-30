@@ -4,6 +4,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import { normalizeApiError } from '../../lib/api';
 import {
 	applyPreset,
+	BLACK,
 	contrastOn,
 	DENSITIES,
 	designChanged,
@@ -20,6 +21,8 @@ import {
 	type DesignSnapshot,
 	type DesignValues,
 	type Density,
+	WHITE,
+	WORDPRESS_PRESET,
 } from './designSystem';
 import { ColorField, NumberField, SelectField, ToggleField } from './fields';
 import { FormFrame } from './FormFrame';
@@ -134,7 +137,7 @@ export function DesignSystemForm( {
 		const text = savedPrimary ? stored.on_primary : preview.text;
 		const passes = savedPrimary ? stored.primary_passes : preview.passes;
 		const textName =
-			'#ffffff' === text
+			WHITE === text
 				? __( 'white', 'ohmylms' )
 				: __( 'black', 'ohmylms' );
 		contrastNote = sprintf(
@@ -152,7 +155,7 @@ export function DesignSystemForm( {
 						'ohmylms'
 					)
 		);
-		if ( '#000000' === text ) {
+		if ( BLACK === text ) {
 			contrastNote += ` ${ __(
 				'White text would be too faint, so buttons use black text.',
 				'ohmylms'
@@ -164,7 +167,7 @@ export function DesignSystemForm( {
 		<FormFrame
 			title={ __( 'Design system', 'ohmylms' ) }
 			description={ __(
-				'Colours, button roundness and spacing of every OhMyLMS admin screen. Learner pages keep their own branding.',
+				'Colours, button roundness and spacing of OhMyLMS screens. The WordPress preset keeps admin screens in each user’s WordPress admin colour scheme; the other presets brand admin screens too. The palette always brands learner pages.',
 				'ohmylms'
 			) }
 			state={ state }
@@ -220,10 +223,23 @@ export function DesignSystemForm( {
 								label: __( 'Custom', 'ohmylms' ),
 							},
 						] }
-						help={ __(
-							'Choosing a preset replaces the colours, roundness and density below.',
-							'ohmylms'
-						) }
+						help={
+							WORDPRESS_PRESET ===
+							matchingPreset( draft, stored.presets )
+								? sprintf(
+										/* translators: 1: admin colour scheme slug, 2: its theme colour. */
+										__(
+											'Admin screens follow each user’s WordPress admin colour scheme (yours: %1$s, %2$s), set under Users › Profile. The colours below brand learner pages only.',
+											'ohmylms'
+										),
+										stored.admin_scheme,
+										stored.admin_colors.primary
+									)
+								: __(
+										'Choosing a preset replaces the colours, roundness and density below.',
+										'ohmylms'
+									)
+						}
 						error={ state.errors.preset }
 						onChange={ ( name ) =>
 							state.update(
@@ -267,10 +283,8 @@ export function DesignSystemForm( {
 						<p aria-live="polite">
 							<span
 								aria-hidden="true"
+								className="ohmylms-ds-swatch"
 								style={ {
-									display: 'inline-block',
-									padding: '2px 8px',
-									marginRight: 8,
 									background: draft.colors.primary,
 									color: contrastOn( draft.colors.primary )
 										.text,

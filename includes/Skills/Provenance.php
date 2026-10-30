@@ -183,6 +183,21 @@ final class Provenance {
 	}
 
 	/**
+	 * Number of skills, and how many of them are archived, in one query.
+	 *
+	 * @return array{total:int,archived:int}
+	 */
+	public static function archive_counts() {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- One aggregate over the skill taxonomy and its status meta.
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT COUNT(*) AS total, SUM(m.meta_value = %s) AS archived FROM %i tt LEFT JOIN %i m ON m.term_id = tt.term_id AND m.meta_key = %s WHERE tt.taxonomy = %s', 'archived', $wpdb->term_taxonomy, $wpdb->termmeta, self::STATUS_META, Taxonomy::NAME ) );
+		return array(
+			'total'    => $row ? (int) $row->total : 0,
+			'archived' => $row ? (int) $row->archived : 0,
+		);
+	}
+
+	/**
 	 * Record the source of skills created before provenance existed, once. Existing skills are
 	 * approved; their source is inferred from what the plugin already stores about them.
 	 */

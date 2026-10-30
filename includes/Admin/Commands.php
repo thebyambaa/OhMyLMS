@@ -51,8 +51,8 @@ final class Commands {
 	/**
 	 * Commands the current user may use.
 	 *
-	 * @return array[] name, label, page (admin page slug), route (a hash route inside that page), keywords
-	 *                 and kind (go or action).
+	 * @return array[] name, label, page (admin page slug), tab, route (the app route), url (its address),
+	 *                 keywords and kind (go or action). Commands that name their own page have no tab or url.
 	 */
 	public static function all() {
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -77,7 +77,7 @@ final class Commands {
 		 *
 		 * @param array[] $commands name, label, route, keywords, kind and optionally page. The route is a
 		 *                          legacy hash route such as /content-hub/exams?action=new; without a
-		 *                          page it opens in the new app when LegacyRoutes maps it.
+		 *                          page it opens the address LegacyRoutes maps it to.
 		 */
 		$commands = (array) apply_filters( 'ohmylms_admin_commands', $commands );
 		$commands = array_filter(
@@ -92,11 +92,12 @@ final class Commands {
 	}
 
 	/**
-	 * Point a command at the screen that serves its route: the new app where LegacyRoutes maps the
-	 * legacy route, the legacy page otherwise. A command that names its own `page` is left as it is.
+	 * Point a command at the screen that serves its route: the page, tab, app route and address of the
+	 * screen LegacyRoutes maps the legacy route to (the Dashboard when unmapped). A command that names its
+	 * own `page` is left as it is.
 	 *
 	 * @param array $command Command with a legacy hash route.
-	 * @return array Command with `page` (admin page slug) and the route inside that page.
+	 * @return array Command with `page` (admin page slug), `tab`, the app route and `url` (the address).
 	 */
 	private static function with_target( array $command ) {
 		if ( ! empty( $command['page'] ) ) {
@@ -105,7 +106,9 @@ final class Commands {
 		}
 		$target           = LegacyRoutes::target( $command['route'] );
 		$command['page']  = $target['page'];
+		$command['tab']   = $target['tab'];
 		$command['route'] = $target['route'];
+		$command['url']   = $target['url'];
 		return $command;
 	}
 

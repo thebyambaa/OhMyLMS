@@ -69,19 +69,12 @@ import {
 	levelClass,
 	inlineShortcode,
 } from '../../assets/src/features/assessment/model.mjs';
-import { loadSkillMatrix } from '../../assets/src/features/assessment/api.mjs';
-test( 'skill level display and inline authoring code', async () => {
+test( 'skill level display and inline authoring code', () => {
 	assert.equal( levelShort( 'mastered' ), 'M' );
 	assert.equal( levelShort( undefined ), '·' );
 	assert.equal( levelClass( 'proficient' ), 'ohmylms-skill-proficient' );
 	assert.equal( levelClass( '' ), '' );
 	assert.equal( inlineShortcode( 'abc' ), '[ohmylms_question uuid="abc"]' );
-	let call;
-	await loadSkillMatrix( 9, ( args ) => {
-		call = args;
-		return Promise.resolve( {} );
-	} );
-	assert.equal( call.path, '/ohmylms/v1/reports/skills?course_id=9' );
 } );
 import {
 	addPart,

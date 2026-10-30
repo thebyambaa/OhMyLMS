@@ -54,9 +54,7 @@ export function OrderNotes( { orderId }: { orderId: number } ) {
 				<ul aria-label={ __( 'Order notes', 'ohmylms' ) }>
 					{ notes.data.map( ( note ) => (
 						<li key={ note.id }>
-							<p style={ { whiteSpace: 'pre-wrap' } }>
-								{ note.content }
-							</p>
+							<p className="ohmylms-pre-wrap">{ note.content }</p>
 							<small>
 								{ note.added_by }
 								{ ' · ' }

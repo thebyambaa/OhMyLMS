@@ -1,11 +1,10 @@
-import { Table } from '../../../ui/Table';
+import { ListTable } from '../../../ui/ListTable';
 import { Button, Modal, Notice, TextControl } from '@wordpress/components';
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { normalizeApiError } from '../../lib/api';
 import { deleteWebhook, rotateSecret, saveWebhook, sendTest } from './api';
 import { Deliveries } from './Deliveries';
-import { Pagination } from '../../components/Pagination';
 import { useWebhooks } from './useWebhooks';
 import { WebhookEditor } from './WebhookEditor';
 import type { Webhook, WebhookInput } from './types';
@@ -176,27 +175,6 @@ export default function WebhooksPage() {
 					) }
 				</p>
 			) }
-			<form
-				role="search"
-				aria-label={ __( 'Search webhooks', 'ohmylms' ) }
-				onSubmit={ ( event ) => {
-					event.preventDefault();
-					list.search( query );
-				} }
-			>
-				<TextControl
-					label={ __( 'Search webhooks', 'ohmylms' ) }
-					value={ query }
-					onChange={ setQuery }
-				/>
-				<Button
-					type="submit"
-					variant="secondary"
-					disabled={ busy || list.loading }
-				>
-					{ __( 'Search', 'ohmylms' ) }
-				</Button>
-			</form>
 			{ message && (
 				<Notice
 					status={ messageStatus }
@@ -221,135 +199,113 @@ export default function WebhooksPage() {
 			{ list.loading && (
 				<p role="status">{ __( 'Loading webhooks…', 'ohmylms' ) }</p>
 			) }
-			{ ! list.loading &&
-				! list.error &&
-				( list.data.items.length ? (
-					<>
-						<p role="status">
-							{ sprintf(
-								/* translators: %d: total webhook count. */
-								_n(
-									'%d webhook found.',
-									'%d webhooks found.',
-									list.data.total,
-									'ohmylms'
-								),
-								list.data.total
-							) }
-						</p>
-						<Table
-							caption={ __( 'Configured webhooks', 'ohmylms' ) }
-							striped
-						>
-							<thead>
-								<tr>
-									{ [
-										__( 'Name', 'ohmylms' ),
-										__( 'Endpoint', 'ohmylms' ),
-										__( 'Event', 'ohmylms' ),
-										__( 'Status', 'ohmylms' ),
-										__( 'Actions', 'ohmylms' ),
-									].map( ( title ) => (
-										<th key={ title } scope="col">
-											{ title }
-										</th>
-									) ) }
-								</tr>
-							</thead>
-							<tbody>
-								{ list.data.items.map( ( item ) => (
-									<tr key={ item.id }>
-										<th scope="row">{ item.name }</th>
-										<td>{ item.webhook_url }</td>
-										<td>
-											{ list.options?.triggers.find(
-												( option ) =>
-													option.value ===
-													item.trigger_event
-											)?.label ?? item.trigger_event }
-										</td>
-										<td>
-											{ 'active' === item.status
-												? __( 'Active', 'ohmylms' )
-												: __( 'Inactive', 'ohmylms' ) }
-										</td>
-										<td>
-											<Button
-												variant="link"
-												disabled={ busy }
-												onClick={ () => {
-													setError( null );
-													setEditor( { item } );
-												} }
-												aria-label={ sprintf(
-													/* translators: %s: webhook name. */
-													__( 'Edit %s', 'ohmylms' ),
-													item.name
-												) }
-											>
-												{ __( 'Edit', 'ohmylms' ) }
-											</Button>{ ' ' }
-											<Button
-												variant="link"
-												disabled={ busy }
-												onClick={ () =>
-													setDeliveries( item )
-												}
-												aria-label={ sprintf(
-													/* translators: %s: webhook name. */
-													__(
-														'Deliveries for %s',
-														'ohmylms'
-													),
-													item.name
-												) }
-											>
-												{ __(
-													'Deliveries',
-													'ohmylms'
-												) }
-											</Button>{ ' ' }
-											{ (
-												[
-													'test',
-													'rotate',
-													'delete',
-												] as const
-											 ).map( ( kind ) => (
-												<Button
-													key={ kind }
-													variant="link"
-													isDestructive={
-														'delete' === kind
-													}
-													disabled={ busy }
-													onClick={ () => {
-														setError( null );
-														setConfirmation( {
-															kind,
-															item,
-														} );
-													} }
-													aria-label={ `${ titles[ kind ] }: ${ item.name }` }
-												>
-													{ titles[ kind ] }
-												</Button>
-											) ) }
-										</td>
-									</tr>
-								) ) }
-							</tbody>
-						</Table>
-						<Pagination
-							page={ list.page }
-							pages={ list.data.totalPages }
-							busy={ busy || list.loading }
-							onChange={ list.setPage }
-						/>
-					</>
-				) : (
-					<p>{ __( 'No webhooks found.', 'ohmylms' ) }</p>
-				) ) }
+			{ ! list.loading && ! list.error && (
+				<ListTable< Webhook >
+					caption={ __( 'Configured webhooks', 'ohmylms' ) }
+					formLabel={ __( 'Search webhooks', 'ohmylms' ) }
+					busy={ busy }
+					rows={ list.data.items }
+					rowKey={ ( item ) => item.id }
+					emptyMessage={ __( 'No webhooks found.', 'ohmylms' ) }
+					search={ {
+						label: __( 'Search webhooks', 'ohmylms' ),
+						submitLabel: __( 'Search', 'ohmylms' ),
+						value: query,
+						onChange: setQuery,
+						onSubmit: () => list.search( query ),
+					} }
+					pagination={ {
+						page: list.page,
+						totalPages: list.data.totalPages,
+						totalItems: list.data.total,
+						itemsLabel: sprintf(
+							/* translators: %d: total webhook count. */
+							_n(
+								'%d webhook found.',
+								'%d webhooks found.',
+								list.data.total,
+								'ohmylms'
+							),
+							list.data.total
+						),
+						onChange: list.setPage,
+					} }
+					columns={ [
+						{
+							id: 'name',
+							label: __( 'Name', 'ohmylms' ),
+							primary: true,
+							render: ( item ) => (
+								<strong className="row-title">
+									{ item.name }
+								</strong>
+							),
+						},
+						{
+							id: 'endpoint',
+							label: __( 'Endpoint', 'ohmylms' ),
+							render: ( item ) => item.webhook_url,
+						},
+						{
+							id: 'event',
+							label: __( 'Event', 'ohmylms' ),
+							render: ( item ) =>
+								list.options?.triggers.find(
+									( option ) =>
+										option.value === item.trigger_event
+								)?.label ?? item.trigger_event,
+						},
+						{
+							id: 'status',
+							label: __( 'Status', 'ohmylms' ),
+							render: ( item ) =>
+								'active' === item.status
+									? __( 'Active', 'ohmylms' )
+									: __( 'Inactive', 'ohmylms' ),
+						},
+					] }
+					rowActions={ ( item ) => [
+						{
+							key: 'edit',
+							label: __( 'Edit', 'ohmylms' ),
+							disabled: busy,
+							ariaLabel: sprintf(
+								/* translators: %s: webhook name. */
+								__( 'Edit %s', 'ohmylms' ),
+								item.name
+							),
+							onClick: () => {
+								setError( null );
+								setEditor( { item } );
+							},
+						},
+						{
+							key: 'deliveries',
+							label: __( 'Deliveries', 'ohmylms' ),
+							disabled: busy,
+							ariaLabel: sprintf(
+								/* translators: %s: webhook name. */
+								__( 'Deliveries for %s', 'ohmylms' ),
+								item.name
+							),
+							onClick: () => setDeliveries( item ),
+						},
+						...( [ 'test', 'rotate', 'delete' ] as const ).map(
+							( kind ) => ( {
+								key: kind,
+								label: titles[ kind ],
+								destructive: 'delete' === kind,
+								disabled: busy,
+								ariaLabel: `${ titles[ kind ] }: ${ item.name }`,
+								onClick: () => {
+									setError( null );
+									setConfirmation( { kind, item } );
+								},
+							} )
+						),
+					] }
+				/>
+			) }
 			{ editor && list.options && (
 				<WebhookEditor
 					item={ editor.item }

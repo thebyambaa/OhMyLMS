@@ -1,11 +1,10 @@
-import { Table } from '../../../ui/Table';
+import { ListTable } from '../../../ui/ListTable';
 import { Modal, Notice, Button } from '@wordpress/components';
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { normalizeApiError } from '../../lib/api';
 import type { Collection } from '../../lib/api/collection';
 import { listDeliveries } from './api';
-import { Pagination } from '../../components/Pagination';
 import type { Delivery, Webhook } from './types';
 
 export function Deliveries( {
@@ -69,59 +68,46 @@ export function Deliveries( {
 					</Button>
 				</Notice>
 			) }
-			{ ! loading &&
-				! error &&
-				( data.items.length ? (
-					<>
-						<Table
-							caption={ __(
-								'Recent delivery attempts',
-								'ohmylms'
-							) }
-							striped
-						>
-							<thead>
-								<tr>
-									{ [
-										__( 'Date', 'ohmylms' ),
-										__( 'Result', 'ohmylms' ),
-										__( 'HTTP status', 'ohmylms' ),
-										__( 'Details', 'ohmylms' ),
-									].map( ( title ) => (
-										<th scope="col" key={ title }>
-											{ title }
-										</th>
-									) ) }
-								</tr>
-							</thead>
-							<tbody>
-								{ data.items.map( ( row ) => (
-									<tr key={ row.id }>
-										<td>{ row.created_at }</td>
-										<td>
-											{ 'success' === row.status
-												? __( 'Succeeded', 'ohmylms' )
-												: __( 'Failed', 'ohmylms' ) }
-										</td>
-										<td>{ row.response_code || '—' }</td>
-										<td>
-											{ row.error_message ||
-												row.delivery_id }
-										</td>
-									</tr>
-								) ) }
-							</tbody>
-						</Table>
-						<Pagination
-							page={ page }
-							pages={ data.totalPages }
-							busy={ loading }
-							onChange={ setPage }
-						/>
-					</>
-				) : (
-					<p>{ __( 'No deliveries yet.', 'ohmylms' ) }</p>
-				) ) }
+			{ ! loading && ! error && (
+				<ListTable
+					caption={ __( 'Recent delivery attempts', 'ohmylms' ) }
+					rows={ data.items }
+					rowKey={ ( row ) => row.id }
+					emptyMessage={ __( 'No deliveries yet.', 'ohmylms' ) }
+					pagination={ {
+						page,
+						totalPages: data.totalPages,
+						onChange: setPage,
+					} }
+					columns={ [
+						{
+							id: 'date',
+							label: __( 'Date', 'ohmylms' ),
+							primary: true,
+							render: ( row ) => row.created_at,
+						},
+						{
+							id: 'result',
+							label: __( 'Result', 'ohmylms' ),
+							render: ( row ) =>
+								'success' === row.status
+									? __( 'Succeeded', 'ohmylms' )
+									: __( 'Failed', 'ohmylms' ),
+						},
+						{
+							id: 'http_status',
+							label: __( 'HTTP status', 'ohmylms' ),
+							render: ( row ) => row.response_code || '—',
+						},
+						{
+							id: 'details',
+							label: __( 'Details', 'ohmylms' ),
+							render: ( row ) =>
+								row.error_message || row.delivery_id,
+						},
+					] }
+				/>
+			) }
 			<Button variant="secondary" onClick={ onClose }>
 				{ __( 'Close', 'ohmylms' ) }
 			</Button>

@@ -93,7 +93,7 @@ describe( 'subscription list', () => {
 			within( table ).getByText( /25\.00 · Every 2 weeks/ )
 		).toBeInTheDocument();
 		expect(
-			screen.getByText( '2 subscriptions found.' )
+			screen.getAllByText( '2 subscriptions found.' )[ 0 ]
 		).toBeInTheDocument();
 		expect( screen.queryByText( /@example\.com/ ) ).not.toBeInTheDocument();
 	} );
@@ -103,7 +103,7 @@ describe( 'subscription list', () => {
 		show( '/subscriptions' );
 		await screen.findByText( 'Ada Lovelace' );
 		await user.type(
-			screen.getByRole( 'textbox', { name: 'Search subscriptions' } ),
+			screen.getByRole( 'searchbox', { name: 'Search subscriptions' } ),
 			'ada{Enter}'
 		);
 		await waitFor( () =>
@@ -112,9 +112,8 @@ describe( 'subscription list', () => {
 				expect.any( AbortSignal )
 			)
 		);
-		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Status' } ),
-			'on-hold'
+		await user.click(
+			await screen.findByRole( 'link', { name: /^Paused \(on hold\)/ } )
 		);
 		await waitFor( () =>
 			expect( as.listSubscriptions ).toHaveBeenLastCalledWith(
@@ -123,7 +122,7 @@ describe( 'subscription list', () => {
 			)
 		);
 		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Sort by' } ),
+			await screen.findByRole( 'combobox', { name: 'Sort by' } ),
 			'asc'
 		);
 		await waitFor( () =>
@@ -141,7 +140,9 @@ describe( 'subscription list', () => {
 		);
 		show( '/subscriptions' );
 		await screen.findByText( 'Ada Lovelace' );
-		await user.click( screen.getByRole( 'button', { name: 'Next page' } ) );
+		await user.click(
+			screen.getAllByRole( 'button', { name: 'Next page' } )[ 0 ]!
+		);
 		await waitFor( () =>
 			expect( as.listSubscriptions ).toHaveBeenLastCalledWith(
 				expect.objectContaining( { page: 2 } ),
@@ -155,8 +156,7 @@ describe( 'subscription list', () => {
 		show( '/subscriptions' );
 		expect(
 			await screen.findByText( 'No subscriptions found.' )
-		).toBeInTheDocument();
-		expect( screen.queryByRole( 'table' ) ).not.toBeInTheDocument();
+		).toHaveClass( 'colspanchange' );
 	} );
 
 	it( 'shows a server error and retries', async () => {

@@ -1,12 +1,15 @@
 /* global module */
 /**
- * Maps a retired legacy admin address (`admin.php?page=ohmylms#/...`) to the new admin app
- * (`admin.php?page=ohmylms-app#/...`). The server redirects the legacy page to the new app with
- * `&ohmylms_from_legacy=1` and the browser carries the legacy `#/route` over; LegacyRoutes::url() builds
- * the same address for unmapped routes. includes/Admin/LegacyRoutes.php prints the rules as
- * `window.ohmylmsLegacyRoutes` and loads this script in the app's head, so before the app reads the hash
- * a mapped route is replaced by its new route and an unmapped one by the app home, with the notice that
- * names the screen shown. The matching mirrors LegacyRoutes::resolve(). See docs/LEGACY-ROUTES.md.
+ * Lands old admin addresses on the Dashboard (`admin.php?page=ohmylms`), where they arrive:
+ * - a retired legacy address (`admin.php?page=ohmylms#/order-edit/12`, or older links with
+ *   `&ohmylms_from_legacy=1`): the legacy route is replaced by its app route (`#/orders/12`), or, when no
+ *   screen replaces it, removed, with the notice that names it shown;
+ * - the retired app page (`admin.php?page=ohmylms-app#/orders/12`), which the server redirects here with
+ *   `&ohmylms_from_app=1` while the browser keeps the hash: the hash already is an app route.
+ * The marker is removed. The app's router then opens the app route in the hash at its address
+ * (`admin.php?page=ohmylms-commerce&tab=orders&id=12`). includes/Admin/LegacyRoutes.php prints the rules
+ * as `window.ohmylmsLegacyRoutes` and loads this script in the Dashboard's head. The matching mirrors
+ * LegacyRoutes::resolve(). See docs/LEGACY-ROUTES.md.
  *
  * In Node the matcher is exported (`require( 'assets/js/legacy-redirects.js' )`) instead of running.
  */
@@ -138,33 +141,42 @@
 	}
 
 	/**
-	 * Address of the new app for the legacy hash carried over by the redirect.
+	 * Dashboard address with the app route of the hash it received.
 	 *
-	 * @param {Object} config   `window.ohmylmsLegacyRoutes`: routes and `landing` (param, home).
+	 * @param {Object} config   `window.ohmylmsLegacyRoutes`: routes and `landing` (param, appParam, home).
 	 * @param {Object} location Object with `pathname`, `search` and `hash`.
-	 * @return {{url: string, unavailable: string|null}|null} Relative URL without the marker, and the
-	 * legacy route when the new app cannot open it; null when the page was not opened by the redirect.
+	 * @return {{url: string, unavailable: string|null}|null} Relative URL without the markers, with the app
+	 * route in the hash (none for the Dashboard itself), and the legacy route when no screen replaces it;
+	 * null when there is nothing to land.
 	 */
 	function landingUrl( config, location ) {
 		if ( ! config || ! config.landing || ! location ) {
 			return null;
 		}
 		const params = new URLSearchParams( location.search || '' );
-		if ( '1' !== params.get( config.landing.param ) ) {
+		const fromLegacy = '1' === params.get( config.landing.param );
+		const fromApp =
+			! fromLegacy &&
+			!! config.landing.appParam &&
+			'1' === params.get( config.landing.appParam );
+		const hash = String( location.hash || '' );
+		if ( ! fromLegacy && ! fromApp && ! hash.startsWith( '#/' ) ) {
 			return null;
 		}
 		params.delete( config.landing.param );
-		const legacy =
-			'/' + String( location.hash || '' ).replace( /^#?\/?/, '' );
-		const route = resolve( config.routes, legacy );
+		if ( config.landing.appParam ) {
+			params.delete( config.landing.appParam );
+		}
+		const carried = '/' + hash.replace( /^#?\/?/, '' );
+		const route = fromApp ? carried : resolve( config.routes, carried );
+		const target = null === route ? config.landing.home : route;
+		const search = params.toString();
 		return {
 			url:
 				location.pathname +
-				'?' +
-				params.toString() +
-				'#' +
-				( null === route ? config.landing.home : route ),
-			unavailable: null === route ? legacy : null,
+				( search ? '?' + search : '' ) +
+				( target === config.landing.home ? '' : '#' + target ),
+			unavailable: null === route ? carried : null,
 		};
 	}
 
@@ -188,11 +200,23 @@
 	}
 
 	/**
-	 * Map the carried-over legacy hash once, before the app's router starts.
+	 * Map the hash before the app's router reads it: once on load, and again whenever a link changes it
+	 * without loading the document (a legacy link clicked on the Dashboard). This listener is added before
+	 * the app's, so the app sees the mapped route.
 	 *
 	 * @param {Window} win Browser window.
 	 */
 	function land( win ) {
+		map( win );
+		win.addEventListener( 'hashchange', () => map( win ) );
+	}
+
+	/**
+	 * Replace the current hash with its app route, showing the notice when there is none.
+	 *
+	 * @param {Window} win Browser window.
+	 */
+	function map( win ) {
 		const config = win.ohmylmsLegacyRoutes;
 		const target = landingUrl( config, win.location );
 		if ( ! target ) {
@@ -218,7 +242,7 @@
 	}
 
 	/**
-	 * Map the carried-over legacy hash on the new app.
+	 * Map the hash the Dashboard received.
 	 *
 	 * @param {Window|null} win Browser window.
 	 */

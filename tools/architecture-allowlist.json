@@ -1,6 +1,13 @@
 {
-	"description": "Known, justified exceptions to tools/check-architecture.mjs. Every entry needs a reason; entries that no longer match a violation fail the check. See docs/ENFORCEMENT.md. Format: recoveredRuntime and crossFeature entries are { \"from\": \"assets/src/app/...\", \"to\": \"assets/src/...\", \"reason\": \"...\" }; cycles entries are { \"files\": [ \"assets/src/app/...\", ... ], \"reason\": \"...\" }.",
+	"description": "Known, justified exceptions to tools/check-architecture.mjs. Every entry needs a reason; entries that no longer match a violation fail the check. See docs/ENFORCEMENT.md. Format: recoveredRuntime and crossFeature entries are { \"from\": \"assets/src/app/...\", \"to\": \"assets/src/...\", \"reason\": \"...\" }; cycles entries are { \"files\": [ \"assets/src/app/...\", ... ], \"reason\": \"...\" }; rawColours entries are { \"file\": \"assets/src/app/...\", \"value\": \"#rrggbb\", \"reason\": \"...\" }.",
 	"recoveredRuntime": [],
 	"cycles": [],
-	"crossFeature": []
+	"crossFeature": [],
+	"rawColours": [
+		{
+			"file": "assets/src/app/features/settings/BrandingForm.tsx",
+			"value": "#6e42d3",
+			"reason": "Example value in the translated help text of the learner branding colour fields; it is shown as text, not used as a colour."
+		}
+	]
 }

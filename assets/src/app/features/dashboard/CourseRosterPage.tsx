@@ -1,16 +1,9 @@
-import {
-	Button,
-	CheckboxControl,
-	Modal,
-	Notice,
-	SelectControl,
-	TextControl,
-} from '@wordpress/components';
+import { Button, Modal, Notice, TextControl } from '@wordpress/components';
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useParams } from 'react-router-dom';
-import { Table } from '../../../ui/Table';
-import { Pagination } from '../../components/Pagination';
+import { ListTable } from '../../../ui/ListTable';
+import { statusViews } from '../../components/listViews';
 import { normalizeApiError } from '../../lib/api';
 import { useCourseStudents } from './hooks';
 import { formatDate, parseCourseId, studentStatus } from './model';
@@ -75,21 +68,10 @@ function Roster( { courseId }: { courseId: number } ) {
 	const [ message, setMessage ] = useState< string | null >( null );
 	const items = list.data?.items ?? [];
 	const total = list.data?.total ?? 0;
-	const pageIds = items.map( ( item ) => item.user_id );
-	const allSelected =
-		pageIds.length > 0 &&
-		pageIds.every( ( id ) => selected.includes( id ) );
 	const limit = 'unenroll' === action ? MAX_BULK : MAX_REMINDER_BATCH;
 
 	useEffect( () => setSelected( [] ), [ list.query ] );
 
-	function toggle( id: number, on: boolean ) {
-		setSelected( ( current ) =>
-			on
-				? Array.from( new Set( [ ...current, id ] ) )
-				: current.filter( ( one ) => one !== id )
-		);
-	}
 	function submitEmail() {
 		const problem = validateEmail( email );
 		setEmailError( problem );
@@ -186,52 +168,75 @@ function Roster( { courseId }: { courseId: number } ) {
 			</form>
 
 			<h3>{ __( 'Students', 'ohmylms' ) }</h3>
-			<form
-				role="search"
-				aria-label={ __( 'Search students', 'ohmylms' ) }
-				onSubmit={ ( event ) => {
-					event.preventDefault();
-					list.setSearch( text );
-				} }
-			>
-				<TextControl
-					label={ __( 'Search students', 'ohmylms' ) }
-					value={ text }
-					onChange={ setText }
-				/>
-				<Button
-					type="submit"
-					variant="secondary"
-					disabled={ list.loading }
-				>
-					{ __( 'Search', 'ohmylms' ) }
-				</Button>
-			</form>
-			<SelectControl
-				label={ __( 'Progress', 'ohmylms' ) }
-				value={ list.query.progress }
-				options={ [
-					{ value: 'all', label: __( 'All students', 'ohmylms' ) },
-					{ value: 'running', label: __( 'In progress', 'ohmylms' ) },
-					{ value: 'completed', label: __( 'Completed', 'ohmylms' ) },
-				] }
-				onChange={ ( value ) =>
-					list.setProgress( value as StudentProgressFilter )
-				}
-			/>
 			<RequestStatus
 				loading={ list.loading }
 				error={ list.error }
 				label={ __( 'Loading students…', 'ohmylms' ) }
 				onRetry={ list.reload }
 			/>
-			{ ! list.loading && ! list.error && ! items.length && (
-				<p>{ __( 'No students found.', 'ohmylms' ) }</p>
-			) }
-			{ items.length > 0 && (
-				<>
-					<p role="status">
-						{ sprintf(
+			{ ! list.error && ( ! list.loading || items.length > 0 ) && (
+				<ListTable
+					caption={ __( 'Students of this course', 'ohmylms' ) }
+					formLabel={ __( 'Search students', 'ohmylms' ) }
+					busy={ list.loading || write.busy }
+					rows={ items }
+					rowKey={ ( student ) => student.user_id }
+					rowLabel={ ( student ) => student.name }
+					emptyMessage={ __( 'No students found.', 'ohmylms' ) }
+					selected={ selected }
+					onSelectedChange={ ( keys ) =>
+						setSelected( keys.map( Number ) )
+					}
+					bulkActions={ {
+						actions: [
+							...getTemplateChoices().map( ( choice ) => ( {
+								value: `remind:${ choice.value }`,
+								label: choice.label,
+							} ) ),
+							{
+								value: 'unenroll',
+								label: __( 'Unenrol', 'ohmylms' ),
+							},
+						],
+						onApply: ( value ) => {
+							setAction( value as BulkAction );
+							write.clearError();
+							setConfirming( true );
+							return false;
+						},
+					} }
+					views={ statusViews(
+						[
+							{
+								value: 'all',
+								label: __( 'All students', 'ohmylms' ),
+							},
+							{
+								value: 'running',
+								label: __( 'In progress', 'ohmylms' ),
+							},
+							{
+								value: 'completed',
+								label: __( 'Completed', 'ohmylms' ),
+							},
+						],
+						list.query.progress,
+						total,
+						( value ) =>
+							list.setProgress( value as StudentProgressFilter )
+					) }
+					search={ {
+						label: __( 'Search students', 'ohmylms' ),
+						submitLabel: __( 'Search', 'ohmylms' ),
+						value: text,
+						onChange: setText,
+						onSubmit: () => list.setSearch( text ),
+					} }
+					pagination={ {
+						page: list.query.page,
+						totalPages: list.data?.totalPages ?? 1,
+						totalItems: total,
+						itemsLabel: sprintf(
 							/* translators: %d: number of students. */
 							_n(
 								'%d student found.',
@@ -240,125 +245,44 @@ function Roster( { courseId }: { courseId: number } ) {
 								'ohmylms'
 							),
 							total
-						) }
-					</p>
-					<form
-						aria-label={ __( 'Bulk actions', 'ohmylms' ) }
-						onSubmit={ ( event ) => {
-							event.preventDefault();
-							if ( action && selected.length ) {
-								write.clearError();
-								setConfirming( true );
-							}
-						} }
-					>
-						<SelectControl
-							label={ __( 'Bulk action', 'ohmylms' ) }
-							value={ action }
-							options={ [
-								{
-									value: '',
-									label: __( 'Choose an action', 'ohmylms' ),
-								},
-								...getTemplateChoices().map( ( choice ) => ( {
-									value: `remind:${ choice.value }`,
-									label: choice.label,
-								} ) ),
-								{
-									value: 'unenroll',
-									label: __( 'Unenrol', 'ohmylms' ),
-								},
-							] }
-							onChange={ ( value ) =>
-								setAction( value as BulkAction )
-							}
-						/>
-						<Button
-							type="submit"
-							variant="secondary"
-							disabled={
-								! action || ! selected.length || write.busy
-							}
-						>
-							{ sprintf(
-								/* translators: %d: number of selected students. */
-								__( 'Apply to %d selected', 'ohmylms' ),
-								Math.min( selected.length, limit )
-							) }
-						</Button>
-					</form>
-					<Table
-						caption={ __( 'Students of this course', 'ohmylms' ) }
-						striped
-						compact
-					>
-						<thead>
-							<tr>
-								<td>
-									<CheckboxControl
-										label={ __(
-											'Select all on this page',
-											'ohmylms'
-										) }
-										checked={ allSelected }
-										onChange={ ( on ) =>
-											setSelected( on ? pageIds : [] )
-										}
-									/>
-								</td>
-								<th scope="col">{ __( 'Name', 'ohmylms' ) }</th>
-								<th scope="col">
-									{ __( 'Status', 'ohmylms' ) }
-								</th>
-								<th scope="col">
-									{ __( 'Progress', 'ohmylms' ) }
-								</th>
-								<th scope="col">
-									{ __( 'Enrolled', 'ohmylms' ) }
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							{ items.map( ( student ) => (
-								<tr key={ student.user_id }>
-									<td>
-										<CheckboxControl
-											label={ sprintf(
-												/* translators: %s: student name. */
-												__( 'Select %s', 'ohmylms' ),
-												student.name
-											) }
-											checked={ selected.includes(
-												student.user_id
-											) }
-											onChange={ ( on ) =>
-												toggle( student.user_id, on )
-											}
-										/>
-									</td>
-									<th scope="row">
-										<Link
-											to={ `/students/${ student.user_id }/report` }
-										>
-											{ student.name }
-										</Link>
-									</th>
-									<td>{ studentStatus( student ) }</td>
-									<td>{ student.percent_complete }%</td>
-									<td>
-										{ formatDate( student.enrolled_at ) }
-									</td>
-								</tr>
-							) ) }
-						</tbody>
-					</Table>
-					<Pagination
-						page={ list.query.page }
-						pages={ list.data?.totalPages ?? 1 }
-						busy={ list.loading || write.busy }
-						onChange={ list.setPage }
-					/>
-				</>
+						),
+						onChange: list.setPage,
+					} }
+					columns={ [
+						{
+							id: 'name',
+							label: __( 'Name', 'ohmylms' ),
+							primary: true,
+							render: ( student ) => (
+								<strong>
+									<Link
+										className="row-title"
+										to={ `/students/${ student.user_id }/report` }
+									>
+										{ student.name }
+									</Link>
+								</strong>
+							),
+						},
+						{
+							id: 'status',
+							label: __( 'Status', 'ohmylms' ),
+							render: ( student ) => studentStatus( student ),
+						},
+						{
+							id: 'progress',
+							label: __( 'Progress', 'ohmylms' ),
+							render: ( student ) =>
+								`${ student.percent_complete }%`,
+						},
+						{
+							id: 'enrolled',
+							label: __( 'Enrolled', 'ohmylms' ),
+							render: ( student ) =>
+								formatDate( student.enrolled_at ),
+						},
+					] }
+				/>
 			) }
 
 			{ confirming && (

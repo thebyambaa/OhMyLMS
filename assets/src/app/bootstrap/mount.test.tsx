@@ -3,15 +3,23 @@ import type { ExtensionRegistry } from '../extensions/registry.mjs';
 import { CORE_QUESTION_EDITOR_IDS } from '../../features/question-editor/registerCoreEditors';
 import { installExtensionHost } from '../extensions/host';
 import { createBootstrap } from '../test/render';
-import { mountApp, MOUNT_ID } from './mount';
+import { mountApp, MOUNT_ID, readPlace } from './mount';
 
 const rendered = vi.hoisted( () => ( {
 	extensions: undefined as ExtensionRegistry | undefined,
+	place: undefined as unknown,
 } ) );
 
 vi.mock( '../App', () => ( {
-	App: ( { extensions }: { extensions?: ExtensionRegistry } ) => {
+	App: ( {
+		extensions,
+		place,
+	}: {
+		extensions?: ExtensionRegistry;
+		place?: unknown;
+	} ) => {
 		rendered.extensions = extensions;
+		rendered.place = place;
 		return <p>App</p>;
 	},
 } ) );
@@ -58,6 +66,32 @@ describe( 'mountApp', () => {
 		expect( host.get( 'question-editor', 'numerical' )?.render ).toBe(
 			addOn
 		);
+	} );
+
+	it( 'renders the app with the place the server printed on the mount element', async () => {
+		const element = container();
+		element.dataset.page = 'ohmylms-settings';
+		element.dataset.tab = 'settings';
+		element.dataset.section = 'general';
+
+		await act( async () => {
+			mountApp( document, createBootstrap() );
+		} );
+
+		expect( rendered.place ).toEqual( {
+			page: 'ohmylms-settings',
+			tab: 'settings',
+			section: 'general',
+		} );
+	} );
+
+	it( 'reads the place from the address when the mount element has none', () => {
+		expect(
+			readPlace(
+				document.createElement( 'div' ),
+				'?page=ohmylms-content&tab=quizzes'
+			)
+		).toEqual( { page: 'ohmylms-content', tab: 'quizzes', section: '' } );
 	} );
 
 	it( 'uses its own registry when the host is not loaded', async () => {

@@ -11,12 +11,11 @@ import {
 import { useCallback, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link, useParams } from 'react-router-dom';
-import { Pagination } from '../../components/Pagination';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
 import { ApiError } from '../../lib/api';
 import { getSchool } from './api';
-import { ListState, SearchForm } from './ListControls';
+import { HubListTable } from './ListControls';
 import { MAX_NAME } from './model';
 import {
 	applyRosterImport,
@@ -282,89 +281,71 @@ function Invitations( { schoolId }: { schoolId: number } ) {
 					{ __( 'Create invitation', 'ohmylms' ) }
 				</Button>
 			</form>
-			<SearchForm
-				label={ __( 'Search invitations by email', 'ohmylms' ) }
-				busy={ list.loading }
-				onSearch={ list.setSearch }
-			>
-				<CheckboxControl
-					label={ __(
-						'Include accepted, revoked and expired',
-						'ohmylms'
-					) }
-					checked={ all }
-					onChange={ setAll }
-				/>
-			</SearchForm>
-			<ListState
-				loading={ list.loading }
-				error={ list.error }
-				total={ list.data.total }
+			<HubListTable
+				caption={ __( 'Invitations', 'ohmylms' ) }
+				searchLabel={ __( 'Search invitations by email', 'ohmylms' ) }
+				list={ list }
 				loadingText={ __( 'Loading invitations…', 'ohmylms' ) }
 				emptyText={ __( 'No invitations.', 'ohmylms' ) }
-				onRetry={ list.reload }
-			>
-				<Table caption={ __( 'Invitations', 'ohmylms' ) }>
-					<thead>
-						<tr>
-							{ [
-								__( 'Recipient', 'ohmylms' ),
-								__( 'Role', 'ohmylms' ),
-								__( 'Status', 'ohmylms' ),
-								__( 'Expires (UTC)', 'ohmylms' ),
-								__( 'Actions', 'ohmylms' ),
-							].map( ( title ) => (
-								<th key={ title } scope="col">
-									{ title }
-								</th>
-							) ) }
-						</tr>
-					</thead>
-					<tbody>
-						{ list.data.items.map( ( item ) => (
-							<tr key={ item.id }>
-								<th scope="row">
+				filters={
+					<CheckboxControl
+						label={ __(
+							'Include accepted, revoked and expired',
+							'ohmylms'
+						) }
+						checked={ all }
+						onChange={ setAll }
+					/>
+				}
+				table={ {
+					rowKey: ( item ) => item.id,
+					columns: [
+						{
+							id: 'recipient',
+							label: __( 'Recipient', 'ohmylms' ),
+							primary: true,
+							render: ( item ) => (
+								<strong>
 									{ item.email ??
 										( item.email_hint ||
 											item.student_name ||
 											'—' ) }
-								</th>
-								<td>{ inviteRoleLabel( item.role ) }</td>
-								<td>
-									{ invitationStatusLabel( item.status ) }
-								</td>
-								<td>{ item.expires_at ?? '—' }</td>
-								<td>
-									{ 'pending' === item.status && (
-										<Button
-											variant="link"
-											isDestructive
-											disabled={ operation.busy }
-											aria-label={ sprintf(
-												/* translators: %s: recipient. */
-												__(
-													'Revoke the invitation for %s',
-													'ohmylms'
-												),
-												item.email ?? item.email_hint
-											) }
-											onClick={ () => revoke( item.id ) }
-										>
-											{ __( 'Revoke', 'ohmylms' ) }
-										</Button>
-									) }
-								</td>
-							</tr>
-						) ) }
-					</tbody>
-				</Table>
-				<Pagination
-					page={ list.page }
-					pages={ list.data.totalPages }
-					busy={ list.loading }
-					onChange={ list.setPage }
-				/>
-			</ListState>
+								</strong>
+							),
+						},
+						{
+							id: 'role',
+							label: __( 'Role', 'ohmylms' ),
+							render: ( item ) => inviteRoleLabel( item.role ),
+						},
+						{
+							id: 'status',
+							label: __( 'Status', 'ohmylms' ),
+							render: ( item ) =>
+								invitationStatusLabel( item.status ),
+						},
+						{
+							id: 'expires',
+							label: __( 'Expires (UTC)', 'ohmylms' ),
+							render: ( item ) => item.expires_at ?? '—',
+						},
+					],
+					rowActions: ( item ) => [
+						'pending' === item.status && {
+							key: 'delete',
+							label: __( 'Revoke', 'ohmylms' ),
+							destructive: true,
+							disabled: operation.busy,
+							ariaLabel: sprintf(
+								/* translators: %s: recipient. */
+								__( 'Revoke the invitation for %s', 'ohmylms' ),
+								item.email ?? item.email_hint
+							),
+							onClick: () => revoke( item.id ),
+						},
+					],
+				} }
+			/>
 		</section>
 	);
 }
@@ -500,84 +481,67 @@ function ManagedStudents( { schoolId }: { schoolId: number } ) {
 					{ __( 'Add managed student', 'ohmylms' ) }
 				</Button>
 			</form>
-			<SearchForm
-				label={ __( 'Search managed students', 'ohmylms' ) }
-				busy={ list.loading }
-				onSearch={ list.setSearch }
-			/>
-			<ListState
-				loading={ list.loading }
-				error={ list.error }
-				total={ list.data.total }
+			<HubListTable
+				caption={ __( 'Managed students', 'ohmylms' ) }
+				searchLabel={ __( 'Search managed students', 'ohmylms' ) }
+				list={ list }
 				loadingText={ __( 'Loading managed students…', 'ohmylms' ) }
 				emptyText={ __( 'No managed students.', 'ohmylms' ) }
-				onRetry={ list.reload }
-			>
-				<Table caption={ __( 'Managed students', 'ohmylms' ) }>
-					<thead>
-						<tr>
-							{ [
-								__( 'Name', 'ohmylms' ),
-								__( 'School student ID', 'ohmylms' ),
-								__( 'Sign-in name', 'ohmylms' ),
-								__( 'Setup link', 'ohmylms' ),
-								__( 'Actions', 'ohmylms' ),
-							].map( ( title ) => (
-								<th key={ title } scope="col">
-									{ title }
-								</th>
-							) ) }
-						</tr>
-					</thead>
-					<tbody>
-						{ list.data.items.map( ( item ) => (
-							<tr key={ item.id }>
-								<th scope="row">{ item.display_name }</th>
-								<td>{ item.external_student_id }</td>
-								<td>{ item.username }</td>
-								<td>
-									{ item.setup_expires_at
-										? sprintf(
-												/* translators: %s: UTC expiry time. */
-												__(
-													'Open until %s',
-													'ohmylms'
-												),
-												item.setup_expires_at
-											)
-										: '—' }
-								</td>
-								<td>
-									<Button
-										variant="link"
-										disabled={ operation.busy }
-										aria-label={ sprintf(
-											/* translators: %s: student name. */
-											__(
-												'Create a password setup link for %s',
-												'ohmylms'
-											),
-											item.display_name
-										) }
-										onClick={ () => {
-											operation.clearError();
-											setConfirm( item );
-										} }
-									>
-										{ __( 'Setup link', 'ohmylms' ) }
-									</Button>
-								</td>
-							</tr>
-						) ) }
-					</tbody>
-				</Table>
-				<Pagination
-					page={ list.page }
-					pages={ list.data.totalPages }
-					busy={ list.loading }
-					onChange={ list.setPage }
-				/>
-			</ListState>
+				table={ {
+					rowKey: ( item ) => item.id,
+					columns: [
+						{
+							id: 'name',
+							label: __( 'Name', 'ohmylms' ),
+							primary: true,
+							render: ( item ) => (
+								<strong>{ item.display_name }</strong>
+							),
+						},
+						{
+							id: 'external_id',
+							label: __( 'School student ID', 'ohmylms' ),
+							render: ( item ) => item.external_student_id,
+						},
+						{
+							id: 'username',
+							label: __( 'Sign-in name', 'ohmylms' ),
+							render: ( item ) => item.username,
+						},
+						{
+							id: 'setup',
+							label: __( 'Setup link', 'ohmylms' ),
+							render: ( item ) =>
+								item.setup_expires_at
+									? sprintf(
+											/* translators: %s: UTC expiry time. */
+											__( 'Open until %s', 'ohmylms' ),
+											item.setup_expires_at
+										)
+									: '—',
+						},
+					],
+					rowActions: ( item ) => [
+						{
+							key: 'setup',
+							label: __( 'Setup link', 'ohmylms' ),
+							disabled: operation.busy,
+							ariaLabel: sprintf(
+								/* translators: %s: student name. */
+								__(
+									'Create a password setup link for %s',
+									'ohmylms'
+								),
+								item.display_name
+							),
+							onClick: () => {
+								operation.clearError();
+								setConfirm( item );
+							},
+						},
+					],
+				} }
+			/>
 			{ confirm && (
 				<Modal
 					title={ __( 'Create a password setup link', 'ohmylms' ) }

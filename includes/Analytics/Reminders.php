@@ -7,7 +7,7 @@
 
 namespace OhMyLMS\Analytics;
 
-use OhMyLMS\Rest\V1\StudentController;
+use OhMyLMS\Student\Directory;
 use WP_Error;
 
 /**
@@ -198,7 +198,7 @@ class Reminders {
 			$reason    = '';
 			if ( ! $user || ! $enrolment ) {
 				$reason = 'not_enrolled';
-			} elseif ( 'enrolled' !== $enrolment['status'] || 'yes' === get_user_meta( $user_id, StudentController::BLOCKED_META, true ) ) {
+			} elseif ( 'enrolled' !== $enrolment['status'] || Directory::is_blocked( $user_id ) ) {
 				$reason = 'blocked';
 			} elseif ( 'completed' === $enrolment['progress'] ) {
 				$reason = 'completed';

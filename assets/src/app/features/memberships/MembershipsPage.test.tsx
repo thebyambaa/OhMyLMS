@@ -67,7 +67,7 @@ describe( 'MembershipsPage', () => {
 			name: 'Membership plans',
 		} );
 		const rows = within( table ).getAllByRole( 'row' );
-		expect( rows ).toHaveLength( 3 );
+		expect( rows ).toHaveLength( 4 );
 		const first = within( rows[ 1 ]! );
 		expect(
 			first.getByRole( 'link', { name: 'All access' } )
@@ -81,7 +81,9 @@ describe( 'MembershipsPage', () => {
 		expect( other.getByText( 'Draft' ) ).toBeInTheDocument();
 		expect( other.getByText( 'One time' ) ).toBeInTheDocument();
 		expect( other.getByText( 'All (9)' ) ).toBeInTheDocument();
-		expect( screen.getByText( '2 plans found.' ) ).toBeInTheDocument();
+		expect(
+			screen.getAllByText( '2 plans found.' )[ 0 ]
+		).toBeInTheDocument();
 	} );
 	it( 'shows an empty state', async () => {
 		vi.mocked( api.listMemberships ).mockResolvedValue( {
@@ -130,7 +132,9 @@ describe( 'MembershipsPage', () => {
 		renderPage();
 		await screen.findByRole( 'table' );
 		await user.type(
-			screen.getByRole( 'textbox', { name: 'Search membership plans' } ),
+			screen.getByRole( 'searchbox', {
+				name: 'Search membership plans',
+			} ),
 			'gold{Enter}'
 		);
 		await waitFor( () =>
@@ -141,9 +145,8 @@ describe( 'MembershipsPage', () => {
 				expect.any( AbortSignal )
 			)
 		);
-		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Status' } ),
-			'draft'
+		await user.click(
+			await screen.findByRole( 'link', { name: 'Draft' } )
 		);
 		await waitFor( () =>
 			expect( api.listMemberships ).toHaveBeenLastCalledWith(
@@ -163,7 +166,9 @@ describe( 'MembershipsPage', () => {
 		const user = userEvent.setup();
 		renderPage();
 		await screen.findByRole( 'table' );
-		await user.click( screen.getByRole( 'button', { name: 'Next page' } ) );
+		await user.click(
+			screen.getAllByRole( 'button', { name: 'Next page' } )[ 0 ]!
+		);
 		await waitFor( () =>
 			expect( api.listMemberships ).toHaveBeenLastCalledWith(
 				2,

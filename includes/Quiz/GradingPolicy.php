@@ -46,6 +46,21 @@ final class GradingPolicy {
 	}
 
 	/**
+	 * Report scope of a user: null when they may grade every quiz (administrators), otherwise the
+	 * IDs from quiz_ids_for_author().
+	 *
+	 * @param int $user_id User ID; the current user when 0.
+	 * @return int[]|null
+	 */
+	public static function gradable_quiz_ids( $user_id = 0 ) {
+		$user_id = $user_id ? absint( $user_id ) : get_current_user_id();
+		if ( $user_id && user_can( $user_id, 'manage_options' ) ) {
+			return null;
+		}
+		return self::quiz_ids_for_author( $user_id );
+	}
+
+	/**
 	 * IDs of the quizzes a user may grade without being an administrator or an editor of others' posts:
 	 * quizzes they wrote plus quizzes inside courses they wrote.
 	 *

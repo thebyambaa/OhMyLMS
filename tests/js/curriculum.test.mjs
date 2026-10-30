@@ -471,84 +471,16 @@ test( 'deletion needs confirmation when children, links or bundles would be affe
 	);
 } );
 
-test( 'API calls use the curriculum routes with the documented payloads', async () => {
+test( 'the skill picker reads the curriculum tree and a syllabus outline', async () => {
 	const calls = [];
 	const fetch = ( args ) => {
 		calls.push( args );
 		return Promise.resolve( {} );
 	};
 	await api.loadTree( fetch );
-	await api.createItem( { name: 'A', parent_id: 0 }, fetch );
-	await api.updateItem( 5, { name: 'B', expected_updated_at: 'x' }, fetch );
-	await api.moveItem( 5, 2, 1, fetch );
-	await api.moveItem( 5, 0, undefined, fetch );
-	await api.deleteItem( 5, { children: 'promote', confirm: true }, fetch );
-	await api.deleteItem( 6, undefined, fetch );
-	await api.addLink( 5, 'course', 12, fetch );
-	await api.removeLink( 5, 'bank', 3, fetch );
-	await api.searchTargets( 'skill', 'frac', fetch );
-	await api.saveMapping(
-		{ specific_id: 1, shared_id: 2, relation: 'equivalent', note: '' },
-		fetch
-	);
-	await api.removeMapping( 1, 2, fetch );
+	await api.loadSyllabus( 5, fetch );
 	assert.deepEqual( calls, [
 		{ path: '/ohmylms/v1/curriculum/tree' },
-		{
-			path: '/ohmylms/v1/curriculum/items',
-			method: 'POST',
-			data: { name: 'A', parent_id: 0 },
-		},
-		{
-			path: '/ohmylms/v1/curriculum/items/5',
-			method: 'PUT',
-			data: { name: 'B', expected_updated_at: 'x' },
-		},
-		{
-			path: '/ohmylms/v1/curriculum/items/5/move',
-			method: 'POST',
-			data: { parent_id: 2, position: 1 },
-		},
-		{
-			path: '/ohmylms/v1/curriculum/items/5/move',
-			method: 'POST',
-			data: { parent_id: 0 },
-		},
-		{
-			path: '/ohmylms/v1/curriculum/items/5',
-			method: 'DELETE',
-			data: { children: 'promote', confirm: true },
-		},
-		{
-			path: '/ohmylms/v1/curriculum/items/6',
-			method: 'DELETE',
-			data: { children: '', confirm: false },
-		},
-		{
-			path: '/ohmylms/v1/curriculum/items/5/links',
-			method: 'POST',
-			data: { object_type: 'course', object_id: 12 },
-		},
-		{
-			path: '/ohmylms/v1/curriculum/items/5/links',
-			method: 'DELETE',
-			data: { object_type: 'bank', object_id: 3 },
-		},
-		{ path: '/ohmylms/v1/curriculum/link-targets?type=skill&search=frac' },
-		{
-			path: '/ohmylms/v1/skill-mappings',
-			method: 'PUT',
-			data: {
-				specific_id: 1,
-				shared_id: 2,
-				relation: 'equivalent',
-				note: '',
-			},
-		},
-		{
-			path: '/ohmylms/v1/skill-mappings',
-			method: 'DELETE',
-			data: { specific_id: 1, shared_id: 2 },
-		},
+		{ path: '/ohmylms/v1/curriculum/items/5/syllabus' },
 	] );
 } );

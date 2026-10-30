@@ -1,15 +1,13 @@
-import { Table } from '../../../ui/Table';
 import {
-	Button,
-	Modal,
-	Notice,
-	SelectControl,
-	TextControl,
-} from '@wordpress/components';
+	ListTable,
+	ListTableInput,
+	ListTableSelect,
+} from '../../../ui/ListTable';
+import { Button, Modal, Notice, TextControl } from '@wordpress/components';
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Pagination } from '../../components/Pagination';
+import { statusViews } from '../../components/listViews';
 import { normalizeApiError } from '../../lib/api';
 import { saveFile } from '../questions/public';
 import { exportQuiz } from './exchange';
@@ -233,44 +231,6 @@ export default function QuizzesPage() {
 			>
 				{ __( 'Import quiz', 'ohmylms' ) }
 			</Button>
-			<form
-				role="search"
-				aria-label={ __( 'Search quizzes', 'ohmylms' ) }
-				onSubmit={ ( event ) => {
-					event.preventDefault();
-					list.search( query );
-				} }
-			>
-				<TextControl
-					label={ __( 'Search quizzes', 'ohmylms' ) }
-					value={ query }
-					onChange={ setQuery }
-				/>
-				<SelectControl
-					label={ __( 'Status', 'ohmylms' ) }
-					value={ list.status }
-					options={ statusOptions }
-					onChange={ list.setStatus }
-				/>
-				<TextControl
-					label={ __( 'Find a course', 'ohmylms' ) }
-					value={ courseQuery }
-					onChange={ setCourseQuery }
-				/>
-				<SelectControl
-					label={ __( 'Course', 'ohmylms' ) }
-					value={ String( list.course ) }
-					options={ courseOptions }
-					onChange={ ( value ) => list.setCourse( Number( value ) ) }
-				/>
-				<Button
-					type="submit"
-					variant="secondary"
-					disabled={ busy || list.loading }
-				>
-					{ __( 'Search', 'ohmylms' ) }
-				</Button>
-			</form>
 			{ message && (
 				<Notice status="success" onRemove={ () => setMessage( null ) }>
 					{ message }
@@ -292,256 +252,251 @@ export default function QuizzesPage() {
 			{ list.loading && (
 				<p role="status">{ __( 'Loading quizzes…', 'ohmylms' ) }</p>
 			) }
-			{ ! list.loading &&
-				! list.error &&
-				( list.data.items.length ? (
-					<>
-						<p role="status">
-							{ sprintf(
-								/* translators: %d: total quiz count. */
-								_n(
-									'%d quiz found.',
-									'%d quizzes found.',
-									list.data.total,
-									'ohmylms'
-								),
-								list.data.total
-							) }
-						</p>
-						<Table caption={ __( 'Quizzes', 'ohmylms' ) } striped>
-							<thead>
-								<tr>
-									{ [
-										__( 'Title', 'ohmylms' ),
-										__( 'Status', 'ohmylms' ),
-										__( 'Course', 'ohmylms' ),
-										__( 'Questions', 'ohmylms' ),
-										__( 'Attempts', 'ohmylms' ),
-										__( 'Updated', 'ohmylms' ),
-										__( 'Actions', 'ohmylms' ),
-									].map( ( heading ) => (
-										<th key={ heading } scope="col">
-											{ heading }
-										</th>
-									) ) }
-								</tr>
-							</thead>
-							<tbody>
-								{ list.data.items.map( ( item ) => (
-									<tr key={ item.id }>
-										<th scope="row">
-											{ item.can_edit ? (
-												<Link
-													to={ `/quizzes/${ item.id }` }
-												>
-													{ item.title }
-												</Link>
-											) : (
-												item.title
-											) }
-										</th>
-										<td>
-											{ quizStatusLabel( item.status ) }
-										</td>
-										<td>{ item.course?.title ?? '—' }</td>
-										<td>{ item.question_count }</td>
-										<td>
-											{ item.attempt_count }
-											{ item.pending_review_count > 0 &&
-												' ' +
-													sprintf(
-														/* translators: %d: attempts waiting for grading. */
-														__(
-															'(%d to grade)',
-															'ohmylms'
-														),
-														item.pending_review_count
-													) }
-										</td>
-										<td>
-											{ formatDate( item.updated_at ) }
-										</td>
-										<td>
-											{ 'trash' === item.status ? (
-												<>
-													{ item.can_edit && (
-														<Button
-															variant="link"
-															disabled={ busy }
-															onClick={ () =>
-																restore( item )
-															}
-															aria-label={ sprintf(
-																/* translators: %s: quiz title. */
-																__(
-																	'Restore %s',
-																	'ohmylms'
-																),
-																item.title
-															) }
-														>
-															{ __(
-																'Restore',
-																'ohmylms'
-															) }
-														</Button>
-													) }{ ' ' }
-													{ item.can_delete && (
-														<Button
-															variant="link"
-															isDestructive
-															disabled={ busy }
-															onClick={ () => {
-																setError(
-																	null
-																);
-																setDialog( {
-																	kind: 'delete',
-																	item,
-																} );
-															} }
-															aria-label={ sprintf(
-																/* translators: %s: quiz title. */
-																__(
-																	'Delete %s permanently',
-																	'ohmylms'
-																),
-																item.title
-															) }
-														>
-															{ __(
-																'Delete permanently',
-																'ohmylms'
-															) }
-														</Button>
-													) }
-												</>
-											) : (
-												<>
-													{ item.can_edit && (
-														<>
-															<Link
-																to={ `/quizzes/${ item.id }` }
-																aria-label={ sprintf(
-																	/* translators: %s: quiz title. */
-																	__(
-																		'Settings for %s',
-																		'ohmylms'
-																	),
-																	item.title
-																) }
-															>
-																{ __(
-																	'Settings',
-																	'ohmylms'
-																) }
-															</Link>{ ' ' }
-															<Link
-																to={ `/quizzes/${ item.id }` }
-																aria-label={ sprintf(
-																	/* translators: %s: quiz title. */
-																	__(
-																		'Edit questions of %s',
-																		'ohmylms'
-																	),
-																	item.title
-																) }
-															>
-																{ __(
-																	'Questions',
-																	'ohmylms'
-																) }
-															</Link>{ ' ' }
-															<Button
-																variant="link"
-																disabled={
-																	busy
-																}
-																onClick={ () =>
-																	download(
-																		item
-																	)
-																}
-																aria-label={ sprintf(
-																	/* translators: %s: quiz title. */
-																	__(
-																		'Export %s',
-																		'ohmylms'
-																	),
-																	item.title
-																) }
-															>
-																{ __(
-																	'Export',
-																	'ohmylms'
-																) }
-															</Button>{ ' ' }
-														</>
-													) }
-													{ item.can_grade && (
-														<Link
-															to={ `/quizzes/${ item.id }/attempts` }
-															aria-label={ sprintf(
-																/* translators: %s: quiz title. */
-																__(
-																	'Attempts for %s',
-																	'ohmylms'
-																),
-																item.title
-															) }
-														>
-															{ __(
-																'Attempts',
-																'ohmylms'
-															) }
-														</Link>
-													) }{ ' ' }
-													{ item.can_delete && (
-														<Button
-															variant="link"
-															isDestructive
-															disabled={ busy }
-															onClick={ () => {
-																setError(
-																	null
-																);
-																setDialog( {
-																	kind: 'trash',
-																	item,
-																} );
-															} }
-															aria-label={ sprintf(
-																/* translators: %s: quiz title. */
-																__(
-																	'Move %s to the trash',
-																	'ohmylms'
-																),
-																item.title
-															) }
-														>
-															{ __(
-																'Trash',
-																'ohmylms'
-															) }
-														</Button>
-													) }
-												</>
-											) }
-										</td>
-									</tr>
-								) ) }
-							</tbody>
-						</Table>
-						<Pagination
-							page={ list.page }
-							pages={ list.data.totalPages }
-							busy={ busy || list.loading }
-							onChange={ list.setPage }
-						/>
-					</>
-				) : (
-					<p>{ __( 'No quizzes found.', 'ohmylms' ) }</p>
-				) ) }
+			{ ! list.loading && ! list.error && (
+				<ListTable< Quiz >
+					caption={ __( 'Quizzes', 'ohmylms' ) }
+					formLabel={ __( 'Search quizzes', 'ohmylms' ) }
+					busy={ busy }
+					rows={ list.data.items }
+					rowKey={ ( item ) => item.id }
+					rowLabel={ ( item ) => item.title }
+					emptyMessage={ __( 'No quizzes found.', 'ohmylms' ) }
+					views={ statusViews(
+						statusOptions,
+						list.status,
+						list.data.total,
+						list.setStatus
+					) }
+					search={ {
+						label: __( 'Search quizzes', 'ohmylms' ),
+						submitLabel: __( 'Search', 'ohmylms' ),
+						value: query,
+						onChange: setQuery,
+					} }
+					onFilter={ () => list.search( query ) }
+					filterLabel={ null }
+					filters={
+						<>
+							<ListTableInput
+								label={ __( 'Find a course', 'ohmylms' ) }
+								type="search"
+								value={ courseQuery }
+								onChange={ setCourseQuery }
+							/>
+							<ListTableSelect
+								label={ __( 'Course', 'ohmylms' ) }
+								value={ String( list.course ) }
+								options={ courseOptions }
+								onChange={ ( value ) =>
+									list.setCourse( Number( value ) )
+								}
+							/>
+						</>
+					}
+					pagination={ {
+						page: list.page,
+						totalPages: list.data.totalPages,
+						totalItems: list.data.total,
+						itemsLabel: sprintf(
+							/* translators: %d: total quiz count. */
+							_n(
+								'%d quiz found.',
+								'%d quizzes found.',
+								list.data.total,
+								'ohmylms'
+							),
+							list.data.total
+						),
+						onChange: list.setPage,
+					} }
+					columns={ [
+						{
+							id: 'title',
+							label: __( 'Title', 'ohmylms' ),
+							primary: true,
+							render: ( item ) => (
+								<strong>
+									{ item.can_edit &&
+									'trash' !== item.status ? (
+										<Link
+											className="row-title"
+											to={ `/quizzes/${ item.id }` }
+										>
+											{ item.title }
+										</Link>
+									) : (
+										item.title
+									) }
+								</strong>
+							),
+						},
+						{
+							id: 'status',
+							label: __( 'Status', 'ohmylms' ),
+							render: ( item ) => quizStatusLabel( item.status ),
+						},
+						{
+							id: 'course',
+							label: __( 'Course', 'ohmylms' ),
+							render: ( item ) => item.course?.title ?? '—',
+						},
+						{
+							id: 'questions',
+							label: __( 'Questions', 'ohmylms' ),
+							className: 'num',
+							render: ( item ) => item.question_count,
+						},
+						{
+							id: 'attempts',
+							label: __( 'Attempts', 'ohmylms' ),
+							render: ( item ) =>
+								item.pending_review_count > 0
+									? `${ item.attempt_count } ${ sprintf(
+											/* translators: %d: attempts waiting for grading. */
+											__( '(%d to grade)', 'ohmylms' ),
+											item.pending_review_count
+										) }`
+									: item.attempt_count,
+						},
+						{
+							id: 'date',
+							label: __( 'Updated', 'ohmylms' ),
+							render: ( item ) => formatDate( item.updated_at ),
+						},
+					] }
+					rowActions={ ( item ) =>
+						'trash' === item.status
+							? [
+									item.can_edit && {
+										key: 'untrash',
+										label: __( 'Restore', 'ohmylms' ),
+										disabled: busy,
+										onClick: () => restore( item ),
+										ariaLabel: sprintf(
+											/* translators: %s: quiz title. */
+											__( 'Restore %s', 'ohmylms' ),
+											item.title
+										),
+									},
+									item.can_delete && {
+										key: 'delete',
+										label: __(
+											'Delete permanently',
+											'ohmylms'
+										),
+										destructive: true,
+										disabled: busy,
+										onClick: () => {
+											setError( null );
+											setDialog( {
+												kind: 'delete',
+												item,
+											} );
+										},
+										ariaLabel: sprintf(
+											/* translators: %s: quiz title. */
+											__(
+												'Delete %s permanently',
+												'ohmylms'
+											),
+											item.title
+										),
+									},
+								]
+							: [
+									item.can_edit && {
+										key: 'edit',
+										label: __( 'Settings', 'ohmylms' ),
+										render: (
+											<Link
+												to={ `/quizzes/${ item.id }` }
+												aria-label={ sprintf(
+													/* translators: %s: quiz title. */
+													__(
+														'Settings for %s',
+														'ohmylms'
+													),
+													item.title
+												) }
+											>
+												{ __( 'Settings', 'ohmylms' ) }
+											</Link>
+										),
+									},
+									item.can_edit && {
+										key: 'questions',
+										label: __( 'Questions', 'ohmylms' ),
+										render: (
+											<Link
+												to={ `/quizzes/${ item.id }` }
+												aria-label={ sprintf(
+													/* translators: %s: quiz title. */
+													__(
+														'Edit questions of %s',
+														'ohmylms'
+													),
+													item.title
+												) }
+											>
+												{ __( 'Questions', 'ohmylms' ) }
+											</Link>
+										),
+									},
+									item.can_edit && {
+										key: 'export',
+										label: __( 'Export', 'ohmylms' ),
+										disabled: busy,
+										onClick: () => download( item ),
+										ariaLabel: sprintf(
+											/* translators: %s: quiz title. */
+											__( 'Export %s', 'ohmylms' ),
+											item.title
+										),
+									},
+									item.can_grade && {
+										key: 'attempts',
+										label: __( 'Attempts', 'ohmylms' ),
+										render: (
+											<Link
+												to={ `/quizzes/${ item.id }/attempts` }
+												aria-label={ sprintf(
+													/* translators: %s: quiz title. */
+													__(
+														'Attempts for %s',
+														'ohmylms'
+													),
+													item.title
+												) }
+											>
+												{ __( 'Attempts', 'ohmylms' ) }
+											</Link>
+										),
+									},
+									item.can_delete && {
+										key: 'trash',
+										label: __( 'Trash', 'ohmylms' ),
+										destructive: true,
+										disabled: busy,
+										onClick: () => {
+											setError( null );
+											setDialog( {
+												kind: 'trash',
+												item,
+											} );
+										},
+										ariaLabel: sprintf(
+											/* translators: %s: quiz title. */
+											__(
+												'Move %s to the trash',
+												'ohmylms'
+											),
+											item.title
+										),
+									},
+								]
+					}
+				/>
+			) }
 			{ dialog?.kind === 'create' && (
 				<Modal
 					title={ __( 'Add quiz', 'ohmylms' ) }

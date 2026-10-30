@@ -26,11 +26,36 @@ function check( $condition, $message ) {
 	++$checks;
 }
 
-// Defaults: a site that never saved the option gets the Khan Academy preset.
+// Defaults: a site that never saved the option gets the WordPress preset; its learner palette is Khan Academy's.
 $d = DS::get();
-check( 'khan' === $d['preset'] && '#1865f2' === $d['colors']['primary'] && 4 === $d['button_radius'] && 'comfortable' === $d['density'], 'fresh sites get the khan preset' );
-check( '#d92916' === $d['colors']['danger'] && '#21242c' === $d['colors']['text'] && '#0b2149' === $d['colors']['heading'], 'khan palette comes from Wonder Blocks' );
-check( 'khan' === DS::sanitize( 'garbage' )['preset'], 'non-array input falls back to khan' );
+check( 'wordpress' === $d['preset'] && '#1865f2' === $d['colors']['primary'] && 4 === $d['button_radius'] && 'comfortable' === $d['density'], 'fresh sites get the wordpress preset' );
+check( '#d92916' === $d['colors']['danger'] && '#21242c' === $d['colors']['text'] && '#0b2149' === $d['colors']['heading'], 'the learner palette comes from Wonder Blocks' );
+check( 'wordpress' === DS::sanitize( 'garbage' )['preset'], 'non-array input falls back to the wordpress preset' );
+check( ! DS::is_branded( $d ), 'the wordpress preset does not restyle admin screens' );
+
+// WordPress preset: admin tokens follow the admin colour scheme; the scheme colours are never stored.
+$khan_values = DS::preset_values( 'khan' );
+check( 'khan' === DS::sanitize( $khan_values )['preset'] && DS::is_branded( DS::sanitize( $khan_values ) ), 'khan stays khan although the wordpress palette is identical' );
+check( 'wordpress' === DS::sanitize( array( 'preset' => 'wordpress' ) )['preset'], 'the wordpress preset is recognised by name' );
+check( 'custom' === DS::sanitize( array( 'preset' => 'wordpress', 'colors' => array( 'primary' => '#123456' ) ) )['preset'], 'editing a colour under wordpress gives custom' );
+foreach ( array( 'modern' => '#3858e9', 'ocean' => '#567958', 'midnight' => '#cf4339', 'fresh' => '#2271b1', 'light' => '#007cba' ) as $scheme => $theme ) {
+	$admin = DS::admin_colors( $scheme );
+	check( $theme === $admin['primary'] && $theme === $admin['info'] && '#c3c4c7' === $admin['border'] && '#f0f0f1' === $admin['background'], "admin colours follow the $scheme scheme" );
+	$scheme_css = DS::css( array( 'preset' => 'wordpress' ), $scheme );
+	check( false !== strpos( $scheme_css, '--oml-primary:' . $theme . ';' ) && false !== strpos( $scheme_css, '--oml-radius-button:2px;' ), "wordpress css uses the $scheme theme colour and WordPress radius" );
+	check( false === strpos( $scheme_css, '--wp-admin-theme-color' ) && false === strpos( $scheme_css, '--wp-components-color-accent' ), "wordpress css leaves the $scheme WordPress variables alone" );
+	foreach ( array( 'success', 'warning', 'danger', 'info' ) as $status ) {
+		$scheme_vars = DS::variables( $admin, 2, 'comfortable' );
+		check( DS::contrast( $scheme_vars[ 'oml-' . $status . '-text' ], $scheme_vars[ 'oml-' . $status . '-soft' ] ) >= 4.5, "status text is readable in the $scheme scheme" );
+	}
+}
+check( '#3858e9' === DS::admin_colors( 'unknown-scheme' )['primary'], 'unknown schemes without registered colours fall back to modern' );
+$GLOBALS['_wp_admin_css_colors'] = array( 'brand' => (object) array( 'colors' => array( '#111111', '#222222', '#AA3300', '#444444' ) ) );
+check( '#aa3300' === DS::admin_colors( 'brand' )['primary'], 'registered custom schemes use their highlight colour' );
+unset( $GLOBALS['_wp_admin_css_colors'] );
+check( 'modern' === DS::admin_scheme(), 'users without a saved scheme get modern, like WordPress' );
+check( false !== strpos( DS::css( $khan_values ), '--wp-admin-theme-color:#1865f2;' ), 'branded presets still recolour the WordPress variables' );
+check( array() === DS::validate( array( 'preset' => 'wordpress' ) ), 'the wordpress preset validates' );
 
 // Presets map back to their name; edits give custom.
 $classic = DS::preset_values( 'classic' );
@@ -40,7 +65,7 @@ $edited = DS::sanitize( array( 'preset' => 'khan', 'colors' => array( 'primary' 
 check( 'custom' === $edited['preset'] && '#aabbcc' === $edited['colors']['primary'], 'an edited value becomes custom and is lower-cased' );
 check( '#112233' === DS::hex( '#123' ) || '#112233' === DS::hex( '#123' ), 'short hex expands' );
 check( '' === DS::hex( 'red' ) && '' === DS::hex( '#12345' ) && '' === DS::hex( array() ) && '' === DS::hex( 'url(x)' ), 'non-hex values are rejected' );
-$bad = DS::sanitize( array( 'colors' => array( 'primary' => 'javascript:alert(1)', 'bogus' => '#ffffff' ), 'density' => 'huge', 'button_radius' => 'x' ) );
+$bad = DS::sanitize( array( 'preset' => 'khan', 'colors' => array( 'primary' => 'javascript:alert(1)', 'bogus' => '#ffffff' ), 'density' => 'huge', 'button_radius' => 'x' ) );
 check( '#1865f2' === $bad['colors']['primary'] && ! isset( $bad['colors']['bogus'] ) && 'comfortable' === $bad['density'] && 4 === $bad['button_radius'], 'invalid fields fall back to the preset' );
 
 // Radius clamping and the pill value.

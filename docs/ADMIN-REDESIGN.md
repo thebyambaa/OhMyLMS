@@ -76,6 +76,21 @@ stay as they are.
 - **Extensions.** `registerAdminPage` gains an optional `group` (default Settings) and appears as tab `ext-<id>`;
   `context.route` and editor-panel slots keep their legacy names (EXTENSIONS.md v1 stays valid).
 
+**Progress (31 October 2026): navigation done.** The six submenus, tabs, sections, query-string router, PHP chrome
+and the forever redirects are in place and verified on 800.local ([ARCHITECTURE](ARCHITECTURE.md), "Routing";
+[LEGACY-ROUTES](LEGACY-ROUTES.md)). As built:
+
+- Content Hub › Courses has the sections All courses and Overview (the former Content Hub overview); Quizzes has
+  Reports (quiz reports). Course reports and rosters are views of a course (`&id=…&view=report|students`); the old
+  course-structure routes are views `structure`/`structure-settings` that redirect into the course editor.
+- Skills › Assessments and Question bank › Import review are sections PHP renders (the former pages redirect).
+- Engagement › Gamification opens Points with the Gamification add-on on and Certificates otherwise.
+- Settings sections are the settings screen's tabs; the in-page tab rows of Settings, Gamification and Account Hub
+  are hidden on the admin pages, as PHP prints them.
+- Every page requires `manage_options`, as before; tabs carry their own capability (some `edit_posts`) for when
+  teachers get access (Phase B scoping).
+- The Home demo route is gone (`/` opens the Dashboard); Help & Feedback is a `.page-title-action` on the Dashboard.
+
 ### Look
 
 - Lists: `ui/Table` renders WordPress list-table markup (views, bulk actions, search box, sortable columns, row

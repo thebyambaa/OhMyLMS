@@ -240,7 +240,9 @@ describe( 'question export', () => {
 		} );
 		renderPage();
 		await user.type(
-			await screen.findByRole( 'textbox', { name: 'Search questions' } ),
+			await screen.findByRole( 'searchbox', {
+				name: 'Search questions',
+			} ),
 			'algebra'
 		);
 		await user.click( screen.getByRole( 'button', { name: 'Search' } ) );

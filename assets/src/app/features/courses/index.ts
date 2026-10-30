@@ -7,6 +7,8 @@ export const courses: FeatureDefinition = {
 	id: 'courses',
 	title: __( 'Courses', 'ohmylms' ),
 	path: '/courses',
+	group: 'content',
+	tab: 'courses',
 	capability: 'edit_posts',
 	component: lazy(
 		() =>
@@ -24,6 +26,9 @@ export const courseEditor: FeatureDefinition = {
 	id: 'courses-editor',
 	title: __( 'Course', 'ohmylms' ),
 	path: '/courses/:id/:tab?',
+	group: 'content',
+	tab: 'courses',
+	params: { tab: 'view' },
 	extensionRoute: '/course-edit/:id/:step?/:subStep?',
 	hidden: true,
 	capability: 'edit_posts',

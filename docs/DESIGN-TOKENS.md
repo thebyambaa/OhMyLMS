@@ -5,13 +5,15 @@ saved Design system palette, spacing, roundness and font. Settings > Design syst
 
 | Context | Values come from | Emitted by | Selector |
 | --- | --- | --- | --- |
-| Plugin admin screens | Settings > Design system (`ohmylms_design_system`) | `DesignSystem::css()` | `body.oml-ds` |
-| Learner pages | The same `ohmylms_design_system` settings | `Tokens::frontend_css()` | `:root` |
+| Plugin admin screens | The user's WordPress admin colour scheme under the default WordPress preset (`DesignSystem::admin_colors()`); otherwise Settings > Design system (`ohmylms_design_system`) | `DesignSystem::css()` | `body.oml-ds` |
+| Learner pages | The saved `ohmylms_design_system` palette | `Tokens::frontend_css()` | `:root` |
 
 Both call `DesignSystem::variables( $colors, $button_radius, $density )`, so derived shades (`-hover`,
 `-active`, `-soft`, `-rgb`, `on-*`), radii, button heights and the 4px spacing scale are computed
-identically. The default is Khan on both sides. A saved Classic or custom preset applies to both sides,
-including density and radius. `ohmylms_font_family` supplies the shared font; the historical `inherit`
+identically. The default preset is WordPress: admin screens take `--oml-*` from the admin colour scheme
+(theme colour on WordPress's neutrals, 2px radius) and leave `--wp-admin-theme-color` to WordPress; learner
+pages keep the Khan Academy palette that preset stores. A saved Khan Academy, Classic or custom preset
+applies to both sides, including density and radius. `ohmylms_font_family` supplies the shared font; the historical `inherit`
 value now means the default system stack so the two contexts do not choose different fonts.
 
 Compatibility: legacy color option names remain accepted by `Tokens::color()` as aliases of the
@@ -78,7 +80,31 @@ The visual gallery and its screenshot tests are `tests/browser/ui-gallery.spec.c
   starts closed; open it from a button with `data-oml-dialog-open="settings"`. Content HTML must already
   be escaped. React dialogs remain in their original theme scope; no portal loses inherited tokens.
 - `Table` accepts a visible `caption`, native table children, `striped` and `compact`; the caption also
-  names its keyboard-scrollable region. Use native header `scope` and `aria-sort` for sortable columns.
+  names its keyboard-scrollable region and the table carries WordPress's `widefat` (and `striped`) classes.
+  Use it for detail and matrix tables; lists use `ListTable`. Use native header `scope` and `aria-sort` for
+  sortable columns.
+- `ListTable` (`assets/src/ui/ListTable.jsx`, typed in `ListTable.d.ts`) prints `WP_List_Table` markup over
+  REST data, so wp-admin's own `list-tables.css` styles it: `.subsubsub` views (`views`, with counts where
+  known), `p.search-box` (`search`), `.tablenav.top/.bottom` with the bulk-actions select and Apply
+  (`bulkActions`), filters and a Filter button (`filters`, `onFilter`; `filterLabel={ null }` when filters
+  apply on change), `table.wp-list-table.widefat.fixed.striped.table-view-list` with `thead`/`tfoot`,
+  sortable headers (`.sortable`/`.sorted asc|desc`, the sorting indicators, `aria-sort` and "Sort
+  ascending." link text, a "Table ordered by …" description), the check column (`isSelectable`, controlled
+  `selected`), `.row-actions` on the primary column, the `.toggle-row` responsive button (with
+  `aria-expanded`), `.no-items` and `.tablenav-pages` (first/previous/current-of-total/next/last and
+  `.displaying-num`). Row actions are buttons, links or a ready `render` element (a router `Link`); they
+  are visually hidden until the row is hovered or a control in the primary cell has focus (`.visible`),
+  and stay in the tab order, as in WordPress. Search and Filter submit one form, like `posts-filter`.
+  `ListTableSelect` / `ListTableInput` are the filter controls (native control, screen-reader label).
+
+## No raw colours in the app
+
+`npm run check:architecture` fails on hex, `rgb()`/`rgba()` and `hsl()`/`hsla()` literals in
+`assets/src/app/**/*.css` and in the strings of `assets/src/app/**/*.tsx` (comments, tests, `href`/`to`
+fragments and `.ts` model files are not checked). Use WordPress classes, `@wordpress/components`,
+`var(--wp-admin-theme-color)` or the `--oml-*` tokens. Justified exceptions go in the `rawColours`
+section of `tools/architecture-allowlist.json` as `{ "file", "value", "reason" }`; today the only entry is
+the example colour in the Branding tab's help text.
   PHP `Ui::table( $headers, $rows, $args )` escapes all text cells and accepts the same caption/modifiers.
 - `EmptyState` accepts a title, description and optional action children. PHP `Ui::empty_state( $title,
   $args )` escapes the title/description and accepts caller-escaped `actions_html`. It does not announce

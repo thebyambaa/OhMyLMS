@@ -15,12 +15,13 @@ Only users who can manage OhMyLMS see them.
 - `includes/Admin/Commands.php` builds the list and loads `assets/js/commands.js`, which registers each command with
   the `core/commands` store. There is no build step for the script.
 - Every command is a legacy hash route. `Commands::all()` sends it through `LegacyRoutes::target()`
-  ([legacy routes](LEGACY-ROUTES.md)), so each command also carries `page`: `ohmylms-app` with the new route where the
-  new app replaces the screen, otherwise `ohmylms` with the route unchanged. A command that sets its own `page` keeps
-  it. On that page the palette changes the hash; elsewhere it opens `admin.php?page=<page>#<route>`.
-- An action is a route with `?action=`: `#/content-hub/exams?action=new` opens the Exams tab with the New exam
-  dialog open. Screens handle it with `useHubAction( { new: ..., import: ... } )`
-  (`assets/src/features/content-hub/useHubAction.js`), which removes the parameter once handled.
+  ([legacy routes](LEGACY-ROUTES.md)), so each command also carries the `page` and `tab` of its new screen, the app
+  `route` and its address `url` (unmapped routes open the Dashboard). The palette opens `url`; when the command is on
+  the current page and tab it sets `#<route>` instead, which the app's router opens without a reload. A command that
+  sets its own `page` keeps it and opens `admin.php?page=<page>#<route>`.
+- An action is a route with `?action=`: `/content-hub/exams?action=new` opens
+  `admin.php?page=ohmylms-content&tab=exams&action=new`, the Exams tab with the New exam dialog open. The screen
+  reads the parameter from its route and removes it once handled.
 
 ## Add a command
 

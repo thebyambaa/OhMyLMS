@@ -48,7 +48,7 @@ describe( 'SubmissionsPage', () => {
 			} )
 		).toBeInTheDocument();
 		const rows = within( table ).getAllByRole( 'row' );
-		expect( rows ).toHaveLength( 3 );
+		expect( rows ).toHaveLength( 4 );
 		const first = within( rows[ 1 ]! );
 		expect( first.getByText( 'Alex Learner' ) ).toBeInTheDocument();
 		expect( first.getByText( 'Needs grading' ) ).toBeInTheDocument();
@@ -68,9 +68,8 @@ describe( 'SubmissionsPage', () => {
 		const user = userEvent.setup();
 		renderPage();
 		await screen.findByRole( 'table' );
-		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Show' } ),
-			'submitted'
+		await user.click(
+			await screen.findByRole( 'link', { name: 'Needs grading' } )
 		);
 		await waitFor( () =>
 			expect( api.listSubmissions ).toHaveBeenLastCalledWith(

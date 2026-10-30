@@ -80,23 +80,22 @@ describe( 'All accounts tab', () => {
 		await screen.findByRole( 'table', { name: 'All accounts' } );
 		await waitFor( () =>
 			expect(
-				screen.getByRole( 'option', { name: 'Teacher' } )
+				screen.getByRole( 'link', { name: 'Teacher' } )
 			).toBeInTheDocument()
 		);
-		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Role' } ),
-			'ohmylms_teacher'
+		await user.click(
+			await screen.findByRole( 'link', { name: 'Teacher' } )
 		);
 		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Registered' } ),
+			await screen.findByRole( 'combobox', { name: 'Registered' } ),
 			'current_year'
 		);
 		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Status' } ),
+			await screen.findByRole( 'combobox', { name: 'Status' } ),
 			'blocked'
 		);
 		await user.type(
-			screen.getByRole( 'textbox', { name: 'Search accounts' } ),
+			screen.getByRole( 'searchbox', { name: 'Search accounts' } ),
 			' tess '
 		);
 		await user.click( screen.getByRole( 'button', { name: 'Search' } ) );

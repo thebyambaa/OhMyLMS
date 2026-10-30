@@ -1,15 +1,9 @@
-import { Table } from '../../../ui/Table';
-import {
-	Button,
-	Modal,
-	Notice,
-	SelectControl,
-	TextControl,
-} from '@wordpress/components';
+import { ListTable, ListTableSelect } from '../../../ui/ListTable';
+import { Button, Modal, Notice, TextControl } from '@wordpress/components';
 import { useCallback, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useNavigate } from 'react-router-dom';
-import { Pagination } from '../../components/Pagination';
+import { statusViews } from '../../components/listViews';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
 import {
@@ -148,50 +142,6 @@ export default function AssignmentsPage() {
 			>
 				{ __( 'Add assignment', 'ohmylms' ) }
 			</Button>
-			<form
-				role="search"
-				aria-label={ __( 'Search assignments', 'ohmylms' ) }
-				onSubmit={ ( event ) => {
-					event.preventDefault();
-					filter( { search: query.trim() } );
-				} }
-			>
-				<TextControl
-					label={ __( 'Search assignments', 'ohmylms' ) }
-					value={ query }
-					onChange={ setQuery }
-				/>
-				<SelectControl
-					label={ __( 'Status', 'ohmylms' ) }
-					value={ filters.status }
-					options={ statusOptions() }
-					onChange={ ( value ) => {
-						const found = STATUS_FILTERS.find(
-							( status ) => status === value
-						);
-						if ( found ) {
-							filter( { status: found } );
-						}
-					} }
-				/>
-				<SelectControl
-					label={ __( 'Course', 'ohmylms' ) }
-					value={ String( filters.course ) }
-					options={ courseOptions }
-					onChange={ ( value ) =>
-						filter( {
-							course: /^\d+$/.test( value ) ? Number( value ) : 0,
-						} )
-					}
-				/>
-				<Button
-					type="submit"
-					variant="secondary"
-					disabled={ list.loading }
-				>
-					{ __( 'Search', 'ohmylms' ) }
-				</Button>
-			</form>
 			{ message && (
 				<Notice status="success" onRemove={ () => setMessage( null ) }>
 					{ message }
@@ -208,136 +158,159 @@ export default function AssignmentsPage() {
 			{ list.loading && (
 				<p role="status">{ __( 'Loading assignments…', 'ohmylms' ) }</p>
 			) }
-			{ ! list.loading &&
-				list.data &&
-				( list.data.items.length ? (
-					<>
-						<p role="status">
-							{ sprintf(
-								/* translators: %d: total assignment count. */
-								_n(
-									'%d assignment found.',
-									'%d assignments found.',
-									list.data.total,
-									'ohmylms'
-								),
-								list.data.total
-							) }
-						</p>
-						<Table
-							caption={ __( 'Assignments', 'ohmylms' ) }
-							striped
-						>
-							<thead>
-								<tr>
-									{ [
-										__( 'Title', 'ohmylms' ),
-										__( 'Status', 'ohmylms' ),
-										__( 'Course', 'ohmylms' ),
-										__( 'Max score', 'ohmylms' ),
-										__( 'Submissions', 'ohmylms' ),
-										__( 'Actions', 'ohmylms' ),
-									].map( ( heading ) => (
-										<th key={ heading } scope="col">
-											{ heading }
-										</th>
-									) ) }
-								</tr>
-							</thead>
-							<tbody>
-								{ list.data.items.map( ( item ) => (
-									<tr key={ item.id }>
-										<th scope="row">
-											<Link
-												to={ `/assignments/${ item.id }` }
-											>
-												{ item.title }
-											</Link>
-										</th>
-										<td>{ statusLabel( item.status ) }</td>
-										<td>
-											{ item.course
-												? item.course.title
-												: __(
-														'Not in a course',
-														'ohmylms'
-													) }
-										</td>
-										<td>{ item.max_score }</td>
-										<td>
-											{ item.pending_count > 0
-												? sprintf(
-														/* translators: 1: submissions; 2: submissions waiting for a grade. */
-														__(
-															'%1$d (%2$d to grade)',
-															'ohmylms'
-														),
-														item.submission_count,
-														item.pending_count
-													)
-												: item.submission_count }
-										</td>
-										<td>
-											<Link
-												to={ `/assignments/${ item.id }/submissions` }
-												aria-label={ sprintf(
-													/* translators: %s: assignment title. */
-													__(
-														'Submissions of %s',
-														'ohmylms'
-													),
-													item.title
-												) }
-											>
-												{ __(
-													'Submissions',
-													'ohmylms'
-												) }
-											</Link>{ ' ' }
-											{ item.can_delete &&
-												'trash' !== item.status && (
-													<Button
-														variant="link"
-														isDestructive
-														disabled={
-															operation.busy
-														}
-														onClick={ () =>
-															open( {
-																kind: 'trash',
-																item,
-															} )
-														}
-														aria-label={ sprintf(
-															/* translators: %s: assignment title. */
-															__(
-																'Move %s to the trash',
-																'ohmylms'
-															),
-															item.title
-														) }
-													>
-														{ __(
-															'Trash',
-															'ohmylms'
-														) }
-													</Button>
-												) }
-										</td>
-									</tr>
-								) ) }
-							</tbody>
-						</Table>
-						<Pagination
-							page={ page }
-							pages={ list.data.totalPages }
-							busy={ list.loading || operation.busy }
-							onChange={ setPage }
+			{ ! list.loading && list.data && (
+				<ListTable
+					caption={ __( 'Assignments', 'ohmylms' ) }
+					formLabel={ __( 'Search assignments', 'ohmylms' ) }
+					busy={ operation.busy }
+					rows={ list.data.items }
+					rowKey={ ( item ) => item.id }
+					emptyMessage={ __( 'No assignments found.', 'ohmylms' ) }
+					views={ statusViews(
+						statusOptions(),
+						filters.status,
+						list.data.total,
+						( value ) => {
+							const found = STATUS_FILTERS.find(
+								( status ) => status === value
+							);
+							if ( found ) {
+								filter( { status: found } );
+							}
+						}
+					) }
+					search={ {
+						label: __( 'Search assignments', 'ohmylms' ),
+						submitLabel: __( 'Search', 'ohmylms' ),
+						value: query,
+						onChange: setQuery,
+					} }
+					onFilter={ () => filter( { search: query.trim() } ) }
+					filterLabel={ null }
+					filters={
+						<ListTableSelect
+							label={ __( 'Course', 'ohmylms' ) }
+							value={ String( filters.course ) }
+							options={ courseOptions }
+							onChange={ ( value ) =>
+								filter( {
+									course: /^\d+$/.test( value )
+										? Number( value )
+										: 0,
+								} )
+							}
 						/>
-					</>
-				) : (
-					<p>{ __( 'No assignments found.', 'ohmylms' ) }</p>
-				) ) }
+					}
+					pagination={ {
+						page,
+						totalPages: list.data.totalPages,
+						totalItems: list.data.total,
+						itemsLabel: sprintf(
+							/* translators: %d: total assignment count. */
+							_n(
+								'%d assignment found.',
+								'%d assignments found.',
+								list.data.total,
+								'ohmylms'
+							),
+							list.data.total
+						),
+						onChange: setPage,
+					} }
+					columns={ [
+						{
+							id: 'title',
+							label: __( 'Title', 'ohmylms' ),
+							primary: true,
+							render: ( item ) => (
+								<strong>
+									<Link
+										className="row-title"
+										to={ `/assignments/${ item.id }` }
+									>
+										{ item.title }
+									</Link>
+								</strong>
+							),
+						},
+						{
+							id: 'status',
+							label: __( 'Status', 'ohmylms' ),
+							render: ( item ) => statusLabel( item.status ),
+						},
+						{
+							id: 'course',
+							label: __( 'Course', 'ohmylms' ),
+							render: ( item ) =>
+								item.course
+									? item.course.title
+									: __( 'Not in a course', 'ohmylms' ),
+						},
+						{
+							id: 'max_score',
+							label: __( 'Max score', 'ohmylms' ),
+							className: 'num',
+							render: ( item ) => item.max_score,
+						},
+						{
+							id: 'submissions',
+							label: __( 'Submissions', 'ohmylms' ),
+							render: ( item ) =>
+								item.pending_count > 0
+									? sprintf(
+											/* translators: 1: submissions; 2: submissions waiting for a grade. */
+											__(
+												'%1$d (%2$d to grade)',
+												'ohmylms'
+											),
+											item.submission_count,
+											item.pending_count
+										)
+									: item.submission_count,
+						},
+					] }
+					rowActions={ ( item ) => [
+						{
+							key: 'edit',
+							label: __( 'Edit', 'ohmylms' ),
+							render: (
+								<Link to={ `/assignments/${ item.id }` }>
+									{ __( 'Edit', 'ohmylms' ) }
+								</Link>
+							),
+						},
+						{
+							key: 'submissions',
+							label: __( 'Submissions', 'ohmylms' ),
+							render: (
+								<Link
+									to={ `/assignments/${ item.id }/submissions` }
+									aria-label={ sprintf(
+										/* translators: %s: assignment title. */
+										__( 'Submissions of %s', 'ohmylms' ),
+										item.title
+									) }
+								>
+									{ __( 'Submissions', 'ohmylms' ) }
+								</Link>
+							),
+						},
+						item.can_delete &&
+							'trash' !== item.status && {
+								key: 'trash',
+								label: __( 'Trash', 'ohmylms' ),
+								destructive: true,
+								disabled: operation.busy,
+								onClick: () => open( { kind: 'trash', item } ),
+								ariaLabel: sprintf(
+									/* translators: %s: assignment title. */
+									__( 'Move %s to the trash', 'ohmylms' ),
+									item.title
+								),
+							},
+					] }
+				/>
+			) }
 			{ dialog?.kind === 'create' && (
 				<Modal
 					title={ __( 'Add assignment', 'ohmylms' ) }

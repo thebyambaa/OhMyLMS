@@ -74,7 +74,7 @@ describe( 'AttemptsPage', () => {
 		renderPage();
 		const table = await screen.findByRole( 'table', { name: 'Attempts' } );
 		const rows = within( table ).getAllByRole( 'row' );
-		expect( rows ).toHaveLength( 3 );
+		expect( rows ).toHaveLength( 4 );
 		expect(
 			within( rows[ 1 ]! ).getByText( 'sam@example.test' )
 		).toBeInTheDocument();
@@ -99,7 +99,9 @@ describe( 'AttemptsPage', () => {
 				name: 'Attempts: Fractions check',
 			} )
 		).toBeInTheDocument();
-		expect( screen.getByText( '2 attempts found.' ) ).toBeInTheDocument();
+		expect(
+			screen.getAllByText( '2 attempts found.' )[ 0 ]
+		).toBeInTheDocument();
 	} );
 	it( 'rejects an invalid route id', () => {
 		renderPage( '/quizzes/0/attempts' );
@@ -149,9 +151,8 @@ describe( 'AttemptsPage', () => {
 		const user = userEvent.setup();
 		renderPage();
 		await screen.findByRole( 'table' );
-		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Status' } ),
-			'in-review'
+		await user.click(
+			await screen.findByRole( 'link', { name: 'Needs grading' } )
 		);
 		await waitFor( () =>
 			expect( api.listAttempts ).toHaveBeenLastCalledWith(
@@ -162,7 +163,7 @@ describe( 'AttemptsPage', () => {
 			)
 		);
 		await user.type(
-			screen.getByRole( 'textbox', { name: 'Search students' } ),
+			screen.getByRole( 'searchbox', { name: 'Search students' } ),
 			' sam {Enter}'
 		);
 		await waitFor( () =>

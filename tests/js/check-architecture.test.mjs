@@ -11,7 +11,9 @@ import {
 	checkCycles,
 	checkDuplicateRuntimes,
 	checkFeatureBoundaries,
+	checkRawColours,
 	checkRecoveredRuntime,
+	findRawColours,
 	formatReport,
 	measureAssets,
 	runArchitectureChecks,
@@ -116,6 +118,103 @@ test( 'allow-listed violations pass with their reason; stale entries fail', () =
 		failures.includes(
 			'stale allow-list entry (no longer violated, remove it): assets/src/app/gone.ts -> assets/src/application/fragment.js'
 		)
+	);
+} );
+
+test( 'raw colour literals in app CSS and TSX are reported; tokens, anchors and comments are not', () => {
+	const root = fs.mkdtempSync( path.join( os.tmpdir(), 'oml-colours-' ) );
+	const write = ( file, text ) => {
+		fs.mkdirSync( path.dirname( path.join( root, file ) ), {
+			recursive: true,
+		} );
+		fs.writeFileSync( path.join( root, file ), text );
+	};
+	try {
+		write(
+			'assets/src/app/styles/app.css',
+			[
+				'/* Brand blue was #1865f2. */',
+				'.a { color: var(--wp-admin-theme-color); }',
+				'.b {',
+				'\tbackground: #FFF;',
+				'\tbox-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);',
+				'}',
+				'.c { border-color: hsl(10 50% 50%); }',
+			].join( '\r\n' )
+		);
+		write(
+			'assets/src/app/features/alpha/Page.tsx',
+			[
+				'// #abcdef in a comment is fine.',
+				'export function Page() {',
+				'\treturn (',
+				'\t\t<>',
+				'\t\t\t<a href="#add">Add</a>',
+				'\t\t\t<a href={ `#/courses/${ 1 }` }>Course</a>',
+				"\t\t\t<span style={ { color: '#d63638' } }>x</span>",
+				'\t\t\t<rect fill="#2271b1" />',
+				'\t\t\t<p>&#160;Colour #c3c4c7</p>',
+				'\t\t</>',
+				'\t);',
+				'}',
+			].join( '\n' )
+		);
+		write(
+			'assets/src/app/features/alpha/model.ts',
+			"export const BLACK = '#000000';\n"
+		);
+		write(
+			'assets/src/app/features/alpha/Page.test.tsx',
+			"const color = '#ffffff';\n"
+		);
+		const project = new Project( root );
+		const { violations, failures, allowed } = checkRawColours( project, [
+			{
+				file: 'assets/src/app/features/alpha/Page.tsx',
+				value: '#C3C4C7',
+				reason: 'Fixture: example in help text.',
+			},
+			{
+				file: 'assets/src/app/styles/app.css',
+				value: '#123456',
+				reason: 'Fixture: gone.',
+			},
+		] );
+		assert.deepEqual(
+			violations.map(
+				( { file, line, value } ) => `${ file }:${ line } ${ value }`
+			),
+			[
+				'assets/src/app/features/alpha/Page.tsx:7 #d63638',
+				'assets/src/app/features/alpha/Page.tsx:8 #2271b1',
+				'assets/src/app/features/alpha/Page.tsx:9 #c3c4c7',
+				'assets/src/app/styles/app.css:4 #FFF',
+				'assets/src/app/styles/app.css:5 rgba',
+				'assets/src/app/styles/app.css:7 hsl',
+			]
+		);
+		assert.deepEqual(
+			allowed.map( ( entry ) => entry.reason ),
+			[ 'Fixture: example in help text.' ]
+		);
+		assert.equal( failures.length, 6 );
+		assert.ok(
+			failures.includes(
+				'stale allow-list entry (no longer violated, remove it): assets/src/app/styles/app.css #123456'
+			)
+		);
+		assert.match( failures[ 0 ], /use a WordPress class/ );
+	} finally {
+		fs.rmSync( root, { recursive: true, force: true } );
+	}
+} );
+
+test( 'raw colour matching skips anchors, entities and ids', () => {
+	assert.deepEqual(
+		findRawColours(
+			'#fff #a1b2c3d4 rgb( hsla( #/x &#160; a#bad #add-new #12'
+		).map( ( hit ) => hit.value ),
+		[ '#fff', '#a1b2c3d4', 'rgb', 'hsla' ]
 	);
 } );
 

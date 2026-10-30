@@ -1,14 +1,9 @@
-import { Table } from '../../../ui/Table';
-import {
-	Button,
-	Notice,
-	SelectControl,
-	TextControl,
-} from '@wordpress/components';
+import { ListTable } from '../../../ui/ListTable';
+import { Button, Notice } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useParams } from 'react-router-dom';
-import { Pagination } from '../../components/Pagination';
+import { statusViews } from '../../components/listViews';
 import { AttemptReview } from './AttemptReview';
 import { attemptStatusLabel, formatDate, formatMarks } from './model';
 import { useAttempts } from './useAttempts';
@@ -69,46 +64,6 @@ export default function AttemptsPage() {
 						)
 					: __( 'Attempts', 'ohmylms' ) }
 			</h2>
-			<form
-				role="search"
-				aria-label={ __( 'Filter attempts', 'ohmylms' ) }
-				onSubmit={ ( event ) => {
-					event.preventDefault();
-					list.setFilters( {
-						...list.filters,
-						search: query.trim(),
-					} );
-				} }
-			>
-				<TextControl
-					label={ __( 'Search students', 'ohmylms' ) }
-					value={ query }
-					onChange={ setQuery }
-				/>
-				<SelectControl
-					label={ __( 'Status', 'ohmylms' ) }
-					value={ list.filters.status }
-					options={ statusOptions }
-					onChange={ ( value ) => {
-						const found = statusOptions.find(
-							( option ) => option.value === value
-						);
-						if ( found ) {
-							list.setFilters( {
-								...list.filters,
-								status: found.value,
-							} );
-						}
-					} }
-				/>
-				<Button
-					type="submit"
-					variant="secondary"
-					disabled={ list.loading }
-				>
-					{ __( 'Search', 'ohmylms' ) }
-				</Button>
-			</form>
 			{ list.error && (
 				<Notice status="error" isDismissible={ false }>
 					{ list.error.message }{ ' ' }
@@ -124,103 +79,114 @@ export default function AttemptsPage() {
 			{ list.loading && (
 				<p role="status">{ __( 'Loading attempts…', 'ohmylms' ) }</p>
 			) }
-			{ ! list.loading &&
-				! list.error &&
-				( list.data.items.length ? (
-					<>
-						<p role="status">
-							{ sprintf(
-								/* translators: %d: total attempt count. */
-								_n(
-									'%d attempt found.',
-									'%d attempts found.',
-									list.data.total,
-									'ohmylms'
-								),
-								list.data.total
-							) }
-						</p>
-						<Table caption={ __( 'Attempts', 'ohmylms' ) } striped>
-							<thead>
-								<tr>
-									{ [
-										__( 'Student', 'ohmylms' ),
-										__( 'Status', 'ohmylms' ),
-										__( 'Score', 'ohmylms' ),
-										__( 'Started', 'ohmylms' ),
-										__( 'Submitted', 'ohmylms' ),
-										__( 'Actions', 'ohmylms' ),
-									].map( ( heading ) => (
-										<th key={ heading } scope="col">
-											{ heading }
-										</th>
-									) ) }
-								</tr>
-							</thead>
-							<tbody>
-								{ list.data.items.map( ( item ) => (
-									<tr key={ item.id }>
-										<th scope="row">
-											{ item.student.name }
-											<br />
-											<small>
-												{ item.student.email }
-											</small>
-										</th>
-										<td>
-											{ attemptStatusLabel(
-												item.status
-											) }
-										</td>
-										<td>
-											{ formatMarks( item.score ) } /{ ' ' }
-											{ formatMarks( item.max_marks ) }
-											{ null !== item.percentage &&
-												` (${ formatMarks( item.percentage ) }%)` }
-										</td>
-										<td>
-											{ formatDate( item.started_at ) }
-										</td>
-										<td>
-											{ formatDate( item.submitted_at ) }
-										</td>
-										<td>
-											<Button
-												variant="link"
-												onClick={ () =>
-													setOpen( item.id )
-												}
-												aria-label={ sprintf(
-													/* translators: %s: student name. */
-													__(
-														'Review attempt by %s',
-														'ohmylms'
-													),
-													item.student.name
-												) }
-											>
-												{ item.needs_grading
-													? __( 'Grade', 'ohmylms' )
-													: __(
-															'Review',
-															'ohmylms'
-														) }
-											</Button>
-										</td>
-									</tr>
-								) ) }
-							</tbody>
-						</Table>
-						<Pagination
-							page={ list.page }
-							pages={ list.data.totalPages }
-							busy={ list.loading }
-							onChange={ list.setPage }
-						/>
-					</>
-				) : (
-					<p>{ __( 'No attempts found.', 'ohmylms' ) }</p>
-				) ) }
+			{ ! list.loading && ! list.error && (
+				<ListTable
+					caption={ __( 'Attempts', 'ohmylms' ) }
+					formLabel={ __( 'Filter attempts', 'ohmylms' ) }
+					rows={ list.data.items }
+					rowKey={ ( item ) => item.id }
+					emptyMessage={ __( 'No attempts found.', 'ohmylms' ) }
+					views={ statusViews(
+						statusOptions,
+						list.filters.status,
+						list.data.total,
+						( value ) => {
+							const found = statusOptions.find(
+								( option ) => option.value === value
+							);
+							if ( found ) {
+								list.setFilters( {
+									...list.filters,
+									status: found.value,
+								} );
+							}
+						}
+					) }
+					search={ {
+						label: __( 'Search students', 'ohmylms' ),
+						submitLabel: __( 'Search', 'ohmylms' ),
+						value: query,
+						onChange: setQuery,
+						onSubmit: () =>
+							list.setFilters( {
+								...list.filters,
+								search: query.trim(),
+							} ),
+					} }
+					pagination={ {
+						page: list.page,
+						totalPages: list.data.totalPages,
+						totalItems: list.data.total,
+						itemsLabel: sprintf(
+							/* translators: %d: total attempt count. */
+							_n(
+								'%d attempt found.',
+								'%d attempts found.',
+								list.data.total,
+								'ohmylms'
+							),
+							list.data.total
+						),
+						onChange: list.setPage,
+					} }
+					columns={ [
+						{
+							id: 'student',
+							label: __( 'Student', 'ohmylms' ),
+							primary: true,
+							render: ( item ) => (
+								<>
+									<strong>{ item.student.name }</strong>
+									<br />
+									{ item.student.email }
+								</>
+							),
+						},
+						{
+							id: 'status',
+							label: __( 'Status', 'ohmylms' ),
+							render: ( item ) =>
+								attemptStatusLabel( item.status ),
+						},
+						{
+							id: 'score',
+							label: __( 'Score', 'ohmylms' ),
+							render: ( item ) => (
+								<>
+									{ formatMarks( item.score ) } /{ ' ' }
+									{ formatMarks( item.max_marks ) }
+									{ null !== item.percentage &&
+										` (${ formatMarks( item.percentage ) }%)` }
+								</>
+							),
+						},
+						{
+							id: 'started',
+							label: __( 'Started', 'ohmylms' ),
+							render: ( item ) => formatDate( item.started_at ),
+						},
+						{
+							id: 'submitted',
+							label: __( 'Submitted', 'ohmylms' ),
+							render: ( item ) => formatDate( item.submitted_at ),
+						},
+					] }
+					rowActions={ ( item ) => [
+						{
+							key: 'review',
+							label: item.needs_grading
+								? __( 'Grade', 'ohmylms' )
+								: __( 'Review', 'ohmylms' ),
+							ariaLabel: sprintf(
+								/* translators: %s: student name. */
+								__( 'Review attempt by %s', 'ohmylms' ),
+								item.student.name
+							),
+							onClick: () => setOpen( item.id ),
+						},
+					] }
+				/>
+			) }
 			{ null !== open && (
 				<AttemptReview
 					quizId={ id }

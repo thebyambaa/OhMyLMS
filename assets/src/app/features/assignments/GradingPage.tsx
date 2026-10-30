@@ -173,9 +173,7 @@ export default function GradingPage() {
 			<section aria-labelledby="oml-asg-work">
 				<h3 id="oml-asg-work">{ __( 'Learner work', 'ohmylms' ) }</h3>
 				{ current.content ? (
-					<p style={ { whiteSpace: 'pre-wrap' } }>
-						{ current.content }
-					</p>
+					<p className="ohmylms-pre-wrap">{ current.content }</p>
 				) : (
 					<p>{ __( 'No text was submitted.', 'ohmylms' ) }</p>
 				) }

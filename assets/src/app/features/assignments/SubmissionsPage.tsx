@@ -1,9 +1,9 @@
-import { Table } from '../../../ui/Table';
-import { Button, Notice, SelectControl } from '@wordpress/components';
+import { ListTable } from '../../../ui/ListTable';
+import { Button, Notice } from '@wordpress/components';
 import { useCallback, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useParams } from 'react-router-dom';
-import { Pagination } from '../../components/Pagination';
+import { statusViews } from '../../components/listViews';
 import { useRequest } from '../../hooks/useRequest';
 import { getAssignment, listSubmissions } from './api';
 import { formatDate, submissionLabel } from './model';
@@ -75,25 +75,6 @@ export default function SubmissionsPage() {
 						)
 					: __( 'Submissions', 'ohmylms' ) }
 			</h2>
-			<SelectControl
-				label={ __( 'Show', 'ohmylms' ) }
-				value={ status }
-				options={ [
-					{ value: 'all', label: __( 'All', 'ohmylms' ) },
-					{
-						value: 'submitted',
-						label: __( 'Needs grading', 'ohmylms' ),
-					},
-					{ value: 'graded', label: __( 'Graded', 'ohmylms' ) },
-				] }
-				onChange={ ( value ) => {
-					const found = FILTERS.find( ( item ) => item === value );
-					if ( found ) {
-						setStatus( found );
-						setPage( 1 );
-					}
-				} }
-			/>
 			{ list.error && (
 				<Notice status="error" isDismissible={ false }>
 					{ list.error }{ ' ' }
@@ -105,92 +86,120 @@ export default function SubmissionsPage() {
 			{ list.loading && (
 				<p role="status">{ __( 'Loading submissions…', 'ohmylms' ) }</p>
 			) }
-			{ ! list.loading &&
-				list.data &&
-				( list.data.items.length ? (
-					<>
-						<p role="status">
-							{ sprintf(
-								/* translators: %d: total submission count. */
-								_n(
-									'%d submission found.',
-									'%d submissions found.',
-									list.data.total,
-									'ohmylms'
-								),
-								list.data.total
-							) }
-						</p>
-						<Table
-							caption={ __( 'Submissions', 'ohmylms' ) }
-							striped
-						>
-							<thead>
-								<tr>
-									{ [
-										__( 'Student', 'ohmylms' ),
-										__( 'Course', 'ohmylms' ),
-										__( 'Submitted', 'ohmylms' ),
-										__( 'Status', 'ohmylms' ),
-										__( 'Score', 'ohmylms' ),
-										__( 'Actions', 'ohmylms' ),
-									].map( ( heading ) => (
-										<th key={ heading } scope="col">
-											{ heading }
-										</th>
-									) ) }
-								</tr>
-							</thead>
-							<tbody>
-								{ list.data.items.map( ( item ) => (
-									<tr key={ item.id }>
-										<th scope="row">
-											{ item.student.display_name }
-										</th>
-										<td>{ item.course?.title ?? '—' }</td>
-										<td>
-											{ formatDate( item.submitted_at ) }
-										</td>
-										<td>{ submissionLabel( item ) }</td>
-										<td>
-											{ null === item.score
-												? '—'
-												: `${ item.score } / ${ item.max_score }` }
-										</td>
-										<td>
-											<Link
-												to={ `/assignments/${ id }/submissions/${ item.id }` }
-												aria-label={ sprintf(
-													/* translators: %s: student name. */
-													__(
-														'Open submission by %s',
-														'ohmylms'
-													),
-													item.student.display_name
-												) }
-											>
-												{ 'submitted' === item.status
-													? __( 'Grade', 'ohmylms' )
-													: __(
-															'Review',
-															'ohmylms'
-														) }
-											</Link>
-										</td>
-									</tr>
-								) ) }
-							</tbody>
-						</Table>
-						<Pagination
-							page={ page }
-							pages={ list.data.totalPages }
-							busy={ list.loading }
-							onChange={ setPage }
-						/>
-					</>
-				) : (
-					<p>{ __( 'No submissions found.', 'ohmylms' ) }</p>
-				) ) }
+			{ ! list.loading && list.data && (
+				<ListTable
+					caption={ __( 'Submissions', 'ohmylms' ) }
+					rows={ list.data.items }
+					rowKey={ ( item ) => item.id }
+					emptyMessage={ __( 'No submissions found.', 'ohmylms' ) }
+					views={ statusViews(
+						[
+							{ value: 'all', label: __( 'All', 'ohmylms' ) },
+							{
+								value: 'submitted',
+								label: __( 'Needs grading', 'ohmylms' ),
+							},
+							{
+								value: 'graded',
+								label: __( 'Graded', 'ohmylms' ),
+							},
+						],
+						status,
+						list.data.total,
+						( value ) => {
+							const found = FILTERS.find(
+								( item ) => item === value
+							);
+							if ( found ) {
+								setStatus( found );
+								setPage( 1 );
+							}
+						}
+					) }
+					pagination={ {
+						page,
+						totalPages: list.data.totalPages,
+						totalItems: list.data.total,
+						itemsLabel: sprintf(
+							/* translators: %d: total submission count. */
+							_n(
+								'%d submission found.',
+								'%d submissions found.',
+								list.data.total,
+								'ohmylms'
+							),
+							list.data.total
+						),
+						onChange: setPage,
+					} }
+					columns={ [
+						{
+							id: 'student',
+							label: __( 'Student', 'ohmylms' ),
+							primary: true,
+							render: ( item ) => (
+								<strong>
+									<Link
+										className="row-title"
+										to={ `/assignments/${ id }/submissions/${ item.id }` }
+									>
+										{ item.student.display_name }
+									</Link>
+								</strong>
+							),
+						},
+						{
+							id: 'course',
+							label: __( 'Course', 'ohmylms' ),
+							render: ( item ) => item.course?.title ?? '—',
+						},
+						{
+							id: 'date',
+							label: __( 'Submitted', 'ohmylms' ),
+							render: ( item ) => formatDate( item.submitted_at ),
+						},
+						{
+							id: 'status',
+							label: __( 'Status', 'ohmylms' ),
+							render: ( item ) => submissionLabel( item ),
+						},
+						{
+							id: 'score',
+							label: __( 'Score', 'ohmylms' ),
+							render: ( item ) =>
+								null === item.score
+									? '—'
+									: `${ item.score } / ${ item.max_score }`,
+						},
+					] }
+					rowActions={ ( item ) => [
+						{
+							key: 'grade',
+							label:
+								'submitted' === item.status
+									? __( 'Grade', 'ohmylms' )
+									: __( 'Review', 'ohmylms' ),
+							render: (
+								<Link
+									to={ `/assignments/${ id }/submissions/${ item.id }` }
+									aria-label={ sprintf(
+										/* translators: %s: student name. */
+										__(
+											'Open submission by %s',
+											'ohmylms'
+										),
+										item.student.display_name
+									) }
+								>
+									{ 'submitted' === item.status
+										? __( 'Grade', 'ohmylms' )
+										: __( 'Review', 'ohmylms' ) }
+								</Link>
+							),
+						},
+					] }
+				/>
+			) }
 		</>
 	);
 }

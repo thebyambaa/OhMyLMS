@@ -175,11 +175,7 @@ export interface CouponQuery {
 	order: SortOrder;
 }
 
-export interface CourseOption {
-	id: number;
-	title: string;
-	status: string;
-}
+export type { CourseOption } from '../students/public';
 
 export type SubscriptionStatus =
 	| 'pending'

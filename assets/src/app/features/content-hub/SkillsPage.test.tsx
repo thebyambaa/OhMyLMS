@@ -60,9 +60,11 @@ it( 'shows the shared accessible table, pages and repeats a search', async () =>
 	open();
 	await screen.findByText( 'Algebra' );
 	expect(
-		screen.getByRole( 'region', { name: 'Skills library' } )
-	).toHaveAttribute( 'tabindex', '0' );
-	await user.click( screen.getByRole( 'button', { name: 'Next page' } ) );
+		screen.getByRole( 'table', { name: 'Skills library' } )
+	).toHaveClass( 'wp-list-table' );
+	await user.click(
+		screen.getAllByRole( 'button', { name: 'Next page' } )[ 0 ]!
+	);
 	await waitFor( () =>
 		expect( api.listSkills ).toHaveBeenLastCalledWith(
 			2,

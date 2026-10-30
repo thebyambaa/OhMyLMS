@@ -12,6 +12,9 @@ export const contentHubOverview: FeatureDefinition = {
 	id: 'content-hub-overview',
 	title: __( 'Content Hub', 'ohmylms' ),
 	path: '/content-hub',
+	group: 'content',
+	tab: 'courses',
+	section: 'overview',
 	extensionRoute: '/content-hub',
 	capability: 'edit_posts',
 	component: lazy(
@@ -26,6 +29,8 @@ export const contentHub: FeatureDefinition = {
 	id: 'content-hub',
 	title: __( 'Skills', 'ohmylms' ),
 	path: '/content-hub/skills',
+	group: 'content',
+	tab: 'skills',
 	capability: 'edit_posts',
 	component: lazy(
 		() =>

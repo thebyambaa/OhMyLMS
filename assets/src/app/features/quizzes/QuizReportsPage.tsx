@@ -1,14 +1,13 @@
-import {
-	Button,
-	Notice,
-	SelectControl,
-	TextControl,
-} from '@wordpress/components';
+import { Button, Notice } from '@wordpress/components';
 import { useCallback, useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Table } from '../../../ui/Table';
-import { Pagination } from '../../components/Pagination';
+import {
+	ListTable,
+	ListTableInput,
+	ListTableSelect,
+} from '../../../ui/ListTable';
+import { statusViews } from '../../components/listViews';
 import { useRequest } from '../../hooks/useRequest';
 import { listCourses } from './api';
 import { formatDate, formatMarks, quizStatusLabel } from './model';
@@ -138,90 +137,6 @@ export default function QuizReportsPage() {
 				) }{ ' ' }
 				<Link to="/quizzes">{ __( 'All quizzes', 'ohmylms' ) }</Link>
 			</p>
-			<form
-				role="search"
-				aria-label={ __( 'Filter quiz reports', 'ohmylms' ) }
-				onSubmit={ ( event ) => {
-					event.preventDefault();
-					update( { search: text.trim() } );
-				} }
-			>
-				<TextControl
-					label={ __( 'Search quizzes', 'ohmylms' ) }
-					value={ text }
-					maxLength={ 200 }
-					onChange={ setText }
-				/>
-				<Button
-					type="submit"
-					variant="secondary"
-					disabled={ rows.loading }
-				>
-					{ __( 'Search', 'ohmylms' ) }
-				</Button>
-				<SelectControl
-					label={ __( 'Status', 'ohmylms' ) }
-					value={ query.status }
-					options={ [
-						{ value: 'all', label: __( 'All', 'ohmylms' ) },
-						{
-							value: 'publish',
-							label: __( 'Published', 'ohmylms' ),
-						},
-						{ value: 'draft', label: __( 'Draft', 'ohmylms' ) },
-					] }
-					onChange={ ( value ) =>
-						update( {
-							status: value as QuizReportQuery[ 'status' ],
-						} )
-					}
-				/>
-				<SelectControl
-					label={ __( 'Activity', 'ohmylms' ) }
-					value={ query.activity }
-					options={ [
-						{ value: 'all', label: __( 'All quizzes', 'ohmylms' ) },
-						{
-							value: 'attempted',
-							label: __( 'With attempts', 'ohmylms' ),
-						},
-						{
-							value: 'to_grade',
-							label: __( 'Waiting for grading', 'ohmylms' ),
-						},
-					] }
-					onChange={ ( value ) =>
-						update( {
-							activity: value as QuizReportQuery[ 'activity' ],
-						} )
-					}
-				/>
-				<TextControl
-					label={ __( 'Find a course', 'ohmylms' ) }
-					value={ courseQuery }
-					onChange={ setCourseQuery }
-				/>
-				<SelectControl
-					label={ __( 'Course', 'ohmylms' ) }
-					value={ String( query.course ) }
-					options={ courseOptions }
-					onChange={ ( value ) =>
-						update( { course: Number( value ) } )
-					}
-				/>
-				<SelectControl
-					label={ __( 'Sort by', 'ohmylms' ) }
-					value={ `${ query.orderby }:${ query.order }` }
-					options={ sortOptions() }
-					onChange={ ( value ) => {
-						const [ orderby, order ] = value.split( ':' );
-						update( {
-							orderby: orderby as QuizReportQuery[ 'orderby' ],
-							order: order as QuizReportQuery[ 'order' ],
-						} );
-					} }
-				/>
-			</form>
 			{ courses.error && (
 				<Notice status="warning" isDismissible={ false }>
 					{ courses.error }
@@ -251,13 +166,106 @@ export default function QuizReportsPage() {
 					{ __( 'Loading quiz reports…', 'ohmylms' ) }
 				</p>
 			) }
-			{ ! rows.loading && ! rows.error && ! items.length && (
-				<p>{ __( 'No quizzes match these filters.', 'ohmylms' ) }</p>
-			) }
-			{ items.length > 0 && (
-				<>
-					<p role="status">
-						{ sprintf(
+			{ ! rows.error && ( ! rows.loading || items.length > 0 ) && (
+				<ListTable
+					caption={ __( 'Quiz reports', 'ohmylms' ) }
+					formLabel={ __( 'Filter quiz reports', 'ohmylms' ) }
+					busy={ rows.loading }
+					rows={ items }
+					rowKey={ ( row ) => row.id }
+					emptyMessage={ __(
+						'No quizzes match these filters.',
+						'ohmylms'
+					) }
+					views={ statusViews(
+						[
+							{ value: 'all', label: __( 'All', 'ohmylms' ) },
+							{
+								value: 'publish',
+								label: __( 'Published', 'ohmylms' ),
+							},
+							{ value: 'draft', label: __( 'Draft', 'ohmylms' ) },
+						],
+						query.status,
+						total,
+						( value ) =>
+							update( {
+								status: value as QuizReportQuery[ 'status' ],
+							} )
+					) }
+					search={ {
+						label: __( 'Search quizzes', 'ohmylms' ),
+						submitLabel: __( 'Search', 'ohmylms' ),
+						value: text,
+						maxLength: 200,
+						onChange: setText,
+					} }
+					onFilter={ () => update( { search: text.trim() } ) }
+					filterLabel={ null }
+					filters={
+						<>
+							<ListTableSelect
+								label={ __( 'Activity', 'ohmylms' ) }
+								value={ query.activity }
+								options={ [
+									{
+										value: 'all',
+										label: __( 'All quizzes', 'ohmylms' ),
+									},
+									{
+										value: 'attempted',
+										label: __( 'With attempts', 'ohmylms' ),
+									},
+									{
+										value: 'to_grade',
+										label: __(
+											'Waiting for grading',
+											'ohmylms'
+										),
+									},
+								] }
+								onChange={ ( value ) =>
+									update( {
+										activity:
+											value as QuizReportQuery[ 'activity' ],
+									} )
+								}
+							/>
+							<ListTableInput
+								label={ __( 'Find a course', 'ohmylms' ) }
+								type="search"
+								value={ courseQuery }
+								onChange={ setCourseQuery }
+							/>
+							<ListTableSelect
+								label={ __( 'Course', 'ohmylms' ) }
+								value={ String( query.course ) }
+								options={ courseOptions }
+								onChange={ ( value ) =>
+									update( { course: Number( value ) } )
+								}
+							/>
+							<ListTableSelect
+								label={ __( 'Sort by', 'ohmylms' ) }
+								value={ `${ query.orderby }:${ query.order }` }
+								options={ sortOptions() }
+								onChange={ ( value ) => {
+									const [ orderby, order ] =
+										value.split( ':' );
+									update( {
+										orderby:
+											orderby as QuizReportQuery[ 'orderby' ],
+										order: order as QuizReportQuery[ 'order' ],
+									} );
+								} }
+							/>
+						</>
+					}
+					pagination={ {
+						page: query.page,
+						totalPages: pages,
+						totalItems: total,
+						itemsLabel: sprintf(
 							/* translators: %d: number of quizzes. */
 							_n(
 								'%d quiz found.',
@@ -266,102 +274,118 @@ export default function QuizReportsPage() {
 								'ohmylms'
 							),
 							total
-						) }
-					</p>
-					<Table caption={ __( 'Quiz reports', 'ohmylms' ) } striped>
-						<thead>
-							<tr>
-								{ [
-									__( 'Quiz', 'ohmylms' ),
-									__( 'Course', 'ohmylms' ),
-									__( 'Status', 'ohmylms' ),
-									__( 'Attempts', 'ohmylms' ),
-									__( 'Learners', 'ohmylms' ),
-									__( 'To grade', 'ohmylms' ),
-									__( 'Completed', 'ohmylms' ),
-									__( 'Average marks', 'ohmylms' ),
-									__( 'Pass rate', 'ohmylms' ),
-									__( 'Last submission', 'ohmylms' ),
-									__( 'Actions', 'ohmylms' ),
-								].map( ( heading ) => (
-									<th key={ heading } scope="col">
-										{ heading }
-									</th>
-								) ) }
-							</tr>
-						</thead>
-						<tbody>
-							{ items.map( ( row ) => (
-								<tr key={ row.id }>
-									<th scope="row">
-										{ row.can_grade ? (
-											<Link
-												to={ `/quizzes/${ row.id }/attempts` }
-											>
-												{ row.title }
-											</Link>
-										) : (
-											row.title
-										) }
-									</th>
-									<td>{ row.course?.title ?? '—' }</td>
-									<td>{ quizStatusLabel( row.status ) }</td>
-									<td>{ row.attempts }</td>
-									<td>{ row.learners }</td>
-									<td>{ row.to_grade }</td>
-									<td>{ row.completed }</td>
-									<td>
-										{ null === row.average_score
-											? '—'
-											: formatMarks( row.average_score ) }
-									</td>
-									<td>{ passRateText( row ) }</td>
-									<td>
-										{ formatDate( row.last_submitted_at ) }
-									</td>
-									<td>
-										{ row.can_grade && (
-											<Link
-												to={ `/quizzes/${ row.id }/attempts` }
-												aria-label={ sprintf(
-													/* translators: %s: quiz title. */
-													__(
-														'Attempts for %s',
-														'ohmylms'
-													),
-													row.title
-												) }
-											>
-												{ __( 'Attempts', 'ohmylms' ) }
-											</Link>
-										) }{ ' ' }
-										{ row.can_edit && (
-											<Link
-												to={ `/quizzes/${ row.id }` }
-												aria-label={ sprintf(
-													/* translators: %s: quiz title. */
-													__(
-														'Settings for %s',
-														'ohmylms'
-													),
-													row.title
-												) }
-											>
-												{ __( 'Settings', 'ohmylms' ) }
-											</Link>
-										) }
-									</td>
-								</tr>
-							) ) }
-						</tbody>
-					</Table>
-					<Pagination
-						page={ query.page }
-						pages={ pages }
-						busy={ rows.loading }
-						onChange={ ( page ) => update( { page } ) }
-					/>
-				</>
+						),
+						onChange: ( page ) => update( { page } ),
+					} }
+					columns={ [
+						{
+							id: 'quiz',
+							label: __( 'Quiz', 'ohmylms' ),
+							primary: true,
+							render: ( row ) => (
+								<strong>
+									{ row.can_grade ? (
+										<Link
+											className="row-title"
+											to={ `/quizzes/${ row.id }/attempts` }
+										>
+											{ row.title }
+										</Link>
+									) : (
+										row.title
+									) }
+								</strong>
+							),
+						},
+						{
+							id: 'course',
+							label: __( 'Course', 'ohmylms' ),
+							render: ( row ) => row.course?.title ?? '—',
+						},
+						{
+							id: 'status',
+							label: __( 'Status', 'ohmylms' ),
+							render: ( row ) => quizStatusLabel( row.status ),
+						},
+						{
+							id: 'attempts',
+							label: __( 'Attempts', 'ohmylms' ),
+							className: 'num',
+							render: ( row ) => row.attempts,
+						},
+						{
+							id: 'learners',
+							label: __( 'Learners', 'ohmylms' ),
+							className: 'num',
+							render: ( row ) => row.learners,
+						},
+						{
+							id: 'to_grade',
+							label: __( 'To grade', 'ohmylms' ),
+							className: 'num',
+							render: ( row ) => row.to_grade,
+						},
+						{
+							id: 'completed',
+							label: __( 'Completed', 'ohmylms' ),
+							className: 'num',
+							render: ( row ) => row.completed,
+						},
+						{
+							id: 'average',
+							label: __( 'Average marks', 'ohmylms' ),
+							render: ( row ) =>
+								null === row.average_score
+									? '—'
+									: formatMarks( row.average_score ),
+						},
+						{
+							id: 'pass_rate',
+							label: __( 'Pass rate', 'ohmylms' ),
+							render: ( row ) => passRateText( row ),
+						},
+						{
+							id: 'last_submitted',
+							label: __( 'Last submission', 'ohmylms' ),
+							render: ( row ) =>
+								formatDate( row.last_submitted_at ),
+						},
+					] }
+					rowActions={ ( row ) => [
+						row.can_grade && {
+							key: 'attempts',
+							label: __( 'Attempts', 'ohmylms' ),
+							render: (
+								<Link
+									to={ `/quizzes/${ row.id }/attempts` }
+									aria-label={ sprintf(
+										/* translators: %s: quiz title. */
+										__( 'Attempts for %s', 'ohmylms' ),
+										row.title
+									) }
+								>
+									{ __( 'Attempts', 'ohmylms' ) }
+								</Link>
+							),
+						},
+						row.can_edit && {
+							key: 'edit',
+							label: __( 'Settings', 'ohmylms' ),
+							render: (
+								<Link
+									to={ `/quizzes/${ row.id }` }
+									aria-label={ sprintf(
+										/* translators: %s: quiz title. */
+										__( 'Settings for %s', 'ohmylms' ),
+										row.title
+									) }
+								>
+									{ __( 'Settings', 'ohmylms' ) }
+								</Link>
+							),
+						},
+					] }
+				/>
 			) }
 		</>
 	);

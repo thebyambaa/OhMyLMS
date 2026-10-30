@@ -7,9 +7,10 @@ import {
 	TextControl,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { request } from '../rest.mjs';
 
 const api = ( path, data ) =>
-	window.wp.apiFetch( {
+	request( {
 		path: `/ohmylms/v1/${ path }`,
 		...( data ? { method: 'POST', data } : {} ),
 	} );

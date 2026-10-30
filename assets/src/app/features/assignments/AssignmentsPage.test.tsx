@@ -63,7 +63,7 @@ describe( 'AssignmentsPage', () => {
 			name: 'Assignments',
 		} );
 		const rows = within( table ).getAllByRole( 'row' );
-		expect( rows ).toHaveLength( 3 );
+		expect( rows ).toHaveLength( 4 );
 		const first = within( rows[ 1 ]! );
 		expect(
 			first.getByRole( 'link', { name: 'Essay on rivers' } )
@@ -80,7 +80,7 @@ describe( 'AssignmentsPage', () => {
 		expect( second.getByText( 'Draft' ) ).toBeInTheDocument();
 		expect( second.getByText( 'Not in a course' ) ).toBeInTheDocument();
 		expect(
-			screen.getByText( '2 assignments found.' )
+			screen.getAllByText( '2 assignments found.' )[ 0 ]
 		).toBeInTheDocument();
 	} );
 	it( 'filters by search, status and course', async () => {
@@ -88,7 +88,7 @@ describe( 'AssignmentsPage', () => {
 		renderPage();
 		await screen.findByRole( 'table' );
 		await user.type(
-			screen.getByRole( 'textbox', { name: 'Search assignments' } ),
+			screen.getByRole( 'searchbox', { name: 'Search assignments' } ),
 			'essay{Enter}'
 		);
 		await waitFor( () =>
@@ -98,9 +98,8 @@ describe( 'AssignmentsPage', () => {
 				expect.any( AbortSignal )
 			)
 		);
-		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Status' } ),
-			'draft'
+		await user.click(
+			await screen.findByRole( 'link', { name: 'Draft' } )
 		);
 		await user.selectOptions(
 			await screen.findByRole( 'combobox', { name: 'Course' } ),

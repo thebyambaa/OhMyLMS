@@ -134,39 +134,6 @@ test( 'picker marks existing questions and appends without overwriting local edi
 	);
 } );
 import {
-	linkSkillPosts,
-	searchLinkTargets,
-	linkTargetTitles,
-} from '../../assets/src/features/question-bank/api.mjs';
-test( 'skills link lessons and courses through one route and look up titles', async () => {
-	let call;
-	const fetch = ( args ) => {
-		call = args;
-		return Promise.resolve( [] );
-	};
-	await linkSkillPosts( 3, 'courses', [ 10, 11 ], fetch );
-	assert.deepEqual( call, {
-		path: '/ohmylms/v1/skills/3/courses',
-		method: 'PUT',
-		data: { course_ids: [ 10, 11 ] },
-	} );
-	await linkSkillPosts( 3, 'lessons', [], fetch );
-	assert.deepEqual( call.data, { lesson_ids: [] } );
-	await searchLinkTargets( 'course', 'алгебр', fetch );
-	assert.equal(
-		call.path,
-		'/ohmylms/v1/skills/link-targets?type=course&search=%D0%B0%D0%BB%D0%B3%D0%B5%D0%B1%D1%80'
-	);
-	await linkTargetTitles( 'lesson', [ 4, 5 ], fetch );
-	assert.equal(
-		call.path,
-		'/ohmylms/v1/skills/link-targets?type=lesson&include=4%2C5'
-	);
-	call = null;
-	assert.deepEqual( await linkTargetTitles( 'lesson', [], fetch ), [] );
-	assert.equal( call, null );
-} );
-import {
 	emptyDraft,
 	changeDraftType,
 	setOptionCorrect,

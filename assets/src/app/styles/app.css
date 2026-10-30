@@ -107,3 +107,62 @@
 	border-inline-start: 4px solid var(--oml-danger);
 	padding-inline-start: var(--oml-space-4);
 }
+
+/* List tables: wp-admin's list-tables.css styles the markup; only the stacking of filters is ours. */
+.ohmylms-app .ohmylms-list-table .tablenav .actions input[type="date"] {
+	vertical-align: middle;
+}
+
+.ohmylms-app .ohmylms-summary-cards {
+	list-style: none;
+	margin: 0 0 var(--oml-space-3);
+	padding: 0;
+}
+
+.ohmylms-app .ohmylms-summary-cards > li {
+	display: inline-block;
+	margin: 0 var(--oml-space-3) var(--oml-space-3) 0;
+}
+
+.ohmylms-app .ohmylms-earnings-chart {
+	margin: 0 0 var(--oml-space-4);
+}
+
+.ohmylms-app .ohmylms-earnings-chart svg {
+	height: auto;
+	max-width: 720px;
+	width: 100%;
+}
+
+.ohmylms-app .ohmylms-earnings-chart-net {
+	color: var(--wp-admin-theme-color);
+	fill: var(--wp-admin-theme-color);
+}
+
+.ohmylms-app .ohmylms-earnings-chart-refund {
+	color: var(--oml-danger);
+	fill: var(--oml-danger);
+}
+
+.ohmylms-app .ohmylms-email-preview {
+	background: var(--oml-surface);
+	border: 1px solid var(--oml-border);
+	height: 640px;
+	width: 100%;
+}
+
+.ohmylms-app .ohmylms-certificate-preview {
+	border: 1px solid currentcolor;
+	display: block;
+	max-width: 100%;
+	width: 100%;
+}
+
+.ohmylms-app .ohmylms-level-chip {
+	border-radius: var(--oml-radius-control);
+	padding: 2px var(--oml-space-2);
+}
+
+.ohmylms-app .ohmylms-pre-wrap {
+	white-space: pre-wrap;
+}

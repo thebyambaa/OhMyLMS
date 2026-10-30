@@ -48,6 +48,16 @@ export const DEFAULT_LIMITS: Limits = {
 	max_criteria: 10,
 };
 
+/**
+ * Value for a native colour picker: the hex colour, or black while the text field holds no valid colour.
+ *
+ * @param value Colour typed by the user.
+ * @return Six-digit lower-case hex.
+ */
+export function pickerColor( value: string ): string {
+	return /^#[0-9a-fA-F]{6}$/.test( value ) ? value.toLowerCase() : '#000000';
+}
+
 /* ------------------------------------------------------------------ parsing */
 
 export function invalidResponse(): ApiError {

@@ -9,7 +9,7 @@ import {
 import { useCallback, useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
-import { Table } from '../../../ui/Table';
+import { ListTable } from '../../../ui/ListTable';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
@@ -178,61 +178,61 @@ export default function BundlesPage() {
 				}
 			/>
 			{ list.data && (
-				<Table caption={ __( 'Bundles', 'ohmylms' ) }>
-					<thead>
-						<tr>
-							<th scope="col">{ __( 'Title', 'ohmylms' ) }</th>
-							<th scope="col">{ __( 'Status', 'ohmylms' ) }</th>
-							<th scope="col">{ __( 'Members', 'ohmylms' ) }</th>
-							<th scope="col">
-								{ __( 'Followers', 'ohmylms' ) }
-							</th>
-							<th scope="col">{ __( 'Actions', 'ohmylms' ) }</th>
-						</tr>
-					</thead>
-					<tbody>
-						{ list.data.bundles.map( ( row ) => (
-							<tr key={ row.id }>
-								<th scope="row">{ row.title }</th>
-								<td>
-									{ row.status === 'published'
-										? __( 'Published', 'ohmylms' )
-										: __( 'Draft', 'ohmylms' ) }
-								</td>
-								<td>{ row.member_count }</td>
-								<td>{ row.follower_count }</td>
-								<td>
-									<Button
-										variant="tertiary"
-										disabled={
-											busy || dirtyFields || dirtyMembers
-										}
-										aria-label={ sprintf(
-											/* translators: %s: bundle title. */
-											__( 'Edit bundle: %s', 'ohmylms' ),
-											row.title
-										) }
-										onClick={ () =>
-											void operation.run(
-												( signal ) =>
-													readBundle(
-														row.id,
-														signal
-													),
-												show
-											)
-										}
-									>
-										{ __( 'Edit', 'ohmylms' ) }
-									</Button>
-								</td>
-							</tr>
-						) ) }
-					</tbody>
-				</Table>
-			) }
-			{ list.data && ! list.data.bundles.length && (
-				<p>{ __( 'No bundles yet.', 'ohmylms' ) }</p>
+				<ListTable
+					caption={ __( 'Bundles', 'ohmylms' ) }
+					rows={ list.data.bundles }
+					rowKey={ ( row ) => row.id }
+					emptyMessage={ __( 'No bundles yet.', 'ohmylms' ) }
+					columns={ [
+						{
+							id: 'title',
+							label: __( 'Title', 'ohmylms' ),
+							primary: true,
+							render: ( row ) => (
+								<strong className="row-title">
+									{ row.title }
+								</strong>
+							),
+						},
+						{
+							id: 'status',
+							label: __( 'Status', 'ohmylms' ),
+							render: ( row ) =>
+								row.status === 'published'
+									? __( 'Published', 'ohmylms' )
+									: __( 'Draft', 'ohmylms' ),
+						},
+						{
+							id: 'members',
+							label: __( 'Members', 'ohmylms' ),
+							className: 'num',
+							render: ( row ) => row.member_count,
+						},
+						{
+							id: 'followers',
+							label: __( 'Followers', 'ohmylms' ),
+							className: 'num',
+							render: ( row ) => row.follower_count,
+						},
+					] }
+					rowActions={ ( row ) => [
+						{
+							key: 'edit',
+							label: __( 'Edit', 'ohmylms' ),
+							disabled: busy || dirtyFields || dirtyMembers,
+							ariaLabel: sprintf(
+								/* translators: %s: bundle title. */
+								__( 'Edit bundle: %s', 'ohmylms' ),
+								row.title
+							),
+							onClick: () =>
+								void operation.run(
+									( signal ) => readBundle( row.id, signal ),
+									show
+								),
+						},
+					] }
+				/>
 			) }
 			{ detail && bundle && (
 				<section aria-labelledby="bundle-editor-heading">

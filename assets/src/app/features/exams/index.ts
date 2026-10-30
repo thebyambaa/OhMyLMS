@@ -10,6 +10,8 @@ export const exams: FeatureDefinition = {
 	id: 'exams',
 	title: __( 'Exams', 'ohmylms' ),
 	path: '/exams',
+	group: 'content',
+	tab: 'exams',
 	extensionRoute: '/content-hub/exams',
 	capability: 'edit_posts',
 	component: lazy(
@@ -22,6 +24,8 @@ export const examEditor: FeatureDefinition = {
 	id: 'exams-editor',
 	title: __( 'Exam', 'ohmylms' ),
 	path: '/exams/:id',
+	group: 'content',
+	tab: 'exams',
 	hidden: true,
 	capability: 'edit_posts',
 	component: lazy(
@@ -37,6 +41,9 @@ export const examImportReview: FeatureDefinition = {
 	id: 'exams-import-review',
 	title: __( 'Import review', 'ohmylms' ),
 	path: '/exams/imports/:jobId',
+	group: 'content',
+	tab: 'exams',
+	view: 'import',
 	hidden: true,
 	capability: 'edit_posts',
 	component: lazy(

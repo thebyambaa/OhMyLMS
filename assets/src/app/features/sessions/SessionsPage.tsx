@@ -1,14 +1,8 @@
-import {
-	Button,
-	Notice,
-	SelectControl,
-	TextControl,
-} from '@wordpress/components';
+import { Button, Notice } from '@wordpress/components';
 import { useCallback, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
-import { Table } from '../../../ui/Table';
-import { Pagination } from '../../components/Pagination';
+import { ListTable, ListTableSelect } from '../../../ui/ListTable';
 import { useRequest } from '../../hooks/useRequest';
 import { listSessions } from './api';
 import { EMPTY_QUERY, formatStart, providerLabel, stateLabel } from './model';
@@ -36,50 +30,6 @@ export default function SessionsPage() {
 					{ __( 'Schedule a session', 'ohmylms' ) }
 				</Link>
 			</p>
-			<form
-				role="search"
-				aria-label={ __( 'Search sessions', 'ohmylms' ) }
-				onSubmit={ ( event ) => {
-					event.preventDefault();
-					setQuery( ( current ) => ( {
-						...current,
-						search: text,
-						page: 1,
-					} ) );
-				} }
-			>
-				<TextControl
-					label={ __( 'Search sessions', 'ohmylms' ) }
-					value={ text }
-					onChange={ setText }
-				/>
-				<Button
-					type="submit"
-					variant="secondary"
-					disabled={ request.loading }
-				>
-					{ __( 'Search', 'ohmylms' ) }
-				</Button>
-			</form>
-			<SelectControl
-				label={ __( 'Provider', 'ohmylms' ) }
-				value={ query.provider }
-				options={ [
-					{ value: 'all', label: __( 'All providers', 'ohmylms' ) },
-					{ value: 'zoom', label: providerLabel( 'zoom' ) },
-					{
-						value: 'googlemeet',
-						label: providerLabel( 'googlemeet' ),
-					},
-				] }
-				onChange={ ( value ) =>
-					setQuery( ( current ) => ( {
-						...current,
-						provider: value as SessionQuery[ 'provider' ],
-						page: 1,
-					} ) )
-				}
-			/>
 			{ request.error && (
 				<Notice status="error" isDismissible={ false }>
 					{ request.error }{ ' ' }
@@ -91,13 +41,61 @@ export default function SessionsPage() {
 			{ request.loading && (
 				<p role="status">{ __( 'Loading sessions…', 'ohmylms' ) }</p>
 			) }
-			{ ! request.loading && ! request.error && ! items.length && (
-				<p>{ __( 'No sessions found.', 'ohmylms' ) }</p>
-			) }
-			{ items.length > 0 && (
-				<>
-					<p role="status">
-						{ sprintf(
+			{ ! request.error && ( ! request.loading || items.length > 0 ) && (
+				<ListTable
+					caption={ __( 'Live sessions', 'ohmylms' ) }
+					formLabel={ __( 'Search sessions', 'ohmylms' ) }
+					busy={ request.loading }
+					rows={ items }
+					rowKey={ ( session ) => session.id }
+					emptyMessage={ __( 'No sessions found.', 'ohmylms' ) }
+					search={ {
+						label: __( 'Search sessions', 'ohmylms' ),
+						submitLabel: __( 'Search', 'ohmylms' ),
+						value: text,
+						onChange: setText,
+					} }
+					onFilter={ () =>
+						setQuery( ( current ) => ( {
+							...current,
+							search: text,
+							page: 1,
+						} ) )
+					}
+					filterLabel={ null }
+					filters={
+						<ListTableSelect
+							label={ __( 'Provider', 'ohmylms' ) }
+							value={ query.provider }
+							options={ [
+								{
+									value: 'all',
+									label: __( 'All providers', 'ohmylms' ),
+								},
+								{
+									value: 'zoom',
+									label: providerLabel( 'zoom' ),
+								},
+								{
+									value: 'googlemeet',
+									label: providerLabel( 'googlemeet' ),
+								},
+							] }
+							onChange={ ( value ) =>
+								setQuery( ( current ) => ( {
+									...current,
+									provider:
+										value as SessionQuery[ 'provider' ],
+									page: 1,
+								} ) )
+							}
+						/>
+					}
+					pagination={ {
+						page: query.page,
+						totalPages: request.data?.totalPages ?? 1,
+						totalItems: total,
+						itemsLabel: sprintf(
 							/* translators: %d: number of sessions. */
 							_n(
 								'%d session found.',
@@ -106,82 +104,81 @@ export default function SessionsPage() {
 								'ohmylms'
 							),
 							total
-						) }
-					</p>
-					<Table caption={ __( 'Live sessions', 'ohmylms' ) } striped>
-						<thead>
-							<tr>
-								<th scope="col">
-									{ __( 'Session', 'ohmylms' ) }
-								</th>
-								<th scope="col">
-									{ __( 'Starts', 'ohmylms' ) }
-								</th>
-								<th scope="col">
-									{ __( 'Provider', 'ohmylms' ) }
-								</th>
-								<th scope="col">
-									{ __( 'Course', 'ohmylms' ) }
-								</th>
-								<th scope="col">
-									{ __( 'State', 'ohmylms' ) }
-								</th>
-								<th scope="col">
-									{ __( 'Meeting', 'ohmylms' ) }
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							{ items.map( ( session ) => (
-								<tr key={ session.id }>
-									<th scope="row">
+						),
+						onChange: ( page ) =>
+							setQuery( ( current ) => ( { ...current, page } ) ),
+					} }
+					columns={ [
+						{
+							id: 'session',
+							label: __( 'Session', 'ohmylms' ),
+							primary: true,
+							render: ( session ) => (
+								<>
+									<strong>
 										<Link
+											className="row-title"
 											to={ `/sessions/${ session.id }` }
 										>
 											{ session.title }
 										</Link>
 										{ 'draft' === session.status &&
 											` · ${ __( 'Draft', 'ohmylms' ) }` }
-									</th>
-									<td>
-										{ formatStart(
-											session.start,
-											session.timezone
-										) }
-									</td>
-									<td>
-										{ providerLabel( session.provider ) }
-									</td>
-									<td>{ session.course?.title ?? '—' }</td>
-									<td>{ stateLabel( session.state ) }</td>
-									<td>
-										{ session.meeting.join_url ? (
-											<a
-												href={
-													session.meeting.join_url
-												}
-												target="_blank"
-												rel="noopener noreferrer"
-											>
-												{ __( 'Join link', 'ohmylms' ) }
-											</a>
-										) : (
-											__( 'Not created', 'ohmylms' )
-										) }
-									</td>
-								</tr>
-							) ) }
-						</tbody>
-					</Table>
-					<Pagination
-						page={ query.page }
-						pages={ request.data?.totalPages ?? 1 }
-						busy={ request.loading }
-						onChange={ ( page ) =>
-							setQuery( ( current ) => ( { ...current, page } ) )
-						}
-					/>
-				</>
+									</strong>
+								</>
+							),
+						},
+						{
+							id: 'starts',
+							label: __( 'Starts', 'ohmylms' ),
+							render: ( session ) =>
+								formatStart( session.start, session.timezone ),
+						},
+						{
+							id: 'provider',
+							label: __( 'Provider', 'ohmylms' ),
+							render: ( session ) =>
+								providerLabel( session.provider ),
+						},
+						{
+							id: 'course',
+							label: __( 'Course', 'ohmylms' ),
+							render: ( session ) => session.course?.title ?? '—',
+						},
+						{
+							id: 'state',
+							label: __( 'State', 'ohmylms' ),
+							render: ( session ) => stateLabel( session.state ),
+						},
+						{
+							id: 'meeting',
+							label: __( 'Meeting', 'ohmylms' ),
+							render: ( session ) =>
+								session.meeting.join_url ? (
+									<a
+										href={ session.meeting.join_url }
+										target="_blank"
+										rel="noopener noreferrer"
+									>
+										{ __( 'Join link', 'ohmylms' ) }
+									</a>
+								) : (
+									__( 'Not created', 'ohmylms' )
+								),
+						},
+					] }
+					rowActions={ ( session ) => [
+						{
+							key: 'edit',
+							label: __( 'Edit', 'ohmylms' ),
+							render: (
+								<Link to={ `/sessions/${ session.id }` }>
+									{ __( 'Edit', 'ohmylms' ) }
+								</Link>
+							),
+						},
+					] }
+				/>
 			) }
 		</>
 	);

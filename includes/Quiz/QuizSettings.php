@@ -113,6 +113,29 @@ final class QuizSettings {
 	}
 
 	/**
+	 * Enabled, positive pass marks of several quizzes, read with one meta cache fill.
+	 *
+	 * @param int[] $quiz_ids Quiz post IDs.
+	 * @return array<int,float> Quiz ID => pass mark in marks; quizzes without one are absent.
+	 */
+	public static function pass_marks( array $quiz_ids ) {
+		$ids = array_values( array_filter( array_map( 'absint', $quiz_ids ) ) );
+		if ( ! $ids ) {
+			return array();
+		}
+		update_meta_cache( 'post', $ids );
+		$marks = array();
+		foreach ( $ids as $id ) {
+			$raw     = get_post_meta( $id, self::META, true );
+			$passing = is_array( $raw ) && isset( $raw['passing_grade'] ) && is_array( $raw['passing_grade'] ) ? $raw['passing_grade'] : array();
+			if ( ! empty( $passing['enabled'] ) && isset( $passing['value'] ) && is_numeric( $passing['value'] ) && (float) $passing['value'] > 0 ) {
+				$marks[ $id ] = round( (float) $passing['value'], 2 );
+			}
+		}
+		return $marks;
+	}
+
+	/**
 	 * Validate submitted settings against the current ones.
 	 *
 	 * Only submitted keys change. The merged result is validated as a whole, so a lone `available_until`

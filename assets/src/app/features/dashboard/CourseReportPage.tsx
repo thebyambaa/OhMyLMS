@@ -1,14 +1,9 @@
-import {
-	Button,
-	Notice,
-	SelectControl,
-	TextControl,
-} from '@wordpress/components';
+import { Notice } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useParams } from 'react-router-dom';
-import { Table } from '../../../ui/Table';
-import { Pagination } from '../../components/Pagination';
+import { ListTable } from '../../../ui/ListTable';
+import { statusViews } from '../../components/listViews';
 import { EarningsChart } from './EarningsChart';
 import { useCourseStudents, useRange, useSingleCourseReport } from './hooks';
 import {
@@ -21,16 +16,14 @@ import {
 } from './model';
 import { RangeFilter } from './RangeFilter';
 import { RequestStatus } from './RequestStatus';
-import { SortHeader } from './SortHeader';
 import { SummaryCards } from './SummaryCards';
-import type { StudentProgressFilter } from './types';
+import type { StudentOrderBy, StudentProgressFilter } from './types';
 
 function Students( { courseId }: { courseId: number } ) {
 	const list = useCourseStudents( courseId );
 	const [ text, setText ] = useState( '' );
 	const items = list.data?.items ?? [];
 	const total = list.data?.total ?? 0;
-	const sort = { orderby: list.query.orderby, order: list.query.order };
 
 	return (
 		<section aria-label={ __( 'Students', 'ohmylms' ) }>
@@ -43,162 +36,137 @@ function Students( { courseId }: { courseId: number } ) {
 					) }
 				</Link>
 			</p>
-			<form
-				role="search"
-				aria-label={ __( 'Search students', 'ohmylms' ) }
-				onSubmit={ ( event ) => {
-					event.preventDefault();
-					list.setSearch( text );
-				} }
-			>
-				<TextControl
-					label={ __( 'Search students', 'ohmylms' ) }
-					help={ __( 'Name, username or email.', 'ohmylms' ) }
-					value={ text }
-					onChange={ setText }
-				/>
-				<Button
-					type="submit"
-					variant="secondary"
-					disabled={ list.loading }
-				>
-					{ __( 'Search', 'ohmylms' ) }
-				</Button>
-			</form>
-			<SelectControl
-				label={ __( 'Progress', 'ohmylms' ) }
-				value={ list.query.progress }
-				options={ [
-					{ value: 'all', label: __( 'All students', 'ohmylms' ) },
-					{ value: 'running', label: __( 'In progress', 'ohmylms' ) },
-					{ value: 'completed', label: __( 'Completed', 'ohmylms' ) },
-				] }
-				onChange={ ( value ) =>
-					list.setProgress( value as StudentProgressFilter )
-				}
-			/>
 			<RequestStatus
 				loading={ list.loading }
 				error={ list.error }
 				label={ __( 'Loading students…', 'ohmylms' ) }
 				onRetry={ list.reload }
 			/>
-			{ ! list.loading &&
-				! list.error &&
-				( items.length ? (
-					<>
-						<p role="status">
-							{ sprintf(
-								/* translators: %d: number of students. */
-								_n(
-									'%d student found.',
-									'%d students found.',
-									total,
-									'ohmylms'
-								),
-								total
-							) }
-						</p>
-						<Table
-							caption={ __(
-								'Students of this course',
+			{ ! list.loading && ! list.error && (
+				<ListTable
+					caption={ __( 'Students of this course', 'ohmylms' ) }
+					formLabel={ __( 'Search students', 'ohmylms' ) }
+					rows={ items }
+					rowKey={ ( student ) => student.user_id }
+					emptyMessage={ __( 'No students found.', 'ohmylms' ) }
+					views={ statusViews(
+						[
+							{
+								value: 'all',
+								label: __( 'All students', 'ohmylms' ),
+							},
+							{
+								value: 'running',
+								label: __( 'In progress', 'ohmylms' ),
+							},
+							{
+								value: 'completed',
+								label: __( 'Completed', 'ohmylms' ),
+							},
+						],
+						list.query.progress,
+						total,
+						( value ) =>
+							list.setProgress( value as StudentProgressFilter )
+					) }
+					search={ {
+						label: __( 'Search students', 'ohmylms' ),
+						submitLabel: __( 'Search', 'ohmylms' ),
+						placeholder: __( 'Name, username or email', 'ohmylms' ),
+						value: text,
+						onChange: setText,
+						onSubmit: () => list.setSearch( text ),
+					} }
+					sort={ {
+						orderby: list.query.orderby,
+						order: list.query.order,
+						onChange: ( orderby, order ) =>
+							list.setSort( orderby as StudentOrderBy, order ),
+					} }
+					pagination={ {
+						page: list.query.page,
+						totalPages: list.data?.totalPages ?? 1,
+						totalItems: total,
+						itemsLabel: sprintf(
+							/* translators: %d: number of students. */
+							_n(
+								'%d student found.',
+								'%d students found.',
+								total,
 								'ohmylms'
-							) }
-							striped
-							compact
-						>
-							<thead>
-								<tr>
-									<SortHeader
-										label={ __( 'Name', 'ohmylms' ) }
-										field="name"
-										first="asc"
-										{ ...sort }
-										onSort={ list.setSort }
-									/>
-									<th scope="col">
-										{ __( 'Email', 'ohmylms' ) }
-									</th>
-									<th scope="col">
-										{ __( 'Status', 'ohmylms' ) }
-									</th>
-									<SortHeader
-										label={ __( 'Progress', 'ohmylms' ) }
-										field="percent"
-										{ ...sort }
-										onSort={ list.setSort }
-									/>
-									<SortHeader
-										label={ __( 'Enrolled', 'ohmylms' ) }
-										field="enrolled_at"
-										{ ...sort }
-										onSort={ list.setSort }
-									/>
-									<th scope="col">
-										{ __( 'Completed on', 'ohmylms' ) }
-									</th>
-								</tr>
-							</thead>
-							<tbody>
-								{ items.map( ( student ) => (
-									<tr key={ student.user_id }>
-										<th scope="row">{ student.name }</th>
-										<td>{ student.email }</td>
-										<td>{ studentStatus( student ) }</td>
-										<td>
-											<progress
-												max={ 100 }
-												value={
-													student.percent_complete
-												}
-												aria-label={ sprintf(
-													/* translators: %s: student name. */
-													__(
-														'Progress of %s',
-														'ohmylms'
-													),
-													student.name
-												) }
-											/>{ ' ' }
-											{ student.percent_complete }%{ ' ' }
-											<small>
-												{ sprintf(
-													/* translators: 1: completed lessons, 2: lessons, 3: completed quizzes, 4: quizzes. */
-													__(
-														'(%1$d of %2$d lessons, %3$d of %4$d quizzes)',
-														'ohmylms'
-													),
-													student.lessons.completed,
-													student.lessons.total,
-													student.quizzes.completed,
-													student.quizzes.total
-												) }
-											</small>
-										</td>
-										<td>
-											{ formatDate(
-												student.enrolled_at
-											) }
-										</td>
-										<td>
-											{ formatDate(
-												student.completed_at
-											) }
-										</td>
-									</tr>
-								) ) }
-							</tbody>
-						</Table>
-						<Pagination
-							page={ list.query.page }
-							pages={ list.data?.totalPages ?? 1 }
-							busy={ list.loading }
-							onChange={ list.setPage }
-						/>
-					</>
-				) : (
-					<p>{ __( 'No students found.', 'ohmylms' ) }</p>
-				) ) }
+							),
+							total
+						),
+						onChange: list.setPage,
+					} }
+					columns={ [
+						{
+							id: 'name',
+							label: __( 'Name', 'ohmylms' ),
+							primary: true,
+							sortable: 'asc',
+							render: ( student ) => (
+								<strong>{ student.name }</strong>
+							),
+						},
+						{
+							id: 'email',
+							label: __( 'Email', 'ohmylms' ),
+							render: ( student ) => student.email,
+						},
+						{
+							id: 'status',
+							label: __( 'Status', 'ohmylms' ),
+							render: ( student ) => studentStatus( student ),
+						},
+						{
+							id: 'percent',
+							label: __( 'Progress', 'ohmylms' ),
+							sortable: 'desc',
+							render: ( student ) => (
+								<>
+									<progress
+										max={ 100 }
+										value={ student.percent_complete }
+										aria-label={ sprintf(
+											/* translators: %s: student name. */
+											__( 'Progress of %s', 'ohmylms' ),
+											student.name
+										) }
+									/>{ ' ' }
+									{ student.percent_complete }%{ ' ' }
+									<span className="description">
+										{ sprintf(
+											/* translators: 1: completed lessons, 2: lessons, 3: completed quizzes, 4: quizzes. */
+											__(
+												'(%1$d of %2$d lessons, %3$d of %4$d quizzes)',
+												'ohmylms'
+											),
+											student.lessons.completed,
+											student.lessons.total,
+											student.quizzes.completed,
+											student.quizzes.total
+										) }
+									</span>
+								</>
+							),
+						},
+						{
+							id: 'enrolled_at',
+							label: __( 'Enrolled', 'ohmylms' ),
+							sortable: 'desc',
+							render: ( student ) =>
+								formatDate( student.enrolled_at ),
+						},
+						{
+							id: 'completed_at',
+							label: __( 'Completed on', 'ohmylms' ),
+							render: ( student ) =>
+								formatDate( student.completed_at ),
+						},
+					] }
+				/>
+			) }
 		</section>
 	);
 }

@@ -5,7 +5,7 @@ import {
 	ToggleControl,
 } from '@wordpress/components';
 import type { ReactNode } from 'react';
-import { toNumber } from './model';
+import { pickerColor, toNumber } from './model';
 
 interface FieldProps {
 	label: string;
@@ -160,9 +160,7 @@ export function ColorField( {
 	onChange: ( value: string ) => void;
 	pickerLabel: string;
 } ) {
-	const swatch = /^#[0-9a-fA-F]{6}$/.test( value )
-		? value.toLowerCase()
-		: '#000000';
+	const swatch = pickerColor( value );
 	return (
 		<div>
 			<TextField

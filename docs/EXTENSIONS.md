@@ -1,6 +1,6 @@
 # Extension API version 1
 
-Skills is a core feature with no Add-ons switch. The skill library (catalogue, prerequisites and lesson/course links) is the Skills tab of the Content Hub (`#/content-hub/skills`; the old `#/extensions/skills` address opens it). See [CONTENT-HUB.md](CONTENT-HUB.md).
+Skills is a core feature with no Add-ons switch. The skill library (catalogue, prerequisites and lesson/course links) is the Skills tab of the Content Hub (`admin.php?page=ohmylms-content&tab=skills`; the old `#/extensions/skills` address opens it). See [CONTENT-HUB.md](CONTENT-HUB.md).
 
 Feature code can live in `modules/<id>/` or a separate plugin. Internal modules load only via `OHMYLMS_ENABLED_MODULES` or `ohmylms_enabled_modules`. The examples module is disabled by default.
 
@@ -23,7 +23,7 @@ All registration methods accept `(id, definition)` and return an unregister func
 
 | Method | Surface |
 | --- | --- |
-| registerAdminPage | `/extensions/<id>` in the admin hash router |
+| registerAdminPage | Admin screen `/extensions/<id>`, shown as tab `ext-<id>` (below) |
 | registerEditorPanel | Existing route path in `slot`; context has route/hash/props |
 | registerQuestionEditor | Matching PHP question ID; existing authoring store |
 | registerLessonEditor | Matching PHP lesson ID; existing save callbacks |
@@ -31,6 +31,16 @@ All registration methods accept `(id, definition)` and return an unregister func
 | registerMembershipSettings | Namespaced plan values and update callback |
 | registerCheckoutField | Checkout UI guidance; register server fields separately |
 | registerIntegration | Integrations screen panel |
+
+Admin pages: `registerAdminPage( id, { label, render, group } )` adds a tab `ext-<id>` to one of the OhMyLMS admin
+pages, at `admin.php?page=<page>&tab=ext-<id>`. The optional `group` is `content`, `accounts`, `commerce`,
+`engagement` or `settings` (the default; also used for an unknown value). Pages registered without `group` keep
+working unchanged. Old addresses (`admin.php?page=ohmylms#/extensions/<id>`) still open the page. A PHP add-on
+can make its own links open the right page directly with the `ohmylms_extension_admin_page_group` filter
+(`$group, $id`). Inside the app, `context.route` stays the original route pattern (`/quiz-edit/:id`, `/accounthub`,
+…) and `context.hash` the screen's route as the hash router had it (`#/quizzes/5`), so editor-panel slot names and
+`when( context )` checks written for v1 keep matching; do not parse `window.location` for the route. Move within
+the app with links to app routes (`/courses/12`), not by building `admin.php` addresses yourself.
 
 Read `modules/examples/editor.js` and the host components in `assets/src/app/extensions/` (`ExtensionSlot.tsx`, `ExtensionBoundary.tsx`, `host.ts`) for exact render props. `list`, `get`, `subscribe` and `getRevision` support custom consumers. `renderSlot(name,context,kind)` returns React; `mount(element,name,context,kind)` mounts outside admin. Rendering failures show a per-extension alert and emit `ohmylms:extension-error`. Async/event handlers and trusted PHP callbacks handle their own errors.
 

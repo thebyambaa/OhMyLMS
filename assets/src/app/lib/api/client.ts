@@ -36,6 +36,8 @@ export interface RequestOptions {
 	query?: QueryParams;
 	/** JSON request body. */
 	data?: unknown;
+	/** Multipart body for file uploads; sent as is, so do not combine it with `data`. */
+	body?: FormData;
 	/** Cancels the request when aborted. */
 	signal?: AbortSignal;
 	/** Extra request headers. */
@@ -56,12 +58,21 @@ export type RequestExtras = Pick<
  * @throws {Error} An `ApiError` for any failure.
  */
 export async function request< T >( options: RequestOptions ): Promise< T > {
-	const { path, method = 'GET', query, data, signal, headers } = options;
+	const {
+		path,
+		method = 'GET',
+		query,
+		data,
+		body,
+		signal,
+		headers,
+	} = options;
 	try {
 		return await apiFetch< T >( {
 			path: withQuery( path, query ),
 			method,
 			...( undefined !== data ? { data } : {} ),
+			...( body ? { body } : {} ),
 			...( signal ? { signal } : {} ),
 			...( headers ? { headers: { ...headers } } : {} ),
 		} );

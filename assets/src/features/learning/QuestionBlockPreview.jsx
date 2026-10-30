@@ -2,7 +2,7 @@ import { createElement, useEffect, useRef, useState } from '@wordpress/element';
 import { useDispatch, useSelect } from '@wordpress/data';
 import { Spinner } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import apiFetch from '@wordpress/api-fetch';
+import { previewQuestion } from './api.mjs';
 
 /**
  * Exact student rendering of an unselected, unsaved question in an isolated frame.
@@ -51,12 +51,10 @@ export function QuestionBlockPreview( { question, clientId } ) {
 		setPreview( null );
 		setError( '' );
 		const timer = setTimeout( () => {
-			apiFetch( {
-				path: '/ohmylms/v1/question-preview',
-				method: 'POST',
-				signal: controller.signal,
-				data: { ...JSON.parse( source ), seed: seed.current },
-			} )
+			previewQuestion(
+				{ ...JSON.parse( source ), seed: seed.current },
+				controller.signal
+			)
 				.then( ( result ) => active && setPreview( result.url ) )
 				.catch(
 					( cause ) =>

@@ -8,6 +8,7 @@
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
+use OhMyLMS\Student\Directory;
 use WP_Error;
 use WP_Query;
 use WP_REST_Request;
@@ -45,7 +46,7 @@ class StudentController extends RestController {
 	/**
 	 * User meta flag set while a student is blocked.
 	 */
-	const BLOCKED_META = '_ohmylms_banned_student';
+	const BLOCKED_META = Directory::BLOCKED_META;
 
 	/**
 	 * Endpoint namespace.
@@ -66,12 +67,7 @@ class StudentController extends RestController {
 	 *
 	 * @var array<string,string>
 	 */
-	const ORDERBY_COLUMNS = array(
-		'name'             => 'u.display_name',
-		'email'            => 'u.user_email',
-		'registered'       => 'u.user_registered',
-		'courses_enrolled' => 'courses_enrolled',
-	);
+	const ORDERBY_COLUMNS = Directory::ORDERBY_COLUMNS;
 
 	/**
 	 * Register the routes for the student endpoints.
@@ -196,104 +192,6 @@ class StudentController extends RestController {
 	}
 
 	/**
-	 * Role slugs that make a user part of the student directory.
-	 *
-	 * @return string[]
-	 */
-	private function student_roles() {
-		return array_values( array_unique( array( 'subscriber', 'ohmylms_student', ohmylms_get_student_role() ) ) );
-	}
-
-	/**
-	 * Build the FROM/WHERE part shared by the page and count queries.
-	 *
-	 * @param array<string,mixed> $filters Filters: search, course, user_id.
-	 * @return array{0:string,1:array} SQL fragment and its prepare() arguments.
-	 */
-	private function directory_sql( array $filters ) {
-		global $wpdb;
-
-		$table = $wpdb->prefix . 'ohmylms_user_enrollment';
-		$sql   = ' FROM %i u LEFT JOIN ( SELECT user_id, COUNT(DISTINCT course_id) AS courses_enrolled,'
-			. " COUNT(DISTINCT CASE WHEN progress = 'completed' THEN course_id END) AS courses_completed"
-			. " FROM %i WHERE status IN ('enrolled','banned') GROUP BY user_id ) agg ON agg.user_id = u.ID";
-		$args  = array( $wpdb->users, $table );
-		$likes = array();
-		$roles = array( $wpdb->usermeta, $wpdb->get_blog_prefix() . 'capabilities' );
-		foreach ( $this->student_roles() as $role ) {
-			$likes[] = 'm.meta_value LIKE %s';
-			$roles[] = '%' . $wpdb->esc_like( '"' . $role . '";b:1;' ) . '%';
-		}
-
-		// New student accounts, and students created inside a school, belong in the directory before their first enrollment.
-		$sql .= ' WHERE ( agg.user_id IS NOT NULL OR EXISTS ( SELECT 1 FROM %i m WHERE m.user_id = u.ID AND m.meta_key = %s AND ( ' . implode( ' OR ', $likes ) . ' ) ) OR EXISTS ( SELECT 1 FROM %i ms WHERE ms.user_id = u.ID AND ms.meta_key = %s ) )';
-		$args = array_merge( $args, $roles, array( $wpdb->usermeta, '_ohmylms_managed_school' ) );
-
-		if ( ! empty( $filters['user_id'] ) ) {
-			$sql   .= ' AND u.ID = %d';
-			$args[] = (int) $filters['user_id'];
-		}
-
-		if ( ! empty( $filters['course'] ) ) {
-			$sql   .= " AND EXISTS ( SELECT 1 FROM %i ec WHERE ec.user_id = u.ID AND ec.course_id = %d AND ec.status IN ('enrolled','banned') )";
-			$args[] = $table;
-			$args[] = (int) $filters['course'];
-		}
-
-		if ( isset( $filters['search'] ) && '' !== $filters['search'] ) {
-			$like   = '%' . $wpdb->esc_like( $filters['search'] ) . '%';
-			$sql   .= ' AND ( u.display_name LIKE %s OR u.user_email LIKE %s OR u.user_login LIKE %s )';
-			$args[] = $like;
-			$args[] = $like;
-			$args[] = $like;
-		}
-
-		return array( $sql, $args );
-	}
-
-	/**
-	 * Read directory rows.
-	 *
-	 * @param array<string,mixed> $filters  Filters accepted by directory_sql().
-	 * @param string              $orderby  Key of ORDERBY_COLUMNS.
-	 * @param string              $order    ASC or DESC.
-	 * @param int                 $limit    Row limit.
-	 * @param int                 $offset   Row offset.
-	 * @return array[] Rows keyed by column alias.
-	 */
-	private function query_rows( array $filters, $orderby, $order, $limit, $offset ) {
-		global $wpdb;
-
-		list( $from, $args ) = $this->directory_sql( $filters );
-		$column              = self::ORDERBY_COLUMNS[ $orderby ];
-		$direction           = 'DESC' === $order ? 'DESC' : 'ASC';
-		$sql                 = 'SELECT u.ID AS id, u.display_name, u.user_email, u.user_registered,'
-			. ' COALESCE(agg.courses_enrolled, 0) AS courses_enrolled, COALESCE(agg.courses_completed, 0) AS courses_completed'
-			. $from
-			. " ORDER BY {$column} {$direction}, u.ID ASC LIMIT %d OFFSET %d";
-		$args[]              = (int) $limit;
-		$args[]              = (int) $offset;
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery -- Prepared with %i identifiers and an allow-listed ORDER BY.
-		$rows = $wpdb->get_results( $wpdb->prepare( $sql, $args ), ARRAY_A );
-		return is_array( $rows ) ? $rows : array();
-	}
-
-	/**
-	 * Count directory rows.
-	 *
-	 * @param array<string,mixed> $filters Filters accepted by directory_sql().
-	 * @return int
-	 */
-	private function count_rows( array $filters ) {
-		global $wpdb;
-
-		list( $from, $args ) = $this->directory_sql( $filters );
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery -- Prepared with %i identifiers.
-		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*)' . $from, $args ) );
-	}
-
-	/**
 	 * Load one student of the directory.
 	 *
 	 * @param int $id User ID.
@@ -304,7 +202,7 @@ class StudentController extends RestController {
 		if ( ! $id ) {
 			return self::not_found_error();
 		}
-		$rows = $this->query_rows( array( 'user_id' => $id ), 'name', 'ASC', 1, 0 );
+		$rows = Directory::rows( array( 'user_id' => $id ), 'name', 'ASC', 1, 0 );
 		return $rows ? $rows[0] : self::not_found_error();
 	}
 
@@ -322,13 +220,13 @@ class StudentController extends RestController {
 			'course' => absint( $request['course'] ),
 		);
 
-		$total       = $this->count_rows( $filters );
+		$total       = Directory::count( $filters );
 		$total_pages = (int) ceil( $total / $per_page );
 		if ( $total > 0 && $page > $total_pages ) {
 			return new WP_Error( 'ohmylms_student_invalid_page', __( 'The page number requested is larger than the number of pages available.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
 
-		$rows = $this->query_rows( $filters, $request['orderby'], strtoupper( (string) $request['order'] ), $per_page, ( $page - 1 ) * $per_page );
+		$rows = Directory::rows( $filters, $request['orderby'], strtoupper( (string) $request['order'] ), $per_page, ( $page - 1 ) * $per_page );
 		// One query for the meta of the whole page instead of one per student.
 		update_meta_cache( 'user', array_map( 'intval', wp_list_pluck( $rows, 'id' ) ) );
 
@@ -390,8 +288,6 @@ class StudentController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function update_item( $request ) {
-		global $wpdb;
-
 		$row = $this->find_student( $request['id'] );
 		if ( is_wp_error( $row ) ) {
 			return $row;
@@ -404,43 +300,10 @@ class StudentController extends RestController {
 			return new WP_Error( 'ohmylms_student_protected', __( 'You cannot block yourself or an administrator.', 'ohmylms' ), array( 'status' => 422 ) );
 		}
 
-		$from = $block ? 'enrolled' : 'banned';
-		$to   = $block ? 'banned' : 'enrolled';
-
-		$tables = array( $wpdb->prefix . 'ohmylms_user_enrollment', $wpdb->prefix . 'ohmylms_user_membership' );
-		foreach ( $tables as $table ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Existence probe for an optional table.
-			if ( $table !== $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) ) ) {
-				continue;
-			}
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- No API for enrolment rows.
-			$result = $wpdb->update(
-				$table,
-				array( 'status' => $to ),
-				array(
-					'user_id' => $user_id,
-					'status'  => $from,
-				),
-				array( '%s' ),
-				array( '%d', '%s' )
-			); // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment
-			if ( false === $result ) {
-				return new WP_Error( 'ohmylms_student_update_failed', __( 'The student could not be updated.', 'ohmylms' ), array( 'status' => 500 ) );
-			}
+		$updated = Directory::set_blocked( $user_id, $block );
+		if ( is_wp_error( $updated ) ) {
+			return $updated;
 		}
-
-		if ( $block ) {
-			update_user_meta( $user_id, self::BLOCKED_META, 'yes' );
-		} else {
-			delete_user_meta( $user_id, self::BLOCKED_META );
-		}
-
-		/**
-		 * Fires after a student was blocked.
-		 *
-		 * @param int $user_id Student (user) ID.
-		 */
-		do_action( $block ? 'ohmylms_student_blocked' : 'ohmylms_student_unblocked', $user_id );
 
 		return $this->get_item( $request );
 	}
@@ -448,7 +311,7 @@ class StudentController extends RestController {
 	/**
 	 * Matches the REST schema: turn a directory row into a response.
 	 *
-	 * @param array           $item    Row from query_rows().
+	 * @param array           $item    Row from Directory::rows().
 	 * @param WP_REST_Request $request Request.
 	 * @return WP_REST_Response
 	 */
@@ -463,7 +326,7 @@ class StudentController extends RestController {
 			'avatar_url'        => (string) get_avatar_url( $user_id, array( 'size' => 96 ) ),
 			'registered'        => self::format_gmt( $item['user_registered'] ),
 			'last_login'        => is_string( $last_login ) && '' !== $last_login ? self::format_local( $last_login ) : null,
-			'blocked'           => 'yes' === get_user_meta( $user_id, self::BLOCKED_META, true ),
+			'blocked'           => Directory::is_blocked( $user_id ),
 			'enrolled_courses'  => (int) $item['courses_enrolled'],
 			'completed_courses' => (int) $item['courses_completed'],
 		);

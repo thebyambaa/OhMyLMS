@@ -222,7 +222,7 @@ How it works:
 - Rows imported through MCP are **always** saved as unapproved drafts and **flagged for review**; the server forces this, so a client cannot opt out. A question with no approved version is never drawn into practice and never moves SmartScore or a learner's progress bar.
 - `dry_run` defaults to true. Call `import_questions` once to see per-row errors (unknown skill code, wrong answer letter, missing fields), fix them, then call it again with `dry_run: false`.
 - Sending the same rows again updates the same questions (they are identified by exam, paper, year, section, number and language), and changing a question puts it back in review while its previously approved version stays in use.
-- People can review without any AI client at **admin.php?page=ohmylms-import-questions** (no menu entry).
+- People can review without any AI client at **Content Hub › Question bank › Import review** (`admin.php?page=ohmylms-content&tab=question-bank&section=import-review`; the old `admin.php?page=ohmylms-import-questions` redirects there).
 - `review_questions` changes what learners are measured on. Prefer approving in the admin page; if an assistant approves, it should only do so for questions a person asked it to approve.
 - Suggested classification loop for an assistant: read the paper, call `search_skill_catalogue` for each question's topic, choose the most specific skill the question really tests (the first skill is primary), set a lower `confidence` when unsure, dry-run, correct, import, then tell the person how many are waiting.
 - Reconnect or refresh tool discovery after updating the plugin, and add the four names to any client allowlist. No new token is needed.

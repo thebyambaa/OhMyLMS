@@ -111,7 +111,7 @@ describe( 'AccountHubPage', () => {
 		renderHub();
 		await screen.findByRole( 'table', { name: 'Schools' } );
 		await user.type(
-			screen.getByRole( 'textbox', { name: 'Search schools' } ),
+			screen.getByRole( 'searchbox', { name: 'Search schools' } ),
 			' north '
 		);
 		await user.click( screen.getByRole( 'button', { name: 'Search' } ) );
@@ -137,9 +137,8 @@ describe( 'AccountHubPage', () => {
 		expect(
 			within( table ).getByRole( 'link', { name: 'Algebra' } )
 		).toHaveAttribute( 'href', '/account-hub/classes/9' );
-		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Status' } ),
-			'archived'
+		await user.click(
+			await screen.findByRole( 'link', { name: 'Archived' } )
 		);
 		await waitFor( () =>
 			expect( api.listClasses ).toHaveBeenLastCalledWith(

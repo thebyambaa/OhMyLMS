@@ -1,5 +1,6 @@
 import { useEffect, useState } from '@wordpress/element';
 import { useNavigate } from 'react-router-dom';
+import { routeFromHref } from '../routing/links';
 
 /**
  * Route a link points at.
@@ -12,10 +13,7 @@ function internalPath( anchor: HTMLAnchorElement ): string | null {
 	if ( ! href || anchor.target || anchor.hasAttribute( 'download' ) ) {
 		return null;
 	}
-	if ( href.startsWith( '#/' ) ) {
-		return href.slice( 1 );
-	}
-	return href.startsWith( '/' ) && ! href.startsWith( '//' ) ? href : null;
+	return routeFromHref( href );
 }
 
 /**

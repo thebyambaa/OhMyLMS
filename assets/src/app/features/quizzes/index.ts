@@ -7,6 +7,8 @@ export const quizzes: FeatureDefinition = {
 	id: 'quizzes',
 	title: __( 'Quizzes', 'ohmylms' ),
 	path: '/quizzes',
+	group: 'content',
+	tab: 'quizzes',
 	capability: 'edit_posts',
 	component: lazy(
 		() =>
@@ -24,6 +26,8 @@ export const quizEditor: FeatureDefinition = {
 	id: 'quizzes-editor',
 	title: __( 'Quiz settings', 'ohmylms' ),
 	path: '/quizzes/:id',
+	group: 'content',
+	tab: 'quizzes',
 	extensionRoute: '/quiz-edit/:id',
 	hidden: true,
 	capability: 'edit_posts',
@@ -43,6 +47,9 @@ export const quizReports: FeatureDefinition = {
 	id: 'quiz-reports',
 	title: __( 'Quiz reports', 'ohmylms' ),
 	path: '/reports/quizzes',
+	group: 'content',
+	tab: 'quizzes',
+	section: 'reports',
 	extensionRoute: '/quiz-report',
 	capability: 'edit_posts',
 	component: lazy(
@@ -58,6 +65,9 @@ export const quizAttempts: FeatureDefinition = {
 	id: 'quizzes-attempts',
 	title: __( 'Quiz attempts', 'ohmylms' ),
 	path: '/quizzes/:id/attempts',
+	group: 'content',
+	tab: 'quizzes',
+	view: 'attempts',
 	extensionRoute: '/quiz-report/:id',
 	hidden: true,
 	capability: 'edit_posts',

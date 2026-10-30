@@ -1,16 +1,7 @@
-.wp-has-submenu.toplevel_page_ohmylms ul li.wp-first-item {
-    display: none;    
-} 
-
-li#toplevel_page_ohmylms ul.wp-submenu a[href$="admin.php?page=ohmylms-app#/memberships"],
-li#toplevel_page_ohmylms ul.wp-submenu a[href$="admin.php?page=ohmylms-app#/settings?tab=general"] {
+li#toplevel_page_ohmylms ul.wp-submenu a[href="admin.php?page=ohmylms-settings"] {
     border-top: 2px solid rgba(240, 246, 252, .2);
     margin-top: 5px;
     padding-top: 8px;
-}
-
-li#toplevel_page_ohmylms ul.wp-submenu .wp-first-item {
-    display: none;
 }
 
 li#toplevel_page_ohmylms ul.wp-submenu li.wp-submenu-head {

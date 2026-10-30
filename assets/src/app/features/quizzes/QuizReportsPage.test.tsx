@@ -82,7 +82,9 @@ it( 'shows totals and the figures of every quiz with links', async () => {
 			'41 quizzes, 90 attempts, 30 learners, 4 to grade, 80 completed'
 		)
 	).toBeInTheDocument();
-	expect( screen.getByText( '41 quizzes found.' ) ).toBeInTheDocument();
+	expect(
+		screen.getAllByText( '41 quizzes found.' )[ 0 ]
+	).toBeInTheDocument();
 	const [ head, first, second ] = within( table ).getAllByRole( 'row' );
 	if ( ! head || ! first || ! second ) {
 		throw new Error( 'Expected a header and two rows.' );
@@ -121,7 +123,7 @@ it( 'reads filters from the address and keeps them there', async () => {
 	);
 	expect( screen.getByLabelText( 'Activity' ) ).toHaveValue( 'to_grade' );
 
-	await user.selectOptions( screen.getByLabelText( 'Status' ), 'draft' );
+	await user.click( await screen.findByRole( 'link', { name: 'Draft' } ) );
 	await waitFor( () =>
 		expect( screen.getByLabelText( 'location' ) ).toHaveTextContent(
 			'?status=draft&activity=to_grade'
@@ -161,14 +163,18 @@ it( 'pages without reloading the totals', async () => {
 	await screen.findByRole( 'table', { name: 'Quiz reports' } );
 	const summaries = vi.mocked( reports.getQuizReportSummary ).mock.calls
 		.length;
-	await user.click( screen.getByRole( 'button', { name: 'Next page' } ) );
+	await user.click(
+		screen.getAllByRole( 'button', { name: 'Next page' } )[ 0 ]!
+	);
 	await waitFor( () =>
 		expect( reports.listQuizReports ).toHaveBeenLastCalledWith(
 			expect.objectContaining( { page: 2 } ),
 			expect.any( AbortSignal )
 		)
 	);
-	expect( screen.getByText( 'Page 2 of 3' ) ).toBeInTheDocument();
+	expect( screen.getAllByLabelText( 'Current Page' )[ 0 ] ).toHaveValue(
+		'2'
+	);
 	expect( reports.getQuizReportSummary ).toHaveBeenCalledTimes( summaries );
 } );
 

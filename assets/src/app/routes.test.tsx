@@ -1,13 +1,21 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { lazy } from '@wordpress/element';
+import { Link } from 'react-router-dom';
 import { createRegistry } from './extensions/registry.mjs';
 import type { FeatureDefinition } from './features/types';
 import { renderShell } from './test/render';
 
 function page( heading: string ) {
 	return lazy( () =>
-		Promise.resolve( { default: () => <h2>{ heading }</h2> } )
+		Promise.resolve( {
+			default: () => (
+				<>
+					<h2>{ heading }</h2>
+					<Link to="/courses">Open courses</Link>
+				</>
+			),
+		} )
 	);
 }
 
@@ -19,12 +27,15 @@ function createFeatures(
 			id: 'home',
 			title: 'Home',
 			path: '/',
+			group: 'dashboard',
 			component: page( 'Home page' ),
 		},
 		{
 			id: 'courses',
 			title: 'Courses',
 			path: '/courses',
+			group: 'content',
+			tab: 'courses',
 			component: page( 'Courses page' ),
 			...overrides,
 		},
@@ -32,26 +43,18 @@ function createFeatures(
 }
 
 describe( 'app shell', () => {
-	it( 'exposes landmarks, a skip link and marks the current page', async () => {
+	it( 'renders the route in one main landmark, without a header or navigation of its own', async () => {
 		renderShell( createFeatures(), { route: '/courses' } );
 
-		expect( screen.getByRole( 'banner' ) ).toBeInTheDocument();
-		expect(
-			screen.getByRole( 'navigation', { name: 'Main' } )
-		).toBeInTheDocument();
 		expect( screen.getByRole( 'main' ) ).toBeInTheDocument();
-		expect(
-			screen.getByRole( 'link', { name: 'Skip to content' } )
-		).toBeInTheDocument();
 		expect(
 			await screen.findByRole( 'heading', { name: 'Courses page' } )
 		).toBeInTheDocument();
+		expect( screen.queryByRole( 'banner' ) ).not.toBeInTheDocument();
+		expect( screen.queryByRole( 'navigation' ) ).not.toBeInTheDocument();
 		expect(
-			screen.getByRole( 'link', { name: 'Courses' } )
-		).toHaveAttribute( 'aria-current', 'page' );
-		expect(
-			screen.getByRole( 'link', { name: 'Home' } )
-		).not.toHaveAttribute( 'aria-current' );
+			screen.queryByRole( 'heading', { level: 1 } )
+		).not.toBeInTheDocument();
 	} );
 
 	it( 'shows a loading status while a lazy route loads, then the route', async () => {
@@ -68,27 +71,14 @@ describe( 'app shell', () => {
 		renderShell( createFeatures() );
 		await screen.findByRole( 'heading', { name: 'Home page' } );
 
-		await user.click( screen.getByRole( 'link', { name: 'Courses' } ) );
+		await user.click(
+			screen.getByRole( 'link', { name: 'Open courses' } )
+		);
 
 		expect(
 			await screen.findByRole( 'heading', { name: 'Courses page' } )
 		).toBeInTheDocument();
 		expect( screen.getByRole( 'main' ) ).toHaveFocus();
-	} );
-
-	it( 'moves focus to main from the skip link without changing the route', async () => {
-		const user = userEvent.setup();
-		renderShell( createFeatures() );
-		await screen.findByRole( 'heading', { name: 'Home page' } );
-
-		await user.click(
-			screen.getByRole( 'link', { name: 'Skip to content' } )
-		);
-
-		expect( screen.getByRole( 'main' ) ).toHaveFocus();
-		expect(
-			screen.getByRole( 'heading', { name: 'Home page' } )
-		).toBeInTheDocument();
 	} );
 
 	it( 'renders the 404 route with a way back', async () => {
@@ -111,9 +101,6 @@ describe( 'app shell', () => {
 		expect(
 			await screen.findByRole( 'heading', { name: 'Page not found' } )
 		).toBeInTheDocument();
-		expect(
-			screen.queryByRole( 'link', { name: 'Courses' } )
-		).not.toBeInTheDocument();
 	} );
 } );
 
@@ -127,6 +114,8 @@ describe( 'extension surfaces', () => {
 				id: 'extension-pages',
 				title: 'Extensions',
 				path: '/extensions/:id',
+				group: 'settings',
+				tab: 'ext-:id',
 				hidden: true,
 				component: lazy(
 					() => import( './features/extensions/ExtensionPage' )
@@ -135,28 +124,22 @@ describe( 'extension surfaces', () => {
 		];
 	}
 
-	it( 'routes and links registered admin pages', async () => {
-		const user = userEvent.setup();
+	it( 'routes registered admin pages', async () => {
 		const extensions = createRegistry();
 		extensions.registerAdminPage( 'example-page', {
 			label: 'Example page',
 			render: () => <h2>Example extension page</h2>,
 		} );
-		renderShell( withExtensionPages(), { extensions } );
-		await screen.findByRole( 'heading', { name: 'Home page' } );
-
-		await user.click(
-			screen.getByRole( 'link', { name: 'Example page' } )
-		);
+		renderShell( withExtensionPages(), {
+			route: '/extensions/example-page',
+			extensions,
+		} );
 
 		expect(
 			await screen.findByRole( 'heading', {
 				name: 'Example extension page',
 			} )
 		).toBeInTheDocument();
-		expect(
-			screen.getByRole( 'link', { name: 'Example page' } )
-		).toHaveAttribute( 'aria-current', 'page' );
 	} );
 
 	it( '404s an unknown or disabled extension page', async () => {
@@ -177,13 +160,17 @@ describe( 'extension surfaces', () => {
 		expect( screen.queryByText( 'Disabled page' ) ).not.toBeInTheDocument();
 	} );
 
-	it( 'renders screen slots and editor panels with the extension route and params', async () => {
+	it( 'renders screen slots and editor panels with the extension route, params and hash', async () => {
 		const extensions = createRegistry();
 		extensions.registerSlot( 'before', {
 			label: 'Before',
 			slot: 'admin.screen.before',
 			when: ( context ) => context.route === '/course-edit/:id',
-			render: ( { id }: { id: string } ) => <p>Before course { id }</p>,
+			render: ( { id, hash }: { id: string; hash: string } ) => (
+				<p>
+					Before course { id } at { hash }
+				</p>
+			),
 		} );
 		extensions.registerSlot( 'after', {
 			label: 'After',
@@ -207,13 +194,15 @@ describe( 'extension surfaces', () => {
 				path: '/courses/:id',
 				extensionRoute: '/course-edit/:id',
 			} ),
-			{ route: '/courses/12', extensions }
+			{ route: '/courses/12?tab=outline', extensions }
 		);
 
 		expect(
 			await screen.findByRole( 'heading', { name: 'Courses page' } )
 		).toBeInTheDocument();
-		expect( screen.getByText( 'Before course 12' ) ).toBeInTheDocument();
+		expect(
+			screen.getByText( 'Before course 12 at #/courses/12?tab=outline' )
+		).toBeInTheDocument();
 		expect( screen.getByText( 'After every screen' ) ).toBeInTheDocument();
 		expect(
 			screen.getByText( 'Panel for /course-edit/:id' )
@@ -263,6 +252,7 @@ describe( 'route error boundary', () => {
 				id: 'flaky',
 				title: 'Flaky',
 				path: '/',
+				group: 'dashboard',
 				component: lazy( () => Promise.resolve( { default: Flaky } ) ),
 			},
 		] );
@@ -270,10 +260,6 @@ describe( 'route error boundary', () => {
 		expect( await screen.findByRole( 'alert' ) ).toHaveTextContent(
 			'Boom'
 		);
-		// The navigation stays usable.
-		expect(
-			screen.getByRole( 'link', { name: 'Flaky' } )
-		).toBeInTheDocument();
 
 		shouldFail = false;
 		await user.click( screen.getByRole( 'button', { name: 'Try again' } ) );

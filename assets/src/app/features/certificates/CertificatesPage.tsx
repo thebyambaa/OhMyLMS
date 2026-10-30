@@ -1,15 +1,9 @@
-import { Table } from '../../../ui/Table';
-import {
-	Button,
-	Modal,
-	Notice,
-	SelectControl,
-	TextControl,
-} from '@wordpress/components';
+import { ListTable } from '../../../ui/ListTable';
+import { Button, Modal, Notice, TextControl } from '@wordpress/components';
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useNavigate } from 'react-router-dom';
-import { Pagination } from '../../components/Pagination';
+import { statusViews } from '../../components/listViews';
 import { normalizeApiError } from '../../lib/api';
 import {
 	createCertificate,
@@ -141,33 +135,6 @@ export default function CertificatesPage() {
 			>
 				{ __( 'Add template', 'ohmylms' ) }
 			</Button>
-			<form
-				role="search"
-				aria-label={ __( 'Search certificate templates', 'ohmylms' ) }
-				onSubmit={ ( event ) => {
-					event.preventDefault();
-					list.search( query );
-				} }
-			>
-				<TextControl
-					label={ __( 'Search certificate templates', 'ohmylms' ) }
-					value={ query }
-					onChange={ setQuery }
-				/>
-				<SelectControl
-					label={ __( 'Status', 'ohmylms' ) }
-					value={ list.status }
-					options={ statusFilters() }
-					onChange={ list.setStatus }
-				/>
-				<Button
-					type="submit"
-					variant="secondary"
-					disabled={ busy || list.loading }
-				>
-					{ __( 'Search', 'ohmylms' ) }
-				</Button>
-			</form>
 			{ message && (
 				<Notice status="success" onRemove={ () => setMessage( null ) }>
 					{ message }
@@ -191,149 +158,151 @@ export default function CertificatesPage() {
 					{ __( 'Loading certificate templates…', 'ohmylms' ) }
 				</p>
 			) }
-			{ ! list.loading &&
-				! list.error &&
-				( list.data.items.length ? (
-					<>
-						<p role="status">
-							{ sprintf(
-								/* translators: %d: total template count. */
-								_n(
-									'%d template found.',
-									'%d templates found.',
-									list.data.total,
-									'ohmylms'
+			{ ! list.loading && ! list.error && (
+				<ListTable< Certificate >
+					caption={ __( 'Certificate templates', 'ohmylms' ) }
+					formLabel={ __(
+						'Search certificate templates',
+						'ohmylms'
+					) }
+					busy={ busy }
+					rows={ list.data.items }
+					rowKey={ ( item ) => item.id }
+					emptyMessage={ __(
+						'No certificate templates found.',
+						'ohmylms'
+					) }
+					views={ statusViews(
+						statusFilters(),
+						list.status,
+						list.data.total,
+						list.setStatus
+					) }
+					search={ {
+						label: __( 'Search certificate templates', 'ohmylms' ),
+						submitLabel: __( 'Search', 'ohmylms' ),
+						value: query,
+						onChange: setQuery,
+						onSubmit: () => list.search( query ),
+					} }
+					pagination={ {
+						page: list.page,
+						totalPages: list.data.totalPages,
+						totalItems: list.data.total,
+						itemsLabel: sprintf(
+							/* translators: %d: total template count. */
+							_n(
+								'%d template found.',
+								'%d templates found.',
+								list.data.total,
+								'ohmylms'
+							),
+							list.data.total
+						),
+						onChange: list.setPage,
+					} }
+					columns={ [
+						{
+							id: 'name',
+							label: __( 'Name', 'ohmylms' ),
+							primary: true,
+							render: ( item ) => (
+								<strong>
+									<Link
+										className="row-title"
+										to={ `/certificates/${ item.id }` }
+									>
+										{ item.name }
+									</Link>
+								</strong>
+							),
+						},
+						{
+							id: 'preview',
+							label: __( 'Preview', 'ohmylms' ),
+							render: ( item ) =>
+								item.background_url ? (
+									<img
+										src={ item.background_url }
+										alt=""
+										width={ 64 }
+										loading="lazy"
+									/>
+								) : (
+									__( 'No image', 'ohmylms' )
 								),
-								list.data.total
-							) }
-						</p>
-						<Table
-							caption={ __( 'Certificate templates', 'ohmylms' ) }
-							striped
-						>
-							<thead>
-								<tr>
-									{ [
-										__( 'Preview', 'ohmylms' ),
-										__( 'Name', 'ohmylms' ),
-										__( 'Status', 'ohmylms' ),
-										__( 'Layout', 'ohmylms' ),
-										__( 'Courses', 'ohmylms' ),
-										__( 'Actions', 'ohmylms' ),
-									].map( ( title ) => (
-										<th key={ title } scope="col">
-											{ title }
-										</th>
-									) ) }
-								</tr>
-							</thead>
-							<tbody>
-								{ list.data.items.map( ( item ) => (
-									<tr key={ item.id }>
-										<td>
-											{ item.background_url ? (
-												<img
-													src={ item.background_url }
-													alt=""
-													width={ 64 }
-													loading="lazy"
-												/>
-											) : (
-												<span>
-													{ __(
-														'No image',
-														'ohmylms'
-													) }
-												</span>
-											) }
-										</td>
-										<th scope="row">
-											<Link
-												to={ `/certificates/${ item.id }` }
-											>
-												{ item.name }
-											</Link>
-										</th>
-										<td>
-											{ 'publish' === item.status
-												? __( 'Published', 'ohmylms' )
-												: __( 'Draft', 'ohmylms' ) }
-										</td>
-										<td>
-											{ 'portrait' === item.orientation
-												? __( 'Portrait', 'ohmylms' )
-												: __( 'Landscape', 'ohmylms' ) }
-											{ ', ' }
-											{ item.size.toUpperCase() }
-										</td>
-										<td>{ item.course_count }</td>
-										<td>
-											<Link
-												to={ `/certificates/${ item.id }` }
-												aria-label={ sprintf(
-													/* translators: %s: template name. */
-													__( 'Edit %s', 'ohmylms' ),
-													item.name
-												) }
-											>
-												{ __( 'Edit', 'ohmylms' ) }
-											</Link>{ ' ' }
-											<Button
-												variant="link"
-												disabled={ busy }
-												onClick={ () =>
-													duplicate( item )
-												}
-												aria-label={ sprintf(
-													/* translators: %s: template name. */
-													__(
-														'Duplicate %s',
-														'ohmylms'
-													),
-													item.name
-												) }
-											>
-												{ __( 'Duplicate', 'ohmylms' ) }
-											</Button>{ ' ' }
-											<Button
-												variant="link"
-												isDestructive
-												disabled={ busy }
-												onClick={ () => {
-													setError( null );
-													setDialog( {
-														kind: 'delete',
-														item,
-													} );
-												} }
-												aria-label={ sprintf(
-													/* translators: %s: template name. */
-													__(
-														'Delete %s',
-														'ohmylms'
-													),
-													item.name
-												) }
-											>
-												{ __( 'Delete', 'ohmylms' ) }
-											</Button>
-										</td>
-									</tr>
-								) ) }
-							</tbody>
-						</Table>
-						<Pagination
-							page={ list.page }
-							pages={ list.data.totalPages }
-							busy={ busy || list.loading }
-							onChange={ list.setPage }
-						/>
-					</>
-				) : (
-					<p>
-						{ __( 'No certificate templates found.', 'ohmylms' ) }
-					</p>
-				) ) }
+						},
+						{
+							id: 'status',
+							label: __( 'Status', 'ohmylms' ),
+							render: ( item ) =>
+								'publish' === item.status
+									? __( 'Published', 'ohmylms' )
+									: __( 'Draft', 'ohmylms' ),
+						},
+						{
+							id: 'layout',
+							label: __( 'Layout', 'ohmylms' ),
+							render: ( item ) =>
+								`${
+									'portrait' === item.orientation
+										? __( 'Portrait', 'ohmylms' )
+										: __( 'Landscape', 'ohmylms' )
+								}, ${ item.size.toUpperCase() }`,
+						},
+						{
+							id: 'courses',
+							label: __( 'Courses', 'ohmylms' ),
+							className: 'num',
+							render: ( item ) => item.course_count,
+						},
+					] }
+					rowActions={ ( item ) => [
+						{
+							key: 'edit',
+							label: __( 'Edit', 'ohmylms' ),
+							render: (
+								<Link
+									to={ `/certificates/${ item.id }` }
+									aria-label={ sprintf(
+										/* translators: %s: template name. */
+										__( 'Edit %s', 'ohmylms' ),
+										item.name
+									) }
+								>
+									{ __( 'Edit', 'ohmylms' ) }
+								</Link>
+							),
+						},
+						{
+							key: 'duplicate',
+							label: __( 'Duplicate', 'ohmylms' ),
+							disabled: busy,
+							onClick: () => duplicate( item ),
+							ariaLabel: sprintf(
+								/* translators: %s: template name. */
+								__( 'Duplicate %s', 'ohmylms' ),
+								item.name
+							),
+						},
+						{
+							key: 'delete',
+							label: __( 'Delete', 'ohmylms' ),
+							destructive: true,
+							disabled: busy,
+							onClick: () => {
+								setError( null );
+								setDialog( { kind: 'delete', item } );
+							},
+							ariaLabel: sprintf(
+								/* translators: %s: template name. */
+								__( 'Delete %s', 'ohmylms' ),
+								item.name
+							),
+						},
+					] }
+				/>
+			) }
 			{ dialog?.kind === 'create' && (
 				<Modal
 					title={ __( 'Add certificate template', 'ohmylms' ) }

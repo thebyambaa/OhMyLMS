@@ -9,7 +9,6 @@ import type {
 	CouponLine,
 	CouponPayload,
 	CouponQuery,
-	CourseOption,
 	LineItem,
 	OrderDetail,
 	OrderNote,
@@ -21,8 +20,9 @@ import type {
 	StatusCounts,
 } from './types';
 
+export { COURSE_OPTION_LIMIT } from '../students/public';
+
 export const PER_PAGE = 20;
-export const COURSE_OPTION_LIMIT = 100;
 export const NOTE_MAX_LENGTH = 2000;
 export const CODE_MAX_LENGTH = 50;
 
@@ -355,15 +355,6 @@ export function parseDeletedId( value: unknown ): number {
 		throw invalidResponse();
 	}
 	return positiveId( record( item.previous ).id );
-}
-
-export function parseCourseOption( value: unknown ): CourseOption {
-	const item = record( value );
-	return {
-		id: positiveId( item.id ),
-		title: text( item.title ),
-		status: text( item.status ),
-	};
 }
 
 /**

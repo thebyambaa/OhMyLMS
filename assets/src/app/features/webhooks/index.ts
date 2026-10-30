@@ -6,6 +6,8 @@ export const webhooks: FeatureDefinition = {
 	id: 'webhooks',
 	title: __( 'Webhooks', 'ohmylms' ),
 	path: '/webhooks',
+	group: 'settings',
+	tab: 'webhooks',
 	capability: 'manage_options',
 	component: lazy(
 		() =>

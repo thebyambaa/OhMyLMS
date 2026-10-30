@@ -1,14 +1,12 @@
-import { Table } from '../../../ui/Table';
 import {
-	Button,
-	Notice,
-	SelectControl,
-	TextControl,
-} from '@wordpress/components';
+	ListTable,
+	ListTableInput,
+	ListTableSelect,
+} from '../../../ui/ListTable';
+import { Button, Notice } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
-import { Pagination } from '../../components/Pagination';
 import { useOrders, useStatusCounts } from './hooks';
 import {
 	ORDER_STATUSES,
@@ -20,7 +18,7 @@ import {
 	statusLabel,
 	validateDateRange,
 } from './model';
-import type { OrderOrderBy, OrderStatus, SortOrder } from './types';
+import type { OrderOrderBy, SortOrder } from './types';
 
 const SORTS: ReadonlyArray< {
 	value: string;
@@ -32,19 +30,6 @@ const SORTS: ReadonlyArray< {
 	{ value: 'total:desc', orderby: 'total', order: 'desc' },
 	{ value: 'total:asc', orderby: 'total', order: 'asc' },
 ];
-
-function sortLabel( value: string ) {
-	switch ( value ) {
-		case 'date:asc':
-			return __( 'Oldest first', 'ohmylms' );
-		case 'total:desc':
-			return __( 'Highest total', 'ohmylms' );
-		case 'total:asc':
-			return __( 'Lowest total', 'ohmylms' );
-		default:
-			return __( 'Newest first', 'ohmylms' );
-	}
-}
 
 /** Searchable, filterable, paged list of orders. */
 export default function OrdersPage() {
@@ -78,106 +63,11 @@ export default function OrdersPage() {
 					'ohmylms'
 				) }
 			</p>
-			<form
-				role="search"
-				aria-label={ __( 'Search orders', 'ohmylms' ) }
-				onSubmit={ ( event ) => {
-					event.preventDefault();
-					list.setFilters( { search: text } );
-				} }
-			>
-				<TextControl
-					label={ __( 'Search orders', 'ohmylms' ) }
-					help={ __(
-						'Order number, student name or email.',
-						'ohmylms'
-					) }
-					value={ text }
-					onChange={ setText }
-				/>
-				<Button
-					type="submit"
-					variant="secondary"
-					disabled={ list.loading }
-				>
-					{ __( 'Search', 'ohmylms' ) }
-				</Button>
-			</form>
-			<SelectControl
-				label={ __( 'Status', 'ohmylms' ) }
-				value={ list.query.status }
-				options={ [
-					{ value: 'any', label: __( 'All statuses', 'ohmylms' ) },
-					...ORDER_STATUSES.map( ( status ) => ( {
-						value: status,
-						label: counts.data
-							? sprintf(
-									/* translators: 1: order status, 2: number of orders. */
-									__( '%1$s (%2$d)', 'ohmylms' ),
-									statusLabel( status ),
-									counts.data[ status ]
-								)
-							: statusLabel( status ),
-					} ) ),
-				] }
-				onChange={ ( value ) =>
-					list.setFilters( {
-						status: ORDER_STATUSES.includes( value as OrderStatus )
-							? ( value as OrderStatus )
-							: 'any',
-					} )
-				}
-			/>
-			<SelectControl
-				label={ __( 'Payment method', 'ohmylms' ) }
-				value={ list.query.paymentMethod }
-				options={ [
-					{ value: '', label: __( 'All methods', 'ohmylms' ) },
-					...PAYMENT_METHODS.map( ( method ) => ( {
-						value: method,
-						label: paymentLabel( method ),
-					} ) ),
-				] }
-				onChange={ ( paymentMethod ) =>
-					list.setFilters( { paymentMethod } )
-				}
-			/>
-			<TextControl
-				label={ __( 'From date', 'ohmylms' ) }
-				type="date"
-				value={ after }
-				onChange={ ( value ) => changeDate( 'after', value ) }
-			/>
-			<TextControl
-				label={ __( 'To date', 'ohmylms' ) }
-				type="date"
-				value={ before }
-				onChange={ ( value ) => changeDate( 'before', value ) }
-			/>
 			{ rangeError && (
 				<Notice status="error" isDismissible={ false }>
 					{ rangeError }
 				</Notice>
 			) }
-			<SelectControl
-				label={ __( 'Sort by', 'ohmylms' ) }
-				value={ `${ list.query.orderby }:${ list.query.order }` }
-				options={ SORTS.map( ( { value } ) => ( {
-					value,
-					label: sortLabel( value ),
-				} ) ) }
-				onChange={ ( value ) => {
-					const choice = SORTS.find(
-						( option ) => option.value === value
-					);
-					if ( choice ) {
-						list.setFilters( {
-							orderby: choice.orderby,
-							order: choice.order,
-						} );
-					}
-				} }
-			/>
 			{ list.error && (
 				<Notice status="error" isDismissible={ false }>
 					{ list.error.message }{ ' ' }
@@ -189,85 +79,177 @@ export default function OrdersPage() {
 			{ list.loading && (
 				<p role="status">{ __( 'Loading orders…', 'ohmylms' ) }</p>
 			) }
-			{ ! list.loading &&
-				! list.error &&
-				( items.length ? (
-					<>
-						<p role="status">
-							{ sprintf(
-								/* translators: %d: total order count. */
-								_n(
-									'%d order found.',
-									'%d orders found.',
-									total,
-									'ohmylms'
-								),
-								total
-							) }
-						</p>
-						<Table caption={ __( 'Orders', 'ohmylms' ) } striped>
-							<thead>
-								<tr>
-									{ [
-										__( 'Order', 'ohmylms' ),
-										__( 'Date', 'ohmylms' ),
-										__( 'Student', 'ohmylms' ),
-										__( 'Status', 'ohmylms' ),
-										__( 'Payment', 'ohmylms' ),
-										__( 'Total', 'ohmylms' ),
-									].map( ( title ) => (
-										<th key={ title } scope="col">
-											{ title }
-										</th>
-									) ) }
-								</tr>
-							</thead>
-							<tbody>
-								{ items.map( ( item ) => (
-									<tr key={ item.id }>
-										<th scope="row">
-											<Link to={ orderPath( item.id ) }>
-												{ sprintf(
-													/* translators: %s: order number. */
-													__(
-														'Order #%s',
-														'ohmylms'
-													),
-													item.number
-												) }
-											</Link>
-										</th>
-										<td>
-											{ formatDate( item.date_created ) }
-										</td>
-										<td>{ item.student_name }</td>
-										<td>{ statusLabel( item.status ) }</td>
-										<td>
-											{ item.payment_method_title ||
-												paymentLabel(
-													item.payment_method
-												) }
-										</td>
-										<td>
-											{ formatMoney(
-												item.total,
-												item.currency
-											) }
-										</td>
-									</tr>
-								) ) }
-							</tbody>
-						</Table>
-						<Pagination
-							page={ list.query.page }
-							pages={ list.data?.totalPages ?? 1 }
-							busy={ list.loading }
-							onChange={ list.setPage }
-						/>
-					</>
-				) : (
-					<p>{ __( 'No orders found.', 'ohmylms' ) }</p>
-				) ) }
+			{ ! list.loading && ! list.error && (
+				<ListTable
+					caption={ __( 'Orders', 'ohmylms' ) }
+					formLabel={ __( 'Search orders', 'ohmylms' ) }
+					rows={ items }
+					rowKey={ ( item ) => item.id }
+					emptyMessage={ __( 'No orders found.', 'ohmylms' ) }
+					views={ [
+						{
+							key: 'any',
+							label: __( 'All', 'ohmylms' ),
+							current: 'any' === list.query.status,
+							count:
+								'any' === list.query.status ? total : undefined,
+							onSelect: () =>
+								list.setFilters( { status: 'any' } ),
+						},
+						...ORDER_STATUSES.map( ( status ) => ( {
+							key: status,
+							label: statusLabel( status ),
+							current: status === list.query.status,
+							count: counts.data?.[ status ],
+							onSelect: () => list.setFilters( { status } ),
+						} ) ),
+					] }
+					search={ {
+						label: __( 'Search orders', 'ohmylms' ),
+						submitLabel: __( 'Search', 'ohmylms' ),
+						placeholder: __(
+							'Order number, student name or email',
+							'ohmylms'
+						),
+						value: text,
+						onChange: setText,
+					} }
+					onFilter={ () => list.setFilters( { search: text } ) }
+					filterLabel={ null }
+					filters={
+						<>
+							<ListTableSelect
+								label={ __( 'Payment method', 'ohmylms' ) }
+								value={ list.query.paymentMethod }
+								options={ [
+									{
+										value: '',
+										label: __( 'All methods', 'ohmylms' ),
+									},
+									...PAYMENT_METHODS.map( ( method ) => ( {
+										value: method,
+										label: paymentLabel( method ),
+									} ) ),
+								] }
+								onChange={ ( paymentMethod ) =>
+									list.setFilters( { paymentMethod } )
+								}
+							/>
+							<ListTableInput
+								label={ __( 'From date', 'ohmylms' ) }
+								type="date"
+								value={ after }
+								onChange={ ( value ) =>
+									changeDate( 'after', value )
+								}
+							/>
+							<ListTableInput
+								label={ __( 'To date', 'ohmylms' ) }
+								type="date"
+								value={ before }
+								onChange={ ( value ) =>
+									changeDate( 'before', value )
+								}
+							/>
+						</>
+					}
+					sort={ {
+						orderby: list.query.orderby,
+						order: list.query.order,
+						onChange: ( orderby, order ) => {
+							const choice = SORTS.find(
+								( option ) =>
+									option.orderby === orderby &&
+									option.order === order
+							);
+							if ( choice ) {
+								list.setFilters( {
+									orderby: choice.orderby,
+									order: choice.order,
+								} );
+							}
+						},
+					} }
+					pagination={ {
+						page: list.query.page,
+						totalPages: list.data?.totalPages ?? 1,
+						totalItems: total,
+						itemsLabel: sprintf(
+							/* translators: %d: total order count. */
+							_n(
+								'%d order found.',
+								'%d orders found.',
+								total,
+								'ohmylms'
+							),
+							total
+						),
+						onChange: list.setPage,
+					} }
+					columns={ [
+						{
+							id: 'order',
+							label: __( 'Order', 'ohmylms' ),
+							primary: true,
+							render: ( item ) => (
+								<strong>
+									<Link
+										className="row-title"
+										to={ orderPath( item.id ) }
+									>
+										{ sprintf(
+											/* translators: %s: order number. */
+											__( 'Order #%s', 'ohmylms' ),
+											item.number
+										) }
+									</Link>
+								</strong>
+							),
+						},
+						{
+							id: 'date',
+							label: __( 'Date', 'ohmylms' ),
+							sortable: 'desc',
+							render: ( item ) => formatDate( item.date_created ),
+						},
+						{
+							id: 'student',
+							label: __( 'Student', 'ohmylms' ),
+							render: ( item ) => item.student_name,
+						},
+						{
+							id: 'status',
+							label: __( 'Status', 'ohmylms' ),
+							render: ( item ) => statusLabel( item.status ),
+						},
+						{
+							id: 'payment',
+							label: __( 'Payment', 'ohmylms' ),
+							render: ( item ) =>
+								item.payment_method_title ||
+								paymentLabel( item.payment_method ),
+						},
+						{
+							id: 'total',
+							label: __( 'Total', 'ohmylms' ),
+							sortable: 'desc',
+							render: ( item ) =>
+								formatMoney( item.total, item.currency ),
+						},
+					] }
+					rowActions={ ( item ) => [
+						{
+							key: 'view',
+							label: __( 'View', 'ohmylms' ),
+							render: (
+								<Link to={ orderPath( item.id ) }>
+									{ __( 'View', 'ohmylms' ) }
+								</Link>
+							),
+						},
+					] }
+				/>
+			) }
 		</>
 	);
 }

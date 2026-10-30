@@ -8,9 +8,13 @@
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
+use OhMyLMS\Bundles\Bundles;
+use OhMyLMS\ContentHub\ContentCounts;
 use OhMyLMS\Curriculum\Access as CurriculumAccess;
+use OhMyLMS\Curriculum\Items as CurriculumItems;
 use OhMyLMS\Curriculum\Schema as CurriculumSchema;
 use OhMyLMS\Exams\Library;
+use OhMyLMS\Quiz\AttemptReports;
 use OhMyLMS\Quiz\GradingPolicy;
 use OhMyLMS\Skills\Provenance;
 use OhMyLMS\Skills\Taxonomy;
@@ -123,62 +127,24 @@ class ContentHubOverviewController extends RestController {
 	}
 
 	/**
-	 * SQL condition and arguments that limit posts to the areas and their scope.
-	 *
-	 * @param array<string,array{type:string,own:bool}> $areas Areas.
-	 * @return array{0:string,1:array}
-	 */
-	private function scope( array $areas ) {
-		$all  = array();
-		$own  = array();
-		$args = array();
-		foreach ( $areas as $area ) {
-			if ( $area['own'] ) {
-				$own[] = $area['type'];
-			} else {
-				$all[] = $area['type'];
-			}
-		}
-		$parts = array();
-		if ( $all ) {
-			$parts[] = 'post_type IN (' . implode( ',', array_fill( 0, count( $all ), '%s' ) ) . ')';
-			$args    = array_merge( $args, $all );
-		}
-		if ( $own ) {
-			$parts[] = '( post_type IN (' . implode( ',', array_fill( 0, count( $own ), '%s' ) ) . ') AND post_author = %d )';
-			$args    = array_merge( $args, $own, array( get_current_user_id() ) );
-		}
-		$statuses = implode( ',', array_fill( 0, count( self::STATUSES ), '%s' ) );
-
-		return array( '( ' . implode( ' OR ', $parts ) . " ) AND post_status IN ({$statuses})", array_merge( $args, self::STATUSES ) );
-	}
-
-	/**
 	 * Read the overview.
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @return WP_REST_Response
 	 */
 	public function get_item( $request ) {
-		global $wpdb;
-
 		$post_areas = $this->post_areas();
-		$counts     = array();
-		$recent     = array();
-		if ( $post_areas ) {
-			list( $where, $args ) = $this->scope( $post_areas );
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery
-			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT post_type, post_status, COUNT(*) AS total FROM %i WHERE {$where} GROUP BY post_type, post_status", array_merge( array( $wpdb->posts ), $args ) ) );
-			foreach ( (array) $rows as $row ) {
-				$counts[ (string) $row->post_type ][ (string) $row->post_status ] = (int) $row->total;
+		$all_types  = array();
+		$own_types  = array();
+		foreach ( $post_areas as $area ) {
+			if ( $area['own'] ) {
+				$own_types[] = $area['type'];
+			} else {
+				$all_types[] = $area['type'];
 			}
-			$limit = (int) $request['recent'];
-			if ( $limit > 0 ) {
-				// New drafts keep a zero post_modified_gmt, so the site-local time orders them.
-				$recent = $wpdb->get_results( $wpdb->prepare( "SELECT ID, post_type, post_status, post_title, post_modified, post_modified_gmt FROM %i WHERE {$where} ORDER BY post_modified DESC, ID DESC LIMIT %d", array_merge( array( $wpdb->posts ), $args, array( $limit ) ) ) );
-			}
-			// phpcs:enable
 		}
+		$counts = ContentCounts::by_status( $all_types, $own_types, get_current_user_id(), self::STATUSES );
+		$recent = ContentCounts::recent( $all_types, $own_types, get_current_user_id(), self::STATUSES, (int) $request['recent'] );
 
 		$areas = array();
 		foreach ( $post_areas as $id => $area ) {
@@ -233,20 +199,7 @@ class ContentHubOverviewController extends RestController {
 	 * @return int
 	 */
 	private function attempts_to_grade() {
-		global $wpdb;
-
-		$table = $wpdb->prefix . 'ohmylms_quiz_attempts';
-		if ( current_user_can( 'manage_options' ) ) {
-			return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE status = 'in-review'", $table ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		}
-		$ids = GradingPolicy::quiz_ids_for_author( get_current_user_id() );
-		if ( ! $ids ) {
-			return 0;
-		}
-		$holders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery
-		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE status = 'in-review' AND quiz_id IN ({$holders})", array_merge( array( $table ), $ids ) ) );
+		return AttemptReports::count_to_grade( GradingPolicy::gradable_quiz_ids() );
 	}
 
 	/**
@@ -255,15 +208,12 @@ class ContentHubOverviewController extends RestController {
 	 * @return array<string,mixed>
 	 */
 	private function skills_area() {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT COUNT(*) AS total, SUM(m.meta_value = %s) AS archived FROM %i tt LEFT JOIN %i m ON m.term_id = tt.term_id AND m.meta_key = %s WHERE tt.taxonomy = %s', 'archived', $wpdb->term_taxonomy, $wpdb->termmeta, Provenance::STATUS_META, Taxonomy::NAME ) );
+		$counts = Provenance::archive_counts();
 
 		return array(
 			'id'     => 'skills',
-			'total'  => $row ? (int) $row->total : 0,
-			'counts' => array( 'archived' => $row ? (int) $row->archived : 0 ),
+			'total'  => $counts['total'],
+			'counts' => array( 'archived' => $counts['archived'] ),
 		);
 	}
 
@@ -273,15 +223,12 @@ class ContentHubOverviewController extends RestController {
 	 * @return array<string,mixed>
 	 */
 	private function curriculum_area() {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT COUNT(*) AS total, SUM(is_syllabus = 1) AS syllabuses FROM %i', CurriculumSchema::table( 'curriculum_items' ) ) );
+		$counts = CurriculumItems::counts();
 
 		return array(
 			'id'     => 'curriculum',
-			'total'  => $row ? (int) $row->total : 0,
-			'counts' => array( 'syllabuses' => $row ? (int) $row->syllabuses : 0 ),
+			'total'  => $counts['total'],
+			'counts' => array( 'syllabuses' => $counts['syllabuses'] ),
 		);
 	}
 
@@ -291,17 +238,14 @@ class ContentHubOverviewController extends RestController {
 	 * @return array<string,mixed>
 	 */
 	private function bundles_area() {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT COUNT(*) AS total, SUM(status = %s) AS published, SUM(status = %s) AS drafts FROM %i', 'published', 'draft', CurriculumSchema::table( 'bundles' ) ) );
+		$counts = Bundles::status_counts();
 
 		return array(
 			'id'     => 'bundles',
-			'total'  => $row ? (int) $row->total : 0,
+			'total'  => $counts['total'],
 			'counts' => array(
-				'published' => $row ? (int) $row->published : 0,
-				'drafts'    => $row ? (int) $row->drafts : 0,
+				'published' => $counts['published'],
+				'drafts'    => $counts['drafts'],
 			),
 		);
 	}

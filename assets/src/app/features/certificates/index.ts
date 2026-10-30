@@ -7,6 +7,9 @@ export const certificates: FeatureDefinition = {
 	id: 'certificates',
 	title: __( 'Certificates', 'ohmylms' ),
 	path: '/certificates',
+	group: 'engagement',
+	tab: 'gamification',
+	section: 'certificates',
 	capability: 'manage_options',
 	component: lazy(
 		() =>
@@ -24,6 +27,9 @@ export const certificateEditor: FeatureDefinition = {
 	id: 'certificates-editor',
 	title: __( 'Certificate template', 'ohmylms' ),
 	path: '/certificates/:id',
+	group: 'engagement',
+	tab: 'gamification',
+	section: 'certificates',
 	extensionRoute: '/certificate-edit/:id',
 	hidden: true,
 	capability: 'manage_options',

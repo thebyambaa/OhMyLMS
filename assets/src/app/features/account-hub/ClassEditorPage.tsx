@@ -1,4 +1,4 @@
-import { Table } from '../../../ui/Table';
+import { ListTable } from '../../../ui/ListTable';
 import {
 	Button,
 	Notice,
@@ -8,7 +8,6 @@ import {
 import { useCallback, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link, useParams } from 'react-router-dom';
-import { Pagination } from '../../components/Pagination';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
@@ -327,63 +326,55 @@ function Members( {
 				emptyText={ __( 'Nobody is in this class yet.', 'ohmylms' ) }
 				onRetry={ request.retry }
 			>
-				<Table caption={ __( 'Class roster', 'ohmylms' ) } striped>
-					<thead>
-						<tr>
-							{ [
-								__( 'Name', 'ohmylms' ),
-								__( 'Role', 'ohmylms' ),
-								__( 'Actions', 'ohmylms' ),
-							].map( ( title ) => (
-								<th key={ title } scope="col">
-									{ title }
-								</th>
-							) ) }
-						</tr>
-					</thead>
-					<tbody>
-						{ data.items.map( ( member ) => (
-							<tr key={ member.id }>
-								<th scope="row">{ member.display_name }</th>
-								<td>{ roleLabel( member.role ) }</td>
-								<td>
-									<Button
-										variant="link"
-										isDestructive
-										disabled={ archived || operation.busy }
-										onClick={ () =>
-											void operation.run(
-												( signal ) =>
-													removeMember(
-														item.id,
-														member.user_id,
-														member.role,
-														signal
-													),
-												onChange
-											)
-										}
-										aria-label={ sprintf(
-											/* translators: %s: person name. */
-											__(
-												'Remove %s from the class',
-												'ohmylms'
-											),
-											member.display_name
-										) }
-									>
-										{ __( 'Remove', 'ohmylms' ) }
-									</Button>
-								</td>
-							</tr>
-						) ) }
-					</tbody>
-				</Table>
-				<Pagination
-					page={ page }
-					pages={ data.totalPages }
-					busy={ request.loading }
-					onChange={ setPage }
+				<ListTable
+					caption={ __( 'Class roster', 'ohmylms' ) }
+					rows={ data.items }
+					rowKey={ ( member ) => member.id }
+					busy={ operation.busy }
+					pagination={ {
+						page,
+						totalPages: data.totalPages,
+						onChange: setPage,
+					} }
+					columns={ [
+						{
+							id: 'name',
+							label: __( 'Name', 'ohmylms' ),
+							primary: true,
+							render: ( member ) => (
+								<strong>{ member.display_name }</strong>
+							),
+						},
+						{
+							id: 'role',
+							label: __( 'Role', 'ohmylms' ),
+							render: ( member ) => roleLabel( member.role ),
+						},
+					] }
+					rowActions={ ( member ) => [
+						{
+							key: 'delete',
+							label: __( 'Remove', 'ohmylms' ),
+							destructive: true,
+							disabled: archived || operation.busy,
+							ariaLabel: sprintf(
+								/* translators: %s: person name. */
+								__( 'Remove %s from the class', 'ohmylms' ),
+								member.display_name
+							),
+							onClick: () =>
+								void operation.run(
+									( signal ) =>
+										removeMember(
+											item.id,
+											member.user_id,
+											member.role,
+											signal
+										),
+									onChange
+								),
+						},
+					] }
 				/>
 			</ListState>
 		</section>

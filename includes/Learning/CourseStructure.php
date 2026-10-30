@@ -50,6 +50,42 @@ final class CourseStructure {
 	}
 
 	/**
+	 * First course of each content item: the lowest course ID among the chapters that contain it.
+	 *
+	 * @param int[] $content_ids Content post IDs.
+	 * @return array<int,int> Content ID => course ID; content outside every course is absent.
+	 */
+	public static function first_courses( array $content_ids ) {
+		global $wpdb;
+		$ids = array_values( array_unique( array_filter( array_map( 'intval', $content_ids ) ) ) );
+		if ( ! $ids ) {
+			return array();
+		}
+		$holders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery -- Placeholders are generated from the id count.
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT content.content_id, MIN(chapter.course_id) AS course_id FROM %i content INNER JOIN %i chapter ON chapter.chapter_id = content.chapter_id WHERE content.content_id IN ({$holders}) GROUP BY content.content_id", array_merge( array( $wpdb->prefix . 'ohmylms_content_relationship', $wpdb->prefix . 'ohmylms_chapter_relationship' ), $ids ) ) );
+		$map  = array();
+		foreach ( (array) $rows as $row ) {
+			$map[ (int) $row->content_id ] = (int) $row->course_id;
+		}
+		return $map;
+	}
+
+	/**
+	 * Subquery selecting the content IDs placed in a course through a chapter, for `ID IN (...)` filters.
+	 *
+	 * @param int $course_id Course ID.
+	 * @return array{0:string,1:array} SQL with two `%i` and one `%d` placeholder, and its arguments.
+	 */
+	public static function content_in_course_sql( $course_id ) {
+		global $wpdb;
+		return array(
+			'SELECT content.content_id FROM %i content INNER JOIN %i chapter ON chapter.chapter_id = content.chapter_id WHERE chapter.course_id = %d',
+			array( $wpdb->prefix . 'ohmylms_content_relationship', $wpdb->prefix . 'ohmylms_chapter_relationship', (int) $course_id ),
+		);
+	}
+
+	/**
 	 * Fresh native relationship rows for an entire course, in display order.
 	 *
 	 * @param int $course_id Course ID.

@@ -594,7 +594,9 @@ describe( 'GamificationPage', () => {
 			await user.clear( limit );
 			await user.type( limit, '5' );
 			await user.selectOptions(
-				screen.getByRole( 'combobox', { name: 'Rank learners by' } ),
+				await screen.findByRole( 'combobox', {
+					name: 'Rank learners by',
+				} ),
 				'fastest_time'
 			);
 			await user.click(

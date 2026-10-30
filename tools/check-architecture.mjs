@@ -691,6 +691,122 @@ export function checkFeatureBoundaries( project, allowlist = [] ) {
 	);
 }
 
+const HEX_COLOUR =
+	/(?<![\w&/.#-])#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})(?![\w-])/g;
+const FUNCTION_COLOUR = /\b(?:rgba?|hsla?)\(/g;
+
+/** Raw colour literals (hex, rgb(), hsl()) in CSS text or in one JS/TS string, with their offsets. */
+export function findRawColours( text ) {
+	const found = [];
+	for ( const pattern of [ HEX_COLOUR, FUNCTION_COLOUR ] ) {
+		for ( const match of text.matchAll( pattern ) )
+			found.push( {
+				index: match.index,
+				value: match[ 0 ].replace( /\($/, '' ),
+			} );
+	}
+	return found.sort( ( a, b ) => a.index - b.index );
+}
+
+const lineAt = ( text, index ) => text.slice( 0, index ).split( '\n' ).length;
+
+/** Raw colours in a stylesheet (comments ignored) or in the strings of a TSX module. */
+export function rawColoursIn( file, text ) {
+	if ( file.endsWith( '.css' ) ) {
+		const code = text.replace( /\/\*[\s\S]*?\*\//g, ( comment ) =>
+			comment.replace( /[^\n]/g, ' ' )
+		);
+		return findRawColours( code ).map( ( hit ) => ( {
+			line: lineAt( code, hit.index ),
+			value: hit.value,
+		} ) );
+	}
+	let ast;
+	try {
+		ast = parse( text, {
+			sourceType: 'module',
+			plugins: parserPlugins( file ),
+			errorRecovery: true,
+		} );
+	} catch {
+		return [];
+	}
+	const hits = [];
+	const stack = [ ast.program ];
+	while ( stack.length ) {
+		const node = stack.pop();
+		if ( ! node || typeof node !== 'object' ) continue;
+		if ( Array.isArray( node ) ) {
+			stack.push( ...node );
+			continue;
+		}
+		// Fragment links (`href="#add"`) are not colours.
+		if (
+			node.type === 'JSXAttribute' &&
+			[ 'href', 'to' ].includes( node.name?.name )
+		)
+			continue;
+		const strings = [];
+		if ( node.type === 'StringLiteral' || node.type === 'JSXText' )
+			strings.push( node.value );
+		if ( node.type === 'TemplateElement' )
+			strings.push( node.value.cooked ?? node.value.raw );
+		for ( const value of strings ) {
+			for ( const hit of findRawColours( value ) )
+				hits.push( {
+					line:
+						( node.loc?.start.line ?? 1 ) +
+						value.slice( 0, hit.index ).split( '\n' ).length -
+						1,
+					value: hit.value,
+				} );
+		}
+		for ( const key of Object.keys( node ) ) {
+			if (
+				! SKIPPED_KEYS.has( key ) &&
+				node[ key ] &&
+				typeof node[ key ] === 'object'
+			)
+				stack.push( node[ key ] );
+		}
+	}
+	return hits.sort( ( a, b ) => a.line - b.line );
+}
+
+/**
+ * f. No raw colour literals in the app's stylesheets and components: colours come from WordPress
+ * classes, @wordpress/components, `--wp-admin-theme-color` or the `--oml-*` tokens. Data and model
+ * modules (.ts) may hold colour values; tests are not checked.
+ */
+export function checkRawColours( project, allowlist = [] ) {
+	const violations = [];
+	const files = walk( project.app ).filter(
+		( file ) =>
+			/\.(?:css|tsx)$/.test( file ) &&
+			! isTest( project.relative( file ) )
+	);
+	for ( const file of files ) {
+		const relative = project.relative( file );
+		for ( const hit of rawColoursIn( file, readText( file ) ) )
+			violations.push( {
+				file: relative,
+				line: hit.line,
+				value: hit.value,
+			} );
+	}
+	return partition(
+		violations,
+		allowlist,
+		( violation, entry ) =>
+			violation.file === entry.file &&
+			violation.value.toLowerCase() ===
+				String( entry.value ).toLowerCase(),
+		( violation ) =>
+			`${ violation.file }:${ violation.line } uses the raw colour ${ violation.value }; use a WordPress class, @wordpress/components or a --wp-admin-theme-color / --oml-* token`,
+		( entry ) => `${ entry.file } ${ entry.value }`
+	);
+}
+
 function partition( violations, allowlist, matches, describe, describeEntry ) {
 	const allowed = [];
 	const failures = [];
@@ -982,6 +1098,7 @@ export function runArchitectureChecks( root, options = {} ) {
 		...requireReasons( allowlist.recoveredRuntime, 'recoveredRuntime' ),
 		...requireReasons( allowlist.cycles, 'cycles' ),
 		...requireReasons( allowlist.crossFeature, 'crossFeature' ),
+		...requireReasons( allowlist.rawColours, 'rawColours' ),
 	];
 	const sections = [
 		{
@@ -1000,6 +1117,10 @@ export function runArchitectureChecks( root, options = {} ) {
 		{
 			name: 'features use each other only through index.ts / public.ts',
 			...checkFeatureBoundaries( project, allowlist.crossFeature ),
+		},
+		{
+			name: 'no raw colour literals in assets/src/app CSS and TSX',
+			...checkRawColours( project, allowlist.rawColours ),
 		},
 		{
 			name: 'admin bundles use WordPress React and @wordpress/* externals',

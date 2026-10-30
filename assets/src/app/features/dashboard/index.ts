@@ -7,6 +7,7 @@ export const dashboard: FeatureDefinition = {
 	id: 'dashboard',
 	title: __( 'Dashboard', 'ohmylms' ),
 	path: '/dashboard',
+	group: 'dashboard',
 	capability: 'manage_options',
 	component: lazy(
 		() =>
@@ -21,6 +22,8 @@ export const earnings: FeatureDefinition = {
 	id: 'earnings',
 	title: __( 'Earnings', 'ohmylms' ),
 	path: '/earnings',
+	group: 'commerce',
+	tab: 'earnings',
 	extensionRoute: '/earnings-report',
 	capability: 'manage_options',
 	component: lazy(
@@ -39,6 +42,9 @@ export const courseReport: FeatureDefinition = {
 	id: 'course-report',
 	title: __( 'Course report', 'ohmylms' ),
 	path: '/reports/courses/:id',
+	group: 'content',
+	tab: 'courses',
+	view: 'report',
 	extensionRoute: '/course/:id/report',
 	hidden: true,
 	capability: 'manage_options',
@@ -55,6 +61,9 @@ export const courseRoster: FeatureDefinition = {
 	id: 'course-roster',
 	title: __( 'Course roster', 'ohmylms' ),
 	path: '/reports/courses/:id/students',
+	group: 'content',
+	tab: 'courses',
+	view: 'students',
 	extensionRoute: '/courses/:id/students',
 	hidden: true,
 	capability: 'manage_options',

@@ -84,6 +84,19 @@ Front-end SCSS, `oml-ui.css`, the learner CSS, block styles, theme-support CSS a
 The shipped outputs (`assets/dist/css/admin`, `assets/dist/css/chunks`, `assets/css/oml-ui-*.css`, `admin-ui.css`,
 `tailwind.css`) and their PHP handles are removed by the build and PHP steps of [CUTOVER.md](CUTOVER.md).
 
+## WordPress list tables and admin colour scheme (31 October 2026)
+
+- App lists render `WP_List_Table` markup through `assets/src/ui/ListTable.jsx`; wp-admin's own
+  `list-tables.css` (part of the `wp-admin` style bundle on every admin page) styles them. The app adds no
+  list-table CSS beyond one alignment rule in `assets/src/app/styles/app.css`.
+- `admin-design-system.css` rules moved from `body.oml-ds` to `body.oml-ds-branded`, so they apply only for a
+  branded Design system preset; under the default WordPress preset plugin screens use WordPress's styles
+  and the user's admin colour scheme. The `.ohmylms-ds-*` rules for the Design system tab are unscoped as before.
+- One-off inline values in app components (earnings chart colours, email and certificate preview frames,
+  summary-card spacing, level chips, pre-wrapped notes, the design-system swatch) moved to token-based
+  classes in `app.css` and `admin-design-system.css`; `check:architecture` now rejects raw colours in
+  `assets/src/app` ([DESIGN-TOKENS](DESIGN-TOKENS.md)).
+
 ## Remaining optimization boundaries
 
 - Feature modules retain their ordered cascade slots. Further request-count reduction needs a

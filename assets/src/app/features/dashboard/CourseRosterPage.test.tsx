@@ -110,14 +110,14 @@ describe( 'course roster', () => {
 			name: 'Students of this course',
 		} );
 		await userEvent.click(
-			within( table ).getByLabelText( 'Select all on this page' )
+			within( table ).getAllByLabelText( 'Select All' )[ 0 ]!
 		);
 		await userEvent.selectOptions(
-			screen.getByLabelText( 'Bulk action' ),
+			screen.getAllByLabelText( 'Select bulk action' )[ 0 ]!,
 			'remind:continue'
 		);
 		await userEvent.click(
-			screen.getByRole( 'button', { name: 'Apply to 2 selected' } )
+			screen.getAllByRole( 'button', { name: 'Apply' } )[ 0 ]!
 		);
 		const dialog = await screen.findByRole( 'dialog', {
 			name: 'Send reminders',
@@ -160,11 +160,11 @@ describe( 'course roster', () => {
 			within( table ).getByLabelText( 'Select Ada Lovelace' )
 		);
 		await userEvent.selectOptions(
-			screen.getByLabelText( 'Bulk action' ),
+			screen.getAllByLabelText( 'Select bulk action' )[ 0 ]!,
 			'unenroll'
 		);
 		await userEvent.click(
-			screen.getByRole( 'button', { name: 'Apply to 1 selected' } )
+			screen.getAllByRole( 'button', { name: 'Apply' } )[ 0 ]!
 		);
 		const dialog = await screen.findByRole( 'dialog', {
 			name: 'Unenrol students',

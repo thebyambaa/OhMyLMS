@@ -72,6 +72,21 @@ final class Bundles {
 	}
 
 	/**
+	 * Number of bundles, published bundles and drafts.
+	 *
+	 * @return array{total:int,published:int,drafts:int}
+	 */
+	public static function status_counts() {
+		global $wpdb;
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT COUNT(*) AS total, SUM(status = %s) AS published, SUM(status = %s) AS drafts FROM %i', 'published', 'draft', self::table() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- One fresh aggregate.
+		return array(
+			'total'     => $row ? (int) $row->total : 0,
+			'published' => $row ? (int) $row->published : 0,
+			'drafts'    => $row ? (int) $row->drafts : 0,
+		);
+	}
+
+	/**
 	 * Clean for Bundles.
 	 *
 	 * @param array $data Input data.

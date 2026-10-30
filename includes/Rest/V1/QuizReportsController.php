@@ -8,6 +8,8 @@
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
+use OhMyLMS\Learning\CourseStructure;
+use OhMyLMS\Quiz\AttemptReports;
 use OhMyLMS\Quiz\GradingPolicy;
 use OhMyLMS\Quiz\QuizSettings;
 use WP_Error;
@@ -36,7 +38,7 @@ class QuizReportsController extends RestController {
 	/**
 	 * Statuses shown in the "all" view.
 	 */
-	const LISTED_STATUSES = array( 'publish', 'draft', 'pending', 'future', 'private' );
+	const LISTED_STATUSES = AttemptReports::LISTED_STATUSES;
 
 	/**
 	 * Register the routes.
@@ -157,50 +159,18 @@ class QuizReportsController extends RestController {
 	}
 
 	/**
-	 * Per-quiz attempt figures as a derived table.
-	 *
-	 * @return string SQL with one `%i` placeholder for the attempts table.
-	 */
-	private function stats_sql() {
-		return "SELECT quiz_id, COUNT(*) AS attempts, COUNT(DISTINCT student_id) AS learners, SUM(status = 'in-progress') AS in_progress, SUM(status = 'in-review') AS to_grade, SUM(status = 'completed') AS completed, AVG(CASE WHEN status = 'completed' THEN total END) AS average_score, MAX(CASE WHEN status <> 'in-progress' AND end_date > '1000-01-01' THEN end_date END) AS last_submitted FROM %i GROUP BY quiz_id";
-	}
-
-	/**
-	 * FROM and WHERE of the filtered quiz set, with its arguments.
+	 * Filters of the request in the shape AttemptReports expects.
 	 *
 	 * @param WP_REST_Request $request Request.
-	 * @return array{0:string,1:array}|null Null when the user may grade no quiz.
+	 * @return array<string,mixed>
 	 */
-	private function filtered( $request ) {
-		global $wpdb;
-
-		$statuses = 'all' === $request['status'] ? self::LISTED_STATUSES : array( (string) $request['status'] );
-		$where    = array( 'p.post_type = %s', 'p.post_status IN (' . implode( ',', array_fill( 0, count( $statuses ), '%s' ) ) . ')' );
-		$args     = array_merge( array( $wpdb->prefix . 'ohmylms_quiz_attempts', $wpdb->posts, OHMYLMS_QUIZ_CPT ), $statuses );
-
-		if ( ! current_user_can( 'manage_options' ) ) {
-			$ids = GradingPolicy::quiz_ids_for_author( get_current_user_id() );
-			if ( ! $ids ) {
-				return null;
-			}
-			$where[] = 'p.ID IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')';
-			$args    = array_merge( $args, $ids );
-		}
-		if ( '' !== (string) $request['search'] ) {
-			$where[] = 'p.post_title LIKE %s';
-			$args[]  = '%' . $wpdb->esc_like( (string) $request['search'] ) . '%';
-		}
-		if ( ! empty( $request['course'] ) ) {
-			$where[] = 'p.ID IN (SELECT content.content_id FROM %i content INNER JOIN %i chapter ON chapter.chapter_id = content.chapter_id WHERE chapter.course_id = %d)';
-			$args    = array_merge( $args, array( $wpdb->prefix . 'ohmylms_content_relationship', $wpdb->prefix . 'ohmylms_chapter_relationship', (int) $request['course'] ) );
-		}
-		if ( 'attempted' === $request['activity'] ) {
-			$where[] = 's.attempts > 0';
-		} elseif ( 'to_grade' === $request['activity'] ) {
-			$where[] = 's.to_grade > 0';
-		}
-
-		return array( '(' . $this->stats_sql() . ') s RIGHT JOIN %i p ON s.quiz_id = p.ID WHERE ' . implode( ' AND ', $where ), $args );
+	private function filters( $request ) {
+		return array(
+			'search'   => (string) $request['search'],
+			'course'   => (int) $request['course'],
+			'status'   => (string) $request['status'],
+			'activity' => (string) $request['activity'],
+		);
 	}
 
 	/**
@@ -210,33 +180,17 @@ class QuizReportsController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_items( $request ) {
-		global $wpdb;
-
 		$page     = max( 1, (int) $request['page'] );
 		$per_page = min( 100, max( 1, (int) $request['per_page'] ) );
-		$filtered = $this->filtered( $request );
+		$filters  = $this->filters( $request );
+		$scope    = GradingPolicy::gradable_quiz_ids();
 		$rows     = array();
-		$total    = 0;
-		if ( null !== $filtered ) {
-			list( $from, $args ) = $filtered;
-			$order               = 'asc' === $request['order'] ? 'ASC' : 'DESC';
-			$columns             = array(
-				'title'          => "p.post_title {$order}",
-				'created_at'     => "p.post_date_gmt {$order}",
-				'attempts'       => "COALESCE(s.attempts, 0) {$order}",
-				'to_grade'       => "COALESCE(s.to_grade, 0) {$order}",
-				'last_submitted' => "s.last_submitted IS NULL ASC, s.last_submitted {$order}",
-			);
-			$sort                = $columns[ $request['orderby'] ];
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery
-			$total = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$from}", $args ) );
-			$pages = (int) ceil( $total / $per_page );
-			if ( $page > $pages && $total > 0 ) {
+		$total    = AttemptReports::count_quizzes( $filters, $scope );
+		if ( $total > 0 ) {
+			if ( $page > (int) ceil( $total / $per_page ) ) {
 				return new WP_Error( 'ohmylms_quiz_report_invalid_page', __( 'The page number requested is larger than the number of pages available.', 'ohmylms' ), array( 'status' => 400 ) );
 			}
-			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT p.ID, p.post_title, p.post_status, s.attempts, s.learners, s.in_progress, s.to_grade, s.completed, s.average_score, s.last_submitted FROM {$from} ORDER BY {$sort}, p.ID {$order} LIMIT %d OFFSET %d", array_merge( $args, array( $per_page, ( $page - 1 ) * $per_page ) ) ), ARRAY_A );
-			// phpcs:enable
-			$rows = is_array( $rows ) ? $rows : array();
+			$rows = AttemptReports::quiz_page( $filters, $scope, (string) $request['orderby'], (string) $request['order'], $page, $per_page );
 		}
 
 		$ids     = array_map( 'intval', wp_list_pluck( $rows, 'ID' ) );
@@ -271,33 +225,7 @@ class QuizReportsController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function get_summary( $request ) {
-		global $wpdb;
-
-		$summary  = array(
-			'quizzes'   => 0,
-			'attempts'  => 0,
-			'learners'  => 0,
-			'to_grade'  => 0,
-			'completed' => 0,
-		);
-		$filtered = $this->filtered( $request );
-		if ( null !== $filtered ) {
-			list( $from, $args ) = $filtered;
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery
-			$row      = $wpdb->get_row( $wpdb->prepare( "SELECT COUNT(*) AS quizzes, COALESCE(SUM(s.attempts), 0) AS attempts, COALESCE(SUM(s.to_grade), 0) AS to_grade, COALESCE(SUM(s.completed), 0) AS completed FROM {$from}", $args ) );
-			$learners = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(DISTINCT a.student_id) FROM %i a WHERE a.quiz_id IN (SELECT p.ID FROM {$from})", array_merge( array( $wpdb->prefix . 'ohmylms_quiz_attempts' ), $args ) ) );
-			// phpcs:enable
-			if ( $row ) {
-				$summary = array(
-					'quizzes'   => (int) $row->quizzes,
-					'attempts'  => (int) $row->attempts,
-					'learners'  => $learners,
-					'to_grade'  => (int) $row->to_grade,
-					'completed' => (int) $row->completed,
-				);
-			}
-		}
-		$response = rest_ensure_response( $summary );
+		$response = rest_ensure_response( AttemptReports::quiz_summary( $this->filters( $request ), GradingPolicy::gradable_quiz_ids() ) );
 		$response->header( 'Cache-Control', 'private, no-store' );
 
 		return $response;
@@ -310,18 +238,7 @@ class QuizReportsController extends RestController {
 	 * @return array<int,array{id:int,title:string}>
 	 */
 	private function courses( array $ids ) {
-		global $wpdb;
-
-		if ( ! $ids ) {
-			return array();
-		}
-		$holders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT content.content_id, MIN(chapter.course_id) AS course_id FROM %i content INNER JOIN %i chapter ON chapter.chapter_id = content.chapter_id WHERE content.content_id IN ({$holders}) GROUP BY content.content_id", array_merge( array( $wpdb->prefix . 'ohmylms_content_relationship', $wpdb->prefix . 'ohmylms_chapter_relationship' ), $ids ) ) );
-		$map  = array();
-		foreach ( (array) $rows as $row ) {
-			$map[ (int) $row->content_id ] = (int) $row->course_id;
-		}
+		$map = CourseStructure::first_courses( $ids );
 		if ( $map ) {
 			_prime_post_caches( array_values( array_unique( $map ) ), false, false );
 		}
@@ -346,40 +263,11 @@ class QuizReportsController extends RestController {
 	 * @return array<int,array{0:int,1:float}> Passed count and pass mark by quiz; quizzes without a pass mark have 0.0.
 	 */
 	private function passed( array $ids ) {
-		global $wpdb;
-
-		if ( ! $ids ) {
-			return array();
-		}
-		update_meta_cache( 'post', $ids );
-		$marks = array();
+		$marks  = QuizSettings::pass_marks( $ids );
+		$counts = AttemptReports::passed_counts( $marks );
+		$out    = array();
 		foreach ( $ids as $id ) {
-			$raw     = get_post_meta( $id, QuizSettings::META, true );
-			$passing = is_array( $raw ) && isset( $raw['passing_grade'] ) && is_array( $raw['passing_grade'] ) ? $raw['passing_grade'] : array();
-			if ( ! empty( $passing['enabled'] ) && isset( $passing['value'] ) && is_numeric( $passing['value'] ) && (float) $passing['value'] > 0 ) {
-				$marks[ $id ] = round( (float) $passing['value'], 2 );
-			}
-		}
-		$out = array();
-		foreach ( $ids as $id ) {
-			$out[ $id ] = array( 0, $marks[ $id ] ?? 0.0 );
-		}
-		if ( ! $marks ) {
-			return $out;
-		}
-		$cases = array();
-		$args  = array();
-		foreach ( $marks as $id => $mark ) {
-			$cases[] = 'WHEN %d THEN %f';
-			$args[]  = $id;
-			$args[]  = $mark;
-		}
-		$holders = implode( ',', array_fill( 0, count( $marks ), '%d' ) );
-		$case    = 'CASE quiz_id ' . implode( ' ', $cases ) . ' END';
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT quiz_id, SUM(total >= {$case}) AS passed FROM %i WHERE status = 'completed' AND quiz_id IN ({$holders}) GROUP BY quiz_id", array_merge( $args, array( $wpdb->prefix . 'ohmylms_quiz_attempts' ), array_keys( $marks ) ) ) );
-		foreach ( (array) $rows as $row ) {
-			$out[ (int) $row->quiz_id ][0] = (int) $row->passed;
+			$out[ $id ] = array( $counts[ $id ] ?? 0, $marks[ $id ] ?? 0.0 );
 		}
 
 		return $out;
