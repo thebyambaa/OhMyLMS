@@ -1,6 +1,12 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes, useParams } from 'react-router-dom';
+import {
+	MemoryRouter,
+	Route,
+	Routes,
+	useLocation,
+	useParams,
+} from 'react-router-dom';
 import { ApiError } from '../../lib/api';
 import * as api from './api';
 import { question, summary, types } from './fixtures';
@@ -10,7 +16,6 @@ import type { QuestionSummary } from './types';
 vi.mock( './api', () => ( {
 	listQuestions: vi.fn(),
 	listQuestionTypes: vi.fn(),
-	createQuestion: vi.fn(),
 	archiveQuestion: vi.fn(),
 	restoreQuestion: vi.fn(),
 	duplicateQuestion: vi.fn(),
@@ -29,7 +34,13 @@ const archived: QuestionSummary = {
 };
 
 function EditorRoute() {
-	return <p>Editor for { useParams().id }</p>;
+	const { search } = useLocation();
+	return (
+		<>
+			<p>Editor for { useParams().id }</p>
+			<p data-testid="search">{ search }</p>
+		</>
+	);
 }
 
 function renderPage() {
@@ -313,52 +324,13 @@ describe( 'QuestionsPage', () => {
 		}
 
 		it.each( [
-			[
-				'single-choice',
-				[
-					{ answer: 'Option 1', is_correct: true, order_number: 0 },
-					{ answer: 'Option 2', is_correct: false, order_number: 1 },
-				],
-			],
-			[
-				'true-false',
-				[
-					{ answer: 'True', is_correct: true, order_number: 0 },
-					{ answer: 'False', is_correct: false, order_number: 1 },
-				],
-			],
-			[
-				'reorder',
-				[
-					{ answer: 'Option 1', is_correct: false, order_number: 0 },
-					{ answer: 'Option 2', is_correct: false, order_number: 1 },
-				],
-			],
-			[
-				'matching',
-				[
-					{
-						answer: 'Option 1',
-						is_correct: false,
-						order_number: 0,
-						matching_data: { label: 'Match 1' },
-					},
-					{
-						answer: 'Option 2',
-						is_correct: false,
-						order_number: 1,
-						matching_data: { label: 'Match 2' },
-					},
-				],
-			],
-			[ 'graded-reader', undefined ],
+			'single-choice',
+			'numerical',
+			'set-clock',
+			'graded-reader',
 		] )(
-			'creates a %s question and opens its editor',
-			async ( type, options ) => {
-				vi.mocked( api.createQuestion ).mockResolvedValue( {
-					...question,
-					id: 900,
-				} );
+			'opens an unsaved %s draft without calling the server',
+			async ( type ) => {
 				const { user, dialog } = await openDialog();
 				expect(
 					within( dialog ).getByRole( 'combobox', { name: 'Type' } )
@@ -369,28 +341,28 @@ describe( 'QuestionsPage', () => {
 				);
 				await user.type(
 					within( dialog ).getByRole( 'textbox', { name: 'Name' } ),
-					' New question {Enter}'
+					' New question & more {Enter}'
 				);
 				expect(
-					await screen.findByText( 'Editor for 900' )
+					await screen.findByText( 'Editor for new' )
 				).toBeInTheDocument();
-				const expected = {
-					name: 'New question',
-					settings: { type, score: { enabled: true, value: 1 } },
-					...( options ? { options } : {} ),
-				};
-				expect( api.createQuestion ).toHaveBeenCalledWith(
-					expected,
-					expect.any( AbortSignal )
+				expect( screen.getByTestId( 'search' ) ).toHaveTextContent(
+					`?${ new URLSearchParams( {
+						type,
+						name: 'New question & more',
+					} ) }`
 				);
+				expect(
+					screen.queryByRole( 'dialog' )
+				).not.toBeInTheDocument();
 			}
 		);
 
-		it( 'requires a name without calling the server', async () => {
+		it( 'requires a name before continuing', async () => {
 			const { user, dialog } = await openDialog();
 			await user.click(
 				within( dialog ).getByRole( 'button', {
-					name: 'Create question',
+					name: 'Continue',
 				} )
 			);
 			expect(
@@ -399,49 +371,9 @@ describe( 'QuestionsPage', () => {
 			expect(
 				within( dialog ).getByRole( 'textbox', { name: 'Name' } )
 			).toHaveAttribute( 'aria-invalid', 'true' );
-			expect( api.createQuestion ).not.toHaveBeenCalled();
-		} );
-
-		it( 'stays open and shows server errors inline', async () => {
-			vi.mocked( api.createQuestion ).mockRejectedValueOnce(
-				new ApiError( {
-					status: 422,
-					code: 'ohmylms_question_invalid_name',
-					message: 'Enter a question name.',
-				} )
-			);
-			vi.mocked( api.createQuestion ).mockRejectedValueOnce(
-				new ApiError( {
-					status: 403,
-					code: 'ohmylms_question_cannot_create',
-					message: 'Sorry, you cannot create questions.',
-				} )
-			);
-			const { user, dialog } = await openDialog();
-			const name = within( dialog ).getByRole( 'textbox', {
-				name: 'Name',
-			} );
-			await user.type( name, 'Q' );
-			await user.click(
-				within( dialog ).getByRole( 'button', {
-					name: 'Create question',
-				} )
-			);
 			expect(
-				await within( dialog ).findByRole( 'alert' )
-			).toHaveTextContent( 'Enter a question name.' );
-			await user.type( name, 'Q' );
-			await user.click(
-				within( dialog ).getByRole( 'button', {
-					name: 'Create question',
-				} )
-			);
-			expect(
-				await within( dialog ).findByText(
-					'Sorry, you cannot create questions.'
-				)
-			).toBeInTheDocument();
-			expect( screen.getByRole( 'dialog' ) ).toBeInTheDocument();
+				screen.queryByText( /Editor for/ )
+			).not.toBeInTheDocument();
 		} );
 	} );
 } );

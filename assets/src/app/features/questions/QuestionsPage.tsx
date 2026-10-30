@@ -12,20 +12,16 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Pagination } from '../../components/Pagination';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
-import { normalizeApiError } from '../../lib/api';
 import {
 	archiveQuestion,
-	createQuestion,
 	duplicateQuestion,
 	listQuestionTypes,
 	restoreQuestion,
 } from './api';
 import {
-	createInput,
 	DIFFICULTIES,
 	difficultyLabel,
 	MAX_NAME,
-	serverFieldError,
 	statusFilters,
 	typeLabel,
 	usageLabel,
@@ -64,8 +60,10 @@ function defaultType( types: readonly QuestionType[] ): string {
 
 /**
  * Question bank list (`#/content-hub/question-bank`): paged and filtered by text, type, difficulty and
- * status, with duplicate, archive/restore and create. Every listed question can be duplicated (the
- * list shows only questions the user may use). The editor lives at `#/content-hub/question-bank/<id>`.
+ * status, with duplicate and archive/restore. Every listed question can be duplicated (the list shows
+ * only questions the user may use). "New question" asks for a name and type and opens an unsaved
+ * draft (`#/content-hub/question-bank/new`), which the first save creates. The editor lives at
+ * `#/content-hub/question-bank/<id>`.
  */
 export default function QuestionsPage() {
 	const list = useQuestions();
@@ -91,11 +89,8 @@ export default function QuestionsPage() {
 		setCreating( true );
 	}
 	function closeCreate() {
-		if ( ! operation.busy ) {
-			setCreating( false );
-			setNameError( null );
-			operation.clearError();
-		}
+		setCreating( false );
+		setNameError( null );
 	}
 	function create() {
 		const value = name.trim();
@@ -110,26 +105,12 @@ export default function QuestionsPage() {
 			return;
 		}
 		setNameError( null );
-		void operation.run(
-			async ( signal ) => {
-				try {
-					return await createQuestion(
-						createInput( value, chosenType ),
-						signal
-					);
-				} catch ( failure ) {
-					const problem = normalizeApiError( failure );
-					const field = serverFieldError( problem );
-					if ( 'name' === field?.path ) {
-						setNameError( field.message );
-					}
-					throw problem;
-				}
-			},
-			( created ) => {
-				setCreating( false );
-				navigate( `${ EDITOR }/${ created.id }` );
-			}
+		setCreating( false );
+		navigate(
+			`${ EDITOR }/new?${ new URLSearchParams( {
+				type: chosenType,
+				name: value,
+			} ).toString() }`
 		);
 	}
 	function duplicate( item: QuestionSummary ) {
@@ -434,11 +415,12 @@ export default function QuestionsPage() {
 						} }
 						noValidate
 					>
-						{ operation.error && ! nameError && (
-							<Notice status="error" isDismissible={ false }>
-								{ operation.error }
-							</Notice>
-						) }
+						<p>
+							{ __(
+								'Next you complete the question in the editor. It is added to the question bank when you save it.',
+								'ohmylms'
+							) }
+						</p>
 						<TextControl
 							label={ __( 'Name', 'ohmylms' ) }
 							value={ name }
@@ -490,10 +472,9 @@ export default function QuestionsPage() {
 						<Button
 							type="submit"
 							variant="primary"
-							disabled={ operation.busy || ! chosenType }
-							isBusy={ operation.busy }
+							disabled={ ! chosenType }
 						>
-							{ __( 'Create question', 'ohmylms' ) }
+							{ __( 'Continue', 'ohmylms' ) }
 						</Button>{ ' ' }
 						<Button
 							variant="tertiary"

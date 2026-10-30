@@ -1,4 +1,5 @@
 import { __, _n, sprintf } from '@wordpress/i18n';
+import { questionTypePatch } from '../../../features/question-editor/questionBlocks.mjs';
 import { ApiError } from '../../lib/api';
 import type {
 	Difficulty,
@@ -597,6 +598,113 @@ export function createInput( name: string, type: string ): QuestionCreateInput {
 			break;
 	}
 	return input;
+}
+
+/**
+ * An unsaved question of a type, for the draft editor: the shared authored starting settings of the
+ * type (`questionTypePatch`, also used by the existing admin) and, for the option types, the options
+ * of {@link createInput}. Nothing is sent until the first save.
+ *
+ * @param name Question name.
+ * @param type Question type id.
+ * @return An editor view with id 0, version 0 and full permissions.
+ */
+export function draftQuestion( name: string, type: string ): QuestionDetail {
+	const settings = questionTypePatch( {}, type ).settings ?? {};
+	const options = createInput( name, type ).options ?? [];
+	return {
+		id: 0,
+		uuid: '',
+		name: name.trim(),
+		description: '',
+		type,
+		settings: { ...settings, type },
+		options: options.map( ( item ) => ( {
+			id: 0,
+			answer: item.answer,
+			is_correct: item.is_correct,
+			order_number: item.order_number,
+			image_id: 0,
+			image_url: '',
+			matching_data: item.matching_data ?? null,
+		} ) ),
+		skills: {},
+		bank: {
+			bank_id: 0,
+			difficulty: 'standard',
+			source: '',
+			family_id: '',
+			secure: false,
+		},
+		thumbnail_id: 0,
+		video_id: 0,
+		extension_settings: {},
+		status: 'draft',
+		post_status: '',
+		version: 0,
+		current_version_id: 0,
+		approved_version_id: 0,
+		approved_is_current: false,
+		usage: { quizzes: 0, responses: 0 },
+		quizzes: [],
+		permissions: { can_edit: true, can_approve: false, can_delete: false },
+		modified: '',
+	};
+}
+
+/**
+ * Body that creates the question of a draft. Call after {@link validateForm} reports no errors.
+ *
+ * @param form Form state of the draft.
+ * @param type Question type id.
+ * @return The create payload; options only for the option types this editor edits.
+ */
+export function toCreateInput(
+	form: FormState,
+	type: string
+): QuestionCreateInput {
+	const input: QuestionCreateInput = {
+		name: form.name.trim(),
+		settings: settingsFor( form, type ),
+		bank: { difficulty: form.difficulty },
+	};
+	if ( form.description ) {
+		input.description = form.description;
+	}
+	if ( editsOptions( type ) ) {
+		input.options = optionInputs( form.options );
+	}
+	return input;
+}
+
+/**
+ * Checks of type settings that the server reports only as a schema mismatch.
+ *
+ * @param type     Question type id.
+ * @param settings Settings to save.
+ * @return A message for the type editor, or `null`.
+ */
+export function settingsProblem(
+	type: string,
+	settings: QuestionSettings
+): string | null {
+	if ( 'numerical' !== type ) {
+		return null;
+	}
+	const template = settings.template as { variables?: unknown } | undefined;
+	if ( Array.isArray( template?.variables ) && template.variables.length ) {
+		return null;
+	}
+	const answers = [
+		settings.answer,
+		...( Array.isArray( settings.answers ) ? settings.answers : [] ),
+	].filter(
+		( value ) => undefined !== value && null !== value && '' !== value
+	);
+	return answers.length &&
+		answers.every( ( value ) => Number.isFinite( Number( value ) ) )
+		? null
+		: __( 'Enter the expected number.', 'ohmylms' );
 }
 
 function pointsFrom( settings: QuestionSettings ): string {

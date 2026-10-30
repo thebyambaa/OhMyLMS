@@ -4,6 +4,7 @@ import {
 	approvalLabel,
 	canApproveCurrent,
 	createInput,
+	draftQuestion,
 	formFromQuestion,
 	isDirty,
 	moveOption,
@@ -14,6 +15,8 @@ import {
 	parseQuestionVersion,
 	serverFieldError,
 	setCorrect,
+	settingsProblem,
+	toCreateInput,
 	toInput,
 	typeLabel,
 	validateForm,
@@ -158,6 +161,83 @@ describe( 'labels', () => {
 		expect( typeLabel( types, 'single-choice' ) ).toBe( 'Single Choice' );
 		expect( typeLabel( [], 'single-choice', 'Single' ) ).toBe( 'Single' );
 		expect( typeLabel( [], 'custom' ) ).toBe( 'custom' );
+	} );
+} );
+
+describe( 'drafts', () => {
+	it( 'seeds settings from the authored type defaults and options from createInput', () => {
+		expect( draftQuestion( ' Clock ', 'set-clock' ) ).toMatchObject( {
+			id: 0,
+			name: 'Clock',
+			type: 'set-clock',
+			settings: {
+				type: 'set-clock',
+				score: { enabled: true, value: 1 },
+				hour: 3,
+				minute: 45,
+			},
+			options: [],
+			version: 0,
+		} );
+		expect( draftQuestion( 'Q', 'graded-reader' ).settings ).toEqual( {
+			type: 'graded-reader',
+			score: { enabled: true, value: 1 },
+		} );
+		expect(
+			draftQuestion( 'Q', 'true-false' ).options.map( ( item ) => [
+				item.answer,
+				item.is_correct,
+			] )
+		).toEqual( [
+			[ 'True', true ],
+			[ 'False', false ],
+		] );
+	} );
+
+	it( 'builds the create body from the draft form', () => {
+		const form = {
+			...formFromQuestion( draftQuestion( 'Pick', 'multiple-choice' ) ),
+			points: '3',
+			description: '<p>Why?</p>',
+		};
+		expect( toCreateInput( form, 'multiple-choice' ) ).toEqual( {
+			name: 'Pick',
+			description: '<p>Why?</p>',
+			settings: {
+				type: 'multiple-choice',
+				score: { enabled: true, value: 3 },
+			},
+			bank: { difficulty: 'standard' },
+			options: [
+				{ answer: 'Option 1', is_correct: true, order_number: 0 },
+				{ answer: 'Option 2', is_correct: false, order_number: 1 },
+			],
+		} );
+		expect(
+			toCreateInput(
+				formFromQuestion( draftQuestion( 'N', 'numerical' ) ),
+				'numerical'
+			)
+		).not.toHaveProperty( 'options' );
+	} );
+
+	it( 'asks for the expected number of a numerical question', () => {
+		expect( settingsProblem( 'numerical', {} ) ).toBe(
+			'Enter the expected number.'
+		);
+		expect( settingsProblem( 'numerical', { answer: 'x' } ) ).toBe(
+			'Enter the expected number.'
+		);
+		expect( settingsProblem( 'numerical', { answer: 4 } ) ).toBeNull();
+		expect(
+			settingsProblem( 'numerical', { answers: [ 1, 2 ] } )
+		).toBeNull();
+		expect(
+			settingsProblem( 'numerical', {
+				template: { variables: [ { name: 'a' } ] },
+			} )
+		).toBeNull();
+		expect( settingsProblem( 'set-clock', {} ) ).toBeNull();
 	} );
 } );
 

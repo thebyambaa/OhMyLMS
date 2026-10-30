@@ -157,8 +157,10 @@ export interface OptionInput {
 /** Body of `POST /questions`. */
 export interface QuestionCreateInput {
 	name: string;
+	description?: string;
 	settings: QuestionSettings;
 	options?: OptionInput[];
+	bank?: { difficulty: string };
 }
 
 /** Body of `PATCH /questions/{id}`: only changed fields, plus the `modified` of the last read. */

@@ -26,6 +26,7 @@ vi.mock( './api', () => ( {
 	restoreQuestion: vi.fn(),
 	approveQuestion: vi.fn(),
 	duplicateQuestion: vi.fn(),
+	createQuestion: vi.fn(),
 	listVersions: vi.fn(),
 } ) );
 
@@ -759,15 +760,13 @@ describe( 'QuestionEditorPage', () => {
 				812,
 				expect.any( AbortSignal )
 			);
-			await waitFor( () =>
-				expect( api.getQuestion ).toHaveBeenLastCalledWith(
-					900,
-					expect.any( AbortSignal )
-				)
-			);
 			expect(
 				screen.getByRole( 'textbox', { name: 'Name' } )
 			).toHaveValue( 'Solve 2x = 6 (copy)' );
+			expect( api.getQuestion ).not.toHaveBeenCalledWith(
+				900,
+				expect.anything()
+			);
 		} );
 
 		it( 'stays on the question when duplicating fails', async () => {
@@ -796,6 +795,292 @@ describe( 'QuestionEditorPage', () => {
 					name: 'Edit question: Solve 2x = 6',
 				} )
 			).toBeInTheDocument();
+		} );
+	} );
+
+	describe( 'new question draft', () => {
+		const draftRoute = ( type: string, name = 'Draft question' ) =>
+			`/content-hub/question-bank/new?${ new URLSearchParams( {
+				type,
+				name,
+			} ) }`;
+
+		function seenEditor( registry: ExtensionRegistry ) {
+			const seen: QuestionSettings[] = [];
+			const Editor = ( {
+				value,
+				onChange,
+			}: {
+				value: QuestionSettings;
+				onChange: ( patch: QuestionSettings ) => void;
+			} ) => {
+				seen.push( value );
+				return (
+					<>
+						<label htmlFor="oml-test-hour">Hour</label>
+						<input
+							id="oml-test-hour"
+							value={ String( value.hour ?? '' ) }
+							onChange={ ( event ) =>
+								onChange( {
+									hour: Number( event.target.value ),
+								} )
+							}
+						/>
+					</>
+				);
+			};
+			for ( const id of [
+				'set-clock',
+				'categorize',
+				'numerical',
+				'graded-reader',
+			] ) {
+				registry.registerQuestionEditor( id, {
+					label: `Editor ${ id }`,
+					render: Editor,
+				} );
+			}
+			return seen;
+		}
+
+		async function draftLoaded( name = 'Draft question' ) {
+			return screen.findByRole( 'heading', {
+				name: `New question: ${ name }`,
+			} );
+		}
+
+		it.each( [
+			[
+				'set-clock',
+				{
+					hour: 3,
+					minute: 45,
+					tolerance: 1,
+					snap: 1,
+					show_digital: false,
+				},
+			],
+			[
+				'categorize',
+				{
+					buckets: [
+						{ id: 'b1', label: '' },
+						{ id: 'b2', label: '' },
+					],
+					items: [
+						{ id: 'i1', text: '' },
+						{ id: 'i2', text: '' },
+					],
+					key: { i1: 'b1', i2: 'b2' },
+				},
+			],
+			[ 'numerical', {} ],
+			[ 'graded-reader', {} ],
+		] )(
+			'starts a %s draft from the authored defaults without requesting it',
+			async ( type, defaults ) => {
+				const registry = createRegistry();
+				const seen = seenEditor( registry );
+				renderEditor( draftRoute( type ), registry );
+				await draftLoaded();
+				expect( seen.at( -1 ) ).toEqual( {
+					type,
+					score: { enabled: true, value: 1 },
+					...defaults,
+				} );
+				expect(
+					screen.getByRole( 'group', { name: `Editor ${ type }` } )
+				).toBeInTheDocument();
+				expect( saveButton() ).toBeEnabled();
+				expect( api.getQuestion ).not.toHaveBeenCalled();
+				expect( api.listVersions ).not.toHaveBeenCalled();
+				for ( const name of [
+					'Duplicate',
+					'Approve this version',
+					'Archive question',
+				] ) {
+					expect(
+						screen.queryByRole( 'button', { name } )
+					).not.toBeInTheDocument();
+				}
+				expect(
+					screen.queryByRole( 'table', { name: 'Versions' } )
+				).not.toBeInTheDocument();
+			}
+		);
+
+		it( 'creates the question on the first save and opens it from the response', async () => {
+			const created: QuestionDetail = {
+				...question,
+				id: 901,
+				name: 'Draft question',
+				type: 'set-clock',
+				settings: {
+					type: 'set-clock',
+					score: { enabled: true, value: 2 },
+					hour: 7,
+					minute: 45,
+					tolerance: 1,
+					snap: 1,
+					show_digital: false,
+				},
+				options: [],
+				version: 1,
+			};
+			vi.mocked( api.createQuestion ).mockResolvedValue( created );
+			const registry = createRegistry();
+			seenEditor( registry );
+			const user = userEvent.setup();
+			renderEditor( draftRoute( 'set-clock' ), registry );
+			await draftLoaded();
+			const hour = screen.getByRole( 'textbox', { name: 'Hour' } );
+			await user.clear( hour );
+			await user.type( hour, '7' );
+			const points = screen.getByLabelText( 'Points' );
+			await user.clear( points );
+			await user.type( points, '2' );
+			await user.click( saveButton() );
+			expect(
+				await screen.findByRole( 'heading', {
+					name: 'Edit question: Draft question',
+				} )
+			).toBeInTheDocument();
+			expect(
+				screen.getByText( 'Question created.', notice )
+			).toBeInTheDocument();
+			expect( api.createQuestion ).toHaveBeenCalledWith(
+				{
+					name: 'Draft question',
+					settings: created.settings,
+					bank: { difficulty: 'standard' },
+				},
+				expect.any( AbortSignal )
+			);
+			expect( api.getQuestion ).not.toHaveBeenCalled();
+			expect(
+				screen.getByRole( 'textbox', { name: 'Hour' } )
+			).toHaveValue( '7' );
+			expect( saveButton() ).toBeDisabled();
+			await screen.findByRole( 'table', { name: 'Versions' } );
+			expect( api.listVersions ).toHaveBeenCalledWith(
+				901,
+				1,
+				expect.any( AbortSignal )
+			);
+		} );
+
+		it( 'creates an option question with its seeded options', async () => {
+			vi.mocked( api.createQuestion ).mockResolvedValue( {
+				...question,
+				id: 902,
+			} );
+			const user = userEvent.setup();
+			renderEditor( draftRoute( 'single-choice', 'Pick one' ) );
+			await draftLoaded( 'Pick one' );
+			expect(
+				screen.getByRole( 'textbox', { name: 'Option 1' } )
+			).toHaveValue( 'Option 1' );
+			await user.click( saveButton() );
+			await screen.findByText( 'Question created.', notice );
+			expect( api.createQuestion ).toHaveBeenCalledWith(
+				{
+					name: 'Pick one',
+					settings: {
+						type: 'single-choice',
+						score: { enabled: true, value: 1 },
+					},
+					bank: { difficulty: 'standard' },
+					options: [
+						{
+							answer: 'Option 1',
+							is_correct: true,
+							order_number: 0,
+						},
+						{
+							answer: 'Option 2',
+							is_correct: false,
+							order_number: 1,
+						},
+					],
+				},
+				expect.any( AbortSignal )
+			);
+		} );
+
+		it( 'keeps the draft and shows a settings rejection next to the type editor', async () => {
+			vi.mocked( api.createQuestion ).mockRejectedValue(
+				new ApiError( {
+					status: 400,
+					code: 'ohmylms_invalid_question_settings',
+					message:
+						'Add at least two labelled groups with unique IDs.',
+				} )
+			);
+			const registry = createRegistry();
+			seenEditor( registry );
+			const user = userEvent.setup();
+			renderEditor( draftRoute( 'categorize' ), registry );
+			await draftLoaded();
+			await user.click( saveButton() );
+			expect(
+				await screen.findByText(
+					'Add at least two labelled groups with unique IDs.',
+					notice
+				)
+			).toBeInTheDocument();
+			const typeEditor = screen.getByRole( 'group', {
+				name: 'Editor categorize',
+			} );
+			expect( typeEditor.nextElementSibling ).toHaveAttribute(
+				'role',
+				'alert'
+			);
+			expect( typeEditor.nextElementSibling ).toHaveTextContent(
+				'Add at least two labelled groups with unique IDs.'
+			);
+			expect(
+				screen.getByRole( 'heading', {
+					name: 'New question: Draft question',
+				} )
+			).toBeInTheDocument();
+			expect( saveButton() ).toBeEnabled();
+		} );
+
+		it( 'asks for the expected number before creating a numerical question', async () => {
+			const registry = createRegistry();
+			seenEditor( registry );
+			const user = userEvent.setup();
+			renderEditor( draftRoute( 'numerical' ), registry );
+			await draftLoaded();
+			await user.click( saveButton() );
+			expect(
+				await screen.findByText( 'Enter the expected number.' )
+			).toBeInTheDocument();
+			expect( api.createQuestion ).not.toHaveBeenCalled();
+		} );
+
+		it( 'asks before leaving an unsaved draft', async () => {
+			const user = userEvent.setup();
+			renderEditor( draftRoute( 'single-choice' ) );
+			await draftLoaded();
+			await user.click( screen.getByRole( 'link', { name: 'Away' } ) );
+			expect(
+				await screen.findByRole( 'dialog', {
+					name: 'Discard unsaved changes?',
+				} )
+			).toBeInTheDocument();
+		} );
+
+		it( 'refuses an unknown type', async () => {
+			renderEditor( draftRoute( 'no-such-type' ) );
+			expect(
+				await screen.findByText(
+					/This question type is not available/,
+					notice
+				)
+			).toBeInTheDocument();
+			expect( api.createQuestion ).not.toHaveBeenCalled();
 		} );
 	} );
 } );

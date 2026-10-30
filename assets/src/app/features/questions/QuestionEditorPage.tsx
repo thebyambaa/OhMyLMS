@@ -10,21 +10,30 @@ import {
 	Suspense,
 	useCallback,
 	useEffect,
+	useMemo,
 	useRef,
 	useState,
 } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import type { ComponentType } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import {
+	Link,
+	useNavigate,
+	useParams,
+	useSearchParams,
+} from 'react-router-dom';
 import { useBootstrap } from '../../bootstrap/BootstrapContext';
 import { ExtensionBoundary } from '../../extensions/ExtensionBoundary';
 import { useExtensions } from '../../extensions/context';
+import { useRequest } from '../../hooks/useRequest';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import { normalizeApiError } from '../../lib/api';
 import {
 	approveQuestion,
 	archiveQuestion,
+	createQuestion,
 	duplicateQuestion,
+	listQuestionTypes,
 	restoreQuestion,
 	updateQuestion,
 } from './api';
@@ -33,6 +42,7 @@ import {
 	canApproveCurrent,
 	DIFFICULTIES,
 	difficultyLabel,
+	draftQuestion,
 	editsOptions,
 	formFromQuestion,
 	isDirty,
@@ -41,6 +51,8 @@ import {
 	MAX_DESCRIPTION,
 	MAX_NAME,
 	serverFieldError,
+	settingsProblem,
+	toCreateInput,
 	toInput,
 	typeLabel,
 	usageLabel,
@@ -48,7 +60,7 @@ import {
 	versionLabel,
 } from './model';
 import { errorId, FieldError, OptionsEditor } from './OptionsEditor';
-import { useQuestionEditor } from './useQuestionEditor';
+import { useQuestionEditor, type QuestionHandoff } from './useQuestionEditor';
 import { Versions } from './Versions';
 import type {
 	FormErrors,
@@ -87,11 +99,104 @@ function BackLink() {
  * types (the built-in settings editors, which load lazily, and add-on editors). Saves send only
  * changed fields and are refused when someone else saved first. Leaving with unsaved changes asks
  * first. Approving and duplicating work on the saved question.
+ *
+ * `#/content-hub/question-bank/new?type=<id>&name=<name>` is an unsaved draft of that type, started
+ * from the type's authored defaults; its first save creates the question and replaces the route with
+ * the question's own, keeping the editor state the server returned.
  */
 export default function QuestionEditorPage() {
 	const params = useParams();
-	const id = routeId( params.id );
-	const editor = useQuestionEditor( id );
+	const [ handoff, setHandoff ] = useState< QuestionHandoff | null >( null );
+	if ( 'new' === params.id ) {
+		return <NewQuestion onHandoff={ setHandoff } />;
+	}
+	return (
+		<SavedQuestion
+			key={ params.id }
+			route={ params.id }
+			handoff={ handoff }
+			onHandoff={ setHandoff }
+		/>
+	);
+}
+
+function NewQuestion( {
+	onHandoff,
+}: {
+	onHandoff: ( handoff: QuestionHandoff ) => void;
+} ) {
+	const [ search ] = useSearchParams();
+	const type = search.get( 'type' ) ?? '';
+	const name = search.get( 'name' ) ?? '';
+	const types = useRequest( listQuestionTypes );
+	const draft = useMemo( () => draftQuestion( name, type ), [ name, type ] );
+	if ( types.loading ) {
+		return (
+			<>
+				<h2>{ __( 'New question', 'ohmylms' ) }</h2>
+				<p role="status">
+					{ __( 'Loading question types…', 'ohmylms' ) }
+				</p>
+			</>
+		);
+	}
+	if ( types.error || ! types.data ) {
+		return (
+			<>
+				<h2>{ __( 'New question', 'ohmylms' ) }</h2>
+				<Notice status="error" isDismissible={ false }>
+					{ types.error ||
+						__( 'Question types could not be loaded.', 'ohmylms' ) }
+				</Notice>
+				<p>
+					<Button variant="secondary" onClick={ types.retry }>
+						{ __( 'Try again', 'ohmylms' ) }
+					</Button>{ ' ' }
+					<BackLink />
+				</p>
+			</>
+		);
+	}
+	if ( ! types.data.some( ( item ) => item.id === type ) ) {
+		return (
+			<>
+				<h2>{ __( 'New question', 'ohmylms' ) }</h2>
+				<Notice status="error" isDismissible={ false }>
+					{ __(
+						'This question type is not available. Start the question again from the question bank.',
+						'ohmylms'
+					) }
+				</Notice>
+				<BackLink />
+			</>
+		);
+	}
+	return (
+		<QuestionWorkspace
+			draft
+			question={ draft }
+			types={ types.data }
+			onSaved={ () => undefined }
+			reload={ () => undefined }
+			onHandoff={ onHandoff }
+		/>
+	);
+}
+
+function SavedQuestion( {
+	route,
+	handoff,
+	onHandoff,
+}: {
+	route: string | undefined;
+	handoff: QuestionHandoff | null;
+	onHandoff: ( handoff: QuestionHandoff ) => void;
+} ) {
+	const id = routeId( route );
+	const editor = useQuestionEditor( id, handoff );
+	const [ initialMessage ] = useState( () =>
+		handoff && handoff.question.id === id ? handoff.message : undefined
+	);
 
 	if ( null === id ) {
 		return (
@@ -144,6 +249,8 @@ export default function QuestionEditorPage() {
 			types={ editor.types }
 			onSaved={ editor.setQuestion }
 			reload={ editor.reload }
+			onHandoff={ onHandoff }
+			initialMessage={ initialMessage }
 		/>
 	);
 }
@@ -153,11 +260,19 @@ function QuestionWorkspace( {
 	types,
 	onSaved,
 	reload,
+	onHandoff,
+	initialMessage,
+	draft = false,
 }: {
 	question: QuestionDetail;
 	types: QuestionType[];
 	onSaved: ( question: QuestionDetail ) => void;
 	reload: () => void;
+	/** Opens another question with data the page already has. */
+	onHandoff: ( handoff: QuestionHandoff ) => void;
+	initialMessage?: string | undefined;
+	/** The question is not saved yet; the first save creates it. */
+	draft?: boolean;
 } ) {
 	const { adminUrl } = useBootstrap();
 	const navigate = useNavigate();
@@ -169,7 +284,9 @@ function QuestionWorkspace( {
 	);
 	const [ errors, setErrors ] = useState< FormErrors >( {} );
 	const [ busy, setBusy ] = useState( false );
-	const [ message, setMessage ] = useState< string | null >( null );
+	const [ message, setMessage ] = useState< string | null >(
+		initialMessage ?? null
+	);
 	const [ failure, setFailure ] = useState< string | null >( null );
 	const [ conflict, setConflict ] = useState< string | null >( null );
 	const [ versionsKey, setVersionsKey ] = useState( 0 );
@@ -177,7 +294,7 @@ function QuestionWorkspace( {
 	const operation = useRef< AbortController | null >( null );
 	const readOnly = ! question.permissions.can_edit;
 	const dirty = isDirty( form, saved );
-	const guard = useUnsavedChangesGuard( dirty && ! readOnly );
+	const guard = useUnsavedChangesGuard( ( draft || dirty ) && ! readOnly );
 	const type = question.type;
 	const extension = useExtensions( 'question-editor' ).find(
 		( entry ) => entry.id === type
@@ -278,6 +395,14 @@ function QuestionWorkspace( {
 			saved,
 			'options' === area ? type : ''
 		);
+		const settingsError =
+			draft ||
+			JSON.stringify( form.settings ) !== JSON.stringify( saved.settings )
+				? settingsProblem( type, form.settings )
+				: null;
+		if ( settingsError ) {
+			problems.settings = settingsError;
+		}
 		setErrors( problems );
 		setMessage( null );
 		setConflict( null );
@@ -286,6 +411,21 @@ function QuestionWorkspace( {
 				__( 'Fix the highlighted fields before saving.', 'ohmylms' )
 			);
 			summary.current?.focus();
+			return;
+		}
+		if ( draft ) {
+			const body = toCreateInput( form, type );
+			void perform(
+				( signal ) => createQuestion( body, signal ),
+				( created ) => {
+					onHandoff( {
+						question: created,
+						types,
+						message: __( 'Question created.', 'ohmylms' ),
+					} );
+					navigate( `${ LIST }/${ created.id }`, { replace: true } );
+				}
+			);
 			return;
 		}
 		const input = toInput( form, saved, type, question.modified );
@@ -338,14 +478,15 @@ function QuestionWorkspace( {
 		void perform(
 			( signal ) => duplicateQuestion( question.id, signal ),
 			( copy ) => {
-				onSaved( copy );
-				navigate( `${ LIST }/${ copy.id }` );
-				setMessage(
-					__(
+				onHandoff( {
+					question: copy,
+					types,
+					message: __(
 						'Question duplicated. You are now editing the copy.',
 						'ohmylms'
-					)
-				);
+					),
+				} );
+				navigate( `${ LIST }/${ copy.id }` );
 			}
 		);
 	}
@@ -355,6 +496,7 @@ function QuestionWorkspace( {
 			{ __( 'Open the full question editor', 'ohmylms' ) }
 		</a>
 	);
+	const title = saved.name.trim() || __( 'Untitled question', 'ohmylms' );
 	const ExtensionEditor = extension?.render as
 		ComponentType< QuestionEditorProps > | undefined;
 
@@ -364,11 +506,17 @@ function QuestionWorkspace( {
 				<BackLink />
 			</p>
 			<h2>
-				{ sprintf(
-					/* translators: %s: question name. */
-					__( 'Edit question: %s', 'ohmylms' ),
-					saved.name.trim() || __( 'Untitled question', 'ohmylms' )
-				) }
+				{ draft
+					? sprintf(
+							/* translators: %s: question name. */
+							__( 'New question: %s', 'ohmylms' ),
+							title
+						)
+					: sprintf(
+							/* translators: %s: question name. */
+							__( 'Edit question: %s', 'ohmylms' ),
+							title
+						) }
 			</h2>
 			<p>
 				{ sprintf(
@@ -376,16 +524,28 @@ function QuestionWorkspace( {
 					__( 'Type: %s', 'ohmylms' ),
 					typeLabel( types, type )
 				) }
-				{ ' · ' }
-				{ versionLabel( question ) }
-				{ ' · ' }
-				{ sprintf(
-					/* translators: %s: usage such as "2 quizzes · 14 responses". */
-					__( 'Used in %s', 'ohmylms' ),
-					usageLabel( question )
+				{ ! draft && (
+					<>
+						{ ' · ' }
+						{ versionLabel( question ) }
+						{ ' · ' }
+						{ sprintf(
+							/* translators: %s: usage such as "2 quizzes · 14 responses". */
+							__( 'Used in %s', 'ohmylms' ),
+							usageLabel( question )
+						) }
+					</>
 				) }
 			</p>
-			{ dirty && (
+			{ draft && (
+				<p role="status">
+					{ __(
+						'This question is not saved yet. Complete it and save to add it to the question bank.',
+						'ohmylms'
+					) }
+				</p>
+			) }
+			{ ! draft && dirty && (
 				<p role="status">
 					{ __( 'You have unsaved changes.', 'ohmylms' ) }
 				</p>
@@ -559,7 +719,7 @@ function QuestionWorkspace( {
 					<Button
 						type="submit"
 						variant="primary"
-						disabled={ busy || ! dirty }
+						disabled={ busy || ( ! draft && ! dirty ) }
 						isBusy={ busy }
 					>
 						{ __( 'Save question', 'ohmylms' ) }
@@ -567,7 +727,7 @@ function QuestionWorkspace( {
 				) }
 			</form>
 
-			{ ! readOnly && (
+			{ ! readOnly && ! draft && (
 				<section aria-labelledby="oml-question-status">
 					<h3 id="oml-question-status">
 						{ __( 'Availability', 'ohmylms' ) }
@@ -603,7 +763,7 @@ function QuestionWorkspace( {
 				</section>
 			) }
 
-			{ question.permissions.can_approve && (
+			{ ! draft && question.permissions.can_approve && (
 				<section aria-labelledby="oml-question-approval">
 					<h3 id="oml-question-approval">
 						{ __( 'Approval', 'ohmylms' ) }
@@ -631,32 +791,38 @@ function QuestionWorkspace( {
 				</section>
 			) }
 
-			<section aria-labelledby="oml-question-copy">
-				<h3 id="oml-question-copy">{ __( 'Copy', 'ohmylms' ) }</h3>
-				<p>
-					{ __(
-						'Duplicating creates a new draft question with the same content, which you can change without affecting this one.',
-						'ohmylms'
-					) }
-				</p>
-				{ dirty && (
-					<p>
-						{ __(
-							'Save or undo your changes first; the copy is made from the saved question.',
-							'ohmylms'
+			{ ! draft && (
+				<>
+					<section aria-labelledby="oml-question-copy">
+						<h3 id="oml-question-copy">
+							{ __( 'Copy', 'ohmylms' ) }
+						</h3>
+						<p>
+							{ __(
+								'Duplicating creates a new draft question with the same content, which you can change without affecting this one.',
+								'ohmylms'
+							) }
+						</p>
+						{ dirty && (
+							<p>
+								{ __(
+									'Save or undo your changes first; the copy is made from the saved question.',
+									'ohmylms'
+								) }
+							</p>
 						) }
-					</p>
-				) }
-				<Button
-					variant="secondary"
-					disabled={ busy || dirty }
-					onClick={ duplicate }
-				>
-					{ __( 'Duplicate', 'ohmylms' ) }
-				</Button>
-			</section>
+						<Button
+							variant="secondary"
+							disabled={ busy || dirty }
+							onClick={ duplicate }
+						>
+							{ __( 'Duplicate', 'ohmylms' ) }
+						</Button>
+					</section>
 
-			<Versions key={ versionsKey } id={ question.id } />
+					<Versions key={ versionsKey } id={ question.id } />
+				</>
+			) }
 
 			{ guard.pendingPath && (
 				<Modal
