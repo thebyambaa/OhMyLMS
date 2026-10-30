@@ -1,0 +1,478 @@
+{
+	"version": 1,
+	"namespace": "ohmylms/v1",
+	"capability": "manage_options",
+	"routes": [
+		{
+			"method": "GET",
+			"path": "/settings"
+		},
+		{
+			"method": "GET",
+			"path": "/settings/{group}"
+		},
+		{
+			"method": [ "PUT", "PATCH", "POST" ],
+			"path": "/settings/{group}"
+		},
+		{
+			"method": "GET",
+			"path": "/settings/pages"
+		},
+		{
+			"method": "GET",
+			"path": "/settings/currencies"
+		},
+		{
+			"method": "GET",
+			"path": "/settings/countries"
+		},
+		{
+			"method": "GET",
+			"path": "/settings/countries/{code}/states"
+		},
+		{
+			"method": "POST",
+			"path": "/settings/general/restore-pages"
+		},
+		{
+			"method": "POST",
+			"path": "/settings/advanced/clear-cache"
+		}
+	],
+	"groupIds": [
+		"general",
+		"branding",
+		"account-and-privacy",
+		"permalink",
+		"advanced",
+		"currency",
+		"tax"
+	],
+	"errorCodes": {
+		"rest_invalid_param": 400,
+		"ohmylms_settings_invalid_body": 400,
+		"ohmylms_settings_unknown_field": 400,
+		"ohmylms_settings_invalid_value": 422,
+		"ohmylms_settings_country_not_found": 404,
+		"ohmylms_settings_save_failed": 500,
+		"ohmylms_settings_restore_failed": 500,
+		"ohmylms_settings_cannot_view": "401|403",
+		"ohmylms_settings_cannot_edit": "401|403"
+	},
+	"groups": {
+		"general": {
+			"fields": {
+				"course_page_id": {
+					"schema": {
+						"type": "integer",
+						"minimum": 0
+					},
+					"default": 0,
+					"option": "ohmylms_course_page_id"
+				},
+				"checkout_page_id": {
+					"schema": {
+						"type": "integer",
+						"minimum": 0
+					},
+					"default": 0,
+					"option": "ohmylms_checkout_page_id"
+				},
+				"thank_you_page_id": {
+					"schema": {
+						"type": "integer",
+						"minimum": 0
+					},
+					"default": 0,
+					"option": "ohmylms_thank_you_page_id"
+				},
+				"student_dashboard_page_id": {
+					"schema": {
+						"type": "integer",
+						"minimum": 0
+					},
+					"default": 0,
+					"option": "ohmylms_student_dashboard_page_id"
+				},
+				"student_profile_page_id": {
+					"schema": {
+						"type": "integer",
+						"minimum": 0
+					},
+					"default": 0,
+					"option": "ohmylms_student_profile_page_id"
+				},
+				"student_courses_page_id": {
+					"schema": {
+						"type": "integer",
+						"minimum": 0
+					},
+					"default": 0,
+					"option": "ohmylms_student_courses_page_id"
+				},
+				"registration_page_id": {
+					"schema": {
+						"type": "integer",
+						"minimum": 0
+					},
+					"default": 0,
+					"option": "ohmylms_registration_page_id"
+				},
+				"terms_page_id": {
+					"schema": {
+						"type": "integer",
+						"minimum": 0
+					},
+					"default": 0,
+					"option": "ohmylms_terms_page_id"
+				},
+				"privacy_policy_page_id": {
+					"schema": {
+						"type": "integer",
+						"minimum": 0
+					},
+					"default": 0,
+					"option": "ohmylms_privacy_policy_page_id"
+				},
+				"profile_page_id": {
+					"schema": {
+						"type": "integer",
+						"minimum": 0
+					},
+					"default": 0,
+					"option": "ohmylms_profile_page_id"
+				}
+			}
+		},
+		"branding": {
+			"fields": {
+				"color_preset": {
+					"schema": {
+						"type": "string",
+						"pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+						"maxLength": 40
+					},
+					"default": "royal-purple",
+					"option": "ohmylms_color_preset"
+				},
+				"primary_color": {
+					"schema": {
+						"type": "string",
+						"pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
+						"maxLength": 7
+					},
+					"default": "#6e42d3",
+					"option": "ohmylms_primary_color_scheme"
+				},
+				"primary_hover_color": {
+					"schema": {
+						"type": "string",
+						"pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
+						"maxLength": 7
+					},
+					"default": "#1447bc",
+					"option": "ohmylms_primary_hover_color_scheme"
+				},
+				"heading_color": {
+					"schema": {
+						"type": "string",
+						"pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
+						"maxLength": 7
+					},
+					"default": "#000d25",
+					"option": "ohmylms_heading_color_scheme"
+				},
+				"body_text_color": {
+					"schema": {
+						"type": "string",
+						"pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
+						"maxLength": 7
+					},
+					"default": "#52525b",
+					"option": "ohmylms_body_text_color_scheme"
+				},
+				"progress_color": {
+					"schema": {
+						"type": "string",
+						"pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
+						"maxLength": 7
+					},
+					"default": "#35bd4c",
+					"option": "ohmylms_body_progress_color_scheme"
+				},
+				"video_player_logo": {
+					"schema": {
+						"type": "string",
+						"maxLength": 2048
+					},
+					"default": "",
+					"option": "ohmylms_video_player_logo"
+				},
+				"video_player_logo_bg_color": {
+					"schema": {
+						"type": "string",
+						"pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
+						"maxLength": 7
+					},
+					"default": "#6e42d3",
+					"option": "ohmylms_video_player_logo_bg_color"
+				}
+			}
+		},
+		"account-and-privacy": {
+			"fields": {
+				"allow_purchase_without_login": {
+					"schema": {
+						"type": "boolean"
+					},
+					"default": true,
+					"option": "ohmylms_allow_purchase_without_login"
+				},
+				"require_email_verification": {
+					"schema": {
+						"type": "boolean"
+					},
+					"default": false,
+					"option": "ohmylms_require_email_verification"
+				},
+				"checkout_phone_field": {
+					"schema": {
+						"type": "string",
+						"enum": [ "optional", "required", "hidden" ]
+					},
+					"default": "optional",
+					"option": "ohmylms_checkout_phone_field"
+				},
+				"privacy_policy_message": {
+					"schema": {
+						"type": "string",
+						"maxLength": 2000
+					},
+					"default": "Your personal data will be used to process your order, support your experience throughout this website, and for other purposes described in our [privacy_policy].",
+					"option": "ohmylms_privacy_policy_message"
+				}
+			}
+		},
+		"permalink": {
+			"fields": {
+				"course_base": {
+					"schema": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 60,
+						"pattern": "^[a-z0-9]+([_-][a-z0-9]+)*(/[a-z0-9]+([_-][a-z0-9]+)*)*$"
+					},
+					"default": "ohmylms-courses",
+					"option": "ohmylms_permalink",
+					"member": "course_base"
+				},
+				"lesson_base": {
+					"schema": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 60,
+						"pattern": "^[a-z0-9]+([_-][a-z0-9]+)*(/[a-z0-9]+([_-][a-z0-9]+)*)*$"
+					},
+					"default": "course-lessons",
+					"option": "ohmylms_permalink",
+					"member": "lesson_base"
+				},
+				"quiz_base": {
+					"schema": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 60,
+						"pattern": "^[a-z0-9]+([_-][a-z0-9]+)*(/[a-z0-9]+([_-][a-z0-9]+)*)*$"
+					},
+					"default": "course-quizzes",
+					"option": "ohmylms_permalink",
+					"member": "quiz_base"
+				},
+				"category_base": {
+					"schema": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 60,
+						"pattern": "^[a-z0-9]+([_-][a-z0-9]+)*(/[a-z0-9]+([_-][a-z0-9]+)*)*$"
+					},
+					"default": "course-categories",
+					"option": "ohmylms_permalink",
+					"member": "category_base"
+				},
+				"tag_base": {
+					"schema": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 60,
+						"pattern": "^[a-z0-9]+([_-][a-z0-9]+)*(/[a-z0-9]+([_-][a-z0-9]+)*)*$"
+					},
+					"default": "course-tags",
+					"option": "ohmylms_permalink",
+					"member": "tag_base"
+				},
+				"membership_base": {
+					"schema": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 60,
+						"pattern": "^[a-z0-9]+([_-][a-z0-9]+)*(/[a-z0-9]+([_-][a-z0-9]+)*)*$"
+					},
+					"default": "members",
+					"option": "ohmylms_permalink",
+					"member": "membership_base"
+				}
+			}
+		},
+		"advanced": {
+			"fields": {
+				"use_custom_video_player": {
+					"schema": {
+						"type": "boolean"
+					},
+					"default": true,
+					"option": "ohmylms_use_custom_video_player"
+				}
+			}
+		},
+		"currency": {
+			"fields": {
+				"currency": {
+					"schema": {
+						"type": "string",
+						"pattern": "^[A-Z]{3}$"
+					},
+					"default": "USD",
+					"option": "ohmylms_currency"
+				},
+				"currency_pos": {
+					"schema": {
+						"type": "string",
+						"enum": [ "left", "right", "left_space", "right_space" ]
+					},
+					"default": "left",
+					"option": "ohmylms_currency_pos"
+				},
+				"price_thousand_sep": {
+					"schema": {
+						"type": "string",
+						"maxLength": 1,
+						"pattern": "^[^0-9<>&\"']?$"
+					},
+					"default": ",",
+					"option": "ohmylms_price_thousand_sep"
+				},
+				"price_decimal_sep": {
+					"schema": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 1,
+						"pattern": "^[^0-9<>&\"']$"
+					},
+					"default": ".",
+					"option": "ohmylms_price_decimal_sep"
+				},
+				"price_num_decimals": {
+					"schema": {
+						"type": "integer",
+						"minimum": 0,
+						"maximum": 8
+					},
+					"default": 2,
+					"option": "ohmylms_price_num_decimals"
+				}
+			}
+		},
+		"tax": {
+			"fields": {
+				"tax_enabled": {
+					"schema": {
+						"type": "boolean"
+					},
+					"default": false,
+					"option": "ohmylms_tax_enabled"
+				},
+				"tax_label": {
+					"schema": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 50
+					},
+					"default": "Tax",
+					"option": "ohmylms_tax_label"
+				},
+				"prices_include_tax": {
+					"schema": {
+						"type": "boolean"
+					},
+					"default": false,
+					"option": "ohmylms_prices_include_tax"
+				},
+				"eu_vat_enabled": {
+					"schema": {
+						"type": "boolean"
+					},
+					"default": false,
+					"option": "ohmylms_eu_vat_enabled"
+				},
+				"disable_vat_validation": {
+					"schema": {
+						"type": "boolean"
+					},
+					"default": false,
+					"option": "ohmylms_disable_vat_validation"
+				},
+				"vat_number_label": {
+					"schema": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 50
+					},
+					"default": "VAT Number",
+					"option": "ohmylms_vat_number_label"
+				},
+				"fallback_tax_rate": {
+					"schema": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 100
+					},
+					"default": 0,
+					"option": "ohmylms_fallback_tax_rate"
+				},
+				"tax_rates": {
+					"schema": {
+						"type": "array",
+						"maxItems": 500,
+						"items": {
+							"type": "object",
+							"additionalProperties": false,
+							"required": [ "country", "rate" ],
+							"properties": {
+								"country": {
+									"type": "string",
+									"pattern": "^[A-Z]{2}$"
+								},
+								"state": {
+									"type": "string",
+									"maxLength": 10,
+									"pattern": "^[A-Za-z0-9-]*$"
+								},
+								"rate": {
+									"type": "number",
+									"minimum": 0,
+									"maximum": 100
+								},
+								"country_wide": {
+									"type": "boolean"
+								}
+							}
+						}
+					},
+					"default": [],
+					"option": "ohmylms_tax_rates"
+				}
+			}
+		}
+	}
+}
