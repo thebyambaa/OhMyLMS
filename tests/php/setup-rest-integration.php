@@ -331,30 +331,114 @@ try {
 	ok( null === get_option( SetupProgress::OPTION, null ), 'a GET writes nothing' );
 	$state_keys = array_keys( $state );
 	sort( $state_keys );
-	ok( $state_keys === array( 'answers', 'completed_at', 'current_step', 'preferences', 'starter_pages', 'started_at', 'status', 'steps', 'version' ), 'state has exactly the documented members' );
+	ok( array( 'answers', 'completed_at', 'current_step', 'preferences', 'started_at', 'starter_pages', 'status', 'steps', 'version' ) === $state_keys, 'state has exactly the documented members' );
 
 	update_option( SetupProgress::OPTION, 'garbage' );
 	ok( 'not_started' === call_api( 'GET', '/setup' )->get_data()['status'], 'unreadable stored progress reads as not started' );
-	update_option( SetupProgress::OPTION, array( 'version' => 99, 'status' => 'completed' ) );
+	update_option(
+		SetupProgress::OPTION,
+		array(
+			'version' => 99,
+			'status'  => 'completed',
+		)
+	);
 	ok( 'not_started' === call_api( 'GET', '/setup' )->get_data()['status'], 'progress of another version reads as not started' );
 	delete_option( SetupProgress::OPTION );
 
 	// ---- Validation (nothing is saved) --------------------------------------------------------
 	ok_error( call_api( 'POST', '/setup/steps/experience', array( 'experience' => 'wizard' ) ), 400, 'rest_invalid_param', array( 'experience' ), 'bad enum' );
 	ok_error( call_api( 'POST', '/setup/steps/experience', array() ), 400, 'rest_invalid_param', array( 'experience' ), 'missing required' );
-	ok_error( call_api( 'POST', '/setup/steps/experience', array( 'experience' => 'beginner', 'extra' => 1 ) ), 400, 'ohmylms_setup_unknown_field', array( 'extra' ), 'unknown field' );
+	ok_error(
+		call_api(
+			'POST',
+			'/setup/steps/experience',
+			array(
+				'experience' => 'beginner',
+				'extra'      => 1,
+			)
+		),
+		400,
+		'ohmylms_setup_unknown_field',
+		array( 'extra' ),
+		'unknown field'
+	);
 	ok_error( call_api( 'POST', '/setup/steps/welcome', array( 'anything' => true ) ), 400, 'ohmylms_setup_unknown_field', array( 'anything' ), 'welcome takes no fields' );
 	ok_error( call_api( 'POST', '/setup/steps/experience', array( 'beginner' ) ), 400, 'ohmylms_setup_invalid_body', array(), 'a list body' );
-	ok_error( call_api( 'POST', '/setup/steps/experience', '{not json' ), 400, 'ohmylms_setup_invalid_body', array(), 'malformed JSON' );
+	ok_error( call_api( 'POST', '/setup/steps/experience', '{not json' ), 400, 'rest_invalid_json', array(), 'malformed JSON' );
 	ok_error( call_api( 'POST', '/setup/steps/preferences', array( 'currency' => 'usd' ) ), 400, 'rest_invalid_param', array( 'currency' ), 'currency pattern' );
-	ok_error( call_api( 'POST', '/setup/steps/preferences', array( 'currency' => 'USD', 'price_num_decimals' => 9 ) ), 400, 'rest_invalid_param', array( 'price_num_decimals' ), 'decimals range' );
-	ok_error( call_api( 'POST', '/setup/steps/preferences', array( 'currency' => 'USD', 'currency_pos' => 'middle' ) ), 400, 'rest_invalid_param', array( 'currency_pos' ), 'currency position enum' );
+	ok_error(
+		call_api(
+			'POST',
+			'/setup/steps/preferences',
+			array(
+				'currency'           => 'USD',
+				'price_num_decimals' => 9,
+			)
+		),
+		400,
+		'rest_invalid_param',
+		array( 'price_num_decimals' ),
+		'decimals range'
+	);
+	ok_error(
+		call_api(
+			'POST',
+			'/setup/steps/preferences',
+			array(
+				'currency'     => 'USD',
+				'currency_pos' => 'middle',
+			)
+		),
+		400,
+		'rest_invalid_param',
+		array( 'currency_pos' ),
+		'currency position enum'
+	);
 	$before_currency = get_option( 'ohmylms_currency', null );
 	ok_error( call_api( 'POST', '/setup/steps/preferences', array( 'currency' => 'ZZZ' ) ), 422, 'ohmylms_setup_invalid_value', array( 'currency' ), 'unknown currency code' );
 	ok( get_option( 'ohmylms_currency', null ) === $before_currency, 'a rejected currency changed nothing' );
-	ok_error( call_api( 'POST', '/setup/steps/niche', array( 'niche' => 'other', 'topics' => array_fill( 0, 11, 'x' ) ) ), 400, 'rest_invalid_param', array( 'topics' ), 'too many topics' );
-	ok_error( call_api( 'POST', '/setup/steps/niche', array( 'niche' => 'other', 'topics' => array( str_repeat( 'x', 61 ) ) ) ), 400, 'rest_invalid_param', array( 'topics' ), 'topic too long' );
-	ok_error( call_api( 'POST', '/setup/steps/niche', array( 'niche' => 'other', 'topics' => 'math' ) ), 400, 'rest_invalid_param', array( 'topics' ), 'topics must be a list' );
+	ok_error(
+		call_api(
+			'POST',
+			'/setup/steps/niche',
+			array(
+				'niche'  => 'other',
+				'topics' => array_fill( 0, 11, 'x' ),
+			)
+		),
+		400,
+		'rest_invalid_param',
+		array( 'topics' ),
+		'too many topics'
+	);
+	ok_error(
+		call_api(
+			'POST',
+			'/setup/steps/niche',
+			array(
+				'niche'  => 'other',
+				'topics' => array( str_repeat( 'x', 61 ) ),
+			)
+		),
+		400,
+		'rest_invalid_param',
+		array( 'topics' ),
+		'topic too long'
+	);
+	ok_error(
+		call_api(
+			'POST',
+			'/setup/steps/niche',
+			array(
+				'niche'  => 'other',
+				'topics' => 'math',
+			)
+		),
+		400,
+		'rest_invalid_param',
+		array( 'topics' ),
+		'topics must be a list'
+	);
 	ok( 404 === call_api( 'POST', '/setup/steps/nonsense', array() )->get_status(), 'an unknown step has no route (404)' );
 	ok( null === get_option( SetupProgress::OPTION, null ), 'rejected requests wrote no progress' );
 
@@ -386,13 +470,29 @@ try {
 			++$currency_updates;
 		}
 	);
-	$response = call_api( 'POST', '/setup/steps/preferences', array( 'currency' => 'EUR', 'currency_pos' => 'right_space', 'price_num_decimals' => 0 ) );
+	$response = call_api(
+		'POST',
+		'/setup/steps/preferences',
+		array(
+			'currency'           => 'EUR',
+			'currency_pos'       => 'right_space',
+			'price_num_decimals' => 0,
+		)
+	);
 	$data     = $response->get_data();
 	ok( 200 === $response->get_status() && array( 'currency', 'currency_pos', 'price_num_decimals' ) === $data['result']['changed'], 'preferences report the changed fields: ' . wp_json_encode( $data['result'] ) );
 	ok( 'EUR' === get_option( 'ohmylms_currency' ) && 'right_space' === get_option( 'ohmylms_currency_pos' ) && 0 === (int) get_option( 'ohmylms_price_num_decimals' ), 'the readers see the registry options' );
 	ok( 'EUR' === $data['state']['preferences']['currency'] && 0 === $data['state']['preferences']['price_num_decimals'], 'state shows the live preferences' );
 	ok( 3 === $currency_updates, 'the settings hook fired per changed field' );
-	$response = call_api( 'POST', '/setup/steps/preferences', array( 'currency' => 'EUR', 'currency_pos' => 'right_space', 'price_num_decimals' => 0 ) );
+	$response = call_api(
+		'POST',
+		'/setup/steps/preferences',
+		array(
+			'currency'           => 'EUR',
+			'currency_pos'       => 'right_space',
+			'price_num_decimals' => 0,
+		)
+	);
 	ok( array() === $response->get_data()['result']['changed'] && 3 === $currency_updates, 'repeating preferences changes nothing (idempotent)' );
 	$response = call_api( 'POST', '/setup/steps/preferences', array( 'currency' => 'EUR' ) );
 	ok( 'right_space' === get_option( 'ohmylms_currency_pos' ), 'fields that are not sent are untouched' );
@@ -400,14 +500,28 @@ try {
 	// ---- Niche and starter topics ---------------------------------------------------------------
 	$topic_a  = 'Wizard topic A ' . $tag;
 	$topic_b  = 'Wizard topic B ' . $tag;
-	$response = call_api( 'POST', '/setup/steps/niche', array( 'niche' => 'tech-skills', 'topics' => array( $topic_a, '  ' . strtoupper( $topic_a ) . ' ', $topic_b, '<b>' . $tag . '</b>' ) ) );
+	$response = call_api(
+		'POST',
+		'/setup/steps/niche',
+		array(
+			'niche'  => 'tech-skills',
+			'topics' => array( $topic_a, '  ' . strtoupper( $topic_a ) . ' ', $topic_b, '<b>' . $tag . '</b>' ),
+		)
+	);
 	$state    = state_of( $response );
 	ok( 200 === $response->get_status() && 'tech-skills' === $state['answers']['niche'] && array( $topic_a, $topic_b, $tag ) === $state['answers']['topics'], 'topics are trimmed, stripped of tags and de-duplicated: ' . wp_json_encode( $state['answers']['topics'] ) );
 	$count = static function () use ( $wpdb, $tag ) {
 		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . Items::table() . ' WHERE name LIKE %s', '%' . $wpdb->esc_like( $tag ) . '%' ) );
 	};
 	ok( 3 === $count(), 'three curriculum items were created' );
-	call_api( 'POST', '/setup/steps/niche', array( 'niche' => 'tech-skills', 'topics' => array( $topic_a, $topic_b, $tag ) ) );
+	call_api(
+		'POST',
+		'/setup/steps/niche',
+		array(
+			'niche'  => 'tech-skills',
+			'topics' => array( $topic_a, $topic_b, $tag ),
+		)
+	);
 	ok( 3 === $count(), 'repeating the niche step creates no duplicate item' );
 	$top = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . Items::table() . ' WHERE name = %s AND parent_id = 0', $topic_a ) );
 	ok( 1 === $top, 'topics are top-level items' );
@@ -486,22 +600,41 @@ try {
 			$post_ids[] = $row['page_id'];
 		}
 	}
-	ok( array(
-		'course'            => 'created',
-		'checkout'          => 'created',
-		'student_dashboard' => 'adopted',
-		'student_profile'   => 'created',
-		'student_courses'   => 'kept',
-	) === $actions, 'created, adopted and kept pages: ' . wp_json_encode( $actions ) );
+	ok(
+		array(
+			'course'            => 'created',
+			'checkout'          => 'created',
+			'student_dashboard' => 'adopted',
+			'student_profile'   => 'created',
+			'student_courses'   => 'kept',
+		) === $actions,
+		'created, adopted and kept pages: ' . wp_json_encode( $actions )
+	);
 	$general = SettingsRegistry::group( 'general' );
-	ok( $adopt_page === (int) get_option( 'ohmylms_student_dashboard_page_id' ) && $kept_page === (int) get_option( 'ohmylms_student_courses_page_id' ), 'adopted and kept pages are configured' );
-	ok( 'original content' === get_post( $adopt_page )->post_content && 'Adopt ' . $tag === get_post( $adopt_page )->post_title, 'an adopted page keeps its content and title' );
+	ok( (int) get_option( 'ohmylms_student_dashboard_page_id' ) === $adopt_page && (int) get_option( 'ohmylms_student_courses_page_id' ) === $kept_page, 'adopted and kept pages are configured' );
+	ok( 'original content' === get_post( $adopt_page )->post_content && get_post( $adopt_page )->post_title === 'Adopt ' . $tag, 'an adopted page keeps its content and title' );
 	ok( 'draft' === get_post_status( $draft_page ) && 'original content' === get_post( $draft_page )->post_content, 'a draft page with the slug is left untouched' );
 	$profile = get_post( (int) get_option( 'ohmylms_student_profile_page_id' ) );
 	ok( $profile && $profile->ID !== $draft_page && 'publish' === $profile->post_status && 'page' === $profile->post_type && 'Wizard profile ' . $tag === $profile->post_title, 'a new page is created next to the draft' );
 	$checkout = get_post( (int) get_option( 'ohmylms_checkout_page_id' ) );
 	ok( $checkout && 'closed' === $checkout->comment_status && 'ohmylms-checkout' === get_post_meta( $checkout->ID, '_wp_page_template', true ) && 'wiz-checkout-' . $tag === $checkout->post_name, 'created pages are published with slug, closed comments and template' );
-	ok( 'ready' === step_status( array( 'steps' => array( array( 'id' => 'ready', 'status' => 'ready' ) ) ), 'ready' ) && 'done' === step_status( $data['state'], 'pages' ), 'the pages step is marked done' );
+	ok(
+		'ready' === step_status(
+			array(
+				'steps' => array(
+					array(
+						'id'     => 'ready',
+						'status' => 'ready',
+					),
+				),
+			),
+			'ready'
+		) && 'done' === step_status(
+			$data['state'],
+			'pages'
+		),
+		'the pages step is marked done'
+	);
 	$post_total = (int) wp_count_posts( 'page' )->publish + (int) wp_count_posts( 'page' )->draft;
 	ok( $post_total === $pages_before + 3, 'exactly three pages were added' );
 
@@ -509,7 +642,7 @@ try {
 	$data     = $response->get_data();
 	$actions  = array_unique( wp_list_pluck( $data['result']['pages'], 'action' ) );
 	ok( 200 === $response->get_status() && array( 'kept' ) === $actions, 'repeating the pages step keeps everything' );
-	ok( $post_total === (int) wp_count_posts( 'page' )->publish + (int) wp_count_posts( 'page' )->draft, 'repeating the pages step adds no page' );
+	ok( (int) wp_count_posts( 'page' )->publish + (int) wp_count_posts( 'page' )->draft === $post_total, 'repeating the pages step adds no page' );
 
 	// A configured page that was unpublished is replaced by a new page, never republished.
 	wp_update_post(
@@ -594,7 +727,7 @@ try {
 	$response      = call_api( 'POST', '/setup/reset' );
 	$state         = state_of( $response );
 	ok( 200 === $response->get_status() && 'not_started' === $state['status'] && 'welcome' === $state['current_step'] && null === $state['completed_at'], 'reset starts over' );
-	ok( 'experienced' === $state['answers']['experience'] && $pages_setting === get_option( 'ohmylms_student_courses_page_id' ) && 'EUR' === get_option( 'ohmylms_currency' ), 'reset keeps answers, settings and pages' );
+	ok( 'experienced' === $state['answers']['experience'] && get_option( 'ohmylms_student_courses_page_id' ) === $pages_setting && 'EUR' === get_option( 'ohmylms_currency' ), 'reset keeps answers, settings and pages' );
 	call_api( 'POST', '/setup/steps/welcome' );
 	ok( 2 === $fired['started'], 'a restarted wizard fires the started hook again' );
 	$response = call_api( 'POST', '/setup/dismiss', array( 'step' => 'niche' ) );
@@ -612,13 +745,27 @@ try {
 	ok_error( call_api( 'POST', '/site-setup/subjects-page', array( 'display' => 'grid' ) ), 400, 'rest_invalid_param', array( 'display' ), 'subjects page display' );
 	ok_error( call_api( 'POST', '/site-setup/subjects-page', array( 'confirm' => 'maybe' ) ), 400, 'rest_invalid_param', array( 'confirm' ), 'subjects page confirm' );
 	ok_error( call_api( 'POST', '/site-setup/explore-menu', array( 'menu_id' => 0 ) ), 400, 'rest_invalid_param', array( 'menu_id' ), 'menu id minimum' );
-	ok_error( call_api( 'POST', '/site-setup/explore-menu', array( 'menu_id' => 1, 'label' => str_repeat( 'x', 41 ) ) ), 400, 'rest_invalid_param', array( 'label' ), 'menu label too long' );
-	ok_error( call_api( 'POST', '/site-setup/explore-menu', array() ), 400, 'rest_missing_callback_param', array( 'menu_id' ), 'menu id required' );
+	ok_error(
+		call_api(
+			'POST',
+			'/site-setup/explore-menu',
+			array(
+				'menu_id' => 1,
+				'label'   => str_repeat( 'x', 41 ),
+			)
+		),
+		400,
+		'rest_invalid_param',
+		array( 'label' ),
+		'menu label too long'
+	);
+	$response = call_api( 'POST', '/site-setup/explore-menu', array() );
+	ok( 400 === $response->get_status() && 'rest_missing_callback_param' === $response->get_data()['code'] && in_array( 'menu_id', $response->get_data()['data']['params'], true ), 'menu id is required' );
 	$page_count = (int) wp_count_posts( 'page' )->publish;
 	$response   = call_api( 'POST', '/site-setup/subjects-page', array( 'title' => 'Subjects ' . $tag ) );
 	$data       = $response->get_data();
 	ok( ( 200 === $response->get_status() && in_array( $data['status'], array( 'preview', 'exists' ), true ) ) || ( 409 === $response->get_status() && 'ohmylms_block_missing' === $data['code'] ), 'without confirm the subjects page is only previewed' );
-	ok( $page_count === (int) wp_count_posts( 'page' )->publish, 'the preview created no page' );
+	ok( (int) wp_count_posts( 'page' )->publish === $page_count, 'the preview created no page' );
 	$response = call_api( 'POST', '/site-setup/explore-menu', array( 'menu_id' => 2147483647 ) );
 	ok( in_array( $response->get_status(), array( 404, 409 ), true ), 'an unknown navigation menu is not found (or the block is missing)' );
 

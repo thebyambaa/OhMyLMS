@@ -1,0 +1,114 @@
+{
+	"version": 1,
+	"namespace": "ohmylms/v1",
+	"capability": "manage_options",
+	"routes": [
+		{ "method": "GET", "path": "/setup" },
+		{ "method": "POST", "path": "/setup/steps/{step}" },
+		{ "method": "POST", "path": "/setup/steps/{step}/skip" },
+		{ "method": "POST", "path": "/setup/complete" },
+		{ "method": "POST", "path": "/setup/dismiss" },
+		{ "method": "POST", "path": "/setup/reset" }
+	],
+	"stepIds": [
+		"welcome",
+		"experience",
+		"preferences",
+		"niche",
+		"pages",
+		"import"
+	],
+	"statuses": [ "not_started", "in_progress", "completed", "dismissed" ],
+	"steps": {
+		"welcome": {
+			"skippable": false,
+			"available": true,
+			"schema": { "properties": {} }
+		},
+		"experience": {
+			"skippable": false,
+			"available": true,
+			"schema": {
+				"required": [ "experience" ],
+				"properties": {
+					"experience": {
+						"type": "string",
+						"enum": [ "beginner", "intermediate", "experienced" ]
+					}
+				}
+			}
+		},
+		"preferences": {
+			"skippable": true,
+			"available": true,
+			"schema": {
+				"required": [ "currency" ],
+				"properties": {
+					"currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+					"currency_pos": {
+						"type": "string",
+						"enum": [ "left", "right", "left_space", "right_space" ]
+					},
+					"price_num_decimals": {
+						"type": "integer",
+						"minimum": 0,
+						"maximum": 8
+					}
+				}
+			}
+		},
+		"niche": {
+			"skippable": true,
+			"available": true,
+			"schema": {
+				"required": [ "niche" ],
+				"properties": {
+					"niche": {
+						"type": "string",
+						"enum": [
+							"digital-marketing-growth",
+							"tech-skills",
+							"creator-economy",
+							"academic-test-prep",
+							"other"
+						]
+					},
+					"topics": {
+						"type": "array",
+						"maxItems": 10,
+						"items": {
+							"type": "string",
+							"minLength": 1,
+							"maxLength": 60
+						}
+					}
+				}
+			}
+		},
+		"pages": {
+			"skippable": true,
+			"available": true,
+			"schema": { "properties": {} }
+		},
+		"import": {
+			"skippable": true,
+			"available": false,
+			"schema": { "properties": {} }
+		}
+	},
+	"errorCodes": {
+		"rest_invalid_param": 400,
+		"ohmylms_setup_unknown_field": 400,
+		"ohmylms_setup_invalid_body": 400,
+		"ohmylms_setup_cannot_view": "401|403",
+		"ohmylms_setup_cannot_manage": "401|403",
+		"ohmylms_setup_cannot_publish_pages": "401|403",
+		"ohmylms_setup_step_unavailable": 409,
+		"ohmylms_setup_step_required": 409,
+		"ohmylms_setup_incomplete": 409,
+		"ohmylms_setup_already_completed": 409,
+		"ohmylms_setup_invalid_value": 422,
+		"ohmylms_setup_save_failed": 500,
+		"ohmylms_setup_pages_failed": 500
+	}
+}

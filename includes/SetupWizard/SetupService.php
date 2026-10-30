@@ -105,6 +105,11 @@ final class SetupService {
 			}
 		}
 		foreach ( $body as $name => $value ) {
+			// Core accepts a comma-separated string for an array; the wizard requires a real JSON array.
+			if ( 'array' === $properties[ $name ]['type'] && ! is_array( $value ) ) {
+				$problems[ $name ] = __( 'Must be a list.', 'ohmylms' );
+				continue;
+			}
 			$result = rest_validate_value_from_schema( $value, $properties[ $name ], $name );
 			if ( is_wp_error( $result ) ) {
 				$problems[ $name ] = $result->get_error_message();
