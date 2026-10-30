@@ -382,7 +382,7 @@
 		],
 		[
 			"/communities",
-			null
+			"/integrations"
 		],
 		[
 			"/sessions",
@@ -700,6 +700,10 @@
 		{
 			"from": "/extensions/bundles",
 			"to": "/content-hub/bundles"
+		},
+		{
+			"from": "/communities",
+			"to": "/integrations"
 		},
 		{
 			"from": "/settings/general-settings/*",

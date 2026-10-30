@@ -299,7 +299,7 @@ try {
 		AppPage::register_menu();
 		// Entries an add-on might add: mapped and unmapped legacy routes, another page, an external link.
 		$GLOBALS['submenu'][ OHMYLMS_SLUG ][] = array( 'Add-on orders', 'manage_options', admin_url( 'admin.php?page=' . OHMYLMS_SLUG . '#/orders' ) );
-		$GLOBALS['submenu'][ OHMYLMS_SLUG ][] = array( 'Add-on communities', 'manage_options', 'admin.php?page=' . OHMYLMS_SLUG . '#/communities' );
+		$GLOBALS['submenu'][ OHMYLMS_SLUG ][] = array( 'Add-on exams', 'manage_options', 'admin.php?page=' . OHMYLMS_SLUG . '#/content-hub/exams' );
 		$GLOBALS['submenu'][ OHMYLMS_SLUG ][] = array( 'Add-on page', 'manage_options', 'ohmylms-addon-page' );
 		$menu_object->cutover_submenu();
 		AppPage::hide_menu_entry();
@@ -308,7 +308,7 @@ try {
 	ok( submenu_url( 'Content Hub' ) === $legacy . '#/content-hub', 'cutover off: Content Hub opens the legacy hub' );
 	ok( submenu_url( 'Sessions' ) === $legacy . '#/sessions', 'cutover off: Sessions stays' );
 	ok( submenu_url( 'OhMyLMS (new)' ) === AppPage::SLUG, 'cutover off: OhMyLMS (new) stays' );
-	ok( submenu_url( 'Add-on communities' ) === 'admin.php?page=' . OHMYLMS_SLUG . '#/communities', 'cutover off: add-on entries are untouched' );
+	ok( submenu_url( 'Add-on exams' ) === 'admin.php?page=' . OHMYLMS_SLUG . '#/content-hub/exams', 'cutover off: add-on entries are untouched' );
 	ok( array_values( $GLOBALS['submenu'][ OHMYLMS_SLUG ] )[0][2] === $app . '#/dashboard', 'cutover off: the top-level entry opens the first submenu, the new dashboard' );
 	wp_dequeue_script( LegacyRoutes::HANDLE );
 	LegacyRoutes::enqueue_landing( $app_hook );
@@ -331,7 +331,7 @@ try {
 	ok( submenu_url( 'Settings' ) === $app . '#/settings?tab=general', 'cutover on: Settings' );
 	ok( submenu_url( 'Add-ons' ) === $app . '#/integrations', 'cutover on: Add-ons' );
 	ok( submenu_url( 'Add-on orders' ) === $app . '#/orders', 'cutover on: a mapped add-on entry opens the new app' );
-	ok( null === submenu_url( 'Add-on communities' ), 'cutover on: an unmapped add-on entry is dropped' );
+	ok( null === submenu_url( 'Add-on exams' ), 'cutover on: an unmapped add-on entry is dropped' );
 	ok( submenu_url( 'Add-on page' ) === 'ohmylms-addon-page', 'cutover on: entries for other pages are kept' );
 	foreach ( $GLOBALS['submenu'][ OHMYLMS_SLUG ] as $item ) {
 		ok( ! preg_match( '#admin\.php\?page=' . preg_quote( OHMYLMS_SLUG, '#' ) . '(?:[&\#]|$)#', (string) $item[2] ), 'cutover on: no submenu entry opens the legacy page: ' . $item[2] );
@@ -386,7 +386,7 @@ try {
 	AppPage::render();
 	$page_html = ob_get_clean();
 	ok( false !== strpos( $page_html, 'id="' . LegacyRoutes::NOTICE_ID . '"' ) && false !== strpos( $page_html, 'hidden' ), 'cutover on: the app prints the hidden unavailable notice' );
-	ok( false !== strpos( $page_html, esc_html( LegacyRoutes::unavailable()['/communities'] ) ), 'cutover on: the notice lists the screens that are not available yet' );
+	ok( false !== strpos( $page_html, esc_html( LegacyRoutes::unavailable()['/sessions'] ) ), 'cutover on: the notice lists the screens that are not available yet' );
 	ok(
 		false !== strpos(
 			$page_html,

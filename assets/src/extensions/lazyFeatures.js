@@ -7,7 +7,6 @@ import gamification from '../features/gamification/components.json';
 import reports from '../features/quiz-reports/components.json';
 import learning from '../features/learning/components.json';
 import memberships from '../features/memberships/components.json';
-import communities from '../features/communities/components.json';
 import analytics from '../features/analytics/components.json';
 import commerce from '../features/commerce/components.json';
 import certificates from '../features/certificates/components.json';
@@ -77,14 +76,6 @@ export const membershipComponents = lazyFactories(
 			/* webpackChunkName: "memberships" */ '../features/memberships'
 		),
 	'membershipComponents'
-);
-export const communityComponents = lazyFactories(
-	communities,
-	() =>
-		import(
-			/* webpackChunkName: "communities" */ '../features/communities'
-		),
-	'communityComponents'
 );
 export const analyticsComponents = lazyFactories(
 	analytics,

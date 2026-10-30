@@ -37,7 +37,6 @@ import { adaptGamification } from './gamification-adapters.mjs';
 import { adaptQuizReports } from './quiz-report-adapters.mjs';
 import { adaptLearning } from './learning-adapters.mjs';
 import { adaptMemberships } from './membership-adapters.mjs';
-import { adaptCommunities } from './community-adapters.mjs';
 import { adaptAnalytics } from './analytics-adapters.mjs';
 import { adaptCommerce } from './commerce-adapters.mjs';
 import { adaptCertificates } from './certificate-adapters.mjs';
@@ -243,11 +242,6 @@ for ( const asset of manifest.assets ) {
 			asset.output === 'assets/dist/admin/ohmylms.js'
 		)
 			console.log( 'Membership adapters:', adaptMemberships( ast ) );
-		if (
-			process.argv.includes( '--extensions' ) &&
-			asset.output === 'assets/dist/admin/ohmylms.js'
-		)
-			console.log( 'Community adapters:', adaptCommunities( ast ) );
 		if (
 			process.argv.includes( '--extensions' ) &&
 			asset.output === 'assets/dist/admin/ohmylms.js'

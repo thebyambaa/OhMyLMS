@@ -14,14 +14,14 @@ steps and acceptance criteria, see [the modularization roadmap](MODULARIZATION-R
 | Application fragments in factory 1841 | 230 |
 | Top-level bindings in factory 1841 | 3703 |
 | Routes in the recovered router | 31 |
-| Authored components created through `readRuntime` | 215 |
-| Distinct bindings those components read | 845 |
-| … authored feature components | 167 |
+| Authored components created through `readRuntime` | 210 |
+| Distinct bindings those components read | 830 |
+| … authored feature components | 163 |
 | … WordPress/React platform packages | 7 |
 | … recovered LMS-owned modules | 26 |
 | … recovered vendor libraries | 18 |
-| … recovered code in factory 1841 | 147 |
-| … inlined Babel helpers (removed by authoring) | 480 |
+| … recovered code in factory 1841 | 146 |
+| … inlined Babel helpers (removed by authoring) | 470 |
 | Unassigned bindings | 0 |
 | Recovered library families | 22 |
 
@@ -34,9 +34,9 @@ drifts from the source.
 | Step | Work | Bindings |
 | --- | --- | --- |
 | 2 | Migrate Easy Email and remaining libraries | 18 |
-| 3 | Extract shared application infrastructure | 52 |
+| 3 | Extract shared application infrastructure | 50 |
 | 4 | Separate state and API access | 9 |
-| 5 | Finish feature independence | 766 |
+| 5 | Finish feature independence | 753 |
 | 6 | Replace the recovered application entry point | 0 |
 
 ## Unwired feature copies
@@ -59,12 +59,11 @@ Platform is zero and its components no longer use `createComponent(readRuntime)`
 | analytics | 18 | 7 | 12 | 1 | 6 | 2 | 12 | 30 |
 | certificates | 13 | 6 | 8 | 4 | 5 | 0 | 3 | 35 |
 | commerce | 22 | 7 | 10 | 1 | 5 | 1 | 4 | 23 |
-| communities | 5 | 6 | 4 | 2 | 2 | 1 | 1 | 12 |
-| courses | 25 | 6 | 14 | 4 | 12 | 4 | 26 | 68 |
+| courses | 25 | 6 | 13 | 4 | 12 | 4 | 27 | 68 |
 | emails | 12 | 5 | 4 | 1 | 5 | 1 | 1 | 16 |
 | gamification | 13 | 6 | 5 | 2 | 3 | 0 | 1 | 54 |
 | integrations | 7 | 5 | 0 | 3 | 0 | 0 | 2 | 27 |
-| learning | 25 | 6 | 18 | 2 | 6 | 1 | 16 | 72 |
+| learning | 25 | 6 | 17 | 2 | 6 | 1 | 17 | 72 |
 | memberships | 7 | 6 | 7 | 2 | 3 | 0 | 5 | 23 |
 | question-editor | 13 | 5 | 4 | 1 | 1 | 0 | 11 | 20 |
 | quiz-editor | 4 | 4 | 4 | 2 | 1 | 1 | 5 | 8 |
@@ -82,19 +81,19 @@ feature reads. Each becomes a direct import or a named public module.
 
 | Binding | Resolves to | Features | Target |
 | --- | --- | --- | --- |
-| `b` | @wordpress/i18n | 18 | direct `@wordpress/*` / `@wordpress/element` import |
-| `g` | react (wp.element) | 18 | direct `@wordpress/*` / `@wordpress/element` import |
-| `React` | react (wp.element) | 18 | direct `@wordpress/*` / `@wordpress/element` import |
-| `y` | @wordpress/data | 17 | direct `@wordpress/*` / `@wordpress/element` import |
-| `l` | @wordpress/api-fetch | 14 | direct `@wordpress/*` / `@wordpress/element` import |
-| `L` | Stylesheet side-effect module (factory 77558) | 13 | named shared module (step 3) |
-| `q` | @wordpress/components | 13 | direct `@wordpress/*` / `@wordpress/element` import |
+| `b` | @wordpress/i18n | 17 | direct `@wordpress/*` / `@wordpress/element` import |
+| `g` | react (wp.element) | 17 | direct `@wordpress/*` / `@wordpress/element` import |
+| `React` | react (wp.element) | 17 | direct `@wordpress/*` / `@wordpress/element` import |
+| `y` | @wordpress/data | 16 | direct `@wordpress/*` / `@wordpress/element` import |
+| `l` | @wordpress/api-fetch | 13 | direct `@wordpress/*` / `@wordpress/element` import |
+| `L` | Stylesheet side-effect module (factory 77558) | 12 | named shared module (step 3) |
+| `q` | @wordpress/components | 12 | direct `@wordpress/*` / `@wordpress/element` import |
 | `We` | component in course-builder-lesson-actions.js | 9 | named shared module (step 3) |
 | `aY` | component in course-list-filters.js | 8 | named shared module (step 3) |
 | `fN` | component in automation-list-table.js | 8 | named shared module (step 3) |
 | `sN` | Component (.ohmylms-table) (factory 65) | 6 | named shared module (step 3) |
-| `Br` | component in lesson-editor.js | 5 | named shared module (step 3) |
 | `D` | Unlabelled module (factory 94490) | 5 | named shared module (step 3) |
+| `Br` | component in lesson-editor.js | 4 | named shared module (step 3) |
 | `Nm` | component in quiz-matching-question-editor.js | 4 | named shared module (step 3) |
 | `vn` | Wrapper around @wordpress/components SelectControl (factory 54870) | 4 | named shared module (step 3) |
 | `hu` | component in quiz-editor-media-library.js | 3 | named shared module (step 3) |
@@ -111,9 +110,7 @@ feature reads. Each becomes a direct import or a named public module.
 | `QZ` | component in quiz-report-helpers.js | 2 | named shared module (step 3) |
 | `r$` | component in quiz-grading-question-row.js | 2 | named shared module (step 3) |
 | `Re` | component in course-builder-lesson-actions.js | 2 | named shared module (step 3) |
-| `Rt` | component in course-builder-add-content-picker.js | 2 | named shared module (step 3) |
 | `RZ` | component in quiz-list.js | 2 | named shared module (step 3) |
-| `SB` | component in certificate-template-preview.js | 2 | named shared module (step 3) |
 | `Tt` | Unlabelled module (factory 50127) | 2 | named shared module (step 3) |
 | `UG` | Unlabelled module (factory 99166) | 2 | named shared module (step 3) |
 | `wn` | Unlabelled module (factory 55907) | 2 | named shared module (step 3) |
@@ -143,9 +140,9 @@ core of step 4. The recovered code below also calls the REST API or creates stat
 
 | Binding | Resolves to | Owner | Used by |
 | --- | --- | --- | --- |
-| `He` | REST client (/ohmylms/v1/plugin-installer/install) (factory 83193) | shared-infrastructure | certificates/CertificateControls, communities/CommunityEditor, courses/CourseToolbar, courses/CourseMedia, courses/CourseBasics, courses/CourseList, gamification/BadgeSettings, gamification/LevelSettings, integrations/IntegrationsPage, learning/LessonSettings, learning/LearningMediaField, learning/DownloadResources, memberships/MembershipList, memberships/MembershipEditor, quiz-editor/QuizSettingsFields, settings/AccountPrivacySettings, settings/MigrationImport, students/CourseStudents, webhooks/WebhooksPage |
+| `He` | REST client (/ohmylms/v1/plugin-installer/install) (factory 83193) | shared-infrastructure | certificates/CertificateControls, courses/CourseToolbar, courses/CourseMedia, courses/CourseBasics, courses/CourseList, gamification/BadgeSettings, gamification/LevelSettings, integrations/IntegrationsPage, learning/LessonSettings, learning/LearningMediaField, learning/DownloadResources, memberships/MembershipList, memberships/MembershipEditor, quiz-editor/QuizSettingsFields, settings/AccountPrivacySettings, settings/MigrationImport, students/CourseStudents, webhooks/WebhooksPage |
 | `J0` | api in checkout-page-settings.js | settings | settings/PaymentGatewaysSettings |
-| `T` | Application data store and REST client (factory 86169) | shared-infrastructure | analytics/Dashboard, analytics/DashboardOverview, analytics/RecentCourses, analytics/CourseReport, analytics/EarningsChart, analytics/CourseStudentsReport, certificates/CertificateList, certificates/CertificateTemplateCard, certificates/CertificateEditPage, certificates/CertificateEditor, certificates/CertificateEditorHeader, certificates/CertificateControls, certificates/CertificatePreview, certificates/CertificateCourseSelector, commerce/OrderList, commerce/OrderItems, commerce/OrderNotes, commerce/OrderStatus, commerce/OrderDetails, commerce/SubscriptionList, commerce/SubscriptionStatus, commerce/SubscriptionDetails, commerce/CouponList, communities/CommunityList, communities/CommunityEditor, communities/CommunityDetails, communities/CommunityCourses, courses/CourseEditor, courses/CourseToolbar, courses/CourseCurriculum, courses/CourseInfoHeader, courses/CourseMedia, courses/CourseSettings, courses/CourseBasics, courses/CoursePricing, courses/CourseAvailability, courses/CourseEngagement, courses/CourseCohortSettings, courses/CoursePreview, courses/CourseFunnel, courses/CourseList, courses/CourseCreateDialog, courses/CourseChapter, emails/EmailSettingsPage, emails/EmailTemplateList, emails/EmailButtonPosition, emails/EmailSenderOptions, emails/EmailPersonalization, emails/EmailEditorPage, emails/EmailEditor, emails/EmailPreview, emails/EmailFields, gamification/LeaderboardSettings, gamification/BonusPointSettings, gamification/BadgeEditor, gamification/BadgeList, gamification/BadgeSettings, gamification/LevelEditor, gamification/LevelList, gamification/LevelSettings, gamification/RewardSettings, integrations/IntegrationsPage, learning/LessonEditor, learning/LessonSettings, learning/LearningMediaField, learning/DownloadResources, learning/AssignmentEditor, learning/AssignmentSettings, learning/AssignmentList, learning/QuizList, learning/SessionList, learning/GoogleMeetEditor, learning/ZoomEditor, learning/AssignmentGrading, memberships/MembershipList, memberships/MembershipEditor, memberships/MembershipDetails, memberships/MembershipPricing, memberships/MembershipSaleSchedule, memberships/MembershipCourses, question-editor/QuestionCanvas, question-editor/QuestionSettings, question-editor/ChoiceOptionsEditor, question-editor/TrueFalseEditor, question-editor/StatementEditor, question-editor/FillInTheBlankEditor, question-editor/ReorderEditor, question-editor/MatchingEditor, quiz-editor/QuizEditor, quiz-editor/QuestionList, quiz-editor/QuizSettingsFields, settings/SettingsPage, settings/GeneralSettings, settings/GeneralSettingsFields, settings/BrandingSettings, settings/AccountPrivacySettings, settings/PermalinkSettings, settings/AdvancedSettings, settings/DesignSettings, settings/PaymentSettings, settings/PaymentGatewaysSettings, settings/CurrencySettings, settings/TaxSettings, settings/MigrationPlatformSelector, settings/MigrationImport, settings/MigrationProgressModal, setup/SetupWelcome, setup/SetupLevelSelection, setup/SetupPreferences, setup/SetupNiche, setup/CourseMigration, setup/ScormImport, setup/CourseImport, setup/SetupCompletion, setup/SetupWizardController, students/StudentList, students/StudentReport, students/CourseStudents, taxonomies/CategoriesPage, webhooks/WebhookDetails, webhooks/WebhookDataMapping, webhooks/WebhookEditorModal, webhooks/WebhooksPage |
+| `T` | Application data store and REST client (factory 86169) | shared-infrastructure | analytics/Dashboard, analytics/DashboardOverview, analytics/RecentCourses, analytics/CourseReport, analytics/EarningsChart, analytics/CourseStudentsReport, certificates/CertificateList, certificates/CertificateTemplateCard, certificates/CertificateEditPage, certificates/CertificateEditor, certificates/CertificateEditorHeader, certificates/CertificateControls, certificates/CertificatePreview, certificates/CertificateCourseSelector, commerce/OrderList, commerce/OrderItems, commerce/OrderNotes, commerce/OrderStatus, commerce/OrderDetails, commerce/SubscriptionList, commerce/SubscriptionStatus, commerce/SubscriptionDetails, commerce/CouponList, courses/CourseEditor, courses/CourseToolbar, courses/CourseCurriculum, courses/CourseInfoHeader, courses/CourseMedia, courses/CourseSettings, courses/CourseBasics, courses/CoursePricing, courses/CourseAvailability, courses/CourseEngagement, courses/CourseCohortSettings, courses/CoursePreview, courses/CourseFunnel, courses/CourseList, courses/CourseCreateDialog, courses/CourseChapter, emails/EmailSettingsPage, emails/EmailTemplateList, emails/EmailButtonPosition, emails/EmailSenderOptions, emails/EmailPersonalization, emails/EmailEditorPage, emails/EmailEditor, emails/EmailPreview, emails/EmailFields, gamification/LeaderboardSettings, gamification/BonusPointSettings, gamification/BadgeEditor, gamification/BadgeList, gamification/BadgeSettings, gamification/LevelEditor, gamification/LevelList, gamification/LevelSettings, gamification/RewardSettings, integrations/IntegrationsPage, learning/LessonEditor, learning/LessonSettings, learning/LearningMediaField, learning/DownloadResources, learning/AssignmentEditor, learning/AssignmentSettings, learning/AssignmentList, learning/QuizList, learning/SessionList, learning/GoogleMeetEditor, learning/ZoomEditor, learning/AssignmentGrading, memberships/MembershipList, memberships/MembershipEditor, memberships/MembershipDetails, memberships/MembershipPricing, memberships/MembershipSaleSchedule, memberships/MembershipCourses, question-editor/QuestionCanvas, question-editor/QuestionSettings, question-editor/ChoiceOptionsEditor, question-editor/TrueFalseEditor, question-editor/StatementEditor, question-editor/FillInTheBlankEditor, question-editor/ReorderEditor, question-editor/MatchingEditor, quiz-editor/QuizEditor, quiz-editor/QuestionList, quiz-editor/QuizSettingsFields, settings/SettingsPage, settings/GeneralSettings, settings/GeneralSettingsFields, settings/BrandingSettings, settings/AccountPrivacySettings, settings/PermalinkSettings, settings/AdvancedSettings, settings/DesignSettings, settings/PaymentSettings, settings/PaymentGatewaysSettings, settings/CurrencySettings, settings/TaxSettings, settings/MigrationPlatformSelector, settings/MigrationImport, settings/MigrationProgressModal, setup/SetupWelcome, setup/SetupLevelSelection, setup/SetupPreferences, setup/SetupNiche, setup/CourseMigration, setup/ScormImport, setup/CourseImport, setup/SetupCompletion, setup/SetupWizardController, students/StudentList, students/StudentReport, students/CourseStudents, taxonomies/CategoriesPage, webhooks/WebhookDetails, webhooks/WebhookDataMapping, webhooks/WebhookEditorModal, webhooks/WebhooksPage |
 | `TW` | api in integration-wp-fusion-modal.js | courses | courses/CourseEditor |
 | `ZD` | api in automation-recipe-modal.js | courses | courses/CourseEditor |
 | `dL` | api in certificate-template-list.js | certificates | certificates/CertificateEditorHeader |
@@ -190,9 +187,9 @@ Vendor bindings that features read directly:
 | `E` | Unidentified vendor (factory 38221) | courses |
 | `IW` | @wordpress/icons (bundled copy) (factory 28351) | courses |
 | `Jt` | Emotion (factory 11541) | courses |
-| `M` | Lodash (factory 2543) | analytics, certificates, communities, courses, gamification, learning, settings |
+| `M` | Lodash (factory 2543) | analytics, certificates, courses, gamification, learning, settings |
 | `NW` | Day.js (factory 83826) | courses |
-| `Ne` | @wordpress/icons (bundled copy) (factory 78907) | analytics, certificates, commerce, communities, courses, gamification, learning, memberships, students, taxonomies, webhooks |
+| `Ne` | @wordpress/icons (bundled copy) (factory 78907) | analytics, certificates, commerce, courses, gamification, learning, memberships, students, taxonomies, webhooks |
 | `Nte` | Unidentified vendor (factory 49215) | setup |
 | `Sc` | @wordpress/icons (bundled copy) (factory 38169) | courses |
 | `Vr` | classnames (factory 46942) | learning |
@@ -214,7 +211,7 @@ that unless the read goes through a documented public export.
 | --- | --- |
 | learning/ZoomEditor | courses |
 | gamification/GamificationPage | settings |
-| gamification/BadgeImageField | communities, emails |
+| gamification/BadgeImageField | emails |
 | emails/EmailSettingsPage | settings |
 | learning/DripSettings | quiz-editor |
 | learning/GoogleMeetEditor | courses |
@@ -254,7 +251,7 @@ compatibility adapters can go.
 | `/settings/:tab/:subTab?/:subPanel?` | `M6` | authored: settings/SettingsPage |
 | `/memberships` | `J8` | authored: memberships/MembershipsPage |
 | `/students` | `s9` | recovered: StudentsScreen.js |
-| `/communities` | `q9` | authored: communities/CommunitiesPage |
+| `/communities` | `q9` | recovered: CommunitiesScreen.js |
 | `/emails` | `P4` | authored: emails/EmailSettingsPage |
 | `/emails/:id` | `Qee` | authored: emails/EmailEditorPage |
 | `/webhooks` | `o4` | authored: webhooks/WebhooksPage |
@@ -305,12 +302,6 @@ moves into that feature as an authored module.
 | `VY` | component | taxonomy-form-fields.js | 786 B | OrderList, RelatedOrders, SubscriptionList |
 | `sH` | component | category-add-form.js | 1,217 B | CouponModal |
 
-### communities
-
-| Binding | Kind | Fragment | Size | Used by |
-| --- | --- | --- | --- | --- |
-| `v9` | data | community-space-form.js | 113 B | CommunityDetails |
-
 ### courses
 
 | Binding | Kind | Fragment | Size | Used by |
@@ -325,6 +316,7 @@ moves into that feature as an authored module.
 | `Jp` | component | course-thumbnail-controls.js | 496 B | CourseCurriculum |
 | `Np` | component | quiz-editor-header.js | 830 B | CourseMedia |
 | `Ot` | component | course-builder-add-content-picker.js | 801 B | CourseList |
+| `SB` | component | certificate-template-preview.js | 1,599 B | CourseListItem |
 | `UW` | component | schedule-date-picker.js | 2,832 B | CourseToolbar |
 | `Vp` | component | quiz-editor-header.js | 777 B | CourseMedia |
 | `Wp` | component | quiz-editor-header.js | 800 B | CourseMedia |
@@ -368,6 +360,7 @@ moves into that feature as an authored module.
 | `An` | component | lesson-drip-feed-settings.js | 1,009 B | DownloadResources |
 | `La` | helper | assignment-editor-settings.js | 357 B | AssignmentEditor |
 | `Rn` | component | lesson-drip-feed-settings.js | 5,132 B | DripSettings |
+| `Rt` | component | course-builder-add-content-picker.js | 1,405 B | LessonSettings, AssignmentSettings |
 | `Tn` | component | lesson-drip-feed-settings.js | 653 B | DownloadResources |
 | `ar` | component | lesson-settings-panel.js | 930 B | LearningMediaField |
 | `co` | data | assignment-editor-outline.js | 8,261 B | GoogleMeetEditor, ZoomEditor |
@@ -482,14 +475,14 @@ helpers, and they go away when a component is authored as normal JSX.
 
 | Helper | Bindings |
 | --- | --- |
-| slicedToArray | 100 |
-| regeneratorRuntime | 84 |
-| objectSpread2 | 57 |
-| asyncToGenerator | 50 |
+| slicedToArray | 98 |
+| regeneratorRuntime | 82 |
+| objectSpread2 | 55 |
+| asyncToGenerator | 48 |
 | toConsumableArray | 45 |
 | arrayLikeToArray | 39 |
 | asyncGeneratorStep | 34 |
-| toPropertyKey/defineProperty | 33 |
+| toPropertyKey/defineProperty | 31 |
 | objectSpread | 15 |
 | typeof | 12 |
 | objectWithoutProperties keys | 5 |

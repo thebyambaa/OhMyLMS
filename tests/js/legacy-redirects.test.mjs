@@ -208,10 +208,10 @@ function fakeDocument( readyState ) {
 
 test( 'showUnavailable fills in the route and the legacy link', () => {
 	const doc = fakeDocument( 'complete' );
-	showUnavailable( doc, 'ohmylms-legacy-unavailable', '/communities' );
+	showUnavailable( doc, 'ohmylms-legacy-unavailable', '/sessions' );
 	assert.equal( doc.notice.hidden, false );
-	assert.equal( doc.code.textContent, '/communities' );
-	assert.equal( doc.link.hash, '/communities' );
+	assert.equal( doc.code.textContent, '/sessions' );
+	assert.equal( doc.link.hash, '/sessions' );
 	assert.doesNotThrow( () => showUnavailable( doc, 'missing', '/x' ) );
 } );
 
@@ -221,7 +221,7 @@ test( 'start lands once with replaceState and shows the notice after load', () =
 	const win = {
 		ohmylmsLegacyRoutes: landing,
 		document: doc,
-		location: { ...arrived( '#/communities' ), replace: assert.fail },
+		location: { ...arrived( '#/sessions' ), replace: assert.fail },
 		history: {
 			state: null,
 			replaceState: ( state, title, url ) => replaced.push( url ),
@@ -234,7 +234,7 @@ test( 'start lands once with replaceState and shows the notice after load', () =
 	assert.equal( doc.notice.hidden, true, 'waits for the notice markup' );
 	doc.listeners.DOMContentLoaded();
 	assert.equal( doc.notice.hidden, false );
-	assert.equal( doc.code.textContent, '/communities' );
+	assert.equal( doc.code.textContent, '/sessions' );
 
 	const mapped = fakeDocument( 'complete' );
 	replaced.length = 0;

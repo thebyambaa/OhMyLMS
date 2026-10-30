@@ -997,7 +997,7 @@ class CourseController extends RestController {
 					'publish'      => $can_publish,
 					'edit_others'  => $this->can( 'list_others' ),
 					'upload_files' => current_user_can( 'upload_files' ),
-					'builder_url'  => current_user_can( 'manage_options' ) ? admin_url( 'admin.php?page=ohmylms#/courses/' ) : '',
+					'builder_url'  => current_user_can( 'manage_options' ) ? \OhMyLMS\Admin\LegacyRoutes::app_url( '/courses/' ) : '',
 				),
 			)
 		);

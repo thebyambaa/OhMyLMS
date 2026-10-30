@@ -385,6 +385,11 @@ final class LegacyRoutes {
 				'from' => '/extensions/bundles',
 				'to'   => '/content-hub/bundles',
 			),
+			// The Communities screen is retired; its add-on switch lives on Integrations.
+			array(
+				'from' => '/communities',
+				'to'   => '/integrations',
+			),
 		);
 		foreach ( self::SETTINGS_TABS as $legacy => $tab ) {
 			$routes[] = array(
@@ -484,7 +489,6 @@ final class LegacyRoutes {
 			'/content-hub'                          => __( 'Content Hub overview', 'ohmylms' ),
 			'/content-hub/exams'                    => __( 'Exams', 'ohmylms' ),
 			'/content-hub/curriculum/compare'       => __( 'Curriculum comparison', 'ohmylms' ),
-			'/communities'                          => __( 'Communities', 'ohmylms' ),
 			'/sessions'                             => __( 'Live sessions', 'ohmylms' ),
 			'/students/:id/report'                  => __( 'Student report', 'ohmylms' ),
 			'/courses/:id/students'                 => __( 'Course students', 'ohmylms' ),

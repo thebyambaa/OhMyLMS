@@ -73,9 +73,14 @@ Without these constants, shipped assets remain active and examples remain disabl
 
 `tests/baseline-assets.json` is a versionable asset inventory. Ignored `test-results/` contains screenshots, traces and script/style/global/network observations. Never commit credentials, SQL dumps or authenticated traces. New dependencies have lockfile versions/integrity hashes; existing PHP licence files are retained. Recovered third-party JS has asset hashes, but its original package versions and missing extracted notices are not fully verified. Hash pinning is not package provenance; do not invent versions/licences.
 
-## Communities source
+## Communities
 
-Five Communities admin components now build from assets/src/features/communities through tools/community-adapters.mjs. See that feature's README for scope and validation. The editor has authored save/validation logic; other components retain documented compatibility dependencies.
+The Communities admin screen is retired: OhMyLMS has no communities backend, and the screen only worked with
+the separate Community add-on's REST routes. Legacy `#/communities` links open Integrations, where the add-on
+switch lives. The course `has_community` flag, the integration switch and the enrolment hook remain, so an
+add-on can still provide communities and add its own admin page through the extension API
+(`registerAdminPage`, see [EXTENSIONS.md](EXTENSIONS.md)). The recovered route and its fragments are deleted
+with the rest of the recovered runtime (see [CUTOVER.md](CUTOVER.md)).
 
 ## Dashboard and analytics source
 

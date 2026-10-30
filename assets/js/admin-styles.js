@@ -22,7 +22,6 @@
 		curriculumComponents: [ 'curriculum', 'skills' ],
 		bundleComponents: [ 'curriculum', 'skills' ],
 		contentHubComponents: [ 'curriculum', 'skills' ],
-		communityComponents: [ 'communities', 'block-editor' ],
 		studentComponents: [ 'students' ],
 		commerceComponents: [ 'commerce' ],
 		membershipComponents: [ 'commerce', 'courses' ],

@@ -4,6 +4,9 @@ Skills is a core feature with no Add-ons switch. The skill library (catalogue, p
 
 Feature code can live in `modules/<id>/` or a separate plugin. Internal modules load only via `OHMYLMS_ENABLED_MODULES` or `ohmylms_enabled_modules`. The examples module is disabled by default.
 
+Communities is not part of OhMyLMS. A Community add-on keeps the course `has_community` flag, the
+Integrations switch and the manual-enrolment hook, and adds its own screen with `registerAdminPage`.
+
 ## Load and register
 
 Register PHP definitions on `ohmylms_register_extensions`. Enqueue editor scripts on `ohmylms_enqueue_extension_scripts`, depending on its SDK handle argument. Those scripts load before the admin app. The action fires only where extension surfaces exist: the LMS admin application, the native block editors (with their own bundle handle) and frontend pages that render a slot. Other wp-admin screens and ordinary frontend pages do not load the SDK or your editor scripts.

@@ -85,7 +85,7 @@ These must move before anything is deleted, in this order.
    `LegacyRoutes::url()` or `LegacyRoutes::app_url()`. With the switch off they still land through the redirect, but
    unmapped ones end on the home screen with the notice.
 5. **Screens the new app does not have** (`LegacyRoutes::unavailable()`): the Content Hub overview, Exams, curriculum
-   comparison, Communities, live Sessions, the student report, course students, design settings, migration, rewards,
+   comparison, live Sessions, the student report, course students, design settings, migration, rewards,
    the All accounts tab, the quiz reports overview and the question/skill dialogs opened by `?action=`/`?add=`. Build or
    consciously drop each one; add a rule to `LegacyRoutes::routes()` (and regenerate the fixture) when a screen lands.
 6. **Features only the legacy SDK loads** (543 files, 41 `tests/js` files): port what the new app needs, then delete
@@ -136,8 +136,8 @@ Specs now open the legacy admin only on purpose. `--check` fails if one opens `p
   `all-activities`, `diagram-labels`, `image-quiz`, `recall-activity`, `word-games`, `word-puzzles`,
   `wordwall-activities`, and the fixture setup of `comparison`, `single-workspace`, `quizzes`, `lesson-block-editor`
   (`#/content-hub/lessons`) and `native-authoring` (`#/quizzes`).
-- **Legacy-only, opened with `&ohmylms_legacy=1`, delete at cutover** (27): `analytics`, `baseline`, `commerce`,
-  `communities`, `comparison`, `course-objectives`, `course-structure`, `courses`, `curriculum`, `design`,
+- **Legacy-only, opened with `&ohmylms_legacy=1`, delete at cutover** (26; `communities` was deleted with the
+  retired Communities screen): `analytics`, `baseline`, `commerce`, `comparison`, `course-objectives`, `course-structure`, `courses`, `curriculum`, `design`,
   `extensions`, `gamification`, `learning-program`, `learning`, `memberships`, `placement`, `schools`,
   `single-workspace`, `students`, `subjects`, `syllabus-course`, `syllabus`, `xapi-settings`, and the harness specs on
   the recovered bundles `editor-packages`, `editor-runtime`, `email-vendor-chunks`, `vendor-packages`. Write new-app
@@ -186,8 +186,9 @@ The specs were checked with `node --check`; they were not run against 800.local 
 - [ ] `page=ohmylms#/order-edit/<id>`, `#/settings/xapi-settings` (with `&xapi_notice=saved`) and a bare `page=ohmylms`
       end on `#/orders/<id>`, `#/settings?tab=xapi&xapi_notice=saved` and `#/dashboard`, with
       `ohmylms_from_legacy` removed from the address.
-- [ ] `page=ohmylms#/communities` ends on `#/` with the notice naming `/communities`, and its link opens the legacy
-      Communities screen with `&ohmylms_legacy=1`.
+- [ ] `page=ohmylms#/sessions` ends on `#/` with the notice naming `/sessions`, and its link opens the legacy
+      Sessions screen with `&ohmylms_legacy=1`.
+- [ ] `page=ohmylms#/communities` (retired) opens `#/integrations`.
 - [ ] `page=ohmylms&ohmylms_legacy=1#/orders` stays on the legacy Orders screen.
 - [ ] Instructor emails, the plugins-screen Settings link, the command palette and the admin bar open new-app routes.
 - [ ] Front end: course page slots, checkout fields and registration fields render (source mode and shipped mode)
