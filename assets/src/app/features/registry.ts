@@ -8,6 +8,7 @@ import { courseReport, dashboard, earnings } from './dashboard';
 import { emails } from './emails';
 import { home } from './home';
 import { integrations } from './integrations';
+import { lessons, lessonEditor } from './lessons';
 import { membershipEditor, memberships } from './memberships';
 import { settings } from './settings';
 import { students } from './students';
@@ -31,6 +32,8 @@ export const features: readonly FeatureDefinition[] = [
 	courses,
 	courseEditor,
 	courseSettings,
+	lessons,
+	lessonEditor,
 	orders,
 	orderDetail,
 	coupons,

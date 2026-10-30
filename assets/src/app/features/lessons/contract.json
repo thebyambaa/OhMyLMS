@@ -1,0 +1,37 @@
+{
+	"version": 1,
+	"namespace": "ohmylms/v1",
+	"collection": {
+		"path": "/authoring/lessons",
+		"methods": [ "GET", "POST" ],
+		"pageSize": 20,
+		"createFields": [ "title", "request_id" ],
+		"createStatus": "draft"
+	},
+	"lesson": {
+		"path": "/authoring/lessons/{id}",
+		"methods": [ "GET", "PUT" ],
+		"writeFields": [
+			"revision",
+			"title",
+			"content",
+			"type",
+			"external_url",
+			"preview_enable",
+			"enable_comments",
+			"resources"
+		],
+		"types": [ "text", "video", "audio" ],
+		"conflictStatus": 409,
+		"changesStatus": false
+	},
+	"publication": {
+		"path": "/authoring/lessons/{id}/publish",
+		"methods": [ "POST" ],
+		"writeFields": [ "revision", "confirmed" ],
+		"confirmed": true,
+		"changesCourseProgram": false
+	},
+	"permission": "manage_options and registered lesson capability",
+	"documentation": "docs/api/lesson-authoring.md"
+}

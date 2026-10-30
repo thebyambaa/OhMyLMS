@@ -13,6 +13,21 @@ defined( 'ABSPATH' ) || exit;
 class NativeLessonController extends \WP_REST_Posts_Controller {
 
 	/**
+	 * Serialize native saves with the typed lesson authoring boundary.
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return mixed
+	 */
+	public function update_item( $request ) {
+		return LessonAuthoring::locked(
+			(int) $request['id'],
+			function () use ( $request ) {
+				return parent::update_item( $request );
+			}
+		);
+	}
+
+	/**
 	 * Filter collection results by permission to edit each lesson.
 	 *
 	 * @param \WP_Post $post Post.
