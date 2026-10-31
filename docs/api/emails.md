@@ -51,7 +51,8 @@ callback (core behaviour), so a malformed request can answer 400 before 401/403.
 `{id}` is one of: `creator_new_order`, `creator_cancelled_order`, `instructor_assignment_submitted`,
 `instructor_quiz_submitted`, `student_new_order`, `student_confirm_enrollment`,
 `student_manual_enrollment`, `student_course_completed`, `student_cancel_enrollment`,
-`student_assignment_graded`, `student_quiz_graded`. `settings` is registered before the id pattern so the
+`student_assignment_graded`, `student_quiz_graded`, `student_at_risk_nudge` (sent by the dashboard's
+At-risk learners nudge; tags `student_name`, `sender_name`, `reasons`; no trigger hook). `settings` is registered before the id pattern so the
 literal path wins. An update changes only the fields sent; sending none is `400 ohmylms_email_empty_update`.
 
 Collection arguments: `page` (>= 1), `per_page` (1-100, default 20), `search` (case-insensitive in

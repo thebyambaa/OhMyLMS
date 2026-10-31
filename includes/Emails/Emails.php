@@ -75,6 +75,7 @@ class Emails {
 			'student_cancel_enrollment'       => \OhMyLMS\Emails\StudentsEmail\CancelEnrollment::class,
 			'student_assignment_graded'       => \OhMyLMS\Emails\StudentsEmail\AssignmentGraded::class,
 			'student_quiz_graded'             => \OhMyLMS\Emails\StudentsEmail\QuizGraded::class,
+			'student_at_risk_nudge'           => \OhMyLMS\Emails\StudentsEmail\AtRiskNudge::class,
 		);
 	}
 

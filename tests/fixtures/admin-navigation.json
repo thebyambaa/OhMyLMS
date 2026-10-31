@@ -260,7 +260,8 @@
 						"xapi",
 						"ai-tutor",
 						"mcp",
-						"migration"
+						"migration",
+						"at-risk"
 					],
 					"serverSections": [],
 					"defaultSection": "general"

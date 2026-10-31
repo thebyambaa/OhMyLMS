@@ -7,8 +7,11 @@
 
 namespace OhMyLMS\Dashboard;
 
+use OhMyLMS\Dashboard\Widgets\MasteryHeatmap;
+use OhMyLMS\Dashboard\Widgets\AtRisk;
 use OhMyLMS\Dashboard\Widgets\NeedsAttention;
 use OhMyLMS\Dashboard\Widgets\Pulse;
+use OhMyLMS\Dashboard\Widgets\ReviewSets;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -51,6 +54,13 @@ final class Widgets {
 		$built_in = array(
 			'needs-attention' => NeedsAttention::class,
 			'pulse'           => Pulse::class,
+			'mastery-heatmap' => MasteryHeatmap::class,
+			'review-sets'     => ReviewSets::class,
+			'at-risk'         => AtRisk::class,
+			'course-health'   => Widgets\CourseHealth::class,
+			'insights'        => Widgets\Insights::class,
+			'activity'        => Widgets\Activity::class,
+			'site-health'     => Widgets\SiteHealth::class,
 		);
 		/**
 		 * Filters the dashboard widget endpoints. Add `'my-widget' => My_Widget::class` (a subclass of

@@ -67,6 +67,7 @@ class EmailManager {
 			'student_cancel_enrollment'       => array( 'student_name', 'course_name', 'expected_processing_time' ),
 			'student_assignment_graded'       => array( 'student_name', 'course_name', 'assignment_name', 'status' ),
 			'student_quiz_graded'             => array( 'student_name', 'course_name', 'quiz_name' ),
+			'student_at_risk_nudge'           => array( 'student_name', 'sender_name', 'reasons' ),
 		);
 	}
 
@@ -96,6 +97,14 @@ class EmailManager {
 			'status'                   => array(
 				'label'       => __( 'Result', 'ohmylms' ),
 				'description' => __( 'Passed or Failed.', 'ohmylms' ),
+			),
+			'sender_name'              => array(
+				'label'       => __( 'Sender name', 'ohmylms' ),
+				'description' => __( 'Display name of the teacher or administrator who sent the nudge.', 'ohmylms' ),
+			),
+			'reasons'                  => array(
+				'label'       => __( 'Reasons', 'ohmylms' ),
+				'description' => __( 'Why the learner was flagged, for example "Inactive 9 days · 2 overdue items".', 'ohmylms' ),
 			),
 			'expected_processing_time' => array(
 				'label'       => __( 'Processing time', 'ohmylms' ),
@@ -128,6 +137,8 @@ class EmailManager {
 			'quiz_name'       => __( 'Chapter 1 Quiz', 'ohmylms' ),
 			'assignment_name' => __( 'Essay on Linear Equations', 'ohmylms' ),
 			'status'          => __( 'Passed', 'ohmylms' ),
+			'sender_name'     => __( 'Ms. Rivera', 'ohmylms' ),
+			'reasons'         => __( 'Inactive 9 days · 2 overdue items', 'ohmylms' ),
 		);
 	}
 
@@ -849,6 +860,11 @@ class EmailManager {
 							'digest_items' => array(),
 						)
 					),
+				);
+			case 'student_at_risk_nudge':
+				return array(
+					'emails/at-risk-nudge',
+					array_merge( $common, array( 'button_url' => StudentsEmail\AtRiskNudge::button_url( $settings ) ) ),
 				);
 			case 'student_assignment_graded':
 				return array(

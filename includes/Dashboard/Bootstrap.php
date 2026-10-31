@@ -7,6 +7,7 @@
 
 namespace OhMyLMS\Dashboard;
 
+use OhMyLMS\Rest\V1\DashboardAtRiskController;
 use OhMyLMS\Rest\V1\DashboardScopesController;
 use OhMyLMS\Rest\V1\DashboardWidgetsController;
 
@@ -40,6 +41,10 @@ final class Bootstrap {
 		foreach ( self::INVALIDATING_ACTIONS as $action ) {
 			add_action( $action, array( Cache::class, 'invalidate' ), 99, 0 );
 		}
+		add_filter( 'ohmylms_dashboard_at_risk_provider', array( Widgets\AtRiskCount::class, 'provide' ) );
+		add_action( 'deleted_user', array( Widgets\AtRiskNudges::class, 'forget_user' ) );
+		add_filter( 'ohmylms_dashboard_cache_ttl', array( Widgets\Activity::class, 'ttl' ), 10, 2 );
+		add_filter( 'ohmylms_dashboard_cache_ttl', array( Widgets\SiteHealth::class, 'ttl' ), 10, 2 );
 	}
 
 	/**
@@ -50,5 +55,8 @@ final class Bootstrap {
 	public static function register_routes() {
 		( new DashboardScopesController() )->register_routes();
 		( new DashboardWidgetsController() )->register_routes();
+		( new Widgets\MasteryController() )->register_routes();
+		( new Widgets\ReviewSetsController() )->register_routes();
+		( new DashboardAtRiskController() )->register_routes();
 	}
 }

@@ -71,7 +71,7 @@ function masteryfx_state( $learner, $skill, $mastery ) {
 function masteryfx_skill( $tag, $name, $subject = '' ) {
 	$term = wp_insert_term( $tag . ' ' . $name, Taxonomy::NAME, array( 'slug' => $tag . '-' . sanitize_title( $name ) ) );
 	if ( is_wp_error( $term ) ) {
-		throw new RuntimeException( 'Could not create skill ' . $name . ': ' . $term->get_error_message() );
+		throw new RuntimeException( esc_html( 'Could not create skill ' . $name . ': ' . $term->get_error_message() ) );
 	}
 	if ( '' !== $subject ) {
 		update_term_meta( (int) $term['term_id'], Comparison::SUBJECT_META, $subject );
@@ -188,7 +188,7 @@ function masteryfx_create( $tag, $bounds = true ) {
 			)
 		);
 	};
-	$class = static function ( $school_id, $name, array $students, array $teachers = array() ) use ( $tag ) {
+	$class  = static function ( $school_id, $name, array $students, array $teachers = array() ) use ( $tag ) {
 		$id = dashfx_insert(
 			Schema::table( 'classes' ),
 			array(
@@ -212,7 +212,7 @@ function masteryfx_create( $tag, $bounds = true ) {
 		}
 		return $id;
 	};
-	$pick = static function ( array $numbers ) use ( $learners ) {
+	$pick   = static function ( array $numbers ) use ( $learners ) {
 		return array_map(
 			static function ( $n ) use ( $learners ) {
 				return $learners[ $n ];
@@ -237,7 +237,7 @@ function masteryfx_create( $tag, $bounds = true ) {
 	}
 	$fx['class_b1'] = $class( $b, 'Class B1', $pick( array( 11, 12 ) ) );
 
-	$c = $school( 'school_c', 'Gamma School' );
+	$c              = $school( 'school_c', 'Gamma School' );
 	$fx['course_c'] = dashfx_post( $tag, OHMYLMS_COURSE_CPT, 'Gamma Course' );
 	foreach ( $pick( array( 13, 14, 15 ) ) as $user ) {
 		$member( $c, $user, 'student' );

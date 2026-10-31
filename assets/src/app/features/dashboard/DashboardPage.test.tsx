@@ -51,6 +51,37 @@ const mocks = {
 };
 
 const notice = { selector: '.components-notice__content' };
+const emptyWidgetData: Record< string, unknown > = {
+	'at-risk': {
+		learners: [],
+		counts: { high: 0, watch: 0 },
+		total: 0,
+		rules: { inactive: true, mastery: true, overdue: true },
+		nudge: { cap: 20, remaining: 20, interval_hours: 72 },
+	},
+	'course-health': { courses: [], total: 0, limit: 12 },
+	insights: { insights: [] },
+	activity: { events: [], limit: 10 },
+	'site-health': { checks: [], passed: 0, total: 0 },
+	'mastery-heatmap': {
+		row_type: 'class',
+		rows_total: 0,
+		rows: [],
+		skills: [],
+		subjects: [],
+		cells: [],
+		levels: [],
+		limits: { rows: 20, skills: 40 },
+		can_open_reports: true,
+	},
+	'review-sets': {
+		row_type: 'class',
+		min_group: 3,
+		groups: [],
+		total: 0,
+		can_assign: true,
+	},
+};
 const features = [ dashboardFeature, earningsFeature, courseReportFeature ];
 function show( route: string ) {
 	return renderShell( features, {
@@ -103,9 +134,10 @@ beforeEach( () => {
 				widget,
 				scope,
 				parse(
-					'pulse' === widget
-						? { dates: [], currency: null, metrics: [] }
-						: { items: [], snoozed: 0, grading_days: 3 }
+					emptyWidgetData[ widget ] ??
+						( 'pulse' === widget
+							? { dates: [], currency: null, metrics: [] }
+							: { items: [], snoozed: 0, grading_days: 3 } )
 				),
 				period
 			)

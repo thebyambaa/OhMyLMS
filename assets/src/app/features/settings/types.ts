@@ -22,6 +22,7 @@ export const EXTRA_TAB_IDS = [
 	'ai-tutor',
 	'mcp',
 	'migration',
+	'at-risk',
 ] as const;
 
 export type ExtraTabId = ( typeof EXTRA_TAB_IDS )[ number ];

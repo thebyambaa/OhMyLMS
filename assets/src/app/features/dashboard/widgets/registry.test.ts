@@ -60,20 +60,40 @@ describe( 'dashboard widget registry', () => {
 	} );
 
 	it( 'ships needs attention, pulse and the admin overview', () => {
-		expect( builtInWidgets.map( ( item ) => item.id ) ).toEqual( [
-			'needs-attention',
-			'pulse',
-			'overview',
-		] );
+		const core = [ 'needs-attention', 'pulse', 'overview' ];
+		const only = ( ids: string[] ) =>
+			ids.filter( ( id ) => core.includes( id ) );
 		expect(
-			dashboardWidgets
-				.list( context( northScope ) )
-				.map( ( item ) => item.id )
+			only( builtInWidgets.map( ( item ) => item.id ) ).sort()
+		).toEqual( [ ...core ].sort() );
+		expect(
+			only(
+				dashboardWidgets
+					.list( context( northScope ) )
+					.map( ( item ) => item.id )
+			)
 		).toEqual( [ 'needs-attention', 'pulse' ] );
 		expect(
-			dashboardWidgets
-				.list( context( allScope ) )
-				.map( ( item ) => item.id )
+			only(
+				dashboardWidgets
+					.list( context( allScope ) )
+					.map( ( item ) => item.id )
+			)
 		).toEqual( [ 'needs-attention', 'pulse', 'overview' ] );
+	} );
+
+	it( 'ships at-risk learners for every scope, after pulse', () => {
+		for ( const scope of [ allScope, northScope ] ) {
+			const ids = dashboardWidgets
+				.list( context( scope ) )
+				.map( ( item ) => item.id );
+			expect( ids ).toContain( 'at-risk' );
+			expect( ids.indexOf( 'at-risk' ) ).toBeGreaterThan(
+				ids.indexOf( 'pulse' )
+			);
+		}
+		expect(
+			builtInWidgets.find( ( item ) => 'at-risk' === item.id )?.size
+		).toBe( 'narrow' );
 	} );
 } );

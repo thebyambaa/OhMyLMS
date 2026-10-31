@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom';
 import { AccountForm } from './AccountForm';
 import { AdvancedForm } from './AdvancedForm';
 import { AiTutorForm } from './AiTutorForm';
+import { AtRiskForm } from './AtRiskForm';
 import { BrandingForm } from './BrandingForm';
 import { CourseArchiveForm } from './CourseArchiveForm';
 import { CurrencyForm } from './CurrencyForm';
@@ -48,6 +49,7 @@ const LABELS: Record< TabId, string > = {
 	'course-archive': __( 'Course archive', 'ohmylms' ),
 	'quiz-design': __( 'Quiz design', 'ohmylms' ),
 	migration: __( 'Migration', 'ohmylms' ),
+	'at-risk': __( 'At-risk learners', 'ohmylms' ),
 };
 
 const TAB_IDS: readonly TabId[] = [ ...GROUP_IDS, ...EXTRA_TAB_IDS ];
@@ -124,6 +126,7 @@ export default function SettingsPage() {
 		'course-archive': Boolean( extraDirty[ 'course-archive' ] ),
 		'quiz-design': Boolean( extraDirty[ 'quiz-design' ] ),
 		migration: false,
+		'at-risk': Boolean( extraDirty[ 'at-risk' ] ),
 	};
 	const guard = useUnsavedChangesGuard(
 		Object.values( dirty ).some( Boolean )
@@ -192,6 +195,12 @@ export default function SettingsPage() {
 			/>
 		),
 		migration: <MigrationForm active={ 'migration' === selected } />,
+		'at-risk': (
+			<AtRiskForm
+				active={ 'at-risk' === selected }
+				onDirty={ reporters[ 'at-risk' ] }
+			/>
+		),
 	};
 	const groupVisited: Record< GroupId, boolean > = {
 		general: null !== general.saved || general.loading,

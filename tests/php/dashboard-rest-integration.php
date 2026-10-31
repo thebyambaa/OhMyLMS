@@ -225,6 +225,7 @@ try {
 	$wpdb->update( Schema::table( 'classes' ), array( 'status' => 'active' ), array( 'id' => $fx['class_a2'] ) );
 
 	// ---- Needs attention.
+	remove_filter( 'ohmylms_dashboard_at_risk_provider', array( \OhMyLMS\Dashboard\Widgets\AtRiskCount::class, 'provide' ) );
 	$na_sa = call( $fx['sa'], 'GET', '/dashboard/widgets/needs-attention', array( 'scope' => $a ) );
 	ok( 200 === $na_sa->get_status(), 'needs attention answers 200 to the school administrator' );
 	ok( 'miss' === $na_sa->get_headers()['X-OhMyLMS-Cache'], 'the first request computes' );
@@ -345,6 +346,10 @@ try {
 	ok( isset( $risk['at_risk'] ) && 2 === $risk['at_risk']['count'], 'a registered provider adds the at-risk item for the scope' );
 	ok( '/dashboard' === $risk['at_risk']['action']['route'], 'its route is offered to school staff with dashboard access' );
 	remove_filter( 'ohmylms_dashboard_at_risk_provider', $give );
+	Cache::flush();
+	add_filter( 'ohmylms_dashboard_at_risk_provider', array( \OhMyLMS\Dashboard\Widgets\AtRiskCount::class, 'provide' ) );
+	$built_in = items( call( $fx['sa'], 'GET', '/dashboard/widgets/needs-attention', array( 'scope' => $a ) ) );
+	ok( isset( $built_in['at_risk'] ) && 1 === $built_in['at_risk']['count'] && '/dashboard?scope=' . $a === $built_in['at_risk']['action']['route'], 'the built-in at-risk widget counts S6 (inactive 20 days) in school A' );
 	Cache::flush();
 
 	// ---- Pulse.

@@ -170,6 +170,143 @@ series[] }` with one value per date:
 
 Activity = an enrolment, a progress row, a quiz attempt or an assignment submission starting.
 
+### Course health (`course-health`)
+
+`data: { courses[], total, limit }`: the scope's courses with enrolled learners, most enrolled first, at
+most `limit` (filter `ohmylms_dashboard_course_health_limit`, default 12, 1–50); `total` = courses of the
+scope with learners. Each course `{ id, title, enrolled, completed, completion, rating, items, lessons,
+median_progress, drop_off, report }`, figures for the scope's learners **now** (not the period):
+
+| Field | Definition |
+| --- | --- |
+| `enrolled`, `completed`, `completion` | distinct learners with an `enrolled` enrolment; of them `progress = completed`; whole % |
+| `rating` | `{ average (1 decimal), count }` of approved top-level course reviews (comment meta `rating` 1–5) **by the scope's learners** (any author in `all`); `null` without reviews |
+| `median_progress` | per enrolment, completed content items ÷ the course's published items (100 when the enrolment is completed, capped at 100), the median; `null` without enrolments |
+| `drop_off` | `{ content_id, title, type: lesson|quiz|assignment|content, position, lost, percent }`: the published item (course order) with the largest loss of learners against the item before (everyone enrolled for the first item; counts capped by the item before; ties keep the earlier item); `percent` = lost ÷ enrolled. `null` when nobody is lost. Same rule as `stalling_course` |
+| `report` | `/reports/courses/<id>` for users with `manage_options`, else `null` (added per user) |
+
+Read model `Dashboard\CourseHealthReport` (memoised per request, shared with Insights): 5 aggregate
+queries plus one structure read per course; enrolment SQL in `Dashboard\Enrolments`
+(`courses_by_enrolment`, `completed_items_by_course`, `progress_histogram`). The client shows a table
+(band label Healthy / Watch / At risk from completion and rating) and, for rated courses, a completion ×
+rating SVG scatter with a text alternative.
+
+### Insights (`insights`)
+
+`data: { insights[] }`, at most 5 (`limit`), sorted by severity (`error`, `warning`, `success`, `info`)
+then rule order below. Each `{ key, rule, severity, text, action: { label, route } | null }`; `text` is a
+server-translated sentence with the numbers. Rules are pure functions in `Dashboard\InsightRules` over
+figures the widget reads for the scope and period; **no AI and no external calls**. Thresholds: filter
+`ohmylms_dashboard_insight_rules` (numbers only, clamped; `limit` 1–5).
+
+| Rule (`key`) | Figures | Fires when (defaults) | Severity | Action (capability) |
+| --- | --- | --- | --- | --- |
+| `revenue` | net revenue of the period vs the previous period (`Analytics\Repository::summary`), top course by net | **`all` scope only** (site administrators; removed again in `present()` for anyone else); any revenue in either period | `success` up ≥ 5 %; `warning` down 5–19 %; `error` down ≥ 20 % (`bad_drop`); `info` "steady" under 5 % (`min_change`) | `/earnings` (`manage_options`) |
+| `drop_off:<course>` | Course health `drop_off` | course with ≥ 5 enrolled (`min_learners`) and an item losing ≥ 30 % (`min_percent`); the largest | `error` from 50 % (`bad_percent`), else `warning` | `/reports/courses/<id>` (`manage_options`) |
+| `class_gap:<class>` | levels from `Performance\Snapshot::students()` for the most started skills (≤ 15) of the scope's classes (≤ 25 classes, ≤ 2000 learners) | **school and `all` scopes only**, ≥ 2 classes; a class whose average is ≥ 15 pts (`min_points`) below the other classes' learners on a skill, both sides ≥ 3 assessed learners (`min_learners`); the largest gap. Points: attempted 25, familiar 50, proficient 80, mastered 100; not started is not counted; a learner in both never counts as "other" | `error` from 30 pts (`bad_points`), else `warning` | none |
+| `missed_question:<id>` | `Repository::missed_questions` (finished attempts in the period) | ≥ 5 learners answered (`min_learners`) and ≥ 60 % of answers wrong (`min_rate`); the worst | `warning` from 75 % (`bad_rate`), else `info` | `/content-hub/question-bank/<id>` (`edit_posts`) |
+| `quiz_lessons` | `Enrolments::lessons_by_quiz_taking` over the Course health courses with lessons: share of their lessons completed by enrolments with a finished quiz attempt in the course vs without | both groups ≥ 5 enrolments (`min_enrolments`), the difference ≥ 15 points (`min_points`) and the ratio ≥ 1.5 (`min_ratio`, skipped when the other group is at 0 %) | `info` (suggests reminder e-mails) | `/emails` (`manage_options`) |
+| `completions` | course completions of the period vs the previous period | ≥ 5 in both periods together (`min_total`) and a change ≥ 20 % (`min_change`), or any after none | `success` up, `warning` down | none |
+
+Fewer than three rules may fire; the widget then shows fewer sentences (never filler). Actions are dropped
+per user without the capability; capabilities are never sent.
+
+### Happening now (`activity`)
+
+`data: { events[], limit }`, newest first, at most `limit` (filter `ohmylms_dashboard_activity_limit`,
+default 10, 1–25), events of the period only. Each `{ id: "<type>:<row id>", type, at (ISO 8601 with the
+site offset), text }`. Types: `enrolled`, `course_completed`, `lesson_completed` (progress row), `quiz_passed`,
+`quiz_failed`, `quiz_completed` (finished attempts, by `end_date`), `assignment_submitted`, and `order`
+(paid orders, **`all` scope only**, "New order #N · amount", no buyer). Each source is one bounded query
+(`ORDER BY … DESC LIMIT n`) limited to the scope's learners and courses. Learners appear by display name
+only; a display name containing `@` falls back to the first name, else "A learner"; no e-mail, login or
+user id is sent. Cached 60 seconds (`Widgets\Activity::ttl` on `ohmylms_dashboard_cache_ttl`).
+
+### Site health (`site-health`)
+
+Site administrators in the `all` scope only (otherwise 403 `ohmylms_dashboard_widget_unavailable`; the
+client registers it with `isAvailable: siteAdmin && scope.commerce`). Not cached (ttl 0): it reads a few
+options. `data: { checks[], passed, total }`, each `{ id, status: ok|warning|error, label, detail,
+action: { label, route|null, href|null } | null }` (`route` = app route, `href` = wp-admin URL):
+
+| Id | Passes when | Fix link |
+| --- | --- | --- |
+| `payment_gateway` | a registered gateway is enabled with every credential of its current mode (`Settings\PaymentGatewaySettings`) | `/settings?tab=payment-gateways` |
+| `email_sender` | sender name and a valid sender address are set (`Emails::get_email_settings()`) | `/emails` |
+| `certificate_template` | at least one published certificate (detail: courses that award one) | `/certificates` |
+| `cron` | the oldest queued cron event is at most 15 minutes overdue (`error` beyond; `warning` with an empty queue; mentions `DISABLE_WP_CRON`) | `site-health.php` |
+| `privacy_policy` | `wp_page_for_privacy_policy` is a published page | `options-privacy.php` |
+
+### At-risk learners (`at-risk`)
+
+`data: { learners[], counts: { high, watch }, total, rules: { inactive, mastery, overdue }, nudge: { cap,
+remaining, interval_hours } }`; learner `{ id, name, initials, level: high|watch, reasons: [{ rule, value,
+severe, text }], summary, report|null, nudged_at|null, nudged_label, can_nudge }`, most urgent first (50 shown,
+500 cached). Rules (`Dashboard\Widgets\AtRiskRules`, settings group `at-risk`): inactive ≥ 7 days (activity
+as in Pulse plus skill evidence; only learners with an open enrolment), mastery down ≥ 10 points in 14 days
+(the 0-100 `ScoreModel` score replayed from evidence at the window start and now, largest drop over a skill),
+overdue ≥ 1 Account Hub class assignment due in the period and not completed (class/school of the scope).
+High = 2+ rules or one at its severe threshold (14 days, 20 points, 3 items); watch = 1 rule. `report` only
+for `manage_options`. `AtRiskCount` is the built-in `ohmylms_dashboard_at_risk_provider` (high count, route
+`/dashboard?scope=<key>`).
+
+| Method | Path | Arguments | Success / errors |
+| --- | --- | --- | --- |
+| POST | `/dashboard/widgets/at-risk/nudges` | `scope`, `learner` (required), `period` | `201 { learner, scope, nudged_at, nudged_label, next_at, remaining, guardians }`; 403 `ohmylms_at_risk_out_of_scope`, 409 `ohmylms_at_risk_not_flagged` / `_nudge_disabled`, 422 `_no_address`, 429 `_nudge_too_soon` / `_nudge_daily_cap` (`Retry-After`), 500 `_nudge_failed` |
+| GET | `/dashboard/widgets/at-risk/nudges` | `learner` | the log, site administrators only (403 `ohmylms_at_risk_log_forbidden`) |
+| GET, PATCH | `/settings/at-risk` | the group's fields | settings contract; 400 types/unknown, 422 `ohmylms_settings_invalid_value` per field |
+
+Nudges send the `student_at_risk_nudge` email (Emails), optionally one copy per active guardian
+(`nudge_guardians`, off by default); one per learner per sender per 72 h and `nudge_daily_cap` (20) per sender
+in 24 h, under a per-sender DB lock; every attempt is logged in `{prefix}ohmylms_at_risk_nudges` (sender,
+learner, scope, reasons, guardian copies, status, UTC time; rows removed when either user is deleted). Tests:
+`tests/php/at-risk-integration.php` (`OHMYLMS_AT_RISK_TEST=1`), live fixtures `tests/php/at-risk-browser-fixture.php`.
+
+### Mastery heatmap (`mastery-heatmap`)
+
+Read model `Dashboard\MasteryRepository` over `student_skill_state` (derived from the skill evidence). A
+learner's percentage on a skill is the stored 0–100 `mastery` score; they are *assessed* when the row has
+evidence. Levels (`Widgets\MasteryLevels`, filter `ohmylms_dashboard_mastery_thresholds`): rounded percentage
+≥ 95 Mastered, ≥ 80 Proficient, ≥ 50 Familiar, otherwise Attempted; no evidence is Not started (never
+"struggling"). Rows: the scope's classes (a class scope is its class; at most 20, `rows_total` tells how many
+exist); a scope without classes uses its courses with the most enrolled learners (`Enrolments::learners_by_course`).
+At most 1000 learners read per row. Columns: the 40 skills most of those learners have evidence on. A cell is
+the mean percentage over **all** the row's learners (unassessed count as 0) and that mean's level.
+
+`data: { row_type: class|course, rows_total, rows[{ key: class:N|course:N, id, label, learners }], skills[{ id,
+name, code, subject, assessed }], subjects[{ name, skills }], cells[{ row, skill, percent, level, assessed,
+below }], levels[{ id, label, min|null }], limits{ rows, skills }, can_open_reports }`; only cells with evidence
+are listed. Counts only, no names. The client pages 8 skills at a time and filters by subject (skill meta
+`_ohmylms_shared_subject`).
+
+`GET /dashboard/widgets/mastery-heatmap/learners?scope=&row=class:N|course:N&skill=N` (`Widgets\MasteryController`):
+learners of that row below Familiar, lowest first, at most 50: `{ scope, row, skill{ id, name, code }, below,
+assessed, learners[{ id, name (display name), percent, level, route }], limit }`. `route` is
+`/students/<id>/report` for `manage_options` users, else null. Cached like a widget (extra key: row, skill).
+Errors: `404 ohmylms_dashboard_row_not_found` (row not shown by the scope, so teachers reach only their
+class), `404 ohmylms_dashboard_skill_not_found`, `400 rest_invalid_param`, and the scope errors.
+
+### Recommended next assignments (`review-sets`)
+
+A group is ≥ 3 learners of one class row with evidence on a skill and a percentage below Familiar (10 skills
+per class considered, largest 8 groups). `data: { row_type, min_group, total, groups[{ key: class:N|skill:N,
+class{ id, key, label, learners }, skill{ id, name, code }, learners, questions{ available, needed, draw, enough },
+review_set|null }], can_assign }`. `questions` comes from `Assessment\Pools::available()` (different approved
+families; 3 needed, 5 drawn, filter `ohmylms_dashboard_review_set_questions`), so the widget says "not enough
+questions" instead of failing. `can_assign` (quiz `edit_posts`) and `review_set` (`{ id, title, status, route }`,
+route `/quizzes/<id>` only with `edit_post` and the Content page capability) are per user, uncached.
+
+`POST /dashboard/widgets/review-sets/assign` (`scope`, `class_id`, `skill_id`; `Widgets\ReviewSetsService`) creates
+a **draft** quiz through `Assessment\SkillAssessment::create()` (one random pool by skill, `publish: false`,
+created as the current user; never published) titled "<skill> review set (<class>)", with post meta
+`_ohmylms_review_set_key` (`class:N|skill:N`) and `_ohmylms_review_set` (class, skill, learner ids, creator).
+201 `{ scope, created: true, review_set{ …, questions } }`; an existing non-trashed set of the group answers
+200 `created: false` (one per group; a MySQL advisory lock serialises double submits, waiting 5 s, then 409
+`ohmylms_dashboard_review_set_busy`). Errors: 403 `ohmylms_dashboard_review_set_forbidden` (cannot create
+quizzes), 404 row/skill, 409 `ohmylms_dashboard_review_set_no_group` (fewer than 3 now), 409
+`ohmylms_dashboard_review_set_not_enough_questions` (`data.available`, `data.needed`; nothing created).
+Action `ohmylms_dashboard_review_set_created( $quiz_id, $class_id, $skill_id, $learner_ids )`.
+
 ## React shell and widget registry
 
 `DashboardPage.tsx` loads `/dashboard/scopes`, keeps `?scope=` and `?period=` in the URL (an unknown or
@@ -191,6 +328,20 @@ ids. Sparklines use `widgets/Sparkline.tsx` (plain SVG, `currentColor`).
   needs-attention item per scope, no commerce or names for staff, links per capability, caching (hit/miss,
   shared key, invalidation, ttl 0), snoozes (per user and scope, expiry, undo, validation), the at-risk hook,
   pulse per scope and period, and the wp-admin opening. Fixtures are tagged and removed.
+- `tests/php/dashboard-insights-integration.php` (`OHMYLMS_DASHBOARD_TEST=1`): 136 checks — drop-off and
+  median progress on fixed figures, every insight rule at and around its thresholds, ordering and the limit,
+  threshold clamping, cron and money formatting; then course health, insights, happening now and site health
+  per scope and user (school administrator, teacher, administrator), ratings by scope, no names or commerce
+  for staff, links per capability, bounds (course and event limits), caching and the admin-only site checks.
+  Extra fixtures (reviews, a skill with states, paid orders): `tests/php/support/dashboard-insights-fixture.php`.
+- `tests/php/dashboard-mastery-integration.php` (`OHMYLMS_DASHBOARD_TEST=1`): 128 checks — level thresholds
+  and rounding, filtered and invalid thresholds, heatmap cells on fixtures per scope (school, class, other
+  school, all, course rows), bounds (20 of 21 classes, 40 of 41 skills), no names in widget data, the learner
+  list (order, links per capability, rows outside the scope), recommendations (group size, bank counts), and
+  review sets: permissions, shortages and small groups leave nothing behind, draft only with one pool and no
+  revision, idempotent repeat and cross-scope repeat, the advisory lock, trashed sets, caching and timings.
+  Fixtures: `tests/php/support/mastery-fixture.php`; live: `tests/php/dashboard-mastery-browser-fixture.php
+  create|cleanup mastlive<digits>`.
 - `tests/php/dashboard-browser-fixture.php create|cleanup dashlive<digits>` for live checks.
 - `npx vitest run --configLoader runner features/dashboard`: shell (`shell/DashboardShell.test.tsx`),
   registry, both widgets and the overview widget (`DashboardPage.test.tsx`).

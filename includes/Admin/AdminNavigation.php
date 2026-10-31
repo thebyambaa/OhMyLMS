@@ -119,6 +119,7 @@ final class AdminNavigation {
 			'ai-tutor'            => __( 'AI tutor', 'ohmylms' ),
 			'mcp'                 => __( 'MCP', 'ohmylms' ),
 			'migration'           => __( 'Migration', 'ohmylms' ),
+			'at-risk'             => __( 'At-risk learners', 'ohmylms' ),
 		);
 		$groups            = array(
 			'dashboard'  => array(

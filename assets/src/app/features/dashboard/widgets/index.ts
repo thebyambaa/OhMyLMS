@@ -34,6 +34,42 @@ export const builtInWidgets: readonly DashboardWidgetDefinition[] = [
 		),
 	},
 	{
+		id: 'at-risk',
+		title: __( 'At-risk learners', 'ohmylms' ),
+		order: 40,
+		size: 'narrow',
+		component: lazy(
+			() =>
+				import(
+					/* webpackChunkName: "admin-app-dashboard" */ './AtRiskWidget'
+				)
+		),
+	},
+	{
+		id: 'mastery-heatmap',
+		title: __( 'Mastery heatmap', 'ohmylms' ),
+		order: 50,
+		size: 'wide',
+		component: lazy(
+			() =>
+				import(
+					/* webpackChunkName: "admin-app-dashboard" */ './MasteryHeatmapWidget'
+				)
+		),
+	},
+	{
+		id: 'review-sets',
+		title: __( 'Recommended next assignments', 'ohmylms' ),
+		order: 60,
+		size: 'narrow',
+		component: lazy(
+			() =>
+				import(
+					/* webpackChunkName: "admin-app-dashboard" */ './ReviewSetsWidget'
+				)
+		),
+	},
+	{
 		id: 'overview',
 		title: __( 'Earnings and courses', 'ohmylms' ),
 		order: 30,
@@ -43,6 +79,55 @@ export const builtInWidgets: readonly DashboardWidgetDefinition[] = [
 			() =>
 				import(
 					/* webpackChunkName: "admin-app-dashboard" */ './OverviewWidget'
+				)
+		),
+	},
+	{
+		id: 'insights',
+		title: __( 'Insights', 'ohmylms' ),
+		order: 15,
+		size: 'full',
+		component: lazy(
+			() =>
+				import(
+					/* webpackChunkName: "admin-app-dashboard" */ './InsightsWidget'
+				)
+		),
+	},
+	{
+		id: 'course-health',
+		title: __( 'Course health', 'ohmylms' ),
+		order: 70,
+		size: 'wide',
+		component: lazy(
+			() =>
+				import(
+					/* webpackChunkName: "admin-app-dashboard" */ './CourseHealthWidget'
+				)
+		),
+	},
+	{
+		id: 'activity',
+		title: __( 'Happening now', 'ohmylms' ),
+		order: 80,
+		size: 'wide',
+		component: lazy(
+			() =>
+				import(
+					/* webpackChunkName: "admin-app-dashboard" */ './ActivityWidget'
+				)
+		),
+	},
+	{
+		id: 'site-health',
+		title: __( 'Site health', 'ohmylms' ),
+		order: 90,
+		size: 'narrow',
+		isAvailable: ( context ) => context.siteAdmin && context.scope.commerce,
+		component: lazy(
+			() =>
+				import(
+					/* webpackChunkName: "admin-app-dashboard" */ './SiteHealthWidget'
 				)
 		),
 	},
