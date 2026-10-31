@@ -45,10 +45,9 @@
 			]
 		},
 		{
-			"reason": "Fail at HEAD on the disposable sites from tools/install-test-sites.sh, not yet diagnosed (a bug, or content the Local baseline has). First failing check: 'a learner reached ai/runs' (ai-analysis), 'multiple syllabus plan configured' (comparison), 'Choices were not saved or an unavailable collection was accepted' (family-reports), 'Next-level progress uses lesson count' (gamification-streak), 'Filtering by a curriculum item must include everything beneath it' (placement), 'Existing skill summary and review recommendations reused' (student-dashboard), 'Block failed' (students), 'a required skill without approved questions keeps the course from being published' (syllabus).",
+			"reason": "Fail at HEAD on the disposable sites from tools/install-test-sites.sh, not yet diagnosed (a bug, or content the Local baseline has). First failing check: 'multiple syllabus plan configured' (comparison), 'Choices were not saved or an unavailable collection was accepted' (family-reports), 'Next-level progress uses lesson count' (gamification-streak), 'Filtering by a curriculum item must include everything beneath it' (placement), 'Existing skill summary and review recommendations reused' (student-dashboard), 'Block failed' (students), 'a required skill without approved questions keeps the course from being published' (syllabus).",
 			"expect": "fail",
 			"files": [
-				"tests/php/ai-analysis-integration.php",
 				"tests/php/comparison-integration.php",
 				"tests/php/family-reports-integration.php",
 				"tests/php/gamification-streak-integration.php",

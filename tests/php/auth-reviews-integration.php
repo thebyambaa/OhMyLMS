@@ -484,6 +484,20 @@ try {
 			break;
 		}
 	}
+	if ( ! $course_id ) {
+		// A fresh site (CI) has no course yet: create one with reviews and enrol the administrator.
+		$fixture_course = (int) wp_insert_post(
+			array(
+				'post_type'      => 'ohmylms-course',
+				'post_status'    => 'publish',
+				'post_title'     => 'Reviews fixture ' . $suffix,
+				'comment_status' => 'open',
+			)
+		);
+		ok( $fixture_course > 0 && true === \OhMyLMS\Student\Enrollments::enroll_manually( (int) $admins[0], $fixture_course ), 'a review fixture course with the administrator enrolled' );
+		$candidate = ohmylms_get_course( $fixture_course );
+		$course_id = $candidate && $candidate->get_enable_reviews() && comments_open( $fixture_course ) && $candidate->has_access() ? $fixture_course : 0;
+	}
 	ok( $course_id > 0, 'the site has a published course with reviews the administrator can open' );
 	global $course, $post;
 	$course = ohmylms_get_course( $course_id );
@@ -618,6 +632,10 @@ try {
 		$post_id = (int) get_comment( $comment_id )->comment_post_ID;
 		wp_delete_comment( $comment_id, true );
 		\OhMyLMS\CourseComment::clear_transients( $post_id );
+	}
+	if ( ! empty( $fixture_course ) ) {
+		\OhMyLMS\Student\Enrollments::remove( (int) $admins[0], $fixture_course );
+		wp_delete_post( $fixture_course, true );
 	}
 	foreach ( array_unique( $users ) as $user_id ) {
 		wp_delete_user( (int) $user_id );

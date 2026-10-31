@@ -60,6 +60,10 @@ wp option update home "http://$HOST"
 wp option update siteurl "http://$HOST"
 wp rewrite structure '/%postname%/'
 wp plugin activate ohmylms
+# The structure above was flushed before the plugin registered its post types (/course/ would 404).
+wp rewrite flush
+# recipient-locale and interface-language switch to Mongolian, which needs the core language pack.
+wp language core install mn
 # Tables otherwise created on first use: CREATE TABLE inside a suite's transaction commits it, so a suite that
 # checks its rollback (exam-import, exam-results-release, figure-assets) fails on the first run against a new database.
 wp eval '\OhMyLMS\Cohorts\CohortSchema::ensure(); \OhMyLMS\Gradebook\Schema::ensure(); \OhMyLMS\Automation\RuleStore::ensure(); \OhMyLMS\Integrations\Webhooks\Includes\WebhooksMigration::ensure_schema(); \OhMyLMS\Certificates\IssuedSchema::install(); \OhMyLMS\Student\EnrolmentSchema::install();'

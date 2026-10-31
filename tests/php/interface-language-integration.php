@@ -26,6 +26,7 @@ $_SERVER['REQUEST_URI'] = '/';
 unset( $_SERVER['HTTP_ACCEPT_LANGUAGE'], $_SERVER['HTTP_REFERER'] );
 require dirname( __DIR__, 5 ) . '/wp-load.php';
 require_once ABSPATH . 'wp-admin/includes/user.php';
+$home = untrailingslashit( home_url() );
 
 use OhMyLMS\I18n\AcceptLanguage;
 use OhMyLMS\I18n\InterfaceLanguage;
@@ -248,9 +249,9 @@ try {
 	ok( 'mn' === determine_locale(), 'the saved profile language wins over a cookie' );
 
 	// No JavaScript: ?ohmylms_locale= then a redirect to the clean URL.
-	$url = 'http://800.local/courses/?paged=2&ohmylms_locale=en_US&ohmylms_locale_nonce=bad';
+	$url = $home . '/courses/?paged=2&ohmylms_locale=en_US&ohmylms_locale_nonce=bad';
 	ok(
-		'http://800.local/courses/?paged=2' === InterfaceLanguage::switch_from_query(
+		$home . '/courses/?paged=2' === InterfaceLanguage::switch_from_query(
 			array(
 				'ohmylms_locale'       => 'en_US',
 				'ohmylms_locale_nonce' => 'bad',
@@ -270,9 +271,9 @@ try {
 	ok( 'en_US' === get_user_meta( $learner_id, 'locale', true ), 'with the form nonce the profile language changes' );
 	wp_set_current_user( 0 );
 	request_as( array() );
-	InterfaceLanguage::switch_from_query( array( 'ohmylms_locale' => 'mn' ), 'http://800.local/?ohmylms_locale=mn' );
+	InterfaceLanguage::switch_from_query( array( 'ohmylms_locale' => 'mn' ), $home . '/?ohmylms_locale=mn' );
 	ok( 'mn' === locale_cookie(), 'a visitor switches with the link alone (cookie)' );
-	InterfaceLanguage::switch_from_query( array( 'ohmylms_locale' => 'fr_FR' ), 'http://800.local/?ohmylms_locale=fr_FR' );
+	InterfaceLanguage::switch_from_query( array( 'ohmylms_locale' => 'fr_FR' ), $home . '/?ohmylms_locale=fr_FR' );
 	ok( 'mn' === locale_cookie(), 'an unknown locale changes nothing' );
 	ok( has_action( 'template_redirect', array( InterfaceLanguage::class, 'redirect_query' ) ), 'the switch runs on template_redirect' );
 
@@ -294,7 +295,7 @@ try {
 	$html = Switcher::render( array( 'variant' => 'compact' ) );
 	$tags = new WP_HTML_Tag_Processor( $html );
 	ok( $tags->next_tag( 'form' ) && 'get' === $tags->get_attribute( 'method' ) && 'ohmylms/language' === $tags->get_attribute( 'data-wp-interactive' ) && 'actions.choose' === $tags->get_attribute( 'data-wp-on--submit' ), 'the switcher is an ohmylms/language GET form' );
-	ok( 'http://800.local/courses/' === $tags->get_attribute( 'action' ), 'it submits to the current page' );
+	ok( $home . '/courses/' === $tags->get_attribute( 'action' ), 'it submits to the current page' );
 	ok(
 		array(
 			'current' => 'mn',

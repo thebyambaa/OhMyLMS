@@ -383,7 +383,8 @@ try {
 	ok( array( $a ) === card_ids( $body ), 'ohmylms_loadmore still returns page 2 as a fragment: ' . wp_json_encode( card_ids( $body ) ) );
 
 	// ---- The live archive renders the filtered list for the same URL --------------------------
-	$url      = home_url( '/course/?course_search=' . rawurlencode( $token ) . '&course_level%5B%5D=expert' );
+	$archive  = get_post_type_archive_link( OHMYLMS_COURSE_CPT );
+	$url      = $archive . '?course_search=' . rawurlencode( $token ) . '&course_level%5B%5D=expert';
 	$response = wp_remote_get( $url, array( 'timeout' => 30 ) );
 	$page     = wp_remote_retrieve_body( $response );
 	ok( 200 === wp_remote_retrieve_response_code( $response ), "archive answers 200 for $url" );
@@ -393,7 +394,7 @@ try {
 	ok( ! preg_match( '/<b>(Warning|Notice|Deprecated|Fatal error)<\/b>/', $page ), 'no PHP notices in the page' );
 	foreach ( array( 'course_level%5B%5D=expert', 'paged=2' ) as $query ) {
 		$response = wp_remote_get(
-			home_url( '/course/?' . $query ),
+			$archive . '?' . $query,
 			array(
 				'timeout'     => 30,
 				'redirection' => 0,
