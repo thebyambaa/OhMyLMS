@@ -1,6 +1,6 @@
 {
 	"name": "ohmylms",
-	"version": "1.2.20",
+	"version": "1.2.21",
 	"private": true,
 	"description": "OhMyLMS admin app, blocks, extension host and reproducible assets",
 	"license": "GPL-2.0-or-later",

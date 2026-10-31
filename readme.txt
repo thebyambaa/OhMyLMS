@@ -5,7 +5,7 @@ Tags: lms, coaching, cohort, course builder, online course
 Requires at least: 6.0
 Tested up to: 7.2
 Requires PHP: 7.4
-Stable tag: 1.2.20
+Stable tag: 1.2.21
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -492,6 +492,8 @@ Yes. All student data is stored in your own WordPress database on your hosting a
 13. Student Profile Edit UI
 
 == Upgrade Notice ==
+= 1.2.21 =
+The admin is rebuilt inside the WordPress menu (Dashboard, Content Hub, Account Hub, Commerce, Engagement, Settings) with WordPress list tables and your admin colour scheme; old admin links and bookmarks redirect. Enrolments move to a new table in the background after the update; nothing changes for learners. The administrator chat assistant is removed and its stored settings are deleted.
 = 1.2.12 =
 Adds Google One-Click Sign-In, live session recording auto-attach, and a dedicated student role (existing students migrate automatically). Free version now shows a small "Powered by OhMyLMS" credit on OhMyLMS pages only — auto-hidden with Pro, filterable for developers. Update recommended for all users.
 = 1.2.6 =
@@ -500,7 +502,7 @@ Community feature enhancements and improved OhMyLMS compatibility. Update recomm
 New Gutenberg blocks for Student Dashboard, My Courses, and Student Profile pages. Includes page restore functionality.
 
 == Changelog ==
-= Unreleased =
+= 1.2.21 =
 🚀 New Features
 
 - Added: Curriculum — build exam-board, national-curriculum, test, grade, subject and syllabus structures of any depth in one accordion editor, with inline editing, reordering, moving, search and safe deletion, and place courses, skills, question banks and exams in them. Learning mode stays a course setting.

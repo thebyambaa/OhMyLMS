@@ -2,7 +2,7 @@
 /**
  * Plugin Name: OhMyLMS
  * Description: OhMyLMS is an all-in-one WordPress LMS: sell courses, quizzes, certificates, memberships and coaching, with built-in checkout and an extension API.
- * Version: 1.2.20
+ * Version: 1.2.21
  * Author: OhMyLMS contributors; original work by WPFunnels Team
  * License: GPL-2.0-or-later
  * Text Domain: ohmylms
@@ -24,7 +24,7 @@ if ( defined( 'OHMYLMS_FILE' ) ) {
 }
 define( 'OHMYLMS_FILE', __FILE__ );
 define( 'OHMYLMS_DIR', __DIR__ );
-define( 'OHMYLMS_VERSION', '1.2.20' );
+define( 'OHMYLMS_VERSION', '1.2.21' );
 define( 'OHMYLMS_NATIVE_QPAY', true );
 define( 'OHMYLMS_API_VERSION', 'v1' );
 define( 'OHMYLMS_API_URL', 'ohmylms/v1' );
