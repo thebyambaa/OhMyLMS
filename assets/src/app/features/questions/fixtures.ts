@@ -146,9 +146,13 @@ export const question: QuestionDetail = {
 	id: 812,
 	uuid: '1b0c5c1e-0000-4000-8000-000000000812',
 	name: 'Solve 2x = 6',
-	description: '<p>Find x.</p>',
+	description: '<p>Solve 2x = 6</p>',
 	type: 'single-choice',
-	settings: { type: 'single-choice', score: { enabled: true, value: 2 } },
+	settings: {
+		type: 'single-choice',
+		score: { enabled: true, value: 2 },
+		question_code: 'Q-TEST',
+	},
 	options: [
 		{
 			id: 3301,

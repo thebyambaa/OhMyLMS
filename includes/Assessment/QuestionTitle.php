@@ -20,10 +20,39 @@ final class QuestionTitle {
 		$value = preg_replace( '#<br\s*/?>|</(?:p|div|li|h\d)>#i', ' ', (string) $html );
 		$value = html_entity_decode( wp_strip_all_tags( $value ), ENT_QUOTES, 'UTF-8' );
 		$value = preg_replace( '/\$\$?|\\\\[()\[\]]/', '', $value );
+		// Hide {{variables}} so their braces are not read as LaTeX groups.
+		$vars  = array();
+		$value = preg_replace_callback(
+			'/\{\{[^{}]*\}\}/',
+			static function ( $m ) use ( &$vars ) {
+				$vars[] = $m[0];
+				return "\x01" . ( count( $vars ) - 1 ) . "\x02";
+			},
+			$value
+		);
 		for ( $pass = 0; $pass < 3; $pass++ ) {
-			$value = preg_replace( '/\\\\[dt]?frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/', '$1/$2', $value );
-			$value = preg_replace( '/\\\\sqrt\s*\{([^{}]*)\}/', '√$1', $value );
+			$value = preg_replace_callback(
+				'/\\\\[dt]?frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/',
+				static function ( $m ) {
+					return trim( $m[1] ) . '/' . trim( $m[2] );
+				},
+				$value
+			);
+			$value = preg_replace_callback(
+				'/\\\\sqrt\s*\{([^{}]*)\}/',
+				static function ( $m ) {
+					return '√' . trim( $m[1] );
+				},
+				$value
+			);
 		}
+		$value = preg_replace_callback(
+			'/\x01(\d+)\x02/',
+			static function ( $m ) use ( $vars ) {
+				return $vars[ (int) $m[1] ] ?? '';
+			},
+			$value
+		);
 		$symbols = array(
 			'cdot'   => '·',
 			'times'  => '×',
@@ -48,7 +77,7 @@ final class QuestionTitle {
 			$value
 		);
 		$value   = preg_replace( '/\^\{([^{}]*)\}/', '^$1', $value );
-		return trim( preg_replace( '/\s+/u', ' ', $value ) );
+		return trim( preg_replace( '/ ([?!.,;:)])/u', '$1', preg_replace( '/\s+/u', ' ', $value ) ) );
 	}
 
 	/**

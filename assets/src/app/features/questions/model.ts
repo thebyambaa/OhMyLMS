@@ -1334,16 +1334,24 @@ export function statementText( html: string ): string {
 		.replace( /<[^>]*>/g, '' )
 		.replace( /&(?:nbsp|lt|gt|quot|amp|#0?39);/g, ( m ) => ENTITIES[ m ] ?? m )
 		.replace( /\$\$?|\\[()[\]]/g, '' );
+	// Hide {{variables}} so their braces are not read as LaTeX groups.
+	const vars: string[] = [];
+	value = value.replace( /\{\{[^{}]*\}\}/g, ( m ) => `\u0000${ vars.push( m ) - 1 }\u0000` );
 	for ( let pass = 0; pass < 3; pass++ ) {
 		value = value
-			.replace( /\\[dt]?frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, '$1/$2' )
-			.replace( /\\sqrt\s*\{([^{}]*)\}/g, '√$1' );
+			.replace(
+				/\\[dt]?frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g,
+				( _m, a: string, b: string ) => `${ a.trim() }/${ b.trim() }`
+			)
+			.replace( /\\sqrt\s*\{([^{}]*)\}/g, ( _m, a: string ) => `√${ a.trim() }` );
 	}
+	value = value.replace( /\u0000(\d+)\u0000/g, ( _m, i: string ) => vars[ Number( i ) ] ?? '' );
 	return value
 		.replace( /\\(?:left|right|displaystyle|text|mathrm|mathbf)\b/g, '' )
 		.replace( /\\([a-zA-Z]+)/g, ( _m, cmd: string ) => TEX[ cmd ] ?? '' )
 		.replace( /\^\{([^{}]*)\}/g, '^$1' )
 		.replace( /\s+/g, ' ' )
+		.replace( / ([?!.,;:)])/g, '$1' )
 		.trim();
 }
 
@@ -1403,6 +1411,13 @@ export function questionStatement( question: {
 	const name = question.name.trim();
 	if ( ! question.description.trim() ) {
 		return name;
+	}
+	if (
+		statementText( question.description ).startsWith(
+			statementText( name )
+		)
+	) {
+		return question.description;
 	}
 	return `<p>${ escapeHtml( name ) }</p>\n${ question.description }`;
 }
@@ -1520,7 +1535,7 @@ export function validateForm(
 		validateOptions( form.options, type, errors );
 	} else if ( 'accepted' === area ) {
 		validateAccepted( form.options, errors, true );
-	} else if ( 'blanks' === area && ! inlineBlanks( form.name ).length ) {
+	} else if ( 'blanks' === area && ! inlineBlanks( derivedName( form, type ) ).length ) {
 		validateAccepted( form.options, errors, false );
 	}
 	return errors;
@@ -1568,7 +1583,7 @@ function validateAccepted(
 		} );
 	} else if ( ! options.some( ( item ) => plain( item.answer ) ) ) {
 		errors.options = __(
-			'Write each answer in {curly brackets} in the name, or add an accepted answer.',
+			'Put each answer in {curly brackets}, or add an accepted answer.',
 			'ohmylms'
 		);
 	}
@@ -1708,11 +1723,14 @@ export function toInput(
 	area: AnswerArea = editsOptions( type ) ? 'options' : 'extension'
 ): QuestionUpdateInput {
 	const input: QuestionUpdateInput = { base_modified: baseModified };
-	const migrating = ! saved.settings.question_code;
 	const name = derivedName( form, type );
 	if ( name !== saved.name ) {
 		input.name = name;
 	}
+	// An older question whose name was its prompt moves to the single statement once edited.
+	const migrating =
+		! saved.settings.question_code &&
+		( undefined !== input.name || form.description !== saved.description );
 	if ( migrating || form.description !== saved.description ) {
 		input.description = form.description;
 	}
@@ -1795,7 +1813,7 @@ function invalidParam(
 }
 
 const PARAM_FIELDS: Record< string, string > = {
-	name: 'name',
+	name: 'description',
 	description: 'description',
 	settings: 'settings',
 	options: 'options',
@@ -1823,7 +1841,7 @@ export function serverFieldError(
 	const message = error.message;
 	switch ( error.code ) {
 		case 'ohmylms_question_invalid_name':
-			return { path: 'name', message };
+			return { path: 'description', message };
 		case 'ohmylms_bank_invalid':
 			return { path: 'difficulty', message };
 		case 'ohmylms_forbidden':

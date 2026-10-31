@@ -351,8 +351,11 @@ describe( 'QuestionsPage', () => {
 					type
 				);
 				await user.type(
-					within( dialog ).getByRole( 'textbox', { name: 'Name' } ),
-					' New question & more {Enter}'
+					within( dialog ).getByRole( 'textbox', { name: 'Question' } ),
+					' New question & more'
+				);
+				await user.click(
+					within( dialog ).getByRole( 'button', { name: 'Continue' } )
 				);
 				expect(
 					await screen.findByText( 'Editor for new' )
@@ -380,7 +383,7 @@ describe( 'QuestionsPage', () => {
 				await within( dialog ).findByRole( 'alert' )
 			).toHaveTextContent( 'Enter a question of 1 to 500 characters.' );
 			expect(
-				within( dialog ).getByRole( 'textbox', { name: 'Name' } )
+				within( dialog ).getByRole( 'textbox', { name: 'Question' } )
 			).toHaveAttribute( 'aria-invalid', 'true' );
 			expect(
 				screen.queryByText( /Editor for/ )

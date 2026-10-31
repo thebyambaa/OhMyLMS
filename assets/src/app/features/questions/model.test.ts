@@ -29,6 +29,8 @@ import {
 	toCreateInput,
 	toInput,
 	typeLabel,
+	questionStatement,
+	statementTitle,
 	validateForm,
 	versionLabel,
 } from './model';
@@ -212,11 +214,12 @@ describe( 'drafts', () => {
 			description: '<p>Why?</p>',
 		};
 		expect( toCreateInput( form, 'multiple-choice' ) ).toEqual( {
-			name: 'Pick',
+			name: 'Why?',
 			description: '<p>Why?</p>',
 			settings: {
 				type: 'multiple-choice',
 				score: { enabled: true, value: 3 },
+				question_code: expect.stringMatching( /^Q-/ ),
 			},
 			bank: { difficulty: 'standard' },
 			options: [
@@ -353,11 +356,14 @@ describe( 'validateForm', () => {
 	it( 'accepts the loaded question', () => {
 		expect( errorsFor( {} ) ).toEqual( {} );
 	} );
-	it( 'requires a name of at most 500 characters', () => {
-		expect( errorsFor( { name: '  ' } ) ).toHaveProperty( 'name' );
-		expect( errorsFor( { name: 'x'.repeat( 501 ) } ) ).toHaveProperty(
-			'name'
+	it( 'requires a question statement', () => {
+		expect( errorsFor( { description: ' <p> </p> ' } ) ).toHaveProperty(
+			'description'
 		);
+		expect(
+			errorsFor( { description: 'x'.repeat( 600 ) }, 'fill-in-the-blank' )
+		).toHaveProperty( 'description' );
+		expect( errorsFor( { name: '' } ) ).toEqual( {} );
 	} );
 	it( 'requires zero or more points once the question is scored', () => {
 		expect( errorsFor( { points: '' } ) ).toHaveProperty( 'points' );
@@ -432,8 +438,7 @@ describe( 'toInput', () => {
 			toInput(
 				{
 					...saved,
-					name: ' Solve 2x = 8 ',
-					description: '<p>New</p>',
+					description: '<p>Solve 2x = 8</p>',
 					difficulty: 'challenge',
 				},
 				saved,
@@ -443,7 +448,7 @@ describe( 'toInput', () => {
 		).toEqual( {
 			base_modified: base,
 			name: 'Solve 2x = 8',
-			description: '<p>New</p>',
+			description: '<p>Solve 2x = 8</p>',
 			bank: { difficulty: 'challenge' },
 		} );
 	} );
@@ -455,6 +460,7 @@ describe( 'toInput', () => {
 			settings: {
 				type: 'single-choice',
 				score: { enabled: true, value: 5 },
+				question_code: 'Q-TEST',
 			},
 		} );
 	} );
@@ -507,7 +513,7 @@ describe( 'serverFieldError', () => {
 	it( 'maps option, name, bank and param errors to fields', () => {
 		expect(
 			serverFieldError( error( 'ohmylms_question_invalid_name' ) )
-		).toEqual( { path: 'name', message: 'Bad' } );
+		).toEqual( { path: 'description', message: 'Bad' } );
 		expect(
 			serverFieldError(
 				error( 'ohmylms_question_invalid_options', {
@@ -703,7 +709,7 @@ describe( 'validateForm for typed answers and shared fields', () => {
 			)
 		).toEqual( {} );
 	} );
-	it( 'needs blanks in the name or an accepted answer for fill-in-the-blank', () => {
+	it( 'needs blanks in the statement or an accepted answer for fill-in-the-blank', () => {
 		const blank = formFromQuestion(
 			draftQuestion( 'Capital', 'fill-in-the-blank' )
 		);
@@ -712,7 +718,7 @@ describe( 'validateForm for typed answers and shared fields', () => {
 		).toHaveProperty( 'options' );
 		expect(
 			validateForm(
-				{ ...blank, name: 'The capital is {Paris}' },
+				{ ...blank, description: 'The capital is {Paris}' },
 				blank,
 				'fill-in-the-blank',
 				'blanks'
@@ -829,10 +835,12 @@ describe( 'writes of the new fields', () => {
 		};
 		expect( toCreateInput( form, 'statement', 'accepted' ) ).toEqual( {
 			name: 'Q',
+			description: 'Q',
 			settings: {
 				type: 'statement',
 				score: { enabled: true, value: 1 },
 				hint: 'Count',
+				question_code: expect.stringMatching( /^Q-/ ),
 			},
 			bank: {
 				difficulty: 'standard',
@@ -921,5 +929,45 @@ describe( 'writes of the new fields', () => {
 				skills: { p1: { primary: 'x' } },
 			} )
 		).toThrow( ApiError );
+	} );
+} );
+
+describe( 'single question statement', () => {
+	it( 'derives a readable list title from rich text and LaTeX', () => {
+		expect(
+			statementTitle(
+				'<p>Write \\(\\frac{ {{2*a}} }{ {{2*b}} }\\) in &amp; lowest terms.</p>'
+			)
+		).toBe( 'Write {{2*a}}/{{2*b}} in & lowest terms.' );
+		const long = statementTitle( '<p>' + 'word '.repeat( 30 ) + '</p>' );
+		expect( Array.from( long ).length ).toBeLessThanOrEqual( 80 );
+		expect( long ).toMatch( /^(word )+word…$/ );
+	} );
+	it( 'moves an older name into the statement', () => {
+		const settings = { type: 'hot-text' };
+		expect(
+			questionStatement( { name: 'Select 5', description: '', settings } )
+		).toBe( 'Select 5' );
+		expect(
+			questionStatement( {
+				name: 'A < B',
+				description: '<p>Body</p>',
+				settings,
+			} )
+		).toBe( '<p>A &lt; B</p>\n<p>Body</p>' );
+		expect(
+			questionStatement( {
+				name: 'Question 3',
+				description: '<p>Body</p>',
+				settings,
+			} )
+		).toBe( '<p>Body</p>' );
+		expect(
+			questionStatement( {
+				name: 'Title',
+				description: '<p>Body</p>',
+				settings: { ...settings, question_code: 'Q-1' },
+			} )
+		).toBe( '<p>Body</p>' );
 	} );
 } );
