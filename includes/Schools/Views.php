@@ -149,7 +149,7 @@ final class Views {
 			);
 			if ( is_admin() ) {
 				$config['usersUrl']    = current_user_can( 'create_users' ) ? admin_url( 'user-new.php' ) : '';
-				$config['studentsUrl'] = current_user_can( 'manage_options' ) ? \OhMyLMS\Admin\LegacyRoutes::url( '/accounthub' ) : '';
+				$config['studentsUrl'] = current_user_can( 'manage_options' ) ? \OhMyLMS\Admin\LegacyRoutes::app_url( '/account-hub' ) : '';
 			}
 			wp_add_inline_script( 'ohmylms-schools', 'window.ohmylmsSchools=' . wp_json_encode( $config, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ) . ';', 'before' );
 			$configured = true;
