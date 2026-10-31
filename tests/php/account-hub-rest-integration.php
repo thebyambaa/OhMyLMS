@@ -304,7 +304,7 @@ try {
 	);
 	ok( 200 === $list->get_status() && '2' === $list->get_headers()['X-WP-Total'] && '2' === $list->get_headers()['X-WP-TotalPages'] && 1 === count( $list->get_data() ), 'paged school list with totals' );
 	$row = $list->get_data()[0];
-	ok( array( 'id', 'name', 'slug', 'timezone', 'status', 'created_at', 'class_count', 'student_count', 'teacher_count', 'version' ) === array_keys( $row ), 'school list fields are exactly the documented ones' );
+	ok( array( 'id', 'name', 'slug', 'timezone', 'status', 'created_at', 'class_count', 'student_count', 'teacher_count', 'sample', 'version' ) === array_keys( $row ) && false === $row['sample'], 'school list fields are exactly the documented ones' );
 	ok( $alpha['id'] === $row['id'] && 2 === $row['student_count'] && 1 === $row['teacher_count'] && 0 === $row['class_count'], 'school counts' );
 	ok_error(
 		hub_api(

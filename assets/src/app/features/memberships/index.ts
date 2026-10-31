@@ -2,7 +2,7 @@ import { lazy } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import type { FeatureDefinition } from '../types';
 
-/** Membership plan list at `#/memberships`. */
+/** Membership plan list at `#/memberships`, with the Cohorts and Automations panels (`?panel=`). */
 export const memberships: FeatureDefinition = {
 	id: 'memberships',
 	title: __( 'Memberships', 'ohmylms' ),
@@ -13,7 +13,7 @@ export const memberships: FeatureDefinition = {
 	component: lazy(
 		() =>
 			import(
-				/* webpackChunkName: "admin-app-memberships" */ './MembershipsPage'
+				/* webpackChunkName: "admin-app-memberships" */ './MembershipsRoute'
 			)
 	),
 };

@@ -6,9 +6,11 @@ import { ApiError } from '../../lib/api';
 import { PlaceProvider } from '../../routing/place';
 import AccountHubPage from './AccountHubPage';
 import * as api from './api';
+import * as operations from './operationsApi';
 import {
 	children,
 	invitation,
+	noSample,
 	page,
 	parentAccount,
 	person,
@@ -16,6 +18,13 @@ import {
 	schoolClass,
 	teacher,
 } from './fixtures';
+
+vi.mock( './operationsApi', () => ( {
+	listSchoolsByStatus: vi.fn(),
+	getSampleSchool: vi.fn(),
+	createSampleSchool: vi.fn(),
+	removeSampleSchool: vi.fn(),
+} ) );
 
 vi.mock( './api', () => ( {
 	listSchools: vi.fn(),
@@ -62,6 +71,10 @@ function renderHub( entry = '/account-hub' ) {
 
 beforeEach( () => {
 	vi.resetAllMocks();
+	vi.mocked( operations.listSchoolsByStatus ).mockResolvedValue(
+		page( [ school ] )
+	);
+	vi.mocked( operations.getSampleSchool ).mockResolvedValue( noSample );
 	vi.mocked( api.listSchools ).mockResolvedValue( page( [ school ] ) );
 	vi.mocked( api.listClasses ).mockResolvedValue(
 		page( [
@@ -98,9 +111,10 @@ describe( 'AccountHubPage', () => {
 		expect(
 			screen.getByRole( 'tab', { name: 'Schools' } )
 		).toHaveAttribute( 'aria-selected', 'true' );
-		expect( api.listSchools ).toHaveBeenCalledWith(
+		expect( operations.listSchoolsByStatus ).toHaveBeenCalledWith(
 			1,
 			'',
+			'all',
 			expect.any( AbortSignal )
 		);
 		await user.click(
@@ -198,9 +212,10 @@ describe( 'AccountHubPage', () => {
 		);
 		await user.click( screen.getByRole( 'button', { name: 'Search' } ) );
 		await waitFor( () =>
-			expect( api.listSchools ).toHaveBeenLastCalledWith(
+			expect( operations.listSchoolsByStatus ).toHaveBeenLastCalledWith(
 				1,
 				'north',
+				'all',
 				expect.any( AbortSignal )
 			)
 		);
@@ -306,7 +321,7 @@ describe( 'AccountHubPage', () => {
 		).toBeVisible();
 	} );
 	it( 'shows a list error with a retry', async () => {
-		vi.mocked( api.listSchools ).mockRejectedValueOnce(
+		vi.mocked( operations.listSchoolsByStatus ).mockRejectedValueOnce(
 			new ApiError( {
 				status: 403,
 				code: 'ohmylms_account_hub_cannot_view',

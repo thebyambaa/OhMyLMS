@@ -30,8 +30,76 @@ import { isCourseReturn, isReturnUrl } from './returnLink.mjs';
 
 installNativeCanvasRecovery();
 
+const INLINE_BLOCK = 'ohmylms/shared-multiple-choice';
+
 /**
- * Insert approved practice questions using the native block insertion action.
+ * One placed inline check: its question title, an editor link and reorder controls.
+ *
+ * @param {Object}                      props        Component properties.
+ * @param {Object}                      props.check  Placed block (`clientId`, `questionId`, `rootClientId`).
+ * @param {number}                      props.index  Position, from 0.
+ * @param {number}                      props.count  Number of placed checks.
+ * @param {(direction: number) => void} props.onMove Moves the block up (-1) or down (1).
+ * @param {() => void}                  props.onPick Selects the block in the canvas.
+ * @return {Element} List item.
+ */
+function PlacedCheck( { check, index, count, onMove, onPick } ) {
+	const question = useSelect(
+		( select ) =>
+			check.questionId
+				? select( 'core' ).getEntityRecord(
+						'postType',
+						'ohmylms-question',
+						check.questionId
+					)
+				: null,
+		[ check.questionId ]
+	);
+	const title =
+		question?.title?.raw ||
+		question?.title?.rendered ||
+		( check.questionId
+			? `#${ check.questionId }`
+			: __( 'Unknown question', 'ohmylms' ) );
+	return (
+		<li>
+			<Button variant="link" onClick={ onPick }>
+				{ `${ index + 1 }. ${ title }` }
+			</Button>{ ' ' }
+			{ check.questionId > 0 && (
+				<a
+					href={ `post.php?post=${ check.questionId }&action=edit` }
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					{ __( 'Edit question', 'ohmylms' ) }
+				</a>
+			) }
+			<Button
+				variant="tertiary"
+				size="small"
+				disabled={ 0 === index }
+				label={ __( 'Move up', 'ohmylms' ) }
+				onClick={ () => onMove( -1 ) }
+			>
+				{ __( 'Up', 'ohmylms' ) }
+			</Button>
+			<Button
+				variant="tertiary"
+				size="small"
+				disabled={ index === count - 1 }
+				label={ __( 'Move down', 'ohmylms' ) }
+				onClick={ () => onMove( 1 ) }
+			>
+				{ __( 'Down', 'ohmylms' ) }
+			</Button>
+		</li>
+	);
+}
+
+/**
+ * Insert approved practice questions using the native block insertion action, and list, select and
+ * reorder the inline checks already in the lesson.
  *
  * @return {Element} Inline-check settings panel.
  */
@@ -39,7 +107,60 @@ function InlineChecks() {
 	const [ search, setSearch ] = useState( '' );
 	const [ questions, setQuestions ] = useState( [] );
 	const [ error, setError ] = useState( '' );
-	const { insertBlocks } = useDispatch( 'core/block-editor' );
+	const { insertBlocks, moveBlockToPosition, selectBlock } =
+		useDispatch( 'core/block-editor' );
+	const getBlockIndex = useSelect(
+		( select ) => select( 'core/block-editor' ).getBlockIndex,
+		[]
+	);
+	const placed = useSelect( ( select ) => {
+		const editor = select( 'core/block-editor' );
+		const found = [];
+		const walk = ( blocks ) =>
+			blocks.forEach( ( block ) => {
+				if ( block.name === INLINE_BLOCK ) {
+					found.push( {
+						clientId: block.clientId,
+						questionId: Number( block.attributes.questionId ) || 0,
+						rootClientId: editor.getBlockRootClientId(
+							block.clientId
+						),
+					} );
+				}
+				walk( block.innerBlocks || [] );
+			} );
+		walk( editor.getBlocks() );
+		return found;
+	}, [] );
+	/**
+	 * Swap a check with the previous or next check; the content between them stays in place.
+	 *
+	 * @param {number} index     Position of the check.
+	 * @param {number} direction -1 up, 1 down.
+	 */
+	const move = ( index, direction ) => {
+		const [ first, second ] =
+			direction < 0
+				? [ placed[ index - 1 ], placed[ index ] ]
+				: [ placed[ index ], placed[ index + 1 ] ];
+		if ( ! first || ! second ) {
+			return;
+		}
+		const firstIndex = getBlockIndex( first.clientId );
+		const secondIndex = getBlockIndex( second.clientId );
+		moveBlockToPosition(
+			second.clientId,
+			second.rootClientId,
+			first.rootClientId,
+			firstIndex
+		);
+		moveBlockToPosition(
+			first.clientId,
+			first.rootClientId,
+			second.rootClientId,
+			secondIndex
+		);
+	};
 	useEffect( () => {
 		let active = true;
 		const timer = setTimeout( () => {
@@ -73,6 +194,27 @@ function InlineChecks() {
 					'ohmylms'
 				) }
 			</p>
+			{ placed.length > 0 ? (
+				<ol
+					aria-label={ __(
+						'Inline checks in this lesson',
+						'ohmylms'
+					) }
+				>
+					{ placed.map( ( check, index ) => (
+						<PlacedCheck
+							key={ check.clientId }
+							check={ check }
+							index={ index }
+							count={ placed.length }
+							onMove={ ( direction ) => move( index, direction ) }
+							onPick={ () => selectBlock( check.clientId ) }
+						/>
+					) ) }
+				</ol>
+			) : (
+				<p>{ __( 'No inline checks yet.', 'ohmylms' ) }</p>
+			) }
 			<TextControl
 				label={ __( 'Find a question', 'ohmylms' ) }
 				value={ search }
@@ -350,6 +492,89 @@ function LessonSettings() {
 							] }
 							onChange={ ( platform ) =>
 								changeVideo( { platform } )
+							}
+						/>
+						<TextControl
+							type="number"
+							min={ 0 }
+							max={ 86400 }
+							label={ __( 'Duration (seconds)', 'ohmylms' ) }
+							help={ __(
+								'Shown to learners and used to measure the watched share.',
+								'ohmylms'
+							) }
+							value={ video.duration ?? '' }
+							onChange={ ( duration ) =>
+								changeVideo( {
+									duration: Math.min(
+										86400,
+										Math.max(
+											0,
+											Math.trunc( Number( duration ) ) ||
+												0
+										)
+									),
+								} )
+							}
+						/>
+						<SelectControl
+							label={ __( 'Completion', 'ohmylms' ) }
+							value={
+								video.completion_rule === 'watch_percent'
+									? 'watch_percent'
+									: 'none'
+							}
+							options={ [
+								{
+									value: 'none',
+									label: __(
+										'Learners mark the lesson complete',
+										'ohmylms'
+									),
+								},
+								{
+									value: 'watch_percent',
+									label: __(
+										'Learners watch part of the video first',
+										'ohmylms'
+									),
+								},
+							] }
+							onChange={ ( rule ) =>
+								changeVideo( {
+									completion_rule: rule,
+									watch_percent: video.watch_percent || 90,
+								} )
+							}
+						/>
+						{ video.completion_rule === 'watch_percent' && (
+							<TextControl
+								type="number"
+								min={ 1 }
+								max={ 100 }
+								label={ __( 'Share to watch (%)', 'ohmylms' ) }
+								value={ video.watch_percent ?? 90 }
+								onChange={ ( percent ) =>
+									changeVideo( {
+										watch_percent: Math.min(
+											100,
+											Math.max(
+												1,
+												Math.trunc(
+													Number( percent )
+												) || 1
+											)
+										),
+									} )
+								}
+							/>
+						) }
+						<LessonMedia
+							label={ __( 'Video poster', 'ohmylms' ) }
+							value={ video.poster_id || 0 }
+							mediaType="image"
+							onChange={ ( posterId ) =>
+								changeVideo( { poster_id: posterId } )
 							}
 						/>
 						<TextControl

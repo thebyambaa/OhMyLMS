@@ -56,7 +56,8 @@ my learning, bundles, skills report data, `Schools\ViewAs` and `SamplePreview`, 
 - Class sync creates enrolments but detaching a class does not revoke them; class membership changes never
   touch enrolments.
 - Subscription cancellation and expiry do not revoke course access rows.
-- `Checkout` writes `cohort_id`, a column the table does not have (that insert fails when a cohort is set).
+- `Checkout` wrote `cohort_id`, a column the table does not have (that insert failed when a cohort was set).
+  Fixed 31 October 2026: the write is gone; cohort membership lives in `ohmylms_cohort_members` ([cohorts](cohorts.md)).
 - A student can have several rows per course (one per order, membership, manual grant); readers pick the first
   or newest row inconsistently.
 
@@ -69,7 +70,7 @@ CREATE TABLE {prefix}ohmylms_enrolments (
   course_id bigint unsigned NOT NULL,
   status varchar(20) NOT NULL DEFAULT 'active',     -- active, completed, expired, cancelled, suspended, pending
   source varchar(20) NOT NULL DEFAULT 'manual',     -- purchase, self, manual, roster, seat, import
-  source_type varchar(20) NOT NULL DEFAULT '',      -- what source_ref is: order, membership, subscription, class, seat, exam
+  source_type varchar(20) NOT NULL DEFAULT '',      -- what source_ref is: order, membership, subscription, class, seat, exam, automation
   source_ref bigint unsigned NOT NULL DEFAULT 0,
   class_id bigint unsigned DEFAULT NULL,            -- the roster (Account Hub class) that enrolled the student
   legacy_id bigint unsigned DEFAULT NULL,           -- ohmylms_user_enrollment.id (progress rows refer to it)

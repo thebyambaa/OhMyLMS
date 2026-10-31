@@ -7,7 +7,12 @@ import {
 } from '@wordpress/components';
 import { useCallback, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import {
+	Link,
+	useNavigate,
+	useParams,
+	useSearchParams,
+} from 'react-router-dom';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
@@ -28,14 +33,67 @@ import {
 	validateSchool,
 	validateYear,
 } from './model';
+import { panelFromParam } from './operationsModel';
+import { SchoolGuardians } from './SchoolGuardians';
+import { SchoolRemovalSection } from './SchoolRemovalSection';
+import { SchoolReportPanel } from './SchoolReportPanel';
+import { SchoolRollover } from './SchoolRollover';
 import type {
 	ClassInput,
 	FormErrors,
 	SchoolDetail,
 	SchoolInput,
+	SchoolPanel,
 	YearInput,
 } from './types';
 import { usePagedList } from './usePagedList';
+
+const PANEL_LABELS: Record< SchoolPanel, string > = {
+	details: __( 'Details and classes', 'ohmylms' ),
+	guardians: __( 'Guardians', 'ohmylms' ),
+	report: __( 'Report', 'ohmylms' ),
+	rollover: __( 'Year rollover', 'ohmylms' ),
+};
+
+/**
+ * Links between the school's sub-screens (`?panel=`), as a WordPress `.subsubsub` row.
+ *
+ * @param props        Component props.
+ * @param props.school School id.
+ * @param props.panel  Current panel.
+ */
+function PanelLinks( {
+	school,
+	panel,
+}: {
+	school: number;
+	panel: SchoolPanel;
+} ) {
+	const ids = Object.keys( PANEL_LABELS ) as SchoolPanel[];
+	return (
+		<nav aria-label={ __( 'School sections', 'ohmylms' ) }>
+			<ul className="subsubsub">
+				{ ids.map( ( id, index ) => (
+					<li key={ id }>
+						<Link
+							to={
+								'details' === id
+									? `/account-hub/schools/${ school }`
+									: `/account-hub/schools/${ school }?panel=${ id }`
+							}
+							className={ id === panel ? 'current' : undefined }
+							aria-current={ id === panel ? 'page' : undefined }
+						>
+							{ PANEL_LABELS[ id ] }
+						</Link>
+						{ index < ids.length - 1 ? ' |' : '' }
+					</li>
+				) ) }
+			</ul>
+			<br className="clear" />
+		</nav>
+	);
+}
 
 /** School editor at `#/account-hub/schools/<id>`: details, academic years and classes. */
 export default function SchoolEditorPage() {
@@ -89,7 +147,10 @@ function SchoolEditor( {
 	initial: SchoolDetail;
 	onReload: () => void;
 } ) {
+	const [ params ] = useSearchParams();
+	const panel = panelFromParam( params.get( 'panel' ) );
 	const [ school, setSchool ] = useState( initial );
+	const refresh = useOperation();
 	const [ form, setForm ] = useState< SchoolInput >( {
 		name: initial.name,
 		timezone: initial.timezone,
@@ -132,9 +193,82 @@ function SchoolEditor( {
 		);
 	}
 
+	const archived = 'archived' === school.status;
+	const header = (
+		<>
+			<h2>
+				{ school.name }
+				{ school.sample && (
+					<span className="ohmylms-account-hub-badge">
+						{ ' ' }
+						{ __( '(sample school)', 'ohmylms' ) }
+					</span>
+				) }
+			</h2>
+			<PanelLinks school={ school.id } panel={ panel } />
+			{ archived && (
+				<Notice status="warning" isDismissible={ false }>
+					{ __(
+						'This school is archived. It is read only and closed to its staff, students and families until it is restored.',
+						'ohmylms'
+					) }
+				</Notice>
+			) }
+			{ school.sample && (
+				<Notice status="info" isDismissible={ false }>
+					{ __(
+						'This is the sample school with made-up classes and learners. Remove it from the Schools list when you are done exploring.',
+						'ohmylms'
+					) }
+				</Notice>
+			) }
+			{ refresh.error && (
+				<Notice status="error" isDismissible={ false }>
+					{ refresh.error }
+				</Notice>
+			) }
+		</>
+	);
+	if ( 'guardians' === panel ) {
+		return (
+			<>
+				{ header }
+				<SchoolGuardians
+					school={ school }
+					initialClass={ Number( params.get( 'class_id' ) ) || 0 }
+				/>
+			</>
+		);
+	}
+	if ( 'report' === panel ) {
+		return (
+			<>
+				{ header }
+				<SchoolReportPanel school={ school } />
+			</>
+		);
+	}
+	if ( 'rollover' === panel ) {
+		return (
+			<>
+				{ header }
+				<SchoolRollover
+					key={ school.years.map( ( year ) => year.id ).join( '-' ) }
+					school={ school }
+					onChange={ () =>
+						void refresh.run(
+							( signal ) => getSchool( school.id, signal ),
+							setSchool
+						)
+					}
+				/>
+			</>
+		);
+	}
+
 	return (
 		<>
-			<h2>{ school.name }</h2>
+			{ header }
 			<LeaveNotice guard={ guard } />
 			{ conflict && <ConflictNotice onReload={ onReload } /> }
 			{ saved && (
@@ -160,7 +294,7 @@ function SchoolEditor( {
 					value={ form.name }
 					maxLength={ MAX_NAME }
 					required
-					disabled={ save.busy }
+					disabled={ save.busy || archived }
 					help={ errors.name }
 					onChange={ ( name ) => setForm( { ...form, name } ) }
 				/>
@@ -168,7 +302,7 @@ function SchoolEditor( {
 					label={ __( 'Time zone', 'ohmylms' ) }
 					value={ form.timezone }
 					required
-					disabled={ save.busy }
+					disabled={ save.busy || archived }
 					help={
 						errors.timezone ??
 						__( 'IANA name such as Asia/Ulaanbaatar.', 'ohmylms' )
@@ -180,7 +314,7 @@ function SchoolEditor( {
 				<Button
 					type="submit"
 					variant="primary"
-					disabled={ save.busy || ! dirty }
+					disabled={ save.busy || ! dirty || archived }
 					isBusy={ save.busy }
 				>
 					{ __( 'Save school', 'ohmylms' ) }
@@ -210,6 +344,10 @@ function SchoolEditor( {
 				}
 			/>
 			<SchoolClasses school={ school } />
+			<SchoolRemovalSection
+				school={ school }
+				onChange={ ( result ) => setSchool( result ) }
+			/>
 		</>
 	);
 }
@@ -274,48 +412,50 @@ function Years( {
 					{ operation.error }
 				</Notice>
 			) }
-			<form
-				noValidate
-				aria-label={ __( 'Add academic year', 'ohmylms' ) }
-				onSubmit={ ( event ) => {
-					event.preventDefault();
-					submit();
-				} }
-			>
-				<TextControl
-					label={ __( 'Year label', 'ohmylms' ) }
-					value={ form.label }
-					maxLength={ 100 }
-					help={ errors.label }
-					onChange={ ( label ) => setForm( { ...form, label } ) }
-				/>
-				<TextControl
-					label={ __( 'Starts on', 'ohmylms' ) }
-					type="date"
-					value={ form.starts_at }
-					help={ errors.starts_at }
-					onChange={ ( value ) =>
-						setForm( { ...form, starts_at: value } )
-					}
-				/>
-				<TextControl
-					label={ __( 'Ends on', 'ohmylms' ) }
-					type="date"
-					value={ form.ends_at }
-					help={ errors.ends_at }
-					onChange={ ( value ) =>
-						setForm( { ...form, ends_at: value } )
-					}
-				/>
-				<Button
-					type="submit"
-					variant="secondary"
-					disabled={ operation.busy }
-					isBusy={ operation.busy }
+			{ 'active' === school.status && (
+				<form
+					noValidate
+					aria-label={ __( 'Add academic year', 'ohmylms' ) }
+					onSubmit={ ( event ) => {
+						event.preventDefault();
+						submit();
+					} }
 				>
-					{ __( 'Add academic year', 'ohmylms' ) }
-				</Button>
-			</form>
+					<TextControl
+						label={ __( 'Year label', 'ohmylms' ) }
+						value={ form.label }
+						maxLength={ 100 }
+						help={ errors.label }
+						onChange={ ( label ) => setForm( { ...form, label } ) }
+					/>
+					<TextControl
+						label={ __( 'Starts on', 'ohmylms' ) }
+						type="date"
+						value={ form.starts_at }
+						help={ errors.starts_at }
+						onChange={ ( value ) =>
+							setForm( { ...form, starts_at: value } )
+						}
+					/>
+					<TextControl
+						label={ __( 'Ends on', 'ohmylms' ) }
+						type="date"
+						value={ form.ends_at }
+						help={ errors.ends_at }
+						onChange={ ( value ) =>
+							setForm( { ...form, ends_at: value } )
+						}
+					/>
+					<Button
+						type="submit"
+						variant="secondary"
+						disabled={ operation.busy }
+						isBusy={ operation.busy }
+					>
+						{ __( 'Add academic year', 'ohmylms' ) }
+					</Button>
+				</form>
+			) }
 		</section>
 	);
 }
@@ -414,70 +554,79 @@ function SchoolClasses( { school }: { school: SchoolDetail } ) {
 					] }
 				/>
 			</ListState>
-			<h4>{ __( 'Add class', 'ohmylms' ) }</h4>
-			{ ! years.length ? (
-				<p>
-					{ __(
-						'Add an active academic year to create classes.',
-						'ohmylms'
-					) }
-				</p>
-			) : (
-				<form
-					noValidate
-					aria-label={ __( 'Add class', 'ohmylms' ) }
-					onSubmit={ ( event ) => {
-						event.preventDefault();
-						submit();
-					} }
-				>
-					{ operation.error && (
-						<Notice status="error" isDismissible={ false }>
-							{ operation.error }
-						</Notice>
-					) }
-					<TextControl
-						label={ __( 'Class name', 'ohmylms' ) }
-						value={ form.name }
-						maxLength={ MAX_NAME }
-						help={ errors.name }
-						onChange={ ( name ) => setForm( { ...form, name } ) }
-					/>
-					<TextControl
-						label={ __( 'Subject', 'ohmylms' ) }
-						value={ form.subject }
-						maxLength={ 100 }
-						help={ errors.subject }
-						onChange={ ( subject ) =>
-							setForm( { ...form, subject } )
-						}
-					/>
-					<TextControl
-						label={ __( 'Grade', 'ohmylms' ) }
-						value={ form.grade }
-						maxLength={ 50 }
-						help={ errors.grade }
-						onChange={ ( grade ) => setForm( { ...form, grade } ) }
-					/>
-					<SelectControl
-						label={ __( 'Academic year', 'ohmylms' ) }
-						value={ String( selectedYear ) }
-						options={ years.map( ( year ) => ( {
-							value: String( year.id ),
-							label: year.label,
-						} ) ) }
-						onChange={ ( value ) => setYearId( Number( value ) ) }
-					/>
-					<Button
-						type="submit"
-						variant="secondary"
-						disabled={ operation.busy }
-						isBusy={ operation.busy }
-					>
-						{ __( 'Create class', 'ohmylms' ) }
-					</Button>
-				</form>
+			{ 'active' === school.status && (
+				<h4>{ __( 'Add class', 'ohmylms' ) }</h4>
 			) }
+			{ 'active' === school.status &&
+				( ! years.length ? (
+					<p>
+						{ __(
+							'Add an active academic year to create classes.',
+							'ohmylms'
+						) }
+					</p>
+				) : (
+					<form
+						noValidate
+						aria-label={ __( 'Add class', 'ohmylms' ) }
+						onSubmit={ ( event ) => {
+							event.preventDefault();
+							submit();
+						} }
+					>
+						{ operation.error && (
+							<Notice status="error" isDismissible={ false }>
+								{ operation.error }
+							</Notice>
+						) }
+						<TextControl
+							label={ __( 'Class name', 'ohmylms' ) }
+							value={ form.name }
+							maxLength={ MAX_NAME }
+							help={ errors.name }
+							onChange={ ( name ) =>
+								setForm( { ...form, name } )
+							}
+						/>
+						<TextControl
+							label={ __( 'Subject', 'ohmylms' ) }
+							value={ form.subject }
+							maxLength={ 100 }
+							help={ errors.subject }
+							onChange={ ( subject ) =>
+								setForm( { ...form, subject } )
+							}
+						/>
+						<TextControl
+							label={ __( 'Grade', 'ohmylms' ) }
+							value={ form.grade }
+							maxLength={ 50 }
+							help={ errors.grade }
+							onChange={ ( grade ) =>
+								setForm( { ...form, grade } )
+							}
+						/>
+						<SelectControl
+							label={ __( 'Academic year', 'ohmylms' ) }
+							value={ String( selectedYear ) }
+							options={ years.map( ( year ) => ( {
+								value: String( year.id ),
+								label: year.label,
+							} ) ) }
+							onChange={ ( value ) =>
+								setYearId( Number( value ) )
+							}
+						/>
+						<Button
+							type="submit"
+							variant="secondary"
+							disabled={ operation.busy }
+							isBusy={ operation.busy }
+						>
+							{ __( 'Create class', 'ohmylms' ) }
+						</Button>
+					</form>
+				) ) }
 		</section>
 	);
 }

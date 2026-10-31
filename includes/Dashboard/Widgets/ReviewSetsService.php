@@ -137,7 +137,8 @@ final class ReviewSetsService {
 	 * @return array{id:int,title:string,status:string,route:string|null}
 	 */
 	public static function describe( array $set, $user_id ) {
-		$editable = user_can( (int) $user_id, 'edit_post', (int) $set['id'] ) && user_can( (int) $user_id, AdminNavigation::page_capability( 'content' ) );
+		// The quiz editor is on the Quizzes tab, which school staff do not see even when the Gradebook opens Content Hub.
+		$editable = user_can( (int) $user_id, 'edit_post', (int) $set['id'] ) && user_can( (int) $user_id, AdminNavigation::CAPABILITY );
 		return array(
 			'id'     => (int) $set['id'],
 			'title'  => (string) $set['title'],

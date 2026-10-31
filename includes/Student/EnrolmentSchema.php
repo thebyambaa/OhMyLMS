@@ -38,7 +38,7 @@ final class EnrolmentSchema {
 	/**
 	 * Kinds of record `source_ref` points to.
 	 */
-	const REF_TYPES = array( '', 'order', 'membership', 'subscription', 'class', 'seat', 'exam' );
+	const REF_TYPES = array( '', 'order', 'membership', 'subscription', 'class', 'seat', 'exam', 'automation' );
 
 	/**
 	 * Existence of each table name checked during this request.

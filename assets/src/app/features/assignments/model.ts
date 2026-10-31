@@ -7,18 +7,46 @@ import type {
 	AssignmentSettings,
 	AssignmentStatus,
 	Attachment,
+	CommentThread,
 	CourseChoice,
 	CourseRef,
+	DeliverySettings,
+	Drip,
+	DripType,
 	FormErrors,
 	FormState,
 	Placement,
+	PrerequisiteItem,
+	PrerequisiteOptions,
+	PrerequisiteType,
+	Resource,
 	Submission,
+	SubmissionComment,
 	SubmissionDetail,
 	SubmissionResult,
 	SubmissionStatus,
 	TimeUnit,
 	WritableStatus,
 } from './types';
+
+/** Release schedules the server accepts. */
+export const DRIP_TYPES: readonly DripType[] = [
+	'enrollment-from-x-days',
+	'specific-date',
+	'cohort-start',
+	'cohort-from-x-days',
+];
+const PREREQUISITE_TYPES: readonly PrerequisiteType[] = [
+	'lesson',
+	'quiz',
+	'assignment',
+	'other',
+];
+const RESOURCE_TYPES: readonly Resource[ 'type' ][] = [ 'file', 'link' ];
+const ROLES: readonly SubmissionComment[ 'role' ][] = [
+	'instructor',
+	'learner',
+];
 
 const STATUSES: readonly AssignmentStatus[] = [ 'draft', 'publish', 'trash' ];
 const WRITABLE: readonly WritableStatus[] = [ 'draft', 'publish' ];
@@ -40,6 +68,12 @@ export const LIMITS = {
 	maxFiles: 20,
 	maxFileSizeMb: 1024,
 	feedback: 10000,
+	resources: 20,
+	resourceName: 200,
+	resourceSize: 50,
+	prerequisites: 50,
+	dripDays: 3650,
+	comment: 5000,
 } as const;
 
 /**
@@ -200,11 +234,56 @@ function placement( value: unknown ): Placement {
 	};
 }
 
+function resource( value: unknown ): Resource {
+	const item = record( value );
+	return {
+		type: oneOf( item.type, RESOURCE_TYPES ),
+		attachment_id: count( item.attachment_id ),
+		name: text( item.name ),
+		url: text( item.url ),
+		size: text( item.size ),
+	};
+}
+
+function prerequisiteItem( value: unknown ): PrerequisiteItem {
+	const item = record( value );
+	return {
+		id: positiveId( item.id ),
+		title: text( item.title ),
+		type: oneOf( item.type, PREREQUISITE_TYPES ),
+		status: text( item.status ),
+	};
+}
+
+function drip( value: unknown ): Drip {
+	const item = record( value );
+	return {
+		enable: boolean( item.enable ),
+		type: oneOf( item.type, DRIP_TYPES ),
+		days: count( item.days ),
+		date: text( item.date ),
+		time: text( item.time ),
+	};
+}
+
+function delivery( item: Record< string, unknown > ): DeliverySettings {
+	const prerequisites = record( item.prerequisites );
+	return {
+		resources: list( item.resources ).map( resource ),
+		prerequisites: {
+			enable: boolean( prerequisites.enable ),
+			items: list( prerequisites.items ).map( prerequisiteItem ),
+		},
+		drip: drip( item.drip ),
+		comments_enabled: boolean( item.comments_enabled ),
+	};
+}
+
 /**
  * Validate an assignment read in edit context.
  *
  * @param value Parsed JSON.
- * @return The assignment with instructions and placements.
+ * @return The assignment with instructions, placements and delivery settings.
  */
 export function parseAssignmentDetail( value: unknown ): AssignmentDetail {
 	const item = record( value );
@@ -212,6 +291,64 @@ export function parseAssignmentDetail( value: unknown ): AssignmentDetail {
 		...parseAssignment( item ),
 		instructions: text( item.instructions ),
 		placements: list( item.placements ).map( placement ),
+		...delivery( item ),
+	};
+}
+
+/**
+ * Validate a page of prerequisite choices.
+ *
+ * @param value Parsed JSON.
+ * @return The choices.
+ */
+export function parsePrerequisiteOptions(
+	value: unknown
+): PrerequisiteOptions {
+	const item = record( value );
+	return {
+		items: list( item.items ).map( prerequisiteItem ),
+		total: count( item.total ),
+		pages: count( item.pages ),
+		scope: oneOf( item.scope, [ 'course', 'library' ] as const ),
+	};
+}
+
+/**
+ * Validate one comment of a submission thread.
+ *
+ * @param value Parsed JSON.
+ * @return The comment.
+ */
+export function parseComment( value: unknown ): SubmissionComment {
+	const item = record( value );
+	const author = record( item.author );
+	return {
+		id: positiveId( item.id ),
+		submission_id: positiveId( item.submission_id ),
+		author: {
+			id: count( author.id ),
+			display_name: text( author.display_name ),
+		},
+		role: oneOf( item.role, ROLES ),
+		body: text( item.body ),
+		created_at: text( item.created_at ),
+		can_delete: boolean( item.can_delete ),
+	};
+}
+
+/**
+ * Validate a submission thread.
+ *
+ * @param value Parsed JSON.
+ * @return The thread.
+ */
+export function parseThread( value: unknown ): CommentThread {
+	const item = record( value );
+	return {
+		items: list( item.items ).map( parseComment ),
+		total: count( item.total ),
+		role: oneOf( item.role, ROLES ),
+		comments_enabled: boolean( item.comments_enabled ),
 	};
 }
 
@@ -298,6 +435,10 @@ export function formFromAssignment( assignment: AssignmentDetail ): FormState {
 		max_files: String( assignment.max_files ),
 		file_size_limit_enabled: assignment.file_size_limit_enabled,
 		max_file_size_mb: String( assignment.max_file_size_mb ),
+		resources: assignment.resources,
+		prerequisites: assignment.prerequisites,
+		drip: assignment.drip,
+		comments_enabled: assignment.comments_enabled,
 	};
 }
 
@@ -310,8 +451,117 @@ export function formFromAssignment( assignment: AssignmentDetail ): FormState {
  */
 export function isDirty( form: FormState, saved: FormState ): boolean {
 	return ( Object.keys( form ) as Array< keyof FormState > ).some(
-		( key ) => form[ key ] !== saved[ key ]
+		( key ) =>
+			JSON.stringify( form[ key ] ) !== JSON.stringify( saved[ key ] )
 	);
+}
+
+/**
+ * Whether a string is an absolute HTTP or HTTPS URL.
+ *
+ * @param value Candidate.
+ * @return True when it is.
+ */
+export function isWebUrl( value: string ): boolean {
+	try {
+		const url = new URL( value.trim() );
+		return 'http:' === url.protocol || 'https:' === url.protocol;
+	} catch {
+		return false;
+	}
+}
+
+function validDate( value: string ): boolean {
+	const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec( value );
+	if ( ! match ) {
+		return false;
+	}
+	const date = new Date(
+		Date.UTC(
+			Number( match[ 1 ] ),
+			Number( match[ 2 ] ) - 1,
+			Number( match[ 3 ] )
+		)
+	);
+	return date.toISOString().slice( 0, 10 ) === value;
+}
+
+/**
+ * Validate the delivery settings with the server's rules.
+ *
+ * @param form Form state.
+ * @return Field errors for `resources`, `prerequisites` and `drip`.
+ */
+export function validateDelivery( form: DeliverySettings ): FormErrors {
+	const errors: FormErrors = {};
+	if ( form.resources.length > LIMITS.resources ) {
+		errors.resources = sprintf(
+			/* translators: %d: maximum number of resources. */
+			__( 'Add at most %d resources.', 'ohmylms' ),
+			LIMITS.resources
+		);
+	} else {
+		for ( const row of form.resources ) {
+			const name = row.name.trim();
+			if ( ! name || Array.from( name ).length > LIMITS.resourceName ) {
+				errors.resources = __(
+					'Give every resource a name of 1 to 200 characters.',
+					'ohmylms'
+				);
+				break;
+			}
+			if ( 'link' === row.type && ! isWebUrl( row.url ) ) {
+				errors.resources = __(
+					'Links need a full address starting with http:// or https://.',
+					'ohmylms'
+				);
+				break;
+			}
+			if ( 'file' === row.type && row.attachment_id < 1 ) {
+				errors.resources = __(
+					'Choose each file from the media library.',
+					'ohmylms'
+				);
+				break;
+			}
+			if ( Array.from( row.size ).length > LIMITS.resourceSize ) {
+				errors.resources = __(
+					'Keep size labels to 50 characters.',
+					'ohmylms'
+				);
+				break;
+			}
+		}
+	}
+	if ( form.prerequisites.items.length > LIMITS.prerequisites ) {
+		errors.prerequisites = sprintf(
+			/* translators: %d: maximum number of prerequisites. */
+			__( 'Require at most %d items.', 'ohmylms' ),
+			LIMITS.prerequisites
+		);
+	}
+	const release = form.drip;
+	if (
+		! Number.isSafeInteger( release.days ) ||
+		release.days < 0 ||
+		release.days > LIMITS.dripDays
+	) {
+		errors.drip = rangeMessage( 0, LIMITS.dripDays );
+	} else if ( '' !== release.date && ! validDate( release.date ) ) {
+		errors.drip = __( 'Enter a real date.', 'ohmylms' );
+	} else if (
+		'' !== release.time &&
+		! /^([01]\d|2[0-3]):[0-5]\d$/.test( release.time )
+	) {
+		errors.drip = __( 'Enter a time such as 09:30.', 'ohmylms' );
+	} else if (
+		release.enable &&
+		'specific-date' === release.type &&
+		'' === release.date
+	) {
+		errors.drip = __( 'Choose the date the assignment opens.', 'ohmylms' );
+	}
+	return errors;
 }
 
 function wholeNumber( value: string, min: number, max: number ) {
@@ -370,7 +620,7 @@ export function validateForm( form: FormState ): FormErrors {
 			errors[ key ] = rangeMessage( 1, limit );
 		}
 	}
-	return errors;
+	return { ...errors, ...validateDelivery( form ) };
 }
 
 /**
@@ -397,6 +647,19 @@ export function toInput(
 		max_files: Number( form.max_files ),
 		file_size_limit_enabled: form.file_size_limit_enabled,
 		max_file_size_mb: Number( form.max_file_size_mb ),
+		resources: form.resources.map( ( row ) => ( {
+			type: row.type,
+			attachment_id: 'file' === row.type ? row.attachment_id : 0,
+			name: row.name.trim(),
+			url: 'link' === row.type ? row.url.trim() : row.url,
+			size: row.size,
+		} ) ),
+		prerequisites: {
+			enable: form.prerequisites.enable,
+			ids: form.prerequisites.items.map( ( item ) => item.id ),
+		},
+		drip: form.drip,
+		comments_enabled: form.comments_enabled,
 		base_modified: baseModified,
 	};
 }
@@ -413,6 +676,10 @@ export function serverFieldError(
 	const fields: Record< string, keyof FormState > = {
 		ohmylms_assignment_invalid_title: 'title',
 		ohmylms_assignment_invalid_pass_score: 'pass_score',
+		ohmylms_assignment_invalid_resources: 'resources',
+		ohmylms_assignment_invalid_resource_file: 'resources',
+		ohmylms_assignment_invalid_prerequisites: 'prerequisites',
+		ohmylms_assignment_invalid_drip: 'drip',
 	};
 	const field = fields[ error.code ];
 	return field ? { field, message: error.message } : null;

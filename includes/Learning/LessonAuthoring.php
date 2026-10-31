@@ -26,7 +26,13 @@ final class LessonAuthoring {
 	);
 
 	/** Optional fields; when omitted their stored values are preserved. */
-	const OPTIONAL = array( 'drip', 'prerequisites', 'cover_image_id', 'video_id', 'audio_id' );
+	const OPTIONAL = array( 'drip', 'prerequisites', 'cover_image_id', 'video_id', 'audio_id', 'video' );
+
+	/** Editable video settings keys. */
+	const VIDEO_KEYS = array( 'provider', 'duration', 'completion', 'watch_percent', 'poster_id', 'autoplay', 'loop', 'controls', 'aspect_ratio' );
+
+	/** Most inline question references listed for one lesson. */
+	const MAX_INLINE = 100;
 
 	/**
 	 * Whether a lesson type is an extension type edited through its registered lesson editor.
@@ -105,6 +111,107 @@ final class LessonAuthoring {
 				'video_id'       => self::media_url( $settings['video_id'] ),
 				'audio_id'       => self::media_url( $settings['audio_id'] ),
 			),
+			'video'             => self::read_video( $lesson_id ),
+			'inline_questions'  => self::inline_questions( $post->post_content ),
+		);
+	}
+
+	/**
+	 * Video settings as the editor reads them, with the poster's display URL.
+	 *
+	 * @param int $lesson_id Lesson ID.
+	 * @return array
+	 */
+	private static function read_video( $lesson_id ) {
+		$video               = VideoCompletion::settings( $lesson_id );
+		$video['poster_url'] = self::media_url( $video['poster_id'] );
+		return $video;
+	}
+
+	/**
+	 * Inline question checks in saved content, in reading order: question blocks and
+	 * `[ohmylms_question uuid="…"]` shortcodes, with the question's title and bank status
+	 * (`approved`, `not_approved`, `exam_only` or `missing`).
+	 *
+	 * @param string $content Block content.
+	 * @return array[]
+	 */
+	public static function inline_questions( $content ) {
+		$content = (string) $content;
+		$found   = array();
+		if ( preg_match_all( '#<!--\s+wp:ohmylms/shared-multiple-choice(?:\s+(\{.*?\}))?\s+/-->#s', $content, $blocks, PREG_SET_ORDER | PREG_OFFSET_CAPTURE ) ) {
+			foreach ( $blocks as $block ) {
+				$attributes = isset( $block[1][0] ) ? json_decode( $block[1][0], true ) : array();
+				$attributes = is_array( $attributes ) ? $attributes : array();
+				$uuid       = is_string( $attributes['uuid'] ?? null ) ? strtolower( $attributes['uuid'] ) : '';
+				$id         = absint( $attributes['questionId'] ?? 0 );
+				$found[]    = array( $block[0][1], 'block', $id ? $id : (int) \OhMyLMS\QuestionBank\VersionPublisher::question_by_uuid( $uuid ), $uuid );
+			}
+		}
+		if ( preg_match_all( '#\[ohmylms_question[^\]]*?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})[^\]]*\]#i', $content, $codes, PREG_SET_ORDER | PREG_OFFSET_CAPTURE ) ) {
+			foreach ( $codes as $code ) {
+				$uuid    = strtolower( $code[1][0] );
+				$found[] = array( $code[0][1], 'shortcode', (int) \OhMyLMS\QuestionBank\VersionPublisher::question_by_uuid( $uuid ), $uuid );
+			}
+		}
+		usort(
+			$found,
+			static function ( $a, $b ) {
+				return $a[0] <=> $b[0];
+			}
+		);
+		$rows = array();
+		foreach ( array_slice( $found, 0, self::MAX_INLINE ) as $index => $row ) {
+			$question = $row[2] ? get_post( $row[2] ) : null;
+			$identity = $question && OHMYLMS_QUESTION_CPT === $question->post_type ? \OhMyLMS\QuestionBank\VersionPublisher::identity( $question->ID, false ) : null;
+			if ( ! $identity ) {
+				$status = 'missing';
+			} elseif ( ! empty( $identity['secure'] ) ) {
+				$status = 'exam_only';
+			} else {
+				$status = (int) ( $identity['approved_version_id'] ?? 0 ) > 0 ? 'approved' : 'not_approved';
+			}
+			$rows[] = array(
+				'position'    => $index + 1,
+				'kind'        => $row[1],
+				'question_id' => $identity ? (int) $question->ID : 0,
+				'uuid'        => $identity ? (string) $identity['uuid'] : $row[3],
+				'title'       => $identity ? html_entity_decode( get_the_title( $question ), ENT_QUOTES, 'UTF-8' ) : '',
+				'status'      => $status,
+			);
+		}
+		return $rows;
+	}
+
+	/**
+	 * Validate submitted video settings; an unchanged poster stays allowed.
+	 *
+	 * @param mixed $video  Submitted settings.
+	 * @param array $stored Current settings.
+	 * @return array|\WP_Error Values for `_video_settings`.
+	 */
+	private static function clean_video( $video, array $stored ) {
+		$message = __( 'Send video settings with a provider, a duration of 0 to 86400 seconds, a completion rule, a percentage of 1 to 100, a poster and the player options.', 'ohmylms' );
+		if ( ! is_array( $video ) || array_diff( array_keys( $video ), self::VIDEO_KEYS ) || array_diff( self::VIDEO_KEYS, array_keys( $video ) ) ) {
+			return Catalog::error( $message );
+		}
+		if ( ! in_array( $video['provider'], VideoCompletion::PROVIDERS, true ) || ! is_int( $video['duration'] ) || $video['duration'] < 0 || $video['duration'] > VideoCompletion::MAX_DURATION || ! in_array( $video['completion'], VideoCompletion::RULES, true ) || ! is_int( $video['watch_percent'] ) || $video['watch_percent'] < 1 || $video['watch_percent'] > 100 || ! is_bool( $video['autoplay'] ) || ! is_bool( $video['loop'] ) || ! is_bool( $video['controls'] ) || ! is_string( $video['aspect_ratio'] ) || ! preg_match( '#^\d{1,2}/\d{1,2}$#D', $video['aspect_ratio'] ) || ! is_int( $video['poster_id'] ) || $video['poster_id'] < 0 ) {
+			return Catalog::error( $message );
+		}
+		$poster = $video['poster_id'];
+		if ( $poster && $poster !== (int) $stored['poster_id'] && ( 'attachment' !== get_post_type( $poster ) || 0 !== strpos( (string) get_post_mime_type( $poster ), 'image/' ) || ! current_user_can( 'edit_post', $poster ) ) ) {
+			return Catalog::error( __( 'Choose a poster image from the media library that you can edit.', 'ohmylms' ) );
+		}
+		return array(
+			'platform'        => $video['provider'],
+			'duration'        => $video['duration'],
+			'completion_rule' => $video['completion'],
+			'watch_percent'   => $video['watch_percent'],
+			'poster_id'       => $poster,
+			'autoplay'        => $video['autoplay'],
+			'loop'            => $video['loop'],
+			'controls'        => $video['controls'],
+			'aspect_ratio'    => $video['aspect_ratio'],
 		);
 	}
 
@@ -398,6 +505,13 @@ final class LessonAuthoring {
 						return $prerequisites;
 					}
 					$advanced['prerequisites'] = array_merge( (array) $stored['prerequisites'], $prerequisites );
+				}
+				if ( array_key_exists( 'video', $data ) ) {
+					$video = self::clean_video( $data['video'], $current['video'] );
+					if ( is_wp_error( $video ) ) {
+						return $video;
+					}
+					$advanced['video_settings'] = array_merge( (array) $stored['video_settings'], $video );
 				}
 				foreach ( array_keys( self::MEDIA ) as $field ) {
 					if ( array_key_exists( $field, $data ) ) {

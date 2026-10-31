@@ -318,8 +318,7 @@ nothing read what they registered). Left in `includes/Admin/Settings`: `Permalin
   (`payment-gateway-settings.js`, `PaymentGatewaysSettings.jsx`, `checkout-page-settings.js`,
   `monetization-settings-tabs.js`) still call the removed `/settings/payment-gateway` route and fail;
   they should be retired in favour of the new tab.
-- **Gateway extras not exposed:** checkout order (`ohmylms_gateway_order`), `ohmylms_guest_checkout`,
-  `ohmylms_content_protection`, `ohmylms_enable_login`, and Stripe's read-only webhook data.
+- **Gateway extras:** done 31 October 2026, see [Checkout](#checkout).
 - **Design settings (layout, archive, quiz design):** implemented 31 October 2026 as the
   `course-archive` and `quiz-design` groups; see [Design groups](#design-groups). (Hub icons, also in
   the legacy Design tab, is implemented over `/hub-icons`.)
@@ -327,6 +326,31 @@ nothing read what they registered). Left in `includes/Admin/Settings`: `Permalin
   instead of answering 400, and resets policies that are not sent. The tab validates first and sends
   the whole form; a stricter route would change the legacy contract.
 - **Stored credentials are plain text** in gateway and xAPI options (AI keys are sealed).
+
+## Checkout
+
+`GET` / `PATCH /ohmylms/v1/settings/checkout` (`CheckoutSettingsController`, `includes/Settings/CheckoutSettings.php`;
+same capability as the other settings routes). Shown at the top of the Payment gateways tab (`CheckoutPanel.tsx`).
+Test: `tests/php/checkout-extras-integration.php` (`OHMYLMS_CHECKOUT_TEST=1`, 52 checks).
+
+| Field | Storage | Enforcement |
+| --- | --- | --- |
+| `gateway_order` | `ohmylms_gateway_order` (id => position) | `Gateways::init()` sorts the registry; checkout lists gateways in this order and selects the first offered one |
+| `guest_checkout` | `ohmylms_allow_purchase_without_login` (default on) | Off: the checkout page redirects visitors to the learner sign-in page with `redirect_to` back to checkout (`CommonHook::enforce_checkout_login_gate()`; without a student dashboard page, wp-login; the template shows a log-in notice if neither runs) and `process_checkout()` refuses them. On: an email-only purchase creates the account at checkout (legacy behaviour); the welcome email now carries a set-password link instead of the generated password; an existing account's email is refused ("please log in") |
+| `login_form` | `ohmylms_enable_login` (default on) | Off: no "Already have an account? Log in" toggle and no checkout login form (with guest checkout also off, a link to the WordPress login) |
+| `content_protection` | `ohmylms_content_protection`, mirrored into the Content protection integration switch | Front-end deterrent on lesson, quiz and assignment pages (right-click, copy, blur); cannot stop screenshots |
+| `stripe_webhook` | read-only | `{enabled, mode, keys_configured, webhook_endpoint: null, confirmation: "return_url", last_confirmed_order}`. The plugin has never registered a Stripe webhook endpoint: payments are confirmed synchronously and on the return URL, so there is no endpoint URL or signing secret to show or store |
+
+Plus `gateways[]` (`id`, `title`, `enabled`) and `revision` (16 hex characters). `PATCH` takes any subset of the
+four writable fields and an optional `revision` (409 `ohmylms_settings_stale` when it no longer matches). Booleans
+only; `gateway_order` must list every registered gateway exactly once (422 `ohmylms_settings_invalid_value`);
+read-only or unknown fields 400 `ohmylms_settings_unknown_field`; wrong types 400 `rest_invalid_param`. All fields
+are validated before any write; a failed write restores earlier ones (500). The response carries `changed`; hook
+`ohmylms_checkout_settings_updated( $changed )`. `ohmylms_guest_checkout` (inverted, read only by the
+`ohmylms_checkout_registration_required` filter) is left as it was and not exposed.
+
+The checkout AJAX entry (`Ajax::checkout`) now verifies the `ohmylms-process-checkout-nonce` field the checkout
+form already sends; without it the answer is a failure with `reload: true` and no order is created.
 
 ## Design groups
 

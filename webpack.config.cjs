@@ -15,10 +15,6 @@ module.exports = {
 			__dirname,
 			'assets/src/app/extensions/registration-entry.ts'
 		),
-		schools: path.resolve(
-			__dirname,
-			'assets/src/features/schools/index.jsx'
-		),
 		'math-runtime': path.resolve(
 			__dirname,
 			'assets/src/features/math/runtime.mjs'

@@ -385,10 +385,18 @@ class SubscriptionsController extends RestController {
 
 			$subscription = function_exists( 'ohmylms_ecommerce_get_subscription' ) ? ohmylms_ecommerce_get_subscription( $post->ID ) : null;
 			if ( 'resume' === $action ) {
-				/** This action is documented in packages/e-commerce/includes/Rest/V1/SubscriptionController.php */
+				/**
+				 * Fires after an administrator reactivated a subscription.
+				 *
+				 * @param \OhMyLMS\Commerce\Data\Subscription|null $subscription Subscription.
+				 */
 				do_action( 'ohmylms_update_subscription_status_to_active', $subscription );
 			} elseif ( 'cancel' === $action ) {
-				/** This action is documented in packages/e-commerce/includes/Rest/V1/SubscriptionController.php */
+				/**
+				 * Fires after an administrator cancelled a subscription.
+				 *
+				 * @param \OhMyLMS\Commerce\Data\Subscription|null $subscription Subscription.
+				 */
 				do_action( 'ohmylms_update_subscription_status_to_cancelled', $subscription );
 			}
 

@@ -47,6 +47,43 @@ export const MEDIA_FIELDS = [
 ] as const;
 export type MediaField = ( typeof MEDIA_FIELDS )[ number ];
 
+export const VIDEO_PROVIDERS = [
+	'self-hosted',
+	'youtube',
+	'vimeo',
+	'bunny',
+] as const;
+export type VideoProvider = ( typeof VIDEO_PROVIDERS )[ number ];
+
+/** Player settings and the completion rule of a video lesson. `duration` is in seconds; 0 is unknown. */
+export interface LessonVideo {
+	provider: VideoProvider;
+	duration: number;
+	completion: 'none' | 'watch_percent';
+	watch_percent: number;
+	poster_id: number;
+	autoplay: boolean;
+	loop: boolean;
+	controls: boolean;
+	aspect_ratio: string;
+	/** Display URL of the poster, read only. */
+	poster_url: string;
+}
+
+/** Bank status of an inline question as the server resolved it for the saved content. */
+export type InlineStatus =
+	'approved' | 'not_approved' | 'exam_only' | 'missing';
+
+/** An inline question check in the saved lesson content. */
+export interface InlineQuestion {
+	position: number;
+	kind: 'block' | 'shortcode';
+	question_id: number;
+	uuid: string;
+	title: string;
+	status: InlineStatus;
+}
+
 export interface Lesson extends LessonSummary, Record< MediaField, number > {
 	revision: string;
 	content: string;
@@ -62,6 +99,60 @@ export interface Lesson extends LessonSummary, Record< MediaField, number > {
 	prerequisites: Prerequisites;
 	/** Display URLs of the attachments, read only. */
 	media_urls: Record< MediaField, string >;
+	video: LessonVideo;
+	/** Inline question checks of the saved content, read only. */
+	inline_questions: InlineQuestion[];
+}
+
+function flag( value: unknown ): boolean {
+	return typeof value === 'boolean' ? value : invalid();
+}
+
+function parseVideo( value: unknown ): LessonVideo {
+	const row = record( value );
+	const provider = VIDEO_PROVIDERS.find( ( item ) => item === row.provider );
+	const completion =
+		'none' === row.completion || 'watch_percent' === row.completion
+			? row.completion
+			: null;
+	if ( ! provider || ! completion ) {
+		return invalid();
+	}
+	return {
+		provider,
+		duration: count( row.duration ),
+		completion,
+		watch_percent: count( row.watch_percent ),
+		poster_id: count( row.poster_id ),
+		autoplay: flag( row.autoplay ),
+		loop: flag( row.loop ),
+		controls: flag( row.controls ),
+		aspect_ratio: text( row.aspect_ratio ),
+		poster_url: text( row.poster_url ),
+	};
+}
+
+const INLINE_STATUSES: InlineStatus[] = [
+	'approved',
+	'not_approved',
+	'exam_only',
+	'missing',
+];
+
+function parseInline( value: unknown ): InlineQuestion {
+	const row = record( value );
+	const status = INLINE_STATUSES.find( ( item ) => item === row.status );
+	if ( ! status || ( 'block' !== row.kind && 'shortcode' !== row.kind ) ) {
+		return invalid();
+	}
+	return {
+		position: positiveId( row.position ),
+		kind: row.kind,
+		question_id: count( row.question_id ),
+		uuid: text( row.uuid ),
+		title: text( row.title ),
+		status,
+	};
 }
 
 export function parseSummary( value: unknown ): LessonSummary {
@@ -121,7 +212,8 @@ export function parseLesson( incoming: unknown ): Lesson {
 		typeof row.preview_enable !== 'boolean' ||
 		typeof row.enable_comments !== 'boolean' ||
 		typeof row.custom_type !== 'boolean' ||
-		! Array.isArray( row.resources )
+		! Array.isArray( row.resources ) ||
+		! Array.isArray( row.inline_questions )
 	) {
 		return invalid();
 	}
@@ -146,6 +238,8 @@ export function parseLesson( incoming: unknown ): Lesson {
 			video_id: text( urls.video_id ),
 			audio_id: text( urls.audio_id ),
 		},
+		video: parseVideo( row.video ),
+		inline_questions: row.inline_questions.map( parseInline ),
 		resources: row.resources.map( ( value ) => {
 			const resource = record( value );
 			return {
@@ -190,5 +284,207 @@ export function savePayload( lesson: Lesson ) {
 		cover_image_id: cover,
 		video_id: video,
 		audio_id: audio,
+		video: videoPayload( lesson.video ),
+	};
+}
+
+/**
+ * The writable video settings (the poster URL is display only).
+ *
+ * @param video Video settings.
+ * @return The payload.
+ */
+export function videoPayload( video: LessonVideo ) {
+	return {
+		provider: video.provider,
+		duration: video.duration,
+		completion: video.completion,
+		watch_percent: video.watch_percent,
+		poster_id: video.poster_id,
+		autoplay: video.autoplay,
+		loop: video.loop,
+		controls: video.controls,
+		aspect_ratio: video.aspect_ratio,
+	};
+}
+
+/**
+ * Format seconds as `m:ss` or `h:mm:ss`.
+ *
+ * @param seconds Duration.
+ * @return Text; empty for 0.
+ */
+export function formatDuration( seconds: number ): string {
+	if ( seconds <= 0 ) {
+		return '';
+	}
+	const h = Math.floor( seconds / 3600 );
+	const m = Math.floor( ( seconds % 3600 ) / 60 );
+	const s = seconds % 60;
+	const pad = ( value: number ) => String( value ).padStart( 2, '0' );
+	return h ? `${ h }:${ pad( m ) }:${ pad( s ) }` : `${ m }:${ pad( s ) }`;
+}
+
+export const RELATIONS = [ 'teaches', 'practices', 'assesses' ] as const;
+export type Relation = ( typeof RELATIONS )[ number ];
+
+/** A skill linked to the lesson. `managed` skills come from an objective mapping and leave with it. */
+export interface LinkedSkill {
+	id: number;
+	name: string;
+	code: string;
+	managed: boolean;
+}
+
+/** A syllabus objective with its live wording. */
+export interface ObjectiveRef {
+	syllabus_id: number;
+	term_id: number;
+	name: string;
+	code: string;
+	objective: string;
+	topic: string;
+}
+
+/** A mapping of the lesson to a syllabus objective. */
+export interface ObjectiveMapping extends ObjectiveRef {
+	relation: Relation;
+	syllabus_name: string;
+	/** The objective is no longer in its syllabus. */
+	missing: boolean;
+}
+
+/** An objective one of the lesson's courses targets. */
+export interface CourseTarget extends ObjectiveRef {
+	syllabus_name: string;
+	course_id: number;
+	course_title: string;
+}
+
+export interface LessonObjectives {
+	id: number;
+	revision: string;
+	skills: LinkedSkill[];
+	mappings: ObjectiveMapping[];
+	course_targets: CourseTarget[];
+}
+
+export interface SyllabusChoice {
+	id: number;
+	name: string;
+	code: string;
+	version: string;
+	grade: string;
+	subject: string;
+}
+
+export interface OptionPage< T > {
+	items: T[];
+	total: number;
+	pages: number;
+}
+
+function list( value: unknown ): unknown[] {
+	return Array.isArray( value ) ? value : invalid();
+}
+
+function objectiveRef( row: Record< string, unknown > ): ObjectiveRef {
+	return {
+		syllabus_id: positiveId( row.syllabus_id ),
+		term_id: positiveId( row.term_id ),
+		name: text( row.name ),
+		code: text( row.code ),
+		objective: text( row.objective ),
+		topic: text( row.topic ),
+	};
+}
+
+export function parseSkill( value: unknown ): LinkedSkill {
+	const row = record( value );
+	return {
+		id: positiveId( row.id ),
+		name: text( row.name ),
+		code: text( row.code ),
+		managed: flag( row.managed ),
+	};
+}
+
+export function parseObjectiveRef( value: unknown ): ObjectiveRef {
+	return objectiveRef( record( value ) );
+}
+
+export function parseObjectives( value: unknown ): LessonObjectives {
+	const row = record( value );
+	return {
+		id: positiveId( row.id ),
+		revision: text( row.revision ),
+		skills: list( row.skills ).map( parseSkill ),
+		mappings: list( row.mappings ).map( ( item ) => {
+			const mapping = record( item );
+			const relation = RELATIONS.find(
+				( entry ) => entry === mapping.relation
+			);
+			return relation
+				? {
+						...objectiveRef( mapping ),
+						relation,
+						syllabus_name: text( mapping.syllabus_name ),
+						missing: flag( mapping.missing ),
+					}
+				: invalid();
+		} ),
+		course_targets: list( row.course_targets ).map( ( item ) => {
+			const target = record( item );
+			return {
+				...objectiveRef( target ),
+				syllabus_name: text( target.syllabus_name ),
+				course_id: positiveId( target.course_id ),
+				course_title: text( target.course_title ),
+			};
+		} ),
+	};
+}
+
+export function parseSyllabus( value: unknown ): SyllabusChoice {
+	const row = record( value );
+	return {
+		id: positiveId( row.id ),
+		name: text( row.name ),
+		code: text( row.code ),
+		version: text( row.version ),
+		grade: text( row.grade ),
+		subject: text( row.subject ),
+	};
+}
+
+export function parseOptionPage< T >(
+	value: unknown,
+	parse: ( item: unknown ) => T
+): OptionPage< T > {
+	const row = record( value );
+	return {
+		items: list( row.items ).map( parse ),
+		total: count( row.total ),
+		pages: count( row.pages ),
+	};
+}
+
+/**
+ * The objectives save payload: explicit skills only (managed ones follow their mappings).
+ *
+ * @param state Edited objectives.
+ * @return The request body.
+ */
+export function objectivesPayload( state: LessonObjectives ) {
+	return {
+		revision: state.revision,
+		skill_ids: state.skills
+			.filter( ( skill ) => ! skill.managed )
+			.map( ( skill ) => skill.id ),
+		mappings: state.mappings.map( ( mapping ) => ( {
+			syllabus_id: mapping.syllabus_id,
+			term_id: mapping.term_id,
+			relation: mapping.relation,
+		} ) ),
 	};
 }

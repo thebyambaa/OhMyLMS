@@ -23,8 +23,8 @@
 			"gzip": 17600
 		},
 		"chunks/admin-app-assignments.js": {
-			"raw": 25100,
-			"gzip": 6600
+			"raw": 37800,
+			"gzip": 9600
 		},
 		"chunks/admin-app-bundles.js": {
 			"raw": 14700,
@@ -163,8 +163,8 @@
 			"gzip": 400
 		},
 		"chunks/admin-app-lessons.js": {
-			"raw": 25900,
-			"gzip": 7800
+			"raw": 47900,
+			"gzip": 13100
 		},
 		"chunks/admin-app-memberships.js": {
 			"raw": 32700,

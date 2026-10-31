@@ -66,6 +66,11 @@ class VideoProgressTracker {
 			return false;
 		}
 
+		// A lesson's declared duration and watched-percentage rule take precedence over what the player reports.
+		$total_duration   = \OhMyLMS\Learning\VideoCompletion::total( $lesson_id, $total_duration );
+		$watched_duration = \OhMyLMS\Learning\VideoCompletion::bounded_watch( $user_id, $lesson_id, $watched_duration );
+		$threshold        = \OhMyLMS\Learning\VideoCompletion::threshold( $lesson_id, $this->completion_threshold );
+
 		// SECURITY: Validate and clamp duration values from client to prevent manipulation
 		// Reject invalid total_duration (must be positive).
 		if ( $total_duration <= 0 ) {
@@ -82,7 +87,7 @@ class VideoProgressTracker {
 		$watch_percentage = min( $watch_percentage, 100 ); // Cap at 100%.
 
 		// Determine if video is completed.
-		$is_completed   = $watch_percentage >= $this->completion_threshold;
+		$is_completed   = $watch_percentage >= $threshold;
 		$completed_date = $is_completed ? current_time( 'mysql' ) : null;
 
 		// Check if record exists.

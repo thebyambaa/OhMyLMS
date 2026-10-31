@@ -8,13 +8,62 @@ use OhMyLMS\Schools\Schema;
 use OhMyLMS\Schools\Service;
 
 function school_check($condition, $message) { if (!$condition) { throw new RuntimeException($message); } }
+/**
+ * Call the school services the way the retired ohmylms/v1/school/* routes did (the Account Hub routes
+ * have their own suites); service exceptions become their status codes, 401 when signed out.
+ */
 function school_request($method, $path, $params = [], $expected = 200) {
-    $request = new WP_REST_Request($method, '/ohmylms/v1/school/' . $path);
-    $request->set_header('X-WP-Nonce', wp_create_nonce('wp_rest'));
-    if ($method === 'GET') { $request->set_query_params($params); } else { $request->set_body_params($params); }
-    $response = rest_do_request($request);
-    school_check($response->get_status() === $expected, "$method $path: expected $expected, got " . $response->get_status() . ' ' . wp_json_encode($response->get_data()));
-    return $response->get_data();
+    $status = 200;
+    $data   = null;
+    try {
+        if (!is_user_logged_in() && !in_array($path, ['register', 'accept'], true)) { throw new RuntimeException('Please sign in.', 401); }
+        $data = school_dispatch($method, $path, $params);
+    } catch (\Throwable $error) {
+        $status = in_array($error->getCode(), [400, 401, 403, 404, 409, 429], true) ? $error->getCode() : 500;
+        $data   = ['message' => $error->getMessage()];
+    }
+    school_check($status === $expected, "$method $path: expected $expected, got $status " . wp_json_encode($data));
+    return $data;
+}
+function school_dispatch($method, $path, $p) {
+    $write = 'POST' === $method;
+    if ('register' === $path) { return \OhMyLMS\Schools\Signup::create($p); }
+    if ('accept' === $path) { return Service::accept($p['token'] ?? '', (string) ($p['password'] ?? '')); }
+    if ('classes' === $path) { return $write ? Service::create_class(0, $p) : Service::classes(0); }
+    if ('schools' === $path) { return $write ? Service::create_school($p) : Service::schools(); }
+    if ('children' === $path) { return Service::children(); }
+    if ('work' === $path) { return Service::assignments(0, absint($p['student'] ?? 0), absint($p['school_id'] ?? 0)); }
+    if (preg_match('#^assignments/(\d+)/submissions/(\d+)$#', $path, $m)) { return Service::grade((int) $m[1], (int) $m[2], $p); }
+    if (preg_match('#^classes/(\d+)/(members|assignments|submissions|archive)$#', $path, $m)) {
+        $class = (int) $m[1];
+        if ('members' === $m[2]) {
+            if ($write) { return Service::class_member($class, $p); }
+            $record = \OhMyLMS\Schools\Access::classroom($class);
+            \OhMyLMS\Schools\Access::require_access($record);
+            return Service::roster((int) $record['school_id'], $class);
+        }
+        if ('assignments' === $m[2]) { return $write ? Service::create_assignment($class, $p) : Service::assignments($class); }
+        if ('submissions' === $m[2]) { return Service::submissions($class); }
+        return Service::archive_class($class);
+    }
+    if (preg_match('#^schools/(\d+)/(members|invitations|guardians)/(\d+)$#', $path, $m) && 'DELETE' === $method) {
+        $calls = ['members' => 'remove_member', 'invitations' => 'revoke_invite', 'guardians' => 'revoke_guardian'];
+        return Service::{$calls[$m[2]]}((int) $m[1], (int) $m[3]);
+    }
+    if (preg_match('#^schools/(\d+)/(\w+)$#', $path, $m)) {
+        $school = (int) $m[1];
+        switch ($m[2]) {
+            case 'years': return $write ? Service::create_year($school, $p) : Service::years($school);
+            case 'classes': return $write ? Service::create_class($school, $p) : Service::classes($school);
+            case 'roster': return Service::roster($school);
+            case 'students': return Service::create_student($school, $p);
+            case 'invitations': return $write ? Service::invite($school, $p) : Service::invitations($school);
+            case 'guardians': return Service::guardians($school);
+            case 'import': return Service::import_roster($school, $p);
+            case 'rollover': return Service::rollover($school, $p);
+        }
+    }
+    throw new RuntimeException('Route not found.', 404);
 }
 function school_token($invitation) { parse_str(wp_parse_url($invitation['url'], PHP_URL_QUERY), $query); return $query['ohmylms_invite']; }
 
@@ -32,7 +81,7 @@ try {
     (new WP_User($users['teacher']))->add_role('ohmylms_teacher');
     (new WP_User($users['parent']))->add_role('ohmylms_parent');
     wp_set_current_user($users['teacher']);
-    school_check(school_request('GET', 'me')['can_create_class'], 'Independent teacher cannot create classes');
+    school_check(\OhMyLMS\Schools\Access::teacher(), 'Independent teacher cannot create classes');
     $independent = school_request('POST', 'classes', ['name' => 'Independent math'])['id'];
     $record = Service::row('classes', $independent);
     school_check((int) $record['school_id'] === 0 && (int) $record['academic_year_id'] === 0, 'Independent class requires a school');
@@ -46,33 +95,22 @@ try {
     school_check(count(school_request('GET', 'classes')) === 0, 'Independent classes leaked to another teacher');
     school_request('POST', "classes/$independent/archive", [], 403);
     (new WP_User($users['outsider']))->remove_role('ohmylms_teacher');
-    wp_set_current_user($admin->ID);
-    foreach (['teacher', 'parent'] as $filter) {
-        $accounts = school_request('GET', 'users', ['role' => $filter, 'search' => $suffix]);
-        school_check(count($accounts) === 1 && (int) $accounts[0]['id'] === $users[$filter], 'Account role filter failed');
-    }
-    school_check(count(school_request('GET', 'users', ['role' => 'parent', 'search' => 'no-match-' . $suffix])) === 0, 'Empty role search leaked users');
     wp_set_current_user($users['teacher']);
     school_request('POST', "classes/$independent/archive");
     (new WP_User($users['teacher']))->remove_role('ohmylms_teacher');
     wp_set_current_user(0);
     school_request('GET', 'schools', [], 401);
-    school_request('GET', 'users', [], 401);
     school_request('POST', 'register', ['role' => 'school_admin'], 400);
     $signup = school_request('POST', 'register', ['role' => 'student', 'email' => "signup-$suffix@example.invalid", 'password' => 'School-signup-test-password-42']);
     $users['signup'] = get_user_by('email', "signup-$suffix@example.invalid")->ID;
     school_check(!$wpdb->get_var($wpdb->prepare('SELECT id FROM ' . Schema::table('user_enrollment') . ' WHERE user_id=%d', $users['signup'])), 'Signup created an enrollment');
     wp_set_current_user($admin->ID);
-    $directory = school_request('GET', 'users', ['search' => "teacher-$suffix@example.invalid"]);
-    school_check(count($directory) === 1 && (int) $directory[0]['id'] === $users['teacher'], 'User directory search failed');
-    school_check(!empty($directory[0]['edit_url']), 'Administrator user edit link missing');
     $schools[] = $a = school_request('POST', 'schools', ['name' => "School A $suffix", 'timezone' => 'Asia/Ulaanbaatar'])['id'];
     $schools[] = $b = school_request('POST', 'schools', ['name' => "School B $suffix"])['id'];
     $staff_invite = school_request('POST', "schools/$a/invitations", ['email' => get_userdata($users['school_admin'])->user_email, 'role' => 'school_admin']);
     wp_set_current_user($users['school_admin']); school_request('POST', 'accept', ['token' => school_token($staff_invite)]);
     school_request('GET', "schools/$a/roster"); school_request('GET', "schools/$b/roster", [], 403);
     school_check(!current_user_can('manage_options'), 'School administrator became a WordPress administrator');
-    school_request('GET', 'users', [], 403);
     wp_set_current_user($admin->ID);
     $year = school_request('POST', "schools/$a/years", ['label' => '2026', 'starts_at' => '2026-09-01', 'ends_at' => '2027-06-01'])['id'];
     $class = school_request('POST', "schools/$a/classes", ['name' => 'Math A', 'academic_year_id' => $year])['id'];
@@ -95,7 +133,6 @@ try {
 	school_check( ! current_user_can( 'manage_options' ), 'School creation granted platform administration' );
 	school_request( 'POST', 'schools', array( 'name' => 'Second teacher school' ), 400 );
     school_check(!current_user_can('edit_posts'), 'Teacher gained broad WordPress editing rights');
-    school_request('GET', 'users', [], 403);
     wp_set_current_user($admin->ID);
     $course = wp_insert_post(['post_type' => OHMYLMS_COURSE_CPT, 'post_status' => 'publish', 'post_title' => "School course $suffix"]);
     $wpdb->insert(Schema::table('user_enrollment'), ['user_id' => $users['student'], 'course_id' => $course, 'status' => 'enrolled', 'progress' => 'running', 'start_date' => Service::now()]);

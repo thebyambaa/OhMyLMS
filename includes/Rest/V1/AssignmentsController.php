@@ -8,6 +8,7 @@
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
+use OhMyLMS\Assignment\Delivery;
 use OhMyLMS\Data\Assignment;
 use OhMyLMS\Learning\CourseStructure;
 use OhMyLMS\Learning\Placements;
@@ -678,15 +679,16 @@ class AssignmentsController extends RestController {
 		if ( ! empty( $request['id'] ) ) {
 			return new WP_Error( 'ohmylms_assignment_exists', __( 'Cannot create an existing assignment.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
-		$input = $this->validated_input( $request, self::DEFAULTS );
+		$input = $this->validated_input( $request, self::DEFAULTS, 0 );
 		if ( is_wp_error( $input ) ) {
 			return $input;
 		}
 		$fields   = $input['fields'];
 		$settings = array_merge( self::DEFAULTS, $input['settings'] );
+		$delivery = $input['delivery'];
 		try {
 			$id = Transaction::run(
-				static function () use ( $fields, $settings ) {
+				static function () use ( $fields, $settings, $delivery ) {
 					$id = wp_insert_post(
 						wp_slash(
 							array_merge(
@@ -707,6 +709,7 @@ class AssignmentsController extends RestController {
 					}
 					update_post_meta( $id, '_type', 'assignment' );
 					self::write_settings( $id, $settings );
+					Delivery::write( $id, $delivery );
 
 					return (int) $id;
 				}
@@ -762,16 +765,17 @@ class AssignmentsController extends RestController {
 				);
 			}
 		}
-		$input = $this->validated_input( $request, $this->read_settings( $post->ID ) );
+		$input = $this->validated_input( $request, $this->read_settings( $post->ID ), $post->ID );
 		if ( is_wp_error( $input ) ) {
 			return $input;
 		}
 		$fields   = $input['fields'];
 		$settings = $input['settings'];
+		$delivery = $input['delivery'];
 		$restore  = 'trash' === $post->post_status && isset( $fields['post_status'] );
 		try {
 			Transaction::run(
-				static function () use ( $post, $fields, $settings, $restore ) {
+				static function () use ( $post, $fields, $settings, $delivery, $restore ) {
 					if ( $restore ) {
 						wp_untrash_post( $post->ID );
 					}
@@ -782,6 +786,7 @@ class AssignmentsController extends RestController {
 						throw new \RuntimeException( is_wp_error( $updated ) ? $updated->get_error_message() : 'update failed' );
 					}
 					self::write_settings( $post->ID, $settings );
+					Delivery::write( $post->ID, $delivery );
 				}
 			);
 		} catch ( \Throwable $error ) {
@@ -858,9 +863,10 @@ class AssignmentsController extends RestController {
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @param array           $stored  Current settings (defaults when creating).
-	 * @return array{fields:array<string,string>,settings:array<string,mixed>}|WP_Error
+	 * @param int             $id      Assignment ID, 0 when creating.
+	 * @return array{fields:array<string,string>,settings:array<string,mixed>,delivery:array<string,mixed>}|WP_Error
 	 */
-	private function validated_input( WP_REST_Request $request, array $stored ) {
+	private function validated_input( WP_REST_Request $request, array $stored, $id ) {
 		$fields = array();
 		if ( $request->has_param( 'title' ) ) {
 			$title = trim( sanitize_text_field( (string) $request['title'] ) );
@@ -900,10 +906,15 @@ class AssignmentsController extends RestController {
 				)
 			);
 		}
+		$delivery = Delivery::validated( (int) $id, $request );
+		if ( is_wp_error( $delivery ) ) {
+			return $delivery;
+		}
 
 		return array(
 			'fields'   => $fields,
 			'settings' => $settings,
+			'delivery' => $delivery,
 		);
 	}
 
@@ -1086,6 +1097,7 @@ class AssignmentsController extends RestController {
 		$context = ! empty( $request['context'] ) ? $request['context'] : 'view';
 		if ( 'edit' === $context ) {
 			$data['placements'] = $this->placements( $id );
+			$data               = array_merge( $data, Delivery::read( $id ) );
 		}
 		$data = $this->add_additional_fields_to_object( $data, $request );
 		$data = $this->filter_response_by_context( $data, $context );
@@ -1563,6 +1575,28 @@ class AssignmentsController extends RestController {
 				'max_files'               => $integer( __( 'Uploads allowed per learner.', 'ohmylms' ), 1, self::MAX_FILES, self::DEFAULTS['max_files'] ),
 				'file_size_limit_enabled' => $flag( __( 'Limit the size of each upload.', 'ohmylms' ), self::DEFAULTS['file_size_limit_enabled'] ),
 				'max_file_size_mb'        => $integer( __( 'Largest upload in megabytes.', 'ohmylms' ), 1, self::MAX_FILE_SIZE_MB, self::DEFAULTS['max_file_size_mb'] ),
+				'resources'               => array(
+					'description' => __( 'Files (media library attachments) and links learners download: `{type, attachment_id, name, url, size}`. File URLs and sizes come from the library.', 'ohmylms' ),
+					'type'        => 'array',
+					'maxItems'    => Delivery::MAX_RESOURCES,
+					'items'       => array( 'type' => 'object' ),
+					'context'     => array( 'edit' ),
+				),
+				'prerequisites'           => array(
+					'description' => __( 'Content learners complete before they can submit. Read `{enable, items: [{id, title, type, status}]}`; write `{enable, ids}`.', 'ohmylms' ),
+					'type'        => 'object',
+					'context'     => array( 'edit' ),
+				),
+				'drip'                    => array(
+					'description' => __( 'Release schedule `{enable, type, days, date, time}` (site time); submissions are refused until it opens.', 'ohmylms' ),
+					'type'        => 'object',
+					'context'     => array( 'edit' ),
+				),
+				'comments_enabled'        => array(
+					'description' => __( 'Whether instructors and the learner can comment on each submission.', 'ohmylms' ),
+					'type'        => 'boolean',
+					'context'     => array( 'edit' ),
+				),
 				'submission_count'        => $readonly( __( 'Learner submissions.', 'ohmylms' ), 'integer' ),
 				'pending_count'           => $readonly( __( 'Submissions waiting for a grade.', 'ohmylms' ), 'integer' ),
 				'created_at'              => $readonly( __( 'Creation time (UTC).', 'ohmylms' ), 'string' ),

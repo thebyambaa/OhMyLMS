@@ -1,21 +1,39 @@
 import { Button, Modal, Notice, TextControl } from '@wordpress/components';
-import { useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
-import { Link, useNavigate } from 'react-router-dom';
+import { useCallback, useState } from '@wordpress/element';
+import { __, sprintf } from '@wordpress/i18n';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useListQuery } from '../../components/listQuery';
+import { statusViews } from '../../components/listViews';
 import { useOperation } from '../../hooks/useOperation';
 import {
 	PageTitleAction,
 	PageTitleActions,
 } from '../../layout/PageTitleActions';
-import { createSchool, listSchools } from './api';
+import { createSchool } from './api';
 import { HubListTable } from './ListControls';
 import { MAX_NAME, validateSchool } from './model';
+import { listSchoolsByStatus, type SchoolFilter } from './operationsApi';
+import { SampleSchoolActions } from './SampleSchoolActions';
 import type { FormErrors, SchoolInput } from './types';
 import { usePagedList } from './usePagedList';
 
-/** Schools tab: searchable list and a create dialog that opens the new school's editor. */
+const STATUS_FILTER = { status: 'all' };
+
+/**
+ * Schools tab: searchable list with status views, a create dialog that opens the new school's editor,
+ * and the sample school action.
+ */
 export function SchoolsTab() {
-	const list = usePagedList( listSchools, true );
+	const query = useListQuery( STATUS_FILTER );
+	const status = query.values.status as SchoolFilter;
+	const load = useCallback(
+		( page: number, search: string, signal: AbortSignal ) =>
+			listSchoolsByStatus( page, search, status, signal ),
+		[ status ]
+	);
+	const list = usePagedList( load, true );
+	const deleted = ( useLocation().state as { deleted?: string } | null )
+		?.deleted;
 	const navigate = useNavigate();
 	const operation = useOperation();
 	const [ open, setOpen ] = useState( false );
@@ -51,12 +69,39 @@ export function SchoolsTab() {
 					{ __( 'Add school', 'ohmylms' ) }
 				</PageTitleAction>
 			</PageTitleActions>
+			<SampleSchoolActions onChange={ list.reload } />
+			{ deleted && (
+				<Notice status="success" isDismissible={ false }>
+					{ sprintf(
+						/* translators: %s: school name. */
+						__(
+							'“%s” was deleted. Its accounts were kept.',
+							'ohmylms'
+						),
+						deleted
+					) }
+				</Notice>
+			) }
 			<HubListTable
 				caption={ __( 'Schools', 'ohmylms' ) }
 				searchLabel={ __( 'Search schools', 'ohmylms' ) }
 				list={ list }
 				loadingText={ __( 'Loading schools…', 'ohmylms' ) }
 				emptyText={ __( 'No schools found.', 'ohmylms' ) }
+				views={ statusViews(
+					[
+						{ value: 'all', label: __( 'All', 'ohmylms' ) },
+						{ value: 'active', label: __( 'Active', 'ohmylms' ) },
+						{
+							value: 'archived',
+							label: __( 'Archived', 'ohmylms' ),
+						},
+					],
+					status,
+					list.data.total,
+					( value ) => query.set( { status: value } ),
+					( value ) => query.href( { status: value } )
+				) }
 				table={ {
 					rowKey: ( school ) => school.id,
 					columns: [
@@ -72,6 +117,18 @@ export function SchoolsTab() {
 									>
 										{ school.name }
 									</Link>
+									{ 'archived' === school.status && (
+										<span className="post-state">
+											{ ' — ' }
+											{ __( 'Archived', 'ohmylms' ) }
+										</span>
+									) }
+									{ school.sample && (
+										<span className="post-state">
+											{ ' — ' }
+											{ __( 'Sample', 'ohmylms' ) }
+										</span>
+									) }
 								</strong>
 							),
 						},
@@ -108,6 +165,28 @@ export function SchoolsTab() {
 									to={ `/account-hub/schools/${ school.id }` }
 								>
 									{ __( 'Edit', 'ohmylms' ) }
+								</Link>
+							),
+						},
+						{
+							key: 'view',
+							label: __( 'Report', 'ohmylms' ),
+							render: (
+								<Link
+									to={ `/account-hub/schools/${ school.id }?panel=report` }
+								>
+									{ __( 'Report', 'ohmylms' ) }
+								</Link>
+							),
+						},
+						{
+							key: 'guardians',
+							label: __( 'Guardians', 'ohmylms' ),
+							render: (
+								<Link
+									to={ `/account-hub/schools/${ school.id }?panel=guardians` }
+								>
+									{ __( 'Guardians', 'ohmylms' ) }
 								</Link>
 							),
 						},

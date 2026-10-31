@@ -7,9 +7,10 @@ import {
 	TextControl,
 	TextareaControl,
 } from '@wordpress/components';
-import { useEffect, useRef, useState } from '@wordpress/element';
+import { Suspense, useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { normalizeApiError } from '../../lib/api';
+import { PointPricePanel } from '../commerce/public';
 import { updateCourse } from './api';
 import { MediaPicker } from './MediaPicker';
 import {
@@ -671,6 +672,13 @@ export function CourseForm( {
 								</>
 							) }
 						</fieldset>
+
+						<Suspense fallback={ null }>
+							<PointPricePanel
+								courseId={ id }
+								disabled={ busy || trashed }
+							/>
+						</Suspense>
 
 						<fieldset disabled={ busy || trashed }>
 							<legend>{ __( 'Access', 'ohmylms' ) }</legend>

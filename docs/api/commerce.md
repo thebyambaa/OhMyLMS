@@ -66,7 +66,8 @@ payment_method_title, student_id, student_name`: no email, phone or address. Pos
 `WP_Query`, so a page costs a constant number of queries. The detail adds `parent_id, subtotal,
 discount_total, tax_amount, date_paid, date_completed, transaction_id, billing{...}, line_items[],
 coupon_lines[], refunds[], total_refunded, remaining_refundable, related_orders[],
-allowed_statuses[]`. Notes are fetched separately. Opening an order sets the `_is_open` flag (the
+allowed_statuses[], points` (`{points, refunded, refunded_at, refundable}` for an order paid with bonus points,
+else `null`; see [point purchases](gamification.md#point-purchases)). Notes are fetched separately. Opening an order sets the `_is_open` flag (the
 "new orders" badge in the legacy menu reads it); that is the only side effect of a `GET`.
 
 **Money** is a decimal string with the shop's number of decimals (`"49.50"`) in the order's
@@ -204,10 +205,25 @@ when the commerce package is not loaded). Status changes go through the existing
 in `assets/src/app/features/commerce` (extension routes `/subscriptions` and `/subscription-edit/:id`).
 Test: `tests/php/subscriptions-rest-integration.php` (`OHMYLMS_SUBSCRIPTIONS_TEST=1`).
 
-The legacy route `ohmylms-commerce/v1/subscriptions` (`packages/e-commerce/includes/Rest/V1/SubscriptionController.php`)
-is still registered for the recovered `#/subscriptions`, `#/subscriptions/:page`, `#/memberships/subscriptions`
-and `#/subscription-edit/:id` screens. Apart from the missing `WP_Error` import (fixed) it is unchanged; the
-findings below apply to it.
+### Retired legacy route
+
+`ohmylms-commerce/v1/subscriptions` and its `cx-ecommerce/v1/subscriptions` twin
+(`packages/e-commerce/includes/Rest/V1/SubscriptionController.php`) were **removed on 31 October 2026**; both answer
+404 `rest_no_route`. Their only callers were the recovered `#/subscriptions`, `#/subscriptions/:page`,
+`#/memberships/subscriptions` and `#/subscription-edit/:id` screens, deleted at the cutover (their addresses
+redirect to `/subscriptions` and `/subscriptions/:id`, see LEGACY-ROUTES.md); no PHP, JavaScript, MCP tool or
+template called them. The audit below describes that route.
+
+| Removed | Replacement |
+| --- | --- |
+| `GET /ohmylms-commerce/v1/subscriptions` | `GET /ohmylms/v1/subscriptions` (paged light rows, no email) |
+| `GET /ohmylms-commerce/v1/subscriptions/{id}` | `GET /ohmylms/v1/subscriptions/{id}` |
+| `PUT /ohmylms-commerce/v1/subscriptions/{id}` (status) | `POST /ohmylms/v1/subscriptions/{id}/pause`, `/resume`, `/cancel` with `{confirm: true}` |
+| `PUT` of other fields, `POST /…/subscriptions`, `DELETE` | None by design: subscriptions come from checkout and are not edited by hand |
+
+`ohmylms_update_subscription_status_to_active` / `_to_cancelled` are now documented on the typed controller; the
+legacy-only `_to_expired`, `cx_ecommerce_rest_insert_ohmylms-subscription` and
+`cx_ecommerce_rest_ohmylms-subscription_query` hooks no longer fire (nothing listened to them).
 
 ### Audit before
 
@@ -294,9 +310,8 @@ HTTP/1.1 409 Conflict
 - Lists carry no email; gateway customer IDs and payment tokens are never returned.
 - Status changes run only through `SubscriptionManager` after the transition and confirmation checks, under a
   lock. Notes are returned as plain text and rendered as text.
-- Not covered: renewals and payments (Action Scheduler job), editing schedule dates or amounts, the legacy
-  `ohmylms-commerce/v1/subscriptions` route, and the `#/memberships/subscriptions` tab (owned by the
-  memberships screen).
+- Not covered: renewals and payments (Action Scheduler job) and editing schedule dates or amounts. The legacy
+  route is retired (above).
 
 ### Verification
 

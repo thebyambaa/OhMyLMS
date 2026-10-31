@@ -70,6 +70,6 @@ fallback, translation preview validation and legacy schema checks). `OHMYLMS_SKI
 `tests/php/skills-catalog-rest-integration.php`. App tests cover parsing, patches, stale reload with
 kept edits, discard confirmation and the administrator-only practice control.
 
-Not covered here: question-bank question creation from a skill, skill-owned quizzes, provenance
-review, shared-skill subject/domain placement (Comparison workspace) and the
-`syllabus.skill.resources` extension slot; those stay in the legacy workspace.
+Skill-owned quizzes, provenance review, domain placement and combined mappings are in the
+[skill workspace](skill-workspace.md). Not covered: question-bank question creation from a skill and
+the `syllabus.skill.resources` extension slot.

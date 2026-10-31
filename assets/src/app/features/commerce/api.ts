@@ -9,6 +9,7 @@ import {
 	parseNotes,
 	parseOrderDetail,
 	parseOrderSummary,
+	parsePointRefund,
 	parseStatusCounts,
 	positiveId,
 } from './model';
@@ -51,6 +52,27 @@ export async function changeOrderStatus(
 export async function trashOrder( id: number, signal?: AbortSignal ) {
 	return parseDeletedId(
 		await del< unknown >( orderRoute( id ), { signal } )
+	);
+}
+/**
+ * Refund a points order: restores the points once and cancels its enrolments.
+ *
+ * @param id     Order ID.
+ * @param reason Plain-text reason.
+ * @param signal Cancels the request.
+ * @return Points summary and the learner's new balance.
+ */
+export async function refundPoints(
+	id: number,
+	reason: string,
+	signal?: AbortSignal
+) {
+	return parsePointRefund(
+		await post< unknown >(
+			`/ohmylms/v1/point-purchases/${ positiveId( id ) }/refund`,
+			{ reason, confirm: true },
+			{ signal }
+		)
 	);
 }
 export async function listNotes( id: number, signal?: AbortSignal ) {

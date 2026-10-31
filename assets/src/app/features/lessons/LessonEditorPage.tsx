@@ -16,6 +16,9 @@ import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import { readLesson, saveLesson, publishLesson } from './api';
 import type { Lesson } from './model';
 import LessonBlocks from './LessonBlocks';
+import InlineQuestions from './InlineQuestions';
+import LessonObjectives from './LessonObjectives';
+import VideoSettings from './VideoSettings';
 import {
 	LessonExtensionEditor,
 	useLessonEditor,
@@ -267,6 +270,14 @@ export function LessonWorkspace( {
 					/>
 				) }
 				<MediaSettings lesson={ draft } onChange={ change } />
+				{ 'video' === draft.type && (
+					<VideoSettings
+						video={ draft.video }
+						onChange={ ( patch ) =>
+							change( { video: { ...draft.video, ...patch } } )
+						}
+					/>
+				) }
 				<CheckboxControl
 					label={ __(
 						'Allow lesson preview without enrollment',
@@ -344,6 +355,15 @@ export function LessonWorkspace( {
 								}
 							/>
 						) }
+						<InlineQuestions
+							content={ draft.content }
+							saved={ draft.inline_questions }
+							disabled={ ! editable || operation.busy }
+							onChange={ ( content ) => {
+								change( { content } );
+								setCanvasVersion( ( value ) => value + 1 );
+							} }
+						/>
 					</>
 				) }
 				<h2>{ __( 'Download resources', 'ohmylms' ) }</h2>
@@ -431,6 +451,7 @@ export function LessonWorkspace( {
 					{ __( 'Add resource link', 'ohmylms' ) }
 				</Button>
 			</fieldset>
+			{ editable && <LessonObjectives lessonId={ draft.id } /> }
 			{ confirmReload && (
 				<Modal
 					title={ __( 'Discard unsaved lesson changes?', 'ohmylms' ) }

@@ -4,9 +4,12 @@ import {
 	invalidResponse,
 	parseAssignment,
 	parseAssignmentDetail,
+	parseComment,
 	parseCourseChoice,
+	parsePrerequisiteOptions,
 	parseSubmission,
 	parseSubmissionDetail,
+	parseThread,
 	positiveId,
 	record,
 } from './model';
@@ -216,4 +219,110 @@ export async function gradeSubmission(
 		throw invalidResponse();
 	}
 	return result;
+}
+
+/**
+ * Lessons, quizzes and assignments the assignment may require (its courses' content, else the library).
+ *
+ * @param id     Assignment ID.
+ * @param search Title search.
+ * @param page   Page from 1.
+ * @param signal Cancels the request.
+ * @return Validated choices.
+ */
+export async function listPrerequisiteOptions(
+	id: number,
+	search: string,
+	page: number,
+	signal?: AbortSignal
+) {
+	return parsePrerequisiteOptions(
+		await get< unknown >( `${ itemPath( id ) }/prerequisite-options`, {
+			signal,
+			query: { search: search.trim(), page },
+		} )
+	);
+}
+
+const threadPath = ( id: number, submissionId: number ) =>
+	`${ submissionPath( id, submissionId ) }/comments`;
+
+/**
+ * Read the comment thread of a submission, oldest first.
+ *
+ * @param id           Assignment ID.
+ * @param submissionId Submission ID.
+ * @param signal       Cancels the request.
+ * @return The validated thread.
+ */
+export async function listComments(
+	id: number,
+	submissionId: number,
+	signal?: AbortSignal
+) {
+	const thread = parseThread(
+		await get< unknown >( threadPath( id, submissionId ), {
+			signal,
+			query: { per_page: 100 },
+		} )
+	);
+	if (
+		thread.items.some( ( item ) => item.submission_id !== submissionId )
+	) {
+		throw invalidResponse();
+	}
+	return thread;
+}
+
+/**
+ * Post a comment. The learner is emailed.
+ *
+ * @param id           Assignment ID.
+ * @param submissionId Submission ID.
+ * @param body         Plain text.
+ * @param signal       Cancels the request.
+ * @return The stored comment.
+ */
+export async function addComment(
+	id: number,
+	submissionId: number,
+	body: string,
+	signal?: AbortSignal
+) {
+	const comment = parseComment(
+		await post< unknown >(
+			threadPath( id, submissionId ),
+			{ body: body.trim() },
+			{ signal }
+		)
+	);
+	if ( comment.submission_id !== submissionId ) {
+		throw invalidResponse();
+	}
+	return comment;
+}
+
+/**
+ * Delete a comment of a thread.
+ *
+ * @param id           Assignment ID.
+ * @param submissionId Submission ID.
+ * @param commentId    Comment ID.
+ * @param signal       Cancels the request.
+ */
+export async function deleteComment(
+	id: number,
+	submissionId: number,
+	commentId: number,
+	signal?: AbortSignal
+) {
+	const response = record(
+		await del< unknown >(
+			`${ threadPath( id, submissionId ) }/${ positiveId( commentId ) }`,
+			{ signal }
+		)
+	);
+	if ( true !== response.deleted ) {
+		throw invalidResponse();
+	}
 }

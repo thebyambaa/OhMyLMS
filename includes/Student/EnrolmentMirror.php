@@ -218,12 +218,16 @@ final class EnrolmentMirror {
 	}
 
 	/**
-	 * Whether an order is known to have cost nothing (free checkout = self-enrolment).
+	 * Whether an order is known to have cost nothing (free checkout = self-enrolment). An order paid
+	 * with bonus points has a zero total but is a purchase.
 	 *
 	 * @param int $order_id Order ID.
 	 * @return bool
 	 */
 	private static function free_order( $order_id ) {
+		if ( 'point' === get_post_meta( (int) $order_id, '_purchased_by', true ) ) {
+			return false;
+		}
 		$total = get_post_meta( (int) $order_id, '_order_total', true );
 		return is_numeric( $total ) && 0.0 === (float) $total;
 	}

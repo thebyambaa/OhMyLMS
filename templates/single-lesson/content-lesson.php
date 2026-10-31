@@ -19,18 +19,46 @@ if ( \OhMyLMS\Extensions\Layouts::render( 'lesson', get_the_ID(), ohmylms_get_co
 <?php while ( have_posts() ) : ?>
 	<?php the_post(); ?>
 
+	<?php
+	$video_conf = \OhMyLMS\Learning\VideoCompletion::settings( get_the_ID() );
+	$video_rule = \OhMyLMS\Learning\VideoCompletion::rule( get_the_ID() );
+	?>
 	<div class="ohmylms-lesson-content-body ohmylms-wysiwyg-content" 
 		data-lesson-id="<?php echo esc_attr( get_the_ID() ); ?>"
-		data-course-id="<?php echo esc_attr( ohmylms_get_course_by_content_id( get_the_ID() ) ); ?>">
+		data-course-id="<?php echo esc_attr( ohmylms_get_course_by_content_id( get_the_ID() ) ); ?>"
+		<?php if ( $video_rule['required'] ) : ?>
+		data-ohmylms-watch-percent="<?php echo esc_attr( $video_rule['percent'] ); ?>"
+		<?php endif; ?>
+		<?php if ( $video_conf['duration'] ) : ?>
+		data-ohmylms-video-duration="<?php echo esc_attr( $video_conf['duration'] ); ?>"
+		<?php endif; ?>>
 		<h1><?php echo esc_html( get_the_title() ); ?></h1>
 		<?php
 
 		$lesson         = ohmylms_get_lesson( get_the_ID() );
 		$lesson_id      = $lesson->get_id();
 		$video_settings = method_exists( $lesson, 'get_video_settings' ) ? $lesson->get_video_settings() : array();
+		$video_settings = is_array( $video_settings ) ? $video_settings : array();
+		// The normalized values: controls are on unless switched off, and the aspect ratio is a safe `n/n`.
+		$video_settings['controls']     = $video_conf['controls'];
+		$video_settings['aspect_ratio'] = $video_conf['aspect_ratio'];
 
 		$cover_image = wp_get_attachment_image_src( $lesson->get_cover_image_id(), 'large' ) ? wp_get_attachment_image_src( $lesson->get_cover_image_id(), 'large' )[0] : '';
+		$poster_src  = $video_conf['poster_id'] ? wp_get_attachment_image_src( $video_conf['poster_id'], 'large' ) : false;
+		$poster      = $poster_src ? $poster_src[0] : $cover_image;
 		$video       = wp_get_attachment_url( $lesson->get_video_id() );
+
+		if ( $video_conf['duration'] && ( $video || ( $lesson->get_external_url() && 'audio' !== $lesson->get_type() ) ) ) {
+			$length = $video_conf['duration'] >= HOUR_IN_SECONDS ? gmdate( 'G:i:s', $video_conf['duration'] ) : gmdate( 'i:s', $video_conf['duration'] );
+			?>
+			<p class="ohmylms-lesson-video-duration">
+				<?php
+				/* translators: %s: video length such as 12:30. */
+				echo esc_html( sprintf( __( 'Video length: %s', 'ohmylms' ), $length ) );
+				?>
+			</p>
+			<?php
+		}
 
 		$cover_image_title = get_the_title( $lesson->get_cover_image_id() );
 		$cover_image_alt   = get_post_meta( $lesson->get_cover_image_id(), '_wp_attachment_image_alt', true );
@@ -57,7 +85,7 @@ if ( \OhMyLMS\Extensions\Layouts::render( 'lesson', get_the_ID(), ohmylms_get_co
 					data-autoplay="<?php echo esc_attr( $autoplay ? 'true' : 'false' ); ?>"
 					data-loop="<?php echo esc_attr( $loop ? 'true' : 'false' ); ?>"
 					data-muted="<?php echo esc_attr( $autoplay ? 'true' : 'false' ); ?>"
-					data-poster="<?php echo esc_attr( $cover_image ? esc_url( $cover_image ) : '' ); ?>"
+					data-poster="<?php echo esc_attr( $poster ? esc_url( $poster ) : '' ); ?>"
 					data-logo-url="<?php echo esc_url( get_option( 'ohmylms_video_player_logo', '' ) ); ?>"
 				>
 					<!-- Player will be initialized by video-player.js -->
@@ -90,9 +118,9 @@ if ( \OhMyLMS\Extensions\Layouts::render( 'lesson', get_the_ID(), ohmylms_get_co
 						<source src="<?php echo esc_url( $video ); ?>" type="video/mp4">
 						Your browser does not support the video tag.
 					</video>
-					<?php if ( $cover_image && ! $autoplay ) { ?>
+					<?php if ( $poster && ! $autoplay ) { ?>
 						<div class="ohmylms-video-player-cover" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
-							<img src="<?php echo esc_url( $cover_image ); ?>" alt="<?php echo esc_attr( $cover_image_alt ? $cover_image_alt : $cover_image_title ); ?>" style="width: 100%; height: 100%; object-fit: cover;">
+							<img src="<?php echo esc_url( $poster ); ?>" alt="<?php echo esc_attr( $cover_image_alt ? $cover_image_alt : $cover_image_title ); ?>" style="width: 100%; height: 100%; object-fit: cover;">
 
 							<button type="button" title="Play" aria-label="Play video" class="ohmylms-video-player-play" tabindex="0">
 								<svg width="14" height="14" fill="none" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg"><path fill="var(--ohmylms-primary-color)" d="M2.977.309C1.715-.415.69.178.69 1.632v10.735c0 1.456 1.024 2.048 2.286 1.325l9.382-5.381c1.263-.724 1.263-1.898 0-2.622L2.977.31z"/></svg>
@@ -205,12 +233,6 @@ if ( \OhMyLMS\Extensions\Layouts::render( 'lesson', get_the_ID(), ohmylms_get_co
 				$is_direct_video = $is_direct_video || ( strpos( $external_video, 'http' ) === 0 );
 			}
 
-			// Debug output (remove in production).
-			error_log( 'OhMyLMS Video Debug - URL: ' . $external_video );
-			error_log( 'OhMyLMS Video Debug - use_custom_player: ' . ( $use_custom_player ? 'yes' : 'no' ) );
-			error_log( 'OhMyLMS Video Debug - is_youtube: ' . ( $is_youtube ? 'yes' : 'no' ) );
-			error_log( 'OhMyLMS Video Debug - is_vimeo: ' . ( $is_vimeo ? 'yes' : 'no' ) );
-			error_log( 'OhMyLMS Video Debug - is_direct_video: ' . ( $is_direct_video ? 'yes' : 'no' ) );
 
 			// Only use custom player when explicitly enabled.
 			if ( $use_custom_player && ( $is_youtube || $is_vimeo || $is_direct_video ) ) {
@@ -225,7 +247,7 @@ if ( \OhMyLMS\Extensions\Layouts::render( 'lesson', get_the_ID(), ohmylms_get_co
 					data-autoplay="<?php echo esc_attr( $autoplay ? 'true' : 'false' ); ?>"
 					data-loop="<?php echo esc_attr( $loop ? 'true' : 'false' ); ?>"
 					data-muted="<?php echo esc_attr( $autoplay ? 'true' : 'false' ); ?>"
-					data-poster="<?php echo esc_attr( $cover_image ? esc_url( $cover_image ) : '' ); ?>"
+					data-poster="<?php echo esc_attr( $poster ? esc_url( $poster ) : '' ); ?>"
 					data-logo-url="<?php echo esc_url( get_option( 'ohmylms_video_player_logo', '' ) ); ?>"
 				>
 					<!-- Player will be initialized by video-player.js -->

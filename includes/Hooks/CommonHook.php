@@ -505,10 +505,8 @@ class CommonHook extends HookHandler {
 							wp_die( $content, 'Access Denied', array( 'response' => 403 ) );
 					}
 
-					if ( 'ohmylms-assignment' === $post->post_type ) {
-						$assignment_obj = ohmylms_get_assignment( $post->ID );
-						$prerequisites  = $assignment_obj->get_prerequisites();
-					}
+					// Assignment prerequisites gate submitting, not reading: the assignment page lists them
+					// and OhMyLMS\Assignment\Delivery refuses the submission until they are complete.
 
 					// Check prerequisites settings.
 					if ( is_array( $prerequisites ) && ! empty( $prerequisites ) && ! empty( $prerequisites['enable'] ) && ! empty( $prerequisites['data'] ) && $prerequisites['enable'] ) {

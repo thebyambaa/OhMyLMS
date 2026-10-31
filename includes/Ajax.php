@@ -262,6 +262,16 @@ class Ajax {
 			define( 'DONOTCACHEPAGE', true );
 		}
 
+		if ( ! check_ajax_referer( 'ohmylms-process_checkout', 'ohmylms-process-checkout-nonce', false ) ) {
+			wp_send_json(
+				array(
+					'result'  => 'failure',
+					'message' => esc_html__( 'Your checkout session expired. Reload the page and try again.', 'ohmylms' ),
+					'reload'  => true,
+				)
+			);
+		}
+
 		ecommerce()->checkout()->process_checkout();
 		die();
 	}
@@ -908,6 +918,16 @@ class Ajax {
 		$course_id             = ohmylms_get_course_by_content_id( $lesson_id );
 		$student_id            = get_current_user_id();
 		$student               = new Student( $student_id );
+		if ( ! \OhMyLMS\Learning\VideoCompletion::satisfied( $student_id, (int) $lesson_id ) ) {
+			wp_send_json_error(
+				array(
+					'status'  => 'error',
+					'code'    => 'ohmylms_lesson_video_not_watched',
+					/* translators: %d: percentage. */
+					'message' => sprintf( __( 'Watch at least %d%% of the video to complete this lesson.', 'ohmylms' ), \OhMyLMS\Learning\VideoCompletion::rule( (int) $lesson_id )['percent'] ),
+				)
+			);
+		}
 		$progress_content_id   = $student->complete_lesson( $lesson_id, $course_id );
 		$get_next_content_link = ohmylms_get_next_content_permalink( $lesson_id );
 		if ( $progress_content_id ) {
@@ -1046,6 +1066,19 @@ class Ajax {
 		if ( ! $assignment->get_id() ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid assignment.', 'ohmylms' ) ) );
 		}
+
+		// Enrolment, the drip release and the prerequisites are checked here, before any upload is stored.
+		$allowed = \OhMyLMS\Assignment\Delivery::check_submission( $assignment->get_id(), $student->get_id() );
+		if ( is_wp_error( $allowed ) ) {
+			wp_send_json_error(
+				array(
+					'message' => $allowed->get_error_message(),
+					'code'    => $allowed->get_error_code(),
+				)
+			);
+		}
+		$resolved_course = (int) ohmylms_get_course_by_content_id( $assignment->get_id(), $student->get_id() );
+		$course_id       = $resolved_course ? $resolved_course : absint( $course_id );
 
 		if ( ! $assignment->get_allow_upload_files() ) {
 			wp_send_json_error( array( 'message' => __( 'File uploads are not allowed for this assignment.', 'ohmylms' ) ) );
@@ -1304,15 +1337,11 @@ class Ajax {
 		$student   = new Student( get_current_user_id() );
 		$post      = get_post( $lesson_id );
 
+		// Assignment prerequisites gate submitting, not reading (OhMyLMS\Assignment\Delivery).
 		$prerequisites = null;
-		if ( 'ohmylms-lesson' === $post->post_type ) {
+		if ( $post && 'ohmylms-lesson' === $post->post_type ) {
 			$lesson_obj    = ohmylms_get_lesson( $post->ID );
 			$prerequisites = method_exists( $lesson_obj, 'get_prerequisites' ) ? $lesson_obj->get_prerequisites() : '';
-		}
-
-		if ( 'ohmylms-assignment' === $post->post_type ) {
-			$assignment_obj = ohmylms_get_assignment( $post->ID );
-			$prerequisites  = $assignment_obj->get_prerequisites();
 		}
 
 		// Check prerequisites settings.

@@ -90,6 +90,9 @@ if ( 'ohmylms-session' === get_post_type() ) {
 		if ( $student ) {
 			$deadline = $student->get_assignment_remaining_time( $lesson->get_id() );
 		}
+		// Enrolment, release and prerequisites; the server checks them again on submit.
+		$can_start = \OhMyLMS\Assignment\Delivery::state( $lesson->get_id(), get_current_user_id() )['can_submit'];
+		$blocked   = $can_start ? '' : ' aria-describedby="ohmylms-assignment-blocked"';
 		?>
 		<div class="assignment-quiz-navigation assignment-navigation">
 			<?php if ( $is_allow && ! empty( ohmylms_get_next_content_permalink( $lesson_id ) ) ) { ?>
@@ -100,23 +103,23 @@ if ( 'ohmylms-session' === get_post_type() ) {
 
 			<?php if ( $is_allow ) : ?>
 				<?php if ( 0 === (int) $submission_count ) : ?>
-					<?php if ( 0 !== $deadline ) : ?>
+					<?php if ( 0 !== $deadline && $can_start ) : ?>
 						<button type="button" class="start-submit-assignment ohmylms-button" aria-label="Start Assignment">
 							<?php echo esc_html__( 'Start Assignment Submit', 'ohmylms' ); ?>
 						</button>
 					<?php else : ?>
-						<button type="button" class="start-not-submit-assignment ohmylms-button" aria-label="Start Assignment" disabled>
+						<button type="button" class="start-not-submit-assignment ohmylms-button" aria-label="Start Assignment" disabled<?php echo $blocked; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Fixed attribute markup. ?>>
 							<?php echo esc_html__( 'Start Assignment Submit', 'ohmylms' ); ?>
 						</button>
 					<?php endif; ?>
 				<?php elseif ( (int) $submission_count > 0 && (int) $submission_count < (int) $allowed_submission ) : ?>
 
-					<?php if ( 0 !== $deadline ) : ?>
+					<?php if ( 0 !== $deadline && $can_start ) : ?>
 						<button type="button" class="start-submit-assignment ohmylms-button" aria-label="Start Assignment">
 							<?php echo esc_html__( 'Try Again', 'ohmylms' ); ?>
 						</button>
 					<?php else : ?>
-						<button type="button" class="start-not-submit-assignment ohmylms-button" aria-label="Start Assignment" disabled>
+						<button type="button" class="start-not-submit-assignment ohmylms-button" aria-label="Start Assignment" disabled<?php echo $blocked; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Fixed attribute markup. ?>>
 							<?php echo esc_html__( 'Try Again', 'ohmylms' ); ?>
 						</button>
 					<?php endif; ?>
@@ -283,8 +286,20 @@ if ( 'ohmylms-session' === get_post_type() ) {
 						</label>
 					<?php endif ?>
 				<?php else : ?>
+					<?php
+					$video_rule    = \OhMyLMS\Learning\VideoCompletion::rule( $lesson_id );
+					$video_pending = ! $is_checked && ! \OhMyLMS\Learning\VideoCompletion::satisfied( get_current_user_id(), $lesson_id );
+					?>
+					<?php if ( $video_pending ) : ?>
+						<p class="ohmylms-video-completion-hint" id="ohmylms-video-completion-hint" data-ohmylms-watch-percent="<?php echo esc_attr( $video_rule['percent'] ); ?>">
+							<?php
+							/* translators: %d: percentage. */
+							echo esc_html( sprintf( __( 'Watch at least %d%% of the video to complete this lesson.', 'ohmylms' ), $video_rule['percent'] ) );
+							?>
+						</p>
+					<?php endif; ?>
 					<label for="ohmylms-completed-lesson" class="ohmylms-checkbox" tabindex="0">
-						<input type="checkbox" name="lesson-completed" value="" id="ohmylms-completed-lesson" <?php echo $is_checked; ?>  <?php echo $is_checked ? 'disabled' : ''; ?> aria-required="true" aria-labelledby="completed-lesson" >
+						<input type="checkbox" name="lesson-completed" value="" id="ohmylms-completed-lesson" <?php echo $is_checked; ?>  <?php echo $is_checked || $video_pending ? 'disabled' : ''; ?> aria-required="true" aria-labelledby="completed-lesson" <?php echo $video_pending ? 'aria-describedby="ohmylms-video-completion-hint" data-ohmylms-video-pending="1"' : ''; ?>>
 
 						<span class="ohmylms-checkbox-text">
 							<span class="checkedbox" aria-hidden="true" id="completed-lesson">

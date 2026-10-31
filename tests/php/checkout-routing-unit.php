@@ -43,6 +43,17 @@ function wp_verify_nonce( $value, $action ) {
 	return 'valid' === $value && 'add-to-cart' === $action;
 }
 /**
+ * Match WordPress's AJAX referer check (without dying) against the posted field.
+ *
+ * @param string $action    Nonce action.
+ * @param string $query_arg Field name.
+ * @param bool   $stop      Whether to die on failure (ignored).
+ */
+function check_ajax_referer( $action, $query_arg = false, $stop = true ) {
+	$value = $query_arg && isset( $_POST[ $query_arg ] ) ? $_POST[ $query_arg ] : '';
+	return 'valid' === $value || wp_verify_nonce( $value, $action );
+}
+/**
  * Match WordPress integer conversion.
  *
  * @param mixed $value Input value.

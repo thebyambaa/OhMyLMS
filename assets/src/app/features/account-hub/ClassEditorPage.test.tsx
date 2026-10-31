@@ -4,7 +4,24 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ApiError } from '../../lib/api';
 import * as api from './api';
 import ClassEditorPage from './ClassEditorPage';
-import { member, page, person, schoolClass } from './fixtures';
+import {
+	classWork,
+	member,
+	page,
+	person,
+	schoolClass,
+	submission,
+} from './fixtures';
+import * as operations from './operationsApi';
+
+vi.mock( './operationsApi', () => ( {
+	listClassWork: vi.fn(),
+	assignClassWork: vi.fn(),
+	listClassCourses: vi.fn(),
+	listCourseActivities: vi.fn(),
+	listSubmissions: vi.fn(),
+	gradeSubmission: vi.fn(),
+} ) );
 
 vi.mock( './api', () => ( {
 	getClass: vi.fn(),
@@ -42,6 +59,19 @@ const notice = { selector: '.components-notice__content' };
 
 beforeEach( () => {
 	vi.resetAllMocks();
+	vi.mocked( operations.listClassWork ).mockResolvedValue(
+		page( [ classWork ] )
+	);
+	vi.mocked( operations.listSubmissions ).mockResolvedValue( {
+		items: [ submission ],
+		has_more: false,
+	} );
+	vi.mocked( operations.listClassCourses ).mockResolvedValue(
+		page( [ { id: 15, title: 'Maths 5' } ] )
+	);
+	vi.mocked( operations.listCourseActivities ).mockResolvedValue( [
+		{ id: 16, title: 'Essay' },
+	] );
 	vi.mocked( api.getClass ).mockResolvedValue( schoolClass );
 	vi.mocked( api.listMembers ).mockResolvedValue(
 		page( [ teacherMember, member ] )
@@ -241,5 +271,108 @@ describe( 'ClassEditorPage', () => {
 		expect(
 			screen.getByRole( 'link', { name: '← All classes' } )
 		).toHaveAttribute( 'href', '/account-hub?tab=classes' );
+		expect(
+			screen.queryByRole( 'region', { name: 'Class work' } )
+		).toBeNull();
+	} );
+	it( 'lists class work and assigns a course to the current students', async () => {
+		vi.mocked( operations.assignClassWork ).mockResolvedValue( {
+			id: 91,
+			recipients: 2,
+		} );
+		const user = userEvent.setup();
+		renderEditor();
+		const table = await screen.findByRole( 'table', {
+			name: 'Work assigned to this class',
+		} );
+		expect(
+			within( table ).getByText( 'Fractions homework' )
+		).toBeVisible();
+		expect( within( table ).getByText( '1 of 2' ) ).toBeVisible();
+		expect(
+			screen.getByRole( 'link', { name: 'Guardians of this class' } )
+		).toHaveAttribute(
+			'href',
+			'/account-hub/schools/3?panel=guardians&class_id=9'
+		);
+		await user.type(
+			screen.getByRole( 'textbox', { name: 'Course title' } ),
+			'Maths'
+		);
+		await user.click(
+			screen.getByRole( 'button', { name: 'Find course' } )
+		);
+		const form = await screen.findByRole( 'form', { name: 'Assign work' } );
+		await waitFor( () =>
+			expect(
+				within( form ).getByRole( 'option', { name: 'Essay' } )
+			).toBeInTheDocument()
+		);
+		await user.selectOptions(
+			within( form ).getByRole( 'combobox', { name: 'Activity' } ),
+			'16'
+		);
+		await user.click(
+			within( form ).getByRole( 'button', {
+				name: 'Assign to current students',
+			} )
+		);
+		expect(
+			await screen.findByText( 'Assigned to 2 students.', notice )
+		).toBeVisible();
+		expect( operations.assignClassWork ).toHaveBeenCalledWith(
+			9,
+			{
+				course_id: 15,
+				content_id: 16,
+				title: '',
+				due_at: '',
+				prior_completion: false,
+			},
+			expect.any( AbortSignal )
+		);
+		expect( operations.listClassCourses ).toHaveBeenCalledWith(
+			9,
+			'Maths',
+			expect.any( AbortSignal )
+		);
+	} );
+	it( 'grades a written submission within its points', async () => {
+		vi.mocked( operations.gradeSubmission ).mockResolvedValue( undefined );
+		const user = userEvent.setup();
+		renderEditor();
+		const table = await screen.findByRole( 'table', {
+			name: 'Written submissions',
+		} );
+		await user.click(
+			within( table ).getByRole( 'button', { name: 'Review' } )
+		);
+		const form = screen.getByRole( 'form', { name: 'Grade submission' } );
+		const score = within( form ).getByRole( 'spinbutton', {
+			name: 'Score (0 to 10)',
+		} );
+		await user.type( score, '11' );
+		expect(
+			within( form ).getByRole( 'button', { name: 'Save grade' } )
+		).toBeDisabled();
+		await user.clear( score );
+		await user.type( score, '8' );
+		await user.type(
+			within( form ).getByRole( 'textbox', { name: 'Feedback' } ),
+			'Good'
+		);
+		await user.click(
+			within( form ).getByRole( 'button', { name: 'Save grade' } )
+		);
+		await waitFor( () =>
+			expect( operations.gradeSubmission ).toHaveBeenCalledWith(
+				9,
+				95,
+				90,
+				8,
+				'Good',
+				expect.any( AbortSignal )
+			)
+		);
 	} );
 } );

@@ -51,6 +51,12 @@
                 this.config.completionThreshold = parseInt(ohmylms_frontend_params.video_completion_threshold, 10);
             }
 
+            // A lesson's own "watch N%" completion rule wins over the site setting (the server applies the same).
+            const lessonPercent = parseInt($('[data-ohmylms-watch-percent]').first().attr('data-ohmylms-watch-percent'), 10);
+            if (lessonPercent >= 1 && lessonPercent <= 100) {
+                this.config.completionThreshold = lessonPercent;
+            }
+
             // Get lesson and course IDs
             this.state.lessonId = this.getLessonId();
             this.state.courseId = this.getCourseId();
@@ -675,6 +681,12 @@
                                 lessonId: this.state.lessonId,
                                 courseId: this.state.courseId,
                             });
+
+                            // The server completed the lesson; show it instead of the "watch N%" hint.
+                            $('#ohmylms-completed-lesson[data-ohmylms-video-pending]')
+                                .prop('checked', true)
+                                .removeAttr('data-ohmylms-video-pending aria-describedby');
+                            $('#ohmylms-video-completion-hint').remove();
                             
                             // Clear progress from database so video starts fresh next time
                             this.clearProgress();

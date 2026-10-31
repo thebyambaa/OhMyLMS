@@ -46,6 +46,14 @@ now redirect to the screens of this API (`includes/Admin/LegacyRoutes.php`).
 | GET | `/assignments/{id}/submissions/{submission_id}` | One submission with text, feedback and attachments | 200 | 401, 403, 404 |
 | PUT / PATCH / POST | `/assignments/{id}/submissions/{submission_id}` | Grade: `score` (required) and `feedback` | 200 (the graded submission) | 400, 401, 403, 404, 409, 422, 500 |
 | GET | `/assignments/{id}/submissions/{submission_id}/file` | Download the upload (`Content-Disposition: attachment`, `nosniff`, `no-store`) | 200 file | 401, 403, 404 |
+| GET | `/assignments/{id}/prerequisite-options` | Lessons, quizzes and assignments it may require: `search`, `page` (20 per page) | 200 `{items, total, pages, scope}` | 400, 401, 403, 404 |
+| GET | `/assignments/{id}/learner-state` | What the current user may do now (release, prerequisites, submit) | 200 | 401, 404 |
+| GET | `/assignments/{id}/submissions/{submission_id}/comments` | The submission's comment thread, oldest first (`page`, `per_page` ≤ 100) | 200 `{items, total, role, comments_enabled, can_comment}` | 401, 403, 404 |
+| POST | `/assignments/{id}/submissions/{submission_id}/comments` | Add a comment `{body}` (plain text, 1–5000) | 201 | 400, 401, 403, 404, 409, 422, 429, 500 |
+| DELETE | `/assignments/{id}/submissions/{submission_id}/comments/{comment_id}` | Delete a comment | 200 `{deleted, previous}` | 401, 403, 404, 500 |
+
+The last five routes live in `includes/Rest/V1/AssignmentDeliveryController.php`; the services are
+`includes/Assignment/Delivery.php` (settings and the learner gate) and `includes/Assignment/Comments.php`.
 
 Capabilities mirror the legacy routes:
 
@@ -77,6 +85,10 @@ placements and published learning programs. Submission arguments: `page`, `per_p
 | `allow_file_uploads`, `max_files` | `_allow_upload_files`, `_number_of_files` | Flag (a missing value means allowed, as the learner page treats it); 1–20. |
 | `file_size_limit_enabled`, `max_file_size_mb` | `_enable_file_size_limit`, `_max_file_size_limit` | Flag; 1–1024 MB. |
 | `course`, `placements` (edit) | `ohmylms_content_relationship` and programs | Read only. Placement is edited in the course editor. |
+| `resources` (edit) | `_download_resource` `{file: [{type, id, name, url, size}]}` | Up to 20 rows `{type: file\|link, attachment_id, name, url, size}`. Files are media library attachments; URL and size come from the library (the request's are ignored); a newly added file must be editable by the author. Links: absolute HTTP(S) URL ≤ 2048, size label ≤ 50. Names 1–200. |
+| `prerequisites` (edit) | `_prerequisites` `{enable, data: [{value, label}]}` | Read `{enable, items: [{id, title, type, status}]}` (`status` `missing` when removed); write `{enable, ids}`: up to 50 distinct lessons, quizzes or assignments other than itself; newly added ones must be editable by the author. |
+| `drip` (edit) | `_drip_settings` `{enable, type, days, date, time}` | Exactly those keys; `type` `enrollment-from-x-days`, `specific-date`, `cohort-start`, `cohort-from-x-days`; `days` 0–3650; `date` empty or a real `YYYY-MM-DD`; `time` empty or `HH:MM` (stored `HH:MM:SS`); a specific date needs the date. Site time. |
+| `comments_enabled` (edit) | `_enable_comments` (`'1'`/`'0'`) | Boolean: submission comment threads accept new comments. |
 | `submission_count`, `pending_count` | `ohmylms_assignment_attempts` | Read only, counted for the whole page in one grouped query. |
 
 Numbers are stored as strings and flags as `'1'`/`'0'`, exactly as the legacy data class writes them.
@@ -85,6 +97,56 @@ Missing legacy meta is reported the way learners see it, for example `0` for an 
 Submissions: each learner upload is one row (`ohmylms_assignment_attempts`, written by
 `Assignment::submit_file_submission()`). `status` is `submitted` until graded and then `graded`. `result`
 is the stored `passed`/`failed`; `score` is `null` until graded. `submitted_at` and `graded_at` are UTC.
+
+## Delivery settings and the learner gate
+
+The editor's Resources, Prerequisites, Release and Comments sections save `resources`,
+`prerequisites`, `drip` and `comments_enabled` with the other fields (same `base_modified` check and
+transaction; an invalid value answers 422 `ohmylms_assignment_invalid_resources` /
+`_invalid_resource_file` / `_invalid_prerequisites` / `_invalid_drip` with `data.field`, and nothing is
+written). The prerequisite picker searches `GET /assignments/{id}/prerequisite-options`: the content of the
+assignment's courses (`scope: course`), or the author's library when it is in no course yet (`scope:
+library`).
+
+`Assignment\Delivery::state()` (also `GET /assignments/{id}/learner-state` for the current user) gives
+`{course_id, can_submit, reason, message, opens_at, opens_label, prerequisites: [{id, title, type, status,
+url, completed}], comments_enabled, preview}`. `reason` is `not_published`, `not_in_course`,
+`not_enrolled`, `not_open` (the drip release has not come; `opens_at` UTC) or `prerequisites` (an item is
+not completed). People who can edit the assignment preview without these gates.
+
+- **Server-side gate.** The learner upload handler (`Ajax::save_assignment_submission_file`) calls
+  `Delivery::check_submission()` before storing any file and answers `{success: false, data: {code:
+  "ohmylms_assignment_<reason>", message}}`. The course of a submission is now resolved on the server
+  (the posted `course_id` is only a fallback for previews).
+- **Drip.** Release dates are worked out by `Learning\DripSchedule` (shared with lessons and quizzes;
+  `DripContent` uses it): enrolment start + N days, a date and time, or the course's first cohort. Until it
+  opens the assignment page shows "This assignment will be available on …" instead of the content.
+  Legacy `YYYY-MM-DDTHH:mm:ss` date/time values are read; a date without a time opens at midnight.
+- **Prerequisites** block submitting, not reading (they used to hide the page): the page lists them with
+  links and completion state, the Start button is disabled with the reason, and the server refuses the
+  submission. `CommonHook::restrict_access()` and `Ajax::lesson_access_nonce()` no longer gate assignment
+  pages on prerequisites (lesson prerequisites are unchanged).
+- **Resources** are listed on the assignment page: files with a download link to the library file, links
+  opening in a new tab. Library files are public URLs, as for lesson resources.
+
+## Comments
+
+One thread per submission in `{prefix}ohmylms_assignment_comments` (`id, submission_id, assignment_id,
+user_id, role, body, created_at` UTC; created on first use, option `ohmylms_assignment_comments_schema`).
+Only the submission's learner (`role: learner`) and people with `edit_post` on the assignment
+(`role: instructor`) read or write it; anyone else gets 403 (401 for guests), an unknown or mismatched
+submission 404. Comments are plain text (`sanitize_textarea_field`, 1–5000 characters). Posting needs
+`comments_enabled` (409 `ohmylms_assignment_comments_disabled`; existing threads stay readable) and one
+comment per author and submission every 5 seconds (429 `ohmylms_assignment_comment_rate_limited`).
+Instructors may delete any comment, others only their own.
+
+Each new comment fires `ohmylms_assignment_comment_added` ($comment, $submission, $assignment_id). The
+two configurable emails react to it: `student_assignment_comment` (instructor comment → the learner, with
+a link to the submission on the assignment page) and `instructor_assignment_comment` (learner comment → the
+configured staff addresses, else the assignment and course authors, with a link to the grading screen);
+the commenter is never emailed. Learners comment from the assignment page (`Your submissions`), a plain
+form posting to `admin-post.php?action=ohmylms_assignment_comment` with a per-submission nonce; it returns
+to the submission with `ohmylms_comment=added` or the error code. Instructors comment on the grading screen.
 
 ## Grading
 
@@ -150,6 +212,11 @@ The detail adds `content` (plain text as the learner typed it), `feedback`, and
 | 409 | `ohmylms_assignment_has_submissions` | Delete while submissions exist (`data.submissions`). |
 | 409 | `ohmylms_assignment_not_in_course`, `_placement_invalid` | Grading an assignment the legacy pipeline cannot complete. |
 | 422 | `ohmylms_assignment_invalid_title`, `_invalid_pass_score`, `_invalid_score` | Blank title, pass above max, score above max (`data.field`). |
+| 422 | `ohmylms_assignment_invalid_resources`, `_invalid_resource_file`, `_invalid_prerequisites`, `_invalid_drip`, `_invalid_comment` | Delivery settings or a comment that break the rules above (`data.field`). |
+| 403 / 401 | `ohmylms_assignment_cannot_comment`, `_cannot_delete_comment` | Not the submission's learner nor an instructor; not the comment's author. |
+| 404 | `ohmylms_assignment_comment_not_found` | Unknown comment, or one of another submission. |
+| 409 | `ohmylms_assignment_comments_disabled` | Posting while comments are switched off. |
+| 429 | `ohmylms_assignment_comment_rate_limited` | A second comment by the same person on one submission within 5 seconds. |
 | 500 | `ohmylms_assignment_create_failed`, `_update_failed`, `_delete_failed`, `_grade_failed` | Database failure; a failed create or update is rolled back. |
 
 ## Hooks kept
@@ -165,8 +232,9 @@ legacy grading hooks listed above. Learner submission (`ohmylms_assignment_submi
 ## Known gaps
 
 - Placement is read only. Assignments are added to chapters in the course editor.
-- Download resources, prerequisites, drip settings and comments are not part of this API and no screen edits
-  them any more (the legacy editor and its routes are gone); this API leaves their stored values untouched.
+- The learner's submit and comment forms are server-rendered; the upload widget is still the jQuery
+  `ohmylms.js` script (roadmap item 6). Comments are plain text without attachments or editing.
+- Cohort releases use the course's first cohort, as before; per-cohort dates are not modelled.
 - The grading pipeline still lives in `AssignmentController::update_attempt_report()` (a class without routes)
   and takes a constructed `WP_REST_Request`; extracting it into a service is in
   [BACKEND-BOUNDARIES](../BACKEND-BOUNDARIES.md).
@@ -189,5 +257,9 @@ this API call the grading method directly), and neither `docs/EXTENSIONS.md` nor
 ## Tests
 
 `tests/php/assignments-rest-integration.php` (set `OHMYLMS_ASSIGNMENTS_TEST=1`; see the file header; it also
-checks that the legacy routes are gone and the grading pipeline stays) and
+checks that the legacy routes are gone and the grading pipeline stays),
+`tests/php/assignment-delivery-integration.php` (`OHMYLMS_ASSIGNMENT_DELIVERY_TEST=1`: delivery settings
+save/reopen and storage, validation without writes, permissions, prerequisite choices, the learner state
+and the real upload handler refusing submissions before the release and with an incomplete prerequisite,
+comment threads, permissions, pace, deletion, the switch and both emails) and
 `npx vitest run --configLoader runner features/assignments`.

@@ -1,10 +1,11 @@
 <?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
- * Sample school, class and people that an administrator can open with View as.
+ * Sample school with classes and people that an administrator can explore and remove in one step.
  *
  * Everything this class creates carries a marker (user meta and a recorded ledger), and removal only
  * ever touches marked records. The sample users get random passwords that are never shown or stored,
  * and a non-deliverable email address, so nobody can sign in as them: only View as can use them.
+ * REST: `ohmylms/v1/account-hub/sample-school` (`Rest\V1\AccountHubSampleSchoolController`).
  *
  * @package OhMyLMS
  */
@@ -13,10 +14,10 @@ namespace OhMyLMS\Schools;
 
 defined( 'ABSPATH' ) || exit;
 
-/** Explicit, administrator-only sample data for previewing each role. */
+/** Explicit, administrator-only sample data for exploring schools and previewing each role. */
 final class SamplePreview {
 
-	/** User meta marking a sample account; the value is the sample role key. */
+	/** User meta marking a sample account; the value is the sample person key. */
 	const META = '_ohmylms_sample_preview';
 
 	/** Ledger of the records this feature created. */
@@ -28,93 +29,77 @@ final class SamplePreview {
 	/** Slug of the sample school. */
 	const SCHOOL_SLUG = 'sample-preview-school';
 
-	/** Register the REST routes. */
-	public static function register() {
-		$routes = array(
-			'sample-preview'        => 'GET',
-			'sample-preview/create' => 'POST',
-			'sample-preview/remove' => 'POST',
-		);
-		foreach ( $routes as $path => $method ) {
-			register_rest_route(
-				'ohmylms/v1',
-				'/school/' . $path,
-				array(
-					'methods'             => $method,
-					'permission_callback' => static function () {
-						if ( ! is_user_logged_in() || ! current_user_can( 'manage_options' ) ) {
-							return new \WP_Error( 'sample_preview_forbidden', 'Only an administrator can manage sample preview people.', array( 'status' => 403 ) );
-						}
-						return true;
-					},
-					'callback'            => static function ( $request ) use ( $path ) {
-						try {
-							$response = rest_ensure_response( self::handle( $path, $request ) );
-							$response->header( 'Cache-Control', 'private, no-store' );
-							return $response;
-						} catch ( \Throwable $error ) {
-							return new \WP_Error( 'sample_preview_error', $error->getMessage(), array( 'status' => in_array( $error->getCode(), array( 400, 403, 409 ), true ) ? $error->getCode() : 400 ) );
-						}
-					},
-				)
-			);
-		}
-	}
-
-	/**
-	 * Route one request after the capability check.
-	 *
-	 * @param string           $path Route suffix.
-	 * @param \WP_REST_Request $request Request.
-	 * @return array
-	 */
-	private static function handle( $path, $request ) {
-		Access::require_access( current_user_can( 'manage_options' ) );
-		if ( 'sample-preview/create' === $path ) {
-			return self::create();
-		}
-		if ( 'sample-preview/remove' === $path ) {
-			return self::remove( ! empty( $request['confirm'] ) );
-		}
-		return self::status();
-	}
-
 	/**
 	 * What the feature creates, in dependency order.
 	 *
-	 * @return array Keys: school, year, class (names) and people (role key => definition).
+	 * @return array Keys: school, year (names), classes (key => name, grade, subject) and people (key => definition).
 	 */
 	public static function definitions() {
+		$people = array(
+			'school'  => array(
+				'login'  => 'sample-preview-school-admin',
+				'name'   => 'Sample School Admin',
+				'role'   => 'ohmylms_school_admin',
+				'member' => 'school_admin',
+				'class'  => '',
+			),
+			'teacher' => array(
+				'login'  => 'sample-preview-teacher',
+				'name'   => 'Sample Teacher',
+				'role'   => 'ohmylms_teacher',
+				'member' => 'teacher',
+				'class'  => '',
+			),
+			'parent'  => array(
+				'login'  => 'sample-preview-parent',
+				'name'   => 'Sample Parent',
+				'role'   => 'ohmylms_parent',
+				'member' => '',
+				'class'  => '',
+			),
+		);
+		for ( $i = 1; $i <= 6; $i++ ) {
+			$people[ 1 === $i ? 'student' : 'student-' . $i ] = array(
+				'login'  => '',
+				'name'   => 'Sample Student ' . $i,
+				'role'   => '',
+				'member' => 'student',
+				'class'  => $i <= 3 ? 'a' : 'b',
+			);
+		}
+
 		return array(
-			'school' => 'Sample Preview School',
-			'year'   => 'Sample Preview Year',
-			'class'  => 'Sample Preview Class',
-			'people' => array(
-				'school'  => array(
-					'login'  => 'sample-preview-school-admin',
-					'name'   => 'Sample School Admin',
-					'role'   => 'ohmylms_school_admin',
-					'member' => 'school_admin',
+			'school'  => 'Sample Preview School',
+			'year'    => 'Sample Preview Year',
+			'classes' => array(
+				'a' => array(
+					'name'    => 'Sample Grade 7A',
+					'grade'   => '7',
+					'subject' => 'Mathematics',
 				),
-				'teacher' => array(
-					'login'  => 'sample-preview-teacher',
-					'name'   => 'Sample Teacher',
-					'role'   => 'ohmylms_teacher',
-					'member' => 'teacher',
-				),
-				'parent'  => array(
-					'login'  => 'sample-preview-parent',
-					'name'   => 'Sample Parent',
-					'role'   => 'ohmylms_parent',
-					'member' => '',
-				),
-				'student' => array(
-					'login'  => '',
-					'name'   => 'Sample Student',
-					'role'   => '',
-					'member' => 'student',
+				'b' => array(
+					'name'    => 'Sample Grade 8B',
+					'grade'   => '8',
+					'subject' => 'Science',
 				),
 			),
+			'people'  => $people,
+		);
+	}
+
+	/**
+	 * Keys of the sample students.
+	 *
+	 * @return string[]
+	 */
+	private static function students() {
+		return array_keys(
+			array_filter(
+				self::definitions()['people'],
+				static function ( $person ) {
+					return 'student' === $person['member'];
+				}
+			)
 		);
 	}
 
@@ -124,7 +109,25 @@ final class SamplePreview {
 	 * @return string[]
 	 */
 	public static function steps() {
-		return array( 'school', 'year', 'class', 'user:school', 'user:teacher', 'user:parent', 'user:student', 'member:school', 'member:teacher', 'class:teacher', 'class:student', 'guardian' );
+		$names = self::definitions();
+		$steps = array( 'school', 'year' );
+		foreach ( array_keys( $names['classes'] ) as $class ) {
+			$steps[] = 'class:' . $class;
+		}
+		foreach ( array_keys( $names['people'] ) as $key ) {
+			$steps[] = 'user:' . $key;
+		}
+		$steps[] = 'member:school';
+		$steps[] = 'member:teacher';
+		foreach ( array_keys( $names['classes'] ) as $class ) {
+			$steps[] = 'roster:' . $class . ':teacher';
+		}
+		foreach ( self::students() as $key ) {
+			$steps[] = 'roster:' . $names['people'][ $key ]['class'] . ':' . $key;
+		}
+		$steps[] = 'guardian';
+
+		return $steps;
 	}
 
 	/**
@@ -183,7 +186,7 @@ final class SamplePreview {
 		$skip   = array();
 		if ( ! empty( $facts['school'] ) ) {
 			if ( self::is_sample_school( $facts['school'] ) ) {
-				$remove[] = sprintf( 'School "%s" (#%d) with its academic year, class, memberships and guardian link', $facts['school']['name'], $facts['school']['id'] );
+				$remove[] = sprintf( 'School "%s" (#%d) with its academic year, classes, memberships and guardian link', $facts['school']['name'], $facts['school']['id'] );
 			} else {
 				$skip[] = sprintf( 'School #%d is not marked as a sample', $facts['school']['id'] ?? 0 );
 			}
@@ -207,7 +210,7 @@ final class SamplePreview {
 	/**
 	 * Recorded sample records, completed from the markers when the ledger is missing.
 	 *
-	 * @return array Keys: school_id, year_id, class_id, users (role key => ID).
+	 * @return array Keys: school_id, year_id, classes (key => ID), users (person key => ID).
 	 */
 	private static function ledger() {
 		global $wpdb;
@@ -217,15 +220,20 @@ final class SamplePreview {
 			array(
 				'school_id' => 0,
 				'year_id'   => 0,
-				'class_id'  => 0,
+				'classes'   => array(),
 				'users'     => array(),
 			),
 			$ledger
 		);
+		// Ledgers of the one-class version recorded `class_id`.
+		if ( ! empty( $ledger['class_id'] ) && empty( $ledger['classes']['a'] ) ) {
+			$ledger['classes']['a'] = (int) $ledger['class_id'];
+		}
+		unset( $ledger['class_id'] );
 		foreach ( get_users(
 			array(
 				'fields'     => 'all',
-				'number'     => 20,
+				'number'     => 50,
 				'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Marker lookup on a handful of rows.
 					array(
 						'key'     => self::META,
@@ -256,15 +264,18 @@ final class SamplePreview {
 	 */
 	private static function done( array $ledger ) {
 		global $wpdb;
+		$names          = self::definitions();
 		$done           = array();
 		$school         = $ledger['school_id'] ? Service::row( 'schools', $ledger['school_id'] ) : null;
 		$year           = $ledger['year_id'] ? Service::row( 'academic_years', $ledger['year_id'] ) : null;
-		$class          = $ledger['class_id'] ? Service::row( 'classes', $ledger['class_id'] ) : null;
-		$sid            = $ledger['school_id'];
+		$sid            = (int) $ledger['school_id'];
 		$done['school'] = self::is_sample_school( $school );
 		$done['year']   = $done['school'] && $year && (int) $year['school_id'] === $sid;
-		$done['class']  = $done['school'] && $class && (int) $class['school_id'] === $sid;
-		foreach ( array_keys( self::definitions()['people'] ) as $key ) {
+		foreach ( array_keys( $names['classes'] ) as $key ) {
+			$class                   = ! empty( $ledger['classes'][ $key ] ) ? Service::row( 'classes', $ledger['classes'][ $key ] ) : null;
+			$done[ 'class:' . $key ] = $done['school'] && $class && (int) $class['school_id'] === $sid;
+		}
+		foreach ( array_keys( $names['people'] ) as $key ) {
 			$user = ! empty( $ledger['users'][ $key ] ) ? get_userdata( $ledger['users'][ $key ] ) : false;
 
 			$done[ 'user:' . $key ] = $user && self::is_sample_user( get_user_meta( $user->ID, self::META, true ), $user->user_email );
@@ -274,19 +285,27 @@ final class SamplePreview {
 		};
 		$users = $ledger['users'];
 		foreach ( array( 'school', 'teacher' ) as $key ) {
-			$done[ 'member:' . $key ] = $done['school'] && ! empty( $users[ $key ] ) && $count( 'school_memberships', "school_id=%d AND user_id=%d AND role=%s AND status='active'", array( $sid, $users[ $key ], self::definitions()['people'][ $key ]['member'] ) ) > 0;
+			$done[ 'member:' . $key ] = $done['school'] && ! empty( $users[ $key ] ) && $count( 'school_memberships', "school_id=%d AND user_id=%d AND role=%s AND status='active'", array( $sid, $users[ $key ], $names['people'][ $key ]['member'] ) ) > 0;
 		}
-		foreach ( array( 'teacher', 'student' ) as $key ) {
-			$done[ 'class:' . $key ] = $done['class'] && ! empty( $users[ $key ] ) && $count( 'class_memberships', "class_id=%d AND user_id=%d AND role=%s AND status='active'", array( $ledger['class_id'], $users[ $key ], $key ) ) > 0;
+		foreach ( array_keys( $names['classes'] ) as $class ) {
+			$members = array( 'teacher' => 'teacher' );
+			foreach ( self::students() as $key ) {
+				if ( $class === $names['people'][ $key ]['class'] ) {
+					$members[ $key ] = 'student';
+				}
+			}
+			foreach ( $members as $key => $role ) {
+				$done[ 'roster:' . $class . ':' . $key ] = ! empty( $done[ 'class:' . $class ] ) && ! empty( $users[ $key ] ) && $count( 'class_memberships', "class_id=%d AND user_id=%d AND role=%s AND status='active'", array( $ledger['classes'][ $class ], $users[ $key ], $role ) ) > 0;
+			}
 		}
 		$done['guardian'] = $done['school'] && ! empty( $users['parent'] ) && ! empty( $users['student'] ) && $count( 'guardian_links', "school_id=%d AND guardian_user_id=%d AND student_user_id=%d AND status='active'", array( $sid, $users['parent'], $users['student'] ) ) > 0;
 		return $done;
 	}
 
 	/**
-	 * Current state for the Account Hub home tab.
+	 * Current state.
 	 *
-	 * @return array
+	 * @return array Keys: exists, complete, school_id, classes (key => id), people (key => id, name).
 	 */
 	public static function status() {
 		Access::require_access( current_user_can( 'manage_options' ) );
@@ -302,17 +321,24 @@ final class SamplePreview {
 				);
 			}
 		}
+		$classes = array();
+		foreach ( (array) $ledger['classes'] as $key => $id ) {
+			if ( ! empty( $done[ 'class:' . $key ] ) ) {
+				$classes[ $key ] = (int) $id;
+			}
+		}
 		$missing = self::plan_create( $done );
 		return array(
 			'exists'    => count( $missing ) < count( self::steps() ),
 			'complete'  => ! $missing,
-			'school_id' => (int) $ledger['school_id'],
+			'school_id' => ! empty( $done['school'] ) ? (int) $ledger['school_id'] : 0,
+			'classes'   => $classes,
 			'people'    => $people,
 		);
 	}
 
 	/**
-	 * Create (or complete) the sample school and people.
+	 * Create (or complete) the sample school, classes and people.
 	 *
 	 * @return array Same shape as status().
 	 */
@@ -328,7 +354,8 @@ final class SamplePreview {
 			return self::status();
 		}
 		foreach ( $todo as $step ) {
-			$sid = $ledger['school_id'];
+			$sid   = $ledger['school_id'];
+			$parts = explode( ':', $step );
 			if ( 'school' === $step ) {
 				$ledger['school_id'] = (int) Service::create_school(
 					array(
@@ -346,35 +373,34 @@ final class SamplePreview {
 						'ends_at'   => gmdate( 'Y' ) . '-12-31',
 					)
 				)['id'];
-			} elseif ( 'class' === $step ) {
-				$ledger['class_id'] = (int) Service::create_class(
+			} elseif ( 'class' === $parts[0] ) {
+				$definition                     = $names['classes'][ $parts[1] ];
+				$ledger['classes'][ $parts[1] ] = (int) Service::create_class(
 					$sid,
 					array(
 						'academic_year_id' => $ledger['year_id'],
-						'name'             => $names['class'],
-						'subject'          => 'Sample',
+						'name'             => $definition['name'],
+						'subject'          => $definition['subject'],
+						'grade'            => $definition['grade'],
 					)
 				)['id'];
-			} elseif ( 0 === strpos( $step, 'user:' ) ) {
-				$key                     = substr( $step, 5 );
-				$ledger['users'][ $key ] = self::create_user( $key, $sid );
-			} elseif ( 0 === strpos( $step, 'member:' ) ) {
-				$key = substr( $step, 7 );
+			} elseif ( 'user' === $parts[0] ) {
+				$ledger['users'][ $parts[1] ] = self::create_user( $parts[1], $sid );
+			} elseif ( 'member' === $parts[0] ) {
 				Service::membership(
 					'school_memberships',
 					array(
 						'school_id' => $sid,
-						'user_id'   => $ledger['users'][ $key ],
-						'role'      => $names['people'][ $key ]['member'],
+						'user_id'   => $ledger['users'][ $parts[1] ],
+						'role'      => $names['people'][ $parts[1] ]['member'],
 					)
 				);
-			} elseif ( 0 === strpos( $step, 'class:' ) ) {
-				$key = substr( $step, 6 );
+			} elseif ( 'roster' === $parts[0] ) {
 				Service::class_member(
-					$ledger['class_id'],
+					$ledger['classes'][ $parts[1] ],
 					array(
-						'user_id' => $ledger['users'][ $key ],
-						'role'    => $key,
+						'user_id' => $ledger['users'][ $parts[2] ],
+						'role'    => 'teacher' === $parts[2] ? 'teacher' : 'student',
 					)
 				);
 			} elseif ( 'guardian' === $step ) {
@@ -399,25 +425,25 @@ final class SamplePreview {
 	/**
 	 * Create one marked sample account.
 	 *
-	 * @param string $key Sample role key.
+	 * @param string $key Sample person key.
 	 * @param int    $school_id Sample school.
 	 * @return int User ID.
 	 * @throws \RuntimeException When the login is taken or the account cannot be created.
 	 */
 	private static function create_user( $key, $school_id ) {
 		$definition = self::definitions()['people'][ $key ];
-		if ( 'student' === $key ) {
+		if ( 'student' === $definition['member'] ) {
 			$id = (int) Service::create_student(
 				$school_id,
 				array(
 					'name'                => $definition['name'],
-					'external_student_id' => 'SAMPLE-1',
+					'external_student_id' => 'SAMPLE-' . strtoupper( $key ),
 				)
 			)['id'];
 			wp_update_user(
 				array(
 					'ID'         => $id,
-					'user_email' => 'sample-preview-student@' . self::DOMAIN,
+					'user_email' => 'sample-preview-' . $key . '@' . self::DOMAIN,
 				)
 			);
 		} else {
@@ -471,17 +497,20 @@ final class SamplePreview {
 		if ( ! $sid || ! self::is_sample_school( $facts['school'] ) ) {
 			return $facts;
 		}
-		$in     = $ids ? implode( ',', array_map( 'intval', $ids ) ) : '0';
-		$count  = static function ( $table, $where, $args = array() ) use ( $wpdb ) {
-			return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE ' . $where, array_merge( array( Schema::table( $table ) ), $args ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Fresh safety check; the fragment is a fixed literal and the ID list is cast to integers.
+		$in      = $ids ? implode( ',', array_map( 'intval', $ids ) ) : '0';
+		$classes = array_values( array_filter( array_map( 'intval', (array) $ledger['classes'] ) ) );
+		$own     = $classes ? implode( ',', $classes ) : '0';
+		$count   = static function ( $table, $where, $args = array() ) use ( $wpdb ) {
+			return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE ' . $where, array_merge( array( Schema::table( $table ) ), $args ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Fresh safety check; the fragment is a fixed literal and the ID lists are cast to integers.
 		};
-		$checks = array(
+		$checks  = array(
 			'People who are not sample accounts belong to the school' => $count( 'school_memberships', "school_id=%d AND user_id NOT IN ($in)", array( $sid ) ),
-			'Other classes were added to the school'      => $count( 'classes', 'school_id=%d AND id<>%d', array( $sid, $ledger['class_id'] ) ),
+			'Other classes were added to the school'      => $count( 'classes', "school_id=%d AND id NOT IN ($own)", array( $sid ) ),
 			'Other academic years were added to the school' => $count( 'academic_years', 'school_id=%d AND id<>%d', array( $sid, $ledger['year_id'] ) ),
-			'Someone outside the sample joined the class' => $count( 'class_memberships', "class_id=%d AND user_id NOT IN ($in)", array( $ledger['class_id'] ) ),
+			'Someone outside the sample joined a class'   => $count( 'class_memberships', "class_id IN ($own) AND user_id NOT IN ($in)" ),
 			'Invitations were sent for the school'        => $count( 'school_invitations', 'school_id=%d', array( $sid ) ),
 			'Assignments were created for the school'     => $count( 'learning_assignments', 'school_id=%d', array( $sid ) ),
+			'Courses were linked to a sample class'       => $count( 'course_classes', "class_id IN ($own)" ),
 			'Guardian links outside the sample exist'     => $count( 'guardian_links', "school_id=%d AND (guardian_user_id NOT IN ($in) OR student_user_id NOT IN ($in))", array( $sid ) ),
 		);
 		foreach ( $checks as $label => $found ) {
@@ -489,12 +518,18 @@ final class SamplePreview {
 				$facts['outsiders'][] = $label;
 			}
 		}
-		if ( ! empty( $ledger['users']['student'] ) ) {
-			$student = (int) $ledger['users']['student'];
-			$used    = array(
-				'The sample student is enrolled in a course' => $count( 'user_enrollment', 'user_id=%d', array( $student ) ),
-				'The sample student has quiz attempts' => $count( 'quiz_attempts', 'student_id=%d', array( $student ) ),
-				'The sample student has assignments'   => $count( 'assignment_recipients', 'student_user_id=%d', array( $student ) ),
+		$students = array();
+		foreach ( self::students() as $key ) {
+			if ( ! empty( $ledger['users'][ $key ] ) ) {
+				$students[] = (int) $ledger['users'][ $key ];
+			}
+		}
+		if ( $students ) {
+			$list = implode( ',', $students );
+			$used = array(
+				'A sample student is enrolled in a course' => $count( 'user_enrollment', "user_id IN ($list)" ),
+				'A sample student has quiz attempts'       => $count( 'quiz_attempts', "student_id IN ($list)" ),
+				'A sample student has assignments'         => $count( 'assignment_recipients', "student_user_id IN ($list)" ),
 			);
 			foreach ( $used as $label => $found ) {
 				if ( $found ) {
@@ -526,7 +561,6 @@ final class SamplePreview {
 				if ( ! $sid ) {
 					return;
 				}
-				$class = (int) $ledger['class_id'];
 				foreach ( array(
 					'guardian_links'          => 'school_id',
 					'school_student_profiles' => 'school_id',
@@ -535,8 +569,10 @@ final class SamplePreview {
 				) as $table => $column ) {
 					$wpdb->delete( Schema::table( $table ), array( $column => $sid ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Removes only rows of the verified sample school.
 				}
-				$wpdb->delete( Schema::table( 'class_memberships' ), array( 'class_id' => $class ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Removes only the sample class roster.
-				$wpdb->delete( Schema::table( 'classes' ), array( 'school_id' => $sid ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Removes only the sample school's class.
+				foreach ( (array) $ledger['classes'] as $class ) {
+					$wpdb->delete( Schema::table( 'class_memberships' ), array( 'class_id' => (int) $class ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Removes only the sample class rosters.
+				}
+				$wpdb->delete( Schema::table( 'classes' ), array( 'school_id' => $sid ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Removes only the sample school's classes.
 				$wpdb->delete( Schema::table( 'academic_years' ), array( 'school_id' => $sid ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Removes only the sample school's year.
 				$wpdb->delete( Schema::table( 'schools' ), array( 'id' => $sid ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Removes only the verified sample school.
 			}
@@ -545,7 +581,8 @@ final class SamplePreview {
 		foreach ( $facts['users'] as $key => $user ) {
 			if ( ! empty( $user['marked'] ) ) {
 				wp_delete_user( $user['id'] );
-				delete_metadata( 'user', 0, ViewAs::LAST_META . $key, $user['id'], true );
+				$role = isset( self::definitions()['people'][ $key ] ) && 'student' === self::definitions()['people'][ $key ]['member'] ? 'student' : $key;
+				delete_metadata( 'user', 0, ViewAs::LAST_META . $role, $user['id'], true );
 			}
 		}
 		delete_option( self::OPTION );

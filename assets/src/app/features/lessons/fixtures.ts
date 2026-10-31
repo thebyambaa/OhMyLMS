@@ -26,4 +26,17 @@ export const lesson: Lesson = {
 	video_id: 0,
 	audio_id: 0,
 	media_urls: { cover_image_id: '', video_id: '', audio_id: '' },
+	video: {
+		provider: 'self-hosted',
+		duration: 0,
+		completion: 'none',
+		watch_percent: 90,
+		poster_id: 0,
+		autoplay: false,
+		loop: false,
+		controls: true,
+		aspect_ratio: '16/9',
+		poster_url: '',
+	},
+	inline_questions: [],
 };

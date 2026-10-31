@@ -559,9 +559,8 @@ try {
 							'session' => 'Oct/Nov 2026',
 						),
 						'timing'           => array(
-							'grace_seconds'    => 60,
-							'feedback_release' => 'manual',
-							'available_from'   => '2026-11-01T09:00:00Z',
+							'grace_seconds'  => 60,
+							'available_from' => '2026-11-01T09:00:00Z',
 						),
 						'paper'            => array(
 							'size'     => 'letter',
@@ -573,7 +572,8 @@ try {
 				'settings saved'
 			);
 			ok( $tag . ' mock paper' === $saved['title'] && 90 === $saved['duration_minutes'] && 'Cambridge' === $saved['header']['board'] && 'Answer all questions.' === $saved['instructions'], 'title, duration, header and instructions saved' );
-			ok( 60 === $saved['timing']['grace_seconds'] && 'manual' === $saved['timing']['feedback_release'] && '2026-11-01T09:00:00Z' === $saved['timing']['available_from'], 'timing saved' );
+			ok( 60 === $saved['timing']['grace_seconds'] && ! isset( $saved['timing']['feedback_release'] ) && '2026-11-01T09:00:00Z' === $saved['timing']['available_from'], 'timing saved; results policy lives under /results' );
+			ok_error( call_api( 'PATCH', 'exams/library/' . $id, array( 'revision' => $saved['revision'], 'timing' => array( 'feedback_release' => 'manual' ) ) ), 400, 'rest_invalid_param', 'results policy is not a timing field' );
 			ok( 'letter' === $saved['paper']['size'] && 2 === $saved['paper']['versions'] && 20 === $saved['paper']['margin'], 'paper settings merged' );
 			ok( ! hash_equals( $exam['revision'], $saved['revision'] ) && get_the_title( $saved['quiz_id'] ) === $tag . ' mock paper', 'revision changes and the backing quiz follows' );
 			ok_error(

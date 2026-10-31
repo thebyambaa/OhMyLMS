@@ -15,6 +15,7 @@ import { useRequest } from '../../hooks/useRequest';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import { normalizeApiError } from '../../lib/api';
 import { getAssignment, updateAssignment } from './api';
+import DeliverySettings from './DeliverySettings';
 import {
 	LIMITS,
 	TIME_UNITS,
@@ -53,9 +54,9 @@ function unitOptions(): Array< { value: TimeUnit; label: string } > {
 }
 
 /**
- * Assignment editor (`#/assignments/<id>`): title, instructions, scoring, deadline and upload rules,
- * with read-only course placement. Saving a copy someone else changed meanwhile is refused (409), and
- * leaving with unsaved changes asks first.
+ * Assignment editor (`#/assignments/<id>`): title, instructions, scoring, deadline, upload rules,
+ * resources, prerequisites, release and comments, with read-only course placement. Saving a copy
+ * someone else changed meanwhile is refused (409), and leaving with unsaved changes asks first.
  */
 export default function AssignmentEditorPage() {
 	const params = useParams();
@@ -411,6 +412,19 @@ export default function AssignmentEditorPage() {
 						)
 					) }
 				</fieldset>
+
+				<DeliverySettings
+					assignmentId={ current.id }
+					value={ form }
+					errors={ errors }
+					disabled={ operation.busy }
+					onChange={ ( patch ) => {
+						setForm( ( previous ) =>
+							previous ? { ...previous, ...patch } : previous
+						);
+						setMessage( null );
+					} }
+				/>
 
 				<Button
 					type="submit"

@@ -5,7 +5,8 @@ new admin app (`#/account-hub`). Students stay on their own screen (`#/students`
 the Student Home (hub) editor stays a PHP page. Server code: `includes/Rest/V1/AccountHubController.php`. Every
 write goes through the existing services in `includes/Schools/` (`Service`, `ClassManagement`, `Access`), which
 re-check relationship scope; the controller adds capability checks, validation, paging, minimal fields and
-stale-save detection. The legacy `ohmylms/v1/school/*` routes are unchanged and still serve the hub workspaces.
+stale-save detection. The legacy `ohmylms/v1/school/*` routes were retired on 31 October 2026 (see "Retired legacy
+routes"); only `school/view-as/*` remains.
 
 ## Audit before
 
@@ -50,7 +51,7 @@ and `search` (name; teachers and parents also match email for `list_users` users
 
 | Method | Path | Purpose | Success |
 | --- | --- | --- | --- |
-| GET | `/schools` | Schools in scope, by name | 200 + totals |
+| GET | `/schools` | Schools in scope, by name (`status=all|active|archived`) | 200 + totals |
 | POST | `/schools` | Create (`name` required, `timezone` default `UTC`); administrators only | 201 + `Location` |
 | GET | `/schools/{id}` | School with `years` | 200 |
 | PUT / PATCH / POST | `/schools/{id}` | Partial update of `name`, `timezone`; send `version` | 200 |
@@ -77,7 +78,7 @@ and `search` (name; teachers and parents also match email for `list_users` users
 
 | Resource | Fields |
 | --- | --- |
-| School | `id, name, slug, timezone, status, created_at, class_count, student_count, teacher_count, version` (+ `years[] {id, label, starts_at, ends_at, status}` on one school) |
+| School | `id, name, slug, timezone, status, created_at, class_count, student_count, teacher_count, sample, version` (+ `years[] {id, label, starts_at, ends_at, status}` on one school; `sample` is true for the removable sample school) |
 | Class | `id, name, subject, grade, status, school_id, school_name, academic_year_id, academic_year_label, student_count, teacher_count, version` |
 | Member | `id` (membership), `user_id, display_name, role, joined_at` |
 | Roster person / candidate | `id, display_name` |
@@ -244,22 +245,195 @@ HTTP/1.1 201 Created
 `assets/src/app/features/account-hub`: `#/account-hub` (tabs Schools, Classes, Teachers, Parents, All accounts via `?tab=`, and
 a link to `#/students`), `#/account-hub/schools/<id>` (details, academic years, the school's classes, add class)
 and `#/account-hub/classes/<id>` (details, archive/restore, roster, add students or teachers by searching the
-school roster), and `#/account-hub/schools/<id>/roster` (invitations with revoke, managed students with
+school roster, class work and grading, link to the class's guardians), the school sub-screens
+`#/account-hub/schools/<id>?panel=guardians|report|rollover` (archive/restore/delete sit on the details screen; the
+Schools list has status views and the sample school action), and `#/account-hub/schools/<id>/roster` (invitations with revoke, managed students with
 confirmed setup links, CSV review then import; linked from the school). Extensions see these screens as the
 original `/accounthub` route. It replaces the legacy school view's Invitations, Import and managed-student
 forms (`#/accounthub?tab=schools` → school → Invitations / Import / Roster).
 
+## School workflows (31 October 2026)
+
+Server code: `includes/Rest/V1/AccountHubSchoolLifecycleController.php`, `AccountHubGuardiansController.php`,
+`AccountHubReportsController.php`, `AccountHubClassWorkController.php`, `AccountHubSampleSchoolController.php` and
+`AccountHubInvitationAcceptController.php` (all extend or mirror the Account Hub controller). Domain rules live in
+`includes/Schools/`: `SchoolRemoval`, `RosterEnrolments`, `Guardians`, `SchoolReport`, `Rollover`, `SamplePreview`,
+`Signup`. Responses that carry links or counts of people send `Cache-Control: private, no-store`.
+
+### Who may do what
+
+| Workflow | Site administrator | School administrator (own active schools) | Teacher, parent, student, subscriber | Anonymous |
+| --- | --- | --- | --- | --- |
+| Archive, restore, delete a school | yes | `403 _cannot_remove` (they would lock themselves out) | 403 | 401 |
+| Guardians, report, class work, rollover | yes | yes; other schools `403 _forbidden` | `403 _cannot_view` / `_cannot_edit` | 401 |
+| Sample school | yes | `403 _cannot_sample` | 403 | 401 |
+| Accept an invitation | any signed-in account with the REST nonce | | | 401 |
+
+Archived schools are read only: every write into one answers `409 ohmylms_account_hub_school_inactive`, and school
+administrators lose access to them (scope only counts active schools).
+
+### School removal
+
+| Method | Path (below `/schools/{id}`) | Purpose | Success |
+| --- | --- | --- | --- |
+| POST | `/archive` | Archive (reversible). `409 _school_archived` when already archived | 200 school |
+| POST | `/restore` | Restore. `409 _school_active` when not archived | 200 school |
+| GET | `/removal` | What deleting would remove, counted now: `{ id, name, status, can_delete, confirm, impact }` | 200 |
+| DELETE | `` (the school) | Permanent delete; `confirm` must equal the school name (`422 _confirmation_mismatch`); only an archived school (`409 _school_active`) | 200 `{ deleted: true, id, removed }` |
+
+`impact` (and `removed`): `classes, academic_years, students, teachers, school_admins, class_memberships,
+teacher_links, guardian_links, invitations, assignments, course_links, roster_enrolments, managed_accounts`.
+Archiving changes only the school status: staff, students and families lose access, invitations cannot be accepted,
+nothing else changes. Deleting runs in one transaction: active course enrolments that a class roster of the school
+granted (`ohmylms_enrolments.source = roster`, `class_id` one of the school's classes) are cancelled through
+`Student\Enrollments::update()` with the source kept; then class and school memberships, student profiles, guardian
+links, invitations, distributed work and its recipients, course-class links, classes, years and the school row are
+deleted. **No user account is deleted**; managed accounts lose only their `_ohmylms_managed_school` marker. Completed
+enrolments, other enrolments, progress, attempts, grades and the audit log stay (`school_deleted` is recorded).
+
+### Guardians
+
+| Method | Path (below `/schools/{id}`) | Purpose | Success |
+| --- | --- | --- | --- |
+| GET | `/guardians` | Active links and open invitations by student; `status=all|active|pending`, `class_id` (a class of the school, else `404 _class_not_found`), `search` (student or parent name) | 200 + totals |
+| POST | `/guardians` | Invite a guardian: `{ student_id, parent_id }` (existing account; invitation to its own email) or `{ student_id, email }`, `send_email?` | 201 `{ kind, id, school_id, student_id, url, expires_at, email_sent }` |
+| DELETE | `/guardians/{link}` | Revoke an active link (becomes inactive) | 200 `{ revoked: true }` |
+| DELETE | `/guardian-invitations/{invitation}` | Revoke an open guardian invitation | 200 `{ revoked: true }` |
+
+Row: `kind (link|invitation), id, status (active|pending), student {id, display_name}, parent {id, display_name}|null,
+linked_at, expires_at, email_hint`. Only display names; `email_hint` is masked (`a***@example.org`) and only on
+open invitations. A link is never made from a name or an email: both POST forms create a single-use guardian
+invitation that becomes a link only when the parent accepts it while signed in with that address. Errors:
+`400 _parent_required` (neither or both), `422 _not_on_roster`, `_invalid_email`, `_parent_without_email`,
+`409 _already_linked`, `_invitation_pending` (`data.invitation`).
+
+### School report
+
+| Method | Path (below `/schools/{id}`) | Purpose | Success |
+| --- | --- | --- | --- |
+| GET | `/report?period=7|30|90` | Summary | 200 |
+| GET | `/report/export?period=` | The same as CSV text `{ filename, content_type, csv }` | 200 |
+
+`{ school, period {days, start, end}, summary, classes[], more_classes, mastery {skills[], average, assessed},
+generated_at }`. `summary` and each class: `learners` (active student members; a class's roster), `active_learners`
+(an enrolment, progress row, quiz attempt or assignment submission in the period), `enrolled`, `completed`,
+`completion` (% of enrolled learners per course who completed it, null without enrolments); the summary adds
+`classes`, `archived_classes`, `assigned`, `assigned_completed` (distributed work recipients); classes add `id, name,
+grade, teachers, assigned, assigned_completed` (at most 50 active classes; `more_classes` counts the rest). Mastery:
+the 8 skills most learners have evidence on, `{ id, name, code, assessed, average, below }` (below 50 %). Figures
+come from `Dashboard\Scope::school()` / `classroom()` with `Dashboard\Repository::active_learners()`,
+`Dashboard\Enrolments::courses_by_enrolment()` and `Dashboard\MasteryRepository`, so they match the Dashboard. No
+names of learners, emails or ids of people leave the report. The CSV (UTF-8, CRLF, a row per class, a whole-school
+row, then the skills) prefixes cells that start with `= + - @`, tab or CR with `'`.
+
+### Year rollover
+
+| Method | Path (below `/schools/{id}`) | Purpose | Success |
+| --- | --- | --- | --- |
+| POST | `/rollover/preview` | `{ from_year_id, to_year_id, grade_map: [{from, to}], copy_teachers }`; writes nothing | 200 plan + `review` |
+| POST | `/rollover` | The same plus `review` | 200 result |
+
+For every active class of the source year: the grade map says what its grade becomes (unlisted grades stay the
+same; an empty `to` means the class leaves). A promoted class gets a successor in the target year (name with the
+grade replaced, `7A` → `8A`; `classes.source_class_id` points back, so a successor is reused, never duplicated); its
+active students (still on the school roster) join it, teachers too with `copy_teachers`; its course links are copied
+(`course_classes`, `course_class_students`) and the students' active roster enrolments move to the new class through
+`Student\Enrollments::update()` (source `roster`, `class_id` and `source_ref` the new class). Students of a leaving
+class keep their account and school membership; their active roster enrolments are cancelled. Every source class
+and the source year are archived. Plan: `{ from, to, classes[] {class_id, name, grade, action (promote|leave),
+students, teachers, enrolments, links, target {id|null, name, grade, exists}|null}, totals, review }`; totals:
+`classes, promoted_classes, leaving_classes, classes_created, students_promoted, students_leaving, teachers_copied,
+enrolments_moved, enrolments_revoked, course_links`. Apply recomputes the plan under a per-school lock and the year
+row locks; a different plan answers `409 _review_stale`, another running rollover `409 _rollover_busy`, an archived
+source year `409 _state_conflict`, unusable years `422 _invalid_year`. Applying the same review again answers the
+first result with `already_applied: true`.
+
+### Class work
+
+Replaces the class routes the deleted platform class editor used.
+
+| Method | Path (below `/classes/{id}`) | Purpose | Success |
+| --- | --- | --- | --- |
+| GET | `/assignments` | Work assigned to the class with `recipients` and `completed` | 200 + totals |
+| POST | `/assignments` | `{ course_id, content_id?, title?, due_at? (school time, YYYY-MM-DDTHH:MM), prior_completion? }`: every current student must already have course access (`422 _rejected`); nobody is enrolled | 201 `{ id, recipients }` |
+| GET | `/courses?search=` | Published courses to assign | 200 + totals |
+| GET | `/courses/{course}/activities` | Published activities of a course (≤ 200) | 200 |
+| GET | `/submissions?page=` | Written submissions to the class's work (100 per page) `{ items[], has_more }` | 200 |
+| POST | `/submissions/{attempt}` | `{ assignment_id, score, note? }` whole points up to the activity total | 200 `{ graded: true }` |
+
+Submission: `id, assignment_id, title, student_name, content, score, status, note, total_points, file_url` (a nonce'd
+download that re-checks the class relationship). Archived classes answer `409 _class_archived`; independent classes
+`422 _independent_class`.
+
+### Sample school
+
+| Method | Path | Purpose | Success |
+| --- | --- | --- | --- |
+| GET | `/sample-school` | `{ exists, complete, school_id, classes[], people[] {key, id, display_name, role}, removal {allowed, remove[], skip[], blockers[]} }` | 200 |
+| POST | `/sample-school` | Create or complete it (a lock prevents two sets) | 201 created, 200 when it existed |
+| DELETE | `/sample-school` | Remove every marked record in one step | 200 `{ removed: true }`; `409 _sample_in_use` (`data.blockers`), `404 _sample_not_found` |
+
+"Sample Preview School" (slug `sample-preview-school`) with one academic year, classes "Sample Grade 7A" and
+"Sample Grade 8B", six managed students (three per class), a teacher of both classes, a school administrator and a
+parent linked to the first student. Accounts carry user meta `_ohmylms_sample_preview`, use `@example.invalid`
+addresses and random discarded passwords (only View as can use them). Removal touches only marked records and is
+refused while real people, classes, years, invitations, assignments, course links or learner activity are attached.
+
+### Invitation acceptance
+
+`POST /invitations/accept` `{ token }` (64 hex): the signed-in recipient accepts a school, class or guardian
+invitation (the learner hub's "Join with an invitation" form, `templates/student-hub/classes.php`). Needs the REST
+nonce (`403 ohmylms_invitation_nonce`), 15 attempts per client in 15 minutes (`429 ohmylms_invitation_rate_limited`).
+`Service::accept()` checks the account email, the active school and the issuer's permission (`422
+ohmylms_invitation_rejected` with its message). Password-setup codes are refused (`422
+ohmylms_invitation_password_setup`); they are used on the hub's own password page.
+
+## Retired legacy routes
+
+The platform school editor (`assets/src/features/schools`, the `schools` webpack entry and the hidden
+`admin.php?page=ohmylms-schools` screen) and `includes/Schools/Controller.php` were deleted. Old
+`page=ohmylms-schools` addresses redirect: `&school=N` to the school, `&class=N` to the class, `&tab=` to the
+Account Hub tab (school staff to their hub workspace). Every `ohmylms/v1/school/*` route except View as is gone:
+
+| Retired route | Replacement |
+| --- | --- |
+| `GET/POST /school/users`, `GET/POST /school/users/{id}` | `GET/POST /account-hub/users`, `GET/PUT /account-hub/users/{id}` |
+| `GET /school/me` | none (the app reads capabilities from its bootstrap) |
+| `POST /school/register` | hub sign-up form (`Student\ParentActions` → `Schools\Signup::create()`, nonce checked) |
+| `POST /school/accept` | `POST /account-hub/invitations/accept` |
+| `GET/POST /school/schools` | `GET/POST /account-hub/schools` |
+| `GET/POST /school/classes` (independent) | `GET /account-hub/classes?school_id=0`; teachers create them in the hub Teacher workspace |
+| `GET/POST /school/schools/{id}/years` | `GET /account-hub/schools/{id}` (`years`), `POST …/years` |
+| `GET/POST /school/schools/{id}/classes` | `GET/POST /account-hub/schools/{id}/classes` |
+| `GET /school/schools/{id}/roster`, `POST …/students`, `POST …/import`, `GET/POST …/invitations`, `DELETE …/invitations/{id}` | `/account-hub/schools/{id}/students`, `/managed-students`, `/roster-import`, `/invitations` |
+| `GET /school/schools/{id}/guardians`, `DELETE …/guardians/{id}` | `GET /account-hub/schools/{id}/guardians`, `DELETE …/guardians/{link}` |
+| `DELETE /school/schools/{id}/members/{id}` | `DELETE /account-hub/classes/{id}/members/{user}`; leaving a school stays in the hub School workspace |
+| `GET /school/schools/{id}/report` | `GET /account-hub/schools/{id}/report` (+ `/export`) |
+| `POST /school/schools/{id}/rollover` | `POST /account-hub/schools/{id}/rollover/preview` then `/rollover` |
+| `GET/POST /school/classes/{id}/members`, `POST …/archive` | `/account-hub/classes/{id}/members`, `/archive`, `/restore` |
+| `GET/POST /school/classes/{id}/assignments`, `GET …/submissions`, `POST /school/assignments/{id}/submissions/{attempt}`, `GET /school/courses`, `GET /school/courses/{id}/activities` | `/account-hub/classes/{id}/assignments`, `/submissions`, `/submissions/{attempt}`, `/courses`, `/courses/{course}/activities` |
+| `GET /school/children`, `GET /school/work` | none over REST: the hub Parent and Learner workspaces read `Service::children()` / `Service::assignments()` server side |
+| `GET /school/sample-preview`, `POST …/create`, `POST …/remove` | `GET/POST/DELETE /account-hub/sample-school` |
+
+Kept: `/school/view-as/options|default|start|return` (`Schools\ViewAs`): `manage_options` and the REST nonce on
+every call (`return` only inside a View as session); the View as banner uses `return`.
+
 ## Not in this slice
 
-Removal from a school, guardian listing per school, assignments, reports, gradebook, rollover, View as and
-sample preview stay in the legacy Account Hub (`#/accounthub`) and the hub School workspace. Schools cannot be
-archived (the code base has no school archive). Adding students to an independent class stays the teacher's
-invitation link. The CSV import does not place people in classes.
+Gradebook is rebuilt separately. The hub School workspace keeps its own server-rendered forms
+(`Student\SchoolActions`); its rollover still uses `Lifecycle::rollover()`, which copies classes with empty rosters
+and does not move enrolments. Adding students to an independent class stays the teacher's invitation
+link. The CSV import does not place people in classes.
 
 ## Tests
 
-`tests/php/account-hub-rest-integration.php`, `tests/php/account-hub-roster-rest-integration.php` and
-`tests/php/account-hub-users-rest-integration.php` (set `OHMYLMS_ACCOUNT_HUB_TEST=1`; see the file headers) and
-`npx vitest run --configLoader runner features/account-hub`. The users test creates tagged accounts and two tagged
+`tests/php/account-hub-rest-integration.php`, `tests/php/account-hub-roster-rest-integration.php`,
+`tests/php/account-hub-users-rest-integration.php` and `tests/php/account-hub-schools-lifecycle-rest-integration.php`
+(set `OHMYLMS_ACCOUNT_HUB_TEST=1`; see the file headers), `tests/php/sample-preview-unit.php` (no database) and
+`npx vitest run --configLoader runner features/account-hub`. The school workflow suite (196 checks) covers the
+permission matrix (anonymous, subscriber, teacher, school administrator, site administrator), guardians and
+acceptance, the report and CSV escaping, class work, rollover (enrolments moved and revoked, idempotent apply),
+archive/restore/delete (accounts kept, roster enrolments revoked) and the sample school, and that the retired
+routes are gone. The users test creates tagged accounts and two tagged
 roles, intercepts mail, and checks denied callers, paging, filters, minimal fields, creation rules, stale saves and
 that a user manager cannot edit administrators or richer roles nor create a type whose role exceeds their own.

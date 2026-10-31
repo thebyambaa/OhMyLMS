@@ -96,13 +96,16 @@ $formattedTimer = str_pad( $hours, 2, '0', STR_PAD_LEFT ) . 'h ' . str_pad( $min
 		</div>
 
 		<?php
-			$resources = $assignment->get_download_resource();
+		$delivery  = \OhMyLMS\Assignment\Delivery::state( $assignment->get_id(), get_current_user_id() );
+		$resources = \OhMyLMS\Assignment\Delivery::read_resources( $assignment->get_id() );
 
-		if ( ! empty( $resources['file'] ) ) {
+		if ( $resources ) {
 			?>
+				<h2 class="ohmylms-assignment-section-title"><?php esc_html_e( 'Resources', 'ohmylms' ); ?></h2>
 				<ul class="ohmylms-resources-list">
 				<?php
-				foreach ( $resources['file'] as $resource ) {
+				foreach ( $resources as $resource ) {
+					$is_file = 'file' === $resource['type'];
 					?>
 
 						<li>
@@ -114,9 +117,15 @@ $formattedTimer = str_pad( $hours, 2, '0', STR_PAD_LEFT ) . 'h ' . str_pad( $min
 								<span class="resource-size"><?php echo esc_html( $resource['size'] ); ?></span>
 							</div>
 
-							<a href="<?php echo esc_url( $resource['url'] ); ?>" class="resource-action" download>
-							<?php include OHMYLMS_DIR . '/assets/images/icon/download-icon.php'; ?>
-							</a>
+							<?php if ( $is_file ) : ?>
+								<a href="<?php echo esc_url( $resource['url'] ); ?>" class="resource-action" download aria-label="<?php echo esc_attr( sprintf( /* translators: %s: resource name. */ __( 'Download %s', 'ohmylms' ), $resource['name'] ) ); ?>">
+									<?php include OHMYLMS_DIR . '/assets/images/icon/download-icon.php'; ?>
+								</a>
+							<?php else : ?>
+								<a href="<?php echo esc_url( $resource['url'] ); ?>" class="resource-action" target="_blank" rel="noopener noreferrer" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: resource name. */ __( 'Open %s (new tab)', 'ohmylms' ), $resource['name'] ) ); ?>">
+									<?php include OHMYLMS_DIR . '/assets/images/icon/download-icon.php'; ?>
+								</a>
+							<?php endif; ?>
 						</li>
 						<?php
 				}
@@ -124,8 +133,36 @@ $formattedTimer = str_pad( $hours, 2, '0', STR_PAD_LEFT ) . 'h ' . str_pad( $min
 				</ul>
 				<?php
 		}
+
+		if ( $delivery['prerequisites'] ) {
+			?>
+			<section class="ohmylms-assignment-prerequisites" aria-labelledby="ohmylms-assignment-prerequisites-title">
+				<h2 id="ohmylms-assignment-prerequisites-title" class="ohmylms-assignment-section-title"><?php esc_html_e( 'Complete before you submit', 'ohmylms' ); ?></h2>
+				<ul>
+					<?php foreach ( $delivery['prerequisites'] as $item ) : ?>
+						<li class="<?php echo esc_attr( $item['completed'] ? 'is-complete' : 'is-incomplete' ); ?>">
+							<span aria-hidden="true"><?php echo $item['completed'] ? '&#10003;' : '&#9675;'; ?></span>
+							<?php if ( $item['url'] ) : ?>
+								<a href="<?php echo esc_url( $item['url'] ); ?>"><?php echo esc_html( $item['title'] ); ?></a>
+							<?php else : ?>
+								<?php echo esc_html( $item['title'] ); ?>
+							<?php endif; ?>
+							<span class="screen-reader-text"><?php echo $item['completed'] ? esc_html__( '(completed)', 'ohmylms' ) : esc_html__( '(not completed yet)', 'ohmylms' ); ?></span>
+						</li>
+					<?php endforeach; ?>
+				</ul>
+			</section>
+			<?php
+		}
+
+		if ( ! $delivery['can_submit'] ) {
+			?>
+			<p class="ohmylms-assignment-blocked" id="ohmylms-assignment-blocked" role="status"><?php echo esc_html( $delivery['message'] ); ?></p>
+			<?php
+		}
 		?>
 
+		<?php if ( $delivery['can_submit'] ) : ?>
 		<div class="ohmylms-assignment-submit" style="display: none">
 			<div class="assignment-submit-head">
 				<div class="assignment-submit-title">
@@ -256,7 +293,7 @@ $formattedTimer = str_pad( $hours, 2, '0', STR_PAD_LEFT ) . 'h ' . str_pad( $min
 				<input type="hidden" name="assignment_id" value="<?php echo esc_attr( $assignment->get_id() ); ?>">
 				<input type="hidden" name="ohmylms_assignment_id" value="<?php echo esc_attr( $assignment->get_id() ); ?>">
 				<input type="hidden" name="ohmylms_assignment_deadline" value="<?php echo esc_attr( $deadline ); ?>">
-				<input type="hidden" name="course_id" value="<?php echo esc_attr( ohmylms_get_course_by_content_id( $assignment->get_id() ) ); ?>">
+				<input type="hidden" name="course_id" value="<?php echo esc_attr( $delivery['course_id'] ); ?>">
 
 				<div class="ohmylms-form-group submission-submit">
 					<p class="assignment-submit-alert">
@@ -274,6 +311,9 @@ $formattedTimer = str_pad( $hours, 2, '0', STR_PAD_LEFT ) . 'h ' . str_pad( $min
 			</form>
 
 		</div>
+		<?php endif; ?>
+
+		<?php ohmylms_get_template( 'single-lesson/assignment-submissions.php', array( 'assignment' => $assignment ) ); ?>
 
 	</div>
 

@@ -20,6 +20,8 @@ export interface School {
 	class_count: number;
 	student_count: number;
 	teacher_count: number;
+	/** The removable sample school. */
+	sample: boolean;
 	version: string;
 }
 
@@ -224,4 +226,238 @@ export interface NewAccountInput extends AccountInput {
 	type: AccountType;
 	username: string;
 	send_email: boolean;
+}
+
+/** Sub-screens of a school (`?panel=` on the school route). */
+export const SCHOOL_PANELS = [
+	'details',
+	'guardians',
+	'report',
+	'rollover',
+] as const;
+
+export type SchoolPanel = ( typeof SCHOOL_PANELS )[ number ];
+
+/** What deleting a school would remove, counted now. */
+export interface RemovalImpact {
+	classes: number;
+	academic_years: number;
+	students: number;
+	teachers: number;
+	school_admins: number;
+	class_memberships: number;
+	teacher_links: number;
+	guardian_links: number;
+	invitations: number;
+	assignments: number;
+	course_links: number;
+	roster_enrolments: number;
+	managed_accounts: number;
+}
+
+export interface SchoolRemoval {
+	id: number;
+	name: string;
+	status: string;
+	can_delete: boolean;
+	/** The text to type to confirm the deletion (the school name). */
+	confirm: string;
+	impact: RemovalImpact;
+}
+
+export type GuardianStatusFilter = 'all' | 'active' | 'pending';
+
+/** An active guardian link or an open guardian invitation. */
+export interface GuardianRow {
+	kind: 'link' | 'invitation';
+	id: number;
+	status: 'active' | 'pending';
+	student: PersonRef;
+	parent: PersonRef | null;
+	linked_at: string | null;
+	expires_at: string | null;
+	email_hint: string | null;
+}
+
+/** Invite a guardian: an existing parent account or an email address. */
+export type GuardianInviteInput =
+	| { student_id: number; parent_id: number; send_email: boolean }
+	| { student_id: number; email: string; send_email: boolean };
+
+export interface ReportFigures {
+	learners: number;
+	active_learners: number;
+	enrolled: number;
+	completed: number;
+	completion: number | null;
+}
+
+export interface ReportClass extends ReportFigures {
+	id: number;
+	name: string;
+	grade: string;
+	teachers: number;
+	assigned: number;
+	assigned_completed: number;
+}
+
+export interface ReportSkill {
+	id: number;
+	name: string;
+	code: string;
+	assessed: number;
+	average: number;
+	below: number;
+}
+
+export type ReportPeriod = 7 | 30 | 90;
+
+export interface SchoolReport {
+	school: { id: number; name: string; status: string };
+	period: { days: ReportPeriod; start: string; end: string };
+	summary: ReportFigures & {
+		classes: number;
+		archived_classes: number;
+		assigned: number;
+		assigned_completed: number;
+	};
+	classes: ReportClass[];
+	more_classes: number;
+	mastery: {
+		skills: ReportSkill[];
+		average: number | null;
+		assessed: number;
+	};
+	generated_at: string;
+}
+
+export interface ReportExport {
+	filename: string;
+	content_type: string;
+	csv: string;
+}
+
+/** One grade mapping row; an empty `to` means the class leaves (graduates). */
+export interface GradeMapping {
+	from: string;
+	to: string;
+}
+
+export interface RolloverInput {
+	from_year_id: number;
+	to_year_id: number;
+	grade_map: GradeMapping[];
+	copy_teachers: boolean;
+}
+
+export interface RolloverClass {
+	class_id: number;
+	name: string;
+	grade: string;
+	action: 'promote' | 'leave';
+	students: number;
+	teachers: number;
+	enrolments: number;
+	links: number;
+	target: {
+		id: number | null;
+		name: string;
+		grade: string;
+		exists: boolean;
+	} | null;
+}
+
+export interface RolloverTotals {
+	classes: number;
+	promoted_classes: number;
+	leaving_classes: number;
+	classes_created: number;
+	students_promoted: number;
+	students_leaving: number;
+	teachers_copied: number;
+	enrolments_moved: number;
+	enrolments_revoked: number;
+	course_links: number;
+}
+
+export interface YearRef {
+	id: number;
+	label: string;
+	status: string;
+}
+
+export interface RolloverPlan {
+	from: YearRef;
+	to: YearRef;
+	classes: RolloverClass[];
+	totals: RolloverTotals;
+	review: string;
+}
+
+export interface RolloverResult {
+	from: YearRef;
+	to: YearRef;
+	classes: {
+		source_id: number;
+		target_id: number | null;
+		action: 'promote' | 'leave';
+	}[];
+	totals: RolloverTotals;
+	already_applied: boolean;
+}
+
+export interface SampleSchool {
+	exists: boolean;
+	complete: boolean;
+	school_id: number;
+	classes: { key: string; id: number; name: string }[];
+	people: { key: string; id: number; display_name: string; role: string }[];
+	removal: {
+		allowed: boolean;
+		remove: string[];
+		skip: string[];
+		blockers: string[];
+	};
+}
+
+/** A course or activity to assign. */
+export interface TitledRef {
+	id: number;
+	title: string;
+}
+
+/** Work distributed to a class. */
+export interface ClassWork {
+	id: number;
+	title: string;
+	course_id: number;
+	course_title: string;
+	content_id: number;
+	content_title: string | null;
+	due_at: string | null;
+	created_at: string | null;
+	recipients: number;
+	completed: number;
+}
+
+export interface ClassWorkInput {
+	course_id: number;
+	content_id: number;
+	title: string;
+	/** `YYYY-MM-DDTHH:MM` in the school's time zone, or empty. */
+	due_at: string;
+	prior_completion: boolean;
+}
+
+export interface Submission {
+	id: number;
+	assignment_id: number;
+	title: string;
+	student_name: string;
+	content: string;
+	score: number | null;
+	status: string;
+	note: string;
+	total_points: number;
+	file_url: string | null;
 }

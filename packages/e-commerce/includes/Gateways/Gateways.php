@@ -64,8 +64,9 @@ class Gateways extends SettingsPage {
 
 		$load_gateways = apply_filters( 'ohmylms_payment_gateways', $load_gateways );
 		// Get sort order option.
-		$ordering  = (array) get_option( 'ohmylms_gateway_order' );
-		$order_end = 999;
+		$ordering               = (array) get_option( 'ohmylms_gateway_order' );
+		$order_end              = 999;
+		$this->payment_gateways = array();
 
 		foreach ( $load_gateways as $gateway ) {
 
@@ -147,18 +148,16 @@ class Gateways extends SettingsPage {
 	 * Save options in admin.
 	 */
 	public function process_admin_options() {
-		$gateway_order = isset( $_POST['gateway_order'] ) ? sanitize_text_field( wp_unslash( $_POST['gateway_order'] ) ) : ''; // WPCS: input var ok, CSRF ok.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The classic settings page verifies its nonce before saving.
+		$gateway_order = isset( $_POST['gateway_order'] ) && is_array( $_POST['gateway_order'] ) ? array_map( 'sanitize_key', wp_unslash( $_POST['gateway_order'] ) ) : array();
+		$known         = array_keys( $this->get_payment_gateways() );
 		$order         = array();
-
-		if ( is_array( $gateway_order ) && count( $gateway_order ) > 0 ) {
-			$loop = 0;
-			foreach ( $gateway_order as $gateway_id ) {
-				$order[ esc_attr( $gateway_id ) ] = $loop;
-				++$loop;
-			}
+		foreach ( array_values( array_intersect( $gateway_order, $known ) ) as $position => $gateway_id ) {
+			$order[ $gateway_id ] = $position;
 		}
-
-		update_option( 'coderex_ecommerce_gateway_order', $order );
+		if ( $order ) {
+			update_option( 'ohmylms_gateway_order', $order );
+		}
 	}
 
 

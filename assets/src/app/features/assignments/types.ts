@@ -61,8 +61,59 @@ export interface Assignment extends AssignmentSettings {
 	can_delete: boolean;
 }
 
+/** A downloadable file (media library attachment) or a link. File URL and size come from the library. */
+export interface Resource {
+	type: 'file' | 'link';
+	/** Attachment ID of a file; 0 for a link. */
+	attachment_id: number;
+	name: string;
+	url: string;
+	size: string;
+}
+
+/** Kind of content a learner completes before submitting. */
+export type PrerequisiteType = 'lesson' | 'quiz' | 'assignment' | 'other';
+
+/** Content required before submitting. `status` is the post status, or `missing` when it was removed. */
+export interface PrerequisiteItem {
+	id: number;
+	title: string;
+	type: PrerequisiteType;
+	status: string;
+}
+
+/** Prerequisites as read. */
+export interface Prerequisites {
+	enable: boolean;
+	items: PrerequisiteItem[];
+}
+
+/** When the assignment opens. */
+export type DripType =
+	| 'enrollment-from-x-days'
+	| 'specific-date'
+	| 'cohort-start'
+	| 'cohort-from-x-days';
+
+/** Release schedule. `date` is `YYYY-MM-DD` and `time` `HH:MM`, both site time; empty when unset. */
+export interface Drip {
+	enable: boolean;
+	type: DripType;
+	days: number;
+	date: string;
+	time: string;
+}
+
+/** Resources, prerequisites, release and comments of an assignment (edit context). */
+export interface DeliverySettings {
+	resources: Resource[];
+	prerequisites: Prerequisites;
+	drip: Drip;
+	comments_enabled: boolean;
+}
+
 /** An assignment as edited (`context=edit`). */
-export interface AssignmentDetail extends Assignment {
+export interface AssignmentDetail extends Assignment, DeliverySettings {
 	instructions: string;
 	placements: Placement[];
 }
@@ -72,12 +123,51 @@ export interface AssignmentInput extends AssignmentSettings {
 	title: string;
 	instructions: string;
 	status: WritableStatus;
+	resources: Resource[];
+	prerequisites: { enable: boolean; ids: number[] };
+	drip: Drip;
+	comments_enabled: boolean;
 	/** The `updated_at` the edit started from. */
 	base_modified: string;
 }
 
+/** A choice offered by the prerequisite picker. */
+export interface PrerequisiteOption {
+	id: number;
+	title: string;
+	type: PrerequisiteType;
+	status: string;
+}
+
+/** A page of prerequisite choices; `scope` says whether they come from the assignment's courses. */
+export interface PrerequisiteOptions {
+	items: PrerequisiteOption[];
+	total: number;
+	pages: number;
+	scope: 'course' | 'library';
+}
+
+/** One comment of a submission thread. */
+export interface SubmissionComment {
+	id: number;
+	submission_id: number;
+	author: { id: number; display_name: string };
+	role: 'instructor' | 'learner';
+	body: string;
+	created_at: string;
+	can_delete: boolean;
+}
+
+/** A submission thread as the reader sees it. */
+export interface CommentThread {
+	items: SubmissionComment[];
+	total: number;
+	role: 'instructor' | 'learner';
+	comments_enabled: boolean;
+}
+
 /** Editor state. Numbers stay strings until the form is validated. */
-export interface FormState {
+export interface FormState extends DeliverySettings {
 	title: string;
 	instructions: string;
 	status: WritableStatus;

@@ -104,6 +104,42 @@ What the front end reads: a course is sold for points only when the Gamification
 not opted out (`_purchase_point`, `_reward_disabled`, edited in the course settings, not here). Both flags are
 booleans in the schema; unknown fields (including the legacy `enable`/`rules` shape) answer 400.
 
+## Point purchases
+
+Buying courses with bonus points (`includes/Engagement/PointPurchase.php`, `includes/Rest/V1/PointPurchasesController.php`;
+test `tests/php/point-purchase-integration.php`, `OHMYLMS_POINTS_TEST=1`, 59 checks). Eligibility is unchanged: the
+flags above, a published course with `_purchase_point` > 0 and not `_reward_disabled`, a learner who is not blocked
+and holds no active or pending enrolment in it, and (cohort-based courses) an open cohort with a seat.
+
+- **Purchase** (one transaction under the learner's points lock): re-check the balance, create a zero-total order
+  paid with `points` (`_purchased_by = point`, `_purchased_point`, one line item per course), insert one debit row
+  (`reason = purchase_course`, `content_id` = order), create a pending enrolment per course through
+  `Student\Enrollments::create()` with source `purchase/order`; commit; then complete the order, which activates
+  the enrolments through the existing `ohmylms_payment_completed` listener (`ohmylms_after_enrolled_student`
+  fires). Any failure rolls back everything (no order, no debit); a failure to complete after the commit restores
+  the points and marks the order failed. Hook `ohmylms_point_purchase_completed( $order_id, $user_id, $course_ids, $points )`.
+  The checkout's point carts use the same service (`Checkout::process_point_checkout()`); the old inline debit is gone.
+  `EnrolmentMirror` now records points orders as `purchase`, not `self`, although their total is 0.
+- **Refund** (administrators): restores the spent points once (`purchase_course_refund` row), cancels the order's
+  enrolments and sets the order `refunded`, in one transaction under a per-order lock. A points order is refused by
+  the money refund route. Hook `ohmylms_point_purchase_refunded( $order_id, $user_id, $points )`. The order detail
+  (`GET ohmylms-commerce/v1/orders/{id}`) has `points: {points, refunded, refunded_at, refundable}` or `null`, and the
+  order screen offers **Refund points** with a reason and a confirmation.
+
+| Method | Path | Who | Purpose |
+| --- | --- | --- | --- |
+| GET | `/point-purchases/quote?course_ids[]=` | logged-in learner | `{course_ids, prices, points, balance, affordable}` |
+| POST | `/point-purchases` `{course_ids}` | logged-in learner | 201 `{order_id, course_ids, points, balance, redirect}` |
+| POST | `/point-purchases/{order_id}/refund` `{reason, confirm: true}` | `manage_options` | Summary plus the new `balance` |
+| GET / PATCH | `/point-purchases/courses/{id}` `{point_price 0-100000, points_enabled}` | `manage_options` + `edit_post` | The course's point price (the Settings tab of the course editor, "Bonus points price") |
+
+Errors: 401 `ohmylms_points_not_logged_in`; 400 `ohmylms_points_invalid_courses` (1-20 distinct ids),
+`ohmylms_points_confirm_required`; 403 `ohmylms_points_student_blocked`, `ohmylms_refund_cannot_create`; 409
+`ohmylms_points_purchase_disabled`, `_course_not_for_points`, `_already_enrolled`, `_insufficient` (with `points`,
+`balance`), `_busy`, `_not_point_order`, `_already_refunded`, `_refund_in_progress`, `ohmylms_refund_order_status`,
+`ohmylms_cohort_enrolment_closed`; 422 `ohmylms_points_refund_reason`; 500 `ohmylms_points_purchase_failed`,
+`ohmylms_refund_failed`.
+
 | Severity | Finding (legacy reward screen) |
 | --- | --- |
 | Medium | **The legacy screen no longer worked.** It read and posted `engagement/settings/reward` with `{ enable, rules: [ { slug: "purchase_course", value } ] }`; contract v1 removed that group, so it showed the defaults and every save failed with a generic "Something went wrong". |

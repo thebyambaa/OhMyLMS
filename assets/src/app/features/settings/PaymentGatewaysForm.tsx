@@ -1,5 +1,11 @@
 import { Button, Notice, Spinner } from '@wordpress/components';
-import { useCallback, useEffect, useState } from '@wordpress/element';
+import {
+	lazy,
+	Suspense,
+	useCallback,
+	useEffect,
+	useState,
+} from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { normalizeApiError } from '../../lib/api';
 import {
@@ -28,6 +34,12 @@ import {
 import { describeFailure } from './model';
 import type { FailureView } from './types';
 import { useResource } from './useResource';
+
+const CheckoutPanel = lazy( () =>
+	import(
+		/* webpackChunkName: "admin-app-settings-checkout" */ './CheckoutPanel'
+	).then( ( module ) => ( { default: module.CheckoutPanel } ) )
+);
 
 /**
  * Payment gateways tab: one form per registered gateway. Credentials are write-only; the server
@@ -86,6 +98,10 @@ export function PaymentGatewaysForm( {
 			current[ id ] === value ? current : { ...current, [ id ]: value }
 		);
 	}, [] );
+	const reportCheckout = useCallback(
+		( value: boolean ) => report( 'checkout:settings', value ),
+		[ report ]
+	);
 
 	if ( failure ) {
 		return (
@@ -111,6 +127,9 @@ export function PaymentGatewaysForm( {
 	}
 	return (
 		<>
+			<Suspense fallback={ null }>
+				<CheckoutPanel active={ active } onDirty={ reportCheckout } />
+			</Suspense>
 			<h3>{ __( 'Payment gateways', 'ohmylms' ) }</h3>
 			<p>
 				{ __(

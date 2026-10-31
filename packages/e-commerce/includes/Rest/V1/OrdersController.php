@@ -689,6 +689,7 @@ class OrdersController extends RestController {
 				'remaining_refundable' => $this->money( max( 0, (float) $meta( '_order_total' ) - $refund['total'] ) ),
 				'related_orders'       => $this->related_of( $order ),
 				'allowed_statuses'     => self::allowed_transitions( $status ),
+				'points'               => class_exists( '\OhMyLMS\Engagement\PointPurchase' ) ? \OhMyLMS\Engagement\PointPurchase::summary( $item->ID ) : null,
 			)
 		);
 		return $this->wrap( $data, $item, $request );
@@ -967,6 +968,12 @@ class OrdersController extends RestController {
 					'description' => __( 'Statuses this order may be changed to (detail only).', 'ohmylms' ),
 					'type'        => 'array',
 					'items'       => array( 'type' => 'string' ),
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
+				'points'               => array(
+					'description' => __( 'Bonus points spent on the order and whether they were refunded; null for orders not paid with points (detail only).', 'ohmylms' ),
+					'type'        => array( 'object', 'null' ),
 					'context'     => array( 'view', 'edit' ),
 					'readonly'    => true,
 				),

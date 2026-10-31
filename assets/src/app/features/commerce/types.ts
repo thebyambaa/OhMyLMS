@@ -84,6 +84,16 @@ export interface OrderDetail extends OrderSummary {
 	remaining_refundable: string;
 	related_orders: RelatedOrder[];
 	allowed_statuses: OrderStatus[];
+	/** Bonus points paid for the order; `null` when it was not paid with points. */
+	points: PointSummary | null;
+}
+
+/** Points spent on a points order (`OrderDetail.points`). */
+export interface PointSummary {
+	points: number;
+	refunded: boolean;
+	refunded_at: string | null;
+	refundable: boolean;
 }
 
 export interface OrderNote {

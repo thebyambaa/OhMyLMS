@@ -26,8 +26,23 @@
 			"prerequisites",
 			"cover_image_id",
 			"video_id",
-			"audio_id"
+			"audio_id",
+			"video"
 		],
+		"readOnlyFields": [ "media_urls", "inline_questions", "video.poster_url" ],
+		"videoFields": [
+			"provider",
+			"duration",
+			"completion",
+			"watch_percent",
+			"poster_id",
+			"autoplay",
+			"loop",
+			"controls",
+			"aspect_ratio"
+		],
+		"videoProviders": [ "self-hosted", "youtube", "vimeo", "bunny" ],
+		"videoCompletion": [ "none", "watch_percent" ],
 		"dripTypes": [
 			"enrollment-from-x-days",
 			"specific-date",
@@ -45,6 +60,19 @@
 		"writeFields": [ "revision", "confirmed" ],
 		"confirmed": true,
 		"changesCourseProgram": false
+	},
+	"objectives": {
+		"path": "/authoring/lessons/{id}/objectives",
+		"methods": [ "GET", "PUT" ],
+		"writeFields": [ "revision", "skill_ids", "mappings" ],
+		"relations": [ "teaches", "practices", "assesses" ],
+		"conflictStatus": 409
+	},
+	"objectiveOptions": {
+		"path": "/authoring/lessons/{id}/objective-options",
+		"methods": [ "GET" ],
+		"types": [ "syllabuses", "objectives", "skills" ],
+		"pageSize": 20
 	},
 	"permission": "manage_options and registered lesson capability",
 	"documentation": "docs/api/lesson-authoring.md"

@@ -18,10 +18,31 @@ defined( 'ABSPATH' ) || exit();
  */
 do_action( 'ohmylms_before_checkout_form_start', $checkout );
 
-// if ( !$checkout->is_guest_checkout_enabled() || $checkout->is_registration_enabled() ||  ! is_user_logged_in() ) {
-// echo esc_html( apply_filters( 'ohmylms_checkout_must_be_logged_in_message', __( 'You must be logged in to checkout.', 'ohmylms' ) ) );
-// return;
-// }.
+if ( ! is_user_logged_in() && ! $checkout->is_allow_purchase_without_login() ) {
+	?>
+	<div class="ohmylms-checkout-form-outer ohmylms-checkout-login-required">
+		<div class="ohmylms-container">
+			<p class="ohmylms-notice ohmylms-notice-info">
+				<?php echo esc_html( apply_filters( 'ohmylms_checkout_must_be_logged_in_message', __( 'You must be logged in to checkout.', 'ohmylms' ) ) ); ?>
+			</p>
+			<?php
+			if ( $checkout->is_login_enabled() ) {
+				ohmylms_login_form(
+					array(
+						'message'     => '',
+						'redirect_to' => ohmylms_get_checkout_url(),
+						'hidden'      => false,
+					)
+				);
+			} else {
+				printf( '<p><a class="ohmylms-button" href="%1$s">%2$s</a></p>', esc_url( wp_login_url( ohmylms_get_checkout_url() ) ), esc_html__( 'Log in', 'ohmylms' ) );
+			}
+			?>
+		</div>
+	</div>
+	<?php
+	return;
+}
 ?>
 <div class="ohmylms-checkout-form-outer">
 	<div class="ohmylms-container">

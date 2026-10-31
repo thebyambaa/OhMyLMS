@@ -1,6 +1,7 @@
 import type {
 	Assignment,
 	AssignmentDetail,
+	CommentThread,
 	Submission,
 	SubmissionDetail,
 } from './types';
@@ -44,6 +45,46 @@ export const assignment: AssignmentDetail = {
 			source: 'chapter',
 		},
 	],
+	resources: [
+		{
+			type: 'file',
+			attachment_id: 77,
+			name: 'Brief',
+			url: 'https://example.test/wp-content/uploads/brief.pdf',
+			size: '20 KB',
+		},
+	],
+	prerequisites: {
+		enable: true,
+		items: [
+			{ id: 41, title: 'Map reading', type: 'lesson', status: 'publish' },
+		],
+	},
+	drip: {
+		enable: false,
+		type: 'enrollment-from-x-days',
+		days: 0,
+		date: '',
+		time: '',
+	},
+	comments_enabled: true,
+};
+
+export const thread: CommentThread = {
+	items: [
+		{
+			id: 900,
+			submission_id: 501,
+			author: { id: 9, display_name: 'Alex Learner' },
+			role: 'learner',
+			body: 'Is the map required?',
+			created_at: '2026-10-30T10:05:00Z',
+			can_delete: true,
+		},
+	],
+	total: 1,
+	role: 'instructor',
+	comments_enabled: true,
 };
 
 export const pending: Submission = {

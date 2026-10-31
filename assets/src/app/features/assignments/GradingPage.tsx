@@ -19,6 +19,7 @@ import {
 	parseScore,
 	submissionLabel,
 } from './model';
+import SubmissionComments from './SubmissionComments';
 import type { SubmissionDetail } from './types';
 
 function routeId( value: string | undefined ): number | null {
@@ -259,6 +260,10 @@ export default function GradingPage() {
 						: __( 'Save grade', 'ohmylms' ) }
 				</Button>
 			</form>
+			<SubmissionComments
+				assignmentId={ current.assignment_id }
+				submissionId={ current.id }
+			/>
 			{ guard.pendingPath && (
 				<Modal
 					title={ __( 'Discard unsaved changes?', 'ohmylms' ) }

@@ -13,6 +13,7 @@ import {
 	order,
 	otherOrder,
 	pendingDetail,
+	pointsDetail,
 } from './fixtures';
 import { coupons, orderDetail, orders } from './index';
 
@@ -22,6 +23,7 @@ vi.mock( './api', () => ( {
 	getOrder: vi.fn(),
 	changeOrderStatus: vi.fn(),
 	trashOrder: vi.fn(),
+	refundPoints: vi.fn(),
 	listNotes: vi.fn(),
 	addNote: vi.fn(),
 	listCoupons: vi.fn(),
@@ -37,6 +39,7 @@ const as = {
 	getOrder: vi.mocked( api.getOrder ),
 	changeOrderStatus: vi.mocked( api.changeOrderStatus ),
 	trashOrder: vi.mocked( api.trashOrder ),
+	refundPoints: vi.mocked( api.refundPoints ),
 	listNotes: vi.mocked( api.listNotes ),
 	addNote: vi.mocked( api.addNote ),
 	listCoupons: vi.mocked( api.listCoupons ),
@@ -282,6 +285,64 @@ describe( 'order details', () => {
 		).toBeInTheDocument();
 		expect(
 			screen.queryByRole( 'button', { name: /refund/i } )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'refunds a points order after confirmation with a reason', async () => {
+		const user = userEvent.setup();
+		as.getOrder.mockResolvedValue( pointsDetail );
+		as.refundPoints.mockResolvedValue( {
+			points: 80,
+			refunded: true,
+			refunded_at: '2026-10-31T10:00:00',
+			refundable: false,
+			balance: 120,
+		} );
+		show( '/orders/312' );
+		expect(
+			await screen.findByText( 'Paid with 80 bonus points.' )
+		).toBeInTheDocument();
+		await user.click(
+			screen.getByRole( 'button', { name: 'Refund points' } )
+		);
+		const dialog = await screen.findByRole( 'dialog', {
+			name: 'Refund points',
+		} );
+		const confirm = within( dialog ).getByRole( 'button', {
+			name: 'Refund points',
+		} );
+		expect( confirm ).toHaveAttribute( 'aria-disabled', 'true' );
+		await user.type(
+			within( dialog ).getByLabelText( 'Reason' ),
+			'Changed mind'
+		);
+		as.getOrder.mockResolvedValue( {
+			...pointsDetail,
+			status: 'refunded',
+			points: {
+				points: 80,
+				refunded: true,
+				refunded_at: '2026-10-31T10:00:00',
+				refundable: false,
+			},
+		} );
+		await user.click( confirm );
+		expect( as.refundPoints ).toHaveBeenCalledWith(
+			312,
+			'Changed mind',
+			expect.any( AbortSignal )
+		);
+		expect(
+			await screen.findByText(
+				'Points restored. The learner now has 120 points.',
+				noticeOptions
+			)
+		).toBeInTheDocument();
+		expect(
+			await screen.findByText( /The points were refunded on/ )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: 'Refund points' } )
 		).not.toBeInTheDocument();
 	} );
 

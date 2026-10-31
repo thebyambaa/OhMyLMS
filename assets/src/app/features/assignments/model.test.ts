@@ -4,19 +4,25 @@ import {
 	pending,
 	pendingDetail,
 	summary,
+	thread,
 } from './fixtures';
 import {
 	formFromAssignment,
 	formatSize,
 	isDirty,
+	isWebUrl,
 	parseAssignment,
 	parseAssignmentDetail,
+	parseComment,
+	parsePrerequisiteOptions,
 	parseScore,
 	parseSubmission,
 	parseSubmissionDetail,
+	parseThread,
 	serverFieldError,
 	submissionLabel,
 	toInput,
+	validateDelivery,
 	validateForm,
 } from './model';
 import { ApiError } from '../../lib/api';
@@ -94,8 +100,117 @@ describe( 'assignment form', () => {
 			max_files: 5,
 			file_size_limit_enabled: true,
 			max_file_size_mb: 5,
+			resources: [
+				{
+					type: 'file',
+					attachment_id: 77,
+					name: 'Brief',
+					url: 'https://example.test/wp-content/uploads/brief.pdf',
+					size: '20 KB',
+				},
+			],
+			prerequisites: { enable: true, ids: [ 41 ] },
+			drip: {
+				enable: false,
+				type: 'enrollment-from-x-days',
+				days: 0,
+				date: '',
+				time: '',
+			},
+			comments_enabled: true,
 			base_modified: '2026-10-30T09:20:00Z',
 		} );
+		expect(
+			isDirty(
+				{
+					...form,
+					prerequisites: { ...form.prerequisites, items: [] },
+				},
+				form
+			)
+		).toBe( true );
+	} );
+	it( 'validates delivery settings with the server rules', () => {
+		const link = {
+			type: 'link' as const,
+			attachment_id: 0,
+			name: 'Atlas',
+			url: 'https://example.org',
+			size: '',
+		};
+		expect( validateDelivery( { ...form, resources: [ link ] } ) ).toEqual(
+			{}
+		);
+		expect(
+			validateDelivery( {
+				...form,
+				resources: [ { ...link, url: 'ftp://example.org' } ],
+			} ).resources
+		).toMatch( /full address/ );
+		expect(
+			validateDelivery( {
+				...form,
+				resources: [ { ...link, name: ' ' } ],
+			} ).resources
+		).toMatch( /name/ );
+		expect(
+			validateDelivery( {
+				...form,
+				resources: Array.from( { length: 21 }, () => link ),
+			} ).resources
+		).toMatch( /at most 20/ );
+		const release = { ...form.drip, enable: true };
+		expect(
+			validateDelivery( {
+				...form,
+				drip: { ...release, type: 'specific-date' },
+			} ).drip
+		).toMatch( /date/ );
+		expect(
+			validateDelivery( {
+				...form,
+				drip: { ...release, type: 'specific-date', date: '2026-02-30' },
+			} ).drip
+		).toBe( 'Enter a real date.' );
+		expect(
+			validateDelivery( {
+				...form,
+				drip: {
+					...release,
+					type: 'specific-date',
+					date: '2026-02-28',
+					time: '24:00',
+				},
+			} ).drip
+		).toMatch( /time/ );
+		expect(
+			validateDelivery( { ...form, drip: { ...release, days: 3651 } } )
+				.drip
+		).toMatch( /0 to 3650/ );
+		expect( isWebUrl( 'javascript:alert(1)' ) ).toBe( false );
+		expect( isWebUrl( 'https://example.org/a b' ) ).toBe( true );
+	} );
+	it( 'parses threads and prerequisite choices strictly', () => {
+		expect( parseThread( thread ) ).toEqual( thread );
+		expect( () => parseThread( { ...thread, role: 'guest' } ) ).toThrow(
+			invalid
+		);
+		expect( () =>
+			parseComment( { ...thread.items[ 0 ], body: 5 } )
+		).toThrow( invalid );
+		expect(
+			parsePrerequisiteOptions( {
+				items: [
+					{ id: 4, title: 'Quiz', type: 'quiz', status: 'draft' },
+				],
+				total: 1,
+				pages: 1,
+				scope: 'library',
+			} ).scope
+		).toBe( 'library' );
+		expect( () =>
+			parseAssignmentDetail( { ...assignment, drip: { enable: true } } )
+		).toThrow( invalid );
 	} );
 	it( 'validates with the server limits', () => {
 		expect( validateForm( form ) ).toEqual( {} );

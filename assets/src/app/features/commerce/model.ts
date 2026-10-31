@@ -15,6 +15,7 @@ import type {
 	OrderQuery,
 	OrderStatus,
 	OrderSummary,
+	PointSummary,
 	RefundRecord,
 	RelatedOrder,
 	StatusCounts,
@@ -288,7 +289,44 @@ export function parseOrderDetail( value: unknown ): OrderDetail {
 		allowed_statuses: list( item.allowed_statuses, ( status ) =>
 			oneOf( status, ORDER_STATUSES )
 		),
+		points: parsePointSummary( item.points ?? null ),
 	};
+}
+
+/**
+ * Bonus points spent on an order, or `null` for orders not paid with points.
+ *
+ * @param value Decoded JSON.
+ * @return Summary.
+ */
+export function parsePointSummary( value: unknown ): PointSummary | null {
+	if ( null === value ) {
+		return null;
+	}
+	const item = record( value );
+	return {
+		points: count( item.points ),
+		refunded: flag( item.refunded ),
+		refunded_at: nullableText( item.refunded_at ),
+		refundable: flag( item.refundable ),
+	};
+}
+
+/**
+ * Result of a points refund.
+ *
+ * @param value Decoded JSON.
+ * @return Summary and the learner's new balance.
+ */
+export function parsePointRefund(
+	value: unknown
+): PointSummary & { balance: number } {
+	const item = record( value );
+	const summary = parsePointSummary( item );
+	if ( ! summary ) {
+		throw invalidResponse();
+	}
+	return { ...summary, balance: Number( item.balance ) };
 }
 
 export function parseNote( value: unknown ): OrderNote {

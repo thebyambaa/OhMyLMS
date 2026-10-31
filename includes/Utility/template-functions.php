@@ -1221,9 +1221,7 @@ if ( ! function_exists( 'ohmylms_checkout_form_contact_title' ) ) {
 				echo esc_html__( 'Contact', 'ohmylms' );
 			echo '</h2>';
 
-		if ( is_user_logged_in() ) {
-
-		} else {
+		if ( ! is_user_logged_in() && \OhMyLMS\Commerce\ecommerce()->checkout()->is_login_enabled() ) {
 			?>
 					<div class="ohmylms-form-login-toggle">
 					<?php echo esc_html__( 'Already have an account?', 'ohmylms' ); ?>

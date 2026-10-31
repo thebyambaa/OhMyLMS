@@ -15,6 +15,11 @@ vi.mock( './api', () => ( {
 	saveLesson: vi.fn(),
 	publishLesson: vi.fn(),
 	listLessons: vi.fn(),
+	readObjectives: vi.fn(),
+	saveObjectives: vi.fn(),
+	listSyllabuses: vi.fn(),
+	searchObjectives: vi.fn(),
+	searchSkills: vi.fn(),
 } ) );
 vi.mock( './LessonBlocks', () => ( {
 	default: ( {
@@ -34,7 +39,16 @@ vi.mock( './LessonBlocks', () => ( {
 		/>
 	),
 } ) );
-beforeEach( () => vi.resetAllMocks() );
+beforeEach( () => {
+	vi.resetAllMocks();
+	vi.mocked( api.readObjectives ).mockResolvedValue( {
+		id: 12,
+		revision: 'objectives-token',
+		skills: [],
+		mappings: [],
+		course_targets: [],
+	} );
+} );
 function open( initial: Lesson = lesson, registry = createRegistry() ) {
 	const reload = vi.fn();
 	return {
@@ -413,4 +427,102 @@ describe( 'extension lesson types', () => {
 			'Old description'
 		);
 	} );
+} );
+it( 'edits the video settings and completion rule of a video lesson', async () => {
+	const user = userEvent.setup();
+	open( {
+		...lesson,
+		type: 'video',
+		external_url: 'https://youtu.be/abcdefghijk',
+	} );
+	await user.selectOptions(
+		screen.getByRole( 'combobox', { name: 'Provider' } ),
+		'youtube'
+	);
+	await user.tripleClick(
+		screen.getByRole( 'spinbutton', { name: 'Minutes' } )
+	);
+	await user.keyboard( '12' );
+	await user.tripleClick(
+		screen.getByRole( 'spinbutton', { name: 'Seconds' } )
+	);
+	await user.keyboard( '30' );
+	expect( screen.getByText( 'Duration (12:30)' ) ).toBeInTheDocument();
+	await user.selectOptions(
+		screen.getByRole( 'combobox', { name: 'Completion' } ),
+		'watch_percent'
+	);
+	const share = screen.getByRole( 'spinbutton', {
+		name: 'Share to watch (%)',
+	} );
+	await user.tripleClick( share );
+	await user.keyboard( '75' );
+	await user.click(
+		screen.getByRole( 'checkbox', { name: 'Show player controls' } )
+	);
+	const payload = await savedPayload( user );
+	expect( payload.video ).toEqual( {
+		...lesson.video,
+		provider: 'youtube',
+		duration: 750,
+		completion: 'watch_percent',
+		watch_percent: 75,
+		controls: false,
+	} );
+} );
+it( 'lists, reorders, removes and inserts inline questions in the lesson content', async () => {
+	const user = userEvent.setup();
+	const first =
+		'<!-- wp:ohmylms/shared-multiple-choice {"questionId":5,"uuid":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"} /-->';
+	const second =
+		'<!-- wp:ohmylms/shared-multiple-choice {"questionId":6,"uuid":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"} /-->';
+	const content = `<!-- wp:paragraph --><p>Intro</p><!-- /wp:paragraph -->\n\n${ first }\n\n${ second }\n`;
+	open( {
+		...lesson,
+		content,
+		inline_questions: [
+			{
+				position: 1,
+				kind: 'block',
+				question_id: 5,
+				uuid: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+				title: 'Slope check',
+				status: 'approved',
+			},
+			{
+				position: 2,
+				kind: 'block',
+				question_id: 6,
+				uuid: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+				title: 'Intercept check',
+				status: 'not_approved',
+			},
+		],
+	} );
+	const table = screen.getByRole( 'table', {
+		name: 'Inline questions in this lesson',
+	} );
+	expect(
+		within( table ).getByRole( 'link', { name: 'Slope check' } )
+	).toHaveAttribute( 'href', '/content-hub/question-bank/5' );
+	expect( within( table ).getByText( /Not approved/ ) ).toBeInTheDocument();
+	expect(
+		screen.getByRole( 'button', { name: 'Move Slope check up' } )
+	).toBeDisabled();
+	await user.click(
+		screen.getByRole( 'button', { name: 'Move Slope check down' } )
+	);
+	expect( screen.getByLabelText( 'Visual block content' ) ).toHaveValue(
+		`<!-- wp:paragraph --><p>Intro</p><!-- /wp:paragraph -->\n\n${ second }\n\n${ first }\n`
+	);
+	await user.click(
+		screen.getByRole( 'button', { name: 'Remove Intercept check' } )
+	);
+	expect(
+		screen.queryByRole( 'link', { name: 'Intercept check' } )
+	).not.toBeInTheDocument();
+	const payload = await savedPayload( user );
+	expect( payload.content ).toBe(
+		`<!-- wp:paragraph --><p>Intro</p><!-- /wp:paragraph -->\n\n${ first }\n`
+	);
 } );

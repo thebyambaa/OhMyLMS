@@ -58,25 +58,28 @@ export function record( value: unknown ): Record< string, unknown > {
 	return value as Record< string, unknown >;
 }
 
-function text( value: unknown ): string {
+export function text( value: unknown ): string {
 	if ( 'string' !== typeof value ) {
 		throw invalidResponse();
 	}
 	return value;
 }
 
-function nullableText( value: unknown ): string | null {
+export function nullableText( value: unknown ): string | null {
 	return null === value ? null : text( value );
 }
 
-function list( value: unknown ): unknown[] {
+export function list( value: unknown ): unknown[] {
 	if ( ! Array.isArray( value ) ) {
 		throw invalidResponse();
 	}
 	return value;
 }
 
-function oneOf< T extends string >( value: unknown, allowed: readonly T[] ): T {
+export function oneOf< T extends string >(
+	value: unknown,
+	allowed: readonly T[]
+): T {
 	const found = allowed.find( ( item ) => item === value );
 	if ( undefined === found ) {
 		throw invalidResponse();
@@ -84,7 +87,7 @@ function oneOf< T extends string >( value: unknown, allowed: readonly T[] ): T {
 	return found;
 }
 
-function count( value: unknown ): number {
+export function count( value: unknown ): number {
 	if (
 		'number' !== typeof value ||
 		! Number.isSafeInteger( value ) ||
@@ -138,6 +141,7 @@ export function parseSchool( value: unknown ): School {
 		class_count: count( item.class_count ),
 		student_count: count( item.student_count ),
 		teacher_count: count( item.teacher_count ),
+		sample: true === item.sample,
 		version: version( item.version ),
 	};
 }

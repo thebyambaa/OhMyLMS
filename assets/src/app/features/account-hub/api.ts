@@ -13,6 +13,7 @@ import {
 	parseTeacher,
 	positiveId,
 } from './model';
+import { PER_PAGE, SEARCH_PER_PAGE } from './paging';
 import type {
 	ClassInput,
 	ClassRole,
@@ -26,11 +27,7 @@ const school = ( id: number ) => `${ BASE }/schools/${ positiveId( id ) }`;
 const classPath = ( id: number ) => `${ BASE }/classes/${ positiveId( id ) }`;
 const parent = ( id: number ) => `${ BASE }/parents/${ positiveId( id ) }`;
 
-/** Rows per page in every list. */
-export const PER_PAGE = 20;
-
-/** Rows in a roster search. */
-export const SEARCH_PER_PAGE = 10;
+export { PER_PAGE, SEARCH_PER_PAGE };
 
 /** Class status filter values. */
 export type ClassFilter = 'all' | 'active' | 'archived';

@@ -48,8 +48,10 @@ requests. These checks run on the server independently of navigation visibility.
 
 Editable fields are `title`, `content`, `type` (`text`, `video`, `audio`),
 `external_url`, boolean `preview_enable`/`enable_comments`, and `resources`. The optional
-fields `drip`, `prerequisites`, `cover_image_id`, `video_id` and `audio_id` may be sent too;
-an omitted optional field keeps its stored value.
+fields `drip`, `prerequisites`, `cover_image_id`, `video_id`, `audio_id` and `video` (see
+[Video settings](#video-settings-and-the-completion-rule)) may be sent too;
+an omitted optional field keeps its stored value. Reads also return the read-only
+`inline_questions` (see [Inline questions](#inline-questions)).
 
 | Field | Read | Write and validation | Storage |
 | --- | --- | --- | --- |
@@ -119,6 +121,62 @@ and prerequisite payloads, media library selection, and the extension lesson edi
 Browser verification exercises the installed WordPress visual editor, since DOM
 unit tests intentionally mock the canvas rather than reimplementing WordPress.
 
-Inline question insertion/editing, video player settings (`_video_settings`), lesson
-objective controls and a full learner rendering preview remain native/future work. The shared unsaved guard covers links and page
-unload, not browser hash-history navigation. The old admin menu remains in place.
+A full learner rendering preview remains future work. The shared unsaved guard covers links and page
+unload, not browser hash-history navigation.
+
+## Video settings and the completion rule
+
+The optional `video` field reads and writes the player settings of `_video_settings`:
+`{provider, duration, completion, watch_percent, poster_id, autoplay, loop, controls, aspect_ratio}`
+(read adds `poster_url`, display only). `provider` is `self-hosted`, `youtube`, `vimeo` or `bunny`
+(stored `platform`); `duration` 0–86400 seconds; `completion` `none` or `watch_percent` (stored
+`completion_rule`) with `watch_percent` 1–100; `poster_id` 0 or an image attachment the author can edit
+(an unchanged poster stays allowed); `aspect_ratio` `n/n`. A write sends every key; unrelated player keys
+(`remove_branding`, widths…) are kept. The source stays the uploaded `video_id` or the `external_url`.
+Native editor saves of the same keys are bounded the same way (`NativeLessonEditor::clean_video_settings`).
+
+`Learning\VideoCompletion` applies the rule to a video lesson (an uploaded video, or an external URL on a
+video lesson): the progress tracker completes the video at the lesson's percentage instead of the site
+setting, measures it against the declared duration when that is longer than what the player reports, and
+bounds each report by elapsed time (a first report counts at most two minutes, later ones at most twice
+the time since the previous report plus 30 s). "Mark as complete" is rendered disabled with "Watch at
+least N% of the video…", and `Ajax::lesson_completed` refuses with `ohmylms_lesson_video_not_watched`
+until the tracked watch reaches the percentage (the tracker then completes the lesson itself). The learner
+page shows the length, uses the poster for the site's player and in front of uploaded videos (falling back
+to the cover image), and passes `data-ohmylms-watch-percent` to the tracker. Watching is measured in the
+browser; the server bounds it but cannot prove viewing. With the site's custom player switched off,
+YouTube and Vimeo embeds show the provider's own thumbnail instead of the poster.
+
+## Inline questions
+
+Reads include `inline_questions` for the saved content, in reading order:
+`[{position, kind: block|shortcode, question_id, uuid, title, status}]`, `status` being `approved`,
+`not_approved` (learners do not see it yet), `exam_only` or `missing`. The editor's Inline questions
+section lists the checks of the draft content, links each to the question bank editor, inserts approved
+non-exam questions as `ohmylms/shared-multiple-choice` blocks (searching `GET /questions?status=approved`),
+and moves or removes them; moving swaps two standalone blocks and leaves everything around them unchanged,
+while text shortcodes are listed and can be removed (open the full editor to turn them into blocks). The
+changes are part of the lesson content and save with it. The native editor's "Inline question checks"
+panel lists the placed checks too, selects them in the canvas, swaps neighbours and links each question.
+
+## Objectives
+
+| Route | Contract |
+| --- | --- |
+| `GET /ohmylms/v1/authoring/lessons/:id/objectives` | `{id, revision, skills: [{id, name, code, managed}], mappings: [{syllabus_id, term_id, relation, name, code, objective, topic, syllabus_name, missing}], course_targets: [{…objective, syllabus_name, course_id, course_title}]}` |
+| `PUT /ohmylms/v1/authoring/lessons/:id/objectives` | Exactly `{revision, skill_ids, mappings: [{syllabus_id, term_id, relation}]}`; `relation` `teaches`, `practices` or `assesses`; up to 200 skills and mappings; 409 on a stale revision |
+| `GET /ohmylms/v1/authoring/lessons/:id/objective-options` | `type=syllabuses` (teaching syllabuses, roadmaps excluded), `type=objectives&syllabus_id=&search=` or `type=skills&search=`; 20 per page, `{items, total, pages}` |
+
+Skills are the lesson's `ohmylms_skill` terms (what coverage and practice read); mappings are
+`Curriculum\LessonObjectives` (`_ohmylms_lesson_objectives`, also used by the MCP authoring tools). A mapped
+objective links its skill as a *managed* skill that leaves with the mapping; explicit skills stay until
+unlinked. Both are replaced together under the lesson lock in one transaction (a rejected part rolls back
+the other). `course_targets` are the course objectives (`_ohmylms_course_objectives`) of the courses that
+place the lesson, offered as quick choices. Nothing here awards mastery or changes a course.
+
+Verification: `OHMYLMS_LESSON_SETTINGS_TEST=1` runs `tests/php/lesson-settings-integration.php` (video
+settings save/reopen, storage and validation without writes, bounded native saves, inline question
+statuses, the watched-percentage rule through the tracker and the completion handler, drip through the
+shared schedule, objective search, save, managed skills, conflicts and invalid input; it maps objectives of
+an existing teaching syllabus read-only). App tests cover the video settings payload, inline question
+insert/move/remove and the objectives editor.

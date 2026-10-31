@@ -68,6 +68,8 @@ class EmailManager {
 			'student_assignment_graded'       => array( 'student_name', 'course_name', 'assignment_name', 'status' ),
 			'student_quiz_graded'             => array( 'student_name', 'course_name', 'quiz_name' ),
 			'student_at_risk_nudge'           => array( 'student_name', 'sender_name', 'reasons' ),
+			'instructor_assignment_comment'   => array( 'student_name', 'course_name', 'assignment_name', 'commenter_name', 'comment' ),
+			'student_assignment_comment'      => array( 'student_name', 'course_name', 'assignment_name', 'commenter_name', 'comment' ),
 		);
 	}
 
@@ -106,6 +108,14 @@ class EmailManager {
 				'label'       => __( 'Reasons', 'ohmylms' ),
 				'description' => __( 'Why the learner was flagged, for example "Inactive 9 days · 2 overdue items".', 'ohmylms' ),
 			),
+			'commenter_name'           => array(
+				'label'       => __( 'Commenter name', 'ohmylms' ),
+				'description' => __( 'Display name of the person who wrote the comment.', 'ohmylms' ),
+			),
+			'comment'                  => array(
+				'label'       => __( 'Comment', 'ohmylms' ),
+				'description' => __( 'The comment text (the first 500 characters).', 'ohmylms' ),
+			),
 			'expected_processing_time' => array(
 				'label'       => __( 'Processing time', 'ohmylms' ),
 				'description' => __( 'How long a refund or payout takes (filterable, 24 hours by default).', 'ohmylms' ),
@@ -139,6 +149,8 @@ class EmailManager {
 			'status'          => __( 'Passed', 'ohmylms' ),
 			'sender_name'     => __( 'Ms. Rivera', 'ohmylms' ),
 			'reasons'         => __( 'Inactive 9 days · 2 overdue items', 'ohmylms' ),
+			'commenter_name'  => __( 'Ms. Rivera', 'ohmylms' ),
+			'comment'         => __( 'Good start. Show the working for question 3.', 'ohmylms' ),
 		);
 	}
 
@@ -865,6 +877,12 @@ class EmailManager {
 				return array(
 					'emails/at-risk-nudge',
 					array_merge( $common, array( 'button_url' => StudentsEmail\AtRiskNudge::button_url( $settings ) ) ),
+				);
+			case 'instructor_assignment_comment':
+			case 'student_assignment_comment':
+				return array(
+					'emails/assignment-comment',
+					array_merge( $common, array( 'button_url' => ! empty( $settings['button_link'] ) ? (string) $settings['button_link'] : home_url( '/' ) ) ),
 				);
 			case 'student_assignment_graded':
 				return array(

@@ -21,6 +21,7 @@ import {
 	restoreClass,
 	updateClass,
 } from './api';
+import { ClassWorkSection } from './ClassWorkSection';
 import { ConflictNotice, LeaveNotice } from './EditorNotices';
 import { ListState } from './ListControls';
 import {
@@ -287,6 +288,18 @@ function ClassEditor( {
 						'ohmylms'
 					) }
 				</p>
+			) }
+			{ item.school_id > 0 && (
+				<>
+					<p>
+						<Link
+							to={ `/account-hub/schools/${ item.school_id }?panel=guardians&class_id=${ item.id }` }
+						>
+							{ __( 'Guardians of this class', 'ohmylms' ) }
+						</Link>
+					</p>
+					<ClassWorkSection key={ rosterVersion } item={ item } />
+				</>
 			) }
 		</>
 	);

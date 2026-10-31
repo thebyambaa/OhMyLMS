@@ -85,7 +85,7 @@ mutable bindings), checked against the importers of each export. "Fixed" means c
 | Native: dead REST helpers inherited from the deleted app | `curriculum/api.mjs` 27, `question-bank/api.mjs` 14, `assessment/api.mjs` 8, `content-hub/api.mjs` 7 | 56 | fixed: removed |
 | Native: dead UI and modules | `QuizActions.jsx` `useAddQuiz`, `CreateBlockQuizButton`, `useExportQuiz`, `ImportIcon`, `ExportIcon`; `assessment/skillMatrix.mjs` | 6 | fixed: removed |
 | Native: legacy app route | `content-hub/api.mjs` `editPath()` (`/quiz-edit/<id>`), used by the `ImportDialog` fallback when no `onQuiz` handler is given | 1 | remaining (behaviour change) |
-| Native: raw `fetch` with its own nonce | `schools/api.mjs` (`window.ohmylmsSchools.nonce`) | 1 | remaining (needs PHP script dependency) |
+| Native: raw `fetch` with its own nonce | `schools/api.mjs` (`window.ohmylmsSchools.nonce`) | 1 | fixed: the schools screen was deleted (31 October 2026); its workflows are Account Hub screens |
 | | `students/registration-api.mjs` (front-end admin-ajax) | 1 | allowed |
 
 ## Changes in this step
@@ -124,8 +124,6 @@ REST paths, methods, payloads and error objects are unchanged.
   `#/quiz-edit/<id>`, an old app route that does nothing on `post.php`. Every current caller passes
   `onQuiz` or only offers other targets, except `ExamsPage`, where choosing "quiz" reaches it. Fixing
   it means opening `quiz.native_editor_url` instead, a visible behaviour change.
-- **`schools/api.mjs`**: uses `fetch` with a nonce from `window.ohmylmsSchools`. Switching to
-  `rest.mjs` needs `wp-api-fetch` in the schools script dependencies (PHP).
 - **Type checking of native modules**: `npm run typecheck` covers `assets/src/app` only; adding a
   `checkJs` project for `assets/src/features` belongs with the roadmap's tooling work.
 

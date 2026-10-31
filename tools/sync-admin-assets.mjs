@@ -54,7 +54,6 @@ for ( const entry of [
 	'paper-print',
 	'paper-student',
 	'math-runtime',
-	'schools',
 ] ) {
 	for ( const suffix of [ '.js', '.js.map', '.asset.php' ] ) {
 		// math-runtime is loaded by URL, so its dependency file is not shipped.

@@ -17,7 +17,9 @@
 		"student_cancel_enrollment",
 		"student_assignment_graded",
 		"student_quiz_graded",
-		"student_at_risk_nudge"
+		"student_at_risk_nudge",
+		"instructor_assignment_comment",
+		"student_assignment_comment"
 	],
 	"routes": [
 		{
@@ -102,7 +104,9 @@
 						"student_cancel_enrollment",
 						"student_assignment_graded",
 						"student_quiz_graded",
-						"student_at_risk_nudge"
+						"student_at_risk_nudge",
+						"instructor_assignment_comment",
+						"student_assignment_comment"
 					],
 					"in": "path"
 				}
@@ -132,7 +136,9 @@
 						"student_cancel_enrollment",
 						"student_assignment_graded",
 						"student_quiz_graded",
-						"student_at_risk_nudge"
+						"student_at_risk_nudge",
+						"instructor_assignment_comment",
+						"student_assignment_comment"
 					],
 					"in": "path"
 				}
@@ -163,7 +169,9 @@
 						"student_cancel_enrollment",
 						"student_assignment_graded",
 						"student_quiz_graded",
-						"student_at_risk_nudge"
+						"student_at_risk_nudge",
+						"instructor_assignment_comment",
+						"student_assignment_comment"
 					],
 					"in": "path"
 				}
@@ -194,7 +202,9 @@
 						"student_cancel_enrollment",
 						"student_assignment_graded",
 						"student_quiz_graded",
-						"student_at_risk_nudge"
+						"student_at_risk_nudge",
+						"instructor_assignment_comment",
+						"student_assignment_comment"
 					],
 					"in": "path"
 				}
@@ -248,7 +258,21 @@
 				"course_name",
 				"quiz_name"
 			],
-			"student_at_risk_nudge": [ "student_name", "sender_name", "reasons" ]
+			"student_at_risk_nudge": [ "student_name", "sender_name", "reasons" ],
+			"instructor_assignment_comment": [
+				"student_name",
+				"course_name",
+				"assignment_name",
+				"commenter_name",
+				"comment"
+			],
+			"student_assignment_comment": [
+				"student_name",
+				"course_name",
+				"assignment_name",
+				"commenter_name",
+				"comment"
+			]
 		}
 	},
 	"definitions": {
@@ -339,7 +363,9 @@
 						"student_cancel_enrollment",
 						"student_assignment_graded",
 						"student_quiz_graded",
-						"student_at_risk_nudge"
+						"student_at_risk_nudge",
+						"instructor_assignment_comment",
+						"student_assignment_comment"
 					]
 				},
 				"title": {

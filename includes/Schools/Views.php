@@ -32,26 +32,9 @@ final class Views {
 			return; }
 		echo '<p class="ohmylms-school-shortcut"><a href="' . esc_url( self::workspace_url( 'student-assignments' ) ) . '">' . esc_html__( 'Open school assignments and family learning', 'ohmylms' ) . '</a></p>';
 	}
-	/** Register shared styles and the platform management bundle. */
+	/** Register the school styles the hub workspaces use. */
 	public static function assets() {
-		$directory = defined( 'OHMYLMS_SOURCE_ASSETS' ) && OHMYLMS_SOURCE_ASSETS ? 'build/sdk' : 'assets/dist/admin';
-		$asset     = OHMYLMS_DIR . '/' . $directory . '/schools.asset.php';
-		if ( ! is_file( $asset ) ) {
-			return; }
-		$meta = require $asset;
-		wp_register_script( 'ohmylms-schools', plugins_url( $directory . '/schools.js', OHMYLMS_FILE ), $meta['dependencies'], $meta['version'], true );
 		wp_register_style( 'ohmylms-schools', plugins_url( 'assets/schools/schools.css', OHMYLMS_FILE ), array(), filemtime( OHMYLMS_DIR . '/assets/schools/schools.css' ) );
-		if ( is_admin() && 'ohmylms-schools' === self::query_value( 'page' ) ) {
-			wp_enqueue_style( 'ohmylms-schools' ); }
-		if ( is_admin() ) {
-			$can_preview = current_user_can( 'manage_options' );
-			$view_as     = array(
-				'enabled'   => $can_preview,
-				'editorUrl' => $can_preview ? admin_url( 'admin.php?page=' . \OhMyLMS\Student\Hub::EDITOR_PAGE . '&embed=1' ) : '',
-				'hubUrl'    => $can_preview ? \OhMyLMS\Student\Hub::base_url() : '',
-			);
-			wp_add_inline_script( 'wp-element', 'window.ohmylmsViewAs=' . wp_json_encode( $view_as ) . ';', 'before' );
-		}
 	}
 	/** Keep published legacy blocks and shortcodes pointing to the hub. */
 	public static function blocks() {
@@ -79,82 +62,72 @@ final class Views {
 		}
 		add_action( 'template_redirect', array( self::class, 'portal' ) );
 	}
-	/** Forward obsolete management list URLs to Account Hub. */
+	/**
+	 * Admin address that replaces an old `admin.php?page=ohmylms-schools` address.
+	 *
+	 * @param array $query Scalar query values: school, class, tab.
+	 * @return string
+	 */
+	public static function management_target( array $query ) {
+		if ( ! empty( $query['school'] ) ) {
+			return \OhMyLMS\Admin\LegacyRoutes::app_url( '/account-hub/schools/' . absint( $query['school'] ) );
+		}
+		if ( ! empty( $query['class'] ) ) {
+			return \OhMyLMS\Admin\LegacyRoutes::app_url( '/account-hub/classes/' . absint( $query['class'] ) );
+		}
+		$tab = sanitize_key( (string) ( $query['tab'] ?? 'schools' ) );
+		if ( 'students' === $tab ) {
+			return \OhMyLMS\Admin\LegacyRoutes::app_url( '/students' );
+		}
+		if ( ! in_array( $tab, array( 'teachers', 'parents', 'users', 'classes', 'schools' ), true ) ) {
+			$tab = 'schools';
+		}
+		return \OhMyLMS\Admin\LegacyRoutes::app_url( '/account-hub?tab=' . $tab );
+	}
+	/** Forward the retired school management page to the Account Hub, or school staff to their workspace. */
 	public static function redirect_management() {
-		if ( ( self::query_value( 'page' ) ) === 'ohmylms-schools' && ! current_user_can( 'manage_options' ) ) {
+		if ( 'ohmylms-schools' !== self::query_value( 'page' ) ) {
+			return;
+		}
+		if ( ! current_user_can( 'manage_options' ) ) {
 			// Non-administrators never use the WordPress dashboard for school work.
 			$workspace = \OhMyLMS\Student\SchoolWorkspace::available() ? \OhMyLMS\Student\SchoolWorkspace::url() : \OhMyLMS\Student\Hub::base_url();
-			if ( $workspace ) {
-				wp_safe_redirect( $workspace );
-				exit;
-			}
+			wp_safe_redirect( $workspace ? $workspace : admin_url() );
+			exit;
 		}
-		if ( ( self::query_value( 'page' ) ) !== 'ohmylms-schools' || ! current_user_can( 'manage_options' ) || self::query_value( 'school' ) || self::query_value( 'class' ) ) {
-			return; }
-		$tab = sanitize_key( self::query_value( 'tab', 'schools' ) );
-		if ( ! in_array( $tab, array( 'home', 'students', 'teachers', 'parents', 'users', 'classes', 'schools' ), true ) ) {
-			$tab = 'schools'; }
-		wp_safe_redirect( \OhMyLMS\Admin\LegacyRoutes::url( '/accounthub' . ( 'home' === $tab ? '' : '?tab=' . $tab ) ) );
+		wp_safe_redirect(
+			self::management_target(
+				array(
+					'school' => self::query_value( 'school' ),
+					'class'  => self::query_value( 'class' ),
+					'tab'    => self::query_value( 'tab', 'schools' ),
+				)
+			)
+		);
 		exit;
 	}
-	/** Register the hidden platform school editor. */
+	/** Keep the retired page registered so its old address reaches the redirect above. */
 	public static function menu() {
-		if ( ( self::query_value( 'page' ) ) === 'ohmylms-schools' ) {
-			add_filter(
-				'parent_file',
-				function () {
-					return OHMYLMS_SLUG;
-				}
-			);
-			add_filter(
-				'submenu_file',
-				function () {
-					return \OhMyLMS\Admin\AdminNavigation::page_slug( 'accounts' );
-				}
-			);
-		}
 		add_submenu_page(
-			null,
-			__( 'Students', 'ohmylms' ),
-			__( 'Students', 'ohmylms' ),
+			'',
+			__( 'Account Hub', 'ohmylms' ),
+			__( 'Account Hub', 'ohmylms' ),
 			'manage_options',
 			'ohmylms-schools',
-			function () {
-				echo '<div class="wrap"><hr class="wp-header-end">' . self::render( 'admin-management' ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- render() escapes its HTML attributes and text.
+			static function () {
+				echo '<div class="wrap"><p><a href="' . esc_url( self::management_target( array() ) ) . '">' . esc_html__( 'Open the Account Hub', 'ohmylms' ) . '</a></p></div>';
 			}
 		);
 	}
 	/**
-	 * Render the platform editor or a compatibility link to the native workspace.
+	 * Compatibility link to the native workspace for retired blocks and shortcodes.
 	 *
 	 * @param string $kind Requested legacy view.
 	 * @return string
 	 */
 	public static function render( $kind ) {
-		if ( 'admin-management' !== $kind || ! is_admin() || ! current_user_can( 'manage_options' ) ) {
-			$target = self::workspace_url( $kind );
-			return '<p class="ohmylms-school-shortcut"><a href="' . esc_url( $target ) . '">' . esc_html__( 'Continue to your learning hub', 'ohmylms' ) . '</a></p>';
-		}
-		if ( ! defined( 'DONOTCACHEPAGE' ) ) {
-			define( 'DONOTCACHEPAGE', true ); }
-		self::assets();
-		wp_enqueue_script( 'ohmylms-schools' );
-		wp_enqueue_style( 'ohmylms-schools' );
-		static $configured = false;
-		if ( ! $configured ) {
-			$config = array(
-				'api'       => rest_url( 'ohmylms/v1/school/' ),
-				'nonce'     => wp_create_nonce( 'wp_rest' ),
-				'skillsApi' => class_exists( \OhMyLMS\Practice\Frontend::class ) && \OhMyLMS\Practice\Frontend::enabled() ? rest_url( 'ohmylms/v1/' ) : '',
-			);
-			if ( is_admin() ) {
-				$config['usersUrl']    = current_user_can( 'create_users' ) ? admin_url( 'user-new.php' ) : '';
-				$config['studentsUrl'] = current_user_can( 'manage_options' ) ? \OhMyLMS\Admin\LegacyRoutes::app_url( '/account-hub' ) : '';
-			}
-			wp_add_inline_script( 'ohmylms-schools', 'window.ohmylmsSchools=' . wp_json_encode( $config, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ) . ';', 'before' );
-			$configured = true;
-		}
-		return '<div class="ohmylms-schools" data-ohmylms-school-view="' . esc_attr( $kind ) . '"><p>' . esc_html__( 'Loading OhMyLMS…', 'ohmylms' ) . '</p></div>';
+		$target = self::workspace_url( $kind );
+		return '<p class="ohmylms-school-shortcut"><a href="' . esc_url( $target ) . '">' . esc_html__( 'Continue to your learning hub', 'ohmylms' ) . '</a></p>';
 	}
 	/**
 	 * Resolve a legacy embedded view to its native hub workspace.

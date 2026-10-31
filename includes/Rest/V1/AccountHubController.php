@@ -10,6 +10,7 @@ namespace OhMyLMS\Rest\V1;
 use OhMyLMS\Abstracts\RestController;
 use OhMyLMS\Schools\Access;
 use OhMyLMS\Schools\ClassManagement;
+use OhMyLMS\Schools\SamplePreview;
 use OhMyLMS\Schools\Schema;
 use OhMyLMS\Schools\Service;
 use OhMyLMS\Utility\Transaction;
@@ -89,7 +90,16 @@ class AccountHubController extends RestController {
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_schools' ),
 					'permission_callback' => $read,
-					'args'                => $this->collection_args(),
+					'args'                => $this->collection_args(
+						array(
+							'status' => array(
+								'description' => __( 'Limit result set to schools with a status.', 'ohmylms' ),
+								'type'        => 'string',
+								'default'     => 'all',
+								'enum'        => array( 'all', 'active', 'archived' ),
+							),
+						)
+					),
 				),
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
@@ -780,6 +790,21 @@ class AccountHubController extends RestController {
 	}
 
 	/**
+	 * Load a school the current user may manage that is still active (archived schools are read only).
+	 *
+	 * @param int $id School id.
+	 * @return array|WP_Error
+	 */
+	protected function writable_school_or_error( $id ) {
+		$school = $this->school_or_error( $id );
+		if ( ! is_wp_error( $school ) && 'active' !== $school['status'] ) {
+			return $this->error( 'school_inactive', __( 'This school is archived. Restore it first.', 'ohmylms' ), 409 );
+		}
+
+		return $school;
+	}
+
+	/**
 	 * Stale-save version of a school.
 	 *
 	 * @param array $row School row.
@@ -796,14 +821,15 @@ class AccountHubController extends RestController {
 	 * @param string $like   LIKE pattern.
 	 * @param int    $limit  Rows.
 	 * @param int    $offset Offset.
+	 * @param string $status `all`, `active` or `archived`.
 	 * @return array
 	 */
-	private function school_rows( $id, $like, $limit, $offset ) {
+	private function school_rows( $id, $like, $limit, $offset, $status = 'all' ) {
 		global $wpdb;
 		$s     = Schema::table( 'schools' );
 		$c     = Schema::table( 'classes' );
 		$m     = Schema::table( 'school_memberships' );
-		$extra = $this->scope_sql( 's.id' ) . ( $id ? $wpdb->prepare( ' AND s.id=%d', $id ) : '' );
+		$extra = $this->scope_sql( 's.id' ) . ( $id ? $wpdb->prepare( ' AND s.id=%d', $id ) : '' ) . $this->school_status_sql( $status );
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- Table names and the integer scope are trusted; values are prepared.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
@@ -840,6 +866,7 @@ class AccountHubController extends RestController {
 			'class_count'   => (int) $row['class_count'],
 			'student_count' => (int) $row['student_count'],
 			'teacher_count' => (int) $row['teacher_count'],
+			'sample'        => SamplePreview::is_sample_school( $row ),
 			'version'       => $this->school_version( $row ),
 		);
 	}
@@ -850,7 +877,7 @@ class AccountHubController extends RestController {
 	 * @param int $id School id.
 	 * @return array
 	 */
-	private function school_detail( $id ) {
+	protected function school_detail( $id ) {
 		global $wpdb;
 		$rows = $this->school_rows( $id, '%', 1, 0 );
 		$data = $rows[0];
@@ -880,9 +907,10 @@ class AccountHubController extends RestController {
 	 */
 	public function get_schools( $request ) {
 		global $wpdb;
-		$like  = $this->like( $request );
-		$scope = $this->scope_sql( 's.id' );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- Integer scope is trusted.
+		$like   = $this->like( $request );
+		$status = (string) $request['status'];
+		$scope  = $this->scope_sql( 's.id' ) . $this->school_status_sql( $status );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- Integer scope and the status fragment are trusted.
 		$total  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i s WHERE s.name LIKE %s{$scope}", Schema::table( 'schools' ), $like ) );
 		$paging = $this->paging( $request, $total );
 		if ( is_wp_error( $paging ) ) {
@@ -890,7 +918,17 @@ class AccountHubController extends RestController {
 		}
 		list( $page, $per_page, $pages ) = $paging;
 
-		return $this->collection( $this->school_rows( 0, $like, $per_page, ( $page - 1 ) * $per_page ), $total, $pages );
+		return $this->collection( $this->school_rows( 0, $like, $per_page, ( $page - 1 ) * $per_page, $status ), $total, $pages );
+	}
+
+	/**
+	 * SQL restricting `s.status` to a list filter.
+	 *
+	 * @param string $status `all`, `active` or `archived`.
+	 * @return string
+	 */
+	private function school_status_sql( $status ) {
+		return in_array( $status, array( 'active', 'archived' ), true ) ? " AND s.status='{$status}'" : '';
 	}
 
 	/**
@@ -960,7 +998,7 @@ class AccountHubController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function update_school( $request ) {
-		$school = $this->school_or_error( $request['id'] );
+		$school = $this->writable_school_or_error( $request['id'] );
 		if ( is_wp_error( $school ) ) {
 			return $school;
 		}
@@ -1019,7 +1057,7 @@ class AccountHubController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function create_year( $request ) {
-		$school = $this->school_or_error( $request['id'] );
+		$school = $this->writable_school_or_error( $request['id'] );
 		if ( is_wp_error( $school ) ) {
 			return $school;
 		}
@@ -1100,7 +1138,7 @@ class AccountHubController extends RestController {
 	 * @param int $id Class id.
 	 * @return array|WP_Error
 	 */
-	private function class_or_error( $id ) {
+	protected function class_or_error( $id ) {
 		$class = Service::row( 'classes', absint( $id ) );
 		if ( ! $class ) {
 			return $this->error( 'class_not_found', __( 'Class not found.', 'ohmylms' ), 404 );
@@ -1273,7 +1311,7 @@ class AccountHubController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function create_class( $request ) {
-		$school = $this->school_or_error( $request['id'] );
+		$school = $this->writable_school_or_error( $request['id'] );
 		if ( is_wp_error( $school ) ) {
 			return $school;
 		}
@@ -1820,7 +1858,7 @@ class AccountHubController extends RestController {
 		if ( is_wp_error( $parent ) ) {
 			return $parent;
 		}
-		$school = $this->school_or_error( $request['school_id'] );
+		$school = $this->writable_school_or_error( $request['school_id'] );
 		if ( is_wp_error( $school ) ) {
 			return $school;
 		}
@@ -1986,6 +2024,12 @@ class AccountHubController extends RestController {
 				'class_count'   => $integer( __( 'Active classes.', 'ohmylms' ) ),
 				'student_count' => $integer( __( 'Students on the roster.', 'ohmylms' ) ),
 				'teacher_count' => $integer( __( 'Teachers on the roster.', 'ohmylms' ) ),
+				'sample'        => array(
+					'description' => __( 'Whether this is the removable sample school.', 'ohmylms' ),
+					'type'        => 'boolean',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
 				'version'       => array(
 					'description' => __( 'Opaque version; send it back on update to detect concurrent changes.', 'ohmylms' ),
 					'type'        => 'string',
