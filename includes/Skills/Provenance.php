@@ -25,6 +25,8 @@ final class Provenance {
 	const REVIEW_META = '_ohmylms_skill_review';
 	const ORIGIN_META = '_ohmylms_skill_origin';
 	const STATUS_META = '_ohmylms_skill_status';
+	const AUDIT_META  = '_ohmylms_skill_audit';
+	const AUDIT_LIMIT = 50;
 	const BACKFILL    = 'ohmylms_skill_provenance_backfill';
 	const REVIEWS     = array( 'approved', 'pending', 'rejected' );
 	const BUILT_IN    = array( 'manual', 'syllabus', 'import', 'ai' );
@@ -40,6 +42,18 @@ final class Provenance {
 	public static function init() {
 		add_action( 'created_' . Taxonomy::NAME, array( __CLASS__, 'created' ) );
 		add_action( 'init', array( __CLASS__, 'maybe_backfill' ), 40 );
+		add_action(
+			'ohmylms_skill_archived',
+			static function ( $term_id ) {
+				self::log( (int) $term_id, 'archived' );
+			}
+		);
+		add_action(
+			'ohmylms_skill_restored',
+			static function ( $term_id ) {
+				self::log( (int) $term_id, 'restored' );
+			}
+		);
 	}
 
 	/**
@@ -153,16 +167,19 @@ final class Provenance {
 	 *
 	 * @param int    $term_id Skill term ID.
 	 * @param string $review  approved or rejected.
+	 * @param string $note    Optional reason, kept in the audit trail.
 	 * @return array|\WP_Error The skill's provenance.
 	 */
-	public static function review( $term_id, $review ) {
+	public static function review( $term_id, $review, $note = '' ) {
 		if ( ! term_exists( (int) $term_id, Taxonomy::NAME ) ) {
 			return new \WP_Error( 'ohmylms_skill_missing', __( 'Skill not found.', 'ohmylms' ), array( 'status' => 404 ) );
 		}
 		if ( ! in_array( $review, array( 'approved', 'rejected' ), true ) ) {
 			return new \WP_Error( 'ohmylms_skill_review_invalid', __( 'Approve or reject the skill.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
+		$previous = (string) get_term_meta( (int) $term_id, self::REVIEW_META, true );
 		update_term_meta( (int) $term_id, self::REVIEW_META, $review );
+		self::log( (int) $term_id, $review, $note, '' !== $previous ? $previous : 'approved' );
 		$origin                = get_term_meta( (int) $term_id, self::ORIGIN_META, true );
 		$origin                = is_array( $origin ) ? $origin : array();
 		$origin['reviewed_by'] = get_current_user_id();
@@ -170,6 +187,37 @@ final class Provenance {
 		update_term_meta( (int) $term_id, self::ORIGIN_META, $origin );
 		do_action( 'ohmylms_skill_reviewed', (int) $term_id, $review );
 		return self::read( (int) $term_id );
+	}
+
+	/**
+	 * Append an entry to a skill's audit trail, keeping the newest AUDIT_LIMIT entries.
+	 *
+	 * @param int    $term_id  Skill term ID.
+	 * @param string $action   approved, rejected, archived or restored.
+	 * @param string $note     Optional reason.
+	 * @param string $previous Review state before the change, for reviews.
+	 */
+	public static function log( $term_id, $action, $note = '', $previous = '' ) {
+		$trail   = self::audit( $term_id );
+		$trail[] = array(
+			'action'   => sanitize_key( (string) $action ),
+			'previous' => sanitize_key( (string) $previous ),
+			'note'     => mb_substr( sanitize_textarea_field( (string) $note ), 0, 500 ),
+			'by'       => get_current_user_id(),
+			'at'       => current_time( 'mysql', true ),
+		);
+		update_term_meta( (int) $term_id, self::AUDIT_META, array_slice( $trail, -self::AUDIT_LIMIT ) );
+	}
+
+	/**
+	 * A skill's audit trail, oldest first.
+	 *
+	 * @param int $term_id Skill term ID.
+	 * @return array[] action, previous, note, by, at.
+	 */
+	public static function audit( $term_id ) {
+		$trail = get_term_meta( (int) $term_id, self::AUDIT_META, true );
+		return is_array( $trail ) ? array_values( $trail ) : array();
 	}
 
 	/**

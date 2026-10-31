@@ -101,6 +101,10 @@ Under `/ohmylms/v1/syllabus-comparison` (administrators):
 | `POST skill-links` | Add a link: `skill_id`, `other_id`, `type` (prerequisite, or encompasses with `weight`) |
 | `POST skill-links/remove` | Remove a link: `skill_id`, `other_id`, `type` |
 
+These routes have typed arguments (400 before the service runs), and reviews run one at a time under a
+named lock so a suggestion is never applied twice. The typed admin screen is the AI runs section of the
+[skill workspace](api/skill-workspace.md).
+
 MCP tools: `get_skill_placement_options`, `start_syllabus_analysis`, `advance_syllabus_analysis`,
 `list_skill_suggestions`, `review_skill_suggestions`, `get_skill_links`, `save_skill_link`.
 

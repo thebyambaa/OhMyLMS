@@ -103,6 +103,7 @@ class Api {
 			\OhMyLMS\Rest\V1\AccountHubUsersController::class,
 			\OhMyLMS\Rest\V1\ContentHubOverviewController::class,
 			\OhMyLMS\Rest\V1\QuizReportsController::class,
+			\OhMyLMS\Rest\V1\SkillWorkspaceController::class,
 		);
 		$controllers_v1  = apply_filters( 'ohmylms_rest_v1_controllers', $controllers_v1 );
 		$controllers_v2  = array();

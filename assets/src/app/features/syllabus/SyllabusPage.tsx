@@ -1,7 +1,7 @@
 import { Button, Modal, Notice } from '@wordpress/components';
 import { useCallback, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
 import { command, readSyllabus } from './api';
@@ -11,8 +11,21 @@ import { FieldsDialog } from './FieldsDialog';
 import { GroupList, type EditSelection, type MoveSelection } from './GroupList';
 import { LibraryPicker } from './LibraryPicker';
 import { MappingDialog } from './MappingDialog';
+import { MindMap } from './MindMap';
 import { MoveDialog } from './MoveDialog';
 import type { Group, SendCommand, Skill, SyllabusOutline } from './model';
+import { SpreadsheetView } from './SpreadsheetView';
+
+const LAYOUTS = [ 'outline', 'mindmap', 'spreadsheet' ] as const;
+type Layout = ( typeof LAYOUTS )[ number ];
+
+function layoutLabel( layout: Layout ) {
+	return {
+		outline: __( 'Outline', 'ohmylms' ),
+		mindmap: __( 'Mind map', 'ohmylms' ),
+		spreadsheet: __( 'Spreadsheet', 'ohmylms' ),
+	}[ layout ];
+}
 
 export default function SyllabusPage() {
 	const id = Number( useParams().id );
@@ -44,6 +57,9 @@ function LoadedSyllabus( { id }: { id: number } ) {
 	return request.data ? <SyllabusWorkspace initial={ request.data } /> : null;
 }
 export function SyllabusWorkspace( { initial }: { initial: SyllabusOutline } ) {
+	const [ params ] = useSearchParams();
+	const layout: Layout =
+		LAYOUTS.find( ( id ) => id === params.get( 'layout' ) ) ?? 'outline';
 	const [ data, setData ] = useState( initial );
 	const operation = useOperation();
 	const [ message, setMessage ] = useState( '' );
@@ -132,28 +148,65 @@ export function SyllabusWorkspace( { initial }: { initial: SyllabusOutline } ) {
 			>
 				{ __( 'Compare syllabuses', 'ohmylms' ) }
 			</Button>
-			<GroupList
-				data={ data }
-				busy={ operation.busy }
-				send={ send }
-				edit={ ( value ) => {
-					operation.clearError();
-					setEditor( value );
-				} }
-				move={ ( value ) => {
-					operation.clearError();
-					setMoving( value );
-				} }
-				attach={ ( group ) => {
-					operation.clearError();
-					setAttaching( group );
-				} }
-				detach={ ( group, skill ) => {
-					operation.clearError();
-					setRemoving( { group, skill } );
-				} }
-				mapping={ setMapping }
-			/>
+			<nav aria-label={ __( 'Syllabus layouts', 'ohmylms' ) }>
+				<ul className="subsubsub">
+					{ LAYOUTS.map( ( id, index ) => (
+						<li key={ id }>
+							<Link
+								to={
+									'outline' === id
+										? `/content-hub/curriculum/syllabus/${ data.syllabus.id }`
+										: `/content-hub/curriculum/syllabus/${ data.syllabus.id }?layout=${ id }`
+								}
+								className={
+									id === layout ? 'current' : undefined
+								}
+								aria-current={
+									id === layout ? 'page' : undefined
+								}
+							>
+								{ layoutLabel( id ) }
+							</Link>
+							{ index < LAYOUTS.length - 1 ? ' | ' : null }
+						</li>
+					) ) }
+				</ul>
+			</nav>
+			<br className="clear" />
+			{ 'mindmap' === layout && <MindMap outline={ data } /> }
+			{ 'spreadsheet' === layout && (
+				<SpreadsheetView
+					outline={ data }
+					onSaved={ ( next ) => {
+						setData( next );
+						setMessage( '' );
+					} }
+				/>
+			) }
+			{ 'outline' === layout && (
+				<GroupList
+					data={ data }
+					busy={ operation.busy }
+					send={ send }
+					edit={ ( value ) => {
+						operation.clearError();
+						setEditor( value );
+					} }
+					move={ ( value ) => {
+						operation.clearError();
+						setMoving( value );
+					} }
+					attach={ ( group ) => {
+						operation.clearError();
+						setAttaching( group );
+					} }
+					detach={ ( group, skill ) => {
+						operation.clearError();
+						setRemoving( { group, skill } );
+					} }
+					mapping={ setMapping }
+				/>
+			) }
 			{ editor && (
 				<FieldsDialog
 					title={

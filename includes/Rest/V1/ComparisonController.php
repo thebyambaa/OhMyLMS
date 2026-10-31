@@ -31,6 +31,21 @@ class ComparisonController extends RestController {
 				'permission_callback' => array( Access::class, 'admin' ),
 			)
 		);
+		$pair = array(
+			'type'                 => 'object',
+			'required'             => array( 'specific_id', 'expected_revision' ),
+			'additionalProperties' => false,
+			'properties'           => array(
+				'specific_id'       => array(
+					'type'    => 'integer',
+					'minimum' => 1,
+				),
+				'expected_revision' => array(
+					'type'      => 'string',
+					'maxLength' => 64,
+				),
+			),
+		);
 		register_rest_route(
 			$this->namespace,
 			'/syllabus-comparison/mapping-groups/remove',
@@ -38,6 +53,20 @@ class ComparisonController extends RestController {
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'remove_mapping_group' ),
 				'permission_callback' => array( Access::class, 'admin' ),
+				'args'                => array(
+					'uuid'  => array(
+						'type'     => 'string',
+						'pattern'  => '^[a-f0-9-]{36}$',
+						'required' => true,
+					),
+					'pairs' => array(
+						'type'     => 'array',
+						'required' => true,
+						'minItems' => 1,
+						'maxItems' => 200,
+						'items'    => $pair,
+					),
+				),
 			)
 		);
 		register_rest_route(
@@ -47,6 +76,44 @@ class ComparisonController extends RestController {
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'save_mapping_groups' ),
 				'permission_callback' => array( Access::class, 'admin' ),
+				'args'                => array(
+					'shared_id' => array(
+						'type'     => 'integer',
+						'minimum'  => 1,
+						'required' => true,
+					),
+					'relation'  => array(
+						'type' => 'string',
+						'enum' => SkillMappings::RELATIONS,
+					),
+					'note'      => array(
+						'type'      => 'string',
+						'maxLength' => 1000,
+					),
+					'groups'    => array(
+						'type'     => 'array',
+						'required' => true,
+						'minItems' => 1,
+						'maxItems' => 10,
+						'items'    => array(
+							'type'                 => 'object',
+							'required'             => array( 'source_id', 'pairs' ),
+							'additionalProperties' => false,
+							'properties'           => array(
+								'source_id' => array(
+									'type'    => 'integer',
+									'minimum' => 1,
+								),
+								'pairs'     => array(
+									'type'     => 'array',
+									'minItems' => 2,
+									'maxItems' => 200,
+									'items'    => $pair,
+								),
+							),
+						),
+					),
+				),
 			)
 		);
 		register_rest_route(
@@ -67,11 +134,38 @@ class ComparisonController extends RestController {
 					'methods'             => 'GET',
 					'callback'            => array( $this, 'content' ),
 					'permission_callback' => array( Access::class, 'admin' ),
+					'args'                => array(
+						'kind'           => array(
+							'type' => 'string',
+							'enum' => array_keys( \OhMyLMS\Curriculum\SharedContent::types() ),
+						),
+						'page'           => array(
+							'type'    => 'integer',
+							'minimum' => 1,
+							'maximum' => 10000,
+						),
+						'search'         => array(
+							'type'      => 'string',
+							'maxLength' => 200,
+						),
+						'search_targets' => array( 'type' => 'boolean' ),
+					),
 				),
 				array(
 					'methods'             => 'PUT',
 					'callback'            => array( $this, 'link_content' ),
 					'permission_callback' => array( Access::class, 'admin' ),
+					'args'                => array(
+						'content_id' => array(
+							'type'     => 'integer',
+							'minimum'  => 1,
+							'required' => true,
+						),
+						'linked'     => array(
+							'type'     => 'boolean',
+							'required' => true,
+						),
+					),
 				),
 			)
 		);
@@ -86,13 +180,6 @@ class ComparisonController extends RestController {
 			'/syllabus-comparison/skill-links/remove'      => array( 'POST', 'remove_skill_link' ),
 			'/syllabus-comparison/skill-map/subjects'      => array( 'GET', 'skill_map_subjects' ),
 			'/syllabus-comparison/compare'                 => array( 'GET', 'compare_syllabuses' ),
-			'/syllabus-comparison/ai/runs'                 => array( 'GET,POST', 'ai_runs' ),
-			'/syllabus-comparison/ai/runs/(?P<id>\d+)'     => array( 'GET', 'ai_run' ),
-			'/syllabus-comparison/ai/runs/(?P<id>\d+)/step' => array( 'POST', 'ai_step' ),
-			'/syllabus-comparison/ai/runs/(?P<id>\d+)/cancel' => array( 'POST', 'ai_cancel' ),
-			'/syllabus-comparison/ai/runs/(?P<id>\d+)/accept-confident' => array( 'POST', 'ai_accept_confident' ),
-			'/syllabus-comparison/ai/suggestions'          => array( 'GET', 'ai_suggestions' ),
-			'/syllabus-comparison/ai/suggestions/review'   => array( 'POST', 'ai_review' ),
 		) as $route => $handler ) {
 			register_rest_route(
 				$this->namespace,
@@ -105,6 +192,7 @@ class ComparisonController extends RestController {
 			);
 		}
 		$this->register_workspace_routes();
+		$this->register_ai_routes();
 		register_rest_route(
 			$this->namespace,
 			'/me/subject-skills',
@@ -444,6 +532,202 @@ class ComparisonController extends RestController {
 						'key'               => $key + array( 'required' => true ),
 						'expected_revision' => $revision,
 					),
+				)
+			);
+		}
+	}
+
+	/**
+	 * AI analysis runs and their review queue, with typed arguments (the skill workspace's AI runs and
+	 * the MCP tools use them). AiAnalysis still validates kinds, targets and confidence.
+	 */
+	private function register_ai_routes() {
+		$admin   = array( Access::class, 'admin' );
+		$id      = array(
+			'type'     => 'integer',
+			'minimum'  => 1,
+			'required' => true,
+		);
+		$subject = array(
+			'type'      => 'string',
+			'maxLength' => 100,
+		);
+		$level   = array(
+			'type'    => 'integer',
+			'minimum' => 0,
+			'maximum' => 100,
+		);
+		$routes  = array(
+			'/syllabus-comparison/ai/runs'                 => array(
+				array(
+					'GET',
+					'ai_runs',
+					array(
+						'syllabus_id' => array(
+							'type'    => 'integer',
+							'minimum' => 0,
+						),
+						'subject'     => $subject,
+					),
+				),
+				array(
+					'POST',
+					'ai_runs',
+					array(
+						'kind'           => array(
+							'type'     => 'string',
+							'enum'     => array( 'syllabus', 'placement', 'links' ),
+							'required' => true,
+						),
+						'syllabus_id'    => array(
+							'type'    => 'integer',
+							'minimum' => 1,
+						),
+						'subject'        => $subject,
+						'include_mapped' => array( 'type' => 'boolean' ),
+						'include_linked' => array( 'type' => 'boolean' ),
+					),
+				),
+			),
+			'/syllabus-comparison/ai/runs/(?P<id>\d+)'     => array( array( 'GET', 'ai_run', array( 'id' => $id ) ) ),
+			'/syllabus-comparison/ai/runs/(?P<id>\d+)/step' => array( array( 'POST', 'ai_step', array( 'id' => $id ) ) ),
+			'/syllabus-comparison/ai/runs/(?P<id>\d+)/cancel' => array( array( 'POST', 'ai_cancel', array( 'id' => $id ) ) ),
+			'/syllabus-comparison/ai/runs/(?P<id>\d+)/accept-confident' => array(
+				array(
+					'POST',
+					'ai_accept_confident',
+					array(
+						'id'             => $id,
+						'min_confidence' => array(
+							'type'     => 'number',
+							'minimum'  => 0.5,
+							'maximum'  => 1,
+							'required' => true,
+						),
+					),
+				),
+			),
+			'/syllabus-comparison/ai/suggestions'          => array(
+				array(
+					'GET',
+					'ai_suggestions',
+					array(
+						'run_id'         => array(
+							'type'    => 'integer',
+							'minimum' => 1,
+						),
+						'id'             => array(
+							'type'    => 'integer',
+							'minimum' => 1,
+						),
+						'course_id'      => array(
+							'type'    => 'integer',
+							'minimum' => 1,
+						),
+						'status'         => array(
+							'type' => 'string',
+							'enum' => array( 'pending', 'accepted', 'rejected', 'all' ),
+						),
+						'kind'           => array(
+							'type' => 'string',
+							'enum' => array( 'new_skill', 'mapping', 'placement', 'link', 'course_skill' ),
+						),
+						'min_confidence' => array(
+							'type'    => 'number',
+							'minimum' => 0,
+							'maximum' => 1,
+						),
+						'page'           => array(
+							'type'    => 'integer',
+							'minimum' => 1,
+							'maximum' => 10000,
+						),
+					),
+				),
+			),
+			'/syllabus-comparison/ai/suggestions/review'   => array(
+				array(
+					'POST',
+					'ai_review',
+					array(
+						'ids'       => array(
+							'type'        => 'array',
+							'required'    => true,
+							'minItems'    => 1,
+							'maxItems'    => 200,
+							'uniqueItems' => true,
+							'items'       => array(
+								'type'    => 'integer',
+								'minimum' => 1,
+							),
+						),
+						'action'    => array(
+							'type'     => 'string',
+							'enum'     => array( 'accept', 'reject' ),
+							'required' => true,
+						),
+						'overrides' => array(
+							'type'                 => 'object',
+							'additionalProperties' => false,
+							'patternProperties'    => array(
+								'^[0-9]+$' => array(
+									'type'                 => 'object',
+									'additionalProperties' => false,
+									'properties'           => array(
+										'relation'    => array(
+											'type' => 'string',
+											'enum' => array( 'equivalent', 'broader', 'narrower', 'related' ),
+										),
+										'shared_id'   => array(
+											'type'    => 'integer',
+											'minimum' => 1,
+										),
+										'name'        => array(
+											'type'      => 'string',
+											'minLength' => 1,
+											'maxLength' => 190,
+										),
+										'description' => array(
+											'type'      => 'string',
+											'maxLength' => 2000,
+										),
+										'topic'       => array(
+											'type'      => 'string',
+											'maxLength' => 100,
+										),
+										'domain'      => array(
+											'type'      => 'string',
+											'maxLength' => 40,
+										),
+										'grade_from'  => $level,
+										'grade_to'    => $level,
+										'weight'      => array(
+											'type'    => 'number',
+											'minimum' => 0.05,
+											'maximum' => 1,
+										),
+									),
+								),
+							),
+						),
+					),
+				),
+			),
+		);
+		foreach ( $routes as $route => $endpoints ) {
+			register_rest_route(
+				$this->namespace,
+				$route,
+				array_map(
+					function ( $endpoint ) use ( $admin ) {
+						return array(
+							'methods'             => $endpoint[0],
+							'callback'            => array( $this, $endpoint[1] ),
+							'permission_callback' => $admin,
+							'args'                => $endpoint[2],
+						);
+					},
+					$endpoints
 				)
 			);
 		}

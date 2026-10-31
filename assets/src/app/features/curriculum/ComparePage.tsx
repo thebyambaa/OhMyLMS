@@ -1,7 +1,7 @@
 import { ListTable } from '../../../ui/ListTable';
 import { WidefatTable } from '../../components/WidefatTable';
 import { Button, Notice, TextControl } from '@wordpress/components';
-import { useState } from '@wordpress/element';
+import { lazy, Suspense, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { useOperation } from '../../hooks/useOperation';
@@ -18,8 +18,22 @@ import {
 import { CompareRoadmaps } from './CompareRoadmaps';
 import { CompareSharedSkills } from './CompareSharedSkills';
 import { SourcePicker } from './SourcePicker';
+import { WORKSPACE_SECTIONS, type WorkspaceSection } from './workspace';
 
-const TABS = [ 'groups', 'roadmaps', 'shared', 'audit' ] as const;
+const SkillWorkspace = lazy(
+	() =>
+		import(
+			/* webpackChunkName: "admin-app-skill-workspace" */ './SkillWorkspace'
+		)
+);
+
+const TABS = [
+	'groups',
+	'roadmaps',
+	'shared',
+	'audit',
+	...WORKSPACE_SECTIONS,
+] as const;
 type Tab = ( typeof TABS )[ number ];
 
 function tabLabel( tab: Tab ): string {
@@ -28,11 +42,22 @@ function tabLabel( tab: Tab ): string {
 		roadmaps: __( 'Roadmaps', 'ohmylms' ),
 		shared: __( 'Shared skills', 'ohmylms' ),
 		audit: __( 'Learner audit', 'ohmylms' ),
+		mappings: __( 'Combined mappings', 'ohmylms' ),
+		ai: __( 'AI runs', 'ohmylms' ),
+		content: __( 'Content links', 'ohmylms' ),
+		placement: __( 'Domain placement', 'ohmylms' ),
+		quizzes: __( 'Skill quizzes', 'ohmylms' ),
+		provenance: __( 'Provenance review', 'ohmylms' ),
 	}[ tab ];
 }
 
+function isWorkspace( tab: Tab ): tab is WorkspaceSection {
+	return ( WORKSPACE_SECTIONS as readonly string[] ).includes( tab );
+}
+
 /**
- * Syllabus comparison at `#/content-hub/curriculum/compare` (`?tab=groups|roadmaps|shared|audit`).
+ * Syllabus comparison and the skill workspace at `#/content-hub/curriculum/compare`
+ * (`?tab=groups|roadmaps|shared|audit|mappings|ai|content|placement|quizzes|provenance`).
  * The legacy `?roadmap=<id>` bookmark opens that roadmap in the syllabus editor.
  */
 export default function ComparePage() {
@@ -40,15 +65,21 @@ export default function ComparePage() {
 	const roadmap = Number( params.get( 'roadmap' ) );
 	const tab: Tab =
 		TABS.find( ( id ) => id === params.get( 'tab' ) ) ?? 'groups';
-	const groups = useRequest( readGroups );
-	if ( Number.isSafeInteger( roadmap ) && roadmap > 0 ) {
-		return (
-			<Navigate
-				replace
-				to={ `/content-hub/curriculum/syllabus/${ roadmap }` }
-			/>
-		);
-	}
+	const workspace = isWorkspace( tab );
+	return Number.isSafeInteger( roadmap ) && roadmap > 0 ? (
+		<Navigate
+			replace
+			to={ `/content-hub/curriculum/syllabus/${ roadmap }` }
+		/>
+	) : (
+		<CompareScreen tab={ tab } workspace={ workspace } />
+	);
+}
+
+const noGroups = () => Promise.resolve( null );
+
+function CompareScreen( { tab, workspace }: { tab: Tab; workspace: boolean } ) {
+	const groups = useRequest( workspace ? noGroups : readGroups );
 	return (
 		<>
 			<p>
@@ -56,10 +87,14 @@ export default function ComparePage() {
 					{ __( '← Curriculum', 'ohmylms' ) }
 				</Link>
 			</p>
-			<h2>{ __( 'Compare syllabuses', 'ohmylms' ) }</h2>
+			<h2>
+				{ workspace
+					? __( 'Skill workspace', 'ohmylms' )
+					: __( 'Compare syllabuses', 'ohmylms' ) }
+			</h2>
 			<p>
 				{ __(
-					'Shared skills connect objectives of different syllabuses. Group the syllabuses learners are measured against, build roadmaps from them and check one learner across a subject.',
+					'Shared skills connect objectives of different syllabuses. Group the syllabuses learners are measured against, build roadmaps from them, review where skills and mappings came from and check one learner across a subject.',
 					'ohmylms'
 				) }
 			</p>
@@ -80,10 +115,19 @@ export default function ComparePage() {
 				</ul>
 			</nav>
 			<br className="clear" />
-			{ groups.loading && (
+			{ workspace && (
+				<Suspense
+					fallback={
+						<p role="status">{ __( 'Loading…', 'ohmylms' ) }</p>
+					}
+				>
+					<SkillWorkspace section={ tab as WorkspaceSection } />
+				</Suspense>
+			) }
+			{ ! workspace && groups.loading && (
 				<p role="status">{ __( 'Loading syllabuses…', 'ohmylms' ) }</p>
 			) }
-			{ groups.error && (
+			{ ! workspace && groups.error && (
 				<Notice status="error" isDismissible={ false }>
 					{ groups.error }{ ' ' }
 					<Button variant="link" onClick={ groups.retry }>

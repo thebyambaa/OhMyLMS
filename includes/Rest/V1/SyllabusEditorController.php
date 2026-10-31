@@ -152,6 +152,40 @@ class SyllabusEditorController extends \WP_REST_Controller {
 				'fields'   => array(),
 				'required' => array(),
 			),
+			'sheet_edit'   => array(
+				'fields'   => array(
+					'changes' => array(
+						'type'     => 'array',
+						'minItems' => 1,
+						'maxItems' => \OhMyLMS\Curriculum\SyllabusSheet::MAX_CHANGES,
+						'items'    => array(
+							'type'                 => 'object',
+							'required'             => array( 'kind', 'id', 'field', 'previous', 'value' ),
+							'additionalProperties' => false,
+							'properties'           => array(
+								'kind'     => array(
+									'type' => 'string',
+									'enum' => array( 'item', 'group', 'skill' ),
+								),
+								'id'       => $id,
+								'field'    => array(
+									'type' => 'string',
+									'enum' => array( 'name', 'code' ),
+								),
+								'previous' => array(
+									'type'      => 'string',
+									'maxLength' => 400,
+								),
+								'value'    => array(
+									'type'      => 'string',
+									'maxLength' => 400,
+								),
+							),
+						),
+					),
+				),
+				'required' => array( 'changes' ),
+			),
 			'import'       => array(
 				'fields'   => array(
 					'rows'            => array(
@@ -233,6 +267,9 @@ class SyllabusEditorController extends \WP_REST_Controller {
 				break;
 			case 'detach_skill':
 				$result = Syllabus::remove_skill( $id, $data['group_id'], $data['term_id'] );
+				break;
+			case 'sheet_edit':
+				$result = \OhMyLMS\Curriculum\SyllabusSheet::apply( $id, $data['changes'] );
 				break;
 			case 'import':
 				$result = $this->import_rows( $id, $data );

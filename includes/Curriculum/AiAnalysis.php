@@ -378,6 +378,39 @@ final class AiAnalysis {
 		if ( ! $ids ) {
 			return array();
 		}
+		// Two reviewers deciding the same suggestion would apply it twice; decisions run one at a time.
+		$lock = 'ohmylms-ai-review-' . md5( $wpdb->prefix );
+		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 10)', $lock ) ) ) {
+			return array_combine(
+				$ids,
+				array_map(
+					static function ( $id ) {
+						return array(
+							'id'    => $id,
+							'error' => __( 'Another review is being saved. Try again.', 'ohmylms' ),
+						);
+					},
+					$ids
+				)
+			);
+		}
+		try {
+			return self::review_locked( $ids, $action, $overrides );
+		} finally {
+			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+		}
+	}
+
+	/**
+	 * Decide suggestions while holding the review lock; rows are read inside it.
+	 *
+	 * @param int[]  $ids       Suggestion IDs.
+	 * @param string $action    accept or reject.
+	 * @param array  $overrides Suggestion ID => changes.
+	 * @return array
+	 */
+	private static function review_locked( array $ids, $action, array $overrides ) {
+		global $wpdb;
 		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE id IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', array_merge( array( self::suggestions_table() ), $ids ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- One placeholder per ID.
 		// New skills first, so mappings to them can follow in the same review.
 		usort(

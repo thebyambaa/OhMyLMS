@@ -24,6 +24,7 @@ export interface Content {
 	id: number;
 	parent_id: number;
 	name: string;
+	code?: string;
 	depth: number;
 	groups: Group[];
 }
@@ -56,7 +57,8 @@ export type CommandName =
 	| 'attach_skill'
 	| 'move_skill'
 	| 'detach_skill'
-	| 'sync_course';
+	| 'sync_course'
+	| 'sheet_edit';
 export type SendCommand = (
 	operation: CommandName,
 	fields: Record< string, unknown >
@@ -101,6 +103,7 @@ export function parseOutline( value: unknown ): SyllabusOutline {
 			id: positiveId( content.id ),
 			parent_id: nonnegative( content.parent_id ),
 			name: text( content.name ),
+			code: undefined === content.code ? '' : text( content.code ),
 			depth: nonnegative( content.depth ),
 			groups: content.groups.map( ( rawGroup ) => {
 				const group = record( rawGroup );

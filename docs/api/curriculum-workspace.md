@@ -101,9 +101,10 @@ add from sources; folders are kept and new steps join the first) with the same k
 **shared skills** searches, shows the mapped objectives and edits against the revision; **audit**
 shows one learner's shared mastery and per-syllabus coverage by user ID.
 
-Not rebuilt: combined mapping groups (`/mapping-groups*`), AI runs and suggestions (`/ai/*`),
-shared content links and domain/level placement stay in the legacy workspace and syllabus editor;
-those routes are unchanged.
+Combined mapping groups, AI runs and suggestions, shared content links, domain/level placement,
+skill-owned quizzes and provenance review are further sections of this screen (`?tab=mappings|ai|
+content|placement|quizzes|provenance`); see [skill workspace](skill-workspace.md). The
+`/mapping-groups*`, `/ai/*` and `/shared-skills/:id/content` routes now have typed arguments.
 
 ## Verification
 
