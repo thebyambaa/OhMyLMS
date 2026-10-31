@@ -1,0 +1,344 @@
+/*
+ * Gradebook screens. Colours come from --wp-admin-theme-color and the --oml-* tokens; every cell state
+ * also differs in text (and the manual mark), so nothing depends on colour alone.
+ */
+
+.ohmylms-app .ohmylms-gradebook-filters {
+	height: auto;
+}
+
+.ohmylms-app .ohmylms-gradebook-filters .actions {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-2);
+}
+
+.ohmylms-app .ohmylms-gradebook-filters select {
+	max-width: 18rem;
+}
+
+.ohmylms-app .ohmylms-gradebook-actions {
+	align-items: center;
+	clear: both;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-2);
+	margin: var(--oml-space-2) 0;
+}
+
+.ohmylms-app .ohmylms-gradebook-actions__name {
+	align-items: center;
+	display: inline-flex;
+	gap: var(--oml-space-1);
+}
+
+.ohmylms-app .ohmylms-gradebook-actions__notice {
+	flex-basis: 100%;
+	margin: 0;
+}
+
+.ohmylms-app .ohmylms-gradebook-inline {
+	align-items: center;
+	display: inline-flex;
+	gap: var(--oml-space-1);
+}
+
+.ohmylms-app .ohmylms-gradebook-muted,
+.ohmylms-app .ohmylms-gradebook-grid__meta {
+	color: var(--oml-muted);
+}
+
+.ohmylms-app .ohmylms-gradebook-weighting {
+	font-size: 12px;
+	margin: var(--oml-space-1) 0;
+}
+
+.ohmylms-app .ohmylms-gradebook-override {
+	background: var(--oml-warning-soft);
+	border: 1px solid var(--oml-warning);
+	border-radius: 2px;
+	margin-inline-start: var(--oml-space-2);
+	padding: 0 var(--oml-space-1);
+}
+
+.ohmylms-app .ohmylms-gradebook-legend {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	font-size: 12px;
+	gap: var(--oml-space-1) var(--oml-space-2);
+	margin: var(--oml-space-1) 0 var(--oml-space-2);
+}
+
+.ohmylms-app .ohmylms-gradebook-source,
+.ohmylms-app .ohmylms-gradebook-chip,
+.ohmylms-app .ohmylms-gradebook-swatch {
+	border: 1px solid var(--oml-border);
+	border-radius: 2px;
+	display: inline-block;
+	font-size: 11px;
+	line-height: 1.6;
+	margin: 1px 2px 1px 0;
+	padding: 0 6px;
+	white-space: nowrap;
+}
+
+.ohmylms-app .ohmylms-gradebook-source {
+	border-radius: 9px;
+}
+
+.ohmylms-app .ohmylms-gradebook-source.is-purchase {
+	background: var(--oml-success-soft, var(--oml-surface));
+	border-color: var(--oml-success);
+}
+
+.ohmylms-app .ohmylms-gradebook-source.is-roster {
+	background: var(--oml-primary-soft);
+	border-color: var(--wp-admin-theme-color);
+}
+
+.ohmylms-app .ohmylms-gradebook-source.is-seat {
+	background: var(--oml-danger-soft);
+	border-color: var(--oml-danger);
+}
+
+.ohmylms-app .ohmylms-gradebook-chip {
+	border-color: var(--wp-admin-theme-color);
+	color: var(--wp-admin-theme-color);
+	text-decoration: none;
+}
+
+.ohmylms-app .ohmylms-gradebook-scroll {
+	max-width: 100%;
+	overflow-x: auto;
+}
+
+.ohmylms-app .ohmylms-gradebook-grid {
+	border-collapse: separate;
+	border-spacing: 0;
+	width: auto;
+}
+
+.ohmylms-app .ohmylms-gradebook-grid th,
+.ohmylms-app .ohmylms-gradebook-grid td {
+	border-bottom: 1px solid var(--oml-border);
+	padding: 4px 6px;
+	vertical-align: middle;
+}
+
+.ohmylms-app .ohmylms-gradebook-grid thead th {
+	font-size: 12px;
+	min-width: 96px;
+	vertical-align: bottom;
+}
+
+.ohmylms-app .ohmylms-gradebook-grid__title,
+.ohmylms-app .ohmylms-gradebook-grid__meta {
+	display: block;
+}
+
+.ohmylms-app .ohmylms-gradebook-grid__meta {
+	font-size: 11px;
+	font-weight: 400;
+}
+
+.ohmylms-app .ohmylms-gradebook-grid__rowheader,
+.ohmylms-app .ohmylms-gradebook-grid__corner {
+	background: var(--oml-surface);
+	inset-inline-start: 0;
+	min-width: 12rem;
+	position: sticky;
+	text-align: start;
+	z-index: 1;
+}
+
+.ohmylms-app .ohmylms-gradebook-grid [data-row]:focus {
+	outline: 2px solid var(--wp-admin-theme-color);
+	outline-offset: -2px;
+}
+
+.ohmylms-app .ohmylms-gradebook-grid .is-activatable {
+	cursor: pointer;
+}
+
+.ohmylms-app .ohmylms-gradebook-grid__total {
+	white-space: nowrap;
+}
+
+.ohmylms-app .ohmylms-gradebook-grid__summary th,
+.ohmylms-app .ohmylms-gradebook-grid__summary td {
+	border-top: 2px solid var(--oml-border);
+}
+
+.ohmylms-app .ohmylms-gradebook-grid tr.is-suspended .row-title {
+	text-decoration: line-through;
+}
+
+/* Cell states: text differs for each; fills add a quick visual scan. */
+.ohmylms-app .ohmylms-gradebook-cell {
+	text-align: center;
+}
+
+.ohmylms-app .ohmylms-gradebook-cell.is-high,
+.ohmylms-app .ohmylms-gradebook-swatch.is-high {
+	background: color-mix(in srgb, var(--oml-success) 30%, var(--oml-surface));
+}
+
+.ohmylms-app .ohmylms-gradebook-cell.is-good {
+	background: color-mix(in srgb, var(--oml-success) 15%, var(--oml-surface));
+}
+
+.ohmylms-app .ohmylms-gradebook-cell.is-fair {
+	background: var(--oml-warning-soft);
+}
+
+.ohmylms-app .ohmylms-gradebook-cell.is-low {
+	background: var(--oml-danger-soft);
+}
+
+.ohmylms-app .ohmylms-gradebook-cell.is-missing,
+.ohmylms-app .ohmylms-gradebook-swatch.is-missing {
+	background: var(--oml-danger-soft);
+	color: var(--oml-danger-text, var(--oml-text));
+	font-weight: 600;
+}
+
+.ohmylms-app .ohmylms-gradebook-cell.is-pending,
+.ohmylms-app .ohmylms-gradebook-swatch.is-pending {
+	background: var(--oml-warning-soft);
+	font-style: italic;
+}
+
+.ohmylms-app .ohmylms-gradebook-cell.is-none,
+.ohmylms-app .ohmylms-gradebook-swatch.is-none {
+	color: var(--oml-muted);
+}
+
+.ohmylms-app .ohmylms-gradebook-cell.is-excused,
+.ohmylms-app .ohmylms-gradebook-swatch.is-excused {
+	background: var(--oml-surface);
+	border: 1px dashed var(--oml-border);
+	color: var(--oml-muted);
+}
+
+.ohmylms-app .ohmylms-gradebook-cell.is-not-assigned,
+.ohmylms-app .ohmylms-gradebook-swatch.is-not-assigned,
+.ohmylms-app .ohmylms-gradebook-cell.is-not-enrolled {
+	background:
+		repeating-linear-gradient(
+			45deg,
+			var(--oml-surface) 0 4px,
+			var(--oml-background) 4px 8px
+		);
+	color: var(--oml-muted);
+}
+
+.ohmylms-app .ohmylms-gradebook-cell.is-overridden,
+.ohmylms-app .ohmylms-gradebook-swatch.is-overridden {
+	box-shadow: inset 0 0 0 2px var(--wp-admin-theme-color);
+}
+
+.ohmylms-app .ohmylms-gradebook-cell__mark {
+	font-size: 10px;
+	margin-inline-start: 2px;
+}
+
+/* Mastery levels: text names every level; fills follow the dashboard heatmap. */
+.ohmylms-app .ohmylms-gradebook-mastery {
+	text-align: center;
+}
+
+.ohmylms-app .ohmylms-gradebook-mastery.is-mastered {
+	background: color-mix(in srgb, var(--wp-admin-theme-color) 45%, var(--oml-surface));
+}
+
+.ohmylms-app .ohmylms-gradebook-mastery.is-proficient {
+	background: color-mix(in srgb, var(--wp-admin-theme-color) 28%, var(--oml-surface));
+}
+
+.ohmylms-app .ohmylms-gradebook-mastery.is-familiar {
+	background: color-mix(in srgb, var(--wp-admin-theme-color) 14%, var(--oml-surface));
+}
+
+.ohmylms-app .ohmylms-gradebook-mastery.is-attempted {
+	background: var(--oml-warning-soft);
+}
+
+.ohmylms-app .ohmylms-gradebook-mastery.is-not-started {
+	color: var(--oml-muted);
+}
+
+.ohmylms-app .ohmylms-gradebook-skills {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.ohmylms-app .ohmylms-gradebook-skills li {
+	align-items: center;
+	display: flex;
+	gap: var(--oml-space-2);
+	margin: var(--oml-space-1) 0;
+}
+
+.ohmylms-app .ohmylms-gradebook-skills__name {
+	min-width: 12rem;
+}
+
+.ohmylms-app .ohmylms-gradebook-bar {
+	background: var(--oml-background);
+	border: 1px solid var(--oml-border);
+	display: inline-block;
+	height: 10px;
+	width: 200px;
+}
+
+.ohmylms-app .ohmylms-gradebook-bar__fill {
+	background: var(--wp-admin-theme-color);
+	display: block;
+	height: 100%;
+}
+
+.ohmylms-app .ohmylms-gradebook-bar__fill.is-attempted {
+	background: var(--oml-warning);
+}
+
+.ohmylms-app .ohmylms-gradebook-rollup__name.is-depth-1 {
+	padding-inline-start: 2rem;
+}
+
+.ohmylms-app .ohmylms-gradebook-rollup__name.is-depth-2,
+.ohmylms-app .ohmylms-gradebook-rollup__name.is-depth-3 {
+	padding-inline-start: 3.5rem;
+}
+
+.ohmylms-gradebook-dialog__form {
+	display: grid;
+	gap: var(--oml-space-2, 8px);
+	margin: var(--oml-space-3, 12px) 0;
+}
+
+.ohmylms-gradebook-dialog__buttons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-2, 8px);
+	margin-top: var(--oml-space-2, 8px);
+}
+
+.ohmylms-gradebook-radio {
+	display: block;
+	margin: 2px 0;
+}
+
+.ohmylms-gradebook-radio.is-nested {
+	margin-inline-start: 1.5rem;
+}
+
+.ohmylms-gradebook-error {
+	color: var(--oml-danger-text, var(--oml-danger));
+	margin-top: 0;
+}
+
+
+/*# sourceMappingURL=admin-app-gradebook-mastery.a842a500beee.css.map*/
