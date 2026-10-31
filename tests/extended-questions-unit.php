@@ -163,21 +163,22 @@ foreach ( $cases as $question_type => $case ) {
 foreach ( Q::MANUAL_TYPES as $question_type ) {
 	check( Q::grade( $question_type, array( 'text' => 'Response' ), array() )['manual'], "$question_type pending review" ); }
 foreach ( Q::UNSCORED_TYPES as $question_type ) {
+	$rows = array(
+		array(
+			'id'   => 'a',
+			'text' => 'Yes',
+		),
+		array(
+			'id'   => 'b',
+			'text' => 'No',
+		),
+	);
 	check(
 		true === Q::validate_settings(
 			$question_type,
 			array(
-				'score'   => array( 'value' => 0 ),
-				'choices' => array(
-					array(
-						'id'   => 'a',
-						'text' => 'Yes',
-					),
-					array(
-						'id'   => 'b',
-						'text' => 'No',
-					),
-				),
+				'score'                                            => array( 'value' => 0 ),
+				in_array( $question_type, Q::DECK_TYPES, true ) ? 'cards' : 'choices' => $rows,
 			)
 		),
 		"$question_type zero score"

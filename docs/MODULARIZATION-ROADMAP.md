@@ -63,9 +63,15 @@ Statuses below were checked against the code on 31 October 2026. Counts are file
    (batches in the plan): shared request/toast helpers, catalog search and load more, learner dashboard and
    profile, login/signup and reviews, the lesson and assignment player, and the two video scripts; the
    124-file JSX/MJS tree in `assets/src/features` used by blocks and native editors.
-7. **Extend enforcement:** CI runs `check:ci` and `php -l` only; add `npm test`, the PHP integration suites,
-   the `admin-app-smoke` browser spec and the WordPress standards lint, and extend the architecture check to
-   the front end and to legacy-route use in PHP.
+7. **Extend enforcement:** Partly done on 31 October 2026 ([ENFORCEMENT](ENFORCEMENT.md#ci-jobs)): CI also
+   runs `npm test`, `npm run lint:js` (LF via `.gitattributes`, Prettier `endOfLine: 'auto'` for older
+   Windows checkouts), the 58 PHP unit suites, 75 PHP integration suites on a fresh WordPress + MySQL 8
+   install (`tools/install-test-wordpress.sh`, `tools/run-php-tests.mjs`) and phpcs on changed lines
+   (`tools/phpcs-changed.mjs`; the full run still reports about 2,200 legacy errors). Remaining
+   (`tests/php-suites.json`): fix the seven integration suites expected to fail at HEAD; give CI the 52
+   suites that need the disposable `ohmylms_source_test`, migration or streak databases or `pdftoppm`, and
+   the six that need content of the Local site; the `admin-app-smoke` browser spec; a clean full phpcs run;
+   and extending the architecture check to the front end and to legacy-route use in PHP.
 
 ## Steps
 
@@ -80,7 +86,7 @@ Statuses below were checked against the code on 31 October 2026. Counts are file
 | 7 | Stylesheet ownership | **Done (admin)** | Legacy admin CSS (285 sources) and `tailwind.css` deleted; feature CSS ships with its chunk ([ownership](STYLESHEET-OWNERSHIP.md)). Learner CSS cleanup (`assets/css/style.css`, 476 KB) is deliberately out of scope |
 | 8 | Backend boundaries | **Partial** | Audit and plan in [BACKEND-BOUNDARIES](BACKEND-BOUNDARIES.md). Student, StudentPro, StudentReport, QuizReports and ContentHubOverview controllers hold no persistence (new `Quiz\AttemptReports`, `Student\Directory`, `Student\Enrollments`, `Assignment\Submissions`, `ContentHub\ContentCounts`); controller `\` calls 152 to 109; 42 of 81 controllers touch no `\`, options or meta. Remaining: course enrolment writes, Account Hub (38 calls), assignment grading, quiz attempts, commerce, a CI rule against new `\` in controllers |
 | 9 | Asset and dependency isolation | **Partial** | Admin: one entry plus 38 shipped hashed lazy chunks with per-screen budgets; React and WordPress packages are externals (`checkDuplicateRuntimes`). Math (836 KB) and JSXGraph (995 KB) load only on pages that use them. Learner: commerce, carousel and paper are script modules with no jQuery. Remaining: `ohmylms.js` and the two video scripts still depend on jQuery |
-| 10 | Enforcement and release checks | **Partial** | `npm run check:ci` in `.github/workflows/ci.yml`: typecheck, app tests, recovered-runtime imports, cycles, feature boundaries, raw colours, duplicate runtimes, budgets; plus `php -l`. Remaining: item 7 above |
+| 10 | Enforcement and release checks | **Partial** | Five parallel jobs in `.github/workflows/ci.yml` ([ENFORCEMENT](ENFORCEMENT.md#ci-jobs)): `check:ci` (typecheck, app tests, recovered-runtime imports, cycles, feature boundaries, raw colours, duplicate runtimes, budgets) and `npm test`; `lint:js`; `php -l` and the PHP unit suites; phpcs on changed lines; the PHP integration suites against WordPress + MySQL. Skips and expected failures are listed with reasons in `tests/php-suites.json`. Remaining: item 7 above |
 
 ## Feature parity
 

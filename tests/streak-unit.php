@@ -1,4 +1,5 @@
 <?php
+function wp_strip_all_tags($text) { return trim(strip_tags((string) $text)); }
 require __DIR__ . '/../includes/Engagement/StreakCalendar.php';
 use OhMyLMS\Engagement\StreakCalendar as Calendar;
 

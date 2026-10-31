@@ -1,0 +1,119 @@
+{
+	"unit": [
+		{
+			"reason": "Needs the sibling plugin wp-content/plugins/ohmylms-custom-question, which is not in this repository.",
+			"files": [ "tests/php/custom-question-registry.php" ]
+		},
+		{
+			"reason": "Helpers, not suites: tests/js/ui-button.test.mjs and tests/js/ui-components.test.mjs call them with a JSON argument (npm test).",
+			"files": [
+				"tests/php/ui-button-classes.php",
+				"tests/php/ui-component-classes.php"
+			]
+		}
+	],
+	"integration": [
+		{
+			"reason": "Needs the disposable site from tools/create-test-site.py: OHMYLMS_TEST_CREDENTIALS, OHMYLMS_TEST_SITE, a database named ohmylms_source_test imported from the baseline, and the sibling ohmylms-qpay and ohmylms-custom-question plugins. The *-http suites and mcp-integration also make real HTTP or AI requests.",
+			"files": [
+				"tests/php/account-blocks-integration.php",
+				"tests/php/ai-analysis-integration.php",
+				"tests/php/assessment-integration.php",
+				"tests/php/assessment-profiles-integration.php",
+				"tests/php/comparison-integration.php",
+				"tests/php/course-objectives-integration.php",
+				"tests/php/course-ux-integration.php",
+				"tests/php/creatorlms-coexistence.php",
+				"tests/php/curriculum-integration.php",
+				"tests/php/delivery-policy-integration.php",
+				"tests/php/exam-import-http.php",
+				"tests/php/exam-import-integration.php",
+				"tests/php/extensions-integration.php",
+				"tests/php/family-reports-integration.php",
+				"tests/php/guidance-integration.php",
+				"tests/php/import-targets-integration.php",
+				"tests/php/leaderboard-integration.php",
+				"tests/php/learner-profile-integration.php",
+				"tests/php/learning-integration.php",
+				"tests/php/mcp-integration.php",
+				"tests/php/pdf-exam-http.php",
+				"tests/php/placement-integration.php",
+				"tests/php/placement-test-integration.php",
+				"tests/php/player-templates-integration.php",
+				"tests/php/qpay-integration.php",
+				"tests/php/question-rows-integration.php",
+				"tests/php/quiz-exchange-integration.php",
+				"tests/php/report-enhancements-integration.php",
+				"tests/php/sample-preview-integration.php",
+				"tests/php/school-reports-integration.php",
+				"tests/php/school-settings-integration.php",
+				"tests/php/schools-integration.php",
+				"tests/php/skill-map-integration.php",
+				"tests/php/skill-studio-integration.php",
+				"tests/php/student-directory-managed-school-integration.php",
+				"tests/php/student-hub-integration.php",
+				"tests/php/students-integration.php",
+				"tests/php/syllabus-integration.php",
+				"tests/php/teacher-class-integration.php",
+				"tests/php/wordpress-api-integration.php"
+			]
+		},
+		{
+			"reason": "Refuse to run unless DB_NAME is the dedicated migration database ohmylms_gutenberg_migration_20261020 (native-quiz-editor also accepts ohmylms_block_browser_1dea) with OHMYLMS_TEST_SITE; they check content migrated into that database.",
+			"files": [
+				"tests/php/all-activities-integration.php",
+				"tests/php/diagram-labels-integration.php",
+				"tests/php/image-activity-integration.php",
+				"tests/php/native-question-editor-integration.php",
+				"tests/php/native-quiz-editor-integration.php",
+				"tests/php/puzzles-integration.php",
+				"tests/php/recall-integration.php",
+				"tests/php/skill-connections-integration.php",
+				"tests/php/wordwall-integration.php"
+			]
+		},
+		{
+			"reason": "Refuse to run unless DB_NAME is the isolated streak database ohmylms_streak_test with OHMYLMS_TEST_SITE (docs/GAMIFICATION-STREAKS.md).",
+			"files": [
+				"tests/php/gamification-streak-integration.php",
+				"tests/php/student-dashboard-integration.php"
+			]
+		},
+		{
+			"reason": "Needs --local, OHMYLMS_TEST_PDFTOPPM (a pdftoppm binary) and the xyz.local host.",
+			"files": [ "tests/php/figure-assets-integration.php" ]
+		},
+		{
+			"reason": "Pass on the Local site but need what a clean install lacks: a published course (course-carousel), source assets built into build/sdk with OHMYLMS_SOURCE_ASSETS on (extension-host-assets), enrolment sources from the Local roster (gradebook-rest), a teaching syllabus with objectives (lesson-settings), the ohmylms-graded-reader plugin, which is not in this repository (questions-rest), and shared skills placed on the site (skill-workspace-rest). Skipped only in CI.",
+			"skipIn": "ci",
+			"files": [
+				"tests/php/course-carousel-integration.php",
+				"tests/php/extension-host-assets-integration.php",
+				"tests/php/gradebook-rest-integration.php",
+				"tests/php/lesson-settings-integration.php",
+				"tests/php/questions-rest-integration.php",
+				"tests/php/skill-workspace-rest-integration.php"
+			]
+		},
+		{
+			"reason": "Not suites: prefix-migration renames database tables when given --apply; randomized-preview-readonly is the PHP half of tests/js/randomized-preview.test.mjs, which the integration job runs with OHMYLMS_READONLY_WP_ROOT.",
+			"files": [
+				"tests/prefix-migration.php",
+				"tests/php/randomized-preview-readonly.php"
+			]
+		},
+		{
+			"reason": "Fail at HEAD (31 October 2026) on the Local site and on a clean install. They run and must still fail; the runner reports one that passes so its entry can be removed. Assertions: course-outline 'Lesson references are remapped while preserving their UUID'; course-structure 'Shared view preserves empty units, canonical order, group and placement IDs'; learner-journey 'The lesson includes its reading, video/reading and practice in published order'; student-directory 'Non-student leaked into directory'; subject-profiles 'A stale revision is refused'; subjects 'Visitors can start either course through its enrollment overview'; prefix-integration calls the retired ohmylms/v1/membership route (memberships-rest-integration covers ohmylms/v1/memberships).",
+			"expect": "fail",
+			"files": [
+				"tests/php/course-outline-integration.php",
+				"tests/php/course-structure-integration.php",
+				"tests/php/learner-journey-integration.php",
+				"tests/php/student-directory-integration.php",
+				"tests/php/subject-profiles-integration.php",
+				"tests/php/subjects-integration.php",
+				"tests/prefix-integration.php"
+			]
+		}
+	]
+}

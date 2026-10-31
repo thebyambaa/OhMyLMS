@@ -406,7 +406,7 @@ if ( $attempt_context ) {
 						?>
 
 						<?php
-						if ( ! $paper_student && ! empty( $question['section'] ) && ( $question['section'] !== ( $previous_section ?? null ) ) ) {
+						if ( ! $paper_student && ! empty( $question['section'] ) && ( ( $previous_section ?? null ) !== $question['section'] ) ) {
 							$previous_section = $question['section'];
 							?>
 							<h2 class="ohmylms-quiz-section-title"><?php echo esc_html( $question['section'] ); ?></h2>

@@ -4,6 +4,8 @@ define('ABSPATH', __DIR__ . '/');
 define('DAY_IN_SECONDS', 86400);
 function __($text) { return $text; }
 function get_option() { return false; }
+function wp_kses_post($text) { return (string) $text; }
+function wp_json_encode($value, $flags = 0) { return json_encode($value, $flags); }
 require dirname(__DIR__) . '/vendor/autoload.php';
 use OhMyLMS\Assessment\NumericAnswer as N;
 use OhMyLMS\Assessment\Structured as S;

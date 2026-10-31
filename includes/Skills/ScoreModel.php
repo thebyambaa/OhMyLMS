@@ -146,7 +146,7 @@ final class ScoreModel {
 	 * @param float   $start the score before the first row.
 	 * @return array{score:float,floor:int,scored:int,correct:int,peak:float,medal:string,struggling:bool,trace:array}
 	 */
-	public static function run( array $rows, array $config = null, $start = 0.0 ) {
+	public static function run( array $rows, ?array $config = null, $start = 0.0 ) {
 		$config  = $config ? $config : self::config();
 		$bands   = $config['bands'];
 		$score   = max( 0.0, min( 100.0, (float) $start ) );
@@ -221,7 +221,7 @@ final class ScoreModel {
 	 * @param mixed $now Now.
 	 * @param array $config Config.
 	 */
-	public static function effective( $score, $last_scored_ts, $now, array $config = null ) {
+	public static function effective( $score, $last_scored_ts, $now, ?array $config = null ) {
 		$config = $config ? $config : self::config();
 		$idle   = $last_scored_ts ? max( 0, (int) floor( ( $now - $last_scored_ts ) / 86400 ) ) : 0;
 		$decay  = 0.0;

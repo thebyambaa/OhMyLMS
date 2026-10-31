@@ -157,23 +157,42 @@ check( get_option( Settings::OPTION ) === $legacy, 'Deactivation retains setting
 do_action( 'init' );
 check( Settings::enabled() && wp_next_scheduled( Processor::HOOK ), 'Reactivation resumes an enabled emitter' );
 
-// The real integrations endpoint must save xAPI without asking the client to reload.
-class WP_REST_Controller {}
+// The real integrations endpoint (PUT integrations/xapi) must save xAPI without asking the client to reload.
+function apply_filters( $name, $value, ...$args ) {
+	$callbacks = $GLOBALS['hooks'][ $name ] ?? array();
+	ksort( $callbacks );
+	foreach ( $callbacks as $group ) {
+		foreach ( $group as list( $callback, $accepted ) ) {
+			$value = $callback( ...array_slice( array_merge( array( $value ), $args ), 0, max( 1, $accepted ) ) );
+		}
+	}
+	return $value;
+}
+function wp_strip_all_tags( $value ) { return trim( strip_tags( (string) $value ) ); }
+function esc_url_raw( $value ) { return (string) $value; }
+function sanitize_key( $value ) { return preg_replace( '/[^a-z0-9_\-]/', '', strtolower( (string) $value ) ); }
+function is_wp_error( $value ) { return $value instanceof WP_Error; }
+function rest_url( $path ) { return 'https://school.test/wp-json/' . $path; }
+function rest_ensure_response( $data ) { return new WP_REST_Response( $data ); }
+class WP_REST_Controller {
+	public function filter_response_by_context( $data, $context ) { return $data; }
+}
 class WP_REST_Response {
 	public $data;
-	public function __construct( $data, $status ) { $this->data = $data; }
+	public function __construct( $data, $status = 200 ) { $this->data = $data; }
+	public function add_link( $rel, $href ) {}
 }
 $controller = new \OhMyLMS\Rest\V1\IntegrationsController();
 foreach ( array( 0, 1, 0 ) as $enabled ) {
-	$payload = get_option( 'ohmylms_integrations', array() );
-	$payload['xapi'] = array( 'is_enable' => $enabled );
-	$request = new class( $payload ) {
-		private $payload;
-		public function __construct( $payload ) { $this->payload = $payload; }
-		public function get_json_params() { return $this->payload; }
+	$request = new class( array( 'id' => 'xapi', 'enabled' => (bool) $enabled ) ) implements ArrayAccess {
+		public function __construct( private array $params ) {}
+		public function offsetExists( $key ): bool { return isset( $this->params[ $key ] ); }
+		public function offsetGet( $key ): mixed { return $this->params[ $key ] ?? null; }
+		public function offsetSet( $key, $value ): void { $this->params[ $key ] = $value; }
+		public function offsetUnset( $key ): void { unset( $this->params[ $key ] ); }
 	};
-	$response = $controller->update_items( $request );
-	check( $response->data['success'] && ! $response->data['need_reload'], 'An xAPI toggle saves without reloading the Add-ons screen' );
+	$response = $controller->update_item( $request );
+	check( $response instanceof WP_REST_Response && $response->data['enabled'] === (bool) $enabled && ! $response->data['requires_reload'], 'An xAPI toggle saves without reloading the Add-ons screen' );
 	check( Settings::enabled() === (bool) $enabled, 'The endpoint applies the requested xAPI state' );
 }
 

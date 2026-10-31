@@ -1331,7 +1331,8 @@ class Ajax {
 		$membership_id = $subscription ? absint( $subscription->get_membership_id() ) : 0;
 		$order_id      = $subscription ? absint( $subscription->get_original_order_id() ) : 0;
 		$posted_order  = absint( $_POST['order_id'] ?? 0 );
-		if ( $posted_order && $subscription_id === absint( get_post_meta( $posted_order, '_subscription_id', true ) ) ) {
+		$order_sub_id  = absint( get_post_meta( $posted_order, '_subscription_id', true ) );
+		if ( $posted_order && $order_sub_id === $subscription_id ) {
 			$order_id = $posted_order;
 		}
 		if ( ! $student_id || ( $student_id !== $current_user_id && ! current_user_can( 'manage_options' ) ) ) {

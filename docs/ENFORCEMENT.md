@@ -2,24 +2,104 @@
 
 Roadmap step 10 (see [the modularization roadmap](MODULARIZATION-ROADMAP.md)). These checks keep
 the typed admin app (`assets/src/app`) independent of the recovered runtime, and keep its published
-bundles (`assets/dist/admin`) small and free of duplicate React or WordPress code. CI runs them on
-every push and pull request to `main`.
+bundles (`assets/dist/admin`) small and free of duplicate React or WordPress code. CI also runs the
+Node tests, ESLint, the PHP unit and integration suites and the WordPress coding standards on every
+push and pull request to `main`.
 
 ## Run locally
 
 | Command | What it runs |
 | --- | --- |
-| `npm run check:ci` | Everything CI runs in the Node job: `typecheck`, `test:app`, `check:architecture`, then `node --test tests/js/check-architecture.test.mjs` |
+| `npm run check:ci` | `typecheck`, `test:app`, `check:architecture`, then `node --test tests/js/check-architecture.test.mjs` |
 | `npm run check:architecture` | `node tools/check-architecture.mjs`: the architecture rules below and the budget table |
 | `node --test tests/js/check-architecture.test.mjs` | Tests for the checker, using fixture trees under `tests/fixtures/architecture/` |
+| `npm test` | `node --test` on `tests/js/*.test.mjs`. The PHP/React parity tests need `php` on `PATH` (or `OHMYLMS_PHP`) |
+| `npm run lint:js` | ESLint with the WordPress config and Prettier on the authored JavaScript and TypeScript |
+| `npm run test:php` | `node tools/run-php-tests.mjs unit`: the PHP suites that stub WordPress |
+| `npm run test:php:integration` | `node tools/run-php-tests.mjs integration`: the PHP suites that load a real WordPress |
+| `npm run lint:php:changed` | `node tools/phpcs-changed.mjs [base]`: phpcs errors on lines changed since `origin/main` |
 
 The architecture check reads source files and the bundles already published in `assets/dist/admin`.
 It never builds anything. After you rebuild the admin app, run it again to check the new bundles.
 
-CI (`.github/workflows/ci.yml`) has two jobs:
+## CI jobs
 
-- **checks:** uses the Node version in `.nvmrc`, runs `npm ci`, then `npm run check:ci`.
-- **php-lint:** runs `php -l` with PHP 8.2 on every file in `includes/` and `tests/php`. Neither job needs WordPress or a database.
+`.github/workflows/ci.yml` runs five jobs in parallel. npm downloads are cached by
+`actions/setup-node`, Composer downloads by `ramsey/composer-install`.
+
+| Job | Runs |
+| --- | --- |
+| **checks** | Node from `.nvmrc` and PHP 8.2; `npm ci`, `npm run build`, `npm run check:ci`, `npm test` |
+| **lint-js** | `npm ci`, `npm run lint:js` |
+| **php** | PHP 8.2: `php -l` on every file in `includes/` and `tests/php`, then `node tools/run-php-tests.mjs unit` |
+| **phpcs** | `composer install` in `tools/coding-standards`, then `node tools/phpcs-changed.mjs <base>`: the pull request's base commit, or the previous `main` commit on a push |
+| **php-integration** | MySQL 8.0 service container; `tools/install-test-wordpress.sh` installs WordPress with wp-cli, copies the plugin to `wp-content/plugins/ohmylms` and activates it; `wp server` on `ohmylms.test:8080`; then `node tools/run-php-tests.mjs integration` and `tests/js/randomized-preview.test.mjs` against that site |
+
+### PHP suites: `tools/run-php-tests.mjs`
+
+The runner runs each PHP file directly in `tests/` and `tests/php/` in its own process (subfolders hold
+shared fixtures; `*-fixture.php` files seed data for the browser specs and are not run). A file without
+`wp-load.php` is a **unit** suite. An **integration** suite is classified by how it finds WordPress:
+
+| Kind | Bootstrap | What the runner sets |
+| --- | --- | --- |
+| local-site | `dirname( __DIR__, 5 ) . '/wp-load.php'` | `1` for every `'1' !== getenv( 'X' )` gate in the file (for example `OHMYLMS_COURSES_TEST`); `OHMYLMS_TEST_HOST` is passed on (the suites default to `800.local`) |
+| argv-site | `$argv[1] . '/wp-load.php'` | The WordPress root as the first argument |
+| site-path | `OHMYLMS_TEST_SITE_PATH` | The WordPress root, unless the variable is already set |
+| credentials | `OHMYLMS_TEST_CREDENTIALS` | Nothing: these need the disposable site from `tools/create-test-site.py` |
+
+`node tools/run-php-tests.mjs integration --list` shows the kind, gates and required database of every
+suite. Name files to run only those. Environment:
+
+- `PHP_BINARY`: the PHP executable (otherwise `php` on `PATH`, then Local's PHP).
+- `OHMYLMS_TEST_DB_PORT`: sets `mysqli.default_port`. Local's `wp-config.php` has `DB_HOST` `localhost`
+  without a port, so use `10006` there. CI puts the port in `DB_HOST` instead.
+- `OHMYLMS_TEST_WP_ROOT`: the WordPress root for argv-site and site-path suites (default: three folders
+  above the plugin).
+- `OHMYLMS_TEST_HOST`: the host header for local-site suites.
+
+When PHP has no `php.ini` (a bare Windows PHP), the runner writes a temporary one that loads mbstring,
+mysqli, openssl, curl, sodium, zip, intl, gd, fileinfo and exif from the PHP `ext` folder.
+
+Against the Local site:
+
+```powershell
+$env:PHP_BINARY = 'C:\php8.5.4\php.exe'; $env:OHMYLMS_TEST_DB_PORT = '10006'
+npm run test:php
+npm run test:php:integration
+```
+
+### Skipped and expected-to-fail suites: `tests/php-suites.json`
+
+Each entry is a group of files with a `reason`. Listed files are not run, except:
+
+- `"skipIn": "ci"`: skipped only when the `CI` variable is set (GitHub Actions sets it). These pass on the
+  Local site but need content a clean install lacks.
+- `"expect": "fail"`: suites that fail at HEAD. They still run; the job fails if one of them passes, so
+  remove its entry when it is fixed.
+
+`--all`, or naming a listed file, runs it anyway. The runner fails when an entry names a missing file, a
+file of the wrong kind, or has no reason. Not run in CI: suites that need the disposable
+`ohmylms_source_test` site or its credentials, the migration databases
+(`ohmylms_gutenberg_migration_20261020`, `ohmylms_streak_test`), a `pdftoppm` binary, the sibling
+`ohmylms-custom-question` or `ohmylms-graded-reader` plugins, or content on the Local site, plus the
+non-suite helpers.
+
+### WordPress coding standards: `tools/phpcs-changed.mjs`
+
+`npm run lint:php` checks every file in `phpcs.xml.dist` and still reports about 2,200 errors and 2,600
+warnings in legacy code (31 October 2026), so CI does not run it. `tools/phpcs-changed.mjs` diffs the
+working tree against the merge base with the given revision, runs phpcs on the changed PHP files and
+fails on errors in added or changed lines. Warnings on those lines are printed; findings on untouched
+lines are counted but not reported. New files must be committed (or staged) to be diffed.
+
+### Line endings
+
+`.gitattributes` stores JavaScript, TypeScript, PHP, CSS, JSON, Markdown, YAML and shell files with LF
+and checks them out with LF even when `core.autocrlf` is `true`. Files checked out before that rule may
+still have CRLF on Windows; `.prettierrc.cjs` sets `endOfLine: 'auto'` so Prettier and ESLint accept
+them, and Git stores LF when they are committed. `git add --renormalize .` is not needed: the index
+already holds LF.
 
 ## What `tools/check-architecture.mjs` enforces
 

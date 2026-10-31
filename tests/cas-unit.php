@@ -1,6 +1,9 @@
 <?php
 /** Pure unit checks for the expression engine (no WordPress). */
 define( 'ABSPATH', __DIR__ . '/' );
+function wp_json_encode( $value, $flags = 0 ) {
+	return json_encode( $value, $flags );
+}
 require dirname( __DIR__ ) . '/vendor/autoload.php';
 use OhMyLMS\Assessment\Cas\Expression as E;
 

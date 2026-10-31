@@ -72,6 +72,8 @@ namespace {
     require __DIR__ . '/../../includes/Schools/ViewAs.php';
     function __($text, $domain = null) { return $text; }
     function apply_filters($hook, $value, ...$args) { return $value; }
+    require __DIR__ . '/../../includes/Gradebook/Access.php';
+    require __DIR__ . '/../../includes/Dashboard/Access.php';
     require __DIR__ . '/../../includes/Admin/AppPage.php';
     require __DIR__ . '/../../includes/Admin/AdminNavigation.php';
     require __DIR__ . '/../../includes/Admin/LegacyRoutes.php';

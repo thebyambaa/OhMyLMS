@@ -93,7 +93,7 @@ npm run dev          # webpack watch of the admin app and the other entries into
 npm run typecheck    # tsc for assets/src/app
 npm run test:app     # Vitest: app unit and component tests
 npm run lint:js
-npm run check:ci     # what CI runs: typecheck, test:app, architecture check and its tests
+npm run check:ci     # CI's checks job: typecheck, test:app, architecture check and its tests (then npm test)
 npm run build        # production build, synced into assets/dist/admin
 ```
 

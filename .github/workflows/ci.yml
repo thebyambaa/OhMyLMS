@@ -13,10 +13,41 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# All jobs run in parallel; see docs/ENFORCEMENT.md for what each one checks and how to run it locally.
 jobs:
   checks:
-    name: Build, typecheck, app tests and architecture (npm run check:ci)
+    name: Build, typecheck, app tests, architecture and node tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # tests/js compares PHP and React output (ui-button, ui-components); without PHP those tests skip.
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: none
+
+      - run: npm ci
+
+      # Styles, the admin app, blocks and native editors; the architecture check then measures these bundles.
+      - run: npm run build
+
+      - run: npm run check:ci
+
+      - name: Node tests (tests/js)
+        run: npm test
+
+  lint-js:
+    name: ESLint (npm run lint:js)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -27,25 +58,133 @@ jobs:
 
       - run: npm ci
 
-      # Styles, the admin app, blocks and native editors; the architecture check then measures these bundles.
-      - run: npm run build
+      - run: npm run lint:js
 
-      - run: npm run check:ci
-
-  php-lint:
-    name: PHP syntax (php -l)
+  php:
+    name: PHP syntax (php -l) and unit suites
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+
+      # The suite runner is a dependency-free Node script; no npm ci.
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
 
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
           coverage: none
           tools: none
+          extensions: mbstring, sodium, zip, intl
+          ini-values: display_errors=stderr, error_reporting=E_ALL, memory_limit=1G
 
       # Parse errors go to stderr; xargs exits non-zero if any file fails.
       - name: Lint includes/ and tests/php
         run: |
           find includes tests/php -type f -name '*.php' -print0 \
             | xargs -0 -n 1 -P 4 php -d display_errors=stderr -l > /dev/null
+
+      # Suites that stub WordPress (tests/*.php and tests/php/*.php without wp-load.php); skips are in tests/php-suites.json.
+      - name: Unit suites
+        run: node tools/run-php-tests.mjs unit
+
+  phpcs:
+    name: WordPress coding standards (changed lines)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: composer
+
+      - uses: ramsey/composer-install@v3
+        with:
+          working-directory: tools/coding-standards
+          composer-options: --no-plugins --no-scripts
+
+      # The full `npm run lint:php` still reports legacy findings; this fails only on errors in added or changed lines.
+      - name: phpcs on lines changed since the base commit
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then BASE=HEAD~1; fi
+          node tools/phpcs-changed.mjs "$BASE"
+
+  php-integration:
+    name: PHP integration suites (WordPress + MySQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+    env:
+      WP_ROOT: ${{ github.workspace }}/wordpress
+      # Not localhost or 127.0.0.1: webhooks-rest-integration expects loopback hooks to be refused, and
+      # WordPress allows URLs on the site's own host.
+      OHMYLMS_TEST_HOST: ohmylms.test:8080
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: plugin
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: plugin/.nvmrc
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: wp-cli
+          extensions: mysqli, mbstring, sodium, zip, intl, gd
+          ini-values: display_errors=stderr, error_reporting=E_ALL, memory_limit=1G
+
+      - run: echo "127.0.0.1 ohmylms.test" | sudo tee -a /etc/hosts
+
+      # WordPress in $WP_ROOT, the plugin copied to wp-content/plugins/ohmylms so dirname( __DIR__, 5 ) is the root.
+      - name: Install WordPress and activate the plugin
+        env:
+          OHMYLMS_TEST_DB_HOST: 127.0.0.1
+          OHMYLMS_TEST_DB_PORT: ${{ job.services.mysql.ports['3306'] }}
+        run: bash plugin/tools/install-test-wordpress.sh "$WP_ROOT"
+
+      # issued-certificates-integration fetches the public verification page over HTTP.
+      - name: Serve WordPress on port 8080
+        run: |
+          wp server --path="$WP_ROOT" --host=127.0.0.1 --port=8080 > "$RUNNER_TEMP/server.log" 2>&1 &
+          for _ in $(seq 30); do curl -sf -o /dev/null "http://$OHMYLMS_TEST_HOST/" && exit 0; sleep 1; done
+          cat "$RUNNER_TEMP/server.log"; exit 1
+
+      # Sets each suite's OHMYLMS_*_TEST flag; skips and expected failures are in tests/php-suites.json.
+      - name: Integration suites
+        working-directory: ${{ env.WP_ROOT }}/wp-content/plugins/ohmylms
+        run: node tools/run-php-tests.mjs integration
+
+      - name: Randomized preview against the live REST endpoint (tests/js)
+        working-directory: ${{ env.WP_ROOT }}/wp-content/plugins/ohmylms
+        env:
+          OHMYLMS_READONLY_WP_ROOT: ${{ env.WP_ROOT }}
+        run: node --test tests/js/randomized-preview.test.mjs
+
+      - name: Server and debug logs
+        if: failure()
+        run: |
+          cat "$RUNNER_TEMP/server.log" || true
+          cat "$WP_ROOT/wp-content/debug.log" || true
