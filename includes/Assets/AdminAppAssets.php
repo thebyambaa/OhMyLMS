@@ -70,7 +70,7 @@ final class AdminAppAssets {
 	 * @param string $hook_suffix Current admin page hook suffix.
 	 */
 	public static function enqueue( $hook_suffix ) {
-		if ( ! AdminNavigation::shows_app( $hook_suffix ) || ! current_user_can( AdminNavigation::CAPABILITY ) ) {
+		if ( ! AdminNavigation::shows_app( $hook_suffix ) || ! current_user_can( AdminNavigation::hook_capability( $hook_suffix ) ) ) {
 			return;
 		}
 		$build = self::locate();

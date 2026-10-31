@@ -635,10 +635,31 @@ final class AdminNavigation {
 	 * @return bool
 	 */
 	public static function can_open( $group ) {
-		if ( ! isset( self::groups()[ $group ] ) || ! current_user_can( self::CAPABILITY ) ) {
+		if ( ! isset( self::groups()[ $group ] ) || ! current_user_can( self::page_capability( $group ) ) ) {
 			return false;
 		}
 		return 'dashboard' === $group || (bool) self::visible_tabs( $group );
+	}
+
+	/**
+	 * Capability a group's page requires. The Dashboard is also open to school administrators and teachers,
+	 * whose endpoints are scoped server-side; every other page needs {@see AdminNavigation::CAPABILITY}.
+	 *
+	 * @param string $group Group id.
+	 * @return string
+	 */
+	public static function page_capability( $group ) {
+		return 'dashboard' === $group ? \OhMyLMS\Dashboard\Access::CAPABILITY : self::CAPABILITY;
+	}
+
+	/**
+	 * Capability the admin page with a hook suffix requires.
+	 *
+	 * @param string $hook_suffix Admin page hook suffix.
+	 * @return string
+	 */
+	public static function hook_capability( $hook_suffix ) {
+		return 'toplevel_page_' . OHMYLMS_SLUG === $hook_suffix ? self::page_capability( 'dashboard' ) : self::CAPABILITY;
 	}
 
 	/**
@@ -881,12 +902,12 @@ final class AdminNavigation {
 	public static function register_menu( $icon, $badge = '' ) {
 		global $menu, $submenu;
 		$render = array( __CLASS__, 'render' );
-		add_menu_page( __( 'OhMyLMS', 'ohmylms' ), __( 'OhMyLMS', 'ohmylms' ), self::CAPABILITY, OHMYLMS_SLUG, $render, $icon, 6 );
+		add_menu_page( __( 'OhMyLMS', 'ohmylms' ), __( 'OhMyLMS', 'ohmylms' ), self::page_capability( 'dashboard' ), OHMYLMS_SLUG, $render, $icon, 6 );
 		foreach ( self::groups() as $id => $group ) {
 			if ( ! self::can_open( $id ) ) {
 				continue;
 			}
-			add_submenu_page( OHMYLMS_SLUG, $group['label'], $group['label'], self::CAPABILITY, $group['page'], $render );
+			add_submenu_page( OHMYLMS_SLUG, $group['label'], $group['label'], self::page_capability( $id ), $group['page'], $render );
 		}
 		if ( '' === $badge ) {
 			return;
