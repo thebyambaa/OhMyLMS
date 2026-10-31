@@ -4,6 +4,11 @@ li#toplevel_page_ohmylms ul.wp-submenu a[href="admin.php?page=ohmylms-settings"]
     padding-top: 8px;
 }
 
+/* The top-level OhMyLMS link opens the dashboard, so its duplicate submenu entry is hidden; removing it would repoint the top-level link at Content Hub. */
+li#toplevel_page_ohmylms ul.wp-submenu li:has(> a[href="admin.php?page=ohmylms"]) {
+    display: none;
+}
+
 li#toplevel_page_ohmylms ul.wp-submenu li.wp-submenu-head {
     background: #2271b1;
     color: #fff;
