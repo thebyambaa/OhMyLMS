@@ -1085,6 +1085,23 @@ final class AdminNavigation {
 	}
 
 	/**
+	 * Drop the Dashboard entry from the printed submenu so the top-level OhMyLMS link is the dashboard (on
+	 * `admin_head`).
+	 *
+	 * WordPress links the top-level item to its first submenu entry and skips printing entries the user
+	 * cannot open, so the entry stays first with a capability nobody has. Removing it instead would point
+	 * OhMyLMS at Content Hub. This runs after WordPress has checked access to the current page.
+	 */
+	public static function hide_dashboard_entry() {
+		global $submenu;
+		foreach ( (array) ( $submenu[ OHMYLMS_SLUG ] ?? array() ) as $index => $item ) {
+			if ( OHMYLMS_SLUG === ( $item[2] ?? '' ) ) {
+				$submenu[ OHMYLMS_SLUG ][ $index ][1] = 'do_not_allow'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+			}
+		}
+	}
+
+	/**
 	 * Print a page: heading (with the slot for the screen's `.page-title-action` links), tabs, sections,
 	 * then the app's mount point or the section the server renders.
 	 *

@@ -18,6 +18,7 @@ class Menu {
 		add_action( 'admin_menu', array( $this, 'init_menu' ) );
 		add_action( 'admin_menu', array( $this, 'menu_highlight' ) );
 		add_action( 'admin_menu', array( $this, 'map_legacy_submenu' ), 9999 );
+		add_action( 'admin_head', array( AdminNavigation::class, 'hide_dashboard_entry' ), 9999 );
 		add_action( 'wp_loaded', array( $this, 'save_settings' ) );
 		add_action( 'admin_footer', array( $this, 'open_link_with_new_page' ) );
 		add_action( 'admin_bar_menu', array( $this, 'lms_admin_menu_option' ), 100 );
