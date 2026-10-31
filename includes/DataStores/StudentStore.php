@@ -737,7 +737,9 @@ class StudentStore extends DataStore {
 	 * @since 1.0.0
 	 */
 	public function has_cover_image( $student ) {
-		return ! empty( get_user_meta( $student->get_id(), 'cover_image', true ) );
+		$cover = (string) get_user_meta( $student->get_id(), 'cover_image', true );
+		// Removing a cover used to store the placeholder URL.
+		return '' !== $cover && false === strpos( $cover, 'student-cover-image-placeholder' );
 	}
 
 

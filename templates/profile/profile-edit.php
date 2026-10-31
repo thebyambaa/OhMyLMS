@@ -2,10 +2,13 @@
 /**
  * Template for displaying profile edit of student profile
  *
+ * The cover and profile photo uploads and the repeatable skill and link rows are driven by the
+ * `ohmylms/account` store; the form itself posts without JavaScript.
+ *
  * This template can be overridden by copying it to yourtheme/ohmylms/profile/profile-edit.php.
  *
  * @package OhMyLMS\Templates
- * @version  1.0.0
+ * @version  1.1.0
  * @global \OhMyLMS\Data\Student $student
  */
 
@@ -14,7 +17,14 @@ do_action( 'ohmylms_before_edit_account_form' );
 
 ?>
 
-<div class="ohmylms-student-profile-tab-content student-profile student-profile-edit">
+<?php
+$profile_images        = \OhMyLMS\Extensions\Account::profile_context( $student );
+$student_profile_photo = $profile_images['avatar'];
+?>
+<div class="ohmylms-student-profile-tab-content student-profile student-profile-edit"
+	data-wp-interactive="ohmylms/account"
+	<?php echo wp_interactivity_data_wp_context( $profile_images ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core helper escapes the attribute. ?>
+	data-wp-class--is-busy="state.isBusy">
 	<h4 class="profile-tab-title">
 		<?php echo esc_html__( 'Edit Profile', 'ohmylms' ); ?>
 	</h4>
@@ -22,17 +32,17 @@ do_action( 'ohmylms_before_edit_account_form' );
 	<div class="ohmylms-profile-cover-area">
 		<div class="ohmylms-profile-cover" tabindex="0">
 			<figure>
-				<img src="<?php echo esc_url( $student->get_cover_image() ); ?>" alt="creator lms profile cover" id="student-cover-image">
+				<img src="<?php echo esc_url( $profile_images['cover'] ); ?>" alt="" id="student-cover-image" data-wp-bind--src="context.cover">
 			</figure>
 
 			<div class="hoverlay" tabindex="0">
-				<label for="cover_image_input" role="button" aria-label="Edit" class="cover-action-btn cover-edit" tabindex="0">
-					<input type="file" id="cover_image_input" style="display: none;" accept="image/*">
+				<label for="cover_image_input" role="button" aria-label="<?php esc_attr_e( 'Change cover image', 'ohmylms' ); ?>" class="cover-action-btn cover-edit" tabindex="0" data-wp-on--keydown="actions.pickKey">
+					<input type="file" id="cover_image_input" style="display: none;" accept="image/*" data-wp-on--change="actions.uploadCover">
 					<?php require OHMYLMS_DIR . '/assets/images/icon/edit-icon.php'; ?>
 					<?php echo esc_html__( 'Edit', 'ohmylms' ); ?>
 				</label>
 
-				<button tabindex="0" type="button" aria-label="Delete" class="cover-action-btn cover-delete" id="cover-image-delete" style="<?php echo esc_attr( $student->has_cover_image() ? 'display: flex;' : 'display: none;' ); ?>">
+				<button type="button" aria-label="<?php esc_attr_e( 'Remove cover image', 'ohmylms' ); ?>" class="cover-action-btn cover-delete" id="cover-image-delete" style="<?php echo esc_attr( $profile_images['hasCover'] ? 'display: flex;' : 'display: none;' ); ?>" data-wp-on--click="actions.deleteCover" data-wp-style--display="state.coverDeleteDisplay" data-wp-bind--disabled="state.isBusy">
 					<?php require OHMYLMS_DIR . '/assets/images/icon/delete-icon.php'; ?>
 					<?php echo esc_html__( 'Delete', 'ohmylms' ); ?>
 				</button>
@@ -40,18 +50,14 @@ do_action( 'ohmylms_before_edit_account_form' );
 
 			<div class="ohmylms-profile-avatar" tabindex="0">
 				<figure>
-					<?php
-					$student_profile_photo = $student->get_profile_image();
-					if ( $student_profile_photo ) {
-						echo '<img class="student-profile-photo" src="' . esc_url( $student_profile_photo ) . '" alt="Student Profile Photo" id="student-profile-photo">';
-					} else {
-						echo esc_html( ohmylms_get_initials( $student->get_first_name(), $student->get_last_name() ) );
-					}
-					?>
+					<img class="student-profile-photo" id="student-profile-photo" alt="<?php esc_attr_e( 'Profile photo', 'ohmylms' ); ?>"
+						<?php echo $student_profile_photo ? 'src="' . esc_url( $student_profile_photo ) . '"' : 'hidden'; ?>
+						data-wp-bind--src="context.avatar" data-wp-bind--hidden="state.avatarHidden">
+					<span class="ohmylms-profile-initials" aria-hidden="true" data-wp-bind--hidden="state.initialsHidden"<?php echo $student_profile_photo ? ' hidden' : ''; ?>><?php echo esc_html( ohmylms_get_initials( $student->get_first_name(), $student->get_last_name() ) ); ?></span>
 				</figure>
 
-				<label for="profile_photo_input" class="edit-avatar" tabindex="0">
-					<input type="file" id="profile_photo_input" style="display: none;" accept="image/*">
+				<label for="profile_photo_input" class="edit-avatar" tabindex="0" role="button" aria-label="<?php esc_attr_e( 'Change profile photo', 'ohmylms' ); ?>" data-wp-on--keydown="actions.pickKey">
+					<input type="file" id="profile_photo_input" style="display: none;" accept="image/*" data-wp-on--change="actions.uploadAvatar">
 					<?php require OHMYLMS_DIR . '/assets/images/icon/camera-icon.php'; ?>
 					<small><?php echo esc_html__( 'Recomanded size 400 x 400 px', 'ohmylms' ); ?></small>
 				</label>
@@ -218,7 +224,7 @@ do_action( 'ohmylms_before_edit_account_form' );
 						<label>
 							<?php echo esc_html__( 'Skills', 'ohmylms' ); ?>
 						</label>
-						<div class="ohmylms-dynamic-fields" id="skills-container">
+						<div class="ohmylms-dynamic-fields" id="skills-container" data-wp-on--click="actions.removeRow">
 							<?php
 							$skills = $student->get_skills(); // We'll need to implement this method.
 							if ( ! empty( $skills ) && is_array( $skills ) ) {
@@ -244,7 +250,7 @@ do_action( 'ohmylms_before_edit_account_form' );
 							}
 							?>
 						</div>
-						<button type="button" class="ohmylms-button ohmylms-add-field" data-target="skills-container" data-template="skills-template">
+						<button type="button" class="ohmylms-button ohmylms-add-field" data-target="skills-container" data-template="skills-template" data-wp-on--click="actions.addRow">
 							<?php echo esc_html__( 'Add Another Skill', 'ohmylms' ); ?>
 						</button>
 					</div>
@@ -254,7 +260,7 @@ do_action( 'ohmylms_before_edit_account_form' );
 						<label>
 							<?php echo esc_html__( 'Social Links', 'ohmylms' ); ?>
 						</label>
-						<div class="ohmylms-dynamic-fields" id="links-container">
+						<div class="ohmylms-dynamic-fields" id="links-container" data-wp-on--click="actions.removeRow">
 							<?php
 							$links = $student->get_social_links(); // We'll need to implement this method.
 							if ( ! empty( $links ) && is_array( $links ) ) {
@@ -286,7 +292,7 @@ do_action( 'ohmylms_before_edit_account_form' );
 							}
 							?>
 						</div>
-						<button type="button" class="ohmylms-button ohmylms-add-field" data-target="links-container" data-template="links-template">
+						<button type="button" class="ohmylms-button ohmylms-add-field" data-target="links-container" data-template="links-template" data-wp-on--click="actions.addRow">
 							<?php echo esc_html__( 'Add Another Link', 'ohmylms' ); ?>
 						</button>
 					</div>
@@ -423,16 +429,16 @@ do_action( 'ohmylms_before_edit_account_form' );
 <?php do_action( 'ohmylms_after_edit_account_form' ); ?>
 
 <!-- Hidden templates for dynamic fields -->
-<script type="text/template" id="skills-template">
+<template id="skills-template">
 	<div class="ohmylms-dynamic-field-row">
 		<span class="ohmylms-input-wrapper">
 			<input type="text" name="skills[]" placeholder="<?php echo esc_attr( 'Enter a skill', 'ohmylms' ); ?>">
 		</span>
 		<button type="button" class="ohmylms-remove-field" aria-label="<?php echo esc_attr__( 'Remove skill', 'ohmylms' ); ?>">×</button>
 	</div>
-</script>
+</template>
 
-<script type="text/template" id="links-template">
+<template id="links-template">
 	<div class="ohmylms-dynamic-field-row ohmylms-link-row">
 		<span class="ohmylms-input-wrapper ohmylms-link-label">
 			<input type="text" name="link_labels[]" placeholder="<?php echo esc_attr( 'Label (e.g., LinkedIn, Facebook)', 'ohmylms' ); ?>">
@@ -442,7 +448,7 @@ do_action( 'ohmylms_before_edit_account_form' );
 		</span>
 		<button type="button" class="ohmylms-remove-field" aria-label="<?php echo esc_attr__( 'Remove link', 'ohmylms' ); ?>">×</button>
 	</div>
-</script>
+</template>
 
 <style>
 /* Styles for dynamic fields */
@@ -501,45 +507,3 @@ do_action( 'ohmylms_before_edit_account_form' );
 	flex: 1;
 }
 </style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-	// Add field functionality
-	document.addEventListener('click', function(e) {
-		if (e.target.classList.contains('ohmylms-add-field')) {
-			e.preventDefault();
-			
-			const targetId = e.target.getAttribute('data-target');
-			const templateId = e.target.getAttribute('data-template');
-			const container = document.getElementById(targetId);
-			const template = document.getElementById(templateId);
-			
-			if (container && template) {
-				const tempDiv = document.createElement('div');
-				tempDiv.innerHTML = template.innerHTML.trim();
-				const newField = tempDiv.firstChild;
-				container.appendChild(newField);
-			}
-		}
-	});
-	
-	// Remove field functionality
-	document.addEventListener('click', function(e) {
-		if (e.target.classList.contains('ohmylms-remove-field')) {
-			e.preventDefault();
-			
-			const fieldRow = e.target.closest('.ohmylms-dynamic-field-row');
-			const container = fieldRow.parentNode;
-			
-			// Don't remove if it's the last field
-			if (container.children.length > 1) {
-				fieldRow.remove();
-			} else {
-				// Clear the inputs instead of removing the row
-				const inputs = fieldRow.querySelectorAll('input');
-				inputs.forEach(input => input.value = '');
-			}
-		}
-	});
-});
-</script>

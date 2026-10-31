@@ -218,7 +218,7 @@ try {
 	has_attributes(
 		opening_tag( $signup, 'ohmylms-form-signup' ),
 		array(
-			'data-wp-context'       => '{"consent":false}',
+			'data-wp-context'       => '{"consent":false,"authForm":"signup","authHidden":true,"busy":false,"error":""}',
 			'data-wp-init--consent' => 'callbacks.syncConsent',
 		),
 		'sign-up form'
@@ -227,7 +227,7 @@ try {
 	has_attributes(
 		opening_tag( $signup, 'ohmylms-form-signup-submit' ),
 		array(
-			'data-wp-bind--disabled' => 'state.consentMissing',
+			'data-wp-bind--disabled' => 'state.submitDisabled',
 			'disabled'               => true,
 		),
 		'sign-up submit'

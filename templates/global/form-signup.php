@@ -13,17 +13,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
 
+$ohmylms_auth    = \OhMyLMS\Extensions\AuthForms::view( 'signup', $hidden );
+$ohmylms_pending = \OhMyLMS\Extensions\AuthForms::pending();
+
 ?>
 <?php ohmylms_get_template( 'global/ohmylms-celebration.php' ); ?>
 
-<form class="ohmylms-login-signup ohmylms-form-signup signup" method="post" <?php echo ( $hidden ) ? 'style="display:none;"' : ''; ?>
+<form class="ohmylms-login-signup ohmylms-form-signup signup" method="post" <?php echo $ohmylms_auth['style'] ? 'style="' . esc_attr( $ohmylms_auth['style'] ) . '"' : ''; ?>
 	data-wp-interactive="ohmylms/forms"
-	data-wp-context='{"consent":false}'
+	data-wp-context="<?php echo esc_attr( $ohmylms_auth['context'] ); ?>"
 	data-wp-init--fold="callbacks.foldFilled"
 	data-wp-init--consent="callbacks.syncConsent"
 	data-wp-on--focusin="actions.fieldFocus"
 	data-wp-on--focusout="actions.fieldBlur"
-	data-wp-on--input="actions.fieldInput">
+	data-wp-on--input="actions.fieldInput"
+	data-wp-on--submit="actions.submit"
+	data-wp-class--is-busy="context.busy"
+	data-wp-bind--aria-busy="context.busy"
+	data-wp-style--display="state.authDisplay">
 
 	<?php do_action( 'ohmylms_signup_form_start' ); ?>
 
@@ -162,6 +169,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 		</label>
 	</p>
 
+	<p class="ohmylms-form-row ohmylms-form-error ohmylms-notice ohmylms-notice-error" role="alert" data-wp-bind--hidden="state.errorHidden" data-wp-text="context.error" <?php echo '' === $ohmylms_auth['error'] ? 'hidden' : ''; ?>><?php echo esc_html( $ohmylms_auth['error'] ); ?></p>
+
 	<p class="ohmylms-form-row form-submit-btn">
 		<?php wp_nonce_field( 'ohmylms-signup', 'ohmylms-signup-nonce' ); ?>
 		<input type="hidden" name="action" value="ohmylms_signup">
@@ -171,7 +180,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		if ( defined( 'OHMYLMS_SOURCE_ASSETS' ) && OHMYLMS_SOURCE_ASSETS ) :
 			?>
 			<span data-ohmylms-registration-submit style="display:contents"><?php endif; ?>
-		<button type="submit" class="ohmylms-button ohmylms-form-signup-submit" name="signup" value="<?php esc_attr_e( 'Sign Up', 'ohmylms' ); ?>" disabled data-wp-bind--disabled="state.consentMissing">
+		<button type="submit" class="ohmylms-button ohmylms-form-signup-submit" name="signup" value="<?php esc_attr_e( 'Sign Up', 'ohmylms' ); ?>" disabled data-wp-bind--disabled="state.submitDisabled">
 			<?php esc_html_e( 'Sign Up', 'ohmylms' ); ?>
 		</button>
 		<?php
@@ -182,7 +191,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 	<p class="ohmylms-form-row dont-have-account">
 		<?php echo esc_html__( 'Already have an account?', 'ohmylms' ); ?>
-		<a href="#" class="ohmylms-show-login-form">
+		<a href="#" class="ohmylms-show-login-form" role="button" data-wp-on--click="actions.showLogin">
 			<?php esc_html_e( 'Log In', 'ohmylms' ); ?>
 		</a>
 	</p>
@@ -190,4 +199,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<?php do_action( 'ohmylms_signup_form_end' ); ?>
 
 </form>
+
+<div class="ohmylms-email-pending-notice" role="status" data-wp-interactive="ohmylms/forms" data-wp-bind--hidden="state.pendingHidden" <?php echo '' === $ohmylms_pending ? 'hidden' : ''; ?>>
+	<span class="ohmylms-email-pending-icon" aria-hidden="true">
+		<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#6E42D3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+	</span>
+	<h3><?php esc_html_e( 'Check your inbox!', 'ohmylms' ); ?></h3>
+	<p data-wp-text="state.pendingMessage"><?php echo esc_html( $ohmylms_pending ); ?></p>
+</div>
 

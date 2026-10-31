@@ -40,6 +40,10 @@ final class Interactivity {
 		add_filter( 'ohmylms_template_html', array( __CLASS__, 'disclosures' ), 10, 2 );
 		Commerce::init();
 		Chrome::init();
+		Account::init();
+		AuthForms::init();
+		Reviews::init();
+		Catalog::init();
 	}
 
 	/**
@@ -51,6 +55,8 @@ final class Interactivity {
 			'quiz'          => 'quiz',
 			'ui'            => 'ui',
 			'forms'         => 'forms',
+			'reviews'       => 'reviews',
+			'account'       => 'account',
 			'gamification'  => 'gamification',
 			'questions'     => 'questions',
 			'tabs'          => 'tabs',
@@ -60,6 +66,7 @@ final class Interactivity {
 			'checkout'      => 'checkout',
 			'stripe'        => 'stripe',
 			'carousel'      => 'carousel',
+			'catalog'       => 'catalog',
 			'paper'         => 'paper',
 		) as $id => $file ) {
 			$path         = 'assets/interactivity/' . $file . '.js';
@@ -67,7 +74,7 @@ final class Interactivity {
 				'ohmylms_interactivity_module_dependencies',
 				'interactivity' === $id ? array() : array_merge(
 					array( '@wordpress/interactivity', 'ohmylms/interactivity' ),
-					'quiz' === $id ? array(
+					in_array( $id, array( 'quiz', 'catalog' ), true ) ? array(
 						array(
 							'id'     => '@wordpress/interactivity-router',
 							'import' => 'dynamic',

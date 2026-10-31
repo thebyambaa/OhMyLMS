@@ -76,7 +76,14 @@ if ( ! $course->get_enable_reviews() ) {
 	<?php
 	if ( $course->has_access() ) {
 		?>
-		<div class="ohmylms-course-reviews-form">
+		<div class="ohmylms-course-reviews-form"
+			data-wp-interactive="ohmylms/reviews"
+			data-wp-context='{"rating":0,"hasComment":false,"attempted":false,"submitting":false}'
+			data-wp-init="callbacks.restore"
+			data-wp-on--change="actions.change"
+			data-wp-on--input="actions.change"
+			data-wp-on--submit="actions.submit"
+			data-wp-on-window--pageshow="actions.reset">
 			<h3 class="ohmylms-reviews-title">
 				<?php esc_html_e( 'Write a Review', 'ohmylms' ); ?>
 			</h3>
@@ -92,6 +99,7 @@ if ( ! $course->get_enable_reviews() ) {
 				'comment_notes_before' => '',
 				'comment_notes_after'  => '',
 				'label_submit'         => esc_html__( 'Submit', 'ohmylms' ),
+				'submit_button'        => '<input name="%1$s" type="submit" id="%2$s" class="%3$s" value="%4$s" data-wp-on--click="actions.validate" data-wp-bind--disabled="context.submitting" />',
 				'logged_in_as'         => '',
 				'comment_field'        => '',
 				'comment_post_ID'      => $course->get_id(),
@@ -130,17 +138,27 @@ if ( ! $course->get_enable_reviews() ) {
 
 			$start_svg = '<svg width="18" height="17" fill="none" viewBox="0 0 18 17" xmlns="http://www.w3.org/2000/svg"><path stroke="#FE9738" d="M11.92 5.713l.116.236.26.037 4.429.644a.66.66 0 01.368 1.123h-.001l-3.205 3.125-.189.183.045.26.755 4.406a.662.662 0 01-.262.646.652.652 0 01-.692.051l-.002-.001-3.96-2.082-.233-.122-.233.123-3.945 2.08s0 0 0 0a.673.673 0 01-.699-.048.663.663 0 01-.262-.646l.756-4.408.045-.259-.189-.183-3.205-3.124h0a.656.656 0 01-.167-.674h0a.662.662 0 01.533-.45s0 0 0 0 0 0 0 0l4.419-.644.26-.038.116-.235 1.979-3.999s0 0 0 0 0 0 0 0c.092-.185.311-.315.592-.315.28 0 .5.13.591.315l1.98 4z"/></svg>';
 
-			// Rating field for the review form.
-			$comment_form['comment_field'] = '<div class="comment-form-rating"><label for="rating">' . esc_html__( 'Your rating', 'ohmylms' ) . '</label><p class="ohmylms-stars"><a class="star-1" href="#" data-rating="1">' . $start_svg . '</a><a class="star-2" href="#" data-rating="2">' . $start_svg . '</a><a class="star-3" href="#" data-rating="3">' . $start_svg . '</a><a class="star-4" href="#" data-rating="4">' . $start_svg . '</a><a class="star-5" href="#" data-rating="5">' . $start_svg . '</a></p><select name="rating" id="rating" required>
-				<option value="">' . esc_html__( 'Rate&hellip;', 'ohmylms' ) . '</option>
-				<option value="5">' . esc_html__( 'Perfect', 'ohmylms' ) . '</option>
-				<option value="4">' . esc_html__( 'Good', 'ohmylms' ) . '</option>
-				<option value="3">' . esc_html__( 'Average', 'ohmylms' ) . '</option>
-				<option value="2">' . esc_html__( 'Not that bad', 'ohmylms' ) . '</option>
-				<option value="1">' . esc_html__( 'Very poor', 'ohmylms' ) . '</option>
-			</select></div>';
+			// Rating field: one radio per star, so the rating posts without JavaScript.
+			$rating_names = array(
+				1 => __( 'Very poor', 'ohmylms' ),
+				2 => __( 'Not that bad', 'ohmylms' ),
+				3 => __( 'Average', 'ohmylms' ),
+				4 => __( 'Good', 'ohmylms' ),
+				5 => __( 'Perfect', 'ohmylms' ),
+			);
+			$stars        = '';
+			foreach ( $rating_names as $value => $name ) {
+				$stars .= sprintf(
+					'<label class="ohmylms-star star-%1$d" data-wp-context=\'{"star":%1$d}\' data-wp-class--active="state.isStar"><input type="radio" class="screen-reader-text" name="rating" value="%1$d" required />%2$s<span class="screen-reader-text">%3$s</span></label>',
+					$value,
+					$start_svg,
+					/* translators: 1: rating label, e.g. "Good"; 2: number of stars. */
+					esc_html( sprintf( _n( '%1$s (%2$d star)', '%1$s (%2$d stars)', $value, 'ohmylms' ), $name, $value ) )
+				);
+			}
+			$comment_form['comment_field'] = '<div class="comment-form-rating"><span class="screen-reader-text" id="ohmylms-rating-label">' . esc_html__( 'Your rating', 'ohmylms' ) . '</span><p class="ohmylms-stars" role="radiogroup" aria-labelledby="ohmylms-rating-label" aria-required="true" data-wp-class--selected="state.rated">' . $stars . '</p></div>';
 
-			$comment_form['comment_field'] .= '<p class="comment-form-comment"><label for="comment">' . esc_html__( 'Your review', 'ohmylms' ) . '&nbsp;<span class="required">*</span></label><textarea id="comment" name="comment" cols="45" rows="8" required></textarea><span class="required-notice">' . __( 'Rating and review both are required *', 'ohmylms' ) . '</span></p>';
+			$comment_form['comment_field'] .= '<p class="comment-form-comment"><label for="comment">' . esc_html__( 'Your review', 'ohmylms' ) . '&nbsp;<span class="required">*</span></label><textarea id="comment" name="comment" cols="45" rows="8" required></textarea><span class="required-notice" role="alert" data-wp-style--display="state.noticeDisplay">' . esc_html__( 'Rating and review both are required *', 'ohmylms' ) . '</span></p>';
 
 			comment_form( apply_filters( 'ohmylms_review_comment_form_args', $comment_form ) );
 			?>

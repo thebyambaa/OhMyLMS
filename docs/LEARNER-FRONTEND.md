@@ -1,6 +1,7 @@
 # Learner front end: script map and Interactivity migration plan
 
-Status: batch L1 (foundation and map) and batch L2 (shared helpers and page chrome) done on
+Status: batch L1 (foundation and map), batch L2 (shared helpers and page chrome), batch L3 (course
+catalogue), batch L4 (learner dashboard and profile) and batch L5 (login, sign-up and reviews) done on
 31 October 2026. L3 to L7 build on the [shared helper API](#shared-helper-api-l2) below. Roadmap item 6 in
 [MODULARIZATION-ROADMAP](MODULARIZATION-ROADMAP.md).
 
@@ -96,8 +97,8 @@ Code:
 Nothing removed called an AJAX action without a PHP handler: every `action` in the learner scripts has a
 `wp_ajax_*` registration in `includes/Ajax.php`. Two handlers now have no in-repo caller and were kept because
 admin-ajax actions are reachable by third parties: `ohmylms_drop_course` (nonce `course_drop_nonce`) and the
-public `ohmylms_lesson_access_nonce` (nonce `lesson_access_nonce`). Remove them, with their localized nonces,
-in batch L4 and L6 if nothing outside the plugin uses them.
+public `ohmylms_lesson_access_nonce` (nonce `lesson_access_nonce`). L4 removed both, with their localized nonces:
+nothing in the plugin, its templates, built assets or the other plugin on the site (`ohmylms-graded-reader`) calls them.
 
 ## Behaviour map
 
@@ -114,28 +115,28 @@ previews, and Elementor/Bricks widgets.
 
 | Behaviour | Selectors | Markup source | Server call | Status |
 | --- | --- | --- | --- | --- |
-| Load more courses | `button.ohmylms-course-loadmore-btn` (`data-total`, `data-posts-per-page`), appends to `.ohmylms-course-cards` | `loop/load-more.php` | `ohmylms_loadmore` → `Ajax::loadmore()` (nonce `load_more_nonce`), returns HTML | Live |
-| Filter, search, sort, category | `.ohmylms-checkbox input[name="ohmylms-filter-checkbox"]` (`data-type`, `data-slug`), `.clear-filter`, `input[name="course-search"]` (every keyup, no debounce), `.course-sort`, `.ohmylms-category-filter` | `filters/filters.php`, `filter-header.php`, `course-search.php`, `course-sort.php`, `search-sort.php`, `category-type-button.php` | `ohmylms_search_filter` → `Ajax::search_filter()` (nonce `search_filter_nonce`), returns HTML; the category branch re-creates the carousel (carousel owner) | Live |
-| Filter checkbox keyboard, category button active state | `.ohmylms-filter-accordion .checkedbox` (Enter), `.ohmylms-category-type-button li` | `filters/filters.php`, `filters/category-type-button.php` | — | Live |
-| Filter drawer on mobile | `.filter-hamburger`, `.ohmylms-course-sidebar`, `.ohmylms-close-filter` | `filters/search-sort.php`, `filters/filter-header.php` | — | Live |
-| Course card hover popup (grid style 3) | `.grid-style3 .ohmylms-course-cards-carousel .course-card`, `.ohmylms-course-card-popup[data-item-id]` | `course-popup-content.php`, `layouts/grid-style3.php` | — | Live (bound once at load; cards added by load more get no popup) |
+| Load more courses | `button.ohmylms-course-loadmore-btn` (`data-total`, `data-posts-per-page`), appends to `.ohmylms-course-cards` | `loop/load-more.php` | `ohmylms_loadmore` → `Ajax::loadmore()` (nonce `load_more_nonce`), returns HTML | **Migrated (L3)** to `ohmylms/catalog` (`?paged=N`, router region); the action is kept for third parties |
+| Filter, search, sort, category | `.ohmylms-checkbox input[name="ohmylms-filter-checkbox"]` (`data-type`, `data-slug`), `.clear-filter`, `input[name="course-search"]` (every keyup, no debounce), `.course-sort`, `.ohmylms-category-filter` | `filters/filters.php`, `filter-header.php`, `course-search.php`, `course-sort.php`, `search-sort.php`, `category-type-button.php` | `ohmylms_search_filter` → `Ajax::search_filter()` (nonce `search_filter_nonce`), returns HTML; the category branch re-creates the carousel (carousel owner) | **Migrated (L3)**: GET parameters rendered by the server, swapped by the router; the action is kept for third parties |
+| Filter checkbox keyboard, category button active state | `.ohmylms-filter-accordion .checkedbox` (Enter), `.ohmylms-category-type-button li` | `filters/filters.php`, `filters/category-type-button.php` | — | **Migrated (L3)** (`actions.keydown`, `state.categoryActive`) |
+| Filter drawer on mobile | `.filter-hamburger`, `.ohmylms-course-sidebar`, `.ohmylms-close-filter` | `filters/search-sort.php`, `filters/filter-header.php` | — | **Migrated (L3)** to the `ohmylms/ui` drawer |
+| Course card hover popup (grid style 3) | `.grid-style3 .ohmylms-course-cards-carousel .course-card`, `.ohmylms-course-card-popup[data-item-id]` | `course-popup-content.php`, `layouts/grid-style3.php` | — | **Migrated (L3)** (delegated `actions.cardOver`/`cardOut`, so cards from later navigations get it too) |
 | Archive carousels | `.ohmylms-course-cards-carousel` | `loop/loop-start.php` | — | Carousel owner (Slick replacement) |
 | Accordions | `.ohmylms-filter-accordion`, `.ohmylms-lesson-sidebar-accordion` `.ohmylms-accordion-head` (+ keyboard) | `filters/filters.php`, `single-lesson/sidebar/sidebar.php` | — | Superseded by `ohmylms/ui` when rendered by `ohmylms_get_template()` |
-| Responsive tables | `.ohmylms-table .ohmylms-td-handle` (bound only if the window is under 768 px at load), `.dashboard-table-tr .table-accordion-handler` | `single-lesson/content-quiz.php`; `profile/membership.php`, `membership-details.php`, `invoice-details.php`, `transactions-history.php` | — | Superseded by `ohmylms/ui` (same rule) |
+| Responsive tables | `.ohmylms-table .ohmylms-td-handle` (bound only if the window is under 768 px at load), `.dashboard-table-tr .table-accordion-handler` | `single-lesson/content-quiz.php`; `profile/membership.php`, `membership-details.php`, `invoice-details.php`, `transactions-history.php` | — | Superseded by `ohmylms/ui` (same rule). The `.dashboard-table-tr` jQuery copy was **removed in L4** (every profile table is rendered by `ohmylms_get_template()`); the quiz `.ohmylms-td-handle` copy stays for L6 |
 | Lesson sidebar tabs | `.ohmylms-lesson-tab-nav li`, `.ohmylms-lesson-single-tab-content` | `single-lesson/sidebar/sidebar.php` | — | Live (vanilla DOM) |
-| My courses tabs | `.ohmylms-my-courses-tab ul li button` (arrow keys) | `profile/my-courses.php`, `Shortcodes\ShortCodeMyCourses` | — | Live; `ohmylms/tabs` can replace it |
+| My courses tabs | `.ohmylms-my-courses-tab ul li button` (arrow keys) | `profile/my-courses.php`, `Shortcodes\ShortCodeMyCourses` | — | **Migrated (L4)** to the public `ohmylms/tabs` store (arrow keys, Home, End) |
 | Toast | `#ohmylms-toast`, `.ohmylms-message`, `#ohmylms-close-toast` | `global/toast.php` | — | **Migrated (L2)** to `ohmylms/ui`. The remaining jQuery callers (login, sign-up, lesson complete, assignment) go through a small shim that dispatches `ohmylms:toast` |
 | Header avatar dropdown | `.ohmylms-header .ohmylms-user-avatar`, body click closes | `global/main-header.php` | — | **Migrated (L2)** to `ohmylms/ui` dropdown actions |
 | Profile sidebar drawer | `.ohmylms-student-profile .ohmylms-hamburger`, `.ohmylms-student-profile-sidebar` | `profile/profile-layout.php`, `profile/navigation.php`, `Shortcodes\ShortCodeProfile`, `student-hub/workspace.php` | — | **Migrated (L2)** to `ohmylms/ui` drawer actions (the hub's legacy wrapper has no toggle and stays static) |
-| Cover and profile photo | `#cover_image_input`, `#cover-image-delete`, `#profile_photo_input`, `.cover-edit`/`.edit-avatar` (keyboard) | `profile/profile-edit.php` | `ohmylms_student_cover_image_upload`, `ohmylms_student_cover_image_delete`, `ohmylms_student_profile_image_upload` → `Ajax::student_cover_image_upload/delete()`, `Ajax::student_profile_image_upload()` (nonces `student_profile_cover_*`, `student_profile_image_upload_nonce`, localized only on the profile shortcode and the hub) | Live |
-| Notification switches | `.single-notification-settings .ohmylms-switcher input` (value on/off) | `profile/notifications.php` | form post | Live |
-| Membership "View plan" dialog | `.ohmylms-dashboard-membership .view-plan`, `.ohmylms-membership-modal`, `.close-modal`, Escape | `profile/loop/membership-card.php` (from `profile/student-dashboard.php`) | — | **Broken**: the card sits in `section.oml-dashboard-card`, not `.ohmylms-dashboard-membership`, so the dialog never opens. Fix the selector (`.ohmylms-dashboard-single-membership .view-plan`) in L4 |
-| Cancel membership | `.do-membership-cancel` → `.ohmylms-alert`; `.ohmylms-cancel-membership` (`data-subscription-id`, `data-membership-id`, `data-order-id`) | `profile/membership.php` | `ohmylms_cancel_membership` → `Ajax::cancel_membership()` (nonce `cancel_membership_nonce`), then reload | Live; see findings |
-| Invoice print | `.ohmylms-membership-invoice .print-button` (replaces `<body>`, prints, reloads) | `profile/membership-details.php`, `profile/invoice-details.php` | — | Live; replace with `@media print` CSS and `window.print()` |
-| Login and signup | `.ohmylms-form-login`, `.ohmylms-form-signup` (serialized, hidden `action`), `a.ohmylms-show-signup-form`, `a.ohmylms-show-login-form`, `#ohmylms-checkout-form` hidden on switch | `global/form-login.php`, `global/form-signup.php` (through `ohmylms_login_form()`, `ohmylms_signup_form()` and the checkout variants in `Utility/template-functions.php`) | `ohmylms_login` → `Ajax::login()`, `ohmylms_signup` → `Ajax::signup()` (form nonces); 8-character client check | Live |
-| Form helpers | `.ohmylms-input-text` label folding, `.show-password-icon`, `.ohmylms-form-login-rememberme` and `.ohmylms-tnc-label` (Enter), `input[name='tnc-accept']` enables submit, `input[name="phone"]`/`[name="whatsapp"]` character filter | `global/form-login.php`, `global/form-signup.php`, `profile/profile-edit.php`, `profile/settings.php`, `checkout/terms.php`, `student-hub/settings.php`, checkout shortcode/block/widgets | — | **Migrated (L2)** to `ohmylms/forms`. Login/sign-up submission and the show-login/show-signup links stay in jQuery for L5 |
+| Cover and profile photo | `#cover_image_input`, `#cover-image-delete`, `#profile_photo_input`, `.cover-edit`/`.edit-avatar` (keyboard) | `profile/profile-edit.php` | `ohmylms_student_cover_image_upload`, `ohmylms_student_cover_image_delete`, `ohmylms_student_profile_image_upload` → `Ajax::student_cover_image_upload/delete()`, `Ajax::student_profile_image_upload()` (nonces `student_profile_cover_*`, `student_profile_image_upload_nonce`, localized only on the profile shortcode and the hub) | **Migrated (L4)** to `ohmylms/account`; the nonces are in its state |
+| Notification switches | `.single-notification-settings .ohmylms-switcher input` (value on/off) | `profile/notifications.php` | form post | **Removed (L4)**: the switches post `value="on"` (the server stores "off" when a box is missing), so no script is needed |
+| Membership "View plan" dialog | `.ohmylms-dashboard-membership .view-plan`, `.ohmylms-membership-modal`, `.close-modal`, Escape | `profile/loop/membership-card.php` (from `profile/student-dashboard.php`) | — | **Fixed and migrated (L4)**: the selector never matched (the card sits in `section.oml-dashboard-card`, not `.ohmylms-dashboard-membership`); each `.ohmylms-dashboard-single-membership` card is now an `ohmylms/account` island |
+| Cancel membership | `.do-membership-cancel` → `.ohmylms-alert`; `.ohmylms-cancel-membership` (`data-subscription-id`, `data-membership-id`, `data-order-id`) | `profile/membership.php` | `ohmylms_cancel_membership` → `Ajax::cancel_membership()` (nonce `cancel_membership_nonce`), then reload | **Migrated (L4)**: `confirmDialog()`, then only `subscription_id` and `order_id` |
+| Invoice print | `.ohmylms-membership-invoice .print-button` (replaces `<body>`, prints, reloads) | `profile/membership-details.php`, `profile/invoice-details.php` | — | **Migrated (L4)**: `@media print` CSS and `window.print()` |
+| Login and signup | `.ohmylms-form-login`, `.ohmylms-form-signup` (serialized, hidden `action`), `a.ohmylms-show-signup-form`, `a.ohmylms-show-login-form`, `#ohmylms-checkout-form` hidden on switch | `global/form-login.php`, `global/form-signup.php` (through `ohmylms_login_form()`, `ohmylms_signup_form()` and the checkout variants in `Utility/template-functions.php`) | `ohmylms_login` → `Ajax::login()`, `ohmylms_signup` → `Ajax::signup()` (form nonces); 8-character client check | **Migrated (L5)** to `ohmylms/forms` (submission, inline errors, pending verification, login/sign-up switch); the forms also work without JavaScript through `Extensions\AuthForms::handle_post()` |
+| Form helpers | `.ohmylms-input-text` label folding, `.show-password-icon`, `.ohmylms-form-login-rememberme` and `.ohmylms-tnc-label` (Enter), `input[name='tnc-accept']` enables submit, `input[name="phone"]`/`[name="whatsapp"]` character filter | `global/form-login.php`, `global/form-signup.php`, `profile/profile-edit.php`, `profile/settings.php`, `checkout/terms.php`, `student-hub/settings.php`, checkout shortcode/block/widgets | — | **Migrated (L2)** to `ohmylms/forms`; submission and the show-login/show-signup links followed in L5 |
 | Email verification | URL params `ohmylms_email_verified`, `ohmylms_verify_sent`, `ohmylms_verify_error` → toast; `a[href*="ohmylms_resend_verification"]` | `Services\EmailVerificationService` notices | GET `ohmylms_resend_verification` with `format=json` → `Ajax::resend_verification()` | **Migrated (L2)** to `ohmylms/ui` (`installChrome()`) |
-| Review stars and validation | `.comment-form-rating .ohmylms-stars > a` → `select#rating`; `.ohmylms-course-reviews-form #submit` | `single-course/tabs/reviews.php` (from `student-hub/course.php`) | comment form post | Live |
+| Review stars and validation | `.comment-form-rating .ohmylms-stars > a` → `select#rating`; `.ohmylms-course-reviews-form #submit` | `single-course/tabs/reviews.php` (from `student-hub/course.php`) | comment form post | **Migrated (L5)** to `ohmylms/reviews`; the stars are now radio inputs (`name="rating"`) and `select#rating` is gone |
 | Mark lesson complete | `#ohmylms-completed-lesson`, `#ohmylms-lesson-id`; `.ohmylms-lesson-navigation .ohmylms-checkbox` (Enter) | `single-lesson/content-navigation.php` | `ohmylms_lesson_completed` → `Ajax::lesson_completed()` (nonce `lesson_completed_nonce`), then next link or reload | Live |
 | Assignment submission | `.ohmylms-assignment-form`, `#submission-file`, `#ohmylms-add-new-attachment`, `.remove-resource-action` (built by the script), `.ohmylms-file-upload` (keyboard), `.assignment-submit-alert` | `single-lesson/content-assignment.php` | `ohmylms_save_assignment_submission_file` → `Ajax::save_assignment_submission_file()` (nonce `assignment_submission_nonce`) | Live |
 | Assignment timer and deadline | `.ohmylms-lesson-navigation .start-submit-assignment`, `input[name="ohmylms_assignment_deadline"]`, `.submission-time-limit .timer-display[data-timer]`, `.deadline` | `single-lesson/content-navigation.php`, `content-assignment.php` | `ohmylms_save_remaining_time` → `Ajax::save_remaining_time()`; at zero `ohmylms_quiz_exit_submission` (see findings) | Live |
@@ -150,9 +151,12 @@ previews, and Elementor/Bricks widgets.
 Localized data (`FrontendAssets::get_script_data( 'ohmylms-frontend' )`): `ajax_url`, `current_student_id`,
 `nonce`, `load_more_nonce`, `search_filter_nonce`, `video_completion_threshold`, `is_creator_page`,
 `content_protection`, `email_verification_required`; on content pages `lesson_completed_nonce`,
-`assignment_submission_nonce`, `save_remaining_time`, `lesson_access_nonce`, `quiz_exit_submission`,
-`video_progress_nonce`; `course_drop_nonce`, the three profile image nonces and `cancel_membership_nonce` on the
-pages listed in that method. `BlocksManager` and `ElementorManager` localize their own copies.
+`assignment_submission_nonce`, `save_remaining_time`, `quiz_exit_submission`, `video_progress_nonce`.
+`BlocksManager` and `ElementorManager` localize their own copies. L4 removed `lesson_access_nonce`,
+`course_drop_nonce`, the three profile image nonces and `cancel_membership_nonce`: the account nonces are now in
+`wp_interactivity_state( 'ohmylms/account' )`, printed only when a template that needs them renders.
+`load_more_nonce` and `search_filter_nonce` are no longer used by the plugin (L3) and stay only for third-party
+callers of the two catalogue admin-ajax actions.
 
 ### `lesson/video-player.js` (handle `ohmylms-video-player`, needs jQuery, content pages)
 
@@ -176,7 +180,8 @@ and `#ohmylms-video-completion-hint` (`content-navigation.php`). Calls `ohmylms_
 ### Block editor scripts (`assets/src/runtimes/blocks/js`)
 
 `dashboard.js` and `profile.js` register the `ohmylms/dashboard` and `ohmylms/profile` blocks for the editor
-(inspector controls plus `ServerSideRender`); they run no learner behaviour. The front-end markup they preview
+(inspector controls plus `ServerSideRender`); they run no learner behaviour (re-checked in L4, both the source and
+the served `assets/blocks/js` copies: only `registerBlockType` and an editor `<style>`), so they stay as they are. The front-end markup they preview
 is the dashboard and profile templates above. There is no `blocks.js` in that folder; the only `blocks*`
 files were the unloaded `blocks.min.js` (an editor-canvas body-class helper) and the empty
 `blocks-frontend.js`, both removed.
@@ -207,17 +212,16 @@ entry); leave it to the admin owner.
 
 ## Findings to fix in the batches
 
-- **`Ajax::cancel_membership()` trusts the posted `student_id`, `subscription_id` and `order_id`.** Any
-  logged-in user with the nonce (printed on dashboard pages) can cancel another learner's subscription and
-  enrolment. Fix before or with L4: use `get_current_user_id()` and check that the subscription and order belong
-  to that user.
-- The membership "View plan" dialog never opens (selector mismatch above).
+- Fixed: **`Ajax::cancel_membership()` trusted the posted `student_id`, `subscription_id` and `order_id`.** It now
+  derives the learner, plan and order from the subscription and refuses anyone but its owner (or an administrator);
+  since L4 the client posts only `subscription_id` and `order_id`.
+- Fixed in L4: the membership "View plan" dialog never opened (selector mismatch above).
 - When an assignment countdown reaches zero, `ohMyLmsCountdown()` calls `saveQuizExiSubmit()`, which posts
   `ohmylms_quiz_exit_submission` with no quiz id; the server rejects it. L6 should give assignments their own
   expiry path (or none: the server already stores the deadline).
 - `video-progress-tracker.js` depends on `ohmylms_frontend_params` without declaring `ohmylms-frontend`.
-- The public stores `ohmylms/tabs` and `ohmylms/curriculum` have no markup in the plugin since the old single
-  course layouts went; keep them (documented add-on contract) and reuse them in L4.
+- The public stores `ohmylms/tabs` and `ohmylms/curriculum` had no markup in the plugin since the old single
+  course layouts went; keep them (documented add-on contract). L4 drives the my-courses tabs with `ohmylms/tabs`.
 - Template overrides: a theme that copied an old `single-lesson/quiz-form.php` or course layout would have
   relied on the removed handlers. Those overrides were already incompatible (the templates they include are
   gone); mention it in the release notes.
@@ -330,51 +334,237 @@ Page-specific nonces (`load_more_nonce`, `lesson_completed_nonce`, …) belong i
 - Classic scripts that remain (until L7) raise toasts with
   `document.dispatchEvent( new CustomEvent( 'ohmylms:toast', { cancelable: true, detail: { message, type } } ) )`.
 
-### L3: catalogue search, filter, sort and load more
+### L3: catalogue search, filter, sort and load more (done)
 
-- Files: `OhMyLMS.load_more`, `OhMyLMS.filter`, filter keyboard, filter drawer, category buttons, card popup;
-  `templates/filters/*.php`, `loop/load-more.php`, `course-popup-content.php`; `Ajax::loadmore()`,
-  `Ajax::search_filter()`.
-- Store: `ohmylms/catalog`. Prefer `@wordpress/interactivity-router` with real GET parameters
-  (`?course_search=…&course_category[]=…&paged=…`) so filtered lists are linkable and work without JavaScript;
-  keep the two AJAX actions as a fallback until the router region renders server-side.
-- Directives: `data-wp-router-region` on the card list, `data-wp-on--change` on checkboxes and sort,
-  debounced `data-wp-on--input` on search, `data-wp-bind--hidden` on the load-more area, `data-wp-on--mouseenter`
-  on cards for the popup. Coordinate with the carousel owner for the category view.
-- Tests: PHP test that the archive with query arguments renders the same cards as `Ajax::search_filter()`;
-  `tests/js/catalog.test.mjs` for state (filters to query string, page reset, last page); Playwright for search
-  debounce and load more.
+Done on 31 October 2026. The L3 handlers took `ohmylms.js` from 45,818 to 35,739 bytes (measured around the L3
+edits; other batches edited the file at the same time).
 
-### L4: learner dashboard and profile
+Every catalogue list is a GET URL that the server renders, with or without JavaScript. `ohmylms/catalog`
+(`assets/interactivity/catalog.js`, factory and pure helpers in `assets/interactivity/catalog/catalog.js`) only builds
+those URLs and asks `@wordpress/interactivity-router` (loaded on the first navigation) to swap two router regions.
+`OhMyLMS\Extensions\Catalog` owns the contract: it reads the parameters, applies them to the archive's main query
+(`pre_get_posts`, priority 20) and to the course list shortcode (`ShortcodeCourseList`, so the block, Elementor,
+Bricks and WPBakery lists too), prints the state and decorates theme overrides.
 
-- Files: cover and profile photo, notification switches, my-courses tabs, membership "View plan" dialog
-  (fix), cancel membership confirm, invoice print, dashboard table rows; `templates/profile/*.php`;
-  `Ajax::student_*_image_*()`, `Ajax::cancel_membership()` (fix ownership first), `Ajax::drop_course()`
-  (remove if unused).
-- Stores: `ohmylms/account`; reuse `ohmylms/tabs` for my-courses and native `<dialog>` with `ohmylms/ui`.
-- Directives: `data-wp-on--change` on file inputs with `data-wp-bind--src` on images, `data-wp-context` per
-  membership card, `data-wp-on--click` for print (CSS `@media print` instead of rewriting `<body>`).
-- Tests: PHP integration test for `cancel_membership` ownership (another user's subscription is refused);
-  `tests/js/account.test.mjs` for the image upload state; extend `tests/browser/account-blocks.spec.cjs`.
+URL contract (also the field names, so the filter form submits it as is):
 
-### L5: authentication forms and reviews
+| Parameter | Values | Notes |
+| --- | --- | --- |
+| `course_search` | text, at most 100 characters | WordPress search on the course query (`s`) |
+| `course_curriculum[]` | `c<id>` | Curriculum item and everything below it (the "Category" filter and the layout 3/4 buttons) |
+| `course_bundle[]` | `t<id>` | Course Bundle (the "Tag" filter; not listed by `filters.php` today) |
+| `course_level[]` | `beginner`, `experience`, `expert`, `all` | `all` does not filter |
+| `course_price[]` | `paid`, `free` | `_price_type` |
+| `course_sort` | `date` (default, left out), `max_price`, `min_price`, `rating`, `review` | Courses without the meta (no rating yet) are listed last instead of being left out |
+| `paged` (or `/page/N/`) | 1 to 50 | Load more: lists pages 1..N in one page, so reload, a shared link and Back show the same cards |
 
-- Files: `OhMyLMS.login`, `OhMyLMS.signup`, show-login/show-signup links, review stars and validation;
-  `global/form-login.php`, `global/form-signup.php`, `single-course/tabs/reviews.php`; `Ajax::login()`,
-  `Ajax::signup()`. The checkout login reuses these forms: coordinate with the commerce owner.
-- Stores: `ohmylms/forms` (from L2), `ohmylms/reviews`.
-- Directives: `data-wp-on--submit` on the forms, `data-wp-class--is-busy`, `data-wp-text` for errors in an
-  `aria-live` region instead of toasts; radio inputs for stars (no `<a href>`), `data-wp-bind--disabled` on submit.
-- Tests: PHP tests for `Ajax::login()`/`signup()` JSON contracts (success, error, `pending_verification`);
-  `tests/js/forms.test.mjs`; Playwright login, signup with verification required, review submit.
+Names avoid the `course_category` / `course_tag` taxonomy query vars. Values are sorted and defaults dropped by both
+`toParams()` (JS) and `Catalog::query_string()` (PHP), so links printed by the server and URLs built in the browser are
+the same string (and hit the router's cache). `Catalog::canonical()` turns off WordPress's canonical redirect for these
+URLs: it rewrote `name[]` to `name[0]` (an extra request per navigation) and dropped `paged` on the archive.
+
+| Behaviour | Now | Markup (written in the template; `Catalog::template()` adds the same to overrides) |
+| --- | --- | --- |
+| Filter form | `<form id="ohmylms-catalog-form" method="get">` with hidden fields for the base URL's own query (`page_id` with plain permalinks) and a `<noscript>` "Apply filters" button; every control is associated with `form="…"`, wherever it sits | `archive-course.php` |
+| Checkboxes, sort | `actions.change` (delegated from the root: the boxes sit inside the `ohmylms/ui` accordions), immediate navigation; focus stays on the control | `filters/filters.php` (`name="course_level[]" value="expert"`, server `checked`), `filters/course-sort.php` (labelled, server `selected`) |
+| Search | `actions.input`, debounced 350 ms; typing refines one history entry (`replace`); Enter submits and moves focus to the results | `filters/course-search.php` (labelled `type="search"`) |
+| Clear all | `actions.clear`: unticks the boxes, keeps search and sort (as before) | `filters/filter-header.php` |
+| Curriculum buttons (layouts 3/4) | real links (`?course_curriculum[]=c27`), `actions.category`, `state.categoryActive` / `categoryCurrent` (`aria-current`) | `filters/category-type-button.php` |
+| Load more | `actions.loadMore` navigates to `paged=N+1`; the server lists pages 1..N+1, Preact keeps the cards already shown and focus moves to the first new card. Without JavaScript the button submits the form with `paged=N+1` | `loop/load-more.php`: always prints `.ohmylms-course-loadmore-area` (router region `ohmylms/catalog-more`, `hidden` on the last page) |
+| Results | router region `ohmylms/catalog-results` (`aria-busy` / `.is-loading` while fetching) holding a visually hidden `<h2 tabindex="-1">` focus target and a `role="status"` count ("Showing 4 of 9 courses."); an empty filtered list keeps the filters and says so | `archive-course.php` |
+| Back/Forward | the router swaps the regions; `actions.popstate` syncs the controls and focuses the heading | root `data-wp-on-window--popstate` |
+| Mobile filter drawer | `ohmylms/ui` drawer on `.ohmylms-course-outer` (`drawerPanel` `.ohmylms-course-sidebar`); the toggle uses `ohmylms/ui::actions.drawerToggle`, the close button `actions.closeFilters` | `archive-course.php`, `filters/search-sort.php`, `filters/filter-header.php` |
+| Card popup (layout 3) | delegated `actions.cardOver` / `cardOut`, `callbacks.reposition` on resize, position from `popupPosition()` | popups render inside the results region |
+| Carousels (layouts 3/4) | the rows render inside the results region; `.ohmylms-course-carousel-wrapper` carries `data-wp-key="rows-<item>"`, so a new curriculum item mounts fresh `ohmylms/carousel` instances (their `callbacks.mount` measures the new slides) | `content-course-carousel.php` |
+
+Focus: moves to the results heading after a submit, "Clear all", a curriculum button and Back/Forward (without
+scrolling); stays on the control for checkboxes, sort and typing, where the live count announces the result. Theme
+overrides of `archive-course.php` from before L3 have no regions: the module then loads the filtered URL in full, and
+the decorated templates become their own `ohmylms/catalog` islands (no mobile drawer).
+
+AJAX actions kept, flagged for removal once nothing outside the plugin calls them: `ohmylms_loadmore`
+(`load_more_nonce`) and `ohmylms_search_filter` (`search_filter_nonce`), still localized in `ohmylms_frontend_params`.
+Both now build their query with `Catalog::query_args()` (from the legacy `search_term`, `category_slug[]`,
+`tag_slug[]`, `level_slug[]`, `price_slug[]`, `sort_by` fields), so they return the same courses as the URL; their
+POST fields and HTML answers are unchanged. Nothing in the plugin calls them any more.
+
+Removed from `ohmylms.js`: the page/filter variables, `OhMyLMS.load_more`, `OhMyLMS.filter` and their six `init`
+bindings, the `.checkedbox` Enter handler, the `.ohmylms-filter-accordion` accordion init (the `ohmylms/ui`
+disclosures already handle `filters/filters.php`), the three mobile drawer handlers, the
+`.ohmylms-category-type-button li` handler, and `positionPopup()` with its card, popup and window resize handlers.
+None triggered a jQuery event and `docs/EXTENSIONS.md` documents none for the catalogue, so nothing is re-dispatched;
+the store emits `ohmylms:catalog-before-navigate` (cancelable) and `ohmylms:catalog-navigated` instead.
+
+Behaviour changes, all deliberate:
+
+- Filtered lists, sort and load more are shareable URLs that work without JavaScript; Back/Forward work.
+- Search waits for a pause in typing (it sent a request per key) and counts every course matching the term.
+- Load more respects the filters, the shortcode's own `curriculum`/`bundle` restriction and its page size (the jQuery
+  version posted the option's page size and lost the shortcode restriction).
+- Sorting by price, rating or reviews keeps courses that have no value (they were dropped by `meta_key`).
+- The layout 3 popup works for every card, including those from later navigations; popups are refreshed with the cards.
+- The filter header ("Clear all", the drawer's close button) now follows the course list's `show_filter` attribute,
+  not only the archive option.
+- Curriculum buttons show the selected item after a reload (the server marks it), and are real links.
+
+Live check (temporary options and courses, restored afterwards): filters, search typing, sort, "Clear all", load more,
+Back/Forward, curriculum buttons with the carousel re-measuring at 700 px, the card popup and the drawer were driven in
+the browser without a page reload; `/course/` with and without each parameter answers 200 with no PHP notices,
+anonymously and logged in. Not done: a Playwright spec (the browser fixture is still broken, see L2).
+
+Tests: `tests/js/catalog.test.mjs` (parameter names, parsing, clamping, `/page/N/`, the canonical query string shared
+with PHP, URL building, page reset, clear, last page, history mode, popup position; the store factory: checkbox
+navigation and loading flag, debounced search with `replace`, submit focus, clear, no duplicate fetch, load more and
+its last page, Back/Forward sync, cancelled navigation, curriculum state) and `tests/php/catalog-integration.php`
+(`OHMYLMS_CATALOG_TEST=1`: URL contract, module registration with the router as a dynamic dependency, server-side
+search/level/price/sort/curriculum filtering and cumulative pages through the course list, directives, regions, form
+controls and state, the carousel layout, decorated pre-L3 overrides, the two admin-ajax actions returning the same
+courses, and the live archive filtering for the same URL without redirects; its three test courses are deleted).
+
+### L4: learner dashboard and profile (done)
+
+Done on 31 October 2026. The L4 handlers took `ohmylms.js` from 56,189 to 45,818 bytes (measured around the L4
+edits; other batches edited the file at the same time).
+
+| Behaviour | Now | Markup (written in the template; `Extensions\Account` adds the same to theme overrides) |
+| --- | --- | --- |
+| Cover and profile photo | `ohmylms/account` (`assets/interactivity/account/store.js`): `actions.uploadCover`, `uploadAvatar`, `deleteCover`, `pickKey` (Enter/Space on the labels), `state.coverDeleteDisplay`, `avatarHidden`, `initialsHidden`, `isBusy`; root context `{ cover, hasCover, avatar, busy }` from `Account::profile_context()` | `profile/profile-edit.php` (`.student-profile-edit`) |
+| Repeatable skill and link rows | `actions.addRow` (clones `<template id="skills-template">` / `links-template`, focuses the new field), `actions.removeRow` (delegated on `.ohmylms-dynamic-fields`; the last row is cleared, focus moves to the neighbour) | `profile/profile-edit.php`; the inline `<script>` is gone. Overrides keep their own inline script and are not decorated for this |
+| My courses tabs | public `ohmylms/tabs`: root context `{ activeTab }`, per-tab `{ tabKey }` on the `<li>` and the panel, `actions.select`, `actions.key`, `state.selected`, `state.tabIndex` | `profile/my-courses.php` (`Account::tabs()` for overrides); the panel is now labelled by its tab |
+| Membership "View plan" dialog | per-card context `{ planOpen }`, `actions.openPlan`, `closePlan`, `planBackdrop`, `callbacks.planFocus` (`trapFocus()`, Escape closes, focus returns to "View plan"), `state.planDisplay` | `profile/loop/membership-card.php`: `role="dialog"`, `aria-modal`, labelled by its title, unique `id`; "View plan" links to `#id`, so `:target` opens it without JavaScript |
+| Cancel membership | `actions.cancelMembership`: `confirmDialog( { tone: 'danger' } )`, then `request( { action: 'ohmylms_cancel_membership', nonce, data: { subscription_id, order_id } } )`, toast, reload | `profile/membership.php`: link context `{ subscriptionId, orderId, busy }`; the inline `.ohmylms-alert` (and its `data-student-id`) is gone. Pre-L4 overrides: the ids are read from their alert's `.ohmylms-cancel-membership` button |
+| Invoice print | `actions.printInvoice`: marks `<html>` and the invoice, `window.print()`, unmarks on `afterprint`; `@media print` rules in `assets/interactivity/frontend.css` | `profile/invoice-details.php` (`.print-button`) |
+| Notification switches | no script: every switch posts `value="on"` | `profile/notifications.php`; `Account::decorate()` rewrites the value in overrides (only the four `notification_*` names inside `.single-notification-settings`) |
+| Dashboard table rows | `ohmylms/ui` disclosures (L1), unchanged | `Interactivity::disclosures()` |
+
+Endpoints: no learner REST route exists for these, so they stay on admin-ajax through `request( { action } )`:
+`ohmylms_student_cover_image_upload`, `ohmylms_student_profile_image_upload` (`FormData` with `file`),
+`ohmylms_student_cover_image_delete` and `ohmylms_cancel_membership`. Nonces come from
+`wp_interactivity_state( 'ohmylms/account' ).nonces` (`coverUpload`, `coverDelete`, `avatarUpload`, `cancelMembership`),
+added by `Account::enqueue( [ 'profile' | 'cancel' ] )` only when those templates render, with `maxUpload`
+(`wp_max_upload_size()`) and the messages. The profile form, password change and notification form keep posting to
+`FormHandler` without JavaScript. The Elementor and Bricks dashboard/profile widgets and the blocks render through
+`ShortCodeDashboard` / `ShortCodeProfile` and `ohmylms_get_template()`, so they get the same markup.
+
+Server-side changes:
+
+- `Ajax::upload_image()` accepts only JPEG, PNG, GIF and WebP (it accepted any allowed upload type) and answers the
+  `wp_handle_upload()` error message.
+- Removing a cover stored the placeholder URL (`Student::get_cover_image( 'edit' )` returned it), so the delete button
+  came back on reload; the `edit` context now returns the raw value, and `StudentStore::has_cover_image()` ignores a
+  stored placeholder.
+- `Ajax::drop_course()` and `Ajax::lesson_access_nonce()` and their localized nonces were removed (see
+  [Removed in L1](#removed-in-l1)).
+
+Removed from `ohmylms.js`: `upload_cover_image`, `delete_cover_image`, `upload_profile_photo`, `cancel_membership`
+and their `init` bindings, the `.cover-edit` / `.edit-avatar` keydown handlers, `ohMyLMSJQueryTab()` and its my-courses
+call, the notification switch handler, the `.dashboard-table-tr` accordion copy, the membership dialog handlers
+(`.view-plan`, inner click, body / `.close-modal` click, document Escape), the invoice print handler and the
+`.do-membership-cancel` / `.ohmylms-alert` handlers. None triggered a jQuery event (and `docs/EXTENSIONS.md` documents
+none for these screens), so nothing is re-dispatched; the store emits `ohmylms:account-before-upload` (cancelable),
+`ohmylms:account-image-changed`, `ohmylms:account-error`, `ohmylms:membership-before-cancel` (cancelable),
+`ohmylms:membership-cancelled` and `ohmylms:membership-cancel-error` instead. The block editor scripts had nothing to
+remove (see [Block editor scripts](#block-editor-scripts-assetssrcruntimesblocksjs)).
+
+Behaviour changes, all deliberate:
+
+- Uploads check the file type and size first, show a busy state, report failures in a danger toast (they went to the
+  console) and confirm success with a toast. Picking the same file twice works (the input is reset).
+- Cancelling asks with the shared native dialog instead of the inline alert, and a refused cancel shows the server's
+  message instead of reloading silently.
+- Printing no longer replaces `<body>` and reloads the page.
+- `ShortCodeProfile::add_navigation_handler()` (an inline vanilla script for the shortcode's view links) is untouched.
+
+Live note: on the local site the legacy shortcodes print a link to the student hub and the hub has its own membership
+screens, so these templates are reached through the blocks, widgets, themes and overrides. They were checked over HTTP
+as a temporary learner on temporary `ohmylms/dashboard` and `ohmylms/profile` block pages (dashboard card, profile edit,
+membership table, invoice, state nonces) and the cancel request was sent as the module sends it (refused with a bad
+nonce and anonymously, accepted for the owner); the learner, its session and the fixtures were deleted. Not done: a
+browser run of the dialog and uploads (`tests/browser/account-blocks.spec.cjs` was not extended).
+
+Tests: `tests/js/account.test.mjs` (image checks, cancel fields, messages, row templates, upload success, refusal,
+failure and veto, pre-L4 avatar, cover removal, label keys, rows, cancel confirm, keep, refusal and pre-L4 ids, plan
+dialog focus and closing, print) and `tests/php/account-frontend-integration.php` (`OHMYLMS_ACCOUNT_FRONTEND_TEST=1`:
+module registration, rendered directives and context for every template above, state nonces, decorated pre-L4
+overrides, hub switches left alone, the upload/delete handlers with the state nonces, and cancelling with only the
+subscription and order: refused for another learner, accepted for the owner; fixture users, plan, order and
+subscription are deleted).
+
+### L5: authentication forms and reviews (done)
+
+Done on 31 October 2026. The L5 handlers took `ohmylms.js` from 59,830 to 56,189 bytes (other batches edited
+the file at the same time; this is the L5 share).
+
+| Behaviour | Now | Markup (written in the template; the decorator adds the same to theme overrides) |
+| --- | --- | --- |
+| Login and sign-up submission | `ohmylms/forms` (`assets/interactivity/forms/auth.js`, merged into the L2 store): `actions.submit`, `state.submitDisabled`, `state.loaderDisplay`, `state.errorHidden`; form context `{ authForm, authHidden, busy, error }` (sign-up also `consent`) | `global/form-login.php`, `global/form-signup.php`; `Extensions\AuthForms::decorate()` on `ohmylms_template_html` (priority 16) |
+| Show sign-up / show login | `actions.showSignup`, `actions.showLogin`, `state.authView`, `state.authDisplay` (focus moves to the first field of the shown form) | `a.ohmylms-show-signup-form`, `a.ohmylms-show-login-form` (`role="button"`) |
+| Pending email verification | `state.pendingMessage`, `state.pendingHidden` | `.ohmylms-email-pending-notice` island after the sign-up form (was built by jQuery) |
+| Review stars and "rating and review both are required" | `ohmylms/reviews` (`assets/interactivity/reviews/rating.js`): `actions.change`, `validate`, `submit`, `reset` (on `pageshow`), `pick` (pre-L5 link stars), `state.rated`, `isStar`, `noticeDisplay`, `callbacks.restore` | `single-course/tabs/reviews.php`; `Extensions\Reviews::decorate()` (priority 16) |
+
+Endpoints: unchanged. The forms post their own fields (nonce, hook fields from `ohmylms_login_form` /
+`ohmylms_signup_form`, captcha fields) with `request( { action: 'ohmylms_login' | 'ohmylms_signup', data } )`.
+`Ajax::login()` and `Ajax::signup()` now wrap `Ajax::login_response()` / `Ajax::signup_response()`, which return the
+same `{ status, message, redirect_url }` array. Without JavaScript the form posts to its page and
+`AuthForms::handle_post()` (on `wp_loaded`, front end only, not AJAX) runs the same method: success redirects with
+`wp_safe_redirect()`, an error or a pending verification re-renders the form with the message. Reviews keep posting to
+`wp-comments-post.php`; `CourseComment::add_comment_rating()` reads `rating` from the radios as it did from the select.
+
+Server-side changes, all in the two shared methods:
+
+- `redirect_to` goes through `wp_validate_redirect()` (it was only `esc_url_raw()`, an open redirect), for the login
+  answer, the sign-up answer and the stored post-verification redirect.
+- A stale or missing form nonce answers `{ status: 'error', message }` instead of an empty `0`, so a cached page tells
+  the learner to reload. A failed automatic sign-in after sign-up answers an error instead of `0`.
+- Nonces, `wp_signon()` (so `authenticate` filters such as captcha and rate-limit plugins), `ohmylms_login_failed`,
+  `ohmylms_signup_failed` and the email verification flow are unchanged. There is no `ohmylms_before_login` filter.
+
+Removed from `ohmylms.js`: the `submit` handlers for `.ohmylms-form-login` and `.ohmylms-form-signup`
+(`OhMyLMS.login`, `OhMyLMS.signup`, including the jQuery-built pending notice), the
+`a.ohmylms-show-signup-form` / `a.ohmylms-show-login-form` click handlers (`show_signup_form`,
+`show_login_form_again`), and the review star click and `#submit` validation handlers. None triggered a jQuery event, so
+nothing is re-dispatched; the stores emit `ohmylms:auth-before-submit` (cancelable), `ohmylms:auth-complete`,
+`ohmylms:auth-error`, `ohmylms:auth-view-changed`, `ohmylms:review-rated` and `ohmylms:review-before-submit`
+(cancelable) instead ([INTERACTIVITY](INTERACTIVITY.md#public-events-and-slots)). `const { __ } = wp.i18n` in
+`ohmylms.js` has no caller left; it stays until L7 deletes the file.
+
+Behaviour changes, all deliberate:
+
+- Errors show inline in the form's `role="alert"` region instead of a toast; a login error shows the server's message
+  (as `wp-login.php` does) instead of the fixed "Invalid username or password". Forms from theme overrides without the
+  region fall back to a danger toast; without the pending notice, to a sticky toast.
+- The button is disabled and the loader shown while a request runs, so a double click no longer sends twice.
+- The redirect is followed only when it is on the page's origin (otherwise the page reloads).
+- The opt-in React sign-up fields (`OHMYLMS_SOURCE_ASSETS`) keep owning sign-up submission; the store steps aside when
+  the form has `data-ohmylms-registration="react"` (they also stop the event first).
+- Review stars are labelled radio inputs, so the rating posts and the stars fill (`:has(:checked)`) without JavaScript
+  and work with arrow keys; `select#rating` and the `<a href="#">` stars are gone from the plugin template. The star CSS
+  is in `assets/interactivity/frontend.css` (no build step). The required notice is `role="alert"`, and the submit
+  button is disabled after a valid submit until the page is shown again.
+- Checkout login: the form is the same `global/form-login.php`; `ohmylms/checkout`'s log-in toggle still sets its
+  inline `display`, and the login store never overrides it (its display only changes when a switch link is used).
+
+Not done here: review edit, delete and "load more reviews" (no such UI in the plugin), lost/reset password (core
+`wp-login.php`), social sign-in (plain links to the REST routes, no script) and Q&A (not in the plugin). Live note: on
+the local site the profile and checkout pages render the student hub's own sign-in and learners with access are sent to
+the hub, so these templates are reached only through themes, shortcodes and overrides; the module was checked on a
+temporary page in a clean headless browser (login with and without JavaScript, view switch, review stars and notice).
+
+Tests: `tests/js/forms.test.mjs` (form kind, validation, same-origin redirects, answer mapping, display rules, submit,
+errors, override toast fallback, pending notice, terms gate, React and cancel opt-outs, view switch),
+`tests/js/reviews.test.mjs` (rating parsing, missing parts, stars, link stars, notice, double submit, cancel, restore) and
+`tests/php/auth-reviews-integration.php` (`OHMYLMS_AUTH_REVIEWS_TEST=1`: rendered directives and state, decorated pre-L5
+overrides, login and sign-up answers for the module's request shape including stale nonces and external redirects,
+pending verification, the no-JavaScript post, the review form and a radio-rated review; fixture users and the review are
+deleted). `learner-chrome-integration.php` now expects the L5 sign-up context and `state.submitDisabled`.
 
 ### L6: lesson and course player and progress
 
 - Files: mark complete, assignment submission, attachments, timer and deadline, prerequisite dialog, lesson
   sidebar tabs, quiz text fields (into `ohmylms/questions`), content images (move to PHP), content protection;
   `single-lesson/content-navigation.php`, `content-assignment.php`, `sidebar/sidebar.php`, `content-lesson.php`;
-  `Ajax::lesson_completed()`, `Ajax::save_assignment_submission_file()`, `Ajax::save_remaining_time()`,
-  `Ajax::lesson_access_nonce()` (remove if unused).
+  `Ajax::lesson_completed()`, `Ajax::save_assignment_submission_file()`, `Ajax::save_remaining_time()`
+  (`Ajax::lesson_access_nonce()` was removed in L4).
 - Stores: `ohmylms/lesson` (completion, navigation, sidebar tabs), `ohmylms/assignment` (files, timer,
   submission), `ohmylms/protection` (only when the option is on, so other pages ship nothing).
 - Directives: `data-wp-on--change` on `#ohmylms-completed-lesson` with `data-wp-bind--disabled`, a context with

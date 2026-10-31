@@ -2,10 +2,13 @@
 /**
  * Template for displaying membership of student profile
  *
+ * "Cancel" asks for confirmation and posts the subscription to `ohmylms_cancel_membership`
+ * through the `ohmylms/account` store.
+ *
  * This template can be overridden by copying it to yourtheme/ohmylms/profile/membership.php.
  *
  * @package OhMyLMS\Templates
- * @version  1.0.0
+ * @version  1.1.0
  */
 
 defined( 'ABSPATH' ) || exit();
@@ -178,7 +181,19 @@ use function OhMyLMS\Commerce\ecommerce;
 									// Disable cancel button for one-time payments.
 									if ( ! $is_one_time && in_array( $subscription->get_status(), $cancellable_statuses ) ) :
 										?>
-											<a href="#" class="do-membership-cancel ohmylms-table-action-btn" title="<?php esc_attr_e( 'Cancel', 'ohmylms' ); ?>">
+											<a href="#" class="do-membership-cancel ohmylms-table-action-btn" role="button" title="<?php esc_attr_e( 'Cancel', 'ohmylms' ); ?>"
+												data-wp-interactive="ohmylms/account"
+												<?php
+												echo wp_interactivity_data_wp_context( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core helper escapes the attribute.
+													array(
+														'subscriptionId' => (int) $subscription->get_id(),
+														'orderId'        => (int) $order->get_id(),
+														'busy'           => false,
+													)
+												);
+												?>
+												data-wp-on--click="actions.cancelMembership"
+												data-wp-bind--aria-disabled="context.busy">
 											<?php echo esc_html__( 'Cancel', 'ohmylms' ); ?>
 											</a>
 										<?php elseif ( $is_one_time ) : ?>
@@ -194,37 +209,6 @@ use function OhMyLMS\Commerce\ecommerce;
 												?>
 											</span>
 										<?php endif; ?>
-
-										<div class="ohmylms-alert">
-											<div class="ohmylms-alert-inner">
-												<div class="ohmylms-alert-wrapper">
-													<div class="ohmylms-alert-body">
-														<div class="icon">
-															<svg fill="none" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="#F85656" fill-rule="evenodd" d="M12 0c6.626 0 12 5.374 12 12s-5.374 12-12 12S0 18.626 0 12 5.374 0 12 0zm-1.286 13.033V6.856c0-.708.578-1.285 1.286-1.285.708 0 1.286.583 1.286 1.285v6.177c0 .702-.578 1.285-1.286 1.285a1.288 1.288 0 01-1.286-1.285zm1.28 2.664a1.457 1.457 0 110 2.915 1.457 1.457 0 010-2.915z" clip-rule="evenodd"></path></svg>
-														</div>
-
-														<div class="title-area">
-															<h4>
-															<?php echo esc_html__( 'Are you sure you want to cancel this subscription?', 'ohmylms' ); ?>
-															</h4>
-															<p>
-															<?php echo esc_html__( 'Cancelling this subscription will remove your access to all associated courses at the end of the billing period.', 'ohmylms' ); ?>
-															</p>
-														</div>
-													</div>
-
-													<div class="ohmylms-alert-footer">
-														<button type="button" class="ohmylms-button ohmylms-alert-cancel" aria-label="<?php echo esc_attr__( 'Cancel', 'ohmylms' ); ?>">
-														<?php echo esc_html__( 'Cancel', 'ohmylms' ); ?>
-														</button>
-
-														<button type="button" class="ohmylms-button ohmylms-danger ohmylms-cancel-membership" aria-label="<?php echo esc_attr__( 'Confirm Cancel', 'ohmylms' ); ?>" data-order-id="<?php echo esc_attr( $order->get_id() ); ?>" data-membership-id="<?php echo esc_attr( $membership->get_id() ); ?>" data-subscription-id="<?php echo esc_attr( $subscription->get_id() ); ?>" data-student-id="<?php echo esc_attr( get_current_user_id() ); ?>">
-														<?php echo esc_html__( 'Confirm Cancel', 'ohmylms' ); ?>
-														</button>
-													</div>
-												</div>
-											</div>
-										</div>
 									</div>
 
 									<div class="dashboard-table-mobile-td">

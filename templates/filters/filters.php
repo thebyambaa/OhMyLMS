@@ -31,6 +31,9 @@ $items = array(
 	'price_type'       => array(),
 	'difficulty_level' => array(),
 );
+
+// Checkboxes belong to the catalogue's GET form (templates/archive-course.php) wherever they sit.
+$catalog_form = \OhMyLMS\Extensions\Catalog::current() ? \OhMyLMS\Extensions\Catalog::current()['form'] : '';
 ?>
 
 <div class="ohmylms-filter-accordion ohmylms-default-accordion">
@@ -108,7 +111,7 @@ $items = array(
 							?>
 								
 								<label for="<?php echo esc_attr( $filter . $index ); ?>" class="ohmylms-checkbox" >
-									<input type="checkbox" name="ohmylms-filter-checkbox" value="" data-type="<?php echo esc_attr( $filter ); ?>" data-slug="<?php echo esc_attr( $item['slug'] ); ?>" id="<?php echo esc_attr( $filter . $index ); ?>" aria-required="true" aria-labelledby="ohmylms-<?php echo esc_attr( $filter . $index ); ?>-filter-label">
+									<input type="checkbox" name="<?php echo esc_attr( \OhMyLMS\Extensions\Catalog::field( $filter ) ); ?>" value="<?php echo esc_attr( $item['slug'] ); ?>" <?php checked( \OhMyLMS\Extensions\Catalog::is_selected( $filter, $item['slug'] ) ); ?> <?php echo $catalog_form ? 'form="' . esc_attr( $catalog_form ) . '"' : ''; ?> data-type="<?php echo esc_attr( $filter ); ?>" data-slug="<?php echo esc_attr( $item['slug'] ); ?>" id="<?php echo esc_attr( $filter . $index ); ?>" aria-labelledby="ohmylms-<?php echo esc_attr( $filter . $index ); ?>-filter-label">
 
 									<span class="ohmylms-checkbox-text">
 										<span class="checkedbox" aria-hidden="false" id="ohmylms-<?php echo esc_attr( $filter . $index ); ?>-filter-label" tabindex="0" data-target="<?php echo esc_attr( $filter . $index ); ?>">

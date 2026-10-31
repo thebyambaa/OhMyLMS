@@ -124,8 +124,8 @@ not completed). People who can edit the assignment preview without these gates.
   Legacy `YYYY-MM-DDTHH:mm:ss` date/time values are read; a date without a time opens at midnight.
 - **Prerequisites** block submitting, not reading (they used to hide the page): the page lists them with
   links and completion state, the Start button is disabled with the reason, and the server refuses the
-  submission. `CommonHook::restrict_access()` and `Ajax::lesson_access_nonce()` no longer gate assignment
-  pages on prerequisites (lesson prerequisites are unchanged).
+  submission. `CommonHook::restrict_access()` no longer gates assignment pages on prerequisites (lesson
+  prerequisites are unchanged); the uncalled `Ajax::lesson_access_nonce()` was removed.
 - **Resources** are listed on the assignment page: files with a download link to the library file, links
   opening in a new tab. Library files are public URLs, as for lesson resources.
 

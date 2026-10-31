@@ -9,7 +9,9 @@
  */
 
 defined( 'ABSPATH' ) || exit();
-$is_filter_enabled = get_option( 'ohmylms_archive_page_filter_is_enabled', 'no' );
+// Inside a catalogue the course list's own `show_filter` attribute applies, not only the archive option.
+$catalog           = \OhMyLMS\Extensions\Catalog::current();
+$is_filter_enabled = $catalog ? ( $catalog['settings']['filters'] ? 'yes' : 'no' ) : get_option( 'ohmylms_archive_page_filter_is_enabled', 'no' );
 
 if ( 'no' === $is_filter_enabled ) {
 	return;
@@ -25,13 +27,13 @@ $filter_data = get_option( 'ohmylms_archive_page_filters', array() );
 		?>
 	</span>
 
-	<button type="button" class="clear-filter">
+	<button type="button" class="clear-filter" data-wp-on--click="actions.clear">
 		<?php
 			echo esc_html__( 'Clear All', 'ohmylms' );
 		?>
 	</button>
 
-	<button type="button" class="ohmylms-close-filter">
+	<button type="button" class="ohmylms-close-filter" aria-label="<?php esc_attr_e( 'Close filters', 'ohmylms' ); ?>" data-wp-on--click="actions.closeFilters">
 		<?php require OHMYLMS_DIR . '/assets/images/icon/cross-icon.php'; ?>
 	</button>
 	

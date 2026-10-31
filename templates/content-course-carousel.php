@@ -21,7 +21,8 @@ global $category;
 
 ?>
 
-<div class="ohmylms-course-carousel-wrapper">
+<?php // A new key per curriculum item makes the catalogue router mount fresh carousels, which measure their slides. ?>
+<div class="ohmylms-course-carousel-wrapper" data-wp-key="<?php echo esc_attr( 'rows-' . ( $category ? $category : 'all' ) ); ?>">
 	<?php
 	foreach ( $data as $row ) {
 

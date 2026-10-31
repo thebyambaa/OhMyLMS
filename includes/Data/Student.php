@@ -846,7 +846,8 @@ class Student extends Data {
 	 */
 	public function get_cover_image( $context = 'view' ) {
 		$cover_image = $this->get_prop( 'cover_image', $context );
-		if ( empty( $cover_image ) ) {
+		// The store saves the `edit` value: storing the placeholder would make has_cover_image() true.
+		if ( empty( $cover_image ) && 'edit' !== $context ) {
 			$cover_image = OHMYLMS_URL . '/assets/images/student-cover-image-placeholder.jpeg';
 		}
 		return $cover_image;

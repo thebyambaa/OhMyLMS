@@ -19,5 +19,43 @@
 .ohmylms-dialog-title { margin: 0 0 8px; font-size: 1.125rem; }
 .ohmylms-dialog-message { margin: 0 0 20px; }
 .ohmylms-dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+/* Course review stars (ohmylms/reviews): radio inputs inside labels; :has() fills them without JavaScript too. */
+.ohmylms-course-reviews-form .ohmylms-stars[role="radiogroup"] { display: inline-flex; align-items: center; gap: var(--oml-space-1, 4px); margin: 0; padding: 0; }
+.ohmylms-course-reviews-form .comment-form .comment-form-rating .ohmylms-stars > label.ohmylms-star { display: block; margin: 0; line-height: 1; cursor: pointer; position: relative; }
+.ohmylms-course-reviews-form .ohmylms-stars > label.ohmylms-star svg { display: block; }
+.ohmylms-course-reviews-form .ohmylms-stars .screen-reader-text { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); border: 0; white-space: nowrap; }
+.ohmylms-course-reviews-form .ohmylms-stars > label.ohmylms-star:has(input:focus-visible) { outline: 2px solid var(--ohmylms-primary-color, #3858e9); outline-offset: 2px; border-radius: 2px; }
+.ohmylms-course-reviews-form .ohmylms-stars:hover > label path,
+.ohmylms-course-reviews-form .ohmylms-stars.selected > label path,
+.ohmylms-course-reviews-form .ohmylms-stars:has(input:checked) > label path { fill: var(--oml-warning, #fe9738); }
+.ohmylms-course-reviews-form .ohmylms-stars.selected > label.active ~ label path,
+.ohmylms-course-reviews-form .ohmylms-stars > label:has(input:checked) ~ label path,
+.ohmylms-course-reviews-form .ohmylms-stars:hover > label:hover ~ label path { fill: transparent; }
+.ohmylms-form-login.is-busy, .ohmylms-form-signup.is-busy { cursor: progress; }
 /* Quiz step button: outlined while the question is unanswered (Skip), solid once answered (Next). */
 button.ohmylms-next-quiz:has(.is-skip) { background: transparent !important; color: var(--player-accent, #7c3aed) !important; border: 2px solid var(--player-accent, #7c3aed) !important; }
+/* Learner account (ohmylms/account). Without JavaScript, "View plan" links to the dialog and :target shows it. */
+.ohmylms-membership-modal:target { display: block; }
+.student-profile-edit.is-busy .ohmylms-profile-cover-area .ohmylms-profile-cover { cursor: progress; opacity: 0.7; }
+.do-membership-cancel[aria-disabled="true"] { pointer-events: none; opacity: 0.6; }
+.cover-edit:focus-visible, .edit-avatar:focus-visible, .view-plan:focus-visible, .close-modal:focus-visible { outline: 2px solid var(--ohmylms-primary-color, #3858e9); outline-offset: 2px; }
+/* Invoice "Print" prints only the invoice. */
+@media print {
+  html.ohmylms-printing body * { visibility: hidden; }
+  html.ohmylms-printing .ohmylms-print-area, html.ohmylms-printing .ohmylms-print-area * { visibility: visible; }
+  html.ohmylms-printing .ohmylms-print-area { position: absolute; top: 0; left: 0; width: 100%; max-width: 980px; margin: 0; box-shadow: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html.ohmylms-printing .ohmylms-print-area .invoice-breadcrumb, html.ohmylms-printing .ohmylms-print-area .print-button { display: none; }
+  html.ohmylms-printing .ohmylms-print-area .invoice-header, html.ohmylms-printing .ohmylms-print-area .ohmylms-dashboard-table { box-shadow: none; border: 1px solid #eef0f3; }
+  html.ohmylms-printing .ohmylms-print-area .invoice-tags li { background-color: #f3f5f7; }
+  html.ohmylms-printing .ohmylms-print-area .dashboard-table-head { background-color: #f8f8f8; }
+}
+/* Course catalogue (ohmylms/catalog). The results heading is a focus target and the count a live region; neither is shown. */
+.ohmylms-visually-hidden { position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); border: 0; white-space: nowrap; }
+.ohmylms-catalog-results { transition: opacity 0.2s ease; }
+.ohmylms-catalog-results.is-loading { opacity: 0.6; cursor: progress; }
+.ohmylms-course-loadmore-area[hidden] { display: none !important; }
+.ohmylms-catalog-apply { margin-bottom: 20px; }
+.ohmylms-category-type-button a:focus-visible, .ohmylms-course-sidebar .checkedbox:focus-visible { outline: 2px solid var(--ohmylms-primary-color, #3858e9); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .ohmylms-catalog-results { transition: none; }
+}

@@ -255,6 +255,9 @@ class ShortcodeCourseList {
 			\OhMyLMS\Curriculum\Placement::ids_from_list( $atts['bundle'], 'bundle' )
 		);
 
+		// Search, filters, sort and load-more pages from the URL (includes/Extensions/Catalog.php).
+		$args = \OhMyLMS\Extensions\Catalog::list_query_args( $args, $atts );
+
 		// Set up global query for template.
 		global $wp_query;
 		$original_query = $wp_query;

@@ -25,14 +25,20 @@ if ( ! empty( $redirect_to ) ) {
 	$ohmylms_google_login_url    = add_query_arg( 'redirect_to', rawurlencode( $redirect_to ), $ohmylms_google_login_url );
 	$ohmylms_microsoft_login_url = add_query_arg( 'redirect_to', rawurlencode( $redirect_to ), $ohmylms_microsoft_login_url );
 }
+$ohmylms_auth = \OhMyLMS\Extensions\AuthForms::view( 'login', $hidden );
 
 ?>
-<form class="ohmylms-login-signup ohmylms-form-login login" method="post" <?php echo ( $hidden ) ? 'style="display:none;"' : ''; ?>
+<form class="ohmylms-login-signup ohmylms-form-login login" method="post" <?php echo $ohmylms_auth['style'] ? 'style="' . esc_attr( $ohmylms_auth['style'] ) . '"' : ''; ?>
 	data-wp-interactive="ohmylms/forms"
+	data-wp-context="<?php echo esc_attr( $ohmylms_auth['context'] ); ?>"
 	data-wp-init--fold="callbacks.foldFilled"
 	data-wp-on--focusin="actions.fieldFocus"
 	data-wp-on--focusout="actions.fieldBlur"
-	data-wp-on--input="actions.fieldInput">
+	data-wp-on--input="actions.fieldInput"
+	data-wp-on--submit="actions.submit"
+	data-wp-class--is-busy="context.busy"
+	data-wp-bind--aria-busy="context.busy"
+	data-wp-style--display="state.authDisplay">
 
 	<?php echo ( $message ) ? wpautop( wptexturize( $message ) ) : ''; // @codingStandardsIgnoreLine ?>
 
@@ -171,21 +177,23 @@ if ( ! empty( $redirect_to ) ) {
 		</a>
 	</p>
 
+	<p class="ohmylms-form-row ohmylms-form-error ohmylms-notice ohmylms-notice-error" role="alert" data-wp-bind--hidden="state.errorHidden" data-wp-text="context.error" <?php echo '' === $ohmylms_auth['error'] ? 'hidden' : ''; ?>><?php echo esc_html( $ohmylms_auth['error'] ); ?></p>
+
 	<p class="ohmylms-form-row form-submit-btn">
 		<?php wp_nonce_field( 'ohmylms-login', 'ohmylms-login-nonce' ); ?>
 		<input type="hidden" name="action" value="ohmylms_login">
 		<input type="hidden" name="redirect_to" value="<?php echo esc_url( $redirect_to ); ?>" />
 
-		<button type="submit" class="ohmylms-button ohmylms-form-login-submit" name="login" value="<?php esc_attr_e( 'Login', 'ohmylms' ); ?>">
+		<button type="submit" class="ohmylms-button ohmylms-form-login-submit" name="login" value="<?php esc_attr_e( 'Login', 'ohmylms' ); ?>" data-wp-bind--disabled="state.submitDisabled">
 			<?php esc_html_e( 'Log in', 'ohmylms' ); ?>
-			<span class="ohmylms-loader"></span>
+			<span class="ohmylms-loader" data-wp-style--display="state.loaderDisplay"></span>
 		</button>
 	</p>
 
 	<?php if ( ! is_ohmylms_checkout() ) : ?>
 		<p class="ohmylms-form-row dont-have-account">
 			<?php echo esc_html__( 'Don\'t have an account?', 'ohmylms' ); ?>
-			<a href="#" class="ohmylms-show-signup-form">
+			<a href="#" class="ohmylms-show-signup-form" role="button" data-wp-on--click="actions.showSignup">
 				<?php esc_html_e( 'Sign Up', 'ohmylms' ); ?>
 			</a>
 		</p>

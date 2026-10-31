@@ -134,23 +134,8 @@ class FrontendAssets extends Assets {
 					$localized_data['lesson_completed_nonce']      = wp_create_nonce( 'lesson_completed_nonce' );
 					$localized_data['assignment_submission_nonce'] = wp_create_nonce( 'assignment_submission_nonce' );
 					$localized_data['save_remaining_time']         = wp_create_nonce( 'save_remaining_time' );
-					$localized_data['lesson_access_nonce']         = wp_create_nonce( 'lesson_access_nonce' );
 					$localized_data['quiz_exit_submission']        = wp_create_nonce( 'quiz_exit_submission' );
 					$localized_data['video_progress_nonce']        = wp_create_nonce( 'video_progress_nonce' );
-				}
-
-				if ( ohmylms_is_single_course_page() || is_ohmylms_dashboard() || is_ohmylms_my_courses_shortcode() || \OhMyLMS\Student\Hub::is_page() ) {
-					$localized_data['course_drop_nonce'] = wp_create_nonce( 'course_drop_nonce' );
-				}
-
-				if ( is_ohmylms_profile_shortcode() || \OhMyLMS\Student\Hub::is_page() ) {
-					$localized_data['student_profile_cover_upload_nonce'] = wp_create_nonce( 'student_profile_cover_image' );
-					$localized_data['student_profile_cover_delete_nonce'] = wp_create_nonce( 'student_profile_cover_image_delete' );
-					$localized_data['student_profile_image_upload_nonce'] = wp_create_nonce( 'student_profile_image_upload' );
-				}
-
-				if ( ohmylms_is_membership_page() || ohmylms_is_membership_plan_shortcode() || is_ohmylms_dashboard() || \OhMyLMS\Student\Hub::is_page() ) {
-					$localized_data['cancel_membership_nonce'] = wp_create_nonce( 'cancel_membership_nonce' );
 				}
 				break;
 			default:
