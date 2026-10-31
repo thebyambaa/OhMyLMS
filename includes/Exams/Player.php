@@ -10,7 +10,6 @@ namespace OhMyLMS\Exams;
 use OhMyLMS\ExamImport\Documents;
 use OhMyLMS\ExamImport\Jobs;
 use OhMyLMS\Quiz\Submission;
-use OhMyLMS\Assessment\AssessmentSettings;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -161,7 +160,7 @@ final class Player {
 			$is_author = get_current_user_id() === (int) get_post_field( 'post_author', $id ) && current_user_can( 'edit_post', $id ) && current_user_can( 'upload_files' );
 			if ( ! $is_author ) {
 				$attempt = $wpdb->get_row( $wpdb->prepare( "SELECT id,status FROM {$wpdb->prefix}ohmylms_quiz_attempts WHERE quiz_id=%d AND student_id=%d ORDER BY id DESC LIMIT 1", $data['quiz_id'], get_current_user_id() ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Authorize source against actual learner attempt, never cache.
-				if ( 'publish' !== get_post_status( $id ) || ! $attempt || is_wp_error( Submission::access( $data['quiz_id'], get_current_user_id() ) ) || ( $mark_scheme && ( 'in-progress' === $attempt['status'] || ! AssessmentSettings::feedback_visible( $attempt['id'] ) ) ) ) {
+				if ( 'publish' !== get_post_status( $id ) || ! $attempt || is_wp_error( Submission::access( $data['quiz_id'], get_current_user_id() ) ) || ( $mark_scheme && ( 'in-progress' === $attempt['status'] || ! Results::claim_view( (int) $attempt['id'] ) ) ) ) {
 					return new \WP_Error( 'exam_source', __( 'This document has not been released.', 'ohmylms' ), array( 'status' => 403 ) );
 				}
 			}
@@ -175,6 +174,29 @@ final class Player {
 		$job      = get_post_meta( $job_id, Jobs::META, true );
 		$document = $mark_scheme ? ( $job['mark_scheme'] ?? null ) : ( $job['document'] ?? null );
 		return is_array( $document ) ? $document : new \WP_Error( 'exam_source', __( 'Source unavailable.', 'ohmylms' ), array( 'status' => 404 ) );
+	}
+
+	/**
+	 * "Results pending" notice for a submitted attempt whose results are held.
+	 *
+	 * @param int   $id      Exam ID.
+	 * @param array $attempt Attempt row.
+	 * @return string Escaped markup.
+	 */
+	private static function pending( $id, array $attempt ) {
+		$state = Results::learner_state( (int) $attempt['quiz_attempt_id'] );
+		if ( $state && 'awaiting_marking' === $state['state'] ) {
+			$text = __( 'Your teacher is marking your written answers. Your results appear here once they are released.', 'ohmylms' );
+		} elseif ( $state && 'scheduled' === $state['mode'] && $state['release_at'] ) {
+			$text = sprintf(
+				/* translators: %s: release date and time. */
+				__( 'Results will be released on %s.', 'ohmylms' ),
+				wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $state['release_at'] . ' UTC' ) )
+			);
+		} else {
+			$text = __( 'Your teacher will release the results. You will get an email when they are ready.', 'ohmylms' );
+		}
+		return '<section class="ohmylms-exam-results is-pending" aria-labelledby="ohmylms-exam-results-title" data-exam="' . (int) $id . '"><h2 id="ohmylms-exam-results-title">' . esc_html__( 'Results pending', 'ohmylms' ) . '</h2><p>' . esc_html( $text ) . '</p></section>';
 	}
 
 	/** Serve a private PDF or an exam document with unchanged engine templates. */
@@ -249,15 +271,17 @@ final class Player {
 		} else {
 			$attempts = $quiz->get_all_quiz_attempts( get_current_user_id(), $data['course_id'] );
 			if ( $attempts ) {
-				echo '<p role="status">' . esc_html__( 'Your exam has been submitted. Written parts await teacher review; results appear after release.', 'ohmylms' ) . '</p>';
+				echo '<p role="status">' . esc_html__( 'Your exam has been submitted.', 'ohmylms' ) . '</p>';
 				usort(
 					$attempts,
 					static function ( $left, $right ) {
 						return (int) $right['quiz_attempt_id'] <=> (int) $left['quiz_attempt_id'];
 					}
 				);
-				$latest = $attempts[0];
-				if ( AssessmentSettings::feedback_visible( $latest['quiz_attempt_id'] ) ) {
+				$latest   = $attempts[0];
+				$released = Results::claim_view( (int) $latest['quiz_attempt_id'] );
+				if ( $released ) {
+					echo '<section class="ohmylms-exam-results" aria-labelledby="ohmylms-exam-results-title"><h2 id="ohmylms-exam-results-title">' . esc_html__( 'Your results', 'ohmylms' ) . '</h2>';
 					/* translators: 1: marks earned, 2: marks available in the frozen attempt. */
 					echo '<p>' . esc_html( sprintf( __( 'Score: %1$s / %2$s', 'ohmylms' ), \OhMyLMS\Assessment\Scoring::display( $latest['total_achieved_marks'] ?? 0 ), \OhMyLMS\Assessment\Scoring::display( \OhMyLMS\Assessment\AttemptReport::basis( $latest['quiz_attempt_id'], $quiz )['max'] ) ) ) . '</p>';
 					if ( ! is_wp_error( self::source( $id, true, true ) ) ) {
@@ -271,8 +295,20 @@ final class Player {
 							)
 						) . '">' . esc_html__( 'Open released mark scheme', 'ohmylms' ) . '</a></p>';
 					}
+					echo '</section>';
+				} else {
+					echo self::pending( $id, $latest ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in pending().
 				}
-				$review = \OhMyLMS\Quiz\AnswerReview::render( $quiz, $attempts );
+				// Only attempts whose release was claimed reach the answer review.
+				$shown  = \OhMyLMS\Quiz\AnswerReview::enabled( (array) $quiz->get_settings() ) ? array_values(
+					array_filter(
+						$attempts,
+						static function ( $row ) use ( $latest, $released ) {
+							return (int) $row['quiz_attempt_id'] === (int) $latest['quiz_attempt_id'] ? $released : Results::claim_view( (int) $row['quiz_attempt_id'] );
+						}
+					)
+				) : array();
+				$review = $shown ? \OhMyLMS\Quiz\AnswerReview::render( $quiz, $shown ) : '';
 				echo $review; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Shared review renderer escapes fields and enforces release policy.
 			} else {
 				echo '<form method="post" action="' . esc_url( self::url( $id ) ) . '">';

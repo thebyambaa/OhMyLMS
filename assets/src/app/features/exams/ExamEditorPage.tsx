@@ -21,8 +21,8 @@ import {
 	searchBank,
 	updateExam,
 } from './api';
+import ResultsPanel from './ResultsPanel';
 import {
-	FEEDBACK,
 	LIMITS,
 	addQuestions,
 	compositionMarks,
@@ -62,15 +62,6 @@ function headerLabel( field: HeaderField ): string {
 		calculator: __( 'Calculator', 'ohmylms' ),
 	};
 	return labels[ field ];
-}
-
-function feedbackLabel( value: ( typeof FEEDBACK )[ number ] ): string {
-	if ( 'immediate' === value ) {
-		return __( 'As soon as the learner submits', 'ohmylms' );
-	}
-	return 'after_close' === value
-		? __( 'After the exam closes', 'ohmylms' )
-		: __( 'When I release results', 'ohmylms' );
 }
 
 /**
@@ -607,22 +598,6 @@ export default function ExamEditorPage() {
 					{ errors.grace_seconds && (
 						<p role="alert">{ errors.grace_seconds }</p>
 					) }
-					<SelectControl
-						label={ __( 'Show results', 'ohmylms' ) }
-						value={ form.feedback_release }
-						options={ FEEDBACK.map( ( value ) => ( {
-							value,
-							label: feedbackLabel( value ),
-						} ) ) }
-						onChange={ ( next ) => {
-							const found = FEEDBACK.find(
-								( value ) => value === next
-							);
-							if ( found ) {
-								update( 'feedback_release', found );
-							}
-						} }
-					/>
 				</fieldset>
 				<fieldset disabled={ operation.busy || ! editable }>
 					<legend>{ __( 'Printable paper', 'ohmylms' ) }</legend>
@@ -937,6 +912,11 @@ export default function ExamEditorPage() {
 					) }
 				</section>
 			) }
+
+			<ResultsPanel
+				examId={ exam.id }
+				canRelease={ exam.permissions.can_release }
+			/>
 
 			{ picking && (
 				<BankPicker

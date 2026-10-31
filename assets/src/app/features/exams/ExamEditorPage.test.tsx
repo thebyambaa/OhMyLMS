@@ -10,7 +10,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ApiError } from '../../lib/api';
 import * as api from './api';
 import ExamEditorPage from './ExamEditorPage';
-import { exam } from './fixtures';
+import { exam, results } from './fixtures';
 
 vi.mock( './api', () => ( {
 	getExam: vi.fn(),
@@ -18,6 +18,11 @@ vi.mock( './api', () => ( {
 	saveComposition: vi.fn(),
 	searchBank: vi.fn(),
 	publishExam: vi.fn(),
+	getResults: vi.fn(),
+	getResultsLog: vi.fn(),
+	saveResultsPolicy: vi.fn(),
+	releaseResults: vi.fn(),
+	revokeResults: vi.fn(),
 } ) );
 
 // Rendering many WordPress controls can exceed the 1 s default under a parallel run.
@@ -39,6 +44,10 @@ const notice = { selector: '.components-notice__content' };
 beforeEach( () => {
 	vi.resetAllMocks();
 	vi.mocked( api.getExam ).mockResolvedValue( exam );
+	vi.mocked( api.getResults ).mockResolvedValue( {
+		view: results,
+		totalPages: 1,
+	} );
 } );
 
 describe( 'ExamEditorPage', () => {
@@ -221,6 +230,7 @@ describe( 'ExamEditorPage', () => {
 				can_edit: false,
 				can_compose: false,
 				can_publish: false,
+				can_release: true,
 			},
 		} );
 		renderPage();
@@ -257,6 +267,7 @@ describe( 'ExamEditorPage', () => {
 					can_edit: false,
 					can_compose: false,
 					can_publish: false,
+					can_release: true,
 				},
 			} );
 		const user = userEvent.setup();

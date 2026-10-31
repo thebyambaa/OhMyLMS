@@ -12,8 +12,9 @@ import {
 	type ExamOrigin,
 	type ExamStatus,
 	type ExamSummary,
-	type FeedbackRelease,
 	type FigureAsset,
+	type FigureProposal,
+	type FigureSpec,
 	type ImportFigure,
 	type ImportJob,
 	type ImportJobDetail,
@@ -23,7 +24,16 @@ import {
 	type JobState,
 	type PaperSettings,
 	type PartKind,
+	type ReleaseOutcome,
+	type ReleaseState,
+	type ResultAttempt,
+	type ResultsCounts,
+	type ResultsLogEntry,
+	type ResultsMode,
+	type ResultsView,
+	type RevokeOutcome,
 	type RowStatus,
+	type SkippedAttempt,
 	type SettingsErrors,
 	type SettingsForm,
 	type SettingsInput,
@@ -42,10 +52,17 @@ export const LIMITS = {
 
 const STATUSES: readonly ExamStatus[] = [ 'draft', 'publish' ];
 const ORIGINS: readonly ExamOrigin[] = [ 'composed', 'imported' ];
-export const FEEDBACK: readonly FeedbackRelease[] = [
+export const RESULTS_MODES: readonly ResultsMode[] = [
 	'immediate',
-	'after_close',
+	'scheduled',
 	'manual',
+];
+const RELEASE_STATES: readonly ReleaseState[] = [
+	'in_progress',
+	'awaiting_marking',
+	'pending',
+	'released',
+	'viewed',
 ];
 const STATES: readonly JobState[] = [
 	'queued',
@@ -186,6 +203,7 @@ export function parseExam( value: unknown ): ExamSummary {
 	if ( ! /^[0-9a-f]{40}$/.test( revision ) ) {
 		throw invalidResponse();
 	}
+	const results = record( item.results );
 	return {
 		id: positiveId( item.id ),
 		title: text( item.title ),
@@ -197,6 +215,10 @@ export function parseExam( value: unknown ): ExamSummary {
 		total_marks: amount( item.total_marks ),
 		question_count: count( item.question_count ),
 		released: flag( item.released ),
+		results: {
+			mode: oneOf( results.mode, RESULTS_MODES ),
+			pending: count( results.pending ),
+		},
 		updated_at: text( item.updated_at ),
 		revision,
 	};
@@ -268,7 +290,6 @@ export function parseExamDetail( value: unknown ): ExamDetail {
 			available_from: text( timing.available_from ),
 			available_until: text( timing.available_until ),
 			grace_seconds: count( timing.grace_seconds ),
-			feedback_release: oneOf( timing.feedback_release, FEEDBACK ),
 		},
 		paper: paper( item.paper ),
 		composition: list( item.composition ).map( compositionItem ),
@@ -285,6 +306,7 @@ export function parseExamDetail( value: unknown ): ExamDetail {
 			can_edit: flag( permissions.can_edit ),
 			can_compose: flag( permissions.can_compose ),
 			can_publish: flag( permissions.can_publish ),
+			can_release: flag( permissions.can_release ),
 		},
 	};
 }
@@ -377,6 +399,53 @@ function part( value: unknown ): ImportPart {
 	return result;
 }
 
+/**
+ * Check the outline of a figure spec (the server validates every object).
+ *
+ * @param value Parsed JSON.
+ * @return The spec.
+ */
+export function parseFigureSpec( value: unknown ): FigureSpec {
+	const item = record( value );
+	if ( 1 !== item.version ) {
+		throw invalidResponse();
+	}
+	const bounds = list( item.bounds ).map( amount );
+	if ( 4 !== bounds.length ) {
+		throw invalidResponse();
+	}
+	return {
+		version: 1,
+		bounds,
+		objects: list( item.objects ).map( ( entry ) => {
+			const object = record( entry );
+			return {
+				...object,
+				id: text( object.id ),
+				type: text( object.type ),
+			};
+		} ),
+	};
+}
+
+function proposal( value: unknown ): FigureProposal {
+	const item = record( value );
+	return {
+		status: oneOf( item.status, [
+			'proposed',
+			'accepted',
+			'rejected',
+		] as const ),
+		origin: oneOf( item.origin, [
+			'generated',
+			'authored',
+			'edited',
+		] as const ),
+		display: oneOf( item.display, [ 'replace', 'accompany' ] as const ),
+		spec: parseFigureSpec( item.spec ),
+	};
+}
+
 function figure( value: unknown ): ImportFigure {
 	const item = record( value );
 	return {
@@ -387,9 +456,18 @@ function figure( value: unknown ): ImportFigure {
 		asset_id: text( item.asset_id ),
 		alt: text( item.alt ),
 		not_to_scale: flag( item.not_to_scale ),
-		selected: oneOf( item.selected, [ 'original', 'jsxgraph' ] as const ),
+		selected: oneOf( item.selected, [
+			'original',
+			'jsxgraph',
+			'both',
+		] as const ),
 		approved: flag( item.approved ),
-		...( undefined !== item.spec ? { spec: item.spec } : {} ),
+		...( undefined !== item.spec
+			? { spec: parseFigureSpec( item.spec ) }
+			: {} ),
+		...( undefined !== item.proposal
+			? { proposal: proposal( item.proposal ) }
+			: {} ),
 	};
 }
 
@@ -429,7 +507,265 @@ export function parseJobDetail( value: unknown ): ImportJobDetail {
 			page_count: count( inventory.page_count ),
 		},
 		usage: { requests: count( record( item.usage ).requests ) },
+		can_reconstruct: flag( item.can_reconstruct ),
 		rows: list( item.rows ).map( row ),
+	};
+}
+
+// Results release.
+
+function stateCounts( value: unknown ): ResultsCounts {
+	const item = record( value );
+	return {
+		in_progress: count( item.in_progress ),
+		awaiting_marking: count( item.awaiting_marking ),
+		pending: count( item.pending ),
+		released: count( item.released ),
+		viewed: count( item.viewed ),
+		total: count( item.total ),
+	};
+}
+
+function attemptRow( value: unknown ): ResultAttempt {
+	const item = record( value );
+	const learner = record( item.learner );
+	return {
+		attempt_id: positiveId( item.attempt_id ),
+		learner: { id: count( learner.id ), name: text( learner.name ) },
+		status: text( item.status ),
+		submitted_at: text( item.submitted_at ),
+		score: null === item.score ? null : amount( item.score ),
+		max: amount( item.max ),
+		state: oneOf( item.state, RELEASE_STATES ),
+		released_at: text( item.released_at ),
+		release_by: text( item.release_by ),
+		viewed_at: text( item.viewed_at ),
+		notified_at: text( item.notified_at ),
+		can_release: flag( item.can_release ),
+		can_revoke: flag( item.can_revoke ),
+	};
+}
+
+/**
+ * Validate the results view of an exam.
+ *
+ * @param value Parsed JSON.
+ * @return Policy, counts and attempts.
+ */
+export function parseResults( value: unknown ): ResultsView {
+	const item = record( value );
+	const policy = record( item.policy );
+	return {
+		policy: {
+			mode: oneOf( policy.mode, RESULTS_MODES ),
+			release_at: text( policy.release_at ),
+		},
+		counts: stateCounts( item.counts ),
+		items: list( item.items ).map( attemptRow ),
+	};
+}
+
+function skipped( value: unknown ): SkippedAttempt {
+	const item = record( value );
+	return { id: count( item.id ), reason: text( item.reason ) };
+}
+
+/**
+ * Validate the outcome of a release.
+ *
+ * @param value Parsed JSON.
+ * @return Released and skipped attempts.
+ */
+export function parseReleaseOutcome( value: unknown ): ReleaseOutcome {
+	const item = record( value );
+	return {
+		released: list( item.released ).map( positiveId ),
+		skipped: list( item.skipped ).map( skipped ),
+		notified: count( item.notified ),
+		remaining: count( item.remaining ),
+		counts: stateCounts( item.counts ),
+	};
+}
+
+/**
+ * Validate the outcome of an undo.
+ *
+ * @param value Parsed JSON.
+ * @return Revoked and skipped attempts.
+ */
+export function parseRevokeOutcome( value: unknown ): RevokeOutcome {
+	const item = record( value );
+	return {
+		revoked: list( item.revoked ).map( positiveId ),
+		skipped: list( item.skipped ).map( skipped ),
+		counts: stateCounts( item.counts ),
+	};
+}
+
+/**
+ * Validate a release log entry.
+ *
+ * @param value Parsed JSON.
+ * @return The entry.
+ */
+export function parseLogEntry( value: unknown ): ResultsLogEntry {
+	const item = record( value );
+	const actor = record( item.actor );
+	return {
+		id: positiveId( item.id ),
+		attempt_id: count( item.attempt_id ),
+		action: text( item.action ),
+		detail: text( item.detail ),
+		actor: { id: count( actor.id ), name: text( actor.name ) },
+		at: text( item.at ),
+	};
+}
+
+/**
+ * Translated results policy.
+ *
+ * @param mode Policy.
+ * @return Label.
+ */
+export function resultsModeLabel( mode: ResultsMode ): string {
+	if ( 'immediate' === mode ) {
+		return __( 'As soon as the learner submits', 'ohmylms' );
+	}
+	return 'scheduled' === mode
+		? __( 'On a date', 'ohmylms' )
+		: __( 'When I release them', 'ohmylms' );
+}
+
+/**
+ * Translated release state.
+ *
+ * @param state State.
+ * @return Label.
+ */
+export function releaseStateLabel( state: ReleaseState ): string {
+	const labels: Record< ReleaseState, string > = {
+		in_progress: __( 'Still writing', 'ohmylms' ),
+		awaiting_marking: __( 'Awaiting marking', 'ohmylms' ),
+		pending: __( 'Results pending', 'ohmylms' ),
+		released: __( 'Released', 'ohmylms' ),
+		viewed: __( 'Released and seen', 'ohmylms' ),
+	};
+	return labels[ state ];
+}
+
+/**
+ * Why an attempt was not released or not undone.
+ *
+ * @param reason Server reason.
+ * @return Label.
+ */
+export function skipReasonLabel( reason: string ): string {
+	const labels: Record< string, string > = {
+		in_progress: __( 'still writing', 'ohmylms' ),
+		awaiting_marking: __( 'awaiting marking', 'ohmylms' ),
+		already_visible: __( 'already released', 'ohmylms' ),
+		not_found: __( 'not an attempt of this exam', 'ohmylms' ),
+		viewed: __( 'the learner has already seen the results', 'ohmylms' ),
+		not_released: __( 'not released', 'ohmylms' ),
+		policy: __(
+			'released by the policy; change the policy instead',
+			'ohmylms'
+		),
+		storage: __( 'could not be saved', 'ohmylms' ),
+	};
+	return labels[ reason ] ?? reason;
+}
+
+/**
+ * Translated log action.
+ *
+ * @param action Action.
+ * @return Label.
+ */
+export function logActionLabel( action: string ): string {
+	const labels: Record< string, string > = {
+		policy: __( 'Policy changed', 'ohmylms' ),
+		release: __( 'Released', 'ohmylms' ),
+		revoke: __( 'Release undone', 'ohmylms' ),
+		notify: __( 'Learner emailed', 'ohmylms' ),
+		notify_failed: __( 'Email failed', 'ohmylms' ),
+		view: __( 'Learner saw the results', 'ohmylms' ),
+	};
+	return labels[ action ] ?? action;
+}
+
+// Figure proposals.
+
+/**
+ * Read an authored JSXGraph configuration typed as JSON.
+ *
+ * @param source JSON text.
+ * @return The spec, or an error message.
+ */
+export function readFigureSpec(
+	source: string
+): { spec: FigureSpec } | { error: string } {
+	let value: unknown;
+	try {
+		value = JSON.parse( source );
+	} catch {
+		return {
+			error: __( 'The configuration is not valid JSON.', 'ohmylms' ),
+		};
+	}
+	try {
+		return { spec: parseFigureSpec( value ) };
+	} catch {
+		return {
+			error: __(
+				'The configuration needs "version": 1, four "bounds" and a list of "objects", each with an "id" and a "type".',
+				'ohmylms'
+			),
+		};
+	}
+}
+
+/**
+ * Translated proposal state.
+ *
+ * @param value Proposal.
+ * @return Label.
+ */
+export function proposalLabel( value: FigureProposal ): string {
+	const origin: Record< FigureProposal[ 'origin' ], string > = {
+		generated: __( 'generated by the exam converter', 'ohmylms' ),
+		authored: __( 'written by a reviewer', 'ohmylms' ),
+		edited: __( 'generated, then edited', 'ohmylms' ),
+	};
+	const status: Record< FigureProposal[ 'status' ], string > = {
+		proposed: __( 'Proposed', 'ohmylms' ),
+		accepted:
+			'accompany' === value.display
+				? __( 'Accepted, shown beside the original', 'ohmylms' )
+				: __( 'Accepted, shown instead of the original', 'ohmylms' ),
+		rejected: __( 'Rejected', 'ohmylms' ),
+	};
+	return `${ status[ value.status ] } (${ origin[ value.origin ] })`;
+}
+
+/**
+ * Change the label of one object of a spec.
+ *
+ * @param spec  Spec.
+ * @param id    Object ID.
+ * @param label New label.
+ * @return A new spec.
+ */
+export function withObjectLabel(
+	spec: FigureSpec,
+	id: string,
+	label: string
+): FigureSpec {
+	return {
+		...spec,
+		objects: spec.objects.map( ( object ) =>
+			object.id === id ? { ...object, label } : object
+		),
 	};
 }
 
@@ -543,7 +879,6 @@ export function formFromExam( exam: ExamDetail ): SettingsForm {
 		available_from: toLocalInput( exam.timing.available_from ),
 		available_until: toLocalInput( exam.timing.available_until ),
 		grace_seconds: String( exam.timing.grace_seconds ),
-		feedback_release: exam.timing.feedback_release,
 		paper: { ...exam.paper },
 	};
 }
@@ -639,7 +974,6 @@ export function toSettingsInput(
 			available_from: fromLocalInput( form.available_from ),
 			available_until: fromLocalInput( form.available_until ),
 			grace_seconds: Number( form.grace_seconds ),
-			feedback_release: form.feedback_release,
 		},
 		paper: { ...form.paper },
 	};

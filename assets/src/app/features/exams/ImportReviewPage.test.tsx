@@ -9,7 +9,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ApiError } from '../../lib/api';
 import * as api from './api';
-import { job } from './fixtures';
+import { job, triangle } from './fixtures';
 import ImportReviewPage from './ImportReviewPage';
 import type { ImportJobDetail } from './types';
 
@@ -32,6 +32,8 @@ vi.mock( './api', () => ( {
 	createFigure: vi.fn(),
 	deleteJob: vi.fn(),
 	searchSkills: vi.fn(),
+	proposeFigure: vi.fn(),
+	decideProposal: vi.fn(),
 } ) );
 
 function renderPage( entry = '/exams/imports/7' ) {
@@ -78,6 +80,100 @@ beforeEach( () => {
 } );
 
 describe( 'ImportReviewPage', () => {
+	it( 'reviews the JSXGraph proposal of a saved figure and adopts the result', async () => {
+		const asset = '9f0a7c52-6c3e-4a4e-9a55-1f4e2b2c8d11';
+		const placed = {
+			id: 'f1',
+			page: 1,
+			bounds: [ 0, 0, 1, 1 ],
+			part_ids: [],
+			asset_id: asset,
+			alt: 'Triangle ABC',
+			not_to_scale: false,
+			selected: 'original' as const,
+			approved: false,
+			proposal: {
+				status: 'proposed' as const,
+				origin: 'authored' as const,
+				display: 'replace' as const,
+				spec: triangle,
+			},
+		};
+		const stored = {
+			...job,
+			can_reconstruct: true,
+			rows: [
+				{ ...job.rows[ 0 ]!, figures: [ placed ] },
+				job.rows[ 1 ]!,
+			],
+		};
+		vi.mocked( api.getJob ).mockResolvedValue( stored );
+		vi.mocked( api.listFigures ).mockResolvedValue( [
+			{
+				id: asset,
+				state: 'ready',
+				attempts: 1,
+				error: '',
+				page: 1,
+				bounds: [ 0, 0, 1, 1 ],
+				width: 10,
+				height: 10,
+				url: 'https://example.test/crop.png',
+			},
+		] );
+		vi.mocked( api.decideProposal ).mockResolvedValue( {
+			...stored,
+			revision: 4,
+			rows: [
+				{
+					...stored.rows[ 0 ]!,
+					figures: [
+						{
+							...placed,
+							selected: 'jsxgraph',
+							spec: triangle,
+							proposal: {
+								...placed.proposal,
+								status: 'accepted',
+							},
+						},
+					],
+				},
+				job.rows[ 1 ]!,
+			],
+		} );
+		const user = userEvent.setup();
+		renderPage();
+		await user.click(
+			await screen.findByRole( 'button', {
+				name: 'Accept instead of the original',
+			} )
+		);
+		expect(
+			await screen.findByText(
+				'Reconstruction accepted. Approve the figure again.',
+				notice
+			)
+		).toBeInTheDocument();
+		expect( api.decideProposal ).toHaveBeenCalledWith(
+			7,
+			0,
+			'f1',
+			3,
+			'replace',
+			expect.any( AbortSignal )
+		);
+		expect(
+			screen.getByText(
+				'Learners see the accepted JSXGraph reconstruction.'
+			)
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', {
+				name: 'Regenerate with the exam converter',
+			} )
+		).toBeInTheDocument();
+	} );
 	it( 'shows rows with parts and private marking notes for the owner', async () => {
 		renderPage();
 		expect(

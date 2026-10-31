@@ -13,6 +13,7 @@ use OhMyLMS\Assessment\Schema;
 use OhMyLMS\Exams\Composer;
 use OhMyLMS\Exams\Editor;
 use OhMyLMS\Exams\Library;
+use OhMyLMS\Exams\Results;
 use OhMyLMS\QuestionBank\AccessPolicy;
 use OhMyLMS\QuestionBank\Search;
 use OhMyLMS\QuestionBank\VersionPublisher;
@@ -161,22 +162,18 @@ class ExamsController extends RestController {
 						'timing'           => array(
 							'type'                 => 'object',
 							'properties'           => array(
-								'available_from'   => array(
+								'available_from'  => array(
 									'type'      => 'string',
 									'maxLength' => 40,
 								),
-								'available_until'  => array(
+								'available_until' => array(
 									'type'      => 'string',
 									'maxLength' => 40,
 								),
-								'grace_seconds'    => array(
+								'grace_seconds'   => array(
 									'type'    => 'integer',
 									'minimum' => 0,
 									'maximum' => 600,
-								),
-								'feedback_release' => array(
-									'type' => 'string',
-									'enum' => array( 'immediate', 'after_close', 'manual' ),
 								),
 							),
 							'additionalProperties' => false,
@@ -318,6 +315,123 @@ class ExamsController extends RestController {
 				),
 			)
 		);
+
+		$paging   = static function ( $max, $per_page ) {
+			return array(
+				'page'     => array(
+					'type'    => 'integer',
+					'minimum' => 1,
+					'default' => 1,
+				),
+				'per_page' => array(
+					'type'    => 'integer',
+					'minimum' => 1,
+					'maximum' => $max,
+					'default' => $per_page,
+				),
+			);
+		};
+		$attempts = array(
+			'type'        => 'array',
+			'minItems'    => 1,
+			'maxItems'    => Results::MAX_BATCH,
+			'uniqueItems' => true,
+			'items'       => array(
+				'type'    => 'integer',
+				'minimum' => 1,
+			),
+		);
+
+		register_rest_route(
+			$this->namespace,
+			$item . '/results',
+			array(
+				'args' => array( 'id' => $id ),
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_results' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'args'                => $paging( 50, 20 ),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			$item . '/results/policy',
+			array(
+				'args' => array( 'id' => $id ),
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'update_results_policy' ),
+					'permission_callback' => array( $this, 'release_permissions_check' ),
+					'args'                => array(
+						'mode'       => array(
+							'type'     => 'string',
+							'enum'     => Results::MODES,
+							'required' => true,
+						),
+						'release_at' => array(
+							'type'      => 'string',
+							'maxLength' => 40,
+							'default'   => '',
+						),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			$item . '/results/release',
+			array(
+				'args' => array( 'id' => $id ),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'release_results' ),
+					'permission_callback' => array( $this, 'release_permissions_check' ),
+					'args'                => array(
+						'attempt_ids' => $attempts,
+						'all'         => array(
+							'type'    => 'boolean',
+							'default' => false,
+						),
+						'notify'      => array(
+							'type'    => 'boolean',
+							'default' => true,
+						),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			$item . '/results/revoke',
+			array(
+				'args' => array( 'id' => $id ),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'revoke_results' ),
+					'permission_callback' => array( $this, 'release_permissions_check' ),
+					'args'                => array( 'attempt_ids' => array_merge( $attempts, array( 'required' => true ) ) ),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			$item . '/results/log',
+			array(
+				'args' => array( 'id' => $id ),
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_results_log' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'args'                => $paging( 100, 50 ),
+				),
+			)
+		);
 	}
 
 	// Permissions.
@@ -385,6 +499,20 @@ class ExamsController extends RestController {
 			return $allowed;
 		}
 		return current_user_can( 'publish_posts' ) ? true : $this->forbidden( 'ohmylms_exam_cannot_publish', __( 'Sorry, you are not allowed to publish exams.', 'ohmylms' ) );
+	}
+
+	/**
+	 * Results policy, release and undo: the item rule plus `publish_posts`, as the legacy release.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return true|WP_Error
+	 */
+	public function release_permissions_check( $request ) {
+		$allowed = $this->get_item_permissions_check( $request );
+		if ( true !== $allowed ) {
+			return $allowed;
+		}
+		return current_user_can( 'publish_posts' ) ? true : $this->forbidden( 'ohmylms_exam_cannot_release', __( 'Sorry, you are not allowed to release exam results.', 'ohmylms' ) );
 	}
 
 	// Callbacks.
@@ -627,5 +755,102 @@ class ExamsController extends RestController {
 		$publish->set_param( 'confirm_overlap', (bool) $request['confirm_overlap'] );
 		$result = Library::publish( $publish );
 		return is_wp_error( $result ) ? $result : $this->respond( Editor::read( $id ) );
+	}
+
+	/**
+	 * Results policy, counts by release state and one page of attempts.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_results( $request ) {
+		$id       = (int) $request['id'];
+		$per_page = (int) $request['per_page'];
+		$page     = (int) $request['page'];
+		$view     = Results::view( $id, $page, $per_page );
+		$pages    = (int) ceil( $view['counts']['total'] / $per_page );
+		if ( $page > 1 && $page > $pages ) {
+			return new WP_Error( 'ohmylms_exam_invalid_page', __( 'The page number is larger than the number of pages.', 'ohmylms' ), array( 'status' => 400 ) );
+		}
+		$response = $this->respond( $view );
+		$response->header( 'X-WP-Total', (string) $view['counts']['total'] );
+		$response->header( 'X-WP-TotalPages', (string) $pages );
+		return $response;
+	}
+
+	/**
+	 * Change when results are shown.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function update_results_policy( $request ) {
+		$unknown = $this->unknown_fields( $request, array( 'mode', 'release_at' ) );
+		if ( $unknown ) {
+			return $unknown;
+		}
+		$saved = Results::save_policy( (int) $request['id'], (string) $request['mode'], (string) $request['release_at'] );
+		return is_wp_error( $saved ) ? $saved : $this->respond( Results::view( (int) $request['id'], 1, 20 ) );
+	}
+
+	/**
+	 * Release chosen attempts, or every pending one with `all`.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function release_results( $request ) {
+		$unknown = $this->unknown_fields( $request, array( 'attempt_ids', 'all', 'notify' ) );
+		if ( $unknown ) {
+			return $unknown;
+		}
+		$ids = $request['attempt_ids'];
+		if ( ( null === $ids ) === ! $request['all'] ) {
+			return new WP_Error(
+				'ohmylms_exam_invalid_field',
+				__( 'Choose attempts to release, or release all pending attempts.', 'ohmylms' ),
+				array(
+					'status' => 422,
+					'field'  => 'attempt_ids',
+				)
+			);
+		}
+		$result = Results::release( (int) $request['id'], null === $ids ? null : array_map( 'intval', (array) $ids ), (bool) $request['notify'] );
+		return is_wp_error( $result ) ? $result : $this->respond( $result + array( 'counts' => Results::counts( (int) $request['id'] ) ) );
+	}
+
+	/**
+	 * Undo releases the learners have not seen yet.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function revoke_results( $request ) {
+		$unknown = $this->unknown_fields( $request, array( 'attempt_ids' ) );
+		if ( $unknown ) {
+			return $unknown;
+		}
+		$result = Results::revoke( (int) $request['id'], array_map( 'intval', (array) $request['attempt_ids'] ) );
+		return is_wp_error( $result ) ? $result : $this->respond( $result + array( 'counts' => Results::counts( (int) $request['id'] ) ) );
+	}
+
+	/**
+	 * Release log, newest first.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_results_log( $request ) {
+		$per_page = (int) $request['per_page'];
+		$page     = (int) $request['page'];
+		$history  = Results::history( (int) $request['id'], $page, $per_page );
+		$pages    = (int) ceil( $history['total'] / $per_page );
+		if ( $page > 1 && $page > $pages ) {
+			return new WP_Error( 'ohmylms_exam_invalid_page', __( 'The page number is larger than the number of pages.', 'ohmylms' ), array( 'status' => 400 ) );
+		}
+		$response = $this->respond( $history['items'] );
+		$response->header( 'X-WP-Total', (string) $history['total'] );
+		$response->header( 'X-WP-TotalPages', (string) $pages );
+		return $response;
 	}
 }

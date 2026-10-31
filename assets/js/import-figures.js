@@ -123,7 +123,10 @@
 			copy.setAttribute( 'height', rect.height );
 			printed.append( copy );
 			figure.append( printed );
-			image.classList.add( 'ohmylms-figure-original' );
+			// An accompanying reconstruction keeps the original crop visible beside it.
+			if ( figure.dataset.figureDisplay !== 'accompany' ) {
+				image.classList.add( 'ohmylms-figure-original' );
+			}
 			mounted.set( figure, { board, node, image, printed } );
 		} catch {
 			if ( board ) {

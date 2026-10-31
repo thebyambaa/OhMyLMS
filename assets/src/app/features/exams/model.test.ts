@@ -1,5 +1,11 @@
-import { exam, job } from './fixtures';
+import { exam, job, results, triangle } from './fixtures';
 import {
+	parseReleaseOutcome,
+	parseResults,
+	parseRevokeOutcome,
+	readFigureSpec,
+	skipReasonLabel,
+	withObjectLabel,
 	addQuestions,
 	compositionMarks,
 	compositionProblem,
@@ -88,6 +94,103 @@ describe( 'exam model', () => {
 			invalid
 		);
 	} );
+	it( 'parses the results release contract', () => {
+		expect( parseResults( results ) ).toEqual( results );
+		expect( () =>
+			parseResults( {
+				...results,
+				policy: { mode: 'after_close', release_at: '' },
+			} )
+		).toThrow( invalid );
+		expect( () =>
+			parseResults( {
+				...results,
+				items: [ { ...results.items[ 0 ], state: 'hidden' } ],
+			} )
+		).toThrow( invalid );
+		expect(
+			parseReleaseOutcome( {
+				released: [ 31 ],
+				skipped: [ { id: 32, reason: 'awaiting_marking' } ],
+				notified: 1,
+				remaining: 0,
+				counts: results.counts,
+			} ).skipped
+		).toEqual( [ { id: 32, reason: 'awaiting_marking' } ] );
+		expect( () =>
+			parseRevokeOutcome( { revoked: [ 0 ], skipped: [], counts: {} } )
+		).toThrow( invalid );
+		expect( () =>
+			parseExam( { ...exam, results: { mode: 'manual' } } )
+		).toThrow( invalid );
+		expect( skipReasonLabel( 'viewed' ) ).toMatch( /already seen/ );
+	} );
+	it( 'parses figure proposals and reads authored configurations', () => {
+		const withProposal = {
+			...job,
+			rows: [
+				{
+					...job.rows[ 0 ],
+					figures: [
+						{
+							id: 'f1',
+							page: 1,
+							bounds: [ 0, 0, 1, 1 ],
+							part_ids: [],
+							asset_id: 'a',
+							alt: 'Triangle',
+							not_to_scale: false,
+							selected: 'both',
+							approved: false,
+							spec: triangle,
+							proposal: {
+								status: 'accepted',
+								origin: 'edited',
+								display: 'accompany',
+								spec: triangle,
+							},
+						},
+					],
+				},
+				job.rows[ 1 ],
+			],
+		};
+		expect( parseJobDetail( withProposal ) ).toEqual( withProposal );
+		expect( () =>
+			parseJobDetail( {
+				...withProposal,
+				rows: [
+					{
+						...withProposal.rows[ 0 ],
+						figures: [
+							{
+								...withProposal.rows[ 0 ]!.figures[ 0 ],
+								proposal: {
+									status: 'approved',
+									origin: 'authored',
+									display: 'replace',
+									spec: triangle,
+								},
+							},
+						],
+					},
+				],
+			} )
+		).toThrow( invalid );
+		expect( readFigureSpec( JSON.stringify( triangle ) ) ).toEqual( {
+			spec: triangle,
+		} );
+		expect( readFigureSpec( '{' ) ).toEqual( {
+			error: expect.stringMatching( /not valid JSON/ ),
+		} );
+		expect(
+			readFigureSpec( JSON.stringify( { ...triangle, version: 2 } ) )
+		).toEqual( { error: expect.stringMatching( /version/ ) } );
+		expect(
+			withObjectLabel( triangle, 'B', 'B′' ).objects[ 1 ]?.label
+		).toBe( 'B′' );
+		expect( triangle.objects[ 1 ]?.label ).toBe( 'B' );
+	} );
 	it( 'validates settings with the server limits', () => {
 		const form = formFromExam( exam );
 		expect( validateSettings( form ) ).toEqual( {} );
@@ -124,9 +227,9 @@ describe( 'exam model', () => {
 				available_from: '2026-11-01T09:30:00Z',
 				available_until: '',
 				grace_seconds: 30,
-				feedback_release: 'manual',
 			},
 		} );
+		expect( input.timing ).not.toHaveProperty( 'feedback_release' );
 		expect( toLocalInput( '2026-11-01T09:30:00Z' ) ).toBe(
 			'2026-11-01T09:30'
 		);

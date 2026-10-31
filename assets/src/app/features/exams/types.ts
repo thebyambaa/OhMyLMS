@@ -3,7 +3,8 @@
 export type ExamStatus = 'draft' | 'publish';
 export type ExamOrigin = 'composed' | 'imported';
 export type StatusFilter = 'all' | ExamStatus;
-export type FeedbackRelease = 'immediate' | 'after_close' | 'manual';
+/** When learners see their results (`/exams/library/{id}/results/policy`). */
+export type ResultsMode = 'immediate' | 'scheduled' | 'manual';
 
 /** List row. */
 export interface ExamSummary {
@@ -16,7 +17,10 @@ export interface ExamSummary {
 	duration_minutes: number;
 	total_marks: number;
 	question_count: number;
+	/** Every submitted attempt can see its results. */
 	released: boolean;
+	/** Policy and attempts still waiting for release (or for marking). */
+	results: { mode: ResultsMode; pending: number };
 	updated_at: string;
 	revision: string;
 }
@@ -38,7 +42,6 @@ export interface ExamTiming {
 	available_from: string;
 	available_until: string;
 	grace_seconds: number;
-	feedback_release: FeedbackRelease;
 }
 
 export interface PaperSettings {
@@ -92,6 +95,8 @@ export interface ExamDetail extends ExamSummary {
 		can_edit: boolean;
 		can_compose: boolean;
 		can_publish: boolean;
+		/** Change the results policy, release and undo releases. */
+		can_release: boolean;
 	};
 }
 
@@ -114,7 +119,6 @@ export interface SettingsForm {
 	available_from: string;
 	available_until: string;
 	grace_seconds: string;
-	feedback_release: FeedbackRelease;
 	paper: PaperSettings;
 }
 
@@ -130,6 +134,71 @@ export interface SettingsInput {
 	header: ExamHeader;
 	timing: Omit< ExamTiming, 'duration_minutes' >;
 	paper: PaperSettings;
+}
+
+// Results release.
+
+/** Release state of one attempt. `viewed`: the learner has seen the results; they stay released. */
+export type ReleaseState =
+	'in_progress' | 'awaiting_marking' | 'pending' | 'released' | 'viewed';
+
+export interface ResultsPolicy {
+	mode: ResultsMode;
+	/** RFC 3339 UTC, for `scheduled`. */
+	release_at: string;
+}
+
+export type ResultsCounts = Record< ReleaseState | 'total', number >;
+
+export interface ResultAttempt {
+	attempt_id: number;
+	learner: { id: number; name: string };
+	status: string;
+	submitted_at: string;
+	score: number | null;
+	max: number;
+	state: ReleaseState;
+	released_at: string;
+	/** `manual`, `schedule`, or empty when the policy shows the results. */
+	release_by: string;
+	viewed_at: string;
+	notified_at: string;
+	can_release: boolean;
+	can_revoke: boolean;
+}
+
+export interface ResultsView {
+	policy: ResultsPolicy;
+	counts: ResultsCounts;
+	items: ResultAttempt[];
+}
+
+export interface SkippedAttempt {
+	id: number;
+	reason: string;
+}
+
+export interface ReleaseOutcome {
+	released: number[];
+	skipped: SkippedAttempt[];
+	notified: number;
+	remaining: number;
+	counts: ResultsCounts;
+}
+
+export interface RevokeOutcome {
+	revoked: number[];
+	skipped: SkippedAttempt[];
+	counts: ResultsCounts;
+}
+
+export interface ResultsLogEntry {
+	id: number;
+	attempt_id: number;
+	action: string;
+	detail: string;
+	actor: { id: number; name: string };
+	at: string;
 }
 
 /** Composition item as sent to the server. */
@@ -188,6 +257,24 @@ export interface ImportPart {
 	skills?: string;
 }
 
+/** A declarative JSXGraph figure (`ExamImport\FigureSpec`, version 1); never code. */
+export interface FigureSpec {
+	version: 1;
+	bounds: number[];
+	objects: Array< Record< string, unknown > & { id: string; type: string } >;
+}
+
+export type ProposalStatus = 'proposed' | 'accepted' | 'rejected';
+export type ProposalOrigin = 'generated' | 'authored' | 'edited';
+export type ProposalDisplay = 'replace' | 'accompany';
+
+export interface FigureProposal {
+	status: ProposalStatus;
+	origin: ProposalOrigin;
+	display: ProposalDisplay;
+	spec: FigureSpec;
+}
+
 export interface ImportFigure {
 	id: string;
 	page: number;
@@ -196,9 +283,11 @@ export interface ImportFigure {
 	asset_id: string;
 	alt: string;
 	not_to_scale: boolean;
-	selected: 'original' | 'jsxgraph';
+	/** Set by the server from the accepted proposal; row edits cannot change it. */
+	selected: 'original' | 'jsxgraph' | 'both';
 	approved: boolean;
-	spec?: unknown;
+	spec?: FigureSpec;
+	proposal?: FigureProposal;
 }
 
 export interface ImportRow {
@@ -224,6 +313,8 @@ export interface ImportJobDetail extends ImportJob {
 		page_count: number;
 	};
 	usage: { requests: number };
+	/** The configured exam converter can generate JSXGraph proposals. */
+	can_reconstruct: boolean;
 	rows: ImportRow[];
 }
 

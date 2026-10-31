@@ -227,7 +227,7 @@ final class Workflow {
 						foreach ( $question['figures'] as &$figure ) {
 							$figure['approved'] = false;
 							$figure['selected'] = 'original';
-							unset( $figure['spec'] );
+							unset( $figure['spec'], $figure['proposal'] );
 							$asset              = Figures::enqueue_crop( $id, $figure['page'], $figure['bounds'], (int) $post->post_author );
 							$figure['asset_id'] = is_wp_error( $asset ) ? '' : $asset['id'];
 						}
@@ -328,7 +328,7 @@ final class Workflow {
 				$rows = array();
 				foreach ( $kept as $row ) {
 					$figure_settings = array(
-						'figures'       => $row['figures'] ?? array(),
+						'figures'       => FigureContent::committed( (array) ( $row['figures'] ?? array() ) ),
 						'figure_review' => array(
 							'complete' => ! empty( $row['figures_complete'] ),
 							'required' => ! empty( $row['requires_source'] ),

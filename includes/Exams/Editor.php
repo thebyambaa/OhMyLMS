@@ -103,6 +103,7 @@ final class Editor {
 		$status   = 'publish' === get_post_status( $id ) ? 'publish' : 'draft';
 		$live     = $composed && 'draft' === $status;
 		$snapshot = $live ? Composer::snapshot( $id ) : null;
+		$results  = Results::summary( $id );
 		return array(
 			'id'               => (int) $id,
 			'title'            => $live ? (string) $snapshot['title'] : (string) get_the_title( $id ),
@@ -113,7 +114,11 @@ final class Editor {
 			'duration_minutes' => $live ? (int) $snapshot['duration_minutes'] : (int) ( $data['duration_minutes'] ?? 0 ),
 			'total_marks'      => (float) ( $live ? $snapshot['total_marks'] : ( $data['total_marks'] ?? 0 ) ),
 			'question_count'   => count( $ids ),
-			'released'         => (bool) AssessmentSettings::get( $quiz_id )['released'],
+			'released'         => $results['released'],
+			'results'          => array(
+				'mode'    => $results['mode'],
+				'pending' => $results['pending'],
+			),
 			'updated_at'       => self::time( get_post_field( 'post_modified_gmt', $id ) ),
 			'revision'         => self::revision( $id ),
 		);
@@ -144,7 +149,6 @@ final class Editor {
 				'available_from'   => self::time( $assessment['available_from'] ),
 				'available_until'  => self::time( $assessment['available_until'] ),
 				'grace_seconds'    => (int) $assessment['grace_seconds'],
-				'feedback_release' => (string) $assessment['feedback_release'],
 			),
 			'paper'        => PaperSettings::sanitize( $settings['paper'] ?? array() ),
 			'composition'  => self::composition( $quiz_id, $data ),
@@ -161,6 +165,7 @@ final class Editor {
 				'can_edit'    => $draft,
 				'can_compose' => $draft && ! empty( $data['composed'] ),
 				'can_publish' => $draft && current_user_can( 'publish_posts' ),
+				'can_release' => current_user_can( 'publish_posts' ),
 			),
 		);
 	}
@@ -340,7 +345,7 @@ final class Editor {
 					$data['instructions'] = mb_substr( sanitize_textarea_field( (string) $input['instructions'] ), 0, self::MAX_INSTRUCTIONS );
 				}
 				update_post_meta( $id, Library::META, wp_slash( $data ) );
-				$timing = array_intersect_key( (array) ( $input['timing'] ?? array() ), array_flip( array( 'available_from', 'available_until', 'grace_seconds', 'feedback_release' ) ) );
+				$timing = array_intersect_key( (array) ( $input['timing'] ?? array() ), array_flip( array( 'available_from', 'available_until', 'grace_seconds' ) ) );
 				if ( $timing ) {
 					$saved = AssessmentSettings::save( $quiz_id, $timing );
 					if ( is_wp_error( $saved ) ) {

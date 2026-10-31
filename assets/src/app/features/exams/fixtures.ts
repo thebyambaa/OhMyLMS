@@ -1,4 +1,9 @@
-import type { ExamDetail, ImportJobDetail } from './types';
+import type {
+	ExamDetail,
+	FigureSpec,
+	ImportJobDetail,
+	ResultsView,
+} from './types';
 
 /** A composed draft exam as `GET /exams/library/12` returns it. */
 export const exam: ExamDetail = {
@@ -12,6 +17,7 @@ export const exam: ExamDetail = {
 	total_marks: 5,
 	question_count: 2,
 	released: false,
+	results: { mode: 'manual', pending: 0 },
 	updated_at: '2026-10-30T10:00:00Z',
 	revision: 'a'.repeat( 40 ),
 	header: {
@@ -29,7 +35,6 @@ export const exam: ExamDetail = {
 		available_from: '',
 		available_until: '',
 		grace_seconds: 30,
-		feedback_release: 'manual',
 	},
 	paper: {
 		size: 'a4',
@@ -73,7 +78,54 @@ export const exam: ExamDetail = {
 		paper: 'https://example.test/?ohmylms_print=40&variant=paper',
 		key: 'https://example.test/?ohmylms_print=40&variant=key',
 	},
-	permissions: { can_edit: true, can_compose: true, can_publish: true },
+	permissions: {
+		can_edit: true,
+		can_compose: true,
+		can_publish: true,
+		can_release: true,
+	},
+};
+
+/** `GET /exams/library/12/results`: one attempt pending, one released but not seen, one seen. */
+export const results: ResultsView = {
+	policy: { mode: 'manual', release_at: '' },
+	counts: {
+		in_progress: 0,
+		awaiting_marking: 0,
+		pending: 1,
+		released: 1,
+		viewed: 1,
+		total: 3,
+	},
+	items: ( [ 'pending', 'released', 'viewed' ] as const ).map(
+		( state, at ) => ( {
+			attempt_id: 31 + at,
+			learner: { id: 200 + at, name: `Learner ${ at + 1 }` },
+			status: 'completed',
+			submitted_at: '2026-10-31T09:00:00Z',
+			score: 3,
+			max: 5,
+			state,
+			released_at: 0 === at ? '' : '2026-10-31T10:00:00Z',
+			release_by: 0 === at ? '' : 'manual',
+			viewed_at: 2 === at ? '2026-10-31T11:00:00Z' : '',
+			notified_at: 0 === at ? '' : '2026-10-31T10:00:00Z',
+			can_release: 0 === at,
+			can_revoke: 1 === at,
+		} )
+	),
+};
+
+/** A declarative JSXGraph triangle. */
+export const triangle: FigureSpec = {
+	version: 1,
+	bounds: [ -1, 5, 6, -1 ],
+	objects: [
+		{ id: 'A', type: 'point', x: 0, y: 0, label: 'A' },
+		{ id: 'B', type: 'point', x: 4, y: 0, label: 'B' },
+		{ id: 'C', type: 'point', x: 2, y: 3, label: 'C' },
+		{ id: 'tri', type: 'polygon', points: [ 'A', 'B', 'C' ], label: '' },
+	],
 };
 
 /** A PDF import waiting for review. */
@@ -105,6 +157,7 @@ export const job: ImportJobDetail = {
 		page_count: 6,
 	},
 	usage: { requests: 2 },
+	can_reconstruct: false,
 	rows: [
 		{
 			index: 0,

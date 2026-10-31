@@ -69,7 +69,8 @@ quality and provider compatibility must be checked with the supplied papers.
 
 `POST /ohmylms/v1/exams` creates a private Exam from the committed job. Separate
 `/exams/{id}/publish` and `/exams/{id}/release` operations publish approved frozen versions
-and release feedback. The player uses a managed private course and the existing quiz engine.
+and release feedback (the release now goes through the logged per-attempt release of
+[the exams API](api/exams.md#results-release)). The player uses a managed private course and the existing quiz engine.
 Source routes `?ohmylms_import_source=JOB` and `?ohmylms_exam_source=EXAM` enforce ownership
 or actual attempt access. Learners cannot access a scheme until submission and release;
 add `&mark_scheme=1` to select it. Jobs referenced by an Exam cannot be deleted.

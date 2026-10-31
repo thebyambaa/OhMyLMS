@@ -24,6 +24,7 @@ import {
 	searchSkills,
 	updateRow,
 } from './api';
+import FigureProposalPanel from './FigureProposalPanel';
 import {
 	LIMITS,
 	POLL_MS,
@@ -116,31 +117,46 @@ function SkillSearch( { onPick }: { onPick: ( skill: SkillMatch ) => void } ) {
 }
 
 interface RowEditorProps {
+	jobId: number;
+	revision: number;
 	row: ImportRow;
 	crops: FigureAsset[];
 	editable: boolean;
 	busy: boolean;
+	canGenerate: boolean;
 	onSave: ( changes: RowChanges ) => void;
 	onDecide: ( decision: 'accept' | 'reject' ) => void;
+	onRun: (
+		work: ( signal: AbortSignal ) => Promise< ImportJobDetail >,
+		done: string
+	) => void;
 }
 
 /**
  * One question of the paper: edit, then accept or reject.
  * @param root0
+ * @param root0.jobId
+ * @param root0.revision
  * @param root0.row
  * @param root0.crops
  * @param root0.editable
  * @param root0.busy
+ * @param root0.canGenerate
  * @param root0.onSave
  * @param root0.onDecide
+ * @param root0.onRun
  */
 function RowEditor( {
+	jobId,
+	revision,
 	row,
 	crops,
 	editable,
 	busy,
+	canGenerate,
 	onSave,
 	onDecide,
+	onRun,
 }: RowEditorProps ) {
 	const [ question, setQuestion ] = useState( row.question );
 	const [ page, setPage ] = useState( String( row.page ) );
@@ -416,11 +432,46 @@ function RowEditor( {
 							/>
 							<CheckboxControl
 								label={ __( 'Approve this figure', 'ohmylms' ) }
+								help={
+									'original' === item.selected
+										? __(
+												'Learners see the original crop.',
+												'ohmylms'
+											)
+										: __(
+												'Learners see the accepted JSXGraph reconstruction.',
+												'ohmylms'
+											)
+								}
 								checked={ item.approved }
 								onChange={ ( approved ) =>
 									setFigure( index, { ...item, approved } )
 								}
 							/>
+							{ editable &&
+								'ready' === crop?.state &&
+								row.figures.some(
+									( saved ) =>
+										saved.id === item.id &&
+										saved.asset_id === item.asset_id
+								) && (
+									<FigureProposalPanel
+										jobId={ jobId }
+										rowIndex={ row.index }
+										revision={ revision }
+										figure={
+											row.figures.find(
+												( saved ) =>
+													saved.id === item.id
+											) as ImportFigure
+										}
+										cropUrl={ crop.url }
+										canGenerate={ canGenerate }
+										dirty={ dirty }
+										busy={ busy }
+										onRun={ onRun }
+									/>
+								) }
 							<Button
 								variant="link"
 								isDestructive
@@ -840,10 +891,14 @@ export default function ImportReviewPage() {
 					{ current.rows.map( ( row ) => (
 						<RowEditor
 							key={ row.index }
+							jobId={ current.id }
+							revision={ current.revision }
 							row={ row }
 							crops={ crops }
 							editable={ reviewable }
 							busy={ operation.busy }
+							canGenerate={ current.can_reconstruct }
+							onRun={ run }
 							onSave={ ( changes ) =>
 								run(
 									( signal ) =>

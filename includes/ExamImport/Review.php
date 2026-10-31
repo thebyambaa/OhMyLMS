@@ -102,14 +102,15 @@ final class Review {
 		if ( ! $detail ) {
 			return $view;
 		}
-		$view['inventory'] = array(
+		$view['inventory']       = array(
 			'title'            => (string) ( $inventory['title'] ?? '' ),
 			'duration_minutes' => (int) ( $inventory['duration_minutes'] ?? 0 ),
 			'total_marks'      => (float) ( $inventory['total_marks'] ?? 0 ),
 			'page_count'       => (int) ( $inventory['page_count'] ?? 0 ),
 		);
-		$view['usage']     = array( 'requests' => (int) ( $job['usage']['requests'] ?? 0 ) );
-		$view['rows']      = array();
+		$view['usage']           = array( 'requests' => (int) ( $job['usage']['requests'] ?? 0 ) );
+		$view['can_reconstruct'] = 'ready_for_review' === $state && 'pdf' === $view['kind'] && \OhMyLMS\AI\Settings::configured( 'exam_converter' ) && (int) ( $job['usage']['requests'] ?? 0 ) < Workflow::MAX_REQUESTS;
+		$view['rows']            = array();
 		foreach ( $rows as $index => $row ) {
 			$view['rows'][] = array(
 				'index'            => $index,
@@ -145,7 +146,8 @@ final class Review {
 	}
 
 	/**
-	 * Run a row write under the job lock after the state, revision and index checks.
+	 * Run a row write under the job lock after the state, revision and index checks. Also used by
+	 * {@see Proposals}.
 	 *
 	 * @param int      $id       Job ID.
 	 * @param int      $index    Row index.
@@ -153,7 +155,7 @@ final class Review {
 	 * @param callable $work     Receives the job (by reference) and the row index; returns true or WP_Error.
 	 * @return array|\WP_Error Job detail view.
 	 */
-	private static function write( $id, $index, $revision, callable $work ) {
+	public static function write( $id, $index, $revision, callable $work ) {
 		return Jobs::locked(
 			$id,
 			static function () use ( $id, $index, $revision, $work ) {
@@ -195,7 +197,10 @@ final class Review {
 			$index,
 			$revision,
 			static function ( array &$job, $index ) use ( $id, $changes ) {
-				$rows                       = $job['draft'];
+				$rows = $job['draft'];
+				if ( isset( $changes['figures'] ) && is_array( $changes['figures'] ) ) {
+					$changes['figures'] = self::keep_proposals( (array) ( $rows[ $index ]['figures'] ?? array() ), $changes['figures'] );
+				}
 				$rows[ $index ]             = array_merge( $rows[ $index ], array_intersect_key( $changes, array_flip( self::ROW_FIELDS ) ) );
 				$rows[ $index ]['reviewed'] = false;
 				$inventory                  = $job['draft_inventory'] ?? $job['inventory'];
@@ -220,6 +225,41 @@ final class Review {
 				return true;
 			}
 		);
+	}
+
+	/**
+	 * The reconstruction a learner sees (`selected`, `spec`) and its `proposal` change only through
+	 * the proposal routes. A row edit keeps them from the stored figure with the same ID and crop; a
+	 * new figure, or one whose crop changed, starts on the original.
+	 *
+	 * @param array $stored   Stored placements.
+	 * @param array $incoming Placements from the request.
+	 * @return array
+	 */
+	private static function keep_proposals( array $stored, array $incoming ) {
+		$known = array();
+		foreach ( $stored as $figure ) {
+			if ( is_array( $figure ) && isset( $figure['id'] ) ) {
+				$known[ (string) $figure['id'] ] = $figure;
+			}
+		}
+		foreach ( $incoming as &$figure ) {
+			if ( ! is_array( $figure ) ) {
+				continue;
+			}
+			unset( $figure['spec'], $figure['proposal'] );
+			$figure['selected'] = 'original';
+			$before             = $known[ (string) ( $figure['id'] ?? '' ) ] ?? null;
+			if ( $before && (string) ( $before['asset_id'] ?? '' ) === (string) ( $figure['asset_id'] ?? '' ) ) {
+				foreach ( array( 'selected', 'spec', 'proposal' ) as $key ) {
+					if ( isset( $before[ $key ] ) ) {
+						$figure[ $key ] = $before[ $key ];
+					}
+				}
+			}
+		}
+		unset( $figure );
+		return $incoming;
 	}
 
 	/**

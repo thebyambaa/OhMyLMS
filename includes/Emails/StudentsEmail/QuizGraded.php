@@ -61,6 +61,17 @@ class QuizGraded {
 			return;
 		}
 
+		/**
+		 * Whether to send the graded email, which carries the score. Exams holding results say no.
+		 *
+		 * @param bool $send       Send.
+		 * @param int  $quiz_id    Quiz ID.
+		 * @param int  $student_id Learner.
+		 */
+		if ( ! apply_filters( 'ohmylms_quiz_graded_email', true, (int) $quiz_id, (int) $student_id ) ) {
+			return;
+		}
+
 		$student = get_userdata( $student_id );
 		if ( ! $student ) {
 			return;

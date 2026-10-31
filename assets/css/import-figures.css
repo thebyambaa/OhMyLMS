@@ -32,6 +32,11 @@
 	height: auto;
 }
 
+.ohmylms-import-figure[data-figure-display="accompany"] img {
+	display: block;
+	margin-top: 0.5em;
+}
+
 .ohmylms-import-figures fieldset {
 	margin: 1em 0;
 	padding: 1em;

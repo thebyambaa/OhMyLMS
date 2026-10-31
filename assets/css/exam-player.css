@@ -20,6 +20,23 @@
 	min-height: 120px;
 }
 
+.ohmylms-exam-results {
+	margin: 16px 0;
+	padding: 16px 20px;
+	border: 1px solid var(--ohmylms-outline-color, #ddd);
+	border-radius: 8px;
+	background: var(--ohmylms-surface-color, #fff);
+}
+
+.ohmylms-exam-results h2 {
+	margin: 0 0 8px;
+	font-size: 1.25em;
+}
+
+.ohmylms-exam-results.is-pending {
+	border-left: 4px solid var(--ohmylms-primary-color, #2271b1);
+}
+
 @media (max-width: 600px) {
 
 	.ohmylms-exam-shell {
