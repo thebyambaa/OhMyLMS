@@ -52,7 +52,6 @@ class Ajax {
 			'search_filter',
 			'apply_coupon',
 			'remove_coupon',
-			'download_certificate_from_email',
 			'calculate_tax',
 			'resend_verification',
 		);
@@ -69,7 +68,6 @@ class Ajax {
 			'lesson_completed',
 			'save_assignment_submission_file',
 			'drop_course',
-			'download_certificate',
 			'save_remaining_time',
 			'quiz_exit_submission',
 			'cancel_membership',
@@ -1009,119 +1007,6 @@ class Ajax {
 			array(
 				'status'  => 'error',
 				'message' => __( 'Course drop failed.', 'ohmylms' ),
-			)
-		);
-	}
-
-	/**
-	 * Handle the lesson completed action via AJAX.
-	 *
-	 * @since 1.0.0
-	 */
-	public static function download_certificate() {
-		check_ajax_referer( 'download_certificate_nonce', 'nonce' );
-		$certificate_id = ohmylms_clean( wp_unslash( $_POST['certificate_id'] ?? '' ) );
-		$course_id      = ohmylms_clean( wp_unslash( $_POST['course_id'] ?? '' ) );
-		$student_id     = get_current_user_id();
-		$certificate    = ohmylms_get_certificate( $certificate_id );
-		$course         = ohmylms_get_course( $course_id );
-		$student        = new \OhMyLMS\Data\Student( $student_id );
-		$html           = $certificate->get_html_contents();
-
-		global $wpdb;
-		$table_name = $wpdb->prefix . 'ohmylms_user_enrollment';
-
-		$end_date = $wpdb->get_var(
-			$wpdb->prepare( 'SELECT end_date FROM %i WHERE user_id = %d AND course_id = %d', $table_name, $student_id, $course_id )
-		);
-
-		if ( $html ) {
-			wp_send_json_success(
-				array(
-					'status'       => 'success',
-					'html'         => $html,
-					'course_name'  => $course ? $course->get_name() : '',
-					'student_name' => $student ? $student->get_name() : '',
-					'date'         => $end_date ? date( 'F j, Y', strtotime( $end_date ) ) : '',
-					'message'      => __( 'Get certificate successfully.', 'ohmylms' ),
-				)
-			);
-		} else {
-			wp_send_json_error(
-				array(
-					'status'  => 'error',
-					'message' => __( 'Lesson completion failed.', 'ohmylms' ),
-				)
-			);
-		}
-	}
-
-
-	/**
-	 * Handle the lesson completed action via AJAX.
-	 *
-	 * @since 1.0.0
-	 */
-	public static function download_certificate_from_email() {
-		check_ajax_referer( 'download_certificate_nonce', 'nonce' );
-		$certificate_data = ohmylms_clean( wp_unslash( $_POST['certificate_data'] ?? '' ) );
-
-		// Base64 decode the encrypted data.
-		$decoded_data = base64_decode( $certificate_data );
-
-		// Separate the cipher text and the IV.
-		list($cipher_text, $iv) = explode( '::', $decoded_data, 2 );
-
-		// Decrypt the cipher text using the same encryption algorithm and key.
-		$decrypted_data = openssl_decrypt( $cipher_text, 'aes-128-cbc', 'ohmylms-certificate-key', 0, $iv );
-
-		if ( false !== $decrypted_data ) {
-			// Parse the decrypted data into an associative array.
-			parse_str( $decrypted_data, $parsed_data );
-
-			// Extract the individual values.
-			$certificate_id = $parsed_data['certificate_id'] ?? null;
-			$student_id     = $parsed_data['student_id'] ?? null;
-			$course_id      = $parsed_data['course_id'] ?? null;
-
-			$certificate = ohmylms_get_certificate( $certificate_id );
-			if ( $certificate && $student_id && $course_id ) {
-				$course  = ohmylms_get_course( $course_id );
-				$student = new \OhMyLMS\Data\Student( $student_id );
-				$html    = $certificate->get_html_contents();
-
-				global $wpdb;
-				$table_name = $wpdb->prefix . 'ohmylms_user_enrollment';
-
-				$end_date = $wpdb->get_var(
-					$wpdb->prepare( 'SELECT end_date FROM %i WHERE user_id = %d AND course_id = %d', $table_name, $student_id, $course_id )
-				);
-
-				if ( $html ) {
-					wp_send_json_success(
-						array(
-							'status'       => 'success',
-							'html'         => $html,
-							'course_name'  => $course ? $course->get_name() : '',
-							'student_name' => $student ? $student->get_name() : '',
-							'date'         => $end_date ? date( 'F j, Y', strtotime( $end_date ) ) : '',
-							'message'      => __( 'Get certificate successfully.', 'ohmylms' ),
-						)
-					);
-				} else {
-					wp_send_json_error(
-						array(
-							'status'  => 'error',
-							'message' => __( 'Lesson completion failed.', 'ohmylms' ),
-						)
-					);
-				}
-			}
-		}
-		wp_send_json_error(
-			array(
-				'status'  => 'error',
-				'message' => __( 'Lesson completion failed.', 'ohmylms' ),
 			)
 		);
 	}

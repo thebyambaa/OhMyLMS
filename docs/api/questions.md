@@ -45,6 +45,7 @@ response carries `Cache-Control: private, no-store`.
 | GET | `/questions/{id}` | `AccessPolicy::can_edit_question` | 200 editor view | 401, 403, 404, 503 |
 | PATCH / PUT / POST | `/questions/{id}` | `can_edit_question` | 200 editor view | 400, 401, 403, 404, 409, 413, 422, 500, 503 |
 | DELETE | `/questions/{id}` | `AccessPolicy::can_delete_question` (`delete_post`; bank grants never delete) | 200 `{deleted, archived, previous}` | 400, 401, 403, 404, 409, 500, 503 |
+| POST | `/questions/delete` | `edit_posts`, then `can_delete_question` per question | 200 `{results, skipped}` | 400, 401, 403, 409, 500, 503 |
 | POST | `/questions/{id}/archive` | `can_edit_question` | 200 editor view | 400, 401, 403, 404, 500, 503 |
 | POST | `/questions/{id}/restore` | `can_edit_question` | 200 editor view | 400, 401, 403, 404, 500, 503 |
 | POST | `/questions/{id}/approve` | `AccessPolicy::can_approve_question` | 200 editor view | 400, 401, 403, 404, 409, 503 |
@@ -58,10 +59,26 @@ not installed.
 **Delete** (`Usage::delete_or_archive()`, the logic of the removed `DELETE /question/{id}`): no body fields
 (400 `ohmylms_question_unknown_field`). A question placed in more than one quiz answers 409
 `ohmylms_question_shared` (`data.quizzes`; remove it from a quiz with
-`DELETE /quizzes/{id}/questions/{question_id}` first). A question with learner history is archived instead
-(`archived: true`); otherwise the question, its options, versions and identity row are deleted
-(`deleted: true`) and its single quiz placement is removed. `previous` is the editor view read just before.
-Fires `ohmylms_rest_delete_question` ($request, $result `{id, action}`).
+`DELETE /quizzes/{id}/questions/{question_id}` first). A question with learner history (attempt answers,
+issued attempt or practice items, the `ohmylms_question_response_count` / `ohmylms_question_has_history`
+filters) **or a version in a published quiz revision** (`quiz_revision_slots`, what attempts are delivered
+from) is archived instead (`archived: true`), so no attempt or revision loses the version it references;
+otherwise the question, its options, versions and identity row are deleted (`deleted: true`). Either way its
+single quiz placement is removed under the quiz's row lock (`SELECT … FOR UPDATE`, as the quiz question routes
+take it) together with what the quiz kept about it — its pin, its marks override and its place in a section
+(`Usage::forget_in_quiz()`) — so the quiz's question-list `revision` changes and an editor holding the old one
+gets 409 and reloads. `previous` is the editor view read just before. Fires `ohmylms_rest_delete_question`
+($request, $result `{id, action}`).
+
+**Bulk delete** (`POST /questions/delete`): `ids` (1–100 unique question IDs) and `skip_blocked` (default
+false); no other fields. Every question is checked first: unknown or trashed (`ohmylms_question_not_found`),
+not deletable by the user (`ohmylms_question_cannot_delete`) or placed in several quizzes
+(`ohmylms_question_shared`). Without `skip_blocked`, any blocked question refuses the whole request with 409
+`ohmylms_question_delete_blocked` and `data.blocked: [{id, code, message, quizzes}]`, and nothing changes. With
+it, the others are deleted or archived as above and the blocked ones are returned in `skipped`. All deletes run
+in one transaction (a storage failure changes nothing). Answers
+`{ results: [{id, action: deleted|archived}], skipped: [{id, code, message, quizzes}] }` and fires
+`ohmylms_rest_delete_question` per question. List rows carry `permissions.can_delete`.
 
 **Version content** (`GET /questions/{id}/versions/{version_id}`): the frozen version row (`id`, `question_id`,
 `version_no`, `title`, `body`, `type`, `settings`, `options` with `is_correct`, …) plus `skills` (the version's
@@ -286,8 +303,39 @@ named "<name> (copy)" and keeps the body, settings, options (as new option rows)
 difficulty, source and `secure`; it gets a new UUID, is version 1 and unapproved, and shares the source's
 `family_id` (a new family is written to the source when it had none). It stays in the source's bank only if
 the user can edit that bank. Extension settings are not copied (as in the legacy route). The legacy
-`quiz_id` option (replace the source in a quiz) is not offered here. Answers 201 with the copy's editor view
-and `Location`; `ohmylms_rest_save_question_item` fires with `$creating = true`.
+`quiz_id` option (replace the source in a quiz) moved to `POST /quizzes/{id}/questions/copy` with `replace`
+(below). Answers 201 with the copy's editor view and `Location`; `ohmylms_rest_save_question_item` fires with
+`$creating = true`.
+
+### Add to a quiz, or copy into a quiz
+
+Under the quiz revision lock of [quizzes](quizzes.md): every write carries the `revision` of the quiz's question
+list and is refused with 409 `ohmylms_quiz_questions_conflict` when the stored list differs.
+
+- **The question itself** (shared by reference): the existing `POST /quizzes/{id}/questions`
+  (`question_ids`, `pin`, `revision`).
+- **A copy**: `POST /quizzes/{id}/questions/copy` with `question_ids` (1–50 unique), `replace` (default false)
+  and `revision`; no other fields (400 `ohmylms_quiz_questions_unknown_field`). Needs `edit_post` on the quiz
+  and, per question, `can_author` and `can_use_question` (403 `ohmylms_quiz_question_forbidden`); unknown or
+  trashed 404 `ohmylms_question_not_found`; archived 409 `ohmylms_question_archived`. Unlike adding by reference,
+  a shared question without an approved version can be copied, and so can a question already in the quiz. Each
+  copy is made by `Duplicator` (as `POST /questions/{id}/duplicate`) and placed at the end (the 500-question
+  limit applies). With `replace: true`, exactly one question that is in the quiz (else 422
+  `ohmylms_quiz_question_replace_invalid`) is replaced by its copy in the same placement row: same position, its
+  marks override and section move to the copy, its pin is dropped; the source stays in the bank. Copies and
+  placements are one transaction. Answers 201 with the quiz question list plus
+  `copied: [{source_id, id}]`; `ohmylms_rest_save_question_item` fires for each copy and
+  `ohmylms_rest_quiz_questions_changed` with operation `copy`.
+
+UI: the question bank list has row actions **Add to quiz** (not on archived questions) and **Delete** (on
+questions the user may delete), and a **Delete** bulk action on the selected rows; the editor has **Add to a
+quiz** next to Duplicate and a **Delete** section that says beforehand whether the question will be deleted,
+archived (answered) or cannot be deleted (several quizzes). **Add to quiz** searches quizzes the user may edit
+and offers "This question" (disabled with the reason for archived questions, shared questions without an
+approved version, or a quiz that already holds it) or "A copy"; it reads the quiz's revision just before the
+write and retries once if another editor changed the quiz in between. The delete dialog lists the outcome per
+question and, when the server refuses some, shows why and offers to delete the others. The quiz editor's
+**Add from question bank** picker has **Add as: the questions themselves / copies**.
 
 ## Examples
 
@@ -474,11 +522,18 @@ registers an editor). `tests/browser/question-editor-parity.spec.cjs` (with
 `tests/php/question-editor-browser-fixture.php`) drives every type through the editor on `800.local`, places
 them in a quiz and has a temporary learner take it.
 
+Delete and copy: `tests/php/question-delete-copy-integration.php` (same flag, 80 checks): routes, 401/403,
+validation, the all-or-nothing preflight (shared, not allowed, unknown), `skip_blocked`, delete vs archive
+(answered, in a published revision), the quiz left clean (pin, marks, section) with a new revision and a stale
+editor refused, and copies (permissions, archived, unknown, stale revision, placement at the end, ownership,
+`replace` moving position, marks and section and dropping the pin, a `use` grant copying an unapproved shared
+question that it cannot add by reference). App tests: `QuestionDelete.test.tsx`, `deleteApi.test.ts`,
+`quizzes/QuizQuestions.test.tsx` (copies from the picker).
+
 ## Not covered
 
-- **Delete in the admin app**: `DELETE /questions/{id}` exists, but no app screen offers it yet.
-- **Duplicate into a quiz**: the removed `/question-bank/{id}/duplicate` with `quiz_id` (the copy replaces the
-  source in that quiz) has no route; `Duplicator::duplicate()` still supports it for a future screen.
+- **Replace with a copy in the quiz editor**: `replace: true` has no button yet (the quiz question list would
+  offer it on shared, read-only questions).
 - **`short-text` and `long-text`** have no answer key and no rubric field on the server; graders see the
   response only. Marking notes exist for `structured`/`passage` parts.
 - **Question extension settings** (`extension_settings`) have no editor in the new admin; none are registered

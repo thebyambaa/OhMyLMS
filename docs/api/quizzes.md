@@ -76,6 +76,7 @@ tables, else 503 `ohmylms_question_bank_unavailable`, and `edit_post` on the qui
 | GET | `/quizzes/{id}/questions` | – | 200 `QuizQuestions` | 401, 403, 404, 503 |
 | POST | `/quizzes/{id}/questions` | `question_ids` (1–50 unique ids), `pin` (bool), `revision` | 200 `QuizQuestions` | 400, 401, 403, 404, 409, 413, 422, 500 |
 | POST | `/quizzes/{id}/questions/new` | `question` (the `POST /questions` body), `revision` | 201 `QuizQuestions` + `created_id`, `Location` of the question | 400, 401, 403, 409, 413, 422, 500 |
+| POST | `/quizzes/{id}/questions/copy` | `question_ids` (1–50 unique ids), `replace` (bool), `revision` — copies placed at the end, or with `replace` one question replaced by its copy ([questions](questions.md#add-to-a-quiz-or-copy-into-a-quiz)) | 201 `QuizQuestions` + `copied` | 400, 401, 403, 404, 409, 413, 422, 500 |
 | PUT / PATCH / POST | `/quizzes/{id}/questions/order` | `question_ids` (every id of the quiz once), `revision` | 200 `QuizQuestions` | 400, 401, 403, 404, 409, 500 |
 | DELETE | `/quizzes/{id}/questions/{question_id}` | `revision` (query or body) | 200 `QuizQuestions` | 400, 401, 403, 404, 409, 500 |
 | PUT / PATCH / POST | `/quizzes/{id}/questions/{question_id}/pin` | `version_id` (id, or `null` to unpin) **or** `current: true`; `revision` | 200 `QuizQuestions` | 400, 401, 403, 404, 409, 500 |

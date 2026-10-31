@@ -204,11 +204,15 @@ final class Usage {
 			);
 		}
 		$responses = self::responses( $question_id );
+		$frozen    = self::in_revision( $question_id );
 		try {
 			return Transaction::run(
-				static function () use ( $question_id, $quizzes, $responses ) {
+				static function () use ( $question_id, $quizzes, $responses, $frozen ) {
 					global $wpdb;
 					foreach ( $quizzes as $quiz_id ) {
+						// The quiz editors' row lock: concurrent placement writes wait, then see a new revision.
+						// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Row lock; must not be cached.
+						$wpdb->query( $wpdb->prepare( 'SELECT ID FROM %i WHERE ID = %d FOR UPDATE', $wpdb->posts, $quiz_id ) );
 						if ( $wpdb->delete(
 							$wpdb->prefix . OHMYLMS_QUIZ_QUESTION_RELATIONSHIP,
 							array(
@@ -218,8 +222,9 @@ final class Usage {
 							array( '%d', '%d' )
 						) === false ) {
 							throw new \RuntimeException( 'Unlink failed' ); }
+						self::forget_in_quiz( $quiz_id, $question_id );
 					}
-					if ( $responses > 0 || apply_filters( 'ohmylms_question_has_history', false, $question_id ) ) {
+					if ( $responses > 0 || $frozen || apply_filters( 'ohmylms_question_has_history', false, $question_id ) ) {
 						$archived = self::archive( $question_id );
 						if ( is_wp_error( $archived ) ) {
 							throw new \RuntimeException( $archived->get_error_message() ); }
@@ -246,6 +251,71 @@ final class Usage {
 			);
 		} catch ( \Throwable $error ) {
 			return new \WP_Error( 'ohmylms_question_storage', __( 'Could not delete the question. Nothing was changed.', 'ohmylms' ), array( 'status' => 500 ) );
+		}
+	}
+
+	/**
+	 * Whether a published quiz revision (what attempts are delivered from) holds a version of the question.
+	 *
+	 * @param int $question_id Question ID.
+	 * @return bool
+	 */
+	public static function in_revision( $question_id ) {
+		global $wpdb;
+		if ( ! \OhMyLMS\Assessment\Schema::ready() ) {
+			return false;
+		}
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Assessment tables; fresh read before a delete.
+		return (bool) $wpdb->get_var( $wpdb->prepare( 'SELECT 1 FROM %i v INNER JOIN %i s ON s.version_id = v.id WHERE v.question_id = %d LIMIT 1', \OhMyLMS\Assessment\Schema::table( 'qb_question_versions' ), \OhMyLMS\Assessment\Schema::table( 'quiz_revision_slots' ), (int) $question_id ) );
+	}
+
+	/**
+	 * Drop what a quiz keeps about a question it no longer holds: its pin, its marks override and its
+	 * place in the sections (as `DELETE /quizzes/{id}/questions/{question_id}` does).
+	 *
+	 * @param int $quiz_id     Quiz ID.
+	 * @param int $question_id Question ID.
+	 * @throws \RuntimeException When the sections cannot be saved (the caller's transaction rolls back).
+	 */
+	public static function forget_in_quiz( $quiz_id, $question_id ) {
+		wp_cache_delete( $quiz_id, 'post_meta' );
+		$pins = get_post_meta( $quiz_id, \OhMyLMS\Rest\V1\QuizQuestionsController::PINS_META, true );
+		if ( is_array( $pins ) && isset( $pins[ $question_id ] ) ) {
+			unset( $pins[ $question_id ] );
+			if ( $pins ) {
+				update_post_meta( $quiz_id, \OhMyLMS\Rest\V1\QuizQuestionsController::PINS_META, $pins );
+			} else {
+				delete_post_meta( $quiz_id, \OhMyLMS\Rest\V1\QuizQuestionsController::PINS_META );
+			}
+		}
+		$settings = get_post_meta( $quiz_id, \OhMyLMS\Rest\V1\QuizQuestionsController::SETTINGS_META, true );
+		if ( is_array( $settings ) && is_array( $settings['slot_marks'] ?? null ) && array_key_exists( $question_id, $settings['slot_marks'] ) ) {
+			unset( $settings['slot_marks'][ $question_id ] );
+			if ( ! $settings['slot_marks'] ) {
+				unset( $settings['slot_marks'] );
+			}
+			update_post_meta( $quiz_id, \OhMyLMS\Rest\V1\QuizQuestionsController::SETTINGS_META, $settings );
+		}
+		$assessment = get_post_meta( $quiz_id, \OhMyLMS\Assessment\AssessmentSettings::META, true );
+		$sections   = is_array( $assessment ) && is_array( $assessment['sections'] ?? null ) ? $assessment['sections'] : array();
+		$changed    = false;
+		foreach ( $sections as &$section ) {
+			if ( ! is_array( $section ) ) {
+				continue;
+			}
+			$questions = array_map( 'intval', (array) ( $section['questions'] ?? array() ) );
+			if ( in_array( (int) $question_id, $questions, true ) || isset( $section['marks'][ $question_id ] ) ) {
+				$section['questions'] = array_values( array_diff( $questions, array( (int) $question_id ) ) );
+				unset( $section['marks'][ $question_id ] );
+				$changed = true;
+			}
+		}
+		unset( $section );
+		if ( $changed ) {
+			$saved = \OhMyLMS\Assessment\AssessmentSettings::save( $quiz_id, array( 'sections' => $sections ) );
+			if ( is_wp_error( $saved ) ) {
+				throw new \RuntimeException( 'Sections update failed' );
+			}
 		}
 	}
 }

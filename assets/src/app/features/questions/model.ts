@@ -5,6 +5,9 @@ import { ApiError } from '../../lib/api';
 import type {
 	BankInput,
 	BankRef,
+	BlockedDelete,
+	BulkDeleteResult,
+	DeleteResult,
 	Difficulty,
 	FormErrors,
 	FormOption,
@@ -22,6 +25,8 @@ import type {
 	QuestionUpdateInput,
 	QuestionUsage,
 	QuestionVersion,
+	QuizChoice,
+	QuizPlacement,
 	SkillMap,
 	SkillRef,
 	StatusFilter,
@@ -456,8 +461,169 @@ export function parseQuestionSummary( value: unknown ): QuestionSummary {
 		permissions: {
 			can_edit: boolean( permissions.can_edit ),
 			can_approve: boolean( permissions.can_approve ),
+			can_delete: boolean( permissions.can_delete ),
 		},
 	};
+}
+
+/**
+ * Validate the answer of `DELETE /questions/{id}`.
+ *
+ * @param value Parsed JSON.
+ * @return Whether the question was deleted or archived.
+ */
+export function parseDeleteResult( value: unknown ): DeleteResult {
+	const item = record( value );
+	const result = {
+		deleted: boolean( item.deleted ),
+		archived: boolean( item.archived ),
+	};
+	if ( result.deleted === result.archived ) {
+		throw invalidResponse();
+	}
+	return result;
+}
+
+/**
+ * Validate one blocked question of a bulk delete (from the response or the 409 error details).
+ *
+ * @param value Parsed JSON.
+ * @return The blocked question.
+ */
+export function parseBlockedDelete( value: unknown ): BlockedDelete {
+	const item = record( value );
+	return {
+		id: positiveId( item.id ),
+		code: text( item.code ),
+		message: text( item.message ),
+		quizzes: list( item.quizzes ).map( positiveId ),
+	};
+}
+
+/**
+ * The blocked questions in the details of a refused bulk delete, or an empty list.
+ *
+ * @param details `ApiError.details`.
+ * @return Blocked questions.
+ */
+export function blockedFromError( details: unknown ): BlockedDelete[] {
+	try {
+		return list( record( details ).blocked ).map( parseBlockedDelete );
+	} catch {
+		return [];
+	}
+}
+
+/**
+ * Validate the answer of `POST /questions/delete`.
+ *
+ * @param value Parsed JSON.
+ * @return Results and skipped questions.
+ */
+export function parseBulkDelete( value: unknown ): BulkDeleteResult {
+	const item = record( value );
+	return {
+		results: list( item.results ).map( ( raw ) => {
+			const row = record( raw );
+			return {
+				id: positiveId( row.id ),
+				action: oneOf( row.action, [ 'deleted', 'archived' ] as const ),
+			};
+		} ),
+		skipped: list( item.skipped ).map( parseBlockedDelete ),
+	};
+}
+
+/**
+ * Validate a quiz of `GET /quizzes` for the add-to-quiz dialog.
+ *
+ * @param value Parsed JSON.
+ * @return The quiz.
+ */
+export function parseQuizChoice( value: unknown ): QuizChoice {
+	const item = record( value );
+	return {
+		id: positiveId( item.id ),
+		title: text( item.title ),
+		status: text( item.status ),
+		can_edit: boolean( item.can_edit ),
+		question_count: count( item.question_count ),
+	};
+}
+
+/**
+ * Validate what adding a question needs from a quiz question list.
+ *
+ * @param value Parsed JSON of `GET|POST /quizzes/{id}/questions[/copy]`.
+ * @return Revision, question ids and copies.
+ */
+export function parseQuizPlacement( value: unknown ): QuizPlacement {
+	const item = record( value );
+	const revision = text( item.revision );
+	if ( ! /^[0-9a-f]{16}$/.test( revision ) ) {
+		throw invalidResponse();
+	}
+	return {
+		revision,
+		question_ids: list( item.questions ).map( ( raw ) =>
+			positiveId( record( raw ).question_id )
+		),
+		copied:
+			undefined === item.copied
+				? []
+				: list( item.copied ).map( ( raw ) => {
+						const row = record( raw );
+						return {
+							source_id: positiveId( row.source_id ),
+							id: positiveId( row.id ),
+						};
+					} ),
+	};
+}
+
+/**
+ * What deleting a question will do, from its usage.
+ *
+ * @param usage Quizzes and learner responses.
+ * @return `blocked` (several quizzes), `archive` (learner answers) or `delete`.
+ */
+export function deleteOutcome(
+	usage: QuestionUsage
+): 'blocked' | 'archive' | 'delete' {
+	if ( usage.quizzes > 1 ) {
+		return 'blocked';
+	}
+	return usage.responses > 0 ? 'archive' : 'delete';
+}
+
+/**
+ * Why a question cannot be placed in a quiz by reference, or null when it can.
+ *
+ * @param item                      Question status, approval and edit permission.
+ * @param item.status
+ * @param item.approved_version_id
+ * @param item.permissions
+ * @param item.permissions.can_edit
+ * @return Reason, or null.
+ */
+export function referenceBlocker( item: {
+	status: QuestionStatus;
+	approved_version_id: number;
+	permissions: { can_edit: boolean };
+} ): string | null {
+	if ( 'archived' === item.status ) {
+		return __(
+			'Archived questions cannot be added to a quiz. Restore the question first.',
+			'ohmylms'
+		);
+	}
+	if ( ! item.permissions.can_edit && ! item.approved_version_id ) {
+		return __(
+			'This shared question has no approved version yet, so only a copy can be added.',
+			'ohmylms'
+		);
+	}
+	return null;
 }
 
 function parseMatching( value: unknown ): MatchingData | null {
@@ -1552,4 +1718,61 @@ export function serverFieldError(
 		default:
 			return null;
 	}
+}
+
+/**
+ * Summary of a delete: how many were deleted, archived and left alone.
+ *
+ * @param result Server results.
+ * @return Message.
+ */
+export function deleteMessage( result: BulkDeleteResult ): string {
+	const deleted = result.results.filter(
+		( row ) => 'deleted' === row.action
+	).length;
+	const archived = result.results.length - deleted;
+	const parts = [];
+	if ( deleted ) {
+		parts.push(
+			sprintf(
+				/* translators: %d: number of questions. */
+				_n(
+					'Deleted %d question.',
+					'Deleted %d questions.',
+					deleted,
+					'ohmylms'
+				),
+				deleted
+			)
+		);
+	}
+	if ( archived ) {
+		parts.push(
+			sprintf(
+				/* translators: %d: number of questions. */
+				_n(
+					'Archived %d question that learners answered.',
+					'Archived %d questions that learners answered.',
+					archived,
+					'ohmylms'
+				),
+				archived
+			)
+		);
+	}
+	if ( result.skipped.length ) {
+		parts.push(
+			sprintf(
+				/* translators: %d: number of questions. */
+				_n(
+					'%d question was not deleted.',
+					'%d questions were not deleted.',
+					result.skipped.length,
+					'ohmylms'
+				),
+				result.skipped.length
+			)
+		);
+	}
+	return parts.join( ' ' );
 }

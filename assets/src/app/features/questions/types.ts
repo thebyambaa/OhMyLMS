@@ -49,7 +49,47 @@ export interface QuestionSummary extends QuestionLifecycle {
 	author: UserRef;
 	/** RFC 3339 UTC time; empty when unset. */
 	modified: string;
-	permissions: { can_edit: boolean; can_approve: boolean };
+	permissions: {
+		can_edit: boolean;
+		can_approve: boolean;
+		can_delete: boolean;
+	};
+}
+
+/** Result of deleting one question: deleted, or archived because learners answered it. */
+export interface DeleteResult {
+	deleted: boolean;
+	archived: boolean;
+}
+
+/** A question a bulk delete did not delete, and why. */
+export interface BlockedDelete {
+	id: number;
+	code: string;
+	message: string;
+	quizzes: number[];
+}
+
+/** Result of `POST /questions/delete`. */
+export interface BulkDeleteResult {
+	results: { id: number; action: 'deleted' | 'archived' }[];
+	skipped: BlockedDelete[];
+}
+
+/** A quiz offered when adding a question to a quiz. */
+export interface QuizChoice {
+	id: number;
+	title: string;
+	status: string;
+	can_edit: boolean;
+	question_count: number;
+}
+
+/** What the quiz placement routes return that adding a question needs. */
+export interface QuizPlacement {
+	revision: string;
+	question_ids: number[];
+	copied: { source_id: number; id: number }[];
 }
 
 /** Matching data of an option (`matching` type). */

@@ -3,6 +3,7 @@ import {
 	CheckboxControl,
 	Modal,
 	Notice,
+	RadioControl,
 	SelectControl,
 	TextControl,
 } from '@wordpress/components';
@@ -17,7 +18,7 @@ import {
 	type QuestionSummary,
 	type QuestionType,
 } from '../questions/public';
-import { addBlocker, formatMarks } from './model';
+import { addBlocker, copyBlocker, formatMarks } from './model';
 
 /** Most questions added in one request (the server's limit). */
 export const MAX_PICK = 50;
@@ -54,9 +55,10 @@ export function QuestionPicker( {
 	types: QuestionType[] | null;
 	busy: boolean;
 	error: string | null;
-	onAdd: ( ids: number[], pin: boolean ) => void;
+	onAdd: ( ids: number[], pin: boolean, copy: boolean ) => void;
 	onClose: () => void;
 } ) {
+	const [ copy, setCopy ] = useState( false );
 	const [ search, setSearch ] = useState( '' );
 	const [ query, setQuery ] = useState< Query >( {
 		page: 1,
@@ -201,7 +203,9 @@ export function QuestionPicker( {
 					{ result.items.length ? (
 						<ul className="oml-quiz-picker">
 							{ result.items.map( ( item ) => {
-								const blocker = addBlocker( item, inQuiz );
+								const blocker = copy
+									? copyBlocker( item )
+									: addBlocker( item, inQuiz );
 								const name =
 									item.name.trim() ||
 									__( 'Untitled question', 'ohmylms' );
@@ -224,7 +228,8 @@ export function QuestionPicker( {
 											) }
 											help={
 												blocker ??
-												( item.permissions.can_edit
+												( item.permissions.can_edit ||
+												copy
 													? undefined
 													: __(
 															'Shared question: its approved version is used.',
@@ -256,16 +261,57 @@ export function QuestionPicker( {
 					/>
 				</fieldset>
 			) }
-			<CheckboxControl
-				label={ __( 'Pin to the version used now', 'ohmylms' ) }
-				help={ __(
-					'Learners keep getting this version when the question is changed later.',
-					'ohmylms'
-				) }
-				checked={ pin }
-				disabled={ busy }
-				onChange={ setPin }
+			<RadioControl
+				label={ __( 'Add as', 'ohmylms' ) }
+				selected={ copy ? 'copy' : 'reference' }
+				options={ [
+					{
+						value: 'reference',
+						label: __(
+							'The questions themselves, shared with the question bank',
+							'ohmylms'
+						),
+					},
+					{
+						value: 'copy',
+						label: __(
+							'Copies: new questions you can change for this quiz only',
+							'ohmylms'
+						),
+					},
+				] }
+				onChange={ ( value ) => {
+					const next = 'copy' === value;
+					setCopy( next );
+					setChosen( ( current ) => {
+						const kept = new Set< number >();
+						for ( const item of result?.items ?? [] ) {
+							if (
+								current.has( item.id ) &&
+								null ===
+									( next
+										? copyBlocker( item )
+										: addBlocker( item, inQuiz ) )
+							) {
+								kept.add( item.id );
+							}
+						}
+						return kept;
+					} );
+				} }
 			/>
+			{ ! copy && (
+				<CheckboxControl
+					label={ __( 'Pin to the version used now', 'ohmylms' ) }
+					help={ __(
+						'Learners keep getting this version when the question is changed later.',
+						'ohmylms'
+					) }
+					checked={ pin }
+					disabled={ busy }
+					onChange={ setPin }
+				/>
+			) }
 			{ tooMany && (
 				<p role="alert">
 					{ sprintf(
@@ -287,18 +333,29 @@ export function QuestionPicker( {
 				variant="primary"
 				disabled={ busy || 0 === chosen.size || tooMany }
 				isBusy={ busy }
-				onClick={ () => onAdd( [ ...chosen ], pin ) }
+				onClick={ () => onAdd( [ ...chosen ], ! copy && pin, copy ) }
 			>
-				{ sprintf(
-					/* translators: %d: number of chosen questions. */
-					_n(
-						'Add %d question',
-						'Add %d questions',
-						chosen.size,
-						'ohmylms'
-					),
-					chosen.size
-				) }
+				{ copy
+					? sprintf(
+							/* translators: %d: number of chosen questions. */
+							_n(
+								'Add a copy of %d question',
+								'Add copies of %d questions',
+								chosen.size,
+								'ohmylms'
+							),
+							chosen.size
+						)
+					: sprintf(
+							/* translators: %d: number of chosen questions. */
+							_n(
+								'Add %d question',
+								'Add %d questions',
+								chosen.size,
+								'ohmylms'
+							),
+							chosen.size
+						) }
 			</Button>{ ' ' }
 			<Button variant="tertiary" disabled={ busy } onClick={ onClose }>
 				{ __( 'Cancel', 'ohmylms' ) }

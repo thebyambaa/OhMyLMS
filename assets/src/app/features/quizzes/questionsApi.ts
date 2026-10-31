@@ -58,6 +58,30 @@ export async function addQuizQuestions(
 }
 
 /**
+ * Copy bank questions into the quiz: each copy is a new question of the user, placed at the end.
+ *
+ * @param quizId      Quiz id.
+ * @param revision    Revision of the loaded list.
+ * @param questionIds Questions to copy, at most 50.
+ * @param signal      Cancels the request.
+ * @return The updated list.
+ */
+export async function copyQuizQuestions(
+	quizId: number,
+	revision: string,
+	questionIds: number[],
+	signal?: AbortSignal
+) {
+	return parseQuizQuestions(
+		await post< unknown >(
+			`${ listPath( quizId ) }/copy`,
+			{ question_ids: questionIds, revision },
+			{ signal }
+		)
+	);
+}
+
+/**
  * Create a question (same body as `POST /questions`) and place it at the end of the quiz.
  *
  * @param quizId   Quiz id.

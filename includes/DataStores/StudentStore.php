@@ -628,14 +628,19 @@ class StudentStore extends DataStore {
 		return ohmylms_get_course_first_lesson_url( $course_id );
 	}
 	/**
-	 * Return the placeholder URL while certificate downloads are unavailable.
+	 * Download address of the learner's valid certificate for a course.
 	 *
-	 * @param Student $student The student object, retained for compatibility.
-	 * @param int     $course_id The course ID, retained for compatibility.
-	 * @return string The placeholder URL.
+	 * @param Student $student The student object.
+	 * @param int     $course_id The course ID.
+	 * @return string The PDF (or printable page) address, or '' without a valid certificate.
 	 */
 	public function get_course_certificate_url( $student, $course_id ) {
-		return '#';
+		$record = \OhMyLMS\Certificates\Issuer::active_for( (int) $student->get_id(), (int) $course_id );
+		if ( ! $record ) {
+			return '';
+		}
+
+		return \OhMyLMS\Certificates\Download::url( $record['code'], \OhMyLMS\Certificates\PdfRenderer::available() ? 'pdf' : 'print' );
 	}
 
 	/**

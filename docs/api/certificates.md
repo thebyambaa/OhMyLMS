@@ -8,9 +8,9 @@ as the default template). The machine-readable form is
 (model, defaults, validation), `includes/Certificates/TemplateRenderer.php` (server-side HTML),
 `includes/DataStores/CertificateStore.php` (storage) and `includes/Data/Certificate.php`.
 
-Scope of this batch: certificate **templates** (list, metadata editor, text blocks, images, course
-assignment, preview). Issuing certificates to learners and the learner download are not part of it; see
-"Not covered".
+Scope: certificate **templates** (list, metadata editor, text blocks, images, course assignment, preview),
+and since 31 October 2026 **issued certificates** (automatic and manual issuing, revoke, re-issue, the
+admin list, public verification and the learner download); see [Issued certificates](#issued-certificates).
 
 ## Audit before
 
@@ -63,8 +63,9 @@ Positions are **validated numeric fields**, not a free-form canvas: each text bl
 sizes are points (8-120). The same rules run in PHP (`Template::normalize()`) and in the admin app
 (`model.ts`).
 
-Placeholders usable in text: `{student_name}`, `{course_name}`, `{date}`, `{site_name}` (extendable with
-the `ohmylms_certificate_placeholders` filter, see Hooks). Any other `{token}` is rejected with
+Placeholders usable in text: `{student_name}`, `{course_name}`, `{date}` (the completion date, else the
+issue date), `{site_name}`, `{certificate_code}` (the verification code) (extendable with the
+`ohmylms_certificate_placeholders` filter, see Hooks). Any other `{token}` is rejected with
 `ohmylms_certificate_unknown_placeholder`; braces are reserved. Text is plain: tags are stripped,
 newlines kept, 1-500 characters.
 
@@ -216,9 +217,8 @@ Defaults are applied on create only; an update never receives schema defaults.
   traversal). SVG is excluded because it can carry script.
 - **SQL.** All queries use `$wpdb->prepare()` (including the `IN (...)` list, built from `absint()` ids),
   `$wpdb->delete()`/`insert()` formats or `WP_Query`; `orderby` is an allow-list map.
-- **Learner download.** `Ajax::download_certificate*()` still reads `_html_contents`. It now holds
-  server-rendered, escaped markup, but the frontend replaces the legacy sample strings (`Name Surname`,
-  `[course_name]`, `January 10, 2025`) rather than the `{tokens}`. See "Not covered".
+- **Learner download.** The legacy `Ajax::download_certificate*()` handlers were removed (see
+  [Issued certificates](#issued-certificates)); downloads render an issued certificate on the server.
 
 ## Hooks
 
@@ -235,11 +235,119 @@ New: `ohmylms_certificate_placeholders` (filter): add or remove placeholders, sh
 Removed with the recovered API: the `creatolr_lms_rest_query_var-*` and `ohmylms_rest_query_vars` filters
 (the query no longer takes arbitrary query vars), and the `trash-bulk` route.
 
+## Issued certificates
+
+Server code: `includes/Certificates/Issuer.php` (issue, revoke, re-issue, reads),
+`includes/Certificates/IssuedSchema.php` (table), `includes/Certificates/Download.php` (learner download and
+public verification pages), `includes/Certificates/PdfRenderer.php` (PDF through Dompdf, a Composer dependency),
+`includes/Certificates/Bootstrap.php` (hooks) and `includes/Rest/V1/IssuedCertificatesController.php`.
+Admin screen: `features/certificates/IssuedCertificatesList.tsx` at `/certificates?list=issued`
+(`page=ohmylms-engagement&tab=gamification&section=certificates&list=issued`), reached from the template
+list's **Issued certificates** title action. Learner: the student hub's Achievements section
+(`templates/student-hub/achievements.php`), the profile course card and the completion e-mail.
+
+### Audit before (legacy download)
+
+| Severity | Finding |
+| --- | --- |
+| High | **Forged links leak any learner's name and completion date.** `wp_ajax_nopriv_ohmylms_download_certificate_from_email` decrypted `certificate_data` with the key `ohmylms-certificate-key`, hard-coded in the open-source e-mail template and handler, so anyone could encrypt `student_id=<any>&course_id=<any>&certificate_id=<any>` and receive that learner's name, the course name and the end date, without signing in (the nonce is printed on public pages). Removed; old links now redirect to the learner's certificates. |
+| High | **No issued record, nothing to verify.** A "certificate" was the template HTML plus names filled in by browser JavaScript (html2pdf); there was no record of who received what, no code, no revocation and no verification. |
+| Medium | **Any template for any course.** `wp_ajax_ohmylms_download_certificate` returned the HTML of whatever `certificate_id` was posted, with no check that the learner completed the course or that the template belonged to it; a fatal error for an unknown id. |
+| Medium | **Placeholders never replaced.** The browser replaced the old sample strings (`Name Surname`, `[course_name]`), not the `{tokens}` the rebuilt templates use, so downloads showed raw tokens. |
+| Low | The achievements template printed `esc_attr()` of a certificate object as `data-certificate-id`, so its download button could not work. |
+
+### Model
+
+Table `{prefix}ohmylms_issued_certificates`, installed on first use (option
+`ohmylms_issued_certificates_schema`). One row per certificate: `code` (unique), `user_id`, `course_id`,
+`certificate_id` (template), `status` (`issued` or `revoked`), `source` (`completion`, `manual`, `reissue`),
+`student_name` and `course_title` as printed, `template` (the template JSON at issue time), `completed_at`,
+`issued_at`, `issued_by` (0 for automatic), `revoked_at`, `revoked_by`, `replaces` (the re-issued row).
+`active_key` (`<user>:<course>`) is set only while the row is issued and is unique, so the database allows at
+most one valid certificate per learner and course; revoked rows are kept for verification.
+
+- **Codes**: 16 characters from `ABCDEFGHJKMNPQRSTUVWXYZ23456789` in four groups (`JZAF-PBCJ-NJU8-GJ89`),
+  80 random bits from `random_int()`. Lookups ignore case, spaces and dashes.
+- **Automatic issuing**: on `ohmylms_course_completed` (priority 5, before the completion e-mail at 10) when the
+  enrolment is really completed (read fresh), the course's assigned template is **published**, and the learner
+  has **no** certificate row for the course (a revoked certificate is not re-issued by completing again). A
+  failure never breaks the completion. The Achievements page backfills completions from before this feature
+  (`Issuer::sync_for_user()`, at most 50 courses, same rules).
+- **Snapshots**: name, course title, template and completion date are frozen at issue time; renaming the course,
+  editing or deleting the template later does not change an issued certificate. **Re-issue** creates a new row
+  and code from the current name, title and course template (the old template if the course has none), keeps
+  the completion date and revokes the old row if it was still valid.
+
+### Routes
+
+All administration routes need `manage_options` (`Issuer::CAPABILITY`): 401 anonymous, 403
+`ohmylms_issued_certificate_forbidden` otherwise. Responses carry `Cache-Control: private, no-store`.
+
+| Method | Path | Purpose | Success | Errors |
+| --- | --- | --- | --- | --- |
+| GET | `/issued-certificates` | List: `page`, `per_page` (1–100, default 20), `search` (≤ 100: exact code, learner name, e-mail or login, course title), `status` (`all\|issued\|revoked`), `source` (`''\|completion\|manual\|reissue`), `course`, `certificate`, `user`, `orderby` (`issued_at\|id\|student_name\|course_title`), `order` | 200 + `X-WP-Total`, `X-WP-TotalPages` | 400 (`ohmylms_issued_certificate_invalid_page` past the end), 401, 403 |
+| POST | `/issued-certificates` | Issue by hand: `user_id`, `course_id`, `certificate_id` (0 = the course's template; draft templates allowed). Completion not required. | 201 + `Location` | 400 (unknown field), 401, 403, 409 `ohmylms_certificate_already_issued` (`data.id`), 422 `ohmylms_certificate_invalid_user\|_invalid_course\|_no_template\|_invalid_template` |
+| GET | `/issued-certificates/{id}` | Read | 200 | 401, 403, 404 `ohmylms_issued_certificate_not_found` |
+| POST | `/issued-certificates/{id}/revoke` | Revoke (no body) | 200 | 400, 401, 403, 404, 409 `ohmylms_certificate_already_revoked` |
+| POST | `/issued-certificates/{id}/reissue` | Re-issue (no body) | 201 + `Location` | 400, 401, 403, 404, 409 `ohmylms_certificate_already_issued` (a newer one is valid), `_no_template`, 500 |
+| GET | `/issued-certificates/learners` | Learner search for the issue form (`search`, ≤ 20 results: id, name, e-mail) | 200 | 401, 403 |
+| GET | `/issued-certificates/verify/{code}` | **Public** verification | 200 | 404 `ohmylms_certificate_code_not_found`, 429 `ohmylms_certificate_verify_throttled` |
+
+Admin item: `id, code, status, source, student_name, learner {id, exists, email}, course {id, title, exists},
+template {id, name ('' when deleted)}, completed_at, issued_at, revoked_at (RFC 3339 UTC or null), issued_by,
+revoked_by, replaces, links {pdf, print, verify}` (`pdf`/`print` empty when revoked). Filter
+`ohmylms_rest_prepare_issued_certificate` ($data, $record).
+
+Verification answers only `code, status, student_name, course_title, completed_on, issued_on, revoked_on,
+valid, page_url` (dates formatted in the site's format): no user or course id, e-mail or template.
+
+### Learner download and verification pages
+
+Answered on `template_redirect` (priority 1) at the home URL, before the theme:
+
+- `?ohmylms-download-certificate=<code>&format=pdf` — the PDF (`Content-Disposition: attachment`), rendered by
+  `PdfRenderer` from the snapshot with real values; `format=print` — a page at paper size (`@page` size of the
+  template, no margins) with **Print or save as PDF**, rendered by `TemplateRenderer::fragment()`. Only the
+  learner and administrators; anonymous visitors are redirected to sign in, anyone else gets 404, a revoked
+  certificate 410. `no-store`, `noindex`, `Referrer-Policy: no-referrer`; the print page's CSP allows only its
+  own nonce script and images.
+- `?ohmylms-verify-certificate=<code>` — public page with the status (valid, or revoked on a date), name,
+  course, dates and code, plus a form to check another code. CSP `default-src 'none'`, `noindex`. Failed
+  lookups are limited to 30 per address per 10 minutes (shared with the REST route).
+- `?ohmylms-certificate-data=…` (links in completion e-mails sent before this change) redirects to the learner's
+  certificates (or sign-in) without decrypting anything.
+
+The PDF uses millimetres and points (Dompdf has no container query units), DejaVu Serif/Sans for Unicode,
+`isRemoteEnabled` off, `chroot` limited to the uploads folder and Dompdf's own fonts; background and signature
+images are read from their media-library files only when they are inside the uploads folder. Text is escaped
+exactly as in `TemplateRenderer`.
+
+### Hooks
+
+`ohmylms_certificate_issued` (action, $record; automatic, manual and re-issue), `ohmylms_certificate_revoked`
+(action, $record; also for the row a re-issue replaces), `ohmylms_certificate_values` (filter, token => text,
+$record: values for placeholders added with `ohmylms_certificate_placeholders`),
+`ohmylms_rest_prepare_issued_certificate` (filter). Removed: the AJAX actions `ohmylms_download_certificate` and
+`ohmylms_download_certificate_from_email`.
+
+### Tests
+
+`tests/php/issued-certificates-integration.php` (`OHMYLMS_CERTIFICATES_TEST=1`, 107 checks): hook wiring, routes,
+401/403 on every admin route, automatic issuing (not before completion, not for draft or missing templates, once
+only, never after a revocation), code format, snapshots surviving course and template edits and template deletion,
+placeholder values, the printable fragment and a one-page PDF, escaping in the PDF markup, download access
+(learner, other learner, anonymous, administrator), verification (case and dashes ignored, only public fields,
+unknown and malformed codes), list search and filters, validation, manual issue, 409 duplicates, revoke, re-issue
+(new code, current title and template, completion date kept), the dashboard backfill, and over HTTP the
+verification page headers, the sign-in redirect and the old e-mail link redirect. App tests:
+`issuedApi.test.ts`, `IssuedCertificatesList.test.tsx`.
+
 ## Not covered
 
-- **Issuing.** There is no issued-certificate record yet (who received what, when, a verification code).
-  The learner download is the legacy `Ajax` path described above and needs its own batch (server-side
-  rendering with real placeholder values, PDF/print, a verification URL).
+- **Bulk issuing** (for every learner who completed a course before a template was assigned) exists only as the
+  per-learner backfill on the Achievements page; there is no admin bulk action.
+- **Learner list in the app**: learners see their certificates in the PHP student hub; there is no learner REST
+  route.
 - **Free-form canvas.** Positions are numeric fields by design.
 - **Media upload from the editor.** The editor picks existing library images through core's `/wp/v2/media`.
 - **Bulk operations**, concurrent-edit detection (last write wins) and revision history.

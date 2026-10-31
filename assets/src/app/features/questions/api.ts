@@ -1,12 +1,16 @@
-import { get, patch, post } from '../../lib/api';
+import { del, get, patch, post } from '../../lib/api';
 import { getCollection } from '../../lib/api/collection';
 import {
 	invalidResponse,
 	parseBanks,
+	parseBulkDelete,
+	parseDeleteResult,
 	parseQuestionDetail,
 	parseQuestionSummary,
 	parseQuestionTypes,
 	parseQuestionVersion,
+	parseQuizChoice,
+	parseQuizPlacement,
 	parseSkillRef,
 	positiveId,
 	record,
@@ -300,4 +304,108 @@ export async function listVersions(
 			query: { page, per_page: VERSIONS_PER_PAGE },
 		}
 	);
+}
+
+/**
+ * Delete a question. One with learner history (or in a published quiz revision) is archived instead;
+ * one used in several quizzes is refused with `ohmylms_question_shared`.
+ *
+ * @param id     Question id.
+ * @param signal Cancels the request.
+ * @return Whether it was deleted or archived.
+ */
+export async function deleteQuestion( id: number, signal?: AbortSignal ) {
+	return parseDeleteResult(
+		await del< unknown >( itemPath( id ), { signal } )
+	);
+}
+
+/** Error code of a bulk delete refused because some questions cannot be deleted. */
+export const DELETE_BLOCKED = 'ohmylms_question_delete_blocked';
+
+/**
+ * Delete several questions with the rules of {@link deleteQuestion}, in one transaction. Without
+ * `skipBlocked`, one question that cannot be deleted refuses the request ({@link DELETE_BLOCKED}, the
+ * blocked ones in the error details); with it, the others are deleted and the blocked ones reported.
+ *
+ * @param ids         Question ids, at most 100.
+ * @param skipBlocked Delete the others when some are blocked.
+ * @param signal      Cancels the request.
+ * @return Per-question results and the skipped questions.
+ */
+export async function deleteQuestions(
+	ids: readonly number[],
+	skipBlocked: boolean,
+	signal?: AbortSignal
+) {
+	return parseBulkDelete(
+		await post< unknown >(
+			`${ BASE }/delete`,
+			{ ids: ids.map( positiveId ), skip_blocked: skipBlocked },
+			{ signal }
+		)
+	);
+}
+
+/** Quizzes offered per search when adding a question to a quiz. */
+export const QUIZZES_PER_SEARCH = 20;
+
+/**
+ * Search quizzes by title, for adding a question to one.
+ *
+ * @param search Title search.
+ * @param signal Cancels the request.
+ * @return Quizzes (with whether the user may edit each).
+ */
+export async function searchQuizzes( search: string, signal?: AbortSignal ) {
+	return (
+		await getCollection( '/ohmylms/v1/quizzes', parseQuizChoice, {
+			signal,
+			query: {
+				search: search.trim(),
+				status: 'all',
+				per_page: QUIZZES_PER_SEARCH,
+				orderby: 'title',
+				order: 'asc',
+			},
+		} )
+	).items;
+}
+
+/**
+ * Add a question to a quiz under the quiz revision lock: the current revision is read, then the
+ * question itself (`copy: false`, shared by reference) or a new copy of it (`copy: true`) is placed at
+ * the end. A change made by someone else in between answers 409 `ohmylms_quiz_questions_conflict`.
+ *
+ * @param quizId     Quiz id.
+ * @param questionId Question id.
+ * @param copy       Place a copy instead of the question.
+ * @param signal     Cancels the request.
+ * @return The id placed in the quiz (the copy's when copying).
+ */
+export async function addToQuiz(
+	quizId: number,
+	questionId: number,
+	copy: boolean,
+	signal?: AbortSignal
+) {
+	const path = `/ohmylms/v1/quizzes/${ positiveId( quizId ) }/questions`;
+	const current = parseQuizPlacement(
+		await get< unknown >( path, { signal } )
+	);
+	const result = parseQuizPlacement(
+		await post< unknown >(
+			copy ? `${ path }/copy` : path,
+			{
+				question_ids: [ positiveId( questionId ) ],
+				revision: current.revision,
+			},
+			{ signal }
+		)
+	);
+	const placed = copy ? result.copied[ 0 ]?.id : questionId;
+	if ( ! placed ) {
+		throw invalidResponse();
+	}
+	return placed;
 }

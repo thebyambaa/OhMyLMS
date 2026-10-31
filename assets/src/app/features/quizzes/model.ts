@@ -1080,6 +1080,18 @@ export function addBlocker(
 }
 
 /**
+ * Whether a bank question can be copied into the quiz, and why not. A copy is a new question of the
+ * user, so questions already in the quiz and shared questions without an approved version qualify.
+ *
+ * @param item        List row of the question bank.
+ * @param item.status Lifecycle status.
+ * @return `null` when it can be copied, otherwise the reason.
+ */
+export function copyBlocker( item: { status: string } ): string | null {
+	return 'archived' === item.status ? __( 'Archived', 'ohmylms' ) : null;
+}
+
+/**
  * Label of a quiz status.
  *
  * @param status Quiz status.

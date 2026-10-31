@@ -8,6 +8,7 @@
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
+use OhMyLMS\Assessment\ErrorException;
 use OhMyLMS\Assessment\InlineBlanks;
 use OhMyLMS\Assessment\Schema;
 use OhMyLMS\Extensions\Registry;
@@ -23,6 +24,7 @@ use OhMyLMS\QuestionBank\SkillMap;
 use OhMyLMS\QuestionBank\Usage;
 use OhMyLMS\QuestionBank\VersionPublisher;
 use OhMyLMS\Skills\Taxonomy;
+use OhMyLMS\Utility\Transaction;
 use WP_Error;
 use WP_Post;
 use WP_REST_Request;
@@ -82,6 +84,11 @@ class QuestionsController extends RestController {
 	const MAX_POINTS = 10000;
 
 	/**
+	 * Most questions deleted by one bulk request.
+	 */
+	const MAX_BULK_DELETE = 100;
+
+	/**
 	 * Body fields accepted by create and update.
 	 */
 	const WRITABLE = array( 'name', 'description', 'settings', 'options', 'skills', 'bank', 'thumbnail_id', 'video_id', 'extension_settings' );
@@ -138,6 +145,37 @@ class QuestionsController extends RestController {
 					'args'                => $this->get_write_args( true ),
 				),
 				'schema' => array( $this, 'get_public_item_schema' ),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			$base . '/delete',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'delete_items' ),
+					'permission_callback' => array( $this, 'delete_items_permissions_check' ),
+					'args'                => array(
+						'ids'          => array(
+							'description' => __( 'Questions to delete (questions with learner history are archived).', 'ohmylms' ),
+							'type'        => 'array',
+							'required'    => true,
+							'minItems'    => 1,
+							'maxItems'    => self::MAX_BULK_DELETE,
+							'uniqueItems' => true,
+							'items'       => array(
+								'type'    => 'integer',
+								'minimum' => 1,
+							),
+						),
+						'skip_blocked' => array(
+							'description' => __( 'Delete the others when some questions cannot be deleted, instead of refusing the request.', 'ohmylms' ),
+							'type'        => 'boolean',
+							'default'     => false,
+						),
+					),
+				),
 			)
 		);
 
@@ -379,6 +417,21 @@ class QuestionsController extends RestController {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Permission for bulk delete: authors; each question is checked by the route itself.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return true|WP_Error
+	 */
+	public function delete_items_permissions_check( $request ) {
+		$ready = $this->bank_ready();
+		if ( is_wp_error( $ready ) ) {
+			return $ready;
+		}
+
+		return AccessPolicy::can_author() ? true : $this->forbidden( 'ohmylms_question_cannot_delete', __( 'Sorry, you are not allowed to delete questions.', 'ohmylms' ) );
 	}
 
 	/**
@@ -818,6 +871,91 @@ class QuestionsController extends RestController {
 				'deleted'  => 'deleted' === ( $result['action'] ?? '' ),
 				'archived' => 'archived' === ( $result['action'] ?? '' ),
 				'previous' => $previous,
+			)
+		);
+		$response->header( 'Cache-Control', 'private, no-store' );
+
+		return $response;
+	}
+
+	/**
+	 * Delete several questions with the rules of `DELETE /questions/{id}`: questions with learner history
+	 * (or in a published quiz revision) are archived, unused ones deleted. Every question is checked first;
+	 * one that cannot be deleted (unknown, not allowed, or placed in several quizzes) refuses the whole
+	 * request unless `skip_blocked` is set. The deletes run in one transaction.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function delete_items( $request ) {
+		$known = $this->reject_unknown_fields( $request, array( 'ids', 'skip_blocked' ) );
+		if ( is_wp_error( $known ) ) {
+			return $known;
+		}
+		$ids     = array_map( 'intval', (array) $request['ids'] );
+		$blocked = array();
+		$allowed = array();
+		foreach ( $ids as $id ) {
+			$post  = $this->get_question_post( $id );
+			$error = null;
+			if ( is_wp_error( $post ) ) {
+				$error = $post;
+			} elseif ( ! AccessPolicy::can_delete_question( $id ) ) {
+				$error = new WP_Error( 'ohmylms_question_cannot_delete', __( 'Sorry, you are not allowed to delete this question.', 'ohmylms' ) );
+			} elseif ( count( Usage::quizzes( $id ) ) > 1 ) {
+				$error = new WP_Error( 'ohmylms_question_shared', __( 'This question is used in several quizzes. Remove it from a specific quiz instead.', 'ohmylms' ), array( 'quizzes' => Usage::quizzes( $id ) ) );
+			}
+			if ( $error ) {
+				$data      = $error->get_error_data();
+				$blocked[] = array(
+					'id'      => $id,
+					'code'    => $error->get_error_code(),
+					'message' => $error->get_error_message(),
+					'quizzes' => is_array( $data ) && isset( $data['quizzes'] ) ? array_map( 'intval', $data['quizzes'] ) : array(),
+				);
+				continue;
+			}
+			$allowed[ $id ] = $post;
+		}
+		if ( $blocked && ! rest_sanitize_boolean( $request['skip_blocked'] ) ) {
+			return new WP_Error(
+				'ohmylms_question_delete_blocked',
+				_n( 'One question cannot be deleted. Nothing was changed.', 'Some questions cannot be deleted. Nothing was changed.', count( $blocked ), 'ohmylms' ),
+				array(
+					'status'  => 409,
+					'blocked' => $blocked,
+				)
+			);
+		}
+		$results = array();
+		try {
+			Transaction::run(
+				static function () use ( $allowed, &$results ) {
+					foreach ( array_keys( $allowed ) as $id ) {
+						$result = Usage::delete_or_archive( $id );
+						if ( is_wp_error( $result ) ) {
+							throw new ErrorException( $result ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Carries a WP_Error out of the transaction; never output.
+						}
+						$results[] = array(
+							'id'     => (int) $id,
+							'action' => (string) $result['action'],
+						);
+					}
+				}
+			);
+		} catch ( ErrorException $error ) {
+			return $error->error;
+		} catch ( \Throwable $error ) {
+			return new WP_Error( 'ohmylms_question_storage', __( 'Could not delete the questions. Nothing was changed.', 'ohmylms' ), array( 'status' => 500 ) );
+		}
+		foreach ( $results as $result ) {
+			/** This action is documented in includes/Rest/V1/QuestionsController.php (delete_item()). */
+			do_action( 'ohmylms_rest_delete_question', $request, $result );
+		}
+		$response = rest_ensure_response(
+			array(
+				'results' => $results,
+				'skipped' => $blocked,
 			)
 		);
 		$response->header( 'Cache-Control', 'private, no-store' );
@@ -1422,6 +1560,7 @@ class QuestionsController extends RestController {
 					'permissions' => array(
 						'can_edit'    => AccessPolicy::can_edit_question( $post->ID ),
 						'can_approve' => AccessPolicy::can_approve_question( $post->ID ),
+						'can_delete'  => AccessPolicy::can_delete_question( $post->ID ),
 					),
 				)
 			);

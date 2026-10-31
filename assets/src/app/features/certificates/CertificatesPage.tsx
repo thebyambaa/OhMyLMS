@@ -2,7 +2,7 @@ import { ListTable } from '../../../ui/ListTable';
 import { Button, Modal, Notice, TextControl } from '@wordpress/components';
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { statusViews } from '../../components/listViews';
 import {
 	PageTitleAction,
@@ -14,8 +14,12 @@ import {
 	deleteCertificate,
 	duplicateCertificate,
 } from './api';
+import { IssuedCertificatesList } from './IssuedCertificatesList';
 import { useCertificates } from './useCertificates';
 import type { Certificate, Option } from './types';
+
+/** `list` value of the issued certificates view. */
+const ISSUED = 'issued';
 
 function statusFilters(): Option[] {
 	return [
@@ -28,10 +32,22 @@ function statusFilters(): Option[] {
 type Dialog = { kind: 'create' } | { kind: 'delete'; item: Certificate } | null;
 
 /**
+ * Certificates screen: the template list, or with `?list=issued` the issued certificates.
+ */
+export default function CertificatesPage() {
+	const [ params ] = useSearchParams();
+	return ISSUED === params.get( 'list' ) ? (
+		<IssuedCertificatesList />
+	) : (
+		<TemplatesList />
+	);
+}
+
+/**
  * Certificate template list (`#/certificates`): paged, searchable, with create, duplicate and
  * confirmed delete. The editor lives at `#/certificates/<id>`.
  */
-export default function CertificatesPage() {
+function TemplatesList() {
 	const list = useCertificates();
 	const navigate = useNavigate();
 	const [ query, setQuery ] = useState( list.searchTerm );
@@ -132,6 +148,9 @@ export default function CertificatesPage() {
 					} }
 				>
 					{ __( 'Add template', 'ohmylms' ) }
+				</PageTitleAction>
+				<PageTitleAction to={ `/certificates?list=${ ISSUED }` }>
+					{ __( 'Issued certificates', 'ohmylms' ) }
 				</PageTitleAction>
 			</PageTitleActions>
 			<p>

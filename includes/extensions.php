@@ -109,6 +109,7 @@ add_action( 'init', array( 'OhMyLMS\\Extensions\\Bootstrap', 'init' ), 5 );
 \OhMyLMS\Dashboard\Bootstrap::init();
 \OhMyLMS\Schools\Bootstrap::init();
 \OhMyLMS\Family\Bootstrap::init();
+\OhMyLMS\Certificates\Bootstrap::init();
 add_action( 'plugins_loaded', array( 'OhMyLMS\\Extensions\\Modules', 'load' ) );
 /** The Quiz Player for a quiz, as HTML: the same player the block and [ohmylms_quiz] show, for themes and templates.
  *

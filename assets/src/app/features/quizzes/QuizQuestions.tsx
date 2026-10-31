@@ -35,6 +35,7 @@ import { QuestionPicker } from './QuestionPicker';
 import { MarksDialog, PoolsDialog, SectionsDialog } from './QuizLayoutDialogs';
 import {
 	addQuizQuestions,
+	copyQuizQuestions,
 	createQuizQuestion,
 	listQuizQuestions,
 	pinQuizQuestion,
@@ -414,21 +415,40 @@ export function QuizQuestions( {
 		} );
 	}
 
-	function add( questionIds: number[], pinned: boolean ) {
+	function add( questionIds: number[], pinned: boolean, copy: boolean ) {
 		void change(
 			( base, signal ) =>
-				addQuizQuestions( quizId, base, questionIds, pinned, signal ),
+				copy
+					? copyQuizQuestions( quizId, base, questionIds, signal )
+					: addQuizQuestions(
+							quizId,
+							base,
+							questionIds,
+							pinned,
+							signal
+						),
 			() =>
-				sprintf(
-					/* translators: %d: number of questions. */
-					_n(
-						'Added %d question.',
-						'Added %d questions.',
-						questionIds.length,
-						'ohmylms'
-					),
-					questionIds.length
-				)
+				copy
+					? sprintf(
+							/* translators: %d: number of questions. */
+							_n(
+								'Added a copy of %d question.',
+								'Added copies of %d questions.',
+								questionIds.length,
+								'ohmylms'
+							),
+							questionIds.length
+						)
+					: sprintf(
+							/* translators: %d: number of questions. */
+							_n(
+								'Added %d question.',
+								'Added %d questions.',
+								questionIds.length,
+								'ohmylms'
+							),
+							questionIds.length
+						)
 		).then( ( saved ) => {
 			if ( saved ) {
 				setPicking( false );

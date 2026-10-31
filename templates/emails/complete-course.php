@@ -28,17 +28,8 @@ $email_bg_color      = $email_settings['ohmylms_email_background_color'] ?? '#F4
 $email_body_bg_color = $email_settings['ohmylms_email_body_background_color'] ?? '#ffffff';
 $email_text_color    = $email_settings['ohmylms_email_body_text_color'] ?? '#1F2328';
 $cta_btn_position    = $email_settings['ohmylms_email_button_possition'] ?? 'center';
-$download_url        = '#';
-
-if ( $certificate_id && $course->get_id() && $student->get_id() ) {
-	$data           = 'certificate-page=true&student_id=' . $student->get_id() . '&course_id=' . $course->get_id() . '&certificate_id=' . $certificate_id;
-	$encryption_key = 'ohmylms-certificate-key';
-	$iv             = openssl_random_pseudo_bytes( openssl_cipher_iv_length( 'aes-128-cbc' ) );
-	$encrypted_data = openssl_encrypt( $data, 'aes-128-cbc', $encryption_key, 0, $iv );
-	$encrypted_data = base64_encode( $encrypted_data . '::' . $iv ); // Correct Base64 encoding.
-
-	$download_url = home_url() . '?ohmylms-certificate-data=' . urlencode( $encrypted_data );
-}
+// The certificate is issued before this e-mail is built; the link asks the learner to sign in.
+$download_url = $course->get_id() && $student->get_id() ? $student->get_course_certificate_url( $course->get_id() ) : '';
 
 ?>
 
@@ -98,7 +89,7 @@ if ( $certificate_id && $course->get_id() && $student->get_id() ) {
 																			</strong>
 																		</td>
 																	</tr>
-																	<?php if ( $course && $course->get_certificate() ) : ?>
+																	<?php if ( $download_url ) : ?>
 																		<tr>
 																			<td style="background: transparent; padding: 14px 20px; border:none; color: <?php echo esc_attr( $email_text_color ); ?>; font-size: 14px; font-weight: 400; line-height: 1.3;">
 																				<span style="color: #7A8B9A;">
@@ -128,7 +119,7 @@ if ( $certificate_id && $course->get_id() && $student->get_id() ) {
 													</div>
 												<?php endif; ?>
 
-												<?php if ( $settings['button_text'] && $course && $course->get_certificate() ) : ?>
+												<?php if ( $settings['button_text'] && $download_url ) : ?>
 													<div style="text-align: center; margin: 25px 0 0;">
 														<a href="<?php echo esc_url( $download_url ); ?>" style="background: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 14px 25px; font-size: 15px; font-weight: 500; line-height:1; text-transform: capitalize; text-decoration: none; border-radius: 12px; display: inline-block;">
 															<?php echo esc_html( $settings['button_text'] ); ?>

@@ -23,6 +23,7 @@ import {
 	restoreQuestion,
 } from './api';
 import {
+	deleteMessage,
 	DIFFICULTIES,
 	difficultyLabel,
 	MAX_NAME,
@@ -32,6 +33,8 @@ import {
 	versionLabel,
 } from './model';
 import { exportQuestions, saveFile, type ExportFormat } from './exchange';
+import { AddToQuizDialog } from './AddToQuizDialog';
+import { DeleteQuestionsDialog } from './DeleteQuestionsDialog';
 import { ImportQuestionsDialog } from './ImportQuestionsDialog';
 import { useQuestions } from './useQuestions';
 import type { QuestionSummary, QuestionType, StatusFilter } from './types';
@@ -88,6 +91,10 @@ export default function QuestionsPage() {
 	const [ nameError, setNameError ] = useState< string | null >( null );
 	const [ message, setMessage ] = useState< string | null >( null );
 	const [ copyId, setCopyId ] = useState< number | null >( null );
+	const [ deleting, setDeleting ] = useState< QuestionSummary[] | null >(
+		null
+	);
+	const [ adding, setAdding ] = useState< QuestionSummary | null >( null );
 	const registered = types.data ?? [];
 	const chosenType = type || defaultType( registered );
 
@@ -348,6 +355,32 @@ export default function QuestionsPage() {
 					onSelectedChange={ ( keys ) =>
 						setSelected( keys.map( Number ) )
 					}
+					bulkActions={ {
+						actions: [
+							{
+								value: 'delete',
+								label: __( 'Delete', 'ohmylms' ),
+							},
+						],
+						onApply: ( _action, _keys, rows ) => {
+							const deletable = rows.filter(
+								( row ) => row.permissions.can_delete
+							);
+							setMessage( null );
+							setCopyId( null );
+							if ( ! deletable.length ) {
+								setMessage(
+									__(
+										'You cannot delete the selected questions.',
+										'ohmylms'
+									)
+								);
+								return false;
+							}
+							setDeleting( deletable );
+							return false;
+						},
+					} }
 					emptyMessage={ __( 'No questions found.', 'ohmylms' ) }
 					views={ statusViews(
 						statusFilters(),
@@ -490,6 +523,21 @@ export default function QuestionsPage() {
 								displayName( item )
 							),
 						},
+						'archived' !== item.status && {
+							key: 'add-to-quiz',
+							label: __( 'Add to quiz', 'ohmylms' ),
+							disabled: operation.busy,
+							onClick: () => {
+								setMessage( null );
+								setCopyId( null );
+								setAdding( item );
+							},
+							ariaLabel: sprintf(
+								/* translators: %s: question name. */
+								__( 'Add %s to a quiz', 'ohmylms' ),
+								displayName( item )
+							),
+						},
 						item.permissions.can_edit && {
 							key:
 								'archived' === item.status
@@ -504,7 +552,69 @@ export default function QuestionsPage() {
 							onClick: () => changeLifecycle( item ),
 							ariaLabel: lifecycleLabel( item ),
 						},
+						item.permissions.can_delete && {
+							key: 'delete',
+							label: __( 'Delete', 'ohmylms' ),
+							destructive: true,
+							disabled: operation.busy,
+							onClick: () => {
+								setMessage( null );
+								setCopyId( null );
+								setDeleting( [ item ] );
+							},
+							ariaLabel: sprintf(
+								/* translators: %s: question name. */
+								__( 'Delete %s', 'ohmylms' ),
+								displayName( item )
+							),
+						},
 					] }
+				/>
+			) }
+			{ deleting && (
+				<DeleteQuestionsDialog
+					items={ deleting }
+					onClose={ () => setDeleting( null ) }
+					onDone={ ( result ) => {
+						setDeleting( null );
+						const done = new Set(
+							result.results.map( ( row ) => row.id )
+						);
+						setSelected( ( current ) =>
+							current.filter( ( id ) => ! done.has( id ) )
+						);
+						setMessage( deleteMessage( result ) );
+						list.reload();
+					} }
+				/>
+			) }
+			{ adding && (
+				<AddToQuizDialog
+					question={ adding }
+					onClose={ () => setAdding( null ) }
+					onAdded={ ( quiz, placed, copy ) => {
+						setAdding( null );
+						setMessage(
+							copy
+								? sprintf(
+										/* translators: 1: question name, 2: quiz title. */
+										__(
+											'Added a copy of %1$s to %2$s.',
+											'ohmylms'
+										),
+										displayName( adding ),
+										quiz.title
+									)
+								: sprintf(
+										/* translators: 1: question name, 2: quiz title. */
+										__( 'Added %1$s to %2$s.', 'ohmylms' ),
+										displayName( adding ),
+										quiz.title
+									)
+						);
+						setCopyId( copy ? placed : null );
+						list.reload();
+					} }
 				/>
 			) }
 			{ importing && (

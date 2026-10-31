@@ -17,6 +17,7 @@ use OhMyLMS\QuestionBank\AccessPolicy;
 use OhMyLMS\QuestionBank\BankAttributes;
 use OhMyLMS\QuestionBank\Banks;
 use OhMyLMS\QuestionBank\DraftWriter;
+use OhMyLMS\QuestionBank\Duplicator;
 use OhMyLMS\QuestionBank\Search;
 use OhMyLMS\QuestionBank\Usage;
 use OhMyLMS\QuestionBank\VersionPublisher;
@@ -168,6 +169,27 @@ class QuizQuestionsController extends RestController {
 							'required'    => true,
 						),
 						'revision' => $revision,
+					),
+				),
+			)
+		);
+		register_rest_route(
+			$this->namespace,
+			$base . '/copy',
+			array(
+				'args' => array( 'id' => $id ),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'copy_items' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'question_ids' => $ids( self::MAX_ADD ),
+						'replace'      => array(
+							'description' => __( 'The copy takes the place of its source in this quiz (one question, which must be in the quiz).', 'ohmylms' ),
+							'type'        => 'boolean',
+							'default'     => false,
+						),
+						'revision'     => $revision,
 					),
 				),
 			)
@@ -511,6 +533,63 @@ class QuizQuestionsController extends RestController {
 		$response->set_data( array_merge( (array) $response->get_data(), array( 'created_id' => (int) $question_id ) ) );
 		$response->set_status( 201 );
 		$response->header( 'Location', rest_url( sprintf( '%s/questions/%d', $this->namespace, $question_id ) ) );
+
+		return $response;
+	}
+
+	/**
+	 * Copy bank questions into the quiz (`QuestionBank\Duplicator`): each copy is a new question of the
+	 * current user, placed at the end. With `replace`, the copy of one question already in the quiz takes
+	 * its place instead (order, section and marks override; the source's pin is dropped), the way to edit
+	 * a shared question the user may only use. Copies and placements are one transaction.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function copy_items( $request ) {
+		$quiz_id = (int) $request['id'];
+		$sources = array_map( 'intval', (array) $request['question_ids'] );
+		$replace = rest_sanitize_boolean( $request['replace'] );
+		$copies  = array();
+
+		$response = $this->write(
+			$request,
+			array( 'question_ids', 'replace', 'revision' ),
+			'copy',
+			function ( array $ids, array $pins ) use ( $quiz_id, $sources, $replace, &$copies ) {
+				if ( $replace && ( 1 !== count( $sources ) || ! in_array( $sources[0], $ids, true ) ) ) {
+					ErrorException::raise( new WP_Error( 'ohmylms_quiz_question_replace_invalid', __( 'Only one question that is in this quiz can be replaced by its copy.', 'ohmylms' ), array( 'status' => 422 ) ) );
+				}
+				foreach ( $sources as $source_id ) {
+					ErrorException::raise( $this->check_copyable( $source_id ) );
+				}
+				if ( ! $replace ) {
+					ErrorException::raise( $this->check_limit( count( $ids ) + count( $sources ) ) );
+				}
+				foreach ( $sources as $source_id ) {
+					$saved   = ErrorException::raise( Duplicator::duplicate( $source_id ) );
+					$copy_id = (int) $saved['id'];
+					if ( $replace ) {
+						$this->replace_slot( $quiz_id, $source_id, $copy_id, $pins );
+					} else {
+						DraftWriter::link( $quiz_id, $copy_id );
+					}
+					$copies[] = array(
+						'source_id' => $source_id,
+						'id'        => $copy_id,
+					);
+				}
+			}
+		);
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+		foreach ( $copies as $copy ) {
+			/** This action is documented in includes/Rest/V1/QuestionsController.php (ohmylms_rest_save_question_item). */
+			do_action( 'ohmylms_rest_save_question_item', get_post( $copy['id'] ), $request, true );
+		}
+		$response->set_data( array_merge( (array) $response->get_data(), array( 'copied' => $copies ) ) );
+		$response->set_status( 201 );
 
 		return $response;
 	}
@@ -875,7 +954,7 @@ class QuizQuestionsController extends RestController {
 		 * Fires after the questions of a quiz were changed through `ohmylms/v1/quizzes/{id}/questions`.
 		 *
 		 * @param int             $quiz_id   Quiz ID.
-		 * @param string          $operation `add`, `create`, `reorder`, `remove`, `pin`, `marks`, `sections` or `pools`.
+		 * @param string          $operation `add`, `create`, `copy`, `reorder`, `remove`, `pin`, `marks`, `sections` or `pools`.
 		 * @param WP_REST_Request $request   The request.
 		 */
 		do_action( 'ohmylms_rest_quiz_questions_changed', $quiz_id, $operation, $request );
@@ -934,6 +1013,94 @@ class QuizQuestionsController extends RestController {
 		}
 
 		return true;
+	}
+
+	/**
+	 * A bank question the current user may copy into a quiz: authors who may use it, not archived.
+	 *
+	 * @param int $question_id Question ID.
+	 * @return true|WP_Error
+	 */
+	private function check_copyable( $question_id ) {
+		$post = get_post( $question_id );
+		if ( ! $post || OHMYLMS_QUESTION_CPT !== $post->post_type || in_array( $post->post_status, array( 'trash', 'auto-draft' ), true ) ) {
+			return new WP_Error(
+				'ohmylms_question_not_found',
+				__( 'Question not found.', 'ohmylms' ),
+				array(
+					'status'      => 404,
+					'question_id' => $question_id,
+				)
+			);
+		}
+		if ( Usage::ARCHIVED === $post->post_status ) {
+			return new WP_Error(
+				'ohmylms_question_archived',
+				__( 'Archived questions cannot be added to a quiz. Restore the question first.', 'ohmylms' ),
+				array(
+					'status'      => 409,
+					'question_id' => $question_id,
+				)
+			);
+		}
+
+		return AccessPolicy::can_author() && AccessPolicy::can_use_question( $question_id ) ? true : $this->question_forbidden( $question_id );
+	}
+
+	/**
+	 * Put a copy in the place of its source: same placement row and order, the source's marks override
+	 * and section; the source's pin is dropped (the copy is the user's own, so the quiz uses its current
+	 * version).
+	 *
+	 * @param int            $quiz_id   Quiz ID.
+	 * @param int            $source_id Question being replaced.
+	 * @param int            $copy_id   Its copy.
+	 * @param array<int,int> $pins      Pins of the quiz.
+	 * @throws \RuntimeException When the placement cannot be written.
+	 */
+	private function replace_slot( $quiz_id, $source_id, $copy_id, array $pins ) {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Placement table has no API; written inside the locked transaction.
+		$updated = $wpdb->update(
+			$wpdb->prefix . OHMYLMS_QUIZ_QUESTION_RELATIONSHIP,
+			array( 'question_id' => $copy_id ),
+			array(
+				'quiz_id'     => $quiz_id,
+				'question_id' => $source_id,
+			),
+			array( '%d' ),
+			array( '%d', '%d' )
+		);
+		if ( ! $updated ) {
+			throw new \RuntimeException( 'Placement update failed' );
+		}
+		if ( isset( $pins[ $source_id ] ) ) {
+			unset( $pins[ $source_id ] );
+			$this->save_pins( $quiz_id, $pins );
+		}
+		$marks = $this->slot_marks( $quiz_id );
+		if ( isset( $marks[ $source_id ] ) ) {
+			$this->save_slot_marks( $quiz_id, $copy_id, $marks[ $source_id ] );
+			$this->save_slot_marks( $quiz_id, $source_id, null );
+		}
+		$sections = $this->stored_sections( $quiz_id );
+		foreach ( $sections as &$section ) {
+			$section['questions'] = array_map(
+				static function ( $id ) use ( $source_id, $copy_id ) {
+					return $id === $source_id ? $copy_id : $id;
+				},
+				$section['questions']
+			);
+			if ( isset( $section['marks'][ $source_id ] ) ) {
+				$section['marks'][ $copy_id ] = $section['marks'][ $source_id ];
+				unset( $section['marks'][ $source_id ] );
+			}
+		}
+		unset( $section );
+		$this->save_sections( $quiz_id, $sections );
+		do_action( 'ohmylms_quiz_question_removed', $quiz_id, $source_id );
+		do_action( 'ohmylms_quiz_question_relationship_created', $quiz_id, $copy_id );
 	}
 
 	/**

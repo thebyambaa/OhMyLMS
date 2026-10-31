@@ -122,7 +122,11 @@ describe( 'QuestionsPage', () => {
 			items: [
 				{
 					...summary,
-					permissions: { can_edit: false, can_approve: false },
+					permissions: {
+						can_edit: false,
+						can_approve: false,
+						can_delete: false,
+					},
 				},
 			],
 			total: 1,
@@ -257,7 +261,11 @@ describe( 'QuestionsPage', () => {
 			items: [
 				{
 					...summary,
-					permissions: { can_edit: false, can_approve: false },
+					permissions: {
+						can_edit: false,
+						can_approve: false,
+						can_delete: false,
+					},
 				},
 			],
 			total: 1,

@@ -12,8 +12,7 @@
 
 defined( 'ABSPATH' ) || exit();
 $class_completed = $student->is_course_completed( $course->get_id() ) ? 'ohmylms-course-completed' : '';
-$certificate     = $course->get_certificate();
-$cerificate_id   = $certificate ? $certificate->get_id() : '';
+$certificate_url = get_current_user_id() === (int) $student->get_id() ? $student->get_course_certificate_url( $course->get_id() ) : '';
 ?>
 
 <div class="ohmylms-dashboard-single-course <?php echo esc_attr( $class_completed ); ?>">
@@ -73,10 +72,10 @@ $cerificate_id   = $certificate ? $certificate->get_id() : '';
 			<?php endif; ?>
 		<?php endif; ?>
 
-		<?php if ( $student->is_course_completed( $course->get_id() ) && $course->get_certificate() ) : ?>
-			<a class="ohmylms-button ohmylms-download-certificate" aria-label="Download Certificate" data-course-id="<?php echo esc_attr( $course->get_id() ); ?>" data-student-id="<?php echo esc_attr( $student->get_id() ); ?>" data-certificate-id="<?php echo esc_attr( $cerificate_id ); ?>">
+		<?php if ( $certificate_url ) : ?>
+			<a class="ohmylms-button" href="<?php echo esc_url( $certificate_url ); ?>">
 				<?php include OHMYLMS_DIR . '/assets/images/icon/download-icon.php'; ?>
-				Download Certificate
+				<?php esc_html_e( 'Download Certificate', 'ohmylms' ); ?>
 			</a>
 		<?php endif; ?>
 

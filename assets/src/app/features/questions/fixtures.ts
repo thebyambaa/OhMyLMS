@@ -139,7 +139,7 @@ export const summary: QuestionSummary = {
 	usage: { quizzes: 1, responses: 0 },
 	author: { id: 7, name: 'Alex' },
 	modified: '2026-10-30T13:05:12Z',
-	permissions: { can_edit: true, can_approve: true },
+	permissions: { can_edit: true, can_approve: true, can_delete: true },
 };
 
 export const question: QuestionDetail = {

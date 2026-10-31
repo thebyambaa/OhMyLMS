@@ -19,10 +19,12 @@ import { ExtensionBoundary } from '../../extensions/ExtensionBoundary';
 import { useExtensions } from '../../extensions/context';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import { normalizeApiError } from '../../lib/api';
+import { AddToQuizDialog } from './AddToQuizDialog';
 import {
 	approveQuestion,
 	archiveQuestion,
 	createQuestion,
+	deleteQuestion,
 	duplicateQuestion,
 	restoreQuestion,
 	updateQuestion,
@@ -33,6 +35,7 @@ import {
 	answerArea,
 	approvalLabel,
 	canApproveCurrent,
+	deleteOutcome,
 	derivedPoints,
 	DIFFICULTIES,
 	difficultyLabel,
@@ -70,8 +73,38 @@ import type {
 	QuestionDetail,
 	QuestionSettings,
 	QuestionType,
+	QuestionUsage,
 } from './types';
 import '../../styles/questions.css';
+
+function deleteHelp( usage: QuestionUsage ): string {
+	const outcome = deleteOutcome( usage );
+	if ( 'blocked' === outcome ) {
+		return sprintf(
+			/* translators: %d: number of quizzes. */
+			__(
+				'This question is used in %d quizzes, so it cannot be deleted. Remove it from all but one quiz first.',
+				'ohmylms'
+			),
+			usage.quizzes
+		);
+	}
+	if ( 'archive' === outcome ) {
+		return __(
+			'Learners have answered this question, so deleting it archives it instead: their results keep it, and it leaves its quiz.',
+			'ohmylms'
+		);
+	}
+	return usage.quizzes
+		? __(
+				'Deleting removes the question, its versions and its place in its quiz. This cannot be undone.',
+				'ohmylms'
+			)
+		: __(
+				'Deleting removes the question and its versions. This cannot be undone.',
+				'ohmylms'
+			);
+}
 
 /** Route of the question bank list; the editor of a question is `${ LIST }/<id>`. */
 export const LIST = '/content-hub/question-bank';
@@ -169,6 +202,8 @@ export function QuestionWorkspace( {
 	const [ failure, setFailure ] = useState< string | null >( null );
 	const [ conflict, setConflict ] = useState< string | null >( null );
 	const [ versionsKey, setVersionsKey ] = useState( 0 );
+	const [ adding, setAdding ] = useState( false );
+	const [ confirmDelete, setConfirmDelete ] = useState( false );
 	const summary = useRef< HTMLDivElement >( null );
 	const operation = useRef< AbortController | null >( null );
 	const readOnly = ! question.permissions.can_edit;
@@ -372,6 +407,26 @@ export function QuestionWorkspace( {
 					),
 				} );
 				navigate( `${ LIST }/${ copy.id }` );
+			}
+		);
+	}
+
+	function remove() {
+		void perform(
+			( signal ) => deleteQuestion( question.id, signal ),
+			( result ) => {
+				setConfirmDelete( false );
+				if ( result.deleted ) {
+					navigate( LIST );
+					return;
+				}
+				setMessage(
+					__(
+						'Learners have answered this question, so it was archived instead of deleted.',
+						'ohmylms'
+					)
+				);
+				reload();
 			}
 		);
 	}
@@ -807,10 +862,110 @@ export function QuestionWorkspace( {
 						>
 							{ __( 'Duplicate', 'ohmylms' ) }
 						</Button>
+						{ ! hosted && 'archived' !== question.status && (
+							<>
+								{ ' ' }
+								<Button
+									variant="secondary"
+									disabled={ busy || dirty }
+									onClick={ () => {
+										setMessage( null );
+										setAdding( true );
+									} }
+								>
+									{ __( 'Add to a quiz', 'ohmylms' ) }
+								</Button>
+							</>
+						) }
 					</section>
+
+					{ ! hosted && question.permissions.can_delete && (
+						<section aria-labelledby="oml-question-delete">
+							<h3 id="oml-question-delete">
+								{ __( 'Delete', 'ohmylms' ) }
+							</h3>
+							<p>{ deleteHelp( question.usage ) }</p>
+							<Button
+								variant="secondary"
+								isDestructive
+								disabled={
+									busy ||
+									dirty ||
+									'blocked' ===
+										deleteOutcome( question.usage )
+								}
+								onClick={ () => setConfirmDelete( true ) }
+							>
+								{ 'archive' === deleteOutcome( question.usage )
+									? __( 'Delete (archive)', 'ohmylms' )
+									: __( 'Delete question', 'ohmylms' ) }
+							</Button>
+						</section>
+					) }
 
 					<Versions key={ versionsKey } id={ question.id } />
 				</>
+			) }
+
+			{ adding && (
+				<AddToQuizDialog
+					question={ {
+						...question,
+						quizIds: question.quizzes.map( ( quiz ) => quiz.id ),
+					} }
+					onClose={ () => setAdding( false ) }
+					onAdded={ ( quiz, _placed, copy ) => {
+						setAdding( false );
+						setMessage(
+							copy
+								? sprintf(
+										/* translators: %s: quiz title. */
+										__(
+											'A copy was added to %s. This question is unchanged.',
+											'ohmylms'
+										),
+										quiz.title
+									)
+								: sprintf(
+										/* translators: %s: quiz title. */
+										__( 'Added to %s.', 'ohmylms' ),
+										quiz.title
+									)
+						);
+						reload();
+					} }
+				/>
+			) }
+
+			{ confirmDelete && (
+				<Modal
+					title={ __( 'Delete question', 'ohmylms' ) }
+					onRequestClose={ () => ! busy && setConfirmDelete( false ) }
+					shouldCloseOnClickOutside={ false }
+				>
+					{ failure && (
+						<Notice status="error" isDismissible={ false }>
+							{ failure }
+						</Notice>
+					) }
+					<p>{ deleteHelp( question.usage ) }</p>
+					<Button
+						variant="primary"
+						isDestructive
+						disabled={ busy }
+						isBusy={ busy }
+						onClick={ remove }
+					>
+						{ __( 'Delete question', 'ohmylms' ) }
+					</Button>{ ' ' }
+					<Button
+						variant="tertiary"
+						disabled={ busy }
+						onClick={ () => setConfirmDelete( false ) }
+					>
+						{ __( 'Cancel', 'ohmylms' ) }
+					</Button>
+				</Modal>
 			) }
 
 			{ guard.pendingPath && (

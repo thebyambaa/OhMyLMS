@@ -17,6 +17,7 @@ vi.mock( './questionsApi', async ( original ) => ( {
 	...( await original< typeof import( './questionsApi' ) >() ),
 	listQuizQuestions: vi.fn(),
 	addQuizQuestions: vi.fn(),
+	copyQuizQuestions: vi.fn(),
 	createQuizQuestion: vi.fn(),
 	reorderQuizQuestions: vi.fn(),
 	removeQuizQuestion: vi.fn(),
@@ -77,7 +78,7 @@ function summary(
 		usage: { quizzes: 0, responses: 0 },
 		author: { id: 2, name: 'Ada' },
 		modified: '2026-10-30T09:00:00Z',
-		permissions: { can_edit: true, can_approve: true },
+		permissions: { can_edit: true, can_approve: true, can_delete: true },
 		...extra,
 	};
 }
@@ -340,7 +341,11 @@ describe( 'QuizQuestions', () => {
 			items: [
 				summary( 101, 'Pick the larger fraction' ),
 				summary( 7, 'Shared draft', {
-					permissions: { can_edit: false, can_approve: false },
+					permissions: {
+						can_edit: false,
+						can_approve: false,
+						can_delete: false,
+					},
 				} ),
 				summary( 8, 'Fresh question' ),
 			],
@@ -398,6 +403,69 @@ describe( 'QuizQuestions', () => {
 		);
 		await screen.findByText( 'Added 1 question.', notice );
 		expect( screen.queryByRole( 'dialog' ) ).toBeNull();
+	} );
+	it( 'adds copies, which allows questions already in the quiz and unapproved shared ones', async () => {
+		vi.mocked( bank.listQuestions ).mockResolvedValue( {
+			items: [
+				summary( 101, 'Pick the larger fraction' ),
+				summary( 7, 'Shared draft', {
+					permissions: {
+						can_edit: false,
+						can_approve: false,
+						can_delete: false,
+					},
+				} ),
+				summary( 9, 'Old question', { status: 'archived' } ),
+			],
+			total: 3,
+			totalPages: 1,
+		} );
+		vi.mocked( api.copyQuizQuestions ).mockResolvedValue( questionList );
+		const user = userEvent.setup();
+		renderSection();
+		await user.click(
+			await screen.findByRole( 'button', {
+				name: 'Add from question bank',
+			} )
+		);
+		const dialog = await screen.findByRole( 'dialog', {
+			name: 'Add questions from the question bank',
+		} );
+		await within( dialog ).findByRole( 'checkbox', {
+			name: /Pick the larger fraction/,
+		} );
+		await user.click(
+			within( dialog ).getByRole( 'radio', { name: /^Copies/ } )
+		);
+		expect(
+			within( dialog ).queryByRole( 'checkbox', {
+				name: 'Pin to the version used now',
+			} )
+		).toBeNull();
+		expect(
+			within( dialog ).getByRole( 'checkbox', { name: /Old question/ } )
+		).toBeDisabled();
+		await user.click(
+			within( dialog ).getByRole( 'checkbox', {
+				name: /Pick the larger fraction/,
+			} )
+		);
+		await user.click(
+			within( dialog ).getByRole( 'checkbox', { name: /Shared draft/ } )
+		);
+		await user.click(
+			within( dialog ).getByRole( 'button', {
+				name: 'Add copies of 2 questions',
+			} )
+		);
+		expect( api.copyQuizQuestions ).toHaveBeenCalledWith(
+			11,
+			questionList.revision,
+			[ 101, 7 ],
+			expect.any( AbortSignal )
+		);
+		expect( api.addQuizQuestions ).not.toHaveBeenCalled();
+		await screen.findByText( 'Added copies of 2 questions.', notice );
 	} );
 	it( 'keeps the picker open with the error when adding fails', async () => {
 		vi.mocked( bank.listQuestions ).mockResolvedValue( {
