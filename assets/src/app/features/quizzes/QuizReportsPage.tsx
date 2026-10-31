@@ -20,7 +20,6 @@ import {
 	sortOptions,
 } from './reportsModel';
 import type { QuizReportQuery, QuizReportSummary } from './types';
-import { usePagedList } from './usePagedList';
 
 function summaryText( summary: QuizReportSummary ): string {
 	return [
@@ -104,9 +103,12 @@ export default function QuizReportsPage() {
 	);
 	const rows = useRequest( loadRows );
 	const summary = useRequest( loadSummary );
-	const courses = usePagedList(
-		( signal ) => listCourses( courseQuery, 1, signal ),
-		[ courseQuery ]
+	const courses = useRequest(
+		useCallback(
+			( signal: AbortSignal ) => listCourses( courseQuery, 1, signal ),
+			[ courseQuery ]
+		),
+		{ keepData: true }
 	);
 
 	const items = rows.data?.items ?? [];
@@ -114,7 +116,7 @@ export default function QuizReportsPage() {
 	const pages = rows.data?.totalPages ?? 1;
 	const courseOptions = [
 		{ value: '0', label: __( 'All courses', 'ohmylms' ) },
-		...courses.data.items.map( ( course ) => ( {
+		...( courses.data?.items ?? [] ).map( ( course ) => ( {
 			value: String( course.id ),
 			label: course.title,
 		} ) ),

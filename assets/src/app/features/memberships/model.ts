@@ -3,6 +3,7 @@ import { ApiError } from '../../lib/api';
 import type {
 	BillingPeriod,
 	CourseRef,
+	ExtensionSettings,
 	FormErrors,
 	FormState,
 	Member,
@@ -199,6 +200,38 @@ export function parseMembership( value: unknown ): Membership {
 }
 
 /**
+ * A JSON object; PHP encodes an empty one as `[]`, and servers without the field omit it.
+ *
+ * @param value Parsed JSON.
+ * @return The object, empty for `[]`, null or a missing value.
+ */
+function looseRecord( value: unknown ): Record< string, unknown > {
+	if (
+		undefined === value ||
+		null === value ||
+		( Array.isArray( value ) && ! value.length )
+	) {
+		return {};
+	}
+	return record( value );
+}
+
+/**
+ * Validate extension settings: an object of objects keyed by extension ID.
+ *
+ * @param value Parsed JSON.
+ * @return Settings by namespace.
+ */
+export function parseExtensionSettings( value: unknown ): ExtensionSettings {
+	return Object.fromEntries(
+		Object.entries( looseRecord( value ) ).map( ( [ id, settings ] ) => [
+			id,
+			looseRecord( settings ),
+		] )
+	);
+}
+
+/**
  * Validate a plan read with `context=edit`.
  *
  * @param value Parsed JSON.
@@ -214,6 +247,7 @@ export function parseMembershipDetail( value: unknown ): MembershipDetail {
 		excluded_course_ids: list( item.excluded_course_ids ).map( positiveId ),
 		excluded_courses: list( item.excluded_courses ).map( parseCourseRef ),
 		curriculum_item_ids: list( item.curriculum_item_ids ).map( positiveId ),
+		extension_settings: parseExtensionSettings( item.extension_settings ),
 	};
 }
 
@@ -256,6 +290,10 @@ export function parseOptions( value: unknown ): MembershipOptions {
 			max_price: limits.max_price,
 			max_name: positiveId( limits.max_name ),
 		},
+		extension_settings:
+			undefined === item.extension_settings
+				? []
+				: list( item.extension_settings ).map( text ),
 	};
 }
 
@@ -305,6 +343,7 @@ export function formFromMembership( plan: MembershipDetail ): FormState {
 		courses: plan.courses,
 		excluded_courses: plan.excluded_courses,
 		curriculum_item_ids: plan.curriculum_item_ids,
+		extension_settings: plan.extension_settings,
 	};
 }
 
@@ -471,12 +510,29 @@ function normalizePrice( value: string, decimals: number ): string {
  *
  * @param form     Form state.
  * @param decimals Currency decimals from the options.
+ * @param saved    Saved form; with it, extension settings that changed since are included.
  * @return Trimmed, typed payload; the form is not modified.
  */
-export function toInput( form: FormState, decimals: number ): MembershipInput {
+export function toInput(
+	form: FormState,
+	decimals: number,
+	saved?: FormState
+): MembershipInput {
 	const optionalPrice = ( value: string ) =>
 		value.trim() ? normalizePrice( value.trim(), decimals ) : null;
+	const changed = saved
+		? Object.fromEntries(
+				Object.entries( form.extension_settings ).filter(
+					( [ id, settings ] ) =>
+						JSON.stringify( settings ) !==
+						JSON.stringify( saved.extension_settings[ id ] )
+				)
+			)
+		: {};
 	return {
+		...( Object.keys( changed ).length
+			? { extension_settings: changed }
+			: {} ),
 		name: form.name.trim(),
 		status: form.status,
 		description: form.description,
@@ -494,6 +550,16 @@ export function toInput( form: FormState, decimals: number ): MembershipInput {
 		),
 		curriculum_item_ids: form.curriculum_item_ids,
 	};
+}
+
+/**
+ * Form error key for one extension's settings.
+ *
+ * @param namespace Extension ID.
+ * @return Key in {@link FormErrors}.
+ */
+export function extensionErrorPath( namespace: string ): string {
+	return `extension_settings.${ namespace }`;
 }
 
 /**
@@ -515,14 +581,24 @@ export function serverFieldError(
 		ohmylms_membership_invalid_courses: 'courses',
 		ohmylms_membership_course_conflict: 'excluded_courses',
 	};
+	const details =
+		error.details && 'object' === typeof error.details
+			? ( error.details as Record< string, unknown > )
+			: {};
 	if ( 'ohmylms_membership_invalid_price' === error.code ) {
-		const details = error.details;
-		const field =
-			details && 'object' === typeof details
-				? ( details as Record< string, unknown > ).field
-				: undefined;
+		const field = details.field;
 		return {
 			path: 'string' === typeof field ? field : 'regular_price',
+			message: error.message,
+		};
+	}
+	if ( 'ohmylms_membership_invalid_extension_settings' === error.code ) {
+		const namespace = details.namespace;
+		return {
+			path:
+				'string' === typeof namespace && namespace
+					? extensionErrorPath( namespace )
+					: 'extension_settings',
 			message: error.message,
 		};
 	}

@@ -1,9 +1,9 @@
 import { Notice } from '@wordpress/components';
-import { useState } from '@wordpress/element';
+import { useCallback } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { ListTable } from '../../../ui/ListTable';
+import { usePagedList } from '../../hooks/usePagedList';
 import { listMembers } from './api';
-import { usePagedList } from './usePagedList';
 
 /**
  * Read-only, paged list of the people on a plan. Membership is changed where it is sold (checkout and
@@ -13,11 +13,12 @@ import { usePagedList } from './usePagedList';
  * @param props.id Plan id.
  */
 export function Members( { id }: { id: number } ) {
-	const [ page, setPage ] = useState( 1 );
-	const list = usePagedList(
-		( signal ) => listMembers( id, page, signal ),
-		[ id, page ]
+	const load = useCallback(
+		( page: number, _search: string, signal: AbortSignal ) =>
+			listMembers( id, page, signal ),
+		[ id ]
 	);
+	const list = usePagedList( load, { keepPrevious: true } );
 	const date = ( value: string | null ) =>
 		value ? new Date( value ).toLocaleDateString() : '-';
 	return (
@@ -41,7 +42,7 @@ export function Members( { id }: { id: number } ) {
 						'ohmylms'
 					) }
 					pagination={ {
-						page,
+						page: list.page,
 						totalPages: list.data.totalPages,
 						totalItems: list.data.total,
 						itemsLabel: sprintf(
@@ -54,7 +55,7 @@ export function Members( { id }: { id: number } ) {
 							),
 							list.data.total
 						),
-						onChange: setPage,
+						onChange: list.setPage,
 					} }
 					columns={ [
 						{

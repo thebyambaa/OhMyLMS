@@ -43,7 +43,7 @@ callback (core behaviour), so a malformed request can answer 400 before 401/403.
 | DELETE | `/memberships/{id}` | Permanent delete | 200 `{deleted, previous}` | 401, 403, 404, 409, 500 |
 | POST | `/memberships/{id}/duplicate` | Draft copy with price, schedule, courses and rules; no members | 201 + `Location` | 401, 403, 404, 500 |
 | GET | `/memberships/{id}/members` | Read-only members (paged) | 200 + totals | 400, 401, 403, 404 |
-| GET | `/memberships/options` | Statuses, billing periods, site currency, limits | 200 | 401, 403 |
+| GET | `/memberships/options` | Statuses, billing periods, site currency, limits, extension settings IDs | 200 | 401, 403 |
 | GET | `/memberships/courses` | Course search for pickers (max 50 per page; `include` by id) | 200 + totals | 400, 401, 403 |
 
 Collection arguments: `page` (>= 1), `per_page` (1-100, default 20), `search` (name or description),
@@ -77,6 +77,47 @@ nothing. This is validation before one save, not a database transaction.
 After a save `ohmylms_rest_after_adding_products_on_membership` runs (also for an empty list), which
 synchronises members' course access: added courses are granted, removed courses revoked.
 `course_count` is the number of published courses granted today; `member_count` the enrolled members.
+
+## Extension settings
+
+Extensions declare membership settings in PHP and render them in the plan editor with
+`registerMembershipSettings` (see [EXTENSIONS.md](../EXTENSIONS.md#membership-settings)):
+
+```php
+add_action( 'ohmylms_register_extensions', static function () {
+	ohmylms_register_extension_settings( 'acme-benefit', array(
+		'contexts' => array( 'membership' ),
+		'schema'   => array(
+			'type'       => 'object',
+			'properties' => array(
+				'benefit' => array( 'type' => 'string', 'maxLength' => 200 ),
+				'seats'   => array( 'type' => 'integer', 'minimum' => 0 ),
+			),
+		),
+		// Optional; runs after schema validation. Return the value or a WP_Error.
+		'sanitize' => static function ( $value ) {
+			$value['benefit'] = trim( $value['benefit'] ?? '' );
+			return $value;
+		},
+	) );
+} );
+```
+
+- `GET /memberships/options` lists the registered IDs in `extension_settings` (`string[]`).
+- `GET /memberships/{id}?context=edit` (and the responses of create, update and duplicate) include
+  `extension_settings`: `{ "<id>": { ... } }`, only for IDs registered for memberships (an empty object
+  when there are none). View context omits it.
+- `POST /memberships` and `PUT|PATCH|POST /memberships/{id}` accept `extension_settings`. Each sent
+  namespace is validated against its schema (unknown properties rejected), sanitised, run through
+  `sanitize`, and replaced as a whole; omitted namespaces keep their values. Validation runs before
+  anything is written, so a rejection leaves the plan and its settings unchanged. Errors answer 400
+  `ohmylms_membership_invalid_extension_settings` with `data.field` (`extension_settings`),
+  `data.namespace` and `data.reason` (the underlying code, for example `ohmylms_unknown_settings` for an ID
+  not registered for memberships, `rest_too_long`, or the code of the `sanitize` error).
+- Duplicating a plan copies its extension settings.
+- Storage is the plan's `_ohmylms_extension_settings` post meta, shared with
+  `GET|PUT /ohmylms/v1/extension-settings/membership/{id}` (SDK `api.getExtensionSettings`), which
+  requires `edit_post` on the plan. The membership routes require `manage_options` as always.
 
 ## Examples
 
@@ -124,6 +165,7 @@ Validation failure:
 | --- | --- | --- |
 | 400 | `rest_invalid_param`, `rest_missing_callback_param` | Schema validation (types, enums, price pattern, ranges, duplicate ids, list limits). |
 | 400 | `ohmylms_membership_invalid_page` | `page` is past the last page (list, members, courses). |
+| 400 | `ohmylms_membership_invalid_extension_settings` | `extension_settings` rejected by a registered schema or `sanitize` callback, or for an unregistered ID (`data.namespace`, `data.reason`). |
 | 401 / 403 | `ohmylms_membership_cannot_view` / `_create` / `_edit` / `_delete` | Not logged in (401) or missing `manage_options` (403). |
 | 403 | `rest_cookie_invalid_nonce` | Cookie auth without a valid `X-WP-Nonce` (core). |
 | 404 | `ohmylms_membership_not_found` | Unknown id, or an id of another post type. |

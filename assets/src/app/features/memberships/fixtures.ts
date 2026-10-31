@@ -26,6 +26,7 @@ export const options: MembershipOptions = {
 		max_price: 99999999.99,
 		max_name: 200,
 	},
+	extension_settings: [],
 };
 
 export const summary: Membership = {
@@ -61,6 +62,7 @@ export const plan: MembershipDetail = {
 	excluded_course_ids: [],
 	excluded_courses: [],
 	curriculum_item_ids: [],
+	extension_settings: {},
 };
 
 export const member: Member = {
@@ -90,4 +92,5 @@ export const form: FormState = {
 	courses: [],
 	excluded_courses: [],
 	curriculum_item_ids: [],
+	extension_settings: {},
 };

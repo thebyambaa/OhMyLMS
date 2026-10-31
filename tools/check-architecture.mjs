@@ -691,6 +691,74 @@ export function checkFeatureBoundaries( project, allowlist = [] ) {
 	);
 }
 
+/** Hooks that exist once, in assets/src/app/hooks; behaviour differences are options there. */
+export const SHARED_HOOKS = [ 'useUnsavedChangesGuard', 'usePagedList' ];
+
+/** Names a module declares at its top level (functions, classes, variables; exported or not). */
+export function declaredNames( file, text ) {
+	let ast;
+	try {
+		ast = parse( text, {
+			sourceType: 'module',
+			plugins: parserPlugins( file ),
+			errorRecovery: true,
+		} );
+	} catch {
+		return [];
+	}
+	const names = [];
+	for ( const statement of ast.program.body ) {
+		const node =
+			statement.type === 'ExportNamedDeclaration' ||
+			statement.type === 'ExportDefaultDeclaration'
+				? statement.declaration
+				: statement;
+		if ( ! node ) continue;
+		if (
+			[
+				'FunctionDeclaration',
+				'TSDeclareFunction',
+				'ClassDeclaration',
+			].includes( node.type ) &&
+			node.id
+		)
+			names.push( node.id.name );
+		if ( node.type === 'VariableDeclaration' )
+			for ( const declarator of node.declarations ) {
+				if ( declarator.id.type === 'Identifier' )
+					names.push( declarator.id.name );
+			}
+	}
+	return names;
+}
+
+/**
+ * g. Features use the shared hooks in app/hooks instead of defining their own copy (a declaration
+ * with the hook's name, or a module named after it, re-export shims included).
+ */
+export function checkSharedHookCopies( project, allowlist = [] ) {
+	const featuresRoot = path.join( project.app, 'features' );
+	const violations = [];
+	for ( const file of project.appFiles() ) {
+		if ( path.relative( featuresRoot, file ).startsWith( '..' ) ) continue;
+		const stem = path.basename( file ).replace( /\.[^.]+$/, '' );
+		const names = declaredNames( file, readText( file ) );
+		for ( const hook of SHARED_HOOKS ) {
+			if ( stem === hook || names.includes( hook ) )
+				violations.push( { file: project.relative( file ), hook } );
+		}
+	}
+	return partition(
+		violations,
+		allowlist,
+		( violation, entry ) =>
+			violation.file === entry.file && violation.hook === entry.hook,
+		( violation ) =>
+			`${ violation.file } defines its own ${ violation.hook }; import it from assets/src/app/hooks/${ violation.hook }.ts and add an option there when the behaviour differs`,
+		( entry ) => `${ entry.file } ${ entry.hook }`
+	);
+}
+
 const HEX_COLOUR =
 	/(?<![\w&/.#-])#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})(?![\w-])/g;
 const FUNCTION_COLOUR = /\b(?:rgba?|hsla?)\(/g;
@@ -1099,6 +1167,7 @@ export function runArchitectureChecks( root, options = {} ) {
 		...requireReasons( allowlist.cycles, 'cycles' ),
 		...requireReasons( allowlist.crossFeature, 'crossFeature' ),
 		...requireReasons( allowlist.rawColours, 'rawColours' ),
+		...requireReasons( allowlist.sharedHooks, 'sharedHooks' ),
 	];
 	const sections = [
 		{
@@ -1117,6 +1186,10 @@ export function runArchitectureChecks( root, options = {} ) {
 		{
 			name: 'features use each other only through index.ts / public.ts',
 			...checkFeatureBoundaries( project, allowlist.crossFeature ),
+		},
+		{
+			name: 'features use the shared hooks in app/hooks, not their own copies',
+			...checkSharedHookCopies( project, allowlist.sharedHooks ),
 		},
 		{
 			name: 'no raw colour literals in assets/src/app CSS and TSX',

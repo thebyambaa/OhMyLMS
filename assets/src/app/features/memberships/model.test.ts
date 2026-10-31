@@ -327,6 +327,76 @@ describe( 'serverFieldError', () => {
 	it( 'ignores errors that are not about one field', () => {
 		expect( serverFieldError( error( 'rest_forbidden' ) ) ).toBeNull();
 	} );
+	it( 'maps rejected extension settings to the extension', () => {
+		const code = 'ohmylms_membership_invalid_extension_settings';
+		expect(
+			serverFieldError( error( code, { namespace: 'acme-benefit' } ) )
+		).toEqual( {
+			path: 'extension_settings.acme-benefit',
+			message: 'Nope.',
+		} );
+		expect( serverFieldError( error( code ) )?.path ).toBe(
+			'extension_settings'
+		);
+	} );
+} );
+
+describe( 'extension settings', () => {
+	it( 'parses settings by namespace, accepting PHP empty arrays and a missing field', () => {
+		expect(
+			parseMembershipDetail( {
+				...plan,
+				extension_settings: { a: { x: 1 }, b: [] },
+			} ).extension_settings
+		).toEqual( { a: { x: 1 }, b: {} } );
+		expect(
+			parseMembershipDetail( { ...plan, extension_settings: [] } )
+				.extension_settings
+		).toEqual( {} );
+		expect(
+			parseMembershipDetail( { ...plan, extension_settings: undefined } )
+				.extension_settings
+		).toEqual( {} );
+		expect( () =>
+			parseMembershipDetail( {
+				...plan,
+				extension_settings: { a: 'text' },
+			} )
+		).toThrow( ApiError );
+	} );
+	it( 'parses the namespaces the server accepts', () => {
+		expect(
+			parseOptions( { ...options, extension_settings: [ 'acme' ] } )
+				.extension_settings
+		).toEqual( [ 'acme' ] );
+		expect(
+			parseOptions( { ...options, extension_settings: undefined } )
+				.extension_settings
+		).toEqual( [] );
+		expect( () =>
+			parseOptions( { ...options, extension_settings: [ 3 ] } )
+		).toThrow( ApiError );
+	} );
+	it( 'sends only the namespaces that changed since the saved form', () => {
+		const saved = {
+			...form,
+			extension_settings: { a: { x: 1 }, b: { y: 2 } },
+		};
+		const edited = {
+			...saved,
+			extension_settings: { a: { x: 1 }, b: { y: 3 }, c: { z: 0 } },
+		};
+		expect( toInput( edited, 2, saved ).extension_settings ).toEqual( {
+			b: { y: 3 },
+			c: { z: 0 },
+		} );
+		expect( toInput( saved, 2, saved ) ).not.toHaveProperty(
+			'extension_settings'
+		);
+		expect( toInput( edited, 2 ) ).not.toHaveProperty(
+			'extension_settings'
+		);
+	} );
 } );
 
 describe( 'display helpers', () => {

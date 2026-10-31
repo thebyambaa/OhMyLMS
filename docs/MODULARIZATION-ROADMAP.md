@@ -31,11 +31,24 @@ Statuses below were checked against the code on 31 October 2026. Counts are file
    settings and objectives; course point prices, [cohorts](api/cohorts.md) and
    [automations](api/automations.md) (own Commerce tabs); checkout extras; exam results release and JSXGraph
    proposals ([exams](api/exams.md)). Every old `?tab=`, `?panel=` and `?list=` address redirects.
-3. **Extension parity:** render `registerMembershipSettings` in the membership editor (documented in
-   EXTENSIONS.md; no app code renders it).
-4. **Consolidate shared app infrastructure:** six feature-local `useUnsavedChangesGuard.ts` (certificates,
-   courses, gamification, memberships, quizzes, settings) and three `usePagedList.ts` (account-hub,
-   memberships, quizzes) duplicate `app/hooks` and `app/lib`.
+3. **Extension parity:** render `registerMembershipSettings` in the membership editor. Done on 31 October
+   2026: the plan editor renders the panels whose IDs PHP registered for the `membership` context and saves
+   their values as `extension_settings` with the plan ([memberships](api/memberships.md#extension-settings)).
+4. **Consolidate shared app infrastructure:** done on 31 October 2026 for the guard and list hooks. The
+   six feature `useUnsavedChangesGuard.ts` files (certificates, courses, gamification, memberships, quizzes,
+   settings) and the copy inside `emails/hooks.ts` were replaced by `app/hooks/useUnsavedChangesGuard`. It
+   gained `ignoreSamePath`, for the gamification and settings section links, and `requestLeave`, for the
+   email editor's back button. The three `usePagedList.ts` (account-hub, memberships, quizzes) became
+   `app/hooks/usePagedList`, which adds the `inAddress` and `keepPrevious` options. `useRequest` gained a
+   `keepData` option, used by the quiz course filters. The architecture check fails if a feature defines
+   either hook again ([rule g](ENFORCEMENT.md#g-features-use-the-shared-hooks-instead-of-their-own-copies)).
+   Remaining, because behaviour differs (see [STATE-API-MODULARIZATION](STATE-API-MODULARIZATION.md#remaining-with-reasons)):
+   - the keyed `useRequest` in commerce, students, dashboard and taxonomies, which keeps data and
+     `ApiError` objects and offers `replace`;
+   - `useOperation` in commerce, students and integrations, whose errors are `null` or an `ApiError`
+     and which have no success callback;
+   - the `record`, `text` and `positiveId` validators, which throw feature-specific error messages;
+   - the media library parsers.
 5. **PHP boundaries:** 35 PHP files still register REST routes outside `includes/Rest/V1`; outside
    `includes/Admin`, `Schools\Views` (two Account Hub links) still builds admin links from legacy route
    names through `LegacyRoutes::url()` instead of `app_url()` (`NativeLessonEditor::return_url()` keeps it
@@ -60,7 +73,7 @@ Statuses below were checked against the code on 31 October 2026. Counts are file
 | --- | --- | --- | --- |
 | 1 | Dependency inventory | **Done, retired** | The recovered runtime it inventoried is deleted; report, generator and drift test removed |
 | 2 | Third-party libraries | **Partial** | Easy Email, Arco, MJML, CodeMirror, html2canvas (admin copy), Chart.js, Emotion, Tiptap, Lowlight and Lodash left with the legacy admin (50 npm packages, [CUTOVER](CUTOVER.md)). The email editor (`app/features/emails`) uses only WordPress components and the server preview. Dead Select2, Mail Mint image, Slick 1.8.1 (replaced by `ohmylms/carousel`) and the html2pdf 0.10.1 bundle were removed on 31 October 2026. Remaining: the runtime libraries listed there (MathLive, JSXGraph). See [libraries](VENDOR-PACKAGE-MIGRATION.md) |
-| 3 | Shared application infrastructure | **Partial** | `app/lib/api` (client, collection, errors, query), `app/hooks` (`useOperation`, `useRequest`, `useUnsavedChangesGuard`), `app/routing`, `app/layout`, `assets/src/ui` (13 components). Remaining: the duplicated local hooks in item 4 above |
+| 3 | Shared application infrastructure | **Partial** | `app/lib/api` (client, collection, errors, query), `app/hooks` (`useOperation`, `useRequest`, `usePagedList`, `useUnsavedChangesGuard`), `app/routing`, `app/layout`, `assets/src/ui` (13 components). Feature copies of the guard and list hooks were removed, and `checkSharedHookCopies` keeps them out. Remaining: the keyed `useRequest` and `useOperation` variants listed in item 4 above |
 | 4 | State and API access | **Done (admin app)** | 24 features own an `api.ts` over `app/lib/api`; cross-feature access only through `public.ts` (quizzes, assignments, settings, students, questions); only `app/extensions/api.ts` calls `@wordpress/api-fetch` directly. Native editor code uses `assets/src/features/rest.mjs`; 56 dead legacy helpers removed. Remaining (see [STATE-API-MODULARIZATION](STATE-API-MODULARIZATION.md)): media parsers, syllabus/curriculum route ownership, duplicated validators and hooks, two `question-editor` files on `window.wp.apiFetch` |
 | 5 | Feature independence | **Done (admin app)** | 25 feature folders, 55 route entries in `features/registry.ts`; no `createComponent(readRuntime)`; the only cross-feature imports are four from `quizzes` into `questions/public.ts` (`checkFeatureBoundaries`). Remaining: the learner tree in item 6 |
 | 6 | Authored entry point | **Done** | `app/bootstrap` is the only admin entry (`admin-app.js`, 67 KB); recovered factories, adapters and SDK deleted |
@@ -82,7 +95,7 @@ component tests. Items named "not rebuilt" had a legacy screen that no longer ex
 | Students, course roster, student report | Done | Open-relay reminder route answers 410; rate-limited reminders live in the course roster |
 | Categories and tags | Done | Read-only by design (writes answer 410) |
 | Orders, coupons, subscriptions | Done | No refund button by design (server route is guarded); cancel at end of term impossible in the schema |
-| Memberships | Partial | Plans and rules done; `registerMembershipSettings` not rendered |
+| Memberships | Done | Plans, rules and `registerMembershipSettings` panels |
 | Settings (all tabs incl. design, course archive, quiz design, xAPI, AI tutor, MCP, migration) | Done | Checkout extras (gateway order, guest checkout, login form, content protection, read-only Stripe status) on the Payment gateways tab |
 | Dashboard, earnings, course report | Done | Scoped widget dashboard for admins, school administrators and teachers (each widget its own chunk); teachers may create review-set draft quizzes for their own classes, which an administrator publishes. Mixed-currency totals; refunds dated by order |
 | Gradebook | Done | Course × students, roster × assignments, student transcript, skill mastery and roll-up on the `ohmylms_enrolments` table; overrides keep a reason and history; per-course weighting with class override; site-wide letter scale (Settings › Letter grades) |

@@ -1,11 +1,11 @@
 import { __ } from '@wordpress/i18n';
 import { listTeachers } from './api';
 import { HubListTable } from './ListControls';
-import { usePagedList } from './usePagedList';
+import { usePagedList } from '../../hooks/usePagedList';
 
 /** Teachers tab: accounts with the teacher role or a school teacher membership. */
 export function TeachersTab() {
-	const list = usePagedList( listTeachers, true );
+	const list = usePagedList( listTeachers, { inAddress: true } );
 
 	return (
 		<>

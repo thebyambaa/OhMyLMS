@@ -21,7 +21,7 @@ import {
 	listSubmissions,
 } from './operationsApi';
 import type { SchoolClass, Submission, TitledRef } from './types';
-import { usePagedList } from './usePagedList';
+import { usePagedList } from '../../hooks/usePagedList';
 
 const NO_COURSES = { items: [] as TitledRef[], total: 0, totalPages: 0 };
 

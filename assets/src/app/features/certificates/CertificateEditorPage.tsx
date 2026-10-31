@@ -24,7 +24,7 @@ import {
 	validateForm,
 } from './model';
 import { useCertificateEditor } from './useCertificateEditor';
-import { useUnsavedChangesGuard } from './useUnsavedChangesGuard';
+import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import type {
 	BlockForm,
 	FormErrors,

@@ -10,7 +10,8 @@ import { __, sprintf } from '@wordpress/i18n';
 import type { MouseEvent } from 'react';
 import { ApiError, normalizeApiError } from '../../lib/api';
 import { saveEmail, sendTestEmail } from './api';
-import { useEmail, useEmailPreview, useUnsavedChangesGuard } from './hooks';
+import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
+import { useEmail, useEmailPreview } from './hooks';
 import {
 	LIST_PATH,
 	changedFields,
@@ -510,7 +511,7 @@ function Editor( {
 					<Button
 						variant="primary"
 						isDestructive
-						onClick={ guard.confirmLeave }
+						onClick={ guard.leave }
 					>
 						{ __( 'Discard and leave', 'ohmylms' ) }
 					</Button>{ ' ' }

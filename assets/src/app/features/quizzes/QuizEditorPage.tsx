@@ -23,7 +23,7 @@ import {
 } from './model';
 import { QuizQuestions } from './QuizQuestions';
 import { useQuizEditor } from './useQuizEditor';
-import { useUnsavedChangesGuard } from './useUnsavedChangesGuard';
+import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import type { QuizForm, QuizFormErrors } from './types';
 
 function routeId( value: string | undefined ): number | null {

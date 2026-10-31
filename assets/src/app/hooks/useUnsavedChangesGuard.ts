@@ -1,5 +1,5 @@
 import { useEffect, useState } from '@wordpress/element';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { routeFromHref } from '../routing/links';
 
 /**
@@ -16,19 +16,36 @@ function internalPath( anchor: HTMLAnchorElement ): string | null {
 	return routeFromHref( href );
 }
 
+export interface UnsavedChangesGuardOptions {
+	/**
+	 * Let links to the current path through when only their query differs: for screens whose
+	 * sections (`?section=…` links, or the screen's own tab list) all keep their draft, so switching
+	 * section is not leaving.
+	 */
+	ignoreSamePath?: boolean;
+}
+
 /**
  * Guard against losing unsaved edits.
  *
- * The app uses a hash router without data-router blockers, so the guard covers the two ways a user
- * leaves: closing or reloading the page (the browser's own prompt) and activating an in-app link,
- * which is intercepted so the page can show its own confirmation.
+ * The app uses a router without data-router blockers, so the guard covers the two ways a user
+ * leaves: closing or reloading the page (the browser's own prompt, which also covers the server's
+ * tab links) and activating an in-app link, which is intercepted so the page can show its own
+ * confirmation. The browser's back button cannot be intercepted.
  *
- * @param dirty Whether there are unsaved changes.
+ * @param dirty                  Whether there are unsaved changes.
+ * @param options                Guard options.
+ * @param options.ignoreSamePath Let links to the current path through (section switches).
  * @return `pendingPath` is the link waiting for a decision (or `null`); call `stay` to cancel it and
- *         `leave` to continue to it.
+ *         `leave` to continue to it. `requestLeave` navigates in code: at once when clean, otherwise
+ *         it waits for the same decision.
  */
-export function useUnsavedChangesGuard( dirty: boolean ) {
+export function useUnsavedChangesGuard(
+	dirty: boolean,
+	{ ignoreSamePath = false }: UnsavedChangesGuardOptions = {}
+) {
 	const navigate = useNavigate();
+	const { pathname } = useLocation();
 	const [ pendingPath, setPendingPath ] = useState< string | null >( null );
 	useEffect( () => {
 		if ( ! dirty ) {
@@ -52,11 +69,15 @@ export function useUnsavedChangesGuard( dirty: boolean ) {
 			}
 			const anchor = event.target.closest( 'a' );
 			const path = anchor ? internalPath( anchor ) : null;
-			if ( path ) {
-				event.preventDefault();
-				event.stopPropagation();
-				setPendingPath( path );
+			if ( ! path ) {
+				return;
 			}
+			if ( ignoreSamePath && path.split( '?' )[ 0 ] === pathname ) {
+				return;
+			}
+			event.preventDefault();
+			event.stopPropagation();
+			setPendingPath( path );
 		};
 		window.addEventListener( 'beforeunload', beforeUnload );
 		document.addEventListener( 'click', onClick, true );
@@ -64,7 +85,7 @@ export function useUnsavedChangesGuard( dirty: boolean ) {
 			window.removeEventListener( 'beforeunload', beforeUnload );
 			document.removeEventListener( 'click', onClick, true );
 		};
-	}, [ dirty ] );
+	}, [ dirty, ignoreSamePath, pathname ] );
 	return {
 		pendingPath,
 		stay: () => setPendingPath( null ),
@@ -72,6 +93,13 @@ export function useUnsavedChangesGuard( dirty: boolean ) {
 			const path = pendingPath;
 			setPendingPath( null );
 			if ( path ) {
+				navigate( path );
+			}
+		},
+		requestLeave: ( path: string ) => {
+			if ( dirty ) {
+				setPendingPath( path );
+			} else {
 				navigate( path );
 			}
 		},

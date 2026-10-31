@@ -35,14 +35,38 @@ final class Settings {
 		if ( empty( $definition['contexts'] ) || array_diff( $definition['contexts'], self::$contexts ) || ( $definition['schema']['type'] ?? '' ) !== 'object' ) {
 			throw new \InvalidArgumentException( 'Settings require supported contexts and an object schema.' );
 		}
+		if ( isset( $definition['sanitize'] ) && ! is_callable( $definition['sanitize'] ) ) {
+			throw new \InvalidArgumentException( 'Settings sanitize must be callable.' );
+		}
 		$definition['schema']['additionalProperties'] = false;
 		self::$definitions[ $id ]                     = $definition;
 	}
 	/**
-	 * Manifest for Settings.
+	 * Manifest for Settings: the public definitions, without server callbacks.
 	 */
 	public static function manifest() {
-		return self::$definitions; }
+		return array_map(
+			static function ( $definition ) {
+				unset( $definition['sanitize'] );
+				return $definition;
+			},
+			self::$definitions
+		);
+	}
+	/**
+	 * Definitions that apply to one content context, without server callbacks.
+	 *
+	 * @param string $context Content context, for example `membership`.
+	 * @return array Definitions keyed by settings ID.
+	 */
+	public static function for_context( $context ) {
+		return array_filter(
+			self::manifest(),
+			static function ( $definition ) use ( $context ) {
+				return in_array( $context, (array) $definition['contexts'], true );
+			}
+		);
+	}
 	/**
 	 * Init for Settings.
 	 */
@@ -140,6 +164,14 @@ final class Settings {
 			if ( is_wp_error( $clean ) ) {
 				$clean->add_data( array( 'status' => 400 ) );
 				return $clean; }
+			if ( isset( $definition['sanitize'] ) ) {
+				// The callback's result must still match the schema it was registered with.
+				$clean = call_user_func( $definition['sanitize'], $clean, $type, $id );
+				$valid = is_wp_error( $clean ) ? $clean : rest_validate_value_from_schema( $clean, $definition['schema'], $id );
+				if ( is_wp_error( $valid ) ) {
+					$valid->add_data( array( 'status' => 400 ) );
+					return $valid; }
+			}
 			$saved[ $id ] = $clean;
 		}
 		return $saved;

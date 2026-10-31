@@ -1,15 +1,8 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
-import type { ReactNode } from 'react';
 import { ApiError } from '../../lib/api';
 import { listEmails, previewEmail, setEmailEnabled } from './api';
 import { newOrder, preview, quizGraded } from './fixtures';
-import {
-	PREVIEW_DELAY_MS,
-	useEmailPreview,
-	useEmails,
-	useUnsavedChangesGuard,
-} from './hooks';
+import { PREVIEW_DELAY_MS, useEmailPreview, useEmails } from './hooks';
 import type { EmailTemplate } from './types';
 
 vi.mock( './api', () => ( {
@@ -213,95 +206,5 @@ describe( 'useEmailPreview', () => {
 		} );
 		expect( view.result.current.error ).toBe( 'Preview broke' );
 		expect( view.result.current.loading ).toBe( false );
-	} );
-} );
-
-describe( 'useUnsavedChangesGuard', () => {
-	const wrapper = ( { children }: { children: ReactNode } ) => (
-		<MemoryRouter initialEntries={ [ '/emails?email=x' ] }>
-			{ children }
-		</MemoryRouter>
-	);
-
-	it( 'navigates straight away when nothing changed', () => {
-		const view = renderHook( () => useUnsavedChangesGuard( false ), {
-			wrapper,
-		} );
-		act( () => view.result.current.requestLeave( '/emails' ) );
-		expect( view.result.current.pendingPath ).toBeNull();
-	} );
-
-	it( 'holds back leaving while dirty until the user decides', () => {
-		const view = renderHook( () => useUnsavedChangesGuard( true ), {
-			wrapper,
-		} );
-		act( () => view.result.current.requestLeave( '/emails' ) );
-		expect( view.result.current.pendingPath ).toBe( '/emails' );
-		act( () => view.result.current.stay() );
-		expect( view.result.current.pendingPath ).toBeNull();
-		act( () => view.result.current.requestLeave( '/webhooks' ) );
-		act( () => view.result.current.confirmLeave() );
-		expect( view.result.current.pendingPath ).toBeNull();
-	} );
-
-	it( 'intercepts internal link clicks and the unload event only while dirty', () => {
-		const link = document.createElement( 'a' );
-		link.setAttribute( 'href', '#/webhooks' );
-		document.body.append( link );
-		const outside = document.createElement( 'a' );
-		outside.setAttribute( 'href', 'https://example.com' );
-		document.body.append( outside );
-
-		const view = renderHook( () => useUnsavedChangesGuard( true ), {
-			wrapper,
-		} );
-		const external = new MouseEvent( 'click', {
-			bubbles: true,
-			cancelable: true,
-		} );
-		outside.dispatchEvent( external );
-		expect( external.defaultPrevented ).toBe( false );
-
-		const click = new MouseEvent( 'click', {
-			bubbles: true,
-			cancelable: true,
-		} );
-		act( () => {
-			link.dispatchEvent( click );
-		} );
-		expect( click.defaultPrevented ).toBe( true );
-		expect( view.result.current.pendingPath ).toBe( '/webhooks' );
-
-		const unload = new Event( 'beforeunload', { cancelable: true } );
-		window.dispatchEvent( unload );
-		expect( unload.defaultPrevented ).toBe( true );
-
-		view.unmount();
-		const free = new MouseEvent( 'click', {
-			bubbles: true,
-			cancelable: true,
-		} );
-		link.dispatchEvent( free );
-		expect( free.defaultPrevented ).toBe( false );
-		const afterUnload = new Event( 'beforeunload', { cancelable: true } );
-		window.dispatchEvent( afterUnload );
-		expect( afterUnload.defaultPrevented ).toBe( false );
-		link.remove();
-		outside.remove();
-	} );
-
-	it( 'does not intercept modified clicks', () => {
-		const link = document.createElement( 'a' );
-		link.setAttribute( 'href', '#/webhooks' );
-		document.body.append( link );
-		renderHook( () => useUnsavedChangesGuard( true ), { wrapper } );
-		const click = new MouseEvent( 'click', {
-			bubbles: true,
-			cancelable: true,
-			ctrlKey: true,
-		} );
-		link.dispatchEvent( click );
-		expect( click.defaultPrevented ).toBe( false );
-		link.remove();
 	} );
 } );

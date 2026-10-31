@@ -38,7 +38,7 @@ import {
 	type ManagedStudent,
 } from './roster';
 import type { SchoolDetail } from './types';
-import { usePagedList } from './usePagedList';
+import { usePagedList } from '../../hooks/usePagedList';
 
 /**
  * School roster intake at `#/account-hub/schools/<id>/roster`: invitations, school-managed students

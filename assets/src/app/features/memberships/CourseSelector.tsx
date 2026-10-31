@@ -7,9 +7,13 @@ import {
 import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Pagination } from '../../components/Pagination';
+import { usePagedList } from '../../hooks/usePagedList';
 import { listCourses } from './api';
-import { usePagedList } from './usePagedList';
 import type { CourseRef } from './types';
+
+function loadCourses( page: number, search: string, signal: AbortSignal ) {
+	return listCourses( search, page, signal );
+}
 
 interface Props {
 	/** Visible group name, for example "Included courses". */
@@ -34,18 +38,10 @@ export function CourseSelector( props: Props ) {
 	const { legend, help, selected, disabled, max, error, errorId, onChange } =
 		props;
 	const [ query, setQuery ] = useState( '' );
-	const [ search, setSearch ] = useState( '' );
-	const [ page, setPage ] = useState( 1 );
-	const list = usePagedList(
-		( signal ) => listCourses( search, page, signal ),
-		[ search, page ]
-	);
+	const list = usePagedList( loadCourses, { keepPrevious: true } );
 	const isSelected = ( id: number ) =>
 		selected.some( ( course ) => course.id === id );
-	const runSearch = () => {
-		setPage( 1 );
-		setSearch( query.trim() );
-	};
+	const runSearch = () => list.setSearch( query );
 	const searchLabel = sprintf(
 		/* translators: %s: group name such as "Included courses". */
 		__( 'Search courses for %s', 'ohmylms' ),
@@ -180,10 +176,10 @@ export function CourseSelector( props: Props ) {
 				</div>
 			) }
 			<Pagination
-				page={ page }
+				page={ list.page }
 				pages={ list.data.totalPages }
 				busy={ list.loading }
-				onChange={ setPage }
+				onChange={ list.setPage }
 			/>
 		</fieldset>
 	);

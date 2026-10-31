@@ -28,7 +28,7 @@ All registration methods accept `(id, definition)` and return an unregister func
 | registerQuestionEditor | Matching PHP question ID; existing authoring store |
 | registerLessonEditor | Matching PHP lesson ID; existing save callbacks |
 | registerSlot | Named insertion point |
-| registerMembershipSettings | Namespaced plan values and update callback |
+| registerMembershipSettings | Membership plan editor panel; namespaced plan values and update callback ([below](#membership-settings)) |
 | registerCheckoutField | Checkout UI guidance; register server fields separately |
 | registerIntegration | Integrations screen panel |
 
@@ -57,7 +57,28 @@ ohmylms_register_extension_settings('my-benefit', [
 ]);
 ```
 
-Supported contexts: course, lesson, quiz, question, membership, assignment, certificate, session. Root unknown keys are rejected; constrain nested objects explicitly. Core single-object authoring endpoints accept `extension_settings: {"my-benefit":{"label":"..."}}`. Invalid settings reject before core fields save. Omitted namespaces are retained. GET exposes settings only to editors.
+Supported contexts: course, lesson, quiz, question, membership, assignment, certificate, session. Root unknown keys are rejected; constrain nested objects explicitly. Optional `sanitize( $value, $context, $id )` runs after the schema has validated and sanitised the value; return the cleaned value or a `WP_Error` to reject it (400). Its result must still match the schema. Core single-object authoring endpoints accept `extension_settings: {"my-benefit":{"label":"..."}}`. Invalid settings reject before core fields save. Omitted namespaces are retained; a sent namespace is replaced as a whole. GET exposes settings only to editors.
+
+### Membership settings
+
+`registerMembershipSettings( id, { label, render } )` adds a panel to the membership plan editor (`#/memberships/<id>`, Commerce › Memberships), after the Access section. The ID is the settings namespace: the panel renders only when PHP registered settings with the same ID for the `membership` context (the editor reads the list from `GET /memberships/options`, `extension_settings`), because the server rejects values it has no schema for. Each panel is a fieldset titled `label` with its own error boundary; `when( props )` can hide it.
+
+`render` receives `{ plan: { id, name, status }, value, onChange, disabled }`. `value` is this extension's object (`{}` before anything is saved); call `onChange( nextObject )` with the whole new object (anything other than a plain object is ignored). Changes count as unsaved changes of the plan (the leave-page prompt applies) and are saved by "Save plan" in the same `PUT /memberships/<id>` request, which sends only the namespaces that changed. A schema or `sanitize` rejection answers 400 `ohmylms_membership_invalid_extension_settings` with `data.namespace`; the editor shows the message under that panel and nothing is saved. Values are stored in the plan's `_ohmylms_extension_settings` post meta, the same store `api.getExtensionSettings( 'membership', id )` reads; duplicating a plan copies them. See [api/memberships.md](api/memberships.md#extension-settings).
+
+```js
+const sdk = window.ohmylms.extensions;
+const el = window.wp.element.createElement;
+const { TextControl } = window.wp.components;
+sdk.registerMembershipSettings( 'my-benefit', {
+	label: 'Member benefit',
+	render: ( { value, onChange } ) =>
+		el( TextControl, {
+			label: 'Benefit',
+			value: value.label || '',
+			onChange: ( label ) => onChange( { ...value, label } ),
+		} ),
+} );
+```
 
 GET/PUT `/ohmylms/v1/extension-settings/<type>/<id>` accepts `{settings:{...}}`, requires `edit_post` and exact post type. The SDK `api` uses WordPress apiFetch/nonce middleware. `/ohmylms/v1/extensions` exposes definitions, not saved private data. Client visibility is not authorization.
 

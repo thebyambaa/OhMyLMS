@@ -30,7 +30,7 @@ import {
 	type GroupId,
 	type TabId,
 } from './types';
-import { useUnsavedChangesGuard } from './useUnsavedChangesGuard';
+import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import { XapiForm } from './XapiForm';
 
 const LABELS: Record< TabId, string > = {
@@ -132,7 +132,8 @@ export default function SettingsPage() {
 		'grade-scale': Boolean( extraDirty[ 'grade-scale' ] ),
 	};
 	const guard = useUnsavedChangesGuard(
-		Object.values( dirty ).some( Boolean )
+		Object.values( dirty ).some( Boolean ),
+		{ ignoreSamePath: true }
 	);
 
 	const tabs: TabItem[] = TAB_IDS.map( ( id ) => ( {

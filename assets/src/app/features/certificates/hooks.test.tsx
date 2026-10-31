@@ -1,20 +1,10 @@
-import {
-	act,
-	render,
-	renderHook,
-	screen,
-	waitFor,
-} from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
-import type { ReactNode } from 'react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { ApiError } from '../../lib/api';
 import type { Collection } from '../../lib/api/collection';
 import { getCertificate, getOptions, listCertificates } from './api';
 import { certificate, options } from './fixtures';
 import { useCertificateEditor } from './useCertificateEditor';
 import { useCertificates } from './useCertificates';
-import { useUnsavedChangesGuard } from './useUnsavedChangesGuard';
 import type { Certificate } from './types';
 
 vi.mock( './api', () => ( {
@@ -161,82 +151,5 @@ describe( 'useCertificateEditor', () => {
 		const signal = vi.mocked( getCertificate ).mock.calls[ 0 ]?.[ 1 ];
 		view.unmount();
 		expect( signal?.aborted ).toBe( true );
-	} );
-} );
-
-describe( 'useUnsavedChangesGuard', () => {
-	function Harness( { dirty }: { dirty: boolean } ) {
-		const guard = useUnsavedChangesGuard( dirty );
-		return (
-			<div>
-				<Link to="/other">Other page</Link>
-				<a href="#/hash-route">Hash link</a>
-				<a href="https://example.com/">External</a>
-				<a href="/new-tab" target="_blank">
-					New tab
-				</a>
-				<span data-testid="pending">
-					{ guard.pendingPath ?? 'none' }
-				</span>
-				<button onClick={ guard.stay }>Stay</button>
-				<button onClick={ guard.leave }>Leave</button>
-			</div>
-		);
-	}
-	const wrap = ( dirty: boolean ): ReactNode => (
-		<MemoryRouter initialEntries={ [ '/here' ] }>
-			<Routes>
-				<Route path="/here" element={ <Harness dirty={ dirty } /> } />
-				<Route path="/other" element={ <p>Arrived</p> } />
-				<Route path="/hash-route" element={ <p>Hash arrived</p> } />
-			</Routes>
-		</MemoryRouter>
-	);
-
-	it( 'does nothing while the form is clean', async () => {
-		const user = userEvent.setup();
-		render( wrap( false ) );
-		await user.click( screen.getByRole( 'link', { name: 'Other page' } ) );
-		expect( await screen.findByText( 'Arrived' ) ).toBeInTheDocument();
-	} );
-	it( 'holds an in-app link while dirty, then continues or stays', async () => {
-		const user = userEvent.setup();
-		render( wrap( true ) );
-		await user.click( screen.getByRole( 'link', { name: 'Other page' } ) );
-		expect( screen.getByTestId( 'pending' ) ).toHaveTextContent( '/other' );
-		await user.click( screen.getByRole( 'button', { name: 'Stay' } ) );
-		expect( screen.getByTestId( 'pending' ) ).toHaveTextContent( 'none' );
-		await user.click( screen.getByRole( 'link', { name: 'Hash link' } ) );
-		expect( screen.getByTestId( 'pending' ) ).toHaveTextContent(
-			'/hash-route'
-		);
-		await user.click( screen.getByRole( 'button', { name: 'Leave' } ) );
-		expect( await screen.findByText( 'Hash arrived' ) ).toBeInTheDocument();
-	} );
-	it( 'leaves external, new-tab and modified clicks alone', async () => {
-		const user = userEvent.setup();
-		render( wrap( true ) );
-		const external = screen.getByRole( 'link', { name: 'External' } );
-		external.addEventListener( 'click', ( event ) =>
-			event.preventDefault()
-		);
-		await user.click( external );
-		const tab = screen.getByRole( 'link', { name: 'New tab' } );
-		tab.addEventListener( 'click', ( event ) => event.preventDefault() );
-		await user.click( tab );
-		await user.keyboard( '{Control>}' );
-		await user.click( screen.getByRole( 'link', { name: 'Other page' } ) );
-		await user.keyboard( '{/Control}' );
-		expect( screen.getByTestId( 'pending' ) ).toHaveTextContent( 'none' );
-	} );
-	it( 'asks the browser to confirm closing the page only while dirty', () => {
-		const view = render( wrap( true ) );
-		const dirtyEvent = new Event( 'beforeunload', { cancelable: true } );
-		window.dispatchEvent( dirtyEvent );
-		expect( dirtyEvent.defaultPrevented ).toBe( true );
-		view.rerender( wrap( false ) );
-		const cleanEvent = new Event( 'beforeunload', { cancelable: true } );
-		window.dispatchEvent( cleanEvent );
-		expect( cleanEvent.defaultPrevented ).toBe( false );
 	} );
 } );

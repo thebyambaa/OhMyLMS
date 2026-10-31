@@ -1,21 +1,10 @@
-import {
-	act,
-	render,
-	renderHook,
-	screen,
-	waitFor,
-} from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
-import type { ReactNode } from 'react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { ApiError } from '../../lib/api';
 import type { Collection } from '../../lib/api/collection';
 import { getMembership, getOptions, listMemberships } from './api';
 import { options, plan, summary } from './fixtures';
 import { useMembershipEditor } from './useMembershipEditor';
 import { useMemberships } from './useMemberships';
-import { usePagedList } from './usePagedList';
-import { useUnsavedChangesGuard } from './useUnsavedChangesGuard';
 import type { Membership } from './types';
 
 vi.mock( './api', () => ( {
@@ -180,95 +169,5 @@ describe( 'useMembershipEditor', () => {
 		const signal = vi.mocked( getMembership ).mock.calls[ 0 ]?.[ 1 ];
 		view.unmount();
 		expect( signal?.aborted ).toBe( true );
-	} );
-} );
-
-describe( 'usePagedList', () => {
-	it( 'reloads on demand, reports failures and aborts on unmount', async () => {
-		const load = vi
-			.fn< ( signal: AbortSignal ) => Promise< Collection< number > > >()
-			.mockResolvedValueOnce( { items: [ 1 ], total: 1, totalPages: 1 } )
-			.mockRejectedValueOnce(
-				new ApiError( { status: 500, code: 'x', message: 'Broken' } )
-			)
-			.mockReturnValue( new Promise( () => undefined ) );
-		const view = renderHook( () => usePagedList( load, [ 'a' ] ) );
-		await waitFor( () =>
-			expect( view.result.current.loading ).toBe( false )
-		);
-		expect( view.result.current.data.items ).toEqual( [ 1 ] );
-		act( () => view.result.current.reload() );
-		await waitFor( () =>
-			expect( view.result.current.error ).toBe( 'Broken' )
-		);
-		act( () => view.result.current.reload() );
-		const signal = load.mock.calls.at( -1 )?.[ 0 ];
-		view.unmount();
-		expect( signal?.aborted ).toBe( true );
-	} );
-} );
-
-describe( 'useUnsavedChangesGuard', () => {
-	function Harness( { dirty }: { dirty: boolean } ) {
-		const guard = useUnsavedChangesGuard( dirty );
-		return (
-			<div>
-				<Link to="/other">Other page</Link>
-				<a href="#/hash-route">Hash link</a>
-				<a href="https://example.com/">External</a>
-				<span data-testid="pending">
-					{ guard.pendingPath ?? 'none' }
-				</span>
-				<button onClick={ guard.stay }>Stay</button>
-				<button onClick={ guard.leave }>Leave</button>
-			</div>
-		);
-	}
-	const wrap = ( dirty: boolean ): ReactNode => (
-		<MemoryRouter initialEntries={ [ '/here' ] }>
-			<Routes>
-				<Route path="/here" element={ <Harness dirty={ dirty } /> } />
-				<Route path="/other" element={ <p>Arrived</p> } />
-				<Route path="/hash-route" element={ <p>Hash arrived</p> } />
-			</Routes>
-		</MemoryRouter>
-	);
-
-	it( 'does nothing while the form is clean', async () => {
-		const user = userEvent.setup();
-		render( wrap( false ) );
-		await user.click( screen.getByRole( 'link', { name: 'Other page' } ) );
-		expect( await screen.findByText( 'Arrived' ) ).toBeInTheDocument();
-	} );
-	it( 'holds an in-app link while dirty, then continues or stays', async () => {
-		const user = userEvent.setup();
-		render( wrap( true ) );
-		await user.click( screen.getByRole( 'link', { name: 'Other page' } ) );
-		expect( screen.getByTestId( 'pending' ) ).toHaveTextContent( '/other' );
-		await user.click( screen.getByRole( 'button', { name: 'Stay' } ) );
-		expect( screen.getByTestId( 'pending' ) ).toHaveTextContent( 'none' );
-		await user.click( screen.getByRole( 'link', { name: 'Hash link' } ) );
-		await user.click( screen.getByRole( 'button', { name: 'Leave' } ) );
-		expect( await screen.findByText( 'Hash arrived' ) ).toBeInTheDocument();
-	} );
-	it( 'leaves external links alone', async () => {
-		const user = userEvent.setup();
-		render( wrap( true ) );
-		const external = screen.getByRole( 'link', { name: 'External' } );
-		external.addEventListener( 'click', ( event ) =>
-			event.preventDefault()
-		);
-		await user.click( external );
-		expect( screen.getByTestId( 'pending' ) ).toHaveTextContent( 'none' );
-	} );
-	it( 'asks the browser to confirm closing the page only while dirty', () => {
-		const view = render( wrap( true ) );
-		const dirtyEvent = new Event( 'beforeunload', { cancelable: true } );
-		window.dispatchEvent( dirtyEvent );
-		expect( dirtyEvent.defaultPrevented ).toBe( true );
-		view.rerender( wrap( false ) );
-		const cleanEvent = new Event( 'beforeunload', { cancelable: true } );
-		window.dispatchEvent( cleanEvent );
-		expect( cleanEvent.defaultPrevented ).toBe( false );
 	} );
 } );

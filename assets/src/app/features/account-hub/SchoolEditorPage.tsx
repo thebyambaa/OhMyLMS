@@ -43,7 +43,7 @@ import type {
 	SchoolPanel,
 	YearInput,
 } from './types';
-import { usePagedList } from './usePagedList';
+import { usePagedList } from '../../hooks/usePagedList';
 
 const SchoolGuardians = lazy( () =>
 	import(

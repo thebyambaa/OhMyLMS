@@ -24,7 +24,7 @@ import {
 	validateForm,
 } from './model';
 import { useCourseEditor } from './useCourseEditor';
-import { useUnsavedChangesGuard } from './useUnsavedChangesGuard';
+import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import type {
 	AccessType,
 	FormErrors,

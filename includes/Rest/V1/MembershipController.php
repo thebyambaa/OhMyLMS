@@ -9,6 +9,7 @@ namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
 use OhMyLMS\Data\Membership;
+use OhMyLMS\Extensions\Settings as ExtensionSettings;
 use OhMyLMS\Membership\CourseSelection;
 use OhMyLMS\Membership\FreeSale;
 use WP_Error;
@@ -55,6 +56,11 @@ class MembershipController extends RestController {
 	 * Membership statuses that count as having members.
 	 */
 	const ACTIVE_MEMBER_STATUSES = array( 'enrolled', 'pending' );
+
+	/**
+	 * Post meta holding extension settings (shared with the other content editors).
+	 */
+	const EXTENSION_META = '_ohmylms_extension_settings';
 
 	/**
 	 * Endpoint namespace.
@@ -391,7 +397,11 @@ class MembershipController extends RestController {
 		}
 
 		$membership = new Membership();
-		$valid      = $this->apply_request( $membership, $request );
+		$extension  = $this->extension_settings_from( $request, 0 );
+		if ( is_wp_error( $extension ) ) {
+			return $extension;
+		}
+		$valid = $this->apply_request( $membership, $request );
 		if ( is_wp_error( $valid ) ) {
 			return $valid;
 		}
@@ -400,6 +410,7 @@ class MembershipController extends RestController {
 		if ( ! $saved ) {
 			return new WP_Error( 'ohmylms_membership_create_failed', __( 'The membership plan could not be created.', 'ohmylms' ), array( 'status' => 500 ) );
 		}
+		$this->save_extension_settings( $membership->get_id(), $extension );
 
 		$post = get_post( $membership->get_id() );
 
@@ -441,6 +452,10 @@ class MembershipController extends RestController {
 			return $membership;
 		}
 
+		$extension = $this->extension_settings_from( $request, $membership->get_id() );
+		if ( is_wp_error( $extension ) ) {
+			return $extension;
+		}
 		$valid = $this->apply_request( $membership, $request );
 		if ( is_wp_error( $valid ) ) {
 			return $valid;
@@ -449,6 +464,7 @@ class MembershipController extends RestController {
 		if ( ! $this->save( $membership ) ) {
 			return new WP_Error( 'ohmylms_membership_update_failed', __( 'The membership plan could not be updated.', 'ohmylms' ), array( 'status' => 500 ) );
 		}
+		$this->save_extension_settings( $membership->get_id(), $extension );
 
 		$this->after_courses_saved( $membership );
 
@@ -546,6 +562,10 @@ class MembershipController extends RestController {
 		if ( ! $this->save( $copy ) ) {
 			return new WP_Error( 'ohmylms_membership_create_failed', __( 'The membership plan could not be created.', 'ohmylms' ), array( 'status' => 500 ) );
 		}
+		$extension = get_post_meta( $source->get_id(), self::EXTENSION_META, true );
+		if ( is_array( $extension ) && $extension ) {
+			update_post_meta( $copy->get_id(), self::EXTENSION_META, wp_slash( $extension ) );
+		}
 
 		$this->after_courses_saved( $copy );
 
@@ -635,7 +655,7 @@ class MembershipController extends RestController {
 
 		return rest_ensure_response(
 			array(
-				'statuses'        => array(
+				'statuses'           => array(
 					array(
 						'value' => 'draft',
 						'label' => __( 'Draft', 'ohmylms' ),
@@ -645,7 +665,7 @@ class MembershipController extends RestController {
 						'label' => __( 'Published', 'ohmylms' ),
 					),
 				),
-				'billing_periods' => array(
+				'billing_periods'    => array(
 					array(
 						'value' => 'one_time',
 						'label' => __( 'One time', 'ohmylms' ),
@@ -667,18 +687,19 @@ class MembershipController extends RestController {
 						'label' => __( 'Every day', 'ohmylms' ),
 					),
 				),
-				'currency'        => array(
+				'currency'           => array(
 					'code'     => $code,
 					'symbol'   => html_entity_decode( (string) get_ohmylms_currency_symbol( $code ), ENT_QUOTES, 'UTF-8' ),
 					'position' => (string) get_ohmylms_currency_position(),
 					'decimals' => (int) ohmylms_get_price_decimals(),
 				),
-				'limits'          => array(
+				'limits'             => array(
 					'max_courses'          => self::MAX_COURSES,
 					'max_curriculum_items' => self::MAX_CURRICULUM_ITEMS,
 					'max_price'            => self::MAX_PRICE,
 					'max_name'             => 200,
 				),
+				'extension_settings' => array_keys( ExtensionSettings::for_context( 'membership' ) ),
 			)
 		);
 	}
@@ -1068,6 +1089,68 @@ class MembershipController extends RestController {
 	}
 
 	/**
+	 * Validate `extension_settings` against the definitions registered for the `membership` context
+	 * and merge it over the stored values. Nothing is written here.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @param int             $id      Plan ID, or 0 for a new plan.
+	 * @return array|null|WP_Error Complete settings to store, null when the request has none.
+	 */
+	private function extension_settings_from( WP_REST_Request $request, $id ) {
+		if ( ! $request->has_param( 'extension_settings' ) ) {
+			return null;
+		}
+
+		$saved = $id ? get_post_meta( $id, self::EXTENSION_META, true ) : array();
+		$saved = is_array( $saved ) ? $saved : array();
+		// One namespace at a time, so the error names the extension whose values were rejected.
+		foreach ( (array) $request['extension_settings'] as $namespace => $value ) {
+			$merged = ExtensionSettings::prepare( 'membership', array( $namespace => $value ), $saved );
+			if ( is_wp_error( $merged ) ) {
+				return new WP_Error(
+					'ohmylms_membership_invalid_extension_settings',
+					$merged->get_error_message(),
+					array(
+						'status'    => 400,
+						'field'     => 'extension_settings',
+						'namespace' => (string) $namespace,
+						'reason'    => $merged->get_error_code(),
+					)
+				);
+			}
+			$saved = $merged;
+		}
+
+		return $saved;
+	}
+
+	/**
+	 * Store extension settings prepared by extension_settings_from().
+	 *
+	 * @param int        $id        Plan ID.
+	 * @param array|null $extension Complete settings, or null to keep the stored ones.
+	 * @return void
+	 */
+	private function save_extension_settings( $id, $extension ) {
+		if ( null !== $extension ) {
+			update_post_meta( $id, self::EXTENSION_META, wp_slash( $extension ) );
+		}
+	}
+
+	/**
+	 * Stored extension settings of a plan, limited to the namespaces registered for memberships.
+	 *
+	 * @param int $id Plan ID.
+	 * @return array|\stdClass Settings keyed by namespace (an empty object when there are none).
+	 */
+	private function extension_settings_of( $id ) {
+		$saved = get_post_meta( $id, self::EXTENSION_META, true );
+		$saved = array_intersect_key( is_array( $saved ) ? $saved : array(), ExtensionSettings::for_context( 'membership' ) );
+
+		return $saved ? $saved : new \stdClass();
+	}
+
+	/**
 	 * Tell the enrolment sync about the (possibly empty) course list, so removed courses lose this
 	 * plan's access.
 	 *
@@ -1184,6 +1267,7 @@ class MembershipController extends RestController {
 			'curriculum_item_ids'  => array_values( array_filter( array_map( 'absint', (array) $membership->get_course_curriculum( 'edit' ) ) ) ),
 			'course_count'         => $this->resolved_course_count( $membership ),
 			'member_count'         => isset( $this->member_counts[ $id ] ) ? $this->member_counts[ $id ] : (int) $membership->count_membership_members(),
+			'extension_settings'   => 'edit' === $request['context'] ? $this->extension_settings_of( $id ) : new \stdClass(),
 			'created_at'           => $post ? mysql_to_rfc3339( $post->post_date ) : '',
 			'updated_at'           => $post ? mysql_to_rfc3339( $post->post_modified ) : '',
 		);
@@ -1392,6 +1476,11 @@ class MembershipController extends RestController {
 					'type'        => 'integer',
 					'context'     => array( 'view', 'edit' ),
 					'readonly'    => true,
+				),
+				'extension_settings'   => array(
+					'description' => __( 'Settings of extensions registered for memberships, keyed by extension ID and validated by their own schemas. Omitted extensions keep their values.', 'ohmylms' ),
+					'type'        => 'object',
+					'context'     => array( 'edit' ),
 				),
 				'created_at'           => array(
 					'description' => __( 'Creation time, in the site timezone.', 'ohmylms' ),

@@ -1,20 +1,10 @@
-import {
-	act,
-	render,
-	renderHook,
-	screen,
-	waitFor,
-} from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
-import type { ReactNode } from 'react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { ApiError } from '../../lib/api';
 import type { Collection } from '../../lib/api/collection';
 import { getCourse, getOptions, listCourses } from './api';
 import { detail, options, summary } from './fixtures';
 import { useCourseEditor } from './useCourseEditor';
 import { useCourses } from './useCourses';
-import { useUnsavedChangesGuard } from './useUnsavedChangesGuard';
 import type { Course } from './types';
 
 vi.mock( './api', () => ( {
@@ -206,67 +196,5 @@ describe( 'useCourseEditor', () => {
 		view.unmount();
 		expect( signal?.aborted ).toBe( true );
 		await act( async () => resolve( detail ) );
-	} );
-} );
-
-describe( 'useUnsavedChangesGuard', () => {
-	function Harness( { dirty }: { dirty: boolean } ) {
-		const guard = useUnsavedChangesGuard( dirty );
-		return (
-			<>
-				<Link to="/elsewhere">Elsewhere</Link>
-				<a href="https://example.test/out">External</a>
-				{ guard.pendingPath && (
-					<>
-						<p>Waiting for { guard.pendingPath }</p>
-						<button onClick={ guard.stay }>Stay</button>
-						<button onClick={ guard.leave }>Leave</button>
-					</>
-				) }
-			</>
-		);
-	}
-	const wrap = ( dirty: boolean ): ReactNode => (
-		<MemoryRouter initialEntries={ [ '/here' ] }>
-			<Routes>
-				<Route path="/here" element={ <Harness dirty={ dirty } /> } />
-				<Route path="/elsewhere" element={ <p>Arrived</p> } />
-			</Routes>
-		</MemoryRouter>
-	);
-	it( 'lets links through when nothing changed', async () => {
-		render( wrap( false ) );
-		await userEvent.click(
-			screen.getByRole( 'link', { name: 'Elsewhere' } )
-		);
-		expect( screen.getByText( 'Arrived' ) ).toBeInTheDocument();
-	} );
-	it( 'holds an in-app link while dirty until the user decides', async () => {
-		const user = userEvent.setup();
-		render( wrap( true ) );
-		await user.click( screen.getByRole( 'link', { name: 'Elsewhere' } ) );
-		expect(
-			screen.getByText( 'Waiting for /elsewhere' )
-		).toBeInTheDocument();
-		await user.click( screen.getByRole( 'button', { name: 'Stay' } ) );
-		expect( screen.queryByText( /Waiting/ ) ).not.toBeInTheDocument();
-		await user.click( screen.getByRole( 'link', { name: 'Elsewhere' } ) );
-		await user.click( screen.getByRole( 'button', { name: 'Leave' } ) );
-		expect( screen.getByText( 'Arrived' ) ).toBeInTheDocument();
-	} );
-	it( 'asks the browser before the page unloads while dirty', () => {
-		render( wrap( true ) );
-		const event = new Event( 'beforeunload', { cancelable: true } );
-		window.dispatchEvent( event );
-		expect( event.defaultPrevented ).toBe( true );
-	} );
-	it( 'ignores external links', () => {
-		render( wrap( true ) );
-		const click = new MouseEvent( 'click', {
-			bubbles: true,
-			cancelable: true,
-		} );
-		screen.getByRole( 'link', { name: 'External' } ).dispatchEvent( click );
-		expect( screen.queryByText( /Waiting/ ) ).not.toBeInTheDocument();
 	} );
 } );

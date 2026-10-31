@@ -4,11 +4,11 @@ import { listParents } from './api';
 import { HubListTable } from './ListControls';
 import { ParentChildrenDialog } from './ParentChildrenDialog';
 import type { Parent } from './types';
-import { usePagedList } from './usePagedList';
+import { usePagedList } from '../../hooks/usePagedList';
 
 /** Parents tab: parent accounts, their linked-children count and the linking dialog. */
 export function ParentsTab() {
-	const list = usePagedList( listParents, true );
+	const list = usePagedList( listParents, { inAddress: true } );
 	const [ open, setOpen ] = useState< Parent | null >( null );
 
 	return (

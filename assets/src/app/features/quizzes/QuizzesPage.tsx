@@ -4,10 +4,11 @@ import {
 	ListTableSelect,
 } from '../../../ui/ListTable';
 import { Button, Modal, Notice, TextControl } from '@wordpress/components';
-import { useEffect, useRef, useState } from '@wordpress/element';
+import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { statusViews } from '../../components/listViews';
+import { useRequest } from '../../hooks/useRequest';
 import {
 	PageTitleAction,
 	PageTitleActions,
@@ -25,7 +26,6 @@ import {
 } from './api';
 import { LIMITS, formatDate, quizStatusLabel } from './model';
 import { useQuizzes } from './useQuizzes';
-import { usePagedList } from './usePagedList';
 import type { Quiz } from './types';
 
 type Dialog =
@@ -71,9 +71,12 @@ export default function QuizzesPage() {
 			{ replace: true }
 		);
 	}, [ action, setParams ] );
-	const courses = usePagedList(
-		( signal ) => listCourses( courseQuery, 1, signal ),
-		[ courseQuery ]
+	const courses = useRequest(
+		useCallback(
+			( signal: AbortSignal ) => listCourses( courseQuery, 1, signal ),
+			[ courseQuery ]
+		),
+		{ keepData: true }
 	);
 
 	async function run( work: ( signal: AbortSignal ) => Promise< void > ) {
@@ -189,7 +192,7 @@ export default function QuizzesPage() {
 	];
 	const courseOptions = [
 		{ value: '0', label: __( 'All courses', 'ohmylms' ) },
-		...courses.data.items.map( ( course ) => ( {
+		...( courses.data?.items ?? [] ).map( ( course ) => ( {
 			value: String( course.id ),
 			label: course.title,
 		} ) ),

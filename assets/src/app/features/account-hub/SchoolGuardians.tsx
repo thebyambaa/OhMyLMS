@@ -27,7 +27,7 @@ import type {
 	PersonRef,
 	SchoolDetail,
 } from './types';
-import { usePagedList } from './usePagedList';
+import { usePagedList } from '../../hooks/usePagedList';
 
 const NO_PEOPLE = { items: [] as PersonRef[], total: 0, totalPages: 0 };
 

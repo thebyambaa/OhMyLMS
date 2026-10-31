@@ -13,6 +13,8 @@ import {
 	checkFeatureBoundaries,
 	checkRawColours,
 	checkRecoveredRuntime,
+	checkSharedHookCopies,
+	declaredNames,
 	findRawColours,
 	formatReport,
 	measureAssets,
@@ -271,6 +273,105 @@ test( 'features reach other features only through index.ts or public.ts', () => 
 	assert.match(
 		failures[ 0 ],
 		/use that feature's index\.ts or a public\.ts$/
+	);
+} );
+
+test( 'features may not define their own copy of a shared hook', () => {
+	const root = fs.mkdtempSync( path.join( os.tmpdir(), 'oml-hooks-' ) );
+	const write = ( file, text ) => {
+		fs.mkdirSync( path.dirname( path.join( root, file ) ), {
+			recursive: true,
+		} );
+		fs.writeFileSync( path.join( root, file ), text );
+	};
+	try {
+		write(
+			'assets/src/app/hooks/usePagedList.ts',
+			'export function usePagedList() {}\n'
+		);
+		write(
+			'assets/src/app/features/alpha/useUnsavedChangesGuard.ts',
+			"export { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';\n"
+		);
+		write(
+			'assets/src/app/features/alpha/hooks.ts',
+			[
+				'// usePagedList in a comment is fine.',
+				"import { usePagedList as shared } from '../../hooks/usePagedList';",
+				'export const usePagedList = () => shared();',
+			].join( '\r\n' )
+		);
+		write(
+			'assets/src/app/features/beta/Page.tsx',
+			[
+				"import { usePagedList } from '../../hooks/usePagedList';",
+				'function useUnsavedChangesGuard() {}',
+				'export function Page() { usePagedList(); useUnsavedChangesGuard(); return null; }',
+			].join( '\n' )
+		);
+		write(
+			'assets/src/app/features/gamma/Page.tsx',
+			"import { usePagedList } from '../../hooks/usePagedList';\nexport const Page = () => usePagedList();\n"
+		);
+		write(
+			'assets/src/app/features/gamma/hooks.test.tsx',
+			'function usePagedList() {}\n'
+		);
+		const project = new Project( root );
+		const { violations, failures, allowed } = checkSharedHookCopies(
+			project,
+			[
+				{
+					file: 'assets/src/app/features/beta/Page.tsx',
+					hook: 'useUnsavedChangesGuard',
+					reason: 'Fixture: being moved.',
+				},
+				{
+					file: 'assets/src/app/features/gone/usePagedList.ts',
+					hook: 'usePagedList',
+					reason: 'Fixture: deleted.',
+				},
+			]
+		);
+		assert.deepEqual(
+			violations.map( ( { file, hook } ) => `${ file } ${ hook }` ),
+			[
+				'assets/src/app/features/alpha/hooks.ts usePagedList',
+				'assets/src/app/features/alpha/useUnsavedChangesGuard.ts useUnsavedChangesGuard',
+				'assets/src/app/features/beta/Page.tsx useUnsavedChangesGuard',
+			]
+		);
+		assert.deepEqual(
+			allowed.map( ( entry ) => entry.reason ),
+			[ 'Fixture: being moved.' ]
+		);
+		assert.deepEqual( failures, [
+			'assets/src/app/features/alpha/hooks.ts defines its own usePagedList; import it from assets/src/app/hooks/usePagedList.ts and add an option there when the behaviour differs',
+			'assets/src/app/features/alpha/useUnsavedChangesGuard.ts defines its own useUnsavedChangesGuard; import it from assets/src/app/hooks/useUnsavedChangesGuard.ts and add an option there when the behaviour differs',
+			'stale allow-list entry (no longer violated, remove it): assets/src/app/features/gone/usePagedList.ts usePagedList',
+		] );
+	} finally {
+		fs.rmSync( root, { recursive: true, force: true } );
+	}
+} );
+
+test( 'declared names cover exported and local functions, classes and variables', () => {
+	assert.deepEqual(
+		declaredNames(
+			'example.ts',
+			[
+				"import { a } from './a';",
+				'export function one() {}',
+				'function two() {}',
+				'export const three = 1, [ skipped ] = [];',
+				'let four;',
+				'export class Five {}',
+				'export default function six() {}',
+				'export { a as seven };',
+				'function outer() { function nested() {} }',
+			].join( '\n' )
+		),
+		[ 'one', 'two', 'three', 'four', 'Five', 'six', 'outer' ]
 	);
 } );
 

@@ -5,7 +5,6 @@ import {
 	useRef,
 	useState,
 } from '@wordpress/element';
-import { useNavigate } from 'react-router-dom';
 import { useListState } from '../../components/listQuery';
 import { normalizeApiError } from '../../lib/api';
 import {
@@ -22,7 +21,6 @@ import type {
 	EmailSettings,
 	EmailTemplate,
 } from './types';
-import { routeFromHref } from '../../routing/links';
 
 /** Delay before a changed draft is rendered again. */
 export const PREVIEW_DELAY_MS = 500;
@@ -255,73 +253,4 @@ export function useEmailPreview(
 		};
 	}, [ id, key, active ] );
 	return { preview, loading, error };
-}
-
-/**
- * Guard against losing unsaved edits. Reloading or closing the tab shows the browser's own prompt. A click
- * on any in-app link is held back and reported as `pendingPath`; the page asks, then calls
- * `confirmLeave()` or `stay()`. The browser's back button cannot be intercepted by a hash router.
- *
- * @param dirty Whether there are unsaved changes.
- */
-export function useUnsavedChangesGuard( dirty: boolean ) {
-	const navigate = useNavigate();
-	const [ pendingPath, setPendingPath ] = useState< string | null >( null );
-
-	useEffect( () => {
-		if ( ! dirty ) {
-			return undefined;
-		}
-		const beforeUnload = ( event: BeforeUnloadEvent ) => {
-			event.preventDefault();
-			event.returnValue = '';
-		};
-		const onClick = ( event: MouseEvent ) => {
-			if (
-				event.defaultPrevented ||
-				0 !== event.button ||
-				event.metaKey ||
-				event.ctrlKey ||
-				event.shiftKey ||
-				event.altKey ||
-				! ( event.target instanceof Element )
-			) {
-				return;
-			}
-			const anchor = event.target.closest( 'a[href]' );
-			const href = anchor?.getAttribute( 'href' ) ?? '';
-			const path = routeFromHref( href );
-			if ( ! path ) {
-				return;
-			}
-			event.preventDefault();
-			event.stopPropagation();
-			setPendingPath( path );
-		};
-		window.addEventListener( 'beforeunload', beforeUnload );
-		document.addEventListener( 'click', onClick, true );
-		return () => {
-			window.removeEventListener( 'beforeunload', beforeUnload );
-			document.removeEventListener( 'click', onClick, true );
-		};
-	}, [ dirty ] );
-
-	return {
-		pendingPath,
-		requestLeave: ( path: string ) => {
-			if ( dirty ) {
-				setPendingPath( path );
-			} else {
-				navigate( path );
-			}
-		},
-		confirmLeave: () => {
-			const path = pendingPath;
-			setPendingPath( null );
-			if ( path ) {
-				navigate( path );
-			}
-		},
-		stay: () => setPendingPath( null ),
-	};
 }

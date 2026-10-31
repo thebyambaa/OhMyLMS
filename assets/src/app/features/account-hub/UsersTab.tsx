@@ -19,7 +19,7 @@ import type {
 	AccountStatusFilter,
 	RegisteredPeriod,
 } from './types';
-import { usePagedList } from './usePagedList';
+import { usePagedList } from '../../hooks/usePagedList';
 
 const PERIODS: { value: RegisteredPeriod; label: string }[] = [
 	{ value: 'all', label: __( 'Any time', 'ohmylms' ) },
@@ -55,7 +55,7 @@ export function UsersTab() {
 			listAccounts( page, search, filters, signal ),
 		[ filters ]
 	);
-	const list = usePagedList( load, true );
+	const list = usePagedList( load, { inAddress: true } );
 	const options = useRequest( getAccountOptions );
 	const [ creating, setCreating ] = useState( false );
 	const [ editing, setEditing ] = useState< Account | null >( null );

@@ -6,7 +6,7 @@ import { statusViews } from '../../components/listViews';
 import { listClasses, type ClassFilter } from './api';
 import { HubListTable } from './ListControls';
 import { classStatusLabel } from './model';
-import { usePagedList } from './usePagedList';
+import { usePagedList } from '../../hooks/usePagedList';
 
 const STATUS_FILTER = { status: 'all' };
 
@@ -22,7 +22,7 @@ export function ClassesTab() {
 			listClasses( page, search, status, undefined, signal ),
 		[ status ]
 	);
-	const list = usePagedList( load, true );
+	const list = usePagedList( load, { inAddress: true } );
 
 	return (
 		<>

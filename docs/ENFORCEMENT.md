@@ -10,7 +10,7 @@ every push and pull request to `main`.
 | Command | What it runs |
 | --- | --- |
 | `npm run check:ci` | Everything CI runs in the Node job: `typecheck`, `test:app`, `check:architecture`, then `node --test tests/js/check-architecture.test.mjs` |
-| `npm run check:architecture` | `node tools/check-architecture.mjs`: the five architecture rules below and the budget table |
+| `npm run check:architecture` | `node tools/check-architecture.mjs`: the architecture rules below and the budget table |
 | `node --test tests/js/check-architecture.test.mjs` | Tests for the checker, using fixture trees under `tests/fixtures/architecture/` |
 
 The architecture check reads source files and the bundles already published in `assets/dist/admin`.
@@ -101,6 +101,14 @@ The check fails when:
 - a budget has no published asset;
 - the same chunk is published twice under different hashes.
 
+### g. Features use the shared hooks instead of their own copies
+
+`useUnsavedChangesGuard` and `usePagedList` live once, in `assets/src/app/hooks`. A file under
+`assets/src/app/features/` fails when it declares a function, class or variable with one of those
+names at its top level, or is itself named after the hook (`useUnsavedChangesGuard.ts`, including
+re-export shims). When a screen needs different behaviour, add a backwards-compatible option to the
+shared hook (for example `ignoreSamePath`, `inAddress`, `keepPrevious`) instead of copying it.
+
 ## Changing the rules on purpose
 
 ### Allow-list: `tools/architecture-allowlist.json`
@@ -114,7 +122,8 @@ still printed (`~ allowed: …`) with their reason.
 {
 	"recoveredRuntime": [ { "from": "assets/src/app/…", "to": "assets/src/…", "reason": "…" } ],
 	"cycles": [ { "files": [ "assets/src/app/a.ts", "assets/src/app/b.ts" ], "reason": "…" } ],
-	"crossFeature": [ { "from": "assets/src/app/features/a/…", "to": "assets/src/app/features/b/…", "reason": "…" } ]
+	"crossFeature": [ { "from": "assets/src/app/features/a/…", "to": "assets/src/app/features/b/…", "reason": "…" } ],
+	"sharedHooks": [ { "file": "assets/src/app/features/a/…", "hook": "usePagedList", "reason": "…" } ]
 }
 ```
 

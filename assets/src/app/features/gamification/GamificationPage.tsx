@@ -31,7 +31,7 @@ import {
 	type TabId,
 } from './types';
 import { useEngagement } from './useEngagement';
-import { useUnsavedChangesGuard } from './useUnsavedChangesGuard';
+import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import { XpTab } from './XpTab';
 
 const LABELS: Record< TabId, string > = {
@@ -100,7 +100,8 @@ export default function GamificationPage() {
 		rewards: rewards.dirty,
 	};
 	const guard = useUnsavedChangesGuard(
-		Object.values( dirty ).some( Boolean )
+		Object.values( dirty ).some( Boolean ),
+		{ ignoreSamePath: true }
 	);
 
 	const tabs: TabItem[] = TAB_IDS.map( ( id ) => ( {

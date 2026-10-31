@@ -73,8 +73,9 @@ mutable bindings), checked against the importers of each export. "Fixed" means c
 | | `/wp/v2/media` parsers in courses, certificates, gamification, settings (`hubIcons`) with different mime and thumbnail rules; three `MediaImage` types and three `MediaPicker` components | 4 | remaining |
 | | `parseCourseChoice` in assignments, certificates, quizzes, sessions, each for its own `/<feature>/courses` route | 4 | remaining (different routes) |
 | | validation primitives (`record`, `positiveId`, `text`) redefined in feature models although `lib/authoring-validation.ts` exports them | 21 `record`, 13 `positiveId` | remaining |
-| Duplicated hooks | feature `useRequest` (commerce = students, dashboard, taxonomies), `useOperation` (commerce = students), `usePagedList` (memberships = quizzes, account-hub); signatures differ from `hooks/` | 9 files | remaining |
-| | feature `useUnsavedChangesGuard` copies (certificates, courses, gamification, quizzes, settings) of `hooks/useUnsavedChangesGuard` | 5 | remaining (being edited by navigation work) |
+| Duplicated hooks | feature `useRequest` (commerce = students; dashboard and taxonomies without `replace`), `useOperation` (commerce = students; integrations with `ApiError`); signatures differ from `hooks/` | 7 files | remaining |
+| | `usePagedList` (memberships = quizzes, account-hub) | 3 | fixed: `hooks/usePagedList` (`inAddress`, `keepPrevious`), `hooks/useRequest` `keepData` |
+| | feature `useUnsavedChangesGuard` copies (certificates, courses, gamification, memberships, quizzes, settings, `emails/hooks.ts`) of `hooks/useUnsavedChangesGuard` | 7 | fixed: shared hook with `ignoreSamePath` and `requestLeave`; `checkSharedHookCopies` |
 | Native: `window.wp.apiFetch` global | `assessment`, `content-hub`, `curriculum`, `question-bank` `api.mjs` | 4 | fixed: `rest.mjs` |
 | | `content-hub` `ImportDialog`, `ImportFigures`, `ExamsPage`, `NewExamDialog` | 4 | fixed |
 | | `question-editor/TemplatePanel.jsx`, `question-editor/QuestionLivePreview.jsx` | 2 | remaining (question-editor owner) |
@@ -114,10 +115,14 @@ REST paths, methods, payloads and error objects are unchanged.
   shared picker in `app/components` (WordPress look work) and an agreed parser.
 - **`syllabus-comparison` ownership**: decide whether `syllabus` or `curriculum` owns
   `/syllabus-comparison/*`; the other then imports the shared-skills read from its `public.ts`.
-- **Validation primitives**: moving 21 feature copies of `record`/`positiveId`/`text` to
-  `lib/authoring-validation.ts` touches every model file; worth a separate mechanical change.
-- **Hook variants**: the feature hooks have different signatures (keyed reload, `replace`, no success
-  callback). Converging them changes page components (list page owners).
+- **Validation primitives**: the 21 feature copies of `record`/`positiveId`/`text` each throw their own
+  feature's invalid-response message (`lib/authoring-validation.ts` throws "invalid authoring data").
+  Moving them changes error text, so it needs an agreed message (or an error factory parameter) first.
+- **Hook variants**: the remaining `useRequest` copies are keyed by a string, keep data while
+  reloading, report `ApiError` objects and (commerce, students) offer `replace`; the `useOperation`
+  copies report `null`/`ApiError` instead of `''` and take no success callback. Converging them changes
+  page components (list page owners). `useUnsavedChangesGuard` and `usePagedList` are shared since
+  31 October 2026.
 - **Question editor**: `TemplatePanel.jsx` and `QuestionLivePreview.jsx` still call `window.wp.apiFetch`;
   they should import `request` from `features/rest.mjs`.
 - **`editPath()`**: after a quiz import without an `onQuiz` handler, `ImportDialog` sets the hash to

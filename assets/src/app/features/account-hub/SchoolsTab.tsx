@@ -15,7 +15,7 @@ import { MAX_NAME, validateSchool } from './model';
 import { listSchoolsByStatus, type SchoolFilter } from './operationsApi';
 import { SampleSchoolActions } from './SampleSchoolActions';
 import type { FormErrors, SchoolInput } from './types';
-import { usePagedList } from './usePagedList';
+import { usePagedList } from '../../hooks/usePagedList';
 
 const STATUS_FILTER = { status: 'all' };
 
@@ -31,7 +31,7 @@ export function SchoolsTab() {
 			listSchoolsByStatus( page, search, status, signal ),
 		[ status ]
 	);
-	const list = usePagedList( load, true );
+	const list = usePagedList( load, { inAddress: true } );
 	const deleted = ( useLocation().state as { deleted?: string } | null )
 		?.deleted;
 	const navigate = useNavigate();
