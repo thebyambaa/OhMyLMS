@@ -36,8 +36,8 @@ defined( 'ABSPATH' ) || exit;
  *
  * Typed REST API for the admin app's question bank under `ohmylms/v1/questions`. See
  * docs/api/questions.md for the contract. Writes go through {@see DraftWriter}, which validates,
- * authorises and versions every save in one transaction. The legacy `/question` and
- * `/question-bank` routes are separate and keep their own shapes.
+ * authorises and versions every save in one transaction. It replaced the legacy `/question` and
+ * `/question-bank` routes, which were removed.
  *
  * Authentication is WordPress core's: cookie requests need the `X-WP-Nonce` header, which core
  * verifies before any permission callback runs.
@@ -169,6 +169,11 @@ class QuestionsController extends RestController {
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 					'args'                => $this->get_write_args( false ),
 				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'delete_item' ),
+					'permission_callback' => array( $this, 'delete_item_permissions_check' ),
+				),
 				'schema' => array( $this, 'get_public_item_schema' ),
 			)
 		);
@@ -231,6 +236,26 @@ class QuestionsController extends RestController {
 					'callback'            => array( $this, 'get_versions' ),
 					'permission_callback' => array( $this, 'get_item_permissions_check' ),
 					'args'                => $this->get_paging_params(),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			$item . '/versions/(?P<version_id>[\d]+)',
+			array(
+				'args' => array(
+					'id'         => $id,
+					'version_id' => array(
+						'description' => __( 'Unique identifier for the version.', 'ohmylms' ),
+						'type'        => 'integer',
+						'minimum'     => 1,
+					),
+				),
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_version' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
 				),
 			)
 		);
@@ -300,16 +325,34 @@ class QuestionsController extends RestController {
 	/**
 	 * Load a question post or a 404 error.
 	 *
-	 * @param mixed $id Question ID.
+	 * An auto-draft is the blank document WordPress allocates for a new question in the native
+	 * editor; only its author may read and write it, and only through the item route.
+	 *
+	 * @param mixed $id          Question ID.
+	 * @param bool  $allow_blank Whether the caller's own auto-draft is accepted.
 	 * @return WP_Post|WP_Error
 	 */
-	private function get_question_post( $id ) {
+	private function get_question_post( $id, $allow_blank = false ) {
 		$post = get_post( absint( $id ) );
-		if ( ! $post || OHMYLMS_QUESTION_CPT !== $post->post_type || in_array( $post->post_status, array( 'trash', 'auto-draft' ), true ) ) {
+		if ( ! $post || OHMYLMS_QUESTION_CPT !== $post->post_type || 'trash' === $post->post_status ) {
+			return $this->not_found();
+		}
+		if ( 'auto-draft' === $post->post_status && ! ( $allow_blank && get_current_user_id() && get_current_user_id() === (int) $post->post_author ) ) {
 			return $this->not_found();
 		}
 
 		return $post;
+	}
+
+	/**
+	 * Whether the request targets the item route itself (`/questions/{id}`), the only route that
+	 * accepts the caller's blank native document.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return bool
+	 */
+	private function is_item_route( $request ) {
+		return (bool) preg_match( '#^/' . preg_quote( $this->namespace . '/' . $this->rest_base, '#' ) . '/\d+$#', (string) $request->get_route() );
 	}
 
 	/**
@@ -329,6 +372,10 @@ class QuestionsController extends RestController {
 		$bank = (int) $request['bank'];
 		if ( $bank > 0 && ! current_user_can( 'edit_others_posts' ) && ! in_array( $bank, array_map( 'intval', array_column( Banks::for_user(), 'id' ) ), true ) ) {
 			return $this->forbidden( 'ohmylms_question_bank_forbidden', __( 'Sorry, you are not allowed to view that question bank.', 'ohmylms' ) );
+		}
+		$quiz = (int) $request['exclude_quiz'];
+		if ( $quiz > 0 && ! AccessPolicy::can_edit_quiz( $quiz ) ) {
+			return $this->forbidden( 'ohmylms_question_quiz_forbidden', __( 'Sorry, you are not allowed to edit that quiz.', 'ohmylms' ) );
 		}
 
 		return true;
@@ -377,6 +424,21 @@ class QuestionsController extends RestController {
 	 */
 	public function update_item_permissions_check( $request ) {
 		return $this->check_editor( $request, 'ohmylms_question_cannot_edit', __( 'Sorry, you are not allowed to edit this question.', 'ohmylms' ) );
+	}
+
+	/**
+	 * Permission to delete one question: `delete_post` on it (bank grants never allow deletion).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return true|WP_Error
+	 */
+	public function delete_item_permissions_check( $request ) {
+		return $this->check_question(
+			$request,
+			array( AccessPolicy::class, 'can_delete_question' ),
+			'ohmylms_question_cannot_delete',
+			__( 'Sorry, you are not allowed to delete this question.', 'ohmylms' )
+		);
 	}
 
 	/**
@@ -437,7 +499,7 @@ class QuestionsController extends RestController {
 		if ( is_wp_error( $ready ) ) {
 			return $ready;
 		}
-		$post = $this->get_question_post( $request['id'] );
+		$post = $this->get_question_post( $request['id'], $this->is_item_route( $request ) );
 		if ( is_wp_error( $post ) ) {
 			return $post;
 		}
@@ -457,12 +519,16 @@ class QuestionsController extends RestController {
 		$page     = max( 1, (int) $request['page'] );
 		$per_page = min( 100, max( 1, (int) $request['per_page'] ) );
 		$filters  = array(
-			'status'     => 'active' === $request['status'] ? '' : (string) $request['status'],
-			'type'       => (string) $request['type'],
-			'difficulty' => (string) $request['difficulty'],
-			'search'     => (string) $request['search'],
-			'bank'       => null === $request['bank'] ? null : (int) $request['bank'],
-			'skill'      => (int) $request['skill'],
+			'status'       => 'active' === $request['status'] ? '' : (string) $request['status'],
+			'type'         => (string) $request['type'],
+			'difficulty'   => (string) $request['difficulty'],
+			'search'       => (string) $request['search'],
+			'bank'         => null === $request['bank'] ? null : (int) $request['bank'],
+			'skill'        => (int) $request['skill'],
+			'secure'       => null === $request['secure'] ? null : (bool) $request['secure'],
+			'exclude_quiz' => (int) $request['exclude_quiz'],
+			'organisation' => $request['organisation'],
+			'scope'        => $request['scope'],
 		);
 
 		/**
@@ -507,12 +573,39 @@ class QuestionsController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_item( $request ) {
-		$post = $this->get_question_post( $request['id'] );
+		$post = $this->get_question_post( $request['id'], true );
 		if ( is_wp_error( $post ) ) {
 			return $post;
 		}
 
 		return $this->prepare_item_for_response( $post, $request );
+	}
+
+	/**
+	 * Content of one saved version (title, body, settings, options with answer keys, skills), for
+	 * the question's editors. Never writes.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_version( $request ) {
+		$post = $this->get_question_post( $request['id'] );
+		if ( is_wp_error( $post ) ) {
+			return $post;
+		}
+		$version = VersionPublisher::version( (int) $request['version_id'] );
+		if ( ! $version || (int) $version['question_id'] !== (int) $post->ID ) {
+			return new WP_Error( 'ohmylms_version_missing', __( 'Version not found for this question.', 'ohmylms' ), array( 'status' => 404 ) );
+		}
+		$snapshot = VersionPublisher::snapshot( (int) $version['id'] );
+		$data     = $snapshot->to_array();
+		unset( $data['content_hash'] );
+		$data['skills'] = SkillMap::for_version( $snapshot->get_version_id() );
+
+		$response = rest_ensure_response( $data );
+		$response->header( 'Cache-Control', 'private, no-store' );
+
+		return $response;
 	}
 
 	/**
@@ -643,7 +736,7 @@ class QuestionsController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function update_item( $request ) {
-		$post = $this->get_question_post( $request['id'] );
+		$post = $this->get_question_post( $request['id'], true );
 		if ( is_wp_error( $post ) ) {
 			return $post;
 		}
@@ -653,7 +746,7 @@ class QuestionsController extends RestController {
 		}
 
 		$base    = rest_parse_date( (string) $request['base_modified'], true );
-		$current = strtotime( $post->post_modified_gmt . ' UTC' );
+		$current = strtotime( $this->modified_gmt( $post ) . ' UTC' );
 		if ( ! $base ) {
 			return new WP_Error( 'rest_invalid_param', __( 'base_modified must be an RFC 3339 date.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
@@ -671,9 +764,11 @@ class QuestionsController extends RestController {
 					'id'            => $post->ID,
 					'base_modified' => gmdate( 'Y-m-d H:i:s', $base ),
 				),
+				// The first save of a blank native document makes it a draft question.
+				'auto-draft' === $post->post_status ? array( 'status' => 'draft' ) : array(),
 				$prepared['payload']
 			);
-			$saved   = $this->save( $payload, $prepared['extension'] );
+			$saved = $this->save( $payload, $prepared['extension'] );
 			if ( is_wp_error( $saved ) ) {
 				return $saved;
 			}
@@ -686,6 +781,48 @@ class QuestionsController extends RestController {
 		do_action( 'ohmylms_rest_save_question_item', $post, $request, false );
 
 		return $this->prepare_item_for_response( $post, $request );
+	}
+
+	/**
+	 * Delete a question that nothing references. A question with learner history is archived
+	 * instead; a question placed in several quizzes answers 409 (remove it from a quiz instead).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function delete_item( $request ) {
+		$known = $this->reject_unknown_fields( $request, array() );
+		if ( is_wp_error( $known ) ) {
+			return $known;
+		}
+		$post = $this->get_question_post( $request['id'], true );
+		if ( is_wp_error( $post ) ) {
+			return $post;
+		}
+		$previous = $this->prepare_item_for_response( $post, $request )->get_data();
+		$result   = Usage::delete_or_archive( $post->ID );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		/**
+		 * Fires after a question was deleted or archived through the REST API.
+		 *
+		 * @param WP_REST_Request $request The request.
+		 * @param array           $result  `id` and `action` (`deleted` or `archived`).
+		 */
+		do_action( 'ohmylms_rest_delete_question', $request, $result );
+
+		$response = rest_ensure_response(
+			array(
+				'deleted'  => 'deleted' === ( $result['action'] ?? '' ),
+				'archived' => 'archived' === ( $result['action'] ?? '' ),
+				'previous' => $previous,
+			)
+		);
+		$response->header( 'Cache-Control', 'private, no-store' );
+
+		return $response;
 	}
 
 	/**
@@ -827,7 +964,7 @@ class QuestionsController extends RestController {
 			__( 'This question was changed by someone else. Reload it before saving.', 'ohmylms' ),
 			array(
 				'status'   => 409,
-				'modified' => $this->iso( $post->post_modified_gmt ),
+				'modified' => $this->iso( $this->modified_gmt( $post ) ),
 			)
 		);
 	}
@@ -1281,7 +1418,7 @@ class QuestionsController extends RestController {
 					'skills'      => $skills[ $post->ID ],
 					'usage'       => $usage[ $post->ID ],
 					'author'      => $this->user_ref( (int) $post->post_author ),
-					'modified'    => $this->iso( $post->post_modified_gmt ),
+					'modified'    => $this->iso( $this->modified_gmt( $post ) ),
 					'permissions' => array(
 						'can_edit'    => AccessPolicy::can_edit_question( $post->ID ),
 						'can_approve' => AccessPolicy::can_approve_question( $post->ID ),
@@ -1362,7 +1499,7 @@ class QuestionsController extends RestController {
 					'can_approve' => AccessPolicy::can_approve_question( $id ),
 					'can_delete'  => AccessPolicy::can_delete_question( $id ),
 				),
-				'modified'    => $this->iso( $post->post_modified_gmt ),
+				'modified'    => $this->iso( $this->modified_gmt( $post ) ),
 			)
 		);
 		$data = $this->add_additional_fields_to_object( $data, $request );
@@ -1502,6 +1639,21 @@ class QuestionsController extends RestController {
 			'id'   => (int) $user_id,
 			'name' => $user ? (string) $user->display_name : '',
 		);
+	}
+
+	/**
+	 * GMT modification time of a question. WordPress leaves it empty on auto-drafts and on drafts
+	 * never updated since insertion; the local time converted to GMT stands in for it then.
+	 *
+	 * @param WP_Post $post Question post.
+	 * @return string GMT MySQL datetime.
+	 */
+	private function modified_gmt( WP_Post $post ) {
+		if ( $post->post_modified_gmt && '0000-00-00 00:00:00' !== $post->post_modified_gmt ) {
+			return $post->post_modified_gmt;
+		}
+
+		return get_gmt_from_date( $post->post_modified );
 	}
 
 	/**
@@ -1747,39 +1899,58 @@ class QuestionsController extends RestController {
 		$params['search']['maxLength']   = 100;
 		$params['search']['description'] = __( 'Limit results to questions whose name or body contains the text.', 'ohmylms' );
 
-		$params['type']       = array(
+		$params['type']         = array(
 			'description' => __( 'Limit results to a registered question type.', 'ohmylms' ),
 			'type'        => 'string',
 			'enum'        => array_map( 'strval', array_keys( Registry::all( 'question' ) ) ),
 		);
-		$params['difficulty'] = array(
+		$params['difficulty']   = array(
 			'description' => __( 'Limit results to a difficulty band.', 'ohmylms' ),
 			'type'        => 'string',
 			'enum'        => BankAttributes::DIFFICULTIES,
 		);
-		$params['status']     = array(
+		$params['status']       = array(
 			'description' => __( 'active: not archived; draft: no approved version; approved; archived.', 'ohmylms' ),
 			'type'        => 'string',
 			'default'     => 'active',
 			'enum'        => array( 'active', 'draft', 'approved', 'archived' ),
 		);
-		$params['bank']       = array(
+		$params['bank']         = array(
 			'description' => __( 'Limit results to a bank (0 = personal questions).', 'ohmylms' ),
 			'type'        => 'integer',
 			'minimum'     => 0,
 		);
-		$params['skill']      = array(
+		$params['skill']        = array(
 			'description' => __( 'Limit results to questions mapped to a skill term.', 'ohmylms' ),
 			'type'        => 'integer',
 			'minimum'     => 1,
 		);
-		$params['orderby']    = array(
+		$params['secure']       = array(
+			'description' => __( 'Limit results to secure (exam-only) questions, or to questions that are not.', 'ohmylms' ),
+			'type'        => 'boolean',
+		);
+		$params['exclude_quiz'] = array(
+			'description' => __( 'Leave out questions already placed in this quiz (the quiz must be editable).', 'ohmylms' ),
+			'type'        => 'integer',
+			'minimum'     => 1,
+		);
+		$params['organisation'] = array(
+			'description' => __( 'Organisation view (GET /question-bank-organisation), used with scope.', 'ohmylms' ),
+			'type'        => 'string',
+			'pattern'     => '^[a-z0-9_-]{1,60}$',
+		);
+		$params['scope']        = array(
+			'description' => __( 'Node of the organisation view whose questions are listed.', 'ohmylms' ),
+			'type'        => 'integer',
+			'minimum'     => 1,
+		);
+		$params['orderby']      = array(
 			'description' => __( 'Sort collection by attribute.', 'ohmylms' ),
 			'type'        => 'string',
 			'default'     => 'modified',
 			'enum'        => array_keys( Search::ORDERBY ),
 		);
-		$params['order']      = array(
+		$params['order']        = array(
 			'description' => __( 'Order sort attribute ascending or descending.', 'ohmylms' ),
 			'type'        => 'string',
 			'default'     => 'desc',

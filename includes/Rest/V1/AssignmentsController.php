@@ -719,7 +719,13 @@ class AssignmentsController extends RestController {
 
 		/** This action is documented in includes/DataStores/AssignmentStore.php. */
 		do_action( 'ohmylms_after_creating_new_assignment', $id, new Assignment( $id ) );
-		/** This action is documented in includes/Rest/V1/AssignmentController.php. */
+		/**
+		 * Fires after an assignment is created or updated through the REST API.
+		 *
+		 * @param \WP_Post         $post     The assignment post.
+		 * @param \WP_REST_Request $request  The request (without `chapter_id`).
+		 * @param bool             $creating True when the assignment was created.
+		 */
 		do_action( 'ohmylms_rest_insert_assignment', $post, $request, true );
 
 		$request->set_param( 'context', 'edit' );
@@ -785,7 +791,7 @@ class AssignmentsController extends RestController {
 		$updated = get_post( $post->ID );
 		$request->set_param( 'chapter_id', null );
 
-		/** This action is documented in includes/Rest/V1/AssignmentController.php. */
+		/** This action is documented in includes/Rest/V1/AssignmentsController.php. */
 		do_action( 'ohmylms_rest_insert_assignment', $updated, $request, false );
 		/** This action is documented in includes/DataStores/AssignmentStore.php. */
 		do_action( 'ohmylms_after_updating_assignment', $updated->ID, new Assignment( $updated->ID ) );
@@ -830,7 +836,12 @@ class AssignmentsController extends RestController {
 			return new WP_Error( 'ohmylms_assignment_delete_failed', __( 'The assignment could not be moved to the trash.', 'ohmylms' ), array( 'status' => 500 ) );
 		}
 
-		/** This action is documented in includes/Rest/V1/AssignmentController.php (unlinks chapters and progress). */
+		/**
+		 * Fires after an assignment is trashed or deleted through the REST API. `AssignmentHookHandler`
+		 * unlinks its chapters and progress.
+		 *
+		 * @param int $id Assignment ID.
+		 */
 		do_action( 'ohmylms_rest_delete_assignment', $post->ID );
 
 		return rest_ensure_response(

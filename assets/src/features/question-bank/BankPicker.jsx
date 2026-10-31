@@ -9,7 +9,7 @@ import {
 	Spinner,
 	TextControl,
 } from '@wordpress/components';
-import { addQuestionsToQuiz, listSkills, searchBank } from './api.mjs';
+import { listSkills, searchBank } from './api.mjs';
 import {
 	cleanFilters,
 	DIFFICULTIES,
@@ -20,22 +20,15 @@ import {
 } from './model.mjs';
 
 /**
- * Pick existing bank questions and place them in a quiz by reference.
- * Marks and placement belong to the quiz; the question content stays in the bank.
+ * Pick existing bank questions for a quiz document. The caller inserts them as question blocks, and
+ * saving the document places them by reference; the question content stays in the bank.
  * @param root0
- * @param root0.quizId
- * @param root0.existingIds
- * @param root0.onAdded
+ * @param root0.quizId      Quiz being edited; its questions are left out of the results.
+ * @param root0.existingIds Questions already in the document.
  * @param root0.onClose
- * @param root0.onPick
+ * @param root0.onPick      Receives the chosen question IDs.
  */
-export function BankPicker( {
-	quizId,
-	existingIds,
-	onAdded,
-	onClose,
-	onPick,
-} ) {
+export function BankPicker( { quizId, existingIds, onClose, onPick } ) {
 	const [ filters, setFilters ] = useState( {
 		search: '',
 		skill: '',
@@ -45,7 +38,6 @@ export function BankPicker( {
 	const [ items, setItems ] = useState( null );
 	const [ skills, setSkills ] = useState( [] );
 	const [ chosen, setChosen ] = useState( [] );
-	const [ pin, setPin ] = useState( false );
 	const [ busy, setBusy ] = useState( false );
 	const [ error, setError ] = useState( '' );
 	useEffect( () => {
@@ -77,13 +69,7 @@ export function BankPicker( {
 		setBusy( true );
 		setError( '' );
 		try {
-			if ( onPick ) {
-				await onPick( chosen );
-				onClose();
-				return;
-			}
-			const result = await addQuestionsToQuiz( quizId, chosen, pin );
-			onAdded( result.content || [], result.added || chosen );
+			await onPick( chosen );
 			onClose();
 		} catch ( cause ) {
 			setError(
@@ -206,16 +192,6 @@ export function BankPicker( {
 					</ul>
 				);
 			} )() }
-			{ ! onPick && (
-				<CheckboxControl
-					label={ __(
-						'Pin the current version (later edits will not change this quiz)',
-						'ohmylms'
-					) }
-					checked={ pin }
-					onChange={ setPin }
-				/>
-			) }
 			<Button
 				variant="primary"
 				isBusy={ busy }

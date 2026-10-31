@@ -48,16 +48,16 @@ $pool_questions = [];
 foreach ([['f1', 0.5], ['f1', 0.25], ['f2', 0.2]] as $i => [$family, $answer]) {
     $id = remember_post(call('POST', 'question', ['name' => 'Pool ' . $i, 'settings' => ['type' => 'numerical', 'answer' => $answer, 'score' => ['enabled' => true, 'value' => 1]],
         'skills' => ['p1' => ['primary' => $fractions]], 'bank' => ['family_id' => $family . '-' . $quiz_id]])->get_data()['id']);
-    call('POST', 'question-bank/' . $id . '/approve');
+    call('POST', 'questions/' . $id . '/approve');
     $pool_questions[] = $id;
 }
 $shortage = call('PUT', 'quiz/' . $quiz_id . '/pools', ['pools' => [['title' => 'Random fractions', 'term_id' => $fractions, 'count' => 3, 'marks' => 1]]]);
 ok(status_of($shortage) === 409 && $shortage->get_data()['code'] === 'quiz_pool_shortage', 'Pool shortage not reported: ' . wp_json_encode($shortage->get_data()));
 $extra = remember_post(call('POST', 'question', ['name' => 'Pool extra', 'settings' => ['type' => 'numerical', 'answer' => 0.1, 'score' => ['enabled' => true, 'value' => 1]],
     'skills' => ['p1' => ['primary' => $fractions]], 'bank' => ['family_id' => 'f3-' . $quiz_id]])->get_data()['id']);
-call('POST', 'question-bank/' . $extra . '/approve');
+call('POST', 'questions/' . $extra . '/approve');
 // The fixed numerical question is mapped to the same skill but must never be drawn twice.
-call('POST', 'question-bank/' . $numerical . '/approve');
+call('POST', 'questions/' . $numerical . '/approve');
 $saved = call('PUT', 'quiz/' . $quiz_id . '/pools', ['pools' => [['title' => 'Random fractions', 'term_id' => $fractions, 'count' => 3, 'marks' => 1]]]);
 ok(status_of($saved) === 200, 'Feasible pool rejected: ' . wp_json_encode($saved->get_data()));
 

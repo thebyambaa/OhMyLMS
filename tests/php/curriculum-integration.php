@@ -394,7 +394,7 @@ try {
     foreach ([$weak, $untouched] as $term) {
         for ($i = 0; $i < 3; $i++) {
             $q = created('question', ['name' => 'Practice ' . $term . '-' . $i, 'settings' => ['type' => 'single-choice', 'hint' => 'h', 'score' => ['enabled' => true, 'value' => 1]], 'questions' => [['answer' => 'Right', 'is_correct' => 1], ['answer' => 'Wrong']], 'skills' => ['p1' => ['primary' => $term, 'supporting' => []]], 'bank' => ['family_id' => 'cf-' . $term . '-' . $i]]);
-            ok(api('POST', 'question-bank/' . $q . '/approve')->get_status() === 200, 'Approve failed');
+            ok(api('POST', 'questions/' . $q . '/approve')->get_status() === 200, 'Approve failed');
         }
         ok(api('PUT', 'skills/' . $term, ['public_practice' => true])->get_status() === 200, 'Public practice flag failed');
     }
@@ -494,7 +494,7 @@ try {
     $z_lesson = created('lessons', ['name' => 'Z lesson ' . $tag, 'description' => '<p>x</p>', 'type' => 'text', 'status' => 'publish']);
     for ($i = 0; $i < 3; $i++) {
         $q = created('question', ['name' => 'Z question ' . $i, 'settings' => ['type' => 'single-choice', 'hint' => 'h', 'score' => ['enabled' => true, 'value' => 1]], 'questions' => [['answer' => 'Right', 'is_correct' => 1], ['answer' => 'Wrong']], 'skills' => ['p1' => ['primary' => $skill_b, 'supporting' => []]], 'bank' => ['family_id' => 'z-family-' . $i]]);
-        api('POST', 'question-bank/' . $q . '/approve');
+        api('POST', 'questions/' . $q . '/approve');
     }
     $course_z = created('courses', ['name' => 'Course Z ' . $tag, 'status' => 'publish']);
     $z_published = api('POST', "courses/$course_z/learning/publish", ['mode' => 'skill-based', 'recognize_prior' => false, 'evidence_days' => 0, 'bank_ids' => [], 'outcomes' => [['term_id' => $skill_b, 'target' => 'proficient', 'required' => true]], 'items' => [['id' => wp_generate_uuid4(), 'type' => 'lesson', 'content_id' => $z_lesson, 'chapter_id' => 0, 'required' => false, 'pass_percent' => 80]], 'apply_existing' => false]);

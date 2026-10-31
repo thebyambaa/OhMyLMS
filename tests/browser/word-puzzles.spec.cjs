@@ -38,7 +38,7 @@ test( 'puzzle builders save in Gutenberg and players support keyboard, selection
 			if ( ! match ) continue;
 			for ( const id of JSON.parse( match[ 1 ] ).questionIds || [] )
 				await wp.apiFetch( {
-					path: `/ohmylms/v1/question/${ id }`,
+					path: `/ohmylms/v1/questions/${ id }`,
 					method: 'DELETE',
 				} );
 			await wp.apiFetch( {
@@ -48,18 +48,17 @@ test( 'puzzle builders save in Gutenberg and players support keyboard, selection
 		}
 		const questions = [];
 		for ( const [ type, settings ] of Object.entries( definitions ) ) {
-			const q = await api( '/ohmylms/v1/question', {
+			const q = await api( '/ohmylms/v1/questions', {
 				name: `Solve the ${ type } puzzle`,
-				quiz_id: 0,
 				settings: {
 					...settings,
 					type,
 					required: true,
 					score: { enabled: true, value: 1 },
 				},
-				questions: [],
+				options: [],
 			} );
-			await api( `/ohmylms/v1/question-bank/${ q.id }/approve`, {} );
+			await api( `/ohmylms/v1/questions/${ q.id }/approve`, {} );
 			questions.push( q.id );
 		}
 		const post = await api( '/wp/v2/pages', {
@@ -100,7 +99,7 @@ test( 'puzzle builders save in Gutenberg and players support keyboard, selection
 					async ( id ) =>
 						(
 							await wp.apiFetch( {
-								path: `/ohmylms/v1/question/${ id }`,
+								path: `/ohmylms/v1/questions/${ id }`,
 							} )
 						).settings.entries[ 0 ].clue,
 					fixture.questions[ 0 ]
@@ -146,7 +145,7 @@ test( 'puzzle builders save in Gutenberg and players support keyboard, selection
 		await page.evaluate(
 			( id ) =>
 				wp.apiFetch( {
-					path: `/ohmylms/v1/question-bank/${ id }/approve`,
+					path: `/ohmylms/v1/questions/${ id }/approve`,
 					method: 'POST',
 					data: {},
 				} ),
@@ -277,7 +276,7 @@ test( 'puzzle builders save in Gutenberg and players support keyboard, selection
 			} );
 			for ( const id of questions )
 				await wp.apiFetch( {
-					path: `/ohmylms/v1/question/${ id }`,
+					path: `/ohmylms/v1/questions/${ id }`,
 					method: 'DELETE',
 				} );
 		}, fixture );

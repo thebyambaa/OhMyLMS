@@ -167,7 +167,7 @@ ok(!$wpdb->get_var($wpdb->prepare("SELECT id FROM {$wpdb->prefix}ohmylms_quiz_qu
 ok(strpos(get_post_field('post_content', $bank_only), '\frac{1}{2}') !== false, 'LaTeX lost on bank-only question');
 $listed = call('GET', 'question-bank', [], ['search' => 'Bank-only fraction'])->get_data();
 ok(in_array($bank_only, array_map('intval', array_column($listed['items'], 'id')), true), 'Bank-only question missing from the bank');
-ok(status_of(call('POST', 'question-bank/' . $bank_only . '/approve')) === 200, 'Bank-only question could not be approved');
+ok(status_of(call('POST', 'questions/' . $bank_only . '/approve')) === 200, 'Bank-only question could not be approved');
 $structured = call('POST', 'question', ['name' => 'Bank-only parts', 'settings' => ['type' => 'structured', 'score' => ['enabled' => true, 'value' => 3],
     'parts' => [['id' => 'a', 'kind' => 'numerical', 'marks' => 1, 'answer' => 4], ['id' => 'b', 'kind' => 'written', 'marks' => 2]]], 'questions' => []]);
 ok(status_of($structured) === 201, 'Bank-only structured question not created: ' . wp_json_encode($structured->get_data()));

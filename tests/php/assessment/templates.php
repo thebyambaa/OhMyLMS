@@ -63,7 +63,7 @@ $created_q = call('POST', 'question', ['quiz_id' => $quiz_id, 'name' => 'What is
     'settings' => $settings($template()), 'skills' => ['p1' => ['primary' => $skill]]]);
 ok(status_of($created_q) === 201, 'Template question create failed: ' . wp_json_encode($created_q->get_data()));
 $qid = remember_post($created_q->get_data()['id']);
-$approved = call('POST', 'question-bank/' . $qid . '/approve');
+$approved = call('POST', 'questions/' . $qid . '/approve');
 ok(status_of($approved) === 200, 'Approve failed: ' . wp_json_encode($approved->get_data()));
 $version_id = (int) VersionPublisher::identity($qid)['current_version_id'];
 $frozen = VersionPublisher::snapshot($version_id);
@@ -144,7 +144,7 @@ ok(Inline::seed($token) === Inline::seed($token) && Inline::seed($token) > 0 && 
 ok(Inline::seed('garbage') === 0, 'A forged token produced a seed');
 
 // ---- Practice: a template is endless, each item has its own numbers, each counts as a first try ----
-$approved = call('POST', 'question-bank/' . $qid . '/approve');
+$approved = call('POST', 'questions/' . $qid . '/approve');
 ok(status_of($approved) === 200, 'Second approve failed: ' . wp_json_encode($approved->get_data()));
 as_user($student);
 $session = call('POST', 'practice/sessions', ['term_id' => $skill, 'item_limit' => 5]);

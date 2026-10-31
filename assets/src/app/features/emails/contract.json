@@ -16,7 +16,8 @@
 		"student_course_completed",
 		"student_cancel_enrollment",
 		"student_assignment_graded",
-		"student_quiz_graded"
+		"student_quiz_graded",
+		"student_at_risk_nudge"
 	],
 	"routes": [
 		{
@@ -100,7 +101,8 @@
 						"student_course_completed",
 						"student_cancel_enrollment",
 						"student_assignment_graded",
-						"student_quiz_graded"
+						"student_quiz_graded",
+						"student_at_risk_nudge"
 					],
 					"in": "path"
 				}
@@ -129,7 +131,8 @@
 						"student_course_completed",
 						"student_cancel_enrollment",
 						"student_assignment_graded",
-						"student_quiz_graded"
+						"student_quiz_graded",
+						"student_at_risk_nudge"
 					],
 					"in": "path"
 				}
@@ -159,7 +162,8 @@
 						"student_course_completed",
 						"student_cancel_enrollment",
 						"student_assignment_graded",
-						"student_quiz_graded"
+						"student_quiz_graded",
+						"student_at_risk_nudge"
 					],
 					"in": "path"
 				}
@@ -189,7 +193,8 @@
 						"student_course_completed",
 						"student_cancel_enrollment",
 						"student_assignment_graded",
-						"student_quiz_graded"
+						"student_quiz_graded",
+						"student_at_risk_nudge"
 					],
 					"in": "path"
 				}
@@ -242,7 +247,8 @@
 				"student_name",
 				"course_name",
 				"quiz_name"
-			]
+			],
+			"student_at_risk_nudge": [ "student_name", "sender_name", "reasons" ]
 		}
 	},
 	"definitions": {
@@ -332,7 +338,8 @@
 						"student_course_completed",
 						"student_cancel_enrollment",
 						"student_assignment_graded",
-						"student_quiz_graded"
+						"student_quiz_graded",
+						"student_at_risk_nudge"
 					]
 				},
 				"title": {

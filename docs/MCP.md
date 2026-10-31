@@ -46,6 +46,11 @@ run on every tool call. No API keys for model providers are stored by WordPress.
 | `get_skill_placement_options`, `start_syllabus_analysis`, `advance_syllabus_analysis`, `list_skill_suggestions`, `review_skill_suggestions`, `get_skill_links`, `save_skill_link` | AI analysis of syllabuses, links between shared skills, and the review queue. See [AI skill analysis](AI-SKILL-ANALYSIS.md) |
 | `list_courses`, `list_lessons`, `list_quizzes`, `list_questions` | Optional `page` (>=1), `per_page` (1–20), `search` (<=200 characters) |
 | `get_course`, `get_lesson`, `get_quiz`, `get_question` | Required positive integer `id` |
+
+`list_questions` and `get_question` read `GET /questions` (summaries, no answer keys) and `GET /questions/{id}`
+(the editor view, with answer keys) since the legacy `/question` route was removed on 31 October 2026;
+`list_quizzes` reads `GET /quizzes` (the legacy quiz list was removed earlier). See
+[questions](api/questions.md) and [quizzes](api/quizzes.md) for the response shapes.
 | `get_course_chapters` | Required positive integer course `id` |
 | `get_course_objectives` | Course `id`; optional `page`, `per_page` (1–50, default 10). Returns selected targets, content connections, available syllabuses, total pages and the current mapping `revision`. |
 | `list_course_objective_options` | Course `id`, `syllabus_id`; optional `page`, `per_page` (1–50), `search` (up to 200 characters). Searches official codes, titles, full wording and topics. |

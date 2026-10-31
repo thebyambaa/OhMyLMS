@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Duplicating a question as a new question in the same family.
  *
- * Used by `POST /question-bank/{id}/duplicate` and `POST /questions/{id}/duplicate`. Callers check
+ * Used by `POST /questions/{id}/duplicate` (without a quiz). Callers check
  * {@see AccessPolicy::can_use_question()} on the source first.
  */
 final class Duplicator {

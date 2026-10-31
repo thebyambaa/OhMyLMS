@@ -8,6 +8,7 @@
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
+use OhMyLMS\Assessment\AssessmentSettings;
 use OhMyLMS\Extensions\Registry;
 use OhMyLMS\QuestionBank\AccessPolicy;
 use OhMyLMS\QuestionBank\BankAttributes;
@@ -135,6 +136,11 @@ class QuestionImportController extends RestController {
 								),
 							),
 						),
+						'quiz_id' => array(
+							'description' => __( 'Export the questions of this quiz in quiz order, with their section titles, instead of selected IDs or filters.', 'ohmylms' ),
+							'type'        => 'integer',
+							'minimum'     => 1,
+						),
 						'label'   => array(
 							'description' => __( 'Collection name written into every row; it identifies the questions when the file is imported again.', 'ohmylms' ),
 							'type'        => 'string',
@@ -173,6 +179,15 @@ class QuestionImportController extends RestController {
 		$bank    = (int) ( $filters['bank'] ?? 0 );
 		if ( $bank > 0 && ! current_user_can( 'edit_others_posts' ) && ! in_array( $bank, array_map( 'intval', array_column( Banks::for_user(), 'id' ) ), true ) ) {
 			return new WP_Error( 'ohmylms_question_bank_forbidden', __( 'Sorry, you are not allowed to view that question bank.', 'ohmylms' ), array( 'status' => 403 ) );
+		}
+		$quiz_id = (int) $request['quiz_id'];
+		if ( $quiz_id > 0 ) {
+			if ( OHMYLMS_QUIZ_CPT !== get_post_type( $quiz_id ) || 'trash' === get_post_status( $quiz_id ) ) {
+				return new WP_Error( 'ohmylms_quiz_not_found', __( 'Quiz not found.', 'ohmylms' ), array( 'status' => 404 ) );
+			}
+			if ( ! AccessPolicy::can_edit_quiz( $quiz_id ) ) {
+				return new WP_Error( 'ohmylms_question_cannot_export', __( 'You are not allowed to export this quiz.', 'ohmylms' ), array( 'status' => 403 ) );
+			}
 		}
 
 		return true;
@@ -273,8 +288,9 @@ class QuestionImportController extends RestController {
 	}
 
 	/**
-	 * Export selected (`ids`) or filtered (`filters`) questions as import rows (CSV or JSON). Only
-	 * questions the user may edit are written, because the file holds every answer key.
+	 * Export selected (`ids`), filtered (`filters`) or one quiz's (`quiz_id`) questions as import
+	 * rows (CSV or JSON). Only questions the user may edit are written, because the file holds every
+	 * answer key.
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @return \WP_REST_Response|\WP_Error
@@ -282,10 +298,25 @@ class QuestionImportController extends RestController {
 	public function export( WP_REST_Request $request ) {
 		$ids     = $request->get_param( 'ids' );
 		$filters = $request->get_param( 'filters' );
-		if ( ( null === $ids ) === ( null === $filters ) ) {
-			return new WP_Error( 'ohmylms_question_export_scope', __( 'Choose either selected questions or list filters to export.', 'ohmylms' ), array( 'status' => 400 ) );
+		$quiz_id = (int) $request->get_param( 'quiz_id' );
+		if ( 1 !== count( array_filter( array( null !== $ids, null !== $filters, $quiz_id > 0 ) ) ) ) {
+			return new WP_Error( 'ohmylms_question_export_scope', __( 'Choose either selected questions, list filters or a quiz to export.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
-		$skipped = 0;
+		$skipped  = 0;
+		$sections = array();
+		$label    = sanitize_text_field( (string) $request->get_param( 'label' ) );
+		if ( $quiz_id > 0 ) {
+			$ids = array_map( 'intval', array_column( ohmylms_get_quiz( $quiz_id )->get_questions(), 'id' ) );
+			if ( ! $ids ) {
+				return new WP_Error( 'ohmylms_question_export_empty', __( 'This quiz has no questions.', 'ohmylms' ), array( 'status' => 422 ) );
+			}
+			$label = '' !== $label ? $label : get_the_title( $quiz_id );
+			foreach ( (array) AssessmentSettings::get( $quiz_id )['sections'] as $section ) {
+				foreach ( (array) ( $section['questions'] ?? array() ) as $question_id ) {
+					$sections[ (int) $question_id ] = (string) ( $section['title'] ?? '' );
+				}
+			}
+		}
 		if ( null !== $filters ) {
 			$type = (string) ( $filters['type'] ?? '' );
 			if ( '' !== $type && ! Registry::get( 'question', $type ) ) {
@@ -319,7 +350,7 @@ class QuestionImportController extends RestController {
 		}
 		$editable = array_values( array_filter( array_map( 'intval', (array) $ids ), array( AccessPolicy::class, 'can_edit_question' ) ) );
 		$skipped  = count( (array) $ids ) - count( $editable );
-		if ( null === $filters ) {
+		if ( null !== $request->get_param( 'ids' ) ) {
 			foreach ( (array) $ids as $id ) {
 				if ( OHMYLMS_QUESTION_CPT !== get_post_type( (int) $id ) || 'trash' === get_post_status( (int) $id ) ) {
 					/* translators: %d: question ID. */
@@ -333,8 +364,7 @@ class QuestionImportController extends RestController {
 		if ( ! $editable ) {
 			return new WP_Error( 'ohmylms_question_export_empty', __( 'None of the matching questions can be exported by you; the file holds their answer keys.', 'ohmylms' ), array( 'status' => 422 ) );
 		}
-		$label  = sanitize_text_field( (string) $request->get_param( 'label' ) );
-		$result = RowExporter::export( $editable, (string) $request['format'], $label );
+		$result = RowExporter::export( $editable, (string) $request['format'], $label, $sections );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}

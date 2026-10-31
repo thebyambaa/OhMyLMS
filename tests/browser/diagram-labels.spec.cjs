@@ -24,9 +24,8 @@ test( 'diagram builder saves pins and labels support drag, keyboard, restore, me
 	const fixture = await page.evaluate( async () => {
 		const api = ( path, data ) =>
 			wp.apiFetch( { path, method: 'POST', data } );
-		const q = await api( '/ohmylms/v1/question', {
+		const q = await api( '/ohmylms/v1/questions', {
 			name: 'Label the colours',
-			quiz_id: 0,
 			settings: {
 				type: 'labeling',
 				required: true,
@@ -38,7 +37,7 @@ test( 'diagram builder saves pins and labels support drag, keyboard, restore, me
 				distractors: [ 'Green' ],
 				score: { enabled: true, value: 2 },
 			},
-			questions: [],
+			options: [],
 		} );
 		const post = await api( '/wp/v2/pages', {
 			title: 'Diagram labels fixture',
@@ -91,7 +90,7 @@ test( 'diagram builder saves pins and labels support drag, keyboard, restore, me
 					async ( id ) =>
 						(
 							await wp.apiFetch( {
-								path: `/ohmylms/v1/question/${ id }`,
+								path: `/ohmylms/v1/questions/${ id }`,
 							} )
 						).settings.targets[ 0 ].x,
 					fixture.question
@@ -108,7 +107,7 @@ test( 'diagram builder saves pins and labels support drag, keyboard, restore, me
 		await page.evaluate(
 			async ( id ) =>
 				wp.apiFetch( {
-					path: `/ohmylms/v1/question-bank/${ id }/approve`,
+					path: `/ohmylms/v1/questions/${ id }/approve`,
 					method: 'POST',
 					data: {},
 				} ),
@@ -252,7 +251,7 @@ test( 'diagram builder saves pins and labels support drag, keyboard, restore, me
 				method: 'DELETE',
 			} );
 			await wp.apiFetch( {
-				path: `/ohmylms/v1/question/${ question }`,
+				path: `/ohmylms/v1/questions/${ question }`,
 				method: 'DELETE',
 			} );
 		}, fixture );

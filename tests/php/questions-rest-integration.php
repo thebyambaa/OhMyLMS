@@ -150,13 +150,34 @@ try {
 
 	// Routes and permission callbacks.
 	$routes = rest_get_server()->get_routes( 'ohmylms/v1' );
-	foreach ( array( '/questions', '/questions/types', '/questions/(?P<id>[\d]+)', '/questions/(?P<id>[\d]+)/archive', '/questions/(?P<id>[\d]+)/restore', '/questions/(?P<id>[\d]+)/approve', '/questions/(?P<id>[\d]+)/duplicate', '/questions/(?P<id>[\d]+)/versions' ) as $route ) {
+	foreach ( array( '/questions', '/questions/types', '/questions/(?P<id>[\d]+)', '/questions/(?P<id>[\d]+)/archive', '/questions/(?P<id>[\d]+)/restore', '/questions/(?P<id>[\d]+)/approve', '/questions/(?P<id>[\d]+)/duplicate', '/questions/(?P<id>[\d]+)/versions', '/questions/(?P<id>[\d]+)/versions/(?P<version_id>[\d]+)' ) as $route ) {
 		ok( isset( $routes[ '/ohmylms/v1' . $route ] ), 'route registered: ' . $route );
 		foreach ( $routes[ '/ohmylms/v1' . $route ] as $endpoint ) {
 			ok( is_callable( $endpoint['permission_callback'] ) && '__return_true' !== $endpoint['permission_callback'], "real permission_callback on $route" );
 		}
 	}
-	ok( isset( $routes['/ohmylms/v1/question'], $routes['/ohmylms/v1/question-bank'] ), 'legacy routes still registered' );
+	$legacy_routes = array_intersect(
+		array_keys( $routes ),
+		array(
+			'/ohmylms/v1/question',
+			'/ohmylms/v1/question/(?P<id>[\d]+)',
+			'/ohmylms/v1/question-bank',
+			'/ohmylms/v1/question-bank/export',
+			'/ohmylms/v1/question-bank/(?P<id>[\d]+)',
+			'/ohmylms/v1/question-bank/(?P<id>[\d]+)/approve',
+			'/ohmylms/v1/question-bank/(?P<id>[\d]+)/archive',
+			'/ohmylms/v1/question-bank/(?P<id>[\d]+)/restore',
+			'/ohmylms/v1/question-bank/(?P<id>[\d]+)/duplicate',
+			'/ohmylms/v1/question-bank/versions/(?P<version_id>[\d]+)',
+			'/ohmylms/v1/quiz/(?P<id>[\d]+)/content',
+			'/ohmylms/v1/quiz/(?P<id>[\d]+)/pools',
+			'/ohmylms/v1/quiz/(?P<id>[\d]+)/questions/(?P<question_id>[\d]+)',
+			'/ohmylms/v1/quiz/(?P<quiz_id>[\d]+)/questions',
+			'/ohmylms/v1/quiz/(?P<quiz_id>[\d]+)/questions/(?P<question_id>[\d]+)/pin',
+		)
+	);
+	ok( array() === array_values( $legacy_routes ), 'legacy question, question-bank and quiz content/questions/pools routes are removed: ' . wp_json_encode( array_values( $legacy_routes ) ) );
+	ok( isset( $routes['/ohmylms/v1/question-bank/import'], $routes['/ohmylms/v1/question-banks'] ), 'the typed import and the bank routes stay' );
 
 	// Create validation (author A). None of these may write.
 	wp_set_current_user( $author_a );
@@ -467,16 +488,65 @@ try {
 	$empty = call_api( 'GET', '/questions', array( 'search' => $tag . ' nothing' ) );
 	ok( 200 === $empty->get_status() && array() === $empty->get_data() && '0' === $empty->get_headers()['X-WP-Total'], 'empty result is 200' );
 
-	// The legacy /question-bank list (now backed by the same Search service) is unchanged.
-	foreach ( array( $admin, $author_a ) as $user ) {
-		wp_set_current_user( $user );
-		$legacy = call_api( 'GET', '/question-bank', array( 'search' => $tag ) );
-		$typed  = call_api( 'GET', '/questions', array( 'search' => $tag ) );
-		$data   = $legacy->get_data();
-		ok( 200 === $legacy->get_status() && array_map( 'intval', wp_list_pluck( $data['items'], 'id' ) ) === ids_of( $typed ), "legacy list returns the same ids for user $user" );
-		ok( (int) $typed->get_headers()['X-WP-Total'] === $data['total'] && 1 === $data['page'] && 20 === $data['per_page'], "legacy list total and paging for user $user" );
-		ok( isset( $data['items'][0]['native_editor_url'], $data['items'][0]['can_edit'], $data['items'][0]['usage']['archived'] ) && is_string( $data['items'][0]['modified'] ) && is_int( $data['items'][0]['author'] ), 'legacy row shape is unchanged' );
-	}
+	// Filters of the native editors' pickers: secure (exam-only) and the questions of a quiz.
+	wp_set_current_user( $author_a );
+	$filtered = array(
+		'search' => $tag,
+		'secure' => false,
+	);
+	ok( array( (int) $alpha['id'] ) === ids_of( call_api( 'GET', '/questions', $filtered ) ), 'secure=false keeps questions that are not exam-only' );
+	ok( array() === ids_of( call_api( 'GET', '/questions', array( 'secure' => true ) + $filtered ) ), 'secure=true leaves them out' );
+	ok_error( call_api( 'GET', '/questions', array( 'exclude_quiz' => 0 ) ), 400, 'rest_invalid_param', 'exclude_quiz must be an ID' );
+	$quiz_a     = wp_insert_post(
+		array(
+			'post_type'   => OHMYLMS_QUIZ_CPT,
+			'post_title'  => $tag . ' quiz',
+			'post_status' => 'draft',
+			'post_author' => $author_a,
+		)
+	);
+	$post_ids[] = $quiz_a;
+	\OhMyLMS\QuestionBank\DraftWriter::link( $quiz_a, (int) $alpha['id'] );
+	$excluded = array(
+		'search'       => $tag,
+		'exclude_quiz' => $quiz_a,
+	);
+	ok( array() === ids_of( call_api( 'GET', '/questions', $excluded ) ), 'exclude_quiz leaves out questions already in the quiz' );
+	wp_set_current_user( $author_b );
+	ok_error( call_api( 'GET', '/questions', $excluded ), 403, 'ohmylms_question_quiz_forbidden', "author B excludes the questions of A's quiz" );
+	ok_error( call_api( 'GET', '/questions', array( 'exclude_quiz' => $other_post ) ), 403, 'ohmylms_question_quiz_forbidden', 'exclude_quiz of a post that is not a quiz' );
+	wp_set_current_user( $author_a );
+	ok( ! is_wp_error( \OhMyLMS\QuestionBank\Usage::remove_from_quiz( $quiz_a, (int) $alpha['id'] ) ), 'fixture placement removed' );
+	// Organisation views (docs/QUESTION-BULK-IMPORT.md): a scope narrows the list, never widens it.
+	ok_error( call_api( 'GET', '/questions', array( 'organisation' => 'Not A View!' ) ), 400, 'rest_invalid_param', 'organisation is a view ID' );
+	ok_error(
+		call_api(
+			'GET',
+			'/questions',
+			array(
+				'organisation' => $tag,
+				'scope'        => 1,
+			)
+		),
+		400,
+		'bank_scope',
+		'an unknown organisation view'
+	);
+	$resolve_scope = static function ( $references, $view ) use ( $tag, $alpha ) {
+		return $tag === $view ? array( 'skills' => (array) $alpha['skills'] ) : $references;
+	};
+	add_filter( 'ohmylms_question_bank_resolve_scope', $resolve_scope, 10, 2 );
+	$scoped = call_api(
+		'GET',
+		'/questions',
+		array(
+			'search'       => $tag,
+			'organisation' => $tag,
+			'scope'        => 1,
+		)
+	);
+	remove_filter( 'ohmylms_question_bank_resolve_scope', $resolve_scope, 10 );
+	ok( 200 === $scoped->get_status() && array() === ids_of( $scoped ), 'a view without matching skills lists nothing: ' . wp_json_encode( $scoped->get_data() ) );
 
 	// Update.
 	wp_set_current_user( $author_a );
@@ -603,6 +673,21 @@ try {
 		'versions are paged'
 	);
 	ok_error( call_api( 'GET', $alpha_path . '/versions', array( 'page' => 9 ) ), 400, 'ohmylms_question_invalid_page', 'versions page past the end' );
+
+	// Content of one version: editors only, never another question's version.
+	$history = $versions->get_data();
+	$first   = end( $history );
+	$content = call_api( 'GET', $alpha_path . '/versions/' . $first['id'] );
+	$data    = $content->get_data();
+	ok( 200 === $content->get_status() && 1 === (int) $data['version_no'] && (int) $alpha['id'] === (int) $data['question_id'] && 'private, no-store' === $content->get_headers()['Cache-Control'], 'version content is readable by its editor: ' . wp_json_encode( $data ) );
+	ok( $tag . ' alpha' === $data['title'] && 'single-choice' === $data['settings']['type'] && 2 === count( $data['options'] ) && ! isset( $data['content_hash'] ) && is_array( $data['skills'] ), 'version content: title, settings, options with answers, skills, no hash' );
+	ok_error( call_api( 'GET', $alpha_path . '/versions/999999999' ), 404, 'ohmylms_version_missing', 'unknown version' );
+	ok_error( call_api( 'GET', $alpha_path . '/versions/' . $beta['current_version_id'] ), 404, 'ohmylms_version_missing', "a version of another question through A's question" );
+	wp_set_current_user( $author_b );
+	ok_error( call_api( 'GET', $alpha_path . '/versions/' . $first['id'] ), 403, 'ohmylms_question_cannot_view', "author B reads A's version content" );
+	wp_set_current_user( 0 );
+	ok_error( call_api( 'GET', $alpha_path . '/versions/' . $first['id'] ), 401, 'ohmylms_question_cannot_view', 'a guest reads version content' );
+	wp_set_current_user( $author_a );
 
 	// Extension settings are validated by their schema, merged, and versioned with the content.
 	$extension_id = $tag . '-ext';
@@ -749,8 +834,8 @@ try {
 		),
 		call_api( 'POST', $alpha_path . '/archive' ),
 		call_api( 'PATCH', $alpha_path, array( 'base_modified' => gmdate( 'Y-m-d\TH:i:s\Z' ) ) ),
-		call_api( 'GET', '/question-bank', array( 'search' => $tag ) ),
-		call_api( 'GET', '/question-bank/' . $alpha['id'] ),
+		call_api( 'GET', $alpha_path . '/versions/' . $alpha['current_version_id'] ),
+		call_api( 'DELETE', $alpha_path ),
 	);
 	$dump = wp_json_encode(
 		array_map(
@@ -761,7 +846,8 @@ try {
 		)
 	);
 	ok( false === strpos( $dump, 'Three' . $tag ) && false === strpos( $dump, 'Divide' ), 'no answer text or settings reach a user without access' );
-	ok( 403 === $seen[0]->get_status() && 403 === $seen[1]->get_status() && 403 === $seen[7]->get_status(), 'item reads are refused' );
+	ok( 403 === $seen[0]->get_status() && 403 === $seen[1]->get_status() && 403 === $seen[6]->get_status() && 403 === $seen[7]->get_status(), 'item reads and deletes are refused' );
+	ok( 'publish' === get_post_status( $alpha['id'] ), 'the refused delete changed nothing' );
 	ok( ! in_array( (int) $alpha['id'], ids_of( $seen[2] ), true ), "A's question is not listed for B" );
 
 	// Approve: 404 before capabilities, object-level approve rights, then the legacy approval logic.
@@ -771,7 +857,7 @@ try {
 	ok_error( call_api( 'POST', '/questions/999999999/duplicate' ), 404, 'ohmylms_question_not_found', 'duplicate unknown id for a guest' );
 	wp_set_current_user( $author_b );
 	ok_error( call_api( 'POST', $approve_path ), 403, 'ohmylms_question_cannot_approve', "author B approves A's question" );
-	ok_error( call_api( 'POST', '/question-bank/' . $alpha['id'] . '/approve' ), 403, 'ohmylms_forbidden', "legacy: author B approves A's question" );
+	ok( 404 === call_api( 'POST', '/question-bank/' . $alpha['id'] . '/approve' )->get_status(), 'the legacy approve route is gone' );
 	wp_set_current_user( $author_a );
 	$before = call_api( 'GET', $alpha_path )->get_data();
 	ok( 0 === $before['approved_version_id'] && 'draft' === $before['status'], 'alpha starts unapproved' );
@@ -800,10 +886,8 @@ try {
 	$older = call_api( 'POST', $approve_path, array( 'version_id' => $before['current_version_id'] ) )->get_data();
 	ok( $before['current_version_id'] === $older['approved_version_id'] && false === $older['approved_is_current'], 'version_id approves that version' );
 	wp_set_current_user( $admin );
-	$legacy_approve = call_api( 'POST', '/question-bank/' . $alpha['id'] . '/approve' );
-	$legacy_data    = $legacy_approve->get_data();
-	ok( 200 === $legacy_approve->get_status() && $newer['current_version_id'] === $legacy_data['approved_version_id'] && 'approved' === $legacy_data['status'] && isset( $legacy_data['native_editor_url'], $legacy_data['can_approve'] ) && ! isset( $legacy_data['settings'] ), 'legacy approve still works and returns its summary: ' . wp_json_encode( $legacy_data ) );
-	ok( true === call_api( 'GET', $alpha_path )->get_data()['approved_is_current'], 'legacy approve approved the current version' );
+	$review = \OhMyLMS\QuestionBank\ReviewQueue::approve( (int) $alpha['id'] );
+	ok( true === $review && true === call_api( 'GET', $alpha_path )->get_data()['approved_is_current'], 'the review queue approves the current version through the typed route: ' . wp_json_encode( $review ) );
 
 	// A bank grant of edit (not approve): the user may edit and duplicate, but not approve.
 	wp_set_current_user( $author_b );
@@ -858,13 +942,59 @@ try {
 	$question_ids[] = (int) $gamma_copy->get_data()['id'];
 	wp_set_current_user( $author_b );
 	ok_error( call_api( 'POST', $alpha_path . '/duplicate' ), 403, 'ohmylms_question_cannot_duplicate', "author B duplicates A's question" );
-	ok_error( call_api( 'POST', '/question-bank/' . $alpha['id'] . '/duplicate' ), 403, 'ohmylms_forbidden', "legacy: author B duplicates A's question" );
 	wp_set_current_user( $author_a );
-	$legacy_copy = call_api( 'POST', '/question-bank/' . $alpha['id'] . '/duplicate' );
-	$legacy_data = $legacy_copy->get_data();
-	ok( 201 === $legacy_copy->get_status() && (int) $alpha['id'] === $legacy_data['duplicated_from'] && (int) $legacy_data['id'] !== (int) $alpha['id'] && isset( $legacy_data['native_editor_url'] ) && ! isset( $legacy_data['settings'] ), 'legacy duplicate still works and returns its summary: ' . wp_json_encode( $legacy_data ) );
-	$question_ids[] = (int) $legacy_data['id'];
-	ok( get_post_field( 'post_title', $legacy_data['id'] ) === $source['name'] . ' (copy)', 'legacy copy name' );
+
+	// The blank document of the native editor (an auto-draft): only its author reads and writes it.
+	$blank_id       = wp_insert_post(
+		array(
+			'post_type'   => OHMYLMS_QUESTION_CPT,
+			'post_title'  => $tag . ' blank',
+			'post_status' => 'auto-draft',
+			'post_author' => $author_a,
+		)
+	);
+	$question_ids[] = $blank_id;
+	$blank_path     = '/questions/' . $blank_id;
+	$blank          = call_api( 'GET', $blank_path );
+	ok( 200 === $blank->get_status() && 'auto-draft' === $blank->get_data()['post_status'] && array() === (array) $blank->get_data()['settings'] && preg_match( '/Z$/', $blank->get_data()['modified'] ), 'the author reads the blank document: ' . wp_json_encode( $blank->get_data() ) );
+	ok_error( call_api( 'GET', $blank_path . '/versions' ), 404, 'ohmylms_question_not_found', 'the blank document has no other routes' );
+	ok_error( call_api( 'POST', $blank_path . '/approve' ), 404, 'ohmylms_question_not_found', 'the blank document cannot be approved' );
+	wp_set_current_user( $admin );
+	ok_error( call_api( 'GET', $blank_path ), 404, 'ohmylms_question_not_found', "another user's blank document is not found" );
+	wp_set_current_user( $author_a );
+	$filled = call_api(
+		'PATCH',
+		$blank_path,
+		array(
+			'base_modified' => $blank->get_data()['modified'],
+			'name'          => $tag . ' blank filled',
+			'settings'      => array( 'type' => 'single-choice' ),
+			'options'       => $single['options'],
+		)
+	);
+	ok( 200 === $filled->get_status() && 'draft' === get_post_status( $blank_id ) && 'draft' === $filled->get_data()['post_status'] && 1 === $filled->get_data()['version'], 'the first save makes the blank document a draft question: ' . wp_json_encode( $filled->get_data() ) );
+
+	// Delete: only questions nothing references; edit grants never delete.
+	$doomed = make_question( array( 'name' => $tag . ' doomed' ) + array_diff_key( $single, array( 'name' => 1 ) ) );
+	ok_error( call_api( 'DELETE', '/questions/' . $doomed['id'], array( 'force' => true ) ), 400, 'ohmylms_question_unknown_field', 'delete takes no body fields' );
+	ok_error( call_api( 'DELETE', $gamma_path ), 403, 'ohmylms_question_cannot_delete', 'an edit grant cannot delete' );
+	$quiz_b     = wp_insert_post(
+		array(
+			'post_type'   => OHMYLMS_QUIZ_CPT,
+			'post_title'  => $tag . ' quiz b',
+			'post_status' => 'draft',
+			'post_author' => $author_a,
+		)
+	);
+	$post_ids[] = $quiz_b;
+	\OhMyLMS\QuestionBank\DraftWriter::link( $quiz_a, (int) $doomed['id'] );
+	\OhMyLMS\QuestionBank\DraftWriter::link( $quiz_b, (int) $doomed['id'] );
+	ok_error( call_api( 'DELETE', '/questions/' . $doomed['id'] ), 409, 'ohmylms_question_shared', 'a question in two quizzes is not deleted' );
+	\OhMyLMS\QuestionBank\Usage::remove_from_quiz( $quiz_b, (int) $doomed['id'] );
+	$deleted = call_api( 'DELETE', '/questions/' . $doomed['id'] );
+	ok( 200 === $deleted->get_status() && true === $deleted->get_data()['deleted'] && false === $deleted->get_data()['archived'] && (int) $doomed['id'] === $deleted->get_data()['previous']['id'], 'delete answers deleted and the previous editor view: ' . wp_json_encode( $deleted->get_data() ) );
+	ok( null === get_post( $doomed['id'] ) && 0 === (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE question_id = %d', $wpdb->prefix . 'ohmylms_quiz_questions_relationship', $doomed['id'] ) ), 'the question and its placement are gone' );
+	ok_error( call_api( 'DELETE', '/questions/' . $doomed['id'] ), 404, 'ohmylms_question_not_found', 'a deleted question is not found' );
 
 	// Schema.
 	$schema = rest_do_request( new WP_REST_Request( 'OPTIONS', '/ohmylms/v1/questions' ) )->get_data()['schema'];

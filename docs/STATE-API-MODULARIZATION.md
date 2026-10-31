@@ -37,6 +37,12 @@ SDK entries):
 - Each area keeps its requests in its own `api.mjs`: `assessment`, `content-hub`, `curriculum`,
   `question-bank`, `learning`. Every helper takes an injectable `fetch` as its last argument so
   Node tests can record requests; components do not pass a transport.
+- Since 31 October 2026 they call only typed routes: `question-bank/api.mjs` uses `ohmylms/v1/questions`
+  (adapting the editor view to the flat fields the editors read: bank attributes, `skill_map`, `can_edit`,
+  option `thumbnail_id`) and `quizzes/{id}/questions/*/pin`; `assessment/api.mjs` reads the quiz's questions
+  and pools from `quizzes/{id}/questions` and saves pools with its revision; `content-hub/api.mjs` exports
+  through `POST questions/export`. The legacy `/question`, `/question-bank`, `/quiz/{id}/content|questions|pools`
+  routes they used were removed.
 - REST failures reach callers as the parsed REST error (`code`, `message`, `data`), unchanged.
 - `rest.mjs` and `learning/api.mjs` are `// @ts-check` with JSDoc types. They pass
   `tsc --allowJs --checkJs --strict`; `npm run typecheck` does not include them yet.

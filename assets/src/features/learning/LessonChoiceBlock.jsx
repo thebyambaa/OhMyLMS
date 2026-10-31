@@ -101,6 +101,8 @@ function LessonChoiceEdit( {
 	);
 	const [ busy, setBusy ] = useState( false );
 	const [ error, setError ] = useState( '' );
+	// A shared question the author may use but not edit: its content and answer key stay private.
+	const [ shared, setShared ] = useState( false );
 	const loadedId = useRef( 0 );
 	const revision = useRef( 0 );
 	const history = useRef( { past: [], future: [] } );
@@ -174,6 +176,7 @@ function LessonChoiceEdit( {
 			return undefined;
 		}
 		setQuestion( null );
+		setShared( false );
 		loadBankQuestion( attributes.questionId )
 			.then( ( data ) => {
 				if ( active ) {
@@ -202,7 +205,17 @@ function LessonChoiceEdit( {
 					} );
 				}
 			} )
-			.catch( ( failure ) => active && setError( failure.message ) );
+			.catch( ( failure ) => {
+				if ( ! active ) {
+					return;
+				}
+				if ( failure.code === 'ohmylms_question_cannot_view' ) {
+					setShared( true );
+					setDirty( false );
+				} else {
+					setError( failure.message );
+				}
+			} );
 		return () => {
 			active = false;
 		};
@@ -322,7 +335,7 @@ function LessonChoiceEdit( {
 	}, [ dirty, busy, error, question, detail?.can_edit, save ] );
 	async function duplicate() {
 		try {
-			const created = await duplicateQuestion( attributes.questionId, 0 );
+			const created = await duplicateQuestion( attributes.questionId );
 			const fresh = await loadBankQuestion( created.id );
 			const editor = select( 'core/block-editor' );
 			insertBlock(
@@ -337,6 +350,34 @@ function LessonChoiceEdit( {
 		} catch ( failure ) {
 			setError( failure.message );
 		}
+	}
+	if ( ! question && shared ) {
+		return (
+			<Notice
+				status="info"
+				isDismissible={ false }
+				actions={ [
+					{
+						label: __( 'Duplicate to edit', 'ohmylms' ),
+						onClick: duplicate,
+					},
+					...( standalone
+						? []
+						: [
+								{
+									label: __( 'Remove', 'ohmylms' ),
+									onClick: () => removeBlock( clientId ),
+								},
+							] ),
+				] }
+			>
+				{ __(
+					'This shared bank question is read-only for you, so its content and answers are not shown here. Learners get its approved version.',
+					'ohmylms'
+				) }
+				{ error && <p role="alert">{ error }</p> }
+			</Notice>
+		);
 	}
 	if ( ! question ) {
 		return error ? (

@@ -85,19 +85,6 @@ final class Usage {
 		return (int) apply_filters( 'ohmylms_question_response_count', $count, (int) $question_id );
 	}
 
-	/**
-	 * Summary for Usage.
-	 *
-	 * @param mixed $question_id Question identifier.
-	 */
-	public static function summary( $question_id ) {
-		return array(
-			'quizzes'   => self::quizzes( $question_id ),
-			'responses' => self::responses( $question_id ),
-			'archived'  => get_post_status( $question_id ) === self::ARCHIVED,
-		);
-	}
-
 	/** Remove the question from one quiz only. The question itself is kept.
 	 *
 	 * @param mixed $quiz_id Quiz identifier.

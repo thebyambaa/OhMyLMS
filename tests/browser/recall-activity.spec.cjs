@@ -21,16 +21,15 @@ test( 'memory recall saves study deadline, choices and practice-only feedback', 
 	const fixture = await page.evaluate( async () => {
 		const api = ( path, data ) =>
 			wp.apiFetch( { path, method: 'POST', data } );
-		const q = await api( '/ohmylms/v1/question', {
+		const q = await api( '/ohmylms/v1/questions', {
 			name: 'Recall browser fixture',
-			quiz_id: 0,
 			settings: { type: 'matching', score: { enabled: true, value: 1 } },
-			questions: [ 'Үүл', 'Rain', 'Sun', 'Snow' ].map( ( answer ) => ( {
+			options: [ 'Үүл', 'Rain', 'Sun', 'Snow' ].map( ( answer ) => ( {
 				answer,
 				matching_data: { label: `Private ${ answer }` },
 			} ) ),
 		} );
-		await api( `/ohmylms/v1/question-bank/${ q.id }/approve`, {} );
+		await api( `/ohmylms/v1/questions/${ q.id }/approve`, {} );
 		const post = await api( '/wp/v2/pages', {
 			title: 'Recall browser fixture',
 			status: 'publish',
@@ -140,7 +139,7 @@ test( 'memory recall saves study deadline, choices and practice-only feedback', 
 				method: 'DELETE',
 			} );
 			await wp.apiFetch( {
-				path: `/ohmylms/v1/question/${ question }`,
+				path: `/ohmylms/v1/questions/${ question }`,
 				method: 'DELETE',
 			} );
 		}, fixture );

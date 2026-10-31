@@ -55,15 +55,15 @@ export const editPath = ( type, id ) =>
 export const exportQuestionRows = (
 	{ quizId = 0, ids = [], format = 'json', label = '' },
 	fetch = request
-) => {
-	const params = new URLSearchParams( { format } );
-	if ( quizId ) {
-		params.set( 'quiz_id', quizId );
-	} else {
-		params.set( 'ids', ids.join( ',' ) );
-	}
-	if ( label ) {
-		params.set( 'label', label );
-	}
-	return fetch( { path: `${ base }/question-bank/export?${ params }` } );
-};
+) =>
+	fetch( {
+		path: `${ base }/questions/export`,
+		method: 'POST',
+		data: {
+			format,
+			...( quizId
+				? { quiz_id: Number( quizId ) }
+				: { ids: ids.map( Number ) } ),
+			...( label ? { label } : {} ),
+		},
+	} );

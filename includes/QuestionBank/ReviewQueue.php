@@ -179,7 +179,7 @@ final class ReviewQueue {
 	 * @return true|string True, or an error message.
 	 */
 	public static function approve( $question_id ) {
-		$response = rest_do_request( new \WP_REST_Request( 'POST', '/ohmylms/v1/question-bank/' . (int) $question_id . '/approve' ) );
+		$response = rest_do_request( new \WP_REST_Request( 'POST', '/ohmylms/v1/questions/' . (int) $question_id . '/approve' ) );
 		return $response->is_error() ? $response->as_error()->get_error_message() : true;
 	}
 

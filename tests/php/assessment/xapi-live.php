@@ -116,7 +116,7 @@ $make_question = static function ($name) use ($quiz_id) {
         'questions' => [['answer' => 'Right', 'is_correct' => 1], ['answer' => 'Wrong']], 'bank' => ['family_id' => 'live-' . wp_generate_password(6, false, false)]]);
     ok(status_of($created) === 201, 'Question create failed');
     $id = remember_post($created->get_data()['id']);
-    ok(status_of(call('POST', 'question-bank/' . $id . '/approve')) === 200, 'Question approve failed');
+    ok(status_of(call('POST', 'questions/' . $id . '/approve')) === 200, 'Question approve failed');
     return $id;
 };
 $q1 = $make_question('Smoke Q1');

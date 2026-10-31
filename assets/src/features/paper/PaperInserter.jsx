@@ -19,7 +19,10 @@ export function PaperInserter( { clientId = '' } ) {
 	const [ mode, setMode ] = useState( '' );
 	const [ jobId, setJobId ] = useState( 0 );
 	const quizId = useSelect(
-		( store ) => store( 'core/editor' ).getCurrentPostId(),
+		( store ) =>
+			store( 'core/editor' ).getCurrentPostType() === 'ohmylms-quiz'
+				? store( 'core/editor' ).getCurrentPostId()
+				: 0,
 		[]
 	);
 	const insert = ( blocks ) => {

@@ -532,7 +532,11 @@ export function registerMultipleChoiceBlock( LessonEdit ) {
 				{ content }
 				{ picking && (
 					<BankPicker
-						quizId={ props.context?.postId }
+						quizId={
+							postType === 'ohmylms-quiz'
+								? props.context?.postId
+								: 0
+						}
 						existingIds={ blockQuestionIds() }
 						onClose={ () => setPicking( false ) }
 						onPick={ ( ids ) => {

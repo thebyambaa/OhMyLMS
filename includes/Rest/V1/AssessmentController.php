@@ -60,22 +60,6 @@ class AssessmentController extends RestController {
 				),
 			)
 		);
-		register_rest_route(
-			$this->namespace,
-			'/quiz/(?P<id>[\d]+)/pools',
-			array(
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'pools' ),
-					'permission_callback' => array( $this, 'quiz_permission' ),
-				),
-				array(
-					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'save_pools' ),
-					'permission_callback' => array( $this, 'quiz_permission' ),
-				),
-			)
-		);
 		// A quiz, unit test or course challenge that draws questions for a list of skills.
 		register_rest_route(
 			$this->namespace,
@@ -185,25 +169,6 @@ class AssessmentController extends RestController {
 	public function save_settings( WP_REST_Request $request ) {
 		$saved = \OhMyLMS\Assessment\AssessmentSettings::save( (int) $request['id'], (array) $request->get_json_params() );
 		return is_wp_error( $saved ) ? $saved : rest_ensure_response( array( 'settings' => $saved ) );
-	}
-
-	/**
-	 * Pools for Assessment controller.
-	 *
-	 * @param WP_REST_Request $request REST request.
-	 */
-	public function pools( WP_REST_Request $request ) {
-		return rest_ensure_response( array( 'pools' => \OhMyLMS\Assessment\Pools::rules( (int) $request['id'] ) ) );
-	}
-
-	/**
-	 * Save pools for Assessment controller.
-	 *
-	 * @param WP_REST_Request $request REST request.
-	 */
-	public function save_pools( WP_REST_Request $request ) {
-		$saved = \OhMyLMS\Assessment\Pools::save( (int) $request['id'], (array) ( $request['pools'] ?? array() ) );
-		return is_wp_error( $saved ) ? $saved : rest_ensure_response( array( 'pools' => $saved ) );
 	}
 
 	/**

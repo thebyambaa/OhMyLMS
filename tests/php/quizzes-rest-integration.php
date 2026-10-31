@@ -425,59 +425,65 @@ try {
 		)
 	);
 	ok( 200 === $cleared->get_status() && null === $cleared->get_data()['settings']['available_from'], 'availability can be cleared' );
-	$essay = call_api(
-		'POST',
-		'question',
+	$place_question = static function ( $quiz, array $question ) {
+		return call_api(
+			'POST',
+			"quizzes/$quiz/questions/new",
+			array(
+				'question' => $question,
+				'revision' => call_api( 'GET', "quizzes/$quiz/questions" )->get_data()['revision'],
+			)
+		);
+	};
+	$essay          = $place_question(
+		$quiz_id,
 		array(
-			'quiz_id'   => $quiz_id,
-			'name'      => 'Explain why',
-			'settings'  => array(
+			'name'     => 'Explain why',
+			'settings' => array(
 				'type'  => 'short-text',
 				'score' => array(
 					'enabled' => true,
 					'value'   => 4,
 				),
 			),
-			'questions' => array(
+			'options'  => array(
 				array(
 					'answer'     => 'model',
-					'is_correct' => 1,
+					'is_correct' => true,
 				),
 			),
 		)
 	);
 	ok( 201 === $essay->get_status(), 'essay question: ' . wp_json_encode( $essay->get_data() ) );
-	$essay_id = $essay->get_data()['id'];
+	$essay_id   = $essay->get_data()['created_id'];
 	$post_ids[] = $essay_id;
-	$choice = call_api(
-		'POST',
-		'question',
+	$choice     = $place_question(
+		$quiz_id,
 		array(
-			'quiz_id'   => $quiz_id,
-			'name'      => 'Pick one',
-			'settings'  => array(
+			'name'     => 'Pick one',
+			'settings' => array(
 				'type'  => 'single-choice',
 				'score' => array(
 					'enabled' => true,
 					'value'   => 2,
 				),
 			),
-			'questions' => array(
+			'options'  => array(
 				array(
 					'answer'       => 'Right',
-					'is_correct'   => 1,
+					'is_correct'   => true,
 					'order_number' => 1,
 				),
 				array(
 					'answer'       => 'Wrong',
-					'is_correct'   => 0,
+					'is_correct'   => false,
 					'order_number' => 2,
 				),
 			),
 		)
 	);
 	ok( 201 === $choice->get_status(), 'choice question' );
-	$choice_id = $choice->get_data()['id'];
+	$choice_id = $choice->get_data()['created_id'];
 	$post_ids[] = $choice_id;
 	ok( 2 === call_api( 'GET', "quizzes/$quiz_id" )->get_data()['question_count'], 'question count' );
 
@@ -840,7 +846,7 @@ try {
 	ok( 200 === call_api( 'GET', "quiz/$quiz_id" )->get_status(), 'authoring read' );
 	wp_set_current_user( $author_c );
 	ok( in_array( call_api( 'GET', "quiz/$quiz_id" )->get_status(), array( 401, 403 ), true ), 'authoring read by an unrelated author is refused' );
-	foreach ( array( 'GET quiz', 'GET quiz/contents', 'DELETE quiz/trash-bulk', 'GET quiz/' . $quiz_id . '/report', 'DELETE quiz/' . $quiz_id ) as $removed ) {
+	foreach ( array( 'GET quiz', 'GET quiz/contents', 'DELETE quiz/trash-bulk', 'GET quiz/' . $quiz_id . '/report', 'DELETE quiz/' . $quiz_id, 'GET quiz/' . $quiz_id . '/content', 'PUT quiz/' . $quiz_id . '/content', 'POST quiz/' . $quiz_id . '/questions', 'PUT quiz/' . $quiz_id . '/questions/1/pin', 'DELETE quiz/' . $quiz_id . '/questions/1', 'GET quiz/' . $quiz_id . '/pools', 'PUT quiz/' . $quiz_id . '/pools' ) as $removed ) {
 		list( $method, $path ) = explode( ' ', $removed );
 		ok( in_array( call_api( $method, $path )->get_status(), array( 404, 405 ), true ), "removed route $removed" );
 	}
@@ -1077,10 +1083,10 @@ try {
 		ok( 0 === (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = %s AND post_title = %s", OHMYLMS_QUESTION_CPT, "$tag QNEW atomic" ) ), 'failed placement rolled the question back' );
 		ok( array( $qa2, $qa1, $new_id ) === $stored_order( $qq_quiz ), 'failed placement changed no slot' );
 
-		// Another writer (legacy route) changes the revision.
-		$legacy = call_api( 'DELETE', "quiz/$qq_quiz/questions/$qa1" );
-		ok( 200 === $legacy->get_status(), 'legacy remove' );
-		ok_error( call_api( 'PUT', "quizzes/$qq_quiz/questions/order", array( 'question_ids' => array( $new_id, $qa2 ), 'revision' => $revision ) ), 409, 'ohmylms_quiz_questions_conflict', 'legacy change detected' );
+		// Another writer (here the bank service the native quiz editor's save uses) changes the revision.
+		$other_writer = \OhMyLMS\QuestionBank\Usage::remove_from_quiz( $qq_quiz, $qa1 );
+		ok( ! is_wp_error( $other_writer ), 'another writer removes a question' );
+		ok_error( call_api( 'PUT', "quizzes/$qq_quiz/questions/order", array( 'question_ids' => array( $new_id, $qa2 ), 'revision' => $revision ) ), 409, 'ohmylms_quiz_questions_conflict', 'change by another writer detected' );
 		$revision = $list( $qq_quiz )->get_data()['revision'];
 
 		// Pools written by another writer (the legacy route stores this meta).

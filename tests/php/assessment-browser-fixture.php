@@ -54,9 +54,12 @@ if ($action === 'setup') {
         $wpdb->insert($wpdb->prefix . 'ohmylms_content_relationship', ['chapter_id' => $chapter, 'content_id' => $quiz, 'content_type' => 'quiz', 'order_number' => 0]);
         $call('PUT', "quiz/$quiz", ['settings' => ['layout' => 'all_questions_in_one_page', 'allow_attempts' => 5, 'time_limit' => ['value' => 30, 'type' => 'minutes']]]);
         $questions = [];
+        $choice = static function ($name, $right, $wrong) {
+            return ['name' => $name, 'settings' => ['type' => 'single-choice', 'score' => ['enabled' => true, 'value' => 1]],
+                'options' => [['answer' => $right, 'is_correct' => true, 'order_number' => 1], ['answer' => $wrong, 'is_correct' => false, 'order_number' => 2]]];
+        };
         foreach (['Pick 2 + 2' => ['4', '5'], 'Pick 3 × 3' => ['9', '6'], 'Pick 10 − 7' => ['3', '7']] as $name => [$right, $wrong]) {
-            $questions[] = $call('POST', 'question', ['quiz_id' => $quiz, 'name' => $name, 'settings' => ['type' => 'single-choice', 'score' => ['enabled' => true, 'value' => 1]],
-                'questions' => [['answer' => $right, 'is_correct' => 1, 'order_number' => 1], ['answer' => $wrong, 'is_correct' => 0, 'order_number' => 2]]])['id'];
+            $questions[] = $call('POST', "quizzes/$quiz/questions/new", ['question' => $choice($name, $right, $wrong), 'revision' => $call('GET', "quizzes/$quiz/questions")['revision']])['created_id'];
         }
         $state['posts'] = array_merge($state['posts'], $questions);
         // Sections without a page break; the browser test adds it.
@@ -70,11 +73,9 @@ if ($action === 'setup') {
         $state['terms'][] = $skill;
         $practice = [];
         foreach (['Which is ½ of 8?' => ['4', '2'], 'Which is ¼ of 8?' => ['2', '4']] as $name => [$right, $wrong]) {
-            $id = $call('POST', 'question', ['quiz_id' => $quiz, 'name' => $name, 'settings' => ['type' => 'single-choice', 'score' => ['enabled' => true, 'value' => 1]],
-                'questions' => [['answer' => $right, 'is_correct' => 1, 'order_number' => 1], ['answer' => $wrong, 'is_correct' => 0, 'order_number' => 2]]])['id'];
-            $call('DELETE', "quiz/$quiz/questions/$id");
+            $id = $call('POST', 'questions', $choice($name, $right, $wrong))['id'];
             $call('PUT', "question/$id/skills", ['skill_map' => ['p1' => ['primary' => $skill, 'supporting' => []]]]);
-            $call('POST', "question-bank/$id/approve");
+            $call('POST', "questions/$id/approve");
             $practice[] = $id;
         }
         $state['posts'] = array_merge($state['posts'], $practice);

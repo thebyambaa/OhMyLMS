@@ -498,7 +498,7 @@ export function validateDraft( draft ) {
 }
 
 /**
- * REST payload for POST /question (no quiz: the question goes straight to the bank).
+ * Question payload for a bank question (no quiz); `createBankQuestion()` sends it to POST /questions.
  * @param draft
  */
 export function draftToPayload( draft ) {

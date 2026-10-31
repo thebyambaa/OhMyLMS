@@ -58,7 +58,7 @@ $question = call('POST', 'question', ['name' => 'Product', 'description' => 'Wha
     'skills' => ['p1' => ['primary' => $skill]], 'bank' => ['family_id' => "xp-$run"]]);
 ok(status_of($question) === 201, 'Template question failed: ' . wp_json_encode($question->get_data()));
 $qid = remember_post($question->get_data()['id']);
-ok(status_of(call('POST', 'question-bank/' . $qid . '/approve')) === 200, 'Approve failed');
+ok(status_of(call('POST', 'questions/' . $qid . '/approve')) === 200, 'Approve failed');
 
 $student = make_user('subscriber');
 as_user($student);

@@ -52,6 +52,30 @@ function native_quiz_request( $method, $route, $data = array() ) {
 }
 
 /**
+ * Create a question through the typed routes: in the bank, or placed in a quiz.
+ *
+ * @param int   $quiz_id  Quiz to place it in; 0 for the bank only.
+ * @param array $question `POST /questions` body.
+ * @return array{0:int,1:int,2:mixed} Status, new question ID and response data.
+ */
+function native_quiz_question( $quiz_id, array $question ) {
+	if ( ! $quiz_id ) {
+		$response = native_quiz_request( 'POST', '/ohmylms/v1/questions', $question );
+		return array( $response->get_status(), (int) ( $response->get_data()['id'] ?? 0 ), $response->get_data() );
+	}
+	$revision = native_quiz_request( 'GET', '/ohmylms/v1/quizzes/' . $quiz_id . '/questions' )->get_data()['revision'] ?? '';
+	$response = native_quiz_request(
+		'POST',
+		'/ohmylms/v1/quizzes/' . $quiz_id . '/questions/new',
+		array(
+			'question' => $question,
+			'revision' => $revision,
+		)
+	);
+	return array( $response->get_status(), (int) ( $response->get_data()['created_id'] ?? 0 ), $response->get_data() );
+}
+
+/**
  * Serialize a public reference; answer data must never be copied into the post.
  *
  * @param int    $id Question ID.
@@ -217,11 +241,9 @@ try {
 	native_quiz_check( str_contains( $created->get_data()['native_editor_url'] ?? '', 'post.php?post=' . $quiz_id ), 'The new draft did not expose its native editor URL.' );
 	$question_ids = array();
 	foreach ( array( 'single-choice', 'multiple-choice', 'true-false' ) as $index => $format ) {
-		$question = native_quiz_request(
-			'POST',
-			'/ohmylms/v1/question',
+		list( $created_status, $question_id, $data ) = native_quiz_question(
+			1 === $index ? 0 : $quiz_id,
 			array(
-				'quiz_id'     => 1 === $index ? 0 : $quiz_id,
 				'name'        => 'Native question ' . $index,
 				'description' => 'Choose [[ohmylms-math:latex:inline]]x^2[[/ohmylms-math]].',
 				'settings'    => array(
@@ -231,7 +253,7 @@ try {
 						'value'   => 1,
 					),
 				),
-				'questions'   => array(
+				'options'     => array(
 					array(
 						'answer'       => 'true-false' === $format ? 'True' : '[[ohmylms-math:latex:inline]]x^2[[/ohmylms-math]]',
 						'is_correct'   => true,
@@ -245,9 +267,9 @@ try {
 				),
 			)
 		);
-		native_quiz_check( 201 === $question->get_status(), 'Question fixture creation failed: ' . wp_json_encode( $question->get_data() ) );
-		$question_ids[] = (int) $question->get_data()['id'];
-		$native_posts[] = (int) $question->get_data()['id'];
+		native_quiz_check( 201 === $created_status, 'Question fixture creation failed: ' . wp_json_encode( $data ) );
+		$question_ids[] = $question_id;
+		$native_posts[] = $question_id;
 	}
 	$route = '/wp/v2/ohmylms-quizzes/' . $quiz_id;
 	$read  = native_quiz_request( 'GET', $route, array( 'context' => 'edit' ) );
@@ -370,11 +392,9 @@ try {
 	native_quiz_check( 1 === count( ohmylms_get_quiz( $core->get_data()['id'] )->get_questions() ), 'Native core creation did not create its placement.' );
 	$written_quiz_id = (int) $core->get_data()['id'];
 	foreach ( array( 'short-text', 'long-text', 'reorder' ) as $written_type ) {
-		$written_question = native_quiz_request(
-			'POST',
-			'/ohmylms/v1/question',
+		list( $created_status, $written_id, $data ) = native_quiz_question(
+			$written_quiz_id,
 			array(
-				'quiz_id'     => $written_quiz_id,
 				'name'        => 'Native written response',
 				'description' => 'Explain your answer.',
 				'settings'    => array(
@@ -384,7 +404,7 @@ try {
 						'value'   => 2,
 					),
 				),
-				'questions'   => 'reorder' === $written_type ? array(
+				'options'     => 'reorder' === $written_type ? array(
 					array(
 						'answer'       => 'First',
 						'is_correct'   => false,
@@ -404,8 +424,8 @@ try {
 				),
 			)
 		);
-		native_quiz_check( 201 === $written_question->get_status(), 'Written question creation failed: ' . wp_json_encode( $written_question->get_data() ) );
-		$native_posts[] = (int) $written_question->get_data()['id'];
+		native_quiz_check( 201 === $created_status, 'Written question creation failed: ' . wp_json_encode( $data ) );
+		$native_posts[] = $written_id;
 	}
 	$written_document = NativeQuizEditor::editor_content( get_post( $written_quiz_id ) );
 	native_quiz_check( 4 === substr_count( $written_document, 'wp:ohmylms/shared-multiple-choice' ), 'Written questions did not open in the shared native question card.' );

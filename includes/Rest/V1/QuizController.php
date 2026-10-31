@@ -17,7 +17,6 @@ use OhMyLMS\DataException;
 use OhMyLMS\Learning\CourseStructure;
 use OhMyLMS\QuestionBank\AccessPolicy;
 use OhMyLMS\QuestionBank\DraftWriter;
-use OhMyLMS\QuestionBank\Usage;
 use OhMyLMS\Quiz\AttemptReports;
 use OhMyLMS\Quiz\GradingPolicy;
 use OhMyLMS\Quiz\QuizSettings;
@@ -39,9 +38,9 @@ defined( 'ABSPATH' ) || exit;
  * - `ohmylms/v1/quizzes`: the typed API of the TypeScript admin. List, create, read, update the quiz
  *   and its settings, trash/delete, and review and grade attempts. Every route is authorised on the
  *   object: `edit_post` / `delete_post` for the quiz, and {@see GradingPolicy} for attempts.
- * - `ohmylms/v1/quiz`: the question-authoring routes (content, question removal, import/export, skills,
- *   raw create/update) that the question editor and internal callers still use. They keep their
- *   response shape.
+ * - `ohmylms/v1/quiz`: the question-authoring routes (import/export, skills, raw create/update) that
+ *   the question editor and internal callers still use. They keep their response shape. The questions
+ *   of a quiz are served by {@see QuizQuestionsController}.
  *
  * Authentication is WordPress core's: cookie requests need the `X-WP-Nonce` header, which core verifies
  * before any permission callback runs.
@@ -347,23 +346,6 @@ class QuizController extends RestController {
 		);
 		register_rest_route(
 			$this->namespace,
-			$item . '/content',
-			array(
-				'args' => $id,
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_questions' ),
-					'permission_callback' => array( $this, 'check_item_permission' ),
-				),
-				array(
-					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'update_questions' ),
-					'permission_callback' => array( $this, 'check_item_permission' ),
-				),
-			)
-		);
-		register_rest_route(
-			$this->namespace,
 			$item . '/export',
 			array(
 				array(
@@ -380,17 +362,6 @@ class QuizController extends RestController {
 				array(
 					'methods'             => WP_REST_Server::EDITABLE,
 					'callback'            => array( $this, 'set_skills' ),
-					'permission_callback' => array( $this, 'check_item_permission' ),
-				),
-			)
-		);
-		register_rest_route(
-			$this->namespace,
-			$item . '/questions/(?P<question_id>[\d]+)',
-			array(
-				array(
-					'methods'             => WP_REST_Server::DELETABLE,
-					'callback'            => array( $this, 'remove_question' ),
 					'permission_callback' => array( $this, 'check_item_permission' ),
 				),
 			)
@@ -1843,21 +1814,6 @@ class QuizController extends RestController {
 	}
 
 	/**
-	 * Remove one question from this quiz. The question stays in the bank.
-	 *
-	 * @param WP_REST_Request $request Request.
-	 * @return WP_Error|WP_REST_Response
-	 */
-	public function remove_question( $request ) {
-		$result = Usage::remove_from_quiz( (int) $request['id'], (int) $request['question_id'] );
-		if ( is_wp_error( $result ) ) {
-			return $result;
-		}
-
-		return rest_ensure_response( $result + array( 'status' => 'success' ) );
-	}
-
-	/**
 	 * Replace the skills the quiz as a whole is connected to.
 	 *
 	 * @param WP_REST_Request $request Request with `skill_ids`.
@@ -2134,71 +2090,5 @@ class QuizController extends RestController {
 		}
 
 		return $quiz;
-	}
-
-	/**
-	 * Get the questions of a quiz.
-	 *
-	 * @param WP_REST_Request $request Request.
-	 * @return WP_Error|WP_REST_Response
-	 */
-	public function get_questions( $request ) {
-		$quiz = ohmylms_get_quiz( (int) $request['id'] );
-		if ( ! ( $quiz instanceof Quiz ) ) {
-			return $this->not_found();
-		}
-
-		return rest_ensure_response(
-			array(
-				'status'  => 'success',
-				'message' => __( 'Quiz fetched successfully', 'ohmylms' ),
-				'data'    => $quiz->get_questions(),
-			)
-		);
-	}
-
-	/**
-	 * Replace the questions of a quiz, optionally with quiz fields.
-	 *
-	 * @param WP_REST_Request $request Request.
-	 * @return WP_Error|WP_REST_Response
-	 */
-	public function update_questions( $request ) {
-		$quiz_id = (int) $request['id'];
-		$quiz    = ohmylms_get_quiz( $quiz_id );
-		if ( ! ( $quiz instanceof Quiz ) ) {
-			return $this->not_found();
-		}
-		$all_data       = (array) $request->get_json_params();
-		$questions_data = isset( $all_data['questions'] ) && is_array( $all_data['questions'] ) ? $all_data['questions'] : array();
-		$plans          = DraftWriter::prepare_many( $questions_data, $quiz_id );
-		if ( is_wp_error( $plans ) ) {
-			return $plans;
-		}
-		try {
-			Transaction::run(
-				function () use ( $all_data, $questions_data, $quiz_id ) {
-					if ( isset( $all_data['quiz'] ) && is_array( $all_data['quiz'] ) ) {
-						$this->save_quiz( array( 'id' => $quiz_id ) + $all_data['quiz'] );
-					}
-					$saved = DraftWriter::save_many( $questions_data, $quiz_id );
-					if ( is_wp_error( $saved ) ) {
-						// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Internal message, caught in this method and never output.
-						throw new DataException( $saved->get_error_code(), $saved->get_error_message(), (int) ( $saved->get_error_data()['status'] ?? 400 ), (array) $saved->get_error_data() );
-					}
-				}
-			);
-		} catch ( DataException $e ) {
-			return new WP_Error( $e->getErrorCode(), $e->getMessage(), $e->getErrorData() );
-		} catch ( \Throwable $e ) {
-			return new WP_Error( 'ohmylms_quiz_storage', __( 'The quiz could not be saved. Nothing was changed.', 'ohmylms' ), array( 'status' => 500 ) );
-		}
-
-		return rest_ensure_response(
-			array(
-				'status'  => 'success',
-				'message' => __( 'Contents updated successfully', 'ohmylms' ),
-			)
-		);
 	}
 }

@@ -26,7 +26,7 @@ and practice or inline checks never touch course completion.
 | Ticket | Delivered | Main code |
 |---|---|---|
 | A01 | Isolated test site restored (`tools/create-test-site.py` renamed to ohmylms identifiers); pre-existing rename bug fixed (two completion hooks shared a name and crashed quiz completion) | `tools/`, `includes/Extensions/Bootstrap.php` |
-| A02 | Object-level authorization for every question/quiz route and nested write; foreign option IDs rejected; reports scoped to their own quiz | `QuestionBank/AccessPolicy.php`, `QuestionBank/DraftWriter.php`, `Rest/V1/QuestionController.php`, `Rest/V1/QuizController.php` |
+| A02 | Object-level authorization for every question/quiz route and nested write; foreign option IDs rejected; reports scoped to their own quiz | `QuestionBank/AccessPolicy.php`, `QuestionBank/DraftWriter.php`, `Rest/V1/QuestionsController.php`, `Rest/V1/QuizQuestionsController.php` |
 | A03 | Atomic nested saves with per-child errors; stale-save conflict (409); editor save-generation guard keeps edits made during a save; delete split into remove-from-quiz / archive / delete-unused | `DraftWriter.php`, `QuestionBank/Usage.php`, `features/quiz-editor/useQuizEditor.js`, `model.mjs` |
 | A04 | Question UUIDs, immutable content-hashed versions, resumable migration with inventory | `QuestionBank/VersionPublisher.php`, `Assessment/Migration.php`, `Assessment/Schema.php` |
 | A05 | Quiz revisions and slots; per-attempt frozen items (seeded order, opaque option tokens); snapshot-aware graders; versioned reports | `Assessment/RevisionPublisher.php`, `AttemptItems.php`, `Grader.php`, `AttemptReport.php`, `Quiz/Submission.php`, `Quiz/Review.php`, quiz templates |
@@ -133,13 +133,13 @@ scoring policy they started with: `legacy-int` (whole points, as before) or `dec
 
 | Route | Who | Purpose |
 |---|---|---|
-| `question-bank` (GET), `question-bank/{id}` | authors | Search/filter; detail with versions, skill map, usage |
-| `question-bank/{id}/approve|archive|restore|duplicate` | per policy | Lifecycle; duplicate with `quiz_id` swaps the reference |
-| `question-bank/versions/{version}` | users of the question | Frozen version |
+| `questions` (GET), `questions/{id}` | authors; editors of the question for the item | Search/filter; editor view; delete ([questions](api/questions.md)) |
+| `questions/{id}/approve|archive|restore|duplicate` | per policy | Lifecycle |
+| `questions/{id}/versions`, `questions/{id}/versions/{version}` | editors of the question | History; frozen version content |
 | `question-banks`, `question-banks/{id}`, `…/grants` | owner/admin | Banks and sharing |
-| `quiz/{id}/questions` (POST), `quiz/{id}/questions/{q}` (DELETE), `…/pin` | quiz editors | Place by reference, remove from quiz, pin a version |
+| `quizzes/{id}/questions` and `…/new`, `…/order`, `…/{q}`, `…/{q}/pin`, `…/{q}/marks`, `…/sections`, `…/pools` | quiz editors | Place by reference, create in place, reorder, remove, pin, marks, sections, random pools, all with a revision check ([quizzes](api/quizzes.md)) |
 | `quiz/{id}/revisions` (GET/POST) | quiz editors | History; publish |
-| `quiz/{id}/assessment-settings`, `quiz/{id}/pools` | quiz editors | Exam settings; random pools |
+| `quiz/{id}/assessment-settings` | quiz editors | Exam settings |
 | `quiz/{id}/preview`, `…/preview/grade` | quiz editors | Non-recording preview |
 | `attempts/{id}`, `attempts/{id}/responses` | the attempt's learner | Resume; autosave |
 | `skills`, `skills/{id}`, `skills/{id}/lessons`, `skills/{id}/courses`, `skills/link-targets`, `question/{id}/skills` | authors | Catalogue and lesson/course/question mappings |

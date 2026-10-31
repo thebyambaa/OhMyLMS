@@ -14,6 +14,7 @@ import {
 	listSkills,
 	loadBankQuestion,
 	loadVersion,
+	loadVersions,
 	pinQuestion,
 	saveQuestionAttributes,
 } from '../question-bank/api.mjs';
@@ -38,6 +39,7 @@ export function NativeQuestionDetails( {
 	revision,
 } ) {
 	const [ detail, setDetail ] = useState( null );
+	const [ versions, setVersions ] = useState( [] );
 	const [ banks, setBanks ] = useState( [] );
 	const [ skills, setSkills ] = useState( [] );
 	const [ bank, setBank ] = useState( {} );
@@ -52,12 +54,18 @@ export function NativeQuestionDetails( {
 			return undefined;
 		}
 		let active = true;
-		Promise.all( [ loadBankQuestion( id ), listBanks(), listSkills( '' ) ] )
-			.then( ( [ loaded, catalogue, taxonomy ] ) => {
+		Promise.all( [
+			loadBankQuestion( id ),
+			loadVersions( id ),
+			listBanks(),
+			listSkills( '' ),
+		] )
+			.then( ( [ loaded, history, catalogue, taxonomy ] ) => {
 				if ( ! active ) {
 					return;
 				}
 				setDetail( loaded );
+				setVersions( Array.isArray( history ) ? history : [] );
 				setBank(
 					Object.fromEntries(
 						[
@@ -114,8 +122,7 @@ export function NativeQuestionDetails( {
 							) }
 						</p>
 						<p>
-							{ detail.status } ·{ ' ' }
-							{ detail.usage?.quizzes?.length || 0 }{ ' ' }
+							{ detail.status } · { detail.usage?.quizzes || 0 }{ ' ' }
 							{ __( 'quiz references', 'ohmylms' ) }
 						</p>
 						<fieldset
@@ -240,14 +247,10 @@ export function NativeQuestionDetails( {
 										'ohmylms'
 									),
 								},
-								...( detail.versions || [] ).map(
-									( item ) => ( {
-										value: item.id,
-										label: String(
-											item.version_no || item.id
-										),
-									} )
-								),
+								...versions.map( ( item ) => ( {
+									value: item.id,
+									label: String( item.version_no || item.id ),
+								} ) ),
 							] }
 							onChange={ ( value ) => {
 								setVersion( value );
@@ -259,7 +262,9 @@ export function NativeQuestionDetails( {
 												...snapshot,
 												name: snapshot.title,
 												description: snapshot.body,
-											} ) )( await loadVersion( value ) )
+											} ) )(
+												await loadVersion( id, value )
+											)
 										)
 									);
 								}

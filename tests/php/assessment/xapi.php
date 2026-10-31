@@ -191,7 +191,7 @@ $make_question = static function ($name) use ($quiz_id, $wpdb) {
     $created = call('POST', 'question', $data);
     ok(status_of($created) === 201, 'Question create failed: ' . wp_json_encode($created->get_data()));
     $id = remember_post($created->get_data()['id']);
-    ok(status_of(call('POST', 'question-bank/' . $id . '/approve')) === 200, 'Question approve failed');
+    ok(status_of(call('POST', 'questions/' . $id . '/approve')) === 200, 'Question approve failed');
     return $id;
 };
 $q1 = $make_question('xAPI Q1');

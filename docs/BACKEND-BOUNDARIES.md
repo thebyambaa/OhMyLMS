@@ -64,7 +64,7 @@ statuses the controllers returned before (`ohmylms_student_already_enrolled` 409
 | `QuizController` | `QuizSettings`, `GradingPolicy`, `Review`, `Assessment\AttemptReport`, `QuestionBank\*` | 9: list attempt/question counts, attempts page and detail (joins `users`), per-attempt marks, `grade_events` count | course via `CourseStructure`; reads `quiz_questions_relationship` and Assessment `grade_events` directly | Partial |
 | `AttemptController` | `Assessment\*`, `Quiz\*` | 2 raw `ohmylms_quiz_attempts` row reads | — | Controller SQL |
 | `AssessmentController` | `Assessment\*` | 2: `quiz_revisions`, `attempt_context` | Assessment tables (owner `Assessment\RevisionPublisher`) | Controller SQL |
-| `QuizQuestionsController`, `QuestionsController`, `QuestionController`, `QuestionBankController` | `QuestionBank\*`, `Assessment\Pools` | QuizQuestions 5 `$wpdb` and direct `postmeta`; Questions 5 meta; QuestionBank 4 meta | — | Other owner (audit only) |
+| `QuizQuestionsController`, `QuestionsController`, `QuestionBankController` (banks and grants only; the legacy `QuestionController` and `/question-bank` routes were removed 31 October 2026) | `QuestionBank\*`, `Assessment\Pools` | QuizQuestions 5 `$wpdb` and direct `postmeta`; Questions 5 meta | — | Other owner (audit only) |
 | `PreviewController`, `TemplateController`, `QuestionImportController`, `QuestionBankToolsController` | `Assessment`, `QuestionBank`, `Extensions` | none | — | Separated |
 
 `Quiz\GradingPolicy::course_id()` and `quiz_ids_for_author()` still query the course-structure tables
@@ -102,7 +102,6 @@ authoritative.
 | `ChapterController` | `Data\Chapter` | 2 deletes (`content_relationship`, `user_progress`) | structure and progress tables (`CourseStructure::detach()` exists) | Controller SQL |
 | `AIController` | `Data` | 1 relationship delete, 1 meta | structure table | Controller SQL |
 | `SessionsController` | `Integrations`, `Student\Enrollments` | 22 meta | attendee roster through `Student\Enrollments::course_roster()` | Partial |
-| `SessionController` (legacy `session`, via `ApiHook`) | — | 53 meta, 12 date-format options | — | Legacy |
 | `CourseStructureController` | `Learning\CourseStructure` | 3 term/post meta | — | Partial |
 | `CourseStructureToolsController`, `CourseSettingsController`, `CourseCatalogController`, `CourseOrganizationController`, `ContentHubController`, `AuthoringController`, `LessonAuthoringController`, `LessonController` | `Learning\*`, `Curriculum\*` | none | — | Separated |
 | `ContentHubOverviewController` | `ContentHub\ContentCounts` and the owners above | none | all through owners | Separated |
@@ -112,7 +111,7 @@ authoritative.
 | Controller | Service | Persistence left in controller | Cross-domain access | Status |
 | --- | --- | --- | --- | --- |
 | `AssignmentsController` | `Data\Assignment`, `Learning\Placements` | 7 `$wpdb` (list counts, submissions page/detail), 3 meta | course via `CourseStructure` | Partial |
-| `AssignmentController` (pro, via `ApiHook`) | `Data` | 1 `$wpdb`, 4 meta; grading pipeline | `Schools\Service::grade()` calls it with a constructed `WP_REST_Request` | Controller SQL, inverted dependency |
+| `AssignmentController` (no routes since 31 October 2026; only the grading pipeline `update_attempt_report()`) | `Data` | 1 `$wpdb`, 4 meta | `AssignmentsController` and `Schools\Service::grade()` call it with a constructed `WP_REST_Request` | Controller SQL, inverted dependency |
 
 ### Account Hub and schools
 
@@ -195,7 +194,8 @@ gradually; migrations and installers may keep raw SQL.
    and `IntegrationsController`.
 9. **Advisory locks** (`GET_LOCK` in Comparison, SkillAuthoring, SyllabusEditor, Learning, CourseStructure)
    → one `Utility` lock helper.
-10. Retire the legacy `SessionController`.
+10. ~~Retire the legacy `SessionController`.~~ Done 31 October 2026 (with the legacy question, question-bank,
+    quiz placement and assignment routes; see the deprecation tables in `docs/api`).
 11. Enforce: extend `tools/check-architecture.mjs` to reject new `$wpdb` calls in `includes/Rest/**` with an
     explicit allowlist that shrinks as each step lands.
 

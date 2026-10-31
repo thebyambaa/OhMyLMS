@@ -102,7 +102,7 @@ export function AssessmentSettingsPanel( props ) {
 						accommodationRows( loaded.settings.accommodations )
 					);
 				}
-				setQuestions( content.data || [] );
+				setQuestions( content );
 				setRevisions( history.revisions || [] );
 			} )
 			.catch(
@@ -515,9 +515,7 @@ export function AssessmentSettingsPanel( props ) {
 														hideLabelFromVision
 														disabled={ index < 0 }
 														placeholder={ String(
-															question.settings
-																?.score
-																?.value ?? ''
+															question.marks ?? ''
 														) }
 														value={
 															index < 0

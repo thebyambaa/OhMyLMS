@@ -132,8 +132,8 @@ Existing source/shared skill mappings are included for discovery. These are view
 questions, not separate question copies or an additional permission system; bank visibility
 checks remain authoritative. Newly imported PDF questions default to **Exam only**.
 
-`GET /ohmylms/v1/question-bank-organisation` supplies the available views. Bank requests accept
-`organisation` and `scope`. Integrations can extend the view metadata through
+`GET /ohmylms/v1/question-bank-organisation` supplies the available views. `GET /ohmylms/v1/questions` accepts
+`organisation` and `scope` (the removed `GET /question-bank` did before). Integrations can extend the view metadata through
 `ohmylms_question_bank_organisation_views` and resolve references with
 `ohmylms_question_bank_resolve_scope`. Resolved references are limited to skills, banks,
 courses and quizzes; empty scopes return no questions. Discovery currently lists at most
@@ -146,9 +146,11 @@ edited in a spreadsheet and be imported again. Every registered question type is
 
 Where: **Export questions (CSV)** and **(JSON)** in the quiz editor's *Quiz authoring* panel (this is also where
 an exam's questions are edited) and on the Question Bank tab (the questions on the current page); or
-`GET /wp-json/ohmylms/v1/question-bank/export?format=csv|json` with `ids=1,2,3` (up to 200) or `quiz_id=ID`,
-optional `label`. The MCP tool `export_questions` uses the same route. Only people who can edit a question can
-export it, because the file holds every answer key.
+`POST /wp-json/ohmylms/v1/questions/export` with `format` (`csv|json`) and `ids` (up to 200), `filters` or
+`quiz_id`, optional `label` ([questions API](api/questions.md#import-and-export); the former
+`GET /question-bank/export` was removed). The MCP tool `export_questions` uses the same exporter. Only people
+who can edit a question can export it, because the file holds every answer key; a quiz export skips shared
+questions the user may only use and reports them in `skipped`.
 
 How types are written:
 

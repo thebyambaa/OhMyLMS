@@ -35,13 +35,12 @@ test( 'Hangman and spelling preserve private answers and resume word progress', 
 				equivalence: false,
 			},
 		] ) {
-			const q = await api( '/ohmylms/v1/question', {
+			const q = await api( '/ohmylms/v1/questions', {
 				name: 'Word games browser clue',
-				quiz_id: 0,
 				settings: { ...settings, score: { enabled: true, value: 1 } },
-				questions: [],
+				options: [],
 			} );
-			await api( `/ohmylms/v1/question-bank/${ q.id }/approve`, {} );
+			await api( `/ohmylms/v1/questions/${ q.id }/approve`, {} );
 			questions.push( q.id );
 		}
 		const pages = [];
@@ -181,7 +180,7 @@ test( 'Hangman and spelling preserve private answers and resume word progress', 
 				} );
 			for ( const id of questions )
 				await wp.apiFetch( {
-					path: `/ohmylms/v1/question/${ id }`,
+					path: `/ohmylms/v1/questions/${ id }`,
 					method: 'DELETE',
 				} );
 		}, fixture );

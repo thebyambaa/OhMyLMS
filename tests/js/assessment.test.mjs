@@ -10,7 +10,74 @@ import {
 	accommodationMap,
 	quizIdFromHash,
 } from '../../assets/src/features/assessment/model.mjs';
-import { saveAssessmentSettings } from '../../assets/src/features/assessment/api.mjs';
+import {
+	loadPools,
+	loadQuizQuestions,
+	saveAssessmentSettings,
+	savePools,
+} from '../../assets/src/features/assessment/api.mjs';
+test( 'quiz questions and pools come from the typed quiz questions route', async () => {
+	const body = {
+		revision: 'r1',
+		questions: [
+			{ question_id: 5, name: 'Halves', question_marks: 2, marks: 3 },
+		],
+		pools: [
+			{
+				id: 'pool-1',
+				title: 'Warm-up',
+				skill: { id: 7, name: 'Fractions' },
+				count: 3,
+				marks: 2,
+				difficulty: '',
+				bank_id: 0,
+				include_secure: false,
+			},
+		],
+	};
+	const paths = [];
+	const fetch = ( args ) => {
+		paths.push( args );
+		return Promise.resolve( body );
+	};
+	assert.deepEqual( await loadQuizQuestions( 4, fetch ), [
+		{ id: 5, name: 'Halves', marks: 2 },
+	] );
+	const loaded = await loadPools( 4, fetch );
+	assert.deepEqual( loaded, {
+		pools: [
+			{
+				title: 'Warm-up',
+				term_id: 7,
+				count: 3,
+				marks: 2,
+				difficulty: '',
+				bank_id: 0,
+				include_secure: false,
+			},
+		],
+		revision: 'r1',
+	} );
+	await savePools( 4, loaded.pools, loaded.revision, fetch );
+	assert.deepEqual( paths.at( -1 ), {
+		path: '/ohmylms/v1/quizzes/4/questions/pools',
+		method: 'PUT',
+		data: {
+			pools: [
+				{
+					title: 'Warm-up',
+					skill_id: 7,
+					count: 3,
+					marks: 2,
+					difficulty: '',
+					include_secure: false,
+				},
+			],
+			revision: 'r1',
+		},
+	} );
+	assert.equal( paths[ 0 ].path, '/ohmylms/v1/quizzes/4/questions' );
+} );
 test( 'UTC server times round-trip through local datetime inputs', () => {
 	const local = utcToLocalInput( '2026-10-02 08:30:00' );
 	assert.match( local, /^\d{4}-\d\d-\d\dT\d\d:\d\d$/ );

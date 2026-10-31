@@ -33,7 +33,7 @@ $add = static function ($settings, $name, $skill, $family, $extra = []) use (&$f
         'skills' => ['p1' => ['primary' => $skill]], 'bank' => ['family_id' => $family]], $extra));
     ok(status_of($response) === 201, "Create $name failed: " . wp_json_encode($response->get_data()));
     $id = remember_post($response->get_data()['id']);
-    ok(status_of(call('POST', 'question-bank/' . $id . '/approve')) === 200, "Approve $name failed");
+    ok(status_of(call('POST', 'questions/' . $id . '/approve')) === 200, "Approve $name failed");
     return $id;
 };
 

@@ -358,8 +358,67 @@ try {
 		'unknown question'
 	);
 
+	// Export the questions of a quiz, in quiz order, named after the quiz.
+	$qx_quiz = wp_insert_post(
+		array(
+			'post_type'   => OHMYLMS_QUIZ_CPT,
+			'post_title'  => $tag . ' quiz',
+			'post_status' => 'draft',
+		)
+	);
+	foreach ( array_reverse( $ids ) as $question_id ) {
+		\OhMyLMS\QuestionBank\DraftWriter::link( $qx_quiz, $question_id );
+	}
+	$quiz_file = qx_post(
+		'/questions/export',
+		array(
+			'format'  => 'json',
+			'quiz_id' => $qx_quiz,
+		)
+	);
+	$rows      = json_decode( (string) ( $quiz_file->get_data()['content'] ?? '' ), true );
+	ok( 200 === $quiz_file->get_status() && 2 === $quiz_file->get_data()['count'] && 0 === $quiz_file->get_data()['skipped'], 'a quiz export: ' . wp_json_encode( array_diff_key( (array) $quiz_file->get_data(), array( 'content' => 1 ) ) ) );
+	ok( is_array( $rows ) && false !== strpos( wp_json_encode( $rows ), $tag . ' quiz' ), 'the quiz title labels the rows' );
+	ok_error(
+		qx_post(
+			'/questions/export',
+			array(
+				'format'  => 'json',
+				'quiz_id' => $qx_quiz,
+				'ids'     => $ids,
+			)
+		),
+		400,
+		'ohmylms_question_export_scope',
+		'a quiz and selected IDs together'
+	);
+	ok_error(
+		qx_post(
+			'/questions/export',
+			array(
+				'format'  => 'json',
+				'quiz_id' => 999999999,
+			)
+		),
+		404,
+		'ohmylms_quiz_not_found',
+		'unknown quiz'
+	);
+
 	// Another author cannot export answer keys of questions they cannot edit.
 	wp_set_current_user( $author );
+	ok_error(
+		qx_post(
+			'/questions/export',
+			array(
+				'format'  => 'json',
+				'quiz_id' => $qx_quiz,
+			)
+		),
+		403,
+		'ohmylms_question_cannot_export',
+		'other author exports a quiz they cannot edit'
+	);
 	ok_error(
 		qx_post(
 			'/questions/export',
@@ -390,6 +449,10 @@ try {
 	fwrite( STDERR, $failure->getMessage() . ' (' . basename( $failure->getFile() ) . ':' . $failure->getLine() . ")\n" );
 	$exit_code = 1;
 } finally {
+	if ( ! empty( $qx_quiz ) ) {
+		$wpdb->delete( $wpdb->prefix . 'ohmylms_quiz_questions_relationship', array( 'quiz_id' => $qx_quiz ), array( '%d' ) );
+		wp_delete_post( $qx_quiz, true );
+	}
 	foreach ( qx_created() as $leftover ) {
 		foreach ( (array) $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE question_id = %d', $wpdb->prefix . 'ohmylms_question_answers', $leftover ) ) as $answer_id ) {
 			$wpdb->delete( $wpdb->prefix . 'ohmylms_question_answermeta', array( 'answer_id' => (int) $answer_id ), array( '%d' ) );

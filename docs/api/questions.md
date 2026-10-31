@@ -1,18 +1,18 @@
 # Questions REST API (`ohmylms/v1/questions`)
 
-Contract version 1. This is the typed API of the new admin app's Question Bank list and single-question
-editor. It sits next to the legacy `ohmylms/v1/question` and `ohmylms/v1/question-bank` routes, which the
-old admin still uses and which keep their routes and response shapes. Server code:
-`includes/Rest/V1/QuestionsController.php` (routes, arguments, validation, responses) and
-`includes/QuestionBank/Search.php` (the visibility-scoped list query, shared with `/question-bank`).
-Writes go through `includes/QuestionBank/DraftWriter.php`; archive and restore through
+Contract version 1. This is the typed API of the admin app's Question Bank list and single-question
+editor, and of the native (Gutenberg) question, quiz and lesson editors. It replaced the legacy
+`ohmylms/v1/question` and `ohmylms/v1/question-bank` routes, which were removed on 31 October 2026 (see
+[Removed legacy routes](#removed-legacy-routes)). Server code: `includes/Rest/V1/QuestionsController.php`
+(routes, arguments, validation, responses) and `includes/QuestionBank/Search.php` (the visibility-scoped
+list query). Writes go through `includes/QuestionBank/DraftWriter.php`; archive, restore and delete through
 `includes/QuestionBank/Usage.php`; approval through `includes/QuestionBank/Approval.php` and duplication
-through `includes/QuestionBank/Duplicator.php` (both shared with the legacy `/question-bank` routes);
-object permissions come from `includes/QuestionBank/AccessPolicy.php`.
+through `includes/QuestionBank/Duplicator.php`; object permissions come from
+`includes/QuestionBank/AccessPolicy.php`.
 
 ## Audit before
 
-Findings in the legacy routes this API replaces for the new admin. The legacy routes are unchanged.
+Findings in the legacy routes this API replaced (now removed).
 
 | Severity | Finding |
 | --- | --- |
@@ -29,7 +29,11 @@ Findings in the legacy routes this API replaces for the new admin. The legacy ro
 
 Anonymous callers get `401`, logged-in users without the capability `403`. For item routes an unknown id,
 another post type, a trashed question or an auto-draft answers `404 ohmylms_question_not_found` before the
-capability check. Core validates declared arguments before the permission callback, so a malformed request
+capability check. One exception: the item route itself (`GET`, `PATCH|PUT|POST` and `DELETE /questions/{id}`)
+accepts the caller's **own** auto-draft, the blank document WordPress allocates on
+`post-new.php?post_type=ohmylms-question`; its first write turns it into a draft question (the native
+editor's "new question"). Another user's auto-draft, and every sub-route of an auto-draft, still answer 404.
+Core validates declared arguments before the permission callback, so a malformed request
 can answer 400 before 401/403; a body above 256 KiB answers 413 before anything else. Every successful
 response carries `Cache-Control: private, no-store`.
 
@@ -40,15 +44,30 @@ response carries `Cache-Control: private, no-store`.
 | GET | `/questions/types` | `edit_posts` | 200 type list | 401, 403 |
 | GET | `/questions/{id}` | `AccessPolicy::can_edit_question` | 200 editor view | 401, 403, 404, 503 |
 | PATCH / PUT / POST | `/questions/{id}` | `can_edit_question` | 200 editor view | 400, 401, 403, 404, 409, 413, 422, 500, 503 |
+| DELETE | `/questions/{id}` | `AccessPolicy::can_delete_question` (`delete_post`; bank grants never delete) | 200 `{deleted, archived, previous}` | 400, 401, 403, 404, 409, 500, 503 |
 | POST | `/questions/{id}/archive` | `can_edit_question` | 200 editor view | 400, 401, 403, 404, 500, 503 |
 | POST | `/questions/{id}/restore` | `can_edit_question` | 200 editor view | 400, 401, 403, 404, 500, 503 |
 | POST | `/questions/{id}/approve` | `AccessPolicy::can_approve_question` | 200 editor view | 400, 401, 403, 404, 409, 503 |
 | POST | `/questions/{id}/duplicate` | `can_author` and `AccessPolicy::can_use_question` | 201 editor view of the copy + `Location` | 400, 401, 403, 404, 500, 503 |
 | GET | `/questions/{id}/versions` | `can_edit_question` | 200 versions + totals | 400, 401, 403, 404, 503 |
+| GET | `/questions/{id}/versions/{version_id}` | `can_edit_question` | 200 the version's content | 401, 403, 404, 503 |
 
 `503 ohmylms_question_bank_unavailable` means the question bank tables (`Assessment\Schema::ready()`) are
-not installed. Delete is not part of this API; the legacy `DELETE /question/{id}` (delete, or archive when
-learners have answered it) remains the only delete route.
+not installed.
+
+**Delete** (`Usage::delete_or_archive()`, the logic of the removed `DELETE /question/{id}`): no body fields
+(400 `ohmylms_question_unknown_field`). A question placed in more than one quiz answers 409
+`ohmylms_question_shared` (`data.quizzes`; remove it from a quiz with
+`DELETE /quizzes/{id}/questions/{question_id}` first). A question with learner history is archived instead
+(`archived: true`); otherwise the question, its options, versions and identity row are deleted
+(`deleted: true`) and its single quiz placement is removed. `previous` is the editor view read just before.
+Fires `ohmylms_rest_delete_question` ($request, $result `{id, action}`).
+
+**Version content** (`GET /questions/{id}/versions/{version_id}`): the frozen version row (`id`, `question_id`,
+`version_no`, `title`, `body`, `type`, `settings`, `options` with `is_correct`, …) plus `skills` (the version's
+skill map), without `content_hash`. A version of another question answers 404 `ohmylms_version_missing`. It
+replaced `GET /question-bank/versions/{version_id}`, which returned the same content to users who could only
+*use* the question; this route needs `edit`.
 
 ### Collection arguments (`GET /questions`)
 
@@ -62,6 +81,9 @@ learners have answered it) remains the only delete route.
 | `status` | `active` (default: not archived), `draft` (no approved version), `approved`, `archived`. |
 | `bank` | integer >= 0; `0` is personal questions. A named bank must be in `Banks::for_user()` unless the user has `edit_others_posts`, otherwise 403 `ohmylms_question_bank_forbidden`. |
 | `skill` | skill term ID >= 1. |
+| `secure` | boolean: only secure (exam-only) questions, or only the others. |
+| `exclude_quiz` | quiz ID >= 1: leave out the questions already placed in that quiz (the bank pickers). The quiz must be editable by the user, otherwise 403 `ohmylms_question_quiz_forbidden`. |
+| `organisation`, `scope` | an organisation view ID (`^[a-z0-9_-]{1,60}$`, from `GET /question-bank-organisation`) and a node ID >= 1 of that view: only questions the view resolves to ([QUESTION-BULK-IMPORT](../QUESTION-BULK-IMPORT.md#question-bank-organisation)). An unknown or unavailable view answers 400/403/404 `bank_scope`; a scope never widens visibility. |
 | `orderby` | `modified` (default), `title`, `id`. |
 | `order` | `asc`, `desc` (default). |
 
@@ -114,8 +136,8 @@ Newest first, paged with `page` / `per_page` (as above) and `X-WP-Total`:
     "is_current": true, "is_approved": false } ]
 ```
 
-Content and content hashes are not exposed; the legacy `GET /question-bank/versions/{version_id}` returns a
-version's content to users who may use the question.
+Rows carry no content or content hashes; `GET /questions/{id}/versions/{version_id}` returns one version's
+content to the question's editors.
 
 ### Types (`GET /questions/types`)
 
@@ -345,14 +367,19 @@ any row error stops the whole import (`stopped`). The legacy Content Hub dialog 
 `review`; the new screen always sends it.
 
 **`POST /questions/export`** — required `format` (`csv`, `json`) and exactly one of `ids` (1–200 unique
-IDs, file order) or `filters` (`search` ≤ 100, `type` (registered), `difficulty`, `status`
-`active|draft|approved|archived`, `bank` ≥ 0 visible to the user, `skill`; no other keys); optional `label`
-≤ 190 (the exam name written into every row). Answers `{ filename, mime, content, count, warnings, skipped }`.
+IDs, file order), `filters` (`search` ≤ 100, `type` (registered), `difficulty`, `status`
+`active|draft|approved|archived`, `bank` ≥ 0 visible to the user, `skill`; no other keys) or `quiz_id` (the
+questions of a quiz the user may edit, in quiz order, with their section titles; an unknown or trashed quiz
+answers 404 `ohmylms_quiz_not_found`, a quiz the user cannot edit 403 `ohmylms_question_cannot_export`;
+the native quiz editor's **Export questions** buttons use it); otherwise 400 `ohmylms_question_export_scope`.
+Optional `label` ≤ 190 (the exam name written into every row; a quiz export defaults to the quiz title).
+Answers `{ filename, mime, content, count, warnings, skipped }`.
 The file holds answer keys, so only questions the user may edit are written: selected IDs answer 404
 `ohmylms_question_not_found` for an unknown or trashed ID and 403 `ohmylms_question_cannot_export` if any
-cannot be edited; filters skip such questions and report them in `skipped`. Filters matching nothing answer
-422 `ohmylms_question_export_empty`, more than 200 answer 422 `_export_too_many`. Re-importing an export on
-the same site plans copies (the exporter writes the label as the exam, without paper or year).
+cannot be edited; filters and quizzes skip such questions (shared questions placed by reference) and report
+them in `skipped`. Nothing to export answers 422 `ohmylms_question_export_empty`, more than 200 matches 422
+`_export_too_many`. Re-importing an export on the same site plans copies (the exporter writes the label as the
+exam, without paper or year).
 
 UI: `#/content-hub/question-bank` has **Import questions** (paste or choose a file, **Check file**, review
 every row, then **Import checked rows**; changing the text requires a new check; a stale refusal asks for a new
@@ -370,9 +397,12 @@ the dialog is open. Tests: `tests/php/question-exchange-rest-integration.php` (`
 - Filter `ohmylms_rest_prepare_question_item` ($response, $post, $request): the editor view.
 - Action `ohmylms_rest_save_question_item` ($post, $request, $creating): after create, update or
   duplicate (`$post` is the copy).
+- Action `ohmylms_rest_delete_question` ($request, $result): after `DELETE /questions/{id}` (same name and
+  arguments as on the removed `DELETE /question/{id}`).
 - DraftWriter, Usage, VersionPublisher and Approval actions still fire (`ohmylms_question_draft_saved`,
-  `ohmylms_question_archived`, `ohmylms_question_version_created`, `ohmylms_question_version_approved`, …). The legacy
-  `ohmylms_rest_insert_question` / `ohmylms_rest_prepare_question` hooks belong to `/question` and do not fire here.
+  `ohmylms_question_archived`, `ohmylms_question_version_created`, `ohmylms_question_version_approved`, …).
+  `ohmylms_rest_insert_question`, `ohmylms_rest_prepare_question` and `ohmylms_rest_ohmylms_question_query`
+  belonged to the removed `/question` route and no longer fire; nothing in OhMyLMS or its add-ons hooked them.
 
 ## Security notes
 
@@ -384,11 +414,33 @@ the dialog is open. Tests: `tests/php/question-exchange-rest-integration.php` (`
   `unfiltered_html`; names and bodies are filtered by DraftWriter. Responses are JSON with
   `Cache-Control: private, no-store`.
 - Only declared arguments reach the list query, which is prepared SQL with allow-listed sort columns.
-- The legacy routes still expose, unchanged: `GET /question` (raw `filter` vars into `WP_Query`, settings and
-  options with `is_correct` for questions the user can only use, totals that include hidden questions);
-  `GET /question-bank/{id}` (settings and options to users with `use`; creates the identity row on read);
-  `GET /question-bank/versions/{version_id}` (frozen content including options to users with `use`).
-  Retire them once the old admin no longer needs them.
+- The legacy routes that exposed answer keys to `use` grantees, forwarded raw query vars and wrote on read
+  are removed (below). A shared question an author may only *use* now shows in the native lesson and quiz
+  editors as a read-only card without its content or answers (its 403 read is expected); the author can
+  duplicate it to edit a copy.
+
+## Removed legacy routes
+
+Removed on 31 October 2026 after their last callers moved (the native question, quiz and lesson editors,
+papers, the exam paper review, the Content Hub export buttons, the review queue and the MCP `list_questions`
+/ `get_question` tools). Nothing in `docs/EXTENSIONS.md` or the `ohmylms-graded-reader` add-on used them.
+They now answer 404 `rest_no_route`.
+
+| Removed | Use instead |
+| --- | --- |
+| `GET /question` | `GET /questions` (no settings or options in rows) |
+| `POST /question` | `POST /questions` (`options` instead of `questions`; `status` and `quiz_id` are refused); to create and place in a quiz, `POST /quizzes/{id}/questions/new` |
+| `GET /question/{id}` | `GET /questions/{id}` (editors only) |
+| `PUT /question/{id}` | `PATCH /questions/{id}` (`base_modified` required) |
+| `DELETE /question/{id}` | `DELETE /questions/{id}`; with `quiz_id`: `DELETE /quizzes/{id}/questions/{question_id}` |
+| `GET /question-bank` | `GET /questions` (array body and `X-WP-Total` instead of `{items, total, page, per_page}`; `organisation`, `scope`, `secure`, `exclude_quiz` kept) |
+| `GET /question-bank/{id}` | `GET /questions/{id}` + `GET /questions/{id}/versions` (editors only; never writes) |
+| `GET /question-bank/versions/{version_id}` | `GET /questions/{id}/versions/{version_id}` (editors only) |
+| `POST /question-bank/{id}/approve`, `/archive`, `/restore`, `/duplicate` | `POST /questions/{id}/approve`, `/archive`, `/restore`, `/duplicate` (editor view responses; no `quiz_id` on duplicate) |
+| `GET /question-bank/export` | `POST /questions/export` (`ids`, `filters` or `quiz_id`) |
+
+`POST /question-bank/import` (typed, `QuestionImportController`) and the bank routes `/question-banks*` stay.
+The quiz-placement routes `/quiz/{id}/content|questions|pools` are covered in [quizzes](quizzes.md#removed-legacy-routes).
 
 ## Tests
 
@@ -402,12 +454,15 @@ $env:OHMYLMS_QUESTIONS_TEST='1'; php -n -d extension_dir=C:\php8.5.4\ext -d exte
 It covers route registration and permission callbacks, 401/403 on every route, object-level access between two
 authors, every validation rule above, create/list/read/update/archive/restore/versions/types, stale saves,
 extension settings versioning, that reads create no identity row, that a user without access never receives
-answer text, and that `GET /question-bank` returns the same ids and totals as `GET /questions`. Approve:
+answer text, and that the legacy routes are gone. Filters: `secure`, `exclude_quiz` (403 for a quiz the user
+cannot edit or a post that is not a quiz), `organisation`/`scope`. Version content: editor read, unknown and
+foreign versions, 401/403. Blank document: its author reads and fills it (it becomes a draft), others and its
+sub-routes get 404. Delete: unknown body field, edit grant refused, 409 for a question in two quizzes,
+deleted question and placement gone, then 404. Approve:
 404 before capabilities, 403 for an author without rights and for a bank `edit` grant, unknown and foreign
 `version_id`, approving the current and an older version, `approved_is_current` after a later edit, the
-identity row status. Duplicate: new id and UUID with the same content and family, bank placement for a bank
-editor, 403 for a user who cannot use the source. The legacy `/question-bank/{id}/approve` and `/duplicate`
-routes still answer with their own summaries and permissions.
+identity row status, the review queue approving through this route. Duplicate: new id and UUID with the same
+content and family, bank placement for a bank editor, 403 for a user who cannot use the source.
 
 `tests/php/question-types-rest-integration.php` (same flag) creates, reads, edits (version 2) and stale-saves
 one question of every built-in type from `tests/php/fixtures/question-types.json` (and fails when a built-in
@@ -421,9 +476,9 @@ them in a quiz and has a temporary learner take it.
 
 ## Not covered
 
-- **Delete**: left to the legacy `DELETE /question/{id}`.
-- **Duplicate into a quiz**: the legacy `/question-bank/{id}/duplicate` with `quiz_id` (the copy replaces the
-  source in that quiz) has no equivalent here.
+- **Delete in the admin app**: `DELETE /questions/{id}` exists, but no app screen offers it yet.
+- **Duplicate into a quiz**: the removed `/question-bank/{id}/duplicate` with `quiz_id` (the copy replaces the
+  source in that quiz) has no route; `Duplicator::duplicate()` still supports it for a future screen.
 - **`short-text` and `long-text`** have no answer key and no rubric field on the server; graders see the
   response only. Marking notes exist for `structured`/`passage` parts.
 - **Question extension settings** (`extension_settings`) have no editor in the new admin; none are registered
@@ -437,9 +492,15 @@ them in a quiz and has a temporary learner take it.
   DraftWriter, without a row lock, so two saves in the same second can both pass.
 - **Option `image_url`**: stored as option meta, but reads derive `image_url` from `image_id`
   (`QuestionStore::get_questions()`), so a URL without an attachment is not returned.
-- **Settings filtering in other writers**: string leaves of settings are filtered here only; DraftWriter and
-  the legacy `/question` route still store settings strings unfiltered.
+- **Settings filtering in other writers**: string leaves of settings are filtered here only; DraftWriter's
+  other callers (such as the bulk import) still store settings strings unfiltered.
 - **Per-row permissions** in the list call `AccessPolicy` per row; for questions in shared banks this costs a
   bank lookup each (all other related data is batched).
-- The `ohmylms_source_test` assessment suite (`tests/php/assessment-integration.php`), which also exercises
-  `/question-bank`, needs its own database and was not run on `800.local`.
+- **Suites on other databases** were moved to the typed routes but not run here: the fixtures and checks of
+  `native-question-editor-integration.php`, `native-quiz-editor-integration.php`, `question-rows-integration.php`,
+  `pdf-exam-http.php`, `assessment-browser-fixture.php`, `learning-browser-fixture.php` and the browser specs.
+  The `ohmylms_source_test` assessment suite (`tests/php/assessment-integration.php` and `tests/php/assessment/*`)
+  only had its approvals and archives moved; its question creation (`POST question` with `quiz_id` and
+  `questions`), legacy reads, pins, adds, duplicates and `quiz/{id}/pools` calls still target removed routes and
+  need porting to `POST /quizzes/{id}/questions/new`, `/quizzes/{id}/questions/*` and `/questions/*` before it
+  can pass again.

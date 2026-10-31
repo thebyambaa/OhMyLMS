@@ -54,7 +54,7 @@ ok(status_of($search) === 200 && in_array($shared, array_column($search->get_dat
 $add = call('POST', 'quiz/' . $quiz_colleague . '/questions', ['question_ids' => [$shared]]);
 ok(status_of($add) === 409, 'Unapproved shared question was placed in a quiz');
 as_user($owner);
-$approve = call('POST', 'question-bank/' . $shared . '/approve');
+$approve = call('POST', 'questions/' . $shared . '/approve');
 ok(status_of($approve) === 200 && $approve->get_data()['approved_is_current'], 'Approve failed');
 $approved_version = (int) $approve->get_data()['approved_version_id'];
 

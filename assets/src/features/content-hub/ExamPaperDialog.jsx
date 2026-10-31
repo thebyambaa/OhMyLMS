@@ -89,7 +89,7 @@ export function ExamPaperDialog( { exam, onClose } ) {
 		let active = true;
 		setError( '' );
 		Promise.all( [
-			loadVersion( versionId ),
+			loadVersion( questionId, versionId ),
 			loadBankQuestion( questionId ),
 		] )
 			.then( ( [ snapshot, detail ] ) => {

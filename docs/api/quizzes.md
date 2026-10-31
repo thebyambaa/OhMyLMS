@@ -85,10 +85,11 @@ tables, else 503 `ohmylms_question_bank_unavailable`, and `edit_post` on the qui
 
 Question-authoring routes kept under `ohmylms/v1/quiz` (used by the question editor, exam import and
 activity drafts; unchanged response shapes, `edit_post` checks): `POST /quiz`, `GET|PUT|POST /quiz/{id}`,
-`GET|PUT /quiz/{id}/content`, `DELETE /quiz/{id}/questions/{question_id}`, `GET /quiz/{id}/export`,
-`POST /quiz/import`, `PUT /quiz/{id}/skills`. Removed: `GET /quiz`, `GET|POST /quiz/contents`,
+`GET /quiz/{id}/export`, `POST /quiz/import`, `PUT /quiz/{id}/skills`, and `GET|PUT /quiz/{id}/assessment-settings`
+and `GET|POST /quiz/{id}/revisions` (`AssessmentController`). Removed: `GET /quiz`, `GET|POST /quiz/contents`,
 `DELETE /quiz/trash-bulk`, `DELETE /quiz/{id}`, `GET /quiz/{id}/report`,
-`GET|PUT /quiz/{id}/report/{attempt_id}`, `POST /quiz/{id}/report/{attempt_id}/{answer_id}`.
+`GET|PUT /quiz/{id}/report/{attempt_id}`, `POST /quiz/{id}/report/{attempt_id}/{answer_id}`, and on 31 October
+2026 the question-placement routes (see [Removed legacy routes](#removed-legacy-routes)).
 
 Who may grade (`GradingPolicy::can_grade`): `manage_options`; or the quiz's `post_author` with `edit_post`;
 or the `post_author` of the course that contains the quiz through a chapter, with `edit_post` on the course.
@@ -187,8 +188,8 @@ rewrites the answer rows, recomputes the attempt total as the sum of the answer 
   `slot_marks` overrides, the sections and the pool rules, all read from the database. Every write sends the
   revision it loaded; each write locks the quiz row, recomputes the revision and answers 409
   `ohmylms_quiz_questions_conflict` (with `data.revision`) when it differs, so edits by another editor,
-  another tab or a legacy route (including `/quiz/{id}/pools` and the native editor's assessment settings)
-  are never overwritten. Question content does not change it (it has its own `base_modified`). The quiz's
+  another tab or another writer (the native editor's document save and assessment settings) are never
+  overwritten. Question content does not change it (it has its own `base_modified`). The quiz's
   `updated_at` is not touched by these writes, so the settings form and the question list are separate
   conflict domains on the same screen.
 - **Marks override**: `marks` is stored in `slot_marks` of `_quiz_settings` (the key publishing already
@@ -259,18 +260,37 @@ nothing was changed. An open question draft counts as unsaved work for the page'
 learner preview uses the quiz as its document. The legacy "Edit questions" link to `#/quiz-edit/<id>` was
 removed from this screen.
 
+### Native quiz editor (post.php)
+
+The Gutenberg quiz editor uses these routes too: its sections table reads `GET /quizzes/{id}/questions`
+(names and marks, no answer keys); its random pools editor reads the pools from the same response and saves
+them with `PUT …/questions/pools` and the loaded revision (a 409 caused only by placement changes, which every
+document save makes, is retried once with the new revision when the stored pools are still the ones it
+loaded; otherwise it reports that the pools changed elsewhere); a question block's **Pin this version** /
+**Use latest version** call `PUT …/questions/{question_id}/pin` with the current revision. Placement itself is
+written by the document save (`NativeQuizEditor`), which the revision detects.
+
+### Removed legacy routes
+
+Removed on 31 October 2026 (they answer 404 `rest_no_route`); their callers were the native quiz editor and
+the assessment fixtures:
+
+| Removed | Use instead |
+| --- | --- |
+| `GET /quiz/{id}/content` (every question with settings and answer keys) | `GET /quizzes/{id}/questions` (summaries); a question's content: `GET /questions/{question_id}` |
+| `PUT /quiz/{id}/content` | `POST /quizzes/{id}/questions/new`, `PUT /quizzes/{id}/questions/order`, `PATCH /questions/{question_id}` |
+| `POST /quiz/{id}/questions` | `POST /quizzes/{id}/questions` (with `revision`) |
+| `PUT /quiz/{id}/questions/{question_id}/pin` | `PUT /quizzes/{id}/questions/{question_id}/pin` (approved version only for use-only questions) |
+| `DELETE /quiz/{id}/questions/{question_id}` | `DELETE /quizzes/{id}/questions/{question_id}` (drops the pin and marks override too) |
+| `GET|PUT /quiz/{id}/pools` (no stale check, pool bank not checked) | `GET /quizzes/{id}/questions` (`pools`) and `PUT /quizzes/{id}/questions/pools` (`skill_id` instead of `term_id`) |
+
 ### Not covered (questions)
 
-- **Legacy pool route**: `GET|PUT /quiz/{id}/pools` (`AssessmentController`, native quiz editor) still has no
-  stale-write check and no bank permission check; its writes are now detected by the revision here.
-- **Pin to a specific older version** is supported by the route but the UI offers only "pin the version used
-  now" and "unpin".
+- **Pin to a specific older version** is supported by the route; the app's quiz screen offers only "pin the
+  version used now" and "unpin" (the native editor's version history can pin any listed version).
 - **Section marks** are kept but not edited per section; per-question marks are edited instead (they win).
 - **Concurrent quiz settings saves**: `slot_marks` lives in `_quiz_settings`, which `PUT /quizzes/{id}` also
   rewrites (merging unknown keys); the two writers do not share a lock.
-- The legacy `/quiz/{id}/content`, `/quiz/{id}/questions`, `/quiz/{id}/questions/{qid}/pin` and
-  `DELETE /quiz/{id}/questions/{qid}` routes are unchanged (still used by the old editor, import and internal
-  callers) and keep the findings above until they retire.
 
 ## Import and export
 
@@ -363,4 +383,6 @@ and pool shortage. App tests: `QuizQuestions.test.tsx`, `questionsApi.test.ts`, 
 routes; both deleted at the cutover), the old quiz list (`GET /quiz`, `trash-bulk`), `tests/php/assessment/versioning.php` (calls
 `GET quiz/{id}/report/{attempt}`; `Review::save()` is unchanged and still tested directly). The question editor
 and internal callers (`SkillAssessment`, `ExamImport\Workflow`, `Learning\ActivityDrafts`) keep working on the
-authoring routes.
+authoring routes. The `ohmylms_source_test` assessment suite (`tests/php/assessment/*`) still calls the removed
+placement routes (`quiz/{id}/questions`, `…/pin`, `DELETE quiz/{id}/questions/{qid}`, `quiz/{id}/pools`) and
+`POST question` with `quiz_id`; see [questions](questions.md#not-covered).

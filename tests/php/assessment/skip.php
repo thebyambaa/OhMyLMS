@@ -17,7 +17,7 @@ for ($n = 1; $n <= 6; $n++) {
         'skills' => ['p1' => ['primary' => $skip_skill]], 'bank' => ['family_id' => "sk$n-$run"]]);
     ok(status_of($response) === 201, "Creating question $n failed: " . wp_json_encode($response->get_data()));
     $id = remember_post($response->get_data()['id']);
-    ok(status_of(call('POST', 'question-bank/' . $id . '/approve')) === 200, "Approving question $n failed");
+    ok(status_of(call('POST', 'questions/' . $id . '/approve')) === 200, "Approving question $n failed");
 }
 
 $learner = make_user('subscriber');

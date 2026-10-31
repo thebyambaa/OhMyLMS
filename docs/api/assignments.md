@@ -6,8 +6,9 @@ legacy meta keys (read by `includes/Data/Assignment.php` / `includes/DataStores/
 the `ohmylms_assignment_attempts` table for learner submissions. The admin UI is
 `assets/src/app/features/assignments`.
 
-The legacy `ohmylms/v1/assignment` controller (`AssignmentController.php`) stays registered because the
-legacy admin screens and `Schools\Service::grade()` still call it. New code uses this API.
+The legacy `ohmylms/v1/assignment` routes were removed on 31 October 2026 (see
+[Removed legacy routes](#removed-legacy-routes)). `AssignmentController.php` remains only as the grading
+pipeline (`update_attempt_report()`, no routes) that this API and `Schools\Service::grade()` call.
 
 ## Audit before
 
@@ -27,10 +28,9 @@ What existed before this API, and what it did wrong.
 | Low | Errors used numeric codes (`new WP_Error( 400, … )`) or misspelt codes (`ohmylms_rest_invalid_assignemnt_id`). There was no item schema, and new assignments were created published (the data store hard-codes `publish`) regardless of `publish_posts`. |
 | OK | Cookie authentication (core verifies `X-WP-Nonce`). Prepared SQL with `%i`. The learner upload path (`Ajax::save_assignment_submission_file`) checks a nonce, the MIME allow-list, the file count and the size. |
 
-Legacy UI (still shipped): `assets/src/features/learning/Assignment*` (list, editor, report and grading),
-reached at `#/assignments`, `#/assignment-edit/:id`, `#/assignment-report/:id`,
-`#/assignment-report/:id/grade-assignment/:studentId` and the Content Hub Assignments tab. Instructor emails
-(`Emails/CreatorsEmail/AssignmentSubmitted.php`) still link to the legacy grading route.
+The legacy UI (`assets/src/features/learning/Assignment*`) was deleted at the cutover; its hash routes
+(`#/assignment-edit/:id`, `#/assignment-report/:id`, `#/assignment-report/:id/grade-assignment/:studentId`)
+now redirect to the screens of this API (`includes/Admin/LegacyRoutes.php`).
 
 ## Final routes
 
@@ -165,14 +165,29 @@ legacy grading hooks listed above. Learner submission (`ohmylms_assignment_submi
 ## Known gaps
 
 - Placement is read only. Assignments are added to chapters in the course editor.
-- Download resources, prerequisites, drip settings and comments are not part of this API. The legacy
-  editor still edits them, and this API leaves them untouched.
-- Emails and the legacy grading route still identify submissions by student; their links still point to
-  the legacy screens.
-- The legacy `ohmylms/v1/assignment` routes keep their behaviour (see the audit) until the legacy screens
-  are retired.
+- Download resources, prerequisites, drip settings and comments are not part of this API and no screen edits
+  them any more (the legacy editor and its routes are gone); this API leaves their stored values untouched.
+- The grading pipeline still lives in `AssignmentController::update_attempt_report()` (a class without routes)
+  and takes a constructed `WP_REST_Request`; extracting it into a service is in
+  [BACKEND-BOUNDARIES](../BACKEND-BOUNDARIES.md).
+
+## Removed legacy routes
+
+Removed on 31 October 2026 with `AssignmentController`'s registration in `Hooks\ApiHook` (they answer 404
+`rest_no_route`). No code called them (the legacy screens were deleted at the cutover; `Schools\Service` and
+this API call the grading method directly), and neither `docs/EXTENSIONS.md` nor the add-ons documented them.
+
+| Removed | Use instead |
+| --- | --- |
+| `GET|POST /assignment` | `GET|POST /assignments` |
+| `DELETE /assignment/trash-bulk` | `DELETE /assignments/{id}` per assignment |
+| `GET|PUT|POST|DELETE /assignment/{id}` | `/assignments/{id}` |
+| `GET /assignment/{id}/report`, `/report/{user_id}` | `GET /assignments/{id}/submissions[/{submission_id}]` |
+| `PUT /assignment/{id}/report/{user_id}` | `PUT /assignments/{id}/submissions/{submission_id}` |
+| `POST /assignment/content/save/{id}` (called a missing method) | `PATCH /assignments/{id}` (`instructions`) |
 
 ## Tests
 
-`tests/php/assignments-rest-integration.php` (set `OHMYLMS_ASSIGNMENTS_TEST=1`; see the file header) and
+`tests/php/assignments-rest-integration.php` (set `OHMYLMS_ASSIGNMENTS_TEST=1`; see the file header; it also
+checks that the legacy routes are gone and the grading pipeline stays) and
 `npx vitest run --configLoader runner features/assignments`.

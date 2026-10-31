@@ -14,9 +14,12 @@ import {
 } from '../../assets/src/features/question-bank/model.mjs';
 import {
 	searchBank,
-	addQuestionsToQuiz,
+	loadBankQuestion,
+	loadVersion,
 	pinQuestion,
 	approveQuestion,
+	duplicateQuestion,
+	saveQuestionAttributes,
 } from '../../assets/src/features/question-bank/api.mjs';
 test( 'filters drop empty values and API paths carry them', async () => {
 	assert.deepEqual(
@@ -30,30 +33,123 @@ test( 'filters drop empty values and API paths carry them', async () => {
 		{ search: 'x', skill: 0, bank: '0' }
 	);
 	let call;
-	await searchBank( { search: 'frac', page: 2 }, ( args ) => {
-		call = args;
-		return Promise.resolve( {} );
-	} );
-	assert.equal( call.path, '/ohmylms/v1/question-bank?search=frac&page=2' );
-	await addQuestionsToQuiz( 4, [ 7, 8 ], true, ( args ) => {
-		call = args;
-		return Promise.resolve( {} );
-	} );
-	assert.deepEqual( call, {
-		path: '/ohmylms/v1/quiz/4/questions',
-		method: 'POST',
-		data: { question_ids: [ 7, 8 ], pin: true },
-	} );
+	const search = await searchBank(
+		{ search: 'frac', page: 2, status: '', secure: 0, exclude_quiz: 4 },
+		( args ) => {
+			call = args;
+			return Promise.resolve( [
+				{ id: 3, bank: { bank_id: 2 }, permissions: { can_edit: true } },
+			] );
+		}
+	);
+	assert.equal(
+		call.path,
+		'/ohmylms/v1/questions?search=frac&page=2&status=active&secure=false&exclude_quiz=4'
+	);
+	assert.equal( search.items[ 0 ].bank_id, 2 );
+	assert.equal( search.items[ 0 ].can_edit, true );
+	assert.equal( search.items[ 0 ].can_approve, false );
+	const calls = [];
 	await pinQuestion( 4, 7, null, ( args ) => {
-		call = args;
-		return Promise.resolve( {} );
+		calls.push( args );
+		return Promise.resolve( { revision: 'abc' } );
 	} );
-	assert.deepEqual( call.data, { version_id: 0 } );
+	assert.deepEqual( calls, [
+		{ path: '/ohmylms/v1/quizzes/4/questions' },
+		{
+			path: '/ohmylms/v1/quizzes/4/questions/7/pin',
+			method: 'PUT',
+			data: { version_id: null, revision: 'abc' },
+		},
+	] );
 	await approveQuestion( 7, undefined, ( args ) => {
 		call = args;
 		return Promise.resolve( {} );
 	} );
-	assert.deepEqual( call.data, {} );
+	assert.deepEqual( call, {
+		path: '/ohmylms/v1/questions/7/approve',
+		method: 'POST',
+		data: {},
+	} );
+	await approveQuestion( 7, '31', ( args ) => {
+		call = args;
+		return Promise.resolve( {} );
+	} );
+	assert.deepEqual( call.data, { version_id: 31 } );
+	await duplicateQuestion( 7, ( args ) => {
+		call = args;
+		return Promise.resolve( {} );
+	} );
+	assert.deepEqual( call, {
+		path: '/ohmylms/v1/questions/7/duplicate',
+		method: 'POST',
+	} );
+	await loadVersion( 7, 31, ( args ) => {
+		call = args;
+		return Promise.resolve( {} );
+	} );
+	assert.equal( call.path, '/ohmylms/v1/questions/7/versions/31' );
+} );
+test( 'question reads add the flat fields the native editors use', async () => {
+	const view = await loadBankQuestion( 9, () =>
+		Promise.resolve( {
+			id: 9,
+			bank: { bank_id: 0, difficulty: 'easy', secure: false },
+			skills: { p1: { primary: 4, supporting: [] } },
+			options: [ { id: 1, answer: 'A', image_id: 12 } ],
+			permissions: { can_edit: true, can_approve: true },
+		} )
+	);
+	assert.equal( view.difficulty, 'easy' );
+	assert.deepEqual( view.skill_map, { p1: { primary: 4, supporting: [] } } );
+	assert.equal( view.options[ 0 ].thumbnail_id, 12 );
+	assert.equal( view.can_approve, true );
+} );
+test( 'question writes send typed options and drop fields the route refuses', async () => {
+	let call;
+	await saveQuestionAttributes(
+		9,
+		{
+			status: 'draft',
+			name: 'Halves',
+			settings: { type: 'single-choice' },
+			questions: [
+				{ id: 5, answer: '2', is_correct: 1, thumbnail_id: 8 },
+				{
+					id: 1730000000000,
+					temp: true,
+					clientKey: 'x',
+					answer: '4',
+					is_correct: '0',
+					order_number: 2,
+				},
+			],
+			base_modified: '2026-10-30T13:05:12Z',
+		},
+		( args ) => {
+			call = args;
+			return Promise.resolve( {} );
+		}
+	);
+	assert.deepEqual( call, {
+		path: '/ohmylms/v1/questions/9',
+		method: 'PATCH',
+		data: {
+			name: 'Halves',
+			settings: { type: 'single-choice' },
+			base_modified: '2026-10-30T13:05:12Z',
+			options: [
+				{
+					answer: '2',
+					is_correct: true,
+					order_number: 1,
+					id: 5,
+					image_id: 8,
+				},
+				{ answer: '4', is_correct: false, order_number: 2 },
+			],
+		},
+	} );
 } );
 test( 'version labels distinguish draft, approved and newer drafts', () => {
 	assert.equal(
@@ -229,9 +325,16 @@ test( 'new bank questions validate per type and post without a quiz', async () =
 		call = args;
 		return Promise.resolve( { id: 9 } );
 	} );
+	const { questions, ...fields } = payload;
 	assert.deepEqual( call, {
-		path: '/ohmylms/v1/question',
+		path: '/ohmylms/v1/questions',
 		method: 'POST',
-		data: payload,
+		data: {
+			...fields,
+			options: questions.map( ( option ) => ( {
+				...option,
+				is_correct: Boolean( option.is_correct ),
+			} ) ),
+		},
 	} );
 } );

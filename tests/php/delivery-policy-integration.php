@@ -61,7 +61,7 @@ function delivery_call( $method, $path, $body = array() ) {
 function delivery_question( $type = 'numerical' ) {
 	$data = delivery_call(
 		'POST',
-		'question',
+		'questions',
 		array(
 			'name'     => 'Delivery ' . $type,
 			'settings' => array(
@@ -86,7 +86,7 @@ delivery_check( null === DeliveryPolicy::snapshot( $fresh, DeliveryPolicy::PRACT
 $snapshot = DeliveryPolicy::snapshot( $fresh, DeliveryPolicy::INLINE, $preview );
 delivery_check( $snapshot && true === $preview, 'An editor sees an unapproved question inline, flagged as a preview.' );
 
-delivery_call( 'POST', "question-bank/$fresh/approve" );
+delivery_call( 'POST', "questions/$fresh/approve" );
 $snapshot = DeliveryPolicy::snapshot( $fresh, DeliveryPolicy::PRACTICE );
 delivery_check( $snapshot && 'numerical' === $snapshot->get_type(), 'An approved question reaches practice as its frozen version.' );
 delivery_check( DeliveryPolicy::snapshot( $fresh, DeliveryPolicy::INLINE, $preview ) && false === $preview, 'An approved question inline is not a preview.' );
@@ -98,10 +98,10 @@ delivery_check( DeliveryPolicy::allows( $fresh, DeliveryPolicy::QUIZ ) && null =
 BankAttributes::write( $fresh, array( 'secure' => 0 ) );
 
 $manual = delivery_question( 'long-text' );
-delivery_call( 'POST', "question-bank/$manual/approve" );
+delivery_call( 'POST', "questions/$manual/approve" );
 delivery_check( DeliveryPolicy::allows( $manual, DeliveryPolicy::QUIZ ) && ! DeliveryPolicy::allows( $manual, DeliveryPolicy::PRACTICE ) && ! DeliveryPolicy::allows( $manual, DeliveryPolicy::INLINE ), 'Teacher-marked questions fit a quiz slot only.' );
 
-delivery_call( 'POST', "question-bank/$fresh/archive" );
+delivery_call( 'POST', "questions/$fresh/archive" );
 delivery_check( ! DeliveryPolicy::allows( $fresh, DeliveryPolicy::QUIZ ) && ! DeliveryPolicy::allows( $fresh, DeliveryPolicy::PRACTICE ), 'Archived questions are refused everywhere.' );
 delivery_check( ! DeliveryPolicy::allows( 999999, DeliveryPolicy::QUIZ ) && ! DeliveryPolicy::allows( $manual, 'nonsense' ), 'Missing questions and unknown deliveries are refused.' );
 
@@ -122,7 +122,7 @@ delivery_check( array( $manual ) === array_map( 'intval', $added['question_ids']
 // Publishing an exam makes its questions exam-only: warn about practice sets and inline checks that use them.
 $shared  = delivery_question();
 $spare   = delivery_question();
-delivery_call( 'POST', "question-bank/$shared/approve" );
+delivery_call( 'POST', "questions/$shared/approve" );
 $uuid    = \OhMyLMS\QuestionBank\VersionPublisher::identity( $shared, false )['uuid'];
 $player  = wp_insert_post(
 	array(

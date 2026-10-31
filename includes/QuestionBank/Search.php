@@ -1,7 +1,7 @@
 <?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
- * Question bank search: the visibility-scoped list query and row summaries shared by
- * the legacy `/question-bank` route and the typed `/questions` API.
+ * Question bank search: the visibility-scoped list query and batched related data used by the
+ * typed `/questions` API, the question export and the exam composer.
  *
  * @package OhMyLMS
  */
@@ -156,45 +156,6 @@ final class Search {
 		return array(
 			'ids'   => array_map( 'intval', (array) $ids ),
 			'total' => $total,
-		);
-	}
-
-	/**
-	 * Row summary used by the legacy `/question-bank` routes.
-	 *
-	 * @param int $question_id Question ID.
-	 * @return array
-	 */
-	public static function summary( $question_id ) {
-		$question_id = (int) $question_id;
-		$attributes  = BankAttributes::get( $question_id );
-		$settings    = (array) get_post_meta( $question_id, '_question_settings', true );
-		$skills      = wp_get_object_terms( $question_id, Taxonomy::NAME, array( 'fields' => 'ids' ) );
-
-		return array(
-			'id'                  => $question_id,
-			'uuid'                => $attributes['uuid'] ?? '',
-			'name'                => get_the_title( $question_id ),
-			'type'                => (string) ( $settings['type'] ?? '' ),
-			'marks'               => ! empty( $settings['score']['enabled'] ) ? (float) ( $settings['score']['value'] ?? 0 ) : 0,
-			'post_status'         => get_post_status( $question_id ),
-			'status'              => ! empty( $attributes['approved_version_id'] ) ? 'approved' : ( get_post_status( $question_id ) === Usage::ARCHIVED ? 'archived' : 'draft' ),
-			'bank_id'             => (int) ( $attributes['bank_id'] ?? 0 ),
-			'difficulty'          => $attributes['difficulty'] ?? 'standard',
-			'source'              => $attributes['source'] ?? '',
-			'family_id'           => $attributes['family_id'] ?? '',
-			'secure'              => (bool) ( $attributes['secure'] ?? 0 ),
-			'version'             => (int) ( $attributes['latest_version_no'] ?? 0 ),
-			'current_version_id'  => (int) ( $attributes['current_version_id'] ?? 0 ),
-			'approved_version_id' => (int) ( $attributes['approved_version_id'] ?? 0 ),
-			'approved_is_current' => ! empty( $attributes['approved_version_id'] ) && (int) $attributes['approved_version_id'] === (int) $attributes['current_version_id'],
-			'skills'              => is_array( $skills ) ? array_map( 'intval', $skills ) : array(),
-			'usage'               => Usage::summary( $question_id ),
-			'author'              => (int) get_post_field( 'post_author', $question_id ),
-			'modified'            => get_post_field( 'post_modified_gmt', $question_id ),
-			'native_editor_url'   => AccessPolicy::can_edit_question( $question_id ) ? (string) get_edit_post_link( $question_id, 'raw' ) : '',
-			'can_edit'            => AccessPolicy::can_edit_question( $question_id ),
-			'can_approve'         => AccessPolicy::can_approve_question( $question_id ),
 		);
 	}
 

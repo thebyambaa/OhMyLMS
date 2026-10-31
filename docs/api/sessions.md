@@ -22,7 +22,13 @@ Meetings are still created by the provider integrations: the controller fires th
 | Low | Delete fired provider deletion with a `platform` taken from the request, not the stored provider. No `OPTIONS` schema. |
 | OK | Zoom credentials are stored per user and never returned (`IntegrationSettings`); Google tokens live in user meta and are not exposed by the session routes. |
 
-The legacy routes stay for the course builder (curriculum area), with the two High fixes above.
+The legacy routes `GET|POST /session` and `GET|PUT|POST|DELETE /session/{id}` (`SessionController`, registered
+by `Hooks\ApiHook`) were **removed on 31 October 2026**: no screen, block, template, add-on or extension
+contract called them any more (the course builder links sessions through the course structure routes), so they
+now answer 404 `rest_no_route`. Use `/sessions` and `/sessions/{id}`. Their hooks keep firing from
+`SessionsController`: `ohmylms_{provider}_session_{created|updated|deleted}` (documented there) and
+`ohmylms_rest_delete_session`; `ohmylms_rest_insert_session` and `ohmylms_rest_ohmylms_session_query` belonged
+to the removed routes and had no listeners.
 
 ## Routes
 

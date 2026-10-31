@@ -52,28 +52,33 @@ test( 'quizzes open in Gutenberg and preserve existing question types despite ro
 						{
 							answer:
 								type === 'true-false' ? 'False' : 'Answer B',
-							is_correct: false,
+							// Every option of a statement is an expected answer.
+							is_correct: type === 'statement',
 							order_number: 2,
 							matching_data: { label: 'Match B' },
 						},
 					];
-			const question = await wp.apiFetch( {
-				path: '/ohmylms/v1/question',
+			const { revision } = await wp.apiFetch( {
+				path: `/ohmylms/v1/quizzes/${ quiz.id }/questions`,
+			} );
+			const placed = await wp.apiFetch( {
+				path: `/ohmylms/v1/quizzes/${ quiz.id }/questions/new`,
 				method: 'POST',
 				data: {
-					quiz_id: quiz.id,
-					name: `Fixture ${ type }`,
-					order_number: ids.length + 1,
-					settings: {
-						type,
-						expected: 1,
-						required: false,
-						score: { enabled: true, value: 1 },
+					question: {
+						name: `Fixture ${ type }`,
+						settings: {
+							type,
+							expected: 1,
+							required: false,
+							score: { enabled: true, value: 1 },
+						},
+						options,
 					},
-					questions: options,
+					revision,
 				},
 			} );
-			ids.push( question.id );
+			ids.push( placed.created_id );
 		}
 		return { quiz, types, ids };
 	} );

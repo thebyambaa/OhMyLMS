@@ -307,12 +307,14 @@ class Server {
 	 */
 	public static function tools() {
 		$tools = array();
+		// Singular => list route and item route.
 		foreach ( array(
-			'course'   => 'courses',
-			'lesson'   => 'lessons',
-			'quiz'     => 'quiz',
-			'question' => 'question',
-		) as $singular => $route ) {
+			'course'   => array( 'courses', 'courses' ),
+			'lesson'   => array( 'lessons', 'lessons' ),
+			'quiz'     => array( 'quizzes', 'quiz' ),
+			'question' => array( 'questions', 'questions' ),
+		) as $singular => $routes ) {
+			list( $route, $item_route )  = $routes;
 			$plural                      = 'quiz' === $singular ? 'quizzes' : $singular . 's';
 			$tools[ 'list_' . $plural ]  = array(
 				'description' => 'List OhMyLMS ' . $singular . 's, including drafts. Use pagination and search.',
@@ -339,7 +341,7 @@ class Server {
 			);
 			$tools[ 'get_' . $singular ] = array(
 				'description' => 'Read one OhMyLMS ' . $singular . ' by ID. Quiz and question data may contain answer keys.',
-				'route'       => '/' . $route . '/{id}',
+				'route'       => '/' . $item_route . '/{id}',
 				'list'        => false,
 				'properties'  => array(
 					'id' => array(

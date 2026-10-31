@@ -59,7 +59,7 @@ try {
     $questions = [];
     for ($i = 0; $i < 5; $i++) {
         $q = created('question', ['name' => 'Learning fraction ' . $i, 'settings' => ['type' => 'single-choice', 'hint' => 'Think about equal parts', 'score' => ['enabled' => true, 'value' => 1]], 'questions' => [['answer' => 'Right', 'is_correct' => 1], ['answer' => 'Wrong']], 'skills' => ['p1' => ['primary' => $skill, 'supporting' => []]], 'bank' => ['family_id' => 'learning-family-' . $i]]);
-        ok(api('POST', 'question-bank/' . $q . '/approve')->get_status() === 200, 'Approve failed'); $questions[] = $q;
+        ok(api('POST', 'questions/' . $q . '/approve')->get_status() === 200, 'Approve failed'); $questions[] = $q;
     }
     $course = created('courses', ['name' => 'Blended fractions', 'status' => 'publish']);
     $quiz = created('quiz', ['name' => 'Fractions checkpoint', 'status' => 'publish']);
@@ -202,7 +202,7 @@ try {
     ok(!is_wp_error(\OhMyLMS\Curriculum\SkillMappings::save($mine, (int) $shared['id'], 'equivalent')) && !is_wp_error(\OhMyLMS\Curriculum\SkillMappings::save($theirs, (int) $shared['id'], 'equivalent')), 'Objectives not mapped');
     for ($i = 0; $i < 3; $i++) {
         $q = created('question', ['name' => 'Credit question ' . $i, 'settings' => ['type' => 'single-choice', 'score' => ['enabled' => true, 'value' => 1]], 'questions' => [['answer' => 'Right', 'is_correct' => 1], ['answer' => 'Wrong']], 'skills' => ['p1' => ['primary' => $mine, 'supporting' => []]], 'bank' => ['family_id' => 'credit-family-' . $tag . $i]]);
-        ok(api('POST', 'question-bank/' . $q . '/approve')->get_status() === 200, 'Approve failed');
+        ok(api('POST', 'questions/' . $q . '/approve')->get_status() === 200, 'Approve failed');
     }
     $credit_student = learner();
     $set_state = static function ($term, $level) use ($wpdb, $credit_student) {

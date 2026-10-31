@@ -84,7 +84,7 @@ try {
 				)
 			);
 			image_check( ! is_wp_error( $written ), 'Question save failed.' );
-			$request = new WP_REST_Request( 'POST', '/ohmylms/v1/question-bank/' . $written['id'] . '/approve' );
+			$request = new WP_REST_Request( 'POST', '/ohmylms/v1/questions/' . $written['id'] . '/approve' );
 			image_check( 200 === rest_do_request( $request )->get_status(), 'Approval failed.' );
 			$snapshot = QuestionPlayer::eligible( $written['id'], $admin->ID );
 			image_check( \OhMyLMS\Practice\ImageActivity::compatible( $snapshot ), 'Image fixture incompatible.' );

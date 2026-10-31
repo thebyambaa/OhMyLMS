@@ -319,28 +319,28 @@ try {
 		for ( $journey_q = 0; $journey_q < 5; ++$journey_q ) {
 			$journey_question = journey_api(
 				'POST',
-				'question',
+				'questions',
 				array(
-					'name'      => 'Guidance question ' . wp_generate_uuid4(),
-					'settings'  => array(
+					'name'     => 'Guidance question ' . wp_generate_uuid4(),
+					'settings' => array(
 						'type'  => 'single-choice',
 						'score' => array(
 							'enabled' => true,
 							'value'   => 1,
 						),
 					),
-					'questions' => array(
+					'options'  => array(
 						array(
 							'answer'     => 'Right',
-							'is_correct' => 1,
+							'is_correct' => true,
 						),
 						array(
 							'answer'     => 'Wrong',
-							'is_correct' => 0,
+							'is_correct' => false,
 						),
 					),
-					'skills'    => array( 'p1' => array( 'primary' => $journey_state['skill'] ) ),
-					'bank'      => array(
+					'skills'   => array( 'p1' => array( 'primary' => $journey_state['skill'] ) ),
+					'bank'     => array(
 						'family_id' => wp_generate_uuid4(),
 						'secure'    => 4 === $journey_q,
 					),
@@ -350,7 +350,7 @@ try {
 			$journey_question_id      = (int) $journey_question->get_data()['id'];
 			$journey_state['posts'][] = $journey_question_id;
 			if ( 3 !== $journey_q ) {
-				journey_check( 200 === journey_api( 'POST', 'question-bank/' . $journey_question_id . '/approve' )->get_status(), 'Eligible and secure fixture versions are explicitly approved.' );
+				journey_check( 200 === journey_api( 'POST', 'questions/' . $journey_question_id . '/approve' )->get_status(), 'Eligible and secure fixture versions are explicitly approved.' );
 			}
 		}
 		wp_set_current_user( $journey_state['learner'] );

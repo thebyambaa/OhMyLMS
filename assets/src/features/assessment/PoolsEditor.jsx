@@ -32,6 +32,7 @@ const EMPTY = {
  */
 export function PoolsEditor( { quizId, native = false } ) {
 	const [ savedState, setSavedState ] = useState( null );
+	const [ revision, setRevision ] = useState( '' );
 	const [ pools, setPools ] = useState( null );
 	const [ skills, setSkills ] = useState( [] );
 	const [ message, setMessage ] = useState( null );
@@ -43,8 +44,9 @@ export function PoolsEditor( { quizId, native = false } ) {
 				if ( ! active ) {
 					return;
 				}
-				setPools( loaded.pools || [] );
-				setSavedState( JSON.stringify( loaded.pools || [] ) );
+				setPools( loaded.pools );
+				setSavedState( JSON.stringify( loaded.pools ) );
+				setRevision( loaded.revision );
 				setSkills( catalogue.skills || [] );
 			} )
 			.catch(
@@ -77,8 +79,28 @@ export function PoolsEditor( { quizId, native = false } ) {
 		setSaving( true );
 		setMessage( null );
 		try {
-			const saved = await savePools( quizId, pools );
+			let saved;
+			try {
+				saved = await savePools( quizId, pools, revision );
+			} catch ( cause ) {
+				if ( cause?.code !== 'ohmylms_quiz_questions_conflict' ) {
+					throw cause;
+				}
+				// Question placement also changes the revision (every native save does); only a
+				// change to the pools themselves since they were loaded is a real conflict.
+				const fresh = await loadPools( quizId );
+				if ( JSON.stringify( fresh.pools ) !== savedState ) {
+					throw new Error(
+						__(
+							'The pools were changed elsewhere. Reload the editor to see them; nothing was saved.',
+							'ohmylms'
+						)
+					);
+				}
+				saved = await savePools( quizId, pools, fresh.revision );
+			}
 			setPools( saved.pools );
+			setRevision( saved.revision );
 			if ( native ) {
 				markNativeQuizDirty();
 			}

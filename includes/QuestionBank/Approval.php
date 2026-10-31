@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Approving a question version for shared use and practice.
  *
- * Used by `POST /question-bank/{id}/approve` and `POST /questions/{id}/approve`. Callers check
+ * Used by `POST /questions/{id}/approve` (and the review queue through it). Callers check
  * {@see AccessPolicy::can_approve_question()} first.
  */
 final class Approval {

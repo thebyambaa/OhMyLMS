@@ -53,7 +53,7 @@ for ($n = 1; $n <= 8; $n++) {
         'skills' => ['p1' => ['primary' => $skill]], 'bank' => ['family_id' => "pf$n-$run"]]);
     ok(status_of($response) === 201, "Creating question $n failed: " . wp_json_encode($response->get_data()));
     $id = remember_post($response->get_data()['id']);
-    ok(status_of(call('POST', 'question-bank/' . $id . '/approve')) === 200, "Approving question $n failed");
+    ok(status_of(call('POST', 'questions/' . $id . '/approve')) === 200, "Approving question $n failed");
 }
 as_user($learner);
 $act = static function ($uuid, $path, $body) { return call('POST', 'practice/sessions/' . $uuid . '/' . $path, $body); };

@@ -220,10 +220,10 @@ try {
 	wp_set_current_user( $contributor );
 	ok( '0' === call_api( 'GET', '/sessions', array( 'search' => $tag ) )->get_headers()['X-WP-Total'], 'contributors list only their own sessions' );
 	ok( 403 === call_api( 'GET', '/sessions/' . $session['id'] )->get_status(), 'contributor cannot read another host session' );
-	$legacy = call_api( 'GET', '/session/' . $session['id'] );
-	ok( 200 !== $legacy->get_status() || '' === $legacy->get_data()['start_url'], 'legacy route hides the host link from non-editors' );
 	wp_set_current_user( $admin );
-	ok( false !== strpos( call_api( 'GET', '/session/' . $session['id'] )->get_data()['start_url'], 'zak=' ), 'legacy route keeps the host link for editors' );
+	$routes = rest_get_server()->get_routes( 'ohmylms/v1' );
+	ok( ! isset( $routes['/ohmylms/v1/session'] ) && ! isset( $routes['/ohmylms/v1/session/(?P<id>[\d]+)'] ), 'the legacy session routes are removed' );
+	ok( 404 === call_api( 'GET', '/session/' . $session['id'] )->get_status(), 'the legacy route no longer answers, not even to editors' );
 
 	// Update.
 	$calls   = array();

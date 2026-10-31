@@ -27,7 +27,7 @@ foreach (['A' => 2, 'B' => 2, 'C' => 2, 'N' => 0] as $letter => $count) {
             'skills' => ['p1' => ['primary' => $skills[$letter]]], 'bank' => ['family_id' => "lv$letter$n-$run"]]);
         ok(status_of($response) === 201, "Creating $letter$n failed");
         $id = remember_post($response->get_data()['id']);
-        ok(status_of(call('POST', 'question-bank/' . $id . '/approve')) === 200, "Approving $letter$n failed");
+        ok(status_of(call('POST', 'questions/' . $id . '/approve')) === 200, "Approving $letter$n failed");
     }
 }
 

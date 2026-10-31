@@ -7,7 +7,7 @@ test('automatic text, language tiles and matching study blocks play and resume',
  await page.goto('/wp-admin/admin.php?page=ohmylms-app'); await page.waitForFunction(()=>Boolean(window.wp?.apiFetch));
  const fixture=await page.evaluate(async()=>{
   const api=async(path,data,method='POST')=>{try{return await wp.apiFetch({path,method,data});}catch(e){throw new Error(JSON.stringify(e));}};
-  const question=async(settings,questions=[])=>{const q=await api('/ohmylms/v1/question',{name:'Wordwall browser fixture',quiz_id:0,settings:{...settings,required:true,score:{enabled:true,value:1}},questions});await api(`/ohmylms/v1/question-bank/${q.id}/approve`,{});return q.id;};
+  const question=async(settings,questions=[])=>{const q=await api('/ohmylms/v1/questions',{name:'Wordwall browser fixture',settings:{...settings,required:true,score:{enabled:true,value:1}},options:questions});await api(`/ohmylms/v1/questions/${q.id}/approve`,{});return q.id;};
   const text=await question({type:'text-entry',accepted:['үүл'],case_sensitive:false,collapse_whitespace:true});
   const tiles=await question({type:'build-expression',tile_mode:'letters',correct:['ү','ү','л'],distractors:['а'],alternatives:[],form:'any',equivalence:false});
   const match=await question({type:'matching'},[{answer:'Cloud',matching_data:{label:'Hidden cloud back'}},{answer:'Rain',matching_data:{label:'Hidden rain back'}}]);
@@ -42,5 +42,5 @@ test('automatic text, language tiles and matching study blocks play and resume',
  await page.goto(`/wp-admin/post.php?post=${fixture.questions[1]}&action=edit`);
  await expect(canvas.getByLabel('Build from',{exact:true})).toHaveValue('letters',{timeout:30000});
  await page.goto('/wp-admin/admin.php?page=ohmylms-app');await page.waitForFunction(()=>Boolean(window.wp?.apiFetch));
- await page.evaluate(async fixture=>{for(const p of fixture.pages)await wp.apiFetch({path:`/wp/v2/pages/${p.id}?force=true`,method:'DELETE'});for(const id of fixture.questions)await wp.apiFetch({path:`/ohmylms/v1/question/${id}`,method:'DELETE'});},fixture);
+ await page.evaluate(async fixture=>{for(const p of fixture.pages)await wp.apiFetch({path:`/wp/v2/pages/${p.id}?force=true`,method:'DELETE'});for(const id of fixture.questions)await wp.apiFetch({path:`/ohmylms/v1/questions/${id}`,method:'DELETE'});},fixture);
 });

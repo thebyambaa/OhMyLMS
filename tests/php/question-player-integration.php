@@ -115,7 +115,7 @@ try {
 					)
 				);
 				player_check( ! is_wp_error( $written ), 'Question fixture failed: ' . ( is_wp_error( $written ) ? $written->get_error_message() : '' ) );
-				$approved = player_request( 'POST', '/ohmylms/v1/question-bank/' . $written['id'] . '/approve' );
+				$approved = player_request( 'POST', '/ohmylms/v1/questions/' . $written['id'] . '/approve' );
 				player_check( 200 === $approved->get_status(), 'Fixture approval failed.' );
 				$questions[] = (int) $written['id'];
 			}
@@ -290,7 +290,7 @@ try {
 				)
 			);
 			player_check( ! is_wp_error( $changed ), 'Frozen-version fixture update failed.' );
-			player_request( 'POST', '/ohmylms/v1/question-bank/' . $questions[1] . '/approve' );
+			player_request( 'POST', '/ohmylms/v1/questions/' . $questions[1] . '/approve' );
 			wp_set_current_user( $student );
 			$frozen_result = player_request(
 				'POST',

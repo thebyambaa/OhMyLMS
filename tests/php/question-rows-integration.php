@@ -290,18 +290,17 @@ try {
 				$payload['description'] = $sample['description'];
 			}
 			if ( isset( $sample['q'] ) ) {
-				$payload['questions'] = $sample['q'];
+				$payload['options'] = $sample['q'];
 			}
-			list( $status, $data ) = rows_call( 'POST', 'question', $payload );
+			list( $status, $data ) = rows_call( 'POST', 'questions', $payload );
 			rows_check( $status < 300, "Create $type: " . wp_json_encode( $data ) );
 			$ids[ $type ] = $data['id'];
 		}
 		list( $status, $file ) = rows_call(
-			'GET',
-			'question-bank/export',
-			null,
+			'POST',
+			'questions/export',
 			array(
-				'ids'    => implode( ',', $ids ),
+				'ids'    => array_values( array_map( 'intval', $ids ) ),
 				'format' => $format,
 				'label'  => $label,
 			)
@@ -340,7 +339,7 @@ try {
 	// A question without a skill still exports, with a warning that names it.
 	list( , $bare ) = rows_call(
 		'POST',
-		'question',
+		'questions',
 		array(
 			'name'     => 'No skill',
 			'settings' => array(
@@ -350,11 +349,10 @@ try {
 		)
 	);
 	list( , $file ) = rows_call(
-		'GET',
-		'question-bank/export',
-		null,
+		'POST',
+		'questions/export',
 		array(
-			'ids'    => (string) $bare['id'],
+			'ids'    => array( (int) $bare['id'] ),
 			'format' => 'json',
 		)
 	);
@@ -372,22 +370,20 @@ try {
 		BulkImportTestHelper::place( $quiz['id'], $question_id, $position );
 	}
 	list( $status, $file ) = rows_call(
-		'GET',
-		'question-bank/export',
-		null,
+		'POST',
+		'questions/export',
 		array(
-			'quiz_id' => $quiz['id'],
+			'quiz_id' => (int) $quiz['id'],
 			'format'  => 'json',
 		)
 	);
 	rows_check( $status < 300 && 3 === $file['count'] && 'Rows quiz' === json_decode( $file['content'], true )[0]['exam'], 'A quiz exports its questions under its title.' );
 	wp_set_current_user( 0 );
 	list( $status ) = rows_call(
-		'GET',
-		'question-bank/export',
-		null,
+		'POST',
+		'questions/export',
 		array(
-			'ids'    => (string) reset( $ids ),
+			'ids'    => array( (int) reset( $ids ) ),
 			'format' => 'json',
 		)
 	);

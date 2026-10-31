@@ -271,6 +271,14 @@ try {
 			ok( is_callable( $endpoint['permission_callback'] ) && '__return_true' !== $endpoint['permission_callback'], "real permission_callback on $route" );
 		}
 	}
+	$legacy_routes = array_filter(
+		array_keys( $routes ),
+		static function ( $route ) {
+			return 0 === strpos( $route, '/ohmylms/v1/assignment/' ) || '/ohmylms/v1/assignment' === $route;
+		}
+	);
+	ok( array() === array_values( $legacy_routes ), 'the legacy assignment routes are removed: ' . wp_json_encode( array_values( $legacy_routes ) ) );
+	ok( method_exists( \OhMyLMS\Rest\V1\AssignmentController::class, 'update_attempt_report' ), 'the shared grading pipeline stays' );
 
 	// Courses: one owned by the author, one by the administrator.
 	$course_a = make_post(

@@ -187,7 +187,7 @@ try {
 	$response = call_api( 'GET', '' );
 	ok( 200 === $response->get_status(), 'list 200' );
 	$list = $response->get_data();
-	ok( 11 === count( $list ) && '11' === $response->get_headers()['X-WP-Total'] && '1' === $response->get_headers()['X-WP-TotalPages'], 'list has 11 emails and pagination headers' );
+	ok( 12 === count( $list ) && '12' === $response->get_headers()['X-WP-Total'] && '1' === $response->get_headers()['X-WP-TotalPages'], 'list has 12 emails and pagination headers' );
 	foreach ( $list as $item ) {
 		foreach ( array( 'id', 'title', 'description', 'recipient_type', 'enabled', 'subject', 'heading', 'additional_content', 'button_text', 'button_link', 'footer_text', 'course_suggestion_text', 'recipient_email', 'tags' ) as $key ) {
 			ok( array_key_exists( $key, $item ), "list item {$item['id']} has $key" );
@@ -196,7 +196,7 @@ try {
 		ok( 'site_name' === $item['tags'][ count( $item['tags'] ) - 3 ]['tag'], "list item {$item['id']} lists the common tags" );
 	}
 	$ids = wp_list_pluck( $list, 'id' );
-	ok( EmailManager::ids() === $ids && 11 === count( array_unique( $ids ) ), 'list order is the catalog order' );
+	ok( EmailManager::ids() === $ids && 12 === count( array_unique( $ids ) ), 'list order is the catalog order' );
 	ok( false === array_search( 'student_email_verification', $ids, true ), 'the fixed verification email is not configurable' );
 
 	$by_id = array_column( $list, null, 'id' );
@@ -220,7 +220,7 @@ try {
 			'page'     => 3,
 		)
 	);
-	ok( 200 === $page->get_status() && 1 === count( $page->get_data() ) && '3' === $page->get_headers()['X-WP-TotalPages'], 'last page holds the remainder' );
+	ok( 200 === $page->get_status() && 2 === count( $page->get_data() ) && '3' === $page->get_headers()['X-WP-TotalPages'], 'last page holds the remainder' );
 	$page = call_api(
 		'GET',
 		'',

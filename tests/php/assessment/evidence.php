@@ -30,7 +30,7 @@ $make = static function ($name, $bank, $quiz = 0) use ($solve, $support) {
     $id = remember_post(call('POST', 'question', $data)->get_data()['id']);
     return $id;
 };
-$approve = static function ($id) { ok(status_of(call('POST', 'question-bank/' . $id . '/approve')) === 200, 'Approve failed'); };
+$approve = static function ($id) { ok(status_of(call('POST', 'questions/' . $id . '/approve')) === 200, 'Approve failed'); };
 $q1 = $make('Quiz Q1', ['family_id' => 'fam-a'], $quiz_id); $approve($q1);
 $q2 = $make('Quiz Q2', ['family_id' => 'fam-b'], $quiz_id); $approve($q2);
 $practice = [];

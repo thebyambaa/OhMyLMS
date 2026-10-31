@@ -27,12 +27,10 @@ class ApiHook {
 	public function add_pro_controllers( $controllers ) {
 		$pro_controllers = array(
 			\OhMyLMS\Rest\V1\MembershipController::class,
-			\OhMyLMS\Rest\V1\AssignmentController::class,
 			\OhMyLMS\Rest\V1\DashboardProController::class,
 			\OhMyLMS\Rest\V1\StudentProController::class,
 			\OhMyLMS\Rest\V1\AIController::class,
 			\OhMyLMS\Rest\V1\PluginInstallerController::class,
-			\OhMyLMS\Rest\V1\SessionController::class,
 			\OhMyLMS\Rest\V1\EngagementController::class,
 		);
 

@@ -9,12 +9,15 @@ Statuses below were checked against the code on 31 October 2026. Counts are file
 
 ## What remains for full modularization (in order)
 
-1. **Retire or harden the legacy REST routes that outlived their screens.** `ohmylms/v1/question` and
-   `/question-bank` (answer keys to `use` grantees, reads that write), `/quiz/{id}/content|questions|pools`
-   (no stale check, pool bank not checked), `ohmylms/v1/assignment`, `ohmylms/v1/school/*` (account
-   directory PII) and `ohmylms-commerce/v1/subscriptions` keep the findings in their `docs/api/*` audits.
-   First move their remaining callers, mainly the 19 files in `assets/src/features` that call `apiFetch`
-   (native editors, question editor, papers), to the typed routes.
+1. **Retire or harden the legacy REST routes that outlived their screens.** Done on 31 October 2026 for
+   `ohmylms/v1/question`, `/question-bank` (except the typed import), `/quiz/{id}/content|questions|pools`,
+   `ohmylms/v1/assignment` and `ohmylms/v1/session`: their callers (native question, quiz and lesson editors,
+   papers, exam paper review, export buttons, review queue, MCP tools) moved to the typed routes and the
+   routes were removed (deprecation tables in [questions](api/questions.md#removed-legacy-routes),
+   [quizzes](api/quizzes.md#removed-legacy-routes), [assignments](api/assignments.md#removed-legacy-routes),
+   [sessions](api/sessions.md)). Remaining: `ohmylms/v1/school/*` (account directory PII) and
+   `ohmylms-commerce/v1/subscriptions` keep the findings in their audits; the `ohmylms_source_test`
+   assessment suite still needs its question fixtures ported to the typed routes.
 2. **Rebuild the workflows that only the deleted legacy admin had** (decided 31 October 2026: rebuild all of them
    in the new admin, none dropped; quiz pool and section editing is already done). They now have no screen:
    certificate issuing and learner download; question delete and duplicate-into-quiz; quiz pool and section
