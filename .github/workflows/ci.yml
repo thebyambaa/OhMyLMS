@@ -17,12 +17,12 @@ concurrency:
 jobs:
   checks:
     name: Build, typecheck, app tests, architecture and node tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -46,12 +46,12 @@ jobs:
 
   lint-js:
     name: ESLint (npm run lint:js)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -62,13 +62,13 @@ jobs:
 
   php:
     name: PHP syntax (php -l) and unit suites
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # The suite runner is a dependency-free Node script; no npm ci.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
 
@@ -92,10 +92,10 @@ jobs:
 
   phpcs:
     name: WordPress coding standards (changed lines)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -120,17 +120,17 @@ jobs:
 
   browser:
     name: Browser specs (Playwright against the PHP fixture servers)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
       PLUGIN: wordpress/wp-content/plugins/ohmylms
     steps:
       # The interactivity fixture serves WordPress's Interactivity API from wp-includes three folders above the plugin.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           path: wordpress/wp-content/plugins/ohmylms
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: wordpress/wp-content/plugins/ohmylms/.nvmrc
           cache: npm
@@ -166,7 +166,7 @@ jobs:
           done
           exit $status
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-results
@@ -177,7 +177,7 @@ jobs:
 
   php-integration:
     name: PHP integration suites (WordPress + MySQL)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     services:
       mysql:
@@ -201,11 +201,11 @@ jobs:
       # Written by tools/install-test-sites.sh; the runner points each suite at the site with its database.
       OHMYLMS_TEST_CREDENTIALS: ${{ github.workspace }}/test-sites/test-credentials.json
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           path: plugin
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: plugin/.nvmrc
 

@@ -419,7 +419,8 @@ export function createAccount( {
 				return Boolean( getContext().busy );
 			},
 			get planDisplay() {
-				return getContext().planOpen ? 'block' : false;
+				// 'none', not false: removing the inline style would let the no-JS `:target` rule show it.
+				return getContext().planOpen ? 'block' : 'none';
 			},
 		},
 		actions: {
@@ -513,10 +514,26 @@ export function createAccount( {
 			/** Trap focus in the open plan dialog; Escape closes it and focus returns to "View plan". */
 			planFocus() {
 				const context = getContext();
+				const modal = ref();
+				// Opened through the no-JS link before hydration (or a shared #link): take it over and drop
+				// the hash, so closing is not undone by `:target`.
+				if (
+					! context.planOpen &&
+					modal?.id &&
+					'undefined' !== typeof window &&
+					window.location.hash === '#' + modal.id
+				) {
+					window.history.replaceState(
+						window.history.state,
+						'',
+						window.location.pathname + window.location.search
+					);
+					context.planOpen = true;
+					return undefined;
+				}
 				if ( ! context.planOpen ) {
 					return undefined;
 				}
-				const modal = ref();
 				const dialog = /** @type {HTMLElement} */ (
 					modal.querySelector( '.ohmylms-membership-modal-inner' ) ||
 						modal
