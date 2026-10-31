@@ -272,12 +272,11 @@ Behaviour changes, all deliberate:
   `autocomplete="new-password"`.
 - Phone fields filter on `input` only (paste and IME included) and keep the caret; there is no keydown filter.
 
-Not done: the Playwright check with jQuery absent. The browser fixture (`tests/fixtures/interactivity.php`, used
-by `tests/interactivity.config.cjs`) was already broken, so all 9 of its tests fail before reaching any store:
-`/fixture` stops with `Class "OhMyLMS\Assessment\Schema" not found`, the SmartScore practice template it includes no
-longer exists, and there is no route for `/quiz-player/*` (imported by `quiz.js`). L2 added the `/ui/chrome.js`
-route. Repair the fixture before relying on it. Instead, L2 was checked in the live site: the toast,
-`request()`, `confirmDialog()` and the phone filter were driven in the browser on the hub settings page.
+L2 was checked in the live site: the toast, `request()`, `confirmDialog()` and the phone filter were driven in the
+browser on the hub settings page. The browser fixture (`tests/fixtures/interactivity.php`, used by
+`tests/interactivity.config.cjs`) was repaired afterwards; `tests/browser/learner-no-jquery.spec.cjs` refuses any
+jQuery request and drives the catalog, carousel, account, login/sign-up, reviews and checkout stores. Run it with
+`OHMYLMS_PHP_BIN` set: `npx playwright test -c tests/interactivity.config.cjs`.
 
 Tests: `tests/js/sdk.test.mjs` (request normalisation, nonce renewal, REST to admin-ajax fallback, uploads,
 abort/timeout, `apiFetch`/`ajaxPost` compatibility, encoding, toasts, focus trap, debounce),
@@ -416,7 +415,9 @@ Behaviour changes, all deliberate:
 Live check (temporary options and courses, restored afterwards): filters, search typing, sort, "Clear all", load more,
 Back/Forward, curriculum buttons with the carousel re-measuring at 700 px, the card popup and the drawer were driven in
 the browser without a page reload; `/course/` with and without each parameter answers 200 with no PHP notices,
-anonymously and logged in. Not done: a Playwright spec (the browser fixture is still broken, see L2).
+anonymously and logged in. `tests/browser/learner-no-jquery.spec.cjs` covers load more, search, the drawer and
+the buy button after a search (each cart button carries a per-course `data-wp-key`, so a region swap cannot reuse
+the previous card's course).
 
 Tests: `tests/js/catalog.test.mjs` (parameter names, parsing, clamping, `/page/N/`, the canonical query string shared
 with PHP, URL building, page reset, clear, last page, history mode, popup position; the store factory: checkbox

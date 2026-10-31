@@ -65,10 +65,12 @@ Statuses below were checked against the code on 31 October 2026. Counts are file
    Windows checkouts), the 58 PHP unit suites, 75 PHP integration suites on a fresh WordPress + MySQL 8
    install (`tools/install-test-wordpress.sh`, `tools/run-php-tests.mjs`) and phpcs on changed lines
    (`tools/phpcs-changed.mjs`; the full run still reports about 2,200 legacy errors). Remaining
-   (`tests/php-suites.json`): fix the seven integration suites expected to fail at HEAD; give CI the 52
-   suites that need the disposable `ohmylms_source_test`, migration or streak databases or `pdftoppm`, and
-   the six that need content of the Local site; the `admin-app-smoke` browser spec; a clean full phpcs run;
-   and extending the architecture check to the front end and to legacy-route use in PHP.
+   (`tests/php-suites.json`): give CI the 52 suites that need the disposable `ohmylms_source_test`,
+   migration or streak databases or `pdftoppm`, and the six that need content of the Local site; run the
+   browser specs in CI (`interactivity`, `dropdown` and `mathlive` pass locally, including the new
+   `learner-no-jquery` spec; `admin-app-smoke` needs a disposable site); a clean full phpcs run; and
+   extending the architecture check to the front end and to legacy-route use in PHP. The seven suites that
+   were expected to fail were stale tests and now pass.
 
 ## Steps
 
@@ -80,7 +82,7 @@ Statuses below were checked against the code on 31 October 2026. Counts are file
 | 4 | State and API access | **Done (admin app)** | 24 features own an `api.ts` over `app/lib/api`; cross-feature access only through `public.ts` (quizzes, assignments, settings, students, questions); only `app/extensions/api.ts` calls `@wordpress/api-fetch` directly. Native editor code uses `assets/src/features/rest.mjs`; 56 dead legacy helpers removed. Remaining (see [STATE-API-MODULARIZATION](STATE-API-MODULARIZATION.md)): media parsers, syllabus/curriculum route ownership, duplicated validators and hooks, two `question-editor` files on `window.wp.apiFetch` |
 | 5 | Feature independence | **Done (admin app)** | 25 feature folders, 55 route entries in `features/registry.ts`; no `createComponent(readRuntime)`; the only cross-feature imports are four from `quizzes` into `questions/public.ts` (`checkFeatureBoundaries`). Remaining: the learner tree in item 6 |
 | 6 | Authored entry point | **Done** | `app/bootstrap` is the only admin entry (`admin-app.js`, 67 KB); recovered factories, adapters and SDK deleted |
-| 7 | Stylesheet ownership | **Done (admin)** | Legacy admin CSS (285 sources) and `tailwind.css` deleted; feature CSS ships with its chunk ([ownership](STYLESHEET-OWNERSHIP.md)). Learner CSS cleanup (`assets/css/style.css`, 476 KB) is deliberately out of scope |
+| 7 | Stylesheet ownership | **Done (admin); learner colours on tokens** | Legacy admin CSS (285 sources) and `tailwind.css` deleted; feature CSS ships with its chunk ([ownership](STYLESHEET-OWNERSHIP.md)). Admin spacing and radius use `--oml-space-*`/`--oml-radius-*` (rule `checkRawSpacing`); learner SCSS colours read `--oml-*` with fallbacks (stylelint `ohmylms/no-raw-svg-colour`); PHP inline colours became `oml-ui.css` classes ([design system](DESIGN-SYSTEM.md#known-gaps)). Remaining: the generated compatibility `assets/css/style.css` (483 KB) stays for old URLs |
 | 8 | Backend boundaries | **Partial** | Audit and plan in [BACKEND-BOUNDARIES](BACKEND-BOUNDARIES.md). Student, StudentPro, StudentReport, QuizReports and ContentHubOverview controllers hold no persistence (new `Quiz\AttemptReports`, `Student\Directory`, `Student\Enrollments`, `Assignment\Submissions`, `ContentHub\ContentCounts`); controller `\` calls 152 to 109; 42 of 81 controllers touch no `\`, options or meta. Remaining: course enrolment writes, Account Hub (38 calls), assignment grading, quiz attempts, commerce, a CI rule against new `\` in controllers |
 | 9 | Asset and dependency isolation | **Partial** | Admin: one entry plus 38 shipped hashed lazy chunks with per-screen budgets; React and WordPress packages are externals (`checkDuplicateRuntimes`). Math (836 KB) and JSXGraph (995 KB) load only on pages that use them. Learner: product behaviour is script modules. `ohmylms.js` was deleted in L7; `ohmylms-frontend` is a script-less handle and does not load jQuery |
 | 10 | Enforcement and release checks | **Partial** | Five parallel jobs in `.github/workflows/ci.yml` ([ENFORCEMENT](ENFORCEMENT.md#ci-jobs)): `check:ci` (typecheck, app tests, recovered-runtime imports, cycles, feature boundaries, raw colours, duplicate runtimes, budgets) and `npm test`; `lint:js`; `php -l` and the PHP unit suites; phpcs on changed lines; the PHP integration suites against WordPress + MySQL. Skips and expected failures are listed with reasons in `tests/php-suites.json`. Remaining: item 7 above |

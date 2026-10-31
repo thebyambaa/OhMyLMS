@@ -98,7 +98,17 @@ Extension admin pages (`registerAdminPage`) render in the new app at `#/extensio
 
 ## Known issues
 
-None currently recorded.
+- Lessons and assignments in an unpublished course get broken permalinks: the content slug is appended to
+  the course's draft link (`/?post_type=ohmylms-course&p=446/assignments/untitled-2/`). Learners cannot reach
+  those courses, so only previews are affected.
+- Flattening lesson groups into their unit (`b0e21ca5`) left practice guidance without a "continue" link once
+  a skill is met, and group lesson pages (`LessonJourney::find`, `hub_lesson` links) are unreachable. The
+  real-site specs `learner-journey.spec.cjs` and `practice-guidance.spec.cjs` still open those pages, and
+  `subjects.config.cjs` points at a missing `subjects.spec.cjs`.
+- The Authorize.Net script still sets its own red on `#authorize-net-payment-errors`; without the script the
+  box uses `--oml-danger`.
+- No real Stripe or QPay payment has been run against the Interactivity checkout; 800.local has no gateway
+  enabled.
 
 ## Block-based Text lessons and the question engine
 
