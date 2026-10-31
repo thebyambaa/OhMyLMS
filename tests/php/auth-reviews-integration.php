@@ -183,7 +183,7 @@ try {
 			'data-wp-class--is-busy'  => 'context.busy',
 			'data-wp-bind--aria-busy' => 'context.busy',
 			'data-wp-style--display'  => 'state.authDisplay',
-			'data-wp-init--fold'      => 'callbacks.foldFilled',
+			'data-wp-init---fold'      => 'callbacks.foldFilled',
 			'method'                  => 'post',
 		),
 		'login form'
@@ -238,7 +238,7 @@ try {
 		array(
 			'data-wp-on--submit'     => 'actions.submit',
 			'data-wp-style--display' => 'state.authDisplay',
-			'data-wp-init--consent'  => 'callbacks.syncConsent',
+			'data-wp-init---consent'  => 'callbacks.syncConsent',
 			'style'                  => 'display:none;',
 		),
 		'sign-up form'
@@ -282,7 +282,7 @@ try {
 		array(
 			'data-wp-interactive' => 'ohmylms/forms',
 			'data-wp-on--submit'  => 'actions.submit',
-			'data-wp-init--fold'  => 'callbacks.foldFilled',
+			'data-wp-init---fold'  => 'callbacks.foldFilled',
 		),
 		'override login form'
 	);
@@ -468,15 +468,6 @@ try {
 			'fields'      => 'ids',
 		)
 	);
-	$course_id  = 0;
-	foreach ( $course_ids as $id ) {
-		$candidate = ohmylms_get_course( $id );
-		if ( $candidate && $candidate->get_enable_reviews() && comments_open( $id ) ) {
-			$course_id = (int) $id;
-			break;
-		}
-	}
-	ok( $course_id > 0, 'the site has a published course with reviews' );
 	$admins = get_users(
 		array(
 			'role'   => 'administrator',
@@ -485,6 +476,15 @@ try {
 		)
 	);
 	wp_set_current_user( (int) $admins[0] );
+	$course_id = 0;
+	foreach ( $course_ids as $id ) {
+		$candidate = ohmylms_get_course( $id );
+		if ( $candidate && $candidate->get_enable_reviews() && comments_open( $id ) && $candidate->has_access() ) {
+			$course_id = (int) $id;
+			break;
+		}
+	}
+	ok( $course_id > 0, 'the site has a published course with reviews the administrator can open' );
 	global $course, $post;
 	$course = ohmylms_get_course( $course_id );
 	$post   = get_post( $course_id ); // comment_form() renders for the global post.

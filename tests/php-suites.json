@@ -101,19 +101,6 @@
 				"tests/prefix-migration.php",
 				"tests/php/randomized-preview-readonly.php"
 			]
-		},
-		{
-			"reason": "Fail at HEAD (31 October 2026) on the Local site and on a clean install. They run and must still fail; the runner reports one that passes so its entry can be removed. Assertions: course-outline 'Lesson references are remapped while preserving their UUID'; course-structure 'Shared view preserves empty units, canonical order, group and placement IDs'; learner-journey 'The lesson includes its reading, video/reading and practice in published order'; student-directory 'Non-student leaked into directory'; subject-profiles 'A stale revision is refused'; subjects 'Visitors can start either course through its enrollment overview'; prefix-integration calls the retired ohmylms/v1/membership route (memberships-rest-integration covers ohmylms/v1/memberships).",
-			"expect": "fail",
-			"files": [
-				"tests/php/course-outline-integration.php",
-				"tests/php/course-structure-integration.php",
-				"tests/php/learner-journey-integration.php",
-				"tests/php/student-directory-integration.php",
-				"tests/php/subject-profiles-integration.php",
-				"tests/php/subjects-integration.php",
-				"tests/prefix-integration.php"
-			]
 		}
 	]
 }

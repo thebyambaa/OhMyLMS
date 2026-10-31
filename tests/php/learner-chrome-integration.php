@@ -176,7 +176,7 @@ try {
 		opening_tag( $login, 'ohmylms-form-login' ),
 		array(
 			'data-wp-interactive'  => 'ohmylms/forms',
-			'data-wp-init--fold'   => 'callbacks.foldFilled',
+			'data-wp-init---fold'   => 'callbacks.foldFilled',
 			'data-wp-on--focusin'  => 'actions.fieldFocus',
 			'data-wp-on--focusout' => 'actions.fieldBlur',
 		),
@@ -219,7 +219,7 @@ try {
 		opening_tag( $signup, 'ohmylms-form-signup' ),
 		array(
 			'data-wp-context'       => '{"consent":false,"authForm":"signup","authHidden":true,"busy":false,"error":""}',
-			'data-wp-init--consent' => 'callbacks.syncConsent',
+			'data-wp-init---consent' => 'callbacks.syncConsent',
 		),
 		'sign-up form'
 	);
@@ -268,7 +268,7 @@ try {
 		array(
 			'data-wp-interactive'             => 'ohmylms/ui',
 			'data-wp-class--visible'          => 'context.scrolled',
-			'data-wp-on-async-window--scroll' => 'callbacks.trackScroll',
+			'data-wp-on-window--scroll' => 'callbacks.trackScroll',
 		),
 		'scroll to top'
 	);

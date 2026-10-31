@@ -63,6 +63,16 @@ final class Commerce {
 				continue;
 			}
 			$tags->set_attribute( 'data-wp-interactive', 'ohmylms/cart' );
+			// Router region swaps keep an element's client context; a key per item stops a reused button buying the previous card's course.
+			$tags->set_attribute(
+				'data-wp-key',
+				sprintf(
+					'cart-%s-%d-%d',
+					$point ? 'point' : 'buy',
+					absint( $tags->get_attribute( 'data-course_id' ) ),
+					absint( $tags->get_attribute( 'data-membership_id' ) )
+				)
+			);
 			$tags->set_attribute(
 				'data-wp-context',
 				wp_json_encode(

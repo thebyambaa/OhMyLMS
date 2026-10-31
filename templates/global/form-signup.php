@@ -22,8 +22,8 @@ $ohmylms_pending = \OhMyLMS\Extensions\AuthForms::pending();
 <form class="ohmylms-login-signup ohmylms-form-signup signup" method="post" <?php echo $ohmylms_auth['style'] ? 'style="' . esc_attr( $ohmylms_auth['style'] ) . '"' : ''; ?>
 	data-wp-interactive="ohmylms/forms"
 	data-wp-context="<?php echo esc_attr( $ohmylms_auth['context'] ); ?>"
-	data-wp-init--fold="callbacks.foldFilled"
-	data-wp-init--consent="callbacks.syncConsent"
+	data-wp-init---fold="callbacks.foldFilled"
+	data-wp-init---consent="callbacks.syncConsent"
 	data-wp-on--focusin="actions.fieldFocus"
 	data-wp-on--focusout="actions.fieldBlur"
 	data-wp-on--input="actions.fieldInput"

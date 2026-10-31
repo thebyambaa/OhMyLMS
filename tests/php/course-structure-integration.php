@@ -231,7 +231,8 @@ try {
 	$saved                           = structure_api( 'PUT', 'courses/' . $structure_course . '/learning', $program, Catalog::revision( $structure_course ) );
 	structure_check( 200 === $saved->get_status(), 'Learning writer uses the same read token.' );
 	$view = structure_api( 'GET', 'courses/' . $structure_course . '/structure' )->get_data();
-	structure_check( $view['units'][0]['id'] === $structure_second && $view['units'][1]['groups'][0]['items'][0]['id'] === $placement_id, 'Shared view preserves empty units, canonical order, group and placement IDs.' );
+	// Since b0e21ca5 lesson groups are flattened into their unit, so the placement is listed ungrouped.
+	structure_check( $view['units'][0]['id'] === $structure_second && array() === $view['units'][1]['groups'] && $view['units'][1]['ungrouped'][0]['id'] === $placement_id && ! isset( $view['program']['groups'] ), 'Shared view preserves empty units, canonical order and placement IDs, with lesson groups flattened: ' . wp_json_encode( $view['units'][1] ?? null ) );
 	$learner = \OhMyLMS\Student\CourseOutline::get( $structure_course, 0 );
 	structure_check( array() === $learner['units'], 'An unpublished native addition stays out of the learner outline.' );
 	$published = structure_api( 'POST', 'courses/' . $structure_course . '/learning/publish', $program, Catalog::revision( $structure_course ) );

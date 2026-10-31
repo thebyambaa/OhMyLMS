@@ -22,7 +22,7 @@ final class Carousel {
 	const MODULE = 'ohmylms/carousel';
 
 	/** Attributes printed on the scrolling track; its children are the slides. */
-	const TRACK_ATTRIBUTES = 'tabindex="0" data-wp-on-async--scroll="actions.sync" data-wp-on--keydown="actions.key"';
+	const TRACK_ATTRIBUTES = 'tabindex="0" data-wp-on--scroll="actions.sync" data-wp-on--keydown="actions.key"';
 
 	/** Breakpoint caps on slides per view, matching the old Slick `responsive` settings. */
 	const BREAKPOINTS = array(

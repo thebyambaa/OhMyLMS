@@ -146,7 +146,7 @@ ok( $track->has_class( 'ohmylms-course-cards' ) && $track->has_class( 'ohmylms-c
 ok( '3' === $track->get_attribute( 'data-col' ), 'track keeps data-col' );
 ok( '0' === $track->get_attribute( 'tabindex' ), 'track is keyboard focusable' );
 ok( 'actions.key' === $track->get_attribute( 'data-wp-on--keydown' ), 'arrow keys on the track navigate' );
-ok( 'actions.sync' === $track->get_attribute( 'data-wp-on-async--scroll' ), 'scrolling syncs the index' );
+ok( 'actions.sync' === $track->get_attribute( 'data-wp-on--scroll' ), 'scrolling syncs the index' );
 ok( substr_count( $html, 'class="course-card' ) >= 1, 'course cards are slides inside the track' );
 
 foreach ( array(

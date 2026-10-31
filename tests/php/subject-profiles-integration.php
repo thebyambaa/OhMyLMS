@@ -95,6 +95,7 @@ try {
 		)
 	);
 	profile_check( 200 === $profile_english->get_status(), 'A profile saves: ' . wp_json_encode( $profile_english->get_data() ) );
+	$profile_before  = $profile_payload['revision'];
 	$profile_payload = $profile_english->get_data();
 	profile_check( in_array( 'english-language', array_column( $profile_payload['profiles'], 'key' ), true ), 'The key comes from the label' );
 	profile_check( array(
@@ -106,8 +107,18 @@ try {
 	$profile_english_options = profile_api( 'GET', 'skill-placement', array( 'subject' => 'English language' ) )->get_data();
 	profile_check( 'english-language' === $profile_english_options['profile'] && 'C2' === end( $profile_english_options['levels'] )['label'], 'skill-placement answers per subject' );
 
-	// Guarded saves.
+	// Guarded saves. The route takes a 16-character revision (ComparisonController); the one read before the last save is stale.
 	$profile_stale = profile_api(
+		'POST',
+		'subject-profiles/save',
+		array(
+			'label'             => 'Chemistry',
+			'levels'            => array( 'Grade 9' ),
+			'expected_revision' => $profile_before,
+		)
+	);
+	profile_check( 409 === $profile_stale->get_status() && 'ohmylms_subject_profile_conflict' === $profile_stale->get_data()['code'], 'A stale revision is refused: ' . wp_json_encode( $profile_stale->get_data() ) );
+	$profile_malformed = profile_api(
 		'POST',
 		'subject-profiles/save',
 		array(
@@ -116,7 +127,7 @@ try {
 			'expected_revision' => 'stale',
 		)
 	);
-	profile_check( 409 === $profile_stale->get_status(), 'A stale revision is refused' );
+	profile_check( 400 === $profile_malformed->get_status() && 'rest_invalid_param' === $profile_malformed->get_data()['code'], 'A malformed revision is refused' );
 	$profile_invalid = profile_api(
 		'POST',
 		'subject-profiles/save',

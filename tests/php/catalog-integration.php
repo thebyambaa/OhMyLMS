@@ -258,7 +258,7 @@ try {
 		'data-wp-on--keydown'             => 'actions.keydown',
 		'data-wp-on--mouseover'           => 'actions.cardOver',
 		'data-wp-on-window--popstate'     => 'actions.popstate',
-		'data-wp-on-async-window--resize' => 'callbacks.reposition',
+		'data-wp-on-window--resize' => 'callbacks.reposition',
 	) as $name => $value ) {
 		ok( $value === $root->get_attribute( $name ), "root $name" );
 	}

@@ -19,6 +19,17 @@ function apply_filters( $name, $value ) { return $value; }
 function wp_script_is() { return true; }
 function wp_style_is() { return true; }
 function wp_enqueue_script() {}
+function wp_register_script() {}
+function wp_register_style() {}
+function wp_localize_script() {}
+// Interactive::enqueue() localizes ResponseMedia::script_data().
+foreach ( array( 'is_user_logged_in' => false, 'wp_create_nonce' => 'nonce', 'wp_max_upload_size' => 2097152 ) as $fixture_function => $fixture_value ) {
+	if ( ! function_exists( $fixture_function ) ) {
+		eval( 'function ' . $fixture_function . '( ...$args ) { return ' . var_export( $fixture_value, true ) . '; }' ); // phpcs:ignore Squiz.PHP.Eval.Discouraged -- Test double.
+	}
+}
+if ( ! function_exists( 'rest_url' ) ) { function rest_url( $path = '' ) { return '/wp-json/' . $path; } }
+if ( ! function_exists( 'esc_url_raw' ) ) { function esc_url_raw( $url ) { return (string) $url; } }
 function wp_enqueue_style() {}
 function plugins_url( $path ) { return '/' . $path; }
 use OhMyLMS\Assessment\Interactive;

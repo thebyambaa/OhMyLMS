@@ -77,7 +77,7 @@ do_action( 'ohmylms_before_main_content' );
 	data-wp-on--mouseover="actions.cardOver"
 	data-wp-on--mouseout="actions.cardOut"
 	data-wp-on-window--popstate="actions.popstate"
-	data-wp-on-async-window--resize="callbacks.reposition"
+	data-wp-on-window--resize="callbacks.reposition"
 >
 	<form id="<?php echo esc_attr( $catalog['form'] ); ?>" class="ohmylms-catalog-form" method="get" action="<?php echo esc_url( Catalog::url( array() ) ); ?>">
 		<?php foreach ( Catalog::base_fields() as $field_name => $field_value ) : ?>

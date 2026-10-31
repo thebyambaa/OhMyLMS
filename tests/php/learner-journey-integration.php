@@ -177,28 +177,16 @@ try {
 	update_post_meta( $journey_state['course'], '_type', 'self-paced' );
 	$journey_unit                = Catalog::add_chapter( $journey_state['course'], 'Foundations' )['id'];
 	$journey_unit_two            = Catalog::add_chapter( $journey_state['course'], 'Applications' )['id'];
-	$journey_term                = wp_insert_term( 'Compare numbers ' . wp_generate_uuid4(), Taxonomy::NAME );
+	$journey_term_name           = 'Compare numbers ' . wp_generate_uuid4();
+	$journey_term                = wp_insert_term( $journey_term_name, Taxonomy::NAME );
 	$journey_state['skill']      = (int) $journey_term['term_id'];
-	$journey_group               = wp_generate_uuid4();
-	$journey_group_two           = wp_generate_uuid4();
+	// Since b0e21ca5 a lesson is a block lesson item, not a folder: programs keep no lesson groups and the
+	// learner outline lists each unit's activities in published order.
 	$journey_program             = CourseProgram::editor( $journey_state['course'] )['draft'];
-	$journey_program['groups']   = array(
-		array(
-			'id'         => $journey_group,
-			'title'      => 'Introduction',
-			'chapter_id' => $journey_unit,
-		),
-		array(
-			'id'         => $journey_group_two,
-			'title'      => 'Everyday numbers',
-			'chapter_id' => $journey_unit_two,
-		),
-	);
 	$journey_program['outcomes'] = array(
 		array(
 			'term_id'    => $journey_state['skill'],
 			'chapter_id' => $journey_unit,
-			'group_id'   => $journey_group,
 			'required'   => false,
 			'target'     => 'proficient',
 		),
@@ -221,7 +209,6 @@ try {
 			'type'       => 'lesson',
 			'content_id' => $journey_content_id,
 			'chapter_id' => 2 === $journey_index ? $journey_unit_two : $journey_unit,
-			'group_id'   => 2 === $journey_index ? $journey_group_two : $journey_group,
 			'required'   => 2 !== $journey_index,
 		);
 	}
@@ -230,7 +217,6 @@ try {
 		'type'       => 'practice',
 		'content_id' => $journey_state['skill'],
 		'chapter_id' => $journey_unit,
-		'group_id'   => $journey_group,
 	);
 	journey_check( ! is_wp_error( CourseProgram::save( $journey_state['course'], $journey_program, true ) ), 'Fixture publishes its course outline.' );
 	$journey_report = CourseProgram::readiness_report( $journey_program, $journey_state['course'] );
@@ -238,7 +224,7 @@ try {
 	$journey_required                            = $journey_program;
 	$journey_required['outcomes'][0]['required'] = true;
 	$journey_report                              = CourseProgram::readiness_report( $journey_required, $journey_state['course'] );
-	journey_check( ! $journey_report['ready'] && 1 === count( $journey_report['skills'] ) && $journey_group === $journey_report['skills'][0]['group_id'], 'The same empty required skill blocks publication and identifies its repair lesson.' );
+	journey_check( ! $journey_report['ready'] && 1 === count( $journey_report['skills'] ) && $journey_unit === $journey_report['skills'][0]['chapter_id'], 'The same empty required skill blocks publication and identifies its repair unit.' );
 	journey_check( ! CourseProgram::readiness( $journey_program, $journey_state['course'] ) && (bool) CourseProgram::readiness( $journey_required, $journey_state['course'] ), 'Readiness report and authoritative publication checks agree.' );
 	wp_update_post(
 		array(
@@ -256,19 +242,19 @@ try {
 	);
 	wp_set_current_user( $journey_state['learner'] );
 	$journey_outline = CourseOutline::get( $journey_state['course'], $journey_state['learner'] );
-	journey_check( is_wp_error( LessonJourney::find( $journey_outline, $journey_group ) ), 'Unenrolled learners cannot open lesson pages.' );
+	journey_check( empty( $journey_outline['enrolled'] ), 'The outline knows the learner is not enrolled.' );
 	journey_check( 403 === journey_api( 'POST', 'courses/' . $journey_state['course'] . '/learning/activities/' . $journey_program['items'][0]['id'] . '/complete' )->get_status(), 'Unenrolled learners cannot write completion.' );
 	wp_set_current_user( $journey_state['actor'] );
 	$journey_enrolled = journey_api( 'PUT', 'courses/' . $journey_state['course'] . '/enroll', array( 'student_id' => $journey_state['learner'] ) );
 	journey_check( $journey_enrolled->get_status() < 300, 'The existing enrollment controller enrolls the learner.' );
 	wp_set_current_user( $journey_state['learner'] );
 	$journey_outline = CourseOutline::get( $journey_state['course'], $journey_state['learner'] );
-	$journey_lesson  = LessonJourney::find( $journey_outline, $journey_group );
-	journey_check( ! is_wp_error( $journey_lesson ) && 3 === count( $journey_lesson['items'] ), 'The lesson includes its reading, video/reading and practice in published order.' );
-	journey_check( 2 === $journey_lesson['activity_total'] && 3 === $journey_outline['summary']['activity_total'], 'Practice stays outside activity completion denominators.' );
-	journey_check( $journey_outline['continue']['url'] === $journey_lesson['items'][0]['url'], 'Continue and lesson start agree on the first required activity.' );
+	$journey_lesson  = $journey_outline['units'][0];
+	journey_check( ! empty( $journey_outline['enrolled'] ) && array( 'Read numbers', 'Watch numbers', $journey_term_name ) === array_column( $journey_lesson['items'], 'name' ) && array() === $journey_lesson['groups'], 'The unit lists its reading, video/reading and practice in published order: ' . wp_json_encode( array_column( $journey_lesson['items'], 'name' ) ) );
+	journey_check( 2 === LessonJourney::progress( $journey_lesson['items'] )['activity_total'] && 3 === $journey_outline['summary']['activity_total'], 'Practice stays outside activity completion denominators.' );
+	journey_check( $journey_outline['continue']['url'] === $journey_lesson['items'][0]['url'], 'Continue and the unit start agree on the first required activity.' );
 	$journey_nav = LessonJourney::activity( $journey_outline, $journey_state['posts'][1], 'content' );
-	journey_check( 'Introduction' === $journey_nav['lesson']['title'] && 'Watch numbers' === $journey_nav['next']['name'], 'Player context keeps the lesson and next activity.' );
+	journey_check( null === $journey_nav['lesson'] && 'Read numbers' === $journey_nav['current']['name'] && 'Watch numbers' === $journey_nav['next']['name'], 'Player context keeps the current and next activity.' );
 	journey_check( is_wp_error( LessonJourney::find( $journey_outline, wp_generate_uuid4() ) ), 'Unknown lesson IDs do not expose another lesson.' );
 	$journey_collision          = $journey_outline;
 	$journey_collision['units'] = array(
@@ -313,7 +299,7 @@ try {
 	remove_filter( 'ohmylms_is_lesson_locked', $journey_locked, 10 );
 	if ( in_array( $argv[1] ?? '', array( 'practice', 'practice-fixture' ), true ) ) {
 		$journey_state['practice'] = true;
-		$journey_guidance          = \OhMyLMS\Student\PracticeGuidance::get( $journey_state['course'], $journey_group );
+		$journey_guidance          = \OhMyLMS\Student\PracticeGuidance::get( $journey_state['course'], '', $journey_state['skill'] );
 		journey_check( 0 === $journey_guidance['skills'][0]['session_limit'] && null === $journey_guidance['recommended'], 'Empty question pools are visible and never recommended.' );
 		wp_set_current_user( $journey_state['actor'] );
 		for ( $journey_q = 0; $journey_q < 5; ++$journey_q ) {
@@ -354,11 +340,11 @@ try {
 			}
 		}
 		wp_set_current_user( $journey_state['learner'] );
-		$journey_guidance = \OhMyLMS\Student\PracticeGuidance::get( $journey_state['course'], $journey_group );
+		$journey_guidance = \OhMyLMS\Student\PracticeGuidance::get( $journey_state['course'], '', $journey_state['skill'] );
 		$journey_report   = CourseProgram::readiness_report( CourseProgram::editor( $journey_state['course'] )['draft'], $journey_state['course'] );
 		journey_check( 3 === $journey_report['practice_skills'][0]['questions'], 'Author readiness counts approved eligible questions and excludes unapproved and secure questions.' );
 		journey_check( 3 === $journey_guidance['skills'][0]['session_limit'] && $journey_guidance['recommended']['term_id'] === $journey_state['skill'], 'Only approved non-secure questions are offered for the assigned skill.' );
-		journey_check( is_wp_error( \OhMyLMS\Student\PracticeGuidance::get( $journey_state['course'], $journey_group, PHP_INT_MAX ) ), 'Foreign skill guidance is denied.' );
+		journey_check( is_wp_error( \OhMyLMS\Student\PracticeGuidance::get( $journey_state['course'], '', PHP_INT_MAX ) ), 'Foreign skill guidance is denied.' );
 		$journey_started = journey_api(
 			'POST',
 			'practice/sessions',
@@ -384,7 +370,7 @@ try {
 			$journey_session = $journey_answered->get_data()['session'];
 		}
 		journey_check( 'complete' === $journey_session['status'], 'The approved question session completes.' );
-		$journey_after_practice = \OhMyLMS\Student\PracticeGuidance::get( $journey_state['course'], $journey_group );
+		$journey_after_practice = \OhMyLMS\Student\PracticeGuidance::get( $journey_state['course'], '', $journey_state['skill'] );
 		journey_check( 'not-started' !== $journey_after_practice['skills'][0]['level'], 'Evaluated practice updates the guidance level.' );
 		journey_check( $journey_after_practice['skills'][0]['met'] ? null === $journey_after_practice['recommended'] && ! empty( $journey_after_practice['next'] ) : ! empty( $journey_after_practice['recommended'] ), 'Guidance chooses further practice or continuation from evaluated targets.' );
 		wp_set_current_user( 0 );
@@ -408,7 +394,9 @@ try {
 			$journey_state['php_args'] = array_merge( $journey_state['php_args'], array( '-d', 'extension_dir=' . ini_get( 'extension_dir' ), '-d', 'extension=mysqli', '-d', 'extension=mbstring' ) );
 		}
 		$journey_state['overview'] = Hub::course_url( $journey_state['course'] );
-		$journey_state['lesson']   = $journey_group;
+		// No lesson groups since b0e21ca5; the browser specs that open `hub_lesson` pages are stale too.
+		$journey_state['lesson']   = '';
+		$journey_state['unit']     = $journey_unit;
 		$journey_state['first']    = $journey_program['items'][0]['id'];
 		foreach ( array(
 			LOGGED_IN_COOKIE => 'logged_in',

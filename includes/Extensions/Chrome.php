@@ -75,12 +75,12 @@ final class Chrome {
 		'data-wp-context'                 => '{"scrolled":false,"threshold":600}',
 		'data-wp-class--visible'          => 'context.scrolled',
 		'data-wp-init'                    => 'callbacks.trackScroll',
-		'data-wp-on-async-window--scroll' => 'callbacks.trackScroll',
+		'data-wp-on-window--scroll' => 'callbacks.trackScroll',
 	);
 
 	const AUTH_FORM = array(
 		'data-wp-interactive'  => 'ohmylms/forms',
-		'data-wp-init--fold'   => 'callbacks.foldFilled',
+		'data-wp-init---fold'   => 'callbacks.foldFilled',
 		'data-wp-on--focusin'  => 'actions.fieldFocus',
 		'data-wp-on--focusout' => 'actions.fieldBlur',
 		'data-wp-on--input'    => 'actions.fieldInput',
@@ -366,7 +366,7 @@ final class Chrome {
 					self::set( $tags, self::AUTH_FORM );
 					if ( $tags->has_class( 'ohmylms-form-signup' ) ) {
 						$tags->set_attribute( 'data-wp-context', '{"consent":false}' );
-						$tags->set_attribute( 'data-wp-init--consent', 'callbacks.syncConsent' );
+						$tags->set_attribute( 'data-wp-init---consent', 'callbacks.syncConsent' );
 					}
 				}
 			} elseif ( $tags->has_class( 'ohmylms-password-show' ) ) {

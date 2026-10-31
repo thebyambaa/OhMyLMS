@@ -31,7 +31,7 @@ $ohmylms_auth = \OhMyLMS\Extensions\AuthForms::view( 'login', $hidden );
 <form class="ohmylms-login-signup ohmylms-form-login login" method="post" <?php echo $ohmylms_auth['style'] ? 'style="' . esc_attr( $ohmylms_auth['style'] ) . '"' : ''; ?>
 	data-wp-interactive="ohmylms/forms"
 	data-wp-context="<?php echo esc_attr( $ohmylms_auth['context'] ); ?>"
-	data-wp-init--fold="callbacks.foldFilled"
+	data-wp-init---fold="callbacks.foldFilled"
 	data-wp-on--focusin="actions.fieldFocus"
 	data-wp-on--focusout="actions.fieldBlur"
 	data-wp-on--input="actions.fieldInput"

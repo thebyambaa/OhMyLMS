@@ -14,10 +14,18 @@ foreach ( $tables as $table ) {
 	$engine = $wpdb->get_var( $wpdb->prepare( 'SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s', $table ) );
 	directory_check( $engine === 'InnoDB', 'Fixtures require transactional tables.' );
 }
-$suffix     = 'directory-fixture-' . wp_generate_password( 12, false );
-$controller = new \OhMyLMS\Rest\V1\StudentController();
-$list       = function ( $params = array() ) use ( $controller, $suffix ) {
-	$request = new WP_REST_Request( 'GET' );
+// The directory is GET ohmylms/v1/students (Rest\V1\StudentController over Student\Directory, rebuilt in 3e1687bf).
+$admins = get_users(
+	array(
+		'role'   => 'administrator',
+		'number' => 1,
+	)
+);
+directory_check( ! empty( $admins ), 'An administrator is needed for the integration test.' );
+wp_set_current_user( $admins[0]->ID );
+$suffix = 'directory-fixture-' . wp_generate_password( 12, false );
+$list   = function ( $params = array() ) use ( $suffix ) {
+	$request = new WP_REST_Request( 'GET', '/ohmylms/v1/students' );
 	$request->set_query_params(
 		array_merge(
 			array(
@@ -27,8 +35,9 @@ $list       = function ( $params = array() ) use ( $controller, $suffix ) {
 			$params
 		)
 	);
-	$response = $controller->get_items( $request );
+	$response = rest_do_request( $request );
 	directory_check( $GLOBALS['wpdb']->last_error === '', 'Directory SQL failed.' );
+	directory_check( 200 === $response->get_status(), 'Directory request failed: ' . wp_json_encode( $response->get_data() ) );
 	return $response;
 };
 $ids        = array();
@@ -69,11 +78,10 @@ try {
 	$rows     = $response->get_data();
 	directory_check( count( $rows ) === 2 && (int) $response->get_headers()['X-WP-Total'] === 2, 'Unenrolled student accounts or total missing; unrelated roles must be excluded.' );
 	foreach ( $rows as $row ) {
-		directory_check( in_array( (int) $row['user_id'], array( $ids['student'], $ids['legacy'] ), true ), 'Non-student leaked into directory.' );
-		directory_check( $row['courses_enrolled'] === 0 && ! empty( $row['registration_date'] ), 'Unenrolled students need zero courses and an account registration date.' );
+		directory_check( in_array( (int) $row['id'], array( $ids['student'], $ids['legacy'] ), true ), 'Non-student leaked into directory.' );
+		directory_check( $row['enrolled_courses'] === 0 && ! empty( $row['registered'] ), 'Unenrolled students need zero courses and an account registration date.' );
 	}
-	directory_check( count( $list( array( 'date_filter' => 'current_month' ) )->get_data() ) === 2, 'Date filter hides newly registered accounts.' );
-	directory_check( count( $list( array( 'course_id' => 2147483647 ) )->get_data() ) === 0, 'Course filter includes unenrolled students.' );
+	directory_check( count( $list( array( 'course' => 2147483647 ) )->get_data() ) === 0, 'Course filter includes unenrolled students.' );
 	directory_check( count( $list( array( 'per_page' => 1 ) )->get_data() ) === 1 && (int) $list( array( 'per_page' => 1 ) )->get_headers()['X-WP-Total'] === 2, 'Pagination total is inconsistent.' );
 
 	directory_check(
@@ -89,8 +97,8 @@ try {
 		) !== false,
 		'Enrollment fixture failed.'
 	);
-	$course_rows = $list( array( 'course_id' => 2147483647 ) )->get_data();
-	directory_check( count( $course_rows ) === 1 && (int) $course_rows[0]['user_id'] === $ids['teacher'], 'Existing enrolled users must remain listed regardless of role.' );
+	$course_rows = $list( array( 'course' => 2147483647 ) )->get_data();
+	directory_check( count( $course_rows ) === 1 && (int) $course_rows[0]['id'] === $ids['teacher'], 'Existing enrolled users must remain listed regardless of role.' );
 	directory_check( (int) $list()->get_headers()['X-WP-Total'] === 3, 'Enrollment and role filters disagree with total.' );
 	directory_check(
 		$wpdb->insert(
@@ -105,9 +113,9 @@ try {
 	);
 	$school_rows = $list()->get_data();
 	directory_check( count( $school_rows ) === 4 && (int) $list()->get_headers()['X-WP-Total'] === 4, 'School-created students must appear in both the list and total without a student role or enrollment.' );
-	directory_check( in_array( $ids['parent'], array_map( 'intval', array_column( $school_rows, 'user_id' ) ), true ), 'School-created student is missing.' );
-	directory_check( count( $list( array( 'course_id' => 2147483647 ) )->get_data() ) === 1, 'Course filter includes a school-created student without an enrollment.' );
-	echo "Student directory integration passed: roles, enrollment, dates, totals and pagination.\n";
+	directory_check( in_array( $ids['parent'], array_map( 'intval', array_column( $school_rows, 'id' ) ), true ), 'School-created student is missing.' );
+	directory_check( count( $list( array( 'course' => 2147483647 ) )->get_data() ) === 1, 'Course filter includes a school-created student without an enrollment.' );
+	echo "Student directory integration passed: roles, enrollment, registration dates, totals and pagination.\n";
 } finally {
 	$wpdb->query( 'ROLLBACK' );
 	foreach ( $ids as $id ) {
