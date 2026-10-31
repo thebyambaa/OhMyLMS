@@ -5,7 +5,7 @@ Tags: lms, coaching, cohort, course builder, online course
 Requires at least: 6.0
 Tested up to: 7.2
 Requires PHP: 7.4
-Stable tag: 1.2.21
+Stable tag: 1.2.22
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -492,6 +492,8 @@ Yes. All student data is stored in your own WordPress database on your hosting a
 13. Student Profile Edit UI
 
 == Upgrade Notice ==
+= 1.2.22 =
+Mongolian is a second interface language: learners pick English or Монгол (the default follows the browser), staff use their profile language, and every email goes out in its recipient's language. Learner pages no longer load jQuery. Saved email settings forget text that only repeated the default, so defaults are translated per recipient again.
 = 1.2.21 =
 The admin is rebuilt inside the WordPress menu (Dashboard, Content Hub, Account Hub, Commerce, Engagement, Settings) with WordPress list tables and your admin colour scheme; old admin links and bookmarks redirect. Enrolments move to a new table in the background after the update; nothing changes for learners. The administrator chat assistant is removed and its stored settings are deleted.
 = 1.2.12 =
@@ -502,6 +504,20 @@ Community feature enhancements and improved OhMyLMS compatibility. Update recomm
 New Gutenberg blocks for Student Dashboard, My Courses, and Student Profile pages. Includes page restore functionality.
 
 == Changelog ==
+= 1.2.22 =
+🚀 New Features
+
+- Added: Mongolian interface language. Learners switch between English and Монгол in the learner header, profile and Student Hub (or with `[ohmylms_language_switcher]`); visitors without a choice follow their browser language. Staff use Users › Profile › Language. The switcher can be turned off in Settings › General.
+- Added: Emails are written in each recipient's language, and an email template stores only the fields an administrator changed (with "Reset to default" per field).
+- Changed: The learner front end runs on the WordPress Interactivity API: catalog search and filters, account and profile, login, sign-up and reviews, the lesson and assignment player, video, carousels, checkout and the exam paper. jQuery and the Slick carousel are no longer loaded on learner pages.
+- Changed: Image fields in the admin (course thumbnail, certificate images, badges, hub icons) open the WordPress media library.
+
+🛡 Security and fixes
+
+- Fixed: Mark as complete is checked on the server (enrolment, drip, prerequisites, sequential lock), assignment deadlines are enforced on every submit path, and membership cancellation only works for the subscription's owner.
+- Fixed: The PayPal gateway loads and its webhook route is registered; its return handler only marks a PayPal order paid after PayPal confirms the amount.
+- Fixed: Links to lessons, quizzes and assignments in unpublished courses, the login `redirect_to` (no off-site redirects), and the Mongolian PHP strings (`Domain Path: /languages`).
+
 = 1.2.21 =
 🚀 New Features
 
