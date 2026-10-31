@@ -1,4 +1,5 @@
 const { __, sprintf } = window.wp.i18n;
+/** @type {Object<string, string>} */
 const titles = {
 	'spin-wheel': __( 'Spin the wheel', 'ohmylms' ),
 	'open-box': __( 'Open the box', 'ohmylms' ),
@@ -19,16 +20,69 @@ const titles = {
 };
 
 /**
+ * @typedef {Object} GameCard
+ * @property {string}  id       Card token.
+ * @property {number}  number   Position, from 1.
+ * @property {boolean} opened   Turned over.
+ * @property {string}  [text]   Front (spin-wheel, flip-tiles, word-magnets, or once opened).
+ * @property {string}  [back]   Back, once opened.
+ * @property {string}  [image]  Image URL, once opened.
+ */
+
+/**
+ * @typedef {Object} GameChoice
+ * @property {string} id      Answer token.
+ * @property {string} text    Label.
+ * @property {string} [image] Image URL.
+ */
+
+/**
+ * Server projection (OhMyLMS\Practice\GameActivity). The `deck` and `magnets` families get
+ * `cards`, `selected` and `positions` (`instructions` for magnets); the others get the round
+ * fields, `choices` in the `play`, `paused` and `review` phases and the review fields in `review`.
+ *
+ * @typedef {Object} GameState
+ * @property {string}                          session            Session UUID.
+ * @property {string}                          activityMode       Game slug.
+ * @property {string}                          gameFamily         `deck`, `magnets` or a round family.
+ * @property {string}                          status             `complete` when the run is over.
+ * @property {string}                          phase              `ready`, `play`, `paused` or `review`.
+ * @property {number}                          round              Current round.
+ * @property {number}                          total              Rounds.
+ * @property {number}                          points             Practice points.
+ * @property {GameCard[]}                      [cards]            Deck and magnets.
+ * @property {string}                          [selected]         Picked card, or the review answer.
+ * @property {Object<string, [number, number]>} [positions]       Magnet positions in percent.
+ * @property {string}                          [instructions]     Magnets.
+ * @property {string}                          [prompt]           Round prompt.
+ * @property {string}                          [body]             Round text.
+ * @property {string}                          [image]            Round image URL.
+ * @property {number}                          [remainingSeconds] Round time left.
+ * @property {number}                          [stake]            Win-or-lose stake.
+ * @property {boolean}                         [helpUsed]         Gameshow 50/50 used.
+ * @property {GameChoice[]}                    [choices]          Answers.
+ * @property {string}                          [correctId]        Review: right answer.
+ * @property {boolean}                         [correct]          Review: answered right.
+ * @property {number}                          [roundPoints]      Review: points for the round.
+ */
+
+/**
  * Reusable native controls; server commands own scoring and saved progress.
  *
  * @param {HTMLElement} stage Player region.
- * @param {Object} data Safe progress.
+ * @param {GameState} data Safe progress.
  * @param {(command: string, value?: string) => Promise<void>} act Save action.
  * @param {() => Promise<void>} restart Start a new run.
  * @return {() => void} Stop animation and timers.
  */
 export function renderGame( stage, data, act, restart ) {
 	const doc = stage.ownerDocument;
+	/**
+	 * @template {keyof HTMLElementTagNameMap} K
+	 * @param {K}      tag    Tag name.
+	 * @param {string} [text] Text content.
+	 * @return {HTMLElementTagNameMap[K]} Element.
+	 */
 	const make = ( tag, text = '' ) => {
 		const node = doc.createElement( tag );
 		node.textContent = text;
@@ -36,17 +90,21 @@ export function renderGame( stage, data, act, restart ) {
 	};
 	let pending = false;
 	let disposed = false;
+	/** @type {Array<() => void>} */
 	const cleanups = [];
+	/**
+	 * @param {string} command Command.
+	 * @param {string} [value] Value.
+	 */
 	const run = async ( command, value = '' ) => {
 		if ( pending || disposed ) return;
 		pending = true;
 		/** @type {Array<[HTMLButtonElement|HTMLSelectElement, boolean]>} */
 		const controls = Array.from(
-			stage.querySelectorAll( 'button, select' ),
-			( /** @type {HTMLButtonElement|HTMLSelectElement} */ node ) => [
-				node,
-				node.disabled,
-			]
+			/** @type {NodeListOf<HTMLButtonElement|HTMLSelectElement>} */ (
+				stage.querySelectorAll( 'button, select' )
+			),
+			( node ) => [ node, node.disabled ]
 		);
 		controls.forEach( ( [ node ] ) => {
 			node.disabled = true;
@@ -60,12 +118,22 @@ export function renderGame( stage, data, act, restart ) {
 			} );
 		}
 	};
+	/**
+	 * @param {string|undefined} text   Label.
+	 * @param {() => unknown}    action Click handler.
+	 * @return {HTMLButtonElement} Button.
+	 */
 	const button = ( text, action ) => {
 		const node = make( 'button', text );
 		node.type = 'button';
 		node.addEventListener( 'click', action );
 		return node;
 	};
+	/**
+	 * @param {HTMLElement} parent Container.
+	 * @param {string}      [url]  Image URL; nothing is added without one.
+	 * @param {string}      [alt]  Alternative text.
+	 */
 	const showImage = ( parent, url, alt = '' ) => {
 		if ( url ) {
 			const image = make( 'img' );
@@ -88,9 +156,8 @@ export function renderGame( stage, data, act, restart ) {
 	);
 	stage.append( feedback );
 	if ( data.gameFamily === 'deck' ) {
-		const selected = data.cards.find(
-			( card ) => card.id === data.selected
-		);
+		const cards = /** @type {GameCard[]} */ ( data.cards );
+		const selected = cards.find( ( card ) => card.id === data.selected );
 		if ( mode === 'spin-wheel' ) {
 			const wheel = make( 'div' );
 			wheel.className = 'ohmylms-game-wheel';
@@ -103,8 +170,8 @@ export function renderGame( stage, data, act, restart ) {
 				'#c2410c',
 				'#a16207',
 			];
-			wheel.style.background = `conic-gradient(${ data.cards.map( ( card, index ) => `${ colors[ index % colors.length ] } ${ ( index * 360 ) / data.total }deg ${ ( ( index + 1 ) * 360 ) / data.total }deg` ).join( ',' ) })`;
-			data.cards.forEach( ( card, index ) => {
+			wheel.style.background = `conic-gradient(${ cards.map( ( card, index ) => `${ colors[ index % colors.length ] } ${ ( index * 360 ) / data.total }deg ${ ( ( index + 1 ) * 360 ) / data.total }deg` ).join( ',' ) })`;
+			cards.forEach( ( card, index ) => {
 				const number = make( 'span', String( index + 1 ) );
 				number.style.transform = `rotate(${ ( ( index + 0.5 ) * 360 ) / data.total }deg) translateY(-105px) rotate(-${ ( ( index + 0.5 ) * 360 ) / data.total }deg)`;
 				wheel.append( number );
@@ -115,14 +182,15 @@ export function renderGame( stage, data, act, restart ) {
 			stage.append( frame );
 			if ( selected ) {
 				const animation = requestAnimationFrame( () => {
-					wheel.style.transform = `rotate(${ 1080 - ( ( data.cards.indexOf( selected ) + 0.5 ) * 360 ) / data.total }deg)`;
+					wheel.style.transform = `rotate(${ 1080 - ( ( cards.indexOf( selected ) + 0.5 ) * 360 ) / data.total }deg)`;
 				} );
 				cleanups.push( () => cancelAnimationFrame( animation ) );
 			}
 		}
 		const grid = make( 'div' );
 		grid.className = 'ohmylms-study-cards ohmylms-game-deck';
-		data.cards.forEach( ( card ) => {
+		cards.forEach( ( card ) => {
+			/** @type {string|undefined} */
 			let text = `${ card.number }`;
 			if ( mode === 'flip-tiles' )
 				text = card.opened ? card.back : card.text;
@@ -175,7 +243,7 @@ export function renderGame( stage, data, act, restart ) {
 					: __( 'Draw random card', 'ohmylms' ),
 				() => run( 'spin' )
 			);
-			draw.disabled = data.cards.every( ( card ) => card.opened );
+			draw.disabled = cards.every( ( card ) => card.opened );
 			stage.append( draw );
 		}
 		stage.append(
@@ -206,8 +274,11 @@ export function renderGame( stage, data, act, restart ) {
 		);
 		const bank = make( 'div' );
 		bank.className = 'ohmylms-label-bank';
-		data.cards.forEach( ( card, index ) => {
-			const at = data.positions[ card.id ];
+		const positions = /** @type {Object<string, [number, number]>} */ (
+			data.positions
+		);
+		/** @type {GameCard[]} */ ( data.cards ).forEach( ( card, index ) => {
+			const at = positions[ card.id ];
 			if ( ! at ) {
 				const add = button( card.text, () =>
 					run(
@@ -224,6 +295,7 @@ export function renderGame( stage, data, act, restart ) {
 			node.className = 'ohmylms-magnet';
 			node.disabled = complete;
 			let [ x, y ] = at;
+			/** @type {number|null} */
 			let start = null;
 			const paint = () => {
 				node.style.left = `${ x }%`;
@@ -265,12 +337,13 @@ export function renderGame( stage, data, act, restart ) {
 				paint();
 			} );
 			node.addEventListener( 'keydown', ( event ) => {
-				const delta = {
-					ArrowLeft: [ -1, 0 ],
-					ArrowRight: [ 1, 0 ],
-					ArrowUp: [ 0, -1 ],
-					ArrowDown: [ 0, 1 ],
-				}[ event.key ];
+				const delta =
+					/** @type {Object<string, [number, number]>} */ ( {
+						ArrowLeft: [ -1, 0 ],
+						ArrowRight: [ 1, 0 ],
+						ArrowUp: [ 0, -1 ],
+						ArrowDown: [ 0, 1 ],
+					} )[ event.key ];
 				if ( ! delta ) return;
 				event.preventDefault();
 				const step = event.shiftKey ? 5 : 1;
@@ -349,26 +422,31 @@ export function renderGame( stage, data, act, restart ) {
 					data.correct
 						? __( 'Correct', 'ohmylms' )
 						: __( 'Incorrect or time expired', 'ohmylms' ),
-					data.roundPoints
+					/** @type {number} */ ( data.roundPoints )
 				)
 			);
 			result.setAttribute( 'role', 'status' );
 			stage.append( result );
-			data.choices.forEach( ( choice ) => {
-				const row = make(
-					'p',
-					choice.text +
-						( choice.id === data.correctId
-							? ' — ' + __( 'Correct answer', 'ohmylms' )
-							: '' )
-				);
-				if ( choice.id === data.selected )
-					row.append(
-						make( 'strong', ' — ' + __( 'Your answer', 'ohmylms' ) )
+			/** @type {GameChoice[]} */ ( data.choices ).forEach(
+				( choice ) => {
+					const row = make(
+						'p',
+						choice.text +
+							( choice.id === data.correctId
+								? ' — ' + __( 'Correct answer', 'ohmylms' )
+								: '' )
 					);
-				showImage( row, choice.image );
-				stage.append( row );
-			} );
+					if ( choice.id === data.selected )
+						row.append(
+							make(
+								'strong',
+								' — ' + __( 'Your answer', 'ohmylms' )
+							)
+						);
+					showImage( row, choice.image );
+					stage.append( row );
+				}
+			);
 			stage.append(
 				button(
 					complete
@@ -381,7 +459,9 @@ export function renderGame( stage, data, act, restart ) {
 			const clock = make( 'p' );
 			clock.setAttribute( 'role', 'timer' );
 			stage.append( clock );
-			const until = Date.now() + data.remainingSeconds * 1000;
+			const until =
+				Date.now() +
+				/** @type {number} */ ( data.remainingSeconds ) * 1000;
 			let expired = false;
 			const retry = button(
 				__( 'Time expired — continue', 'ohmylms' ),
@@ -414,14 +494,16 @@ export function renderGame( stage, data, act, restart ) {
 			tick();
 			const grid = make( 'div' );
 			grid.className = 'ohmylms-study-cards ohmylms-game-answers';
-			data.choices.forEach( ( choice ) => {
-				const option = button( choice.text, () =>
-					run( 'answer', choice.id )
-				);
-				option.dataset.cardId = choice.id;
-				showImage( option, choice.image, choice.text );
-				grid.append( option );
-			} );
+			/** @type {GameChoice[]} */ ( data.choices ).forEach(
+				( choice ) => {
+					const option = button( choice.text, () =>
+						run( 'answer', choice.id )
+					);
+					option.dataset.cardId = choice.id;
+					showImage( option, choice.image, choice.text );
+					grid.append( option );
+				}
+			);
 			const arcades = [
 				'maze-chase',
 				'airplane',
@@ -442,8 +524,14 @@ export function renderGame( stage, data, act, restart ) {
 					.then( ( { renderArcade } ) => {
 						if ( ! disposed )
 							cleanups.push(
-								renderArcade( area, data, ( command, value ) =>
-									run( command, value )
+								renderArcade(
+									area,
+									data,
+									/**
+									 * @param {string} command Command.
+									 * @param {string} value   Value.
+									 */
+									( command, value ) => run( command, value )
 								)
 							);
 					} )

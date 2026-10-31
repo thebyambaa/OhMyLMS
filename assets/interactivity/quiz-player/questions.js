@@ -13,6 +13,12 @@ import {
 import { createQuestionControls } from './questionControls.js';
 import { gridRowsAnswered } from './gridAnswers.mjs';
 import { attachMatchingLines } from './matchingLines.js';
+/**
+ * Controls by action name; each receives the DOM event of its name (drag events, keydown, click).
+ *
+ * @typedef {Record<string, (event: Event) => void>} ControlActions
+ */
+/** @type {WeakMap<Element, ReturnType<typeof createQuestionControls>>} */
 const controllers = new WeakMap();
 store( 'ohmylms/questions', {
 	actions: Object.fromEntries(
@@ -30,8 +36,11 @@ store( 'ohmylms/questions', {
 			name,
 			withSyncEvent( ( event ) => {
 				event.stopPropagation();
-				const root = getElement().ref.closest(
-					'[data-wp-interactive="ohmylms/questions"]'
+				// Actions run inside the island.
+				const root = /** @type {HTMLElement} */ (
+					/** @type {HTMLElement} */ ( getElement().ref ).closest(
+						'[data-wp-interactive="ohmylms/questions"]'
+					)
 				);
 				if ( ! controllers.has( root ) ) {
 					controllers.set(
@@ -39,7 +48,9 @@ store( 'ohmylms/questions', {
 						createQuestionControls( root, getContext() )
 					);
 				}
-				controllers.get( root )[ name ]( event );
+				/** @type {ControlActions} */ (
+					/** @type {unknown} */ ( controllers.get( root ) )
+				)[ name ]( event );
 			} ),
 		] )
 	),
@@ -47,11 +58,14 @@ store( 'ohmylms/questions', {
 
 /**
  * Fetched HTML is inside data-wp-ignore; initialize only this isolated renderer region.
- * @param container
+ * @param {Element} container Question root.
+ * @return {() => void} Cleanup.
  */
 function mountDynamic( container ) {
-	const root = container.querySelector(
-		'.quiz-reorder-options,.quiz-matching-options'
+	const root = /** @type {HTMLElement|null} */ (
+		container.querySelector(
+			'.quiz-reorder-options,.quiz-matching-options'
+		)
 	);
 	if ( ! root ) {
 		return () => {};
@@ -68,21 +82,23 @@ function mountDynamic( container ) {
 		click: 'select',
 		dblclick: 'unlink',
 	};
+	/** @type {Array<[string, (event: Event) => void]>} */
 	const registered = [];
 	for ( const [ event, action ] of Object.entries( listeners ) ) {
+		/** @param {Event} eventObject DOM event. */
 		const listener = ( eventObject ) => {
-			if (
-				event === 'click' &&
-				eventObject.target.closest( '.reorder-move' )
-			) {
+			const target = /** @type {Element} */ ( eventObject.target );
+			if ( event === 'click' && target.closest( '.reorder-move' ) ) {
 				controller.move( eventObject );
 			} else if (
 				event === 'click' &&
-				eventObject.target.closest( '.option-drop-box' )
+				target.closest( '.option-drop-box' )
 			) {
 				controller.place( eventObject );
 			} else {
-				controller[ action ]( eventObject );
+				/** @type {ControlActions} */ (
+					/** @type {unknown} */ ( controller )
+				)[ action ]( eventObject );
 			}
 		};
 		root.addEventListener( event, listener );
@@ -99,9 +115,9 @@ function mountDynamic( container ) {
 	};
 }
 const attachStaticMatching = () =>
-	document
-		.querySelectorAll( '.quiz-matching-options' )
-		.forEach( attachMatchingLines );
+	/** @type {HTMLElement[]} */ ( [
+		...document.querySelectorAll( '.quiz-matching-options' ),
+	] ).forEach( attachMatchingLines );
 if ( document.readyState === 'loading' ) {
 	document.addEventListener( 'DOMContentLoaded', attachStaticMatching );
 } else {
@@ -140,9 +156,13 @@ registerAnswerValidator( 'match-table-grid', ( root ) => {
 		return false;
 	}
 	try {
-		const config = JSON.parse( widget.getAttribute( 'data-config' ) );
+		const config = JSON.parse(
+			/** @type {string} */ ( widget.getAttribute( 'data-config' ) )
+		);
 		const answers = Array.from(
-			widget.querySelectorAll( 'input[data-answer-key]' )
+			/** @type {Iterable<HTMLInputElement>} */ (
+				widget.querySelectorAll( 'input[data-answer-key]' )
+			)
 		).map( ( input ) => ( {
 			id: input.getAttribute( 'data-answer-key' ),
 			value: input.value,
@@ -178,9 +198,11 @@ registerAnswerValidator( 'match-table-grid', ( root ) => {
 	'flying-fruit',
 ].forEach( ( type ) =>
 	registerAnswerValidator( type, ( root ) =>
-		Array.from( root.querySelectorAll( 'input[data-answer-key]' ) ).some(
-			( input ) => input.value.trim() !== ''
-		)
+		Array.from(
+			/** @type {Iterable<HTMLInputElement>} */ (
+				root.querySelectorAll( 'input[data-answer-key]' )
+			)
+		).some( ( input ) => input.value.trim() !== '' )
 	)
 );
 
@@ -190,28 +212,40 @@ registerAnswerValidator( 'structured', ( root ) => {
 	return (
 		parts.length > 0 &&
 		parts.every( ( part ) => {
-			const child = part.querySelector( '.ohmylms-structured-child' );
+			const child = /** @type {HTMLElement|null} */ (
+				part.querySelector( '.ohmylms-structured-child' )
+			);
 			return child
 				? isAnswered( child, child.dataset.partType )
-				: [ ...part.querySelectorAll( 'input,textarea' ) ].some(
-						( field ) => field.value.trim() !== ''
-					);
+				: [
+						.../** @type {Iterable<HTMLInputElement|HTMLTextAreaElement>} */ (
+							part.querySelectorAll( 'input,textarea' )
+						),
+					].some( ( field ) => field.value.trim() !== '' );
 		} )
 	);
 } );
 registerQuestionMount( 'structured', ( root, detail ) => {
-	const cleanups = [ ...root.querySelectorAll( '.ohmylms-structured-child' ) ]
-		.map( ( child ) =>
-			mountQuestion( child, child.dataset.partType, detail )
-		)
-		.filter( Boolean );
+	const cleanups = /** @type {Array<() => void>} */ (
+		[
+			.../** @type {Iterable<HTMLElement>} */ (
+				root.querySelectorAll( '.ohmylms-structured-child' )
+			),
+		]
+			.map( ( child ) =>
+				mountQuestion( child, child.dataset.partType, detail )
+			)
+			.filter( Boolean )
+	);
 	return () => cleanups.forEach( ( cleanup ) => cleanup() );
 } );
 
 for ( const type of [ 'crossword', 'wordsearch' ] ) {
 	registerAnswerValidator( type, ( root ) =>
-		[ ...root.querySelectorAll( '[data-answer-key]' ) ].some(
-			( input ) => input.value.trim() !== ''
-		)
+		[
+			.../** @type {Iterable<HTMLInputElement>} */ (
+				root.querySelectorAll( '[data-answer-key]' )
+			),
+		].some( ( input ) => input.value.trim() !== '' )
 	);
 }

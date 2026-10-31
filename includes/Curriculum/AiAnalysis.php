@@ -14,6 +14,7 @@ use OhMyLMS\Skills\SubjectProfiles;
 use OhMyLMS\AI\Client;
 use OhMyLMS\AI\Settings as AiSettings;
 use OhMyLMS\Skills\Taxonomy;
+use OhMyLMS\Utility\Lock;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -170,7 +171,7 @@ final class AiAnalysis {
 		global $wpdb;
 		$run_id = (int) $run_id;
 		$lock   = 'ohmylms-ai-analysis-' . md5( $wpdb->prefix ) . '-' . $run_id;
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $lock ) ) ) {
+		if ( ! Lock::acquire( $lock, 0 ) ) {
 			return self::run( $run_id );
 		}
 		try {
@@ -227,7 +228,7 @@ final class AiAnalysis {
 			}
 			return self::run( $run_id );
 		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+			Lock::release( $lock );
 		}
 	}
 
@@ -379,26 +380,27 @@ final class AiAnalysis {
 			return array();
 		}
 		// Two reviewers deciding the same suggestion would apply it twice; decisions run one at a time.
-		$lock = 'ohmylms-ai-review-' . md5( $wpdb->prefix );
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 10)', $lock ) ) ) {
-			return array_combine(
-				$ids,
-				array_map(
-					static function ( $id ) {
-						return array(
-							'id'    => $id,
-							'error' => __( 'Another review is being saved. Try again.', 'ohmylms' ),
-						);
-					},
-					$ids
-				)
-			);
-		}
-		try {
-			return self::review_locked( $ids, $action, $overrides );
-		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
-		}
+		return Lock::with(
+			'ohmylms-ai-review-' . md5( $wpdb->prefix ),
+			10,
+			static function () use ( $ids, $action, $overrides ) {
+				return self::review_locked( $ids, $action, $overrides );
+			},
+			static function () use ( $ids ) {
+				return array_combine(
+					$ids,
+					array_map(
+						static function ( $id ) {
+							return array(
+								'id'    => $id,
+								'error' => __( 'Another review is being saved. Try again.', 'ohmylms' ),
+							);
+						},
+						$ids
+					)
+				);
+			}
+		);
 	}
 
 	/**

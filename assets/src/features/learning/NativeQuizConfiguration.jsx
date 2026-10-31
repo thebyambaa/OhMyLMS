@@ -8,7 +8,7 @@ import {
 	ToggleControl,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { listSkills } from '../question-bank/api.mjs';
+import { listSkills } from '../question-bank/public.mjs';
 
 /**
  * Shared configuration in Gutenberg's normal save and publishing transaction.
@@ -26,7 +26,9 @@ export function NativeQuizConfiguration( { exam = false } ) {
 		[]
 	);
 	const { editPost } = useDispatch( 'core/editor' );
-	const [ skills, setSkills ] = useState( [] );
+	const [ skills, setSkills ] = useState(
+		/** @type {{ id: number, name: string }[]} */ ( [] )
+	);
 	useEffect( () => {
 		let active = true;
 		listSkills( '' )
@@ -39,10 +41,20 @@ export function NativeQuizConfiguration( { exam = false } ) {
 	const settings = value.settings || {};
 	const drip = value.drip_settings || {};
 	const paper = settings.presentation === 'paper';
+	/** @param {Record<string, unknown>} patch Changed quiz fields. */
 	const change = ( patch ) =>
 		editPost( { ohmylms_quiz: { ...value, ...patch } } );
+	/**
+	 * @param {string}  key  Setting.
+	 * @param {unknown} next New value.
+	 */
 	const set = ( key, next ) =>
 		change( { settings: { ...settings, [ key ]: next } } );
+	/**
+	 * @param {string}  key   Setting.
+	 * @param {string}  field Field of the setting.
+	 * @param {unknown} next  New value.
+	 */
 	const nested = ( key, field, next ) =>
 		set( key, { ...settings[ key ], [ field ]: next } );
 	const booleanFields = [
@@ -350,6 +362,7 @@ export function NativeQuizConfiguration( { exam = false } ) {
 												skill.id,
 											]
 										: ( value.skill_ids || [] ).filter(
+												/** @param {number} id Skill ID. */
 												( id ) => id !== skill.id
 											),
 								} )

@@ -1,5 +1,7 @@
 /** Pure helpers for randomised question templates ("Randomize numbers"). */
 
+/** @typedef {import('./editorTypes').Data} Data */
+
 /** Variable names are single letters; "e" is Euler's number and is not available. */
 export const VARIABLE_LETTERS = 'abcdfghijklmnopqrstuvwxyz'.split( '' );
 
@@ -12,7 +14,8 @@ export const VARIABLE_TYPES = [
 
 /**
  * Does this question draw new numbers each time it is issued?
- * @param settings
+ * @param {Data|null|undefined} settings
+ * @return {boolean} Whether the question has template variables.
  */
 export function hasTemplate( settings ) {
 	return (
@@ -37,7 +40,8 @@ export function defaultTemplate() {
 
 /**
  * The first unused variable letter, or '' when all are taken.
- * @param variables
+ * @param {Data[]|null|undefined} variables
+ * @return {string} Variable name.
  */
 export function nextVariableName( variables ) {
 	const used = new Set( ( variables || [] ).map( ( v ) => v.name ) );
@@ -46,8 +50,9 @@ export function nextVariableName( variables ) {
 
 /**
  * A new variable of a type with sensible limits.
- * @param type
- * @param name
+ * @param {string} type
+ * @param {string} name
+ * @return {Data} Variable.
  */
 export function variableDefaults( type, name ) {
 	switch ( type ) {
@@ -64,7 +69,8 @@ export function variableDefaults( type, name ) {
 
 /**
  * "apples, 3, pears" as a list; numeric entries become numbers.
- * @param text
+ * @param {string|null|undefined} text
+ * @return {(number|string)[]} Values.
  */
 export function parseValues( text ) {
 	return String( text || '' )
@@ -78,7 +84,8 @@ export function parseValues( text ) {
 
 /**
  * Conditions typed one per line.
- * @param text
+ * @param {string|null|undefined} text
+ * @return {string[]} Lines.
  */
 export function parseLines( text ) {
 	return String( text || '' )
@@ -90,7 +97,8 @@ export function parseLines( text ) {
 /**
  * Setting names a learner's answer or target usually lives under, per question type.
  * Authors can still type any other path (for example "blanks.a.answer" or "parts.0.answer").
- * @param type
+ * @param {string} type
+ * @return {string[]} Setting paths.
  */
 export function setPathSuggestions( type ) {
 	switch ( type ) {
@@ -123,10 +131,12 @@ export function setPathSuggestions( type ) {
 /**
  * Quick problems to show before the server's own check: duplicate or unusable names,
  * reversed ranges, missing formulas.
- * @param template
+ * @param {Data|null|undefined} template
+ * @return {string[]} Issue codes.
  */
 export function templateIssues( template ) {
 	const issues = [];
+	/** @type {Data[]} */
 	const variables = template?.variables || [];
 	const names = variables.map( ( v ) => v.name );
 	if (
@@ -155,7 +165,7 @@ export function templateIssues( template ) {
 	}
 	if (
 		( template?.set || [] ).some(
-			( rule ) =>
+			( /** @type {Data} */ rule ) =>
 				! String( rule.path || '' ).trim() ||
 				! String( rule.expr || '' ).trim()
 		)

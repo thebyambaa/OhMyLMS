@@ -3,15 +3,19 @@ import { createElement } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Button } from '@wordpress/components';
 
+/** @typedef {import('./editorTypes').Data} Data */
+
 /**
  * The names of the variables a question template defines, in order.
  *
- * @param {Object} settings Question settings.
+ * @param {Data|null|undefined} settings Question settings.
  * @return {string[]} Variable names.
  */
 export const variableNames = ( settings ) =>
 	( settings?.template?.variables || [] )
-		.map( ( variable ) => String( variable?.name || '' ) )
+		.map( ( /** @type {Data|null} */ variable ) =>
+			String( variable?.name || '' )
+		)
 		.filter( Boolean );
 
 /**

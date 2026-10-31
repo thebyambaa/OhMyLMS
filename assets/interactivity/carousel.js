@@ -22,16 +22,35 @@ const reduceMotion = () =>
 		window.matchMedia?.( '(prefers-reduced-motion: reduce)' ).matches
 	);
 
+/**
+ * @typedef {Object} CarouselMetrics
+ * @property {number} count   Slides.
+ * @property {number} perView Slides fully visible.
+ * @property {number} index   First visible slide.
+ */
+
+/**
+ * @param {Element} element Element inside the carousel.
+ * @return {{track: Element|null, slides: Element[], rtl: boolean}} Track, slides and direction.
+ */
 function parts( element ) {
 	const root = element.closest( '[data-wp-interactive="ohmylms/carousel"]' );
 	const track = root?.querySelector( '.ohmylms-carousel-track' ) || null;
 	return {
 		track,
 		slides: track ? [ ...track.children ] : [],
-		rtl: Boolean( track ) && getComputedStyle( track ).direction === 'rtl',
+		rtl:
+			Boolean( track ) &&
+			getComputedStyle( /** @type {Element} */ ( track ) ).direction ===
+				'rtl',
 	};
 }
 
+/**
+ * @param {Element}   track  Scroll track.
+ * @param {Element[]} slides Slides.
+ * @return {{width: number, slideWidth: number, step: number, maxOffset: number}} Measurements.
+ */
 function geometry( track, slides ) {
 	const style = getComputedStyle( track );
 	const first = slides[ 0 ]?.getBoundingClientRect();
@@ -48,6 +67,10 @@ function geometry( track, slides ) {
 	};
 }
 
+/**
+ * @param {CarouselMetrics} context Carousel context (updated).
+ * @param {Element}         element Element inside the carousel.
+ */
 function measure( context, element ) {
 	const { track, slides } = parts( element );
 	if ( ! track ) {
@@ -65,8 +88,11 @@ function measure( context, element ) {
 	);
 }
 
+/** @param {number} index Requested first slide. */
 function go( index ) {
-	const { track, slides, rtl } = parts( getElement().ref );
+	const { track, slides, rtl } = parts(
+		/** @type {HTMLElement} */ ( getElement().ref )
+	);
 	if ( ! track || ! slides.length ) {
 		return;
 	}
@@ -87,13 +113,16 @@ function go( index ) {
 
 const { state } = store( 'ohmylms/carousel', {
 	state: {
+		/** @return {boolean} There is more than one view. */
 		get scrollable() {
 			const context = getContext();
 			return context.count > context.perView;
 		},
+		/** @return {boolean} Hide the arrows. */
 		get arrowsHidden() {
 			return ! getContext().arrows || ! state.scrollable;
 		},
+		/** @return {boolean} Hide the dots. */
 		get dotsHidden() {
 			return ! getContext().dots || ! state.scrollable;
 		},
@@ -133,7 +162,9 @@ const { state } = store( 'ohmylms/carousel', {
 			go( getContext().dot.index );
 		},
 		key: withSyncEvent( ( event ) => {
-			const { track, rtl } = parts( getElement().ref );
+			const { track, rtl } = parts(
+				/** @type {HTMLElement} */ ( getElement().ref )
+			);
 			const target = keyTarget( event.key, rtl );
 			if ( event.target !== track || ! target ) {
 				return;
@@ -150,7 +181,10 @@ const { state } = store( 'ohmylms/carousel', {
 			);
 		} ),
 		sync() {
-			measure( getContext(), getElement().ref );
+			measure(
+				getContext(),
+				/** @type {HTMLElement} */ ( getElement().ref )
+			);
 		},
 		hoverIn() {
 			getContext().hovered = true;
@@ -161,8 +195,15 @@ const { state } = store( 'ohmylms/carousel', {
 		focusIn() {
 			getContext().focused = true;
 		},
+		/** @param {FocusEvent} event Focus leaving the carousel or one of its children. */
 		focusOut( event ) {
-			if ( ! getElement().ref.contains( event.relatedTarget ) ) {
+			if (
+				! (
+					/** @type {HTMLElement} */ ( getElement().ref ).contains(
+						/** @type {Node|null} */ ( event.relatedTarget )
+					)
+				)
+			) {
 				getContext().focused = false;
 			}
 		},
@@ -173,7 +214,7 @@ const { state } = store( 'ohmylms/carousel', {
 	},
 	callbacks: {
 		mount() {
-			const { ref } = getElement();
+			const ref = /** @type {HTMLElement} */ ( getElement().ref );
 			const { track } = parts( ref );
 			if ( ! track ) {
 				return undefined;

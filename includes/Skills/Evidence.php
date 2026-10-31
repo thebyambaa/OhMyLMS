@@ -11,6 +11,7 @@ use OhMyLMS\Performance\Settings;
 use OhMyLMS\Performance\Snapshot;
 use OhMyLMS\QuestionBank\SkillMap;
 use OhMyLMS\QuestionBank\VersionPublisher;
+use OhMyLMS\Utility\Lock;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -37,7 +38,7 @@ final class Evidence {
 		if ( ! Schema::ready() ) {
 			return 0; }
 		$lock = self::LOCK . '-' . md5( $wpdb->prefix );
-		if ( (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $lock ) ) !== '1' ) {
+		if ( ! Lock::acquire( $lock, 0 ) ) {
 			return 0; }
 		$done = 0;
 		try {
@@ -61,7 +62,7 @@ final class Evidence {
 				}
 			}
 		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+			Lock::release( $lock );
 		}
 		return $done;
 	}

@@ -9,7 +9,7 @@ import {
 } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
 import { PAPER_STORE } from './store';
-import { saveQuizForPreview } from '../learning/quizPreview.mjs';
+import { saveQuizForPreview } from '../learning/public.mjs';
 import {
 	PAPER_VERSIONS,
 	limitMinutes,
@@ -28,10 +28,20 @@ const QUESTION_BLOCKS = [
 	'ohmylms/quiz-question-reference',
 ];
 
+/** @typedef {import('./paperModel.mjs').PaperSettings} PaperSettings */
+
+/**
+ * Editor canvas parts.
+ * @typedef {Object} CanvasParts
+ * @property {Document}    doc     Canvas document.
+ * @property {HTMLElement} wrapper Editor styles wrapper.
+ * @property {HTMLElement} root    Root block container.
+ */
+
 /**
  * Normalized paper settings of the open exam, including unsaved edits.
  *
- * @return {Object} Paper settings.
+ * @return {PaperSettings} Paper settings.
  */
 export function usePaperSettings() {
 	const raw = useSelect(
@@ -62,8 +72,8 @@ export function usePaperView() {
  * Every block in document order, nested blocks in place. Core's getClientIdsWithDescendants()
  * lists top-level blocks before nested ones, which would misnumber questions in a section.
  *
- * @param {Object} editor Block editor selectors.
- * @param {string} root   Parent block, empty for the document.
+ * @param {import('@wordpress/data').BlockEditorSelectors} editor Block editor selectors.
+ * @param {string}                                         [root] Parent block, empty for the document.
  * @return {string[]} Block IDs.
  */
 function documentOrder( editor, root = '' ) {
@@ -86,7 +96,11 @@ export function usePaperIndex( clientId ) {
 			const paper = getStore( PAPER_STORE );
 			let index = 0;
 			for ( const id of documentOrder( editor ) ) {
-				if ( ! QUESTION_BLOCKS.includes( editor.getBlockName( id ) ) ) {
+				// Every listed block exists, so it has a name.
+				const name = /** @type {string} */ (
+					editor.getBlockName( id )
+				);
+				if ( ! QUESTION_BLOCKS.includes( name ) ) {
 					continue;
 				}
 				const statement = paper.getQuestionType( id ) === 'statement';
@@ -105,9 +119,9 @@ export function usePaperIndex( clientId ) {
  * Everything a question block needs to show its printed form, and registration of its type
  * and marks so numbering skips statements and headers and sections can total the marks.
  *
- * @param {string} clientId Question block.
- * @param {Object} question Editor question, or null while loading.
- * @return {{view: boolean, label: string, settings: Object, answers: boolean}} Paper state.
+ * @param {string}                                              clientId Question block.
+ * @param {import('./paperModel.mjs').PaperSourceQuestion|null} question Editor question, or null while loading.
+ * @return {{view: boolean, label: string, settings: PaperSettings, answers: boolean}} Paper state.
  */
 export function usePaperQuestion( clientId, question ) {
 	const type = question?.settings?.type || '';
@@ -172,7 +186,7 @@ export function usePaperTotals() {
 		/** @type {Array<{kind: string, key?: string, marks?: number}>} */
 		const entries = [];
 		for ( const id of documentOrder( editor ) ) {
-			const name = editor.getBlockName( id );
+			const name = /** @type {string} */ ( editor.getBlockName( id ) );
 			if ( QUESTION_BLOCKS.includes( name ) ) {
 				entries.push( {
 					kind: 'question',
@@ -235,30 +249,36 @@ export function PaperViewToggle() {
 /**
  * Locate the editor canvas: the iframe document when core iframes it, else the page itself.
  *
- * @return {{doc: Document, wrapper: Element, root: Element}|null} Canvas parts.
+ * @return {CanvasParts|null} Canvas parts.
  */
 function findCanvas() {
 	const frame = /** @type {HTMLIFrameElement|null} */ (
 		document.querySelector( 'iframe[name="editor-canvas"]' )
 	);
 	const doc = frame ? frame.contentDocument : document;
-	const wrapper = doc?.querySelector( '.editor-styles-wrapper' );
-	const root = wrapper?.querySelector( '.is-root-container' );
-	return root ? { doc, wrapper, root } : null;
+	const wrapper = /** @type {HTMLElement|null|undefined} */ (
+		doc?.querySelector( '.editor-styles-wrapper' )
+	);
+	const root = /** @type {HTMLElement|null|undefined} */ (
+		wrapper?.querySelector( '.is-root-container' )
+	);
+	// A root was found inside the wrapper, inside the document.
+	return root ? /** @type {CanvasParts} */ ( { doc, wrapper, root } ) : null;
 }
 
 /**
  * Lay the open canvas out as sheets: size and margins from the paper settings, blocks that
  * would straddle a sheet edge moved to the next sheet, and a page number on each sheet.
  *
- * @param {Object}  canvas   Canvas parts from findCanvas().
- * @param {Object}  settings Normalized paper settings.
- * @param {boolean} answers  Whether the answer key is shown.
+ * @param {CanvasParts}   canvas   Canvas parts from findCanvas().
+ * @param {PaperSettings} settings Normalized paper settings.
+ * @param {boolean}       answers  Whether the answer key is shown.
  * @return {() => void} Cleanup restoring the normal canvas.
  */
 function layoutSheets( canvas, settings, answers ) {
 	const { doc, wrapper, root } = canvas;
-	const view = doc.defaultView;
+	// The canvas document is shown, in the page or its iframe, so it has a window.
+	const view = /** @type {Window & typeof globalThis} */ ( doc.defaultView );
 	const sheet = { ...sheetMetrics( settings ), gap: SHEET_GAP };
 	const style = doc.createElement( 'style' );
 	style.id = 'ohmylms-paper-layout';
@@ -288,9 +308,9 @@ function layoutSheets( canvas, settings, answers ) {
 	let css = '';
 	const measure = () => {
 		frame = 0;
-		const blocks = [ ...root.children ].filter( ( child ) =>
-			child.hasAttribute( 'data-block' )
-		);
+		const blocks = /** @type {HTMLElement[]} */ ( [
+			...root.children,
+		] ).filter( ( child ) => child.hasAttribute( 'data-block' ) );
 		const afters = blocks.map(
 			( block ) =>
 				parseFloat( view.getComputedStyle( block ).marginBottom ) || 0
@@ -436,7 +456,9 @@ export function PaperCanvas() {
 		if ( ! view ) {
 			return undefined;
 		}
+		/** @type {CanvasParts|null} */
 		let canvas = null;
+		/** @type {(() => void)|null} */
 		let cleanup = null;
 		const attach = () => {
 			const found = findCanvas();
@@ -470,8 +492,8 @@ export function PaperCanvas() {
  * page reads the saved exam; the tab opens at once so the browser does not block it.
  *
  * @param {Object} root0
- * @param {number} [root0.versions]
- * @return {React.ReactElement} Print buttons.
+ * @param {number} root0.versions
+ * @return {React.ReactElement|null} Print buttons.
  */
 function PrintButtons( { versions } ) {
 	const urls = window.ohmylmsNativeLesson?.printUrls;
@@ -496,6 +518,7 @@ function PrintButtons( { versions } ) {
 		}
 		return url.href;
 	};
+	/** @param {string} url Print URL. */
 	const open = async ( url ) => {
 		const tab = window.open( 'about:blank', '_blank' );
 		if ( tab ) {
@@ -594,6 +617,10 @@ export function PaperSettingsPanel() {
 	const { setAnswers } = useDispatch( PAPER_STORE );
 	const { editPost } = useDispatch( 'core/editor' );
 	const paper = paperSettings( value.settings?.paper );
+	/**
+	 * @param {string}  field Paper setting.
+	 * @param {unknown} next  New value.
+	 */
 	const set = ( field, next ) =>
 		editPost( {
 			ohmylms_quiz: {

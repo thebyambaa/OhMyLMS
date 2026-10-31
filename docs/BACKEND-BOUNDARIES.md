@@ -37,6 +37,10 @@ using `$wpdb` 253 → 53 (the measure of the ratchet, [ENFORCEMENT.md](ENFORCEME
 using `$wpdb` 28 → 15 of 96 files. `QuestionBank\Usage` no longer reads `QuizQuestionsController` constants.
 The second part of the pass moved the remaining 15 files, including the advisory locks of plan step 9: `$wpdb`
 calls 28 → 0, lines 53 → 0. The ratchet now also counts the feature controllers (4 files, 34 lines left).
+The third part (1 November 2026) moved `WPFusionTriggersController` 13 → 0 and the e-commerce `OrdersController`
+10 → 0 and removed their budgets.
+The fourth part (1 November 2026) moved `GradebookController` 7 → 0 and `ZoomWebhookController` 4 → 0, so no
+controller has a budget, and put every advisory lock behind `Utility\Lock` (plan step 9).
 
 Status values in the tables: **Separated** (no persistence in the controller), **Partial** (some reads or
 options remain, or a cross-domain read remains), **Controller SQL** (business queries live in the
@@ -278,7 +282,7 @@ other databases or binaries and were not run.
 
 Lines using `$wpdb` per controller (comments excluded), HEAD `023ce4b7` → after. No file in `includes/Rest/V1`
 uses `$wpdb` any more, so none has a budget. The budgets in `tools/controller-persistence-budgets.json` are
-for the four feature controllers listed below the table.
+for the feature controllers listed below the table.
 
 | Controller | Before | After | Moved to |
 | --- | --- | --- | --- |
@@ -312,10 +316,11 @@ for the four feature controllers listed below the table.
 | `MigrationController` | 2 | 0 | `Migrations\Migration::migrated_courses()` (and `SOURCE_META`, which the controller constant now points to) |
 | `Engagement\Rest\GamificationController` | 3 | 0 | `Engagement\Achievements::earned_counts()` |
 
-Feature controllers that still use `$wpdb`, with their budgets: `Gradebook\Rest\GradebookController` 7,
-`Integrations\WPFusion\…\WPFusionTriggersController` 13, `Integrations\Zoom\…\ZoomWebhookController` 4 and the
-e-commerce package's `Rest\V1\OrdersController` 10. In all, 141 controller files are counted (96 in
-`includes/Rest/V1`); lines using `$wpdb` went from 90 in 20 files to 34 in 4.
+Feature controllers that still use `$wpdb`, with their budgets: `Gradebook\Rest\GradebookController` 7 and
+`Integrations\Zoom\…\ZoomWebhookController` 4 (`WPFusionTriggersController` 13 and the e-commerce
+`OrdersController` 10 moved in the third part, below). In all, 141 controller files are counted (96 in
+`includes/Rest/V1`); lines using `$wpdb` went from 90 in 20 files to 34 in 4, then to 11 in 2, then to 0 (fourth
+part, below).
 
 Locks and tokens moved with their writes: the school and class `FOR UPDATE` version checks, the quiz question
 row lock and revision, the roster import lock and review token, and the lesson completion lock now each run
@@ -342,6 +347,63 @@ the disposable site), so a throwaway script ran them against rows it created and
 current single removes, missing-pair, stale-pair and current group removes (nothing removed until the last),
 the revision list compared with the old SQL, the two placement queries compared with the old SQL, and the
 chapter delete.
+
+Third part (1 November 2026), lines using `$wpdb`, HEAD `9aba2492` → after; both budgets are removed:
+
+| Controller | Before | After | Moved to |
+| --- | --- | --- | --- |
+| `Integrations\WPFusion\Includes\Rest\WPFusionTriggersController` | 13 | 0 | `Integrations\WPFusion\Includes\Triggers` (new: `for_crm()`, `find()`, `create()`, `update()`, `delete()` on the integrations table; `action_data` encoded on write and decoded on read) |
+| e-commerce `Rest\V1\OrdersController` | 10 | 0 | `Commerce\DataStore\OrderStore::search_ids()` and `::post_status_counts()`, reached through `DataStores::load( 'order' )` |
+
+SQL text, ordering (`created_at DESC`), the 1000-ID search limit, statuses (201, 404, 500), messages and the
+`false` versus `0` checks of the trigger writes are unchanged. `TriggerHandler::process_triggers()` still reads
+the integrations table itself (it is not a controller). Suites, before and after, same check counts:
+commerce REST 211, checkout extras 53, points purchase 59, commerce interactivity 48, integrations REST 179.
+The trigger routes have no suite, so a throwaway script ran the HEAD controller next to the new one on rows it
+created and removed (45 checks: create with and without defaults, list, get, missing get, update, unchanged and
+missing update, delete, missing delete, forced write failures, events, actions, and order status counts and
+searches compared on the site's orders).
+
+Fourth part (1 November 2026), lines using `$wpdb`, HEAD `9aba2492` → after; both budgets are removed, so
+`tools/controller-persistence-budgets.json` lists no file:
+
+| Controller | Before | After | Moved to |
+| --- | --- | --- | --- |
+| `Gradebook\Rest\GradebookController` | 7 | 0 | `Gradebook\Repository::picker_courses()` (context picker) and `::search_learners()` (transcript picker); a failed query still reads as no rows |
+| `Integrations\Zoom\Includes\Rest\ZoomWebhookController` | 4 | 0 | `Integrations\Zoom\Includes\Services\RecordingAttachService::attach()` (new: replay pick, session lookup by `_zoom_meeting_data`, attach unless already attached); payload checks, the URL-validation handshake and the HMAC check stay in the controller, unchanged |
+
+Plan step 9: `OhMyLMS\Utility\Lock` is the one place that writes `GET_LOCK`. `with( $name, $timeout, $work,
+$busy )` releases in `finally` and returns `$busy` when the lock is not free (a Closure is called, so each
+caller keeps its own error code, status and message; default `ohmylms_lock_busy`, 409); `acquire()` and
+`release()` serve bodies that keep their own `try`/`finally`. `name()` keeps names that start with `ohmylms`
+or `oml` (all current ones) and hashes names over 64 characters, so every lock name, timeout and busy answer is
+unchanged. Callers: `with()` in `Achievements::locked()`, `Cohorts::add_member()`, `RuleRunner` (plan grant),
+`Items::exclusive()`, `Syllabus::import_reviewed()`, `SkillMappings::remove_current()`, `PlacementBatch`,
+`ContentLinks`, `AiAnalysis::review()`, `SkillQuizzes::link()`, `SkillEditor::update()`,
+`SamplePreview::create_once()`, `CourseStructure::read()`, `Catalog::with_revision()`,
+`LessonAuthoring::locked()`, `ExamImport\Jobs::locked()`, `FreeSale::expire()` and QPay
+`PaymentService::locked()`; `acquire()`/`release()` in `SkillMappings::save()`, `::remove_group()`,
+`::save_groups()`, `Comparison` (shared skill save), `MappingReconnect`, `SyllabusSheet`, `CourseLinks`,
+`AiAnalysis::step()`, `CompletionPolicy::complete_lesson()`, `CourseProgram` (publish), `Quiz\Submission`,
+`FreeSale::claim()`, `RosterImport::apply()`, `Rollover::apply()`, `AtRiskNudges`, `ReviewSetsService`,
+`Skills\Evidence`, `XApi\Processor`, `Assessment\Migration` and `EnrolmentMigration`. The option-row locks
+(`ohmylms_lock_<name>`) use `Lock::acquire_option()` / `release_option()`: `SubscriptionsController` (its
+private copies are gone), `PointPurchase::refund()` and the e-commerce `Abstracts\RestController`, whose
+`acquire_lock()` / `release_lock()` keep their signatures for the order and refund controllers.
+[ENFORCEMENT.md](ENFORCEMENT.md) section p rejects `GET_LOCK(` outside the helper.
+
+Suites, before and after, same check counts: account frontend 146, account-hub 228, roster 89, schools
+lifecycle 212, users 88, at-risk 123, automations 77, cohorts 65, commerce REST 211, course authoring 49, course
+structure 61, courses 284, curriculum compare 77, dashboard mastery 149, enrolments migration 309, exam results
+112, exams 138, gamification 328, gamification rewards 27, gradebook 240, integrations REST 179, learner journey
+57, lesson authoring 79, memberships 205, paper view 67, points purchase 59, question player 33, quiz questions
+authoring 61, quizzes 241, sessions 49, settings 198, skill workspace 122, subscriptions 195, syllabus editor 47,
+taxonomies 122; curriculum workspace, skill authoring and the gradebook suite (`gradebook-integration`) pass
+with identical output. The unit runner passes 58 suites. New: `tests/php/lock-integration.php` (40 checks:
+names, a second connection seeing the lock, nested takes, release on an exception, busy values, option locks).
+The Zoom webhook has no suite, so a throwaway script sent the same 11 requests before and after (bad payload,
+URL validation with and without a token, missing, bad and wrong signatures, a signed recording, an already
+attached session, an unknown meeting, another event) and got identical responses and post meta.
 
 ## Ordered plan
 
@@ -372,17 +434,18 @@ chapter delete.
    `Student\Directory::set_blocked()`.
 8. **Integrations option**: one `Integrations` settings reader used by `AppController`, `SettingsController`
    and `IntegrationsController`.
-9. **Advisory locks** (`GET_LOCK` in Comparison, SkillAuthoring, SyllabusEditor, Learning, CourseStructure)
-   → one `Utility` lock helper. No controller takes a lock any more (31 October 2026): each lock runs with its
+9. ~~**Advisory locks** (`GET_LOCK` in Comparison, SkillAuthoring, SyllabusEditor, Learning, CourseStructure)
+   → one `Utility` lock helper.~~ No controller takes a lock any more (31 October 2026): each lock runs with its
    write in `SkillMappings`, `SkillEditor`, `Syllabus::import_reviewed()`, `SamplePreview::create_once()` or
-   `CompletionPolicy`, with the same names, timeouts and error codes. Left: the shared helper itself.
+   `CompletionPolicy`, with the same names, timeouts and error codes. Done 1 November 2026: every caller uses
+   `Utility\Lock`, and [ENFORCEMENT.md](ENFORCEMENT.md) section p rejects `GET_LOCK(` outside it (fourth part).
 10. ~~Retire the legacy `SessionController`.~~ Done 31 October 2026 (with the legacy question, question-bank,
     quiz placement and assignment routes; see the deprecation tables in `docs/api`).
 11. ~~Enforce: extend `tools/check-architecture.mjs` to reject new `$wpdb` calls in `includes/Rest/**` with an
     explicit allowlist that shrinks as each step lands.~~ Done 31 October 2026 for `includes/Rest/V1`:
     per-file budgets in `tools/controller-persistence-budgets.json` ([ENFORCEMENT.md](ENFORCEMENT.md) section j).
     Since the second part of the pass the rule also counts the feature `Rest/` folders and every other
-    `WP_REST_Controller` subclass; four of them keep budgets (see the controller persistence pass).
+    `WP_REST_Controller` subclass; none keeps a budget since the fourth part (see the controller persistence pass).
 
 ## Verification of this change (31 October 2026)
 

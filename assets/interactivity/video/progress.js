@@ -17,6 +17,10 @@ export const MAX_INTERVALS = 500;
 /** Playback speeds offered by the custom controls. */
 export const RATES = Object.freeze( [ 0.5, 0.75, 1, 1.25, 1.5, 2 ] );
 
+/**
+ * @param {unknown} value Value.
+ * @return {value is number} A finite number.
+ */
 const finite = ( value ) =>
 	'number' === typeof value && Number.isFinite( value );
 
@@ -146,7 +150,8 @@ export function formatTime( seconds ) {
 	const h = Math.floor( total / 3600 );
 	const m = Math.floor( ( total % 3600 ) / 60 );
 	const s = total % 60;
-	const pad = ( value ) => String( value ).padStart( 2, '0' );
+	const pad = ( /** @type {number} */ value ) =>
+		String( value ).padStart( 2, '0' );
 	return h > 0
 		? `${ h }:${ pad( m ) }:${ pad( s ) }`
 		: `${ m }:${ pad( s ) }`;
@@ -258,6 +263,11 @@ export function createSaveClock( interval = 15000 ) {
 	let lastAt = -Infinity;
 	let lastWatched = 0;
 	let lastPosition = -Infinity;
+	/**
+	 * @param {number} watched  Watched seconds.
+	 * @param {number} position Position.
+	 * @return {boolean} Something changed since the last save.
+	 */
 	const changed = ( watched, position ) =>
 		watched - lastWatched >= 0.5 ||
 		Math.abs( position - lastPosition ) >= 1;
@@ -344,7 +354,8 @@ export function shortcut( event, target = {} ) {
  * @return {number|null} New value, null when the key does not move the slider.
  */
 export function sliderValue( key, value, max, step ) {
-	const clamp = ( next ) => Math.max( 0, Math.min( max, next ) );
+	const clamp = ( /** @type {number} */ next ) =>
+		Math.max( 0, Math.min( max, next ) );
 	switch ( key ) {
 		case 'ArrowRight':
 		case 'ArrowUp':
@@ -368,8 +379,8 @@ export function sliderValue( key, value, max, step ) {
 /**
  * Share of a horizontal track under the pointer, 0 to 1.
  *
- * @param {number}                        clientX Pointer x.
- * @param {{left: number, width: number}} rect    Track box.
+ * @param {number}                             clientX Pointer x.
+ * @param {{left: number, width: number}|null} rect    Track box.
  * @return {number} Ratio.
  */
 export function pointerRatio( clientX, rect ) {

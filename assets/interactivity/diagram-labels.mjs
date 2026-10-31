@@ -1,22 +1,52 @@
 const { __, sprintf } = window.wp.i18n;
+/** @type {WeakMap<Element, () => void>} */
 const views = new WeakMap();
+/** @type {WeakSet<Document>} */
 const documents = new WeakSet();
+
+/**
+ * @typedef {Object} DiagramTarget
+ * @property {string}        id Answer key.
+ * @property {number|string} x  Left, in percent of the image.
+ * @property {number|string} y  Top, in percent of the image.
+ */
+
+/**
+ * @typedef {Object} DragState
+ * @property {HTMLButtonElement} node    Dragged label.
+ * @property {string}            choice  Its text.
+ * @property {number}            x       Start X.
+ * @property {number}            y       Start Y.
+ * @property {boolean}           moved   Past the drag threshold.
+ * @property {number}            pointer Pointer id.
+ */
 
 /**
  * Upgrade the existing label-to-target answer contract with pointer and keyboard input.
  *
  * @param {HTMLElement} root Native question root, including precreated answer fields.
  * @param {HTMLElement} stage Image-sized coordinate surface.
- * @param {Object} config Public coordinates and an unordered label bank, without keys.
+ * @param {{targets?: DiagramTarget[], choices?: string[]}} config Public coordinates and an unordered label bank, without keys.
  */
 export function buildDiagramLabels( root, stage, config ) {
 	if ( views.has( root ) ) return;
 	const doc = root.ownerDocument;
+	/**
+	 * @template {keyof HTMLElementTagNameMap} K
+	 * @param {K}      tag    Tag name.
+	 * @param {string} [text] Text content.
+	 * @return {HTMLElementTagNameMap[K]} Element.
+	 */
 	const make = ( tag, text = '' ) => {
 		const node = doc.createElement( tag );
 		node.textContent = text;
 		return node;
 	};
+	/**
+	 * @param {string}                     text   Label.
+	 * @param {(event: MouseEvent) => void} action Click handler.
+	 * @return {HTMLButtonElement} Button.
+	 */
 	const button = ( text, action ) => {
 		const node = make( 'button', text );
 		node.type = 'button';
@@ -25,13 +55,17 @@ export function buildDiagramLabels( root, stage, config ) {
 	};
 	const targets = config.targets || [];
 	const choices = [ ...new Set( config.choices || [] ) ];
+	/** @type {Map<string, HTMLInputElement>} */
 	const fields = new Map(
 		Array.from(
-			root.querySelectorAll( 'input[data-answer-key]' ),
-			( /** @type {HTMLInputElement} */ input ) => [
-				input.dataset.answerKey,
-				input,
-			]
+			/** @type {NodeListOf<HTMLInputElement>} */ (
+				root.querySelectorAll( 'input[data-answer-key]' )
+			),
+			( input ) =>
+				/** @type {[string, HTMLInputElement]} */ ( [
+					input.dataset.answerKey,
+					input,
+				] )
 		)
 	);
 	const prefix = root.dataset.namePrefix;
@@ -39,6 +73,7 @@ export function buildDiagramLabels( root, stage, config ) {
 		prefix && ! root.closest( '[data-autosave]' )
 			? `ohmylms:diagram:${ window.location.pathname }${ window.location.search }:${ prefix }`
 			: null;
+	/** @type {Object<string, string>} */
 	let cached = {};
 	try {
 		cached = storage
@@ -84,19 +119,30 @@ export function buildDiagramLabels( root, stage, config ) {
 	const menus = make( 'details' );
 	menus.className = 'ohmylms-label-menus';
 	menus.append( make( 'summary', __( 'Use label menus', 'ohmylms' ) ) );
+	/** @type {string|null} */
 	let selected = null;
+	/** @type {DragState|null} */
 	let dragging = null;
+	/** @type {HTMLElement|null} */
 	let hover = null;
 	let suppressUntil = 0;
+	// Every target gets a field above and a pin and a select below, before the first sync().
+	/** @type {Map<string, HTMLButtonElement>} */
 	const pins = new Map();
+	/** @type {Map<string, HTMLSelectElement>} */
 	const selects = new Map();
+	/** @type {Map<string, HTMLButtonElement>} */
 	const buttons = new Map();
 	const sync = () => {
 		let answered = 0;
 		for ( const [ index, target ] of targets.entries() ) {
-			const value = fields.get( target.id ).value;
+			const value = /** @type {HTMLInputElement} */ (
+				fields.get( target.id )
+			).value;
 			if ( value ) answered++;
-			const pin = pins.get( target.id );
+			const pin = /** @type {HTMLButtonElement} */ (
+				pins.get( target.id )
+			);
 			pin.classList.toggle( 'is-filled', Boolean( value ) );
 			pin.dataset.label = value;
 			pin.setAttribute(
@@ -108,7 +154,9 @@ export function buildDiagramLabels( root, stage, config ) {
 					value || __( 'Unassigned', 'ohmylms' )
 				)
 			);
-			selects.get( target.id ).value = value;
+			/** @type {HTMLSelectElement} */ (
+				selects.get( target.id )
+			).value = value;
 		}
 		for ( const [ choice, node ] of buttons )
 			node.setAttribute( 'aria-pressed', String( choice === selected ) );
@@ -128,6 +176,10 @@ export function buildDiagramLabels( root, stage, config ) {
 						selected
 					);
 	};
+	/**
+	 * @param {string} id    Target id.
+	 * @param {string} value Label, '' to clear.
+	 */
 	const assign = ( id, value ) => {
 		const field = fields.get( id );
 		if (
@@ -159,6 +211,10 @@ export function buildDiagramLabels( root, stage, config ) {
 		field.dispatchEvent( new Event( 'input', { bubbles: true } ) );
 		field.dispatchEvent( new Event( 'change', { bubbles: true } ) );
 	};
+	/**
+	 * @param {PointerEvent} event Pointer position.
+	 * @return {HTMLElement|null} Pin under the pointer.
+	 */
 	const pointTarget = ( event ) => {
 		const pin = /** @type {HTMLElement|null|undefined} */ (
 			doc
@@ -212,7 +268,11 @@ export function buildDiagramLabels( root, stage, config ) {
 			if ( dragging.moved ) {
 				suppressUntil = Date.now() + 300;
 				const pin = pointTarget( event );
-				if ( pin ) assign( pin.dataset.labelTarget, choice );
+				if ( pin )
+					assign(
+						/** @type {string} */ ( pin.dataset.labelTarget ),
+						choice
+					);
 			}
 			finishDrag();
 		} );
@@ -227,7 +287,9 @@ export function buildDiagramLabels( root, stage, config ) {
 				assign( target.id, selected );
 			} else {
 				menus.open = true;
-				selects.get( target.id ).focus();
+				/** @type {HTMLSelectElement} */ (
+					selects.get( target.id )
+				).focus();
 			}
 		} );
 		pin.className = 'ohmylms-label-pin';
@@ -281,7 +343,7 @@ export function buildDiagramLabels( root, stage, config ) {
 			for ( const target of targets ) assign( target.id, '' );
 		} )
 	);
-	stage.parentElement.append( panel );
+	/** @type {HTMLElement} */ ( stage.parentElement ).append( panel );
 	root.addEventListener( 'keydown', ( event ) => {
 		if ( event.key === 'Escape' ) {
 			selected = null;

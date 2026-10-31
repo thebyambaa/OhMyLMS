@@ -14,7 +14,7 @@ use WP_REST_Controller;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
-use OhMyLMS\Integrations\WPFusion\Includes\WPFusionMigration;
+use OhMyLMS\Integrations\WPFusion\Includes\Triggers;
 
 /**
  * Class WPFusionTriggersController
@@ -158,22 +158,8 @@ class WPFusionTriggersController extends WP_REST_Controller {
 	 * @return WP_REST_Response
 	 */
 	public function get_triggers( WP_REST_Request $request ) {
-		global $wpdb;
-
-		$table_name = WPFusionMigration::get_table_name();
-
 		// Filter by wpfusion CRM type since this is the WP Fusion controller.
-		$triggers = $wpdb->get_results(
-			$wpdb->prepare( 'SELECT * FROM %i WHERE crm_type = %s ORDER BY created_at DESC', $table_name, 'wpfusion' ),
-			ARRAY_A
-		);
-
-		// Decode JSON fields.
-		foreach ( $triggers as &$trigger ) {
-			if ( isset( $trigger['action_data'] ) ) {
-				$trigger['action_data'] = json_decode( $trigger['action_data'], true );
-			}
-		}
+		$triggers = Triggers::for_crm( 'wpfusion' );
 
 		return new \WP_REST_Response(
 			array(
@@ -194,15 +180,8 @@ class WPFusionTriggersController extends WP_REST_Controller {
 	 * @return WP_REST_Response
 	 */
 	public function get_trigger( WP_REST_Request $request ) {
-		global $wpdb;
-
-		$id         = intval( $request->get_param( 'id' ) );
-		$table_name = WPFusionMigration::get_table_name();
-
-		$trigger = $wpdb->get_row(
-			$wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $table_name, $id ),
-			ARRAY_A
-		);
+		$id      = intval( $request->get_param( 'id' ) );
+		$trigger = Triggers::find( $id );
 
 		if ( ! $trigger ) {
 			return new \WP_REST_Response(
@@ -212,11 +191,6 @@ class WPFusionTriggersController extends WP_REST_Controller {
 				),
 				404
 			);
-		}
-
-		// Decode JSON field.
-		if ( isset( $trigger['action_data'] ) ) {
-			$trigger['action_data'] = json_decode( $trigger['action_data'], true );
 		}
 
 		return new \WP_REST_Response(
@@ -238,8 +212,6 @@ class WPFusionTriggersController extends WP_REST_Controller {
 	 * @return WP_REST_Response
 	 */
 	public function create_trigger( WP_REST_Request $request ) {
-		global $wpdb;
-
 		$name          = \sanitize_text_field( $request->get_param( 'name' ) );
 		$crm_type      = \sanitize_text_field( $request->get_param( 'crm_type' ) );
 		$trigger_event = \sanitize_text_field( $request->get_param( 'trigger_event' ) );
@@ -258,10 +230,7 @@ class WPFusionTriggersController extends WP_REST_Controller {
 			$status = 'active';
 		}
 
-		$table_name = WPFusionMigration::get_table_name();
-
-		$inserted = $wpdb->insert(
-			$table_name,
+		$trigger_id = Triggers::create(
 			array(
 				'name'          => $name,
 				'crm_type'      => $crm_type,
@@ -269,13 +238,12 @@ class WPFusionTriggersController extends WP_REST_Controller {
 				'content_type'  => $content_type,
 				'content_id'    => $content_id,
 				'action_type'   => $action_type,
-				'action_data'   => wp_json_encode( $action_data ),
+				'action_data'   => $action_data,
 				'status'        => $status,
-			),
-			array( '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s' )
+			)
 		);
 
-		if ( ! $inserted ) {
+		if ( false === $trigger_id ) {
 			return new \WP_REST_Response(
 				array(
 					'success' => false,
@@ -284,8 +252,6 @@ class WPFusionTriggersController extends WP_REST_Controller {
 				500
 			);
 		}
-
-		$trigger_id = $wpdb->insert_id;
 
 		return new \WP_REST_Response(
 			array(
@@ -307,8 +273,6 @@ class WPFusionTriggersController extends WP_REST_Controller {
 	 * @return WP_REST_Response
 	 */
 	public function update_trigger( WP_REST_Request $request ) {
-		global $wpdb;
-
 		$id            = intval( $request->get_param( 'id' ) );
 		$name          = \sanitize_text_field( $request->get_param( 'name' ) );
 		$crm_type      = \sanitize_text_field( $request->get_param( 'crm_type' ) );
@@ -324,10 +288,8 @@ class WPFusionTriggersController extends WP_REST_Controller {
 			$crm_type = 'wpfusion';
 		}
 
-		$table_name = WPFusionMigration::get_table_name();
-
-		$updated = $wpdb->update(
-			$table_name,
+		$updated = Triggers::update(
+			$id,
 			array(
 				'name'          => $name,
 				'crm_type'      => $crm_type,
@@ -335,12 +297,9 @@ class WPFusionTriggersController extends WP_REST_Controller {
 				'content_type'  => $content_type,
 				'content_id'    => $content_id,
 				'action_type'   => $action_type,
-				'action_data'   => wp_json_encode( $action_data ),
+				'action_data'   => $action_data,
 				'status'        => $status,
-			),
-			array( 'id' => $id ),
-			array( '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s' ),
-			array( '%d' )
+			)
 		);
 
 		if ( false === $updated ) {
@@ -372,16 +331,8 @@ class WPFusionTriggersController extends WP_REST_Controller {
 	 * @return WP_REST_Response
 	 */
 	public function delete_trigger( WP_REST_Request $request ) {
-		global $wpdb;
-
-		$id         = intval( $request->get_param( 'id' ) );
-		$table_name = WPFusionMigration::get_table_name();
-
-		$deleted = $wpdb->delete(
-			$table_name,
-			array( 'id' => $id ),
-			array( '%d' )
-		);
+		$id      = intval( $request->get_param( 'id' ) );
+		$deleted = Triggers::delete( $id );
 
 		if ( ! $deleted ) {
 			return new \WP_REST_Response(

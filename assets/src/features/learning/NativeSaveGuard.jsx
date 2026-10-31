@@ -5,9 +5,9 @@ let nextLock = 0;
 
 /**
  * Lock native publication and browser navigation while independent settings are unsaved.
- * @param {Object} root0
- * @param          [root0.dirty]
- * @param          [root0.busy]
+ * @param {Object}  root0        Properties.
+ * @param {boolean} root0.dirty  Whether settings are unsaved.
+ * @param {boolean} [root0.busy] Whether a save is running.
  */
 export function NativeSaveGuard( { dirty, busy = false } ) {
 	const key = useRef( `ohmylms-settings-${ ++nextLock }` );
@@ -18,6 +18,7 @@ export function NativeSaveGuard( { dirty, busy = false } ) {
 		if ( blocked ) {
 			lockPostSaving( lock );
 		}
+		/** @param {BeforeUnloadEvent} event Page unload. */
 		const leave = ( event ) => {
 			event.preventDefault();
 			event.returnValue = '';

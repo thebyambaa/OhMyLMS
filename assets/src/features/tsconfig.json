@@ -6,8 +6,8 @@
 	// `/** @jsx createElement */` pragma are checked with it. types/ declares the editor packages
 	// that are not npm dependencies, the string-named @wordpress/data stores and the page globals.
 	//
-	// Not strict yet: strictNullChecks and noImplicitAny report about 2,500 more errors here (most
-	// of them parameters without JSDoc types). Excluded folders: none. See docs/ENFORCEMENT.md.
+	// Strict: every folder type-checks with strict on; untyped spots are narrow, documented
+	// `Record<string, any>` typedefs for server- and type-dependent data. See docs/ENFORCEMENT.md.
 	"compilerOptions": {
 		"target": "ES2022",
 		"lib": [ "ES2023", "DOM", "DOM.Iterable" ],
@@ -17,7 +17,7 @@
 		"checkJs": true,
 		"noEmit": true,
 		"jsx": "react-jsx",
-		"strict": false,
+		"strict": true,
 		"skipLibCheck": true,
 		"resolveJsonModule": true,
 		"forceConsistentCasingInFileNames": true,

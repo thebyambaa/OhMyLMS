@@ -7,6 +7,7 @@
 
 namespace OhMyLMS\Cohorts;
 
+use OhMyLMS\Utility\Lock;
 use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
@@ -486,34 +487,38 @@ final class Cohorts {
 		if ( ! self::eligible( $row, $user_id ) ) {
 			return self::error( 'ohmylms_cohort_not_enrolled', __( 'Only learners enrolled in the course or holding the plan can join this cohort.', 'ohmylms' ), 409 );
 		}
-		$lock = 'ohmylms-cohort-' . md5( $wpdb->prefix . ':' . (int) $id );
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery
-		if ( 1 !== (int) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) ) {
-			return self::error( 'ohmylms_cohort_busy', __( 'The cohort is busy. Try again.', 'ohmylms' ), 409 );
-		}
-		try {
-			if ( $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE cohort_id = %d AND user_id = %d', CohortSchema::members(), (int) $id, (int) $user_id ) ) ) {
-				return self::error( 'ohmylms_cohort_member_exists', __( 'The learner is already in this cohort.', 'ohmylms' ), 409 );
+		$inserted = Lock::with(
+			'ohmylms-cohort-' . md5( $wpdb->prefix . ':' . (int) $id ),
+			5,
+			static function () use ( $wpdb, $id, $user_id, $row, $source, $source_ref, $added_by ) {
+				if ( $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE cohort_id = %d AND user_id = %d', CohortSchema::members(), (int) $id, (int) $user_id ) ) ) {
+					return self::error( 'ohmylms_cohort_member_exists', __( 'The learner is already in this cohort.', 'ohmylms' ), 409 );
+				}
+				if ( ! self::has_seat( $row ) ) {
+					return self::error( 'ohmylms_cohort_full', __( 'The cohort is full.', 'ohmylms' ), 409 );
+				}
+				return $wpdb->insert(
+					CohortSchema::members(),
+					array(
+						'cohort_id'  => (int) $id,
+						'user_id'    => (int) $user_id,
+						'source'     => in_array( $source, self::SOURCES, true ) ? $source : 'manual',
+						'source_ref' => (int) $source_ref,
+						'joined_at'  => self::now(),
+						'added_by'   => (int) $added_by,
+					),
+					array( '%d', '%d', '%s', '%d', '%s', '%d' )
+				);
+			},
+			static function () {
+				return self::error( 'ohmylms_cohort_busy', __( 'The cohort is busy. Try again.', 'ohmylms' ), 409 );
 			}
-			if ( ! self::has_seat( $row ) ) {
-				return self::error( 'ohmylms_cohort_full', __( 'The cohort is full.', 'ohmylms' ), 409 );
-			}
-			$inserted = $wpdb->insert(
-				CohortSchema::members(),
-				array(
-					'cohort_id'  => (int) $id,
-					'user_id'    => (int) $user_id,
-					'source'     => in_array( $source, self::SOURCES, true ) ? $source : 'manual',
-					'source_ref' => (int) $source_ref,
-					'joined_at'  => self::now(),
-					'added_by'   => (int) $added_by,
-				),
-				array( '%d', '%d', '%s', '%d', '%s', '%d' )
-			);
-		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
-		}
+		);
 		// phpcs:enable
+		if ( is_wp_error( $inserted ) ) {
+			return $inserted;
+		}
 		if ( ! $inserted ) {
 			return self::error( 'ohmylms_cohort_member_not_saved', __( 'The learner could not be added.', 'ohmylms' ), 500 );
 		}

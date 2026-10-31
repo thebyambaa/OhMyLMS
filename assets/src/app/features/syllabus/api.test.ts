@@ -1,12 +1,5 @@
 import * as transport from '../../lib/api';
-import {
-	command,
-	compare,
-	importRows,
-	readSyllabus,
-	saveMapping,
-	removeMapping,
-} from './api';
+import { command, importRows, readMappings, readSyllabus } from './api';
 import { outline, report } from './fixtures';
 
 vi.mock( '../../lib/api', async ( original ) => ( {
@@ -38,47 +31,31 @@ it( 'requests server preview before an apply and preserves cancellation', async 
 		{ signal: controller.signal }
 	);
 } );
-it( 'uses read mapping revisions for both saves and removals', async () => {
-	await saveMapping( 10, 20, 'equivalent', 'Reviewed', 'read-revision' );
-	expect( transport.put ).toHaveBeenCalledWith(
-		'/ohmylms/v1/syllabus-comparison/mapping',
-		expect.objectContaining( {
-			expected_revision: 'read-revision',
-			specific_id: 10,
-			shared_id: 20,
-		} ),
-		{ signal: undefined }
-	);
-	await removeMapping( 10, {
-		shared_id: 20,
-		name: 'Shared',
-		relation: 'related',
-		note: '',
-		revision: 'read-revision',
-		combined: false,
-	} );
-	expect( transport.post ).toHaveBeenCalledWith(
-		'/ohmylms/v1/syllabus-comparison/mapping/remove',
-		{ expected_revision: 'read-revision', specific_id: 10, shared_id: 20 },
-		{ signal: undefined }
-	);
-} );
-it( 'parses explicitly mapped comparison rows and keeps unmapped objectives separate', async () => {
+it( 'reads the shared-skill mappings of a syllabus objective with their revisions', async () => {
 	vi.mocked( transport.get ).mockResolvedValue( {
-		a: { id: 5, name: 'A', objectives: [ { id: 10, name: 'Count' } ] },
-		b: { id: 6, name: 'B', objectives: [] },
-		skills: { '20': { name: 'Number sense' } },
-		rows: [ { skill: 20, a: { '10': 'equivalent' }, b: [] } ],
-		both: [],
-		only_a: [ 20 ],
-		only_b: [],
-		unmapped_a: [],
-		unmapped_b: [ 30 ],
-		overlap: 0,
+		maps_to: [
+			{
+				shared_id: 20,
+				shared: { name: 'Number sense' },
+				relation: 'related',
+				note: '',
+				revision: 'read-revision',
+				group_uuid: '',
+			},
+		],
 	} );
-	expect( await compare( 5, 6 ) ).toMatchObject( {
-		onlyA: 1,
-		unmappedB: 1,
-		rows: [ { name: 'Number sense', a: [ 'Count' ], b: [] } ],
-	} );
+	await expect( readMappings( 10 ) ).resolves.toEqual( [
+		{
+			shared_id: 20,
+			name: 'Number sense',
+			relation: 'related',
+			note: '',
+			revision: 'read-revision',
+			combined: false,
+		},
+	] );
+	expect( transport.get ).toHaveBeenCalledWith(
+		'/ohmylms/v1/skill-mappings',
+		{ query: { skill_id: 10 }, signal: undefined }
+	);
 } );

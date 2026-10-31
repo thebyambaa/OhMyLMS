@@ -7,9 +7,9 @@ import { previewQuestion } from './api.mjs';
 /**
  * Exact student rendering of an unselected, unsaved question in an isolated frame.
  *
- * @param {Object} props          Properties.
- * @param {Object} props.question Current question, including unsaved edits.
- * @param {string} props.clientId Native block ID.
+ * @param {Object}                                     props          Properties.
+ * @param {import('./choiceAutosave.mjs').ChoiceDraft} props.question Current question, including unsaved edits.
+ * @param {string}                                     props.clientId Native block ID.
  * @return {React.ReactElement} Student document with an editing action over it.
  */
 export function QuestionBlockPreview( { question, clientId } ) {
@@ -18,6 +18,10 @@ export function QuestionBlockPreview( { question, clientId } ) {
 		( store ) => {
 			const editor = store( 'core/editor' );
 			const quiz = editor.getEditedPostAttribute( 'ohmylms_quiz' ) || {};
+			/**
+			 * @param {import('@wordpress/blocks').BlockInstance[]} blocks Blocks.
+			 * @return {string[]} Client IDs of the question blocks among them.
+			 */
 			const collect = ( blocks ) =>
 				blocks.flatMap( ( block ) => [
 					...( [
@@ -41,10 +45,12 @@ export function QuestionBlockPreview( { question, clientId } ) {
 	);
 	const source = JSON.stringify( { ...documentSettings, question } );
 	const seed = useRef( Math.floor( Math.random() * 2147483647 ) );
-	const [ preview, setPreview ] = useState( null );
+	const [ preview, setPreview ] = useState(
+		/** @type {string|null} */ ( null )
+	);
 	const [ error, setError ] = useState( '' );
 	const [ height, setHeight ] = useState( 160 );
-	const observer = useRef( null );
+	const observer = useRef( /** @type {ResizeObserver|null} */ ( null ) );
 	useEffect( () => {
 		let active = true;
 		const controller = new AbortController();
@@ -75,6 +81,7 @@ export function QuestionBlockPreview( { question, clientId } ) {
 		};
 	}, [ source ] );
 	useEffect( () => () => observer.current?.disconnect(), [] );
+	/** @param {import('react').SyntheticEvent<HTMLIFrameElement>} event Frame load. */
 	const resize = ( event ) => {
 		observer.current?.disconnect();
 		const frame = event.currentTarget;

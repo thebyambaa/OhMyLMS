@@ -1,32 +1,64 @@
 import {
 	EXTENDED_TYPES,
-	isExtendedType,
-	isUngradedType,
+	INTERACTIVE_TYPES,
 	extendedDefaults,
 	extendedIssues,
-} from '../question-editor/extendedModel.mjs';
-/** Pure helpers for the question bank, skills and picker UIs. */
-import {
+	hasTemplate,
+	interactiveDefaults,
+	interactiveIssues,
+	isExtendedType,
+	isInteractiveType,
+	isUngradedType,
 	promptText,
 	questionPrompt,
 	questionPromptPatch,
 	statementKey,
-} from '../question-editor/questionPrompt.mjs';
-import {
-	INTERACTIVE_TYPES,
-	interactiveDefaults,
-	interactiveIssues,
-	isInteractiveType,
-} from '../question-editor/interactiveModel.mjs';
-import { hasTemplate } from '../question-editor/templateModel.mjs';
+} from '../question-editor/public.mjs';
+/** Pure helpers for the question bank, skills and picker UIs. */
 export const DIFFICULTIES = [ 'easy', 'standard', 'challenge' ];
 export const STATUSES = [ 'draft', 'approved', 'archived' ];
 
 /**
+ * @typedef {Object} Skill
+ * @property {number}   id              Skill ID.
+ * @property {string}   name            Skill name.
+ * @property {number}   [parent]        Parent skill ID; 0 or unknown for a root.
+ * @property {string}   [code]          Short code.
+ * @property {number[]} [prerequisites] Prerequisite skill IDs.
+ */
+/** @typedef {Skill & { children: SkillNode[] }} SkillNode */
+/** @typedef {SkillNode & { depth: number }} FlatSkill */
+/** @typedef {{ primary: number, supporting: number[] }} SkillRoles */
+/** @typedef {Record<string, SkillRoles>} SkillMap Skill roles by question part. */
+/**
+ * @typedef {Object} DraftOption
+ * @property {string}                                 answer          Answer text.
+ * @property {boolean}                                correct         Whether it is a correct answer.
+ * @property {number}                                 [thumbnail_id]  Image attachment ID.
+ * @property {string}                                 [image_url]     Image URL.
+ * @property {{ label?: string, image_url?: string }} [matching_data] Matching pair.
+ */
+/**
+ * Question settings; their shape depends on the question type (see the question-editor models).
+ * @typedef {Record<string, any>} QuestionSettings
+ */
+/**
+ * @typedef {Object} QuestionDraft New question form state.
+ * @property {string}           type        Question type.
+ * @property {string}           name        Title.
+ * @property {string}           description Prompt.
+ * @property {number}           marks       Marks.
+ * @property {DraftOption[]}    options     Answer options.
+ * @property {QuestionSettings} settings    Type settings.
+ */
+
+/**
  * Drop empty filters so URLs and requests stay stable.
- * @param filters
+ * @param {Record<string, unknown>|null|undefined} filters Filters.
+ * @return {Record<string, unknown>} Set filters.
  */
 export function cleanFilters( filters ) {
+	/** @type {Record<string, unknown>} */
 	const result = {};
 	for ( const [ key, value ] of Object.entries( filters || {} ) ) {
 		if (
@@ -43,7 +75,8 @@ export function cleanFilters( filters ) {
 
 /**
  * One-line status for a bank row.
- * @param item
+ * @param {{ version?: number|string, approved_version_id?: number, approved_is_current?: boolean }|null|undefined} item Bank row.
+ * @return {string} Status.
  */
 export function versionLabel( item ) {
 	if ( ! item?.version ) {
@@ -59,9 +92,11 @@ export function versionLabel( item ) {
 
 /**
  * Build a parent/child tree from a flat skill list; unknown parents become roots.
- * @param skills
+ * @param {Skill[]|null|undefined} skills Skills.
+ * @return {SkillNode[]} Roots, sorted by name at every level.
  */
 export function skillTree( skills ) {
+	/** @type {Map<number, SkillNode>} */
 	const byId = new Map(
 		( skills || [] ).map( ( skill ) => [
 			skill.id,
@@ -71,6 +106,7 @@ export function skillTree( skills ) {
 			},
 		] )
 	);
+	/** @type {SkillNode[]} */
 	const roots = [];
 	for ( const skill of byId.values() ) {
 		const parent = skill.parent && byId.get( skill.parent );
@@ -80,6 +116,10 @@ export function skillTree( skills ) {
 			roots.push( skill );
 		}
 	}
+	/**
+	 * @param {SkillNode[]} list Siblings.
+	 * @return {SkillNode[]} The same list, sorted.
+	 */
 	const sort = ( list ) => {
 		list.sort( ( left, right ) => left.name.localeCompare( right.name ) );
 		list.forEach( ( skill ) => sort( skill.children ) );
@@ -90,8 +130,9 @@ export function skillTree( skills ) {
 
 /**
  * Flatten a tree with depth for indented selects.
- * @param tree
- * @param depth
+ * @param {SkillNode[]} tree    Tree.
+ * @param {number}      [depth] Depth of the given nodes.
+ * @return {FlatSkill[]} Skills in tree order.
  */
 export function flattenTree( tree, depth = 0 ) {
 	return tree.flatMap( ( skill ) => [
@@ -106,21 +147,23 @@ export function flattenTree( tree, depth = 0 ) {
 /**
  * Would making `candidate` a prerequisite of `skillId` create a cycle?
  * Mirrors the server check so the UI can disable invalid choices.
- * @param skills
- * @param skillId
- * @param candidate
+ * @param {Skill[]|null|undefined} skills    Skills.
+ * @param {number}                 skillId   Skill that would get the prerequisite.
+ * @param {number}                 candidate Prerequisite.
+ * @return {boolean} Whether it would create a cycle.
  */
 export function createsCycle( skills, skillId, candidate ) {
 	if ( skillId === candidate ) {
 		return true;
 	}
+	/** @type {Map<number, Skill>} */
 	const byId = new Map(
 		( skills || [] ).map( ( skill ) => [ skill.id, skill ] )
 	);
 	const seen = new Set();
 	const stack = [ candidate ];
 	while ( stack.length ) {
-		const current = stack.pop();
+		const current = /** @type {number} */ ( stack.pop() );
 		if ( current === skillId ) {
 			return true;
 		}
@@ -135,9 +178,11 @@ export function createsCycle( skills, skillId, candidate ) {
 
 /**
  * Normalize a part => roles skill map, removing empty parts and duplicate supporting skills.
- * @param map
+ * @param {Record<string, { primary?: unknown, supporting?: unknown[] }|null|undefined>|null|undefined} map Skill map as stored or edited.
+ * @return {SkillMap} Normalized skill map.
  */
 export function normalizeSkillMap( map ) {
+	/** @type {SkillMap} */
 	const result = {};
 	for ( const [ part, roles ] of Object.entries( map || {} ) ) {
 		const primary = Number( roles?.primary ) || 0;
@@ -153,6 +198,12 @@ export function normalizeSkillMap( map ) {
 	}
 	return result;
 }
+/**
+ * @param {SkillMap|null|undefined} map     Skill map.
+ * @param {string}                  part    Question part.
+ * @param {number|string}           skillId Primary skill, or empty for none.
+ * @return {SkillMap} Updated skill map.
+ */
 export function setPrimarySkill( map, part, skillId ) {
 	const current = map?.[ part ] || {
 		primary: 0,
@@ -166,6 +217,12 @@ export function setPrimarySkill( map, part, skillId ) {
 		},
 	} );
 }
+/**
+ * @param {SkillMap|null|undefined} map     Skill map.
+ * @param {string}                  part    Question part.
+ * @param {number|string}           skillId Supporting skill to add or remove.
+ * @return {SkillMap} Updated skill map.
+ */
 export function toggleSupportingSkill( map, part, skillId ) {
 	const current = map?.[ part ] || {
 		primary: 0,
@@ -186,8 +243,10 @@ export function toggleSupportingSkill( map, part, skillId ) {
 
 /**
  * Questions already in the quiz cannot be added again.
- * @param items
- * @param existingIds
+ * @template {{ id?: unknown }} T
+ * @param {T[]|null|undefined}               items       Bank rows.
+ * @param {(number|string)[]|null|undefined} existingIds Questions already in the quiz.
+ * @return {(T & { alreadyInQuiz: boolean })[]} Rows with `alreadyInQuiz`.
  */
 export function selectableResults( items, existingIds ) {
 	const existing = new Set( ( existingIds || [] ).map( Number ) );
@@ -199,9 +258,11 @@ export function selectableResults( items, existingIds ) {
 
 /**
  * Append newly linked server questions to the editor list without touching local edits.
- * @param current
- * @param serverContent
- * @param addedIds
+ * @template {{ id?: unknown }} T
+ * @param {T[]|null|undefined}               current       Editor questions.
+ * @param {T[]|null|undefined}               serverContent Server questions.
+ * @param {(number|string)[]|null|undefined} addedIds      Newly linked question IDs.
+ * @return {T[]} Editor questions and the new ones.
  */
 export function appendLinkedQuestions( current, serverContent, addedIds ) {
 	const present = new Set(
@@ -218,10 +279,15 @@ export function appendLinkedQuestions( current, serverContent, addedIds ) {
 
 /**
  * Numerical editor helpers.
- * @param values
+ * @param {unknown} values Numbers.
+ * @return {string} Comma-separated list.
  */
 export const numbersToList = ( values ) =>
 	Array.isArray( values ) ? values.join( ', ' ) : '';
+/**
+ * @param {unknown} text Comma-separated list.
+ * @return {number[]|undefined} Finite numbers, or undefined for none.
+ */
 export function listToNumbers( text ) {
 	const numbers = String( text || '' )
 		.split( ',' )
@@ -233,7 +299,8 @@ export function listToNumbers( text ) {
 
 /**
  * Structured-part helpers; part IDs are stable once created.
- * @param parts
+ * @param {Record<string, unknown>[]|null|undefined} parts Parts.
+ * @return {Record<string, unknown>[]} Parts and a new written part.
  */
 export function addPart( parts ) {
 	const used = new Set( ( parts || [] ).map( ( part ) => part.id ) );
@@ -253,6 +320,12 @@ export function addPart( parts ) {
 		},
 	];
 }
+/**
+ * @param {Record<string, unknown>[]|null|undefined} parts  Parts.
+ * @param {number}                                   index  Part to change.
+ * @param {Record<string, unknown>}                  fields Changed fields.
+ * @return {Record<string, unknown>[]} Updated parts.
+ */
 export function updatePart( parts, index, fields ) {
 	return ( parts || [] ).map( ( part, position ) =>
 		position === index
@@ -263,6 +336,11 @@ export function updatePart( parts, index, fields ) {
 			: part
 	);
 }
+/**
+ * @param {Record<string, unknown>[]|null|undefined} parts Parts.
+ * @param {number}                                   index Part to remove.
+ * @return {Record<string, unknown>[]} Remaining parts.
+ */
 export function removePart( parts, index ) {
 	return ( parts || [] ).filter( ( _, position ) => position !== index );
 }
@@ -287,9 +365,11 @@ const CHOICE_TYPES = [ 'single-choice', 'multiple-choice' ];
 
 /**
  * A blank draft for the New question form.
- * @param type
+ * @param {string} [type] Question type.
+ * @return {QuestionDraft} Draft.
  */
 export function emptyDraft( type = 'single-choice' ) {
+	/** @type {QuestionSettings} */
 	let settings = interactiveDefaults( type );
 	if ( type === 'structured' ) {
 		settings = {
@@ -336,8 +416,9 @@ export function emptyDraft( type = 'single-choice' ) {
 
 /**
  * Change the draft's type, keeping the shared fields.
- * @param draft
- * @param type
+ * @param {QuestionDraft} draft Draft.
+ * @param {string}        type  New question type.
+ * @return {QuestionDraft} Draft of the new type.
  */
 export function changeDraftType( draft, type ) {
 	const blank = emptyDraft( type );
@@ -389,9 +470,10 @@ export function changeDraftType( draft, type ) {
 
 /**
  * Mark one option correct (single choice, true/false) or toggle it (multiple choice).
- * @param draft
- * @param index
- * @param correct
+ * @param {QuestionDraft} draft   Draft.
+ * @param {number}        index   Option.
+ * @param {boolean}       correct Whether it is correct.
+ * @return {QuestionDraft} Updated draft.
  */
 export function setOptionCorrect( draft, index, correct ) {
 	const single = draft.type !== 'multiple-choice';
@@ -414,9 +496,11 @@ export function setOptionCorrect( draft, index, correct ) {
 
 /**
  * Problems that block saving, as message keys for the form.
- * @param draft
+ * @param {QuestionDraft} draft Draft.
+ * @return {string[]} Problems.
  */
 export function validateDraft( draft ) {
+	/** @type {string[]} */
 	const problems = [];
 	if ( ! String( draft.name || '' ).trim() ) {
 		problems.push( 'name' );
@@ -499,7 +583,7 @@ export function validateDraft( draft ) {
 
 /**
  * Question payload for a bank question (no quiz); `createBankQuestion()` sends it to POST /questions.
- * @param draft
+ * @param {QuestionDraft} draft Draft.
  */
 export function draftToPayload( draft ) {
 	const options = [
@@ -522,8 +606,10 @@ export function draftToPayload( draft ) {
 				value:
 					draft.type === 'structured'
 						? ( draft.settings.parts || [] ).reduce(
-								( sum, part ) =>
-									sum + ( Number( part.marks ) || 0 ),
+								(
+									/** @type {number} */ sum,
+									/** @type {Record<string, unknown>} */ part
+								) => sum + ( Number( part.marks ) || 0 ),
 								0
 							)
 						: Number( draft.marks ) || 0,

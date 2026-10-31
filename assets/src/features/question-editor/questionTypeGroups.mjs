@@ -88,7 +88,13 @@ export function groupQuestionTypes( options ) {
 		heading,
 		ids
 			.map( ( id ) => options.find( ( option ) => option.value === id ) )
-			.filter( Boolean ),
+			.filter(
+				/**
+				 * @param {{value: string, label: string}|undefined} option Found option.
+				 * @return {option is {value: string, label: string}} Whether the type is offered.
+				 */
+				( option ) => Boolean( option )
+			),
 	] );
 	groups.push( [
 		'More',

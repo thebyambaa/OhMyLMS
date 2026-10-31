@@ -5,7 +5,7 @@
 
 interface Window {
 	/** Classic WordPress scripts (`wp-i18n` is a dependency of every learner module page). */
-	wp?: { i18n: typeof import( '@wordpress/i18n' ); [ key: string ]: any };
+	wp: { i18n: typeof import( '@wordpress/i18n' ); [ key: string ]: any };
 	/** OhMyLMS\Assessment\MathLive::config(). */
 	ohmylmsMath?: {
 		enabled: boolean;

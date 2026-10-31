@@ -12,6 +12,7 @@ use OhMyLMS\Assessment\Pools;
 use OhMyLMS\Assessment\SkillAssessment;
 use OhMyLMS\Curriculum\Access;
 use OhMyLMS\Quiz\QuizSkills;
+use OhMyLMS\Utility\Lock;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -126,25 +127,24 @@ final class SkillQuizzes {
 		if ( $linked && Provenance::archived( $term_id ) ) {
 			return Access::error( 'ohmylms_skill_archived', __( 'Archived skills cannot own more quizzes. Restore the skill first.', 'ohmylms' ), 409 );
 		}
-		$lock = 'ohmylms-quiz-skills-' . md5( $wpdb->prefix ) . '-' . (int) $quiz_id;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Non-cacheable advisory lock.
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) ) {
-			return Access::error( 'ohmylms_quiz_skills_busy', __( 'Another change to this quiz’s skills is being saved. Try again.', 'ohmylms' ), 409 );
-		}
-		try {
-			$ids = QuizSkills::get( $quiz_id );
-			if ( $linked && ! in_array( (int) $term_id, $ids, true ) ) {
-				$ids[] = (int) $term_id;
-			} elseif ( ! $linked ) {
-				$ids = array_values( array_diff( $ids, array( (int) $term_id ) ) );
+		$saved = Lock::with(
+			'ohmylms-quiz-skills-' . md5( $wpdb->prefix ) . '-' . (int) $quiz_id,
+			5,
+			static function () use ( $quiz_id, $term_id, $linked ) {
+				$ids = QuizSkills::get( $quiz_id );
+				if ( $linked && ! in_array( (int) $term_id, $ids, true ) ) {
+					$ids[] = (int) $term_id;
+				} elseif ( ! $linked ) {
+					$ids = array_values( array_diff( $ids, array( (int) $term_id ) ) );
+				}
+				return QuizSkills::set( $quiz_id, $ids );
+			},
+			static function () {
+				return Access::error( 'ohmylms_quiz_skills_busy', __( 'Another change to this quiz’s skills is being saved. Try again.', 'ohmylms' ), 409 );
 			}
-			$saved = QuizSkills::set( $quiz_id, $ids );
-			if ( is_wp_error( $saved ) ) {
-				return $saved;
-			}
-		} finally {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Release the advisory lock.
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+		);
+		if ( is_wp_error( $saved ) ) {
+			return $saved;
 		}
 		return self::listing( $term_id );
 	}

@@ -18,8 +18,8 @@ import {
 	loadBankQuestion,
 	loadVersion,
 	listSkills,
-} from '../question-bank/api.mjs';
-import { loadMath } from '../math/loader.mjs';
+} from '../question-bank/public.mjs';
+import { loadMath } from '../math/public.mjs';
 
 /**
  * Render sanitized question HTML in an isolated region owned by the math runtime.
@@ -31,6 +31,7 @@ function PaperContent( { html = '', plain = false } ) {
 	const host = useRef( null );
 	useEffect( () => {
 		let active = true;
+		/** @type {(() => void)|undefined} */
 		let cleanup;
 		loadMath()
 			.then( ( runtime ) => {
@@ -56,15 +57,49 @@ function PaperContent( { html = '', plain = false } ) {
 }
 
 /**
+ * @typedef {Object} PaperExam
+ * @property {number[]}               question_ids     Questions in paper order.
+ * @property {Record<string, number>} version_ids      Pinned version by question ID.
+ * @property {Record<string, number>} [source_pages]   Source PDF page by question ID.
+ * @property {number}                 job_id           Import job that holds the source PDF.
+ * @property {string}                 title            Exam title.
+ * @property {number}                 total_marks      Total marks.
+ * @property {number}                 duration_minutes Time limit.
+ * @property {string}                 preview_url      Player preview address.
+ */
+
+/**
+ * @typedef {Object} PaperPart
+ * @property {string}        id         Part ID.
+ * @property {string}        [label]    Part label.
+ * @property {number|string} [marks]    Available marks.
+ * @property {string}        [prompt]   Part prompt.
+ * @property {unknown}       [answer]   Expected answer.
+ * @property {string[]}      [answers]  Expected answers.
+ * @property {string[]}      [accepted] Accepted answers.
+ * @property {string}        [rubric]   Marking notes.
+ */
+
+/**
+ * @typedef {Object} PaperEntry
+ * @property {{title?: string, version_no: number, body?: string, settings?: {parts?: PaperPart[]}, skills?: Array<{part_id: string, term_id: number|string}>}} snapshot Saved version.
+ * @property {{approved_version_id?: number|string, can_approve?: boolean}}                                                                                     detail   Bank view of the question.
+ */
+
+/**
  * Review the exact saved paper versions without leaving Exams.
  * @param {Object}     props         Properties.
- * @param {Object}     props.exam    Saved exam and pinned version IDs.
+ * @param {PaperExam}  props.exam    Saved exam and pinned version IDs.
  * @param {() => void} props.onClose Close and restore focus.
  */
 export function ExamPaperDialog( { exam, onClose } ) {
 	const [ selected, setSelected ] = useState( 0 );
-	const [ entries, setEntries ] = useState( {} );
-	const [ skills, setSkills ] = useState( [] );
+	const [ entries, setEntries ] = useState(
+		/** @type {Record<string, PaperEntry>} */ ( {} )
+	);
+	const [ skills, setSkills ] = useState(
+		/** @type {Array<{id: number|string, name?: string}>} */ ( [] )
+	);
 	const [ error, setError ] = useState( '' );
 	const [ busy, setBusy ] = useState( false );
 	const [ mode, setMode ] = useState( 'review' );
@@ -120,7 +155,7 @@ export function ExamPaperDialog( { exam, onClose } ) {
 				[ questionId ]: { ...previous[ questionId ], detail },
 			} ) );
 		} catch ( failure ) {
-			setError( failure.message );
+			setError( /** @type {{message: string}} */ ( failure ).message );
 		} finally {
 			setBusy( false );
 		}
@@ -295,7 +330,7 @@ export function ExamPaperDialog( { exam, onClose } ) {
 														Number( part.marks ),
 														'ohmylms'
 													),
-													part.marks
+													String( part.marks ?? '' )
 												) }
 											</h3>
 											<PaperContent

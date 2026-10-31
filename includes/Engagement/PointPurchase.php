@@ -8,6 +8,7 @@
 namespace OhMyLMS\Engagement;
 
 use OhMyLMS\Student\Enrollments;
+use OhMyLMS\Utility\Lock;
 use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
@@ -368,13 +369,9 @@ final class PointPurchase {
 			return self::error( 'ohmylms_points_refund_reason', __( 'Give a reason of 1 to 500 characters.', 'ohmylms' ), 422, array( 'field' => 'reason' ) );
 		}
 
-		$lock = 'ohmylms_lock_point-refund-' . $order_id;
-		if ( ! add_option( $lock, time(), '', 'no' ) ) {
-			$taken = (int) get_option( $lock );
-			if ( ! $taken || time() - $taken <= 60 ) {
-				return self::error( 'ohmylms_points_refund_in_progress', __( 'A refund for this order is already being processed.', 'ohmylms' ), 409 );
-			}
-			update_option( $lock, time(), 'no' );
+		$lock = 'point-refund-' . $order_id;
+		if ( ! Lock::acquire_option( $lock, 60 ) ) {
+			return self::error( 'ohmylms_points_refund_in_progress', __( 'A refund for this order is already being processed.', 'ohmylms' ), 409 );
 		}
 		try {
 			clean_post_cache( $order_id );
@@ -433,7 +430,7 @@ final class PointPurchase {
 				array( 'balance' => Point::get_total_points( $user_id ) )
 			);
 		} finally {
-			delete_option( $lock );
+			Lock::release_option( $lock );
 		}
 	}
 }

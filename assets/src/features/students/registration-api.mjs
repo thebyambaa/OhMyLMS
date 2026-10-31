@@ -1,10 +1,18 @@
 /**
+ * @typedef {Window & {
+ *   ohmylmsRegistration?: { ajaxUrl?: unknown },
+ *   ohmylms_frontend_params?: { ajax_url?: unknown },
+ *   ohmylms_checkout_params?: { ajax_url?: unknown },
+ * }} RegistrationWindow
+ */
+
+/**
  * admin-ajax URL for the sign-up request: the URL localized with the registration script
  * (`ohmylmsRegistration.ajaxUrl`), else the `ohmylms/interactivity` module config every OhMyLMS page
  * prints, else the legacy page globals. Never a relative "undefined".
  *
- * @param {Object}   [win] Window.
- * @param {Document} [doc] Document.
+ * @param {RegistrationWindow} [win] Window.
+ * @param {Document}           [doc] Document.
  * @return {string} URL, '' when the page has none.
  */
 export function registrationUrl(
@@ -31,9 +39,9 @@ export function registrationUrl(
 
 /**
  * Keep PHP hook fields and the existing nonce/action in the request.
- * @param url
- * @param formData
- * @param fetch
+ * @param {string}                  url
+ * @param {FormData}                formData
+ * @param {typeof globalThis.fetch} [fetch]
  */
 export async function submitRegistration(
 	url,
@@ -65,6 +73,11 @@ export async function submitRegistration(
 	}
 	return result;
 }
+/**
+ * @param {unknown} value  Redirect URL from the response.
+ * @param {string}  origin Current page URL.
+ * @return {string|null} Same-origin absolute URL, else null.
+ */
 export function registrationRedirect( value, origin ) {
 	if ( typeof value !== 'string' || ! value.trim() ) {
 		return null;

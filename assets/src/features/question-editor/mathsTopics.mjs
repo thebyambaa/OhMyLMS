@@ -1,4 +1,16 @@
 /**
+ * @typedef {{name: string, type: string, min?: number, max?: number, step?: number, expr?: string, places?: number}} TemplateVariable
+ */
+
+/**
+ * @typedef {Object} TopicDefinition
+ * @property {TemplateVariable[]} variables   Template variables.
+ * @property {string[]}           constraints Conditions the drawn numbers meet.
+ * @property {string}             prompt      Question text.
+ * @property {string}             expr        Answer expression.
+ */
+
+/**
  * Topic presets for the maths generator that are built from a construction: the numbers that make the
  * answer exact are drawn first, and the question is derived from them. Each returns the variables,
  * constraints, prompt and answer expression for the shared seeded template engine, or null when the
@@ -7,9 +19,16 @@
  * @param {string} kind Preset name.
  * @param {number} min  Lower integer bound.
  * @param {number} max  Upper integer bound.
- * @return {Object|null|undefined} Definition; null for an unusable range; undefined for an unknown kind.
+ * @return {TopicDefinition|null|undefined} Definition; null for an unusable range; undefined for an unknown kind.
  */
 export function topicPreset( kind, min, max ) {
+	/**
+	 * @param {string} name
+	 * @param {number} low
+	 * @param {number} high
+	 * @param {number} [step]
+	 * @return {TemplateVariable} Whole-number variable.
+	 */
 	const int = ( name, low, high, step = 1 ) => ( {
 		name,
 		type: 'int',
@@ -17,6 +36,11 @@ export function topicPreset( kind, min, max ) {
 		max: high,
 		step,
 	} );
+	/**
+	 * @param {string} name
+	 * @param {string} formula
+	 * @return {TemplateVariable} Calculated variable.
+	 */
 	const expr = ( name, formula ) => ( {
 		name,
 		type: 'expr',

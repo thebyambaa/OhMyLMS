@@ -1,8 +1,11 @@
+/** @typedef {import('./choiceAutosave.mjs').ChoiceDraft} ChoiceDraft */
+/** @typedef {{ past: ChoiceDraft[], future: ChoiceDraft[] }} QuestionHistory Local undo stacks. */
+
 /**
  * Remember a private draft independently of the public reference document.
  *
- * @param {Object} history  Local undo stacks.
- * @param {Object} question Current private draft.
+ * @param {QuestionHistory} history  Local undo stacks.
+ * @param {ChoiceDraft}     question Current private draft.
  */
 export function rememberQuestion( history, question ) {
 	history.past.push( structuredClone( question ) );
@@ -14,10 +17,10 @@ export function rememberQuestion( history, question ) {
  * Restore a local edit, reconciling option identities assigned during autosave.
  * Deleted options become new options; immutable historical versions stay unchanged.
  *
- * @param {Object} history   Local undo stacks.
- * @param {Object} current   Current draft with canonical option identities.
- * @param {string} direction Either past or future.
- * @return {Object|null} Restored draft.
+ * @param {QuestionHistory} history   Local undo stacks.
+ * @param {ChoiceDraft}     current   Current draft with canonical option identities.
+ * @param {'past'|'future'} direction Either past or future.
+ * @return {ChoiceDraft|null} Restored draft.
  */
 export function stepQuestionHistory( history, current, direction ) {
 	const next = history[ direction ].pop();

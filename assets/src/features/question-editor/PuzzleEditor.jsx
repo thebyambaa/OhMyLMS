@@ -16,6 +16,9 @@ import {
 	puzzleLetters,
 } from './puzzleModel.mjs';
 
+/** @typedef {import('./editorTypes').Data} Data */
+/** @typedef {import('./editorTypes').OnPatch} OnPatch */
+
 /**
  * The same controls used by the learner, mounted with an answer-free projection.
  *
@@ -24,12 +27,12 @@ import {
  *
  * @param {string} props.type     Puzzle type.
  *
- * @param {Object} props.settings Private author settings.
+ * @param {Data}   props.settings Private author settings.
  *
  * @return {React.ReactElement} Live preview.
  */
 export function PuzzlePreview( { type, settings } ) {
-	const ref = useRef( null );
+	const ref = useRef( /** @type {HTMLDivElement|null} */ ( null ) );
 	const issues = puzzleIssues( type, settings );
 	useEffect( () => {
 		if ( issues.length || ! ref.current ) {
@@ -54,19 +57,20 @@ export function PuzzlePreview( { type, settings } ) {
  * Compact Wordwall-style answer/clue rows inside the existing question block.
  *
  *
- * @param {Object}                  props          Editor properties.
+ * @param {Object}  props          Editor properties.
  *
- * @param {string}                  props.type     Puzzle type.
+ * @param {string}  props.type     Puzzle type.
  *
- * @param {Object}                  props.value    Current settings.
+ * @param {Data}    props.value    Current settings.
  *
- * @param {(patch: Object) => void} props.onChange Persist a settings patch.
+ * @param {OnPatch} props.onChange Persist a settings patch.
  *
  * @return {React.ReactElement} Puzzle builder.
  */
 function PuzzleEditor( { type, value, onChange } ) {
 	const [ preview, setPreview ] = useState( false );
 	const [ error, setError ] = useState( '' );
+	/** @type {Data[]} */
 	const entries = value.entries || [];
 	const issues = puzzleIssues( type, value );
 	const nextId = () => {
@@ -76,7 +80,11 @@ function PuzzleEditor( { type, value, onChange } ) {
 		}
 		return `w${ id }`;
 	};
-	const update = ( index, patch, dirty = true ) =>
+	const update = (
+		/** @type {number} */ index,
+		/** @type {Data} */ patch,
+		dirty = true
+	) =>
 		onChange( {
 			entries: entries.map( ( entry, i ) =>
 				i === index ? { ...entry, ...patch } : entry
@@ -97,14 +105,16 @@ function PuzzleEditor( { type, value, onChange } ) {
 			setError( '' );
 			setPreview( showPreview );
 		} catch ( failure ) {
-			setError( failure.message );
+			setError( /** @type {Error} */ ( failure ).message );
 			setPreview( false );
 		}
 	};
 	const occupied = new Map();
 	for ( const entry of entries ) {
 		if ( Number.isInteger( entry.row ) && Number.isInteger( entry.col ) ) {
-			puzzleCells( entry ).forEach( ( cell, index ) =>
+			puzzleCells(
+				/** @type {import('./puzzleModel.mjs').PuzzleEntry} */ ( entry )
+			).forEach( ( cell, index ) =>
 				occupied.set( cell, puzzleLetters( entry.answer )[ index ] )
 			);
 		}
@@ -419,14 +429,14 @@ function PuzzleEditor( { type, value, onChange } ) {
 }
 
 /**
- * @param {Object} props Shared answer settings.
+ * @param {{value: Data, onChange: OnPatch}} props Shared answer settings.
  * @return {React.ReactElement} Crossword builder.
  */
 export function CrosswordEditor( props ) {
 	return <PuzzleEditor { ...props } type="crossword" />;
 }
 /**
- * @param {Object} props Shared answer settings.
+ * @param {{value: Data, onChange: OnPatch}} props Shared answer settings.
  * @return {React.ReactElement} Wordsearch builder.
  */
 export function WordsearchEditor( props ) {

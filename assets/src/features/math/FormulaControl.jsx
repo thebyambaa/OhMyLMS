@@ -7,11 +7,13 @@ import { mathEnabled } from './loader.mjs';
 
 /**
  * Optional teacher syntax check; the server preview remains authoritative.
- * @param {Object} props Original formula field properties.
- * @return {Object} Field and advisory status.
+ * @param {Parameters<typeof MathInput>[0]} props Original formula field properties.
+ * @return {React.ReactElement} Field and advisory status.
  */
 export function FormulaControl( props ) {
-	const [ result, setResult ] = useState( null );
+	const [ result, setResult ] = useState(
+		/** @type {string|null} */ ( null )
+	);
 	const [ busy, setBusy ] = useState( false );
 	const inspect = async () => {
 		setBusy( true );

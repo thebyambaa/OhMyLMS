@@ -6,6 +6,7 @@ use OhMyLMS\Skills\Mastery;
 use OhMyLMS\Practice\Selector;
 use OhMyLMS\QuestionBank\AccessPolicy;
 use OhMyLMS\QuestionBank\Banks;
+use OhMyLMS\Utility\Lock;
 use OhMyLMS\Utility\Transaction;
 
 defined( 'ABSPATH' ) || exit;
@@ -703,7 +704,7 @@ final class CourseProgram {
 			update_post_meta( $course_id, self::DRAFT, $program );
 			return self::editor( $course_id ) + array( 'readiness' => $errors ); }
 		$key = 'ohmylms_program_' . (int) $course_id;
-		if ( ! $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 3)', $key ) ) ) {
+		if ( ! Lock::acquire( $key, 3 ) ) {
 			return self::error( __( 'Another author is publishing this course. Try again.', 'ohmylms' ), 409 ); }
 		try {
 			wp_cache_delete( $course_id, 'post_meta' );
@@ -765,6 +766,6 @@ final class CourseProgram {
 			wp_cache_delete( $course_id, 'post_meta' );
 			return self::error( __( 'Could not publish the learning program. Try again.', 'ohmylms' ), 500 );
 		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $key ) ); }
+			Lock::release( $key ); }
 	}
 }

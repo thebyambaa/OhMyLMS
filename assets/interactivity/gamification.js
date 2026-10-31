@@ -7,6 +7,7 @@ const { state, actions } = store( 'ohmylms/gamification', {
 		dismiss: withSyncEvent( () => {
 			state.visible = false;
 		} ),
+		/** @param {unknown} message Reward message. */
 		show( message ) {
 			state.message = String( message );
 			state.visible = true;
@@ -14,10 +15,15 @@ const { state, actions } = store( 'ohmylms/gamification', {
 	},
 	callbacks: {
 		mount() {
-			const root = getElement().ref;
+			const root = /** @type {HTMLElement} */ ( getElement().ref );
+			/** @type {ReturnType<typeof setTimeout>|undefined} */
 			let timeout;
+			/** @param {Event|{detail: {message: unknown}}} event `ohmylms:celebrate`, or a queued message. */
 			const show = ( event ) => {
-				actions.show( event.detail.message );
+				actions.show(
+					/** @type {{detail: {message: unknown}}} */ ( event ).detail
+						.message
+				);
 				clearTimeout( timeout );
 				timeout = setTimeout( () => {
 					state.visible = false;

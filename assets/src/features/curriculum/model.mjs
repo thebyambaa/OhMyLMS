@@ -11,16 +11,62 @@ export const DESCRIPTION_LIMIT = 2000;
 export const SHORT_LIMIT = 60;
 export const LINK_TYPES = [ 'course', 'skill', 'bank', 'quiz' ];
 
+/**
+ * @typedef {Object} CurriculumItem
+ * @property {number}                 id            Item ID.
+ * @property {number|null}            [parent_id]   Parent item ID, 0 or empty at the top level.
+ * @property {number}                 position      Position among siblings.
+ * @property {string}                 [name]        Display name.
+ * @property {string}                 [item_type]   Type slug.
+ * @property {string}                 [description] Description.
+ * @property {string}                 [code]        Short code.
+ * @property {string}                 [version]     Version label.
+ * @property {boolean}                [is_syllabus] Whether the item is a syllabus.
+ * @property {number}                 [child_count] Visible children.
+ * @property {Record<string, number>} [links]       Link counts by type.
+ */
+
+/**
+ * @typedef {Object} TreeNode
+ * @property {CurriculumItem} item     Item.
+ * @property {number}         depth    Depth with a root at 0.
+ * @property {TreeNode[]}     children Nested children.
+ */
+
+/**
+ * @typedef {Object} SearchState
+ * @property {boolean}     active  Whether a query is set.
+ * @property {Set<number>} matches Matching item IDs.
+ * @property {Set<number>} reveal  Ancestors of the matches.
+ */
+
+/**
+ * @typedef {Object} ViewState
+ * @property {Set<number>}          expanded  Branches the administrator opened.
+ * @property {Map<number, boolean>} overrides Open state during one search.
+ */
+
+/** @typedef {'name'|'item_type'|'description'|'code'|'version'} EditableField */
+
+/**
+ * @param {CurriculumItem} left
+ * @param {CurriculumItem} right
+ */
 const byPosition = ( left, right ) =>
 	left.position - right.position || left.id - right.id;
 
+/**
+ * @template {CurriculumItem} T
+ * @param {T[]|null} [items]
+ * @return {Map<number, T>} Items by ID.
+ */
 export function indexItems( items ) {
 	return new Map( ( items || [] ).map( ( item ) => [ item.id, item ] ) );
 }
 
 /**
  * Hide topic rows and promote their children to the nearest visible ancestor.
- * @param items
+ * @param {CurriculumItem[]} [items]
  */
 export function withoutTopics( items = [] ) {
 	const index = indexItems( items );
@@ -34,7 +80,7 @@ export function withoutTopics( items = [] ) {
 				! seen.has( parent )
 			) {
 				seen.add( parent );
-				parent = index.get( parent ).parent_id || 0;
+				parent = index.get( parent )?.parent_id || 0;
 			}
 			return {
 				...item,
@@ -44,8 +90,9 @@ export function withoutTopics( items = [] ) {
 		} );
 	const parents = indexItems( visible );
 	for ( const item of visible ) {
-		if ( parents.has( item.parent_id ) ) {
-			parents.get( item.parent_id ).child_count++;
+		const parent = parents.get( item.parent_id );
+		if ( parent ) {
+			parent.child_count++;
 		}
 	}
 	return visible;
@@ -53,16 +100,18 @@ export function withoutTopics( items = [] ) {
 
 /**
  * Parent ID => children ordered by sibling position.
- * @param items
+ * @param {CurriculumItem[]|null} [items]
+ * @return {Map<number, CurriculumItem[]>} Children by parent ID.
  */
 export function childrenOf( items ) {
+	/** @type {Map<number, CurriculumItem[]>} */
 	const map = new Map();
 	for ( const item of items || [] ) {
 		const parent = item.parent_id || 0;
 		if ( ! map.has( parent ) ) {
 			map.set( parent, [] );
 		}
-		map.get( parent ).push( item );
+		/** @type {CurriculumItem[]} */ ( map.get( parent ) ).push( item );
 	}
 	for ( const list of map.values() ) {
 		list.sort( byPosition );
@@ -73,12 +122,14 @@ export function childrenOf( items ) {
 /**
  * Nest a flat list. An item whose parent is missing surfaces as a root and a loop is broken,
  * so corrupted data is shown rather than silently hidden.
- * @param items
+ * @param {CurriculumItem[]|null} [items]
+ * @return {TreeNode[]} Root nodes.
  */
 export function buildTree( items ) {
 	const byId = indexItems( items );
 	const children = childrenOf( items );
 	const seen = new Set();
+	/** @type {( item: CurriculumItem, depth: number ) => TreeNode} */
 	const build = ( item, depth ) => {
 		seen.add( item.id );
 		const nested = ( children.get( item.id ) || [] ).filter(
@@ -104,7 +155,8 @@ export function buildTree( items ) {
 
 /**
  * Depth-first node list.
- * @param tree
+ * @param {TreeNode[]} tree
+ * @return {TreeNode[]} Nodes.
  */
 export function flattenTree( tree ) {
 	return tree.flatMap( ( node ) => [
@@ -115,9 +167,10 @@ export function flattenTree( tree ) {
 
 /**
  * Ancestor IDs of an item, nearest parent first. Stops at a root, a gap or a loop.
- * @param items
- * @param id
- * @param byId
+ * @param {CurriculumItem[]|null}       items
+ * @param {number}                      id
+ * @param {Map<number, CurriculumItem>} [byId]
+ * @return {number[]} Ancestor IDs.
  */
 export function ancestorIds( items, id, byId = indexItems( items ) ) {
 	const result = [];
@@ -126,18 +179,25 @@ export function ancestorIds( items, id, byId = indexItems( items ) ) {
 	while ( current && byId.has( current ) && ! seen.has( current ) ) {
 		result.push( current );
 		seen.add( current );
-		current = byId.get( current ).parent_id || 0;
+		current = byId.get( current )?.parent_id || 0;
 	}
 	return result;
 }
 
+/**
+ * @param {CurriculumItem[]|null} items
+ * @param {number}                id
+ * @return {number[]} Descendant IDs, breadth first.
+ */
 export function descendantIds( items, id ) {
 	const children = childrenOf( items );
 	const result = [];
 	const seen = new Set( [ id ] );
 	const queue = [ id ];
 	while ( queue.length ) {
-		for ( const child of children.get( queue.shift() ) || [] ) {
+		for ( const child of children.get(
+			/** @type {number} */ ( queue.shift() )
+		) || [] ) {
 			if ( seen.has( child.id ) ) {
 				continue;
 			}
@@ -151,8 +211,8 @@ export function descendantIds( items, id ) {
 
 /**
  * Depth with a root at 1.
- * @param items
- * @param id
+ * @param {CurriculumItem[]|null} items
+ * @param {number}                id
  */
 export function depthOf( items, id ) {
 	return 1 + ancestorIds( items, id ).length;
@@ -160,8 +220,8 @@ export function depthOf( items, id ) {
 
 /**
  * Levels in the subtree under an item, counting the item itself as 1.
- * @param items
- * @param id
+ * @param {CurriculumItem[]|null} items
+ * @param {number}                id
  */
 export function heightOf( items, id ) {
 	const children = childrenOf( items );
@@ -189,22 +249,22 @@ export function heightOf( items, id ) {
 
 /**
  * Names from the root down to the item's parent.
- * @param items
- * @param id
+ * @param {CurriculumItem[]|null} items
+ * @param {number}                id
  */
 export function pathNames( items, id ) {
 	const byId = indexItems( items );
 	return ancestorIds( items, id, byId )
 		.reverse()
-		.map( ( ancestor ) => byId.get( ancestor ).name );
+		.map( ( ancestor ) => byId.get( ancestor )?.name );
 }
 
 /**
  * Syllabus shortcuts in tree order, retaining each complete curriculum path.
  *
- * @param {Array} items Stored curriculum items.
- * @param {Array} tree  Hidden descendant branches, optionally filtered by search.
- * @return {Array} Syllabus items and their breadcrumb names.
+ * @param {CurriculumItem[]} items Stored curriculum items.
+ * @param {TreeNode[]}       tree  Hidden descendant branches, optionally filtered by search.
+ * @return {Array<{item: CurriculumItem, ancestors: Array<CurriculumItem|undefined>, path: Array<string|undefined>}>} Syllabus items and their breadcrumb names.
  */
 export function syllabusBreadcrumbs( items, tree ) {
 	const byId = indexItems( items );
@@ -222,11 +282,11 @@ export function syllabusBreadcrumbs( items, tree ) {
 /**
  * Open a breadcrumb parent and the ancestors needed to reveal it.
  *
- * @param {Object} state  Expansion state.
- * @param {Object} search Current search state.
- * @param {Array}  items  Visible curriculum items.
- * @param {number} id     Parent to reveal.
- * @return {Object} Updated expansion state.
+ * @param {ViewState}        state  Expansion state.
+ * @param {SearchState}      search Current search state.
+ * @param {CurriculumItem[]} items  Visible curriculum items.
+ * @param {number}           id     Parent to reveal.
+ * @return {ViewState} Updated expansion state.
  */
 export function revealBranch( state, search, items, id ) {
 	const ids = [ ...ancestorIds( items, id ), id ];
@@ -244,10 +304,11 @@ export function revealBranch( state, search, items, id ) {
 /**
  * May an item move under a parent (0 = top level)? Mirrors the server: never under itself or
  * one of its own descendants, and never beyond the maximum depth.
- * @param items
- * @param id
- * @param parentId
- * @param maxDepth
+ * @param {CurriculumItem[]|null} items
+ * @param {number}                id
+ * @param {number|null}           [parentId]
+ * @param {number}                [maxDepth]
+ * @return {{ok: boolean, reason?: string}} Result.
  */
 export function validateMove(
 	items,
@@ -278,9 +339,9 @@ export function validateMove(
 
 /**
  * Parents an item can legally move under, in tree order with their depth for indented menus.
- * @param items
- * @param id
- * @param maxDepth
+ * @param {CurriculumItem[]|null} items
+ * @param {number}                id
+ * @param {number}                [maxDepth]
  */
 export function moveTargets( items, id, maxDepth = DEFAULT_MAX_DEPTH ) {
 	return flattenTree( buildTree( items ) )
@@ -296,8 +357,8 @@ export function moveTargets( items, id, maxDepth = DEFAULT_MAX_DEPTH ) {
 
 /**
  * Where an item sits among its siblings.
- * @param items
- * @param id
+ * @param {CurriculumItem[]|null} items
+ * @param {number}                id
  */
 export function siblingInfo( items, id ) {
 	const byId = indexItems( items );
@@ -314,9 +375,9 @@ export function siblingInfo( items, id ) {
 
 /**
  * Target for moving one step up (-1) or down (+1) among siblings, or null at the edge.
- * @param items
- * @param id
- * @param direction
+ * @param {CurriculumItem[]|null} items
+ * @param {number}                id
+ * @param {number}                direction
  */
 export function siblingMove( items, id, direction ) {
 	const { parentId, index, count } = siblingInfo( items, id );
@@ -327,6 +388,9 @@ export function siblingMove( items, id, direction ) {
 	return { parentId, position: target };
 }
 
+/**
+ * @param {unknown} value
+ */
 export function normalizeText( value ) {
 	return String( value ?? '' )
 		.normalize( 'NFKC' )
@@ -336,8 +400,9 @@ export function normalizeText( value ) {
 /**
  * Search names, codes, versions, types and descriptions. `matches` are the hits and `reveal`
  * their ancestors, which the tree shows open so each hit is visible inside its branch.
- * @param items
- * @param query
+ * @param {CurriculumItem[]|null} items
+ * @param {unknown}               query
+ * @return {SearchState} Search state.
  */
 export function searchItems( items, query ) {
 	const terms = normalizeText( query )
@@ -348,7 +413,9 @@ export function searchItems( items, query ) {
 		return { active: false, matches: new Set(), reveal: new Set() };
 	}
 	const byId = indexItems( items );
+	/** @type {Set<number>} */
 	const matches = new Set();
+	/** @type {Set<number>} */
 	const reveal = new Set();
 	for ( const item of items || [] ) {
 		const haystack = normalizeText(
@@ -373,8 +440,9 @@ export function searchItems( items, query ) {
 
 /**
  * Keep only hits and their ancestors while a search is active.
- * @param tree
- * @param search
+ * @param {TreeNode[]}  tree
+ * @param {SearchState} search
+ * @return {TreeNode[]} Visible nodes.
  */
 export function filterTree( tree, search ) {
 	if ( ! search.active ) {
@@ -395,12 +463,18 @@ export function filterTree( tree, search ) {
 /**
  * Open/closed state lives outside the data: `expanded` is the administrator's own choice and
  * survives edits, reloads and searches; `overrides` only adjusts branches during one search.
- * @param expanded
+ * @param {Iterable<number>} [expanded]
+ * @return {ViewState} View state.
  */
 export function createViewState( expanded = [] ) {
 	return { expanded: new Set( expanded ), overrides: new Map() };
 }
 
+/**
+ * @param {ViewState}   state
+ * @param {SearchState} search
+ * @param {number}      id
+ */
 export function isOpen( state, search, id ) {
 	if ( search.active ) {
 		return state.overrides.has( id )
@@ -410,6 +484,12 @@ export function isOpen( state, search, id ) {
 	return state.expanded.has( id );
 }
 
+/**
+ * @param {ViewState}   state
+ * @param {SearchState} search
+ * @param {number}      id
+ * @return {ViewState} Updated state.
+ */
 export function toggleOpen( state, search, id ) {
 	const open = isOpen( state, search, id );
 	if ( search.active ) {
@@ -428,8 +508,9 @@ export function toggleOpen( state, search, id ) {
 
 /**
  * Open a branch (for example the parent of a newly added child) without toggling it shut.
- * @param state
- * @param id
+ * @param {ViewState} state
+ * @param {number}    id
+ * @return {ViewState} Updated state.
  */
 export function ensureOpen( state, id ) {
 	if ( state.expanded.has( id ) ) {
@@ -438,10 +519,18 @@ export function ensureOpen( state, id ) {
 	return { ...state, expanded: new Set( [ ...state.expanded, id ] ) };
 }
 
+/**
+ * @param {ViewState} state
+ * @return {ViewState} State without search overrides.
+ */
 export function resetOverrides( state ) {
 	return state.overrides.size ? { ...state, overrides: new Map() } : state;
 }
 
+/**
+ * @param {CurriculumItem[]|null} [items]
+ * @return {ViewState} State with every branch open.
+ */
 export function expandAll( items ) {
 	const children = childrenOf( items );
 	return {
@@ -460,8 +549,9 @@ export function collapseAll() {
 
 /**
  * Forget items that no longer exist; every surviving branch keeps its state.
- * @param state
- * @param items
+ * @param {ViewState}             state
+ * @param {CurriculumItem[]|null} [items]
+ * @return {ViewState} Pruned state.
  */
 export function pruneState( state, items ) {
 	const ids = new Set( ( items || [] ).map( ( item ) => item.id ) );
@@ -482,7 +572,7 @@ export function pruneState( state, items ) {
 
 /**
  * Type slugs are lowercase letters, numbers, hyphens and underscores; spaces become hyphens.
- * @param value
+ * @param {unknown} value
  */
 export function normalizeType( value ) {
 	return String( value ?? '' )
@@ -492,6 +582,9 @@ export function normalizeType( value ) {
 		.replace( /[^a-z0-9_-]/g, '' );
 }
 
+/**
+ * @param {unknown} type
+ */
 export function typeLabel( type ) {
 	const text = String( type || '' )
 		.replace( /[-_]+/g, ' ' )
@@ -501,9 +594,11 @@ export function typeLabel( type ) {
 
 /**
  * Client-side hints that mirror the server's field rules. Keys with a problem map to a message code.
- * @param draft
+ * @param {Record<string, unknown>|null} [draft]
+ * @return {Record<string, string>} Message codes by field.
  */
 export function validateDraft( draft ) {
+	/** @type {Record<string, string>} */
 	const errors = {};
 	const name = String( draft?.name ?? '' ).trim();
 	if ( ! name ) {
@@ -528,7 +623,10 @@ export function validateDraft( draft ) {
 	return errors;
 }
 
-/** Fields the editor can change. */
+/**
+ * Fields the editor can change.
+ * @type {EditableField[]}
+ */
 export const EDITABLE_FIELDS = [
 	'name',
 	'item_type',
@@ -537,6 +635,9 @@ export const EDITABLE_FIELDS = [
 	'version',
 ];
 
+/**
+ * @param {Partial<CurriculumItem>|null} [item]
+ */
 export function draftFrom( item ) {
 	return Object.fromEntries(
 		EDITABLE_FIELDS.map( ( key ) => [ key, item?.[ key ] ?? '' ] )
@@ -545,7 +646,7 @@ export function draftFrom( item ) {
 
 /**
  * Payload for a save: trimmed, with the type normalized.
- * @param draft
+ * @param {Record<string, unknown>} draft
  */
 export function payloadFrom( draft ) {
 	return {
@@ -557,6 +658,10 @@ export function payloadFrom( draft ) {
 	};
 }
 
+/**
+ * @param {Record<string, unknown>}      draft
+ * @param {Partial<CurriculumItem>|null} [item]
+ */
 export function isDirty( draft, item ) {
 	const clean = payloadFrom( draft );
 	return EDITABLE_FIELDS.some(
@@ -564,6 +669,9 @@ export function isDirty( draft, item ) {
 	);
 }
 
+/**
+ * @param {Partial<CurriculumItem>|null} [item]
+ */
 export function linkTotal( item ) {
 	return LINK_TYPES.reduce(
 		( sum, type ) => sum + ( item?.links?.[ type ] || 0 ),
@@ -573,8 +681,8 @@ export function linkTotal( item ) {
 
 /**
  * What deleting this item would affect, from the dependents the server reports.
- * @param dependents
- * @param strategy
+ * @param {Record<string, number>|null} [dependents]
+ * @param {string}                      [strategy]
  */
 export function needsConfirmation( dependents, strategy ) {
 	if ( ! dependents ) {

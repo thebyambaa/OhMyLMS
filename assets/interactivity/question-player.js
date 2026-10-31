@@ -5,12 +5,38 @@ import { loadMath, mathEnabled } from '../src/features/math/loader.mjs';
 const { __, sprintf } = window.wp.i18n;
 
 /**
+ * @typedef {Object} PlayerQuestion
+ * @property {string}  html       Learner-safe question markup.
+ * @property {string}  type       Question type slug.
+ * @property {boolean} [required] Must be answered before moving on.
+ */
+
+/**
+ * Session state from OhMyLMS\Practice\QuestionPlayer. Activities (`activityMode`, `gameFamily`)
+ * send their own projection, typed by their renderer. Standard sessions send `questions` until
+ * complete, then `results` and, when graded, `score`.
+ *
+ * @typedef {Object} PlayerData
+ * @property {string}                                      session        Session UUID.
+ * @property {string}                                      status         `complete` when submitted.
+ * @property {boolean}                                     [preview]      Instructor preview.
+ * @property {string}                                      [gameFamily]   Game activities.
+ * @property {string}                                      [activityMode] Practice activities.
+ * @property {number}                                      [revision]     Activity state revision.
+ * @property {{earned: number, maximum: number}}           [score]        Graded result.
+ * @property {Array<{correct: boolean, fraction: number}>} [results]      Per-question results.
+ * @property {PlayerQuestion[]}                            [questions]    Questions to answer.
+ */
+
+/**
  * Mount one independent bank-question player using the shared question controls.
  *
- * @param {HTMLElement} root Block instance.
+ * @param {HTMLElement} root Block instance (has `data-player-config`).
  */
 export function mountPlayer( root ) {
-	const config = JSON.parse( root.dataset.playerConfig );
+	const config = JSON.parse(
+		/** @type {string} */ ( root.dataset.playerConfig )
+	);
 	const stage = /** @type {HTMLElement} */ (
 		root.querySelector( '.ohmylms-question-player-stage' )
 	);
@@ -22,7 +48,12 @@ export function mountPlayer( root ) {
 	);
 	let session = '';
 	let busy = false;
+	/** @type {Array<() => void>} */
 	let cleanups = [];
+	/**
+	 * @param {string} [value] Session to store; omit to read.
+	 * @return {string} Stored session, '' when none or storage is blocked.
+	 */
 	const remember = ( value ) => {
 		try {
 			if ( value !== undefined ) {
@@ -37,6 +68,11 @@ export function mountPlayer( root ) {
 		error.textContent = text;
 		error.hidden = ! text;
 	};
+	/**
+	 * @param {string}                                  operation `start`, `resume`, `study` or `submit`.
+	 * @param {HTMLFormElement|null}                    [form]    Responses to submit.
+	 * @param {Object<string, string|number|undefined>} [extra]   Extra fields.
+	 */
 	const request = async ( operation, form = null, extra = {} ) => {
 		if ( busy ) {
 			return;
@@ -58,7 +94,7 @@ export function mountPlayer( root ) {
 			body.set( 'operation', operation );
 			body.set( 'session', session );
 			for ( const [ key, value ] of Object.entries( extra ) ) {
-				body.set( key, value );
+				body.set( key, String( value ) );
 			}
 			const response = await fetch( config.endpoint, {
 				method: 'POST',
@@ -95,7 +131,7 @@ export function mountPlayer( root ) {
 			}
 		} catch ( failure ) {
 			message(
-				failure.message ||
+				/** @type {Error} */ ( failure ).message ||
 					__(
 						'Could not save your responses. Please retry.',
 						'ohmylms'
@@ -114,6 +150,12 @@ export function mountPlayer( root ) {
 			root.removeAttribute( 'aria-busy' );
 		}
 	};
+	/**
+	 * @param {string} tag         Tag name.
+	 * @param {string} text        Text content.
+	 * @param {string} [className] Classes.
+	 * @return {HTMLElement} Element.
+	 */
 	const element = ( tag, text, className = '' ) => {
 		const node = document.createElement( tag );
 		node.textContent = text;
@@ -122,12 +164,20 @@ export function mountPlayer( root ) {
 		}
 		return node;
 	};
+	/**
+	 * @param {string}        label  Label.
+	 * @param {() => unknown} action Click handler.
+	 * @return {HTMLButtonElement} Button.
+	 */
 	const button = ( label, action ) => {
-		const node = element( 'button', label );
+		const node = /** @type {HTMLButtonElement} */ (
+			element( 'button', label )
+		);
 		node.type = 'button';
 		node.addEventListener( 'click', action );
 		return node;
 	};
+	/** @param {PlayerData} data Session state. */
 	const render = async ( data ) => {
 		cleanups.forEach( ( cleanup ) => cleanup() );
 		cleanups = [];
@@ -148,11 +198,16 @@ export function mountPlayer( root ) {
 		if ( data.gameFamily ) {
 			const moduleUrl = new URL( './game-player.mjs', import.meta.url );
 			moduleUrl.search = new URL( import.meta.url ).search;
-			const { renderGame } = await import( moduleUrl.href );
+			const { renderGame } =
+				/** @type {typeof import('./game-player.mjs')} */ (
+					await import( moduleUrl.href )
+				);
 			cleanups.push(
 				renderGame(
 					stage,
-					data,
+					/** @type {import('./game-player.mjs').GameState} */ (
+						data
+					),
 					( card, value = '' ) =>
 						request( 'study', null, {
 							card,
@@ -164,11 +219,16 @@ export function mountPlayer( root ) {
 			);
 			return;
 		}
-		if ( [ 'hangman', 'spell-word' ].includes( data.activityMode ) ) {
+		if (
+			/** @type {Array<string|undefined>} */ ( [
+				'hangman',
+				'spell-word',
+			] ).includes( data.activityMode )
+		) {
 			const { renderWord } = await import( './word-player.js' );
 			renderWord(
 				stage,
-				data,
+				/** @type {import('./word-player.js').WordState} */ ( data ),
 				( card, value ) =>
 					request( 'study', null, {
 						card,
@@ -187,7 +247,9 @@ export function mountPlayer( root ) {
 			cleanups.push(
 				renderImageQuiz(
 					stage,
-					data,
+					/** @type {import('./image-player.js').ImageQuizState} */ (
+						data
+					),
 					( card, value = '' ) =>
 						request( 'study', null, {
 							card,
@@ -204,7 +266,9 @@ export function mountPlayer( root ) {
 			cleanups.push(
 				renderRecall(
 					stage,
-					data,
+					/** @type {import('./recall-player.js').RecallState} */ (
+						data
+					),
 					( card, value = '' ) =>
 						request( 'study', null, {
 							card,
@@ -220,7 +284,7 @@ export function mountPlayer( root ) {
 			const { renderStudy } = await import( './study-player.js' );
 			renderStudy(
 				stage,
-				data,
+				/** @type {import('./study-player.js').StudyState} */ ( data ),
 				( card, revision ) =>
 					request( 'study', null, { card, revision } ),
 				() => request( 'start' )
@@ -243,14 +307,16 @@ export function mountPlayer( root ) {
 								'Score: %1$s / %2$s',
 								'ohmylms'
 							),
-							data.score.earned,
-							data.score.maximum
+							String( data.score.earned ),
+							String( data.score.maximum )
 						),
 						'ohmylms-question-player-score'
 					)
 				);
 				const list = document.createElement( 'ol' );
-				data.results.forEach( ( result ) =>
+				/** @type {NonNullable<PlayerData['results']>} */ (
+					data.results
+				).forEach( ( result ) =>
 					list.append(
 						element(
 							'li',
@@ -288,15 +354,16 @@ export function mountPlayer( root ) {
 			heading.focus();
 			return;
 		}
+		const items = /** @type {PlayerQuestion[]} */ ( data.questions );
 		const form = document.createElement( 'form' );
 		form.noValidate = true;
 		const progress = element( 'p', '', 'ohmylms-question-player-progress' );
 		progress.setAttribute( 'aria-live', 'polite' );
 		const bar = document.createElement( 'progress' );
-		bar.max = data.questions.length;
+		bar.max = items.length;
 		bar.setAttribute( 'aria-label', __( 'Question progress', 'ohmylms' ) );
 		form.append( progress, bar );
-		const questions = data.questions.map( ( question, index ) => {
+		const questions = items.map( ( question, index ) => {
 			const article = document.createElement( 'article' );
 			article.className = 'ohmylms-question-player-question';
 			article.tabIndex = -1;
@@ -332,10 +399,16 @@ export function mountPlayer( root ) {
 			}
 			show( page + 1 );
 		} );
-		const submit = element( 'button', __( 'Submit responses', 'ohmylms' ) );
+		const submit = /** @type {HTMLButtonElement} */ (
+			element( 'button', __( 'Submit responses', 'ohmylms' ) )
+		);
 		submit.type = 'submit';
+		/**
+		 * @param {number} index Question index.
+		 * @return {boolean} Not required, or answered.
+		 */
 		const valid = ( index ) => {
-			const question = data.questions[ index ];
+			const question = items[ index ];
 			if (
 				question.required &&
 				! isAnswered( questions[ index ], question.type )
@@ -352,6 +425,10 @@ export function mountPlayer( root ) {
 			message();
 			return true;
 		};
+		/**
+		 * @param {number}  index   Question index (clamped).
+		 * @param {boolean} [focus] Move focus to it.
+		 */
 		const show = ( index, focus = true ) => {
 			page = Math.max( 0, Math.min( questions.length - 1, index ) );
 			questions.forEach( ( question, position ) => {
@@ -377,9 +454,7 @@ export function mountPlayer( root ) {
 		form.append( navigation );
 		form.addEventListener( 'submit', ( event ) => {
 			event.preventDefault();
-			if (
-				data.questions.every( ( question, index ) => valid( index ) )
-			) {
+			if ( items.every( ( question, index ) => valid( index ) ) ) {
 				request( 'submit', form );
 			}
 		} );
@@ -410,12 +485,16 @@ export function mountPlayer( root ) {
 	}
 }
 
-document
-	.querySelectorAll( '.ohmylms-question-player[data-player-config]' )
-	.forEach( ( /** @type {HTMLElement} */ root, index ) => {
-		// Identical placements on one page still keep separate browser sessions.
-		const config = JSON.parse( root.dataset.playerConfig );
-		config.storage += '-' + index;
-		root.dataset.playerConfig = JSON.stringify( config );
-		mountPlayer( root );
-	} );
+/** @type {HTMLElement[]} */ ( [
+	...document.querySelectorAll(
+		'.ohmylms-question-player[data-player-config]'
+	),
+] ).forEach( ( root, index ) => {
+	// Identical placements on one page still keep separate browser sessions.
+	const config = JSON.parse(
+		/** @type {string} */ ( root.dataset.playerConfig )
+	);
+	config.storage += '-' + index;
+	root.dataset.playerConfig = JSON.stringify( config );
+	mountPlayer( root );
+} );

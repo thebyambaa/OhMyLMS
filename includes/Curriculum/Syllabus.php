@@ -8,6 +8,7 @@
 namespace OhMyLMS\Curriculum;
 
 use OhMyLMS\Skills\Taxonomy;
+use OhMyLMS\Utility\Lock;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -1038,25 +1039,26 @@ final class Syllabus {
 	 */
 	public static function import_reviewed( $syllabus_id, array $rows, $dry_run, $review_revision ) {
 		global $wpdb;
-		$lock = Items::LOCK . '-' . md5( $wpdb->prefix );
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Non-cacheable domain advisory lock.
-			return Access::error( 'ohmylms_syllabus_busy', __( 'Another author is changing the syllabus. Try again.', 'ohmylms' ), 409 );
-		}
-		try {
-			$outline = self::outline( $syllabus_id );
-			if ( is_wp_error( $outline ) ) {
-				return $outline; }
-			$revision = hash( 'sha256', wp_json_encode( array( $outline, $rows ) ) );
-			if ( ! $dry_run && ! hash_equals( $revision, $review_revision ) ) {
-				return Access::error( 'ohmylms_syllabus_review_stale', __( 'The syllabus or import rows changed. Review the import again before applying it.', 'ohmylms' ), 409 );
+		return Lock::with(
+			Items::LOCK . '-' . md5( $wpdb->prefix ),
+			5,
+			static function () use ( $syllabus_id, $rows, $dry_run, $review_revision ) {
+				$outline = self::outline( $syllabus_id );
+				if ( is_wp_error( $outline ) ) {
+					return $outline; }
+				$revision = hash( 'sha256', wp_json_encode( array( $outline, $rows ) ) );
+				if ( ! $dry_run && ! hash_equals( $revision, $review_revision ) ) {
+					return Access::error( 'ohmylms_syllabus_review_stale', __( 'The syllabus or import rows changed. Review the import again before applying it.', 'ohmylms' ), 409 );
+				}
+				$report = self::import( $syllabus_id, $rows, $dry_run );
+				if ( ! is_wp_error( $report ) ) {
+					$report['review_revision'] = $revision; }
+				return $report;
+			},
+			static function () {
+				return Access::error( 'ohmylms_syllabus_busy', __( 'Another author is changing the syllabus. Try again.', 'ohmylms' ), 409 );
 			}
-			$report = self::import( $syllabus_id, $rows, $dry_run );
-			if ( ! is_wp_error( $report ) ) {
-				$report['review_revision'] = $revision; }
-			return $report;
-		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Release the non-cacheable domain advisory lock.
-		}
+		);
 	}
 
 	/**

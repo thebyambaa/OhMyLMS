@@ -67,6 +67,7 @@ namespace {
     };
 
     require __DIR__ . '/../../includes/Utility/Transaction.php';
+    require __DIR__ . '/../../includes/Utility/Lock.php';
     require __DIR__ . '/../../includes/Quiz/Submission.php';
     use OhMyLMS\Quiz\Submission;
 

@@ -111,11 +111,11 @@ export function requestMatches( detail, context ) {
  *
  * @param {Object}                                                                              api               Runtime.
  * @param {() => LessonContext}                                                                 api.getContext    `@wordpress/interactivity` getContext.
- * @param {() => {ref: HTMLElement}}                                                            api.getElement    `@wordpress/interactivity` getElement.
+ * @param {() => {ref: HTMLElement|null}}                                                       api.getElement    `@wordpress/interactivity` getElement.
  * @param {(callback: EventHandler) => EventHandler}                                            api.withSyncEvent `@wordpress/interactivity` withSyncEvent.
  * @param {() => LessonState}                                                                   api.getState      Store state (server values).
  * @param {(options: Object) => Promise<any>}                                                   api.request       SDK `request()`.
- * @param {(message: string, options?: {type?: string}) => unknown}                             api.toast         SDK `toast()`.
+ * @param {(message: string, options?: import('../sdk.js').ToastOptions) => unknown}            api.toast         SDK `toast()`.
  * @param {(root: EventTarget, name: string, detail?: Object, cancelable?: boolean) => boolean} api.emit          SDK `emit()`.
  * @param {any}                                                                                 [api.win]         `window` (location, jQuery).
  * @param {(callback: () => void, ms: number) => unknown}                                       [api.later]       `setTimeout` (tests).
@@ -260,6 +260,7 @@ export function createLesson( {
 			},
 		},
 		actions: {
+			/** @param {Event} event Checkbox `change`. */
 			complete( event ) {
 				const input = /** @type {HTMLInputElement} */ ( event.target );
 				if ( ! input?.checked ) {
@@ -279,7 +280,7 @@ export function createLesson( {
 			},
 			/** Enter or Space on the focusable label ticks the box, as a click would. */
 			checkboxKey: withSyncEvent( ( event ) => {
-				const label = getElement().ref;
+				const label = /** @type {HTMLElement} */ ( getElement().ref );
 				const key = /** @type {KeyboardEvent} */ ( event ).key;
 				if (
 					( 'Enter' !== key && ' ' !== key ) ||
@@ -300,7 +301,7 @@ export function createLesson( {
 			/** Listen for complete requests (and the legacy tracker's jQuery event) while the lesson is shown. */
 			listen() {
 				const context = getContext();
-				const root = getElement().ref;
+				const root = /** @type {HTMLElement} */ ( getElement().ref );
 				const doc = root.ownerDocument;
 				const onRequest = ( /** @type {Event} */ event ) =>
 					requested(

@@ -7,21 +7,24 @@ import {
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
-const clamp = ( number ) => Math.max( 0, Math.min( 100, number ) );
+/** @typedef {import('./editorTypes').Data} Data */
+
+const clamp = ( /** @type {number} */ number ) =>
+	Math.max( 0, Math.min( 100, number ) );
 
 /**
  * Full-screen popup for placing hotspot regions or labels on a large image.
  *
  * Click the image to add a marker, drag a marker to move it, and use the arrow
  * keys on a focused marker for fine adjustment.
- * @param {Object} root0
- * @param          [root0.type]     Either hotspot or labeling.
- * @param          [root0.imageUrl] Diagram image.
- * @param          [root0.rows]     Zones (hotspot) or targets (labeling).
- * @param          [root0.selected] Index of the selected marker.
- * @param          [root0.onSelect] Receives a marker index.
- * @param          [root0.onChange] Receives the full replacement list.
- * @param          [root0.onClose]  Closes the popup.
+ * @param {Object}                  root0
+ * @param {string}                  root0.type     Either hotspot or labeling.
+ * @param {string}                  root0.imageUrl Diagram image.
+ * @param {Data[]}                  root0.rows     Zones (hotspot) or targets (labeling).
+ * @param {number}                  root0.selected Index of the selected marker.
+ * @param {(index: number) => void} root0.onSelect Receives a marker index.
+ * @param {(rows: Data[]) => void}  root0.onChange Receives the full replacement list.
+ * @param {() => void}              root0.onClose  Closes the popup.
  */
 export function DiagramPopup( {
 	type,
@@ -33,11 +36,15 @@ export function DiagramPopup( {
 	onClose,
 } ) {
 	const hotspot = type === 'hotspot';
-	const frame = useRef( null );
+	const frame = useRef( /** @type {HTMLDivElement|null} */ ( null ) );
 	const dragging = useRef( -1 );
-	const area = useRef( null );
-	const natural = useRef( null );
-	const [ fit, setFit ] = useState( null );
+	const area = useRef( /** @type {HTMLDivElement|null} */ ( null ) );
+	const natural = useRef(
+		/** @type {{width: number, height: number}|null} */ ( null )
+	);
+	const [ fit, setFit ] = useState(
+		/** @type {{width: number, height: number}|null} */ ( null )
+	);
 	// Scale the image up or down to fill the popup, keeping its proportions.
 	const refit = () => {
 		if ( ! natural.current || ! area.current ) {
@@ -58,14 +65,18 @@ export function DiagramPopup( {
 		return () => window.removeEventListener( 'resize', refit );
 	}, [] );
 	const current = rows[ selected ];
-	const patch = ( index, change ) =>
+	const patch = ( /** @type {number} */ index, /** @type {Data} */ change ) =>
 		onChange(
 			rows.map( ( row, i ) =>
 				i === index ? { ...row, ...change } : row
 			)
 		);
-	const position = ( event ) => {
-		const bounds = frame.current.getBoundingClientRect();
+	const position = (
+		/** @type {{clientX: number, clientY: number}} */ event
+	) => {
+		const bounds = /** @type {HTMLDivElement} */ (
+			frame.current
+		).getBoundingClientRect();
 		return {
 			x: clamp(
 				Math.round(
@@ -79,7 +90,7 @@ export function DiagramPopup( {
 			),
 		};
 	};
-	const add = ( at ) => {
+	const add = ( /** @type {{x: number, y: number}} */ at ) => {
 		onChange( [
 			...rows,
 			hotspot
@@ -88,18 +99,21 @@ export function DiagramPopup( {
 		] );
 		onSelect( rows.length );
 	};
-	const remove = ( index ) => {
+	const remove = ( /** @type {number} */ index ) => {
 		onChange( rows.filter( ( _, i ) => i !== index ) );
 		onSelect( Math.max( 0, index - 1 ) );
 	};
-	const nudge = ( event, index ) => {
+	const nudge = (
+		/** @type {import('react').KeyboardEvent} */ event,
+		/** @type {number} */ index
+	) => {
 		const step = event.shiftKey ? 5 : 1;
-		const delta = {
+		const delta = /** @type {Record<string, number[]>} */ ( {
 			ArrowLeft: [ -step, 0 ],
 			ArrowRight: [ step, 0 ],
 			ArrowUp: [ 0, -step ],
 			ArrowDown: [ 0, step ],
-		}[ event.key ];
+		} )[ event.key ];
 		if ( ! delta ) {
 			return;
 		}

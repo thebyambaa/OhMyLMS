@@ -14,8 +14,9 @@ const registry = () => {
 /**
  * Register the panel component for a profile's panel id.
  *
- * @param {string}                                               id        Panel id named by the profile.
- * @param {(props: { data: Object }) => React.ReactElement|null} component Component receiving the profile's editor data as `data`.
+ * @template T
+ * @param {string}                                          id        Panel id named by the profile.
+ * @param {(props: { data: T }) => React.ReactElement|null} component Component receiving the profile's editor data as `data`.
  */
 export function registerProfilePanel( id, component ) {
 	registry()[ id ] = component;
@@ -29,5 +30,5 @@ export function registerProfilePanel( id, component ) {
 export function ProfilePanel() {
 	const profile = window.ohmylmsNativeLesson?.profile;
 	const Panel = profile ? registry()[ profile.panel ] : null;
-	return Panel ? <Panel data={ profile.data } /> : null;
+	return Panel ? <Panel data={ profile?.data } /> : null;
 }

@@ -1,12 +1,16 @@
 import { topicPreset } from './mathsTopics.mjs';
 
+/** @typedef {import('./editorTypes').Data} Data */
+
+/** @typedef {{prompt: string|undefined, settings: Data}} MathsPreset */
+
 /**
  * Create a bounded preset over the existing seeded template engine.
  *
  * @param {string} kind Preset name.
  * @param {number} min  Lower integer bound.
  * @param {number} max  Upper integer bound.
- * @return {Object|null} Generated authoring definition.
+ * @return {MathsPreset|null} Generated authoring definition.
  */
 export function mathsPreset( kind, min, max ) {
 	if (
@@ -18,9 +22,16 @@ export function mathsPreset( kind, min, max ) {
 	) {
 		return null;
 	}
-	const variable = ( name ) => ( { name, type: 'int', min, max, step: 1 } );
+	const variable = ( /** @type {string} */ name ) => ( {
+		name,
+		type: 'int',
+		min,
+		max,
+		step: 1,
+	} );
 	/** @type {Array<{name: string, type: string, min?: number, max?: number, step?: number, expr?: string, places?: number}>} */
 	let variables = [ variable( 'a' ), variable( 'b' ) ];
+	/** @type {string[]} */
 	let constraints = [];
 	let prompt;
 	let expr;

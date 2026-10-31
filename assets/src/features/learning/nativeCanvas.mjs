@@ -15,7 +15,9 @@ export async function recoverNativeCanvas( frame ) {
 		if ( doc?.head?.childNodes.length || doc?.body?.childNodes.length ) {
 			return false;
 		}
-		const response = await frame.ownerDocument.defaultView.fetch( source );
+		const response = await /** @type {Window} */ (
+			frame.ownerDocument.defaultView
+		).fetch( source );
 		if ( ! response.ok ) {
 			return false;
 		}

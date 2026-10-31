@@ -44,6 +44,7 @@ export function parseAcceptLanguage( header ) {
 	if ( 'string' !== typeof header || '' === header.trim() ) {
 		return [];
 	}
+	/** @type {Array<LanguageRange & {position: number}>} */
 	const ranges = [];
 	header
 		.slice( 0, MAX_LENGTH )
@@ -146,7 +147,7 @@ export function switchUrl( action, params ) {
  * Store definitions for `ohmylms/language`. Form context: `{ current, busy }`.
  *
  * @param {Object}                                                                                api               Runtime, SDK and page navigation.
- * @param {() => Object}                                                                          api.getContext    `@wordpress/interactivity` getContext.
+ * @param {() => {current?: string, busy?: boolean}}                                             api.getContext    `@wordpress/interactivity` getContext.
  * @param {(callback: EventHandler) => EventHandler}                                              api.withSyncEvent `@wordpress/interactivity` withSyncEvent.
  * @param {(options: Object) => Promise<{ok: boolean, data: any, error: any}>}                   api.request       SDK `request()`.
  * @param {(target: EventTarget, name: string, detail?: Object, cancelable?: boolean) => boolean} api.emit          SDK `emit()`.

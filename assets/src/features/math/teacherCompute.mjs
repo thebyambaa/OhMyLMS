@@ -4,7 +4,7 @@ const syntax = new LatexSyntax();
 
 /**
  * Parser errors can be nested inside a MathJSON function or dictionary.
- * @param {Array|Object|string|number|null} value Parsed expression.
+ * @param {unknown} value Parsed expression: array, dictionary, string, number or null.
  * @return {boolean} Whether the expression contains a syntax error.
  */
 function hasSyntaxError( value ) {
@@ -21,7 +21,7 @@ function hasSyntaxError( value ) {
 /**
  * Advisory syntax preview only; original LaTeX is never replaced or graded here.
  * @param {string} source Formula.
- * @return {Object} Preview.
+ * @return {{ valid: boolean, latex: string }} Preview.
  */
 export function inspectFormula( source ) {
 	if ( source.length > 2000 ) {

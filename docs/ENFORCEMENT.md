@@ -160,11 +160,13 @@ Writing JSDoc that TypeScript reads:
 - Event handlers that read `key`, `detail` or a typed `target` annotate the parameter:
   `( /** @type {KeyboardEvent} */ event ) => …`.
 
-The projects are not `strict` yet. On 31 October 2026, before this check existed, `tsc` reported these
-errors with the same options, and none after the JSDoc and declaration changes of that day. No folder is
-excluded.
+Both projects are `strict` since 1 November 2026, with no folder excluded. The table shows the
+non-strict errors fixed on 31 October 2026 and the strict errors fixed on 1 November 2026 (all now 0).
+Untyped spots are a few documented `Record<string, any>` typedefs for data whose shape depends on the
+question type, block or server response, plus two narrow `any` casts in `question-editor` (a
+`FormTokenField` token and the `wp.media` frame); ESLint's `jsdoc/reject-any-type` lists them.
 
-| Folder | Before | After | Still to fix under `strict` |
+| Folder | Non-strict before | After | Strict errors fixed |
 | --- | ---: | ---: | ---: |
 | `features/question-editor` | 265 | 0 | 735 |
 | `features/learning` | 175 | 0 | 292 |
@@ -188,8 +190,7 @@ excluded.
 | `interactivity/account` | 3 | 0 | 39 |
 | `interactivity/reviews`, `assignment`, `lesson` | 0 | 0 | 19 |
 
-Turning on `strictNullChecks` and `noImplicitAny` is the next step, folder by folder (a `tsconfig` per
-strict folder). `rest.mjs` and `learning/api.mjs` already pass under `strict`.
+A new file must pass under `strict`; prefer a typedef that follows the PHP contract over `any`.
 
 ## What `tools/check-architecture.mjs` enforces
 
@@ -380,8 +381,8 @@ includes/Rest/V1/NewController.php uses $wpdb on 2 lines (budget 0); move the qu
 ```
 
 Budgets only go down. Do not raise one to make a change pass; the budgets list only files above 0. No file
-in `includes/Rest/V1` has one any more; the four left are feature controllers (`Gradebook\Rest\GradebookController`
-7, `WPFusionTriggersController` 13, `ZoomWebhookController` 4, the e-commerce `OrdersController` 10).
+has one any more: the last two (`Gradebook\Rest\GradebookController` 7, `ZoomWebhookController` 4) went to 0
+on 1 November 2026, so every controller now has a budget of 0.
 Tests: `tests/js/architecture-controller-persistence.test.mjs` (fixture trees in a temporary folder), run
 by `npm test`.
 
@@ -399,9 +400,10 @@ register them (`ohmylms/interactivity` is `sdk.js`, `ohmylms/video-<provider>` i
 #### l. No import cycles in `assets/src/features` and `assets/interactivity`
 
 Strongly connected components over both trees, reported once each with an example path, as rule b does
-for the app. On 31 October 2026 there are none at file level. Folder level is not a rule: `learning`,
-`paper`, `question-editor`, `question-bank` and `assessment` import each other in both directions
-through different files.
+for the app. On 1 November 2026 there are none at file level, `public.mjs` entry points included.
+Folder level is not a rule: `learning`, `paper`, `question-editor`, `question-bank` and `assessment`
+import each other in both directions through different files. That is why three components are imported
+directly instead of through `question-editor/public.mjs` (rule n).
 
 #### m. Learner modules use the SDK by name and no jQuery
 
@@ -419,20 +421,38 @@ through different files.
 assets/interactivity/tabs.js:3 imports the SDK as './sdk.js'; import 'ohmylms/interactivity' (the import-map name), so the page loads one SDK instance
 ```
 
-#### n. Feature folders use each other only through listed files
+#### n. Feature folders use each other only through `public.mjs`
 
-`assets/src/features` has no `index` or `public` entry points. Each top-level folder (`learning`,
-`paper`, `question-editor`, …) may import a file of another folder only when `featureImports` lists that
-file for that pair of folders. Root modules (`rest.mjs`, `requestFeedback.mjs`) are shared and need no
-entry. On 31 October 2026 the measured graph had 48 such imports, of 21 pairs of folders; all are
-listed with a reason, so a new pair, or a new file of an already-coupled folder, fails:
+A top-level folder of `assets/src/features` (`learning`, `paper`, `question-editor`, …) imports another
+folder only through that folder's `public.mjs`, which re-exports what other folders use from it. Root
+modules (`rest.mjs`, `requestFeedback.mjs`) are shared and are imported directly. Static imports,
+`export … from`, dynamic `import()` and `require()` all count, so a `public.mjs` that re-exports another
+folder's file fails too. Every other cross-folder import fails:
 
 ```text
-assets/src/features/paper/PaperInserter.jsx imports assets/src/features/learning/NativeLessonSettings.jsx; features/paper may use features/learning only through the files listed for that pair in tools/architecture-rules/frontend-allowlist.json (featureImports)
+assets/src/features/paper/PaperInserter.jsx imports assets/src/features/learning/NativeLessonSettings.jsx; features/paper may use features/learning only through assets/src/features/learning/public.mjs (re-export what it needs there)
 ```
 
-When a folder grows a real public surface, give it a `public.mjs`, point the importers at it and shrink
-the entries. Imports that leave the two trees are not checked by this rule; on the same date they were
+Eight folders have a `public.mjs`: `assessment`, `content-hub`, `curriculum`, `learning`, `math`,
+`paper`, `question-bank` and `question-editor`; `navigation` and `students` are used by no other folder.
+They use explicit file extensions, so the `.mjs` ones load in Node tests. `question-editor/public.mjs`
+holds only the question type models (`.mjs`). `question-bank/model.mjs`, `paper/paperTypes.mjs` and
+`learning/choiceAutosave.mjs` import it and run in Node tests, which cannot load JSX. Three
+`featureImports` entries allow the direct imports that remain (four files, five import statements):
+
+- `learning` to `question-editor/MultipleChoiceBlock.jsx` and `QuestionLivePreview.jsx`: they reach
+  `question-bank/public.mjs`, whose `model.mjs` imports `question-editor/public.mjs`, so re-exporting
+  them there makes an import cycle (rule l).
+- `learning` to `paper/paperBlocks.jsx`: `NativeLessonSettings.jsx` imports it only for its side effect
+  (it registers the paper blocks before the question blocks). webpack drops a `public.mjs` whose exports
+  are unused, so a bare `import '../paper/public.mjs'` would not load the registration.
+- `math` to `question-editor/QuestionMediaUpload.jsx`: a JSX component cannot be in the Node-loaded
+  `question-editor/public.mjs`.
+
+The entry files cost nothing in the bundles: webpack binds each import to the module that defines it
+and leaves the `public.mjs` files out. On 1 November 2026, a temp-dir build put the same modules in
+every bundle as before, and no bundle changed by more than 39 bytes.
+Imports that leave the two trees are not checked by this rule; on 31 October 2026 they were
 `assets/src/ui` (`Modal`, `Alert`; 3 imports), `assets/src/app/extensions` (`registry.mjs`, `api.ts`,
 `ExtensionBoundary.tsx`; 4 imports), `features/question-editor/PuzzleEditor.jsx` to
 `interactivity/puzzles.mjs`, and two learner modules to `features/math/loader.mjs`.
@@ -443,6 +463,29 @@ webpack compiles their JSX with the classic `createElement` pragma (`webpack.con
 with JSX must import `createElement` from `@wordpress/element` (or declare it). Without it the editor
 throws a `ReferenceError` when the component renders. `npm run typecheck:js` types JSX with `react-jsx`
 and cannot see this; `<>` fragments compile to WordPress' global `React.Fragment` and need no import.
+
+### p. Advisory locks go through `OhMyLMS\Utility\Lock`
+
+`tools/architecture-rules/advisory-locks.mjs` reads the PHP files under `includes/`, `templates/`,
+`packages/`, `modules/` and `ohmylms.php` (`vendor/`, `node_modules/` and `tests/` are not read; the suites
+hold locks from a second connection on purpose). With comments and inline HTML blanked (strings stay, since
+the SQL is a string), it fails on each `GET_LOCK(` (any case) outside `includes/Utility/Lock.php`:
+
+```text
+includes/Example/Locking.php:9 takes a MySQL advisory lock itself; use OhMyLMS\Utility\Lock::with( $name, $timeout, $work, $busy )
+```
+
+To fix one, call `Lock::with( $name, $timeout, $work, $busy )`: it takes the lock, runs `$work`, releases in
+`finally` and returns `$busy` (a Closure is called, so it can build the caller's own `WP_Error` or throw)
+when the lock is not free in time; the default is `ohmylms_lock_busy` (409). Long bodies that already have
+a `try`/`finally` can call `Lock::acquire()` and `Lock::release()` instead. `Lock::name()` keeps names that
+start with `ohmylms` or `oml`, prefixes others with `ohmylms-`, and hashes names over MySQL's 64 characters.
+Option-row locks (`ohmylms_lock_<name>`) use `Lock::acquire_option()`, `release_option()` or `with_option()`.
+Exceptions go in `ADVISORY_LOCK_ALLOWLIST` in the rule file, each `{ file, reason }`; it is empty, and an
+entry whose file no longer calls `GET_LOCK` fails as stale.
+
+Tests: `tests/js/architecture-advisory-locks.test.mjs` (fixture trees in a temporary folder), run by
+`npm test`; the helper itself: `tests/php/lock-integration.php` (`OHMYLMS_LOCK_TEST=1`).
 
 ## Changing the rules on purpose
 
@@ -490,13 +533,15 @@ and an entry that no longer matches fails as stale.
 {
 	"cycles": [ { "files": [ "assets/interactivity/a.js", "assets/interactivity/b.js" ], "reason": "…" } ],
 	"jquery": [ { "file": "assets/interactivity/cart.js", "reason": "…" } ],
-	"featureImports": [ { "from": "learning", "to": "paper", "files": [ "PaperCanvas.jsx" ], "reason": "…" } ]
+	"featureImports": [ { "from": "learning", "to": "paper", "files": [ "paperBlocks.jsx" ], "reason": "…" } ]
 }
 ```
 
-`featureImports` names folders of `assets/src/features`; `files` are paths inside the `to` folder. A
-listed file that the `from` folder no longer imports is reported as stale on its own. There are no
-`cycles` entries; `jquery` lists the five bridges of rule m and `featureImports` the 21 pairs of rule n.
+`featureImports` names folders of `assets/src/features`; `files` are paths inside the `to` folder that
+the `from` folder may import without going through `public.mjs`. A listed file that the `from` folder no
+longer imports is reported as stale on its own. There are no `cycles` entries; `jquery` lists the five
+bridges of rule m and `featureImports` the three direct imports of rule n (an import cycle, a side-effect
+import and a JSX component kept out of a Node-loaded entry).
 
 ### Budgets: `tools/asset-budgets.json`
 

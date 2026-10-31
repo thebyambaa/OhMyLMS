@@ -10,9 +10,8 @@ import { parse } from '@babel/parser';
  * l. No import cycles between their modules (static, dynamic and `require()`).
  * m. Learner modules import the SDK by its import-map name `ohmylms/interactivity`, never by path;
  *    sdk.js imports nothing; nothing there uses jQuery or `$` (event bridges are allow-listed).
- * n. A folder of assets/src/features imports another folder's files only where the allow-list
- *    names that file for that pair of folders. Root modules (rest.mjs, requestFeedback.mjs) are
- *    shared by every folder.
+ * n. A folder of assets/src/features imports another folder only through that folder's public.mjs.
+ *    Root modules (rest.mjs, requestFeedback.mjs) are shared by every folder.
  * o. A JSX module in assets/src/features binds `createElement`: webpack compiles its JSX with the
  *    classic `createElement` pragma (webpack.config.cjs).
  *
@@ -27,6 +26,7 @@ export const SDK_MODULE = 'ohmylms/interactivity';
 export const SDK_FILE = `${ LEARNER_ROOT }/sdk.js`;
 export const FRONTEND_ALLOWLIST =
 	'tools/architecture-rules/frontend-allowlist.json';
+export const FEATURE_ENTRY = 'public.mjs';
 
 const SOURCE = /\.(?:[cm]?js|jsx)$/;
 const RESOLVE_EXTENSIONS = [ '.js', '.jsx', '.mjs', '.cjs', '.json' ];
@@ -441,7 +441,7 @@ export function featureFolder( file ) {
 	return parts.length > 1 ? parts[ 0 ] : null;
 }
 
-/** n. Imports between folders of assets/src/features, file by file. */
+/** n. Imports between folders of assets/src/features go through the target folder's public.mjs. */
 export function checkFeatureFolderImports( graph, allowlist = [] ) {
 	const violations = [];
 	for ( const [ file, module ] of graph.modules ) {
@@ -453,6 +453,7 @@ export function checkFeatureFolderImports( graph, allowlist = [] ) {
 			const target = edge.target.slice(
 				FEATURES_ROOT.length + to.length + 2
 			);
+			if ( target === FEATURE_ENTRY ) continue;
 			let violation = violations.find(
 				( entry ) =>
 					entry.from === from &&
@@ -476,7 +477,7 @@ export function checkFeatureFolderImports( graph, allowlist = [] ) {
 			violation.to === entry.to &&
 			( entry.files || [] ).includes( violation.file ),
 		( violation ) =>
-			`${ violation.importers.join( ', ' ) } imports ${ FEATURES_ROOT }/${ violation.to }/${ violation.file }; features/${ violation.from } may use features/${ violation.to } only through the files listed for that pair in ${ FRONTEND_ALLOWLIST } (featureImports)`,
+			`${ violation.importers.join( ', ' ) } imports ${ FEATURES_ROOT }/${ violation.to }/${ violation.file }; features/${ violation.from } may use features/${ violation.to } only through ${ FEATURES_ROOT }/${ violation.to }/${ FEATURE_ENTRY } (re-export what it needs there)`,
 		( entry ) => `${ entry.from } -> ${ entry.to }`
 	);
 	for ( const entry of allowlist || [] ) {
@@ -534,7 +535,7 @@ export function frontendSections(
 			...checkLearnerModules( graph, allowlist.jquery ),
 		},
 		{
-			name: 'assets/src/features folders import each other only through allow-listed files',
+			name: 'assets/src/features folders import each other only through public.mjs',
 			...checkFeatureFolderImports( graph, allowlist.featureImports ),
 		},
 		{

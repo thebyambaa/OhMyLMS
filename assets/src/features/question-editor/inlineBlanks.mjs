@@ -1,6 +1,6 @@
 /**
  * Stable token IDs keep repeated answer words independently draggable.
- * @param text
+ * @param {string} text
  */
 export function parseInlineBlankPrompt( text ) {
 	const parts = [];
@@ -31,6 +31,12 @@ export function parseInlineBlankPrompt( text ) {
 		answers,
 	};
 }
+/**
+ * @param {(string|null)[]} assignments Token ID placed in each blank.
+ * @param {string}          token       Token ID.
+ * @param {number}          position    Blank index.
+ * @return {(string|null)[]} Assignments.
+ */
 export function placeBlankToken( assignments, token, position ) {
 	if (
 		! Number.isInteger( position ) ||

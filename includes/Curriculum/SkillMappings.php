@@ -7,6 +7,7 @@
 namespace OhMyLMS\Curriculum;
 
 use OhMyLMS\Skills\Taxonomy;
+use OhMyLMS\Utility\Lock;
 use OhMyLMS\Utility\Transaction;
 
 defined( 'ABSPATH' ) || exit;
@@ -183,7 +184,7 @@ final class SkillMappings {
 				return Access::error( 'ohmylms_mapping_invalid', __( 'Both skills must exist.', 'ohmylms' ), 404 ); }
 		}
 		$lock = self::LOCK . '-' . md5( $wpdb->prefix );
-		if ( (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) !== '1' ) {
+		if ( ! Lock::acquire( $lock, 5 ) ) {
 			return Access::error( 'ohmylms_mapping_busy', __( 'Another mapping change is being saved. Try again.', 'ohmylms' ), 409 ); }
 		try {
 			$table   = self::table();
@@ -236,7 +237,7 @@ final class SkillMappings {
 				return Access::error( 'ohmylms_mapping_failed', __( 'The mapping could not be saved.', 'ohmylms' ), 500 ); }
 			return self::describe( $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id=%d', $table, $existing ), ARRAY_A ) );
 		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+			Lock::release( $lock );
 		}
 	}
 
@@ -273,28 +274,29 @@ final class SkillMappings {
 	 */
 	public static function remove_current( $specific_id, $shared_id, $expected_revision ) {
 		global $wpdb;
-		$lock = self::LOCK . '-' . md5( $wpdb->prefix );
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Non-cacheable advisory lock.
-			return Access::error( 'ohmylms_mapping_busy', __( 'Another mapping change is being saved. Try again.', 'ohmylms' ), 409 );
-		}
-		try {
-			$mappings = self::for_skill( $specific_id );
-			foreach ( $mappings['maps_to'] as $mapping ) {
-				$current_revision = self::revision( $mapping );
-				if ( $shared_id === (int) $mapping['shared_id'] && $expected_revision === $current_revision ) {
-					if ( ! empty( $mapping['group_uuid'] ) ) {
-						return Access::error( 'ohmylms_mapping_group_invalid', __( 'Remove combined coverage as a group.', 'ohmylms' ), 409 );
+		return Lock::with(
+			self::LOCK . '-' . md5( $wpdb->prefix ),
+			5,
+			static function () use ( $specific_id, $shared_id, $expected_revision ) {
+				$mappings = self::for_skill( $specific_id );
+				foreach ( $mappings['maps_to'] as $mapping ) {
+					$current_revision = self::revision( $mapping );
+					if ( $shared_id === (int) $mapping['shared_id'] && $expected_revision === $current_revision ) {
+						if ( ! empty( $mapping['group_uuid'] ) ) {
+							return Access::error( 'ohmylms_mapping_group_invalid', __( 'Remove combined coverage as a group.', 'ohmylms' ), 409 );
+						}
+						if ( ! self::remove( $mapping['specific_id'], $mapping['shared_id'] ) ) {
+							return Access::error( 'ohmylms_mapping_failed', __( 'The mapping could not be removed.', 'ohmylms' ), 500 );
+						}
+						return true;
 					}
-					if ( ! self::remove( $mapping['specific_id'], $mapping['shared_id'] ) ) {
-						return Access::error( 'ohmylms_mapping_failed', __( 'The mapping could not be removed.', 'ohmylms' ), 500 );
-					}
-					return true;
 				}
+				return Access::error( 'ohmylms_mapping_stale', __( 'This mapping changed. Reload before removing it.', 'ohmylms' ), 409 );
+			},
+			static function () {
+				return Access::error( 'ohmylms_mapping_busy', __( 'Another mapping change is being saved. Try again.', 'ohmylms' ), 409 );
 			}
-			return Access::error( 'ohmylms_mapping_stale', __( 'This mapping changed. Reload before removing it.', 'ohmylms' ), 409 );
-		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Release the advisory lock.
-		}
+		);
 	}
 
 	/**
@@ -308,7 +310,7 @@ final class SkillMappings {
 	public static function remove_group( $uuid, array $pairs ) {
 		global $wpdb;
 		$lock = self::LOCK . '-' . md5( $wpdb->prefix );
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Non-cacheable advisory lock.
+		if ( ! Lock::acquire( $lock, 5 ) ) {
 			return Access::error( 'ohmylms_mapping_busy', __( 'Another mapping change is being saved. Try again.', 'ohmylms' ), 409 );
 		}
 		try {
@@ -341,7 +343,7 @@ final class SkillMappings {
 		} catch ( \Throwable $error ) {
 			return Access::error( 'ohmylms_mapping_failed', __( 'Combined coverage could not be removed. Nothing was changed.', 'ohmylms' ), 500 );
 		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Release the advisory lock.
+			Lock::release( $lock );
 		}
 	}
 
@@ -442,7 +444,7 @@ final class SkillMappings {
 			}
 		}
 		$lock = self::LOCK . '-' . md5( $wpdb->prefix );
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) ) {
+		if ( ! Lock::acquire( $lock, 5 ) ) {
 			return Access::error( 'ohmylms_mapping_busy', __( 'Another mapping change is being saved. Try again.', 'ohmylms' ), 409 );
 		}
 		$failure = null;
@@ -492,7 +494,7 @@ final class SkillMappings {
 			}
 			return Access::error( 'ohmylms_mapping_failed', __( 'Combined coverage could not be saved. Nothing was changed.', 'ohmylms' ), 500 );
 		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+			Lock::release( $lock );
 		}
 	}
 }

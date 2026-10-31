@@ -4,7 +4,7 @@
  * @return {string} Localized label.
  */
 function label( fallback ) {
-	const labels = globalThis.wp?.i18n;
+	const labels = /** @type {{ wp?: Window['wp'] }} */ ( globalThis ).wp?.i18n;
 	if ( fallback === 'Cancel' ) {
 		return labels?.__( 'Cancel', 'ohmylms' ) || fallback;
 	}
@@ -23,14 +23,21 @@ function label( fallback ) {
 }
 /**
  * Show a dismissible, text-only error instead of a blocking alert or developer log.
- * @param {...(Object|string)} details Request errors or a validation message.
+ * @param {...unknown} details Request errors or a validation message.
  */
 export function showRequestError( ...details ) {
 	if ( typeof document === 'undefined' ) {
 		return;
 	}
-	const error = details.find(
-		( value ) => typeof value?.message === 'string'
+	const error = /** @type {{ message: string }|undefined} */ (
+		details.find(
+			( value ) =>
+				typeof (
+					/** @type {{ message?: unknown }|null|undefined} */ (
+						value
+					)?.message
+				) === 'string'
+		)
 	);
 	const message =
 		error?.message ||

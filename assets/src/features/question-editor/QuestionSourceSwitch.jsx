@@ -3,6 +3,7 @@ import { createElement } from '@wordpress/element';
 import { Button } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
+/** @return {Record<string, string>} Source labels. */
 const labels = () => ( {
 	write: __( 'Write here', 'ohmylms' ),
 	bank: __( 'Pick from bank', 'ohmylms' ),

@@ -17,6 +17,7 @@ import { createCatalog } from './catalog/catalog.js';
  * layout-3 card popup. Markup: templates/archive-course.php, templates/filters/*, loop/load-more.php
  * (decorated for theme overrides by includes/Extensions/Catalog.php).
  */
+/** @type {Promise<typeof import('@wordpress/interactivity-router')>|null} */
 let router = null;
 const regions = () =>
 	document.querySelector( '[data-wp-router-region^="ohmylms/catalog"]' );

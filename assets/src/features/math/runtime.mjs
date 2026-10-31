@@ -8,7 +8,11 @@ import {
 } from './content.mjs';
 
 const { MathfieldElement } = MathLive;
-MathfieldElement.fontsDirectory = window.ohmylmsMath.fonts;
+// The loader requests this bundle only when the page printed `ohmylmsMath`.
+MathfieldElement.fontsDirectory =
+	/** @type {NonNullable<Window['ohmylmsMath']>} */ (
+		window.ohmylmsMath
+	).fonts;
 MathfieldElement.soundsDirectory = null;
 MathfieldElement.computeEngine = null;
 const mounted = new Map();
@@ -39,6 +43,7 @@ function mountInput( input ) {
 	let template = templateLatex( input.value );
 	field.value = template.latex;
 	// Until a real edit, keep legacy ASCII and the author's original spelling untouched.
+	/** @param {Event} event MathLive input. */
 	const write = ( event ) => {
 		event.stopPropagation();
 		input.value = restoreTemplateTokens(
@@ -70,6 +75,7 @@ function mountInput( input ) {
 		}
 	};
 	const focus = () => field.focus();
+	/** @param {Event} event Constraint validation failure. */
 	const invalid = ( event ) => {
 		event.preventDefault();
 		field.focus();
@@ -134,7 +140,9 @@ function mountInput( input ) {
 	input.tabIndex = -1;
 	input.classList.add( 'ohmylms-math-fallback' );
 	const keys = /** @type {HTMLElement|null} */ (
-		input.parentElement.querySelector( '.ohmylms-expression-keys' )
+		/** @type {HTMLElement} */ ( input.parentElement ).querySelector(
+			'.ohmylms-expression-keys'
+		)
 	);
 	if ( keys ) {
 		keys.hidden = true;
@@ -172,14 +180,16 @@ function renderContent( root ) {
 	const nodes = [];
 	while ( walker.nextNode() ) {
 		const node = /** @type {Text} */ ( walker.currentNode );
+		// Text below an element root always has a parent element.
+		const parent = /** @type {Element} */ ( node.parentElement );
 		if (
-			! node.parentElement.closest(
+			! parent.closest(
 				'script,style,textarea,input,math-field,[contenteditable="true"],option,[data-ohmylms-react-math]'
 			) &&
 			contentEquations(
 				node.textContent,
 				Boolean(
-					node.parentElement.closest(
+					parent.closest(
 						'[data-ohmylms-latex],.ohmylms-structured-question,.ohmylms-exam-player,.ohmylms-default-quiz-preview'
 					)
 				)
@@ -194,7 +204,7 @@ function renderContent( root ) {
 		for ( const match of contentEquations(
 			node.textContent,
 			Boolean(
-				node.parentElement.closest(
+				/** @type {Element} */ ( node.parentElement ).closest(
 					'[data-ohmylms-latex],.ohmylms-structured-question,.ohmylms-exam-player,.ohmylms-default-quiz-preview'
 				)
 			)
@@ -236,7 +246,8 @@ function authorContent( root, html = true ) {
 	const clone = /** @type {Element} */ ( root.cloneNode( true ) );
 	clone
 		.querySelectorAll( '[data-ohmylms-equation]' )
-		.forEach( ( /** @type {HTMLElement} */ node ) => {
+		.forEach( ( element ) => {
+			const node = /** @type {HTMLElement} */ ( element );
 			const source =
 				node.querySelector( 'input' )?.value ??
 				node.dataset.source ??
@@ -269,7 +280,7 @@ function authorContent( root, html = true ) {
  */
 function authorCaret( widget, before = false ) {
 	const root = /** @type {HTMLElement|null} */ (
-		widget.parentElement.closest(
+		/** @type {Element} */ ( widget.parentElement ).closest(
 			'[contenteditable="true"][role="textbox"]'
 		)
 	);
@@ -284,17 +295,26 @@ function authorCaret( widget, before = false ) {
 	}
 	range.collapse( true );
 	root.focus();
-	const selection = root.ownerDocument.defaultView.getSelection();
+	const selection = /** @type {Selection} */ (
+		/** @type {Window} */ ( root.ownerDocument.defaultView ).getSelection()
+	);
 	selection.removeAllRanges();
 	selection.addRange( range );
 }
 
 /**
+ * @typedef {Object} EquationLabels Translated equation control labels.
+ * @property {string} [remove]  Remove action.
+ * @property {string} [display] Switch to display layout.
+ * @property {string} [inline]  Switch to inline layout.
+ */
+
+/**
  * Create an author widget; controls never become stored content.
- * @param {Element} root   Editor.
- * @param {string}  source Original LaTeX.
- * @param {string}  mode   Layout.
- * @param {Object}  labels Translated control labels.
+ * @param {Element}        root   Editor.
+ * @param {string}         source Original LaTeX.
+ * @param {string}         mode   Layout.
+ * @param {EquationLabels} labels Translated control labels.
  * @return {HTMLElement} Widget.
  */
 function authorWidget( root, source, mode, labels ) {
@@ -324,7 +344,9 @@ function authorWidget( root, source, mode, labels ) {
 				? labels.display || 'Display equation'
 				: labels.inline || 'Inline equation'
 		);
-		toggle.title = toggle.getAttribute( 'aria-label' );
+		toggle.title = /** @type {string} */ (
+			toggle.getAttribute( 'aria-label' )
+		);
 	};
 	updateLabel();
 	toggle.addEventListener( 'click', () => {
@@ -341,7 +363,9 @@ function authorWidget( root, source, mode, labels ) {
 	remove.type = 'button';
 	remove.textContent = '×';
 	remove.setAttribute( 'aria-label', labels.remove || 'Remove equation' );
-	remove.title = remove.getAttribute( 'aria-label' );
+	remove.title = /** @type {string} */ (
+		remove.getAttribute( 'aria-label' )
+	);
 	remove.addEventListener( 'click', () => {
 		authorCaret( widget, true );
 		mounted.get( input )?.();
@@ -358,9 +382,14 @@ function authorWidget( root, source, mode, labels ) {
  * @param {HTMLElement} widget Equation node.
  */
 function mountAuthor( widget ) {
-	const input = widget.querySelector( 'input' );
+	// authorWidget() gives every widget its source input.
+	const input = /** @type {HTMLInputElement} */ (
+		widget.querySelector( 'input' )
+	);
 	mountInput( input );
-	const field = widget.querySelector( 'math-field' );
+	const field = /** @type {InstanceType<typeof MathfieldElement>|null} */ (
+		widget.querySelector( 'math-field' )
+	);
 	if ( field && ! widget.dataset.navigation ) {
 		widget.dataset.navigation = '1';
 		field.addEventListener(
@@ -388,10 +417,10 @@ function mountAuthor( widget ) {
 
 /**
  * Insert an editable equation at the saved text selection.
- * @param {Element}    root      Editor.
- * @param {string}     source    Original LaTeX, possibly empty until authored.
- * @param {Range|null} selection Saved text selection.
- * @param {Object}     labels    Translated controls.
+ * @param {Element}        root      Editor.
+ * @param {string}         source    Original LaTeX, possibly empty until authored.
+ * @param {Range|null}     selection Saved text selection.
+ * @param {EquationLabels} labels    Translated controls.
  * @return {HTMLElement} Inserted widget.
  */
 function insertAuthor( root, source = '', selection = null, labels = {} ) {
@@ -412,15 +441,17 @@ function insertAuthor( root, source = '', selection = null, labels = {} ) {
 		field.focus();
 		field.position = field.lastOffset;
 	} else {
-		widget.querySelector( 'input' ).focus();
+		/** @type {HTMLInputElement} */ (
+			widget.querySelector( 'input' )
+		).focus();
 	}
 	return widget;
 }
 
 /**
  * Editable MathLive nodes in the prompt editor; original markers remain the save contract.
- * @param {Element} root   Content editor.
- * @param {Object}  labels Translated equation control labels.
+ * @param {Element}        root   Content editor.
+ * @param {EquationLabels} labels Translated equation control labels.
  */
 function hydrateAuthor( root, labels = {} ) {
 	const walker = document.createTreeWalker( root, NodeFilter.SHOW_TEXT );
@@ -428,8 +459,10 @@ function hydrateAuthor( root, labels = {} ) {
 	while ( walker.nextNode() ) {
 		const node = /** @type {Text} */ ( walker.currentNode );
 		if (
-			! node.parentElement.closest(
-				'math-field,[data-ohmylms-equation]'
+			! (
+				/** @type {Element} */ ( node.parentElement ).closest(
+					'math-field,[data-ohmylms-equation]'
+				)
 			) &&
 			node.textContent.includes( '[[ohmylms-math:' )
 		) {
@@ -456,7 +489,9 @@ function hydrateAuthor( root, labels = {} ) {
 			node.replaceWith( fragment );
 		}
 	}
-	root.querySelectorAll( '[data-ohmylms-equation]' ).forEach( mountAuthor );
+	root.querySelectorAll( '[data-ohmylms-equation]' ).forEach( ( widget ) =>
+		mountAuthor( /** @type {HTMLElement} */ ( widget ) )
+	);
 }
 
 /**
@@ -468,7 +503,9 @@ function mount( root ) {
 	const scan = () => {
 		root.querySelectorAll(
 			'input.ohmylms-expression-input,input[data-ohmylms-math-input]'
-		).forEach( mountInput );
+		).forEach( ( input ) =>
+			mountInput( /** @type {HTMLInputElement} */ ( input ) )
+		);
 		renderContent( root );
 		for ( const [ input, cleanup ] of mounted ) {
 			if ( ! input.isConnected ) {
@@ -541,7 +578,10 @@ window.OhMyLMSMath = {
 	insertAuthor,
 };
 // Server-rendered quizzes, practice regions and reviews share the same marker renderer.
-if ( window.ohmylmsMath.enabled ) {
+if (
+	/** @type {NonNullable<Window['ohmylmsMath']>} */ ( window.ohmylmsMath )
+		.enabled
+) {
 	const cleanup = mount( document.body );
 	window.addEventListener( 'pagehide', cleanup, { once: true } );
 }

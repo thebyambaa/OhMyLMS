@@ -11,7 +11,10 @@ vi.mock( './api', () => ( {
 	command: vi.fn(),
 	readSyllabus: vi.fn(),
 	readMappings: vi.fn(),
-	sharedSkills: vi.fn(),
+} ) );
+vi.mock( '../curriculum/public', async ( original ) => ( {
+	...( await original< typeof import( '../curriculum/public' ) >() ),
+	searchSharedSkills: vi.fn(),
 } ) );
 beforeEach( () => {
 	vi.resetAllMocks();

@@ -1,9 +1,11 @@
+/** @typedef {import('./editorTypes').Data} Data */
+
 /**
  * Change choice selection mode without resetting authored options or media.
  *
- * @param {Object}  question Current question.
+ * @param {Data}    question Current question.
  * @param {boolean} multiple Allow several correct answers.
- * @return {Object} Question patch.
+ * @return {Data} Question patch.
  */
 export function choiceModePatch( question, multiple ) {
 	const settings = question.settings || {};
@@ -16,13 +18,16 @@ export function choiceModePatch( question, multiple ) {
 				? Boolean( settings.partial_credit )
 				: false,
 		},
-		questions: ( question.questions || [] ).map( ( option ) => {
-			const correct =
-				option.is_correct === true || Number( option.is_correct ) === 1;
-			const selected = multiple ? correct : correct && ! keptCorrect;
-			keptCorrect = keptCorrect || selected;
-			return { ...option, is_correct: selected };
-		} ),
+		questions: ( question.questions || [] ).map(
+			( /** @type {Data} */ option ) => {
+				const correct =
+					option.is_correct === true ||
+					Number( option.is_correct ) === 1;
+				const selected = multiple ? correct : correct && ! keptCorrect;
+				keptCorrect = keptCorrect || selected;
+				return { ...option, is_correct: selected };
+			}
+		),
 	};
 }
 

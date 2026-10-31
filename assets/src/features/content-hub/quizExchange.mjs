@@ -2,12 +2,18 @@
 export const IMPORT_ACCEPT = '.json,.csv,application/json,text/csv';
 
 /**
+ * @typedef {Object} RestFailure Error thrown by apiFetch.
+ * @property {string}                                                            [message] Message.
+ * @property {{errors?: Array<{question?: number, message?: string}|null>}|null} [data]    Error data.
+ */
+
+/**
  * The messages of a failed import or export, one per line.
  *
  * A refused file carries every problem it has (`data.errors`, each with the question number), so
  * the author can fix them all in one pass instead of one upload per problem.
  *
- * @param {Object} error Error thrown by apiFetch.
+ * @param {RestFailure|null} [error] Error thrown by apiFetch.
  * @return {string[]} Messages.
  */
 export function problemLines( error ) {
@@ -29,7 +35,7 @@ export function problemLines( error ) {
 /**
  * Question types in a file summary, most common first, as readable names.
  *
- * @param {Object} summary `summary` from the import response.
+ * @param {{types?: Record<string, number>}|null} [summary] `summary` from the import response.
  * @return {{type: string, label: string, count: number}[]} Rows.
  */
 export function typeCounts( summary ) {
@@ -137,12 +143,18 @@ export function exampleFile() {
 }
 
 /**
+ * @typedef {Object} DownloadEnv
+ * @property {Pick<Document, 'createElement'>}                       document Document that makes the link.
+ * @property {Pick<typeof URL, 'createObjectURL'|'revokeObjectURL'>} URL      Object URL factory.
+ */
+
+/**
  * Save text as a file through the browser.
  *
- * @param {string} filename Suggested name.
- * @param {string} mime     Media type.
- * @param {string} content  File text.
- * @param {Object} env      `document` and `URL`, replaceable in tests.
+ * @param {string}      filename Suggested name.
+ * @param {string}      mime     Media type.
+ * @param {string}      content  File text.
+ * @param {DownloadEnv} [env]    `document` and `URL`, replaceable in tests.
  */
 export function downloadText(
 	filename,

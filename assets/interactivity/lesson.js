@@ -7,6 +7,7 @@ import {
 import { emit, request, toast } from 'ohmylms/interactivity';
 import { createLesson } from './lesson/store.js';
 
+/** @type {ReturnType<typeof store>} */
 let lesson = null;
 const definitions = createLesson( {
 	getContext,

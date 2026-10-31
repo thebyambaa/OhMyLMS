@@ -27,12 +27,17 @@ export function alertClass( { tone = 'info', className = '' } = {} ) {
  * @return {string} ARIA role.
  */
 export function alertRole( { tone, role } = {} ) {
-	if ( [ 'alert', 'status', 'none' ].includes( role ) ) {
+	if ( role && [ 'alert', 'status', 'none' ].includes( role ) ) {
 		return role;
 	}
 	return 'danger' === tone ? 'alert' : 'status';
 }
 
+/**
+ * @param {string[]} classes Base classes.
+ * @param {string}   extra   Extra class names, or empty.
+ * @return {string} Class attribute.
+ */
 const join = ( classes, extra ) =>
 	( extra ? [ ...classes, extra ] : classes ).join( ' ' );
 
@@ -68,6 +73,10 @@ export function progressClass( { tone = 'primary', className = '' } = {} ) {
 }
 
 // 0..100, whole numbers; anything else becomes 0.
+/**
+ * @param {unknown} value Percentage.
+ * @return {number} Whole percentage.
+ */
 export function clampPercent( value ) {
 	const number = Number( value );
 	return Number.isFinite( number )

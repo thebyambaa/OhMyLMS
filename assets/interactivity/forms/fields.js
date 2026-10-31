@@ -6,6 +6,12 @@
 
 /** @typedef {(event: Event) => void} EventHandler */
 
+/**
+ * `@wordpress/interactivity` withSyncEvent, for handlers of any event or of keyboard events.
+ *
+ * @typedef {((callback: EventHandler) => EventHandler) & ((callback: (event: KeyboardEvent) => void) => (event: KeyboardEvent) => void)} SyncEvent
+ */
+
 const PHONE_REJECT = /[^\d+\s\-()]/g;
 
 /**
@@ -19,7 +25,9 @@ const PHONE_REJECT = /[^\d+\s\-()]/g;
 export function filterPhone( value, caret = null ) {
 	const text = String( value ?? '' );
 	const clean = text.replace( PHONE_REJECT, '' );
-	const at = Number.isInteger( caret ) ? caret : text.length;
+	const at = Number.isInteger( caret )
+		? /** @type {number} */ ( caret )
+		: text.length;
 	const removedBefore =
 		text.slice( 0, at ).length -
 		text.slice( 0, at ).replace( PHONE_REJECT, '' ).length;
@@ -49,6 +57,10 @@ export function isActivationKey( key ) {
 
 const FIELD = '.ohmylms-input-text';
 
+/**
+ * @param {HTMLInputElement|null} field   Field (any event target).
+ * @param {boolean}               focused Field has focus.
+ */
 function fold( field, focused ) {
 	if ( ! field?.matches?.( FIELD ) ) {
 		return;
@@ -68,14 +80,16 @@ function fold( field, focused ) {
 		);
 }
 
+/** @typedef {Event & {target: HTMLInputElement|null}} FieldEvent Event of a form field. */
+
 /**
  * Store definitions for `ohmylms/forms`.
  *
- * @param {Object}                                     api               Runtime.
- * @param {() => Object}                               api.getContext    `@wordpress/interactivity` getContext.
- * @param {() => {ref: HTMLElement}}                   api.getElement    `@wordpress/interactivity` getElement.
- * @param {(callback: EventHandler) => EventHandler}   api.withSyncEvent `@wordpress/interactivity` withSyncEvent.
- * @param {(callback: () => void, ms: number) => void} [api.later]       `setTimeout` (tests).
+ * @param {Object}                                        api               Runtime.
+ * @param {() => {revealed?: boolean, consent?: boolean}} api.getContext    `@wordpress/interactivity` getContext.
+ * @param {() => {ref: HTMLElement|null}}                 api.getElement    `@wordpress/interactivity` getElement.
+ * @param {SyncEvent}                                     api.withSyncEvent `@wordpress/interactivity` withSyncEvent.
+ * @param {(callback: () => void, ms: number) => void}    [api.later]       `setTimeout` (tests).
  * @return {{state: Object, actions: Object, callbacks: Object}} Definitions.
  */
 export function createForms( {
@@ -84,6 +98,8 @@ export function createForms( {
 	withSyncEvent,
 	later = ( callback, ms ) => setTimeout( callback, ms ),
 } ) {
+	/** @return {HTMLElement} Element of the running directive. */
+	const ref = () => /** @type {HTMLElement} */ ( getElement().ref );
 	const toggle = () => {
 		const context = getContext();
 		context.revealed = ! context.revealed;
@@ -104,12 +120,15 @@ export function createForms( {
 			},
 		},
 		actions: {
+			/** @param {FieldEvent} event `focusin`. */
 			fieldFocus( event ) {
 				fold( event.target, true );
 			},
+			/** @param {FieldEvent} event `focusout`. */
 			fieldBlur( event ) {
 				fold( event.target, false );
 			},
+			/** @param {FieldEvent} event `input`. */
 			fieldInput( event ) {
 				fold(
 					event.target,
@@ -130,9 +149,7 @@ export function createForms( {
 			),
 			checkboxKey: withSyncEvent(
 				( /** @type {KeyboardEvent} */ event ) => {
-					const label = /** @type {HTMLLabelElement} */ (
-						getElement().ref
-					);
+					const label = /** @type {HTMLLabelElement} */ ( ref() );
 					if (
 						! isActivationKey( event.key ) ||
 						event.target !== label
@@ -149,9 +166,11 @@ export function createForms( {
 					}
 				}
 			),
+			/** @param {FieldEvent} event Terms box `change`. */
 			consentChange( event ) {
 				getContext().consent = Boolean( event.target?.checked );
 			},
+			/** @param {Event & {target: HTMLInputElement}} event Phone `input`. */
 			filterPhone( event ) {
 				const field = event.target;
 				const filtered = filterPhone(
@@ -166,23 +185,23 @@ export function createForms( {
 		},
 		callbacks: {
 			foldFilled() {
-				const root = getElement().ref;
+				const root = ref();
 				const run = () =>
-					root
-						.querySelectorAll( FIELD )
-						.forEach( ( field ) =>
-							fold(
-								field,
-								root.ownerDocument.activeElement === field
-							)
-						);
+					/** @type {HTMLInputElement[]} */ ( [
+						...root.querySelectorAll( FIELD ),
+					] ).forEach( ( field ) =>
+						fold(
+							field,
+							root.ownerDocument.activeElement === field
+						)
+					);
 				run();
 				// Browsers fill saved credentials after load without an input event.
 				later( run, 500 );
 			},
 			syncConsent() {
 				const box = /** @type {HTMLInputElement|null} */ (
-					getElement().ref.querySelector( 'input[name="tnc-accept"]' )
+					ref().querySelector( 'input[name="tnc-accept"]' )
 				);
 				if ( box ) {
 					getContext().consent = box.checked;

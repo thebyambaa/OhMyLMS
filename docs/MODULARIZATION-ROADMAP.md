@@ -1,4 +1,4 @@
-# Modularization roadmap — updated 31 October 2026
+# Modularization roadmap — updated 1 November 2026
 
 The admin is the typed application in `assets/src/app` (`admin.php?page=ohmylms-app`); the recovered admin
 was deleted on 31 October 2026 ([CUTOVER](CUTOVER.md)). The LMS counts as fully modular when each feature
@@ -45,18 +45,24 @@ Statuses below were checked against the code on 31 October 2026. Counts are file
    subclass: 22 new controllers (including QPay and the PayPal webhook) and 10 existing classes that now
    extend it (rule `rest-controllers`). No controller in `includes/Rest/V1` uses `$wpdb`; SQL, locks and revision checks
    live in feature services (`Schools\Directory`, `Schools\Versions`, `Schools\RosterImport`,
-   `Quiz\Questions`, `Membership\Members`, `Membership\Subscriptions`, `Skills\SkillEditor` and others), and
-   the `controller-persistence` ratchet budgets the four feature controllers that still do (gradebook,
-   WP Fusion triggers, Zoom webhook, e-commerce orders). `LegacyRoutes::url()` is limited to
-   `includes/Admin` and `NativeLessonEditor` (rule k); the inert select2 classes are gone. Remaining: those
-   four controllers and one shared advisory-lock helper ([BACKEND-BOUNDARIES](BACKEND-BOUNDARIES.md)).
+   `Quiz\Questions`, `Membership\Members`, `Membership\Subscriptions`, `Skills\SkillEditor`,
+   `Gradebook\Repository`, the WP Fusion `Triggers` repository, the e-commerce `OrderStore` and others).
+   On 1 November 2026 the last four feature controllers (gradebook, WP Fusion triggers, Zoom webhook,
+   e-commerce orders) were emptied too: no REST controller anywhere uses `$wpdb`, and the
+   `controller-persistence` ratchet has no budgets left. Every MySQL advisory lock goes through
+   `OhMyLMS\Utility\Lock` (`with`, `acquire`/`release`, and option-row locks), about 40 callers with the same
+   names, timeouts and busy errors; rule p fails `GET_LOCK` anywhere else. `LegacyRoutes::url()` is limited
+   to `includes/Admin` and `NativeLessonEditor` (rule k); the inert select2 classes are gone
+   ([BACKEND-BOUNDARIES](BACKEND-BOUNDARIES.md)).
 6. **Learner front end and native editors.** Done on 31 October 2026. The learner front end runs on
    Interactivity modules (L1–L7; behaviour map in [LEARNER-FRONTEND](LEARNER-FRONTEND.md)); `ohmylms.js`,
    the jQuery video scripts, Slick and html2pdf are deleted and learner pages load no jQuery.
    `assets/src/features` (native editors and blocks) and `assets/interactivity` are type-checked through
-   JSDoc (`npm run typecheck:js`, 0 errors, in `check:ci`); front-end rules l–o forbid cycles, jQuery,
-   relative SDK imports and new cross-folder imports. Remaining: `strict` mode (about 2,469 and 1,331
-   errors) and per-folder entry points for the 21 allow-listed folder pairs.
+   JSDoc with `strict` on since 1 November 2026 (`npm run typecheck:js`, 0 errors, in `check:ci`; about
+   3,800 strict errors fixed). Each feature folder that others use has a `public.mjs`, and rule n allows a
+   cross-folder import only through it (three allow-listed exceptions with reasons: an import cycle, a
+   side-effect block registration, a JSX file Node tests cannot load). Front-end rules l–o forbid cycles,
+   jQuery and relative SDK imports.
 7. **Extend enforcement.** Done on 31 October 2026 ([ENFORCEMENT](ENFORCEMENT.md#ci-jobs)): six CI jobs
    (build and `check:ci`, `lint:js`, PHP lint and 58 unit suites, phpcs on changed lines, PHP integration on
    WordPress + MySQL with the disposable source, migration and streak sites and `pdftoppm`, and the
@@ -75,11 +81,11 @@ Statuses below were checked against the code on 31 October 2026. Counts are file
 | 1 | Dependency inventory | **Done, retired** | The recovered runtime it inventoried is deleted; report, generator and drift test removed |
 | 2 | Third-party libraries | **Partial** | Easy Email, Arco, MJML, CodeMirror, html2canvas (admin copy), Chart.js, Emotion, Tiptap, Lowlight and Lodash left with the legacy admin (50 npm packages, [CUTOVER](CUTOVER.md)). The email editor (`app/features/emails`) uses only WordPress components and the server preview. Dead Select2, Mail Mint image, Slick 1.8.1 (replaced by `ohmylms/carousel`) and the html2pdf 0.10.1 bundle were removed on 31 October 2026. Remaining: the runtime libraries listed there (MathLive, JSXGraph). See [libraries](VENDOR-PACKAGE-MIGRATION.md) |
 | 3 | Shared application infrastructure | **Done** | `app/lib/api`, `app/lib/validation.ts`, `app/lib/media.ts`, `app/hooks` (`useOperation`, `useRequest`, `usePagedList`, `useUnsavedChangesGuard`), `app/components/MediaPicker`, `app/routing`, `app/layout`, `assets/src/ui`. Rules g and `shared-helpers` fail feature copies |
-| 4 | State and API access | **Done** | 24 features own an `api.ts` over `app/lib/api`; cross-feature access only through `public.ts`; only `app/extensions/api.ts` calls `@wordpress/api-fetch` directly. Validators and media parsing are shared. Native editor code uses `assets/src/features/rest.mjs` and is type-checked. Remaining (see [STATE-API-MODULARIZATION](STATE-API-MODULARIZATION.md)): syllabus/curriculum route ownership, two `question-editor` files on `window.wp.apiFetch` |
+| 4 | State and API access | **Done** | 24 features own an `api.ts` over `app/lib/api`; cross-feature access only through `public.ts`; only `app/extensions/api.ts` calls `@wordpress/api-fetch` directly. Validators and media parsing are shared. Native editor code uses `assets/src/features/rest.mjs` (no direct `wp.apiFetch`) and is strict type-checked. `curriculum` owns `/syllabus-comparison/*`, which `syllabus` calls through `curriculum/public.ts` ([STATE-API-MODULARIZATION](STATE-API-MODULARIZATION.md)) |
 | 5 | Feature independence | **Done (admin app)** | 25 feature folders, 55 route entries in `features/registry.ts`; no `createComponent(readRuntime)`; the only cross-feature imports are four from `quizzes` into `questions/public.ts` (`checkFeatureBoundaries`). Remaining: the learner tree in item 6 |
 | 6 | Authored entry point | **Done** | `app/bootstrap` is the only admin entry (`admin-app.js`, 67 KB); recovered factories, adapters and SDK deleted |
 | 7 | Stylesheet ownership | **Done (admin); learner colours on tokens** | Legacy admin CSS (285 sources) and `tailwind.css` deleted; feature CSS ships with its chunk ([ownership](STYLESHEET-OWNERSHIP.md)). Admin spacing and radius use `--oml-space-*`/`--oml-radius-*` (rule `checkRawSpacing`); learner SCSS colours read `--oml-*` with fallbacks (stylelint `ohmylms/no-raw-svg-colour`); PHP inline colours became `oml-ui.css` classes ([design system](DESIGN-SYSTEM.md#known-gaps)). Remaining: the generated compatibility `assets/css/style.css` (483 KB) stays for old URLs |
-| 8 | Backend boundaries | **Done (REST controllers)** | Every route in a `WP_REST_Controller` subclass; no `$wpdb` in `includes/Rest/V1` (253 lines in 28 controllers before); persistence in feature services; `controller-persistence` ratchet over all 141 controller files. Remaining: four budgeted feature controllers (gradebook 7, WP Fusion triggers 13, Zoom webhook 4, e-commerce orders 10) and a shared advisory-lock helper ([BACKEND-BOUNDARIES](BACKEND-BOUNDARIES.md)) |
+| 8 | Backend boundaries | **Done** | Every route in a `WP_REST_Controller` subclass; no `$wpdb` in any of the 141 REST controller files (`Rest/V1` alone had 253 lines in 28 controllers on 31 October); persistence in feature services; `controller-persistence` ratchet with no budgets; one advisory-lock helper (`Utility\Lock`, rule p) ([BACKEND-BOUNDARIES](BACKEND-BOUNDARIES.md)) |
 | 9 | Asset and dependency isolation | **Done** | Admin: one entry plus hashed lazy chunks with per-screen budgets; React and WordPress packages are externals (`checkDuplicateRuntimes`). Math (836 KB) and JSXGraph (995 KB) load only where used. Learner: script modules only; video provider APIs load lazily per provider; no jQuery on learner pages (`learner-no-jquery` browser spec) |
 | 10 | Enforcement and release checks | **Done** | Six CI jobs ([ENFORCEMENT](ENFORCEMENT.md#ci-jobs)): `check:ci` (typecheck, `typecheck:js`, app tests, architecture rules a–o incl. REST controllers, controller persistence, shared helpers, legacy routes, front-end rules, raw colours and spacing, budgets) and `npm test`; `lint:js`; PHP lint and unit suites; phpcs on changed lines; PHP integration with disposable sites; Playwright. Remaining: item 7 above |
 

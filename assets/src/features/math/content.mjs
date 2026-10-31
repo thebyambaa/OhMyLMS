@@ -7,7 +7,7 @@ export const equationPattern = () =>
  * Escaped dollars and ordinary currency prose remain text.
  * @param {string}  text      Source text.
  * @param {boolean} delimited Whether the region opts in to LaTeX delimiters.
- * @return {Array} Source-preserving equation ranges.
+ * @return {{ index: number, raw: string, mode: string, source: string }[]} Source-preserving equation ranges.
  */
 export function contentEquations( text, delimited = false ) {
 	const pattern = delimited
@@ -61,9 +61,10 @@ export function normalizeTemplateTokens( source ) {
 /**
  * Show stored randomization tokens as locked MathLive prompts.
  * @param {string} source Original template source.
- * @return {Object} LaTeX and a reversible token map.
+ * @return {{ latex: string, tokens: string[] }} LaTeX and a reversible token map.
  */
 export function templateLatex( source ) {
+	/** @type {string[]} */
 	const tokens = [];
 	const latex = normalizeTemplateTokens( source ).replace(
 		/\{\{([^{}]{1,240})\}\}/g,
@@ -78,8 +79,8 @@ export function templateLatex( source ) {
 
 /**
  * Restore the randomization tokens, never the current preview value.
- * @param {string} latex  MathLive source.
- * @param {Array}  tokens Original tokens.
+ * @param {string}   latex  MathLive source.
+ * @param {string[]} tokens Original tokens.
  * @return {string} Stored source.
  */
 export function restoreTemplateTokens( latex, tokens ) {

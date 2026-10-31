@@ -12,6 +12,8 @@
 
 namespace OhMyLMS\Schools;
 
+use OhMyLMS\Utility\Lock;
+
 defined( 'ABSPATH' ) || exit;
 
 /** Explicit, administrator-only sample data for exploring schools and previewing each role. */
@@ -346,23 +348,20 @@ final class SamplePreview {
 	 *                     returned); false while another request holds the lock.
 	 */
 	public static function create_once( callable $read ) {
-		global $wpdb;
-		$lock = 'ohmylms_sample_school';
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Two clicks must not create two sets.
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 10)', $lock ) ) ) {
-			return false;
-		}
-		try {
-			$before = self::status()['complete'];
-			self::create();
-			return array(
-				'complete_before' => $before,
-				'state'           => $read(),
-			);
-		} finally {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Release the lock.
-			$wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
-		}
+		// Two clicks must not create two sets.
+		return Lock::with(
+			'ohmylms_sample_school',
+			10,
+			static function () use ( $read ) {
+				$before = self::status()['complete'];
+				self::create();
+				return array(
+					'complete_before' => $before,
+					'state'           => $read(),
+				);
+			},
+			false
+		);
 	}
 
 	/**

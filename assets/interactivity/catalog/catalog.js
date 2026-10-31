@@ -17,7 +17,13 @@ export const PARAMS = Object.freeze( {
 	page: 'paged',
 } );
 
-/** Multi-value filters, in URL order. */
+/** @typedef {'curriculum'|'bundle'|'level'|'price'} ListKey */
+
+/**
+ * Multi-value filters, in URL order.
+ *
+ * @type {ReadonlyArray<ListKey>}
+ */
 export const LISTS = Object.freeze( [
 	'curriculum',
 	'bundle',
@@ -49,6 +55,12 @@ export const POPUP_CARD =
 const KEYS = Object.fromEntries(
 	Object.entries( PARAMS ).map( ( [ key, name ] ) => [ name, key ] )
 );
+
+/**
+ * @param {string|null} key Filter key.
+ * @return {key is ListKey} A multi-value filter.
+ */
+const isList = ( key ) => LISTS.includes( /** @type {ListKey} */ ( key ) );
 
 /**
  * @typedef {Object} Filters
@@ -116,7 +128,7 @@ export function readFilters( query ) {
 		if ( ! key || ! value ) {
 			continue;
 		}
-		if ( LISTS.includes( key ) ) {
+		if ( isList( key ) ) {
 			if ( ! filters[ key ].includes( value ) ) {
 				filters[ key ].push( value );
 			}
@@ -211,7 +223,7 @@ export function sameFilters( a, b ) {
  * Turn one list value on or off. Any change starts again from the first page.
  *
  * @param {Filters} filters Filters.
- * @param {string}  key     List key.
+ * @param {ListKey} key     List key.
  * @param {string}  value   Value.
  * @param {boolean} on      Selected.
  * @return {Filters} New filters.
@@ -295,21 +307,47 @@ export function popupPosition(
 }
 
 /**
+ * @typedef {Object} CatalogContext Context of the catalogue root or a curriculum button.
+ * @property {string} [form]    Id of the filter form.
+ * @property {string} [heading] Id of the heading focused after a navigation.
+ * @property {string} [slug]    Curriculum button slug (`all` for every course).
+ */
+
+/**
+ * @typedef {Object} CatalogState Live `ohmylms/catalog` state.
+ * @property {Filters} [filters]        Filters of the list shown.
+ * @property {boolean} loading          A navigation is running.
+ * @property {boolean} [categoryActive] The curriculum button of the context is active.
+ */
+
+/**
+ * `@wordpress/interactivity` withSyncEvent, for handlers of any event, keyboard or mouse events.
+ *
+ * @typedef {((callback: (event: Event) => void) => (event: Event) => void) & ((callback: (event: KeyboardEvent) => void) => (event: KeyboardEvent) => void) & ((callback: (event: MouseEvent) => void) => (event: MouseEvent) => void)} SyncEvent
+ */
+
+/**
+ * @typedef {Object} CatalogTimers
+ * @property {(callback: () => void, ms: number) => number} setTimeout   `setTimeout`.
+ * @property {(id: number) => void}                         clearTimeout `clearTimeout`.
+ */
+
+/**
  * Store definitions.
  *
  * @param {Object}                                                                                                                           api               Runtime and SDK.
- * @param {() => Object}                                                                                                                     api.getContext    `@wordpress/interactivity` getContext.
- * @param {() => {ref: HTMLElement}}                                                                                                         api.getElement    `@wordpress/interactivity` getElement.
- * @param {(callback: (event: Event) => void) => (event: Event) => void}                                                                     api.withSyncEvent `@wordpress/interactivity` withSyncEvent.
- * @param {() => Object}                                                                                                                     api.getState      Returns the live `ohmylms/catalog` state.
+ * @param {() => CatalogContext}                                                                                                             api.getContext    `@wordpress/interactivity` getContext.
+ * @param {() => {ref: HTMLElement|null}}                                                                                                    api.getElement    `@wordpress/interactivity` getElement.
+ * @param {SyncEvent}                                                                                                                        api.withSyncEvent `@wordpress/interactivity` withSyncEvent.
+ * @param {() => CatalogState}                                                                                                               api.getState      Returns the live `ohmylms/catalog` state.
  * @param {(url: string, options: {replace: boolean}) => Promise<boolean>}                                                                   api.navigate      Swaps the regions; resolves false when the page was loaded in full instead.
  * @param {() => boolean}                                                                                                                    api.routed        Whether a client navigation happened (popstate then belongs to the router).
- * @param {(form: HTMLFormElement, options?: Object) => URLSearchParams}                                                                     api.serializeForm SDK `serializeForm`.
+ * @param {(form: HTMLFormElement, options?: {as?: 'object'|'params'|'formdata'}) => unknown}                                                api.serializeForm SDK `serializeForm`.
  * @param {(callback: (...args: Array<?>) => void, ms: number) => ((...args: Array<?>) => void) & {cancel?: () => void, flush?: () => void}} api.debounce      SDK `debounce`.
  * @param {(target: EventTarget, name: string, detail?: Object, cancelable?: boolean) => boolean}                                            api.emit          SDK `emit`.
  * @param {(container: Element) => HTMLElement[]}                                                                                            [api.focusable]   SDK `focusable`.
  * @param {(callback: () => void) => void}                                                                                                   [api.frame]       `requestAnimationFrame`.
- * @param {Object}                                                                                                                           [api.timers]      `setTimeout`, `clearTimeout` (tests).
+ * @param {CatalogTimers}                                                                                                                    [api.timers]      `setTimeout`, `clearTimeout` (tests).
  * @param {number}                                                                                                                           [api.searchDelay] Debounce for typing, in ms.
  * @param {Window}                                                                                                                           [api.win]         Window.
  * @return {{state: Object, actions: Object, callbacks: Object}} Definitions.
@@ -334,6 +372,8 @@ export function createCatalog( api ) {
 		searchDelay = 350,
 	} = api;
 	const win = () => api.win || globalThis.window;
+	/** @return {HTMLElement} Element of the running directive. */
+	const ref = () => /** @type {HTMLElement} */ ( getElement().ref );
 
 	let previousReason = '';
 	let sequence = 0;
@@ -349,10 +389,17 @@ export function createCatalog( api ) {
 		element?.closest?.( '[data-wp-interactive="ohmylms/catalog"]' ) ||
 		element;
 
+	/**
+	 * @param {CatalogContext} context Root context.
+	 * @param {Element}        element Catalogue root.
+	 * @return {HTMLFormElement|null} Filter form.
+	 */
 	const formOf = ( context, element ) => {
 		const doc = element?.ownerDocument || win().document;
 		const form = context?.form ? doc.getElementById( context.form ) : null;
-		return 'FORM' === form?.tagName ? form : null;
+		return 'FORM' === form?.tagName
+			? /** @type {HTMLFormElement} */ ( form )
+			: null;
 	};
 
 	/**
@@ -376,9 +423,18 @@ export function createCatalog( api ) {
 		].filter( ( field ) => keyOf( field.name ) && ! field.form );
 	};
 
+	/**
+	 * @param {HTMLFormElement|null} form Filter form.
+	 * @param {Element}              root Catalogue root.
+	 * @return {Filters} Filters of the controls.
+	 */
 	const collect = ( form, root ) => {
 		if ( form ) {
-			return readFilters( serializeForm( form, { as: 'params' } ) );
+			return readFilters(
+				/** @type {URLSearchParams} */ (
+					serializeForm( form, { as: 'params' } )
+				)
+			);
 		}
 		const params = new URLSearchParams();
 		for ( const field of controlsOf( null, root ) ) {
@@ -405,7 +461,7 @@ export function createCatalog( api ) {
 			if ( ! key || 'page' === key ) {
 				continue;
 			}
-			if ( LISTS.includes( key ) ) {
+			if ( isList( key ) ) {
 				/** @type {HTMLInputElement} */ ( field ).checked = filters[
 					key
 				].includes( field.value );
@@ -417,14 +473,21 @@ export function createCatalog( api ) {
 		}
 	};
 
+	/**
+	 * @param {CatalogContext} context         Root context.
+	 * @param {Element}        root            Catalogue root.
+	 * @param {boolean}        [preventScroll] Keep the scroll position.
+	 */
 	const focusHeading = ( context, root, preventScroll = false ) => {
 		const doc = root?.ownerDocument || win().document;
-		const heading =
+		const heading = /** @type {HTMLElement|null|undefined} */ (
 			( context?.heading && doc.getElementById( context.heading ) ) ||
-			root?.querySelector?.( '.ohmylms-catalog-heading' );
+				root?.querySelector?.( '.ohmylms-catalog-heading' )
+		);
 		heading?.focus?.( { preventScroll } );
 	};
 
+	/** @param {Element} root Catalogue root. */
 	const hidePopups = ( root ) => {
 		root?.querySelectorAll?.( '.ohmylms-course-card-popup.active' ).forEach(
 			( popup ) => popup.classList.remove( 'active' )
@@ -434,11 +497,11 @@ export function createCatalog( api ) {
 	/**
 	 * Show a filtered list.
 	 *
-	 * @param {Object}  context Root context (`form`, `heading`).
-	 * @param {Element} root    Catalogue root.
-	 * @param {Filters} filters Filters.
-	 * @param {string}  reason  Why (see historyMode()).
-	 * @param {Object}  [after] `focus`: 'heading' or a function run with the root.
+	 * @param {CatalogContext}                                context Root context (`form`, `heading`).
+	 * @param {Element}                                       root    Catalogue root.
+	 * @param {Filters}                                       filters Filters.
+	 * @param {string}                                        reason  Why (see historyMode()).
+	 * @param {{focus?: 'heading'|((root: Element) => void)}} [after] `focus`: 'heading' or a function run with the root.
 	 * @return {Promise<void>} Settles after the regions are swapped.
 	 */
 	const go = async ( context, root, filters, reason, after = {} ) => {
@@ -491,15 +554,28 @@ export function createCatalog( api ) {
 	}, searchDelay );
 
 	let popupTimer = 0;
+	/**
+	 * @param {Element}      root Catalogue root.
+	 * @param {Element|null} card Course card.
+	 * @return {HTMLElement|null} Popup of the card.
+	 */
 	const popupFor = ( root, card ) => {
 		if ( ! card?.id ) {
 			return null;
 		}
-		const id = globalThis.CSS?.escape ? CSS.escape( card.id ) : card.id;
+		const id = /** @type {Partial<typeof CSS>|undefined} */ (
+			globalThis.CSS
+		)?.escape
+			? CSS.escape( card.id )
+			: card.id;
 		return root.querySelector(
 			`.ohmylms-course-card-popup[data-item-id="${ id }"]`
 		);
 	};
+	/**
+	 * @param {Element}     card  Course card.
+	 * @param {HTMLElement} popup Its popup.
+	 */
 	const placePopup = ( card, popup ) => {
 		const parent = card.closest( '.ohmylms-course-outer' );
 		if ( ! parent ) {
@@ -526,7 +602,9 @@ export function createCatalog( api ) {
 				const { curriculum = [] } = getState().filters || {};
 				return 'all' === slug
 					? ! curriculum.length
-					: curriculum.includes( slug );
+					: /** @type {Array<string|undefined>} */ (
+							curriculum
+						).includes( slug );
 			},
 			get categoryCurrent() {
 				return getState().categoryActive ? 'true' : false;
@@ -545,7 +623,7 @@ export function createCatalog( api ) {
 					return;
 				}
 				const context = getContext();
-				const root = rootOf( getElement().ref );
+				const root = rootOf( ref() );
 				const form = formOf( context, root );
 				if ( form && field.form !== form ) {
 					return;
@@ -572,7 +650,7 @@ export function createCatalog( api ) {
 					return;
 				}
 				const context = getContext();
-				const root = rootOf( getElement().ref );
+				const root = rootOf( ref() );
 				const form = formOf( context, root );
 				if ( form && event.target.form !== form ) {
 					return;
@@ -582,7 +660,7 @@ export function createCatalog( api ) {
 			/** Enter in the search box, or the no-JavaScript "Apply" button. */
 			submit: withSyncEvent( ( event ) => {
 				const context = getContext();
-				const root = rootOf( getElement().ref );
+				const root = rootOf( ref() );
 				const form = formOf( context, root );
 				if ( ! form || event.target !== form ) {
 					return;
@@ -594,31 +672,28 @@ export function createCatalog( api ) {
 				} );
 			} ),
 			/** Enter/Space on the styled box next to a filter checkbox. */
-			keydown: withSyncEvent(
-				( /** @type {KeyboardEvent & {target: Element}} */ event ) => {
-					const box = /** @type {HTMLElement|null} */ (
-						event.target?.closest?.( '.checkedbox' )
-					);
-					if (
-						! box ||
-						( 'Enter' !== event.key && ' ' !== event.key )
-					) {
-						return;
-					}
-					const input = box.ownerDocument.getElementById(
-						box.dataset.target || ''
-					);
-					if ( input ) {
-						event.preventDefault();
-						input.click();
-					}
+			keydown: withSyncEvent( ( /** @type {KeyboardEvent} */ event ) => {
+				const box = /** @type {HTMLElement|null} */ (
+					/** @type {Element|null} */ ( event.target )?.closest?.(
+						'.checkedbox'
+					)
+				);
+				if ( ! box || ( 'Enter' !== event.key && ' ' !== event.key ) ) {
+					return;
 				}
-			),
+				const input = box.ownerDocument.getElementById(
+					box.dataset.target || ''
+				);
+				if ( input ) {
+					event.preventDefault();
+					input.click();
+				}
+			} ),
 			/** "Clear all" in the filter sidebar. */
 			clear: withSyncEvent( ( event ) => {
 				event.preventDefault();
 				const context = getContext();
-				const root = rootOf( getElement().ref );
+				const root = rootOf( ref() );
 				const form = formOf( context, root );
 				const filters = clearFilters( collect( form, root ) );
 				syncControls( form, root, filters );
@@ -637,7 +712,7 @@ export function createCatalog( api ) {
 				}
 				event.preventDefault();
 				const { slug } = getContext();
-				const root = rootOf( getElement().ref );
+				const root = rootOf( ref() );
 				const current = getState().filters || emptyFilters();
 				go(
 					getContext(),
@@ -654,16 +729,22 @@ export function createCatalog( api ) {
 			/** "Load more": the server renders pages 1..N for `paged=N`, so the cards already shown stay. */
 			loadMore: withSyncEvent( ( event ) => {
 				event.preventDefault();
-				const button = getElement().ref;
+				const button = ref();
 				const next = nextPage(
 					{
 						...( getState().filters || emptyFilters() ),
 						page: Math.max(
 							1,
-							parseInt( button.dataset.paged, 10 ) || 1
+							parseInt(
+								/** @type {string} */ ( button.dataset.paged ),
+								10
+							) || 1
 						),
 					},
-					parseInt( button.dataset.total, 10 ) || 1
+					parseInt(
+						/** @type {string} */ ( button.dataset.total ),
+						10
+					) || 1
 				);
 				if ( ! next || getState().loading ) {
 					return;
@@ -686,9 +767,7 @@ export function createCatalog( api ) {
 			closeFilters: withSyncEvent( ( event ) => {
 				event.preventDefault();
 				/** @type {HTMLElement|null} */ (
-					rootOf( getElement().ref )?.querySelector(
-						'.filter-hamburger'
-					)
+					rootOf( ref() )?.querySelector( '.filter-hamburger' )
 				)?.click();
 			} ),
 			/** Back/Forward between catalogue URLs: the router swaps the regions, this syncs the controls. */
@@ -702,7 +781,7 @@ export function createCatalog( api ) {
 					return;
 				}
 				const context = getContext();
-				const root = rootOf( getElement().ref );
+				const root = rootOf( ref() );
 				state.filters = filters;
 				syncControls( formOf( context, root ), root, filters );
 				hidePopups( root );
@@ -721,7 +800,7 @@ export function createCatalog( api ) {
 				if ( ! card || card.contains( event.relatedTarget ) ) {
 					return;
 				}
-				const root = rootOf( getElement().ref );
+				const root = rootOf( ref() );
 				const popup = popupFor( root, card );
 				if ( ! popup ) {
 					return;
@@ -736,6 +815,9 @@ export function createCatalog( api ) {
 				popup.classList.add( 'active' );
 				placePopup( card, popup );
 			},
+			/**
+			 * @param {MouseEvent & {target: Element, relatedTarget: Node|null}} event `mouseout` event.
+			 */
 			cardOut( event ) {
 				const from =
 					event.target?.closest?.( POPUP_CARD ) ||
@@ -743,9 +825,9 @@ export function createCatalog( api ) {
 				if ( ! from || from.contains( event.relatedTarget ) ) {
 					return;
 				}
-				const root = rootOf( getElement().ref );
+				const root = rootOf( ref() );
 				const popup = from.matches( '.ohmylms-course-card-popup' )
-					? from
+					? /** @type {HTMLElement} */ ( from )
 					: popupFor( root, from );
 				const card = popup
 					? root.ownerDocument.getElementById(
@@ -767,7 +849,7 @@ export function createCatalog( api ) {
 		callbacks: {
 			/** Keep an open popup next to its card when the window is resized. */
 			reposition() {
-				const root = rootOf( getElement().ref );
+				const root = rootOf( ref() );
 				const popup = /** @type {HTMLElement|null} */ (
 					root?.querySelector?.( '.ohmylms-course-card-popup.active' )
 				);

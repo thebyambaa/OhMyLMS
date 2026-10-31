@@ -11,12 +11,56 @@ import { stripeIntentOutcome } from './commerce-logic.mjs';
 // units), returnUrl, scriptUrl, messages.
 const { state } = store( 'ohmylms/stripe' );
 
+/*
+ * The part of Stripe.js used here (Stripe's own types are not a dependency).
+ */
+
+/** @typedef {{message: string}} StripeError */
+
+/**
+ * @typedef {Object} StripeElement
+ * @property {(target: HTMLElement) => void} mount Render into `target`.
+ */
+
+/**
+ * @typedef {Object} StripeElements
+ * @property {(type: string, options?: Object) => StripeElement} create Create an element.
+ * @property {() => Promise<{error?: StripeError}>}              submit Validate the Payment Element.
+ */
+
+/**
+ * @typedef {{error: StripeError, paymentIntent?: undefined}|{error?: undefined, paymentIntent: import('./commerce-logic.mjs').StripeIntent}} StripeIntentResult
+ */
+
+/**
+ * @typedef {Object} StripeClient
+ * @property {(options: Object) => StripeElements}                                                                                            elements            Elements group.
+ * @property {(options: Object) => Promise<StripeIntentResult>}                                                                               handleNextAction    Card next action.
+ * @property {(options: Object) => Promise<StripeIntentResult>}                                                                               confirmPayment      Payment Element confirmation.
+ * @property {(options: Object) => Promise<{error: StripeError, paymentMethod?: undefined}|{error?: undefined, paymentMethod: {id: string}}>} createPaymentMethod Payment method.
+ */
+
+/** @typedef {(publishableKey: string) => StripeClient} StripeFactory */
+
+/**
+ * @typedef {Object} StripeCheckoutResponse
+ * @property {string} [result]        `requires_action` when the PaymentIntent needs confirming.
+ * @property {string} [return_url]    Order thank-you URL.
+ * @property {string} [client_secret] PaymentIntent client secret.
+ */
+
+/** @type {Promise<StripeFactory>|null} */
 let loader = null;
+/** @type {StripeClient|null} */
 let stripe = null;
+/** @type {StripeElements|null} */
 let elements = null;
+/** @type {StripeElement|null} */
 let card = null;
+/** @type {Promise<void>|null} */
 let mounting = null;
 
+/** @return {Promise<StripeFactory>} Stripe.js, loaded once. */
 function loadStripe() {
 	if ( window.Stripe ) {
 		return Promise.resolve( window.Stripe );
@@ -41,6 +85,7 @@ function loadStripe() {
 	return loader;
 }
 
+/** @param {string} text Message; empty hides it. */
 function showMessage( text ) {
 	const message = document.getElementById( 'payment-message' );
 	if ( message ) {
@@ -49,6 +94,11 @@ function showMessage( text ) {
 	}
 }
 
+/**
+ * Only called by `mount()` once `elements` exists.
+ *
+ * @param {HTMLElement} target Payment Element holder.
+ */
 function fallbackToCard( target ) {
 	const holder = document.getElementById( 'card-element' );
 	if ( card || ! holder ) {
@@ -56,7 +106,7 @@ function fallbackToCard( target ) {
 	}
 	target.style.display = 'none';
 	holder.style.display = '';
-	card = elements.create( 'card' );
+	card = /** @type {StripeElements} */ ( elements ).create( 'card' );
 	card.mount( holder );
 }
 
@@ -78,8 +128,8 @@ function mount() {
 			} );
 			document
 				.querySelectorAll( '#stripe-payment-element-wrapper > p' )
-				.forEach( ( /** @type {HTMLElement} */ loading ) => {
-					loading.hidden = true;
+				.forEach( ( loading ) => {
+					/** @type {HTMLElement} */ ( loading ).hidden = true;
 				} );
 			try {
 				elements
@@ -102,13 +152,20 @@ function mount() {
 	return mounting;
 }
 
+/**
+ * Only called after `prepare()` mounted Stripe.
+ *
+ * @param {StripeCheckoutResponse} response `ohmylms_checkout` answer.
+ * @return {Promise<{result: string, redirect: string}|false>} Replacement response, or false.
+ */
 async function nextAction( response ) {
+	const client = /** @type {StripeClient} */ ( stripe );
 	const returnUrl = response.return_url || state.returnUrl;
 	const result = card
-		? await stripe.handleNextAction( {
+		? await client.handleNextAction( {
 				clientSecret: response.client_secret,
 			} )
-		: await stripe.confirmPayment( {
+		: await client.confirmPayment( {
 				elements,
 				clientSecret: response.client_secret,
 				confirmParams: { return_url: returnUrl },
@@ -138,14 +195,16 @@ registerGateway( 'stripe', {
 		await mount();
 		showMessage( '' );
 		if ( ! card ) {
-			const { error } = await elements.submit();
+			const { error } = await /** @type {StripeElements} */ (
+				elements
+			).submit();
 			if ( error ) {
 				throw new Error( error.message );
 			}
 		}
-		const { paymentMethod, error } = await stripe.createPaymentMethod(
-			card ? { type: 'card', card } : { elements }
-		);
+		const { paymentMethod, error } = await /** @type {StripeClient} */ (
+			stripe
+		).createPaymentMethod( card ? { type: 'card', card } : { elements } );
 		if ( error ) {
 			throw new Error( error.message );
 		}

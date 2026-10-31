@@ -10,6 +10,7 @@ namespace OhMyLMS\Curriculum;
 use OhMyLMS\QuestionBank\SkillMap;
 use OhMyLMS\Skills\Provenance;
 use OhMyLMS\Skills\Taxonomy;
+use OhMyLMS\Utility\Lock;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -152,25 +153,24 @@ final class ContentLinks {
 				return Access::error( 'ohmylms_skill_archived', __( 'Archived skills cannot be linked to more content. Restore the skill first.', 'ohmylms' ), 409, array( 'term_id' => $term_id ) );
 			}
 		}
-		$lock = 'ohmylms-content-links-' . md5( $wpdb->prefix ) . '-' . (int) $post->ID;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Non-cacheable advisory lock.
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) ) {
-			return Access::error( 'ohmylms_content_links_busy', __( 'Another change to these links is being saved. Try again.', 'ohmylms' ), 409 );
-		}
-		try {
-			$links = self::links( $kind, (int) $post->ID );
-			if ( ! hash_equals( self::revision( $links ), (string) $expected_revision ) ) {
-				return Access::error( 'ohmylms_content_links_stale', __( 'The skills of this content changed. Reload them before saving.', 'ohmylms' ), 409, array( 'revision' => self::revision( $links ) ) );
+		$saved = Lock::with(
+			'ohmylms-content-links-' . md5( $wpdb->prefix ) . '-' . (int) $post->ID,
+			5,
+			static function () use ( $kind, $post, $expected_revision, $add, $remove ) {
+				$links = self::links( $kind, (int) $post->ID );
+				if ( ! hash_equals( self::revision( $links ), (string) $expected_revision ) ) {
+					return Access::error( 'ohmylms_content_links_stale', __( 'The skills of this content changed. Reload them before saving.', 'ohmylms' ), 409, array( 'revision' => self::revision( $links ) ) );
+				}
+				return 'question' === $kind
+					? self::update_question( (int) $post->ID, $links, $add, $remove )
+					: self::update_terms( (int) $post->ID, $add, $remove );
+			},
+			static function () {
+				return Access::error( 'ohmylms_content_links_busy', __( 'Another change to these links is being saved. Try again.', 'ohmylms' ), 409 );
 			}
-			$saved = 'question' === $kind
-				? self::update_question( (int) $post->ID, $links, $add, $remove )
-				: self::update_terms( (int) $post->ID, $add, $remove );
-			if ( is_wp_error( $saved ) ) {
-				return $saved;
-			}
-		} finally {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Release the advisory lock.
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+		);
+		if ( is_wp_error( $saved ) ) {
+			return $saved;
 		}
 		return self::read( $kind, (int) $post->ID );
 	}

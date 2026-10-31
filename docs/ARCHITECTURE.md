@@ -165,10 +165,14 @@ by `npm run typecheck:js` ([ENFORCEMENT.md](ENFORCEMENT.md#type-checking-the-nat
   (`native-lesson-editor`, `math-runtime` and the block entries of `webpack.config.cjs`; JSX with the
   classic `createElement` pragma, `@wordpress/*` as script externals). Its top-level folders
   (`learning`, `paper`, `question-editor`, `question-bank`, `content-hub`, `assessment`, `curriculum`,
-  `math`, `navigation`, `students`) have no public entry points yet; which files one folder may import
-  from another is listed in `tools/architecture-rules/frontend-allowlist.json`, and a new cross-folder
-  import fails `check:architecture` (rule n). REST calls go through the shared `rest.mjs`
-  ([STATE-API-MODULARIZATION.md](STATE-API-MODULARIZATION.md)).
+  `math`, `navigation`, `students`) use each other only through the other folder's `public.mjs`, which
+  re-exports what other folders use (`check:architecture` rule n). Root modules such as `rest.mjs` are
+  shared. `question-editor/public.mjs` exposes only the question type models, which Node tests load. Its
+  `MultipleChoiceBlock`, `QuestionLivePreview` and `QuestionMediaUpload` components are imported
+  directly, as is the side-effect import of `paper/paperBlocks.jsx`; the reasons are in
+  `tools/architecture-rules/frontend-allowlist.json`. webpack binds imports through a `public.mjs` to
+  the defining module, so the entry files do not change what a bundle contains. REST calls go through the
+  shared `rest.mjs` ([STATE-API-MODULARIZATION.md](STATE-API-MODULARIZATION.md)).
 - `assets/interactivity` holds the learner script modules, loaded through the WordPress import map.
   They import WordPress' `@wordpress/interactivity` and the OhMyLMS SDK by its import-map name
   `ohmylms/interactivity` (`sdk.js`, which imports nothing), never by path. They use the DOM and

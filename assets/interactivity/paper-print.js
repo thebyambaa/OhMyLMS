@@ -14,14 +14,15 @@ const button = /** @type {HTMLButtonElement|null} */ (
 );
 const status = document.querySelector( '.ohmylms-print-status' );
 
-async function settled() {
-	if ( window.ohmylmsMath?.enabled && hasMath( sheet.textContent ) ) {
+/** @param {Element} page The print sheet. */
+async function settled( page ) {
+	if ( window.ohmylmsMath?.enabled && hasMath( page.textContent ) ) {
 		// The math loader typesets the sheet as soon as its runtime loads.
 		await waitFor( () => window.OhMyLMSMath, { timeout: 10000 } );
 	}
 	await document.fonts?.ready;
 	await Promise.all(
-		[ ...sheet.querySelectorAll( 'img' ) ].map( ( image ) =>
+		[ ...page.querySelectorAll( 'img' ) ].map( ( image ) =>
 			image.complete
 				? null
 				: new Promise( ( resolve ) => {
@@ -38,12 +39,15 @@ async function settled() {
 }
 
 if ( sheet && button ) {
+	// PrintPaper prints the status region and its labels in the same toolbar as the button.
+	const region = /** @type {Element} */ ( status );
+	const labels = /** @type {HTMLElement} */ ( toolbar ).dataset;
 	button.hidden = false;
-	status.textContent = toolbar.dataset.preparing || '';
+	region.textContent = labels.preparing || '';
 	button.addEventListener( 'click', () => window.print() );
-	settled().then( () => {
+	settled( sheet ).then( () => {
 		document.body.dataset.ready = '1';
-		status.textContent = toolbar.dataset.ready || '';
+		region.textContent = labels.ready || '';
 		button.disabled = false;
 		if ( 'autoPrint' in document.body.dataset ) {
 			window.print();

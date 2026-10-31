@@ -9,6 +9,7 @@
  */
 namespace OhMyLMS\Curriculum;
 
+use OhMyLMS\Utility\Lock;
 use OhMyLMS\Utility\Transaction;
 
 defined( 'ABSPATH' ) || exit;
@@ -216,19 +217,22 @@ final class Items {
 	 */
 	public static function exclusive( callable $work ) {
 		global $wpdb;
-		$lock = self::LOCK . '-' . md5( $wpdb->prefix );
-		if ( (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) !== '1' ) {
-			return Access::error( 'ohmylms_curriculum_busy', __( 'Another change is being saved. Try again in a moment.', 'ohmylms' ), 409 );
-		}
-		try {
-			return Transaction::run( $work );
-		} catch ( \Throwable $error ) {
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				error_log( 'OhMyLMS curriculum write failed: ' . $error->getMessage() ); }
-			return Access::error( 'ohmylms_curriculum_failed', __( 'The change could not be saved. Nothing was changed.', 'ohmylms' ), 500 );
-		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
-		}
+		return Lock::with(
+			self::LOCK . '-' . md5( $wpdb->prefix ),
+			5,
+			static function () use ( $work ) {
+				try {
+					return Transaction::run( $work );
+				} catch ( \Throwable $error ) {
+					if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+						error_log( 'OhMyLMS curriculum write failed: ' . $error->getMessage() ); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Only with WP_DEBUG.
+					return Access::error( 'ohmylms_curriculum_failed', __( 'The change could not be saved. Nothing was changed.', 'ohmylms' ), 500 );
+				}
+			},
+			static function () {
+				return Access::error( 'ohmylms_curriculum_busy', __( 'Another change is being saved. Try again in a moment.', 'ohmylms' ), 409 );
+			}
+		);
 	}
 
 	/** Write dense 0..n-1 positions for a sibling group, touching only rows that changed.

@@ -7,8 +7,8 @@ import {
 import { select, useDispatch, useSelect } from '@wordpress/data';
 import { registerPlugin } from '@wordpress/plugins';
 import { PluginDocumentSettingPanel } from '@wordpress/editor';
-import { BankPicker } from '../question-bank/BankPicker';
-import { AssessmentSettingsPanel } from '../assessment/AssessmentSettingsPanel';
+import { BankPicker } from '../question-bank/public.mjs';
+import { AssessmentSettingsPanel } from '../assessment/public.mjs';
 import { NativeExtensionPanels } from './NativeExtensionPanels';
 import { NativeQuizConfiguration } from './NativeQuizConfiguration';
 import {
@@ -20,21 +20,23 @@ import {
 	AssessmentPreviewButton as QuizPreviewButton,
 } from './AssessmentPreview';
 import './NativeExamPanel';
-import { PaperInserter } from '../paper/PaperInserter';
+import {
+	PaperCanvas,
+	PaperInserter,
+	PaperSettingsPanel,
+	PaperViewToggle,
+} from '../paper/public.mjs';
 import { ProfilePanel } from './ProfilePanel';
-import { ExportRowsButtons } from '../content-hub/ExportRowsButtons';
+import {
+	ExportRowsButtons,
+	downloadText,
+	exportQuiz,
+} from '../content-hub/public.mjs';
 import { createBlock } from '@wordpress/blocks';
-import { exportQuiz } from '../content-hub/api.mjs';
-import { downloadText } from '../content-hub/quizExchange.mjs';
 import { Button, Notice } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { saveQuizForPreview } from './quizPreview.mjs';
 import { useBlankPlaceholderTitle } from './useBlankPlaceholderTitle';
-import {
-	PaperCanvas,
-	PaperSettingsPanel,
-	PaperViewToggle,
-} from '../paper/PaperCanvas';
 
 /**
  * Keep the player preview visible when the document sidebar is closed.
@@ -44,7 +46,9 @@ import {
  * @return {React.ReactElement|null} Quiz preview action.
  */
 function QuizPreviewAction() {
-	const [ container, setContainer ] = useState( null );
+	const [ container, setContainer ] = useState(
+		/** @type {HTMLSpanElement|null} */ ( null )
+	);
 	useEffect( () => {
 		const host = document.createElement( 'span' );
 		host.className = 'ohmylms-quiz-preview-action';
@@ -150,7 +154,10 @@ function NativeQuizSettings() {
 								file.content
 							);
 						} catch ( cause ) {
-							setError( cause.message );
+							setError(
+								/** @type {{ message: string }} */ ( cause )
+									.message
+							);
 						}
 					} }
 				>
@@ -182,7 +189,11 @@ function NativeQuizSettings() {
 				<p>
 					<Button
 						variant="link"
-						href={ window.ohmylmsNativeLesson.returnUrl }
+						href={
+							/** @type {NonNullable<Window['ohmylmsNativeLesson']>} */ (
+								window.ohmylmsNativeLesson
+							).returnUrl
+						}
 					>
 						{ __( 'Back to assessments', 'ohmylms' ) }
 					</Button>
@@ -214,13 +225,19 @@ function NativeQuizSettings() {
 					quizId={ postId }
 					existingIds={ select( 'core/block-editor' )
 						.getBlocks()
-						.flatMap( function collect( block ) {
-							return block.attributes?.questionId
-								? [ block.attributes.questionId ]
-								: ( block.innerBlocks || [] ).flatMap(
-										collect
-									);
-						} ) }
+						.flatMap(
+							/**
+							 * @param {import('@wordpress/blocks').BlockInstance} block Block.
+							 * @return {number[]} Question IDs in the block and its inner blocks.
+							 */
+							function collect( block ) {
+								return block.attributes?.questionId
+									? [ block.attributes.questionId ]
+									: ( block.innerBlocks || [] ).flatMap(
+											collect
+										);
+							}
+						) }
 					onClose={ () => setPickerOpen( false ) }
 					onPick={ ( ids ) =>
 						insertBlocks(

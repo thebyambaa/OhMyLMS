@@ -10,6 +10,7 @@ namespace OhMyLMS\Learning;
 use OhMyLMS\Curriculum\UnitNumber;
 use OhMyLMS\DataStores\ChapterStore;
 use OhMyLMS\DataStores\CourseStore;
+use OhMyLMS\Utility\Lock;
 use OhMyLMS\Utility\Transaction;
 
 defined( 'ABSPATH' ) || exit;
@@ -24,17 +25,18 @@ final class CourseStructure {
 	 * @return mixed|\WP_Error
 	 */
 	public static function read( $course_id, callable $reader ) {
-		global $wpdb;
-		$key = 'ohmylms_program_' . (int) $course_id;
-		if ( ! $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 3)', $key ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Named lock shared with program and native structure writers.
-			return Catalog::error( __( 'Another author is saving this course. Try again.', 'ohmylms' ), 409 );
-		}
-		try {
-			self::flush( $course_id );
-			return UnitSnapshots::authoring( $reader );
-		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $key ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Release the named read lock.
-		}
+		// Named lock shared with program and native structure writers.
+		return Lock::with(
+			'ohmylms_program_' . (int) $course_id,
+			3,
+			static function () use ( $course_id, $reader ) {
+				self::flush( $course_id );
+				return UnitSnapshots::authoring( $reader );
+			},
+			static function () {
+				return Catalog::error( __( 'Another author is saving this course. Try again.', 'ohmylms' ), 409 );
+			}
+		);
 	}
 
 	/**

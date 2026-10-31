@@ -37,6 +37,25 @@ import {
 	usePaperTotals,
 } from './PaperCanvas';
 
+/** @typedef {import('./paperModel.mjs').SavedFields} SavedFields */
+
+/**
+ * @typedef {Object} PaperBlockEditProps
+ * @property {SavedFields}                              attributes    Block attributes.
+ * @property {(patch: Record<string, unknown>) => void} setAttributes Attribute setter.
+ * @property {string}                                   clientId      Block.
+ */
+
+/**
+ * @typedef {Object} PaperBlockDefinition
+ * @property {string}                                             title       Block title.
+ * @property {string}                                             description Block description.
+ * @property {string}                                             icon        Dashicon.
+ * @property {Record<string, {type: string, default?: unknown}>}  attributes  Attribute schema.
+ * @property {boolean}                                            [container] Whether the block saves inner blocks.
+ * @property {import('react').ComponentType<PaperBlockEditProps>} edit        Editor view.
+ */
+
 /** Attribute a block inside a columns section carries to span every column (PaperBlocks::SPAN). */
 export const SPAN = 'ohmylmsPaperSpan';
 const COLUMNS = 'ohmylms/paper-columns';
@@ -44,8 +63,8 @@ const COLUMNS = 'ohmylms/paper-columns';
 /**
  * Editable text fields for a paper block view: plain text with bold and italic only.
  *
- * @param {Object}                  attributes    Block attributes.
- * @param {(patch: Object) => void} setAttributes Attribute setter.
+ * @param {SavedFields}                              attributes    Block attributes.
+ * @param {(patch: Record<string, unknown>) => void} setAttributes Attribute setter.
  * @return {import('./PaperBlockViews').TextField} Text field renderer for the shared views.
  */
 function editableText( attributes, setAttributes ) {
@@ -56,7 +75,9 @@ function editableText( attributes, setAttributes ) {
 			value={ attributes[ key ] || '' }
 			placeholder={ placeholder }
 			allowedFormats={ [ 'core/bold', 'core/italic' ] }
-			onChange={ ( value ) => setAttributes( { [ key ]: value } ) }
+			onChange={ ( /** @type {string} */ value ) =>
+				setAttributes( { [ key ]: value } )
+			}
 		/>
 	);
 }
@@ -66,6 +87,7 @@ const text = ( defaultValue = '' ) => ( {
 	default: defaultValue,
 } );
 
+/** @type {Record<string, PaperBlockDefinition>} */
 const definitions = {
 	'ohmylms/paper-header': {
 		title: __( 'Paper header', 'ohmylms' ),
@@ -449,8 +471,8 @@ const definitions = {
 /**
  * Let any block inside a columns section span every column.
  *
- * @param {Object} settings Block type settings.
- * @return {Object} Settings with the span attribute.
+ * @param {SavedFields} settings Block type settings.
+ * @return {SavedFields} Settings with the span attribute.
  */
 function addSpanAttribute( settings ) {
 	return {
@@ -473,11 +495,16 @@ function useInFlowingColumns( clientId ) {
 		( getStore ) => {
 			const editor = getStore( 'core/block-editor' );
 			const parent = editor.getBlockRootClientId( clientId );
+			// Only read once Boolean( parent ) found a parent block.
+			const id = /** @type {string} */ ( parent );
 			return (
 				Boolean( parent ) &&
-				editor.getBlockName( parent ) === COLUMNS &&
-				columnsLayout( editor.getBlockAttributes( parent ) ).flow ===
-					'flow'
+				editor.getBlockName( id ) === COLUMNS &&
+				columnsLayout(
+					/** @type {SavedFields} */ (
+						editor.getBlockAttributes( id )
+					)
+				).flow === 'flow'
 			);
 		},
 		[ clientId ]

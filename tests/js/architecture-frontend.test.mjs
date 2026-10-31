@@ -273,14 +273,16 @@ test( 'featureFolder names top-level folders; root modules and other trees have 
 	assert.equal( featureFolder( `${ LEARNER }/sdk.js` ), null );
 } );
 
-test( 'feature folders: cross-folder imports need the target file listed for that pair', () => {
+test( 'feature folders: cross-folder imports go through the target public.mjs', () => {
 	const graph = graphOf( {
 		[ `${ FEATURES }/rest.mjs` ]: '',
 		[ `${ FEATURES }/learning/Panel.jsx` ]:
-			"import { request } from '../rest.mjs';\nimport { a } from '../paper/PaperCanvas.jsx';\nimport { b } from '../paper/model.mjs';\nimport './local.mjs';",
+			"import { request } from '../rest.mjs';\nimport { a } from '../paper/PaperCanvas.jsx';\nimport { b } from '../paper/model.mjs';\nimport { d } from '../paper/public.mjs';\nimport './local.mjs';",
 		[ `${ FEATURES }/learning/Other.jsx` ]:
-			"const c = import( '../paper/PaperCanvas.jsx' );",
+			"const c = import( '../paper/PaperCanvas.jsx' );\nconst e = import( '../paper/public.mjs' );",
 		[ `${ FEATURES }/learning/local.mjs` ]: '',
+		[ `${ FEATURES }/paper/public.mjs` ]:
+			"export { d } from './model.mjs';\nexport { a } from './PaperCanvas.jsx';",
 		[ `${ FEATURES }/paper/PaperCanvas.jsx` ]:
 			"import '../../../interactivity/puzzles.mjs';",
 		[ `${ FEATURES }/paper/model.mjs` ]: '',
@@ -298,7 +300,7 @@ test( 'feature folders: cross-folder imports need the target file listed for tha
 	);
 	assert.match(
 		open.failures.join( '\n' ),
-		/assets\/src\/features\/learning\/Other\.jsx, assets\/src\/features\/learning\/Panel\.jsx imports assets\/src\/features\/paper\/PaperCanvas\.jsx/
+		/assets\/src\/features\/learning\/Other\.jsx, assets\/src\/features\/learning\/Panel\.jsx imports assets\/src\/features\/paper\/PaperCanvas\.jsx; features\/learning may use features\/paper only through assets\/src\/features\/paper\/public\.mjs/
 	);
 	const listed = checkFeatureFolderImports( graph, [
 		{
@@ -314,6 +316,21 @@ test( 'feature folders: cross-folder imports need the target file listed for tha
 		/imports assets\/src\/features\/paper\/model\.mjs/
 	);
 	assert.equal( listed.allowed[ 0 ].reason, 'Canvas.' );
+} );
+
+test( 'feature folders: a public.mjs re-exports its own folder, not the files of another folder', () => {
+	const graph = graphOf( {
+		[ `${ FEATURES }/learning/Panel.jsx` ]:
+			"import { a, b } from '../paper/public.mjs';",
+		[ `${ FEATURES }/paper/public.mjs` ]:
+			"export { a } from './PaperCanvas.jsx';\nexport { b } from '../math/MathInput.jsx';\nexport { c } from '../math/public.mjs';",
+		[ `${ FEATURES }/paper/PaperCanvas.jsx` ]: '',
+		[ `${ FEATURES }/math/MathInput.jsx` ]: '',
+		[ `${ FEATURES }/math/public.mjs` ]: '',
+	} );
+	assert.deepEqual( checkFeatureFolderImports( graph ).failures, [
+		`${ FEATURES }/paper/public.mjs imports ${ FEATURES }/math/MathInput.jsx; features/paper may use features/math only through ${ FEATURES }/math/public.mjs (re-export what it needs there)`,
+	] );
 } );
 
 test( 'feature folders: stale pairs, stale files and missing reasons fail', () => {

@@ -14,14 +14,21 @@ import {
 } from './registration-api.mjs';
 
 /**
+ * The PHP signup form; its controls are read by name.
+ * @typedef {HTMLFormElement & {
+ *   elements: HTMLFormControlsCollection & Record<string, HTMLInputElement | undefined>,
+ * }} RegistrationFormElement
+ */
+
+/**
  * React fields inside the original PHP form retain third-party hook markup.
- * @param {Object} root0
- * @param          [root0.form]
- * @param          [root0.countries]
- * @param          [root0.submitHost]
- * @param          [root0.noticeHost]
- * @param          [root0.icons]
- * @param          [root0.initialValues]
+ * @param {Object}                             root0
+ * @param {RegistrationFormElement}            root0.form
+ * @param {{ value: string, label: string }[]} root0.countries
+ * @param {Element}                            root0.submitHost
+ * @param {Element}                            root0.noticeHost
+ * @param {{ on: string, off: string }}        root0.icons
+ * @param {Record<string, string>}             root0.initialValues
  */
 export function RegistrationForm( {
 	form,
@@ -43,6 +50,7 @@ export function RegistrationForm( {
 	useEffect( () => {
 		const changed = () =>
 			setAccepted( Boolean( form.elements[ 'tnc-accept' ]?.checked ) );
+		/** @param {Event} event */
 		async function submit( event ) {
 			event.preventDefault();
 			event.stopImmediatePropagation();
@@ -84,7 +92,7 @@ export function RegistrationForm( {
 			} catch ( cause ) {
 				// WordPress may include formatting in validation messages; render only text.
 				const text = new DOMParser().parseFromString(
-					cause.message ||
+					/** @type {{ message?: string }} */ ( cause ).message ||
 						__(
 							'Registration failed. Please try again.',
 							'ohmylms'
@@ -105,11 +113,18 @@ export function RegistrationForm( {
 			form.removeEventListener( 'change', changed );
 		};
 	}, [ form ] );
+	/** @param {import('react').ChangeEvent<HTMLInputElement | HTMLSelectElement>} event */
 	const update = ( event ) =>
 		setValues( ( current ) => ( {
 			...current,
 			[ event.target.name ]: event.target.value,
 		} ) );
+	/**
+	 * @param {string}  name
+	 * @param {string}  label
+	 * @param {string}  [type]
+	 * @param {boolean} [required]
+	 */
 	function field( name, label, type = 'text', required = false ) {
 		const id = 'signup-' + name.replace( '_', '-' );
 		return (

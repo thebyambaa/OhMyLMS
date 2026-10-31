@@ -33,6 +33,17 @@
  * @property {number}                 [maxUpload] Upload limit in bytes (0: no client check).
  */
 
+/**
+ * @typedef {Object} AccountContext Context of the account root, a membership link or the plan dialog.
+ * @property {string|boolean} [busy]           Upload running (`cover`, `avatar`) or cancellation running.
+ * @property {string}         [cover]          Cover URL.
+ * @property {boolean}        [hasCover]       A cover is set.
+ * @property {string}         [avatar]         Profile photo URL.
+ * @property {boolean}        [planOpen]       The plan dialog is open.
+ * @property {number}         [subscriptionId] Subscription of a cancel link.
+ * @property {number}         [orderId]        Order of a cancel link.
+ */
+
 /** Admin-ajax actions and the state nonce each one posts. */
 export const IMAGE_ACTIONS = Object.freeze( {
 	cover: {
@@ -76,11 +87,16 @@ export function imageProblem( file, maxBytes = 0 ) {
  * sent: the server derives the learner, plan and order from the subscription and refuses
  * anyone else's.
  *
- * @param {Object|null|undefined}                 context   Link context (`subscriptionId`, `orderId`).
- * @param {Object<string, string|undefined>|null} [dataset] Fallback `data-*` values (pre-L4 overrides).
+ * @param {{subscriptionId?: unknown, orderId?: unknown}|null|undefined} context   Link context (`subscriptionId`, `orderId`).
+ * @param {Object<string, string|undefined>|null}                        [dataset] Fallback `data-*` values (pre-L4 overrides).
  * @return {{subscription_id: number, order_id?: number}|null} Fields, null without a subscription.
  */
 export function cancelFields( context, dataset = null ) {
+	/**
+	 * @param {'subscriptionId'|'orderId'} contextKey Context key.
+	 * @param {string}                     dataKey    `data-*` key.
+	 * @return {number} Positive ID, else 0.
+	 */
 	const pick = ( contextKey, dataKey ) => {
 		const value = Number( context?.[ contextKey ] || dataset?.[ dataKey ] );
 		return Number.isInteger( value ) && value > 0 ? value : 0;
@@ -133,18 +149,18 @@ export function rowFragment( template ) {
 /**
  * Store definitions for `ohmylms/account`.
  *
- * @param {Object}                                                                              api               Runtime.
- * @param {() => Object}                                                                        api.getContext    `@wordpress/interactivity` getContext.
- * @param {() => {ref: HTMLElement}}                                                            api.getElement    `@wordpress/interactivity` getElement.
- * @param {(callback: EventHandler) => EventHandler}                                            api.withSyncEvent `@wordpress/interactivity` withSyncEvent.
- * @param {() => AccountState}                                                                  api.getState      Store state (server values).
- * @param {(options: Object) => Promise<{ok: boolean, data?: Object, message?: string}>}        api.request       SDK `request()`.
- * @param {(message: string, options?: {type?: string}) => unknown}                             api.toast         SDK `toast()`.
- * @param {(options: Object) => Promise<boolean>}                                               api.confirmDialog SDK `confirmDialog()`.
- * @param {(root: EventTarget, name: string, detail?: Object, cancelable?: boolean) => boolean} api.emit          SDK `emit()`.
- * @param {(container: Element, options?: Object) => () => void}                                api.trapFocus     SDK `trapFocus()`.
- * @param {Object}                                                                              [api.win]         `window` (print, reload, `afterprint`).
- * @param {(callback: () => void, ms: number) => unknown}                                       [api.later]       `setTimeout` (tests).
+ * @param {Object}                                                                                                    api               Runtime.
+ * @param {() => AccountContext}                                                                                      api.getContext    `@wordpress/interactivity` getContext.
+ * @param {() => {ref: HTMLElement|null}}                                                                             api.getElement    `@wordpress/interactivity` getElement.
+ * @param {(callback: EventHandler) => EventHandler}                                                                  api.withSyncEvent `@wordpress/interactivity` withSyncEvent.
+ * @param {() => AccountState}                                                                                        api.getState      Store state (server values).
+ * @param {(options: import('../sdk.js').RequestOptions) => Promise<{ok: boolean, data?: unknown, message?: string}>} api.request       SDK `request()`.
+ * @param {(message: string, options?: import('../sdk.js').ToastOptions) => unknown}                                  api.toast         SDK `toast()`.
+ * @param {(options: import('../sdk.js').ConfirmOptions) => Promise<boolean>}                                         api.confirmDialog SDK `confirmDialog()`.
+ * @param {(root: EventTarget, name: string, detail?: Object, cancelable?: boolean) => boolean}                       api.emit          SDK `emit()`.
+ * @param {(container: HTMLElement, options?: {onEscape?: (event: KeyboardEvent) => void}) => () => void}             api.trapFocus     SDK `trapFocus()`.
+ * @param {Window}                                                                                                    [api.win]         `window` (print, reload, `afterprint`).
+ * @param {(callback: () => void, ms: number) => unknown}                                                             [api.later]       `setTimeout` (tests).
  * @return {{state: Object, actions: Object, callbacks: Object}} Definitions.
  */
 export function createAccount( {
@@ -161,7 +177,15 @@ export function createAccount( {
 	later = ( callback, ms ) => setTimeout( callback, ms ),
 } ) {
 	const messages = () => getState()?.messages || {};
+	/** @param {string} key State nonce key. */
 	const nonce = ( key ) => getState()?.nonces?.[ key ] || '';
+	/** @return {HTMLElement} Element of the running directive. */
+	const ref = () => /** @type {HTMLElement} */ ( getElement().ref );
+	/**
+	 * @param {EventTarget} root      Event target.
+	 * @param {string}      operation Failed operation.
+	 * @param {string}      message   Message.
+	 */
 	const fail = ( root, operation, message ) => {
 		toast( message, { type: 'danger' } );
 		emit( root, 'account-error', { operation, message } );
@@ -189,7 +213,7 @@ export function createAccount( {
 	/**
 	 * @param {'cover'|'avatar'} kind    Image.
 	 * @param {HTMLInputElement} input   File input.
-	 * @param {Object}           context Root context.
+	 * @param {AccountContext}   context Root context.
 	 * @param {HTMLElement}      root    Account root.
 	 */
 	const upload = async ( kind, input, context, root ) => {
@@ -221,7 +245,12 @@ export function createAccount( {
 		} );
 		context.busy = '';
 		input.value = '';
-		const url = result.ok ? String( result.data?.url || '' ) : '';
+		const url = result.ok
+			? String(
+					/** @type {{url?: unknown}|undefined} */ ( result.data )
+						?.url || ''
+				)
+			: '';
 		if ( ! url ) {
 			fail(
 				root,
@@ -248,6 +277,10 @@ export function createAccount( {
 		}
 	};
 
+	/**
+	 * @param {AccountContext} context Root context.
+	 * @param {HTMLElement}    root    Account root.
+	 */
 	const deleteCover = async ( context, root ) => {
 		if ( context.busy ) {
 			return;
@@ -266,8 +299,9 @@ export function createAccount( {
 			);
 			return;
 		}
-		if ( result.data?.url ) {
-			context.cover = String( result.data.url );
+		const data = /** @type {{url?: unknown}|undefined} */ ( result.data );
+		if ( data?.url ) {
+			context.cover = String( data.url );
 		}
 		context.hasCover = false;
 		emit( root, 'account-image-changed', {
@@ -275,15 +309,22 @@ export function createAccount( {
 			url: context.cover || '',
 		} );
 		if ( messages().coverDeleted ) {
-			toast( messages().coverDeleted );
+			toast( /** @type {string} */ ( messages().coverDeleted ) );
 		}
 	};
 
+	/**
+	 * @param {HTMLElement}    link    Cancel link.
+	 * @param {AccountContext} context Link context.
+	 */
 	const cancel = async ( link, context ) => {
 		const fields = cancelFields(
 			context,
-			link.parentElement?.querySelector( '.ohmylms-cancel-membership' )
-				?.dataset || link.dataset
+			/** @type {HTMLElement|null|undefined} */ (
+				link.parentElement?.querySelector(
+					'.ohmylms-cancel-membership'
+				)
+			)?.dataset || link.dataset
 		);
 		if ( ! fields || context.busy ) {
 			return;
@@ -294,7 +335,7 @@ export function createAccount( {
 		}
 		const confirmed = await confirmDialog( {
 			title: messages().cancelTitle,
-			message: messages().cancelMessage,
+			message: /** @type {string} */ ( messages().cancelMessage ),
 			confirmLabel: messages().cancelConfirm,
 			cancelLabel: messages().cancelKeep,
 			tone: 'danger',
@@ -321,6 +362,7 @@ export function createAccount( {
 		later( () => win?.location?.reload(), 600 );
 	};
 
+	/** @param {HTMLElement} button Print button. */
 	const print = ( button ) => {
 		const area =
 			button.closest( '.membership-invoice-printable-area' ) ||
@@ -353,7 +395,8 @@ export function createAccount( {
 		)?.click();
 	} );
 
-	const imageHandler = ( kind ) => ( event ) => {
+	/** @param {'cover'|'avatar'} kind Image. */
+	const imageHandler = ( kind ) => ( /** @type {Event} */ event ) => {
 		const input = /** @type {HTMLInputElement} */ ( event.target );
 		const root = /** @type {HTMLElement} */ (
 			input.closest( '[data-wp-interactive="ohmylms/account"]' )
@@ -384,7 +427,7 @@ export function createAccount( {
 			uploadAvatar: imageHandler( 'avatar' ),
 			deleteCover: withSyncEvent( ( event ) => {
 				event.preventDefault();
-				const button = getElement().ref;
+				const button = ref();
 				deleteCover(
 					getContext(),
 					/** @type {HTMLElement} */ (
@@ -397,7 +440,7 @@ export function createAccount( {
 			pickKey,
 			addRow: withSyncEvent( ( event ) => {
 				event.preventDefault();
-				const button = getElement().ref;
+				const button = ref();
 				const doc = button.ownerDocument;
 				const list = doc.getElementById( button.dataset.target || '' );
 				const row = rowFragment(
@@ -445,10 +488,13 @@ export function createAccount( {
 				event.preventDefault();
 				getContext().planOpen = false;
 			} ),
+			/** @param {Event} event Click on the dialog backdrop. */
 			planBackdrop( event ) {
 				if (
-					! event.target?.closest?.(
-						'.ohmylms-membership-modal-inner'
+					! (
+						/** @type {Element|null} */ ( event.target )?.closest?.(
+							'.ohmylms-membership-modal-inner'
+						)
 					)
 				) {
 					getContext().planOpen = false;
@@ -456,11 +502,11 @@ export function createAccount( {
 			},
 			cancelMembership: withSyncEvent( ( event ) => {
 				event.preventDefault();
-				cancel( getElement().ref, getContext() );
+				cancel( ref(), getContext() );
 			} ),
 			printInvoice: withSyncEvent( ( event ) => {
 				event.preventDefault();
-				print( getElement().ref );
+				print( ref() );
 			} ),
 		},
 		callbacks: {
@@ -470,10 +516,11 @@ export function createAccount( {
 				if ( ! context.planOpen ) {
 					return undefined;
 				}
-				const modal = getElement().ref;
-				const dialog =
+				const modal = ref();
+				const dialog = /** @type {HTMLElement} */ (
 					modal.querySelector( '.ohmylms-membership-modal-inner' ) ||
-					modal;
+						modal
+				);
 				return trapFocus( dialog, {
 					onEscape: () => {
 						context.planOpen = false;

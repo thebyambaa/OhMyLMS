@@ -40,48 +40,49 @@ export function attachMatchingLines( root ) {
 		svg.setAttribute( 'width', String( base.width ) );
 		svg.setAttribute( 'height', String( base.height ) );
 		svg.textContent = '';
-		root.querySelectorAll( '.matching-definition' ).forEach(
-			( /** @type {HTMLElement} */ definition ) => {
-				const box = definition.querySelector( '.option-drop-box' );
-				const input = /** @type {HTMLInputElement|null} */ (
-					definition.querySelector( '.matching-answer-input' )
-				);
-				const linked = box?.querySelector( '.dropped' ) && input?.value;
-				definition.classList.toggle( 'is-linked', Boolean( linked ) );
-				definition.style.removeProperty( '--pair-color' );
-				if ( ! linked ) {
-					return;
-				}
-				const index = terms.findIndex(
-					( term ) => term.dataset.optionId === input.value
-				);
-				if ( index < 0 ) {
-					return;
-				}
-				const color = COLORS[ index % COLORS.length ];
-				terms[ index ].classList.add( 'is-linked' );
-				terms[ index ].style.setProperty( '--pair-color', color );
-				definition.style.setProperty( '--pair-color', color );
-				// The grid layout shows a pair by position, so it needs no line.
-				if ( root.classList.contains( 'is-grid' ) ) {
-					return;
-				}
-				const from = terms[ index ].getBoundingClientRect();
-				const to = box.getBoundingClientRect();
-				const x1 = from.right - base.left;
-				const y1 = from.top + from.height / 2 - base.top;
-				const x2 = to.left - base.left;
-				const y2 = to.top + to.height / 2 - base.top;
-				const mid = ( x1 + x2 ) / 2;
-				const path = document.createElementNS( NS, 'path' );
-				path.setAttribute(
-					'd',
-					`M${ x1 } ${ y1 } C${ mid } ${ y1 } ${ mid } ${ y2 } ${ x2 } ${ y2 }`
-				);
-				path.setAttribute( 'stroke', color );
-				svg.append( path );
+		/** @type {HTMLElement[]} */ ( [
+			...root.querySelectorAll( '.matching-definition' ),
+		] ).forEach( ( definition ) => {
+			const box = definition.querySelector( '.option-drop-box' );
+			const input = /** @type {HTMLInputElement|null} */ (
+				definition.querySelector( '.matching-answer-input' )
+			);
+			const linked = box?.querySelector( '.dropped' ) && input?.value;
+			definition.classList.toggle( 'is-linked', Boolean( linked ) );
+			definition.style.removeProperty( '--pair-color' );
+			if ( ! linked ) {
+				return;
 			}
-		);
+			const index = terms.findIndex(
+				( term ) => term.dataset.optionId === input.value
+			);
+			if ( index < 0 ) {
+				return;
+			}
+			const color = COLORS[ index % COLORS.length ];
+			terms[ index ].classList.add( 'is-linked' );
+			terms[ index ].style.setProperty( '--pair-color', color );
+			definition.style.setProperty( '--pair-color', color );
+			// The grid layout shows a pair by position, so it needs no line.
+			if ( root.classList.contains( 'is-grid' ) ) {
+				return;
+			}
+			const from = terms[ index ].getBoundingClientRect();
+			// `linked` requires the box.
+			const to = /** @type {Element} */ ( box ).getBoundingClientRect();
+			const x1 = from.right - base.left;
+			const y1 = from.top + from.height / 2 - base.top;
+			const x2 = to.left - base.left;
+			const y2 = to.top + to.height / 2 - base.top;
+			const mid = ( x1 + x2 ) / 2;
+			const path = document.createElementNS( NS, 'path' );
+			path.setAttribute(
+				'd',
+				`M${ x1 } ${ y1 } C${ mid } ${ y1 } ${ mid } ${ y2 } ${ x2 } ${ y2 }`
+			);
+			path.setAttribute( 'stroke', color );
+			svg.append( path );
+		} );
 	};
 	const schedule = () => {
 		if ( ! frame ) {

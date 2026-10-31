@@ -4,12 +4,22 @@ import { Button } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
 import { parseInlineBlankPrompt, placeBlankToken } from './inlineBlanks.mjs';
 
+/**
+ * @param {Object} root0
+ * @param {string} root0.text Prompt with {answer} blanks.
+ */
 export function InlineBlankPreview( { text } ) {
 	const { parts, answers } = parseInlineBlankPrompt( text );
 	const [ assigned, setAssigned ] = useState( () =>
-		answers.map( () => null )
+		answers.map( () => /** @type {string|null} */ ( null ) )
 	);
-	const [ selected, setSelected ] = useState( null );
+	const [ selected, setSelected ] = useState(
+		/** @type {string|null} */ ( null )
+	);
+	/**
+	 * @param {string} token Answer token ID.
+	 * @param {number} index Blank position.
+	 */
 	const place = ( token, index ) => {
 		if ( ! answers.some( ( answer ) => answer.id === token ) ) {
 			return;
@@ -86,7 +96,9 @@ export function InlineBlankPreview( { text } ) {
 						}
 						aria-pressed={ selected === answer.id }
 						draggable
-						onDragStart={ ( event ) =>
+						onDragStart={ (
+							/** @type {import('react').DragEvent} */ event
+						) =>
 							event.dataTransfer.setData(
 								'text/plain',
 								answer.id
@@ -96,7 +108,9 @@ export function InlineBlankPreview( { text } ) {
 						onDoubleClick={ () =>
 							place( answer.id, assigned.indexOf( null ) )
 						}
-						onKeyDown={ ( event ) => {
+						onKeyDown={ (
+							/** @type {import('react').KeyboardEvent} */ event
+						) => {
 							if ( event.key === 'Enter' ) {
 								event.preventDefault();
 								place( answer.id, assigned.indexOf( null ) );

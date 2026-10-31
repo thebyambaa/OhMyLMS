@@ -9,6 +9,7 @@ import { isAnswered, emit } from 'ohmylms/interactivity';
 import { createQuizPlayer } from './player.js';
 import { sendInline } from './inline.js';
 
+/** @type {import('./inline.js').InlineRuntime} */
 const inlineRuntime = {
 	request: ( /** @type {Parameters<typeof fetch>} */ ...args ) =>
 		fetch( ...args ),
@@ -32,9 +33,14 @@ const { actions } = store(
 		withScope,
 		isAnswered,
 		emit,
-		expire: () => actions.expire(),
-		inlineSubmit: ( form, operation ) =>
-			actions.inlineSubmit( form, operation ),
+		expire: /** @return {unknown} Action result. */ () => actions.expire(),
+		inlineSubmit:
+			/**
+			 * @param {HTMLFormElement} form      Quiz form.
+			 * @param {string}          operation Submit, exit or timeout.
+			 * @return {unknown} Action result.
+			 */
+			( form, operation ) => actions.inlineSubmit( form, operation ),
 	} )
 );
 store( 'ohmylms/quiz', {
@@ -48,6 +54,10 @@ store( 'ohmylms/quiz', {
 			context.submitting = true;
 			yield sendInline( context, event.target, 'start', inlineRuntime );
 		} ),
+		/**
+		 * @param {HTMLFormElement} form      Quiz form.
+		 * @param {string}          operation Submit, exit or timeout.
+		 */
 		*inlineSubmit( form, operation ) {
 			yield sendInline( getContext(), form, operation, inlineRuntime );
 		},

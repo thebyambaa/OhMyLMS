@@ -1,14 +1,22 @@
 const { __ } = window.wp.i18n;
 
+/** @typedef {import('./game-player.mjs').GameChoice} GameChoice */
+
 /**
  * Optional arcade surface. Stationary native answer buttons remain available.
  *
  * @param {HTMLElement} area Activity region.
- * @param {Object} data Safe round.
+ * @param {import('./game-player.mjs').GameState} data Safe round (`play` phase, so `choices` is set).
  * @param {(command: string, value?: string) => Promise<void>} act Save practice action.
  * @return {() => void} Stop this surface's animation.
  */
 export function renderArcade( area, data, act ) {
+	/**
+	 * @template {keyof HTMLElementTagNameMap} K
+	 * @param {K}      tag    Tag name.
+	 * @param {string} [text] Text content.
+	 * @return {HTMLElementTagNameMap[K]} Element.
+	 */
 	const make = ( tag, text = '' ) => {
 		const node = area.ownerDocument.createElement( tag );
 		node.textContent = text;
@@ -30,15 +38,25 @@ export function renderArcade( area, data, act ) {
 	area.append( board, status );
 	let stopped = false;
 	let chosen = false;
-	let frame;
+	let frame = 0;
+	/** @type {ReturnType<typeof setInterval>|undefined} */
 	let interval;
+	/** @type {ReturnType<typeof setTimeout>|undefined} */
 	let falling;
+	/**
+	 * @param {string} command Command.
+	 * @param {string} [value] Answer token.
+	 */
 	const send = ( command, value = '' ) => {
 		if ( chosen || stopped ) return;
 		chosen = true;
 		void act( command, value );
 	};
-	const choices = data.choices;
+	const choices = /** @type {GameChoice[]} */ ( data.choices );
+	/**
+	 * @param {GameChoice} choice Answer.
+	 * @return {HTMLButtonElement} Its button on the board.
+	 */
 	const option = ( choice ) => {
 		const node = make( 'button', choice.text );
 		node.type = 'button';
@@ -269,6 +287,7 @@ export function renderArcade( area, data, act ) {
 				paint();
 			};
 			let previous = performance.now();
+			/** @param {number} now Frame time. */
 			const animate = ( now ) => {
 				if ( stopped || chosen ) return;
 				const elapsed = Math.min( 0.1, ( now - previous ) / 1000 );
@@ -302,12 +321,12 @@ export function renderArcade( area, data, act ) {
 		} );
 		board.addEventListener( 'keydown', ( event ) => {
 			/** @type {[number, number]|undefined} */
-			const delta = {
+			const delta = /** @type {Object<string, [number, number]>} */ ( {
 				ArrowLeft: [ -1, 0 ],
 				ArrowRight: [ 1, 0 ],
 				ArrowUp: [ 0, -1 ],
 				ArrowDown: [ 0, 1 ],
-			}[ event.key ];
+			} )[ event.key ];
 			if ( delta ) {
 				event.preventDefault();
 				move( ...delta );

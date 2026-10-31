@@ -32,23 +32,39 @@ import {
 	utcToLocalInput,
 } from './model.mjs';
 import { PoolsEditor } from './PoolsEditor';
-import { useNativeAssessmentSettings } from '../learning/NativeAssessmentSettings';
+import { useNativeAssessmentSettings } from '../learning/public.mjs';
+
+/** @typedef {import('./model.mjs').AssessmentSettings} AssessmentSettings */
+/** @typedef {import('./model.mjs').AccommodationRow} AccommodationRow */
+/** @typedef {{status: 'success'|'error', text: string}} Message */
 
 /**
  * Assessment settings for the quiz editor: quiz/exam preset, feedback release,
  * availability window, sections with slot marks, extra time, and published revisions.
  * Stored separately from the legacy quiz settings, then frozen into each revision.
- * @param props
+ * @param {Object}  props          Component props.
+ * @param {number}  [props.quizId] Quiz ID; read from the hash route when missing.
+ * @param {string}  [props.hash]   Admin hash route.
+ * @param {boolean} [props.native] Rendered in the native quiz editor.
  */
 export function AssessmentSettingsPanel( props ) {
 	const quizId =
 		props.quizId || quizIdFromHash( props.hash || window.location.hash );
-	const [ localSettings, setLocalSettings ] = useState( null );
+	const [ localSettings, setLocalSettings ] = useState(
+		/** @type {AssessmentSettings|null} */ ( null )
+	);
 	const native = useNativeAssessmentSettings( Boolean( props.native ) );
-	const settings = props.native ? native.settings : localSettings;
+	const settings = props.native
+		? /** @type {AssessmentSettings|undefined} */ ( native.settings )
+		: localSettings;
+	/** @type {(next: AssessmentSettings) => void} */
 	const setSettings = props.native ? native.setSettings : setLocalSettings;
-	const [ questions, setQuestions ] = useState( [] );
-	const [ revisions, setRevisions ] = useState( [] );
+	const [ questions, setQuestions ] = useState(
+		/** @type {{id: number, name: string, marks: number}[]} */ ( [] )
+	);
+	const [ revisions, setRevisions ] = useState(
+		/** @type {import('./api.mjs').QuizRevision[]} */ ( [] )
+	);
 	const [ accommodations, updateAccommodations ] = useState( () =>
 		accommodationRows( native.settings?.accommodations || {} )
 	);
@@ -67,19 +83,24 @@ export function AssessmentSettingsPanel( props ) {
 			);
 		}
 	}, [ props.native, accommodationSource ] );
+	/** @param {AccommodationRow[]} rows Extra time rows. */
 	const setAccommodations = ( rows ) => {
 		updateAccommodations( rows );
 		if ( props.native ) {
 			const next = accommodationMap( rows );
 			lastAccommodations.current = JSON.stringify( next );
-			setSettings( {
-				...settings,
-				accommodations: next,
-			} );
+			setSettings(
+				/** @type {AssessmentSettings} */ ( {
+					...settings,
+					accommodations: next,
+				} )
+			);
 		}
 	};
 	const [ saving, setSaving ] = useState( false );
-	const [ message, setMessage ] = useState( null );
+	const [ message, setMessage ] = useState(
+		/** @type {Message|null} */ ( null )
+	);
 	useEffect( () => {
 		if ( ! quizId ) {
 			return;
@@ -120,11 +141,18 @@ export function AssessmentSettingsPanel( props ) {
 	if ( ! quizId ) {
 		return null;
 	}
+	/**
+	 * @param {keyof AssessmentSettings} key Rule to change.
+	 * @return {(value: unknown) => void} Setter of the rule.
+	 */
 	const set = ( key ) => ( value ) =>
-		setSettings( {
-			...settings,
-			[ key ]: value,
-		} );
+		setSettings(
+			/** @type {AssessmentSettings} */ ( {
+				...settings,
+				[ key ]: value,
+			} )
+		);
+	/** @param {Record<string, unknown>} [extra] Additional fields, such as `preset`. */
 	async function save( extra = {} ) {
 		setSaving( true );
 		setMessage( null );
@@ -149,7 +177,9 @@ export function AssessmentSettingsPanel( props ) {
 		} catch ( cause ) {
 			setMessage( {
 				status: 'error',
-				text: cause.message || __( 'Could not save.', 'ohmylms' ),
+				text:
+					/** @type {{message?: string}} */ ( cause ).message ||
+					__( 'Could not save.', 'ohmylms' ),
 			} );
 		} finally {
 			setSaving( false );
@@ -196,26 +226,31 @@ export function AssessmentSettingsPanel( props ) {
 									<SelectControl
 										label={ __( 'Kind', 'ohmylms' ) }
 										value={ settings.kind }
-										options={ [
-											{
-												value: 'quiz',
-												label: __( 'Quiz', 'ohmylms' ),
-											},
-											{
-												value: 'exam',
-												label: __(
-													'Exam (fixed paper)',
-													'ohmylms'
-												),
-											},
-											{
-												value: 'practice',
-												label: __(
-													'Practice',
-													'ohmylms'
-												),
-											},
-										] }
+										options={
+											/** @type {{value: string, label: string}[]} */ ( [
+												{
+													value: 'quiz',
+													label: __(
+														'Quiz',
+														'ohmylms'
+													),
+												},
+												{
+													value: 'exam',
+													label: __(
+														'Exam (fixed paper)',
+														'ohmylms'
+													),
+												},
+												{
+													value: 'practice',
+													label: __(
+														'Practice',
+														'ohmylms'
+													),
+												},
+											] )
+										}
 										onChange={ set( 'kind' ) }
 									/>
 								) }
@@ -674,7 +709,7 @@ export function AssessmentSettingsPanel( props ) {
 													'Revision %1$d · %2$s marks · %3$d attempts · %4$s UTC',
 													'ohmylms'
 												),
-												revision.revision_no,
+												Number( revision.revision_no ),
 												String(
 													Number(
 														revision.total_marks

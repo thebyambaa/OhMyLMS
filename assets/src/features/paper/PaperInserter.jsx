@@ -5,9 +5,8 @@ import { DropdownMenu } from '@wordpress/components';
 import { addFilter } from '@wordpress/hooks';
 import { createHigherOrderComponent } from '@wordpress/compose';
 import { __ } from '@wordpress/i18n';
-import { BankPicker } from '../question-bank/BankPicker';
-import { ImportDialog } from '../content-hub/ImportDialog';
-import { ExamsPage } from '../content-hub/ExamsPage';
+import { BankPicker } from '../question-bank/public.mjs';
+import { ExamsPage, ImportDialog } from '../content-hub/public.mjs';
 
 /**
  * Insert at a stable document anchor, including after an asynchronous import.
@@ -25,10 +24,14 @@ export function PaperInserter( { clientId = '' } ) {
 				: 0,
 		[]
 	);
+	/** @param {import('@wordpress/blocks').BlockInstance[]} blocks */
 	const insert = ( blocks ) => {
 		const editor = select( 'core/block-editor' );
 		const exists = clientId && editor.getBlock( clientId );
-		const root = exists ? editor.getBlockRootClientId( clientId ) : '';
+		// The root of an existing block is a client ID, or '' at the top level.
+		const root = exists
+			? /** @type {string} */ ( editor.getBlockRootClientId( clientId ) )
+			: '';
 		const index = exists
 			? editor.getBlockIndex( clientId, root ) + 1
 			: undefined;
@@ -43,6 +46,7 @@ export function PaperInserter( { clientId = '' } ) {
 						?.questionId
 			)
 			.filter( Boolean );
+	/** @param {Array<number|string>} ids Question IDs. */
 	const insertQuestions = ( ids ) => {
 		const existing = new Set( existingIds().map( Number ) );
 		insert(

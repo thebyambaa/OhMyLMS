@@ -21,11 +21,11 @@ export function Modal( {
 	className = '',
 	children,
 } ) {
-	/** @type {import('react').MutableRefObject<HTMLDialogElement>} */
-	const ref = useRef();
+	/** @type {import('react').RefObject<HTMLDialogElement>} */
+	const ref = useRef( null );
 	const id = useId();
 	useEffect( () => {
-		const dialog = ref.current;
+		const dialog = /** @type {HTMLDialogElement} */ ( ref.current );
 		const previousFocus = /** @type {HTMLElement|null} */ (
 			document.activeElement
 		);
@@ -81,7 +81,9 @@ export function Modal( {
 					first?.focus();
 				}
 			},
-			onCancel: ( event ) => {
+			onCancel: (
+				/** @type {import('react').SyntheticEvent<HTMLDialogElement>} */ event
+			) => {
 				event.preventDefault();
 				onRequestClose?.();
 			},

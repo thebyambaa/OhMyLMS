@@ -10,8 +10,8 @@ import { VisualFigure } from './PaperVisualViews';
 /**
  * Answer key lines.
  *
- * @param {Object}   props       Properties.
- * @param {string[]} props.lines Key lines.
+ * @param {Object}   props         Properties.
+ * @param {string[]} [props.lines] Key lines.
  * @return {React.ReactElement|null} Key.
  */
 function KeyLines( { lines } ) {
@@ -30,8 +30,8 @@ function KeyLines( { lines } ) {
 /**
  * Option text with an optional image.
  *
- * @param {Object} props      Properties.
- * @param {Object} props.item Item with text and image.
+ * @param {Object}                               props      Properties.
+ * @param {import('./paperTypes.mjs').PaperItem} props.item Item with text and image.
  * @return {React.ReactElement} Option content.
  */
 function ItemContent( { item } ) {
@@ -63,8 +63,8 @@ function Blank( { label, unit } ) {
 /**
  * Body of a typed question.
  *
- * @param {Object} props       Properties.
- * @param {Object} props.paper Paper model.
+ * @param {Object}                                        props       Properties.
+ * @param {import('./paperModel.mjs').PaperQuestionModel} props.paper Paper model.
  * @return {React.ReactElement|null} Body.
  */
 export function TypedBody( { paper } ) {
@@ -309,26 +309,31 @@ export function TypedBody( { paper } ) {
 						</tbody>
 					</table>
 					<div className="ohmylms-print-clues">
-						{ [
-							[ __( 'Across', 'ohmylms' ), paper.across ],
-							[ __( 'Down', 'ohmylms' ), paper.down ],
-						]
-							.filter( ( [ , clues ] ) => clues.length )
-							.map( ( [ heading, clues ] ) => (
-								<div key={ heading }>
-									<p className="ohmylms-print-clues-heading">
-										{ heading }
-									</p>
-									<ol>
-										{ clues.map( ( clue ) => (
-											<li key={ clue.number }>
-												<strong>{ clue.number }</strong>{ ' ' }
-												{ clue.text } ({ clue.length })
-											</li>
-										) ) }
-									</ol>
-								</div>
-							) ) }
+						{
+							/** @type {Array<[string, import('./paperTypes.mjs').PaperClue[]]>} */ ( [
+								[ __( 'Across', 'ohmylms' ), paper.across ],
+								[ __( 'Down', 'ohmylms' ), paper.down ],
+							] )
+								.filter( ( [ , clues ] ) => clues.length )
+								.map( ( [ heading, clues ] ) => (
+									<div key={ heading }>
+										<p className="ohmylms-print-clues-heading">
+											{ heading }
+										</p>
+										<ol>
+											{ clues.map( ( clue ) => (
+												<li key={ clue.number }>
+													<strong>
+														{ clue.number }
+													</strong>{ ' ' }
+													{ clue.text } (
+													{ clue.length })
+												</li>
+											) ) }
+										</ol>
+									</div>
+								) )
+						}
 					</div>
 				</div>
 			);

@@ -15,7 +15,7 @@ const { code } = transformSync( source, {
 	babelrc: false,
 	presets: [ [ '@babel/preset-react', { pragma: 'createElement' } ] ],
 } );
-function harness( apiFetch ) {
+function harness( request ) {
 	let state = null;
 	let effect;
 	const scope = {
@@ -35,7 +35,7 @@ function harness( apiFetch ) {
 			effect = callback;
 		},
 		__: ( text ) => text,
-		window: { wp: { apiFetch } },
+		request,
 	};
 	const render = new Function(
 		...Object.keys( scope ),

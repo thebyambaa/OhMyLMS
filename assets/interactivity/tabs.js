@@ -5,9 +5,12 @@ import {
 	withSyncEvent,
 } from '@wordpress/interactivity';
 import { emit } from 'ohmylms/interactivity';
+/** @param {HTMLElement} button Tab (always inside the store root, with `data-target`). */
 function select( button ) {
-	const root = button.closest( '[data-wp-interactive="ohmylms/tabs"]' );
-	const key = button.dataset.target.slice( 1 );
+	const root = /** @type {Element} */ (
+		button.closest( '[data-wp-interactive="ohmylms/tabs"]' )
+	);
+	const key = /** @type {string} */ ( button.dataset.target ).slice( 1 );
 	if (
 		! emit(
 			root,
@@ -41,7 +44,7 @@ store( 'ohmylms/tabs', {
 		select: withSyncEvent( ( event ) => {
 			event.preventDefault();
 			event.stopPropagation();
-			select( getElement().ref );
+			select( /** @type {HTMLElement} */ ( getElement().ref ) );
 		} ),
 		key: withSyncEvent( ( event ) => {
 			if (
@@ -53,9 +56,9 @@ store( 'ohmylms/tabs', {
 			}
 			event.preventDefault();
 			event.stopPropagation();
-			const button = getElement().ref;
-			const root = button.closest(
-				'[data-wp-interactive="ohmylms/tabs"]'
+			const button = /** @type {HTMLElement} */ ( getElement().ref );
+			const root = /** @type {Element} */ (
+				button.closest( '[data-wp-interactive="ohmylms/tabs"]' )
 			);
 			const buttons = /** @type {HTMLElement[]} */ ( [
 				...root.querySelectorAll( '[role=tab]' ),

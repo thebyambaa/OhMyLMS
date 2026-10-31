@@ -1,20 +1,51 @@
-const { __, sprintf } = window.wp.i18n;
+// wp-i18n loads on learner pages and in the editor preview (assets/src/features/question-editor).
+const { __, sprintf } = /** @type {NonNullable<Window['wp']>} */ ( window.wp )
+	.i18n;
+
+/**
+ * @typedef {Object} PuzzleClue
+ * @property {string}          id        Clue id.
+ * @property {number}          number    Clue number.
+ * @property {string}          clue      Clue text (the word, for wordsearch).
+ * @property {number}          length    Letters.
+ * @property {number}          row       First row.
+ * @property {number}          col       First column.
+ * @property {'across'|'down'} direction Crossword direction.
+ */
+
+/**
+ * @typedef {Object} PuzzleConfig
+ * @property {number}       [size]  Grid size (always sent).
+ * @property {string[]}     [cells] Crossword: `r<row>c<col>` keys of letter cells.
+ * @property {string[][]}   [grid]  Wordsearch: letters by row and column.
+ * @property {PuzzleClue[]} [clues] Clues or words.
+ */
 
 /**
  * Shared learner controls and editor preview. This receives public settings only.
  *
  * @param {HTMLElement} root Puzzle region.
  * @param {string} type Crossword or wordsearch.
- * @param {Object} config Frozen public layout.
+ * @param {PuzzleConfig} config Frozen public layout.
  * @return {() => void} Detach optional listeners.
  */
 export function buildPuzzle( root, type, config ) {
 	const doc = root.ownerDocument;
+	/**
+	 * @template {keyof HTMLElementTagNameMap} K
+	 * @param {K}      tag    Tag name.
+	 * @param {string} [text] Text content.
+	 * @return {HTMLElementTagNameMap[K]} Element.
+	 */
 	const create = ( tag, text = '' ) => {
 		const node = doc.createElement( tag );
 		node.textContent = text;
 		return node;
 	};
+	/**
+	 * @param {string} text Typed text.
+	 * @return {string[]} Upper-case graphemes.
+	 */
 	const letters = ( text ) =>
 		typeof Intl.Segmenter === 'function'
 			? Array.from(
@@ -24,12 +55,16 @@ export function buildPuzzle( root, type, config ) {
 					( part ) => part.segment
 				)
 			: text.toUpperCase().match( /\P{M}\p{M}*/gu ) || [];
-	const size = config.size;
+	const size = /** @type {number} */ ( config.size );
+	// Crosswords always carry `cells` and wordsearches `grid`, in `r<row>c<col>` form.
+	const cellKeys = /** @type {string[]} */ ( config.cells );
+	const letterGrid = /** @type {string[][]} */ ( config.grid );
 	const occupied =
 		type === 'crossword'
-			? config.cells.map( ( key ) =>
-					key
-						.match( /^r(\d+)c(\d+)$/ )
+			? cellKeys.map( ( key ) =>
+					/** @type {RegExpMatchArray} */ (
+						key.match( /^r(\d+)c(\d+)$/ )
+					)
 						.slice( 1 )
 						.map( Number )
 				)
@@ -47,6 +82,7 @@ export function buildPuzzle( root, type, config ) {
 		prefix && ! root.closest( '[data-autosave]' )
 			? `ohmylms:puzzle:${ window.location.pathname }${ window.location.search }:${ prefix }`
 			: null;
+	/** @type {Object<string, unknown>} */
 	let cached = {};
 	try {
 		cached = storage
@@ -57,17 +93,23 @@ export function buildPuzzle( root, type, config ) {
 	}
 	const old = Object.fromEntries(
 		Array.from(
-			root.querySelectorAll( '[data-answer-key]' ),
-			( /** @type {HTMLInputElement} */ input ) => [
-				input.dataset.answerKey,
-				input.value,
-			]
+			/** @type {NodeListOf<HTMLInputElement>} */ (
+				root.querySelectorAll( '[data-answer-key]' )
+			),
+			( input ) =>
+				/** @type {[string, string]} */ ( [
+					input.dataset.answerKey,
+					input.value,
+				] )
 		)
 	);
 	root.replaceChildren();
 	root.classList.add( 'ohmylms-puzzle' );
+	/** @type {Map<string, HTMLInputElement>} */
 	const fields = new Map();
+	/** @type {Map<string, HTMLInputElement|HTMLButtonElement>} */
 	const cellNodes = new Map();
+	/** @param {HTMLElement} field Changed answer field. */
 	const changed = ( field ) => {
 		try {
 			if ( storage )
@@ -91,6 +133,11 @@ export function buildPuzzle( root, type, config ) {
 			new CustomEvent( 'ohmylms:puzzle-changed', { bubbles: true } )
 		);
 	};
+	/**
+	 * @param {string}  key      Answer key.
+	 * @param {boolean} [hidden] Hidden field (wordsearch selections).
+	 * @return {HTMLInputElement} Answer field.
+	 */
 	const field = ( key, hidden = false ) => {
 		const input = create( 'input' );
 		input.type = hidden ? 'hidden' : 'text';
@@ -135,7 +182,8 @@ export function buildPuzzle( root, type, config ) {
 			);
 		}
 	} );
-	if ( root.requestFullscreen ) toolbar.append( fullscreen );
+	if ( typeof root.requestFullscreen === 'function' )
+		toolbar.append( fullscreen );
 	toolbar.append( status );
 	root.append( toolbar );
 	const layout = create( 'div' );
@@ -144,7 +192,7 @@ export function buildPuzzle( root, type, config ) {
 	scroll.className = 'ohmylms-puzzle-scroll';
 	const grid = create( 'div' );
 	grid.className = 'ohmylms-puzzle-grid';
-	grid.style.setProperty( '--puzzle-size', lastCol - firstCol + 1 );
+	grid.style.setProperty( '--puzzle-size', String( lastCol - firstCol + 1 ) );
 	grid.setAttribute( 'role', 'group' );
 	grid.setAttribute(
 		'aria-label',
@@ -157,7 +205,16 @@ export function buildPuzzle( root, type, config ) {
 	sidebar.className = 'ohmylms-puzzle-clues';
 	layout.append( scroll, sidebar );
 	root.append( layout );
+	/**
+	 * @param {number} row Row.
+	 * @param {number} col Column.
+	 * @return {string} Cell key.
+	 */
 	const keyFor = ( row, col ) => `r${ row }c${ col }`;
+	/**
+	 * @param {PuzzleClue} clue Clue.
+	 * @return {string[]} Its cell keys, in order.
+	 */
 	const clueCells = ( clue ) =>
 		Array.from( { length: clue.length }, ( _, i ) =>
 			keyFor(
@@ -166,15 +223,22 @@ export function buildPuzzle( root, type, config ) {
 			)
 		);
 	let active = clues[ 0 ];
+	// Cells sit in their grid box, and clue cells exist, before any of these helpers run.
+	/**
+	 * @param {PuzzleClue} clue    Clue to highlight.
+	 * @param {boolean}    [focus] Move focus to its first empty cell.
+	 */
 	const selectWord = ( clue, focus = true ) => {
 		active = clue;
 		const cells = clueCells( clue );
 		for ( const [ key, node ] of cellNodes )
-			node.parentElement.classList.toggle(
+			/** @type {HTMLElement} */ ( node.parentElement ).classList.toggle(
 				'is-active',
 				cells.includes( key )
 			);
-		for ( const button of sidebar.querySelectorAll( '[data-clue]' ) )
+		for ( const button of /** @type {NodeListOf<HTMLElement>} */ (
+			sidebar.querySelectorAll( '[data-clue]' )
+		) )
 			button.setAttribute(
 				'aria-pressed',
 				button.dataset.clue === clue.id ? 'true' : 'false'
@@ -183,18 +247,32 @@ export function buildPuzzle( root, type, config ) {
 		if ( focus )
 			(
 				cells
-					.map( ( key ) => cellNodes.get( key ) )
+					.map(
+						( key ) =>
+							/** @type {HTMLInputElement} */ (
+								cellNodes.get( key )
+							)
+					)
 					.find( ( input ) => ! input.value ) ||
 				cellNodes.get( cells[ 0 ] )
 			)?.focus();
 	};
+	/**
+	 * @param {string} key Current cell.
+	 * @param {number} dr  Row step.
+	 * @param {number} dc  Column step.
+	 */
 	const move = ( key, dr, dc ) => {
-		const [ , row, col ] = key.match( /^r(\d+)c(\d+)$/ );
+		const [ , row, col ] = /** @type {RegExpMatchArray} */ (
+			key.match( /^r(\d+)c(\d+)$/ )
+		);
 		cellNodes
 			.get( keyFor( Number( row ) + dr, Number( col ) + dc ) )
 			?.focus();
 	};
+	/** @type {string|null} */
 	let start = null;
+	/** @type {HTMLInputElement[]} */
 	const paths = [];
 	const selectionStatus = () => {
 		status.textContent = sprintf(
@@ -207,6 +285,10 @@ export function buildPuzzle( root, type, config ) {
 		);
 	};
 	let paintPaths = () => {};
+	/**
+	 * @param {string} value `r1c1:r2c2` selection.
+	 * @return {string[]} Cell keys on the line, empty when it is not a valid line.
+	 */
 	const parsePath = ( value ) => {
 		const match = value.match( /^r(\d+)c(\d+):r(\d+)c(\d+)$/ );
 		if ( ! match ) return [];
@@ -227,6 +309,7 @@ export function buildPuzzle( root, type, config ) {
 			)
 		);
 	};
+	/** @param {string} key Selected cell. */
 	const choosePath = ( key ) => {
 		if ( start === null ) {
 			start = key;
@@ -263,7 +346,7 @@ export function buildPuzzle( root, type, config ) {
 			const key = keyFor( row, col );
 			const box = create( 'div' );
 			box.className = 'ohmylms-puzzle-cell';
-			if ( type === 'crossword' && ! config.cells.includes( key ) ) {
+			if ( type === 'crossword' && ! cellKeys.includes( key ) ) {
 				box.classList.add( 'is-empty' );
 				grid.append( box );
 				continue;
@@ -271,7 +354,7 @@ export function buildPuzzle( root, type, config ) {
 			const node =
 				type === 'crossword'
 					? field( key )
-					: create( 'button', config.grid[ row ][ col ] );
+					: create( 'button', letterGrid[ row ][ col ] );
 			node.dataset.puzzleCell = key;
 			node.setAttribute(
 				'aria-label',
@@ -283,17 +366,20 @@ export function buildPuzzle( root, type, config ) {
 					row + 1,
 					col + 1,
 					type === 'wordsearch'
-						? `, ${ config.grid[ row ][ col ] }`
+						? `, ${ letterGrid[ row ][ col ] }`
 						: ''
 				)
 			);
 			if ( type === 'crossword' ) {
-				node.maxLength = 100;
+				/** @type {HTMLInputElement} */ ( node ).maxLength = 100;
 				const starts = clues.filter(
 					( clue ) => clue.row === row && clue.col === col
 				);
 				if ( starts.length ) {
-					const number = create( 'small', starts[ 0 ].number );
+					const number = create(
+						'small',
+						String( starts[ 0 ].number )
+					);
 					number.setAttribute( 'aria-hidden', 'true' );
 					box.append( number );
 				}
@@ -306,13 +392,15 @@ export function buildPuzzle( root, type, config ) {
 							candidates[ 0 ],
 						false
 					);
-					node.select();
+					/** @type {HTMLInputElement} */ ( node ).select();
 				} );
 				node.addEventListener( 'click', () => {
 					if ( candidates.length > 1 )
 						selectWord(
-							candidates.find(
-								( clue ) => clue.id !== active?.id
+							/** @type {PuzzleClue} */ (
+								candidates.find(
+									( clue ) => clue.id !== active?.id
+								)
 							),
 							false
 						);
@@ -328,8 +416,8 @@ export function buildPuzzle( root, type, config ) {
 					value
 						.slice( 0, cells.length - index )
 						.forEach( ( letter, offset ) => {
-							const target = cellNodes.get(
-								cells[ index + offset ]
+							const target = /** @type {HTMLInputElement} */ (
+								cellNodes.get( cells[ index + offset ] )
 							);
 							target.value = /^\p{L}\p{M}*$/u.test( letter )
 								? letter
@@ -348,46 +436,59 @@ export function buildPuzzle( root, type, config ) {
 						?.focus();
 				};
 				node.addEventListener( 'input', ( event ) => {
-					if ( event.isTrusted && ! event.isComposing ) applyInput();
+					if (
+						event.isTrusted &&
+						! ( /** @type {InputEvent} */ ( event ).isComposing )
+					)
+						applyInput();
 				} );
 				node.addEventListener( 'compositionend', applyInput );
 			} else {
 				node.type = 'button';
-				node.addEventListener( 'click', ( event ) => {
-					if ( event.detail && Date.now() < suppressClickUntil )
-						return;
-					choosePath( key );
-				} );
+				/** @type {HTMLElement} */ ( node ).addEventListener(
+					'click',
+					( event ) => {
+						if ( event.detail && Date.now() < suppressClickUntil )
+							return;
+						choosePath( key );
+					}
+				);
 			}
-			node.addEventListener( 'keydown', ( event ) => {
-				const arrows = {
-					ArrowLeft: [ 0, -1 ],
-					ArrowRight: [ 0, 1 ],
-					ArrowUp: [ -1, 0 ],
-					ArrowDown: [ 1, 0 ],
-				};
-				if ( arrows[ event.key ] ) {
-					event.preventDefault();
-					move( key, ...arrows[ event.key ] );
+			/** @type {HTMLElement} */ ( node ).addEventListener(
+				'keydown',
+				( event ) => {
+					/** @type {Object<string, [number, number]>} */
+					const arrows = {
+						ArrowLeft: [ 0, -1 ],
+						ArrowRight: [ 0, 1 ],
+						ArrowUp: [ -1, 0 ],
+						ArrowDown: [ 1, 0 ],
+					};
+					if ( arrows[ event.key ] ) {
+						event.preventDefault();
+						move( key, ...arrows[ event.key ] );
+					}
+					if (
+						type === 'crossword' &&
+						event.key === 'Backspace' &&
+						! node.value
+					) {
+						event.preventDefault();
+						const cells = clueCells( active );
+						cellNodes
+							.get( cells[ cells.indexOf( key ) - 1 ] )
+							?.focus();
+					}
+					if ( event.key === 'Escape' ) {
+						start = null;
+						paintPaths();
+						status.textContent = __(
+							'Selection cancelled.',
+							'ohmylms'
+						);
+					}
 				}
-				if (
-					type === 'crossword' &&
-					event.key === 'Backspace' &&
-					! node.value
-				) {
-					event.preventDefault();
-					const cells = clueCells( active );
-					cellNodes.get( cells[ cells.indexOf( key ) - 1 ] )?.focus();
-				}
-				if ( event.key === 'Escape' ) {
-					start = null;
-					paintPaths();
-					status.textContent = __(
-						'Selection cancelled.',
-						'ohmylms'
-					);
-				}
-			} );
+			);
 			cellNodes.set( key, node );
 			box.append( node );
 			grid.append( box );
@@ -443,20 +544,20 @@ export function buildPuzzle( root, type, config ) {
 					'aria-pressed',
 					marked.has( key ) ? 'true' : 'false'
 				);
-				node.parentElement.classList.toggle(
-					'is-selected',
-					marked.has( key )
-				);
-				node.parentElement.classList.toggle(
-					'is-active',
-					key === start
-				);
+				const box = /** @type {HTMLElement} */ ( node.parentElement );
+				box.classList.toggle( 'is-selected', marked.has( key ) );
+				box.classList.toggle( 'is-active', key === start );
 			}
 			paths.forEach( ( input ) => {
 				const cells = parsePath( input.value );
 				if ( ! cells.length ) return;
 				const text = cells
-					.map( ( key ) => cellNodes.get( key ).textContent )
+					.map(
+						( key ) =>
+							/** @type {HTMLButtonElement} */ (
+								cellNodes.get( key )
+							).textContent
+					)
 					.join( '' );
 				const remove = create(
 					'button',
@@ -478,11 +579,14 @@ export function buildPuzzle( root, type, config ) {
 				selected.append( remove );
 			} );
 		};
+		/** @type {string|null|undefined} */
 		let pointerStart;
 		grid.addEventListener( 'pointerdown', ( event ) => {
-			pointerStart =
-				event.target.closest( '[data-puzzle-cell]' )?.dataset
-					.puzzleCell;
+			pointerStart = /** @type {HTMLElement|null} */ (
+				/** @type {Element} */ ( event.target ).closest(
+					'[data-puzzle-cell]'
+				)
+			)?.dataset.puzzleCell;
 		} );
 		grid.addEventListener( 'pointerup', ( event ) => {
 			const end = /** @type {HTMLElement|null|undefined} */ (
@@ -497,7 +601,7 @@ export function buildPuzzle( root, type, config ) {
 				pointerStart !== end.dataset.puzzleCell
 			) {
 				start = pointerStart;
-				choosePath( end.dataset.puzzleCell );
+				choosePath( /** @type {string} */ ( end.dataset.puzzleCell ) );
 				suppressClickUntil = Date.now() + 300;
 			}
 			pointerStart = null;
@@ -506,8 +610,15 @@ export function buildPuzzle( root, type, config ) {
 		selectionStatus();
 	}
 	const form = root.closest( 'form' );
+	/** @param {Event} event `ohmylms:answer-restored`. */
 	const restored = ( event ) => {
-		if ( String( event.detail?.questionId ) === root.dataset.questionId ) {
+		if (
+			String(
+				/** @type {CustomEvent<{questionId?: unknown}|null>} */ (
+					event
+				).detail?.questionId
+			) === root.dataset.questionId
+		) {
 			paintPaths();
 			if ( type === 'wordsearch' ) selectionStatus();
 			else if ( active ) selectWord( active, false );

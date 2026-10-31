@@ -22,7 +22,7 @@ import {
 import { SVG, Path } from '@wordpress/primitives';
 import { __ } from '@wordpress/i18n';
 import { createBlock } from '@wordpress/blocks';
-import { searchBank } from '../question-bank/api.mjs';
+import { searchBank } from '../question-bank/public.mjs';
 import { searchChapterContents } from './api.mjs';
 import { installNativeCanvasRecovery } from './nativeCanvas.mjs';
 import { isCourseReturn, isReturnUrl } from './returnLink.mjs';
@@ -31,11 +31,25 @@ installNativeCanvasRecovery();
 
 const INLINE_BLOCK = 'ohmylms/shared-multiple-choice';
 
+/** @typedef {import('./api.mjs').ContentOption} ContentOption */
+/** @typedef {{ clientId: string, questionId: number, rootClientId: string }} PlacedBlock An inline check in the lesson. */
+/** @typedef {{ id: number, name: string, url: string, size: string }} ResourceFile A download resource. */
+
+/**
+ * Page data of includes/Learning/NativeLessonEditor.php, which prints it with this editor.
+ *
+ * @return {NonNullable<Window['ohmylmsNativeLesson']>} Native lesson data.
+ */
+const nativeLesson = () =>
+	/** @type {NonNullable<Window['ohmylmsNativeLesson']>} */ (
+		window.ohmylmsNativeLesson
+	);
+
 /**
  * One placed inline check: its question title, an editor link and reorder controls.
  *
  * @param {Object}                      props        Component properties.
- * @param {Object}                      props.check  Placed block (`clientId`, `questionId`, `rootClientId`).
+ * @param {PlacedBlock}                 props.check  Placed block.
  * @param {number}                      props.index  Position, from 0.
  * @param {number}                      props.count  Number of placed checks.
  * @param {(direction: number) => void} props.onMove Moves the block up (-1) or down (1).
@@ -104,7 +118,9 @@ function PlacedCheck( { check, index, count, onMove, onPick } ) {
  */
 function InlineChecks() {
 	const [ search, setSearch ] = useState( '' );
-	const [ questions, setQuestions ] = useState( [] );
+	const [ questions, setQuestions ] = useState(
+		/** @type {Awaited<ReturnType<typeof searchBank>>['items']} */ ( [] )
+	);
 	const [ error, setError ] = useState( '' );
 	const { insertBlocks, moveBlockToPosition, selectBlock } =
 		useDispatch( 'core/block-editor' );
@@ -114,15 +130,18 @@ function InlineChecks() {
 	);
 	const placed = useSelect( ( select ) => {
 		const editor = select( 'core/block-editor' );
+		/** @type {PlacedBlock[]} */
 		const found = [];
+		/** @param {import('@wordpress/blocks').BlockInstance[]} blocks Blocks. */
 		const walk = ( blocks ) =>
 			blocks.forEach( ( block ) => {
 				if ( block.name === INLINE_BLOCK ) {
 					found.push( {
 						clientId: block.clientId,
 						questionId: Number( block.attributes.questionId ) || 0,
-						rootClientId: editor.getBlockRootClientId(
-							block.clientId
+						// The root of an existing block is a client ID, or '' at the top level.
+						rootClientId: /** @type {string} */ (
+							editor.getBlockRootClientId( block.clientId )
 						),
 					} );
 				}
@@ -311,9 +330,7 @@ function LessonSettings() {
 		[]
 	);
 	const { editPost } = useDispatch( 'core/editor' );
-	const [ returnUrl, setReturnUrl ] = useState(
-		window.ohmylmsNativeLesson.returnUrl
-	);
+	const [ returnUrl, setReturnUrl ] = useState( nativeLesson().returnUrl );
 	const backLabel = isCourseReturn( returnUrl )
 		? __( 'Back to course', 'ohmylms' )
 		: __( 'Back to Content Hub', 'ohmylms' );
@@ -323,12 +340,9 @@ function LessonSettings() {
 		}
 		const key = `ohmylms:lesson-return:${ postId }`;
 		try {
-			if ( window.ohmylmsNativeLesson.hasReturn ) {
-				window.sessionStorage.setItem(
-					key,
-					window.ohmylmsNativeLesson.returnUrl
-				);
-				setReturnUrl( window.ohmylmsNativeLesson.returnUrl );
+			if ( nativeLesson().hasReturn ) {
+				window.sessionStorage.setItem( key, nativeLesson().returnUrl );
+				setReturnUrl( nativeLesson().returnUrl );
 			} else {
 				const saved = window.sessionStorage.getItem( key );
 				if ( saved && isReturnUrl( saved, window.location.origin ) ) {
@@ -345,31 +359,40 @@ function LessonSettings() {
 			openGeneralSidebar( 'edit-post/block' );
 		}
 	}, [ postType, openGeneralSidebar ] );
-	const [ prerequisites, setPrerequisites ] = useState( [] );
+	const [ prerequisites, setPrerequisites ] = useState(
+		/** @type {ContentOption[]} */ ( [] )
+	);
 	const [ searchError, setSearchError ] = useState( '' );
 	if ( postType !== 'ohmylms-lesson' ) {
 		return null;
 	}
+	/** @param {Record<string, unknown>} patch Changed lesson settings. */
 	const change = ( patch ) =>
 		editPost( { ohmylms_lesson_settings: { ...settings, ...patch } } );
 	const drip = settings.drip_settings || {};
+	/** @type {{ enable?: boolean, data?: ContentOption[] }} */
 	const required = settings.prerequisites || {};
+	/** @type {{ file?: ResourceFile[] }} */
 	const resources = settings.download_resource || {};
 	const video = settings.video_settings || {};
 	const lessonType = settings.type || 'text';
+	/** @param {Record<string, unknown>} patch Changed drip settings. */
 	const changeDrip = ( patch ) =>
 		change( { drip_settings: { ...drip, ...patch } } );
+	/** @param {Record<string, unknown>} patch Changed prerequisites. */
 	const changeRequired = ( patch ) =>
 		change( { prerequisites: { ...required, ...patch } } );
+	/** @param {Record<string, unknown>} patch Changed video settings. */
 	const changeVideo = ( patch ) =>
 		change( { video_settings: { ...video, ...patch } } );
+	/** @param {string} search Search text. */
 	async function findPrerequisites( search ) {
-		if ( ! window.ohmylmsNativeLesson.chapterId ) {
+		if ( ! nativeLesson().chapterId ) {
 			return;
 		}
 		try {
 			const result = await searchChapterContents(
-				window.ohmylmsNativeLesson.chapterId,
+				nativeLesson().chapterId,
 				search
 			);
 			setPrerequisites(
@@ -379,7 +402,9 @@ function LessonSettings() {
 			);
 			setSearchError( '' );
 		} catch ( error ) {
-			setSearchError( error.message );
+			setSearchError(
+				/** @type {{ message: string }} */ ( error ).message
+			);
 		}
 	}
 	return (
@@ -765,7 +790,7 @@ function LessonSettings() {
 				/>
 				{ required.enable && (
 					<>
-						{ window.ohmylmsNativeLesson.chapterId > 0 && (
+						{ nativeLesson().chapterId > 0 && (
 							<ComboboxControl
 								label={ __( 'Add prerequisite', 'ohmylms' ) }
 								value={ null }
@@ -805,7 +830,9 @@ function LessonSettings() {
 									variant="tertiary"
 									onClick={ () =>
 										changeRequired( {
-											data: required.data.filter(
+											data: /** @type {ContentOption[]} */ (
+												required.data
+											).filter(
 												( candidate ) =>
 													candidate.value !==
 													item.value
@@ -830,18 +857,22 @@ function LessonSettings() {
 						value={ ( resources.file || [] ).map(
 							( file ) => file.id
 						) }
-						onSelect={ ( files ) =>
-							change( {
-								download_resource: {
-									...resources,
-									file: files.map( ( file ) => ( {
-										id: file.id,
-										name: file.filename || file.title,
-										url: file.url,
-										size: file.filesizeHumanReadable || '',
-									} ) ),
-								},
-							} )
+						onSelect={
+							/** @param {{ id: number, filename?: string, title?: string, url: string, filesizeHumanReadable?: string }[]} files Selected attachments. */
+							( files ) =>
+								change( {
+									download_resource: {
+										...resources,
+										file: files.map( ( file ) => ( {
+											id: file.id,
+											name: file.filename || file.title,
+											url: file.url,
+											size:
+												file.filesizeHumanReadable ||
+												'',
+										} ) ),
+									},
+								} )
 						}
 						render={ ( { open } ) => (
 							<Button variant="secondary" onClick={ open }>
@@ -865,7 +896,9 @@ function LessonSettings() {
 								change( {
 									download_resource: {
 										...resources,
-										file: resources.file.filter(
+										file: /** @type {ResourceFile[]} */ (
+											resources.file
+										).filter(
 											( item ) => item.id !== file.id
 										),
 									},

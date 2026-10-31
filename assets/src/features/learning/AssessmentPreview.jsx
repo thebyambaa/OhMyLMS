@@ -11,7 +11,9 @@ import { Button, Modal, Notice, Spinner } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { saveQuizForPreview } from './quizPreview.mjs';
 
-const PreviewContext = createContext( null );
+const PreviewContext = createContext(
+	/** @type {{ open: () => Promise<void> }|null} */ ( null )
+);
 
 /**
  * Host one student player for all preview buttons in the assessment editor.
@@ -48,7 +50,11 @@ export function AssessmentPreviewProvider( { children } ) {
 			}
 			if ( current === request.current ) {
 				setSession( ( value ) => value + 1 );
-				setSource( window.ohmylmsNativeLesson.previewUrl );
+				setSource(
+					/** @type {NonNullable<Window['ohmylmsNativeLesson']>} */ (
+						window.ohmylmsNativeLesson
+					).previewUrl
+				);
 			}
 		} catch {
 			if ( current === request.current ) {
@@ -110,9 +116,9 @@ export function AssessmentPreviewProvider( { children } ) {
 							className="ohmylms-assessment-preview-frame"
 							onLoad={ ( event ) => {
 								try {
-									const location =
+									const location = /** @type {Window} */ (
 										event.currentTarget.contentWindow
-											.location;
+									).location;
 									if (
 										location.pathname.endsWith(
 											'/wp-admin/post.php'

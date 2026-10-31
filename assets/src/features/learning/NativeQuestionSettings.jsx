@@ -2,7 +2,7 @@ import { createElement, useState } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
 import { registerPlugin } from '@wordpress/plugins';
 import { PluginDocumentSettingPanel } from '@wordpress/editor';
-import { loadBankQuestion } from '../question-bank/api.mjs';
+import { loadBankQuestion } from '../question-bank/public.mjs';
 import { QuestionLivePreview } from '../question-editor/QuestionLivePreview';
 import { Button, Notice } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
@@ -22,7 +22,11 @@ function NativeQuestionSettings() {
 		} ),
 		[]
 	);
-	const [ preview, setPreview ] = useState( null );
+	const [ preview, setPreview ] = useState(
+		/** @type {Awaited<ReturnType<typeof loadBankQuestion>>|null} */ (
+			null
+		)
+	);
 	const [ error, setError ] = useState( '' );
 	if ( type !== 'ohmylms-question' ) {
 		return null;
@@ -48,7 +52,9 @@ function NativeQuestionSettings() {
 						setPreview( { ...fresh, questions: fresh.options } );
 						setError( '' );
 					} catch ( cause ) {
-						setError( cause.message );
+						setError(
+							/** @type {{ message: string }} */ ( cause ).message
+						);
 					}
 				} }
 			>
@@ -62,7 +68,11 @@ function NativeQuestionSettings() {
 			{ preview && <QuestionLivePreview question={ preview } /> }
 			<Button
 				variant="link"
-				href={ window.ohmylmsNativeLesson.returnUrl }
+				href={
+					/** @type {NonNullable<Window['ohmylmsNativeLesson']>} */ (
+						window.ohmylmsNativeLesson
+					).returnUrl
+				}
 			>
 				{ __( 'Back to content', 'ohmylms' ) }
 			</Button>

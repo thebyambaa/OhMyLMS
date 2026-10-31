@@ -4,8 +4,7 @@
 	// OhMyLMS\Extensions\Interactivity and Video register; WordPress' own modules are typed in
 	// wordpress-interactivity.d.ts and the page globals in globals.d.ts.
 	//
-	// Not strict yet: strictNullChecks and noImplicitAny report about 1,300 more errors here.
-	// Excluded folders: none. See docs/ENFORCEMENT.md.
+	// Strict: every module type-checks with strict on. See docs/ENFORCEMENT.md.
 	"compilerOptions": {
 		"target": "ES2022",
 		"lib": [ "ES2022", "DOM", "DOM.Iterable" ],
@@ -14,7 +13,7 @@
 		"allowJs": true,
 		"checkJs": true,
 		"noEmit": true,
-		"strict": false,
+		"strict": true,
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
 		"types": [],

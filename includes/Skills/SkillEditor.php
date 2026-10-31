@@ -7,6 +7,8 @@
 
 namespace OhMyLMS\Skills;
 
+use OhMyLMS\Utility\Lock;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -82,28 +84,29 @@ final class SkillEditor {
 	 */
 	public static function update( $id, array $changes, $expected_revision, callable $read ) {
 		global $wpdb;
-		$lock = 'ohmylms-skill-' . $id . '-' . md5( $wpdb->prefix );
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Non-cacheable advisory lock.
-			return new \WP_Error( 'ohmylms_skill_busy', __( 'Another author is saving this skill. Try again.', 'ohmylms' ), array( 'status' => 409 ) );
-		}
-		try {
-			clean_term_cache( $id, Taxonomy::NAME );
-			$term = self::term( $id );
-			if ( is_wp_error( $term ) ) {
-				return $term;
+		return Lock::with(
+			'ohmylms-skill-' . $id . '-' . md5( $wpdb->prefix ),
+			5,
+			static function () use ( $id, $changes, $expected_revision, $read ) {
+				clean_term_cache( $id, Taxonomy::NAME );
+				$term = self::term( $id );
+				if ( is_wp_error( $term ) ) {
+					return $term;
+				}
+				if ( ! hash_equals( self::revision( $term ), $expected_revision ) ) {
+					return new \WP_Error( 'ohmylms_skill_stale', __( 'This skill changed since you opened it. Reload it and apply your edits again.', 'ohmylms' ), array( 'status' => 409 ) );
+				}
+				$written = self::write( $id, $changes );
+				if ( is_wp_error( $written ) ) {
+					return $written;
+				}
+				clean_term_cache( $id, Taxonomy::NAME );
+				return $read( get_term( $id, Taxonomy::NAME ) );
+			},
+			static function () {
+				return new \WP_Error( 'ohmylms_skill_busy', __( 'Another author is saving this skill. Try again.', 'ohmylms' ), array( 'status' => 409 ) );
 			}
-			if ( ! hash_equals( self::revision( $term ), $expected_revision ) ) {
-				return new \WP_Error( 'ohmylms_skill_stale', __( 'This skill changed since you opened it. Reload it and apply your edits again.', 'ohmylms' ), array( 'status' => 409 ) );
-			}
-			$written = self::write( $id, $changes );
-			if ( is_wp_error( $written ) ) {
-				return $written;
-			}
-			clean_term_cache( $id, Taxonomy::NAME );
-			return $read( get_term( $id, Taxonomy::NAME ) );
-		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Release the advisory lock.
-		}
+		);
 	}
 
 	/**

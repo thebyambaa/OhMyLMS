@@ -7,6 +7,7 @@
 
 namespace OhMyLMS\Schools;
 
+use OhMyLMS\Utility\Lock;
 use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
@@ -135,8 +136,8 @@ final class RosterImport {
 	public static function apply( $school_id, array $parsed, $review, $send_email ) {
 		global $wpdb;
 		$lock = 'ohmylms_roster_import_' . md5( $wpdb->prefix . $school_id );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Serialize imports into one school.
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 10)', $lock ) ) ) {
+		// Serialize imports into one school.
+		if ( ! Lock::acquire( $lock, 10 ) ) {
 			return new WP_Error( 'ohmylms_account_hub_import_busy', __( 'Another import into this school is running. Try again shortly.', 'ohmylms' ), array( 'status' => 409 ) );
 		}
 		try {
@@ -181,8 +182,7 @@ final class RosterImport {
 				unset( $failure );
 			}
 		} finally {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Release the import lock.
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+			Lock::release( $lock );
 		}
 		$plan['counts'] = array_fill_keys( array( 'created', 'invited', 'existing', 'pending', 'error' ), 0 );
 		foreach ( $plan['rows'] as $row ) {

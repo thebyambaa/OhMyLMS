@@ -7,6 +7,7 @@ import { checkSharedHelperCopies } from './architecture-rules/shared-helpers.mjs
 import { checkLegacyRouteUrls } from './architecture-rules/legacy-routes.mjs';
 import { checkRestControllers } from './architecture-rules/rest-controllers.mjs';
 import { checkControllerPersistence } from './architecture-rules/controller-persistence.mjs';
+import { checkAdvisoryLocks } from './architecture-rules/advisory-locks.mjs';
 import { frontendSections } from './architecture-rules/frontend.mjs';
 
 /** Roadmap step 10: architecture rules for the typed admin app (assets/src/app) and its
@@ -1361,6 +1362,10 @@ export function runArchitectureChecks( root, options = {} ) {
 				root,
 				options.controllerPersistenceBudgets
 			),
+		},
+		{
+			name: 'advisory locks go through OhMyLMS\\Utility\\Lock',
+			...checkAdvisoryLocks( root ),
 		},
 		...frontendSections( root, options.frontendAllowlist ),
 		{

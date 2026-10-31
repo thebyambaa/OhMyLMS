@@ -5,11 +5,11 @@ import { groupQuestionTypes } from './questionTypeGroups.mjs';
 
 /**
  * Grouped, searchable replacement for the flat question type list.
- * @param {Object} root0
- * @param          [root0.value]    Current type ID.
- * @param          [root0.options]  Available { value, label } types.
- * @param          [root0.onChange] Called with the chosen type ID.
- * @param          [root0.disabled] Whether the type is locked.
+ * @param {Object}                                root0
+ * @param {string}                                root0.value      Current type ID.
+ * @param {Array<{value: string, label: string}>} root0.options    Available { value, label } types.
+ * @param {(type: string) => void}                root0.onChange   Called with the chosen type ID.
+ * @param {boolean}                               [root0.disabled] Whether the type is locked.
  */
 export function QuestionTypeMenu( { value, options, onChange, disabled } ) {
 	const [ search, setSearch ] = useState( '' );

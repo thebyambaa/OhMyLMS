@@ -10,6 +10,7 @@ namespace OhMyLMS\Rest\V1;
 use OhMyLMS\Abstracts\RestController;
 use OhMyLMS\Commerce\SubscriptionManager;
 use OhMyLMS\Membership\Subscriptions;
+use OhMyLMS\Utility\Lock;
 use WP_Error;
 use WP_Post;
 use WP_Query;
@@ -349,7 +350,7 @@ class SubscriptionsController extends RestController {
 
 		$action = (string) $request['action'];
 		$lock   = 'subscription-' . $post->ID;
-		if ( ! $this->acquire_lock( $lock ) ) {
+		if ( ! Lock::acquire_option( $lock, self::LOCK_TTL ) ) {
 			return new WP_Error( 'ohmylms_subscription_busy', __( 'Another change to this subscription is running. Try again in a moment.', 'ohmylms' ), array( 'status' => 409 ) );
 		}
 
@@ -410,7 +411,7 @@ class SubscriptionsController extends RestController {
 			 */
 			do_action( 'ohmylms_rest_subscription_action', $post->ID, $action, $status );
 		} finally {
-			$this->release_lock( $lock );
+			Lock::release_option( $lock );
 		}
 
 		clean_post_cache( $post->ID );
@@ -427,36 +428,6 @@ class SubscriptionsController extends RestController {
 		$end = $this->date( get_post_meta( $id, '_schedule_end_date', true ) );
 
 		return null !== $end && strtotime( $end ) <= current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested -- Schedule dates are stored in site time.
-	}
-
-	/**
-	 * Take a short, atomic lock (add_option() inserts on the unique option_name).
-	 *
-	 * @param string $name Lock name.
-	 * @return bool True when the lock was taken.
-	 */
-	private function acquire_lock( $name ) {
-		$key = 'ohmylms_lock_' . sanitize_key( $name );
-		if ( add_option( $key, time(), '', 'no' ) ) {
-			return true;
-		}
-		$taken = (int) get_option( $key );
-		if ( $taken && ( time() - $taken ) > self::LOCK_TTL ) {
-			update_option( $key, time(), 'no' );
-			return true;
-		}
-
-		return false;
-	}
-
-	/**
-	 * Release a lock taken with acquire_lock().
-	 *
-	 * @param string $name Lock name.
-	 * @return void
-	 */
-	private function release_lock( $name ) {
-		delete_option( 'ohmylms_lock_' . sanitize_key( $name ) );
 	}
 
 	/**

@@ -5,15 +5,61 @@
  * from the server, so the printed layout is the same either way.
  */
 import {
+	dropdownAnswers,
+	markerIds,
 	publicPuzzle,
 	puzzleCells,
 	puzzleLetters,
-} from '../question-editor/puzzleModel.mjs';
-import { markerIds } from '../question-editor/interactiveModel.mjs';
-import { dropdownAnswers } from '../question-editor/dropdownModel.mjs';
+} from '../question-editor/public.mjs';
 import { VISUAL_TYPES, visualFigure } from './paperVisual.mjs';
 
+/** @typedef {import('./paperModel.mjs').SavedFields} SavedFields */
+/** @typedef {import('./paperModel.mjs').PaperQuestionBase} PaperQuestionBase */
+
+/**
+ * A printed option, item or label.
+ * @typedef {Object} PaperItem
+ * @property {string} [id]     Item ID.
+ * @property {string} [letter] Printed letter.
+ * @property {number} [number] Printed number.
+ * @property {string} text     Text HTML.
+ * @property {string} [image]  Image URL, '' for none.
+ */
+
+/** @typedef {{ text: string, id?: undefined } | { id: string, text?: undefined }} MarkerPart */
+
+/**
+ * @typedef {Object} PaperSlot
+ * @property {string}             id       Slot ID.
+ * @property {number}             number   Printed number.
+ * @property {boolean}            multiple Whether several choices are correct.
+ * @property {string[]}           choices  Choices in printed order.
+ * @property {string[]|undefined} answers  Answer key: correct choices.
+ */
+
+/** @typedef {{ number: number, text: string, length: number }} PaperClue */
+
+/** @typedef {PaperQuestionBase & { layout: 'matching', left: PaperItem[], right: PaperItem[] }} PaperMatchingModel */
+/** @typedef {PaperQuestionBase & { layout: 'reorder', items: PaperItem[] }} PaperReorderModel */
+/** @typedef {PaperQuestionBase & { layout: 'blanks' }} PaperBlanksModel */
+/** @typedef {PaperQuestionBase & { layout: 'dropdown', slots: PaperSlot[] }} PaperDropdownModel */
+/** @typedef {PaperQuestionBase & { layout: 'multi-blank', table: { columns: string[], rows: MarkerPart[][][] } | null, units: Record<string, string> }} PaperMultiBlankModel */
+/** @typedef {PaperQuestionBase & { layout: 'categorize', items: PaperItem[], groups: Array<{ id: string, label: string }> }} PaperCategorizeModel */
+/** @typedef {PaperQuestionBase & { layout: 'tiles', tiles: string[] }} PaperTilesModel */
+/** @typedef {PaperQuestionBase & { layout: 'crossword', size: number, cells: Set<string>, numbers: Record<string, number>, letters: Record<string, string>, across: PaperClue[], down: PaperClue[] }} PaperCrosswordModel */
+/** @typedef {PaperQuestionBase & { layout: 'wordsearch', grid: string[][], marked: Set<string>, words: string[] }} PaperWordsearchModel */
+/** @typedef {PaperQuestionBase & { layout: 'visual', figure: import('./paperVisual.mjs').VisualFigureModel | null }} PaperVisualModel */
+
+/**
+ * Printed forms built in this module.
+ * @typedef {PaperMatchingModel | PaperReorderModel | PaperBlanksModel | PaperDropdownModel | PaperMultiBlankModel | PaperCategorizeModel | PaperTilesModel | PaperCrosswordModel | PaperWordsearchModel | PaperVisualModel} PaperTypedModel
+ */
+
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+/**
+ * @param {number} index Zero-based position.
+ * @return {string} Letter: A to Z, then AA, AB and on.
+ */
 const letter = ( index ) =>
 	LETTERS[ index ] ||
 	`${ LETTERS[ Math.floor( index / 26 ) - 1 ] }${ LETTERS[ index % 26 ] }`;
@@ -56,11 +102,15 @@ export function jumble( texts, seed, { avoidIdentity = false } = {} ) {
 		order.length > 1 &&
 		order.every( ( value, index ) => value === index )
 	) {
-		order.push( order.shift() );
+		order.push( /** @type {number} */ ( order.shift() ) );
 	}
 	return order;
 }
 
+/**
+ * @param {unknown} text Text.
+ * @return {string} Text escaped for HTML.
+ */
 const escapeHtml = ( text ) =>
 	String( text )
 		.replace( /&/g, '&amp;' )
@@ -74,9 +124,10 @@ const MARKER = /\{([a-z0-9_-]{1,20})\}/gi;
  * Split text at blank markers such as {a} or {1}.
  *
  * @param {string} text Text with markers.
- * @return {Array<{text: string}|{id: string}>} Parts.
+ * @return {MarkerPart[]} Parts.
  */
 export function splitMarkers( text ) {
+	/** @type {MarkerPart[]} */
 	const parts = [];
 	let offset = 0;
 	for ( const match of String( text || '' ).matchAll( MARKER ) ) {
@@ -116,10 +167,10 @@ function blankMarkers( html, label, units = {} ) {
  * The learner view of an interactive question's settings, as OhMyLMS\Assessment\Interactive
  * builds it, without the server's per-delivery shuffles: printed lists are jumbled here.
  *
- * @param {string}  type     Question type.
- * @param {Object}  settings Full or already public settings.
- * @param {boolean} isPublic Whether the settings are already the learner view.
- * @return {Object} Learner view.
+ * @param {string}      type     Question type.
+ * @param {SavedFields} settings Full or already public settings.
+ * @param {boolean}     isPublic Whether the settings are already the learner view.
+ * @return {SavedFields} Learner view.
  */
 export function learnerSettings( type, settings, isPublic ) {
 	if ( isPublic ) {
@@ -170,7 +221,7 @@ export function learnerSettings( type, settings, isPublic ) {
 /**
  * Readable answer of one multi-blank field.
  *
- * @param {Object} spec Private blank settings.
+ * @param {SavedFields} [spec] Private blank settings.
  * @return {string} Answer.
  */
 function blankAnswer( spec = {} ) {
@@ -186,11 +237,11 @@ function blankAnswer( spec = {} ) {
 /**
  * Printed form of the question types in this module.
  *
- * @param {Object}  question    Question: settings, options and public flag.
- * @param {Object}  model       Base paper model (type, prompt, marks).
- * @param {boolean} showAnswers Whether to include the answer key.
- * @param {string}  seed        Jumble seed of the question in this paper version.
- * @return {Object|null} Paper model, or null for other types.
+ * @param {import('./paperModel.mjs').PaperSourceQuestion} question    Question: settings, options and public flag.
+ * @param {PaperQuestionBase}                              model       Base paper model (type, prompt, marks).
+ * @param {boolean}                                        showAnswers Whether to include the answer key.
+ * @param {string}                                         [seed]      Jumble seed of the question in this paper version.
+ * @return {import('./paperModel.mjs').PaperQuestionModel|null} Paper model, or null for other types.
  */
 export function typedPaper(
 	question,
@@ -213,6 +264,7 @@ export function typedPaper(
 				image: String( row.image_url ?? '' ),
 			} ) );
 			// Labels in pair order; the student print page receives them already jumbled.
+			/** @type {string[]} */
 			const labels = isPublic
 				? ( settings.match_right || [] ).map( String )
 				: rows.map( ( row ) =>
@@ -221,6 +273,7 @@ export function typedPaper(
 			const order = isPublic
 				? labels.map( ( _, index ) => index )
 				: jumble( labels, seed, { avoidIdentity: true } );
+			/** @type {PaperMatchingModel} */
 			const paper = {
 				...model,
 				layout: 'matching',
@@ -243,6 +296,7 @@ export function typedPaper(
 			const order = isPublic
 				? texts.map( ( _, index ) => index )
 				: jumble( texts, seed, { avoidIdentity: true } );
+			/** @type {PaperReorderModel} */
 			const paper = {
 				...model,
 				layout: 'reorder',
@@ -281,7 +335,9 @@ export function typedPaper(
 			};
 		}
 		case 'dropdown-blanks': {
-			const slots = ( settings.slots || [] ).map( ( slot, index ) => {
+			const slots = /** @type {SavedFields[]} */ (
+				settings.slots || []
+			).map( ( slot, index ) => {
 				const choices = ( slot.choices || [] ).map( String );
 				return {
 					id: String( slot.id ?? '' ),
@@ -310,9 +366,11 @@ export function typedPaper(
 					? {
 							key: slots.map(
 								( slot ) =>
-									`(${ slot.number }) ${ slot.answers.join(
-										', '
-									) }`
+									`(${ slot.number }) ${
+										/** @type {string[]} */ (
+											slot.answers
+										).join( ', ' )
+									}`
 							),
 						}
 					: {} ),
@@ -320,6 +378,7 @@ export function typedPaper(
 		}
 		case 'multi-blank': {
 			const fields = settings.fields || {};
+			/** @type {PaperMultiBlankModel} */
 			const paper = {
 				...model,
 				layout: 'multi-blank',
@@ -329,7 +388,9 @@ export function typedPaper(
 								columns: ( settings.columns || [] ).map(
 									String
 								),
-								rows: ( settings.rows || [] ).map( ( row ) =>
+								rows: /** @type {unknown[][]} */ (
+									settings.rows || []
+								).map( ( row ) =>
 									row.map( ( cell ) =>
 										splitMarkers( String( cell ) )
 									)
@@ -359,6 +420,7 @@ export function typedPaper(
 			return paper;
 		}
 		case 'categorize': {
+			/** @type {SavedFields[]} */
 			const items = settings.items || [];
 			const order = jumble(
 				items.map( ( item ) => String( item.text ?? '' ) ),
@@ -370,10 +432,13 @@ export function typedPaper(
 				text: String( items[ from ].text ?? '' ),
 				image: String( items[ from ].image_url ?? '' ),
 			} ) );
-			const groups = ( settings.buckets || [] ).map( ( bucket ) => ( {
+			const groups = /** @type {SavedFields[]} */ (
+				settings.buckets || []
+			).map( ( bucket ) => ( {
 				id: String( bucket.id ?? '' ),
 				label: String( bucket.label ?? '' ),
 			} ) );
+			/** @type {PaperCategorizeModel} */
 			const paper = {
 				...model,
 				layout: 'categorize',
@@ -423,10 +488,12 @@ export function typedPaper(
 			};
 		case 'crossword': {
 			const size = Number( settings.size ) || 0;
+			/** @type {Record<string, number>} */
 			const numbers = {};
 			for ( const clue of settings.clues || [] ) {
 				numbers[ `r${ clue.row }c${ clue.col }` ] = clue.number;
 			}
+			/** @type {Record<string, string>} */
 			const letters = {};
 			if ( answers ) {
 				for ( const entry of settings.entries || [] ) {
@@ -436,8 +503,12 @@ export function typedPaper(
 					} );
 				}
 			}
+			/**
+			 * @param {string} direction across or down.
+			 * @return {PaperClue[]} Clues in number order.
+			 */
 			const clueList = ( direction ) =>
-				( settings.clues || [] )
+				/** @type {SavedFields[]} */ ( settings.clues || [] )
 					.filter( ( clue ) => clue.direction === direction )
 					.sort( ( a, b ) => a.number - b.number )
 					.map( ( clue ) => ( {
@@ -463,13 +534,13 @@ export function typedPaper(
 			return {
 				...model,
 				layout: 'wordsearch',
-				grid: ( settings.grid || [] ).map( ( row ) =>
-					row.map( String )
+				grid: /** @type {unknown[][]} */ ( settings.grid || [] ).map(
+					( row ) => row.map( String )
 				),
 				marked,
-				words: ( settings.clues || [] ).map( ( clue ) =>
-					String( clue.clue ?? '' )
-				),
+				words: /** @type {SavedFields[]} */ (
+					settings.clues || []
+				).map( ( clue ) => String( clue.clue ?? '' ) ),
 			};
 		}
 		default:

@@ -4,6 +4,7 @@ namespace OhMyLMS\Learning;
 use OhMyLMS\Assessment\Schema as AssessmentSchema;
 use OhMyLMS\Skills\Mastery;
 use OhMyLMS\Skills\Taxonomy;
+use OhMyLMS\Utility\Lock;
 use OhMyLMS\Utility\Transaction;
 
 defined( 'ABSPATH' ) || exit;
@@ -290,7 +291,7 @@ final class CompletionPolicy {
 		global $wpdb;
 		$table = $wpdb->prefix . 'ohmylms_user_progress';
 		$key   = 'ohmylms_activity_' . $enrollment_id;
-		if ( ! $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 3)', $key ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Advisory lock per enrolment.
+		if ( ! Lock::acquire( $key, 3 ) ) {
 			return CourseProgram::error( __( 'Please retry completing the lesson.', 'ohmylms' ), 409 ); }
 		try {
 			$existing = $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE enrollment_id=%d AND content_id=%d AND status=\'completed\'', $table, $enrollment_id, $content_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh read under the lock.
@@ -313,6 +314,6 @@ final class CompletionPolicy {
 			$result = self::award( $student_id, $course_id );
 			return is_wp_error( $result ) ? $result : $result + array( 'next_action' => LearningPath::next( $result ) );
 		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $key ) ); } // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Release the advisory lock.
+			Lock::release( $key ); }
 	}
 }

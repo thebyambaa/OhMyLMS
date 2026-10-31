@@ -220,15 +220,14 @@ final class Jobs {
 	 */
 	public static function locked( $id, callable $work ) {
 		global $wpdb;
-		$key = 'oml_import_' . md5( $wpdb->prefix . ':' . (int) $id );
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $key ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Connection-scoped worker serialization, not cacheable.
-			return new \WP_Error( 'exam_busy', __( 'The import is busy. Retry shortly.', 'ohmylms' ), array( 'status' => 409 ) );
-		}
-		try {
-			return $work();
-		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $key ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Release the connection-scoped lock.
-		}
+		return \OhMyLMS\Utility\Lock::with(
+			'oml_import_' . md5( $wpdb->prefix . ':' . (int) $id ),
+			0,
+			$work,
+			static function () {
+				return new \WP_Error( 'exam_busy', __( 'The import is busy. Retry shortly.', 'ohmylms' ), array( 'status' => 409 ) );
+			}
+		);
 	}
 
 	/**

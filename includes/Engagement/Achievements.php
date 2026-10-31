@@ -9,6 +9,8 @@
  */
 namespace OhMyLMS\Engagement;
 
+use OhMyLMS\Utility\Lock;
+
 /**
  * Plugin achievements implementation.
  */
@@ -20,12 +22,7 @@ class Achievements {
 	 */
 	public static function locked( $user_id, callable $work ) {
 		global $wpdb;
-		$key = 'ohmylms-award-' . md5( $wpdb->prefix . ':' . (int) $user_id );
-		if ( (int) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $key ) ) !== 1 ) {
-			return false; }
-		try {
-			return $work(); } finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $key ) ); }
+		return Lock::with( 'ohmylms-award-' . md5( $wpdb->prefix . ':' . (int) $user_id ), 5, $work, false );
 	}
 
 	/**

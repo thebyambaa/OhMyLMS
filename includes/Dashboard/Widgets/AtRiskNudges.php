@@ -11,6 +11,7 @@ use OhMyLMS\Dashboard\Period;
 use OhMyLMS\Dashboard\Scope;
 use OhMyLMS\Emails\StudentsEmail\AtRiskNudge;
 use OhMyLMS\Schools\Schema;
+use OhMyLMS\Utility\Lock;
 use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
@@ -220,7 +221,7 @@ final class AtRiskNudges {
 
 		global $wpdb;
 		$lock = 'ohmylms_nudge_' . (int) $sender_id;
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK( %s, 5 )', $lock ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		if ( ! Lock::acquire( $lock, 5 ) ) {
 			return new WP_Error( 'ohmylms_at_risk_nudge_busy', __( 'Another nudge is being sent. Try again in a moment.', 'ohmylms' ), array( 'status' => 409 ) );
 		}
 		try {
@@ -311,7 +312,7 @@ final class AtRiskNudges {
 				'guardians'    => (int) $result['guardians'],
 			);
 		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK( %s )', $lock ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			Lock::release( $lock );
 		}
 	}
 
