@@ -64,9 +64,9 @@ module.exports = {
 	optimization: {
 		splitChunks: {
 			cacheGroups: {
-				// Shared admin components (ListTable and friends) load once instead of in every screen chunk.
+				// Shared admin components (ui/ListTable, app/components) load once instead of in every screen chunk.
 				adminAppUi: {
-					test: /[\\/]assets[\\/]src[\\/]ui[\\/]/,
+					test: /[\\/]assets[\\/]src[\\/](ui|app[\\/]components)[\\/]/,
 					name: 'admin-app-ui',
 					chunks: 'async',
 					minChunks: 2,
