@@ -84,8 +84,9 @@ final class Access {
 	}
 
 	/**
-	 * Keep the Dashboard page (`admin.php?page=ohmylms`) open to school staff, who are otherwise kept out of
-	 * wp-admin (`ohmylms_hide_admin_for_user`). Every other admin screen stays closed to them.
+	 * Keep the Dashboard page (`admin.php?page=ohmylms`), and OhMyLMS pages with a staff tab they can see,
+	 * open to school staff, who are otherwise kept out of wp-admin (`ohmylms_hide_admin_for_user`). Every
+	 * other admin screen stays closed to them.
 	 *
 	 * @param bool    $hub_only Whether the user is kept out of wp-admin.
 	 * @param WP_User $user     User.
@@ -98,10 +99,15 @@ final class Access {
 		}
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Navigation only.
 		$page = isset( $_GET['page'] ) && is_string( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
-		if ( OHMYLMS_SLUG !== $page ) {
+		if ( OHMYLMS_SLUG === $page ) {
+			return ! self::can_view( (int) $user->ID );
+		}
+		// Other OhMyLMS pages open when one of their staff tabs (for example the Gradebook) is visible.
+		$group = \OhMyLMS\Admin\AdminNavigation::group_of_page( $page );
+		if ( null === $group || get_current_user_id() !== (int) $user->ID ) {
 			return $hub_only;
 		}
-		return ! self::can_view( (int) $user->ID );
+		return ! \OhMyLMS\Admin\AdminNavigation::can_open( $group );
 	}
 
 	/**

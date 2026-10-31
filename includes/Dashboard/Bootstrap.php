@@ -45,6 +45,7 @@ final class Bootstrap {
 		add_action( 'deleted_user', array( Widgets\AtRiskNudges::class, 'forget_user' ) );
 		add_filter( 'ohmylms_dashboard_cache_ttl', array( Widgets\Activity::class, 'ttl' ), 10, 2 );
 		add_filter( 'ohmylms_dashboard_cache_ttl', array( Widgets\SiteHealth::class, 'ttl' ), 10, 2 );
+		\OhMyLMS\Gradebook\Bootstrap::init();
 	}
 
 	/**

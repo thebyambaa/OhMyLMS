@@ -11,6 +11,7 @@ import { CourseArchiveForm } from './CourseArchiveForm';
 import { CurrencyForm } from './CurrencyForm';
 import { DesignSystemForm } from './DesignSystemForm';
 import { GeneralForm } from './GeneralForm';
+import { GradeScaleForm } from './GradeScaleForm';
 import { useSettingsGroup } from './hooks';
 import { HubIconsForm } from './HubIconsForm';
 import { McpForm } from './McpForm';
@@ -50,6 +51,7 @@ const LABELS: Record< TabId, string > = {
 	'quiz-design': __( 'Quiz design', 'ohmylms' ),
 	migration: __( 'Migration', 'ohmylms' ),
 	'at-risk': __( 'At-risk learners', 'ohmylms' ),
+	'grade-scale': __( 'Letter grades', 'ohmylms' ),
 };
 
 const TAB_IDS: readonly TabId[] = [ ...GROUP_IDS, ...EXTRA_TAB_IDS ];
@@ -127,6 +129,7 @@ export default function SettingsPage() {
 		'quiz-design': Boolean( extraDirty[ 'quiz-design' ] ),
 		migration: false,
 		'at-risk': Boolean( extraDirty[ 'at-risk' ] ),
+		'grade-scale': Boolean( extraDirty[ 'grade-scale' ] ),
 	};
 	const guard = useUnsavedChangesGuard(
 		Object.values( dirty ).some( Boolean )
@@ -199,6 +202,12 @@ export default function SettingsPage() {
 			<AtRiskForm
 				active={ 'at-risk' === selected }
 				onDirty={ reporters[ 'at-risk' ] }
+			/>
+		),
+		'grade-scale': (
+			<GradeScaleForm
+				active={ 'grade-scale' === selected }
+				onDirty={ reporters[ 'grade-scale' ] }
 			/>
 		),
 	};

@@ -23,6 +23,7 @@ export const EXTRA_TAB_IDS = [
 	'mcp',
 	'migration',
 	'at-risk',
+	'grade-scale',
 ] as const;
 
 export type ExtraTabId = ( typeof EXTRA_TAB_IDS )[ number ];

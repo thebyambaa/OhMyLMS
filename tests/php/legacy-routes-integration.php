@@ -555,7 +555,7 @@ try {
 	);
 	ok( false !== strpos( $content_html, '<h1 class="wp-heading-inline">Content Hub</h1>' ) && false !== strpos( $content_html, '<hr class="wp-header-end">' ), 'page: heading' );
 	ok( false !== strpos( $content_html, 'class="nav-tab-wrapper wp-clearfix" id="' . AdminNavigation::TABS_ID . '"' ), 'page: tab row' );
-	ok( 8 === preg_match_all( '/class="nav-tab(?: nav-tab-active)?"/', $content_html ), 'page: one link per Content Hub tab' );
+	ok( 9 === preg_match_all( '/class="nav-tab(?: nav-tab-active)?"/', $content_html ), 'page: one link per Content Hub tab' );
 	ok( false !== strpos( $content_html, 'href="' . esc_url( address_url( 'page=ohmylms-content&tab=courses' ) ) . '" class="nav-tab nav-tab-active" aria-current="page">Courses</a>' ), 'page: the current tab is a real, marked link' );
 	ok( false !== strpos( $content_html, '<a data-tab="lessons" href="' ), 'page: tab links name their tab for the app' );
 	ok( 1 === preg_match( '#</h1>\s*<span id="' . AdminNavigation::TITLE_ACTIONS_ID . '" class="ohmylms-title-actions"></span>\s*<hr class="wp-header-end">#', $content_html ), 'page: the screen actions slot follows the heading' );

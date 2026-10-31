@@ -33,6 +33,13 @@ import { emails } from './emails';
 import { examEditor, examImportReview, exams } from './exams';
 import { extensionPages } from './extensions';
 import { gamification } from './gamification';
+import {
+	gradebook,
+	gradebookMastery,
+	gradebookRollup,
+	gradebookRoster,
+	gradebookStudent,
+} from './gradebook';
 import { integrations } from './integrations';
 import { lessons, lessonEditor } from './lessons';
 import { membershipEditor, memberships } from './memberships';
@@ -78,6 +85,11 @@ export const features: readonly FeatureDefinition[] = [
 	assignmentEditor,
 	assignmentSubmissions,
 	assignmentGrading,
+	gradebook,
+	gradebookRoster,
+	gradebookStudent,
+	gradebookMastery,
+	gradebookRollup,
 	exams,
 	examImportReview,
 	examEditor,

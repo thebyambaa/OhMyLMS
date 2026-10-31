@@ -120,6 +120,7 @@ final class AdminNavigation {
 			'mcp'                 => __( 'MCP', 'ohmylms' ),
 			'migration'           => __( 'Migration', 'ohmylms' ),
 			'at-risk'             => __( 'At-risk learners', 'ohmylms' ),
+			'grade-scale'         => __( 'Letter grades', 'ohmylms' ),
 		);
 		$groups            = array(
 			'dashboard'  => array(
@@ -155,6 +156,17 @@ final class AdminNavigation {
 					'assignments'   => array(
 						'label'      => __( 'Assignments', 'ohmylms' ),
 						'capability' => 'edit_posts',
+					),
+					'gradebook'     => array(
+						'label'      => __( 'Gradebook', 'ohmylms' ),
+						'capability' => \OhMyLMS\Gradebook\Access::CAPABILITY,
+						'sections'   => array(
+							''        => __( 'Course × Students', 'ohmylms' ),
+							'roster'  => __( 'Roster × Assignments', 'ohmylms' ),
+							'student' => __( 'Student transcript', 'ohmylms' ),
+							'mastery' => __( 'Skill mastery', 'ohmylms' ),
+							'rollup'  => __( 'Org roll-up', 'ohmylms' ),
+						),
 					),
 					'question-bank' => array(
 						'label'      => __( 'Question bank', 'ohmylms' ),
@@ -461,6 +473,39 @@ final class AdminNavigation {
 					'view' => 'submissions',
 				),
 			),
+			array( 'gradebook', '/content-hub/gradebook', $content + array( 'tab' => 'gradebook' ) ),
+			array(
+				'gradebook-roster',
+				'/content-hub/gradebook/roster',
+				$content + array(
+					'tab'     => 'gradebook',
+					'section' => 'roster',
+				),
+			),
+			array(
+				'gradebook-student',
+				'/content-hub/gradebook/student',
+				$content + array(
+					'tab'     => 'gradebook',
+					'section' => 'student',
+				),
+			),
+			array(
+				'gradebook-mastery',
+				'/content-hub/gradebook/mastery',
+				$content + array(
+					'tab'     => 'gradebook',
+					'section' => 'mastery',
+				),
+			),
+			array(
+				'gradebook-rollup',
+				'/content-hub/gradebook/rollup',
+				$content + array(
+					'tab'     => 'gradebook',
+					'section' => 'rollup',
+				),
+			),
 			array( 'exams', '/exams', $content + array( 'tab' => 'exams' ) ),
 			array(
 				'exams-import-review',
@@ -610,11 +655,13 @@ final class AdminNavigation {
 	 * @return array<string, array> Tab id => tab.
 	 */
 	public static function visible_tabs( $group ) {
-		if ( ! current_user_can( self::CAPABILITY ) ) {
-			return array();
-		}
+		$site    = current_user_can( self::CAPABILITY );
 		$visible = array();
 		foreach ( self::groups()[ $group ]['tabs'] ?? array() as $id => $tab ) {
+			// School staff without the site capability only see tabs gated by a staff capability.
+			if ( ! $site && ! in_array( $tab['capability'], self::staff_capabilities(), true ) ) {
+				continue;
+			}
 			if ( ! current_user_can( $tab['capability'] ) || ( '' !== $tab['flag'] && ! apply_filters( $tab['flag'], false ) ) ) {
 				continue;
 			}
@@ -650,7 +697,27 @@ final class AdminNavigation {
 	 * @return string
 	 */
 	public static function page_capability( $group ) {
-		return 'dashboard' === $group ? \OhMyLMS\Dashboard\Access::CAPABILITY : self::CAPABILITY;
+		if ( 'dashboard' === $group ) {
+			return \OhMyLMS\Dashboard\Access::CAPABILITY;
+		}
+		if ( current_user_can( self::CAPABILITY ) ) {
+			return self::CAPABILITY;
+		}
+		// School staff open a page through the first staff tab they can see (for example the Gradebook).
+		foreach ( self::visible_tabs( $group ) as $tab ) {
+			return $tab['capability'];
+		}
+		return self::CAPABILITY;
+	}
+
+	/**
+	 * Capabilities school administrators and teachers may hold without `manage_options`; tabs gated by one
+	 * of them are the only ones such users see. Their endpoints resolve the user's scopes server-side.
+	 *
+	 * @return string[]
+	 */
+	public static function staff_capabilities() {
+		return array( \OhMyLMS\Dashboard\Access::CAPABILITY, \OhMyLMS\Gradebook\Access::CAPABILITY );
 	}
 
 	/**
@@ -660,7 +727,12 @@ final class AdminNavigation {
 	 * @return string
 	 */
 	public static function hook_capability( $hook_suffix ) {
-		return 'toplevel_page_' . OHMYLMS_SLUG === $hook_suffix ? self::page_capability( 'dashboard' ) : self::CAPABILITY;
+		if ( 'toplevel_page_' . OHMYLMS_SLUG === $hook_suffix ) {
+			return self::page_capability( 'dashboard' );
+		}
+		$prefix = 'ohmylms_page_';
+		$group  = 0 === strpos( (string) $hook_suffix, $prefix ) ? self::group_of_page( substr( (string) $hook_suffix, strlen( $prefix ) ) ) : null;
+		return null === $group ? self::CAPABILITY : self::page_capability( $group );
 	}
 
 	/**

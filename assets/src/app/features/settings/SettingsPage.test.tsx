@@ -136,13 +136,13 @@ describe( 'tabs', () => {
 		).toBeInTheDocument();
 		await user.keyboard( '{End}' );
 		expect(
-			screen.getByRole( 'tab', { name: 'At-risk learners' } )
+			screen.getByRole( 'tab', { name: 'Letter grades' } )
 		).toHaveFocus();
 		await user.keyboard( '{ArrowRight}' );
 		expect( screen.getByRole( 'tab', { name: 'General' } ) ).toHaveFocus();
 		await user.keyboard( '{ArrowLeft}' );
 		expect(
-			screen.getByRole( 'tab', { name: 'At-risk learners' } )
+			screen.getByRole( 'tab', { name: 'Letter grades' } )
 		).toHaveFocus();
 		await user.keyboard( '{Home}' );
 		expect( screen.getByRole( 'tab', { name: 'General' } ) ).toHaveFocus();

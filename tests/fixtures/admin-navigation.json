@@ -56,6 +56,20 @@
 					"defaultSection": ""
 				},
 				{
+					"id": "gradebook",
+					"capability": "ohmylms_view_gradebook",
+					"flag": "",
+					"sections": [
+						"",
+						"roster",
+						"student",
+						"mastery",
+						"rollup"
+					],
+					"serverSections": [],
+					"defaultSection": ""
+				},
+				{
 					"id": "question-bank",
 					"capability": "edit_posts",
 					"flag": "",
@@ -261,7 +275,8 @@
 						"ai-tutor",
 						"mcp",
 						"migration",
-						"at-risk"
+						"at-risk",
+						"grade-scale"
 					],
 					"serverSections": [],
 					"defaultSection": "general"
@@ -462,6 +477,40 @@
 			"group": "content",
 			"tab": "assignments",
 			"view": "submissions"
+		},
+		{
+			"id": "gradebook",
+			"path": "/content-hub/gradebook",
+			"group": "content",
+			"tab": "gradebook"
+		},
+		{
+			"id": "gradebook-roster",
+			"path": "/content-hub/gradebook/roster",
+			"group": "content",
+			"tab": "gradebook",
+			"section": "roster"
+		},
+		{
+			"id": "gradebook-student",
+			"path": "/content-hub/gradebook/student",
+			"group": "content",
+			"tab": "gradebook",
+			"section": "student"
+		},
+		{
+			"id": "gradebook-mastery",
+			"path": "/content-hub/gradebook/mastery",
+			"group": "content",
+			"tab": "gradebook",
+			"section": "mastery"
+		},
+		{
+			"id": "gradebook-rollup",
+			"path": "/content-hub/gradebook/rollup",
+			"group": "content",
+			"tab": "gradebook",
+			"section": "rollup"
 		},
 		{
 			"id": "exams",

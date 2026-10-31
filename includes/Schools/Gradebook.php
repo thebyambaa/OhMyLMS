@@ -231,7 +231,7 @@ final class Gradebook {
 	 *
 	 * @param mixed $quiz_id Quiz identifier.
 	 */
-	private static function quiz_max( $quiz_id ) {
+	public static function quiz_max( $quiz_id ) {
 		if ( class_exists( \OhMyLMS\Assessment\Engine::class ) && \OhMyLMS\Assessment\Schema::ready() && \OhMyLMS\Assessment\Engine::versioned() ) {
 			$revision = \OhMyLMS\Assessment\RevisionPublisher::latest( $quiz_id );
 			if ( $revision ) {
@@ -383,6 +383,9 @@ final class Gradebook {
 			)
 		);
 		Service::need( $items, 'This assessment does not belong to the course.' );
+		if ( \OhMyLMS\Gradebook\Schema::ready() ) {
+			return self::grade_with_history( $course, $content, $user, $r, $reset );
+		}
 		$table = Schema::table( 'gradebook_overrides' );
 		$key   = array(
 			'course_id'  => $course,
@@ -411,5 +414,42 @@ final class Gradebook {
 				throw new \RuntimeException( 'Unable to save this grade.' ); }
 			Service::audit( 0, $reset ? 'gradebook_grade_reset' : 'gradebook_grade_saved', $content );
 			return array( 'success' => true );
+	}
+
+	/**
+	 * Save or reset a grade through the gradebook's override service, so the change gets a history row and
+	 * shows in the new gradebook. This route keeps its last-write-wins behaviour (it sends the version it
+	 * reads) and its optional note (a fixed reason when empty).
+	 *
+	 * @param int  $course  Course.
+	 * @param int  $content Item.
+	 * @param int  $user    Learner.
+	 * @param mixed $r      Request.
+	 * @param bool $reset   Remove the manual grade.
+	 * @return array
+	 * @throws \RuntimeException When the change is refused.
+	 */
+	private static function grade_with_history( $course, $content, $user, $r, $reset ) {
+		global $wpdb;
+		$version = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT version FROM %i WHERE course_id=%d AND content_id=%d AND user_id=%d', \OhMyLMS\Gradebook\Schema::table( 'gradebook_cells' ), $course, $content, $user ) );
+		$note    = mb_substr( sanitize_textarea_field( $r['note'] ?? '' ), 0, 500 );
+		$result  = \OhMyLMS\Gradebook\Overrides::apply(
+			$course,
+			$content,
+			$user,
+			array(
+				'action'           => $reset ? 'revert' : 'override',
+				'score'            => $r['score'],
+				'reason'           => '' !== trim( $note ) ? $note : __( 'Changed in the class gradebook.', 'ohmylms' ),
+				'expected_version' => $version,
+			),
+			get_current_user_id()
+		);
+		if ( is_wp_error( $result ) && ! ( $reset && 'ohmylms_gradebook_nothing_to_revert' === $result->get_error_code() ) ) {
+			$status = (int) ( $result->get_error_data()['status'] ?? 500 );
+			throw new \RuntimeException( $result->get_error_message(), 422 === $status ? 400 : $status ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Returned as REST error data.
+		}
+		Service::audit( 0, $reset ? 'gradebook_grade_reset' : 'gradebook_grade_saved', $content );
+		return array( 'success' => true );
 	}
 }
