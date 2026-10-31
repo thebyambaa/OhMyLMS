@@ -3,14 +3,17 @@
  * The hosted draft editor is loaded lazily from `./draft/public`.
  */
 export type { QuestionDraftEditorProps } from './QuestionDraftEditor';
-export { listQuestions, listQuestionTypes, PER_PAGE } from './api';
+export { listBanks, listQuestions, listQuestionTypes, PER_PAGE } from './api';
 export { saveFile } from './exchange';
-export { MAX_NAME, typeLabel } from './model';
+export { DIFFICULTIES, difficultyLabel, MAX_NAME, typeLabel } from './model';
+export { SkillPicker } from './SkillPicker';
 export type {
+	BankRef,
 	QuestionCreateInput,
 	QuestionListQuery,
 	QuestionSummary,
 	QuestionType,
+	SkillRef,
 } from './types';
 
 /**

@@ -164,6 +164,7 @@ export function ExtendedEditor( {
 			'video-response',
 			'word-cloud',
 			'discussion-board',
+			'slide',
 		].includes( type )
 	) {
 		return (
@@ -171,6 +172,10 @@ export function ExtendedEditor( {
 				<p>
 					{
 						{
+							slide: __(
+								'Learners read the question text and continue. A slide has no answer and no marks.',
+								'ohmylms'
+							),
 							draw: __(
 								'Learners draw on a canvas. A teacher reviews the drawing.',
 								'ohmylms'

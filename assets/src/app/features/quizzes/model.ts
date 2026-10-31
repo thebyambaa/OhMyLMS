@@ -20,6 +20,7 @@ import type {
 	QuizInput,
 	QuizLayout,
 	QuizPool,
+	QuizSection,
 	QuizQuestionCreated,
 	QuizQuestions,
 	QuizQuestionSlot,
@@ -853,6 +854,14 @@ function parseSlot( value: unknown ): QuizQuestionSlot {
 		type: text( item.type ),
 		type_label: text( item.type_label ),
 		marks: finite( item.marks ),
+		question_marks:
+			undefined === item.question_marks
+				? finite( item.marks )
+				: finite( item.question_marks ),
+		marks_override:
+			null === item.marks_override || undefined === item.marks_override
+				? null
+				: finite( item.marks_override ),
 		section: text( item.section ),
 		status: oneOf( item.status, SLOT_STATUSES ),
 		version: count( item.version ),
@@ -909,6 +918,14 @@ export function parseQuizQuestions( value: unknown ): QuizQuestions {
 		quiz_id: positiveId( item.quiz_id ),
 		revision,
 		questions: list( item.questions ).map( parseSlot ),
+		sections: list( item.sections ?? [] ).map( ( raw ) => {
+			const section = record( raw );
+			return {
+				title: text( section.title ),
+				question_ids: list( section.question_ids ).map( positiveId ),
+				new_page: boolean( section.new_page ),
+			};
+		} ),
 		pools: list( item.pools ).map( parsePool ),
 		totals: {
 			questions: count( totals.questions ),
@@ -1077,4 +1094,51 @@ export function quizStatusLabel( status: QuizStatus ): string {
 		default:
 			return __( 'Draft', 'ohmylms' );
 	}
+}
+
+/** Most marks a question or pool question can be worth in a quiz. */
+export const MAX_SLOT_MARKS = 10000;
+
+/**
+ * Read marks typed for a question or pool: a number from 0 to {@link MAX_SLOT_MARKS} with at most four
+ * decimals.
+ *
+ * @param value Typed text.
+ * @return The marks, or `null` when the text is not such a number.
+ */
+export function slotMarks( value: string ): number | null {
+	const trimmed = value.trim();
+	if ( ! /^\d+(\.\d{1,4})?$/.test( trimmed ) ) {
+		return null;
+	}
+	const marks = Number( trimmed );
+	return marks <= MAX_SLOT_MARKS ? marks : null;
+}
+
+/**
+ * Sections with one question moved into another section, or out of every section. Questions keep the
+ * order of the quiz inside their section.
+ *
+ * @param sections   Sections in paper order.
+ * @param order      Question ids of the quiz in order.
+ * @param questionId Question to move.
+ * @param target     Index of the new section, or -1 for none.
+ * @return The new sections.
+ */
+export function assignSection< T extends QuizSection >(
+	sections: readonly T[],
+	order: readonly number[],
+	questionId: number,
+	target: number
+): T[] {
+	return sections.map( ( section, index ) => {
+		const ids = section.question_ids.filter( ( id ) => id !== questionId );
+		if ( index === target ) {
+			ids.push( questionId );
+		}
+		return {
+			...section,
+			question_ids: order.filter( ( id ) => ids.includes( id ) ),
+		};
+	} );
 }

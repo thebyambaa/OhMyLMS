@@ -2,7 +2,6 @@ import {
 	Button,
 	Modal,
 	Notice,
-	SelectControl,
 	TextControl,
 	TextareaControl,
 } from '@wordpress/components';
@@ -16,7 +15,6 @@ import {
 import { __, sprintf } from '@wordpress/i18n';
 import type { ComponentType } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useBootstrap } from '../../bootstrap/BootstrapContext';
 import { ExtensionBoundary } from '../../extensions/ExtensionBoundary';
 import { useExtensions } from '../../extensions/context';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
@@ -28,20 +26,25 @@ import {
 	duplicateQuestion,
 	restoreQuestion,
 	updateQuestion,
+	type PreviewQuestion,
 } from './api';
+import { AcceptedAnswers, BlankAnswers, ManualAnswer } from './AnswerFields';
 import {
+	answerArea,
 	approvalLabel,
 	canApproveCurrent,
+	derivedPoints,
 	DIFFICULTIES,
 	difficultyLabel,
-	editsOptions,
 	formFromQuestion,
 	isDirty,
 	isValid,
-	legacyEditorUrl,
 	MAX_DESCRIPTION,
 	MAX_NAME,
+	MAX_POINTS,
+	scoreMode,
 	serverFieldError,
+	settingsFor,
 	settingsProblem,
 	toCreateInput,
 	toInput,
@@ -51,6 +54,13 @@ import {
 	versionLabel,
 } from './model';
 import { errorId, FieldError, OptionsEditor } from './OptionsEditor';
+import { PlayerPreview } from './PlayerPreview';
+import {
+	BankFields,
+	MediaFields,
+	SharedSettingsFields,
+	SkillsFields,
+} from './QuestionFields';
 import type { QuestionHandoff } from './useQuestionEditor';
 import { Versions } from './Versions';
 import type {
@@ -94,6 +104,8 @@ export interface DraftTarget {
 	saveLabel: string;
 	/** Reports whether the editor holds unsaved edits (always true for a draft). */
 	onDirtyChange?: ( dirty: boolean ) => void;
+	/** A post the user may edit (such as the hosting quiz) that the learner preview of the draft uses. */
+	previewPostId?: number;
 }
 
 /** Link back to the question bank list. */
@@ -104,9 +116,11 @@ export function BackLink() {
 }
 
 /**
- * The question editor form: name, text, points and difficulty for every type; options for the built-in
- * option types; the registered `question-editor` for the other types. Saves send only changed fields
- * and are refused when someone else saved first. Approving and duplicating work on the saved question.
+ * The question editor form: name, text and points for every type; the answers (options, expected
+ * answers, blanks, or the registered `question-editor` of settings types and add-ons); the shared
+ * settings, hint and explanation; media; bank, difficulty, source and secure flag; skills by part; and a
+ * learner preview in the real player. Saves send only changed fields and are refused when someone else
+ * saved first. Approving and duplicating work on the saved question.
  *
  * @param props
  * @param props.question       Question as loaded or saved (a draft has id 0).
@@ -140,7 +154,6 @@ export function QuestionWorkspace( {
 	/** Hosted draft: the first save goes to the host, which also guards unsaved edits. */
 	target?: DraftTarget | undefined;
 } ) {
-	const { adminUrl } = useBootstrap();
 	const navigate = useNavigate();
 	const [ form, setForm ] = useState< FormState >( () =>
 		formFromQuestion( question )
@@ -169,13 +182,8 @@ export function QuestionWorkspace( {
 	const extension = useExtensions( 'question-editor' ).find(
 		( entry ) => entry.id === type
 	);
-	const format = types.find( ( item ) => item.id === type )?.format;
-	let area: 'options' | 'full-editor' | 'extension' | 'none' = 'none';
-	if ( 'ohmylms-options' === format ) {
-		area = editsOptions( type ) ? 'options' : 'full-editor';
-	} else if ( extension ) {
-		area = 'extension';
-	}
+	const area = answerArea( type, Boolean( extension ) );
+	const points = scoreMode( type );
 
 	useEffect( () => () => operation.current?.abort(), [] );
 
@@ -264,11 +272,7 @@ export function QuestionWorkspace( {
 		if ( readOnly || operation.current ) {
 			return;
 		}
-		const problems = validateForm(
-			form,
-			saved,
-			'options' === area ? type : ''
-		);
+		const problems = validateForm( form, saved, type, area );
 		const settingsError =
 			draft ||
 			JSON.stringify( form.settings ) !== JSON.stringify( saved.settings )
@@ -288,7 +292,7 @@ export function QuestionWorkspace( {
 			return;
 		}
 		if ( draft ) {
-			const body = toCreateInput( form, type );
+			const body = toCreateInput( form, type, area );
 			if ( target ) {
 				void perform(
 					( signal ) => target.save( body, signal ),
@@ -309,7 +313,7 @@ export function QuestionWorkspace( {
 			);
 			return;
 		}
-		const input = toInput( form, saved, type, question.modified );
+		const input = toInput( form, saved, type, question.modified, area );
 		void perform(
 			( signal ) => updateQuestion( question.id, input, signal ),
 			( result ) => {
@@ -372,11 +376,39 @@ export function QuestionWorkspace( {
 		);
 	}
 
-	const fullEditor = (
-		<a href={ legacyEditorUrl( adminUrl ) }>
-			{ __( 'Open the full question editor', 'ohmylms' ) }
-		</a>
-	);
+	function previewData(): PreviewQuestion {
+		return {
+			id: question.id,
+			name: form.name,
+			description: form.description,
+			settings: settingsFor( form, type ),
+			questions: form.options.map( ( item, index ) => ( {
+				id: item.id > 0 ? item.id : 900000 + index,
+				answer: item.answer,
+				is_correct: item.is_correct,
+				order_number: index + 1,
+				image_url: item.image_url,
+				matching_data: item.matching,
+			} ) ),
+			image_src: form.image.url,
+			video_src: form.video.url,
+		};
+	}
+
+	const difficulties = [
+		...( ( DIFFICULTIES as readonly string[] ).includes( form.difficulty )
+			? []
+			: [
+					{
+						value: form.difficulty,
+						label: difficultyLabel( form.difficulty ),
+					},
+				] ),
+		...DIFFICULTIES.map( ( value ) => ( {
+			value,
+			label: difficultyLabel( value ),
+		} ) ),
+	];
 	const title = saved.name.trim() || __( 'Untitled question', 'ohmylms' );
 	const ExtensionEditor = extension?.render as
 		ComponentType< QuestionEditorProps > | undefined;
@@ -510,46 +542,47 @@ export function QuestionWorkspace( {
 						field="description"
 						message={ errors.description }
 					/>
-					<TextControl
-						label={ __( 'Points', 'ohmylms' ) }
-						type="number"
-						min={ 0 }
-						step="any"
-						value={ form.points }
-						aria-invalid={ invalid( 'points' ) }
-						aria-describedby={ described( 'points' ) }
-						onChange={ ( next ) => update( 'points', next ) }
-					/>
-					<FieldError field="points" message={ errors.points } />
-					<SelectControl
-						label={ __( 'Difficulty', 'ohmylms' ) }
-						value={ form.difficulty }
-						options={ [
-							...( ( DIFFICULTIES as readonly string[] ).includes(
-								form.difficulty
-							)
-								? []
-								: [
-										{
-											value: form.difficulty,
-											label: difficultyLabel(
-												form.difficulty
-											),
-										},
-									] ),
-							...DIFFICULTIES.map( ( value ) => ( {
-								value,
-								label: difficultyLabel( value ),
-							} ) ),
-						] }
-						aria-invalid={ invalid( 'difficulty' ) }
-						aria-describedby={ described( 'difficulty' ) }
-						onChange={ ( next ) => update( 'difficulty', next ) }
-					/>
-					<FieldError
-						field="difficulty"
-						message={ errors.difficulty }
-					/>
+					{ 'points' === points && (
+						<>
+							<TextControl
+								label={ __( 'Points', 'ohmylms' ) }
+								type="number"
+								min={ 0 }
+								max={ MAX_POINTS }
+								step="any"
+								value={ form.points }
+								aria-invalid={ invalid( 'points' ) }
+								aria-describedby={ described( 'points' ) }
+								onChange={ ( next ) =>
+									update( 'points', next )
+								}
+							/>
+							<FieldError
+								field="points"
+								message={ errors.points }
+							/>
+						</>
+					) }
+					{ 'derived' === points && (
+						<p>
+							{ sprintf(
+								/* translators: %s: total points. */
+								__(
+									'Points: %s (the total of the parts’ marks; change the marks of each part below).',
+									'ohmylms'
+								),
+								derivedPoints( form.settings )
+							) }
+						</p>
+					) }
+					{ 'unscored' === points && (
+						<p>
+							{ __(
+								'Points: 0. This type is not scored; responses are kept but not graded.',
+								'ohmylms'
+							) }
+						</p>
+					) }
 				</fieldset>
 
 				{ 'options' === area && (
@@ -561,15 +594,27 @@ export function QuestionWorkspace( {
 						onChange={ ( next ) => update( 'options', next ) }
 					/>
 				) }
-				{ 'full-editor' === area && (
-					<Notice status="info" isDismissible={ false }>
-						{ __(
-							'The answers of this question type are edited in the full editor.',
-							'ohmylms'
-						) }{ ' ' }
-						{ fullEditor }
-					</Notice>
+				{ 'accepted' === area && (
+					<AcceptedAnswers
+						type={ type }
+						options={ form.options }
+						errors={ errors }
+						disabled={ busy || readOnly }
+						onChange={ ( next ) => update( 'options', next ) }
+					/>
 				) }
+				{ 'blanks' === area && (
+					<BlankAnswers
+						name={ form.name }
+						settings={ form.settings }
+						options={ form.options }
+						errors={ errors }
+						disabled={ busy || readOnly }
+						onSettings={ changeSettings }
+						onOptions={ ( next ) => update( 'options', next ) }
+					/>
+				) }
+				{ 'manual' === area && <ManualAnswer type={ type } /> }
 				{ 'extension' === area && extension && ExtensionEditor && (
 					<fieldset disabled={ busy || readOnly }>
 						<legend>{ extension.label }</legend>
@@ -596,13 +641,49 @@ export function QuestionWorkspace( {
 				{ 'none' === area && (
 					<Notice status="warning" isDismissible={ false }>
 						{ __(
-							'This question type does not have an editor in the new admin yet.',
+							'No editor is available for this question type. Activate the add-on that provides it to edit its answers; the other fields can still be changed.',
 							'ohmylms'
-						) }{ ' ' }
-						{ fullEditor }
+						) }
 					</Notice>
 				) }
 				<FieldError field="settings" message={ errors.settings } />
+
+				<SharedSettingsFields
+					type={ type }
+					settings={ form.settings }
+					errors={ errors }
+					disabled={ busy || readOnly }
+					onChange={ changeSettings }
+				/>
+				<MediaFields
+					image={ form.image }
+					video={ form.video }
+					errors={ errors }
+					disabled={ busy || readOnly }
+					onImage={ ( next ) => update( 'image', next ) }
+					onVideo={ ( next ) => update( 'video', next ) }
+				/>
+				<BankFields
+					bankId={ form.bankId }
+					difficulty={ form.difficulty }
+					source={ form.source }
+					secure={ form.secure }
+					familyId={ question.bank.family_id }
+					difficulties={ difficulties }
+					errors={ errors }
+					disabled={ busy || readOnly }
+					onChange={ ( patch ) => {
+						setForm( ( current ) => ( { ...current, ...patch } ) );
+						setMessage( null );
+					} }
+				/>
+				<SkillsFields
+					settings={ form.settings }
+					skills={ form.skills }
+					errors={ errors }
+					disabled={ busy || readOnly }
+					onChange={ ( next ) => update( 'skills', next ) }
+				/>
 
 				{ ! readOnly && (
 					<Button
@@ -629,6 +710,11 @@ export function QuestionWorkspace( {
 					</>
 				) }
 			</form>
+
+			<PlayerPreview
+				postId={ draft ? ( target?.previewPostId ?? 0 ) : question.id }
+				question={ previewData }
+			/>
 
 			{ ! readOnly && ! draft && (
 				<section aria-labelledby="oml-question-status">

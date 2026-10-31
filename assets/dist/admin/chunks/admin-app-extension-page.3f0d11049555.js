@@ -1,2 +1,0 @@
-"use strict";(self.webpackChunkohmylmsExtensionSdk=self.webpackChunkohmylmsExtensionSdk||[]).push([[246],{1719(e,n,s){s.r(n),s.d(n,{default:()=>a});var d=s(6419),t=s(7034),i=s(9574),o=s(7242),r=s(790);function a(){const{id:e=""}=(0,d.g)(),n=(0,i.oq)();(0,i.Ot)("admin-page");const s=n.get("admin-page",e);if(!s?.enabled)return(0,r.jsx)(o.M,{homeTo:"/"});const a=s.render;return(0,r.jsx)(t.u,{id:s.id,children:(0,r.jsx)(a,{})},s.id)}}}]);
-//# sourceMappingURL=admin-app-extension-page.3f0d11049555.js.map

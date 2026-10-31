@@ -221,7 +221,9 @@ final class QuestionPreview {
 		wp_enqueue_style( 'ohmylms-frontend' );
 		wp_enqueue_script( 'ohmylms-frontend' );
 		MathLive::enqueue();
-		$figure_markup = (string) ( $saved['question']['description'] ?? '' ) . implode( ' ', array_column( $saved['question']['settings']['parts'] ?? array(), 'prompt' ) );
+		// Most types store parts as a list of prompts; Shade a model stores a number of parts.
+		$parts         = $saved['question']['settings']['parts'] ?? array();
+		$figure_markup = (string) ( $saved['question']['description'] ?? '' ) . ( is_array( $parts ) ? implode( ' ', array_column( $parts, 'prompt' ) ) : '' );
 		if ( false !== strpos( $figure_markup, 'ohmylms-import-figure' ) ) {
 			\OhMyLMS\ExamImport\FigureContent::enqueue();
 		}

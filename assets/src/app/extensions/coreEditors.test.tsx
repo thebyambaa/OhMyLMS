@@ -58,7 +58,7 @@ function renderEditor(
 }
 
 describe( 'built-in question editors', () => {
-	it( 'registers the fifteen editors without loading them', () => {
+	it( 'registers an editor for every built-in settings type without loading them', () => {
 		const registry = createRegistry();
 		const load = vi.fn< EditorModuleLoader >();
 
@@ -87,7 +87,9 @@ describe( 'built-in question editors', () => {
 
 		const registered = registerAppQuestionEditors( registry, vi.fn() );
 
-		expect( registered ).toHaveLength( 14 );
+		expect( registered ).toHaveLength(
+			CORE_QUESTION_EDITOR_IDS.length - 1
+		);
 		expect( registered ).not.toContain( 'expression' );
 		expect( registry.get( 'question-editor', 'expression' )?.render ).toBe(
 			addOn
@@ -140,6 +142,31 @@ describe( 'built-in question editors', () => {
 		expect(
 			screen.getByText( 'CategorizeEditor for categorize' )
 		).toBeInTheDocument();
+	} );
+
+	it( 'renders the extended formats with the shared extended editor and their type', async () => {
+		const registry = createRegistry();
+		const parts = fakeModule();
+		parts.ExtendedEditor = ( { type }: { type: string } ) => (
+			<p>Extended editor of { type }</p>
+		);
+		registerAppQuestionEditors( registry, async () => parts );
+
+		renderEditor( registry, 'hotspot' );
+		expect(
+			await screen.findByText( 'Extended editor of hotspot' )
+		).toBeInTheDocument();
+		renderEditor( registry, 'slide' );
+		expect(
+			await screen.findByText( 'Extended editor of slide' )
+		).toBeInTheDocument();
+		renderEditor( registry, 'crossword' );
+		expect(
+			await screen.findByText( 'CrosswordEditor for crossword' )
+		).toBeInTheDocument();
+		expect( registry.get( 'question-editor', 'text-entry' )?.label ).toBe(
+			'Type the answer (automatic)'
+		);
 	} );
 
 	it( 'reports a failed load through the extension boundary', async () => {

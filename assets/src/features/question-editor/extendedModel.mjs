@@ -55,6 +55,13 @@ export const isSettingsAddonType = (
 	manifest?.[ type ]?.editor?.format === 'ohmylms-settings';
 export const isUngradedType = ( type ) =>
 	[ 'poll', 'word-cloud', ...DECK_TYPES ].includes( type );
+/** Types the server only accepts with zero points (`ExtendedQuestions::UNSCORED_TYPES`). */
+export const UNSCORED_TYPES = Object.freeze( [
+	'poll',
+	'word-cloud',
+	'slide',
+	...DECK_TYPES,
+] );
 
 /**
  * Work out how an interactive video link should be played.

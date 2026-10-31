@@ -8,6 +8,7 @@
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
+use OhMyLMS\Assessment\InlineBlanks;
 use OhMyLMS\Assessment\Schema;
 use OhMyLMS\Extensions\Registry;
 use OhMyLMS\Extensions\Settings as ExtensionSettings;
@@ -59,6 +60,26 @@ class QuestionsController extends RestController {
 	 * Types whose answers are option rows with structural rules.
 	 */
 	const OPTION_TYPES = array( 'single-choice', 'multiple-choice', 'true-false', 'reorder', 'matching' );
+
+	/**
+	 * On/off settings shared by every type.
+	 */
+	const FLAG_SETTINGS = array( 'required', 'randomize', 'partial_credit', 'case_sensitive' );
+
+	/**
+	 * Text settings shared by every type.
+	 */
+	const TEXT_SETTINGS = array( 'hint', 'explanation' );
+
+	/**
+	 * Longest hint or explanation, in bytes.
+	 */
+	const MAX_TEXT_SETTING = 65535;
+
+	/**
+	 * Most points a question can be worth.
+	 */
+	const MAX_POINTS = 10000;
 
 	/**
 	 * Body fields accepted by create and update.
@@ -873,6 +894,10 @@ class QuestionsController extends RestController {
 					)
 				);
 			}
+			$valid = $this->validate_shared_settings( $settings );
+			if ( is_wp_error( $valid ) ) {
+				return $valid;
+			}
 			$settings            = $this->clean_settings( $settings );
 			$payload['settings'] = $settings;
 		}
@@ -883,9 +908,11 @@ class QuestionsController extends RestController {
 			$payload['questions'] = $options;
 		}
 
-		if ( null !== $settings || null !== $options ) {
-			$type  = null !== $settings ? $settings['type'] : ( $post ? $this->stored_type( $post->ID ) : '' );
-			$valid = $this->validate_options( $type, null !== $options ? $options : ( $post ? $this->stored_options( $post->ID ) : array() ) );
+		$type = null !== $settings ? $settings['type'] : ( $post ? $this->stored_type( $post->ID ) : '' );
+		// Fill-in-the-blank answers may live in the name, so renaming one re-checks its answers.
+		if ( null !== $settings || null !== $options || ( 'fill-in-the-blank' === $type && isset( $payload['name'] ) ) ) {
+			$name  = $payload['name'] ?? ( $post ? (string) $post->post_title : '' );
+			$valid = $this->validate_options( $type, null !== $options ? $options : ( $post ? $this->stored_options( $post->ID ) : array() ), $name );
 			if ( is_wp_error( $valid ) ) {
 				return $valid;
 			}
@@ -1033,13 +1060,93 @@ class QuestionsController extends RestController {
 	}
 
 	/**
-	 * Structural rules of the option-based built-in types.
+	 * Rules for the settings every type shares, which no type schema checks: flags, hint and
+	 * explanation, points, and the presentation choices of fill-in-the-blank and matching.
+	 *
+	 * @param array $settings Settings from the request.
+	 * @return true|WP_Error
+	 */
+	private function validate_shared_settings( array $settings ) {
+		foreach ( self::FLAG_SETTINGS as $key ) {
+			if ( array_key_exists( $key, $settings ) && ! in_array( $settings[ $key ], array( true, false, 0, 1, '0', '1', '' ), true ) ) {
+				return $this->invalid( 'ohmylms_question_invalid_settings', __( 'This setting must be on or off.', 'ohmylms' ), "settings.$key" );
+			}
+		}
+		foreach ( self::TEXT_SETTINGS as $key ) {
+			if ( array_key_exists( $key, $settings ) && ( ! is_string( $settings[ $key ] ) || strlen( $settings[ $key ] ) > self::MAX_TEXT_SETTING ) ) {
+				return $this->invalid(
+					'ohmylms_question_invalid_settings',
+					sprintf(
+						/* translators: %d: maximum length in bytes. */
+						__( 'Use text of at most %d characters.', 'ohmylms' ),
+						self::MAX_TEXT_SETTING
+					),
+					"settings.$key"
+				);
+			}
+		}
+		if ( array_key_exists( 'score', $settings ) ) {
+			$score = $settings['score'];
+			$value = is_array( $score ) ? ( $score['value'] ?? 0 ) : null;
+			if ( ! is_array( $score ) || ( isset( $score['enabled'] ) && ! in_array( $score['enabled'], array( true, false, 0, 1, '0', '1', '' ), true ) ) || ! is_numeric( $value ) || ! is_finite( (float) $value ) || (float) $value < 0 || (float) $value > self::MAX_POINTS ) {
+				return $this->invalid(
+					'ohmylms_question_invalid_settings',
+					sprintf(
+						/* translators: %d: maximum points. */
+						__( 'Enter points from 0 to %d.', 'ohmylms' ),
+						self::MAX_POINTS
+					),
+					'settings.score'
+				);
+			}
+		}
+		if ( isset( $settings['blank_mode'] ) && ! in_array( $settings['blank_mode'], array( '', 'drag', 'type' ), true ) ) {
+			return $this->invalid( 'ohmylms_question_invalid_settings', __( 'Choose how learners fill the blanks.', 'ohmylms' ), 'settings.blank_mode' );
+		}
+		if ( isset( $settings['match_layout'] ) && ! in_array( $settings['match_layout'], array( 'wire', 'grid' ), true ) ) {
+			return $this->invalid( 'ohmylms_question_invalid_settings', __( 'Choose a matching layout.', 'ohmylms' ), 'settings.match_layout' );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Answer rules of the option-format built-in types, checked against the merged question.
 	 *
 	 * @param string  $type    Question type.
 	 * @param array[] $options Options in the {@see clean_options()} shape.
+	 * @param string  $name    Question name (fill-in-the-blank answers may be `{braces}` in it).
 	 * @return true|WP_Error
 	 */
-	private function validate_options( $type, array $options ) {
+	private function validate_options( $type, array $options, $name = '' ) {
+		$texts = array_map(
+			static function ( $option ) {
+				return trim( wp_strip_all_tags( (string) $option['answer'] ) );
+			},
+			$options
+		);
+		if ( 'statement' === $type ) {
+			if ( ! $options ) {
+				return $this->invalid_options( __( 'Add at least one expected answer.', 'ohmylms' ), 'options' );
+			}
+			foreach ( array_values( $options ) as $index => $option ) {
+				if ( '' === $texts[ $index ] || empty( $option['is_correct'] ) ) {
+					return $this->invalid_options( __( 'Every expected answer needs text and must be marked correct.', 'ohmylms' ), "options[$index].answer" );
+				}
+			}
+			return true;
+		}
+		if ( 'fill-in-the-blank' === $type ) {
+			if ( InlineBlanks::parse( $name )['answers'] ) {
+				return true;
+			}
+			foreach ( array_values( $options ) as $index => $option ) {
+				if ( ! empty( $option['is_correct'] ) && '' !== $texts[ $index ] ) {
+					return true;
+				}
+			}
+			return $this->invalid_options( __( 'Write each answer in {curly brackets} in the question, or add an accepted answer.', 'ohmylms' ), 'options' );
+		}
 		if ( ! in_array( $type, self::OPTION_TYPES, true ) ) {
 			return true;
 		}
@@ -1229,7 +1336,9 @@ class QuestionsController extends RestController {
 				'skills'             => $skills ? $skills : new \stdClass(),
 				'bank'               => $this->bank_fields( $identity ),
 				'thumbnail_id'       => $question ? (int) $question->get_thumbnail_id() : 0,
+				'thumbnail_url'      => $question ? $this->attachment_url( (int) $question->get_thumbnail_id() ) : '',
 				'video_id'           => $question ? (int) $question->get_video_id() : 0,
+				'video_url'          => $question ? $this->attachment_url( (int) $question->get_video_id() ) : '',
 				'extension_settings' => $extension ? $extension : new \stdClass(),
 			),
 			$this->lifecycle( $post, $identity ),
@@ -1296,6 +1405,18 @@ class QuestionsController extends RestController {
 			'image_url'     => (string) ( $option['image_url'] ?? '' ),
 			'matching_data' => $matching ? $matching : null,
 		);
+	}
+
+	/**
+	 * URL of an attachment, or an empty string when there is none.
+	 *
+	 * @param int $id Attachment ID.
+	 * @return string
+	 */
+	private function attachment_url( $id ) {
+		$url = $id > 0 ? wp_get_attachment_url( $id ) : false;
+
+		return $url ? (string) $url : '';
 	}
 
 	/**
@@ -1434,7 +1555,9 @@ class QuestionsController extends RestController {
 				'skills'              => $readonly( 'object', __( 'Skill map by part: {part: {primary, supporting[]}}.', 'ohmylms' ) ),
 				'bank'                => $readonly( 'object', __( 'Bank attributes: bank_id, difficulty, source, family_id, secure.', 'ohmylms' ) ),
 				'thumbnail_id'        => $readonly( 'integer', __( 'Question image attachment ID (0 for none).', 'ohmylms' ) ),
+				'thumbnail_url'       => $readonly( 'string', __( 'URL of the question image (empty for none).', 'ohmylms' ) ),
 				'video_id'            => $readonly( 'integer', __( 'Question video attachment ID (0 for none).', 'ohmylms' ) ),
+				'video_url'           => $readonly( 'string', __( 'URL of the question video (empty for none).', 'ohmylms' ) ),
 				'extension_settings'  => $readonly( 'object', __( 'Registered extension settings for questions.', 'ohmylms' ) ),
 				'status'              => array_merge(
 					$readonly( 'string', __( 'Bank status.', 'ohmylms' ) ),

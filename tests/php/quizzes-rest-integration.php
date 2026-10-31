@@ -1083,7 +1083,7 @@ try {
 		ok_error( call_api( 'PUT', "quizzes/$qq_quiz/questions/order", array( 'question_ids' => array( $new_id, $qa2 ), 'revision' => $revision ) ), 409, 'ohmylms_quiz_questions_conflict', 'legacy change detected' );
 		$revision = $list( $qq_quiz )->get_data()['revision'];
 
-		// Read-only pools.
+		// Pools written by another writer (the legacy route stores this meta).
 		$skill = wp_insert_term( "$tag skill", \OhMyLMS\Skills\Taxonomy::NAME );
 		ok( is_array( $skill ), 'skill created' );
 		update_post_meta(
@@ -1104,7 +1104,9 @@ try {
 		);
 		$with_pools = $list( $qq_quiz )->get_data();
 		ok( 1 === count( $with_pools['pools'] ) && "$tag skill" === $with_pools['pools'][0]['skill']['name'] && 3 === $with_pools['pools'][0]['count'] && 6.0 === (float) $with_pools['totals']['pool_marks'] && 3 === $with_pools['totals']['pool_questions'] && 14.0 === (float) $with_pools['totals']['total_marks'], 'pools listed and counted' );
-		ok( $revision === $with_pools['revision'], 'pools do not change the question revision' );
+		ok( $revision !== $with_pools['revision'], 'a pool change by another writer changes the question revision' );
+		ok_error( call_api( 'PUT', "quizzes/$qq_quiz/questions/order", array( 'question_ids' => array( $new_id, $qa2 ), 'revision' => $revision ) ), 409, 'ohmylms_quiz_questions_conflict', 'stale revision after a pool change' );
+		$revision = $with_pools['revision'];
 
 		// A trashed quiz is read-only.
 		wp_trash_post( $qq_quiz );

@@ -21,6 +21,8 @@ export interface QuestionDraftEditorProps< T > {
 	saveLabel: string;
 	/** Reports unsaved edits so the host can guard them; pass a stable function. */
 	onDirtyChange?: ( dirty: boolean ) => void;
+	/** A post the user may edit (such as the hosting quiz) for the learner preview of the draft. */
+	previewPostId?: number;
 }
 
 function noop() {
@@ -41,6 +43,7 @@ function noop() {
  * @param props.onCancel      Leaves the draft.
  * @param props.saveLabel     Label of the save button.
  * @param props.onDirtyChange Reports unsaved edits.
+ * @param props.previewPostId Post for the learner preview of the draft.
  */
 export function QuestionDraftEditor< T >( {
 	name,
@@ -51,6 +54,7 @@ export function QuestionDraftEditor< T >( {
 	onCancel,
 	saveLabel,
 	onDirtyChange,
+	previewPostId,
 }: QuestionDraftEditorProps< T > ) {
 	const question = useMemo(
 		() => draftQuestion( name, type ),
@@ -70,6 +74,7 @@ export function QuestionDraftEditor< T >( {
 				cancel: onCancel,
 				saveLabel,
 				onDirtyChange,
+				previewPostId,
 			} }
 		/>
 	);

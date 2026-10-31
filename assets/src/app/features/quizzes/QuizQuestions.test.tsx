@@ -6,6 +6,7 @@ import { BootstrapProvider } from '../../bootstrap/BootstrapContext';
 import { ApiError } from '../../lib/api';
 import { createBootstrap } from '../../test/render';
 import * as bank from '../questions/public';
+import * as bankApi from '../questions/api';
 import type { QuestionSummary, QuestionType } from '../questions/public';
 import { questionList, sharedSlot, slot } from './fixtures';
 import * as api from './questionsApi';
@@ -20,11 +21,21 @@ vi.mock( './questionsApi', async ( original ) => ( {
 	reorderQuizQuestions: vi.fn(),
 	removeQuizQuestion: vi.fn(),
 	pinQuizQuestion: vi.fn(),
+	setQuizQuestionMarks: vi.fn(),
+	saveQuizSections: vi.fn(),
+	saveQuizPools: vi.fn(),
 } ) );
 vi.mock( '../questions/public', async ( original ) => ( {
 	...( await original< typeof import( '../questions/public' ) >() ),
 	listQuestions: vi.fn(),
 	listQuestionTypes: vi.fn(),
+	listBanks: vi.fn(),
+} ) );
+vi.mock( '../questions/api', async ( original ) => ( {
+	...( await original< typeof import( '../questions/api' ) >() ),
+	listBanks: vi.fn(),
+	searchSkills: vi.fn(),
+	getSkills: vi.fn(),
 } ) );
 
 const types: QuestionType[] = [
@@ -104,6 +115,11 @@ beforeEach( () => {
 	vi.resetAllMocks();
 	vi.mocked( api.listQuizQuestions ).mockResolvedValue( questionList );
 	vi.mocked( bank.listQuestionTypes ).mockResolvedValue( types );
+	vi.mocked( bank.listBanks ).mockResolvedValue( [
+		{ id: 4, name: 'Shared maths bank' },
+	] );
+	vi.mocked( bankApi.listBanks ).mockResolvedValue( [] );
+	vi.mocked( bankApi.getSkills ).mockResolvedValue( [] );
 } );
 
 describe( 'QuizQuestions', () => {
@@ -497,6 +513,245 @@ describe( 'QuizQuestions', () => {
 		expect( await screen.findByRole( 'table' ) ).toBeInTheDocument();
 		expect( api.createQuizQuestion ).not.toHaveBeenCalled();
 		expect( onDirtyChange ).toHaveBeenLastCalledWith( false );
+	} );
+	it( 'sets the marks of a question in this quiz and goes back to its points', async () => {
+		const overridden = listWith( {
+			questions: [ { ...slot, marks: 5, marks_override: 5 }, sharedSlot ],
+			totals: { ...questionList.totals, total_marks: 8 },
+		} );
+		vi.mocked( api.setQuizQuestionMarks )
+			.mockResolvedValueOnce( overridden )
+			.mockResolvedValueOnce( listWith( {} ) );
+		const user = userEvent.setup();
+		renderSection();
+		await user.click(
+			await screen.findByRole( 'button', {
+				name: 'Change the marks of Pick the larger fraction',
+			} )
+		);
+		let dialog = await screen.findByRole( 'dialog', {
+			name: 'Marks of Pick the larger fraction in this quiz',
+		} );
+		const field = within( dialog ).getByRole( 'spinbutton', {
+			name: 'Marks in this quiz',
+		} );
+		await user.clear( field );
+		await user.type( field, '-2' );
+		await user.click(
+			within( dialog ).getByRole( 'button', { name: 'Save marks' } )
+		);
+		expect( within( dialog ).getByRole( 'alert' ) ).toHaveTextContent(
+			/from 0 to 10000/
+		);
+		expect( field ).toHaveAttribute( 'aria-invalid', 'true' );
+		expect( api.setQuizQuestionMarks ).not.toHaveBeenCalled();
+		await user.clear( field );
+		await user.type( field, '5' );
+		await user.click(
+			within( dialog ).getByRole( 'button', { name: 'Save marks' } )
+		);
+		await screen.findByText(
+			'Pick the larger fraction is now worth 5 in this quiz.',
+			notice
+		);
+		expect( api.setQuizQuestionMarks ).toHaveBeenLastCalledWith(
+			11,
+			questionList.revision,
+			101,
+			5,
+			expect.any( AbortSignal )
+		);
+		expect( screen.queryByRole( 'dialog' ) ).toBeNull();
+		expect(
+			screen.getByText( 'Set in this quiz (question: 2)' )
+		).toBeVisible();
+		expect( onTotalChange ).toHaveBeenLastCalledWith( 8 );
+
+		await user.click(
+			screen.getByRole( 'button', {
+				name: 'Change the marks of Pick the larger fraction',
+			} )
+		);
+		dialog = await screen.findByRole( 'dialog' );
+		await user.click(
+			within( dialog ).getByRole( 'button', {
+				name: 'Use the question’s points (2)',
+			} )
+		);
+		await waitFor( () =>
+			expect( api.setQuizQuestionMarks ).toHaveBeenLastCalledWith(
+				11,
+				'fedcba9876543210',
+				101,
+				null,
+				expect.any( AbortSignal )
+			)
+		);
+	} );
+	it( 'edits the sections of the paper', async () => {
+		vi.mocked( api.saveQuizSections ).mockResolvedValue(
+			listWith( {
+				sections: [
+					{ title: 'Part A', question_ids: [ 102 ], new_page: true },
+				],
+				questions: [ slot, { ...sharedSlot, section: 'Part A' } ],
+			} )
+		);
+		const user = userEvent.setup();
+		renderSection();
+		await user.click(
+			await screen.findByRole( 'button', { name: 'Edit sections' } )
+		);
+		const dialog = await screen.findByRole( 'dialog', {
+			name: 'Sections',
+		} );
+		await user.click(
+			within( dialog ).getByRole( 'button', { name: 'Add section' } )
+		);
+		await user.click(
+			within( dialog ).getByRole( 'button', { name: 'Save sections' } )
+		);
+		expect( within( dialog ).getByRole( 'alert' ) ).toHaveTextContent(
+			'Give every section a title.'
+		);
+		await user.type(
+			within( dialog ).getByRole( 'textbox', {
+				name: 'Title of section 1',
+			} ),
+			'Part A'
+		);
+		await user.click(
+			within( dialog ).getByRole( 'checkbox', {
+				name: 'Start on a new page',
+			} )
+		);
+		await user.selectOptions(
+			within( dialog ).getByRole( 'combobox', {
+				name: /^2\. Explain why/,
+			} ),
+			'Part A'
+		);
+		await user.click(
+			within( dialog ).getByRole( 'button', { name: 'Save sections' } )
+		);
+		await screen.findByText( 'Sections saved.', notice );
+		expect( api.saveQuizSections ).toHaveBeenCalledWith(
+			11,
+			questionList.revision,
+			[ { title: 'Part A', question_ids: [ 102 ], new_page: true } ],
+			expect.any( AbortSignal )
+		);
+		expect( screen.getByText( 'Section: Part A' ) ).toBeVisible();
+	} );
+	it( 'edits the random pools and reports a shortage from the server', async () => {
+		vi.mocked( bankApi.searchSkills ).mockResolvedValue( [
+			{ id: 7, name: 'Fractions', code: 'F1' },
+		] );
+		vi.mocked( api.saveQuizPools )
+			.mockRejectedValueOnce(
+				new ApiError( {
+					status: 409,
+					code: 'quiz_pool_shortage',
+					message: 'The random pool needs 3 approved questions.',
+				} )
+			)
+			.mockResolvedValueOnce(
+				listWith( {
+					pools: [
+						{
+							id: 'pool-1',
+							title: 'Warm-up',
+							skill: { id: 7, name: 'Fractions' },
+							count: 2,
+							marks: 1,
+							difficulty: 'easy',
+							bank_id: 4,
+							include_secure: true,
+						},
+					],
+				} )
+			);
+		const user = userEvent.setup();
+		renderSection();
+		await user.click(
+			await screen.findByRole( 'button', { name: 'Edit random pools' } )
+		);
+		const dialog = await screen.findByRole( 'dialog', {
+			name: 'Random pools',
+		} );
+		await user.click(
+			within( dialog ).getByRole( 'button', { name: 'Add pool' } )
+		);
+		await user.click(
+			within( dialog ).getByRole( 'button', { name: 'Save pools' } )
+		);
+		expect( within( dialog ).getByRole( 'alert' ) ).toHaveTextContent(
+			'Choose a skill.'
+		);
+		await user.type(
+			within( dialog ).getByRole( 'textbox', { name: 'Title' } ),
+			'Warm-up'
+		);
+		await user.type(
+			within( dialog ).getByRole( 'textbox', {
+				name: 'Search skills for Skill of pool 1',
+			} ),
+			'frac'
+		);
+		await user.click(
+			within( dialog ).getByRole( 'button', { name: 'Search' } )
+		);
+		await user.click(
+			await within( dialog ).findByRole( 'button', {
+				name: 'Add Fractions (F1)',
+			} )
+		);
+		const count = within( dialog ).getByRole( 'spinbutton', {
+			name: 'Questions to draw',
+		} );
+		await user.clear( count );
+		await user.type( count, '2' );
+		await user.selectOptions(
+			within( dialog ).getByRole( 'combobox', { name: 'Difficulty' } ),
+			'easy'
+		);
+		await within( dialog ).findByRole( 'option', {
+			name: 'Shared maths bank',
+		} );
+		await user.selectOptions(
+			within( dialog ).getByRole( 'combobox', { name: 'Bank' } ),
+			'4'
+		);
+		await user.click(
+			within( dialog ).getByRole( 'button', { name: 'Save pools' } )
+		);
+		expect(
+			await within( dialog ).findByText(
+				'The random pool needs 3 approved questions.'
+			)
+		).toBeVisible();
+		await user.click(
+			within( dialog ).getByRole( 'button', { name: 'Save pools' } )
+		);
+		await screen.findByText( 'Random pools saved.', notice );
+		expect( api.saveQuizPools ).toHaveBeenLastCalledWith(
+			11,
+			questionList.revision,
+			[
+				{
+					title: 'Warm-up',
+					skill_id: 7,
+					count: 2,
+					marks: 1,
+					difficulty: 'easy',
+					bank_id: 4,
+					include_secure: true,
+				},
+			],
+			expect.any( AbortSignal )
+		);
+		const pools = screen.getByRole( 'table', { name: 'Random pools' } );
+		expect( within( pools ).getByText( 'Fractions' ) ).toBeVisible();
 	} );
 	it( 'offers a retry when the list cannot be loaded', async () => {
 		vi.mocked( api.listQuizQuestions ).mockRejectedValueOnce(

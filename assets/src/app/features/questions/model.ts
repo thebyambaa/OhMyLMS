@@ -1,7 +1,10 @@
 import { __, _n, sprintf } from '@wordpress/i18n';
+import { UNSCORED_TYPES } from '../../../features/question-editor/extendedModel.mjs';
 import { questionTypePatch } from '../../../features/question-editor/questionBlocks.mjs';
 import { ApiError } from '../../lib/api';
 import type {
+	BankInput,
+	BankRef,
 	Difficulty,
 	FormErrors,
 	FormOption,
@@ -19,6 +22,8 @@ import type {
 	QuestionUpdateInput,
 	QuestionUsage,
 	QuestionVersion,
+	SkillMap,
+	SkillRef,
 	StatusFilter,
 	UserRef,
 } from './types';
@@ -56,6 +61,229 @@ export const MAX_ANSWER = 10000;
 
 /** Longest matching label. */
 export const MAX_LABEL = 1000;
+
+/** Longest hint or explanation the server accepts (bytes; the form counts characters). */
+export const MAX_TEXT_SETTING = 65535;
+
+/** Most points a question can be worth. */
+export const MAX_POINTS = 10000;
+
+/** Longest source note. */
+export const MAX_SOURCE = 100;
+
+/** Most supporting skills per part. */
+export const MAX_SUPPORTING = 50;
+
+/** Types whose learners write an answer that a teacher marks; they store no answer key. */
+export const MANUAL_TEXT_TYPES = [ 'short-text', 'long-text' ] as const;
+
+/** Types whose points are the sum of their parts' marks. */
+export const DERIVED_SCORE_TYPES = [ 'structured', 'passage' ] as const;
+
+/**
+ * Which editor edits the answers of a type.
+ *
+ * - `options`: answer options with correct answers, order or pairs (the built-in choice types);
+ * - `accepted`: expected typed answers (statement);
+ * - `blanks`: `{answers}` in the question name, or accepted answers (fill-in-the-blank);
+ * - `manual`: no answer key, a teacher marks the answer (short and long text);
+ * - `extension`: the registered `question-editor` of the type (built-in settings types and add-ons);
+ * - `none`: no editor is available for the type.
+ */
+export type AnswerArea =
+	'options' | 'accepted' | 'blanks' | 'manual' | 'extension' | 'none';
+
+/**
+ * The answer editor of a type. The built-in option-format types (their ids are reserved) are edited by
+ * this form; every other type by its registered `question-editor`.
+ *
+ * @param type      Question type id.
+ * @param extension Whether a `question-editor` is registered for the type.
+ * @return The area.
+ */
+export function answerArea( type: string, extension: boolean ): AnswerArea {
+	if ( editsOptions( type ) ) {
+		return 'options';
+	}
+	if ( 'statement' === type ) {
+		return 'accepted';
+	}
+	if ( 'fill-in-the-blank' === type ) {
+		return 'blanks';
+	}
+	if ( ( MANUAL_TEXT_TYPES as readonly string[] ).includes( type ) ) {
+		return 'manual';
+	}
+	return extension ? 'extension' : 'none';
+}
+
+/**
+ * How the points of a type are set.
+ *
+ * @param type Question type id.
+ * @return `points` (edited here), `derived` (the sum of the parts' marks, edited in the parts) or
+ *         `unscored` (always zero).
+ */
+export function scoreMode( type: string ): 'points' | 'derived' | 'unscored' {
+	if ( ( DERIVED_SCORE_TYPES as readonly string[] ).includes( type ) ) {
+		return 'derived';
+	}
+	return UNSCORED_TYPES.includes( type ) ? 'unscored' : 'points';
+}
+
+/** Shared settings that apply to a type. */
+export interface SharedSettings {
+	/** Learners must answer before submitting. */
+	required: boolean;
+	/** Answer options are shown in a random order. */
+	randomize: boolean;
+	/** Partly correct answers earn part of the points. */
+	partialCredit: boolean;
+	/** Hint (practice) and explanation (after answering). */
+	feedback: boolean;
+}
+
+/**
+ * Which shared settings a type uses. The type editors of the settings types carry their own grading
+ * options (partial credit, case).
+ *
+ * @param type Question type id.
+ * @return Flags by setting.
+ */
+export function sharedSettings( type: string ): SharedSettings {
+	return {
+		required: 'slide' !== type,
+		randomize: [
+			'single-choice',
+			'multiple-choice',
+			'true-false',
+		].includes( type ),
+		partialCredit: [ 'multiple-choice', 'fill-in-the-blank' ].includes(
+			type
+		),
+		feedback: 'slide' !== type,
+	};
+}
+
+/**
+ * Whether a stored on/off setting is on. Legacy questions store `1`, `'1'` or `true`.
+ *
+ * @param value    Stored value.
+ * @param fallback Value when unset.
+ * @return True when on.
+ */
+export function flag( value: unknown, fallback = false ): boolean {
+	if ( undefined === value || null === value ) {
+		return fallback;
+	}
+	return ! [ false, 0, '0', '' ].includes( value as never );
+}
+
+/**
+ * The answers written in `{curly brackets}` in a fill-in-the-blank name, as the server parses them.
+ *
+ * @param name Question name.
+ * @return Answers in order; blank brackets are ignored.
+ */
+export function inlineBlanks( name: string ): string[] {
+	return Array.from( name.matchAll( /\{([^{}<>]+)\}/gu ) )
+		.map( ( match ) => match[ 1 ] ?? '' )
+		.filter( ( answer ) => '' !== answer.trim() );
+}
+
+/**
+ * Parts of a question that can be mapped to skills: the part ids of multi-part questions, otherwise
+ * the one part `p1`.
+ *
+ * @param settings Question settings.
+ * @return Part keys with labels.
+ */
+export function skillParts(
+	settings: QuestionSettings
+): { key: string; label: string }[] {
+	const parts = Array.isArray( settings.parts ) ? settings.parts : [];
+	const found = parts
+		.map( ( part: unknown ) => {
+			const item =
+				part && 'object' === typeof part
+					? ( part as Record< string, unknown > )
+					: {};
+			const key = 'string' === typeof item.id ? item.id : '';
+			const label =
+				'string' === typeof item.label && item.label ? item.label : key;
+			return { key, label };
+		} )
+		.filter( ( part ) => /^[a-z0-9_-]+$/i.test( part.key ) );
+	return found.length ? found : [ { key: 'p1', label: '' } ];
+}
+
+/**
+ * A skill map as the server normalizes it: parts with neither a primary nor a supporting skill are
+ * dropped, supporting skills are unique, sorted and never the primary skill, parts are sorted.
+ *
+ * @param map Skill map.
+ * @return The normalized map.
+ */
+export function normalizeSkills( map: SkillMap ): SkillMap {
+	const clean: SkillMap = {};
+	for ( const key of Object.keys( map ).sort() ) {
+		const roles = map[ key ];
+		if ( ! roles ) {
+			continue;
+		}
+		const primary = roles.primary > 0 ? roles.primary : 0;
+		const supporting = Array.from( new Set( roles.supporting ) )
+			.filter( ( id ) => id > 0 && id !== primary )
+			.sort( ( a, b ) => a - b );
+		if ( primary || supporting.length ) {
+			clean[ key ] = { primary, supporting };
+		}
+	}
+	return clean;
+}
+
+function parseSkillMap( value: unknown ): SkillMap {
+	const map: SkillMap = {};
+	for ( const [ key, raw ] of Object.entries( looseRecord( value ) ) ) {
+		const roles = looseRecord( raw );
+		map[ key ] = {
+			primary: count( roles.primary ?? 0 ),
+			supporting: list( roles.supporting ?? [] ).map( positiveId ),
+		};
+	}
+	return map;
+}
+
+/**
+ * Validate one row of the skill catalogue.
+ *
+ * @param value Parsed JSON.
+ * @return The skill.
+ */
+export function parseSkillRef( value: unknown ): SkillRef {
+	const item = record( value );
+	return {
+		id: positiveId( item.id ),
+		name: text( item.name ),
+		code: 'string' === typeof item.code ? item.code : '',
+	};
+}
+
+/**
+ * Validate the bank list of `GET /question-banks`.
+ *
+ * @param value Parsed JSON.
+ * @return The banks.
+ */
+export function parseBanks( value: unknown ): BankRef[] {
+	return list( record( value ).banks ).map( ( raw ) => {
+		const item = record( raw );
+		return {
+			id: positiveId( Number( item.id ) ),
+			name: text( item.name ),
+		};
+	} );
+}
 
 /**
  * Build the error thrown when the server answers with data that does not match the contract.
@@ -156,6 +384,10 @@ function finite( value: unknown ): number {
 
 function nullableText( value: unknown ): string | null {
 	return null === value ? null : text( value );
+}
+
+function optionalText( value: unknown ): string {
+	return undefined === value ? '' : text( value );
 }
 
 /**
@@ -280,7 +512,7 @@ export function parseQuestionDetail( value: unknown ): QuestionDetail {
 		type: text( item.type ),
 		settings: looseRecord( item.settings ),
 		options: list( item.options ).map( parseQuestionOption ),
-		skills: looseRecord( item.skills ),
+		skills: parseSkillMap( item.skills ),
 		bank: {
 			bank_id: count( bank.bank_id ),
 			difficulty: text( bank.difficulty ),
@@ -289,7 +521,9 @@ export function parseQuestionDetail( value: unknown ): QuestionDetail {
 			secure: boolean( bank.secure ),
 		},
 		thumbnail_id: count( item.thumbnail_id ),
+		thumbnail_url: optionalText( item.thumbnail_url ),
 		video_id: count( item.video_id ),
+		video_url: optionalText( item.video_url ),
 		extension_settings: looseRecord( item.extension_settings ),
 		...parseLifecycle( item ),
 		usage: parseUsage( item.usage ),
@@ -533,16 +767,6 @@ export function formatDateTime( value: string, locale?: string ): string {
 	} ).format( time );
 }
 
-/**
- * URL of the question bank in the existing admin, where every type can be edited.
- *
- * @param adminUrl Site admin URL ending with a slash.
- * @return Absolute URL.
- */
-export function legacyEditorUrl( adminUrl: string ): string {
-	return `${ adminUrl }admin.php?page=ohmylms#/content-hub/question-bank`;
-}
-
 function option(
 	answer: string,
 	isCorrect: boolean,
@@ -552,8 +776,8 @@ function option(
 }
 
 /**
- * Body that creates a valid minimal question of a type: one point and, for the option types, two
- * options that satisfy the server's option rules.
+ * Body that creates a valid minimal question of a type: one point (none for unscored types) and,
+ * for the option types, options that satisfy the server's option rules.
  *
  * @param name Question name.
  * @param type Question type id.
@@ -562,7 +786,13 @@ function option(
 export function createInput( name: string, type: string ): QuestionCreateInput {
 	const input: QuestionCreateInput = {
 		name: name.trim(),
-		settings: { type, score: { enabled: true, value: 1 } },
+		settings: {
+			type,
+			score: {
+				enabled: true,
+				value: 'unscored' === scoreMode( type ) ? 0 : 1,
+			},
+		},
 	};
 	switch ( type ) {
 		case 'single-choice':
@@ -596,13 +826,16 @@ export function createInput( name: string, type: string ): QuestionCreateInput {
 				},
 			];
 			break;
+		case 'statement':
+			input.options = [ option( '', true, 0 ) ];
+			break;
 	}
 	return input;
 }
 
 /**
  * An unsaved question of a type, for the draft editor: the shared authored starting settings of the
- * type (`questionTypePatch`, also used by the existing admin) and, for the option types, the options
+ * type (`questionTypePatch`, also used by the native editors) and, for the option types, the options
  * of {@link createInput}. Nothing is sent until the first save.
  *
  * @param name Question name.
@@ -610,7 +843,11 @@ export function createInput( name: string, type: string ): QuestionCreateInput {
  * @return An editor view with id 0, version 0 and full permissions.
  */
 export function draftQuestion( name: string, type: string ): QuestionDetail {
-	const settings = questionTypePatch( {}, type ).settings ?? {};
+	const patched = questionTypePatch( {}, type ).settings ?? {};
+	const settings: QuestionSettings = { ...patched, type };
+	if ( 'unscored' === scoreMode( type ) ) {
+		settings.score = { enabled: true, value: 0 };
+	}
 	const options = createInput( name, type ).options ?? [];
 	return {
 		id: 0,
@@ -618,7 +855,7 @@ export function draftQuestion( name: string, type: string ): QuestionDetail {
 		name: name.trim(),
 		description: '',
 		type,
-		settings: { ...settings, type },
+		settings,
 		options: options.map( ( item ) => ( {
 			id: 0,
 			answer: item.answer,
@@ -637,7 +874,9 @@ export function draftQuestion( name: string, type: string ): QuestionDetail {
 			secure: false,
 		},
 		thumbnail_id: 0,
+		thumbnail_url: '',
 		video_id: 0,
+		video_url: '',
 		extension_settings: {},
 		status: 'draft',
 		post_status: '',
@@ -653,26 +892,58 @@ export function draftQuestion( name: string, type: string ): QuestionDetail {
 }
 
 /**
+ * Whether the answer options of an area are edited and sent by this form.
+ *
+ * @param area Answer area of the type.
+ * @return True for the option, accepted-answer and blank areas.
+ */
+export function sendsOptions( area: AnswerArea ): boolean {
+	return 'options' === area || 'accepted' === area || 'blanks' === area;
+}
+
+/**
  * Body that creates the question of a draft. Call after {@link validateForm} reports no errors.
  *
  * @param form Form state of the draft.
  * @param type Question type id.
- * @return The create payload; options only for the option types this editor edits.
+ * @param area Answer area of the type; options are sent for the areas this form edits.
+ * @return The create payload.
  */
 export function toCreateInput(
 	form: FormState,
-	type: string
+	type: string,
+	area: AnswerArea = answerArea( type, false )
 ): QuestionCreateInput {
+	const bank: BankInput = { difficulty: form.difficulty };
+	if ( form.bankId > 0 ) {
+		bank.bank_id = form.bankId;
+	}
+	if ( form.source.trim() ) {
+		bank.source = form.source.trim();
+	}
+	if ( form.secure ) {
+		bank.secure = true;
+	}
 	const input: QuestionCreateInput = {
 		name: form.name.trim(),
 		settings: settingsFor( form, type ),
-		bank: { difficulty: form.difficulty },
+		bank,
 	};
 	if ( form.description ) {
 		input.description = form.description;
 	}
-	if ( editsOptions( type ) ) {
+	if ( sendsOptions( area ) ) {
 		input.options = optionInputs( form.options );
+	}
+	const skills = normalizeSkills( form.skills );
+	if ( Object.keys( skills ).length ) {
+		input.skills = skills;
+	}
+	if ( form.image.id > 0 ) {
+		input.thumbnail_id = form.image.id;
+	}
+	if ( form.video.id > 0 ) {
+		input.video_id = form.video.id;
 	}
 	return input;
 }
@@ -713,13 +984,23 @@ function pointsFrom( settings: QuestionSettings ): string {
 		return '';
 	}
 	const { enabled, value } = score as Record< string, unknown >;
-	if ( ! enabled ) {
+	if ( ! flag( enabled ) ) {
 		return '';
 	}
 	if ( 'number' === typeof value && Number.isFinite( value ) ) {
 		return String( value );
 	}
 	return 'string' === typeof value ? value : '';
+}
+
+/**
+ * Points of a type whose points come from its settings (the sum of the parts, or zero).
+ *
+ * @param settings Settings.
+ * @return The points, as text.
+ */
+export function derivedPoints( settings: QuestionSettings ): string {
+	return pointsFrom( settings ) || '0';
 }
 
 /**
@@ -743,8 +1024,15 @@ export function formFromQuestion( question: QuestionDetail ): FormState {
 				answer: item.answer,
 				is_correct: item.is_correct,
 				image_id: item.image_id,
+				image_url: item.image_url,
 				matching: item.matching_data,
 			} ) ),
+		bankId: question.bank.bank_id,
+		source: question.bank.source,
+		secure: question.bank.secure,
+		image: { id: question.thumbnail_id, url: question.thumbnail_url },
+		video: { id: question.video_id, url: question.video_url },
+		skills: normalizeSkills( question.skills ),
 	};
 }
 
@@ -753,7 +1041,8 @@ let nextKey = 0;
 /**
  * A new, empty option for the options editor.
  *
- * @param type Question type id; matching options start with an empty label.
+ * @param type Question type id; matching options start with an empty label, expected answers of
+ *             statement and fill-in-the-blank are correct.
  * @return The option.
  */
 export function newOption( type: string ): FormOption {
@@ -762,8 +1051,9 @@ export function newOption( type: string ): FormOption {
 		key: `new-${ nextKey }`,
 		id: 0,
 		answer: '',
-		is_correct: false,
+		is_correct: [ 'statement', 'fill-in-the-blank' ].includes( type ),
 		image_id: 0,
+		image_url: '',
 		matching: 'matching' === type ? { label: '' } : null,
 	};
 }
@@ -842,18 +1132,24 @@ function plain( html: string ): string {
 	return html.replace( /<[^>]*>/g, '' ).trim();
 }
 
+function tooLong( value: unknown, max: number ): boolean {
+	return 'string' === typeof value && value.length > max;
+}
+
 /**
  * Validate the form with the same rules as the server (which stays authoritative).
  *
  * @param form  Form state.
  * @param saved Saved form; a question without points may stay without points.
- * @param type  Question type id; option rules apply to the built-in option types only.
+ * @param type  Question type id.
+ * @param area  Answer area of the type; the answer rules of the areas this form edits apply.
  * @return Errors keyed by field; empty when valid.
  */
 export function validateForm(
 	form: FormState,
 	saved: FormState,
-	type: string
+	type: string,
+	area: AnswerArea = editsOptions( type ) ? 'options' : 'extension'
 ): FormErrors {
 	const errors: FormErrors = {};
 	const name = form.name.trim();
@@ -873,10 +1169,15 @@ export function validateForm(
 	}
 	const points = form.points.trim();
 	if (
+		'points' === scoreMode( type ) &&
 		( points || saved.points.trim() ) &&
-		! /^\d+(\.\d+)?$/.test( points )
+		( ! /^\d+(\.\d+)?$/.test( points ) || Number( points ) > MAX_POINTS )
 	) {
-		errors.points = __( 'Enter points of zero or more.', 'ohmylms' );
+		errors.points = sprintf(
+			/* translators: %d: maximum points. */
+			__( 'Enter points from 0 to %d.', 'ohmylms' ),
+			MAX_POINTS
+		);
 	}
 	if (
 		form.difficulty !== saved.difficulty &&
@@ -884,10 +1185,88 @@ export function validateForm(
 	) {
 		errors.difficulty = __( 'Choose a difficulty.', 'ohmylms' );
 	}
-	if ( editsOptions( type ) ) {
+	if ( Array.from( form.source.trim() ).length > MAX_SOURCE ) {
+		errors.source = sprintf(
+			/* translators: %d: maximum length. */
+			__( 'Use at most %d characters.', 'ohmylms' ),
+			MAX_SOURCE
+		);
+	}
+	for ( const key of [ 'hint', 'explanation' ] ) {
+		if ( tooLong( form.settings[ key ], MAX_TEXT_SETTING ) ) {
+			errors[ key ] = sprintf(
+				/* translators: %d: maximum length. */
+				__( 'Use at most %d characters.', 'ohmylms' ),
+				MAX_TEXT_SETTING
+			);
+		}
+	}
+	for ( const [ part, roles ] of Object.entries( form.skills ) ) {
+		if ( roles.supporting.length > MAX_SUPPORTING ) {
+			errors[ `skills.${ part }` ] = sprintf(
+				/* translators: %d: maximum number of skills. */
+				__( 'Choose at most %d supporting skills.', 'ohmylms' ),
+				MAX_SUPPORTING
+			);
+		}
+	}
+	if ( 'options' === area ) {
 		validateOptions( form.options, type, errors );
+	} else if ( 'accepted' === area ) {
+		validateAccepted( form.options, errors, true );
+	} else if ( 'blanks' === area && ! inlineBlanks( form.name ).length ) {
+		validateAccepted( form.options, errors, false );
 	}
 	return errors;
+}
+
+function answerTooLong( options: readonly FormOption[], errors: FormErrors ) {
+	options.forEach( ( item, index ) => {
+		if ( item.answer.length > MAX_ANSWER ) {
+			errors[ `options.${ index }.answer` ] = sprintf(
+				/* translators: %d: maximum length. */
+				__( 'Use at most %d characters.', 'ohmylms' ),
+				MAX_ANSWER
+			);
+		}
+	} );
+}
+
+function validateAccepted(
+	options: readonly FormOption[],
+	errors: FormErrors,
+	statement: boolean
+) {
+	if ( options.length > MAX_OPTIONS ) {
+		errors.options = sprintf(
+			/* translators: %d: maximum number of options. */
+			__( 'Use at most %d answers.', 'ohmylms' ),
+			MAX_OPTIONS
+		);
+		return;
+	}
+	if ( statement ) {
+		if ( ! options.length ) {
+			errors.options = __(
+				'Add at least one expected answer.',
+				'ohmylms'
+			);
+		}
+		options.forEach( ( item, index ) => {
+			if ( ! plain( item.answer ) ) {
+				errors[ `options.${ index }.answer` ] = __(
+					'Enter the expected answer.',
+					'ohmylms'
+				);
+			}
+		} );
+	} else if ( ! options.some( ( item ) => plain( item.answer ) ) ) {
+		errors.options = __(
+			'Write each answer in {curly brackets} in the name, or add an accepted answer.',
+			'ohmylms'
+		);
+	}
+	answerTooLong( options, errors );
 }
 
 function validateOptions(
@@ -920,14 +1299,8 @@ function validateOptions(
 			'ohmylms'
 		);
 	}
+	answerTooLong( options, errors );
 	options.forEach( ( item, index ) => {
-		if ( item.answer.length > MAX_ANSWER ) {
-			errors[ `options.${ index }.answer` ] = sprintf(
-				/* translators: %d: maximum length. */
-				__( 'Use at most %d characters.', 'ohmylms' ),
-				MAX_ANSWER
-			);
-		}
 		const label = item.matching?.label ?? '';
 		if ( 'matching' === type && ! label.trim() ) {
 			errors[ `options.${ index }.label` ] = __(
@@ -978,8 +1351,8 @@ export function optionInputs( options: readonly FormOption[] ): OptionInput[] {
 }
 
 /**
- * The settings to save: the edited settings with the type stamped and, when points are set, a
- * score of that many points.
+ * The settings to save: the edited settings with the type stamped and the score of the points
+ * (zero for unscored types; the parts' total, which their editor keeps, for multi-part types).
  *
  * @param form Form state.
  * @param type Question type id.
@@ -987,16 +1360,19 @@ export function optionInputs( options: readonly FormOption[] ): OptionInput[] {
  */
 export function settingsFor( form: FormState, type: string ): QuestionSettings {
 	const settings: QuestionSettings = { ...form.settings, type };
+	const mode = scoreMode( type );
+	const score = form.settings.score;
+	const base =
+		score && 'object' === typeof score && ! Array.isArray( score )
+			? score
+			: {};
+	if ( 'unscored' === mode ) {
+		settings.score = { ...base, enabled: true, value: 0 };
+		return settings;
+	}
 	const points = form.points.trim();
-	if ( points ) {
-		const score = form.settings.score;
-		settings.score = {
-			...( score && 'object' === typeof score && ! Array.isArray( score )
-				? score
-				: {} ),
-			enabled: true,
-			value: Number( points ),
-		};
+	if ( 'points' === mode && points ) {
+		settings.score = { ...base, enabled: true, value: Number( points ) };
 	}
 	return settings;
 }
@@ -1008,13 +1384,15 @@ export function settingsFor( form: FormState, type: string ): QuestionSettings {
  * @param saved        Saved form the edits started from.
  * @param type         Question type id.
  * @param baseModified `modified` of the last read, for the stale-save check.
+ * @param area         Answer area of the type; options are sent for the areas this form edits.
  * @return Only the changed fields, plus `base_modified`.
  */
 export function toInput(
 	form: FormState,
 	saved: FormState,
 	type: string,
-	baseModified: string
+	baseModified: string,
+	area: AnswerArea = editsOptions( type ) ? 'options' : 'extension'
 ): QuestionUpdateInput {
 	const input: QuestionUpdateInput = { base_modified: baseModified };
 	if ( form.name !== saved.name ) {
@@ -1031,13 +1409,40 @@ export function toInput(
 	}
 	const options = optionInputs( form.options );
 	if (
+		sendsOptions( area ) &&
 		JSON.stringify( options ) !==
-		JSON.stringify( optionInputs( saved.options ) )
+			JSON.stringify( optionInputs( saved.options ) )
 	) {
 		input.options = options;
 	}
+	const bank: BankInput = {};
 	if ( form.difficulty !== saved.difficulty ) {
-		input.bank = { difficulty: form.difficulty };
+		bank.difficulty = form.difficulty;
+	}
+	if ( form.bankId !== saved.bankId ) {
+		bank.bank_id = form.bankId;
+	}
+	if ( form.source.trim() !== saved.source.trim() ) {
+		bank.source = form.source.trim();
+	}
+	if ( form.secure !== saved.secure ) {
+		bank.secure = form.secure;
+	}
+	if ( Object.keys( bank ).length ) {
+		input.bank = bank;
+	}
+	if ( form.image.id !== saved.image.id ) {
+		input.thumbnail_id = form.image.id;
+	}
+	if ( form.video.id !== saved.video.id ) {
+		input.video_id = form.video.id;
+	}
+	const skills = normalizeSkills( form.skills );
+	if (
+		JSON.stringify( skills ) !==
+		JSON.stringify( normalizeSkills( saved.skills ) )
+	) {
+		input.skills = skills;
 	}
 	return input;
 }
@@ -1079,6 +1484,15 @@ const PARAM_FIELDS: Record< string, string > = {
 	settings: 'settings',
 	options: 'options',
 	bank: 'difficulty',
+	skills: 'skills',
+	thumbnail_id: 'image',
+	video_id: 'video',
+};
+
+const SETTING_FIELDS: Record< string, string > = {
+	'settings.score': 'points',
+	'settings.hint': 'hint',
+	'settings.explanation': 'explanation',
 };
 
 /**
@@ -1096,8 +1510,17 @@ export function serverFieldError(
 			return { path: 'name', message };
 		case 'ohmylms_bank_invalid':
 			return { path: 'difficulty', message };
+		case 'ohmylms_forbidden':
+			return { path: 'bank', message };
+		case 'ohmylms_skill_map_invalid':
+		case 'ohmylms_skill_missing':
+			return { path: 'skills', message };
 		case 'ohmylms_invalid_question_settings':
 			return { path: 'settings', message };
+		case 'ohmylms_question_invalid_settings': {
+			const field = detailField( error ) ?? '';
+			return { path: SETTING_FIELDS[ field ] ?? 'settings', message };
+		}
 		case 'ohmylms_question_invalid_options':
 		case 'ohmylms_question_invalid_media': {
 			const field = detailField( error ) ?? '';
@@ -1106,6 +1529,16 @@ export function serverFieldError(
 			);
 			if ( label ) {
 				return { path: `options.${ label[ 1 ] }.label`, message };
+			}
+			const answer = /^options\[(\d+)\]\.answer$/.exec( field );
+			if ( answer ) {
+				return { path: `options.${ answer[ 1 ] }.answer`, message };
+			}
+			if ( 'thumbnail_id' === field ) {
+				return { path: 'image', message };
+			}
+			if ( 'video_id' === field ) {
+				return { path: 'video', message };
 			}
 			return field.startsWith( 'options' )
 				? { path: 'options', message }

@@ -102,7 +102,8 @@ batches per page (posts and meta, identity rows, usage counts, skill terms, auth
 
 `name` and `description` are returned as stored (raw, filtered on write); render them as HTML only through
 the same sanitisation. `uuid` is empty and `version` 0 for a question that has never been saved through the
-bank; reading it does not create the identity row. `image_url` of an option is derived from `image_id`.
+bank; reading it does not create the identity row. `image_url` of an option is derived from `image_id`;
+`thumbnail_url` and `video_url` (empty for none) are the URLs of `thumbnail_id` and `video_id`.
 
 ### Versions (`GET /questions/{id}/versions`)
 
@@ -130,6 +131,51 @@ All registered question types, built-in and from add-ons (for example `graded-re
 `answers` is `options`, `text` or `null`. `builtin` is true for types OhMyLMS registers before
 `ohmylms_register_extensions` fires (`Registry::mark_core()`).
 
+## Type and field coverage of the editor
+
+The new admin editor (`#/content-hub/question-bank/<id>`, and the same form hosted by the quiz editor) was
+compared with what the server stores and plays (`Extensions\QuestionTypes`, `Assessment\Interactive`,
+`Assessment\ExtendedQuestions`, `QuestionBank\DraftWriter`, the `single-lesson/quiz-loop/*` players).
+53 types are registered on a site with the graded-reader add-on and the examples module: 52 built-in, plus
+`graded-reader` and `example-number`, which register their own editors through `registerQuestionEditor`.
+
+Answers, by type (before: 30 October 2026; after: this change):
+
+| Types | Stored answer data | Before | After |
+| --- | --- | --- | --- |
+| `single-choice`, `multiple-choice`, `true-false` | options with `is_correct` | text, correct, order | + option images, shuffle; partial credit for `multiple-choice` |
+| `reorder` | option order | text, order | + option images |
+| `matching` | options with `matching_data.label`/`image_url`; `match_layout` | text, label, order | + option and match images, layout (lines or grid) |
+| `statement` | expected answers (correct options, compared exactly, in order) | link to the deleted full editor | expected answers editor |
+| `fill-in-the-blank` | `{answers}` in the name, or correct options; `blank_mode`, `case_sensitive`, `partial_credit` | link to the deleted full editor | detected blanks, accepted answers, drag or type, case, partial credit |
+| `short-text`, `long-text` | none (marked by a teacher; length limit is a quiz setting) | link to the deleted full editor | explained, no answer key |
+| `numerical`, `structured`, `dropdown-blanks`, `categorize`, `multi-blank`, `build-expression`, `expression`, `number-line`, `shade-model`, `count-blocks`, `set-clock`, `make-amount`, `fill-level`, `build-chart`, `grid-build` | type settings | registered core editor | unchanged |
+| `text-entry`, `crossword`, `wordsearch` | type settings | "no editor yet" | registered core editor |
+| `passage`, `graphing`, `hot-text`, `match-table-grid`, `labeling`, `hotspot`, `draw`, `audio-response`, `video-response`, `poll`, `word-cloud`, `discussion-board`, `slide`, `interactive-video`, `spin-wheel`, `gameshow`, `hangman`, `open-box`, `speaking-cards`, `flip-tiles`, `flashcards`, `timed-true-false`, `whack-a-mole`, `flying-fruit` | type settings (frozen keys, public views in `ExtendedQuestions`) | "no editor yet" | registered core editor (`ExtendedEditor`) |
+| `graded-reader`, `example-number` (add-ons) | their settings | their own editor | unchanged |
+
+Every built-in settings editor is registered by `registerCoreQuestionEditors()`
+(`assets/src/features/question-editor/registerCoreEditors.js`) exactly as an add-on registers one, after
+extension scripts ran, so an add-on can still replace any of them. Fields every type shares:
+
+| Field | Stored in | Before | After |
+| --- | --- | --- | --- |
+| Name, question text | post title and content | yes | yes |
+| Points | `settings.score` | yes (also overwrote multi-part totals and unscored types) | points types; the parts' total for `structured`/`passage`; always 0 for unscored types |
+| Required | `settings.required` | no | yes (not for `slide`) |
+| Shuffle options | `settings.randomize` | no | choice and true/false (`reorder`/`matching` always shuffle) |
+| Hint, explanation | `settings.hint`, `settings.explanation` | no | yes |
+| Question image and video | `thumbnail_id`, `video_id` | no | media library |
+| Bank, difficulty, source, secure | `bank` | difficulty only | all; `family_id` shown read-only |
+| Skills | `skills` (per part: primary and supporting) | no | yes, per part of `structured`/`passage` |
+| Teacher marking notes | `parts[].rubric` of `structured`/`passage` | yes (structured editor) | yes; the server has no rubric for `short-text`/`long-text` |
+| Extension settings | `extension_settings` | no | no (no question extension settings are registered; see Not covered) |
+
+Tags, per-option feedback and per-question numeric tolerance outside `numerical`/`multi-blank`/`structured`
+are not stored by the plugin. The editor's **Learner preview** posts the unsaved edits to
+`POST /question-preview` (author-only; the saved question, or for a draft created in a quiz the quiz, is the
+preview's document) and shows the real quiz player in a frame; nothing is saved or graded.
+
 ## Writes
 
 ### Body fields
@@ -150,11 +196,25 @@ Any other top-level body field, including `status` and `id`, answers 400 `ohmylm
 with `data.fields`. Archive and restore accept no body fields. The request body is capped at 256 KiB
 (413 `ohmylms_question_too_large`).
 
+### Shared settings rules
+
+Checked whenever `settings` is sent, before anything is written. Failures answer 422
+`ohmylms_question_invalid_settings` with `data.field` (`settings.<key>`).
+
+| Setting | Rule |
+| --- | --- |
+| `required`, `randomize`, `partial_credit`, `case_sensitive` | `true`, `false`, `0`, `1`, `'0'`, `'1'` or `''` (legacy values stay accepted). |
+| `hint`, `explanation` | A string of at most 65535 bytes. |
+| `score` | An object; `enabled` on/off as above; `value` a number from 0 to 10000. |
+| `blank_mode` | `''`, `drag` or `type`. |
+| `match_layout` | `wire` or `grid`. |
+
 ### Option rules
 
-Checked on create, and on update when `settings` or `options` is sent, against the merged result (stored
-type or options for whichever was not sent). Failures answer 422 `ohmylms_question_invalid_options` with
-`data.field` (`options`, or `options[i].matching_data.label`).
+Checked on create, and on update when `settings` or `options` is sent (or, for fill-in-the-blank, the
+name), against the merged result (stored type, options or name for whatever was not sent). Failures answer
+422 `ohmylms_question_invalid_options` with `data.field` (`options`, `options[i].answer` or
+`options[i].matching_data.label`).
 
 | Type | Rule |
 | --- | --- |
@@ -163,8 +223,12 @@ type or options for whichever was not sent). Failures answer 422 `ohmylms_questi
 | `true-false` | Exactly two options. |
 | `multiple-choice` | At least one correct option. |
 | `matching` | Every option has a non-empty `matching_data.label`. |
+| `statement` | At least one option; every option has text and is correct (each is an expected answer). |
+| `fill-in-the-blank` | A non-empty `{answer}` in the name, or at least one correct option with text. |
 
-Other types are validated by their own `validate_settings` / editor schema in DraftWriter.
+Other types are validated by their own `validate_settings` / editor schema in DraftWriter (400
+`ohmylms_invalid_question_settings`): for example unscored types (`poll`, `word-cloud`, `slide` and the card
+decks) must have 0 points, `labeling`/`hotspot` need an http(s) image, `hot-text` keys must name its tokens.
 
 ### Update semantics
 
@@ -257,7 +321,7 @@ Stale save:
 | 409 | `ohmylms_question_conflict` | Stale `base_modified` (`data.modified`). |
 | 409 | `quiz_type_unversioned`, `exam_figure_review` | Approve: the type does not support versioned snapshots; figures are not reviewed. |
 | 413 | `ohmylms_question_too_large` | Body above 256 KiB (`data.max_bytes`). |
-| 422 | `ohmylms_question_invalid_name`, `ohmylms_question_invalid_options`, `ohmylms_question_invalid_media` | Blank name, option rules, media IDs that are not attachments (`data.field`). |
+| 422 | `ohmylms_question_invalid_name`, `ohmylms_question_invalid_options`, `ohmylms_question_invalid_media`, `ohmylms_question_invalid_settings` | Blank name, option rules, media IDs that are not attachments, shared settings rules (`data.field`). |
 | 500 | `ohmylms_question_storage` | Storage failure; DraftWriter rolled the save back. |
 | 503 | `ohmylms_question_bank_unavailable` | Question bank tables not installed. |
 
@@ -345,14 +409,28 @@ identity row status. Duplicate: new id and UUID with the same content and family
 editor, 403 for a user who cannot use the source. The legacy `/question-bank/{id}/approve` and `/duplicate`
 routes still answer with their own summaries and permissions.
 
+`tests/php/question-types-rest-integration.php` (same flag) creates, reads, edits (version 2) and stale-saves
+one question of every built-in type from `tests/php/fixtures/question-types.json` (and fails when a built-in
+type has no fixture), and checks the shared-settings and per-type rules, media, option images, bank fields,
+skills and that a draft's learner preview drops the answer key. App tests: `model.test.ts`,
+`QuestionEditorPage.test.tsx` (every answer area, shared settings, bank and skills, preview),
+`extensions/coreEditors.test.tsx` and `tests/js/core-question-editors.test.mjs` (every built-in settings type
+registers an editor). `tests/browser/question-editor-parity.spec.cjs` (with
+`tests/php/question-editor-browser-fixture.php`) drives every type through the editor on `800.local`, places
+them in a quiz and has a temporary learner take it.
+
 ## Not covered
 
 - **Delete**: left to the legacy `DELETE /question/{id}`.
 - **Duplicate into a quiz**: the legacy `/question-bank/{id}/duplicate` with `quiz_id` (the copy replaces the
   source in that quiz) has no equivalent here.
-- **`fill-in-the-blank` and `short-text` option rules**: not enforced. Fill-in-the-blank has two answer
-  storages (`{braces}` in the name parsed by `InlineBlanks`, or correct options compared by text in
-  `QuestionTypes::grade_builtin()`), and short-text is graded manually with no stored key.
+- **`short-text` and `long-text`** have no answer key and no rubric field on the server; graders see the
+  response only. Marking notes exist for `structured`/`passage` parts.
+- **Question extension settings** (`extension_settings`) have no editor in the new admin; none are registered
+  on this site. The REST field is unchanged.
+- **Unhelpful messages**: types whose `validate_settings` returns a `WP_Error` (labeling, hotspot,
+  interactive video) are reported by `Extensions\Authoring` as "Invalid question settings."; the editor's
+  type editors explain what is missing before saving.
 - **Clearing all options**: DraftWriter treats an empty `options` list as "leave the options unchanged"
   (legacy semantics), so `options: []` cannot remove every option of a settings-based question.
 - **Atomic stale check**: `base_modified` is compared before DraftWriter's transaction and again inside

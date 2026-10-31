@@ -204,8 +204,12 @@ export interface QuizQuestionSlot {
 	name: string;
 	type: string;
 	type_label: string;
-	/** Marks of the delivered version, or the section's marks. */
+	/** Marks learners can earn: the override when set, otherwise the points of the delivered version. */
 	marks: number;
+	/** Points of the delivered version. */
+	question_marks: number;
+	/** Marks set for this question in this quiz, or `null` to use its points. */
+	marks_override: number | null;
 	section: string;
 	status: SlotStatus;
 	/** Latest version number; 0 before the first version. */
@@ -237,12 +241,32 @@ export interface QuizPool {
 	include_secure: boolean;
 }
 
+/** A section of the quiz paper: a title over some of its questions, optionally on a new page. */
+export interface QuizSection {
+	title: string;
+	question_ids: number[];
+	new_page: boolean;
+}
+
+/** A pool as `PUT /quizzes/{id}/questions/pools` accepts it. */
+export interface QuizPoolInput {
+	title: string;
+	skill_id: number;
+	count: number;
+	marks: number;
+	difficulty: string;
+	bank_id: number;
+	include_secure: boolean;
+}
+
 /** `GET /quizzes/{id}/questions` and the answer to every write. */
 export interface QuizQuestions {
 	quiz_id: number;
 	/** Token of the list as loaded; writes send it back and a changed list answers 409. */
 	revision: string;
 	questions: QuizQuestionSlot[];
+	/** Sections in paper order; questions in no section come first. */
+	sections: QuizSection[];
 	pools: QuizPool[];
 	totals: {
 		questions: number;

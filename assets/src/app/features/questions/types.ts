@@ -88,6 +88,28 @@ export interface QuizRef {
 /** Type settings: an open object whose `type` is the question type. */
 export type QuestionSettings = Record< string, unknown >;
 
+/** Skills of one part of a question: the skill it assesses and skills it also draws on. */
+export interface SkillRoles {
+	primary: number;
+	supporting: number[];
+}
+
+/** Skill map by part (`p1` for a question with one part, the part ids of multi-part questions). */
+export type SkillMap = Record< string, SkillRoles >;
+
+/** A skill as the skill catalogue lists it. */
+export interface SkillRef {
+	id: number;
+	name: string;
+	code: string;
+}
+
+/** A question bank the user can at least use. */
+export interface BankRef {
+	id: number;
+	name: string;
+}
+
 /** The editor view of `GET /questions/{id}` and of every write. */
 export interface QuestionDetail extends QuestionLifecycle {
 	id: number;
@@ -97,11 +119,15 @@ export interface QuestionDetail extends QuestionLifecycle {
 	type: string;
 	settings: QuestionSettings;
 	options: QuestionOption[];
-	/** Skill map by part; kept as received because this editor does not change it. */
-	skills: Record< string, unknown >;
+	/** Skill map by part. */
+	skills: SkillMap;
 	bank: QuestionBankFields;
 	thumbnail_id: number;
+	/** URL of the question image; empty for none. */
+	thumbnail_url: string;
 	video_id: number;
+	/** URL of the question video; empty for none. */
+	video_url: string;
 	extension_settings: Record< string, unknown >;
 	usage: QuestionUsage;
 	quizzes: QuizRef[];
@@ -154,13 +180,24 @@ export interface OptionInput {
 	matching_data?: MatchingData;
 }
 
+/** Bank attributes as the server accepts them; only the keys sent change. */
+export interface BankInput {
+	bank_id?: number;
+	difficulty?: string;
+	source?: string;
+	secure?: boolean;
+}
+
 /** Body of `POST /questions`. */
 export interface QuestionCreateInput {
 	name: string;
 	description?: string;
 	settings: QuestionSettings;
 	options?: OptionInput[];
-	bank?: { difficulty: string };
+	bank?: BankInput;
+	skills?: SkillMap;
+	thumbnail_id?: number;
+	video_id?: number;
 }
 
 /** Body of `PATCH /questions/{id}`: only changed fields, plus the `modified` of the last read. */
@@ -170,7 +207,10 @@ export interface QuestionUpdateInput {
 	description?: string;
 	settings?: QuestionSettings;
 	options?: OptionInput[];
-	bank?: { difficulty: string };
+	bank?: BankInput;
+	skills?: SkillMap;
+	thumbnail_id?: number;
+	video_id?: number;
 }
 
 /** An option being edited. `key` is a stable React key; `id` is 0 for a new option. */
@@ -180,7 +220,15 @@ export interface FormOption {
 	answer: string;
 	is_correct: boolean;
 	image_id: number;
+	/** URL of the option image, for display; the server derives it from `image_id`. */
+	image_url: string;
 	matching: MatchingData | null;
+}
+
+/** An image or video of the question: its attachment id and, for display, its URL. */
+export interface FormMedia {
+	id: number;
+	url: string;
 }
 
 /** The editor state. Points stay a string until the form is validated. */
@@ -191,6 +239,12 @@ export interface FormState {
 	difficulty: string;
 	settings: QuestionSettings;
 	options: FormOption[];
+	bankId: number;
+	source: string;
+	secure: boolean;
+	image: FormMedia;
+	video: FormMedia;
+	skills: SkillMap;
 }
 
 /** Field errors keyed by field name (`name`, `points`, `options`, `options.2.label`, …). */

@@ -57,7 +57,8 @@ class AttemptController extends RestController {
 							'type'    => 'integer',
 							'default' => 0,
 							'minimum' => 0,
-							'maximum' => 2147483647,
+							// The player sends Date.now(); the column is bigint, so allow any safe JavaScript integer.
+							'maximum' => 9007199254740991,
 						),
 						'response'    => array(
 							'description'       => 'The answer: text, a number, a boolean, a list or an object; at most 64 KB when encoded.',

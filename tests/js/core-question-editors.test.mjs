@@ -23,6 +23,10 @@ const names = [
 	'FillLevelEditor',
 	'BuildChartEditor',
 	'GridBuildEditor',
+	'TextEntryEditor',
+	'CrosswordEditor',
+	'WordsearchEditor',
+	'ExtendedEditor',
 ];
 const components = () =>
 	Object.fromEntries(
@@ -33,12 +37,58 @@ const components = () =>
 		} )
 	);
 
-test( 'the fifteen built-in question editors register with their labels', () => {
+// Every built-in `ohmylms-settings` type the server registers (QuestionTypes and ExtendedQuestions).
+const SETTINGS_TYPES = [
+	'numerical',
+	'structured',
+	'crossword',
+	'wordsearch',
+	'text-entry',
+	'dropdown-blanks',
+	'categorize',
+	'multi-blank',
+	'build-expression',
+	'expression',
+	'number-line',
+	'shade-model',
+	'count-blocks',
+	'set-clock',
+	'make-amount',
+	'fill-level',
+	'build-chart',
+	'grid-build',
+	'passage',
+	'graphing',
+	'hot-text',
+	'match-table-grid',
+	'labeling',
+	'hotspot',
+	'draw',
+	'audio-response',
+	'video-response',
+	'poll',
+	'word-cloud',
+	'discussion-board',
+	'slide',
+	'interactive-video',
+	'spin-wheel',
+	'gameshow',
+	'hangman',
+	'open-box',
+	'speaking-cards',
+	'flip-tiles',
+	'flashcards',
+	'timed-true-false',
+	'whack-a-mole',
+	'flying-fruit',
+];
+
+test( 'every built-in settings type has an editor, registered with its label', () => {
 	const registry = createRegistry();
 	const parts = components();
 	const registered = registerCoreQuestionEditors( registry, parts );
 	assert.deepEqual( registered, [ ...CORE_QUESTION_EDITOR_IDS ] );
-	assert.equal( registered.length, 15 );
+	assert.deepEqual( [ ...registered ].sort(), [ ...SETTINGS_TYPES ].sort() );
 	assert.deepEqual(
 		registry
 			.list( 'question-editor' )
@@ -55,9 +105,14 @@ test( 'the fifteen built-in question editors register with their labels', () => 
 		parts.GridBuildEditor
 	);
 	assert.equal(
+		registry.get( 'question-editor', 'crossword' ).render,
+		parts.CrosswordEditor
+	);
+	assert.equal(
 		registry.get( 'question-editor', 'dropdown-blanks' ).label,
 		'Dropdown in a sentence'
 	);
+	assert.equal( registry.get( 'question-editor', 'slide' ).label, 'Slide' );
 } );
 
 test( 'structured parts render with BankAnswerFields', () => {
@@ -72,6 +127,20 @@ test( 'structured parts render with BankAnswerFields', () => {
 	assert.deepEqual( element.props.value, { type: 'structured' } );
 } );
 
+test( 'extended formats render the extended editor with their type', () => {
+	const registry = createRegistry();
+	const parts = components();
+	registerCoreQuestionEditors( registry, parts );
+	for ( const type of [ 'passage', 'hotspot', 'slide', 'flying-fruit' ] ) {
+		const element = registry
+			.get( 'question-editor', type )
+			.render( { value: { type }, onChange() {} } );
+		assert.equal( element.type, parts.ExtendedEditor );
+		assert.equal( element.props.type, type );
+		assert.deepEqual( element.props.value, { type } );
+	}
+} );
+
 test( 'editors an extension registered first are kept', () => {
 	const registry = createRegistry();
 	const custom = () => null;
@@ -81,7 +150,7 @@ test( 'editors an extension registered first are kept', () => {
 	} );
 	const registered = registerCoreQuestionEditors( registry, components() );
 	assert.equal( registered.includes( 'numerical' ), false );
-	assert.equal( registered.length, 14 );
+	assert.equal( registered.length, CORE_QUESTION_EDITOR_IDS.length - 1 );
 	assert.equal(
 		registry.get( 'question-editor', 'numerical' ).render,
 		custom

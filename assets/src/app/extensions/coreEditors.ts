@@ -24,6 +24,10 @@ export const CORE_EDITOR_COMPONENTS = [
 	'FillLevelEditor',
 	'BuildChartEditor',
 	'GridBuildEditor',
+	'TextEntryEditor',
+	'CrosswordEditor',
+	'WordsearchEditor',
+	'ExtendedEditor',
 ] as const;
 
 type ComponentName = ( typeof CORE_EDITOR_COMPONENTS )[ number ];
@@ -80,8 +84,8 @@ export function lazyEditorComponents(
 }
 
 /**
- * Register the built-in question editors (numerical, structured and the interactive types) with
- * lazily loaded components. Editors an extension registered first are kept.
+ * Register the built-in question editors (numerical, structured, the interactive, puzzle and extended
+ * response types) with lazily loaded components. Editors an extension registered first are kept.
  *
  * @param registry Extension registry, normally the published host.
  * @param load     Loads the editor module; the `admin-app-question-editors` chunk by default.

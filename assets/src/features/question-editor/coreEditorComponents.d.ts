@@ -19,3 +19,7 @@ export declare const MakeAmountEditor: Editor;
 export declare const NumberLineEditor: Editor;
 export declare const SetClockEditor: Editor;
 export declare const ShadeModelEditor: Editor;
+export declare const TextEntryEditor: Editor;
+export declare const CrosswordEditor: Editor;
+export declare const WordsearchEditor: Editor;
+export declare const ExtendedEditor: Editor;

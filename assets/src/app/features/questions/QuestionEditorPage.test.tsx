@@ -28,10 +28,11 @@ vi.mock( './api', () => ( {
 	duplicateQuestion: vi.fn(),
 	createQuestion: vi.fn(),
 	listVersions: vi.fn(),
+	listBanks: vi.fn(),
+	searchSkills: vi.fn(),
+	getSkills: vi.fn(),
+	previewQuestion: vi.fn(),
 } ) );
-
-const LEGACY =
-	'http://example.test/wp-admin/admin.php?page=ohmylms#/content-hub/question-bank';
 
 function renderEditor(
 	route = '/content-hub/question-bank/812',
@@ -94,6 +95,8 @@ beforeEach( () => {
 	vi.resetAllMocks();
 	loadQuestion( question );
 	vi.mocked( api.listQuestionTypes ).mockResolvedValue( types );
+	vi.mocked( api.listBanks ).mockResolvedValue( [] );
+	vi.mocked( api.getSkills ).mockResolvedValue( [] );
 	vi.mocked( api.listVersions ).mockResolvedValue( {
 		items: [ version ],
 		total: 1,
@@ -463,44 +466,382 @@ describe( 'QuestionEditorPage', () => {
 		restore();
 	} );
 
-	it( 'points to the full editor for types without an editor here', async () => {
+	it( 'says when no editor is available for a type', async () => {
 		loadQuestion( {
 			...question,
-			type: 'long-text',
-			settings: { type: 'long-text' },
+			type: 'graded-reader',
+			settings: { type: 'graded-reader' },
 			options: [],
 		} );
-		const { unmount } = renderEditor();
+		renderEditor();
 		await loaded();
 		expect(
 			screen.getByText(
-				/does not have an editor in the new admin yet/,
+				/No editor is available for this question type/,
 				notice
 			)
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole( 'link', {
-				name: 'Open the full question editor',
-			} )
-		).toHaveAttribute( 'href', LEGACY );
+			screen.queryByRole( 'link', { name: /full question editor/ } )
+		).not.toBeInTheDocument();
 		expect(
 			screen.queryByRole( 'button', { name: 'Add option' } )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'edits the expected answers of a statement question', async () => {
+		loadQuestion( {
+			...question,
+			type: 'statement',
+			settings: {
+				type: 'statement',
+				score: { enabled: true, value: 1 },
+			},
+			options: [ { ...question.options[ 0 ]!, answer: '4' } ],
+		} );
+		const user = userEvent.setup();
+		renderEditor();
+		await loaded();
+		const group = screen.getByRole( 'group', { name: 'Expected answers' } );
+		expect(
+			within( group ).queryByRole( 'checkbox' )
+		).not.toBeInTheDocument();
+		await user.click(
+			within( group ).getByRole( 'button', { name: 'Add answer' } )
+		);
+		await user.click( saveButton() );
+		expect(
+			await screen.findByText( 'Enter the expected answer.' )
+		).toBeInTheDocument();
+		expect( api.updateQuestion ).not.toHaveBeenCalled();
+		await user.type(
+			within( group ).getByRole( 'textbox', { name: 'Answer 2' } ),
+			'8'
+		);
+		await user.click( saveButton() );
+		await screen.findByText( 'Question saved.', notice );
+		expect( api.updateQuestion ).toHaveBeenCalledWith(
+			812,
+			{
+				base_modified: '2026-10-30T13:05:12Z',
+				options: [
+					{
+						id: 3301,
+						answer: '4',
+						is_correct: true,
+						order_number: 0,
+					},
+					{ answer: '8', is_correct: true, order_number: 1 },
+				],
+			},
+			expect.any( AbortSignal )
+		);
+	} );
+
+	it( 'shows the blanks written in the name and their settings for fill-in-the-blank', async () => {
+		const blanks: QuestionDetail = {
+			...question,
+			name: 'The {cat} sat on the {mat}.',
+			type: 'fill-in-the-blank',
+			settings: {
+				type: 'fill-in-the-blank',
+				score: { enabled: true, value: 1 },
+				blank_mode: 'drag',
+			},
+			options: [],
+		};
+		loadQuestion( blanks );
+		vi.mocked( api.updateQuestion ).mockImplementation(
+			async ( id, input ) => ( {
+				...blanks,
+				id,
+				settings: input.settings ?? blanks.settings,
+				modified: '2026-10-30T14:00:00Z',
+			} )
+		);
+		const user = userEvent.setup();
+		renderEditor();
+		const name = await loaded();
+		expect(
+			screen.getByText( '2 blanks found: cat, mat' )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'group', { name: 'Accepted answers' } )
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByRole( 'combobox', {
+				name: 'How learners fill the blanks',
+			} )
+		).toHaveValue( 'drag' );
+		await user.selectOptions(
+			screen.getByRole( 'combobox', {
+				name: 'How learners fill the blanks',
+			} ),
+			'type'
+		);
+		await user.click(
+			screen.getByRole( 'checkbox', {
+				name: 'Answers are case-sensitive',
+			} )
+		);
+		await user.click(
+			screen.getByRole( 'checkbox', {
+				name: 'Give part of the points for partly correct answers',
+			} )
+		);
+		await user.click( saveButton() );
+		await screen.findByText( 'Question saved.', notice );
+		expect( api.updateQuestion ).toHaveBeenLastCalledWith(
+			812,
+			{
+				base_modified: '2026-10-30T13:05:12Z',
+				settings: {
+					type: 'fill-in-the-blank',
+					score: { enabled: true, value: 1 },
+					blank_mode: 'type',
+					case_sensitive: false,
+					partial_credit: false,
+				},
+			},
+			expect.any( AbortSignal )
+		);
+
+		await user.clear( name );
+		await user.type( name, 'No blanks now' );
+		expect(
+			screen.getByRole( 'group', { name: 'Accepted answers' } )
+		).toBeInTheDocument();
+		await user.click( saveButton() );
+		expect(
+			await screen.findByText(
+				'Write each answer in {curly brackets} in the name, or add an accepted answer.'
+			)
+		).toBeInTheDocument();
+		expect( api.updateQuestion ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	it( 'explains that short and long answers are marked by a teacher', async () => {
+		loadQuestion( {
+			...question,
+			type: 'long-text',
+			settings: { type: 'long-text', score: { enabled: true, value: 3 } },
+			options: [],
+		} );
+		renderEditor();
+		await loaded();
+		expect(
+			screen.getByText( /A teacher marks it in the quiz attempts/ )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: 'Add option' } )
+		).not.toBeInTheDocument();
+		expect( screen.getByLabelText( 'Points' ) ).toHaveValue( 3 );
+	} );
+
+	it( 'saves the shared settings, hint and explanation', async () => {
+		const user = userEvent.setup();
+		renderEditor();
+		await loaded();
+		await user.click(
+			screen.getByRole( 'checkbox', { name: 'Learners must answer' } )
+		);
+		await user.click(
+			screen.getByRole( 'checkbox', {
+				name: 'Shuffle the answer options for each learner',
+			} )
+		);
+		expect(
+			screen.queryByRole( 'checkbox', {
+				name: 'Give part of the points for partly correct answers',
+			} )
+		).not.toBeInTheDocument();
+		await user.type(
+			screen.getByRole( 'textbox', { name: 'Hint' } ),
+			'Divide both sides'
+		);
+		await user.type(
+			screen.getByRole( 'textbox', { name: 'Explanation' } ),
+			'2x = 6 so x = 3'
+		);
+		await user.click( saveButton() );
+		await screen.findByText( 'Question saved.', notice );
+		expect( api.updateQuestion ).toHaveBeenCalledWith(
+			812,
+			{
+				base_modified: '2026-10-30T13:05:12Z',
+				settings: {
+					type: 'single-choice',
+					score: { enabled: true, value: 2 },
+					required: true,
+					randomize: true,
+					hint: 'Divide both sides',
+					explanation: '2x = 6 so x = 3',
+				},
+			},
+			expect.any( AbortSignal )
+		);
+	} );
+
+	it( 'saves the bank, source, secure flag and skills', async () => {
+		vi.mocked( api.listBanks ).mockResolvedValue( [
+			{ id: 4, name: 'Shared maths' },
+		] );
+		vi.mocked( api.getSkills ).mockResolvedValue( [
+			{ id: 41, name: 'Linear equations', code: 'A1' },
+		] );
+		vi.mocked( api.searchSkills ).mockResolvedValue( [
+			{ id: 41, name: 'Linear equations', code: 'A1' },
+			{ id: 42, name: 'Inverse operations', code: '' },
+		] );
+		const user = userEvent.setup();
+		renderEditor();
+		await loaded();
+		expect(
+			await screen.findByText( /^Linear equations \(A1\)/ )
+		).toBeInTheDocument();
+		await screen.findByRole( 'option', { name: 'Shared maths' } );
+		await user.selectOptions(
+			screen.getByRole( 'combobox', { name: 'Bank' } ),
+			'4'
+		);
+		await user.type(
+			screen.getByRole( 'textbox', { name: 'Source' } ),
+			', p. 3'
+		);
+		await user.click(
+			screen.getByRole( 'checkbox', { name: /^Secure question/ } )
+		);
+		await user.type(
+			screen.getByRole( 'textbox', {
+				name: 'Search skills for Supporting skills',
+			} ),
+			'inv{Enter}'
+		);
+		expect( api.searchSkills ).toHaveBeenCalledWith(
+			'inv',
+			expect.any( AbortSignal )
+		);
+		await user.click(
+			await screen.findByRole( 'button', {
+				name: 'Add Inverse operations',
+			} )
+		);
+		expect(
+			screen.getByRole( 'button', {
+				name: 'Remove Inverse operations from Supporting skills',
+			} )
+		).toBeInTheDocument();
+		await user.click( saveButton() );
+		await screen.findByText( 'Question saved.', notice );
+		expect( api.updateQuestion ).toHaveBeenCalledWith(
+			812,
+			{
+				base_modified: '2026-10-30T13:05:12Z',
+				bank: {
+					bank_id: 4,
+					source: 'Textbook 4.2, p. 3',
+					secure: true,
+				},
+				skills: { p1: { primary: 41, supporting: [ 42 ] } },
+			},
+			expect.any( AbortSignal )
+		);
+	} );
+
+	it( 'previews the edited question in the learner player', async () => {
+		vi.mocked( api.previewQuestion ).mockResolvedValue(
+			'http://example.test/?ohmylms_question_preview=abc'
+		);
+		const user = userEvent.setup();
+		renderEditor();
+		const name = await loaded();
+		await user.type( name, '?' );
+		await user.click(
+			screen.getByRole( 'button', { name: 'Preview as a learner' } )
+		);
+		const frame = await screen.findByTitle(
+			'Learner preview of the question'
+		);
+		expect( frame ).toHaveAttribute(
+			'src',
+			'http://example.test/?ohmylms_question_preview=abc'
+		);
+		expect( api.previewQuestion ).toHaveBeenCalledWith(
+			812,
+			expect.objectContaining( {
+				id: 812,
+				name: 'Solve 2x = 6?',
+				settings: {
+					type: 'single-choice',
+					score: { enabled: true, value: 2 },
+				},
+				questions: [
+					expect.objectContaining( {
+						id: 3301,
+						answer: '3',
+						order_number: 1,
+					} ),
+					expect.objectContaining( { id: 3302, answer: '12' } ),
+				],
+			} ),
+			expect.any( AbortSignal )
+		);
+		expect(
+			screen.getByRole( 'button', { name: 'Refresh preview' } )
+		).toBeInTheDocument();
+		vi.mocked( api.previewQuestion ).mockRejectedValueOnce(
+			new ApiError( {
+				status: 400,
+				code: 'ohmylms_preview_type',
+				message: 'Enable this question type to preview it.',
+			} )
+		);
+		await user.click(
+			screen.getByRole( 'button', { name: 'Refresh preview' } )
+		);
+		expect(
+			await screen.findByText(
+				'Enable this question type to preview it.',
+				notice
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'shows unscored and multi-part points without a points field', async () => {
+		const registry = createRegistry();
+		registerAppQuestionEditors( registry, async () => ( {
+			ExtendedEditor: ( { type }: { type: string } ) => (
+				<p>Editor of { type }</p>
+			),
+		} ) );
+		loadQuestion( {
+			...question,
+			type: 'slide',
+			settings: { type: 'slide', score: { enabled: true, value: 0 } },
+			options: [],
+		} );
+		const { unmount } = renderEditor( undefined, registry );
+		await loaded();
+		expect( await screen.findByText( 'Editor of slide' ) ).toBeVisible();
+		expect( screen.queryByLabelText( 'Points' ) ).not.toBeInTheDocument();
+		expect( screen.getByText( /This type is not scored/ ) ).toBeVisible();
+		expect(
+			screen.queryByRole( 'checkbox', { name: 'Learners must answer' } )
 		).not.toBeInTheDocument();
 		unmount();
 
 		loadQuestion( {
 			...question,
-			type: 'fill-in-the-blank',
-			settings: { type: 'fill-in-the-blank' },
+			type: 'passage',
+			settings: { type: 'passage', score: { enabled: true, value: 3 } },
+			options: [],
 		} );
-		renderEditor();
+		renderEditor( undefined, registry );
 		await loaded();
+		expect( await screen.findByText( 'Editor of passage' ) ).toBeVisible();
 		expect(
-			screen.getByText( /edited in the full editor/, notice )
-		).toBeInTheDocument();
-		expect(
-			screen.queryByRole( 'textbox', { name: 'Option 1' } )
-		).not.toBeInTheDocument();
+			screen.getByText( /Points: 3 \(the total of the parts/ )
+		).toBeVisible();
 	} );
 
 	it( 'edits matching labels and hides correct answers for matching', async () => {
@@ -516,7 +857,9 @@ describe( 'QuestionEditorPage', () => {
 		const user = userEvent.setup();
 		renderEditor();
 		await loaded();
-		expect( screen.queryByRole( 'checkbox' ) ).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'checkbox', { name: /is correct/ } )
+		).not.toBeInTheDocument();
 		const label = screen.getByRole( 'textbox', {
 			name: 'Match for option 2',
 		} );

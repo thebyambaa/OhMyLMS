@@ -14,6 +14,7 @@ use OhMyLMS\Assessment\Pools;
 use OhMyLMS\Assessment\Schema;
 use OhMyLMS\Extensions\Registry;
 use OhMyLMS\QuestionBank\AccessPolicy;
+use OhMyLMS\QuestionBank\BankAttributes;
 use OhMyLMS\QuestionBank\Banks;
 use OhMyLMS\QuestionBank\DraftWriter;
 use OhMyLMS\QuestionBank\Search;
@@ -59,6 +60,26 @@ class QuizQuestionsController extends RestController {
 	 * Largest accepted request body, in bytes.
 	 */
 	const MAX_BODY_BYTES = 262144;
+
+	/**
+	 * Most marks one question or pool question can be worth in a quiz.
+	 */
+	const MAX_MARKS = 10000;
+
+	/**
+	 * Most sections per quiz.
+	 */
+	const MAX_SECTIONS = 50;
+
+	/**
+	 * Most random pools per quiz.
+	 */
+	const MAX_POOLS = 20;
+
+	/**
+	 * Quiz meta of the legacy settings blob, which holds `slot_marks`.
+	 */
+	const SETTINGS_META = '_quiz_settings';
 
 	/**
 	 * Route base.
@@ -207,6 +228,130 @@ class QuizQuestionsController extends RestController {
 							'default'     => false,
 						),
 						'revision'   => $revision,
+					),
+				),
+			)
+		);
+		register_rest_route(
+			$this->namespace,
+			$slot . '/marks',
+			array(
+				'args' => array(
+					'id'          => $id,
+					'question_id' => $question,
+				),
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'marks_item' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'marks'    => array(
+							'description' => __( 'Marks of the question in this quiz, or null to use the points of the question.', 'ohmylms' ),
+							'type'        => array( 'number', 'null' ),
+							'minimum'     => 0,
+							'maximum'     => self::MAX_MARKS,
+							'required'    => true,
+						),
+						'revision' => $revision,
+					),
+				),
+			)
+		);
+		register_rest_route(
+			$this->namespace,
+			$base . '/sections',
+			array(
+				'args' => array( 'id' => $id ),
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'sections_items' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'sections' => array(
+							'description' => __( 'Every section in paper order; replaces the sections of the quiz.', 'ohmylms' ),
+							'type'        => 'array',
+							'required'    => true,
+							'maxItems'    => self::MAX_SECTIONS,
+							'items'       => array(
+								'type'                 => 'object',
+								'additionalProperties' => false,
+								'properties'           => array(
+									'title'        => array(
+										'type'      => 'string',
+										'maxLength' => 190,
+										'required'  => true,
+									),
+									'question_ids' => array(
+										'type'        => 'array',
+										'maxItems'    => self::MAX_QUESTIONS,
+										'uniqueItems' => true,
+										'items'       => array(
+											'type'    => 'integer',
+											'minimum' => 1,
+										),
+										'required'    => true,
+									),
+									'new_page'     => array( 'type' => 'boolean' ),
+								),
+							),
+						),
+						'revision' => $revision,
+					),
+				),
+			)
+		);
+		register_rest_route(
+			$this->namespace,
+			$base . '/pools',
+			array(
+				'args' => array( 'id' => $id ),
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'pools_items' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'pools'    => array(
+							'description' => __( 'Every random pool of the quiz; replaces its pools.', 'ohmylms' ),
+							'type'        => 'array',
+							'required'    => true,
+							'maxItems'    => self::MAX_POOLS,
+							'items'       => array(
+								'type'                 => 'object',
+								'additionalProperties' => false,
+								'properties'           => array(
+									'title'          => array(
+										'type'      => 'string',
+										'maxLength' => 190,
+									),
+									'skill_id'       => array(
+										'type'     => 'integer',
+										'minimum'  => 1,
+										'required' => true,
+									),
+									'count'          => array(
+										'type'     => 'integer',
+										'minimum'  => 1,
+										'maximum'  => 50,
+										'required' => true,
+									),
+									'marks'          => array(
+										'type'    => 'number',
+										'minimum' => 0,
+										'maximum' => self::MAX_MARKS,
+									),
+									'difficulty'     => array(
+										'type' => 'string',
+										'enum' => array_merge( array( '' ), BankAttributes::DIFFICULTIES ),
+									),
+									'bank_id'        => array(
+										'type'    => 'integer',
+										'minimum' => 0,
+									),
+									'include_secure' => array( 'type' => 'boolean' ),
+								),
+							),
+						),
+						'revision' => $revision,
 					),
 				),
 			)
@@ -445,6 +590,166 @@ class QuizQuestionsController extends RestController {
 					unset( $pins[ $question_id ] );
 					$this->save_pins( $quiz_id, $pins );
 				}
+				$this->save_slot_marks( $quiz_id, $question_id, null );
+				$sections = $this->stored_sections( $quiz_id );
+				foreach ( $sections as &$section ) {
+					$section['questions'] = array_values( array_diff( $section['questions'], array( $question_id ) ) );
+					unset( $section['marks'][ $question_id ] );
+				}
+				unset( $section );
+				$this->save_sections( $quiz_id, $sections );
+			}
+		);
+	}
+
+	/**
+	 * Set the marks of one question in this quiz (`marks`), or go back to the points of the question
+	 * (`marks: null`). The override wins over the question's points and over section marks.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function marks_item( $request ) {
+		$quiz_id     = (int) $request['id'];
+		$question_id = (int) $request['question_id'];
+		$marks       = null === $request['marks'] ? null : (float) $request['marks'];
+
+		return $this->write(
+			$request,
+			array( 'marks', 'revision' ),
+			'marks',
+			function ( array $ids ) use ( $quiz_id, $question_id, $marks ) {
+				ErrorException::raise( $this->check_in_quiz( $question_id, $ids ) );
+				$this->save_slot_marks( $quiz_id, $question_id, $marks );
+				$sections = $this->stored_sections( $quiz_id );
+				foreach ( $sections as &$section ) {
+					unset( $section['marks'][ $question_id ] );
+				}
+				unset( $section );
+				$this->save_sections( $quiz_id, $sections );
+			}
+		);
+	}
+
+	/**
+	 * Replace the sections of the quiz: titles, which questions each holds (in paper order, a question
+	 * in at most one section) and whether a section starts a new page. Section marks of questions that
+	 * stay in their section are kept.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function sections_items( $request ) {
+		$quiz_id = (int) $request['id'];
+		$input   = (array) $request['sections'];
+
+		return $this->write(
+			$request,
+			array( 'sections', 'revision' ),
+			'sections',
+			function ( array $ids ) use ( $quiz_id, $input ) {
+				$old  = array();
+				$seen = array();
+				foreach ( $this->stored_sections( $quiz_id ) as $section ) {
+					foreach ( $section['marks'] as $question_id => $value ) {
+						$old[ $section['title'] ][ (int) $question_id ] = $value;
+					}
+				}
+				$sections = array();
+				foreach ( array_values( $input ) as $index => $section ) {
+					$title = trim( sanitize_text_field( (string) $section['title'] ) );
+					if ( '' === $title ) {
+						ErrorException::raise( $this->invalid_section( __( 'Give every section a title.', 'ohmylms' ), "sections[$index].title" ) );
+					}
+					$questions = array_map( 'intval', (array) $section['question_ids'] );
+					foreach ( $questions as $question_id ) {
+						if ( ! in_array( $question_id, $ids, true ) ) {
+							ErrorException::raise( $this->invalid_section( __( 'A section contains a question that is not in this quiz.', 'ohmylms' ), "sections[$index].question_ids", $question_id ) );
+						}
+						if ( isset( $seen[ $question_id ] ) ) {
+							ErrorException::raise( $this->invalid_section( __( 'A question can belong to only one section.', 'ohmylms' ), "sections[$index].question_ids", $question_id ) );
+						}
+						$seen[ $question_id ] = true;
+					}
+					$sections[] = array(
+						'title'     => $title,
+						'questions' => $questions,
+						'marks'     => array_intersect_key( $old[ $title ] ?? array(), array_flip( $questions ) ),
+						'new_page'  => ! empty( $section['new_page'] ),
+					);
+				}
+				$this->save_sections( $quiz_id, $sections );
+			}
+		);
+	}
+
+	/**
+	 * Replace the random pools of the quiz. Each pool draws approved questions of a skill (and its
+	 * sub-skills); a named bank must be one the user may use. The pools must be able to draw their
+	 * questions from distinct families, as publishing requires.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function pools_items( $request ) {
+		$quiz_id = (int) $request['id'];
+		$input   = (array) $request['pools'];
+
+		return $this->write(
+			$request,
+			array( 'pools', 'revision' ),
+			'pools',
+			function () use ( $quiz_id, $input ) {
+				$rules = array();
+				foreach ( array_values( $input ) as $index => $pool ) {
+					$skill = (int) $pool['skill_id'];
+					if ( ! term_exists( $skill, Taxonomy::NAME ) ) {
+						ErrorException::raise(
+							new WP_Error(
+								'ohmylms_quiz_pool_invalid',
+								__( 'Choose an existing skill for every pool.', 'ohmylms' ),
+								array(
+									'status' => 422,
+									'field'  => "pools[$index].skill_id",
+								)
+							)
+						);
+					}
+					$bank = (int) ( $pool['bank_id'] ?? 0 );
+					if ( $bank && ! Banks::can( $bank, 'use' ) ) {
+						ErrorException::raise(
+							new WP_Error(
+								'ohmylms_quiz_pool_bank_forbidden',
+								__( 'You are not allowed to draw questions from this bank.', 'ohmylms' ),
+								array(
+									'status' => rest_authorization_required_code(),
+									'field'  => "pools[$index].bank_id",
+								)
+							)
+						);
+					}
+					$rules[] = array(
+						'title'          => (string) ( $pool['title'] ?? '' ),
+						'term_id'        => $skill,
+						'count'          => (int) $pool['count'],
+						'marks'          => (float) ( $pool['marks'] ?? 1 ),
+						'difficulty'     => (string) ( $pool['difficulty'] ?? '' ),
+						'bank_id'        => $bank,
+						'include_secure' => ! isset( $pool['include_secure'] ) || ! empty( $pool['include_secure'] ),
+					);
+				}
+				if ( ! $rules ) {
+					delete_post_meta( $quiz_id, Pools::META );
+					return;
+				}
+				$saved = Pools::save( $quiz_id, $rules );
+				if ( is_wp_error( $saved ) ) {
+					$data = (array) $saved->get_error_data();
+					if ( 'ohmylms_pool_invalid' === $saved->get_error_code() ) {
+						$data['status'] = 422;
+					}
+					ErrorException::raise( new WP_Error( $saved->get_error_code(), $saved->get_error_message(), $data ) );
+				}
 			}
 		);
 	}
@@ -542,7 +847,7 @@ class QuizQuestionsController extends RestController {
 					$wpdb->query( $wpdb->prepare( 'SELECT ID FROM %i WHERE ID = %d FOR UPDATE', $wpdb->posts, $quiz_id ) );
 					$ids     = $this->question_ids( $quiz_id );
 					$pins    = $this->pins( $quiz_id );
-					$current = $this->revision( $ids, $pins );
+					$current = $this->revision( $ids, $pins, $this->layout( $quiz_id ) );
 					if ( ! hash_equals( $current, $base ) ) {
 						ErrorException::raise(
 							new WP_Error(
@@ -570,7 +875,7 @@ class QuizQuestionsController extends RestController {
 		 * Fires after the questions of a quiz were changed through `ohmylms/v1/quizzes/{id}/questions`.
 		 *
 		 * @param int             $quiz_id   Quiz ID.
-		 * @param string          $operation `add`, `create`, `reorder`, `remove` or `pin`.
+		 * @param string          $operation `add`, `create`, `reorder`, `remove`, `pin`, `marks`, `sections` or `pools`.
 		 * @param WP_REST_Request $request   The request.
 		 */
 		do_action( 'ohmylms_rest_quiz_questions_changed', $quiz_id, $operation, $request );
@@ -825,20 +1130,169 @@ class QuizQuestionsController extends RestController {
 	}
 
 	/**
-	 * Revision token of a question list: changes whenever the order, the members or the pins change,
-	 * whichever route or writer changed them.
+	 * Revision token of a question list: changes whenever the order, the members, the pins, the
+	 * per-question marks, the sections or the random pools change, whichever route or writer changed them.
 	 *
-	 * @param int[]          $ids  Question IDs in order.
-	 * @param array<int,int> $pins Pins.
+	 * @param int[]          $ids    Question IDs in order.
+	 * @param array<int,int> $pins   Pins.
+	 * @param array          $layout Marks, sections and pools ({@see layout()}).
 	 * @return string 16 hexadecimal characters.
 	 */
-	private function revision( array $ids, array $pins ) {
+	private function revision( array $ids, array $pins, array $layout ) {
 		$pairs = array();
 		foreach ( $pins as $question_id => $version_id ) {
 			$pairs[] = array( (int) $question_id, (int) $version_id );
 		}
+		$marks = array();
+		foreach ( $layout['marks'] as $question_id => $value ) {
+			$marks[] = array( (int) $question_id, (float) $value );
+		}
 
-		return substr( hash( 'sha256', (string) wp_json_encode( array( array_map( 'intval', $ids ), $pairs ) ) ), 0, 16 );
+		return substr( hash( 'sha256', (string) wp_json_encode( array( array_map( 'intval', $ids ), $pairs, $marks, $layout['sections'], $layout['pools'] ) ) ), 0, 16 );
+	}
+
+	/**
+	 * Per-question marks, sections and pools of a quiz, read from the database (not the meta cache).
+	 *
+	 * @param int $quiz_id Quiz ID.
+	 * @return array{marks:array<int,float>,sections:array[],pools:array}
+	 */
+	private function layout( $quiz_id ) {
+		$pools = $this->fresh_meta( $quiz_id, Pools::META );
+
+		return array(
+			'marks'    => $this->slot_marks( $quiz_id ),
+			'sections' => $this->stored_sections( $quiz_id ),
+			'pools'    => is_array( $pools ) ? array_values( $pools ) : array(),
+		);
+	}
+
+	/**
+	 * A quiz meta value read from the database, so a cached copy cannot hide a concurrent change.
+	 *
+	 * @param int    $quiz_id Quiz ID.
+	 * @param string $key     Meta key.
+	 * @return mixed Unserialized value, or null when unset.
+	 */
+	private function fresh_meta( $quiz_id, $key ) {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Deliberately bypasses the meta cache (see the method description).
+		$raw = $wpdb->get_var( $wpdb->prepare( 'SELECT meta_value FROM %i WHERE post_id = %d AND meta_key = %s ORDER BY meta_id ASC LIMIT 1', $wpdb->postmeta, $quiz_id, $key ) );
+
+		return null === $raw ? null : maybe_unserialize( $raw );
+	}
+
+	/**
+	 * Marks overrides by question (`slot_marks` of the quiz settings).
+	 *
+	 * @param int $quiz_id Quiz ID.
+	 * @return array<int,float>
+	 */
+	private function slot_marks( $quiz_id ) {
+		$settings = $this->fresh_meta( $quiz_id, self::SETTINGS_META );
+		$marks    = array();
+		foreach ( (array) ( is_array( $settings ) ? ( $settings['slot_marks'] ?? array() ) : array() ) as $question_id => $value ) {
+			if ( (int) $question_id > 0 && is_numeric( $value ) ) {
+				$marks[ (int) $question_id ] = round( max( 0, (float) $value ), 4 );
+			}
+		}
+		ksort( $marks );
+
+		return $marks;
+	}
+
+	/**
+	 * Store or clear the marks override of one question.
+	 *
+	 * @param int        $quiz_id     Quiz ID.
+	 * @param int        $question_id Question ID.
+	 * @param float|null $marks       Marks, or null to clear.
+	 */
+	private function save_slot_marks( $quiz_id, $question_id, $marks ) {
+		$settings = $this->fresh_meta( $quiz_id, self::SETTINGS_META );
+		$settings = is_array( $settings ) ? $settings : array();
+		$current  = is_array( $settings['slot_marks'] ?? null ) ? $settings['slot_marks'] : array();
+		if ( null === $marks && ! array_key_exists( $question_id, $current ) ) {
+			return;
+		}
+		if ( null === $marks ) {
+			unset( $current[ $question_id ] );
+		} else {
+			$current[ $question_id ] = round( $marks, 4 );
+		}
+		if ( $current ) {
+			$settings['slot_marks'] = $current;
+		} else {
+			unset( $settings['slot_marks'] );
+		}
+		update_post_meta( $quiz_id, self::SETTINGS_META, $settings );
+	}
+
+	/**
+	 * Sections of the quiz as stored in the assessment settings, normalized.
+	 *
+	 * @param int $quiz_id Quiz ID.
+	 * @return array[] {title, questions: int[], marks: array<int,float>, new_page: bool}
+	 */
+	private function stored_sections( $quiz_id ) {
+		$settings = $this->fresh_meta( $quiz_id, AssessmentSettings::META );
+		$sections = array();
+		foreach ( (array) ( is_array( $settings ) ? ( $settings['sections'] ?? array() ) : array() ) as $section ) {
+			if ( ! is_array( $section ) ) {
+				continue;
+			}
+			$marks = array();
+			foreach ( (array) ( $section['marks'] ?? array() ) as $question_id => $value ) {
+				if ( is_numeric( $value ) ) {
+					$marks[ (int) $question_id ] = (float) $value;
+				}
+			}
+			$sections[] = array(
+				'title'     => (string) ( $section['title'] ?? '' ),
+				'questions' => array_values( array_map( 'intval', (array) ( $section['questions'] ?? array() ) ) ),
+				'marks'     => $marks,
+				'new_page'  => ! empty( $section['new_page'] ),
+			);
+		}
+
+		return $sections;
+	}
+
+	/**
+	 * Store the sections through the assessment settings, which validate them against the quiz.
+	 *
+	 * @param int     $quiz_id  Quiz ID.
+	 * @param array[] $sections Sections ({@see stored_sections()} shape).
+	 */
+	private function save_sections( $quiz_id, array $sections ) {
+		if ( $sections === $this->stored_sections( $quiz_id ) ) {
+			return;
+		}
+		$saved = AssessmentSettings::save( $quiz_id, array( 'sections' => $sections ) );
+		if ( is_wp_error( $saved ) ) {
+			ErrorException::raise( new WP_Error( 'ohmylms_quiz_sections_invalid', $saved->get_error_message(), array( 'status' => 422 ) ) );
+		}
+	}
+
+	/**
+	 * Build a section validation error.
+	 *
+	 * @param string $message     Message.
+	 * @param string $field       Field path.
+	 * @param int    $question_id Question concerned, if any.
+	 * @return WP_Error
+	 */
+	private function invalid_section( $message, $field, $question_id = 0 ) {
+		$data = array(
+			'status' => 422,
+			'field'  => $field,
+		);
+		if ( $question_id ) {
+			$data['question_id'] = $question_id;
+		}
+
+		return new WP_Error( 'ohmylms_quiz_sections_invalid', $message, $data );
 	}
 
 	/**
@@ -849,11 +1303,12 @@ class QuizQuestionsController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	private function respond( $quiz_id, $request ) {
-		$ids   = $this->question_ids( $quiz_id );
-		$pins  = $this->pins( $quiz_id );
-		$slots = $this->slots( $quiz_id, $ids, $pins );
-		$pools = $this->pools( $quiz_id );
-		$fixed = 0.0;
+		$ids    = $this->question_ids( $quiz_id );
+		$pins   = $this->pins( $quiz_id );
+		$layout = $this->layout( $quiz_id );
+		$slots  = $this->slots( $quiz_id, $ids, $pins );
+		$pools  = $this->pools( $quiz_id );
+		$fixed  = 0.0;
 		foreach ( $slots as $slot ) {
 			$fixed += $slot['marks'];
 		}
@@ -865,8 +1320,18 @@ class QuizQuestionsController extends RestController {
 		}
 		$data = array(
 			'quiz_id'   => $quiz_id,
-			'revision'  => $this->revision( $ids, $pins ),
+			'revision'  => $this->revision( $ids, $pins, $layout ),
 			'questions' => $slots,
+			'sections'  => array_map(
+				static function ( array $section ) {
+					return array(
+						'title'        => $section['title'],
+						'question_ids' => $section['questions'],
+						'new_page'     => $section['new_page'],
+					);
+				},
+				$layout['sections']
+			),
 			'pools'     => $pools,
 			'totals'    => array(
 				'questions'      => count( $slots ),
@@ -919,11 +1384,10 @@ class QuizQuestionsController extends RestController {
 			$settings = is_array( $settings ) ? $settings : array();
 			$pinned   = (int) ( $pins[ $question_id ] ?? 0 );
 			$delivery = $this->delivery( $quiz_id, $question_id, $identity, $pinned, $settings );
-			$marks    = ! empty( $delivery['settings']['score']['enabled'] ) ? max( 0, (float) ( $delivery['settings']['score']['value'] ?? 0 ) ) : 0.0;
-			if ( isset( $sections['marks'][ $question_id ] ) ) {
-				$marks = max( 0, $sections['marks'][ $question_id ] );
-			}
-			$type = (string) ( $settings['type'] ?? '' );
+			$points   = ! empty( $delivery['settings']['score']['enabled'] ) ? max( 0, (float) ( $delivery['settings']['score']['value'] ?? 0 ) ) : 0.0;
+			$override = isset( $sections['marks'][ $question_id ] ) ? round( max( 0, $sections['marks'][ $question_id ] ), 4 ) : null;
+			$marks    = null === $override ? $points : $override;
+			$type     = (string) ( $settings['type'] ?? '' );
 			if ( ! $exists || 'trash' === $post->post_status ) {
 				$status = 'unavailable';
 			} elseif ( Usage::ARCHIVED === $post->post_status ) {
@@ -942,6 +1406,8 @@ class QuizQuestionsController extends RestController {
 				'type'                => $can_use ? $type : '',
 				'type_label'          => $can_use ? $this->type_label( $type ) : '',
 				'marks'               => round( $marks, 4 ),
+				'question_marks'      => round( $points, 4 ),
+				'marks_override'      => $override,
 				'section'             => (string) ( $sections['by_question'][ $question_id ] ?? '' ),
 				'status'              => $status,
 				'version'             => (int) ( $identity['latest_version_no'] ?? 0 ),
@@ -1060,7 +1526,7 @@ class QuizQuestionsController extends RestController {
 	}
 
 	/**
-	 * Random pools of the quiz (read-only here; edited through `/quiz/{id}/pools`).
+	 * Random pools of the quiz (edited through `PUT /quizzes/{id}/questions/pools`).
 	 *
 	 * @param int $quiz_id Quiz ID.
 	 * @return array[]

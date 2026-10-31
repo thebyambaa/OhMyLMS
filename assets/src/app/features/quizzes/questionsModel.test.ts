@@ -1,13 +1,46 @@
 import { questionList, sharedSlot, slot } from './fixtures';
 import {
 	addBlocker,
+	assignSection,
 	deliveryLabel,
 	moveQuestion,
 	parseQuizQuestionCreated,
 	parseQuizQuestions,
+	slotMarks,
 	slotName,
 	slotWarning,
 } from './model';
+
+describe( 'quiz layout helpers', () => {
+	it( 'reads marks from 0 to 10000 with at most four decimals', () => {
+		expect( slotMarks( ' 2.5 ' ) ).toBe( 2.5 );
+		expect( slotMarks( '0' ) ).toBe( 0 );
+		expect( slotMarks( '10000' ) ).toBe( 10000 );
+		expect( slotMarks( '1.2345' ) ).toBe( 1.2345 );
+		for ( const bad of [ '', '-1', '10001', '1.23456', 'two', '1e2' ] ) {
+			expect( slotMarks( bad ) ).toBeNull();
+		}
+	} );
+	it( 'moves a question between sections in quiz order', () => {
+		const sections = [
+			{ title: 'A', question_ids: [ 3 ], new_page: false },
+			{ title: 'B', question_ids: [ 1 ], new_page: true },
+		];
+		const order = [ 1, 2, 3 ];
+		expect( assignSection( sections, order, 1, 0 ) ).toEqual( [
+			{ title: 'A', question_ids: [ 1, 3 ], new_page: false },
+			{ title: 'B', question_ids: [], new_page: true },
+		] );
+		expect( assignSection( sections, order, 3, -1 )[ 0 ] ).toEqual( {
+			title: 'A',
+			question_ids: [],
+			new_page: false,
+		} );
+		expect(
+			assignSection( sections, order, 2, 1 )[ 1 ]?.question_ids
+		).toEqual( [ 1, 2 ] );
+	} );
+} );
 
 describe( 'question list parser', () => {
 	it( 'accepts the documented shape', () => {

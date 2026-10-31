@@ -1,5 +1,6 @@
 import { Button, CheckboxControl, TextControl } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
+import { MediaChoice } from './MediaChoice';
 import {
 	correctMode,
 	MAX_ANSWER,
@@ -43,8 +44,8 @@ export function FieldError( {
 }
 
 /**
- * Answer options of the built-in option types: text, correct answers (one or many, or none for
- * reorder and matching), matching labels, order, and adding or removing options.
+ * Answer options of the built-in option types: text, images, correct answers (one or many, or none
+ * for reorder and matching), matching labels and images, order, and adding or removing options.
  *
  * @param props          Component props.
  * @param props.type     Question type id.
@@ -133,6 +134,27 @@ export function OptionsEditor( {
 								field={ answerKey }
 								message={ errors[ answerKey ] }
 							/>
+							{ ! fixed && (
+								<MediaChoice
+									kind="image"
+									label={ sprintf(
+										/* translators: %d: option number. */
+										__( 'image of option %d', 'ohmylms' ),
+										number
+									) }
+									value={ {
+										id: item.image_id,
+										url: item.image_url,
+									} }
+									disabled={ disabled }
+									onChange={ ( image ) =>
+										update( index, {
+											image_id: image.id,
+											image_url: image.url,
+										} )
+									}
+								/>
+							) }
 							{ 'matching' === type && (
 								<>
 									<TextControl
@@ -168,6 +190,30 @@ export function OptionsEditor( {
 									<FieldError
 										field={ labelKey }
 										message={ errors[ labelKey ] }
+									/>
+									<MediaChoice
+										kind="image"
+										label={ sprintf(
+											/* translators: %d: option number. */
+											__(
+												'image of the match for option %d',
+												'ohmylms'
+											),
+											number
+										) }
+										value={ {
+											id: 0,
+											url: item.matching?.image_url ?? '',
+										} }
+										disabled={ disabled }
+										onChange={ ( image ) =>
+											update( index, {
+												matching: {
+													...( item.matching ?? {} ),
+													image_url: image.url,
+												},
+											} )
+										}
 									/>
 								</>
 							) }

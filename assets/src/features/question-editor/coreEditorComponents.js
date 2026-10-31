@@ -10,6 +10,7 @@ export {
 	DropdownBlanksEditor,
 	ExpressionEditor,
 	MultiBlankEditor,
+	TextEntryEditor,
 } from './InteractiveEditors';
 export {
 	BuildChartEditor,
@@ -21,3 +22,5 @@ export {
 	SetClockEditor,
 	ShadeModelEditor,
 } from './VisualEditors';
+export { CrosswordEditor, WordsearchEditor } from './PuzzleEditor';
+export { ExtendedEditor } from './ExtendedEditor';

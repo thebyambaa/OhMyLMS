@@ -32,6 +32,7 @@ import {
 	slotWarning,
 } from './model';
 import { QuestionPicker } from './QuestionPicker';
+import { MarksDialog, PoolsDialog, SectionsDialog } from './QuizLayoutDialogs';
 import {
 	addQuizQuestions,
 	createQuizQuestion,
@@ -40,12 +41,17 @@ import {
 	QUESTIONS_CONFLICT,
 	removeQuizQuestion,
 	reorderQuizQuestions,
+	saveQuizPools,
+	saveQuizSections,
+	setQuizQuestionMarks,
 } from './questionsApi';
 import type {
 	PinChoice,
+	QuizPoolInput,
 	QuizQuestionCreated,
 	QuizQuestions as QuestionList,
 	QuizQuestionSlot,
+	QuizSection,
 } from './types';
 
 const QuestionDraftEditor = lazy(
@@ -70,11 +76,11 @@ function defaultType( types: readonly QuestionType[] ): string {
 
 /**
  * The Questions section of the quiz editor: the questions of the quiz in order with type, marks and the
- * version learners get, the total marks and the random pools (read-only). Authors add questions from
- * the question bank, create a question in place (the question bank's draft editor, saved into this
- * quiz), reorder with move buttons, pin or unpin versions and remove questions. Every change is saved
- * at once with the revision of the loaded list; a list changed by someone else is reloaded instead of
- * overwritten.
+ * version learners get, the total marks and the random pools. Authors add questions from the question
+ * bank, create a question in place (the question bank's draft editor, saved into this quiz), reorder
+ * with move buttons, set a question's marks in this quiz, pin or unpin versions, remove questions, and
+ * edit the paper's sections and the random pools. Every change is saved at once with the revision of
+ * the loaded list; a list changed by someone else is reloaded instead of overwritten.
  *
  * @param props
  * @param props.quizId        Quiz id.
@@ -111,6 +117,11 @@ export function QuizQuestions( {
 	const [ removing, setRemoving ] = useState< QuizQuestionSlot | null >(
 		null
 	);
+	const [ marking, setMarking ] = useState< QuizQuestionSlot | null >( null );
+	const [ layout, setLayout ] = useState< 'sections' | 'pools' | null >(
+		null
+	);
+	const dialog = picking || removing || marking || layout;
 	const [ focus, setFocus ] = useState< string[] >( [] );
 	const operation = useRef< AbortController | null >( null );
 	const revision = useRef( '' );
@@ -351,6 +362,58 @@ export function QuizQuestions( {
 		} );
 	}
 
+	function saveMarks( slot: QuizQuestionSlot, marks: number | null ) {
+		void change(
+			( base, signal ) =>
+				setQuizQuestionMarks(
+					quizId,
+					base,
+					slot.question_id,
+					marks,
+					signal
+				),
+			( result ) => {
+				const updated = result.questions.find(
+					( item ) => item.question_id === slot.question_id
+				);
+				return sprintf(
+					/* translators: 1: question name, 2: marks. */
+					__( '%1$s is now worth %2$s in this quiz.', 'ohmylms' ),
+					slotName( slot ),
+					formatMarks( updated?.marks ?? marks ?? 0 )
+				);
+			},
+			[ `${ slot.question_id }:marks` ]
+		).then( ( saved ) => {
+			if ( saved ) {
+				setMarking( null );
+			}
+		} );
+	}
+
+	function saveSections( sections: QuizSection[] ) {
+		void change(
+			( base, signal ) =>
+				saveQuizSections( quizId, base, sections, signal ),
+			() => __( 'Sections saved.', 'ohmylms' )
+		).then( ( saved ) => {
+			if ( saved ) {
+				setLayout( null );
+			}
+		} );
+	}
+
+	function savePools( pools: QuizPoolInput[] ) {
+		void change(
+			( base, signal ) => saveQuizPools( quizId, base, pools, signal ),
+			() => __( 'Random pools saved.', 'ohmylms' )
+		).then( ( saved ) => {
+			if ( saved ) {
+				setLayout( null );
+			}
+		} );
+	}
+
 	function add( questionIds: number[], pinned: boolean ) {
 		void change(
 			( base, signal ) =>
@@ -486,7 +549,7 @@ export function QuizQuestions( {
 				</Notice>
 			) }
 			<div ref={ summary } tabIndex={ -1 }>
-				{ failure && ! picking && ! removing && (
+				{ failure && ! dialog && (
 					<Notice status="error" isDismissible={ false }>
 						{ failure }
 					</Notice>
@@ -520,6 +583,7 @@ export function QuizQuestions( {
 						onCancel={ () => setDraft( null ) }
 						saveLabel={ __( 'Create and add to quiz', 'ohmylms' ) }
 						onDirtyChange={ onDirtyChange }
+						previewPostId={ quizId }
 					/>
 				</Suspense>
 			) : (
@@ -539,6 +603,26 @@ export function QuizQuestions( {
 								onClick={ openNaming }
 							>
 								{ __( 'Create question', 'ohmylms' ) }
+							</Button>{ ' ' }
+							<Button
+								variant="secondary"
+								disabled={ locked || ! slots.length }
+								onClick={ () => {
+									setFailure( null );
+									setLayout( 'sections' );
+								} }
+							>
+								{ __( 'Edit sections', 'ohmylms' ) }
+							</Button>{ ' ' }
+							<Button
+								variant="secondary"
+								disabled={ locked }
+								onClick={ () => {
+									setFailure( null );
+									setLayout( 'pools' );
+								} }
+							>
+								{ __( 'Edit random pools', 'ohmylms' ) }
 							</Button>
 						</p>
 					) }
@@ -586,6 +670,10 @@ export function QuizQuestions( {
 										register={ register }
 										onMove={ move }
 										onPin={ pin }
+										onMarks={ ( item ) => {
+											setFailure( null );
+											setMarking( item );
+										} }
 										onRemove={ ( item ) => {
 											setFailure( null );
 											setRemoving( item );
@@ -618,7 +706,7 @@ export function QuizQuestions( {
 					</h4>
 					<p>
 						{ __(
-							'Each attempt draws approved questions from these pools after the questions above. Pools are read-only here.',
+							'Each attempt draws approved questions from these pools after the questions above.',
 							'ohmylms'
 						) }
 					</p>
@@ -659,6 +747,46 @@ export function QuizQuestions( {
 						</tbody>
 					</Table>
 				</section>
+			) }
+
+			{ marking && (
+				<MarksDialog
+					slot={ marking }
+					busy={ busy }
+					error={ failure }
+					onSave={ ( marks ) => saveMarks( marking, marks ) }
+					onClose={ () => {
+						setMarking( null );
+						setFailure( null );
+					} }
+				/>
+			) }
+
+			{ 'sections' === layout && (
+				<SectionsDialog
+					sections={ data.sections }
+					slots={ slots }
+					busy={ busy }
+					error={ failure }
+					onSave={ saveSections }
+					onClose={ () => {
+						setLayout( null );
+						setFailure( null );
+					} }
+				/>
+			) }
+
+			{ 'pools' === layout && (
+				<PoolsDialog
+					pools={ data.pools }
+					busy={ busy }
+					error={ failure }
+					onSave={ savePools }
+					onClose={ () => {
+						setLayout( null );
+						setFailure( null );
+					} }
+				/>
 			) }
 
 			{ picking && (
@@ -801,6 +929,7 @@ function SlotRow( {
 	register,
 	onMove,
 	onPin,
+	onMarks,
 	onRemove,
 }: {
 	slot: QuizQuestionSlot;
@@ -811,6 +940,7 @@ function SlotRow( {
 	register: ( key: string ) => ( element: HTMLButtonElement | null ) => void;
 	onMove: ( index: number, delta: -1 | 1 ) => void;
 	onPin: ( slot: QuizQuestionSlot, choice: PinChoice ) => void;
+	onMarks: ( slot: QuizQuestionSlot ) => void;
 	onRemove: ( slot: QuizQuestionSlot ) => void;
 } ) {
 	const name = slotName( slot );
@@ -860,7 +990,42 @@ function SlotRow( {
 				) }
 			</th>
 			<td>{ slot.type_label || slot.type || '—' }</td>
-			<td>{ formatMarks( slot.marks ) }</td>
+			<td>
+				{ formatMarks( slot.marks ) }
+				{ null !== slot.marks_override && (
+					<>
+						<br />
+						<small>
+							{ sprintf(
+								/* translators: %s: points of the question. */
+								__(
+									'Set in this quiz (question: %s)',
+									'ohmylms'
+								),
+								formatMarks( slot.question_marks )
+							) }
+						</small>
+					</>
+				) }
+				{ ! readOnly && (
+					<>
+						<br />
+						<Button
+							ref={ register( `${ slot.question_id }:marks` ) }
+							variant="link"
+							disabled={ disabled }
+							aria-label={ sprintf(
+								/* translators: %s: question name. */
+								__( 'Change the marks of %s', 'ohmylms' ),
+								name
+							) }
+							onClick={ () => onMarks( slot ) }
+						>
+							{ __( 'Change marks', 'ohmylms' ) }
+						</Button>
+					</>
+				) }
+			</td>
 			<td>{ deliveryLabel( slot ) }</td>
 			{ ! readOnly && (
 				<td>

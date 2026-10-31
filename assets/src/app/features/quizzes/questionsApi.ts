@@ -5,7 +5,7 @@ import {
 	parseQuizQuestions,
 	positiveId,
 } from './model';
-import type { PinChoice } from './types';
+import type { PinChoice, QuizPoolInput, QuizSection } from './types';
 
 const listPath = ( quizId: number ) =>
 	`/ohmylms/v1/quizzes/${ positiveId( quizId ) }/questions`;
@@ -153,5 +153,79 @@ export async function pinQuizQuestion(
 		await put< unknown >( `${ slotPath( quizId, questionId ) }/pin`, body, {
 			signal,
 		} )
+	);
+}
+
+/**
+ * Set the marks of a question in this quiz, or go back to the question's own points.
+ *
+ * @param quizId     Quiz id.
+ * @param revision   Revision of the loaded list.
+ * @param questionId Question.
+ * @param marks      Marks (0 to 10000), or `null` to use the question's points.
+ * @param signal     Cancels the request.
+ * @return The updated list.
+ */
+export async function setQuizQuestionMarks(
+	quizId: number,
+	revision: string,
+	questionId: number,
+	marks: number | null,
+	signal?: AbortSignal
+) {
+	return parseQuizQuestions(
+		await put< unknown >(
+			`${ slotPath( quizId, questionId ) }/marks`,
+			{ marks, revision },
+			{ signal }
+		)
+	);
+}
+
+/**
+ * Replace the sections of the quiz.
+ *
+ * @param quizId   Quiz id.
+ * @param revision Revision of the loaded list.
+ * @param sections Every section in paper order.
+ * @param signal   Cancels the request.
+ * @return The updated list.
+ */
+export async function saveQuizSections(
+	quizId: number,
+	revision: string,
+	sections: QuizSection[],
+	signal?: AbortSignal
+) {
+	return parseQuizQuestions(
+		await put< unknown >(
+			`${ listPath( quizId ) }/sections`,
+			{ sections, revision },
+			{ signal }
+		)
+	);
+}
+
+/**
+ * Replace the random pools of the quiz.
+ *
+ * @param quizId   Quiz id.
+ * @param revision Revision of the loaded list.
+ * @param pools    Every pool.
+ * @param signal   Cancels the request.
+ * @return The updated list.
+ */
+export async function saveQuizPools(
+	quizId: number,
+	revision: string,
+	pools: QuizPoolInput[],
+	signal?: AbortSignal
+) {
+	return parseQuizQuestions(
+		await put< unknown >(
+			`${ listPath( quizId ) }/pools`,
+			{ pools, revision },
+			{ signal }
+		)
 	);
 }

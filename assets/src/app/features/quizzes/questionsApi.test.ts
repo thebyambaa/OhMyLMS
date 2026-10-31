@@ -7,6 +7,9 @@ import {
 	pinQuizQuestion,
 	removeQuizQuestion,
 	reorderQuizQuestions,
+	saveQuizPools,
+	saveQuizSections,
+	setQuizQuestionMarks,
 } from './questionsApi';
 
 vi.mock( '../../lib/api', async ( original ) => ( {
@@ -81,6 +84,83 @@ describe( 'quiz questions API', () => {
 		await pinQuizQuestion( 11, REVISION, 102, choice );
 		expect( put ).toHaveBeenCalledWith( `${ BASE }/102/pin`, body, {
 			signal: undefined,
+		} );
+	} );
+	it( 'sets and clears marks, and saves sections and pools with the revision', async () => {
+		vi.mocked( put ).mockResolvedValue( questionList );
+		await setQuizQuestionMarks( 11, REVISION, 101, 2.5 );
+		expect( put ).toHaveBeenLastCalledWith(
+			`${ BASE }/101/marks`,
+			{ marks: 2.5, revision: REVISION },
+			{ signal: undefined }
+		);
+		await setQuizQuestionMarks( 11, REVISION, 101, null );
+		expect( put ).toHaveBeenLastCalledWith(
+			`${ BASE }/101/marks`,
+			{ marks: null, revision: REVISION },
+			{ signal: undefined }
+		);
+		const sections = [
+			{ title: 'Part A', question_ids: [ 101 ], new_page: true },
+		];
+		await saveQuizSections( 11, REVISION, sections );
+		expect( put ).toHaveBeenLastCalledWith(
+			`${ BASE }/sections`,
+			{ sections, revision: REVISION },
+			{ signal: undefined }
+		);
+		const pools = [
+			{
+				title: 'Warm-up',
+				skill_id: 7,
+				count: 2,
+				marks: 1,
+				difficulty: '',
+				bank_id: 0,
+				include_secure: true,
+			},
+		];
+		await saveQuizPools( 11, REVISION, pools );
+		expect( put ).toHaveBeenLastCalledWith(
+			`${ BASE }/pools`,
+			{ pools, revision: REVISION },
+			{ signal: undefined }
+		);
+	} );
+	it( 'reads sections and marks overrides, and tolerates their absence', async () => {
+		vi.mocked( get ).mockResolvedValueOnce( {
+			...questionList,
+			questions: [
+				{
+					...questionList.questions[ 0 ],
+					marks: 4,
+					marks_override: 4,
+				},
+			],
+			sections: [
+				{ title: 'Part A', question_ids: [ 101 ], new_page: false },
+			],
+		} );
+		const list = await listQuizQuestions( 11 );
+		expect( list.questions[ 0 ] ).toMatchObject( {
+			marks: 4,
+			question_marks: 2,
+			marks_override: 4,
+		} );
+		expect( list.sections ).toEqual( [
+			{ title: 'Part A', question_ids: [ 101 ], new_page: false },
+		] );
+		const { sections, ...older } = questionList;
+		vi.mocked( get ).mockResolvedValueOnce( older );
+		expect( ( await listQuizQuestions( 11 ) ).sections ).toEqual(
+			sections
+		);
+		vi.mocked( get ).mockResolvedValueOnce( {
+			...questionList,
+			sections: [ { title: 'A', question_ids: [ 0 ], new_page: false } ],
+		} );
+		await expect( listQuizQuestions( 11 ) ).rejects.toMatchObject( {
+			code: 'invalid_response',
 		} );
 	} );
 	it( 'creates a question in the quiz and checks it is in the answer', async () => {

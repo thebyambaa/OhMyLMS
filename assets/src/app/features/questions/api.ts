@@ -1,17 +1,128 @@
 import { get, patch, post } from '../../lib/api';
 import { getCollection } from '../../lib/api/collection';
 import {
+	invalidResponse,
+	parseBanks,
 	parseQuestionDetail,
 	parseQuestionSummary,
 	parseQuestionTypes,
 	parseQuestionVersion,
+	parseSkillRef,
 	positiveId,
+	record,
 } from './model';
 import type {
 	QuestionCreateInput,
 	QuestionListQuery,
+	QuestionSettings,
 	QuestionUpdateInput,
+	SkillRef,
 } from './types';
+
+/** Skills offered per search. */
+export const SKILLS_PER_SEARCH = 20;
+
+/** An unsaved question as the learner player preview accepts it. */
+export interface PreviewQuestion {
+	id: number;
+	name: string;
+	description: string;
+	settings: QuestionSettings;
+	questions: {
+		id: number;
+		answer: string;
+		is_correct: boolean;
+		order_number: number;
+		image_url: string;
+		matching_data: { label?: string; image_url?: string } | null;
+	}[];
+	image_src?: string;
+	video_src?: string;
+}
+
+function skillList( value: unknown ): SkillRef[] {
+	if ( ! Array.isArray( value ) ) {
+		throw invalidResponse();
+	}
+	return value.map( parseSkillRef );
+}
+
+/**
+ * Search the skill catalogue by name.
+ *
+ * @param search Text to search for.
+ * @param signal Cancels the request.
+ * @return Up to {@link SKILLS_PER_SEARCH} skills, sorted by name.
+ */
+export async function searchSkills( search: string, signal?: AbortSignal ) {
+	return skillList(
+		await get< unknown >( '/ohmylms/v1/skills/catalog', {
+			signal,
+			query: { search: search.trim(), per_page: SKILLS_PER_SEARCH },
+		} )
+	);
+}
+
+/**
+ * Read skills by id, for the names of skills a question is mapped to.
+ *
+ * @param ids    Skill ids, at most 50.
+ * @param signal Cancels the request.
+ * @return The skills that exist.
+ */
+export async function getSkills(
+	ids: readonly number[],
+	signal?: AbortSignal
+) {
+	if ( ! ids.length ) {
+		return [];
+	}
+	return skillList(
+		await get< unknown >( '/ohmylms/v1/skills/catalog', {
+			signal,
+			query: { include: ids.slice( 0, 50 ), per_page: 50 },
+		} )
+	);
+}
+
+/**
+ * List the question banks the user can at least use.
+ *
+ * @param signal Cancels the request.
+ * @return The banks, sorted by name.
+ */
+export async function listBanks( signal?: AbortSignal ) {
+	return parseBanks(
+		await get< unknown >( '/ohmylms/v1/question-banks', { signal } )
+	);
+}
+
+/**
+ * Open an author-only learner preview of an unsaved question in the real quiz player. Nothing is
+ * saved and no attempt is started; the preview address expires after 15 minutes.
+ *
+ * @param postId   A question, quiz or lesson the user may edit (the preview's document).
+ * @param question The question as edited.
+ * @param signal   Cancels the request.
+ * @return The address of the preview document.
+ */
+export async function previewQuestion(
+	postId: number,
+	question: PreviewQuestion,
+	signal?: AbortSignal
+): Promise< string > {
+	const result = record(
+		await post< unknown >(
+			'/ohmylms/v1/question-preview',
+			{ post_id: positiveId( postId ), question, seed: 1 },
+			{ signal }
+		)
+	);
+	if ( 'string' !== typeof result.url || ! result.url ) {
+		throw invalidResponse();
+	}
+	return result.url;
+}
 
 const BASE = '/ohmylms/v1/questions';
 const itemPath = ( id: number ) => `${ BASE }/${ positiveId( id ) }`;

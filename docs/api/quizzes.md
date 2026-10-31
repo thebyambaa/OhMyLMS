@@ -79,6 +79,9 @@ tables, else 503 `ohmylms_question_bank_unavailable`, and `edit_post` on the qui
 | PUT / PATCH / POST | `/quizzes/{id}/questions/order` | `question_ids` (every id of the quiz once), `revision` | 200 `QuizQuestions` | 400, 401, 403, 404, 409, 500 |
 | DELETE | `/quizzes/{id}/questions/{question_id}` | `revision` (query or body) | 200 `QuizQuestions` | 400, 401, 403, 404, 409, 500 |
 | PUT / PATCH / POST | `/quizzes/{id}/questions/{question_id}/pin` | `version_id` (id, or `null` to unpin) **or** `current: true`; `revision` | 200 `QuizQuestions` | 400, 401, 403, 404, 409, 500 |
+| PUT / PATCH / POST | `/quizzes/{id}/questions/{question_id}/marks` | `marks` (0–10000, or `null` for the question's points), `revision` | 200 `QuizQuestions` | 400, 401, 403, 404, 409, 500 |
+| PUT / PATCH / POST | `/quizzes/{id}/questions/sections` | `sections` (≤ 50 of `{title ≤ 190, question_ids, new_page?}`), `revision` | 200 `QuizQuestions` | 400, 401, 403, 404, 409, 422, 500 |
+| PUT / PATCH / POST | `/quizzes/{id}/questions/pools` | `pools` (≤ 20 of `{title?, skill_id, count 1–50, marks? 0–10000, difficulty? '' or a band, bank_id?, include_secure?}`), `revision` | 200 `QuizQuestions` | 400, 401, 403, 404, 409, 422, 500 |
 
 Question-authoring routes kept under `ohmylms/v1/quiz` (used by the question editor, exam import and
 activity drafts; unchanged response shapes, `edit_post` checks): `POST /quiz`, `GET|PUT|POST /quiz/{id}`,
@@ -158,11 +161,13 @@ rewrites the answer rows, recomputes the attempt total as the sum of the answer 
 ```json
 { "quiz_id": 11, "revision": "643d5437104296e2",
   "questions": [ { "question_id": 101, "position": 1, "name": "Pick the larger fraction",
-    "type": "single-choice", "type_label": "Single Choice", "marks": 2, "section": "", "status": "draft",
+    "type": "single-choice", "type_label": "Single Choice", "marks": 2, "question_marks": 2,
+    "marks_override": null, "section": "", "status": "draft",
     "version": 3, "current_version_id": 31, "approved_version_id": 0, "pinned_version_id": 0,
     "pinned_version_no": 0, "delivery": { "source": "current", "version_id": 31, "version_no": 3 },
     "usage": { "quizzes": 1, "responses": 0 }, "permissions": { "can_edit": true, "can_use": true },
     "modified": "2026-10-30T09:00:00Z" } ],
+  "sections": [ { "title": "Part A", "question_ids": [ 101 ], "new_page": false } ],
   "pools": [ { "id": "pool-1", "title": "Warm-up", "skill": { "id": 7, "name": "Fractions" }, "count": 3,
     "marks": 2, "difficulty": "", "bank_id": 0, "include_secure": true } ],
   "totals": { "questions": 1, "fixed_marks": 2, "pool_questions": 3, "pool_marks": 6, "total_marks": 8 } }
@@ -175,14 +180,31 @@ rewrites the answer rows, recomputes the attempt total as the sum of the answer 
 - **Delivery** says which version learners get, read-only (reads never capture versions): `pinned`; else
   `current` when the quiz owner may edit the question; else `approved`; else `unavailable` (publishing will
   answer 409 `quiz_question_unapproved`). This mirrors `RevisionPublisher::slot_version()`.
-- **Marks** are those of the delivered version's `score`, overridden by section marks / `slot_marks`, as
-  publishing computes them. `totals.total_marks` adds the pools (`count × marks`).
-- **Revision**: the first 16 hex characters of SHA-256 over the ordered question ids and the pins. Every write
-  sends the revision it loaded; each write locks the quiz row, recomputes the revision from the database and
-  answers 409 `ohmylms_quiz_questions_conflict` (with `data.revision`) when it differs, so edits by another
-  editor, another tab or a legacy route are never overwritten. Pools and question content do not change it
-  (question content has its own `base_modified`). The quiz's `updated_at` is not touched by these writes, so
-  the settings form and the question list are separate conflict domains on the same screen.
+- **Marks** are those of the delivered version's `score` (`question_marks`), overridden by section marks /
+  `slot_marks` (`marks_override`, `null` when none), as publishing computes them. `totals.total_marks` adds
+  the pools (`count × marks`).
+- **Revision**: the first 16 hex characters of SHA-256 over the ordered question ids, the pins, the
+  `slot_marks` overrides, the sections and the pool rules, all read from the database. Every write sends the
+  revision it loaded; each write locks the quiz row, recomputes the revision and answers 409
+  `ohmylms_quiz_questions_conflict` (with `data.revision`) when it differs, so edits by another editor,
+  another tab or a legacy route (including `/quiz/{id}/pools` and the native editor's assessment settings)
+  are never overwritten. Question content does not change it (it has its own `base_modified`). The quiz's
+  `updated_at` is not touched by these writes, so the settings form and the question list are separate
+  conflict domains on the same screen.
+- **Marks override**: `marks` is stored in `slot_marks` of `_quiz_settings` (the key publishing already
+  reads) and clears the question's section marks, so there is one source; `null` removes it. The question
+  must be in the quiz (404 `ohmylms_question_not_in_quiz`).
+- **Sections** replace the assessment settings' `sections` through `AssessmentSettings::save()`: a title is
+  required, each question id must be in the quiz and in at most one section (422
+  `ohmylms_quiz_sections_invalid` with `data.field` and `data.question_id`). Section marks of questions that
+  stay in a section of the same title are kept. Publishing orders the paper by section (questions in no
+  section first) and starts `new_page` sections on a new page.
+- **Pools** replace `_ohmylms_pools` through `Pools::save()`: the skill must exist (422
+  `ohmylms_quiz_pool_invalid`, `data.field`), a named `bank_id` must be a bank the user may use (403
+  `ohmylms_quiz_pool_bank_forbidden`), and the pools must be able to draw their counts from approved questions
+  of distinct families not already in the quiz (409 `quiz_pool_shortage`, nothing written). `pools: []`
+  removes them. With `bank_id` 0 a pool draws approved questions of the skill from every bank, as before.
+- **Remove** also drops the question's marks override and its section membership.
 - **Add**: each id must be an existing, non-trashed question (404 `ohmylms_question_not_found` with
   `data.question_id`), not archived (409 `ohmylms_question_archived`), not already placed (409
   `ohmylms_quiz_question_exists`), usable (`can_use_question`, else 403 `ohmylms_quiz_question_forbidden`), and,
@@ -206,7 +228,7 @@ rewrites the answer rows, recomputes the attempt total as the sum of the answer 
 - Writes on a trashed quiz answer 409 `ohmylms_quiz_trashed`; any other body field answers 400
   `ohmylms_quiz_questions_unknown_field` (`data.fields`); bodies over 256 KiB answer 413
   `ohmylms_quiz_questions_too_large`; storage failures roll back and answer 500 `ohmylms_quiz_questions_storage`.
-- Hooks: action `ohmylms_rest_quiz_questions_changed` ($quiz_id, $operation `add|create|reorder|remove|pin`,
+- Hooks: action `ohmylms_rest_quiz_questions_changed` ($quiz_id, $operation `add|create|reorder|remove|pin|marks|sections|pools`,
   $request) after every successful write; filter `ohmylms_rest_prepare_quiz_questions` ($data, $quiz_id,
   $request) on every list response. `ohmylms_quiz_question_relationship_created` still fires from
   `DraftWriter::link()`.
@@ -229,19 +251,23 @@ questions and shared questions without an approved version cannot be chosen; opt
 type, then the question bank's own draft editor, loaded lazily from `features/questions/draft/public.ts`,
 saving through `POST …/questions/new`); edit (link to `#/content-hub/question-bank/<id>` for questions the user
 may edit); move up/down buttons that keep keyboard focus on the moved question; pin/unpin; remove with a
-confirmation dialog; read-only random pools. Every change is saved immediately with the loaded revision; a 409
-reloads the list and says nothing was changed. An open question draft counts as unsaved work for the page's
-leave guard. The legacy "Edit questions" link to `#/quiz-edit/<id>` was removed from this screen.
+confirmation dialog; **Change marks** per question (the marks in this quiz, or back to the question's
+points); **Edit sections** (titles, order, start on a new page, the section of each question); **Edit random
+pools** (title, skill from a catalogue search, questions drawn, marks each, difficulty, bank, secure
+questions). Every change is saved immediately with the loaded revision; a 409 reloads the list and says
+nothing was changed. An open question draft counts as unsaved work for the page's leave guard and its
+learner preview uses the quiz as its document. The legacy "Edit questions" link to `#/quiz-edit/<id>` was
+removed from this screen.
 
 ### Not covered (questions)
 
-- **Pool editing**: pools are shown read-only. `GET|PUT /quiz/{id}/pools` (`AssessmentController`) still edits
-  them; it has no stale-write check and does not check that a pool's `bank_id` is a bank the user may use (a
-  pool can draw approved questions from another author's private bank). Harden before exposing it here.
+- **Legacy pool route**: `GET|PUT /quiz/{id}/pools` (`AssessmentController`, native quiz editor) still has no
+  stale-write check and no bank permission check; its writes are now detected by the revision here.
 - **Pin to a specific older version** is supported by the route but the UI offers only "pin the version used
   now" and "unpin".
-- **Sections**: section titles and marks are shown but not edited; removing a question does not remove it from
-  `sections` in the assessment settings (as before).
+- **Section marks** are kept but not edited per section; per-question marks are edited instead (they win).
+- **Concurrent quiz settings saves**: `slot_marks` lives in `_quiz_settings`, which `PUT /quizzes/{id}` also
+  rewrites (merging unknown keys); the two writers do not share a lock.
 - The legacy `/quiz/{id}/content`, `/quiz/{id}/questions`, `/quiz/{id}/questions/{qid}/pin` and
   `DELETE /quiz/{id}/questions/{qid}` routes are unchanged (still used by the old editor, import and internal
   callers) and keep the findings above until they retire.
@@ -289,6 +315,7 @@ and `features/quizzes/QuizExchange.test.tsx`.
 | 404 | `ohmylms_question_not_found`, `ohmylms_question_not_in_quiz`, `ohmylms_version_missing` | Unknown/trashed question; question not placed in the quiz; version of another question. |
 | 409 | `ohmylms_quiz_questions_conflict`, `ohmylms_quiz_questions_mismatch`, `ohmylms_quiz_question_exists`, `ohmylms_question_archived`, `quiz_question_unapproved`, `ohmylms_quiz_trashed` | Stale revision (`data.revision`); reorder list differs from the quiz; duplicate add; archived question; use-only question without an approved version; trashed quiz. |
 | 413 / 422 / 500 / 503 | `ohmylms_quiz_questions_too_large`, `ohmylms_quiz_questions_limit`, `ohmylms_quiz_questions_storage`, `ohmylms_question_bank_unavailable` | Body over 256 KiB; more than 500 questions; storage failure (rolled back); bank tables missing. |
+| 403 / 409 / 422 | `ohmylms_quiz_pool_bank_forbidden`, `quiz_pool_shortage`, `ohmylms_quiz_pool_invalid`, `ohmylms_quiz_sections_invalid` | Pool from a bank the user may not use; pools that cannot be drawn; unknown pool skill; invalid sections (`data.field`). |
 
 ## Hooks kept
 
@@ -324,7 +351,10 @@ version as a use-only user (403), a foreign version, invalid pin bodies, pin cur
 reorder mismatch/duplicate/conflict and the stored and learner order; remove (question kept, pin dropped);
 create in quiz with `POST /questions` validation, 201/`Location`/totals/ownership; create atomicity (a failing
 placement hook rolls the question back); detection of a legacy-route change; read-only pools in the totals;
-trashed quiz. App tests: `QuizQuestions.test.tsx`, `questionsApi.test.ts`, `questionsModel.test.ts`,
+trashed quiz. `tests/php/quiz-questions-authoring-integration.php` (same flag) covers the marks, sections
+and pools routes: registration, 401/403/404, argument and semantic validation, stale revisions, storage,
+what publishing freezes (override marks, section order and page breaks), removal cleanup, bank permission
+and pool shortage. App tests: `QuizQuestions.test.tsx`, `questionsApi.test.ts`, `questionsModel.test.ts`,
 `QuizEditorPage.test.tsx`.
 
 ## Old callers that break
