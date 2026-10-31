@@ -1,0 +1,76 @@
+/*
+ * Course health table and scatter. The band is told by its label as well as its colour. Colours come
+ * from the --oml-* tokens.
+ */
+
+.ohmylms-app .ohmylms-course-health__scroll {
+	overflow-x: auto;
+}
+
+.ohmylms-app .ohmylms-course-health th,
+.ohmylms-app .ohmylms-course-health td {
+	vertical-align: middle;
+}
+
+.ohmylms-app .ohmylms-course-health .num {
+	text-align: end;
+	white-space: nowrap;
+}
+
+.ohmylms-app .ohmylms-course-health__band {
+	border-radius: 2px;
+	color: var(--oml-surface);
+	display: inline-block;
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 18px;
+	padding: 0 6px;
+}
+
+.ohmylms-app .ohmylms-course-health__band.is-good {
+	background: var(--oml-success);
+}
+
+.ohmylms-app .ohmylms-course-health__band.is-fair {
+	background: var(--oml-warning);
+	color: var(--oml-heading);
+}
+
+.ohmylms-app .ohmylms-course-health__band.is-poor {
+	background: var(--oml-danger);
+}
+
+.ohmylms-app .ohmylms-course-health__chart {
+	margin: var(--oml-space-3) 0 0;
+}
+
+.ohmylms-app .ohmylms-course-health__chart svg {
+	display: block;
+	max-width: 100%;
+	height: auto;
+}
+
+.ohmylms-app .ohmylms-course-health__chart text {
+	fill: var(--oml-muted);
+	font-size: 10px;
+}
+
+.ohmylms-app .ohmylms-course-health__axis {
+	stroke: var(--oml-border);
+}
+
+.ohmylms-app .ohmylms-course-health__dot {
+	fill: var(--oml-warning);
+	stroke: var(--oml-surface);
+}
+
+.ohmylms-app .ohmylms-course-health__dot.is-good {
+	fill: var(--oml-success);
+}
+
+.ohmylms-app .ohmylms-course-health__dot.is-poor {
+	fill: var(--oml-danger);
+}
+
+
+/*# sourceMappingURL=admin-app-dashboard-course-health.3c5f3666c8cc.css.map*/

@@ -15,8 +15,8 @@
 			"gzip": 1200
 		},
 		"admin-app.js": {
-			"raw": 87000,
-			"gzip": 27700
+			"raw": 88000,
+			"gzip": 28000
 		},
 		"chunks/admin-app-account-hub.js": {
 			"raw": 71800,
@@ -70,13 +70,73 @@
 			"raw": 12400,
 			"gzip": 4100
 		},
+		"chunks/admin-app-dashboard-activity.css": {
+			"raw": 800,
+			"gzip": 500
+		},
+		"chunks/admin-app-dashboard-activity.js": {
+			"raw": 2100,
+			"gzip": 1100
+		},
+		"chunks/admin-app-dashboard-at-risk.css": {
+			"raw": 2100,
+			"gzip": 700
+		},
+		"chunks/admin-app-dashboard-at-risk.js": {
+			"raw": 6400,
+			"gzip": 2600
+		},
+		"chunks/admin-app-dashboard-course-health.css": {
+			"raw": 1800,
+			"gzip": 700
+		},
+		"chunks/admin-app-dashboard-course-health.js": {
+			"raw": 6800,
+			"gzip": 2400
+		},
+		"chunks/admin-app-dashboard-insights.css": {
+			"raw": 1000,
+			"gzip": 500
+		},
+		"chunks/admin-app-dashboard-insights.js": {
+			"raw": 2500,
+			"gzip": 1300
+		},
+		"chunks/admin-app-dashboard-mastery.css": {
+			"raw": 5700,
+			"gzip": 1500
+		},
+		"chunks/admin-app-dashboard-mastery.js": {
+			"raw": 13200,
+			"gzip": 4400
+		},
+		"chunks/admin-app-dashboard-overview.js": {
+			"raw": 3200,
+			"gzip": 1200
+		},
+		"chunks/admin-app-dashboard-review-sets.css": {
+			"raw": 5800,
+			"gzip": 1500
+		},
+		"chunks/admin-app-dashboard-review-sets.js": {
+			"raw": 11700,
+			"gzip": 4000
+		},
+		"chunks/admin-app-dashboard-site-health.css": {
+			"raw": 1500,
+			"gzip": 600
+		},
+		"chunks/admin-app-dashboard-site-health.js": {
+			"raw": 3000,
+			"gzip": 1400
+		},
 		"chunks/admin-app-dashboard.css": {
 			"raw": 4600,
 			"gzip": 1200
 		},
 		"chunks/admin-app-dashboard.js": {
-			"raw": 59800,
-			"gzip": 16700
+			"raw": 58000,
+			"gzip": 16500
 		},
 		"chunks/admin-app-emails.js": {
 			"raw": 26000,
@@ -135,8 +195,8 @@
 			"gzip": 6400
 		},
 		"chunks/admin-app-settings.js": {
-			"raw": 97100,
-			"gzip": 27300
+			"raw": 102100,
+			"gzip": 28800
 		},
 		"chunks/admin-app-setup.js": {
 			"raw": 30300,

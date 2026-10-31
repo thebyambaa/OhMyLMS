@@ -72,7 +72,7 @@ const currentChunks = new Set( fs.readdirSync( sourceChunks ) );
 for ( const entry of fs.readdirSync( targetChunks, { withFileTypes: true } ) ) {
 	if (
 		entry.isFile() &&
-		/^[\w-]+\.[a-f0-9]{12}\.js(?:\.map|\.LICENSE\.txt)?$/.test(
+		/^[\w-]+\.[a-f0-9]{12}\.(?:js|css)(?:\.map|\.LICENSE\.txt)?$/.test(
 			entry.name
 		) &&
 		! currentChunks.has( entry.name )

@@ -1,0 +1,221 @@
+/*
+ * Mastery heatmap, its legend and the review-set list. Each level has its own fill *and* pattern (solid,
+ * stripes, dots, hatching, dashed outline) so levels can be told apart without colour; every cell also
+ * shows its percentage. Colours come from --wp-admin-theme-color and the --oml-* tokens.
+ */
+
+.ohmylms-app .ohmylms-heatmap__toolbar {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-3);
+	margin: 0 0 var(--oml-space-3);
+}
+
+.ohmylms-app .ohmylms-heatmap__range {
+	color: var(--oml-muted);
+	font-size: 12px;
+}
+
+.ohmylms-app .ohmylms-heatmap__pager {
+	display: inline-flex;
+	gap: var(--oml-space-2);
+	margin-inline-start: auto;
+}
+
+.ohmylms-app .ohmylms-heatmap__scroll {
+	overflow-x: auto;
+}
+
+.ohmylms-app .ohmylms-heatmap {
+	border-collapse: separate;
+	border-spacing: 3px;
+	width: 100%;
+}
+
+.ohmylms-app .ohmylms-heatmap th {
+	font-size: 12px;
+	font-weight: 600;
+	padding: 2px 4px;
+	text-align: center;
+	vertical-align: bottom;
+}
+
+.ohmylms-app .ohmylms-heatmap tbody th {
+	text-align: start;
+	vertical-align: middle;
+	white-space: nowrap;
+}
+
+.ohmylms-app .ohmylms-heatmap__learners {
+	color: var(--oml-muted);
+	display: block;
+	font-weight: 400;
+}
+
+.ohmylms-app .ohmylms-heatmap td {
+	padding: 0;
+}
+
+.ohmylms-app .ohmylms-heatmap__cell {
+	align-items: center;
+	border: 1px solid var(--oml-border);
+	border-radius: 2px;
+	box-sizing: border-box;
+	color: var(--oml-text, currentColor);
+	display: flex;
+	flex-direction: column;
+	font: inherit;
+	justify-content: center;
+	min-height: 40px;
+	min-width: 56px;
+	padding: 2px 4px;
+	width: 100%;
+}
+
+.ohmylms-app button.ohmylms-heatmap__cell {
+	cursor: pointer;
+}
+
+.ohmylms-app button.ohmylms-heatmap__cell:focus-visible {
+	outline: 2px solid var(--wp-admin-theme-color);
+	outline-offset: 1px;
+}
+
+.ohmylms-app .ohmylms-heatmap__value {
+	font-weight: 600;
+}
+
+.ohmylms-app .ohmylms-heatmap__below {
+	font-size: 11px;
+}
+
+.ohmylms-app .ohmylms-heatmap__value,
+.ohmylms-app .ohmylms-heatmap__below {
+	background: var(--oml-surface);
+	border-radius: 2px;
+	color: var(--oml-text, currentColor);
+	line-height: 1.3;
+	padding: 0 3px;
+}
+
+/* Level fills and patterns, shared by cells, swatches and the learner list. */
+.is-mastered.ohmylms-heatmap__cell,
+.is-mastered.ohmylms-mastery-swatch {
+	background: var(--wp-admin-theme-color);
+	border-color: var(--wp-admin-theme-color);
+}
+
+.is-proficient.ohmylms-heatmap__cell,
+.is-proficient.ohmylms-mastery-swatch {
+	background:
+		repeating-linear-gradient(
+			90deg,
+			color-mix(in srgb, var(--wp-admin-theme-color) 70%, var(--oml-surface)) 0 4px,
+			color-mix(in srgb, var(--wp-admin-theme-color) 50%, var(--oml-surface)) 4px 6px
+		);
+	border-color: color-mix(in srgb, var(--wp-admin-theme-color) 70%, var(--oml-surface));
+}
+
+.is-familiar.ohmylms-heatmap__cell,
+.is-familiar.ohmylms-mastery-swatch {
+	background-color: color-mix(in srgb, var(--wp-admin-theme-color) 22%, var(--oml-surface));
+	background-image: radial-gradient(color-mix(in srgb, var(--wp-admin-theme-color) 55%, var(--oml-surface)) 1px, transparent 1.5px);
+	background-size: 6px 6px;
+	border-color: color-mix(in srgb, var(--wp-admin-theme-color) 45%, var(--oml-surface));
+}
+
+.is-attempted.ohmylms-heatmap__cell,
+.is-attempted.ohmylms-mastery-swatch {
+	background:
+		repeating-linear-gradient(
+			45deg,
+			var(--oml-warning-soft) 0 4px,
+			color-mix(in srgb, var(--oml-warning) 55%, var(--oml-surface)) 4px 6px
+		);
+	border-color: var(--oml-warning);
+}
+
+.is-not-started.ohmylms-heatmap__cell,
+.is-not-started.ohmylms-mastery-swatch {
+	background: var(--oml-surface);
+	border: 1px dashed var(--oml-border);
+	color: var(--oml-muted);
+}
+
+.ohmylms-mastery-swatch {
+	border: 1px solid var(--oml-border);
+	border-radius: 2px;
+	display: inline-block;
+	flex: none;
+	height: 14px;
+	vertical-align: middle;
+	width: 22px;
+}
+
+.ohmylms-app .ohmylms-mastery-legend {
+	display: flex;
+	flex-wrap: wrap;
+	font-size: 12px;
+	gap: var(--oml-space-2) var(--oml-space-4);
+	list-style: none;
+	margin: var(--oml-space-3) 0 0;
+	padding: 0;
+}
+
+.ohmylms-app .ohmylms-mastery-legend__item {
+	align-items: center;
+	display: inline-flex;
+	gap: var(--oml-space-2);
+	margin: 0;
+}
+
+.ohmylms-app .ohmylms-mastery-legend__range {
+	color: var(--oml-muted);
+}
+
+.ohmylms-mastery-dialog .ohmylms-mastery-dialog__table {
+	margin: var(--oml-space-2, 8px) 0;
+}
+
+.ohmylms-app .ohmylms-review-sets {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.ohmylms-app .ohmylms-review-sets__item {
+	align-items: center;
+	border-top: 1px solid var(--oml-border);
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-2) var(--oml-space-3);
+	justify-content: space-between;
+	margin: 0;
+	padding: var(--oml-space-3) 0;
+}
+
+.ohmylms-app .ohmylms-review-sets__item:first-child {
+	border-top: 0;
+	padding-top: 0;
+}
+
+.ohmylms-app .ohmylms-review-sets__detail {
+	color: var(--oml-muted);
+	display: block;
+	font-size: 12px;
+}
+
+.ohmylms-app .ohmylms-review-sets__detail.is-short {
+	color: var(--oml-warning-text, var(--oml-text, currentColor));
+}
+
+.ohmylms-app .ohmylms-review-sets__actions {
+	align-items: center;
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-2);
+}
+
+
+/*# sourceMappingURL=admin-app-dashboard-review-sets.ae029f0b6df1.css.map*/

@@ -1,0 +1,88 @@
+/* At-risk learners widget. */
+.ohmylms-app .ohmylms-at-risk {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.ohmylms-app .ohmylms-at-risk__item {
+	align-items: center;
+	border-bottom: 1px solid var(--oml-border);
+	display: flex;
+	gap: var(--oml-space-3);
+	margin: 0;
+	padding: var(--oml-space-2) 0;
+}
+
+.ohmylms-app .ohmylms-at-risk__item:last-child {
+	border-bottom: 0;
+}
+
+.ohmylms-app .ohmylms-at-risk__avatar {
+	align-items: center;
+	background: var(--oml-primary-soft);
+	border-radius: 50%;
+	color: var(--oml-text);
+	display: inline-flex;
+	flex: 0 0 32px;
+	font-size: 12px;
+	font-weight: 600;
+	height: 32px;
+	justify-content: center;
+	width: 32px;
+}
+
+.ohmylms-app .ohmylms-at-risk__item.is-high .ohmylms-at-risk__avatar {
+	box-shadow: inset 0 0 0 2px var(--oml-danger);
+}
+
+.ohmylms-app .ohmylms-at-risk__item.is-watch .ohmylms-at-risk__avatar {
+	box-shadow: inset 0 0 0 2px var(--oml-warning);
+}
+
+.ohmylms-app .ohmylms-at-risk__text {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.ohmylms-app .ohmylms-at-risk__reasons,
+.ohmylms-app .ohmylms-at-risk__nudged,
+.ohmylms-app .ohmylms-at-risk__note {
+	color: var(--oml-muted);
+	font-size: 12px;
+}
+
+.ohmylms-app .ohmylms-at-risk__badge {
+	border-radius: 2px;
+	display: inline-block;
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 1.6;
+	padding: 0 6px;
+	white-space: nowrap;
+}
+
+.ohmylms-app .ohmylms-at-risk__badge.is-high {
+	background: var(--oml-danger-soft);
+	color: var(--oml-danger-text);
+}
+
+.ohmylms-app .ohmylms-at-risk__badge.is-watch {
+	background: var(--oml-warning-soft);
+	color: var(--oml-warning-text);
+}
+
+.ohmylms-app .ohmylms-at-risk__action {
+	flex: 0 0 auto;
+	text-align: end;
+}
+
+.ohmylms-app .ohmylms-at-risk__sent {
+	color: var(--oml-success-text);
+	margin: 0 0 var(--oml-space-2);
+}
+
+
+/*# sourceMappingURL=admin-app-dashboard-at-risk.6ca91c28f7da.css.map*/

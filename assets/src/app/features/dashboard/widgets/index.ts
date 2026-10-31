@@ -6,7 +6,7 @@ import type { DashboardWidgetDefinition } from './registry';
 /**
  * Built-in dashboard widgets. To add one, create its component file in this folder (render it inside
  * `WidgetCard`, load data with `useWidget`) and add one entry here; the Dashboard page needs no change.
- * Every entry shares the dashboard chunk unless it names its own.
+ * Needs attention and Pulse share the dashboard chunk; every other widget names its own, so a page loads only the widgets its scope shows.
  */
 export const builtInWidgets: readonly DashboardWidgetDefinition[] = [
 	{
@@ -41,7 +41,7 @@ export const builtInWidgets: readonly DashboardWidgetDefinition[] = [
 		component: lazy(
 			() =>
 				import(
-					/* webpackChunkName: "admin-app-dashboard" */ './AtRiskWidget'
+					/* webpackChunkName: "admin-app-dashboard-at-risk" */ './AtRiskWidget'
 				)
 		),
 	},
@@ -53,7 +53,7 @@ export const builtInWidgets: readonly DashboardWidgetDefinition[] = [
 		component: lazy(
 			() =>
 				import(
-					/* webpackChunkName: "admin-app-dashboard" */ './MasteryHeatmapWidget'
+					/* webpackChunkName: "admin-app-dashboard-mastery" */ './MasteryHeatmapWidget'
 				)
 		),
 	},
@@ -65,7 +65,7 @@ export const builtInWidgets: readonly DashboardWidgetDefinition[] = [
 		component: lazy(
 			() =>
 				import(
-					/* webpackChunkName: "admin-app-dashboard" */ './ReviewSetsWidget'
+					/* webpackChunkName: "admin-app-dashboard-review-sets" */ './ReviewSetsWidget'
 				)
 		),
 	},
@@ -78,7 +78,7 @@ export const builtInWidgets: readonly DashboardWidgetDefinition[] = [
 		component: lazy(
 			() =>
 				import(
-					/* webpackChunkName: "admin-app-dashboard" */ './OverviewWidget'
+					/* webpackChunkName: "admin-app-dashboard-overview" */ './OverviewWidget'
 				)
 		),
 	},
@@ -90,7 +90,7 @@ export const builtInWidgets: readonly DashboardWidgetDefinition[] = [
 		component: lazy(
 			() =>
 				import(
-					/* webpackChunkName: "admin-app-dashboard" */ './InsightsWidget'
+					/* webpackChunkName: "admin-app-dashboard-insights" */ './InsightsWidget'
 				)
 		),
 	},
@@ -102,7 +102,7 @@ export const builtInWidgets: readonly DashboardWidgetDefinition[] = [
 		component: lazy(
 			() =>
 				import(
-					/* webpackChunkName: "admin-app-dashboard" */ './CourseHealthWidget'
+					/* webpackChunkName: "admin-app-dashboard-course-health" */ './CourseHealthWidget'
 				)
 		),
 	},
@@ -114,7 +114,7 @@ export const builtInWidgets: readonly DashboardWidgetDefinition[] = [
 		component: lazy(
 			() =>
 				import(
-					/* webpackChunkName: "admin-app-dashboard" */ './ActivityWidget'
+					/* webpackChunkName: "admin-app-dashboard-activity" */ './ActivityWidget'
 				)
 		),
 	},
@@ -127,7 +127,7 @@ export const builtInWidgets: readonly DashboardWidgetDefinition[] = [
 		component: lazy(
 			() =>
 				import(
-					/* webpackChunkName: "admin-app-dashboard" */ './SiteHealthWidget'
+					/* webpackChunkName: "admin-app-dashboard-site-health" */ './SiteHealthWidget'
 				)
 		),
 	},
