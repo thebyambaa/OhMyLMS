@@ -556,6 +556,24 @@ test( 'the plan dialog opens, traps focus and closes on Escape or the backdrop',
 	assert.equal( env.context.planOpen, false );
 } );
 
+test( 'Escape on the page closes an open plan dialog without the focus trap', () => {
+	const { account, env } = fixture();
+	env.context = { planOpen: true };
+	const other = event( {} );
+	other.key = 'Enter';
+	account.actions.planKey( other );
+	assert.equal( env.context.planOpen, true );
+	const escape = event( {} );
+	escape.key = 'Escape';
+	account.actions.planKey( escape );
+	assert.equal( env.context.planOpen, false );
+	assert.equal( escape.defaultPrevented, true );
+	const again = event( {} );
+	again.key = 'Escape';
+	account.actions.planKey( again );
+	assert.equal( again.defaultPrevented, false, 'a closed dialog leaves Escape alone' );
+} );
+
 test( 'a plan dialog opened by its #link before hydration is taken over and the hash dropped', () => {
 	const { account, env } = fixture();
 	const replaced = [];

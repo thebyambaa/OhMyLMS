@@ -489,6 +489,17 @@ export function createAccount( {
 				event.preventDefault();
 				getContext().planOpen = false;
 			} ),
+			// Escape on the page closes an open dialog even before the focus trap below is in place.
+			planKey: withSyncEvent( ( event ) => {
+				const context = getContext();
+				if (
+					'Escape' === /** @type {KeyboardEvent} */ ( event ).key &&
+					context.planOpen
+				) {
+					event.preventDefault();
+					context.planOpen = false;
+				}
+			} ),
 			/** @param {Event} event Click on the dialog backdrop. */
 			planBackdrop( event ) {
 				if (

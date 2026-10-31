@@ -20,7 +20,8 @@ DB_NAME="${OHMYLMS_TEST_DB_NAME:-ohmylms_ci}"
 DB_USER="${OHMYLMS_TEST_DB_USER:-root}"
 DB_PASSWORD="${OHMYLMS_TEST_DB_PASSWORD:-root}"
 case "$DB_NAME" in local | wordpress | wp) echo "Refusing to install into database '$DB_NAME'." >&2; exit 1 ;; esac
-wp() { "${WP[@]}" --path="$ROOT" "$@"; }
+# `command`: with the default WP_CLI=wp, a bare "${WP[@]}" would call this function again, forever.
+wp() { command "${WP[@]}" --path="$ROOT" "$@"; }
 
 mkdir -p "$ROOT"
 # With content: the learner templates and shortcodes render inside the default theme.

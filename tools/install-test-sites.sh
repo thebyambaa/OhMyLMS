@@ -45,7 +45,8 @@ exit( $db->query( "SHOW DATABASES LIKE \"" . $db->real_escape_string( getenv( "D
     exit 1
   fi
   OHMYLMS_TEST_DB_NAME="$database" OHMYLMS_TEST_HOST="127.0.0.1:$port" bash "$REPO/tools/install-test-wordpress.sh" "$root"
-  wp() { "${WP[@]}" --path="$root" "$@"; }
+  # `command`: with the default WP_CLI=wp, a bare "${WP[@]}" would call this function again, forever.
+  wp() { command "${WP[@]}" --path="$root" "$@"; }
   wp config set OHMYLMS_TEST_SITE true --raw
   wp config set DISABLE_WP_CRON true --raw
   # extensions-integration registers the example question, lesson, checkout and membership extensions.
