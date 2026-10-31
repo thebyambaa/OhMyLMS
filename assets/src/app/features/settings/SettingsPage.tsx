@@ -19,7 +19,8 @@ import { PaymentGatewaysForm } from './PaymentGatewaysForm';
 import { PermalinkForm } from './PermalinkForm';
 import { QuizDesignForm } from './QuizDesignForm';
 import { TaxForm } from './TaxForm';
-import { Tabs, tabId, tabPanelId, type TabItem } from './Tabs';
+import { useServerNavBadges } from '../../layout/serverNavBadges';
+import { Tabs, useTabPanelProps, type TabItem } from './Tabs';
 import {
 	EXTRA_TAB_IDS,
 	GROUP_IDS,
@@ -133,6 +134,11 @@ export default function SettingsPage() {
 		label: LABELS[ id ],
 		badge: dirty[ id ] ? __( '(unsaved)', 'ohmylms' ) : undefined,
 	} ) );
+	useServerNavBadges(
+		'section',
+		Object.fromEntries( tabs.map( ( tab ) => [ tab.id, tab.badge ] ) )
+	);
+	const panelProps = useTabPanelProps();
 
 	const panels: Record< TabId, JSX.Element > = {
 		general: <GeneralForm state={ general } />,
@@ -203,7 +209,6 @@ export default function SettingsPage() {
 
 	return (
 		<>
-			<h2>{ __( 'Settings', 'ohmylms' ) }</h2>
 			{ guard.pendingPath && (
 				<Notice status="warning" isDismissible={ false }>
 					<p>
@@ -233,13 +238,7 @@ export default function SettingsPage() {
 				}
 			/>
 			{ TAB_IDS.map( ( id ) => (
-				<div
-					key={ id }
-					role="tabpanel"
-					id={ tabPanelId( id ) }
-					aria-labelledby={ tabId( id ) }
-					hidden={ id !== selected }
-				>
+				<div key={ id } { ...panelProps( id, selected ) }>
 					{ ( id === selected || visited( id ) ) && panels[ id ] }
 				</div>
 			) ) }

@@ -8,19 +8,22 @@ import type { ListTableView } from '../../ui/ListTable';
  * @param current  Selected value.
  * @param total    Items in the current view.
  * @param onSelect Switches the view.
+ * @param href     Address of a view (`useListQuery().href`), so views are real links.
  * @return Views for `ListTable`.
  */
 export function statusViews(
 	options: ReadonlyArray< { value: string; label: string } >,
 	current: string,
 	total: number | null,
-	onSelect: ( value: string ) => void
+	onSelect: ( value: string ) => void,
+	href?: ( value: string ) => string
 ): ListTableView[] {
 	return options.map( ( option ) => ( {
 		key: option.value,
 		label: option.label,
 		current: option.value === current,
 		count: option.value === current && null !== total ? total : undefined,
+		href: href?.( option.value ),
 		onSelect: () => onSelect( option.value ),
 	} ) );
 }

@@ -1,8 +1,8 @@
 import { Button, Notice, SelectControl } from '@wordpress/components';
-import { useCallback, useEffect, useState } from '@wordpress/element';
+import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
-import { Link } from 'react-router-dom';
-import { Table } from '../../../ui/Table';
+import { useListQuery } from '../../components/listQuery';
+import { WidefatTable } from '../../components/WidefatTable';
 import { useRequest } from '../../hooks/useRequest';
 import { normalizeApiError } from '../../lib/api';
 import {
@@ -46,20 +46,35 @@ function issueText( issue: MapIssue, names: Map< number, string > ) {
 	);
 }
 
-/** Read-only coherence map of a subject's shared skills, optionally with a syllabus's coverage. */
+const MAP_QUERY = { subject: '', syllabus: '0' };
+
+/**
+ * Read-only coherence map of a subject's shared skills, optionally with a syllabus's coverage. The
+ * shown subject and syllabus are in the address (`&subject=…&syllabus=…`).
+ */
 export default function SkillMapPage() {
 	const loadSubjects = useCallback(
 		( signal: AbortSignal ) => readSubjects( signal ),
 		[]
 	);
 	const subjects = useRequest( loadSubjects );
-	const [ subject, setSubject ] = useState( '' );
-	const [ syllabus, setSyllabus ] = useState( 0 );
-	const [ shown, setShown ] = useState< {
-		subject: string;
-		syllabus: number;
-		version: number;
-	} | null >( null );
+	const query = useListQuery( MAP_QUERY );
+	const chosen = query.values.subject;
+	const chosenSyllabus = Number( query.values.syllabus ) || 0;
+	const [ subject, setSubject ] = useState( chosen );
+	const [ syllabus, setSyllabus ] = useState( chosenSyllabus );
+	useEffect( () => {
+		setSubject( chosen );
+		setSyllabus( chosenSyllabus );
+	}, [ chosen, chosenSyllabus ] );
+	const [ version, setVersion ] = useState( 0 );
+	const shown = useMemo(
+		() =>
+			chosen
+				? { subject: chosen, syllabus: chosenSyllabus, version }
+				: null,
+		[ chosen, chosenSyllabus, version ]
+	);
 	const [ map, setMap ] = useState< SkillMap | null >( null );
 	const [ loading, setLoading ] = useState( false );
 	const [ error, setError ] = useState( '' );
@@ -102,13 +117,7 @@ export default function SkillMapPage() {
 				)
 			: skill.name;
 	return (
-		<section aria-labelledby="skill-map-heading">
-			<h1 id="skill-map-heading">{ __( 'Skill map', 'ohmylms' ) }</h1>
-			<p>
-				<Link to="/content-hub/curriculum">
-					{ __( 'Back to curriculum', 'ohmylms' ) }
-				</Link>
-			</p>
+		<section>
 			<p>
 				{ __(
 					'See how a subject’s shared skills fit together across domains and levels, and which of them a syllabus teaches. The map is read-only; place skills and edit links in the curriculum workspace.',
@@ -138,11 +147,18 @@ export default function SkillMapPage() {
 				<form
 					onSubmit={ ( event ) => {
 						event.preventDefault();
-						if ( subject ) {
-							setShown( {
+						if ( ! subject ) {
+							return;
+						}
+						if (
+							subject === chosen &&
+							syllabus === chosenSyllabus
+						) {
+							setVersion( ( shownVersion ) => shownVersion + 1 );
+						} else {
+							query.set( {
 								subject,
-								syllabus,
-								version: ( shown?.version ?? 0 ) + 1,
+								syllabus: String( syllabus ),
 							} );
 						}
 					} }
@@ -221,7 +237,7 @@ export default function SkillMapPage() {
 						</p>
 					) }
 					{ map.domains.length && map.grades.length ? (
-						<Table
+						<WidefatTable
 							caption={ __(
 								'Shared skills by domain and starting level',
 								'ohmylms'
@@ -269,7 +285,7 @@ export default function SkillMapPage() {
 									</tr>
 								) ) }
 							</tbody>
-						</Table>
+						</WidefatTable>
 					) : (
 						<p>
 							{ __(

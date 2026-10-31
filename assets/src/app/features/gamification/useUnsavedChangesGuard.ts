@@ -1,5 +1,5 @@
 import { useEffect, useState } from '@wordpress/element';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { routeFromHref } from '../../routing/links';
 
 /**
@@ -19,10 +19,11 @@ function internalPath( anchor: HTMLAnchorElement ): string | null {
 /**
  * Guard against losing unsaved edits.
  *
- * The app uses a hash router without data-router blockers, so the guard covers the two ways a user
- * leaves: closing or reloading the page (the browser's own prompt) and activating an in-app link,
- * which is intercepted so the page can show its own confirmation. Switching tabs is not
- * leaving: every tab keeps its draft.
+ * The app uses a query-string router without data-router blockers, so the guard covers the two ways a
+ * user leaves: closing or reloading the page (the browser's own prompt, which also covers the server's
+ * tab links) and activating an in-app link, which is intercepted so the page can show its own
+ * confirmation. Switching gamification sections (the server's section links, or this screen's own tab
+ * list) is not leaving: every section keeps its draft.
  *
  * @param dirty Whether there are unsaved changes.
  * @return `pendingPath` is the link waiting for a decision (or `null`); call `stay` to cancel it and
@@ -30,6 +31,7 @@ function internalPath( anchor: HTMLAnchorElement ): string | null {
  */
 export function useUnsavedChangesGuard( dirty: boolean ) {
 	const navigate = useNavigate();
+	const { pathname } = useLocation();
 	const [ pendingPath, setPendingPath ] = useState< string | null >( null );
 	useEffect( () => {
 		if ( ! dirty ) {
@@ -53,7 +55,7 @@ export function useUnsavedChangesGuard( dirty: boolean ) {
 			}
 			const anchor = event.target.closest( 'a' );
 			const path = anchor ? internalPath( anchor ) : null;
-			if ( path ) {
+			if ( path && path.split( '?' )[ 0 ] !== pathname ) {
 				event.preventDefault();
 				event.stopPropagation();
 				setPendingPath( path );
@@ -65,7 +67,7 @@ export function useUnsavedChangesGuard( dirty: boolean ) {
 			window.removeEventListener( 'beforeunload', beforeUnload );
 			document.removeEventListener( 'click', onClick, true );
 		};
-	}, [ dirty ] );
+	}, [ dirty, pathname ] );
 	return {
 		pendingPath,
 		stay: () => setPendingPath( null ),

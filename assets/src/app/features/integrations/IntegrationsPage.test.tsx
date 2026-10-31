@@ -124,22 +124,39 @@ describe( 'IntegrationsPage list', () => {
 			'zoo'
 		);
 		expect(
-			screen.getByText( '1 integration shown.' )
-		).toBeInTheDocument();
-		expect( screen.queryByText( 'Gamification' ) ).not.toBeInTheDocument();
+			screen.getAllByText( '1 integration shown.' )[ 0 ]
+		).toHaveClass( 'displaying-num' );
+		expect(
+			screen.queryByRole( 'checkbox', { name: 'Enable Gamification' } )
+		).not.toBeInTheDocument();
 		await user.selectOptions(
 			screen.getByRole( 'combobox', { name: 'Category' } ),
 			'crm'
 		);
 		expect(
-			screen.getByText( 'No integrations match your filters.' )
+			screen.getByText( /No integrations match your filters\./ )
 		).toBeInTheDocument();
 		await user.click(
 			screen.getByRole( 'button', { name: 'Clear filters' } )
 		);
 		expect(
-			screen.getByText( '3 integrations shown.' )
+			screen.getAllByText( '3 integrations shown.' )[ 0 ]
 		).toBeInTheDocument();
+	} );
+	it( 'lists enabled and disabled integrations as views, as the Plugins screen does', async () => {
+		const user = userEvent.setup();
+		renderPage();
+		await screen.findByRole( 'table', { name: 'Integrations' } );
+		await user.click( screen.getByRole( 'link', { name: /^Enabled/ } ) );
+		expect(
+			screen.getByRole( 'checkbox', { name: 'Enable Gamification' } )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'checkbox', { name: 'Enable Zoom' } )
+		).not.toBeInTheDocument();
+		expect( screen.getByTestId( 'search' ) ).toHaveTextContent(
+			'status=enabled'
+		);
 	} );
 	it( 'shows a retry for server errors but not for permission errors', async () => {
 		const user = userEvent.setup();

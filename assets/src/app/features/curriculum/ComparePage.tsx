@@ -1,4 +1,5 @@
-import { Table } from '../../../ui/Table';
+import { ListTable } from '../../../ui/ListTable';
+import { WidefatTable } from '../../components/WidefatTable';
 import { Button, Notice, TextControl } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -35,7 +36,7 @@ function tabLabel( tab: Tab ): string {
  * The legacy `?roadmap=<id>` bookmark opens that roadmap in the syllabus editor.
  */
 export default function ComparePage() {
-	const [ params, setParams ] = useSearchParams();
+	const [ params ] = useSearchParams();
 	const roadmap = Number( params.get( 'roadmap' ) );
 	const tab: Tab =
 		TABS.find( ( id ) => id === params.get( 'tab' ) ) ?? 'groups';
@@ -63,17 +64,22 @@ export default function ComparePage() {
 				) }
 			</p>
 			<nav aria-label={ __( 'Comparison sections', 'ohmylms' ) }>
-				{ TABS.map( ( id ) => (
-					<Button
-						key={ id }
-						variant={ id === tab ? 'primary' : 'tertiary' }
-						aria-current={ id === tab ? 'page' : undefined }
-						onClick={ () => setParams( { tab: id } ) }
-					>
-						{ tabLabel( id ) }
-					</Button>
-				) ) }
+				<ul className="subsubsub">
+					{ TABS.map( ( id, index ) => (
+						<li key={ id } className={ id }>
+							<Link
+								to={ `/content-hub/curriculum/compare?tab=${ id }` }
+								className={ id === tab ? 'current' : undefined }
+								aria-current={ id === tab ? 'page' : undefined }
+							>
+								{ tabLabel( id ) }
+							</Link>
+							{ index < TABS.length - 1 ? ' | ' : null }
+						</li>
+					) ) }
+				</ul>
 			</nav>
+			<br className="clear" />
 			{ groups.loading && (
 				<p role="status">{ __( 'Loading syllabuses…', 'ohmylms' ) }</p>
 			) }
@@ -217,55 +223,55 @@ function Groups( {
 					{ operation.error }
 				</Notice>
 			) }
-			{ subjects.length ? (
-				<Table caption={ __( 'Comparison groups', 'ohmylms' ) }>
-					<thead>
-						<tr>
-							<th scope="col">{ __( 'Subject', 'ohmylms' ) }</th>
-							<th scope="col">{ __( 'Sources', 'ohmylms' ) }</th>
-							<th scope="col">{ __( 'Actions', 'ohmylms' ) }</th>
-						</tr>
-					</thead>
-					<tbody>
-						{ subjects.map( ( name ) => (
-							<tr key={ name }>
-								<th scope="row">{ name }</th>
-								<td>
-									{ ( groups.selected[ name ] ?? [] )
-										.map(
-											( id ) =>
-												names.get( id ) ??
-												sprintf(
-													/* translators: %d: syllabus ID. */
-													__(
-														'Missing syllabus %d',
-														'ohmylms'
-													),
-													id
-												)
+			<ListTable
+				caption={ __( 'Comparison groups', 'ohmylms' ) }
+				footer={ false }
+				rows={ subjects }
+				rowKey={ ( name ) => name }
+				rowLabel={ ( name ) => name }
+				emptyMessage={ __( 'No comparison groups yet.', 'ohmylms' ) }
+				columns={ [
+					{
+						id: 'subject',
+						label: __( 'Subject', 'ohmylms' ),
+						primary: true,
+						render: ( name ) => (
+							<strong className="row-title">{ name }</strong>
+						),
+					},
+					{
+						id: 'sources',
+						label: __( 'Sources', 'ohmylms' ),
+						render: ( name ) =>
+							( groups.selected[ name ] ?? [] )
+								.map(
+									( id ) =>
+										names.get( id ) ??
+										sprintf(
+											/* translators: %d: syllabus ID. */
+											__(
+												'Missing syllabus %d',
+												'ohmylms'
+											),
+											id
 										)
-										.join( ', ' ) }
-								</td>
-								<td>
-									<Button
-										variant="link"
-										aria-label={ sprintf(
-											/* translators: %s: subject. */
-											__( 'Edit %s', 'ohmylms' ),
-											name
-										) }
-										onClick={ () => edit( name ) }
-									>
-										{ __( 'Edit', 'ohmylms' ) }
-									</Button>
-								</td>
-							</tr>
-						) ) }
-					</tbody>
-				</Table>
-			) : (
-				<p>{ __( 'No comparison groups yet.', 'ohmylms' ) }</p>
-			) }
+								)
+								.join( ', ' ),
+					},
+				] }
+				rowActions={ ( name ) => [
+					{
+						key: 'edit',
+						label: __( 'Edit', 'ohmylms' ),
+						ariaLabel: sprintf(
+							/* translators: %s: subject. */
+							__( 'Edit %s', 'ohmylms' ),
+							name
+						),
+						onClick: () => edit( name ),
+					},
+				] }
+			/>
 			<form
 				noValidate
 				aria-label={ __( 'Comparison group', 'ohmylms' ) }
@@ -385,7 +391,7 @@ function Audit( { groups }: { groups: ComparisonGroups } ) {
 			{ result?.map( ( subject ) => (
 				<section key={ subject.subject }>
 					<h4>{ subject.subject }</h4>
-					<Table
+					<WidefatTable
 						caption={ sprintf(
 							/* translators: %s: subject. */
 							__( 'Shared mastery in %s', 'ohmylms' ),
@@ -417,7 +423,7 @@ function Audit( { groups }: { groups: ComparisonGroups } ) {
 								</tr>
 							) ) }
 						</tbody>
-					</Table>
+					</WidefatTable>
 					<ul>
 						{ subject.syllabuses.map( ( syllabus ) => (
 							<li key={ syllabus.id }>

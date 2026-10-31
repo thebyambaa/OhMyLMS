@@ -201,10 +201,15 @@ describe( 'ExamsPage', () => {
 		);
 		const user = userEvent.setup();
 		renderPage();
-		await user.click(
-			await screen.findByRole( 'button', { name: 'Import exam' } )
-		);
-		const dialog = screen.getByRole( 'dialog', { name: 'Import an exam' } );
+		const action = await screen.findByRole( 'link', {
+			name: 'Import exam',
+		} );
+		expect( action ).toHaveClass( 'page-title-action' );
+		expect( action ).toHaveAttribute( 'href', '/exams?action=import' );
+		await user.click( action );
+		const dialog = await screen.findByRole( 'dialog', {
+			name: 'Import an exam',
+		} );
 		const file = new File( [ '%PDF-1.4' ], 'june.pdf', {
 			type: 'application/pdf',
 		} );

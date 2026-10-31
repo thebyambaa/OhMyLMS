@@ -3,6 +3,10 @@ import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { Link, useNavigate } from 'react-router-dom';
 import { useOperation } from '../../hooks/useOperation';
+import {
+	PageTitleAction,
+	PageTitleActions,
+} from '../../layout/PageTitleActions';
 import { createSchool, listSchools } from './api';
 import { HubListTable } from './ListControls';
 import { MAX_NAME, validateSchool } from './model';
@@ -11,7 +15,7 @@ import { usePagedList } from './usePagedList';
 
 /** Schools tab: searchable list and a create dialog that opens the new school's editor. */
 export function SchoolsTab() {
-	const list = usePagedList( listSchools );
+	const list = usePagedList( listSchools, true );
 	const navigate = useNavigate();
 	const operation = useOperation();
 	const [ open, setOpen ] = useState( false );
@@ -35,17 +39,18 @@ export function SchoolsTab() {
 
 	return (
 		<>
-			<Button
-				variant="primary"
-				onClick={ () => {
-					setForm( { name: '', timezone: 'UTC' } );
-					setErrors( {} );
-					operation.clearError();
-					setOpen( true );
-				} }
-			>
-				{ __( 'Add school', 'ohmylms' ) }
-			</Button>
+			<PageTitleActions>
+				<PageTitleAction
+					onClick={ () => {
+						setForm( { name: '', timezone: 'UTC' } );
+						setErrors( {} );
+						operation.clearError();
+						setOpen( true );
+					} }
+				>
+					{ __( 'Add school', 'ohmylms' ) }
+				</PageTitleAction>
+			</PageTitleActions>
 			<HubListTable
 				caption={ __( 'Schools', 'ohmylms' ) }
 				searchLabel={ __( 'Search schools', 'ohmylms' ) }

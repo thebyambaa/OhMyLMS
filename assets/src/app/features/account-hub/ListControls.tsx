@@ -1,5 +1,5 @@
 import { Button, Notice, TextControl } from '@wordpress/components';
-import { useState } from '@wordpress/element';
+import { useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import type { ReactNode } from 'react';
 import {
@@ -54,10 +54,12 @@ export function SearchForm( {
 /** What `HubListTable` reads from `usePagedList`. */
 interface HubList< Row > {
 	page: number;
+	search: string;
 	loading: boolean;
 	error: string;
 	data: { items: Row[]; total: number; totalPages: number };
 	setPage: ( page: number ) => void;
+	pageHref?: ( page: number ) => string;
 	setSearch: ( value: string ) => void;
 	reload: () => void;
 }
@@ -98,7 +100,8 @@ export function HubListTable< Row >( {
 		'columns' | 'rowKey' | 'rowActions' | 'rowLabel'
 	>;
 } ) {
-	const [ value, setValue ] = useState( '' );
+	const [ value, setValue ] = useState( list.search );
+	useEffect( () => setValue( list.search ), [ list.search ] );
 	if ( list.loading ) {
 		return <p role="status">{ loadingText }</p>;
 	}
@@ -117,6 +120,7 @@ export function HubListTable< Row >( {
 		<ListTable< Row >
 			{ ...table }
 			caption={ caption }
+			heading={ caption }
 			formLabel={ searchLabel }
 			rows={ list.data.items }
 			emptyMessage={ emptyText }
@@ -140,6 +144,7 @@ export function HubListTable< Row >( {
 					total
 				),
 				onChange: list.setPage,
+				href: list.pageHref,
 			} }
 		/>
 	);

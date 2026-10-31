@@ -1,9 +1,14 @@
 import { ListTableSelect } from '../../../ui/ListTable';
-import { Button, Notice } from '@wordpress/components';
-import { useCallback, useState } from '@wordpress/element';
+import { Notice } from '@wordpress/components';
+import { useCallback, useMemo, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
+import { useListQuery } from '../../components/listQuery';
 import { statusViews } from '../../components/listViews';
 import { useRequest } from '../../hooks/useRequest';
+import {
+	PageTitleAction,
+	PageTitleActions,
+} from '../../layout/PageTitleActions';
 import { CreateAccountDialog, EditAccountDialog } from './AccountDialog';
 import { formatDate } from './accounts';
 import { getAccountOptions, listAccounts } from './accountsApi';
@@ -25,6 +30,8 @@ const PERIODS: { value: RegisteredPeriod; label: string }[] = [
 	{ value: 'last_12_months', label: __( 'Last 12 months', 'ohmylms' ) },
 ];
 
+const NO_FILTERS = { role: '', registered: 'all', status: 'all' };
+
 const STATUSES: { value: AccountStatusFilter; label: string }[] = [
 	{ value: 'all', label: __( 'All', 'ohmylms' ) },
 	{ value: 'active', label: __( 'Active', 'ohmylms' ) },
@@ -37,39 +44,40 @@ const STATUSES: { value: AccountStatusFilter; label: string }[] = [
  * which accounts the current user may edit (never their own, never one with more privileges).
  */
 export function UsersTab() {
-	const [ filters, setFilters ] = useState< AccountFilters >( {
-		role: '',
-		registered: 'all',
-		status: 'all',
-	} );
+	const query = useListQuery( NO_FILTERS );
+	const filters = useMemo(
+		() => query.values as AccountFilters,
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[ query.key ]
+	);
 	const load = useCallback(
 		( page: number, search: string, signal: AbortSignal ) =>
 			listAccounts( page, search, filters, signal ),
 		[ filters ]
 	);
-	const list = usePagedList( load );
+	const list = usePagedList( load, true );
 	const options = useRequest( getAccountOptions );
 	const [ creating, setCreating ] = useState( false );
 	const [ editing, setEditing ] = useState< Account | null >( null );
 	const [ message, setMessage ] = useState( '' );
 
 	function filter( change: Partial< AccountFilters > ) {
-		setFilters( ( current ) => ( { ...current, ...change } ) );
-		list.setPage( 1 );
+		query.set( change );
 	}
 
 	return (
 		<>
 			{ options.data?.can_create && (
-				<Button
-					variant="primary"
-					onClick={ () => {
-						setMessage( '' );
-						setCreating( true );
-					} }
-				>
-					{ __( 'Add account', 'ohmylms' ) }
-				</Button>
+				<PageTitleActions>
+					<PageTitleAction
+						onClick={ () => {
+							setMessage( '' );
+							setCreating( true );
+						} }
+					>
+						{ __( 'Add account', 'ohmylms' ) }
+					</PageTitleAction>
+				</PageTitleActions>
 			) }
 			{ message && (
 				<Notice
@@ -96,7 +104,8 @@ export function UsersTab() {
 					],
 					filters.role,
 					list.data.total,
-					( role ) => filter( { role } )
+					( role ) => filter( { role } ),
+					( role ) => query.href( { role } )
 				) }
 				filters={
 					<>

@@ -8,7 +8,7 @@ import { usePagedList } from './usePagedList';
 
 /** Parents tab: parent accounts, their linked-children count and the linking dialog. */
 export function ParentsTab() {
-	const list = usePagedList( listParents );
+	const list = usePagedList( listParents, true );
 	const [ open, setOpen ] = useState< Parent | null >( null );
 
 	return (

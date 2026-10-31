@@ -93,7 +93,7 @@ and the forever redirects are in place and verified on 800.local ([ARCHITECTURE]
 
 ### Look
 
-- Lists: `ui/Table` renders WordPress list-table markup (views, bulk actions, search box, sortable columns, row
+- Lists: `ui/ListTable` renders WordPress list-table markup (views, bulk actions, search box, sortable columns, row
   actions, pagination); every list screen moves to it. Forms and dialogs stay on `@wordpress/components`.
 - Colours (decided 31 October 2026): admin screens follow the user's WordPress admin colour scheme
   (`--wp-admin-theme-color`); `--oml-*` remains for learner pages. The Design system setting (`ohmylms_design_system`,
@@ -102,6 +102,38 @@ and the forever redirects are in place and verified on 800.local ([ARCHITECTURE]
 - Remove one-off values: every new-app stylesheet uses WordPress classes or tokens only
   ([DESIGN-TOKENS](DESIGN-TOKENS.md), [STYLESHEET-OWNERSHIP](STYLESHEET-OWNERSHIP.md)); `check:architecture` gains a
   rule against raw colours in `assets/src/app`.
+
+**Progress (31 October 2026): WordPress look.** Verified on 800.local in the Default and Midnight colour schemes
+(every page, tab and section; no console errors). As built:
+
+- **Header.** PHP prints `#ohmylms-admin-title-actions` after `h1.wp-heading-inline`; a screen registers its
+  primary actions with `layout/PageTitleActions` (`<PageTitleAction onClick>` for a dialog, `to` for a route), which
+  render there as `.page-title-action` (in place outside the admin pages). List and tab screens no longer print their
+  own `h1`/`h2`; `ListTable`'s `heading` prints WordPress's screen-reader `h2` ("Courses list"). Detail screens keep
+  an `h2` (course, lesson, syllabus, order…). A dialog returns focus to its header action.
+- **No card.** `.ohmylms-app-main` is only the landmark (notices region kept); app text inherits wp-admin's font, size
+  and line height, so a one-line row with row actions measures like Posts (no extra reserved space).
+- **Real addresses.** `components/listQuery.ts` keeps list state in the address (`useListQuery`, `useListState`,
+  `useAddressQuery`; names `s`, `status`, `orderby`, `order`, filters, and `paged` for the page). `ListTable` views,
+  sort links and page links (`pagination.href`) are real hrefs: a plain click moves in place with `pushState`, a
+  modified click opens a new tab, Back/Forward and reload restore the list; a view or filter link always opens page 1.
+  Every list screen uses it; lists inside an editor (versions, members, attendees, roster sub-lists) keep their page
+  in memory, as a screen has one address. After a list reloads, `AppLayout` returns focus to the activated link.
+- **One `.subsubsub` per level** (what WooCommerce does with settings sections over a list table, e.g. Advanced ›
+  Webhooks): PHP prints the sections, then `br.clear`, then the list's own views under them (Quizzes, Question bank,
+  Certificates, Categories and tags). In-screen second levels use `.subsubsub` too: course editor views, syllabus
+  comparison views, and Categories/Tags as list views (`&taxonomy=tags`) instead of a `TabPanel`.
+- **Tables.** Lists moved to `ListTable` (Content Hub overview, shared skills, comparison groups, integrations with
+  All/Enabled/Disabled views like Plugins, versions, attendees, migration sources, student report sections);
+  non-list data uses `components/WidefatTable` (`table.widefat.striped`: quiz questions and pools, order items,
+  related orders, skill map grid, audit, import reviews, skill links, student enrolments). `ui/Table` is left only in
+  the Dashboard and Earnings screens (dashboard work).
+- **Settings, Gamification, Account Hub.** `layout/serverNavBadges` marks the PHP section/tab link with "(unsaved)"
+  (`data-ohmylms-badge`; PHP tab links carry `data-tab`); panels are `tabpanel`s labelled by their buttons only where
+  the in-app tab list renders. The guards treat the server's section links as staying on the screen (each section
+  keeps its draft); a tab link is a page load, covered by the browser's leave prompt.
+- Left: sortable columns exist only where the REST API sorts (Orders); the student enrolments table becomes a list
+  table once the enrolments API settles; the gamification Levels/Badges "Add" buttons stay in their section.
 
 ### Done when
 
@@ -128,6 +160,25 @@ school or one class from Account Hub; period 7/30/90 days):
 Before building: audit what [DASHBOARD-BENCHMARK](DASHBOARD-BENCHMARK.md) and
 [DASHBOARD-LATENCY-INVESTIGATION](DASHBOARD-LATENCY-INVESTIGATION.md) measured; each endpoint gets a latency budget
 on the test data and a PHP integration test.
+
+**Progress (31 October 2026): foundation, Needs attention and Pulse done** ([api/dashboard.md](api/dashboard.md)).
+
+- Scope and access: `Dashboard\Scope` and `ScopeResolver` (all / school / class from Account Hub rows),
+  `Period` (7/30/90 days and the previous window), `Cache` (10 minutes per widget, scope and period,
+  invalidated on grading, order status and manual enrolment changes), the `ohmylms_view_dashboard` capability
+  and `GET /dashboard/scopes`. Widget endpoints are `Dashboard\Widget` subclasses served under
+  `/dashboard/widgets/<id>`.
+- Shell: scope picker, period switcher and a widget registry (`features/dashboard/widgets/index.ts`) with
+  postbox cards; the earlier overview is the `overview` widget for site administrators in All schools.
+- Widgets: Needs attention (grading, failed payments, manual approval, at-risk hook, stalling courses, missed
+  questions; snooze per user for 7 days) and Pulse (revenue, weekly active learners, completions, renewals at
+  risk, each with a sparkline).
+- Verified on 800.local as an administrator, a school administrator and a teacher (tagged temporary users):
+  each sees only their scopes and figures, no console errors. Endpoint code 23–105 ms cold and 5–7 ms warm
+  in-process; 100–160 ms cold and 100–125 ms warm (median) over HTTP on an idle machine.
+- Open: the Dashboard page itself still requires `manage_options` until `AdminNavigation`/`AdminAppAssets`
+  take `ohmylms_view_dashboard` for the Dashboard group (coordinator); bulk enrolment reads move to
+  `Student\Enrollments` when it offers them.
 
 ## Phase C: gradebook
 

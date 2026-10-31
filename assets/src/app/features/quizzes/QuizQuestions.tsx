@@ -15,7 +15,7 @@ import {
 } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
-import { Table } from '../../../ui/Table';
+import { WidefatTable } from '../../components/WidefatTable';
 import { ApiError, normalizeApiError } from '../../lib/api';
 import {
 	listQuestionTypes,
@@ -627,12 +627,11 @@ export function QuizQuestions( {
 						</p>
 					) }
 					{ slots.length ? (
-						<Table
+						<WidefatTable
 							caption={ __(
 								'Questions in this quiz',
 								'ohmylms'
 							) }
-							striped
 						>
 							<thead>
 								<tr>
@@ -681,7 +680,7 @@ export function QuizQuestions( {
 									/>
 								) ) }
 							</tbody>
-						</Table>
+						</WidefatTable>
 					) : (
 						<p>
 							{ __(
@@ -710,7 +709,7 @@ export function QuizQuestions( {
 							'ohmylms'
 						) }
 					</p>
-					<Table caption={ __( 'Random pools', 'ohmylms' ) } striped>
+					<WidefatTable caption={ __( 'Random pools', 'ohmylms' ) }>
 						<thead>
 							<tr>
 								<th scope="col">{ __( 'Pool', 'ohmylms' ) }</th>
@@ -745,7 +744,7 @@ export function QuizQuestions( {
 								</tr>
 							) ) }
 						</tbody>
-					</Table>
+					</WidefatTable>
 				</section>
 			) }
 

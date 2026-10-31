@@ -1,8 +1,9 @@
 import { ListTable } from '../../../ui/ListTable';
 import { Button, Notice } from '@wordpress/components';
-import { useCallback, useState } from '@wordpress/element';
+import { useCallback } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useParams } from 'react-router-dom';
+import { useListState } from '../../components/listQuery';
 import { statusViews } from '../../components/listViews';
 import { useRequest } from '../../hooks/useRequest';
 import { getAssignment, listSubmissions } from './api';
@@ -23,8 +24,10 @@ function routeId( value: string | undefined ): number | null {
 export default function SubmissionsPage() {
 	const params = useParams();
 	const id = routeId( params.id );
-	const [ page, setPage ] = useState( 1 );
-	const [ status, setStatus ] = useState< SubmissionFilter >( 'all' );
+	const address = useListState( { status: 'all' } );
+	const { page, setPage } = address;
+	const status: SubmissionFilter =
+		FILTERS.find( ( item ) => item === address.filters.status ) ?? 'all';
 	const load = useCallback(
 		( signal: AbortSignal ) =>
 			null === id
@@ -111,10 +114,10 @@ export default function SubmissionsPage() {
 								( item ) => item === value
 							);
 							if ( found ) {
-								setStatus( found );
-								setPage( 1 );
+								address.setFilters( { status: found } );
 							}
-						}
+						},
+						( value ) => address.filtersHref( { status: value } )
 					) }
 					pagination={ {
 						page,
@@ -131,6 +134,7 @@ export default function SubmissionsPage() {
 							list.data.total
 						),
 						onChange: setPage,
+						href: address.pageHref,
 					} }
 					columns={ [
 						{

@@ -8,6 +8,10 @@ import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useNavigate } from 'react-router-dom';
 import { statusViews } from '../../components/listViews';
+import {
+	PageTitleAction,
+	PageTitleActions,
+} from '../../layout/PageTitleActions';
 import { normalizeApiError } from '../../lib/api';
 import {
 	createCourse,
@@ -57,6 +61,7 @@ export default function CoursesPage() {
 	const list = useCourses();
 	const navigate = useNavigate();
 	const [ draft, setDraft ] = useState< CourseFilters >( list.filters );
+	useEffect( () => setDraft( list.filters ), [ list.filters ] );
 	const [ dialog, setDialog ] = useState< Dialog >( null );
 	const [ title, setTitle ] = useState( '' );
 	const [ titleError, setTitleError ] = useState< string | null >( null );
@@ -175,24 +180,24 @@ export default function CoursesPage() {
 
 	return (
 		<>
-			<h2>{ __( 'Courses', 'ohmylms' ) }</h2>
+			<PageTitleActions>
+				<PageTitleAction
+					disabled={ busy }
+					onClick={ () => {
+						setTitle( '' );
+						setError( null );
+						setDialog( { kind: 'create' } );
+					} }
+				>
+					{ __( 'Add course', 'ohmylms' ) }
+				</PageTitleAction>
+			</PageTitleActions>
 			<p>
 				{ __(
 					'Create courses and manage their settings, pricing and access.',
 					'ohmylms'
 				) }
 			</p>
-			<Button
-				variant="primary"
-				disabled={ busy }
-				onClick={ () => {
-					setTitle( '' );
-					setError( null );
-					setDialog( { kind: 'create' } );
-				} }
-			>
-				{ __( 'Add course', 'ohmylms' ) }
-			</Button>
 			{ message && (
 				<Notice status="success" onRemove={ () => setMessage( null ) }>
 					{ message }
@@ -217,6 +222,7 @@ export default function CoursesPage() {
 			{ ! list.loading && ! list.error && (
 				<ListTable< Course >
 					caption={ __( 'Courses', 'ohmylms' ) }
+					heading={ __( 'Courses list', 'ohmylms' ) }
 					formLabel={ __( 'Filter courses', 'ohmylms' ) }
 					busy={ busy }
 					rows={ list.data.items }
@@ -237,7 +243,12 @@ export default function CoursesPage() {
 								search: draft.search.trim(),
 								status,
 							} );
-						}
+						},
+						( status ) =>
+							list.filtersHref( {
+								...list.filters,
+								status,
+							} )
 					) }
 					search={ {
 						label: __( 'Search courses', 'ohmylms' ),
@@ -308,6 +319,7 @@ export default function CoursesPage() {
 							list.data.total
 						),
 						onChange: list.setPage,
+						href: list.pageHref,
 					} }
 					columns={ [
 						{

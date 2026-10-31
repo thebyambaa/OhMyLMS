@@ -1,4 +1,4 @@
-import { useState } from '@wordpress/element';
+import { useEffect, useState } from '@wordpress/element';
 import {
 	Button,
 	Notice,
@@ -14,9 +14,14 @@ import type { EmailFilters } from './types';
 
 export function EmailList() {
 	const list = useEmails();
-	const [ query, setQuery ] = useState( '' );
-	const [ recipient, setRecipient ] =
-		useState< EmailFilters[ 'recipient_type' ] >( 'all' );
+	const [ query, setQuery ] = useState( list.filters.search );
+	const [ recipient, setRecipient ] = useState<
+		EmailFilters[ 'recipient_type' ]
+	>( list.filters.recipient_type );
+	useEffect( () => {
+		setQuery( list.filters.search );
+		setRecipient( list.filters.recipient_type );
+	}, [ list.filters ] );
 
 	return (
 		<section aria-labelledby="oml-emails-list-title">

@@ -4,7 +4,7 @@ import {
 	ListTableSelect,
 } from '../../../ui/ListTable';
 import { Button, Notice } from '@wordpress/components';
-import { useState } from '@wordpress/element';
+import { useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
 import { useOrders, useStatusCounts } from './hooks';
@@ -35,9 +35,14 @@ const SORTS: ReadonlyArray< {
 export default function OrdersPage() {
 	const list = useOrders();
 	const counts = useStatusCounts( 'counts' );
-	const [ text, setText ] = useState( '' );
-	const [ after, setAfter ] = useState( '' );
-	const [ before, setBefore ] = useState( '' );
+	const [ text, setText ] = useState( list.query.search );
+	const [ after, setAfter ] = useState( list.query.after );
+	const [ before, setBefore ] = useState( list.query.before );
+	useEffect( () => {
+		setText( list.query.search );
+		setAfter( list.query.after );
+		setBefore( list.query.before );
+	}, [ list.query ] );
 	const rangeError = validateDateRange( after, before );
 	const items = list.data?.items ?? [];
 	const total = list.data?.total ?? 0;
@@ -56,7 +61,6 @@ export default function OrdersPage() {
 
 	return (
 		<>
-			<h2>{ __( 'Orders', 'ohmylms' ) }</h2>
 			<p>
 				{ __(
 					'Orders are created at checkout. Open an order to see its items, change its status or add notes.',
@@ -82,6 +86,7 @@ export default function OrdersPage() {
 			{ ! list.loading && ! list.error && (
 				<ListTable
 					caption={ __( 'Orders', 'ohmylms' ) }
+					heading={ __( 'Orders list', 'ohmylms' ) }
 					formLabel={ __( 'Search orders', 'ohmylms' ) }
 					rows={ items }
 					rowKey={ ( item ) => item.id }
@@ -93,6 +98,7 @@ export default function OrdersPage() {
 							current: 'any' === list.query.status,
 							count:
 								'any' === list.query.status ? total : undefined,
+							href: list.filtersHref( { status: 'any' } ),
 							onSelect: () =>
 								list.setFilters( { status: 'any' } ),
 						},
@@ -101,6 +107,7 @@ export default function OrdersPage() {
 							label: statusLabel( status ),
 							current: status === list.query.status,
 							count: counts.data?.[ status ],
+							href: list.filtersHref( { status } ),
 							onSelect: () => list.setFilters( { status } ),
 						} ) ),
 					] }
@@ -169,6 +176,11 @@ export default function OrdersPage() {
 								} );
 							}
 						},
+						href: ( orderby, order ) =>
+							list.filtersHref( {
+								orderby: orderby as OrderOrderBy,
+								order,
+							} ),
 					} }
 					pagination={ {
 						page: list.query.page,
@@ -185,6 +197,7 @@ export default function OrdersPage() {
 							total
 						),
 						onChange: list.setPage,
+						href: list.pageHref,
 					} }
 					columns={ [
 						{

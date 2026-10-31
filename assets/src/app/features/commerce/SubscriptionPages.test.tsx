@@ -141,7 +141,7 @@ describe( 'subscription list', () => {
 		show( '/subscriptions' );
 		await screen.findByText( 'Ada Lovelace' );
 		await user.click(
-			screen.getAllByRole( 'button', { name: 'Next page' } )[ 0 ]!
+			screen.getAllByRole( 'link', { name: 'Next page' } )[ 0 ]!
 		);
 		await waitFor( () =>
 			expect( as.listSubscriptions ).toHaveBeenLastCalledWith(

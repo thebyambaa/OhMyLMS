@@ -18,7 +18,6 @@ export default function EmailsPage() {
 	}
 	return (
 		<>
-			<h2>{ __( 'Emails', 'ohmylms' ) }</h2>
 			<p>
 				{ __(
 					'Choose which system emails are sent and edit what they say.',

@@ -1,6 +1,6 @@
 import { ListTable } from '../../../ui/ListTable';
 import { Button, Notice } from '@wordpress/components';
-import { useState } from '@wordpress/element';
+import { useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useParams } from 'react-router-dom';
 import { statusViews } from '../../components/listViews';
@@ -22,7 +22,8 @@ export default function AttemptsPage() {
 	const params = useParams();
 	const id = routeId( params.id );
 	const list = useAttempts( id );
-	const [ query, setQuery ] = useState( '' );
+	const [ query, setQuery ] = useState( list.filters.search );
+	useEffect( () => setQuery( list.filters.search ), [ list.filters.search ] );
 	const [ open, setOpen ] = useState< number | null >( null );
 
 	if ( null === id ) {
@@ -100,7 +101,12 @@ export default function AttemptsPage() {
 									status: found.value,
 								} );
 							}
-						}
+						},
+						( value ) =>
+							list.filtersHref( {
+								...list.filters,
+								status: value as AttemptFilters[ 'status' ],
+							} )
 					) }
 					search={ {
 						label: __( 'Search students', 'ohmylms' ),
@@ -128,6 +134,7 @@ export default function AttemptsPage() {
 							list.data.total
 						),
 						onChange: list.setPage,
+						href: list.pageHref,
 					} }
 					columns={ [
 						{

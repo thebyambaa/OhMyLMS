@@ -50,6 +50,7 @@ export interface ListTableView {
 	label: string;
 	count?: number;
 	current?: boolean;
+	/** Address of the view; with `onSelect`, plain clicks select in place and modified clicks open it. */
 	href?: string;
 	onSelect?: () => void;
 }
@@ -87,6 +88,8 @@ export interface ListTablePagination {
 	itemsLabel?: string;
 	disabled?: boolean;
 	onChange: ( page: number ) => void;
+	/** Address of a page: the page links become real links (plain clicks still call `onChange`). */
+	href?: ( page: number ) => string;
 }
 
 export interface ListTableSort {
@@ -99,6 +102,11 @@ export interface ListTableSort {
 export interface ListTableProps< Row > {
 	/** Accessible table name (a screen-reader caption). */
 	caption: string;
+	/**
+	 * Screen-reader `h2` before the list, as WordPress prints on list screens ("Posts list"). Give it on
+	 * screens whose title is the page heading and tab, so the list still has a heading.
+	 */
+	heading?: string;
 	columns: ReadonlyArray< ListTableColumn< Row > >;
 	rows: readonly Row[];
 	rowKey?: ( row: Row, index: number ) => string | number;

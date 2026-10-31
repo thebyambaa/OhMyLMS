@@ -1,8 +1,7 @@
-import { Table } from '../../../ui/Table';
+import { ListTable } from '../../../ui/ListTable';
 import { Button, Notice } from '@wordpress/components';
 import { useCallback, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { Pagination } from '../../components/Pagination';
 import { useRequest } from '../../hooks/useRequest';
 import { listVersions } from './api';
 import { formatDateTime } from './model';
@@ -46,60 +45,53 @@ export function Versions( { id }: { id: number } ) {
 					</Button>
 				</Notice>
 			) }
-			{ versions.data &&
-				( versions.data.items.length ? (
-					<>
-						<Table caption={ __( 'Versions', 'ohmylms' ) } compact>
-							<thead>
-								<tr>
-									{ [
-										__( 'Version', 'ohmylms' ),
-										__( 'Created', 'ohmylms' ),
-										__( 'By', 'ohmylms' ),
-										__( 'State', 'ohmylms' ),
-									].map( ( title ) => (
-										<th key={ title } scope="col">
-											{ title }
-										</th>
-									) ) }
-								</tr>
-							</thead>
-							<tbody>
-								{ versions.data.items.map( ( version ) => (
-									<tr key={ version.id }>
-										<th scope="row">
-											v{ version.version_no }
-										</th>
-										<td>
-											{ formatDateTime(
-												version.created_at
-											) }
-										</td>
-										<td>
-											{ version.created_by.name || '—' }
-										</td>
-										<td>{ flags( version ) }</td>
-									</tr>
-								) ) }
-							</tbody>
-						</Table>
-						{ versions.data.totalPages > 1 && (
-							<Pagination
-								page={ page }
-								pages={ versions.data.totalPages }
-								busy={ versions.loading }
-								onChange={ setPage }
-							/>
-						) }
-					</>
-				) : (
-					<p>
-						{ __(
-							'No versions yet. A version is kept each time the question is saved.',
-							'ohmylms'
-						) }
-					</p>
-				) ) }
+			{ versions.data && (
+				<ListTable< QuestionVersion >
+					caption={ __( 'Versions', 'ohmylms' ) }
+					busy={ versions.loading }
+					footer={ false }
+					rows={ versions.data.items }
+					rowKey={ ( version ) => version.id }
+					emptyMessage={ __(
+						'No versions yet. A version is kept each time the question is saved.',
+						'ohmylms'
+					) }
+					columns={ [
+						{
+							id: 'version',
+							label: __( 'Version', 'ohmylms' ),
+							primary: true,
+							render: ( version ) => `v${ version.version_no }`,
+						},
+						{
+							id: 'created',
+							label: __( 'Created', 'ohmylms' ),
+							render: ( version ) =>
+								formatDateTime( version.created_at ),
+						},
+						{
+							id: 'author',
+							label: __( 'By', 'ohmylms' ),
+							render: ( version ) =>
+								version.created_by.name || '—',
+						},
+						{
+							id: 'state',
+							label: __( 'State', 'ohmylms' ),
+							render: flags,
+						},
+					] }
+					pagination={
+						versions.data.totalPages > 1
+							? {
+									page,
+									totalPages: versions.data.totalPages,
+									onChange: setPage,
+								}
+							: undefined
+					}
+				/>
+			) }
 		</section>
 	);
 }

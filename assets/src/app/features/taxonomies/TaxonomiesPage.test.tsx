@@ -76,13 +76,17 @@ describe( 'taxonomies route', () => {
 		).not.toBeInTheDocument();
 	} );
 
-	it( 'switches tabs with the keyboard and loads tags without a parent column', async () => {
+	it( 'switches taxonomies with the list views and loads tags without a parent column', async () => {
 		const user = userEvent.setup();
 		show( { edit_posts: true, manage_options: true } );
 		await screen.findByRole( 'table', { name: 'Categories' } );
-		screen.getByRole( 'tab', { name: 'Categories' } ).focus();
-		await user.keyboard( '{ArrowRight}' );
-		expect( screen.getByRole( 'tab', { name: 'Tags' } ) ).toHaveFocus();
+		expect(
+			screen.getByRole( 'link', { name: 'Categories' } )
+		).toHaveAttribute( 'aria-current', 'page' );
+		const tags = screen.getByRole( 'link', { name: 'Tags' } );
+		expect( tags.closest( 'ul' ) ).toHaveClass( 'subsubsub' );
+		tags.focus();
+		await user.keyboard( '{Enter}' );
 		const table = await screen.findByRole( 'table', { name: 'Tags' } );
 		expect(
 			within( table ).getByText( 'Starter pack' )
@@ -163,7 +167,7 @@ describe( 'taxonomies route', () => {
 		show( { edit_posts: true } );
 		await screen.findAllByRole( 'cell', { name: /^Mathematics/ } );
 		await user.click(
-			screen.getAllByRole( 'button', { name: 'Next page' } )[ 0 ]!
+			screen.getAllByRole( 'link', { name: 'Next page' } )[ 0 ]!
 		);
 		await waitFor( () =>
 			expect( list ).toHaveBeenLastCalledWith(

@@ -1,6 +1,6 @@
 import { ListTable, ListTableSelect } from '../../../ui/ListTable';
 import { Button, Notice } from '@wordpress/components';
-import { useState } from '@wordpress/element';
+import { useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
 import { statusViews } from '../../components/listViews';
@@ -17,13 +17,15 @@ import type { SortOrder } from './types';
 /** Searchable, filterable, paged list of membership subscriptions. */
 export default function SubscriptionsPage() {
 	const list = useSubscriptions();
-	const [ text, setText ] = useState( '' );
+	const [ text, setText ] = useState( list.query.search );
+	useEffect( () => setText( list.query.search ), [ list.query.search ] );
 	const items = list.data?.items ?? [];
 	const total = list.data?.total ?? 0;
+	const statusOf = ( value: string ) =>
+		SUBSCRIPTION_STATUSES.find( ( status ) => status === value ) ?? 'any';
 
 	return (
 		<>
-			<h2>{ __( 'Subscriptions', 'ohmylms' ) }</h2>
 			<p>
 				{ __(
 					'Subscriptions start when a learner buys a recurring membership plan. Open one to see its orders or to pause, resume or cancel it.',
@@ -49,6 +51,7 @@ export default function SubscriptionsPage() {
 			{ ! list.loading && ! list.error && (
 				<ListTable
 					caption={ __( 'Subscriptions', 'ohmylms' ) }
+					heading={ __( 'Subscriptions list', 'ohmylms' ) }
 					formLabel={ __( 'Search subscriptions', 'ohmylms' ) }
 					rows={ items }
 					rowKey={ ( item ) => item.id }
@@ -64,12 +67,9 @@ export default function SubscriptionsPage() {
 						list.query.status,
 						total,
 						( value ) =>
-							list.setFilters( {
-								status:
-									SUBSCRIPTION_STATUSES.find(
-										( status ) => status === value
-									) ?? 'any',
-							} )
+							list.setFilters( { status: statusOf( value ) } ),
+						( value ) =>
+							list.filtersHref( { status: statusOf( value ) } )
 					) }
 					search={ {
 						label: __( 'Search subscriptions', 'ohmylms' ),
@@ -123,6 +123,7 @@ export default function SubscriptionsPage() {
 							total
 						),
 						onChange: list.setPage,
+						href: list.pageHref,
 					} }
 					columns={ [
 						{

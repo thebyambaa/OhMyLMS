@@ -97,7 +97,7 @@ describe( 'GamificationPage', () => {
 		expect( api.listLevels ).not.toHaveBeenCalled();
 		expect(
 			screen.getByRole( 'link', { name: 'Open certificates' } )
-		).toHaveAttribute( 'href', '#/certificates' );
+		).toHaveAttribute( 'href', '/certificates' );
 	} );
 
 	it( 'moves between tabs with the arrow keys and loads a tab when first opened', async () => {

@@ -1,6 +1,6 @@
 import { Button, Notice } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
 	createBadge,
 	createLevel,
@@ -19,7 +19,9 @@ import { DEFAULT_LIMITS, tabFromParam } from './model';
 import { PointsTab } from './PointsTab';
 import { RewardsTab } from './RewardsTab';
 import { StreaksTab } from './StreaksTab';
-import { Tabs, tabId, tabPanelId, type TabItem } from './Tabs';
+import { useServerNavBadges } from '../../layout/serverNavBadges';
+import { useAdminPlace } from '../../routing/place';
+import { Tabs, useTabPanelProps, type TabItem } from './Tabs';
 import {
 	TAB_IDS,
 	type Badge,
@@ -63,6 +65,7 @@ const BADGES_API: ResourceApi< Badge, BadgeDraft > = {
  */
 export default function GamificationPage() {
 	const [ params, setParams ] = useSearchParams();
+	const place = useAdminPlace();
 	const selected = tabFromParam( params.get( 'tab' ) );
 	const { options } = useOptions();
 	const limits = options?.limits ?? DEFAULT_LIMITS;
@@ -105,6 +108,11 @@ export default function GamificationPage() {
 		label: LABELS[ id ],
 		badge: dirty[ id ] ? __( '(unsaved)', 'ohmylms' ) : undefined,
 	} ) );
+	useServerNavBadges(
+		'section',
+		Object.fromEntries( tabs.map( ( tab ) => [ tab.id, tab.badge ] ) )
+	);
+	const panelProps = useTabPanelProps();
 	const visited: Record< string, boolean > = {
 		points: points.loaded || points.loading,
 		levels: levels.loaded || levels.loading,
@@ -141,7 +149,6 @@ export default function GamificationPage() {
 
 	return (
 		<>
-			<h2>{ __( 'Gamification', 'ohmylms' ) }</h2>
 			{ options && ! options.integration_enabled && (
 				<Notice status="warning" isDismissible={ false }>
 					{ __(
@@ -179,25 +186,21 @@ export default function GamificationPage() {
 				}
 			/>
 			{ TAB_IDS.map( ( id ) => (
-				<div
-					key={ id }
-					role="tabpanel"
-					id={ tabPanelId( id ) }
-					aria-labelledby={ tabId( id ) }
-					hidden={ id !== selected }
-				>
+				<div key={ id } { ...panelProps( id, selected ) }>
 					{ ( id === selected || visited[ id ] ) && panels[ id ] }
 				</div>
 			) ) }
-			<p>
-				{ __(
-					'Certificates are managed on their own screen:',
-					'ohmylms'
-				) }{ ' ' }
-				<a href="#/certificates">
-					{ __( 'Open certificates', 'ohmylms' ) }
-				</a>
-			</p>
+			{ ! place && (
+				<p>
+					{ __(
+						'Certificates are managed on their own screen:',
+						'ohmylms'
+					) }{ ' ' }
+					<Link to="/certificates">
+						{ __( 'Open certificates', 'ohmylms' ) }
+					</Link>
+				</p>
+			) }
 		</>
 	);
 }

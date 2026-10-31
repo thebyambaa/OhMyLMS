@@ -7,10 +7,13 @@ import {
 } from '@wordpress/components';
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
-import { Link } from 'react-router-dom';
 import { ListTable } from '../../../ui/ListTable';
 import { useOperation } from '../../hooks/useOperation';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
+import {
+	PageTitleAction,
+	PageTitleActions,
+} from '../../layout/PageTitleActions';
 import { normalizeApiError } from '../../lib/api';
 import {
 	formOf,
@@ -145,15 +148,17 @@ export default function SubjectProfilesPage() {
 	}
 	const busy = operation.busy;
 	return (
-		<section aria-labelledby="subject-profiles-heading">
-			<h1 id="subject-profiles-heading">
-				{ __( 'Subject profiles', 'ohmylms' ) }
-			</h1>
-			<p>
-				<Link to="/content-hub/curriculum">
-					{ __( 'Back to curriculum', 'ohmylms' ) }
-				</Link>
-			</p>
+		<section>
+			{ data && (
+				<PageTitleActions>
+					<PageTitleAction
+						disabled={ busy || dirty }
+						onClick={ () => open( null ) }
+					>
+						{ __( 'Add profile', 'ohmylms' ) }
+					</PageTitleAction>
+				</PageTitleActions>
+			) }
 			<p>
 				{ __(
 					'A profile describes how a subject’s skills are organised: its domains, ordered levels and the context AI analysis is given. Saving a profile also creates or renames its curriculum subject. Generic is the fallback profile.',
@@ -201,15 +206,9 @@ export default function SubjectProfilesPage() {
 			) }
 			{ data && (
 				<>
-					<Button
-						variant="primary"
-						disabled={ busy || dirty }
-						onClick={ () => open( null ) }
-					>
-						{ __( 'Add profile', 'ohmylms' ) }
-					</Button>
 					<ListTable
 						caption={ __( 'Profiles', 'ohmylms' ) }
+						heading={ __( 'Subject profiles list', 'ohmylms' ) }
 						rows={ data.profiles }
 						rowKey={ ( profile ) => profile.key }
 						columns={ [

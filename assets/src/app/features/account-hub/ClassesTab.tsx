@@ -1,24 +1,28 @@
-import { useCallback, useState } from '@wordpress/element';
+import { useCallback } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
+import { useListQuery } from '../../components/listQuery';
 import { statusViews } from '../../components/listViews';
 import { listClasses, type ClassFilter } from './api';
 import { HubListTable } from './ListControls';
 import { classStatusLabel } from './model';
 import { usePagedList } from './usePagedList';
 
+const STATUS_FILTER = { status: 'all' };
+
 /**
  * Classes of every school in scope. Classes are created from their school, which owns the academic
  * years; this tab finds and opens them.
  */
 export function ClassesTab() {
-	const [ status, setStatus ] = useState< ClassFilter >( 'all' );
+	const query = useListQuery( STATUS_FILTER );
+	const status = query.values.status as ClassFilter;
 	const load = useCallback(
 		( page: number, search: string, signal: AbortSignal ) =>
 			listClasses( page, search, status, undefined, signal ),
 		[ status ]
 	);
-	const list = usePagedList( load );
+	const list = usePagedList( load, true );
 
 	return (
 		<>
@@ -45,10 +49,8 @@ export function ClassesTab() {
 					],
 					status,
 					list.data.total,
-					( value ) => {
-						setStatus( value as ClassFilter );
-						list.setPage( 1 );
-					}
+					( value ) => query.set( { status: value } ),
+					( value ) => query.href( { status: value } )
 				) }
 				table={ {
 					rowKey: ( item ) => item.id,

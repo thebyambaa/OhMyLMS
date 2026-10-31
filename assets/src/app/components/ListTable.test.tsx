@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from '@wordpress/element';
 import {
@@ -330,11 +330,76 @@ describe( 'ListTable', () => {
 			],
 		} );
 		const list = container.querySelector( 'ul.subsubsub' );
-		expect( list ).toHaveTextContent( 'All (3) |Trash (1)' );
+		expect( list ).toHaveTextContent( 'All (3) | Trash (1)' );
 		expect(
 			screen.getByRole( 'link', { name: 'All (3)' } )
 		).toHaveAttribute( 'aria-current', 'page' );
 		await user.click( screen.getByRole( 'link', { name: 'Trash (1)' } ) );
 		expect( onSelect ).toHaveBeenCalled();
+	} );
+
+	it( 'gives views, sorting and pages real addresses and leaves modified clicks to the browser', async () => {
+		const onSelect = vi.fn();
+		const onPage = vi.fn();
+		const onSort = vi.fn();
+		table( {
+			views: [
+				{ key: 'all', label: 'All', current: true, href: '?' },
+				{
+					key: 'draft',
+					label: 'Draft',
+					href: '?status=draft',
+					onSelect,
+				},
+			],
+			sort: {
+				orderby: 'status',
+				order: 'asc',
+				onChange: onSort,
+				href: ( orderby, order ) =>
+					`?orderby=${ orderby }&order=${ order }`,
+			},
+			pagination: {
+				page: 2,
+				totalPages: 3,
+				onChange: onPage,
+				href: ( page ) => `?page=${ page }`,
+			},
+		} );
+		const draft = screen.getByRole( 'link', { name: 'Draft' } );
+		expect( draft ).toHaveAttribute( 'href', '?status=draft' );
+		const [ next ] = screen.getAllByRole( 'link', { name: 'Next page' } );
+		expect( next ).toHaveAttribute( 'href', '?page=3' );
+		expect( next ).toHaveClass( 'next-page', 'button' );
+		expect(
+			screen.getAllByRole( 'link', { name: 'First page' } )[ 0 ]
+		).toHaveAttribute( 'href', '?page=1' );
+		const [ title ] = screen.getAllByRole( 'link', {
+			name: 'Title Sort ascending.',
+		} );
+		expect( title ).toHaveAttribute( 'href', '?orderby=title&order=asc' );
+
+		// A modified click opens the address (the browser's default is not prevented).
+		expect( fireEvent.click( next!, { ctrlKey: true } ) ).toBe( true );
+		expect( fireEvent.click( draft, { metaKey: true } ) ).toBe( true );
+		expect( fireEvent.click( title!, { shiftKey: true } ) ).toBe( true );
+		expect( onPage ).not.toHaveBeenCalled();
+		expect( onSelect ).not.toHaveBeenCalled();
+		expect( onSort ).not.toHaveBeenCalled();
+
+		// A plain click is handled in place.
+		expect( fireEvent.click( next! ) ).toBe( false );
+		expect( onPage ).toHaveBeenCalledWith( 3 );
+		expect( fireEvent.click( draft ) ).toBe( false );
+		expect( onSelect ).toHaveBeenCalled();
+		expect( fireEvent.click( title! ) ).toBe( false );
+		expect( onSort ).toHaveBeenCalledWith( 'title', 'asc' );
+	} );
+
+	it( 'prints a screen-reader heading for the list', () => {
+		table( { heading: 'Courses list' } );
+		expect(
+			screen.getByRole( 'heading', { level: 2, name: 'Courses list' } )
+		).toHaveClass( 'screen-reader-text' );
 	} );
 } );

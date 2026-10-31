@@ -1,6 +1,6 @@
-import { ListTable } from '../../../ui/ListTable';
+import { ListTable, type ListTableView } from '../../../ui/ListTable';
 import { Button, Modal, Notice } from '@wordpress/components';
-import { useState } from '@wordpress/element';
+import { useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { useBootstrap } from '../../bootstrap/BootstrapContext';
 import { parentLabel } from './model';
@@ -56,13 +56,21 @@ function CoursesDialog( {
 /**
  * Searchable, paged, read-only list of one taxonomy.
  *
- * @param props      Component props.
- * @param props.info Taxonomy to show.
+ * @param props       Component props.
+ * @param props.info  Taxonomy to show.
+ * @param props.views
  */
-export function TaxonomyList( { info }: { info: TaxonomyInfo } ) {
+export function TaxonomyList( {
+	info,
+	views,
+}: {
+	info: TaxonomyInfo;
+	views?: readonly ListTableView[];
+} ) {
 	const { user } = useBootstrap();
 	const list = useTerms( info.kind );
-	const [ text, setText ] = useState( '' );
+	const [ text, setText ] = useState( list.query.search );
+	useEffect( () => setText( list.query.search ), [ list.query.search ] );
 	const [ opened, setOpened ] = useState< Term | null >( null );
 	const items = list.data?.items ?? [];
 	const total = list.data?.total ?? 0;
@@ -102,6 +110,8 @@ export function TaxonomyList( { info }: { info: TaxonomyInfo } ) {
 			{ ! list.loading && ! list.error && (
 				<ListTable< Term >
 					caption={ info.title }
+					heading={ info.title }
+					views={ views }
 					formLabel={ searchLabel }
 					rows={ items }
 					rowKey={ ( item ) => item.id }
@@ -128,6 +138,7 @@ export function TaxonomyList( { info }: { info: TaxonomyInfo } ) {
 							total
 						),
 						onChange: list.setPage,
+						href: list.pageHref,
 					} }
 					columns={ [
 						{

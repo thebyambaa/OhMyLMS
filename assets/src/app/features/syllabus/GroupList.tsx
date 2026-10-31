@@ -41,7 +41,7 @@ export function GroupList( {
 			<legend>{ __( 'Syllabus outline', 'ohmylms' ) }</legend>
 			{ data.contents.map( ( content ) => (
 				<section key={ content.id } aria-label={ content.name }>
-					<h2>{ content.name }</h2>
+					<h3>{ content.name }</h3>
 					<Button
 						onClick={ () =>
 							edit( {

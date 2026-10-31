@@ -2,6 +2,10 @@ import { ListTable } from '../../../ui/ListTable';
 import { Button, Modal, Notice, TextControl } from '@wordpress/components';
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
+import {
+	PageTitleAction,
+	PageTitleActions,
+} from '../../layout/PageTitleActions';
 import { normalizeApiError } from '../../lib/api';
 import { deleteWebhook, rotateSecret, saveWebhook, sendTest } from './api';
 import { Deliveries } from './Deliveries';
@@ -13,7 +17,8 @@ type Confirmation = { kind: 'delete' | 'rotate' | 'test'; item: Webhook };
 
 export default function WebhooksPage() {
 	const list = useWebhooks();
-	const [ query, setQuery ] = useState( '' );
+	const [ query, setQuery ] = useState( list.searchTerm );
+	useEffect( () => setQuery( list.searchTerm ), [ list.searchTerm ] );
 	const [ editor, setEditor ] = useState< { item: Webhook | null } | null >(
 		null
 	);
@@ -139,7 +144,19 @@ export default function WebhooksPage() {
 	}
 	return (
 		<>
-			<h2>{ __( 'Webhooks', 'ohmylms' ) }</h2>
+			<PageTitleActions>
+				<PageTitleAction
+					disabled={
+						busy || list.loading || ! list.options?.triggers.length
+					}
+					onClick={ () => {
+						setError( null );
+						setEditor( { item: null } );
+					} }
+				>
+					{ __( 'Add webhook', 'ohmylms' ) }
+				</PageTitleAction>
+			</PageTitleActions>
 			<p>
 				{ __(
 					'Send LMS events to your services and inspect delivery results.',
@@ -155,18 +172,6 @@ export default function WebhooksPage() {
 					{ __( 'Open Add-ons', 'ohmylms' ) }
 				</a>
 			</p>
-			<Button
-				variant="primary"
-				disabled={
-					busy || list.loading || ! list.options?.triggers.length
-				}
-				onClick={ () => {
-					setError( null );
-					setEditor( { item: null } );
-				} }
-			>
-				{ __( 'Add webhook', 'ohmylms' ) }
-			</Button>
 			{ list.options && ! list.options.triggers.length && (
 				<p role="status">
 					{ __(
@@ -202,6 +207,7 @@ export default function WebhooksPage() {
 			{ ! list.loading && ! list.error && (
 				<ListTable< Webhook >
 					caption={ __( 'Configured webhooks', 'ohmylms' ) }
+					heading={ __( 'Webhooks list', 'ohmylms' ) }
 					formLabel={ __( 'Search webhooks', 'ohmylms' ) }
 					busy={ busy }
 					rows={ list.data.items }
@@ -229,6 +235,7 @@ export default function WebhooksPage() {
 							list.data.total
 						),
 						onChange: list.setPage,
+						href: list.pageHref,
 					} }
 					columns={ [
 						{

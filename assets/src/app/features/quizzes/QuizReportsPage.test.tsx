@@ -164,7 +164,7 @@ it( 'pages without reloading the totals', async () => {
 	const summaries = vi.mocked( reports.getQuizReportSummary ).mock.calls
 		.length;
 	await user.click(
-		screen.getAllByRole( 'button', { name: 'Next page' } )[ 0 ]!
+		screen.getAllByRole( 'link', { name: 'Next page' } )[ 0 ]!
 	);
 	await waitFor( () =>
 		expect( reports.listQuizReports ).toHaveBeenLastCalledWith(

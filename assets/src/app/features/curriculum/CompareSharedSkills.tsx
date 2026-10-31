@@ -1,14 +1,18 @@
-import { Table } from '../../../ui/Table';
+import { ListTable, ListTableInput } from '../../../ui/ListTable';
 import {
 	Button,
 	Notice,
 	TextareaControl,
 	TextControl,
 } from '@wordpress/components';
-import { useCallback, useState } from '@wordpress/element';
+import { useCallback, useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
-import { Pagination } from '../../components/Pagination';
+import { useListState } from '../../components/listQuery';
 import { useOperation } from '../../hooks/useOperation';
+import {
+	PageTitleAction,
+	PageTitleActions,
+} from '../../layout/PageTitleActions';
 import { useRequest } from '../../hooks/useRequest';
 import {
 	isStale,
@@ -21,6 +25,8 @@ import {
 	type SharedSkillSummary,
 } from './compare';
 
+const NO_FILTERS = { search: '', subject: '' };
+
 const EMPTY: SharedSkillInput = {
 	name: '',
 	description: '',
@@ -30,9 +36,11 @@ const EMPTY: SharedSkillInput = {
 
 /** Shared skills: search, the objectives mapped to each, and editing against the read revision. */
 export function CompareSharedSkills() {
-	const [ query, setQuery ] = useState( { search: '', subject: '' } );
+	const address = useListState( NO_FILTERS, { search: 's' } );
+	const { page, setPage } = address;
+	const query = address.filters;
 	const [ draft, setDraft ] = useState( query );
-	const [ page, setPage ] = useState( 1 );
+	useEffect( () => setDraft( query ), [ query ] );
 	const [ editing, setEditing ] = useState<
 		SharedSkillSummary | 'new' | null
 	>( null );
@@ -56,46 +64,17 @@ export function CompareSharedSkills() {
 					{ message }
 				</Notice>
 			) }
-			<Button
-				variant="primary"
-				onClick={ () => {
-					setMessage( null );
-					setEditing( 'new' );
-				} }
-			>
-				{ __( 'New shared skill', 'ohmylms' ) }
-			</Button>
-			<form
-				role="search"
-				aria-label={ __( 'Find shared skills', 'ohmylms' ) }
-				onSubmit={ ( event ) => {
-					event.preventDefault();
-					setPage( 1 );
-					setQuery( {
-						search: draft.search.trim(),
-						subject: draft.subject.trim(),
-					} );
-				} }
-			>
-				<TextControl
-					label={ __( 'Search shared skills', 'ohmylms' ) }
-					value={ draft.search }
-					maxLength={ 100 }
-					onChange={ ( search ) => setDraft( { ...draft, search } ) }
-				/>
-				<TextControl
-					label={ __( 'Subject', 'ohmylms' ) }
-					value={ draft.subject }
-					maxLength={ 100 }
-					onChange={ ( subject ) =>
-						setDraft( { ...draft, subject } )
-					}
-				/>
-				<Button type="submit" variant="secondary">
-					{ __( 'Search', 'ohmylms' ) }
-				</Button>
-			</form>
-			{ list.loading && (
+			<PageTitleActions>
+				<PageTitleAction
+					onClick={ () => {
+						setMessage( null );
+						setEditing( 'new' );
+					} }
+				>
+					{ __( 'New shared skill', 'ohmylms' ) }
+				</PageTitleAction>
+			</PageTitleActions>
+			{ list.loading && ! list.data && (
 				<p role="status">
 					{ __( 'Loading shared skills…', 'ohmylms' ) }
 				</p>
@@ -108,72 +87,98 @@ export function CompareSharedSkills() {
 					</Button>
 				</Notice>
 			) }
-			{ list.data && ! list.data.items.length && (
-				<p>{ __( 'No shared skills found.', 'ohmylms' ) }</p>
-			) }
-			{ list.data && list.data.items.length > 0 && (
-				<>
-					<Table caption={ __( 'Shared skills', 'ohmylms' ) }>
-						<thead>
-							<tr>
-								<th scope="col">{ __( 'Name', 'ohmylms' ) }</th>
-								<th scope="col">
-									{ __( 'Subject', 'ohmylms' ) }
-								</th>
-								<th scope="col">
-									{ __( 'Topic', 'ohmylms' ) }
-								</th>
-								<th scope="col">
-									{ __( 'Mapped objectives', 'ohmylms' ) }
-								</th>
-								<th scope="col">
-									{ __( 'Actions', 'ohmylms' ) }
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							{ list.data.items.map( ( skill ) => (
-								<tr key={ skill.id }>
-									<th scope="row">{ skill.name }</th>
-									<td>{ skill.subject || '—' }</td>
-									<td>{ skill.topic || '—' }</td>
-									<td>
-										{ skill.mapped_from.length
-											? skill.mapped_from
-													.map(
-														( mapping ) =>
-															`${ mapping.name } (${ mapping.relation })`
-													)
-													.join( ', ' )
-											: __( 'None', 'ohmylms' ) }
-									</td>
-									<td>
-										<Button
-											variant="link"
-											aria-label={ sprintf(
-												/* translators: %s: skill name. */
-												__( 'Edit %s', 'ohmylms' ),
-												skill.name
-											) }
-											onClick={ () => {
-												setMessage( null );
-												setEditing( skill );
-											} }
-										>
-											{ __( 'Edit', 'ohmylms' ) }
-										</Button>
-									</td>
-								</tr>
-							) ) }
-						</tbody>
-					</Table>
-					<Pagination
-						page={ page }
-						pages={ pages }
-						busy={ list.loading }
-						onChange={ setPage }
-					/>
-				</>
+			{ list.data && (
+				<ListTable< SharedSkillSummary >
+					caption={ __( 'Shared skills', 'ohmylms' ) }
+					formLabel={ __( 'Find shared skills', 'ohmylms' ) }
+					busy={ list.loading }
+					rows={ list.data.items }
+					rowKey={ ( skill ) => skill.id }
+					rowLabel={ ( skill ) => skill.name }
+					emptyMessage={ __( 'No shared skills found.', 'ohmylms' ) }
+					search={ {
+						label: __( 'Search shared skills', 'ohmylms' ),
+						submitLabel: __( 'Search', 'ohmylms' ),
+						value: draft.search,
+						maxLength: 100,
+						onChange: ( search ) =>
+							setDraft( { ...draft, search } ),
+					} }
+					filters={
+						<ListTableInput
+							label={ __( 'Subject', 'ohmylms' ) }
+							placeholder={ __( 'Subject', 'ohmylms' ) }
+							value={ draft.subject }
+							maxLength={ 100 }
+							onChange={ ( subject ) =>
+								setDraft( { ...draft, subject } )
+							}
+						/>
+					}
+					onFilter={ () =>
+						address.setFilters( {
+							search: draft.search.trim(),
+							subject: draft.subject.trim(),
+						} )
+					}
+					pagination={ {
+						page,
+						totalPages: pages,
+						totalItems: list.data.total,
+						onChange: setPage,
+						href: address.pageHref,
+					} }
+					columns={ [
+						{
+							id: 'name',
+							label: __( 'Name', 'ohmylms' ),
+							primary: true,
+							render: ( skill ) => (
+								<strong className="row-title">
+									{ skill.name }
+								</strong>
+							),
+						},
+						{
+							id: 'subject',
+							label: __( 'Subject', 'ohmylms' ),
+							render: ( skill ) => skill.subject || '—',
+						},
+						{
+							id: 'topic',
+							label: __( 'Topic', 'ohmylms' ),
+							render: ( skill ) => skill.topic || '—',
+						},
+						{
+							id: 'mapped',
+							label: __( 'Mapped objectives', 'ohmylms' ),
+							render: ( skill ) =>
+								skill.mapped_from.length
+									? skill.mapped_from
+											.map(
+												( mapping ) =>
+													`${ mapping.name } (${ mapping.relation })`
+											)
+											.join( ', ' )
+									: __( 'None', 'ohmylms' ),
+						},
+					] }
+					rowActions={ ( skill ) => [
+						{
+							key: 'edit',
+							label: __( 'Edit', 'ohmylms' ),
+							ariaLabel: sprintf(
+								/* translators: %s: skill name. */
+								__( 'Edit %s', 'ohmylms' ),
+								skill.name
+							),
+							onClick: () => {
+								setMessage( null );
+								setEditing( skill );
+							},
+						},
+					] }
+				/>
 			) }
 			{ editing && (
 				<SharedSkillForm

@@ -62,11 +62,10 @@ it( 'lists every area the server sent with counts and links', async () => {
 	const table = await screen.findByRole( 'table', {
 		name: 'Content areas',
 	} );
+	expect( table ).toHaveClass( 'wp-list-table', 'widefat', 'striped' );
 	const rows = within( table ).getAllByRole( 'row' ).slice( 1 );
 	expect(
-		rows.map(
-			( row ) => within( row ).getByRole( 'rowheader' ).textContent
-		)
+		rows.map( ( row ) => row.querySelector( '.row-title' )?.textContent )
 	).toEqual( [
 		'Courses',
 		'Lessons',

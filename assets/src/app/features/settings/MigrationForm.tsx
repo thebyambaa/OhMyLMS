@@ -4,13 +4,11 @@ import {
 	Notice,
 	SelectControl,
 	Spinner,
-	TextControl,
 } from '@wordpress/components';
 import { useCallback, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
-import { Table } from '../../../ui/Table';
-import { Pagination } from '../../components/Pagination';
+import { ListTable } from '../../../ui/ListTable';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
 import {
@@ -66,26 +64,7 @@ function Courses( { source }: { source: string } ) {
 					{ message }
 				</Notice>
 			) }
-			<form
-				role="search"
-				aria-label={ __( 'Search source courses', 'ohmylms' ) }
-				onSubmit={ ( event ) => {
-					event.preventDefault();
-					setPage( 1 );
-					setSearch( text );
-				} }
-			>
-				<TextControl
-					__nextHasNoMarginBottom
-					label={ __( 'Search source courses', 'ohmylms' ) }
-					value={ text }
-					onChange={ setText }
-				/>
-				<Button type="submit" variant="secondary">
-					{ __( 'Search', 'ohmylms' ) }
-				</Button>
-			</form>
-			{ request.loading && (
+			{ request.loading && ! request.data && (
 				<p role="status">
 					<Spinner /> { __( 'Loading courses…', 'ohmylms' ) }
 				</p>
@@ -95,67 +74,79 @@ function Courses( { source }: { source: string } ) {
 					{ request.error }
 				</Notice>
 			) }
-			{ ! request.loading && ! request.error && ! items.length && (
-				<p>{ __( 'No courses found in this plugin.', 'ohmylms' ) }</p>
-			) }
-			{ items.length > 0 && (
-				<>
-					<Table
-						caption={ __( 'Source courses', 'ohmylms' ) }
-						striped
-					>
-						<thead>
-							<tr>
-								<th scope="col">
-									{ __( 'Course', 'ohmylms' ) }
-								</th>
-								<th scope="col">
-									{ __( 'Status', 'ohmylms' ) }
-								</th>
-								<th scope="col">
-									{ __( 'Migration', 'ohmylms' ) }
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							{ items.map( ( course ) => (
-								<tr key={ course.id }>
-									<th scope="row">{ course.title }</th>
-									<td>{ course.status }</td>
-									<td>
-										{ null === course.migrated_to ? (
-											<Button
-												variant="secondary"
-												disabled={ operation.busy }
-												onClick={ () => {
-													operation.clearError();
-													setConfirm( course );
-												} }
-											>
-												{ __( 'Migrate', 'ohmylms' ) }
-											</Button>
-										) : (
-											<Link
-												to={ `/courses/${ course.migrated_to }` }
-											>
-												{ __(
-													'Migrated: open the copy',
-													'ohmylms'
-												) }
-											</Link>
+			{ ! request.error && (
+				<ListTable< SourceCourse >
+					caption={ __( 'Source courses', 'ohmylms' ) }
+					formLabel={ __( 'Search source courses', 'ohmylms' ) }
+					busy={ request.loading }
+					footer={ false }
+					rows={ items }
+					rowKey={ ( course ) => course.id }
+					emptyMessage={
+						request.loading
+							? ''
+							: __(
+									'No courses found in this plugin.',
+									'ohmylms'
+								)
+					}
+					search={ {
+						label: __( 'Search source courses', 'ohmylms' ),
+						submitLabel: __( 'Search', 'ohmylms' ),
+						value: text,
+						onChange: setText,
+						onSubmit: () => {
+							setPage( 1 );
+							setSearch( text );
+						},
+					} }
+					pagination={ {
+						page,
+						totalPages: request.data?.totalPages ?? 1,
+						onChange: setPage,
+					} }
+					columns={ [
+						{
+							id: 'course',
+							label: __( 'Course', 'ohmylms' ),
+							primary: true,
+							render: ( course ) => (
+								<strong>{ course.title }</strong>
+							),
+						},
+						{
+							id: 'status',
+							label: __( 'Status', 'ohmylms' ),
+							render: ( course ) => course.status,
+						},
+						{
+							id: 'migration',
+							label: __( 'Migration', 'ohmylms' ),
+							render: ( course ) =>
+								null === course.migrated_to ? (
+									<Button
+										variant="secondary"
+										disabled={ operation.busy }
+										onClick={ () => {
+											operation.clearError();
+											setConfirm( course );
+										} }
+									>
+										{ __( 'Migrate', 'ohmylms' ) }
+									</Button>
+								) : (
+									<Link
+										to={ `/courses/${ course.migrated_to }` }
+									>
+										{ __(
+											'Migrated: open the copy',
+											'ohmylms'
 										) }
-									</td>
-								</tr>
-							) ) }
-						</tbody>
-					</Table>
-					<Pagination
-						page={ page }
-						pages={ request.data?.totalPages ?? 1 }
-						busy={ request.loading }
-						onChange={ setPage }
-					/>
-				</>
+									</Link>
+								),
+						},
+					] }
+				/>
 			) }
 			{ confirm && (
 				<Modal

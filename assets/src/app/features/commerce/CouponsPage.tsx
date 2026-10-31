@@ -1,8 +1,12 @@
 import { ListTable } from '../../../ui/ListTable';
 import { Button, Modal, Notice } from '@wordpress/components';
-import { useState } from '@wordpress/element';
+import { useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { statusViews } from '../../components/listViews';
+import {
+	PageTitleAction,
+	PageTitleActions,
+} from '../../layout/PageTitleActions';
 import { createCoupon, deleteCoupon, updateCoupon } from './api';
 import { CouponEditor } from './CouponEditor';
 import { useCoupons } from './hooks';
@@ -14,11 +18,15 @@ interface EditorState {
 	coupon: Coupon | null;
 }
 
+const couponStatus = ( value: string ) =>
+	'publish' === value || 'draft' === value ? value : 'any';
+
 /** Coupon list with create, edit and confirmed deletion. */
 export default function CouponsPage() {
 	const list = useCoupons();
 	const operation = useOperation();
-	const [ text, setText ] = useState( '' );
+	const [ text, setText ] = useState( list.query.search );
+	useEffect( () => setText( list.query.search ), [ list.query.search ] );
 	const [ editor, setEditor ] = useState< EditorState | null >( null );
 	const [ removing, setRemoving ] = useState< Coupon | null >( null );
 	const [ saved, setSaved ] = useState< string | null >( null );
@@ -66,20 +74,16 @@ export default function CouponsPage() {
 
 	return (
 		<>
-			<h2>{ __( 'Coupons', 'ohmylms' ) }</h2>
+			<PageTitleActions>
+				<PageTitleAction onClick={ () => open( { coupon: null } ) }>
+					{ __( 'Add coupon', 'ohmylms' ) }
+				</PageTitleAction>
+			</PageTitleActions>
 			<p>
 				{ __(
 					'Discount codes customers enter at checkout. Past orders keep the code they used.',
 					'ohmylms'
 				) }
-			</p>
-			<p>
-				<Button
-					variant="primary"
-					onClick={ () => open( { coupon: null } ) }
-				>
-					{ __( 'Add coupon', 'ohmylms' ) }
-				</Button>
 			</p>
 			{ saved && (
 				<Notice status="success" onRemove={ () => setSaved( null ) }>
@@ -100,6 +104,7 @@ export default function CouponsPage() {
 			{ ! list.loading && ! list.error && (
 				<ListTable
 					caption={ __( 'Coupons', 'ohmylms' ) }
+					heading={ __( 'Coupons list', 'ohmylms' ) }
 					formLabel={ __( 'Search coupons', 'ohmylms' ) }
 					rows={ items }
 					rowKey={ ( item ) => item.id }
@@ -120,10 +125,11 @@ export default function CouponsPage() {
 						total,
 						( value ) =>
 							list.setFilters( {
-								status:
-									'publish' === value || 'draft' === value
-										? value
-										: 'any',
+								status: couponStatus( value ),
+							} ),
+						( value ) =>
+							list.filtersHref( {
+								status: couponStatus( value ),
 							} )
 					) }
 					search={ {
@@ -152,6 +158,7 @@ export default function CouponsPage() {
 							total
 						),
 						onChange: list.setPage,
+						href: list.pageHref,
 					} }
 					columns={ [
 						{

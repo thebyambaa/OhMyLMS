@@ -1,4 +1,4 @@
-import { Table } from '../../../ui/Table';
+import { WidefatTable } from '../../components/WidefatTable';
 import { Button, Modal, Notice } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -246,7 +246,7 @@ function Subscription( { id }: { id: number } ) {
 					{ __( 'Related orders', 'ohmylms' ) }
 				</h3>
 				{ subscription.related_orders.length ? (
-					<Table caption={ __( 'Related orders', 'ohmylms' ) }>
+					<WidefatTable caption={ __( 'Related orders', 'ohmylms' ) }>
 						<thead>
 							<tr>
 								<th scope="col">
@@ -294,7 +294,7 @@ function Subscription( { id }: { id: number } ) {
 								</tr>
 							) ) }
 						</tbody>
-					</Table>
+					</WidefatTable>
 				) : (
 					<p>{ __( 'No related orders.', 'ohmylms' ) }</p>
 				) }

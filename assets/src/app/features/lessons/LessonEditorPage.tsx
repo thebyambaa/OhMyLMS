@@ -8,7 +8,7 @@ import {
 	TextControl,
 } from '@wordpress/components';
 import { useCallback, useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { Link, useParams } from 'react-router-dom';
 import { useRequest } from '../../hooks/useRequest';
 import { useOperation } from '../../hooks/useOperation';
@@ -45,7 +45,20 @@ function LoadedLesson( { id }: { id: number } ) {
 	const request = useRequest( load );
 	return (
 		<>
-			<h1>{ __( 'Lesson editor', 'ohmylms' ) }</h1>
+			<p>
+				<Link to="/content-hub/lessons">
+					{ __( 'Back to lessons', 'ohmylms' ) }
+				</Link>
+			</p>
+			<h2>
+				{ request.data?.title
+					? sprintf(
+							/* translators: %s: lesson title. */
+							__( 'Edit lesson: %s', 'ohmylms' ),
+							request.data.title
+						)
+					: __( 'Edit lesson', 'ohmylms' ) }
+			</h2>
 			{ request.loading && (
 				<p role="status">{ __( 'Loading lesson…', 'ohmylms' ) }</p>
 			) }

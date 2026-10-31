@@ -1,17 +1,27 @@
 import { Button, Notice } from '@wordpress/components';
-import { useCallback, useState } from '@wordpress/element';
+import { useCallback, useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
 import { ListTable, ListTableSelect } from '../../../ui/ListTable';
+import { useAddressQuery } from '../../components/listQuery';
 import { useRequest } from '../../hooks/useRequest';
+import {
+	PageTitleAction,
+	PageTitleActions,
+} from '../../layout/PageTitleActions';
 import { listSessions } from './api';
 import { EMPTY_QUERY, formatStart, providerLabel, stateLabel } from './model';
 import type { SessionQuery } from './types';
 
-/** The `/sessions` route: live sessions the user may edit. */
+/**
+ * The `/sessions` route: live sessions the user may edit, with search, provider and page in the
+ * address.
+ */
 export default function SessionsPage() {
-	const [ query, setQuery ] = useState< SessionQuery >( EMPTY_QUERY );
-	const [ text, setText ] = useState( '' );
+	const address = useAddressQuery( EMPTY_QUERY, { search: 's' } );
+	const { query } = address;
+	const [ text, setText ] = useState( query.search );
+	useEffect( () => setText( query.search ), [ query.search ] );
 	const load = useCallback(
 		( signal: AbortSignal ) => listSessions( query, signal ),
 		[ query ]
@@ -22,14 +32,11 @@ export default function SessionsPage() {
 
 	return (
 		<>
-			<p>
-				<Link
-					to="/sessions/new"
-					className="components-button is-primary"
-				>
+			<PageTitleActions>
+				<PageTitleAction to="/sessions/new">
 					{ __( 'Schedule a session', 'ohmylms' ) }
-				</Link>
-			</p>
+				</PageTitleAction>
+			</PageTitleActions>
 			{ request.error && (
 				<Notice status="error" isDismissible={ false }>
 					{ request.error }{ ' ' }
@@ -44,6 +51,7 @@ export default function SessionsPage() {
 			{ ! request.error && ( ! request.loading || items.length > 0 ) && (
 				<ListTable
 					caption={ __( 'Live sessions', 'ohmylms' ) }
+					heading={ __( 'Live sessions list', 'ohmylms' ) }
 					formLabel={ __( 'Search sessions', 'ohmylms' ) }
 					busy={ request.loading }
 					rows={ items }
@@ -55,13 +63,7 @@ export default function SessionsPage() {
 						value: text,
 						onChange: setText,
 					} }
-					onFilter={ () =>
-						setQuery( ( current ) => ( {
-							...current,
-							search: text,
-							page: 1,
-						} ) )
-					}
+					onFilter={ () => address.setFilters( { search: text } ) }
 					filterLabel={ null }
 					filters={
 						<ListTableSelect
@@ -82,12 +84,10 @@ export default function SessionsPage() {
 								},
 							] }
 							onChange={ ( value ) =>
-								setQuery( ( current ) => ( {
-									...current,
+								address.setFilters( {
 									provider:
 										value as SessionQuery[ 'provider' ],
-									page: 1,
-								} ) )
+								} )
 							}
 						/>
 					}
@@ -105,8 +105,8 @@ export default function SessionsPage() {
 							),
 							total
 						),
-						onChange: ( page ) =>
-							setQuery( ( current ) => ( { ...current, page } ) ),
+						onChange: ( page ) => address.setPage( page ),
+						href: address.pageHref,
 					} }
 					columns={ [
 						{

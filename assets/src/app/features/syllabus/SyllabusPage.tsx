@@ -73,12 +73,12 @@ export function SyllabusWorkspace( { initial }: { initial: SyllabusOutline } ) {
 	);
 	return (
 		<section aria-label={ __( 'Syllabus editor', 'ohmylms' ) }>
-			<h1>{ data.syllabus.name }</h1>
 			<p>
 				<Link to="/content-hub/curriculum">
 					{ __( 'Back to curriculum', 'ohmylms' ) }
 				</Link>
 			</p>
+			<h2>{ data.syllabus.name }</h2>
 			{ operation.error && (
 				<Notice status="error" isDismissible={ false }>
 					{ operation.error }

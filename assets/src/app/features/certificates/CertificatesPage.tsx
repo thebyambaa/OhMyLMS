@@ -4,6 +4,10 @@ import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useNavigate } from 'react-router-dom';
 import { statusViews } from '../../components/listViews';
+import {
+	PageTitleAction,
+	PageTitleActions,
+} from '../../layout/PageTitleActions';
 import { normalizeApiError } from '../../lib/api';
 import {
 	createCertificate,
@@ -30,7 +34,8 @@ type Dialog = { kind: 'create' } | { kind: 'delete'; item: Certificate } | null;
 export default function CertificatesPage() {
 	const list = useCertificates();
 	const navigate = useNavigate();
-	const [ query, setQuery ] = useState( '' );
+	const [ query, setQuery ] = useState( list.searchTerm );
+	useEffect( () => setQuery( list.searchTerm ), [ list.searchTerm ] );
 	const [ dialog, setDialog ] = useState< Dialog >( null );
 	const [ name, setName ] = useState( '' );
 	const [ nameError, setNameError ] = useState< string | null >( null );
@@ -117,24 +122,24 @@ export default function CertificatesPage() {
 
 	return (
 		<>
-			<h2>{ __( 'Certificates', 'ohmylms' ) }</h2>
+			<PageTitleActions>
+				<PageTitleAction
+					disabled={ busy }
+					onClick={ () => {
+						setName( '' );
+						setError( null );
+						setDialog( { kind: 'create' } );
+					} }
+				>
+					{ __( 'Add template', 'ohmylms' ) }
+				</PageTitleAction>
+			</PageTitleActions>
 			<p>
 				{ __(
 					'Design certificate templates and assign them to courses.',
 					'ohmylms'
 				) }
 			</p>
-			<Button
-				variant="primary"
-				disabled={ busy }
-				onClick={ () => {
-					setName( '' );
-					setError( null );
-					setDialog( { kind: 'create' } );
-				} }
-			>
-				{ __( 'Add template', 'ohmylms' ) }
-			</Button>
 			{ message && (
 				<Notice status="success" onRemove={ () => setMessage( null ) }>
 					{ message }
@@ -161,6 +166,7 @@ export default function CertificatesPage() {
 			{ ! list.loading && ! list.error && (
 				<ListTable< Certificate >
 					caption={ __( 'Certificate templates', 'ohmylms' ) }
+					heading={ __( 'Certificate templates list', 'ohmylms' ) }
 					formLabel={ __(
 						'Search certificate templates',
 						'ohmylms'
@@ -176,7 +182,8 @@ export default function CertificatesPage() {
 						statusFilters(),
 						list.status,
 						list.data.total,
-						list.setStatus
+						list.setStatus,
+						list.statusHref
 					) }
 					search={ {
 						label: __( 'Search certificate templates', 'ohmylms' ),
@@ -200,6 +207,7 @@ export default function CertificatesPage() {
 							list.data.total
 						),
 						onChange: list.setPage,
+						href: list.pageHref,
 					} }
 					columns={ [
 						{

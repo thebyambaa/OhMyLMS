@@ -166,9 +166,9 @@ describe( 'CoursesPage', () => {
 		const user = userEvent.setup();
 		renderPage();
 		await screen.findByRole( 'table', { name: 'Courses' } );
-		await user.click(
-			screen.getAllByRole( 'button', { name: 'Next page' } )[ 0 ]!
-		);
+		const next = screen.getAllByRole( 'link', { name: 'Next page' } )[ 0 ]!;
+		expect( next ).toHaveAttribute( 'href', '/courses?page=2' );
+		await user.click( next );
 		await waitFor( () =>
 			expect( api.listCourses ).toHaveBeenLastCalledWith(
 				2,
@@ -176,6 +176,32 @@ describe( 'CoursesPage', () => {
 				expect.any( AbortSignal )
 			)
 		);
+	} );
+	it( 'reads the list state from the address and links views to addresses', async () => {
+		render(
+			<MemoryRouter
+				initialEntries={ [ '/courses?status=draft&s=geo&page=3' ] }
+			>
+				<Routes>
+					<Route path="/courses" element={ <CoursesPage /> } />
+				</Routes>
+			</MemoryRouter>
+		);
+		await screen.findByRole( 'table', { name: 'Courses' } );
+		expect( api.listCourses ).toHaveBeenLastCalledWith(
+			3,
+			expect.objectContaining( { search: 'geo', status: 'draft' } ),
+			expect.any( AbortSignal )
+		);
+		expect( screen.getByLabelText( 'Search courses' ) ).toHaveValue(
+			'geo'
+		);
+		expect(
+			screen.getByRole( 'link', { name: 'Published' } )
+		).toHaveAttribute( 'href', '/courses?status=publish&s=geo' );
+		expect(
+			screen.getByRole( 'link', { name: /^Draft/ } )
+		).toHaveAttribute( 'aria-current', 'page' );
 	} );
 
 	describe( 'create', () => {

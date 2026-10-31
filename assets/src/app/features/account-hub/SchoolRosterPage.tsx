@@ -1,4 +1,4 @@
-import { Table } from '../../../ui/Table';
+import { WidefatTable } from '../../components/WidefatTable';
 import {
 	Button,
 	CheckboxControl,
@@ -767,7 +767,7 @@ function RosterImport( {
 							) }
 						</p>
 					) }
-					<Table
+					<WidefatTable
 						caption={
 							shown.dry_run
 								? __( 'Import review', 'ohmylms' )
@@ -832,7 +832,7 @@ function RosterImport( {
 								</tr>
 							) ) }
 						</tbody>
-					</Table>
+					</WidefatTable>
 				</>
 			) }
 			{ current && (

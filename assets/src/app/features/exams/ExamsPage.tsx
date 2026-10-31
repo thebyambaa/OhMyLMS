@@ -12,8 +12,13 @@ import {
 import { useCallback, useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useListState } from '../../components/listQuery';
 import { statusViews } from '../../components/listViews';
 import { useOperation } from '../../hooks/useOperation';
+import {
+	PageTitleAction,
+	PageTitleActions,
+} from '../../layout/PageTitleActions';
 import { useRequest } from '../../hooks/useRequest';
 import {
 	checkRows,
@@ -41,6 +46,8 @@ import type {
 } from './types';
 
 type Dialog = 'new' | 'import' | null;
+
+const NO_FILTERS: ExamFilters = { search: '', status: 'all' };
 
 function dialogFrom( action: string | null ): Dialog {
 	return 'new' === action || 'import' === action ? action : null;
@@ -384,13 +391,11 @@ function ImportDialog( { onClose }: { onClose: () => void } ) {
 export default function ExamsPage() {
 	const [ params, setParams ] = useSearchParams();
 	const dialog = dialogFrom( params.get( 'action' ) );
-	const [ page, setPage ] = useState( 1 );
+	const list = useListState< ExamFilters >( NO_FILTERS, { search: 's' } );
+	const { page, filters, setPage } = list;
 	const [ jobPage, setJobPage ] = useState( 1 );
-	const [ filters, setFilters ] = useState< ExamFilters >( {
-		search: '',
-		status: 'all',
-	} );
-	const [ query, setQuery ] = useState( '' );
+	const [ query, setQuery ] = useState( filters.search );
+	useEffect( () => setQuery( filters.search ), [ filters.search ] );
 	const load = useCallback(
 		( signal: AbortSignal ) => listExams( page, filters, signal ),
 		[ page, filters ]
@@ -402,25 +407,36 @@ export default function ExamsPage() {
 	);
 	const jobs = useRequest( loadJobs );
 	function open( next: Dialog ) {
-		setParams( next ? { action: next } : {}, { replace: true } );
+		setParams(
+			( current ) => {
+				const changed = new URLSearchParams( current );
+				if ( next ) {
+					changed.set( 'action', next );
+				} else {
+					changed.delete( 'action' );
+				}
+				return changed;
+			},
+			{ replace: true }
+		);
 	}
 	useEffect( () => {
 		if ( params.get( 'action' ) && ! dialog ) {
-			setParams( {}, { replace: true } );
+			open( null );
 		}
-	}, [ params, dialog, setParams ] );
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [ params, dialog ] );
 
 	return (
 		<>
-			<h2>{ __( 'Exams', 'ohmylms' ) }</h2>
-			<p>
-				<Button variant="primary" onClick={ () => open( 'new' ) }>
+			<PageTitleActions>
+				<PageTitleAction to="/exams?action=new">
 					{ __( 'New exam', 'ohmylms' ) }
-				</Button>{ ' ' }
-				<Button variant="secondary" onClick={ () => open( 'import' ) }>
+				</PageTitleAction>
+				<PageTitleAction to="/exams?action=import">
 					{ __( 'Import exam', 'ohmylms' ) }
-				</Button>
-			</p>
+				</PageTitleAction>
+			</PageTitleActions>
 			{ exams.error && (
 				<Notice status="error" isDismissible={ false }>
 					{ exams.error }{ ' ' }
@@ -435,6 +451,7 @@ export default function ExamsPage() {
 			{ ! exams.loading && exams.data && (
 				<ListTable
 					caption={ __( 'Exams', 'ohmylms' ) }
+					heading={ __( 'Exams list', 'ohmylms' ) }
 					formLabel={ __( 'Search exams', 'ohmylms' ) }
 					rows={ exams.data.items }
 					rowKey={ ( exam ) => exam.id }
@@ -455,26 +472,25 @@ export default function ExamsPage() {
 								[ 'all', 'draft', 'publish' ] as StatusFilter[]
 							 ).find( ( item ) => item === value );
 							if ( status ) {
-								setFilters( ( current ) => ( {
-									...current,
-									status,
-								} ) );
-								setPage( 1 );
+								list.setFilters( { ...filters, status } );
 							}
-						}
+						},
+						( value ) =>
+							list.filtersHref( {
+								...filters,
+								status: value as StatusFilter,
+							} )
 					) }
 					search={ {
 						label: __( 'Search exams', 'ohmylms' ),
 						submitLabel: __( 'Search', 'ohmylms' ),
 						value: query,
 						onChange: setQuery,
-						onSubmit: () => {
-							setFilters( ( current ) => ( {
-								...current,
+						onSubmit: () =>
+							list.setFilters( {
+								...filters,
 								search: query.trim(),
-							} ) );
-							setPage( 1 );
-						},
+							} ),
 					} }
 					pagination={ {
 						page,
@@ -491,6 +507,7 @@ export default function ExamsPage() {
 							exams.data.total
 						),
 						onChange: setPage,
+						href: list.pageHref,
 					} }
 					columns={ [
 						{

@@ -6,6 +6,7 @@ import {
 	useState,
 } from '@wordpress/element';
 import { useNavigate } from 'react-router-dom';
+import { useListState } from '../../components/listQuery';
 import { normalizeApiError } from '../../lib/api';
 import {
 	getEmail,
@@ -80,15 +81,17 @@ function useLoaded< T >(
 	};
 }
 
+const NO_FILTERS: EmailFilters = { search: '', recipient_type: 'all' };
+
 /**
- * The email list with filters and enable toggles. A toggle is applied at once and rolled back, with a
- * message, if the server refuses it.
+ * The email list with filters (kept in the address) and enable toggles. A toggle is applied at once and
+ * rolled back, with a message, if the server refuses it.
  */
 export function useEmails() {
-	const [ filters, setFilters ] = useState< EmailFilters >( {
-		search: '',
-		recipient_type: 'all',
+	const address = useListState< EmailFilters >( NO_FILTERS, {
+		search: 's',
 	} );
+	const { filters } = address;
 	const [ items, setItems ] = useState< EmailTemplate[] >( [] );
 	const [ pending, setPending ] = useState< readonly string[] >( [] );
 	const [ toggleError, setToggleError ] = useState< string | null >( null );
@@ -162,7 +165,7 @@ export function useEmails() {
 		error: list.error,
 		reload: list.reload,
 		filters,
-		setFilters,
+		setFilters: address.setFilters,
 		pending,
 		toggle,
 		toggleError,

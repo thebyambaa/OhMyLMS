@@ -63,18 +63,18 @@ export default function CourseEditorPage() {
 					{ __( 'Back to courses', 'ohmylms' ) }
 				</Link>
 			</p>
-			<nav
-				aria-label={ __( 'Course editor sections', 'ohmylms' ) }
-				className="ohmylms-app-nav"
-			>
-				<ul>
-					{ tabs.map( ( row ) => (
-						<li key={ row.id }>
+			<nav aria-label={ __( 'Course editor sections', 'ohmylms' ) }>
+				<ul className="subsubsub">
+					{ tabs.map( ( row, index ) => (
+						<li key={ row.id } className={ row.id }>
 							<Link
 								to={
 									'details' === row.id
 										? `/courses/${ id }`
 										: `/courses/${ id }/${ row.id }`
+								}
+								className={
+									row.id === tab.id ? 'current' : undefined
 								}
 								aria-current={
 									row.id === tab.id ? 'page' : undefined
@@ -82,10 +82,12 @@ export default function CourseEditorPage() {
 							>
 								{ row.label() }
 							</Link>
+							{ index < tabs.length - 1 ? ' | ' : null }
 						</li>
 					) ) }
 				</ul>
 			</nav>
+			<br className="clear" />
 			{ ( 'details' === tab.id || 'settings' === tab.id ) && (
 				<CourseForm key={ tab.id } id={ id } section={ tab.id } />
 			) }

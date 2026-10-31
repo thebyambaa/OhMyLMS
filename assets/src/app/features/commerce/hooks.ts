@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from '@wordpress/element';
+import { useEffect, useRef } from '@wordpress/element';
+import { useAddressQuery } from '../../components/listQuery';
 import type { ApiError } from '../../lib/api';
 import {
 	getOrder,
@@ -11,6 +12,9 @@ import {
 import { EMPTY_COUPON_QUERY, EMPTY_ORDER_QUERY } from './model';
 import { useRequest } from './useRequest';
 import type { CouponQuery, OrderQuery } from './types';
+
+/** Address names of order filters that differ from the query's. */
+const ORDER_NAMES = { search: 's', paymentMethod: 'payment_method' };
 
 /**
  * Step back one page when the current page no longer exists (the last row of a page was removed).
@@ -44,31 +48,34 @@ export function useStepBack(
 	}, [ error, page, invalid ] );
 }
 
-/** State of the order list: query, paging, filters and the request that follows them. */
+/**
+ * State of the order list: query, paging and filters, kept in the address (`&status=…&s=…&paged=…`),
+ * and the request that follows them.
+ */
 export function useOrders() {
-	const [ query, setQuery ] = useState< OrderQuery >( EMPTY_ORDER_QUERY );
+	const address = useAddressQuery( EMPTY_ORDER_QUERY, ORDER_NAMES );
+	const { query } = address;
 	const request = useRequest(
 		( signal ) => listOrders( query, signal ),
 		JSON.stringify( query )
 	);
 	useStepBack( request.error, query.page, 'ohmylms_order_invalid_page', () =>
-		setQuery( ( current ) => ( {
-			...current,
-			page: Math.max( 1, current.page - 1 ),
-		} ) )
+		address.setPage( Math.max( 1, query.page - 1 ), { replace: true } )
 	);
 	return {
 		...request,
 		query,
-		setPage: ( page: number ) =>
-			setQuery( ( current ) => ( { ...current, page } ) ),
+		setPage: ( page: number ) => address.setPage( page ),
+		pageHref: address.pageHref,
 		/**
 		 * Replace filters and return to the first page.
 		 *
 		 * @param filters Filters to change.
 		 */
 		setFilters: ( filters: Partial< OrderQuery > ) =>
-			setQuery( ( current ) => ( { ...current, ...filters, page: 1 } ) ),
+			address.setFilters( filters ),
+		filtersHref: ( filters: Partial< OrderQuery > ) =>
+			address.filtersHref( filters ),
 	};
 }
 
@@ -99,26 +106,26 @@ export function useNotes( id: number ) {
 	return useRequest( ( signal ) => listNotes( id, signal ), String( id ) );
 }
 
-/** State of the coupon list. */
+/** State of the coupon list, kept in the address. */
 export function useCoupons() {
-	const [ query, setQuery ] = useState< CouponQuery >( EMPTY_COUPON_QUERY );
+	const address = useAddressQuery( EMPTY_COUPON_QUERY, { search: 's' } );
+	const { query } = address;
 	const request = useRequest(
 		( signal ) => listCoupons( query, signal ),
 		JSON.stringify( query )
 	);
 	useStepBack( request.error, query.page, 'ohmylms_coupon_invalid_page', () =>
-		setQuery( ( current ) => ( {
-			...current,
-			page: Math.max( 1, current.page - 1 ),
-		} ) )
+		address.setPage( Math.max( 1, query.page - 1 ), { replace: true } )
 	);
 	return {
 		...request,
 		query,
-		setPage: ( page: number ) =>
-			setQuery( ( current ) => ( { ...current, page } ) ),
+		setPage: ( page: number ) => address.setPage( page ),
+		pageHref: address.pageHref,
 		setFilters: ( filters: Partial< CouponQuery > ) =>
-			setQuery( ( current ) => ( { ...current, ...filters, page: 1 } ) ),
+			address.setFilters( filters ),
+		filtersHref: ( filters: Partial< CouponQuery > ) =>
+			address.filtersHref( filters ),
 	};
 }
 

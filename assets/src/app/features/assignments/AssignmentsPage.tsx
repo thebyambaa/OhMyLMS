@@ -1,9 +1,14 @@
 import { ListTable, ListTableSelect } from '../../../ui/ListTable';
 import { Button, Modal, Notice, TextControl } from '@wordpress/components';
-import { useCallback, useState } from '@wordpress/element';
+import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useNavigate } from 'react-router-dom';
+import { useListState } from '../../components/listQuery';
 import { statusViews } from '../../components/listViews';
+import {
+	PageTitleAction,
+	PageTitleActions,
+} from '../../layout/PageTitleActions';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
 import {
@@ -34,6 +39,8 @@ function statusOptions(): Array< { value: StatusFilter; label: string } > {
 
 type Dialog = { kind: 'create' } | { kind: 'trash'; item: Assignment } | null;
 
+const ADDRESS_DEFAULTS = { search: '', status: 'all', course: '0' };
+
 /**
  * Assignment list (`#/assignments`): paged, searchable, filterable by status and course, with create
  * and a confirmed move to the trash. The editor is `#/assignments/<id>` and submissions are
@@ -41,13 +48,23 @@ type Dialog = { kind: 'create' } | { kind: 'trash'; item: Assignment } | null;
  */
 export default function AssignmentsPage() {
 	const navigate = useNavigate();
-	const [ page, setPage ] = useState( 1 );
-	const [ filters, setFilters ] = useState< ListFilters >( {
-		search: '',
-		status: 'all',
-		course: 0,
-	} );
-	const [ query, setQuery ] = useState( '' );
+	const address = useListState( ADDRESS_DEFAULTS, { search: 's' } );
+	const { page, setPage } = address;
+	const filters = useMemo< ListFilters >(
+		() => ( {
+			search: address.filters.search,
+			status:
+				STATUS_FILTERS.find(
+					( status ) => status === address.filters.status
+				) ?? 'all',
+			course: /^\d+$/.test( address.filters.course )
+				? Number( address.filters.course )
+				: 0,
+		} ),
+		[ address.filters ]
+	);
+	const [ query, setQuery ] = useState( filters.search );
+	useEffect( () => setQuery( filters.search ), [ filters.search ] );
 	const [ dialog, setDialog ] = useState< Dialog >( null );
 	const [ title, setTitle ] = useState( '' );
 	const [ titleError, setTitleError ] = useState< string | null >( null );
@@ -64,9 +81,16 @@ export default function AssignmentsPage() {
 	);
 	const courses = useRequest( loadCourses );
 
+	const toAddress = ( next: Partial< ListFilters > ) => {
+		const merged = { ...filters, ...next };
+		return {
+			search: merged.search,
+			status: merged.status,
+			course: String( merged.course ),
+		};
+	};
 	function filter( next: Partial< ListFilters > ) {
-		setFilters( ( current ) => ( { ...current, ...next } ) );
-		setPage( 1 );
+		address.setFilters( toAddress( next ) );
 	}
 	function open( next: Dialog ) {
 		operation.clearError();
@@ -131,17 +155,17 @@ export default function AssignmentsPage() {
 
 	return (
 		<>
-			<h2>{ __( 'Assignments', 'ohmylms' ) }</h2>
-			<Button
-				variant="primary"
-				disabled={ operation.busy }
-				onClick={ () => {
-					setTitle( '' );
-					open( { kind: 'create' } );
-				} }
-			>
-				{ __( 'Add assignment', 'ohmylms' ) }
-			</Button>
+			<PageTitleActions>
+				<PageTitleAction
+					disabled={ operation.busy }
+					onClick={ () => {
+						setTitle( '' );
+						open( { kind: 'create' } );
+					} }
+				>
+					{ __( 'Add assignment', 'ohmylms' ) }
+				</PageTitleAction>
+			</PageTitleActions>
 			{ message && (
 				<Notice status="success" onRemove={ () => setMessage( null ) }>
 					{ message }
@@ -161,6 +185,7 @@ export default function AssignmentsPage() {
 			{ ! list.loading && list.data && (
 				<ListTable
 					caption={ __( 'Assignments', 'ohmylms' ) }
+					heading={ __( 'Assignments list', 'ohmylms' ) }
 					formLabel={ __( 'Search assignments', 'ohmylms' ) }
 					busy={ operation.busy }
 					rows={ list.data.items }
@@ -177,7 +202,11 @@ export default function AssignmentsPage() {
 							if ( found ) {
 								filter( { status: found } );
 							}
-						}
+						},
+						( value ) =>
+							address.filtersHref(
+								toAddress( { status: value as StatusFilter } )
+							)
 					) }
 					search={ {
 						label: __( 'Search assignments', 'ohmylms' ),
@@ -216,6 +245,7 @@ export default function AssignmentsPage() {
 							list.data.total
 						),
 						onChange: setPage,
+						href: address.pageHref,
 					} }
 					columns={ [
 						{

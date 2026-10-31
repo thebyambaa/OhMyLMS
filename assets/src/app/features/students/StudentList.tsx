@@ -1,6 +1,6 @@
 import { ListTable, ListTableSelect } from '../../../ui/ListTable';
 import { Button, Notice } from '@wordpress/components';
-import { useState } from '@wordpress/element';
+import { useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
 import {
@@ -16,14 +16,14 @@ import { useCourseOptions, useStudents } from './useStudents';
 export function StudentList() {
 	const list = useStudents();
 	const courses = useCourseOptions( '' );
-	const [ text, setText ] = useState( '' );
+	const [ text, setText ] = useState( list.query.search );
+	useEffect( () => setText( list.query.search ), [ list.query.search ] );
 	const sortChoices = getSortChoices();
 	const items = list.data?.items ?? [];
 	const total = list.data?.total ?? 0;
 
 	return (
 		<>
-			<h2>{ __( 'Students', 'ohmylms' ) }</h2>
 			<p>
 				{ __(
 					'Everyone with the student role or an enrolment. Open a student to see progress and manage enrolments.',
@@ -64,6 +64,7 @@ export function StudentList() {
 			{ ! list.loading && ! list.error && (
 				<ListTable
 					caption={ __( 'Students', 'ohmylms' ) }
+					heading={ __( 'Students list', 'ohmylms' ) }
 					formLabel={ __( 'Search students', 'ohmylms' ) }
 					rows={ items }
 					rowKey={ ( item ) => item.id }
@@ -132,6 +133,7 @@ export function StudentList() {
 							total
 						),
 						onChange: list.setPage,
+						href: list.pageHref,
 					} }
 					columns={ [
 						{

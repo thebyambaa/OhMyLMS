@@ -1,16 +1,41 @@
-import { useEffect, useState } from '@wordpress/element';
+import { useEffect, useMemo, useState } from '@wordpress/element';
+import { useListState } from '../../components/listQuery';
 import { getStudent, listCourses, listEnrollments, listStudents } from './api';
 import { EMPTY_ENROLLMENT_QUERY, EMPTY_QUERY, getSortChoices } from './model';
 import { useRequest } from './useRequest';
 import type { EnrollmentQuery, ProgressFilter, StudentQuery } from './types';
 
+const LIST_DEFAULTS = {
+	search: EMPTY_QUERY.search,
+	course: '',
+	orderby: EMPTY_QUERY.orderby as string,
+	order: EMPTY_QUERY.order as string,
+};
+
 /**
- * State of the student list: query, paging, filters and the request that follows them.
- * A page that no longer exists (after the last student of a page was removed elsewhere)
- * steps back one page.
+ * State of the student list: query, paging and filters, kept in the address (`&s=…&course=…&orderby=…
+ * &order=…&paged=…`), and the request that follows them. A page that no longer exists (after the last
+ * student of a page was removed elsewhere) steps back one page.
  */
 export function useStudents() {
-	const [ query, setQuery ] = useState< StudentQuery >( EMPTY_QUERY );
+	const list = useListState( LIST_DEFAULTS, { search: 's' } );
+	const query = useMemo< StudentQuery >( () => {
+		const sort =
+			getSortChoices().find(
+				( option ) =>
+					option.orderby === list.filters.orderby &&
+					option.order === list.filters.order
+			) ?? EMPTY_QUERY;
+		return {
+			page: list.page,
+			search: list.filters.search,
+			course: /^[1-9]\d*$/.test( list.filters.course )
+				? Number( list.filters.course )
+				: null,
+			orderby: sort.orderby,
+			order: sort.order,
+		};
+	}, [ list.page, list.filters ] );
 	const request = useRequest(
 		( signal ) => listStudents( query, signal ),
 		JSON.stringify( query )
@@ -21,33 +46,27 @@ export function useStudents() {
 			query.page > 1 &&
 			'ohmylms_student_invalid_page' === error?.code
 		) {
-			setQuery( ( current ) => ( {
-				...current,
-				page: Math.max( 1, current.page - 1 ),
-			} ) );
+			list.setPage( Math.max( 1, query.page - 1 ), { replace: true } );
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ error, query.page ] );
+	const filter = ( change: Partial< typeof LIST_DEFAULTS > ) =>
+		list.setFilters( { ...list.filters, ...change } );
 
 	return {
 		...request,
 		query,
-		setPage: ( page: number ) =>
-			setQuery( ( current ) => ( { ...current, page } ) ),
-		setSearch: ( search: string ) =>
-			setQuery( ( current ) => ( { ...current, search, page: 1 } ) ),
+		setPage: ( page: number ) => list.setPage( page ),
+		pageHref: list.pageHref,
+		setSearch: ( search: string ) => filter( { search } ),
 		setCourse: ( course: number | null ) =>
-			setQuery( ( current ) => ( { ...current, course, page: 1 } ) ),
+			filter( { course: null === course ? '' : String( course ) } ),
 		setSort: ( value: string ) => {
 			const choice = getSortChoices().find(
 				( option ) => option.value === value
 			);
 			if ( choice ) {
-				setQuery( ( current ) => ( {
-					...current,
-					orderby: choice.orderby,
-					order: choice.order,
-					page: 1,
-				} ) );
+				filter( { orderby: choice.orderby, order: choice.order } );
 			}
 		},
 	};

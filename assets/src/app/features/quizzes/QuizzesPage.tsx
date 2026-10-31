@@ -8,6 +8,10 @@ import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { statusViews } from '../../components/listViews';
+import {
+	PageTitleAction,
+	PageTitleActions,
+} from '../../layout/PageTitleActions';
 import { normalizeApiError } from '../../lib/api';
 import { saveFile } from '../questions/public';
 import { exportQuiz } from './exchange';
@@ -40,7 +44,8 @@ export default function QuizzesPage() {
 	const navigate = useNavigate();
 	const [ params, setParams ] = useSearchParams();
 	const action = params.get( 'action' );
-	const [ query, setQuery ] = useState( '' );
+	const [ query, setQuery ] = useState( list.searchTerm );
+	useEffect( () => setQuery( list.searchTerm ), [ list.searchTerm ] );
 	const [ courseQuery, setCourseQuery ] = useState( '' );
 	const [ dialog, setDialog ] = useState< Dialog >( null );
 	const [ title, setTitle ] = useState( '' );
@@ -203,34 +208,33 @@ export default function QuizzesPage() {
 
 	return (
 		<>
-			<h2>{ __( 'Quizzes', 'ohmylms' ) }</h2>
+			<PageTitleActions>
+				<PageTitleAction
+					disabled={ busy }
+					onClick={ () => {
+						setTitle( '' );
+						setError( null );
+						setDialog( { kind: 'create' } );
+					} }
+				>
+					{ __( 'Add quiz', 'ohmylms' ) }
+				</PageTitleAction>
+				<PageTitleAction
+					disabled={ busy }
+					onClick={ () => {
+						setError( null );
+						setDialog( { kind: 'import' } );
+					} }
+				>
+					{ __( 'Import quiz', 'ohmylms' ) }
+				</PageTitleAction>
+			</PageTitleActions>
 			<p>
 				{ __(
 					'Set up quizzes, review attempts and grade written answers. Questions are edited in the question screens.',
 					'ohmylms'
 				) }
 			</p>
-			<Button
-				variant="primary"
-				disabled={ busy }
-				onClick={ () => {
-					setTitle( '' );
-					setError( null );
-					setDialog( { kind: 'create' } );
-				} }
-			>
-				{ __( 'Add quiz', 'ohmylms' ) }
-			</Button>{ ' ' }
-			<Button
-				variant="secondary"
-				disabled={ busy }
-				onClick={ () => {
-					setError( null );
-					setDialog( { kind: 'import' } );
-				} }
-			>
-				{ __( 'Import quiz', 'ohmylms' ) }
-			</Button>
 			{ message && (
 				<Notice status="success" onRemove={ () => setMessage( null ) }>
 					{ message }
@@ -255,6 +259,7 @@ export default function QuizzesPage() {
 			{ ! list.loading && ! list.error && (
 				<ListTable< Quiz >
 					caption={ __( 'Quizzes', 'ohmylms' ) }
+					heading={ __( 'Quizzes list', 'ohmylms' ) }
 					formLabel={ __( 'Search quizzes', 'ohmylms' ) }
 					busy={ busy }
 					rows={ list.data.items }
@@ -265,7 +270,8 @@ export default function QuizzesPage() {
 						statusOptions,
 						list.status,
 						list.data.total,
-						list.setStatus
+						list.setStatus,
+						list.statusHref
 					) }
 					search={ {
 						label: __( 'Search quizzes', 'ohmylms' ),
@@ -308,6 +314,7 @@ export default function QuizzesPage() {
 							list.data.total
 						),
 						onChange: list.setPage,
+						href: list.pageHref,
 					} }
 					columns={ [
 						{

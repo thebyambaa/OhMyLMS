@@ -10,6 +10,11 @@ import {
 import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
+import { useListQuery } from '../../components/listQuery';
+import {
+	PageTitleAction,
+	PageTitleActions,
+} from '../../layout/PageTitleActions';
 import { normalizeApiError } from '../../lib/api';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import { useRequest } from '../../hooks/useRequest';
@@ -33,6 +38,12 @@ const empty: ItemInput = {
 	is_syllabus: false,
 	icon: '',
 };
+const NO_FILTER = { s: '' };
+
+/**
+ * Curriculum (Curriculum › Syllabuses): the curriculum tree, filtered by the address's `s`, with the
+ * item editor. "Add curriculum item" switches the editor to a new item.
+ */
 export default function CurriculumPage() {
 	const load = useCallback(
 		( signal: AbortSignal ) => readWorkspace( signal ),
@@ -42,7 +53,17 @@ export default function CurriculumPage() {
 	const [ editing, setEditing ] = useState< CurriculumItem | null >( null );
 	const [ input, setInput ] = useState< ItemInput >( empty );
 	const [ parent, setParent ] = useState( 0 );
-	const [ search, setSearch ] = useState( '' );
+	const filter = useListQuery( NO_FILTER );
+	const search = filter.values.s;
+	const setSearch = ( value: string ) =>
+		filter.set( { s: value }, { replace: true } );
+	const form = useRef< HTMLFormElement >( null );
+	const [ focusForm, setFocusForm ] = useState( 0 );
+	useEffect( () => {
+		if ( focusForm ) {
+			form.current?.querySelector< HTMLInputElement >( 'input' )?.focus();
+		}
+	}, [ focusForm ] );
 	const [ busy, setBusy ] = useState( false );
 	const [ error, setError ] = useState( '' );
 	const [ message, setMessage ] = useState( '' );
@@ -133,28 +154,17 @@ export default function CurriculumPage() {
 	];
 	return (
 		<section aria-label={ __( 'Curriculum', 'ohmylms' ) }>
-			<h1>{ __( 'Curriculum', 'ohmylms' ) }</h1>
-			<p>
-				<Link to="/content-hub/courses">
-					{ __( 'Open courses', 'ohmylms' ) }
-				</Link>{ ' ' }
-				·{ ' ' }
-				<Link to="/content-hub/skills">
-					{ __( 'Open skills', 'ohmylms' ) }
-				</Link>{ ' ' }
-				·{ ' ' }
-				<Link to="/content-hub/curriculum/skill-map">
-					{ __( 'Skill map', 'ohmylms' ) }
-				</Link>{ ' ' }
-				·{ ' ' }
-				<Link to="/content-hub/curriculum/subjects">
-					{ __( 'Subject profiles', 'ohmylms' ) }
-				</Link>{ ' ' }
-				·{ ' ' }
-				<Link to="/content-hub/bundles">
-					{ __( 'Course bundles', 'ohmylms' ) }
-				</Link>
-			</p>
+			<PageTitleActions>
+				<PageTitleAction
+					disabled={ busy }
+					onClick={ () => {
+						choose( null );
+						setFocusForm( ( current ) => current + 1 );
+					} }
+				>
+					{ __( 'Add curriculum item', 'ohmylms' ) }
+				</PageTitleAction>
+			</PageTitleActions>
 			{ request.loading && (
 				<p role="status">{ __( 'Loading curriculum…', 'ohmylms' ) }</p>
 			) }
@@ -230,6 +240,7 @@ export default function CurriculumPage() {
 					: __( 'New curriculum item', 'ohmylms' ) }
 			</h2>
 			<form
+				ref={ form }
 				onSubmit={ ( event ) => {
 					event.preventDefault();
 					void run( ( signal ) =>

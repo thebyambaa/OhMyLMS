@@ -7,6 +7,7 @@ import {
 	ListTableInput,
 	ListTableSelect,
 } from '../../../ui/ListTable';
+import { useSearchHref } from '../../components/listQuery';
 import { statusViews } from '../../components/listViews';
 import { useRequest } from '../../hooks/useRequest';
 import { listCourses } from './api';
@@ -65,16 +66,19 @@ export default function QuizReportsPage() {
 	const [ courseQuery, setCourseQuery ] = useState( '' );
 	useEffect( () => setText( query.search ), [ query.search ] );
 
-	function update( change: Partial< QuizReportQuery > ) {
-		setParams(
-			paramsFromQuery( {
-				...query,
-				page: 1,
-				...change,
-			} ),
-			{ replace: true }
-		);
+	const searchHref = useSearchHref();
+	function next( change: Partial< QuizReportQuery > ) {
+		return paramsFromQuery( {
+			...query,
+			page: 1,
+			...change,
+		} );
 	}
+	function update( change: Partial< QuizReportQuery > ) {
+		setParams( next( change ) );
+	}
+	const hrefOf = ( change: Partial< QuizReportQuery > ) =>
+		searchHref( next( change ).toString() );
 
 	const loadRows = useCallback(
 		( signal: AbortSignal ) =>
@@ -129,7 +133,6 @@ export default function QuizReportsPage() {
 
 	return (
 		<>
-			<h2>{ __( 'Quiz reports', 'ohmylms' ) }</h2>
 			<p>
 				{ __(
 					'Attempts, grading and results across the quizzes you may grade. Open a quiz to review and grade its attempts.',
@@ -169,6 +172,7 @@ export default function QuizReportsPage() {
 			{ ! rows.error && ( ! rows.loading || items.length > 0 ) && (
 				<ListTable
 					caption={ __( 'Quiz reports', 'ohmylms' ) }
+					heading={ __( 'Quiz reports', 'ohmylms' ) }
 					formLabel={ __( 'Filter quiz reports', 'ohmylms' ) }
 					busy={ rows.loading }
 					rows={ items }
@@ -190,6 +194,10 @@ export default function QuizReportsPage() {
 						total,
 						( value ) =>
 							update( {
+								status: value as QuizReportQuery[ 'status' ],
+							} ),
+						( value ) =>
+							hrefOf( {
 								status: value as QuizReportQuery[ 'status' ],
 							} )
 					) }
@@ -276,6 +284,7 @@ export default function QuizReportsPage() {
 							total
 						),
 						onChange: ( page ) => update( { page } ),
+						href: ( page ) => hrefOf( { page } ),
 					} }
 					columns={ [
 						{

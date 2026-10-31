@@ -4,17 +4,26 @@ import { __ } from '@wordpress/i18n';
 import { useSearchParams } from 'react-router-dom';
 import { ListTable } from '../../../ui/ListTable';
 import { useBootstrap } from '../../bootstrap/BootstrapContext';
+import { useListState } from '../../components/listQuery';
+import {
+	PageTitleAction,
+	PageTitleActions,
+} from '../../layout/PageTitleActions';
 import { normalizeApiError } from '../../lib/api';
 import type { Collection } from '../../lib/api/collection';
 import { changeArchive, listSkills, type SkillSummary } from './api';
 import { SkillEditor } from './SkillEditor';
 import { SkillLinks } from './SkillLinks';
 
+const NO_FILTERS = { search: '' };
+
 export default function SkillsPage() {
 	const { user } = useBootstrap();
-	const [ query, setQuery ] = useState( '' );
-	const [ search, setSearch ] = useState( '' );
-	const [ page, setPage ] = useState( 1 );
+	const list = useListState( NO_FILTERS, { search: 's' } );
+	const { page, setPage } = list;
+	const search = list.filters.search;
+	const [ query, setQuery ] = useState( search );
+	useEffect( () => setQuery( search ), [ search ] );
 	const [ version, setVersion ] = useState( 0 );
 	const [ data, setData ] = useState< Collection< SkillSummary > >( {
 		items: [],
@@ -70,7 +79,7 @@ export default function SkillsPage() {
 					page > 1 &&
 					problem.code === 'ohmylms_skill_invalid_page'
 				) {
-					setPage( ( current ) => current - 1 );
+					setPage( page - 1, { replace: true } );
 					return;
 				}
 				setError( problem.message );
@@ -78,6 +87,7 @@ export default function SkillsPage() {
 			}
 		);
 		return () => controller.abort();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ page, search, version ] );
 	async function run( work: ( signal: AbortSignal ) => Promise< void > ) {
 		if ( operation.current ) {
@@ -102,10 +112,18 @@ export default function SkillsPage() {
 		}
 	}
 	return (
-		<section aria-labelledby="skills-heading">
-			<h2 id="skills-heading">
-				{ __( 'Content Hub — Skills', 'ohmylms' ) }
-			</h2>
+		<section>
+			<PageTitleActions>
+				<PageTitleAction
+					disabled={ busy }
+					onClick={ () => {
+						setMessage( null );
+						setEditor( { item: null } );
+					} }
+				>
+					{ __( 'Add skill', 'ohmylms' ) }
+				</PageTitleAction>
+			</PageTitleActions>
 			<p>
 				{ __(
 					'Shared skills, hierarchy and prerequisites. Skills are a core feature.',
@@ -129,16 +147,6 @@ export default function SkillsPage() {
 					</Button>
 				</Notice>
 			) }
-			<Button
-				variant="primary"
-				disabled={ busy }
-				onClick={ () => {
-					setMessage( null );
-					setEditor( { item: null } );
-				} }
-			>
-				{ __( 'Add skill', 'ohmylms' ) }
-			</Button>
 			<div aria-live="polite">
 				{ loading && __( 'Loading skills…', 'ohmylms' ) }
 			</div>
@@ -146,6 +154,7 @@ export default function SkillsPage() {
 				<div aria-busy={ loading }>
 					<ListTable< SkillSummary >
 						caption={ __( 'Skills library', 'ohmylms' ) }
+						heading={ __( 'Skills list', 'ohmylms' ) }
 						formLabel={ __( 'Find skills', 'ohmylms' ) }
 						busy={ busy || loading }
 						rows={ data.items }
@@ -160,8 +169,7 @@ export default function SkillsPage() {
 							maxLength: 200,
 							onChange: setQuery,
 							onSubmit: () => {
-								setSearch( query.trim() );
-								setPage( 1 );
+								list.setFilters( { search: query.trim() } );
 								setVersion( ( current ) => current + 1 );
 							},
 						} }
@@ -169,6 +177,7 @@ export default function SkillsPage() {
 							page,
 							totalPages: data.totalPages,
 							onChange: setPage,
+							href: list.pageHref,
 						} }
 						columns={ [
 							{

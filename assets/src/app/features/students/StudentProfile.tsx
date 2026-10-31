@@ -1,4 +1,4 @@
-import { Table } from '../../../ui/Table';
+import { WidefatTable } from '../../components/WidefatTable';
 import {
 	Button,
 	Modal,
@@ -390,12 +390,11 @@ export function StudentProfile( { studentId }: { studentId: number } ) {
 								enrollments.data?.total ?? 0
 							) }
 						</p>
-						<Table
+						<WidefatTable
 							caption={ __(
 								'Enrolments and progress',
 								'ohmylms'
 							) }
-							striped
 						>
 							<thead>
 								<tr>
@@ -473,7 +472,7 @@ export function StudentProfile( { studentId }: { studentId: number } ) {
 									</tr>
 								) ) }
 							</tbody>
-						</Table>
+						</WidefatTable>
 						<Pagination
 							page={ enrollments.query.page }
 							pages={ enrollments.data?.totalPages ?? 1 }

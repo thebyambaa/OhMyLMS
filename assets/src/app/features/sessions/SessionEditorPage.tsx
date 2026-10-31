@@ -10,8 +10,7 @@ import {
 import { useCallback, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Table } from '../../../ui/Table';
-import { Pagination } from '../../components/Pagination';
+import { ListTable } from '../../../ui/ListTable';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
 import {
@@ -59,62 +58,53 @@ function Attendees( { sessionId }: { sessionId: number } ) {
 					{ request.error }
 				</Notice>
 			) }
-			{ request.loading && (
+			{ request.loading && ! request.data && (
 				<p role="status">{ __( 'Loading attendees…', 'ohmylms' ) }</p>
 			) }
-			{ ! request.loading && ! request.error && ! items.length && (
-				<p>
-					{ __(
+			{ ! request.error && request.data && (
+				<ListTable< ( typeof items )[ number ] >
+					caption={ __( 'Attendees', 'ohmylms' ) }
+					busy={ request.loading }
+					footer={ false }
+					rows={ items }
+					rowKey={ ( attendee ) => attendee.user_id }
+					emptyMessage={ __(
 						'No students yet. Link the session to a course with enrolled students.',
 						'ohmylms'
 					) }
-				</p>
-			) }
-			{ items.length > 0 && (
-				<>
-					<Table
-						caption={ __( 'Attendees', 'ohmylms' ) }
-						striped
-						compact
-					>
-						<thead>
-							<tr>
-								<th scope="col">
-									{ __( 'Student', 'ohmylms' ) }
-								</th>
-								<th scope="col">
-									{ __( 'Access', 'ohmylms' ) }
-								</th>
-								<th scope="col">
-									{ __( 'Session completed', 'ohmylms' ) }
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							{ items.map( ( attendee ) => (
-								<tr key={ attendee.user_id }>
-									<th scope="row">{ attendee.name }</th>
-									<td>
-										{ 'banned' === attendee.status
-											? __( 'Blocked', 'ohmylms' )
-											: __( 'Enrolled', 'ohmylms' ) }
-									</td>
-									<td>
-										{ attendee.completed
-											? __( 'Yes', 'ohmylms' )
-											: __( 'No', 'ohmylms' ) }
-									</td>
-								</tr>
-							) ) }
-						</tbody>
-					</Table>
-					<Pagination
-						page={ page }
-						pages={ request.data?.totalPages ?? 1 }
-						busy={ request.loading }
-						onChange={ setPage }
-					/>
-				</>
+					pagination={ {
+						page,
+						totalPages: request.data.totalPages,
+						totalItems: request.data.total,
+						onChange: setPage,
+					} }
+					columns={ [
+						{
+							id: 'student',
+							label: __( 'Student', 'ohmylms' ),
+							primary: true,
+							render: ( attendee ) => (
+								<strong>{ attendee.name }</strong>
+							),
+						},
+						{
+							id: 'access',
+							label: __( 'Access', 'ohmylms' ),
+							render: ( attendee ) =>
+								'banned' === attendee.status
+									? __( 'Blocked', 'ohmylms' )
+									: __( 'Enrolled', 'ohmylms' ),
+						},
+						{
+							id: 'completed',
+							label: __( 'Session completed', 'ohmylms' ),
+							render: ( attendee ) =>
+								attendee.completed
+									? __( 'Yes', 'ohmylms' )
+									: __( 'No', 'ohmylms' ),
+						},
+					] }
+				/>
 			) }
 		</section>
 	);

@@ -14,6 +14,39 @@ const keyOf = ( rowKey, row, index ) =>
 	String( rowKey ? rowKey( row, index ) : index );
 
 /**
+ * Whether a click on a link with a real address should be handled in place. Modified and non-primary
+ * clicks keep the browser's behaviour (open in a new tab or window).
+ *
+ * @param {MouseEvent} event Click event.
+ * @return {boolean} True for a plain primary click.
+ */
+const isPlainClick = ( event ) =>
+	0 === event.button &&
+	! event.metaKey &&
+	! event.ctrlKey &&
+	! event.shiftKey &&
+	! event.altKey;
+
+/**
+ * Click handler of a list-table link (view, sort or page): runs `run` instead of following the address
+ * on a plain click, and leaves modified clicks to the browser when the link has a real address.
+ *
+ * @param {string|undefined} href Real address, if any.
+ * @param {boolean}          busy Whether the table ignores input.
+ * @param {() => void}       run  In-place action.
+ * @return {(event: MouseEvent) => void} Click handler.
+ */
+const linkClick = ( href, busy, run ) => ( event ) => {
+	if ( href && ! isPlainClick( event ) ) {
+		return;
+	}
+	event.preventDefault();
+	if ( ! busy ) {
+		run();
+	}
+};
+
+/**
  * Screen-reader-only label for a native control, as WordPress prints it in list tables.
  *
  * @param {Object} props          Label properties.
@@ -154,7 +187,7 @@ function RowActions( { actions, visible } ) {
 	);
 }
 
-function PageButton( { kind, label, symbol, disabled, onClick } ) {
+function PageButton( { kind, label, symbol, disabled, href, onClick } ) {
 	if ( disabled ) {
 		return h(
 			'span',
@@ -165,11 +198,25 @@ function PageButton( { kind, label, symbol, disabled, onClick } ) {
 			symbol
 		);
 	}
+	const content = [
+		h( 'span', { key: 'label', className: 'screen-reader-text' }, label ),
+		h( 'span', { key: 'symbol', 'aria-hidden': 'true' }, symbol ),
+	];
+	if ( href ) {
+		return h(
+			'a',
+			{
+				className: `${ kind } button`,
+				href,
+				onClick: linkClick( href, false, onClick ),
+			},
+			content
+		);
+	}
 	return h(
 		'button',
 		{ type: 'button', className: `${ kind } button`, onClick },
-		h( 'span', { className: 'screen-reader-text' }, label ),
-		h( 'span', { 'aria-hidden': 'true' }, symbol )
+		content
 	);
 }
 
@@ -180,6 +227,7 @@ function Pages( { pagination, position, baseId, busy } ) {
 		totalItems,
 		itemsLabel,
 		onChange,
+		href,
 		disabled = false,
 	} = pagination;
 	const pages = Math.max( 1, totalPages || 1 );
@@ -225,6 +273,7 @@ function Pages( { pagination, position, baseId, busy } ) {
 				label: __( 'First page', 'ohmylms' ),
 				symbol: '«',
 				disabled: locked || current <= 1,
+				href: href?.( 1 ),
 				onClick: () => go( 1 ),
 			} ),
 			' ',
@@ -233,6 +282,7 @@ function Pages( { pagination, position, baseId, busy } ) {
 				label: __( 'Previous page', 'ohmylms' ),
 				symbol: '‹',
 				disabled: locked || current <= 1,
+				href: href?.( current - 1 ),
 				onClick: () => go( current - 1 ),
 			} ),
 			' ',
@@ -303,6 +353,7 @@ function Pages( { pagination, position, baseId, busy } ) {
 				label: __( 'Next page', 'ohmylms' ),
 				symbol: '›',
 				disabled: locked || current >= pages,
+				href: href?.( current + 1 ),
 				onClick: () => go( current + 1 ),
 			} ),
 			' ',
@@ -311,6 +362,7 @@ function Pages( { pagination, position, baseId, busy } ) {
 				label: __( 'Last page', 'ohmylms' ),
 				symbol: '»',
 				disabled: locked || current >= pages,
+				href: href?.( pages ),
 				onClick: () => go( pages ),
 			} )
 		)
@@ -332,12 +384,7 @@ function Views( { views, busy } ) {
 						className: view.current ? 'current' : undefined,
 						'aria-current': view.current ? 'page' : undefined,
 						onClick: view.onSelect
-							? ( event ) => {
-									event.preventDefault();
-									if ( ! busy ) {
-										view.onSelect();
-									}
-								}
+							? linkClick( view.href, busy, view.onSelect )
 							: undefined,
 					},
 					view.label,
@@ -353,7 +400,7 @@ function Views( { views, busy } ) {
 							)
 						)
 				),
-				index < views.length - 1 ? ' |' : null
+				index < views.length - 1 ? ' | ' : null
 			)
 		)
 	);
@@ -366,16 +413,14 @@ function SortLink( { column, sort, busy } ) {
 	if ( sorted ) {
 		next = 'asc' === sort.order ? 'desc' : 'asc';
 	}
+	const href = sort.href?.( column.id, next );
 	return h(
 		'a',
 		{
-			href: sort.href ? sort.href( column.id, next ) : '#',
-			onClick: ( event ) => {
-				event.preventDefault();
-				if ( ! busy ) {
-					sort.onChange( column.id, next );
-				}
-			},
+			href: href ?? '#',
+			onClick: linkClick( href, busy, () =>
+				sort.onChange( column.id, next )
+			),
 		},
 		h( 'span', null, column.heading ?? column.label ),
 		h(
@@ -438,6 +483,7 @@ export function ListTable( props ) {
 		className = '',
 		formLabel,
 		tablenavExtra,
+		heading,
 	} = props;
 	const baseId = `oml-list-${ useId().replace( /[^a-zA-Z0-9_-]/g, '' ) }`;
 	const visibleColumns = columns.filter( ( column ) => ! column.hidden );
@@ -883,6 +929,7 @@ export function ListTable( props ) {
 	return h(
 		'div',
 		{ className: 'ohmylms-list-table-wrap' },
+		heading && h( 'h2', { className: 'screen-reader-text' }, heading ),
 		views && views.length > 0 && h( Views, { views, busy: locked } ),
 		content
 	);

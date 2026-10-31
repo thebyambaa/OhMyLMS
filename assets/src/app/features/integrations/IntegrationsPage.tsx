@@ -1,14 +1,9 @@
-import { Table } from '../../../ui/Table';
-import {
-	Button,
-	Notice,
-	SelectControl,
-	TextControl,
-	ToggleControl,
-} from '@wordpress/components';
+import { ListTable, ListTableSelect } from '../../../ui/ListTable';
+import { Button, Notice, ToggleControl } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { useSearchParams } from 'react-router-dom';
+import { useListQuery } from '../../components/listQuery';
 import { setIntegrationEnabled } from './api';
 import { useIntegrations, useOperation } from './hooks';
 import {
@@ -22,10 +17,40 @@ import {
 import { SettingsDialog } from './SettingsDialog';
 import type { Integration } from './types';
 
+const ALL = EMPTY_FILTERS.category;
+
+const ADDRESS_DEFAULTS = { s: '', category: ALL, status: 'all' };
+
+const STATES: ReadonlyArray< {
+	value: string;
+	label: () => string;
+	matches: ( item: Integration ) => boolean;
+} > = [
+	{ value: 'all', label: () => __( 'All', 'ohmylms' ), matches: () => true },
+	{
+		value: 'enabled',
+		label: () => __( 'Enabled', 'ohmylms' ),
+		matches: ( item ) => item.enabled,
+	},
+	{
+		value: 'disabled',
+		label: () => __( 'Disabled', 'ohmylms' ),
+		matches: ( item ) => ! item.enabled,
+	},
+];
+
+/**
+ * Integrations (Settings › Integrations), listed like the Plugins screen: views by state, search and
+ * category filter (kept in the address), a switch per add-on and its settings as a row action.
+ */
 export default function IntegrationsPage() {
 	const list = useIntegrations();
 	const toggle = useOperation();
-	const [ filters, setFilters ] = useState( EMPTY_FILTERS );
+	const query = useListQuery( ADDRESS_DEFAULTS );
+	const filters = { search: query.values.s, category: query.values.category };
+	const status =
+		STATES.find( ( state ) => state.value === query.values.status )
+			?.value ?? 'all';
 	const [ settingsFor, setSettingsFor ] = useState< Integration | null >(
 		null
 	);
@@ -35,7 +60,10 @@ export default function IntegrationsPage() {
 	const [ params, setParams ] = useSearchParams();
 	const auth = authNotice( params.get( 'auth' ), params.get( 'message' ) );
 
-	const visible = filterIntegrations( list.items, filters );
+	const matches =
+		STATES.find( ( state ) => state.value === status )?.matches ??
+		( () => true );
+	const shown = filterIntegrations( list.items, filters ).filter( matches );
 
 	function dismissAuth() {
 		setParams(
@@ -84,7 +112,6 @@ export default function IntegrationsPage() {
 
 	return (
 		<>
-			<h2>{ __( 'Integrations', 'ohmylms' ) }</h2>
 			<p>
 				{ __(
 					'Switch add-ons on or off and connect them to other services.',
@@ -139,159 +166,146 @@ export default function IntegrationsPage() {
 				</p>
 			) }
 			{ ! list.loading && ! list.error && (
-				<>
-					<div
-						role="search"
-						aria-label={ __( 'Filter integrations', 'ohmylms' ) }
-					>
-						<TextControl
-							label={ __( 'Search integrations', 'ohmylms' ) }
-							type="search"
-							value={ filters.search }
-							onChange={ ( search ) =>
-								setFilters( ( current ) => ( {
-									...current,
-									search,
-								} ) )
-							}
-							__nextHasNoMarginBottom
-						/>
-						<SelectControl
+				<ListTable< Integration >
+					caption={ __( 'Integrations', 'ohmylms' ) }
+					heading={ __( 'Integrations list', 'ohmylms' ) }
+					formLabel={ __( 'Filter integrations', 'ohmylms' ) }
+					rows={ shown }
+					rowKey={ ( item ) => item.id }
+					rowLabel={ ( item ) => item.label }
+					views={ STATES.map( ( state ) => ( {
+						key: state.value,
+						label: state.label(),
+						current: state.value === status,
+						count: list.items.filter( state.matches ).length,
+						href: query.href( { status: state.value } ),
+						onSelect: () => query.set( { status: state.value } ),
+					} ) ) }
+					search={ {
+						label: __( 'Search integrations', 'ohmylms' ),
+						submitLabel: __( 'Search', 'ohmylms' ),
+						value: filters.search,
+						onChange: ( search ) =>
+							query.set( { s: search }, { replace: true } ),
+					} }
+					filters={
+						<ListTableSelect
 							label={ __( 'Category', 'ohmylms' ) }
 							value={ filters.category }
 							options={ categoryOptions( list.items ) }
 							onChange={ ( category ) =>
-								setFilters( ( current ) => ( {
-									...current,
-									category,
-								} ) )
+								query.set( { category } )
 							}
-							__nextHasNoMarginBottom
 						/>
-					</div>
-					<p role="status">
-						{ sprintf(
+					}
+					filterLabel={ null }
+					pagination={ {
+						page: 1,
+						totalPages: 1,
+						totalItems: shown.length,
+						itemsLabel: sprintf(
 							/* translators: %d: number of integrations shown. */
 							_n(
 								'%d integration shown.',
 								'%d integrations shown.',
-								visible.length,
+								shown.length,
 								'ohmylms'
 							),
-							visible.length
-						) }
-					</p>
-					{ visible.length ? (
-						<Table
-							caption={ __( 'Integrations', 'ohmylms' ) }
-							striped
-						>
-							<thead>
-								<tr>
-									{ [
-										__( 'Integration', 'ohmylms' ),
-										__( 'Category', 'ohmylms' ),
-										__( 'Status', 'ohmylms' ),
-										__( 'Settings', 'ohmylms' ),
-									].map( ( title ) => (
-										<th key={ title } scope="col">
-											{ title }
-										</th>
-									) ) }
-								</tr>
-							</thead>
-							<tbody>
-								{ visible.map( ( item ) => (
-									<tr key={ item.id }>
-										<th scope="row">
-											{ item.label }
-											<br />
-											<span>{ item.description }</span>
-										</th>
-										<td>
-											{ item.categories
-												.map( categoryLabel )
-												.join( ', ' ) }
-										</td>
-										<td>
-											<ToggleControl
-												label={ sprintf(
-													/* translators: %s: integration name. */
-													__(
-														'Enable %s',
-														'ohmylms'
-													),
-													item.label
-												) }
-												checked={ item.enabled }
-												disabled={
-													toggle.busy ||
-													( ! item.available &&
-														! item.enabled )
-												}
-												help={
-													( item.available
-														? item.dependency
-														: item.unavailable_reason ) ??
-													undefined
-												}
-												onChange={ ( next ) =>
-													change( item, next )
-												}
-												__nextHasNoMarginBottom
-											/>
-											{ pending === item.id && (
-												<span role="status">
-													{ __(
-														'Saving…',
-														'ohmylms'
-													) }
-												</span>
-											) }
-										</td>
-										<td>
-											{ item.configurable && (
-												<Button
-													variant="secondary"
-													disabled={ toggle.busy }
-													onClick={ () =>
-														setSettingsFor( item )
-													}
-													aria-label={ sprintf(
-														/* translators: %s: integration name. */
-														__(
-															'Settings for %s',
-															'ohmylms'
-														),
-														item.label
-													) }
-												>
-													{ __(
-														'Settings',
-														'ohmylms'
-													) }
-												</Button>
-											) }
-										</td>
-									</tr>
-								) ) }
-							</tbody>
-						</Table>
-					) : (
-						<p>
+							shown.length
+						),
+						onChange: () => undefined,
+					} }
+					emptyMessage={
+						<>
 							{ __(
 								'No integrations match your filters.',
 								'ohmylms'
 							) }{ ' ' }
 							<Button
 								variant="link"
-								onClick={ () => setFilters( EMPTY_FILTERS ) }
+								onClick={ () =>
+									query.set( {
+										s: '',
+										category: ALL,
+										status: 'all',
+									} )
+								}
 							>
 								{ __( 'Clear filters', 'ohmylms' ) }
 							</Button>
-						</p>
-					) }
-				</>
+						</>
+					}
+					columns={ [
+						{
+							id: 'integration',
+							label: __( 'Integration', 'ohmylms' ),
+							primary: true,
+							render: ( item ) => (
+								<>
+									<strong>{ item.label }</strong>
+									<p>{ item.description }</p>
+								</>
+							),
+						},
+						{
+							id: 'category',
+							label: __( 'Category', 'ohmylms' ),
+							render: ( item ) =>
+								item.categories
+									.map( categoryLabel )
+									.join( ', ' ),
+						},
+						{
+							id: 'status',
+							label: __( 'Status', 'ohmylms' ),
+							render: ( item ) => (
+								<>
+									<ToggleControl
+										label={ sprintf(
+											/* translators: %s: integration name. */
+											__( 'Enable %s', 'ohmylms' ),
+											item.label
+										) }
+										checked={ item.enabled }
+										disabled={
+											toggle.busy ||
+											( ! item.available &&
+												! item.enabled )
+										}
+										help={
+											( item.available
+												? item.dependency
+												: item.unavailable_reason ) ??
+											undefined
+										}
+										onChange={ ( next ) =>
+											change( item, next )
+										}
+										__nextHasNoMarginBottom
+									/>
+									{ pending === item.id && (
+										<span role="status">
+											{ __( 'Saving…', 'ohmylms' ) }
+										</span>
+									) }
+								</>
+							),
+						},
+					] }
+					rowActions={ ( item ) => [
+						item.configurable && {
+							key: 'settings',
+							label: __( 'Settings', 'ohmylms' ),
+							disabled: toggle.busy,
+							ariaLabel: sprintf(
+								/* translators: %s: integration name. */
+								__( 'Settings for %s', 'ohmylms' ),
+								item.label
+							),
+							onClick: () => setSettingsFor( item ),
+						},
+					] }
+				/>
 			) }
 			{ settingsFor && (
 				<SettingsDialog

@@ -1,4 +1,4 @@
-import { Table } from '../../../ui/Table';
+import { WidefatTable } from '../../components/WidefatTable';
 import {
 	Button,
 	CheckboxControl,
@@ -231,7 +231,7 @@ export function ImportQuestionsDialog( {
 							{ shown.stopped }
 						</Notice>
 					) }
-					<Table
+					<WidefatTable
 						caption={
 							shown.dry_run
 								? __( 'Checked rows', 'ohmylms' )
@@ -263,7 +263,7 @@ export function ImportQuestionsDialog( {
 								</tr>
 							) ) }
 						</tbody>
-					</Table>
+					</WidefatTable>
 				</>
 			) }
 			{ current && (

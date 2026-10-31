@@ -5,7 +5,7 @@ import { usePagedList } from './usePagedList';
 
 /** Teachers tab: accounts with the teacher role or a school teacher membership. */
 export function TeachersTab() {
-	const list = usePagedList( listTeachers );
+	const list = usePagedList( listTeachers, true );
 
 	return (
 		<>

@@ -45,6 +45,12 @@ final class AdminNavigation {
 	const SECTIONS_ID = 'ohmylms-admin-sections';
 
 	/**
+	 * Id of the element after the heading where the app shows the screen's `.page-title-action` links.
+	 * Keep in sync with assets/src/app/layout/PageTitleActions.tsx.
+	 */
+	const TITLE_ACTIONS_ID = 'ohmylms-admin-title-actions';
+
+	/**
 	 * Id of the element the app mounts into. Keep in sync with assets/src/app/bootstrap/mount.tsx.
 	 */
 	const MOUNT_ID = 'ohmylms-app-root';
@@ -899,7 +905,11 @@ final class AdminNavigation {
 	}
 
 	/**
-	 * Print a page: heading, tabs, sections, then the app's mount point or the section the server renders.
+	 * Print a page: heading (with the slot for the screen's `.page-title-action` links), tabs, sections,
+	 * then the app's mount point or the section the server renders.
+	 *
+	 * A tab with sections and a list screen prints one `.subsubsub` per level, as WooCommerce's settings
+	 * sections over a list table do: the sections here, then the list's own views under them.
 	 */
 	public static function render() {
 		$current = self::current();
@@ -913,6 +923,9 @@ final class AdminNavigation {
 			<h1 class="wp-heading-inline"><?php echo esc_html( $group['label'] ); ?></h1>
 			<?php if ( 'dashboard' === $current['group'] ) : ?>
 				<a class="page-title-action" href="<?php echo esc_url( self::HELP_URL ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html__( 'Help & Feedback', 'ohmylms' ); ?></a>
+			<?php endif; ?>
+			<?php if ( ! $current['render'] ) : ?>
+				<span id="<?php echo esc_attr( self::TITLE_ACTIONS_ID ); ?>" class="ohmylms-title-actions"></span>
 			<?php endif; ?>
 			<hr class="wp-header-end">
 			<?php if ( $tabs ) : ?>
@@ -953,7 +966,7 @@ final class AdminNavigation {
 		<nav class="nav-tab-wrapper wp-clearfix" id="<?php echo esc_attr( self::TABS_ID ); ?>" aria-label="<?php echo esc_attr( $group['label'] ); ?>">
 			<?php foreach ( $tabs as $id => $tab ) : ?>
 				<?php $active = $id === $current['tab']; ?>
-				<a href="<?php echo esc_url( self::tab_url( $current['group'], $id ) ); ?>" class="nav-tab<?php echo $active ? ' nav-tab-active' : ''; ?>"<?php echo $active ? ' aria-current="page"' : ''; ?>><?php echo esc_html( $tab['label'] ); ?></a>
+				<a data-tab="<?php echo esc_attr( $id ); ?>" href="<?php echo esc_url( self::tab_url( $current['group'], $id ) ); ?>" class="nav-tab<?php echo $active ? ' nav-tab-active' : ''; ?>"<?php echo $active ? ' aria-current="page"' : ''; ?>><?php echo esc_html( $tab['label'] ); ?></a>
 			<?php endforeach; ?>
 		</nav>
 		<?php

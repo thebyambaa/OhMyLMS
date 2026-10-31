@@ -8,11 +8,14 @@ import {
 } from '@wordpress/components';
 import { useCallback, useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
-import { Link } from 'react-router-dom';
 import { ListTable } from '../../../ui/ListTable';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
+import {
+	PageTitleAction,
+	PageTitleActions,
+} from '../../layout/PageTitleActions';
 import { normalizeApiError } from '../../lib/api';
 import {
 	createBundle,
@@ -47,6 +50,7 @@ export default function BundlesPage() {
 	const [ message, setMessage ] = useState( '' );
 	const [ deleting, setDeleting ] = useState( false );
 	const [ followers, setFollowers ] = useState( 0 );
+	const [ creating, setCreating ] = useState( false );
 	const dirtyFields =
 		!! detail &&
 		( fields.title !== detail.bundle.title ||
@@ -118,13 +122,15 @@ export default function BundlesPage() {
 	const busy = operation.busy;
 	const bundle = detail?.bundle;
 	return (
-		<section aria-labelledby="bundles-heading">
-			<h1 id="bundles-heading">{ __( 'Course bundles', 'ohmylms' ) }</h1>
-			<p>
-				<Link to="/content-hub/curriculum">
-					{ __( 'Back to curriculum', 'ohmylms' ) }
-				</Link>
-			</p>
+		<section>
+			<PageTitleActions>
+				<PageTitleAction
+					disabled={ busy }
+					onClick={ () => setCreating( true ) }
+				>
+					{ __( 'Add bundle', 'ohmylms' ) }
+				</PageTitleAction>
+			</PageTitleActions>
 			<p>
 				{ __(
 					'A bundle groups courses and curriculum items that learners follow together. Publishing shows it to learners; unpublishing keeps their follows.',
@@ -167,19 +173,33 @@ export default function BundlesPage() {
 					) }
 				</Notice>
 			) }
-			<NewBundle
-				busy={ busy }
-				onCreate={ ( title, description ) =>
-					write(
-						( signal ) =>
-							createBundle( title, description, signal ),
-						__( 'Bundle created.', 'ohmylms' )
-					)
-				}
-			/>
+			{ creating && (
+				<Modal
+					title={ __( 'Add bundle', 'ohmylms' ) }
+					onRequestClose={ () => {
+						if ( ! busy ) {
+							setCreating( false );
+						}
+					} }
+					shouldCloseOnClickOutside={ false }
+				>
+					<NewBundle
+						busy={ busy }
+						onCreate={ ( title, description ) => {
+							setCreating( false );
+							write(
+								( signal ) =>
+									createBundle( title, description, signal ),
+								__( 'Bundle created.', 'ohmylms' )
+							);
+						} }
+					/>
+				</Modal>
+			) }
 			{ list.data && (
 				<ListTable
 					caption={ __( 'Bundles', 'ohmylms' ) }
+					heading={ __( 'Bundles list', 'ohmylms' ) }
 					rows={ list.data.bundles }
 					rowKey={ ( row ) => row.id }
 					emptyMessage={ __( 'No bundles yet.', 'ohmylms' ) }

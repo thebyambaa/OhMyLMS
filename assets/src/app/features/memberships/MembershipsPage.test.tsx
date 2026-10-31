@@ -167,7 +167,7 @@ describe( 'MembershipsPage', () => {
 		renderPage();
 		await screen.findByRole( 'table' );
 		await user.click(
-			screen.getAllByRole( 'button', { name: 'Next page' } )[ 0 ]!
+			screen.getAllByRole( 'link', { name: 'Next page' } )[ 0 ]!
 		);
 		await waitFor( () =>
 			expect( api.listMemberships ).toHaveBeenLastCalledWith(

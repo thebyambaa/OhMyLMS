@@ -557,6 +557,8 @@ try {
 	ok( false !== strpos( $content_html, 'class="nav-tab-wrapper wp-clearfix" id="' . AdminNavigation::TABS_ID . '"' ), 'page: tab row' );
 	ok( 8 === preg_match_all( '/class="nav-tab(?: nav-tab-active)?"/', $content_html ), 'page: one link per Content Hub tab' );
 	ok( false !== strpos( $content_html, 'href="' . esc_url( address_url( 'page=ohmylms-content&tab=courses' ) ) . '" class="nav-tab nav-tab-active" aria-current="page">Courses</a>' ), 'page: the current tab is a real, marked link' );
+	ok( false !== strpos( $content_html, '<a data-tab="lessons" href="' ), 'page: tab links name their tab for the app' );
+	ok( 1 === preg_match( '#</h1>\s*<span id="' . AdminNavigation::TITLE_ACTIONS_ID . '" class="ohmylms-title-actions"></span>\s*<hr class="wp-header-end">#', $content_html ), 'page: the screen actions slot follows the heading' );
 	ok( false !== strpos( $content_html, 'class="subsubsub" id="' . AdminNavigation::SECTIONS_ID . '"' ) && false !== strpos( $content_html, 'data-section="" class="current" aria-current="page">All courses</a>' ), 'page: sections with the current one marked' );
 	ok( false !== strpos( $content_html, 'id="' . AdminNavigation::MOUNT_ID . '" class="ohmylms-app" data-page="ohmylms-content" data-tab="courses" data-section=""' ), 'page: the mount point carries the place' );
 	ok( false === strpos( $content_html, LegacyRoutes::NOTICE_ID ), 'page: only the Dashboard has the legacy notice' );
@@ -582,7 +584,7 @@ try {
 			'section' => 'assessments',
 		)
 	);
-	ok( false !== strpos( $assessments_html, 'Skill assessments' ) && false === strpos( $assessments_html, AdminNavigation::MOUNT_ID ), 'page: the Assessments section is rendered by the server, without the app' );
+	ok( false !== strpos( $assessments_html, 'Skill assessments' ) && false === strpos( $assessments_html, AdminNavigation::MOUNT_ID ) && false === strpos( $assessments_html, AdminNavigation::TITLE_ACTIONS_ID ), 'page: the Assessments section is rendered by the server, without the app' );
 	ok( false !== strpos( $assessments_html, 'name="section" value="assessments"' ) && false === strpos( $assessments_html, 'page=' . \OhMyLMS\Assessment\SkillAssessmentPage::SLUG ), 'page: the Assessments forms stay on the section' );
 	$dashboard_html = render_page( array( 'page' => OHMYLMS_SLUG ) );
 	ok( false !== strpos( $dashboard_html, '<h1 class="wp-heading-inline">Dashboard</h1>' ) && false === strpos( $dashboard_html, 'nav-tab-wrapper' ), 'page: the Dashboard has no tabs' );

@@ -149,7 +149,9 @@ describe( 'student report', () => {
 		} );
 		await within( skills ).findByRole( 'table' );
 		await userEvent.click(
-			within( skills ).getByRole( 'button', { name: /next/i } )
+			within( skills ).getAllByRole( 'button', {
+				name: 'Next page',
+			} )[ 0 ]!
 		);
 		await waitFor( () =>
 			expect( as.skills ).toHaveBeenLastCalledWith(

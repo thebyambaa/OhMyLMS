@@ -1,4 +1,5 @@
 import { useEffect, useState } from '@wordpress/element';
+import { useListState } from '../../components/listQuery';
 import { ApiError, normalizeApiError } from '../../lib/api';
 import type { Collection } from '../../lib/api/collection';
 import { getAttempt, getQuiz, listAttempts } from './api';
@@ -9,20 +10,21 @@ import type {
 	QuizDetail,
 } from './types';
 
+const DEFAULT_FILTERS: AttemptFilters = { status: 'all', search: '' };
+
 /**
- * Paged, filterable attempt list of one quiz, plus the quiz itself for the page heading. Obsolete
- * requests are cancelled and their results ignored.
+ * Paged, filterable attempt list of one quiz, plus the quiz itself for the page heading. The page and
+ * filters live in the address. Obsolete requests are cancelled and their results ignored.
  *
  * @param quizId Quiz id, or `null` when the route id is invalid (nothing is requested).
  * @return The quiz, attempts, loading and error state, and the actions that change the query.
  */
 export function useAttempts( quizId: number | null ) {
 	const [ quiz, setQuiz ] = useState< QuizDetail | null >( null );
-	const [ page, setPage ] = useState( 1 );
-	const [ filters, setFilters ] = useState< AttemptFilters >( {
-		status: 'all',
-		search: '',
+	const list = useListState< AttemptFilters >( DEFAULT_FILTERS, {
+		search: 's',
 	} );
+	const { page, filters, setPage } = list;
 	const [ version, setVersion ] = useState( 0 );
 	const [ data, setData ] = useState< Collection< Attempt > >( {
 		items: [],
@@ -72,7 +74,7 @@ export function useAttempts( quizId: number | null ) {
 					page > 1 &&
 					'ohmylms_attempt_invalid_page' === problem.code
 				) {
-					setPage( page - 1 );
+					setPage( page - 1, { replace: true } );
 					return;
 				}
 				setError( problem );
@@ -80,6 +82,7 @@ export function useAttempts( quizId: number | null ) {
 			}
 		);
 		return () => controller.abort();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ quizId, page, filters, version ] );
 
 	return {
@@ -90,10 +93,9 @@ export function useAttempts( quizId: number | null ) {
 		page,
 		filters,
 		setPage,
-		setFilters: ( next: AttemptFilters ) => {
-			setPage( 1 );
-			setFilters( next );
-		},
+		setFilters: list.setFilters,
+		pageHref: list.pageHref,
+		filtersHref: list.filtersHref,
 		reload: () => setVersion( ( current ) => current + 1 ),
 	};
 }

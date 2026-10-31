@@ -102,3 +102,22 @@ export function tabId( id: string ): string {
 export function tabPanelId( id: string ): string {
 	return `ohmylms-settings-panel-${ id }`;
 }
+
+/**
+ * Properties of a panel: a `tabpanel` labelled by its tab button where this file's tab list renders,
+ * and a plain region on the admin pages, where the server prints the sections as links.
+ *
+ * @return Builds the properties of the panel `id` while `selected` is shown.
+ */
+export function useTabPanelProps() {
+	const place = useAdminPlace();
+	return ( id: string, selected: string ) =>
+		place
+			? { id: tabPanelId( id ), hidden: id !== selected }
+			: {
+					role: 'tabpanel',
+					id: tabPanelId( id ),
+					'aria-labelledby': tabId( id ),
+					hidden: id !== selected,
+				};
+}

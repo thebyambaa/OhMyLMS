@@ -188,7 +188,7 @@ describe( 'QuestionsPage', () => {
 			} )
 		);
 		await user.click(
-			screen.getAllByRole( 'button', { name: 'Next page' } )[ 0 ]!
+			screen.getAllByRole( 'link', { name: 'Next page' } )[ 0 ]!
 		);
 		await waitFor( () => expect( lastQuery().page ).toBe( 1 ) );
 		expect( api.listQuestions ).toHaveBeenCalledTimes( 3 );

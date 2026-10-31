@@ -11,6 +11,10 @@ import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { statusViews } from '../../components/listViews';
 import { useOperation } from '../../hooks/useOperation';
+import {
+	PageTitleAction,
+	PageTitleActions,
+} from '../../layout/PageTitleActions';
 import { useRequest } from '../../hooks/useRequest';
 import {
 	archiveQuestion,
@@ -76,7 +80,8 @@ export default function QuestionsPage() {
 	const [ params, setParams ] = useSearchParams();
 	const [ importing, setImporting ] = useState( false );
 	const [ selected, setSelected ] = useState< number[] >( [] );
-	const [ search, setSearch ] = useState( '' );
+	const [ search, setSearch ] = useState( list.query.search );
+	useEffect( () => setSearch( list.query.search ), [ list.query.search ] );
 	const [ creating, setCreating ] = useState( false );
 	const [ name, setName ] = useState( '' );
 	const [ type, setType ] = useState( '' );
@@ -228,30 +233,29 @@ export default function QuestionsPage() {
 
 	return (
 		<>
-			<h2>{ __( 'Question bank', 'ohmylms' ) }</h2>
+			<PageTitleActions>
+				<PageTitleAction
+					disabled={ operation.busy }
+					onClick={ openCreate }
+				>
+					{ __( 'New question', 'ohmylms' ) }
+				</PageTitleAction>
+				<PageTitleAction
+					disabled={ operation.busy }
+					onClick={ () => {
+						setMessage( null );
+						setImporting( true );
+					} }
+				>
+					{ __( 'Import questions', 'ohmylms' ) }
+				</PageTitleAction>
+			</PageTitleActions>
 			<p>
 				{ __(
 					'Questions you can reuse across quizzes. Each save keeps a version.',
 					'ohmylms'
 				) }
 			</p>
-			<Button
-				variant="primary"
-				disabled={ operation.busy }
-				onClick={ openCreate }
-			>
-				{ __( 'New question', 'ohmylms' ) }
-			</Button>{ ' ' }
-			<Button
-				variant="secondary"
-				disabled={ operation.busy }
-				onClick={ () => {
-					setMessage( null );
-					setImporting( true );
-				} }
-			>
-				{ __( 'Import questions', 'ohmylms' ) }
-			</Button>
 			<div
 				role="group"
 				aria-label={ __( 'Export questions', 'ohmylms' ) }
@@ -333,6 +337,7 @@ export default function QuestionsPage() {
 			{ ! list.loading && ! list.error && (
 				<ListTable< QuestionSummary >
 					caption={ __( 'Questions', 'ohmylms' ) }
+					heading={ __( 'Questions list', 'ohmylms' ) }
 					formLabel={ __( 'Search questions', 'ohmylms' ) }
 					busy={ operation.busy }
 					rows={ list.data.items }
@@ -355,7 +360,8 @@ export default function QuestionsPage() {
 							if ( found ) {
 								list.setStatus( found.value as StatusFilter );
 							}
-						}
+						},
+						list.statusHref
 					) }
 					search={ {
 						label: __( 'Search questions', 'ohmylms' ),
@@ -418,6 +424,7 @@ export default function QuestionsPage() {
 							list.data.total
 						),
 						onChange: list.setPage,
+						href: list.pageHref,
 					} }
 					columns={ [
 						{

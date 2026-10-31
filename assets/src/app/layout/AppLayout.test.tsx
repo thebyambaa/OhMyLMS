@@ -1,5 +1,13 @@
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { useEffect, useState } from '@wordpress/element';
+import {
+	MemoryRouter,
+	Route,
+	Routes,
+	useNavigate,
+	useSearchParams,
+} from 'react-router-dom';
 import { createRegistry } from '../extensions/registry.mjs';
 import { ExtensionsProvider } from '../extensions/context';
 import { PlaceProvider } from '../routing/place';
@@ -31,6 +39,54 @@ it( 'provides one main landmark inside WordPress and restores the host on unmoun
 	} finally {
 		host.remove();
 	}
+} );
+
+function ReloadingList() {
+	const [ params ] = useSearchParams();
+	const navigate = useNavigate();
+	const page = params.get( 'page' ) ?? '1';
+	const [ shown, setShown ] = useState( page );
+	useEffect( () => {
+		const timer = setTimeout( () => setShown( page ), 150 );
+		return () => clearTimeout( timer );
+	}, [ page ] );
+	if ( shown !== page ) {
+		return <p role="status">Loading…</p>;
+	}
+	return (
+		<>
+			<p>Page { page }</p>
+			<a
+				href="/list?page=2"
+				onClick={ ( event ) => {
+					event.preventDefault();
+					navigate( '/list?page=2' );
+				} }
+			>
+				Page two
+			</a>
+		</>
+	);
+}
+
+it( 'returns focus to the activated list link after the list reloads', async () => {
+	const user = userEvent.setup();
+	render(
+		<MemoryRouter initialEntries={ [ '/list' ] }>
+			<Routes>
+				<Route element={ <AppLayout /> }>
+					<Route path="/list" element={ <ReloadingList /> } />
+				</Route>
+			</Routes>
+		</MemoryRouter>
+	);
+	const link = screen.getByRole( 'link', { name: 'Page two' } );
+	link.focus();
+	await user.keyboard( '{Enter}' );
+	expect( await screen.findByText( 'Page 2' ) ).toBeInTheDocument();
+	await waitFor( () =>
+		expect( screen.getByRole( 'link', { name: 'Page two' } ) ).toHaveFocus()
+	);
 } );
 
 it( 'adds the extension pages of the current page to the server tab row', () => {

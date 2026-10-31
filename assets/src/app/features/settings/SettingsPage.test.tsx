@@ -1,7 +1,15 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import {
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { ApiError } from '../../lib/api';
+import { PlaceProvider } from '../../routing/place';
+import { SECTIONS_ID } from '../../routing/QueryRouter';
 import * as api from './api';
 import {
 	countries,
@@ -158,6 +166,69 @@ describe( 'tabs', () => {
 		expect( screen.getByLabelText( 'Number of decimals' ) ).toHaveValue(
 			4
 		);
+	} );
+} );
+
+describe( 'on the admin page', () => {
+	it( 'marks the server section link as unsaved and lets the sections switch without the guard', async () => {
+		const user = userEvent.setup();
+		const sections = document.createElement( 'ul' );
+		sections.id = SECTIONS_ID;
+		sections.innerHTML =
+			'<li><a data-section="currency" href="/settings?tab=currency">Currency</a></li>' +
+			'<li><a data-section="tax" href="/settings?tab=tax">Tax</a></li>' +
+			'<li><a href="/orders">Orders</a></li>';
+		document.body.append( sections );
+		try {
+			render(
+				<PlaceProvider
+					value={ {
+						page: 'ohmylms-settings',
+						tab: 'settings',
+						section: 'currency',
+					} }
+				>
+					<MemoryRouter
+						initialEntries={ [ '/settings?tab=currency' ] }
+					>
+						<SettingsPage />
+					</MemoryRouter>
+				</PlaceProvider>
+			);
+			const decimals =
+				await screen.findByLabelText( 'Number of decimals' );
+			expect( screen.queryByRole( 'tablist' ) ).not.toBeInTheDocument();
+			const panel = decimals.closest(
+				'#ohmylms-settings-panel-currency'
+			);
+			expect( panel ).not.toHaveAttribute( 'aria-labelledby' );
+			expect( panel ).not.toHaveAttribute( 'role' );
+			await user.clear( decimals );
+			await user.type( decimals, '4' );
+			const currencyLink = sections.querySelector(
+				'[data-section="currency"]'
+			);
+			expect( currencyLink ).toHaveTextContent( 'Currency (unsaved)' );
+			expect( currencyLink ).toHaveAttribute(
+				'data-ohmylms-badge',
+				'(unsaved)'
+			);
+			const taxLink = sections.querySelector( '[data-section="tax"]' )!;
+			taxLink.addEventListener( 'click', ( event ) =>
+				event.preventDefault()
+			);
+			fireEvent.click( taxLink );
+			expect(
+				document.body.textContent?.includes(
+					'You have unsaved settings'
+				)
+			).toBe( false );
+			const orders = sections.querySelector( '[href="/orders"]' )!;
+			fireEvent.click( orders );
+			await notice( /You have unsaved settings/ );
+		} finally {
+			sections.remove();
+		}
 	} );
 } );
 

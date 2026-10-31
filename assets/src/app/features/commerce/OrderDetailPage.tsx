@@ -1,4 +1,4 @@
-import { Table } from '../../../ui/Table';
+import { WidefatTable } from '../../components/WidefatTable';
 import { Button, Modal, Notice, SelectControl } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -191,7 +191,7 @@ function Order( { id }: { id: number } ) {
 
 			<section aria-labelledby="order-items-heading">
 				<h3 id="order-items-heading">{ __( 'Items', 'ohmylms' ) }</h3>
-				<Table caption={ __( 'Order items', 'ohmylms' ) }>
+				<WidefatTable caption={ __( 'Order items', 'ohmylms' ) }>
 					<thead>
 						<tr>
 							<th scope="col">{ __( 'Course', 'ohmylms' ) }</th>
@@ -210,7 +210,7 @@ function Order( { id }: { id: number } ) {
 							</tr>
 						) ) }
 					</tbody>
-				</Table>
+				</WidefatTable>
 				<dl>
 					<Row
 						label={ __( 'Subtotal', 'ohmylms' ) }
@@ -320,7 +320,7 @@ function Order( { id }: { id: number } ) {
 					<h3 id="order-related-heading">
 						{ __( 'Related orders', 'ohmylms' ) }
 					</h3>
-					<Table caption={ __( 'Related orders', 'ohmylms' ) }>
+					<WidefatTable caption={ __( 'Related orders', 'ohmylms' ) }>
 						<thead>
 							<tr>
 								<th scope="col">
@@ -371,7 +371,7 @@ function Order( { id }: { id: number } ) {
 								</tr>
 							) ) }
 						</tbody>
-					</Table>
+					</WidefatTable>
 				</section>
 			) }
 

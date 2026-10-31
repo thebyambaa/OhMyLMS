@@ -1,7 +1,9 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { TITLE_ACTIONS_ID } from '../../layout/PageTitleActions';
 import { ApiError } from '../../lib/api';
+import { PlaceProvider } from '../../routing/place';
 import AccountHubPage from './AccountHubPage';
 import * as api from './api';
 import {
@@ -105,6 +107,86 @@ describe( 'AccountHubPage', () => {
 			screen.getByRole( 'link', { name: 'Open students' } )
 		);
 		expect( screen.getByText( 'Students reached' ) ).toBeInTheDocument();
+	} );
+	it( 'leaves the tabs to the server page and keeps the list in the address', async () => {
+		const user = userEvent.setup();
+		const slot = document.createElement( 'span' );
+		slot.id = TITLE_ACTIONS_ID;
+		document.body.append( slot );
+		try {
+			render(
+				<PlaceProvider
+					value={ {
+						page: 'ohmylms-accounts',
+						tab: 'classes',
+						section: '',
+					} }
+				>
+					<MemoryRouter
+						initialEntries={ [ '/account-hub?tab=classes' ] }
+					>
+						<Routes>
+							<Route
+								path="/account-hub"
+								element={
+									<>
+										<AccountHubPage />
+										<Where />
+									</>
+								}
+							/>
+						</Routes>
+					</MemoryRouter>
+				</PlaceProvider>
+			);
+			const table = await screen.findByRole( 'table', {
+				name: 'Classes',
+			} );
+			expect( screen.queryByRole( 'tablist' ) ).not.toBeInTheDocument();
+			expect(
+				screen.queryByRole( 'link', { name: 'Open students' } )
+			).not.toBeInTheDocument();
+			const panel = table.closest( '#ohmylms-account-hub-panel-classes' );
+			expect( panel ).not.toHaveAttribute( 'role' );
+			expect( panel ).not.toHaveAttribute( 'aria-labelledby' );
+			const archived = screen.getByRole( 'link', { name: 'Archived' } );
+			expect( archived ).toHaveAttribute(
+				'href',
+				'/account-hub?tab=classes&status=archived'
+			);
+			await user.click( archived );
+			expect( screen.getByTestId( 'where' ) ).toHaveTextContent(
+				'/account-hub?tab=classes&status=archived'
+			);
+		} finally {
+			slot.remove();
+		}
+	} );
+	it( 'puts Add school next to the page heading on the admin page', async () => {
+		const slot = document.createElement( 'span' );
+		slot.id = TITLE_ACTIONS_ID;
+		document.body.append( slot );
+		try {
+			render(
+				<PlaceProvider
+					value={ {
+						page: 'ohmylms-accounts',
+						tab: 'schools',
+						section: '',
+					} }
+				>
+					<MemoryRouter initialEntries={ [ '/account-hub' ] }>
+						<AccountHubPage />
+					</MemoryRouter>
+				</PlaceProvider>
+			);
+			await screen.findByRole( 'table', { name: 'Schools' } );
+			const add = screen.getByRole( 'button', { name: 'Add school' } );
+			expect( slot ).toContainElement( add );
+			expect( add ).toHaveClass( 'page-title-action' );
+		} finally {
+			slot.remove();
+		}
 	} );
 	it( 'searches schools from the first page', async () => {
 		const user = userEvent.setup();

@@ -63,7 +63,7 @@ it( 'shows the shared accessible table, pages and repeats a search', async () =>
 		screen.getByRole( 'table', { name: 'Skills library' } )
 	).toHaveClass( 'wp-list-table' );
 	await user.click(
-		screen.getAllByRole( 'button', { name: 'Next page' } )[ 0 ]!
+		screen.getAllByRole( 'link', { name: 'Next page' } )[ 0 ]!
 	);
 	await waitFor( () =>
 		expect( api.listSkills ).toHaveBeenLastCalledWith(
