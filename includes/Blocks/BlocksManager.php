@@ -123,6 +123,16 @@ class BlocksManager {
 	 * @return void
 	 */
 	public function enqueue_block_editor_assets() {
+		// Preview banners read the shared sheet. Fallbacks keep the previous colours when the editor
+		// canvas has no design tokens; hex is not allowed in oml-ui.css.
+		if ( class_exists( \OhMyLMS\Design\Ui::class ) ) {
+			\OhMyLMS\Design\Ui::enqueue();
+			wp_add_inline_style(
+				\OhMyLMS\Design\Ui::STYLE_HANDLE,
+				'.ohmylms-gutenberg-edit-mode{--oml-edit-background:var(--oml-background,#f0f0f1);--oml-edit-info:var(--oml-info,#2271b1);--oml-edit-text:var(--oml-text,#3c434a)}'
+			);
+		}
+
 		// Enqueue main blocks script.
 		wp_enqueue_script(
 			'ohmylms-blocks-editor',

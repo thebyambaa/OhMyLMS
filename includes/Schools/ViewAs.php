@@ -336,12 +336,23 @@ final class ViewAs {
 	public static function banner() {
 		if ( ! self::session() ) {
 			return; }
+		if ( class_exists( \OhMyLMS\Design\Ui::class ) ) {
+			\OhMyLMS\Design\Ui::enqueue();
+		}
+		// Previous bar colours are the fallback when design tokens are missing. Hex stays out of
+		// oml-ui.css because stylelint rejects it there, including inside var() fallbacks.
+		echo '<style>#ohmylms-view-as-banner{--oml-view-as-background:var(--oml-heading,#14213d);--oml-view-as-text:var(--oml-on-shade,#fff)}</style>';
 		$config = array(
 			'url'   => rest_url( 'ohmylms/v1/school/view-as/return' ),
 			'nonce' => wp_create_nonce( 'wp_rest' ),
 		);
-		echo '<div id="ohmylms-view-as-banner" style="position:fixed;bottom:0;left:0;right:0;z-index:999999;background:#14213d;color:white;padding:12px 24px;display:flex;align-items:center;gap:16px">' . esc_html( sprintf( /* translators: %s: text value. */
-		__( 'Viewing and acting as %s', 'ohmylms' ), wp_get_current_user()->display_name ) ) . ' <button type="button">' . esc_html__( 'Return to admin', 'ohmylms' ) . '</button><span role="alert"></span></div>';
+		echo '<div id="ohmylms-view-as-banner">' . esc_html(
+			sprintf(
+				/* translators: %s: text value. */
+				__( 'Viewing and acting as %s', 'ohmylms' ),
+				wp_get_current_user()->display_name
+			)
+		) . ' <button type="button">' . esc_html__( 'Return to admin', 'ohmylms' ) . '</button><span role="alert"></span></div>';
 		echo '<script>(function(c){const b=document.getElementById("ohmylms-view-as-banner"),x=b.querySelector("button");x.onclick=async function(){x.disabled=true;try{const r=await fetch(c.url,{method:"POST",credentials:"same-origin",headers:{"X-WP-Nonce":c.nonce}}),d=await r.json();if(!r.ok)throw Error(d.message);location.href=d.url;}catch(e){b.querySelector("span").textContent=e.message;x.disabled=false;}};})(' . wp_json_encode( $config, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ) . ');</script>';
 	}
 }

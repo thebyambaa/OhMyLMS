@@ -87,6 +87,7 @@ const compatible_pattern = ( names ) =>
 
 export default {
 	extends: [ '@wordpress/stylelint-config' ],
+	plugins: [ './tools/stylelint-learner-colours.mjs' ],
 	rules: {
 		'selector-class-pattern': compatible_pattern( public_classes ),
 		'selector-id-pattern': compatible_pattern( public_ids ),
@@ -128,6 +129,15 @@ export default {
 				'color-no-hex': true,
 				'color-named': 'never',
 				'function-disallowed-list': [ 'rgb', 'rgba', 'hsl', 'hsla' ],
+			},
+		},
+		{
+			// Learner SCSS may keep the previous hex only as a var(--oml-*) fallback.
+			// SVG data URIs are checked separately; generated CSS stays ignored below.
+			files: [ 'assets/src/frontend/scss/**/*.scss' ],
+			rules: {
+				'color-no-hex': [ true, { ignoreFunctions: [ 'var' ] } ],
+				'ohmylms/no-raw-svg-colour': true,
 			},
 		},
 	],

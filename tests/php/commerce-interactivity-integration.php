@@ -258,6 +258,10 @@ try {
 	$buy_now = ci_tag( (string) ob_get_clean(), 'add_to_cart_button' );
 	$bought  = $buy_now ? json_decode( $buy_now['data-wp-context'], true ) : array( 'courseId' => 0 );
 	ok( $buy_now && 'ohmylms/cart' === $buy_now['data-wp-interactive'] && $course_id === $bought['courseId'], 'buy-now shortcode (block, Elementor, Bricks) is decorated' );
+	ob_start();
+	\OhMyLMS\Shortcodes\ShortCodeBuyNow::output( array( 'course_id' => '' ) );
+	$buy_error = (string) ob_get_clean();
+	ok( false !== strpos( $buy_error, 'ohmylms-buy-now-error' ) && false === strpos( $buy_error, 'color:red' ) && false !== strpos( $buy_error, 'Course ID is required.' ), 'buy-now errors use the danger class: ' . $buy_error );
 	$point = \OhMyLMS\Extensions\Commerce::cart_buttons( '<a href="#" class="add-to-cart-using-point-button" data-course_id="' . $course_id . '">Points</a><a class="ohmylms-button add_to_cart_button" data-membership_id="7" is_already_purchased="1" href="/plan">Plan</a>' );
 	ok( false !== strpos( $point, '&quot;purchaseBy&quot;:&quot;point&quot;' ) && false !== strpos( $point, '&quot;membershipId&quot;:7' ) && false !== strpos( $point, '&quot;purchased&quot;:true' ), 'points and membership buttons carry their context: ' . $point );
 	ok( \OhMyLMS\Extensions\Commerce::cart_buttons( $point ) === $point, 'decoration is idempotent for nested templates' );

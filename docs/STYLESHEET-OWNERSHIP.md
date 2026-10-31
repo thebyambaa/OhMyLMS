@@ -13,7 +13,7 @@ The table below records the 29 October 2026 snapshot on `main`; see the 30 Octob
 | Learner `checkout` / `thankyou` / `account` / `membership` | `frontend/*.css` | 36,512 / 12,995 / 84,565 / 8,352 | `assets/src/frontend/scss/{checkout,thankyou,dashboard,membership}` | |
 | Learner RTL | `frontend/rtl.css` | 1,209 | `assets/src/frontend/scss/rtl` | Only when `is_rtl()` |
 | Learner, other features | `student-hub.css` 49,070, `quiz-player-templates.css` 43,298, `practice.css` 23,752, `paper.css` 21,618, `student-dashboard.css` 17,373, and about 30 smaller files | | Each feature's PHP class enqueues its own | Referenced from `includes/` or `templates/` |
-| Public compatibility URLs | `assets/css/style.css`, `style-rtl.css` | 476,556 / 1,215 | Generated from the same SCSS by `tools/build-frontend-styles.mjs` | Not enqueued by the plugin. Kept for integrations that request the old URLs |
+| Public compatibility URLs | `assets/css/style.css`, `style-rtl.css` | 476,556 / 1,215 | Generated from the same SCSS by `tools/build-frontend-styles.mjs` | Not a second colour source and not enqueued by the plugin. Kept so old URLs still work. Recolour the authored SCSS and regenerate; do not hand-edit these files |
 | Admin shell | `admin-design-system.css` 17,002 (plus inline variables from `DesignSystem.php`), `global.css` 596 (all wp-admin, LMS menu) | | `Design/DesignSystem.php`, `Assets/AdminAssets.php` | |
 | Admin app (`page=ohmylms-app`) | `assets/dist/admin/admin-app*.css` and its feature chunks | | `assets/src/app/styles`, feature CSS in `assets/src/app` | Built by Webpack; see [ARCHITECTURE.md](ARCHITECTURE.md) |
 | Retired legacy admin (`page=ohmylms`) | `assets/dist/css/admin/oml-{main,rtl}-*.css`, `assets/css/oml-ui-*.css`, `admin-ui.css`, `tailwind.css`, the `admin-styles.js` loader | was 1,430,902 + 77,274 + 4,968 + 22,069 | deleted 31 October 2026 (see below) | |
@@ -96,6 +96,10 @@ The shipped outputs (`assets/dist/css/admin`, `assets/dist/css/chunks`, `assets/
   summary-card spacing, level chips, pre-wrapped notes, the design-system swatch) moved to token-based
   classes in `app.css` and `admin-design-system.css`; `check:architecture` now rejects raw colours in
   `assets/src/app` ([DESIGN-TOKENS](DESIGN-TOKENS.md)).
+
+## Learner colours
+
+Authored learner colours live in `assets/src/frontend/scss` and use `--oml-*` (previous hex only as a `var()` fallback). `assets/css/style.css` and `style-rtl.css` are the generated compatibility bundle from that SCSS, written by `tools/build-frontend-styles.mjs` into `assets/css` with the page modules. They are not a second source. The October snapshot's 476,556 bytes was the size of that generated file, not a separate palette; after the icon masks were regenerated it is 483,294 bytes. Exceptions that stay literal are listed in `tools/learner-colour-allowlist.json` (star artwork, select chevrons, one notice glyph, two-paint icons). The video player keeps its fixed media palette. Exam-print colours are in `paper.css`, not this SCSS.
 
 ## Remaining optimization boundaries
 

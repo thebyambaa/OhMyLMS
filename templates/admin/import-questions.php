@@ -51,7 +51,7 @@ if ( $result && ! $result['dry_run'] ) {
 								<strong><?php echo esc_html( $hub_item['name'] ); ?></strong> <small>#<?php echo esc_html( $hub_item['id'] ); ?> · <?php echo esc_html( $hub_item['type'] ); ?></small>
 								<div><?php echo esc_html( $hub_item['text'] ); ?></div>
 								<?php if ( $hub_item['notes'] ) : ?>
-									<div style="color:#50575e"><em><?php echo esc_html( $hub_item['notes'] ); ?></em></div>
+									<div class="ohmylms-text-muted"><em><?php echo esc_html( $hub_item['notes'] ); ?></em></div>
 								<?php endif; ?>
 							</td>
 							<td>
@@ -113,10 +113,10 @@ if ( $result && ! $result['dry_run'] ) {
 						<td><strong><?php echo esc_html( $hub_status[ $hub_row['status'] ] ); ?></strong></td>
 						<td>
 							<?php foreach ( $hub_row['errors'] as $hub_text ) : ?>
-								<div style="color:#b32d2e"><?php echo esc_html( $hub_text ); ?></div>
+								<div class="ohmylms-text-danger"><?php echo esc_html( $hub_text ); ?></div>
 							<?php endforeach; ?>
 							<?php foreach ( $hub_row['warnings'] as $hub_text ) : ?>
-								<div style="color:#8a6100"><?php echo esc_html( $hub_text ); ?></div>
+								<div class="ohmylms-text-warning"><?php echo esc_html( $hub_text ); ?></div>
 							<?php endforeach; ?>
 						</td>
 					</tr>

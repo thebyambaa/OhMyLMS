@@ -144,7 +144,7 @@ $ticked = $form['skills'];
 						<td>
 							<?php echo esc_html( (string) $skill['available'] ); ?>
 							<?php if ( ! $skill['available'] ) : ?>
-								<strong style="color:#b32d2e"><?php esc_html_e( 'None yet: approve questions for this skill first.', 'ohmylms' ); ?></strong>
+								<strong class="ohmylms-text-danger"><?php esc_html_e( 'None yet: approve questions for this skill first.', 'ohmylms' ); ?></strong>
 							<?php endif; ?>
 						</td>
 					</tr>

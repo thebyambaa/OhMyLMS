@@ -182,12 +182,20 @@ class CommonHook extends HookHandler {
 					) {
 						$resend_url = \OhMyLMS\Services\EmailVerificationService::get_resend_url();
 						ob_start();
+						// wp_die() exits before the footer, so print the shared sheet and tokens here.
+						if ( class_exists( \OhMyLMS\Design\Ui::class ) && function_exists( 'wp_print_styles' ) ) {
+							\OhMyLMS\Design\Ui::enqueue();
+							if ( class_exists( \OhMyLMS\Design\Tokens::class ) ) {
+								wp_add_inline_style( \OhMyLMS\Design\Ui::STYLE_HANDLE, \OhMyLMS\Design\Tokens::frontend_css() );
+							}
+							wp_print_styles( \OhMyLMS\Design\Ui::STYLE_HANDLE );
+						}
 						?>
 						<div class="ohmylms-access-denied-modal">
 							<div class="ohmylms-access-denied-inner">
 								<div class="ohmylms-access-denied-modal-content">
 									<span class="denied-icon">
-										<svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#6E42D3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+										<svg class="ohmylms-verification-icon" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
 									</span>
 									<h4 class="ohmylms-access-denied-title">
 										<?php esc_html_e( 'Please verify your email', 'ohmylms' ); ?>
@@ -195,8 +203,8 @@ class CommonHook extends HookHandler {
 									<p class="ohmylms-access-denied-description">
 										<?php esc_html_e( 'Check your inbox and click the verification link to access course content.', 'ohmylms' ); ?>
 									</p>
-									<p style="margin-top:16px;">
-										<a href="<?php echo esc_url( $resend_url ); ?>" style="color:#6E42D3;text-decoration:underline;">
+									<p class="ohmylms-verification-resend-row">
+										<a class="ohmylms-verification-resend" href="<?php echo esc_url( $resend_url ); ?>">
 											<?php esc_html_e( 'Resend verification email', 'ohmylms' ); ?>
 										</a>
 									</p>
@@ -1555,37 +1563,21 @@ class CommonHook extends HookHandler {
 	}
 
 	/**
-	 * Render a styled inline notice.
+	 * Render a verification notice. Colours and spacing come from the shared stylesheet.
 	 *
 	 * @param string $type 'success' | 'info' | 'warning'.
 	 * @param string $message Already-escaped or safe HTML message.
 	 * @param bool   $escape  Whether to run esc_html on $message (default true).
 	 */
 	private function render_verification_notice( string $type, string $message, bool $escape = true ): void {
-		$brand = get_option( 'ohmylms_notification_color', get_option( 'ohmylms_email_base_color', '#6E42D3' ) );
-		if ( empty( $brand ) ) {
-			$brand = '#6E42D3';
+		if ( ! in_array( $type, array( 'success', 'info', 'warning' ), true ) ) {
+			$type = 'info';
 		}
-		$colors = array(
-			'success' => array(
-				'bg'     => '#f0fdf4',
-				'border' => '#16a34a',
-				'text'   => '#15803d',
-			),
-			'info'    => array(
-				'bg'     => '#eff6ff',
-				'border' => $brand,
-				'text'   => $brand,
-			),
-			'warning' => array(
-				'bg'     => '#fffbeb',
-				'border' => '#d97706',
-				'text'   => '#92400e',
-			),
-		);
-		$c      = $colors[ $type ] ?? $colors['info'];
+		if ( class_exists( \OhMyLMS\Design\Ui::class ) ) {
+			\OhMyLMS\Design\Ui::enqueue();
+		}
 		?>
-		<div class="ohmylms-verification-notice ohmylms-verification-notice--<?php echo esc_attr( $type ); ?>" style="background:<?php echo esc_attr( $c['bg'] ); ?>;border-left:4px solid <?php echo esc_attr( $c['border'] ); ?>;border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:14px;color:<?php echo esc_attr( $c['text'] ); ?>;line-height:1.6;">
+		<div class="ohmylms-verification-notice ohmylms-verification-notice-<?php echo esc_attr( $type ); ?> ohmylms-verification-notice--<?php echo esc_attr( $type ); ?>">
 			<?php
 			if ( $escape ) {
 				echo esc_html( $message );
@@ -1611,14 +1603,16 @@ class CommonHook extends HookHandler {
 		if ( ! $user_id || \OhMyLMS\Services\EmailVerificationService::is_verified( $user_id ) ) {
 			return;
 		}
-		$resend_url  = \OhMyLMS\Services\EmailVerificationService::get_resend_url();
-		$brand_color = get_option( 'ohmylms_notification_color', get_option( 'ohmylms_email_base_color', '#6E42D3' ) ) ?: '#6E42D3';
+		$resend_url = \OhMyLMS\Services\EmailVerificationService::get_resend_url();
+		if ( class_exists( \OhMyLMS\Design\Ui::class ) ) {
+			\OhMyLMS\Design\Ui::enqueue();
+		}
 		?>
-		<div class="ohmylms-verification-notice ohmylms-verification-notice--info" style="background:#f5f0ff;border:1px solid <?php echo esc_attr( $brand_color ); ?>;border-radius:10px;padding:18px 22px;margin:24px 0;font-size:15px;color:<?php echo esc_attr( $brand_color ); ?>;line-height:1.7;text-align:center;">
+		<div class="ohmylms-verification-notice ohmylms-verification-notice-info ohmylms-verification-notice-thankyou ohmylms-verification-notice--info">
 			<strong><?php esc_html_e( 'One more step — verify your email!', 'ohmylms' ); ?></strong><br>
 			<?php esc_html_e( 'We sent a verification link to your inbox. Click it to unlock your course content.', 'ohmylms' ); ?>
 			<br><br>
-			<a href="<?php echo esc_url( $resend_url ); ?>" style="display:inline-block;background:<?php echo esc_attr( $brand_color ); ?>;color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:600;">
+			<a class="ohmylms-verification-resend-button" href="<?php echo esc_url( $resend_url ); ?>">
 				<?php esc_html_e( 'Resend verification email', 'ohmylms' ); ?>
 			</a>
 		</div>

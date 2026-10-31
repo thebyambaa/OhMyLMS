@@ -2,14 +2,14 @@
 	{
 		"name": "core",
 		"path": "assets/css/frontend/core.css",
-		"bytes": 51338,
-		"version": "757a5395220d"
+		"bytes": 54068,
+		"version": "33a9b865373f"
 	},
 	{
 		"name": "catalog",
 		"path": "assets/css/frontend/catalog.css",
-		"bytes": 54773,
-		"version": "4fb6c3c9c099"
+		"bytes": 55417,
+		"version": "c33849fed7d0"
 	},
 	{
 		"name": "course",
@@ -20,14 +20,14 @@
 	{
 		"name": "lesson",
 		"path": "assets/css/frontend/lesson.css",
-		"bytes": 105241,
-		"version": "a6c21fa20231"
+		"bytes": 108549,
+		"version": "bdfea9a5d572"
 	},
 	{
 		"name": "checkout",
 		"path": "assets/css/frontend/checkout.css",
-		"bytes": 36512,
-		"version": "491e957247a9"
+		"bytes": 37121,
+		"version": "3938e9a626db"
 	},
 	{
 		"name": "thankyou",
@@ -38,14 +38,14 @@
 	{
 		"name": "account",
 		"path": "assets/css/frontend/account.css",
-		"bytes": 84565,
-		"version": "bfb926c76541"
+		"bytes": 85778,
+		"version": "17eb5cc6b9ee"
 	},
 	{
 		"name": "membership",
 		"path": "assets/css/frontend/membership.css",
-		"bytes": 8352,
-		"version": "ab27b5cb820e"
+		"bytes": 8656,
+		"version": "49057e9efa02"
 	},
 	{
 		"name": "rtl",

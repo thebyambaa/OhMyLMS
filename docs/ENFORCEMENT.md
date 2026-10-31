@@ -189,6 +189,19 @@ names at its top level, or is itself named after the hook (`useUnsavedChangesGua
 re-export shims). When a screen needs different behaviour, add a backwards-compatible option to the
 shared hook (for example `ignoreSamePath`, `inAddress`, `keepPrevious`) instead of copying it.
 
+### h. Spacing and radius use the tokens
+
+Stylesheets in `assets/src/app` set `padding`, `margin`, `gap`, `row-gap` and `column-gap`
+(including physical and logical longhands, and the legacy `grid-gap` aliases) and `border-radius`
+(including corner longhands) from `--oml-space-*` or `--oml-radius-*`. A raw px length may stay
+when it is `0`, `1px` or `2px`, including the same sizes with a minus sign (`-1px` overlaps a
+segmented control). Those are hairlines, borders and focus rings. A px length written only as the
+fallback inside `var(--oml-…)` belongs to that token. Comments are ignored. The check reads px
+lengths; percentages, rem and em stay as written. `999px` is a fully round pill and needs an
+allow-list reason, because no radius token stays fully round on the WordPress preset.
+
+The check reads `*.css` under `assets/src/app`. `assets/src/ui` has no stylesheets.
+
 ## Changing the rules on purpose
 
 ### Allow-list: `tools/architecture-allowlist.json`
@@ -203,14 +216,15 @@ still printed (`~ allowed: …`) with their reason.
 	"recoveredRuntime": [ { "from": "assets/src/app/…", "to": "assets/src/…", "reason": "…" } ],
 	"cycles": [ { "files": [ "assets/src/app/a.ts", "assets/src/app/b.ts" ], "reason": "…" } ],
 	"crossFeature": [ { "from": "assets/src/app/features/a/…", "to": "assets/src/app/features/b/…", "reason": "…" } ],
-	"sharedHooks": [ { "file": "assets/src/app/features/a/…", "hook": "usePagedList", "reason": "…" } ]
+	"sharedHooks": [ { "file": "assets/src/app/features/a/…", "hook": "usePagedList", "reason": "…" } ],
+	"rawSpacing": [ { "file": "assets/src/app/feature.css", "value": "999px", "reason": "…" } ]
 }
 ```
 
 For `recoveredRuntime`, `from` is the app file and `to` is the first file it imports on the chain;
 both appear in the failure message. For `cycles`, `files` lists every file in the cycle.
 
-The current code has no violations, so all three lists are empty.
+`value` on a `rawSpacing` entry is the px length (`6px`, `999px`), compared case-insensitively, and it covers every use of that length in the file. `rawColours` allows one help-text example. `rawSpacing` allows the gradebook enrollment-source pill (`999px`).
 
 ### Budgets: `tools/asset-budgets.json`
 

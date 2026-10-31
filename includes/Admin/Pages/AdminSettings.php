@@ -537,17 +537,17 @@ class AdminSettings {
 		}
 
 		$description_is_error    = $value['description_is_error'] ?? false;
-		$extra_description_style = $description_is_error ? " style='color:red'" : '';
+		$extra_description_class = $description_is_error ? ' ohmylms-settings-error' : '';
 
 		if ( $description && in_array( $value['type'], array( 'textarea', 'radio' ), true ) ) {
-			$description = '<p style="margin-top:0">' . wp_kses_post( $description ) . '</p>';
+			$description = '<p class="ohmylms-settings-description">' . wp_kses_post( $description ) . '</p>';
 		} elseif ( $description && in_array( $value['type'], array( 'checkbox' ), true ) ) {
 			$description = wp_kses_post( $description );
 		} elseif ( $description ) {
-			$description = '<p class="description"' . $extra_description_style . '>' . wp_kses_post( $description ) . '</p>';
+			$description = '<p class="description' . esc_attr( $extra_description_class ) . '">' . wp_kses_post( $description ) . '</p>';
 		}
 
-		$tooltip_html = '<p class="description"' . $extra_description_style . '>' . $tooltip_html . '</p>';
+		$tooltip_html = '<p class="description' . esc_attr( $extra_description_class ) . '">' . $tooltip_html . '</p>';
 
 		return array(
 			'description'  => $description,

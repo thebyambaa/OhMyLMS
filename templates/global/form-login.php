@@ -98,7 +98,12 @@ $ohmylms_auth = \OhMyLMS\Extensions\AuthForms::view( 'login', $hidden );
 	<?php endif; ?>
 
 	<?php if ( $ohmylms_google_configured || $ohmylms_microsoft_configured ) : ?>
-		<p class="ohmylms-form-row ohmylms-auth-divider" style="text-align:center;color:#7A8B9A;font-size:13px;">
+		<?php
+		if ( class_exists( '\OhMyLMS\Design\Ui' ) ) {
+			\OhMyLMS\Design\Ui::enqueue();
+		}
+		?>
+		<p class="ohmylms-form-row ohmylms-auth-divider">
 			<?php esc_html_e( 'or', 'ohmylms' ); ?>
 		</p>
 	<?php endif; ?>

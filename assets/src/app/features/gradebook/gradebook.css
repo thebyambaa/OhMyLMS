@@ -57,7 +57,7 @@
 .ohmylms-app .ohmylms-gradebook-override {
 	background: var(--oml-warning-soft);
 	border: 1px solid var(--oml-warning);
-	border-radius: 2px;
+	border-radius: var(--oml-radius-control);
 	margin-inline-start: var(--oml-space-2);
 	padding: 0 var(--oml-space-1);
 }
@@ -75,17 +75,18 @@
 .ohmylms-app .ohmylms-gradebook-chip,
 .ohmylms-app .ohmylms-gradebook-swatch {
 	border: 1px solid var(--oml-border);
-	border-radius: 2px;
+	border-radius: var(--oml-radius-control);
 	display: inline-block;
 	font-size: 11px;
 	line-height: 1.6;
 	margin: 1px 2px 1px 0;
-	padding: 0 6px;
+	padding: 0 var(--oml-space-2);
 	white-space: nowrap;
 }
 
 .ohmylms-app .ohmylms-gradebook-source {
-	border-radius: 9px;
+	/* Pill. No radius token stays fully round on the WordPress preset (button radius 2px). */
+	border-radius: 999px;
 }
 
 .ohmylms-app .ohmylms-gradebook-source.is-purchase {
@@ -123,7 +124,7 @@
 .ohmylms-app .ohmylms-gradebook-grid th,
 .ohmylms-app .ohmylms-gradebook-grid td {
 	border-bottom: 1px solid var(--oml-border);
-	padding: 4px 6px;
+	padding: var(--oml-space-1) var(--oml-space-2);
 	vertical-align: middle;
 }
 
@@ -305,11 +306,12 @@
 }
 
 .ohmylms-app .ohmylms-gradebook-rollup__name.is-depth-1 {
-	padding-inline-start: 2rem;
+	padding-inline-start: var(--oml-space-6);
 }
 
 .ohmylms-app .ohmylms-gradebook-rollup__name.is-depth-2,
 .ohmylms-app .ohmylms-gradebook-rollup__name.is-depth-3 {
+	/* 56px at a 16px root: halfway between space-7 (48px) and space-8 (64px). */
 	padding-inline-start: 3.5rem;
 }
 
@@ -332,7 +334,7 @@
 }
 
 .ohmylms-gradebook-radio.is-nested {
-	margin-inline-start: 1.5rem;
+	margin-inline-start: var(--oml-space-5);
 }
 
 .ohmylms-gradebook-error {

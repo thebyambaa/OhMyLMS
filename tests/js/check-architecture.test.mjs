@@ -12,6 +12,7 @@ import {
 	checkDuplicateRuntimes,
 	checkFeatureBoundaries,
 	checkRawColours,
+	checkRawSpacing,
 	checkRecoveredRuntime,
 	checkSharedHookCopies,
 	declaredNames,
@@ -218,6 +219,120 @@ test( 'raw colour matching skips anchors, entities and ids', () => {
 		).map( ( hit ) => hit.value ),
 		[ '#fff', '#a1b2c3d4', 'rgb', 'hsla' ]
 	);
+} );
+
+test( 'raw px spacing and radius in app CSS are reported; tokens, hairlines and comments are not', () => {
+	const root = fs.mkdtempSync( path.join( os.tmpdir(), 'oml-spacing-' ) );
+	const write = ( file, text ) => {
+		fs.mkdirSync( path.dirname( path.join( root, file ) ), {
+			recursive: true,
+		} );
+		fs.writeFileSync( path.join( root, file ), text );
+	};
+	const token = 'use a --oml-space-* or --oml-radius-* token';
+	const at = ( line, property, value ) =>
+		`assets/src/app/styles/app.css:${ line } sets ${ property } to ${ value }; ${ token }`;
+	try {
+		write(
+			'assets/src/app/styles/app.css',
+			[
+				'/* padding: 40px; */',
+				'.a { padding: var(--oml-space-3); gap: var(--oml-space-2, 8px); }',
+				'.b {',
+				'\tborder-radius: var(--oml-radius-card);',
+				'\tmargin: 0;',
+				'\tpadding: 2px var(--oml-space-2);',
+				'\tborder-radius: 50%;',
+				'\tmargin: 1px 2px 1px 0;',
+				'\tmargin-inline-start: -1px;',
+				'\trow-gap: 0px;',
+				'\tcolumn-gap: 2px;',
+				'\t--padding: 10px;',
+				'}',
+				'.c { padding: 0 6px; margin: 14px 0; border-radius: 12px; }',
+				'.d { padding-top: 4px; column-gap: 10px; border-top-left-radius: 9px; }',
+				'.e { padding-inline-start: 2rem; margin-block-start: 16px; }',
+				'.f {',
+				'\tpadding:',
+				'\t\t8px;',
+				'}',
+				'.g { PADDING: 4PX; grid-column-gap: 8px; }',
+			].join( '\r\n' )
+		);
+		write(
+			'assets/src/app/features/alpha/Page.tsx',
+			"export const Page = () => <div style={ { padding: '99px' } } />;\n"
+		);
+		write(
+			'assets/src/ui/widget.css',
+			'.ui { padding: 20px; margin: 14px; }\n'
+		);
+		const project = new Project( root );
+		const { violations, failures, allowed } = checkRawSpacing( project, [
+			{
+				file: 'assets/src/app/styles/app.css',
+				value: '14PX',
+				reason: 'Fixture: kept.',
+			},
+			{
+				file: 'assets/src/app/styles/app.css',
+				value: '99px',
+				reason: 'Fixture: gone.',
+			},
+		] );
+		assert.deepEqual(
+			violations.map(
+				( { file, line, property, value } ) =>
+					`${ file }:${ line } ${ property } ${ value }`
+			),
+			[
+				'assets/src/app/styles/app.css:14 padding 6px',
+				'assets/src/app/styles/app.css:14 margin 14px',
+				'assets/src/app/styles/app.css:14 border-radius 12px',
+				'assets/src/app/styles/app.css:15 padding-top 4px',
+				'assets/src/app/styles/app.css:15 column-gap 10px',
+				'assets/src/app/styles/app.css:15 border-top-left-radius 9px',
+				'assets/src/app/styles/app.css:16 margin-block-start 16px',
+				'assets/src/app/styles/app.css:19 padding 8px',
+				'assets/src/app/styles/app.css:21 padding 4px',
+				'assets/src/app/styles/app.css:21 grid-column-gap 8px',
+			]
+		);
+		assert.deepEqual(
+			allowed.map( ( entry ) => entry.reason ),
+			[ 'Fixture: kept.' ]
+		);
+		assert.deepEqual( failures, [
+			at( 14, 'padding', '6px' ),
+			at( 14, 'border-radius', '12px' ),
+			at( 15, 'padding-top', '4px' ),
+			at( 15, 'column-gap', '10px' ),
+			at( 15, 'border-top-left-radius', '9px' ),
+			at( 16, 'margin-block-start', '16px' ),
+			at( 19, 'padding', '8px' ),
+			at( 21, 'padding', '4px' ),
+			at( 21, 'grid-column-gap', '8px' ),
+			'stale allow-list entry (no longer violated, remove it): assets/src/app/styles/app.css 99px',
+		] );
+	} finally {
+		fs.rmSync( root, { recursive: true, force: true } );
+	}
+} );
+
+test( 'raw spacing allow-list entries need a reason', () => {
+	const result = runArchitectureChecks( fixture( 'graph' ), {
+		allowlist: {
+			rawSpacing: [
+				{ file: 'assets/src/app/styles/app.css', value: '10px' },
+			],
+		},
+		budgets: { assets: {} },
+	} );
+	assert.match(
+		result.sections[ 0 ].failures.join( '\n' ),
+		/rawSpacing: entry .* has no reason/
+	);
+	assert.equal( result.ok, false );
 } );
 
 test( 'allow-list entries without a reason are rejected', () => {

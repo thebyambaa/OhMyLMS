@@ -10,8 +10,9 @@ namespace OhMyLMS\Abstracts {
 }
 namespace OhMyLMS\Services {
     final class EmailVerificationService {
-        public static function is_required() { return false; }
-        public static function is_verified($user_id) { return true; }
+        public static function is_required() { return ! empty( $GLOBALS['verify_required'] ); }
+        public static function is_verified($user_id) { return empty( $GLOBALS['verify_required'] ); }
+        public static function get_resend_url() { return 'https://example.test/resend'; }
     }
 }
 namespace OhMyLMS\Quiz {
@@ -40,12 +41,14 @@ namespace {
     function ohmylms_is_pro() { return true; }
     function ohmylms_get_lesson($id) { return new class { public function get_prerequisites() { return ''; } }; }
     function ohmylms_get_assignment($id) { return new class { public function get_prerequisites() { return ''; } }; }
-    function __($text) { return $text; }
+    function __($text, $domain = null) { return $text; }
     function esc_html__($text) { return $text; }
     function esc_html_e($text) { echo $text; }
     function esc_html($text) { return $text; }
     function esc_url($url) { return $url; }
-    function wp_die($message, $title = '', $args = []) { throw new \RuntimeException('wp_die:' . ($args['response'] ?? 200)); }
+    function wp_die($message, $title = '', $args = []) { $GLOBALS['die_message'] = $message; throw new \RuntimeException('wp_die:' . ($args['response'] ?? 200)); }
+    function esc_attr($text) { return htmlspecialchars((string) $text, ENT_QUOTES, 'UTF-8'); }
+    function shortcode_atts($pairs, $atts, $shortcode = '') { return array_merge($pairs, (array) $atts); }
 
     require __DIR__ . '/../../includes/Hooks/CommonHook.php';
 
@@ -74,4 +77,35 @@ namespace {
     $cleared = []; visit(GUEST, 'ohmylms-quiz'); visit(ADMIN, 'ohmylms-lesson'); visit(ADMIN, 'ohmylms-assignment');
     check($cleared === [], 'Stale preview records cleared for a guest or for non-quiz content');
     echo "Content gate: admins and authors bypass enrollment; guests and unenrolled students stay blocked.\n";
+
+    // Verification notices and buy-now errors use token classes, not hard-coded colours.
+    $GLOBALS['verify_required'] = true;
+    $hook = (new \ReflectionClass(\OhMyLMS\Hooks\CommonHook::class))->newInstanceWithoutConstructor();
+    $render = new \ReflectionMethod($hook, 'render_verification_notice');
+    ob_start();
+    $render->invoke($hook, 'success', 'Email verified! Your account is now fully active.');
+    $notice = (string) ob_get_clean();
+    check(str_contains($notice, 'ohmylms-verification-notice-success') && str_contains($notice, 'ohmylms-verification-notice--success'), 'Verification notice lost its class');
+    check(! str_contains($notice, '#6E42D3') && ! str_contains($notice, 'color:red') && ! str_contains($notice, 'style='), 'Verification notice still has an inline colour: ' . $notice);
+    ob_start();
+    $hook->output_thankyou_verification_notice(1);
+    $thankyou = (string) ob_get_clean();
+    check(str_contains($thankyou, 'ohmylms-verification-notice-thankyou') && str_contains($thankyou, 'ohmylms-verification-resend-button'), 'Thank-you notice lost its classes');
+    check(! str_contains($thankyou, '#6E42D3') && ! str_contains($thankyou, 'style='), 'Thank-you notice still has an inline colour: ' . $thankyou);
+    check(visit(STUDENT, 'ohmylms-lesson') === 'wp_die:200', 'Unverified student was not stopped');
+    check(str_contains($GLOBALS['die_message'], 'ohmylms-verification-resend') && ! str_contains($GLOBALS['die_message'], '#6E42D3') && ! str_contains($GLOBALS['die_message'], 'color:#6E42D3'), 'Resend link still hard-codes #6E42D3');
+    $GLOBALS['verify_required'] = false;
+
+    require __DIR__ . '/../../includes/Shortcodes/ShortCodeBuyNow.php';
+    ob_start();
+    \OhMyLMS\Shortcodes\ShortCodeBuyNow::output(array('course_id' => ''));
+    $buy_error = (string) ob_get_clean();
+    check(str_contains($buy_error, 'ohmylms-buy-now-error') && str_contains($buy_error, 'Course ID is required.') && ! str_contains($buy_error, 'color:red'), 'Buy-now error still uses color:red: ' . $buy_error);
+
+    $sheet = (string) file_get_contents(__DIR__ . '/../../assets/css/oml-ui.css');
+    check(str_contains($sheet, '.ohmylms-buy-now-error') && str_contains($sheet, 'var(--oml-danger)') && str_contains($sheet, 'var(--oml-primary)'), 'Shared sheet is missing the token classes');
+    check(! str_contains($sheet, '#6E42D3') && ! preg_match('/color:\\s*red/', $sheet), 'Shared sheet reintroduced a raw error colour');
+    $login = (string) file_get_contents(__DIR__ . '/../../templates/global/form-login.php');
+    check(str_contains($login, 'ohmylms-auth-divider') && ! str_contains($login, '#7A8B9A'), 'Login divider still hard-codes its colour');
+    echo "Verification notices and buy-now errors use token classes.\n";
 }

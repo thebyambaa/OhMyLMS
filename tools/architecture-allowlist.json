@@ -1,5 +1,5 @@
 {
-	"description": "Known, justified exceptions to tools/check-architecture.mjs. Every entry needs a reason; entries that no longer match a violation fail the check. See docs/ENFORCEMENT.md. Format: recoveredRuntime and crossFeature entries are { \"from\": \"assets/src/app/...\", \"to\": \"assets/src/...\", \"reason\": \"...\" }; cycles entries are { \"files\": [ \"assets/src/app/...\", ... ], \"reason\": \"...\" }; rawColours entries are { \"file\": \"assets/src/app/...\", \"value\": \"#rrggbb\", \"reason\": \"...\" }; sharedHooks entries are { \"file\": \"assets/src/app/features/...\", \"hook\": \"usePagedList\", \"reason\": \"...\" }.",
+	"description": "Known, justified exceptions to tools/check-architecture.mjs. Every entry needs a reason; entries that no longer match a violation fail the check. See docs/ENFORCEMENT.md. Format: recoveredRuntime and crossFeature entries are { \"from\": \"assets/src/app/...\", \"to\": \"assets/src/...\", \"reason\": \"...\" }; cycles entries are { \"files\": [ \"assets/src/app/...\", ... ], \"reason\": \"...\" }; rawColours entries are { \"file\": \"assets/src/app/...\", \"value\": \"#rrggbb\", \"reason\": \"...\" }; rawSpacing entries are { \"file\": \"assets/src/app/....css\", \"value\": \"999px\", \"reason\": \"...\" }; sharedHooks entries are { \"file\": \"assets/src/app/features/...\", \"hook\": \"usePagedList\", \"reason\": \"...\" }.",
 	"recoveredRuntime": [],
 	"cycles": [],
 	"crossFeature": [],
@@ -8,6 +8,13 @@
 			"file": "assets/src/app/features/settings/BrandingForm.tsx",
 			"value": "#6e42d3",
 			"reason": "Example value in the translated help text of the learner branding colour fields; it is shown as text, not used as a colour."
+		}
+	],
+	"rawSpacing": [
+		{
+			"file": "assets/src/app/features/gradebook/gradebook.css",
+			"value": "999px",
+			"reason": "Enrollment-source chips are pills. 999px stays fully round on every radius preset; --oml-radius-button is 2px on the WordPress preset, and there is no separate pill token."
 		}
 	]
 }

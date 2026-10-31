@@ -118,7 +118,32 @@ Authored frontend SCSS compiles to nine page modules through `tools/build-fronte
 `FrontendStyles` registers shared components and the groups required by each request;
 `ohmylms_frontend_style_groups` lets integrations request additional groups explicitly.
 The generated `style.css` and `style-rtl.css` URLs remain compatibility outputs and are not loaded
-alongside those modules. The ordered admin feature modules are built from
+alongside those modules. They are produced from the same SCSS; they are not a second colour source.
+Edit `assets/src/frontend/scss` and regenerate with `tools/build-frontend-styles.mjs`. Do not hand-edit
+`assets/css/style.css`, `assets/css/style-rtl.css`, or `assets/css/frontend/**`.
+
+## Learner SCSS colours
+
+`npm run lint:css` rejects new raw colours in `assets/src/frontend/scss`. `color-no-hex`, `color-named`
+and the `rgb`/`rgba`/`hsl`/`hsla` ban apply, with one allowance: a previous hex may appear only as the
+fallback of a design token, for example `color: var(--oml-primary, #1865f2)`. A page that does not emit
+the token keeps that previous colour; a learner page resolves the token from the saved palette. Use
+`--oml-primary`, `--oml-text`, `--oml-heading`, `--oml-muted`, `--oml-border`, `--oml-surface`,
+`--oml-background`, `--oml-danger`, `--oml-success`, `--oml-warning`, `--oml-link` and `--oml-on-primary`.
+Use an `--ohmylms-*` alias only in a file that already uses that family.
+
+Single-colour icons use a white SVG mask (`--icon-mask`) plus `background-color: var(--oml-*, <previous>)`, so the
+palette can restyle them. `#fff` / `#000` inside that mask are the silhouette, not a brand colour.
+`ohmylms/no-raw-svg-colour` (`tools/stylelint-learner-colours.mjs`) rejects any other colour inside an
+SVG data URI unless `tools/learner-colour-allowlist.json` lists that file and value. The list is for
+values that cannot follow one token: star-rating artwork, select chevrons painted behind the control's
+text, a notice glyph that shares its box with a surface disc, and two-paint lesson-type icons. This
+SCSS has no chart series and no exam-print colours (`assets/css/paper.css` is separate). The video
+player partial is outside the rule: its fixed media palette is documented on that file and owned with
+the player. Generated `assets/css/style.css`, `assets/css/style-rtl.css` and `assets/css/frontend/**`
+stay ignored. `assets/css/oml-ui.css` stays on the stricter rule, with no hex fallbacks.
+
+The ordered admin feature modules are built from
 `assets/src/design-system/admin`; edit authored sources rather than hashed outputs. Video controls retain a documented fixed media palette over arbitrary footage. Status text
 has separate contrast-adjusted `--oml-{success,warning,danger,info}-text` tokens for soft backgrounds.
 

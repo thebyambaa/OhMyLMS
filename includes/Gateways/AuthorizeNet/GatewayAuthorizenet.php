@@ -294,7 +294,7 @@ class GatewayAuthorizenet extends PaymentGateway {
 					<input type="text" id="anet-cvv" class="authorize-net-field" autocomplete="cc-csc" placeholder="123" />
 				</div>
 			</fieldset>
-			<div id="authorize-net-payment-errors" role="alert" style="color: red;"></div>
+			<div id="authorize-net-payment-errors" class="ohmylms-text-danger" role="alert"></div>
 			<input type="hidden" name="authorize_net_opaque_data_value" id="authorize_net_opaque_data_value" />
 			<input type="hidden" name="authorize_net_opaque_data_descriptor" id="authorize_net_opaque_data_descriptor" />
 		</div>

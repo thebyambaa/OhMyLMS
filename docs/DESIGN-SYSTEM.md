@@ -1,6 +1,6 @@
 # Backend design system
 
-One look for every OhMyLMS admin screen: the React app (Dashboard, Content Hub, course and quiz editors, Account Hub, Settings), the PHP pages (Skill assessments, Import questions, Schools, xAPI) and the plugin's post screens. Learner pages are **not** affected; they keep their own branding options.
+One look for every OhMyLMS admin screen: the React app (Dashboard, Content Hub, course and quiz editors, Account Hub, Settings), the PHP pages (Skill assessments, Import questions, Schools, xAPI) and the plugin's post screens. Learner pages read the same saved palette through `--oml-*` (`docs/DESIGN-TOKENS.md`); this document is the admin contract and the stored preset values.
 
 ## Where it lives
 
@@ -77,6 +77,6 @@ Deviating screens: PHP pages (Skill assessments, Import questions, Schools, xAPI
 
 ## Known gaps
 
-- Remaining one-off values in feature CSS (10px/12px radii, 6/10/14px gaps, assorted greys and tints such as `#efe9fb`, `#e3e6eb`) are not yet on the tokens.
+- App stylesheets under `assets/src/app` take padding, margin, gap and radius from `--oml-space-*` and `--oml-radius-*`. The architecture check rejects any other raw px on those properties except `0`, `1px` and `2px`. Still literal: `50%` circles (dashboard attention marker, at-risk avatar, site-health mark); the gradebook enrollment-source pill at `999px` (allow-listed, because `--oml-radius-button` is 2px on the WordPress preset and there is no separate pill token); hairline `1px` and `2px` where the next space step would open a tight group (period-control overlap `-1px`, pulse `gap: 2px`, heatmap header and cell padding `2px`, gradebook chip margins `1px`/`2px`, manual-mark offset `2px`, dialog-radio `margin: 2px 0`, level-chip vertical padding `2px`); and gradebook rollup depth 2–3 at `padding-inline-start: 3.5rem` (56px at a 16px root), halfway between `--oml-space-7` (48px) and `--oml-space-8` (64px). `assets/src/ui` has no stylesheets.
 - Small inline `style=""` attributes on PHP pages (e.g. the xAPI delivery table `max-width`) are layout only and were left.
-- Cart/checkout-style learner screens and learner pages are out of scope.
+- Learner colour declarations in `assets/src/frontend/scss` read `--oml-*`, with the previous hex kept only as a `var()` fallback. `assets/css/style.css` (483,294 bytes after this regeneration; the October snapshot was 476,556) and `style-rtl.css` are the generated compatibility bundle from that SCSS, not a second palette to recolour by hand. Still outside the tokens: the video player's fixed media palette, star-rating artwork, select chevrons, one notice glyph, and two-paint lesson-type icons (`tools/learner-colour-allowlist.json`). Exam-print colours stay in `paper.css`.

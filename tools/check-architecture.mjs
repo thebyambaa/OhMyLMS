@@ -875,6 +875,144 @@ export function checkRawColours( project, allowlist = [] ) {
 	);
 }
 
+const SPACING_PROPERTIES = new Set( [
+	'border-radius',
+	'border-top-left-radius',
+	'border-top-right-radius',
+	'border-bottom-right-radius',
+	'border-bottom-left-radius',
+	'border-start-start-radius',
+	'border-start-end-radius',
+	'border-end-start-radius',
+	'border-end-end-radius',
+	'gap',
+	'row-gap',
+	'column-gap',
+	'grid-gap',
+	'grid-row-gap',
+	'grid-column-gap',
+	'padding',
+	'padding-top',
+	'padding-right',
+	'padding-bottom',
+	'padding-left',
+	'padding-block',
+	'padding-inline',
+	'padding-block-start',
+	'padding-block-end',
+	'padding-inline-start',
+	'padding-inline-end',
+	'margin',
+	'margin-top',
+	'margin-right',
+	'margin-bottom',
+	'margin-left',
+	'margin-block',
+	'margin-inline',
+	'margin-block-start',
+	'margin-block-end',
+	'margin-inline-start',
+	'margin-inline-end',
+] );
+
+/** 0, 1px and 2px: hairlines, borders and focus rings. Negatives collapse to the same sizes. */
+const HAIRLINE_PX = new Set( [ 0, 1, 2 ] );
+
+function blankCssComments( css ) {
+	return css.replace( /\/\*[\s\S]*?\*\//g, ( comment ) =>
+		comment.replace( /[^\n]/g, ' ' )
+	);
+}
+
+/** Replace each var(--oml-…) call, fallback included, with spaces. Newlines stay put. */
+function maskOmlVars( css ) {
+	const needle = /var\(\s*--oml-/g;
+	let out = '';
+	let cursor = 0;
+	for ( const match of css.matchAll( needle ) ) {
+		if ( match.index < cursor ) continue;
+		out += css.slice( cursor, match.index );
+		const open = css.indexOf( '(', match.index );
+		let depth = 0;
+		let end = open;
+		for ( ; end < css.length; end++ ) {
+			if ( css[ end ] === '(' ) depth++;
+			else if ( css[ end ] === ')' ) {
+				depth--;
+				if ( depth === 0 ) {
+					end++;
+					break;
+				}
+			}
+		}
+		out += css.slice( match.index, end ).replace( /[^\n]/g, ' ' );
+		cursor = end;
+	}
+	return out + css.slice( cursor );
+}
+
+/**
+ * Raw px lengths on spacing and radius properties in one stylesheet. Comments are ignored, and so
+ * is any length written inside var(--oml-…). 0, 1px and 2px (including negatives) are not hits.
+ */
+export function findRawSpacing( text ) {
+	const code = maskOmlVars( blankCssComments( text ) );
+	const found = [];
+	const declarations = /(?:^|[{;}])\s*(--)?([A-Za-z-]+)\s*:/g;
+	for ( const match of code.matchAll( declarations ) ) {
+		if ( match[ 1 ] ) continue;
+		const property = match[ 2 ].toLowerCase();
+		if ( ! SPACING_PROPERTIES.has( property ) ) continue;
+		const valueStart = match.index + match[ 0 ].length;
+		let valueEnd = valueStart;
+		while (
+			valueEnd < code.length &&
+			code[ valueEnd ] !== ';' &&
+			code[ valueEnd ] !== '{' &&
+			code[ valueEnd ] !== '}'
+		)
+			valueEnd++;
+		const value = code.slice( valueStart, valueEnd );
+		for ( const hit of value.matchAll(
+			/([+-]?(?:\d+\.\d+|\d+|\.\d+))px/gi
+		) ) {
+			const number = hit[ 1 ].replace( /^\+/, '' );
+			if ( HAIRLINE_PX.has( Math.abs( Number( number ) ) ) ) continue;
+			found.push( {
+				line: lineAt( code, valueStart + hit.index ),
+				property,
+				value: `${ number.toLowerCase() }px`,
+			} );
+		}
+	}
+	return found;
+}
+
+/** h. Spacing and radius in app stylesheets come from --oml-space-* and --oml-radius-*. */
+export function checkRawSpacing( project, allowlist = [] ) {
+	const violations = [];
+	const files = walk( project.app ).filter(
+		( file ) =>
+			file.endsWith( '.css' ) && ! isTest( project.relative( file ) )
+	);
+	for ( const file of files ) {
+		const relative = project.relative( file );
+		for ( const hit of findRawSpacing( readText( file ) ) )
+			violations.push( { file: relative, ...hit } );
+	}
+	return partition(
+		violations,
+		allowlist,
+		( violation, entry ) =>
+			violation.file === entry.file &&
+			violation.value.toLowerCase() ===
+				String( entry.value ).toLowerCase(),
+		( violation ) =>
+			`${ violation.file }:${ violation.line } sets ${ violation.property } to ${ violation.value }; use a --oml-space-* or --oml-radius-* token`,
+		( entry ) => `${ entry.file } ${ entry.value }`
+	);
+}
+
 function partition( violations, allowlist, matches, describe, describeEntry ) {
 	const allowed = [];
 	const failures = [];
@@ -1167,6 +1305,7 @@ export function runArchitectureChecks( root, options = {} ) {
 		...requireReasons( allowlist.cycles, 'cycles' ),
 		...requireReasons( allowlist.crossFeature, 'crossFeature' ),
 		...requireReasons( allowlist.rawColours, 'rawColours' ),
+		...requireReasons( allowlist.rawSpacing, 'rawSpacing' ),
 		...requireReasons( allowlist.sharedHooks, 'sharedHooks' ),
 	];
 	const sections = [
@@ -1194,6 +1333,10 @@ export function runArchitectureChecks( root, options = {} ) {
 		{
 			name: 'no raw colour literals in assets/src/app CSS and TSX',
 			...checkRawColours( project, allowlist.rawColours ),
+		},
+		{
+			name: 'no raw spacing or radius lengths in assets/src/app CSS',
+			...checkRawSpacing( project, allowlist.rawSpacing ),
 		},
 		{
 			name: 'admin bundles use WordPress React and @wordpress/* externals',
