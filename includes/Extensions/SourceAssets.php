@@ -90,6 +90,8 @@ final class SourceAssets {
 		if ( self::register_entry( self::REGISTRATION_HANDLE, 'admin-app-registration' ) ) {
 			wp_enqueue_script( self::REGISTRATION_HANDLE );
 			wp_set_script_translations( self::REGISTRATION_HANDLE, 'ohmylms', OHMYLMS_DIR . '/languages' );
+			// The form posts to admin-ajax on pages that load neither `ohmylms-frontend` nor the checkout script.
+			wp_localize_script( self::REGISTRATION_HANDLE, 'ohmylmsRegistration', array( 'ajaxUrl' => admin_url( 'admin-ajax.php' ) ) );
 		}
 	}
 

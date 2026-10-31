@@ -59,6 +59,15 @@ Emotion, Tiptap, Lowlight, Lodash and `react-select` ([CUTOVER](CUTOVER.md)).
 The typed email editor (`assets/src/app/features/emails`) uses only WordPress components and the server
 preview, so no email library needs replacing.
 
+## Loaded from the provider, not bundled (L7)
+
+The lesson video module does not vendor a player. The first time a page has that provider, the adapter
+fetches the API: YouTube IFrame API (`https://www.youtube.com/iframe_api`), Vimeo Player
+(`https://player.vimeo.com/api/player.js`) and Wistia `E-v1.js`
+(`https://fast.wistia.com/assets/external/E-v1.js`). Bunny Stream is spoken with the player.js `postMessage`
+protocol; the player.js script itself is not loaded, because the Bunny iframe is the receiver. HTML5 uses
+the browser's `<video>`. None of these is an npm dependency.
+
 ## Left for other owners
 
 - The two inert `ohmylms-select2` field classes in `includes/Admin/Pages/GeneralSettings.php`. (The Mail Mint
@@ -70,6 +79,6 @@ preview, so no email library needs replacing.
 ## History
 
 The 29 October migrations of Chart.js, Emotion, MJML, Arco, Easy Email core and Lowlight to npm
-packages, with their adapters and parity tests, applied to the recovered admin and were deleted with it. See
-git history for this file, [EMAIL-PACKAGE-MIGRATION](EMAIL-PACKAGE-MIGRATION.md),
-[EASY-EMAIL-AUDIT](EASY-EMAIL-AUDIT.md) and [ADMIN-VENDOR-AUDIT](ADMIN-VENDOR-AUDIT.md).
+packages, with their adapters and parity tests, applied to the recovered admin and were deleted with it on
+31 October 2026. See git history for this file and the retired audit documents removed in the October 2026
+documentation cleanup.

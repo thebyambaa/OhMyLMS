@@ -1,30 +1,28 @@
-# Learner front end: script map and Interactivity migration plan
+# Learner front end: script map and Interactivity migration
 
-Status: batch L1 (foundation and map), batch L2 (shared helpers and page chrome), batch L3 (course
-catalogue), batch L4 (learner dashboard and profile) and batch L5 (login, sign-up and reviews) done on
-31 October 2026. L3 to L7 build on the [shared helper API](#shared-helper-api-l2) below. Roadmap item 6 in
+Status: batches L1–L7 done on 31 October 2026 (foundation through lesson/assignment player and video).
+L3–L7 build on the [shared helper API](#shared-helper-api-l2) below. Roadmap item 6 in
 [MODULARIZATION-ROADMAP](MODULARIZATION-ROADMAP.md).
 
-The admin is the typed app. The learner side still runs three jQuery scripts (`ohmylms.js`,
-`video-player.js`, `video-progress-tracker.js`) next to vanilla scripts in `assets/js` and the
-Interactivity modules in `assets/interactivity` ([INTERACTIVITY](INTERACTIVITY.md)). Carousels (Slick),
-commerce scripts and the exam paper are migrated by their own owners and are only mentioned here where
-`ohmylms.js` touches them.
+The admin is the typed app. Learner UI is implemented with Interactivity script modules in
+`assets/interactivity` ([INTERACTIVITY](INTERACTIVITY.md)), plus a few vanilla helpers in `assets/js`.
+Carousels, commerce, the exam paper, catalogue, account pages, auth forms, the lesson player and video
+each have their own store. L7 deleted `ohmylms.js`. The `ohmylms-frontend` handle stays with no source
+file and no jQuery, so Chrome, Elementor, Bricks, blocks, previews, the hub and the exam player can
+still enqueue it and receive `ohmylms_frontend_params`.
 
 ## How learner scripts are served
 
-| Handle | Canonical source (the only copy) | Served from | Build step |
-| --- | --- | --- | --- |
-| `ohmylms-frontend` | `assets/src/frontend/js/ohmylms.js` | the same file, in every mode | none |
-| `ohmylms-video-player` | `assets/src/frontend/js/lesson/video-player.js` | the same file, in every mode | none |
-| `ohmylms-video-progress-tracker` | `assets/src/frontend/js/video-progress-tracker.js` | the same file, in every mode | none |
+Since L7, `Assets\FrontendAssets::LEARNER_SCRIPTS` is empty. `ohmylms-frontend` is registered with
+`src` false and no dependencies; localizing it still prints `ohmylms_frontend_params`. `BlocksManager`
+registers the same kind of handle (`ohmylms-frontend-editor`) for the block editor, and `ElementorManager`
+registers `ohmylms-frontend` the same way when FrontendAssets has not. `Interactivity::legacy_url()` no
+longer rewrites `assets/dist/frontend/{ohmylms,video-player,video-progress-tracker}.js`: those files are
+not on disk (they stay in `retiredAssets`), and there is no authored file left to point them at.
 
-`Assets\FrontendAssets::LEARNER_SCRIPTS` maps the handles to these paths and
-`FrontendAssets::learner_script_version()` versions them as `OHMYLMS_VERSION-<filemtime>`, so an edit is
-picked up without a version bump. `BlocksManager` (block editor) and `ElementorManager` register
-`ohmylms.js` through the same constant. `Extensions\Interactivity::legacy_url()` still rewrites the removed
-`assets/dist/frontend/{ohmylms,video-player,video-progress-tracker}.js` URLs (and their `build/` twins) to the
-canonical files for any add-on or theme that hard-coded them.
+Video uses the `ohmylms/video` module and provider adapters under `assets/interactivity/video/`. The
+old `ohmylms-video-player` and `ohmylms-video-progress-tracker` files were removed in L7, and `ohmylms.js`
+was deleted in the same batch.
 
 What it was before L1:
 
@@ -121,11 +119,11 @@ previews, and Elementor/Bricks widgets.
 | Filter drawer on mobile | `.filter-hamburger`, `.ohmylms-course-sidebar`, `.ohmylms-close-filter` | `filters/search-sort.php`, `filters/filter-header.php` | — | **Migrated (L3)** to the `ohmylms/ui` drawer |
 | Course card hover popup (grid style 3) | `.grid-style3 .ohmylms-course-cards-carousel .course-card`, `.ohmylms-course-card-popup[data-item-id]` | `course-popup-content.php`, `layouts/grid-style3.php` | — | **Migrated (L3)** (delegated `actions.cardOver`/`cardOut`, so cards from later navigations get it too) |
 | Archive carousels | `.ohmylms-course-cards-carousel` | `loop/loop-start.php` | — | Carousel owner (Slick replacement) |
-| Accordions | `.ohmylms-filter-accordion`, `.ohmylms-lesson-sidebar-accordion` `.ohmylms-accordion-head` (+ keyboard) | `filters/filters.php`, `single-lesson/sidebar/sidebar.php` | — | Superseded by `ohmylms/ui` when rendered by `ohmylms_get_template()` |
-| Responsive tables | `.ohmylms-table .ohmylms-td-handle` (bound only if the window is under 768 px at load), `.dashboard-table-tr .table-accordion-handler` | `single-lesson/content-quiz.php`; `profile/membership.php`, `membership-details.php`, `invoice-details.php`, `transactions-history.php` | — | Superseded by `ohmylms/ui` (same rule). The `.dashboard-table-tr` jQuery copy was **removed in L4** (every profile table is rendered by `ohmylms_get_template()`); the quiz `.ohmylms-td-handle` copy stays for L6 |
-| Lesson sidebar tabs | `.ohmylms-lesson-tab-nav li`, `.ohmylms-lesson-single-tab-content` | `single-lesson/sidebar/sidebar.php` | — | Live (vanilla DOM) |
+| Accordions | `.ohmylms-filter-accordion`, `.ohmylms-lesson-sidebar-accordion` `.ohmylms-accordion-head` (+ keyboard) | `filters/filters.php`, `single-lesson/sidebar/sidebar.php` | — | `ohmylms/ui` disclosures; the jQuery copies (click and keyboard) were **removed in L6** |
+| Responsive tables | `.ohmylms-table .ohmylms-td-handle` (bound only if the window is under 768 px at load), `.dashboard-table-tr .table-accordion-handler` | `single-lesson/content-quiz.php`; `profile/membership.php`, `membership-details.php`, `invoice-details.php`, `transactions-history.php` | — | `ohmylms/ui` disclosures. The `.dashboard-table-tr` jQuery copy was **removed in L4**, the quiz `.ohmylms-td-handle` copy **in L6** (`content-quiz.php` is rendered by `ohmylms_get_template()`) |
+| Lesson sidebar tabs | `.ohmylms-lesson-tab-nav li`, `.ohmylms-lesson-single-tab-content` | `single-lesson/sidebar/sidebar.php` | — | **Migrated (L6)** to the public `ohmylms/tabs` store (`role="tab"`, arrow keys) |
 | My courses tabs | `.ohmylms-my-courses-tab ul li button` (arrow keys) | `profile/my-courses.php`, `Shortcodes\ShortCodeMyCourses` | — | **Migrated (L4)** to the public `ohmylms/tabs` store (arrow keys, Home, End) |
-| Toast | `#ohmylms-toast`, `.ohmylms-message`, `#ohmylms-close-toast` | `global/toast.php` | — | **Migrated (L2)** to `ohmylms/ui`. The remaining jQuery callers (login, sign-up, lesson complete, assignment) go through a small shim that dispatches `ohmylms:toast` |
+| Toast | `#ohmylms-toast`, `.ohmylms-message`, `#ohmylms-close-toast` | `global/toast.php` | — | **Migrated (L2)** to `ohmylms/ui`. The jQuery shim that dispatched `ohmylms:toast` lost its last callers (lesson complete, assignment) and was **removed in L6** |
 | Header avatar dropdown | `.ohmylms-header .ohmylms-user-avatar`, body click closes | `global/main-header.php` | — | **Migrated (L2)** to `ohmylms/ui` dropdown actions |
 | Profile sidebar drawer | `.ohmylms-student-profile .ohmylms-hamburger`, `.ohmylms-student-profile-sidebar` | `profile/profile-layout.php`, `profile/navigation.php`, `Shortcodes\ShortCodeProfile`, `student-hub/workspace.php` | — | **Migrated (L2)** to `ohmylms/ui` drawer actions (the hub's legacy wrapper has no toggle and stays static) |
 | Cover and profile photo | `#cover_image_input`, `#cover-image-delete`, `#profile_photo_input`, `.cover-edit`/`.edit-avatar` (keyboard) | `profile/profile-edit.php` | `ohmylms_student_cover_image_upload`, `ohmylms_student_cover_image_delete`, `ohmylms_student_profile_image_upload` → `Ajax::student_cover_image_upload/delete()`, `Ajax::student_profile_image_upload()` (nonces `student_profile_cover_*`, `student_profile_image_upload_nonce`, localized only on the profile shortcode and the hub) | **Migrated (L4)** to `ohmylms/account`; the nonces are in its state |
@@ -137,14 +135,14 @@ previews, and Elementor/Bricks widgets.
 | Form helpers | `.ohmylms-input-text` label folding, `.show-password-icon`, `.ohmylms-form-login-rememberme` and `.ohmylms-tnc-label` (Enter), `input[name='tnc-accept']` enables submit, `input[name="phone"]`/`[name="whatsapp"]` character filter | `global/form-login.php`, `global/form-signup.php`, `profile/profile-edit.php`, `profile/settings.php`, `checkout/terms.php`, `student-hub/settings.php`, checkout shortcode/block/widgets | — | **Migrated (L2)** to `ohmylms/forms`; submission and the show-login/show-signup links followed in L5 |
 | Email verification | URL params `ohmylms_email_verified`, `ohmylms_verify_sent`, `ohmylms_verify_error` → toast; `a[href*="ohmylms_resend_verification"]` | `Services\EmailVerificationService` notices | GET `ohmylms_resend_verification` with `format=json` → `Ajax::resend_verification()` | **Migrated (L2)** to `ohmylms/ui` (`installChrome()`) |
 | Review stars and validation | `.comment-form-rating .ohmylms-stars > a` → `select#rating`; `.ohmylms-course-reviews-form #submit` | `single-course/tabs/reviews.php` (from `student-hub/course.php`) | comment form post | **Migrated (L5)** to `ohmylms/reviews`; the stars are now radio inputs (`name="rating"`) and `select#rating` is gone |
-| Mark lesson complete | `#ohmylms-completed-lesson`, `#ohmylms-lesson-id`; `.ohmylms-lesson-navigation .ohmylms-checkbox` (Enter) | `single-lesson/content-navigation.php` | `ohmylms_lesson_completed` → `Ajax::lesson_completed()` (nonce `lesson_completed_nonce`), then next link or reload | Live |
-| Assignment submission | `.ohmylms-assignment-form`, `#submission-file`, `#ohmylms-add-new-attachment`, `.remove-resource-action` (built by the script), `.ohmylms-file-upload` (keyboard), `.assignment-submit-alert` | `single-lesson/content-assignment.php` | `ohmylms_save_assignment_submission_file` → `Ajax::save_assignment_submission_file()` (nonce `assignment_submission_nonce`) | Live |
-| Assignment timer and deadline | `.ohmylms-lesson-navigation .start-submit-assignment`, `input[name="ohmylms_assignment_deadline"]`, `.submission-time-limit .timer-display[data-timer]`, `.deadline` | `single-lesson/content-navigation.php`, `content-assignment.php` | `ohmylms_save_remaining_time` → `Ajax::save_remaining_time()`; at zero `ohmylms_quiz_exit_submission` (see findings) | Live |
-| Quiz text fields | `.textarea-auto-resize`, `.ohmylms-has-character-limit[data-limit]` | `quiz-loop/long-text.php`, `quiz-loop/short-text.php` | — | Live, inside the `ohmylms/quiz` region; move into `ohmylms/questions` |
-| Lesson video cover | `.ohmylms-video-player`, `.ohmylms-video-player-play`, `.ohmylms-video-player-cover`, `.the-video` (three overlapping handlers) | `single-lesson/content-lesson.php` | — | Live |
-| Lesson content images | `.ohmylms-wysiwyg-content img[data-width][data-align]` wrapped in `.image-wrapper` | `single-lesson/content-{lesson,quiz,assignment,zoom,googlemeet}.php` | — | Live; do it on the server (`the_content` filter) |
-| Prerequisite dialog close | `.ohmylms-access-denied-inner`, `.ohmylms-access-denied-close`, `.ohmylms-access-denied-modal-content` | `Hooks\CommonHook::restrict_access()`, `single-lesson.php` | — | Live |
-| Content protection | whole page when `is_creator_page` and `content_protection === 'yes'` (blur on window blur, context menu, copy/cut, shortcut keys, DevTools size check, Loom element poll) | option `ohmylms_content_protection` | — | Live; deterrent only |
+| Mark lesson complete | `#ohmylms-completed-lesson`, `#ohmylms-lesson-id`; `.ohmylms-lesson-navigation .ohmylms-checkbox` (Enter) | `single-lesson/content-navigation.php` | `ohmylms_lesson_completed` → `Ajax::lesson_completed()` (nonce `lesson_completed_nonce`), then next link or reload | **Migrated (L6)** to `ohmylms/lesson`; the server now applies enrolment, drip, prerequisites and the sequential lock (`Learning\LessonGate`) |
+| Assignment submission | `.ohmylms-assignment-form`, `#submission-file`, `#ohmylms-add-new-attachment`, `.remove-resource-action` (built by the script), `.ohmylms-file-upload` (keyboard), `.assignment-submit-alert` | `single-lesson/content-assignment.php` | `ohmylms_save_assignment_submission_file` → `Ajax::save_assignment_submission_file()` (nonce `assignment_submission_nonce`) | **Migrated (L6)** to `ohmylms/assignment` (file list rendered with `data-wp-each`) |
+| Assignment timer and deadline | `.ohmylms-lesson-navigation .start-submit-assignment`, `input[name="ohmylms_assignment_deadline"]`, `.submission-time-limit .timer-display[data-timer]`, `.deadline` | `single-lesson/content-navigation.php`, `content-assignment.php` | `ohmylms_save_remaining_time` → `Ajax::save_remaining_time()`; at zero `ohmylms_quiz_exit_submission` (see findings) | **Fixed and migrated (L6)**: the server answers the deadline and refuses late submissions; at zero the module submits through the assignment action or locks |
+| Quiz text fields | `.textarea-auto-resize`, `.ohmylms-has-character-limit[data-limit]` | `quiz-loop/long-text.php`, `quiz-loop/short-text.php` | — | **Removed (L6)**: `ohmylms/quiz::actions.answerChanged` (added to every field by `Interactivity::quiz()`) already limits, counts and resizes them |
+| Lesson video cover | `.ohmylms-video-player`, `.ohmylms-video-player-play`, `.ohmylms-video-player-cover`, `.the-video` (three overlapping handlers) | `single-lesson/content-lesson.php` | — | **Migrated (L7)** to `ohmylms/video` (`actions.coverPlay`, `state.coverHidden`). `ohmylms.js` was then deleted |
+| Lesson content images | `.ohmylms-wysiwyg-content img[data-width][data-align]` wrapped in `.image-wrapper` | `single-lesson/content-{lesson,quiz,assignment,zoom,googlemeet}.php` | — | **Moved to PHP (L6)**: `Extensions\Lesson::images()` styles the `<img>` (no wrapper; no CSS used `.image-wrapper` in lesson content) |
+| Prerequisite dialog close | `.ohmylms-access-denied-inner`, `.ohmylms-access-denied-close`, `.ohmylms-access-denied-modal-content` | `Hooks\CommonHook::restrict_access()`, `single-lesson.php` | — | **Removed (L6)**: every modal is printed by `wp_die()` or before `wp_footer()` in `single-lesson.php`, so the script never ran next to it |
+| Content protection | whole page when `is_creator_page` and `content_protection === 'yes'` (blur on window blur, context menu, copy/cut, shortcut keys, DevTools size check, Loom element poll) | option `ohmylms_content_protection` | — | **Migrated (L6)** to `ohmylms/protection`, loaded only when the option is on; deterrent only |
 | Block-theme navigation fix | `.ohmylms-page.theme-twentytwenty{two,three,five} .wp-block-navigation__responsive-container-{open,close}` | core navigation block; body class from `Utility/template-functions.php` | — | **Migrated (L2)**: a delegated listener in `ohmylms/ui` that acts only when core's `core/navigation` store did not open or close the menu within a frame |
 | Scroll to top | `.ohmylms-scroll-to-top button` | `global/scrollto-top.php` | — | **Migrated (L2)** to `ohmylms/ui` (passive async window scroll, smooth only without reduced motion) |
 
@@ -156,7 +154,10 @@ Localized data (`FrontendAssets::get_script_data( 'ohmylms-frontend' )`): `ajax_
 `course_drop_nonce`, the three profile image nonces and `cancel_membership_nonce`: the account nonces are now in
 `wp_interactivity_state( 'ohmylms/account' )`, printed only when a template that needs them renders.
 `load_more_nonce` and `search_filter_nonce` are no longer used by the plugin (L3) and stay only for third-party
-callers of the two catalogue admin-ajax actions.
+callers of the two catalogue admin-ajax actions. L6 removed `assignment_submission_nonce`, `save_remaining_time` and
+`quiz_exit_submission` (the quiz player has its own `expiryNonce`); the lesson and assignment nonces are in
+`wp_interactivity_state( 'ohmylms/lesson' | 'ohmylms/assignment' )`. `lesson_completed_nonce` and
+`video_progress_nonce` stay for third-party callers of those admin-ajax actions.
 
 ### `lesson/video-player.js` (handle `ohmylms-video-player`, needs jQuery, content pages)
 
@@ -164,7 +165,9 @@ Custom controls for YouTube (iframe API), Vimeo (`player.vimeo.com/api/player.js
 `.ohmylms-custom-video-player[data-video-url]` from `single-lesson/content-lesson.php`, `content-zoom.php` and
 `content-googlemeet.php`: play/pause, progress and seek, volume, speed menu, fullscreen, keyboard shortcuts,
 branding blockers, logo overlay. Globals: `window.OhMyLMSVideoPlayer`, `window.initOhMyLMSVideoPlayers`,
-`window.onYouTubeIframeAPIReady`. No server calls. Live.
+`window.onYouTubeIframeAPIReady`. No server calls. **Migrated (L7)** to `ohmylms/video` and one adapter
+module per provider; the two globals remain as thin shims for one release (`onYouTubeIframeAPIReady` is
+chained inside the YouTube adapter and is no longer a page global of ours).
 
 ### `video-progress-tracker.js` (handle `ohmylms-video-progress-tracker`, needs jQuery, content pages)
 
@@ -175,7 +178,8 @@ and `#ohmylms-video-completion-hint` (`content-navigation.php`). Calls `ohmylms_
 `ohmylms_get_video_progress`, `ohmylms_clear_video_progress` → `Ajax::save/get/clear_video_progress()` (nonce
 `video_progress_nonce`). Reads `ohmylms_frontend_params` (`ajax_url`, `video_progress_nonce`,
 `video_completion_threshold`) although its handle depends only on `jquery`; it works because
-`ohmylms-frontend` is enqueued on every content page. Live.
+`ohmylms-frontend` is enqueued on every content page. **Migrated (L7)**: progress config and nonces come
+from `wp_interactivity_state( 'ohmylms/video' )`, not from `ohmylms_frontend_params`.
 
 ### Block editor scripts (`assets/src/runtimes/blocks/js`)
 
@@ -216,10 +220,11 @@ entry); leave it to the admin owner.
   derives the learner, plan and order from the subscription and refuses anyone but its owner (or an administrator);
   since L4 the client posts only `subscription_id` and `order_id`.
 - Fixed in L4: the membership "View plan" dialog never opened (selector mismatch above).
-- When an assignment countdown reaches zero, `ohMyLmsCountdown()` calls `saveQuizExiSubmit()`, which posts
-  `ohmylms_quiz_exit_submission` with no quiz id; the server rejects it. L6 should give assignments their own
-  expiry path (or none: the server already stores the deadline).
-- `video-progress-tracker.js` depends on `ohmylms_frontend_params` without declaring `ohmylms-frontend`.
+- Fixed in L6: when an assignment countdown reached zero, `ohMyLmsCountdown()` called `saveQuizExiSubmit()`, which
+  posted `ohmylms_quiz_exit_submission` with no quiz id; the server rejected it. The deadline was never enforced on
+  the server either. See [L6](#l6-lesson-and-assignment-player-done).
+- Fixed in L7: `video-progress-tracker.js` read `ohmylms_frontend_params` without declaring `ohmylms-frontend`.
+  The module reads `wp_interactivity_state( 'ohmylms/video' )` instead, and the jQuery file is deleted.
 - The public stores `ohmylms/tabs` and `ohmylms/curriculum` had no markup in the plugin since the old single
   course layouts went; keep them (documented add-on contract). L4 drives the my-courses tabs with `ohmylms/tabs`.
 - Template overrides: a theme that copied an old `single-lesson/quiz-form.php` or course layout would have
@@ -331,8 +336,9 @@ Page-specific nonces (`load_more_nonce`, `lesson_completed_nonce`, …) belong i
   calls `toast()` on a page that may not load `ohmylms-frontend` (it also guarantees the region).
   `Chrome::template()` runs on `ohmylms_template_html` at priority 15. Batch decorators should do the same:
   match classes, skip elements that already carry the directive, and enqueue only when something matched.
-- Classic scripts that remain (until L7) raise toasts with
-  `document.dispatchEvent( new CustomEvent( 'ohmylms:toast', { cancelable: true, detail: { message, type } } ) )`.
+- L7 removed the last classic learner script. Code that still wants the toast region dispatches
+  `document.dispatchEvent( new CustomEvent( 'ohmylms:toast', { cancelable: true, detail: { message, type } } ) )`
+  or calls `toast()` from `ohmylms/interactivity`.
 
 ### L3: catalogue search, filter, sort and load more (done)
 
@@ -526,7 +532,7 @@ Removed from `ohmylms.js`: the `submit` handlers for `.ohmylms-form-login` and `
 nothing is re-dispatched; the stores emit `ohmylms:auth-before-submit` (cancelable), `ohmylms:auth-complete`,
 `ohmylms:auth-error`, `ohmylms:auth-view-changed`, `ohmylms:review-rated` and `ohmylms:review-before-submit`
 (cancelable) instead ([INTERACTIVITY](INTERACTIVITY.md#public-events-and-slots)). `const { __ } = wp.i18n` in
-`ohmylms.js` has no caller left; it stays until L7 deletes the file.
+`ohmylms.js` has no caller left; L7 deleted the file.
 
 Behaviour changes, all deliberate:
 
@@ -536,7 +542,12 @@ Behaviour changes, all deliberate:
 - The button is disabled and the loader shown while a request runs, so a double click no longer sends twice.
 - The redirect is followed only when it is on the page's origin (otherwise the page reloads).
 - The opt-in React sign-up fields (`OHMYLMS_SOURCE_ASSETS`) keep owning sign-up submission; the store steps aside when
-  the form has `data-ohmylms-registration="react"` (they also stop the event first).
+  the form has `data-ohmylms-registration="react"` (they also stop the event first). Fixed in L6: they posted to
+  `ohmylms_frontend_params.ajax_url || ohmylms_checkout_params.ajax_url`, so on pages with neither (most pages now)
+  the request went to a relative `…/undefined`. `registrationUrl()` (`assets/src/features/students/registration-api.mjs`)
+  reads `ohmylmsRegistration.ajaxUrl` (localized on the `ohmylms-app-registration` handle by
+  `SourceAssets::enqueue_registration()`), then the `ohmylms/interactivity` module config, then the legacy globals,
+  and `submitRegistration()` refuses to post without a URL. The built bundle picks this up at the next `npm run build`.
 - Review stars are labelled radio inputs, so the rating posts and the stars fill (`:has(:checked)`) without JavaScript
   and work with arrow keys; `select#rating` and the `<a href="#">` stars are gone from the plugin template. The star CSS
   is in `assets/interactivity/frontend.css` (no build step). The required notice is `role="alert"`, and the submit
@@ -558,38 +569,191 @@ overrides, login and sign-up answers for the module's request shape including st
 pending verification, the no-JavaScript post, the review form and a radio-rated review; fixture users and the review are
 deleted). `learner-chrome-integration.php` now expects the L5 sign-up context and `state.submitDisabled`.
 
-### L6: lesson and course player and progress
+### L6: lesson and assignment player (done)
 
-- Files: mark complete, assignment submission, attachments, timer and deadline, prerequisite dialog, lesson
-  sidebar tabs, quiz text fields (into `ohmylms/questions`), content images (move to PHP), content protection;
-  `single-lesson/content-navigation.php`, `content-assignment.php`, `sidebar/sidebar.php`, `content-lesson.php`;
-  `Ajax::lesson_completed()`, `Ajax::save_assignment_submission_file()`, `Ajax::save_remaining_time()`
-  (`Ajax::lesson_access_nonce()` was removed in L4).
-- Stores: `ohmylms/lesson` (completion, navigation, sidebar tabs), `ohmylms/assignment` (files, timer,
-  submission), `ohmylms/protection` (only when the option is on, so other pages ship nothing).
-- Directives: `data-wp-on--change` on `#ohmylms-completed-lesson` with `data-wp-bind--disabled`, a context with
-  lesson id and next link; file list rendered from context with `data-wp-each`; timer via `data-wp-init` and
-  `data-wp-text`; tab buttons with `ohmylms/tabs`.
-- Tests: PHP: `lesson_completed` returns the next link and completes once (extend
-  `lesson-settings-integration.php`); `assignment-delivery-integration.php` for uploads; `tests/js/lesson.test.mjs` and
-  `assignment.test.mjs` (file limit, timer, double submit); Playwright `learner-journey.spec.cjs`.
+Done on 31 October 2026. The L6 handlers took `ohmylms.js` from 35,739 to 1,574 bytes; what is left are the three
+video cover handlers (`.ohmylms-video-player-play` click, `.ohmylms-video-player` focus/keydown,
+`.ohmylms-video-player-play` click/keydown), owned by the video batch, whose `Extensions\Video` drives the same markup
+through `ohmylms/video`. L7 deleted the file. `ohmylms-frontend` stays as a script-less handle that carries
+`ohmylms_frontend_params`, because `Chrome::footer()`, Elementor, Bricks, blocks, previews, the hub and the
+exam player enqueue it (see [L7](#l7-video-done)).
 
-### L7: video
+`OhMyLMS\Extensions\Lesson` (`ohmylms_template_html`, priority 17) adds the directives below to theme overrides of
+`single-lesson/content-navigation.php`, `content-assignment.php` and `sidebar/sidebar.php` copied before L6, loads
+the modules and prints their state; the current templates carry the same directives themselves.
 
-- Files: `lesson/video-player.js`, `video-progress-tracker.js`, the video cover handlers in `ohmylms.js`;
-  `content-lesson.php`, `content-zoom.php`, `content-googlemeet.php`; `Ajax::*_video_progress()`.
-- Store: `ohmylms/video`, with provider adapters (YouTube, Vimeo, native) as separate modules loaded on demand,
-  and progress saved through the SDK `request()` (or a REST route) with `navigator.sendBeacon` on page hide.
-  Keep `window.OhMyLMSVideoPlayer` and `window.initOhMyLMSVideoPlayers` as thin shims for one release.
-- Directives: `data-wp-interactive="ohmylms/video"` with a context (`url`, `lessonId`, `courseId`,
-  `watchPercent`, saved position) on `.ohmylms-custom-video-player`; `data-wp-on--click` on controls;
-  `data-wp-style--width` on the progress bar; `data-wp-bind--checked` on the completion checkbox.
-- Tests: `tests/js/video-progress.test.mjs` (threshold, lesson rule overrides site setting, completion once,
-  resume position); PHP tests for the server-side watch rule; Playwright with the native `<video>` provider.
+| Behaviour | Now | Markup |
+| --- | --- | --- |
+| Mark as complete | `ohmylms/lesson` (`assets/interactivity/lesson.js`, factory and helpers in `lesson/store.js`): root context `{ lessonId, completed, busy, videoPending, nextUrl }` from `Lesson::navigation_context()`; `actions.complete` (change), `actions.checkboxKey` (Enter/Space on the focusable label), `state.completeDisabled`, `state.completeLabel`, `callbacks.listen` | `.ohmylms-lesson-navigation` root; `#ohmylms-completed-lesson` gets `data-wp-on--change`, `data-wp-bind--checked`, `data-wp-bind--disabled`; the label text is a `span.ohmylms-checkbox-label`; `#ohmylms-video-completion-hint` is bound to `!context.videoPending`. The input lost `aria-labelledby` (it pointed at the hidden tick, so the box had no name) and the bogus `aria-required` |
+| Next / previous | The next link stays a plain `a.next-lesson` (works without JavaScript). After a completion the store follows the server's `next_content_link` (same origin only) or reloads, 500 ms after the toast. The templates have no "previous" control; the hub player's outline (`assets/js/player-context.js`) is unchanged | — |
+| Sidebar tabs | public `ohmylms/tabs` (root `{ activeTab }`, per-tab and per-panel `{ tabKey }`) | `aside.ohmylms-lesson-sidebar`; `li[data-target]` gets `role="tab"`, `aria-controls`, `tabindex`; panels `role="tabpanel"`. The sidebar is not rendered inside the hub player (`PlayerContext::active()`) |
+| Start, timer, deadline | `ohmylms/assignment` (`assets/interactivity/assignment.js`, `assignment/store.js`): `actions.start` asks the server to start the timer and counts down to the deadline it answers, corrected by `state.serverNow` for the device clock; `state.timeLabel` (same `05m 09s` / `01h 05m 09s` / `02d …` format), `state.timerWidth`, `state.deadlineLabel` | the Start / Try Again buttons in `content-navigation.php` use `ohmylms/assignment::actions.start` and hide themselves; the skip link hides too; `.ohmylms-assignment-submit` (`state.panelDisplay`), `.submission-time-limit` (`role="timer"`, `state.timerDisplay`); `li.deadline` now shows the stored deadline from the server (it showed the duration, then the script overwrote it with "now + remaining") |
+| Files | `actions.pick`, `actions.remove`, `actions.pickKey`; `state.files` rendered by `<template data-wp-each--file="state.files">` in `#ohmylms-submission-file-list`; `state.tooLarge` against `state.maxBytes` (the assignment limit when it is on, else `wp_max_upload_size()`, as the server checks) | the remove control is a `<button>`; `#submission-max-file-limit` now exists (the input referenced it); overrides keep their picker visible, since they have no list template |
+| Submission | `actions.submit`: `request( { action: 'ohmylms_save_assignment_submission_file', nonce, data: FormData( form ) } )` (text and file), busy state, errors in the form's `role="alert"` region, then the server's `redirect_url` | `.ohmylms-assignment-form`; the text field is labelled (`#ohmylms-submission-body`); the submit button is bound to `state.submitDisabled` |
+| Expiry at zero | a picked file is submitted with `reason: 'timeout'` through the same action; without one the form locks and shows the message of `GET ohmylms/v1/assignments/{id}/learner-state` (or "Time is up…") | — |
+| Content protection | `ohmylms/protection` (`protection.js`, rules in `protection/rules.js`): context menu, copy and cut blocked; print, save, view source, developer tools and screenshot shortcuts blocked (most blur the page for 2 s); blurred while the window is in the background (not when focus moved into an embedded player) or while the Loom recorder element is present | `Lesson::protection()` prints the overlay `.ohmylms-screenshot-protection` with `data-wp-init="callbacks.install"` in `wp_footer`, only on content pages with the option on; `body.ohmylms-content-protected` prints nothing (`@media print`), also without JavaScript |
+| Lesson images | `Lesson::images()` styles `img[data-width][data-align]` in `single-lesson/content-*.php` output (`display:block`, the width, margins for the alignment) | — |
 
-After L7 the learner pages need no jQuery from OhMyLMS: drop `jquery` from the handles, delete `ohmylms.js`
-and remove `ohmylms-frontend` from the Elementor/Bricks/block registrations (keep the handle as an alias that
-loads the modules, since third-party code depends on it).
+Contract for the video module (`ohmylms/video`, batch L7). The lesson-complete endpoint is unchanged:
+`ohmylms_lesson_completed` with `lesson_id` and nonce `lesson_completed_nonce` (in
+`wp_interactivity_state( 'ohmylms/lesson' ).nonces.complete`, and still in `ohmylms_frontend_params`), answering
+`{ success, data: { status, next_content_link, message, already_completed? } }` or
+`{ success: false, data: { code, message } }`. Do not call it directly; dispatch the request on `document` and let
+the lesson store send it, keep the checkbox, label and hint in sync and emit the events:
+
+```js
+// The tracker's save_video_progress answer says the server completed the lesson: update the page only.
+document.dispatchEvent( new CustomEvent( 'ohmylms:lesson-complete-request', {
+  detail: { lessonId, source: 'video', completed: true },
+} ) );
+// Ask the store to complete the lesson (same request as the checkbox); add navigate: true to go to the next content.
+document.dispatchEvent( new CustomEvent( 'ohmylms:lesson-complete-request', {
+  detail: { lessonId, source: 'video' },
+} ) );
+```
+
+`lessonId` may be left out (the page's lesson); a request for another lesson is ignored. The store answers with
+`ohmylms:lesson-before-complete` (cancelable), `ohmylms:lesson-completed` (`lessonId`, `source`, `nextUrl`) or
+`ohmylms:lesson-complete-error` (`code`, `message`; `ohmylms_lesson_video_not_watched` shows the hint again). For
+code that still triggers the legacy tracker's jQuery `ohmylms:video:completed`, the store treats it (when jQuery is
+loaded) as a `completed: true` request.
+
+Endpoints. No learner REST route exists for completion, submission or starting the timer, so they stay on
+admin-ajax through `request( { action } )`: `ohmylms_lesson_completed`, `ohmylms_save_assignment_submission_file`
+and `ohmylms_save_remaining_time`. The lock at zero reads the typed REST route
+`GET /ohmylms/v1/assignments/{id}/learner-state` ([assignments API](api/assignments.md)).
+
+Server-side changes:
+
+- **"Mark as complete" is gated** (`Learning\LessonGate::check_completion()`, called by `Ajax::lesson_completed()`
+  before anything is written). It refused nothing before: a direct request completed any content of an enrolled
+  course. Now only published lessons and live sessions complete this way (quizzes and assignments answer
+  `ohmylms_lesson_not_completable`), and the learner must be enrolled (`_not_enrolled`), past the drip release
+  (`_not_open`, with the "available on" message), done with the lesson's prerequisites (`_prerequisites`) and not
+  held by the sequential lock or another `ohmylms_is_lesson_locked` rule such as email verification (`_locked`).
+  Errors answer 4xx with `{ code, message }`. People who can edit the lesson skip the release, prerequisite and lock
+  rules, as they do on the page. Completing a completed lesson answers success with `already_completed: true` and
+  fires no hook again (it answered "Lesson completion failed." before).
+- **The assignment timer is enforced by the server.** `Assignment\Delivery::timer()` reads the stored deadline
+  (option `_ohmylms_deadline_{user}_{assignment}_`, site time, as before) and `Delivery::state()` adds `timer`
+  (`enabled`, `limit`, `deadline` UTC, `deadline_label`, `remaining`, `expired`, `closed`) and the reason
+  `time_expired` once the deadline plus `Delivery::TIMER_GRACE` (60 s, so a submission sent at zero still counts)
+  has passed. Every submission path goes through `Delivery::check_submission()`: the AJAX upload,
+  `FormHandler::save_submission_form_data()` (the no-JavaScript handler had no gate at all) and starting the timer.
+  Before, the deadline was only a client countdown: an expired learner could press Start again (the template
+  checked `0 !== $deadline`, and the remaining time is `false` once it passed) and submit.
+- `Ajax::save_remaining_time()` delegates to `Delivery::start_timer()`: it refuses learners the gate refuses
+  (it started timers for anyone), stores the deadline once (starting again never adds time), understands
+  `minute`/`hour` units (minutes became months, `P5M`, and hours failed), and answers `{ deadline, deadline_label, remaining }` instead of
+  an empty `0` for assignments without a time limit (now 400 `ohmylms_assignment_no_time_limit`).
+- The assignment gate also applies the sequential lock (`locked`): the submission nonce is the same for every
+  assignment, so a learner could submit one whose page the lock hides.
+- The start button is offered whenever `Delivery::state()` allows a submission (it was hidden for the last minute of
+  a timer because the remaining minutes rounded down to 0).
+
+Removed from `ohmylms.js`: the toast shim, the `OhMyLMS` object, `const { __ } = wp.i18n`, `ohMyLMSAccordion()` and
+its sidebar call, the keyboard accordion handler, `ohMyLMSTab()` and its sidebar call, the mobile
+`.ohmylms-td-handle` toggle, the completion click and Enter handlers, the assignment submit, start, file change,
+add-attachment, remove and drop-zone keyboard handlers, the "Selected file" handler (its `#submission-max-file-limit`
+selector never matched), `ohMyLmsCountdown()`, `saveQuizExiSubmit()`, `saveRemainingTime()`, the client-side
+deadline text, the quiz text-field resize and character-limit handlers, the whole content protection block,
+`wrapAndStyleImages()` and the access-denied modal handlers. None triggered a jQuery event and
+`docs/EXTENSIONS.md` documents none for these screens, so nothing is re-dispatched; the stores emit the events in
+[INTERACTIVITY](INTERACTIVITY.md#public-events-and-slots) instead.
+
+Behaviour changes, all deliberate:
+
+- The completion checkbox is unticked again with a danger toast when the server refuses (it stayed disabled and
+  ticked), and a double click sends one request.
+- Assignment errors keep the server's wording, also for network failures; double submission is impossible while a
+  request runs; picking the same file after removing it works.
+- Content protection no longer closes the tab or redirects to `about:blank` when the window is much larger than the
+  viewport (it fired for zoomed pages and docked side panels, which made lessons unreadable for people who zoom),
+  no longer blocks keys a page cannot block anyway (Alt+F4, Alt+Tab) or every Cmd+Shift shortcut (only the macOS
+  screenshot keys), and a blocked shortcut blurs the page for 2 s instead of until the window loses and regains focus.
+  Printing from the browser menu prints nothing.
+- Lesson images are no longer wrapped in `div.image-wrapper[data-align]`; the `<img>` gets the same styles.
+
+Text-only assignments are unchanged: the upload handler still requires a file, and assignments that disallow uploads
+show only "Next Lesson", as before (a product decision, not a front-end one). Lesson comments are not part of the
+learner templates (`#lesson-comment` is an empty panel without a tab), so there was nothing to migrate.
+
+Live check (temporary course, lesson, timed assignment and enrolled learner with one session token, all deleted
+afterwards): the lesson and assignment pages answer 200 with the islands, modules and state; in headless Chrome,
+Enter on the label completed the lesson and followed the next link, Start showed the form, focused the text field and
+counted down from the server deadline, a picked file was listed, removed and submitted with text; over curl the
+timer started, text and file were accepted, a submission after the deadline was refused with
+`ohmylms_assignment_time_expired`, the reloaded page showed the expiry message without a Start button, and completing
+twice answered `already_completed`. On the local site the assignment rewrite rules use a `kept-assignments` base
+that no longer matches the permalinks (left by another suite's settings test), so pretty assignment URLs answer 404
+there; the checks used `?ohmylms-assignment=<slug>`.
+
+Tests: `tests/js/lesson.test.mjs` (same-origin next link, outcome, disabled state, completion once and navigation,
+last lesson, refusal and video hint, cancel, label keys, the complete-request event with and without `completed`,
+`navigate`, the legacy jQuery event; protection shortcuts, blur rules and the installed listeners),
+`tests/js/assignment.test.mjs` (countdown format, remaining time, bar width, deadline parsing, file limit, start with
+the server deadline and clock correction, no time limit, refused start, pick and remove, submit once, refusal,
+cancel, expiry with a file and without, the grace period, refused timeout submission, resume, drop-zone keys) and
+`tests/php/lesson-player-integration.php` (`OHMYLMS_LESSON_PLAYER_TEST=1`: module registration, rendered directives,
+context and state of the navigation, sidebar and assignment templates, decorated pre-L6 overrides, server-sized
+images, completion refused for a prerequisite, the drip release, a quiz and a learner who is not enrolled, completed
+once with the next link, the timer started once, refused for a stranger, accepted within the grace period and refused
+after it (AJAX and REST), the sequential lock for lessons and assignments, content protection on and off, and over
+HTTP as the learner: both pages, completion with the page's nonce, the timer, text-and-file submissions, a second
+attempt and the late refusal).
+
+### L7: video (done)
+
+Done on 31 October 2026. `Extensions\Video` (`ohmylms_template_html`) renders every lesson and session-replay
+player as an `ohmylms/video` island and decorates theme overrides of `content-lesson.php`, `content-zoom.php`
+and `content-googlemeet.php` copied before L7. The store is `assets/interactivity/video.js` (factory and
+helpers in `video/store.js`, `progress.js`, `session.js`, `sources.js`). One adapter module per platform is
+a dynamic import, registered only so the import map can fetch it, and loaded only when that provider is on
+the page:
+
+| Provider | Module | Third-party API |
+| --- | --- | --- |
+| HTML5 (`<video>`, uploaded or a file URL) | `ohmylms/video-html5` | none (native controls, or the custom controls when the lesson uses them) |
+| YouTube | `ohmylms/video-youtube` | IFrame API, `https://www.youtube.com/iframe_api`, loaded on first use; an existing `onYouTubeIframeAPIReady` is chained |
+| Vimeo | `ohmylms/video-vimeo` | `https://player.vimeo.com/api/player.js`, including a privacy hash |
+| Bunny Stream | `ohmylms/video-playerjs` | the player.js protocol over `postMessage` to the iframe (the iframe is the receiver, so the player.js script is not loaded) |
+| Wistia | `ohmylms/video-wistia` | `https://fast.wistia.com/assets/external/E-v1.js` |
+| Anything else | — | left as the provider's iframe; no API is loaded unless the lesson tracks it or autoplays |
+
+Custom controls (play, seek, volume, speed, captions, fullscreen, keyboard) are offered for HTML5, YouTube
+and Vimeo. Bunny and Wistia keep their own controls. A plain `<video>` with a poster uses the old cover
+(`.ohmylms-video-player-cover`, `.ohmylms-video-player-play`); the cover is `hidden` without JavaScript.
+Autoplay waits for `prefersReducedMotion()` and starts muted. Jumps are not counted as watched (the old
+tracker did the same; it did not lock the scrubber). `window.OhMyLMSVideoPlayer` and
+`window.initOhMyLMSVideoPlayers` remain as thin shims for one release.
+
+Progress is `request( { action: 'ohmylms_save_video_progress' } )` with the spans actually played, debounced
+(15 s while playing, 3 s within 10 points of the threshold, and shortly after pause, seek or end). Leaving
+the page sends the same fields with `navigator.sendBeacon`, or `fetch` with `keepalive`. Config and nonces
+come from `wp_interactivity_state( 'ohmylms/video' )`, never from `ohmylms_frontend_params`. When the server
+answers `is_completed`, the module dispatches `ohmylms:lesson-complete-request` (`source: 'video'`, and
+`completed: true` only when the lesson was already completed) and does not post `ohmylms_lesson_completed`
+itself while `ohmylms/lesson` is on the page.
+
+The server stays the authority. `VideoProgressTracker::save_progress()` merges the reported spans with the
+spans already stored for that learner (`VideoCompletion::seen()` / `remember()`), ignores a client
+`watched_duration` when spans are present, and `VideoCompletion::bounded_watch()` caps a required watch by
+elapsed time (at most two minutes on the first report, then twice the time since the previous report plus
+30 seconds). The threshold is the lesson's `watch_percent` when `completion_rule` is `watch_percent`, else
+`ohmylms_video_completion_threshold`. Saving progress does not complete the lesson.
+`Ajax::lesson_completed()` calls `VideoCompletion::satisfied()` and answers `ohmylms_lesson_video_not_watched`
+until the stored percentage reaches the threshold.
+
+`ohmylms.js` is deleted (it had no behaviour left once the cover handlers moved). `ohmylms-frontend` is a
+script-less handle with no jQuery. The old dist URLs are not rewritten; see
+[how scripts are served](#how-learner-scripts-are-served).
+
+Tests: `tests/js/video.test.mjs` (intervals, resume, the watch log, every adapter, the session's saves,
+beacon, completion once through the lesson event, the store and the shims) and
+`tests/php/video-player-integration.php` (`OHMYLMS_VIDEO_TEST=1`: source parsing, module registration,
+rendered islands for each provider, decorated pre-L7 overrides, merged spans, the elapsed-time bound, the
+lesson threshold over the site setting, completion only through `ohmylms_lesson_completed`, and a forged
+full-video report refused).
 
 ## Typing and shared code
 

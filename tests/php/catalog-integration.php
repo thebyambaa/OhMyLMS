@@ -403,10 +403,7 @@ try {
 	}
 
 	// ---- jQuery is gone from the catalogue ----------------------------------------------------
-	$script = (string) file_get_contents( OHMYLMS_DIR . '/assets/src/frontend/js/ohmylms.js' );
-	foreach ( array( 'ohmylms_loadmore', 'ohmylms_search_filter', 'filter-hamburger', 'ohmylms-category-type-button', 'ohmylms-course-card-popup', 'course-search', 'checkedbox' ) as $needle ) {
-		ok( false === strpos( $script, $needle ), "ohmylms.js no longer handles $needle" );
-	}
+	ok( ! is_file( OHMYLMS_DIR . '/assets/src/frontend/js/ohmylms.js' ), 'ohmylms.js was removed in L7; the catalogue handlers went with the file' );
 
 	ok( array() === $warnings, 'no PHP warnings from the catalogue: ' . implode( '; ', $warnings ) );
 	echo "Catalogue tests passed ($checks checks).\n";

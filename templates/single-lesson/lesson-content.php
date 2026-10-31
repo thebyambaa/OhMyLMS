@@ -54,7 +54,7 @@ do_action( 'ohmylms_before_lesson_main_content' );
 
 					ohmylms_get_template( 'single-lesson/content-navigation.php' );
 				} else {
-					echo esc_html( $content_drip_protection_message );
+					echo '<p class="ohmylms-drip-notice" role="status">' . esc_html( $content_drip_protection_message ) . '</p>';
 				}
 				?>
 			</div>

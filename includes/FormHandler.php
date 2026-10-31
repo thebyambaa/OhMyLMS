@@ -250,6 +250,14 @@ class FormHandler {
 			return;
 		}
 
+		// The same gate as the AJAX upload: enrolment, release, prerequisites and the timed deadline.
+		$allowed = \OhMyLMS\Assignment\Delivery::check_submission( $assignment->get_id(), $student->get_id() );
+		if ( is_wp_error( $allowed ) ) {
+			\OhMyLMS\Commerce\ohmylmse_add_notice( $allowed->get_error_message(), 'error' );
+			wp_safe_redirect( get_permalink( $assignment->get_id() ) );
+			exit;
+		}
+
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 
 		if ( ! isset( $_FILES['ohmylms-submission-file']['error'] ) || UPLOAD_ERR_NO_FILE === absint( $_FILES['ohmylms-submission-file']['error'] ) ) {

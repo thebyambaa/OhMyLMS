@@ -79,32 +79,28 @@ if ( 'ohmylms-session' === get_post_type() ) {
 }
 ?>
 
-<div class="ohmylms-lesson-navigation">
+<div class="ohmylms-lesson-navigation" data-wp-interactive="ohmylms/lesson" data-wp-init="callbacks.listen" <?php echo wp_interactivity_data_wp_context( \OhMyLMS\Extensions\Lesson::navigation_context( get_the_ID() ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core helper escapes the attribute. ?>>
 	<?php
 	if ( 'assignment' == $get_type ) {
 		$submission_count   = count( $lesson->get_submission( $student->get_id() ) );
 		$allowed_submission = $lesson->get_number_of_files();
 		$is_allow           = $lesson->get_allow_upload_files();
 		$student            = new \OhMyLMS\Data\Student( get_current_user_id() );
-		$deadline           = false;
-		if ( $student ) {
-			$deadline = $student->get_assignment_remaining_time( $lesson->get_id() );
-		}
-		// Enrolment, release and prerequisites; the server checks them again on submit.
+		// Enrolment, release, prerequisites and the timed deadline; the server checks them again on start and submit.
 		$can_start = \OhMyLMS\Assignment\Delivery::state( $lesson->get_id(), get_current_user_id() )['can_submit'];
 		$blocked   = $can_start ? '' : ' aria-describedby="ohmylms-assignment-blocked"';
 		?>
 		<div class="assignment-quiz-navigation assignment-navigation">
 			<?php if ( $is_allow && ! empty( ohmylms_get_next_content_permalink( $lesson_id ) ) ) { ?>
-				<a href="<?php echo esc_url( ohmylms_get_next_content_permalink( $lesson_id ) ); ?>" class="skip">
+				<a href="<?php echo esc_url( ohmylms_get_next_content_permalink( $lesson_id ) ); ?>" class="skip" data-wp-bind--hidden="ohmylms/assignment::state.started">
 					<?php echo esc_html__( 'Skip to Next', 'ohmylms' ); ?>
 				</a>
 			<?php } ?>
 
 			<?php if ( $is_allow ) : ?>
 				<?php if ( 0 === (int) $submission_count ) : ?>
-					<?php if ( 0 !== $deadline && $can_start ) : ?>
-						<button type="button" class="start-submit-assignment ohmylms-button" aria-label="Start Assignment">
+					<?php if ( $can_start ) : ?>
+						<button type="button" class="start-submit-assignment ohmylms-button" data-wp-on--click="ohmylms/assignment::actions.start" data-wp-bind--hidden="ohmylms/assignment::state.started" data-wp-bind--aria-busy="ohmylms/assignment::state.busy">
 							<?php echo esc_html__( 'Start Assignment Submit', 'ohmylms' ); ?>
 						</button>
 					<?php else : ?>
@@ -114,8 +110,8 @@ if ( 'ohmylms-session' === get_post_type() ) {
 					<?php endif; ?>
 				<?php elseif ( (int) $submission_count > 0 && (int) $submission_count < (int) $allowed_submission ) : ?>
 
-					<?php if ( 0 !== $deadline && $can_start ) : ?>
-						<button type="button" class="start-submit-assignment ohmylms-button" aria-label="Start Assignment">
+					<?php if ( $can_start ) : ?>
+						<button type="button" class="start-submit-assignment ohmylms-button" data-wp-on--click="ohmylms/assignment::actions.start" data-wp-bind--hidden="ohmylms/assignment::state.started" data-wp-bind--aria-busy="ohmylms/assignment::state.busy">
 							<?php echo esc_html__( 'Try Again', 'ohmylms' ); ?>
 						</button>
 					<?php else : ?>
@@ -130,13 +126,13 @@ if ( 'ohmylms-session' === get_post_type() ) {
 						<input type="hidden" id="ohmylms-student-id" value="<?php echo esc_attr( get_current_user_id() ); ?>">
 
 						<?php if ( $is_checked && $student->maybe_enrolled( $course_id ) ) : ?>
-							<label for="ohmylms-completed-lesson" class="ohmylms-checkbox" tabindex="0">
-								<input type="checkbox" name="lesson-completed" value="" id="ohmylms-completed-lesson" <?php echo $is_checked; ?>  <?php echo $is_checked ? 'disabled' : ''; ?> aria-required="true" aria-labelledby="completed-lesson" >
+							<label for="ohmylms-completed-lesson" class="ohmylms-checkbox" tabindex="0" data-wp-on--keydown="actions.checkboxKey">
+								<input type="checkbox" name="lesson-completed" value="" id="ohmylms-completed-lesson" <?php checked( (bool) $is_checked ); ?> <?php disabled( (bool) $is_checked ); ?> data-wp-on--change="actions.complete" data-wp-bind--checked="context.completed" data-wp-bind--disabled="state.completeDisabled">
 								<span class="ohmylms-checkbox-text">
 									<span class="checkedbox" aria-hidden="true" id="completed-lesson">
 										<svg width="10" height="8" fill="none" viewBox="0 0 10 8" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M8.373.818L3.745 5.446 1.623 3.325A.818.818 0 00.466 4.482l2.7 2.7a.818.818 0 001.157 0L9.53 1.975A.818.818 0 008.373.818z"/></svg>
 									</span>
-									<?php echo $is_checked ? esc_html__( 'Completed', 'ohmylms' ) : esc_html__( 'Mark as Complete', 'ohmylms' ); ?>
+									<span class="ohmylms-checkbox-label" data-wp-text="state.completeLabel"><?php echo $is_checked ? esc_html__( 'Completed', 'ohmylms' ) : esc_html__( 'Mark as Complete', 'ohmylms' ); ?></span>
 								</span>
 							</label>
 						<?php endif; ?>
@@ -153,13 +149,13 @@ if ( 'ohmylms-session' === get_post_type() ) {
 						<input type="hidden" id="ohmylms-lesson-id" value="<?php echo esc_attr( get_the_ID() ); ?>">
 						<input type="hidden" id="ohmylms-student-id" value="<?php echo esc_attr( get_current_user_id() ); ?>">
 						<?php if ( $is_checked && $student->maybe_enrolled( $course_id ) ) : ?>
-							<label class="ohmylms-checkbox">
-								<input type="checkbox" name="lesson-completed" value="" id="ohmylms-completed-lesson" <?php echo $is_checked; ?>  <?php echo $is_checked ? 'disabled' : ''; ?> >
+							<label for="ohmylms-completed-lesson" class="ohmylms-checkbox" tabindex="0" data-wp-on--keydown="actions.checkboxKey">
+								<input type="checkbox" name="lesson-completed" value="" id="ohmylms-completed-lesson" <?php checked( (bool) $is_checked ); ?> <?php disabled( (bool) $is_checked ); ?> data-wp-on--change="actions.complete" data-wp-bind--checked="context.completed" data-wp-bind--disabled="state.completeDisabled">
 								<span class="ohmylms-checkbox-text">
 									<span class="checkedbox">
 										<svg width="10" height="8" fill="none" viewBox="0 0 10 8" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M8.373.818L3.745 5.446 1.623 3.325A.818.818 0 00.466 4.482l2.7 2.7a.818.818 0 001.157 0L9.53 1.975A.818.818 0 008.373.818z"/></svg>
 									</span>
-									<?php echo $is_checked ? esc_html__( 'Completed', 'ohmylms' ) : esc_html__( 'Mark as Complete', 'ohmylms' ); ?>
+									<span class="ohmylms-checkbox-label" data-wp-text="state.completeLabel"><?php echo $is_checked ? esc_html__( 'Completed', 'ohmylms' ) : esc_html__( 'Mark as Complete', 'ohmylms' ); ?></span>
 								</span>
 							</label>
 						<?php endif; ?>
@@ -224,13 +220,13 @@ if ( 'ohmylms-session' === get_post_type() ) {
 				<input type="hidden" id="ohmylms-student-id" value="<?php echo esc_attr( get_current_user_id() ); ?>">
 				
 				<?php if ( $student->maybe_enrolled( $course_id ) ) : ?>
-					<label for="ohmylms-completed-lesson" class="ohmylms-checkbox" tabindex="0">
-						<input type="checkbox" name="lesson-completed" value="" id="ohmylms-completed-lesson" <?php echo $is_checked; ?>  <?php echo $is_checked ? 'disabled' : ''; ?> aria-required="true" aria-labelledby="completed-lesson" >
+					<label for="ohmylms-completed-lesson" class="ohmylms-checkbox" tabindex="0" data-wp-on--keydown="actions.checkboxKey">
+						<input type="checkbox" name="lesson-completed" value="" id="ohmylms-completed-lesson" <?php checked( (bool) $is_checked ); ?> <?php disabled( (bool) $is_checked ); ?> data-wp-on--change="actions.complete" data-wp-bind--checked="context.completed" data-wp-bind--disabled="state.completeDisabled">
 						<span class="ohmylms-checkbox-text">
 							<span class="checkedbox" aria-hidden="true" id="completed-lesson">
 								<svg width="10" height="8" fill="none" viewBox="0 0 10 8" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M8.373.818L3.745 5.446 1.623 3.325A.818.818 0 00.466 4.482l2.7 2.7a.818.818 0 001.157 0L9.53 1.975A.818.818 0 008.373.818z"/></svg>
 							</span>
-							<?php echo $is_checked ? esc_html__( 'Completed', 'ohmylms' ) : esc_html__( 'Mark as Complete', 'ohmylms' ); ?>
+							<span class="ohmylms-checkbox-label" data-wp-text="state.completeLabel"><?php echo $is_checked ? esc_html__( 'Completed', 'ohmylms' ) : esc_html__( 'Mark as Complete', 'ohmylms' ); ?></span>
 						</span>
 					</label>
 				<?php endif; ?>
@@ -274,14 +270,14 @@ if ( 'ohmylms-session' === get_post_type() ) {
 			<?php if ( $student->maybe_enrolled( $course_id ) ) : ?> 
 				<?php if ( 'session' === $get_type ) : ?>
 					<?php if ( $show_button_on_session ) : ?>
-						<label for="ohmylms-completed-lesson" class="ohmylms-checkbox" tabindex="0">
-							<input type="checkbox" name="lesson-completed" value="" id="ohmylms-completed-lesson" <?php echo $is_checked; ?>  <?php echo $is_checked ? 'disabled' : ''; ?> aria-required="true" aria-labelledby="completed-lesson" >
+						<label for="ohmylms-completed-lesson" class="ohmylms-checkbox" tabindex="0" data-wp-on--keydown="actions.checkboxKey">
+							<input type="checkbox" name="lesson-completed" value="" id="ohmylms-completed-lesson" <?php checked( (bool) $is_checked ); ?> <?php disabled( (bool) $is_checked ); ?> data-wp-on--change="actions.complete" data-wp-bind--checked="context.completed" data-wp-bind--disabled="state.completeDisabled">
 
 							<span class="ohmylms-checkbox-text">
 								<span class="checkedbox" aria-hidden="true" id="completed-lesson">
 									<svg width="10" height="8" fill="none" viewBox="0 0 10 8" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M8.373.818L3.745 5.446 1.623 3.325A.818.818 0 00.466 4.482l2.7 2.7a.818.818 0 001.157 0L9.53 1.975A.818.818 0 008.373.818z"/></svg>
 								</span>
-								<?php echo $is_checked ? esc_html__( 'Completed', 'ohmylms' ) : esc_html__( 'Mark as Complete', 'ohmylms' ); ?>
+								<span class="ohmylms-checkbox-label" data-wp-text="state.completeLabel"><?php echo $is_checked ? esc_html__( 'Completed', 'ohmylms' ) : esc_html__( 'Mark as Complete', 'ohmylms' ); ?></span>
 							</span>
 						</label>
 					<?php endif ?>
@@ -291,21 +287,21 @@ if ( 'ohmylms-session' === get_post_type() ) {
 					$video_pending = ! $is_checked && ! \OhMyLMS\Learning\VideoCompletion::satisfied( get_current_user_id(), $lesson_id );
 					?>
 					<?php if ( $video_pending ) : ?>
-						<p class="ohmylms-video-completion-hint" id="ohmylms-video-completion-hint" data-ohmylms-watch-percent="<?php echo esc_attr( $video_rule['percent'] ); ?>">
+						<p class="ohmylms-video-completion-hint" id="ohmylms-video-completion-hint" data-ohmylms-watch-percent="<?php echo esc_attr( $video_rule['percent'] ); ?>" data-wp-bind--hidden="!context.videoPending">
 							<?php
 							/* translators: %d: percentage. */
 							echo esc_html( sprintf( __( 'Watch at least %d%% of the video to complete this lesson.', 'ohmylms' ), $video_rule['percent'] ) );
 							?>
 						</p>
 					<?php endif; ?>
-					<label for="ohmylms-completed-lesson" class="ohmylms-checkbox" tabindex="0">
-						<input type="checkbox" name="lesson-completed" value="" id="ohmylms-completed-lesson" <?php echo $is_checked; ?>  <?php echo $is_checked || $video_pending ? 'disabled' : ''; ?> aria-required="true" aria-labelledby="completed-lesson" <?php echo $video_pending ? 'aria-describedby="ohmylms-video-completion-hint" data-ohmylms-video-pending="1"' : ''; ?>>
+					<label for="ohmylms-completed-lesson" class="ohmylms-checkbox" tabindex="0" data-wp-on--keydown="actions.checkboxKey">
+						<input type="checkbox" name="lesson-completed" value="" id="ohmylms-completed-lesson" <?php checked( (bool) $is_checked ); ?> <?php disabled( $is_checked || $video_pending ); ?> <?php echo $video_pending ? 'aria-describedby="ohmylms-video-completion-hint" data-ohmylms-video-pending="1"' : ''; ?> data-wp-on--change="actions.complete" data-wp-bind--checked="context.completed" data-wp-bind--disabled="state.completeDisabled">
 
 						<span class="ohmylms-checkbox-text">
 							<span class="checkedbox" aria-hidden="true" id="completed-lesson">
 								<svg width="10" height="8" fill="none" viewBox="0 0 10 8" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M8.373.818L3.745 5.446 1.623 3.325A.818.818 0 00.466 4.482l2.7 2.7a.818.818 0 001.157 0L9.53 1.975A.818.818 0 008.373.818z"/></svg>
 							</span>
-							<?php echo $is_checked ? esc_html__( 'Completed', 'ohmylms' ) : esc_html__( 'Mark as Complete', 'ohmylms' ); ?>
+							<span class="ohmylms-checkbox-label" data-wp-text="state.completeLabel"><?php echo $is_checked ? esc_html__( 'Completed', 'ohmylms' ) : esc_html__( 'Mark as Complete', 'ohmylms' ); ?></span>
 						</span>
 					</label>
 				<?php endif ?>

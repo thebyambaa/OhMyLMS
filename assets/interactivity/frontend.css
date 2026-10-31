@@ -59,3 +59,28 @@ button.ohmylms-next-quiz:has(.is-skip) { background: transparent !important; col
 @media (prefers-reduced-motion: reduce) {
   .ohmylms-catalog-results { transition: none; }
 }
+/* Lesson and assignment player (ohmylms/lesson, ohmylms/assignment). */
+.ohmylms-lesson-tab-nav [role="tab"]:focus-visible, .ohmylms-file-upload:focus-visible { outline: 2px solid var(--ohmylms-primary-color, #3858e9); outline-offset: 2px; }
+.ohmylms-assignment-form[aria-busy="true"] { cursor: progress; }
+.ohmylms-assignment-form button.remove-resource-action { background: none; border: 0; padding: 0; cursor: pointer; }
+.ohmylms-lesson-navigation .start-submit-assignment[aria-busy="true"] { cursor: progress; opacity: 0.7; }
+/* Content protection (ohmylms/protection): blurred while away or after a blocked shortcut; printing prints nothing. */
+body.ohmylms-protection-blur { filter: blur(20px); }
+@media print {
+  body.ohmylms-content-protected > * { display: none !important; }
+}
+/* Lesson videos (ohmylms/video). The player classes are styled by assets/css/frontend/lesson.css; these rules are for the server-rendered buttons and sliders. */
+.ohmylms-custom-video-player button.ohmylms-big-play-button { border: 0; padding: 0; color: #fff; }
+.ohmylms-custom-video-player button.ohmylms-player-logo-button { background: none; border: 0; padding: 0; cursor: pointer; }
+.ohmylms-custom-video-player .ohmylms-big-play-button:focus-visible, .ohmylms-custom-video-player .ohmylms-player-logo-button:focus-visible img, .ohmylms-video-player .ohmylms-video-player-play:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.ohmylms-custom-video-player .ohmylms-progress-bar:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+.ohmylms-custom-video-player .ohmylms-progress-bar:focus-visible .ohmylms-progress-handle { opacity: 1; transform: translateY(-50%) translateX(-50%) scale(1); }
+.ohmylms-custom-video-player .ohmylms-progress-bar, .ohmylms-custom-video-player .ohmylms-volume-track { touch-action: none; }
+.ohmylms-custom-video-player .ohmylms-volume-control:focus-within .ohmylms-volume-slider { width: 100px; opacity: 1; }
+.ohmylms-custom-video-player .ohmylms-captions-btn[aria-pressed="true"] { background-color: rgba(255, 255, 255, 0.2); }
+.ohmylms-custom-video-player .ohmylms-play-pause > span, .ohmylms-custom-video-player .ohmylms-volume-btn > span, .ohmylms-custom-video-player .ohmylms-fullscreen-btn > span { display: flex; }
+.ohmylms-custom-video-player.is-playing { cursor: default; }
+.ohmylms-video-player video.the-video:focus-visible { outline: 2px solid var(--ohmylms-primary-color, #3858e9); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .ohmylms-custom-video-player .ohmylms-custom-controls, .ohmylms-custom-video-player .ohmylms-speed-menu, .ohmylms-custom-video-player .ohmylms-volume-slider, .ohmylms-custom-video-player .ohmylms-progress-filled, .ohmylms-custom-video-player .ohmylms-progress-handle, .ohmylms-custom-video-player .ohmylms-big-play-button, .ohmylms-video-player-container iframe { transition: none !important; }
+}

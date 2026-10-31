@@ -85,7 +85,8 @@ fonts screen links to that editor and retains the shared font control. Independe
 settings no longer create separate palettes; their public token/API names remain compatibility aliases.
 
 This completes the shared design foundation, not the replacement of every legacy runtime and layout.
-See [the legacy dependency audit](LEGACY-DESIGN-AUDIT.md) before removing compatibility code or assets.
+Before removing compatibility code or assets, confirm nothing in `assets/src/runtimes/` or shipped bundles
+still references the old class names ([CUTOVER.md](CUTOVER.md)).
 
 ## Adopting it
 

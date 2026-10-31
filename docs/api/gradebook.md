@@ -1,6 +1,7 @@
 # Gradebook (`ohmylms/v1/gradebook/*`, `ohmylms/v1/settings/grade-scale`)
 
-Phase C of the [admin redesign](../ADMIN-REDESIGN.md): Content Hub › Gradebook with five views (Course × Students,
+Phase C of the [admin redesign](../ADMIN-REDESIGN.md) (research: [GRADEBOOK-RESEARCH.md](../GRADEBOOK-RESEARCH.md)):
+Content Hub › Gradebook with five views (Course × Students,
 Roster × Assignments, Student transcript, Skill mastery, Org roll-up), per-cell manual overrides with a reason and
 history, category weighting per course with an optional per-class override, and one site-wide letter scale.
 

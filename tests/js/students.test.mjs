@@ -3,7 +3,42 @@ import assert from 'node:assert/strict';
 import {
 	submitRegistration,
 	registrationRedirect,
+	registrationUrl,
 } from '../../assets/src/features/students/registration-api.mjs';
+
+test( 'registration posts to a real admin-ajax URL on pages without ohmylms_frontend_params', async () => {
+	const moduleData = ( url ) => ( {
+		getElementById: ( id ) =>
+			'wp-script-module-data-ohmylms/interactivity' === id
+				? { textContent: JSON.stringify( { ajaxUrl: url } ) }
+				: null,
+	} );
+	assert.equal(
+		registrationUrl(
+			{ ohmylmsRegistration: { ajaxUrl: '/wp-admin/admin-ajax.php' } },
+			moduleData( '/module-ajax' )
+		),
+		'/wp-admin/admin-ajax.php'
+	);
+	assert.equal( registrationUrl( {}, moduleData( '/module-ajax' ) ), '/module-ajax' );
+	assert.equal(
+		registrationUrl(
+			{ ohmylms_checkout_params: { ajax_url: '/checkout-ajax' } },
+			{ getElementById: () => ( { textContent: 'not json' } ) }
+		),
+		'/checkout-ajax'
+	);
+	assert.equal( registrationUrl( {}, { getElementById: () => null } ), '' );
+	let called = false;
+	await assert.rejects(
+		submitRegistration( registrationUrl( {}, undefined ), new FormData(), async () => {
+			called = true;
+			return Response.json( { status: 'success' } );
+		} ),
+		/could not be completed/
+	);
+	assert.equal( called, false, 'nothing is posted to a relative "undefined"' );
+} );
 
 test( 'registration preserves nonce and extension fields and handles verification', async () => {
 	const data = new FormData();

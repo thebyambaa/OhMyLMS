@@ -54,15 +54,12 @@ Statuses below were checked against the code on 31 October 2026. Counts are file
    names through `LegacyRoutes::url()` instead of `app_url()` (`NativeLessonEditor::return_url()` keeps it
    because its input, `ohmylms_return` and assessment profiles' `return_route`, is a legacy route); the two
    inert `ohmylms-select2` field classes in `Admin\Pages\GeneralSettings`.
-6. **Learner front end to Interactivity modules** (plan and behaviour map: [LEARNER-FRONTEND](LEARNER-FRONTEND.md)).
-   Done on 31 October 2026: one source per learner script (the `runtimes/dist` reprints and stale
-   `assets/dist/frontend` bundles deleted); Slick replaced by `ohmylms/carousel`; add to cart, checkout, tax
-   and Stripe moved to `ohmylms/cart`, `ohmylms/checkout` and `ohmylms/stripe`; the React learner paper and
-   print views replaced by server-rendered markup with `ohmylms/paper` and `ohmylms/paper-print`; html2pdf
-   and the certificate template deleted; `ohmylms.js` trimmed from 112 KB to 73 KB of live code. Remaining
-   (batches in the plan): shared request/toast helpers, catalog search and load more, learner dashboard and
-   profile, login/signup and reviews, the lesson and assignment player, and the two video scripts; the
-   124-file JSX/MJS tree in `assets/src/features` used by blocks and native editors.
+6. **Learner front end to Interactivity modules** (behaviour map: [LEARNER-FRONTEND](LEARNER-FRONTEND.md)).
+   Done on 31 October 2026 through batch L7: carousel, commerce, paper, shared helpers, catalogue, dashboard
+   and profile, login/sign-up, reviews, lesson and assignment player, and video (`ohmylms/video`). Legacy
+   bundles, the two jQuery video files and `ohmylms.js` were deleted. `ohmylms-frontend` stays as a
+   script-less handle with no jQuery. Remaining: the 124-file JSX/MJS tree in `assets/src/features` used by
+   blocks and native editors.
 7. **Extend enforcement:** Partly done on 31 October 2026 ([ENFORCEMENT](ENFORCEMENT.md#ci-jobs)): CI also
    runs `npm test`, `npm run lint:js` (LF via `.gitattributes`, Prettier `endOfLine: 'auto'` for older
    Windows checkouts), the 58 PHP unit suites, 75 PHP integration suites on a fresh WordPress + MySQL 8
@@ -85,7 +82,7 @@ Statuses below were checked against the code on 31 October 2026. Counts are file
 | 6 | Authored entry point | **Done** | `app/bootstrap` is the only admin entry (`admin-app.js`, 67 KB); recovered factories, adapters and SDK deleted |
 | 7 | Stylesheet ownership | **Done (admin)** | Legacy admin CSS (285 sources) and `tailwind.css` deleted; feature CSS ships with its chunk ([ownership](STYLESHEET-OWNERSHIP.md)). Learner CSS cleanup (`assets/css/style.css`, 476 KB) is deliberately out of scope |
 | 8 | Backend boundaries | **Partial** | Audit and plan in [BACKEND-BOUNDARIES](BACKEND-BOUNDARIES.md). Student, StudentPro, StudentReport, QuizReports and ContentHubOverview controllers hold no persistence (new `Quiz\AttemptReports`, `Student\Directory`, `Student\Enrollments`, `Assignment\Submissions`, `ContentHub\ContentCounts`); controller `\` calls 152 to 109; 42 of 81 controllers touch no `\`, options or meta. Remaining: course enrolment writes, Account Hub (38 calls), assignment grading, quiz attempts, commerce, a CI rule against new `\` in controllers |
-| 9 | Asset and dependency isolation | **Partial** | Admin: one entry plus 38 shipped hashed lazy chunks with per-screen budgets; React and WordPress packages are externals (`checkDuplicateRuntimes`). Math (836 KB) and JSXGraph (995 KB) load only on pages that use them. Learner: commerce, carousel and paper are script modules with no jQuery. Remaining: `ohmylms.js` and the two video scripts still depend on jQuery |
+| 9 | Asset and dependency isolation | **Partial** | Admin: one entry plus 38 shipped hashed lazy chunks with per-screen budgets; React and WordPress packages are externals (`checkDuplicateRuntimes`). Math (836 KB) and JSXGraph (995 KB) load only on pages that use them. Learner: product behaviour is script modules. `ohmylms.js` was deleted in L7; `ohmylms-frontend` is a script-less handle and does not load jQuery |
 | 10 | Enforcement and release checks | **Partial** | Five parallel jobs in `.github/workflows/ci.yml` ([ENFORCEMENT](ENFORCEMENT.md#ci-jobs)): `check:ci` (typecheck, app tests, recovered-runtime imports, cycles, feature boundaries, raw colours, duplicate runtimes, budgets) and `npm test`; `lint:js`; `php -l` and the PHP unit suites; phpcs on changed lines; the PHP integration suites against WordPress + MySQL. Skips and expected failures are listed with reasons in `tests/php-suites.json`. Remaining: item 7 above |
 
 ## Feature parity
@@ -115,10 +112,10 @@ component tests. Items named "not rebuilt" had a legacy screen that no longer ex
 | Question bank and editor | Partial | List, versions, approve, duplicate, import/export and an editor for all 52 built-in types and every stored field (built-in editors register like add-ons), with per-type REST validation and a real-player preview (`question-types-rest-integration.php` 596 checks; live parity spec). Delete and copy-into-quiz on typed routes. Remaining: no rubric for short/long text; no editor for extension settings |
 | Exams and exam import | Partial | Results release (policy, single/bulk release with email, undo before view, log; enforced in every result surface) and JSXGraph proposals (generate/author, accept instead of or beside the crop, reject) rebuilt ([api](api/exams.md)). The release email is on the Emails screen; held scores are hidden from every gradebook until released. Not rebuilt: renderer probe, side-by-side PDF, drag crop |
 | Account Hub | Partial | Schools, years, classes, teachers, parents, All accounts, roster intake, school archive/restore/delete, guardians per school and class, school report with CSV, year rollover with roster promotion, class work and grading, sample school done (`account-hub-schools-lifecycle-rest-integration.php` 212 checks). Rollover skips classes with no active students unless `include_empty` is set. Panels load as their own chunks. Remaining: the older `Lifecycle::rollover` and `Service::rollover` paths still copy empty classes |
-| Extension host | Partial | Pages, screen slots, editor panels by route, integration panels, question and lesson editors, checkout/frontend slots, per-extension error isolation. Membership settings missing |
+| Extension host | Partial | Pages, screen slots, editor panels by route, integration panels, question and lesson editors, checkout/frontend slots, per-extension error isolation. Membership settings panels render in the plan editor |
 | Communities | Retired | No backend; add-ons can register a page |
 | Cutover | Done | 31 October 2026; old addresses redirect through `LegacyRoutes` |
-| Learner front end on Interactivity | Partial | Carousel, commerce and exam paper done; `ohmylms.js` and the video scripts remain (item 6 above) |
+| Learner front end on Interactivity | Done | L1–L7, 31 October 2026. `ohmylms.js` is deleted; `ohmylms-frontend` stays as a script-less handle (item 6 above) |
 
 ## Invariants
 

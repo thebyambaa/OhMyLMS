@@ -145,10 +145,9 @@ $recording_url    = get_post_meta( $post_id, '_recording_url', true );
 $recording_state  = get_post_meta( $post_id, '_recording_state', true );
 $has_recording    = ( 'attached' === $recording_state ) && ! empty( $recording_url );
 
-// YouTube/Vimeo/Uploaded play through the site's custom video player
-// (assets/src/frontend/js/lesson/video-player.js — same one lesson videos
-// use), which does its own URL parsing from data-video-url. Drive isn't a
-// real video file the player can load — that stays a plain iframe.
+// YouTube/Vimeo/Uploaded play through the lesson video player (ohmylms/video,
+// OhMyLMS\Extensions\Video). Drive isn't a real video file the player can
+// load — that stays a plain iframe.
 $recording_uses_custom_player = in_array( $recording_source, array( 'YouTube', 'Vimeo', 'Uploaded' ), true );
 
 $recording_embed_src = '';
@@ -164,14 +163,16 @@ if ( $has_recording ) {
 	<div class="creator-zoom-recording">
 		<h2 class="creator-zoom-recording__title"><?php esc_html_e( 'Session Replay', 'ohmylms' ); ?></h2>
 		<?php if ( $recording_uses_custom_player ) : ?>
-			<div
-				class="ohmylms-custom-video-player ohmylms-responsive-video-wrapper"
-				style="aspect-ratio: 16/9;"
-				data-video-url="<?php echo esc_attr( $recording_url ); ?>"
-				data-autoplay="false"
-				data-loop="false"
-				data-muted="false"
-			></div>
+			<?php
+			\OhMyLMS\Extensions\Video::render(
+				array(
+					'url'    => $recording_url,
+					'custom' => true,
+					'logo'   => '',
+					'title'  => $topic,
+				)
+			);
+			?>
 		<?php elseif ( $recording_embed_src ) : ?>
 			<div class="creator-zoom-recording__embed">
 				<iframe src="<?php echo esc_url( $recording_embed_src ); ?>" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen frameborder="0"></iframe>

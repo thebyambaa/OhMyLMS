@@ -145,14 +145,10 @@ class BlocksManager {
 		// Enqueue individual block scripts.
 		$this->enqueue_individual_block_scripts();
 
-		// Enqueue frontend script in editor.
-		wp_enqueue_script(
-			'ohmylms-frontend-editor',
-			OHMYLMS_URL . '/' . \OhMyLMS\Assets\FrontendAssets::LEARNER_SCRIPTS['ohmylms-frontend'],
-			array( 'jquery' ),
-			\OhMyLMS\Assets\FrontendAssets::learner_script_version( 'ohmylms-frontend' ),
-			true
-		);
+		// Script-less handle: ohmylms.js was deleted in L7. The editor preview still receives
+		// ohmylms_frontend_params; learner behaviour is the Interactivity modules.
+		wp_register_script( 'ohmylms-frontend-editor', false, array(), OHMYLMS_VERSION, true );
+		wp_enqueue_script( 'ohmylms-frontend-editor' );
 		// The editor uses a separate handle, so the frontend print hook does not localize it.
 		$frontend_assets = new \OhMyLMS\Assets\FrontendAssets();
 		wp_localize_script( 'ohmylms-frontend-editor', 'ohmylms_frontend_params', $frontend_assets->get_script_data( 'ohmylms-frontend' ) );

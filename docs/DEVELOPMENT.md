@@ -1,11 +1,9 @@
 # Source development
 
 Student frontend modules and add-on contracts are documented in [INTERACTIVITY.md](INTERACTIVITY.md).
-They load on demand independently of the opt-in admin source build. The remaining jQuery learner
-scripts, `assets/src/frontend/js/ohmylms.js`, `lesson/video-player.js` and `video-progress-tracker.js`,
-have no build step: `Assets\FrontendAssets::LEARNER_SCRIPTS` serves them as written in every mode, and
-`OHMYLMS_SOURCE_ASSETS` does not change them. Their behaviours and the plan to move them to
-Interactivity modules are in [LEARNER-FRONTEND.md](LEARNER-FRONTEND.md).
+They load on demand independently of the opt-in admin source build. The jQuery learner scripts
+(`ohmylms.js`, `lesson/video-player.js`, `video-progress-tracker.js`) were removed in batches L1–L7;
+`ohmylms-frontend` remains a script-less handle (see [LEARNER-FRONTEND](LEARNER-FRONTEND.md)).
 
 The source build is opt-in: `OHMYLMS_SOURCE_ASSETS` makes the site load `build/sdk` instead of the published
 `assets/dist/admin`. Use it on development sites only.
@@ -27,8 +25,8 @@ at the cutover ([CUTOVER.md](CUTOVER.md)); `admin.php?page=ohmylms` only redirec
 - `assets/src/ui/`: the shared UI kit with the PHP twin in `Design/Ui.php`.
 - `assets/src/blocks/`: block editor and view scripts (quiz player, question player, interactive activity, subject
   browsing).
-- `assets/src/frontend/`: front-end SCSS (built by `tools/build-frontend-styles.mjs`) and the authored
-  learner scripts in `frontend/js`, served directly by `Assets\FrontendAssets` (not in the manifest).
+- `assets/src/frontend/`: front-end SCSS (built by `tools/build-frontend-styles.mjs`). The authored
+  learner scripts that used to live in `frontend/js` were removed in L7; behaviour is in `assets/interactivity`.
 - `assets/src/runtimes/` and `assets/src/static/`: the recovered front-end, block, Elementor,
   theme-support and image assets still shipped. `assets/src/manifest.json` maps each to its output;
   `tools/build-assets.mjs` copies or reprints them. Delete by manifest output, never by folder.

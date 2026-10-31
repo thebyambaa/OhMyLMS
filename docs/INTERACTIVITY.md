@@ -43,9 +43,12 @@ they are loaded on demand by WordPress and do not require the opt-in React sourc
   the layout-3 card popup on the course archive and the course list shortcode/block/elements (`ohmylms/catalog`,
   with `@wordpress/interactivity-router`). Every list is a GET URL rendered by the server. See
   [Course catalogue](#course-catalogue).
+- Lesson and assignment player (batch L6): "Mark as complete" (`ohmylms/lesson`), assignment start, server-timed
+  countdown, file picking and submission (`ohmylms/assignment`), the lesson sidebar tabs (`ohmylms/tabs`) and
+  content protection (`ohmylms/protection`, only when switched on). See [Lesson and assignment player](#lesson-and-assignment-player).
 
 Admin editors continue to use React. Static reports/leaderboards need no reactive runtime. Media
-players, payment provider SDKs other than Stripe, assignment uploads, layout-3
+players, payment provider SDKs other than Stripe, layout-3
 scroll navigation and remaining legacy presentation controls retain their existing integrations. Use the
 module contract below for new student interfaces; migration does not require replacing those SDKs.
 
@@ -74,7 +77,8 @@ ohmylms_enqueue_interactivity_module('my-addon/questions');
 The dependency filter also applies to SmartScore. New modules should use their own store namespace. Core stores:
 `ohmylms/quiz`, `ohmylms/questions`, `ohmylms/smartscore`, `ohmylms/gamification`, `ohmylms/ui`,
 `ohmylms/tabs`, `ohmylms/curriculum`, `ohmylms/reveal`, `ohmylms/cart`, `ohmylms/checkout`,
-`ohmylms/stripe`, `ohmylms/forms`, `ohmylms/reviews`, `ohmylms/account` and `ohmylms/catalog`.
+`ohmylms/stripe`, `ohmylms/forms`, `ohmylms/reviews`, `ohmylms/account`, `ohmylms/catalog`, `ohmylms/lesson`,
+`ohmylms/assignment` and `ohmylms/protection`.
 
 The enqueue helper handles modules discovered after `wp_head`, including shortcodes. It also loads
 the shared hidden/focus/reduced-motion stylesheet. Enqueue dependencies before footer modules print.
@@ -154,6 +158,15 @@ Events bubble from the relevant component and include `detail.apiVersion = 1`. S
 | `ohmylms:membership-cancelled`, `ohmylms:membership-cancel-error` | `subscriptionId`, plus `message` on error |
 | `ohmylms:catalog-before-navigate` (cancelable, on the catalogue root) | `url`, `filters`, `reason` (`filter`, `sort`, `search`, `submit`, `clear`, `category`, `more`) |
 | `ohmylms:catalog-navigated` | `url`, `filters`, `reason` (after the result regions are swapped) |
+| `ohmylms:lesson-complete-request` (dispatch it on `document`; the lesson store listens) | `lessonId` (optional), `source` (`video`, …), `completed` (the server already completed it: update the page only), `navigate` (follow the next link) |
+| `ohmylms:lesson-before-complete` (cancelable, on the lesson navigation) | `lessonId`, `source` (`button` or the request's) |
+| `ohmylms:lesson-completed`, `ohmylms:lesson-complete-error` | `lessonId`, `source`, plus `nextUrl`, or `code` and `message` |
+| `ohmylms:video-ready`, `ohmylms:video-error` (on the player) | `lessonId`, `provider`, plus `duration` or `message` |
+| `ohmylms:video-progress` (on the player) | `lessonId`, `percent`, `position` |
+| `ohmylms:video-completed` (on the player; the video counts as watched, before the lesson request) | `lessonId`, `courseId`, `percent` |
+| `ohmylms:assignment-before-start`, `ohmylms:assignment-before-submit` (both cancelable) | `assignmentId`, plus `reason` (`submit` or `timeout`) on submit |
+| `ohmylms:assignment-started`, `ohmylms:assignment-submitted`, `ohmylms:assignment-expired` | `assignmentId`, plus `deadline` (ms) when started, `reason` when submitted |
+| `ohmylms:assignment-error` | `assignmentId`, `operation` (`start` or `submit`), `code`, `message` |
 
 The `before` events are cancelable. Call `event.preventDefault()` to block that UI action. They do
 not replace server permissions, validation or audit hooks. Presentation events are not proof that
@@ -278,6 +291,45 @@ their actions. An `archive-course.php` override without the regions still filter
 `Ajax::loadmore()` and `Ajax::search_filter()` remain for third-party callers and use the same query builder,
 `Catalog::query_args()`. Listen to `ohmylms:catalog-before-navigate` (cancelable) to veto or track a change.
 
+## Lesson and assignment player
+
+`single-lesson/content-navigation.php` is an `ohmylms/lesson` root (context `{ lessonId, completed, busy,
+videoPending, nextUrl }`), `content-assignment.php` an `ohmylms/assignment` root and `sidebar/sidebar.php` an
+`ohmylms/tabs` root. `OhMyLMS\Extensions\Lesson` (`ohmylms_template_html`, priority 17) adds the same directives to
+theme overrides copied before L6, loads the modules, and puts the nonces in `wp_interactivity_state( 'ohmylms/lesson' )`
+and the assignment's server values (time limit, stored deadline, `serverNow`, upload limit, nonces) in
+`wp_interactivity_state( 'ohmylms/assignment' )`. Requests stay on admin-ajax (`ohmylms_lesson_completed`,
+`ohmylms_save_remaining_time`, `ohmylms_save_assignment_submission_file`); at zero the assignment form locks with the
+message of `GET /ohmylms/v1/assignments/{id}/learner-state`, unless a picked file can still be submitted. The server
+decides: `OhMyLMS\Learning\LessonGate` refuses completing a lesson the learner may not open (enrolment, drip,
+prerequisites, sequential lock), and `OhMyLMS\Assignment\Delivery` refuses starting or submitting after the timed
+deadline (plus 60 s grace) as well as before the release or with prerequisites missing.
+
+Other modules complete the page's lesson by dispatching `ohmylms:lesson-complete-request` on `document` instead of
+posting themselves; pass `completed: true` when the server already completed it (the video tracker's answer). The
+store keeps the checkbox, its label and the video hint in sync. Content protection loads only on lesson, quiz,
+assignment and session pages when `ohmylms_content_protection` is `yes`; it is a deterrent, not access control.
+Contract details and the server-side changes are in
+[LEARNER-FRONTEND](LEARNER-FRONTEND.md#l6-lesson-and-assignment-player-done).
+
+## Video
+
+Lesson and session-replay videos are `ohmylms/video` islands (`OhMyLMS\Extensions\Video`, priority on
+`ohmylms_template_html`). The context carries the provider, ids, lesson, course, resume position and whether
+watching is required. Provider adapters (`ohmylms/video-html5`, `-youtube`, `-vimeo`, `-playerjs`, `-wistia`)
+are dynamic imports and load only for the provider on the page; YouTube, Vimeo and Wistia fetch their player
+APIs then, Bunny speaks player.js over `postMessage`, and an unrecognized embed stays an iframe.
+`wp_interactivity_state( 'ohmylms/video' )` holds `ajaxUrl`, `saveInterval`, `messages` and, when a player
+tracks progress, `nonces.progress` and `nonces.complete`.
+
+Watched spans are saved with `ohmylms_save_video_progress` (debounced, and with `sendBeacon` or a keepalive
+`fetch` on `pagehide`). The server merges them and applies the watched-percentage rule; the module then
+dispatches `ohmylms:lesson-complete-request` rather than completing the lesson itself. Filter
+`ohmylms_video_context` to add values under an add-on key. `window.OhMyLMSVideoPlayer` and
+`window.initOhMyLMSVideoPlayers` are shims for one release. The jQuery event `ohmylms:video:completed` is
+still triggered when jQuery is on the page. Details are in
+[LEARNER-FRONTEND](LEARNER-FRONTEND.md#l7-video-done).
+
 ## Verification
 
 ```sh
@@ -288,6 +340,8 @@ OHMYLMS_CHROME_TEST=1 php tests/php/learner-chrome-integration.php
 OHMYLMS_AUTH_REVIEWS_TEST=1 php tests/php/auth-reviews-integration.php
 OHMYLMS_ACCOUNT_FRONTEND_TEST=1 php tests/php/account-frontend-integration.php
 OHMYLMS_CATALOG_TEST=1 php tests/php/catalog-integration.php
+OHMYLMS_LESSON_PLAYER_TEST=1 php tests/php/lesson-player-integration.php
+OHMYLMS_VIDEO_TEST=1 php tests/php/video-player-integration.php
 php tests/unit.php
 php ../ohmylms-smartscore/tests/engine-test.php
 ```

@@ -3,10 +3,10 @@
 Plan for the admin's menu, look, dashboard and gradebook after the cutover ([CUTOVER](CUTOVER.md)). Work starts
 once the recovered admin is deleted, so it never has to keep two admins in step.
 
-Reference pack (fake data; ideas, not a blueprint): [design-reference/](design-reference/). It contains the clickable prototype
-(`ohmylms-prototype/index.html`; serve the folder over HTTP, for example `npx http-server docs/design-reference`), the
-agreed menu organisation (`ohmylms-redesign/PROPOSED-NAV.md`, `wp-native/WP-MENU-PROPOSAL.md`), today's map
-(`CURRENT-NAV-MAP.md`) and the enrolment/gradebook research (`GRADEBOOK-RESEARCH.md`, `KHAN-COMPARISON.md`).
+External reference pack (fake data; ideas, not a blueprint): keep a copy outside the repo if needed (for example
+`ohmylms-reference` on the workstation). Enrolment and gradebook research that informed Phase C lives in
+[GRADEBOOK-RESEARCH.md](GRADEBOOK-RESEARCH.md) and [learner-experience/KHAN-COMPARISON.md](learner-experience/KHAN-COMPARISON.md).
+Implemented navigation is defined in `includes/Admin/AdminNavigation.php` and [ARCHITECTURE.md](ARCHITECTURE.md).
 
 Decisions (31 October 2026): start after the cutover; six real WordPress pages with tabs addressed by query string;
 order: menu and WordPress look, then the dashboard, then the gradebook. Also decided:
@@ -157,9 +157,9 @@ school or one class from Account Hub; period 7/30/90 days):
 | Insights | deterministic rules over the same data | plain sentences with the numbers; no AI calls |
 | Activity, site health, weekly goal | existing events and checks | optional cards |
 
-Before building: audit what [DASHBOARD-BENCHMARK](DASHBOARD-BENCHMARK.md) and
-[DASHBOARD-LATENCY-INVESTIGATION](DASHBOARD-LATENCY-INVESTIGATION.md) measured; each endpoint gets a latency budget
-on the test data and a PHP integration test.
+Each widget endpoint gets a latency budget on the test data and a PHP integration test. On local sites, slow
+first-byte times often include Windows resolving custom hostnames (for example `800.local`); measure server wait
+separately from DNS when investigating dashboard speed.
 
 **Progress (31 October 2026): foundation, Needs attention and Pulse done** ([api/dashboard.md](api/dashboard.md)).
 

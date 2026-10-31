@@ -20,8 +20,8 @@ defined( 'ABSPATH' ) || exit;
  * `_enable_comments` ('1'/'0').
  *
  * {@see self::check_submission()} is the server-side gate of a learner submission: enrolment, the drip
- * release and every prerequisite. Reading the assignment stays a matter of the course access rules and the
- * drip message; prerequisites block submitting, not reading.
+ * release, every prerequisite, the sequential lock and the timed deadline. Reading the assignment stays a matter of the course
+ * access rules and the drip message; prerequisites and an expired timer block submitting, not reading.
  */
 final class Delivery {
 
@@ -31,6 +31,18 @@ final class Delivery {
 		'ohmylms-lesson'     => 'lesson',
 		'ohmylms-quiz'       => 'quiz',
 		'ohmylms-assignment' => 'assignment',
+	);
+
+	/** Seconds after the timed deadline during which a submission is still accepted (a submit sent at zero). */
+	const TIMER_GRACE = 60;
+
+	/** Time-limit units and their `DateInterval` parts; anything else counts as minutes, as the learner page shows it. */
+	const TIMER_UNITS = array(
+		'month'  => array( 'P', 'M' ),
+		'week'   => array( 'P', 'W' ),
+		'day'    => array( 'P', 'D' ),
+		'hour'   => array( 'PT', 'H' ),
+		'minute' => array( 'PT', 'M' ),
 	);
 
 	/**
@@ -372,15 +384,118 @@ final class Delivery {
 	}
 
 	/**
+	 * Option holding a learner's timed deadline (site time, `Y-m-d H:i:s`), the key the learner page has
+	 * always used. Written once, when the learner first starts the assignment.
+	 *
+	 * @param int $id      Assignment ID.
+	 * @param int $user_id Learner.
+	 * @return string
+	 */
+	public static function deadline_key( $id, $user_id ) {
+		return '_ohmylms_deadline_' . (int) $user_id . '_' . (int) $id . '_';
+	}
+
+	/**
+	 * The assignment's time limit as an interval, or null when it has none.
+	 *
+	 * @param int $id Assignment ID.
+	 * @return \DateInterval|null
+	 */
+	public static function time_limit( $id ) {
+		$assignment = ohmylms_get_assignment( (int) $id );
+		$amount     = $assignment ? absint( $assignment->get_time_limit() ) : 0;
+		if ( ! $assignment || empty( $assignment->get_enable_time_limit() ) || ! $amount ) {
+			return null;
+		}
+		$unit  = rtrim( strtolower( trim( (string) $assignment->get_time_limit_type() ) ), 's' );
+		$parts = self::TIMER_UNITS[ $unit ] ?? self::TIMER_UNITS['minute'];
+		try {
+			return new \DateInterval( $parts[0] . $amount . $parts[1] );
+		} catch ( \Exception $e ) {
+			return null;
+		}
+	}
+
+	/**
+	 * A learner's timer: `enabled`, the limit in seconds (`limit`, months count as 30 days), the stored
+	 * `deadline` (UTC ISO 8601, null until started) with its site-time `deadline_label`, the `remaining`
+	 * seconds, `expired` (the deadline has passed) and `closed` (the grace period has passed too, so the
+	 * server refuses submissions).
+	 *
+	 * @param int      $id      Assignment ID.
+	 * @param int      $user_id Learner.
+	 * @param int|null $now     Unix time (tests).
+	 * @return array{enabled:bool,limit:int,deadline:string|null,deadline_label:string,remaining:int,expired:bool,closed:bool}
+	 */
+	public static function timer( $id, $user_id, $now = null ) {
+		$now      = null === $now ? time() : (int) $now;
+		$interval = self::time_limit( $id );
+		$timer    = array(
+			'enabled'        => null !== $interval,
+			'limit'          => 0,
+			'deadline'       => null,
+			'deadline_label' => '',
+			'remaining'      => 0,
+			'expired'        => false,
+			'closed'         => false,
+		);
+		if ( ! $interval ) {
+			return $timer;
+		}
+		$zero           = new \DateTimeImmutable( '@0' );
+		$timer['limit'] = $zero->add( $interval )->getTimestamp();
+		$stored         = $user_id > 0 ? (string) get_option( self::deadline_key( $id, $user_id ), '' ) : '';
+		$deadline       = '' !== $stored ? date_create_immutable( $stored, DripSchedule::timezone() ) : false;
+		if ( ! $deadline ) {
+			$timer['remaining'] = $timer['limit'];
+			return $timer;
+		}
+		$at                      = $deadline->getTimestamp();
+		$timer['deadline']       = gmdate( 'Y-m-d\TH:i:s\Z', $at );
+		$timer['deadline_label'] = DripSchedule::format( $deadline );
+		$timer['remaining']      = max( 0, $at - $now );
+		$timer['expired']        = $now >= $at;
+		$timer['closed']         = $now > $at + self::TIMER_GRACE;
+		return $timer;
+	}
+
+	/**
+	 * Start a learner's timer: store the deadline (now plus the limit) unless one is stored already, after
+	 * the same gate as a submission. Starting again never extends the time.
+	 *
+	 * @param int $id      Assignment ID.
+	 * @param int $user_id Learner.
+	 * @return array|WP_Error {@see self::timer()}, or the gate's error; 400 `ohmylms_assignment_no_time_limit`.
+	 */
+	public static function start_timer( $id, $user_id ) {
+		$allowed = self::check_submission( $id, $user_id );
+		if ( is_wp_error( $allowed ) ) {
+			return $allowed;
+		}
+		$interval = self::time_limit( $id );
+		if ( ! $interval ) {
+			return new WP_Error( 'ohmylms_assignment_no_time_limit', __( 'This assignment has no time limit.', 'ohmylms' ), array( 'status' => 400 ) );
+		}
+		$key = self::deadline_key( $id, $user_id );
+		if ( ! get_option( $key ) ) {
+			$deadline = ( new \DateTimeImmutable( 'now', DripSchedule::timezone() ) )->add( $interval );
+			update_option( $key, $deadline->format( 'Y-m-d H:i:s' ), false );
+		}
+		return self::timer( $id, $user_id );
+	}
+
+	/**
 	 * What a learner may do with an assignment now.
 	 *
 	 * `can_submit` is false with a `reason` of `not_published`, `not_in_course`, `not_enrolled`, `not_open`
-	 * (with `opens_at`) or `prerequisites` (with the incomplete items). People who can edit the assignment
-	 * preview it without these gates, as they read it without enrolling.
+	 * (with `opens_at`), `prerequisites` (with the incomplete items), `locked` (the course's sequential mode
+	 * and an earlier item not done) or `time_expired` (the learner's timed deadline and its grace period
+	 * have passed; `timer` is {@see self::timer()}). People who can edit the
+	 * assignment preview it without these gates, as they read it without enrolling.
 	 *
 	 * @param int $id      Assignment ID.
 	 * @param int $user_id User.
-	 * @return array{course_id:int,can_submit:bool,reason:string|null,message:string,opens_at:string|null,opens_label:string,prerequisites:array,comments_enabled:bool,preview:bool}
+	 * @return array{course_id:int,can_submit:bool,reason:string|null,message:string,opens_at:string|null,opens_label:string,prerequisites:array,comments_enabled:bool,preview:bool,timer:array}
 	 */
 	public static function state( $id, $user_id ) {
 		$id        = (int) $id;
@@ -400,6 +515,7 @@ final class Delivery {
 		}
 		$opens   = DripSchedule::opens_at( self::stored( $id, '_drip_settings' ), $course_id, $user_id );
 		$closed  = $opens && new \DateTimeImmutable( 'now', DripSchedule::timezone() ) < $opens;
+		$timer   = self::timer( $id, $user_id );
 		$state   = array(
 			'course_id'        => $course_id,
 			'can_submit'       => true,
@@ -410,6 +526,7 @@ final class Delivery {
 			'prerequisites'    => $items,
 			'comments_enabled' => rest_sanitize_boolean( get_post_meta( $id, '_enable_comments', true ) ),
 			'preview'          => $preview,
+			'timer'            => $timer,
 		);
 		$missing = array_values(
 			array_filter(
@@ -433,6 +550,11 @@ final class Delivery {
 		} elseif ( $missing ) {
 			/* translators: %s: comma-separated titles. */
 			$block = array( 'prerequisites', sprintf( __( 'Complete %s before you submit this assignment.', 'ohmylms' ), implode( ', ', array_column( $missing, 'title' ) ) ) );
+		} elseif ( apply_filters( 'ohmylms_is_lesson_sequentially_locked', false, $id, $course_id, $user_id ) ) {
+			$block = array( 'locked', __( 'You must complete the previous lesson before accessing this content.', 'ohmylms' ) );
+		} elseif ( $timer['closed'] ) {
+			/* translators: %s: deadline date and time. */
+			$block = array( 'time_expired', sprintf( __( 'The time for this assignment ran out on %s.', 'ohmylms' ), $timer['deadline_label'] ) );
 		} else {
 			$block = null;
 		}

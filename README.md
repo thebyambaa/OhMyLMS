@@ -4,11 +4,13 @@ WordPress LMS with editable React feature modules, a reproducible source build a
 
 ## Start here
 
+- [Documentation index](docs/README.md): full map of maintained docs.
 - [AGENTS.md](AGENTS.md) and [Coding standards](docs/CODING-STANDARDS.md): WordPress standards, compatibility exceptions and the lint commands.
 - [Build and local setup](docs/DEVELOPMENT.md): commands, isolated testing, source-asset activation, translations.
-- [React development guide](docs/REACT-DEVELOPMENT.md): component boundaries, conversion contracts and the feature workflow.
-- [Work ledger](CONTINUE-LEARNER-HUB.md): current state of the learner hub and every checkpoint, newest facts first in its "Current state" section.
-- [Acceptance status](docs/ACCEPTANCE.md): tested scope and compatibility limitations.
+- [Admin architecture](docs/ARCHITECTURE.md), [modularization roadmap](docs/MODULARIZATION-ROADMAP.md) and [React development](docs/REACT-DEVELOPMENT.md).
+- [Learner Interactivity](docs/INTERACTIVITY.md) and [learner script map](docs/LEARNER-FRONTEND.md).
+- [Work ledger](CONTINUE-LEARNER-HUB.md): learner hub checkpoints (newest facts first in "Current state").
+- [Verification](docs/ACCEPTANCE.md): which suites and docs to use for acceptance today.
 
 ## Learners, teachers, parents and schools
 

@@ -23,6 +23,15 @@ final class VideoCompletion {
 
 	const MAX_DURATION = 86400;
 
+	/** Most watched spans accepted in one report (assets/interactivity/video/progress.js MAX_INTERVALS). */
+	const MAX_INTERVALS = 500;
+
+	/** Gap in seconds under which two watched spans are joined (progress.js JOIN_GAP). */
+	const JOIN_GAP = 0.25;
+
+	/** User meta prefix of the spans a learner watched of a lesson's video (`<prefix><lesson ID>`). */
+	const SEEN_META = '_ohmylms_video_seen_';
+
 	/**
 	 * Normalized video settings of a lesson.
 	 *
@@ -59,7 +68,23 @@ final class VideoCompletion {
 	}
 
 	/**
-	 * The completion rule in force: required only for a lesson that plays a video and asks for it.
+	 * Whether the lesson's video can be tracked: an uploaded file, or an external URL the player has an
+	 * adapter for (YouTube, Vimeo, Bunny, Wistia, a video file). Any other iframe embed reports nothing,
+	 * so requiring a watched share there would lock the learner out.
+	 *
+	 * @param int $lesson_id Lesson ID.
+	 * @return bool
+	 */
+	public static function trackable( $lesson_id ) {
+		if ( absint( get_post_meta( (int) $lesson_id, '_video_id', true ) ) > 0 ) {
+			return true;
+		}
+		$custom = 'yes' === get_option( 'ohmylms_use_custom_video_player', 'yes' );
+		return VideoSource::trackable( (string) get_post_meta( (int) $lesson_id, '_external_url', true ), $custom );
+	}
+
+	/**
+	 * The completion rule in force: required only for a lesson that plays a trackable video and asks for it.
 	 *
 	 * @param int $lesson_id Lesson ID.
 	 * @return array{required:bool,percent:int,duration:int}
@@ -67,7 +92,7 @@ final class VideoCompletion {
 	public static function rule( $lesson_id ) {
 		$settings = self::settings( $lesson_id );
 		return array(
-			'required' => 'watch_percent' === $settings['completion'] && self::has_video( $lesson_id ),
+			'required' => 'watch_percent' === $settings['completion'] && self::has_video( $lesson_id ) && self::trackable( $lesson_id ),
 			'percent'  => $settings['watch_percent'],
 			'duration' => $settings['duration'],
 		);
@@ -86,15 +111,159 @@ final class VideoCompletion {
 	}
 
 	/**
-	 * Duration used to compute the watched share: the declared duration when it is longer than what the
-	 * player reported, so a shortened duration sent by a client never completes the video early.
+	 * Duration used to compute the watched share: the longest of what the player reported, the declared
+	 * duration and the length WordPress read from an uploaded file, so a shortened duration sent by a client
+	 * never completes the video early. When the lesson requires watching, the duration stored by an
+	 * earlier report is a floor too (a later report cannot shrink it).
 	 *
 	 * @param int   $lesson_id Lesson ID.
 	 * @param float $reported  Duration the player reported, in seconds.
+	 * @param float $stored    Duration stored by the learner's previous report.
 	 * @return float
 	 */
-	public static function total( $lesson_id, $reported ) {
-		return max( (float) $reported, (float) self::settings( $lesson_id )['duration'] );
+	public static function total( $lesson_id, $reported, $stored = 0.0 ) {
+		$length = 0;
+		$file   = absint( get_post_meta( (int) $lesson_id, '_video_id', true ) );
+		if ( $file ) {
+			$meta   = wp_get_attachment_metadata( $file );
+			$length = is_array( $meta ) ? min( self::MAX_DURATION, absint( $meta['length'] ?? 0 ) ) : 0;
+		}
+		$floor = self::rule( $lesson_id )['required'] ? (float) $stored : 0.0;
+		return max( (float) $reported, (float) self::settings( $lesson_id )['duration'], (float) $length, $floor );
+	}
+
+	/**
+	 * Watched spans posted by the player (`segments`, JSON `[[start, end], …]`).
+	 *
+	 * @param mixed $raw Posted value.
+	 * @return array<int, array{0: float, 1: float}>|null Merged spans; null when none were posted or the value is not a list of pairs.
+	 */
+	public static function parse_intervals( $raw ) {
+		if ( ! is_string( $raw ) || '' === $raw || strlen( $raw ) > 40000 ) {
+			return null;
+		}
+		$list = json_decode( $raw, true );
+		if ( ! is_array( $list ) || count( $list ) > self::MAX_INTERVALS ) {
+			return null;
+		}
+		foreach ( $list as $span ) {
+			if ( ! is_array( $span ) || 2 !== count( $span ) || ! is_numeric( $span[0] ?? null ) || ! is_numeric( $span[1] ?? null ) ) {
+				return null;
+			}
+		}
+		return self::merge_intervals( $list );
+	}
+
+	/**
+	 * Sorted, disjoint spans: invalid ones dropped, overlapping or nearly touching ones joined.
+	 *
+	 * @param array $intervals Spans (`[start, end]` pairs).
+	 * @return array<int, array{0: float, 1: float}>
+	 */
+	public static function merge_intervals( array $intervals ) {
+		$spans = array();
+		foreach ( $intervals as $span ) {
+			if ( ! is_array( $span ) || ! isset( $span[0], $span[1] ) || ! is_numeric( $span[0] ) || ! is_numeric( $span[1] ) ) {
+				continue;
+			}
+			$start = max( 0.0, (float) $span[0] );
+			$end   = min( (float) self::MAX_DURATION, (float) $span[1] );
+			if ( is_finite( $start ) && is_finite( $end ) && $end > $start ) {
+				$spans[] = array( $start, $end );
+			}
+		}
+		usort(
+			$spans,
+			static function ( $a, $b ) {
+				$order = $a[0] <=> $b[0];
+				return 0 !== $order ? $order : $a[1] <=> $b[1];
+			}
+		);
+		$merged = array();
+		foreach ( $spans as $span ) {
+			$last = count( $merged ) - 1;
+			if ( $last >= 0 && $span[0] <= $merged[ $last ][1] + self::JOIN_GAP ) {
+				$merged[ $last ][1] = max( $merged[ $last ][1], $span[1] );
+			} else {
+				$merged[] = $span;
+			}
+		}
+		return $merged;
+	}
+
+	/**
+	 * Spans limited to `[0, total]`.
+	 *
+	 * @param array $intervals Merged spans.
+	 * @param float $total     Duration.
+	 * @return array<int, array{0: float, 1: float}>
+	 */
+	public static function clamp_intervals( array $intervals, $total ) {
+		$total = (float) $total;
+		if ( $total <= 0 ) {
+			return self::merge_intervals( $intervals );
+		}
+		return self::merge_intervals(
+			array_map(
+				static function ( $span ) use ( $total ) {
+					return array( min( (float) $span[0], $total ), min( (float) $span[1], $total ) );
+				},
+				$intervals
+			)
+		);
+	}
+
+	/**
+	 * Seconds covered by merged spans.
+	 *
+	 * @param array $intervals Merged spans.
+	 * @return float
+	 */
+	public static function measure( array $intervals ) {
+		$total = 0.0;
+		foreach ( $intervals as $span ) {
+			$total += (float) $span[1] - (float) $span[0];
+		}
+		return $total;
+	}
+
+	/**
+	 * Spans a learner watched of a lesson's video, as stored by earlier reports.
+	 *
+	 * @param int $user_id   Learner.
+	 * @param int $lesson_id Lesson ID.
+	 * @return array<int, array{0: float, 1: float}>
+	 */
+	public static function seen( $user_id, $lesson_id ) {
+		$stored = get_user_meta( (int) $user_id, self::SEEN_META . (int) $lesson_id, true );
+		return is_array( $stored ) ? self::merge_intervals( $stored ) : array();
+	}
+
+	/**
+	 * Store the spans a learner watched.
+	 *
+	 * @param int   $user_id   Learner.
+	 * @param int   $lesson_id Lesson ID.
+	 * @param array $intervals Merged spans.
+	 */
+	public static function remember( $user_id, $lesson_id, array $intervals ) {
+		$rounded = array_map(
+			static function ( $span ) {
+				return array( round( (float) $span[0], 2 ), round( (float) $span[1], 2 ) );
+			},
+			array_slice( self::merge_intervals( $intervals ), 0, self::MAX_INTERVALS )
+		);
+		update_user_meta( (int) $user_id, self::SEEN_META . (int) $lesson_id, $rounded );
+	}
+
+	/**
+	 * Forget the spans (progress reset).
+	 *
+	 * @param int $user_id   Learner.
+	 * @param int $lesson_id Lesson ID.
+	 */
+	public static function forget( $user_id, $lesson_id ) {
+		delete_user_meta( (int) $user_id, self::SEEN_META . (int) $lesson_id );
 	}
 
 	/**

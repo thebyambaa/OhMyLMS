@@ -110,13 +110,23 @@ library`).
 
 `Assignment\Delivery::state()` (also `GET /assignments/{id}/learner-state` for the current user) gives
 `{course_id, can_submit, reason, message, opens_at, opens_label, prerequisites: [{id, title, type, status,
-url, completed}], comments_enabled, preview}`. `reason` is `not_published`, `not_in_course`,
-`not_enrolled`, `not_open` (the drip release has not come; `opens_at` UTC) or `prerequisites` (an item is
-not completed). People who can edit the assignment preview without these gates.
+url, completed}], comments_enabled, preview, timer}`. `reason` is `not_published`, `not_in_course`,
+`not_enrolled`, `not_open` (the drip release has not come; `opens_at` UTC), `prerequisites` (an item is
+not completed), `locked` (the course's sequential mode and an earlier item not done) or `time_expired` (the timed
+deadline and its grace period have passed). People who can edit the assignment preview without these gates.
 
-- **Server-side gate.** The learner upload handler (`Ajax::save_assignment_submission_file`) calls
-  `Delivery::check_submission()` before storing any file and answers `{success: false, data: {code:
-  "ohmylms_assignment_<reason>", message}}`. The course of a submission is now resolved on the server
+- **Timer.** `timer` is `{enabled, limit, deadline, deadline_label, remaining, expired, closed}`: the time limit in
+  seconds (months count as 30 days), the learner's deadline (UTC, null until started; stored in the option
+  `_ohmylms_deadline_{user}_{assignment}_` in site time, as before), the seconds left, whether the deadline has
+  passed, and whether `Delivery::TIMER_GRACE` (60 s) has passed too. The learner page starts the timer with
+  admin-ajax `ohmylms_save_remaining_time` (`content_id`, nonce `save_remaining_time`), which runs the same gate,
+  stores the deadline once and answers `{deadline, deadline_label, remaining}` (400
+  `ohmylms_assignment_no_time_limit` without a time limit). After the grace period submissions answer
+  `ohmylms_assignment_time_expired`.
+
+- **Server-side gate.** The learner upload handler (`Ajax::save_assignment_submission_file`), the form post
+  handler (`FormHandler::save_submission_form_data`) and the timer start call `Delivery::check_submission()` before
+  storing anything; the upload handler answers `{success: false, data: {code: "ohmylms_assignment_<reason>", message}}`. The course of a submission is now resolved on the server
   (the posted `course_id` is only a fallback for previews).
 - **Drip.** Release dates are worked out by `Learning\DripSchedule` (shared with lessons and quizzes;
   `DripContent` uses it): enrolment start + N days, a date and time, or the course's first cohort. Until it
@@ -233,8 +243,10 @@ legacy grading hooks listed above. Learner submission (`ohmylms_assignment_submi
 ## Known gaps
 
 - Placement is read only. Assignments are added to chapters in the course editor.
-- The learner's submit and comment forms are server-rendered; the upload widget is still the jQuery
-  `ohmylms.js` script (roadmap item 6). Comments are plain text without attachments or editing.
+- The learner's submit and comment forms are server-rendered; start, countdown, file picking and submission run in
+  the `ohmylms/assignment` Interactivity store (batch L6 of [LEARNER-FRONTEND](../LEARNER-FRONTEND.md)). There is no
+  learner REST route for submitting yet; the store posts to the admin-ajax handler. Comments are plain text without
+  attachments or editing.
 - Cohort releases use the course's first cohort, as before; per-cohort dates are not modelled.
 - The grading pipeline still lives in `AssignmentController::update_attempt_report()` (a class without routes)
   and takes a constructed `WP_REST_Request`; extracting it into a service is in

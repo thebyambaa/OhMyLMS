@@ -13,24 +13,26 @@ defined( 'ABSPATH' ) || exit();
 class FrontendAssets extends Assets {
 
 	/**
-	 * Authored learner scripts, served as written (no build step), by handle.
+	 * Authored learner scripts, by handle. Empty since L7: the last file, `ohmylms.js`, was deleted
+	 * with the video scripts. The `ohmylms-frontend` handle stays, with no source, in {@see self::get_scripts()}.
 	 *
 	 * @var array<string, string>
 	 */
-	const LEARNER_SCRIPTS = array(
-		'ohmylms-frontend'               => 'assets/src/frontend/js/ohmylms.js',
-		'ohmylms-video-player'           => 'assets/src/frontend/js/lesson/video-player.js',
-		'ohmylms-video-progress-tracker' => 'assets/src/frontend/js/video-progress-tracker.js',
-	);
+	const LEARNER_SCRIPTS = array();
 
 	/**
 	 * Version of an authored learner script; changes whenever the file does.
+	 * A handle with no file (every handle, since L7) is the plugin version.
 	 *
 	 * @param string $handle Handle in {@see self::LEARNER_SCRIPTS}.
 	 * @return string
 	 */
 	public static function learner_script_version( $handle ) {
-		return OHMYLMS_VERSION . '-' . (string) filemtime( OHMYLMS_DIR . '/' . self::LEARNER_SCRIPTS[ $handle ] );
+		$path = self::LEARNER_SCRIPTS[ $handle ] ?? '';
+		if ( '' === $path || ! is_file( OHMYLMS_DIR . '/' . $path ) ) {
+			return OHMYLMS_VERSION;
+		}
+		return OHMYLMS_VERSION . '-' . (string) filemtime( OHMYLMS_DIR . '/' . $path );
 	}
 
 	/**
@@ -50,27 +52,18 @@ class FrontendAssets extends Assets {
 	 */
 	public function get_scripts() {
 		$scripts = array(
-			'ohmylms-frontend'               => array(
-				'src'       => self::get_asset_url( self::LEARNER_SCRIPTS['ohmylms-frontend'] ),
-				'deps'      => array( 'wp-i18n', 'jquery' ),
+			// Script-less since L7: `ohmylms.js` was deleted. Chrome::footer(), Elementor, Bricks, blocks,
+			// previews, the hub and the exam player still enqueue this handle, and it still carries
+			// `ohmylms_frontend_params`. It loads no script and no jQuery.
+			'ohmylms-frontend' => array(
+				'src'       => false,
+				'deps'      => array(),
 				'in_footer' => true,
-				'version'   => self::learner_script_version( 'ohmylms-frontend' ),
-			),
-			'ohmylms-video-player'           => array(
-				'src'       => self::get_asset_url( self::LEARNER_SCRIPTS['ohmylms-video-player'] ),
-				'deps'      => array( 'jquery' ),
-				'in_footer' => true,
-				'version'   => self::learner_script_version( 'ohmylms-video-player' ),
-			),
-			'ohmylms-video-progress-tracker' => array(
-				'src'       => self::get_asset_url( self::LEARNER_SCRIPTS['ohmylms-video-progress-tracker'] ),
-				'deps'      => array( 'jquery' ),
-				'in_footer' => true,
-				'version'   => self::learner_script_version( 'ohmylms-video-progress-tracker' ),
+				'version'   => OHMYLMS_VERSION,
 			),
 			// Script-less compatibility handle: classic gateway scripts (QPay, add-ons) depend on it to
 			// call window.registerPaymentGatewayHandler() before the ohmylms/checkout module runs.
-			'ohmylms-checkout'               => array(
+			'ohmylms-checkout' => array(
 				'src'       => false,
 				'deps'      => array(),
 				'in_footer' => true,
@@ -131,11 +124,9 @@ class FrontendAssets extends Assets {
 				);
 
 				if ( ohmylms_is_content_page() ) {
-					$localized_data['lesson_completed_nonce']      = wp_create_nonce( 'lesson_completed_nonce' );
-					$localized_data['assignment_submission_nonce'] = wp_create_nonce( 'assignment_submission_nonce' );
-					$localized_data['save_remaining_time']         = wp_create_nonce( 'save_remaining_time' );
-					$localized_data['quiz_exit_submission']        = wp_create_nonce( 'quiz_exit_submission' );
-					$localized_data['video_progress_nonce']        = wp_create_nonce( 'video_progress_nonce' );
+					// The lesson and assignment nonces are in wp_interactivity_state( 'ohmylms/lesson' | 'ohmylms/assignment' ); ohmylms/video has its own (Extensions\Video). These stay for third-party callers of the admin-ajax actions.
+					$localized_data['lesson_completed_nonce'] = wp_create_nonce( 'lesson_completed_nonce' );
+					$localized_data['video_progress_nonce']   = wp_create_nonce( 'video_progress_nonce' );
 				}
 				break;
 			default:
@@ -181,10 +172,6 @@ class FrontendAssets extends Assets {
 			wp_enqueue_style( 'ohmylms-general' );
 		}
 
-		if ( ohmylms_is_content_page() ) {
-			wp_enqueue_script( 'ohmylms-video-player' );
-			wp_enqueue_script( 'ohmylms-video-progress-tracker' );
-		}
 	}
 
 	/**

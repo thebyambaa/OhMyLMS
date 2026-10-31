@@ -50,24 +50,37 @@ class VideoProgressTracker {
 	/**
 	 * Save video progress
 	 *
-	 * @param int   $user_id User ID.
-	 * @param int   $lesson_id Lesson ID.
-	 * @param int   $course_id Course ID.
-	 * @param float $watched_duration Watched duration in seconds.
-	 * @param float $total_duration Total video duration in seconds.
-	 * @param float $last_position Last watched position in seconds.
+	 * @param int        $user_id          User ID.
+	 * @param int        $lesson_id        Lesson ID.
+	 * @param int        $course_id        Course ID.
+	 * @param float      $watched_duration Watched duration in seconds.
+	 * @param float      $total_duration   Total video duration in seconds.
+	 * @param float      $last_position    Last watched position in seconds.
+	 * @param array|null $intervals        Watched spans of the report (`[[start, end], …]`). When given, they are
+	 *                                     merged with the spans of earlier reports and the watched duration is what
+	 *                                     the union covers, so watching over several visits adds up and watching a
+	 *                                     part again does not; `$watched_duration` is then ignored. Null keeps the
+	 *                                     reported duration.
 	 *
 	 * @return bool|int False on failure, inserted/updated record ID on success.
 	 */
-	public function save_progress( $user_id, $lesson_id, $course_id, $watched_duration, $total_duration, $last_position ) {
+	public function save_progress( $user_id, $lesson_id, $course_id, $watched_duration, $total_duration, $last_position, $intervals = null ) {
 		global $wpdb;
 		// Validate inputs.
 		if ( ! $this->validate_inputs( $user_id, $lesson_id, $course_id ) ) {
 			return false;
 		}
 
+		// Check if record exists.
+		$existing = $this->get_progress( $user_id, $lesson_id );
+
 		// A lesson's declared duration and watched-percentage rule take precedence over what the player reports.
-		$total_duration   = \OhMyLMS\Learning\VideoCompletion::total( $lesson_id, $total_duration );
+		$total_duration = \OhMyLMS\Learning\VideoCompletion::total( $lesson_id, $total_duration, $existing ? (float) $existing->total_duration : 0.0 );
+		$seen           = null;
+		if ( is_array( $intervals ) ) {
+			$seen             = \OhMyLMS\Learning\VideoCompletion::clamp_intervals( array_merge( \OhMyLMS\Learning\VideoCompletion::seen( $user_id, $lesson_id ), $intervals ), $total_duration );
+			$watched_duration = max( \OhMyLMS\Learning\VideoCompletion::measure( $seen ), $existing ? (float) $existing->watched_duration : 0.0 );
+		}
 		$watched_duration = \OhMyLMS\Learning\VideoCompletion::bounded_watch( $user_id, $lesson_id, $watched_duration );
 		$threshold        = \OhMyLMS\Learning\VideoCompletion::threshold( $lesson_id, $this->completion_threshold );
 
@@ -90,8 +103,9 @@ class VideoProgressTracker {
 		$is_completed   = $watch_percentage >= $threshold;
 		$completed_date = $is_completed ? current_time( 'mysql' ) : null;
 
-		// Check if record exists.
-		$existing = $this->get_progress( $user_id, $lesson_id );
+		if ( null !== $seen ) {
+			\OhMyLMS\Learning\VideoCompletion::remember( $user_id, $lesson_id, $seen );
+		}
 
 		$data = array(
 			'watched_duration' => round( $watched_duration, 2 ),
@@ -135,10 +149,12 @@ class VideoProgressTracker {
 
 			return false !== $result ? $existing->id : false;
 		} else {
-			// Insert new record.
-			$data['user_id']   = $user_id;
-			$data['lesson_id'] = $lesson_id;
-			$data['course_id'] = $course_id;
+			// Insert new record. wpdb applies the formats in key order, so the IDs come first.
+			$data = array(
+				'user_id'   => $user_id,
+				'lesson_id' => $lesson_id,
+				'course_id' => $course_id,
+			) + $data;
 
 			// Build format array dynamically to match $data keys.
 			$formats = array(
@@ -229,6 +245,9 @@ class VideoProgressTracker {
 	/**
 	 * Mark lesson as completed based on video progress
 	 *
+	 * Kept for add-ons. The plugin no longer calls it: the player asks `ohmylms_lesson_completed` (through the
+	 * lesson store), which applies the lesson gate and fires the completion hooks this method skips.
+	 *
 	 * @param int $user_id User ID.
 	 * @param int $lesson_id Lesson ID.
 	 * @param int $course_id Course ID.
@@ -264,6 +283,7 @@ class VideoProgressTracker {
 	public function reset_progress( $user_id, $lesson_id ) {
 		global $wpdb;
 
+		\OhMyLMS\Learning\VideoCompletion::forget( $user_id, $lesson_id );
 		return (bool) $wpdb->delete(
 			$this->table_name,
 			array(

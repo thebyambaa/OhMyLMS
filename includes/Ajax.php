@@ -841,9 +841,30 @@ class Ajax {
 	public static function lesson_completed() {
 		check_ajax_referer( 'lesson_completed_nonce', 'nonce' );
 		$lesson_id             = ohmylms_clean( wp_unslash( $_POST['lesson_id'] ?? '' ) );
-		$course_id             = ohmylms_get_course_by_content_id( $lesson_id );
 		$student_id            = get_current_user_id();
 		$student               = new Student( $student_id );
+		// Enrolment, drip, prerequisites and the sequential lock, as the lesson page applies them.
+		$course_id = \OhMyLMS\Learning\LessonGate::check_completion( (int) $lesson_id, $student_id );
+		if ( is_wp_error( $course_id ) ) {
+			wp_send_json_error(
+				array(
+					'status'  => 'error',
+					'code'    => $course_id->get_error_code(),
+					'message' => $course_id->get_error_message(),
+				),
+				(int) $course_id->get_error_data()['status']
+			);
+		}
+		if ( \OhMyLMS\Assignment\Delivery::completed( $student_id, (int) $lesson_id ) ) {
+			wp_send_json_success(
+				array(
+					'status'            => 'success',
+					'already_completed' => true,
+					'next_content_link' => ohmylms_get_next_content_permalink( $lesson_id ),
+					'message'           => __( 'This lesson is already completed.', 'ohmylms' ),
+				)
+			);
+		}
 		if ( ! \OhMyLMS\Learning\VideoCompletion::satisfied( $student_id, (int) $lesson_id ) ) {
 			wp_send_json_error(
 				array(
@@ -1109,36 +1130,29 @@ class Ajax {
 
 		check_ajax_referer( 'save_remaining_time', 'nonce' );
 
-		$content_id = ohmylms_clean( wp_unslash( $_POST['content_id'] ?? '' ) );
-		$student_id = get_current_user_id();
-		$assignment = ohmylms_get_assignment( $content_id );
-		if ( ! $assignment ) {
-			return;
+		$content_id = absint( $_POST['content_id'] ?? 0 );
+		if ( OHMYLMS_ASSIGNMENT_CPT !== get_post_type( $content_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid assignment.', 'ohmylms' ) ), 404 );
 		}
-		$is_enabled_time_limit = $assignment->get_enable_time_limit();
-		if ( ! $is_enabled_time_limit ) {
-			return;
+		// The gate of a submission, then the deadline is stored once; starting again never adds time.
+		$timer = \OhMyLMS\Assignment\Delivery::start_timer( $content_id, get_current_user_id() );
+		if ( is_wp_error( $timer ) ) {
+			wp_send_json_error(
+				array(
+					'code'    => $timer->get_error_code(),
+					'message' => $timer->get_error_message(),
+				),
+				(int) $timer->get_error_data()['status']
+			);
 		}
-
-		$time_limit        = $assignment->get_time_limit();
-		$time_limit_type   = strtolower( $assignment->get_time_limit_type() );
-		$key               = '_ohmylms_deadline_' . $student_id . '_' . $content_id . '_';
-		$existing_deadline = get_option( $key );
-
-		if ( ! $existing_deadline ) {
-			// No deadline is set, so calculate it from the current time.
-			$current_datetime = new \DateTime( 'now', new \DateTimeZone( wp_timezone_string() ) ); // Use WordPress timezone.
-			$interval_spec    = "P{$time_limit}" . strtoupper( substr( $time_limit_type, 0, 1 ) ); // Example: P2D (2 days), P2M (2 months), P2W (2 weeks).
-
-			try {
-				$current_datetime->add( new \DateInterval( $interval_spec ) );
-				$new_deadline = $current_datetime->format( 'Y-m-d H:i:s' ); // Format for storage.
-				update_option( "_ohmylms_deadline_{$student_id}_{$content_id}_", $new_deadline );
-			} catch ( \Exception $e ) {
-				wp_send_json_error( array( 'message' => __( 'Error calculating deadline.', 'ohmylms' ) ) );
-			}
-		}
-		wp_send_json_success( array( 'message' => __( 'Deadline saved successfully.', 'ohmylms' ) ) );
+		wp_send_json_success(
+			array(
+				'message'        => __( 'Deadline saved successfully.', 'ohmylms' ),
+				'deadline'       => $timer['deadline'],
+				'deadline_label' => $timer['deadline_label'],
+				'remaining'      => $timer['remaining'],
+			)
+		);
 	}
 
 
@@ -1271,6 +1285,8 @@ class Ajax {
 		$watched_duration = isset( $_POST['watched_duration'] ) ? floatval( $_POST['watched_duration'] ) : 0;
 		$total_duration   = isset( $_POST['total_duration'] ) ? floatval( $_POST['total_duration'] ) : 0;
 		$last_position    = isset( $_POST['last_position'] ) ? floatval( $_POST['last_position'] ) : 0;
+		// Watched spans of the ohmylms/video player, merged server-side with the learner's earlier ones.
+		$intervals = isset( $_POST['segments'] ) ? \OhMyLMS\Learning\VideoCompletion::parse_intervals( sanitize_text_field( wp_unslash( $_POST['segments'] ) ) ) : null;
 
 		if ( ! $lesson_id ) {
 			wp_send_json_error( array( 'message' => __( 'Missing lesson ID.', 'ohmylms' ) ) );
@@ -1303,24 +1319,22 @@ class Ajax {
 		}
 
 		// Save progress.
-		$result = $tracker->save_progress( $user_id, $lesson_id, $course_id, $watched_duration, $total_duration, $last_position );
+		$result = $tracker->save_progress( $user_id, $lesson_id, $course_id, $watched_duration, $total_duration, $last_position, $intervals );
 
 		if ( $result ) {
 			$progress = $tracker->get_progress( $user_id, $lesson_id );
 
-			// Auto-complete lesson if threshold reached.
-			if ( $progress && $progress->is_completed ) {
-				$tracker->mark_lesson_complete( $user_id, $lesson_id, $course_id );
-			}
-
+			// A watched video does not complete the lesson here: the player then asks ohmylms_lesson_completed,
+			// which applies the lesson gate and the watched-percentage rule and fires the completion hooks.
 			wp_send_json_success(
 				array(
-					'message'  => __( 'Progress saved successfully.', 'ohmylms' ),
-					'progress' => array(
+					'message'          => __( 'Progress saved successfully.', 'ohmylms' ),
+					'progress'         => array(
 						'watched_duration' => $progress->watched_duration,
 						'watch_percentage' => $progress->watch_percentage,
 						'is_completed'     => (bool) $progress->is_completed,
 					),
+					'lesson_completed' => \OhMyLMS\Assignment\Delivery::completed( $user_id, $lesson_id ),
 				)
 			);
 		} else {

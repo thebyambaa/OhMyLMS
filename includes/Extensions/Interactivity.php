@@ -44,6 +44,8 @@ final class Interactivity {
 		AuthForms::init();
 		Reviews::init();
 		Catalog::init();
+		Lesson::init();
+		Video::init();
 	}
 
 	/**
@@ -68,6 +70,10 @@ final class Interactivity {
 			'carousel'      => 'carousel',
 			'catalog'       => 'catalog',
 			'paper'         => 'paper',
+			'lesson'        => 'lesson',
+			'assignment'    => 'assignment',
+			'protection'    => 'protection',
+			'video'         => 'video',
 		) as $id => $file ) {
 			$path         = 'assets/interactivity/' . $file . '.js';
 			$dependencies = apply_filters(
@@ -117,25 +123,13 @@ final class Interactivity {
 		}
 	}
 
-	/** Point code that still registers the removed compiled copies at the authored learner scripts.
+	/** Leave retired learner-script URLs unchanged. L7 deleted the last file they could point at
+	 * (`ohmylms.js`); the dist copies are not on disk, so a rewrite would 404. The `ohmylms-frontend`
+	 * handle stays, with no source file.
 	 *
 	 * @param mixed $url Url.
 	 */
 	public static function legacy_url( $url ) {
-		$base = plugins_url( '/', OHMYLMS_FILE );
-		if ( strpos( $url, $base ) !== 0 ) {
-			return $url;
-		}
-		$path    = preg_replace( '#^build/#', '', (string) strtok( substr( $url, strlen( $base ) ), '?' ) );
-		$removed = array(
-			'assets/dist/frontend/ohmylms.js'      => 'ohmylms-frontend',
-			'assets/dist/frontend/video-player.js' => 'ohmylms-video-player',
-			'assets/dist/frontend/video-progress-tracker.js' => 'ohmylms-video-progress-tracker',
-		);
-		if ( isset( $removed[ $path ] ) ) {
-			$handle = $removed[ $path ];
-			return $base . \OhMyLMS\Assets\FrontendAssets::LEARNER_SCRIPTS[ $handle ] . '?ver=' . \OhMyLMS\Assets\FrontendAssets::learner_script_version( $handle );
-		}
 		return $url;
 	}
 

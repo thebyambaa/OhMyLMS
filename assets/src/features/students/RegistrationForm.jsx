@@ -10,6 +10,7 @@ import { __ } from '@wordpress/i18n';
 import {
 	submitRegistration,
 	registrationRedirect,
+	registrationUrl,
 } from './registration-api.mjs';
 
 /**
@@ -59,8 +60,7 @@ export function RegistrationForm( {
 			setError( '' );
 			try {
 				const result = await submitRegistration(
-					window.ohmylms_frontend_params?.ajax_url ||
-						window.ohmylms_checkout_params?.ajax_url,
+					registrationUrl( window, document ),
 					new FormData( form )
 				);
 				if ( result.status === 'pending_verification' ) {

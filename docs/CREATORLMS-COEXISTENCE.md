@@ -1,5 +1,9 @@
 # Running OhMyLMS with CreatorLMS
 
+> **Note:** Local development sites for this plugin usually run **OhMyLMS alone** (Tutor LMS and other LMS
+> plugins are removed to avoid side effects). This document applies when you deliberately install Creator LMS
+> alongside OhMyLMS for coexistence testing.
+
 OhMyLMS can load alongside Creator LMS 1.2.21 in the same WordPress installation. CreatorLMS's source does not need modification. Both plugin load orders and activating either plugin second are covered by the isolated integration test.
 
 ## Runtime separation
