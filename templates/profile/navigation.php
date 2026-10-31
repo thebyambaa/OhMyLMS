@@ -17,7 +17,7 @@ do_action( 'ohmylms_before_account_navigation' );
 ?>
 
 
-<aside class="ohmylms-student-profile-sidebar">
+<aside class="ohmylms-student-profile-sidebar" id="ohmylms-profile-sidebar">
 	<ul class="ohmylms-student-profile-tab">
 		<li class="item-profile <?php echo esc_attr( ohmylms_get_account_menu_item_classes( 'profile' ) . ' ' . ohmylms_get_account_menu_item_classes( 'profile-edit' ) ); ?> ">
 			<a href="<?php echo esc_url( ohmylms_get_account_endpoint_url( 'profile' ) ); ?>">

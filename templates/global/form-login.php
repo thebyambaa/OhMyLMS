@@ -27,7 +27,12 @@ if ( ! empty( $redirect_to ) ) {
 }
 
 ?>
-<form class="ohmylms-login-signup ohmylms-form-login login" method="post" <?php echo ( $hidden ) ? 'style="display:none;"' : ''; ?> >
+<form class="ohmylms-login-signup ohmylms-form-login login" method="post" <?php echo ( $hidden ) ? 'style="display:none;"' : ''; ?>
+	data-wp-interactive="ohmylms/forms"
+	data-wp-init--fold="callbacks.foldFilled"
+	data-wp-on--focusin="actions.fieldFocus"
+	data-wp-on--focusout="actions.fieldBlur"
+	data-wp-on--input="actions.fieldInput">
 
 	<?php echo ( $message ) ? wpautop( wptexturize( $message ) ) : ''; // @codingStandardsIgnoreLine ?>
 
@@ -120,20 +125,23 @@ if ( ! empty( $redirect_to ) ) {
 				</span>
 			</label>
 
-			<span class="ohmylms-password-show">
-				<input class="ohmylms-input-text password" type="password" name="password" id="login-password" autocomplete="current-password" required aria-required="true" >
+			<span class="ohmylms-password-show" data-wp-context='{"revealed":false}'>
+				<input class="ohmylms-input-text password" type="password" name="password" id="login-password" autocomplete="current-password" required aria-required="true" data-wp-bind--type="state.passwordType">
 
-				<label class="show-password-icon" tabindex="0">
-					<input type="checkbox" name="show-password-checkbox" class="show-password-checkbox" aria-required="true" aria-hidden="true" >
+				<label class="show-password-icon" tabindex="0" role="button" aria-pressed="false" aria-label="<?php esc_attr_e( 'Show password', 'ohmylms' ); ?>"
+					data-wp-bind--aria-pressed="context.revealed"
+					data-wp-on--click="actions.togglePassword"
+					data-wp-on--keydown="actions.passwordKey">
+					<input type="checkbox" name="show-password-checkbox" class="show-password-checkbox" aria-hidden="true" tabindex="-1" data-wp-bind--checked="context.revealed">
 
-					<span class="show-password" aria-label="Toggle password visibility">
-						<span class="eye-on">
+					<span class="show-password" aria-hidden="true">
+						<span class="eye-on" data-wp-style--display="state.eyeOnDisplay">
 							<?php
 								require OHMYLMS_DIR . '/assets/images/icon/eye-icon2.php';
 							?>
 						</span>
 
-						<span class="eye-off">
+						<span class="eye-off" data-wp-style--display="state.eyeOffDisplay">
 							<?php
 								require OHMYLMS_DIR . '/assets/images/icon/eye-off-icon.php';
 							?>
@@ -147,7 +155,7 @@ if ( ! empty( $redirect_to ) ) {
 	<?php do_action( 'ohmylms_login_form' ); ?>
 
 	<p class="ohmylms-form-row rememberme-row">
-		<label for="rememberme" class="ohmylms-checkbox ohmylms-form-login-rememberme" tabindex="0">
+		<label for="rememberme" class="ohmylms-checkbox ohmylms-form-login-rememberme" tabindex="0" data-wp-on--keydown="actions.checkboxKey">
 			<input class="ohmylms-form__input ohmylms-form__input-checkbox" name="rememberme" type="checkbox" id="rememberme" value="forever" aria-required="true" aria-labelledby="rememberme-label" />
 
 			<span class="ohmylms-checkbox-text">

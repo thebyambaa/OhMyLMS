@@ -1,7 +1,8 @@
 # Learner front end: script map and Interactivity migration plan
 
-Status: batch L1 (foundation and map) done on 31 October 2026. No live behaviour has moved yet; the
-batches below do that. Roadmap item 6 in [MODULARIZATION-ROADMAP](MODULARIZATION-ROADMAP.md).
+Status: batch L1 (foundation and map) and batch L2 (shared helpers and page chrome) done on
+31 October 2026. L3 to L7 build on the [shared helper API](#shared-helper-api-l2) below. Roadmap item 6 in
+[MODULARIZATION-ROADMAP](MODULARIZATION-ROADMAP.md).
 
 The admin is the typed app. The learner side still runs three jQuery scripts (`ohmylms.js`,
 `video-player.js`, `video-progress-tracker.js`) next to vanilla scripts in `assets/js` and the
@@ -123,17 +124,17 @@ previews, and Elementor/Bricks widgets.
 | Responsive tables | `.ohmylms-table .ohmylms-td-handle` (bound only if the window is under 768 px at load), `.dashboard-table-tr .table-accordion-handler` | `single-lesson/content-quiz.php`; `profile/membership.php`, `membership-details.php`, `invoice-details.php`, `transactions-history.php` | — | Superseded by `ohmylms/ui` (same rule) |
 | Lesson sidebar tabs | `.ohmylms-lesson-tab-nav li`, `.ohmylms-lesson-single-tab-content` | `single-lesson/sidebar/sidebar.php` | — | Live (vanilla DOM) |
 | My courses tabs | `.ohmylms-my-courses-tab ul li button` (arrow keys) | `profile/my-courses.php`, `Shortcodes\ShortCodeMyCourses` | — | Live; `ohmylms/tabs` can replace it |
-| Toast | `#ohmylms-toast`, `.ohmylms-message`, `#ohmylms-close-toast` | `global/toast.php` | — | Live; two copies (`OhMyLMS.ohMyLMSshowToast` uses `.html()`, the inner `ohMyLMSshowToast` uses `.text()`) |
-| Header avatar dropdown | `.ohmylms-header .ohmylms-user-avatar`, body click closes | `global/main-header.php` | — | Live |
-| Profile sidebar drawer | `.ohmylms-student-profile .ohmylms-hamburger`, `.ohmylms-student-profile-sidebar` | `profile/profile-layout.php`, `profile/navigation.php`, `Shortcodes\ShortCodeProfile`, `student-hub/workspace.php` | — | Live |
+| Toast | `#ohmylms-toast`, `.ohmylms-message`, `#ohmylms-close-toast` | `global/toast.php` | — | **Migrated (L2)** to `ohmylms/ui`. The remaining jQuery callers (login, sign-up, lesson complete, assignment) go through a small shim that dispatches `ohmylms:toast` |
+| Header avatar dropdown | `.ohmylms-header .ohmylms-user-avatar`, body click closes | `global/main-header.php` | — | **Migrated (L2)** to `ohmylms/ui` dropdown actions |
+| Profile sidebar drawer | `.ohmylms-student-profile .ohmylms-hamburger`, `.ohmylms-student-profile-sidebar` | `profile/profile-layout.php`, `profile/navigation.php`, `Shortcodes\ShortCodeProfile`, `student-hub/workspace.php` | — | **Migrated (L2)** to `ohmylms/ui` drawer actions (the hub's legacy wrapper has no toggle and stays static) |
 | Cover and profile photo | `#cover_image_input`, `#cover-image-delete`, `#profile_photo_input`, `.cover-edit`/`.edit-avatar` (keyboard) | `profile/profile-edit.php` | `ohmylms_student_cover_image_upload`, `ohmylms_student_cover_image_delete`, `ohmylms_student_profile_image_upload` → `Ajax::student_cover_image_upload/delete()`, `Ajax::student_profile_image_upload()` (nonces `student_profile_cover_*`, `student_profile_image_upload_nonce`, localized only on the profile shortcode and the hub) | Live |
 | Notification switches | `.single-notification-settings .ohmylms-switcher input` (value on/off) | `profile/notifications.php` | form post | Live |
 | Membership "View plan" dialog | `.ohmylms-dashboard-membership .view-plan`, `.ohmylms-membership-modal`, `.close-modal`, Escape | `profile/loop/membership-card.php` (from `profile/student-dashboard.php`) | — | **Broken**: the card sits in `section.oml-dashboard-card`, not `.ohmylms-dashboard-membership`, so the dialog never opens. Fix the selector (`.ohmylms-dashboard-single-membership .view-plan`) in L4 |
 | Cancel membership | `.do-membership-cancel` → `.ohmylms-alert`; `.ohmylms-cancel-membership` (`data-subscription-id`, `data-membership-id`, `data-order-id`) | `profile/membership.php` | `ohmylms_cancel_membership` → `Ajax::cancel_membership()` (nonce `cancel_membership_nonce`), then reload | Live; see findings |
 | Invoice print | `.ohmylms-membership-invoice .print-button` (replaces `<body>`, prints, reloads) | `profile/membership-details.php`, `profile/invoice-details.php` | — | Live; replace with `@media print` CSS and `window.print()` |
 | Login and signup | `.ohmylms-form-login`, `.ohmylms-form-signup` (serialized, hidden `action`), `a.ohmylms-show-signup-form`, `a.ohmylms-show-login-form`, `#ohmylms-checkout-form` hidden on switch | `global/form-login.php`, `global/form-signup.php` (through `ohmylms_login_form()`, `ohmylms_signup_form()` and the checkout variants in `Utility/template-functions.php`) | `ohmylms_login` → `Ajax::login()`, `ohmylms_signup` → `Ajax::signup()` (form nonces); 8-character client check | Live |
-| Form helpers | `.ohmylms-input-text` label folding, `.show-password-icon`, `.ohmylms-form-login-rememberme` and `.ohmylms-tnc-label` (Enter), `input[name='tnc-accept']` enables submit, `input[name="phone"]`/`[name="whatsapp"]` character filter | `global/form-login.php`, `global/form-signup.php`, `profile/profile-edit.php`, `profile/settings.php`, `checkout/terms.php`, checkout shortcode/block/widgets | — | Live |
-| Email verification | URL params `ohmylms_email_verified`, `ohmylms_verify_sent`, `ohmylms_verify_error` → toast; `a[href*="ohmylms_resend_verification"]` | `Services\EmailVerificationService` notices | GET `ohmylms_resend_verification` with `format=json` → `Ajax::resend_verification()` | Live |
+| Form helpers | `.ohmylms-input-text` label folding, `.show-password-icon`, `.ohmylms-form-login-rememberme` and `.ohmylms-tnc-label` (Enter), `input[name='tnc-accept']` enables submit, `input[name="phone"]`/`[name="whatsapp"]` character filter | `global/form-login.php`, `global/form-signup.php`, `profile/profile-edit.php`, `profile/settings.php`, `checkout/terms.php`, `student-hub/settings.php`, checkout shortcode/block/widgets | — | **Migrated (L2)** to `ohmylms/forms`. Login/sign-up submission and the show-login/show-signup links stay in jQuery for L5 |
+| Email verification | URL params `ohmylms_email_verified`, `ohmylms_verify_sent`, `ohmylms_verify_error` → toast; `a[href*="ohmylms_resend_verification"]` | `Services\EmailVerificationService` notices | GET `ohmylms_resend_verification` with `format=json` → `Ajax::resend_verification()` | **Migrated (L2)** to `ohmylms/ui` (`installChrome()`) |
 | Review stars and validation | `.comment-form-rating .ohmylms-stars > a` → `select#rating`; `.ohmylms-course-reviews-form #submit` | `single-course/tabs/reviews.php` (from `student-hub/course.php`) | comment form post | Live |
 | Mark lesson complete | `#ohmylms-completed-lesson`, `#ohmylms-lesson-id`; `.ohmylms-lesson-navigation .ohmylms-checkbox` (Enter) | `single-lesson/content-navigation.php` | `ohmylms_lesson_completed` → `Ajax::lesson_completed()` (nonce `lesson_completed_nonce`), then next link or reload | Live |
 | Assignment submission | `.ohmylms-assignment-form`, `#submission-file`, `#ohmylms-add-new-attachment`, `.remove-resource-action` (built by the script), `.ohmylms-file-upload` (keyboard), `.assignment-submit-alert` | `single-lesson/content-assignment.php` | `ohmylms_save_assignment_submission_file` → `Ajax::save_assignment_submission_file()` (nonce `assignment_submission_nonce`) | Live |
@@ -143,8 +144,8 @@ previews, and Elementor/Bricks widgets.
 | Lesson content images | `.ohmylms-wysiwyg-content img[data-width][data-align]` wrapped in `.image-wrapper` | `single-lesson/content-{lesson,quiz,assignment,zoom,googlemeet}.php` | — | Live; do it on the server (`the_content` filter) |
 | Prerequisite dialog close | `.ohmylms-access-denied-inner`, `.ohmylms-access-denied-close`, `.ohmylms-access-denied-modal-content` | `Hooks\CommonHook::restrict_access()`, `single-lesson.php` | — | Live |
 | Content protection | whole page when `is_creator_page` and `content_protection === 'yes'` (blur on window blur, context menu, copy/cut, shortcut keys, DevTools size check, Loom element poll) | option `ohmylms_content_protection` | — | Live; deterrent only |
-| Block-theme navigation fix | `.ohmylms-page.theme-twentytwenty{two,three,five} .wp-block-navigation__responsive-container-{open,close}` | core navigation block; body class from `Utility/template-functions.php` | — | Live |
-| Scroll to top | `.ohmylms-scroll-to-top button` | `global/scrollto-top.php` | — | Live |
+| Block-theme navigation fix | `.ohmylms-page.theme-twentytwenty{two,three,five} .wp-block-navigation__responsive-container-{open,close}` | core navigation block; body class from `Utility/template-functions.php` | — | **Migrated (L2)**: a delegated listener in `ohmylms/ui` that acts only when core's `core/navigation` store did not open or close the menu within a frame |
+| Scroll to top | `.ohmylms-scroll-to-top button` | `global/scrollto-top.php` | — | **Migrated (L2)** to `ohmylms/ui` (passive async window scroll, smooth only without reduced motion) |
 
 Localized data (`FrontendAssets::get_script_data( 'ohmylms-frontend' )`): `ajax_url`, `current_student_id`,
 `nonce`, `load_more_nonce`, `search_filter_nonce`, `video_completion_threshold`, `is_creator_page`,
@@ -228,22 +229,106 @@ Each batch replaces the jQuery code with server-rendered directives and a script
 classes so theme CSS keeps working. Write stores as `createX( api )` factories like
 `assets/interactivity/quiz-player/player.js`, so `node:test` can drive them without a browser.
 
-### L2: shared helpers and page chrome
+### L2: shared helpers and page chrome (done)
 
-- Files: toast, header avatar dropdown, profile sidebar drawer, scroll to top, block-theme navigation fix,
-  form helpers (label folding, show password, Enter on checkbox labels, terms checkbox, phone filter),
-  verification toasts and resend link in `ohmylms.js`; `templates/global/{toast,main-header,scrollto-top,form-login,form-signup}.php`,
-  `profile/profile-layout.php`, `Shortcodes\ShortCodeProfile`.
-- SDK (`assets/interactivity/sdk.js`, typed with JSDoc): `request( { action | path, data, nonce } )` that posts
-  `FormData` to admin-ajax or calls REST with `X-WP-Nonce`, returns `{ ok, data, message }` and never throws on
-  `wp_send_json_error`; `toast( message, type )` dispatching `ohmylms:toast`.
-- Stores: extend `ohmylms/ui` (`toast`, `dropdown`, `drawer` actions); new `ohmylms/forms`.
-- Directives: `data-wp-interactive="ohmylms/ui"` with `data-wp-context` on `#ohmylms-toast`, the user menu and the
-  profile layout; `data-wp-on--click`/`--keydown` on the triggers; `data-wp-bind--type` for show password;
-  `data-wp-class--ohmylms-folded` on form rows; `data-wp-on--input` on phone fields.
-- Tests: `tests/js/interactivity-ui.test.mjs` (toast queue and timing, dropdown outside click and Escape,
-  password toggle, phone filter); a Playwright check that login, signup and the profile drawer still work with
-  jQuery absent on those pages.
+Done on 31 October 2026. `ohmylms.js` went from 69,251 to 59,830 bytes.
+
+| Behaviour | Now | Markup (directives written in the template; `Extensions\Chrome` adds the same ones to theme overrides and to templates not listed) |
+| --- | --- | --- |
+| Toast (both jQuery copies) | `ohmylms/ui`: `state.toast`, `callbacks.toastRegion`, `actions.dismissToast`, `pauseToast`, `resumeToast`, `toastKeydown` | `global/toast.php` (close is now a `<button>`; the region is `role="status"`) |
+| Header account menu | `ohmylms/ui`: `actions.dropdownToggle`, `dropdownKeydown`, `dropdownOutside`, `dropdownEscape`, `dropdownFocusout` | `global/main-header.php` |
+| Profile drawer | `ohmylms/ui`: `actions.drawerToggle`, `drawerKey`, `drawerOutside`, `drawerEscape` (focus trapped while open) | `profile/profile-layout.php`, `profile/navigation.php` (panel id), `Shortcodes\ShortCodeProfile` |
+| Scroll to top | `ohmylms/ui`: `callbacks.trackScroll`, `actions.scrollToTop` | `global/scrollto-top.php` |
+| Block-theme menu fix, verification toasts, resend link | `installChrome()` in `assets/interactivity/ui/chrome.js` (document listeners, no markup) | core navigation block; `CommonHook` notices |
+| Label folding, show password, Enter/Space on checkbox labels, terms gate, phone filter | `ohmylms/forms` (`assets/interactivity/forms.js`) | `global/form-login.php`, `global/form-signup.php`; decorated: `profile/profile-edit.php`, `profile/settings.php`, `checkout/terms.php`, `student-hub/settings.php` |
+
+Removed from `ohmylms.js`: `OhMyLMS.ohMyLMSshowToast` and the inner `ohMyLMSshowToast` (replaced by one shim
+that dispatches `ohmylms:toast`), `#ohmylms-close-toast`, the `.ohmylms-user-avatar` toggle and its body click,
+the `.ohmylms-hamburger` drawer with its two body/sidebar click handlers, the block-theme menu open/close handlers,
+the checkout terms, remember-me and sign-up terms keydown handlers, the `tnc-accept` change handler, both phone
+filter handlers, the three label-folding handlers, the show-password handler, scroll to top, the verification
+URL-parameter toast and the resend-link handler. None of them triggered a jQuery event, so there is nothing to
+re-dispatch; the new code emits DOM events instead (see [INTERACTIVITY](INTERACTIVITY.md#public-events-and-slots)).
+
+Behaviour changes, all deliberate:
+
+- One toast region per page: a second `global/toast.php` renders nothing, and pages that load `ohmylms-frontend`
+  without rendering one get it in `wp_footer` (`Chrome::footer()`). Toasts queue instead of overwriting each other,
+  pause on hover and focus, close on Escape, strip markup (the `.html()` copy rendered server HTML), and no longer
+  keep the previous type's colour.
+- Labels fold only their own row (`closest()`, not `parents()`), so the first/last name pair no longer folds together.
+- The sign-up terms label is focusable; Enter and Space now go through `input.click()`, so the terms gate updates
+  (setting `.checked` did not fire `change`).
+- The password toggle is `role="button"` with `aria-pressed`; the sign-up password field uses
+  `autocomplete="new-password"`.
+- Phone fields filter on `input` only (paste and IME included) and keep the caret; there is no keydown filter.
+
+Not done: the Playwright check with jQuery absent. The browser fixture (`tests/fixtures/interactivity.php`, used
+by `tests/interactivity.config.cjs`) was already broken, so all 9 of its tests fail before reaching any store:
+`/fixture` stops with `Class "OhMyLMS\Assessment\Schema" not found`, the SmartScore practice template it includes no
+longer exists, and there is no route for `/quiz-player/*` (imported by `quiz.js`). L2 added the `/ui/chrome.js`
+route. Repair the fixture before relying on it. Instead, L2 was checked in the live site: the toast,
+`request()`, `confirmDialog()` and the phone filter were driven in the browser on the hub settings page.
+
+Tests: `tests/js/sdk.test.mjs` (request normalisation, nonce renewal, REST to admin-ajax fallback, uploads,
+abort/timeout, `apiFetch`/`ajaxPost` compatibility, encoding, toasts, focus trap, debounce),
+`tests/js/interactivity-ui.test.mjs` (toast queue timing, pause, hurry and duplicates, dropdown, drawer, scroll,
+verification, menu fallback, password toggle, checkbox keys, terms gate, phone filter, folding) and
+`tests/php/learner-chrome-integration.php` (`OHMYLMS_CHROME_TEST=1`: rendered templates, decorated pre-L2 overrides,
+module registration, SDK data, state, footer region).
+
+## Shared helper API (L2)
+
+Stable for L3 to L7. Add to it rather than around it; change a signature only with every caller in the same change.
+
+### SDK: `ohmylms/interactivity` (`assets/interactivity/sdk.js`)
+
+Import from the bare specifier, never relatively (a relative URL loads a second copy with its own config and
+toast queue). The module has no imports of its own. Store factories that need it take the functions as
+parameters, like `createChrome( api )`, so node tests can pass fakes.
+
+| Export | Signature | Notes |
+| --- | --- | --- |
+| `request` | `request( { path?, action?, url?, method?, data?, query?, nonce?, nonceField?, restRoot?, ajaxUrl?, headers?, signal?, timeout?, parse? } ) → Promise<{ ok, status, data, message, error, raw, transport }>` | Never rejects for HTTP, WordPress or network errors (only a call without `path`/`action`/`url` throws). `error` is `null` or `{ code, message, status }`. `path` is REST with the server nonce and one automatic nonce renewal; `action` is an admin-ajax POST, using `FormData` when a value is a `Blob`, with `nonce` posted as `nonceField` (default `nonce`); `path` + `action` falls back to admin-ajax on 404/`rest_no_route` or non-JSON; `url` alone fetches that URL. `data` for `wp_send_json_*` is the unwrapped `data`; legacy `{ status, message, … }` bodies are kept whole. `parse: 'text'` returns HTML. Error codes: server `code`, `http_<status>`, `ajax_error`, `invalid_nonce` (`-1`), `invalid_action` (`0`), `invalid_json`, `network_error`, `aborted`, `timeout` |
+| `toast` | `toast( message, { type?: 'success'\|'warning'\|'danger'\|'error'\|'info', duration? } ) → { id, dismiss() } \| null` | Plain text only. Duration defaults to 5000 ms (8000 for danger); `0` stays until dismissed. Dispatches the cancelable `ohmylms:toast` on `document`. Use it for transient confirmations; show form validation inline in an `aria-live` element (L5) |
+| `dismissToast` | `dismissToast( id? )` | Current toast when `id` is empty |
+| `confirmDialog` | `confirmDialog( message \| { message, title?, confirmLabel?, cancelLabel?, tone?: 'danger' } ) → Promise<boolean>` | Native modal `<dialog>`; Escape and backdrop cancel; `danger` focuses Cancel; focus returns to the opener. For L4's membership cancel |
+| `trapFocus` | `trapFocus( container, { initialFocus?, returnFocus? = true, onEscape? } ) → release()` | For drawers and non-`<dialog>` overlays |
+| `focusable` | `focusable( container ) → HTMLElement[]` | Visible, enabled tab stops |
+| `announce` | `announce( message, 'polite'\|'assertive' )` | Screen-reader-only live region (result counts in L3, "saved" in L4) |
+| `serializeForm` | `serializeForm( form, { exclude?, extra?, submitter?, as?: 'formdata'\|'params'\|'object' } )` | What the browser would submit; `exclude: [ 'action' ]` replaces jQuery `serializeArray().filter()` |
+| `toSearchParams`, `toFormData`, `entriesToObject` | PHP-style `name[]` / `name[key]` encoding | `request()` uses them; L3 filters send arrays this way |
+| `debounce` | `debounce( callback, ms ) → fn` with `.cancel()`, `.flush()` | L3 search |
+| `prefersReducedMotion` | `() → boolean` | |
+| `jqueryTrigger` | `jqueryTrigger( name, args?, target = document.body ) → boolean` | Re-dispatch a documented jQuery event when jQuery is loaded |
+| `getConfig`, `setConfig` | `{ restRoot, restNonce, ajaxUrl, messages }` | Printed by `Chrome::sdk_data()` through WordPress's `script_module_data_ohmylms/interactivity` filter on every page with an OhMyLMS module; `messages` holds translated fallbacks (`error`, `network`, `timeout`, `confirm`, `cancel`, `dismiss`, …) |
+| `apiFetch`, `ajaxPost` | Unchanged contracts (commerce) | Now thin wrappers over `request()`; prefer `request()` in new code |
+| `emit`, `toastItem`, `plainText`, `normalizeResponse`, `trapIndex`, `takePendingToasts` | Helpers | `normalizeResponse` and `toastItem` are exported for tests; `takePendingToasts` is internal to `ohmylms/ui` |
+
+Page-specific nonces (`load_more_nonce`, `lesson_completed_nonce`, …) belong in each store's
+`wp_interactivity_state()`, not in the SDK config.
+
+### Stores and markup
+
+- `ohmylms/ui`, generic contexts any batch can reuse:
+  - dropdown: root context `{ "open": false }` with `data-wp-class--<open-class>="context.open"`,
+    `data-wp-on-document--click="actions.dropdownOutside"`, `data-wp-on-document--keydown="actions.dropdownEscape"`,
+    `data-wp-on--focusout="actions.dropdownFocusout"`; trigger with `aria-controls`, `data-wp-bind--aria-expanded="context.open"`,
+    `data-wp-on--click="actions.dropdownToggle"`, `data-wp-on--keydown="actions.dropdownKeydown"`.
+  - drawer: root context `{ "drawerOpen": false, "drawerPanel": "<selector>", "drawerInside": "<panel and toggle selectors>" }`
+    with `actions.drawerOutside`/`drawerEscape` on the document; toggle with `actions.drawerToggle` and
+    `actions.drawerKey`. L3's mobile filter drawer is this pattern with `.ohmylms-course-sidebar,.filter-hamburger`.
+  - disclosures (`actions.toggle`, `keyToggle`, context `open`) and the lesson sidebar actions are unchanged.
+- `ohmylms/forms`: auth-form root (`actions.fieldFocus`, `fieldBlur`, `fieldInput`, `callbacks.foldFilled`),
+  password wrapper context `{ "revealed": false }`, `actions.checkboxKey`, sign-up context `{ "consent": false }`
+  with `actions.consentChange` and `state.consentMissing`, and `actions.filterPhone`. L5 adds `submit`, busy and
+  error state to this store and keeps these names.
+- PHP: `Extensions\Interactivity::enqueue( $module )` for any module; `Extensions\Chrome::enqueue_ui()` when a store
+  calls `toast()` on a page that may not load `ohmylms-frontend` (it also guarantees the region).
+  `Chrome::template()` runs on `ohmylms_template_html` at priority 15. Batch decorators should do the same:
+  match classes, skip elements that already carry the directive, and enqueue only when something matched.
+- Classic scripts that remain (until L7) raise toasts with
+  `document.dispatchEvent( new CustomEvent( 'ohmylms:toast', { cancelable: true, detail: { message, type } } ) )`.
 
 ### L3: catalogue search, filter, sort and load more
 
@@ -321,7 +406,8 @@ loads the modules, since third-party code depends on it).
 - Add `// @ts-check` and JSDoc types to every new module and a `tsconfig` for `assets/interactivity`
   (`checkJs`, `noEmit`, `@wordpress/interactivity` types) run by `npm run typecheck`; there is still no build
   step for these modules.
-- Put the request helper, toast, and the localized-config reader (one typed object per store via
-  `wp_interactivity_config()` instead of `wp_localize_script` globals) in `ohmylms/interactivity`.
+- Done in L2: the request helper, toast and the config reader live in `ohmylms/interactivity`. The shared config
+  comes from script module data, so the SDK keeps no dependency on `@wordpress/interactivity`; per-store values
+  (page nonces, messages) go in `wp_interactivity_state()` for that store.
 - Add the migrated modules to `lint:js` (it already covers `assets/interactivity`) and extend
   `tools/check-architecture.mjs` to fail on new jQuery use in learner code.

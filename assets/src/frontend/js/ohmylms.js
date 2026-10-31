@@ -12,6 +12,16 @@
 		var searchTerm = '';
 		var sortBy = '';
 		var filterActive = false;
+
+		// Toasts render in the page's ohmylms/ui live region (assets/interactivity/ui/chrome.js).
+		function ohMyLMSshowToast( message, type, duration ) {
+			document.dispatchEvent( new CustomEvent( 'ohmylms:toast', {
+				bubbles: true,
+				cancelable: true,
+				detail: { message: message, type: type || 'success', duration: duration }
+			} ) );
+		}
+
 		var OhMyLMS = {
 			init: function() {
 				$( document.body )
@@ -31,26 +41,7 @@
 					.on('submit', '.ohmylms-form-signup', this.signup);
 			},
 
-			ohMyLMSshowToast: function(message, type='success', duration = 2000) {
-				$('.ohmylms-toast').addClass('toast-' + type).find('.ohmylms-message').empty();
-				$('.ohmylms-toast').addClass('toast-' + type).find('.ohmylms-message').html(message);
-
-				$('#ohmylms-toast').addClass('active').css('top', '20px');
-				$('.admin-bar #ohmylms-toast').css('top', '42px'); //when admin bar is present
-
-				if( $('#ohmylms-toast').hasClass('active') ) {
-					setTimeout(function() {
-						$('#ohmylms-toast').removeClass('active').css('top', '0');
-
-						setTimeout(function() {
-							$('#ohmylms-toast').css('top', '40px');
-							$('.admin-bar #ohmylms-toast').css('top', '60px');//when admin bar is present
-						}, 300);
-
-					}, duration);
-				}
-
-			},
+			ohMyLMSshowToast: ohMyLMSshowToast,
 			load_more: function (e) {
 				e.preventDefault();
 				page++;
@@ -578,17 +569,6 @@
 			}
 
 
-			// -----student profile dropdown show/hide------
-			$(document).on("click", ".ohmylms-header .ohmylms-user-avatar", function(e) {
-				e.preventDefault();
-				e.stopPropagation();
-				$(this).parents('.ohmylms-user').toggleClass('show-dropdown');
-			});
-
-			$(document).on("click", "body", function(e) {
-				$('.ohmylms-header .ohmylms-user').removeClass('show-dropdown');
-			});
-
 			// -----course single page review rating------
 			$(document).on("click", ".comment-form-rating .ohmylms-stars > a", function(e) {
 				e.preventDefault();
@@ -634,21 +614,6 @@
 			});
 
 
-			//--------dashboard sidebar toggle on mobile------
-			$(document).on('click', '.ohmylms-student-profile .ohmylms-hamburger', function(e) {
-				e.stopPropagation();
-				$(this).parents('.ohmylms-student-profile').addClass('open-sidebar');
-			});
-
-			$(document).on('click', '.ohmylms-student-profile-sidebar', function(e) {
-				e.stopPropagation();
-			});
-
-			$(document).on('click', 'body', function() {
-				$('.ohmylms-student-profile').removeClass('open-sidebar');
-			});
-
-
 			//-----Initialize single lesson sidebar tab-----
 			ohMyLMSTab('.ohmylms-lesson-tab-nav li', '.ohmylms-lesson-tab-content .ohmylms-lesson-single-tab-content');
 
@@ -660,43 +625,6 @@
 			* (2) allowMultipleOpen: Boolean value indicating whether multiple accordion items can be open at the same time (true or false).
 			*/
 			ohMyLMSAccordion('.ohmylms-lesson-sidebar-accordion', false);
-
-
-			/**
-			 * Show a toast notification with a message, type, and duration.
-			 *
-			 * @param {string} message The message to show in the toast.
-			 * @param {string} type The type of toast. Can be 'success', 'warning', or 'danger'. Default is 'success'.
-			 * @param {number} duration The amount of time the toast should be visible in milliseconds. Default is 3000.
-			 */
-			function ohMyLMSshowToast(message, type='success', duration = 2000) {
-				$('.ohmylms-toast').addClass('toast-' + type).find('.ohmylms-message').text(message);
-
-				$('#ohmylms-toast').addClass('active').css('top', '20px');
-				$('.admin-bar #ohmylms-toast').css('top', '42px'); //when admin bar is present
-
-				if( $('#ohmylms-toast').hasClass('active') ) {
-					setTimeout(function() {
-						$('#ohmylms-toast').removeClass('active').css('top', '0');
-
-						setTimeout(function() {
-							$('#ohmylms-toast').css('top', '40px');
-							$('.admin-bar #ohmylms-toast').css('top', '60px');//when admin bar is present
-						}, 300);
-
-					}, duration);
-				}
-
-			}
-
-			// -----close toast notification-----
-			$('#ohmylms-close-toast').on('click', function() {
-				$('#ohmylms-toast').removeClass('active').css('top', '0');
-
-				setTimeout(function() {
-					$('#ohmylms-toast').css('top', '40px');
-				}, 300);
-			});
 
 
 			// -----complete lesson-----
@@ -1498,19 +1426,6 @@
 				}
 			});
 
-			//-----twenty twenty two and three theme menu hamburger----
-			$(document).on("click", ".ohmylms-page.theme-twentytwentytwo .site-header button.wp-block-navigation__responsive-container-open, .ohmylms-page.theme-twentytwentythree .site-header button.wp-block-navigation__responsive-container-open, .ohmylms-page.theme-twentytwentyfive .site-header button.wp-block-navigation__responsive-container-open", function(e) {
-				e.preventDefault();
-				$(this).parents("html").toggleClass("has-modal-open");
-				$(this).siblings(".wp-block-navigation__responsive-container").toggleClass("has-modal-open is-menu-open");
-			});
-
-			$(document).on("click", ".ohmylms-page.theme-twentytwentytwo .site-header button.wp-block-navigation__responsive-container-close, .ohmylms-page.theme-twentytwentythree .site-header button.wp-block-navigation__responsive-container-close, .ohmylms-page.theme-twentytwentyfive .site-header button.wp-block-navigation__responsive-container-close", function(e) {
-				e.preventDefault();
-				$(this).parents("html").removeClass("has-modal-open");
-				$(this).parents(".wp-block-navigation__responsive-container").removeClass("has-modal-open is-menu-open");
-			});
-
 			//--------course lesson video play button------
 			$(document).on("click", ".ohmylms-video-player-play", function(e) {
                 e.preventDefault();
@@ -1605,105 +1520,6 @@
 			});
 			// -----end membership delete confirm alert------
 
-
-			// ------checkout tnc Accessibility------
-			$(".ohmylms-checkout-payment .ohmylms-tnc-label").on("keydown", function (event) {
-				if (event.key === "Enter") {
-					event.preventDefault();
-					var checkbox = $("#terms");
-					checkbox.prop("checked", !checkbox.prop("checked"));
-				}
-			});
-
-			// ------rememberme Accessibility------
-			$(".ohmylms-form-login .ohmylms-form-login-rememberme").on("keydown", function (event) {
-				if (event.key === "Enter") {
-					event.preventDefault();
-					var checkbox = $("#rememberme");
-					checkbox.prop("checked", !checkbox.prop("checked"));
-				}
-			});
-
-			// ------signup form tnc policy accessibility------
-			$(".ohmylms-form-signup .ohmylms-form-login-rememberme").on("keydown", function (event) {
-				if (event.key === "Enter") {
-					event.preventDefault();
-					var checkbox = $("#tnc-accept");
-					checkbox.prop("checked", !checkbox.prop("checked"));
-				}
-			});
-
-			$(".ohmylms-form-signup input[name='tnc-accept']").on("change", function (event) {
-				let $form = $(this).closest('.ohmylms-form-signup');
-				let $submitButton = $form.find('.ohmylms-form-signup-submit');
-
-				if ($(this).is(":checked")) {
-					$submitButton.prop("disabled", false);
-				} else {
-					$submitButton.prop("disabled", true);
-				}
-			});
-
-			// ------phone input restriction (digits and + only)------
-			$(document).on('keydown', 'input[name="phone"], input[name="whatsapp"]', function (e) {
-				var allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'Home', 'End',
-					'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
-				if (allowedKeys.indexOf(e.key) !== -1 || e.ctrlKey || e.metaKey) {
-					return;
-				}
-				if (!/[\d\+\s\-\(\)]/.test(e.key)) {
-					e.preventDefault();
-				}
-			});
-
-			$(document).on('input', 'input[name="phone"], input[name="whatsapp"]', function () {
-				this.value = this.value.replace(/[^\d\+\s\-\(\)]/g, '');
-			});
-
-			// ----login and signup form label folding------
-			$(document).on("click focus", ".ohmylms-login-signup .ohmylms-input-text", function () {
-				$(this).parents('.ohmylms-form-row').addClass('ohmylms-folded');
-			});
-
-			$(".ohmylms-input-text").each(function () {
-				var $row = $(this).parents('.ohmylms-form-row');
-				// Check if the input has a value
-				if ($(this).val().trim() !== "") {
-					$row.addClass('ohmylms-folded');
-				} else {
-					$row.removeClass('ohmylms-folded');
-				}
-			});
-
-			$(document).on("blur", ".ohmylms-input-text", function () {
-				if ($(this).val() === '') {
-					$(this).parents('.ohmylms-form-row').removeClass('ohmylms-folded');
-				}
-			});
-
-
-			// ------show password accessibility------
-			$(".show-password-icon").on("click keydown", function (event) {
-				if (event.type === "click" || event.key === "Enter") {
-					event.preventDefault();
-
-					let thisParent = $(this).closest('.ohmylms-password-show');
-
-					var passwordInput = thisParent.find("input.password");
-					var isChecked = thisParent.find("input[name='show-password-checkbox']").prop("checked");
-
-					thisParent.find("input[name='show-password-checkbox']").prop("checked", !isChecked);
-
-					if (!isChecked) {
-						passwordInput.attr("type", "text");
-
-					} else {
-						passwordInput.attr("type", "password");
-					}
-
-					thisParent.find(".eye-on, .eye-off").toggle();
-				}
-			});
 
 			// ------lesson video accessibility------
 			$(".ohmylms-video-player").on("focus keydown", function (event) {
@@ -1849,73 +1665,6 @@
 				e.stopPropagation();
 			});
 			// -----end lesson prerequisite access modal------
-
-
-			// -----start scroll to top------
-			const $scrollBtn = $('.ohmylms-scroll-to-top');
-			const halfWindowHeight = jQuery(window).height() / 2;
-
-			if ($scrollBtn.length) {
-				$scrollBtn.on('click', 'button', function () {
-					$('html, body').animate({ scrollTop: 0 }, 600);
-				});
-
-				$(window).on('scroll', function () {
-					if ($(this).scrollTop() > 600) {
-						$scrollBtn.addClass('visible');
-					} else {
-						$scrollBtn.removeClass('visible');
-					}
-				});
-			}
-			// -----end scroll to top------
-
-			// -----start email verification toasts------
-			// Show toast for verification status from URL params on page load.
-			(function () {
-				var params = new URLSearchParams(window.location.search);
-				var msg = '', type = 'success', duration = 5000;
-
-				if ( params.get('ohmylms_email_verified') ) {
-					msg  = __( 'Email verified! Your account is now fully active.', 'ohmylms' );
-					type = 'success';
-				} else if ( params.get('ohmylms_verify_sent') ) {
-					msg  = __( 'Verification email sent. Check your inbox!', 'ohmylms' );
-					type = 'success';
-				} else if ( params.get('ohmylms_verify_error') ) {
-					var err = params.get('ohmylms_verify_error');
-					msg  = err === 'expired'
-						? __( 'Verification link expired. Please request a new one.', 'ohmylms' )
-						: __( 'Invalid verification link.', 'ohmylms' );
-					type = 'danger';
-				}
-
-				if ( msg ) {
-					// Clean the URL so refreshing doesn't re-trigger the toast.
-					params.delete('ohmylms_email_verified');
-					params.delete('ohmylms_verify_sent');
-					params.delete('ohmylms_verify_error');
-					var qs = params.toString();
-					history.replaceState( null, '', window.location.pathname + ( qs ? '?' + qs : '' ) );
-
-					OhMyLMS.ohMyLMSshowToast( msg, type, duration );
-				}
-			})();
-
-			// Intercept resend-verification link clicks — show toast without full-page reload.
-			$(document).on( 'click', 'a[href*="ohmylms_resend_verification"]', function (e) {
-				e.preventDefault();
-				var href = $(this).attr('href') + '&format=json';
-				$.get( href, function (response) {
-					if ( response && response.status === 'success' ) {
-						OhMyLMS.ohMyLMSshowToast( response.message, 'success', 5000 );
-					} else if ( response && response.status === 'error' ) {
-						OhMyLMS.ohMyLMSshowToast( response.message, 'danger', 5000 );
-					}
-				} );
-			} );
-			// -----end email verification toasts------
-
 
 		});
 		// ---end doument ready---

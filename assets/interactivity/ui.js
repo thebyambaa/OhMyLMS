@@ -4,18 +4,44 @@ import {
 	getElement,
 	withSyncEvent,
 } from '@wordpress/interactivity';
-import { emit } from 'ohmylms/interactivity';
+import {
+	emit,
+	focusable,
+	prefersReducedMotion,
+	request,
+	takePendingToasts,
+	toast,
+	toastItem,
+	trapFocus,
+} from 'ohmylms/interactivity';
+import { createChrome, installChrome } from './ui/chrome.js';
 
-/** Reusable disclosure/drawer actions. Add-ons can use the same markup contract. */
-store( 'ohmylms/ui', {
-	state: {
-		get display() {
-			return getContext().open ? 'block' : 'none';
+let ui = null;
+const chrome = createChrome( {
+	getContext,
+	getElement,
+	withSyncEvent,
+	getState: () => ui.state,
+	emit,
+	focusable,
+	trapFocus,
+	takePendingToasts,
+	reducedMotion: prefersReducedMotion,
+} );
+
+/** Reusable disclosure/drawer actions and the page chrome. Add-ons can use the same markup contract. */
+ui = store( 'ohmylms/ui', {
+	state: Object.defineProperties(
+		{
+			get display() {
+				return getContext().open ? 'block' : 'none';
+			},
+			get sidebarDisplay() {
+				return getContext().sidebarOpen ? 'block' : '';
+			},
 		},
-		get sidebarDisplay() {
-			return getContext().sidebarOpen ? 'block' : '';
-		},
-	},
+		Object.getOwnPropertyDescriptors( chrome.state )
+	),
 	actions: {
 		toggle: withSyncEvent( ( event ) => {
 			event.preventDefault();
@@ -69,5 +95,16 @@ store( 'ohmylms/ui', {
 				getContext().sidebarOpen = false;
 			}
 		},
+		...chrome.actions,
 	},
+	callbacks: chrome.callbacks,
+} );
+
+installChrome( {
+	win: window,
+	chrome,
+	toast,
+	toastItem,
+	request,
+	messages: () => ui.state.messages || {},
 } );

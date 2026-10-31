@@ -39,6 +39,7 @@ final class Interactivity {
 		add_filter( 'script_loader_src', array( __CLASS__, 'legacy_url' ), 30 );
 		add_filter( 'ohmylms_template_html', array( __CLASS__, 'disclosures' ), 10, 2 );
 		Commerce::init();
+		Chrome::init();
 	}
 
 	/**
@@ -49,6 +50,7 @@ final class Interactivity {
 			'interactivity' => 'sdk',
 			'quiz'          => 'quiz',
 			'ui'            => 'ui',
+			'forms'         => 'forms',
 			'gamification'  => 'gamification',
 			'questions'     => 'questions',
 			'tabs'          => 'tabs',

@@ -12,6 +12,7 @@ $files = [
     '/sdk.js' => OHMYLMS_DIR . '/assets/interactivity/sdk.js',
     '/quiz.js' => OHMYLMS_DIR . '/assets/interactivity/quiz.js',
     '/ui.js' => OHMYLMS_DIR . '/assets/interactivity/ui.js',
+    '/ui/chrome.js' => OHMYLMS_DIR . '/assets/interactivity/ui/chrome.js',
     '/gamification.js' => OHMYLMS_DIR . '/assets/interactivity/gamification.js',
     '/smartscore.js' => OHMYLMS_SS_DIR . 'assets/interactivity.js',
     '/questions.js' => OHMYLMS_DIR . '/assets/interactivity/questions.js',

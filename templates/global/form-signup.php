@@ -16,7 +16,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 ?>
 <?php ohmylms_get_template( 'global/ohmylms-celebration.php' ); ?>
 
-<form class="ohmylms-login-signup ohmylms-form-signup signup" method="post" <?php echo ( $hidden ) ? 'style="display:none;"' : ''; ?> >
+<form class="ohmylms-login-signup ohmylms-form-signup signup" method="post" <?php echo ( $hidden ) ? 'style="display:none;"' : ''; ?>
+	data-wp-interactive="ohmylms/forms"
+	data-wp-context='{"consent":false}'
+	data-wp-init--fold="callbacks.foldFilled"
+	data-wp-init--consent="callbacks.syncConsent"
+	data-wp-on--focusin="actions.fieldFocus"
+	data-wp-on--focusout="actions.fieldBlur"
+	data-wp-on--input="actions.fieldInput">
 
 	<?php do_action( 'ohmylms_signup_form_start' ); ?>
 
@@ -76,20 +83,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 				</span>
 			</label>
 
-			<span class="ohmylms-password-show">
-				<input class="ohmylms-input-text password" type="password" name="password" id="signup-password" autocomplete="current-password" required aria-required="true">
+			<span class="ohmylms-password-show" data-wp-context='{"revealed":false}'>
+				<input class="ohmylms-input-text password" type="password" name="password" id="signup-password" autocomplete="new-password" required aria-required="true" data-wp-bind--type="state.passwordType">
 
-				<label class="show-password-icon" tabindex="0">
-					<input type="checkbox" name="show-password-checkbox" class="show-password-checkbox" aria-required="true" aria-hidden="true">
+				<label class="show-password-icon" tabindex="0" role="button" aria-pressed="false" aria-label="<?php esc_attr_e( 'Show password', 'ohmylms' ); ?>"
+					data-wp-bind--aria-pressed="context.revealed"
+					data-wp-on--click="actions.togglePassword"
+					data-wp-on--keydown="actions.passwordKey">
+					<input type="checkbox" name="show-password-checkbox" class="show-password-checkbox" aria-hidden="true" tabindex="-1" data-wp-bind--checked="context.revealed">
 
-					<span class="show-password" aria-label="Toggle password visibility">
-						<span class="eye-on">
+					<span class="show-password" aria-hidden="true">
+						<span class="eye-on" data-wp-style--display="state.eyeOnDisplay">
 							<?php
 								require OHMYLMS_DIR . '/assets/images/icon/eye-icon2.php';
 							?>
 						</span>
 
-						<span class="eye-off">
+						<span class="eye-off" data-wp-style--display="state.eyeOffDisplay">
 							<?php
 								require OHMYLMS_DIR . '/assets/images/icon/eye-off-icon.php';
 							?>
@@ -106,7 +116,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<?php esc_html_e( 'Phone Number', 'ohmylms' ); ?>
 			</label>
 
-			<input type="text" class="ohmylms-input-text phone" name="phone" id="signup-phone" />
+			<input type="text" class="ohmylms-input-text phone" name="phone" id="signup-phone" inputmode="tel" autocomplete="tel" data-wp-on--input="actions.filterPhone" />
 		</span>
 	</p>
 
@@ -132,8 +142,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<?php do_action( 'ohmylms_signup_form' ); ?>
 
 	<p class="ohmylms-form-row privacy-policy-row">
-		<label for="tnc-accept" class="ohmylms-checkbox ohmylms-form-login-rememberme">
-			<input class="ohmylms-form__input ohmylms-form__input-checkbox" name="tnc-accept" type="checkbox" id="tnc-accept" required />
+		<label for="tnc-accept" class="ohmylms-checkbox ohmylms-form-login-rememberme" tabindex="0" data-wp-on--keydown="actions.checkboxKey">
+			<input class="ohmylms-form__input ohmylms-form__input-checkbox" name="tnc-accept" type="checkbox" id="tnc-accept" required data-wp-on--change="actions.consentChange" />
 
 			<span class="ohmylms-checkbox-text">
 				<span class="checkedbox" aria-hidden="true" id="tnc-accept-label">
@@ -161,7 +171,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		if ( defined( 'OHMYLMS_SOURCE_ASSETS' ) && OHMYLMS_SOURCE_ASSETS ) :
 			?>
 			<span data-ohmylms-registration-submit style="display:contents"><?php endif; ?>
-		<button type="submit" class="ohmylms-button ohmylms-form-signup-submit" name="signup" value="<?php esc_attr_e( 'Sign Up', 'ohmylms' ); ?>" disabled>
+		<button type="submit" class="ohmylms-button ohmylms-form-signup-submit" name="signup" value="<?php esc_attr_e( 'Sign Up', 'ohmylms' ); ?>" disabled data-wp-bind--disabled="state.consentMissing">
 			<?php esc_html_e( 'Sign Up', 'ohmylms' ); ?>
 		</button>
 		<?php

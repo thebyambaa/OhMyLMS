@@ -56,8 +56,19 @@ $my_courses_url = ohmylms_get_nav_link_url( 'courses' );
 <!--				</div>-->
 
 				<?php $student_profile_photo = $student->get_profile_image(); ?>
-				<div class="ohmylms-user">
-					<a href="#" class="ohmylms-user-avatar <?php echo esc_attr( $student_profile_photo ? 'has-profile-photo' : '' ); ?>">
+				<div class="ohmylms-user"
+					data-wp-interactive="ohmylms/ui"
+					data-wp-context='{"open":false}'
+					data-wp-class--show-dropdown="context.open"
+					data-wp-on-document--click="actions.dropdownOutside"
+					data-wp-on-document--keydown="actions.dropdownEscape"
+					data-wp-on--focusout="actions.dropdownFocusout">
+					<a href="#" class="ohmylms-user-avatar <?php echo esc_attr( $student_profile_photo ? 'has-profile-photo' : '' ); ?>"
+						role="button" aria-expanded="false" aria-controls="ohmylms-user-dropdown"
+						aria-label="<?php esc_attr_e( 'Account menu', 'ohmylms' ); ?>"
+						data-wp-bind--aria-expanded="context.open"
+						data-wp-on--click="actions.dropdownToggle"
+						data-wp-on--keydown="actions.dropdownKeydown">
 						<?php
 
 						if ( $student_profile_photo ) {
@@ -68,7 +79,7 @@ $my_courses_url = ohmylms_get_nav_link_url( 'courses' );
 						?>
 					</a>
 
-					<ul class="ohmylms-user-dropdown">
+					<ul class="ohmylms-user-dropdown" id="ohmylms-user-dropdown">
 						<li>
 							<a href="<?php echo esc_url( ohmylms_get_account_endpoint_url( 'dashboard' ) ); ?>" class="dashboard-link asdfads">
 								<?php require OHMYLMS_DIR . '/assets/images/icon/home-icon.php'; ?>

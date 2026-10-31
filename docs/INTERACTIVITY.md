@@ -26,10 +26,15 @@ they are loaded on demand by WordPress and do not require the opt-in React sourc
   js.stripe.com only when Stripe is chosen). See [Commerce](#commerce).
 - Course carousels (layouts 3/4, replacing Slick): `ohmylms/carousel` adds arrows, optional dots and
   autoplay to a server-rendered CSS scroll-snap track that scrolls without JavaScript. Internal store.
+- Page chrome (batch L2 of [LEARNER-FRONTEND](LEARNER-FRONTEND.md)): the page's toast live region, the header
+  account menu, the profile drawer, scroll to top, the block-theme menu fallback and the email-verification
+  notices (`ohmylms/ui`), and the shared form helpers: floating labels, password visibility, keyboard toggling of
+  checkbox labels, the sign-up terms gate and the phone filter (`ohmylms/forms`). See
+  [Shared helpers and page chrome](#shared-helpers-and-page-chrome).
 
 Admin editors continue to use React. Static reports/leaderboards need no reactive runtime. Media
-players, payment provider SDKs other than Stripe, uploads, course filtering, account forms, layout-3 scroll
-navigation and remaining legacy presentation controls retain their existing integrations. Use the
+players, payment provider SDKs other than Stripe, uploads, course filtering, login/sign-up submission, layout-3
+scroll navigation and remaining legacy presentation controls retain their existing integrations. Use the
 module contract below for new student interfaces; migration does not require replacing those SDKs.
 
 ## Register and load a module
@@ -56,8 +61,8 @@ ohmylms_enqueue_interactivity_module('my-addon/questions');
 
 The dependency filter also applies to SmartScore. New modules should use their own store namespace. Core stores:
 `ohmylms/quiz`, `ohmylms/questions`, `ohmylms/smartscore`, `ohmylms/gamification`, `ohmylms/ui`,
-`ohmylms/tabs`, `ohmylms/curriculum`, `ohmylms/reveal`, `ohmylms/cart`, `ohmylms/checkout` and
-`ohmylms/stripe`.
+`ohmylms/tabs`, `ohmylms/curriculum`, `ohmylms/reveal`, `ohmylms/cart`, `ohmylms/checkout`,
+`ohmylms/stripe` and `ohmylms/forms`.
 
 The enqueue helper handles modules discovered after `wp_head`, including shortcodes. It also loads
 the shared hidden/focus/reduced-motion stylesheet. Enqueue dependencies before footer modules print.
@@ -120,6 +125,10 @@ Events bubble from the relevant component and include `detail.apiVersion = 1`. S
 | `ohmylms:checkout-before-submit` (cancelable) | `gateway` |
 | `ohmylms:checkout-pending`, `ohmylms:checkout-complete`, `ohmylms:checkout-error` | `gateway`, plus `redirect` or `message` |
 | `ohmylms:checkout-totals-updated` | `reason` (`coupon-applied`, `coupon-removed`, `tax`) |
+| `ohmylms:toast` (cancelable, on `document`) | `id`, `message`, `type` (`success`, `warning`, `danger`), `duration`; cancel it to render the notice yourself |
+| `ohmylms:toast-dismiss` (on `document`) | `id` (empty for the current toast) |
+| `ohmylms:toast-shown`, `ohmylms:toast-hidden` (on `#ohmylms-toast`) | `id`, plus `type` and `message` when shown |
+| `ohmylms:dropdown-changed`, `ohmylms:drawer-changed` | `open` |
 
 The `before` events are cancelable. Call `event.preventDefault()` to block that UI action. They do
 not replace server permissions, validation or audit hooks. Presentation events are not proof that
@@ -163,12 +172,41 @@ Payment gateways register with `window.registerPaymentGatewayHandler( id, handle
 The legacy jQuery body events `course_adding_to_cart`, `course_added_to_cart` and
 `payment_method_selected` are still triggered when jQuery is on the page.
 
+## Shared helpers and page chrome
+
+`ohmylms/interactivity` (`assets/interactivity/sdk.js`) is the shared learner toolkit, with no dependencies.
+Besides the question API above it exports `request()` (REST or admin-ajax, never rejects, errors normalised to
+`{ code, message, status }`, `AbortSignal` and `timeout` support, one automatic REST nonce renewal), `toast()` /
+`dismissToast()`, `confirmDialog()` (native `<dialog>`), `trapFocus()`, `focusable()`, `announce()`,
+`serializeForm()`, `toSearchParams()`, `debounce()`, `prefersReducedMotion()`, `jqueryTrigger()` and
+`getConfig()`. `apiFetch()` and `ajaxPost()` keep their contracts and are built on `request()`. Signatures and
+rules for the learner batches are in [LEARNER-FRONTEND](LEARNER-FRONTEND.md#shared-helper-api-l2).
+
+The SDK reads `{ restRoot, restNonce, ajaxUrl, messages }` from WordPress's script module data
+(`script_module_data_ohmylms/interactivity`, filled by `OhMyLMS\Extensions\Chrome::sdk_data()`), so a page
+needs no `wp_localize_script` global. Add-ons can raise notices without importing anything:
+
+```js
+document.dispatchEvent( new CustomEvent( 'ohmylms:toast', {
+  cancelable: true,
+  detail: { message: 'Saved.', type: 'success' },
+} ) );
+```
+
+`OhMyLMS\Extensions\Chrome` adds the `ohmylms/ui` and `ohmylms/forms` directives through `ohmylms_template_html`
+(priority 15) by class name, so theme overrides of `global/toast.php`, `global/main-header.php`,
+`global/scrollto-top.php`, `global/form-login.php`, `global/form-signup.php` and `profile/profile-layout.php`
+copied before this change keep their behaviour. Only the first rendered toast region is output; pages that load
+the legacy `ohmylms-frontend` script without one get a region in `wp_footer`. PHP that renders a store calling
+`toast()` on other pages calls `Chrome::enqueue_ui()`.
+
 ## Verification
 
 ```sh
 npm run lint
 npx playwright test --config tests/interactivity.config.cjs
 php tests/php/custom-question-registry.php
+OHMYLMS_CHROME_TEST=1 php tests/php/learner-chrome-integration.php
 php tests/unit.php
 php ../ohmylms-smartscore/tests/engine-test.php
 ```

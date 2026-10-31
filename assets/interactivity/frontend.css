@@ -5,6 +5,19 @@
 [data-wp-interactive="ohmylms/questions"] .matching-option[aria-pressed="true"] { outline: 2px solid var(--ohmylms-primary-color, #3858e9); }
 @media (prefers-reduced-motion: reduce) {
   [data-wp-interactive="ohmylms/gamification"] .ohmylms-celebration-popup { animation: none; right: 20px; }
+  #ohmylms-toast[data-wp-interactive], .ohmylms-scroll-to-top[data-wp-interactive] { transition: none; }
 }
+/* Toast live region (ohmylms/ui): it stays in the accessibility tree while empty so that screen readers announce new messages. */
+#ohmylms-toast[data-wp-interactive] { visibility: visible; pointer-events: none; }
+#ohmylms-toast[data-wp-interactive].active { top: 20px; pointer-events: auto; }
+.admin-bar #ohmylms-toast[data-wp-interactive].active { top: 42px; }
+#ohmylms-toast button.ohmylms-close { background: none; border: 0; box-shadow: none; color: inherit; min-width: 24px; min-height: 24px; }
+#ohmylms-toast .ohmylms-close:focus-visible, .ohmylms-user-avatar:focus-visible, .ohmylms-hamburger:focus-visible, .show-password-icon:focus-visible, label.ohmylms-checkbox:focus-visible { outline: 2px solid var(--ohmylms-primary-color, #3858e9); outline-offset: 2px; }
+/* confirmDialog() from ohmylms/interactivity. */
+.ohmylms-dialog { border: 0; border-radius: 12px; padding: 24px; max-width: min(440px, calc(100vw - 32px)); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); }
+.ohmylms-dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
+.ohmylms-dialog-title { margin: 0 0 8px; font-size: 1.125rem; }
+.ohmylms-dialog-message { margin: 0 0 20px; }
+.ohmylms-dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 /* Quiz step button: outlined while the question is unanswered (Skip), solid once answered (Next). */
 button.ohmylms-next-quiz:has(.is-skip) { background: transparent !important; color: var(--player-accent, #7c3aed) !important; border: 2px solid var(--player-accent, #7c3aed) !important; }
