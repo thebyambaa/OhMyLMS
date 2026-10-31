@@ -15,7 +15,8 @@ Statuses below were checked against the code on 31 October 2026. Counts are file
    directory PII) and `ohmylms-commerce/v1/subscriptions` keep the findings in their `docs/api/*` audits.
    First move their remaining callers, mainly the 19 files in `assets/src/features` that call `apiFetch`
    (native editors, question editor, papers), to the typed routes.
-2. **Decide build-or-drop for workflows that only the deleted legacy admin had** (they now have no screen):
+2. **Rebuild the workflows that only the deleted legacy admin had** (decided 31 October 2026: rebuild all of them
+   in the new admin, none dropped; quiz pool and section editing is already done). They now have no screen:
    certificate issuing and learner download; question delete and duplicate-into-quiz; quiz pool and section
    editing; assignment resources, prerequisites, drip and comments; Account Hub school removal, guardian
    lists, reports, gradebook, rollover and sample preview; Content Hub combined mappings, AI runs, shared
