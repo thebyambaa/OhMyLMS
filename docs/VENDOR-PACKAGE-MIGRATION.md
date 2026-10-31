@@ -56,11 +56,9 @@ preview, so no email library needs replacing.
 
 ## Left for other owners
 
-- `includes/Assets/your-logo.png` (a Mail Mint image with no reference) and the unused
-  `Abstracts\Assets::localize_script_MRM()`, which localizes `MRM_Vars` for an `ohmylms` handle that no
-  longer exists.
-- The `ohmylms-select2` field classes in `includes/Admin/Settings/Currency.php` and
-  `includes/Admin/Pages/GeneralSettings.php`.
+- The two inert `ohmylms-select2` field classes in `includes/Admin/Pages/GeneralSettings.php`. (The Mail Mint
+  image `includes/Assets/your-logo.png`, `Abstracts\Assets::localize_script_MRM()` and the unused
+  `Admin\Settings\Currency` class with the third were removed on 31 October 2026.)
 - Empty `node_modules/@arco-design` and `node_modules/@tiptap` folders disappear with the next `npm ci`.
   The stale `build/assets/lib/admin/css/select2.css` is removed by the next asset build (`retiredAssets`).
 

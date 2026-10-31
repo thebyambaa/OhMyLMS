@@ -186,6 +186,8 @@ $_GET['ohmylms_return'] = '/course-edit/12/curriculum';
 ok( LegacyRoutes::url( '/course-edit/12/curriculum' ) === NativeLessonEditor::return_url(), 'the course return link bypasses LegacyRoutes' );
 ok( LegacyRoutes::app_url( '/courses/12' ) === NativeLessonEditor::return_url(), 'the course return link does not open the app: ' . NativeLessonEditor::return_url() );
 ok( LegacyRoutes::app_url( '/quizzes/5' ) === PreviewPlayer::editor_url( 5 ), 'the preview return link does not open the app' );
+ok( LegacyRoutes::app_url( '/quizzes/5' ) === NativeQuizEditor::form_url( 5 ), 'the quiz form link does not open the app' );
+ok( false === strpos( NativeQuizEditor::form_url( 5 ), '#' ), 'the quiz form link carries a hash route: ' . NativeQuizEditor::form_url( 5 ) );
 unset( $_GET['ohmylms_return'] );
 
 echo ( $source ? 'source' : 'shipped' ) . " mode: {$checks} checks passed\n";

@@ -298,9 +298,12 @@ Kept: `ohmylms_{group}_settings_updated( $option, $stored_value, $group )` fires
 New: `ohmylms_settings_updated( $group, $changed_field_names )` once per request with changes, and
 `ohmylms_payment_gateway_settings_updated( $gateway_id, $changed_names )` for gateway saves.
 `ohmylms_default_pages` (filter) still extends the restore-pages list.
-Removed: `ohmylms_valid_option_keys`, `ohmylms_settings-{group}` and the classic `Settings` classes in
-`includes/Admin/Settings` are no longer used by the REST API; they remain for the legacy
-settings pages until those are retired.
+Removed: `ohmylms_valid_option_keys`, `ohmylms_settings-{group}`, `ohmylms_settings_groups`,
+`ohmylms_get_settings_object` and the classic settings classes `AdminSettings`, `RegisterSettings`,
+`General`, `Currency`, `Tax`, `PaymentGateway`, `AccountAndPrivacy` and `Advanced` (31 October 2026;
+nothing read what they registered). Left in `includes/Admin/Settings`: `Permalink`, `Design` and
+`EmailSettings`, whose defaults `Install::install()` stores on a new install, and the bundled
+`Country.php`/`State.php` lists read by `SettingsService`.
 
 ## Remaining work
 

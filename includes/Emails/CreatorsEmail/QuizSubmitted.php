@@ -148,7 +148,7 @@ class QuizSubmitted {
 		$subject = isset( $settings['subject'] ) ? $settings['subject'] : '';
 		$subject = $this->replace_tags( $subject, $student->display_name, $course->get_name(), $quiz_title );
 
-		$settings['button_link'] = LegacyRoutes::url( '/quiz-report/' . absint( $quiz_id ) . '/grade-quiz/' . absint( $attempt_id ) );
+		$settings['button_link'] = LegacyRoutes::app_url( '/quizzes/' . absint( $quiz_id ) . '/attempts' );
 
 		ob_start();
 		ohmylms_get_template(
@@ -206,13 +206,13 @@ class QuizSubmitted {
 				'quiz_title'   => $q ? $q->post_title : __( 'Unknown Quiz', 'ohmylms' ),
 				'time'         => $item['time'],
 				'grade_link'   => ! empty( $item['attempt_id'] )
-					? LegacyRoutes::url( '/quiz-report/' . absint( $item['quiz_id'] ) . '/grade-quiz/' . absint( $item['attempt_id'] ) )
+					? LegacyRoutes::app_url( '/quizzes/' . absint( $item['quiz_id'] ) . '/attempts' )
 					: '',
 			);
 		}
 
 		$digest_settings                = $settings;
-		$digest_settings['button_link'] = LegacyRoutes::url( '/quiz-report' );
+		$digest_settings['button_link'] = LegacyRoutes::app_url( '/reports/quizzes' );
 
 		ob_start();
 		ohmylms_get_template(

@@ -28,10 +28,11 @@ Statuses below were checked against the code on 31 October 2026. Counts are file
 4. **Consolidate shared app infrastructure:** six feature-local `useUnsavedChangesGuard.ts` (certificates,
    courses, gamification, memberships, quizzes, settings) and three `usePagedList.ts` (account-hub,
    memberships, quizzes) duplicate `app/hooks` and `app/lib`.
-5. **PHP boundaries:** 35 PHP files still register REST routes outside `includes/Rest/V1`; 16 calls in 11
-   files outside `includes/Admin` build admin links from legacy route names through `LegacyRoutes::url()`
-   instead of `app_url()`; dead leftovers (`Abstracts\Assets::localize_script_MRM()`,
-   `includes/Assets/your-logo.png`, the inert `ohmylms-select2` field classes).
+5. **PHP boundaries:** 35 PHP files still register REST routes outside `includes/Rest/V1`; outside
+   `includes/Admin`, `Schools\Views` (two Account Hub links) still builds admin links from legacy route
+   names through `LegacyRoutes::url()` instead of `app_url()` (`NativeLessonEditor::return_url()` keeps it
+   because its input, `ohmylms_return` and assessment profiles' `return_route`, is a legacy route); the two
+   inert `ohmylms-select2` field classes in `Admin\Pages\GeneralSettings`.
 6. **Learner front end to typed modules:** 33 jQuery scripts (`assets/src/frontend/js`, `assets/src/runtimes`)
    and the 124-file JSX/MJS tree in `assets/src/features` (11 folders used by blocks and native editors).
    Replace Slick and the embedded html2pdf bundle in the same batches (step 2).

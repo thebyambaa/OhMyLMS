@@ -7,9 +7,6 @@
 
 namespace OhMyLMS\Rest;
 
-use OhMyLMS\Admin\Settings\AdminSettings;
-use OhMyLMS\Admin\Settings\RegisterSettings;
-
 /**
  * API Manager class.
  *
@@ -114,7 +111,6 @@ class Api {
 
 		// Init REST API routes.
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ), 10 );
-		add_action( 'rest_api_init', array( $this, 'register_admin_settings' ), 10 );
 	}
 
 	/**
@@ -128,21 +124,6 @@ class Api {
 		foreach ( $this->class_map as $controller_class ) {
 			$controller_instance = new $controller_class();
 			$controller_instance->register_routes();
-		}
-	}
-
-	/**
-	 * Register admin settings.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return void
-	 */
-	public function register_admin_settings() {
-		$settings = AdminSettings::get_settings_objects();
-
-		foreach ( $settings as $setting ) {
-			new RegisterSettings( $setting );
 		}
 	}
 }

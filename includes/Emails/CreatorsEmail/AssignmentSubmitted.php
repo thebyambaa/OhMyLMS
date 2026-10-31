@@ -198,7 +198,7 @@ class AssignmentSubmitted {
 		}
 
 		$digest_settings                = $settings;
-		$digest_settings['button_link'] = LegacyRoutes::url( '/assignment-report' );
+		$digest_settings['button_link'] = LegacyRoutes::app_url( '/assignments' );
 
 		ob_start();
 		ohmylms_get_template(

@@ -22,7 +22,7 @@ final class AdminPage {
 	const SLUG = 'ohmylms-ai';
 
 	/** Where the tab lives in the admin app. */
-	const TAB = 'ai-tutor-settings';
+	const TAB = 'ai-tutor';
 
 	/** Register shared AI tools routes and the legacy bookmark. */
 	public static function init() {
@@ -32,7 +32,7 @@ final class AdminPage {
 
 	/** URL of the Settings tab. */
 	public static function url() {
-		return \OhMyLMS\Admin\LegacyRoutes::url( '/settings/' . self::TAB );
+		return \OhMyLMS\Admin\LegacyRoutes::app_url( '/settings?tab=' . self::TAB );
 	}
 
 	/** Keep old bookmarks working: a hidden page that forwards to the tab. */

@@ -237,13 +237,13 @@ final class NativeQuizEditor {
 	}
 
 	/**
-	 * The LMS quiz screen beside Gutenberg: the new app's when it replaces the legacy one.
+	 * The quiz's screen in the admin app, beside Gutenberg.
 	 *
 	 * @param int $quiz_id Quiz ID.
 	 * @return string Authoring URL.
 	 */
 	public static function form_url( $quiz_id ) {
-		return \OhMyLMS\Admin\LegacyRoutes::url( '/quiz-edit/' . absint( $quiz_id ) );
+		return \OhMyLMS\Admin\LegacyRoutes::app_url( '/quizzes/' . absint( $quiz_id ) );
 	}
 
 	/**

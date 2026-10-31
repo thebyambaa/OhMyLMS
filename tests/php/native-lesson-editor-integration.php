@@ -93,9 +93,9 @@ try {
 	native_lesson_check( in_array( $autosave->get_status(), array( 200, 201 ), true ), 'Native autosave failed.' );
 	native_lesson_check( $blocks === get_post( $lesson_id )->post_content, 'An autosave changed published content.' );
 	$_GET['ohmylms_return'] = '/content-hub/curriculum/syllabus/24?node=s%3A1';
-	native_lesson_check( str_ends_with( NativeLessonEditor::return_url(), '#/content-hub/curriculum/syllabus/24?node=s%3A1' ), 'Syllabus return path was lost.' );
+	native_lesson_check( \OhMyLMS\Admin\LegacyRoutes::app_url( '/content-hub/curriculum/syllabus/24?node=s%3A1' ) === NativeLessonEditor::return_url(), 'Syllabus return path was lost.' );
 	$_GET['ohmylms_return'] = '//example.invalid/';
-	native_lesson_check( str_ends_with( NativeLessonEditor::return_url(), '#/content-hub/lessons' ), 'Unsafe return route was accepted.' );
+	native_lesson_check( \OhMyLMS\Admin\LegacyRoutes::app_url( '/content-hub/lessons' ) === NativeLessonEditor::return_url(), 'Unsafe return route was accepted.' );
 	unset( $_GET['ohmylms_return'] );
 	wp_set_current_user( 0 );
 	foreach ( array( '/wp/v2/ohmylms-lessons', '/wp/v2/ohmylms-lessons/' . $lesson_id ) as $route ) {

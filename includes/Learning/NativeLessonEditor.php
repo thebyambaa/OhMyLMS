@@ -381,7 +381,7 @@ final class NativeLessonEditor {
 				'initialSkillId'  => isset( $_GET['ohmylms_skill'] ) ? absint( $_GET['ohmylms_skill'] ) : 0,
 				'questionTypes'   => \OhMyLMS\Extensions\Registry::manifest()['question'] ?? array(),
 				'newQuestionUrl'  => admin_url( 'post-new.php?post_type=ohmylms-question' ),
-				'bankUrl'         => \OhMyLMS\Admin\LegacyRoutes::url( '/content-hub/question-bank' ),
+				'bankUrl'         => \OhMyLMS\Admin\LegacyRoutes::app_url( '/content-hub/question-bank' ),
 				'chapterId'       => ohmylms_get_chapter_id_by_content_id( get_the_ID() ),
 				'profile'         => 'ohmylms-quiz' === $screen->post_type ? \OhMyLMS\Assessment\Profiles::editor( get_the_ID() ) : null,
 				'assessmentTypes' => array_values(

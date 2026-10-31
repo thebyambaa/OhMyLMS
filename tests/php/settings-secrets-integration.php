@@ -549,7 +549,7 @@ try {
 	$response = call_api( 'POST', '/design-system', array_merge( \OhMyLMS\Design\DesignSystem::preset_values( 'classic' ), array( 'density' => 'compact' ) ) );
 	ok( 200 === $response->get_status() && 'custom' === $response->get_data()['preset'] && 'compact' === $response->get_data()['density'] && is_bool( $response->get_data()['primary_passes'] ), 'design system saves and reports contrast' );
 	$response = call_api( 'DELETE', '/design-system' );
-	ok( 200 === $response->get_status() && 'khan' === $response->get_data()['preset'], 'design system resets to the default preset' );
+	ok( 200 === $response->get_status() && \OhMyLMS\Design\DesignSystem::DEFAULT_PRESET === $response->get_data()['preset'], 'design system resets to the default preset' );
 
 	echo "OK: {$checks} checks passed.\n";
 } catch ( Throwable $e ) {

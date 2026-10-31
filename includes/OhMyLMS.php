@@ -699,7 +699,7 @@ final class OhMyLMS {
 	 * @return array
 	 */
 	public function plugin_action_links( $links ) {
-		$links[] = '<a href="' . esc_url( \OhMyLMS\Admin\LegacyRoutes::url( '/settings/general-settings' ) ) . '">' . esc_html__( 'Settings', 'ohmylms' ) . '</a>';
+		$links[] = '<a href="' . esc_url( \OhMyLMS\Admin\LegacyRoutes::app_url( '/settings?tab=general' ) ) . '">' . esc_html__( 'Settings', 'ohmylms' ) . '</a>';
 
 		return $links;
 	}
