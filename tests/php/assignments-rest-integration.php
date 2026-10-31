@@ -31,6 +31,7 @@ global $wpdb;
 $checks   = 0;
 $post_ids = array();
 $user_ids = array();
+$rule_id  = 0;
 $files    = array();
 $tag      = 'astest' . strtolower( wp_generate_password( 6, false, false ) );
 $fired    = array(
@@ -537,6 +538,44 @@ try {
 	ok_error( call_api( 'DELETE', '/' . $beta['id'], array( 'force' => true ) ), 409, 'ohmylms_assignment_has_submissions', 'force delete blocked by submissions' );
 	ok( 'publish' === get_post_status( $beta['id'] ), 'assignment still published' );
 
+	// An "assignment reviewed" automation that must run for the learner graded through this route.
+	$rule_request = new WP_REST_Request( 'POST', '/ohmylms/v1/automations' );
+	$rule_request->set_header( 'Content-Type', 'application/json' );
+	$rule_request->set_body(
+		wp_json_encode(
+			array(
+				'name'       => "$tag reviewed",
+				'event'      => 'assignment_reviewed',
+				'status'     => 'active',
+				'conditions' => array(
+					'assignment_ids' => array( $alpha['id'] ),
+					'result'         => 'pass',
+				),
+				'actions'    => array(
+					array(
+						'type'    => 'send_email',
+						'to'      => 'learner',
+						'subject' => "$tag automation for {display_name}",
+						'body'    => 'Well done.',
+					),
+				),
+			)
+		)
+	);
+	$rule_response = rest_do_request( $rule_request );
+	ok( 201 === $rule_response->get_status(), 'automation rule created: ' . wp_json_encode( $rule_response->get_data() ) );
+	$rule_id = (int) $rule_response->get_data()['id'];
+	$automation_mails = static function () use ( &$fired, $tag ) {
+		return array_values(
+			array_filter(
+				$fired['mail'],
+				static function ( $mail ) use ( $tag ) {
+					return 0 === strpos( (string) $mail['subject'], "$tag automation" );
+				}
+			)
+		);
+	};
+
 	// Grading: bounds, feedback, legacy pipeline, persistence.
 	wp_set_current_user( $author );
 	$path = '/' . $alpha['id'] . '/submissions/' . $sub_a;
@@ -561,10 +600,13 @@ try {
 	ok( array( array( $alpha['id'], $course_a, $learner, 'passed' ) ) === $fired['reviews'], 'ohmylms_after_assignment_review fired as from the legacy screen' );
 	$mailed = wp_list_pluck( $fired['mail'], 'to' );
 	ok( in_array( $tag . '_learner@example.invalid', array_map( 'strval', $mailed ), true ), 'the learner was emailed: ' . wp_json_encode( $mailed ) );
+	$ran = $automation_mails();
+	ok( 1 === count( $ran ) && $tag . '_learner@example.invalid' === (string) $ran[0]['to'], 'the assignment_reviewed automation ran once, for the graded learner: ' . wp_json_encode( wp_list_pluck( $ran, 'to' ) ) );
 	$again = call_api( 'GET', $path )->get_data();
 	ok( 'graded' === $again['status'] && 70 === $again['score'] && 'passed' === $again['result'], 'a graded submission reads back graded' );
 	$regraded = call_api( 'PATCH', $path, array( 'score' => 10 ) )->get_data();
 	ok( 'failed' === $regraded['result'] && 10 === $regraded['score'] && false !== strpos( $regraded['feedback'], 'Good work.' ), 'regrade below the pass score fails and keeps feedback' );
+	ok( 2 === count( $fired['reviews'] ) && 1 === count( $automation_mails() ), 'the regrade fires the review once more; a fail does not match the pass rule' );
 	ok( 1 === count( call_api( 'GET', '/' . $alpha['id'] . '/submissions', array( 'status' => 'graded' ) )->get_data() ) && array() === call_api( 'GET', '/' . $alpha['id'] . '/submissions', array( 'status' => 'submitted' ) )->get_data(), 'status filter' );
 	ok( 0 === call_api( 'GET', '/' . $alpha['id'] )->get_data()['pending_count'], 'pending count drops' );
 	wp_set_current_user( $admin );
@@ -618,6 +660,9 @@ try {
 } finally {
 	// Remove only what this run created.
 	wp_set_current_user( 0 );
+	if ( $rule_id ) {
+		\OhMyLMS\Automation\RuleStore::delete( $rule_id );
+	}
 	$post_ids = array_map( 'intval', $post_ids );
 	$post_ids = array_merge( $post_ids, array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type IN ('ohmylms-assignment','ohmylms-course','ohmylms-chapter') AND post_title LIKE %s", $wpdb->esc_like( $tag ) . '%' ) ) ) );
 	foreach ( array_unique( $post_ids ) as $post_id ) {

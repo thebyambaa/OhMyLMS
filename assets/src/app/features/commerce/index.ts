@@ -36,6 +36,38 @@ export const orderDetail: FeatureDefinition = {
 	),
 };
 
+/** Commerce › Cohorts at `#/cohorts` (`cohort=<id>` opens one); formerly `/memberships?panel=cohorts`. */
+export const cohorts: FeatureDefinition = {
+	id: 'cohorts',
+	title: __( 'Cohorts', 'ohmylms' ),
+	path: '/cohorts',
+	group: 'commerce',
+	tab: 'cohorts',
+	capability: 'manage_options',
+	component: lazy(
+		() =>
+			import(
+				/* webpackChunkName: "admin-app-cohorts" */ './cohorts/CohortsPanel'
+			)
+	),
+};
+
+/** Commerce › Automations at `#/automations` (`rule=`, `show=log`); formerly `/memberships?panel=automations`. */
+export const automations: FeatureDefinition = {
+	id: 'automations',
+	title: __( 'Automations', 'ohmylms' ),
+	path: '/automations',
+	group: 'commerce',
+	tab: 'automations',
+	capability: 'manage_options',
+	component: lazy(
+		() =>
+			import(
+				/* webpackChunkName: "admin-app-automations" */ './automations/AutomationsPanel'
+			)
+	),
+};
+
 /** Coupon list and editor at `#/coupons`. */
 export const coupons: FeatureDefinition = {
 	id: 'coupons',

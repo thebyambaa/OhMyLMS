@@ -88,7 +88,13 @@
 					"flag": "",
 					"sections": [
 						"",
-						"assessments"
+						"assessments",
+						"mappings",
+						"ai-runs",
+						"content-links",
+						"placement",
+						"skill-quizzes",
+						"provenance"
 					],
 					"serverSections": [
 						"assessments"
@@ -194,6 +200,22 @@
 					"defaultSection": ""
 				},
 				{
+					"id": "cohorts",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
+				},
+				{
+					"id": "automations",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
+				},
+				{
 					"id": "subscriptions",
 					"capability": "manage_options",
 					"flag": "",
@@ -227,7 +249,8 @@
 						"xp",
 						"leaderboard",
 						"rewards",
-						"certificates"
+						"certificates",
+						"issued-certificates"
 					],
 					"serverSections": [],
 					"defaultSection": ""
@@ -352,6 +375,48 @@
 			"path": "/content-hub/skills",
 			"group": "content",
 			"tab": "skills"
+		},
+		{
+			"id": "skill-workspace-mappings",
+			"path": "/content-hub/skills/mappings",
+			"group": "content",
+			"tab": "skills",
+			"section": "mappings"
+		},
+		{
+			"id": "skill-workspace-ai-runs",
+			"path": "/content-hub/skills/ai-runs",
+			"group": "content",
+			"tab": "skills",
+			"section": "ai-runs"
+		},
+		{
+			"id": "skill-workspace-content-links",
+			"path": "/content-hub/skills/content-links",
+			"group": "content",
+			"tab": "skills",
+			"section": "content-links"
+		},
+		{
+			"id": "skill-workspace-placement",
+			"path": "/content-hub/skills/placement",
+			"group": "content",
+			"tab": "skills",
+			"section": "placement"
+		},
+		{
+			"id": "skill-workspace-skill-quizzes",
+			"path": "/content-hub/skills/skill-quizzes",
+			"group": "content",
+			"tab": "skills",
+			"section": "skill-quizzes"
+		},
+		{
+			"id": "skill-workspace-provenance",
+			"path": "/content-hub/skills/provenance",
+			"group": "content",
+			"tab": "skills",
+			"section": "provenance"
 		},
 		{
 			"id": "curriculum",
@@ -605,6 +670,18 @@
 			"tab": "memberships"
 		},
 		{
+			"id": "cohorts",
+			"path": "/cohorts",
+			"group": "commerce",
+			"tab": "cohorts"
+		},
+		{
+			"id": "automations",
+			"path": "/automations",
+			"group": "commerce",
+			"tab": "automations"
+		},
+		{
 			"id": "students",
 			"path": "/students",
 			"group": "accounts",
@@ -657,6 +734,13 @@
 			"group": "engagement",
 			"tab": "gamification",
 			"section": "certificates"
+		},
+		{
+			"id": "certificates-issued",
+			"path": "/certificates/issued",
+			"group": "engagement",
+			"tab": "gamification",
+			"section": "issued-certificates"
 		},
 		{
 			"id": "certificates-editor",
@@ -768,6 +852,34 @@
 		[
 			"/content-hub/skills?add=1",
 			"page=ohmylms-content&tab=skills&add=1"
+		],
+		[
+			"/content-hub/skills/mappings?skill=7",
+			"page=ohmylms-content&tab=skills&section=mappings&skill=7"
+		],
+		[
+			"/content-hub/skills/ai-runs?run=1",
+			"page=ohmylms-content&tab=skills&section=ai-runs&run=1"
+		],
+		[
+			"/content-hub/skills/content-links?kind=lesson&content=5",
+			"page=ohmylms-content&tab=skills&section=content-links&kind=lesson&content=5"
+		],
+		[
+			"/content-hub/skills/placement",
+			"page=ohmylms-content&tab=skills&section=placement"
+		],
+		[
+			"/content-hub/skills/skill-quizzes?skill=7",
+			"page=ohmylms-content&tab=skills&section=skill-quizzes&skill=7"
+		],
+		[
+			"/content-hub/skills/provenance",
+			"page=ohmylms-content&tab=skills&section=provenance"
+		],
+		[
+			"/content-hub/curriculum/compare?tab=mappings&skill=7",
+			"page=ohmylms-content&tab=curriculum&view=compare&compare=mappings&skill=7"
 		],
 		[
 			"/content-hub/curriculum",
@@ -914,6 +1026,22 @@
 			"page=ohmylms-commerce&tab=memberships&id=2"
 		],
 		[
+			"/cohorts?cohort=5",
+			"page=ohmylms-commerce&tab=cohorts&cohort=5"
+		],
+		[
+			"/automations?show=log",
+			"page=ohmylms-commerce&tab=automations&show=log"
+		],
+		[
+			"/memberships?panel=cohorts&cohort=5",
+			"page=ohmylms-commerce&tab=memberships&panel=cohorts&cohort=5"
+		],
+		[
+			"/memberships?panel=automations",
+			"page=ohmylms-commerce&tab=memberships&panel=automations"
+		],
+		[
 			"/students",
 			"page=ohmylms-accounts&tab=students"
 		],
@@ -957,6 +1085,14 @@
 		[
 			"/certificates/5",
 			"page=ohmylms-engagement&tab=gamification&section=certificates&id=5"
+		],
+		[
+			"/certificates/issued?s=ABCD",
+			"page=ohmylms-engagement&tab=gamification&section=issued-certificates&s=ABCD"
+		],
+		[
+			"/certificates?list=issued",
+			"page=ohmylms-engagement&tab=gamification&section=certificates&list=issued"
 		],
 		[
 			"/sessions",

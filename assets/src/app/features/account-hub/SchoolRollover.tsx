@@ -15,6 +15,7 @@ import { applyRollover, previewRollover } from './operationsApi';
 import { gradeMapError, suggestGradeMap } from './operationsModel';
 import type {
 	GradeMapping,
+	RolloverClass,
 	RolloverInput,
 	RolloverPlan,
 	RolloverResult,
@@ -29,6 +30,20 @@ import type {
  * @return Lines.
  */
 export function rolloverLines( totals: RolloverTotals ): string[] {
+	const skipped = totals.classes_skipped
+		? [
+				sprintf(
+					/* translators: %d: number of classes. */
+					_n(
+						'%d class without students is skipped: it is archived and no new class is created.',
+						'%d classes without students are skipped: they are archived and no new classes are created.',
+						totals.classes_skipped,
+						'ohmylms'
+					),
+					totals.classes_skipped
+				),
+			]
+		: [];
 	return [
 		sprintf(
 			/* translators: 1: classes, 2: new classes. */
@@ -39,6 +54,7 @@ export function rolloverLines( totals: RolloverTotals ): string[] {
 			totals.classes,
 			totals.classes_created
 		),
+		...skipped,
 		sprintf(
 			/* translators: %d: number of students. */
 			_n(
@@ -82,6 +98,32 @@ export function rolloverLines( totals: RolloverTotals ): string[] {
 }
 
 /**
+ * What a class becomes in the new year, for the preview table.
+ *
+ * @param row Planned class.
+ * @return Text.
+ */
+function becomes( row: RolloverClass ): string {
+	if ( row.target ) {
+		return (
+			sprintf(
+				/* translators: 1: class name, 2: grade. */
+				__( '%1$s (grade %2$s)', 'ohmylms' ),
+				row.target.name,
+				row.target.grade || '—'
+			) +
+			( row.target.exists
+				? ' ' + __( '— already created', 'ohmylms' )
+				: '' )
+		);
+	}
+	if ( 'skip' === row.action ) {
+		return __( 'Skipped: no students (archived, no new class)', 'ohmylms' );
+	}
+	return __( 'Leaves (archived, no new class)', 'ohmylms' );
+}
+
+/**
  * Year rollover: choose the years and what each grade becomes, preview, then apply once. The preview
  * writes nothing; applying the same preview twice changes nothing more.
  *
@@ -107,6 +149,7 @@ export function SchoolRollover( {
 	const [ toId, setToId ] = useState( firstTo );
 	const [ map, setMap ] = useState< GradeMapping[] | null >( null );
 	const [ teachers, setTeachers ] = useState( false );
+	const [ includeEmpty, setIncludeEmpty ] = useState( false );
 	const [ plan, setPlan ] = useState< RolloverPlan | null >( null );
 	const [ input, setInput ] = useState< RolloverInput | null >( null );
 	const [ result, setResult ] = useState< RolloverResult | null >( null );
@@ -133,6 +176,7 @@ export function SchoolRollover( {
 			to_year_id: target,
 			grade_map: map ?? [],
 			copy_teachers: teachers,
+			include_empty: includeEmpty,
 		};
 		void preview.run(
 			async ( signal ) => {
@@ -303,6 +347,21 @@ export function SchoolRollover( {
 						reset();
 					} }
 				/>
+				<CheckboxControl
+					label={ __(
+						'Also create next-year classes for classes without students',
+						'ohmylms'
+					) }
+					help={ __(
+						'When off, a class with no students is archived and not copied.',
+						'ohmylms'
+					) }
+					checked={ includeEmpty }
+					onChange={ ( value ) => {
+						setIncludeEmpty( value );
+						reset();
+					} }
+				/>
 				<Button
 					type="submit"
 					variant="secondary"
@@ -350,29 +409,7 @@ export function SchoolRollover( {
 									<tr key={ row.class_id }>
 										<th scope="row">{ row.name }</th>
 										<td>{ row.grade || '—' }</td>
-										<td>
-											{ row.target
-												? sprintf(
-														/* translators: 1: class name, 2: grade. */
-														__(
-															'%1$s (grade %2$s)',
-															'ohmylms'
-														),
-														row.target.name,
-														row.target.grade || '—'
-													) +
-													( row.target.exists
-														? ' ' +
-															__(
-																'— already created',
-																'ohmylms'
-															)
-														: '' )
-												: __(
-														'Leaves (archived, no new class)',
-														'ohmylms'
-													) }
-										</td>
+										<td>{ becomes( row ) }</td>
 										<td className="num">
 											{ row.students }
 										</td>

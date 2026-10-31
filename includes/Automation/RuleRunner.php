@@ -53,7 +53,7 @@ final class RuleRunner {
 		add_action( 'ohmylms_course_completed', array( __CLASS__, 'on_course_completed' ), 30, 2 );
 		add_action( 'ohmylms_quiz_submission', array( __CLASS__, 'on_quiz_submitted' ), 30, 3 );
 		add_action( 'ohmylms_after_assignment_submitted', array( __CLASS__, 'on_assignment_submitted' ), 30, 3 );
-		add_action( 'ohmylms_after_assignment_review', array( __CLASS__, 'on_assignment_reviewed' ), 30, 4 );
+		add_action( 'ohmylms_after_assignment_review', array( __CLASS__, 'on_assignment_reviewed' ), 30, 5 );
 	}
 
 	/**
@@ -294,18 +294,27 @@ final class RuleRunner {
 	}
 
 	/**
-	 * Assignment graded. The grading route passes the attempt id; the learner is read from it.
+	 * Assignment graded (fired once per graded submission by the shared grading pipeline,
+	 * `Rest\V1\AssignmentController::update_attempt_report()`). The rule runs for the learner only when
+	 * they own a submission of the assignment (the graded row when it is named).
 	 *
 	 * @param int    $assignment_id Assignment.
 	 * @param int    $course_id     Course.
-	 * @param int    $attempt_id    Attempt.
+	 * @param int    $student_id    Learner.
 	 * @param string $status        `passed` or `failed`.
+	 * @param int    $attempt_id    Graded submission row, or 0.
 	 * @return void
 	 */
-	public static function on_assignment_reviewed( $assignment_id, $course_id, $attempt_id, $status ) {
+	public static function on_assignment_reviewed( $assignment_id, $course_id, $student_id, $status, $attempt_id = 0 ) {
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$user_id = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT user_id FROM %i WHERE id = %d', $wpdb->prefix . 'ohmylms_assignment_attempts', (int) $attempt_id ) );
+		$table = $wpdb->prefix . 'ohmylms_assignment_attempts';
+		if ( (int) $attempt_id > 0 ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$user_id = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT user_id FROM %i WHERE id = %d AND assignment_id = %d AND user_id = %d', $table, (int) $attempt_id, (int) $assignment_id, (int) $student_id ) );
+		} else {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$user_id = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT user_id FROM %i WHERE assignment_id = %d AND user_id = %d LIMIT 1', $table, (int) $assignment_id, (int) $student_id ) );
+		}
 		if ( ! $user_id ) {
 			return;
 		}

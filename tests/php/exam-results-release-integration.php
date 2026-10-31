@@ -20,6 +20,7 @@ use OhMyLMS\Assessment\Schema;
 use OhMyLMS\ExamImport\Jobs;
 use OhMyLMS\Exams\Player;
 use OhMyLMS\Exams\Results;
+use OhMyLMS\Exams\ResultsEmail;
 use OhMyLMS\Quiz\AnswerReview;
 use OhMyLMS\Quiz\Submission;
 use OhMyLMS\Utility\Transaction;
@@ -352,6 +353,18 @@ try {
 			ok( false === apply_filters( 'ohmylms_quiz_graded_email', true, $quiz, $learners[0] ), 'no graded email (with the score) while results are held' );
 			ok( null === Results::feedback_filter( null, 0 ), 'attempts outside exams are left to the quiz policy' );
 			ok( 'pending' === Results::learner_state( $a1 )['state'] && 'awaiting_marking' === Results::learner_state( $a2 )['state'], 'learners see pending and awaiting-marking notices' );
+			$held = Results::held( array( $a1, $a2, $a3, 999999999 ) );
+			sort( $held );
+			$all_attempts = array( $a1, $a2, $a3 );
+			sort( $all_attempts );
+			ok( $all_attempts === $held, 'Results::held() lists every attempt learners may not see (gradebooks use it)' );
+			$changed = array();
+			add_action(
+				'ohmylms_exam_results_changed',
+				static function ( $exam_id ) use ( &$changed ) {
+					$changed[] = (int) $exam_id;
+				}
+			);
 
 			wp_set_current_user( $author );
 			$view = ok_status( call_api( 'GET', 'exams/library/' . $exam . '/results' ), 200, 'results read' );
@@ -421,6 +434,26 @@ try {
 			);
 			ok_error( call_api( 'POST', 'exams/library/' . $exam . '/results/revoke', array() ), 400, 'rest_missing_callback_param', 'undo needs attempts' );
 
+			// The release email follows its entry under Emails: switched off, nothing is sent and the
+			// attempt stays unnotified; edited, the learner gets the edited subject and button link.
+			ok( in_array( ResultsEmail::ID, \OhMyLMS\Emails\EmailManager::ids(), true ), 'the release email is listed under Emails' );
+			update_option( \OhMyLMS\Emails\Emails::OPTION_PREFIX . ResultsEmail::ID, array( 'enable' => false ) );
+			$mails = array();
+			ok( 0 === Results::release( $exam, array( $a1 ), true )['notified'] && ! $mails && empty( release_row( $a1 )['notified_at'] ), 'a disabled release email is not sent' );
+			ok( array( $a1 ) === Results::revoke( $exam, array( $a1 ) )['revoked'], 'test release undone' );
+			update_option(
+				\OhMyLMS\Emails\Emails::OPTION_PREFIX . ResultsEmail::ID,
+				array(
+					'subject'     => 'Edited: {exam_name} for {student_name}',
+					'button_link' => 'https://example.invalid/results',
+				)
+			);
+			$mails = array();
+			ok( 1 === Results::release( $exam, array( $a1 ), true )['notified'] && 1 === count( $mails ) && 'Edited: ' . $tag . ' exam for ' . $tag . ' l1' === $mails[0]['subject'] && false !== strpos( $mails[0]['message'], 'https://example.invalid/results' ), 'the edited subject and button link are sent: ' . ( $mails[0]['subject'] ?? '' ) );
+			ok( array( $a1 ) === Results::revoke( $exam, array( $a1 ) )['revoked'], 'test release undone again' );
+			$wpdb->update( Results::table(), array( 'notified_at' => null ), array( 'attempt_id' => $a1 ) );
+			delete_option( \OhMyLMS\Emails\Emails::OPTION_PREFIX . ResultsEmail::ID );
+
 			// Release one attempt; the others are skipped with a reason.
 			$mails    = array();
 			$released = ok_status(
@@ -436,14 +469,18 @@ try {
 			ok( array( $a1 ) === $released['released'] && 'awaiting_marking' === $reasons[ $a2 ] && 'in_progress' === $reasons[ $a3 ] && 'not_found' === $reasons[999999999] && 1 === $released['notified'] && 0 === $released['remaining'], 'only the marked attempt is released: ' . wp_json_encode( $released ) );
 			ok( 1 === count( $mails ) && $tag . '_l1@example.invalid' === $mails[0]['to'] && false !== strpos( $mails[0]['subject'], $tag . ' exam' ) && false === strpos( $mails[0]['message'], '4' . ' / ' ) && false !== strpos( $mails[0]['message'], 'ohmylms_exam=' . $exam ), 'one notification to the learner, linking to the exam, without marks' );
 			ok( true === AssessmentSettings::feedback_visible( $a1 ) && false === AssessmentSettings::feedback_visible( $a2 ), 'released attempt visible, others still held' );
+			ok( ! in_array( $a1, Results::held( array( $a1, $a2 ) ), true ) && in_array( $a2, Results::held( array( $a1, $a2 ) ), true ), 'Results::held() follows the release' );
+			$changed = array();
 			ok( true === apply_filters( 'ohmylms_quiz_graded_email', true, $quiz, $learners[0] ), 'graded email allowed once released' );
 			$again = ok_status( call_api( 'POST', 'exams/library/' . $exam . '/results/release', array( 'attempt_ids' => array( $a1 ) ) ), 200, 'release again' );
 			ok( ! $again['released'] && 'already_visible' === $again['skipped'][0]['reason'], 'releasing twice changes nothing' );
+			ok( array() === $changed, 'a release that releases nothing announces no change' );
 
 			// Undo before the learner looked.
 			$mails   = array();
 			$revoked = ok_status( call_api( 'POST', 'exams/library/' . $exam . '/results/revoke', array( 'attempt_ids' => array( $a1, $a2 ) ) ), 200, 'undo release' );
 			ok( array( $a1 ) === $revoked['revoked'] && 'not_released' === $revoked['skipped'][0]['reason'], 'undo applies to the released attempt only' );
+			ok( array( $exam ) === $changed, 'an undo announces the change once' );
 			ok( false === AssessmentSettings::feedback_visible( $a1 ), 'undone release is held again' );
 			$released = ok_status( call_api( 'POST', 'exams/library/' . $exam . '/results/release', array( 'attempt_ids' => array( $a1 ) ) ), 200, 'release after undo' );
 			ok( array( $a1 ) === $released['released'] && 0 === $released['notified'] && ! $mails, 'a learner is notified once' );
@@ -479,7 +516,9 @@ try {
 
 			// Policies.
 			wp_set_current_user( $author );
-			$policy = ok_status( call_api( 'PUT', 'exams/library/' . $exam . '/results/policy', array( 'mode' => 'immediate' ) ), 200, 'immediate policy' );
+			$changed = array();
+			$policy  = ok_status( call_api( 'PUT', 'exams/library/' . $exam . '/results/policy', array( 'mode' => 'immediate' ) ), 200, 'immediate policy' );
+			ok( array( $exam ) === $changed, 'a policy change announces the change' );
 			ok( 'immediate' === $policy['policy']['mode'] && 'released' === result_item( $policy, $a2 )['state'] && true === AssessmentSettings::feedback_visible( $a2 ), 'immediate policy shows results' );
 			$revoked = ok_status( call_api( 'POST', 'exams/library/' . $exam . '/results/revoke', array( 'attempt_ids' => array( $a2 ) ) ), 200, 'undo under immediate' );
 			ok( 'policy' === $revoked['skipped'][0]['reason'], 'policy releases are changed through the policy' );
@@ -513,12 +552,15 @@ try {
 				'past date'
 			);
 			ok( true === AssessmentSettings::feedback_visible( $a2 ), 'a past date shows results' );
-			$mails = array();
+			$mails   = array();
+			$changed = array();
 			Results::run_schedule( $exam );
 			ok( 'schedule' === release_row( $a2 )['source'] && ! empty( release_row( $a2 )['notified_at'] ) && 1 === count( $mails ) && $tag . '_l2@example.invalid' === $mails[0]['to'], 'the scheduled release is recorded and notified once' );
-			$mails = array();
+			ok( array( $exam ) === $changed, 'the scheduled release announces the change' );
+			$mails   = array();
+			$changed = array();
 			Results::run_schedule( $exam );
-			ok( ! $mails, 'running the schedule again sends nothing' );
+			ok( ! $mails && ! $changed, 'running the schedule again sends and announces nothing' );
 			ok_status( call_api( 'PUT', 'exams/library/' . $exam . '/results/policy', array( 'mode' => 'manual' ) ), 200, 'back to manual' );
 			ok( false === wp_next_scheduled( Results::HOOK, array( $exam ) ) && true === AssessmentSettings::feedback_visible( $a2 ), 'manual clears the schedule; a recorded release stays' );
 
@@ -542,7 +584,7 @@ try {
 			$entries = ok_status( $log, 200, 'log read' );
 			$actions = array_count_values( array_column( $entries, 'action' ) );
 			ok( 'private, no-store' === $log->get_headers()['Cache-Control'] && (int) $log->get_headers()['X-WP-Total'] === count( $entries ), 'log is private and paged' );
-			ok( 5 === $actions['release'] && 2 === $actions['revoke'] && 4 === $actions['policy'] && 3 === $actions['notify'] && 1 === $actions['view'], 'every release, undo, policy change, notification and first view is logged: ' . wp_json_encode( $actions ) );
+			ok( 7 === $actions['release'] && 4 === $actions['revoke'] && 4 === $actions['policy'] && 4 === $actions['notify'] && 1 === $actions['view'], 'every release, undo, policy change, notification and first view is logged: ' . wp_json_encode( $actions ) );
 			$first_view = current( wp_list_filter( $entries, array( 'action' => 'view' ) ) );
 			ok( $a1 === $first_view['attempt_id'] && $learners[0] === $first_view['actor']['id'], 'a view is logged with the learner' );
 			ok_error( call_api( 'GET', 'exams/library/' . $exam . '/results', array( 'page' => 9 ) ), 400, 'ohmylms_exam_invalid_page', 'results page past the end' );

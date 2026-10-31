@@ -196,6 +196,7 @@ final class Results {
 				}
 				if ( $before !== $policy ) {
 					self::log( $exam_id, 0, 'policy', $mode . ( $at ? ' ' . $at : '' ) );
+					self::changed( $exam_id );
 				}
 				return $policy;
 			}
@@ -292,6 +293,64 @@ final class Results {
 			return null;
 		}
 		return in_array( self::state( self::policy( $exam_id ), $attempt, self::record( $attempt_id ) ), array( 'released', 'viewed' ), true );
+	}
+
+	/**
+	 * The attempts among the given ones whose exam results learners may not see yet, decided as
+	 * {@see self::visible()} does, in one query per 500 attempts. Attempts outside exams are never held.
+	 *
+	 * @param int[] $attempt_ids Attempt IDs.
+	 * @return int[] Held attempt IDs.
+	 */
+	public static function held( array $attempt_ids ) {
+		global $wpdb;
+		$ids = array_values( array_unique( array_filter( array_map( 'intval', $attempt_ids ) ) ) );
+		if ( ! $ids ) {
+			return array();
+		}
+		$installed = self::install();
+		$policies  = array();
+		$held      = array();
+		foreach ( array_chunk( $ids, 500 ) as $chunk ) {
+			$in = implode( ',', array_fill( 0, count( $chunk ), '%d' ) );
+			if ( $installed ) {
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery -- Only %d placeholders are interpolated; live release decision.
+				$rows = $wpdb->get_results( $wpdb->prepare( "SELECT a.id, a.quiz_id, a.status, r.released_at, r.viewed_at FROM %i a LEFT JOIN %i r ON r.attempt_id = a.id WHERE a.id IN ($in)", array_merge( array( $wpdb->prefix . 'ohmylms_quiz_attempts', self::table() ), $chunk ) ), ARRAY_A );
+			} else {
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery -- Only %d placeholders are interpolated; live release decision.
+				$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, quiz_id, status, NULL AS released_at, NULL AS viewed_at FROM %i WHERE id IN ($in)", array_merge( array( $wpdb->prefix . 'ohmylms_quiz_attempts' ), $chunk ) ), ARRAY_A );
+			}
+			foreach ( (array) $rows as $row ) {
+				$exam_id = self::exam_of_quiz( (int) $row['quiz_id'] );
+				if ( ! $exam_id ) {
+					continue;
+				}
+				if ( ! isset( $policies[ $exam_id ] ) ) {
+					$policies[ $exam_id ] = self::policy( $exam_id );
+				}
+				$state = self::state( $policies[ $exam_id ], $row, $row['released_at'] || $row['viewed_at'] ? $row : null );
+				if ( ! in_array( $state, array( 'released', 'viewed' ), true ) ) {
+					$held[] = (int) $row['id'];
+				}
+			}
+		}
+		return $held;
+	}
+
+	/**
+	 * Announce that which attempts of an exam learners may see has changed.
+	 *
+	 * @param int $exam_id Exam ID.
+	 * @return void
+	 */
+	private static function changed( $exam_id ) {
+		/**
+		 * Fires after a release, undo, policy change or scheduled release changed which results of an exam
+		 * learners may see. Cached views of exam scores (the gradebook) are recomputed.
+		 *
+		 * @param int $exam_id Exam ID.
+		 */
+		do_action( 'ohmylms_exam_results_changed', (int) $exam_id );
 	}
 
 	/**
@@ -449,6 +508,9 @@ final class Results {
 		if ( is_wp_error( $outcome ) ) {
 			return $outcome;
 		}
+		if ( $outcome['released'] ) {
+			self::changed( $exam_id );
+		}
 		$outcome['notified']  = $notify ? self::notify( $exam_id, $outcome['released'] ) : 0;
 		$outcome['remaining'] = self::counts( $exam_id )['pending'];
 		return $outcome;
@@ -465,7 +527,7 @@ final class Results {
 		if ( ! self::install() ) {
 			return self::error( 'storage', __( 'The results tables are unavailable.', 'ohmylms' ), 503 );
 		}
-		return Jobs::locked(
+		$outcome = Jobs::locked(
 			$exam_id,
 			static function () use ( $exam_id, $ids ) {
 				global $wpdb;
@@ -504,6 +566,10 @@ final class Results {
 				return $result;
 			}
 		);
+		if ( ! is_wp_error( $outcome ) && $outcome['revoked'] ) {
+			self::changed( $exam_id );
+		}
+		return $outcome;
 	}
 
 	/**
@@ -530,6 +596,9 @@ final class Results {
 			$wpdb->query( $wpdb->prepare( 'INSERT INTO %i (attempt_id, exam_id, student_id, released_at, source) VALUES (%d, %d, %d, %s, %s) ON DUPLICATE KEY UPDATE released_at=IFNULL(released_at, VALUES(released_at)), source=IF(source=\'\', VALUES(source), source)', self::table(), (int) $row['id'], $exam_id, (int) $row['student_id'], current_time( 'mysql', true ), 'schedule' ) );
 			self::log( $exam_id, (int) $row['id'], 'release', 'schedule' );
 			$marked[] = (int) $row['id'];
+		}
+		if ( $marked ) {
+			self::changed( $exam_id );
 		}
 		self::notify( $exam_id, $marked );
 		if ( count( $marked ) >= self::MAX_BATCH ) {

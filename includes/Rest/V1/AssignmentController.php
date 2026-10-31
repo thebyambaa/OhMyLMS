@@ -15,7 +15,8 @@ defined( 'ABSPATH' ) || exit;
 /**
  * The grading pipeline of the former `ohmylms/v1/assignment` routes (removed; see
  * docs/api/assignments.md). `AssignmentsController` and `Schools\Service::grade()` grade through
- * it, so learners keep getting the same completion, hooks and emails. It registers no routes.
+ * it, so learners keep getting the same completion, hooks and emails. It registers no routes, and it is
+ * the only place that fires `ohmylms_after_assignment_review`: once per graded submission.
  */
 class AssignmentController {
 
@@ -30,7 +31,7 @@ class AssignmentController {
 	 */
 	public function update_attempt_report( $request ) {
 		$id         = (int) $request['id'];
-		$attempt_id = (int) $request['user_id'];
+		$student_id = (int) $request['user_id'];
 
 		$post = get_post( $id );
 		if ( empty( $id ) || empty( $post->ID ) || OHMYLMS_ASSIGNMENT_CPT !== $post->post_type ) {
@@ -47,7 +48,7 @@ class AssignmentController {
 			if ( $get_data[0]['score'] >= $pass_marks ) {
 				$get_data[0]['status'] = 'passed';
 
-				$student = new \OhMyLMS\Data\Student( $attempt_id );
+				$student = new \OhMyLMS\Data\Student( $student_id );
 				if ( $student ) {
 					$previous_completion_rate = $student->get_over_all_completion_rate( $course_id );
 					$student->complete_lesson( $post->ID, $course_id );
@@ -56,9 +57,9 @@ class AssignmentController {
 				$get_data[0]['status'] = 'failed';
 			}
 		}
-		$quiz->update_assignment_attempts( $attempt_id, $get_data );
+		$quiz->update_assignment_attempts( $student_id, $get_data );
 
-		$report = $quiz->get_assignment_attempts( $attempt_id );
+		$report = $quiz->get_assignment_attempts( $student_id );
 
 		$data = array(
 			'report' => $report,
@@ -78,26 +79,35 @@ class AssignmentController {
 
 		$response->link_header( 'alternate', get_permalink( $id ), array( 'type' => 'text/html' ) );
 
-		do_action( 'ohmylms_after_assignment_review', $post->ID, $course_id, $attempt_id, $get_data[0]['status'] );
+		/**
+		 * Fires once after a learner's assignment submission is graded, from every grading route.
+		 *
+		 * @param int    $assignment_id Assignment.
+		 * @param int    $course_id     Course.
+		 * @param int    $student_id    Learner (not an attempt ID).
+		 * @param string $status        `passed` or `failed`.
+		 * @param int    $attempt_id    The graded submission row (0 when the body named none).
+		 */
+		do_action( 'ohmylms_after_assignment_review', $post->ID, $course_id, $student_id, $get_data[0]['status'], (int) ( $get_data[0]['id'] ?? 0 ) );
 
 		if ( class_exists( '\OhMyLMS\Engagement\Leaderboard' ) ) {
-			$avg_marks = \OhMyLMS\Engagement\Leaderboard::get_student_avg_assignment_marks( $attempt_id, $post->ID );
-			do_action( 'ohmylms_pro_after_assignment_review', $post->ID, $course_id, $attempt_id, $avg_marks );
+			$avg_marks = \OhMyLMS\Engagement\Leaderboard::get_student_avg_assignment_marks( $student_id, $post->ID );
+			do_action( 'ohmylms_pro_after_assignment_review', $post->ID, $course_id, $student_id, $avg_marks );
 		}
-		$student                 = new \OhMyLMS\Data\Student( $attempt_id );
+		$student                 = new \OhMyLMS\Data\Student( $student_id );
 		$maybe_course_completion = $student && $student->is_course_completed( $course_id ) ? 'yes' : 'no';
 
 		if ( 'yes' === $maybe_course_completion ) {
-			do_action( 'ohmylms_student_completed_course_after_reviewing_assignment', $attempt_id, $course_id );
+			do_action( 'ohmylms_student_completed_course_after_reviewing_assignment', $student_id, $course_id );
 		}
 
 		$completion_rate = $student->get_over_all_completion_rate( $course_id );
-		if ( (int) ( $completion_rate ) === 100 && (int) ( $previous_completion_rate ) !== 100 && ! \OhMyLMS\Learning\CourseProgram::managed( $attempt_id, $course_id ) ) {
+		if ( (int) ( $completion_rate ) === 100 && (int) ( $previous_completion_rate ) !== 100 && ! \OhMyLMS\Learning\CourseProgram::managed( $student_id, $course_id ) ) {
 			global $wpdb;
 			$table_name  = $wpdb->prefix . 'ohmylms_user_enrollment';
-			$enroll_data = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE user_id = %d AND course_id = %d', $table_name, $attempt_id, $course_id ), ARRAY_A );
+			$enroll_data = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE user_id = %d AND course_id = %d', $table_name, $student_id, $course_id ), ARRAY_A );
 			if ( isset( $enroll_data['order_id'] ) ) {
-				do_action( 'ohmylms_course_completed', $attempt_id, $course_id, $enroll_data['order_id'] );
+				do_action( 'ohmylms_course_completed', $student_id, $course_id, $enroll_data['order_id'] );
 			}
 		}
 

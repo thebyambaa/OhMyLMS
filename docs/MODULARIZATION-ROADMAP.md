@@ -21,17 +21,16 @@ Statuses below were checked against the code on 31 October 2026. Counts are file
    `ohmylms-commerce/v1/subscriptions` (and `cx-ecommerce/v1/subscriptions`) was removed too
    ([replacements](api/commerce.md#retired-legacy-route)). Remaining: the `ohmylms_source_test`
    assessment suite still needs its question fixtures ported to the typed routes.
-2. **Rebuild the workflows that only the deleted legacy admin had** (decided 31 October 2026: rebuild all of them
-   in the new admin, none dropped; quiz pool and section editing is already done). They now have no screen:
-   certificate issuing and learner download; question delete and duplicate-into-quiz; quiz pool and section
-   editing; ~~assignment resources, prerequisites, drip and comments~~ (done 31 October 2026); ~~Account Hub school removal, guardian
-   lists, reports, rollover and sample preview~~ (done 31 October 2026); Account Hub gradebook; Content Hub combined mappings, AI runs, shared
-   content links, domain placement, skill-owned quizzes and provenance review; syllabus mind map and
-   spreadsheet; ~~lesson inline questions, video settings and objectives~~ (done 31 October 2026); ~~course purchase points, cohorts
-   and automations; checkout gateway extras~~ (done 31 October 2026: [points](api/gamification.md#point-purchases),
-   [cohorts](api/cohorts.md), [automations](api/automations.md), [checkout](api/settings.md#checkout); cohorts and
-   automations are panels of Commerce › Memberships until AdminNavigation gives them tabs). (Exam results release and JSXGraph proposals: rebuilt on
-   31 October 2026, see [exams](api/exams.md).)
+2. **Rebuild the workflows that only the deleted legacy admin had.** Done on 31 October 2026 (decided the
+   same day: rebuild all twelve, none dropped): certificate issuing and learner download
+   ([certificates](api/certificates.md)); question delete and duplicate-into-quiz; quiz pool and section
+   editing; assignment resources, prerequisites, drip and comments; Account Hub school removal, guardians,
+   reports, rollover and sample preview; the gradebook ([gradebook](api/gradebook.md), Content Hub ›
+   Gradebook, open to school staff for their own scopes); the [skill workspace](api/skill-workspace.md)
+   (Content Hub › Skills sections); syllabus mind map and spreadsheet; lesson inline questions, video
+   settings and objectives; course point prices, [cohorts](api/cohorts.md) and
+   [automations](api/automations.md) (own Commerce tabs); checkout extras; exam results release and JSXGraph
+   proposals ([exams](api/exams.md)). Every old `?tab=`, `?panel=` and `?list=` address redirects.
 3. **Extension parity:** render `registerMembershipSettings` in the membership editor (documented in
    EXTENSIONS.md; no app code renders it).
 4. **Consolidate shared app infrastructure:** six feature-local `useUnsavedChangesGuard.ts` (certificates,
@@ -44,7 +43,9 @@ Statuses below were checked against the code on 31 October 2026. Counts are file
    inert `ohmylms-select2` field classes in `Admin\Pages\GeneralSettings`.
 6. **Learner front end to typed modules:** 33 jQuery scripts (`assets/src/frontend/js`, `assets/src/runtimes`)
    and the 124-file JSX/MJS tree in `assets/src/features` (11 folders used by blocks and native editors).
-   Replace Slick and the embedded html2pdf bundle in the same batches (step 2).
+   Replace Slick in the same batches (step 2). The certificate-download handlers and the html2pdf enqueue
+   are gone; the `?ohmylms-certificate-data` template override in `Hooks\CommonHook` and the 943 KB
+   `includes/Assets/packages/html2pdf.bundle.min.js` are now dead and can be deleted.
 7. **Extend enforcement:** CI runs `check:ci` and `php -l` only; add `npm test`, the PHP integration suites,
    the `admin-app-smoke` browser spec and the WordPress standards lint, and extend the architecture check to
    the front end and to legacy-route use in PHP.
@@ -73,23 +74,24 @@ component tests. Items named "not rebuilt" had a legacy screen that no longer ex
 | Feature | Status | Remaining / notes |
 | --- | --- | --- |
 | Webhooks, Integrations (Zoom, Google Meet, sign-in), Emails, Sessions | Done | Webhook bulk UI not built (bulk API exists) |
-| Certificates | Partial | Templates done. Not rebuilt: issued-certificate records and learner download (still the `Ajax` path with html2pdf) |
+| Certificates | Done | Templates, issued records (Engagement › Gamification › Issued certificates), learner download and public verification |
 | Students, course roster, student report | Done | Open-relay reminder route answers 410; rate-limited reminders live in the course roster |
 | Categories and tags | Done | Read-only by design (writes answer 410) |
 | Orders, coupons, subscriptions | Done | No refund button by design (server route is guarded); cancel at end of term impossible in the schema |
 | Memberships | Partial | Plans and rules done; `registerMembershipSettings` not rendered |
 | Settings (all tabs incl. design, course archive, quiz design, xAPI, AI tutor, MCP, migration) | Done | Checkout extras (gateway order, guest checkout, login form, content protection, read-only Stripe status) on the Payment gateways tab |
-| Dashboard, earnings, course report | Done | Mixed-currency totals; refunds dated by order |
+| Dashboard, earnings, course report | Done | Scoped widget dashboard for admins, school administrators and teachers (each widget its own chunk); teachers may create review-set draft quizzes for their own classes, which an administrator publishes. Mixed-currency totals; refunds dated by order |
+| Gradebook | Done | Course × students, roster × assignments, student transcript, skill mastery and roll-up on the `ohmylms_enrolments` table; overrides keep a reason and history; per-course weighting with class override; site-wide letter scale (Settings › Letter grades) |
 | Setup wizard, Gamification (incl. Rewards) | Done | |
-| Content Hub (overview, skills, curriculum, compare, skill map, subject profiles, bundles) | Partial | Combined mappings, AI runs, shared content links, domain placement, skill-owned quizzes and provenance review rebuilt as [skill workspace](api/skill-workspace.md) sections of the compare screen (`skill-workspace-rest-integration.php` 122 checks; own AdminNavigation sections pending). Not rebuilt: learner overlays on the skill map |
+| Content Hub (overview, skills, curriculum, compare, skill map, subject profiles, bundles) | Partial | Combined mappings, AI runs, shared content links, domain placement, skill-owned quizzes and provenance review rebuilt as [skill workspace](api/skill-workspace.md) sections of Content Hub › Skills (`skill-workspace-rest-integration.php` 122 checks; site administrators only). Not rebuilt: learner overlays on the skill map |
 | Syllabus editor | Partial | Mind map and spreadsheet layouts done (`?layout=`; atomic, stale-checked `sheet_edit`; reviewed bulk paste). Not rebuilt: skill-group deletion, source configuration, course requirement controls |
-| Courses and course structure | Partial | Point price on the Settings tab; cohorts and automations under Commerce › Memberships. Not rebuilt: drag-and-drop outline |
+| Courses and course structure | Partial | Point price on the Settings tab; cohorts and automations are Commerce tabs. Not rebuilt: drag-and-drop outline |
 | Lessons | Partial | Blocks, source, resources, drip/prerequisites/media, extension lesson types, inline questions (list/insert/reorder/remove, question editor links; native panel lists and swaps checks), video settings with a server-enforced watched-% rule, and objectives (skills + syllabus objective mappings, course objectives as choices) done (`lesson-settings-integration.php` 74 checks). Not rebuilt: learner preview |
 | Assignments | Partial | List, editor, submissions and grading done; resources, prerequisites, drip release (enforced on submit) and submission comment threads with emails done (`assignment-delivery-integration.php` 102 checks). Placement read-only |
 | Quizzes, attempts, quiz reports | Partial | Editor, questions, per-question marks, sections and random pools (under the quiz revision lock; `quiz-questions-authoring-integration.php` 61 checks), attempts, grading, import/export and reports done; a live learner attempt grades as authored and autosave is accepted. Remaining: older-version pin UI, the legacy pools route is not hardened |
-| Question bank and editor | Partial | List, versions, approve, duplicate, import/export and an editor for all 52 built-in types and every stored field (built-in editors register like add-ons), with per-type REST validation and a real-player preview (`question-types-rest-integration.php` 596 checks; live parity spec). Remaining: delete and duplicate-into-quiz only on legacy routes; no rubric for short/long text; no editor for extension settings |
-| Exams and exam import | Partial | Results release (policy, single/bulk release with email, undo before view, log; enforced in every result surface) and JSXGraph proposals (generate/author, accept instead of or beside the crop, reject) rebuilt ([api](api/exams.md)). Not rebuilt: renderer probe, side-by-side PDF, drag crop; release email not on the Emails screen |
-| Account Hub | Partial | Schools, years, classes, teachers, parents, All accounts, roster intake, school archive/restore/delete, guardians per school and class, school report with CSV, year rollover with roster promotion, class work and grading, sample school done (`account-hub-schools-lifecycle-rest-integration.php` 196 checks). Remaining: gradebook (separate workstream); the hub School workspace rollover still copies empty classes |
+| Question bank and editor | Partial | List, versions, approve, duplicate, import/export and an editor for all 52 built-in types and every stored field (built-in editors register like add-ons), with per-type REST validation and a real-player preview (`question-types-rest-integration.php` 596 checks; live parity spec). Delete and copy-into-quiz on typed routes. Remaining: no rubric for short/long text; no editor for extension settings |
+| Exams and exam import | Partial | Results release (policy, single/bulk release with email, undo before view, log; enforced in every result surface) and JSXGraph proposals (generate/author, accept instead of or beside the crop, reject) rebuilt ([api](api/exams.md)). The release email is on the Emails screen; held scores are hidden from every gradebook until released. Not rebuilt: renderer probe, side-by-side PDF, drag crop |
+| Account Hub | Partial | Schools, years, classes, teachers, parents, All accounts, roster intake, school archive/restore/delete, guardians per school and class, school report with CSV, year rollover with roster promotion, class work and grading, sample school done (`account-hub-schools-lifecycle-rest-integration.php` 212 checks). Rollover skips classes with no active students unless `include_empty` is set. Panels load as their own chunks. Remaining: the older `Lifecycle::rollover` and `Service::rollover` paths still copy empty classes |
 | Extension host | Partial | Pages, screen slots, editor panels by route, integration panels, question and lesson editors, checkout/frontend slots, per-extension error isolation. Membership settings missing |
 | Communities | Retired | No backend; add-ons can register a page |
 | Cutover | Done | 31 October 2026; old addresses redirect through `LegacyRoutes` |

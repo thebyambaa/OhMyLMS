@@ -330,7 +330,7 @@ row, then the skills) prefixes cells that start with `= + - @`, tab or CR with `
 
 | Method | Path (below `/schools/{id}`) | Purpose | Success |
 | --- | --- | --- | --- |
-| POST | `/rollover/preview` | `{ from_year_id, to_year_id, grade_map: [{from, to}], copy_teachers }`; writes nothing | 200 plan + `review` |
+| POST | `/rollover/preview` | `{ from_year_id, to_year_id, grade_map: [{from, to}], copy_teachers, include_empty }`; writes nothing | 200 plan + `review` |
 | POST | `/rollover` | The same plus `review` | 200 result |
 
 For every active class of the source year: the grade map says what its grade becomes (unlisted grades stay the
@@ -339,11 +339,14 @@ grade replaced, `7A` → `8A`; `classes.source_class_id` points back, so a succe
 active students (still on the school roster) join it, teachers too with `copy_teachers`; its course links are copied
 (`course_classes`, `course_class_students`) and the students' active roster enrolments move to the new class through
 `Student\Enrollments::update()` (source `roster`, `class_id` and `source_ref` the new class). Students of a leaving
-class keep their account and school membership; their active roster enrolments are cancelled. Every source class
-and the source year are archived. Plan: `{ from, to, classes[] {class_id, name, grade, action (promote|leave),
-students, teachers, enrolments, links, target {id|null, name, grade, exists}|null}, totals, review }`; totals:
-`classes, promoted_classes, leaving_classes, classes_created, students_promoted, students_leaving, teachers_copied,
-enrolments_moved, enrolments_revoked, course_links`. Apply recomputes the plan under a per-school lock and the year
+class keep their account and school membership; their active roster enrolments are cancelled. A class that would
+be promoted but has no active students is skipped (action `skip`: archived, no successor) unless `include_empty`
+(default `false`) is sent; the choice is part of the plan and its review. Every source class and the source year are
+archived. Plan: `{ from, to, grade_map, copy_teachers, include_empty, classes[] {class_id, name, grade, action
+(promote|leave|skip), students, teachers, enrolments, links, target {id|null, name, grade, exists}|null}, totals,
+review }`; totals: `classes, promoted_classes, leaving_classes, classes_skipped, classes_created, students_promoted,
+students_leaving, teachers_copied, enrolments_moved, enrolments_revoked, course_links`. The result's `classes[]` carry
+`action` `skip` and `target_id: null` for skipped classes. Apply recomputes the plan under a per-school lock and the year
 row locks; a different plan answers `409 _review_stale`, another running rollover `409 _rollover_busy`, an archived
 source year `409 _state_conflict`, unusable years `422 _invalid_year`. Applying the same review again answers the
 first result with `already_applied: true`.

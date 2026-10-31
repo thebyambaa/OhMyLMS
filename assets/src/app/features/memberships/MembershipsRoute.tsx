@@ -1,61 +1,29 @@
-import { Suspense } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
-import { Link, useSearchParams } from 'react-router-dom';
-import { AutomationsPanel, CohortsPanel } from '../commerce/public';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import MembershipsPage from './MembershipsPage';
 
-const PANELS = [
-	{ id: '', label: () => __( 'Plans', 'ohmylms' ) },
-	{ id: 'cohorts', label: () => __( 'Cohorts', 'ohmylms' ) },
-	{ id: 'automations', label: () => __( 'Automations', 'ohmylms' ) },
-] as const;
+/** Former `panel=` values of Commerce › Memberships, now Commerce tabs with these routes. */
+const PANEL_ROUTES: Readonly< Record< string, string > > = {
+	cohorts: '/cohorts',
+	automations: '/automations',
+};
 
 /**
- * Commerce › Memberships: plans, cohorts and automations as in-page panels (`panel=`), until the
- * admin navigation gives cohorts and automations their own tabs.
+ * Commerce › Memberships: the plan list. Old `?panel=cohorts|automations` addresses open the Cohorts
+ * or Automations tab with the rest of their query.
  */
 export default function MembershipsRoute() {
 	const [ params ] = useSearchParams();
-	const current =
-		PANELS.find( ( panel ) => panel.id === params.get( 'panel' ) )?.id ??
-		'';
-	return (
-		<>
-			<ul
-				className="subsubsub"
-				aria-label={ __( 'Memberships', 'ohmylms' ) }
-			>
-				{ PANELS.map( ( panel, index ) => (
-					<li key={ panel.id }>
-						<Link
-							to={
-								panel.id
-									? `/memberships?panel=${ panel.id }`
-									: '/memberships'
-							}
-							className={
-								current === panel.id ? 'current' : undefined
-							}
-							aria-current={
-								current === panel.id ? 'page' : undefined
-							}
-						>
-							{ panel.label() }
-						</Link>
-						{ index < PANELS.length - 1 ? ' |' : '' }
-					</li>
-				) ) }
-			</ul>
-			<div className="clear" />
-			<Suspense
-				fallback={
-					<p role="status">{ __( 'Loading…', 'ohmylms' ) }</p>
-				}
-			>
-				{ 'cohorts' === current && <CohortsPanel /> }
-				{ 'automations' === current && <AutomationsPanel /> }
-			</Suspense>
-			{ '' === current && <MembershipsPage /> }
-		</>
-	);
+	const panel = params.get( 'panel' ) ?? '';
+	if ( Object.prototype.hasOwnProperty.call( PANEL_ROUTES, panel ) ) {
+		const rest = new URLSearchParams( params );
+		rest.delete( 'panel' );
+		const search = rest.toString();
+		return (
+			<Navigate
+				replace
+				to={ `${ PANEL_ROUTES[ panel ] }${ search ? `?${ search }` : '' }` }
+			/>
+		);
+	}
+	return <MembershipsPage />;
 }

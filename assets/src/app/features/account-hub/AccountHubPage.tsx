@@ -1,14 +1,25 @@
+import { lazy, Suspense } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import type { ComponentType } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAdminPlace } from '../../routing/place';
 import { ClassesTab } from './ClassesTab';
 import { tabFromParam } from './model';
-import { ParentsTab } from './ParentsTab';
 import { SchoolsTab } from './SchoolsTab';
 import { Tabs, useTabPanelProps } from './Tabs';
 import { TeachersTab } from './TeachersTab';
 import { TAB_IDS, type TabId } from './types';
-import { UsersTab } from './UsersTab';
+
+const ParentsTab = lazy( () =>
+	import(
+		/* webpackChunkName: "admin-app-account-hub-parents" */ './ParentsTab'
+	).then( ( module ) => ( { default: module.ParentsTab } ) )
+);
+const UsersTab = lazy( () =>
+	import(
+		/* webpackChunkName: "admin-app-account-hub-users" */ './UsersTab'
+	).then( ( module ) => ( { default: module.UsersTab } ) )
+);
 
 const LABELS: Record< TabId, string > = {
 	schools: __( 'Schools', 'ohmylms' ),
@@ -18,7 +29,7 @@ const LABELS: Record< TabId, string > = {
 	users: __( 'All accounts', 'ohmylms' ),
 };
 
-const PANELS: Record< TabId, () => JSX.Element > = {
+const PANELS: Record< TabId, ComponentType > = {
 	schools: SchoolsTab,
 	classes: ClassesTab,
 	teachers: TeachersTab,
@@ -63,7 +74,13 @@ export default function AccountHubPage() {
 				}
 			/>
 			<div { ...panelProps( selected, selected ) }>
-				<Panel key={ selected } />
+				<Suspense
+					fallback={
+						<p role="status">{ __( 'Loading…', 'ohmylms' ) }</p>
+					}
+				>
+					<Panel key={ selected } />
+				</Suspense>
 			</div>
 		</>
 	);

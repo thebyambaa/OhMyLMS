@@ -50,6 +50,82 @@ export const subjectProfiles: FeatureDefinition = {
 			)
 	),
 };
+/**
+ * Content Hub › Skills › skill workspace sections (`&section=<id>`), all served by one chunk. The
+ * screens need the curriculum administrator, unlike the Skills tab itself.
+ */
+const skillWorkspace = lazy(
+	() =>
+		import(
+			/* webpackChunkName: "admin-app-skill-workspace" */ './SkillWorkspace'
+		)
+);
+export const skillWorkspaceMappings: FeatureDefinition = {
+	id: 'skill-workspace-mappings',
+	title: __( 'Combined mappings', 'ohmylms' ),
+	path: '/content-hub/skills/mappings',
+	group: 'content',
+	tab: 'skills',
+	section: 'mappings',
+	capability: 'manage_options',
+	hidden: true,
+	component: skillWorkspace,
+};
+export const skillWorkspaceAiRuns: FeatureDefinition = {
+	id: 'skill-workspace-ai-runs',
+	title: __( 'AI runs', 'ohmylms' ),
+	path: '/content-hub/skills/ai-runs',
+	group: 'content',
+	tab: 'skills',
+	section: 'ai-runs',
+	capability: 'manage_options',
+	hidden: true,
+	component: skillWorkspace,
+};
+export const skillWorkspaceContentLinks: FeatureDefinition = {
+	id: 'skill-workspace-content-links',
+	title: __( 'Content links', 'ohmylms' ),
+	path: '/content-hub/skills/content-links',
+	group: 'content',
+	tab: 'skills',
+	section: 'content-links',
+	capability: 'manage_options',
+	hidden: true,
+	component: skillWorkspace,
+};
+export const skillWorkspacePlacement: FeatureDefinition = {
+	id: 'skill-workspace-placement',
+	title: __( 'Domain placement', 'ohmylms' ),
+	path: '/content-hub/skills/placement',
+	group: 'content',
+	tab: 'skills',
+	section: 'placement',
+	capability: 'manage_options',
+	hidden: true,
+	component: skillWorkspace,
+};
+export const skillWorkspaceQuizzes: FeatureDefinition = {
+	id: 'skill-workspace-skill-quizzes',
+	title: __( 'Skill quizzes', 'ohmylms' ),
+	path: '/content-hub/skills/skill-quizzes',
+	group: 'content',
+	tab: 'skills',
+	section: 'skill-quizzes',
+	capability: 'manage_options',
+	hidden: true,
+	component: skillWorkspace,
+};
+export const skillWorkspaceProvenance: FeatureDefinition = {
+	id: 'skill-workspace-provenance',
+	title: __( 'Provenance review', 'ohmylms' ),
+	path: '/content-hub/skills/provenance',
+	group: 'content',
+	tab: 'skills',
+	section: 'provenance',
+	capability: 'manage_options',
+	hidden: true,
+	component: skillWorkspace,
+};
 /** Syllabus comparison (groups, roadmaps, shared skills, learner audit) at `#/content-hub/curriculum/compare`. */
 export const curriculumCompare: FeatureDefinition = {
 	id: 'curriculum-compare',

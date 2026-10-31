@@ -4,7 +4,16 @@ import { ApiError } from '../../lib/api';
 import { renderShell } from '../../test/render';
 import * as hub from '../content-hub';
 import ComparePage from './ComparePage';
-import { curriculumCompare } from './index';
+import {
+	curriculumCompare,
+	skillWorkspaceAiRuns,
+	skillWorkspaceContentLinks,
+	skillWorkspaceMappings,
+	skillWorkspacePlacement,
+	skillWorkspaceProvenance,
+	skillWorkspaceQuizzes,
+} from './index';
+import SkillWorkspace from './SkillWorkspace';
 import * as mapApi from './skill-map';
 import * as api from './workspace';
 
@@ -60,9 +69,20 @@ vi.mock( '../content-hub', async ( original ) => ( {
 const sha = 'a'.repeat( 64 );
 const conflict = () =>
 	new ApiError( { status: 409, code: 'stale', message: 'Changed.' } );
-function open( tab: string, query = '' ) {
-	renderShell( [ { ...curriculumCompare, component: ComparePage } ], {
-		route: `/content-hub/curriculum/compare?tab=${ tab }${ query }`,
+const features = [
+	{ ...curriculumCompare, component: ComparePage },
+	...[
+		skillWorkspaceMappings,
+		skillWorkspaceAiRuns,
+		skillWorkspaceContentLinks,
+		skillWorkspacePlacement,
+		skillWorkspaceQuizzes,
+		skillWorkspaceProvenance,
+	].map( ( feature ) => ( { ...feature, component: SkillWorkspace } ) ),
+];
+function open( route: string ) {
+	renderShell( features, {
+		route,
 		capabilities: { manage_options: true },
 	} );
 }
@@ -109,42 +129,40 @@ beforeEach( () => {
 } );
 
 describe( 'Skill workspace', () => {
-	it( 'adds the workspace sections to the comparison screen', async () => {
+	it( 'is a Content Hub › Skills section, also opened by the former comparison tab', async () => {
 		vi.mocked( api.readQueue ).mockResolvedValue( {
 			items: [],
 			total: 0,
 			counts: { pending: 0, rejected: 0 },
 			sources: [ 'manual' ],
 		} );
-		open( 'provenance' );
+		open( '/content-hub/curriculum/compare?tab=provenance' );
 		expect(
-			screen.getByRole( 'heading', { name: 'Skill workspace' } )
+			await screen.findByRole( 'heading', { name: 'Skill workspace' } )
 		).toBeInTheDocument();
-		const nav = screen.getByRole( 'navigation', {
-			name: 'Comparison sections',
-		} );
-		for ( const name of [
-			'Combined mappings',
-			'AI runs',
-			'Content links',
-			'Domain placement',
-			'Skill quizzes',
-			'Provenance review',
-		] ) {
-			expect(
-				within( nav ).getByRole( 'link', { name } )
-			).toBeInTheDocument();
-		}
+		expect(
+			screen.queryByRole( 'navigation', { name: 'Comparison sections' } )
+		).toBeNull();
 		expect(
 			await screen.findByText( 'Nothing to review here.' )
 		).toBeInTheDocument();
+	} );
+
+	it( 'leaves the workspace sections out of the comparison screen', async () => {
+		open( '/content-hub/curriculum/compare' );
+		const nav = await screen.findByRole( 'navigation', {
+			name: 'Comparison sections',
+		} );
+		expect(
+			within( nav ).queryByRole( 'link', { name: 'Combined mappings' } )
+		).toBeNull();
 	} );
 
 	it( 'shows a skill’s mappings with their source and removes one after confirmation', async () => {
 		const user = userEvent.setup();
 		vi.mocked( api.readCombined ).mockResolvedValue( view );
 		vi.mocked( api.removeMapping ).mockRejectedValueOnce( conflict() );
-		open( 'mappings', '&skill=7' );
+		open( '/content-hub/skills/mappings?skill=7' );
 		expect( await screen.findByText( 'AI run (91%)' ) ).toBeInTheDocument();
 		expect( screen.getByText( 'IGCSE' ) ).toBeInTheDocument();
 		await user.click(
@@ -195,7 +213,7 @@ describe( 'Skill workspace', () => {
 		vi.mocked( api.reviewSkills ).mockResolvedValue( [
 			{ id: 3, error: 'Someone reviewed it.', stale: true },
 		] );
-		open( 'provenance' );
+		open( '/content-hub/skills/provenance' );
 		expect( await screen.findByText( 'model-x' ) ).toBeInTheDocument();
 		await user.type(
 			screen.getByLabelText( 'Note for the audit trail (optional)' ),
@@ -249,7 +267,7 @@ describe( 'Skill workspace', () => {
 			totalPages: 1,
 		} as Awaited< ReturnType< typeof hub.listSkills > > );
 		vi.mocked( api.updateContentLinks ).mockRejectedValueOnce( conflict() );
-		open( 'content', '&kind=lesson&content=5' );
+		open( '/content-hub/skills/content-links?kind=lesson&content=5' );
 		expect(
 			await screen.findByRole( 'link', { name: 'Fractions' } )
 		).toBeInTheDocument();
@@ -305,7 +323,8 @@ describe( 'Skill workspace', () => {
 			total: 1,
 		} );
 		vi.mocked( api.reviewSuggestions ).mockResolvedValue( [] );
-		open( 'ai', '&run=1' );
+		// The former comparison address keeps the rest of its query.
+		open( '/content-hub/curriculum/compare?tab=ai&run=1' );
 		expect( await screen.findByText( 'Same ability' ) ).toBeInTheDocument();
 		await user.selectOptions(
 			screen.getAllByLabelText( 'Relation' ).at( -1 ) as HTMLElement,
@@ -345,7 +364,7 @@ describe( 'Skill workspace', () => {
 			],
 		} );
 		vi.mocked( api.savePlacement ).mockResolvedValue( 1 );
-		open( 'placement', '&subject=Maths' );
+		open( '/content-hub/skills/placement?subject=Maths' );
 		await user.selectOptions(
 			await screen.findByLabelText( 'Domain of Linear equations' ),
 			'algebra'
@@ -382,7 +401,7 @@ describe( 'Skill workspace', () => {
 			available: 2,
 			quizzes: [],
 		} );
-		open( 'quizzes', '&skill=7' );
+		open( '/content-hub/skills/skill-quizzes?skill=7' );
 		expect(
 			await screen.findByText( /2 approved question families/ )
 		).toBeInTheDocument();

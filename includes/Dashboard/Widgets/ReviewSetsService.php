@@ -10,8 +10,10 @@ namespace OhMyLMS\Dashboard\Widgets;
 use OhMyLMS\Admin\AdminNavigation;
 use OhMyLMS\Assessment\Pools;
 use OhMyLMS\Assessment\SkillAssessment;
+use OhMyLMS\Dashboard\Access;
 use OhMyLMS\Dashboard\MasteryRepository;
 use OhMyLMS\Dashboard\Scope;
+use OhMyLMS\Dashboard\ScopeResolver;
 use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
@@ -19,9 +21,11 @@ defined( 'ABSPATH' ) || exit;
 /**
  * A review set is a **draft** quiz with one random pool drawing approved questions of the skill
  * (`Assessment\SkillAssessment::create()`, so the quiz REST permissions and the pool feasibility checks
- * apply as the current user). It is never published here. The quiz remembers the class, the skill and
- * the learners of the group in post meta, and one class and skill get at most one review set outside the
- * trash: a second request (a double click, another tab) returns the existing one.
+ * apply as the current user). Teachers and school administrators who cannot author quizzes may create one
+ * for their own classes: the draft is theirs, but only a quiz author can edit or publish it. It is never
+ * published here. The quiz remembers the class, the skill and the learners of the group in post meta, and
+ * one class and skill get at most one review set outside the trash: a second request (a double click,
+ * another tab) returns the existing one.
  */
 final class ReviewSetsService {
 
@@ -103,6 +107,59 @@ final class ReviewSetsService {
 	}
 
 	/**
+	 * Whether a user may create review sets: quiz authors, and school staff (teachers and school
+	 * administrators with a dashboard scope) for their own classes, as drafts an administrator publishes.
+	 *
+	 * @param int $user_id User.
+	 * @return bool
+	 */
+	public static function can_assign( $user_id ) {
+		return self::can_author( $user_id ) || (bool) ScopeResolver::available( (int) $user_id );
+	}
+
+	/**
+	 * Whether a class is one of the user's own dashboard class scopes (a class they teach, or a class of a
+	 * school they administer).
+	 *
+	 * @param int $user_id  User.
+	 * @param int $class_id Class.
+	 * @return bool
+	 */
+	public static function owns_class( $user_id, $class_id ) {
+		foreach ( ScopeResolver::available( (int) $user_id ) as $scope ) {
+			if ( Scope::CLASSROOM === $scope->type() && (int) $class_id === $scope->id() ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Run a callback while a user who cannot author quizzes holds the quiz type's `edit_posts`, so the quiz
+	 * routes {@see SkillAssessment::create()} goes through accept the draft as theirs. Nothing else is
+	 * granted (no publishing, no other users' posts) and the grant ends with the callback.
+	 *
+	 * @param int      $user_id  User.
+	 * @param callable $callback Callback.
+	 * @return mixed What the callback returns.
+	 */
+	private static function as_draft_author( $user_id, callable $callback ) {
+		$type  = get_post_type_object( OHMYLMS_QUIZ_CPT );
+		$grant = static function ( $allcaps, $caps, $args, $user ) use ( $user_id, $type ) {
+			if ( $type && $user instanceof \WP_User && (int) $user->ID === (int) $user_id ) {
+				$allcaps[ $type->cap->edit_posts ] = true;
+			}
+			return $allcaps;
+		};
+		add_filter( 'user_has_cap', $grant, 10, 4 );
+		try {
+			return $callback();
+		} finally {
+			remove_filter( 'user_has_cap', $grant, 10 );
+		}
+	}
+
+	/**
 	 * Review sets outside the trash for some groups.
 	 *
 	 * @param string[] $keys Guard keys.
@@ -160,8 +217,11 @@ final class ReviewSetsService {
 		global $wpdb;
 		$class_id = (int) $class_id;
 		$skill_id = (int) $skill_id;
-		if ( ! self::can_author( $user_id ) ) {
+		if ( ! self::can_assign( $user_id ) ) {
 			return new WP_Error( 'ohmylms_dashboard_review_set_forbidden', __( 'You cannot create quizzes, so you cannot assign a review set. Ask a site administrator.', 'ohmylms' ), array( 'status' => 403 ) );
+		}
+		if ( ! Access::is_site_admin( $user_id ) && ! self::owns_class( $user_id, $class_id ) ) {
+			return Scope::forbidden();
 		}
 		$row = MasteryRepository::row( $scope, 'class:' . $class_id );
 		if ( ! $row ) {
@@ -208,16 +268,18 @@ final class ReviewSetsService {
 					)
 				);
 			}
-			$created = SkillAssessment::create(
-				array(
-					/* translators: 1: skill name, 2: class name. */
-					'title'     => sprintf( __( '%1$s review set (%2$s)', 'ohmylms' ), $skill['name'], $row['label'] ),
-					'style'     => 'quiz',
-					'skills'    => array( $skill_id ),
-					'per_skill' => $questions['draw'],
-					'publish'   => false,
-				)
+			$args    = array(
+				/* translators: 1: skill name, 2: class name. */
+				'title'     => sprintf( __( '%1$s review set (%2$s)', 'ohmylms' ), $skill['name'], $row['label'] ),
+				'style'     => 'quiz',
+				'skills'    => array( $skill_id ),
+				'per_skill' => $questions['draw'],
+				'publish'   => false,
 			);
+			$create  = static function () use ( $args ) {
+				return SkillAssessment::create( $args );
+			};
+			$created = self::can_author( $user_id ) ? $create() : self::as_draft_author( $user_id, $create );
 			if ( is_wp_error( $created ) ) {
 				return $created;
 			}

@@ -34,11 +34,10 @@ export const accountHubSchool: FeatureDefinition = {
 	extensionRoute: '/accounthub',
 	hidden: true,
 	capability: 'manage_options',
-	component: lazy(
-		() =>
-			import(
-				/* webpackChunkName: "admin-app-account-hub" */ './SchoolEditorPage'
-			)
+	component: lazy( () =>
+		import(
+			/* webpackChunkName: "admin-app-account-hub" */ './screens'
+		).then( ( screens ) => screens.loadSchoolEditor() )
 	),
 };
 
@@ -53,11 +52,10 @@ export const accountHubRoster: FeatureDefinition = {
 	extensionRoute: '/accounthub',
 	hidden: true,
 	capability: 'manage_options',
-	component: lazy(
-		() =>
-			import(
-				/* webpackChunkName: "admin-app-account-hub" */ './SchoolRosterPage'
-			)
+	component: lazy( () =>
+		import(
+			/* webpackChunkName: "admin-app-account-hub" */ './screens'
+		).then( ( screens ) => screens.loadSchoolRoster() )
 	),
 };
 
@@ -71,10 +69,9 @@ export const accountHubClass: FeatureDefinition = {
 	extensionRoute: '/accounthub',
 	hidden: true,
 	capability: 'manage_options',
-	component: lazy(
-		() =>
-			import(
-				/* webpackChunkName: "admin-app-account-hub" */ './ClassEditorPage'
-			)
+	component: lazy( () =>
+		import(
+			/* webpackChunkName: "admin-app-account-hub" */ './screens'
+		).then( ( screens ) => screens.loadClassEditor() )
 	),
 };

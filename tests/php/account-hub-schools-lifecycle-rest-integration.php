@@ -603,6 +603,89 @@ try {
 	ok( 1 === (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE source_class_id=%d', Schema::table( 'classes' ), $c7 ) ), 'no duplicate successor' );
 	ok_error( life_api( 'POST', "/account-hub/schools/$a/rollover/preview", $input ), 409, 'ohmylms_account_hub_state_conflict', 'an archived year cannot roll over again' );
 
+	// Rollover of classes without students (school B): skipped by default, copied with include_empty.
+	wp_set_current_user( $admin );
+	$year_b = static function ( $label ) use ( $b ) {
+		return (int) Service::create_year(
+			$b,
+			array(
+				'label'     => $label,
+				'starts_at' => $label . '-09-01',
+				'ends_at'   => ( (int) $label + 1 ) . '-06-30',
+			)
+		)['id'];
+	};
+	$class_b = static function ( $name, $grade, $year ) use ( $b ) {
+		return (int) Service::create_class(
+			$b,
+			array(
+				'name'             => $name,
+				'grade'            => $grade,
+				'academic_year_id' => $year,
+			)
+		)['id'];
+	};
+	$yb1     = $year_b( '2025' );
+	$yb2     = $year_b( '2026' );
+	$yb3     = $year_b( '2027' );
+	$b5      = $class_b( '5A', '5', $yb1 );
+	$b5_void = $class_b( '5B', '5', $yb1 );
+	$b6_void = $class_b( '6Z', '6', $yb1 );
+	$sb1     = (int) Service::create_student( $b, array( 'name' => $tag . ' Dana', 'external_student_id' => $tag . '-b1' ) )['id'];
+	$user_ids[] = $sb1;
+	Service::class_member(
+		$b5,
+		array(
+			'user_id' => $sb1,
+			'role'    => 'student',
+		)
+	);
+	$input_b = array(
+		'from_year_id' => $yb1,
+		'to_year_id'   => $yb2,
+		'grade_map'    => array(
+			array(
+				'from' => '5',
+				'to'   => '6',
+			),
+			array(
+				'from' => '6',
+				'to'   => '7',
+			),
+		),
+	);
+	$plan_b = ok_status( life_api( 'POST', "/account-hub/schools/$b/rollover/preview", $input_b ), 200, 'preview with empty classes' );
+	ok( 3 === $plan_b['totals']['classes'] && 2 === $plan_b['totals']['classes_skipped'] && 1 === $plan_b['totals']['promoted_classes'] && 1 === $plan_b['totals']['classes_created'] && false === $plan_b['include_empty'], 'empty classes are skipped by default: ' . wp_json_encode( $plan_b['totals'] ) );
+	$void_row = array_values( array_filter( $plan_b['classes'], static fn( $row ) => $row['class_id'] === $b5_void ) )[0];
+	ok( 'skip' === $void_row['action'] && null === $void_row['target'] && 0 === $void_row['students'], 'a skipped class has no successor in the preview' );
+	$plan_all = ok_status( life_api( 'POST', "/account-hub/schools/$b/rollover/preview", array_merge( $input_b, array( 'include_empty' => true ) ) ), 200, 'preview including empty classes' );
+	ok( 0 === $plan_all['totals']['classes_skipped'] && 3 === $plan_all['totals']['classes_created'] && true === $plan_all['include_empty'] && $plan_all['review'] !== $plan_b['review'], 'include_empty copies every class and changes the review' );
+	ok_error( life_api( 'POST', "/account-hub/schools/$b/rollover", array_merge( $input_b, array( 'include_empty' => true, 'review' => $plan_b['review'] ) ) ), 409, 'ohmylms_account_hub_review_stale', 'the empty-class choice is part of the review' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+	$applied_b = ok_status( life_api( 'POST', "/account-hub/schools/$b/rollover", array_merge( $input_b, array( 'review' => $plan_b['review'] ) ) ), 200, 'apply skipping empty classes' );
+	ok( 2 === $applied_b['totals']['classes_skipped'], 'the result reports the skipped classes' );
+	$skipped_rows = array_values( array_filter( $applied_b['classes'], static fn( $row ) => 'skip' === $row['action'] ) );
+	ok( 2 === count( $skipped_rows ) && null === $skipped_rows[0]['target_id'] && null === $skipped_rows[1]['target_id'], 'skipped classes have no target' );
+	ok( 'archived' === Service::row( 'classes', $b5_void )['status'] && 'archived' === Service::row( 'classes', $b6_void )['status'], 'skipped classes are archived with the year' );
+	ok( 0 === (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE source_class_id IN (%d,%d)', Schema::table( 'classes' ), $b5_void, $b6_void ) ), 'no successor for an empty class' );
+	$b6 = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE source_class_id=%d AND academic_year_id=%d', Schema::table( 'classes' ), $b5, $yb2 ) );
+	ok( $b6 > 0, 'the class with a student is promoted' );
+	$b6_new_void = $class_b( '6Y', '6', $yb2 );
+	$input_b2    = array(
+		'from_year_id'  => $yb2,
+		'to_year_id'    => $yb3,
+		'grade_map'     => array(
+			array(
+				'from' => '6',
+				'to'   => '7',
+			),
+		),
+		'include_empty' => true,
+	);
+	$plan_b2 = ok_status( life_api( 'POST', "/account-hub/schools/$b/rollover/preview", $input_b2 ), 200, 'second preview including empty classes' );
+	ok( 0 === $plan_b2['totals']['classes_skipped'] && 2 === $plan_b2['totals']['classes_created'], 'both classes get a successor' );
+	$applied_b2 = ok_status( life_api( 'POST', "/account-hub/schools/$b/rollover", array_merge( $input_b2, array( 'review' => $plan_b2['review'] ) ) ), 200, 'apply including empty classes' );
+	ok( 0 === $applied_b2['totals']['classes_skipped'] && 1 === (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE source_class_id=%d AND academic_year_id=%d', Schema::table( 'classes' ), $b6_new_void, $yb3 ) ), 'include_empty copies the empty class' );
+
 	// Removal: impact, archive, read only, restore, delete with confirmation; accounts stay.
 	wp_set_current_user( $admin );
 	$impact = ok_status( life_api( 'GET', "/account-hub/schools/$a/removal" ), 200, 'removal impact' );

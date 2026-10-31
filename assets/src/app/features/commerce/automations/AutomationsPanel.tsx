@@ -36,7 +36,7 @@ function plainDate( value: string | null ): string {
 }
 
 /**
- * Automations (`/memberships?panel=automations`): "when <event> then <action>" rules on purchase,
+ * Commerce › Automations (`/automations`): "when <event> then <action>" rules on purchase,
  * enrolment and learning events, with their run log. `rule=new|<id>` opens the editor and
  * `show=log` the log.
  */

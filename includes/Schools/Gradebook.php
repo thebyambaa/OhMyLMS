@@ -251,7 +251,7 @@ final class Gradebook {
 		$q     = Schema::table( 'quiz_attempts' );
 		$a     = Schema::table( 'quiz_attempts_answers' );
 		// quiz_attempts.total stores earned points, not the maximum possible points.
-		$quizzes     = $wpdb->get_results( $wpdb->prepare( 'SELECT q.id,q.student_id AS user_id,q.quiz_id AS content_id,q.status,SUM(a.question_marks) AS max,COALESCE(SUM(a.achive_mark),0) AS score FROM %i q LEFT JOIN %i a ON a.quiz_attempt_id=q.id WHERE q.course_id=%d GROUP BY q.id,q.student_id,q.quiz_id,q.status ORDER BY q.id DESC', $q, $a, $course ), ARRAY_A );
+		$quizzes     = \OhMyLMS\Gradebook\ExamRelease::hold( $wpdb->get_results( $wpdb->prepare( 'SELECT q.id,q.student_id AS user_id,q.quiz_id AS content_id,q.status,SUM(a.question_marks) AS max,COALESCE(SUM(a.achive_mark),0) AS score FROM %i q LEFT JOIN %i a ON a.quiz_attempt_id=q.id WHERE q.course_id=%d GROUP BY q.id,q.student_id,q.quiz_id,q.status ORDER BY q.id DESC', $q, $a, $course ), ARRAY_A ) );
 		$a           = Schema::table( 'assignment_attempts' );
 		$assignments = $wpdb->get_results( $wpdb->prepare( 'SELECT id,user_id,assignment_id AS content_id,status,score FROM %i WHERE course_id=%d ORDER BY id DESC', $a, $course ), ARRAY_A );
 		$o           = Schema::table( 'gradebook_overrides' );

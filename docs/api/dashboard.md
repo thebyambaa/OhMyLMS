@@ -293,8 +293,9 @@ per class considered, largest 8 groups). `data: { row_type, min_group, total, gr
 class{ id, key, label, learners }, skill{ id, name, code }, learners, questions{ available, needed, draw, enough },
 review_set|null }], can_assign }`. `questions` comes from `Assessment\Pools::available()` (different approved
 families; 3 needed, 5 drawn, filter `ohmylms_dashboard_review_set_questions`), so the widget says "not enough
-questions" instead of failing. `can_assign` (quiz `edit_posts`) and `review_set` (`{ id, title, status, route }`,
-route `/quizzes/<id>` only with `edit_post` and the Content page capability) are per user, uncached.
+questions" instead of failing. `can_assign` (quiz `edit_posts`, or school staff with a dashboard scope) and
+`review_set` (`{ id, title, status, route }`, route `/quizzes/<id>` only with `edit_post` and the Content page
+capability) are per user, uncached.
 
 `POST /dashboard/widgets/review-sets/assign` (`scope`, `class_id`, `skill_id`; `Widgets\ReviewSetsService`) creates
 a **draft** quiz through `Assessment\SkillAssessment::create()` (one random pool by skill, `publish: false`,
@@ -302,8 +303,13 @@ created as the current user; never published) titled "<skill> review set (<class
 `_ohmylms_review_set_key` (`class:N|skill:N`) and `_ohmylms_review_set` (class, skill, learner ids, creator).
 201 `{ scope, created: true, review_set{ …, questions } }`; an existing non-trashed set of the group answers
 200 `created: false` (one per group; a MySQL advisory lock serialises double submits, waiting 5 s, then 409
-`ohmylms_dashboard_review_set_busy`). Errors: 403 `ohmylms_dashboard_review_set_forbidden` (cannot create
-quizzes), 404 row/skill, 409 `ohmylms_dashboard_review_set_no_group` (fewer than 3 now), 409
+`ohmylms_dashboard_review_set_busy`). Teachers and school administrators who cannot create quizzes may still
+create the draft for a class among their own dashboard class scopes (a class they teach, or a class of a school
+they administer): the quiz routes run with the quiz type's `edit_posts` granted to them for that call only, so
+the draft is authored by them but they cannot edit or publish it afterwards (no editor route); a quiz author
+publishes it from Content › Quizzes. Errors: 403 `ohmylms_dashboard_review_set_forbidden` (cannot create
+quizzes), 403 `ohmylms_dashboard_forbidden_scope` (anyone but a site administrator naming a class that is not
+theirs), 404 row/skill, 409 `ohmylms_dashboard_review_set_no_group` (fewer than 3 now), 409
 `ohmylms_dashboard_review_set_not_enough_questions` (`data.available`, `data.needed`; nothing created).
 Action `ohmylms_dashboard_review_set_created( $quiz_id, $class_id, $skill_id, $learner_ids )`.
 

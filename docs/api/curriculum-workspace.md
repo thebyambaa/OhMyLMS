@@ -102,8 +102,9 @@ add from sources; folders are kept and new steps join the first) with the same k
 shows one learner's shared mastery and per-syllabus coverage by user ID.
 
 Combined mapping groups, AI runs and suggestions, shared content links, domain/level placement,
-skill-owned quizzes and provenance review are further sections of this screen (`?tab=mappings|ai|
-content|placement|quizzes|provenance`); see [skill workspace](skill-workspace.md). The
+skill-owned quizzes and provenance review are Content Hub › Skills sections (`/content-hub/skills/<section>`);
+this screen's former `?tab=mappings|ai|content|placement|quizzes|provenance` open them. See
+[skill workspace](skill-workspace.md). The
 `/mapping-groups*`, `/ai/*` and `/shared-skills/:id/content` routes now have typed arguments.
 
 ## Verification

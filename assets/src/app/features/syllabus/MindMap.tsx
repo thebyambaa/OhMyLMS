@@ -31,7 +31,7 @@ function title( node: MapNode ) {
 }
 
 function skillRoute( node: MapNode ) {
-	return `/content-hub/curriculum/compare?tab=mappings&skill=${ node.id }`;
+	return `/content-hub/skills/mappings?skill=${ node.id }`;
 }
 
 /**

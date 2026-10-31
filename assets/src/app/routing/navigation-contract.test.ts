@@ -136,6 +136,7 @@ describe( 'admin navigation contract', () => {
 		expect( tabsOf( 'engagement', 'gamification' ) ).toEqual( [
 			...GAMIFICATION_TABS,
 			'certificates',
+			'issued-certificates',
 		] );
 		expect(
 			groups

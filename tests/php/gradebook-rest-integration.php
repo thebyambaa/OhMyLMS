@@ -535,6 +535,101 @@ try {
 	$school_rollup = call( $fx['sa'], 'GET', '/gradebook/rollup', array( 'scope' => $scope_a ) )->get_data();
 	same( 1, count( $school_rollup['nodes'] ), 'school admin roll-up: their school' );
 
+	// ---------------------------------------------------------------- Exam results release.
+	// E1 becomes a real exam whose results are held: L1's graded attempt has no score in any view.
+	ok( false !== has_action( 'ohmylms_exam_results_changed', array( Version::class, 'touch' ) ), 'a results release, undo or policy change replaces the gradebook version' );
+	$exam = dashfx_post( $tag, \OhMyLMS\Exams\Library::TYPE, 'Release exam' );
+	update_post_meta( $fx['e1'], '_ohmylms_exam_id', $exam );
+	update_post_meta(
+		$exam,
+		\OhMyLMS\Exams\Results::POLICY_META,
+		array(
+			'mode'       => 'manual',
+			'release_at' => '',
+		)
+	);
+	$e1_attempt = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE quiz_id = %d AND student_id = %d', $wpdb->prefix . 'ohmylms_quiz_attempts', $fx['e1'], $l[1] ) );
+	ok( $e1_attempt && array( $e1_attempt ) === \OhMyLMS\Exams\Results::held( array( $e1_attempt ) ) && false === \OhMyLMS\Exams\Results::visible( $e1_attempt ), 'L1 E1 attempt is held' );
+	Version::bump();
+	$held_admin = by_user( call( $fx['admin'], 'GET', '/gradebook/courses/' . $course, array( 'scope' => 'all' ) )->get_data() );
+	$held_cell  = cell_of( $held_admin[ $l[1] ], $fx['e1'] );
+	ok( 'pending' === $held_cell['state'] && null === $held_cell['score'] && 'pending' === $held_cell['computed']['state'], 'admin course grid: a held exam score is pending' );
+	// Course weights 40/30/30 without the test category: (40 × 70 + 30 × 80) / 70.
+	same( 74.29, $held_admin[ $l[1] ]['total']['percent'], 'the held score leaves the total' );
+	$held_teacher = by_user( call( $fx['teacher'], 'GET', '/gradebook/courses/' . $course, array( 'scope' => $scope_1 ) )->get_data() );
+	ok( 'pending' === cell_of( $held_teacher[ $l[1] ], $fx['e1'] )['state'], 'class scope course grid: held' );
+	$held_school = by_user( call( $fx['sa'], 'GET', '/gradebook/courses/' . $course, array( 'scope' => $scope_a ) )->get_data() );
+	ok( 'pending' === cell_of( $held_school[ $l[1] ], $fx['e1'] )['state'], 'school scope course grid: held' );
+	$held_roster = call( $fx['teacher'], 'GET', '/gradebook/classes/' . $fx['class_a1'], array( 'scope' => $scope_1 ) )->get_data();
+	$roster_l1   = current( wp_list_filter( $held_roster['learners'], array( 'id' => $l[1] ) ) );
+	$roster_cell = (array) ( ( (array) $roster_l1['cells'] )[ $course . ':' . $fx['e1'] ] ?? array() );
+	ok( 'pending' === ( $roster_cell['state'] ?? '' ) && null === $roster_cell['score'], 'roster view: held' );
+	$held_tr = call( $fx['sa'], 'GET', '/gradebook/learners/' . $l[1], array( 'scope' => $scope_a ) )->get_data();
+	ok( 'pending' === ( (array) $held_tr['enrolments'][0]['row']['cells'] )[ (string) $fx['e1'] ]['state'], 'transcript: held' );
+	same( 74.29, $held_tr['enrolments'][0]['row']['total']['percent'], 'transcript total leaves the held score out' );
+	$held_detail = call( $fx['teacher'], 'GET', '/gradebook/courses/' . $course . '/cells/' . $fx['e1'] . '/' . $l[1], array( 'scope' => $scope_1 ) )->get_data();
+	ok( 'pending' === $held_detail['cell']['state'] && null === $held_detail['cell']['score'], 'cell detail: held' );
+	$held_rollup = array();
+	foreach ( call( $fx['admin'], 'GET', '/gradebook/rollup', array( 'scope' => 'all' ) )->get_data()['nodes'] as $node ) {
+		$held_rollup[ $node['type'] . ':' . $node['name'] ] = $node;
+	}
+	same( $alpha['pending'] + 1, $held_rollup[ 'school:' . $tag . ' Alpha School' ]['pending'], 'roll-up counts the held score as pending' );
+	status_is( call( $fx['admin'], 'GET', '/gradebook/mastery', array( 'scope' => 'all', 'course' => $course ) ), 200, '', 'skill mastery still answers (it shows skill states, not exam scores)' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+	$class_book = \OhMyLMS\Schools\Gradebook::read( $course );
+	$class_row  = null;
+	foreach ( array_merge( $class_book['students'], ...array_map( static fn( $c ) => $c['students'], $class_book['classes'] ) ) as $student ) {
+		if ( $l[1] === $student['id'] ) {
+			$class_row = $student;
+		}
+	}
+	ok( $class_row && 'pending' === $class_row['cells'][ $fx['e1'] ]['status'] && null === $class_row['cells'][ $fx['e1'] ]['score'], 'class gradebook (Schools\Gradebook): held' );
+	$matrix_rows = \OhMyLMS\Gradebook\ExamRelease::hold( $wpdb->get_results( $wpdb->prepare( 'SELECT q.id, q.student_id AS user_id, q.quiz_id AS content_id, q.status, q.start_date, SUM(a.question_marks) AS max, COALESCE(SUM(a.achive_mark),0) AS score FROM %i q LEFT JOIN %i a ON a.quiz_attempt_id = q.id WHERE q.id = %d GROUP BY q.id', $wpdb->prefix . 'ohmylms_quiz_attempts', $wpdb->prefix . 'ohmylms_quiz_attempts_answers', $e1_attempt ), ARRAY_A ) );
+	$distributed = array(
+		array(
+			'prior_completion' => 1,
+			'assigned_at'      => '2000-01-01 00:00:00',
+		),
+	);
+	$matrix_cell = \OhMyLMS\Student\SchoolGradebook::cell( array( 'max' => 40.0 ), $distributed, $matrix_rows );
+	ok( \OhMyLMS\Gradebook\ExamRelease::HELD === $matrix_rows[0]['status'] && 'pending' === $matrix_cell['status'] && null === $matrix_cell['score'], 'school and teacher matrices (Student\SchoolGradebook): held' );
+
+	// Released by a release row, then by the policy: the score is back everywhere.
+	$wpdb->insert(
+		\OhMyLMS\Exams\Results::table(),
+		array(
+			'attempt_id'  => $e1_attempt,
+			'exam_id'     => $exam,
+			'student_id'  => $l[1],
+			'released_at' => gmdate( 'Y-m-d H:i:s' ),
+			'source'      => 'manual',
+		)
+	);
+	Version::bump();
+	$released = by_user( call( $fx['teacher'], 'GET', '/gradebook/courses/' . $course, array( 'scope' => $scope_1 ) )->get_data() );
+	ok( 'score' === cell_of( $released[ $l[1] ], $fx['e1'] )['state'] && 75.0 === (float) cell_of( $released[ $l[1] ], $fx['e1'] )['percent'], 'a released exam score shows (30 of 40)' );
+	same( 74.5, $released[ $l[1] ]['total']['percent'], 'and counts in the total again' );
+	$wpdb->delete( \OhMyLMS\Exams\Results::table(), array( 'attempt_id' => $e1_attempt ) );
+	update_post_meta(
+		$exam,
+		\OhMyLMS\Exams\Results::POLICY_META,
+		array(
+			'mode'       => 'immediate',
+			'release_at' => '',
+		)
+	);
+	Version::bump();
+	ok( 30.0 === (float) cell_of( by_user( call( $fx['admin'], 'GET', '/gradebook/courses/' . $course, array( 'scope' => 'all' ) )->get_data() )[ $l[1] ], $fx['e1'] )['score'], 'an immediate policy shows the score' );
+	$class_book = \OhMyLMS\Schools\Gradebook::read( $course );
+	foreach ( array_merge( $class_book['students'], ...array_map( static fn( $c ) => $c['students'], $class_book['classes'] ) ) as $student ) {
+		if ( $l[1] === $student['id'] ) {
+			$class_row = $student;
+		}
+	}
+	ok( 'graded' === $class_row['cells'][ $fx['e1'] ]['status'] && 30.0 === (float) $class_row['cells'][ $fx['e1'] ]['score'], 'class gradebook shows the released score' );
+	update_post_meta( $fx['e1'], '_ohmylms_exam_id', $fx['e1'] );
+	wp_delete_post( $exam, true );
+	Version::bump();
+
 	// ---------------------------------------------------------------- Saved views.
 	status_is( call( $fx['teacher'], 'POST', '/gradebook/views', array( 'name' => '', 'section' => 'course', 'query' => '' ) ), 422, 'ohmylms_gradebook_invalid_view', 'view needs a name' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 	$view = call( $fx['teacher'], 'POST', '/gradebook/views', array( 'name' => 'Missing work', 'section' => 'course', 'query' => 'scope=' . $scope_1 . '&course=' . $course . '&status=missing&evil=1' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound

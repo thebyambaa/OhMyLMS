@@ -16,7 +16,8 @@ import './Mastery.css';
 /**
  * "Recommended next assignments": groups of learners in one class below Familiar on a skill, from
  * `GET /dashboard/widgets/review-sets`. "Assign review set" creates a draft quiz drawing the skill's
- * approved questions (never published) and links to it; "See group" lists the learners.
+ * approved questions (never published) and links to it when the user may open the quiz editor; teachers
+ * and school administrators are told an administrator publishes it. "See group" lists the learners.
  *
  * @param props         Component props.
  * @param props.context Scope and period.
@@ -105,22 +106,28 @@ export default function ReviewSetsWidget( { context }: DashboardWidgetProps ) {
 			{ announced && (
 				<div role="status" className="ohmylms-review-sets__status">
 					<Notice status="success" isDismissible={ false }>
-						{ sprintf(
-							/* translators: %s: quiz title. */
-							__(
-								'Draft review set ready: %s. It is not published; review it, then publish and share it with the group.',
-								'ohmylms'
-							),
-							announced.title
-						) }{ ' ' }
 						{ announced.route ? (
-							<Link to={ announced.route }>
-								{ __( 'Open the draft', 'ohmylms' ) }
-							</Link>
+							<>
+								{ sprintf(
+									/* translators: %s: quiz title. */
+									__(
+										'Draft review set ready: %s. It is not published; review it, then publish and share it with the group.',
+										'ohmylms'
+									),
+									announced.title
+								) }{ ' ' }
+								<Link to={ announced.route }>
+									{ __( 'Open the draft', 'ohmylms' ) }
+								</Link>
+							</>
 						) : (
-							__(
-								'A site administrator can open it under Content › Quizzes.',
-								'ohmylms'
+							sprintf(
+								/* translators: %s: quiz title. */
+								__(
+									'Draft review set created: %s. It is not published; an administrator can review and publish it under Content › Quizzes.',
+									'ohmylms'
+								),
+								announced.title
 							)
 						) }
 					</Notice>

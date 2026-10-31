@@ -35,12 +35,21 @@ Score overrides are mirrored into `gradebook_overrides` so the class gradebook a
 | --- | --- |
 | `not_assigned` | the learner is outside the item's audience (wins over everything; cannot be overridden) |
 | `score` | a graded attempt, or a manual score |
-| `pending` | a submission waits for grading (a newer pending retake never hides a graded attempt) |
+| `pending` | a submission waits for grading, or an exam attempt's results are held (a newer pending retake never hides a graded attempt) |
 | `missing` | assigned, due date passed, nothing submitted |
 | `none` | assigned, nothing submitted, not due yet or no due date |
 | `excused` | manual |
 
 Every cell carries `computed` (what the attempts say) next to the effective value, `overridden` and `version`.
+
+**Exam results release.** A graded attempt of an exam whose results learners may not see yet
+(`Exams\Results::held()`: manual policy and not released, or a release date still ahead) has no score in any
+gradebook: Course × Students, Roster × Assignments, the transcript, cell detail, the roll-up (counted as pending),
+the class gradebook (`/courses/<id>/gradebook`) and the school and teacher matrices and CSV
+(`Gradebook\ExamRelease`). It shows as `pending` and stays out of totals and averages until it is released. The rule
+is the same for every viewer (cached grids do not depend on the user); the exam's author sees held scores in the
+exam's Results panel. Releases, undos, policy changes and scheduled releases fire `ohmylms_exam_results_changed`,
+which replaces the gradebook version. Skill mastery shows skill states, not exam scores, and is unchanged.
 
 ## Math
 

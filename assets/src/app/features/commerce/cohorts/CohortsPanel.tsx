@@ -24,7 +24,7 @@ type Dialog =
 const DEFAULTS = { status: 'any', s: '', cohort: '' };
 
 /**
- * Cohorts (`/memberships?panel=cohorts`): groups of learners of a course or a membership plan who
+ * Commerce › Cohorts (`/cohorts`): groups of learners of a course or a membership plan who
  * enrolled in the same window. A list with create, edit, archive and delete; `cohort=<id>` opens the
  * member list.
  */

@@ -5,7 +5,7 @@ import {
 	SelectControl,
 	TextControl,
 } from '@wordpress/components';
-import { useCallback, useState } from '@wordpress/element';
+import { lazy, Suspense, useCallback, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import {
 	Link,
@@ -34,10 +34,7 @@ import {
 	validateYear,
 } from './model';
 import { panelFromParam } from './operationsModel';
-import { SchoolGuardians } from './SchoolGuardians';
 import { SchoolRemovalSection } from './SchoolRemovalSection';
-import { SchoolReportPanel } from './SchoolReportPanel';
-import { SchoolRollover } from './SchoolRollover';
 import type {
 	ClassInput,
 	FormErrors,
@@ -47,6 +44,22 @@ import type {
 	YearInput,
 } from './types';
 import { usePagedList } from './usePagedList';
+
+const SchoolGuardians = lazy( () =>
+	import(
+		/* webpackChunkName: "admin-app-account-hub-guardians" */ './SchoolGuardians'
+	).then( ( module ) => ( { default: module.SchoolGuardians } ) )
+);
+const SchoolReportPanel = lazy( () =>
+	import(
+		/* webpackChunkName: "admin-app-account-hub-report" */ './SchoolReportPanel'
+	).then( ( module ) => ( { default: module.SchoolReportPanel } ) )
+);
+const SchoolRollover = lazy( () =>
+	import(
+		/* webpackChunkName: "admin-app-account-hub-rollover" */ './SchoolRollover'
+	).then( ( module ) => ( { default: module.SchoolRollover } ) )
+);
 
 const PANEL_LABELS: Record< SchoolPanel, string > = {
 	details: __( 'Details and classes', 'ohmylms' ),
@@ -229,14 +242,17 @@ function SchoolEditor( {
 			) }
 		</>
 	);
+	const loading = <p role="status">{ __( 'Loading…', 'ohmylms' ) }</p>;
 	if ( 'guardians' === panel ) {
 		return (
 			<>
 				{ header }
-				<SchoolGuardians
-					school={ school }
-					initialClass={ Number( params.get( 'class_id' ) ) || 0 }
-				/>
+				<Suspense fallback={ loading }>
+					<SchoolGuardians
+						school={ school }
+						initialClass={ Number( params.get( 'class_id' ) ) || 0 }
+					/>
+				</Suspense>
 			</>
 		);
 	}
@@ -244,7 +260,9 @@ function SchoolEditor( {
 		return (
 			<>
 				{ header }
-				<SchoolReportPanel school={ school } />
+				<Suspense fallback={ loading }>
+					<SchoolReportPanel school={ school } />
+				</Suspense>
 			</>
 		);
 	}
@@ -252,16 +270,20 @@ function SchoolEditor( {
 		return (
 			<>
 				{ header }
-				<SchoolRollover
-					key={ school.years.map( ( year ) => year.id ).join( '-' ) }
-					school={ school }
-					onChange={ () =>
-						void refresh.run(
-							( signal ) => getSchool( school.id, signal ),
-							setSchool
-						)
-					}
-				/>
+				<Suspense fallback={ loading }>
+					<SchoolRollover
+						key={ school.years
+							.map( ( year ) => year.id )
+							.join( '-' ) }
+						school={ school }
+						onChange={ () =>
+							void refresh.run(
+								( signal ) => getSchool( school.id, signal ),
+								setSchool
+							)
+						}
+					/>
+				</Suspense>
 			</>
 		);
 	}

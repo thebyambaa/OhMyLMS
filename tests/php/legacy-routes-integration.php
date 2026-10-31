@@ -241,7 +241,7 @@ try {
 	}
 	$settings_tab = AdminNavigation::groups()['settings']['tabs']['settings'];
 	ok( array_keys( $settings_tab['sections'] ) === $tabs['/settings'], 'Settings sections are the settings screen tabs, in order' );
-	ok( array_keys( AdminNavigation::groups()['engagement']['tabs']['gamification']['sections'] ) === array_merge( $tabs['/gamification'], array( 'certificates' ) ), 'Gamification sections are its tabs plus Certificates' );
+	ok( array_keys( AdminNavigation::groups()['engagement']['tabs']['gamification']['sections'] ) === array_merge( $tabs['/gamification'], array( 'certificates', 'issued-certificates' ) ), 'Gamification sections are its tabs plus Certificates and Issued certificates' );
 	ok( array_slice( array_keys( AdminNavigation::groups()['accounts']['tabs'] ), 1 ) === $tabs['/account-hub'], 'Account Hub tabs are Students and the Account Hub screen tabs' );
 
 	// Absolute URLs from the helpers and the screens that use them.
@@ -507,6 +507,19 @@ try {
 		)['render'],
 		'the Skills tab shows the app'
 	);
+	$workspace = AdminNavigation::groups()['content']['tabs']['skills']['sections'];
+	ok( array( 'mappings', 'ai-runs', 'content-links', 'placement', 'skill-quizzes', 'provenance' ) === array_slice( array_keys( $workspace ), 2 ) && array( AdminNavigation::CAPABILITY ) === array_values( array_unique( array_column( array_slice( $workspace, 2 ), 'capability' ) ) ), 'the skill workspace sections are Skills sections for site administrators only' );
+	ok(
+		'ai-runs' === AdminNavigation::current(
+			array(
+				'page'    => 'ohmylms-content',
+				'tab'     => 'skills',
+				'section' => 'ai-runs',
+			)
+		)['section'],
+		'a skill workspace section opens in the app'
+	);
+	ok( array( 'earnings', 'orders', 'memberships', 'cohorts', 'automations', 'subscriptions', 'coupons' ) === array_keys( AdminNavigation::groups()['commerce']['tabs'] ), 'Cohorts and Automations are Commerce tabs after Memberships' );
 	if ( apply_filters( 'ohmylms_should_enable_webhooks', false ) ) {
 		ok( isset( AdminNavigation::visible_tabs( 'settings' )['webhooks'] ), 'Webhooks shows with ohmylms_should_enable_webhooks' );
 	} else {

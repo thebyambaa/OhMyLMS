@@ -20,6 +20,27 @@ export const certificates: FeatureDefinition = {
 };
 
 /**
+ * Issued certificates at `#/certificates/issued` (Gamification › Issued certificates); the old
+ * `/certificates?list=issued` opens it. More literal segments than the editor's path, so it wins.
+ */
+export const certificatesIssued: FeatureDefinition = {
+	id: 'certificates-issued',
+	title: __( 'Issued certificates', 'ohmylms' ),
+	path: '/certificates/issued',
+	group: 'engagement',
+	tab: 'gamification',
+	section: 'issued-certificates',
+	capability: 'manage_options',
+	hidden: true,
+	component: lazy(
+		() =>
+			import(
+				/* webpackChunkName: "admin-app-certificates" */ './IssuedCertificatesList'
+			)
+	),
+};
+
+/**
  * Template editor at `#/certificates/<id>`. A separate route entry because the registry does not
  * accept wildcard paths; it shares the chunk with the list.
  */

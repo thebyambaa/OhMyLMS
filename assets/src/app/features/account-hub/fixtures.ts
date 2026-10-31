@@ -289,6 +289,7 @@ const totals = {
 	classes: 1,
 	promoted_classes: 1,
 	leaving_classes: 0,
+	classes_skipped: 0,
 	classes_created: 1,
 	students_promoted: 1,
 	students_leaving: 0,

@@ -19,8 +19,8 @@ describe( 'emails REST contract', () => {
 		expect( contract.capability ).toBe( 'manage_options' );
 	} );
 
-	it( 'lists the fourteen emails once and every id is URL safe', () => {
-		expect( new Set( contract.emailIds ).size ).toBe( 14 );
+	it( 'lists the fifteen emails once and every id is URL safe', () => {
+		expect( new Set( contract.emailIds ).size ).toBe( 15 );
 		for ( const id of contract.emailIds ) {
 			expect( id ).toMatch( /^[a-z][a-z0-9_]*$/ );
 			expect( editorPath( id ) ).toBe( `/emails?email=${ id }` );

@@ -225,7 +225,7 @@ describe( 'review sets widget', () => {
 		).toBeNull();
 	} );
 
-	it( 'says where the draft is when the user cannot open the quiz editor', async () => {
+	it( 'tells a teacher who cannot open the quiz editor that an administrator publishes the draft', async () => {
 		const user = userEvent.setup();
 		assignReviewSet.mockResolvedValueOnce( {
 			created: true,
@@ -244,12 +244,18 @@ describe( 'review sets widget', () => {
 		);
 		const status = await screen.findByRole( 'status' );
 		expect( status ).toHaveTextContent(
-			'A site administrator can open it under Content › Quizzes.'
+			'Draft review set created: Cells review set (Algebra 8A). It is not published; an administrator can review and publish it under Content › Quizzes.'
 		);
+		expect( status ).not.toHaveTextContent( 'review it, then publish' );
 		expect( within( status ).queryByRole( 'link' ) ).toBeNull();
+		const cells = item(
+			'5 learners in Algebra 8A are below Familiar on Cells'
+		);
+		expect( cells ).toHaveTextContent( 'Draft review set created' );
+		expect( within( cells ).queryByRole( 'link' ) ).toBeNull();
 		expect(
-			item( '5 learners in Algebra 8A are below Familiar on Cells' )
-		).toHaveTextContent( 'Draft review set created' );
+			within( cells ).queryByRole( 'button', { name: /Assign/ } )
+		).toBeNull();
 	} );
 
 	it( 'shows why a review set could not be created', async () => {

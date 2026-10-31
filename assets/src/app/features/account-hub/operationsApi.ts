@@ -277,6 +277,7 @@ function rolloverBody( input: RolloverInput ) {
 			to: row.to.trim(),
 		} ) ),
 		copy_teachers: input.copy_teachers,
+		include_empty: Boolean( input.include_empty ),
 	};
 }
 

@@ -134,5 +134,37 @@ describe( 'sentences', () => {
 		expect( rolloverLines( plan.totals )[ 0 ] ).toBe(
 			'1 classes are archived; 1 new classes are created in the new year.'
 		);
+		expect( rolloverLines( plan.totals ).join( ' ' ) ).not.toMatch(
+			/skipped/
+		);
+		expect(
+			rolloverLines( { ...plan.totals, classes_skipped: 2 } )[ 1 ]
+		).toBe(
+			'2 classes without students are skipped: they are archived and no new classes are created.'
+		);
+	} );
+	it( 'reads skipped classes of a rollover', () => {
+		const skipped = {
+			...plan,
+			classes: [
+				{
+					...plan.classes[ 0 ],
+					action: 'skip',
+					students: 0,
+					target: null,
+				},
+			],
+			totals: { ...plan.totals, classes_skipped: 1 },
+		};
+		const parsed = parsePlan( skipped );
+		expect( parsed.classes[ 0 ]?.action ).toBe( 'skip' );
+		expect( parsed.classes[ 0 ]?.target ).toBeNull();
+		expect( parsed.totals.classes_skipped ).toBe( 1 );
+		expect(
+			parseRolloverResult( {
+				...rolloverResult,
+				classes: [ { source_id: 9, target_id: null, action: 'skip' } ],
+			} ).classes[ 0 ]?.action
+		).toBe( 'skip' );
 	} );
 } );

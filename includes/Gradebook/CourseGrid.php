@@ -111,7 +111,7 @@ final class CourseGrid {
 			}
 		}
 		$attempts = self::attempts(
-			Repository::quiz_attempts( $course_id, $quizzes, $users ),
+			ExamRelease::hold( Repository::quiz_attempts( $course_id, $quizzes, $users ) ),
 			Repository::assignment_attempts( $course_id, $written, $users )
 		);
 		$due      = Repository::class_due_dates( $course_id, $users );
@@ -270,9 +270,9 @@ final class CourseGrid {
 	/**
 	 * Latest graded attempt and a pending flag per learner and item.
 	 *
-	 * Quizzes: `completed` (and legacy `passed`/`failed`) is graded, `in-review` waits for grading,
-	 * `in-progress` is not a submission. Assignments: `submitted` waits for grading, any other status is
-	 * graded. A newer pending retake never hides a graded attempt.
+	 * Quizzes: `completed` (and legacy `passed`/`failed`) is graded, `in-review` and a held exam result
+	 * ({@see ExamRelease::HELD}) wait, `in-progress` is not a submission. Assignments: `submitted` waits for
+	 * grading, any other status is graded. A newer pending retake never hides a graded attempt.
 	 *
 	 * @param array[] $quizzes Quiz attempts, newest first.
 	 * @param array[] $written Assignment submissions, newest first.
@@ -294,7 +294,7 @@ final class CourseGrid {
 						'max'   => (float) $row['max'],
 					);
 				}
-			} elseif ( 'in-review' === $row['status'] ) {
+			} elseif ( in_array( $row['status'], array( 'in-review', ExamRelease::HELD ), true ) ) {
 				$slot['pending'] = true;
 			}
 			$out[ $user ][ $item ] = $slot;

@@ -11,13 +11,13 @@ const BASE = '/ohmylms/v1';
 const WORKSPACE = `${ BASE }/skill-workspace`;
 const AI = `${ BASE }/syllabus-comparison/ai`;
 
-/** Sections of the skill workspace, as `?tab=` values of the comparison screen. */
+/** Sections of the skill workspace: Content Hub › Skills sections at `/content-hub/skills/<section>`. */
 export const WORKSPACE_SECTIONS = [
 	'mappings',
-	'ai',
-	'content',
+	'ai-runs',
+	'content-links',
 	'placement',
-	'quizzes',
+	'skill-quizzes',
 	'provenance',
 ] as const;
 export type WorkspaceSection = ( typeof WORKSPACE_SECTIONS )[ number ];

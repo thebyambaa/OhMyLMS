@@ -2,7 +2,7 @@ import { lazy } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import type { FeatureDefinition } from '../types';
 
-/** Membership plan list at `#/memberships`, with the Cohorts and Automations panels (`?panel=`). */
+/** Membership plan list at `#/memberships`; the old `?panel=cohorts|automations` opens those tabs. */
 export const memberships: FeatureDefinition = {
 	id: 'memberships',
 	title: __( 'Memberships', 'ohmylms' ),

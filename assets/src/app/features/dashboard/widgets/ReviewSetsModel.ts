@@ -44,7 +44,7 @@ export interface ReviewSets {
 	readonly groups: readonly ReviewSetGroup[];
 	/** Groups before the bound. */
 	readonly total: number;
-	/** Whether the user may create quizzes. */
+	/** Whether the user may create review set drafts (quiz authors, and school staff for their classes). */
 	readonly canAssign: boolean;
 }
 

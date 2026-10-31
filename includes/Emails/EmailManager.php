@@ -67,6 +67,7 @@ class EmailManager {
 			'student_cancel_enrollment'       => array( 'student_name', 'course_name', 'expected_processing_time' ),
 			'student_assignment_graded'       => array( 'student_name', 'course_name', 'assignment_name', 'status' ),
 			'student_quiz_graded'             => array( 'student_name', 'course_name', 'quiz_name' ),
+			'student_exam_results_released'   => array( 'student_name', 'exam_name' ),
 			'student_at_risk_nudge'           => array( 'student_name', 'sender_name', 'reasons' ),
 			'instructor_assignment_comment'   => array( 'student_name', 'course_name', 'assignment_name', 'commenter_name', 'comment' ),
 			'student_assignment_comment'      => array( 'student_name', 'course_name', 'assignment_name', 'commenter_name', 'comment' ),
@@ -95,6 +96,10 @@ class EmailManager {
 			'assignment_name'          => array(
 				'label'       => __( 'Assignment name', 'ohmylms' ),
 				'description' => __( 'Title of the assignment.', 'ohmylms' ),
+			),
+			'exam_name'                => array(
+				'label'       => __( 'Exam name', 'ohmylms' ),
+				'description' => __( 'Title of the exam whose results were released.', 'ohmylms' ),
 			),
 			'status'                   => array(
 				'label'       => __( 'Result', 'ohmylms' ),
@@ -146,6 +151,7 @@ class EmailManager {
 			'course_name'     => __( 'Introduction to Algebra', 'ohmylms' ),
 			'quiz_name'       => __( 'Chapter 1 Quiz', 'ohmylms' ),
 			'assignment_name' => __( 'Essay on Linear Equations', 'ohmylms' ),
+			'exam_name'       => __( 'End of Term Mathematics Exam', 'ohmylms' ),
 			'status'          => __( 'Passed', 'ohmylms' ),
 			'sender_name'     => __( 'Ms. Rivera', 'ohmylms' ),
 			'reasons'         => __( 'Inactive 9 days · 2 overdue items', 'ohmylms' ),
@@ -877,6 +883,11 @@ class EmailManager {
 				return array(
 					'emails/at-risk-nudge',
 					array_merge( $common, array( 'button_url' => StudentsEmail\AtRiskNudge::button_url( $settings ) ) ),
+				);
+			case 'student_exam_results_released':
+				return array(
+					'emails/student-exam-results-released',
+					array_merge( $common, array( 'button_url' => (string) $settings['button_link'] ) ),
 				);
 			case 'instructor_assignment_comment':
 			case 'student_assignment_comment':

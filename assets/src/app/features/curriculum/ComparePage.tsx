@@ -1,7 +1,7 @@
 import { ListTable } from '../../../ui/ListTable';
 import { WidefatTable } from '../../components/WidefatTable';
 import { Button, Notice, TextControl } from '@wordpress/components';
-import { lazy, Suspense, useState } from '@wordpress/element';
+import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { useOperation } from '../../hooks/useOperation';
@@ -18,23 +18,20 @@ import {
 import { CompareRoadmaps } from './CompareRoadmaps';
 import { CompareSharedSkills } from './CompareSharedSkills';
 import { SourcePicker } from './SourcePicker';
-import { WORKSPACE_SECTIONS, type WorkspaceSection } from './workspace';
+import type { WorkspaceSection } from './workspace';
 
-const SkillWorkspace = lazy(
-	() =>
-		import(
-			/* webpackChunkName: "admin-app-skill-workspace" */ './SkillWorkspace'
-		)
-);
-
-const TABS = [
-	'groups',
-	'roadmaps',
-	'shared',
-	'audit',
-	...WORKSPACE_SECTIONS,
-] as const;
+const TABS = [ 'groups', 'roadmaps', 'shared', 'audit' ] as const;
 type Tab = ( typeof TABS )[ number ];
+
+/** Former `?tab=` values of the skill workspace sections, now Content Hub › Skills sections. */
+const WORKSPACE_TABS: Readonly< Record< string, WorkspaceSection > > = {
+	mappings: 'mappings',
+	ai: 'ai-runs',
+	content: 'content-links',
+	placement: 'placement',
+	quizzes: 'skill-quizzes',
+	provenance: 'provenance',
+};
 
 function tabLabel( tab: Tab ): string {
 	return {
@@ -42,44 +39,52 @@ function tabLabel( tab: Tab ): string {
 		roadmaps: __( 'Roadmaps', 'ohmylms' ),
 		shared: __( 'Shared skills', 'ohmylms' ),
 		audit: __( 'Learner audit', 'ohmylms' ),
-		mappings: __( 'Combined mappings', 'ohmylms' ),
-		ai: __( 'AI runs', 'ohmylms' ),
-		content: __( 'Content links', 'ohmylms' ),
-		placement: __( 'Domain placement', 'ohmylms' ),
-		quizzes: __( 'Skill quizzes', 'ohmylms' ),
-		provenance: __( 'Provenance review', 'ohmylms' ),
 	}[ tab ];
 }
 
-function isWorkspace( tab: Tab ): tab is WorkspaceSection {
-	return ( WORKSPACE_SECTIONS as readonly string[] ).includes( tab );
-}
-
 /**
- * Syllabus comparison and the skill workspace at `#/content-hub/curriculum/compare`
- * (`?tab=groups|roadmaps|shared|audit|mappings|ai|content|placement|quizzes|provenance`).
- * The legacy `?roadmap=<id>` bookmark opens that roadmap in the syllabus editor.
+ * Syllabus comparison at `#/content-hub/curriculum/compare` (`?tab=groups|roadmaps|shared|audit`).
+ * The legacy `?roadmap=<id>` bookmark opens that roadmap in the syllabus editor; the former skill
+ * workspace tabs (`?tab=mappings|ai|content|placement|quizzes|provenance`) open their Skills section
+ * with the rest of the query.
  */
 export default function ComparePage() {
 	const [ params ] = useSearchParams();
 	const roadmap = Number( params.get( 'roadmap' ) );
-	const tab: Tab =
-		TABS.find( ( id ) => id === params.get( 'tab' ) ) ?? 'groups';
-	const workspace = isWorkspace( tab );
-	return Number.isSafeInteger( roadmap ) && roadmap > 0 ? (
-		<Navigate
-			replace
-			to={ `/content-hub/curriculum/syllabus/${ roadmap }` }
-		/>
-	) : (
-		<CompareScreen tab={ tab } workspace={ workspace } />
-	);
+	const requested = params.get( 'tab' ) ?? '';
+	const workspace = Object.prototype.hasOwnProperty.call(
+		WORKSPACE_TABS,
+		requested
+	)
+		? WORKSPACE_TABS[ requested ]
+		: undefined;
+	if ( Number.isSafeInteger( roadmap ) && roadmap > 0 ) {
+		return (
+			<Navigate
+				replace
+				to={ `/content-hub/curriculum/syllabus/${ roadmap }` }
+			/>
+		);
+	}
+	if ( workspace ) {
+		const rest = new URLSearchParams( params );
+		rest.delete( 'tab' );
+		const search = rest.toString();
+		return (
+			<Navigate
+				replace
+				to={ `/content-hub/skills/${ workspace }${
+					search ? `?${ search }` : ''
+				}` }
+			/>
+		);
+	}
+	const tab: Tab = TABS.find( ( id ) => id === requested ) ?? 'groups';
+	return <CompareScreen tab={ tab } />;
 }
 
-const noGroups = () => Promise.resolve( null );
-
-function CompareScreen( { tab, workspace }: { tab: Tab; workspace: boolean } ) {
-	const groups = useRequest( workspace ? noGroups : readGroups );
+function CompareScreen( { tab }: { tab: Tab } ) {
+	const groups = useRequest( readGroups );
 	return (
 		<>
 			<p>
@@ -87,11 +92,7 @@ function CompareScreen( { tab, workspace }: { tab: Tab; workspace: boolean } ) {
 					{ __( '← Curriculum', 'ohmylms' ) }
 				</Link>
 			</p>
-			<h2>
-				{ workspace
-					? __( 'Skill workspace', 'ohmylms' )
-					: __( 'Compare syllabuses', 'ohmylms' ) }
-			</h2>
+			<h2>{ __( 'Compare syllabuses', 'ohmylms' ) }</h2>
 			<p>
 				{ __(
 					'Shared skills connect objectives of different syllabuses. Group the syllabuses learners are measured against, build roadmaps from them, review where skills and mappings came from and check one learner across a subject.',
@@ -115,19 +116,10 @@ function CompareScreen( { tab, workspace }: { tab: Tab; workspace: boolean } ) {
 				</ul>
 			</nav>
 			<br className="clear" />
-			{ workspace && (
-				<Suspense
-					fallback={
-						<p role="status">{ __( 'Loading…', 'ohmylms' ) }</p>
-					}
-				>
-					<SkillWorkspace section={ tab as WorkspaceSection } />
-				</Suspense>
-			) }
-			{ ! workspace && groups.loading && (
+			{ groups.loading && (
 				<p role="status">{ __( 'Loading syllabuses…', 'ohmylms' ) }</p>
 			) }
-			{ ! workspace && groups.error && (
+			{ groups.error && (
 				<Notice status="error" isDismissible={ false }>
 					{ groups.error }{ ' ' }
 					<Button variant="link" onClick={ groups.retry }>

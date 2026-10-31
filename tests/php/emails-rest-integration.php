@@ -187,7 +187,7 @@ try {
 	$response = call_api( 'GET', '' );
 	ok( 200 === $response->get_status(), 'list 200' );
 	$list = $response->get_data();
-	ok( 14 === count( $list ) && '14' === $response->get_headers()['X-WP-Total'] && '1' === $response->get_headers()['X-WP-TotalPages'], 'list has 14 emails and pagination headers' );
+	ok( 15 === count( $list ) && '15' === $response->get_headers()['X-WP-Total'] && '1' === $response->get_headers()['X-WP-TotalPages'], 'list has 15 emails and pagination headers' );
 	foreach ( $list as $item ) {
 		foreach ( array( 'id', 'title', 'description', 'recipient_type', 'enabled', 'subject', 'heading', 'additional_content', 'button_text', 'button_link', 'footer_text', 'course_suggestion_text', 'recipient_email', 'tags' ) as $key ) {
 			ok( array_key_exists( $key, $item ), "list item {$item['id']} has $key" );
@@ -196,8 +196,12 @@ try {
 		ok( 'site_name' === $item['tags'][ count( $item['tags'] ) - 3 ]['tag'], "list item {$item['id']} lists the common tags" );
 	}
 	$ids = wp_list_pluck( $list, 'id' );
-	ok( EmailManager::ids() === $ids && 14 === count( array_unique( $ids ) ), 'list order is the catalog order' );
+	ok( EmailManager::ids() === $ids && 15 === count( array_unique( $ids ) ), 'list order is the catalog order' );
 	ok( false === array_search( 'student_email_verification', $ids, true ), 'the fixed verification email is not configurable' );
+	$released = array_column( $list, null, 'id' )['student_exam_results_released'] ?? null;
+	ok( $released && 'student' === $released['recipient_type'] && true === $released['enabled'] && false !== strpos( $released['subject'], '{exam_name}' ), 'the exam results release email is listed, on by default' );
+	ok( array( 'student_name', 'exam_name', 'site_name', 'store_name', 'admin_email' ) === wp_list_pluck( $released['tags'], 'tag' ), 'release email tags: ' . wp_json_encode( wp_list_pluck( $released['tags'], 'tag' ) ) );
+	ok( \OhMyLMS\Exams\ResultsEmail::defaults() === ( new \OhMyLMS\Emails\StudentsEmail\ExamResultsReleased() )->default_settings(), 'the sender reads the catalogue entry' );
 
 	$by_id = array_column( $list, null, 'id' );
 	ok( false === $by_id['student_confirm_enrollment']['enabled'] && true === $by_id['creator_new_order']['enabled'], 'enabled mirrors the class defaults' );
@@ -220,7 +224,7 @@ try {
 			'page'     => 3,
 		)
 	);
-	ok( 200 === $page->get_status() && 4 === count( $page->get_data() ) && '3' === $page->get_headers()['X-WP-TotalPages'], 'last page holds the remainder' );
+	ok( 200 === $page->get_status() && 5 === count( $page->get_data() ) && '3' === $page->get_headers()['X-WP-TotalPages'], 'last page holds the remainder' );
 	$page = call_api(
 		'GET',
 		'',
@@ -454,6 +458,10 @@ try {
 	}
 	restore_error_handler();
 	ok( array() === $warnings, 'rendering the templates raised no PHP notices from the plugin: ' . implode( '; ', array_unique( $warnings ) ) );
+
+	$exam_preview = call_api( 'POST', '/student_exam_results_released/preview' )->get_data();
+	ok( false !== strpos( $exam_preview['subject'], __( 'End of Term Mathematics Exam', 'ohmylms' ) ) && false !== strpos( $exam_preview['html'], __( 'End of Term Mathematics Exam', 'ohmylms' ) ), 'release email preview fills {exam_name}: ' . $exam_preview['subject'] );
+	ok( 422 === call_api( 'PUT', '/student_exam_results_released', array( 'subject' => 'Results for {quiz_name}' ) )->get_status(), 'release email refuses tags it does not provide' );
 
 	$orders = call_api( 'POST', '/creator_new_order/preview' )->get_data();
 	ok( false !== strpos( $orders['html'], '1001' ) && false !== strpos( $orders['html'], $s_course ), 'order preview renders the order and its items' );

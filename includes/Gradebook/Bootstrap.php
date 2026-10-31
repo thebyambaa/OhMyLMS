@@ -26,6 +26,7 @@ final class Bootstrap {
 		'ohmylms_manual_student_enrollment',
 		'ohmylms_student_unenrolled',
 		'ohmylms_quiz_revision_published',
+		'ohmylms_exam_results_changed',
 	);
 
 	/**

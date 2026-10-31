@@ -17,6 +17,7 @@
 		"student_cancel_enrollment",
 		"student_assignment_graded",
 		"student_quiz_graded",
+		"student_exam_results_released",
 		"student_at_risk_nudge",
 		"instructor_assignment_comment",
 		"student_assignment_comment"
@@ -104,6 +105,7 @@
 						"student_cancel_enrollment",
 						"student_assignment_graded",
 						"student_quiz_graded",
+						"student_exam_results_released",
 						"student_at_risk_nudge",
 						"instructor_assignment_comment",
 						"student_assignment_comment"
@@ -136,6 +138,7 @@
 						"student_cancel_enrollment",
 						"student_assignment_graded",
 						"student_quiz_graded",
+						"student_exam_results_released",
 						"student_at_risk_nudge",
 						"instructor_assignment_comment",
 						"student_assignment_comment"
@@ -169,6 +172,7 @@
 						"student_cancel_enrollment",
 						"student_assignment_graded",
 						"student_quiz_graded",
+						"student_exam_results_released",
 						"student_at_risk_nudge",
 						"instructor_assignment_comment",
 						"student_assignment_comment"
@@ -202,6 +206,7 @@
 						"student_cancel_enrollment",
 						"student_assignment_graded",
 						"student_quiz_graded",
+						"student_exam_results_released",
 						"student_at_risk_nudge",
 						"instructor_assignment_comment",
 						"student_assignment_comment"
@@ -258,6 +263,7 @@
 				"course_name",
 				"quiz_name"
 			],
+			"student_exam_results_released": [ "student_name", "exam_name" ],
 			"student_at_risk_nudge": [ "student_name", "sender_name", "reasons" ],
 			"instructor_assignment_comment": [
 				"student_name",
@@ -363,6 +369,7 @@
 						"student_cancel_enrollment",
 						"student_assignment_graded",
 						"student_quiz_graded",
+						"student_exam_results_released",
 						"student_at_risk_nudge",
 						"instructor_assignment_comment",
 						"student_assignment_comment"

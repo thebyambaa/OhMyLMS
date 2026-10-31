@@ -348,13 +348,15 @@ export interface RolloverInput {
 	to_year_id: number;
 	grade_map: GradeMapping[];
 	copy_teachers: boolean;
+	/** Also create next-year classes for classes without students (skipped by default). */
+	include_empty?: boolean;
 }
 
 export interface RolloverClass {
 	class_id: number;
 	name: string;
 	grade: string;
-	action: 'promote' | 'leave';
+	action: 'promote' | 'leave' | 'skip';
 	students: number;
 	teachers: number;
 	enrolments: number;
@@ -371,6 +373,7 @@ export interface RolloverTotals {
 	classes: number;
 	promoted_classes: number;
 	leaving_classes: number;
+	classes_skipped: number;
 	classes_created: number;
 	students_promoted: number;
 	students_leaving: number;
@@ -400,7 +403,7 @@ export interface RolloverResult {
 	classes: {
 		source_id: number;
 		target_id: number | null;
-		action: 'promote' | 'leave';
+		action: 'promote' | 'leave' | 'skip';
 	}[];
 	totals: RolloverTotals;
 	already_applied: boolean;

@@ -2,7 +2,7 @@
 /**
  * Mastery heatmap and recommended review sets: aggregation on fixtures (level thresholds, scope filtering,
  * bounds, course rows), the learner list (scope, PII, links), the recommendations, and creating a review
- * set (draft only, permissions, idempotency, bank shortages), plus caching.
+ * set (draft only, permissions, staff limited to their own classes, idempotency, bank shortages), plus caching.
  *
  * Runs against a WordPress install (the Local site by default) with real tables. Fixtures are tagged
  * (tests/php/support/mastery-fixture.php) and removed in `finally`. It never resets the database.
@@ -275,7 +275,8 @@ try {
 	ok( 0 === $rec['groups'][1]['questions']['available'] && false === $rec['groups'][1]['questions']['enough'], 'K4 has not enough questions' );
 	ok( true === $rec['can_assign'] && null === $rec['groups'][0]['review_set'], 'administrators may assign; nothing assigned yet' );
 	ok( false === strpos( wp_json_encode( $rec ), $tag . ' L' ), 'recommendations carry no learner names' );
-	ok( false === call( $fx['sa'], 'GET', '/dashboard/widgets/review-sets', array( 'scope' => $sa ) )->get_data()['data']['can_assign'], 'a school administrator without authoring rights may not assign' );
+	ok( true === call( $fx['sa'], 'GET', '/dashboard/widgets/review-sets', array( 'scope' => $sa ) )->get_data()['data']['can_assign'], 'a school administrator without authoring rights may assign drafts for their classes' );
+	ok( true === call( $fx['teacher'], 'GET', '/dashboard/widgets/review-sets', array( 'scope' => $a1 ) )->get_data()['data']['can_assign'], 'a teacher without authoring rights may assign drafts for their class' );
 	$course_rec = call( $fx['admin'], 'GET', '/dashboard/widgets/review-sets', array( 'scope' => 'school:' . $fx['school_c'] ) )->get_data()['data'];
 	ok( 'course' === $course_rec['row_type'] && array() === $course_rec['groups'], 'no class groups in a scope without classes' );
 
@@ -285,36 +286,50 @@ try {
 		'class_id' => $fx['class_a1'],
 		'skill_id' => $fx['k2'],
 	);
-	is_error( call( $fx['teacher'], 'POST', '/dashboard/widgets/review-sets/assign', $assign ), 403, 'ohmylms_dashboard_review_set_forbidden', 'a teacher without authoring rights' );
-	is_error( call( $fx['sa'], 'POST', '/dashboard/widgets/review-sets/assign', array( 'scope' => $sa ) + $assign ), 403, 'ohmylms_dashboard_review_set_forbidden', 'a school administrator without authoring rights' );
 	is_error( call( $fx['author'], 'POST', '/dashboard/widgets/review-sets/assign', array( 'scope' => $a2 ) + $assign ), 403, 'ohmylms_dashboard_forbidden_scope', 'an authoring teacher on a class they do not teach' );
-	is_error( call( $fx['author'], 'POST', '/dashboard/widgets/review-sets/assign', array( 'class_id' => $fx['class_a2'] ) + $assign ), 404, 'ohmylms_dashboard_row_not_found', 'an authoring teacher naming another class in their scope' );
+	is_error( call( $fx['author'], 'POST', '/dashboard/widgets/review-sets/assign', array( 'class_id' => $fx['class_a2'] ) + $assign ), 403, 'ohmylms_dashboard_forbidden_scope', 'an authoring teacher naming a class they do not teach' );
+	is_error( call( $fx['teacher'], 'POST', '/dashboard/widgets/review-sets/assign', array( 'scope' => $a2 ) + $assign ), 403, 'ohmylms_dashboard_forbidden_scope', 'a teacher on a class scope they do not teach' );
+	is_error( call( $fx['teacher'], 'POST', '/dashboard/widgets/review-sets/assign', array( 'class_id' => $fx['class_a2'] ) + $assign ), 403, 'ohmylms_dashboard_forbidden_scope', 'a teacher naming a class of their school they do not teach' );
+	is_error( call( $fx['teacher'], 'POST', '/dashboard/widgets/review-sets/assign', array( 'class_id' => $fx['class_b1'] ) + $assign ), 403, 'ohmylms_dashboard_forbidden_scope', 'a teacher naming a class of another school' );
+	is_error( call( $fx['sa'], 'POST', '/dashboard/widgets/review-sets/assign', array( 'scope' => $sa, 'class_id' => $fx['class_b1'] ) + $assign ), 403, 'ohmylms_dashboard_forbidden_scope', 'a school administrator naming a class of another school' );
+	is_error( call( $fx['sa'], 'POST', '/dashboard/widgets/review-sets/assign', array( 'scope' => 'school:' . $fx['school_b'] ) + $assign ), 403, 'ohmylms_dashboard_forbidden_scope', 'a school administrator on another school' );
+	is_error( call( $fx['admin'], 'POST', '/dashboard/widgets/review-sets/assign', array( 'scope' => $sa, 'class_id' => $fx['class_b1'] ) + $assign ), 404, 'ohmylms_dashboard_row_not_found', 'an administrator naming a class outside the scope they look at' );
 	is_error( call( 0, 'POST', '/dashboard/widgets/review-sets/assign', $assign ), 401, 'ohmylms_dashboard_cannot_view', 'anonymous assign' );
-	ok( 0 === review_sets( $fx['class_a1'], $fx['k2'] ), 'refused requests created nothing' );
+	is_error( call( $l[1], 'POST', '/dashboard/widgets/review-sets/assign', $assign ), 403, 'ohmylms_dashboard_cannot_view', 'a learner assigning' );
+	ok( 0 === review_sets( $fx['class_a1'], $fx['k2'] ) && 0 === review_sets( $fx['class_b1'], $fx['k2'] ) && 0 === review_sets( $fx['class_a2'], $fx['k2'] ), 'refused requests created nothing' );
 
 	// ---- Bank shortages and small groups ----
-	$r = call( $fx['author'], 'POST', '/dashboard/widgets/review-sets/assign', array( 'skill_id' => $fx['k4'] ) + $assign );
+	$r = call( $fx['teacher'], 'POST', '/dashboard/widgets/review-sets/assign', array( 'skill_id' => $fx['k4'] ) + $assign );
 	is_error( $r, 409, 'ohmylms_dashboard_review_set_not_enough_questions', 'a skill without questions' );
 	ok( 0 === $r->get_data()['data']['available'] && 3 === $r->get_data()['data']['needed'], 'the shortage says how many questions exist and are needed' );
 	ok( 0 === review_sets( $fx['class_a1'], $fx['k4'] ) && 0 === (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = %s AND post_title LIKE %s", OHMYLMS_QUIZ_CPT, $wpdb->esc_like( $tag . ' Orbits' ) . '%' ) ), 'a shortage leaves no half-made quiz' );
 	is_error( call( $fx['author'], 'POST', '/dashboard/widgets/review-sets/assign', array( 'skill_id' => $fx['k3'] ) + $assign ), 409, 'ohmylms_dashboard_review_set_no_group', 'a group smaller than 3' );
 
+	ok( ! user_can( $fx['teacher'], 'edit_posts' ), 'a refused teacher request leaves no authoring rights behind' );
+
 	// ---- Assign: draft only, linked, idempotent ----
-	$r = call( $fx['author'], 'POST', '/dashboard/widgets/review-sets/assign', $assign );
-	ok( 201 === $r->get_status() && true === $r->get_data()['created'], 'an authoring teacher creates the review set: ' . wp_json_encode( $r->get_data() ) );
+	$r = call( $fx['teacher'], 'POST', '/dashboard/widgets/review-sets/assign', $assign );
+	ok( 201 === $r->get_status() && true === $r->get_data()['created'], 'a teacher without authoring rights creates the review set for their class: ' . wp_json_encode( $r->get_data() ) );
 	$set  = $r->get_data()['review_set'];
 	$quiz = (int) $set['id'];
 	ok( 'draft' === $set['status'] && 'draft' === get_post_status( $quiz ) && OHMYLMS_QUIZ_CPT === get_post_type( $quiz ), 'the review set is a draft quiz' );
-	ok( null === $set['route'] && 5 === $set['questions'], 'it draws 5 questions; no editor link for a teacher who cannot open the Content pages' );
+	ok( null === $set['route'] && 5 === $set['questions'], 'it draws 5 questions; no editor link for a teacher' );
 	ok( $tag . ' Cells review set (' . $tag . ' Class A1)' === $set['title'], 'titled after the skill and class' );
 	$pools = Pools::rules( $quiz );
 	ok( 1 === count( $pools ) && $fx['k2'] === $pools[0]['term_id'] && 5 === $pools[0]['count'], 'one random pool by skill: ' . wp_json_encode( $pools ) );
 	ok( 0 === (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE quiz_id = %d', \OhMyLMS\Assessment\Schema::table( 'quiz_revisions' ), $quiz ) ), 'no revision was published' );
 	$meta = get_post_meta( $quiz, ReviewSetsService::META, true );
-	ok( $fx['class_a1'] === $meta['class_id'] && $fx['k2'] === $meta['skill_id'] && array( $l[5], $l[2], $l[1], $l[3], $l[4] ) === $meta['learners'] && $fx['author'] === $meta['created_by'], 'the quiz remembers the class, skill and group' );
-	ok( (int) get_post_field( 'post_author', $quiz ) === $fx['author'], 'created as the current user' );
-	$again = call( $fx['author'], 'POST', '/dashboard/widgets/review-sets/assign', $assign );
+	ok( $fx['class_a1'] === $meta['class_id'] && $fx['k2'] === $meta['skill_id'] && array( $l[5], $l[2], $l[1], $l[3], $l[4] ) === $meta['learners'] && $fx['teacher'] === $meta['created_by'], 'the quiz remembers the class, skill and group' );
+	ok( (int) get_post_field( 'post_author', $quiz ) === $fx['teacher'], 'created as the teacher' );
+	ok( ! user_can( $fx['teacher'], 'edit_posts' ) && ! user_can( $fx['teacher'], 'publish_posts' ) && ! user_can( $fx['teacher'], 'edit_post', $quiz ) && ! user_can( $fx['teacher'], 'publish_post', $quiz ), 'the teacher keeps no authoring or publishing rights, not even on their draft' );
+	is_error( call( $fx['teacher'], 'PUT', '/quiz/' . $quiz, array( 'status' => 'publish' ) ), 403, 'ohmylms_forbidden', 'the teacher publishing the draft through the quiz routes' );
+	ok( 'draft' === get_post_status( $quiz ), 'the draft stays a draft' );
+	$listed = call( $fx['admin'], 'GET', '/quizzes', array( 'status' => 'draft', 'include' => array( $quiz ) ) );
+	ok( 200 === $listed->get_status() && in_array( $quiz, array_map( 'intval', array_column( $listed->get_data(), 'id' ) ), true ), 'administrators find the draft in the Content Hub quiz list: ' . wp_json_encode( $listed->get_data() ) );
+	$again = call( $fx['teacher'], 'POST', '/dashboard/widgets/review-sets/assign', $assign );
 	ok( 200 === $again->get_status() && false === $again->get_data()['created'] && $quiz === $again->get_data()['review_set']['id'], 'a second click returns the same draft' );
+	$author_again = call( $fx['author'], 'POST', '/dashboard/widgets/review-sets/assign', $assign );
+	ok( 200 === $author_again->get_status() && $quiz === $author_again->get_data()['review_set']['id'] && null === $author_again->get_data()['review_set']['route'], 'an authoring teacher gets the same draft, without a link to a page they cannot open' );
 	$admin_again = call( $fx['admin'], 'POST', '/dashboard/widgets/review-sets/assign', array( 'scope' => $sa ) + $assign );
 	ok( 200 === $admin_again->get_status() && $quiz === $admin_again->get_data()['review_set']['id'], 'another user in another scope gets the same draft' );
 	ok( '/quizzes/' . $quiz === $admin_again->get_data()['review_set']['route'], 'administrators get the quiz editor link' );
@@ -338,8 +353,17 @@ try {
 	ok( '/quizzes/' . $quiz === $rec['groups'][0]['review_set']['route'], 'an administrator sees the draft with a link' );
 	$rec = call( $fx['sa'], 'GET', '/dashboard/widgets/review-sets', array( 'scope' => $sa ) )->get_data()['data'];
 	ok( $quiz === $rec['groups'][0]['review_set']['id'] && null === $rec['groups'][0]['review_set']['route'], 'a school administrator sees it without a link they cannot open' );
+	$rec = call( $fx['teacher'], 'GET', '/dashboard/widgets/review-sets', array( 'scope' => $a1 ) )->get_data()['data'];
+	ok( $quiz === $rec['groups'][0]['review_set']['id'] && null === $rec['groups'][0]['review_set']['route'], 'the teacher who created it sees it without an editor link' );
 	wp_trash_post( $quiz );
 	ok( null === call( $fx['admin'], 'GET', '/dashboard/widgets/review-sets', array( 'scope' => $sa ) )->get_data()['data']['groups'][0]['review_set'], 'a trashed review set no longer counts' );
+
+	// ---- A school administrator creates a draft for a class of their school ----
+	$r = call( $fx['sa'], 'POST', '/dashboard/widgets/review-sets/assign', array( 'scope' => $sa ) + $assign );
+	ok( 201 === $r->get_status() && true === $r->get_data()['created'] && null === $r->get_data()['review_set']['route'], 'a school administrator creates the draft, without an editor link: ' . wp_json_encode( $r->get_data() ) );
+	$sa_quiz = (int) $r->get_data()['review_set']['id'];
+	ok( 'draft' === get_post_status( $sa_quiz ) && (int) get_post_field( 'post_author', $sa_quiz ) === $fx['sa'] && ! user_can( $fx['sa'], 'edit_post', $sa_quiz ), 'a draft by the school administrator, who cannot edit or publish it' );
+	wp_trash_post( $sa_quiz );
 
 	// ---- Cache invalidation and ttl 0 ----
 	Cache::flush();

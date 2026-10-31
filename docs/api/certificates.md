@@ -241,9 +241,10 @@ Server code: `includes/Certificates/Issuer.php` (issue, revoke, re-issue, reads)
 `includes/Certificates/IssuedSchema.php` (table), `includes/Certificates/Download.php` (learner download and
 public verification pages), `includes/Certificates/PdfRenderer.php` (PDF through Dompdf, a Composer dependency),
 `includes/Certificates/Bootstrap.php` (hooks) and `includes/Rest/V1/IssuedCertificatesController.php`.
-Admin screen: `features/certificates/IssuedCertificatesList.tsx` at `/certificates?list=issued`
-(`page=ohmylms-engagement&tab=gamification&section=certificates&list=issued`), reached from the template
-list's **Issued certificates** title action. Learner: the student hub's Achievements section
+Admin screen: `features/certificates/IssuedCertificatesList.tsx` at `/certificates/issued`
+(`page=ohmylms-engagement&tab=gamification&section=issued-certificates`), the Gamification section
+**Issued certificates** (also the template list's title action). The former `/certificates?list=issued`
+(`…&section=certificates&list=issued`) opens it with the rest of its query. Learner: the student hub's Achievements section
 (`templates/student-hub/achievements.php`), the profile course card and the completion e-mail.
 
 ### Audit before (legacy download)

@@ -3,7 +3,8 @@
 Rules of the form **when &lt;event&gt; then &lt;actions&gt;** that run on the plugin's existing hooks. Server code:
 `includes/Automation/Rules.php` (allow-list and validation), `RuleStore.php` (tables, log),
 `RuleRunner.php` (listeners and actions), `includes/Rest/V1/AutomationsController.php`. Screen: Commerce ›
-Memberships › **Automations** (`…&tab=memberships&panel=automations`, `features/commerce/automations`).
+**Automations** (`/automations`, `…&tab=automations`, `features/commerce/automations`; the former
+`…&tab=memberships&panel=automations` opens it with the rest of its query).
 Test: `tests/php/automations-integration.php` (`OHMYLMS_AUTOMATIONS_TEST=1`, 74 checks).
 
 ## What the legacy admin had
@@ -42,7 +43,7 @@ the five plugin actions below. The Mail Mint connector is untouched and still wo
 | `course_completed` | `ohmylms_course_completed` | `course_ids` |
 | `quiz_submitted` | `ohmylms_quiz_submission` | `course_ids`, `quiz_ids` |
 | `assignment_submitted` | `ohmylms_after_assignment_submitted` | `course_ids`, `assignment_ids` |
-| `assignment_reviewed` | `ohmylms_after_assignment_review` (learner read from the attempt) | `course_ids`, `assignment_ids`, `result` pass/fail |
+| `assignment_reviewed` | `ohmylms_after_assignment_review` (the learner, who must own a submission of the assignment) | `course_ids`, `assignment_ids`, `result` pass/fail |
 
 Id lists hold up to 50 existing items of the right post type; an empty list means any.
 
@@ -75,6 +76,8 @@ Errors: 400 `ohmylms_automation_unknown_field` / `rest_invalid_param`; 422 `ohmy
 
 ## Not covered
 
-Actions run synchronously in the request that raised the event (no queue or delay steps). The new assignment
-grading service (`Assignment\Submissions`) fires no review hook, so `assignment_reviewed` only fires from the
-REST grading route that does (`AssignmentController`).
+Actions run synchronously in the request that raised the event (no queue or delay steps). Every grading route
+(the admin assignments grading in `AssignmentsController`, Account Hub class work and the school screens through
+`Schools\Service::grade()`) grades through `AssignmentController::update_attempt_report()`, the only place that fires
+`ohmylms_after_assignment_review` (once per graded submission, with the learner and the graded row), so
+`assignment_reviewed` runs for all of them.

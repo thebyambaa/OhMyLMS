@@ -110,7 +110,7 @@ final class ReviewSets extends Widget {
 	 * @return array
 	 */
 	public function present( array $data, Scope $scope, Period $period, $user_id ) {
-		$data['can_assign'] = ReviewSetsService::can_author( $user_id );
+		$data['can_assign'] = ReviewSetsService::can_assign( $user_id );
 		$existing           = ReviewSetsService::existing( array_column( $data['groups'] ?? array(), 'key' ) );
 		foreach ( $data['groups'] as &$group ) {
 			$group['review_set'] = isset( $existing[ $group['key'] ] ) ? ReviewSetsService::describe( $existing[ $group['key'] ], $user_id ) : null;

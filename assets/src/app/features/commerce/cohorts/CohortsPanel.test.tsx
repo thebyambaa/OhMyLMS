@@ -1,6 +1,7 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderShell } from '../../../test/render';
+import { cohorts } from '../index';
 import { memberships } from '../../memberships';
 import * as api from './api';
 import { cohortRow } from './fixtures';
@@ -28,7 +29,7 @@ const page = < T, >( items: T[] ) => ( {
 	totalPages: 1,
 } );
 const show = ( route: string ) =>
-	renderShell( [ memberships ], {
+	renderShell( [ memberships, cohorts ], {
 		route,
 		capabilities: { manage_options: true },
 	} );
@@ -53,16 +54,13 @@ beforeEach( () => {
 } );
 
 describe( 'cohorts panel', () => {
-	it( 'is a panel of Commerce › Memberships with its own list', async () => {
+	it( 'is a Commerce tab with its own list, also opened by the former Memberships panel address', async () => {
 		show( '/memberships?panel=cohorts' );
 		const table = await screen.findByRole( 'table', { name: 'Cohorts' } );
 		expect(
 			within( table ).getByText( 'Spring batch' )
 		).toBeInTheDocument();
 		expect( within( table ).getByText( '3 of 20' ) ).toBeInTheDocument();
-		expect(
-			screen.getByRole( 'link', { name: 'Cohorts' } )
-		).toHaveAttribute( 'aria-current', 'page' );
 		expect( api.listCohorts ).toHaveBeenCalledWith(
 			{ page: 1, search: '', status: 'any' },
 			expect.anything()
@@ -71,7 +69,7 @@ describe( 'cohorts panel', () => {
 
 	it( 'validates a new cohort before sending anything', async () => {
 		const user = userEvent.setup();
-		show( '/memberships?panel=cohorts' );
+		show( '/cohorts' );
 		await screen.findByRole( 'table', { name: 'Cohorts' } );
 		await user.click(
 			screen.getByRole( 'button', { name: 'Add cohort' } )
@@ -97,6 +95,7 @@ describe( 'cohorts panel', () => {
 			member_count: 2,
 		} );
 		const user = userEvent.setup();
+		// The former address keeps the rest of its query.
 		show( '/memberships?panel=cohorts&cohort=5' );
 		const table = await screen.findByRole( 'table', {
 			name: 'Cohort members',

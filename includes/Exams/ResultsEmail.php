@@ -9,19 +9,20 @@ namespace OhMyLMS\Exams;
 
 use OhMyLMS\Emails\EmailManager;
 use OhMyLMS\Emails\Emails;
+use OhMyLMS\Emails\StudentsEmail\ExamResultsReleased;
 use WP_User;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * `student_exam_results_released` uses the plugin's email system: global email settings (colours,
- * sender, footer), the shared header hook, merge tags and stored per-email settings
- * (`create_lms_email_student_exam_results_released`, merged over the defaults below). It carries no
- * marks; the learner signs in to see them. It is not listed in the Emails screen yet.
+ * Sends `student_exam_results_released` with what the admin set under Emails ({@see ExamResultsReleased}:
+ * toggle, subject, heading, body, button, footer, merge tags `student_name` and `exam_name`) and the global
+ * email settings (colours, sender, footer, shared header hook). It carries no marks; the learner signs in
+ * to see them.
  */
 final class ResultsEmail {
 
-	const ID = 'student_exam_results_released';
+	const ID = ExamResultsReleased::ID;
 
 	/**
 	 * Default settings.
@@ -29,16 +30,7 @@ final class ResultsEmail {
 	 * @return array
 	 */
 	public static function defaults() {
-		$p = '<p style="margin: 0 0 15px 0; padding:0; color: #1F2328;">';
-		return array(
-			'enable'             => true,
-			'heading'            => __( 'Your exam results are ready', 'ohmylms' ),
-			'subject'            => __( 'Your results for {exam_name} are ready', 'ohmylms' ),
-			'additional_content' => $p . esc_html__( 'Hi {student_name},', 'ohmylms' ) . '</p>'
-				. $p . esc_html__( 'Your results for {exam_name} have been released. Sign in to see your marks and feedback.', 'ohmylms' ) . '</p>',
-			'button_text'        => __( 'View my results', 'ohmylms' ),
-			'footer_text'        => __( 'You receive this email because you took this exam on {site_name}.', 'ohmylms' ),
-		);
+		return ( new ExamResultsReleased() )->default_settings();
 	}
 
 	/**
@@ -47,7 +39,7 @@ final class ResultsEmail {
 	 * @return array
 	 */
 	public static function settings() {
-		return Emails::get_template_settings( self::ID, self::defaults() );
+		return ( new ExamResultsReleased() )->settings();
 	}
 
 	/**
@@ -57,6 +49,17 @@ final class ResultsEmail {
 	 */
 	public static function enabled() {
 		return Emails::is_enabled( self::settings() );
+	}
+
+	/**
+	 * Where the button leads: the link set under Emails, else the exam's results.
+	 *
+	 * @param array $settings Settings.
+	 * @param int   $exam_id  Exam ID.
+	 * @return string
+	 */
+	public static function button_url( array $settings, $exam_id ) {
+		return ! empty( $settings['button_link'] ) ? (string) $settings['button_link'] : Player::url( $exam_id );
 	}
 
 	/**
@@ -79,7 +82,7 @@ final class ResultsEmail {
 			array(
 				'settings'       => $settings,
 				'email_settings' => $email_settings,
-				'button_url'     => Player::url( $exam_id ),
+				'button_url'     => self::button_url( $settings, $exam_id ),
 			)
 		);
 		return array(

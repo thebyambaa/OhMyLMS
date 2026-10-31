@@ -136,8 +136,7 @@ class FrontendAssets extends Assets {
 				}
 
 				if ( ohmylms_is_single_course_page() || is_ohmylms_dashboard() || is_ohmylms_my_courses_shortcode() || \OhMyLMS\Student\Hub::is_page() ) {
-					$localized_data['course_drop_nonce']          = wp_create_nonce( 'course_drop_nonce' );
-					$localized_data['download_certificate_nonce'] = wp_create_nonce( 'download_certificate_nonce' );
+					$localized_data['course_drop_nonce'] = wp_create_nonce( 'course_drop_nonce' );
 				}
 
 				if ( is_ohmylms_profile_shortcode() || \OhMyLMS\Student\Hub::is_page() ) {
@@ -236,17 +235,7 @@ class FrontendAssets extends Assets {
 			wp_enqueue_script( 'ohmylms-frontend' );
 		}
 
-		if ( isset( $_GET['ohmylms-certificate-data'] ) ) {
-			wp_enqueue_script(
-				'html2pdf',
-				plugin_dir_url( __FILE__ ) . '/packages/html2pdf.bundle.min.js',
-				array(),
-				'0.10.1',
-				true
-			);
-		}
-
-		if ( is_ohmylms_buy_now() || is_ohmylms_archive() || ohmylms_is_course_list_shortcode() || ohmylms_is_membership_page() || ohmylms_is_membership_plan_shortcode() || is_ohmylms_dashboard() || is_ohmylms_profile_shortcode() || is_ohmylms_my_courses_shortcode() || ( isset( $_GET['ohmylms-certificate-data'] ) ) ) {
+		if ( is_ohmylms_buy_now() || is_ohmylms_archive() || ohmylms_is_course_list_shortcode() || ohmylms_is_membership_page() || ohmylms_is_membership_plan_shortcode() || is_ohmylms_dashboard() || is_ohmylms_profile_shortcode() || is_ohmylms_my_courses_shortcode() ) {
 			wp_enqueue_script( 'ohmylms-frontend' );
 			wp_enqueue_script( 'ohmylms-add-to-cart' );
 		}

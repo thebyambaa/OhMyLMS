@@ -40,10 +40,7 @@ describe( 'Mind map', () => {
 		);
 		expect(
 			within( list ).getByRole( 'link', { name: 'G.1 Measure angles' } )
-		).toHaveAttribute(
-			'href',
-			'/content-hub/curriculum/compare?tab=mappings&skill=12'
-		);
+		).toHaveAttribute( 'href', '/content-hub/skills/mappings?skill=12' );
 		await user.click(
 			screen.getByRole( 'button', { name: 'Collapse all' } )
 		);

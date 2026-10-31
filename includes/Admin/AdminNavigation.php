@@ -183,10 +183,35 @@ final class AdminNavigation {
 						'label'      => __( 'Skills', 'ohmylms' ),
 						'capability' => 'edit_posts',
 						'sections'   => array(
-							''            => __( 'Skill library', 'ohmylms' ),
-							'assessments' => array(
+							''              => __( 'Skill library', 'ohmylms' ),
+							'assessments'   => array(
 								'label'  => __( 'Assessments', 'ohmylms' ),
 								'render' => array( SkillAssessmentPage::class, 'render' ),
+							),
+							// The skill workspace, whose endpoints need the curriculum administrator.
+							'mappings'      => array(
+								'label'      => __( 'Combined mappings', 'ohmylms' ),
+								'capability' => self::CAPABILITY,
+							),
+							'ai-runs'       => array(
+								'label'      => __( 'AI runs', 'ohmylms' ),
+								'capability' => self::CAPABILITY,
+							),
+							'content-links' => array(
+								'label'      => __( 'Content links', 'ohmylms' ),
+								'capability' => self::CAPABILITY,
+							),
+							'placement'     => array(
+								'label'      => __( 'Domain placement', 'ohmylms' ),
+								'capability' => self::CAPABILITY,
+							),
+							'skill-quizzes' => array(
+								'label'      => __( 'Skill quizzes', 'ohmylms' ),
+								'capability' => self::CAPABILITY,
+							),
+							'provenance'    => array(
+								'label'      => __( 'Provenance review', 'ohmylms' ),
+								'capability' => self::CAPABILITY,
 							),
 						),
 					),
@@ -221,6 +246,8 @@ final class AdminNavigation {
 					'earnings'      => array( 'label' => __( 'Earnings', 'ohmylms' ) ),
 					'orders'        => array( 'label' => __( 'Orders', 'ohmylms' ) ),
 					'memberships'   => array( 'label' => __( 'Memberships', 'ohmylms' ) ),
+					'cohorts'       => array( 'label' => __( 'Cohorts', 'ohmylms' ) ),
+					'automations'   => array( 'label' => __( 'Automations', 'ohmylms' ) ),
 					'subscriptions' => array( 'label' => __( 'Subscriptions', 'ohmylms' ) ),
 					'coupons'       => array( 'label' => __( 'Coupons', 'ohmylms' ) ),
 				),
@@ -232,14 +259,15 @@ final class AdminNavigation {
 					'gamification' => array(
 						'label'           => __( 'Gamification', 'ohmylms' ),
 						'sections'        => array(
-							'points'       => __( 'Points', 'ohmylms' ),
-							'levels'       => __( 'Levels', 'ohmylms' ),
-							'badges'       => __( 'Badges', 'ohmylms' ),
-							'streaks'      => __( 'Streaks', 'ohmylms' ),
-							'xp'           => __( 'XP and mastery', 'ohmylms' ),
-							'leaderboard'  => __( 'Leaderboard', 'ohmylms' ),
-							'rewards'      => __( 'Rewards', 'ohmylms' ),
-							'certificates' => __( 'Certificates', 'ohmylms' ),
+							'points'              => __( 'Points', 'ohmylms' ),
+							'levels'              => __( 'Levels', 'ohmylms' ),
+							'badges'              => __( 'Badges', 'ohmylms' ),
+							'streaks'             => __( 'Streaks', 'ohmylms' ),
+							'xp'                  => __( 'XP and mastery', 'ohmylms' ),
+							'leaderboard'         => __( 'Leaderboard', 'ohmylms' ),
+							'rewards'             => __( 'Rewards', 'ohmylms' ),
+							'certificates'        => __( 'Certificates', 'ohmylms' ),
+							'issued-certificates' => __( 'Issued certificates', 'ohmylms' ),
 						),
 						'default_section' => array( __CLASS__, 'gamification_default_section' ),
 					),
@@ -370,6 +398,54 @@ final class AdminNavigation {
 				),
 			),
 			array( 'content-hub', '/content-hub/skills', $content + array( 'tab' => 'skills' ) ),
+			array(
+				'skill-workspace-mappings',
+				'/content-hub/skills/mappings',
+				$content + array(
+					'tab'     => 'skills',
+					'section' => 'mappings',
+				),
+			),
+			array(
+				'skill-workspace-ai-runs',
+				'/content-hub/skills/ai-runs',
+				$content + array(
+					'tab'     => 'skills',
+					'section' => 'ai-runs',
+				),
+			),
+			array(
+				'skill-workspace-content-links',
+				'/content-hub/skills/content-links',
+				$content + array(
+					'tab'     => 'skills',
+					'section' => 'content-links',
+				),
+			),
+			array(
+				'skill-workspace-placement',
+				'/content-hub/skills/placement',
+				$content + array(
+					'tab'     => 'skills',
+					'section' => 'placement',
+				),
+			),
+			array(
+				'skill-workspace-skill-quizzes',
+				'/content-hub/skills/skill-quizzes',
+				$content + array(
+					'tab'     => 'skills',
+					'section' => 'skill-quizzes',
+				),
+			),
+			array(
+				'skill-workspace-provenance',
+				'/content-hub/skills/provenance',
+				$content + array(
+					'tab'     => 'skills',
+					'section' => 'provenance',
+				),
+			),
 			array( 'curriculum', '/content-hub/curriculum', $content + array( 'tab' => 'curriculum' ) ),
 			array(
 				'curriculum-skill-map',
@@ -535,6 +611,8 @@ final class AdminNavigation {
 			array( 'subscription-detail', '/subscriptions/:id', $commerce + array( 'tab' => 'subscriptions' ) ),
 			array( 'memberships', '/memberships', $commerce + array( 'tab' => 'memberships' ) ),
 			array( 'memberships-editor', '/memberships/:id', $commerce + array( 'tab' => 'memberships' ) ),
+			array( 'cohorts', '/cohorts', $commerce + array( 'tab' => 'cohorts' ) ),
+			array( 'automations', '/automations', $commerce + array( 'tab' => 'automations' ) ),
 			array( 'students', '/students', $accounts + array( 'tab' => 'students' ) ),
 			array(
 				'student-report',
@@ -569,6 +647,14 @@ final class AdminNavigation {
 				$engage + array(
 					'tab'     => 'gamification',
 					'section' => 'certificates',
+				),
+			),
+			array(
+				'certificates-issued',
+				'/certificates/issued',
+				$engage + array(
+					'tab'     => 'gamification',
+					'section' => 'issued-certificates',
 				),
 			),
 			array(

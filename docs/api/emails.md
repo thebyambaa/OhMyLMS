@@ -8,7 +8,7 @@ storage, preview, test sending), `includes/Emails/Emails.php` (registry, merge t
 read), `includes/Emails/SampleRecord.php` (sample data for previews) and the sending classes under
 `includes/Emails/CreatorsEmail` and `includes/Emails/StudentsEmail`.
 
-The configurable emails are the eleven in `Emails::catalog()`. `EmailVerification` has fixed content
+The configurable emails are the fifteen in `Emails::catalog()`. `EmailVerification` has fixed content
 and is not configurable.
 
 ## Audit before
@@ -51,7 +51,9 @@ callback (core behaviour), so a malformed request can answer 400 before 401/403.
 `{id}` is one of: `creator_new_order`, `creator_cancelled_order`, `instructor_assignment_submitted`,
 `instructor_quiz_submitted`, `student_new_order`, `student_confirm_enrollment`,
 `student_manual_enrollment`, `student_course_completed`, `student_cancel_enrollment`,
-`student_assignment_graded`, `student_quiz_graded`, `student_at_risk_nudge` (sent by the dashboard's
+`student_assignment_graded`, `student_quiz_graded`, `student_exam_results_released` (sent once per attempt when
+exam results are released, by `Exams\ResultsEmail`; tags `student_name`, `exam_name`; no trigger hook; see
+[exams](exams.md)), `student_at_risk_nudge` (sent by the dashboard's
 At-risk learners nudge; tags `student_name`, `sender_name`, `reasons`; no trigger hook),
 `instructor_assignment_comment` and `student_assignment_comment` (an assignment submission comment, sent
 to the other side of the thread; tags `student_name`, `course_name`, `assignment_name`, `commenter_name`,

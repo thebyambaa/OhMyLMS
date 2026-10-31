@@ -452,6 +452,7 @@ describe( 'year rollover', () => {
 				to_year_id: 6,
 				grade_map: [],
 				copy_teachers: false,
+				include_empty: false,
 			},
 			expect.any( AbortSignal )
 		);
@@ -460,6 +461,7 @@ describe( 'year rollover', () => {
 			to_year_id: 6,
 			grade_map: [ { from: '5', to: '6' } ],
 			copy_teachers: false,
+			include_empty: false,
 		};
 		expect( operations.previewRollover ).toHaveBeenNthCalledWith(
 			2,
@@ -488,6 +490,63 @@ describe( 'year rollover', () => {
 			3,
 			suggested,
 			plan.review,
+			expect.any( AbortSignal )
+		);
+	} );
+	it( 'skips classes without students unless asked, and says how many', async () => {
+		const skipping = {
+			...plan,
+			classes: [
+				...plan.classes,
+				{
+					class_id: 11,
+					name: '5B',
+					grade: '5',
+					action: 'skip' as const,
+					students: 0,
+					teachers: 0,
+					enrolments: 0,
+					links: 0,
+					target: null,
+				},
+			],
+			totals: { ...plan.totals, classes: 2, classes_skipped: 1 },
+		};
+		vi.mocked( api.getSchool ).mockResolvedValue( twoYears );
+		vi.mocked( operations.previewRollover ).mockResolvedValue( skipping );
+		const user = userEvent.setup();
+		renderSchool( '/account-hub/schools/3?panel=rollover' );
+		await user.click(
+			await screen.findByRole( 'button', { name: 'Preview rollover' } )
+		);
+		const table = await screen.findByRole( 'table', {
+			name: 'Rollover preview',
+		} );
+		expect(
+			within( table ).getByText(
+				'Skipped: no students (archived, no new class)'
+			)
+		).toBeVisible();
+		expect(
+			screen.getAllByText(
+				'1 class without students is skipped: it is archived and no new class is created.'
+			)[ 0 ]
+		).toBeVisible();
+		await user.click(
+			screen.getByRole( 'checkbox', {
+				name: 'Also create next-year classes for classes without students',
+			} )
+		);
+		expect(
+			screen.queryByRole( 'table', { name: 'Rollover preview' } )
+		).toBeNull();
+		await user.click(
+			screen.getByRole( 'button', { name: 'Preview rollover' } )
+		);
+		await screen.findByRole( 'table', { name: 'Rollover preview' } );
+		expect( operations.previewRollover ).toHaveBeenLastCalledWith(
+			3,
+			expect.objectContaining( { include_empty: true } ),
 			expect.any( AbortSignal )
 		);
 	} );

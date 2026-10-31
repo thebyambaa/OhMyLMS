@@ -5,6 +5,7 @@ import { ApiError } from '../../lib/api';
 import * as api from './api';
 import CertificatesPage from './CertificatesPage';
 import { certificate } from './fixtures';
+import IssuedCertificatesList from './IssuedCertificatesList';
 import * as issuedApi from './issuedApi';
 import { issued, revoked } from './issuedFixtures';
 
@@ -28,10 +29,11 @@ vi.mock( './issuedApi', async ( original ) => ( {
 const notice = { selector: '.components-notice__content' };
 
 function Search() {
-	return <p data-testid="search">{ useLocation().search }</p>;
+	const location = useLocation();
+	return <p data-testid="search">{ location.pathname + location.search }</p>;
 }
 
-function renderPage( entry = '/certificates?list=issued' ) {
+function renderPage( entry = '/certificates/issued' ) {
 	return render(
 		<MemoryRouter initialEntries={ [ entry ] }>
 			<Routes>
@@ -40,6 +42,15 @@ function renderPage( entry = '/certificates?list=issued' ) {
 					element={
 						<>
 							<CertificatesPage />
+							<Search />
+						</>
+					}
+				/>
+				<Route
+					path="/certificates/issued"
+					element={
+						<>
+							<IssuedCertificatesList />
 							<Search />
 						</>
 					}
@@ -74,8 +85,18 @@ describe( 'Issued certificates', () => {
 		renderPage( '/certificates' );
 		expect(
 			await screen.findByRole( 'link', { name: 'Issued certificates' } )
-		).toHaveAttribute( 'href', '/certificates?list=issued' );
+		).toHaveAttribute( 'href', '/certificates/issued' );
 		expect( issuedApi.listIssued ).not.toHaveBeenCalled();
+	} );
+
+	it( 'opens from the former `?list=issued` address with the rest of its query', async () => {
+		renderPage( '/certificates?list=issued&s=ABCD' );
+		expect(
+			await screen.findByRole( 'table', { name: 'Issued certificates' } )
+		).toBeInTheDocument();
+		expect( screen.getByTestId( 'search' ) ).toHaveTextContent(
+			'/certificates/issued?s=ABCD'
+		);
 	} );
 
 	it( 'lists learner, course, template, date, code and status with download and verification links', async () => {
@@ -135,7 +156,7 @@ describe( 'Issued certificates', () => {
 			).toMatchObject( { course: '12', search: 'ABCD' } )
 		);
 		expect( screen.getByTestId( 'search' ) ).toHaveTextContent(
-			'list=issued'
+			'/certificates/issued?'
 		);
 		expect( screen.getByTestId( 'search' ) ).toHaveTextContent( 's=ABCD' );
 		expect( screen.getByTestId( 'search' ) ).toHaveTextContent(

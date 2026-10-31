@@ -130,6 +130,11 @@ class AccountHubSchoolLifecycleController extends AccountHubController {
 				'type'        => 'boolean',
 				'default'     => false,
 			),
+			'include_empty' => array(
+				'description' => __( 'Also create next-year classes for classes without students. By default they are archived without a successor and counted in `totals.classes_skipped`.', 'ohmylms' ),
+				'type'        => 'boolean',
+				'default'     => false,
+			),
 		);
 
 		register_rest_route(
@@ -329,7 +334,7 @@ class AccountHubSchoolLifecycleController extends AccountHubController {
 	 * Load the school and the rollover inputs.
 	 *
 	 * @param WP_REST_Request $request Request.
-	 * @return array|WP_Error School row, grade map and teacher flag.
+	 * @return array|WP_Error School row, grade map, teacher flag and empty-class flag.
 	 */
 	private function rollover_input( $request ) {
 		$school = $this->writable_school_or_error( $request['id'] );
@@ -337,7 +342,7 @@ class AccountHubSchoolLifecycleController extends AccountHubController {
 			return $school;
 		}
 
-		return array( $school, Rollover::grade_map( (array) $request['grade_map'] ), (bool) $request['copy_teachers'] );
+		return array( $school, Rollover::grade_map( (array) $request['grade_map'] ), (bool) $request['copy_teachers'], (bool) $request['include_empty'] );
 	}
 
 	/**
@@ -351,9 +356,9 @@ class AccountHubSchoolLifecycleController extends AccountHubController {
 		if ( is_wp_error( $input ) ) {
 			return $input;
 		}
-		list( $school, $map, $teachers ) = $input;
+		list( $school, $map, $teachers, $empty ) = $input;
 		try {
-			$plan = Rollover::plan( (int) $school['id'], (int) $request['from_year_id'], (int) $request['to_year_id'], $map, $teachers );
+			$plan = Rollover::plan( (int) $school['id'], (int) $request['from_year_id'], (int) $request['to_year_id'], $map, $teachers, false, $empty );
 		} catch ( \Throwable $failure ) {
 			return $this->lifecycle_error( $failure );
 		}
@@ -372,9 +377,9 @@ class AccountHubSchoolLifecycleController extends AccountHubController {
 		if ( is_wp_error( $input ) ) {
 			return $input;
 		}
-		list( $school, $map, $teachers ) = $input;
+		list( $school, $map, $teachers, $empty ) = $input;
 		try {
-			$result = Rollover::apply( (int) $school['id'], (int) $request['from_year_id'], (int) $request['to_year_id'], $map, $teachers, (string) $request['review'] );
+			$result = Rollover::apply( (int) $school['id'], (int) $request['from_year_id'], (int) $request['to_year_id'], $map, $teachers, (string) $request['review'], $empty );
 		} catch ( \Throwable $failure ) {
 			return $this->lifecycle_error( $failure );
 		}

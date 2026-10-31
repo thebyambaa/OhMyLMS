@@ -57,6 +57,16 @@ $zero = SchoolGradebook::cell(
 	)
 );
 ohmylms_class_gradebook_check( 0.0 === $zero['score'] );
+// A graded exam attempt whose results are held (Gradebook\ExamRelease::HELD) has no score; an older
+// released attempt still shows.
+$held = array(
+	'status' => 'held',
+	'score'  => 9,
+	'max'    => 10,
+);
+$held_cell = SchoolGradebook::cell( $item, $scope, array( $held ) );
+ohmylms_class_gradebook_check( 'pending' === $held_cell['status'] && null === $held_cell['score'] );
+ohmylms_class_gradebook_check( 8.0 === SchoolGradebook::cell( $item, $scope, array( $held, $attempts[1] ) )['score'] );
 $total = GradebookMath::total(
 	array(
 		$cell,

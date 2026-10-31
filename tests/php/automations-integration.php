@@ -403,10 +403,30 @@ try {
 	$attempt = (int) $wpdb->insert_id;
 	RuleRunner::reset();
 	$mails = array();
-	do_action( 'ohmylms_after_assignment_review', $task, $intro, $attempt, 'passed' );
-	ok( ! $mails, 'passed grade does not match a fail rule' );
-	do_action( 'ohmylms_after_assignment_review', $task, $intro, $attempt, 'failed' );
-	ok( 1 === count( $mails ) && false !== strpos( $mails[0]['message'], strtoupper( $tag ) . 'OFF' ), 'coupon code sent to the learner of the attempt' );
+	// The grading pipeline passes the learner (third) and the graded row (fifth). Other listeners (the
+	// "assignment graded" email) also mail the learner, so only coupon mails are counted.
+	$coupons = static function () use ( &$mails, $tag ) {
+		return array_values(
+			array_filter(
+				$mails,
+				static function ( $mail ) use ( $tag ) {
+					return false !== strpos( (string) $mail['message'], strtoupper( $tag ) . 'OFF' );
+				}
+			)
+		);
+	};
+	do_action( 'ohmylms_after_assignment_review', $task, $intro, $users['ben'], 'passed', $attempt );
+	ok( ! $coupons(), 'passed grade does not match a fail rule' );
+	do_action( 'ohmylms_after_assignment_review', $task, $intro, $users['ann'], 'failed', $attempt );
+	ok( ! $coupons(), 'a learner who does not own the graded row gets nothing' );
+	do_action( 'ohmylms_after_assignment_review', $task, $intro, $users['ann'], 'failed' );
+	ok( ! $coupons(), 'a learner without a submission of the assignment gets nothing' );
+	do_action( 'ohmylms_after_assignment_review', $task, $intro, $users['ben'], 'failed', $attempt );
+	ok( 1 === count( $coupons() ) && get_userdata( $users['ben'] )->user_email === $coupons()[0]['to'], 'coupon code sent to the graded learner' );
+	RuleRunner::reset();
+	$mails = array();
+	do_action( 'ohmylms_after_assignment_review', $task, $intro, $users['ben'], 'failed' );
+	ok( 1 === count( $coupons() ), 'without a row id the learner\'s own submission is enough' );
 	$wpdb->delete( $wpdb->prefix . 'ohmylms_assignment_attempts', array( 'id' => $attempt ) );
 
 	$lesson_rule = au_rule(

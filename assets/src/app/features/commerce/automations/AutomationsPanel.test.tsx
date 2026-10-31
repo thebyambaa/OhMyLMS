@@ -2,6 +2,7 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderShell } from '../../../test/render';
 import { memberships } from '../../memberships';
+import { automations } from '../index';
 import * as api from './api';
 import { optionsBody, ruleRow } from './fixtures';
 import { parseOptions, parseRule } from './model';
@@ -24,7 +25,7 @@ const page = < T, >( items: T[] ) => ( {
 	totalPages: 1,
 } );
 const show = ( route: string ) =>
-	renderShell( [ memberships ], {
+	renderShell( [ memberships, automations ], {
 		route,
 		capabilities: { manage_options: true },
 	} );
@@ -60,7 +61,7 @@ beforeEach( () => {
 
 describe( 'automations panel', () => {
 	it( 'lists rules as "when … then …" with their runs', async () => {
-		show( '/memberships?panel=automations' );
+		show( '/automations' );
 		const table = await screen.findByRole( 'table', {
 			name: 'Automation rules',
 		} );
@@ -79,6 +80,7 @@ describe( 'automations panel', () => {
 			status: 'paused',
 		} );
 		const user = userEvent.setup();
+		// The former Memberships panel address opens the Automations tab.
 		show( '/memberships?panel=automations' );
 		const table = await screen.findByRole( 'table', {
 			name: 'Automation rules',
@@ -96,7 +98,7 @@ describe( 'automations panel', () => {
 	it( 'creates a rule only from allow-listed choices and validates first', async () => {
 		vi.mocked( api.createRule ).mockResolvedValue( rule );
 		const user = userEvent.setup();
-		show( '/memberships?panel=automations&rule=new' );
+		show( '/automations?rule=new' );
 		const form = await screen.findByRole( 'form', { name: 'New rule' } );
 		await user.click(
 			within( form ).getByRole( 'button', { name: 'Create rule' } )
@@ -135,6 +137,7 @@ describe( 'automations panel', () => {
 	} );
 
 	it( 'shows the run log', async () => {
+		// The former address keeps the rest of its query.
 		show( '/memberships?panel=automations&show=log' );
 		const table = await screen.findByRole( 'table', {
 			name: 'Automation run log',

@@ -54,6 +54,7 @@ const TOTAL_KEYS: readonly ( keyof RolloverTotals )[] = [
 	'classes',
 	'promoted_classes',
 	'leaving_classes',
+	'classes_skipped',
 	'classes_created',
 	'students_promoted',
 	'students_leaving',
@@ -254,7 +255,11 @@ function totals( value: unknown ): RolloverTotals {
 
 function rolloverClass( value: unknown ): RolloverClass {
 	const item = record( value );
-	const action = oneOf( item.action, [ 'promote', 'leave' ] as const );
+	const action = oneOf( item.action, [
+		'promote',
+		'leave',
+		'skip',
+	] as const );
 	let target: RolloverClass[ 'target' ] = null;
 	if ( 'promote' === action ) {
 		const found = record( item.target );
@@ -316,7 +321,11 @@ export function parseRolloverResult( value: unknown ): RolloverResult {
 				source_id: positiveId( row.source_id ),
 				target_id:
 					null === row.target_id ? null : positiveId( row.target_id ),
-				action: oneOf( row.action, [ 'promote', 'leave' ] as const ),
+				action: oneOf( row.action, [
+					'promote',
+					'leave',
+					'skip',
+				] as const ),
 			};
 		} ),
 		totals: totals( item.totals ),

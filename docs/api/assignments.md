@@ -159,8 +159,9 @@ to the submission with `ohmylms_comment=added` or the error code. Instructors co
    `ohmylms_assignment_placement_invalid`), because the legacy pipeline needs both.
 3. The request goes through `AssignmentController::update_attempt_report()`, the same pipeline the legacy
    grading screen and `Schools\Service::grade()` use. The result is `passed` when `score >= pass_score`,
-   and a pass completes the learner's progress. It fires `ohmylms_after_assignment_review` (the "assignment
-   graded" email, automations, WP Fusion, completion awards), `ohmylms_pro_after_assignment_review`
+   and a pass completes the learner's progress. It fires `ohmylms_after_assignment_review( $assignment_id,
+   $course_id, $student_id, $status, $attempt_id )` once (the "assignment graded" email, the `assignment_reviewed`
+   automation event, WP Fusion, completion awards), `ohmylms_pro_after_assignment_review`
    (leaderboard), and course-completion hooks when applicable.
 4. The row is read back. If it did not persist, the route answers 500 `ohmylms_assignment_grade_failed`.
 

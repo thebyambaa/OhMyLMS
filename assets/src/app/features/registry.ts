@@ -11,8 +11,12 @@ import {
 	assignments,
 	assignmentSubmissions,
 } from './assignments';
-import { certificateEditor, certificates } from './certificates';
-import { coupons, orderDetail, orders } from './commerce';
+import {
+	certificateEditor,
+	certificates,
+	certificatesIssued,
+} from './certificates';
+import { automations, cohorts, coupons, orderDetail, orders } from './commerce';
 import { subscriptionDetail, subscriptions } from './commerce/subscriptions';
 import { contentHub, contentHubOverview } from './content-hub';
 import { courseEditor, courses } from './courses';
@@ -26,6 +30,12 @@ import {
 	curriculum,
 	curriculumCompare,
 	skillMap,
+	skillWorkspaceAiRuns,
+	skillWorkspaceContentLinks,
+	skillWorkspaceMappings,
+	skillWorkspacePlacement,
+	skillWorkspaceProvenance,
+	skillWorkspaceQuizzes,
 	subjectProfiles,
 } from './curriculum';
 import { courseReport, courseRoster, dashboard, earnings } from './dashboard';
@@ -67,6 +77,12 @@ export const features: readonly FeatureDefinition[] = [
 	setup,
 	contentHubOverview,
 	contentHub,
+	skillWorkspaceMappings,
+	skillWorkspaceAiRuns,
+	skillWorkspaceContentLinks,
+	skillWorkspacePlacement,
+	skillWorkspaceQuizzes,
+	skillWorkspaceProvenance,
 	curriculum,
 	skillMap,
 	subjectProfiles,
@@ -105,6 +121,8 @@ export const features: readonly FeatureDefinition[] = [
 	subscriptionDetail,
 	memberships,
 	membershipEditor,
+	cohorts,
+	automations,
 	students,
 	studentReport,
 	accountHub,
@@ -112,6 +130,7 @@ export const features: readonly FeatureDefinition[] = [
 	accountHubRoster,
 	accountHubClass,
 	certificates,
+	certificatesIssued,
 	certificateEditor,
 	sessions,
 	sessionEditor,

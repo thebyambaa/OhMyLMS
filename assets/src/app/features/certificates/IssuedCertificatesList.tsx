@@ -49,11 +49,11 @@ function statusOptions() {
 }
 
 /**
- * Issued certificates (`/certificates?list=issued`): search by code, learner or course; filter by
- * course, template and how they were issued; revoke and re-issue with confirmation; issue by hand.
- * The list state is kept in the address.
+ * Issued certificates (`/certificates/issued`, Gamification › Issued certificates): search by code,
+ * learner or course; filter by course, template and how they were issued; revoke and re-issue with
+ * confirmation; issue by hand. The list state is kept in the address.
  */
-export function IssuedCertificatesList() {
+export default function IssuedCertificatesList() {
 	const list = useListState( FILTERS, { search: 's' } );
 	const { filters, page } = list;
 	const operation = useOperation();

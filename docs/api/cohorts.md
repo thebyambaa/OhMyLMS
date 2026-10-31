@@ -3,8 +3,9 @@
 A cohort groups the learners of one **course** or one **membership plan** who enrolled or bought in the
 same window. Server code: `includes/Cohorts/Cohorts.php` (storage, validation, membership, assignment),
 `CohortHooks.php` (enrolment, checkout and access hooks), `CohortSchema.php` (tables),
-`includes/Rest/V1/CohortsController.php`. Screen: Commerce › Memberships › **Cohorts**
-(`admin.php?page=ohmylms-commerce&tab=memberships&panel=cohorts`, `features/commerce/cohorts`). Test:
+`includes/Rest/V1/CohortsController.php`. Screen: Commerce › **Cohorts**
+(`/cohorts`, `admin.php?page=ohmylms-commerce&tab=cohorts`, `features/commerce/cohorts`; the former
+`…&tab=memberships&panel=cohorts` opens it with the rest of its query). Test:
 `tests/php/cohorts-integration.php` (`OHMYLMS_COHORTS_TEST=1`, 65 checks).
 
 ## What the legacy admin had

@@ -139,8 +139,11 @@ Before rendering marks it calls `Results::claim_view()`, which records the first
 undo changes; both are conditional single-row updates, so an undo that wins the race is never shown.
 
 **Release** (single or bulk) writes a `manual` release per pending attempt and, with `notify`, emails each
-learner once (`student_exam_results_released`, `Exams\ResultsEmail`: plugin email settings, header hook,
-merge tags `{student_name}`, `{exam_name}`, no marks). Attempts that cannot be released are returned in
+learner once (`student_exam_results_released`, listed under Emails as "Exam Results Released"
+(`Emails\StudentsEmail\ExamResultsReleased`): its toggle, subject, heading, body, button text and link, footer and
+merge tags `{student_name}`, `{exam_name}` are what `Exams\ResultsEmail` sends, with the global email settings; no
+marks; the button opens the exam unless a link is set). A disabled email sends nothing and leaves the attempt
+unnotified. Attempts that cannot be released are returned in
 `skipped` with `reason`: `in_progress`, `awaiting_marking`, `already_visible`, `not_found`, `storage`.
 `all` takes up to 200 per call; `remaining` says how many are still pending. The legacy
 `POST /exams/{id}/release` releases every pending attempt through the same service.

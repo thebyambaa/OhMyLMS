@@ -18,8 +18,9 @@ defined( 'ABSPATH' ) || exit;
  * successor carries `source_class_id`), its active students (and optionally teachers) join it, its course
  * links are copied and the students' active roster enrolments move to the new class through
  * {@see RosterEnrolments::move()} (source `roster`). Students of a leaving class keep their accounts and
- * school membership; their active roster enrolments are cancelled. Every source class and the old year are
- * archived. {@see self::plan()} writes nothing and returns a review token; {@see self::apply()} recomputes
+ * school membership; their active roster enrolments are cancelled. A class that would be promoted but has no
+ * active students is skipped (archived, no successor) unless `include_empty` is set. Every source class and
+ * the old year are archived. {@see self::plan()} writes nothing and returns a review token; {@see self::apply()} recomputes
  * the plan under a lock and refuses a different one, and applying the same review twice returns the first
  * result. Callers check that the user manages the school.
  */
@@ -110,10 +111,11 @@ final class Rollover {
 	 * @param array $grade_map     From {@see self::grade_map()}.
 	 * @param bool  $copy_teachers Whether teachers join the new classes too.
 	 * @param bool  $lock          Lock the rows read (inside {@see self::apply()}).
+	 * @param bool  $include_empty Also create next-year classes for classes without students.
 	 * @return array
 	 * @throws \RuntimeException 409 when the source year is already archived.
 	 */
-	public static function plan( $school_id, $from_id, $to_id, array $grade_map, $copy_teachers, $lock = false ) {
+	public static function plan( $school_id, $from_id, $to_id, array $grade_map, $copy_teachers, $lock = false, $include_empty = false ) {
 		global $wpdb;
 		list( $from, $to ) = self::years( $school_id, $from_id, $to_id );
 		if ( 'active' !== $from['status'] ) {
@@ -127,6 +129,7 @@ final class Rollover {
 			'classes'            => 0,
 			'promoted_classes'   => 0,
 			'leaving_classes'    => 0,
+			'classes_skipped'    => 0,
 			'classes_created'    => 0,
 			'students_promoted'  => 0,
 			'students_leaving'   => 0,
@@ -140,30 +143,34 @@ final class Rollover {
 			$to_grade = array_key_exists( $grade, $grade_map ) ? $grade_map[ $grade ] : $grade;
 			$leaves   = '' === $to_grade;
 			$students = self::members( (int) $class['id'], (int) $school_id, 'student' );
-			$teachers = $copy_teachers && ! $leaves ? self::members( (int) $class['id'], (int) $school_id, 'teacher' ) : array();
+			$skipped  = ! $leaves && ! $students && ! $include_empty;
+			$promoted = ! $leaves && ! $skipped;
+			$teachers = $copy_teachers && $promoted ? self::members( (int) $class['id'], (int) $school_id, 'teacher' ) : array();
 			$enrolled = count( RosterEnrolments::active( array( (int) $class['id'] ), $students ) );
-			$links    = $leaves ? 0 : count( self::course_links( (int) $class['id'] ) );
+			$links    = $promoted ? count( self::course_links( (int) $class['id'] ) ) : 0;
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Successor lookup keeps apply idempotent.
-			$existing = $leaves ? null : $wpdb->get_row( $wpdb->prepare( 'SELECT id,name,grade FROM %i WHERE source_class_id=%d AND academic_year_id=%d LIMIT 1', Schema::table( 'classes' ), $class['id'], $to['id'] ), ARRAY_A );
+			$existing = $promoted ? $wpdb->get_row( $wpdb->prepare( 'SELECT id,name,grade FROM %i WHERE source_class_id=%d AND academic_year_id=%d LIMIT 1', Schema::table( 'classes' ), $class['id'], $to['id'] ), ARRAY_A ) : null;
 			$rows[]   = array(
 				'class_id'   => (int) $class['id'],
 				'name'       => (string) $class['name'],
 				'subject'    => (string) $class['subject'],
 				'grade'      => $grade,
-				'action'     => $leaves ? 'leave' : 'promote',
+				'action'     => $leaves ? 'leave' : ( $skipped ? 'skip' : 'promote' ),
 				'students'   => count( $students ),
 				'teachers'   => count( $teachers ),
 				'enrolments' => $enrolled,
 				'links'      => $links,
-				'target'     => $leaves ? null : array(
+				'target'     => $promoted ? array(
 					'id'     => $existing ? (int) $existing['id'] : null,
 					'name'   => $existing ? (string) $existing['name'] : self::successor_name( (string) $class['name'], $grade, $to_grade ),
 					'grade'  => $existing ? (string) $existing['grade'] : $to_grade,
 					'exists' => (bool) $existing,
-				),
+				) : null,
 			);
 			++$totals['classes'];
-			if ( $leaves ) {
+			if ( $skipped ) {
+				++$totals['classes_skipped'];
+			} elseif ( $leaves ) {
 				++$totals['leaving_classes'];
 				$totals['students_leaving']   += count( $students );
 				$totals['enrolments_revoked'] += $enrolled;
@@ -182,6 +189,7 @@ final class Rollover {
 			'to'            => self::year( $to ),
 			'grade_map'     => $grade_map,
 			'copy_teachers' => (bool) $copy_teachers,
+			'include_empty' => (bool) $include_empty,
 			'classes'       => $rows,
 			'totals'        => $totals,
 		);
@@ -249,11 +257,12 @@ final class Rollover {
 	 * @param array  $grade_map     Grade map.
 	 * @param bool   $copy_teachers Whether teachers join the new classes.
 	 * @param string $review        Token from the plan.
+	 * @param bool   $include_empty Also create next-year classes for classes without students (as previewed).
 	 * @return array Result; `already_applied` is true when this review was applied before.
 	 * @throws \RuntimeException 412 for a stale review, 409 when the year is already archived, 423 when
 	 *                           another rollover of the school runs, 500 on a database failure.
 	 */
-	public static function apply( $school_id, $from_id, $to_id, array $grade_map, $copy_teachers, $review ) {
+	public static function apply( $school_id, $from_id, $to_id, array $grade_map, $copy_teachers, $review, $include_empty = false ) {
 		global $wpdb;
 		$school_id = (int) $school_id;
 		$lock      = 'ohmylms_rollover_' . $school_id;
@@ -269,10 +278,10 @@ final class Rollover {
 				return array_merge( $applied[ $key ]['result'], array( 'already_applied' => true ) );
 			}
 			$result = Transaction::run(
-				static function () use ( $wpdb, $school_id, $from_id, $to_id, $grade_map, $copy_teachers, $review ) {
+				static function () use ( $wpdb, $school_id, $from_id, $to_id, $grade_map, $copy_teachers, $review, $include_empty ) {
 					// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Lock both years in id order; class creation in them waits.
 					$wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE id IN (%d,%d) ORDER BY id FOR UPDATE', Schema::table( 'academic_years' ), $from_id, $to_id ) );
-					$plan = self::plan( $school_id, $from_id, $to_id, $grade_map, $copy_teachers, true );
+					$plan = self::plan( $school_id, $from_id, $to_id, $grade_map, $copy_teachers, true, $include_empty );
 					if ( ! hash_equals( self::review( $school_id, $plan ), (string) $review ) ) {
 						throw new \RuntimeException( 'The classes or rosters changed since the preview. Preview the rollover again.', 412 );
 					}
@@ -311,7 +320,9 @@ final class Rollover {
 			$source   = (int) $row['class_id'];
 			$students = self::members( $source, $school_id, 'student' );
 			$enrolled = RosterEnrolments::active( array( $source ), $students );
-			if ( 'leave' === $row['action'] ) {
+			if ( 'skip' === $row['action'] ) {
+				$target = 0;
+			} elseif ( 'leave' === $row['action'] ) {
 				RosterEnrolments::revoke( $enrolled );
 				$target = 0;
 			} else {
