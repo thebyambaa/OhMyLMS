@@ -1,4 +1,4 @@
-import { Button, Modal, Notice } from '@wordpress/components';
+import { Button, Modal, Notice, PanelBody } from '@wordpress/components';
 import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
@@ -219,26 +219,47 @@ export function OutlineWorkspace( {
 			! draft.units.some( ( unit ) => unit.id === item.chapter_id )
 	);
 	return (
-		<section aria-label={ __( 'Outline editor', 'ohmylms' ) }>
-			<p>
-				<Link to={ `/courses/${ draft.course_id }/settings` }>
-					{ __( 'Course settings', 'ohmylms' ) }
-				</Link>{ ' ' }
-				·{ ' ' }
-				<Link to={ `/courses/${ draft.course_id }/publish` }>
-					{ __( 'Preview and publish', 'ohmylms' ) }
-				</Link>{ ' ' }
-				·{ ' ' }
-				<Link to="/content-hub/curriculum">
-					{ __( 'Curriculum', 'ohmylms' ) }
-				</Link>
-			</p>
-			<p>
-				{ __(
-					'Edit the draft units and activity placements. Saving here does not publish to learners.',
-					'ohmylms'
-				) }
-			</p>
+		<section
+			className="oml-outline"
+			aria-label={ __( 'Outline editor', 'ohmylms' ) }
+		>
+			<div className="oml-editor-header">
+				<div className="oml-editor-header__title">
+					<h2>{ __( 'Curriculum', 'ohmylms' ) }</h2>
+					<span className="oml-editor-status">
+						{ sprintf(
+							/* translators: 1: units, 2: activities. */
+							__( '%1$d units · %2$d activities', 'ohmylms' ),
+							draft.units.length,
+							draft.program.items.length
+						) }
+					</span>
+					<span className="oml-editor-saved" role="status">
+						{ dirty
+							? __( 'Unsaved changes', 'ohmylms' )
+							: __( 'Saved draft', 'ohmylms' ) }
+					</span>
+				</div>
+				<div className="oml-editor-header__actions">
+					<Button
+						variant="tertiary"
+						disabled={ busy }
+						onClick={ () =>
+							dirty ? setReloadConfirm( true ) : reload()
+						}
+					>
+						{ __( 'Reload saved outline', 'ohmylms' ) }
+					</Button>
+					<Button
+						variant="primary"
+						disabled={ busy || ! dirty }
+						isBusy={ busy }
+						onClick={ save }
+					>
+						{ __( 'Save outline draft', 'ohmylms' ) }
+					</Button>
+				</div>
+			</div>
 			{ error && (
 				<Notice status="error" isDismissible={ false }>
 					{ error }
@@ -249,34 +270,16 @@ export function OutlineWorkspace( {
 					{ message }
 				</Notice>
 			) }
-			<p role="status">
-				{ dirty
-					? __( 'Unsaved changes', 'ohmylms' )
-					: __( 'Saved draft', 'ohmylms' ) }
+			<div className="oml-editor-grid">
+			<div className="oml-editor-main">
+			<p className="oml-editor-hint">
+				{ __(
+					'Edit the draft units and activity placements. Saving here does not publish to learners.',
+					'ohmylms'
+				) }
 			</p>
-			<Button
-				variant="primary"
-				disabled={ busy || ! dirty }
-				isBusy={ busy }
-				onClick={ save }
-			>
-				{ __( 'Save outline draft', 'ohmylms' ) }
-			</Button>
-			<Button
-				disabled={ busy }
-				onClick={ () =>
-					dirty ? setReloadConfirm( true ) : reload()
-				}
-			>
-				{ __( 'Reload saved outline', 'ohmylms' ) }
-			</Button>
-			<LearningSettings
-				draft={ draft }
-				change={ change }
-				disabled={ busy }
-			/>
-			<fieldset disabled={ busy }>
-				<legend>{ __( 'Units and activities', 'ohmylms' ) }</legend>
+			<fieldset className="oml-outline-units" disabled={ busy }>
+				<legend className="screen-reader-text">{ __( 'Units and activities', 'ohmylms' ) }</legend>
 				{ draft.units.map( ( unit, index ) => (
 					<UnitEditor
 						key={ unit.id }
@@ -338,6 +341,9 @@ export function OutlineWorkspace( {
 				) ) }
 
 				<Button
+					className="oml-outline-add-unit"
+					variant="secondary"
+					icon="plus"
 					onClick={ () =>
 						change( {
 							...draft,
@@ -395,6 +401,45 @@ export function OutlineWorkspace( {
 					</ul>
 				</section>
 			) }
+			</div>
+			<aside className="oml-editor-aside">
+				<PanelBody
+					title={ __( 'Learning settings', 'ohmylms' ) }
+					initialOpen
+				>
+					<LearningSettings
+						draft={ draft }
+						change={ change }
+						disabled={ busy }
+					/>
+				</PanelBody>
+				<PanelBody
+					title={ __( 'Placement', 'ohmylms' ) }
+					initialOpen={ false }
+				>
+					<CoursePlacement course={ draft.course_id } />
+				</PanelBody>
+				<PanelBody title={ __( 'Shortcuts', 'ohmylms' ) }>
+					<ul className="oml-editor-links">
+						<li>
+							<Link to={ `/courses/${ draft.course_id }/settings` }>
+								{ __( 'Course settings', 'ohmylms' ) }
+							</Link>
+						</li>
+						<li>
+							<Link to={ `/courses/${ draft.course_id }/publish` }>
+								{ __( 'Preview and publish', 'ohmylms' ) }
+							</Link>
+						</li>
+						<li>
+							<Link to="/content-hub/curriculum">
+								{ __( 'Curriculum', 'ohmylms' ) }
+							</Link>
+						</li>
+					</ul>
+				</PanelBody>
+			</aside>
+			</div>
 			{ picker && (
 				<ResourcePicker
 					course={ draft.course_id }
@@ -500,7 +545,6 @@ export function OutlineWorkspace( {
 					</Button>
 				</Modal>
 			) }
-			<CoursePlacement course={ draft.course_id } />
 		</section>
 	);
 }

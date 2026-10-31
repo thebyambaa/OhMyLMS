@@ -100,6 +100,10 @@ final class ExtendedQuestions {
 			'flying-fruit'     => array( 'choices', 'seconds' ),
 			'hangman'          => array( 'max_misses' ),
 		);
+		if ( 'hot-text' === $type ) {
+			$settings = self::hot_text( $settings );
+			$keys[ $type ][] = 'passage';
+		}
 		$view = array_intersect_key( $settings, array_flip( $keys[ $type ] ?? array() ) );
 		if ( 'passage' === $type ) {
 			$view['parts'] = Structured::public_parts( $settings );
@@ -163,6 +167,19 @@ final class ExtendedQuestions {
 			$correct = $settings['correct'] ?? array();
 			$valid   = self::valid_rows( $tokens, 'text' ) && is_array( $correct ) && count( $correct ) > 0 && count( array_filter( $correct, 'is_string' ) ) === count( $correct );
 			$valid   = $valid && ! array_diff( $correct, array_column( $tokens, 'id' ) );
+			// At least two options, unique ids, and a passage (when given) that places every option once.
+			$ids   = array_map( 'strval', array_column( $tokens, 'id' ) );
+			$valid = $valid && count( $tokens ) >= 2 && count( array_unique( $ids ) ) === count( $ids );
+			$valid = $valid && in_array( $settings['scoring'] ?? 'partial', array( 'partial', 'all' ), true );
+			if ( $valid && isset( $settings['passage'] ) && '' !== trim( (string) $settings['passage'] ) ) {
+				$valid = is_string( $settings['passage'] ) && strlen( $settings['passage'] ) <= 50000;
+				preg_match_all( self::HOT_TEXT_MARK, (string) $settings['passage'], $marks );
+				$placed = $marks[1] ?? array();
+				sort( $placed );
+				$sorted = $ids;
+				sort( $sorted );
+				$valid = $valid && $placed === $sorted;
+			}
 		}
 		if ( 'match-table-grid' === $type ) {
 			$rows    = $settings['rows'] ?? array();
@@ -247,6 +264,32 @@ final class ExtendedQuestions {
 			$valid = $valid && 0.0 === (float) ( $settings['score']['value'] ?? 0 );
 		}
 		return $valid ? true : new \WP_Error( 'ohmylms_extended_settings', __( 'Complete the question response settings and correct answers.', 'ohmylms' ), array( 'status' => 400 ) );
+	}
+
+	const HOT_TEXT_MARK = '/\[\[([A-Za-z0-9_-]+)\]\]/';
+
+	/**
+	 * Hot text settings in passage form; legacy token lists read as a passage of their tokens.
+	 *
+	 * @param array $settings Authored or frozen settings.
+	 * @return array
+	 */
+	public static function hot_text( array $settings ) {
+		$tokens = array_values( array_filter( (array) ( $settings['tokens'] ?? array() ), 'is_array' ) );
+		if ( ! isset( $settings['passage'] ) || ! is_string( $settings['passage'] ) || '' === trim( $settings['passage'] ) ) {
+			$settings['passage'] = implode(
+				' ',
+				array_map(
+					static function ( $token ) {
+						return '[[' . ( $token['id'] ?? '' ) . ']]';
+					},
+					$tokens
+				)
+			);
+		}
+		$settings['tokens']  = $tokens;
+		$settings['scoring'] = 'all' === ( $settings['scoring'] ?? 'partial' ) ? 'all' : 'partial';
+		return $settings;
 	}
 
 	/**
@@ -360,18 +403,34 @@ final class ExtendedQuestions {
 	public static function grade( $type, array $answer, array $settings ) {
 		$correct = false;
 		if ( 'hot-text' === $type ) {
-			$given    = array_keys(
-				array_filter(
-					$answer,
-					static function ( $value ) {
-						return '1' === (string) $value;
-					}
+			$ids      = array_map( 'strval', array_column( (array) ( $settings['tokens'] ?? array() ), 'id' ) );
+			$given    = array_values(
+				array_intersect(
+					array_map(
+						'strval',
+						array_keys(
+							array_filter(
+								$answer,
+								static function ( $value ) {
+									return '1' === (string) $value;
+								}
+							)
+						)
+					),
+					$ids
 				)
 			);
-			$expected = $settings['correct'] ?? array();
-			sort( $given );
-			sort( $expected );
-			$correct = $given === $expected;
+			$expected = array_map( 'strval', (array) ( $settings['correct'] ?? array() ) );
+			$hits     = count( array_intersect( $given, $expected ) );
+			$wrong    = count( $given ) - $hits;
+			$correct  = $hits === count( $expected ) && 0 === $wrong;
+			// Partial credit by default: (correct picks - wrong picks) / correct options, floored at 0.
+			$fraction = 'all' === ( $settings['scoring'] ?? 'partial' ) || ! $expected ? ( $correct ? 1.0 : 0.0 ) : max( 0.0, ( $hits - $wrong ) / count( $expected ) );
+			return array(
+				'correct'  => $correct,
+				'fraction' => (float) $fraction,
+				'manual'   => false,
+			);
 		}
 		if ( 'match-table-grid' === $type ) {
 			if ( ! empty( $settings['multiple'] ) ) {

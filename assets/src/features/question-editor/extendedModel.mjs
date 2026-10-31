@@ -205,12 +205,14 @@ export function extendedDefaults( type ) {
 			};
 		case 'hot-text':
 			return {
+				passage: 'Even numbers: [[t1]], [[t2]] and [[t3]]. Which are even?',
 				tokens: [
 					{ id: 't1', text: '2' },
 					{ id: 't2', text: '3' },
 					{ id: 't3', text: '4' },
 				],
 				correct: [ 't1', 't3' ],
+				scoring: 'partial',
 			};
 		case 'match-table-grid':
 			return {
@@ -301,7 +303,7 @@ export function extendedPublicView( type, settings ) {
 		{
 			passage: [ 'passage' ],
 			graphing: [ 'mode', 'min', 'max' ],
-			'hot-text': [ 'tokens' ],
+			'hot-text': [ 'passage', 'tokens' ],
 			'match-table-grid': [ 'rows', 'columns', 'multiple' ],
 			labeling: [ 'image_url' ],
 			hotspot: [ 'image_url' ],
@@ -461,7 +463,7 @@ export function extendedIssues( type, settings = {} ) {
 	}
 	if (
 		type === 'hot-text' &&
-		( ! ( settings.tokens || [] ).length ||
+		( ( settings.tokens || [] ).length < 2 ||
 			! ( settings.correct || [] ).length )
 	) {
 		return [ 'tokens' ];

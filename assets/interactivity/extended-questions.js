@@ -1188,25 +1188,78 @@
 			return;
 		}
 		if ( type === 'hot-text' ) {
+			const tokens = config.tokens || [];
+			const byId = new Map( tokens.map( ( token ) => [ token.id, token ] ) );
+			// Legacy questions have no passage: read their tokens as one.
+			const passage =
+				typeof config.passage === 'string' && config.passage.trim()
+					? config.passage
+					: tokens.map( ( token ) => '[[' + token.id + ']]' ).join( ' ' );
+			const order = [ ...passage.matchAll( /\[\[([A-Za-z0-9_-]+)\]\]/g ) ]
+				.map( ( match ) => match[ 1 ] )
+				.filter( ( id ) => byId.has( id ) );
 			root.appendChild(
 				el( 'p', {
 					class: 'ohmylms-vis-hint',
 					text: __(
-						'Tap every answer that fits. Tap again to undo.',
+						'Select every highlighted option that answers the question. Select again to undo.',
 						'ohmylms'
 					),
 				} )
 			);
-			( config.tokens || [] ).forEach( ( token ) => {
-				const item = button( token.text, () => {
-					const selected =
-						item.getAttribute( 'aria-pressed' ) !== 'true';
+			const body = el( 'div', {
+				class: 'ohmylms-hot-text',
+				role: 'group',
+				'aria-label': __( 'Passage with selectable options', 'ohmylms' ),
+			} );
+			let last = 0;
+			const addText = ( text ) => {
+				text.split( /\n{2,}/ ).forEach( ( chunk, index ) => {
+					if ( index > 0 ) {
+						body.appendChild( el( 'span', { class: 'ohmylms-hot-text__break' } ) );
+					}
+					body.appendChild( document.createTextNode( chunk ) );
+				} );
+			};
+			for ( const match of passage.matchAll( /\[\[([A-Za-z0-9_-]+)\]\]/g ) ) {
+				addText( passage.slice( last, match.index ) );
+				last = match.index + match[ 0 ].length;
+				const token = byId.get( match[ 1 ] );
+				if ( ! token ) {
+					addText( match[ 0 ] );
+					continue;
+				}
+				const position = order.indexOf( token.id ) + 1;
+				const item = button( '', () => {
+					const selected = item.getAttribute( 'aria-pressed' ) !== 'true';
 					item.setAttribute( 'aria-pressed', String( selected ) );
 					setAnswer( root, token.id, selected ? '1' : '' );
 				} );
+				item.className +=
+					' ohmylms-hot-text__option ohmylms-ht-color-' + ( ( position - 1 ) % 6 );
+				item.appendChild(
+					el( 'span', {
+						class: 'ohmylms-hot-text__num',
+						'aria-hidden': 'true',
+						text: String( position ),
+					} )
+				);
+				item.appendChild( el( 'span', { text: token.text } ) );
+				item.setAttribute(
+					'aria-label',
+					sprintf(
+						/* translators: 1: option number, 2: option count, 3: option text. */
+						__( 'Option %1$d of %2$d: %3$s', 'ohmylms' ),
+						position,
+						order.length,
+						token.text
+					)
+				);
 				item.setAttribute( 'aria-pressed', 'false' );
-				root.appendChild( item );
-			} );
+				body.appendChild( item );
+			}
+			addText( passage.slice( last ) );
+			root.appendChild( body );
 			return;
 		}
 		if ( type === 'spin-wheel' ) {

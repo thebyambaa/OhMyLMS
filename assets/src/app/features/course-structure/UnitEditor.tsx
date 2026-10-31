@@ -4,7 +4,8 @@ import {
 	TextareaControl,
 	TextControl,
 } from '@wordpress/components';
-import { __, sprintf } from '@wordpress/i18n';
+import { useState } from '@wordpress/element';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
 import type { ResourceType } from './api';
 import type { Activity, Unit } from './model';
@@ -14,6 +15,13 @@ const TYPE_LABELS: Record< string, () => string > = {
 	quiz: () => __( 'Quiz', 'ohmylms' ),
 	assignment: () => __( 'Assignment', 'ohmylms' ),
 	practice: () => __( 'Practice', 'ohmylms' ),
+};
+
+const TYPE_ICONS: Record< string, string > = {
+	lesson: 'media-document',
+	quiz: 'editor-help',
+	assignment: 'portfolio',
+	practice: 'update',
 };
 
 const EDIT_ROUTES: Record< string, string > = {
@@ -66,115 +74,181 @@ export function UnitEditor( {
 	onMoveToUnit: ( id: string, unit: number | string ) => void;
 } ) {
 	const unitName = unit.title || __( 'New unit', 'ohmylms' );
+	const [ open, setOpen ] = useState( true );
 	return (
-		<section aria-label={ unitName }>
-			<h2>{ unitName }</h2>
-			<TextControl
-				label={ __( 'Unit title', 'ohmylms' ) }
-				value={ unit.title }
-				onChange={ ( title ) => onChange( { title } ) }
-			/>
-			<TextControl
-				label={ __( 'Unit number', 'ohmylms' ) }
-				value={ unit.number }
-				onChange={ ( number ) => onChange( { number } ) }
-			/>
-			<TextareaControl
-				label={ __( 'Unit description', 'ohmylms' ) }
-				value={ unit.description }
-				onChange={ ( description ) => onChange( { description } ) }
-			/>
-			<Button disabled={ first } onClick={ () => onMove( -1 ) }>
-				{ __( 'Move unit up', 'ohmylms' ) }
-			</Button>
-			<Button disabled={ last } onClick={ () => onMove( 1 ) }>
-				{ __( 'Move unit down', 'ohmylms' ) }
-			</Button>
-			<Button isDestructive onClick={ onDelete }>
-				{ __( 'Delete unit', 'ohmylms' ) }
-			</Button>
-			<ol>
+		<section className="oml-unit" aria-label={ unitName }>
+			<header className="oml-unit__header">
+				<span className="oml-unit__number">{ unit.number }</span>
+				<h2 className="oml-unit__title">{ unitName }</h2>
+				<span className="oml-unit__count">
+					{ sprintf(
+						/* translators: %d: number of activities. */
+						_n( '%d activity', '%d activities', items.length, 'ohmylms' ),
+						items.length
+					) }
+				</span>
+				<div className="oml-unit__tools">
+					<Button
+						size="small"
+						icon="edit"
+						label={ __( 'Unit details', 'ohmylms' ) }
+						aria-expanded={ open }
+						isPressed={ open }
+						onClick={ () => setOpen( ! open ) }
+					/>
+					<Button
+						size="small"
+						icon="arrow-up-alt2"
+						label={ __( 'Move unit up', 'ohmylms' ) }
+						disabled={ first }
+						onClick={ () => onMove( -1 ) }
+					/>
+					<Button
+						size="small"
+						icon="arrow-down-alt2"
+						label={ __( 'Move unit down', 'ohmylms' ) }
+						disabled={ last }
+						onClick={ () => onMove( 1 ) }
+					/>
+					<Button
+						size="small"
+						icon="trash"
+						isDestructive
+						label={ __( 'Delete unit', 'ohmylms' ) }
+						onClick={ onDelete }
+					/>
+				</div>
+			</header>
+			{ (
+				<div className="oml-unit__details" hidden={ ! open }>
+					<div className="oml-unit__row">
+						<TextControl
+							label={ __( 'Unit title', 'ohmylms' ) }
+							value={ unit.title }
+							onChange={ ( title ) => onChange( { title } ) }
+						/>
+						<TextControl
+							label={ __( 'Unit number', 'ohmylms' ) }
+							value={ unit.number }
+							onChange={ ( number ) => onChange( { number } ) }
+						/>
+					</div>
+					<TextareaControl
+						label={ __( 'Unit description', 'ohmylms' ) }
+						value={ unit.description }
+						rows={ 2 }
+						onChange={ ( description ) => onChange( { description } ) }
+					/>
+				</div>
+			) }
+			<ol className="oml-unit__items">
+				{ items.length === 0 && (
+					<li className="oml-unit__empty">
+						{ __( 'No activities yet. Add one below.', 'ohmylms' ) }
+					</li>
+				) }
 				{ items.map( ( item, index ) => {
 					const name = item.name || String( item.content_id );
 					const edit = EDIT_ROUTES[ item.type ];
 					return (
-						<li key={ item.id }>
-							{ name } (
-							{ TYPE_LABELS[ item.type ]?.() ?? item.type }){ ' ' }
-							{ edit && (
-								<Link to={ `${ edit }${ item.content_id }` }>
-									{ sprintf(
-										/* translators: %s: activity name. */
-										__( 'Edit %s', 'ohmylms' ),
-										name
-									) }
-								</Link>
-							) }
-							<Button
-								disabled={ 0 === index }
-								onClick={ () => onMoveItem( item.id, -1 ) }
-							>
-								{ sprintf(
-									/* translators: %s: activity name. */
-									__( 'Move %s up', 'ohmylms' ),
+						<li key={ item.id } className="oml-outline-item">
+							<span
+								className={ `dashicons dashicons-${
+									TYPE_ICONS[ item.type ] ?? 'media-default'
+								} oml-outline-item__icon` }
+								aria-hidden="true"
+							/>
+							<span className="oml-outline-item__name">
+								{ edit ? (
+									<Link to={ `${ edit }${ item.content_id }` }>
+										{ name }
+									</Link>
+								) : (
 									name
 								) }
-							</Button>
-							<Button
-								disabled={ index === items.length - 1 }
-								onClick={ () => onMoveItem( item.id, 1 ) }
+							</span>
+							<span
+								className={ `oml-badge oml-outline-item__type oml-outline-item__type--${ item.type }` }
 							>
-								{ sprintf(
-									/* translators: %s: activity name. */
-									__( 'Move %s down', 'ohmylms' ),
-									name
+								{ TYPE_LABELS[ item.type ]?.() ?? item.type }
+							</span>
+							<span className="oml-outline-item__tools">
+								{ units.length > 1 && (
+									<SelectControl< string >
+										__nextHasNoMarginBottom
+										hideLabelFromVision
+										size="small"
+										label={ sprintf(
+											/* translators: %s: activity name. */
+											__( 'Unit for %s', 'ohmylms' ),
+											name
+										) }
+										value={ String( unit.id ) }
+										options={ units.map( ( row ) => ( {
+											value: String( row.id ),
+											label:
+												row.title ||
+												__( 'New unit', 'ohmylms' ),
+										} ) ) }
+										onChange={ ( value ) => {
+											const target = units.find(
+												( row ) =>
+													String( row.id ) === value
+											);
+											if ( target ) {
+												onMoveToUnit( item.id, target.id );
+											}
+										} }
+									/>
 								) }
-							</Button>
-							{ units.length > 1 && (
-								<SelectControl< string >
+								<Button
+									size="small"
+									icon="arrow-up-alt2"
 									label={ sprintf(
 										/* translators: %s: activity name. */
-										__( 'Unit for %s', 'ohmylms' ),
+										__( 'Move %s up', 'ohmylms' ),
 										name
 									) }
-									value={ String( unit.id ) }
-									options={ units.map( ( row ) => ( {
-										value: String( row.id ),
-										label:
-											row.title ||
-											__( 'New unit', 'ohmylms' ),
-									} ) ) }
-									onChange={ ( value ) => {
-										const target = units.find(
-											( row ) =>
-												String( row.id ) === value
-										);
-										if ( target ) {
-											onMoveToUnit( item.id, target.id );
-										}
-									} }
+									disabled={ 0 === index }
+									onClick={ () => onMoveItem( item.id, -1 ) }
 								/>
-							) }
-							<Button onClick={ () => onDetach( item ) }>
-								{ sprintf(
-									/* translators: %s: activity name. */
-									__( 'Detach %s', 'ohmylms' ),
-									name
-								) }
-							</Button>
+								<Button
+									size="small"
+									icon="arrow-down-alt2"
+									label={ sprintf(
+										/* translators: %s: activity name. */
+										__( 'Move %s down', 'ohmylms' ),
+										name
+									) }
+									disabled={ index === items.length - 1 }
+									onClick={ () => onMoveItem( item.id, 1 ) }
+								/>
+								<Button
+									size="small"
+									icon="no-alt"
+									label={ sprintf(
+										/* translators: %s: activity name. */
+										__( 'Detach %s', 'ohmylms' ),
+										name
+									) }
+									onClick={ () => onDetach( item ) }
+								/>
+							</span>
 						</li>
 					);
 				} ) }
 			</ol>
-			<Button onClick={ () => onAdd( 'lesson' ) }>
-				{ __( 'Attach lesson to unit', 'ohmylms' ) }
-			</Button>
-			<Button onClick={ () => onAdd( 'quiz' ) }>
-				{ __( 'Add quiz to unit', 'ohmylms' ) }
-			</Button>
-			<Button onClick={ () => onAdd( 'assignment' ) }>
-				{ __( 'Add assignment to unit', 'ohmylms' ) }
-			</Button>
+			<div className="oml-unit__add">
+				<Button size="small" variant="tertiary" icon="plus" aria-label={ __( 'Attach lesson to unit', 'ohmylms' ) } onClick={ () => onAdd( 'lesson' ) }>
+					{ __( 'Lesson', 'ohmylms' ) }
+				</Button>
+				<Button size="small" variant="tertiary" icon="plus" aria-label={ __( 'Add quiz to unit', 'ohmylms' ) } onClick={ () => onAdd( 'quiz' ) }>
+					{ __( 'Quiz', 'ohmylms' ) }
+				</Button>
+				<Button size="small" variant="tertiary" icon="plus" aria-label={ __( 'Add assignment to unit', 'ohmylms' ) } onClick={ () => onAdd( 'assignment' ) }>
+					{ __( 'Assignment', 'ohmylms' ) }
+				</Button>
+			</div>
 		</section>
 	);
 }

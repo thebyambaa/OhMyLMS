@@ -1091,7 +1091,7 @@ export function toCreateInput(
 		bank.secure = true;
 	}
 	const input: QuestionCreateInput = {
-		name: form.name.trim(),
+		name: derivedName( form, type ),
 		settings: settingsFor( form, type ),
 		bank,
 	};
@@ -1178,7 +1178,7 @@ export function derivedPoints( settings: QuestionSettings ): string {
 export function formFromQuestion( question: QuestionDetail ): FormState {
 	return {
 		name: question.name,
-		description: question.description,
+		description: questionStatement( question ),
 		points: pointsFrom( question.settings ),
 		difficulty: question.bank.difficulty,
 		settings: question.settings,
@@ -1294,6 +1294,140 @@ export function isValid( errors: FormErrors ): boolean {
 	return 0 === Object.keys( errors ).length;
 }
 
+const ENTITIES: Record< string, string > = {
+	'&nbsp;': ' ',
+	'&lt;': '<',
+	'&gt;': '>',
+	'&quot;': '"',
+	'&#39;': "'",
+	'&#039;': "'",
+	'&amp;': '&',
+};
+const TEX: Record< string, string > = {
+	cdot: '·',
+	times: '×',
+	div: '÷',
+	pm: '±',
+	le: '≤',
+	leq: '≤',
+	ge: '≥',
+	geq: '≥',
+	ne: '≠',
+	neq: '≠',
+	pi: 'π',
+	infty: '∞',
+	degree: '°',
+	circ: '°',
+};
+export const TITLE_LENGTH = 80;
+
+/**
+ * Readable plain text of a rich statement: tags removed, entities decoded, LaTeX source simplified
+ * (`\frac{a}{b}` → `a/b`, `\sqrt{x}` → `√x`, delimiters dropped).
+ *
+ * @param html Statement HTML.
+ * @return One line of plain text.
+ */
+export function statementText( html: string ): string {
+	let value = String( html || '' )
+		.replace( /<br\s*\/?>|<\/(?:p|div|li|h\d)>/gi, ' ' )
+		.replace( /<[^>]*>/g, '' )
+		.replace( /&(?:nbsp|lt|gt|quot|amp|#0?39);/g, ( m ) => ENTITIES[ m ] ?? m )
+		.replace( /\$\$?|\\[()[\]]/g, '' );
+	for ( let pass = 0; pass < 3; pass++ ) {
+		value = value
+			.replace( /\\[dt]?frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, '$1/$2' )
+			.replace( /\\sqrt\s*\{([^{}]*)\}/g, '√$1' );
+	}
+	return value
+		.replace( /\\(?:left|right|displaystyle|text|mathrm|mathbf)\b/g, '' )
+		.replace( /\\([a-zA-Z]+)/g, ( _m, cmd: string ) => TEX[ cmd ] ?? '' )
+		.replace( /\^\{([^{}]*)\}/g, '^$1' )
+		.replace( /\s+/g, ' ' )
+		.trim();
+}
+
+/**
+ * Short list title of a statement, cut at a word boundary.
+ *
+ * @param html Statement HTML.
+ * @param max  Maximum characters.
+ * @return The title, or an empty string.
+ */
+export function statementTitle( html: string, max = TITLE_LENGTH ): string {
+	const textValue = statementText( html );
+	const chars = Array.from( textValue );
+	if ( chars.length <= max ) {
+		return textValue;
+	}
+	const cut = chars.slice( 0, max - 1 ).join( '' );
+	const space = cut.lastIndexOf( ' ' );
+	return ( space > max / 2 ? cut.slice( 0, space ) : cut ).trimEnd() + '…';
+}
+
+function escapeHtml( value: string ): string {
+	return value
+		.replace( /&/g, '&amp;' )
+		.replace( /</g, '&lt;' )
+		.replace( />/g, '&gt;' );
+}
+
+/**
+ * Whether a stored name is only a placeholder (never the question itself).
+ *
+ * @param name Stored name.
+ * @return True for empty, "Untitled" and "Question N".
+ */
+function placeholderName( name: string ): boolean {
+	return /^(?:|Untitled|Question \d+)$/.test( name.trim() );
+}
+
+/**
+ * The single statement of a question. Older questions kept the prompt in the name and an optional
+ * body in the description; both are merged so nothing a learner saw is lost.
+ *
+ * @param question Name, description and settings.
+ * @return Statement HTML.
+ */
+export function questionStatement( question: {
+	name: string;
+	description: string;
+	settings: QuestionSettings;
+} ): string {
+	if ( question.settings.question_code ) {
+		return question.description;
+	}
+	if ( placeholderName( question.name ) ) {
+		return question.description;
+	}
+	const name = question.name.trim();
+	if ( ! question.description.trim() ) {
+		return name;
+	}
+	return `<p>${ escapeHtml( name ) }</p>\n${ question.description }`;
+}
+
+/**
+ * Stored name (post title) derived from the statement. Fill-in-the-blank keeps the whole plain
+ * statement because the server reads its `{blanks}` from the name.
+ *
+ * @param form Form state.
+ * @param type Question type id.
+ * @return The derived name.
+ */
+export function derivedName(
+	form: Pick< FormState, 'description' | 'settings' >,
+	type: string
+): string {
+	if ( 'fill-in-the-blank' === type ) {
+		return statementText( form.description );
+	}
+	const statement =
+		form.description ||
+		String( form.settings.passage || form.settings.text || '' );
+	return statementTitle( statement ) || __( 'Untitled question', 'ohmylms' );
+}
+
 function plain( html: string ): string {
 	return html.replace( /<[^>]*>/g, '' ).trim();
 }
@@ -1318,9 +1452,15 @@ export function validateForm(
 	area: AnswerArea = editsOptions( type ) ? 'options' : 'extension'
 ): FormErrors {
 	const errors: FormErrors = {};
-	const name = form.name.trim();
-	if ( ! name || Array.from( name ).length > MAX_NAME ) {
-		errors.name = sprintf(
+	const statement = statementText(
+		form.description ||
+			String( form.settings.passage || form.settings.text || '' )
+	);
+	if (
+		! statement ||
+		Array.from( derivedName( form, type ) ).length > MAX_NAME
+	) {
+		errors.description = sprintf(
 			/* translators: %d: maximum name length. */
 			__( 'Enter a question of 1 to %d characters.', 'ohmylms' ),
 			MAX_NAME
@@ -1525,7 +1665,14 @@ export function optionInputs( options: readonly FormOption[] ): OptionInput[] {
  * @return Settings payload.
  */
 export function settingsFor( form: FormState, type: string ): QuestionSettings {
-	const settings: QuestionSettings = { ...form.settings, type };
+	const settings: QuestionSettings = {
+		...form.settings,
+		type,
+		// The statement is the description; the name is only a derived list title.
+		question_code:
+			form.settings.question_code ||
+			`Q-${ Math.random().toString( 36 ).slice( 2, 10 ).toUpperCase() }`,
+	};
 	const mode = scoreMode( type );
 	const score = form.settings.score;
 	const base =
@@ -1561,13 +1708,16 @@ export function toInput(
 	area: AnswerArea = editsOptions( type ) ? 'options' : 'extension'
 ): QuestionUpdateInput {
 	const input: QuestionUpdateInput = { base_modified: baseModified };
-	if ( form.name !== saved.name ) {
-		input.name = form.name.trim();
+	const migrating = ! saved.settings.question_code;
+	const name = derivedName( form, type );
+	if ( name !== saved.name ) {
+		input.name = name;
 	}
-	if ( form.description !== saved.description ) {
+	if ( migrating || form.description !== saved.description ) {
 		input.description = form.description;
 	}
 	if (
+		migrating ||
 		form.points.trim() !== saved.points.trim() ||
 		JSON.stringify( form.settings ) !== JSON.stringify( saved.settings )
 	) {

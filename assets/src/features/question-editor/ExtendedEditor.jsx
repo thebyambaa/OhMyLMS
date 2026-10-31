@@ -1,4 +1,5 @@
 import { MatchTableGridEditor } from './MatchTableGridEditor';
+import { HotTextEditor } from './HotTextEditor';
 import { RichContentControl } from '../math/RichContentControl';
 import { createElement, useState } from '@wordpress/element';
 import {
@@ -524,51 +525,7 @@ export function ExtendedEditor( {
 				</>
 			) }
 			{ type === 'hot-text' && (
-				<>
-					<RichContentControl
-						compact
-						html={ false }
-						label={ __(
-							'Selectable words (one per line)',
-							'ohmylms'
-						) }
-						value={ rows( 'tokens' )
-							.map( ( token ) => token.text )
-							.join( '\n' ) }
-						onChange={ ( text ) =>
-							set( {
-								tokens: text
-									.split( '\n' )
-									.map( ( word, index ) => ( {
-										id: 't' + ( index + 1 ),
-										text: word,
-									} ) ),
-								correct: [],
-							} )
-						}
-					/>
-					{ rows( 'tokens' ).map( ( token ) => (
-						<CheckboxControl
-							key={ token.id }
-							label={ token.text }
-							checked={ ( value.correct || [] ).includes(
-								token.id
-							) }
-							onChange={ ( checked ) =>
-								set( {
-									correct: checked
-										? [
-												...( value.correct || [] ),
-												token.id,
-											]
-										: ( value.correct || [] ).filter(
-												( id ) => id !== token.id
-											),
-								} )
-							}
-						/>
-					) ) }
-				</>
+				<HotTextEditor value={ value } onChange={ onChange } />
 			) }
 			{ type === 'match-table-grid' && (
 				<MatchTableGridEditor value={ value } onChange={ onChange } />

@@ -46,6 +46,7 @@ export const summary: Course = {
 	slug: 'algebra-i',
 	status: 'publish',
 	permalink: 'https://example.test/course/algebra-i/',
+	preview_url: '',
 	author_id: 1,
 	author_name: 'Ada Admin',
 	level: 'beginner',

@@ -58,6 +58,7 @@ export default function QuizEditorPage() {
 	const [ conflict, setConflict ] = useState( false );
 	const [ questionDraft, setQuestionDraft ] = useState( false );
 	const [ totalMarks, setTotalMarks ] = useState< number | null >( null );
+	const [ asideOpen, setAsideOpen ] = useState( true );
 	const summary = useRef< HTMLDivElement >( null );
 	const operation = useRef< AbortController | null >( null );
 	const dirty = Boolean( form && saved && isDirty( form, saved ) );
@@ -193,36 +194,74 @@ export default function QuizEditorPage() {
 
 	return (
 		<>
-			<p>
+			<p className="oml-editor-breadcrumb">
 				<Link to="/quizzes">
 					{ __( 'Back to quizzes', 'ohmylms' ) }
 				</Link>
 			</p>
-			<h2>
-				{ sprintf(
-					/* translators: %s: quiz title. */
-					__( 'Quiz settings: %s', 'ohmylms' ),
-					saved.title
-				) }
-			</h2>
-			<p>
-				{ quiz.can_grade && (
-					<>
-						<Link to={ `/quizzes/${ quiz.id }/attempts` }>
+			<div className="oml-editor-header">
+				<div className="oml-editor-header__title">
+					<h2>
+						{ sprintf(
+							/* translators: %s: quiz title. */
+							__( 'Quiz settings: %s', 'ohmylms' ),
+							saved.title
+						) }
+					</h2>
+					<span
+						className={ `oml-editor-status oml-editor-status--${ quiz.status }` }
+					>
+						{ 'publish' === quiz.status
+							? __( 'Published', 'ohmylms' )
+							: quiz.status }
+					</span>
+					{ totalMarks !== null && totalMarks !== undefined && (
+						<span className="oml-editor-saved">
+							{ sprintf(
+								/* translators: %s: marks. */
+								__( '%s marks', 'ohmylms' ),
+								String( totalMarks )
+							) }
+						</span>
+					) }
+				</div>
+				<div className="oml-editor-header__actions">
+					{ dirty && (
+						<span className="oml-editor-saved" role="status">
+							{ __( 'You have unsaved changes.', 'ohmylms' ) }
+						</span>
+					) }
+					{ quiz.can_grade && (
+						<Link
+							className="components-button is-tertiary"
+							to={ `/quizzes/${ quiz.id }/attempts` }
+						>
 							{ sprintf(
 								/* translators: %d: number of attempts. */
 								__( 'Attempts (%d)', 'ohmylms' ),
 								quiz.attempt_count
 							) }
-						</Link>{ ' ' }
-					</>
-				) }
-				{ quiz.native_editor_url && (
-					<a href={ quiz.native_editor_url }>
-						{ __( 'Open in the block editor', 'ohmylms' ) }
-					</a>
-				) }
-			</p>
+						</Link>
+					) }
+					{ quiz.native_editor_url && (
+						<a
+							className="components-button is-tertiary"
+							href={ quiz.native_editor_url }
+						>
+							{ __( 'Open in the block editor', 'ohmylms' ) }
+						</a>
+					) }
+					<Button
+						variant="tertiary"
+						aria-expanded={ asideOpen }
+						onClick={ () => setAsideOpen( ! asideOpen ) }
+					>
+						{ asideOpen
+							? __( 'Hide settings', 'ohmylms' )
+							: __( 'Show settings', 'ohmylms' ) }
+					</Button>
+				</div>
+			</div>
 			{ 'trash' === quiz.status && (
 				<Notice status="warning" isDismissible={ false }>
 					{ __(
@@ -230,11 +269,6 @@ export default function QuizEditorPage() {
 						'ohmylms'
 					) }
 				</Notice>
-			) }
-			{ dirty && (
-				<p role="status">
-					{ __( 'You have unsaved changes.', 'ohmylms' ) }
-				</p>
 			) }
 			{ message && (
 				<Notice status="success" onRemove={ () => setMessage( null ) }>
@@ -262,7 +296,24 @@ export default function QuizEditorPage() {
 					</Notice>
 				) }
 			</div>
+			<div
+				className={ `oml-editor oml-editor-grid${ asideOpen ? '' : ' is-aside-closed' }` }
+			>
+			<div className="oml-editor-main">
+				<QuizQuestions
+					quizId={ quiz.id }
+					readOnly={ readOnly }
+					onDirtyChange={ setQuestionDraft }
+					onTotalChange={ setTotalMarks }
+				/>
+			</div>
+			{ asideOpen && (
+			<aside
+				className="oml-editor-aside"
+				aria-label={ __( 'Quiz settings', 'ohmylms' ) }
+			>
 			<form
+				className="oml-editor-form"
 				aria-label={ __( 'Quiz settings', 'ohmylms' ) }
 				noValidate
 				onSubmit={ ( event ) => {
@@ -528,13 +579,10 @@ export default function QuizEditorPage() {
 					{ __( 'Save quiz', 'ohmylms' ) }
 				</Button>
 			</form>
+			</aside>
+			) }
+			</div>
 
-			<QuizQuestions
-				quizId={ quiz.id }
-				readOnly={ readOnly }
-				onDirtyChange={ setQuestionDraft }
-				onTotalChange={ setTotalMarks }
-			/>
 
 			{ guard.pendingPath && (
 				<Modal

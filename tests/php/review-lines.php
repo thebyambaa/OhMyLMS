@@ -40,7 +40,8 @@ $check  = static function ( $label, $actual, $expected ) use ( &$checks ) {
 };
 
 $tokens = array( 'tokens' => array( array( 'id' => 't1', 'text' => 'two' ), array( 'id' => 't2', 'text' => 'three' ), array( 'id' => 't3', 'text' => 'four' ) ), 'correct' => array( 't1', 't3' ) );
-$check( 'hot-text given', ReviewLines::given( 'hot-text', array( 't1' => '1', 't2' => '0', 't3' => '1' ), $tokens ), array( 'two', 'four' ) );
+$check( 'hot-text given', ReviewLines::given( 'hot-text', array( 't1' => '1', 't2' => '0', 't3' => '1' ), $tokens ), array( '[✓ two] three [✓ four]', 'two', 'four' ) );
+$check( 'hot-text passage marks', ReviewLines::given( 'hot-text', array( 't2' => '1', 't3' => '1' ), $tokens + array( 'passage' => 'Even: [[t1]], [[t2]] or [[t3]]?' ) ), array( 'Even: [○ two], [✗ three] or [✓ four]?', 'three', 'four' ) );
 $check( 'hot-text expected', ReviewLines::expected( 'hot-text', $tokens ), array( 'two', 'four' ) );
 
 $grid = array(

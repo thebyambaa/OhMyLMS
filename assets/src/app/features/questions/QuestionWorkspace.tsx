@@ -43,7 +43,7 @@ import {
 	isDirty,
 	isValid,
 	MAX_DESCRIPTION,
-	MAX_NAME,
+	derivedName,
 	MAX_POINTS,
 	scoreMode,
 	serverFieldError,
@@ -66,6 +66,7 @@ import {
 } from './QuestionFields';
 import type { QuestionHandoff } from './useQuestionEditor';
 import { Versions } from './Versions';
+import { VariablesPanel } from './VariablesPanel';
 import type {
 	FormErrors,
 	FormState,
@@ -196,6 +197,7 @@ export function QuestionWorkspace( {
 	);
 	const [ errors, setErrors ] = useState< FormErrors >( {} );
 	const [ busy, setBusy ] = useState( false );
+	const [ asideOpen, setAsideOpen ] = useState( true );
 	const [ message, setMessage ] = useState< string | null >(
 		initialMessage ?? null
 	);
@@ -434,7 +436,7 @@ export function QuestionWorkspace( {
 	function previewData(): PreviewQuestion {
 		return {
 			id: question.id,
-			name: form.name,
+			name: derivedName( form, type ),
 			description: form.description,
 			settings: settingsFor( form, type ),
 			questions: form.options.map( ( item, index ) => ( {
@@ -476,38 +478,69 @@ export function QuestionWorkspace( {
 					<BackLink />
 				</p>
 			) }
-			<Heading>
-				{ draft
-					? sprintf(
-							/* translators: %s: question name. */
-							__( 'New question: %s', 'ohmylms' ),
-							title
-						)
-					: sprintf(
-							/* translators: %s: question name. */
-							__( 'Edit question: %s', 'ohmylms' ),
-							title
-						) }
-			</Heading>
-			<p>
-				{ sprintf(
-					/* translators: %s: question type label. */
-					__( 'Type: %s', 'ohmylms' ),
-					typeLabel( types, type )
-				) }
-				{ ! draft && (
-					<>
-						{ ' · ' }
-						{ versionLabel( question ) }
-						{ ' · ' }
+			<div className="oml-editor-header">
+				<div className="oml-editor-header__title">
+					<Heading>{ draft ? sprintf(
+						/* translators: %s: question name. */
+						__( 'New question: %s', 'ohmylms' ),
+						title
+					) : sprintf(
+						/* translators: %s: question name. */
+						__( 'Edit question: %s', 'ohmylms' ),
+						title
+					) }</Heading>
+					<span className="oml-editor-status">
 						{ sprintf(
-							/* translators: %s: usage such as "2 quizzes · 14 responses". */
-							__( 'Used in %s', 'ohmylms' ),
-							usageLabel( question )
+							/* translators: %s: question type. */
+							__( 'Type: %s', 'ohmylms' ),
+							typeLabel( types, type )
 						) }
-					</>
-				) }
-			</p>
+					</span>
+					{ ! draft && (
+						<span className={ `oml-editor-status oml-editor-status--${ question.status }` }>
+							{ question.status }
+						</span>
+					) }
+					{ ! draft && (
+						<span className="oml-editor-saved">
+							{ versionLabel( question ) }
+							{ ' · ' }
+							{ sprintf(
+								/* translators: %s: usage such as "2 quizzes · 14 responses". */
+								__( 'Used in %s', 'ohmylms' ),
+								usageLabel( question )
+							) }
+						</span>
+					) }
+				</div>
+				<div className="oml-editor-header__actions">
+					{ ! draft && dirty && (
+						<span className="oml-editor-saved" role="status">
+							{ __( 'You have unsaved changes.', 'ohmylms' ) }
+						</span>
+					) }
+					<Button
+						variant="tertiary"
+						aria-expanded={ asideOpen }
+						onClick={ () => setAsideOpen( ! asideOpen ) }
+					>
+						{ asideOpen
+							? __( 'Hide sidebar', 'ohmylms' )
+							: __( 'Show sidebar', 'ohmylms' ) }
+					</Button>
+					{ ! readOnly && (
+						<Button
+							type="submit"
+							form="oml-question-form"
+							variant="primary"
+							disabled={ busy || ( ! draft && ! dirty ) }
+							isBusy={ busy }
+						>
+							{ __( 'Save', 'ohmylms' ) }
+						</Button>
+					) }
+				</div>
+			</div>
 			{ draft && (
 				<p role="status">
 					{ hosted
@@ -519,11 +552,6 @@ export function QuestionWorkspace( {
 								'This question is not saved yet. Complete it and save to add it to the question bank.',
 								'ohmylms'
 							) }
-				</p>
-			) }
-			{ ! draft && dirty && (
-				<p role="status">
-					{ __( 'You have unsaved changes.', 'ohmylms' ) }
 				</p>
 			) }
 			{ message && (
@@ -564,7 +592,11 @@ export function QuestionWorkspace( {
 					) }
 				</Notice>
 			) }
+			<div className={ `oml-editor oml-editor-grid${ asideOpen ? '' : ' is-aside-closed' }` }>
+			<div className="oml-editor-main">
 			<form
+				id="oml-question-form"
+				className="oml-editor-form"
 				aria-label={ __( 'Question', 'ohmylms' ) }
 				noValidate
 				onSubmit={ ( event ) => {
@@ -574,20 +606,15 @@ export function QuestionWorkspace( {
 			>
 				<fieldset disabled={ busy || readOnly }>
 					<legend>{ __( 'Question details', 'ohmylms' ) }</legend>
-					<TextControl
-						label={ __( 'Name', 'ohmylms' ) }
-						value={ form.name }
-						maxLength={ MAX_NAME }
-						required
-						aria-invalid={ invalid( 'name' ) }
-						aria-describedby={ described( 'name' ) }
-						onChange={ ( next ) => update( 'name', next ) }
-					/>
-					<FieldError field="name" message={ errors.name } />
 					<TextareaControl
-						label={ __( 'Question text', 'ohmylms' ) }
+						label={ __( 'Question', 'ohmylms' ) }
 						value={ form.description }
 						rows={ 4 }
+						required
+						help={ __(
+							'The question learners see. Supports HTML, LaTeX and {{variables}}. Its first words become the title in question lists.',
+							'ohmylms'
+						) }
 						maxLength={ MAX_DESCRIPTION }
 						aria-invalid={ invalid( 'description' ) }
 						aria-describedby={ described( 'description' ) }
@@ -660,7 +687,7 @@ export function QuestionWorkspace( {
 				) }
 				{ 'blanks' === area && (
 					<BlankAnswers
-						name={ form.name }
+						name={ derivedName( form, type ) }
 						settings={ form.settings }
 						options={ form.options }
 						errors={ errors }
@@ -702,6 +729,23 @@ export function QuestionWorkspace( {
 					</Notice>
 				) }
 				<FieldError field="settings" message={ errors.settings } />
+
+				<fieldset
+					className="oml-vars-fieldset"
+					disabled={ busy || readOnly }
+				>
+					<legend>{ __( 'Variables', 'ohmylms' ) }</legend>
+					<VariablesPanel
+						type={ type }
+						name={ derivedName( form, type ) }
+						description={ form.description }
+						settings={ form.settings as Record< string, unknown > }
+						disabled={ busy || readOnly }
+						onChange={ ( patch ) =>
+							changeSettings( patch as QuestionSettings )
+						}
+					/>
+				</fieldset>
 
 				<SharedSettingsFields
 					type={ type }
@@ -765,7 +809,9 @@ export function QuestionWorkspace( {
 					</>
 				) }
 			</form>
-
+			</div>
+			{ asideOpen && (
+			<aside className="oml-editor-aside" aria-label={ __( 'Question sidebar', 'ohmylms' ) }>
 			<PlayerPreview
 				postId={ draft ? ( target?.previewPostId ?? 0 ) : question.id }
 				question={ previewData }
@@ -906,6 +952,9 @@ export function QuestionWorkspace( {
 					<Versions key={ versionsKey } id={ question.id } />
 				</>
 			) }
+			</aside>
+			) }
+			</div>
 
 			{ adding && (
 				<AddToQuizDialog

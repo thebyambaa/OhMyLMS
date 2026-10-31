@@ -1,11 +1,14 @@
 import { Notice } from '@wordpress/components';
-import { lazy, Suspense } from '@wordpress/element';
+import { lazy, Suspense, useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { Link, useParams } from 'react-router-dom';
 import { useBootstrap } from '../../bootstrap/BootstrapContext';
 import { hasCapability } from '../../bootstrap/config';
 import { CertificatePanel } from './CertificatePanel';
+import { getCourse } from './api';
 import { CourseForm } from './CourseForm';
+import { CourseViewLink } from './CourseViewLink';
+import type { CourseDetail } from './types';
 
 const CourseOutline = lazy( () =>
 	import(
@@ -36,6 +39,25 @@ function routeId( value: string | undefined ): number | null {
  * placements), Settings (pricing, access, availability, capacity and certificate) and Publish (reviewed
  * publication of the saved program). Publication and certificates need `manage_options`, as on the server.
  */
+/**
+ * View/Preview link for tabs without the course form header (Outline, Publish). Loads the course once.
+ *
+ * @param props    Component props.
+ * @param props.id Course id.
+ */
+function CourseViewAction( { id }: { id: number } ) {
+	const [ course, setCourse ] = useState< CourseDetail | null >( null );
+	useEffect( () => {
+		const controller = new AbortController();
+		getCourse( id, controller.signal ).then(
+			( loaded ) => ! controller.signal.aborted && setCourse( loaded ),
+			() => undefined
+		);
+		return () => controller.abort();
+	}, [ id ] );
+	return course ? <CourseViewLink course={ course } /> : null;
+}
+
 export default function CourseEditorPage() {
 	const params = useParams();
 	const id = routeId( params.id );
@@ -57,37 +79,40 @@ export default function CourseEditorPage() {
 		);
 	}
 	return (
-		<>
-			<p>
-				<Link to="/courses">
-					{ __( 'Back to courses', 'ohmylms' ) }
-				</Link>
-			</p>
-			<nav aria-label={ __( 'Course editor sections', 'ohmylms' ) }>
-				<ul className="subsubsub">
-					{ tabs.map( ( row, index ) => (
-						<li key={ row.id } className={ row.id }>
-							<Link
-								to={
-									'details' === row.id
-										? `/courses/${ id }`
-										: `/courses/${ id }/${ row.id }`
-								}
-								className={
-									row.id === tab.id ? 'current' : undefined
-								}
-								aria-current={
-									row.id === tab.id ? 'page' : undefined
-								}
-							>
-								{ row.label() }
-							</Link>
-							{ index < tabs.length - 1 ? ' | ' : null }
-						</li>
-					) ) }
-				</ul>
+		<div className="oml-editor">
+			<div className="oml-editor-topbar">
+				<p className="oml-editor-breadcrumb">
+					<Link to="/courses">
+						{ __( 'Back to courses', 'ohmylms' ) }
+					</Link>
+				</p>
+				{ ( 'outline' === tab.id || 'publish' === tab.id ) && (
+					<CourseViewAction key={ id } id={ id } />
+				) }
+			</div>
+			<nav
+				className="oml-editor-tabs"
+				aria-label={ __( 'Course editor sections', 'ohmylms' ) }
+			>
+				{ tabs.map( ( row ) => (
+					<Link
+						key={ row.id }
+						to={
+							'details' === row.id
+								? `/courses/${ id }`
+								: `/courses/${ id }/${ row.id }`
+						}
+						className={
+							row.id === tab.id
+								? 'oml-editor-tab is-active'
+								: 'oml-editor-tab'
+						}
+						aria-current={ row.id === tab.id ? 'page' : undefined }
+					>
+						{ row.label() }
+					</Link>
+				) ) }
 			</nav>
-			<br className="clear" />
 			{ ( 'details' === tab.id || 'settings' === tab.id ) && (
 				<CourseForm key={ tab.id } id={ id } section={ tab.id } />
 			) }
@@ -108,6 +133,6 @@ export default function CourseEditorPage() {
 					/>
 				) }
 			</Suspense>
-		</>
+		</div>
 	);
 }

@@ -22,6 +22,8 @@ export interface Course {
 	slug: string;
 	status: CourseStatus;
 	permalink: string;
+	/** Preview link for an unpublished course; empty when published or trashed. */
+	preview_url: string;
 	author_id: number;
 	/** Empty unless the user can edit other people's courses. */
 	author_name: string;

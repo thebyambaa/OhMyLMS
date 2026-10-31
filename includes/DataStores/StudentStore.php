@@ -756,6 +756,9 @@ class StudentStore extends DataStore {
 		global $wpdb;
 		$content_type  = ohmylms_get_content_type_id_by_content_id( $lesson_id );
 		$lesson        = ohmylms_get_content_object( $content_type, $lesson_id );
+		if ( ! $lesson ) {
+			return false;
+		}
 		$content_type  = $lesson->get_type();
 		$enrollment_id = $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE user_id = %d AND course_id = %d', $wpdb->prefix . 'ohmylms_user_enrollment', $student->get_id(), $course_id ) );
 		$table_name    = $wpdb->prefix . 'ohmylms_user_progress';
