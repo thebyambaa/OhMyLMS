@@ -106,6 +106,7 @@ add_action( 'init', array( 'OhMyLMS\\Extensions\\Bootstrap', 'init' ), 5 );
 \OhMyLMS\Design\DesignSystem::init();
 \OhMyLMS\Admin\AppPage::init();
 \OhMyLMS\Assets\AdminAppAssets::init();
+\OhMyLMS\Dashboard\Bootstrap::init();
 \OhMyLMS\Schools\Bootstrap::init();
 \OhMyLMS\Family\Bootstrap::init();
 add_action( 'plugins_loaded', array( 'OhMyLMS\\Extensions\\Modules', 'load' ) );

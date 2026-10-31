@@ -2,13 +2,17 @@ import { lazy } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import type { FeatureDefinition } from '../types';
 
-/** Overview at `#/dashboard`: totals, earnings chart, recent and popular courses. */
+/**
+ * The scoped dashboard (`page=ohmylms`): scope picker, period switcher and the widgets of
+ * `widgets/index.ts`. Site administrators, school administrators and teachers (`ohmylms_view_dashboard`,
+ * includes/Dashboard/Access.php); every widget endpoint scopes its figures on the server.
+ */
 export const dashboard: FeatureDefinition = {
 	id: 'dashboard',
 	title: __( 'Dashboard', 'ohmylms' ),
 	path: '/dashboard',
 	group: 'dashboard',
-	capability: 'manage_options',
+	capability: 'ohmylms_view_dashboard',
 	component: lazy(
 		() =>
 			import(

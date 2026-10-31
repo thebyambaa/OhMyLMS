@@ -22,6 +22,15 @@ import {
 	earnings as earningsFeature,
 } from './index';
 import { formatMoney } from './model';
+import * as shellApi from './shell/api';
+import { adminScopes, envelope } from './shell/fixtures';
+
+vi.mock( './shell/api', () => ( {
+	getScopes: vi.fn(),
+	getWidget: vi.fn(),
+	snoozeItem: vi.fn(),
+	wakeItem: vi.fn(),
+} ) );
 
 vi.mock( './api', () => ( {
 	getDashboard: vi.fn(),
@@ -46,8 +55,16 @@ const features = [ dashboardFeature, earningsFeature, courseReportFeature ];
 function show( route: string ) {
 	return renderShell( features, {
 		route,
-		capabilities: { manage_options: true },
+		capabilities: { manage_options: true, ohmylms_view_dashboard: true },
 	} );
+}
+/**
+ * The overview widget's card.
+ */
+async function overview() {
+	return ( await screen.findByRole( 'region', {
+		name: 'Earnings and courses',
+	} ) ) as HTMLElement;
 }
 /**
  * Text Testing Library sees: Intl uses non-breaking spaces, which it normalises.
@@ -79,20 +96,38 @@ beforeEach( () => {
 	mocks.listCourseStudents.mockResolvedValue(
 		collection( [ student, completedStudent ] )
 	);
+	vi.mocked( shellApi.getScopes ).mockResolvedValue( adminScopes );
+	vi.mocked( shellApi.getWidget ).mockImplementation(
+		async ( widget, scope, period, parse ) =>
+			envelope(
+				widget,
+				scope,
+				parse(
+					'pulse' === widget
+						? { dates: [], currency: null, metrics: [] }
+						: { items: [], snoozed: 0, grading_days: 3 }
+				),
+				period
+			)
+	);
 } );
 
 describe( 'routes', () => {
-	it( 'are hidden and make no request without manage_options', () => {
-		renderShell( features, { route: '/dashboard' } );
-		expect(
-			screen.queryByRole( 'link', { name: 'Dashboard' } )
-		).not.toBeInTheDocument();
+	it( 'are hidden and make no request without the dashboard capability', () => {
+		renderShell( features, {
+			route: '/dashboard',
+			capabilities: { manage_options: true },
+		} );
+		expect( shellApi.getScopes ).not.toHaveBeenCalled();
 		expect( mocks.getDashboard ).not.toHaveBeenCalled();
 	} );
 
 	it( 'place the dashboard, earnings and the course report on their admin pages', async () => {
 		show( '/dashboard' );
-		await screen.findByRole( 'heading', { name: 'Dashboard' } );
+		await overview();
+		expect( dashboardFeature ).toMatchObject( {
+			capability: 'ohmylms_view_dashboard',
+		} );
 		expect( dashboardFeature ).toMatchObject( { group: 'dashboard' } );
 		expect( dashboardFeature.tab ).toBeUndefined();
 		expect( earningsFeature ).toMatchObject( {
@@ -108,7 +143,7 @@ describe( 'routes', () => {
 	} );
 } );
 
-describe( 'dashboard', () => {
+describe( 'overview widget', () => {
 	it( 'shows loading, then cards with changes, a described chart and course lists', async () => {
 		let release!: () => void;
 		mocks.getDashboard.mockImplementationOnce(
@@ -119,7 +154,7 @@ describe( 'dashboard', () => {
 		);
 		show( '/dashboard' );
 		expect(
-			await screen.findByText( 'Loading dashboard…' )
+			await within( await overview() ).findByText( 'Loading…' )
 		).toBeInTheDocument();
 		await waitFor( () => expect( release ).toBeDefined() );
 		release();
@@ -241,7 +276,7 @@ describe( 'dashboard', () => {
 		show( '/dashboard' );
 		expect(
 			await screen.findByText(
-				'You do not have permission to view analytics.',
+				'You do not have permission to view this.',
 				notice
 			)
 		).toBeInTheDocument();
@@ -253,10 +288,57 @@ describe( 'dashboard', () => {
 		).not.toBeInTheDocument();
 	} );
 
-	it( 'reads the range from the URL', async () => {
-		show( '/dashboard?range=last_7_days' );
+	it( 'follows the dashboard period', async () => {
+		const user = userEvent.setup();
+		show( '/dashboard?period=7' );
 		await screen.findByRole( 'list', { name: 'Summary' } );
 		expect( mocks.getDashboard.mock.calls[ 0 ]?.[ 0 ] ).toEqual( {
+			preset: 'last_7_days',
+			start: '',
+			end: '',
+		} );
+		expect(
+			screen.getByRole( 'button', { name: '7 days' } )
+		).toHaveAttribute( 'aria-pressed', 'true' );
+		await user.click( screen.getByRole( 'button', { name: '90 days' } ) );
+		await waitFor( () =>
+			expect( mocks.getDashboard.mock.calls.at( -1 )?.[ 0 ] ).toEqual( {
+				preset: 'last_90_days',
+				start: '',
+				end: '',
+			} )
+		);
+		expect(
+			screen.getByRole( 'link', { name: 'View the earnings report' } )
+		).toHaveAttribute(
+			'href',
+			expect.stringContaining( 'range=last_90_days' )
+		);
+	} );
+} );
+
+describe( 'date range filter', () => {
+	it( 'applies a preset chosen with the select at once', async () => {
+		const user = userEvent.setup();
+		show( '/earnings' );
+		await screen.findByRole( 'list', { name: 'Summary' } );
+		await user.selectOptions(
+			await screen.findByRole( 'combobox', { name: 'Date range' } ),
+			'last_90_days'
+		);
+		await waitFor( () =>
+			expect( mocks.getEarnings.mock.calls.at( -1 )?.[ 0 ] ).toEqual( {
+				preset: 'last_90_days',
+				start: '',
+				end: '',
+			} )
+		);
+	} );
+
+	it( 'reads the range from the URL', async () => {
+		show( '/earnings?range=last_7_days' );
+		await screen.findByRole( 'list', { name: 'Summary' } );
+		expect( mocks.getEarnings.mock.calls[ 0 ]?.[ 0 ] ).toEqual( {
 			preset: 'last_7_days',
 			start: '',
 			end: '',
@@ -265,35 +347,16 @@ describe( 'dashboard', () => {
 			screen.getByRole( 'combobox', { name: 'Date range' } )
 		).toHaveValue( 'last_7_days' );
 	} );
-} );
-
-describe( 'date range filter', () => {
-	it( 'applies a preset chosen with the select at once', async () => {
-		const user = userEvent.setup();
-		show( '/dashboard' );
-		await screen.findByRole( 'list', { name: 'Summary' } );
-		await user.selectOptions(
-			await screen.findByRole( 'combobox', { name: 'Date range' } ),
-			'last_90_days'
-		);
-		await waitFor( () =>
-			expect( mocks.getDashboard.mock.calls.at( -1 )?.[ 0 ] ).toEqual( {
-				preset: 'last_90_days',
-				start: '',
-				end: '',
-			} )
-		);
-	} );
 
 	it( 'applies a custom range with the keyboard and rejects an invalid one', async () => {
 		const user = userEvent.setup();
-		show( '/dashboard' );
+		show( '/earnings' );
 		await screen.findByRole( 'list', { name: 'Summary' } );
 		await user.selectOptions(
 			await screen.findByRole( 'combobox', { name: 'Date range' } ),
 			'custom'
 		);
-		expect( mocks.getDashboard ).toHaveBeenCalledTimes( 1 );
+		expect( mocks.getEarnings ).toHaveBeenCalledTimes( 1 );
 
 		const start = screen.getByLabelText( 'Start date' );
 		const end = screen.getByLabelText( 'End date' );
@@ -305,7 +368,7 @@ describe( 'date range filter', () => {
 		expect( await screen.findByRole( 'alert' ) ).toHaveTextContent(
 			'The start date must not be after the end date.'
 		);
-		expect( mocks.getDashboard ).toHaveBeenCalledTimes( 1 );
+		expect( mocks.getEarnings ).toHaveBeenCalledTimes( 1 );
 
 		await user.clear( start );
 		await user.keyboard( '2001-03-01' );
@@ -317,7 +380,7 @@ describe( 'date range filter', () => {
 		).toHaveFocus();
 		await user.keyboard( '{Enter}' );
 		await waitFor( () =>
-			expect( mocks.getDashboard.mock.calls.at( -1 )?.[ 0 ] ).toEqual( {
+			expect( mocks.getEarnings.mock.calls.at( -1 )?.[ 0 ] ).toEqual( {
 				preset: 'custom',
 				start: '2001-03-01',
 				end: '2001-03-31',

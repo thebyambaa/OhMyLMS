@@ -1,0 +1,195 @@
+/*
+ * Dashboard layout. Cards are WordPress postboxes (wp-admin styles them); only the grid, the toolbar and
+ * the widget internals are ours. Colours come from --wp-admin-theme-color and the --oml-* tokens.
+ */
+
+.ohmylms-app .ohmylms-dashboard-toolbar {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-3);
+	margin: 0 0 var(--oml-space-4);
+}
+
+.ohmylms-app .ohmylms-dashboard-toolbar__summary {
+	color: var(--oml-muted);
+	flex: 1 1 280px;
+	margin: 0;
+}
+
+.ohmylms-app .ohmylms-dashboard-scope select {
+	min-width: 240px;
+}
+
+.ohmylms-app .ohmylms-dashboard-period {
+	display: inline-flex;
+}
+
+.ohmylms-app .ohmylms-dashboard-period .components-button + .components-button {
+	margin-inline-start: -1px;
+}
+
+.ohmylms-app .ohmylms-dashboard-grid {
+	display: grid;
+	gap: var(--oml-space-4);
+	grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+.ohmylms-app .ohmylms-dashboard-grid__cell {
+	grid-column: span 12;
+	min-width: 0;
+}
+
+@media (min-width: 1100px) {
+
+	.ohmylms-app .ohmylms-dashboard-grid__cell.is-wide {
+		grid-column: span 7;
+	}
+
+	.ohmylms-app .ohmylms-dashboard-grid__cell.is-narrow {
+		grid-column: span 5;
+	}
+}
+
+.ohmylms-app .ohmylms-dashboard-widget {
+	margin: 0;
+	min-width: 0;
+}
+
+.ohmylms-app .ohmylms-dashboard-widget .postbox-header {
+	gap: var(--oml-space-2);
+	padding-inline-end: var(--oml-space-3);
+}
+
+.ohmylms-app .ohmylms-dashboard-widget .postbox-header .hndle {
+	cursor: default;
+}
+
+.ohmylms-app .ohmylms-dashboard-widget__meta {
+	color: var(--oml-muted);
+	font-size: 12px;
+	white-space: nowrap;
+}
+
+.ohmylms-app .ohmylms-dashboard-widget__loading {
+	align-items: center;
+	color: var(--oml-muted);
+	display: flex;
+	gap: var(--oml-space-2);
+}
+
+.ohmylms-app .ohmylms-dashboard-columns {
+	display: grid;
+	gap: var(--oml-space-4);
+	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+/* Needs attention */
+.ohmylms-app .ohmylms-attention {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.ohmylms-app .ohmylms-attention__item {
+	align-items: center;
+	border-bottom: 1px solid var(--oml-border);
+	display: flex;
+	gap: var(--oml-space-3);
+	margin: 0;
+	padding: var(--oml-space-3) 0;
+}
+
+.ohmylms-app .ohmylms-attention__item:last-child {
+	border-bottom: 0;
+}
+
+.ohmylms-app .ohmylms-attention__marker {
+	background: var(--oml-info);
+	border-radius: 50%;
+	flex: 0 0 8px;
+	height: 8px;
+	width: 8px;
+}
+
+.ohmylms-app .ohmylms-attention__item.is-error .ohmylms-attention__marker {
+	background: var(--oml-danger);
+}
+
+.ohmylms-app .ohmylms-attention__item.is-warning .ohmylms-attention__marker {
+	background: var(--oml-warning);
+}
+
+.ohmylms-app .ohmylms-attention__text {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.ohmylms-app .ohmylms-attention__detail {
+	color: var(--oml-muted);
+	font-size: 12px;
+}
+
+.ohmylms-app .ohmylms-attention__actions {
+	align-items: center;
+	display: flex;
+	flex: 0 0 auto;
+	gap: var(--oml-space-2);
+}
+
+.ohmylms-app .ohmylms-attention__snoozed {
+	margin: 0 0 var(--oml-space-2);
+}
+
+/* Pulse */
+.ohmylms-app .ohmylms-pulse {
+	display: grid;
+	gap: var(--oml-space-4);
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.ohmylms-app .ohmylms-pulse__metric {
+	border-inline-start: 1px solid var(--oml-border);
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin: 0;
+	padding-inline-start: var(--oml-space-3);
+}
+
+.ohmylms-app .ohmylms-pulse__metric:first-child {
+	border-inline-start: 0;
+	padding-inline-start: 0;
+}
+
+.ohmylms-app .ohmylms-pulse__label,
+.ohmylms-app .ohmylms-pulse__hint {
+	color: var(--oml-muted);
+	font-size: 12px;
+}
+
+.ohmylms-app .ohmylms-pulse__value {
+	font-size: 24px;
+	line-height: 1.2;
+}
+
+.ohmylms-app .ohmylms-pulse__change.is-up,
+.ohmylms-app .ohmylms-sparkline.is-up {
+	color: var(--oml-success);
+}
+
+.ohmylms-app .ohmylms-pulse__change.is-down,
+.ohmylms-app .ohmylms-sparkline.is-down {
+	color: var(--oml-danger);
+}
+
+.ohmylms-app .ohmylms-sparkline {
+	color: var(--wp-admin-theme-color);
+	display: block;
+	margin: var(--oml-space-1) 0;
+}
