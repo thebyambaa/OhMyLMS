@@ -81,9 +81,15 @@ hotspot, labeling, drawing, match table, hot text and the game and poll activiti
   person may use in the bank. Both variants use the same template seed, so randomized numbers match.
 - Core blocks print as rendered, filtered HTML in document order. Blocks nested in layout containers print in order
   until phase 3 adds multi-column sections.
-- `assets/src/features/paper/print.jsx` (bundle `paper-print`) mounts the same `PaperQuestion` renderer, waits for
-  math, fonts and images, then enables **Print**. Math typesets here, unlike in the editor canvas, across the
-  whole sheet: questions, paper blocks such as the formula sheet, and other content.
+- The print page is server-rendered HTML (`PrintPaper::document()`, `OhMyLMS\Exams\PaperRenderer`, with the model
+  in `OhMyLMS\Exams\PaperModel`). It prints the same markup as the editor's `PaperQuestion` renderer;
+  `tests/fixtures/paper-models.json` keeps the PHP and JS models equal. The `ohmylms/paper-print` module only waits
+  for math, fonts and images, then enables **Print**. The math loader is printed only when the sheet has math,
+  and typesets the whole sheet: questions, paper blocks such as the formula sheet, and other content.
+- The learner's Paper View is rendered by the same `PaperRenderer` (`PaperPresentation::sheet()`): the quiz
+  template places each player question box in its printed place, choice options answer by their printed letters,
+  and other types keep the player's controls under the printed statement. The `ohmylms/paper` module adds the
+  question navigator, flags for review and timer announcements; the quiz player keeps autosave and submission.
 - `@page` sets size and margins; page numbers use `@page` margin boxes (`counter(page)`/`counter(pages)`). The
   translated footer is escaped for the CSS string and for the style element.
 - Print buttons: **Print paper** and **Print answer key** in the editor's Printable paper panel (they save first,

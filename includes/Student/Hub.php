@@ -655,9 +655,7 @@ final class Hub {
 		wp_enqueue_style( 'ohmylms-frontend' );
 		wp_enqueue_style( 'ohmylms-general' );
 		wp_enqueue_script( 'ohmylms-frontend' );
-		wp_enqueue_script( 'ohmylms-add-to-cart' );
 		if ( 'catalog' === get_query_var( 'hub_view' ) ) {
-			wp_enqueue_script( 'ohmylms-slick' );
 			wp_enqueue_style( 'ohmylms-shortcode-course-list', plugins_url( 'assets/css/shortcode-course-list.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/shortcode-course-list.css' ) );
 		}
 		Dashboard::assets();

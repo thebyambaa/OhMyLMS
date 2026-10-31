@@ -73,6 +73,10 @@ Versioned assessments grade frozen question versions. A type joins them by decla
 
 The learner result screen shows a readable "Your answer" and "Correct answer" for each question. A type that stores answers by ID can supply them with the optional `review_given($given,$settings)` and `review_expected($settings)` callbacks, each returning a list of strings built only from the settings passed in (so frozen versions review correctly). Without them the generic lines are used; the built-in ID-based types (categorize, dropdown and multi-blank, hot-text, match grid, labeling, hotspot, interactive video, graphing) already provide theirs through `AssessmentReviewLines`.
 
+Printed papers (the learner's Paper View and the editor-only print page) are server-rendered by `OhMyLMS\Exams\PaperRenderer`. A type without a built-in printed form prints its statement and blank lines; filter `ohmylms_paper_question_html( $html, $question, $paper, $answers )` to print your own form. `$question` is the learner view unless `$answers` is true (answer key or marking sheet, editors only), so never print answers otherwise. In Paper View the player's own answer fields stay under the printed statement, so your `render` callback and answer contract are unchanged.
+
+The `ohmylms/paper` Interactivity module adds the question navigator, flags for review and timer announcements to Paper View; answers, autosave, the timer and submission stay with `ohmylms/quiz` and the attempt REST endpoints. It listens to the cancelable `ohmylms:quiz-before-submit` event to confirm flagged questions, so add-ons that cancel that event keep working. The print page loads only the dependency-free `ohmylms/paper-print` module for its Print button.
+
 `ohmylms_register_lesson_type` requires label/render. Its matching JS editor uses supplied authoring callbacks. The example persists normal WordPress content. Existing `ohmylms_register_layout` and `ohmylms_register_activity` remain; layouts accept course/chapter/lesson/quiz contexts. Avoid recursively invoking a layout hook from its renderer.
 
 ## Checkout/integrations

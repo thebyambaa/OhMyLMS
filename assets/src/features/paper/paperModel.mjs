@@ -2,7 +2,8 @@ import { jumble, typedPaper } from './paperTypes.mjs';
 
 /**
  * Printable paper layout: settings, the printed form of each question and page breaks.
- * Pure functions shared by the editor's paper canvas and the print page.
+ * Pure functions of the editor's paper canvas. OhMyLMS\Exams\PaperModel mirrors them for the print page
+ * and the learner's Paper View; tests/fixtures/paper-models.json keeps both equal.
  */
 
 export const PAPER_SIZES = {

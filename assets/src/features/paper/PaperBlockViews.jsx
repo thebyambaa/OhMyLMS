@@ -4,7 +4,8 @@ import { __, _n, sprintf } from '@wordpress/i18n';
 import { answerSpace, columnsLayout } from './paperModel.mjs';
 
 /**
- * Printed views of the paper blocks, shared by the editor (with editable text) and the print page.
+ * Printed views of the paper blocks in the editor (with editable text); OhMyLMS\Exams\PaperRenderer prints the
+ * same markup on the print page.
  * `text( key, tagName, className, placeholder )` renders one text attribute: a RichText field in the
  * editor, the saved value on the print page.
  */

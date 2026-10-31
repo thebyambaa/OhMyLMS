@@ -3,20 +3,6 @@
   "description": "Front-end, block, theme-support and image assets copied or reprinted by tools/build-assets.mjs. The recovered admin entries were removed with the legacy admin.",
   "assets": [
     {
-      "output": "assets/blocks/js/blocks-frontend.js",
-      "sha256": "cd9150665a995c90d904e0e89d41e4a2f6d29e572cef6bc79061b82699dae870",
-      "bytes": 239,
-      "source": "runtimes/blocks/js/blocks-frontend.js",
-      "factories": []
-    },
-    {
-      "output": "assets/blocks/js/blocks.min.js",
-      "sha256": "efcaf4e2e30d34a8716c49b6a9d613497b3f6c139c0d097b08ba0fd13dd6572d",
-      "bytes": 926,
-      "source": "runtimes/blocks/js/blocks.min.js",
-      "factories": []
-    },
-    {
       "output": "assets/blocks/js/buy-now.js",
       "sha256": "d3fe7b91a3b3d3693ed51d6c5d4782b55a66f8348d9e4ae2a40fbe7fc0497442",
       "bytes": 8172,
@@ -49,13 +35,6 @@
       "sha256": "c7371101c70885458e574037c51aea1dbfecb19684bb71af1f511c9781c20427",
       "bytes": 16391,
       "source": "runtimes/blocks/js/dashboard.js",
-      "factories": []
-    },
-    {
-      "output": "assets/blocks/js/dashboard.min.js",
-      "sha256": "3f4d6b47808b1734d8c0769f15480e776e1e4cb2ae64bc89d32e87067b572482",
-      "bytes": 9140,
-      "source": "runtimes/blocks/js/dashboard.min.js",
       "factories": []
     },
     {
@@ -94,13 +73,6 @@
       "factories": []
     },
     {
-      "output": "assets/blocks/js/profile.min.js",
-      "sha256": "10510b45bd5f7301f33b997f2acd04ab9ead6cc443263c729473e92929229eb7",
-      "bytes": 18153,
-      "source": "runtimes/blocks/js/profile.min.js",
-      "factories": []
-    },
-    {
       "output": "assets/css/elementor-widgets.css",
       "sha256": "1f2cab38fb8531625fa66ab7d7c5098b48e393c2baaec26d2a174d6062d3f47a",
       "bytes": 2794,
@@ -129,62 +101,6 @@
       "factories": []
     },
     {
-      "output": "assets/dist/frontend/add-to-cart.js",
-      "sha256": "e5c987be101fdf69144f8fb9eac7d9cc9a2a98fd89a091f2391f75c4a429fd83",
-      "bytes": 1724,
-      "source": "runtimes/dist/frontend/add-to-cart.js",
-      "factories": []
-    },
-    {
-      "output": "assets/dist/frontend/checkout.js",
-      "sha256": "7e6aa7f242dbefec179a8eb89acf00b5769b37140a52dd773da6444086343aed",
-      "bytes": 10763,
-      "source": "runtimes/dist/frontend/checkout.js",
-      "factories": []
-    },
-    {
-      "output": "assets/dist/frontend/ohmylms.js",
-      "sha256": "da69e1e34068c03ad5e94354e9e26ad83a9c31f887c5192fdb11321032b5a630",
-      "bytes": 120924,
-      "source": "runtimes/dist/frontend/ohmylms.js",
-      "factories": []
-    },
-    {
-      "output": "assets/dist/frontend/slick.js",
-      "sha256": "e3cfb35fcca18d5419794bbc73c962228086dc80bbee8d6e7ee05bf45051ac05",
-      "bytes": 43180,
-      "source": "runtimes/dist/frontend/slick.js",
-      "factories": []
-    },
-    {
-      "output": "assets/dist/frontend/stripe.js",
-      "sha256": "6c1851ed9aa2cc4627c0b62a8bbf7b054c639737bfdbd5a8a389509bd39219f3",
-      "bytes": 8828,
-      "source": "runtimes/dist/frontend/stripe.js",
-      "factories": []
-    },
-    {
-      "output": "assets/dist/frontend/tax-calculation.js",
-      "sha256": "76ec97c8f9130b96ea4d502df99a8bd0c5db4eb81ee4937e25f90399db65f0a5",
-      "bytes": 2371,
-      "source": "runtimes/dist/frontend/tax-calculation.js",
-      "factories": []
-    },
-    {
-      "output": "assets/dist/frontend/video-player.js",
-      "sha256": "f02412416f85e18546d2acb277fe53a6f30edbf73dc4c724a37727a5436ee439",
-      "bytes": 42824,
-      "source": "runtimes/dist/frontend/video-player.js",
-      "factories": []
-    },
-    {
-      "output": "assets/dist/frontend/video-progress-tracker.js",
-      "sha256": "4223207dec33c7b00c437755a70d76a43f7ee244e89fc5abf0e095ff152f90a1",
-      "bytes": 16728,
-      "source": "runtimes/dist/frontend/video-progress-tracker.js",
-      "factories": []
-    },
-    {
       "output": "assets/js/admin-notices.js",
       "sha256": "e1d015ae536db8750f45d0fcd926d517e9cc532efac4e287c5d46aa668f788c3",
       "bytes": 1224,
@@ -203,13 +119,6 @@
       "sha256": "3f7d4300c1bfc728f4971db286cd0ccc77dc8f4e9b39f9617c60d505be9bc469",
       "bytes": 4506,
       "source": "runtimes/js/elementor-widgets.js",
-      "factories": []
-    },
-    {
-      "output": "assets/js/wpbakery-frontend.js",
-      "sha256": "baa8769e6575033cde1283cd6f7bca0c9dcb865cff58f41fc99c72f36242de1e",
-      "bytes": 3817,
-      "source": "runtimes/js/wpbakery-frontend.js",
       "factories": []
     },
     {
@@ -334,8 +243,8 @@
     {
       "output": "assets/theme-support/theme-betheme.css",
       "source": "static/theme-support/theme-betheme.css",
-      "sha256": "b1255c83c57ab0dea3fd60c3afb47a9cf0923d447c1ea3e0ee7716b455c2cc8f",
-      "bytes": 2249,
+      "sha256": "0c535c3620d59e538f9582e8e08ab6705fcf2dcf083b13660f28caa481a5f9cf",
+      "bytes": 1957,
       "factories": []
     },
     {
@@ -502,12 +411,21 @@
     {
       "output": "assets/theme-support/theme-woostify.css",
       "source": "static/theme-support/theme-woostify.css",
-      "sha256": "81b4f5dfe7b3f5c7301e1779130a040625ae4657780cd3b10130efce8d610c33",
-      "bytes": 2537,
+      "sha256": "a004896c8bfa79ddda59d336da80a756a84f19b4a843141c0094e4d5ceb3c1a5",
+      "bytes": 2260,
       "factories": []
     }
   ],
   "retiredAssets": [
+    "assets/blocks/js/blocks-frontend.js",
+    "assets/blocks/js/blocks.min.js",
+    "assets/blocks/js/dashboard.min.js",
+    "assets/blocks/js/profile.min.js",
+    "assets/dist/frontend/ohmylms.js",
+    "assets/dist/frontend/video-player.js",
+    "assets/dist/frontend/video-progress-tracker.js",
+    "assets/dist/frontend/slick.js",
+    "assets/js/wpbakery-frontend.js",
     "assets/blocks/js/course-list.js",
     "assets/blocks/js/course-list.min.js",
     "assets/blocks/js/my-courses.js",
@@ -516,6 +434,10 @@
     "assets/css/learning-pages.css",
     "assets/dist/css/vendors.css",
     "assets/lib/admin/css/select2.css",
-    "assets/lib/admin/js/select2.js"
+    "assets/lib/admin/js/select2.js",
+    "assets/dist/frontend/add-to-cart.js",
+    "assets/dist/frontend/checkout.js",
+    "assets/dist/frontend/stripe.js",
+    "assets/dist/frontend/tax-calculation.js"
   ]
 }

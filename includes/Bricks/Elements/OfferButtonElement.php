@@ -500,6 +500,5 @@ class OfferButtonElement extends Element {
 	 */
 	public function enqueue_scripts() {
 		wp_enqueue_script( 'ohmylms-frontend' );
-		wp_enqueue_script( 'ohmylms-add-to-cart' );
 	}
 }

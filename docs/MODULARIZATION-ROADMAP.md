@@ -41,11 +41,15 @@ Statuses below were checked against the code on 31 October 2026. Counts are file
    names through `LegacyRoutes::url()` instead of `app_url()` (`NativeLessonEditor::return_url()` keeps it
    because its input, `ohmylms_return` and assessment profiles' `return_route`, is a legacy route); the two
    inert `ohmylms-select2` field classes in `Admin\Pages\GeneralSettings`.
-6. **Learner front end to typed modules:** 33 jQuery scripts (`assets/src/frontend/js`, `assets/src/runtimes`)
-   and the 124-file JSX/MJS tree in `assets/src/features` (11 folders used by blocks and native editors).
-   Replace Slick in the same batches (step 2). The certificate-download handlers and the html2pdf enqueue
-   are gone; the `?ohmylms-certificate-data` template override in `Hooks\CommonHook` and the 943 KB
-   `includes/Assets/packages/html2pdf.bundle.min.js` are now dead and can be deleted.
+6. **Learner front end to Interactivity modules** (plan and behaviour map: [LEARNER-FRONTEND](LEARNER-FRONTEND.md)).
+   Done on 31 October 2026: one source per learner script (the `runtimes/dist` reprints and stale
+   `assets/dist/frontend` bundles deleted); Slick replaced by `ohmylms/carousel`; add to cart, checkout, tax
+   and Stripe moved to `ohmylms/cart`, `ohmylms/checkout` and `ohmylms/stripe`; the React learner paper and
+   print views replaced by server-rendered markup with `ohmylms/paper` and `ohmylms/paper-print`; html2pdf
+   and the certificate template deleted; `ohmylms.js` trimmed from 112 KB to 73 KB of live code. Remaining
+   (batches in the plan): shared request/toast helpers, catalog search and load more, learner dashboard and
+   profile, login/signup and reviews, the lesson and assignment player, and the two video scripts; the
+   124-file JSX/MJS tree in `assets/src/features` used by blocks and native editors.
 7. **Extend enforcement:** CI runs `check:ci` and `php -l` only; add `npm test`, the PHP integration suites,
    the `admin-app-smoke` browser spec and the WordPress standards lint, and extend the architecture check to
    the front end and to legacy-route use in PHP.
@@ -55,14 +59,14 @@ Statuses below were checked against the code on 31 October 2026. Counts are file
 | # | Work | Status | Evidence / remaining |
 | --- | --- | --- | --- |
 | 1 | Dependency inventory | **Done, retired** | The recovered runtime it inventoried is deleted; report, generator and drift test removed |
-| 2 | Third-party libraries | **Partial** | Easy Email, Arco, MJML, CodeMirror, html2canvas (admin copy), Chart.js, Emotion, Tiptap, Lowlight and Lodash left with the legacy admin (50 npm packages, [CUTOVER](CUTOVER.md)). The email editor (`app/features/emails`) uses only WordPress components and the server preview. Dead Select2, Mail Mint image and duplicate Slick copies were removed today. Remaining: vendored Slick 1.8.1 and the embedded html2pdf 0.10.1 bundle. See [libraries](VENDOR-PACKAGE-MIGRATION.md) |
+| 2 | Third-party libraries | **Partial** | Easy Email, Arco, MJML, CodeMirror, html2canvas (admin copy), Chart.js, Emotion, Tiptap, Lowlight and Lodash left with the legacy admin (50 npm packages, [CUTOVER](CUTOVER.md)). The email editor (`app/features/emails`) uses only WordPress components and the server preview. Dead Select2, Mail Mint image, Slick 1.8.1 (replaced by `ohmylms/carousel`) and the html2pdf 0.10.1 bundle were removed on 31 October 2026. Remaining: the runtime libraries listed there (MathLive, JSXGraph). See [libraries](VENDOR-PACKAGE-MIGRATION.md) |
 | 3 | Shared application infrastructure | **Partial** | `app/lib/api` (client, collection, errors, query), `app/hooks` (`useOperation`, `useRequest`, `useUnsavedChangesGuard`), `app/routing`, `app/layout`, `assets/src/ui` (13 components). Remaining: the duplicated local hooks in item 4 above |
 | 4 | State and API access | **Done (admin app)** | 24 features own an `api.ts` over `app/lib/api`; cross-feature access only through `public.ts` (quizzes, assignments, settings, students, questions); only `app/extensions/api.ts` calls `@wordpress/api-fetch` directly. Native editor code uses `assets/src/features/rest.mjs`; 56 dead legacy helpers removed. Remaining (see [STATE-API-MODULARIZATION](STATE-API-MODULARIZATION.md)): media parsers, syllabus/curriculum route ownership, duplicated validators and hooks, two `question-editor` files on `window.wp.apiFetch` |
 | 5 | Feature independence | **Done (admin app)** | 25 feature folders, 55 route entries in `features/registry.ts`; no `createComponent(readRuntime)`; the only cross-feature imports are four from `quizzes` into `questions/public.ts` (`checkFeatureBoundaries`). Remaining: the learner tree in item 6 |
 | 6 | Authored entry point | **Done** | `app/bootstrap` is the only admin entry (`admin-app.js`, 67 KB); recovered factories, adapters and SDK deleted |
 | 7 | Stylesheet ownership | **Done (admin)** | Legacy admin CSS (285 sources) and `tailwind.css` deleted; feature CSS ships with its chunk ([ownership](STYLESHEET-OWNERSHIP.md)). Learner CSS cleanup (`assets/css/style.css`, 476 KB) is deliberately out of scope |
 | 8 | Backend boundaries | **Partial** | Audit and plan in [BACKEND-BOUNDARIES](BACKEND-BOUNDARIES.md). Student, StudentPro, StudentReport, QuizReports and ContentHubOverview controllers hold no persistence (new `Quiz\AttemptReports`, `Student\Directory`, `Student\Enrollments`, `Assignment\Submissions`, `ContentHub\ContentCounts`); controller `\` calls 152 to 109; 42 of 81 controllers touch no `\`, options or meta. Remaining: course enrolment writes, Account Hub (38 calls), assignment grading, quiz attempts, commerce, a CI rule against new `\` in controllers |
-| 9 | Asset and dependency isolation | **Partial** | Admin: one entry plus 38 shipped hashed lazy chunks with per-screen budgets; React and WordPress packages are externals (`checkDuplicateRuntimes`). Math (836 KB) and JSXGraph (995 KB) load only on pages that use them. Remaining: front-end jQuery scripts, Slick on course/archive pages |
+| 9 | Asset and dependency isolation | **Partial** | Admin: one entry plus 38 shipped hashed lazy chunks with per-screen budgets; React and WordPress packages are externals (`checkDuplicateRuntimes`). Math (836 KB) and JSXGraph (995 KB) load only on pages that use them. Learner: commerce, carousel and paper are script modules with no jQuery. Remaining: `ohmylms.js` and the two video scripts still depend on jQuery |
 | 10 | Enforcement and release checks | **Partial** | `npm run check:ci` in `.github/workflows/ci.yml`: typecheck, app tests, recovered-runtime imports, cycles, feature boundaries, raw colours, duplicate runtimes, budgets; plus `php -l`. Remaining: item 7 above |
 
 ## Feature parity
@@ -95,7 +99,7 @@ component tests. Items named "not rebuilt" had a legacy screen that no longer ex
 | Extension host | Partial | Pages, screen slots, editor panels by route, integration panels, question and lesson editors, checkout/frontend slots, per-extension error isolation. Membership settings missing |
 | Communities | Retired | No backend; add-ons can register a page |
 | Cutover | Done | 31 October 2026; old addresses redirect through `LegacyRoutes` |
-| Learner front end in TypeScript | Not started | Item 6 above |
+| Learner front end on Interactivity | Partial | Carousel, commerce and exam paper done; `ohmylms.js` and the video scripts remain (item 6 above) |
 
 ## Invariants
 

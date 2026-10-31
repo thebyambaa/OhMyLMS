@@ -130,6 +130,19 @@ part of the API. Collection arguments: `page`, `per_page` (1-100, default 20), `
 description), `status` (`any|publish|draft`), `orderby` (`date|code|usage_count`), `order`. Past orders
 keep the coupon code they used, so deleting a coupon is safe.
 
+### Storefront (learner) routes
+
+`includes/Rest/V1/CartController.php`, used by the `ohmylms/cart` and `ohmylms/checkout` modules
+(see `docs/INTERACTIVITY.md#commerce`). Open to visitors like the matching AJAX actions; WordPress
+cookie auth verifies `X-WP-Nonce` for logged-in buyers.
+
+| Method | Route | Body / answer |
+| --- | --- | --- |
+| POST | `/cart/items` | `course_id` or `membership_id` (integer >= 1), `quantity` (1-100, default 1), `purchase_by` (`''` or `point`). Answers the `ohmylms_add_to_cart` body: `{status: success, redirect_url, message}` or `{status: error, message}` (503 when no checkout page is configured); 400 `ohmylms_cart_missing_item` without an id. Same service as the AJAX action (`Ajax::add_course_to_cart()` / `add_membership_to_cart()`). |
+| GET | `/countries/{code}/states` | Two-letter country code. `[{code, title}]`, empty when the country has no states. |
+
+Test: `tests/php/commerce-interactivity-integration.php` (`OHMYLMS_COMMERCE_UI_TEST=1`).
+
 ## Examples
 
 ```http

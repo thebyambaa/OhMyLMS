@@ -23,14 +23,6 @@ module.exports = {
 			__dirname,
 			'assets/src/features/learning/NativeLessonSettings.jsx'
 		),
-		'paper-print': path.resolve(
-			__dirname,
-			'assets/src/features/paper/print.jsx'
-		),
-		'paper-student': path.resolve(
-			__dirname,
-			'assets/src/features/paper/student.jsx'
-		),
 		'quiz-player-block': path.resolve(
 			__dirname,
 			'assets/src/blocks/quiz-player/index.jsx'

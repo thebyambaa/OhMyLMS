@@ -1216,7 +1216,7 @@
 }
 
 /*
- * Paper View with the editor's paper (assets/src/features/paper/student.jsx): the sheet comes
+ * Paper View with the editor's paper (OhMyLMS\Quiz\PaperPresentation::sheet()): the sheet comes
  * from paper.css; the player's boxes only lend their answer fields.
  */
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-quiz-form {
@@ -1261,6 +1261,143 @@
 .ohmylms-paper-student .ohmylms-paper-choice {
 	position: relative;
 	cursor: pointer;
+}
+
+.ohmylms-paper-student .ohmylms-paper-choice-label {
+	display: flex;
+	flex: 1;
+	align-items: baseline;
+	gap: 0.5em;
+	cursor: pointer;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-paper-student .ohmylms-quiz-box:focus {
+	outline: none;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-paper-student .ohmylms-quiz-box:focus-visible {
+	outline: 2px solid var(--oml-focus, #2271b1);
+	outline-offset: 4px;
+}
+
+.ohmylms-paper-student .ohmylms-paper-flag {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3em;
+	margin: 0.4em 0 0 2.4em;
+	padding: 0.15em 0.6em;
+	border: 1px solid #c3c4c7;
+	border-radius: 999px;
+	background: transparent;
+	color: #50575e;
+	font: inherit;
+	font-size: 0.8em;
+	cursor: pointer;
+}
+
+.ohmylms-paper-student .ohmylms-paper-flag.is-flagged {
+	border-color: #b26200;
+	background: #fcf0e3;
+	color: #8a4d00;
+}
+
+.ohmylms-paper-student .ohmylms-paper-flag:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: 2px;
+}
+
+@media print {
+
+	.ohmylms-paper-student .ohmylms-paper-flag {
+		display: none;
+	}
+}
+
+.ohmylms-paper-nav {
+	position: relative;
+}
+
+.ohmylms-paper-nav-flags {
+	margin-left: 0.25em;
+}
+
+.ohmylms-paper-nav-panel {
+	position: absolute;
+	z-index: 11;
+	top: calc(100% + 6px);
+	right: 0;
+	width: min(320px, 90vw);
+	max-height: 60vh;
+	overflow: auto;
+	padding: 12px;
+	border: 1px solid var(--oml-border);
+	border-radius: 6px;
+	background: var(--oml-surface);
+	box-shadow: var(--oml-shadow-md);
+}
+
+.ohmylms-paper-nav-section {
+	margin: 8px 0 4px;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.ohmylms-paper-nav-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.ohmylms-paper-nav-item {
+	min-width: 36px;
+	height: 36px;
+	padding: 0 6px;
+	border: 1px solid var(--oml-border);
+	border-radius: 4px;
+	background: var(--oml-surface);
+	color: var(--oml-heading);
+	font: inherit;
+	cursor: pointer;
+}
+
+.ohmylms-paper-nav-item.is-answered,
+.ohmylms-paper-nav-legend .is-answered::before {
+	border-color: var(--oml-primary);
+	background: var(--oml-primary);
+	color: var(--oml-on-primary);
+}
+
+.ohmylms-paper-nav-item.is-flagged {
+	box-shadow: inset 0 -3px 0 #b26200;
+}
+
+.ohmylms-paper-nav-item:focus-visible {
+	outline: 2px solid var(--oml-focus, #2271b1);
+	outline-offset: 2px;
+}
+
+.ohmylms-paper-nav-legend {
+	display: flex;
+	gap: 12px;
+	margin: 10px 0 0;
+	font-size: 12px;
+}
+
+.ohmylms-paper-nav-legend span::before {
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	margin-right: 4px;
+	border: 1px solid var(--oml-border);
+	content: "";
+}
+
+.ohmylms-paper-nav-legend .is-flagged::before {
+	border-color: #b26200;
+	box-shadow: inset 0 -3px 0 #b26200;
 }
 
 .ohmylms-paper-student .ohmylms-paper-choice-input {

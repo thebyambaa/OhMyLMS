@@ -13,6 +13,27 @@ defined( 'ABSPATH' ) || exit();
 class FrontendAssets extends Assets {
 
 	/**
+	 * Authored learner scripts, served as written (no build step), by handle.
+	 *
+	 * @var array<string, string>
+	 */
+	const LEARNER_SCRIPTS = array(
+		'ohmylms-frontend'               => 'assets/src/frontend/js/ohmylms.js',
+		'ohmylms-video-player'           => 'assets/src/frontend/js/lesson/video-player.js',
+		'ohmylms-video-progress-tracker' => 'assets/src/frontend/js/video-progress-tracker.js',
+	);
+
+	/**
+	 * Version of an authored learner script; changes whenever the file does.
+	 *
+	 * @param string $handle Handle in {@see self::LEARNER_SCRIPTS}.
+	 * @return string
+	 */
+	public static function learner_script_version( $handle ) {
+		return OHMYLMS_VERSION . '-' . (string) filemtime( OHMYLMS_DIR . '/' . self::LEARNER_SCRIPTS[ $handle ] );
+	}
+
+	/**
 	 * Init for Frontend assets.
 	 */
 	public function init() {
@@ -28,47 +49,30 @@ class FrontendAssets extends Assets {
 	 * @since 1.0.0
 	 */
 	public function get_scripts() {
-		$suffix  = '';
 		$scripts = array(
-			'ohmylms-slick'                  => array(
-				'src'       => self::get_asset_url( 'assets/dist/frontend/slick' . $suffix . '.js' ),
-				'deps'      => array( 'jquery' ),
-				'in_footer' => true,
-				'version'   => '1.8.1',
-			),
 			'ohmylms-frontend'               => array(
-				'src'       => self::get_asset_url( 'assets/dist/frontend/ohmylms' . $suffix . '.js' ),
+				'src'       => self::get_asset_url( self::LEARNER_SCRIPTS['ohmylms-frontend'] ),
 				'deps'      => array( 'wp-i18n', 'jquery' ),
 				'in_footer' => true,
-				'version'   => OHMYLMS_VERSION,
+				'version'   => self::learner_script_version( 'ohmylms-frontend' ),
 			),
 			'ohmylms-video-player'           => array(
-				'src'       => self::get_asset_url( 'assets/dist/frontend/video-player' . $suffix . '.js' ),
+				'src'       => self::get_asset_url( self::LEARNER_SCRIPTS['ohmylms-video-player'] ),
 				'deps'      => array( 'jquery' ),
 				'in_footer' => true,
-				'version'   => OHMYLMS_VERSION,
+				'version'   => self::learner_script_version( 'ohmylms-video-player' ),
 			),
 			'ohmylms-video-progress-tracker' => array(
-				'src'       => self::get_asset_url( 'assets/dist/frontend/video-progress-tracker' . $suffix . '.js' ),
+				'src'       => self::get_asset_url( self::LEARNER_SCRIPTS['ohmylms-video-progress-tracker'] ),
 				'deps'      => array( 'jquery' ),
 				'in_footer' => true,
-				'version'   => OHMYLMS_VERSION,
+				'version'   => self::learner_script_version( 'ohmylms-video-progress-tracker' ),
 			),
-			'ohmylms-add-to-cart'            => array(
-				'src'       => self::get_asset_url( 'assets/dist/frontend/add-to-cart' . $suffix . '.js' ),
-				'deps'      => array( 'jquery' ),
-				'in_footer' => true,
-				'version'   => OHMYLMS_VERSION,
-			),
+			// Script-less compatibility handle: classic gateway scripts (QPay, add-ons) depend on it to
+			// call window.registerPaymentGatewayHandler() before the ohmylms/checkout module runs.
 			'ohmylms-checkout'               => array(
-				'src'       => self::get_asset_url( 'assets/dist/frontend/checkout' . $suffix . '.js' ),
-				'deps'      => array( 'wp-i18n', 'jquery' ),
-				'in_footer' => true,
-				'version'   => OHMYLMS_VERSION . '-' . filemtime( OHMYLMS_DIR . '/assets/dist/frontend/checkout.js' ),
-			),
-			'ohmylms-tax-calculation'        => array(
-				'src'       => self::get_asset_url( 'assets/dist/frontend/tax-calculation' . $suffix . '.js' ),
-				'deps'      => array( 'jquery' ),
+				'src'       => false,
+				'deps'      => array(),
 				'in_footer' => true,
 				'version'   => OHMYLMS_VERSION,
 			),
@@ -149,64 +153,11 @@ class FrontendAssets extends Assets {
 					$localized_data['cancel_membership_nonce'] = wp_create_nonce( 'cancel_membership_nonce' );
 				}
 				break;
-			case 'ohmylms-add-to-cart':
-				$localized_data = array(
-					'ajax_url' => admin_url( 'admin-ajax.php' ),
-					'nonce'    => wp_create_nonce( 'add-to-cart' ),
-				);
-				break;
-			case 'ohmylms-checkout':
-				$localized_data = array(
-					'ajax_url'                => admin_url( 'admin-ajax.php' ),
-					'nonce'                   => wp_create_nonce( 'add-to-cart' ),
-					'apply_coupon_nonce'      => wp_create_nonce( 'apply-coupon' ),
-					'remove_coupon_nonce'     => wp_create_nonce( 'remove-coupon' ),
-					'gateway_required_fields' => self::get_gateway_required_checkout_fields(),
-				);
-				break;
-			case 'ohmylms-tax-calculation':
-				$localized_data = array(
-					'ajax_url' => admin_url( 'admin-ajax.php' ),
-					'nonce'    => wp_create_nonce( 'ohmylms_calculate_tax' ),
-				);
-				break;
 			default:
 				$localized_data = false;
 		}
 
 		return apply_filters( 'ohmylms_get_script_data', $localized_data, $handle );
-	}
-
-	/**
-	 * Map of payment gateway id => checkout field keys that gateway requires.
-	 *
-	 * Feeds the checkout script so it can toggle the "required" state of fields
-	 * (e.g. phone) live when the buyer switches payment method. Server-side
-	 * validation in Checkout::validate_gateway_required_fields() is authoritative.
-	 *
-	 * @since 1.2.19
-	 * @return array<string, string[]>
-	 */
-	private static function get_gateway_required_checkout_fields() {
-		$map = array();
-
-		if ( ! function_exists( 'OhMyLMS\Commerce\ecommerce' ) ) {
-			return $map;
-		}
-
-		$gateways = \OhMyLMS\Commerce\ecommerce()->gateways();
-		if ( ! $gateways || ! method_exists( $gateways, 'get_available_payment_gateways' ) ) {
-			return $map;
-		}
-
-		foreach ( (array) $gateways->get_available_payment_gateways() as $gateway ) {
-			if ( ! is_object( $gateway ) || ! isset( $gateway->id ) || ! method_exists( $gateway, 'get_required_checkout_fields' ) ) {
-				continue;
-			}
-			$map[ $gateway->id ] = $gateway->get_required_checkout_fields();
-		}
-
-		return $map;
 	}
 
 	/**
@@ -219,34 +170,20 @@ class FrontendAssets extends Assets {
 		$this->register_styles();
 		\OhMyLMS\Design\FrontendStyles::register();
 
-		$layout       = get_option( 'ohmylms_archive_page_layout', 'grid' );
-		$layout_style = get_option( 'ohmylms_archive_page_layout_style', 'grid-style1' );
-
-		if ( ohmylms_is_single_course_page() ||
-			( is_ohmylms_archive() || ohmylms_is_course_list_shortcode() &&
-			'grid' === $layout &&
-			( 'grid-style3' === $layout_style || 'grid-style4' === $layout_style ) )
-		) {
-			wp_enqueue_script( 'ohmylms-slick' );
-		}
-
+		// Course carousels load the ohmylms/carousel module while rendering (OhMyLMS\Design\Carousel).
 		if ( ohmylms_is_course_list_shortcode() ) {
-			wp_enqueue_script( 'ohmylms-slick' );
 			wp_enqueue_script( 'ohmylms-frontend' );
 		}
 
 		if ( is_ohmylms_buy_now() || is_ohmylms_archive() || ohmylms_is_course_list_shortcode() || ohmylms_is_membership_page() || ohmylms_is_membership_plan_shortcode() || is_ohmylms_dashboard() || is_ohmylms_profile_shortcode() || is_ohmylms_my_courses_shortcode() ) {
 			wp_enqueue_script( 'ohmylms-frontend' );
-			wp_enqueue_script( 'ohmylms-add-to-cart' );
 		}
 
-		if ( ohmylms_is_single_course_page() ) {
-			wp_enqueue_script( 'ohmylms-add-to-cart' );
-		}
+		// Buy buttons and the checkout load ohmylms/cart and ohmylms/checkout while rendering
+		// (OhMyLMS\Extensions\Commerce); this registry runs only for gateway scripts that depend on it.
+		wp_add_inline_script( 'ohmylms-checkout', 'window.PaymentGatewayHandlers=window.PaymentGatewayHandlers||{};window.registerPaymentGatewayHandler=window.registerPaymentGatewayHandler||function(id,handler){window.PaymentGatewayHandlers[id]=handler;};' );
 
 		if ( is_ohmylms_checkout() ) {
-			wp_enqueue_script( 'ohmylms-checkout' );
-			wp_enqueue_script( 'ohmylms-tax-calculation' );
 			wp_enqueue_script( 'ohmylms-frontend' );
 
 			wp_enqueue_style( 'ohmylms-frontend' );

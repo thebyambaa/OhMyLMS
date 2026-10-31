@@ -800,13 +800,6 @@ class CommonHook extends HookHandler {
 	 */
 	public function load_custom_template( $template ) {
 
-		if ( isset( $_GET['ohmylms-certificate-data'] ) ) {
-			$plugin_template = OHMYLMS_PATH . '/templates/page-template/ohmylms-certificate.php';
-			if ( file_exists( $plugin_template ) ) {
-				return $plugin_template;
-			}
-		}
-
 		if ( is_ohmylms_profile() && get_page_template_slug() === 'ohmylms-profile' ) {
 			$plugin_template = OHMYLMS_PATH . '/templates/page-template/ohmylms-profile.php';
 			if ( file_exists( $plugin_template ) ) {
@@ -1044,8 +1037,6 @@ class CommonHook extends HookHandler {
 		$templates['ohmylms-checkout'] = 'OhMyLMS Checkout'; // Template name as it appears in the editor.
 
 		$templates['ohmylms-thankyou'] = 'OhMyLMS Thank You'; // Template name as it appears in the editor.
-
-		$templates['ohmylms-certificate'] = 'Certificate template';
 
 		$templates['ohmylms-dashboard'] = 'OhMyLMS Dashboard'; // Template name as it appears in the editor.
 

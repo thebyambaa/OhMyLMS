@@ -187,40 +187,6 @@
 							}else{
 								$('.ohmylms-course-carousel-wrapper').remove()
 								$('.ohmylms-course-main').append(response);
-								if ($('.ohmylms-course-cards-carousel').hasClass('slick-initialized')) {
-									$('.ohmylms-course-cards-carousel').slick('reinit');
-								} else {
-									let colPerRow = $('.ohmylms-course-cards-carousel').data('col');
-
-									$('.ohmylms-course-cards-carousel').slick({
-										infinite: false,
-										slidesToShow: colPerRow,
-										slidesToScroll: 1,
-										rtl: isRTL,
-										prevArrow: '<button class="slick-prev" aria-label="Previous" type="button"><svg width="9" height="18" fill="none" viewBox="0 0 9 18" xmlns="http://www.w3.org/2000/svg"><path fill="#A1A1AA" d="M1.655 6.526L7.01 1.171a1.167 1.167 0 111.645 1.657L3.288 8.171a1.167 1.167 0 000 1.657l5.367 5.343a1.167 1.167 0 11-1.645 1.657l-5.355-5.355a3.5 3.5 0 010-4.947z"/></svg></button>',
-										nextArrow: '<button class="slick-next" aria-label="Next" type="button"><svg width="9" height="18" fill="none" viewBox="0 0 9 18" xmlns="http://www.w3.org/2000/svg"><path fill="#A1A1AA" d="M7.345 6.526L1.99 1.171A1.167 1.167 0 10.345 2.828l5.367 5.343a1.167 1.167 0 010 1.657L.345 15.171a1.167 1.167 0 101.645 1.657l5.355-5.355a3.5 3.5 0 000-4.947z"/></svg></button>',
-										responsive: [
-											{
-												breakpoint: 1200,
-												settings: {
-													slidesToShow: colPerRow < 3 ? colPerRow : 3
-												}
-											},
-											{
-												breakpoint: 768,
-												settings: {
-													slidesToShow: colPerRow < 2 ? colPerRow : 2
-												}
-											},
-											{
-												breakpoint: 575,
-												settings: {
-													slidesToShow: 1
-												}
-											}
-										]
-									}).addClass('ohmylms-initialized').css('display', 'block').siblings('.ohmylms-carousel-skeleton').remove();
-								}
 							}
 							// Display the number of courses showing
 
@@ -431,8 +397,6 @@
 
 		OhMyLMS.init();
 
-		const isRTL = document.documentElement.getAttribute("dir") === "rtl";
-
 		$(document).ready(function ($) {
 			$(".cover-edit").on("keydown", function (event) {
 				if (event.key === "Enter" || event.key === " ") {
@@ -497,172 +461,8 @@
 				});
 			}
 
-			// Initialize accordions for single course faq
-			ohMyLMSAccordion('.ohmylms-single-course-faq', true);
-
 			// Initialize accordions for single course sidebar filter
 			ohMyLMSAccordion('.ohmylms-filter-accordion', true);
-
-			// Initialize accordions for single course assignment
-			ohMyLMSAccordion('.ohmylms-assignment-accordion', false);
-
-
-			/**
-			 * Course content tab's Show more/less button's initial functionality
-			 *
-			 * Event handler for the click event on the course content tab.
-			 * This function calculates the combined height of the first two chapter content items
-			 * and sets the maximum height for the chapter content list accordingly.
-			 * It also adjusts the height if the "read more" button is active.
-			 *
-			 * @event click
-			 * @selector .ohmylms-course-tab-nav li button[data-target='#course-content']
-			 * @returns {void}
-			 */
-			let twoElHeight = 0;
-			function courseContentReadMore() {
-				$(".ohmylms-chapter-layout-1 .ohmylms-single-chapter").each(function(){
-					let firstChildHeight = $(this).find(".ohmylms-chapter-content-list-item:first-child").outerHeight(true);
-					let secondChildHeight = $(this).find(".ohmylms-chapter-content-list-item:nth-child(2)").outerHeight(true);
-
-					twoElHeight = (firstChildHeight + secondChildHeight) - 10;
-
-					$(this).find(".ohmylms-chapter-content-list").removeClass('active').css(
-						{
-							'--el-height' : secondChildHeight+'px',
-							'max-height' : twoElHeight+'px',
-						}
-					);
-
-					$(this).find(".readmore").removeClass('active');
-					$(this).find(".readmore .readmore-text").text('See more lesson items');
-
-					$(this).find(".ohmylms-chapter-content-list").attr("initial-height", twoElHeight);
-
-					if ($(this).find(".readmore").hasClass('active')) {
-						$(this).find(".ohmylms-chapter-content-list").css("max-height", twoElHeight+'px');
-					}
-				});
-			}
-
-			$(document).on("click focus", ".ohmylms-course-tab-nav li button[data-target='#course-content']", courseContentReadMore);
-
-			/**
-			 * Sets a timeout to call the courseContentReadMore function after 1 millisecond.
-			 */
-			setTimeout(function(){
-				courseContentReadMore();
-			}, 1);
-
-
-			/**
-			 * Course content tab's Show more/less button functionality
-			 *
-			 * Event handler for the click event on the "read more" button in each chapter.
-			 * Toggles the visibility of additional lesson items in a chapter.
-			 * When the "read more" button is clicked, it expands or collapses the chapter content list
-			 * and updates the button text accordingly.
-			 *
-			 * @event click
-			 * @selector .ohmylms-single-chapter .readmore
-			 * @returns {void}
-			 */
-			$(document).on("click", ".ohmylms-chapter-layout-1 .ohmylms-single-chapter .readmore", function() {
-				$(this).toggleClass('active');
-
-				let ulHeight = null;
-				$(this).siblings(".ohmylms-chapter-content-list").find("li").each(function(){
-					ulHeight += $(this).outerHeight(true);
-				});
-
-				if ($(this).hasClass('active')) {
-					$(this).find('.readmore-text').text('See less lesson items');
-					$(this).siblings(".ohmylms-chapter-content-list").addClass('active').css('max-height', ulHeight+'px');
-					$(this).siblings(".ohmylms-chapter-content-list").find('a').attr("tabindex", "0");
-
-				}else {
-					$(this).find('.readmore-text').text('See more lesson items');
-					let initialHeight = $(this).siblings(".ohmylms-chapter-content-list").attr("initial-height");
-
-					$(this).siblings(".ohmylms-chapter-content-list").removeClass('active').css('max-height', initialHeight+'px');
-
-					$(this).siblings(".ohmylms-chapter-content-list").find('a').each(function(index) {
-						if (index === 0) {
-							$(this).attr("tabindex", "0"); // Set tabindex to 0 for the first link
-						} else {
-							$(this).attr("tabindex", "-1"); // Set tabindex to -1 for all other links
-						}
-					});
-
-				}
-			});
-
-
-			function checkAllChapterActive() {
-				if ($(".ohmylms-chapter-layout-2 .ohmylms-single-chapter").length === $(".ohmylms-chapter-layout-2 .ohmylms-single-chapter.active").length) {
-					$(".ohmylms-chapter-layout-2 .ohmylms-chapter-toggle .chapter-collapse").show();
-					$(".ohmylms-chapter-layout-2 .ohmylms-chapter-toggle .chapter-expand").hide();
-
-				}else {
-					$(".ohmylms-chapter-layout-2 .ohmylms-chapter-toggle .chapter-collapse").hide();
-					$(".ohmylms-chapter-layout-2 .ohmylms-chapter-toggle .chapter-expand").show();
-				}
-			}
-
-			//------course single layout-2 chapter toggle------
-			$(document).on("click", ".ohmylms-chapter-layout-2 .ohmylms-single-chapter .chapter-title", function() {
-				const $chapter = $(this).closest(".ohmylms-single-chapter");
-				const $list = $chapter.find(".ohmylms-chapter-content-list");
-				const isExpanded = $(this).attr("aria-expanded") === "true";
-
-				$(this).attr("aria-expanded", !isExpanded);
-				$chapter.toggleClass("active");
-				$list.slideToggle().attr("hidden", isExpanded);
-
-				checkAllChapterActive();
-			});
-
-			// Keyboard support (Enter or Space)
-			$(document).on("keydown", ".ohmylms-chapter-layout-2 .chapter-title", function (e) {
-				if (e.key === "Enter" || e.key === " ") {
-					e.preventDefault(); // prevent scroll on space
-					$(this).trigger("click");
-
-					checkAllChapterActive();
-				}
-			});
-
-
-			//------course single layout-2 expand/collapse chapter toggle------
-			$(document).on("click", ".ohmylms-chapter-layout-2 .ohmylms-chapter-toggle .chapter-expand", function() {
-				const $expandBtn = $(this);
-				const $collapseBtn = $expandBtn.siblings('.chapter-collapse');
-
-				$expandBtn.hide().attr("aria-expanded", "true");
-				$collapseBtn.show().attr("aria-expanded", "true").trigger("focus"); // Focus on collapse button
-
-				$('.ohmylms-single-chapter').addClass('active');
-				$('.ohmylms-single-chapter .ohmylms-chapter-content-list').slideDown();
-			});
-
-			$(document).on("click", ".ohmylms-chapter-layout-2 .ohmylms-chapter-toggle .chapter-collapse", function() {
-				const $collapseBtn = $(this);
-				const $expandBtn = $collapseBtn.siblings('.chapter-expand');
-
-				$collapseBtn.hide().attr("aria-expanded", "false");
-				$expandBtn.show().attr("aria-expanded", "false").trigger("focus"); // Focus on expand button
-
-				$('.ohmylms-single-chapter').removeClass('active');
-				$('.ohmylms-single-chapter .ohmylms-chapter-content-list').slideUp();
-			});
-
-
-			//------course single layout-2 show all chapter------
-			$(document).on("click", ".ohmylms-chapter-layout-2 .show-more-chapter", function() {
-				$(this).remove();
-				$(".ohmylms-chapter-layout-2 .ohmylms-single-chapter").show();
-			});
-
 
 			/**
 			 * Sets up dynamic tab behavior for a given set of tabs and corresponding content.
@@ -769,53 +569,6 @@
 				}
 			}
 
-			//-----course details page tab-----
-			ohMyLMSJQueryTab('.ohmylms-course-tab-nav li button', '.ohmylms-course-tab-content .ohmylms-single-tab-content');
-
-			//-----in carousel view----
-			let navOuterWidth = $('.ohmylms-course-details-tab .ohmylms-carousel-container').innerWidth();
-			let navWidth = 0;
-			$('.ohmylms-course-details-tab .ohmylms-course-tab-nav li').each( function() {
-				navWidth += $(this).outerWidth(true);
-			})
-
-			//----if nav width is less than navOuterWidth will show carousel nav----
-			if( navOuterWidth < navWidth && !$('.ohmylms-course-details-tab[data-wp-interactive="ohmylms/tabs"]').length ) {
-				$(document).on("click", ".ohmylms-course-tab-nav li button", function() {
-					let dataTarget = $(this).attr('data-target');
-
-					$(this).parents('.slick-slide').siblings().find('button').removeClass('active');
-					$(this).parents('.slick-slide').siblings().find('button[data-target="'+dataTarget+'"]').addClass('active');
-					$(this).addClass('active');
-
-					//--for Tab Content Panels--
-					$('.ohmylms-single-tab-content').removeClass('active');
-					$(dataTarget).siblings().removeClass('active');
-					$(dataTarget).addClass('active');
-				});
-
-				if( $('.ohmylms-course-tab-nav').length > 0 ) {
-					$('.ohmylms-course-tab-nav').slick({
-						infinite: true,
-						slidesToShow: 1,
-						slidesToScroll: 1,
-						variableWidth: true,
-						centerPadding: '20px',
-						prevArrow: '<button class="slick-prev" aria-label="Previous" type="button"><svg width="9" height="18" fill="none" viewBox="0 0 9 18" xmlns="http://www.w3.org/2000/svg"><path fill="#A1A1AA" d="M1.655 6.526L7.01 1.171a1.167 1.167 0 111.645 1.657L3.288 8.171a1.167 1.167 0 000 1.657l5.367 5.343a1.167 1.167 0 11-1.645 1.657l-5.355-5.355a3.5 3.5 0 010-4.947z"/></svg></button>',
-						nextArrow: '<button class="slick-next" aria-label="Next" type="button"><svg width="9" height="18" fill="none" viewBox="0 0 9 18" xmlns="http://www.w3.org/2000/svg"><path fill="#A1A1AA" d="M7.345 6.526L1.99 1.171A1.167 1.167 0 10.345 2.828l5.367 5.343a1.167 1.167 0 010 1.657L.345 15.171a1.167 1.167 0 101.645 1.657l5.355-5.355a3.5 3.5 0 000-4.947z"/></svg></button>',
-						responsive: [
-							{
-								breakpoint: 426,
-								settings: {
-									slidesToShow: 2
-								}
-							}
-						]
-					});
-				}
-			}
-
-
 			// -----creator lms table responsive toggle------
 			if($(window).width() < 768) {
 				$(document).on("click", ".ohmylms-table .ohmylms-td-handle", function() {
@@ -824,34 +577,6 @@
 				});
 			}
 
-
-			// ------course single sticky pricebox------
-			if( $(window).width() < 992 && $('.ohmylms-course-header .ohmylms-widget-pricebox').length > 0 ) {
-				let $priceBox = $('.ohmylms-course-header .ohmylms-widget-pricebox');
-
-				// Calculate the distance from the top of the browser and add the height
-				let stickyScrollDistance = $priceBox.offset().top + $priceBox.outerHeight(true);
-				let lastScrollTop = 0;
-
-				$(window).on('scroll', function() {
-					const currentScrollTop = $(this).scrollTop(); // Get the current scroll position
-
-					if (currentScrollTop > stickyScrollDistance) {
-						if (currentScrollTop > lastScrollTop) {
-							// Scrolling down
-							$('.ohmylms-single-course').addClass('show-sticky-price');
-						} else {
-							// Scrolling up
-							$('.ohmylms-single-course').removeClass('show-sticky-price');
-						}
-					} else {
-						// If the scroll position is less than the stickyScrollDistance, remove the class
-						$('.ohmylms-single-course').removeClass('show-sticky-price');
-					}
-
-					lastScrollTop = currentScrollTop; // Update the last scroll position
-				});
-			}
 
 			// -----student profile dropdown show/hide------
 			$(document).on("click", ".ohmylms-header .ohmylms-user-avatar", function(e) {
@@ -863,24 +588,6 @@
 			$(document).on("click", "body", function(e) {
 				$('.ohmylms-header .ohmylms-user').removeClass('show-dropdown');
 			});
-
-			$(document).on("click", "ohmylms-header .ohmylms-user .ohmylms-user-dropdown", function(e) {
-				e.stopPropagation();
-			});
-
-
-			// -----header search box show/hide on mobile device------
-			if( $(window).width() < 576 ) {
-				$(document).on("click", ".ohmylms-header .ohmylms-mobile-search-btn", function(e) {
-					e.preventDefault();
-					e.stopPropagation();
-					$(this).parents('.ohmylms-header-wrapper').find('.search-box').fadeIn(300);
-				});
-
-				$(document).on("click", ".ohmylms-header .ohmylms-search-close", function(e) {
-					$(".ohmylms-header-wrapper .search-box").fadeOut(300);
-				});
-			}
 
 			// -----course single page review rating------
 			$(document).on("click", ".comment-form-rating .ohmylms-stars > a", function(e) {
@@ -912,59 +619,6 @@
 
 			// -----my course page tab behaviour------
 			ohMyLMSJQueryTab('.ohmylms-my-courses-tab ul li button', '.ohmylms-my-courses-tab-content .ohmylms-single-tab-content');
-
-
-			// -----password strength meter------
-			$('#ohmylms-password-meter').on('input', function() {
-				const password = $(this).val();
-				if(password.length != 0) {
-					$('.ohmylms-password-strength').show();
-				}else {
-					$('.ohmylms-password-strength').hide();
-				}
-
-				// Reset criteria
-				$('.ohmylms-password-strength li').removeClass('matched');
-
-				// Check criteria
-				let strength = 0;
-
-				// 1. Check length (8-12 characters)
-				if (password.length >= 8 && password.length <= 12) {
-					$('.ohmylms-password-strength .password-characters').addClass('matched');
-					strength++;
-				}
-
-				// 2. Check for number or symbol
-				if (/[0-9!@#$%^&*(),.?":{}|<>]/.test(password)) {
-					$('.ohmylms-password-strength .password-number').addClass('matched');
-					strength++;
-				}
-
-				// 3. Check for uppercase and lowercase letters
-				if (/[A-Z]/.test(password) && /[a-z]/.test(password)) {
-					$('.ohmylms-password-strength .password-case').addClass('matched');
-					strength++;
-				}
-
-				// Determine strength level
-				let strengthLevel = '';
-
-				if (strength === 0) {
-					strengthLevel = 'Low';
-					$('.ohmylms-password-strength .password-strength').text(`Password Strength: ${strengthLevel}`).removeClass('weak');
-
-				} else if (strength <= 2) {
-					strengthLevel = 'Weak';
-					$('.ohmylms-password-strength .password-strength').text(`Password Strength: ${strengthLevel}`).addClass('weak').removeClass('matched');
-
-				} else {
-					strengthLevel = 'High';
-					$('.ohmylms-password-strength .password-strength').text(`Password Strength: ${strengthLevel}`).removeClass('weak').addClass('matched');
-				}
-
-
-			});
 
 
 			//--------notification settings switcher------
@@ -1045,26 +699,6 @@
 			});
 
 
-			//--------lesson single sidebar toggle on mobile------
-			$(document).on('click', '.ohmylms-lesson-details-hamburger', function(e) {
-				e.stopPropagation();
-				$(this).parents('.ohmylms-lesson-details').addClass('open-sidebar');
-			});
-
-			$(document).on('click', '.ohmylms-lesson-sidebar', function(e) {
-				e.stopPropagation();
-			});
-
-			$(document).on('click', 'body', function() {
-				$('.ohmylms-lesson-details').removeClass('open-sidebar');
-			});
-
-
-			$(document).on('click', '.ohmylms-student-profile .ohmylms-student-profile-sidebar-close', function() {
-				$(this).parents('.ohmylms-student-profile').removeClass('open-sidebar');
-			});
-
-
 			// -----complete lesson-----
 			$(document).on('click', '#ohmylms-completed-lesson', function(e) {
 				$(this).prop('disabled', true);
@@ -1095,49 +729,6 @@
 								}
 							}, 500);
 
-						} else {
-							ohMyLMSshowToast(response.data.message, 'danger');
-						}
-					}
-				});
-			});
-
-			// -----drop course confirm alert------
-			$(document).on('click', '.ohmylms-drop-course-confirm', function(e) {
-				e.preventDefault();
-				e.stopPropagation();
-				$(this).closest('.ohmylms-sidebar').find('.ohmylms-alert').fadeIn(200);
-			});
-
-			$(document).on('click', 'body, .ohmylms-alert .ohmylms-alert-cancel', function() {
-				$('.ohmylms-alert').fadeOut(200);
-			});
-
-			$(document).on('click', '.ohmylms-alert .ohmylms-alert-wrapper', function(e) {
-				e.stopPropagation();
-			});
-			// -----end drop course confirm alert------
-
-			$(document).on('click', '.ohmylms-drop-course', function(e) {
-				let courseID = $(this).data('course-id'),
-					userID	 = $(this).data('user-id');
-
-					$('.ohmylms-sidebar .ohmylms-alert').fadeOut(200);
-
-				$.ajax({
-					url: ohmylms_frontend_params.ajax_url,
-					type: 'POST',
-					data: {
-						action	: 'ohmylms_drop_course',
-						course_id	: courseID,
-						nonce	: ohmylms_frontend_params.course_drop_nonce
-					},
-					success: function(response) {
-						if (response.success) {
-							ohMyLMSshowToast(response.data.message);
-							setTimeout(function() {
-								location.reload();
-							}, 1000);
 						} else {
 							ohMyLMSshowToast(response.data.message, 'danger');
 						}
@@ -1300,404 +891,12 @@
 			//------end assignment page attachment submition journey-----
 
 
-			// -----quiz page modal------
-			$(document).on('click', '.ohmylms-quiz .quiz-page-close', function(e) {
-				e.preventDefault();
-				e.stopPropagation();
-				$('.ohmylms-quiz-alert').fadeIn(200);
-			});
-
-			$(document).on('click', 'body, .ohmylms-quiz-alert .quiz-alert-cancel', function() {
-				$('.ohmylms-quiz-alert').fadeOut(200);
-			});
-
-			$(document).on('click', '.ohmylms-quiz-alert .quiz-alert-wrapper', function(e) {
-				e.stopPropagation();
-			});
-			// -----end quiz page modal------
-
 			//----start quiz textarea auto resize----
 			$('.textarea-auto-resize').on('input', function() {
 				$(this).css('height', 'auto');
 				$(this).css('height', this.scrollHeight + 'px');
 			});
 
-
-			// ----quiz page next question navigation------
-			$(document).on("click", ".ohmylms-next-quiz", function() {
-				let totalQuestions = parseInt($(this).attr('total-questions'));
-				let nextQuestion = parseInt($(this).attr('next-question'));
-				let currentQuestion = parseInt($(this).attr('current-question'));
-				let perviousQuestion = nextQuestion - 1;
-				let isQuestionAnswered = true;
-
-				let isRequired = $('.ohmylms-quiz-box.question-' + currentQuestion+' input.is-required').val();
-				let questionType = $('.ohmylms-quiz-box.question-' + currentQuestion+' input.is-required').attr('question-type');
-
-				//-------check if question is required and input field has value------
-				if(isRequired){
-					if(
-						'single-choice' == questionType ||
-						'multiple-choice' == questionType ||
-						'true-false' == questionType
-					){
-						if ( !$('.ohmylms-quiz-box.question-' + currentQuestion+' input').is(':checked')) {
-							isQuestionAnswered = false;
-							$('.ohmylms-quiz-box.question-' + currentQuestion+' .required-question').show();
-
-						}else {
-							$('.ohmylms-quiz-box.question-' + currentQuestion+' .required-question').hide();
-						}
-
-					} else if(
-						'short-text' == questionType ||
-						'statement' == questionType ||
-						'fill-in-the-blank' == questionType
-					){
-
-						if ( $('.ohmylms-quiz-box.question-' + currentQuestion+' input.ohmylms-text-input').filter(function () { return this.value.trim() === ''; }).length > 0 ) {
-							isQuestionAnswered = false;
-							$('.ohmylms-quiz-box.question-' + currentQuestion+' .required-question').show();
-
-						}else {
-							$('.ohmylms-quiz-box.question-' + currentQuestion+' .required-question').hide();
-						}
-
-					} else if( 'long-text' == questionType ){
-						if ( $('.ohmylms-quiz-box.question-' + currentQuestion+' textarea').val() == '' ) {
-							isQuestionAnswered = false;
-							$('.ohmylms-quiz-box.question-' + currentQuestion+' .required-question').show();
-
-						}else {
-							$('.ohmylms-quiz-box.question-' + currentQuestion+' .required-question').hide();
-						}
-
-					} else if( 'reorder' == questionType ){
-						// Reorder questions are always considered answered since they have a default order
-						$('.ohmylms-quiz-box.question-' + currentQuestion+' .required-question').hide();
-
-					} else if( 'matching' == questionType ){
-						// Check if at least one matching pair is made
-						const matchingInputs = $('.ohmylms-quiz-box.question-' + currentQuestion+' .matching-answer-input');
-						let hasMatching = false;
-						matchingInputs.each(function() {
-							if ($(this).val() !== '') {
-								hasMatching = true;
-								return false; // break the loop
-							}
-						});
-
-						if (!hasMatching) {
-							isQuestionAnswered = false;
-							$('.ohmylms-quiz-box.question-' + currentQuestion+' .required-question').show();
-						} else {
-							$('.ohmylms-quiz-box.question-' + currentQuestion+' .required-question').hide();
-						}
-					}
-				}
-				//---end isRequired check---
-
-				if( isQuestionAnswered ){
-					//-------update current question number------
-					$(this).attr('current-question', currentQuestion+1);
-					$(this).siblings('.ohmylms-previous-quiz').attr('current-question', currentQuestion+1);
-
-					//-------update previous question number and enable previous button------
-					$(this).siblings('.ohmylms-previous-quiz').attr('previous-question', perviousQuestion).prop('disabled', false);
-
-					//-------update next question number------
-					if (nextQuestion <= totalQuestions) {
-						$('.ohmylms-quiz-box.question-' + nextQuestion).siblings().removeClass('active');
-						$('.ohmylms-quiz-box.question-' + nextQuestion).addClass('active');
-
-						//-------update next question number if next question is less than total questions------
-						if (nextQuestion != totalQuestions) {
-							$(this).attr('next-question',nextQuestion+1);
-						}
-					}
-
-					//-------hide next button and show submit button------
-					if (nextQuestion == totalQuestions) {
-						$(this).hide();
-						$(this).siblings('.quiz-submit').show();
-					}else {
-						$(this).show();
-						$(this).siblings('.quiz-submit').hide();
-					}
-
-				}
-
-			});
-
-			// ----quiz page previous question navigation------
-			$(document).on("click", ".ohmylms-previous-quiz", function() {
-				let totalQuestions = parseInt($(this).attr('total-questions'));
-				let perviousQuestion = parseInt($(this).attr('previous-question'));
-				let currentQuestion = parseInt($(this).attr('current-question'));
-				let nextQuestion = perviousQuestion + 1;
-
-				//-------update current question number------
-				$(this).attr('current-question', currentQuestion-1);
-				$(this).siblings('.ohmylms-next-quiz').attr('current-question', currentQuestion-1);
-
-				//-------update next question number------
-				$(this).siblings('.ohmylms-next-quiz').attr('next-question', nextQuestion);
-
-				$('.ohmylms-quiz-box.question-' + perviousQuestion).siblings().removeClass('active');
-				$('.ohmylms-quiz-box.question-' + perviousQuestion).addClass('active');
-
-				//-------update previous question number------
-				if (perviousQuestion > 1) {
-					$(this).attr('previous-question', perviousQuestion - 1);
-				}
-
-				// -------disable previous button on first question------
-				if (perviousQuestion == 1) {
-					$(this).prop('disabled', true);
-				}else {
-					$(this).prop('disabled', false);
-				}
-
-				//-------show next button on last question------
-				if (perviousQuestion < totalQuestions) {
-					$(this).siblings('.quiz-submit').hide();
-					$(this).siblings('.ohmylms-next-quiz').show();
-				}else {
-					$(this).siblings('.quiz-submit').show();
-					$(this).siblings('.ohmylms-next-quiz').hide();
-				}
-
-			});
-
-			// ----quiz page next grouped question navigation------
-			$(document).on("click", ".ohmylms-next-quiz-group", function() {
-				let totalGroup = parseInt($(this).attr('total-group'));
-				let nextGroup = parseInt($(this).attr('next-group'));
-				let currentGroup = parseInt($(this).attr('current-group'));
-				let perviousGroup = nextGroup - 1;
-				let isAnsweredRequiredQuestion = true;
-
-				$('.ohmylms-question-group.question-group-' + currentGroup+ ' .ohmylms-quiz-box').each(function(){
-					let isRequired = $(this).find('input.is-required').val();
-					let questionType = $(this).find('input.is-required').attr('question-type');
-
-					//-------check if question is required and input field has value------
-					if(isRequired){
-						if(
-							'single-choice' == questionType ||
-							'multiple-choice' == questionType ||
-							'true-false' == questionType
-						){
-							if ( !$(this).find('input').is(':checked')) {
-								isAnsweredRequiredQuestion = false;
-								$(this).find('.required-question').show();
-
-							}else {
-								$(this).find('.required-question').hide();
-							}
-
-						} else if(
-							'short-text' == questionType ||
-							'statement' == questionType ||
-							'fill-in-the-blank' == questionType
-						){
-							if ( $(this).find('input.ohmylms-text-input').filter(function () { return this.value.trim() === ''; }).length > 0 ) {
-								isAnsweredRequiredQuestion = false;
-								$(this).find('.required-question').show();
-
-							}else {
-								$(this).find('.required-question').hide();
-							}
-
-						} else if( 'long-text' == questionType ){
-							if ( $(this).find('textarea').val() == '' ) {
-								isAnsweredRequiredQuestion = false;
-								$(this).find('.required-question').show();
-
-							}else {
-								$(this).find('.required-question').hide();
-							}
-
-						} else if( 'reorder' == questionType ){
-							// Reorder questions are always considered answered since they have a default order
-							$(this).find('.required-question').hide();
-
-						} else if( 'matching' == questionType ){
-							// Check if at least one matching pair is made
-							const matchingInputs = $(this).find('.matching-answer-input');
-							let hasMatching = false;
-							matchingInputs.each(function() {
-								if ($(this).val() !== '') {
-									hasMatching = true;
-									return false; // break the loop
-								}
-							});
-
-							if (!hasMatching) {
-								isAnsweredRequiredQuestion = false;
-								$(this).find('.required-question').show();
-							} else {
-								$(this).find('.required-question').hide();
-							}
-						}
-					}
-					//---end isRequired check---
-				});
-
-				if( isAnsweredRequiredQuestion ){
-					//-------update current group number------
-					$(this).attr('current-group', currentGroup+1);
-					$(this).siblings('.ohmylms-previous-quiz-group').attr('current-group', currentGroup+1);
-
-					//-------update previous group number and enable previous button------
-					$(this).siblings('.ohmylms-previous-quiz-group').attr('previous-group', perviousGroup).prop('disabled', false);
-
-					//-------update next group number------
-					if (nextGroup <= totalGroup) {
-						$('.ohmylms-question-group.question-group-' + nextGroup).siblings().removeClass('active');
-						$('.ohmylms-question-group.question-group-' + nextGroup).addClass('active');
-
-						//-------update next group number if next group is less than total group------
-						if (nextGroup != totalGroup) {
-							$(this).attr('next-group', nextGroup+1);
-						}
-					}
-
-					//-------hide next button and show submit button------
-					if (nextGroup == totalGroup) {
-						$(this).hide();
-						$(this).siblings('.quiz-submit').show();
-					}else {
-						$(this).show();
-						$(this).siblings('.quiz-submit').hide();
-					}
-
-				}
-
-			});
-
-			// ----quiz page previous grouped question navigation------
-			$(document).on("click", ".ohmylms-previous-quiz-group", function() {
-				let totalGroup = parseInt($(this).attr('total-group'));
-				let perviousGroup = parseInt($(this).attr('previous-group'));
-				let currentGroup = parseInt($(this).attr('current-group'));
-				let nextGroup = perviousGroup + 1;
-
-				//-------update current group number------
-				$(this).attr('current-group', currentGroup-1);
-				$(this).siblings('.ohmylms-next-quiz-group').attr('current-group', currentGroup-1);
-
-				//-------update next group number------
-				$(this).siblings('.ohmylms-next-quiz-group').attr('next-group', nextGroup);
-
-				$('.ohmylms-question-group.question-group-' + perviousGroup).siblings().removeClass('active');
-				$('.ohmylms-question-group.question-group-' + perviousGroup).addClass('active');
-
-
-				//-------update previous group number------
-				if (perviousGroup > 1) {
-					$(this).attr('previous-group', perviousGroup - 1);
-				}
-
-				// -------disable previous button on first group------
-				if (perviousGroup == 1) {
-					$(this).prop('disabled', true);
-				}else {
-					$(this).prop('disabled', false);
-				}
-
-				//-------show next button on last group------
-				if (perviousGroup < totalGroup) {
-					$(this).siblings('.quiz-submit').hide();
-					$(this).siblings('.ohmylms-next-quiz-group').show();
-				}else {
-					$(this).siblings('.quiz-submit').show();
-					$(this).siblings('.ohmylms-next-quiz-group').hide();
-				}
-
-			});
-
-			//------quiz submit----
-			$(document).on("click", ".ohmylms-button.quiz-submit", function(e) {
-				if ($(this).closest('[data-wp-interactive="ohmylms/quiz"]').length) return;
-				let isAnsweredRequiredQuestion = true;
-
-				$(".ohmylms-quiz-box").each(function(){
-					let isRequired = $(this).find('input.is-required').val();
-					let questionType = $(this).find('input.is-required').attr('question-type');
-
-					//-------check if question is required and input field has value------
-					if(isRequired){
-						if(
-							'single-choice' == questionType ||
-							'multiple-choice' == questionType ||
-							'true-false' == questionType
-						){
-							if ( !$(this).find('input').is(':checked')) {
-								isAnsweredRequiredQuestion = false;
-								$(this).find('.required-question').show();
-
-							}else {
-								$(this).find('.required-question').hide();
-							}
-
-						} else if(
-							'short-text' == questionType ||
-							'statement' == questionType ||
-							'fill-in-the-blank' == questionType
-						){
-							if ( $(this).find('input.ohmylms-text-input').filter(function () { return this.value.trim() === ''; }).length > 0 ) {
-								isAnsweredRequiredQuestion = false;
-								$(this).find('.required-question').show();
-
-							}else {
-								$(this).find('.required-question').hide();
-							}
-
-						} else if( 'long-text' == questionType ){
-							if ( $(this).find('textarea').val() == '' ) {
-								isAnsweredRequiredQuestion = false;
-								$(this).find('.required-question').show();
-
-							}else {
-								$(this).find('.required-question').hide();
-							}
-
-						} else if( 'reorder' == questionType ){
-							// Reorder questions are always considered answered since they have a default order
-							$(this).find('.required-question').hide();
-
-						} else if( 'matching' == questionType ){
-							// Check if at least one matching pair is made
-							const matchingInputs = $(this).find('.matching-answer-input');
-							let hasMatching = false;
-							matchingInputs.each(function() {
-								if ($(this).val() !== '') {
-									hasMatching = true;
-									return false; // break the loop
-								}
-							});
-
-							if (!hasMatching) {
-								isAnsweredRequiredQuestion = false;
-								$(this).find('.required-question').show();
-							} else {
-								$(this).find('.required-question').hide();
-							}
-						}
-					}
-					//---end isRequired check---
-				});
-
-				if( !isAnsweredRequiredQuestion ) {
-					e.preventDefault();
-					return;
-				}
-
-				$(this).prop('disabled', true);
-    			$(this).closest('form')[0].submit();
-
-			});
 
 			// ------check character limit----
 			$('.ohmylms-has-character-limit').on('input', function() {
@@ -1802,14 +1001,6 @@
 				});
 			}
 
-			if ($('.ohmylms-quiz-timer').filter(function() { return !this.closest('[data-wp-interactive="ohmylms/quiz"]'); }).length > 0) {
-				// Get the timer value from the data attribute
-				let time = $('.ohmylms-timer .timer-display').attr('data-timer');
-				isTimerStart = true;
-				// Call the countdown function with the retrieved time
-				ohMyLmsCountdown(parseFloat(time), 'quiz');
-			}
-
 			if( $('input[name="ohmylms_assignment_deadline"]').length > 0 ){
 
 				let remainingTime = $('input[name="ohmylms_assignment_deadline"]').val();
@@ -1855,20 +1046,6 @@
 			});
 
 
-			// ----------assignment details comment box read more and read less toggle------
-			$(document).on("click", ".score-comment-details-text .read-more-toggle", function(e) {
-				let getText = $(this).children('.read-more').attr('data-title');
-
-				if (getText == "more") {
-					$(this).children('.read-more').attr("data-title", "less").text("Read less");
-				}else {
-					$(this).children('.read-more').attr("data-title", "more").text("Read more");
-				}
-
-				$(this).parents(".score-comment-details-text").toggleClass("active");
-			});
-
-
 			//--------course list page sidebar toggle on mobile------
 			$(document).on("click", ".ohmylms-search-sort .filter-hamburger", function(e) {
 				$(this).parents('.ohmylms-filter-enabled').addClass('open-sidebar');
@@ -1908,43 +1085,6 @@
 				}
 			});
 
-
-			//--------frontend course archive page layout 3 carousel------
-			if ( $('.ohmylms-course-cards-carousel').length ) {
-				$('.ohmylms-course-cards-carousel').each(function(){
-					let colPerRow = $(this).data('col');
-
-					$(this).slick({
-						infinite: false,
-						slidesToShow: colPerRow,
-						slidesToScroll: 1,
-						rtl: isRTL,
-						prevArrow: '<button class="slick-prev" aria-label="Previous" type="button"><svg width="9" height="18" fill="none" viewBox="0 0 9 18" xmlns="http://www.w3.org/2000/svg"><path fill="#A1A1AA" d="M1.655 6.526L7.01 1.171a1.167 1.167 0 111.645 1.657L3.288 8.171a1.167 1.167 0 000 1.657l5.367 5.343a1.167 1.167 0 11-1.645 1.657l-5.355-5.355a3.5 3.5 0 010-4.947z"/></svg></button>',
-						nextArrow: '<button class="slick-next" aria-label="Next" type="button"><svg width="9" height="18" fill="none" viewBox="0 0 9 18" xmlns="http://www.w3.org/2000/svg"><path fill="#A1A1AA" d="M7.345 6.526L1.99 1.171A1.167 1.167 0 10.345 2.828l5.367 5.343a1.167 1.167 0 010 1.657L.345 15.171a1.167 1.167 0 101.645 1.657l5.355-5.355a3.5 3.5 0 000-4.947z"/></svg></button>',
-						responsive: [
-							{
-								breakpoint: 1200,
-								settings: {
-									slidesToShow: colPerRow < 3 ? colPerRow : 3,
-								}
-							},
-							{
-								breakpoint: 768,
-								settings: {
-									slidesToShow: colPerRow < 2 ? colPerRow : 2,
-								}
-							},
-							{
-								breakpoint: 575,
-								settings: {
-									slidesToShow: 1,
-								}
-							}
-						]
-					}).addClass('ohmylms-initialized').css('display', 'block').siblings('.ohmylms-carousel-skeleton').remove();
-
-				});
-			}
 
 			// ----------Protect content from single lesson, quiz and assignment page------
 			if (ohmylms_frontend_params.is_creator_page && ohmylms_frontend_params.content_protection === 'yes') {
@@ -2371,13 +1511,6 @@
 				$(this).parents(".wp-block-navigation__responsive-container").removeClass("has-modal-open is-menu-open");
 			});
 
-			//-----course single layout-2 review show more toggle----
-			$(document).on("click", ".ohmylms-course-reviews .show-more-review", function(e) {
-				e.preventDefault();
-				$(this).hide();
-				$(this).siblings('.ohmylms-course-single-review').addClass('shown');
-			});
-
 			//--------course lesson video play button------
 			$(document).on("click", ".ohmylms-video-player-play", function(e) {
                 e.preventDefault();
@@ -2385,18 +1518,6 @@
                 const video = $(this).closest(".ohmylms-video-player").find('.the-video')[0];
                 if (video) video.play();
             });
-
-			//--------course single layout-2 header overlay dynamic height------
-			if( $('.ohmylms-single-course-layout-2').length > 0 ) {
-				let getHeaderHeight = $('.ohmylms-single-course-layout-2 .ohmylms-course-header').innerHeight();
-
-				if( $(window).width() < 992 ) {
-					$('.ohmylms-single-course-layout-2 .layout-2-overlay').css('height', (getHeaderHeight + 30) +'px');
-				}else {
-					$('.ohmylms-single-course-layout-2 .layout-2-overlay').css('height', (getHeaderHeight + 60) +'px');
-				}
-			}
-
 
 			//--------membership invoice print button------
 			$(document).on("click", ".ohmylms-membership-invoice .print-button", function(e) {
@@ -2720,50 +1841,6 @@
 
 			// -----start lesson prerequisite access modal------
 
-			// $(document).on('click', '.ohmylms-lesson-list .lesson-item a, .ohmylms-lesson-navigation .next-lesson', async function(e) {
-			// 	e.stopPropagation();
-			// 	e.preventDefault();
-
-			// 	let lessonId = $(this).attr('lesson-id');
-
-			// 	try {
-			// 		let lessonHasPrerequisite = await checkLessonPrerequisite(lessonId);
-
-			// 		if (lessonHasPrerequisite && !lessonHasPrerequisite?.permission) {
-			// 			$('.ohmylms-access-denied-modal').fadeIn().attr('aria-hidden', 'false');
-			// 		} else {
-			// 			// Optional: Redirect or allow navigation
-			// 			window.location.href = $(this).attr('href');
-			// 		}
-			// 	} catch (error) {
-			// 		console.error('Error checking lesson prerequisite:', error);
-			// 	}
-			// });
-
-			async function checkLessonPrerequisite(lesson_id) {
-				return new Promise((resolve, reject) => {
-					$.ajax({
-						url: ohmylms_frontend_params.ajax_url,
-						type: 'GET',
-						data: {
-							action: 'ohmylms_lesson_access_nonce',
-							lesson_id: lesson_id,
-							nonce: ohmylms_frontend_params.lesson_access_nonce
-						},
-						success: function(response) {
-							if (response.success) {
-								resolve(response.data);
-							} else {
-								resolve(false);
-							}
-						},
-						error: function(jqXHR, textStatus, errorThrown) {
-							reject(errorThrown);
-						}
-					});
-				});
-			}
-
 			$(document).on('click', '.ohmylms-access-denied-inner, .ohmylms-access-denied-close', function() {
 				$('.ohmylms-access-denied-modal').fadeOut().attr('aria-hidden', 'true');
 			});
@@ -2772,217 +1849,6 @@
 				e.stopPropagation();
 			});
 			// -----end lesson prerequisite access modal------
-
-
-			// -----start single course layout-3 nav actions------
-			let navLinks = $('.ohmylms-single-course-layout3-content-nav a');
-  			let navOffset = 60;
-
-			if($('body').hasClass('admin-bar')) {
-				navOffset = 85;
-			}
-
-			// Smooth scroll on click
-			navLinks.on('click', function(e) {
-				e.preventDefault();
-
-				const target = $(this).attr('href');
-				const $targetEl = $(target);
-
-				if ($targetEl.length) {
-					$('html, body').animate({
-						scrollTop: $targetEl.offset().top - navOffset
-					}, 600);
-
-					// Set active state manually on click
-					navLinks.parent('li').siblings().removeClass('active');
-					$(this).parent('li').addClass('active');
-				}
-			});
-
-			// ScrollSpy: update active link on scroll
-			$(window).on('scroll', function() {
-				let currentScroll = $(this).scrollTop();
-				let contentNav = $('.ohmylms-single-course-layout3-content-nav');
-
-				if (contentNav.length) {
-					let navTop = contentNav.offset().top - $(window).scrollTop();
-
-					$('.ohmylms-single-course-layout3-content .ohmylms-single-tab-content').each(function() {
-						const sectionTop = $(this).offset().top - navOffset - 100;
-						const sectionBottom = sectionTop + $(this).outerHeight();
-						const sectionId = $(this).attr('id');
-
-						if (currentScroll >= sectionTop && currentScroll < sectionBottom) {
-							navLinks.parent('li').siblings().removeClass('active');
-							contentNav.find('a[href="#' + sectionId + '"]').parent('li').addClass('active');
-						}
-					});
-
-					if ( 0 == navTop || 32 == navTop ) {
-						contentNav.addClass('at-top');
-					} else {
-						contentNav.removeClass('at-top');
-					}
-				}
-
-			});
-			// -----end single course layout-3 nav actions------
-
-
-			// -----start single course layout-3 showmore/showless------
-			$('.layout3-description .layout3-content-readmore-button').on('click', function () {
-				$(this).closest('.layout3-content-readmore').toggleClass('ohmylms-expanded');
-				$(this).closest('.ohmylms-description-content-inner').find('.ohmylms-description-content-height').toggleClass('show-all ohmylms-expandable');
-
-				let isExpanded = $(this).closest('.ohmylms-description-content-inner').find('.ohmylms-description-content-height').hasClass('show-all');
-
-				if (isExpanded) {
-					$(this).children('.button-text').text('Show Less');
-					$(this).find('svg').css('transform', 'rotate(180deg)');
-
-				} else {
-					$(this).children('.button-text').text('Show More');
-					$(this).find('svg').css('transform', 'rotate(0deg)');
-				}
-			});
-
-			//---layout3 chapter show more toggle---
-			$('.layout3-chapters .layout3-content-readmore-button').on('click', function () {
-				$(this).closest('.layout3-content-readmore').toggleClass('ohmylms-expanded');
-				$(this).closest('.ohmylms-single-chapter').find('.ohmylms-chapter-content-list').toggleClass('show-all');
-
-				let isExpanded = $(this).closest('.ohmylms-single-chapter').find('.ohmylms-chapter-content-list').hasClass('show-all');
-
-				if (isExpanded) {
-					$(this).children('.button-text').text('Show Less');
-					$(this).find('svg').css('transform', 'rotate(180deg)');
-
-				} else {
-					$(this).children('.button-text').text('Show More');
-					$(this).find('svg').css('transform', 'rotate(0deg)');
-				}
-
-				const allExpanded = $('.ohmylms-chapter-content-list.ohmylms-expandable').length ===
-                    $('.ohmylms-chapter-content-list.ohmylms-expandable.show-all').length;
-
-				if (allExpanded) {
-					$('.layout3-chapters .chapter-expand').hide();
-					$('.layout3-chapters .chapter-collapse').show();
-				}
-
-			});
-
-			//---chapter all expand/collapse toggle---
-			$('.layout3-chapters .chapter-expand').on('click', function () {
-				$(this).hide();
-				$(this).siblings('.chapter-collapse').show();
-
-				$('.layout3-chapters .ohmylms-chapter-content-list').addClass('show-all');
-				$('.layout3-chapters .layout3-content-readmore').addClass('ohmylms-expanded');
-				$('.layout3-chapters .layout3-content-readmore .button-text').text('Show Less');
-				$('.layout3-chapters .layout3-content-readmore svg').css('transform', 'rotate(180deg)');
-
-			});
-
-			$('.layout3-chapters .chapter-collapse').on('click', function () {
-				$(this).hide();
-				$(this).siblings('.chapter-expand').show();
-
-				$('.layout3-chapters .ohmylms-chapter-content-list').removeClass('show-all');
-				$('.layout3-chapters .layout3-content-readmore').removeClass('ohmylms-expanded');
-				$('.layout3-chapters .layout3-content-readmore .button-text').text('Show More');
-				$('.layout3-chapters .layout3-content-readmore svg').css('transform', 'rotate(0deg)');
-
-			});
-
-			//---assignment show more toggle---
-			$('.layout3-assignments .layout3-content-readmore-button').on('click', function () {
-				$(this).closest('.layout3-content-readmore').toggleClass('ohmylms-expanded');
-				$(this).closest('.ohmylms-table').toggleClass('show-all ohmylms-expandable');
-
-				let isExpanded = $(this).closest('.ohmylms-table').hasClass('show-all');
-
-				if (isExpanded) {
-					$(this).children('.button-text').text('Show Less');
-					$(this).find('svg').css('transform', 'rotate(180deg)');
-
-				} else {
-					$(this).children('.button-text').text('Show More');
-					$(this).find('svg').css('transform', 'rotate(0deg)');
-				}
-			});
-
-			//---resource show more toggle---
-			$('.layout3-resources .layout3-content-readmore-button').on('click', function () {
-				$(this).closest('.layout3-content-readmore').toggleClass('ohmylms-expanded');
-				$(this).closest('.ohmylms-table').toggleClass('show-all ohmylms-expandable');
-
-				let isExpanded = $(this).closest('.ohmylms-table').hasClass('show-all');
-
-				if (isExpanded) {
-					$(this).children('.button-text').text('Show Less');
-					$(this).find('svg').css('transform', 'rotate(180deg)');
-
-				} else {
-					$(this).children('.button-text').text('Show More');
-					$(this).find('svg').css('transform', 'rotate(0deg)');
-				}
-			});
-
-			//---review show more toggle---
-			$('.layout3-reviews .layout3-content-readmore-button').on('click', function () {
-				$(this).closest('.layout3-content-readmore').toggleClass('ohmylms-expanded');
-				$(this).closest('.ohmylms-course-reviews').toggleClass('show-all ohmylms-expandable');
-
-				let isExpanded = $(this).closest('.ohmylms-course-reviews').hasClass('show-all');
-
-				if (isExpanded) {
-					$(this).children('.button-text').text('Show Less');
-					$(this).find('svg').css('transform', 'rotate(180deg)');
-
-				} else {
-					$(this).children('.button-text').text('Show More');
-					$(this).find('svg').css('transform', 'rotate(0deg)');
-				}
-			});
-			// -----end single course layout-3 showmore/showless------
-
-
-			// -----start single course layout-3 sticky price bar------
-			$(window).on('scroll', function () {
-				const pricebox = $('.ohmylms-single-course-layout3 .ohmylms-sidebar .ohmylms-widget-pricebox');
-				const continueLearnBtn = $('.ohmylms-single-course-layout3 .ohmylms-widget-continue-learn');
-				const stickyTarget = $('.ohmylms-single-course-layout3 .ohmylms-sticky-price');
-
-				// Check if pricebox is above the viewport
-				if (pricebox.length && stickyTarget.length ) {
-					const priceboxBottom = pricebox.offset().top + pricebox.outerHeight();
-					const scrollTop = $(window).scrollTop();
-
-					if ( scrollTop > priceboxBottom ) {
-						stickyTarget.addClass('is-stuck');
-						$('body').addClass('ohmylms-has-sticky-pricebar');
-					} else {
-						stickyTarget.removeClass('is-stuck');
-						$('body').removeClass('ohmylms-has-sticky-pricebar');
-					}
-				}
-
-				if ( continueLearnBtn.length && stickyTarget.length ) {
-					const continueLearnBtnBottom = continueLearnBtn.offset().top + continueLearnBtn.outerHeight();
-					const scrollTop = $(window).scrollTop();
-
-					if (scrollTop > continueLearnBtnBottom) {
-						stickyTarget.addClass('is-stuck');
-						$('body').addClass('ohmylms-has-sticky-pricebar');
-					} else {
-						stickyTarget.removeClass('is-stuck');
-						$('body').removeClass('ohmylms-has-sticky-pricebar');
-					}
-				}
-			});
-			// -----end single course layout-3 sticky price bar------
 
 
 			// -----start scroll to top------

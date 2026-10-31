@@ -115,7 +115,8 @@ function AnswerSpace( { item } ) {
 }
 
 /**
- * The printed form of one question, shared by the editor's paper canvas and the print page.
+ * The printed form of one question on the editor's paper canvas. OhMyLMS\Exams\PaperRenderer prints the
+ * same markup on the print page and in the learner's Paper View.
  *
  * @param {Object}  props             Properties.
  * @param {Object}  props.question    Editor question: settings and options.

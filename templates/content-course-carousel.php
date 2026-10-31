@@ -40,6 +40,7 @@ global $category;
 
 		echo '<div class="ohmylms-course-carousel-single">';
 			echo '<h3 class="course-carousel-title">' . esc_html( $row['row_heading'] ) . '</h3>';
+			\OhMyLMS\Design\Carousel::label( $row['row_heading'] );
 
 		if ( 'all' === $row['row_display_criteria'] ) {
 			$args = array(
@@ -92,6 +93,7 @@ global $category;
 			}
 		}
 
+		\OhMyLMS\Design\Carousel::label( '' );
 		echo '</div>';
 	}
 	?>

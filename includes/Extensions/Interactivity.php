@@ -38,6 +38,7 @@ final class Interactivity {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register' ), 5 );
 		add_filter( 'script_loader_src', array( __CLASS__, 'legacy_url' ), 30 );
 		add_filter( 'ohmylms_template_html', array( __CLASS__, 'disclosures' ), 10, 2 );
+		Commerce::init();
 	}
 
 	/**
@@ -53,6 +54,11 @@ final class Interactivity {
 			'tabs'          => 'tabs',
 			'curriculum'    => 'curriculum',
 			'bundles'       => 'bundles',
+			'cart'          => 'cart',
+			'checkout'      => 'checkout',
+			'stripe'        => 'stripe',
+			'carousel'      => 'carousel',
+			'paper'         => 'paper',
 		) as $id => $file ) {
 			$path         = 'assets/interactivity/' . $file . '.js';
 			$dependencies = apply_filters(
@@ -64,7 +70,8 @@ final class Interactivity {
 							'id'     => '@wordpress/interactivity-router',
 							'import' => 'dynamic',
 						),
-					) : array()
+					) : array(),
+					'stripe' === $id ? array( 'ohmylms/checkout' ) : array()
 				),
 				'ohmylms/' . $id
 			);
@@ -101,16 +108,24 @@ final class Interactivity {
 		}
 	}
 
-	/** Keep original compiled assets as provenance; execute the maintained frontend source.
+	/** Point code that still registers the removed compiled copies at the authored learner scripts.
 	 *
 	 * @param mixed $url Url.
 	 */
 	public static function legacy_url( $url ) {
 		$base = plugins_url( '/', OHMYLMS_FILE );
-		$path = strtok( substr( $url, strlen( $base ) ), '?' );
-		if ( strpos( $url, $base ) === 0 && in_array( $path, array( 'assets/dist/frontend/ohmylms.js', 'build/assets/dist/frontend/ohmylms.js' ), true ) ) {
-			$file = 'assets/src/frontend/js/ohmylms.js';
-			return $base . $file . '?ver=' . filemtime( OHMYLMS_DIR . '/' . $file );
+		if ( strpos( $url, $base ) !== 0 ) {
+			return $url;
+		}
+		$path    = preg_replace( '#^build/#', '', (string) strtok( substr( $url, strlen( $base ) ), '?' ) );
+		$removed = array(
+			'assets/dist/frontend/ohmylms.js'      => 'ohmylms-frontend',
+			'assets/dist/frontend/video-player.js' => 'ohmylms-video-player',
+			'assets/dist/frontend/video-progress-tracker.js' => 'ohmylms-video-progress-tracker',
+		);
+		if ( isset( $removed[ $path ] ) ) {
+			$handle = $removed[ $path ];
+			return $base . \OhMyLMS\Assets\FrontendAssets::LEARNER_SCRIPTS[ $handle ] . '?ver=' . \OhMyLMS\Assets\FrontendAssets::learner_script_version( $handle );
 		}
 		return $url;
 	}

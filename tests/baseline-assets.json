@@ -299,14 +299,6 @@
     "bytes": 2652,
     "sha256": "ce5269ebf38cd1c3b7b79bd2640f874a720393b0a2402b5ff4bd7652763fdfd5"
   },
-  "assets/dist/frontend/add-to-cart.js": {
-    "bytes": 1724,
-    "sha256": "e5c987be101fdf69144f8fb9eac7d9cc9a2a98fd89a091f2391f75c4a429fd83"
-  },
-  "assets/dist/frontend/checkout.js": {
-    "bytes": 10763,
-    "sha256": "7e6aa7f242dbefec179a8eb89acf00b5769b37140a52dd773da6444086343aed"
-  },
   "assets/dist/frontend/ohmylms.js": {
     "bytes": 120924,
     "sha256": "da69e1e34068c03ad5e94354e9e26ad83a9c31f887c5192fdb11321032b5a630"
@@ -314,14 +306,6 @@
   "assets/dist/frontend/slick.js": {
     "bytes": 43180,
     "sha256": "e3cfb35fcca18d5419794bbc73c962228086dc80bbee8d6e7ee05bf45051ac05"
-  },
-  "assets/dist/frontend/stripe.js": {
-    "bytes": 8828,
-    "sha256": "6c1851ed9aa2cc4627c0b62a8bbf7b054c639737bfdbd5a8a389509bd39219f3"
-  },
-  "assets/dist/frontend/tax-calculation.js": {
-    "bytes": 2371,
-    "sha256": "76ec97c8f9130b96ea4d502df99a8bd0c5db4eb81ee4937e25f90399db65f0a5"
   },
   "assets/dist/frontend/video-player.js": {
     "bytes": 42824,
@@ -691,14 +675,6 @@
     "bytes": 73164,
     "sha256": "9bd694a723405aeeb67696d5494d110c8de0f4029a40b7fb6bf47cb6235a0a6a"
   },
-  "assets/src/frontend/js/add-to-cart.js": {
-    "bytes": 2989,
-    "sha256": "376a73dc24e67a8f27117c7239a9ceda5cc47e567fceba3b86e0857a71b88e94"
-  },
-  "assets/src/frontend/js/checkout.js": {
-    "bytes": 17431,
-    "sha256": "0121f2a2cb5273a0cfa711046aa28145f23d2dc9797f0f4dbeccae2483dcc36a"
-  },
   "assets/src/frontend/js/ohmylms.js": {
     "bytes": 120924,
     "sha256": "da69e1e34068c03ad5e94354e9e26ad83a9c31f887c5192fdb11321032b5a630"
@@ -706,14 +682,6 @@
   "assets/src/frontend/js/slick.js": {
     "bytes": 89658,
     "sha256": "c5e0d965ba1eff75e5d1135da8369672d6e9ad7ef444ef527462d09ebf175328"
-  },
-  "assets/src/frontend/js/stripe.js": {
-    "bytes": 10392,
-    "sha256": "1ddae46b91b6f6f3956d33201612994277f3b5c9b8b9abe441206f02f9c548c2"
-  },
-  "assets/src/frontend/js/tax-calculation.js": {
-    "bytes": 6752,
-    "sha256": "07d470472b40b4c1806db59fe57f47c9149e79a86d62f4562a62cebd177a7939"
   },
   "assets/src/frontend/js/video-progress-tracker.js": {
     "bytes": 31764,
@@ -1114,9 +1082,5 @@
   "packages/e-commerce/assets/js/razorpay-checkout.js": {
     "bytes": 11758,
     "sha256": "f68c09516e19046f3ce50e300b501187a1bc04af21e08fa615fa0d250bca5b8f"
-  },
-  "packages/e-commerce/assets/js/stripe-intents.js": {
-    "bytes": 14125,
-    "sha256": "08603c9d62fd07d3a81b748a285583224914f7cf0b4ca186321945e6636ec25e"
   }
 }

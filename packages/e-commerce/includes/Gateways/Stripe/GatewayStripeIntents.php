@@ -286,11 +286,10 @@ class OhMyLMS_Gateway_Stripe_Intents extends PaymentGateway {
 		?>
 
 		<div id="stripe-payment-element-wrapper">
-			<p>Loading payment form...</p>
-			<div id="payment-element" data-email="<?php echo esc_attr( $user_email ); ?>" data-currency="<?php echo esc_attr( strtolower( function_exists( 'get_ohmylms_currency' ) ? get_ohmylms_currency() : 'usd' ) ); ?>"/>
+			<p><?php esc_html_e( 'Loading payment form...', 'ohmylms' ); ?></p>
+			<div id="payment-element" data-email="<?php echo esc_attr( $user_email ); ?>" data-currency="<?php echo esc_attr( strtolower( function_exists( 'get_ohmylms_currency' ) ? get_ohmylms_currency() : 'usd' ) ); ?>"></div>
 			<div id="card-element" style="display:none;"></div>
-			<div id="payment-message" class="hidden"></div>
-			<div id="stripe-error-message" role="alert" style="color: red;"></div>
+			<div id="payment-message" role="status" style="display:none;"></div>
 		</div>
 
 		<?php
@@ -300,60 +299,35 @@ class OhMyLMS_Gateway_Stripe_Intents extends PaymentGateway {
 	}
 
 	/**
-	 * Enqueue scripts and styles for the gateway on the frontend.
+	 * Load the `ohmylms/stripe` module on the checkout. It loads Stripe.js from js.stripe.com only
+	 * when the buyer selects Stripe, mounts the Payment Element and confirms any required action.
 	 *
-	 * This method registers and enqueues the Stripe.js V3 library and the custom
-	 * `stripe-intents.js` script which handles the Payment Element and AJAX communication.
-	 * It localizes parameters for the frontend script, including API keys, AJAX URLs, nonces,
-	 * and flags like `is_subscription`.
-	 *
-	 * @global $wp Global WordPress object, potentially used for order context (commented out).
 	 * @return void
 	 */
 	public function payment_scripts() {
-		if ( ! is_ohmylms_checkout() && ! is_ohmylms_order_received_page() ) {
+		if ( ! is_ohmylms_checkout() || is_ohmylms_order_received_page() || 'no' === $this->enabled || ! class_exists( '\OhMyLMS\Extensions\Interactivity' ) ) {
 			return;
 		}
 
-		if ( 'no' === $this->enabled ) {
-			return;
-		}
-
-		wp_register_script( 'stripe-v3', 'https://js.stripe.com/v3/', array(), null, true ); // Version is handled by Stripe.
-
-		// Determine JS file URL and version (assuming constants are defined in the main plugin).
-		$js_file_url = defined( 'OHMYLMS_URL' ) ? OHMYLMS_URL . '/packages/e-commerce/assets/js/stripe-intents.js' : plugins_url( '../../../../assets/js/stripe-intents.js', __FILE__ );
-		$js_version  = defined( 'OHMYLMS_VERSION' ) ? OHMYLMS_VERSION : time(); // Use time for cache busting during dev.
-
-		wp_register_script( 'ohmylms-stripe-intents', $js_file_url, array( 'jquery', 'stripe-v3' ), $js_version, true );
-
-		// Prepare parameters to pass to the frontend script.
-		$current_order_id = 0;
-
-		$is_subscription_purchase = false;
-		if ( $current_order_id && function_exists( 'ecommerce_order_contains_subscription' ) ) {
-			$is_subscription_purchase = ecommerce_order_contains_subscription( $current_order_id );
-		} elseif ( ! $current_order_id && function_exists( 'ecommerce_cart_contains_subscription' ) ) {
-			$is_subscription_purchase = ecommerce_cart_contains_subscription();
-		}
-
-		$stripe_params = array(
-			'publishableKey'        => $this->publishable_key,
-			'ajax_url'              => admin_url( 'admin-ajax.php' ),
-			'create_intent_nonce'   => wp_create_nonce( 'ohmylms_stripe_intents_create_intent_nonce' ),
-			'handle_success_nonce'  => wp_create_nonce( 'ohmylms_stripe_intents_handle_success_nonce' ),
-			'create_intent_action'  => 'ohmylms_stripe_intents_create_payment_intent',
-			'handle_success_action' => 'ohmylms_stripe_intents_handle_payment_success',
-			'order_id'              => $current_order_id, // Pass current order ID if available.
-			'currency'              => strtolower( function_exists( 'get_ohmylms_currency' ) ? get_ohmylms_currency() : 'usd' ),
-			'error_prefix'          => __( 'Payment error: ', 'ohmylms' ),
-			'return_url'            => $this->get_return_url(),
-			'is_subscription'       => $is_subscription_purchase,
-			'amount_in_cents'       => Helper::get_stripe_amount( ecommerce()->cart->get_total( 'edit' ) ),
+		\OhMyLMS\Extensions\Interactivity::enqueue( 'ohmylms/stripe' );
+		wp_interactivity_state(
+			'ohmylms/stripe',
+			array(
+				'publishableKey' => $this->publishable_key,
+				'currency'       => strtolower( function_exists( 'get_ohmylms_currency' ) ? get_ohmylms_currency() : 'usd' ),
+				'amount'         => (int) Helper::get_stripe_amount( ecommerce()->cart->get_total( 'edit' ) ),
+				'returnUrl'      => $this->get_return_url(),
+				'scriptUrl'      => 'https://js.stripe.com/v3/',
+				'messages'       => array(
+					'loadFailed'         => __( 'The payment form could not be loaded. Please refresh the page and try again.', 'ohmylms' ),
+					'unavailable'        => __( 'The payment form is not available.', 'ohmylms' ),
+					'processing'         => __( "Payment processing. We'll update you when payment is received.", 'ohmylms' ),
+					'failed'             => __( 'Payment failed. Please try another payment method.', 'ohmylms' ),
+					'payment_failed'     => __( 'Payment failed. Please try another payment method.', 'ohmylms' ),
+					'missing_return_url' => __( 'Payment succeeded but the order page could not be opened. Please check your orders.', 'ohmylms' ),
+				),
+			)
 		);
-
-		wp_localize_script( 'ohmylms-stripe-intents', 'ohmylms_stripe_intents_params', $stripe_params );
-		wp_enqueue_script( 'ohmylms-stripe-intents' );
 	}
 
 	/**

@@ -1,31 +1,18 @@
 .ohmylms-page {
 
-	.ohmylms-carousel-outer {
-		position: relative;
-	}
-
 	/*-----when layout style-4----*/
 	.grid-style4 {
 
 		.ohmylms-course-carousel-single .course-carousel-title {
 			margin: 0 0 39px;
-			padding-right: 140px;
+			padding-inline-end: 140px;
 		}
 
 		.ohmylms-course-cards {
 			display: flex;
-			overflow: hidden;
 			position: relative;
 
 			.course-card {
-				display: none;
-
-				@for $i from 1 through 4 {
-					&:nth-child(#{$i}) {
-						display: block;
-						flex: 1;
-					}
-				}
 
 				.course-info {
 					padding: 20px 20px 14px;
@@ -88,63 +75,20 @@
 					font-weight: var(--oml-weight-strong);
 				}
 			}
+		}
 
-			&.ohmylms-initialized {
-				overflow: visible;
+		.ohmylms-carousel-arrow {
+			width: 50px;
+			height: 50px;
+			top: -83px;
+			inset-inline-end: 0;
 
-				.course-card {
-					display: block;
-					flex: inherit;
-				}
+			&.ohmylms-carousel-prev {
+				inset-inline-end: 63px;
 			}
 
-			@extend %carousel-style; /*---extend from _course-grid-style3.scss---*/
-
-			.slick-arrow {
-				border: none;
-				outline: none;
+			&:hover {
 				box-shadow: var(--oml-shadow-sm);
-				width: 50px;
-				height: 50px;
-				background-color: var(--oml-surface);
-				border-radius: 100%;
-				padding: 0;
-				display: flex;
-				flex-flow: column;
-				align-items: center;
-				justify-content: center;
-				cursor: pointer;
-				transition: all 0.3s ease;
-				position: absolute;
-				top: -83px;
-				right: 0;
-				z-index: 2;
-				margin: 0;
-
-				&.slick-prev {
-					right: 63px;
-				}
-
-				&:hover {
-					background-color: var(
-						--ohmylms-primary-color,
-						var(--oml-primary)
-					);
-					box-shadow: var(--oml-shadow-sm);
-
-					path {
-						fill: var(--oml-surface);
-					}
-				}
-
-				svg {
-					display: block;
-					line-height: 1;
-
-					path {
-						transition: all 0.3s ease;
-					}
-				}
 			}
 		}
 	}
@@ -157,20 +101,20 @@
 		.ohmylms-course-carousel-single
 		.course-carousel-title {
 		margin: 0 0 27px;
-		padding-right: 120px;
+		padding-inline-end: 120px;
 	}
 
-	.ohmylms-page .grid-style4 .ohmylms-course-cards .slick-arrow {
+	.ohmylms-page .grid-style4 .ohmylms-carousel-arrow {
 		width: 44px;
 		height: 44px;
 		top: -66px;
 	}
 
-	.ohmylms-page .grid-style4 .ohmylms-course-cards .slick-arrow.slick-prev {
-		right: 54px;
+	.ohmylms-page .grid-style4 .ohmylms-carousel-arrow.ohmylms-carousel-prev {
+		inset-inline-end: 54px;
 	}
 
-	.ohmylms-page .grid-style4 .ohmylms-course-cards .slick-arrow svg {
+	.ohmylms-page .grid-style4 .ohmylms-carousel-arrow svg {
 		height: 16px;
 	}
 }
@@ -181,16 +125,16 @@
 		.grid-style4
 		.ohmylms-course-carousel-single
 		.course-carousel-title {
-		padding-right: 110px;
+		padding-inline-end: 110px;
 	}
 
-	.ohmylms-page .grid-style4 .ohmylms-course-cards .slick-arrow {
+	.ohmylms-page .grid-style4 .ohmylms-carousel-arrow {
 		width: 40px;
 		height: 40px;
 		top: -62px;
 	}
 
-	.ohmylms-page .grid-style4 .ohmylms-course-cards .slick-arrow svg {
+	.ohmylms-page .grid-style4 .ohmylms-carousel-arrow svg {
 		height: 14px;
 	}
 }
@@ -218,32 +162,24 @@
 		.grid-style4
 		.ohmylms-course-carousel-single
 		.course-carousel-title {
-		padding-right: 0;
+		padding-inline-end: 0;
 		margin: 0 0 20px;
 	}
 
-	.ohmylms-page .grid-style4 .ohmylms-course-cards .slick-arrow.slick-prev {
-		right: calc(50% + 25px);
+	.ohmylms-page .grid-style4 .ohmylms-carousel-arrow.ohmylms-carousel-prev {
+		inset-inline-end: calc(50% + 25px);
 		top: 100%;
 		transform: translateX(50%);
 	}
 
-	.ohmylms-page .grid-style4 .ohmylms-course-cards .slick-arrow.slick-next {
-		right: calc(50% - 25px);
+	.ohmylms-page .grid-style4 .ohmylms-carousel-arrow.ohmylms-carousel-next {
+		inset-inline-end: calc(50% - 25px);
 		top: 100%;
 		transform: translateX(50%);
 	}
 }
 
 @media screen and (max-width: 575px) {
-
-	.ohmylms-page .grid-style4 .ohmylms-course-cards .slick-list {
-		margin: 0 -var(--oml-space-2);
-	}
-
-	.ohmylms-page .grid-style4 .ohmylms-course-cards .slick-slide {
-		margin: 0 var(--oml-space-2);
-	}
 
 	.ohmylms-page
 		.grid-style4
@@ -258,15 +194,3 @@
 		height: calc(100% - 160px) !important;
 	}
 }
-
-/* @media screen and (max-width: 425px) {*/
-
-/*     .ohmylms-page .grid-style4 .ohmylms-course-carousel-single .course-carousel-title {*/
-
-/*         margin-left: auto;*/
-
-/*         margin-right: auto;*/
-
-/*     }*/
-
-/* }*/

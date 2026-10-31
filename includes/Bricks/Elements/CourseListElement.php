@@ -58,7 +58,7 @@ class CourseListElement extends \Bricks\Element {
 	 *
 	 * @var array
 	 */
-	public $scripts = array( 'ohmylms-frontend', 'ohmylms-add-to-cart', 'ohmylms-slick' );
+	public $scripts = array( 'ohmylms-frontend' );
 
 	/**
 	 * Element styles
@@ -1073,89 +1073,11 @@ class CourseListElement extends \Bricks\Element {
 	 */
 	public function enqueue_scripts() {
 		wp_enqueue_script( 'ohmylms-frontend' );
-		wp_enqueue_script( 'ohmylms-add-to-cart' );
 
 		wp_enqueue_style( 'ohmylms-frontend' );
 		wp_enqueue_style( 'ohmylms-general' );
-		wp_enqueue_script( 'ohmylms-slick' );
 
 		// Ensure CSS variables are available in Bricks builder.
 		$this->add_css_variables();
-
-		$layout       = isset( $this->settings['layout'] ) ? $this->settings['layout'] : 'grid';
-		$layout_style = isset( $this->settings['layout_style'] ) ? $this->settings['layout_style'] : 'grid-style1';
-
-		if ( 'grid' === $layout && ( 'grid-style3' === $layout_style || 'grid-style4' === $layout_style ) && isset( $_GET['bricks'] ) && 'run' === $_GET['bricks'] ) {
-			$columns       = isset( $this->settings['columns'] ) ? (int) $this->settings['columns'] : 4;
-			$inline_script = "
-			jQuery(document).ready(function($) {
-				function initSlickCarousel() {
-					if (typeof $.fn.slick !== 'undefined') {
-						$('.ohmylms-course-cards-carousel').each(function(){
-							if (!$(this).hasClass('slick-initialized')) {
-								let colPerRow = $(this).data('col') || {$columns};
-								$(this).slick({
-									infinite: false,
-									slidesToShow: colPerRow,
-									slidesToScroll: 1,
-									prevArrow: '<button class=\"slick-prev\" aria-label=\"Previous\" type=\"button\"><svg width=\"9\" height=\"18\" fill=\"none\" viewBox=\"0 0 9 18\" xmlns=\"http://www.w3.org/2000/svg\"><path fill=\"#A1A1AA\" d=\"M1.655 6.526L7.01 1.171a1.167 1.167 0 111.645 1.657L3.288 8.171a1.167 1.167 0 000 1.657l5.367 5.343a1.167 1.167 0 11-1.645 1.657l-5.355-5.355a3.5 3.5 0 010-4.947z\"/></svg></button>',
-									nextArrow: '<button class=\"slick-next\" aria-label=\"Next\" type=\"button\"><svg width=\"9\" height=\"18\" fill=\"none\" viewBox=\"0 0 9 18\" xmlns=\"http://www.w3.org/2000/svg\"><path fill=\"#A1A1AA\" d=\"M7.345 6.526L1.99 1.171A1.167 1.167 0 10.345 2.828l5.367 5.343a1.167 1.167 0 010 1.657L.345 15.171a1.167 1.167 0 101.645 1.657l5.355-5.355a3.5 3.5 0 000-4.947z\"/></svg></button>',
-									responsive: [
-										{
-											breakpoint: 1200,
-											settings: {
-												slidesToShow: colPerRow < 3 ? colPerRow : 3,
-											}
-										},
-										{
-											breakpoint: 768,
-											settings: {
-												slidesToShow: colPerRow < 2 ? colPerRow : 2,
-											}
-										},
-										{
-											breakpoint: 576,
-											settings: {
-												slidesToShow: 1,
-											}
-										}
-									]
-								}).addClass('ohmylms-initialized').css('display', 'block');
-							}
-						});
-					} else {
-						setTimeout(initSlickCarousel, 100);
-					}
-				}
-				
-				initSlickCarousel();
-				
-				if (window.wp && window.wp.data) {
-					let timeoutId;
-					window.wp.data.subscribe(function() {
-						clearTimeout(timeoutId);
-						timeoutId = setTimeout(initSlickCarousel, 500);
-					});
-				}
-				
-				var observer = new MutationObserver(function(mutations) {
-					mutations.forEach(function(mutation) {
-						if (mutation.type === 'childList') {
-							var addedNodes = $(mutation.addedNodes);
-							if (addedNodes.find('.ohmylms-course-cards-carousel').length || addedNodes.hasClass('ohmylms-course-cards-carousel')) {
-								setTimeout(initSlickCarousel, 300);
-							}
-						}
-					});
-				});
-				
-				observer.observe(document.body, {
-					childList: true,
-					subtree: true
-				});
-			});
-			";
-			wp_add_inline_script( 'ohmylms-slick', $inline_script );
-		}
 	}
 }

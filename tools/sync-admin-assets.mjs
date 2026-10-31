@@ -51,8 +51,6 @@ for ( const entry of [
 	'interactive-activity-block',
 	'interactive-activity-view',
 	'native-lesson-editor',
-	'paper-print',
-	'paper-student',
 	'math-runtime',
 ] ) {
 	for ( const suffix of [ '.js', '.js.map', '.asset.php' ] ) {

@@ -8,14 +8,14 @@
 	{
 		"name": "catalog",
 		"path": "assets/css/frontend/catalog.css",
-		"bytes": 56013,
-		"version": "1a384c59f178"
+		"bytes": 54773,
+		"version": "4fb6c3c9c099"
 	},
 	{
 		"name": "course",
 		"path": "assets/css/frontend/course.css",
-		"bytes": 121434,
-		"version": "67a01c3949d4"
+		"bytes": 120999,
+		"version": "55e358794a3a"
 	},
 	{
 		"name": "lesson",
@@ -50,7 +50,7 @@
 	{
 		"name": "rtl",
 		"path": "assets/css/frontend/rtl.css",
-		"bytes": 1209,
-		"version": "df811556d631"
+		"bytes": 1124,
+		"version": "99c7edf8c688"
 	}
 ]

@@ -47,7 +47,7 @@ class CheckoutElement extends Element {
 	 *
 	 * @var array
 	 */
-	public $scripts = array( 'ohmylms-frontend', 'ohmylms-checkout', 'ohmylms-tax-calculation' );
+	public $scripts = array( 'ohmylms-frontend' );
 
 	/**
 	 * Element styles
@@ -627,61 +627,11 @@ class CheckoutElement extends Element {
 	 * Enqueue scripts for Checkout element.
 	 */
 	public function enqueue_scripts() {
-		wp_enqueue_script( 'ohmylms-checkout' );
-		wp_enqueue_script( 'ohmylms-tax-calculation' );
+		// The checkout template loads ohmylms/checkout and renders filled fields folded (OhMyLMS\Extensions\Commerce).
 		wp_enqueue_script( 'ohmylms-frontend' );
 
 		wp_enqueue_style( 'ohmylms-frontend' );
 		wp_enqueue_style( 'ohmylms-general' );
-		$is_bricks_edit_mode = false;
-		if ( ( function_exists( 'bricks_is_builder' ) && bricks_is_builder() ) ||
-			( function_exists( 'bricks_is_builder_main' ) && bricks_is_builder_main() ) ||
-			( function_exists( 'bricks_is_rest_call' ) && bricks_is_rest_call() )
-		) {
-			$is_bricks_edit_mode = true;
-		}
-
-		// Only add the inline script in edit mode.
-		if ( ! $is_bricks_edit_mode ) {
-			return;
-		}
-
-		$inline_script = "
-			jQuery(document).ready(function($) {
-				function checkInputValues() {
-					$('.ohmylms-input-text').each(function (index) {
-						var row = $(this).parents('.ohmylms-form-row');
-						var inputValue = $(this).val();
-
-						// Check if the input has a value
-						if (inputValue && inputValue.trim() !== '') {
-							row.addClass('ohmylms-folded');
-						} else {
-							row.removeClass('ohmylms-folded');
-						}
-					});
-				}
-				
-				// Run immediately
-				checkInputValues();
-				
-				// Also run after a short delay to catch dynamically loaded content
-				setTimeout(checkInputValues, 500);
-				
-				// Bind to input changes
-				$(document).on('input change', '.ohmylms-input-text', function() {
-					var row = $(this).parents('.ohmylms-form-row');
-					var inputValue = $(this).val();
-					
-					if (inputValue && inputValue.trim() !== '') {
-						row.addClass('ohmylms-folded');
-					} else {
-						row.removeClass('ohmylms-folded');
-					}
-				});
-			});
-		";
-		wp_add_inline_script( 'ohmylms-frontend', $inline_script );
 	}
 
 	/**

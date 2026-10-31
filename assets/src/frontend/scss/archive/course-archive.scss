@@ -127,8 +127,6 @@
 }
 
 /*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
-@import "slick.min";
-/*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import "course-filter";
 /*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import "course-category-type-button";
@@ -142,6 +140,8 @@
 @import "course-grid-style3";
 /*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import "course-grid-style4";
+/*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
+@import "course-carousel";
 /*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/
 @import "course-loadmore";
 /*stylelint-disable-next-line no-invalid-position-at-import-rule -- Sass expands this partial here; moving it changes the cascade.*/

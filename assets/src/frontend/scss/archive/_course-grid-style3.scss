@@ -22,46 +22,13 @@
 	}
 
 	/*-----when layout style-3----*/
-	%carousel-style {
-
-		.slick-list {
-			padding: 0 var(--oml-space-1);
-			margin: 0 -var(--oml-space-3);
-		}
-
-		.slick-track {
-			display: flex !important;
-			padding: 0 0 20px;
-			margin-left: 0;
-		}
-
-		.slick-slide {
-			height: inherit !important;
-			margin: 0 var(--oml-space-3);
-
-			.course-card,
-			> div {
-				height: 100%;
-			}
-		}
-	}
-
 	.grid-style3 {
 
 		.ohmylms-course-cards {
 			display: flex;
-			overflow: hidden;
 			position: relative;
 
 			.course-card {
-				display: none;
-
-				@for $i from 1 through 4 {
-					&:nth-child(#{$i}) {
-						display: block;
-						flex: 1;
-					}
-				}
 
 				.course-info .ohmylms-loop-course-title {
 					margin: 0 0 11px;
@@ -89,15 +56,6 @@
 				}
 			}
 
-			&.ohmylms-initialized {
-				overflow: visible;
-
-				.course-card {
-					display: block;
-					flex: inherit;
-				}
-			}
-
 			.course-card .course-info .course-meta > li.total-enrolled-user {
 				display: none;
 			}
@@ -114,56 +72,17 @@
 				color: var(--oml-text);
 				font-weight: var(--oml-weight-regular);
 			}
+		}
 
-			@extend %carousel-style;
+		.ohmylms-carousel-arrow {
+			top: 58px;
 
-			.slick-arrow {
-				border: none;
-				outline: none;
-				box-shadow: var(--oml-shadow-sm);
-				width: 44px;
-				height: 44px;
-				background-color: var(--oml-surface);
-				border-radius: 100%;
-				padding: 0;
-				display: flex;
-				flex-flow: column;
-				align-items: center;
-				justify-content: center;
-				cursor: pointer;
-				transition: all 0.3s ease;
-				position: absolute;
-				top: 58px;
-				z-index: 2;
-				margin: 0;
+			&.ohmylms-carousel-prev {
+				inset-inline-start: -16px;
+			}
 
-				&.slick-prev {
-					left: -16px;
-				}
-
-				&.slick-next {
-					right: -16px;
-				}
-
-				&:hover {
-					background-color: var(
-						--ohmylms-primary-color,
-						var(--oml-primary)
-					);
-
-					path {
-						fill: var(--oml-surface);
-					}
-				}
-
-				svg {
-					display: block;
-					line-height: 1;
-
-					path {
-						transition: all 0.3s ease;
-					}
-				}
+			&.ohmylms-carousel-next {
+				inset-inline-end: -16px;
 			}
 		}
 	}
@@ -195,12 +114,12 @@
 		font-size: var(--oml-font-size-2xl);
 	}
 
-	.ohmylms-page .grid-style3 .ohmylms-course-cards .slick-arrow {
+	.ohmylms-page .grid-style3 .ohmylms-carousel-arrow {
 		width: 40px;
 		height: 40px;
 	}
 
-	.ohmylms-page .grid-style3 .ohmylms-course-cards .slick-arrow svg {
+	.ohmylms-page .grid-style3 .ohmylms-carousel-arrow svg {
 		height: 14px;
 	}
 }
@@ -218,20 +137,12 @@
 
 @media screen and (max-width: 575px) {
 
-	.ohmylms-page .grid-style3 .ohmylms-course-cards .slick-list {
-		margin: 0 -var(--oml-space-2);
+	.ohmylms-page .grid-style3 .ohmylms-carousel-arrow.ohmylms-carousel-prev {
+		inset-inline-start: -10px;
 	}
 
-	.ohmylms-page .grid-style3 .ohmylms-course-cards .slick-slide {
-		margin: 0 var(--oml-space-2);
-	}
-
-	.ohmylms-page .grid-style3 .ohmylms-course-cards .slick-arrow.slick-prev {
-		left: -10px;
-	}
-
-	.ohmylms-page .grid-style3 .ohmylms-course-cards .slick-arrow.slick-next {
-		right: -10px;
+	.ohmylms-page .grid-style3 .ohmylms-carousel-arrow.ohmylms-carousel-next {
+		inset-inline-end: -10px;
 	}
 
 	.ohmylms-page

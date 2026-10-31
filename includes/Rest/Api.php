@@ -114,6 +114,7 @@ class Api {
 			\OhMyLMS\Rest\V1\QuizReportsController::class,
 			\OhMyLMS\Rest\V1\CheckoutSettingsController::class,
 			\OhMyLMS\Rest\V1\PointPurchasesController::class,
+			\OhMyLMS\Rest\V1\CartController::class,
 			\OhMyLMS\Rest\V1\CohortsController::class,
 			\OhMyLMS\Rest\V1\AutomationsController::class,
 		);

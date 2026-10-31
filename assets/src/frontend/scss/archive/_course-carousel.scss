@@ -1,0 +1,190 @@
+/*-----scroll-snap course carousel (markup: includes/Design/Carousel.php, behaviour: assets/interactivity/carousel.js)----*/
+.ohmylms-carousel-outer {
+	position: relative;
+}
+
+.ohmylms-course-cards.ohmylms-course-cards-carousel {
+	--ohmylms-carousel-per-view: var(--ohmylms-carousel-slides, var(--per-row, 4));
+	--ohmylms-carousel-gap: calc(2 * var(--oml-space-3));
+	display: flex;
+	flex-wrap: nowrap;
+	gap: var(--ohmylms-carousel-gap);
+	overflow-x: auto;
+	overflow-y: hidden;
+	overscroll-behavior-x: contain;
+	scroll-snap-type: x mandatory;
+	scroll-padding-inline: var(--oml-space-1);
+	scroll-behavior: smooth;
+	padding: var(--oml-space-1) var(--oml-space-1) 20px;
+	position: relative;
+
+	> * {
+		--ohmylms-carousel-gaps: calc((var(--ohmylms-carousel-per-view) - 1) * var(--ohmylms-carousel-gap));
+		flex: 0 0 calc((100% - var(--ohmylms-carousel-gaps)) / var(--ohmylms-carousel-per-view));
+		min-width: 0;
+		scroll-snap-align: start;
+	}
+
+	> .course-card {
+		display: block;
+		height: auto;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--ohmylms-primary-color, var(--oml-primary));
+		outline-offset: 2px;
+	}
+}
+
+.ohmylms-carousel.is-enhanced > .ohmylms-course-cards-carousel {
+	scrollbar-width: none;
+
+	&::-webkit-scrollbar {
+		display: none;
+	}
+}
+
+.ohmylms-carousel-arrow {
+	border: none;
+	outline: none;
+	box-shadow: var(--oml-shadow-sm);
+	width: 44px;
+	height: 44px;
+	background-color: var(--oml-surface);
+	border-radius: 100%;
+	padding: 0;
+	display: flex;
+	flex-flow: column;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	position: absolute;
+	z-index: 2;
+	margin: 0;
+
+	&:hover {
+		background-color: var(--ohmylms-primary-color, var(--oml-primary));
+
+		path {
+			fill: var(--oml-surface);
+		}
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--ohmylms-primary-color, var(--oml-primary));
+		outline-offset: 2px;
+	}
+
+	&[aria-disabled="true"] {
+		opacity: 0.4;
+		cursor: default;
+	}
+
+	svg {
+		display: block;
+		line-height: 1;
+
+		path {
+			transition: all 0.3s ease;
+		}
+	}
+}
+
+.ohmylms-carousel-controls {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--oml-space-2);
+	margin-top: var(--oml-space-2);
+}
+
+.ohmylms-carousel-dots {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: var(--oml-space-2);
+}
+
+.ohmylms-carousel-dot,
+.ohmylms-carousel-play {
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	&:focus-visible {
+		outline: 2px solid var(--ohmylms-primary-color, var(--oml-primary));
+		outline-offset: 2px;
+	}
+}
+
+.ohmylms-carousel-dot::before {
+	content: "";
+	width: 10px;
+	height: 10px;
+	border-radius: 100%;
+	background-color: var(--oml-border);
+}
+
+.ohmylms-carousel-dot[aria-current="true"]::before {
+	background-color: var(--ohmylms-primary-color, var(--oml-primary));
+}
+
+.ohmylms-carousel-play-icon {
+	width: 10px;
+	height: 12px;
+	border-inline: 3px solid var(--oml-heading);
+}
+
+.ohmylms-carousel-play.is-paused .ohmylms-carousel-play-icon {
+	border-inline-end: 0;
+	border-inline-start: 10px solid var(--oml-heading);
+	border-block: 6px solid transparent;
+	height: 0;
+}
+
+.ohmylms-carousel-arrow[hidden],
+.ohmylms-carousel-dots[hidden],
+.ohmylms-carousel-play[hidden] {
+	display: none;
+}
+
+@media screen and (max-width: 1199px) {
+
+	.ohmylms-course-cards.ohmylms-course-cards-carousel {
+		--ohmylms-carousel-per-view: var(--ohmylms-carousel-slides-lg, min(var(--per-row, 4), 3));
+	}
+}
+
+@media screen and (max-width: 767px) {
+
+	.ohmylms-course-cards.ohmylms-course-cards-carousel {
+		--ohmylms-carousel-per-view: var(--ohmylms-carousel-slides-md, min(var(--per-row, 4), 2));
+	}
+}
+
+@media screen and (max-width: 575px) {
+
+	.ohmylms-course-cards.ohmylms-course-cards-carousel {
+		--ohmylms-carousel-per-view: var(--ohmylms-carousel-slides-sm, 1);
+		--ohmylms-carousel-gap: calc(2 * var(--oml-space-2));
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	.ohmylms-course-cards.ohmylms-course-cards-carousel {
+		scroll-behavior: auto;
+	}
+
+	.ohmylms-carousel-arrow,
+	.ohmylms-carousel-arrow svg path {
+		transition: none;
+	}
+}

@@ -1,14 +1,16 @@
 .rtl.ohmylms-page {
 
 	/*---start course list page---*/
-	.grid-style4 .ohmylms-course-cards .slick-arrow.slick-next svg,
-	.grid-style3 .ohmylms-course-cards .slick-arrow.slick-next svg {
-		transform: rotate(-180deg);
+	.ohmylms-carousel-arrow svg {
+		transform: rotate(180deg);
 	}
 
-	.grid-style4 .ohmylms-course-cards .slick-arrow.slick-prev svg,
-	.grid-style3 .ohmylms-course-cards .slick-arrow.slick-prev svg {
-		transform: rotate(180deg);
+	@media screen and (max-width: 767px) {
+
+		.grid-style4 .ohmylms-carousel-arrow.ohmylms-carousel-prev,
+		.grid-style4 .ohmylms-carousel-arrow.ohmylms-carousel-next {
+			transform: translateX(-50%);
+		}
 	}
 
 	.ohmylms-course-card-popup::before {

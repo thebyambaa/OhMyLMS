@@ -135,21 +135,12 @@ class BlocksManager {
 		// Enqueue individual block scripts.
 		$this->enqueue_individual_block_scripts();
 
-		// Enqueue slick.js for carousel functionality in editor.
-		wp_enqueue_script(
-			'ohmylms-slick-editor',
-			OHMYLMS_URL . '/assets/dist/frontend/slick.js',
-			array( 'jquery' ),
-			'1.8.1',
-			true
-		);
-
-		// Enqueue frontend script for slick initialization in editor.
+		// Enqueue frontend script in editor.
 		wp_enqueue_script(
 			'ohmylms-frontend-editor',
-			OHMYLMS_URL . '/assets/dist/frontend/ohmylms.js',
-			array( 'jquery', 'ohmylms-slick-editor' ),
-			OHMYLMS_VERSION,
+			OHMYLMS_URL . '/' . \OhMyLMS\Assets\FrontendAssets::LEARNER_SCRIPTS['ohmylms-frontend'],
+			array( 'jquery' ),
+			\OhMyLMS\Assets\FrontendAssets::learner_script_version( 'ohmylms-frontend' ),
 			true
 		);
 		// The editor uses a separate handle, so the frontend print hook does not localize it.
@@ -197,7 +188,7 @@ class BlocksManager {
 		// Dashboard block.
 		wp_enqueue_script(
 			'ohmylms-dashboard-block',
-			OHMYLMS_URL . "/assets/blocks/js/dashboard{$suffix}.js",
+			OHMYLMS_URL . '/assets/blocks/js/dashboard.js',
 			array( 'wp-blocks', 'wp-element', 'wp-editor', 'wp-components', 'wp-i18n', 'wp-server-side-render' ),
 			OHMYLMS_VERSION,
 			true
@@ -206,7 +197,7 @@ class BlocksManager {
 		// Profile block.
 		wp_enqueue_script(
 			'ohmylms-profile-block',
-			OHMYLMS_URL . "/assets/blocks/js/profile{$suffix}.js",
+			OHMYLMS_URL . '/assets/blocks/js/profile.js',
 			array( 'wp-blocks', 'wp-element', 'wp-editor', 'wp-components', 'wp-i18n', 'wp-server-side-render' ),
 			OHMYLMS_VERSION,
 			true
@@ -284,15 +275,6 @@ class BlocksManager {
 			OHMYLMS_URL . '/assets/blocks/css/blocks-frontend.css',
 			array(),
 			OHMYLMS_VERSION
-		);
-
-		// Enqueue frontend script.
-		wp_enqueue_script(
-			'ohmylms-blocks-frontend',
-			OHMYLMS_URL . '/assets/blocks/js/blocks-frontend.js',
-			array( 'jquery' ),
-			OHMYLMS_VERSION,
-			true
 		);
 	}
 }

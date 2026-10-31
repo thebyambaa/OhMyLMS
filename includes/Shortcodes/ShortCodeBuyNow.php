@@ -120,14 +120,17 @@ class ShortCodeBuyNow {
 				$html_attributes .= sprintf( ' %s="%s"', esc_attr( $attr_key ), esc_attr( $attr_val ) );
 			}
 			$html_attributes .= sprintf( ' data-quantity="%s"', esc_attr( $defaults['quantity'] ) );
-			printf(
+
+			$button = sprintf(
 				'<a href="%s"%s class="%s" style="%s">%s</a>',
 				esc_url( $url ),
-				$html_attributes,
+				$html_attributes, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- each key and value is escaped above.
 				esc_attr( $default_class ),
 				esc_attr( $style ),
 				esc_html( $btn_text )
 			);
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above; Commerce only adds directive attributes.
+			echo \OhMyLMS\Extensions\Commerce::cart_buttons( $button );
 		}
 	}
 }

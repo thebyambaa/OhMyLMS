@@ -160,39 +160,71 @@ class Ajax {
 			wp_send_json_error( array( 'message' => __( 'Invalid request. Please refresh the page and try again.', 'ohmylms' ) ) );
 		}
 
-		if ( isset( $_POST['membership_id'] ) ) {
-			self::handle_membership_add_to_cart();
-		}
 		// phpcs:disable WordPress.Security.NonceVerification.Missing
+		$quantity = empty( $_POST['quantity'] ) ? 1 : absint( $_POST['quantity'] );
+		if ( isset( $_POST['membership_id'] ) ) {
+			$result = self::add_membership_to_cart( absint( $_POST['membership_id'] ), $quantity );
+			wp_send_json( $result['body'], $result['status'] );
+		}
 		if ( ! isset( $_POST['course_id'] ) ) {
 			return;
 		}
-		$course_id     = absint( $_POST['course_id'] ?? 0 );
-		$quantity      = empty( $_POST['quantity'] ) ? 1 : absint( $_POST['quantity'] );
+		$result = self::add_course_to_cart(
+			absint( $_POST['course_id'] ?? 0 ),
+			$quantity,
+			isset( $_POST['purchase_by'] ) ? ohmylms_clean( wp_unslash( $_POST['purchase_by'] ) ) : ''
+		);
+		// phpcs:enable
+		wp_send_json( $result['body'], $result['status'] );
+	}
+
+	/**
+	 * Cart answer shared by the AJAX action and `POST ohmylms-commerce/v1/cart/items`.
+	 *
+	 * @param array $body   Response body (`status`, `message`, `redirect_url`).
+	 * @param int   $status HTTP status.
+	 * @return array{status:int, body:array}
+	 */
+	private static function cart_answer( array $body, $status = 200 ): array {
+		return array(
+			'status' => $status,
+			'body'   => $body,
+		);
+	}
+
+	/**
+	 * Add a course to the cart. Callers verify their own nonce.
+	 *
+	 * @param int    $course_id   Course.
+	 * @param int    $quantity    Quantity.
+	 * @param string $purchase_by `point` for a bonus-points purchase.
+	 * @return array{status:int, body:array}
+	 */
+	public static function add_course_to_cart( $course_id, $quantity = 1, $purchase_by = '' ): array {
 		$course_status = get_post_status( $course_id );
 
 		$course = ohmylms_get_course( $course_id );
-		if ( ! $course->is_purchasable() ) {
-			$response = array(
-				'status'  => 'error',
-				'message' => __( 'Sorry! This course is not purchasable.', 'ohmylms' ),
+		if ( ! $course || ! $course->is_purchasable() ) {
+			return self::cart_answer(
+				array(
+					'status'  => 'error',
+					'message' => __( 'Sorry! This course is not purchasable.', 'ohmylms' ),
+				)
 			);
-
-			wp_send_json( $response );
 		}
 
 		if ( ! $course->is_in_stock() ) {
-			$response = array(
-				'status'  => 'error',
-				'message' => __( 'Sorry! The number of enrolled students has reached its limit.', 'ohmylms' ),
+			return self::cart_answer(
+				array(
+					'status'  => 'error',
+					'message' => __( 'Sorry! The number of enrolled students has reached its limit.', 'ohmylms' ),
+				)
 			);
-
-			wp_send_json( $response );
 		}
 
 		$checkout_url = ohmylms_get_checkout_url();
 		if ( ! $checkout_url ) {
-			wp_send_json(
+			return self::cart_answer(
 				array(
 					'status'  => 'error',
 					'message' => __( 'Enrollment is temporarily unavailable. Please contact the site administrator.', 'ohmylms' ),
@@ -204,20 +236,20 @@ class Ajax {
 		// Not logged in + guest checkout disabled → redirect to checkout which has its own login form.
 		if ( ! is_user_logged_in() && ! ohmylms_is_guest_purchase_enabled() ) {
 			// Store course in a short-lived cookie so it can be added to cart after login/verification.
-			setcookie( 'ohmylms_pending_course', (string) $course_id, time() + 3600, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), false );
-			wp_send_json(
+			if ( ! headers_sent() ) {
+				setcookie( 'ohmylms_pending_course', (string) $course_id, time() + 3600, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), false );
+			}
+			return self::cart_answer(
 				array(
 					'status'       => 'success',
 					'redirect_url' => $checkout_url,
 					'message'      => __( 'Please log in to complete your purchase.', 'ohmylms' ),
 				)
 			);
-			return;
 		}
 
 		$redirect_url = add_query_arg( 'nocache', time(), $checkout_url );
 		$cart_meta    = array();
-		$purchase_by  = isset( $_POST['purchase_by'] ) ? ohmylms_clean( wp_unslash( $_POST['purchase_by'] ) ) : '';
 
 		if ( 'point' === $purchase_by ) {
 			$cart_meta['purchase_by'] = 'point';
@@ -227,25 +259,21 @@ class Ajax {
 
 			do_action( 'ohmylms_ajax_added_to_cart', $course_id );
 
-			$response = array(
-				'status'       => 'success',
-				'redirect_url' => $redirect_url,
-				'message'      => __( 'Successfully added to cart.', 'ohmylms' ),
+			return self::cart_answer(
+				array(
+					'status'       => 'success',
+					'redirect_url' => $redirect_url,
+					'message'      => __( 'Successfully added to cart.', 'ohmylms' ),
+				)
 			);
+		}
 
-			wp_send_json( $response );
-
-		} else {
-
-			// If there was an error adding to the cart, redirect to the product page to show any errors.
-			$response = array(
+		return self::cart_answer(
+			array(
 				'status'  => 'error',
 				'message' => __( 'Add to cart failed.', 'ohmylms' ),
-			);
-
-			wp_send_json( $response );
-		}
-		// phpcs:enable
+			)
+		);
 	}
 
 
@@ -1160,61 +1188,63 @@ class Ajax {
 
 
 	/**
-	 * Handle membership add to cart for Ajax.
+	 * Add a membership plan to the cart. Callers verify their own nonce.
+	 *
+	 * @param int $membership_id Membership.
+	 * @param int $quantity      Quantity.
+	 * @return array{status:int, body:array}
 	 */
-	private static function handle_membership_add_to_cart(): void {
-		check_ajax_referer( 'add-to-cart', 'nonce' );
-		// Prevent caching of cart operations.
-		nocache_headers();
-
+	public static function add_membership_to_cart( $membership_id, $quantity = 1 ): array {
 		if ( ! ohmylms_is_pro() ) {
-			$response = array(
-				'status'  => 'error',
-				'message' => __( 'Sorry! This membership is only available in OhMyLMS.', 'ohmylms' ),
+			return self::cart_answer(
+				array(
+					'status'  => 'error',
+					'message' => __( 'Sorry! This membership is only available in OhMyLMS.', 'ohmylms' ),
+				)
 			);
-			wp_send_json( $response );
 		}
 
-		$membership_id     = absint( $_POST['membership_id'] ?? 0 );
-		$quantity          = empty( $_POST['quantity'] ) ? 1 : absint( $_POST['quantity'] );
 		$membership_status = get_post_status( $membership_id );
 		if ( \OhMyLMS\Membership\FreeSale::active( ohmylms_get_membership( $membership_id ) ) ) {
-			wp_send_json( array( 'status' => 'success', 'redirect_url' => \OhMyLMS\Student\Hub::url( 'membership', 'plans' ) ) );
+			return self::cart_answer(
+				array(
+					'status'       => 'success',
+					'redirect_url' => \OhMyLMS\Student\Hub::url( 'membership', 'plans' ),
+				)
+			);
 		}
 
 		$membership = ohmylms_get_membership( $membership_id );
 		if ( ! $membership || ! $membership->is_purchasable() ) {
-			$response = array(
-				'status'  => 'error',
-				'message' => __( 'Sorry! This membership is not purchasable.', 'ohmylms' ),
+			return self::cart_answer(
+				array(
+					'status'  => 'error',
+					'message' => __( 'Sorry! This membership is not purchasable.', 'ohmylms' ),
+				)
 			);
-
-			wp_send_json( $response );
 		}
 
 		if ( false !== ecommerce()->cart->add_to_cart( $membership_id, $quantity ) && 'publish' === $membership_status ) {
 			do_action( 'ohmylms_ajax_added_to_cart', $membership_id );
 
 			// Add cache-busting parameter to redirect URL.
-			$checkout_url                 = get_permalink( ohmylms_get_page_id( 'checkout' ) );
-			$redirect_url_with_cache_bust = add_query_arg( 'nocache', time(), $checkout_url );
+			$checkout_url = get_permalink( ohmylms_get_page_id( 'checkout' ) );
 
-			$response = array(
-				'status'       => 'success',
-				'redirect_url' => $redirect_url_with_cache_bust,
-				'message'      => __( 'Successfully added to cart.', 'ohmylms' ),
+			return self::cart_answer(
+				array(
+					'status'       => 'success',
+					'redirect_url' => add_query_arg( 'nocache', time(), $checkout_url ),
+					'message'      => __( 'Successfully added to cart.', 'ohmylms' ),
+				)
 			);
+		}
 
-			wp_send_json( $response );
-		} else {
-			// If there was an error adding to the cart, redirect to the product page to show any errors.
-			$response = array(
+		return self::cart_answer(
+			array(
 				'status'  => 'error',
 				'message' => __( 'Add to cart failed.', 'ohmylms' ),
-			);
-
-			wp_send_json( $response );
-		}
+			)
+		);
 	}
 
 

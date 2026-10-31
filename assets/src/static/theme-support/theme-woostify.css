@@ -20,19 +20,16 @@
     background-color: transparent;
 }
 
-.theme-woostify.ohmylms-page .grid-style4 .ohmylms-course-cards .slick-arrow:before,
-.theme-woostify.ohmylms-page .grid-style3 .ohmylms-course-cards .slick-arrow:before {
+.theme-woostify.ohmylms-page .grid-style4 .ohmylms-carousel-arrow:before,
+.theme-woostify.ohmylms-page .grid-style3 .ohmylms-carousel-arrow:before {
     display: none;
 }
 
-.theme-woostify.ohmylms-page .grid-style3 .ohmylms-course-cards .slick-arrow.slick-prev svg {
+.theme-woostify.ohmylms-page .grid-style3 .ohmylms-carousel-arrow.ohmylms-carousel-prev svg {
     position: relative;
     left: -2px;
 }
 
-.theme-woostify.ohmylms-page .grid-style4 .ohmylms-course-cards .slick-arrow.slick-prev {
-    left: inherit;
-}
 
 
 .theme-woostify.ohmylms-page .ohmylms-course-reviews-form #commentform #comment {

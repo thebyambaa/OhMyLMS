@@ -1,0 +1,4642 @@
+{
+	"settings": {
+		"lines_per_mark": 3
+	},
+	"cases": [
+		{
+			"name": "choice paper",
+			"question": {
+				"id": 31,
+				"settings": {
+					"type": "single-choice",
+					"score": {
+						"enabled": true,
+						"value": 2
+					}
+				},
+				"questions": [
+					{
+						"answer": "Venus",
+						"is_correct": 0,
+						"order_number": 1
+					},
+					{
+						"answer": "Mars",
+						"is_correct": 1,
+						"order_number": 2
+					},
+					{
+						"answer": "Jupiter",
+						"is_correct": 0,
+						"order_number": 3
+					},
+					{
+						"answer": "Mercury",
+						"is_correct": 0,
+						"order_number": 4
+					}
+				]
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "single-choice",
+				"prompt": "",
+				"marks": 2,
+				"layout": "choice",
+				"multiple": false,
+				"options": [
+					{
+						"letter": "A",
+						"text": "Venus",
+						"image": ""
+					},
+					{
+						"letter": "B",
+						"text": "Mars",
+						"image": ""
+					},
+					{
+						"letter": "C",
+						"text": "Jupiter",
+						"image": ""
+					},
+					{
+						"letter": "D",
+						"text": "Mercury",
+						"image": ""
+					}
+				]
+			}
+		},
+		{
+			"name": "choice key",
+			"question": {
+				"id": 31,
+				"settings": {
+					"type": "single-choice",
+					"score": {
+						"enabled": true,
+						"value": 2
+					}
+				},
+				"questions": [
+					{
+						"answer": "Venus",
+						"is_correct": 0,
+						"order_number": 1
+					},
+					{
+						"answer": "Mars",
+						"is_correct": 1,
+						"order_number": 2
+					},
+					{
+						"answer": "Jupiter",
+						"is_correct": 0,
+						"order_number": 3
+					},
+					{
+						"answer": "Mercury",
+						"is_correct": 0,
+						"order_number": 4
+					}
+				]
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "single-choice",
+				"prompt": "",
+				"marks": 2,
+				"layout": "choice",
+				"multiple": false,
+				"options": [
+					{
+						"letter": "A",
+						"text": "Venus",
+						"image": "",
+						"correct": false
+					},
+					{
+						"letter": "B",
+						"text": "Mars",
+						"image": "",
+						"correct": true
+					},
+					{
+						"letter": "C",
+						"text": "Jupiter",
+						"image": "",
+						"correct": false
+					},
+					{
+						"letter": "D",
+						"text": "Mercury",
+						"image": "",
+						"correct": false
+					}
+				]
+			}
+		},
+		{
+			"name": "choice key-b",
+			"question": {
+				"id": 31,
+				"settings": {
+					"type": "single-choice",
+					"score": {
+						"enabled": true,
+						"value": 2
+					}
+				},
+				"questions": [
+					{
+						"answer": "Venus",
+						"is_correct": 0,
+						"order_number": 1
+					},
+					{
+						"answer": "Mars",
+						"is_correct": 1,
+						"order_number": 2
+					},
+					{
+						"answer": "Jupiter",
+						"is_correct": 0,
+						"order_number": 3
+					},
+					{
+						"answer": "Mercury",
+						"is_correct": 0,
+						"order_number": 4
+					}
+				]
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "single-choice",
+				"prompt": "",
+				"marks": 2,
+				"layout": "choice",
+				"multiple": false,
+				"options": [
+					{
+						"letter": "A",
+						"text": "Mars",
+						"image": "",
+						"correct": true
+					},
+					{
+						"letter": "B",
+						"text": "Mercury",
+						"image": "",
+						"correct": false
+					},
+					{
+						"letter": "C",
+						"text": "Jupiter",
+						"image": "",
+						"correct": false
+					},
+					{
+						"letter": "D",
+						"text": "Venus",
+						"image": "",
+						"correct": false
+					}
+				]
+			}
+		},
+		{
+			"name": "multiple paper",
+			"question": {
+				"id": 33,
+				"settings": {
+					"type": "multiple-choice",
+					"score": {
+						"enabled": true,
+						"value": 1
+					}
+				},
+				"questions": [
+					{
+						"answer": "Two",
+						"is_correct": 1,
+						"order_number": 1
+					},
+					{
+						"answer": "Three",
+						"is_correct": 0,
+						"order_number": 2
+					},
+					{
+						"answer": "Four",
+						"is_correct": 1,
+						"order_number": 3
+					}
+				]
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "multiple-choice",
+				"prompt": "",
+				"marks": 1,
+				"layout": "choice",
+				"multiple": true,
+				"options": [
+					{
+						"letter": "A",
+						"text": "Two",
+						"image": ""
+					},
+					{
+						"letter": "B",
+						"text": "Three",
+						"image": ""
+					},
+					{
+						"letter": "C",
+						"text": "Four",
+						"image": ""
+					}
+				]
+			}
+		},
+		{
+			"name": "multiple key",
+			"question": {
+				"id": 33,
+				"settings": {
+					"type": "multiple-choice",
+					"score": {
+						"enabled": true,
+						"value": 1
+					}
+				},
+				"questions": [
+					{
+						"answer": "Two",
+						"is_correct": 1,
+						"order_number": 1
+					},
+					{
+						"answer": "Three",
+						"is_correct": 0,
+						"order_number": 2
+					},
+					{
+						"answer": "Four",
+						"is_correct": 1,
+						"order_number": 3
+					}
+				]
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "multiple-choice",
+				"prompt": "",
+				"marks": 1,
+				"layout": "choice",
+				"multiple": true,
+				"options": [
+					{
+						"letter": "A",
+						"text": "Two",
+						"image": "",
+						"correct": true
+					},
+					{
+						"letter": "B",
+						"text": "Three",
+						"image": "",
+						"correct": false
+					},
+					{
+						"letter": "C",
+						"text": "Four",
+						"image": "",
+						"correct": true
+					}
+				]
+			}
+		},
+		{
+			"name": "multiple key-b",
+			"question": {
+				"id": 33,
+				"settings": {
+					"type": "multiple-choice",
+					"score": {
+						"enabled": true,
+						"value": 1
+					}
+				},
+				"questions": [
+					{
+						"answer": "Two",
+						"is_correct": 1,
+						"order_number": 1
+					},
+					{
+						"answer": "Three",
+						"is_correct": 0,
+						"order_number": 2
+					},
+					{
+						"answer": "Four",
+						"is_correct": 1,
+						"order_number": 3
+					}
+				]
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "multiple-choice",
+				"prompt": "",
+				"marks": 1,
+				"layout": "choice",
+				"multiple": true,
+				"options": [
+					{
+						"letter": "A",
+						"text": "Three",
+						"image": "",
+						"correct": false
+					},
+					{
+						"letter": "B",
+						"text": "Four",
+						"image": "",
+						"correct": true
+					},
+					{
+						"letter": "C",
+						"text": "Two",
+						"image": "",
+						"correct": true
+					}
+				]
+			}
+		},
+		{
+			"name": "trueFalse paper",
+			"question": {
+				"id": 32,
+				"settings": {
+					"type": "true-false",
+					"score": {
+						"enabled": true,
+						"value": 1
+					}
+				},
+				"questions": [
+					{
+						"answer": "True",
+						"is_correct": 0,
+						"order_number": 1
+					},
+					{
+						"answer": "False",
+						"is_correct": 1,
+						"order_number": 2
+					}
+				]
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "true-false",
+				"prompt": "",
+				"marks": 1,
+				"layout": "choice",
+				"multiple": false,
+				"options": [
+					{
+						"letter": "A",
+						"text": "True",
+						"image": ""
+					},
+					{
+						"letter": "B",
+						"text": "False",
+						"image": ""
+					}
+				]
+			}
+		},
+		{
+			"name": "trueFalse key",
+			"question": {
+				"id": 32,
+				"settings": {
+					"type": "true-false",
+					"score": {
+						"enabled": true,
+						"value": 1
+					}
+				},
+				"questions": [
+					{
+						"answer": "True",
+						"is_correct": 0,
+						"order_number": 1
+					},
+					{
+						"answer": "False",
+						"is_correct": 1,
+						"order_number": 2
+					}
+				]
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "true-false",
+				"prompt": "",
+				"marks": 1,
+				"layout": "choice",
+				"multiple": false,
+				"options": [
+					{
+						"letter": "A",
+						"text": "True",
+						"image": "",
+						"correct": false
+					},
+					{
+						"letter": "B",
+						"text": "False",
+						"image": "",
+						"correct": true
+					}
+				]
+			}
+		},
+		{
+			"name": "trueFalse key-b",
+			"question": {
+				"id": 32,
+				"settings": {
+					"type": "true-false",
+					"score": {
+						"enabled": true,
+						"value": 1
+					}
+				},
+				"questions": [
+					{
+						"answer": "True",
+						"is_correct": 0,
+						"order_number": 1
+					},
+					{
+						"answer": "False",
+						"is_correct": 1,
+						"order_number": 2
+					}
+				]
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "true-false",
+				"prompt": "",
+				"marks": 1,
+				"layout": "choice",
+				"multiple": false,
+				"options": [
+					{
+						"letter": "A",
+						"text": "True",
+						"image": "",
+						"correct": false
+					},
+					{
+						"letter": "B",
+						"text": "False",
+						"image": "",
+						"correct": true
+					}
+				]
+			}
+		},
+		{
+			"name": "numerical paper",
+			"question": {
+				"id": 40,
+				"settings": {
+					"type": "numerical",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"unit": "cm",
+					"answer": [
+						"12.5"
+					],
+					"tolerance": 0.5
+				}
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "numerical",
+				"prompt": "",
+				"marks": 2,
+				"layout": "answer-line",
+				"unit": "cm"
+			}
+		},
+		{
+			"name": "numerical key",
+			"question": {
+				"id": 40,
+				"settings": {
+					"type": "numerical",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"unit": "cm",
+					"answer": [
+						"12.5"
+					],
+					"tolerance": 0.5
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "numerical",
+				"prompt": "",
+				"marks": 2,
+				"layout": "answer-line",
+				"unit": "cm",
+				"answers": [
+					"12.5 ± 0.5"
+				]
+			}
+		},
+		{
+			"name": "numerical key-b",
+			"question": {
+				"id": 40,
+				"settings": {
+					"type": "numerical",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"unit": "cm",
+					"answer": [
+						"12.5"
+					],
+					"tolerance": 0.5
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "numerical",
+				"prompt": "",
+				"marks": 2,
+				"layout": "answer-line",
+				"unit": "cm",
+				"answers": [
+					"12.5 ± 0.5"
+				]
+			}
+		},
+		{
+			"name": "shortText paper",
+			"question": {
+				"id": 41,
+				"settings": {
+					"type": "short-text",
+					"score": {
+						"enabled": true,
+						"value": 1
+					}
+				},
+				"questions": [
+					{
+						"answer": "Paris",
+						"order_number": 1
+					}
+				]
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "short-text",
+				"prompt": "",
+				"marks": 1,
+				"layout": "answer-line"
+			}
+		},
+		{
+			"name": "shortText key",
+			"question": {
+				"id": 41,
+				"settings": {
+					"type": "short-text",
+					"score": {
+						"enabled": true,
+						"value": 1
+					}
+				},
+				"questions": [
+					{
+						"answer": "Paris",
+						"order_number": 1
+					}
+				]
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "short-text",
+				"prompt": "",
+				"marks": 1,
+				"layout": "answer-line",
+				"answers": [
+					"Paris"
+				]
+			}
+		},
+		{
+			"name": "shortText key-b",
+			"question": {
+				"id": 41,
+				"settings": {
+					"type": "short-text",
+					"score": {
+						"enabled": true,
+						"value": 1
+					}
+				},
+				"questions": [
+					{
+						"answer": "Paris",
+						"order_number": 1
+					}
+				]
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "short-text",
+				"prompt": "",
+				"marks": 1,
+				"layout": "answer-line",
+				"answers": [
+					"Paris"
+				]
+			}
+		},
+		{
+			"name": "textEntry paper",
+			"question": {
+				"id": 42,
+				"settings": {
+					"type": "text-entry",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"accepted": [
+						"H2O",
+						"h2o"
+					]
+				}
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "text-entry",
+				"prompt": "",
+				"marks": 2,
+				"layout": "answer-line"
+			}
+		},
+		{
+			"name": "textEntry key",
+			"question": {
+				"id": 42,
+				"settings": {
+					"type": "text-entry",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"accepted": [
+						"H2O",
+						"h2o"
+					]
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "text-entry",
+				"prompt": "",
+				"marks": 2,
+				"layout": "answer-line",
+				"answers": [
+					"H2O",
+					"h2o"
+				]
+			}
+		},
+		{
+			"name": "textEntry key-b",
+			"question": {
+				"id": 42,
+				"settings": {
+					"type": "text-entry",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"accepted": [
+						"H2O",
+						"h2o"
+					]
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "text-entry",
+				"prompt": "",
+				"marks": 2,
+				"layout": "answer-line",
+				"answers": [
+					"H2O",
+					"h2o"
+				]
+			}
+		},
+		{
+			"name": "longText paper",
+			"question": {
+				"id": 43,
+				"settings": {
+					"type": "long-text",
+					"score": {
+						"enabled": true,
+						"value": 3
+					}
+				}
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "long-text",
+				"prompt": "",
+				"marks": 3,
+				"layout": "lines",
+				"lines": 9
+			}
+		},
+		{
+			"name": "longText key",
+			"question": {
+				"id": 43,
+				"settings": {
+					"type": "long-text",
+					"score": {
+						"enabled": true,
+						"value": 3
+					}
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "long-text",
+				"prompt": "",
+				"marks": 3,
+				"layout": "lines",
+				"lines": 9
+			}
+		},
+		{
+			"name": "longText key-b",
+			"question": {
+				"id": 43,
+				"settings": {
+					"type": "long-text",
+					"score": {
+						"enabled": true,
+						"value": 3
+					}
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "long-text",
+				"prompt": "",
+				"marks": 3,
+				"layout": "lines",
+				"lines": 9
+			}
+		},
+		{
+			"name": "structured paper",
+			"question": {
+				"id": 44,
+				"settings": {
+					"type": "structured",
+					"parts": [
+						{
+							"id": "p1",
+							"label": "(a)",
+							"prompt": "Work out 1 + 1.",
+							"kind": "numerical",
+							"marks": 2,
+							"answer": 2,
+							"unit": "kg"
+						},
+						{
+							"id": "p2",
+							"label": "b",
+							"prompt": "Explain.",
+							"kind": "written",
+							"marks": 3,
+							"rubric": "M1 method, A1 answer."
+						}
+					]
+				}
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "structured",
+				"prompt": "",
+				"marks": 5,
+				"layout": "parts",
+				"parts": [
+					{
+						"id": "p1",
+						"label": "a",
+						"prompt": "Work out 1 + 1.",
+						"marks": 2,
+						"layout": "answer-line",
+						"lines": 0,
+						"unit": "kg"
+					},
+					{
+						"id": "p2",
+						"label": "b",
+						"prompt": "Explain.",
+						"marks": 3,
+						"layout": "lines",
+						"lines": 9,
+						"unit": ""
+					}
+				]
+			}
+		},
+		{
+			"name": "structured key",
+			"question": {
+				"id": 44,
+				"settings": {
+					"type": "structured",
+					"parts": [
+						{
+							"id": "p1",
+							"label": "(a)",
+							"prompt": "Work out 1 + 1.",
+							"kind": "numerical",
+							"marks": 2,
+							"answer": 2,
+							"unit": "kg"
+						},
+						{
+							"id": "p2",
+							"label": "b",
+							"prompt": "Explain.",
+							"kind": "written",
+							"marks": 3,
+							"rubric": "M1 method, A1 answer."
+						}
+					]
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "structured",
+				"prompt": "",
+				"marks": 5,
+				"layout": "parts",
+				"parts": [
+					{
+						"id": "p1",
+						"label": "a",
+						"prompt": "Work out 1 + 1.",
+						"marks": 2,
+						"layout": "answer-line",
+						"lines": 0,
+						"unit": "kg",
+						"answers": [
+							"2"
+						],
+						"rubric": ""
+					},
+					{
+						"id": "p2",
+						"label": "b",
+						"prompt": "Explain.",
+						"marks": 3,
+						"layout": "lines",
+						"lines": 9,
+						"unit": "",
+						"answers": [],
+						"rubric": "M1 method, A1 answer."
+					}
+				]
+			}
+		},
+		{
+			"name": "structured key-b",
+			"question": {
+				"id": 44,
+				"settings": {
+					"type": "structured",
+					"parts": [
+						{
+							"id": "p1",
+							"label": "(a)",
+							"prompt": "Work out 1 + 1.",
+							"kind": "numerical",
+							"marks": 2,
+							"answer": 2,
+							"unit": "kg"
+						},
+						{
+							"id": "p2",
+							"label": "b",
+							"prompt": "Explain.",
+							"kind": "written",
+							"marks": 3,
+							"rubric": "M1 method, A1 answer."
+						}
+					]
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "structured",
+				"prompt": "",
+				"marks": 5,
+				"layout": "parts",
+				"parts": [
+					{
+						"id": "p1",
+						"label": "a",
+						"prompt": "Work out 1 + 1.",
+						"marks": 2,
+						"layout": "answer-line",
+						"lines": 0,
+						"unit": "kg",
+						"answers": [
+							"2"
+						],
+						"rubric": ""
+					},
+					{
+						"id": "p2",
+						"label": "b",
+						"prompt": "Explain.",
+						"marks": 3,
+						"layout": "lines",
+						"lines": 9,
+						"unit": "",
+						"answers": [],
+						"rubric": "M1 method, A1 answer."
+					}
+				]
+			}
+		},
+		{
+			"name": "statement paper",
+			"question": {
+				"id": 45,
+				"settings": {
+					"type": "statement"
+				}
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "statement",
+				"prompt": "",
+				"marks": 0,
+				"layout": "text"
+			}
+		},
+		{
+			"name": "statement key",
+			"question": {
+				"id": 45,
+				"settings": {
+					"type": "statement"
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "statement",
+				"prompt": "",
+				"marks": 0,
+				"layout": "text"
+			}
+		},
+		{
+			"name": "statement key-b",
+			"question": {
+				"id": 45,
+				"settings": {
+					"type": "statement"
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "statement",
+				"prompt": "",
+				"marks": 0,
+				"layout": "text"
+			}
+		},
+		{
+			"name": "blanks paper",
+			"question": {
+				"id": 46,
+				"settings": {
+					"type": "fill-in-the-blank",
+					"score": {
+						"enabled": true,
+						"value": 2
+					}
+				}
+			},
+			"prompt": "<p>The capital of {France} is {Paris}.</p>",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "fill-in-the-blank",
+				"prompt": "<p>The capital of __________ is __________.</p>",
+				"marks": 2,
+				"layout": "blanks"
+			}
+		},
+		{
+			"name": "blanks key",
+			"question": {
+				"id": 46,
+				"settings": {
+					"type": "fill-in-the-blank",
+					"score": {
+						"enabled": true,
+						"value": 2
+					}
+				}
+			},
+			"prompt": "<p>The capital of {France} is {Paris}.</p>",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "fill-in-the-blank",
+				"prompt": "<p>The capital of <span class=\"ohmylms-print-blank is-answered\">France</span> is <span class=\"ohmylms-print-blank is-answered\">Paris</span>.</p>",
+				"marks": 2,
+				"layout": "blanks",
+				"key": [
+					"France",
+					"Paris"
+				]
+			}
+		},
+		{
+			"name": "blanks key-b",
+			"question": {
+				"id": 46,
+				"settings": {
+					"type": "fill-in-the-blank",
+					"score": {
+						"enabled": true,
+						"value": 2
+					}
+				}
+			},
+			"prompt": "<p>The capital of {France} is {Paris}.</p>",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "fill-in-the-blank",
+				"prompt": "<p>The capital of <span class=\"ohmylms-print-blank is-answered\">France</span> is <span class=\"ohmylms-print-blank is-answered\">Paris</span>.</p>",
+				"marks": 2,
+				"layout": "blanks",
+				"key": [
+					"France",
+					"Paris"
+				]
+			}
+		},
+		{
+			"name": "unsupported paper",
+			"question": {
+				"id": 47,
+				"settings": {
+					"type": "graphing",
+					"score": {
+						"enabled": true,
+						"value": 4
+					}
+				}
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "graphing",
+				"prompt": "",
+				"marks": 4,
+				"layout": "unsupported"
+			}
+		},
+		{
+			"name": "unsupported key",
+			"question": {
+				"id": 47,
+				"settings": {
+					"type": "graphing",
+					"score": {
+						"enabled": true,
+						"value": 4
+					}
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "graphing",
+				"prompt": "",
+				"marks": 4,
+				"layout": "unsupported"
+			}
+		},
+		{
+			"name": "unsupported key-b",
+			"question": {
+				"id": 47,
+				"settings": {
+					"type": "graphing",
+					"score": {
+						"enabled": true,
+						"value": 4
+					}
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "graphing",
+				"prompt": "",
+				"marks": 4,
+				"layout": "unsupported"
+			}
+		},
+		{
+			"name": "matching paper",
+			"question": {
+				"id": 9,
+				"settings": {
+					"type": "matching",
+					"score": {
+						"enabled": true,
+						"value": 2
+					}
+				},
+				"questions": [
+					{
+						"answer": "France",
+						"order_number": 1,
+						"matching_data": {
+							"label": "Paris"
+						}
+					},
+					{
+						"answer": "Italy",
+						"order_number": 2,
+						"matching_data": {
+							"label": "Rome"
+						}
+					},
+					{
+						"answer": "Spain",
+						"order_number": 3,
+						"matching_data": {
+							"label": "Madrid"
+						}
+					}
+				]
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "matching",
+				"prompt": "",
+				"marks": 2,
+				"layout": "matching",
+				"left": [
+					{
+						"number": 1,
+						"text": "France",
+						"image": ""
+					},
+					{
+						"number": 2,
+						"text": "Italy",
+						"image": ""
+					},
+					{
+						"number": 3,
+						"text": "Spain",
+						"image": ""
+					}
+				],
+				"right": [
+					{
+						"letter": "A",
+						"text": "Madrid"
+					},
+					{
+						"letter": "B",
+						"text": "Rome"
+					},
+					{
+						"letter": "C",
+						"text": "Paris"
+					}
+				]
+			}
+		},
+		{
+			"name": "matching key",
+			"question": {
+				"id": 9,
+				"settings": {
+					"type": "matching",
+					"score": {
+						"enabled": true,
+						"value": 2
+					}
+				},
+				"questions": [
+					{
+						"answer": "France",
+						"order_number": 1,
+						"matching_data": {
+							"label": "Paris"
+						}
+					},
+					{
+						"answer": "Italy",
+						"order_number": 2,
+						"matching_data": {
+							"label": "Rome"
+						}
+					},
+					{
+						"answer": "Spain",
+						"order_number": 3,
+						"matching_data": {
+							"label": "Madrid"
+						}
+					}
+				]
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "matching",
+				"prompt": "",
+				"marks": 2,
+				"layout": "matching",
+				"left": [
+					{
+						"number": 1,
+						"text": "France",
+						"image": ""
+					},
+					{
+						"number": 2,
+						"text": "Italy",
+						"image": ""
+					},
+					{
+						"number": 3,
+						"text": "Spain",
+						"image": ""
+					}
+				],
+				"right": [
+					{
+						"letter": "A",
+						"text": "Madrid"
+					},
+					{
+						"letter": "B",
+						"text": "Rome"
+					},
+					{
+						"letter": "C",
+						"text": "Paris"
+					}
+				],
+				"key": [
+					"1 → C",
+					"2 → B",
+					"3 → A"
+				]
+			}
+		},
+		{
+			"name": "matching key-b",
+			"question": {
+				"id": 9,
+				"settings": {
+					"type": "matching",
+					"score": {
+						"enabled": true,
+						"value": 2
+					}
+				},
+				"questions": [
+					{
+						"answer": "France",
+						"order_number": 1,
+						"matching_data": {
+							"label": "Paris"
+						}
+					},
+					{
+						"answer": "Italy",
+						"order_number": 2,
+						"matching_data": {
+							"label": "Rome"
+						}
+					},
+					{
+						"answer": "Spain",
+						"order_number": 3,
+						"matching_data": {
+							"label": "Madrid"
+						}
+					}
+				]
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "matching",
+				"prompt": "",
+				"marks": 2,
+				"layout": "matching",
+				"left": [
+					{
+						"number": 1,
+						"text": "France",
+						"image": ""
+					},
+					{
+						"number": 2,
+						"text": "Italy",
+						"image": ""
+					},
+					{
+						"number": 3,
+						"text": "Spain",
+						"image": ""
+					}
+				],
+				"right": [
+					{
+						"letter": "A",
+						"text": "Rome"
+					},
+					{
+						"letter": "B",
+						"text": "Madrid"
+					},
+					{
+						"letter": "C",
+						"text": "Paris"
+					}
+				],
+				"key": [
+					"1 → C",
+					"2 → A",
+					"3 → B"
+				]
+			}
+		},
+		{
+			"name": "matchingPublic paper",
+			"question": {
+				"id": 9,
+				"public": true,
+				"settings": {
+					"type": "matching",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"match_right": [
+						"Rome",
+						"Madrid",
+						"Paris"
+					]
+				},
+				"questions": [
+					{
+						"answer": "France"
+					},
+					{
+						"answer": "Italy"
+					},
+					{
+						"answer": "Spain"
+					}
+				]
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "matching",
+				"prompt": "",
+				"marks": 2,
+				"layout": "matching",
+				"left": [
+					{
+						"number": 1,
+						"text": "France",
+						"image": ""
+					},
+					{
+						"number": 2,
+						"text": "Italy",
+						"image": ""
+					},
+					{
+						"number": 3,
+						"text": "Spain",
+						"image": ""
+					}
+				],
+				"right": [
+					{
+						"letter": "A",
+						"text": "Rome"
+					},
+					{
+						"letter": "B",
+						"text": "Madrid"
+					},
+					{
+						"letter": "C",
+						"text": "Paris"
+					}
+				]
+			}
+		},
+		{
+			"name": "matchingPublic key",
+			"question": {
+				"id": 9,
+				"public": true,
+				"settings": {
+					"type": "matching",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"match_right": [
+						"Rome",
+						"Madrid",
+						"Paris"
+					]
+				},
+				"questions": [
+					{
+						"answer": "France"
+					},
+					{
+						"answer": "Italy"
+					},
+					{
+						"answer": "Spain"
+					}
+				]
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "matching",
+				"prompt": "",
+				"marks": 2,
+				"layout": "matching",
+				"left": [
+					{
+						"number": 1,
+						"text": "France",
+						"image": ""
+					},
+					{
+						"number": 2,
+						"text": "Italy",
+						"image": ""
+					},
+					{
+						"number": 3,
+						"text": "Spain",
+						"image": ""
+					}
+				],
+				"right": [
+					{
+						"letter": "A",
+						"text": "Rome"
+					},
+					{
+						"letter": "B",
+						"text": "Madrid"
+					},
+					{
+						"letter": "C",
+						"text": "Paris"
+					}
+				]
+			}
+		},
+		{
+			"name": "matchingPublic key-b",
+			"question": {
+				"id": 9,
+				"public": true,
+				"settings": {
+					"type": "matching",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"match_right": [
+						"Rome",
+						"Madrid",
+						"Paris"
+					]
+				},
+				"questions": [
+					{
+						"answer": "France"
+					},
+					{
+						"answer": "Italy"
+					},
+					{
+						"answer": "Spain"
+					}
+				]
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "matching",
+				"prompt": "",
+				"marks": 2,
+				"layout": "matching",
+				"left": [
+					{
+						"number": 1,
+						"text": "France",
+						"image": ""
+					},
+					{
+						"number": 2,
+						"text": "Italy",
+						"image": ""
+					},
+					{
+						"number": 3,
+						"text": "Spain",
+						"image": ""
+					}
+				],
+				"right": [
+					{
+						"letter": "A",
+						"text": "Rome"
+					},
+					{
+						"letter": "B",
+						"text": "Madrid"
+					},
+					{
+						"letter": "C",
+						"text": "Paris"
+					}
+				]
+			}
+		},
+		{
+			"name": "reorder paper",
+			"question": {
+				"id": 5,
+				"settings": {
+					"type": "reorder",
+					"score": {
+						"enabled": true,
+						"value": 2
+					}
+				},
+				"questions": [
+					{
+						"answer": "egg",
+						"is_correct": 0,
+						"order_number": 1
+					},
+					{
+						"answer": "larva",
+						"is_correct": 0,
+						"order_number": 2
+					},
+					{
+						"answer": "pupa",
+						"is_correct": 0,
+						"order_number": 3
+					},
+					{
+						"answer": "butterfly",
+						"is_correct": 0,
+						"order_number": 4
+					}
+				]
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "reorder",
+				"prompt": "",
+				"marks": 2,
+				"layout": "reorder",
+				"items": [
+					{
+						"letter": "A",
+						"text": "pupa",
+						"image": ""
+					},
+					{
+						"letter": "B",
+						"text": "egg",
+						"image": ""
+					},
+					{
+						"letter": "C",
+						"text": "larva",
+						"image": ""
+					},
+					{
+						"letter": "D",
+						"text": "butterfly",
+						"image": ""
+					}
+				]
+			}
+		},
+		{
+			"name": "reorder key",
+			"question": {
+				"id": 5,
+				"settings": {
+					"type": "reorder",
+					"score": {
+						"enabled": true,
+						"value": 2
+					}
+				},
+				"questions": [
+					{
+						"answer": "egg",
+						"is_correct": 0,
+						"order_number": 1
+					},
+					{
+						"answer": "larva",
+						"is_correct": 0,
+						"order_number": 2
+					},
+					{
+						"answer": "pupa",
+						"is_correct": 0,
+						"order_number": 3
+					},
+					{
+						"answer": "butterfly",
+						"is_correct": 0,
+						"order_number": 4
+					}
+				]
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "reorder",
+				"prompt": "",
+				"marks": 2,
+				"layout": "reorder",
+				"items": [
+					{
+						"letter": "A",
+						"text": "pupa",
+						"image": ""
+					},
+					{
+						"letter": "B",
+						"text": "egg",
+						"image": ""
+					},
+					{
+						"letter": "C",
+						"text": "larva",
+						"image": ""
+					},
+					{
+						"letter": "D",
+						"text": "butterfly",
+						"image": ""
+					}
+				],
+				"key": [
+					"B, C, A, D"
+				]
+			}
+		},
+		{
+			"name": "reorder key-b",
+			"question": {
+				"id": 5,
+				"settings": {
+					"type": "reorder",
+					"score": {
+						"enabled": true,
+						"value": 2
+					}
+				},
+				"questions": [
+					{
+						"answer": "egg",
+						"is_correct": 0,
+						"order_number": 1
+					},
+					{
+						"answer": "larva",
+						"is_correct": 0,
+						"order_number": 2
+					},
+					{
+						"answer": "pupa",
+						"is_correct": 0,
+						"order_number": 3
+					},
+					{
+						"answer": "butterfly",
+						"is_correct": 0,
+						"order_number": 4
+					}
+				]
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "reorder",
+				"prompt": "",
+				"marks": 2,
+				"layout": "reorder",
+				"items": [
+					{
+						"letter": "A",
+						"text": "larva",
+						"image": ""
+					},
+					{
+						"letter": "B",
+						"text": "pupa",
+						"image": ""
+					},
+					{
+						"letter": "C",
+						"text": "egg",
+						"image": ""
+					},
+					{
+						"letter": "D",
+						"text": "butterfly",
+						"image": ""
+					}
+				],
+				"key": [
+					"C, A, B, D"
+				]
+			}
+		},
+		{
+			"name": "dropdown paper",
+			"question": {
+				"id": 3,
+				"settings": {
+					"type": "dropdown-blanks",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"text": "Water boils at {1} degrees and freezes at {2}.",
+					"slots": [
+						{
+							"id": "1",
+							"choices": [
+								"100",
+								"50",
+								"0"
+							],
+							"answer": "100"
+						},
+						{
+							"id": "2",
+							"choices": [
+								"0",
+								"32",
+								"-10"
+							],
+							"answers": [
+								"0"
+							],
+							"multiple": true
+						}
+					]
+				}
+			},
+			"prompt": "<p>Water boils at {1} degrees and freezes at {2}.</p>",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "dropdown-blanks",
+				"prompt": "<p>Water boils at <span class=\"ohmylms-print-blank\">(1)</span> degrees and freezes at <span class=\"ohmylms-print-blank\">(2)</span>.</p>",
+				"marks": 2,
+				"layout": "dropdown",
+				"slots": [
+					{
+						"id": "1",
+						"number": 1,
+						"multiple": false,
+						"choices": [
+							"0",
+							"100",
+							"50"
+						]
+					},
+					{
+						"id": "2",
+						"number": 2,
+						"multiple": true,
+						"choices": [
+							"32",
+							"-10",
+							"0"
+						]
+					}
+				]
+			}
+		},
+		{
+			"name": "dropdown key",
+			"question": {
+				"id": 3,
+				"settings": {
+					"type": "dropdown-blanks",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"text": "Water boils at {1} degrees and freezes at {2}.",
+					"slots": [
+						{
+							"id": "1",
+							"choices": [
+								"100",
+								"50",
+								"0"
+							],
+							"answer": "100"
+						},
+						{
+							"id": "2",
+							"choices": [
+								"0",
+								"32",
+								"-10"
+							],
+							"answers": [
+								"0"
+							],
+							"multiple": true
+						}
+					]
+				}
+			},
+			"prompt": "<p>Water boils at {1} degrees and freezes at {2}.</p>",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "dropdown-blanks",
+				"prompt": "<p>Water boils at <span class=\"ohmylms-print-blank\">(1)</span> degrees and freezes at <span class=\"ohmylms-print-blank\">(2)</span>.</p>",
+				"marks": 2,
+				"layout": "dropdown",
+				"slots": [
+					{
+						"id": "1",
+						"number": 1,
+						"multiple": false,
+						"choices": [
+							"0",
+							"100",
+							"50"
+						],
+						"answers": [
+							"100"
+						]
+					},
+					{
+						"id": "2",
+						"number": 2,
+						"multiple": true,
+						"choices": [
+							"32",
+							"-10",
+							"0"
+						],
+						"answers": [
+							"0"
+						]
+					}
+				],
+				"key": [
+					"(1) 100",
+					"(2) 0"
+				]
+			}
+		},
+		{
+			"name": "dropdown key-b",
+			"question": {
+				"id": 3,
+				"settings": {
+					"type": "dropdown-blanks",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"text": "Water boils at {1} degrees and freezes at {2}.",
+					"slots": [
+						{
+							"id": "1",
+							"choices": [
+								"100",
+								"50",
+								"0"
+							],
+							"answer": "100"
+						},
+						{
+							"id": "2",
+							"choices": [
+								"0",
+								"32",
+								"-10"
+							],
+							"answers": [
+								"0"
+							],
+							"multiple": true
+						}
+					]
+				}
+			},
+			"prompt": "<p>Water boils at {1} degrees and freezes at {2}.</p>",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "dropdown-blanks",
+				"prompt": "<p>Water boils at <span class=\"ohmylms-print-blank\">(1)</span> degrees and freezes at <span class=\"ohmylms-print-blank\">(2)</span>.</p>",
+				"marks": 2,
+				"layout": "dropdown",
+				"slots": [
+					{
+						"id": "1",
+						"number": 1,
+						"multiple": false,
+						"choices": [
+							"50",
+							"0",
+							"100"
+						],
+						"answers": [
+							"100"
+						]
+					},
+					{
+						"id": "2",
+						"number": 2,
+						"multiple": true,
+						"choices": [
+							"0",
+							"-10",
+							"32"
+						],
+						"answers": [
+							"0"
+						]
+					}
+				],
+				"key": [
+					"(1) 100",
+					"(2) 0"
+				]
+			}
+		},
+		{
+			"name": "multiBlank paper",
+			"question": {
+				"id": 4,
+				"settings": {
+					"type": "multi-blank",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"text": "Speed {a}, time {b}",
+					"blanks": {
+						"a": {
+							"kind": "numerical",
+							"answer": 12,
+							"unit": "m/s"
+						},
+						"b": {
+							"kind": "text",
+							"accepted": [
+								"ten seconds"
+							]
+						}
+					}
+				}
+			},
+			"prompt": "<p>Speed {a}, time {b}</p>",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "multi-blank",
+				"prompt": "<p>Speed <span class=\"ohmylms-print-blank\">(a)</span> m/s, time <span class=\"ohmylms-print-blank\">(b)</span></p>",
+				"marks": 2,
+				"layout": "multi-blank",
+				"table": null,
+				"units": {
+					"a": "m/s",
+					"b": ""
+				}
+			}
+		},
+		{
+			"name": "multiBlank key",
+			"question": {
+				"id": 4,
+				"settings": {
+					"type": "multi-blank",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"text": "Speed {a}, time {b}",
+					"blanks": {
+						"a": {
+							"kind": "numerical",
+							"answer": 12,
+							"unit": "m/s"
+						},
+						"b": {
+							"kind": "text",
+							"accepted": [
+								"ten seconds"
+							]
+						}
+					}
+				}
+			},
+			"prompt": "<p>Speed {a}, time {b}</p>",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "multi-blank",
+				"prompt": "<p>Speed <span class=\"ohmylms-print-blank\">(a)</span> m/s, time <span class=\"ohmylms-print-blank\">(b)</span></p>",
+				"marks": 2,
+				"layout": "multi-blank",
+				"table": null,
+				"units": {
+					"a": "m/s",
+					"b": ""
+				},
+				"key": [
+					"(a) 12",
+					"(b) ten seconds"
+				]
+			}
+		},
+		{
+			"name": "multiBlank key-b",
+			"question": {
+				"id": 4,
+				"settings": {
+					"type": "multi-blank",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"text": "Speed {a}, time {b}",
+					"blanks": {
+						"a": {
+							"kind": "numerical",
+							"answer": 12,
+							"unit": "m/s"
+						},
+						"b": {
+							"kind": "text",
+							"accepted": [
+								"ten seconds"
+							]
+						}
+					}
+				}
+			},
+			"prompt": "<p>Speed {a}, time {b}</p>",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "multi-blank",
+				"prompt": "<p>Speed <span class=\"ohmylms-print-blank\">(a)</span> m/s, time <span class=\"ohmylms-print-blank\">(b)</span></p>",
+				"marks": 2,
+				"layout": "multi-blank",
+				"table": null,
+				"units": {
+					"a": "m/s",
+					"b": ""
+				},
+				"key": [
+					"(a) 12",
+					"(b) ten seconds"
+				]
+			}
+		},
+		{
+			"name": "multiBlankTable paper",
+			"question": {
+				"id": 14,
+				"settings": {
+					"type": "multi-blank",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"layout": "table",
+					"columns": [
+						"x",
+						"y"
+					],
+					"rows": [
+						[
+							"1",
+							"{a}"
+						],
+						[
+							"2",
+							"{b} cm"
+						]
+					],
+					"blanks": {
+						"a": {
+							"kind": "numerical",
+							"answer": 3
+						},
+						"b": {
+							"kind": "expression",
+							"answer": "2x",
+							"unit": "cm"
+						}
+					}
+				}
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "multi-blank",
+				"prompt": "",
+				"marks": 2,
+				"layout": "multi-blank",
+				"table": {
+					"columns": [
+						"x",
+						"y"
+					],
+					"rows": [
+						[
+							[
+								{
+									"text": "1"
+								}
+							],
+							[
+								{
+									"id": "a"
+								}
+							]
+						],
+						[
+							[
+								{
+									"text": "2"
+								}
+							],
+							[
+								{
+									"id": "b"
+								},
+								{
+									"text": " cm"
+								}
+							]
+						]
+					]
+				},
+				"units": {
+					"a": "",
+					"b": "cm"
+				}
+			}
+		},
+		{
+			"name": "multiBlankTable key",
+			"question": {
+				"id": 14,
+				"settings": {
+					"type": "multi-blank",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"layout": "table",
+					"columns": [
+						"x",
+						"y"
+					],
+					"rows": [
+						[
+							"1",
+							"{a}"
+						],
+						[
+							"2",
+							"{b} cm"
+						]
+					],
+					"blanks": {
+						"a": {
+							"kind": "numerical",
+							"answer": 3
+						},
+						"b": {
+							"kind": "expression",
+							"answer": "2x",
+							"unit": "cm"
+						}
+					}
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "multi-blank",
+				"prompt": "",
+				"marks": 2,
+				"layout": "multi-blank",
+				"table": {
+					"columns": [
+						"x",
+						"y"
+					],
+					"rows": [
+						[
+							[
+								{
+									"text": "1"
+								}
+							],
+							[
+								{
+									"id": "a"
+								}
+							]
+						],
+						[
+							[
+								{
+									"text": "2"
+								}
+							],
+							[
+								{
+									"id": "b"
+								},
+								{
+									"text": " cm"
+								}
+							]
+						]
+					]
+				},
+				"units": {
+					"a": "",
+					"b": "cm"
+				},
+				"key": [
+					"(a) 3",
+					"(b) 2x"
+				]
+			}
+		},
+		{
+			"name": "multiBlankTable key-b",
+			"question": {
+				"id": 14,
+				"settings": {
+					"type": "multi-blank",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"layout": "table",
+					"columns": [
+						"x",
+						"y"
+					],
+					"rows": [
+						[
+							"1",
+							"{a}"
+						],
+						[
+							"2",
+							"{b} cm"
+						]
+					],
+					"blanks": {
+						"a": {
+							"kind": "numerical",
+							"answer": 3
+						},
+						"b": {
+							"kind": "expression",
+							"answer": "2x",
+							"unit": "cm"
+						}
+					}
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "multi-blank",
+				"prompt": "",
+				"marks": 2,
+				"layout": "multi-blank",
+				"table": {
+					"columns": [
+						"x",
+						"y"
+					],
+					"rows": [
+						[
+							[
+								{
+									"text": "1"
+								}
+							],
+							[
+								{
+									"id": "a"
+								}
+							]
+						],
+						[
+							[
+								{
+									"text": "2"
+								}
+							],
+							[
+								{
+									"id": "b"
+								},
+								{
+									"text": " cm"
+								}
+							]
+						]
+					]
+				},
+				"units": {
+					"a": "",
+					"b": "cm"
+				},
+				"key": [
+					"(a) 3",
+					"(b) 2x"
+				]
+			}
+		},
+		{
+			"name": "categorize paper",
+			"question": {
+				"id": 8,
+				"settings": {
+					"type": "categorize",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"buckets": [
+						{
+							"id": "m",
+							"label": "Mammals"
+						},
+						{
+							"id": "b",
+							"label": "Birds"
+						}
+					],
+					"items": [
+						{
+							"id": "i1",
+							"text": "Dog"
+						},
+						{
+							"id": "i2",
+							"text": "Eagle"
+						},
+						{
+							"id": "i3",
+							"text": "Cat"
+						}
+					],
+					"key": {
+						"i1": "m",
+						"i2": "b",
+						"i3": "m"
+					}
+				}
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "categorize",
+				"prompt": "",
+				"marks": 2,
+				"layout": "categorize",
+				"items": [
+					{
+						"id": "i1",
+						"letter": "A",
+						"text": "Dog",
+						"image": ""
+					},
+					{
+						"id": "i2",
+						"letter": "B",
+						"text": "Eagle",
+						"image": ""
+					},
+					{
+						"id": "i3",
+						"letter": "C",
+						"text": "Cat",
+						"image": ""
+					}
+				],
+				"groups": [
+					{
+						"id": "m",
+						"label": "Mammals"
+					},
+					{
+						"id": "b",
+						"label": "Birds"
+					}
+				]
+			}
+		},
+		{
+			"name": "categorize key",
+			"question": {
+				"id": 8,
+				"settings": {
+					"type": "categorize",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"buckets": [
+						{
+							"id": "m",
+							"label": "Mammals"
+						},
+						{
+							"id": "b",
+							"label": "Birds"
+						}
+					],
+					"items": [
+						{
+							"id": "i1",
+							"text": "Dog"
+						},
+						{
+							"id": "i2",
+							"text": "Eagle"
+						},
+						{
+							"id": "i3",
+							"text": "Cat"
+						}
+					],
+					"key": {
+						"i1": "m",
+						"i2": "b",
+						"i3": "m"
+					}
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "categorize",
+				"prompt": "",
+				"marks": 2,
+				"layout": "categorize",
+				"items": [
+					{
+						"id": "i1",
+						"letter": "A",
+						"text": "Dog",
+						"image": ""
+					},
+					{
+						"id": "i2",
+						"letter": "B",
+						"text": "Eagle",
+						"image": ""
+					},
+					{
+						"id": "i3",
+						"letter": "C",
+						"text": "Cat",
+						"image": ""
+					}
+				],
+				"groups": [
+					{
+						"id": "m",
+						"label": "Mammals"
+					},
+					{
+						"id": "b",
+						"label": "Birds"
+					}
+				],
+				"key": [
+					"Mammals: A, C",
+					"Birds: B"
+				]
+			}
+		},
+		{
+			"name": "categorize key-b",
+			"question": {
+				"id": 8,
+				"settings": {
+					"type": "categorize",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"buckets": [
+						{
+							"id": "m",
+							"label": "Mammals"
+						},
+						{
+							"id": "b",
+							"label": "Birds"
+						}
+					],
+					"items": [
+						{
+							"id": "i1",
+							"text": "Dog"
+						},
+						{
+							"id": "i2",
+							"text": "Eagle"
+						},
+						{
+							"id": "i3",
+							"text": "Cat"
+						}
+					],
+					"key": {
+						"i1": "m",
+						"i2": "b",
+						"i3": "m"
+					}
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "categorize",
+				"prompt": "",
+				"marks": 2,
+				"layout": "categorize",
+				"items": [
+					{
+						"id": "i3",
+						"letter": "A",
+						"text": "Cat",
+						"image": ""
+					},
+					{
+						"id": "i2",
+						"letter": "B",
+						"text": "Eagle",
+						"image": ""
+					},
+					{
+						"id": "i1",
+						"letter": "C",
+						"text": "Dog",
+						"image": ""
+					}
+				],
+				"groups": [
+					{
+						"id": "m",
+						"label": "Mammals"
+					},
+					{
+						"id": "b",
+						"label": "Birds"
+					}
+				],
+				"key": [
+					"Mammals: A, C",
+					"Birds: B"
+				]
+			}
+		},
+		{
+			"name": "tiles paper",
+			"question": {
+				"id": 2,
+				"settings": {
+					"type": "build-expression",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"correct": [
+						"2",
+						"x",
+						"+",
+						"3"
+					],
+					"distractors": [
+						"-"
+					]
+				}
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "build-expression",
+				"prompt": "",
+				"marks": 2,
+				"layout": "tiles",
+				"tiles": [
+					"+",
+					"-",
+					"3",
+					"2",
+					"x"
+				]
+			}
+		},
+		{
+			"name": "tiles key",
+			"question": {
+				"id": 2,
+				"settings": {
+					"type": "build-expression",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"correct": [
+						"2",
+						"x",
+						"+",
+						"3"
+					],
+					"distractors": [
+						"-"
+					]
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "build-expression",
+				"prompt": "",
+				"marks": 2,
+				"layout": "tiles",
+				"tiles": [
+					"+",
+					"-",
+					"3",
+					"2",
+					"x"
+				],
+				"key": [
+					"2 x + 3"
+				]
+			}
+		},
+		{
+			"name": "tiles key-b",
+			"question": {
+				"id": 2,
+				"settings": {
+					"type": "build-expression",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"correct": [
+						"2",
+						"x",
+						"+",
+						"3"
+					],
+					"distractors": [
+						"-"
+					]
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "build-expression",
+				"prompt": "",
+				"marks": 2,
+				"layout": "tiles",
+				"tiles": [
+					"x",
+					"+",
+					"-",
+					"3",
+					"2"
+				],
+				"key": [
+					"2 x + 3"
+				]
+			}
+		},
+		{
+			"name": "expression paper",
+			"question": {
+				"id": 1,
+				"settings": {
+					"type": "expression",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"answer": "3x+9"
+				}
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "expression",
+				"prompt": "",
+				"marks": 2,
+				"layout": "answer-line"
+			}
+		},
+		{
+			"name": "expression key",
+			"question": {
+				"id": 1,
+				"settings": {
+					"type": "expression",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"answer": "3x+9"
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "expression",
+				"prompt": "",
+				"marks": 2,
+				"layout": "answer-line",
+				"answers": [
+					"$3x+9$"
+				]
+			}
+		},
+		{
+			"name": "expression key-b",
+			"question": {
+				"id": 1,
+				"settings": {
+					"type": "expression",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"answer": "3x+9"
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "expression",
+				"prompt": "",
+				"marks": 2,
+				"layout": "answer-line",
+				"answers": [
+					"$3x+9$"
+				]
+			}
+		},
+		{
+			"name": "crossword paper",
+			"question": {
+				"id": 6,
+				"settings": {
+					"type": "crossword",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"size": 5,
+					"entries": [
+						{
+							"id": "w1",
+							"clue": "Feline",
+							"answer": "CAT",
+							"row": 0,
+							"col": 0,
+							"direction": "across"
+						},
+						{
+							"id": "w2",
+							"clue": "Not hot",
+							"answer": "COLD",
+							"row": 0,
+							"col": 0,
+							"direction": "down"
+						}
+					]
+				}
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "crossword",
+				"prompt": "",
+				"marks": 2,
+				"layout": "crossword",
+				"size": 5,
+				"cells": [
+					"r0c0",
+					"r0c1",
+					"r0c2",
+					"r1c0",
+					"r2c0",
+					"r3c0"
+				],
+				"numbers": {
+					"r0c0": 1
+				},
+				"letters": {},
+				"across": [
+					{
+						"number": 1,
+						"text": "Feline",
+						"length": 3
+					}
+				],
+				"down": [
+					{
+						"number": 1,
+						"text": "Not hot",
+						"length": 4
+					}
+				]
+			}
+		},
+		{
+			"name": "crossword key",
+			"question": {
+				"id": 6,
+				"settings": {
+					"type": "crossword",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"size": 5,
+					"entries": [
+						{
+							"id": "w1",
+							"clue": "Feline",
+							"answer": "CAT",
+							"row": 0,
+							"col": 0,
+							"direction": "across"
+						},
+						{
+							"id": "w2",
+							"clue": "Not hot",
+							"answer": "COLD",
+							"row": 0,
+							"col": 0,
+							"direction": "down"
+						}
+					]
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "crossword",
+				"prompt": "",
+				"marks": 2,
+				"layout": "crossword",
+				"size": 5,
+				"cells": [
+					"r0c0",
+					"r0c1",
+					"r0c2",
+					"r1c0",
+					"r2c0",
+					"r3c0"
+				],
+				"numbers": {
+					"r0c0": 1
+				},
+				"letters": {
+					"r0c0": "C",
+					"r0c1": "A",
+					"r0c2": "T",
+					"r1c0": "O",
+					"r2c0": "L",
+					"r3c0": "D"
+				},
+				"across": [
+					{
+						"number": 1,
+						"text": "Feline",
+						"length": 3
+					}
+				],
+				"down": [
+					{
+						"number": 1,
+						"text": "Not hot",
+						"length": 4
+					}
+				]
+			}
+		},
+		{
+			"name": "crossword key-b",
+			"question": {
+				"id": 6,
+				"settings": {
+					"type": "crossword",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"size": 5,
+					"entries": [
+						{
+							"id": "w1",
+							"clue": "Feline",
+							"answer": "CAT",
+							"row": 0,
+							"col": 0,
+							"direction": "across"
+						},
+						{
+							"id": "w2",
+							"clue": "Not hot",
+							"answer": "COLD",
+							"row": 0,
+							"col": 0,
+							"direction": "down"
+						}
+					]
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "crossword",
+				"prompt": "",
+				"marks": 2,
+				"layout": "crossword",
+				"size": 5,
+				"cells": [
+					"r0c0",
+					"r0c1",
+					"r0c2",
+					"r1c0",
+					"r2c0",
+					"r3c0"
+				],
+				"numbers": {
+					"r0c0": 1
+				},
+				"letters": {
+					"r0c0": "C",
+					"r0c1": "A",
+					"r0c2": "T",
+					"r1c0": "O",
+					"r2c0": "L",
+					"r3c0": "D"
+				},
+				"across": [
+					{
+						"number": 1,
+						"text": "Feline",
+						"length": 3
+					}
+				],
+				"down": [
+					{
+						"number": 1,
+						"text": "Not hot",
+						"length": 4
+					}
+				]
+			}
+		},
+		{
+			"name": "wordsearch paper",
+			"question": {
+				"id": 7,
+				"settings": {
+					"type": "wordsearch",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"size": 4,
+					"with_clues": false,
+					"grid": [
+						[
+							"C",
+							"A",
+							"T",
+							"X"
+						],
+						[
+							"Q",
+							"W",
+							"E",
+							"R"
+						],
+						[
+							"D",
+							"O",
+							"G",
+							"Z"
+						],
+						[
+							"M",
+							"N",
+							"B",
+							"V"
+						]
+					],
+					"entries": [
+						{
+							"id": "w1",
+							"clue": "",
+							"answer": "CAT",
+							"row": 0,
+							"col": 0,
+							"direction": "across"
+						},
+						{
+							"id": "w2",
+							"clue": "",
+							"answer": "DOG",
+							"row": 2,
+							"col": 0,
+							"direction": "across"
+						}
+					]
+				}
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "wordsearch",
+				"prompt": "",
+				"marks": 2,
+				"layout": "wordsearch",
+				"grid": [
+					[
+						"C",
+						"A",
+						"T",
+						"X"
+					],
+					[
+						"Q",
+						"W",
+						"E",
+						"R"
+					],
+					[
+						"D",
+						"O",
+						"G",
+						"Z"
+					],
+					[
+						"M",
+						"N",
+						"B",
+						"V"
+					]
+				],
+				"marked": [],
+				"words": [
+					"CAT",
+					"DOG"
+				]
+			}
+		},
+		{
+			"name": "wordsearch key",
+			"question": {
+				"id": 7,
+				"settings": {
+					"type": "wordsearch",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"size": 4,
+					"with_clues": false,
+					"grid": [
+						[
+							"C",
+							"A",
+							"T",
+							"X"
+						],
+						[
+							"Q",
+							"W",
+							"E",
+							"R"
+						],
+						[
+							"D",
+							"O",
+							"G",
+							"Z"
+						],
+						[
+							"M",
+							"N",
+							"B",
+							"V"
+						]
+					],
+					"entries": [
+						{
+							"id": "w1",
+							"clue": "",
+							"answer": "CAT",
+							"row": 0,
+							"col": 0,
+							"direction": "across"
+						},
+						{
+							"id": "w2",
+							"clue": "",
+							"answer": "DOG",
+							"row": 2,
+							"col": 0,
+							"direction": "across"
+						}
+					]
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "wordsearch",
+				"prompt": "",
+				"marks": 2,
+				"layout": "wordsearch",
+				"grid": [
+					[
+						"C",
+						"A",
+						"T",
+						"X"
+					],
+					[
+						"Q",
+						"W",
+						"E",
+						"R"
+					],
+					[
+						"D",
+						"O",
+						"G",
+						"Z"
+					],
+					[
+						"M",
+						"N",
+						"B",
+						"V"
+					]
+				],
+				"marked": [
+					"r0c0",
+					"r0c1",
+					"r0c2",
+					"r2c0",
+					"r2c1",
+					"r2c2"
+				],
+				"words": [
+					"CAT",
+					"DOG"
+				]
+			}
+		},
+		{
+			"name": "wordsearch key-b",
+			"question": {
+				"id": 7,
+				"settings": {
+					"type": "wordsearch",
+					"score": {
+						"enabled": true,
+						"value": 2
+					},
+					"size": 4,
+					"with_clues": false,
+					"grid": [
+						[
+							"C",
+							"A",
+							"T",
+							"X"
+						],
+						[
+							"Q",
+							"W",
+							"E",
+							"R"
+						],
+						[
+							"D",
+							"O",
+							"G",
+							"Z"
+						],
+						[
+							"M",
+							"N",
+							"B",
+							"V"
+						]
+					],
+					"entries": [
+						{
+							"id": "w1",
+							"clue": "",
+							"answer": "CAT",
+							"row": 0,
+							"col": 0,
+							"direction": "across"
+						},
+						{
+							"id": "w2",
+							"clue": "",
+							"answer": "DOG",
+							"row": 2,
+							"col": 0,
+							"direction": "across"
+						}
+					]
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "wordsearch",
+				"prompt": "",
+				"marks": 2,
+				"layout": "wordsearch",
+				"grid": [
+					[
+						"C",
+						"A",
+						"T",
+						"X"
+					],
+					[
+						"Q",
+						"W",
+						"E",
+						"R"
+					],
+					[
+						"D",
+						"O",
+						"G",
+						"Z"
+					],
+					[
+						"M",
+						"N",
+						"B",
+						"V"
+					]
+				],
+				"marked": [
+					"r0c0",
+					"r0c1",
+					"r0c2",
+					"r2c0",
+					"r2c1",
+					"r2c2"
+				],
+				"words": [
+					"CAT",
+					"DOG"
+				]
+			}
+		},
+		{
+			"name": "numberLine paper",
+			"question": {
+				"id": 20,
+				"settings": {
+					"type": "number-line",
+					"score": {
+						"enabled": true,
+						"value": 1
+					},
+					"min": 0,
+					"max": 2,
+					"step": 0.25,
+					"target": 1.5
+				}
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "number-line",
+				"prompt": "",
+				"marks": 1,
+				"layout": "visual",
+				"figure": {
+					"figure": "number-line",
+					"min": 0,
+					"max": 2,
+					"step": 0.25,
+					"unit": "",
+					"ticks": {
+						"values": [
+							0,
+							0.25,
+							0.5,
+							0.75,
+							1,
+							1.25,
+							1.5,
+							1.75,
+							2
+						],
+						"labelEvery": 1
+					}
+				}
+			}
+		},
+		{
+			"name": "numberLine key",
+			"question": {
+				"id": 20,
+				"settings": {
+					"type": "number-line",
+					"score": {
+						"enabled": true,
+						"value": 1
+					},
+					"min": 0,
+					"max": 2,
+					"step": 0.25,
+					"target": 1.5
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "number-line",
+				"prompt": "",
+				"marks": 1,
+				"layout": "visual",
+				"figure": {
+					"figure": "number-line",
+					"min": 0,
+					"max": 2,
+					"step": 0.25,
+					"unit": "",
+					"ticks": {
+						"values": [
+							0,
+							0.25,
+							0.5,
+							0.75,
+							1,
+							1.25,
+							1.5,
+							1.75,
+							2
+						],
+						"labelEvery": 1
+					},
+					"target": 1.5,
+					"key": [
+						"1.5"
+					]
+				}
+			}
+		},
+		{
+			"name": "numberLine key-b",
+			"question": {
+				"id": 20,
+				"settings": {
+					"type": "number-line",
+					"score": {
+						"enabled": true,
+						"value": 1
+					},
+					"min": 0,
+					"max": 2,
+					"step": 0.25,
+					"target": 1.5
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "number-line",
+				"prompt": "",
+				"marks": 1,
+				"layout": "visual",
+				"figure": {
+					"figure": "number-line",
+					"min": 0,
+					"max": 2,
+					"step": 0.25,
+					"unit": "",
+					"ticks": {
+						"values": [
+							0,
+							0.25,
+							0.5,
+							0.75,
+							1,
+							1.25,
+							1.5,
+							1.75,
+							2
+						],
+						"labelEvery": 1
+					},
+					"target": 1.5,
+					"key": [
+						"1.5"
+					]
+				}
+			}
+		},
+		{
+			"name": "jug paper",
+			"question": {
+				"id": 21,
+				"settings": {
+					"type": "fill-level",
+					"score": {
+						"enabled": true,
+						"value": 1
+					},
+					"target": 350
+				}
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "fill-level",
+				"prompt": "",
+				"marks": 1,
+				"layout": "visual",
+				"figure": {
+					"figure": "fill-level",
+					"min": 0,
+					"max": 1000,
+					"step": 50,
+					"unit": "ml",
+					"ticks": {
+						"values": [
+							0,
+							50,
+							100,
+							150,
+							200,
+							250,
+							300,
+							350,
+							400,
+							450,
+							500,
+							550,
+							600,
+							650,
+							700,
+							750,
+							800,
+							850,
+							900,
+							950,
+							1000
+						],
+						"labelEvery": 2
+					}
+				}
+			}
+		},
+		{
+			"name": "jug key",
+			"question": {
+				"id": 21,
+				"settings": {
+					"type": "fill-level",
+					"score": {
+						"enabled": true,
+						"value": 1
+					},
+					"target": 350
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "fill-level",
+				"prompt": "",
+				"marks": 1,
+				"layout": "visual",
+				"figure": {
+					"figure": "fill-level",
+					"min": 0,
+					"max": 1000,
+					"step": 50,
+					"unit": "ml",
+					"ticks": {
+						"values": [
+							0,
+							50,
+							100,
+							150,
+							200,
+							250,
+							300,
+							350,
+							400,
+							450,
+							500,
+							550,
+							600,
+							650,
+							700,
+							750,
+							800,
+							850,
+							900,
+							950,
+							1000
+						],
+						"labelEvery": 2
+					},
+					"target": 350,
+					"key": [
+						"350 ml"
+					]
+				}
+			}
+		},
+		{
+			"name": "jug key-b",
+			"question": {
+				"id": 21,
+				"settings": {
+					"type": "fill-level",
+					"score": {
+						"enabled": true,
+						"value": 1
+					},
+					"target": 350
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "fill-level",
+				"prompt": "",
+				"marks": 1,
+				"layout": "visual",
+				"figure": {
+					"figure": "fill-level",
+					"min": 0,
+					"max": 1000,
+					"step": 50,
+					"unit": "ml",
+					"ticks": {
+						"values": [
+							0,
+							50,
+							100,
+							150,
+							200,
+							250,
+							300,
+							350,
+							400,
+							450,
+							500,
+							550,
+							600,
+							650,
+							700,
+							750,
+							800,
+							850,
+							900,
+							950,
+							1000
+						],
+						"labelEvery": 2
+					},
+					"target": 350,
+					"key": [
+						"350 ml"
+					]
+				}
+			}
+		},
+		{
+			"name": "shade paper",
+			"question": {
+				"id": 22,
+				"settings": {
+					"type": "shade-model",
+					"score": {
+						"enabled": true,
+						"value": 1
+					},
+					"shape": "grid",
+					"parts": 12,
+					"cols": 4,
+					"answer": 5
+				}
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "shade-model",
+				"prompt": "",
+				"marks": 1,
+				"layout": "visual",
+				"figure": {
+					"figure": "shade-model",
+					"shape": "grid",
+					"parts": 12,
+					"cols": 4
+				}
+			}
+		},
+		{
+			"name": "shade key",
+			"question": {
+				"id": 22,
+				"settings": {
+					"type": "shade-model",
+					"score": {
+						"enabled": true,
+						"value": 1
+					},
+					"shape": "grid",
+					"parts": 12,
+					"cols": 4,
+					"answer": 5
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "shade-model",
+				"prompt": "",
+				"marks": 1,
+				"layout": "visual",
+				"figure": {
+					"figure": "shade-model",
+					"shape": "grid",
+					"parts": 12,
+					"cols": 4,
+					"shaded": 5,
+					"key": [
+						"5 / 12"
+					]
+				}
+			}
+		},
+		{
+			"name": "shade key-b",
+			"question": {
+				"id": 22,
+				"settings": {
+					"type": "shade-model",
+					"score": {
+						"enabled": true,
+						"value": 1
+					},
+					"shape": "grid",
+					"parts": 12,
+					"cols": 4,
+					"answer": 5
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "shade-model",
+				"prompt": "",
+				"marks": 1,
+				"layout": "visual",
+				"figure": {
+					"figure": "shade-model",
+					"shape": "grid",
+					"parts": 12,
+					"cols": 4,
+					"shaded": 5,
+					"key": [
+						"5 / 12"
+					]
+				}
+			}
+		},
+		{
+			"name": "blocks paper",
+			"question": {
+				"id": 23,
+				"settings": {
+					"type": "count-blocks",
+					"score": {
+						"enabled": true,
+						"value": 1
+					},
+					"places": [
+						"ones",
+						"thousands",
+						"tens"
+					],
+					"target": 2047
+				}
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "count-blocks",
+				"prompt": "",
+				"marks": 1,
+				"layout": "visual",
+				"figure": {
+					"figure": "count-blocks",
+					"places": [
+						"thousands",
+						"tens",
+						"ones"
+					]
+				}
+			}
+		},
+		{
+			"name": "blocks key",
+			"question": {
+				"id": 23,
+				"settings": {
+					"type": "count-blocks",
+					"score": {
+						"enabled": true,
+						"value": 1
+					},
+					"places": [
+						"ones",
+						"thousands",
+						"tens"
+					],
+					"target": 2047
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "count-blocks",
+				"prompt": "",
+				"marks": 1,
+				"layout": "visual",
+				"figure": {
+					"figure": "count-blocks",
+					"places": [
+						"thousands",
+						"tens",
+						"ones"
+					],
+					"counts": {
+						"thousands": 2,
+						"tens": 4,
+						"ones": 7
+					},
+					"key": [
+						"2047"
+					]
+				}
+			}
+		},
+		{
+			"name": "blocks key-b",
+			"question": {
+				"id": 23,
+				"settings": {
+					"type": "count-blocks",
+					"score": {
+						"enabled": true,
+						"value": 1
+					},
+					"places": [
+						"ones",
+						"thousands",
+						"tens"
+					],
+					"target": 2047
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "count-blocks",
+				"prompt": "",
+				"marks": 1,
+				"layout": "visual",
+				"figure": {
+					"figure": "count-blocks",
+					"places": [
+						"thousands",
+						"tens",
+						"ones"
+					],
+					"counts": {
+						"thousands": 2,
+						"tens": 4,
+						"ones": 7
+					},
+					"key": [
+						"2047"
+					]
+				}
+			}
+		},
+		{
+			"name": "clock paper",
+			"question": {
+				"id": 24,
+				"settings": {
+					"type": "set-clock",
+					"score": {
+						"enabled": true,
+						"value": 1
+					},
+					"show_digital": true,
+					"hour": 15,
+					"minute": 5
+				}
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "set-clock",
+				"prompt": "",
+				"marks": 1,
+				"layout": "visual",
+				"figure": {
+					"figure": "set-clock",
+					"digital": true
+				}
+			}
+		},
+		{
+			"name": "clock key",
+			"question": {
+				"id": 24,
+				"settings": {
+					"type": "set-clock",
+					"score": {
+						"enabled": true,
+						"value": 1
+					},
+					"show_digital": true,
+					"hour": 15,
+					"minute": 5
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "set-clock",
+				"prompt": "",
+				"marks": 1,
+				"layout": "visual",
+				"figure": {
+					"figure": "set-clock",
+					"digital": true,
+					"hour": 15,
+					"minute": 5,
+					"key": [
+						"15:05"
+					]
+				}
+			}
+		},
+		{
+			"name": "clock key-b",
+			"question": {
+				"id": 24,
+				"settings": {
+					"type": "set-clock",
+					"score": {
+						"enabled": true,
+						"value": 1
+					},
+					"show_digital": true,
+					"hour": 15,
+					"minute": 5
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "set-clock",
+				"prompt": "",
+				"marks": 1,
+				"layout": "visual",
+				"figure": {
+					"figure": "set-clock",
+					"digital": true,
+					"hour": 15,
+					"minute": 5,
+					"key": [
+						"15:05"
+					]
+				}
+			}
+		},
+		{
+			"name": "money paper",
+			"question": {
+				"id": 25,
+				"settings": {
+					"type": "make-amount",
+					"score": {
+						"enabled": true,
+						"value": 1
+					},
+					"denominations": [
+						5,
+						20,
+						"10",
+						5,
+						0
+					],
+					"symbol": "$",
+					"target": 35
+				}
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "make-amount",
+				"prompt": "",
+				"marks": 1,
+				"layout": "visual",
+				"figure": {
+					"figure": "make-amount",
+					"denominations": [
+						20,
+						10,
+						5
+					],
+					"symbol": "$"
+				}
+			}
+		},
+		{
+			"name": "money key",
+			"question": {
+				"id": 25,
+				"settings": {
+					"type": "make-amount",
+					"score": {
+						"enabled": true,
+						"value": 1
+					},
+					"denominations": [
+						5,
+						20,
+						"10",
+						5,
+						0
+					],
+					"symbol": "$",
+					"target": 35
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "make-amount",
+				"prompt": "",
+				"marks": 1,
+				"layout": "visual",
+				"figure": {
+					"figure": "make-amount",
+					"denominations": [
+						20,
+						10,
+						5
+					],
+					"symbol": "$",
+					"counts": {
+						"5": 1,
+						"10": 1,
+						"20": 1
+					},
+					"key": [
+						"35 $"
+					]
+				}
+			}
+		},
+		{
+			"name": "money key-b",
+			"question": {
+				"id": 25,
+				"settings": {
+					"type": "make-amount",
+					"score": {
+						"enabled": true,
+						"value": 1
+					},
+					"denominations": [
+						5,
+						20,
+						"10",
+						5,
+						0
+					],
+					"symbol": "$",
+					"target": 35
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "make-amount",
+				"prompt": "",
+				"marks": 1,
+				"layout": "visual",
+				"figure": {
+					"figure": "make-amount",
+					"denominations": [
+						20,
+						10,
+						5
+					],
+					"symbol": "$",
+					"counts": {
+						"5": 1,
+						"10": 1,
+						"20": 1
+					},
+					"key": [
+						"35 $"
+					]
+				}
+			}
+		},
+		{
+			"name": "chart paper",
+			"question": {
+				"id": 26,
+				"settings": {
+					"type": "build-chart",
+					"score": {
+						"enabled": true,
+						"value": 1
+					},
+					"categories": [
+						{
+							"id": "cats!",
+							"label": "Cats"
+						},
+						{
+							"id": "dogs",
+							"label": "Dogs"
+						}
+					],
+					"max": 8,
+					"step": 2,
+					"show_table": true,
+					"values": {
+						"cats": 3,
+						"dogs": 6
+					}
+				}
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "build-chart",
+				"prompt": "",
+				"marks": 1,
+				"layout": "visual",
+				"figure": {
+					"figure": "build-chart",
+					"categories": [
+						{
+							"id": "cats",
+							"label": "Cats"
+						},
+						{
+							"id": "dogs",
+							"label": "Dogs"
+						}
+					],
+					"max": 8,
+					"step": 2,
+					"unit": "",
+					"ticks": {
+						"values": [
+							0,
+							2,
+							4,
+							6,
+							8
+						],
+						"labelEvery": 1
+					},
+					"table": [
+						{
+							"label": "Cats",
+							"value": 3
+						},
+						{
+							"label": "Dogs",
+							"value": 6
+						}
+					]
+				}
+			}
+		},
+		{
+			"name": "chart key",
+			"question": {
+				"id": 26,
+				"settings": {
+					"type": "build-chart",
+					"score": {
+						"enabled": true,
+						"value": 1
+					},
+					"categories": [
+						{
+							"id": "cats!",
+							"label": "Cats"
+						},
+						{
+							"id": "dogs",
+							"label": "Dogs"
+						}
+					],
+					"max": 8,
+					"step": 2,
+					"show_table": true,
+					"values": {
+						"cats": 3,
+						"dogs": 6
+					}
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "build-chart",
+				"prompt": "",
+				"marks": 1,
+				"layout": "visual",
+				"figure": {
+					"figure": "build-chart",
+					"categories": [
+						{
+							"id": "cats",
+							"label": "Cats"
+						},
+						{
+							"id": "dogs",
+							"label": "Dogs"
+						}
+					],
+					"max": 8,
+					"step": 2,
+					"unit": "",
+					"ticks": {
+						"values": [
+							0,
+							2,
+							4,
+							6,
+							8
+						],
+						"labelEvery": 1
+					},
+					"table": [
+						{
+							"label": "Cats",
+							"value": 3
+						},
+						{
+							"label": "Dogs",
+							"value": 6
+						}
+					],
+					"values": {
+						"cats": 3,
+						"dogs": 6
+					},
+					"key": [
+						"Cats = 3",
+						"Dogs = 6"
+					]
+				}
+			}
+		},
+		{
+			"name": "chart key-b",
+			"question": {
+				"id": 26,
+				"settings": {
+					"type": "build-chart",
+					"score": {
+						"enabled": true,
+						"value": 1
+					},
+					"categories": [
+						{
+							"id": "cats!",
+							"label": "Cats"
+						},
+						{
+							"id": "dogs",
+							"label": "Dogs"
+						}
+					],
+					"max": 8,
+					"step": 2,
+					"show_table": true,
+					"values": {
+						"cats": 3,
+						"dogs": 6
+					}
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "build-chart",
+				"prompt": "",
+				"marks": 1,
+				"layout": "visual",
+				"figure": {
+					"figure": "build-chart",
+					"categories": [
+						{
+							"id": "cats",
+							"label": "Cats"
+						},
+						{
+							"id": "dogs",
+							"label": "Dogs"
+						}
+					],
+					"max": 8,
+					"step": 2,
+					"unit": "",
+					"ticks": {
+						"values": [
+							0,
+							2,
+							4,
+							6,
+							8
+						],
+						"labelEvery": 1
+					},
+					"table": [
+						{
+							"label": "Cats",
+							"value": 3
+						},
+						{
+							"label": "Dogs",
+							"value": 6
+						}
+					],
+					"values": {
+						"cats": 3,
+						"dogs": 6
+					},
+					"key": [
+						"Cats = 3",
+						"Dogs = 6"
+					]
+				}
+			}
+		},
+		{
+			"name": "grid paper",
+			"question": {
+				"id": 27,
+				"settings": {
+					"type": "grid-build",
+					"score": {
+						"enabled": true,
+						"value": 1
+					},
+					"rows": 30,
+					"cols": 5,
+					"constraints": {
+						"area": 6,
+						"rectangle": true
+					}
+				}
+			},
+			"prompt": "",
+			"answers": false,
+			"version": "A",
+			"expected": {
+				"type": "grid-build",
+				"prompt": "",
+				"marks": 1,
+				"layout": "visual",
+				"figure": {
+					"figure": "grid-build",
+					"rows": 20,
+					"cols": 5,
+					"measures": false
+				}
+			}
+		},
+		{
+			"name": "grid key",
+			"question": {
+				"id": 27,
+				"settings": {
+					"type": "grid-build",
+					"score": {
+						"enabled": true,
+						"value": 1
+					},
+					"rows": 30,
+					"cols": 5,
+					"constraints": {
+						"area": 6,
+						"rectangle": true
+					}
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "A",
+			"expected": {
+				"type": "grid-build",
+				"prompt": "",
+				"marks": 1,
+				"layout": "visual",
+				"figure": {
+					"figure": "grid-build",
+					"rows": 20,
+					"cols": 5,
+					"measures": false,
+					"constraints": {
+						"area": 6,
+						"perimeter": null,
+						"rectangle": true,
+						"connected": false
+					}
+				}
+			}
+		},
+		{
+			"name": "grid key-b",
+			"question": {
+				"id": 27,
+				"settings": {
+					"type": "grid-build",
+					"score": {
+						"enabled": true,
+						"value": 1
+					},
+					"rows": 30,
+					"cols": 5,
+					"constraints": {
+						"area": 6,
+						"rectangle": true
+					}
+				}
+			},
+			"prompt": "",
+			"answers": true,
+			"version": "B",
+			"expected": {
+				"type": "grid-build",
+				"prompt": "",
+				"marks": 1,
+				"layout": "visual",
+				"figure": {
+					"figure": "grid-build",
+					"rows": 20,
+					"cols": 5,
+					"measures": false,
+					"constraints": {
+						"area": 6,
+						"perimeter": null,
+						"rectangle": true,
+						"connected": false
+					}
+				}
+			}
+		}
+	]
+}

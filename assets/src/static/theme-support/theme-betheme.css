@@ -52,11 +52,6 @@
     top: inherit;
 }
 
-.theme-betheme.ohmylms-page .ohmylms-course-details-tab .ohmylms-course-tab-nav .slick-arrow {
-    top: -3px;
-    overflow: visible;
-}
-
 .theme-betheme.ohmylms-page .ohmylms-course-reviews-form #respond .comment-form .form-submit {
     margin-top: 20px;
 }

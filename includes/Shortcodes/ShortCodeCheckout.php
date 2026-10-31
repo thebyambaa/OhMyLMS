@@ -256,9 +256,6 @@ class ShortCodeCheckout {
 		}
 		// Inject custom styles.
 		self::inject_custom_styles();
-
-		// Inject folded input fields script.
-		self::inject_checkout_folded_input_script();
 		ohmylms_get_template( 'checkout/form-checkout.php', array( 'checkout' => $checkout ) );
 	}
 
@@ -302,35 +299,6 @@ class ShortCodeCheckout {
 		if ( ! empty( $css ) ) {
 			echo '<style type="text/css" id="ohmylms-checkout-custom-styles">' . $css . '</style>';
 		}
-	}
-
-
-	/**
-	 * Inject jsscript for checkout folded input fields
-	 */
-	private static function inject_checkout_folded_input_script() {
-		?>
-		<script type="text/javascript">
-		(function($) {
-			// Function to initialize folded state for checkout input fields
-			function initializeCheckoutFoldedInputs() {
-				$(".ohmylms-input-text").each(function () {
-					var $row = $(this).parents('.ohmylms-form-row');
-					// Check if the input has a value		
-					if ($(this).val().trim() !== "") {
-						$row.addClass('ohmylms-folded');
-					} else {
-						$row.removeClass('ohmylms-folded');
-					}
-				});
-			}
-			// Initialize on document ready
-			$(document).ready(function() {
-				initializeCheckoutFoldedInputs();
-			});
-		})(jQuery);
-		</script>
-		<?php
 	}
 
 

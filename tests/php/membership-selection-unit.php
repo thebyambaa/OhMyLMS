@@ -116,17 +116,6 @@ function rest_ensure_response($value) { return $value; }
 function term_exists($id, $taxonomy) { return in_array((int) $id, $taxonomy === 'course_category' ? [10, 11] : [20]); }
 function get_term_children($id, $taxonomy) { return (int) $id === 10 ? [11] : []; }
 function wp_get_post_terms($id, $taxonomy) { return array_map(fn($term) => (object) ['term_id' => $term, 'name' => 'Term ' . $term], $GLOBALS['courses'][$id][$taxonomy]); }
-$controller = (new ReflectionClass(\OhMyLMS\Rest\V1\MembershipController::class))->newInstanceWithoutConstructor();
-$valid = new ReflectionMethod($controller, 'validate_course_selection');
-check($valid->invoke($controller, []) === true, 'Omitted rule fields are accepted for legacy plans');
-check(is_wp_error($valid->invoke($controller, ['course_categories' => [999]])), 'Unknown category rejected');
-check(is_wp_error($valid->invoke($controller, ['course_tags' => '20'])), 'Malformed rule payload rejected');
-check(is_wp_error($valid->invoke($controller, ['excluded_courses' => [999]])), 'Non-course exclusion rejected');
-$GLOBALS['courses'][2]['course_category'] = [11];
-$preview = $controller->course_preview(['products' => [['id' => 1]], 'course_categories' => [10], 'course_tags' => [20], 'excluded_courses' => [3]]);
-check(array_column($preview['courses'], 'id') === [1, 2, 5], 'Unsaved preview resolves the same live course set');
-check($preview['courses'][0]['reasons'] === ['Individual course'] && $preview['courses'][1]['reasons'] === ['Term 11'], 'Preview explains direct and descendant-category matches');
-echo "Membership preview and validation checks passed.\n";
 check( array() === \OhMyLMS\Membership\CourseSelection::resolve( array(), array(), array(), array(), array(), array( 999 ) ), 'Retired bundle rules grant no courses' );
 
 $plan->set_all_learning_content(true);

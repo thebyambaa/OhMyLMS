@@ -227,17 +227,15 @@ class ElementorManager {
 	 * @return void
 	 */
 	private function register_and_enqueue_ohmylms_assets() {
-		$suffix  = '';
-		$version = defined( 'OHMYLMS_VERSION' ) ? OHMYLMS_VERSION : '1.0.0';
-		$url     = defined( 'OHMYLMS_URL' ) ? OHMYLMS_URL : plugins_url( '', OHMYLMS_FILE );
+		$url = defined( 'OHMYLMS_URL' ) ? OHMYLMS_URL : plugins_url( '', OHMYLMS_FILE );
 
 		// Register if not already registered (FrontendAssets may have done it first).
 		if ( ! wp_script_is( 'ohmylms-frontend', 'registered' ) ) {
 			wp_register_script(
 				'ohmylms-frontend',
-				$url . '/assets/dist/frontend/ohmylms' . $suffix . '.js',
+				$url . '/' . \OhMyLMS\Assets\FrontendAssets::LEARNER_SCRIPTS['ohmylms-frontend'],
 				array( 'wp-i18n', 'jquery' ),
-				$version,
+				\OhMyLMS\Assets\FrontendAssets::learner_script_version( 'ohmylms-frontend' ),
 				true
 			);
 		}
