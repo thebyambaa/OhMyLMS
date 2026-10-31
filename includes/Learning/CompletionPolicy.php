@@ -237,8 +237,7 @@ final class CompletionPolicy {
 						)
 					) ) {
 						throw new \RuntimeException( 'Award write failed' ); }
-					if ( $wpdb->update(
-						$wpdb->prefix . 'ohmylms_user_enrollment',
+					if ( \OhMyLMS\Student\Enrollments::update(
 						array(
 							'progress' => 'completed',
 							'end_date' => current_time( 'mysql' ),

@@ -1476,8 +1476,7 @@ class MasterStudy {
 				continue;
 			}
 
-			$wpdb->insert(
-				$wpdb->prefix . 'ohmylms_user_enrollment',
+			\OhMyLMS\Student\Enrollments::create(
 				array(
 					'user_id'    => $user_id,
 					'course_id'  => $new_course_id,
@@ -1487,6 +1486,7 @@ class MasterStudy {
 					'start_date' => current_datetime()->format( 'Y-m-d H:i:s' ),
 					'end_date'   => '0000-00-00 00:00:00',
 				),
+				array( 'source' => 'import' ),
 				array( '%d', '%d', '%d', '%s', '%s', '%s', '%s' )
 			);
 		}

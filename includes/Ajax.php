@@ -930,8 +930,7 @@ class Ajax {
 					// Get current date with WordPress timezone.
 					$current_date = current_time( 'mysql' ); // Format: Y-m-d H:i:s
 					// Update end_date in the table.
-					$wpdb->update(
-						$table_name,
+					\OhMyLMS\Student\Enrollments::update(
 						array( 'end_date' => $current_date ),
 						array(
 							'user_id'   => $student_id,
@@ -987,13 +986,7 @@ class Ajax {
 
 		$student = new \OhMyLMS\Data\Student( $student_id );
 		if ( $student && $student->maybe_enrolled( $course_id ) ) {
-			global $wpdb;
-			$enrollment_table = $wpdb->prefix . 'ohmylms_user_enrollment';
-			$updated          = $wpdb->update(
-				$enrollment_table,
-				$enrollment_data,
-				$where
-			);
+			$updated = \OhMyLMS\Student\Enrollments::update( $enrollment_data, $where );
 
 			if ( false !== $updated ) {
 				wp_send_json_success(

@@ -81,17 +81,27 @@ ID; decide which rule grading should use before routing it through `CourseStruct
 | `CourseRosterController` | `Analytics\Repository` | none | — | Separated |
 
 `Student\Directory::set_blocked()` still updates `ohmylms_user_membership` itself; the Membership domain has
-no status service for it yet.
+no status service for it yet. Its enrolment update goes through `Student\Enrollments::update()`.
+
+**Enrolment storage (Phase C part 1, [enrolments.md](api/enrolments.md)).** `Student\Enrollments` now owns
+every enrolment write in the plugin (`create`, `update`, `delete`, `resync`): `CourseController`, checkout,
+upsell, order completion, refunds, membership sync and cancellation, free-sale expiry, class sync, exam start,
+course completion, preview reset, blocking, deletion hooks and the three LMS importers. Each writes
+`ohmylms_user_enrollment` as before plus its projection in `ohmylms_enrolments` with the source. Its readers
+(students API, student report, course counts, learning report, session attendees, skill report scope,
+gradebook) read the new table once `EnrolmentMigration` is complete and the legacy table otherwise. The
+remaining direct readers are listed in enrolments.md; they stay correct because legacy storage stays
+authoritative.
 
 ### Courses, structure, learning and sessions
 
 | Controller | Service | Persistence left in controller | Cross-domain access | Status |
 | --- | --- | --- | --- | --- |
-| `CourseController` | `Course\CourseHelper`, `Data\Course` | 8 `$wpdb` (enrolment counts, manual enrolment insert/update/delete, by-email enrolment), 12 meta, 1 option | writes `ohmylms_user_enrollment`, duplicating `Student\Enrollments` | Controller SQL |
-| `LearningController` | `Learning\*` | 6: advisory lock, progress insert, enrolled users | enrolment and progress tables | Controller SQL |
+| `CourseController` | `Course\CourseHelper`, `Data\Course`, `Student\Enrollments` | 12 meta, 1 option | enrolment counts and writes through `Student\Enrollments` | Partial |
+| `LearningController` | `Learning\*`, `Student\Enrollments` | 4: advisory lock, progress insert | progress table; enrolled users through `Student\Enrollments` | Controller SQL (progress) |
 | `ChapterController` | `Data\Chapter` | 2 deletes (`content_relationship`, `user_progress`) | structure and progress tables (`CourseStructure::detach()` exists) | Controller SQL |
 | `AIController` | `Data` | 1 relationship delete, 1 meta | structure table | Controller SQL |
-| `SessionsController` | `Integrations` | 2 `$wpdb` (roster over enrolment + progress), 22 meta | enrolment and progress tables | Partial |
+| `SessionsController` | `Integrations`, `Student\Enrollments` | 22 meta | attendee roster through `Student\Enrollments::course_roster()` | Partial |
 | `SessionController` (legacy `session`, via `ApiHook`) | — | 53 meta, 12 date-format options | — | Legacy |
 | `CourseStructureController` | `Learning\CourseStructure` | 3 term/post meta | — | Partial |
 | `CourseStructureToolsController`, `CourseSettingsController`, `CourseCatalogController`, `CourseOrganizationController`, `ContentHubController`, `AuthoringController`, `LessonAuthoringController`, `LessonController` | `Learning\*`, `Curriculum\*` | none | — | Separated |
@@ -112,7 +122,7 @@ no status service for it yet.
 | `AccountHubRosterController` | `Schools\*` | 9 `$wpdb` (roster, profiles, invitations) | `users`, `usermeta`, `_ohmylms_managed_school` | Controller SQL |
 | `AccountHubUsersController` | `Schools\*` | 2 `$wpdb` (`FOR UPDATE` on `users`), 6 user meta | reads `_ohmylms_banned_student` itself (owner `Student\Directory::is_blocked()`) | Partial |
 | `Schools\Controller` (legacy `school/*`) | `Schools\Service` | 4 `$wpdb`, 2 meta | structure tables | Partial |
-| `SkillReportController` | `Skills`, `Performance`, `Schools` | 3 `$wpdb` | `class_memberships` (Schools), enrolment (Student), `skill_evidence` (Assessment) | Controller SQL |
+| `SkillReportController` | `Skills`, `Performance`, `Schools`, `Student\Enrollments` | 2 `$wpdb` | `class_memberships` (Schools), `skill_evidence` (Assessment); enrolment through `Student\Enrollments` | Controller SQL |
 
 ### Curriculum, syllabus, skills and bundles
 
@@ -160,10 +170,12 @@ gradually; migrations and installers may keep raw SQL.
 
 ## Ordered plan
 
-1. **Enrolment writes in `CourseController`** (manual enrolment, by-email enrolment, unenrol) → extend
-   `Student\Enrollments`. It duplicates logic just moved; suites: courses, students, student report.
-2. **Enrolment and progress reads** in `LearningController`, `SessionsController`, `SkillReportController` →
-   `Student\Enrollments` (enrolled user IDs, progress rows); class membership → a `Schools` reader.
+1. ~~**Enrolment writes in `CourseController`**~~ → `Student\Enrollments` (done with the enrolments table,
+   [enrolments.md](api/enrolments.md)).
+2. **Enrolment and progress reads**: the enrolment reads in `LearningController`, `SessionsController` and
+   `SkillReportController` now use `Student\Enrollments` (done). Left: progress rows (`LearningController`
+   completion insert) and class membership → a `Schools` reader; the direct enrolment readers outside
+   controllers listed in enrolments.md.
 3. **Account Hub** (`AccountHubController` 27, `AccountHubRosterController` 9, `AccountHubUsersController` 2)
    → `Schools` read models for the paged lists; writes stay in `Schools\Service`; the blocked flag via
    `Student\Directory::is_blocked()`. Keep the stale-save `version` checks in the service. Suites: the three

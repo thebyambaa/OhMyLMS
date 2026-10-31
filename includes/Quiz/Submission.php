@@ -121,7 +121,17 @@ final class Submission {
 		$course_id = (int) ohmylms_get_course_by_content_id( $quiz_id, $student_id );
 		if ( $removed && $course_id && (int) ( new Student( $student_id ) )->get_over_all_completion_rate( $course_id ) < 100 ) {
 			// Completing this quiz had also completed the course; take that back with it.
-			$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}ohmylms_user_enrollment SET progress='running', end_date='0000-00-00 00:00:00' WHERE user_id=%d AND course_id=%d AND progress='completed'", $student_id, $course_id ) );
+			\OhMyLMS\Student\Enrollments::update(
+				array(
+					'progress' => 'running',
+					'end_date' => '0000-00-00 00:00:00',
+				),
+				array(
+					'user_id'   => $student_id,
+					'course_id' => $course_id,
+					'progress'  => 'completed',
+				)
+			);
 		}
 	}
 	/**

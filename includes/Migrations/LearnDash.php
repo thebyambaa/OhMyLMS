@@ -738,7 +738,6 @@ class LearnDash {
 	 */
 	private function enroll_student( $student_id, $course_id ) {
 		global $wpdb;
-		$enrollment_table = $wpdb->prefix . 'ohmylms_user_enrollment';
 
 		$enrollment_data = array(
 			'course_id'  => $course_id,
@@ -756,10 +755,7 @@ class LearnDash {
 			);
 
 			if ( ! $existing_record ) {
-				$wpdb->insert(
-					$enrollment_table,
-					$enrollment_data
-				);
+				\OhMyLMS\Student\Enrollments::create( $enrollment_data, array( 'source' => 'import' ) );
 			}
 
 			update_user_meta( $student_id, '_is_ohmylms_student', 'yes' );

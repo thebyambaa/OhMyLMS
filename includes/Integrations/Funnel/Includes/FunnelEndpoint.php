@@ -702,10 +702,10 @@ class FunnelEndpoint {
 				$wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE user_id = %d AND course_id = %d', $enrollment_table, $student_id, $course_id )
 			);
 
+			$origin = \OhMyLMS\Student\EnrolmentMirror::order_origin( $order->get_id() );
 			if ( $existing_record ) {
 				// Update the existing record.
-				$wpdb->update(
-					$enrollment_table,
+				\OhMyLMS\Student\Enrollments::update(
 					array(
 						'order_id'   => $order->get_id(),
 						'status'     => $enrollment_status,
@@ -715,13 +715,11 @@ class FunnelEndpoint {
 					array(
 						'user_id'   => $student_id,
 						'course_id' => $course_id,
-					)
+					),
+					$origin
 				);
 			} else {
-				$wpdb->insert(
-					$enrollment_table,
-					$enrollment_data
-				);
+				\OhMyLMS\Student\Enrollments::create( $enrollment_data, $origin );
 			}
 
 			if ( 'enrolled' === $enrollment_status ) {

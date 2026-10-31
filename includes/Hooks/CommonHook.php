@@ -714,11 +714,7 @@ class CommonHook extends HookHandler {
 		// Ensure course_id is sanitized.
 		$course_id = intval( $course_id );
 		// Delete rows where course_id matches.
-		$deleted = $wpdb->delete(
-			"{$wpdb->prefix}ohmylms_user_enrollment", // Table name.
-			array( 'course_id' => $course_id ),           // Where condition.
-			array( '%d' )                                 // Data type for the condition.
-		);
+		$deleted = \OhMyLMS\Student\Enrollments::delete( array( 'course_id' => $course_id ), array( '%d' ) );
 	}
 
 
@@ -736,11 +732,7 @@ class CommonHook extends HookHandler {
 			$order_id = $parent_order_id;
 		}
 		// Delete rows where order_id matches.
-		$deleted = $wpdb->delete(
-			"{$wpdb->prefix}ohmylms_user_enrollment", // Table name.
-			array( 'order_id' => $order_id ),           // Where condition.
-			array( '%d' )                                 // Data type for the condition.
-		);
+		$deleted = \OhMyLMS\Student\Enrollments::delete( array( 'order_id' => $order_id ), array( '%d' ) );
 		if ( ohmylms_is_pro() ) {
 			// Delete rows where order_id matches.
 			$deleted = $wpdb->delete(
@@ -770,11 +762,7 @@ class CommonHook extends HookHandler {
 		// Check if an order_id was found.
 		if ( $order_id ) {
 			// Delete rows from ohmylms_user_enrollment where order_id matches.
-			$wpdb->delete(
-				"{$wpdb->prefix}ohmylms_user_enrollment", // Table name.
-				array( 'order_id' => $order_id ),       // Where condition.
-				array( '%d' )                           // Data type for the condition.
-			);
+			\OhMyLMS\Student\Enrollments::delete( array( 'order_id' => (int) $order_id ), array( '%d' ) );
 		}
 		if ( ohmylms_is_pro() ) {
 			// Delete rows where course_id matches.
@@ -803,11 +791,7 @@ class CommonHook extends HookHandler {
 			);
 		}
 
-		$wpdb->delete(
-			"{$wpdb->prefix}ohmylms_user_enrollment", // Table name.
-			array( 'user_id' => $id ),       // Where condition.
-			array( '%d' )                           // Data type for the condition.
-		);
+		\OhMyLMS\Student\Enrollments::delete( array( 'user_id' => (int) $id ), array( '%d' ) );
 	}
 
 	/**
@@ -1414,14 +1398,12 @@ class CommonHook extends HookHandler {
 	 */
 	public function after_delete_wp_user( $user_id ) {
 		global $wpdb;
-		$table_name = $wpdb->prefix . 'ohmylms_user_enrollment';
-		$wpdb->update(
-			$table_name,
+		\OhMyLMS\Student\Enrollments::update(
 			array(
 				'status' => 'cancelled',
 			),
 			array(
-				'user_id' => $user_id,
+				'user_id' => (int) $user_id,
 			)
 		);
 		if ( ohmylms_is_pro() ) {

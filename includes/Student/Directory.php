@@ -165,17 +165,16 @@ final class Directory {
 			if ( $table !== $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) ) ) {
 				continue;
 			}
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- No API for enrolment rows.
-			$result = $wpdb->update(
-				$table,
-				array( 'status' => $to ),
-				array(
-					'user_id' => $user_id,
-					'status'  => $from,
-				),
-				array( '%s' ),
-				array( '%d', '%s' )
-			); // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment
+			$where = array(
+				'user_id' => $user_id,
+				'status'  => $from,
+			);
+			if ( $tables[0] === $table ) {
+				$result = Enrollments::update( array( 'status' => $to ), $where, null, array( '%s' ), array( '%d', '%s' ) );
+			} else {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- No API for membership rows.
+				$result = $wpdb->update( $table, array( 'status' => $to ), $where, array( '%s' ), array( '%d', '%s' ) );
+			}
 			if ( false === $result ) {
 				return new WP_Error( 'ohmylms_student_update_failed', __( 'The student could not be updated.', 'ohmylms' ), array( 'status' => 500 ) );
 			}

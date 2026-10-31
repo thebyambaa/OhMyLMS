@@ -362,20 +362,18 @@ class MembershipStore extends DataStore {
 	public function cancel_enrollment( &$membership, $student_id, $order_id ) {
 		global $wpdb;
 		$user_id          = $student_id;
-		$enrollment_table = $wpdb->prefix . 'ohmylms_user_enrollment';
 		$membership_table = $wpdb->prefix . 'ohmylms_user_membership';
 		$products         = $membership->get_products();
 
 		if ( ! empty( $products ) ) {
 			foreach ( $products as $product ) {
-				$wpdb->update(
-					$enrollment_table,
+				\OhMyLMS\Student\Enrollments::update(
 					array(
 						'status' => 'cancelled',
 					),
 					array(
-						'user_id'  => $user_id,
-						'order_id' => $order_id,
+						'user_id'  => (int) $user_id,
+						'order_id' => (int) $order_id,
 					)
 				);
 			}

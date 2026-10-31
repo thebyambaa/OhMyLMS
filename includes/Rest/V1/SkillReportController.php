@@ -22,6 +22,7 @@ use OhMyLMS\Skills\Recommendations;
 use OhMyLMS\Skills\ReportData;
 use OhMyLMS\Skills\Taxonomy;
 use OhMyLMS\Skills\UnitReport;
+use OhMyLMS\Student\Enrollments;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Server;
@@ -204,7 +205,7 @@ class SkillReportController extends RestController {
 			return new WP_Error( 'ohmylms_scope_required', __( 'Choose a course or class.', 'ohmylms' ), array( 'status' => 400 ) ); }
 		if ( ! current_user_can( 'edit_post', $course ) ) {
 			return new WP_Error( 'ohmylms_forbidden', __( 'You cannot view this course.', 'ohmylms' ), array( 'status' => rest_authorization_required_code() ) ); }
-		return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT user_id FROM %i WHERE course_id=%d AND status=\'enrolled\'', $wpdb->prefix . 'ohmylms_user_enrollment', $course ) ) );
+		return Enrollments::course_user_ids( $course, 0, 0, true );
 	}
 
 	/**

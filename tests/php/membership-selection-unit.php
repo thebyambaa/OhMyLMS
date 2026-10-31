@@ -59,6 +59,8 @@ class SelectionDatabase {
         ['id' => 5, 'user_id' => 7, 'order_id' => 71, 'membership_id' => 101, 'course_id' => 4, 'status' => 'enrolled'],
     ];
     public function prepare($sql, ...$args) { return [$sql, $args]; }
+    public function esc_like($text) { return $text; }
+    public function get_var($query) { return null; } // No ohmylms_enrolments table: the service writes legacy rows only.
     public function get_results($query, $format) {
         if (str_contains($query[0], 'ohmylms_user_membership') || in_array('wp_ohmylms_user_membership', $query[1], true)) return $this->members;
         return array_values(array_filter($this->rows, fn($row) => $row['membership_id'] === 100));

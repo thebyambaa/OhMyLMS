@@ -966,8 +966,7 @@ class StudentStore extends DataStore {
 			$table_name  = $wpdb->prefix . 'ohmylms_user_enrollment';
 			$enroll_data = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE user_id = %d AND course_id = %d', $table_name, $student_id, $course_id ), ARRAY_A );
 			if ( 'enrolled' === $enroll_data['status'] && 'running' === $enroll_data['progress'] ) {
-				$wpdb->update(
-					$table_name,
+				\OhMyLMS\Student\Enrollments::update(
 					array(
 						'progress' => 'completed',
 						'end_date' => current_time( 'mysql' ),
@@ -1031,11 +1030,8 @@ class StudentStore extends DataStore {
 	 * @param mixed $order_id Order identifier.
 	 */
 	public function delete_enrollment( $student_id, $order_id ) {
-		global $wpdb;
-		$table_name = $wpdb->prefix . 'ohmylms_user_enrollment';
 		// Delete the row.
-		$delete_result = $wpdb->delete(
-			$table_name,
+		$delete_result = \OhMyLMS\Student\Enrollments::delete(
 			array(
 				'user_id'  => $student_id,
 				'order_id' => $order_id,
@@ -1059,17 +1055,14 @@ class StudentStore extends DataStore {
 	 * @param mixed $new_status New status.
 	 */
 	public function update_enrollment_status( $student_id, $order_id, $new_status ) {
-		global $wpdb;
-		$table_name = $wpdb->prefix . 'ohmylms_user_enrollment';
-
 		// Update the status.
-		$update_result = $wpdb->update(
-			$table_name,
+		$update_result = \OhMyLMS\Student\Enrollments::update(
 			array( 'status' => $new_status ), // Data to update.
 			array(
 				'user_id'  => $student_id,
 				'order_id' => $order_id,
 			), // WHERE conditions.
+			null,
 			array( '%s' ), // Format for updated data.
 			array( '%d', '%d' ) // Format for WHERE conditions.
 		);

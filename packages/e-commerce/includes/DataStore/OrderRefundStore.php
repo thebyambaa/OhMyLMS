@@ -52,14 +52,12 @@ class OrderRefundStore extends OrderStore {
 			$order_id = $parent_order_id;
 		}
 
-		$table_name = $wpdb->prefix . 'ohmylms_user_enrollment';
-		$wpdb->update(
-			$table_name,
+		\OhMyLMS\Student\Enrollments::update(
 			array(
 				'status' => 'cancelled',
 			),
 			array(
-				'order_id' => $order_id,
+				'order_id' => (int) $order_id,
 			)
 		);
 		if ( ohmylms_is_pro() ) {

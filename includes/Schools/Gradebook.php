@@ -6,6 +6,8 @@
  */
 namespace OhMyLMS\Schools;
 
+use OhMyLMS\Student\Enrollments;
+
 defined( 'ABSPATH' ) || exit;
 
 /** Course gradebooks group real enrollments without creating shared user accounts. */
@@ -124,16 +126,23 @@ final class Gradebook {
 					$existing = $wpdb->get_row( $wpdb->prepare( 'SELECT id,status FROM %i WHERE course_id=%d AND user_id=%d ORDER BY (status=\'enrolled\') DESC,id DESC LIMIT 1', $enrollments, $course, $user ), ARRAY_A );
 					// A class sync must never restore a blocked/cancelled enrollment.
 					if ( ! $existing && $enroll && get_user_meta( $user, '_ohmylms_banned_student', true ) !== 'yes' ) {
-						Service::insert(
-							'user_enrollment',
+						$created = Enrollments::create(
 							array(
 								'course_id'  => $course,
 								'user_id'    => $user,
 								'status'     => 'enrolled',
 								'progress'   => 'running',
 								'start_date' => current_time( 'mysql' ),
+							),
+							array(
+								'source'      => 'roster',
+								'source_type' => 'class',
+								'source_ref'  => $class,
+								'class_id'    => $class,
 							)
 						);
+						if ( false === $created ) {
+							throw new \RuntimeException( 'Unable to save this record. It may already exist.', 409 ); }
 						$new[]    = $user;
 						$existing = array( 'status' => 'enrolled' );
 					}
@@ -238,8 +247,7 @@ final class Gradebook {
 	public static function read( $course ) {
 		global $wpdb;
 		$items = self::items( $course );
-		$e     = Schema::table( 'user_enrollment' );
-		$users = $wpdb->get_results( $wpdb->prepare( 'SELECT DISTINCT u.ID AS id,u.display_name AS name,u.user_email AS email FROM %i e JOIN %i u ON u.ID=e.user_id WHERE e.course_id=%d AND e.status IN (\'enrolled\',\'banned\') ORDER BY u.display_name,u.ID', $e, $wpdb->users, $course ), ARRAY_A );
+		$users = Enrollments::listed_students( $course );
 		$q     = Schema::table( 'quiz_attempts' );
 		$a     = Schema::table( 'quiz_attempts_answers' );
 		// quiz_attempts.total stores earned points, not the maximum possible points.
@@ -365,8 +373,7 @@ final class Gradebook {
 		global $wpdb;
 		$user    = absint( $r['user_id'] );
 		$content = absint( $r['content_id'] );
-		$e       = Schema::table( 'user_enrollment' );
-		Access::require_access( $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE course_id=%d AND user_id=%d AND status IN (\'enrolled\',\'banned\')', $e, $course, $user ) ) );
+		Access::require_access( Enrollments::is_listed( $user, $course ) );
 		$items = array_values(
 			array_filter(
 				self::items( $course ),

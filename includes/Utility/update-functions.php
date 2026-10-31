@@ -151,6 +151,27 @@ function ohmylms_update_1221_remove_admin_assistant() {
 }
 
 /**
+ * Create the `ohmylms_enrolments` table (docs/api/enrolments.md). Down: `EnrolmentSchema::uninstall()`.
+ *
+ * @return void
+ * @since 1.2.21
+ */
+function ohmylms_update_1221_create_enrolments_table() {
+	\OhMyLMS\Student\EnrolmentSchema::install();
+}
+
+/**
+ * Schedule the batched fill of `ohmylms_enrolments` from `ohmylms_user_enrollment`. Readers switch to the
+ * new table once it completes; down: `EnrolmentMigration::revert()`.
+ *
+ * @return void
+ * @since 1.2.21
+ */
+function ohmylms_update_1221_schedule_enrolment_migration() {
+	\OhMyLMS\Student\EnrolmentMigration::start();
+}
+
+/**
  * Update database version to 1.2.21
  *
  * @return void

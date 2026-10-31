@@ -115,16 +115,20 @@ final class Player {
 				}
 				if ( ! $existing ) {
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Create only this exam's managed enrollment under the exam lock.
-					if ( ! $wpdb->insert(
-						$table,
+					if ( ! \OhMyLMS\Student\Enrollments::create(
 						array(
 							'user_id'    => $student,
 							'course_id'  => $course,
 							'status'     => 'enrolled',
 							'progress'   => 'running',
 							'start_date' => current_time( 'mysql' ),
+						),
+						array(
+							'source'      => 'self',
+							'source_type' => 'exam',
+							'source_ref'  => (int) $id,
 						)
-					) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Standalone exam enrollment, scoped to the managed course.
+					) ) {
 						return new \WP_Error( 'exam_storage', __( 'Could not start the exam. Retry.', 'ohmylms' ), array( 'status' => 500 ) );
 					}
 					update_user_meta( $student, '_is_ohmylms_student', 'yes' );

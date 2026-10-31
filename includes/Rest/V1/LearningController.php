@@ -9,6 +9,7 @@ use OhMyLMS\Learning\Schema;
 use OhMyLMS\Learning\LearningPath;
 use OhMyLMS\Skills\Evidence;
 use OhMyLMS\Skills\Taxonomy;
+use OhMyLMS\Student\Enrollments;
 use OhMyLMS\QuestionBank\AccessPolicy;
 use WP_REST_Server;
 
@@ -312,16 +313,14 @@ class LearningController extends RestController {
 	 * @param mixed $request REST request.
 	 */
 	public function report( $request ) {
-		global $wpdb;
 		$course = (int) $request['id'];
 		$page   = max( 1, (int) $request['page'] );
-		$rows   = $wpdb->get_results( $wpdb->prepare( 'SELECT user_id FROM %i WHERE course_id=%d AND status=\'enrolled\' ORDER BY id LIMIT 25 OFFSET %d', $wpdb->prefix . 'ohmylms_user_enrollment', $course, ( $page - 1 ) * 25 ), ARRAY_A );
 		$result = array();
-		foreach ( $rows as $row ) {
-			$state    = CompletionPolicy::status( $row['user_id'], $course );
-			$user     = get_userdata( $row['user_id'] );
+		foreach ( Enrollments::course_user_ids( $course, 25, ( $page - 1 ) * 25 ) as $user_id ) {
+			$state    = CompletionPolicy::status( $user_id, $course );
+			$user     = get_userdata( $user_id );
 			$result[] = array(
-				'student_id' => (int) $row['user_id'],
+				'student_id' => $user_id,
 				'name'       => $user ? $user->display_name : '',
 				'progress'   => is_wp_error( $state ) ? null : $state,
 			);
@@ -330,7 +329,7 @@ class LearningController extends RestController {
 			array(
 				'students' => $result,
 				'page'     => $page,
-				'total'    => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE course_id=%d AND status=\'enrolled\'', $wpdb->prefix . 'ohmylms_user_enrollment', $course ) ),
+				'total'    => Enrollments::count_in_course( $course ),
 			)
 		);
 	}

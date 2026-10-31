@@ -6,6 +6,8 @@
  */
 namespace OhMyLMS\Membership;
 
+use OhMyLMS\Student\Enrollments;
+
 defined( 'ABSPATH' ) || exit;
 
 /** Resolves live membership rules and keeps membership-owned enrollments in sync. */
@@ -194,7 +196,17 @@ final class CourseSelection {
 		// Adopt old checkout rows only when their order identifies this membership.
 		foreach ( $members as $member ) {
 			if ( (int) $member['order_id'] > 0 ) {
-				$wpdb->query( $wpdb->prepare( 'UPDATE %i SET membership_id=%d WHERE user_id=%d AND order_id=%d AND (membership_id IS NULL OR membership_id=0)', $table, $membership_id, $member['user_id'], $member['order_id'] ) );
+				$adopted = $wpdb->query( $wpdb->prepare( 'UPDATE %i SET membership_id=%d WHERE user_id=%d AND order_id=%d AND (membership_id IS NULL OR membership_id=0)', $table, $membership_id, $member['user_id'], $member['order_id'] ) );
+				if ( $adopted ) {
+					Enrollments::resync(
+						array(
+							'user_id'       => (int) $member['user_id'],
+							'order_id'      => (int) $member['order_id'],
+							'membership_id' => (int) $membership_id,
+						),
+						'detect'
+					);
+				}
 			}
 		}
 		$rows    = $wpdb->get_results( $wpdb->prepare( 'SELECT id,user_id,order_id,course_id,status FROM %i WHERE membership_id=%d', $table, $membership_id ), ARRAY_A );
@@ -212,20 +224,19 @@ final class CourseSelection {
 			$status = isset( $desired[ $key ] ) ? $desired[ $key ][0]['status'] : 'cancelled';
 			$order  = isset( $desired[ $key ] ) ? (int) $desired[ $key ][0]['order_id'] : (int) $row['order_id'];
 			if ( $row['status'] !== $status || (int) $row['order_id'] !== $order ) {
-				$wpdb->update(
-					$table,
+				Enrollments::update(
 					array(
 						'status'   => $status,
 						'order_id' => $order,
 					),
-					array( 'id' => $row['id'] )
+					array( 'id' => (int) $row['id'] ),
+					'detect'
 				);
 			}
 			unset( $desired[ $key ] );
 		}
 		foreach ( $desired as [$member, $course] ) {
-			$wpdb->insert(
-				$table,
+			Enrollments::create(
 				array(
 					'user_id'       => (int) $member['user_id'],
 					'order_id'      => (int) $member['order_id'],
@@ -234,7 +245,8 @@ final class CourseSelection {
 					'status'        => $member['status'],
 					'progress'      => 'running',
 					'start_date'    => current_time( 'mysql' ),
-				)
+				),
+				'detect'
 			);
 		}
 	}

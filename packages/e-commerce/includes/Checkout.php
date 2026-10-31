@@ -1362,10 +1362,10 @@ class Checkout {
 						)
 					);
 
+					$origin = \OhMyLMS\Student\EnrolmentMirror::order_origin( $order_id, (int) $enrollment_data['membership_id'] );
 					if ( $existing_record ) {
 						// Update the existing record.
-						$wpdb->update(
-							$enrollment_table,
+						\OhMyLMS\Student\Enrollments::update(
 							array(
 								'order_id'      => $order_id,
 								'membership_id' => $enrollment_data['membership_id'],
@@ -1373,13 +1373,11 @@ class Checkout {
 								'progress'      => 'running',
 								'start_date'    => current_time( 'mysql' ),
 							),
-							$existing_where
+							$existing_where,
+							$origin
 						);
 					} else {
-						$wpdb->insert(
-							$enrollment_table,
-							$enrollment_data
-						);
+						\OhMyLMS\Student\Enrollments::create( $enrollment_data, $origin );
 					}
 
 					if ( 'enrolled' === $enrollment_status ) {

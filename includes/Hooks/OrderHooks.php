@@ -142,13 +142,13 @@ class OrderHooks extends HookHandler {
 		$enroll_data = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE order_id = %d AND status = %s', $table_name, $order->get_id(), 'pending' ), ARRAY_A );
 		if ( ! empty( $enroll_data ) ) {
 			foreach ( $enroll_data as $enroll ) {
-				$rows = $wpdb->update(
-					$table_name,
+				$rows = \OhMyLMS\Student\Enrollments::update(
 					array( 'status' => 'enrolled' ),
 					array(
-						'id'     => $enroll['id'],
+						'id'     => (int) $enroll['id'],
 						'status' => 'pending',
 					),
+					null,
 					array( '%s' ),
 					array( '%d', '%s' )
 				);

@@ -7,6 +7,7 @@
 
 namespace OhMyLMS\Membership;
 
+use OhMyLMS\Student\Enrollments;
 use OhMyLMS\Student\Hub;
 
 defined( 'ABSPATH' ) || exit;
@@ -222,6 +223,15 @@ final class FreeSale {
 			$revoked = $wpdb->query( $wpdb->prepare( "UPDATE %i SET status='cancelled' WHERE user_id=%d AND membership_id=%d AND order_id=0 AND status='enrolled' AND NOT EXISTS (SELECT 1 FROM %i WHERE user_id=%d AND membership_id=%d AND status='enrolled')", $wpdb->prefix . 'ohmylms_user_enrollment', $user_id, $grant['plan_id'], $wpdb->prefix . 'ohmylms_user_membership', $user_id, $grant['plan_id'] ) );
 			if ( false === $revoked ) {
 				continue;
+			}
+			if ( $revoked ) {
+				Enrollments::resync(
+					array(
+						'user_id'       => (int) $user_id,
+						'membership_id' => (int) $grant['plan_id'],
+						'order_id'      => 0,
+					)
+				);
 			}
 			unset( $remaining[ $row_id ] );
 		}

@@ -13,6 +13,7 @@ use DateTimeZone;
 use Exception;
 use OhMyLMS\Abstracts\RestController;
 use OhMyLMS\Integrations\IntegrationSettings;
+use OhMyLMS\Student\Enrollments;
 use WP_Error;
 use WP_Post;
 use WP_Query;
@@ -716,7 +717,15 @@ class SessionsController extends RestController {
 		}
 
 		update_post_meta( $id, $flag, 'no' );
-		/** This action is documented in includes/Rest/V1/SessionController.php. */
+		/**
+		 * Asks a provider integration to create or update the meeting of a session
+		 * (`ohmylms_zoom_session_created`, `ohmylms_googlemeet_session_updated`, ...). The
+		 * integration sets `_is_{provider}_session_created` to `yes` when the meeting exists.
+		 *
+		 * @param \WP_Post         $post  The session.
+		 * @param \WP_REST_Request $inner Meeting fields: id, topic, agenda, platform, date, endDate,
+		 *                                timezone, duration, password, type and the meeting options.
+		 */
 		do_action( 'ohmylms_' . $provider . '_session_' . $event, get_post( $id ), $inner );
 		return 'yes' === get_post_meta( $id, $flag, true );
 	}
@@ -860,13 +869,22 @@ class SessionsController extends RestController {
 		if ( $previous['provider'] ) {
 			$inner = new WP_REST_Request( 'DELETE', '/' . $this->namespace . '/session/' . $post->ID );
 			$inner->set_param( 'platform', $previous['provider'] );
-			/** This action is documented in includes/Rest/V1/SessionController.php. */
+			/**
+			 * Asks a provider integration to delete the meeting of a session being deleted.
+			 *
+			 * @param int              $id    Session ID.
+			 * @param \WP_REST_Request $inner Carries `platform`.
+			 */
 			do_action( 'ohmylms_' . $previous['provider'] . '_session_deleted', $post->ID, $inner );
 		}
 		if ( ! wp_delete_post( $post->ID, true ) ) {
 			return new WP_Error( 'ohmylms_session_delete_failed', __( 'The session could not be deleted.', 'ohmylms' ), array( 'status' => 500 ) );
 		}
-		/** This action is documented in includes/Rest/V1/SessionController.php. */
+		/**
+		 * Fires after a session was deleted through the REST API.
+		 *
+		 * @param int $id Session ID.
+		 */
 		do_action( 'ohmylms_rest_delete_session', $post->ID );
 		return rest_ensure_response(
 			array(
@@ -883,8 +901,6 @@ class SessionsController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_attendees( $request ) {
-		global $wpdb;
-
 		$post = $this->find( $request['id'] );
 		if ( is_wp_error( $post ) ) {
 			return $post;
@@ -896,15 +912,12 @@ class SessionsController extends RestController {
 		$items    = array();
 		$total    = 0;
 		if ( $course ) {
-			$table = $wpdb->prefix . 'ohmylms_user_enrollment';
-			// phpcs:disable WordPress.DB.DirectDatabaseQuery -- Enrolment and progress tables have no API.
-			$total = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i e INNER JOIN %i u ON u.ID = e.user_id WHERE e.course_id = %d AND e.status IN ('enrolled','banned')", $table, $wpdb->users, $course ) );
+			$roster = Enrollments::course_roster( $course, $post->ID, $per_page, ( $page - 1 ) * $per_page );
+			$total  = $roster['total'];
 			if ( $total > 0 && $page > (int) ceil( $total / $per_page ) ) {
 				return new WP_Error( 'ohmylms_session_invalid_page', __( 'The page number requested is larger than the number of pages available.', 'ohmylms' ), array( 'status' => 400 ) );
 			}
-			$rows = (array) $wpdb->get_results( $wpdb->prepare( "SELECT e.user_id, e.status, u.display_name, EXISTS ( SELECT 1 FROM %i p WHERE p.enrollment_id = e.id AND p.content_id = %d AND p.status = 'completed' ) AS attended FROM %i e INNER JOIN %i u ON u.ID = e.user_id WHERE e.course_id = %d AND e.status IN ('enrolled','banned') ORDER BY u.display_name ASC, e.user_id ASC LIMIT %d OFFSET %d", $wpdb->prefix . 'ohmylms_user_progress', $post->ID, $table, $wpdb->users, $course, $per_page, ( $page - 1 ) * $per_page ), ARRAY_A );
-			// phpcs:enable WordPress.DB.DirectDatabaseQuery
-			foreach ( $rows as $row ) {
+			foreach ( $roster['rows'] as $row ) {
 				$items[] = array(
 					'user_id'   => (int) $row['user_id'],
 					'name'      => (string) $row['display_name'],
