@@ -13,6 +13,9 @@ namespace OhMyLMS\Data {
         public function get_over_all_completion_rate($course_id) { return $GLOBALS['course_rate']; }
     }
 }
+namespace OhMyLMS\Student {
+    final class Enrollments { public static function update($data, $where) { $GLOBALS['enrolment_updates'][] = [$data, $where]; return 1; } }
+}
 namespace OhMyLMS\Learning {
     final class CourseProgram { public static function managed($student_id, $course_id) { return false; } }
 }
@@ -69,7 +72,7 @@ namespace {
 
     function check($value, $message) { if (!$value) { throw new \RuntimeException($message); } }
     function reset_state() {
-        foreach (['actions', 'completed', 'transients', 'stale_attempts', 'filters'] as $name) { $GLOBALS[$name] = []; }
+        foreach (['actions', 'completed', 'transients', 'stale_attempts', 'filters', 'enrolment_updates'] as $name) { $GLOBALS[$name] = []; }
         $GLOBALS['removed'] = 0; $GLOBALS['course_rate'] = 0;
         $w = $GLOBALS['wpdb']; $w->deleted = []; $w->inserted = []; $w->queries = []; $w->selects = [];
     }
@@ -147,10 +150,10 @@ namespace {
     check(strpos($wpdb->selects[0], "status<>'in-progress'") !== false, 'Cleanup could erase an attempt in progress');
     check(erased_attempts() === [11, 12], 'Exactly the old attempts should be erased, got ' . json_encode(erased_attempts()));
     check(count(array_filter($wpdb->queries, fn($q) => str_contains($q, 'DELETE p FROM') && str_contains($q, "p.status='completed'"))) === 1, 'The old completion was not removed');
-    check(count(array_filter($wpdb->queries, fn($q) => str_contains($q, "SET progress='running'"))) === 1, 'The course was left completed after its quiz was cleared');
+    check(count(array_filter($GLOBALS['enrolment_updates'], fn($u) => 'running' === $u[0]['progress'] && 'completed' === $u[1]['progress'] && COURSE === $u[1]['course_id'])) === 1, 'The course was left completed after its quiz was cleared');
     reset_state(); $stale_attempts = ['11']; $removed = 0;
     Submission::clear_preview_record(QUIZ, AUTHOR_ENROLLED);
-    check(count(array_filter($wpdb->queries, fn($q) => str_contains($q, "SET progress='running'"))) === 0, 'Course reopened although no completion was removed');
+    check($GLOBALS['enrolment_updates'] === [], 'Course reopened although no completion was removed');
     foreach ([ADMIN, EDITOR, STUDENT_ENROLLED, 0] as $other) {
         reset_state(); $stale_attempts = ['11']; $removed = 1;
         Submission::clear_preview_record(QUIZ, $other);

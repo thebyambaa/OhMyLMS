@@ -517,6 +517,60 @@ try {
 		'ohmylms_rest_subscription_action fired once per change: ' . wp_json_encode( $fired['rest'] )
 	);
 
+	// Learner-side cancel (admin-ajax `ohmylms_cancel_membership`): the subscription decides whose it is.
+	if ( ohmylms_is_pro() ) {
+		$cancel_ajax = static function ( $who, array $post ) {
+			wp_set_current_user( $who );
+			$_POST    = $post + array( 'nonce' => wp_create_nonce( 'cancel_membership_nonce' ) );
+			$_REQUEST = $_POST;
+			$die      = static function () {
+				return static function () {
+					throw new RuntimeException( 'ajax-done' );
+				};
+			};
+			add_filter( 'wp_doing_ajax', '__return_true' );
+			add_filter( 'wp_die_ajax_handler', $die );
+			ob_start();
+			try {
+				\OhMyLMS\Ajax::cancel_membership();
+			} catch ( RuntimeException $done ) {
+				if ( 'ajax-done' !== $done->getMessage() ) {
+					throw $done;
+				}
+			} finally {
+				$body = (string) ob_get_clean();
+				remove_filter( 'wp_doing_ajax', '__return_true' );
+				remove_filter( 'wp_die_ajax_handler', $die );
+				$_POST    = array();
+				$_REQUEST = array();
+			}
+			return json_decode( $body, true );
+		};
+		$victim   = make_subscription( $customer, $plan, 'active' );
+		$snapshot = state_of( $victim );
+		$forged   = $cancel_ajax(
+			$users['sub'],
+			array(
+				'subscription_id' => $victim,
+				'membership_id'   => $plan,
+				'order_id'        => (int) get_post_meta( $victim, '_original_order_id', true ),
+				'student_id'      => $customer,
+			)
+		);
+		ok( is_array( $forged ) && false === $forged['success'], 'another learner cannot cancel the subscription: ' . wp_json_encode( $forged ) );
+		ok( state_of( $victim ) === $snapshot && 'active' === status_of( $victim ), 'forged cancel changed nothing' );
+
+		$own = $cancel_ajax(
+			$customer,
+			array(
+				'subscription_id' => $victim,
+				'student_id'      => $users['sub'],
+			)
+		);
+		ok( is_array( $own ) && true === $own['success'], 'the owner can cancel: ' . wp_json_encode( $own ) );
+		ok( 'cancelled' === status_of( $victim ), 'owner cancel stored' );
+	}
+
 	// Schema.
 	$schema = rest_do_request( new WP_REST_Request( 'OPTIONS', $base ) )->get_data()['schema'];
 	ok( 'http://json-schema.org/draft-04/schema#' === $schema['$schema'] && 'subscription' === $schema['title'], 'schema header' );

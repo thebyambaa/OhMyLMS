@@ -1293,18 +1293,30 @@ class Ajax {
 			wp_send_json_error( array( 'message' => __( 'This feature is only available in OhMyLMS.', 'ohmylms' ) ) );
 		}
 
+		$current_user_id = get_current_user_id();
 		$subscription_id = absint( $_POST['subscription_id'] ?? 0 );
-		$membership_id   = absint( $_POST['membership_id'] ?? 0 );
-		$order_id        = absint( $_POST['order_id'] ?? 0 );
-		$subscription    = ohmylms_ecommerce_get_subscription( $subscription_id );
-		$membership      = ohmylms_get_membership( $membership_id );
-		$student_id      = absint( $_POST['student_id'] ?? 0 );
+		$subscription    = $current_user_id && $subscription_id ? ohmylms_ecommerce_get_subscription( $subscription_id ) : null;
+		// The student, membership and order come from the subscription record, never from the request.
+		$student_id    = $subscription ? absint( $subscription->get_student_id() ) : 0;
+		$membership_id = $subscription ? absint( $subscription->get_membership_id() ) : 0;
+		$order_id      = $subscription ? absint( $subscription->get_original_order_id() ) : 0;
+		$posted_order  = absint( $_POST['order_id'] ?? 0 );
+		if ( $posted_order && $subscription_id === absint( get_post_meta( $posted_order, '_subscription_id', true ) ) ) {
+			$order_id = $posted_order;
+		}
+		if ( ! $student_id || ( $student_id !== $current_user_id && ! current_user_can( 'manage_options' ) ) ) {
+			wp_send_json_error( array( 'message' => __( 'You cannot cancel this membership.', 'ohmylms' ) ), 403 );
+		}
+		$membership = ohmylms_get_membership( $membership_id );
+		if ( ! $membership ) {
+			wp_send_json_error( array( 'message' => __( 'Membership not found.', 'ohmylms' ) ), 404 );
+		}
 		$membership->cancel_enrollment( $student_id, $order_id );
 		$subscription->set_status( 'cancelled' );
 		$subscription->set_schedule_next_payment_date( '' );
 		$subscription->set_schedule_end_date( '' );
 		$subscription->save();
-		$user_id = $student_id ? absint( $student_id ) : get_current_user_id();
+		$user_id = $current_user_id;
 		if ( $user_id ) {
 			$user = get_user_by( 'id', $user_id );
 			if ( $user && $user->exists() ) {
