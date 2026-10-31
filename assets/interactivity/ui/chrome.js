@@ -419,18 +419,22 @@ export function createChrome( api ) {
 				event.preventDefault();
 				dismissCurrent();
 			} ),
-			dismissToastKey: withSyncEvent( ( event ) => {
-				if ( toggleKey( event.key ) ) {
-					event.preventDefault();
-					dismissCurrent();
+			dismissToastKey: withSyncEvent(
+				( /** @type {KeyboardEvent} */ event ) => {
+					if ( toggleKey( event.key ) ) {
+						event.preventDefault();
+						dismissCurrent();
+					}
 				}
-			} ),
-			toastKeydown: withSyncEvent( ( event ) => {
-				if ( 'Escape' === event.key ) {
-					event.preventDefault();
-					dismissCurrent();
+			),
+			toastKeydown: withSyncEvent(
+				( /** @type {KeyboardEvent} */ event ) => {
+					if ( 'Escape' === event.key ) {
+						event.preventDefault();
+						dismissCurrent();
+					}
 				}
-			} ),
+			),
 			pauseToast( event ) {
 				if (
 					'focusin' === event.type &&
@@ -463,20 +467,25 @@ export function createChrome( api ) {
 					open: context.open,
 				} );
 			} ),
-			dropdownKeydown: withSyncEvent( ( event ) => {
-				const context = getContext();
-				const intent = dropdownKey( event.key, context.open );
-				if ( ! intent || 'close' === intent ) {
-					return;
+			dropdownKeydown: withSyncEvent(
+				( /** @type {KeyboardEvent} */ event ) => {
+					const context = getContext();
+					const intent = dropdownKey( event.key, context.open );
+					if ( ! intent || 'close' === intent ) {
+						return;
+					}
+					event.preventDefault();
+					const trigger = getElement().ref;
+					context.open =
+						'open-first' === intent ? true : ! context.open;
+					emit( trigger, 'dropdown-changed', { open: context.open } );
+					if ( 'open-first' === intent ) {
+						frame( () =>
+							focusable( menuOf( trigger ) )[ 0 ]?.focus()
+						);
+					}
 				}
-				event.preventDefault();
-				const trigger = getElement().ref;
-				context.open = 'open-first' === intent ? true : ! context.open;
-				emit( trigger, 'dropdown-changed', { open: context.open } );
-				if ( 'open-first' === intent ) {
-					frame( () => focusable( menuOf( trigger ) )[ 0 ]?.focus() );
-				}
-			} ),
+			),
 			dropdownOutside( event ) {
 				const context = getContext();
 				if (
@@ -494,7 +503,9 @@ export function createChrome( api ) {
 				context.open = false;
 				const root = getElement().ref;
 				if ( root.contains( activeElement( root ) ) ) {
-					root.querySelector( '[aria-expanded]' )?.focus();
+					/** @type {HTMLElement|null} */ (
+						root.querySelector( '[aria-expanded]' )
+					)?.focus();
 				}
 			},
 			dropdownFocusout( event ) {
@@ -518,20 +529,22 @@ export function createChrome( api ) {
 					toggle
 				);
 			} ),
-			drawerKey: withSyncEvent( ( event ) => {
-				if ( ! toggleKey( event.key ) ) {
-					return;
+			drawerKey: withSyncEvent(
+				( /** @type {KeyboardEvent} */ event ) => {
+					if ( ! toggleKey( event.key ) ) {
+						return;
+					}
+					event.preventDefault();
+					const context = getContext();
+					const toggle = getElement().ref;
+					setDrawer(
+						context,
+						drawerRoot( toggle ),
+						! context.drawerOpen,
+						toggle
+					);
 				}
-				event.preventDefault();
-				const context = getContext();
-				const toggle = getElement().ref;
-				setDrawer(
-					context,
-					drawerRoot( toggle ),
-					! context.drawerOpen,
-					toggle
-				);
-			} ),
+			),
 			drawerOutside( event ) {
 				const context = getContext();
 				if (
@@ -604,89 +617,108 @@ export function installChrome( {
 } ) {
 	const doc = win.document;
 	let legacyCount = 0;
-	win.addEventListener( 'ohmylms:toast', ( event ) => {
-		if ( event.defaultPrevented || ! event.detail ) {
-			return;
-		}
-		event.detail.accepted = true;
-		chrome.toasts.push(
-			toastItem(
-				event.detail,
-				{},
-				`ohmylms-toast-event-${ ++legacyCount }`
-			)
-		);
-	} );
-	win.addEventListener( 'ohmylms:toast-dismiss', ( event ) =>
-		chrome.toasts.dismiss( event.detail?.id || '' )
-	);
-
-	doc.addEventListener( 'click', ( event ) => {
-		const link = event.target?.closest?.(
-			'a[href*="ohmylms_resend_verification"]'
-		);
-		if (
-			! link ||
-			event.defaultPrevented ||
-			event.button > 0 ||
-			event.metaKey ||
-			event.ctrlKey ||
-			event.shiftKey ||
-			event.altKey
-		) {
-			return;
-		}
-		event.preventDefault();
-		if ( 'true' === link.getAttribute( 'aria-busy' ) ) {
-			return;
-		}
-		link.setAttribute( 'aria-busy', 'true' );
-		const url = new URL( link.href, win.location.href );
-		url.searchParams.set( 'format', 'json' );
-		request( { url: url.toString() } )
-			.then( ( result ) =>
-				toast( result.message || messages().error, {
-					type: result.ok ? 'success' : 'danger',
-					duration: 5000,
-				} )
-			)
-			.finally( () => link.removeAttribute( 'aria-busy' ) );
-	} );
-
-	doc.addEventListener( 'click', ( event ) => {
-		const button = event.target?.closest?.(
-			`.${ NAV_OPEN }, .${ NAV_CLOSE }`
-		);
-		if (
-			! button ||
-			! doc.body.classList.contains( 'ohmylms-page' ) ||
-			! NAV_THEMES.some( ( name ) => doc.body.classList.contains( name ) )
-		) {
-			return;
-		}
-		const intent = button.classList.contains( NAV_OPEN ) ? 'open' : 'close';
-		const container =
-			'open' === intent
-				? button.parentElement?.querySelector( `.${ NAV_CONTAINER }` )
-				: button.closest( `.${ NAV_CONTAINER }` );
-		if ( ! container ) {
-			return;
-		}
-		const before = container.classList.contains( 'is-menu-open' );
-		frame( () => {
-			const open = navigationFallback(
-				intent,
-				before,
-				container.classList.contains( 'is-menu-open' )
-			);
-			if ( null === open ) {
+	win.addEventListener(
+		'ohmylms:toast',
+		( /** @type {CustomEvent} */ event ) => {
+			if ( event.defaultPrevented || ! event.detail ) {
 				return;
 			}
-			container.classList.toggle( 'is-menu-open', open );
-			container.classList.toggle( 'has-modal-open', open );
-			doc.documentElement.classList.toggle( 'has-modal-open', open );
-		} );
-	} );
+			event.detail.accepted = true;
+			chrome.toasts.push(
+				toastItem(
+					event.detail,
+					{},
+					`ohmylms-toast-event-${ ++legacyCount }`
+				)
+			);
+		}
+	);
+	win.addEventListener(
+		'ohmylms:toast-dismiss',
+		( /** @type {CustomEvent} */ event ) =>
+			chrome.toasts.dismiss( event.detail?.id || '' )
+	);
+
+	doc.addEventListener(
+		'click',
+		( /** @type {MouseEvent & {target: Element}} */ event ) => {
+			const link = /** @type {HTMLAnchorElement|null|undefined} */ (
+				event.target?.closest?.(
+					'a[href*="ohmylms_resend_verification"]'
+				)
+			);
+			if (
+				! link ||
+				event.defaultPrevented ||
+				event.button > 0 ||
+				event.metaKey ||
+				event.ctrlKey ||
+				event.shiftKey ||
+				event.altKey
+			) {
+				return;
+			}
+			event.preventDefault();
+			if ( 'true' === link.getAttribute( 'aria-busy' ) ) {
+				return;
+			}
+			link.setAttribute( 'aria-busy', 'true' );
+			const url = new URL( link.href, win.location.href );
+			url.searchParams.set( 'format', 'json' );
+			request( { url: url.toString() } )
+				.then( ( result ) =>
+					toast( result.message || messages().error, {
+						type: result.ok ? 'success' : 'danger',
+						duration: 5000,
+					} )
+				)
+				.finally( () => link.removeAttribute( 'aria-busy' ) );
+		}
+	);
+
+	doc.addEventListener(
+		'click',
+		( /** @type {MouseEvent & {target: Element}} */ event ) => {
+			const button = event.target?.closest?.(
+				`.${ NAV_OPEN }, .${ NAV_CLOSE }`
+			);
+			if (
+				! button ||
+				! doc.body.classList.contains( 'ohmylms-page' ) ||
+				! NAV_THEMES.some( ( name ) =>
+					doc.body.classList.contains( name )
+				)
+			) {
+				return;
+			}
+			const intent = button.classList.contains( NAV_OPEN )
+				? 'open'
+				: 'close';
+			const container =
+				'open' === intent
+					? button.parentElement?.querySelector(
+							`.${ NAV_CONTAINER }`
+						)
+					: button.closest( `.${ NAV_CONTAINER }` );
+			if ( ! container ) {
+				return;
+			}
+			const before = container.classList.contains( 'is-menu-open' );
+			frame( () => {
+				const open = navigationFallback(
+					intent,
+					before,
+					container.classList.contains( 'is-menu-open' )
+				);
+				if ( null === open ) {
+					return;
+				}
+				container.classList.toggle( 'is-menu-open', open );
+				container.classList.toggle( 'has-modal-open', open );
+				doc.documentElement.classList.toggle( 'has-modal-open', open );
+			} );
+		}
+	);
 
 	const notice = verificationNotice( win.location.search );
 	if ( notice ) {

@@ -36,8 +36,8 @@ export async function recoverNativeCanvas( frame ) {
 export function installNativeCanvasRecovery() {
 	const pending = new WeakSet();
 	const inspect = () => {
-		for ( const frame of document.querySelectorAll(
-			'iframe[name="editor-canvas"]'
+		for ( const frame of /** @type {Iterable<HTMLIFrameElement>} */ (
+			document.querySelectorAll( 'iframe[name="editor-canvas"]' )
 		) ) {
 			if ( pending.has( frame ) ) {
 				continue;

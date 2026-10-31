@@ -28,7 +28,10 @@ export function buildDiagramLabels( root, stage, config ) {
 	const fields = new Map(
 		Array.from(
 			root.querySelectorAll( 'input[data-answer-key]' ),
-			( input ) => [ input.dataset.answerKey, input ]
+			( /** @type {HTMLInputElement} */ input ) => [
+				input.dataset.answerKey,
+				input,
+			]
 		)
 	);
 	const prefix = root.dataset.namePrefix;
@@ -47,7 +50,7 @@ export function buildDiagramLabels( root, stage, config ) {
 	for ( const target of targets ) {
 		let input = fields.get( target.id );
 		if ( ! input ) {
-			input = make( 'input' );
+			input = /** @type {HTMLInputElement} */ ( make( 'input' ) );
 			input.type = 'hidden';
 			input.dataset.answerKey = target.id;
 			if ( prefix ) input.name = `${ prefix }[${ target.id }]`;
@@ -157,9 +160,11 @@ export function buildDiagramLabels( root, stage, config ) {
 		field.dispatchEvent( new Event( 'change', { bubbles: true } ) );
 	};
 	const pointTarget = ( event ) => {
-		const pin = doc
-			.elementFromPoint( event.clientX, event.clientY )
-			?.closest( '[data-label-target]' );
+		const pin = /** @type {HTMLElement|null|undefined} */ (
+			doc
+				.elementFromPoint( event.clientX, event.clientY )
+				?.closest( '[data-label-target]' )
+		);
 		return pin && stage.contains( pin ) ? pin : null;
 	};
 	const finishDrag = () => {
@@ -291,7 +296,7 @@ export function buildDiagramLabels( root, stage, config ) {
 		doc.addEventListener(
 			'ohmylms:answer-restored',
 			( event ) => {
-				event.target
+				/** @type {Element} */ ( event.target )
 					.querySelectorAll( '[data-labels-ready]' )
 					.forEach( ( node ) => views.get( node )?.() );
 			},

@@ -8,7 +8,6 @@ import {
 	getOptions,
 	listCertificates,
 	listCourses,
-	listMedia,
 	previewCertificate,
 	updateCertificate,
 } from './api';
@@ -53,17 +52,6 @@ describe( 'typed certificates API', () => {
 				query: { search: 'alg', page: 3, per_page: 10 },
 			} )
 		);
-		await listMedia( 'logo', 1 );
-		const [ path, , extras ] = vi
-			.mocked( getCollection )
-			.mock.calls.at( -1 )!;
-		expect( path ).toBe( '/wp/v2/media' );
-		expect( extras?.query ).toMatchObject( {
-			media_type: 'image',
-			mime_type: 'image/jpeg,image/png,image/gif,image/webp',
-			per_page: 12,
-			search: 'logo',
-		} );
 	} );
 	it( 'reads and validates one template and the options', async () => {
 		vi.mocked( get ).mockResolvedValueOnce( certificate );

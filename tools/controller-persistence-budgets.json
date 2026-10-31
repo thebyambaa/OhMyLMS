@@ -1,0 +1,9 @@
+{
+	"description": "Most lines of code using $wpdb per REST controller file (comments excluded): files in includes/**/Rest/ and files declaring a WP_REST_Controller subclass under includes or packages. A controller not listed may not use $wpdb. Budgets only go down; see docs/ENFORCEMENT.md section j.",
+	"files": {
+		"includes/Gradebook/Rest/GradebookController.php": 7,
+		"includes/Integrations/WPFusion/Includes/Rest/WPFusionTriggersController.php": 13,
+		"includes/Integrations/Zoom/Includes/Rest/ZoomWebhookController.php": 4,
+		"packages/e-commerce/includes/Rest/V1/OrdersController.php": 10
+	}
+}

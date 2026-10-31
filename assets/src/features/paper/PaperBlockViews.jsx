@@ -18,7 +18,7 @@ import { answerSpace, columnsLayout } from './paperModel.mjs';
  * @param {string} tagName     Element to render.
  * @param {string} className   Class name.
  * @param {string} placeholder Editor placeholder.
- * @return {Element|null} Text element.
+ * @return {React.ReactElement|null} Text element.
  */
 
 export const CANDIDATE_FIELDS = [ 'name', 'class', 'number', 'date' ];
@@ -65,7 +65,7 @@ export function candidateLabel( field ) {
  * @param {number}    props.total      Total marks.
  * @param {TextField} props.text       Text field renderer.
  * @param {string}    props.version    Version letter, empty when the paper has one version.
- * @return {Element} Header.
+ * @return {React.ReactElement} Header.
  */
 export function PaperHeaderView( {
 	attributes,
@@ -156,10 +156,10 @@ export function PaperHeaderView( {
 /**
  * Instructions: a heading and the instruction list.
  *
- * @param {Object}    props          Properties.
- * @param {TextField} props.text     Text field renderer.
- * @param {Element}   props.children Instruction content.
- * @return {Element} Instructions.
+ * @param {Object}          props          Properties.
+ * @param {TextField}       props.text     Text field renderer.
+ * @param {React.ReactNode} props.children Instruction content.
+ * @return {React.ReactElement} Instructions.
  */
 export function PaperInstructionsView( { text, children } ) {
 	return (
@@ -182,7 +182,7 @@ export function PaperInstructionsView( { text, children } ) {
  * @param {Object}    props.attributes Block attributes.
  * @param {number}    props.total      Marks up to the next section.
  * @param {TextField} props.text       Text field renderer.
- * @return {Element} Section heading.
+ * @return {React.ReactElement} Section heading.
  */
 export function PaperSectionView( { attributes, total, text } ) {
 	return (
@@ -225,7 +225,7 @@ export function columnsProps( attributes ) {
 /**
  * Page break; the label shows only in the editor.
  *
- * @return {Element} Page break.
+ * @return {React.ReactElement} Page break.
  */
 export function PaperPageBreakView() {
 	return (
@@ -240,7 +240,7 @@ export function PaperPageBreakView() {
  *
  * @param {Object} props            Properties.
  * @param {Object} props.attributes Block attributes.
- * @return {Element} Answer space.
+ * @return {React.ReactElement} Answer space.
  */
 export function PaperAnswerSpaceView( { attributes } ) {
 	const space = answerSpace( attributes );
@@ -256,11 +256,11 @@ export function PaperAnswerSpaceView( { attributes } ) {
 /**
  * Formula sheet: a heading and free content, starting on a new page when set.
  *
- * @param {Object}    props            Properties.
- * @param {Object}    props.attributes Block attributes.
- * @param {TextField} props.text       Text field renderer.
- * @param {Element}   props.children   Sheet content.
- * @return {Element} Formula sheet.
+ * @param {Object}          props            Properties.
+ * @param {Object}          props.attributes Block attributes.
+ * @param {TextField}       props.text       Text field renderer.
+ * @param {React.ReactNode} props.children   Sheet content.
+ * @return {React.ReactElement} Formula sheet.
  */
 export function PaperFormulaSheetView( { attributes, text, children } ) {
 	return (

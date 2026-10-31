@@ -117,6 +117,19 @@ class Api {
 			\OhMyLMS\Rest\V1\CartController::class,
 			\OhMyLMS\Rest\V1\CohortsController::class,
 			\OhMyLMS\Rest\V1\AutomationsController::class,
+			\OhMyLMS\Assessment\Rest\ResponseMediaController::class,
+			\OhMyLMS\ExamImport\Rest\JobsController::class,
+			\OhMyLMS\ExamImport\Rest\WorkflowController::class,
+			\OhMyLMS\ExamImport\Rest\FiguresController::class,
+			\OhMyLMS\Exams\Rest\LibraryController::class,
+			\OhMyLMS\Exams\Rest\ComposerController::class,
+			\OhMyLMS\QuestionBank\Rest\OrganisationController::class,
+			\OhMyLMS\Practice\Rest\DashboardController::class,
+			\OhMyLMS\Assessment\Rest\QuestionPreviewController::class,
+			\OhMyLMS\Blocks\Rest\QuizPlayerController::class,
+			\OhMyLMS\Blocks\Rest\QuestionPlayerController::class,
+			\OhMyLMS\MCP\Rest\ServerController::class,
+			\OhMyLMS\AI\Rest\SettingsController::class,
 		);
 		$controllers_v1  = apply_filters( 'ohmylms_rest_v1_controllers', $controllers_v1 );
 		$controllers_v2  = array();

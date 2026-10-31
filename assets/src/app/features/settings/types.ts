@@ -43,6 +43,7 @@ export const FIELD_NAMES = {
 		'terms_page_id',
 		'privacy_policy_page_id',
 		'profile_page_id',
+		'language_switcher',
 	],
 	branding: [
 		'color_preset',

@@ -10,6 +10,7 @@ namespace OhMyLMS\Exams;
 use OhMyLMS\Emails\EmailManager;
 use OhMyLMS\Emails\Emails;
 use OhMyLMS\Emails\StudentsEmail\ExamResultsReleased;
+use OhMyLMS\I18n\RecipientLocale;
 use WP_User;
 
 defined( 'ABSPATH' ) || exit;
@@ -102,7 +103,12 @@ final class ResultsEmail {
 		if ( ! is_email( $learner->user_email ) ) {
 			return false;
 		}
-		$mail = self::render( $learner, $exam_id );
-		return (bool) wp_mail( $learner->user_email, $mail['subject'], $mail['html'], EmailManager::mail_headers( Emails::get_email_settings() ) );
+		return (bool) RecipientLocale::run(
+			$learner,
+			static function () use ( $learner, $exam_id ) {
+				$mail = self::render( $learner, $exam_id );
+				return wp_mail( $learner->user_email, $mail['subject'], $mail['html'], EmailManager::mail_headers( Emails::get_email_settings() ) );
+			}
+		);
 	}
 }

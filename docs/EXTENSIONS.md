@@ -105,3 +105,7 @@ The `ohmylms/paper` Interactivity module adds the question navigator, flags for 
 `ohmylms_register_checkout_field` accepts label, type (text/textarea/email/number/select), required and scalar JSON schema. It adds `ohmylms_extension_<id>` to billing, validates data and persists `_ohmylms_extension_fields` after the order gets its ID. JS registration alone is not a trusted server field.
 
 Prices, coupons, payment verification and enrollment remain server-side. Integration panels need permission-checked endpoints; never expose provider secrets. Examples demonstrate every category without core edits. Disabling a module hides UI but retains saved metadata. A quiz with an unavailable question extension fails safely.
+
+## Emails
+
+Compose an add-on's emails in the recipient's language, not the language of the request that sends them: wrap everything that produces text (settings defaults, subject, template, `__()`, dates) and the `wp_mail()` call in `OhMyLMS\I18n\RecipientLocale::run( $recipient, static function ( $locale ) { … } )`, where `$recipient` is a user ID, `WP_User` or address. For several recipients use `RecipientLocale::each( $recipients, static function ( $to, $locale ) { … } )`, which calls back once per language. Your text domain is reloaded for the switch if it is already loaded or loads just in time. See "Interface languages" in [DEVELOPMENT](DEVELOPMENT.md#interface-languages).

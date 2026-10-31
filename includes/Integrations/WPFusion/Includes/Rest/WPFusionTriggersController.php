@@ -10,6 +10,7 @@
 
 namespace OhMyLMS\Integrations\WPFusion\Includes\Rest;
 
+use WP_REST_Controller;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -21,7 +22,7 @@ use OhMyLMS\Integrations\WPFusion\Includes\WPFusionMigration;
  * @package OhMyLMS\Integrations\WPFusion\Includes\Rest
  * @since 1.0.0
  */
-class WPFusionTriggersController {
+class WPFusionTriggersController extends WP_REST_Controller {
 	/**
 	 * The single instance of the class.
 	 *

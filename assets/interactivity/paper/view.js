@@ -86,36 +86,48 @@ export function createPaperView( {
 				state.navOpen = ! state.navOpen;
 			} ),
 			// Escape closes the list; arrow keys, Home and End move between its questions.
-			navKey: withSyncEvent( ( event ) => {
-				const nav = getElement().ref;
-				const state = current();
-				if ( event.key === 'Escape' && state.navOpen ) {
-					event.preventDefault();
-					state.navOpen = false;
-					nav.querySelector( '.ohmylms-paper-nav-toggle' )?.focus();
-					return;
+			navKey: withSyncEvent(
+				(
+					/** @type {KeyboardEvent & {target: HTMLElement}} */ event
+				) => {
+					const nav = getElement().ref;
+					const state = current();
+					if ( event.key === 'Escape' && state.navOpen ) {
+						event.preventDefault();
+						state.navOpen = false;
+						/** @type {HTMLElement|null} */ (
+							nav.querySelector( '.ohmylms-paper-nav-toggle' )
+						)?.focus();
+						return;
+					}
+					const items = /** @type {HTMLElement[]} */ ( [
+						...nav.querySelectorAll( '.ohmylms-paper-nav-item' ),
+					] );
+					const next = stepIndex(
+						items.length,
+						items.indexOf(
+							/** @type {HTMLElement} */ (
+								nav.ownerDocument.activeElement
+							)
+						),
+						event.key
+					);
+					if ( next >= 0 && items.includes( event.target ) ) {
+						event.preventDefault();
+						items[ next ].focus();
+					}
 				}
-				const items = [
-					...nav.querySelectorAll( '.ohmylms-paper-nav-item' ),
-				];
-				const next = stepIndex(
-					items.length,
-					items.indexOf( nav.ownerDocument.activeElement ),
-					event.key
-				);
-				if ( next >= 0 && items.includes( event.target ) ) {
-					event.preventDefault();
-					items[ next ].focus();
-				}
-			} ),
+			),
 			// Move to a question and give it focus, so reading and typing continue there.
 			jump: withSyncEvent( ( event ) => {
 				event.preventDefault();
 				const { questionId } = getContext();
-				const box = quizRoot()?.querySelector(
-					`.ohmylms-quiz-box[data-question-id="${ Number(
-						questionId
-					) }"]`
+				const box = /** @type {HTMLElement|null|undefined} */ (
+					quizRoot()?.querySelector(
+						`.ohmylms-quiz-box[data-question-id="${ Number(
+							questionId
+						) }"]`
+					)
 				);
 				if ( ! box ) {
 					return;

@@ -20,7 +20,7 @@ export const variableNames = ( settings ) =>
  * @param {Object}               props        Component properties.
  * @param {string[]}             props.names  Variable names.
  * @param {(name: string)=>void} props.onPick Called with the chosen name.
- * @return {Element|null} Chips, or nothing when there are no variables.
+ * @return {React.ReactElement|null} Chips, or nothing when there are no variables.
  */
 export function VariableChips( { names, onPick } ) {
 	if ( ! names.length ) {

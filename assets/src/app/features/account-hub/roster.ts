@@ -2,6 +2,9 @@ import { __ } from '@wordpress/i18n';
 import { del, post } from '../../lib/api';
 import { getCollection } from '../../lib/api/collection';
 import { confirmed, invalidResponse, positiveId, record } from './model';
+import { createValidators } from '../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
 
 /** Roles a roster invitation can grant. */
 export const INVITE_ROLES = [ 'school_admin', 'teacher', 'student' ] as const;
@@ -101,13 +104,6 @@ const STATUSES: readonly InvitationStatus[] = [
 	'revoked',
 	'expired',
 ];
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
-}
 
 function nullableText( value: unknown ): string | null {
 	return null === value ? null : text( value );

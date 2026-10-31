@@ -17,10 +17,9 @@ final class Jobs {
 	const HOOK  = 'ohmylms_validate_exam_import';
 	const GROUP = 'ohmylms-exam-import';
 
-	/** Register only private storage and authenticated authoring routes. */
+	/** Register only private storage. The authoring routes are {@see Rest\JobsController}. */
 	public static function init() {
 		add_action( 'init', array( __CLASS__, 'register' ) );
-		add_action( 'rest_api_init', array( __CLASS__, 'routes' ) );
 		add_action( self::HOOK, array( __CLASS__, 'process' ) );
 		add_action( 'before_delete_post', array( __CLASS__, 'cleanup' ) );
 		Workflow::init();
@@ -40,43 +39,6 @@ final class Jobs {
 				'supports'     => array(),
 			)
 		);
-	}
-
-	/** Register upload, status, retry and removal endpoints. */
-	public static function routes() {
-		register_rest_route(
-			'ohmylms/v1',
-			'/exam-imports',
-			array(
-				'methods'             => 'POST',
-				'permission_callback' => array( __CLASS__, 'permission' ),
-				'callback'            => array( __CLASS__, 'create' ),
-			)
-		);
-		register_rest_route(
-			'ohmylms/v1',
-			'/exam-imports',
-			array(
-				'methods'             => 'GET',
-				'permission_callback' => array( __CLASS__, 'permission' ),
-				'callback'            => array( __CLASS__, 'listing' ),
-			)
-		);
-		foreach ( array(
-			'GET'    => 'status',
-			'POST'   => 'retry',
-			'DELETE' => 'delete',
-		) as $method => $callback ) {
-			register_rest_route(
-				'ohmylms/v1',
-				'/exam-imports/(?P<id>\d+)',
-				array(
-					'methods'             => $method,
-					'permission_callback' => array( __CLASS__, 'permission' ),
-					'callback'            => array( __CLASS__, $callback ),
-				)
-			);
-		}
 	}
 
 	/**

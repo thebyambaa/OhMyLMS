@@ -39,6 +39,10 @@ import {
 	type SettingsInput,
 	type SkillMatch,
 } from './types';
+import { createValidators } from '../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
+export const { record, positiveId } = createValidators( invalidResponse );
 
 /** Limits shared with the server (`Exams\Editor` in PHP). */
 export const LIMITS = {
@@ -106,26 +110,6 @@ export function invalidResponse(): ApiError {
 	} );
 }
 
-/**
- * Narrow to a plain object.
- *
- * @param value Parsed JSON.
- * @return The object.
- */
-export function record( value: unknown ): Record< string, unknown > {
-	if ( ! value || 'object' !== typeof value || Array.isArray( value ) ) {
-		throw invalidResponse();
-	}
-	return value as Record< string, unknown >;
-}
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
-}
-
 function flag( value: unknown ): boolean {
 	if ( 'boolean' !== typeof value ) {
 		throw invalidResponse();
@@ -172,23 +156,6 @@ function link( value: unknown ): string {
 		throw invalidResponse();
 	}
 	return url;
-}
-
-/**
- * Validate a positive integer identifier.
- *
- * @param value Candidate id.
- * @return The id.
- */
-export function positiveId( value: unknown ): number {
-	if (
-		'number' !== typeof value ||
-		! Number.isSafeInteger( value ) ||
-		value < 1
-	) {
-		throw invalidResponse();
-	}
-	return value;
 }
 
 /**

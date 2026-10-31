@@ -1,4 +1,4 @@
-import { useRequest } from '../useRequest';
+import { useRequest } from '../../../hooks/useRequest';
 import { getWidget } from './api';
 import type { WidgetContext } from './model';
 
@@ -26,7 +26,11 @@ export function useWidget< T >(
 				parse,
 				signal
 			),
-		`${ widget }|${ context.scope.id }|${ context.period }`
+		{
+			key: `${ widget }|${ context.scope.id }|${ context.period }`,
+			keepData: true,
+			errorShape: 'object',
+		}
 	);
 	return {
 		...request,

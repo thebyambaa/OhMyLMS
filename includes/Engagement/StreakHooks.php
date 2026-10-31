@@ -104,28 +104,9 @@ final class StreakHooks {
 	}
 
 	/**
-	 * Routes for Streak hooks.
+	 * Register the learner streak routes ({@see Rest\StreakController}).
 	 */
 	public static function routes() {
-		register_rest_route(
-			'ohmylms/v1',
-			'/engagement/streak',
-			array(
-				array(
-					'methods'             => 'GET',
-					'permission_callback' => static function () {
-						return is_user_logged_in(); },
-					'callback'            => static function ( $request ) {
-						return rest_ensure_response( Streak::snapshot( get_current_user_id(), $request->get_param( 'history_days' ) ?: 7 ) ); },
-				),
-				array(
-					'methods'             => 'PUT',
-					'permission_callback' => static function () {
-						return is_user_logged_in(); },
-					'callback'            => static function ( $request ) {
-						return rest_ensure_response( Streak::set_timezone( get_current_user_id(), $request->get_param( 'timezone' ) ) ); },
-				),
-			)
-		);
+		( new Rest\StreakController() )->register_routes();
 	}
 }

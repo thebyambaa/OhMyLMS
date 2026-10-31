@@ -23,7 +23,7 @@ function label( fallback ) {
 }
 /**
  * Show a dismissible, text-only error instead of a blocking alert or developer log.
- * @param {...unknown} details Request errors or a validation message.
+ * @param {...(Object|string)} details Request errors or a validation message.
  */
 export function showRequestError( ...details ) {
 	if ( typeof document === 'undefined' ) {
@@ -60,7 +60,9 @@ export function showRequestError( ...details ) {
  */
 export function confirmAction( message ) {
 	return new Promise( ( resolve ) => {
-		const previous = document.activeElement;
+		const previous = /** @type {HTMLElement|null} */ (
+			document.activeElement
+		);
 		const dialog = document.createElement( 'dialog' );
 		dialog.className = 'ohmylms-action-confirmation';
 		const text = document.createElement( 'p' );

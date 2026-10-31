@@ -46,6 +46,8 @@ they are loaded on demand by WordPress and do not require the opt-in React sourc
 - Lesson and assignment player (batch L6): "Mark as complete" (`ohmylms/lesson`), assignment start, server-timed
   countdown, file picking and submission (`ohmylms/assignment`), the lesson sidebar tabs (`ohmylms/tabs`) and
   content protection (`ohmylms/protection`, only when switched on). See [Lesson and assignment player](#lesson-and-assignment-player).
+- Language switcher (English / Монгол, `ohmylms/language`): posts the learner's choice and reloads the page; the
+  GET form works without JavaScript. See [Language switcher](#language-switcher).
 
 Admin editors continue to use React. Static reports/leaderboards need no reactive runtime. Media
 players, payment provider SDKs other than Stripe, layout-3
@@ -78,7 +80,7 @@ The dependency filter also applies to SmartScore. New modules should use their o
 `ohmylms/quiz`, `ohmylms/questions`, `ohmylms/smartscore`, `ohmylms/gamification`, `ohmylms/ui`,
 `ohmylms/tabs`, `ohmylms/curriculum`, `ohmylms/reveal`, `ohmylms/cart`, `ohmylms/checkout`,
 `ohmylms/stripe`, `ohmylms/forms`, `ohmylms/reviews`, `ohmylms/account`, `ohmylms/catalog`, `ohmylms/lesson`,
-`ohmylms/assignment` and `ohmylms/protection`.
+`ohmylms/assignment`, `ohmylms/protection` and `ohmylms/language`.
 
 The enqueue helper handles modules discovered after `wp_head`, including shortcodes. It also loads
 the shared hidden/focus/reduced-motion stylesheet. Enqueue dependencies before footer modules print.
@@ -167,6 +169,8 @@ Events bubble from the relevant component and include `detail.apiVersion = 1`. S
 | `ohmylms:assignment-before-start`, `ohmylms:assignment-before-submit` (both cancelable) | `assignmentId`, plus `reason` (`submit` or `timeout`) on submit |
 | `ohmylms:assignment-started`, `ohmylms:assignment-submitted`, `ohmylms:assignment-expired` | `assignmentId`, plus `deadline` (ms) when started, `reason` when submitted |
 | `ohmylms:assignment-error` | `assignmentId`, `operation` (`start` or `submit`), `code`, `message` |
+| `ohmylms:language-before-change` (cancelable, on the switcher form) | `locale`, `previous` |
+| `ohmylms:language-changed` (before the reload), `ohmylms:language-error` (before the GET fallback) | `locale`, plus `previous` and `source` (`user` or `cookie`), or `code` and `message` |
 
 The `before` events are cancelable. Call `event.preventDefault()` to block that UI action. They do
 not replace server permissions, validation or audit hooks. Presentation events are not proof that
@@ -330,6 +334,21 @@ dispatches `ohmylms:lesson-complete-request` rather than completing the lesson i
 still triggered when jQuery is on the page. Details are in
 [LEARNER-FRONTEND](LEARNER-FRONTEND.md#l7-video-done).
 
+## Language switcher
+
+`OhMyLMS\I18n\Switcher` renders the switcher (learner header, profile settings, Student Hub, the
+`[ohmylms_language_switcher]` shortcode and `ohmylms_get_language_switcher()`): a GET form that is an
+`ohmylms/language` root with context `{ current, busy }`, holding a labelled `role="group"` of submit buttons
+`name="ohmylms_locale" value="<locale>"` with `aria-pressed` and `lang` (`lang="mn"` on Монгол). Without
+JavaScript the form loads `?ohmylms_locale=<locale>` (the current query is carried in hidden fields), which the
+server applies and redirects back from. `actions.choose` (`data-wp-on--submit`) reads the pressed button,
+ignores the current language and other submitters, emits `ohmylms:language-before-change`, then posts
+`{ locale }` to `POST ohmylms/v1/learner/locale` with `request()` and reloads, because translations are rendered
+on the server. If the request fails it loads the form's GET URL instead. `actions.reset` runs on `pageshow` so a
+page restored from the back/forward cache is usable again. The helpers in `assets/interactivity/language/model.mjs`
+(`parseAcceptLanguage()`, `matchLocale()`, `switchUrl()`, `createLanguage()`) are pure; the server's rules and
+the REST contract are in [DEVELOPMENT](DEVELOPMENT.md#interface-languages).
+
 ## Verification
 
 ```sh
@@ -342,6 +361,7 @@ OHMYLMS_ACCOUNT_FRONTEND_TEST=1 php tests/php/account-frontend-integration.php
 OHMYLMS_CATALOG_TEST=1 php tests/php/catalog-integration.php
 OHMYLMS_LESSON_PLAYER_TEST=1 php tests/php/lesson-player-integration.php
 OHMYLMS_VIDEO_TEST=1 php tests/php/video-player-integration.php
+OHMYLMS_INTERFACE_LANGUAGE_TEST=1 php tests/php/interface-language-integration.php
 php tests/unit.php
 php ../ohmylms-smartscore/tests/engine-test.php
 ```

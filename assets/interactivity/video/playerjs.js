@@ -47,6 +47,7 @@ export function message( method, value, listener ) {
  * @return {{event: string, value?: ?, listener?: string}|null} Message.
  */
 export function parseMessage( data ) {
+	/** @type {?} */
 	let parsed = data;
 	if ( 'string' === typeof data ) {
 		try {

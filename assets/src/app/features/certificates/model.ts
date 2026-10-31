@@ -11,7 +11,6 @@ import type {
 	FormErrors,
 	FormState,
 	Limits,
-	MediaImage,
 	Option,
 	Orientation,
 	Placeholder,
@@ -20,6 +19,10 @@ import type {
 	TextAlign,
 	TextBlock,
 } from './types';
+import { createValidators } from '../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
+export const { record, positiveId } = createValidators( invalidResponse );
 
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 const BLOCK_ID = /^[A-Za-z0-9_-]{1,32}$/;
@@ -27,14 +30,6 @@ const PLACEHOLDER_TOKEN = /\{[^{}]*\}/g;
 const ALIGNMENTS: readonly TextAlign[] = [ 'left', 'center', 'right' ];
 const ORIENTATIONS: readonly Orientation[] = [ 'landscape', 'portrait' ];
 const STATUSES: readonly CertificateStatus[] = [ 'draft', 'publish' ];
-
-/** Allowed media types for the background and signature (mirrors the server allow-list). */
-export const IMAGE_MIME_TYPES: readonly string[] = [
-	'image/jpeg',
-	'image/png',
-	'image/gif',
-	'image/webp',
-];
 
 /**
  * Build the error thrown when the server answers with data that does not match the contract.
@@ -50,26 +45,6 @@ export function invalidResponse(): ApiError {
 			'ohmylms'
 		),
 	} );
-}
-
-/**
- * Narrow an unknown value to a plain object or fail with an invalid response.
- *
- * @param value Parsed JSON.
- * @return The object.
- */
-export function record( value: unknown ): Record< string, unknown > {
-	if ( ! value || 'object' !== typeof value || Array.isArray( value ) ) {
-		throw invalidResponse();
-	}
-	return value as Record< string, unknown >;
-}
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
 }
 
 function finite( value: unknown ): number {
@@ -92,23 +67,6 @@ function oneOf< T extends string >( value: unknown, allowed: readonly T[] ): T {
 		throw invalidResponse();
 	}
 	return found;
-}
-
-/**
- * Validate a positive integer identifier.
- *
- * @param value Candidate id.
- * @return The id.
- */
-export function positiveId( value: unknown ): number {
-	if (
-		'number' !== typeof value ||
-		! Number.isSafeInteger( value ) ||
-		value < 1
-	) {
-		throw invalidResponse();
-	}
-	return value;
 }
 
 function nonNegativeId( value: unknown ): number {
@@ -282,43 +240,6 @@ export function parseCourseChoice( value: unknown ): CourseChoice {
 		id: positiveId( item.id ),
 		title: text( item.title ),
 		status: text( item.status ),
-	};
-}
-
-/**
- * Validate a WordPress media item; only supported image types are accepted.
- *
- * @param value Parsed JSON from `/wp/v2/media`.
- * @return The image.
- */
-export function parseMedia( value: unknown ): MediaImage {
-	const item = record( value );
-	const mime = text( item.mime_type );
-	if ( ! IMAGE_MIME_TYPES.includes( mime ) ) {
-		throw invalidResponse();
-	}
-	const title = record( item.title );
-	const url = text( item.source_url );
-	let thumbnail = url;
-	const details = item.media_details;
-	if ( details && 'object' === typeof details ) {
-		const sizes = ( details as Record< string, unknown > ).sizes;
-		if ( sizes && 'object' === typeof sizes ) {
-			const small = ( sizes as Record< string, unknown > ).thumbnail;
-			if ( small && 'object' === typeof small ) {
-				const sourceUrl = ( small as Record< string, unknown > )
-					.source_url;
-				if ( 'string' === typeof sourceUrl && sourceUrl ) {
-					thumbnail = sourceUrl;
-				}
-			}
-		}
-	}
-	return {
-		id: positiveId( item.id ),
-		url,
-		thumbnail_url: thumbnail,
-		title: text( title.rendered ),
 	};
 }
 

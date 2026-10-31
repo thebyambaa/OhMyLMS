@@ -5,9 +5,9 @@ let nextLock = 0;
 
 /**
  * Lock native publication and browser navigation while independent settings are unsaved.
- * @param root0
- * @param root0.dirty
- * @param root0.busy
+ * @param {Object} root0
+ * @param          [root0.dirty]
+ * @param          [root0.busy]
  */
 export function NativeSaveGuard( { dirty, busy = false } ) {
 	const key = useRef( `ohmylms-settings-${ ++nextLock }` );

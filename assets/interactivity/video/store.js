@@ -88,7 +88,7 @@ export function errorMessage( messages, error ) {
  * @param {(callback: () => void, ms: number) => unknown}                                                            [api.later]              `setTimeout`.
  * @param {(timer: unknown) => void}                                                                                 [api.cancel]             `clearTimeout`.
  * @param {(url: string, fields: Object) => string}                                                                  [api.beacon]             Final save transport (tests).
- * @return {{state: Object, actions: Object, callbacks: Object}} Definitions; `find( element )` (not
+ * @return {{state: Object, actions: Object, callbacks: Object, find: (element: Element) => Player|null}} Definitions; `find( element )` (not
  *         enumerable, so the runtime does not see it) returns the player of an element.
  */
 export function createVideo( {
@@ -881,7 +881,9 @@ export function createVideo( {
 		},
 	};
 	Object.defineProperty( definitions, 'find', { value: find } );
-	return definitions;
+	return /** @type {typeof definitions & {find: typeof find}} */ (
+		definitions
+	);
 }
 
 /**

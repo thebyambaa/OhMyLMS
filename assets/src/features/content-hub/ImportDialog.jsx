@@ -119,15 +119,15 @@ function CheckReport( { report, done } ) {
  * until Import is pressed. A quiz file makes a draft quiz (`onQuiz` receives it, otherwise its
  * editor opens). With `withSkills`, chosen skills are given to every row that names none.
  *
- * @param {Object}                       root0               Component properties.
- * @param {string}                       root0.initialTarget questions, quiz or exam.
- * @param {string[]}                     root0.targets       The targets offered.
- * @param {boolean}                      root0.withSkills    Offer a skill choice.
- * @param {Object[]}                     root0.initialSkills Skills chosen when the dialog opens.
- * @param {() => void}                   root0.onClose       Close the dialog.
- * @param {(jobId: number) => void}      root0.onJob         An import job to review was made.
- * @param {(ids: number[]) => void|null} root0.onQuestions   Imported question IDs.
- * @param {(quiz: Object) => void|null}  root0.onQuiz        A quiz was made from a quiz file.
+ * @param {Object}                       root0                 Component properties.
+ * @param {string}                       [root0.initialTarget] questions, quiz or exam.
+ * @param {string[]}                     [root0.targets]       The targets offered.
+ * @param {boolean}                      [root0.withSkills]    Offer a skill choice.
+ * @param {Object[]}                     [root0.initialSkills] Skills chosen when the dialog opens.
+ * @param {() => void}                   root0.onClose         Close the dialog.
+ * @param {(jobId: number) => void}      root0.onJob           An import job to review was made.
+ * @param {(ids: number[]) => void|null} [root0.onQuestions]   Imported question IDs.
+ * @param {(quiz: Object) => void|null}  [root0.onQuiz]        A quiz was made from a quiz file.
  */
 export function ImportDialog( {
 	initialTarget = 'questions',

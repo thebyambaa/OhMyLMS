@@ -26,9 +26,9 @@ const EMPTY = {
 /**
  * Random question pools: each attempt draws `count` approved questions for a skill.
  * The server validates pools together and refuses shortages with an explanation.
- * @param root0
- * @param root0.quizId
- * @param root0.native
+ * @param {Object} root0
+ * @param          [root0.quizId]
+ * @param          [root0.native]
  */
 export function PoolsEditor( { quizId, native = false } ) {
 	const [ savedState, setSavedState ] = useState( null );

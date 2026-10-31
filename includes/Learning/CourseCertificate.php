@@ -27,6 +27,21 @@ final class CourseCertificate {
 	}
 
 	/**
+	 * Every certificate assigned to a course, unordered.
+	 *
+	 * @param int $course_id Course ID.
+	 * @return int[]
+	 */
+	public static function all( $course_id ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh assignment read for a list filter.
+		$ids = $wpdb->get_col(
+			$wpdb->prepare( 'SELECT certificate_id FROM %i WHERE course_id = %d', $wpdb->prefix . 'ohmylms_certificate_relationship', $course_id )
+		);
+		return array_map( 'intval', (array) $ids );
+	}
+
+	/**
 	 * Current assignment and the templates the user may assign, by title.
 	 *
 	 * @param int $course_id Course ID.

@@ -16,9 +16,9 @@ export function editorDeliveries() {
 /**
  * Sources offered where the block sits. The standalone bank-question editor only writes; skills need the
  * practice delivery, which an exam does not allow.
- * @param {Object}   root0            Context.
- * @param {string}   root0.postType   Post type being edited.
- * @param {string[]} root0.deliveries Deliveries the kind allows.
+ * @param {Object}   [root0]            Context.
+ * @param {string}   [root0.postType]   Post type being edited.
+ * @param {string[]} [root0.deliveries] Deliveries the kind allows.
  * @return {string[]} Any of write, bank and skills.
  */
 export function allowedSources( {
@@ -38,9 +38,9 @@ export function allowedSources( {
 /**
  * What choosing a source does from the Question block (which writes a question here).
  * In a quiz or exam, picking from the bank adds questions as slots; elsewhere it becomes a practice set.
- * @param {string} source         write, bank or skills.
- * @param {Object} root0          Context.
- * @param {string} root0.postType Post type being edited.
+ * @param {string} source           write, bank or skills.
+ * @param {Object} [root0]          Context.
+ * @param {string} [root0.postType] Post type being edited.
  * @return {Object} action: none, pick (open the bank picker) or player (replace with these attributes).
  */
 export function fromQuestionBlock( source, { postType = '' } = {} ) {

@@ -2,7 +2,7 @@ import { Modal, Notice, Spinner } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
 import { describeWidgetError } from '../shell/errors';
-import { useRequest } from '../useRequest';
+import { useRequest } from '../../../hooks/useRequest';
 import { getMasteryLearners } from './MasteryApi';
 import { levelLabel } from './MasteryModel';
 
@@ -32,7 +32,11 @@ export function MasteryLearnersDialog( {
 } ) {
 	const request = useRequest(
 		( signal ) => getMasteryLearners( scope, row, skill, signal ),
-		`${ scope }|${ row }|${ skill }`
+		{
+			key: `${ scope }|${ row }|${ skill }`,
+			keepData: true,
+			errorShape: 'object',
+		}
 	);
 	const data = request.data;
 	return (

@@ -4,6 +4,7 @@ import {
 	emailId,
 	findUnknownTags,
 	insertTag,
+	isDefaultText,
 	isHttpUrl,
 	parseEmail,
 	parsePreview,
@@ -43,6 +44,34 @@ describe( 'email boundary parsing', () => {
 		expect( () =>
 			parseEmail( { ...quizGraded, course_suggestion_text: 4 } )
 		).toThrow();
+	} );
+
+	it( 'requires the defaults and the customized flags of every text field', () => {
+		const { defaults, customized, ...withoutFlags } = quizGraded;
+		expect( () => parseEmail( withoutFlags ) ).toThrow();
+		expect( () =>
+			parseEmail( {
+				...quizGraded,
+				defaults: { ...defaults, subject: 3 },
+			} )
+		).toThrow();
+		expect( () =>
+			parseEmail( {
+				...quizGraded,
+				customized: { ...customized, footer_text: 'yes' },
+			} )
+		).toThrow();
+		const { heading, ...missingHeading } = customized;
+		expect( heading ).toBe( false );
+		expect( () =>
+			parseEmail( { ...quizGraded, customized: missingHeading } )
+		).toThrow();
+		expect(
+			parseEmail( {
+				...quizGraded,
+				defaults: { ...defaults, course_suggestion_text: 'More' },
+			} ).defaults.course_suggestion_text
+		).toBe( 'More' );
 	} );
 
 	it( 'validates settings, previews and test results', () => {
@@ -125,6 +154,44 @@ describe( 'email draft', () => {
 			'a@b.co',
 			'c@d.co',
 		] );
+	} );
+
+	it( 'knows which fields hold their default and resets saved text with null', () => {
+		const draft = toDraft( quizGraded );
+		expect( isDefaultText( draft, quizGraded, 'subject' ) ).toBe( false );
+		expect( isDefaultText( draft, quizGraded, 'heading' ) ).toBe( true );
+		expect( isDefaultText( draft, quizGraded, 'recipient_email' ) ).toBe(
+			false
+		);
+		expect(
+			isDefaultText(
+				{ ...draft, course_suggestion_text: '' },
+				quizGraded,
+				'course_suggestion_text'
+			)
+		).toBe( false );
+
+		const reset = {
+			...draft,
+			subject: quizGraded.defaults.subject,
+			heading: 'Changed',
+		};
+		expect( isDefaultText( reset, quizGraded, 'subject' ) ).toBe( true );
+		expect(
+			toInput( reset, [ 'subject', 'heading' ], quizGraded )
+		).toEqual( { subject: null, heading: 'Changed' } );
+		// Without the saved email (preview, test) the default text itself is sent.
+		expect( toInput( reset, [ 'subject' ] ) ).toEqual( {
+			subject: quizGraded.defaults.subject,
+		} );
+		// A field that was never customized is sent as text even when it equals the default.
+		expect(
+			toInput(
+				{ ...draft, heading: quizGraded.defaults.heading },
+				[ 'heading' ],
+				quizGraded
+			)
+		).toEqual( { heading: quizGraded.defaults.heading } );
 	} );
 
 	it( 'validates like the server', () => {

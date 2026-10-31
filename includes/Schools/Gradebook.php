@@ -13,56 +13,6 @@ defined( 'ABSPATH' ) || exit;
 /** Course gradebooks group real enrollments without creating shared user accounts. */
 final class Gradebook {
 	/**
-	 * Register for Gradebook.
-	 */
-	public static function register() {
-		foreach ( array(
-			''                           => 'GET',
-			'/classes'                   => 'GET,POST',
-			'/classes/(?P<class_id>\d+)' => 'POST,DELETE',
-			'/grades'                    => 'POST,DELETE',
-		) as $suffix => $methods ) {
-			register_rest_route(
-				'ohmylms/v1',
-				'/courses/(?P<course_id>\d+)/gradebook' . $suffix,
-				array(
-					'methods'             => $methods,
-					'permission_callback' => function ( $r ) {
-						return current_user_can( 'manage_options' ) && wp_verify_nonce( $r->get_header( 'X-WP-Nonce' ), 'wp_rest' ) ? true : new \WP_Error( 'gradebook_forbidden', 'Only an administrator can manage this gradebook.', array( 'status' => 403 ) );
-					},
-					'callback'            => array( self::class, 'dispatch' ),
-				)
-			);
-		}
-	}
-	/**
-	 * Dispatch for Gradebook.
-	 *
-	 * @param mixed $r R.
-	 */
-	public static function dispatch( $r ) {
-		try {
-			$course = absint( $r['course_id'] );
-			$post   = get_post( $course );
-			Service::need( $post && OHMYLMS_COURSE_CPT === $post->post_type && 'trash' !== $post->post_status, 'Course not found.' );
-			$route  = $r->get_route();
-			$method = $r->get_method();
-			if ( substr( $route, -7 ) === '/grades' ) {
-				$data = self::grade( $course, $r, 'DELETE' === $method ); } elseif ( $r['class_id'] ) {
-				$data = 'DELETE' === $method ? self::detach( $course, absint( $r['class_id'] ) ) : self::attach( $course, absint( $r['class_id'] ), rest_sanitize_boolean( $r['enroll'] ) ); } elseif ( substr( $route, -8 ) === '/classes' ) {
-					$data = 'GET' === $method ? self::classes( $course ) : self::attach( $course, absint( $r['class'] ), rest_sanitize_boolean( $r['enroll'] ) ); } else {
-					$data = self::read( $course ); }
-					$response = rest_ensure_response( $data );
-					$response->header( 'Cache-Control', 'private, no-store' );
-					return $response;
-		} catch ( \Throwable $e ) {
-			$status = in_array( $e->getCode(), array( 400, 403, 404, 409 ), true ) ? $e->getCode() : 500;
-			if ( 500 === $status ) {
-				error_log( '[OhMyLMS gradebook] ' . $e->getMessage() ); }
-			return new \WP_Error( 'gradebook_error', 500 === $status ? 'Unable to update the gradebook. Please try again.' : $e->getMessage(), array( 'status' => $status ) );
-		}
-	}
-	/**
 	 * Roster for Gradebook.
 	 *
 	 * @param mixed $class Class.

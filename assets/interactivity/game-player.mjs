@@ -40,9 +40,13 @@ export function renderGame( stage, data, act, restart ) {
 	const run = async ( command, value = '' ) => {
 		if ( pending || disposed ) return;
 		pending = true;
+		/** @type {Array<[HTMLButtonElement|HTMLSelectElement, boolean]>} */
 		const controls = Array.from(
 			stage.querySelectorAll( 'button, select' ),
-			( node ) => [ node, node.disabled ]
+			( /** @type {HTMLButtonElement|HTMLSelectElement} */ node ) => [
+				node,
+				node.disabled,
+			]
 		);
 		controls.forEach( ( [ node ] ) => {
 			node.disabled = true;
@@ -469,7 +473,9 @@ export function renderGame( stage, data, act, restart ) {
 			);
 		}
 	}
-	stage.querySelector( 'button:not(:disabled)' )?.focus();
+	/** @type {HTMLButtonElement|null} */ (
+		stage.querySelector( 'button:not(:disabled)' )
+	)?.focus();
 	return () => {
 		disposed = true;
 		cleanups.forEach( ( cleanup ) => cleanup() );

@@ -5,13 +5,13 @@ import { Button } from './Button';
 /**
  * Native modal dialog with browser focus containment, Escape and focus restoration.
  *
- * @param {Object}     props                Component properties.
- * @param {boolean}    props.open           Whether the dialog is open (default true).
- * @param {string}     props.title          Accessible visible title.
- * @param {() => void} props.onRequestClose Request to close; caller updates open state.
- * @param {string}     props.closeLabel     Accessible close-button text.
- * @param {string}     props.className      Extra dialog classes.
- * @param {Object}     props.children       Dialog content.
+ * @param {Object}                    props                Component properties.
+ * @param {boolean}                   [props.open]         Whether the dialog is open (default true).
+ * @param {string}                    props.title          Accessible visible title.
+ * @param {() => void}                props.onRequestClose Request to close; caller updates open state.
+ * @param {string}                    [props.closeLabel]   Accessible close-button text.
+ * @param {string}                    [props.className]    Extra dialog classes.
+ * @param {import('react').ReactNode} props.children       Dialog content.
  */
 export function Modal( {
 	open = true,
@@ -21,11 +21,14 @@ export function Modal( {
 	className = '',
 	children,
 } ) {
+	/** @type {import('react').MutableRefObject<HTMLDialogElement>} */
 	const ref = useRef();
 	const id = useId();
 	useEffect( () => {
 		const dialog = ref.current;
-		const previousFocus = document.activeElement;
+		const previousFocus = /** @type {HTMLElement|null} */ (
+			document.activeElement
+		);
 		if ( open && ! dialog.open ) {
 			dialog.showModal();
 		}
@@ -47,13 +50,17 @@ export function Modal( {
 			ref,
 			className: `oml-modal ${ className }`,
 			'aria-labelledby': id,
-			onKeyDown: ( event ) => {
+			onKeyDown: (
+				/** @type {import('react').KeyboardEvent<HTMLDialogElement>} */ event
+			) => {
 				if ( event.key !== 'Tab' ) {
 					return;
 				}
 				const focusable = Array.from(
-					event.currentTarget.querySelectorAll(
-						'a[href], button, input, select, textarea, [tabindex]'
+					/** @type {Iterable<HTMLElement & { disabled?: boolean }>} */ (
+						event.currentTarget.querySelectorAll(
+							'a[href], button, input, select, textarea, [tabindex]'
+						)
 					)
 				).filter(
 					( node ) =>

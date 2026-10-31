@@ -210,7 +210,7 @@ class WP_Error {
 	public $code;
 	public function __construct( $code, $message, $data ) { $this->code = $code; }
 }
-SettingsController::register_routes();
+Bootstrap::register_routes();
 check( ! SettingsController::can_manage(), 'Non-administrators cannot access xAPI settings' );
 $can_manage = true;
 check( SettingsController::can_manage(), 'Administrators can manage xAPI settings' );

@@ -1,4 +1,7 @@
 import { invalidResponse, positiveId, record } from '../model';
+import { createValidators } from '../../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
 
 export interface CourseDropOff {
 	readonly contentId: number;
@@ -35,13 +38,6 @@ export interface CourseHealth {
 	/** Courses of the scope with learners (the list holds at most `limit`). */
 	readonly total: number;
 	readonly limit: number;
-}
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
 }
 
 function whole( value: unknown, max = Number.MAX_SAFE_INTEGER ): number {

@@ -10,7 +10,7 @@ import { previewQuestion } from './api.mjs';
  * @param {Object} props          Properties.
  * @param {Object} props.question Current question, including unsaved edits.
  * @param {string} props.clientId Native block ID.
- * @return {Element} Student document with an editing action over it.
+ * @return {React.ReactElement} Student document with an editing action over it.
  */
 export function QuestionBlockPreview( { question, clientId } ) {
 	const { selectBlock } = useDispatch( 'core/block-editor' );

@@ -22,6 +22,7 @@ use OhMyLMS\Gradebook\Views;
 use OhMyLMS\Gradebook\Weights;
 use OhMyLMS\Rest\V1\SettingsController;
 use WP_Error;
+use WP_REST_Controller;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -32,7 +33,7 @@ defined( 'ABSPATH' ) || exit;
  * Contract: docs/api/gradebook.md. Every read and write resolves `scope` with the dashboard rules and
  * answers `Cache-Control: private, no-store`; reads say `X-OhMyLMS-Cache: hit|miss`.
  */
-final class GradebookController {
+final class GradebookController extends WP_REST_Controller {
 
 	/**
 	 * Namespace.

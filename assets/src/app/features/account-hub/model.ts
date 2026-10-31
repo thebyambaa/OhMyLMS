@@ -23,6 +23,9 @@ import {
 	type Teacher,
 	type YearInput,
 } from './types';
+import { createValidators } from '../../lib/validation';
+
+export const { record, text, positiveId } = createValidators( invalidResponse );
 
 /** Longest school or class name the server accepts. */
 export const MAX_NAME = 190;
@@ -43,26 +46,6 @@ export function invalidResponse(): ApiError {
 		status: 502,
 		message: __( 'The server returned invalid account data.', 'ohmylms' ),
 	} );
-}
-
-/**
- * Narrow to a plain object.
- *
- * @param value Parsed JSON.
- * @return The object.
- */
-export function record( value: unknown ): Record< string, unknown > {
-	if ( ! value || 'object' !== typeof value || Array.isArray( value ) ) {
-		throw invalidResponse();
-	}
-	return value as Record< string, unknown >;
-}
-
-export function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
 }
 
 export function nullableText( value: unknown ): string | null {
@@ -92,23 +75,6 @@ export function count( value: unknown ): number {
 		'number' !== typeof value ||
 		! Number.isSafeInteger( value ) ||
 		value < 0
-	) {
-		throw invalidResponse();
-	}
-	return value;
-}
-
-/**
- * Validate a positive integer identifier.
- *
- * @param value Candidate id.
- * @return The id.
- */
-export function positiveId( value: unknown ): number {
-	if (
-		'number' !== typeof value ||
-		! Number.isSafeInteger( value ) ||
-		value < 1
 	) {
 		throw invalidResponse();
 	}

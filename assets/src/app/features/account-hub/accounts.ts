@@ -11,6 +11,9 @@ import {
 	type NewAccountInput,
 	type RoleRef,
 } from './types';
+import { createValidators } from '../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
 
 /** Longest name part the server accepts. */
 export const MAX_ACCOUNT_NAME = 190;
@@ -24,13 +27,6 @@ export const MAX_USERNAME = 60;
 const VERSION = /^[a-f0-9]{16}$/;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const USERNAME = /^[A-Za-z0-9 _.\-@]+$/;
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
-}
 
 function nullableText( value: unknown ): string | null {
 	return null === value ? null : text( value );

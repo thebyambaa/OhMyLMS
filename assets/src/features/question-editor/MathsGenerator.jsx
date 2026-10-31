@@ -9,7 +9,7 @@ import { mathsPreset } from './mathsGenerator.mjs';
  * @param {Object}                   props            Component properties.
  * @param {Object}                   props.value      Existing settings.
  * @param {(preset: Object) => void} props.onGenerate Apply the authored definition.
- * @return {Element} Maths generator controls.
+ * @return {React.ReactElement} Maths generator controls.
  */
 export function MathsGenerator( { value, onGenerate } ) {
 	const saved = value.maths_generator || {};

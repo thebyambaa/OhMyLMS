@@ -10,10 +10,11 @@ namespace OhMyLMS\Rest\V1;
 use OhMyLMS\Abstracts\RestController;
 use OhMyLMS\Schools\Access;
 use OhMyLMS\Schools\ClassManagement;
+use OhMyLMS\Schools\Directory;
+use OhMyLMS\Schools\Guardians;
 use OhMyLMS\Schools\SamplePreview;
-use OhMyLMS\Schools\Schema;
 use OhMyLMS\Schools\Service;
-use OhMyLMS\Utility\Transaction;
+use OhMyLMS\Schools\Versions;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -459,28 +460,10 @@ class AccountHubController extends RestController {
 		}
 		$user = get_current_user_id();
 		if ( ! isset( $this->managed[ $user ] ) ) {
-			global $wpdb;
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Current relationships decide scope; never persisted across requests.
-			$ids                    = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT m.school_id FROM %i m JOIN %i s ON s.id=m.school_id AND s.status='active' WHERE m.user_id=%d AND m.role='school_admin' AND m.status='active'", Schema::table( 'school_memberships' ), Schema::table( 'schools' ), $user ) );
-			$this->managed[ $user ] = array_map( 'intval', (array) $ids );
+			$this->managed[ $user ] = Directory::managed_school_ids( $user );
 		}
 
 		return $this->managed[ $user ];
-	}
-
-	/**
-	 * SQL restricting a school id column to the current scope.
-	 *
-	 * @param string $column Trusted column expression.
-	 * @return string
-	 */
-	private function scope_sql( $column ) {
-		$managed = $this->managed_schools();
-		if ( null === $managed ) {
-			return '';
-		}
-
-		return $managed ? " AND {$column} IN (" . implode( ',', array_map( 'intval', $managed ) ) . ')' : ' AND 1=0';
 	}
 
 	/**
@@ -738,9 +721,7 @@ class AccountHubController extends RestController {
 	 * @return string
 	 */
 	protected function like( $request ) {
-		global $wpdb;
-
-		return '%' . $wpdb->esc_like( $this->clean( $request['search'], 100 ) ) . '%';
+		return Directory::like( $this->clean( $request['search'], 100 ) );
 	}
 
 	/**
@@ -805,16 +786,6 @@ class AccountHubController extends RestController {
 	}
 
 	/**
-	 * Stale-save version of a school.
-	 *
-	 * @param array $row School row.
-	 * @return string
-	 */
-	private function school_version( array $row ) {
-		return substr( hash( 'sha256', wp_json_encode( array( (string) $row['name'], (string) $row['timezone'], (string) $row['status'] ) ) ), 0, 16 );
-	}
-
-	/**
 	 * Page of schools.
 	 *
 	 * @param int    $id     Only this school, or 0.
@@ -825,28 +796,7 @@ class AccountHubController extends RestController {
 	 * @return array
 	 */
 	private function school_rows( $id, $like, $limit, $offset, $status = 'all' ) {
-		global $wpdb;
-		$s     = Schema::table( 'schools' );
-		$c     = Schema::table( 'classes' );
-		$m     = Schema::table( 'school_memberships' );
-		$extra = $this->scope_sql( 's.id' ) . ( $id ? $wpdb->prepare( ' AND s.id=%d', $id ) : '' ) . $this->school_status_sql( $status );
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- Table names and the integer scope are trusted; values are prepared.
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT s.id,s.name,s.slug,s.timezone,s.status,s.created_at,
-				(SELECT COUNT(*) FROM $c c WHERE c.school_id=s.id AND c.status='active') AS class_count,
-				(SELECT COUNT(*) FROM $m m WHERE m.school_id=s.id AND m.role='student' AND m.status='active') AS student_count,
-				(SELECT COUNT(*) FROM $m m WHERE m.school_id=s.id AND m.role='teacher' AND m.status='active') AS teacher_count
-				FROM $s s WHERE s.name LIKE %s{$extra} ORDER BY s.name, s.id LIMIT %d OFFSET %d",
-				$like,
-				$limit,
-				$offset
-			),
-			ARRAY_A
-		);
-		// phpcs:enable
-
-		return array_map( array( $this, 'prepare_school' ), (array) $rows );
+		return array_map( array( $this, 'prepare_school' ), Directory::schools( $id, $like, $limit, $offset, $status, $this->managed_schools() ) );
 	}
 
 	/**
@@ -867,7 +817,7 @@ class AccountHubController extends RestController {
 			'student_count' => (int) $row['student_count'],
 			'teacher_count' => (int) $row['teacher_count'],
 			'sample'        => SamplePreview::is_sample_school( $row ),
-			'version'       => $this->school_version( $row ),
+			'version'       => Versions::school( $row ),
 		);
 	}
 
@@ -878,11 +828,9 @@ class AccountHubController extends RestController {
 	 * @return array
 	 */
 	protected function school_detail( $id ) {
-		global $wpdb;
-		$rows = $this->school_rows( $id, '%', 1, 0 );
-		$data = $rows[0];
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Bounded list of one school's years.
-		$years         = $wpdb->get_results( $wpdb->prepare( 'SELECT id,label,starts_at,ends_at,status FROM %i WHERE school_id=%d ORDER BY starts_at DESC, id DESC LIMIT %d', Schema::table( 'academic_years' ), $id, self::MAX_SUBLIST ), ARRAY_A );
+		$rows          = $this->school_rows( $id, '%', 1, 0 );
+		$data          = $rows[0];
+		$years         = Directory::years( $id, self::MAX_SUBLIST );
 		$data['years'] = array_map(
 			static function ( $year ) {
 				return array(
@@ -906,12 +854,9 @@ class AccountHubController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_schools( $request ) {
-		global $wpdb;
 		$like   = $this->like( $request );
 		$status = (string) $request['status'];
-		$scope  = $this->scope_sql( 's.id' ) . $this->school_status_sql( $status );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- Integer scope and the status fragment are trusted.
-		$total  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i s WHERE s.name LIKE %s{$scope}", Schema::table( 'schools' ), $like ) );
+		$total  = Directory::count_schools( $like, $status, $this->managed_schools() );
 		$paging = $this->paging( $request, $total );
 		if ( is_wp_error( $paging ) ) {
 			return $paging;
@@ -919,16 +864,6 @@ class AccountHubController extends RestController {
 		list( $page, $per_page, $pages ) = $paging;
 
 		return $this->collection( $this->school_rows( 0, $like, $per_page, ( $page - 1 ) * $per_page, $status ), $total, $pages );
-	}
-
-	/**
-	 * SQL restricting `s.status` to a list filter.
-	 *
-	 * @param string $status `all`, `active` or `archived`.
-	 * @return string
-	 */
-	private function school_status_sql( $status ) {
-		return in_array( $status, array( 'active', 'archived' ), true ) ? " AND s.status='{$status}'" : '';
 	}
 
 	/**
@@ -1008,26 +943,14 @@ class AccountHubController extends RestController {
 		if ( is_wp_error( $valid ) ) {
 			return $valid;
 		}
-		$version = (string) $request['version'];
 		try {
-			$result = Transaction::run(
-				function () use ( $school, $name, $timezone, $version ) {
-					global $wpdb;
-					// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Lock the row so the version check and the write are atomic.
-					$current = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id=%d FOR UPDATE', Schema::table( 'schools' ), $school['id'] ), ARRAY_A );
-					if ( '' !== $version && $version !== $this->school_version( (array) $current ) ) {
-						return $this->conflict( __( 'This school was changed by someone else. Reload it before saving.', 'ohmylms' ), $this->school_version( (array) $current ) );
-					}
-					Service::update_school(
-						(int) $school['id'],
-						array(
-							'name'     => $name,
-							'timezone' => $timezone,
-						)
-					);
-
-					return true;
-				}
+			$result = Versions::update_school(
+				(int) $school['id'],
+				array(
+					'name'     => $name,
+					'timezone' => $timezone,
+				),
+				(string) $request['version']
 			);
 		} catch ( \Throwable $failure ) {
 			return $this->service_error( $failure );
@@ -1037,17 +960,6 @@ class AccountHubController extends RestController {
 		}
 
 		return rest_ensure_response( $this->school_detail( (int) $school['id'] ) );
-	}
-
-	/**
-	 * Stale-save error.
-	 *
-	 * @param string $message Message.
-	 * @param string $version Current version.
-	 * @return WP_Error
-	 */
-	private function conflict( $message, $version ) {
-		return $this->error( 'conflict', $message, 409, array( 'version' => $version ) );
 	}
 
 	/**
@@ -1096,23 +1008,20 @@ class AccountHubController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_school_students( $request ) {
-		global $wpdb;
 		$school = $this->school_or_error( $request['id'] );
 		if ( is_wp_error( $school ) ) {
 			return $school;
 		}
-		$from = $wpdb->prepare( "FROM %i u JOIN %i m ON m.user_id=u.ID AND m.school_id=%d AND m.role='student' AND m.status='active' WHERE u.display_name LIKE %s", $wpdb->users, Schema::table( 'school_memberships' ), $school['id'], $this->like( $request ) );
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- $from is prepared above.
-		$total  = (int) $wpdb->get_var( "SELECT COUNT(*) $from" );
+		$like   = $this->like( $request );
+		$total  = Directory::count_school_students( (int) $school['id'], $like );
 		$paging = $this->paging( $request, $total );
 		if ( is_wp_error( $paging ) ) {
 			return $paging;
 		}
 		list( $page, $per_page, $pages ) = $paging;
-		$rows                            = $wpdb->get_results( $wpdb->prepare( "SELECT u.ID AS id,u.display_name $from ORDER BY u.display_name, u.ID LIMIT %d OFFSET %d", $per_page, ( $page - 1 ) * $per_page ), ARRAY_A );
-		// phpcs:enable
+		$rows                            = Directory::school_students( (int) $school['id'], $like, $per_page, ( $page - 1 ) * $per_page );
 
-		return $this->collection( array_map( array( $this, 'prepare_person' ), (array) $rows ), $total, $pages );
+		return $this->collection( array_map( array( $this, 'prepare_person' ), $rows ), $total, $pages );
 	}
 
 	/**
@@ -1150,69 +1059,34 @@ class AccountHubController extends RestController {
 	}
 
 	/**
-	 * Stale-save version of a class.
-	 *
-	 * @param array $row Class row.
-	 * @return string
-	 */
-	private function class_version( array $row ) {
-		return substr( hash( 'sha256', wp_json_encode( array( (string) $row['name'], (string) $row['subject'], (string) $row['grade'], (string) $row['status'], (string) $row['academic_year_id'] ) ) ), 0, 16 );
-	}
-
-	/**
-	 * Shared FROM/WHERE for class lists.
+	 * Class list filter from a request.
 	 *
 	 * @param WP_REST_Request $request   Request.
 	 * @param int|null        $school_id Forced school filter.
-	 * @param int             $class_id  Only this class, or 0.
-	 * @return string Prepared SQL fragment.
+	 * @return array Filter for `Directory::count_classes()` and `Directory::classes()`.
 	 */
-	private function class_from( $request, $school_id = null, $class_id = 0 ) {
-		global $wpdb;
-		$sql = $wpdb->prepare( 'FROM %i c LEFT JOIN %i s ON s.id=c.school_id LEFT JOIN %i y ON y.id=c.academic_year_id WHERE 1=1', Schema::table( 'classes' ), Schema::table( 'schools' ), Schema::table( 'academic_years' ) );
-		if ( $class_id ) {
-			return $sql . $wpdb->prepare( ' AND c.id=%d', $class_id );
-		}
-		$sql .= $wpdb->prepare( ' AND c.name LIKE %s', $this->like( $request ) );
+	private function class_filter( $request, $school_id = null ) {
 		if ( null === $school_id && null !== $request['school_id'] ) {
 			$school_id = (int) $request['school_id'];
 		}
-		if ( null !== $school_id ) {
-			$sql .= $wpdb->prepare( ' AND c.school_id=%d', $school_id );
-		}
-		if ( in_array( $request['status'], array( 'active', 'archived' ), true ) ) {
-			$sql .= $wpdb->prepare( ' AND c.status=%s', $request['status'] );
-		}
 
-		return $sql . $this->scope_sql( 'c.school_id' );
+		return array(
+			'like'      => $this->like( $request ),
+			'school_id' => $school_id,
+			'status'    => $request['status'],
+		);
 	}
 
 	/**
-	 * Class rows for a prepared FROM fragment.
+	 * Shaped class rows for a filter.
 	 *
-	 * @param string $from   Prepared FROM/WHERE.
-	 * @param int    $limit  Rows.
-	 * @param int    $offset Offset.
+	 * @param array $filter Filter.
+	 * @param int   $limit  Rows.
+	 * @param int   $offset Offset.
 	 * @return array
 	 */
-	private function class_rows( $from, $limit, $offset ) {
-		global $wpdb;
-		$m = Schema::table( 'class_memberships' );
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- $from is prepared by class_from().
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT c.id,c.school_id,c.academic_year_id,c.name,c.subject,c.grade,c.status,s.name AS school_name,y.label AS year_label,
-				(SELECT COUNT(*) FROM $m m WHERE m.class_id=c.id AND m.role='student' AND m.status='active') AS student_count,
-				(SELECT COUNT(*) FROM $m m WHERE m.class_id=c.id AND m.role='teacher' AND m.status='active') AS teacher_count
-				$from ORDER BY c.name, c.id LIMIT %d OFFSET %d",
-				$limit,
-				$offset
-			),
-			ARRAY_A
-		);
-		// phpcs:enable
-
-		return array_map( array( $this, 'prepare_class' ), (array) $rows );
+	private function class_rows( array $filter, $limit, $offset ) {
+		return array_map( array( $this, 'prepare_class' ), Directory::classes( $filter, $this->managed_schools(), $limit, $offset ) );
 	}
 
 	/**
@@ -1236,7 +1110,7 @@ class AccountHubController extends RestController {
 			'academic_year_label' => $school && null !== $row['year_label'] ? (string) $row['year_label'] : null,
 			'student_count'       => (int) $row['student_count'],
 			'teacher_count'       => (int) $row['teacher_count'],
-			'version'             => $this->class_version( $row ),
+			'version'             => Versions::classroom( $row ),
 		);
 	}
 
@@ -1247,29 +1121,27 @@ class AccountHubController extends RestController {
 	 * @return array
 	 */
 	private function class_detail( $id ) {
-		$rows = $this->class_rows( $this->class_from( new WP_REST_Request(), null, $id ), 1, 0 );
+		$rows = $this->class_rows( array( 'class_id' => (int) $id ), 1, 0 );
 
 		return $rows[0];
 	}
 
 	/**
-	 * List classes for a prepared filter.
+	 * List classes for a filter.
 	 *
 	 * @param WP_REST_Request $request Request.
-	 * @param string          $from    Prepared FROM/WHERE.
+	 * @param array           $filter  Filter from class_filter().
 	 * @return WP_REST_Response|WP_Error
 	 */
-	private function class_collection( $request, $from ) {
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- $from is prepared by class_from().
-		$total  = (int) $wpdb->get_var( "SELECT COUNT(*) $from" );
+	private function class_collection( $request, array $filter ) {
+		$total  = Directory::count_classes( $filter, $this->managed_schools() );
 		$paging = $this->paging( $request, $total );
 		if ( is_wp_error( $paging ) ) {
 			return $paging;
 		}
 		list( $page, $per_page, $pages ) = $paging;
 
-		return $this->collection( $this->class_rows( $from, $per_page, ( $page - 1 ) * $per_page ), $total, $pages );
+		return $this->collection( $this->class_rows( $filter, $per_page, ( $page - 1 ) * $per_page ), $total, $pages );
 	}
 
 	/**
@@ -1286,7 +1158,7 @@ class AccountHubController extends RestController {
 			}
 		}
 
-		return $this->class_collection( $request, $this->class_from( $request ) );
+		return $this->class_collection( $request, $this->class_filter( $request ) );
 	}
 
 	/**
@@ -1301,7 +1173,7 @@ class AccountHubController extends RestController {
 			return $school;
 		}
 
-		return $this->class_collection( $request, $this->class_from( $request, (int) $school['id'] ) );
+		return $this->class_collection( $request, $this->class_filter( $request, (int) $school['id'] ) );
 	}
 
 	/**
@@ -1387,24 +1259,8 @@ class AccountHubController extends RestController {
 		if ( '' === $data['name'] ) {
 			return $this->error( 'invalid_name', __( 'Enter a class name.', 'ohmylms' ), 422 );
 		}
-		$version = (string) $request['version'];
 		try {
-			$result = Transaction::run(
-				function () use ( $class, $data, $version ) {
-					global $wpdb;
-					// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Lock the row so the version check and the write are atomic.
-					$current = (array) $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id=%d FOR UPDATE', Schema::table( 'classes' ), $class['id'] ), ARRAY_A );
-					if ( '' !== $version && $version !== $this->class_version( $current ) ) {
-						return $this->conflict( __( 'This class was changed by someone else. Reload it before saving.', 'ohmylms' ), $this->class_version( $current ) );
-					}
-					if ( 'active' !== $current['status'] ) {
-						return $this->archived_error();
-					}
-					ClassManagement::edit( (int) $class['id'], $data );
-
-					return true;
-				}
-			);
+			$result = Versions::update_class( (int) $class['id'], $data, (string) $request['version'] );
 		} catch ( \Throwable $failure ) {
 			return $this->service_error( $failure );
 		}
@@ -1472,26 +1328,21 @@ class AccountHubController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_members( $request ) {
-		global $wpdb;
 		$class = $this->class_or_error( $request['id'] );
 		if ( is_wp_error( $class ) ) {
 			return $class;
 		}
-		$from = $wpdb->prepare( "FROM %i cm JOIN %i u ON u.ID=cm.user_id WHERE cm.class_id=%d AND cm.status='active' AND u.display_name LIKE %s", Schema::table( 'class_memberships' ), $wpdb->users, $class['id'], $this->like( $request ) );
-		if ( in_array( $request['role'], array( 'student', 'teacher' ), true ) ) {
-			$from .= $wpdb->prepare( ' AND cm.role=%s', $request['role'] );
-		}
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- $from is prepared above.
-		$total  = (int) $wpdb->get_var( "SELECT COUNT(*) $from" );
+		$like   = $this->like( $request );
+		$role   = (string) $request['role'];
+		$total  = Directory::count_members( (int) $class['id'], $like, $role );
 		$paging = $this->paging( $request, $total );
 		if ( is_wp_error( $paging ) ) {
 			return $paging;
 		}
 		list( $page, $per_page, $pages ) = $paging;
-		$rows                            = $wpdb->get_results( $wpdb->prepare( "SELECT cm.id,cm.user_id,cm.role,cm.joined_at,u.display_name $from ORDER BY cm.role='teacher' DESC, u.display_name, cm.id LIMIT %d OFFSET %d", $per_page, ( $page - 1 ) * $per_page ), ARRAY_A );
-		// phpcs:enable
+		$rows                            = Directory::members( (int) $class['id'], $like, $role, $per_page, ( $page - 1 ) * $per_page );
 
-		return $this->collection( array_map( array( $this, 'prepare_member' ), (array) $rows ), $total, $pages );
+		return $this->collection( array_map( array( $this, 'prepare_member' ), $rows ), $total, $pages );
 	}
 
 	/**
@@ -1511,28 +1362,12 @@ class AccountHubController extends RestController {
 	}
 
 	/**
-	 * Active membership row id, or 0.
-	 *
-	 * @param int    $class_id Class id.
-	 * @param int    $user_id  User id.
-	 * @param string $role     Role.
-	 * @return int
-	 */
-	private function active_member( $class_id, $user_id, $role ) {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Current roster state.
-		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM %i WHERE class_id=%d AND user_id=%d AND role=%s AND status='active'", Schema::table( 'class_memberships' ), $class_id, $user_id, $role ) );
-	}
-
-	/**
 	 * School roster people who can join a class in a role.
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_candidates( $request ) {
-		global $wpdb;
 		$class = $this->class_or_error( $request['id'] );
 		if ( is_wp_error( $class ) ) {
 			return $class;
@@ -1540,28 +1375,17 @@ class AccountHubController extends RestController {
 		if ( ! (int) $class['school_id'] ) {
 			return $this->collection( array(), 0, 0 );
 		}
-		$from = $wpdb->prepare(
-			"FROM %i u JOIN %i sm ON sm.user_id=u.ID AND sm.school_id=%d AND sm.role=%s AND sm.status='active' WHERE u.display_name LIKE %s AND NOT EXISTS (SELECT 1 FROM %i cm WHERE cm.class_id=%d AND cm.user_id=u.ID AND cm.role=%s AND cm.status='active')",
-			$wpdb->users,
-			Schema::table( 'school_memberships' ),
-			$class['school_id'],
-			$request['role'],
-			$this->like( $request ),
-			Schema::table( 'class_memberships' ),
-			$class['id'],
-			$request['role']
-		);
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- $from is prepared above.
-		$total  = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT u.ID) $from" );
+		$like   = $this->like( $request );
+		$role   = (string) $request['role'];
+		$total  = Directory::count_candidates( (int) $class['school_id'], (int) $class['id'], $role, $like );
 		$paging = $this->paging( $request, $total );
 		if ( is_wp_error( $paging ) ) {
 			return $paging;
 		}
 		list( $page, $per_page, $pages ) = $paging;
-		$rows                            = $wpdb->get_results( $wpdb->prepare( "SELECT DISTINCT u.ID AS id,u.display_name $from ORDER BY u.display_name, u.ID LIMIT %d OFFSET %d", $per_page, ( $page - 1 ) * $per_page ), ARRAY_A );
-		// phpcs:enable
+		$rows                            = Directory::candidates( (int) $class['school_id'], (int) $class['id'], $role, $like, $per_page, ( $page - 1 ) * $per_page );
 
-		return $this->collection( array_map( array( $this, 'prepare_person' ), (array) $rows ), $total, $pages );
+		return $this->collection( array_map( array( $this, 'prepare_person' ), $rows ), $total, $pages );
 	}
 
 	/**
@@ -1587,7 +1411,7 @@ class AccountHubController extends RestController {
 		if ( ! Access::school( (int) $class['school_id'], array( $role ), $user ) ) {
 			return $this->error( 'not_on_roster', __( 'Only people on this school\'s roster in that role can join the class.', 'ohmylms' ), 422 );
 		}
-		if ( $this->active_member( (int) $class['id'], $user, $role ) ) {
+		if ( Directory::active_member_id( (int) $class['id'], $user, $role ) ) {
 			return $this->error( 'already_member', __( 'This person is already in the class.', 'ohmylms' ), 409 );
 		}
 		try {
@@ -1601,11 +1425,9 @@ class AccountHubController extends RestController {
 		} catch ( \Throwable $failure ) {
 			return $this->service_error( $failure );
 		}
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Read back the saved membership.
-		$row = $wpdb->get_row( $wpdb->prepare( "SELECT cm.id,cm.user_id,cm.role,cm.joined_at,u.display_name FROM %i cm JOIN %i u ON u.ID=cm.user_id WHERE cm.class_id=%d AND cm.user_id=%d AND cm.role=%s AND cm.status='active'", Schema::table( 'class_memberships' ), $wpdb->users, $class['id'], $user, $role ), ARRAY_A );
+		$row = Directory::member( (int) $class['id'], $user, $role );
 
-		return $this->created( $this->prepare_member( (array) $row ), '/classes/' . (int) $class['id'] . '/members' );
+		return $this->created( $this->prepare_member( $row ), '/classes/' . (int) $class['id'] . '/members' );
 	}
 
 	/**
@@ -1621,7 +1443,7 @@ class AccountHubController extends RestController {
 		}
 		$user = (int) $request['user_id'];
 		$role = (string) $request['role'];
-		if ( ! $this->active_member( (int) $class['id'], $user, $role ) ) {
+		if ( ! Directory::active_member_id( (int) $class['id'], $user, $role ) ) {
 			return $this->error( 'member_not_found', __( 'This person is not in the class.', 'ohmylms' ), 404 );
 		}
 		if ( 'active' !== $class['status'] ) {
@@ -1654,30 +1476,6 @@ class AccountHubController extends RestController {
 	 */
 
 	/**
-	 * WHERE clause selecting the people of a kind visible to the current user.
-	 *
-	 * @param string   $kind      `teacher` or `parent`.
-	 * @param int|null $school_id Optional school filter.
-	 * @return string Prepared SQL fragment on `u`.
-	 */
-	private function people_where( $kind, $school_id = null ) {
-		global $wpdb;
-		$school = $school_id ? $wpdb->prepare( ' AND x.school_id=%d', $school_id ) : '';
-		if ( 'teacher' === $kind ) {
-			$relation = $wpdb->prepare( "EXISTS (SELECT 1 FROM %i x JOIN %i xs ON xs.id=x.school_id AND xs.status='active' WHERE x.user_id=u.ID AND x.role='teacher' AND x.status='active'", Schema::table( 'school_memberships' ), Schema::table( 'schools' ) );
-		} else {
-			$relation = $wpdb->prepare( "EXISTS (SELECT 1 FROM %i x WHERE x.guardian_user_id=u.ID AND x.status='active'", Schema::table( 'guardian_links' ) );
-		}
-		$relation .= $school . $this->scope_sql( 'x.school_id' ) . ')';
-		if ( null !== $this->managed_schools() || $school_id ) {
-			return $relation;
-		}
-		$role = $wpdb->prepare( 'EXISTS (SELECT 1 FROM %i um WHERE um.user_id=u.ID AND um.meta_key=%s AND um.meta_value LIKE %s)', $wpdb->usermeta, $wpdb->get_blog_prefix() . 'capabilities', '%' . $wpdb->esc_like( '"ohmylms_' . $kind . '"' ) . '%' );
-
-		return "($role OR $relation)";
-	}
-
-	/**
 	 * Paged list of teachers or parents.
 	 *
 	 * @param WP_REST_Request $request Request.
@@ -1685,7 +1483,6 @@ class AccountHubController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	private function people( $request, $kind ) {
-		global $wpdb;
 		$school_id = null === $request['school_id'] ? null : (int) $request['school_id'];
 		if ( $school_id ) {
 			$school = $this->school_or_error( $school_id );
@@ -1694,38 +1491,26 @@ class AccountHubController extends RestController {
 			}
 		}
 		$like   = $this->like( $request );
-		$search = $this->can_see_email() ? $wpdb->prepare( '(u.display_name LIKE %s OR u.user_email LIKE %s)', $like, $like ) : $wpdb->prepare( 'u.display_name LIKE %s', $like );
-		$from   = $wpdb->prepare( 'FROM %i u WHERE ', $wpdb->users ) . $this->people_where( $kind, $school_id ) . ' AND ' . $search;
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- $from is assembled from prepared fragments.
-		$total  = (int) $wpdb->get_var( "SELECT COUNT(*) $from" );
+		$scope  = $this->managed_schools();
+		$total  = Directory::count_people( $kind, $school_id, $like, $this->can_see_email(), $scope );
 		$paging = $this->paging( $request, $total );
 		if ( is_wp_error( $paging ) ) {
 			return $paging;
 		}
 		list( $page, $per_page, $pages ) = $paging;
-		$rows                            = (array) $wpdb->get_results( $wpdb->prepare( "SELECT u.ID,u.display_name,u.user_email $from ORDER BY u.display_name, u.ID LIMIT %d OFFSET %d", $per_page, ( $page - 1 ) * $per_page ), ARRAY_A );
+		$rows                            = Directory::people( $kind, $school_id, $like, $this->can_see_email(), $scope, $per_page, ( $page - 1 ) * $per_page );
 		$ids                             = array_map( 'intval', wp_list_pluck( $rows, 'ID' ) );
-		$in                              = $ids ? implode( ',', $ids ) : '0';
 		$schools                         = array();
-		$counts                          = array();
 		if ( 'teacher' === $kind ) {
-			$scope       = $this->scope_sql( 's.id' );
-			$memberships = $wpdb->get_results( $wpdb->prepare( "SELECT m.user_id,s.id,s.name FROM %i m JOIN %i s ON s.id=m.school_id AND s.status='active' WHERE m.role='teacher' AND m.status='active' AND m.user_id IN ($in){$scope} ORDER BY s.name, s.id", Schema::table( 'school_memberships' ), Schema::table( 'schools' ) ), ARRAY_A );
-			foreach ( (array) $memberships as $membership ) {
+			foreach ( Directory::teacher_schools( $ids, $scope ) as $membership ) {
 				$schools[ (int) $membership['user_id'] ][] = array(
 					'id'   => (int) $membership['id'],
 					'name' => (string) $membership['name'],
 				);
 			}
-			$scope   = $this->scope_sql( 'c.school_id' );
-			$counted = $wpdb->get_results( $wpdb->prepare( "SELECT cm.user_id,COUNT(*) AS total FROM %i cm JOIN %i c ON c.id=cm.class_id AND c.status='active' WHERE cm.role='teacher' AND cm.status='active' AND cm.user_id IN ($in){$scope} GROUP BY cm.user_id", Schema::table( 'class_memberships' ), Schema::table( 'classes' ) ), ARRAY_A );
+			$counts = Directory::teacher_class_counts( $ids, $scope );
 		} else {
-			$scope   = $this->scope_sql( 'g.school_id' );
-			$counted = $wpdb->get_results( $wpdb->prepare( "SELECT g.guardian_user_id AS user_id,COUNT(*) AS total FROM %i g WHERE g.status='active' AND g.guardian_user_id IN ($in){$scope} GROUP BY g.guardian_user_id", Schema::table( 'guardian_links' ) ), ARRAY_A );
-		}
-		// phpcs:enable
-		foreach ( (array) $counted as $count ) {
-			$counts[ (int) $count['user_id'] ] = (int) $count['total'];
+			$counts = Directory::child_counts( $ids, $scope );
 		}
 		$email = $this->can_see_email();
 		$data  = array();
@@ -1775,10 +1560,8 @@ class AccountHubController extends RestController {
 	 * @return \WP_User|WP_Error
 	 */
 	private function parent_or_error( $id ) {
-		global $wpdb;
-		$id = absint( $id );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- Assembled from prepared fragments.
-		$found = $id && $wpdb->get_var( $wpdb->prepare( 'SELECT u.ID FROM %i u WHERE u.ID=%d AND ', $wpdb->users, $id ) . $this->people_where( 'parent' ) );
+		$id    = absint( $id );
+		$found = $id && Directory::is_parent( $id, $this->managed_schools() );
 		$user  = $found ? get_userdata( $id ) : false;
 
 		return $user ? $user : $this->error( 'parent_not_found', __( 'Parent not found.', 'ohmylms' ), 404 );
@@ -1791,13 +1574,8 @@ class AccountHubController extends RestController {
 	 * @return array
 	 */
 	private function children_of( $guardian ) {
-		global $wpdb;
-		$link_scope   = $this->scope_sql( 'g.school_id' );
-		$invite_scope = $this->scope_sql( 'i.school_id' );
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- Integer scope is trusted; values are prepared.
-		$links   = $wpdb->get_results( $wpdb->prepare( "SELECT g.id,g.school_id,s.name AS school_name,g.student_user_id,u.display_name,g.approved_at FROM %i g JOIN %i s ON s.id=g.school_id JOIN %i u ON u.ID=g.student_user_id WHERE g.guardian_user_id=%d AND g.status='active'{$link_scope} ORDER BY u.display_name, g.id LIMIT %d", Schema::table( 'guardian_links' ), Schema::table( 'schools' ), $wpdb->users, $guardian->ID, self::MAX_SUBLIST ), ARRAY_A );
-		$pending = $wpdb->get_results( $wpdb->prepare( "SELECT i.id,i.school_id,s.name AS school_name,i.student_user_id,u.display_name,i.expires_at FROM %i i JOIN %i s ON s.id=i.school_id LEFT JOIN %i u ON u.ID=i.student_user_id WHERE i.role='guardian' AND i.email=%s AND i.consumed_at IS NULL AND i.revoked_at IS NULL AND i.expires_at>%s{$invite_scope} ORDER BY i.id DESC LIMIT %d", Schema::table( 'school_invitations' ), Schema::table( 'schools' ), $wpdb->users, $guardian->user_email, Service::now(), self::MAX_SUBLIST ), ARRAY_A );
-		// phpcs:enable
+		$links   = Directory::children( (int) $guardian->ID, $this->managed_schools(), self::MAX_SUBLIST );
+		$pending = Directory::pending_children( $guardian->user_email, $this->managed_schools(), self::MAX_SUBLIST );
 
 		return array(
 			'children' => array_map(
@@ -1853,7 +1631,6 @@ class AccountHubController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function link_child( $request ) {
-		global $wpdb;
 		$parent = $this->parent_or_error( $request['id'] );
 		if ( is_wp_error( $parent ) ) {
 			return $parent;
@@ -1869,15 +1646,12 @@ class AccountHubController extends RestController {
 		if ( ! is_email( $parent->user_email ) ) {
 			return $this->error( 'parent_without_email', __( 'This parent account has no email address to send the invitation to.', 'ohmylms' ), 422 );
 		}
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery -- Current link and invitation state.
-		$linked = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM %i WHERE school_id=%d AND guardian_user_id=%d AND student_user_id=%d AND status='active'", Schema::table( 'guardian_links' ), $school['id'], $parent->ID, $student ) );
-		if ( $linked ) {
+		if ( Guardians::linked( (int) $school['id'], (int) $parent->ID, $student ) ) {
 			return $this->error( 'already_linked', __( 'This parent is already linked to the student.', 'ohmylms' ), 409 );
 		}
-		$pending = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM %i WHERE school_id=%d AND student_user_id=%d AND role='guardian' AND email=%s AND consumed_at IS NULL AND revoked_at IS NULL AND expires_at>%s", Schema::table( 'school_invitations' ), $school['id'], $student, $parent->user_email, Service::now() ) );
-		// phpcs:enable
+		$pending = Directory::open_guardian_invitation( (int) $school['id'], $student, $parent->user_email );
 		if ( $pending ) {
-			return $this->error( 'invitation_pending', __( 'An invitation for this parent and student is already waiting. Revoke it to create a new link.', 'ohmylms' ), 409, array( 'invitation' => (int) $pending ) );
+			return $this->error( 'invitation_pending', __( 'An invitation for this parent and student is already waiting. Revoke it to create a new link.', 'ohmylms' ), 409, array( 'invitation' => $pending ) );
 		}
 		try {
 			$invite = Service::invite(

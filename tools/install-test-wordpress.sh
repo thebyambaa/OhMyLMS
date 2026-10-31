@@ -59,6 +59,9 @@ wp option update home "http://$HOST"
 wp option update siteurl "http://$HOST"
 wp rewrite structure '/%postname%/'
 wp plugin activate ohmylms
+# Tables otherwise created on first use: CREATE TABLE inside a suite's transaction commits it, so a suite that
+# checks its rollback (exam-import, exam-results-release, figure-assets) fails on the first run against a new database.
+wp eval '\OhMyLMS\Cohorts\CohortSchema::ensure(); \OhMyLMS\Gradebook\Schema::ensure(); \OhMyLMS\Automation\RuleStore::ensure(); \OhMyLMS\Integrations\Webhooks\Includes\WebhooksMigration::ensure_schema(); \OhMyLMS\Certificates\IssuedSchema::install(); \OhMyLMS\Student\EnrolmentSchema::install();'
 # integrations-rest-integration expects the MCP integration switched on, as on the Local site.
 wp eval '$s = (array) get_option( "ohmylms_integrations", array() ); $s["mcp"] = array_merge( (array) ( $s["mcp"] ?? array() ), array( "is_enable" => 1 ) ); update_option( "ohmylms_integrations", $s );'
 wp plugin list --status=active --field=name

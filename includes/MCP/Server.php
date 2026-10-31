@@ -8,7 +8,10 @@ namespace OhMyLMS\MCP;
 
 defined( 'ABSPATH' ) || exit;
 
-/** Connection settings and authentication for the official WordPress MCP Adapter. */
+/**
+ * Connection settings and authentication for the official WordPress MCP Adapter. The settings routes
+ * are {@see Rest\ServerController}.
+ */
 class Server {
 	const ROUTE  = '/ohmylms/v1/mcp';
 	const OPTION = 'ohmylms_mcp_tokens';
@@ -24,7 +27,6 @@ class Server {
 	 */
 	public static function init() {
 		add_filter( 'ohmylms_integrations', array( __CLASS__, 'manifest' ) );
-		add_action( 'rest_api_init', array( __CLASS__, 'register' ) );
 		if ( self::enabled() ) {
 			Abilities::init();
 		}
@@ -60,37 +62,6 @@ class Server {
 			'is_enable'   => self::enabled() ? 1 : 0,
 		);
 		return $integrations;
-	}
-
-	/**
-	 * Register for Server.
-	 */
-	public static function register() {
-		register_rest_route(
-			'ohmylms/v1',
-			'/mcp/settings',
-			array(
-				'methods'             => 'GET',
-				'callback'            => array( __CLASS__, 'settings' ),
-				'permission_callback' => array( __CLASS__, 'can_manage' ),
-			)
-		);
-		register_rest_route(
-			'ohmylms/v1',
-			'/mcp/settings/(?P<provider>openai|anthropic|gemini)',
-			array(
-				'methods'             => 'POST',
-				'callback'            => array( __CLASS__, 'update_settings' ),
-				'permission_callback' => array( __CLASS__, 'can_manage' ),
-				'args'                => array(
-					'action' => array(
-						'required' => true,
-						'type'     => 'string',
-						'enum'     => array( 'generate', 'revoke' ),
-					),
-				),
-			)
-		);
 	}
 
 	/**

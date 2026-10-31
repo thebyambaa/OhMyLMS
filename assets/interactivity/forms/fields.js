@@ -120,28 +120,35 @@ export function createForms( {
 				event.preventDefault();
 				toggle();
 			} ),
-			passwordKey: withSyncEvent( ( event ) => {
-				if ( isActivationKey( event.key ) ) {
+			passwordKey: withSyncEvent(
+				( /** @type {KeyboardEvent} */ event ) => {
+					if ( isActivationKey( event.key ) ) {
+						event.preventDefault();
+						toggle();
+					}
+				}
+			),
+			checkboxKey: withSyncEvent(
+				( /** @type {KeyboardEvent} */ event ) => {
+					const label = /** @type {HTMLLabelElement} */ (
+						getElement().ref
+					);
+					if (
+						! isActivationKey( event.key ) ||
+						event.target !== label
+					) {
+						return;
+					}
 					event.preventDefault();
-					toggle();
+					const box = /** @type {HTMLInputElement|null} */ (
+						label.control ||
+							label.querySelector( 'input[type="checkbox"]' )
+					);
+					if ( box && ! box.disabled ) {
+						box.click();
+					}
 				}
-			} ),
-			checkboxKey: withSyncEvent( ( event ) => {
-				const label = getElement().ref;
-				if (
-					! isActivationKey( event.key ) ||
-					event.target !== label
-				) {
-					return;
-				}
-				event.preventDefault();
-				const box =
-					label.control ||
-					label.querySelector( 'input[type="checkbox"]' );
-				if ( box && ! box.disabled ) {
-					box.click();
-				}
-			} ),
+			),
 			consentChange( event ) {
 				getContext().consent = Boolean( event.target?.checked );
 			},
@@ -174,8 +181,8 @@ export function createForms( {
 				later( run, 500 );
 			},
 			syncConsent() {
-				const box = getElement().ref.querySelector(
-					'input[name="tnc-accept"]'
+				const box = /** @type {HTMLInputElement|null} */ (
+					getElement().ref.querySelector( 'input[name="tnc-accept"]' )
 				);
 				if ( box ) {
 					getContext().consent = box.checked;

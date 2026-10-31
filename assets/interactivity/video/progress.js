@@ -228,6 +228,7 @@ export function progressFields( {
 	position,
 	intervals,
 } ) {
+	/** @type {Interval[]} */
 	const spans = clampIntervals( intervals, duration )
 		.slice( -MAX_INTERVALS )
 		.map( ( [ start, end ] ) => [ round2( start ), round2( end ) ] );

@@ -2,6 +2,7 @@
 namespace OhMyLMS\Commerce\Gateways\QPay;
 
 use OhMyLMS\Commerce\Abstracts\PaymentGateway;
+use OhMyLMS\Commerce\Gateways\QPay\Rest\CallbackController;
 use function OhMyLMS\Commerce\ecommerce;
 
 defined( 'ABSPATH' ) || exit;
@@ -43,7 +44,7 @@ class GatewayQPay extends PaymentGateway {
 				add_action( $prefix . 'ohmylms_qpay_check_payment', array( $this, 'ajax_check_payment' ) );
 				add_action( $prefix . 'ohmylms_qpay_resume', array( $this, 'ajax_resume' ) );
 			}
-			add_action( 'rest_api_init', array( $this, 'register_callback_route' ) );
+			add_action( 'rest_api_init', array( new CallbackController( $this ), 'register_routes' ) );
 			add_action( 'update_option_ohmylms_qpay_settings', array( QPayAPI::class, 'settings_changed' ), 10, 2 );
 		}
 	}
@@ -435,21 +436,6 @@ class GatewayQPay extends PaymentGateway {
 				ohmylms_empty_cart();
 			}
 		}
-	}
-
-	/**
-	 * Register callback route for Gateway qpay.
-	 */
-	public function register_callback_route() {
-		register_rest_route(
-			'ohmylms/v1',
-			'/qpay/callback',
-			array(
-				'methods'             => 'GET',
-				'callback'            => array( $this, 'handle_callback' ),
-				'permission_callback' => '__return_true',
-			)
-		);
 	}
 
 	/**

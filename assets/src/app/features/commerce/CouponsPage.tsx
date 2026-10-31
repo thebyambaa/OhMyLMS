@@ -11,7 +11,7 @@ import { createCoupon, deleteCoupon, updateCoupon } from './api';
 import { CouponEditor } from './CouponEditor';
 import { useCoupons } from './hooks';
 import { discountLabel, formatDate } from './model';
-import { useOperation } from './useOperation';
+import { useOperation } from '../../hooks/useOperation';
 import type { Coupon, CouponPayload } from './types';
 
 interface EditorState {

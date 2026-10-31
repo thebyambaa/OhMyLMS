@@ -20,7 +20,7 @@ import {
 	listSubmissions,
 } from './report';
 import type { SkillFilter } from './report';
-import { useRequest } from './useRequest';
+import { useRequest } from '../../hooks/useRequest';
 
 function attemptStatus( status: string ): string {
 	switch ( status ) {
@@ -91,10 +91,11 @@ function Section< T >( {
 } ) {
 	const [ page, setPage ] = useState( { filterKey, page: 1 } );
 	const current = page.filterKey === filterKey ? page.page : 1;
-	const request = useRequest(
-		( signal ) => load( current, signal ),
-		`${ filterKey }:${ current }`
-	);
+	const request = useRequest( ( signal ) => load( current, signal ), {
+		key: `${ filterKey }:${ current }`,
+		keepData: true,
+		errorShape: 'object',
+	} );
 	return (
 		<section aria-label={ title }>
 			<h3>{ title }</h3>
@@ -128,13 +129,14 @@ function Section< T >( {
 }
 
 function Report( { studentId }: { studentId: number } ) {
-	const student = useRequest(
-		( signal ) => getStudent( studentId, signal ),
-		String( studentId )
-	);
+	const student = useRequest( ( signal ) => getStudent( studentId, signal ), {
+		key: String( studentId ),
+		keepData: true,
+		errorShape: 'object',
+	} );
 	const summary = useRequest(
 		( signal ) => getReportSummary( studentId, signal ),
-		String( studentId )
+		{ key: String( studentId ), keepData: true, errorShape: 'object' }
 	);
 	const [ skillFilter, setSkillFilter ] = useState< SkillFilter >( 'all' );
 

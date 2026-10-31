@@ -10,6 +10,7 @@
 namespace OhMyLMS\Engagement;
 
 use OhMyLMS\Engagement\Achievements;
+use OhMyLMS\I18n\RecipientLocale;
 
 /**
  * Plugin point implementation.
@@ -175,7 +176,12 @@ class Point {
 	 */
 	public static function send_email( $body, $to, $subject ) {
 		$headers = array( 'MIME-Version: 1.0', 'Content-Type: text/html; charset=UTF-8' );
-		wp_mail( sanitize_email( $to ), sanitize_text_field( $subject ), wp_kses_post( $body ), $headers );
+		RecipientLocale::run(
+			sanitize_email( $to ),
+			static function () use ( $body, $to, $subject, $headers ) {
+				wp_mail( sanitize_email( $to ), sanitize_text_field( $subject ), wp_kses_post( $body ), $headers );
+			}
+		);
 	}
 
 

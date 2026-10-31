@@ -10,7 +10,7 @@ import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { normalizeApiError } from '../../../lib/api';
 import { SearchPicker } from '../SearchPicker';
-import { useOperation } from '../useOperation';
+import { useOperation } from '../../../hooks/useOperation';
 import { createCohort, searchTargets, updateCohort } from './api';
 import {
 	COHORT_CAPACITY_MAX,

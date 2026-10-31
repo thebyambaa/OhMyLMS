@@ -5,23 +5,26 @@ import { groupQuestionTypes } from './questionTypeGroups.mjs';
 
 /**
  * Grouped, searchable replacement for the flat question type list.
- * @param root0
- * @param root0.value    Current type ID.
- * @param root0.options  Available { value, label } types.
- * @param root0.onChange Called with the chosen type ID.
- * @param root0.disabled Whether the type is locked.
+ * @param {Object} root0
+ * @param          [root0.value]    Current type ID.
+ * @param          [root0.options]  Available { value, label } types.
+ * @param          [root0.onChange] Called with the chosen type ID.
+ * @param          [root0.disabled] Whether the type is locked.
  */
 export function QuestionTypeMenu( { value, options, onChange, disabled } ) {
 	const [ search, setSearch ] = useState( '' );
 	const current = options.find( ( option ) => option.value === value );
 	const query = search.toLowerCase().trim();
 	const groups = groupQuestionTypes( options )
-		.map( ( [ heading, items ] ) => [
-			heading,
-			items.filter( ( item ) =>
-				item.label.toLowerCase().includes( query )
-			),
-		] )
+		.map(
+			( [ heading, items ] ) =>
+				/** @type {[string, Array<{value: string, label: string}>]} */ ( [
+					heading,
+					items.filter( ( item ) =>
+						item.label.toLowerCase().includes( query )
+					),
+				] )
+		)
 		.filter( ( [ , items ] ) => items.length );
 	return (
 		<Dropdown

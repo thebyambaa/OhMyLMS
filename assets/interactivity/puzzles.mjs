@@ -6,7 +6,7 @@ const { __, sprintf } = window.wp.i18n;
  * @param {HTMLElement} root Puzzle region.
  * @param {string} type Crossword or wordsearch.
  * @param {Object} config Frozen public layout.
- * @return {Function} Detach optional listeners.
+ * @return {() => void} Detach optional listeners.
  */
 export function buildPuzzle( root, type, config ) {
 	const doc = root.ownerDocument;
@@ -56,10 +56,13 @@ export function buildPuzzle( root, type, config ) {
 		/* Storage is optional. */
 	}
 	const old = Object.fromEntries(
-		Array.from( root.querySelectorAll( '[data-answer-key]' ), ( input ) => [
-			input.dataset.answerKey,
-			input.value,
-		] )
+		Array.from(
+			root.querySelectorAll( '[data-answer-key]' ),
+			( /** @type {HTMLInputElement} */ input ) => [
+				input.dataset.answerKey,
+				input.value,
+			]
+		)
 	);
 	root.replaceChildren();
 	root.classList.add( 'ohmylms-puzzle' );
@@ -482,9 +485,11 @@ export function buildPuzzle( root, type, config ) {
 					.puzzleCell;
 		} );
 		grid.addEventListener( 'pointerup', ( event ) => {
-			const end = doc
-				.elementFromPoint( event.clientX, event.clientY )
-				?.closest( '[data-puzzle-cell]' );
+			const end = /** @type {HTMLElement|null|undefined} */ (
+				doc
+					.elementFromPoint( event.clientX, event.clientY )
+					?.closest( '[data-puzzle-cell]' )
+			);
 			if (
 				pointerStart &&
 				end &&

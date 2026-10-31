@@ -65,6 +65,7 @@ export function scaleTicks( min, max, step, limit = 101 ) {
  */
 function placeCounts( target, places ) {
 	let rest = Math.max( 0, Math.trunc( num( target ) ) );
+	/** @type {Object<string, number>} */
 	const counts = {};
 	const ordered = Object.keys( PLACES ).filter( ( place ) =>
 		places.includes( place )

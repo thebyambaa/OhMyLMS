@@ -21,6 +21,7 @@ export function renderImageQuiz( stage, data, act, restart ) {
 			return;
 		}
 		pending = true;
+		/** @type {Array<[HTMLButtonElement, boolean]>} */
 		const buttons = Array.from(
 			stage.querySelectorAll( 'button' ),
 			( node ) => [ node, node.disabled ]

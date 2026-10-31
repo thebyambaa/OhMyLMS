@@ -291,12 +291,16 @@ function isFormElement( value ) {
  * @return {Object<string, unknown>} Object.
  */
 export function entriesToObject( entries ) {
+	/** @type {Object<string, unknown>} */
 	const result = {};
 	for ( const [ rawName, value ] of entries ) {
 		const list = rawName.endsWith( '[]' );
 		const name = list ? rawName.slice( 0, -2 ) : rawName;
 		if ( list ) {
-			result[ name ] = [ ...( result[ name ] || [] ), value ];
+			result[ name ] = [
+				.../** @type {unknown[]} */ ( result[ name ] || [] ),
+				value,
+			];
 		} else if ( name in result ) {
 			result[ name ] = [].concat( result[ name ], value );
 		} else {
@@ -406,14 +410,14 @@ function codeOf( payload ) {
  * Turn one HTTP exchange into a `RequestResult`. Pure, so every response shape the plugin
  * uses is covered by tests/js/sdk.test.mjs.
  *
- * @param {Object}      reply           Exchange.
- * @param {string}      reply.transport `rest`, `ajax` or `url`.
- * @param {number}      [reply.status]  HTTP status.
- * @param {unknown}     [reply.body]    Parsed body (string when `invalid` or `parse` is `text`).
- * @param {boolean}     [reply.invalid] The body was not JSON.
- * @param {string}      [reply.failure] `network`, `aborted` or `timeout` when there was no response.
- * @param {string}      [reply.parse]   `json` or `text`.
- * @param {SdkMessages} [messages]      Fallback messages.
+ * @param {Object}              reply           Exchange.
+ * @param {'rest'|'ajax'|'url'} reply.transport `rest`, `ajax` or `url`.
+ * @param {number}              [reply.status]  HTTP status.
+ * @param {?}                   [reply.body]    Parsed body (string when `invalid` or `parse` is `text`).
+ * @param {boolean}             [reply.invalid] The body was not JSON.
+ * @param {string}              [reply.failure] `network`, `aborted` or `timeout` when there was no response.
+ * @param {string}              [reply.parse]   `json` or `text`.
+ * @param {SdkMessages}         [messages]      Fallback messages.
  * @return {RequestResult} Result.
  */
 export function normalizeResponse( reply, messages = getConfig().messages ) {
@@ -549,6 +553,27 @@ function linkSignals( signal, timeout ) {
 	};
 }
 
+/** @typedef {NonNullable<Parameters<typeof fetch>[1]>} FetchOptions */
+
+/**
+ * @typedef {Object} Exchange
+ * @property {'rest'|'ajax'|'url'} transport Endpoint kind.
+ * @property {number}              status    HTTP status, 0 without a response.
+ * @property {?}                   [body]    Parsed body (text for `parse: 'text'` and invalid JSON).
+ * @property {string}              [parse]   `json` or `text`.
+ * @property {boolean}             [invalid] The body was not JSON.
+ * @property {string}              [failure] `network`, `aborted` or `timeout`.
+ * @property {unknown}             [error]   The fetch error.
+ */
+
+/**
+ * @param {'rest'|'ajax'|'url'} transport Endpoint kind.
+ * @param {string}              url       Address.
+ * @param {FetchOptions}        init      Fetch options.
+ * @param {string}              parse     `json` or `text`.
+ * @param {AbortSignal}         [signal]  Abort signal.
+ * @return {Promise<Exchange>} The exchange, never rejected.
+ */
 async function exchange( transport, url, init, parse, signal ) {
 	let response;
 	let text;
@@ -576,6 +601,7 @@ async function exchange( transport, url, init, parse, signal ) {
 
 function restInit( options, method, nonce ) {
 	const headers = { Accept: 'application/json', ...options.headers };
+	/** @type {FetchOptions} */
 	const init = { method, credentials: 'same-origin', headers };
 	if ( nonce ) {
 		headers[ 'X-WP-Nonce' ] = nonce;
@@ -597,6 +623,7 @@ function restInit( options, method, nonce ) {
 }
 
 function ajaxInit( options, method ) {
+	/** @type {FetchOptions & {headers: Object<string, string>}} */
 	const init = {
 		method,
 		credentials: 'same-origin',
@@ -730,6 +757,7 @@ async function ajax( opts, settings, parse, signal ) {
 			( 'url' === transport && opts.data === undefined ? 'GET' : 'POST' )
 	).toUpperCase();
 	let target = url;
+	/** @type {FetchOptions & {headers: Object<string, string>}} */
 	let init;
 	if ( 'url' === transport ) {
 		init = {
@@ -766,8 +794,16 @@ async function ajax( opts, settings, parse, signal ) {
 	);
 }
 
+/**
+ * @typedef {Error & {code?: string, status?: number, data?: unknown}} RequestFailure
+ */
+
+/**
+ * @param {RequestResult} result Aborted or timed-out result.
+ * @return {RequestFailure} `AbortError` carrying the result's code.
+ */
 function abortError( result ) {
-	const error = new Error( result.message );
+	const error = /** @type {RequestFailure} */ ( new Error( result.message ) );
 	error.name = 'AbortError';
 	error.code = result.error.code;
 	return error;
@@ -785,7 +821,7 @@ function abortError( result ) {
  * @param {string}      [options.root]   REST root URL ending in `/` (default: server config).
  * @param {string}      [options.nonce]  `wp_rest` nonce (default: server config).
  * @param {AbortSignal} [options.signal] Abort signal.
- * @return {Promise<unknown>} Parsed body.
+ * @return {Promise<?>} Parsed body, as the legacy callers read it.
  */
 export async function apiFetch(
 	path,
@@ -805,7 +841,7 @@ export async function apiFetch(
 	if ( [ 'aborted', 'timeout' ].includes( result.error.code ) ) {
 		throw abortError( result );
 	}
-	const error = new Error( result.message );
+	const error = /** @type {RequestFailure} */ ( new Error( result.message ) );
 	error.code = result.error.code;
 	error.status = result.status;
 	error.data = result.raw;
@@ -819,7 +855,7 @@ export async function apiFetch(
  *
  * @param {string}                          url  `admin-ajax.php` URL.
  * @param {FormData|URLSearchParams|Object} data Fields, including `action`.
- * @return {Promise<unknown>} Parsed body.
+ * @return {Promise<?>} Parsed body, as the legacy callers read it.
  */
 export async function ajaxPost( url, data ) {
 	const body =
@@ -828,7 +864,9 @@ export async function ajaxPost( url, data ) {
 			: new URLSearchParams( data );
 	const result = await request( { url, method: 'POST', data: body } );
 	if ( result.error && 'invalid_json' === result.error.code ) {
-		const error = new Error( result.message );
+		const error = /** @type {RequestFailure} */ (
+			new Error( result.message )
+		);
 		error.status = result.status;
 		throw error;
 	}
@@ -1077,11 +1115,14 @@ export function focusable( container ) {
 	if ( ! container ) {
 		return [];
 	}
-	return [ ...container.querySelectorAll( FOCUSABLE ) ].filter(
-		( element ) =>
-			! element.closest( '[inert],[hidden]' ) &&
-			element.getAttribute( 'tabindex' ) !== '-1' &&
-			( ! element.getClientRects || element.getClientRects().length > 0 )
+	return /** @type {HTMLElement[]} */ (
+		[ ...container.querySelectorAll( FOCUSABLE ) ].filter(
+			( element ) =>
+				! element.closest( '[inert],[hidden]' ) &&
+				element.getAttribute( 'tabindex' ) !== '-1' &&
+				( ! element.getClientRects ||
+					element.getClientRects().length > 0 )
+		)
 	);
 }
 
@@ -1124,7 +1165,7 @@ export function trapFocus(
 	container,
 	{ initialFocus, returnFocus = true, onEscape } = {}
 ) {
-	const previous = document.activeElement;
+	const previous = /** @type {HTMLElement|null} */ ( document.activeElement );
 	const onKeydown = ( event ) => {
 		if ( 'Escape' === event.key && onEscape ) {
 			event.preventDefault();
@@ -1137,7 +1178,9 @@ export function trapFocus(
 		const items = focusable( container );
 		const next = trapIndex(
 			items.length,
-			items.indexOf( document.activeElement ),
+			items.indexOf(
+				/** @type {HTMLElement} */ ( document.activeElement )
+			),
 			event.shiftKey
 		);
 		if ( items.length < 1 ) {
@@ -1156,7 +1199,9 @@ export function trapFocus(
 	document.addEventListener( 'focusin', onFocusin );
 	const first =
 		typeof initialFocus === 'string'
-			? container.querySelector( initialFocus )
+			? /** @type {HTMLElement|null} */ (
+					container.querySelector( initialFocus )
+				)
 			: initialFocus || focusable( container )[ 0 ];
 	if ( ! first && ! container.hasAttribute( 'tabindex' ) ) {
 		container.setAttribute( 'tabindex', '-1' );
@@ -1174,20 +1219,25 @@ export function trapFocus(
 let dialogCount = 0;
 
 /**
+ * @typedef {Object} ConfirmOptions
+ * @property {string}             message        Question.
+ * @property {string}             [title]        Heading.
+ * @property {string}             [confirmLabel] Confirm button.
+ * @property {string}             [cancelLabel]  Cancel button.
+ * @property {'default'|'danger'} [tone]         `danger` focuses Cancel first.
+ */
+
+/**
  * Accessible confirmation on a native modal `<dialog>` (focus trapped by the browser, Escape and
  * backdrop click cancel, focus returns to the opener). Resolves false without a document.
  *
- * @param {string|Object}      options                Message, or options.
- * @param {string}             options.message        Question.
- * @param {string}             [options.title]        Heading.
- * @param {string}             [options.confirmLabel] Confirm button.
- * @param {string}             [options.cancelLabel]  Cancel button.
- * @param {'default'|'danger'} [options.tone]         `danger` focuses Cancel first.
+ * @param {string|ConfirmOptions} options Message, or options.
  * @return {Promise<boolean>} True when confirmed.
  */
 export function confirmDialog( options ) {
-	const opts =
-		typeof options === 'string' ? { message: options } : options || {};
+	const opts = /** @type {ConfirmOptions} */ (
+		typeof options === 'string' ? { message: options } : options || {}
+	);
 	const messages = getConfig().messages;
 	if ( ! hasDocument() ) {
 		return Promise.resolve( false );
@@ -1239,7 +1289,7 @@ export function confirmDialog( options ) {
 	);
 	form.append( actions );
 	dialog.append( form );
-	const opener = document.activeElement;
+	const opener = /** @type {HTMLElement|null} */ ( document.activeElement );
 	document.body.append( dialog );
 	return new Promise( ( resolve ) => {
 		dialog.addEventListener(
@@ -1300,7 +1350,9 @@ export function debounce( callback, wait ) {
 		clearTimeout( timer );
 		run();
 	};
-	return debounced;
+	return /** @type {F & {cancel: function(): void, flush: function(): void}} */ (
+		/** @type {unknown} */ ( debounced )
+	);
 }
 
 /**

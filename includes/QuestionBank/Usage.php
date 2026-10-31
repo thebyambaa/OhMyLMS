@@ -279,22 +279,22 @@ final class Usage {
 	 */
 	public static function forget_in_quiz( $quiz_id, $question_id ) {
 		wp_cache_delete( $quiz_id, 'post_meta' );
-		$pins = get_post_meta( $quiz_id, \OhMyLMS\Rest\V1\QuizQuestionsController::PINS_META, true );
+		$pins = get_post_meta( $quiz_id, \OhMyLMS\Quiz\Questions::PINS_META, true );
 		if ( is_array( $pins ) && isset( $pins[ $question_id ] ) ) {
 			unset( $pins[ $question_id ] );
 			if ( $pins ) {
-				update_post_meta( $quiz_id, \OhMyLMS\Rest\V1\QuizQuestionsController::PINS_META, $pins );
+				update_post_meta( $quiz_id, \OhMyLMS\Quiz\Questions::PINS_META, $pins );
 			} else {
-				delete_post_meta( $quiz_id, \OhMyLMS\Rest\V1\QuizQuestionsController::PINS_META );
+				delete_post_meta( $quiz_id, \OhMyLMS\Quiz\Questions::PINS_META );
 			}
 		}
-		$settings = get_post_meta( $quiz_id, \OhMyLMS\Rest\V1\QuizQuestionsController::SETTINGS_META, true );
+		$settings = get_post_meta( $quiz_id, \OhMyLMS\Quiz\Questions::SETTINGS_META, true );
 		if ( is_array( $settings ) && is_array( $settings['slot_marks'] ?? null ) && array_key_exists( $question_id, $settings['slot_marks'] ) ) {
 			unset( $settings['slot_marks'][ $question_id ] );
 			if ( ! $settings['slot_marks'] ) {
 				unset( $settings['slot_marks'] );
 			}
-			update_post_meta( $quiz_id, \OhMyLMS\Rest\V1\QuizQuestionsController::SETTINGS_META, $settings );
+			update_post_meta( $quiz_id, \OhMyLMS\Quiz\Questions::SETTINGS_META, $settings );
 		}
 		$assessment = get_post_meta( $quiz_id, \OhMyLMS\Assessment\AssessmentSettings::META, true );
 		$sections   = is_array( $assessment ) && is_array( $assessment['sections'] ?? null ) ? $assessment['sections'] : array();

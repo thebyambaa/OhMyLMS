@@ -9,12 +9,14 @@ import {
 } from '@wordpress/components';
 import { Suspense, useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
+import { MediaPicker } from '../../components/MediaPicker';
 import { normalizeApiError } from '../../lib/api';
+import { IMAGE_MIME_TYPES } from '../../lib/media';
 import { PointPricePanel } from '../commerce/public';
 import { updateCourse } from './api';
-import { MediaPicker } from './MediaPicker';
 import {
 	formFromCourse,
+	invalidResponse,
 	isDirty,
 	isValid,
 	LEVELS,
@@ -121,7 +123,6 @@ export function CourseForm( {
 	const [ busy, setBusy ] = useState( false );
 	const [ message, setMessage ] = useState< string | null >( null );
 	const [ failure, setFailure ] = useState< string | null >( null );
-	const [ picking, setPicking ] = useState( false );
 	const [ reveal, setReveal ] = useState( false );
 	const summary = useRef< HTMLDivElement >( null );
 	const operation = useRef< AbortController | null >( null );
@@ -488,62 +489,58 @@ export function CourseForm( {
 
 						<fieldset disabled={ busy || trashed }>
 							<legend>{ __( 'Thumbnail', 'ohmylms' ) }</legend>
-							{ form.thumbnail ? (
-								<p>
-									{ form.thumbnail.url && (
-										<img
-											src={ form.thumbnail.url }
-											alt=""
-											width={ 96 }
-											height={ 96 }
-										/>
-									) }{ ' ' }
-									{ sprintf(
-										/* translators: %d: image ID. */
-										__( 'Image #%d', 'ohmylms' ),
-										form.thumbnail.id
-									) }
-								</p>
-							) : (
-								<p>
-									{ __(
-										'No thumbnail selected.',
-										'ohmylms'
-									) }
-								</p>
-							) }
+							<MediaPicker
+								label={ __( 'Choose a thumbnail', 'ohmylms' ) }
+								chooseText={ __(
+									'Choose thumbnail',
+									'ohmylms'
+								) }
+								changeText={ __(
+									'Change thumbnail',
+									'ohmylms'
+								) }
+								removeText={ __(
+									'Remove thumbnail',
+									'ohmylms'
+								) }
+								destructiveRemove
+								description={
+									form.thumbnail
+										? sprintf(
+												/* translators: %d: image ID. */
+												__( 'Image #%d', 'ohmylms' ),
+												form.thumbnail.id
+											)
+										: __(
+												'No thumbnail selected.',
+												'ohmylms'
+											)
+								}
+								previewSize={ 96 }
+								value={ form.thumbnail }
+								unavailable={
+									options.abilities.upload_files
+										? undefined
+										: __(
+												'You do not have permission to pick images from the media library.',
+												'ohmylms'
+											)
+								}
+								accept={ IMAGE_MIME_TYPES }
+								fallback="missing"
+								invalid={ invalidResponse }
+								onChange={ ( image ) =>
+									update( 'thumbnail', {
+										id: image.id,
+										url: image.thumbnail_url,
+									} )
+								}
+								onRemove={ () => update( 'thumbnail', null ) }
+							/>
 							<FieldError
 								id="oml-course-thumbnail_id-error"
 								message={ errors.thumbnail_id }
 							/>
-							{ options.abilities.upload_files ? (
-								<Button
-									variant="secondary"
-									onClick={ () => setPicking( true ) }
-								>
-									{ form.thumbnail
-										? __( 'Change thumbnail', 'ohmylms' )
-										: __( 'Choose thumbnail', 'ohmylms' ) }
-								</Button>
-							) : (
-								<p>
-									{ __(
-										'You do not have permission to pick images from the media library.',
-										'ohmylms'
-									) }
-								</p>
-							) }{ ' ' }
-							{ form.thumbnail && (
-								<Button
-									variant="tertiary"
-									isDestructive
-									onClick={ () =>
-										update( 'thumbnail', null )
-									}
-								>
-									{ __( 'Remove thumbnail', 'ohmylms' ) }
-								</Button>
-							) }
 						</fieldset>
 					</>
 				) }
@@ -865,20 +862,6 @@ export function CourseForm( {
 					{ __( 'Save course', 'ohmylms' ) }
 				</Button>
 			</form>
-
-			{ picking && (
-				<MediaPicker
-					title={ __( 'Choose a thumbnail', 'ohmylms' ) }
-					onClose={ () => setPicking( false ) }
-					onSelect={ ( image ) => {
-						update( 'thumbnail', {
-							id: image.id,
-							url: image.thumbnail_url,
-						} );
-						setPicking( false );
-					} }
-				/>
-			) }
 
 			{ guard.pendingPath && (
 				<Modal

@@ -7,8 +7,8 @@ import {
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { get, patch } from '../../../lib/api';
-import { useOperation } from '../useOperation';
-import { useRequest } from '../useRequest';
+import { useOperation } from '../../../hooks/useOperation';
+import { useRequest } from '../../../hooks/useRequest';
 
 const MAX_POINTS = 100000;
 
@@ -84,7 +84,7 @@ export function PointPricePanel( {
 			parsePointPrice(
 				await get< unknown >( route( courseId ), { signal } )
 			),
-		String( courseId )
+		{ key: String( courseId ), keepData: true, errorShape: 'object' }
 	);
 	const operation = useOperation();
 	const [ price, setPrice ] = useState( '' );

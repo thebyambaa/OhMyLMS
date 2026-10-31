@@ -9,6 +9,7 @@ namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Assignment\Comments;
 use OhMyLMS\Assignment\Delivery;
+use OhMyLMS\Learning\CourseStructure;
 use WP_Error;
 use WP_Query;
 use WP_REST_Request;
@@ -221,9 +222,8 @@ class AssignmentDeliveryController extends \WP_REST_Controller {
 	 * @return \WP_REST_Response
 	 */
 	public function prerequisite_options( $request ) {
-		global $wpdb;
 		$id      = (int) $request['id'];
-		$courses = array_values( array_unique( array_filter( array_map( 'intval', array_merge( (array) $wpdb->get_col( $wpdb->prepare( 'SELECT ch.course_id FROM %i c INNER JOIN %i ch ON ch.chapter_id = c.chapter_id WHERE c.content_id = %d', $wpdb->prefix . 'ohmylms_content_relationship', $wpdb->prefix . 'ohmylms_chapter_relationship', $id ) ), \OhMyLMS\Learning\Placements::courses_for( $id ) ) ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Bounded placement read.
+		$courses = array_values( array_unique( array_filter( array_map( 'intval', array_merge( CourseStructure::placement_courses( $id ), \OhMyLMS\Learning\Placements::courses_for( $id ) ) ) ) ) );
 		$args    = array(
 			'post_type'      => array_keys( Delivery::PREREQUISITE_TYPES ),
 			'post_status'    => array( 'publish', 'draft', 'pending', 'private' ),
@@ -237,9 +237,7 @@ class AssignmentDeliveryController extends \WP_REST_Controller {
 			),
 		);
 		if ( $courses ) {
-			$holders          = implode( ',', array_fill( 0, count( $courses ), '%d' ) );
-			$content          = array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT c.content_id FROM %i c INNER JOIN %i ch ON ch.chapter_id = c.chapter_id WHERE ch.course_id IN ({$holders})", array_merge( array( $wpdb->prefix . 'ohmylms_content_relationship', $wpdb->prefix . 'ohmylms_chapter_relationship' ), $courses ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Placeholders built for the course list.
-			$content          = array_values( array_diff( $content, array( $id ) ) );
+			$content          = array_values( array_diff( CourseStructure::content_in_courses( $courses ), array( $id ) ) );
 			$args['post__in'] = $content ? $content : array( 0 );
 		} elseif ( ! current_user_can( 'edit_others_posts' ) ) {
 			$args['author'] = get_current_user_id();

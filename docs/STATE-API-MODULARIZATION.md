@@ -45,7 +45,8 @@ SDK entries):
   routes they used were removed.
 - REST failures reach callers as the parsed REST error (`code`, `message`, `data`), unchanged.
 - `rest.mjs` and `learning/api.mjs` are `// @ts-check` with JSDoc types. They pass
-  `tsc --allowJs --checkJs --strict`; `npm run typecheck` does not include them yet.
+  `tsc --allowJs --checkJs --strict`; `npm run typecheck:js` checks them with the rest of
+  `assets/src/features`, not yet `strict`.
 - Page bootstrap data printed by PHP (`window.ohmylmsNativeLesson`, `ohmylmsMath`, `ohmylmsSchools`,
   `ohmylmsTabPreferences`, `ohmylmsPlayerTemplates`) is current contract data, not legacy state.
 - Feature-owned `@wordpress/data` stores are allowed when only that area reads them:
@@ -70,10 +71,11 @@ mutable bindings), checked against the importers of each export. "Fixed" means c
 | | `extensions/api.ts` (public extension contract) | 1 | allowed |
 | Duplicated parsers/types | `CurrencyOption` + `parseCurrencies` (settings, setup) | 1 | fixed |
 | | `CourseOption` + `parseCourseOption` + `COURSE_OPTION_LIMIT` (students, commerce) | 1 | fixed |
-| | `/wp/v2/media` parsers in courses, certificates, gamification, settings (`hubIcons`) with different mime and thumbnail rules; three `MediaImage` types and three `MediaPicker` components | 4 | remaining |
+| | `/wp/v2/media` parsers in courses, certificates, gamification, settings (`hubIcons`) with different mime and thumbnail rules; three `MediaImage` types | 4 | fixed: `lib/media` `parseMediaImage` (`accept`, `fallback`), one `MediaImage` and `IMAGE_MIME_TYPES` |
+| | three `MediaPicker` components (courses, certificates, gamification) and the hub icon picker | 4 | fixed: `components/MediaPicker` on the `wp.media` frame; `checkSharedHelperCopies` rejects new copies |
 | | `parseCourseChoice` in assignments, certificates, quizzes, sessions, each for its own `/<feature>/courses` route | 4 | remaining (different routes) |
-| | validation primitives (`record`, `positiveId`, `text`) redefined in feature models although `lib/authoring-validation.ts` exports them | 21 `record`, 13 `positiveId` | remaining |
-| Duplicated hooks | feature `useRequest` (commerce = students; dashboard and taxonomies without `replace`), `useOperation` (commerce = students; integrations with `ApiError`); signatures differ from `hooks/` | 7 files | remaining |
+| | validation primitives (`record`, `positiveId`, `text`) redefined in feature models although `lib/authoring-validation.ts` exports them | 24 `record`, 35 `text`, 13 `positiveId` in 39 files | fixed: `lib/validation` (message or error factory argument, `createValidators`) |
+| Duplicated hooks | feature `useRequest` (commerce = students; dashboard and taxonomies without `replace`), `useOperation` (commerce = students; integrations with `ApiError`); signatures differ from `hooks/` | 7 copies in 7 files | fixed: `hooks/useRequest` (`key`, `errorShape`, `replace`, `reload`), `hooks/useOperation` (`errorShape`, optional success callback) |
 | | `usePagedList` (memberships = quizzes, account-hub) | 3 | fixed: `hooks/usePagedList` (`inAddress`, `keepPrevious`), `hooks/useRequest` `keepData` |
 | | feature `useUnsavedChangesGuard` copies (certificates, courses, gamification, memberships, quizzes, settings, `emails/hooks.ts`) of `hooks/useUnsavedChangesGuard` | 7 | fixed: shared hook with `ignoreSamePath` and `requestLeave`; `checkSharedHookCopies` |
 | Native: `window.wp.apiFetch` global | `assessment`, `content-hub`, `curriculum`, `question-bank` `api.mjs` | 4 | fixed: `rest.mjs` |
@@ -108,29 +110,56 @@ mutable bindings), checked against the importers of each export. "Fixed" means c
 
 REST paths, methods, payloads and error objects are unchanged.
 
+## Shared helpers (31 October 2026)
+
+The last near-duplicate admin helpers were merged into shared modules with backwards-compatible
+options. Error text shown to users is unchanged.
+
+- `hooks/useRequest`: `key` (only a key change starts a request; the latest `load` closure is used),
+  `errorShape: 'message' | 'object'` (`''`/message, or `null`/`ApiError`), plus `reload` (same as
+  `retry`) and `replace`. Commerce, students, dashboard and taxonomies call it with
+  `{ key, keepData: true, errorShape: 'object' }`; their four `useRequest.ts` files were deleted.
+- `hooks/useOperation`: `errorShape`, an optional success callback, and a stable `run`. Commerce and
+  students use the default (message; `''` instead of `null` when there is no error, which renders the
+  same); integrations uses `errorShape: 'object'`. The two `useOperation.ts` files and the copy in
+  `integrations/hooks.ts` were deleted.
+- `lib/validation`: `record`, `text` and `positiveId` take the feature's message or error factory;
+  `createValidators( invalidResponse )` binds them, so parsers keep calling `record( value )`.
+  `lib/authoring-validation` is built on it. `assignments/media.ts` kept its lenient helper, renamed
+  `textOrEmpty`.
+- `lib/media`: `parseMediaImage( item, { invalid, accept, fallback } )`, `MediaImage` and
+  `IMAGE_MIME_TYPES`. Certificates and gamification pass `accept: IMAGE_MIME_TYPES`; courses passes
+  `fallback: 'missing'` (a malformed thumbnail size stays invalid); settings accepts any type and keeps
+  its plain-text title. Behaviour on valid responses is unchanged. On malformed items the rules now
+  match: certificates accepts a missing or non-string title as `''`, and gamification and settings
+  require a positive integer `id` (both throw the feature's own message, as before).
+- The unique hook tests moved to `hooks/useRequest.test.tsx` and `hooks/useOperation.test.tsx`; new
+  `lib/validation.test.ts` and `lib/media.test.ts`.
+- `tools/architecture-rules/shared-helpers.mjs` fails on new local copies
+  ([ENFORCEMENT g](ENFORCEMENT.md#g-features-use-the-shared-hooks-instead-of-their-own-copies)).
+
 ## Remaining, with reasons
 
-- **Media library parsers** (courses, certificates, gamification, settings): they differ in mime
-  filtering and thumbnail fallback, and each has its own `MediaPicker` component. Merging needs one
-  shared picker in `app/components` (WordPress look work) and an agreed parser.
+- **Media pickers** (done 31 October 2026): courses, certificates, gamification badges and settings
+  hub icons use `components/MediaPicker`, an image field on the WordPress media frame (`wp.media`)
+  that checks the chosen attachment with `parseMediaImage` and the feature's `accept`, `fallback`
+  and `invalid` message. The REST-backed picker modals, the features' `listMedia`/`listImages` and
+  `parseMedia` wrappers were deleted. `docs/api/certificates.md` still says the editor browses
+  `/wp/v2/media`; the frame reads the library through core's media modal instead.
 - **`syllabus-comparison` ownership**: decide whether `syllabus` or `curriculum` owns
   `/syllabus-comparison/*`; the other then imports the shared-skills read from its `public.ts`.
-- **Validation primitives**: the 21 feature copies of `record`/`positiveId`/`text` each throw their own
-  feature's invalid-response message (`lib/authoring-validation.ts` throws "invalid authoring data").
-  Moving them changes error text, so it needs an agreed message (or an error factory parameter) first.
-- **Hook variants**: the remaining `useRequest` copies are keyed by a string, keep data while
-  reloading, report `ApiError` objects and (commerce, students) offer `replace`; the `useOperation`
-  copies report `null`/`ApiError` instead of `''` and take no success callback. Converging them changes
-  page components (list page owners). `useUnsavedChangesGuard` and `usePagedList` are shared since
-  31 October 2026.
+- **Integration loaders**: `useIntegrations` and `useIntegrationSettings` in `integrations/hooks.ts`
+  map failures to `LoadError` (message plus permission flag) and merge single-item updates, so they
+  stay feature hooks. `useUnsavedChangesGuard` and `usePagedList` are shared since 31 October 2026.
 - **Question editor**: `TemplatePanel.jsx` and `QuestionLivePreview.jsx` still call `window.wp.apiFetch`;
   they should import `request` from `features/rest.mjs`.
 - **`editPath()`**: after a quiz import without an `onQuiz` handler, `ImportDialog` sets the hash to
   `#/quiz-edit/<id>`, an old app route that does nothing on `post.php`. Every current caller passes
   `onQuiz` or only offers other targets, except `ExamsPage`, where choosing "quiz" reaches it. Fixing
   it means opening `quiz.native_editor_url` instead, a visible behaviour change.
-- **Type checking of native modules**: `npm run typecheck` covers `assets/src/app` only; adding a
-  `checkJs` project for `assets/src/features` belongs with the roadmap's tooling work.
+- **Type checking of native modules**: done on 31 October 2026. `npm run typecheck:js` (in `check:ci`)
+  checks `assets/src/features` and `assets/interactivity` through JSDoc, not yet `strict`
+  ([ENFORCEMENT.md](ENFORCEMENT.md#type-checking-the-native-and-learner-javascript)).
 
 ## Verification (31 October 2026)
 

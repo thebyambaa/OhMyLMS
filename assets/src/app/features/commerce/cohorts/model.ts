@@ -1,5 +1,8 @@
 import { __, sprintf } from '@wordpress/i18n';
 import { ApiError } from '../../../lib/api';
+import { createValidators } from '../../../lib/validation';
+
+const { record, text } = createValidators( invalidCohortResponse );
 
 export const COHORT_PER_PAGE = 20;
 export const COHORT_TITLE_MAX = 190;
@@ -72,18 +75,6 @@ export function invalidCohortResponse(): ApiError {
 	} );
 }
 
-function record( value: unknown ): Record< string, unknown > {
-	if ( ! value || 'object' !== typeof value || Array.isArray( value ) ) {
-		throw invalidCohortResponse();
-	}
-	return value as Record< string, unknown >;
-}
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidCohortResponse();
-	}
-	return value;
-}
 function nullableText( value: unknown ): string | null {
 	return null === value || undefined === value ? null : text( value );
 }

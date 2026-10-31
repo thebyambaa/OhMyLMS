@@ -11,9 +11,9 @@ import { ExamsPage } from '../content-hub/ExamsPage';
 
 /**
  * Insert at a stable document anchor, including after an asynchronous import.
- * @param {Object} props          Properties.
- * @param {string} props.clientId Block to insert after, or empty for the end.
- * @return {Element} Contextual insertion menu.
+ * @param {Object} props            Properties.
+ * @param {string} [props.clientId] Block to insert after, or empty for the end.
+ * @return {React.ReactElement} Contextual insertion menu.
  */
 export function PaperInserter( { clientId = '' } ) {
 	const [ mode, setMode ] = useState( '' );

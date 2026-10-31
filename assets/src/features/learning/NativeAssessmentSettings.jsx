@@ -32,7 +32,7 @@ export function useNativeAssessmentSettings( enabled = true ) {
 /**
  * Choose how the shared assessment is delivered without resetting its rules.
  *
- * @return {Element|null} Assessment type control.
+ * @return {React.ReactElement|null} Assessment type control.
  */
 export function NativeAssessmentType() {
 	const { settings, setSettings } = useNativeAssessmentSettings();

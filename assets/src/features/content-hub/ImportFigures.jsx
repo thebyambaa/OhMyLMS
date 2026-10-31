@@ -25,7 +25,7 @@ const api = ( path, data ) =>
  * @param {Object[]}                                                       props.candidates   New detections that have not replaced teacher edits.
  * @param {string[]}                                                       props.destinations Question numbers in the import.
  * @param {(index: number, question: string) => void}                      props.onMove       Reassign a placement.
- * @return {Element} Figure review controls.
+ * @return {React.ReactElement} Figure review controls.
  */
 export function ImportFigures( {
 	jobId,
@@ -499,7 +499,7 @@ export function ImportFigures( {
  * @param {string}                     props.url      Protected full-page image.
  * @param {number[]}                   props.bounds   Normalized bounds.
  * @param {(bounds: number[]) => void} props.onBounds Selection callback.
- * @return {Element} Page with selection overlay.
+ * @return {React.ReactElement} Page with selection overlay.
  */
 function CropReference( { url, bounds, onBounds } ) {
 	const [ anchor, setAnchor ] = useState( null );
@@ -568,7 +568,7 @@ function CropReference( { url, bounds, onBounds } ) {
  * @param {string}  props.url        Protected original.
  * @param {string}  props.alt        Accessible description.
  * @param {boolean} props.notToScale Whether a scale warning is printed.
- * @return {Element} Preview.
+ * @return {React.ReactElement} Preview.
  */
 function ReconstructionPreview( { spec, url, alt, notToScale = false } ) {
 	useEffect( () => {

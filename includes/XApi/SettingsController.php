@@ -7,13 +7,15 @@
 
 namespace OhMyLMS\XApi;
 
+use WP_REST_Controller;
+
 defined( 'ABSPATH' ) || exit;
 
 /** Exposes the existing emitter controls without returning the saved secret. */
-final class SettingsController {
+final class SettingsController extends WP_REST_Controller {
 
 	/** Register settings and explicit delivery actions. */
-	public static function register_routes() {
+	public function register_routes() {
 		$groups = array();
 		foreach ( array_keys( Settings::groups() ) as $group ) {
 			$groups[ $group ] = array( 'type' => 'boolean' );

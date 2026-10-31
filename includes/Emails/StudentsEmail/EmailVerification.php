@@ -9,6 +9,7 @@
 namespace OhMyLMS\Emails\StudentsEmail;
 
 use OhMyLMS\Emails\Emails;
+use OhMyLMS\I18n\RecipientLocale;
 use OhMyLMS\Services\EmailVerificationService;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -40,6 +41,22 @@ class EmailVerification {
 			return false;
 		}
 
+		return (bool) RecipientLocale::run(
+			$user,
+			function () use ( $user, $token ) {
+				return $this->compose_and_send( $user, $token );
+			}
+		);
+	}
+
+	/**
+	 * Compose and send the email, in the user's language.
+	 *
+	 * @param \WP_User $user  User.
+	 * @param string   $token Token.
+	 * @return bool
+	 */
+	private function compose_and_send( $user, $token ) {
 		$site_name      = get_bloginfo( 'name' );
 		$verify_url     = EmailVerificationService::get_verification_url( $token );
 		$email_settings = Emails::get_email_settings();

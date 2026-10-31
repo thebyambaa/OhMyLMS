@@ -1,6 +1,8 @@
 /**
  * Question formats grouped by what the learner does. Shared by the type chooser
  * dialog and the in-block type menu so both list formats the same way.
+ *
+ * @type {Array<[string, string[]]>}
  */
 export const QUESTION_TYPE_GROUPS = [
 	[
@@ -74,12 +76,14 @@ export const QUESTION_TYPE_GROUPS = [
 /**
  * Split option objects ({ value, label }) into the groups above. Formats that
  * no group lists, such as add-on types, fall into a final "More" group.
- * @param options
+ * @param {Array<{value: string, label: string}>} options Question type options.
+ * @return {Array<[string, Array<{value: string, label: string}>]>} Non-empty groups.
  */
 export function groupQuestionTypes( options ) {
 	const known = new Set(
 		QUESTION_TYPE_GROUPS.flatMap( ( [ , ids ] ) => ids )
 	);
+	/** @type {Array<[string, Array<{value: string, label: string}>]>} */
 	const groups = QUESTION_TYPE_GROUPS.map( ( [ heading, ids ] ) => [
 		heading,
 		ids

@@ -88,7 +88,9 @@ export function loadScript( src, doc = globalThis.document ) {
 		return scripts.get( src );
 	}
 	const loading = new Promise( ( resolve, reject ) => {
-		const existing = doc.querySelector( `script[src="${ src }"]` );
+		const existing = /** @type {HTMLScriptElement|null} */ (
+			doc.querySelector( `script[src="${ src }"]` )
+		);
 		const script = existing || doc.createElement( 'script' );
 		script.addEventListener( 'load', () => resolve(), { once: true } );
 		script.addEventListener(

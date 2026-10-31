@@ -16,9 +16,9 @@ const PreviewContext = createContext( null );
 /**
  * Host one student player for all preview buttons in the assessment editor.
  *
- * @param {Object}  props          Component properties.
- * @param {Element} props.children Editor controls.
- * @return {Element} Controls and the shared preview dialog.
+ * @param {Object}          props          Component properties.
+ * @param {React.ReactNode} props.children Editor controls.
+ * @return {React.ReactElement} Controls and the shared preview dialog.
  */
 export function AssessmentPreviewProvider( { children } ) {
 	const [ opened, setOpened ] = useState( false );
@@ -135,7 +135,7 @@ export function AssessmentPreviewProvider( { children } ) {
 /**
  * Open the shared student preview after pending question edits are complete.
  *
- * @return {Element} Preview button.
+ * @return {React.ReactElement} Preview button.
  */
 export function AssessmentPreviewButton() {
 	const preview = useContext( PreviewContext );

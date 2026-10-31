@@ -9,6 +9,7 @@ namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
 use OhMyLMS\Commerce\SubscriptionManager;
+use OhMyLMS\Membership\Subscriptions;
 use WP_Error;
 use WP_Post;
 use WP_Query;
@@ -466,33 +467,7 @@ class SubscriptionsController extends RestController {
 	 * @return int[] At most 1000 IDs.
 	 */
 	private function search_ids( $term ) {
-		global $wpdb;
-
-		$like   = '%' . $wpdb->esc_like( $term ) . '%';
-		$number = ctype_digit( $term ) ? ' OR p.ID = %d OR o.meta_value = %s' : '';
-		$params = array( $wpdb->posts, $wpdb->postmeta, $wpdb->users, $wpdb->postmeta, $wpdb->posts, $wpdb->postmeta, self::POST_TYPE, $like, $like, $like );
-		if ( $number ) {
-			$params[] = (int) $term;
-			$params[] = $term;
-		}
-
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery -- Prepared; $number is one of two fixed fragments whose placeholders are added to $params.
-		$ids = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT p.ID FROM %i p
-				LEFT JOIN %i s ON s.post_id = p.ID AND s.meta_key = '_student_id'
-				LEFT JOIN %i u ON u.ID = s.meta_value
-				LEFT JOIN %i m ON m.post_id = p.ID AND m.meta_key = '_membership_id'
-				LEFT JOIN %i plan ON plan.ID = m.meta_value
-				LEFT JOIN %i o ON o.post_id = p.ID AND o.meta_key = '_original_order_id'
-				WHERE p.post_type = %s AND ( u.display_name LIKE %s OR u.user_email LIKE %s OR plan.post_title LIKE %s{$number} )
-				LIMIT 1000",
-				$params
-			)
-		);
-		// phpcs:enable
-
-		return array_values( array_unique( array_map( 'intval', (array) $ids ) ) );
+		return Subscriptions::search_ids( $term );
 	}
 
 	/**
@@ -618,10 +593,7 @@ class SubscriptionsController extends RestController {
 	 * @return array[]
 	 */
 	private function related_orders( WP_Post $post ) {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Prepared and bounded.
-		$renewals = $wpdb->get_col( $wpdb->prepare( "SELECT p.ID FROM %i p INNER JOIN %i m ON m.post_id = p.ID AND m.meta_key = '_subscription_renewal_id' WHERE m.meta_value = %s AND p.post_type = %s ORDER BY p.post_date DESC, p.ID DESC LIMIT %d", $wpdb->posts, $wpdb->postmeta, (string) $post->ID, 'ohmylms-order', self::MAX_RELATED ) );
+		$renewals = Subscriptions::renewal_order_ids( $post->ID, self::MAX_RELATED );
 		$ids      = array();
 		foreach ( (array) $renewals as $renewal ) {
 			$ids[ (int) $renewal ] = 'renewal';

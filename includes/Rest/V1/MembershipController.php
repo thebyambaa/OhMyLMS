@@ -12,6 +12,7 @@ use OhMyLMS\Data\Membership;
 use OhMyLMS\Extensions\Settings as ExtensionSettings;
 use OhMyLMS\Membership\CourseSelection;
 use OhMyLMS\Membership\FreeSale;
+use OhMyLMS\Membership\Members;
 use WP_Error;
 use WP_Query;
 use WP_REST_Request;
@@ -584,40 +585,21 @@ class MembershipController extends RestController {
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
 	 */
 	public function get_members( $request ) {
-		global $wpdb;
-
 		$membership = $this->get_membership( $request['id'] );
 		if ( is_wp_error( $membership ) ) {
 			return $membership;
 		}
 
-		$table    = $wpdb->prefix . 'ohmylms_user_membership';
 		$page     = max( 1, (int) $request['page'] );
 		$per_page = min( 100, max( 1, (int) $request['per_page'] ) );
 		$status   = (string) $request['status'];
-		$where    = 'WHERE m.membership_id = %d';
-		$params   = array( $table, $membership->get_id() );
-		if ( 'all' !== $status ) {
-			$where   .= ' AND m.status = %s';
-			$params[] = $status;
-		}
-
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery
-		$total = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i m {$where}", $params ) );
-		$pages = (int) ceil( $total / $per_page );
+		$total    = Members::count( $membership->get_id(), $status );
+		$pages    = (int) ceil( $total / $per_page );
 		if ( $page > $pages && $total > 0 ) {
 			return new WP_Error( 'ohmylms_membership_invalid_page', __( 'The page number requested is larger than the number of pages available.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
 
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT m.id, m.user_id, m.status, m.order_id, m.start_date, m.end_date, u.display_name, u.user_email
-				FROM %i m LEFT JOIN %i u ON u.ID = m.user_id {$where}
-				ORDER BY m.id DESC LIMIT %d OFFSET %d",
-				array_merge( array( $table, $wpdb->users ), array_slice( $params, 1 ), array( $per_page, ( $page - 1 ) * $per_page ) )
-			)
-		);
-		// phpcs:enable
+		$rows = Members::page( $membership->get_id(), $status, $page, $per_page );
 
 		$to_date = static function ( $value ) {
 			$value = (string) $value;
@@ -793,22 +775,7 @@ class MembershipController extends RestController {
 	 * @return array<int,int>
 	 */
 	private function count_members( array $ids ) {
-		global $wpdb;
-
-		$ids = array_values( array_filter( array_map( 'absint', $ids ) ) );
-		if ( ! $ids ) {
-			return array();
-		}
-
-		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery
-		$rows   = $wpdb->get_results( $wpdb->prepare( "SELECT membership_id, COUNT(*) AS total FROM %i WHERE status = 'enrolled' AND membership_id IN ({$placeholders}) GROUP BY membership_id", array_merge( array( $wpdb->prefix . 'ohmylms_user_membership' ), $ids ) ) );
-		$counts = array_fill_keys( $ids, 0 );
-		foreach ( (array) $rows as $row ) {
-			$counts[ (int) $row->membership_id ] = (int) $row->total;
-		}
-
-		return $counts;
+		return Members::enrolled_counts( $ids );
 	}
 
 	/**
@@ -818,10 +785,7 @@ class MembershipController extends RestController {
 	 * @return int
 	 */
 	private function count_active_members( $id ) {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE membership_id = %d AND status IN (%s, %s)', $wpdb->prefix . 'ohmylms_user_membership', $id, self::ACTIVE_MEMBER_STATUSES[0], self::ACTIVE_MEMBER_STATUSES[1] ) );
+		return Members::count_in( $id, self::ACTIVE_MEMBER_STATUSES );
 	}
 
 	/**

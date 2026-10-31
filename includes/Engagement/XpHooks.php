@@ -40,33 +40,9 @@ final class XpHooks {
 	}
 
 	/**
-	 * Routes for Xp hooks.
+	 * Register the learner XP routes ({@see Rest\XpController}).
 	 */
 	public static function routes() {
-		register_rest_route(
-			'ohmylms/v1',
-			'/engagement/xp',
-			array(
-				array(
-					'methods'             => 'GET',
-					'permission_callback' => 'is_user_logged_in',
-					'callback'            => static function ( $request ) {
-						if ( ! Xp::enabled() ) {
-							return rest_ensure_response( array( 'enabled' => false ) ); }
-						return rest_ensure_response( Xp::summary( get_current_user_id(), $request->get_param( 'history_days' ) ?: 7 ) );
-					},
-				),
-				array(
-					'methods'             => 'PUT',
-					'permission_callback' => 'is_user_logged_in',
-					'callback'            => static function ( $request ) {
-						if ( ! Xp::enabled() ) {
-							return new \WP_Error( 'xp_off', __( 'XP is not switched on.', 'ohmylms' ), array( 'status' => 404 ) ); }
-						$goal = Xp::set_goal( get_current_user_id(), $request->get_param( 'goal' ) );
-						return is_wp_error( $goal ) ? $goal : rest_ensure_response( Xp::summary( get_current_user_id() ) );
-					},
-				),
-			)
-		);
+		( new Rest\XpController() )->register_routes();
 	}
 }

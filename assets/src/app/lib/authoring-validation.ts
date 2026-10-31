@@ -1,25 +1,16 @@
 import { __ } from '@wordpress/i18n';
 import { ApiError } from './api';
+import { createValidators } from './validation';
 
 export type Row = Record< string, unknown >;
-export function invalid(): never {
-	throw new ApiError( {
+function invalidData(): ApiError {
+	return new ApiError( {
 		code: 'invalid_response',
 		status: 502,
 		message: __( 'The server returned invalid authoring data.', 'ohmylms' ),
 	} );
 }
-export function record( value: unknown ): Row {
-	if ( ! value || typeof value !== 'object' || Array.isArray( value ) ) {
-		return invalid();
-	}
-	return value as Row;
+export function invalid(): never {
+	throw invalidData();
 }
-export function positiveId( value: unknown ): number {
-	return Number.isSafeInteger( value ) && Number( value ) > 0
-		? Number( value )
-		: invalid();
-}
-export function text( value: unknown ): string {
-	return typeof value === 'string' ? value : invalid();
-}
+export const { record, positiveId, text } = createValidators( invalidData );

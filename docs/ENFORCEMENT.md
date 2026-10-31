@@ -10,7 +10,8 @@ push and pull request to `main`.
 
 | Command | What it runs |
 | --- | --- |
-| `npm run check:ci` | `typecheck`, `test:app`, `check:architecture`, then `node --test tests/js/check-architecture.test.mjs` |
+| `npm run check:ci` | `typecheck`, `typecheck:js`, `test:app`, `check:architecture`, then `node --test tests/js/check-architecture.test.mjs` |
+| `npm run typecheck:js` | `tsc` on the JavaScript of `assets/src/features` and `assets/interactivity` through JSDoc (see [Type checking the native and learner JavaScript](#type-checking-the-native-and-learner-javascript)) |
 | `npm run check:architecture` | `node tools/check-architecture.mjs`: the architecture rules below and the budget table |
 | `node --test tests/js/check-architecture.test.mjs` | Tests for the checker, using fixture trees under `tests/fixtures/architecture/` |
 | `npm test` | `node --test` on `tests/js/*.test.mjs`. The PHP/React parity tests need `php` on `PATH` (or `OHMYLMS_PHP`) |
@@ -24,7 +25,7 @@ It never builds anything. After you rebuild the admin app, run it again to check
 
 ## CI jobs
 
-`.github/workflows/ci.yml` runs five jobs in parallel. npm downloads are cached by
+`.github/workflows/ci.yml` runs six jobs in parallel. npm downloads are cached by
 `actions/setup-node`, Composer downloads by `ramsey/composer-install`.
 
 | Job | Runs |
@@ -33,7 +34,18 @@ It never builds anything. After you rebuild the admin app, run it again to check
 | **lint-js** | `npm ci`, `npm run lint:js` |
 | **php** | PHP 8.2: `php -l` on every file in `includes/` and `tests/php`, then `node tools/run-php-tests.mjs unit` |
 | **phpcs** | `composer install` in `tools/coding-standards`, then `node tools/phpcs-changed.mjs <base>`: the pull request's base commit, or the previous `main` commit on a push |
-| **php-integration** | MySQL 8.0 service container; `tools/install-test-wordpress.sh` installs WordPress with wp-cli, copies the plugin to `wp-content/plugins/ohmylms` and activates it; `wp server` on `ohmylms.test:8080`; then `node tools/run-php-tests.mjs integration` and `tests/js/randomized-preview.test.mjs` against that site |
+| **browser** | The plugin checked out to `wordpress/wp-content/plugins/ohmylms` with WordPress's `wp-includes` beside it (the interactivity fixture serves the Interactivity API from there), PHP 8.2 with mbstring, `npm ci`, `npx playwright install --with-deps chromium`; then `npx playwright test -c tests/<name>.config.cjs` for `interactivity`, `dropdown` and `mathlive` with `OHMYLMS_BROWSER_CHANNEL=''` (Playwright's Chromium instead of Edge). Each config starts its PHP fixture server (`tests/fixtures/<name>.php`; no WordPress, no database). Locally, a PHP without `php.ini` needs `OHMYLMS_PHP_ARGS`, for example `["-d","extension_dir=C:/php8.5.4/ext","-d","extension=mbstring"]`, and `OHMYLMS_PHP_BIN` |
+| **php-integration** | MySQL 8.0 service container on port 10005; `poppler-utils`; `tools/install-test-wordpress.sh` installs WordPress at `xyz/app/public` (the Local layout `figure-assets-integration` checks for) with wp-cli, copies the plugin to `wp-content/plugins/ohmylms` and activates it; `tools/install-test-sites.sh` installs the disposable sites (below); `wp server` on `ohmylms.test:8080`; then `node tools/run-php-tests.mjs integration` (with `OHMYLMS_TEST_CREDENTIALS` and `OHMYLMS_TEST_PDFTOPPM=/usr/bin/pdftoppm`) and `tests/js/randomized-preview.test.mjs` against that site |
+
+`tools/install-test-sites.sh <dir>` installs three disposable sites, each with the database its suites
+check for: `source` (`ohmylms_source_test`), `migration` (`ohmylms_gutenberg_migration_20261020`) and
+`streak` (`ohmylms_streak_test`). Each one has `OHMYLMS_TEST_SITE`, the isolation mu-plugin
+(`tests/fixtures/isolation.php`: no outbound HTTP or mail), the administrator `ohmylms-test-admin` and
+Mathematics as the default subject profile; `source` also enables the `examples` module. The script writes
+`<dir>/test-credentials.json` (`username`, `password`, `site`, and `sites`: database to WordPress root).
+MySQL defaults to `127.0.0.1:10005`, the port of `tools/create-test-site.py`. The script refuses a database
+that already exists before its site folder does, so it never takes over a site that `create-test-site.py`
+made.
 
 ### PHP suites: `tools/run-php-tests.mjs`
 
@@ -46,7 +58,13 @@ shared fixtures; `*-fixture.php` files seed data for the browser specs and are n
 | local-site | `dirname( __DIR__, 5 ) . '/wp-load.php'` | `1` for every `'1' !== getenv( 'X' )` gate in the file (for example `OHMYLMS_COURSES_TEST`); `OHMYLMS_TEST_HOST` is passed on (the suites default to `800.local`) |
 | argv-site | `$argv[1] . '/wp-load.php'` | The WordPress root as the first argument |
 | site-path | `OHMYLMS_TEST_SITE_PATH` | The WordPress root, unless the variable is already set |
-| credentials | `OHMYLMS_TEST_CREDENTIALS` | Nothing: these need the disposable site from `tools/create-test-site.py` |
+| credentials | `OHMYLMS_TEST_CREDENTIALS` | The `site` of the credentials file as the first argument, for suites that read `$argv[1]` |
+
+A suite that checks `DB_NAME` against a dedicated database (`ohmylms_source_test`, the migration or the
+streak database) and every credentials suite run against the disposable site with that database, from the
+`site` and `sites` of `OHMYLMS_TEST_CREDENTIALS`: as `OHMYLMS_TEST_SITE_PATH` or as the first argument. A suite
+that refuses to run without `--local` (`figure-assets-integration`) gets it. Without the site, or without
+`OHMYLMS_TEST_PDFTOPPM` for a suite that reads it, the suite is not run; when `CI` is set it fails instead.
 
 `node tools/run-php-tests.mjs integration --list` shows the kind, gates and required database of every
 suite. Name files to run only those. Environment:
@@ -57,6 +75,9 @@ suite. Name files to run only those. Environment:
 - `OHMYLMS_TEST_WP_ROOT`: the WordPress root for argv-site and site-path suites (default: three folders
   above the plugin).
 - `OHMYLMS_TEST_HOST`: the host header for local-site suites.
+- `OHMYLMS_TEST_CREDENTIALS`: the credentials file of `tools/install-test-sites.sh` or
+  `tools/create-test-site.py`.
+- `OHMYLMS_TEST_PDFTOPPM`: a `pdftoppm` binary (poppler-utils; MiKTeX ships one on Windows).
 
 When PHP has no `php.ini` (a bare Windows PHP), the runner writes a temporary one that loads mbstring,
 mysqli, openssl, curl, sodium, zip, intl, gd, fileinfo and exif from the PHP `ext` folder.
@@ -79,11 +100,11 @@ Each entry is a group of files with a `reason`. Listed files are not run, except
   remove its entry when it is fixed.
 
 `--all`, or naming a listed file, runs it anyway. The runner fails when an entry names a missing file, a
-file of the wrong kind, or has no reason. Not run in CI: suites that need the disposable
-`ohmylms_source_test` site or its credentials, the migration databases
-(`ohmylms_gutenberg_migration_20261020`, `ohmylms_streak_test`), a `pdftoppm` binary, the sibling
-`ohmylms-custom-question` or `ohmylms-graded-reader` plugins, or content on the Local site, plus the
-non-suite helpers.
+file of the wrong kind, or has no reason. Not run in CI: suites that need the sibling
+`ohmylms-custom-question`, `ohmylms-qpay` or `ohmylms-graded-reader` plugins or CreatorLMS, or content on the
+Local site, plus the non-suite helpers and the `php -S` routers (`exam-import-http`, `pdf-exam-http`). The
+disposable-site, migration and streak suites run in CI; 19 of them fail at HEAD and are listed as expected
+failures with the first failing check (31 October 2026).
 
 ### WordPress coding standards: `tools/phpcs-changed.mjs`
 
@@ -100,6 +121,75 @@ and checks them out with LF even when `core.autocrlf` is `true`. Files checked o
 still have CRLF on Windows; `.prettierrc.cjs` sets `endOfLine: 'auto'` so Prettier and ESLint accept
 them, and Git stores LF when they are committed. `git add --renormalize .` is not needed: the index
 already holds LF.
+
+## Type checking the native and learner JavaScript
+
+`npm run typecheck:js` (part of `check:ci`) runs `tsc --noEmit` on two projects. Their files stay
+JavaScript: TypeScript reads them with `allowJs` and `checkJs` and the types come from JSDoc
+(`@param`, `@return`, `@typedef`, `@type`). Nothing is compiled by `tsc`; webpack and Babel are
+unchanged.
+
+| Project | Covers | Notes |
+| --- | --- | --- |
+| `assets/src/features/tsconfig.json` | The native editor and block modules (111 files) and what they import from `assets/src/ui`, `assets/src/app/extensions` and `assets/interactivity/puzzles.mjs` | `jsx: react-jsx` for typing (the program also reads the app's `ExtensionBoundary.tsx`); files that keep a `/** @jsx createElement */` pragma are checked with it. Rule o below checks the `createElement` binding webpack needs |
+| `assets/interactivity/tsconfig.json` | The learner script modules and `features/math/loader.mjs` | `paths` mirrors the import map (`ohmylms/interactivity` is `sdk.js`, `ohmylms/checkout`, `ohmylms/questions`, `ohmylms/video-<provider>`) |
+
+Types of packages:
+
+- `@wordpress/element`, `components`, `data`, `i18n`, `api-fetch`, `compose`, `hooks` and the other
+  installed packages use their own `build-types`. `@types/react` 18 supplies React.
+- Editor packages WordPress provides but npm does not install here (`@wordpress/blocks`,
+  `block-editor`, `editor`, `edit-post`, `plugins`, `interactivity`, `interactivity-router`) are declared
+  in `assets/src/features/types/wordpress-modules.d.ts` and `assets/interactivity/wordpress-interactivity.d.ts`,
+  only as far as these modules use them. Add a declaration there when you use more of their API.
+- `@wordpress/data` maps to `assets/src/features/types/wordpress-data.d.ts`: the package's own types,
+  plus overloads for the stores these modules name with a string (`core`, `core/editor`,
+  `core/block-editor`, `core/edit-post`, `ohmylms/paper`) with the selectors and actions in use.
+- Page data printed by PHP (`ohmylmsNativeLesson`, `ohmylmsMath`, …) and third-party globals are typed in
+  `assets/src/features/types/globals.d.ts` and `assets/interactivity/globals.d.ts`.
+- `question-editor/extendedModel.d.mts` and `questionBlocks.d.mts` describe their `.mjs` for the app and
+  for these modules alike; a new export needs a declaration there.
+
+Writing JSDoc that TypeScript reads:
+
+- Components return `{React.ReactElement}` (or `|null`) and take `{React.ReactNode}` children. `{Element}`
+  is the DOM element to TypeScript.
+- Mark props and options with a default or that callers may leave out as optional: `[props.help]`.
+- DOM queries return `Element`; cast once where the element type is known:
+  `/** @type {HTMLInputElement|null} */ ( root.querySelector( 'input' ) )`.
+- Event handlers that read `key`, `detail` or a typed `target` annotate the parameter:
+  `( /** @type {KeyboardEvent} */ event ) => …`.
+
+The projects are not `strict` yet. On 31 October 2026, before this check existed, `tsc` reported these
+errors with the same options, and none after the JSDoc and declaration changes of that day. No folder is
+excluded.
+
+| Folder | Before | After | Still to fix under `strict` |
+| --- | ---: | ---: | ---: |
+| `features/question-editor` | 265 | 0 | 735 |
+| `features/learning` | 175 | 0 | 292 |
+| `features/paper` | 141 | 0 | 482 |
+| `features/math` | 50 (+9 in the learner project) | 0 | 101 (+5) |
+| `features/content-hub` | 45 | 0 | 387 |
+| `features/question-bank` | 10 | 0 | 126 |
+| `features/students` | 6 | 0 | 20 |
+| `features/navigation` | 5 | 0 | 61 |
+| `features/assessment` | 3 | 0 | 115 |
+| `features/curriculum` | 0 | 0 | 83 |
+| `features` root files | 3 | 0 | 3 |
+| `ui` and `app/extensions` (imported) | 12 | 0 | 7 |
+| `interactivity` root files | 195 (+5 in `puzzles.mjs` via features) | 0 | 738 |
+| `interactivity/catalog` | 26 | 0 | 48 |
+| `interactivity/quiz-player` | 23 | 0 | 111 |
+| `interactivity/video` | 13 | 0 | 190 |
+| `interactivity/ui` | 11 | 0 | 99 |
+| `interactivity/paper` | 9 | 0 | 46 |
+| `interactivity/forms` | 4 | 0 | 36 |
+| `interactivity/account` | 3 | 0 | 39 |
+| `interactivity/reviews`, `assignment`, `lesson` | 0 | 0 | 19 |
+
+Turning on `strictNullChecks` and `noImplicitAny` is the next step, folder by folder (a `tsconfig` per
+strict folder). `rest.mjs` and `learning/api.mjs` already pass under `strict`.
 
 ## What `tools/check-architecture.mjs` enforces
 
@@ -189,6 +279,23 @@ names at its top level, or is itself named after the hook (`useUnsavedChangesGua
 re-export shims). When a screen needs different behaviour, add a backwards-compatible option to the
 shared hook (for example `ignoreSamePath`, `inAddress`, `keepPrevious`) instead of copying it.
 
+`tools/architecture-rules/shared-helpers.mjs` applies the same idea to the request hooks, the response
+validators and the media parser, in every source file of `assets/src/app` except their home module and
+tests. A file fails when it:
+
+- declares `useRequest` or `useOperation` at its top level or is named after one of them
+  (`assets/src/app/hooks/useRequest.ts` offers `key`, `keepData`, `errorShape: 'message' | 'object'` and
+  `replace`; `hooks/useOperation.ts` offers `errorShape` and an optional success callback);
+- declares a one-argument `record`, `text` or `positiveId` (function or arrow). Bind the shared ones in
+  `assets/src/app/lib/validation.ts` to the feature's own error instead, so its message stays:
+  `const { record, text } = createValidators( invalidResponse );`. A message string becomes an
+  `invalid_response` `ApiError` with status 502; a factory's error is thrown as it is;
+- reads `media_details` (a member access or destructuring) instead of calling `parseMediaImage` from
+  `assets/src/app/lib/media.ts` with its `accept` (mime types) and `fallback` (`'unusable'` or
+  `'missing'`) options. `_fields` strings that name `media_details` do not count.
+
+Tests: `tests/js/architecture-shared-helpers.test.mjs`, run by `npm test`.
+
 ### h. Spacing and radius use the tokens
 
 Stylesheets in `assets/src/app` set `padding`, `margin`, `gap`, `row-gap` and `column-gap`
@@ -201,6 +308,141 @@ lengths; percentages, rem and em stay as written. `999px` is a fully round pill 
 allow-list reason, because no radius token stays fully round on the WordPress preset.
 
 The check reads `*.css` under `assets/src/app`. `assets/src/ui` has no stylesheets.
+
+### i. REST routes are registered by WP_REST_Controller subclasses
+
+`tools/architecture-rules/rest-controllers.mjs` reads every PHP file under `includes/` and `packages/`
+(`vendor/` and `node_modules/` are skipped). It blanks comments, strings, heredocs and inline HTML, then
+finds each `register_rest_route(` call (a plain or `\`-prefixed function call; method calls, test stubs that
+declare the function, and mentions in comments or strings do not count) and the class whose body contains it.
+The call passes when that class reaches `WP_REST_Controller` through its `extends` chain: directly, through
+classes of the plugin (`Abstracts\RestController`, `Engagement\Rest\GamificationController`,
+`Commerce\Abstracts\RestController`, …) or through a core `WP_REST_*_Controller`. Parent names are resolved
+the way PHP resolves them, from the file's namespace and `use` imports (aliases and group imports included),
+so `extends WP_REST_Controller` in a namespaced file without `use WP_REST_Controller;` fails, as it would at
+run time.
+
+A file fails when a call sits in a class that does not reach `WP_REST_Controller` (an admin page, block,
+hook class, gateway or service) or outside any class. The message names the file, the lines, the class and
+its parent chain:
+
+```text
+includes/Blocks/PlayerBlock.php:5 calls register_rest_route() in OhMyLMS\Blocks\PlayerBlock (no parent); register routes in a WP_REST_Controller subclass (includes/Rest/V1 or the feature's Rest/ folder) listed in includes/Rest/Api.php
+```
+
+To fix one, move the `register_rest_route()` calls into a controller in `includes/Rest/V1/` or the feature's
+own `Rest/` folder, keep the logic in the domain class and call it from the controller, and register the
+controller in `includes/Rest/Api.php` (or from the feature bootstrap on `rest_api_init`). Keep paths,
+methods, arguments, permission rules, status and error codes and bodies identical; dump
+`rest_get_server()->get_routes()` before and after to show it ([BACKEND-BOUNDARIES.md](BACKEND-BOUNDARIES.md)).
+The rule does not check that a controller is registered, or that its routes are well formed.
+
+Tests: `tests/js/architecture-rest-controllers.test.mjs` (fixture trees in a temporary folder), run by
+`npm test`.
+
+### k. PHP admin links use app addresses, not `LegacyRoutes::url()`
+
+`tools/architecture-rules/legacy-routes.mjs` reads the PHP files under `includes/`, `templates/`,
+`packages/`, `modules/` and `ohmylms.php` (`vendor/`, `node_modules/` and `tests/` are not read). With
+comments and inline HTML blanked, it fails on each `LegacyRoutes::url(` call (also `\OhMyLMS\Admin\…` and
+`array( LegacyRoutes::class, 'url' )`) outside `includes/Admin/`, which owns `LegacyRoutes` and the menu,
+commands and redirects that map legacy addresses. New links call `LegacyRoutes::app_url( '/<app path>' )`
+so the legacy route table can shrink. The one exception, in `legacyRouteUrls` of the allow-list, is
+`NativeLessonEditor::return_url()`: its input (`ohmylms_return`, assessment profiles' `return_route`) is a
+legacy route name by design.
+
+Tests: `tests/js/architecture-shared-helpers.test.mjs`, run by `npm test`.
+
+### j. REST controllers stay within their `$wpdb` budgets
+
+`tools/architecture-rules/controller-persistence.mjs` reads every REST controller file: each PHP file in a
+`Rest` folder under `includes` at any depth (`includes/Rest/V1`, `includes/Engagement/Rest`,
+`includes/Integrations/Zoom/Includes/Rest`, …), and each other file under `includes` or `packages` that
+declares a `WP_REST_Controller` subclass, found with the class index of rule i (dashboard widget
+controllers, `XApi\SettingsController`, the native editor controllers, the e-commerce package). `vendor`
+and `node_modules` folders are skipped. It blanks comments (strings stay, so `"{$wpdb->options}"` counts)
+and counts the lines that use `$wpdb`. This is the per-controller measure of
+[BACKEND-BOUNDARIES.md](BACKEND-BOUNDARIES.md);
+options and post or user meta are not counted. Each file is compared with its budget in
+`tools/controller-persistence-budgets.json`. A file that is not listed, such as a new controller, has a
+budget of 0.
+
+The check fails when:
+
+- a file uses `$wpdb` on more lines than its budget: move the query into the feature's domain service or
+  read model (`Schools\Directory`, `Quiz\AttemptReports`, `Assignment\Submissions`, …) and call it from the
+  controller;
+- a file uses fewer lines than its budget: lower the budget in the same change, so it cannot grow back;
+- a budget names a file that no longer exists or is no longer a controller.
+
+```text
+includes/Rest/V1/NewController.php uses $wpdb on 2 lines (budget 0); move the queries into the feature's domain service or repository
+```
+
+Budgets only go down. Do not raise one to make a change pass; the budgets list only files above 0. No file
+in `includes/Rest/V1` has one any more; the four left are feature controllers (`Gradebook\Rest\GradebookController`
+7, `WPFusionTriggersController` 13, `ZoomWebhookController` 4, the e-commerce `OrdersController` 10).
+Tests: `tests/js/architecture-controller-persistence.test.mjs` (fixture trees in a temporary folder), run
+by `npm test`.
+
+### Front-end rules (l to o): native editors and learner modules
+
+`tools/architecture-rules/frontend.mjs` applies four rules to the JavaScript outside the typed app:
+`assets/src/features` (native editors and blocks) and `assets/interactivity` (learner script modules).
+It parses every `.js`, `.jsx`, `.mjs` and `.cjs` file with `@babel/parser` (comments are ignored) and
+resolves static imports, `export … from`, dynamic `import()` and `require()`: relative paths as webpack
+resolves them, and the learner import-map names as `OhMyLMS\Extensions\Interactivity` and `Video`
+register them (`ohmylms/interactivity` is `sdk.js`, `ohmylms/video-<provider>` is `video/<provider>.js`,
+`ohmylms/<id>` is `<id>.js`). Exceptions are in `tools/architecture-rules/frontend-allowlist.json`
+(below). Tests: `tests/js/architecture-frontend.test.mjs`, run by `npm test`.
+
+#### l. No import cycles in `assets/src/features` and `assets/interactivity`
+
+Strongly connected components over both trees, reported once each with an example path, as rule b does
+for the app. On 31 October 2026 there are none at file level. Folder level is not a rule: `learning`,
+`paper`, `question-editor`, `question-bank` and `assessment` import each other in both directions
+through different files.
+
+#### m. Learner modules use the SDK by name and no jQuery
+
+- A module in `assets/interactivity` imports the SDK only as `ohmylms/interactivity`. Importing
+  `./sdk.js` (or `../sdk`) by path would load a second SDK instance next to the import-map one, with its
+  own configuration and registries.
+- `sdk.js` imports nothing: it is the import-map entry, and node tests and the Playwright fixture load it
+  as a single file.
+- No module refers to `jQuery` or `$` (identifiers, `window[ 'jQuery' ]`, or an import of `jquery`).
+  Add-on events go through `emit()`. Five files bridge to legacy jQuery listeners and are allow-listed:
+  `sdk.js` (`jqueryTrigger()`), `commerce-logic.mjs` (`triggerLegacy()`), `cart.js` and `checkout.js`
+  (gateway hooks that receive jQuery objects) and `lesson/store.js` (the legacy video tracker event).
+
+```text
+assets/interactivity/tabs.js:3 imports the SDK as './sdk.js'; import 'ohmylms/interactivity' (the import-map name), so the page loads one SDK instance
+```
+
+#### n. Feature folders use each other only through listed files
+
+`assets/src/features` has no `index` or `public` entry points. Each top-level folder (`learning`,
+`paper`, `question-editor`, …) may import a file of another folder only when `featureImports` lists that
+file for that pair of folders. Root modules (`rest.mjs`, `requestFeedback.mjs`) are shared and need no
+entry. On 31 October 2026 the measured graph had 48 such imports, of 21 pairs of folders; all are
+listed with a reason, so a new pair, or a new file of an already-coupled folder, fails:
+
+```text
+assets/src/features/paper/PaperInserter.jsx imports assets/src/features/learning/NativeLessonSettings.jsx; features/paper may use features/learning only through the files listed for that pair in tools/architecture-rules/frontend-allowlist.json (featureImports)
+```
+
+When a folder grows a real public surface, give it a `public.mjs`, point the importers at it and shrink
+the entries. Imports that leave the two trees are not checked by this rule; on the same date they were
+`assets/src/ui` (`Modal`, `Alert`; 3 imports), `assets/src/app/extensions` (`registry.mjs`, `api.ts`,
+`ExtensionBoundary.tsx`; 4 imports), `features/question-editor/PuzzleEditor.jsx` to
+`interactivity/puzzles.mjs`, and two learner modules to `features/math/loader.mjs`.
+
+#### o. JSX modules in `assets/src/features` bind `createElement`
+
+webpack compiles their JSX with the classic `createElement` pragma (`webpack.config.cjs`), so a module
+with JSX must import `createElement` from `@wordpress/element` (or declare it). Without it the editor
+throws a `ReferenceError` when the component renders. `npm run typecheck:js` types JSX with `react-jsx`
+and cannot see this; `<>` fragments compile to WordPress' global `React.Fragment` and need no import.
 
 ## Changing the rules on purpose
 
@@ -217,7 +459,10 @@ still printed (`~ allowed: …`) with their reason.
 	"cycles": [ { "files": [ "assets/src/app/a.ts", "assets/src/app/b.ts" ], "reason": "…" } ],
 	"crossFeature": [ { "from": "assets/src/app/features/a/…", "to": "assets/src/app/features/b/…", "reason": "…" } ],
 	"sharedHooks": [ { "file": "assets/src/app/features/a/…", "hook": "usePagedList", "reason": "…" } ],
-	"rawSpacing": [ { "file": "assets/src/app/feature.css", "value": "999px", "reason": "…" } ]
+	"sharedHelpers": [ { "file": "assets/src/app/features/a/…", "helper": "useRequest", "reason": "…" } ],
+	"legacyRouteUrls": [ { "file": "includes/Feature/File.php", "reason": "…" } ],
+	"rawSpacing": [ { "file": "assets/src/app/feature.css", "value": "999px", "reason": "…" } ],
+	"restControllers": [ { "file": "includes/Feature/Hooks.php", "reason": "…" } ]
 }
 ```
 
@@ -225,6 +470,33 @@ For `recoveredRuntime`, `from` is the app file and `to` is the first file it imp
 both appear in the failure message. For `cycles`, `files` lists every file in the cycle.
 
 `value` on a `rawSpacing` entry is the px length (`6px`, `999px`), compared case-insensitively, and it covers every use of that length in the file. `rawColours` allows one help-text example. `rawSpacing` allows the gradebook enrollment-source pill (`999px`).
+
+`restControllers` entries are `{ "file": "includes/…/File.php", "reason": "…" }`, matched by the exact path
+from the plugin root; one entry covers every call in that file. It lists one file: the packaged QPay gateway
+(`packages/e-commerce/includes/Gateways/QPay/GatewayQPay.php`), which registers its public `/qpay/callback`
+from the gateway constructor.
+
+`sharedHelpers` entries name the file and the helper (`useRequest`, `useOperation`, `record`, `text`,
+`positiveId`, or `parseMediaImage` for a file that parses media items); there are none.
+`legacyRouteUrls` entries are `{ "file": "includes/…/File.php", "reason": "…" }`, one per file; it lists
+`includes/Learning/NativeLessonEditor.php`.
+
+### Front-end allow-list: `tools/architecture-rules/frontend-allowlist.json`
+
+Rules l to o keep their exceptions next to the rule, with the same policy: every entry needs a `reason`,
+and an entry that no longer matches fails as stale.
+
+```json
+{
+	"cycles": [ { "files": [ "assets/interactivity/a.js", "assets/interactivity/b.js" ], "reason": "…" } ],
+	"jquery": [ { "file": "assets/interactivity/cart.js", "reason": "…" } ],
+	"featureImports": [ { "from": "learning", "to": "paper", "files": [ "PaperCanvas.jsx" ], "reason": "…" } ]
+}
+```
+
+`featureImports` names folders of `assets/src/features`; `files` are paths inside the `to` folder. A
+listed file that the `from` folder no longer imports is reported as stale on its own. There are no
+`cycles` entries; `jquery` lists the five bridges of rule m and `featureImports` the 21 pairs of rule n.
 
 ### Budgets: `tools/asset-budgets.json`
 

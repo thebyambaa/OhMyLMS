@@ -2,7 +2,7 @@ import { useEffect, useMemo } from '@wordpress/element';
 import { useListState } from '../../components/listQuery';
 import { getTermDetail, listTerms } from './api';
 import { EMPTY_QUERY } from './model';
-import { useRequest } from './useRequest';
+import { useRequest } from '../../hooks/useRequest';
 import type { TaxonomyKind, TermQuery } from './types';
 
 const NO_FILTERS = { search: EMPTY_QUERY.search };
@@ -21,7 +21,11 @@ export function useTerms( kind: TaxonomyKind ) {
 	);
 	const request = useRequest(
 		( signal ) => listTerms( kind, query, signal ),
-		`${ kind }:${ JSON.stringify( query ) }`
+		{
+			key: `${ kind }:${ JSON.stringify( query ) }`,
+			keepData: true,
+			errorShape: 'object',
+		}
 	);
 	const { error } = request;
 	const invalidPage = `ohmylms_${ 'categories' === kind ? 'category' : 'tag' }_invalid_page`;
@@ -48,8 +52,9 @@ export function useTerms( kind: TaxonomyKind ) {
  * @param id   Term ID.
  */
 export function useTermDetail( kind: TaxonomyKind, id: number ) {
-	return useRequest(
-		( signal ) => getTermDetail( kind, id, signal ),
-		`${ kind }:${ id }`
-	);
+	return useRequest( ( signal ) => getTermDetail( kind, id, signal ), {
+		key: `${ kind }:${ id }`,
+		keepData: true,
+		errorShape: 'object',
+	} );
 }

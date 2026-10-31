@@ -42,14 +42,14 @@ const VISUAL_TYPES = [
 /**
  * A text field that edits a parsed value without eating the characters being typed
  * (a trailing space or newline would otherwise vanish on every keystroke).
- * @param root0
- * @param root0.value
- * @param root0.format
- * @param root0.parse
- * @param root0.onChange
- * @param root0.multiline
- * @param root0.label
- * @param root0.help
+ * @param {Object} root0
+ * @param          [root0.value]
+ * @param          [root0.format]
+ * @param          [root0.parse]
+ * @param          [root0.onChange]
+ * @param          [root0.multiline]
+ * @param          [root0.label]
+ * @param          [root0.help]
  */
 function ParsedField( {
 	value,
@@ -84,9 +84,9 @@ const joinCsv = ( list ) => ( list || [] ).join( ', ' );
 
 /**
  * Partial credit applies to every type that has several independent parts.
- * @param root0
- * @param root0.value
- * @param root0.onChange
+ * @param {Object} root0
+ * @param          [root0.value]
+ * @param          [root0.onChange]
  */
 function PartialCredit( { value, onChange } ) {
 	return (
@@ -125,9 +125,9 @@ const formOptions = () => [
 
 /**
  * Required shape of an equivalent answer.
- * @param root0
- * @param root0.value
- * @param root0.onChange
+ * @param {Object} root0
+ * @param          [root0.value]
+ * @param          [root0.onChange]
  */
 function FormSelect( { value, onChange } ) {
 	return (
@@ -146,9 +146,9 @@ function FormSelect( { value, onChange } ) {
 
 /**
  * A typed math expression graded by algebraic equivalence.
- * @param root0
- * @param root0.value
- * @param root0.onChange
+ * @param {Object} root0
+ * @param          [root0.value]
+ * @param          [root0.onChange]
  */
 export function ExpressionEditor( { value, onChange } ) {
 	return (
@@ -217,10 +217,10 @@ export function ExpressionEditor( { value, onChange } ) {
 
 /**
  * Sentence with {1}, {2} … markers; each marker becomes a dropdown.
- * @param root0
- * @param root0.value
- * @param root0.onChange
- * @param root0.mainStatement
+ * @param {Object} root0
+ * @param          [root0.value]
+ * @param          [root0.onChange]
+ * @param          [root0.mainStatement]
  */
 export function DropdownBlanksEditor( {
 	value,
@@ -442,11 +442,11 @@ export function DropdownBlanksEditor( {
 /**
  * Tag input for the items that belong to one group (or to none).
  * Enter or comma turns the typed text into a new item in that group.
- * @param root0
- * @param root0.bucket
- * @param root0.index
- * @param root0.value
- * @param root0.onChange
+ * @param {Object} root0
+ * @param          [root0.bucket]
+ * @param          [root0.index]
+ * @param          [root0.value]
+ * @param          [root0.onChange]
  */
 function TagItemsRow( { bucket, index, value, onChange } ) {
 	const items = value.items || [];
@@ -514,9 +514,9 @@ function TagItemsRow( { bucket, index, value, onChange } ) {
 
 /**
  * Groups and the items that belong in them.
- * @param root0
- * @param root0.value
- * @param root0.onChange
+ * @param {Object} root0
+ * @param          [root0.value]
+ * @param          [root0.onChange]
  */
 export function CategorizeEditor( { value, onChange } ) {
 	const buckets = value.buckets || [];
@@ -618,11 +618,11 @@ const parseRows = ( text ) =>
 
 /**
  * Blanks in a sentence or table cells, each with its own expected answer.
- * @param root0
- * @param root0.value
- * @param root0.onChange
- * @param root0.mainStatement
- * @param root0.compactActions
+ * @param {Object} root0
+ * @param          [root0.value]
+ * @param          [root0.onChange]
+ * @param          [root0.mainStatement]
+ * @param          [root0.compactActions]
  */
 export function MultiBlankEditor( {
 	value,
@@ -913,9 +913,9 @@ export function MultiBlankEditor( {
 
 /**
  * Tiles the learner arranges into an answer.
- * @param root0
- * @param root0.value
- * @param root0.onChange
+ * @param {Object} root0
+ * @param          [root0.value]
+ * @param          [root0.onChange]
  */
 export function BuildExpressionEditor( { value, onChange } ) {
 	const mode = value.tile_mode || 'math';
@@ -1039,9 +1039,9 @@ export function BuildExpressionEditor( { value, onChange } ) {
 
 /**
  * Author-side learner preview of an interactive question (answers are not graded or saved).
- * @param root0
- * @param root0.type
- * @param root0.settings
+ * @param {Object} root0
+ * @param          [root0.type]
+ * @param          [root0.settings]
  */
 export function InteractivePreview( { type, settings = {} } ) {
 	const _controlId = useId();
@@ -1257,9 +1257,9 @@ export function InteractivePreview( { type, settings = {} } ) {
 
 /**
  * Accepted text answers using explicit automatic comparison rules.
- * @param root0
- * @param root0.value
- * @param root0.onChange
+ * @param {Object} root0
+ * @param          [root0.value]
+ * @param          [root0.onChange]
  */
 export function TextEntryEditor( { value, onChange } ) {
 	return (

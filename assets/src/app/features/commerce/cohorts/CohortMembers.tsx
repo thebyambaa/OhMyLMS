@@ -3,8 +3,8 @@ import { Button, Modal, Notice } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { SearchPicker } from '../SearchPicker';
-import { useOperation } from '../useOperation';
-import { useRequest } from '../useRequest';
+import { useOperation } from '../../../hooks/useOperation';
+import { useRequest } from '../../../hooks/useRequest';
 import {
 	addMember,
 	getCohort,
@@ -42,13 +42,18 @@ export function CohortMembers( {
 } ) {
 	const [ page, setPage ] = useState( 1 );
 	const [ version, setVersion ] = useState( 0 );
-	const cohort = useRequest(
-		( signal ) => getCohort( id, signal ),
-		`${ id }:${ version }`
-	);
+	const cohort = useRequest( ( signal ) => getCohort( id, signal ), {
+		key: `${ id }:${ version }`,
+		keepData: true,
+		errorShape: 'object',
+	} );
 	const members = useRequest(
 		( signal ) => listMembers( id, page, '', signal ),
-		`${ id }:${ page }:${ version }`
+		{
+			key: `${ id }:${ page }:${ version }`,
+			keepData: true,
+			errorShape: 'object',
+		}
 	);
 	const operation = useOperation();
 	const [ pick, setPick ] = useState< { id: number; title: string } >( {

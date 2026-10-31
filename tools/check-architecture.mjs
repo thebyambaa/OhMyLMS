@@ -3,6 +3,11 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import { pathToFileURL } from 'node:url';
 import { parse } from '@babel/parser';
+import { checkSharedHelperCopies } from './architecture-rules/shared-helpers.mjs';
+import { checkLegacyRouteUrls } from './architecture-rules/legacy-routes.mjs';
+import { checkRestControllers } from './architecture-rules/rest-controllers.mjs';
+import { checkControllerPersistence } from './architecture-rules/controller-persistence.mjs';
+import { frontendSections } from './architecture-rules/frontend.mjs';
 
 /** Roadmap step 10: architecture rules for the typed admin app (assets/src/app) and its
  * published bundles (assets/dist/admin). See docs/ENFORCEMENT.md.
@@ -1331,6 +1336,14 @@ export function runArchitectureChecks( root, options = {} ) {
 			...checkSharedHookCopies( project, allowlist.sharedHooks ),
 		},
 		{
+			name: 'features use the shared request hooks, validators and media parser',
+			...checkSharedHelperCopies( project, allowlist.sharedHelpers ),
+		},
+		{
+			name: 'PHP admin links use app addresses, not LegacyRoutes::url()',
+			...checkLegacyRouteUrls( root, allowlist.legacyRouteUrls ),
+		},
+		{
 			name: 'no raw colour literals in assets/src/app CSS and TSX',
 			...checkRawColours( project, allowlist.rawColours ),
 		},
@@ -1338,6 +1351,18 @@ export function runArchitectureChecks( root, options = {} ) {
 			name: 'no raw spacing or radius lengths in assets/src/app CSS',
 			...checkRawSpacing( project, allowlist.rawSpacing ),
 		},
+		{
+			name: 'REST routes are registered by WP_REST_Controller subclasses',
+			...checkRestControllers( root, allowlist.restControllers ),
+		},
+		{
+			name: 'REST controllers stay within their $wpdb budgets',
+			...checkControllerPersistence(
+				root,
+				options.controllerPersistenceBudgets
+			),
+		},
+		...frontendSections( root, options.frontendAllowlist ),
 		{
 			name: 'admin bundles use WordPress React and @wordpress/* externals',
 			...checkDuplicateRuntimes( root ),

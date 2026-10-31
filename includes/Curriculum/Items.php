@@ -89,6 +89,19 @@ final class Items {
 		return $wpdb->get_results( 'SELECT * FROM ' . self::table() . ' ORDER BY parent_id, position, id', ARRAY_A ) ?: array();
 	}
 
+	/**
+	 * Items whose name or code contains a search, by name (at most 20).
+	 *
+	 * @param string $search Search text.
+	 * @return array[]
+	 */
+	public static function search( $search ) {
+		global $wpdb;
+		$like = '%' . $wpdb->esc_like( $search ) . '%';
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE name LIKE %s OR code LIKE %s ORDER BY name LIMIT 20', self::table(), $like, $like ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Bounded search of the plugin's curriculum table; results change with every edit.
+		return is_array( $rows ) ? $rows : array();
+	}
+
 	/** Ordered child IDs of a parent.
 	 *
 	 * @param mixed $parent_id Parent identifier.

@@ -61,19 +61,15 @@ export function QuestionOptionsBar( {
 					compact
 					html={ false }
 					label={ __( 'Hint', 'ohmylms' ) }
-					rows={ 2 }
 					value={ settings.hint || '' }
 					onChange={ ( hint ) => set( { hint } ) }
-					__nextHasNoMarginBottom
 				/>
 				<RichContentControl
 					compact
 					html={ false }
 					label={ __( 'Explanation', 'ohmylms' ) }
-					rows={ 2 }
 					value={ settings.explanation || '' }
 					onChange={ ( explanation ) => set( { explanation } ) }
-					__nextHasNoMarginBottom
 				/>
 			</div>
 		</div>

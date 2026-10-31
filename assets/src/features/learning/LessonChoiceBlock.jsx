@@ -1,4 +1,3 @@
-/** @jsx createElement */
 import {
 	createElement,
 	useCallback,
@@ -54,10 +53,10 @@ import { QuestionBlockPreview } from './QuestionBlockPreview';
  * Question fields stay on the canvas, except on the printable paper, where the sheet shows the
  * printed question and the fields move to the block sidebar.
  *
- * @param {Object}  props          Properties.
- * @param {boolean} props.paper    Whether paper view is on.
- * @param {Element} props.children Question fields.
- * @return {Element} Fields in place or in the sidebar.
+ * @param {Object}          props          Properties.
+ * @param {boolean}         props.paper    Whether paper view is on.
+ * @param {React.ReactNode} props.children Question fields.
+ * @return {React.ReactNode} Fields in place or in the sidebar.
  */
 function QuestionFieldsSlot( { paper, children } ) {
 	if ( ! paper ) {
@@ -74,12 +73,12 @@ function QuestionFieldsSlot( { paper, children } ) {
 
 /**
  * A lesson placement stores references only; private authoring data uses the bank API.
- * @param root0
- * @param root0.attributes
- * @param root0.setAttributes
- * @param root0.clientId
- * @param root0.context
- * @param root0.isSelected
+ * @param {Object} root0
+ * @param          [root0.attributes]
+ * @param          [root0.setAttributes]
+ * @param          [root0.clientId]
+ * @param          [root0.context]
+ * @param          [root0.isSelected]
  */
 function LessonChoiceEdit( {
 	attributes,
@@ -395,6 +394,7 @@ function LessonChoiceEdit( {
 				)
 			: [ 'single-choice', 'multiple-choice' ]
 	).includes( question.settings?.type );
+	/** @type {string} */
 	let incompleteMessage = __(
 		'Complete the question and options, and select a correct answer.',
 		'ohmylms'
@@ -669,7 +669,7 @@ registerMultipleChoiceBlock( LessonChoiceEdit );
 /**
  * Keep established question formats movable in native quiz documents.
  * @param {Object} props Block properties.
- * @return {Element} Existing question reference.
+ * @return {React.ReactElement} Existing question reference.
  */
 function QuizQuestionReferenceEdit( props ) {
 	const blockProps = useBlockProps();

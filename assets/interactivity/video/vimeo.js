@@ -26,11 +26,11 @@ export async function loadVimeo( win, load = loadScript ) {
 /**
  * Options of a player created by the custom controls.
  *
- * @param {{id: string, hash?: string}} source        Parsed source.
- * @param {Object}                      config        `loop`, `muted`, `custom`.
- * @param                               config.loop
- * @param                               config.muted
- * @param                               config.custom
+ * @param {{id: string, hash?: string}} source          Parsed source.
+ * @param {Object}                      [config]        `loop`, `muted`, `custom`.
+ * @param {boolean}                     [config.loop]   Loop playback.
+ * @param {boolean}                     [config.muted]  Start muted.
+ * @param {boolean}                     [config.custom] Plugin controls instead of Vimeo's.
  * @return {Object} Player options.
  */
 export function playerOptions(
@@ -111,6 +111,7 @@ export async function createAdapter( {
 	let rate = 1;
 	let tracks = [];
 
+	/** @type {HTMLElement} */
 	let host = iframe;
 	if ( ! host ) {
 		host = doc.createElement( 'div' );

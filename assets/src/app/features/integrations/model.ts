@@ -12,6 +12,10 @@ import type {
 	SettingsDraft,
 	SettingsField,
 } from './types';
+import { createValidators } from '../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
+export const { record } = createValidators( invalidResponse );
 
 export const ALL_CATEGORIES = 'all';
 export const EMPTY_FILTERS: IntegrationFilters = {
@@ -32,20 +36,6 @@ export function invalidResponse(): ApiError {
 			'ohmylms'
 		),
 	} );
-}
-
-export function record( value: unknown ): Record< string, unknown > {
-	if ( ! value || 'object' !== typeof value || Array.isArray( value ) ) {
-		throw invalidResponse();
-	}
-	return value as Record< string, unknown >;
-}
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
 }
 
 function flag( value: unknown ): boolean {

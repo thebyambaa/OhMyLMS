@@ -8,7 +8,7 @@
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Schools\Service;
-use OhMyLMS\Utility\Transaction;
+use OhMyLMS\Schools\Versions;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -394,7 +394,7 @@ class AccountHubUsersController extends AccountHubController {
 	 * @return string
 	 */
 	private function account_version( $email, $display, $first, $last ) {
-		return substr( hash( 'sha256', (string) wp_json_encode( array( (string) $email, (string) $display, (string) $first, (string) $last ) ) ), 0, 16 );
+		return Versions::account( $email, $display, $first, $last );
 	}
 
 	/**
@@ -705,34 +705,7 @@ class AccountHubUsersController extends AccountHubController {
 		}
 		$version = (string) $request['version'];
 		try {
-			$result = Transaction::run(
-				function () use ( $user, $first, $last, $email, $version ) {
-					global $wpdb;
-					// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Lock the account row so the version check and the write are atomic.
-					$row = $wpdb->get_row( $wpdb->prepare( 'SELECT user_email,display_name FROM %i WHERE ID=%d FOR UPDATE', $wpdb->users, $user->ID ), ARRAY_A );
-					// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Current names under the same lock, bypassing the object cache.
-					$meta    = $wpdb->get_results( $wpdb->prepare( "SELECT meta_key,meta_value FROM %i WHERE user_id=%d AND meta_key IN ('first_name','last_name') ORDER BY umeta_id DESC", $wpdb->usermeta, $user->ID ), ARRAY_A );
-					$names   = wp_list_pluck( (array) $meta, 'meta_value', 'meta_key' );
-					$current = $this->account_version( $row['user_email'] ?? '', $row['display_name'] ?? '', $names['first_name'] ?? '', $names['last_name'] ?? '' );
-					if ( '' !== $version && $version !== $current ) {
-						return $this->error( 'conflict', __( 'This account was changed by someone else. Reload it before saving.', 'ohmylms' ), 409, array( 'version' => $current ) );
-					}
-					$updated = wp_update_user(
-						array(
-							'ID'           => $user->ID,
-							'user_email'   => $email,
-							'first_name'   => $first,
-							'last_name'    => $last,
-							'display_name' => trim( $first . ' ' . $last ),
-						)
-					);
-					if ( is_wp_error( $updated ) ) {
-						return $this->error( 'rejected', $updated->get_error_message(), 422 );
-					}
-
-					return true;
-				}
-			);
+			$result = Versions::update_account( $user->ID, $first, $last, $email, $version );
 		} catch ( \Throwable $failure ) {
 			clean_user_cache( $user->ID );
 			return $this->error( 'failed', __( 'The change could not be saved. Nothing was changed.', 'ohmylms' ), 500 );

@@ -17,7 +17,7 @@ import {
  * @param {Object}                  root0          Component properties.
  * @param {Object}                  root0.value    Grid settings.
  * @param {(patch: Object) => void} root0.onChange Settings writer.
- * @return {Element} Grid editor.
+ * @return {React.ReactElement} Grid editor.
  */
 export function MatchTableGridEditor( { value, onChange } ) {
 	const dragged = useRef( null );

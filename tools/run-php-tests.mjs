@@ -11,7 +11,13 @@
  *                every `'1' !== getenv( 'X' )` gate in the file is set to 1, and OHMYLMS_TEST_HOST is passed on.
  *   argv-site    `$argv[1] . '/wp-load.php'`: the WordPress root is passed as the first argument.
  *   site-path    OHMYLMS_TEST_SITE_PATH, set to the WordPress root unless already set.
- *   credentials  OHMYLMS_TEST_CREDENTIALS (disposable site from tools/create-test-site.py); never set here.
+ *   credentials  OHMYLMS_TEST_CREDENTIALS: the JSON of a disposable site (tools/install-test-sites.sh or
+ *                tools/create-test-site.py); never set here.
+ * A suite that checks DB_NAME against a dedicated database (ohmylms_source_test, the migration or streak
+ * database) runs against the disposable site with that database: "site" in the credentials JSON for
+ * ohmylms_source_test, "sites" ({ database: root }) for the others. It gets that root as OHMYLMS_TEST_SITE_PATH
+ * or as its first argument. Without the site, or without OHMYLMS_TEST_PDFTOPPM for a suite that reads it,
+ * the suite is not run; with CI set it fails instead.
  *
  * `*-fixture.php` files seed data for the browser specs and are never run here. Files listed in
  * tests/php-suites.json are not run either; each entry needs a reason. `--all`, or naming the file, runs them.
@@ -20,6 +26,8 @@
  *   PHP_BINARY             PHP executable (otherwise `php` on PATH or Local's lightning-services PHP).
  *   OHMYLMS_TEST_WP_ROOT   WordPress root for argv-site and site-path suites (default: three levels above the plugin).
  *   OHMYLMS_TEST_HOST      Host header for local-site suites (they default to 800.local).
+ *   OHMYLMS_TEST_CREDENTIALS  Disposable sites (see above).
+ *   OHMYLMS_TEST_PDFTOPPM  pdftoppm binary for figure-assets-integration (which also gets --local).
  *   OHMYLMS_TEST_DB_PORT   Sets mysqli.default_port, for a DB_HOST without a port (Local uses 10006).
  *   OHMYLMS_PHP_INI        php.ini to use instead of the generated one.
  *   OHMYLMS_PHP_TIMEOUT    Per-suite timeout in seconds (default 600).
@@ -101,6 +109,13 @@ function classify( file ) {
 			/DB_NAME\s*!==\s*'([^']+)'|'([^']+)'\s*!==\s*DB_NAME/g
 		),
 	].map( ( match ) => match[ 1 ] || match[ 2 ] );
+	for ( const match of source.matchAll(
+		/in_array\(\s*DB_NAME\s*,\s*(?:array\(|\[)([^)\]]*)/g
+	) ) {
+		databases.push(
+			...[ ...match[ 1 ].matchAll( /'([^']+)'/g ) ].map( ( name ) => name[ 1 ] )
+		);
+	}
 	let kind = 'unit';
 	if ( file.endsWith( '-fixture.php' ) ) {
 		kind = 'fixture';
@@ -120,8 +135,26 @@ function classify( file ) {
 		kind,
 		flags: [ ...new Set( flags ) ],
 		databases: [ ...new Set( databases ) ],
+		siteArgument: /\$argv\[\s*1\s*\]/.test( source ),
+		// Only suites that refuse to run without --local; for others it switches to the Local site.
+		local: /!\s*in_array\(\s*'--local',\s*\$argv/.test( source ),
+		pdftoppm: /getenv\(\s*'OHMYLMS_TEST_PDFTOPPM'\s*\)/.test( source ),
 	};
 }
+
+/** Disposable sites by database name, from the OHMYLMS_TEST_CREDENTIALS JSON. */
+function disposableSites() {
+	const file = process.env.OHMYLMS_TEST_CREDENTIALS;
+	if ( ! file || ! fs.existsSync( file ) ) {
+		return {};
+	}
+	const config = JSON.parse( fs.readFileSync( file, 'utf8' ) );
+	return {
+		...( config.site ? { ohmylms_source_test: config.site } : {} ),
+		...( config.sites ?? {} ),
+	};
+}
+const SITES = disposableSites();
 
 function readManifest() {
 	const manifest = JSON.parse(
@@ -238,19 +271,51 @@ function wordpressRoot() {
 	);
 }
 
+/** The suite's environment and arguments, and what it lacks to run (null when nothing). */
 function invocation( suite ) {
 	const env = { ...process.env };
 	const suiteArgs = [];
+	const missing = [];
 	for ( const flag of suite.flags ) {
 		env[ flag ] = '1';
 	}
-	if ( suite.kind === 'argv-site' ) {
-		suiteArgs.push( wordpressRoot() );
+	let site = wordpressRoot();
+	const ownSitePath =
+		suite.kind === 'site-path' && process.env.OHMYLMS_TEST_SITE_PATH;
+	if (
+		suite.kind === 'credentials' ||
+		( suite.databases.length && suite.kind !== 'local-site' && ! ownSitePath )
+	) {
+		const databases = suite.databases.length
+			? suite.databases
+			: [ 'ohmylms_source_test' ];
+		site = databases.map( ( database ) => SITES[ database ] ).find( Boolean );
+		if ( ! site || ( suite.kind === 'credentials' && ! SITES.ohmylms_source_test ) ) {
+			missing.push(
+				`a disposable site with the database ${ databases.join( ' or ' ) } in OHMYLMS_TEST_CREDENTIALS (tools/install-test-sites.sh)`
+			);
+		}
+	}
+	if (
+		suite.kind === 'argv-site' ||
+		( suite.kind === 'credentials' && suite.siteArgument )
+	) {
+		suiteArgs.push( site ?? '' );
 	}
 	if ( suite.kind === 'site-path' && ! env.OHMYLMS_TEST_SITE_PATH ) {
-		env.OHMYLMS_TEST_SITE_PATH = wordpressRoot();
+		env.OHMYLMS_TEST_SITE_PATH = site ?? '';
 	}
-	return { env, suiteArgs };
+	if ( suite.local ) {
+		suiteArgs.push( '--local' );
+	}
+	if ( suite.pdftoppm && ! env.OHMYLMS_TEST_PDFTOPPM ) {
+		missing.push( 'OHMYLMS_TEST_PDFTOPPM (a pdftoppm binary)' );
+	}
+	return {
+		env,
+		suiteArgs,
+		missing: missing.length ? `Needs ${ missing.join( ' and ' ) }.` : null,
+	};
 }
 
 function tail( text, lines ) {
@@ -260,7 +325,10 @@ function tail( text, lines ) {
 }
 
 function runSuite( php, iniArgs, suite ) {
-	const { env, suiteArgs } = invocation( suite );
+	const { env, suiteArgs, missing } = invocation( suite );
+	if ( missing ) {
+		return { passed: false, seconds: '0.0', detail: missing };
+	}
 	const begin = Date.now();
 	const run = spawnSync( php, [ ...iniArgs, suite.file, ...suiteArgs ], {
 		cwd: ROOT,
@@ -332,11 +400,16 @@ if ( problems.length ) {
 if ( listOnly ) {
 	for ( const suite of suites ) {
 		const entry = entries.get( suite.file );
-		const reason = skipReason( entry );
+		const { missing } = invocation( suite );
+		const reason =
+			skipReason( entry ) || ( process.env.CI ? null : missing );
 		const notes = [
 			suite.kind,
 			...suite.flags.map( ( flag ) => `${ flag }=1` ),
 			...suite.databases.map( ( db ) => `DB_NAME=${ db }` ),
+			...( suite.databases.length && SITES[ suite.databases[ 0 ] ]
+				? [ `site=${ SITES[ suite.databases[ 0 ] ] }` ]
+				: [] ),
 		];
 		const action = reason
 			? 'skip'
@@ -359,11 +432,16 @@ if ( mode === 'integration' ) {
 	process.stdout.write(
 		`WordPress: ${ path.resolve( ROOT, '..', '..', '..' ) } (local-site), ${ wordpressRoot() } (argv-site, site-path); host ${ process.env.OHMYLMS_TEST_HOST || '800.local (suite default)' }\n`
 	);
+	for ( const [ database, site ] of Object.entries( SITES ) ) {
+		process.stdout.write( `Disposable site: ${ site } (${ database })\n` );
+	}
 }
 for ( const suite of suites ) {
 	const entry = entries.get( suite.file );
 	const forced = includeSkipped || only.includes( suite.file );
-	const reason = skipReason( entry );
+	const reason =
+		skipReason( entry ) ||
+		( process.env.CI ? null : invocation( suite ).missing );
 	if ( reason && ! forced ) {
 		results.push( { ...suite, status: 'skipped', reason } );
 		continue;

@@ -55,6 +55,7 @@ export const SPECS: { [ G in GroupId ]: Record< FieldName< G >, FieldSpec > } =
 			terms_page_id: page,
 			privacy_policy_page_id: page,
 			profile_page_id: page,
+			language_switcher: toggle,
 		},
 		branding: {
 			color_preset: {

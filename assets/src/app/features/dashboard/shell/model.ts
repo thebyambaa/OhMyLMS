@@ -1,5 +1,8 @@
 import { __, sprintf } from '@wordpress/i18n';
 import { invalidResponse, record } from '../model';
+import { createValidators } from '../../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
 
 /** Lengths of the dashboard period, in days (`period=` on every widget endpoint). */
 export const PERIODS = [ 7, 30, 90 ] as const;
@@ -49,13 +52,6 @@ export interface WidgetEnvelope< T > {
 	readonly period: PeriodInfo;
 	readonly generatedAt: string;
 	readonly data: T;
-}
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
 }
 
 function whole( value: unknown ): number {

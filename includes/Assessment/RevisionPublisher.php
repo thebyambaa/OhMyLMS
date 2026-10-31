@@ -294,6 +294,21 @@ final class RevisionPublisher {
 	}
 
 	/**
+	 * Revisions of a quiz, newest first, each with the number of attempts that used it.
+	 *
+	 * @param int $quiz_id Quiz ID.
+	 * @return array
+	 */
+	public static function history( $quiz_id ) {
+		global $wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT id, revision_no, kind, total_marks, status, created_by, created_at FROM %i WHERE quiz_id=%d ORDER BY revision_no DESC', Schema::table( 'quiz_revisions' ), (int) $quiz_id ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh revision list for the editor.
+		foreach ( $rows as &$row ) {
+			$row['attempts'] = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE revision_id=%d', Schema::table( 'attempt_context' ), (int) $row['id'] ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh attempt count per revision.
+		}
+		return $rows;
+	}
+
+	/**
 	 * Latest for Revision publisher.
 	 *
 	 * @param mixed $quiz_id Quiz identifier.

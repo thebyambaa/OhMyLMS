@@ -15,8 +15,7 @@ final class Bootstrap {
 		if ( defined( 'OHMYLMS_SCHOOLS_ENABLED' ) && ! OHMYLMS_SCHOOLS_ENABLED ) {
 			return; }
 		add_action( 'init', array( Schema::class, 'install' ), 6 );
-		add_action( 'rest_api_init', array( ViewAs::class, 'register' ) );
-		add_action( 'rest_api_init', array( Gradebook::class, 'register' ) );
+		add_action( 'rest_api_init', array( self::class, 'register_routes' ) );
 		add_action( 'init', array( ViewAs::class, 'protect_session' ), 1 );
 		add_action( 'wp_footer', array( ViewAs::class, 'banner' ) );
 		add_action( 'admin_footer', array( ViewAs::class, 'banner' ) );
@@ -28,5 +27,13 @@ final class Bootstrap {
 		add_action( 'wp_enqueue_scripts', array( Views::class, 'assets' ) );
 		add_action( 'admin_enqueue_scripts', array( Views::class, 'assets' ) );
 		add_action( 'ohmylms_lms_student_profile_after_dashboard_content', array( Views::class, 'dashboard_link' ) );
+	}
+
+	/**
+	 * Register the view-as and course gradebook routes.
+	 */
+	public static function register_routes() {
+		( new Rest\ViewAsController() )->register_routes();
+		( new Rest\CourseGradebookController() )->register_routes();
 	}
 }

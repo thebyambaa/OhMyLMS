@@ -44,12 +44,27 @@ export function registerGateway( id, handler ) {
 	window.registerPaymentGatewayHandler( id, handler );
 }
 
+/**
+ * @typedef {Object} GatewayHandler
+ * @property {(form: HTMLFormElement) => void}                   [select]  The gateway was chosen.
+ * @property {(form: HTMLFormElement) => Promise<Object>|Object} [prepare] Extra POST fields.
+ * @property {(response: Object, form: HTMLFormElement) => ?}    [handle]  Replacement response, or false.
+ * @property {(response: Object, $form: Object) => void}         [open]    Legacy hook.
+ * @property {($form: Object) => boolean}                        [resume]  Legacy hook.
+ */
+
+/**
+ * @param {string} id Gateway id.
+ * @return {GatewayHandler|undefined} Registered handler.
+ */
 const gatewayHandler = ( id ) => window.PaymentGatewayHandlers[ id ];
 const legacyForm = ( form ) =>
 	'function' === typeof window.jQuery ? window.jQuery( form ) : form;
 const checkoutForm = () =>
-	document.querySelector(
-		'form#ohmylms-checkout-form, form.ohmylms-checkout-form'
+	/** @type {HTMLFormElement|null} */ (
+		document.querySelector(
+			'form#ohmylms-checkout-form, form.ohmylms-checkout-form'
+		)
 	);
 
 // Server state (Commerce::checkout_state()): ajaxUrl, restRoot, restNonce, nonces, requiredFields,
@@ -151,8 +166,8 @@ const { state } = store( 'ohmylms/checkout', {
 	callbacks: {
 		init() {
 			const form = checkoutForm();
-			const checked = form?.querySelector(
-				'input[name="payment_method"]:checked'
+			const checked = /** @type {HTMLInputElement|null} */ (
+				form?.querySelector( 'input[name="payment_method"]:checked' )
 			);
 			if ( checked ) {
 				state.gateway = checked.value;
@@ -195,17 +210,23 @@ function fold( field, active ) {
 
 function setRequired( key, required ) {
 	const row = document.getElementById( `${ key }_field` );
-	const input = row?.querySelector( 'input, select' );
+	const input = /** @type {HTMLInputElement|HTMLSelectElement|null} */ (
+		row?.querySelector( 'input, select' )
+	);
 	if ( ! input ) {
 		return;
 	}
 	const label = row.querySelector( 'label' );
 	input.required = required;
 	row.classList.toggle( 'validate-required', required );
-	label?.querySelectorAll( '.optional' ).forEach( ( optional ) => {
-		optional.hidden = required;
-	} );
-	let marker = label?.querySelector( 'abbr.required' );
+	label
+		?.querySelectorAll( '.optional' )
+		.forEach( ( /** @type {HTMLElement} */ optional ) => {
+			optional.hidden = required;
+		} );
+	let marker = /** @type {HTMLElement|null} */ (
+		label?.querySelector( 'abbr.required' )
+	);
 	if ( required && label && ! marker ) {
 		marker = document.createElement( 'abbr' );
 		marker.className = 'required';
@@ -295,7 +316,10 @@ export function showNotice( notice ) {
 	} else {
 		box.append(
 			errorMarkup(
-				( notice && notice.message ) || state.messages?.error || ''
+				( notice &&
+					/** @type {{message: string}} */ ( notice ).message ) ||
+					state.messages?.error ||
+					''
 			)
 		);
 	}
@@ -456,7 +480,9 @@ async function recalculate() {
 	if ( ! state.taxEnabled || ! form ) {
 		return;
 	}
-	const value = ( name ) => form.elements.namedItem( name )?.value || '';
+	const value = ( name ) =>
+		/** @type {HTMLInputElement|null} */ ( form.elements.namedItem( name ) )
+			?.value || '';
 	const ticket = ++taxRequest;
 	try {
 		const response = await ajaxPost( state.ajaxUrl, {
@@ -502,9 +528,11 @@ function renderStateField( model ) {
 	if ( ! current || ! row ) {
 		return;
 	}
-	const marker = row.querySelector( '.required' );
+	const marker = /** @type {HTMLElement|null} */ (
+		row.querySelector( '.required' )
+	);
 	if ( 'select' === model.type ) {
-		let select = current;
+		let select = /** @type {HTMLSelectElement} */ ( current );
 		if ( 'SELECT' !== current.tagName ) {
 			select = document.createElement( 'select' );
 			select.id = 'state';

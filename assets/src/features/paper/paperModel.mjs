@@ -199,12 +199,12 @@ function paperPart( part, settings, showAnswers ) {
  * The printed form of a question. Answer fields are present only when showAnswers is true,
  * so a student paper never carries the answer key, even hidden.
  *
- * @param {Object}  question            Editor question: settings and options (questions).
- * @param {Object}  options             Rendering options.
- * @param {Object}  options.settings    Normalized paper settings.
- * @param {boolean} options.showAnswers Whether to include the answer key.
- * @param {string}  options.prompt      Statement HTML.
- * @param {string}  options.version     Paper version letter; B to D shuffle choice options.
+ * @param {Object}  question              Editor question: settings and options (questions).
+ * @param {Object}  [options]             Rendering options.
+ * @param {Object}  [options.settings]    Normalized paper settings.
+ * @param {boolean} [options.showAnswers] Whether to include the answer key.
+ * @param {string}  [options.prompt]      Statement HTML.
+ * @param {string}  [options.version]     Paper version letter; B to D shuffle choice options.
  * @return {Object} Paper question model.
  */
 export function paperQuestion(
@@ -348,11 +348,12 @@ export function paginate( heights, { height, margin, gap }, breaks = [] ) {
 /**
  * Marks under each section heading: the questions after it, up to the next section.
  *
- * @param {Array<{kind: string, key: string, marks: number}>} entries Sections and questions in
- *                                                                    document order.
+ * @param {Array<{kind: string, key?: string, marks?: number}>} entries Sections and questions in
+ *                                                                      document order.
  * @return {Object<string, number>} Total marks by section key.
  */
 export function sectionTotals( entries ) {
+	/** @type {Object<string, number>} */
 	const totals = {};
 	let current = null;
 	for ( const entry of entries ) {
@@ -378,14 +379,17 @@ export function limitMinutes( limit ) {
 	return Math.round( value * factor );
 }
 
-/** Answer space heights, in lines of 8 mm, and the space styles. */
+/**
+ * Answer space heights, in lines of 8 mm, and the space styles.
+ * @type {Array<'lines'|'grid'|'blank'>}
+ */
 export const ANSWER_SPACE_STYLES = [ 'lines', 'grid', 'blank' ];
 
 /**
  * Normalize answer space attributes.
  *
  * @param {Object} attributes Block attributes.
- * @return {{style: string, lines: number}} Answer space.
+ * @return {{style: 'lines'|'grid'|'blank', lines: number}} Answer space.
  */
 export function answerSpace( attributes = {} ) {
 	return {
@@ -402,7 +406,7 @@ export function answerSpace( attributes = {} ) {
  * Normalize columns section attributes.
  *
  * @param {Object} attributes Block attributes.
- * @return {{columns: number, flow: string, rule: boolean}} Columns section.
+ * @return {{columns: number, flow: 'grid'|'flow', rule: boolean}} Columns section.
  */
 export function columnsLayout( attributes = {} ) {
 	return {

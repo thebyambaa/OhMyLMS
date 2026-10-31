@@ -19,6 +19,7 @@ export function mathsPreset( kind, min, max ) {
 		return null;
 	}
 	const variable = ( name ) => ( { name, type: 'int', min, max, step: 1 } );
+	/** @type {Array<{name: string, type: string, min?: number, max?: number, step?: number, expr?: string, places?: number}>} */
 	let variables = [ variable( 'a' ), variable( 'b' ) ];
 	let constraints = [];
 	let prompt;

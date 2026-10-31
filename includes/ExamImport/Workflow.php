@@ -18,43 +18,9 @@ final class Workflow {
 	const HOOK         = 'ohmylms_extract_exam_import';
 	const MAX_REQUESTS = 125;
 
-	/** Register stages and author-only review operations. */
+	/** Register the extraction stages. The review operations are {@see Rest\WorkflowController}. */
 	public static function init() {
 		add_action( self::HOOK, array( __CLASS__, 'process' ), 10, 3 );
-		add_action( 'rest_api_init', array( __CLASS__, 'routes' ) );
-	}
-
-	/** Register discrete extraction, review and draft commit actions. */
-	public static function routes() {
-		register_rest_route(
-			'ohmylms/v1',
-			'/exam-import-skills',
-			array(
-				'methods'             => 'GET',
-				'permission_callback' => array( Jobs::class, 'permission' ),
-				'callback'            => array( __CLASS__, 'skills' ),
-			)
-		);
-		register_rest_route(
-			'ohmylms/v1',
-			'/exam-imports/rows',
-			array(
-				'methods'             => 'POST',
-				'permission_callback' => array( Jobs::class, 'permission' ),
-				'callback'            => array( __CLASS__, 'rows' ),
-			)
-		);
-		foreach ( array( 'extract', 'review', 'commit', 'quiz' ) as $operation ) {
-			register_rest_route(
-				'ohmylms/v1',
-				'/exam-imports/(?P<id>\d+)/' . $operation,
-				array(
-					'methods'             => 'POST',
-					'permission_callback' => array( Jobs::class, 'permission' ),
-					'callback'            => array( __CLASS__, $operation ),
-				)
-			);
-		}
 	}
 
 	/**

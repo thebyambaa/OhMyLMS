@@ -258,7 +258,10 @@ final class AtRiskNudges {
 			$reasons   = (array) $flagged['reasons'];
 			$guardians = $settings['nudge_guardians'] ? self::guardian_addresses( $learner_id, $scope ) : array();
 			$sender    = get_userdata( (int) $sender_id );
-			$result    = $email->send( $user, $sender ? $sender->display_name : '', AtRiskRules::summary( $reasons, $rules ), $guardians );
+			$summary   = static function () use ( $reasons, $rules ) {
+				return AtRiskRules::summary( $reasons, $rules );
+			};
+			$result    = $email->send( $user, $sender ? $sender->display_name : '', $summary, $guardians );
 			$status    = $result['sent'] ? 'sent' : 'failed';
 			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 				self::table(),

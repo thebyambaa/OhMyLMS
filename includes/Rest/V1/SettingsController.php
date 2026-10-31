@@ -517,27 +517,7 @@ class SettingsController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function clear_cache( $request ) {
-		global $wpdb;
-
-		$patterns = array(
-			$wpdb->esc_like( '_transient_ohmylms_' ) . '%',
-			$wpdb->esc_like( '_transient_timeout_ohmylms_' ) . '%',
-			$wpdb->esc_like( '_site_transient_ohmylms_' ) . '%',
-			$wpdb->esc_like( '_site_transient_timeout_ohmylms_' ) . '%',
-		);
-		$deleted  = (int) $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Transient cleanup has no API for prefixes.
-			$wpdb->prepare(
-				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s",
-				$patterns[0],
-				$patterns[1],
-				$patterns[2],
-				$patterns[3]
-			)
-		);
-		wp_cache_delete( 'alloptions', 'options' );
-		wp_cache_delete( 'notoptions', 'options' );
-
-		return rest_ensure_response( array( 'deleted' => $deleted ) );
+		return rest_ensure_response( array( 'deleted' => SettingsService::clear_transients() ) );
 	}
 
 	/**

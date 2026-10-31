@@ -182,6 +182,32 @@ function ohmylms_update_1221_db_version() {
 }
 
 /**
+ * Forget saved email texts that are only a default. Saving an email used to store all of its fields,
+ * so defaults were frozen in the language of the administrator who saved; a subject, heading, message,
+ * button or footer that equals its default in any interface language (English, Mongolian) is removed
+ * and translated per recipient again. Customized texts, `enable` and recipients are kept. Idempotent.
+ *
+ * @return void
+ * @since 1.2.22
+ */
+function ohmylms_update_1222_forget_email_defaults() {
+	$locales = array_merge( array( 'en_US' ), array_keys( \OhMyLMS\I18n\InterfaceLanguage::locales() ) );
+	foreach ( \OhMyLMS\Emails\EmailManager::ids() as $email_id ) {
+		\OhMyLMS\Emails\EmailManager::forget_defaults( $email_id, $locales );
+	}
+}
+
+/**
+ * Update database version to 1.2.22
+ *
+ * @return void
+ * @since 1.2.22
+ */
+function ohmylms_update_1222_db_version() {
+	\OhMyLMS\Install::update_db_version( '1.2.22' );
+}
+
+/**
  * Process one batch of the 'subscriber' -> 'ohmylms_student' migration.
  *
  * Scoped to users who have an actual course enrollment record (not every

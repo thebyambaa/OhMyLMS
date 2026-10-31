@@ -31,17 +31,17 @@ import { ExtensionBoundary } from '../../app/extensions/ExtensionBoundary';
 
 /**
  * Private answer controls used by the question block; they save through the assessment writer.
- * @param root0
- * @param root0.type
- * @param root0.options
- * @param root0.settings
- * @param root0.onChange
- * @param root0.prompt
- * @param root0.mainStatement
- * @param root0.collapseAnswerToolbar
- * @param root0.compactActions
- * @param root0.showAnswerToolbar
- * @param root0.question
+ * @param {Object} root0
+ * @param          [root0.type]
+ * @param          [root0.options]
+ * @param          [root0.settings]
+ * @param          [root0.onChange]
+ * @param          [root0.prompt]
+ * @param          [root0.mainStatement]
+ * @param          [root0.collapseAnswerToolbar]
+ * @param          [root0.compactActions]
+ * @param          [root0.showAnswerToolbar]
+ * @param          [root0.question]
  */
 export function BankAnswerFields( {
 	type,
@@ -435,7 +435,6 @@ export function BankAnswerFields( {
 					{ type !== 'true-false' && (
 						<MediaUpload
 							allowedTypes={ [ 'image' ] }
-							value={ option.thumbnail_id }
 							onSelect={ ( image ) =>
 								patchOption( index, {
 									thumbnail_id: image.id,

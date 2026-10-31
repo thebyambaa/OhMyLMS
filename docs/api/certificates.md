@@ -350,5 +350,5 @@ verification page headers, the sign-in redirect and the old e-mail link redirect
 - **Learner list in the app**: learners see their certificates in the PHP student hub; there is no learner REST
   route.
 - **Free-form canvas.** Positions are numeric fields by design.
-- **Media upload from the editor.** The editor picks existing library images through core's `/wp/v2/media`.
+- **Upload limits.** The editor opens WordPress's media library (the shared admin `MediaPicker`), so images can be uploaded there; the server still accepts only image attachments the user can edit (JPEG, PNG, GIF, WebP).
 - **Bulk operations**, concurrent-edit detection (last write wins) and revision history.

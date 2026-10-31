@@ -55,7 +55,9 @@ async function change( button, follow, id ) {
 		const current = document.getElementById( 'ohmylms-bundles' );
 		const holder = document.createElement( 'div' );
 		holder.innerHTML = data.html || '';
-		const next = holder.querySelector( '#ohmylms-bundles' );
+		const next = /** @type {HTMLElement|null} */ (
+			holder.querySelector( '#ohmylms-bundles' )
+		);
 		if ( current && next ) {
 			current.replaceWith( next );
 			next.focus();

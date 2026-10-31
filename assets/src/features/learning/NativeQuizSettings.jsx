@@ -1,4 +1,3 @@
-/** @jsx createElement */
 import {
 	createElement,
 	createPortal,
@@ -42,7 +41,7 @@ import {
  * Core has no public SlotFill for an arbitrary header action, so scope this
  * portal to its settings container; the sidebar link remains the fallback.
  *
- * @return {Element|null} Quiz preview action.
+ * @return {React.ReactElement|null} Quiz preview action.
  */
 function QuizPreviewAction() {
 	const [ container, setContainer ] = useState( null );
@@ -79,7 +78,7 @@ function QuizPreviewAction() {
 
 /**
  * Keep native Gutenberg controls and provide the existing quiz settings and player preview.
- * @return {Element|null} Native quiz sidebar.
+ * @return {React.ReactElement|null} Native quiz sidebar.
  */
 function NativeQuizSettings() {
 	useBlankPlaceholderTitle();

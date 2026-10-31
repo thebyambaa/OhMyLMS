@@ -2,6 +2,8 @@
 
 namespace OhMyLMS\Integrations\Cohorts\Includes;
 
+use OhMyLMS\I18n\RecipientLocale;
+
 /**
  * Cohort Reminder Scheduler
  * This class handles the reminder for cohort courses
@@ -147,27 +149,51 @@ class CohortReminderScheduler {
 			return;
 		}
 
+		RecipientLocale::run(
+			$user,
+			static function () use ( $user, $course_id, $cohort ) {
+				self::compose_and_send( $user, $course_id, $cohort );
+			}
+		);
+	}
+
+	/**
+	 * Compose and send the email, in the user's language.
+	 *
+	 * @param \WP_User $user      User.
+	 * @param mixed    $course_id Course identifier.
+	 * @param mixed    $cohort    Cohort.
+	 */
+	protected static function compose_and_send( $user, $course_id, $cohort ) {
 		$course_title = get_the_title( $course_id );
 		$course_link  = get_permalink( $course_id );
 		$start_date   = date_i18n( 'M j, g:i A', strtotime( $cohort->start_date ) );
 
 		$subject = sprintf(
-			'Reminder: Your Course "%s" Starts in 24 Hours!',
+			/* translators: %s: course title. */
+			__( 'Reminder: Your Course "%s" Starts in 24 Hours!', 'ohmylms' ),
 			$course_title
 		);
 
 		$message = sprintf(
-			"Hi %s,\n\n" .
-			"Just a quick reminder that your course \"%s\" starts in 24 hours!\n\n" .
-			"🗓 Start Date: %s\n" .
-			"📍 Course Link: %s\n\n" .
-			"We're excited to have you on board. Make sure to log in on time and make the most of your learning journey.\n\n" .
-			"See you in class!\n\n" .
-			'— %s Team',
-			$user->display_name,
-			$course_title,
-			$start_date,
-			$course_link,
+			/* translators: %s: recipient's display name. */
+			__( 'Hi %s,', 'ohmylms' ),
+			$user->display_name
+		) . "\n\n" . sprintf(
+			/* translators: %s: course title. */
+			__( 'Just a quick reminder that your course "%s" starts in 24 hours!', 'ohmylms' ),
+			$course_title
+		) . "\n\n🗓 " . sprintf(
+			/* translators: %s: date and time the cohort starts. */
+			__( 'Start Date: %s', 'ohmylms' ),
+			$start_date
+		) . "\n📍 " . sprintf(
+			/* translators: %s: course URL. */
+			__( 'Course Link: %s', 'ohmylms' ),
+			$course_link
+		) . "\n\n" . __( 'We\'re excited to have you on board. Make sure to log in on time and make the most of your learning journey.', 'ohmylms' ) . "\n\n" . __( 'See you in class!', 'ohmylms' ) . "\n\n" . sprintf(
+			/* translators: %s: site name. */
+			__( '— %s Team', 'ohmylms' ),
 			get_bloginfo( 'name' )
 		);
 

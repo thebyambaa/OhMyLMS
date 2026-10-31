@@ -30,7 +30,9 @@ function ExamField( { children } ) {
 		<label htmlFor={ id }>
 			{ Children.map( children, ( child ) =>
 				isValidElement( child ) &&
-				[ 'input', 'textarea', 'select' ].includes( child.type )
+				[ 'input', 'textarea', 'select' ].includes(
+					/** @type {string} */ ( child.type )
+				)
 					? cloneElement( child, { id } )
 					: child
 			) }
@@ -129,11 +131,11 @@ function SkillSearch( { onPick } ) {
 
 /**
  * PDF papers become reviewed bank questions and an exam on the shared quiz engine.
- * @param root0
- * @param root0.reviewOnly  Show only the review window of one import.
- * @param root0.jobId       Import to open for review.
- * @param root0.onQuestions Imported question IDs.
- * @param root0.onClosed    Called when that review window is closed.
+ * @param {Object} root0
+ * @param          [root0.reviewOnly]  Show only the review window of one import.
+ * @param          [root0.jobId]       Import to open for review.
+ * @param          [root0.onQuestions] Imported question IDs.
+ * @param          [root0.onClosed]    Called when that review window is closed.
  */
 export function ExamsPage( {
 	reviewOnly = false,

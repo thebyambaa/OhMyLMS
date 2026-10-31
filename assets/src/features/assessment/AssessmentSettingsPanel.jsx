@@ -675,7 +675,11 @@ export function AssessmentSettingsPanel( props ) {
 													'ohmylms'
 												),
 												revision.revision_no,
-												Number( revision.total_marks ),
+												String(
+													Number(
+														revision.total_marks
+													)
+												),
 												revision.attempts,
 												revision.created_at
 											) }

@@ -7,7 +7,6 @@ import {
 	toleranceOrFormula,
 } from './formulaInput.mjs';
 import { QUESTION_BLOCK_TYPES, questionTypePatch } from './questionBlocks.mjs';
-/** @jsx createElement */
 import { createElement, useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { RichContentControl } from '../math/RichContentControl';
@@ -28,10 +27,10 @@ import {
 /**
  * Other accepted answers: numbers and {{formulas}}, comma separated. The typed text is kept as
  * typed; only complete numbers and formulas are stored.
- * @param root0
- * @param root0.value
- * @param root0.onChange
- * @param root0.names
+ * @param {Object} root0
+ * @param          [root0.value]
+ * @param          [root0.onChange]
+ * @param          [root0.names]
  */
 function AcceptedAnswers( { value, onChange, names } ) {
 	const stored = numbersToList( value.answers );
@@ -75,10 +74,10 @@ function AcceptedAnswers( { value, onChange, names } ) {
 
 /**
  * Numerical question settings: expected value(s), tolerance and unit.
- * @param root0
- * @param root0.value
- * @param root0.onChange
- * @param root0.onGenerate
+ * @param {Object} root0
+ * @param          [root0.value]
+ * @param          [root0.onChange]
+ * @param          [root0.onGenerate]
  */
 export function NumericalEditor( { value, onChange, onGenerate } ) {
 	const names = variableNames( value );
@@ -197,10 +196,10 @@ export function NumericalEditor( { value, onChange, onGenerate } ) {
 
 /**
  * Structured question parts: shared stem (question text) plus separately scored parts.
- * @param root0
- * @param root0.value
- * @param root0.onChange
- * @param root0.renderQuestion
+ * @param {Object} root0
+ * @param          [root0.value]
+ * @param          [root0.onChange]
+ * @param          [root0.renderQuestion]
  */
 export function StructuredEditor( {
 	value,
@@ -456,9 +455,9 @@ export function StructuredEditor( {
 
 /**
  * Practice feedback fields shared by all question types.
- * @param root0
- * @param root0.question
- * @param root0.onChange
+ * @param {Object} root0
+ * @param          [root0.question]
+ * @param          [root0.onChange]
  */
 export function PracticeFeedbackFields( { question, onChange } ) {
 	if ( ! question || ! question.settings?.type ) {

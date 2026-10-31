@@ -108,6 +108,18 @@ final class GradeEvents {
 	}
 
 	/**
+	 * Number of events written for a source (every item, superseded ones included).
+	 *
+	 * @param string $source_type Source type.
+	 * @param int    $source_id   Source identifier.
+	 * @return int
+	 */
+	public static function count_for( $source_type, $source_id ) {
+		global $wpdb;
+		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE source_type = %s AND source_id = %d', Schema::table( 'grade_events' ), $source_type, $source_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh count around a grading write.
+	}
+
+	/**
 	 * Get for Grade events.
 	 *
 	 * @param mixed $id Id.

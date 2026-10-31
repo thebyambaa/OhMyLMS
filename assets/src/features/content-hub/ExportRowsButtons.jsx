@@ -8,11 +8,11 @@ import { downloadText } from './quizExchange.mjs';
  * Download questions as import rows, CSV or JSON, for every question type. The file imports back through
  * the Question Bank Import button.
  *
- * @param {Object}              root0              Component properties.
- * @param {number}              root0.quizId       Export this quiz's questions in order, with sections.
- * @param {number[]}            root0.ids          Or export these questions.
- * @param {string}              root0.label        Exam name written into every row.
- * @param {() => Promise<void>} root0.beforeExport Called first, for example to save unsaved edits.
+ * @param {Object}              root0                Component properties.
+ * @param {number}              [root0.quizId]       Export this quiz's questions in order, with sections.
+ * @param {number[]}            [root0.ids]          Or export these questions.
+ * @param {string}              [root0.label]        Exam name written into every row.
+ * @param {() => Promise<void>} [root0.beforeExport] Called first, for example to save unsaved edits.
  */
 export function ExportRowsButtons( {
 	quizId = 0,

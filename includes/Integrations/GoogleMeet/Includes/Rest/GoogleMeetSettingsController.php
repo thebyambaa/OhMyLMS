@@ -8,6 +8,7 @@
 
 namespace OhMyLMS\Integrations\GoogleMeet\Includes\Rest;
 
+use WP_REST_Controller;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -15,7 +16,7 @@ use WP_REST_Server;
 /**
  * Plugin google meet settings controller implementation.
  */
-class GoogleMeetSettingsController {
+class GoogleMeetSettingsController extends WP_REST_Controller {
 	/**
 	 * Instance.
 	 *

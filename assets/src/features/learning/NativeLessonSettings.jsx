@@ -1,4 +1,3 @@
-/** @jsx createElement */
 import './nativeAuthoringBootstrap';
 // Before the question blocks register, so they also receive the paper span attribute.
 import '../paper/paperBlocks';
@@ -41,7 +40,7 @@ const INLINE_BLOCK = 'ohmylms/shared-multiple-choice';
  * @param {number}                      props.count  Number of placed checks.
  * @param {(direction: number) => void} props.onMove Moves the block up (-1) or down (1).
  * @param {() => void}                  props.onPick Selects the block in the canvas.
- * @return {Element} List item.
+ * @return {React.ReactElement} List item.
  */
 function PlacedCheck( { check, index, count, onMove, onPick } ) {
 	const question = useSelect(
@@ -101,7 +100,7 @@ function PlacedCheck( { check, index, count, onMove, onPick } ) {
  * Insert approved practice questions using the native block insertion action, and list, select and
  * reorder the inline checks already in the lesson.
  *
- * @return {Element} Inline-check settings panel.
+ * @return {React.ReactElement} Inline-check settings panel.
  */
 function InlineChecks() {
 	const [ search, setSearch ] = useState( '' );
@@ -251,7 +250,7 @@ function InlineChecks() {
  * @param {number}               props.value     Attachment ID.
  * @param {string}               props.mediaType Media type.
  * @param {(id: number) => void} props.onChange  Selection callback.
- * @return {Element} Media selector.
+ * @return {React.ReactElement} Media selector.
  */
 function LessonMedia( { label, value, mediaType, onChange } ) {
 	const media = useSelect(
@@ -296,7 +295,7 @@ function LessonMedia( { label, value, mediaType, onChange } ) {
 /**
  * LMS settings saved together with the native post's title and block content.
  *
- * @return {Element|null} Lesson panels.
+ * @return {React.ReactElement|null} Lesson panels.
  */
 function LessonSettings() {
 	useBlankPlaceholderTitle();

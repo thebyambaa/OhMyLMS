@@ -24,12 +24,12 @@ import { NativeSaveGuard, markNativeQuizDirty } from './NativeSaveGuard';
 
 /**
  * Bank metadata, skills, immutable history and placement pins in the native sidebar.
- * @param root0
- * @param root0.id
- * @param root0.quizId
- * @param root0.busy
- * @param root0.onRefresh
- * @param root0.revision
+ * @param {Object} root0
+ * @param          [root0.id]
+ * @param          [root0.quizId]
+ * @param          [root0.busy]
+ * @param          [root0.onRefresh]
+ * @param          [root0.revision]
  */
 export function NativeQuestionDetails( {
 	id,
@@ -42,7 +42,7 @@ export function NativeQuestionDetails( {
 	const [ versions, setVersions ] = useState( [] );
 	const [ banks, setBanks ] = useState( [] );
 	const [ skills, setSkills ] = useState( [] );
-	const [ bank, setBank ] = useState( {} );
+	const [ bank, setBank ] = useState( /** @type {Object} */ ( {} ) );
 	const [ map, setMap ] = useState( {} );
 	const [ dirty, setDirty ] = useState( false );
 	const [ saving, setSaving ] = useState( false );

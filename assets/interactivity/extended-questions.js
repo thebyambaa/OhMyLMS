@@ -6,11 +6,11 @@
 		return;
 	}
 	const { el, setAnswer } = api.util;
-	const diagramModule = new URL(
-		'./diagram-labels.mjs',
-		document.currentScript.src
+	const moduleScript = /** @type {HTMLScriptElement} */ (
+		document.currentScript
 	);
-	diagramModule.search = new URL( document.currentScript.src ).search;
+	const diagramModule = new URL( './diagram-labels.mjs', moduleScript.src );
+	diagramModule.search = new URL( moduleScript.src ).search;
 	const { __, sprintf } = window.wp.i18n;
 	let instanceId = 0;
 	const types = [
@@ -1765,7 +1765,9 @@
 			const source = videoSource( config.video_url );
 			const frame = el( 'div', { class: 'ohmylms-video-frame' } );
 			let player = null;
+			/** @type {(seconds: number) => void} */
 			let seekTo = () => {};
+			/** @type {(seconds: number, pause: () => void) => void} */
 			let onTime = () => {};
 			if ( source.provider === 'file' ) {
 				player = el( 'video', { controls: '', src: source.embed } );

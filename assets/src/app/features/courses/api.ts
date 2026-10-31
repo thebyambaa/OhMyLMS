@@ -5,7 +5,6 @@ import {
 	parseCertificateAssignment,
 	parseCourse,
 	parseCourseDetail,
-	parseMedia,
 	parseOptions,
 	positiveId,
 	record,
@@ -17,9 +16,6 @@ const itemPath = ( id: number ) => `${ BASE }/${ positiveId( id ) }`;
 
 /** Rows per page in the course list. */
 export const PER_PAGE = 20;
-
-/** Images per page in the media picker. */
-export const MEDIA_PER_PAGE = 12;
 
 /**
  * List courses, newest first. Empty filters are not sent.
@@ -225,32 +221,4 @@ export async function saveCourseCertificate(
 		throw invalidResponse();
 	}
 	return result;
-}
-
-/**
- * List images for the thumbnail picker through the core media route.
- *
- * @param search Title search.
- * @param page   Page number, from 1.
- * @param signal Cancels the request.
- * @return Validated images and totals.
- */
-export function listMedia(
-	search: string,
-	page: number,
-	signal?: AbortSignal
-) {
-	return getCollection( '/wp/v2/media', parseMedia, {
-		signal,
-		query: {
-			search,
-			page,
-			per_page: MEDIA_PER_PAGE,
-			media_type: 'image',
-			mime_type: 'image/jpeg,image/png,image/gif,image/webp',
-			orderby: 'date',
-			order: 'desc',
-			_fields: 'id,source_url,mime_type,title,media_details',
-		},
-	} );
 }

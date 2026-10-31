@@ -15,7 +15,7 @@ import { listSkills } from '../question-bank/api.mjs';
  *
  * @param {Object}  props      Component properties.
  * @param {boolean} props.exam Whether the exam profile controls the player design.
- * @return {Element} Timing, grading and player settings.
+ * @return {React.ReactElement} Timing, grading and player settings.
  */
 export function NativeQuizConfiguration( { exam = false } ) {
 	const value = useSelect(

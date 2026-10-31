@@ -1,4 +1,3 @@
-/** @jsx createElement */
 import { createElement } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { useSelect } from '@wordpress/data';

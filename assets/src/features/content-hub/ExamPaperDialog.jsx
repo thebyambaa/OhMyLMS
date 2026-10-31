@@ -23,9 +23,9 @@ import { loadMath } from '../math/loader.mjs';
 
 /**
  * Render sanitized question HTML in an isolated region owned by the math runtime.
- * @param {Object}  props       Properties.
- * @param {string}  props.html  Sanitized stored question HTML.
- * @param {boolean} props.plain Whether the field is plain text.
+ * @param {Object}  props         Properties.
+ * @param {string}  [props.html]  Sanitized stored question HTML.
+ * @param {boolean} [props.plain] Whether the field is plain text.
  */
 function PaperContent( { html = '', plain = false } ) {
 	const host = useRef( null );

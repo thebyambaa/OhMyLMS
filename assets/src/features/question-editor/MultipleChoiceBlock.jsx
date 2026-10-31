@@ -1,4 +1,3 @@
-/** @jsx createElement */
 import { createElement, useEffect, useRef, useState } from '@wordpress/element';
 import {
 	createBlock,
@@ -62,14 +61,14 @@ function blockQuestionIds() {
 
 /**
  * Shared authoring controls. Assessment data stays in the versioned question writer.
- * @param root0
- * @param root0.question
- * @param root0.onChange
- * @param root0.onApprove
- * @param root0.onDuplicate
- * @param root0.onRemove
- * @param root0.allowWritten
- * @param root0.readOnly
+ * @param {Object} root0
+ * @param          [root0.question]
+ * @param          [root0.onChange]
+ * @param          [root0.onApprove]
+ * @param          [root0.onDuplicate]
+ * @param          [root0.onRemove]
+ * @param          [root0.allowWritten]
+ * @param          [root0.readOnly]
  */
 export function MultipleChoiceFields( {
 	question,

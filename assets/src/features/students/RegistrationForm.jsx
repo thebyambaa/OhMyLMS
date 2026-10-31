@@ -15,13 +15,13 @@ import {
 
 /**
  * React fields inside the original PHP form retain third-party hook markup.
- * @param root0
- * @param root0.form
- * @param root0.countries
- * @param root0.submitHost
- * @param root0.noticeHost
- * @param root0.icons
- * @param root0.initialValues
+ * @param {Object} root0
+ * @param          [root0.form]
+ * @param          [root0.countries]
+ * @param          [root0.submitHost]
+ * @param          [root0.noticeHost]
+ * @param          [root0.icons]
+ * @param          [root0.initialValues]
  */
 export function RegistrationForm( {
 	form,

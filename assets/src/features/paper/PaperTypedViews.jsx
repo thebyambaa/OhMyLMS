@@ -1,4 +1,3 @@
-/** @jsx createElement */
 import { createElement, RawHTML } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { VisualFigure } from './PaperVisualViews';
@@ -13,7 +12,7 @@ import { VisualFigure } from './PaperVisualViews';
  *
  * @param {Object}   props       Properties.
  * @param {string[]} props.lines Key lines.
- * @return {Element|null} Key.
+ * @return {React.ReactElement|null} Key.
  */
 function KeyLines( { lines } ) {
 	if ( ! lines?.length ) {
@@ -33,7 +32,7 @@ function KeyLines( { lines } ) {
  *
  * @param {Object} props      Properties.
  * @param {Object} props.item Item with text and image.
- * @return {Element} Option content.
+ * @return {React.ReactElement} Option content.
  */
 function ItemContent( { item } ) {
 	return (
@@ -50,7 +49,7 @@ function ItemContent( { item } ) {
  * @param {Object} props       Properties.
  * @param {string} props.label Blank label.
  * @param {string} props.unit  Unit after the blank.
- * @return {Element} Blank.
+ * @return {React.ReactElement} Blank.
  */
 function Blank( { label, unit } ) {
 	return (
@@ -66,7 +65,7 @@ function Blank( { label, unit } ) {
  *
  * @param {Object} props       Properties.
  * @param {Object} props.paper Paper model.
- * @return {Element|null} Body.
+ * @return {React.ReactElement|null} Body.
  */
 export function TypedBody( { paper } ) {
 	switch ( paper.layout ) {

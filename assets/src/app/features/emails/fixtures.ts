@@ -37,6 +37,24 @@ export const quizGraded: EmailTemplate = {
 			description: 'Name of this website.',
 		},
 	],
+	defaults: {
+		subject: 'Your quiz {quiz_name} has been graded',
+		heading: 'Your quiz was graded',
+		additional_content: '<p>Dear {student_name},</p>',
+		button_text: 'View result',
+		button_link: '',
+		footer_text: '<p>Thanks, {site_name}</p>',
+		course_suggestion_text: null,
+	},
+	customized: {
+		subject: true,
+		heading: false,
+		additional_content: false,
+		button_text: false,
+		button_link: false,
+		footer_text: false,
+		course_suggestion_text: false,
+	},
 };
 
 export const newOrder: EmailTemplate = {
@@ -48,6 +66,10 @@ export const newOrder: EmailTemplate = {
 	enabled: false,
 	subject: '{student_name} placed an order',
 	recipient_email: [ 'owner@example.com' ],
+	defaults: {
+		...quizGraded.defaults,
+		subject: 'New order from {student_name}',
+	},
 };
 
 export const settings: EmailSettings = {

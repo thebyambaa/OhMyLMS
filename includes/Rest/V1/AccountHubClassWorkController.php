@@ -7,7 +7,8 @@
 
 namespace OhMyLMS\Rest\V1;
 
-use OhMyLMS\Schools\Schema;
+use OhMyLMS\Learning\CourseStructure;
+use OhMyLMS\Schools\Directory;
 use OhMyLMS\Schools\Service;
 use WP_Error;
 use WP_REST_Request;
@@ -200,22 +201,19 @@ class AccountHubClassWorkController extends AccountHubController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_assignments( $request ) {
-		global $wpdb;
 		$class = $this->class_or_error( $request['id'] );
 		if ( is_wp_error( $class ) ) {
 			return $class;
 		}
-		$a = Schema::table( 'learning_assignments' );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- One count.
-		$total  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE class_id=%d AND status='active' AND title LIKE %s", $a, $class['id'], $this->like( $request ) ) );
+		$like   = $this->like( $request );
+		$total  = Directory::count_class_work( (int) $class['id'], $like );
 		$paging = $this->paging( $request, $total );
 		if ( is_wp_error( $paging ) ) {
 			return $paging;
 		}
 		list( $page, $per_page, $pages ) = $paging;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- One page with grouped recipient counts.
-		$rows = (array) $wpdb->get_results( $wpdb->prepare( "SELECT a.id,a.title,a.course_id,a.content_id,a.due_at,a.created_at,COUNT(r.id) AS recipients,SUM(CASE WHEN r.completed_at IS NOT NULL THEN 1 ELSE 0 END) AS completed FROM %i a LEFT JOIN %i r ON r.assignment_id=a.id WHERE a.class_id=%d AND a.status='active' AND a.title LIKE %s GROUP BY a.id ORDER BY a.id DESC LIMIT %d OFFSET %d", $a, Schema::table( 'assignment_recipients' ), $class['id'], $this->like( $request ), $per_page, ( $page - 1 ) * $per_page ), ARRAY_A );
-		$data = array();
+		$rows                            = Directory::class_work( (int) $class['id'], $like, $per_page, ( $page - 1 ) * $per_page );
+		$data                            = array();
 		foreach ( $rows as $row ) {
 			$data[] = array(
 				'id'            => (int) $row['id'],
@@ -319,7 +317,6 @@ class AccountHubClassWorkController extends AccountHubController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_activities( $request ) {
-		global $wpdb;
 		$class = $this->class_or_error( $request['id'] );
 		if ( is_wp_error( $class ) ) {
 			return $class;
@@ -328,8 +325,7 @@ class AccountHubClassWorkController extends AccountHubController {
 		if ( ! $course || OHMYLMS_COURSE_CPT !== $course->post_type || 'publish' !== $course->post_status ) {
 			return $this->error( 'course_not_found', __( 'Course not available.', 'ohmylms' ), 404 );
 		}
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Bounded outline of one course.
-		$rows = (array) $wpdb->get_results( $wpdb->prepare( "SELECT DISTINCT p.ID AS id,p.post_title AS title FROM %i r JOIN %i c ON c.chapter_id=r.chapter_id JOIN %i p ON p.ID=r.content_id WHERE c.course_id=%d AND p.post_status='publish' ORDER BY p.post_title LIMIT 200", Schema::table( 'content_relationship' ), Schema::table( 'chapter_relationship' ), $wpdb->posts, $course->ID ), ARRAY_A );
+		$rows = CourseStructure::published_items( (int) $course->ID );
 
 		return rest_ensure_response(
 			array_map(

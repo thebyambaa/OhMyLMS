@@ -18,7 +18,6 @@ final class Bootstrap {
 	 */
 	public static function init() {
 		PreviewPlayer::init();
-		ResponseMedia::init();
 		add_action( 'init', array( Taxonomy::class, 'register' ), 4 );
 		\OhMyLMS\Skills\Provenance::init();
 		add_action( 'init', array( Usage::class, 'register_status' ), 4 );

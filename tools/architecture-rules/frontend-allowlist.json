@@ -1,0 +1,181 @@
+{
+	"description": "Existing exceptions to the front-end rules of tools/architecture-rules/frontend.mjs (docs/ENFORCEMENT.md, sections l to o). Measured on 31 October 2026; remove entries as they are fixed. Do not add entries without a reason.",
+	"cycles": [],
+	"jquery": [
+		{
+			"file": "assets/interactivity/sdk.js",
+			"reason": "jqueryTrigger() is the one bridge that re-fires learner events as jQuery events for add-ons that still listen with .on(); it only runs when a theme or add-on loaded jQuery."
+		},
+		{
+			"file": "assets/interactivity/commerce-logic.mjs",
+			"reason": "triggerLegacy() fires the legacy body events (added_to_cart, payment_method_selected, …) that gateway add-ons listen for; no-op without jQuery."
+		},
+		{
+			"file": "assets/interactivity/cart.js",
+			"reason": "Gateway and cart add-ons receive the clicked button as a jQuery object in the legacy cart events; plain element without jQuery."
+		},
+		{
+			"file": "assets/interactivity/checkout.js",
+			"reason": "Classic payment gateway handlers' open( response, $form ) and resume( $form ) hooks receive a jQuery-wrapped form."
+		},
+		{
+			"file": "assets/interactivity/lesson/store.js",
+			"reason": "Listens for the legacy video tracker's jQuery event (ohmylms:video:completed) that add-on players still trigger."
+		}
+	],
+	"featureImports": [
+		{
+			"from": "assessment",
+			"to": "learning",
+			"files": [ "NativeAssessmentSettings.jsx", "NativeSaveGuard.jsx" ],
+			"reason": "The quiz settings and pools panels run in the native quiz editor: they use its assessment type control and lock post saving while pools are edited."
+		},
+		{
+			"from": "assessment",
+			"to": "question-bank",
+			"files": [ "api.mjs", "model.mjs" ],
+			"reason": "The pools editor lists and normalizes bank questions through the question bank's REST client and model."
+		},
+		{
+			"from": "content-hub",
+			"to": "curriculum",
+			"files": [ "api.mjs", "model.mjs" ],
+			"reason": "The skill picker searches and creates curriculum skills; skillCurriculum.mjs reads the curriculum tree model."
+		},
+		{
+			"from": "content-hub",
+			"to": "math",
+			"files": [ "loader.mjs" ],
+			"reason": "The exam paper dialog typesets imported questions with the shared math loader."
+		},
+		{
+			"from": "content-hub",
+			"to": "question-bank",
+			"files": [ "api.mjs" ],
+			"reason": "Exam import, the paper dialog and the skill picker read and write bank questions through the question bank's REST client."
+		},
+		{
+			"from": "learning",
+			"to": "assessment",
+			"files": [ "AssessmentSettingsPanel.jsx" ],
+			"reason": "The native quiz sidebar renders the assessment settings panel."
+		},
+		{
+			"from": "learning",
+			"to": "content-hub",
+			"files": [ "ExportRowsButtons.jsx", "api.mjs", "quizExchange.mjs" ],
+			"reason": "The native quiz sidebar offers the Content Hub quiz export and import actions."
+		},
+		{
+			"from": "learning",
+			"to": "paper",
+			"files": [
+				"PaperCanvas.jsx",
+				"PaperInserter.jsx",
+				"PaperQuestion.jsx",
+				"paperBlocks.jsx"
+			],
+			"reason": "The native lesson and quiz editors mount the printable paper canvas, its blocks and inserter, and show placed questions in paper view."
+		},
+		{
+			"from": "learning",
+			"to": "question-bank",
+			"files": [ "BankPicker.jsx", "SkillMapEditor.jsx", "api.mjs" ],
+			"reason": "Native question blocks and sidebars load, save and pick bank questions and edit their skill map."
+		},
+		{
+			"from": "learning",
+			"to": "question-editor",
+			"files": [
+				"MultipleChoiceBlock.jsx",
+				"QuestionLivePreview.jsx",
+				"extendedModel.mjs",
+				"inlineBlanks.mjs",
+				"interactiveModel.mjs",
+				"questionBlocks.mjs",
+				"questionPrompt.mjs"
+			],
+			"reason": "The native editors host the shared question editor: its block, preview and the type models choiceAutosave validates before saving."
+		},
+		{
+			"from": "math",
+			"to": "question-editor",
+			"files": [ "QuestionMediaUpload.jsx" ],
+			"reason": "The rich content control inserts images with the question editor's media library opener."
+		},
+		{
+			"from": "paper",
+			"to": "content-hub",
+			"files": [ "ExamsPage.jsx", "ImportDialog.jsx" ],
+			"reason": "The paper inserter offers the exam import and question import dialogs."
+		},
+		{
+			"from": "paper",
+			"to": "learning",
+			"files": [ "quizPreview.mjs" ],
+			"reason": "The paper canvas opens the learner preview of the quiz being edited."
+		},
+		{
+			"from": "paper",
+			"to": "math",
+			"files": [ "loader.mjs" ],
+			"reason": "Printed questions are typeset with the shared math loader."
+		},
+		{
+			"from": "paper",
+			"to": "question-bank",
+			"files": [ "BankPicker.jsx" ],
+			"reason": "The paper inserter adds bank questions with the bank picker."
+		},
+		{
+			"from": "paper",
+			"to": "question-editor",
+			"files": [
+				"dropdownModel.mjs",
+				"interactiveModel.mjs",
+				"puzzleModel.mjs"
+			],
+			"reason": "Printed question types read the question models' public views (dropdown, interactive and puzzle layouts)."
+		},
+		{
+			"from": "question-bank",
+			"to": "question-editor",
+			"files": [
+				"extendedModel.mjs",
+				"interactiveModel.mjs",
+				"questionPrompt.mjs",
+				"templateModel.mjs"
+			],
+			"reason": "The bank model normalizes and validates questions with the question type models."
+		},
+		{
+			"from": "question-editor",
+			"to": "learning",
+			"files": [ "nativeAuthoring.mjs" ],
+			"reason": "The multiple-choice block lists add-on question types from the native authoring manifest."
+		},
+		{
+			"from": "question-editor",
+			"to": "math",
+			"files": [
+				"FormulaControl.jsx",
+				"MathInput.jsx",
+				"RichContentControl.jsx",
+				"loader.mjs"
+			],
+			"reason": "Question editors write statements, options and answers with the shared math and rich content controls."
+		},
+		{
+			"from": "question-editor",
+			"to": "paper",
+			"files": [ "PaperCanvas.jsx", "PaperInserter.jsx" ],
+			"reason": "The multiple-choice block follows paper view and offers the paper inserter on the printable exam."
+		},
+		{
+			"from": "question-editor",
+			"to": "question-bank",
+			"files": [ "BankPicker.jsx", "model.mjs" ],
+			"reason": "Question editors use the bank model's type rules and the bank picker for the bank source."
+		}
+	]
+}

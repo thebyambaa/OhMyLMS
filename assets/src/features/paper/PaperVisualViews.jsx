@@ -1,4 +1,3 @@
-/** @jsx createElement */
 import { createElement } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
@@ -15,7 +14,7 @@ const label = ( value ) => String( Number( Number( value ).toFixed( 4 ) ) );
  *
  * @param {Object} props        Properties.
  * @param {Object} props.figure Figure model.
- * @return {Element} Number line.
+ * @return {React.ReactElement} Number line.
  */
 function NumberLine( { figure } ) {
 	const { min, max, ticks } = figure;
@@ -79,7 +78,7 @@ function NumberLine( { figure } ) {
  *
  * @param {Object} props        Properties.
  * @param {Object} props.figure Figure model.
- * @return {Element} Jug.
+ * @return {React.ReactElement} Jug.
  */
 function Jug( { figure } ) {
 	const { min, max, ticks, unit } = figure;
@@ -155,7 +154,7 @@ function Jug( { figure } ) {
  *
  * @param {Object} props        Properties.
  * @param {Object} props.figure Figure model.
- * @return {Element} Model.
+ * @return {React.ReactElement} Model.
  */
 function ShadeModel( { figure } ) {
 	const { parts, shape } = figure;
@@ -230,7 +229,7 @@ function ShadeModel( { figure } ) {
  *
  * @param {Object} props        Properties.
  * @param {Object} props.figure Figure model.
- * @return {Element} Clock.
+ * @return {React.ReactElement} Clock.
  */
 function Clock( { figure } ) {
 	const hasTime = Number.isFinite( figure.hour );
@@ -330,7 +329,7 @@ function Clock( { figure } ) {
  *
  * @param {Object} props        Properties.
  * @param {Object} props.figure Figure model.
- * @return {Element} Table.
+ * @return {React.ReactElement} Table.
  */
 function PlaceValue( { figure } ) {
 	const names = {
@@ -364,7 +363,7 @@ function PlaceValue( { figure } ) {
  *
  * @param {Object} props        Properties.
  * @param {Object} props.figure Figure model.
- * @return {Element} Money.
+ * @return {React.ReactElement} Money.
  */
 function Money( { figure } ) {
 	return (
@@ -389,7 +388,7 @@ function Money( { figure } ) {
  *
  * @param {Object} props        Properties.
  * @param {Object} props.figure Figure model.
- * @return {Element} Chart.
+ * @return {React.ReactElement} Chart.
  */
 function Chart( { figure } ) {
 	const { categories, max, ticks } = figure;
@@ -504,7 +503,7 @@ function Chart( { figure } ) {
  *
  * @param {Object} props        Properties.
  * @param {Object} props.figure Figure model.
- * @return {Element} Grid.
+ * @return {React.ReactElement} Grid.
  */
 function Grid( { figure } ) {
 	const { rows, cols } = figure;
@@ -546,7 +545,7 @@ function Grid( { figure } ) {
  *
  * @param {Object} props        Properties.
  * @param {Object} props.figure Figure model.
- * @return {Element|null} Key.
+ * @return {React.ReactElement|null} Key.
  */
 function FigureKey( { figure } ) {
 	let lines = figure.key || [];
@@ -610,7 +609,7 @@ function FigureKey( { figure } ) {
  *
  * @param {Object} props        Properties.
  * @param {Object} props.figure Figure model from paperVisual.mjs.
- * @return {Element|null} Figure.
+ * @return {React.ReactElement|null} Figure.
  */
 export function VisualFigure( { figure } ) {
 	if ( ! figure ) {

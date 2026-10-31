@@ -5,8 +5,7 @@
 	margin: 24px 0;
 }
 
-.oml-journey-progress > div,
-.oml-lesson-page {
+.oml-journey-progress > div {
 	border: 1px solid #dcdcde;
 	border-radius: 12px;
 	padding: 24px;
@@ -17,25 +16,12 @@
 	font-size: 18px;
 }
 
-.oml-journey-progress progress,
-.oml-lesson-page progress {
+.oml-journey-progress progress {
 	width: 100%;
 	height: 12px;
 	accent-color: #3b39c9;
 }
 
-.oml-lesson-activities {
-	margin: 16px 0;
-	padding-left: 24px;
-}
-
-.oml-lesson-activities li {
-	margin: 12px 0;
-	border-bottom: 1px solid #dcdcde;
-	padding: 12px;
-}
-
-.oml-lesson-activities span,
 .oml-lesson-skills strong {
 	display: block;
 	margin-top: 4px;
@@ -47,23 +33,6 @@
 	gap: 16px;
 	padding: 0;
 	list-style: none;
-}
-
-.oml-player-lesson {
-	margin: 16px 0;
-	border-left: 2px solid var(--player-border);
-	padding-left: 8px;
-}
-
-.oml-player-lesson h3 {
-	margin: 8px;
-	font-size: 14px;
-}
-
-.oml-player-lesson p {
-	margin: 8px;
-	color: var(--player-muted);
-	font-size: 12px;
 }
 
 .oml-player-journey {

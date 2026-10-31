@@ -366,12 +366,7 @@ class CertificateController extends RestController {
 	 * @return int[]
 	 */
 	private function certificate_ids_for_course( $course_id ) {
-		global $wpdb;
-
-		$ids = $wpdb->get_col(
-			$wpdb->prepare( 'SELECT certificate_id FROM %i WHERE course_id = %d', $wpdb->prefix . 'ohmylms_certificate_relationship', $course_id )
-		);
-		$ids = array_map( 'intval', (array) $ids );
+		$ids = \OhMyLMS\Learning\CourseCertificate::all( $course_id );
 
 		return $ids ? $ids : array( 0 );
 	}

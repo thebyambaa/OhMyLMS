@@ -594,6 +594,43 @@ final class Cohorts {
 	}
 
 	/**
+	 * Learners enrolled in the cohort's course or plan who are not members yet, by name (at most 20).
+	 *
+	 * @param array  $row    Cohort row.
+	 * @param string $search Text matched against name, login and email.
+	 * @return array[] Rows with ID, display_name, user_login.
+	 */
+	public static function candidates( array $row, $search ) {
+		global $wpdb;
+		$plan   = (int) $row['membership_id'] > 0;
+		$table  = $plan ? $wpdb->prefix . 'ohmylms_user_membership' : $wpdb->prefix . 'ohmylms_user_enrollment';
+		$column = $plan ? 'membership_id' : 'course_id';
+		$status = $plan ? "e.status IN ('enrolled','active','completed')" : "e.status = 'enrolled'";
+		$like   = '%' . $wpdb->esc_like( (string) $search ) . '%';
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $column and $status are fixed strings.
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT DISTINCT u.ID, u.display_name, u.user_login FROM %i e JOIN %i u ON u.ID = e.user_id
+				WHERE e.{$column} = %d AND {$status}
+				AND u.ID NOT IN ( SELECT user_id FROM %i WHERE cohort_id = %d )
+				AND ( u.display_name LIKE %s OR u.user_login LIKE %s OR u.user_email LIKE %s )
+				ORDER BY u.display_name ASC LIMIT 20",
+				$table,
+				$wpdb->users,
+				(int) $row[ $column ],
+				CohortSchema::members(),
+				(int) $row['id'],
+				$like,
+				$like,
+				$like
+			),
+			ARRAY_A
+		);
+		// phpcs:enable
+		return $rows ? $rows : array();
+	}
+
+	/**
 	 * Cohorts of a learner for a course or plan.
 	 *
 	 * @param int    $user_id Learner.

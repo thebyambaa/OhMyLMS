@@ -14,26 +14,11 @@ use OhMyLMS\Assessment\Schema;
 
 defined( 'ABSPATH' ) || exit;
 
-/** Organisation is many-to-many discovery, never a question copy or access grant. */
+/**
+ * Organisation is many-to-many discovery, never a question copy or access grant. The author-only route
+ * is {@see Rest\OrganisationController}.
+ */
 final class Organisation {
-	/** Register discoverable author-only organisation views. */
-	public static function init() {
-		add_action(
-			'rest_api_init',
-			static function () {
-				register_rest_route(
-					'ohmylms/v1',
-					'/question-bank-organisation',
-					array(
-						'methods'             => 'GET',
-						'permission_callback' => array( AccessPolicy::class, 'can_author' ),
-						'callback'            => array( __CLASS__, 'views' ),
-					)
-				);
-			}
-		);
-	}
-
 	/**
 	 * Hierarchical scopes. Extensions may add views with stable IDs and parent references.
 	 *

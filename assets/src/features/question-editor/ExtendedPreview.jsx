@@ -2,9 +2,9 @@ import { createElement, useEffect, useRef } from '@wordpress/element';
 import { extendedPublicView } from './extendedModel.mjs';
 /**
  * Render the same public widgets used by frozen learner deliveries.
- * @param root0
- * @param root0.type
- * @param root0.settings
+ * @param {Object} root0
+ * @param          [root0.type]
+ * @param          [root0.settings]
  */
 export function ExtendedPreview( { type, settings } ) {
 	const holder = useRef( null );

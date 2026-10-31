@@ -58,7 +58,7 @@ class Gateways extends SettingsPage {
 		$load_gateways = array(
 			'OhMyLMS_Gateway_Offline',
 			'OhMyLMS_Gateway_Stripe_Intents',
-			'GatewayPaypal',
+			\OhMyLMS\Gateways\Paypal\GatewayPaypal::class,
 			\OhMyLMS\Commerce\Gateways\QPay\GatewayQPay::class,
 		);
 

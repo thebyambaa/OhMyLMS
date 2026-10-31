@@ -3,6 +3,7 @@
 namespace OhMyLMS\Emails\StudentsEmail;
 
 use OhMyLMS\Emails\Emails;
+use OhMyLMS\I18n\RecipientLocale;
 
 /**
  * Plugin manual enrollment implementation.
@@ -78,6 +79,26 @@ class ManualEnrollment {
 		if ( ! Emails::is_enabled( $settings ) ) {
 			return;
 		}
+
+		RecipientLocale::run(
+			$user,
+			function () use ( $user, $course, $username, $plain_password, $is_new_user ) {
+				$this->send( $user, $course, $username, $plain_password, $is_new_user );
+			}
+		);
+	}
+
+	/**
+	 * Compose and send the email, in the learner's language.
+	 *
+	 * @param \WP_User $user           Learner.
+	 * @param object   $course         Course.
+	 * @param mixed    $username       Username.
+	 * @param mixed    $plain_password Plain password.
+	 * @param mixed    $is_new_user    Is new user.
+	 */
+	private function send( $user, $course, $username, $plain_password, $is_new_user ) {
+		$settings       = Emails::get_template_settings( 'student_manual_enrollment', $this->default_settings() );
 		$email_settings = Emails::get_email_settings();
 
 		$subject = isset( $settings['subject'] ) ? $settings['subject'] : $this->default_settings()['subject'];

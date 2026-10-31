@@ -9,6 +9,7 @@ namespace OhMyLMS\Emails\StudentsEmail;
 
 use OhMyLMS\Emails\EmailManager;
 use OhMyLMS\Emails\Emails;
+use OhMyLMS\I18n\RecipientLocale;
 use WP_User;
 
 defined( 'ABSPATH' ) || exit;
@@ -117,29 +118,49 @@ class AtRiskNudge {
 	/**
 	 * Send the nudge to the learner, and a separate copy to each extra address (guardians).
 	 *
-	 * @param WP_User  $learner     Learner.
-	 * @param string   $sender_name Display name of the sender.
-	 * @param string   $reasons     Reasons, such as "Inactive 9 days · 2 overdue items".
-	 * @param string[] $copies      Guardian addresses.
+	 * @param WP_User         $learner     Learner.
+	 * @param string          $sender_name Display name of the sender.
+	 * @param string|callable $reasons     Reasons, such as "Inactive 9 days · 2 overdue items", or a callable
+	 *                                     returning them, called in each recipient's language.
+	 * @param string[]        $copies      Guardian addresses.
 	 * @return array{sent:bool,guardians:int}
 	 */
 	public function send( WP_User $learner, $sender_name, $reasons, array $copies = array() ) {
-		$settings = $this->settings();
-		$values   = array(
-			'student_name' => $learner->display_name,
-			'sender_name'  => '' !== (string) $sender_name ? (string) $sender_name : wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
-			'reasons'      => (string) $reasons,
+		$compose = function () use ( $learner, $sender_name, $reasons ) {
+			$values = array(
+				'student_name' => $learner->display_name,
+				'sender_name'  => '' !== (string) $sender_name ? (string) $sender_name : wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
+				'reasons'      => is_callable( $reasons ) && ! is_string( $reasons ) ? (string) $reasons() : (string) $reasons,
+			);
+			return self::render( $this->settings(), $values );
+		};
+		$headers = EmailManager::mail_headers( Emails::get_email_settings() );
+		$sent    = RecipientLocale::run(
+			$learner,
+			static function () use ( $compose, $learner, $headers ) {
+				$mail = $compose();
+				return wp_mail( $learner->user_email, $mail['subject'], $mail['html'], $headers );
+			}
 		);
-		$mail     = self::render( $settings, $values );
-		$headers  = EmailManager::mail_headers( Emails::get_email_settings() );
-		$sent     = wp_mail( $learner->user_email, $mail['subject'], $mail['html'], $headers );
-		$copied   = 0;
+		$copied  = 0;
 		if ( $sent ) {
+			$addresses = array();
 			foreach ( array_unique( $copies ) as $address ) {
-				if ( is_email( $address ) && strtolower( $address ) !== strtolower( $learner->user_email ) && wp_mail( $address, $mail['subject'], $mail['html'], $headers ) ) {
-					++$copied;
+				if ( is_email( $address ) && strtolower( $address ) !== strtolower( $learner->user_email ) ) {
+					$addresses[] = $address;
 				}
 			}
+			RecipientLocale::each(
+				$addresses,
+				static function ( $recipients ) use ( $compose, $headers, &$copied ) {
+					$mail = $compose();
+					foreach ( $recipients as $address ) {
+						if ( wp_mail( $address, $mail['subject'], $mail['html'], $headers ) ) {
+							++$copied;
+						}
+					}
+				}
+			);
 		}
 		return array(
 			'sent'      => (bool) $sent,

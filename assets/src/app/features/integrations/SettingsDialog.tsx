@@ -7,8 +7,9 @@ import {
 } from '@wordpress/components';
 import { useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
+import { useOperation } from '../../hooks/useOperation';
 import { saveIntegrationSettings } from './api';
-import { useIntegrationSettings, useOperation } from './hooks';
+import { useIntegrationSettings } from './hooks';
 import {
 	buildChanges,
 	createDraft,
@@ -101,7 +102,7 @@ function SettingsForm( {
 	const [ draft, setDraft ] = useState( () => createDraft( settings ) );
 	const [ clientErrors, setClientErrors ] = useState< FieldErrors >( {} );
 	const form = useRef< HTMLFormElement >( null );
-	const operation = useOperation();
+	const operation = useOperation( { errorShape: 'object' } );
 	const serverErrors = operation.error
 		? fieldErrorsFrom( operation.error )
 		: {};

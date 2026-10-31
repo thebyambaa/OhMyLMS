@@ -4,6 +4,7 @@ namespace OhMyLMS\Emails\CreatorsEmail;
 
 use OhMyLMS\Admin\LegacyRoutes;
 use OhMyLMS\Emails\Emails;
+use OhMyLMS\I18n\RecipientLocale;
 
 /**
  * Plugin assignment submitted implementation.
@@ -129,6 +130,25 @@ class AssignmentSubmitted {
 			return;
 		}
 
+		RecipientLocale::each(
+			$to,
+			function ( $recipients ) use ( $assignment_id, $student_id, $student, $course ) {
+				$this->compose_single( $assignment_id, $student_id, $student, $course, $recipients );
+			}
+		);
+	}
+
+	/**
+	 * Compose and send one submission to recipients who share a language, in that language.
+	 *
+	 * @param mixed        $assignment_id Assignment identifier.
+	 * @param mixed        $student_id    Student identifier.
+	 * @param \WP_User     $student       Learner.
+	 * @param object       $course        Course.
+	 * @param string|array $to            Recipients.
+	 */
+	private function compose_single( $assignment_id, $student_id, $student, $course, $to ) {
+		$settings         = Emails::get_template_settings( 'instructor_assignment_submitted', $this->default_settings() );
 		$assignment       = get_post( $assignment_id );
 		$assignment_title = $assignment ? $assignment->post_title : '';
 		$email_settings   = Emails::get_email_settings();
@@ -175,6 +195,23 @@ class AssignmentSubmitted {
 			return;
 		}
 
+		RecipientLocale::each(
+			$to,
+			function ( $recipients ) use ( $course, $items ) {
+				$this->compose_digest( $course, $items, $recipients );
+			}
+		);
+	}
+
+	/**
+	 * Compose and send a course digest to recipients who share a language, in that language.
+	 *
+	 * @param object       $course Course.
+	 * @param array        $items  Queued submissions.
+	 * @param string|array $to     Recipients.
+	 */
+	private function compose_digest( $course, $items, $to ) {
+		$settings       = Emails::get_template_settings( 'instructor_assignment_submitted', $this->default_settings() );
 		$email_settings = Emails::get_email_settings();
 
 		/* translators: 1: submission count, 2: course name */

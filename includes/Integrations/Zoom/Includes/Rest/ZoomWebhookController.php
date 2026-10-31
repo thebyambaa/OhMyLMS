@@ -13,6 +13,7 @@
 namespace OhMyLMS\Integrations\Zoom\Includes\Rest;
 
 use OhMyLMS\Integrations\Zoom\Includes\Helpers\ZoomApiHelper;
+use WP_REST_Controller;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -23,7 +24,7 @@ use WP_REST_Server;
  * @package OhMyLMS\Integrations\Zoom\Includes\Rest
  * @since 1.0.0
  */
-class ZoomWebhookController {
+class ZoomWebhookController extends WP_REST_Controller {
 	/**
 	 * The single instance of the class.
 	 *

@@ -338,6 +338,34 @@ final class SamplePreview {
 	}
 
 	/**
+	 * Create (or complete) the sample school under a named lock, so two clicks cannot create two sets.
+	 * `$read` runs under the same lock after the create. Exceptions propagate after the lock is released.
+	 *
+	 * @param callable $read Builds the answer once the sample school exists.
+	 * @return array|false `complete_before` (whether it was already complete) and `state` (what `$read`
+	 *                     returned); false while another request holds the lock.
+	 */
+	public static function create_once( callable $read ) {
+		global $wpdb;
+		$lock = 'ohmylms_sample_school';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Two clicks must not create two sets.
+		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 10)', $lock ) ) ) {
+			return false;
+		}
+		try {
+			$before = self::status()['complete'];
+			self::create();
+			return array(
+				'complete_before' => $before,
+				'state'           => $read(),
+			);
+		} finally {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Release the lock.
+			$wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+		}
+	}
+
+	/**
 	 * Create (or complete) the sample school, classes and people.
 	 *
 	 * @return array Same shape as status().

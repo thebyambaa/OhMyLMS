@@ -20,7 +20,6 @@ import {
 	levelToDraft,
 	parseBadge,
 	parseLevel,
-	parseMedia,
 	parseOptions,
 	parseSection,
 	tabFromParam,
@@ -112,29 +111,6 @@ describe( 'parsing', () => {
 		expect( () => parseOptions( { ...options, limits: {} } ) ).toThrow(
 			ApiError
 		);
-	} );
-
-	it( 'keeps only allowed image types from the media route', () => {
-		const item = {
-			id: 5,
-			source_url: 'https://e.test/a.png',
-			mime_type: 'image/png',
-			title: { rendered: 'A' },
-			media_details: {
-				sizes: {
-					thumbnail: { source_url: 'https://e.test/a-150.png' },
-				},
-			},
-		};
-		expect( parseMedia( item ) ).toEqual( {
-			id: 5,
-			url: 'https://e.test/a.png',
-			thumbnail_url: 'https://e.test/a-150.png',
-			title: 'A',
-		} );
-		expect( () =>
-			parseMedia( { ...item, mime_type: 'image/svg+xml' } )
-		).toThrow( ApiError );
 	} );
 } );
 

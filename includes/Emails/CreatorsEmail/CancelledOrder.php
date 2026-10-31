@@ -3,6 +3,7 @@
 namespace OhMyLMS\Emails\CreatorsEmail;
 
 use OhMyLMS\Emails\Emails;
+use OhMyLMS\I18n\RecipientLocale;
 /**
  * Plugin cancelled order implementation.
  */
@@ -66,7 +67,24 @@ class CancelledOrder {
 		// The creator is notified, not the student: use the configured recipients or the site administrator.
 		$to = ! empty( $settings['recipient_email'] ) ? $settings['recipient_email'] : get_option( 'admin_email' );
 
-		$subject = isset( $settings['subject'] ) ? $settings['subject'] : '';
+		RecipientLocale::each(
+			$to,
+			function ( $recipients ) use ( $order, $student_id ) {
+				$this->send( $order, $student_id, $recipients );
+			}
+		);
+	}
+
+	/**
+	 * Compose and send the email to recipients who share a language, in that language.
+	 *
+	 * @param object       $order      Order.
+	 * @param int          $student_id Learner.
+	 * @param string|array $to         Recipients.
+	 */
+	private function send( $order, $student_id, $to ) {
+		$settings = Emails::get_template_settings( 'creator_cancelled_order', $this->default_settings() );
+		$subject  = isset( $settings['subject'] ) ? $settings['subject'] : '';
 
 		global $wpdb;
 		$table_name  = $wpdb->prefix . 'ohmylms_user_enrollment';

@@ -20,6 +20,12 @@ export function alertClass( { tone = 'info', className = '' } = {} ) {
 		.join( ' ' );
 }
 
+/**
+ * @param {Object} [options]
+ * @param {string} [options.tone] Info, success, warning or danger.
+ * @param {string} [options.role] Status, alert or none; otherwise from the tone.
+ * @return {string} ARIA role.
+ */
 export function alertRole( { tone, role } = {} ) {
 	if ( [ 'alert', 'status', 'none' ].includes( role ) ) {
 		return role;

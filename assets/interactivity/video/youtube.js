@@ -149,6 +149,7 @@ export async function createAdapter( {
 	const origin = win.location?.origin || '';
 	const custom = Boolean( config.custom ) && ! iframe;
 	const events = createEmitter();
+	/** @type {number} */
 	let state = STATE.UNSTARTED;
 	let time = 0;
 	let duration = 0;

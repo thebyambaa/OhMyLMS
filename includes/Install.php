@@ -51,6 +51,10 @@ class Install {
 			'ohmylms_update_1221_schedule_enrolment_migration',
 			'ohmylms_update_1221_db_version',
 		),
+		'1.2.22' => array(
+			'ohmylms_update_1222_forget_email_defaults',
+			'ohmylms_update_1222_db_version',
+		),
 	);
 
 

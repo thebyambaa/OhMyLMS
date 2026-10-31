@@ -19,6 +19,7 @@ export function parseFlags( raw ) {
 	if ( ! Array.isArray( list ) ) {
 		return {};
 	}
+	/** @type {Object<string, true>} */
 	const flags = {};
 	for ( const value of list ) {
 		const id = Number( value );
@@ -187,11 +188,11 @@ export const hasMath = ( text ) =>
 /**
  * Resolve once a check passes, or false after the timeout.
  *
- * @param {() => unknown} check             Condition.
- * @param {Object}        options           Options.
- * @param {number}        options.timeout   Longest wait in milliseconds.
- * @param {number}        options.interval  Polling interval in milliseconds.
- * @param {Function}      options.setTimer  Timer function, for tests.
+ * @param {() => unknown} check               Condition.
+ * @param {Object}        [options]           Options.
+ * @param {number}        [options.timeout]   Longest wait in milliseconds.
+ * @param {number}        [options.interval]  Polling interval in milliseconds.
+ * @param {Function}      [options.setTimer]  Timer function, for tests.
  * @return {Promise<boolean>} Whether the check passed.
  */
 export function waitFor(

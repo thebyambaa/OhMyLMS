@@ -30,21 +30,21 @@ export function attachMatchingLines( root ) {
 	const draw = () => {
 		frame = 0;
 		const base = root.getBoundingClientRect();
-		const terms = [
+		const terms = /** @type {HTMLElement[]} */ ( [
 			...root.querySelectorAll( '.quiz-match-items .matching-option' ),
-		];
+		] );
 		terms.forEach( ( term ) => {
 			term.classList.remove( 'is-linked' );
 			term.style.removeProperty( '--pair-color' );
 		} );
-		svg.setAttribute( 'width', base.width );
-		svg.setAttribute( 'height', base.height );
+		svg.setAttribute( 'width', String( base.width ) );
+		svg.setAttribute( 'height', String( base.height ) );
 		svg.textContent = '';
 		root.querySelectorAll( '.matching-definition' ).forEach(
-			( definition ) => {
+			( /** @type {HTMLElement} */ definition ) => {
 				const box = definition.querySelector( '.option-drop-box' );
-				const input = definition.querySelector(
-					'.matching-answer-input'
+				const input = /** @type {HTMLInputElement|null} */ (
+					definition.querySelector( '.matching-answer-input' )
 				);
 				const linked = box?.querySelector( '.dropped' ) && input?.value;
 				definition.classList.toggle( 'is-linked', Boolean( linked ) );

@@ -28,6 +28,10 @@ import type {
 	Transaction,
 	TransactionQuery,
 } from './types';
+import { createValidators } from '../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
+export const { record, positiveId } = createValidators( invalidResponse );
 
 export const PER_PAGE = 20;
 /** Longest custom range the server accepts, in days. */
@@ -103,18 +107,6 @@ export function invalidResponse(): ApiError {
 	} );
 }
 
-export function record( value: unknown ): Record< string, unknown > {
-	if ( ! value || 'object' !== typeof value || Array.isArray( value ) ) {
-		throw invalidResponse();
-	}
-	return value as Record< string, unknown >;
-}
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
-}
 function nullableText( value: unknown ): string | null {
 	return null === value ? null : text( value );
 }
@@ -127,13 +119,6 @@ function count( value: unknown ): number {
 		throw invalidResponse();
 	}
 	return value;
-}
-export function positiveId( value: unknown ): number {
-	const id = count( value );
-	if ( id < 1 ) {
-		throw invalidResponse();
-	}
-	return id;
 }
 function amount( value: unknown ): number {
 	if ( 'number' !== typeof value || ! Number.isFinite( value ) ) {

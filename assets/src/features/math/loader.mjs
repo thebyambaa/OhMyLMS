@@ -21,8 +21,10 @@ export function loadMath() {
 			document.head.append( style );
 		}
 		pending = new Promise( ( resolve, reject ) => {
-			const existing = document.querySelector(
-				'script[src="' + window.ohmylmsMath.runtime + '"]'
+			const existing = /** @type {HTMLScriptElement|null} */ (
+				document.querySelector(
+					'script[src="' + window.ohmylmsMath.runtime + '"]'
+				)
 			);
 			const script = existing || document.createElement( 'script' );
 			script.addEventListener(

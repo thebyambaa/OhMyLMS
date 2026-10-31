@@ -135,6 +135,7 @@ export function renderArcade( area, data, act ) {
 		const moveButtons = make( 'div' );
 		moveButtons.className = 'ohmylms-arcade-directions';
 		area.append( moveButtons );
+		/** @type {(dx: number, dy: number) => void} */
 		let move = () => {};
 		if ( mode === 'maze-chase' ) {
 			board.classList.add( 'ohmylms-maze' );
@@ -286,6 +287,7 @@ export function renderArcade( area, data, act ) {
 				'ohmylms'
 			);
 		}
+		/** @type {Array<[string, number, number]>} */
 		const directions = [
 			[ __( 'Left', 'ohmylms' ), -1, 0 ],
 			[ __( 'Up', 'ohmylms' ), 0, -1 ],
@@ -299,6 +301,7 @@ export function renderArcade( area, data, act ) {
 			moveButtons.append( node );
 		} );
 		board.addEventListener( 'keydown', ( event ) => {
+			/** @type {[number, number]|undefined} */
 			const delta = {
 				ArrowLeft: [ -1, 0 ],
 				ArrowRight: [ 1, 0 ],

@@ -304,17 +304,7 @@ class AIController extends RestController {
 	 */
 	public function delete_exiting_contents( $course_id ) {
 		$course = ohmylms_get_course( $course_id );
-		global $wpdb;
-		$table_name = $wpdb->prefix . OHMYLMS_CHAPTER_RELATIONSHIP;
-		$wpdb->delete(
-			$table_name,
-			array(
-				'course_id' => $course_id,
-			),
-			array(
-				'%d',
-			)
-		);
+		\OhMyLMS\Learning\CourseStructure::remove_course_chapters( $course_id );
 
 		if ( $course instanceof Course ) {
 			$chapters = $course->get_chapters();

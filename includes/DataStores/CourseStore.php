@@ -754,9 +754,12 @@ class CourseStore extends DataStore {
 
 
 	/**
-	 * Check course access for Course store.
+	 * Whether the current user has an `enrolled` enrolment in the course.
+	 *
+	 * Roles are not consulted on purpose; see `Course::has_access()`.
 	 *
 	 * @param mixed $course Course.
+	 * @return bool
 	 */
 	public function check_course_access( $course ) {
 		// Get the current user ID.

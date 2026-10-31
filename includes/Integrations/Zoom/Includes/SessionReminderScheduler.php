@@ -16,6 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use OhMyLMS\I18n\RecipientLocale;
 use WP_Query;
 
 /**
@@ -159,29 +160,56 @@ class SessionReminderScheduler {
 			return;
 		}
 
-		$start_time   = date_i18n( 'M j, g:i A', strtotime( $session_data['start_time'] ) );
+		RecipientLocale::run(
+			$user,
+			static function () use ( $user, $session_data ) {
+				self::compose_and_send( $user, $session_data );
+			}
+		);
+	}
+
+	/**
+	 * Compose and send the email, in the user's language.
+	 *
+	 * @param \WP_User $user         User.
+	 * @param array    $session_data Session data.
+	 * @return void
+	 */
+	protected static function compose_and_send( $user, $session_data ) {
+		$start_time   = date_i18n( 'M j, g:i A', is_numeric( $session_data['start_time'] ) ? (int) $session_data['start_time'] : strtotime( $session_data['start_time'] ) );
 		$zoom_link    = $session_data['zoom_link'] ? $session_data['zoom_link'] : '#';
 		$course_title = $session_data['course_title'];
 		$course_link  = $session_data['course_link'];
 
 		$subject = sprintf(
-			'Reminder: Zoom Session for "%s" Starts in 24 Hours!',
+			/* translators: %s: course title. */
+			__( 'Reminder: Zoom Session for "%s" Starts in 24 Hours!', 'ohmylms' ),
 			$course_title
 		);
 
 		$message = sprintf(
-			"Hi %s,\n\n" .
-			"Just a heads-up that your Zoom session for \"%s\" starts in 24 hours!\n\n" .
-			"🗓 Start Time: %s\n" .
-			"🔗 Zoom Link: %s\n" .
-			"📘 Course Page: %s\n\n" .
-			"Make sure to join on time. Looking forward to your participation!\n\n" .
-			'— %s Team',
-			$user->display_name,
-			$course_title,
-			$start_time,
-			$zoom_link,
-			$course_link,
+			/* translators: %s: recipient's display name. */
+			__( 'Hi %s,', 'ohmylms' ),
+			$user->display_name
+		) . "\n\n" . sprintf(
+			/* translators: %s: course title. */
+			__( 'Just a heads-up that your Zoom session for "%s" starts in 24 hours!', 'ohmylms' ),
+			$course_title
+		) . "\n\n🗓 " . sprintf(
+			/* translators: %s: date and time the session starts. */
+			__( 'Start Time: %s', 'ohmylms' ),
+			$start_time
+		) . "\n🔗 " . sprintf(
+			/* translators: %s: Zoom meeting URL. */
+			__( 'Zoom Link: %s', 'ohmylms' ),
+			$zoom_link
+		) . "\n📘 " . sprintf(
+			/* translators: %s: course URL. */
+			__( 'Course Page: %s', 'ohmylms' ),
+			$course_link
+		) . "\n\n" . __( 'Make sure to join on time. Looking forward to your participation!', 'ohmylms' ) . "\n\n" . sprintf(
+			/* translators: %s: site name. */
+			__( '— %s Team', 'ohmylms' ),
 			get_bloginfo( 'name' )
 		);
 

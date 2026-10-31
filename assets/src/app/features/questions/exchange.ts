@@ -2,6 +2,9 @@ import { __ } from '@wordpress/i18n';
 import { ApiError, post } from '../../lib/api';
 import { positiveId } from './model';
 import type { QuestionListQuery } from './types';
+import { createValidators } from '../../lib/validation';
+
+const { record } = createValidators( invalid );
 
 /** Most rows in one import and questions in one export. */
 export const MAX_EXCHANGE_ROWS = 200;
@@ -64,12 +67,6 @@ function invalid(): never {
 			'ohmylms'
 		),
 	} );
-}
-
-function record( value: unknown ): Record< string, unknown > {
-	return value && 'object' === typeof value && ! Array.isArray( value )
-		? ( value as Record< string, unknown > )
-		: invalid();
 }
 
 function strings( value: unknown ): string[] {

@@ -8,6 +8,9 @@ import type {
 	TermDetail,
 	TermQuery,
 } from './types';
+import { createValidators } from '../../lib/validation';
+
+const { record, text } = createValidators( invalidResponse );
 
 export const PER_PAGE = 20;
 export const EMPTY_QUERY: TermQuery = { page: 1, search: '' };
@@ -60,18 +63,6 @@ export function invalidResponse(): ApiError {
 	} );
 }
 
-function record( value: unknown ): Record< string, unknown > {
-	if ( ! value || 'object' !== typeof value || Array.isArray( value ) ) {
-		throw invalidResponse();
-	}
-	return value as Record< string, unknown >;
-}
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
-}
 function whole( value: unknown, minimum: number ): number {
 	if (
 		'number' !== typeof value ||

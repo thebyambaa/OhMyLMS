@@ -11,9 +11,15 @@ const { __, sprintf } = window.wp.i18n;
  */
 export function mountPlayer( root ) {
 	const config = JSON.parse( root.dataset.playerConfig );
-	const stage = root.querySelector( '.ohmylms-question-player-stage' );
-	const error = root.querySelector( '.ohmylms-question-player-error' );
-	const start = root.querySelector( '.ohmylms-question-player-start' );
+	const stage = /** @type {HTMLElement} */ (
+		root.querySelector( '.ohmylms-question-player-stage' )
+	);
+	const error = /** @type {HTMLElement} */ (
+		root.querySelector( '.ohmylms-question-player-error' )
+	);
+	const start = /** @type {HTMLButtonElement} */ (
+		root.querySelector( '.ohmylms-question-player-start' )
+	);
 	let session = '';
 	let busy = false;
 	let cleanups = [];
@@ -36,7 +42,9 @@ export function mountPlayer( root ) {
 			return;
 		}
 		busy = true;
-		const focusedCard = document.activeElement?.dataset?.cardId;
+		const focusedCard = /** @type {HTMLElement|null} */ (
+			document.activeElement
+		)?.dataset?.cardId;
 		message();
 		root.setAttribute( 'aria-busy', 'true' );
 		start.disabled = true;
@@ -45,7 +53,7 @@ export function mountPlayer( root ) {
 		}
 		try {
 			const body = new URLSearchParams(
-				form ? new FormData( form ) : undefined
+				/** @type {?} */ ( form ? new FormData( form ) : undefined )
 			);
 			body.set( 'operation', operation );
 			body.set( 'session', session );
@@ -69,7 +77,9 @@ export function mountPlayer( root ) {
 			remember( session );
 			await render( data );
 			if ( focusedCard ) {
-				const cards = [ ...stage.querySelectorAll( '[data-card-id]' ) ];
+				const cards = /** @type {HTMLButtonElement[]} */ ( [
+					...stage.querySelectorAll( '[data-card-id]' ),
+				] );
 				const target =
 					cards.find(
 						( card ) =>
@@ -77,7 +87,10 @@ export function mountPlayer( root ) {
 							! card.disabled
 					) || cards.find( ( card ) => ! card.disabled );
 				(
-					target || stage.querySelector( 'button:not(:disabled)' )
+					target ||
+					/** @type {HTMLButtonElement|null} */ (
+						stage.querySelector( 'button:not(:disabled)' )
+					)
 				)?.focus();
 			}
 		} catch ( failure ) {
@@ -164,7 +177,9 @@ export function mountPlayer( root ) {
 					} ),
 				() => request( 'start' )
 			);
-			stage.querySelector( 'input, button' )?.focus();
+			/** @type {HTMLElement|null} */ (
+				stage.querySelector( 'input, button' )
+			)?.focus();
 			return;
 		}
 		if ( data.activityMode === 'image-quiz' ) {
@@ -246,7 +261,9 @@ export function mountPlayer( root ) {
 											'Credit: %s%%',
 											'ohmylms'
 										),
-										Math.round( result.fraction * 100 )
+										String(
+											Math.round( result.fraction * 100 )
+										)
 									)
 						)
 					)
@@ -395,7 +412,7 @@ export function mountPlayer( root ) {
 
 document
 	.querySelectorAll( '.ohmylms-question-player[data-player-config]' )
-	.forEach( ( root, index ) => {
+	.forEach( ( /** @type {HTMLElement} */ root, index ) => {
 		// Identical placements on one page still keep separate browser sessions.
 		const config = JSON.parse( root.dataset.playerConfig );
 		config.storage += '-' + index;

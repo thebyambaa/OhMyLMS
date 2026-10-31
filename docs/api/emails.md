@@ -59,6 +59,8 @@ At-risk learners nudge; tags `student_name`, `sender_name`, `reasons`; no trigge
 to the other side of the thread; tags `student_name`, `course_name`, `assignment_name`, `commenter_name`,
 `comment`; see [assignments](assignments.md#comments)). `settings` is registered before the id pattern so the
 literal path wins. An update changes only the fields sent; sending none is `400 ohmylms_email_empty_update`.
+Text equal to its default is not stored, and `null` resets a field (see
+[Stored values and defaults](#stored-values-and-defaults)).
 
 Collection arguments: `page` (>= 1), `per_page` (1-100, default 20), `search` (case-insensitive in
 title, description and subject), `status` (`all|enabled|disabled`), `recipient_type`
@@ -124,6 +126,24 @@ X-WP-Nonce: <wp_rest nonce>
 			"description": "Display name of the student the email is about."
 		}
 	],
+	"defaults": {
+		"subject": "Your quiz {quiz_name} has been graded",
+		"heading": "Your Quiz Has Been Graded",
+		"additional_content": "<p ...>Dear {student_name},</p>...",
+		"button_text": "View My Result",
+		"button_link": "",
+		"footer_text": "Click the button below to view your quiz result.",
+		"course_suggestion_text": null
+	},
+	"customized": {
+		"subject": false,
+		"heading": false,
+		"additional_content": true,
+		"button_text": false,
+		"button_link": false,
+		"footer_text": false,
+		"course_suggestion_text": false
+	},
 	"_links": {
 		"self": [ { "href": ".../emails/student_quiz_graded" } ],
 		"collection": [ { "href": ".../emails" } ]
@@ -136,6 +156,14 @@ Partial update (everything not sent is unchanged; response is the saved email):
 ```json
 PATCH /emails/student_quiz_graded
 { "enabled": false, "subject": "Result for {student_name}" }
+```
+
+Stored afterwards: `{ "enable": false, "subject": "Result for {student_name}" }`, and the response has
+`"customized": { "subject": true, ... }`. Back to the default (stored subject removed):
+
+```json
+PATCH /emails/student_quiz_graded
+{ "subject": null }
 ```
 
 Preview (the body fields are an unsaved draft applied over the stored email; nothing is stored):
@@ -181,7 +209,7 @@ Errors use the WordPress shape `{ "code", "message", "data": { "status", ... } }
 
 | HTTP      | Code                                                      | When                                                                                                                                                 |
 | --------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 400       | `rest_invalid_param`                                      | Schema validation: types, enums, `per_page` outside 1-100, empty `subject`/`heading`, a color that is not `#RRGGBB`, a button position outside `left | center | right`. `data.params` names the fields. |
+| 400       | `rest_invalid_param`                                      | Schema validation: types, enums, `per_page` outside 1-100, a color that is not `#RRGGBB`, a button position outside `left | center | right`. `data.params` names the fields. (An empty `subject`/`heading` resets it to the default.) |
 | 400       | `ohmylms_email_invalid_page`                              | `page` is past the last page.                                                                                                                        |
 | 400       | `ohmylms_email_empty_update`                              | An update with no editable field.                                                                                                                    |
 | 401 / 403 | `ohmylms_email_cannot_view` / `ohmylms_email_cannot_edit` | Not logged in (401) or missing `manage_options` (403). Preview uses _view_; update, settings update and test use _edit_.                             |
@@ -205,15 +233,42 @@ ohmylms-email-settings`), JSON Schema draft 4. Limits are in characters after sa
 | `id`, `title`, `description` | string                                 | read only                                                                                                                           |
 | `recipient_type`             | `student\|creator`                     | read only                                                                                                                           |
 | `enabled`                    | boolean                                | stored as `enable` in the option the sending class reads                                                                            |
-| `subject`                    | string 1-255                           | plain text, one line (tags and newlines are removed)                                                                                |
-| `heading`                    | string 1-200                           | plain text, one line                                                                                                                |
-| `additional_content`         | string, HTML, max 20000                | must have visible text or an image                                                                                                  |
-| `button_text`                | string, max 60                         | plain text; empty hides the button where the template allows it                                                                     |
-| `button_link`                | string, max 2048                       | empty or a full `http(s)` URL. Emails that compute their own destination (new order, assignment and quiz notifications) override it |
-| `footer_text`                | string, HTML, max 5000                 |                                                                                                                                     |
-| `course_suggestion_text`     | string or null, max 5000               | `null` on emails without it (only `student_course_completed` has it)                                                                |
+| `subject`                    | string max 255, or null                | plain text, one line (tags and newlines are removed); empty or `null` is the default                                                |
+| `heading`                    | string max 200, or null                | plain text, one line; empty or `null` is the default                                                                                |
+| `additional_content`         | string, HTML, max 20000, or null       | must have visible text or an image; empty or `null` is the default                                                                  |
+| `button_text`                | string, max 60, or null                | plain text; empty hides the button where the template allows it; `null` is the default                                              |
+| `button_link`                | string, max 2048, or null              | empty or a full `http(s)` URL. Emails that compute their own destination (new order, assignment and quiz notifications) override it |
+| `footer_text`                | string, HTML, max 5000, or null        | `null` is the default                                                                                                               |
+| `course_suggestion_text`     | string or null, max 5000               | `null` on emails without it (only `student_course_completed` has it); on that email `null` in a write is the default                |
 | `recipient_email`            | array of up to 10 addresses            | staff emails only; empty means the default (administrator or course author)                                                         |
 | `tags`                       | array of `{ tag, label, description }` | read only                                                                                                                           |
+| `defaults`                   | object, one string per text field      | read only. The default of each text field in the language of the request; `course_suggestion_text` is `null` on emails without it   |
+| `customized`                 | object, one boolean per text field     | read only. `true` when the field holds saved text (sent as written) rather than the default (translated per recipient)              |
+
+Responses always carry strings in the text fields (the saved text or the default); `null` is only accepted
+in writes.
+
+## Stored values and defaults
+
+Each email's option (`create_lms_email_<id>`) holds only what an administrator changed: `enable`,
+`recipient_email` and the customized text fields. On save, every text field (`subject`, `heading`,
+`additional_content`, `button_text`, `button_link`, `footer_text`, `course_suggestion_text`) that equals its
+default as rendered in the language of the saving request (the administrator's profile language) is
+removed, after the same sanitizing as a save, so a client may send the whole form. `null`, or an empty
+`subject`, `heading` or `additional_content`, removes the field too. When nothing is left the option is
+deleted.
+
+A missing field falls back to the class default when the email is composed. Defaults come from `__()` and
+composing runs inside `RecipientLocale::run()`, so each recipient gets them in their own language; saved
+text is sent as written, in every language. `GET` shows the effective value of each field, with `defaults`
+and `customized` alongside; the editor shows "Reset to default: <field>" for every field that differs from
+its default and saves such a reset as `null`.
+
+Before this, a save stored every field, freezing defaults in the saving administrator's language. The 1.2.22
+update `ohmylms_update_1222_forget_email_defaults()` calls `EmailManager::forget_defaults( $id, $locales )`
+for every email with English and every interface locale, removing stored texts equal to one of those
+defaults (customized text, `enable` and recipients stay). It is idempotent; run it early with `wp eval
+'ohmylms_update_1222_forget_email_defaults();'`.
 
 Global settings: `branding_image` (empty or `http(s)` URL), `base_color`, `background_color`,
 `body_background_color`, `body_text_color` (`#RRGGBB`, stored upper case), `button_position`

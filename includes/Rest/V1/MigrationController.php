@@ -31,7 +31,7 @@ class MigrationController extends RestController {
 	/**
 	 * Meta key that links a migrated OhMyLMS course to its source (`<source>:<id>`).
 	 */
-	const SOURCE_META = '_ohmylms_migrated_from';
+	const SOURCE_META = Migration::SOURCE_META;
 
 	/**
 	 * Largest page.
@@ -222,34 +222,6 @@ class MigrationController extends RestController {
 	}
 
 	/**
-	 * OhMyLMS courses already migrated from some source courses.
-	 *
-	 * @param string $source Source id.
-	 * @param int[]  $ids    Source course IDs.
-	 * @return array<int,int> Source ID => OhMyLMS course ID.
-	 */
-	private function migrated( $source, array $ids ) {
-		global $wpdb;
-		if ( ! $ids ) {
-			return array();
-		}
-		$keys    = array_map(
-			static function ( $id ) use ( $source ) {
-				return $source . ':' . (int) $id;
-			},
-			$ids
-		);
-		$holders = implode( ',', array_fill( 0, count( $keys ), '%s' ) );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Placeholders are generated from the key count.
-		$rows  = (array) $wpdb->get_results( $wpdb->prepare( "SELECT m.meta_value, MAX(p.ID) AS course_id FROM %i m INNER JOIN %i p ON p.ID = m.post_id AND p.post_type = 'ohmylms-course' AND p.post_status NOT IN ('trash','auto-draft') WHERE m.meta_key = %s AND m.meta_value IN ({$holders}) GROUP BY m.meta_value", array_merge( array( $wpdb->postmeta, $wpdb->posts, self::SOURCE_META ), $keys ) ), ARRAY_A );
-		$found = array();
-		foreach ( $rows as $row ) {
-			$found[ (int) substr( (string) $row['meta_value'], strlen( $source ) + 1 ) ] = (int) $row['course_id'];
-		}
-		return $found;
-	}
-
-	/**
 	 * Paged courses of a source, with the OhMyLMS course each was migrated to.
 	 *
 	 * @param WP_REST_Request $request Request.
@@ -285,7 +257,7 @@ class MigrationController extends RestController {
 			return new WP_Error( 'ohmylms_migration_invalid_page', __( 'The page number requested is larger than the number of pages available.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
 
-		$migrated = $this->migrated( $resolved['id'], wp_list_pluck( $query->posts, 'ID' ) );
+		$migrated = Migration::migrated_courses( $resolved['id'], wp_list_pluck( $query->posts, 'ID' ) );
 		$items    = array();
 		foreach ( $query->posts as $post ) {
 			$items[] = array(
@@ -321,7 +293,7 @@ class MigrationController extends RestController {
 		if ( ! $course || $this->post_type( $id, $resolved['source'] ) !== $course->post_type || in_array( $course->post_status, array( 'trash', 'auto-draft' ), true ) ) {
 			return new WP_Error( 'ohmylms_migration_course_not_found', __( 'That course does not exist in the source plugin.', 'ohmylms' ), array( 'status' => 404 ) );
 		}
-		$existing = $this->migrated( $id, array( $course_id ) );
+		$existing = Migration::migrated_courses( $id, array( $course_id ) );
 		if ( isset( $existing[ $course_id ] ) ) {
 			return new WP_Error(
 				'ohmylms_migration_already_done',

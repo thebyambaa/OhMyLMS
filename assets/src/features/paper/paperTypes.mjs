@@ -40,10 +40,10 @@ export function fnv1a( text ) {
  * (OhMyLMS\Exams\PrintPaper::jumble()). With avoidIdentity, a list given in answer order is never
  * printed in that order.
  *
- * @param {string[]} texts                 Item texts, in answer order when avoidIdentity is set.
- * @param {string}   seed                  Question seed.
- * @param {Object}   options               Options.
- * @param {boolean}  options.avoidIdentity Rotate an order that would match the input.
+ * @param {string[]} texts                   Item texts, in answer order when avoidIdentity is set.
+ * @param {string}   seed                    Question seed.
+ * @param {Object}   [options]               Options.
+ * @param {boolean}  [options.avoidIdentity] Rotate an order that would match the input.
  * @return {number[]} Input indexes in printed order.
  */
 export function jumble( texts, seed, { avoidIdentity = false } = {} ) {

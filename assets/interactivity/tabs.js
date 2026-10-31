@@ -57,7 +57,9 @@ store( 'ohmylms/tabs', {
 			const root = button.closest(
 				'[data-wp-interactive="ohmylms/tabs"]'
 			);
-			const buttons = [ ...root.querySelectorAll( '[role=tab]' ) ];
+			const buttons = /** @type {HTMLElement[]} */ ( [
+				...root.querySelectorAll( '[role=tab]' ),
+			] );
 			const rtl = getComputedStyle( root ).direction === 'rtl';
 			const step =
 				( event.key === 'ArrowRight' ? 1 : -1 ) * ( rtl ? -1 : 1 );

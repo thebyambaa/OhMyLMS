@@ -6,6 +6,7 @@ use OhMyLMS\Commerce\Data\OrderItemCoupon;
 use OhMyLMS\Commerce\Data\OrderItemCourse;
 use OhMyLMS\Integrations\Funnel\Includes\FunnelManager;
 use OhMyLMS\Data\Student;
+use OhMyLMS\I18n\RecipientLocale;
 use OhMyLMS\Membership\MembershipHelper;
 use OhMyLMS\user\UserHelper;
 use OhMyLMS\user\UserRepository;
@@ -1081,37 +1082,42 @@ class Checkout {
 			ecommerce()->session->init_session_cookie();
 
 			// Email the new student a link to choose a password; the generated one is never sent.
-			$to           = $data['email'];
-			$subject      = __( 'Your account has been created', 'ohmylms' );
-			$profile_url  = ohmylms_get_account_endpoint_url( 'dashboard' );
-			$student_name = '';
-			if ( $user ) {
-				$student_name = trim( $user->first_name . ' ' . $user->last_name );
-				if ( empty( $student_name ) ) {
-					$student_name = $user->display_name;
-				}
-			}
-			$reset_key = $user ? get_password_reset_key( $user ) : '';
-			$reset_url = $user && ! is_wp_error( $reset_key ) ? network_site_url( 'wp-login.php?action=rp&key=' . rawurlencode( $reset_key ) . '&login=' . rawurlencode( $user->user_login ), 'login' ) : wp_lostpassword_url();
+			$to = $data['email'];
+			RecipientLocale::run(
+				$user ? $user : $to,
+				static function () use ( $to, $user, $username ) {
+					$subject      = __( 'Your account has been created', 'ohmylms' );
+					$profile_url  = ohmylms_get_account_endpoint_url( 'dashboard' );
+					$student_name = '';
+					if ( $user ) {
+						$student_name = trim( $user->first_name . ' ' . $user->last_name );
+						if ( empty( $student_name ) ) {
+							$student_name = $user->display_name;
+						}
+					}
+					$reset_key = $user ? get_password_reset_key( $user ) : '';
+					$reset_url = $user && ! is_wp_error( $reset_key ) ? network_site_url( 'wp-login.php?action=rp&key=' . rawurlencode( $reset_key ) . '&login=' . rawurlencode( $user->user_login ), 'login' ) : wp_lostpassword_url();
 
-			$message = sprintf(
-				/* translators: %1$s: name; %2$s: site name; %3$s: username; %4$s: set-password URL; %5$s: account URL; %6$s: account URL text; %7$s: site name. */
-				__( 'Hello %1$s,<br><br>Your account has been created on %2$s.<br><br>Username: %3$s<br><br>Choose your password here: <a href="%4$s">set your password</a><br><br>You can access your courses from here: <a href="%5$s">%6$s</a><br><br>Thank you<br>%7$s', 'ohmylms' ),
-				esc_html( $student_name ),
-				esc_html( get_bloginfo( 'name' ) ),
-				esc_html( $user ? $user->user_login : $username ),
-				esc_url( $reset_url ),
-				esc_url( $profile_url ),
-				esc_html( $profile_url ),
-				esc_html( get_bloginfo( 'name' ) )
-			);
+					$message = sprintf(
+						/* translators: %1$s: name; %2$s: site name; %3$s: username; %4$s: set-password URL; %5$s: account URL; %6$s: account URL text; %7$s: site name. */
+						__( 'Hello %1$s,<br><br>Your account has been created on %2$s.<br><br>Username: %3$s<br><br>Choose your password here: <a href="%4$s">set your password</a><br><br>You can access your courses from here: <a href="%5$s">%6$s</a><br><br>Thank you<br>%7$s', 'ohmylms' ),
+						esc_html( $student_name ),
+						esc_html( get_bloginfo( 'name' ) ),
+						esc_html( $user ? $user->user_login : $username ),
+						esc_url( $reset_url ),
+						esc_url( $profile_url ),
+						esc_html( $profile_url ),
+						esc_html( get_bloginfo( 'name' ) )
+					);
 
-			$headers = array(
-				'MIME-Version: 1.0',
-				'Content-Type: text/html;
+					$headers = array(
+						'MIME-Version: 1.0',
+						'Content-Type: text/html;
             charset = UTF-8',
+					);
+					wp_mail( $to, $subject, $message, $headers );
+				}
 			);
-			wp_mail( $to, $subject, $message, $headers );
 		}
 
 		if ( $student_id && is_multisite() && is_user_logged_in() && ! is_user_member_of_blog() ) {

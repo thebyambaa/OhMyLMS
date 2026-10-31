@@ -274,4 +274,45 @@ final class CompletionPolicy {
 		}
 		return $ratios ? min( 99, (int) floor( min( $ratios ) ) ) : 0;
 	}
+
+	/**
+	 * Mark a lesson complete for an enrolment, then award the course and pick the next action. Runs under
+	 * the enrolment's activity lock, so a repeated request records one completion and fires
+	 * `ohmylms_lesson_completed` once.
+	 *
+	 * @param int $student_id    Learner.
+	 * @param int $course_id     Course.
+	 * @param int $enrollment_id Enrolment of the learner in the course.
+	 * @param int $content_id    Lesson.
+	 * @return array|\WP_Error Award state plus `next_action`.
+	 */
+	public static function complete_lesson( $student_id, $course_id, $enrollment_id, $content_id ) {
+		global $wpdb;
+		$table = $wpdb->prefix . 'ohmylms_user_progress';
+		$key   = 'ohmylms_activity_' . $enrollment_id;
+		if ( ! $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 3)', $key ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Advisory lock per enrolment.
+			return CourseProgram::error( __( 'Please retry completing the lesson.', 'ohmylms' ), 409 ); }
+		try {
+			$existing = $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE enrollment_id=%d AND content_id=%d AND status=\'completed\'', $table, $enrollment_id, $content_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh read under the lock.
+			if ( ! $existing ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Progress table has no API; written under the lock.
+				if ( ! $wpdb->insert(
+					$table,
+					array(
+						'enrollment_id' => $enrollment_id,
+						'content_id'    => $content_id,
+						'content_type'  => ohmylms_get_lesson( $content_id )->get_type(),
+						'status'        => 'completed',
+						'start_date'    => current_time( 'mysql' ),
+					)
+				) ) {
+					return CourseProgram::error( __( 'Could not save lesson completion.', 'ohmylms' ), 500 ); }
+				\OhMyLMS\DataStores\StudentStore::clear_learning_cache( $student_id, $course_id );
+				do_action( 'ohmylms_lesson_completed', $content_id, $course_id, $student_id );
+			}
+			$result = self::award( $student_id, $course_id );
+			return is_wp_error( $result ) ? $result : $result + array( 'next_action' => LearningPath::next( $result ) );
+		} finally {
+			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $key ) ); } // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Release the advisory lock.
+	}
 }

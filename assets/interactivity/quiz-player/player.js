@@ -3,15 +3,15 @@ import { validate } from './validation.js';
 import { loadMath, mathEnabled } from '../../src/features/math/loader.mjs';
 /**
  * Construct the player against a runtime; registration belongs to index.js.
- * @param root0
- * @param root0.getContext
- * @param root0.getElement
- * @param root0.withSyncEvent
- * @param root0.withScope
- * @param root0.isAnswered
- * @param root0.emit
- * @param root0.expire
- * @param root0.inlineSubmit
+ * @param {Object} root0
+ * @param          [root0.getContext]
+ * @param          [root0.getElement]
+ * @param          [root0.withSyncEvent]
+ * @param          [root0.withScope]
+ * @param          [root0.isAnswered]
+ * @param          [root0.emit]
+ * @param          [root0.expire]
+ * @param          [root0.inlineSubmit]
  */
 export function createQuizPlayer( {
 	getContext,
@@ -390,7 +390,9 @@ export function createQuizPlayer( {
 					HTMLFormElement.prototype.submit.call( form );
 					return;
 				}
-				const body = new URLSearchParams( new FormData( form ) );
+				const body = new URLSearchParams(
+					/** @type {?} */ ( new FormData( form ) )
+				);
 				body.set( 'action', 'ohmylms_quiz_exit_submission' );
 				body.set( 'content_id', c.quizId );
 				body.set( 'attempt_id', c.attemptId );

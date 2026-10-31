@@ -6,8 +6,12 @@
 import { hasMath, waitFor } from './paper/model.mjs';
 
 const sheet = document.querySelector( '.ohmylms-print-sheet' );
-const toolbar = document.querySelector( '.ohmylms-print-toolbar' );
-const button = document.querySelector( '.ohmylms-print-button' );
+const toolbar = /** @type {HTMLElement|null} */ (
+	document.querySelector( '.ohmylms-print-toolbar' )
+);
+const button = /** @type {HTMLButtonElement|null} */ (
+	document.querySelector( '.ohmylms-print-button' )
+);
 const status = document.querySelector( '.ohmylms-print-status' );
 
 async function settled() {

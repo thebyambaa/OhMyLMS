@@ -25,13 +25,13 @@ const label = ( skill ) =>
  * reference: nothing is copied, and the same skill can sit in many courses and lessons.
  *
  * `initial` skills start checked. With `courseId`, skills the course already has are left out.
- * @param root0
- * @param root0.title
- * @param root0.confirmLabel
- * @param root0.initial
- * @param root0.courseId
- * @param root0.onConfirm
- * @param root0.onClose
+ * @param {Object} root0
+ * @param          [root0.title]
+ * @param          [root0.confirmLabel]
+ * @param          [root0.initial]
+ * @param          [root0.courseId]
+ * @param          [root0.onConfirm]
+ * @param          [root0.onClose]
  */
 export function SkillPicker( {
 	title,

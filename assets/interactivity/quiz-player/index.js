@@ -10,8 +10,10 @@ import { createQuizPlayer } from './player.js';
 import { sendInline } from './inline.js';
 
 const inlineRuntime = {
-	request: ( ...args ) => fetch( ...args ),
-	encode: ( form ) => new URLSearchParams( new FormData( form ) ),
+	request: ( /** @type {Parameters<typeof fetch>} */ ...args ) =>
+		fetch( ...args ),
+	encode: ( form ) =>
+		new URLSearchParams( /** @type {?} */ ( new FormData( form ) ) ),
 	refresh: async () => {
 		const router = await import( '@wordpress/interactivity-router' );
 		await router.actions.navigate( window.location.href, {

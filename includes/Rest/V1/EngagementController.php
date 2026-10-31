@@ -14,7 +14,6 @@ use OhMyLMS\Engagement\Rest\BadgesController;
 use OhMyLMS\Engagement\Rest\GamificationController;
 use OhMyLMS\Engagement\Rest\LevelsController;
 use OhMyLMS\Engagement\StreakSettings;
-use OhMyLMS\Utility\Transaction;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Server;
@@ -366,16 +365,6 @@ class EngagementController extends GamificationController {
 	}
 
 	/**
-	 * Stale-save revision of a stored section option (16 hex characters).
-	 *
-	 * @param mixed $stored Unserialized option value, or null when the option does not exist.
-	 * @return string
-	 */
-	private function section_revision( $stored ) {
-		return substr( hash( 'sha256', (string) wp_json_encode( $stored ) ), 0, 16 );
-	}
-
-	/**
 	 * A section as GET and a save answer it: the section plus its `revision`.
 	 *
 	 * @param string $section Section id.
@@ -383,7 +372,7 @@ class EngagementController extends GamificationController {
 	 */
 	private function section_response( $section ) {
 		$data             = GamificationStore::for_response( $section );
-		$data['revision'] = $this->section_revision( get_option( GamificationRegistry::option( $section ), null ) );
+		$data['revision'] = GamificationStore::revision( get_option( GamificationRegistry::option( $section ), null ) );
 		return $data;
 	}
 
@@ -411,35 +400,7 @@ class EngagementController extends GamificationController {
 		$revision = isset( $body['revision'] ) ? (string) $body['revision'] : '';
 		unset( $body['revision'] );
 		try {
-			$result = Transaction::run(
-				function () use ( $section, $body, $revision ) {
-					global $wpdb;
-					$option = GamificationRegistry::option( $section );
-					// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Lock the option row so the revision check and the write are atomic.
-					$row = $wpdb->get_var( $wpdb->prepare( 'SELECT option_value FROM %i WHERE option_name=%s FOR UPDATE', $wpdb->options, $option ) );
-					if ( '' !== $revision ) {
-						$current = $this->section_revision( null === $row ? null : maybe_unserialize( $row ) );
-						if ( $current !== $revision ) {
-							return new WP_Error(
-								'ohmylms_gamification_conflict',
-								__( 'These settings were changed by someone else. Reload them before saving.', 'ohmylms' ),
-								array(
-									'status'   => 409,
-									'revision' => $current,
-								)
-							);
-						}
-					}
-					$next = GamificationStore::prepare( $section, $body );
-					if ( is_wp_error( $next ) ) {
-						return $next;
-					}
-					if ( ! GamificationStore::save( $section, $next ) ) {
-						throw new \RuntimeException( 'save failed' );
-					}
-					return true;
-				}
-			);
+			$result = GamificationStore::save_checked( $section, $body, $revision );
 		} catch ( \Throwable $failure ) {
 			unset( $failure );
 			wp_cache_delete( 'alloptions', 'options' );

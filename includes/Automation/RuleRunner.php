@@ -8,6 +8,7 @@
 namespace OhMyLMS\Automation;
 
 use OhMyLMS\Cohorts\Cohorts;
+use OhMyLMS\I18n\RecipientLocale;
 use OhMyLMS\Student\Enrollments;
 
 defined( 'ABSPATH' ) || exit;
@@ -492,9 +493,14 @@ final class RuleRunner {
 	 * @return bool
 	 */
 	private static function mail( $to, $subject, $body, array $context ) {
-		$subject = wp_strip_all_tags( self::merge( $subject, $context ) );
-		$body    = wp_strip_all_tags( self::merge( $body, $context ) );
-		return (bool) wp_mail( $to, $subject, $body, array( 'Content-Type: text/plain; charset=UTF-8' ) );
+		return (bool) RecipientLocale::run(
+			$to,
+			static function () use ( $to, $subject, $body, $context ) {
+				$subject = wp_strip_all_tags( self::merge( $subject, $context ) );
+				$body    = wp_strip_all_tags( self::merge( $body, $context ) );
+				return wp_mail( $to, $subject, $body, array( 'Content-Type: text/plain; charset=UTF-8' ) );
+			}
+		);
 	}
 
 	/**

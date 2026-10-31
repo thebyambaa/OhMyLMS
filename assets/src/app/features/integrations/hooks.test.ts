@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { ApiError } from '../../lib/api';
 import { getIntegrationSettings, listIntegrations } from './api';
 import { gamification, integrations, zoom, zoomSettings } from './fixtures';
-import { useIntegrationSettings, useIntegrations, useOperation } from './hooks';
+import { useIntegrationSettings, useIntegrations } from './hooks';
 import type { Integration } from './types';
 
 vi.mock( './api', () => ( {
@@ -95,54 +95,5 @@ describe( 'useIntegrationSettings', () => {
 			expect( view.result.current.error?.message ).toBe( 'boom' )
 		);
 		expect( view.result.current.error?.permission ).toBe( false );
-	} );
-} );
-
-describe( 'useOperation', () => {
-	it( 'runs one operation at a time and records failures', async () => {
-		const view = renderHook( useOperation );
-		let finish!: () => void;
-		let first!: Promise< boolean >;
-		act( () => {
-			first = view.result.current.run(
-				() =>
-					new Promise< void >( ( resolve ) => {
-						finish = resolve;
-					} )
-			);
-		} );
-		expect( view.result.current.busy ).toBe( true );
-		const work = vi.fn();
-		let second = true;
-		await act( async () => {
-			second = await view.result.current.run( work );
-		} );
-		expect( second ).toBe( false );
-		expect( work ).not.toHaveBeenCalled();
-		await act( async () => {
-			finish();
-			await first;
-		} );
-		expect( view.result.current.busy ).toBe( false );
-		await act( async () => {
-			await view.result.current.run( () =>
-				Promise.reject( new Error( 'nope' ) )
-			);
-		} );
-		expect( view.result.current.error?.message ).toBe( 'nope' );
-		act( () => view.result.current.clearError() );
-		expect( view.result.current.error ).toBeNull();
-	} );
-	it( 'aborts the pending request on unmount', () => {
-		const view = renderHook( useOperation );
-		let signal: AbortSignal | undefined;
-		act( () => {
-			void view.result.current.run( ( next ) => {
-				signal = next;
-				return new Promise< void >( () => undefined );
-			} );
-		} );
-		view.unmount();
-		expect( signal?.aborted ).toBe( true );
 	} );
 } );

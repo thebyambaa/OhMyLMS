@@ -22,18 +22,18 @@ const equationLabels = () => ( {
 
 /**
  * Small rich-text field that preserves existing HTML without a block editor.
- * @param root0
- * @param root0.value
- * @param root0.onChange
- * @param root0.readOnly
- * @param root0.html
- * @param root0.compact
- * @param root0.help
- * @param root0.placeholder
- * @param root0.onDoubleClick
- * @param root0.label
- * @param root0.collapseToolbar
- * @param root0.showToolbar
+ * @param {Object} root0
+ * @param          [root0.value]
+ * @param          [root0.onChange]
+ * @param          [root0.readOnly]
+ * @param          [root0.html]
+ * @param          [root0.compact]
+ * @param          [root0.help]
+ * @param          [root0.placeholder]
+ * @param          [root0.onDoubleClick]
+ * @param          [root0.label]
+ * @param          [root0.collapseToolbar]
+ * @param          [root0.showToolbar]
  */
 export function RichContentControl( {
 	value,
@@ -149,40 +149,59 @@ export function RichContentControl( {
 	};
 	const toolbar = showToolbar && (
 		<div role="toolbar" aria-label={ __( 'Text formatting', 'ohmylms' ) }>
-			{ ( html
-				? [
-						[ 'bold', 'Bold', 'editor-bold' ],
-						[ 'italic', 'Italic', 'editor-italic' ],
-						[ 'underline', 'Underline', 'editor-underline' ],
-						[ 'insertUnorderedList', 'Bullet list', 'editor-ul' ],
-						[ 'superscript', 'Superscript', 'editor-superscript' ],
-						[ 'subscript', 'Subscript', 'editor-subscript' ],
-					]
-				: []
-			).map( ( [ command, formatLabel, icon ] ) => (
-				<Button
-					key={ command }
-					icon={
-						[ 'superscript', 'subscript' ].includes( command )
-							? undefined
-							: icon
-					}
-					label={ formatLabel }
-					onMouseDown={ ( event ) => event.preventDefault() }
-					onClick={ () => format( command ) }
-				>
-					{ 'superscript' === command && (
-						<span>
-							x<sup>2</sup>
-						</span>
-					) }
-					{ 'subscript' === command && (
-						<span>
-							x<sub>2</sub>
-						</span>
-					) }
-				</Button>
-			) ) }
+			{
+				/** @type {[string, string, import('@wordpress/components').IconType][]} */ (
+					html
+						? [
+								[ 'bold', 'Bold', 'editor-bold' ],
+								[ 'italic', 'Italic', 'editor-italic' ],
+								[
+									'underline',
+									'Underline',
+									'editor-underline',
+								],
+								[
+									'insertUnorderedList',
+									'Bullet list',
+									'editor-ul',
+								],
+								[
+									'superscript',
+									'Superscript',
+									'editor-superscript',
+								],
+								[
+									'subscript',
+									'Subscript',
+									'editor-subscript',
+								],
+							]
+						: []
+				).map( ( [ command, formatLabel, icon ] ) => (
+					<Button
+						key={ command }
+						icon={
+							[ 'superscript', 'subscript' ].includes( command )
+								? undefined
+								: icon
+						}
+						label={ formatLabel }
+						onMouseDown={ ( event ) => event.preventDefault() }
+						onClick={ () => format( command ) }
+					>
+						{ 'superscript' === command && (
+							<span>
+								x<sup>2</sup>
+							</span>
+						) }
+						{ 'subscript' === command && (
+							<span>
+								x<sub>2</sub>
+							</span>
+						) }
+					</Button>
+				) )
+			}
 			{ html && (
 				<QuestionMediaUpload
 					allowedTypes={ [ 'image' ] }

@@ -1,4 +1,3 @@
-/** @jsx createElement */
 import { createElement, useState } from '@wordpress/element';
 import { select, useDispatch, useSelect } from '@wordpress/data';
 import { PluginDocumentSettingPanel } from '@wordpress/editor';
@@ -13,7 +12,7 @@ import { registerProfilePanel } from './ProfilePanel';
  *
  * @param {Object} root0      Component properties.
  * @param {Object} root0.data Exam id, status, player URL and instructions from the exam profile.
- * @return {Element|null} Panel, or nothing when this quiz has no exam record.
+ * @return {React.ReactElement|null} Panel, or nothing when this quiz has no exam record.
  */
 export function NativeExamPanel( { data: exam } ) {
 	const [ instructions, setInstructions ] = useState(

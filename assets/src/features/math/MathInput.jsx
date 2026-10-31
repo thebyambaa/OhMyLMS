@@ -22,12 +22,12 @@ export const MathVariables = createContext( [] );
 
 /**
  * Controlled author input with a working text fallback.
- * @param {Object}                   props          Field properties.
- * @param {string}                   props.label    Accessible label.
- * @param {string}                   props.value    Original source.
- * @param {(source: string) => void} props.onChange Save source.
- * @param {string}                   props.help     Help text.
- * @param {boolean}                  props.disabled Readonly state.
+ * @param {Object}                   props            Field properties.
+ * @param {string}                   props.label      Accessible label.
+ * @param {string}                   props.value      Original source.
+ * @param {(source: string) => void} props.onChange   Save source.
+ * @param {string}                   [props.help]     Help text.
+ * @param {boolean}                  [props.disabled] Readonly state.
  * @return {Object} Field.
  */
 export function MathInput( {
@@ -71,7 +71,11 @@ export function MathInput( {
 				aria-label={ label }
 				defaultValue={ value }
 				readOnly={ disabled }
-				onInput={ ( event ) => onChange( event.target.value ) }
+				onInput={ ( event ) =>
+					onChange(
+						/** @type {HTMLInputElement} */ ( event.target ).value
+					)
+				}
 			/>
 			{ help && <p>{ help }</p> }
 			{ mathEnabled() && ! disabled && variables.length > 0 && (
@@ -96,11 +100,11 @@ export function MathInput( {
 
 /**
  * Insert or replace a marked equation in an existing content string.
- * @param {Object}                   props            Content properties.
- * @param {string}                   props.value      Content.
- * @param {(source: string) => void} props.onChange   Save content.
- * @param {boolean}                  props.html       Whether content is HTML.
- * @param {boolean}                  props.showInsert Whether to show the modal insertion action.
+ * @param {Object}                   props              Content properties.
+ * @param {string}                   props.value        Content.
+ * @param {(source: string) => void} props.onChange     Save content.
+ * @param {boolean}                  [props.html]       Whether content is HTML.
+ * @param {boolean}                  [props.showInsert] Whether to show the modal insertion action.
  * @return {Object|null} Toolbar.
  */
 export function EquationAction( {
@@ -112,7 +116,9 @@ export function EquationAction( {
 	const variables = useContext( MathVariables );
 	const [ editing, setEditing ] = useState( null );
 	const [ latex, setLatex ] = useState( '' );
-	const [ mode, setMode ] = useState( 'inline' );
+	const [ mode, setMode ] = useState(
+		/** @type {'inline'|'display'} */ ( 'inline' )
+	);
 	if ( ! mathEnabled() ) {
 		return null;
 	}
@@ -121,7 +127,10 @@ export function EquationAction( {
 		setEditing( match || { index: value.length, 0: '' } );
 		const source = match?.[ 2 ] || '';
 		setLatex( html ? decodeEntities( source ) : source );
-		setMode( match?.[ 1 ] || 'inline' );
+		// equationPattern() captures only inline or display.
+		setMode(
+			/** @type {'inline'|'display'} */ ( match?.[ 1 ] || 'inline' )
+		);
 	};
 	return (
 		<div className="ohmylms-equation-actions">

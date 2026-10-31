@@ -3,6 +3,7 @@
 namespace OhMyLMS\Emails\StudentsEmail;
 
 use OhMyLMS\Emails\Emails;
+use OhMyLMS\I18n\RecipientLocale;
 
 /**
  * Plugin cancel enrollment implementation.
@@ -75,7 +76,25 @@ class CancelEnrollment {
 			return;
 		}
 
-		$subject = isset( $settings['subject'] ) ? $settings['subject'] : '';
+		RecipientLocale::run(
+			$user,
+			function () use ( $order, $student_id, $name, $to ) {
+				$this->send( $order, $student_id, $name, $to );
+			}
+		);
+	}
+
+	/**
+	 * Compose and send the email, in the learner's language.
+	 *
+	 * @param object $order      Order.
+	 * @param int    $student_id Learner.
+	 * @param string $name       Learner's display name.
+	 * @param string $to         Learner's address.
+	 */
+	private function send( $order, $student_id, $name, $to ) {
+		$settings = Emails::get_template_settings( 'student_cancel_enrollment', $this->default_settings() );
+		$subject  = isset( $settings['subject'] ) ? $settings['subject'] : '';
 
 		global $wpdb;
 		$table_name  = $wpdb->prefix . 'ohmylms_user_enrollment';

@@ -21,6 +21,9 @@ import {
 	type StepStatus,
 	type WizardStatus,
 } from './types';
+import { createValidators } from '../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
 
 /** Limits mirrored from the server schema (`SetupSteps`, see contract.json). */
 export const LIMITS = {
@@ -52,13 +55,6 @@ function oneOf< T extends string >(
 	value: unknown
 ): T | undefined {
 	return list.find( ( item ) => item === value );
-}
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
 }
 
 function whole( value: unknown ): number {

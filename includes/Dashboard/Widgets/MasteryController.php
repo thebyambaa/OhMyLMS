@@ -14,6 +14,7 @@ use OhMyLMS\Dashboard\Period;
 use OhMyLMS\Dashboard\Scope;
 use RuntimeException;
 use WP_Error;
+use WP_REST_Controller;
 use WP_REST_Request;
 use WP_REST_Server;
 
@@ -25,7 +26,7 @@ defined( 'ABSPATH' ) || exit;
  * The row must be one the scope shows (`class:<id>` or `course:<id>`), so a teacher only reaches their own
  * classes. Cached like the widgets; report links are added per user.
  */
-final class MasteryController {
+final class MasteryController extends WP_REST_Controller {
 
 	/** Most learners listed. */
 	const MAX_LEARNERS = 50;

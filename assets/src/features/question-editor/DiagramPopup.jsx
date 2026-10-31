@@ -14,14 +14,14 @@ const clamp = ( number ) => Math.max( 0, Math.min( 100, number ) );
  *
  * Click the image to add a marker, drag a marker to move it, and use the arrow
  * keys on a focused marker for fine adjustment.
- * @param root0
- * @param root0.type     Either hotspot or labeling.
- * @param root0.imageUrl Diagram image.
- * @param root0.rows     Zones (hotspot) or targets (labeling).
- * @param root0.selected Index of the selected marker.
- * @param root0.onSelect Receives a marker index.
- * @param root0.onChange Receives the full replacement list.
- * @param root0.onClose  Closes the popup.
+ * @param {Object} root0
+ * @param          [root0.type]     Either hotspot or labeling.
+ * @param          [root0.imageUrl] Diagram image.
+ * @param          [root0.rows]     Zones (hotspot) or targets (labeling).
+ * @param          [root0.selected] Index of the selected marker.
+ * @param          [root0.onSelect] Receives a marker index.
+ * @param          [root0.onChange] Receives the full replacement list.
+ * @param          [root0.onClose]  Closes the popup.
  */
 export function DiagramPopup( {
 	type,
@@ -189,9 +189,13 @@ export function DiagramPopup( {
 								alt={ __( 'Diagram', 'ohmylms' ) }
 								draggable={ false }
 								onLoad={ ( event ) => {
+									const image =
+										/** @type {HTMLImageElement} */ (
+											event.target
+										);
 									natural.current = {
-										width: event.target.naturalWidth || 1,
-										height: event.target.naturalHeight || 1,
+										width: image.naturalWidth || 1,
+										height: image.naturalHeight || 1,
 									};
 									refit();
 								} }

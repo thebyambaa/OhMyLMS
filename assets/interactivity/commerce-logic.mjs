@@ -90,6 +90,7 @@ export function gatewayFromInputId( id ) {
  * @return {Object<string,boolean>} Field key to required.
  */
 export function requiredFields( map, gateway, serverRequired = [] ) {
+	/** @type {Object<string,boolean>} */
 	const fields = {};
 	const wanted = new Set( ( map && map[ gateway ] ) || [] );
 	for ( const list of Object.values( map || {} ) ) {

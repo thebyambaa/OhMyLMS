@@ -262,6 +262,89 @@ final class SkillMappings {
 		return false !== $result;
 	}
 
+	/**
+	 * Remove one ungrouped mapping under the shared mapping lock, if its revision still matches.
+	 * Exceptions propagate after the lock is released.
+	 *
+	 * @param int    $specific_id Source skill ID.
+	 * @param int    $shared_id Shared target ID.
+	 * @param string $expected_revision Pair revision the editor loaded.
+	 * @return true|\WP_Error
+	 */
+	public static function remove_current( $specific_id, $shared_id, $expected_revision ) {
+		global $wpdb;
+		$lock = self::LOCK . '-' . md5( $wpdb->prefix );
+		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Non-cacheable advisory lock.
+			return Access::error( 'ohmylms_mapping_busy', __( 'Another mapping change is being saved. Try again.', 'ohmylms' ), 409 );
+		}
+		try {
+			$mappings = self::for_skill( $specific_id );
+			foreach ( $mappings['maps_to'] as $mapping ) {
+				$current_revision = self::revision( $mapping );
+				if ( $shared_id === (int) $mapping['shared_id'] && $expected_revision === $current_revision ) {
+					if ( ! empty( $mapping['group_uuid'] ) ) {
+						return Access::error( 'ohmylms_mapping_group_invalid', __( 'Remove combined coverage as a group.', 'ohmylms' ), 409 );
+					}
+					if ( ! self::remove( $mapping['specific_id'], $mapping['shared_id'] ) ) {
+						return Access::error( 'ohmylms_mapping_failed', __( 'The mapping could not be removed.', 'ohmylms' ), 500 );
+					}
+					return true;
+				}
+			}
+			return Access::error( 'ohmylms_mapping_stale', __( 'This mapping changed. Reload before removing it.', 'ohmylms' ), 409 );
+		} finally {
+			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Release the advisory lock.
+		}
+	}
+
+	/**
+	 * Remove every link of one combined group and the group, under the shared mapping lock, if each
+	 * pair revision still matches. Nothing is removed when one does not.
+	 *
+	 * @param string $uuid Group UUID.
+	 * @param array  $pairs `specific_id` and `expected_revision` of every member.
+	 * @return true|\WP_Error
+	 */
+	public static function remove_group( $uuid, array $pairs ) {
+		global $wpdb;
+		$lock = self::LOCK . '-' . md5( $wpdb->prefix );
+		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Non-cacheable advisory lock.
+			return Access::error( 'ohmylms_mapping_busy', __( 'Another mapping change is being saved. Try again.', 'ohmylms' ), 409 );
+		}
+		try {
+			$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE group_uuid=%s', self::table(), $uuid ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh rows under the mapping lock.
+			if ( ! $rows || count( $rows ) !== count( $pairs ) ) {
+				return Access::error( 'ohmylms_mapping_stale', __( 'This group changed. Reload it before removing it.', 'ohmylms' ), 409 );
+			}
+			foreach ( $rows as $row ) {
+				$matches = array_values(
+					array_filter(
+						$pairs,
+						static function ( $pair ) use ( $row ) {
+							return is_array( $pair ) && ( $pair['specific_id'] ?? null ) === (int) $row['specific_term_id'] && ( $pair['expected_revision'] ?? null ) === self::revision( $row );
+						}
+					)
+				);
+				if ( 1 !== count( $matches ) ) {
+					return Access::error( 'ohmylms_mapping_stale', __( 'This group changed. Reload it before removing it.', 'ohmylms' ), 409 );
+				}
+			}
+			Transaction::run(
+				static function () use ( $wpdb, $uuid ) {
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Mapping tables have no API; both deletes run in one transaction.
+					if ( false === $wpdb->delete( self::table(), array( 'group_uuid' => $uuid ) ) || false === $wpdb->delete( Schema::table( 'skill_mapping_groups' ), array( 'uuid' => $uuid ) ) ) {
+						throw new \RuntimeException( 'Combined coverage could not be removed.' );
+					}
+				}
+			);
+			return true;
+		} catch ( \Throwable $error ) {
+			return Access::error( 'ohmylms_mapping_failed', __( 'Combined coverage could not be removed. Nothing was changed.', 'ohmylms' ), 500 );
+		} finally {
+			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Release the advisory lock.
+		}
+	}
+
 	/** Drop mappings of a deleted skill.
 	 *
 	 * @param mixed $term_id Term identifier.

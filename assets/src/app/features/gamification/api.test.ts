@@ -9,7 +9,6 @@ import {
 	getSection,
 	listBadges,
 	listLevels,
-	listMedia,
 	saveSection,
 	updateBadge,
 	updateLevel,
@@ -139,23 +138,5 @@ describe( 'typed gamification API', () => {
 		expect( at( vi.mocked( del ).mock.calls )[ 0 ] ).toBe(
 			'/ohmylms/v1/gamification/badges/starter'
 		);
-	} );
-
-	it( 'searches only image media through the core route', async () => {
-		vi.mocked( getCollection ).mockResolvedValue( {
-			items: [],
-			total: 0,
-			totalPages: 0,
-		} );
-		await listMedia( 'trophy', 2 );
-		const [ path, , extras ] = at( vi.mocked( getCollection ).mock.calls );
-		expect( path ).toBe( '/wp/v2/media' );
-		expect( extras?.query ).toMatchObject( {
-			search: 'trophy',
-			page: 2,
-			per_page: 12,
-			media_type: 'image',
-			mime_type: 'image/jpeg,image/png,image/gif,image/webp',
-		} );
 	} );
 } );

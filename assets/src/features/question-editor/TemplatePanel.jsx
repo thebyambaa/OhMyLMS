@@ -44,9 +44,10 @@ export const exampleText = ( sample ) => plain( sample.body ) || sample.title;
 
 /**
  * A number field that stores a number, or nothing while empty.
- * @param value
- * @param onChange
- * @param extra
+ * @param {number|undefined}                  value    Stored number.
+ * @param {(value: number|undefined) => void} onChange Receives the number, or undefined when empty.
+ * @param {Object}                            [extra]  More TextControl props.
+ * @return {{type: 'number', step: string, value: number|string, onChange: (text: string) => void}} TextControl props.
  */
 const number = ( value, onChange, extra = {} ) => ( {
 	type: 'number',
@@ -58,14 +59,14 @@ const number = ( value, onChange, extra = {} ) => ( {
 
 /**
  * Text kept as typed while a parsed value is stored (so a trailing comma or newline is not eaten).
- * @param root0
- * @param root0.value
- * @param root0.format
- * @param root0.parse
- * @param root0.onChange
- * @param root0.multiline
- * @param root0.label
- * @param root0.help
+ * @param {Object} root0
+ * @param          [root0.value]
+ * @param          [root0.format]
+ * @param          [root0.parse]
+ * @param          [root0.onChange]
+ * @param          [root0.multiline]
+ * @param          [root0.label]
+ * @param          [root0.help]
  */
 function ParsedField( {
 	value,
@@ -96,10 +97,10 @@ function ParsedField( {
 /**
  * "Randomize numbers": turns a question into a template that draws new numbers every time
  * it is issued, with the learner's worked solution and answer following the same numbers.
- * @param root0
- * @param root0.question
- * @param root0.onChange
- * @param root0.readOnly
+ * @param {Object} root0
+ * @param          [root0.question]
+ * @param          [root0.onChange]
+ * @param          [root0.readOnly]
  */
 export function TemplatePanel( { question, onChange, readOnly } ) {
 	const settings = question.settings || {};

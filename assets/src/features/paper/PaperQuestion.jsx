@@ -1,4 +1,3 @@
-/** @jsx createElement */
 import { createElement, RawHTML, useEffect, useRef } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { loadMath, mathEnabled } from '../math/loader.mjs';
@@ -37,10 +36,10 @@ function useMath( source ) {
 /**
  * Bracketed marks, right-aligned as on exam papers.
  *
- * @param {Object}  props       Properties.
- * @param {number}  props.marks Marks.
- * @param {boolean} props.total Whether this is a question total.
- * @return {Element|null} Marks label.
+ * @param {Object}  props         Properties.
+ * @param {number}  props.marks   Marks.
+ * @param {boolean} [props.total] Whether this is a question total.
+ * @return {React.ReactElement|null} Marks label.
  */
 function Marks( { marks, total = false } ) {
 	if ( ! marks ) {
@@ -62,10 +61,10 @@ function Marks( { marks, total = false } ) {
 /**
  * Answer key entries; only rendered for the answer key view.
  *
- * @param {Object}   props         Properties.
- * @param {string[]} props.answers Accepted answers.
- * @param {string}   props.rubric  Marking notes.
- * @return {Element|null} Key.
+ * @param {Object}   props           Properties.
+ * @param {string[]} [props.answers] Accepted answers.
+ * @param {string}   [props.rubric]  Marking notes.
+ * @return {React.ReactElement|null} Key.
  */
 function Key( { answers = [], rubric = '' } ) {
 	if ( ! answers.length && ! rubric ) {
@@ -92,7 +91,7 @@ function Key( { answers = [], rubric = '' } ) {
  *
  * @param {Object} props      Properties.
  * @param {Object} props.item Question or part model.
- * @return {Element} Answer space.
+ * @return {React.ReactElement} Answer space.
  */
 function AnswerSpace( { item } ) {
 	if ( item.layout === 'answer-line' ) {
@@ -118,15 +117,15 @@ function AnswerSpace( { item } ) {
  * The printed form of one question on the editor's paper canvas. OhMyLMS\Exams\PaperRenderer prints the
  * same markup on the print page and in the learner's Paper View.
  *
- * @param {Object}  props             Properties.
- * @param {Object}  props.question    Editor question: settings and options.
- * @param {string}  props.prompt      Statement HTML.
- * @param {string}  props.label       Printed question number, empty for none.
- * @param {Object}  props.settings    Normalized paper settings.
- * @param {boolean} props.showAnswers Whether to show the answer key.
- * @param {boolean} props.editor      Whether editor-only notes may show.
- * @param {string}  props.version     Paper version letter.
- * @return {Element} Printed question.
+ * @param {Object}  props               Properties.
+ * @param {Object}  props.question      Editor question: settings and options.
+ * @param {string}  props.prompt        Statement HTML.
+ * @param {string}  props.label         Printed question number, empty for none.
+ * @param {Object}  props.settings      Normalized paper settings.
+ * @param {boolean} [props.showAnswers] Whether to show the answer key.
+ * @param {boolean} [props.editor]      Whether editor-only notes may show.
+ * @param {string}  [props.version]     Paper version letter.
+ * @return {React.ReactElement} Printed question.
  */
 export function PaperQuestion( {
 	question,

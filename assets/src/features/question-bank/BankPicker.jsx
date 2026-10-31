@@ -22,19 +22,21 @@ import {
 /**
  * Pick existing bank questions for a quiz document. The caller inserts them as question blocks, and
  * saving the document places them by reference; the question content stays in the bank.
- * @param root0
- * @param root0.quizId      Quiz being edited; its questions are left out of the results.
- * @param root0.existingIds Questions already in the document.
- * @param root0.onClose
- * @param root0.onPick      Receives the chosen question IDs.
+ * @param {Object} root0
+ * @param          [root0.quizId]      Quiz being edited; its questions are left out of the results.
+ * @param          [root0.existingIds] Questions already in the document.
+ * @param          [root0.onClose]
+ * @param          [root0.onPick]      Receives the chosen question IDs.
  */
 export function BankPicker( { quizId, existingIds, onClose, onPick } ) {
-	const [ filters, setFilters ] = useState( {
-		search: '',
-		skill: '',
-		difficulty: '',
-		status: 'approved',
-	} );
+	const [ filters, setFilters ] = useState(
+		/** @type {{search: string, skill: string, difficulty: string, status: ''|'approved'}} */ ( {
+			search: '',
+			skill: '',
+			difficulty: '',
+			status: 'approved',
+		} )
+	);
 	const [ items, setItems ] = useState( null );
 	const [ skills, setSkills ] = useState( [] );
 	const [ chosen, setChosen ] = useState( [] );

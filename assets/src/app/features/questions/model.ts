@@ -32,6 +32,10 @@ import type {
 	StatusFilter,
 	UserRef,
 } from './types';
+import { createValidators } from '../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
+export const { record, positiveId } = createValidators( invalidResponse );
 
 const STATUSES: readonly QuestionStatus[] = [ 'draft', 'approved', 'archived' ];
 const ANSWERS = [ 'options', 'text' ] as const;
@@ -303,26 +307,6 @@ export function invalidResponse(): ApiError {
 	} );
 }
 
-/**
- * Narrow an unknown value to a plain object or fail with an invalid response.
- *
- * @param value Parsed JSON.
- * @return The object.
- */
-export function record( value: unknown ): Record< string, unknown > {
-	if ( ! value || 'object' !== typeof value || Array.isArray( value ) ) {
-		throw invalidResponse();
-	}
-	return value as Record< string, unknown >;
-}
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
-}
-
 function boolean( value: unknown ): boolean {
 	if ( 'boolean' !== typeof value ) {
 		throw invalidResponse();
@@ -340,23 +324,6 @@ function oneOf< T extends string >( value: unknown, allowed: readonly T[] ): T {
 
 function list( value: unknown ): unknown[] {
 	if ( ! Array.isArray( value ) ) {
-		throw invalidResponse();
-	}
-	return value;
-}
-
-/**
- * Validate a positive integer identifier.
- *
- * @param value Candidate id.
- * @return The id.
- */
-export function positiveId( value: unknown ): number {
-	if (
-		'number' !== typeof value ||
-		! Number.isSafeInteger( value ) ||
-		value < 1
-	) {
 		throw invalidResponse();
 	}
 	return value;

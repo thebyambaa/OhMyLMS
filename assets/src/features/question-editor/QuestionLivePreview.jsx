@@ -16,9 +16,9 @@ import { InteractivePreview } from './InteractiveEditors';
 
 /**
  * Interactive learner appearance, built from the current unsaved question rather than a preview page.
- * @param root0
- * @param root0.question
- * @param root0.showNote
+ * @param {Object} root0
+ * @param          [root0.question]
+ * @param          [root0.showNote]
  */
 export function QuestionLivePreview( { question, showNote = true } ) {
 	const source = JSON.stringify( question );
@@ -83,9 +83,9 @@ export function QuestionLivePreview( { question, showNote = true } ) {
 
 /**
  * Render a concrete question after server-side variable substitution.
- * @param root0
- * @param root0.question
- * @param root0.showNote
+ * @param {Object} root0
+ * @param          [root0.question]
+ * @param          [root0.showNote]
  */
 function QuestionPreviewContent( { question, showNote } ) {
 	const view = questionPreviewModel( question );

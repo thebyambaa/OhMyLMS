@@ -205,12 +205,7 @@ class AssessmentController extends RestController {
 	 * @param WP_REST_Request $request REST request.
 	 */
 	public function revisions( WP_REST_Request $request ) {
-		global $wpdb;
-		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT id, revision_no, kind, total_marks, status, created_by, created_at FROM %i WHERE quiz_id=%d ORDER BY revision_no DESC', Schema::table( 'quiz_revisions' ), (int) $request['id'] ), ARRAY_A );
-		foreach ( $rows as &$row ) {
-			$row['attempts'] = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE revision_id=%d', Schema::table( 'attempt_context' ), (int) $row['id'] ) );
-		}
-		return rest_ensure_response( array( 'revisions' => $rows ) );
+		return rest_ensure_response( array( 'revisions' => RevisionPublisher::history( (int) $request['id'] ) ) );
 	}
 
 	/** Validate the quiz and publish its current content as a revision.

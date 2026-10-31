@@ -138,7 +138,7 @@ export function rowFragment( template ) {
  * @param {() => {ref: HTMLElement}}                                                            api.getElement    `@wordpress/interactivity` getElement.
  * @param {(callback: EventHandler) => EventHandler}                                            api.withSyncEvent `@wordpress/interactivity` withSyncEvent.
  * @param {() => AccountState}                                                                  api.getState      Store state (server values).
- * @param {(options: Object) => Promise<{ok: boolean, data?: unknown, message?: string}>}       api.request       SDK `request()`.
+ * @param {(options: Object) => Promise<{ok: boolean, data?: Object, message?: string}>}        api.request       SDK `request()`.
  * @param {(message: string, options?: {type?: string}) => unknown}                             api.toast         SDK `toast()`.
  * @param {(options: Object) => Promise<boolean>}                                               api.confirmDialog SDK `confirmDialog()`.
  * @param {(root: EventTarget, name: string, detail?: Object, cancelable?: boolean) => boolean} api.emit          SDK `emit()`.

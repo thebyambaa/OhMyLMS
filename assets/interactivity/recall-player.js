@@ -21,6 +21,7 @@ export function renderRecall( stage, data, act, restart ) {
 			return;
 		}
 		pending = true;
+		/** @type {Array<[HTMLButtonElement, boolean]>} */
 		const buttons = Array.from(
 			stage.querySelectorAll( 'button' ),
 			( node ) => [ node, node.disabled ]
@@ -190,7 +191,9 @@ export function renderRecall( stage, data, act, restart ) {
 				button( __( 'Check recall', 'ohmylms' ), () => run( 'finish' ) )
 			);
 		}
-		stage.querySelector( 'button:not(:disabled)' )?.focus();
+		/** @type {HTMLButtonElement|null} */ (
+			stage.querySelector( 'button:not(:disabled)' )
+		)?.focus();
 	}
 	return () => {
 		clearInterval( timer );

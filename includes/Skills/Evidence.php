@@ -280,4 +280,24 @@ final class Evidence {
 	public static function summary( $student_id ) {
 		return Snapshot::skills( (int) $student_id );
 	}
+
+	/**
+	 * A learner's most recent evidence rows, newest first (at most 200).
+	 *
+	 * @param int $student_id Learner.
+	 * @return array[]
+	 */
+	public static function recent( $student_id ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh evidence for the teacher's report.
+		return $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT e.term_id, e.part_id, e.role, e.awarded, e.available, e.independent, e.first_try, e.difficulty, e.source_type, e.source_id, e.question_id, e.version_id, e.evidence_at, e.superseded
+             FROM %i e WHERE e.student_id=%d ORDER BY e.evidence_at DESC, e.id DESC LIMIT 200',
+				Schema::table( 'skill_evidence' ),
+				$student_id
+			),
+			ARRAY_A
+		);
+	}
 }

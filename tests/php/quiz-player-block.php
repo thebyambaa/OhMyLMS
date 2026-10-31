@@ -58,10 +58,14 @@ function get_posts( $args ) {
 	return array_map( static function ( $id ) { return (object) array( 'ID' => $id, 'post_status' => get_post_status( $id ) ); }, array( 7, 8, 9 ) );
 }
 function register_rest_route( $namespace, $route, $settings ) { $GLOBALS['route_settings'] = $settings; $GLOBALS['routes'][ $route ] = $settings; }
+class WP_REST_Controller {}
 require OHMYLMS_DIR . '/includes/QuestionBank/AccessPolicy.php';
 require OHMYLMS_DIR . '/includes/Assessment/PreviewPlayer.php';
 require OHMYLMS_DIR . '/includes/Blocks/QuizPlayerBlock.php';
+require OHMYLMS_DIR . '/includes/Abstracts/RestController.php';
+require OHMYLMS_DIR . '/includes/Blocks/Rest/QuizPlayerController.php';
 use OhMyLMS\Blocks\QuizPlayerBlock;
+use OhMyLMS\Blocks\Rest\QuizPlayerController;
 $checks = 0;
 function check_embed( $condition, $message ) {
 	if ( ! $condition ) { throw new RuntimeException( $message ); }
@@ -92,15 +96,17 @@ $items = QuizPlayerBlock::choices( array() );
 check_embed( array_column( $items, 'id' ) === array( 7, 9 ), 'Private quizzes must stay out of unauthorized pickers.' );
 check_embed( array_keys( $items[0] ) === array( 'id', 'title', 'status', 'previewUrl' ), 'Picker must not expose questions or answer keys.' );
 check_embed( '' === $items[0]['previewUrl'] && str_contains( $items[1]['previewUrl'], '_wpnonce=' ), 'Only quiz authors may preview.' );
-QuizPlayerBlock::register_routes();
+( new QuizPlayerController() )->register_routes();
+$picker = $GLOBALS['routes']['/quiz-player/quizzes'];
 $GLOBALS['can_author'] = false;
-check_embed( ! ( $GLOBALS['route_settings']['permission_callback'] )(), 'Guests must not access quiz picker metadata.' );
+check_embed( ! ( $picker['permission_callback'] )( array() ), 'Guests must not access quiz picker metadata.' );
 $GLOBALS['can_author'] = true;
-check_embed( ( $GLOBALS['route_settings']['permission_callback'] )(), 'Content authors must access the quiz picker.' );
+check_embed( ( $picker['permission_callback'] )( array() ), 'Content authors must access the quiz picker.' );
+check_embed( array_column( ( $picker['callback'] )( array() ), 'id' ) === array( 7, 9 ), 'The picker route must return the block picker items.' );
 $route = $GLOBALS['routes']['/quiz-player/quizzes/(?P<id>\d+)/attempt'];
-check_embed( ! ( $route['permission_callback'] )(), 'Guests must not mutate attempts.' );
+check_embed( ! ( $route['permission_callback'] )( array() ), 'Guests must not mutate attempts.' );
 $GLOBALS['logged_in'] = true;
-check_embed( ( $route['permission_callback'] )(), 'Authenticated users may reach the shared access check.' );
+check_embed( ( $route['permission_callback'] )( array() ), 'Authenticated users may reach the shared access check.' );
 check_embed( array( 'saved' => true ) === QuizPlayerBlock::mutate( array( 'id' => 7, 'operation' => 'start' ) ), 'Start must return no score or redirects.' );
 check_embed( array( 7, 3, 'start' ) === $GLOBALS['submitted'], 'Start must delegate the authenticated user to the existing engine.' );
 foreach ( array( 'submit', 'exit', 'timeout' ) as $reason ) {

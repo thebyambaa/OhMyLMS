@@ -60,11 +60,11 @@ function videoHelp( link ) {
 }
 /**
  * Authoring controls for additional response formats.
- * @param root0
- * @param root0.type
- * @param root0.value
- * @param root0.onChange
- * @param root0.mainStatement
+ * @param {Object} root0
+ * @param          [root0.type]
+ * @param          [root0.value]
+ * @param          [root0.onChange]
+ * @param          [root0.mainStatement]
  */
 export function ExtendedEditor( {
 	type,
@@ -129,7 +129,6 @@ export function ExtendedEditor( {
 						compact
 						html={ false }
 						label={ __( 'Reading passage', 'ohmylms' ) }
-						rows={ 6 }
 						value={ value.passage || '' }
 						onChange={ ( passage ) => set( { passage } ) }
 					/>
@@ -345,7 +344,7 @@ export function ExtendedEditor( {
 							) }
 							<SelectControl
 								label={ __( 'Marker to move', 'ohmylms' ) }
-								value={ selected }
+								value={ String( selected ) }
 								options={ rows( diagramKey ).map(
 									( row, index ) => ( {
 										value: index,

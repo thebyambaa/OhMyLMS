@@ -1,4 +1,7 @@
 import { invalidResponse, record } from '../model';
+import { createValidators } from '../../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
 
 export type InsightSeverity = 'error' | 'warning' | 'success' | 'info';
 
@@ -24,13 +27,6 @@ const SEVERITIES: readonly InsightSeverity[] = [
 	'success',
 	'info',
 ];
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
-}
 
 function parseInsight( value: unknown ): Insight {
 	const item = record( value );

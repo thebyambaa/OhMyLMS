@@ -163,6 +163,13 @@
 					},
 					"default": 0,
 					"option": "ohmylms_profile_page_id"
+				},
+				"language_switcher": {
+					"schema": {
+						"type": "boolean"
+					},
+					"default": true,
+					"option": "ohmylms_language_switcher"
 				}
 			}
 		},

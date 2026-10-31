@@ -92,6 +92,7 @@ $hub_main  = array_values( array_diff( $config['tabs'], array( 'account', 'home'
 					<button type="button" data-hub-theme-set="light"><?php esc_html_e( 'Light', 'ohmylms' ); ?></button>
 					<button type="button" data-hub-theme-set="dark"><?php esc_html_e( 'Dark', 'ohmylms' ); ?></button>
 				</div>
+				<?php echo ohmylms_get_language_switcher( array( 'variant' => 'compact' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped by OhMyLMS\I18n\Switcher::render(). ?>
 				<div class="oml-hub-account">
 					<?php echo get_avatar( $user->ID, 32, '', '', array( 'class' => 'oml-hub-avatar' ) ); ?>
 					<span class="oml-hub-account-name"><?php echo esc_html( $user->display_name ); ?></span>

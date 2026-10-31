@@ -1,4 +1,3 @@
-/** @jsx createElement */
 import { createElement, useEffect, useRef, useState } from '@wordpress/element';
 import { select, useDispatch, useSelect } from '@wordpress/data';
 import {
@@ -170,6 +169,7 @@ export function usePaperTotals() {
 	return useSelect( ( getStore ) => {
 		const editor = getStore( 'core/block-editor' );
 		const paper = getStore( PAPER_STORE );
+		/** @type {Array<{kind: string, key?: string, marks?: number}>} */
 		const entries = [];
 		for ( const id of documentOrder( editor ) ) {
 			const name = editor.getBlockName( id );
@@ -213,7 +213,7 @@ export function useExamDetails() {
 /**
  * Header button that switches the canvas between normal editing and the paper sheet.
  *
- * @return {Element} Toggle button.
+ * @return {React.ReactElement} Toggle button.
  */
 export function PaperViewToggle() {
 	const view = usePaperView();
@@ -238,7 +238,9 @@ export function PaperViewToggle() {
  * @return {{doc: Document, wrapper: Element, root: Element}|null} Canvas parts.
  */
 function findCanvas() {
-	const frame = document.querySelector( 'iframe[name="editor-canvas"]' );
+	const frame = /** @type {HTMLIFrameElement|null} */ (
+		document.querySelector( 'iframe[name="editor-canvas"]' )
+	);
 	const doc = frame ? frame.contentDocument : document;
 	const wrapper = doc?.querySelector( '.editor-styles-wrapper' );
 	const root = wrapper?.querySelector( '.is-root-container' );
@@ -467,9 +469,9 @@ export function PaperCanvas() {
  * Print the saved paper or its answer key. Unsaved changes are saved first, because the print
  * page reads the saved exam; the tab opens at once so the browser does not block it.
  *
- * @param  root0
- * @param  root0.versions
- * @return {Element} Print buttons.
+ * @param {Object} root0
+ * @param {number} [root0.versions]
+ * @return {React.ReactElement} Print buttons.
  */
 function PrintButtons( { versions } ) {
 	const urls = window.ohmylmsNativeLesson?.printUrls;
@@ -573,7 +575,7 @@ function PrintButtons( { versions } ) {
 /**
  * Document sidebar panel with the paper layout settings, saved with the exam.
  *
- * @return {Element} Settings controls.
+ * @return {React.ReactElement} Settings controls.
  */
 export function PaperSettingsPanel() {
 	const value = useSelect(

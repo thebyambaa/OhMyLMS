@@ -10,6 +10,7 @@
 namespace OhMyLMS\Emails\CreatorsEmail;
 
 use OhMyLMS\Emails\Emails;
+use OhMyLMS\I18n\RecipientLocale;
 
 
 
@@ -98,7 +99,31 @@ class NewOrder {
 		if ( ! Emails::is_enabled( $settings ) ) {
 			return;
 		}
-		$to             = ! empty( $settings['recipient_email'] ) ? $settings['recipient_email'] : get_option( 'admin_email' );
+		$to   = ! empty( $settings['recipient_email'] ) ? $settings['recipient_email'] : get_option( 'admin_email' );
+		$sent = RecipientLocale::each(
+			$to,
+			function ( $recipients ) use ( $order, $data ) {
+				return $this->send( $order, $data, $recipients );
+			}
+		);
+
+		// Mark email as sent to prevent duplicates.
+		if ( in_array( true, $sent, true ) ) {
+			update_post_meta( $order->get_id(), '_creator_new_order_email_sent', true );
+		}
+	}
+
+	/**
+	 * Compose and send the email to recipients who share a language, in that language.
+	 *
+	 * @param mixed        $order The order object containing details of the new order.
+	 * @param mixed        $data  Additional data related to the order.
+	 * @param string|array $to    Recipients.
+	 * @return bool Whether it was sent.
+	 */
+	private function send( $order, $data, $to ) {
+		$email_sent     = false;
+		$settings       = Emails::get_template_settings( 'creator_new_order', $this->default_settings() );
 		$subject        = isset( $settings['subject'] ) ? $settings['subject'] : '';
 		$subject        = Emails::replace_merge_tags( $subject, $order );
 		$email_settings = Emails::get_email_settings();
@@ -141,11 +166,7 @@ class NewOrder {
 			}
 
 			$email_sent = wp_mail( $to, $subject, $html_body, $headers );
-
-			// Mark email as sent to prevent duplicates.
-			if ( $email_sent ) {
-				update_post_meta( $order->get_id(), '_creator_new_order_email_sent', true );
-			}
 		}
+		return (bool) $email_sent;
 	}
 }

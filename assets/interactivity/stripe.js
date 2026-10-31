@@ -78,7 +78,7 @@ function mount() {
 			} );
 			document
 				.querySelectorAll( '#stripe-payment-element-wrapper > p' )
-				.forEach( ( loading ) => {
+				.forEach( ( /** @type {HTMLElement} */ loading ) => {
 					loading.hidden = true;
 				} );
 			try {

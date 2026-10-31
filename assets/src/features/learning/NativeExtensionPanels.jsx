@@ -7,7 +7,7 @@ import { ExtensionBoundary } from '../../app/extensions/ExtensionBoundary';
  *
  * @param {Object} props        Component properties.
  * @param {number} props.quizId Quiz ID.
- * @return {Element} Registered panels.
+ * @return {React.ReactElement} Registered panels.
  */
 export function NativeExtensionPanels( { quizId } ) {
 	const registry = window.ohmylms?.extensions;

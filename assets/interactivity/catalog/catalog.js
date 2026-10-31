@@ -92,7 +92,7 @@ export function keyOf( name ) {
  * @return {number} Page.
  */
 export function clampPage( value ) {
-	const page = parseInt( value, 10 );
+	const page = parseInt( String( value ), 10 );
 	return Number.isFinite( page ) && page > 1 ? Math.min( page, MAX_PAGE ) : 1;
 }
 
@@ -106,7 +106,9 @@ export function readFilters( query ) {
 	const params =
 		query instanceof URLSearchParams
 			? query
-			: new URLSearchParams( query || '' );
+			: new URLSearchParams(
+					/** @type {string|string[][]} */ ( query || '' )
+				);
 	const filters = emptyFilters();
 	for ( const [ name, raw ] of params ) {
 		const key = keyOf( name );
@@ -295,21 +297,21 @@ export function popupPosition(
 /**
  * Store definitions.
  *
- * @param {Object}                                                                                api               Runtime and SDK.
- * @param {() => Object}                                                                          api.getContext    `@wordpress/interactivity` getContext.
- * @param {() => {ref: HTMLElement}}                                                              api.getElement    `@wordpress/interactivity` getElement.
- * @param {(callback: (event: Event) => void) => (event: Event) => void}                          api.withSyncEvent `@wordpress/interactivity` withSyncEvent.
- * @param {() => Object}                                                                          api.getState      Returns the live `ohmylms/catalog` state.
- * @param {(url: string, options: {replace: boolean}) => Promise<boolean>}                        api.navigate      Swaps the regions; resolves false when the page was loaded in full instead.
- * @param {() => boolean}                                                                         api.routed        Whether a client navigation happened (popstate then belongs to the router).
- * @param {(form: HTMLFormElement, options?: Object) => URLSearchParams}                          api.serializeForm SDK `serializeForm`.
- * @param {(callback: (...args: unknown[]) => void, ms: number) => (...args: unknown[]) => void}  api.debounce      SDK `debounce`.
- * @param {(target: EventTarget, name: string, detail?: Object, cancelable?: boolean) => boolean} api.emit          SDK `emit`.
- * @param {(container: Element) => HTMLElement[]}                                                 [api.focusable]   SDK `focusable`.
- * @param {(callback: () => void) => void}                                                        [api.frame]       `requestAnimationFrame`.
- * @param {Object}                                                                                [api.timers]      `setTimeout`, `clearTimeout` (tests).
- * @param {number}                                                                                [api.searchDelay] Debounce for typing, in ms.
- * @param {Window}                                                                                [api.win]         Window.
+ * @param {Object}                                                                                                                           api               Runtime and SDK.
+ * @param {() => Object}                                                                                                                     api.getContext    `@wordpress/interactivity` getContext.
+ * @param {() => {ref: HTMLElement}}                                                                                                         api.getElement    `@wordpress/interactivity` getElement.
+ * @param {(callback: (event: Event) => void) => (event: Event) => void}                                                                     api.withSyncEvent `@wordpress/interactivity` withSyncEvent.
+ * @param {() => Object}                                                                                                                     api.getState      Returns the live `ohmylms/catalog` state.
+ * @param {(url: string, options: {replace: boolean}) => Promise<boolean>}                                                                   api.navigate      Swaps the regions; resolves false when the page was loaded in full instead.
+ * @param {() => boolean}                                                                                                                    api.routed        Whether a client navigation happened (popstate then belongs to the router).
+ * @param {(form: HTMLFormElement, options?: Object) => URLSearchParams}                                                                     api.serializeForm SDK `serializeForm`.
+ * @param {(callback: (...args: Array<?>) => void, ms: number) => ((...args: Array<?>) => void) & {cancel?: () => void, flush?: () => void}} api.debounce      SDK `debounce`.
+ * @param {(target: EventTarget, name: string, detail?: Object, cancelable?: boolean) => boolean}                                            api.emit          SDK `emit`.
+ * @param {(container: Element) => HTMLElement[]}                                                                                            [api.focusable]   SDK `focusable`.
+ * @param {(callback: () => void) => void}                                                                                                   [api.frame]       `requestAnimationFrame`.
+ * @param {Object}                                                                                                                           [api.timers]      `setTimeout`, `clearTimeout` (tests).
+ * @param {number}                                                                                                                           [api.searchDelay] Debounce for typing, in ms.
+ * @param {Window}                                                                                                                           [api.win]         Window.
  * @return {{state: Object, actions: Object, callbacks: Object}} Definitions.
  */
 export function createCatalog( api ) {
@@ -362,11 +364,15 @@ export function createCatalog( api ) {
 	 */
 	const controlsOf = ( form, root ) => {
 		if ( form ) {
-			return [ ...form.elements ];
+			return /** @type {Array<HTMLInputElement|HTMLSelectElement>} */ ( [
+				...form.elements,
+			] );
 		}
 		const doc = root?.ownerDocument || win().document;
 		return [
-			...doc.querySelectorAll( 'input[name], select[name]' ),
+			.../** @type {Iterable<HTMLInputElement|HTMLSelectElement>} */ (
+				doc.querySelectorAll( 'input[name], select[name]' )
+			),
 		].filter( ( field ) => keyOf( field.name ) && ! field.form );
 	};
 
@@ -400,7 +406,9 @@ export function createCatalog( api ) {
 				continue;
 			}
 			if ( LISTS.includes( key ) ) {
-				field.checked = filters[ key ].includes( field.value );
+				/** @type {HTMLInputElement} */ ( field ).checked = filters[
+					key
+				].includes( field.value );
 			} else if ( 'search' === key && field.value !== filters.search ) {
 				field.value = filters.search;
 			} else if ( 'sort' === key ) {
@@ -528,7 +536,7 @@ export function createCatalog( api ) {
 			/**
 			 * Checkbox and sort changes (delegated from the root: the boxes sit in `ohmylms/ui` accordions).
 			 *
-			 * @param {Event} event `change` event.
+			 * @param {Event & {target: HTMLInputElement}} event `change` event.
 			 */
 			change( event ) {
 				const field = event.target;
@@ -557,7 +565,7 @@ export function createCatalog( api ) {
 			/**
 			 * Typing in the search box (debounced).
 			 *
-			 * @param {Event} event `input` event.
+			 * @param {Event & {target: HTMLInputElement}} event `input` event.
 			 */
 			input( event ) {
 				if ( 'search' !== keyOf( event.target?.name ) ) {
@@ -586,19 +594,26 @@ export function createCatalog( api ) {
 				} );
 			} ),
 			/** Enter/Space on the styled box next to a filter checkbox. */
-			keydown: withSyncEvent( ( event ) => {
-				const box = event.target?.closest?.( '.checkedbox' );
-				if ( ! box || ( 'Enter' !== event.key && ' ' !== event.key ) ) {
-					return;
+			keydown: withSyncEvent(
+				( /** @type {KeyboardEvent & {target: Element}} */ event ) => {
+					const box = /** @type {HTMLElement|null} */ (
+						event.target?.closest?.( '.checkedbox' )
+					);
+					if (
+						! box ||
+						( 'Enter' !== event.key && ' ' !== event.key )
+					) {
+						return;
+					}
+					const input = box.ownerDocument.getElementById(
+						box.dataset.target || ''
+					);
+					if ( input ) {
+						event.preventDefault();
+						input.click();
+					}
 				}
-				const input = box.ownerDocument.getElementById(
-					box.dataset.target || ''
-				);
-				if ( input ) {
-					event.preventDefault();
-					input.click();
-				}
-			} ),
+			),
 			/** "Clear all" in the filter sidebar. */
 			clear: withSyncEvent( ( event ) => {
 				event.preventDefault();
@@ -610,7 +625,7 @@ export function createCatalog( api ) {
 				go( context, root, filters, 'clear', { focus: 'heading' } );
 			} ),
 			/** Curriculum buttons (layouts 3 and 4): real links, followed by the router. */
-			category: withSyncEvent( ( event ) => {
+			category: withSyncEvent( ( /** @type {MouseEvent} */ event ) => {
 				if (
 					event.button > 0 ||
 					event.metaKey ||
@@ -670,9 +685,11 @@ export function createCatalog( api ) {
 			/** Close button inside the mobile filter drawer: the toggle closes it and keeps focus. */
 			closeFilters: withSyncEvent( ( event ) => {
 				event.preventDefault();
-				rootOf( getElement().ref )
-					?.querySelector( '.filter-hamburger' )
-					?.click();
+				/** @type {HTMLElement|null} */ (
+					rootOf( getElement().ref )?.querySelector(
+						'.filter-hamburger'
+					)
+				)?.click();
 			} ),
 			/** Back/Forward between catalogue URLs: the router swaps the regions, this syncs the controls. */
 			popstate() {
@@ -697,7 +714,7 @@ export function createCatalog( api ) {
 			/**
 			 * Layout-3 card popup (delegated, so cards from later navigations work too).
 			 *
-			 * @param {MouseEvent} event `mouseover` event.
+			 * @param {MouseEvent & {target: Element, relatedTarget: Node|null}} event `mouseover` event.
 			 */
 			cardOver( event ) {
 				const card = event.target?.closest?.( POPUP_CARD );
@@ -751,8 +768,8 @@ export function createCatalog( api ) {
 			/** Keep an open popup next to its card when the window is resized. */
 			reposition() {
 				const root = rootOf( getElement().ref );
-				const popup = root?.querySelector?.(
-					'.ohmylms-course-card-popup.active'
+				const popup = /** @type {HTMLElement|null} */ (
+					root?.querySelector?.( '.ohmylms-course-card-popup.active' )
 				);
 				const card = popup
 					? root.ownerDocument.getElementById(

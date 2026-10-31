@@ -1,5 +1,9 @@
 <?php
+define('ABSPATH', __DIR__ . '/');
+class WP_REST_Controller {}
 require dirname(__DIR__, 2) . '/includes/Extensions/TabPreferences.php';
+require dirname(__DIR__, 2) . '/includes/Extensions/Rest/TabPreferencesController.php';
+use OhMyLMS\Extensions\Rest\TabPreferencesController;
 use OhMyLMS\Extensions\TabPreferences;
 class WP_Error { public function __construct(public $code, public $message, public $data) {} }
 function is_wp_error($value) { return $value instanceof WP_Error; }
@@ -23,10 +27,11 @@ class Request implements ArrayAccess {
 }
 $GLOBALS['user'] = 1;
 $GLOBALS['capabilities'] = [];
-TabPreferences::register_routes();
-check(!$GLOBALS['route']['permission_callback'](), 'Non-managers cannot write preferences');
+(new TabPreferencesController())->register_routes();
+check(!$GLOBALS['route']['permission_callback'](new Request('content-hub', [])), 'Non-managers cannot write preferences');
 $GLOBALS['capabilities'] = ['manage_options'];
-check($GLOBALS['route']['permission_callback'](), 'Administrators can save their layout');
+check($GLOBALS['route']['permission_callback'](new Request('content-hub', [])), 'Administrators can save their layout');
+check(TabPreferences::save(new Request('content-hub', 'bad')) == $GLOBALS['route']['callback'](new Request('content-hub', 'bad')), 'The route saves through TabPreferences');
 $layout = ['order' => ['courses', 'catalog'], 'groups' => [['id' => 'g1', 'name' => "Teacher's <b>group</b>", 'background' => '#abcdef', 'text' => '#112233', 'collapsed' => true]], 'assignments' => ['catalog' => 'g1', 'courses' => 'unknown']];
 $prepared = TabPreferences::prepare($layout);
 check($prepared['groups'][0]['name'] === "Teacher's group", 'Names are sanitized');

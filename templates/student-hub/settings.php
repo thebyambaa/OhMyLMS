@@ -75,6 +75,15 @@ $hub_save = static function () {
 			<?php $hub_save(); ?>
 		</form>
 
+		<?php $hub_language = ohmylms_get_language_switcher( array( 'variant' => 'compact' ) ); ?>
+		<?php if ( '' !== $hub_language ) : ?>
+			<section class="oml-hub-card oml-hub-settings-card" aria-labelledby="hub-language-heading">
+				<h2 id="hub-language-heading"><?php esc_html_e( 'Language', 'ohmylms' ); ?></h2>
+				<p><?php esc_html_e( 'The language of your learning pages. It is saved to your account.', 'ohmylms' ); ?></p>
+				<?php echo $hub_language; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped by OhMyLMS\I18n\Switcher::render(). ?>
+			</section>
+		<?php endif; ?>
+
 		<?php $hub_open( 'about' ); ?>
 			<h2><?php esc_html_e( 'About you', 'ohmylms' ); ?></h2>
 			<div class="oml-hub-field"><label for="hub-bio"><?php esc_html_e( 'Bio', 'ohmylms' ); ?></label><textarea id="hub-bio" name="bio" rows="3" maxlength="1000"><?php echo esc_textarea( $hub_student->get_bio() ); ?></textarea></div>

@@ -67,26 +67,6 @@ final class ProgramGroups {
 	}
 
 	/**
-	 * Resolve explicit lesson links, falling back to the legacy single placement.
-	 *
-	 * @param array $program Course program.
-	 * @param array $group Lesson group.
-	 * @return int[] Skill identifiers.
-	 */
-	public static function skill_ids( array $program, array $group ) {
-		if ( isset( $group['skill_ids'] ) ) {
-			return $group['skill_ids'];
-		}
-		$ids = array();
-		foreach ( $program['outcomes'] ?? array() as $outcome ) {
-			if ( ( $outcome['group_id'] ?? '' ) === $group['id'] ) {
-				$ids[] = (int) $outcome['term_id'];
-			}
-		}
-		return $ids;
-	}
-
-	/**
 	 * Preserve explicit skill links when an older editor sends only lesson titles.
 	 *
 	 * @param array $groups Submitted groups.

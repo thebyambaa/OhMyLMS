@@ -29,6 +29,26 @@ class Achievements {
 	}
 
 	/**
+	 * Number of distinct learners holding each badge or level, in one grouped, bounded query (500 slugs).
+	 *
+	 * @param string $type Achievement type: `badge` or `level`.
+	 * @return array<string,int> Slug => learners.
+	 */
+	public static function earned_counts( $type ) {
+		global $wpdb;
+		$column = 'level' === $type ? 'level_id' : 'badge_id';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh grouped count; awards change it at any time.
+		$rows   = $wpdb->get_results(
+			$wpdb->prepare( 'SELECT %i AS slug, COUNT(DISTINCT user_id) AS learners FROM %i WHERE type = %s AND status = %s AND %i IS NOT NULL GROUP BY %i LIMIT 500', $column, $wpdb->prefix . 'ohmylms_user_achievement', $type, 'active', $column, $column )
+		);
+		$counts = array();
+		foreach ( (array) $rows as $row ) {
+			$counts[ (string) $row->slug ] = (int) $row->learners;
+		}
+		return $counts;
+	}
+
+	/**
 	 * Insert a new achievement.
 	 *
 	 * @param array $data Input data.
