@@ -239,7 +239,8 @@ jobs:
       # issued-certificates-integration fetches the public verification page over HTTP.
       - name: Serve WordPress on port 8080
         run: |
-          wp server --path="$WP_ROOT" --host=127.0.0.1 --port=8080 > "$RUNNER_TEMP/server.log" 2>&1 &
+          # The exit status (139 is a segfault) tells a crashed server from a PHP error in the log.
+          ( wp server --path="$WP_ROOT" --host=127.0.0.1 --port=8080; echo "wp server exited with status $?" ) > "$RUNNER_TEMP/server.log" 2>&1 &
           for _ in $(seq 30); do curl -sf -o /dev/null "http://$OHMYLMS_TEST_HOST/" && exit 0; sleep 1; done
           cat "$RUNNER_TEMP/server.log"; exit 1
 
@@ -261,3 +262,4 @@ jobs:
         run: |
           cat "$RUNNER_TEMP/server.log" || true
           cat "$WP_ROOT/wp-content/debug.log" || true
+          sudo dmesg | grep -iE 'php|segfault|oom|killed' | tail -n 20 || true
