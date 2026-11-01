@@ -137,9 +137,14 @@ manual marks) or `completed`. Collection arguments: `page`, `per_page` (1-100), 
 `status`, `student_id`, `orderby` (`started_at|score|student`), `order`.
 
 Attempt detail adds `passing_mark`, `passed`, `versioned` and `questions`: `{ question_id, position, title,
-type, max_marks, awarded, status, correct, answer[], parts[]|null, history[] }`. `answer` is plain text lines
-(option ids are replaced by their text); no answer key or option correctness is sent. `history` lists the
-last ten grade events with reviewer, reason and time.
+type, max_marks, awarded, status, correct, answer[], parts[]|null, rubric[]|null, rubric_scores|null,
+history[] }`. `answer` is plain text lines (option ids are replaced by their text); no answer key or option
+correctness is sent. `history` lists the last ten grade events with reviewer, reason, `rubric_scores` and
+time. `rubric` is the marking rubric of a `short-text` / `long-text` question as delivered (the frozen
+version's `settings.rubric`, see [questions](questions.md#marking-rubric)), as plain text: `[{ id, title,
+description, points, levels: [{ points, description }] }]`; `null` for other types and questions without
+one. `rubric_scores` is the breakdown saved with the current grade, `{ criterionId: points }` in rubric order,
+or `null` when the current grade was not given with the rubric.
 
 ```http
 POST /wp-json/ohmylms/v1/quizzes/11/attempts/21/grades
@@ -157,6 +162,46 @@ rewrites the answer rows, recomputes the attempt total as the sum of the answer 
 (reviewer, reason, UTC time; the previous event is superseded). Sending the same marks again is a no-op:
 `changed` is 0 and no event is written. Hooks `ohmylms_answer_regraded`, `ohmylms_attempt_graded`,
 `ohmylms_rest_review_quiz_attempt` and the completion hooks still run.
+
+### Rubric breakdown
+
+A grade of a `short-text` / `long-text` question may carry the points per rubric criterion:
+
+```json
+{ "grades": [ { "question_id": 102, "marks": 3, "rubric": { "reasoning": 3, "clarity": 0 } } ] }
+```
+
+`rubric` is an object of 1–20 numbers (0–10000). `Review::save()`, still the only writer, checks it inside
+the grading transaction against the rubric of the version the learner was delivered (422, nothing written,
+with `data.question_id`):
+
+| Code | When |
+| --- | --- |
+| `ohmylms_grade_rubric_unavailable` | The question has no rubric in this attempt (another type, no rubric, or an unversioned attempt). |
+| `ohmylms_grade_rubric_invalid` | An unknown criterion, a criterion left out, points outside 0 to the criterion's points, or points that are not one of its levels when it has levels (`data.criterion_id`). |
+| `ohmylms_grade_rubric_total` | `marks` is not the rubric score — the sum of the points, scaled to the question's maximum in the attempt when the quiz overrides its marks (`data.expected`); or the attempt awards whole marks (attempts started before the decimal migration) and the score is fractional. |
+
+The breakdown is stored as JSON in the new `rubric` column of the manual grade event (`grade_events`,
+assessment schema version 6, added on the next request by `Schema::install()`), the same row as the marks,
+reviewer, reason and time. A regrade writes a new event that supersedes the previous one, so the history
+keeps every earlier breakdown: sending a different breakdown writes a new event even when the marks stay
+the same; sending the same marks and breakdown again changes nothing (`changed: 0`); marks sent without a
+breakdown write an event without one, which clears the current breakdown. Evidence and attempt totals use
+the marks as before; the breakdown does not change manual or pending grading.
+
+Learners see the breakdown in their result (`AnswerReview`, the "How it was marked" list under their answer:
+each criterion's title, points awarded of its points and the chosen level's description, never the
+criterion's marking notes) only where the result already shows marked answers: the quiz shows answers on
+its results page and the attempt's feedback is released (`AssessmentSettings::feedback_visible()`, including
+exam result release). Otherwise it stays with staff (the attempt detail needs `GradingPolicy`).
+
+Grading screen (`AttemptReview.tsx`): a question with a rubric shows its criteria under the marks field,
+prefilled with the saved breakdown ("Saved with the current marks: …"); the grade history shows each
+event's breakdown. The grader picks a level (or types points for a criterion without levels). Once every
+criterion is scored, the marks field is filled with the total, scaled to the question's maximum in this
+attempt when the quiz overrides the question's points (for example a 4-point rubric in a question worth 8
+marks here: 2 of 4 becomes 4 marks), and the breakdown is sent with the marks. Marks typed over the rubric
+score are sent without a breakdown, which the screen says beforehand.
 
 ## Questions of a quiz
 
@@ -252,7 +297,13 @@ paged picker over `GET /questions` with type and "approved only" filters; questi
 questions and shared questions without an approved version cannot be chosen; optional pin); create (name and
 type, then the question bank's own draft editor, loaded lazily from `features/questions/draft/public.ts`,
 saving through `POST …/questions/new`); edit (link to `#/content-hub/question-bank/<id>` for questions the user
-may edit); move up/down buttons that keep keyboard focus on the moved question; pin/unpin; remove with a
+may edit); move up/down buttons that keep keyboard focus on the moved question; pin the version used
+now / unpin; **Versions** (questions the user may edit): a dialog listing the question's saved versions
+(`GET /questions/{id}/versions`, paged) with who saved each, which one is the latest, approved, pinned or
+delivered now, **View** (the version's statement, points and answers from
+`GET /questions/{id}/versions/{version_id}`) and **Pin** for any of them, plus **Unpin** (all through
+`PUT …/questions/{question_id}/pin` with the loaded revision; a 409 keeps the dialog open and reloads the
+list; use-only shared questions keep the single "pin the approved version" action); remove with a
 confirmation dialog; **Change marks** per question (the marks in this quiz, or back to the question's
 points); **Edit sections** (titles, order, start on a new page, the section of each question); **Edit random
 pools** (title, skill from a catalogue search, questions drawn, marks each, difficulty, bank, secure
@@ -285,10 +336,16 @@ the assessment fixtures:
 | `DELETE /quiz/{id}/questions/{question_id}` | `DELETE /quizzes/{id}/questions/{question_id}` (drops the pin and marks override too) |
 | `GET|PUT /quiz/{id}/pools` (no stale check, pool bank not checked) | `GET /quizzes/{id}/questions` (`pools`) and `PUT /quizzes/{id}/questions/pools` (`skill_id` instead of `term_id`) |
 
+The pools route was the last legacy route of random pools; its remaining caller, the `ohmylms_source_test`
+assessment fixture `tests/php/assessment/math.php`, was moved to `PUT /quizzes/{id}/questions/pools` with the
+loaded `revision` on 2 November 2026, so nothing in the plugin calls it. The native quiz editor's pools panel
+(`features/assessment/api.mjs`) and the app's **Edit random pools** dialog use the typed route only.
+
 ### Not covered (questions)
 
-- **Pin to a specific older version** is supported by the route; the app's quiz screen offers only "pin the
-  version used now" and "unpin" (the native editor's version history can pin any listed version).
+- **Quiz revisions cannot be pinned**: a new attempt always starts on the quiz's current content (published
+  as a revision by `Submission::start()`); `GET|POST /quiz/{id}/revisions` only list and publish. Older
+  versions can be pinned per question inside the quiz, not per quiz in a course or lesson.
 - **Section marks** are kept but not edited per section; per-question marks are edited instead (they win).
 - **Concurrent quiz settings saves**: `slot_marks` lives in `_quiz_settings`, which `PUT /quizzes/{id}` also
   rewrites (merging unknown keys); the two writers do not share a lock.
@@ -330,6 +387,7 @@ and `features/quizzes/QuizExchange.test.tsx`.
 | 409 | `ohmylms_attempt_not_submitted`, `ohmylms_attempt_not_versioned`, `quiz_attempt` | Grading an in-progress, pre-versioning or otherwise unavailable attempt. |
 | 422 | `ohmylms_quiz_invalid_title`, `_time_limit`, `_passing_score`, `_attempts`, `_layout`, `_questions_per_page`, `_feedback_mode`, `_availability`, `_status` | Semantic validation of the merged request. |
 | 422 | `ohmylms_grade_unknown_question`, `_duplicate_question`, `_exceeds_max`, `quiz_marks` | Grades outside the attempt, repeated, or above the maximum (`data.question_id`, `data.max`). |
+| 422 | `ohmylms_grade_rubric_unavailable`, `_rubric_invalid`, `_rubric_total` | A rubric breakdown that does not fit the delivered rubric or the marks ([Rubric breakdown](#rubric-breakdown)). |
 | 500 | `ohmylms_quiz_create_failed`, `_update_failed`, `_delete_failed`, `quiz_storage` | Database failure; nothing is changed. |
 | 400 | `ohmylms_quiz_questions_unknown_field`, `ohmylms_quiz_pin_invalid` | Questions routes: unknown body field; pin without exactly one of `version_id` / `current`. |
 | 403 | `ohmylms_quiz_question_forbidden`, `ohmylms_quiz_pin_forbidden` | A question the user may not use; pinning a non-approved version of a use-only question. |
@@ -372,18 +430,28 @@ version as a use-only user (403), a foreign version, invalid pin bodies, pin cur
 reorder mismatch/duplicate/conflict and the stored and learner order; remove (question kept, pin dropped);
 create in quiz with `POST /questions` validation, 201/`Location`/totals/ownership; create atomicity (a failing
 placement hook rolls the question back); detection of a legacy-route change; read-only pools in the totals;
-trashed quiz. `tests/php/quiz-questions-authoring-integration.php` (same flag) covers the marks, sections
-and pools routes: registration, 401/403/404, argument and semantic validation, stale revisions, storage,
-what publishing freezes (override marks, section order and page breaks), removal cleanup, bank permission
-and pool shortage. App tests: `QuizQuestions.test.tsx`, `questionsApi.test.ts`, `questionsModel.test.ts`,
-`QuizEditorPage.test.tsx`.
+trashed quiz; the frozen rubric of a short-text question in the attempt detail (plain text, `null` for a
+choice question) and no rubric in the learner delivery; rubric breakdowns: every refusal (no rubric,
+unknown or missing criterion, points that are not a level, above the criterion, marks other than the
+score, a fractional score in a whole-marks attempt, an empty object) writes nothing, a saved breakdown is
+stored with the manual grade event and returned in rubric order in the detail and its history, the same
+breakdown again writes nothing, a new breakdown supersedes it and the history keeps both, scaled marks are
+accepted and unscaled ones refused, the learner result shows titles, points and levels without marking
+notes only while feedback is visible, and marks without a breakdown clear it (276 checks). `tests/php/quiz-questions-authoring-integration.php`
+(same flag, 72 checks) covers the marks, sections and pools routes: registration, 401/403/404, argument and
+semantic validation, stale revisions, storage, what publishing freezes (override marks, section order and
+page breaks), removal cleanup, bank permission and pool shortage; and pinning an older version: the
+version list and content as the dialog reads them, a stale pin refused, the slot delivering the pinned
+version 1 (with its marks) while the question is at version 2, publishing freezing it, and unpinning back
+to the latest version. App tests: `QuizQuestions.test.tsx`, `VersionPinDialog.test.tsx`,
+`questionsApi.test.ts`, `questionsModel.test.ts`, `QuizEditorPage.test.tsx`, `RubricGrading.test.tsx`.
 
 ## Old callers that break
 
 `assets/src/features/quiz-reports/*` and `assets/src/application/screens/quiz-report*` (report and grading
-routes; both deleted at the cutover), the old quiz list (`GET /quiz`, `trash-bulk`), `tests/php/assessment/versioning.php` (calls
-`GET quiz/{id}/report/{attempt}`; `Review::save()` is unchanged and still tested directly). The question editor
+routes; both deleted at the cutover) and the old quiz list (`GET /quiz`, `trash-bulk`). The question editor
 and internal callers (`SkillAssessment`, `ExamImport\Workflow`, `Learning\ActivityDrafts`) keep working on the
-authoring routes. The `ohmylms_source_test` assessment suite (`tests/php/assessment/*`) still calls the removed
-placement routes (`quiz/{id}/questions`, `…/pin`, `DELETE quiz/{id}/questions/{qid}`, `quiz/{id}/pools`) and
-`POST question` with `quiz_id`; see [questions](questions.md#not-covered).
+authoring routes. The `ohmylms_source_test` assessment suite (`tests/php/assessment/*`) moved off the removed
+placement and report routes on 2 November 2026: `POST /quizzes/{id}/questions/new`, `…/questions` (add),
+`…/questions/copy`, `…/questions/{id}/pin`, `…/questions/pools`, and `GET /quizzes/{id}/attempts[/{attempt_id}]`
+with `POST …/grades` for reports and per-part marks; see [questions](questions.md#not-covered).

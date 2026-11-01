@@ -138,7 +138,7 @@ final class SourcePages {
 		if ( is_wp_error( $root ) || ! wp_is_uuid( (string) $document['id'] ) ) {
 			return is_wp_error( $root ) ? $root : self::unavailable();
 		}
-		$contract = substr( md5( PageRenderer::VERSION . ':' . PageRenderer::MAX_SIDE . ':' . $document['sha256'] ), 0, 12 );
+		$contract = substr( md5( PageRenderer::contract() . ':' . PageRenderer::MAX_SIDE . ':' . $document['sha256'] ), 0, 12 );
 		return $root . DIRECTORY_SEPARATOR . 'page-' . $document['id'] . '-' . (int) $page . '-' . $contract . '.png';
 	}
 

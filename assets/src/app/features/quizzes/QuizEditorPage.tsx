@@ -200,7 +200,7 @@ export default function QuizEditorPage() {
 				</Link>
 			</p>
 			<div className="oml-editor-header">
-				<div className="oml-editor-header__title">
+				<div className="oml-editor-header-title">
 					<h2>
 						{ sprintf(
 							/* translators: %s: quiz title. */
@@ -209,7 +209,7 @@ export default function QuizEditorPage() {
 						) }
 					</h2>
 					<span
-						className={ `oml-editor-status oml-editor-status--${ quiz.status }` }
+						className={ `oml-editor-status oml-editor-status-${ quiz.status }` }
 					>
 						{ 'publish' === quiz.status
 							? __( 'Published', 'ohmylms' )
@@ -225,7 +225,7 @@ export default function QuizEditorPage() {
 						</span>
 					) }
 				</div>
-				<div className="oml-editor-header__actions">
+				<div className="oml-editor-header-actions">
 					{ dirty && (
 						<span className="oml-editor-saved" role="status">
 							{ __( 'You have unsaved changes.', 'ohmylms' ) }

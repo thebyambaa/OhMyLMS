@@ -163,7 +163,7 @@ export default function SkillMapPage() {
 		<section>
 			<p>
 				{ __(
-					'See how a subject’s shared skills fit together across domains and levels, which of them a syllabus teaches and how far a learner, class or school has mastered them. The map is read-only; place skills and edit links in the curriculum workspace.',
+					'See how a subject’s shared skills fit together across domains and levels, which of them a syllabus teaches and how far a learner, class or school has mastered them. The map is read-only; curriculum administrators place skills and edit links in the curriculum workspace.',
 					'ohmylms'
 				) }
 			</p>

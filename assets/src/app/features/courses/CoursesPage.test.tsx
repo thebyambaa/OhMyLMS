@@ -14,6 +14,13 @@ vi.mock( './api', () => ( {
 	restoreCourse: vi.fn(),
 	deleteCourse: vi.fn(),
 } ) );
+vi.mock( '../syllabus/public', () => ( {
+	CourseFromSyllabusDialog: ( { onClose }: { onClose: () => void } ) => (
+		<div role="dialog" aria-label="Create a course from a syllabus">
+			<button onClick={ onClose }>Close generator</button>
+		</div>
+	),
+} ) );
 
 function renderPage() {
 	return render(
@@ -69,6 +76,24 @@ describe( 'CoursesPage', () => {
 		expect( screen.getAllByText( '2 courses found.' )[ 0 ] ).toHaveClass(
 			'displaying-num'
 		);
+	} );
+	it( 'opens the course-from-syllabus workflow without creating anything', async () => {
+		const user = userEvent.setup();
+		renderPage();
+		await screen.findByRole( 'table', { name: 'Courses' } );
+		await user.click(
+			screen.getByRole( 'button', { name: 'Create from syllabus' } )
+		);
+		expect(
+			await screen.findByRole( 'dialog', {
+				name: 'Create a course from a syllabus',
+			} )
+		).toBeInTheDocument();
+		expect( api.createCourse ).not.toHaveBeenCalled();
+		await user.click(
+			screen.getByRole( 'button', { name: 'Close generator' } )
+		);
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
 	} );
 	it( 'shows an empty state', async () => {
 		vi.mocked( api.listCourses ).mockResolvedValue( {

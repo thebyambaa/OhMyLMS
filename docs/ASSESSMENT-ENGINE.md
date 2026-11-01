@@ -269,6 +269,13 @@ performance report.
 - Structured questions: teachers can mark each part in the grading screen (sent as
   `part_marks`) or enter a whole-question mark (automatic parts keep their scores, the rest goes
   to written parts). Choice-type parts are not supported.
+- Short and long text questions may carry a teacher-only rubric (`settings.rubric`, criteria with points
+  and optional levels; `Assessment\Rubric`), frozen with the version and never delivered to learners.
+  The grading screen scores each criterion and fills in the question's marks from the total (scaled
+  when the quiz overrides the marks). `Review::save()` checks the breakdown against the delivered rubric
+  and stores it with the manual grade event (`grade_events.rubric`, schema version 6), so regrades keep
+  the earlier breakdowns in the history; marks, evidence, manual and pending grading behave as before.
+  Learners see it with their marked answers only when feedback is visible.
 - Pool feasibility is checked greedily across pools; unusual overlaps may be reported short.
 - Not built: symbolic equivalence, follow-through marking, Moodle XML import/export,
   generators, PDF/mark-scheme export. (Quiz files, bulk import, exam PDF import and AI-drafted

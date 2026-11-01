@@ -9,6 +9,7 @@ import {
 	Suspense,
 	useCallback,
 	useEffect,
+	useMemo,
 	useRef,
 	useState,
 } from '@wordpress/element';
@@ -17,6 +18,7 @@ import type { ComponentType } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ExtensionBoundary } from '../../extensions/ExtensionBoundary';
 import { useExtensions } from '../../extensions/context';
+import { settingsDefinitions } from '../../extensions/settings';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import { normalizeApiError } from '../../lib/api';
 import { AddToQuizDialog } from './AddToQuizDialog';
@@ -39,6 +41,7 @@ import {
 	derivedPoints,
 	DIFFICULTIES,
 	difficultyLabel,
+	extensionErrors,
 	formFromQuestion,
 	isDirty,
 	isValid,
@@ -53,17 +56,21 @@ import {
 	toInput,
 	typeLabel,
 	usageLabel,
+	usesRubric,
 	validateForm,
 	versionLabel,
 } from './model';
 import { errorId, FieldError, OptionsEditor } from './OptionsEditor';
 import { PlayerPreview } from './PlayerPreview';
+import { QuestionExtensionSettings } from './QuestionExtensionSettings';
 import {
 	BankFields,
 	MediaFields,
 	SharedSettingsFields,
 	SkillsFields,
 } from './QuestionFields';
+import { rubricTotal } from './rubric';
+import { RubricEditor } from './RubricEditor';
 import type { QuestionHandoff } from './useQuestionEditor';
 import { Versions } from './Versions';
 import { VariablesPanel } from './VariablesPanel';
@@ -221,6 +228,8 @@ export function QuestionWorkspace( {
 	);
 	const area = answerArea( type, Boolean( extension ) );
 	const points = scoreMode( type );
+	const rubric = usesRubric( type, form );
+	const definitions = useMemo( () => settingsDefinitions( 'question' ), [] );
 
 	useEffect( () => () => operation.current?.abort(), [] );
 
@@ -318,6 +327,7 @@ export function QuestionWorkspace( {
 		if ( settingsError ) {
 			problems.settings = settingsError;
 		}
+		Object.assign( problems, extensionErrors( definitions, form, saved ) );
 		setErrors( problems );
 		setMessage( null );
 		setConflict( null );
@@ -479,7 +489,7 @@ export function QuestionWorkspace( {
 				</p>
 			) }
 			<div className="oml-editor-header">
-				<div className="oml-editor-header__title">
+				<div className="oml-editor-header-title">
 					<Heading>
 						{ draft
 							? sprintf(
@@ -502,7 +512,7 @@ export function QuestionWorkspace( {
 					</span>
 					{ ! draft && (
 						<span
-							className={ `oml-editor-status oml-editor-status--${ question.status }` }
+							className={ `oml-editor-status oml-editor-status-${ question.status }` }
 						>
 							{ question.status }
 						</span>
@@ -519,7 +529,7 @@ export function QuestionWorkspace( {
 						</span>
 					) }
 				</div>
-				<div className="oml-editor-header__actions">
+				<div className="oml-editor-header-actions">
 					{ ! draft && dirty && (
 						<span className="oml-editor-saved" role="status">
 							{ __( 'You have unsaved changes.', 'ohmylms' ) }
@@ -636,7 +646,21 @@ export function QuestionWorkspace( {
 								field="description"
 								message={ errors.description }
 							/>
-							{ 'points' === points && (
+							{ 'points' === points && rubric && (
+								<p>
+									{ sprintf(
+										/* translators: %s: total points. */
+										__(
+											'Points: %s (the total of the rubric’s criteria; change the points of each criterion below).',
+											'ohmylms'
+										),
+										String(
+											rubricTotal( form.rubric ) ?? '—'
+										)
+									) }
+								</p>
+							) }
+							{ 'points' === points && ! rubric && (
 								<>
 									<TextControl
 										label={ __( 'Points', 'ohmylms' ) }
@@ -716,7 +740,19 @@ export function QuestionWorkspace( {
 								}
 							/>
 						) }
-						{ 'manual' === area && <ManualAnswer type={ type } /> }
+						{ 'manual' === area && (
+							<>
+								<ManualAnswer type={ type } />
+								<RubricEditor
+									rows={ form.rubric }
+									errors={ errors }
+									disabled={ busy || readOnly }
+									onChange={ ( next ) =>
+										update( 'rubric', next )
+									}
+								/>
+							</>
+						) }
 						{ 'extension' === area &&
 							extension &&
 							ExtensionEditor && (
@@ -815,6 +851,27 @@ export function QuestionWorkspace( {
 							errors={ errors }
 							disabled={ busy || readOnly }
 							onChange={ ( next ) => update( 'skills', next ) }
+						/>
+						<QuestionExtensionSettings
+							definitions={ definitions }
+							question={ {
+								id: question.id,
+								type,
+								name: saved.name,
+							} }
+							values={ form.extension }
+							errors={ errors }
+							disabled={ busy || readOnly }
+							onChange={ ( id, next ) => {
+								setForm( ( current ) => ( {
+									...current,
+									extension: {
+										...current.extension,
+										[ id ]: next,
+									},
+								} ) );
+								setMessage( null );
+							} }
 						/>
 
 						{ ! readOnly && (

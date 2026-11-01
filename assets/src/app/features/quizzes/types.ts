@@ -135,7 +135,18 @@ export interface GradeEvent {
 	reviewer_id: number;
 	reviewer_name: string;
 	reason: string;
+	/** Points by rubric criterion id saved with this grade; `null` when it was not graded with the rubric. */
+	rubric_scores: Record< string, number > | null;
 	created_at: string;
+}
+
+/** A criterion of the marking rubric of a short or long text question (plain text). */
+export interface RubricCriterion {
+	id: string;
+	title: string;
+	description: string;
+	points: number;
+	levels: { points: number; description: string }[];
 }
 
 /** A question of an attempt with the learner's answer and marks. */
@@ -150,8 +161,15 @@ export interface AttemptQuestion {
 	correct: boolean | null;
 	answer: string[];
 	parts: AttemptPart[] | null;
+	/** Rubric of the delivered version; `null` when it has none. */
+	rubric: RubricCriterion[] | null;
+	/** Points by criterion id saved with the current grade; `null` without a saved breakdown. */
+	rubric_scores: Record< string, number > | null;
 	history: GradeEvent[];
 }
+
+/** Points the grader chose per rubric criterion, as text, by criterion id. */
+export type RubricScores = Record< string, string >;
 
 /** An attempt with its questions. */
 export interface AttemptDetail extends Attempt {
@@ -173,12 +191,16 @@ export type Marks = number | Record< string, number >;
 export interface GradeInput {
 	question_id: number;
 	marks: Marks;
+	/** Points by rubric criterion id; the marks must be the rubric score scaled to the question. */
+	rubric?: Record< string, number >;
 }
 
 /** What the grader typed for a question. */
 export interface QuestionDraft {
 	total: string;
 	parts: Record< string, string >;
+	/** Points chosen per rubric criterion. */
+	rubric?: RubricScores;
 }
 
 /** Drafts by question id. */

@@ -319,7 +319,7 @@ try {
 			wp_set_current_user( $author );
 			$probe    = call_api( 'GET', 'exam-imports/renderer' );
 			$renderer = ok_status( $probe, 200, 'author renderer probe' );
-			ok( true === $renderer['available'] && 'poppler' === $renderer['engine'] && '' === $renderer['reason'], 'Poppler is available' );
+			ok( true === $renderer['available'] && 'poppler' === $renderer['engine'] && '' === $renderer['reason'] && '' === $renderer['poppler_reason'], 'Poppler is available and preferred' );
 			ok( preg_match( '/^\d+\.\d+(?:\.\d+)?$/', $renderer['version'] ), 'Poppler version reported' );
 			ok( true === $renderer['crops'] && 'poppler-crop-1' === $renderer['contract'] && 2400 === $renderer['max_side'] && 20 === $renderer['timeout_seconds'], 'crop capability and limits reported' );
 			ok( 'rotated-cropbox-normalized-top-left' === $renderer['coordinate_space'] && is_bool( $renderer['imagick'] ), 'coordinate space and Imagick flag reported' );
@@ -505,6 +505,26 @@ try {
 				'exam_crop_bounds',
 				'empty height'
 			);
+			$tiny = call_api(
+				'POST',
+				"exam-imports/jobs/$job/figures",
+				array(
+					'page'   => 1,
+					'bounds' => array( 0.2, 0.2, 0.204, 0.8 ),
+				)
+			);
+			ok_error( $tiny, 400, 'exam_crop_bounds', 'a crop narrower than half a percent of the page' );
+			ok( 'too_small' === $tiny->get_data()['data']['reason'], 'the too-small crop says why' );
+			$past = call_api(
+				'POST',
+				"exam-imports/jobs/$job/figures",
+				array(
+					'page'   => 4,
+					'bounds' => array( 0.2, 0.2, 0.8, 0.8 ),
+				)
+			);
+			ok_error( $past, 400, 'exam_crop_bounds', 'a crop on a page after the last' );
+			ok( 'page' === $past->get_data()['data']['reason'] && false !== strpos( $past->get_data()['message'], '3 pages' ), 'the page error names the page count' );
 			ok_error(
 				call_api(
 					'POST',
@@ -655,6 +675,118 @@ try {
 				'ohmylms_exam_import_conflict',
 				'stale crop save'
 			);
+
+			// A figure keeps the page and bounds of its crop; an accepted crop lies inside its page.
+			foreach ( array(
+				'other bounds' => array( 'bounds' => array( 0.25, 0.125, 0.75, 0.5 ) ),
+				'other page'   => array( 'page' => 2 ),
+			) as $label => $change ) {
+				$moved = call_api(
+					'PATCH',
+					"exam-imports/jobs/$job/rows/0",
+					array(
+						'revision' => $saved['revision'],
+						'figures'  => array( array_merge( $figure, $change ) ),
+					)
+				);
+				ok_error( $moved, 400, 'ohmylms_exam_import_figure_bounds', "a figure with $label than its crop" );
+				$data = $moved->get_data()['data'];
+				ok( 'mismatch' === $data['reason'] && 0 === $data['index'] && 'f1' === $data['figure'], "the $label mismatch names the row and figure" );
+			}
+			ok( $saved['revision'] === (int) get_post_meta( $job, Jobs::META, true )['draft_revision'], 'refused figure saves change nothing' );
+			$approved = ok_status(
+				call_api(
+					'PATCH',
+					"exam-imports/jobs/$job/rows/0",
+					array(
+						'revision' => $saved['revision'],
+						'figures'  => array( array_merge( $figure, array( 'approved' => true ) ) ),
+					)
+				),
+				200,
+				'approved figure saved'
+			);
+			$asset_post = (int) get_posts(
+				array(
+					'post_type'   => Figures::TYPE,
+					'post_status' => 'private',
+					'name'        => $crop['id'],
+					'fields'      => 'ids',
+				)
+			)[0];
+			$rendered   = get_post_meta( $asset_post, Figures::META, true );
+			ok( PageRenderer::inside( $rendered['pixel_bounds'], $rendered['page_width'], $rendered['page_height'] ) && array( 600, 150, 1800, 1050 ) === $rendered['pixel_bounds'], 'the rendered crop lies inside its page raster: ' . wp_json_encode( $rendered['pixel_bounds'] ) );
+			$outside                    = $rendered;
+			$outside['pixel_bounds'][2] = $rendered['page_width'] + 10;
+			update_post_meta( $asset_post, Figures::META, wp_slash( $outside ) );
+			$refused = call_api( 'POST', "exam-imports/jobs/$job/rows/0/accept", array( 'revision' => $approved['revision'] ) );
+			ok_error( $refused, 400, 'ohmylms_exam_import_figure_bounds', 'accepting a crop that leaves its page' );
+			ok( 'outside' === $refused->get_data()['data']['reason'], 'the outside crop says why' );
+			$stored = get_post_meta( $job, Jobs::META, true );
+			$narrow = array( 0.25, 0.125, 0.252, 0.875 );
+			$draft  = $stored;
+
+			$draft['draft'][0]['figures'][0]['bounds'] = $narrow;
+			update_post_meta( $asset_post, Figures::META, wp_slash( array_merge( $rendered, array( 'bounds' => $narrow ) ) ) );
+			update_post_meta( $job, Jobs::META, wp_slash( $draft ) );
+			$refused = call_api( 'POST', "exam-imports/jobs/$job/rows/0/accept", array( 'revision' => $approved['revision'] ) );
+			ok_error( $refused, 400, 'ohmylms_exam_import_figure_bounds', 'accepting a degenerate crop' );
+			ok( 'too_small' === $refused->get_data()['data']['reason'], 'the degenerate crop says why' );
+			update_post_meta( $asset_post, Figures::META, wp_slash( $rendered ) );
+			update_post_meta( $job, Jobs::META, wp_slash( $stored ) );
+			$accepted = ok_status( call_api( 'POST', "exam-imports/jobs/$job/rows/0/accept", array( 'revision' => $approved['revision'] ) ), 200, 'the matching crop inside its page is accepted' );
+			ok( 'accepted' === $accepted['rows'][0]['status'], 'row accepted' );
+
+			// Imagick (Ghostscript) as the fallback renderer, when this PHP has it.
+			$only_imagick = static function () {
+				return array( 'imagick' );
+			};
+			add_filter( 'ohmylms_exam_import_renderers', $only_imagick );
+			$fallback = PageRenderer::status();
+			if ( $fallback['available'] ) {
+				$probe = ok_status( call_api( 'GET', 'exam-imports/renderer' ), 200, 'probe with the Imagick fallback' );
+				ok( 'imagick' === $probe['engine'] && 'imagick-crop-1' === $probe['contract'] && '' === $probe['reason'] && 'not_configured' === $probe['poppler_reason'] && true === $probe['imagick'] && preg_match( '/^\d/', $probe['version'] ), 'Imagick is the engine and says why Poppler is not: ' . wp_json_encode( $probe ) );
+				$imagick_page = ok_status( call_api( 'GET', "exam-imports/jobs/$job/pages/1" ), 200, 'Imagick page 1' );
+				ok( 2400 === $imagick_page['width'] && 1200 === $imagick_page['height'], 'Imagick landscape raster equals Poppler\'s' );
+				$imagick_rotated = ok_status( call_api( 'GET', "exam-imports/jobs/$job/pages/2" ), 200, 'Imagick rotated page' );
+				ok( 1200 === $imagick_rotated['width'] && 2400 === $imagick_rotated['height'], 'Imagick follows the page rotation' );
+				$imagick_cropped = ok_status( call_api( 'GET', "exam-imports/jobs/$job/pages/3" ), 200, 'Imagick CropBox page' );
+				ok( 2400 === $imagick_cropped['width'] && 1200 === $imagick_cropped['height'], 'Imagick renders the CropBox' );
+				$files = array_merge( $files, cached_pages( $paper ) );
+				ok( 6 === count( cached_pages( $paper ) ), 'Imagick pages are cached under their own contract, beside Poppler\'s' );
+				$imagick_crop = ok_status(
+					call_api(
+						'POST',
+						"exam-imports/jobs/$job/figures",
+						array(
+							'page'   => 1,
+							'bounds' => $bounds,
+						)
+					),
+					201,
+					'crop queued for the Imagick renderer'
+				);
+				ok( $crop['id'] !== $imagick_crop['id'], 'the same bounds under another renderer contract are a new crop' );
+				Figures::process(
+					(int) get_posts(
+						array(
+							'post_type'   => Figures::TYPE,
+							'post_status' => 'private',
+							'name'        => $imagick_crop['id'],
+							'fields'      => 'ids',
+						)
+					)[0]
+				);
+				$files[]       = Documents::root() . DIRECTORY_SEPARATOR . 'figure-' . $imagick_crop['id'] . '.png';
+				$imagick_asset = Figures::asset( $imagick_crop['id'] );
+				ok( 'ready' === $imagick_asset['state'] && 'imagick-crop-1' === $imagick_asset['engine'] && 1200 === $imagick_asset['width'] && 900 === $imagick_asset['height'] && array( 600, 150, 1800, 1050 ) === $imagick_asset['pixel_bounds'], 'Imagick cuts the same pixels as Poppler: ' . wp_json_encode( array_intersect_key( $imagick_asset, array_flip( array( 'state', 'error', 'engine', 'width', 'height', 'pixel_bounds' ) ) ) ) );
+				ok( isset( $imagick_asset['width_mm'] ) && $imagick_asset['width_mm'] > 0, 'the Imagick crop keeps its physical size' );
+			} else {
+				ok( in_array( $fallback['reason'], array( 'not_configured', 'storage' ), true ) && false === $fallback['available'], 'without Imagick reading PDF the fallback reports itself unavailable (' . ( $fallback['imagick'] ? 'Imagick lists PDF but cannot read it' : 'no Imagick' ) . ')' );
+				echo "Note: this PHP has no Imagick reading PDF; the fallback renderer was not exercised.\n";
+			}
+			remove_filter( 'ohmylms_exam_import_renderers', $only_imagick );
+			ok( 'poppler' === PageRenderer::status()['engine'], 'Poppler stays preferred when configured' );
 
 			// Deleting the job removes its cached pages.
 			wp_delete_post( $job, true );

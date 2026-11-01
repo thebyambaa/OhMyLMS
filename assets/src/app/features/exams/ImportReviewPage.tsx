@@ -31,7 +31,7 @@ import {
 	searchSkills,
 	updateRow,
 } from './api';
-import { isBounds, type Bounds } from './cropGeometry';
+import { MIN_SIDE, isBounds, round6, type Bounds } from './cropGeometry';
 import FigureProposalPanel from './FigureProposalPanel';
 import type { SourceFocus } from './SourcePanel';
 import type { SourceInfo } from './sourceModel';
@@ -84,6 +84,37 @@ function nextFigureId( figures: readonly ImportFigure[] ): string {
 
 function routeId( value: string | undefined ): number | null {
 	return value && /^[1-9]\d*$/.test( value ) ? Number( value ) : null;
+}
+
+/**
+ * The saved figure a refused crop (`ohmylms_exam_import_figure_bounds`) names, to redraw on the page.
+ *
+ * @param failure Last failure.
+ * @param rows    Rows of the job.
+ * @return Row index and figure ID, or null.
+ */
+function figureToRedraw(
+	failure: ApiError | null,
+	rows: readonly ImportRow[]
+): { row: number; figure: string } | null {
+	const details = failure?.details;
+	if (
+		'ohmylms_exam_import_figure_bounds' !== failure?.code ||
+		! details ||
+		'object' !== typeof details
+	) {
+		return null;
+	}
+	const { index, figure } = details as Record< string, unknown >;
+	return 'number' === typeof index &&
+		'string' === typeof figure &&
+		rows.some(
+			( row ) =>
+				row.index === index &&
+				row.figures.some( ( item ) => item.id === figure )
+		)
+		? { row: index, figure }
+		: null;
 }
 
 function kindLabel( kind: PartKind ): string {
@@ -521,12 +552,24 @@ function RowEditor( {
 										),
 									} ) ),
 								] }
-								onChange={ ( assetId ) =>
-									setFigure( index, {
-										...item,
-										asset_id: assetId,
-									} )
-								}
+								onChange={ ( assetId ) => {
+									// The server refuses a figure whose page and area differ from its crop's.
+									const chosen = readyCrops.find(
+										( entry ) => entry.id === assetId
+									);
+									setFigure(
+										index,
+										chosen
+											? {
+													...item,
+													asset_id: chosen.id,
+													page: chosen.page,
+													bounds: chosen.bounds,
+													approved: false,
+												}
+											: { ...item, asset_id: assetId }
+									);
+								} }
 							/>
 							<TextControl
 								label={ __(
@@ -883,6 +926,7 @@ export default function ImportReviewPage() {
 	}
 
 	const current = job;
+	const redraw = figureToRedraw( failure, current.rows );
 	const reviewable = 'ready_for_review' === current.state;
 	const pending = current.rows.filter(
 		( row ) => 'pending' === row.status
@@ -1035,24 +1079,37 @@ export default function ImportReviewPage() {
 		const values = [ crop.left, crop.top, crop.right, crop.bottom ].map(
 			( value ) => Number( value ) / 100
 		);
+		const pages = current.inventory.page_count;
 		const valid =
 			/^\d{1,3}$/.test( crop.page ) &&
 			Number( crop.page ) >= 1 &&
+			( ! pages || Number( crop.page ) <= pages ) &&
 			values.every(
 				( value ) =>
 					Number.isFinite( value ) && value >= 0 && value <= 1
 			) &&
-			( values[ 0 ] as number ) < ( values[ 2 ] as number ) &&
-			( values[ 1 ] as number ) < ( values[ 3 ] as number );
+			round6( ( values[ 2 ] as number ) - ( values[ 0 ] as number ) ) >=
+				MIN_SIDE &&
+			round6( ( values[ 3 ] as number ) - ( values[ 1 ] as number ) ) >=
+				MIN_SIDE;
 		if ( ! valid ) {
 			setFailure(
 				new ApiError( {
 					status: 422,
 					code: 'ohmylms_exam_import_crop',
-					message: __(
-						'Choose a page and a crop area from 0 to 100 percent, with left before right and top before bottom.',
-						'ohmylms'
-					),
+					message: pages
+						? sprintf(
+								/* translators: %d: pages of the paper. */
+								__(
+									'Choose a page from 1 to %d and a crop area from 0 to 100 percent, with left before right and top before bottom, at least half a percent wide and high.',
+									'ohmylms'
+								),
+								pages
+							)
+						: __(
+								'Choose a page and a crop area from 0 to 100 percent, with left before right and top before bottom, at least half a percent wide and high.',
+								'ohmylms'
+							),
 				} )
 			);
 			return;
@@ -1120,6 +1177,27 @@ export default function ImportReviewPage() {
 							{ ' ' }
 							<Button variant="link" onClick={ request.retry }>
 								{ __( 'Reload the latest version', 'ohmylms' ) }
+							</Button>
+						</>
+					) }
+					{ viewable && redraw && (
+						<>
+							{ ' ' }
+							<Button
+								variant="link"
+								onClick={ () => {
+									setFailure( null );
+									setFocus( redraw );
+								} }
+							>
+								{ sprintf(
+									/* translators: %s: figure ID. */
+									__(
+										'Redraw figure %s on the page',
+										'ohmylms'
+									),
+									redraw.figure
+								) }
 							</Button>
 						</>
 					) }

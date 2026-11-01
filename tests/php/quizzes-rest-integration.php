@@ -440,10 +440,33 @@ try {
 		array(
 			'name'     => 'Explain why',
 			'settings' => array(
-				'type'  => 'short-text',
-				'score' => array(
+				'type'   => 'short-text',
+				'score'  => array(
 					'enabled' => true,
 					'value'   => 4,
+				),
+				'rubric' => array(
+					array(
+						'id'          => 'reasoning',
+						'title'       => '<strong>Reasoning</strong>',
+						'description' => 'Gives a reason.',
+						'points'      => 3,
+						'levels'      => array(
+							array(
+								'points'      => 3,
+								'description' => 'Complete',
+							),
+							array(
+								'points'      => 0,
+								'description' => 'Missing',
+							),
+						),
+					),
+					array(
+						'id'     => 'clarity',
+						'title'  => 'Clarity',
+						'points' => 1,
+					),
 				),
 			),
 			'options'  => array(
@@ -505,6 +528,7 @@ try {
 	$attempt = Submission::start( $quiz_id, $student );
 	ok( is_int( $attempt ), 'attempt started: ' . ( is_wp_error( $attempt ) ? $attempt->get_error_message() : '' ) );
 	$attempts[] = $attempt;
+	ok( false === strpos( (string) wp_json_encode( \OhMyLMS\Assessment\AttemptItems::delivery( $attempt ) ), 'Gives a reason.' ), 'the learner delivery has no rubric' );
 	ok_error(
 		call_api(
 			'POST',
@@ -561,6 +585,9 @@ try {
 	$by_id = array_column( $detail->get_data()['questions'], null, 'question_id' );
 	ok( 4.0 === (float) $by_id[ $essay_id ]['max_marks'] && 'in-review' === $by_id[ $essay_id ]['status'] && array( 'Because it is so.' ) === $by_id[ $essay_id ]['answer'], 'essay awaiting review with the answer text' );
 	ok( ! array_key_exists( 'questions', $by_id[ $essay_id ] ) && ! array_key_exists( 'is_correct', $by_id[ $essay_id ] ), 'no answer key in the detail' );
+	$rubric = $by_id[ $essay_id ]['rubric'];
+	ok( 2 === count( $rubric ) && 'Reasoning' === $rubric[0]['title'] && 'Gives a reason.' === $rubric[0]['description'] && 3.0 === $rubric[0]['points'] && array( 3.0, 0.0 ) === array_column( $rubric[0]['levels'], 'points' ) && array() === $rubric[1]['levels'], 'the essay carries its frozen rubric as plain text: ' . wp_json_encode( $rubric ) );
+	ok( null === $by_id[ $choice_id ]['rubric'], 'an automatically marked question has no rubric' );
 	ok_error( call_api( 'GET', "quizzes/$other_id/attempts/$attempt" ), 403, 'ohmylms_quiz_cannot_grade', 'a quiz the user may not grade' );
 	wp_set_current_user( $admin );
 	ok_error( call_api( 'GET', "quizzes/$other_id/attempts/$attempt" ), 404, 'ohmylms_attempt_not_found', 'attempt does not belong to the quiz' );
@@ -777,6 +804,178 @@ try {
 		'ohmylms_quiz_cannot_grade',
 		'unrelated subscriber cannot grade'
 	);
+
+	// Rubric scores are checked against the delivered rubric and stored with the manual grade.
+	wp_set_current_user( $author_a );
+	$rubric_grade = static function ( $marks, $scores, $question = null ) use ( $grade, $quiz_id, $attempt, $essay_id ) {
+		return $grade(
+			$quiz_id,
+			$attempt,
+			array(
+				array(
+					'question_id' => $question ? $question : $essay_id,
+					'marks'       => $marks,
+					'rubric'      => $scores,
+				),
+			),
+			array( 'reason' => 'Rubric pass' )
+		);
+	};
+	$events_before = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE source_type = %s AND source_id = %d', Schema::table( 'grade_events' ), 'quiz', $attempt ) );
+	ok_error( $rubric_grade( 2, array( 'reasoning' => 2 ), $choice_id ), 422, 'ohmylms_grade_rubric_unavailable', 'rubric scores for a question without a rubric' );
+	foreach ( array(
+		array( 4, array( 'reasoning' => 3, 'clarity' => 1, 'nope' => 0 ), 'nope', 'unknown criterion' ),
+		array( 3, array( 'reasoning' => 3 ), 'clarity', 'criterion left out' ),
+		array( 3, array( 'reasoning' => 2, 'clarity' => 1 ), 'reasoning', 'points that are not a level' ),
+		array( 4, array( 'reasoning' => 3, 'clarity' => 1.5 ), 'clarity', 'points above the criterion' ),
+	) as $case ) {
+		$refused = $rubric_grade( $case[0], $case[1] );
+		ok_error( $refused, 422, 'ohmylms_grade_rubric_invalid', $case[3] );
+		ok( $case[2] === $refused->get_data()['data']['criterion_id'] && $essay_id === $refused->get_data()['data']['question_id'], $case[3] . ' names the criterion: ' . wp_json_encode( $refused->get_data() ) );
+	}
+	$mismatch = $rubric_grade( 4, array( 'reasoning' => 3, 'clarity' => 0 ) );
+	ok_error( $mismatch, 422, 'ohmylms_grade_rubric_total', 'marks other than the rubric score' );
+	ok( 3.0 === $mismatch->get_data()['data']['expected'], 'the rejection gives the expected marks' );
+	ok_error( $rubric_grade( 3, array() ), 400, 'rest_invalid_param', 'empty rubric scores' );
+	if ( \OhMyLMS\Assessment\Scoring::LEGACY === \OhMyLMS\Assessment\AttemptItems::context( $attempt )['scoring'] ) {
+		$rounded = $rubric_grade( 3.5, array( 'reasoning' => 3, 'clarity' => 0.5 ) );
+		ok_error( $rounded, 422, 'ohmylms_grade_rubric_total', 'a fractional rubric score in a whole-marks attempt' );
+		ok( 4.0 === $rounded->get_data()['data']['expected'], 'the whole-marks rejection gives the rounded marks' );
+	}
+	ok( $events_before === (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE source_type = %s AND source_id = %d', Schema::table( 'grade_events' ), 'quiz', $attempt ) ) && 4.0 === (float) $wpdb->get_var( $wpdb->prepare( "SELECT total FROM {$wpdb->prefix}ohmylms_quiz_attempts WHERE id = %d", $attempt ) ), 'refused rubric grades changed nothing' );
+
+	$scored = $rubric_grade(
+		3,
+		array(
+			'clarity'   => 0,
+			'reasoning' => 3,
+		)
+	);
+	ok( 200 === $scored->get_status() && 1 === $scored->get_data()['changed'] && 3.0 === (float) $scored->get_data()['score'], 'rubric grade saved: ' . wp_json_encode( $scored->get_data() ) );
+	$essay_row = array_column( $scored->get_data()['questions'], null, 'question_id' )[ $essay_id ];
+	ok(
+		array(
+			'reasoning' => 3.0,
+			'clarity'   => 0.0,
+		) === (array) $essay_row['rubric_scores'],
+		'the attempt detail returns the breakdown in rubric order: ' . wp_json_encode( $essay_row['rubric_scores'] )
+	);
+	ok( wp_json_encode( $essay_row['rubric_scores'] ) === wp_json_encode( end( $essay_row['history'] )['rubric_scores'] ) && null === $essay_row['history'][0]['rubric_scores'], 'the history keeps the breakdown with its grade event' );
+	$stored = $wpdb->get_var( $wpdb->prepare( 'SELECT rubric FROM %i WHERE source_type = %s AND source_id = %d AND superseded_by = 0 AND grader = %s', Schema::table( 'grade_events' ), 'quiz', $attempt, 'manual' ) );
+	ok(
+		array(
+			'reasoning' => 3.0,
+			'clarity'   => 0.0,
+		) === \OhMyLMS\Assessment\GradeEvents::rubric( array( 'rubric' => $stored ) ),
+		'stored with the manual grade event: ' . $stored
+	);
+	ok( null === array_column( $scored->get_data()['questions'], null, 'question_id' )[ $choice_id ]['rubric_scores'], 'no breakdown for the choice question' );
+	ok( 0 === $rubric_grade( 3, array( 'reasoning' => 3, 'clarity' => 0 ) )->get_data()['changed'], 'the same breakdown again writes nothing' );
+	$reopened = call_api( 'GET', "quizzes/$quiz_id/attempts/$attempt" );
+	ok( 3.0 === (float) array_column( $reopened->get_data()['questions'], null, 'question_id' )[ $essay_id ]['rubric_scores']->reasoning, 'a reopened attempt shows the saved breakdown' );
+
+	$rescored = $rubric_grade(
+		1,
+		array(
+			'reasoning' => 0,
+			'clarity'   => 1,
+		)
+	);
+	$essay_row = array_column( $rescored->get_data()['questions'], null, 'question_id' )[ $essay_id ];
+	ok( 200 === $rescored->get_status() && 1 === $rescored->get_data()['changed'] && 0.0 === $essay_row['rubric_scores']->reasoning, 'a regrade replaces the breakdown' );
+	$breakdowns = array_values( array_filter( array_column( $essay_row['history'], 'rubric_scores' ) ) );
+	ok( 2 === count( $breakdowns ) && 3.0 === $breakdowns[0]->reasoning, 'earlier breakdowns stay in the history' );
+
+	// A question worth 8 marks in the quiz with a 4-point rubric: the marks are the scaled score.
+	$criteria = \OhMyLMS\Assessment\Rubric::criteria(
+		array(
+			'type'   => 'short-text',
+			'rubric' => array(
+				array(
+					'id'     => 'a',
+					'title'  => 'A',
+					'points' => 2,
+				),
+				array(
+					'id'     => 'b',
+					'title'  => 'B',
+					'points' => 2,
+				),
+			),
+		)
+	);
+	ok(
+		array(
+			'a' => 1.0,
+			'b' => 2.0,
+		) === \OhMyLMS\Assessment\Rubric::check_scores(
+			$criteria,
+			array(
+				'b' => 2,
+				'a' => 1,
+			),
+			6,
+			8.0,
+			1
+		),
+		'scaled rubric marks accepted'
+	);
+	$unscaled = \OhMyLMS\Assessment\Rubric::check_scores(
+		$criteria,
+		array(
+			'a' => 1,
+			'b' => 2,
+		),
+		3,
+		8.0,
+		1
+	);
+	ok( is_wp_error( $unscaled ) && 'ohmylms_grade_rubric_total' === $unscaled->get_error_code() && 6.0 === $unscaled->get_error_data()['expected'], 'the unscaled score is refused when the quiz scales the question' );
+
+	// The learner sees the breakdown only where the quiz shows marked answers.
+	ok( 200 === call_api( 'PATCH', "quizzes/$quiz_id", array( 'settings' => array( 'show_correct_answers' => true ) ) )->get_status(), 'answer review switched on' );
+	wp_set_current_user( $student );
+	$entries = array_column( \OhMyLMS\Quiz\AnswerReview::for_attempt( $attempt ), null, 'question_id' );
+	ok(
+		array(
+			array(
+				'title'   => 'Reasoning',
+				'awarded' => 0.0,
+				'max'     => 3.0,
+				'level'   => 'Missing',
+			),
+			array(
+				'title'   => 'Clarity',
+				'awarded' => 1.0,
+				'max'     => 1.0,
+				'level'   => '',
+			),
+		) === $entries[ $essay_id ]['rubric'],
+		'the learner entry has the breakdown without marking notes: ' . wp_json_encode( $entries[ $essay_id ]['rubric'] )
+	);
+	$quiz_object = ohmylms_get_quiz( $quiz_id );
+	$learner     = \OhMyLMS\Quiz\AnswerReview::render( $quiz_object, \OhMyLMS\Quiz\AnswerReview::attempts( $quiz_object, $student ) );
+	ok( false !== strpos( $learner, 'How it was marked' ) && false !== strpos( $learner, 'Missing' ) && false === strpos( $learner, 'Gives a reason.' ), 'the released result shows the breakdown' );
+	add_filter( 'ohmylms_attempt_feedback_visible', '__return_false' );
+	$hidden = \OhMyLMS\Quiz\AnswerReview::render( $quiz_object, \OhMyLMS\Quiz\AnswerReview::attempts( $quiz_object, $student ) );
+	remove_filter( 'ohmylms_attempt_feedback_visible', '__return_false' );
+	ok( false === strpos( $hidden, 'How it was marked' ), 'unreleased feedback keeps the breakdown staff-only' );
+
+	wp_set_current_user( $author_a );
+	$plain     = $grade(
+		$quiz_id,
+		$attempt,
+		array(
+			array(
+				'question_id' => $essay_id,
+				'marks'       => 2,
+			),
+		)
+	);
+	$essay_row = array_column( $plain->get_data()['questions'], null, 'question_id' )[ $essay_id ];
+	ok( 200 === $plain->get_status() && null === $essay_row['rubric_scores'] && 2 === count( array_filter( array_column( $essay_row['history'], 'rubric_scores' ) ) ), 'marks without a breakdown clear it and keep the history' );
+	wp_set_current_user( $student );
+	ok( array() === array_column( \OhMyLMS\Quiz\AnswerReview::for_attempt( $attempt ), null, 'question_id' )[ $essay_id ]['rubric'], 'the learner sees no stale breakdown' );
 
 	// An attempt still in progress cannot be graded.
 	wp_set_current_user( $student );

@@ -10,6 +10,7 @@ namespace OhMyLMS\Rest\V1;
 use OhMyLMS\Abstracts\RestController;
 use OhMyLMS\Assessment\ErrorException;
 use OhMyLMS\Assessment\InlineBlanks;
+use OhMyLMS\Assessment\Rubric;
 use OhMyLMS\Assessment\Schema;
 use OhMyLMS\Extensions\Registry;
 use OhMyLMS\Extensions\Settings as ExtensionSettings;
@@ -1173,6 +1174,9 @@ class QuestionsController extends RestController {
 				);
 			}
 			$valid = $this->validate_shared_settings( $settings );
+			if ( true === $valid && Rubric::applies( $type ) && array_key_exists( 'rubric', $settings ) ) {
+				$valid = Rubric::check( $settings['rubric'], $settings['score'] ?? null );
+			}
 			if ( is_wp_error( $valid ) ) {
 				return $valid;
 			}
@@ -1222,17 +1226,23 @@ class QuestionsController extends RestController {
 		$extension = null;
 		if ( $request->has_param( 'extension_settings' ) ) {
 			$saved     = $post ? get_post_meta( $post->ID, self::EXTENSION_META, true ) : array();
-			$extension = ExtensionSettings::prepare( 'question', (array) $request['extension_settings'], is_array( $saved ) ? $saved : array() );
-			if ( is_wp_error( $extension ) ) {
-				return new WP_Error(
-					'ohmylms_question_invalid_extension_settings',
-					$extension->get_error_message(),
-					array(
-						'status' => 400,
-						'field'  => 'extension_settings',
-						'reason' => $extension->get_error_code(),
-					)
-				);
+			$extension = is_array( $saved ) ? $saved : array();
+			// One namespace at a time, so the error names the extension whose values were rejected.
+			foreach ( (array) $request['extension_settings'] as $namespace => $value ) {
+				$merged = ExtensionSettings::prepare( 'question', array( $namespace => $value ), $extension );
+				if ( is_wp_error( $merged ) ) {
+					return new WP_Error(
+						'ohmylms_question_invalid_extension_settings',
+						$merged->get_error_message(),
+						array(
+							'status'    => 400,
+							'field'     => 'extension_settings',
+							'namespace' => (string) $namespace,
+							'reason'    => $merged->get_error_code(),
+						)
+					);
+				}
+				$extension = $merged;
 			}
 		}
 

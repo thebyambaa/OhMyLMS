@@ -2,7 +2,9 @@
 /**
  * Question types through `ohmylms/v1/questions`: one question of every built-in type is created, read,
  * edited (with a new version) and refused when stale; the shared-settings and per-type answer rules,
- * media, bank fields and skills are checked; the learner preview of a draft carries no answer key.
+ * media, bank fields and skills are checked; the learner preview of a draft carries no answer key; the
+ * marking rubric of short and long text questions is validated, versioned and kept out of learner views;
+ * extension settings registered for this run only are validated per namespace.
  *
  * Runs against the Local site (`800.local`) and removes everything it creates (tagged questions,
  * a temporary attachment, a temporary skill and their question-bank rows).
@@ -16,8 +18,10 @@
 
 // phpcs:disable WordPress.WP.GlobalVariablesOverride, WordPress.Security.EscapeOutput, WordPress.PHP.DevelopmentFunctions, Generic.Formatting.MultipleStatementAlignment, WordPress.DB.DirectDatabaseQuery, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- CLI test script writing to STDOUT/STDERR.
 
+use OhMyLMS\Assessment\Rubric;
 use OhMyLMS\Assessment\Schema;
 use OhMyLMS\Extensions\Registry;
+use OhMyLMS\QuestionBank\VersionPublisher;
 use OhMyLMS\Skills\Taxonomy;
 
 if ( 'cli' !== PHP_SAPI || '1' !== getenv( 'OHMYLMS_QUESTIONS_TEST' ) ) {
@@ -561,6 +565,177 @@ try {
 	$stored = get_transient( 'ohmylms_question_preview_' . $query['ohmylms_question_preview'] );
 	ok( is_array( $stored ) && ! isset( $stored['question']['settings']['correct'] ) && isset( $stored['question']['settings']['tokens'] ), 'preview keeps the tokens and drops the answer key' );
 	delete_transient( 'ohmylms_question_preview_' . $query['ohmylms_question_preview'] );
+
+	// Marking rubric of short and long text questions.
+	$criteria = array(
+		array(
+			'id'          => 'reasoning',
+			'title'       => 'Reasoning',
+			'description' => "$tag explains each step",
+			'points'      => 2,
+			'levels'      => array(
+				array(
+					'points'      => 2,
+					'description' => 'Complete',
+				),
+				array(
+					'points'      => 0,
+					'description' => 'Missing',
+				),
+			),
+		),
+		array(
+			'id'     => 'clarity',
+			'title'  => 'Clarity',
+			'points' => 1.5,
+		),
+	);
+	$essay_body = static function ( $rubric, $points = 3.5, $type = 'long-text' ) use ( $tag ) {
+		return array(
+			'name'     => "$tag essay",
+			'settings' => array(
+				'type'   => $type,
+				'score'  => array(
+					'enabled' => true,
+					'value'   => $points,
+				),
+				'rubric' => $rubric,
+			),
+		);
+	};
+	$changed = static function ( array $patch, $index = 0 ) use ( $criteria ) {
+		$criteria[ $index ] = array_merge( $criteria[ $index ], $patch );
+		return $criteria;
+	};
+	$before = tagged_count();
+	foreach ( array(
+		array( 'one criterion', 'settings.rubric' ),
+		array( array( 'a' => $criteria[0] ), 'settings.rubric' ),
+		array( array_fill( 0, Rubric::MAX_CRITERIA + 1, $criteria[1] ), 'settings.rubric' ),
+		array( $changed( array( 'weight' => 1 ) ), 'settings.rubric[0]' ),
+		array( $changed( array( 'id' => 'Bad ID' ) ), 'settings.rubric[0].id' ),
+		array( $changed( array( 'id' => 'reasoning' ), 1 ), 'settings.rubric[1].id' ),
+		array( $changed( array( 'title' => '<p> </p>' ) ), 'settings.rubric[0].title' ),
+		array( $changed( array( 'title' => str_repeat( 'x', Rubric::MAX_TITLE + 1 ) ) ), 'settings.rubric[0].title' ),
+		array( $changed( array( 'description' => array( 'x' ) ) ), 'settings.rubric[0].description' ),
+		array( $changed( array( 'points' => 0 ) ), 'settings.rubric[0].points' ),
+		array( $changed( array( 'points' => '2' ) ), 'settings.rubric[0].points' ),
+		array(
+			$changed(
+				array(
+					'levels' => array(
+						array(
+							'points'      => 3,
+							'description' => 'Too many',
+						),
+					),
+				)
+			),
+			'settings.rubric[0].levels[0].points',
+		),
+		array(
+			$changed(
+				array(
+					'levels' => array(
+						array(
+							'points'      => 1,
+							'description' => 'A',
+						),
+						array(
+							'points'      => 1,
+							'description' => 'B',
+						),
+					),
+				)
+			),
+			'settings.rubric[0].levels[1].points',
+		),
+		array( $changed( array( 'levels' => array( array( 'points' => 1 ) ) ) ), 'settings.rubric[0].levels[0].description' ),
+		array(
+			$changed(
+				array(
+					'levels' => array_fill(
+						0,
+						Rubric::MAX_LEVELS + 1,
+						array(
+							'points'      => 1,
+							'description' => 'Same',
+						)
+					),
+				)
+			),
+			'settings.rubric[0].levels',
+		),
+	) as $index => $case ) {
+		ok_error( call_api( 'POST', '/questions', $essay_body( $case[0] ) ), 422, 'ohmylms_question_invalid_settings', "rubric case $index", $case[1] );
+	}
+	ok_error( call_api( 'POST', '/questions', $essay_body( $criteria, 4 ) ), 422, 'ohmylms_question_invalid_settings', 'points other than the rubric total', 'settings.score' );
+	ok( tagged_count() === $before, 'rejected rubrics wrote nothing' );
+
+	$essay = make_question( $essay_body( $criteria ), 'long text with a rubric' );
+	ok( $criteria === $essay['settings']['rubric'], 'rubric stored as sent: ' . wp_json_encode( $essay['settings']['rubric'] ) );
+	$snapshot = VersionPublisher::snapshot( $essay['current_version_id'] );
+	$graded   = Rubric::criteria( $snapshot->get_settings() );
+	ok( 2 === count( $graded ) && 1.5 === $graded[1]['points'] && array() === $graded[1]['levels'] && 'Complete' === $graded[0]['levels'][0]['description'], 'the version carries the rubric for graders' );
+	$learner = wp_json_encode( $snapshot->student_view() );
+	ok( false === strpos( $learner, "$tag explains each step" ) && false === strpos( $learner, 'rubric' ), 'the learner view has no rubric: ' . $learner );
+	$short = make_question( $essay_body( array( $criteria[1] ), 1.5, 'short-text' ), 'short text with a rubric' );
+	ok( 1 === count( Rubric::criteria( $short['settings'] ) ), 'short text keeps its rubric' );
+	$cleared = call_api(
+		'PATCH',
+		'/questions/' . $essay['id'],
+		array(
+			'base_modified' => $essay['modified'],
+			'settings'      => array_merge( $essay['settings'], array( 'rubric' => array() ) ),
+		)
+	);
+	ok( 200 === $cleared->get_status() && 2 === $cleared->get_data()['version'] && array() === Rubric::criteria( $cleared->get_data()['settings'] ), 'an empty rubric clears it in a new version' );
+
+	// Extension settings registered for this run only; the error names the namespace.
+	$namespace = "$tag-review";
+	ohmylms_register_extension_settings(
+		$namespace,
+		array(
+			'contexts' => array( 'question' ),
+			'schema'   => array(
+				'type'       => 'object',
+				'properties' => array(
+					'level' => array(
+						'type'    => 'integer',
+						'minimum' => 1,
+						'maximum' => 5,
+					),
+				),
+			),
+		)
+	);
+	$with_extension = static function ( array $values ) use ( $tag, $single ) {
+		return array(
+			'name'               => "$tag extension",
+			'settings'           => $single['settings'],
+			'options'            => $single['options'],
+			'extension_settings' => $values,
+		);
+	};
+	$before   = tagged_count();
+	$rejected = call_api( 'POST', '/questions', $with_extension( array( $namespace => array( 'level' => 9 ) ) ) );
+	ok_error( $rejected, 400, 'ohmylms_question_invalid_extension_settings', 'extension value outside its schema', 'extension_settings' );
+	ok( $namespace === $rejected->get_data()['data']['namespace'], 'the rejection names the namespace' );
+	$unknown = call_api( 'POST', '/questions', $with_extension( array( "$tag-nope" => array() ) ) );
+	ok_error( $unknown, 400, 'ohmylms_question_invalid_extension_settings', 'unregistered namespace' );
+	ok( "$tag-nope" === $unknown->get_data()['data']['namespace'] && 'ohmylms_unknown_settings' === $unknown->get_data()['data']['reason'], 'unknown namespace named with its reason' );
+	ok( tagged_count() === $before, 'rejected extension settings wrote nothing' );
+	$extended = make_question( $with_extension( array( $namespace => array( 'level' => 3 ) ) ), 'question with extension settings' );
+	ok( array( 'level' => 3 ) === (array) $extended['extension_settings'][ $namespace ], 'extension settings stored' );
+	$updated = call_api(
+		'PATCH',
+		'/questions/' . $extended['id'],
+		array(
+			'base_modified'      => $extended['modified'],
+			'extension_settings' => array( $namespace => array( 'level' => 4 ) ),
+		)
+	);
+	ok( 200 === $updated->get_status() && 4 === $updated->get_data()['extension_settings'][ $namespace ]['level'], 'extension settings updated: ' . wp_json_encode( $updated->get_data() ) );
 
 	echo "OK $checks checks\n";
 	$exit_code = 0;

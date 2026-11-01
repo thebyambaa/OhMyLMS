@@ -11,6 +11,7 @@ use OhMyLMS\Abstracts\RestController;
 use OhMyLMS\Curriculum\Access;
 use OhMyLMS\Curriculum\Comparison;
 use OhMyLMS\Curriculum\SkillMappings;
+use OhMyLMS\Dashboard\SkillMapOverlay;
 use OhMyLMS\Skills\SubjectProfileModel;
 use OhMyLMS\Skills\SubjectProfiles;
 use WP_REST_Request;
@@ -178,7 +179,6 @@ class ComparisonController extends RestController {
 			'/syllabus-comparison/skill-links/(?P<id>\d+)' => array( 'GET', 'skill_links' ),
 			'/syllabus-comparison/skill-links'             => array( 'POST', 'save_skill_link' ),
 			'/syllabus-comparison/skill-links/remove'      => array( 'POST', 'remove_skill_link' ),
-			'/syllabus-comparison/skill-map/subjects'      => array( 'GET', 'skill_map_subjects' ),
 			'/syllabus-comparison/compare'                 => array( 'GET', 'compare_syllabuses' ),
 		) as $route => $handler ) {
 			register_rest_route(
@@ -422,11 +422,20 @@ class ComparisonController extends RestController {
 		);
 		register_rest_route(
 			$this->namespace,
+			'/syllabus-comparison/skill-map/subjects',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'skill_map_subjects' ),
+				'permission_callback' => array( $this, 'skill_map_permission' ),
+			)
+		);
+		register_rest_route(
+			$this->namespace,
 			'/syllabus-comparison/skill-map',
 			array(
 				'methods'             => 'GET',
 				'callback'            => array( $this, 'skill_map' ),
-				'permission_callback' => $admin,
+				'permission_callback' => array( $this, 'skill_map_permission' ),
 				'args'                => array(
 					'subject'     => array(
 						'type'      => 'string',
@@ -826,6 +835,21 @@ class ComparisonController extends RestController {
 	}
 
 	/**
+	 * The read-only skill map: curriculum administrators, and the school staff who may lay their learners
+	 * over it ({@see SkillMapOverlay::can_view()}). Its writes stay with curriculum administrators.
+	 *
+	 * @return true|\WP_Error
+	 */
+	public function skill_map_permission() {
+		$admin = Access::admin();
+		if ( ! is_wp_error( $admin ) || 'ohmylms_curriculum_unavailable' === $admin->get_error_code() ) {
+			return $admin;
+		}
+		$user_id = get_current_user_id();
+		return SkillMapOverlay::can_view( $user_id ) ? true : Access::error( 'ohmylms_skill_map_cannot_view', __( 'Sorry, you are not allowed to see the skill map.', 'ohmylms' ), $user_id > 0 ? 403 : 401 );
+	}
+
+	/**
 	 * The coherence map of a subject: shared skills by domain and grade, their links and the checks
 	 * on them, optionally with a syllabus's coverage and a learner's levels laid over it.
 	 *
@@ -834,6 +858,10 @@ class ComparisonController extends RestController {
 	 */
 	public function skill_map( WP_REST_Request $request ) {
 		$student = absint( $request['student_id'] );
+		$visible = $student ? SkillMapOverlay::visible_learners( get_current_user_id() ) : null;
+		if ( null !== $visible && ! in_array( $student, $visible, true ) ) {
+			return Access::error( 'ohmylms_skill_overlay_forbidden', __( 'Sorry, this learner is not in your schools or classes.', 'ohmylms' ), 403 );
+		}
 		if ( $student && ! get_userdata( $student ) ) {
 			return Access::error( 'ohmylms_skill_map_student', __( 'Learner not found.', 'ohmylms' ), 404 );
 		}

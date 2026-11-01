@@ -58,15 +58,33 @@ describe( 'AssignmentEditorPage', () => {
 			screen.getByRole( 'checkbox', { name: 'Learners submit files' } )
 		).toBeChecked();
 		expect(
-			screen.getByRole( 'link', { name: 'Geography' } )
-		).toHaveAttribute( 'href', '/courses/12' );
-		expect( screen.getByText( /Rivers/ ) ).toBeInTheDocument();
+			screen.getByRole( 'link', {
+				name: 'Move or detach in the outline of Geography',
+			} )
+		).toHaveAttribute( 'href', '/courses/12/outline?focus=assignment:31' );
+		expect( screen.getByText( /Geography — Rivers/ ) ).toBeInTheDocument();
 		expect(
 			screen.getByRole( 'link', { name: 'Submissions (4)' } )
 		).toHaveAttribute( 'href', '/assignments/31/submissions' );
 		expect(
 			screen.getByRole( 'button', { name: 'Save assignment' } )
 		).toBeDisabled();
+	} );
+	it( 'sends an unplaced assignment to the courses, whose outlines place it', async () => {
+		vi.mocked( api.getAssignment ).mockResolvedValue( {
+			...assignment,
+			placements: [],
+		} );
+		renderPage();
+		expect(
+			await screen.findByText( /Not in a course yet/ )
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'link', { name: 'Choose a course' } )
+		).toHaveAttribute( 'href', '/courses' );
+		expect(
+			screen.queryByRole( 'link', { name: /Move or detach/ } )
+		).toBeNull();
 	} );
 	it( 'saves the edited fields with the loaded version', async () => {
 		const saved = { ...assignment, max_score: 80, updated_at: 'later' };

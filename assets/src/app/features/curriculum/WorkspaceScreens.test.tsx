@@ -35,11 +35,15 @@ vi.mock( './bundles', async ( original ) => ( {
 function open(
 	feature: typeof skillMap,
 	component: () => JSX.Element,
-	allowed = true
+	allowed = true,
+	capabilities: Record< string, boolean > = {
+		manage_options: allowed,
+		ohmylms_view_dashboard: allowed,
+	}
 ) {
 	renderShell( [ { ...feature, component } ], {
 		route: feature.path,
-		capabilities: { manage_options: allowed },
+		capabilities,
 	} );
 }
 const stale = ( code: string ) =>
@@ -84,12 +88,40 @@ describe( 'Skill map', () => {
 			covered: [ 2 ],
 		},
 	};
-	it( 'keeps the screen and its requests behind administrator capability', () => {
+	it( 'keeps the screen and its requests from users without a staff or administrator capability', () => {
 		open( skillMap, SkillMapPage, false );
 		expect( mapApi.readSubjects ).not.toHaveBeenCalled();
 		expect( skillMap.extensionRoute ).toBe(
 			'/content-hub/curriculum/skill-map'
 		);
+	} );
+	it( 'opens the read-only map to school staff, unlike the curriculum editors', async () => {
+		const staff = { manage_options: false, ohmylms_view_dashboard: true };
+		vi.mocked( mapApi.readSubjects ).mockResolvedValue( [
+			{ subject: 'Maths', skills: 2, syllabuses: [] },
+		] );
+		vi.mocked( mapApi.readMap ).mockResolvedValue( {
+			...map,
+			syllabus: null,
+		} );
+		const user = userEvent.setup();
+		open( skillMap, SkillMapPage, true, staff );
+		await user.selectOptions(
+			await screen.findByLabelText( 'Subject' ),
+			'Maths'
+		);
+		await user.click( screen.getByRole( 'button', { name: 'Show map' } ) );
+		expect(
+			await screen.findByRole( 'button', { name: 'Count' } )
+		).toBeInTheDocument();
+		expect( mapApi.readMap ).toHaveBeenCalledWith(
+			'Maths',
+			0,
+			expect.any( AbortSignal )
+		);
+		expect( subjectProfiles.capability ).toBe( 'manage_options' );
+		expect( bundles.capability ).toBe( 'manage_options' );
+		expect( skillMap.capability ).toBe( 'ohmylms_view_dashboard' );
 	} );
 	it( 'shows a subject grid with syllabus coverage, checks and skill details', async () => {
 		const user = userEvent.setup();

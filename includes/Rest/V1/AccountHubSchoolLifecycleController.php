@@ -105,7 +105,7 @@ class AccountHubSchoolLifecycleController extends AccountHubController {
 				)
 			),
 			'grade_map'     => array(
-				'description' => __( 'What each grade becomes; an empty `to` means the class leaves (graduates). Unlisted grades stay the same.', 'ohmylms' ),
+				'description' => __( 'What each grade becomes; an empty `to` means the class leaves (graduates). Unlisted grades, and classes without a grade, stay the same; list the empty grade to make classes without a grade leave.', 'ohmylms' ),
 				'type'        => 'array',
 				'default'     => array(),
 				'maxItems'    => 100,

@@ -4,8 +4,8 @@
  * domain placement, skill-owned quizzes, provenance review) and the syllabus spreadsheet command:
  * typed rejections, capability checks, stale writes refused without changes, and the happy paths.
  * Run on the Local site with OHMYLMS_SKILL_WORKSPACE_TEST=1. No AI provider is called: runs and
- * suggestions are tagged fixture rows, and any outbound HTTP request fails the test. Every fixture is
- * removed in `finally`.
+ * suggestions are tagged fixture rows, and any outbound HTTP request fails the test. The fixture subject
+ * gets the Mathematics profile through an option filter (nothing stored). Every fixture is removed in `finally`.
  *
  * @package OhMyLMS
  */
@@ -21,6 +21,8 @@ use OhMyLMS\Curriculum\SyllabusCourse;
 use OhMyLMS\QuestionBank\SkillMap;
 use OhMyLMS\Quiz\QuizSkills;
 use OhMyLMS\Skills\Provenance;
+use OhMyLMS\Skills\SubjectProfileModel;
+use OhMyLMS\Skills\SubjectProfiles;
 use OhMyLMS\Skills\Taxonomy;
 
 if ( 'cli' !== PHP_SAPI || '1' !== getenv( 'OHMYLMS_SKILL_WORKSPACE_TEST' ) ) {
@@ -133,8 +135,17 @@ try {
 		}
 	}
 
-	// Fixtures: a syllabus with a unit, a group of three objectives, and a shared skill.
+	// Fixtures: a syllabus with a unit, a group of three objectives, and a shared skill. The fixture subject
+	// gets the built-in Mathematics profile (domains such as algebra) for this request only, so placement does
+	// not depend on the site's default profile.
 	$subject  = $tag . ' Mathematics';
+	$profiles = static function ( $stored ) use ( $subject ) {
+		$stored = is_array( $stored ) ? $stored : array();
+		$stored['profiles'][ SubjectProfileModel::key( $subject ) ] = array( 'label' => $subject ) + SubjectProfiles::builtin()[ SubjectProfiles::MATHEMATICS ];
+		return $stored;
+	};
+	add_filter( 'option_' . SubjectProfiles::OPTION, $profiles );
+	add_filter( 'default_option_' . SubjectProfiles::OPTION, $profiles );
 	$syllabus = Items::create(
 		array(
 			'name'        => $tag . ' Syllabus',

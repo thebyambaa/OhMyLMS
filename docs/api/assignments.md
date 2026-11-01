@@ -84,7 +84,7 @@ placements and published learning programs. Submission arguments: `page`, `per_p
 | `time_limit_enabled`, `time_limit`, `time_limit_unit` | `_enable_time_limit`, `_time_limit`, `_time_limit_type` | Flag; 1–365; `day`, `week` or `month` (stored lower case; legacy `Month`/`days` are read back normalised). |
 | `allow_file_uploads`, `max_files` | `_allow_upload_files`, `_number_of_files` | Flag (a missing value means allowed, as the learner page treats it); 1–20. |
 | `file_size_limit_enabled`, `max_file_size_mb` | `_enable_file_size_limit`, `_max_file_size_limit` | Flag; 1–1024 MB. |
-| `course`, `placements` (edit) | `ohmylms_content_relationship` and programs | Read only. Placement is edited in the course editor. |
+| `course`, `placements` (edit) | `ohmylms_content_relationship` and programs | Read only. Placement is edited in the course outline; see "Placement" below. |
 | `resources` (edit) | `_download_resource` `{file: [{type, id, name, url, size}]}` | Up to 20 rows `{type: file\|link, attachment_id, name, url, size}`. Files are media library attachments; URL and size come from the library (the request's are ignored); a newly added file must be editable by the author. Links: absolute HTTP(S) URL ≤ 2048, size label ≤ 50. Names 1–200. |
 | `prerequisites` (edit) | `_prerequisites` `{enable, data: [{value, label}]}` | Read `{enable, items: [{id, title, type, status}]}` (`status` `missing` when removed); write `{enable, ids}`: up to 50 distinct lessons, quizzes or assignments other than itself; newly added ones must be editable by the author. |
 | `drip` (edit) | `_drip_settings` `{enable, type, days, date, time}` | Exactly those keys; `type` `enrollment-from-x-days`, `specific-date`, `cohort-start`, `cohort-from-x-days`; `days` 0–3650; `date` empty or a real `YYYY-MM-DD`; `time` empty or `HH:MM` (stored `HH:MM:SS`); a specific date needs the date. Site time. |
@@ -240,9 +240,24 @@ permanent delete. Filters `ohmylms_rest_prepare_assignment` ($response, $post, $
 `ohmylms_rest_ohmylms_assignment_query` ($args, $request; now a fixed, validated query). Grading fires the
 legacy grading hooks listed above. Learner submission (`ohmylms_assignment_submitted`) is unchanged.
 
+## Placement
+
+The assignment editor shows where the assignment is placed, read only, and each placement links to the course
+outline focused on it (`#/courses/<course>/outline?focus=assignment:<id>`): the outline opens with that activity
+row focused and says which unit holds it, so the author moves it to another unit, reorders or detaches it there and
+saves the outline draft. An unplaced assignment links to the course list, whose outlines add it to a unit
+(**+ Assignment**).
+
+This is a decision, not a gap. Placements belong to the course outline ([course authoring](course-authoring.md),
+[learning architecture](../LEARNING-ARCHITECTURE.md)): `PUT /courses/{id}/structure` replaces the whole units and
+program draft under the outline's read revision, named lock and transaction, `AssessmentPlacement` validates
+assessments against their unit, and outline saves are drafts that never publish. An assignment-editor control
+would have to load, rewrite and resubmit another course's complete outline draft (and any unsaved outline edits
+would conflict), a second writer of data the outline owns, so the editor links to the one editor that already
+does this with its revision checks, unit picker and detach confirmation.
+
 ## Known gaps
 
-- Placement is read only. Assignments are added to chapters in the course editor.
 - The learner's submit and comment forms are server-rendered; start, countdown, file picking and submission run in
   the `ohmylms/assignment` Interactivity store (batch L6 of [LEARNER-FRONTEND](../LEARNER-FRONTEND.md)). There is no
   learner REST route for submitting yet; the store posts to the admin-ajax handler. Comments are plain text without
@@ -275,4 +290,6 @@ checks that the legacy routes are gone and the grading pipeline stays),
 save/reopen and storage, validation without writes, permissions, prerequisite choices, the learner state
 and the real upload handler refusing submissions before the release and with an incomplete prerequisite,
 comment threads, permissions, pace, deletion, the switch and both emails) and
-`npx vitest run --configLoader runner features/assignments`.
+`npx vitest run --configLoader runner features/assignments` (the placement links: focused outline per placement,
+the course list for an unplaced assignment). `features/course-structure/CourseEditorPage.test.tsx` checks that
+`focus` opens the outline on the placement's row with its unit named, and says when the item is not placed.

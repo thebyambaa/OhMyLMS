@@ -7,7 +7,7 @@ import {
 } from '@wordpress/components';
 import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import { normalizeApiError, type ApiError } from '../../lib/api';
 import { CoursePlacement } from '../curriculum';
@@ -28,7 +28,8 @@ import { useRequest } from '../../hooks/useRequest';
 import { newId } from '../../lib/uuid';
 
 /**
- * Outline tab of the course editor: loads the saved draft outline of one course.
+ * Outline tab of the course editor: loads the saved draft outline of one course. `?focus=<type>:<id>`
+ * (for example from the assignment editor) opens it on that resource's placement.
  *
  * @param root0
  * @param root0.id Course ID.
@@ -39,6 +40,7 @@ export function CourseOutline( { id }: { id: number } ) {
 		[ id ]
 	);
 	const request = useRequest( load );
+	const [ params ] = useSearchParams();
 	return (
 		<>
 			<h2>{ __( 'Outline', 'ohmylms' ) }</h2>
@@ -60,6 +62,7 @@ export function CourseOutline( { id }: { id: number } ) {
 					key={ `${ id }:${ request.data.revision }` }
 					initial={ request.data }
 					reload={ request.retry }
+					opening={ params.get( 'focus' ) ?? '' }
 				/>
 			) }
 		</>
@@ -93,10 +96,18 @@ function failureMessage( problem: ApiError ) {
 export function OutlineWorkspace( {
 	initial,
 	reload,
+	opening = '',
 }: {
 	initial: Outline;
 	reload: () => void;
+	/** `<type>:<content id>` of a placement to open the outline on. */
+	opening?: string;
 } ) {
+	const [ targeted ] = useState( () =>
+		initial.program.items.find(
+			( item ) => `${ item.type }:${ item.content_id }` === opening
+		)
+	);
 	const [ draft, setDraft ] = useState( initial );
 	const [ saved, setSaved ] = useState( snapshot( initial ) );
 	const [ busy, setBusy ] = useState( false );
@@ -111,7 +122,9 @@ export function OutlineWorkspace( {
 	} | null >( null );
 	const [ said, say ] = useState( '' );
 	const [ stale, setStale ] = useState( false );
-	const [ focus, setFocus ] = useState< [ string, string ] | null >( null );
+	const [ focus, setFocus ] = useState< [ string, string ] | null >(
+		targeted ? [ targeted.id, '' ] : null
+	);
 	const root = useRef< HTMLElement >( null );
 	const operation = useRef< AbortController | null >( null );
 	useEffect( () => () => operation.current?.abort(), [] );
@@ -311,7 +324,7 @@ export function OutlineWorkspace( {
 		>
 			<VisuallyHidden role="status">{ said }</VisuallyHidden>
 			<div className="oml-editor-header">
-				<div className="oml-editor-header__title">
+				<div className="oml-editor-header-title">
 					<h2>{ __( 'Curriculum', 'ohmylms' ) }</h2>
 					<span className="oml-editor-status">
 						{ sprintf(
@@ -327,7 +340,7 @@ export function OutlineWorkspace( {
 							: __( 'Saved draft', 'ohmylms' ) }
 					</span>
 				</div>
-				<div className="oml-editor-header__actions">
+				<div className="oml-editor-header-actions">
 					<Button
 						variant="tertiary"
 						disabled={ busy }
@@ -370,6 +383,27 @@ export function OutlineWorkspace( {
 			{ message && (
 				<Notice status="success" isDismissible={ false }>
 					{ message }
+				</Notice>
+			) }
+			{ opening && (
+				<Notice status="info" isDismissible={ false }>
+					{ targeted
+						? sprintf(
+								/* translators: 1: activity name, 2: unit title. */
+								__(
+									'Opened on “%1$s” in %2$s. Move it to another unit or detach it here, then save the outline draft.',
+									'ohmylms'
+								),
+								targeted.name || String( targeted.content_id ),
+								initial.units.find(
+									( unit ) => unit.id === targeted.chapter_id
+								)?.title ??
+									__( 'the unplaced activities', 'ohmylms' )
+							)
+						: __(
+								'That item is not placed in this course outline. Add it to a unit, then save the outline draft.',
+								'ohmylms'
+							) }
 				</Notice>
 			) }
 			<div className="oml-editor-grid">

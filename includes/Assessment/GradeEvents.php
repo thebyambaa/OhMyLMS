@@ -24,6 +24,7 @@ final class GradeEvents {
 	 * @param array $event source_type, source_id, item_id, student_id, question_id, version_id,
 	 *                     awarded, max_marks, fraction, correct, grader, reviewer_id, reason.
 	 *                     Optional record_evidence defaults to true; false saves a grade without skill effects.
+	 *                     Optional rubric: points by rubric criterion ID of a manual grade.
 	 * @return int event ID
 	 * @throws \RuntimeException When the operation cannot be completed.
 	 */
@@ -52,6 +53,9 @@ final class GradeEvents {
 			'supersedes'  => $previous,
 			'created_at'  => current_time( 'mysql', true ),
 		);
+		if ( isset( $event['rubric'] ) && is_array( $event['rubric'] ) ) {
+			$row['rubric'] = (string) wp_json_encode( (object) $event['rubric'] );
+		}
 		if ( ! $wpdb->insert( $table, $row ) ) {
 			throw new \RuntimeException( 'Grade event write failed' ); }
 		$id = (int) $wpdb->insert_id;
@@ -105,6 +109,27 @@ final class GradeEvents {
 			$wpdb->prepare( 'SELECT * FROM %i WHERE source_type=%s AND source_id=%d AND item_id=%d ORDER BY id', Schema::table( 'grade_events' ), $source_type, $source_id, $item_id ),
 			ARRAY_A
 		);
+	}
+
+	/**
+	 * Points by rubric criterion stored with an event, or null when it has none.
+	 *
+	 * @param array|null $event Event row.
+	 * @return array<string,float>|null
+	 */
+	public static function rubric( $event ) {
+		$stored = is_array( $event ) && is_string( $event['rubric'] ?? null ) ? json_decode( $event['rubric'], true ) : null;
+		if ( ! is_array( $stored ) ) {
+			return null;
+		}
+		$scores = array();
+		foreach ( $stored as $id => $points ) {
+			if ( is_numeric( $points ) ) {
+				$scores[ (string) $id ] = round( (float) $points, 4 );
+			}
+		}
+
+		return $scores;
 	}
 
 	/**

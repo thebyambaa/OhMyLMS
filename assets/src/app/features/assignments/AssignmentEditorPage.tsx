@@ -55,7 +55,8 @@ function unitOptions(): Array< { value: TimeUnit; label: string } > {
 
 /**
  * Assignment editor (`#/assignments/<id>`): title, instructions, scoring, deadline, upload rules,
- * resources, prerequisites, release and comments, with read-only course placement. Saving a copy
+ * resources, prerequisites, release and comments. Course placement is shown read-only and links to the
+ * course outline, which owns it, focused on this assignment. Saving a copy
  * someone else changed meanwhile is refused (409), and leaving with unsaved changes asks first.
  */
 export default function AssignmentEditorPage() {
@@ -440,6 +441,12 @@ export default function AssignmentEditorPage() {
 				<h3 id="oml-asg-placement">
 					{ __( 'Course placement', 'ohmylms' ) }
 				</h3>
+				<p>
+					{ __(
+						'Each course outline owns where this assignment sits. Move it to another unit or detach it in the outline and save the outline draft; learners see the change once the course is published.',
+						'ohmylms'
+					) }
+				</p>
 				{ current.placements.length ? (
 					<ul>
 						{ current.placements.map( ( placement ) => (
@@ -448,26 +455,37 @@ export default function AssignmentEditorPage() {
 									placement.chapter_id ?? 0
 								}` }
 							>
-								<Link
-									to={ `/courses/${ placement.course_id }` }
-								>
-									{ placement.course_title }
-								</Link>
+								{ placement.course_title }
 								{ placement.chapter_title
 									? ` — ${ placement.chapter_title }`
 									: ` — ${ __(
 											'learning program',
 											'ohmylms'
-										) }` }
+										) }` }{ ' ' }
+								<Link
+									to={ `/courses/${ placement.course_id }/outline?focus=assignment:${ current.id }` }
+								>
+									{ sprintf(
+										/* translators: %s: course title. */
+										__(
+											'Move or detach in the outline of %s',
+											'ohmylms'
+										),
+										placement.course_title
+									) }
+								</Link>
 							</li>
 						) ) }
 					</ul>
 				) : (
 					<p>
 						{ __(
-							'Not in a course yet. Add it to a chapter in the course editor; learners cannot submit until then.',
+							'Not in a course yet; learners cannot submit until it is. Open a course outline and add it to a unit with “Assignment”.',
 							'ohmylms'
-						) }
+						) }{ ' ' }
+						<Link to="/courses">
+							{ __( 'Choose a course', 'ohmylms' ) }
+						</Link>
 					</p>
 				) }
 				{ current.permalink && (

@@ -84,7 +84,10 @@ final class Figures {
 		$bounds = PageRenderer::bounds( $request['bounds'] );
 		$page   = $request['page'];
 		if ( is_wp_error( $bounds ) || ! is_int( $page ) || $page < 1 || $page > 500 ) {
-			return new \WP_Error( 'exam_crop_bounds', __( 'Choose a page from 1 to 500 and normalized left, top, right, bottom bounds.', 'ohmylms' ), array( 'status' => 400 ) );
+			return self::bounds_error( 'shape', __( 'Choose a page from 1 to 500 and normalized left, top, right, bottom bounds.', 'ohmylms' ) );
+		}
+		if ( is_wp_error( PageRenderer::crop_bounds( $bounds ) ) ) {
+			return self::bounds_error( 'too_small', __( 'The crop is too small: make it at least half a percent of the page wide and high.', 'ohmylms' ) );
 		}
 		if ( ! function_exists( 'as_schedule_single_action' ) || ! did_action( 'action_scheduler_init' ) ) {
 			return new \WP_Error( 'exam_scheduler', __( 'The import scheduler is unavailable.', 'ohmylms' ), array( 'status' => 503 ) );
@@ -117,7 +120,15 @@ final class Figures {
 		if ( ! is_array( $job ) || empty( $job['document']['sha256'] ) || in_array( $job['state'], array( 'queued', 'failed' ), true ) ) {
 			return new \WP_Error( 'exam_crop_source', __( 'Validate the source PDF before creating crops.', 'ohmylms' ), array( 'status' => 409 ) );
 		}
-		$key     = hash( 'sha256', wp_json_encode( array( $job['document']['sha256'], $page, $bounds, PageRenderer::VERSION, PageRenderer::MAX_SIDE ) ) );
+		$pages = SourcePages::page_count( $job );
+		if ( $pages && $page > $pages ) {
+			return self::bounds_error(
+				'page',
+				/* translators: %d: pages of the paper. */
+				sprintf( _n( 'The paper has %d page. Crop a figure on one of its pages.', 'The paper has %d pages. Crop a figure on one of its pages.', $pages, 'ohmylms' ), $pages )
+			);
+		}
+		$key     = hash( 'sha256', wp_json_encode( array( $job['document']['sha256'], $page, $bounds, PageRenderer::contract(), PageRenderer::MAX_SIDE ) ) );
 		$records = self::records( $job_id );
 		foreach ( $records as $post ) {
 			$data = get_post_meta( $post->ID, self::META, true );
@@ -381,6 +392,24 @@ final class Figures {
 	 */
 	private static function denied() {
 		return new \WP_Error( 'exam_figure_forbidden', __( 'Figure unavailable.', 'ohmylms' ), array( 'status' => 403 ) );
+	}
+
+	/**
+	 * A crop the server will not cut.
+	 *
+	 * @param string $reason  `shape`, `too_small` or `page`.
+	 * @param string $message Message for the author.
+	 * @return \WP_Error 400 `exam_crop_bounds`.
+	 */
+	private static function bounds_error( $reason, $message ) {
+		return new \WP_Error(
+			'exam_crop_bounds',
+			$message,
+			array(
+				'status' => 400,
+				'reason' => $reason,
+			)
+		);
 	}
 
 	/**

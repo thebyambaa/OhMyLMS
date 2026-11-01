@@ -1002,54 +1002,6 @@ final class Service {
 		return array( 'success' => true );
 	}
 	/**
-	 * Rollover for Service.
-	 *
-	 * @param mixed $school School.
-	 * @param mixed $data Input data.
-	 */
-	public static function rollover( $school, $data ) {
-		global $wpdb;
-		Access::require_access( Access::school( $school ) );
-		$from = self::row( 'academic_years', absint( $data['from_year'] ?? 0 ) );
-		$to   = self::row( 'academic_years', absint( $data['to_year'] ?? 0 ) );
-		self::need( $from && $to && $from['id'] !== $to['id'] && (int) $from['school_id'] === $school && (int) $to['school_id'] === $school && 'active' === $from['status'] && 'active' === $to['status'], 'Select two different active years in this school.' );
-		return self::transaction(
-			function () use ( $school, $from, $to, $wpdb, $data ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Lock both years in ID order to serialize concurrent rollovers and class creation.
-				$wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE id IN (%d,%d) ORDER BY id FOR UPDATE', Schema::table( 'academic_years' ), $from['id'], $to['id'] ) );
-				Access::require_access( Access::school( $school ) );
-				$target = self::row( 'academic_years', $to['id'] );
-				self::need( $target && 'active' === $target['status'], 'The destination year is no longer active.' );
-				$years = Schema::table( 'academic_years' );
-				// Serialize rollover; repeated requests must never duplicate classes.
-				$status = $wpdb->get_var( $wpdb->prepare( 'SELECT status FROM %i WHERE id=%d FOR UPDATE', $years, $from['id'] ) );
-				self::need( 'active' === $status, 'This year has already been archived.' );
-				$c       = Schema::table( 'classes' );
-				$classes = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE academic_year_id=%d AND school_id=%d AND status=\'active\' ORDER BY id FOR UPDATE', $c, $from['id'], $school ), ARRAY_A );
-				if ( isset( $data['preview_hash'] ) ) {
-					self::need( hash_equals( $data['preview_hash'], Lifecycle::signature( self::row( 'academic_years', $from['id'] ), self::row( 'academic_years', $to['id'] ), $classes ) ), 'The academic years or source classes changed. Preview the rollover again.' );
-				}
-				foreach ( $classes as $class ) {
-					// New year starts with empty rosters; grade promotion is an explicit staff decision.
-					self::insert(
-						'classes',
-						array(
-							'school_id'        => $school,
-							'academic_year_id' => $to['id'],
-							'name'             => $class['name'],
-							'subject'          => $class['subject'],
-							'grade'            => $class['grade'],
-						)
-					);
-					self::update( 'classes', array( 'status' => 'archived' ), array( 'id' => $class['id'] ) );
-				}
-				self::update( 'academic_years', array( 'status' => 'archived' ), array( 'id' => $from['id'] ) );
-				self::audit( $school, 'year_rolled_over', $from['id'] );
-				return array( 'classes_created' => count( $classes ) );
-			}
-		);
-	}
-	/**
 	 * Import roster for Service.
 	 *
 	 * @param mixed $school School.

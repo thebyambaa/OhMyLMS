@@ -243,7 +243,7 @@ export function CourseForm( {
 	return (
 		<>
 			<div className="oml-editor-header">
-				<div className="oml-editor-header__title">
+				<div className="oml-editor-header-title">
 					<h2>
 						{ sprintf(
 							/* translators: %s: course title. */
@@ -252,7 +252,7 @@ export function CourseForm( {
 						) }
 					</h2>
 					<span
-						className={ `oml-editor-status oml-editor-status--${ course.status }` }
+						className={ `oml-editor-status oml-editor-status-${ course.status }` }
 					>
 						{ statusOptions.find(
 							( row ) => row.value === course.status
@@ -264,7 +264,7 @@ export function CourseForm( {
 						</span>
 					) }
 				</div>
-				<div className="oml-editor-header__actions">
+				<div className="oml-editor-header-actions">
 					<CourseViewLink course={ course } />
 					<Button
 						type="submit"

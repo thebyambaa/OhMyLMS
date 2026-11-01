@@ -46,7 +46,7 @@ if ($action === 'setup') {
             $state['users'][$role] = ['id' => $id, 'login' => $login, 'password' => $password];
         }
         // Course, chapter and a quiz with three choice questions.
-        $course = $call('POST', 'courses', ['name' => "Browser exam course $tag", 'status' => 'publish'])['id'];
+        $course = $call('POST', 'courses', ['title' => "Browser exam course $tag", 'status' => 'publish'])['id'];
         $quiz = $call('POST', 'quiz', ['name' => "Browser exam $tag", 'status' => 'publish'])['id'];
         $chapter = wp_insert_post(['post_type' => 'ohmylms-chapter', 'post_title' => 'Browser chapter', 'post_status' => 'publish']);
         array_push($state['posts'], $course, $quiz, $chapter);

@@ -60,7 +60,9 @@ function school_dispatch($method, $path, $p) {
             case 'invitations': return $write ? Service::invite($school, $p) : Service::invitations($school);
             case 'guardians': return Service::guardians($school);
             case 'import': return Service::import_roster($school, $p);
-            case 'rollover': return Service::rollover($school, $p);
+            case 'rollover':
+                \OhMyLMS\Schools\Lifecycle::preview($school, absint($p['from_year'] ?? 0), absint($p['to_year'] ?? 0));
+                return \OhMyLMS\Schools\Lifecycle::rollover($school, absint($p['from_year'] ?? 0), absint($p['to_year'] ?? 0));
         }
     }
     throw new RuntimeException('Route not found.', 404);

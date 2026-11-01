@@ -511,6 +511,15 @@ New Gutenberg blocks for Student Dashboard, My Courses, and Student Profile page
 - Added: Emails are written in each recipient's language, and an email template stores only the fields an administrator changed (with "Reset to default" per field).
 - Changed: The learner front end runs on the WordPress Interactivity API: catalog search and filters, account and profile, login, sign-up and reviews, the lesson and assignment player, video, carousels, checkout and the exam paper. jQuery and the Slick carousel are no longer loaded on learner pages.
 - Changed: Image fields in the admin (course thumbnail, certificate images, badges, hub icons) open the WordPress media library.
+- Added: "Create from syllabus" in the course list and the syllabus editor: select topics or skills, review the generated units, draft lessons and skill links, then create an independent draft course and open its outline.
+- Added: Syllabus editor skill-group deletion (skills stay in the library), source and profile editing with category icon and colour styles, per-skill required and target controls for the syllabus's course, publication of that course through the reviewed Publish panel, and the `syllabus.skill.resources` extension slot under each skill.
+- Added: Quiz editor "Versions" dialog to read any saved version of a question and pin the quiz to it, or unpin it.
+- Added: Marking rubric for short and long text questions (criteria with points, levels and descriptions). Graders score each criterion; the server checks the breakdown against the delivered rubric and saves it with the manual grade and its history. Learners see it with their marked answers only when feedback is released.
+- Added: Question editor fields for add-on question settings, generated from the settings schema, and a `registerQuestionSettings` extension panel. Rejected add-on settings name the add-on (`data.namespace`).
+- Added: Exam import renders pages and crops with Imagick and Ghostscript when Poppler is not set up (Poppler stays preferred; the `ohmylms_exam_import_renderers` filter controls the engines).
+- Changed: School administrators and teachers can open the read-only skill map with their own learners' mastery; editing stays with administrators.
+- Changed: The School workspace's year rollover uses the same rollover as Account Hub: classes move with their active students, classes without students are skipped unless included, and the old copy-every-class path was removed.
+- Changed: Each course placement in the assignment editor links to the course outline opened on that placement.
 
 🛡 Security and fixes
 
@@ -520,6 +529,8 @@ New Gutenberg blocks for Student Dashboard, My Courses, and Student Profile page
 - Fixed: A syllabus course could be published while a skill it requires had too few approved questions, so no learner could complete it. Required skills of syllabus courses now pass the same question check as other courses, and the readiness panel lists them.
 - Changed: A syllabus course is published only when it has a completion requirement (and, unless it is traditional, a required skill), like any course; before, one with nothing required could be published that no learner could complete.
 - Changed: The syllabus editor shows one outline workspace; the mind map and spreadsheet layouts are removed and their old addresses open the outline.
+- Fixed: Exam import checks every figure crop on the server (minimum size, page range, crop inside the rendered page, and a figure's page and area against its crop on save and accept); the review screen offers to redraw a refused crop, and choosing a crop copies its page and bounds.
+- Fixed: A class without a grade is kept in a year rollover instead of being treated as graduating (which cancelled its students' roster enrolments).
 
 🗑 Removed (breaking for themes and add-ons that used them; see docs/EXTENSIONS.md)
 
@@ -527,6 +538,7 @@ New Gutenberg blocks for Student Dashboard, My Courses, and Student Profile page
 - Removed: Payment gateway `open()` and `resume()` hooks receive the checkout form element, not a jQuery object; the QPay script no longer needs jQuery.
 - Removed: The unused admin-ajax actions `ohmylms_loadmore` and `ohmylms_search_filter`, and every `ohmylms_frontend_params` field except `ajax_url` (including `load_more_nonce` and `search_filter_nonce`). The catalogue uses its GET URLs.
 - Removed: The compatibility stylesheets `assets/css/style.css` and `style-rtl.css` (483 KB, never enqueued by the plugin); old URLs now answer 404. Use the `ohmylms-frontend` style handle.
+- Removed: BEM-style class names in the shared editor and hot-text styles (`oml-unit__*`, `oml-outline-item__*`, `oml-vars__*`, `oml-editor-header__*`, `oml-editor-status--*`, `ohmylms-hot-text__*`) are now hyphenated (`oml-unit-header`, `ohmylms-hot-text-option` and so on). Theme overrides that targeted them need the new names.
 
 = 1.2.21 =
 🚀 New Features

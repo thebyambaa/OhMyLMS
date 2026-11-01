@@ -12,6 +12,7 @@ use OhMyLMS\Assessment\AttemptReport;
 use OhMyLMS\Assessment\AssessmentSettings;
 use OhMyLMS\Assessment\AttemptItems;
 use OhMyLMS\Assessment\GradeEvents;
+use OhMyLMS\Assessment\Rubric;
 use OhMyLMS\Assessment\Schema;
 use OhMyLMS\Data\Quiz;
 use OhMyLMS\DataException;
@@ -668,6 +669,17 @@ class QuizController extends RestController {
 								'type'    => 'number',
 								'minimum' => 0,
 								'maximum' => 1000000,
+							),
+						),
+						'rubric'      => array(
+							'description'          => __( 'Points by rubric criterion ID, for a short or long text question graded with its rubric. The marks must be the rubric score, scaled to the question\'s marks in the attempt.', 'ohmylms' ),
+							'type'                 => 'object',
+							'minProperties'        => 1,
+							'maxProperties'        => Rubric::MAX_CRITERIA,
+							'additionalProperties' => array(
+								'type'    => 'number',
+								'minimum' => 0,
+								'maximum' => Rubric::MAX_POINTS,
 							),
 						),
 					),
@@ -1550,6 +1562,12 @@ class QuizController extends RestController {
 				}
 			}
 			$history = array();
+			$current = null;
+			foreach ( (array) ( $question['grade_history'] ?? array() ) as $event ) {
+				if ( empty( $event['superseded_by'] ) ) {
+					$current = $event;
+				}
+			}
 			foreach ( array_slice( (array) ( $question['grade_history'] ?? array() ), -10 ) as $event ) {
 				$reviewer  = ! empty( $event['reviewer_id'] ) ? get_userdata( (int) $event['reviewer_id'] ) : false;
 				$history[] = array(
@@ -1558,21 +1576,24 @@ class QuizController extends RestController {
 					'reviewer_id'   => (int) $event['reviewer_id'],
 					'reviewer_name' => $reviewer ? (string) $reviewer->display_name : '',
 					'reason'        => (string) $event['reason'],
+					'rubric_scores' => $this->rubric_scores( $event ),
 					'created_at'    => $this->iso( (string) $event['created_at'] ),
 				);
 			}
 			$questions[] = array(
-				'question_id' => (int) $question['id'],
-				'position'    => $index + 1,
-				'title'       => $this->plain( (string) ( $question['name'] ?? '' ), 1000 ),
-				'type'        => (string) ( $settings['type'] ?? '' ),
-				'max_marks'   => round( $max, 4 ),
-				'awarded'     => round( (float) ( $question['achive_mark'] ?? 0 ), 4 ),
-				'status'      => 'in-review' === ( $question['status'] ?? '' ) ? 'in-review' : 'graded',
-				'correct'     => array_key_exists( 'correct', $question ) && null !== $question['correct'] ? (bool) $question['correct'] : null,
-				'answer'      => $this->answer_lines( $question['given_answer'] ?? null, (array) ( $question['questions'] ?? array() ) ),
-				'parts'       => $parts ? $parts : null,
-				'history'     => $history,
+				'question_id'   => (int) $question['id'],
+				'position'      => $index + 1,
+				'title'         => $this->plain( (string) ( $question['name'] ?? '' ), 1000 ),
+				'type'          => (string) ( $settings['type'] ?? '' ),
+				'max_marks'     => round( $max, 4 ),
+				'awarded'       => round( (float) ( $question['achive_mark'] ?? 0 ), 4 ),
+				'status'        => 'in-review' === ( $question['status'] ?? '' ) ? 'in-review' : 'graded',
+				'correct'       => array_key_exists( 'correct', $question ) && null !== $question['correct'] ? (bool) $question['correct'] : null,
+				'answer'        => $this->answer_lines( $question['given_answer'] ?? null, (array) ( $question['questions'] ?? array() ) ),
+				'parts'         => $parts ? $parts : null,
+				'rubric'        => $this->rubric_view( $settings ),
+				'rubric_scores' => $this->rubric_scores( $current ),
+				'history'       => $history,
 			);
 		}
 
@@ -1585,6 +1606,52 @@ class QuizController extends RestController {
 				'questions'    => $questions,
 			)
 		);
+	}
+
+	/**
+	 * The marking rubric of a short or long text question as plain text, or null without one.
+	 *
+	 * @param array $settings Settings of the delivered version.
+	 * @return array[]|null
+	 */
+	private function rubric_view( array $settings ) {
+		$criteria = Rubric::criteria( $settings );
+		if ( ! $criteria ) {
+			return null;
+		}
+
+		return array_map(
+			function ( array $criterion ) {
+				return array(
+					'id'          => $criterion['id'],
+					'title'       => $this->plain( $criterion['title'], Rubric::MAX_TITLE ),
+					'description' => $this->plain( $criterion['description'], Rubric::MAX_DESCRIPTION ),
+					'points'      => round( $criterion['points'], 4 ),
+					'levels'      => array_map(
+						function ( array $level ) {
+							return array(
+								'points'      => round( $level['points'], 4 ),
+								'description' => $this->plain( $level['description'], Rubric::MAX_LEVEL_TEXT ),
+							);
+						},
+						$criterion['levels']
+					),
+				);
+			},
+			$criteria
+		);
+	}
+
+	/**
+	 * Points by rubric criterion stored with a grade event, or null when it has none.
+	 *
+	 * @param array|null $event Grade event.
+	 * @return object|null
+	 */
+	private function rubric_scores( $event ) {
+		$scores = GradeEvents::rubric( $event );
+
+		return $scores ? (object) $scores : null;
 	}
 
 	/**
@@ -1659,8 +1726,9 @@ class QuizController extends RestController {
 			return new WP_Error( 'ohmylms_attempt_not_versioned', __( 'Attempts taken before versioned grading cannot be graded here.', 'ohmylms' ), array( 'status' => 409 ) );
 		}
 
-		$max   = AttemptReports::question_marks( $attempt_id );
-		$marks = array();
+		$max     = AttemptReports::question_marks( $attempt_id );
+		$marks   = array();
+		$rubrics = array();
 		foreach ( (array) $request['grades'] as $grade ) {
 			$question_id = (int) $grade['question_id'];
 			if ( isset( $marks[ $question_id ] ) ) {
@@ -1703,13 +1771,17 @@ class QuizController extends RestController {
 				);
 			}
 			$marks[ $question_id ] = $value;
+			if ( isset( $grade['rubric'] ) ) {
+				$rubrics[ $question_id ] = (array) $grade['rubric'];
+			}
 		}
 
 		$events_before = $this->grade_event_count( $attempt_id );
-		$report        = Review::save( $quiz_id, $attempt_id, $marks, (string) $request['reason'] );
+		$report        = Review::save( $quiz_id, $attempt_id, $marks, (string) $request['reason'], $rubrics );
 		if ( is_wp_error( $report ) ) {
-			$status = (int) ( $report->get_error_data()['status'] ?? 500 );
-			return new WP_Error( $report->get_error_code(), $report->get_error_message(), array( 'status' => $status ) );
+			$data           = (array) $report->get_error_data();
+			$data['status'] = (int) ( $data['status'] ?? 500 );
+			return new WP_Error( $report->get_error_code(), $report->get_error_message(), $data );
 		}
 		$fresh = $this->find_attempt( $quiz_id, $attempt_id );
 		if ( is_wp_error( $fresh ) ) {

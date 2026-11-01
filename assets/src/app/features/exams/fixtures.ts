@@ -215,6 +215,7 @@ export const source: SourceInfo = {
 		engine: 'poppler',
 		version: '24.08.0',
 		reason: '',
+		poppler_reason: '',
 		crops: true,
 		max_side: 2400,
 		imagick: false,

@@ -1407,7 +1407,7 @@
 				text.split( /\n{2,}/ ).forEach( ( chunk, index ) => {
 					if ( index > 0 ) {
 						body.appendChild(
-							el( 'span', { class: 'ohmylms-hot-text__break' } )
+							el( 'span', { class: 'ohmylms-hot-text-break' } )
 						);
 					}
 					body.appendChild( document.createTextNode( chunk ) );
@@ -1431,11 +1431,11 @@
 					setAnswer( root, token.id, selected ? '1' : '' );
 				} );
 				item.className +=
-					' ohmylms-hot-text__option ohmylms-ht-color-' +
+					' ohmylms-hot-text-option ohmylms-ht-color-' +
 					( ( position - 1 ) % 6 );
 				item.appendChild(
 					el( 'span', {
-						class: 'ohmylms-hot-text__num',
+						class: 'ohmylms-hot-text-num',
 						'aria-hidden': 'true',
 						text: String( position ),
 					} )

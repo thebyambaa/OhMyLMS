@@ -98,7 +98,7 @@ $make_due = static function ($student) use ($wpdb, $outbox) {
 as_user($admin);
 $student = make_user('subscriber');
 $other = make_user('subscriber');
-$course_id = remember_post(call('POST', 'courses', ['name' => 'xAPI course', 'status' => 'publish'])->get_data()['id']);
+$course_id = new_course('xAPI course');
 $lesson_id = remember_post(wp_insert_post(['post_type' => OHMYLMS_LESSON_CPT, 'post_title' => 'xAPI lesson', 'post_status' => 'publish', 'post_content' => 'x']));
 enroll($student, $course_id);
 
@@ -188,9 +188,9 @@ as_user($admin);
 $make_question = static function ($name) use ($quiz_id, $wpdb) {
     $data = ['name' => $name, 'quiz_id' => $quiz_id, 'settings' => ['type' => 'single-choice', 'score' => ['enabled' => true, 'value' => 2]],
         'questions' => [['answer' => 'Right', 'is_correct' => 1], ['answer' => 'Wrong']], 'bank' => ['family_id' => 'xapi-' . wp_generate_password(6, false, false)]];
-    $created = call('POST', 'question', $data);
+    $created = create_question($data);
     ok(status_of($created) === 201, 'Question create failed: ' . wp_json_encode($created->get_data()));
-    $id = remember_post($created->get_data()['id']);
+    $id = remember_post($created->get_data()['created_id']);
     ok(status_of(call('POST', 'questions/' . $id . '/approve')) === 200, 'Question approve failed');
     return $id;
 };
@@ -210,12 +210,18 @@ ok(($queued_kinds['attempt_completed'] ?? 0) === 1 && ($queued_kinds['attempt_gr
 
 $reset_lrs();
 Processor::process();
-$statements = $sent_statements();
+$statements = [];
+$course_statements = [];
+foreach ($sent_statements() as $statement) {
+    if (($statement['object']['definition']['type'] ?? '') === 'http://adlnet.gov/expapi/activities/course') { $course_statements[] = $statement; } else { $statements[] = $statement; }
+}
 $verbs = array_map(static function ($s) { return basename($s['verb']['id']); }, $statements);
 $attempt_row = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}ohmylms_quiz_attempts WHERE id=%d", $attempt), ARRAY_A);
 $basis = \OhMyLMS\Assessment\AttemptReport::basis($attempt, ohmylms_get_quiz($quiz_id));
 $passed = (float) $attempt_row['total'] >= $basis['passing'];
 ok(count(array_keys($verbs, 'answered')) === 2 && count(array_keys($verbs, 'completed')) === 1 && count(array_keys($verbs, $passed ? 'passed' : 'failed')) === 1, 'Attempt verbs wrong: ' . implode(',', $verbs));
+// The quiz is the course's only content, so passing it also completes the course: one statement of its own.
+ok(!$passed || (count($course_statements) === 1 && basename($course_statements[0]['verb']['id']) === 'completed' && $course_statements[0]['object']['id'] === home_url('/') . 'xapi/activities/course/' . $quiz_course), 'Course completion statement wrong: ' . wp_json_encode($course_statements));
 
 $completed = $outcome = null; $answers = [];
 foreach ($statements as $statement) {

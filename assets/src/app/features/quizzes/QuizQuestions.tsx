@@ -33,6 +33,7 @@ import {
 } from './model';
 import { QuestionPicker } from './QuestionPicker';
 import { MarksDialog, PoolsDialog, SectionsDialog } from './QuizLayoutDialogs';
+import { VersionPinDialog } from './VersionPinDialog';
 import {
 	addQuizQuestions,
 	copyQuizQuestions,
@@ -79,9 +80,10 @@ function defaultType( types: readonly QuestionType[] ): string {
  * The Questions section of the quiz editor: the questions of the quiz in order with type, marks and the
  * version learners get, the total marks and the random pools. Authors add questions from the question
  * bank, create a question in place (the question bank's draft editor, saved into this quiz), reorder
- * with move buttons, set a question's marks in this quiz, pin or unpin versions, remove questions, and
- * edit the paper's sections and the random pools. Every change is saved at once with the revision of
- * the loaded list; a list changed by someone else is reloaded instead of overwritten.
+ * with move buttons, set a question's marks in this quiz, pin the version used now or any saved version
+ * (read in the versions dialog), unpin, remove questions, and edit the paper's sections and the random
+ * pools. Every change is saved at once with the revision of the loaded list; a list changed by someone
+ * else is reloaded instead of overwritten.
  *
  * @param props
  * @param props.quizId        Quiz id.
@@ -119,10 +121,11 @@ export function QuizQuestions( {
 		null
 	);
 	const [ marking, setMarking ] = useState< QuizQuestionSlot | null >( null );
+	const [ versioning, setVersioning ] = useState< number | null >( null );
 	const [ layout, setLayout ] = useState< 'sections' | 'pools' | null >(
 		null
 	);
-	const dialog = picking || removing || marking || layout;
+	const dialog = picking || removing || marking || layout || versioning;
 	const [ focus, setFocus ] = useState< string[] >( [] );
 	const operation = useRef< AbortController | null >( null );
 	const revision = useRef( '' );
@@ -342,8 +345,12 @@ export function QuizQuestions( {
 							updated.pinned_version_no
 						);
 			},
-			[ `${ slot.question_id }:pin` ]
-		);
+			[ `${ slot.question_id }:pin`, `${ slot.question_id }:versions` ]
+		).then( ( saved ) => {
+			if ( saved ) {
+				setVersioning( null );
+			}
+		} );
 	}
 
 	function remove( slot: QuizQuestionSlot ) {
@@ -525,6 +532,9 @@ export function QuizQuestions( {
 	}
 
 	const totals = data.totals;
+	const versionSlot = slots.find(
+		( slot ) => slot.question_id === versioning
+	);
 
 	return (
 		<section aria-labelledby="oml-quiz-questions">
@@ -689,6 +699,10 @@ export function QuizQuestions( {
 										register={ register }
 										onMove={ move }
 										onPin={ pin }
+										onVersions={ ( item ) => {
+											setFailure( null );
+											setVersioning( item.question_id );
+										} }
 										onMarks={ ( item ) => {
 											setFailure( null );
 											setMarking( item );
@@ -766,6 +780,19 @@ export function QuizQuestions( {
 						</tbody>
 					</WidefatTable>
 				</section>
+			) }
+
+			{ versionSlot && (
+				<VersionPinDialog
+					slot={ versionSlot }
+					busy={ busy }
+					error={ failure }
+					onPin={ ( choice ) => pin( versionSlot, choice ) }
+					onClose={ () => {
+						setVersioning( null );
+						setFailure( null );
+					} }
+				/>
 			) }
 
 			{ marking && (
@@ -948,6 +975,7 @@ function SlotRow( {
 	register,
 	onMove,
 	onPin,
+	onVersions,
 	onMarks,
 	onRemove,
 }: {
@@ -959,6 +987,7 @@ function SlotRow( {
 	register: ( key: string ) => ( element: HTMLButtonElement | null ) => void;
 	onMove: ( index: number, delta: -1 | 1 ) => void;
 	onPin: ( slot: QuizQuestionSlot, choice: PinChoice ) => void;
+	onVersions: ( slot: QuizQuestionSlot ) => void;
 	onMarks: ( slot: QuizQuestionSlot ) => void;
 	onRemove: ( slot: QuizQuestionSlot ) => void;
 } ) {
@@ -1104,6 +1133,25 @@ function SlotRow( {
 								{ pinned
 									? __( 'Unpin', 'ohmylms' )
 									: __( 'Pin version', 'ohmylms' ) }
+							</Button>{ ' ' }
+						</>
+					) }
+					{ slot.permissions.can_edit && slot.version > 0 && (
+						<>
+							<Button
+								ref={ register(
+									`${ slot.question_id }:versions`
+								) }
+								variant="link"
+								disabled={ disabled }
+								aria-label={ sprintf(
+									/* translators: %s: question name. */
+									__( 'Choose a version of %s', 'ohmylms' ),
+									name
+								) }
+								onClick={ () => onVersions( slot ) }
+							>
+								{ __( 'Versions', 'ohmylms' ) }
 							</Button>{ ' ' }
 						</>
 					) }

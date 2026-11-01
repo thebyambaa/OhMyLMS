@@ -10,6 +10,7 @@ export type ExtensionKind =
 	| 'slash-command'
 	| 'slot'
 	| 'membership-settings'
+	| 'question-settings'
 	| 'checkout-field'
 	| 'integration';
 
@@ -63,6 +64,7 @@ export interface ExtensionRegistry {
 	registerSlashCommand: Register;
 	registerSlot: Register;
 	registerMembershipSettings: Register;
+	registerQuestionSettings: Register;
 	registerCheckoutField: Register;
 	registerIntegration: Register;
 }

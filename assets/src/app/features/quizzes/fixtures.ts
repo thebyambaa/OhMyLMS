@@ -81,6 +81,8 @@ export const attemptDetail: AttemptDetail = {
 			correct: true,
 			answer: [ '3/4' ],
 			parts: null,
+			rubric: null,
+			rubric_scores: null,
 			history: [],
 		},
 		{
@@ -94,6 +96,8 @@ export const attemptDetail: AttemptDetail = {
 			correct: null,
 			answer: [ 'Because they are equal.' ],
 			parts: null,
+			rubric: null,
+			rubric_scores: null,
 			history: [],
 		},
 	],

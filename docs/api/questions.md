@@ -187,7 +187,7 @@ Answers, by type (before: 30 October 2026; after: this change):
 | `matching` | options with `matching_data.label`/`image_url`; `match_layout` | text, label, order | + option and match images, layout (lines or grid) |
 | `statement` | expected answers (correct options, compared exactly, in order) | link to the deleted full editor | expected answers editor |
 | `fill-in-the-blank` | `{answers}` in the name, or correct options; `blank_mode`, `case_sensitive`, `partial_credit` | link to the deleted full editor | detected blanks, accepted answers, drag or type, case, partial credit |
-| `short-text`, `long-text` | none (marked by a teacher; length limit is a quiz setting) | link to the deleted full editor | explained, no answer key |
+| `short-text`, `long-text` | none (marked by a teacher; length limit is a quiz setting); optional `settings.rubric` | link to the deleted full editor | explained, no answer key; marking rubric (2 November 2026) |
 | `numerical`, `structured`, `dropdown-blanks`, `categorize`, `multi-blank`, `build-expression`, `expression`, `number-line`, `shade-model`, `count-blocks`, `set-clock`, `make-amount`, `fill-level`, `build-chart`, `grid-build` | type settings | registered core editor | unchanged |
 | `text-entry`, `crossword`, `wordsearch` | type settings | "no editor yet" | registered core editor |
 | `passage`, `graphing`, `hot-text`, `match-table-grid`, `labeling`, `hotspot`, `draw`, `audio-response`, `video-response`, `poll`, `word-cloud`, `discussion-board`, `slide`, `interactive-video`, `spin-wheel`, `gameshow`, `hangman`, `open-box`, `speaking-cards`, `flip-tiles`, `flashcards`, `timed-true-false`, `whack-a-mole`, `flying-fruit` | type settings (frozen keys, public views in `ExtendedQuestions`) | "no editor yet" | registered core editor (`ExtendedEditor`) |
@@ -207,8 +207,9 @@ extension scripts ran, so an add-on can still replace any of them. Fields every 
 | Question image and video | `thumbnail_id`, `video_id` | no | media library |
 | Bank, difficulty, source, secure | `bank` | difficulty only | all; `family_id` shown read-only |
 | Skills | `skills` (per part: primary and supporting) | no | yes, per part of `structured`/`passage` |
-| Teacher marking notes | `parts[].rubric` of `structured`/`passage` | yes (structured editor) | yes; the server has no rubric for `short-text`/`long-text` |
-| Extension settings | `extension_settings` | no | no (no question extension settings are registered; see Not covered) |
+| Teacher marking notes | `parts[].rubric` of `structured`/`passage` | yes (structured editor) | yes |
+| Marking rubric | `settings.rubric` of `short-text`/`long-text` | no | yes ([below](#marking-rubric)) |
+| Extension settings | `extension_settings` | no | yes: a `registerQuestionSettings` panel, or generic fields from the settings schema ([below](#extension-settings-in-the-editor)) |
 
 Tags, per-option feedback and per-question numeric tolerance outside `numerical`/`multi-blank`/`structured`
 are not stored by the plugin. The editor's **Learner preview** posts the unsaved edits to
@@ -221,14 +222,14 @@ preview's document) and shows the real quiz player in a frame; nothing is saved 
 
 | Field | Create | Update | Rules |
 | --- | --- | --- | --- |
-| `name` | required | optional | string, 1-500 characters after trimming (blank: 422 `ohmylms_question_invalid_name`). |
+| `name` | optional | optional | string, 1-500 characters after trimming. When it is missing on create, or sent blank, the title is derived from `description` (the question statement); a statement with no text answers 422 `ohmylms_question_invalid_name` on `description`. |
 | `description` | optional | optional | string, at most 65535 characters; `wp_kses_post` unless `unfiltered_html` (DraftWriter). |
 | `settings` | required | optional, replaces the whole object | object; `settings.type` must be a registered type (400 `ohmylms_question_invalid_type`); the type's own `validate_settings`/editor schema runs in DraftWriter (400 `ohmylms_invalid_question_settings`). Every string leaf is `wp_kses_post`-filtered unless the user has `unfiltered_html`; numbers, booleans and keys are kept. |
 | `options` | optional | optional, replaces the option set | at most 100 items of `{id?, answer (required, <= 10000), is_correct?, order_number? >= 0, image_id? >= 1, image_url? (uri), matching_data? {label?, image_url?}}`; no other keys. `id` keeps an existing option row of this question (another question's option: 403 `ohmylms_option_foreign`). |
 | `skills` | optional | optional, replaces the map | `{part: {primary: int >= 0, supporting: int[] (<= 50)}}`, at most 20 parts; term IDs must be skills. |
 | `bank` | optional | optional, only sent keys change | `{bank_id >= 0, difficulty (enum), source <= 100, family_id <= 64, secure: bool}`; a `bank_id` the user cannot edit answers 403. |
 | `thumbnail_id`, `video_id` | optional | optional | integer >= 0; a non-zero value must be an attachment (422 `ohmylms_question_invalid_media`). |
-| `extension_settings` | optional | optional, merged by settings ID | object keyed by registered question extension settings; each is validated by its schema (400 `ohmylms_question_invalid_extension_settings`). Stored in the same transaction and part of the version. |
+| `extension_settings` | optional | optional, merged by settings ID | object keyed by registered question extension settings; each is validated by its schema, one namespace at a time (400 `ohmylms_question_invalid_extension_settings` with `data.namespace`, the rejected settings ID, and `data.reason`). Stored in the same transaction and part of the version. |
 | `base_modified` | - | **required** | RFC 3339; the `modified` of the last read. A newer stored value answers 409 `ohmylms_question_conflict` with `data.modified`. |
 
 Any other top-level body field, including `status` and `id`, answers 400 `ohmylms_question_unknown_field`
@@ -268,6 +269,59 @@ name), against the merged result (stored type, options or name for whatever was 
 Other types are validated by their own `validate_settings` / editor schema in DraftWriter (400
 `ohmylms_invalid_question_settings`): for example unscored types (`poll`, `word-cloud`, `slide` and the card
 decks) must have 0 points, `labeling`/`hotspot` need an http(s) image, `hot-text` keys must name its tokens.
+
+### Marking rubric
+
+`short-text` and `long-text` questions may carry a teacher-only rubric in `settings.rubric`
+(`includes/Assessment/Rubric.php`), checked whenever `settings` is sent for these types; failures answer 422
+`ohmylms_question_invalid_settings` with `data.field`:
+
+```json
+{ "type": "long-text", "score": { "enabled": true, "value": 3.5 },
+  "rubric": [
+    { "id": "reasoning", "title": "Reasoning", "description": "Explains each step.", "points": 2,
+      "levels": [ { "points": 2, "description": "Complete" }, { "points": 0, "description": "Missing" } ] },
+    { "id": "clarity", "title": "Clarity", "points": 1.5 } ] }
+```
+
+| Rule | `data.field` |
+| --- | --- |
+| A list of at most 20 criteria; `[]` removes the rubric | `settings.rubric` |
+| Only the keys `id`, `title`, `description`, `points`, `levels` | `settings.rubric[i]` |
+| `id`: `^[a-z0-9_-]{1,40}$`, unique | `settings.rubric[i].id` |
+| `title`: text after stripping tags, at most 200 characters | `settings.rubric[i].title` |
+| `description`: optional string, at most 2000 characters | `settings.rubric[i].description` |
+| `points`: a JSON number above 0 and at most 10000 | `settings.rubric[i].points` |
+| `levels`: optional list of at most 10 `{points, description}`; points from 0 to the criterion's points, different within a criterion; description required, at most 1000 characters | `settings.rubric[i].levels`, `…levels[j].points`, `…levels[j].description` |
+| The question's points (`score.value`) equal the criteria's total | `settings.score` |
+
+The rubric is part of the version (it is in the settings), so attempts keep the rubric they were delivered
+with. The types publish no settings to learners, so it never reaches delivery markup or the learner
+preview; a learner's released result shows only the criteria titles, the points they were given and the
+chosen levels, never the marking notes. Graders read it, and save a breakdown with the marks, in the
+attempt detail ([quizzes](quizzes.md#rubric-breakdown)). The editor
+(`RubricEditor.tsx`) adds, orders and removes criteria and levels, shows the total, and with criteria
+replaces the Points field by that total; removing every criterion brings the Points field back.
+
+### Extension settings in the editor
+
+Settings registered with `ohmylms_register_extension_settings()` for the `question` context (the editor
+reads them from the page's extension manifest, `ohmylmsExtensionManifest.settings`, the same data as
+`GET /ohmylms/v1/extensions`) are edited below the skills, one fieldset per settings ID titled with the
+definition's `label` (or the schema `title`, or the ID):
+
+- An extension that registered `registerQuestionSettings( id, { label, render } )` with the same ID gets its
+  own panel (`QuestionExtensionSettings.tsx`; props `{ question: { id, type, name }, value, onChange,
+  disabled }`, error boundary, `when( props )`), as membership plans do with `registerMembershipSettings`.
+- Otherwise generic fields are built from the schema (`app/extensions/settings.ts`, `SettingsFields.tsx`):
+  `string` (text, or a text area above 200 characters or without `maxLength`; `format: uri` as a URL),
+  `number` / `integer` (with `minimum` / `maximum`), `boolean` (checkbox) and `enum` of strings or numbers
+  (select; `required` properties cannot be unset). `title` and `description` label them. Other properties
+  (objects, lists) are listed as kept as they are; their stored values are sent back unchanged.
+
+Values count as unsaved changes, are checked against the same rules before saving, and only the namespaces
+that changed are sent (`extension_settings`, also on create, including drafts created in a quiz). A server
+rejection is shown in the fieldset of `data.namespace`.
 
 ### Update semantics
 
@@ -380,7 +434,7 @@ Stale save:
 | 400 | `ohmylms_question_invalid_type` | `settings.type` missing, empty or not registered (`data.field`). |
 | 400 | `ohmylms_question_unknown_field` | Body fields the route does not accept (`data.fields`). |
 | 400 | `ohmylms_question_invalid_page` | `page` past the last page (list, versions). |
-| 400 | `ohmylms_question_invalid_extension_settings` | Unregistered or invalid extension settings (`data.reason` is the underlying code). |
+| 400 | `ohmylms_question_invalid_extension_settings` | Unregistered or invalid extension settings (`data.namespace` is the rejected settings ID, `data.reason` the underlying code). |
 | 400 | `ohmylms_invalid_question_settings`, `ohmylms_question_invalid`, `ohmylms_skill_map_invalid`, `ohmylms_skill_missing`, `ohmylms_bank_invalid` | DraftWriter, SkillMap and BankAttributes validation. |
 | 401 / 403 | `ohmylms_question_cannot_view`, `_cannot_create`, `_cannot_edit`, `_cannot_approve`, `_cannot_duplicate` | Not logged in (401) or missing the permission (403). |
 | 403 | `ohmylms_question_bank_forbidden` | `bank` filter for a bank the user cannot see. |
@@ -391,7 +445,7 @@ Stale save:
 | 409 | `ohmylms_question_conflict` | Stale `base_modified` (`data.modified`). |
 | 409 | `quiz_type_unversioned`, `exam_figure_review` | Approve: the type does not support versioned snapshots; figures are not reviewed. |
 | 413 | `ohmylms_question_too_large` | Body above 256 KiB (`data.max_bytes`). |
-| 422 | `ohmylms_question_invalid_name`, `ohmylms_question_invalid_options`, `ohmylms_question_invalid_media`, `ohmylms_question_invalid_settings` | Blank name, option rules, media IDs that are not attachments, shared settings rules (`data.field`). |
+| 422 | `ohmylms_question_invalid_name`, `ohmylms_question_invalid_options`, `ohmylms_question_invalid_media`, `ohmylms_question_invalid_settings` | Blank name, option rules, media IDs that are not attachments, shared settings and rubric rules (`data.field`). |
 | 500 | `ohmylms_question_storage` | Storage failure; DraftWriter rolled the save back. |
 | 503 | `ohmylms_question_bank_unavailable` | Question bank tables not installed. |
 
@@ -515,8 +569,14 @@ content and family, bank placement for a bank editor, 403 for a user who cannot 
 `tests/php/question-types-rest-integration.php` (same flag) creates, reads, edits (version 2) and stale-saves
 one question of every built-in type from `tests/php/fixtures/question-types.json` (and fails when a built-in
 type has no fixture), and checks the shared-settings and per-type rules, media, option images, bank fields,
-skills and that a draft's learner preview drops the answer key. App tests: `model.test.ts`,
-`QuestionEditorPage.test.tsx` (every answer area, shared settings, bank and skills, preview),
+skills and that a draft's learner preview drops the answer key; every rubric rule (nothing written on a
+rejection), the rubric stored, frozen in the version and absent from the learner view, a rubric on short
+text, clearing it with `[]` in a new version; and extension settings registered for the run only: a value
+outside the schema and an unknown namespace answer 400 naming `data.namespace`, valid values are stored and
+updated (645 checks). App tests: `model.test.ts`, `QuestionRubric.test.tsx`,
+`QuestionExtensionSettings.test.tsx` (generic fields, a registered panel, late registration, server
+rejection, nothing sent when unchanged), `QuestionEditorPage.test.tsx` (every answer area, shared settings,
+bank and skills, preview),
 `extensions/coreEditors.test.tsx` and `tests/js/core-question-editors.test.mjs` (every built-in settings type
 registers an editor). `tests/browser/question-editor-parity.spec.cjs` (with
 `tests/php/question-editor-browser-fixture.php`) drives every type through the editor on `800.local`, places
@@ -534,10 +594,11 @@ question that it cannot add by reference). App tests: `QuestionDelete.test.tsx`,
 
 - **Replace with a copy in the quiz editor**: `replace: true` has no button yet (the quiz question list would
   offer it on shared, read-only questions).
-- **`short-text` and `long-text`** have no answer key and no rubric field on the server; graders see the
-  response only. Marking notes exist for `structured`/`passage` parts.
-- **Question extension settings** (`extension_settings`) have no editor in the new admin; none are registered
-  on this site. The REST field is unchanged.
+- **Printed papers** do not print the rubric in the answer key. (Graders' points per criterion are stored
+  with the grade; see [quizzes](quizzes.md#rubric-breakdown).)
+- **Extension settings for one question type only**: settings registered for the `question` context apply
+  to every type; a panel can hide itself with `when( { question } )`, but the server does not restrict
+  them by type. Nested objects and lists need a `registerQuestionSettings` panel.
 - **Unhelpful messages**: types whose `validate_settings` returns a `WP_Error` (labeling, hotspot,
   interactive video) are reported by `Extensions\Authoring` as "Invalid question settings."; the editor's
   type editors explain what is missing before saving.
@@ -555,7 +616,6 @@ question that it cannot add by reference). App tests: `QuestionDelete.test.tsx`,
   `native-question-editor-integration.php`, `native-quiz-editor-integration.php`, `question-rows-integration.php`,
   `pdf-exam-http.php`, `assessment-browser-fixture.php`, `learning-browser-fixture.php` and the browser specs.
   The `ohmylms_source_test` assessment suite (`tests/php/assessment-integration.php` and `tests/php/assessment/*`)
-  only had its approvals and archives moved; its question creation (`POST question` with `quiz_id` and
-  `questions`), legacy reads, pins, adds, duplicates and `quiz/{id}/pools` calls still target removed routes and
-  need porting to `POST /quizzes/{id}/questions/new`, `/quizzes/{id}/questions/*` and `/questions/*` before it
-  can pass again.
+  was ported on 2 November 2026: questions are created with `POST /quizzes/{id}/questions/new` or `POST /questions`,
+  edited with `PATCH /questions/{id}`, and added, pinned, copied and pooled through `/quizzes/{id}/questions/*`;
+  every phase but `xapi-live` passes and runs in CI.

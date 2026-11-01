@@ -75,7 +75,7 @@ final class SchoolActions {
 					'invite_url' => $invite['url'],
 				);
 			case 'rollover_preview':
-				$preview = Lifecycle::preview( $school_id, absint( $data['from_year'] ?? 0 ), absint( $data['to_year'] ?? 0 ) );
+				$preview = Lifecycle::preview( $school_id, absint( $data['from_year'] ?? 0 ), absint( $data['to_year'] ?? 0 ), ! empty( $data['include_empty'] ), ! empty( $data['copy_teachers'] ) );
 				return array(
 					'message'  => __( 'Review the rollover below. Nothing has changed yet.', 'ohmylms' ),
 					'rollover' => $preview,
@@ -83,7 +83,16 @@ final class SchoolActions {
 			case 'rollover_commit':
 				Service::need( 'yes' === ( $data['confirm'] ?? '' ), 'Confirm archiving the source year and its classes.' );
 				$result = Lifecycle::rollover( $school_id, absint( $data['from_year'] ?? 0 ), absint( $data['to_year'] ?? 0 ) );
-				return array( 'message' => sprintf( /* translators: %d: number of new empty classes. */ _n( 'Rollover complete: %d empty class created. The source year and classes were archived; learning history was kept.', 'Rollover complete: %d empty classes created. The source year and classes were archived; learning history was kept.', $result['classes_created'], 'ohmylms' ), $result['classes_created'] ) );
+				$totals = $result['totals'];
+				return array(
+					'message' => sprintf(
+						/* translators: 1: classes created, 2: students moved, 3: classes without students archived only. */
+						__( 'Rollover complete: %1$d classes created in the new year, %2$d students moved with their classes, %3$d classes without students archived without a successor. The source year and classes were archived; learning history was kept.', 'ohmylms' ),
+						$totals['classes_created'],
+						$totals['students_promoted'],
+						$totals['classes_skipped']
+					),
+				);
 			case 'grade_submission':
 				$learning = Service::row( 'learning_assignments', absint( $data['learning_id'] ?? 0 ) );
 				SchoolReports::classroom( $school_id, $learning ? (int) $learning['class_id'] : 0 );
@@ -175,7 +184,7 @@ final class SchoolActions {
 				throw new \RuntimeException( 'Invalid request.', 400 );
 			}
 			$data = array();
-			foreach ( array( 'name', 'timezone', 'member_id', 'label', 'starts_at', 'ends_at', 'subject', 'grade', 'academic_year_id', 'class_id', 'external_student_id', 'role', 'email', 'student_user_id', 'invitation_id', 'guardian_link_id', 'confirm', 'learning_id', 'attempt_id', 'score', 'from_year', 'to_year', 'accent', 'remove_logo', 'reset_accent' ) as $key ) {
+			foreach ( array( 'name', 'timezone', 'member_id', 'label', 'starts_at', 'ends_at', 'subject', 'grade', 'academic_year_id', 'class_id', 'external_student_id', 'role', 'email', 'student_user_id', 'invitation_id', 'guardian_link_id', 'confirm', 'learning_id', 'attempt_id', 'score', 'from_year', 'to_year', 'include_empty', 'copy_teachers', 'accent', 'remove_logo', 'reset_accent' ) as $key ) {
 				$data[ $key ] = isset( $_POST[ $key ] ) && is_string( $_POST[ $key ] ) ? sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) : '';
 			}
 			$data['csv']  = isset( $_POST['csv'] ) && is_string( $_POST['csv'] ) ? sanitize_textarea_field( wp_unslash( $_POST['csv'] ) ) : '';

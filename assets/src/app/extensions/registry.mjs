@@ -8,6 +8,7 @@ export const KINDS = Object.freeze( [
 	'slash-command',
 	'slot',
 	'membership-settings',
+	'question-settings',
 	'checkout-field',
 	'integration',
 ] );
@@ -105,6 +106,7 @@ export function createRegistry() {
 		registerSlashCommand: 'slash-command',
 		registerSlot: 'slot',
 		registerMembershipSettings: 'membership-settings',
+		registerQuestionSettings: 'question-settings',
 		registerCheckoutField: 'checkout-field',
 		registerIntegration: 'integration',
 	} ) ) {

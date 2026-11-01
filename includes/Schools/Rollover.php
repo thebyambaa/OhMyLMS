@@ -14,8 +14,9 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * A rollover moves the active classes of one academic year of a school to another, active year. A grade
- * map says what each grade becomes (`7` → `8`); a grade mapped to nothing leaves the school's classes
- * (graduates). For every promoted class a successor class is created in the new year (or reused: the
+ * map says what each grade becomes (`7` → `8`); unlisted grades, and classes without a grade, stay as they
+ * are; a grade mapped to nothing leaves the school's classes (graduates), and so do classes without a grade
+ * when the map lists the empty grade. For every promoted class a successor class is created in the new year (or reused: the
  * successor carries `source_class_id`), its active students (and optionally teachers) join it, its course
  * links are copied and the students' active roster enrolments move to the new class through
  * {@see RosterEnrolments::move()} (source `roster`). Students of a leaving class keep their accounts and
@@ -142,7 +143,7 @@ final class Rollover {
 		foreach ( $classes as $class ) {
 			$grade    = (string) $class['grade'];
 			$to_grade = array_key_exists( $grade, $grade_map ) ? $grade_map[ $grade ] : $grade;
-			$leaves   = '' === $to_grade;
+			$leaves   = '' === $to_grade && ( '' !== $grade || array_key_exists( '', $grade_map ) );
 			$students = self::members( (int) $class['id'], (int) $school_id, 'student' );
 			$skipped  = ! $leaves && ! $students && ! $include_empty;
 			$promoted = ! $leaves && ! $skipped;

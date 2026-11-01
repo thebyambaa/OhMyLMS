@@ -260,6 +260,26 @@ $stamp           = static function ( $row ) {
 					</div>
 				<?php endif; ?>
 
+				<?php if ( ! empty( $entry['rubric'] ) ) : ?>
+					<div class="ohmylms-answer-review-rubric">
+						<h3><?php esc_html_e( 'How it was marked', 'ohmylms' ); ?></h3>
+						<ul>
+							<?php foreach ( $entry['rubric'] as $criterion ) : ?>
+								<li>
+									<strong><?php echo esc_html( $criterion['title'] ); ?></strong>:
+									<?php
+									/* translators: 1: points awarded, 2: points available */
+									echo esc_html( sprintf( __( '%1$s / %2$s', 'ohmylms' ), Scoring::display( $criterion['awarded'] ), Scoring::display( $criterion['max'] ) ) );
+									if ( '' !== $criterion['level'] ) {
+										echo ' — ' . esc_html( $criterion['level'] );
+									}
+									?>
+								</li>
+							<?php endforeach; ?>
+						</ul>
+					</div>
+				<?php endif; ?>
+
 				<?php if ( $entry['expected'] ) : ?>
 					<div class="ohmylms-answer-review-expected">
 						<h3><?php esc_html_e( 'Correct answer', 'ohmylms' ); ?></h3>

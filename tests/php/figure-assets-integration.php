@@ -643,6 +643,12 @@ try {
 			$changed   = $make( array( 0, 0, 0.5, 0.5 ) )->get_data();
 			$cleanup[] = $root . '/figure-' . $changed['id'] . '.png';
 			$check( $changed['id'] !== $view['id'], 'Corrected bounds create a new asset' );
+			$past = $make( array( 0, 0, 1, 1 ), 4 );
+			$check( 400 === $past->get_status() && 'page' === $past->get_data()['data']['reason'], 'A page after the counted pages is refused before rendering' );
+			$uncounted = get_post_meta( $job_id, Jobs::META, true );
+
+			$uncounted['draft_inventory']['page_count'] = 0;
+			update_post_meta( $job_id, Jobs::META, wp_slash( $uncounted ) );
 			$bad      = $make( array( 0, 0, 1, 1 ), 4 )->get_data();
 			$bad_post = get_posts(
 				array(

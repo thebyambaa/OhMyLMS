@@ -35,8 +35,8 @@ if ($action === 'setup') {
     $create = static function ($path, $data) use ($call, &$state) { $id = (int) $call('POST', $path, $data)['id']; $state['posts'][] = $id; return $id; };
     $item = static function ($name, $parent, $type, $extra = []) use ($call, &$state) { $id = (int) $call('POST', 'curriculum/items', array_merge(['name' => $name, 'parent_id' => $parent, 'item_type' => $type], $extra))['item']['id']; $state['items'][] = $id; return $id; };
     // Courses: one the learner is enrolled in with partial progress, one they are not.
-    $state['enrolled_course'] = $create('courses', ['name' => 'English warm-up ' . $tag, 'status' => 'publish']);
-    $state['other_course'] = $create('courses', ['name' => 'Test prep ' . $tag, 'status' => 'publish']);
+    $state['enrolled_course'] = $create('courses', ['title' => 'English warm-up ' . $tag, 'status' => 'publish']);
+    $state['other_course'] = $create('courses', ['title' => 'Test prep ' . $tag, 'status' => 'publish']);
     $chapter = (int) ohmylms_get_course($state['enrolled_course'])->get_chapters()[0]['id']; $state['posts'][] = $chapter;
     $state['lessons'] = [];
     foreach (range(1, 3) as $i) {

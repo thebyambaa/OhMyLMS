@@ -34,6 +34,8 @@ if [ "$(cd "$REPO/.." && pwd)" != "$(mkdir -p "$ROOT/wp-content/plugins" && cd "
   # Tracked and new files of the working tree; ignored files (node_modules, build output) stay behind.
   (cd "$REPO" && git ls-files -z --cached --others --exclude-standard | xargs -0 cp --parents -t "$PLUGIN" 2>/dev/null || true)
   [ -f "$PLUGIN/ohmylms.php" ] || { echo "Copying the plugin to $PLUGIN failed." >&2; exit 1; }
+  # The webpack entries of `npm run build:sdk` (git-ignored), for the source-mode run of extension-host-assets-integration.
+  if [ -d "$REPO/build/sdk" ]; then mkdir -p "$PLUGIN/build" && cp -R "$REPO/build/sdk" "$PLUGIN/build/"; fi
 fi
 
 DB_HOST="$DB_HOST" DB_PORT="$DB_PORT" DB_USER="$DB_USER" DB_PASSWORD="$DB_PASSWORD" DB_NAME="$DB_NAME" "${PHP_CMD[@]}" -r '
@@ -49,7 +51,8 @@ wp config set WP_ENVIRONMENT_TYPE local
 wp config set WP_DEBUG false --raw
 wp config set AUTOMATIC_UPDATER_DISABLED true --raw
 # Private exam-import storage outside the web root, as on the Local site (exams, figure proposals). The site
-# serves the published assets/dist bundles: build/ is not in the repository, so OHMYLMS_SOURCE_ASSETS stays off.
+# serves the published assets/dist bundles, so OHMYLMS_SOURCE_ASSETS stays off; extension-host-assets-integration
+# switches it on for its own process when build/sdk was copied above.
 PRIVATE="$(cd "$ROOT/.." && pwd)/$(basename "$ROOT")-private"
 mkdir -p "$PRIVATE"
 wp config set OHMYLMS_IMPORT_PRIVATE_DIR "$PRIVATE"

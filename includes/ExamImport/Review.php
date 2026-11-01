@@ -219,6 +219,10 @@ final class Review {
 					if ( '' !== $figure['asset_id'] && ! self::owns_asset( $id, $figure['asset_id'] ) ) {
 						return new \WP_Error( 'ohmylms_exam_import_figure_forbidden', __( 'A figure belongs to another import.', 'ohmylms' ), array( 'status' => 403 ) );
 					}
+					$crop = '' === $figure['asset_id'] ? null : self::crop_error( $index, $figure, Figures::asset( $figure['asset_id'] ), false );
+					if ( $crop ) {
+						return $crop;
+					}
 				}
 				$job['draft']    = $clean;
 				$job['rejected'] = array_values( array_diff( self::rejected( $job ), array( (string) $clean[ $index ]['number'] ) ) );
@@ -297,12 +301,64 @@ final class Review {
 					if ( empty( $figure['approved'] ) || '' === trim( (string) ( $figure['alt'] ?? '' ) ) || ! $asset || 'ready' !== $asset['state'] ) {
 						return new \WP_Error( 'ohmylms_exam_import_figures_unreviewed', __( 'Approve every figure of this question, with a description, after its crop is ready.', 'ohmylms' ), array( 'status' => 409 ) );
 					}
+					$crop = self::crop_error( $index, $figure, $asset, true );
+					if ( $crop ) {
+						return $crop;
+					}
 				}
 				$job['draft'][ $index ]['reviewed']         = true;
 				$job['draft'][ $index ]['figures_complete'] = true;
 				$job['rejected']                            = $others;
 				return true;
 			}
+		);
+	}
+
+	/**
+	 * Learners get the crop, so a figure's page and bounds must be its crop's. An accepted crop must
+	 * also be large enough and, once rendered, lie inside the page raster it was cut from.
+	 *
+	 * @param int        $index    Row index.
+	 * @param array      $figure   Placement.
+	 * @param array|null $asset    Crop metadata.
+	 * @param bool       $accepted Whether the row is being accepted.
+	 * @return \WP_Error|null 400 `ohmylms_exam_import_figure_bounds` (`data.reason` `mismatch`, `too_small` or `outside`).
+	 */
+	private static function crop_error( $index, array $figure, $asset, $accepted ) {
+		if ( ! $asset ) {
+			return null;
+		}
+		$id     = (string) ( $figure['id'] ?? '' );
+		$bounds = array_map( 'floatval', (array) ( $figure['bounds'] ?? array() ) );
+		$cut    = array_map( 'floatval', (array) ( $asset['bounds'] ?? array() ) );
+		$same   = 4 === count( $bounds ) && 4 === count( $cut ) && (int) ( $figure['page'] ?? 0 ) === (int) ( $asset['page'] ?? -1 );
+		foreach ( $same ? $bounds : array() as $at => $value ) {
+			$same = $same && abs( $value - $cut[ $at ] ) < 0.0000005;
+		}
+		if ( ! $same ) {
+			/* translators: %s: figure ID. */
+			$message = __( 'Figure %s does not match its crop: a figure keeps the page and area of the crop it shows. Redraw the crop on the page, or choose the crop again.', 'ohmylms' );
+			$reason  = 'mismatch';
+		} elseif ( $accepted && is_wp_error( PageRenderer::crop_bounds( $cut ) ) ) {
+			/* translators: %s: figure ID. */
+			$message = __( 'The crop of figure %s is too small: redraw it on the page at least half a percent of the page wide and high.', 'ohmylms' );
+			$reason  = 'too_small';
+		} elseif ( $accepted && isset( $asset['pixel_bounds'] ) && ! PageRenderer::inside( $asset['pixel_bounds'], $asset['page_width'] ?? null, $asset['page_height'] ?? null ) ) {
+			/* translators: %s: figure ID. */
+			$message = __( 'The crop of figure %s is not inside its page. Redraw it on the page.', 'ohmylms' );
+			$reason  = 'outside';
+		} else {
+			return null;
+		}
+		return new \WP_Error(
+			'ohmylms_exam_import_figure_bounds',
+			sprintf( $message, $id ),
+			array(
+				'status' => 400,
+				'reason' => $reason,
+				'index'  => (int) $index,
+				'figure' => $id,
+			)
 		);
 	}
 

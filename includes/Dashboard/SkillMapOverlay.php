@@ -36,7 +36,8 @@ final class SkillMapOverlay {
 	const TARGET_PATTERN = '^(learner|class|school):[1-9][0-9]{0,18}$';
 
 	/**
-	 * Whether a user may use the overlay at all: curriculum administrators and users with dashboard access.
+	 * Whether a user may open the read-only skill map and its overlay at all: curriculum administrators and
+	 * users with dashboard access ({@see \OhMyLMS\Rest\V1\ComparisonController::skill_map_permission()}).
 	 *
 	 * @param int $user_id User.
 	 * @return bool

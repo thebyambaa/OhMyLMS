@@ -220,7 +220,11 @@ final class AdminNavigation {
 						'sections' => array(
 							''           => __( 'Syllabuses', 'ohmylms' ),
 							'bundles'    => __( 'Course bundles', 'ohmylms' ),
-							'skill-map'  => __( 'Skill map', 'ohmylms' ),
+							// School staff open the read-only map too; its learner overlays are scoped server-side.
+							'skill-map'  => array(
+								'label'      => __( 'Skill map', 'ohmylms' ),
+								'capability' => \OhMyLMS\Dashboard\Access::CAPABILITY,
+							),
 							'subjects'   => __( 'Subject profiles', 'ohmylms' ),
 							'taxonomies' => __( 'Categories and tags', 'ohmylms' ),
 						),
@@ -742,10 +746,28 @@ final class AdminNavigation {
 	 */
 	public static function visible_tabs( $group ) {
 		$site    = current_user_can( self::CAPABILITY );
+		$staff   = self::staff_capabilities();
 		$visible = array();
 		foreach ( self::groups()[ $group ]['tabs'] ?? array() as $id => $tab ) {
-			// School staff without the site capability only see tabs gated by a staff capability.
-			if ( ! $site && ! in_array( $tab['capability'], self::staff_capabilities(), true ) ) {
+			// School staff without the site capability only see tabs, or sections of a site tab, gated by a staff capability.
+			if ( ! $site && ! in_array( $tab['capability'], $staff, true ) ) {
+				$sections = array_filter(
+					$tab['sections'],
+					static function ( $section ) use ( $staff ) {
+						return in_array( $section['capability'], $staff, true ) && current_user_can( $section['capability'] );
+					}
+				);
+				if ( $sections && ( '' === $tab['flag'] || apply_filters( $tab['flag'], false ) ) ) {
+					$first          = (string) array_key_first( $sections );
+					$visible[ $id ] = array_merge(
+						$tab,
+						array(
+							'capability'      => $sections[ $first ]['capability'],
+							'sections'        => $sections,
+							'default_section' => $first,
+						)
+					);
+				}
 				continue;
 			}
 			if ( ! current_user_can( $tab['capability'] ) || ( '' !== $tab['flag'] && ! apply_filters( $tab['flag'], false ) ) ) {
@@ -797,8 +819,9 @@ final class AdminNavigation {
 	}
 
 	/**
-	 * Capabilities school administrators and teachers may hold without `manage_options`; tabs gated by one
-	 * of them are the only ones such users see. Their endpoints resolve the user's scopes server-side.
+	 * Capabilities school administrators and teachers may hold without `manage_options`; tabs, and sections
+	 * of other tabs, gated by one of them are the only ones such users see. Their endpoints resolve the
+	 * user's scopes server-side.
 	 *
 	 * @return string[]
 	 */

@@ -29,6 +29,7 @@ All registration methods accept `(id, definition)` and return an unregister func
 | registerLessonEditor | Matching PHP lesson ID; existing save callbacks |
 | registerSlot | Named insertion point |
 | registerMembershipSettings | Membership plan editor panel; namespaced plan values and update callback ([below](#membership-settings)) |
+| registerQuestionSettings | Question editor panel for question extension settings ([below](#question-settings)) |
 | registerCheckoutField | Checkout UI guidance; register server fields separately |
 | registerIntegration | Integrations screen panel |
 
@@ -46,7 +47,7 @@ Read `modules/examples/editor.js` and the host components in `assets/src/app/ext
 
 ## Slots and settings
 
-Named slots: `admin.screen.before`, `admin.screen.after`, `student.course.before`, `student.course.after`, `checkout.fields.after`, `checkout.summary.after`, and `syllabus.skill.resources`, which the syllabus editor renders in a skill's pane under what the skill owns (lessons and questions; context `{skill, syllabus}`), so a module such as practice games can add its own section for a skill. Editor-panel slots use actual route paths listed in the recovery manifest. PHP `ohmylms_render_slot($name,$context)` also emits a server-rendering hook. Context must be public, JSON-safe data.
+Named slots: `admin.screen.before`, `admin.screen.after`, `student.course.before`, `student.course.after`, `checkout.fields.after`, `checkout.summary.after`, and `syllabus.skill.resources`, which the syllabus editor renders under each skill of its outline (context `{skill, syllabus}`: the skill's `term_id`, `name`, `code`, `description` and the syllabus `id`, `name`), so a module such as practice games can add its own section for a skill. Editor-panel slots use actual route paths listed in the recovery manifest. PHP `ohmylms_render_slot($name,$context)` also emits a server-rendering hook. Context must be public, JSON-safe data.
 
 ```php
 ohmylms_register_extension_settings('my-benefit', [
@@ -79,6 +80,20 @@ sdk.registerMembershipSettings( 'my-benefit', {
 		} ),
 } );
 ```
+
+### Question settings
+
+Settings registered for the `question` context are edited in the question editor (`#/content-hub/question-bank/<id>`,
+and the draft editor of a quiz) without any script: the editor builds fields from the schema for `string`,
+`number`, `integer`, `boolean` and `enum` properties (`title` labels a field, `description` explains it;
+give the definition a `label` for the fieldset). Values are saved with the question in
+`PATCH /questions/<id>` (`extension_settings`, only changed namespaces) and are part of its version; a schema
+or `sanitize` rejection answers 400 `ohmylms_question_invalid_extension_settings` with `data.namespace` and is
+shown in that fieldset. For anything else (nested objects, lists, your own controls) register a panel with
+the same ID: `registerQuestionSettings( id, { label, render } )`, whose `render` receives
+`{ question: { id, type, name }, value, onChange, disabled }` exactly like membership settings (`onChange` takes
+the whole plain object; `when( props )` can hide it, for example for other question types). See
+[api/questions.md](api/questions.md#extension-settings-in-the-editor).
 
 GET/PUT `/ohmylms/v1/extension-settings/<type>/<id>` accepts `{settings:{...}}`, requires `edit_post` and exact post type. The SDK `api` uses WordPress apiFetch/nonce middleware. `/ohmylms/v1/extensions` exposes definitions, not saved private data. Client visibility is not authorization.
 

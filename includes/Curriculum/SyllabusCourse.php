@@ -491,6 +491,31 @@ final class SyllabusCourse {
 	}
 
 	/**
+	 * The requirement and target of each syllabus skill that is an outcome of the course draft; empty without a course.
+	 *
+	 * @param int $syllabus_id Syllabus ID.
+	 * @return array[] `[{term_id, required, target}]` in draft order.
+	 */
+	public static function requirements( $syllabus_id ) {
+		$course_id = self::course_id( $syllabus_id );
+		if ( ! $course_id ) {
+			return array();
+		}
+		$mine = Syllabus::skill_ids( Items::with_descendants( $syllabus_id ) );
+		$rows = array();
+		foreach ( CourseProgram::editor( $course_id )['draft']['outcomes'] as $outcome ) {
+			if ( in_array( (int) $outcome['term_id'], $mine, true ) ) {
+				$rows[] = array(
+					'term_id'  => (int) $outcome['term_id'],
+					'required' => ! empty( $outcome['required'] ),
+					'target'   => (string) $outcome['target'],
+				);
+			}
+		}
+		return $rows;
+	}
+
+	/**
 	 * Run a mirror step without ever failing the change that caused it: the syllabus is saved either way, and the
 	 * editor offers "Update course" when the course could not follow. @return true|\WP_Error
 	 *

@@ -686,6 +686,77 @@ try {
 	$applied_b2 = ok_status( life_api( 'POST', "/account-hub/schools/$b/rollover", array_merge( $input_b2, array( 'review' => $plan_b2['review'] ) ) ), 200, 'apply including empty classes' );
 	ok( 0 === $applied_b2['totals']['classes_skipped'] && 1 === (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE source_class_id=%d AND academic_year_id=%d', Schema::table( 'classes' ), $b6_new_void, $yb3 ) ), 'include_empty copies the empty class' );
 
+	// The hub School workspace rolls over through the same implementation: grades unchanged, empty classes skipped.
+	ok( ! method_exists( Service::class, 'rollover' ) && ! method_exists( \OhMyLMS\Schools\Lifecycle::class, 'signature' ), 'the old rollover path is gone' );
+	$yb4      = $year_b( '2028' );
+	$b7       = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE source_class_id=%d AND academic_year_id=%d', Schema::table( 'classes' ), $b6, $yb3 ) );
+	$b7_void  = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE source_class_id=%d AND academic_year_id=%d', Schema::table( 'classes' ), $b6_new_void, $yb3 ) );
+	$b_club   = $class_b( $tag . ' Club', '', $yb3 );
+	Service::class_member(
+		$b_club,
+		array(
+			'user_id' => $sb1,
+			'role'    => 'student',
+		)
+	);
+	$hub_years = array(
+		'from_year' => $yb3,
+		'to_year'   => $yb4,
+	);
+	$hub_plan  = \OhMyLMS\Student\SchoolActions::apply( 'rollover_preview', $b, $hub_years )['rollover'];
+	$hub_rows  = array_column( $hub_plan['classes'], null, 'class_id' );
+	ok( 'promote' === $hub_rows[ $b7 ]['action'] && '7A' === $hub_rows[ $b7 ]['target']['name'] && '7' === $hub_rows[ $b7 ]['target']['grade'] && 1 === $hub_rows[ $b7 ]['students'], 'the hub keeps names and grades and moves the students: ' . wp_json_encode( $hub_rows[ $b7 ] ) );
+	ok( 'skip' === $hub_rows[ $b7_void ]['action'] && 1 === $hub_plan['totals']['classes_skipped'] && false === $hub_plan['include_empty'], 'the hub skips the class without students by default' );
+	ok( 'promote' === $hub_rows[ $b_club ]['action'] && '' === $hub_rows[ $b_club ]['target']['grade'], 'a class without a grade stays a class without a grade instead of leaving' );
+	$rest_plan = ok_status(
+		life_api(
+			'POST',
+			"/account-hub/schools/$b/rollover/preview",
+			array(
+				'from_year_id' => $yb3,
+				'to_year_id'   => $yb4,
+				'grade_map'    => array(),
+			)
+		),
+		200,
+		'the same rollover previewed over REST'
+	);
+	ok( hash_equals( $rest_plan['review'], \OhMyLMS\Schools\Rollover::review( $b, $hub_plan ) ), 'the hub and REST previews are the same plan' );
+	$leaving = ok_status(
+		life_api(
+			'POST',
+			"/account-hub/schools/$b/rollover/preview",
+			array(
+				'from_year_id' => $yb3,
+				'to_year_id'   => $yb4,
+				'grade_map'    => array(
+					array(
+						'from' => '',
+						'to'   => '',
+					),
+				),
+			)
+		),
+		200,
+		'preview with the empty grade listed'
+	);
+	ok( 'leave' === array_column( $leaving['classes'], null, 'class_id' )[ $b_club ]['action'], 'listing the empty grade makes classes without a grade leave' );
+	$hub_all = \OhMyLMS\Student\SchoolActions::apply( 'rollover_preview', $b, $hub_years + array( 'include_empty' => '1' ) )['rollover'];
+	ok( true === $hub_all['include_empty'] && 0 === $hub_all['totals']['classes_skipped'], 'the hub can include classes without students' );
+	\OhMyLMS\Student\SchoolActions::apply( 'rollover_preview', $b, $hub_years );
+	$hub_done = \OhMyLMS\Student\SchoolActions::apply( 'rollover_commit', $b, $hub_years + array( 'confirm' => 'yes' ) );
+	ok( false !== strpos( $hub_done['message'], '2 classes created' ) && false !== strpos( $hub_done['message'], '1 classes without students' ), 'the hub reports created and skipped classes: ' . $hub_done['message'] );
+	ok( 'archived' === Service::row( 'academic_years', $yb3 )['status'] && 'archived' === Service::row( 'classes', $b7_void )['status'], 'the hub rollover archived the year and every class' );
+	ok( 0 === (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE source_class_id=%d', Schema::table( 'classes' ), $b7_void ) ), 'no new class for the class without students' );
+	$b8 = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE source_class_id=%d AND academic_year_id=%d', Schema::table( 'classes' ), $b7, $yb4 ) );
+	ok( $b8 && array( $sb1 ) === array_map( 'intval', $wpdb->get_col( $wpdb->prepare( "SELECT user_id FROM %i WHERE class_id=%d AND role='student' AND status='active'", Schema::table( 'class_memberships' ), $b8 ) ) ), 'the hub moved the student into the new class' );
+	try {
+		\OhMyLMS\Student\SchoolActions::apply( 'rollover_commit', $b, $hub_years + array( 'confirm' => 'yes' ) );
+		ok( false, 'a second hub confirmation must be refused' );
+	} catch ( RuntimeException $refused ) {
+		ok( 400 === $refused->getCode(), 'a second hub confirmation needs a new preview' );
+	}
+
 	// Removal: impact, archive, read only, restore, delete with confirmation; accounts stay.
 	wp_set_current_user( $admin );
 	$impact = ok_status( life_api( 'GET', "/account-hub/schools/$a/removal" ), 200, 'removal impact' );

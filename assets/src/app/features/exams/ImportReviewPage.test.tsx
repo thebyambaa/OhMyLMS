@@ -363,6 +363,134 @@ describe( 'ImportReviewPage', () => {
 			)
 		);
 	} );
+	it( 'gives a figure the page and area of the crop chosen for it, and offers a redraw when the server refuses it', async () => {
+		const before = '9f0a7c52-6c3e-4a4e-9a55-1f4e2b2c8d11';
+		const other = '2c7d1e0f-3b4a-4d5e-9f60-718293a4b5c6';
+		const placed = {
+			id: 'f1',
+			page: 1,
+			bounds: [ 0.2, 0.2, 0.6, 0.4 ],
+			part_ids: [],
+			asset_id: before,
+			alt: 'Triangle ABC',
+			not_to_scale: false,
+			selected: 'original' as const,
+			approved: true,
+		};
+		const ready = {
+			state: 'ready' as const,
+			attempts: 1,
+			error: '',
+			width: 960,
+			height: 480,
+			url: 'https://example.test/crop.png',
+		};
+		vi.mocked( api.getJob ).mockResolvedValue( {
+			...job,
+			rows: [
+				{ ...job.rows[ 0 ]!, figures: [ placed ] },
+				job.rows[ 1 ]!,
+			],
+		} );
+		vi.mocked( api.listFigures ).mockResolvedValue( [
+			{ ...ready, id: before, page: 1, bounds: placed.bounds },
+			{ ...ready, id: other, page: 2, bounds: [ 0.1, 0.5, 0.7, 0.9 ] },
+		] );
+		vi.mocked( api.updateRow ).mockRejectedValue(
+			new ApiError( {
+				status: 400,
+				code: 'ohmylms_exam_import_figure_bounds',
+				message:
+					'Figure f1 does not match its crop: a figure keeps the page and area of the crop it shows.',
+				details: {
+					status: 400,
+					reason: 'mismatch',
+					index: 0,
+					figure: 'f1',
+				},
+			} )
+		);
+		const user = userEvent.setup();
+		renderPage();
+		const first = await screen.findByRole( 'article', {
+			name: /Question 1/,
+		} );
+		const select = within( first ).getByRole( 'combobox', {
+			name: 'Crop',
+		} );
+		await waitFor( () =>
+			expect(
+				within( select ).getByRole( 'option', { name: 'Page 2 crop' } )
+			).toBeInTheDocument()
+		);
+		await user.selectOptions( select, other );
+		await user.click(
+			within( first ).getByRole( 'button', { name: 'Save changes' } )
+		);
+		await waitFor( () =>
+			expect( api.updateRow ).toHaveBeenCalledWith(
+				7,
+				0,
+				{
+					figures: [
+						{
+							...placed,
+							asset_id: other,
+							page: 2,
+							bounds: [ 0.1, 0.5, 0.7, 0.9 ],
+							approved: false,
+						},
+					],
+				},
+				3,
+				expect.any( AbortSignal )
+			)
+		);
+		expect(
+			await screen.findByText( /does not match its crop/, notice )
+		).toBeInTheDocument();
+		await user.click(
+			screen.getByRole( 'button', {
+				name: 'Redraw figure f1 on the page',
+			} )
+		);
+		expect(
+			screen.getByRole( 'heading', {
+				name: 'Source: Question 1, figure f1, page 1',
+			} )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText( /does not match its crop/, notice )
+		).toBeNull();
+	} );
+	it( 'refuses a typed crop past the last page or below the smallest size', async () => {
+		const user = userEvent.setup();
+		renderPage();
+		const form = await screen.findByRole( 'group', {
+			name: 'Request a crop',
+		} );
+		const field = ( name: string ) =>
+			within( form ).getByRole( 'textbox', { name } );
+		await user.clear( field( 'Page' ) );
+		await user.type( field( 'Page' ), '9' );
+		await user.click(
+			within( form ).getByRole( 'button', { name: 'Request crop' } )
+		);
+		expect(
+			await screen.findByText( /Choose a page from 1 to 6/, notice )
+		).toBeInTheDocument();
+		await user.clear( field( 'Page' ) );
+		await user.type( field( 'Page' ), '2' );
+		await user.clear( field( 'Left (%)' ) );
+		await user.type( field( 'Left (%)' ), '99.8' );
+		await user.click(
+			within( form ).getByRole( 'button', { name: 'Request crop' } )
+		);
+		expect(
+			await screen.findByText( /at least half a percent/, notice )
+		).toBeInTheDocument();
+		expect( api.createFigure ).not.toHaveBeenCalled();
+	} );
 	it( 'shows the source page and renderer guidance before extraction', async () => {
 		vi.mocked( api.getJob ).mockResolvedValue( {
 			...job,

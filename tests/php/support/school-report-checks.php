@@ -165,6 +165,7 @@ function ohmylms_school_report_cleanup( $fixture ) {
 			$wpdb->delete( Schema::table( $table ), array( 'school_id' => $school ) );
 		}
 		$wpdb->delete( Schema::table( 'schools' ), array( 'id' => $school ) );
+		delete_option( 'ohmylms_rollover_' . $school );
 	}
 	if ( ! empty( $fixture['posts'][0] ) ) {
 		$course      = $fixture['posts'][0];

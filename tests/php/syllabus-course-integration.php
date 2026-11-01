@@ -50,22 +50,14 @@ function seed_api( $method, $suffix = '', array $data = array() ) {
 }
 
 /**
- * Remove the exact temporary records, including courses made by the browser.
+ * Remove the exact temporary records.
  *
  * @param array $state Fixture identifiers.
  */
 function seed_cleanup( array $state ) {
 	global $wpdb;
 	wp_set_current_user( $state['actor'] );
-	if ( isset( $state['token'] ) ) {
-		WP_Session_Tokens::get_instance( $state['actor'] )->destroy( $state['token'] );
-	}
-	$courses = $state['courses'];
-	if ( isset( $state['browser_title'] ) ) {
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Exact unique browser fixture title only.
-		$courses = array_merge( $courses, $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND post_title = %s", OHMYLMS_COURSE_CPT, $state['browser_title'] ) ) );
-	}
-	foreach ( array_unique( $courses ) as $course ) {
+	foreach ( array_unique( $state['courses'] ) as $course ) {
 		foreach ( Catalog::chapters( $course ) as $unit ) {
 			wp_delete_post( $unit['id'], true );
 		}
@@ -84,12 +76,6 @@ function seed_cleanup( array $state ) {
 	}
 }
 
-$seed_path = dirname( __DIR__, 2 ) . '/test-results/syllabus-course-session.json';
-if ( 'cleanup' === ( $argv[1] ?? '' ) ) {
-	seed_cleanup( json_decode( file_get_contents( $seed_path ), true ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Ignored ephemeral fixture file.
-	wp_delete_file( $seed_path );
-	exit;
-}
 $seed_checks = 0;
 $seed_state  = array(
 	'actor'   => get_users(
@@ -101,9 +87,7 @@ $seed_state  = array(
 	'courses' => array(),
 	'items'   => array(),
 	'terms'   => array(),
-	'base'    => home_url(),
 );
-$seed_keep   = false;
 try {
 	wp_set_current_user( $seed_state['actor'] );
 	$seed_syllabus         = Items::create(
@@ -215,31 +199,6 @@ try {
 	seed_check( 401 === seed_api( 'GET', '/' . $seed_syllabus['id'] )->get_status() && 401 === seed_api( 'POST', '', $seed_body )->get_status(), 'Anonymous preview and creation are denied.' );
 	wp_set_current_user( $seed_state['actor'] );
 	echo 'PASS: ' . (int) $seed_checks . " syllabus course checks.\n";
-	if ( 'fixture' === ( $argv[1] ?? '' ) ) {
-		$seed_expiry                 = time() + HOUR_IN_SECONDS;
-		$seed_state['token']         = WP_Session_Tokens::get_instance( $seed_state['actor'] )->create( $seed_expiry );
-		$seed_state['syllabus']      = (int) $seed_syllabus['id'];
-		$seed_state['browser_title'] = 'Generated browser course ' . wp_generate_uuid4();
-		foreach ( array(
-			LOGGED_IN_COOKIE => 'logged_in',
-			AUTH_COOKIE      => 'auth',
-		) as $seed_cookie => $seed_scheme ) {
-			$seed_state['cookies'][] = array(
-				'name'     => $seed_cookie,
-				'value'    => wp_generate_auth_cookie( $seed_state['actor'], $seed_expiry, $seed_scheme, $seed_state['token'] ),
-				'domain'   => wp_parse_url( home_url(), PHP_URL_HOST ),
-				'path'     => '/',
-				'expires'  => $seed_expiry,
-				'httpOnly' => true,
-				'secure'   => false,
-				'sameSite' => 'Lax',
-			);
-		}
-		file_put_contents( $seed_path, wp_json_encode( $seed_state ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Ignored session removed during cleanup.
-		$seed_keep = true;
-	}
 } finally {
-	if ( ! $seed_keep ) {
-		seed_cleanup( $seed_state );
-	}
+	seed_cleanup( $seed_state );
 }

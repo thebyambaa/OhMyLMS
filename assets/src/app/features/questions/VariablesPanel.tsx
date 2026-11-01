@@ -326,7 +326,7 @@ export function VariablesPanel( {
 
 	return (
 		<div className="oml-vars">
-			<table className="oml-vars__table widefat striped">
+			<table className="oml-vars-table widefat striped">
 				<thead>
 					<tr>
 						<th>{ __( 'Name', 'ohmylms' ) }</th>
@@ -395,7 +395,7 @@ export function VariablesPanel( {
 									}
 								/>
 							</td>
-							<td className="oml-vars__values">
+							<td className="oml-vars-values">
 								{ ( 'int' === v.type ||
 									'decimal' === v.type ) && (
 									<>
@@ -489,7 +489,7 @@ export function VariablesPanel( {
 					) ) }
 				</tbody>
 			</table>
-			<p className="oml-vars__row-actions">
+			<p className="oml-vars-row-actions">
 				<Button
 					variant="secondary"
 					size="small"
@@ -541,10 +541,10 @@ export function VariablesPanel( {
 					} )
 				}
 			/>
-			<fieldset className="oml-vars__set">
+			<fieldset className="oml-vars-set">
 				<legend>{ __( 'Computed answer fields', 'ohmylms' ) }</legend>
 				{ t.set.map( ( r, i ) => (
-					<div className="oml-vars__rule" key={ i }>
+					<div className="oml-vars-rule" key={ i }>
 						<TextControl
 							__nextHasNoMarginBottom
 							label={ __( 'Field', 'ohmylms' ) }
@@ -607,7 +607,7 @@ export function VariablesPanel( {
 					</ul>
 				</Notice>
 			) }
-			<div className="oml-vars__actions">
+			<div className="oml-vars-actions">
 				<Button
 					variant="secondary"
 					isBusy={ busy }
@@ -644,7 +644,7 @@ export function VariablesPanel( {
 				</Notice>
 			) }
 			{ result?.samples && result.samples.length > 0 && (
-				<table className="oml-vars__samples widefat striped">
+				<table className="oml-vars-samples widefat striped">
 					<thead>
 						<tr>
 							<th>{ __( 'Values', 'ohmylms' ) }</th>

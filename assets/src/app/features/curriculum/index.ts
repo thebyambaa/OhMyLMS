@@ -16,6 +16,10 @@ export const curriculum: FeatureDefinition = {
 			)
 	),
 };
+/**
+ * The read-only skill map is also open to school administrators and teachers, whose learner overlays
+ * the server limits to their schools and classes; editing stays in the administrator-only workspace.
+ */
 export const skillMap: FeatureDefinition = {
 	id: 'curriculum-skill-map',
 	title: __( 'Skill map', 'ohmylms' ),
@@ -24,7 +28,7 @@ export const skillMap: FeatureDefinition = {
 	tab: 'curriculum',
 	section: 'skill-map',
 	extensionRoute: '/content-hub/curriculum/skill-map',
-	capability: 'manage_options',
+	capability: 'ohmylms_view_dashboard',
 	hidden: true,
 	component: lazy(
 		() =>

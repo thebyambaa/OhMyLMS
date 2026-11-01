@@ -166,6 +166,41 @@ final class SyllabusSettings {
 	}
 
 	/**
+	 * Save the syllabus's source fields (name, code, version, description) and its profile together: a failure
+	 * leaves both as they were. The profile lives on the syllabus course, so changing it needs that course.
+	 *
+	 * @param int   $syllabus_id Syllabus ID.
+	 * @param array $item        Curriculum item fields to change.
+	 * @param array $profile     Profile fields to change.
+	 * @return true|\WP_Error
+	 * @throws \RuntimeException When the item cannot be written after the profile was.
+	 */
+	public static function save_source( $syllabus_id, array $item, array $profile ) {
+		$fields = Items::clean( $item, true );
+		if ( is_wp_error( $fields ) ) {
+			return $fields;
+		}
+		$clean = self::clean( $profile );
+		if ( is_wp_error( $clean ) ) {
+			return $clean;
+		}
+		return Items::exclusive(
+			static function () use ( $syllabus_id, $fields, $clean ) {
+				if ( $clean ) {
+					$saved = self::save( $syllabus_id, $clean );
+					if ( is_wp_error( $saved ) ) {
+						return $saved;
+					}
+				}
+				if ( $fields && is_wp_error( Items::update( $syllabus_id, $fields ) ) ) {
+					throw new \RuntimeException( 'Syllabus source fields could not be saved.' );
+				}
+				return true;
+			}
+		);
+	}
+
+	/**
 	 * Publish for Syllabus settings.
 	 *
 	 * @param mixed $syllabus_id Syllabus identifier.

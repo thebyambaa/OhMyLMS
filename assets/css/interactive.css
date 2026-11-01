@@ -692,23 +692,35 @@ fieldset.ohmylms-interactive-row {
 
 /* Hot text: passage with numbered, colour-coded inline options (Design system tokens only). */
 .ohmylms-hot-text { --oml-option-color: var(--oml-primary); line-height: 2.1; font-size: var(--oml-font-size-md, 1.05em); }
-.ohmylms-hot-text__break { display: block; height: var(--oml-space-3, 12px); }
-.ohmylms-hot-text .ohmylms-hot-text__option {
+
+.ohmylms-hot-text-break { display: block; height: var(--oml-space-3, 12px); }
+
+.ohmylms-hot-text .ohmylms-hot-text-option {
 	display: inline; margin: 0 var(--oml-space-1, 4px); padding: 2px var(--oml-space-1, 4px); font: inherit; line-height: 1.6;
 	border: 2px solid var(--oml-option-color); border-radius: var(--oml-radius-control);
 	background: color-mix(in srgb, var(--oml-option-color) 10%, var(--oml-surface));
 	color: var(--oml-text); cursor: pointer; -webkit-box-decoration-break: clone; box-decoration-break: clone;
 }
-.ohmylms-hot-text .ohmylms-hot-text__option:focus-visible { outline: 3px solid var(--oml-focus); outline-offset: 2px; }
-.ohmylms-hot-text .ohmylms-hot-text__option[aria-pressed="true"] { background: var(--oml-option-color); color: var(--oml-on-primary); }
-.ohmylms-hot-text__num {
+
+.ohmylms-hot-text .ohmylms-hot-text-option:focus-visible { outline: 3px solid var(--oml-focus); outline-offset: 2px; }
+
+.ohmylms-hot-text .ohmylms-hot-text-option[aria-pressed="true"] { background: var(--oml-option-color); color: var(--oml-on-primary); }
+
+.ohmylms-hot-text-num {
 	display: inline-block; min-width: 1.3em; margin-right: var(--oml-space-1, 4px); border-radius: 50%;
-	background: var(--oml-option-color); color: var(--oml-on-primary); font-size: var(--oml-font-size-xs); font-weight: var(--oml-weight-strong); text-align: center; line-height: 1.3em;
+	background: var(--oml-option-color); color: var(--oml-on-primary); font-size: var(--oml-font-size-xs); font-weight: var(--oml-weight-strong); text-align: center; line-height: 1.3;
 }
-.ohmylms-hot-text__option[aria-pressed="true"] .ohmylms-hot-text__num { background: var(--oml-surface); color: var(--oml-option-color); }
+
+.ohmylms-hot-text-option[aria-pressed="true"] .ohmylms-hot-text-num { background: var(--oml-surface); color: var(--oml-option-color); }
+
 .ohmylms-ht-color-0 { --oml-option-color: var(--oml-primary); }
+
 .ohmylms-ht-color-1 { --oml-option-color: var(--oml-success); }
+
 .ohmylms-ht-color-2 { --oml-option-color: var(--oml-danger); }
+
 .ohmylms-ht-color-3 { --oml-option-color: var(--oml-info); }
+
 .ohmylms-ht-color-4 { --oml-option-color: var(--oml-secondary); }
+
 .ohmylms-ht-color-5 { --oml-option-color: var(--oml-heading); }

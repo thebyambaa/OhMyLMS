@@ -4,7 +4,8 @@
  *
  * Runs against a WordPress install (the Local site by default) with real database tables. It only
  * creates tagged questions, a tagged post and bank, and temporary users, and removes them (with their
- * answer rows and question-bank identity/version rows) in `finally`.
+ * answer rows and question-bank identity/version rows) in `finally`. Add-on types are checked with a
+ * question type registered for the run only; the graded-reader check runs when ohmylms-graded-reader is active.
  *
  * Usage (set OHMYLMS_QUESTIONS_TEST=1; PHP needs mysqli, mbstring, openssl, curl):
  *   php -n -d extension_dir=<php>/ext -d extension=mysqli -d extension=mbstring -d extension=openssl \
@@ -195,8 +196,11 @@ try {
 			),
 		),
 	);
-	ok_error( call_api( 'POST', '/questions', array_diff_key( $single, array( 'name' => 1 ) ) ), 400, 'rest_missing_callback_param', 'name required' );
+	$nameless = call_api( 'POST', '/questions', array_diff_key( $single, array( 'name' => 1 ) ) );
+	ok_error( $nameless, 422, 'ohmylms_question_invalid_name', 'no name and no statement' );
+	ok( 'description' === $nameless->get_data()['data']['field'], 'a missing name points at the statement' );
 	ok_error( call_api( 'POST', '/questions', array( 'name' => '   ' ) + $single ), 422, 'ohmylms_question_invalid_name', 'blank name' );
+	ok_error( call_api( 'POST', '/questions', array( 'description' => '<p> </p>' ) + array_diff_key( $single, array( 'name' => 1 ) ) ), 422, 'ohmylms_question_invalid_name', 'no name and an empty statement' );
 	ok_error( call_api( 'POST', '/questions', array( 'name' => str_repeat( 'x', 501 ) ) + $single ), 400, 'rest_invalid_param', 'name above 500 characters' );
 	ok_error( call_api( 'POST', '/questions', array_diff_key( $single, array( 'settings' => 1 ) ) ), 400, 'rest_missing_callback_param', 'settings required' );
 	ok_error( call_api( 'POST', '/questions', array( 'settings' => array( 'score' => array( 'enabled' => true ) ) ) + $single ), 400, 'ohmylms_question_invalid_type', 'settings.type required' );
@@ -238,6 +242,11 @@ try {
 	$huge = wp_json_encode( array( 'description' => str_repeat( 'x', 300000 ) ) + $single );
 	ok_error( call_api( 'POST', '/questions', $huge ), 413, 'ohmylms_question_too_large', 'body above 256 KiB' );
 	ok( 0 === (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = %s AND post_title LIKE %s", OHMYLMS_QUESTION_CPT, $wpdb->esc_like( $tag ) . '%' ) ), 'rejected creates wrote nothing' );
+
+	// Without a name, the title is the statement's text.
+	$derived = make_question( array( 'description' => '<p>' . $tag . ' <em>derived</em> title</p>' ) + array_diff_key( $single, array( 'name' => 1 ) ) );
+	ok( $tag . ' derived title' === $derived['name'], 'the name is derived from the statement: ' . $derived['name'] );
+	ok( 200 === call_api( 'DELETE', '/questions/' . $derived['id'] )->get_status() && null === get_post( $derived['id'] ), 'the derived-title question is deleted again' );
 
 	// Valid create (author A).
 	$alpha_payload = array(
@@ -778,10 +787,22 @@ try {
 		'restored question is listed as a draft'
 	);
 
-	// Types.
+	// Types. An add-on type registered for this request only (nothing is stored) stands in for add-on plugins.
+	$addon_type = $tag . '-addon';
+	ohmylms_register_question_type(
+		$addon_type,
+		array(
+			'label'    => 'Fixture add-on ' . $tag,
+			'answers'  => 'text',
+			'editor'   => array( 'format' => 'ohmylms-settings' ),
+			'render'   => '__return_empty_string',
+			'validate' => '__return_true',
+			'grade'    => '__return_zero',
+		)
+	);
 	$types = call_api( 'GET', '/questions/types' );
 	$by_id = array_column( $types->get_data(), null, 'id' );
-	ok( 200 === $types->get_status() && isset( $by_id['single-choice'], $by_id['graded-reader'] ), 'types include single-choice and graded-reader' );
+	ok( 200 === $types->get_status() && isset( $by_id['single-choice'], $by_id[ $addon_type ] ), 'types include single-choice and the add-on type' );
 	ok(
 		array(
 			'id'       => 'single-choice',
@@ -794,7 +815,12 @@ try {
 		) === $by_id['single-choice'],
 		'built-in type shape'
 	);
-	ok( 'ohmylms-settings' === $by_id['graded-reader']['format'] && 'text' === $by_id['graded-reader']['answers'] && false === $by_id['graded-reader']['builtin'], 'add-on type is not built-in' );
+	ok( 'ohmylms-settings' === $by_id[ $addon_type ]['format'] && 'text' === $by_id[ $addon_type ]['answers'] && false === $by_id[ $addon_type ]['manual'] && false === $by_id[ $addon_type ]['builtin'], 'add-on type is not built-in' );
+	if ( class_exists( 'OhMyLMS\GradedReader\Type' ) || isset( $by_id['graded-reader'] ) ) {
+		ok( isset( $by_id['graded-reader'] ) && 'ohmylms-settings' === $by_id['graded-reader']['format'] && 'text' === $by_id['graded-reader']['answers'] && false === $by_id['graded-reader']['builtin'], 'the graded-reader add-on type is not built-in' );
+	} else {
+		fwrite( STDOUT, "graded-reader type check not run: the ohmylms-graded-reader plugin is not active.\n" );
+	}
 	ok( true === $by_id['short-text']['manual'] && 'text' === $by_id['short-text']['answers'], 'manual type' );
 	$labels = wp_list_pluck( $types->get_data(), 'label' );
 	$sorted = $labels;

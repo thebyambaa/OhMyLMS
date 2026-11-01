@@ -26,6 +26,8 @@ import type {
 	QuizQuestionSlot,
 	QuizSettings,
 	QuizStatus,
+	RubricCriterion,
+	RubricScores,
 } from './types';
 import { createValidators } from '../../lib/validation';
 
@@ -254,6 +256,18 @@ function parsePart( value: unknown ): AttemptPart {
 	};
 }
 
+function parseScores( value: unknown ): Record< string, number > | null {
+	if ( null === value || undefined === value ) {
+		return null;
+	}
+	return Object.fromEntries(
+		Object.entries( record( value ) ).map( ( [ id, points ] ) => [
+			id,
+			finite( points ),
+		] )
+	);
+}
+
 function parseEvent( value: unknown ): GradeEvent {
 	const item = record( value );
 	return {
@@ -262,7 +276,25 @@ function parseEvent( value: unknown ): GradeEvent {
 		reviewer_id: count( item.reviewer_id ),
 		reviewer_name: text( item.reviewer_name ),
 		reason: text( item.reason ),
+		rubric_scores: parseScores( item.rubric_scores ),
 		created_at: text( item.created_at ),
+	};
+}
+
+function parseCriterion( value: unknown ): RubricCriterion {
+	const item = record( value );
+	return {
+		id: text( item.id ),
+		title: text( item.title ),
+		description: text( item.description ),
+		points: finite( item.points ),
+		levels: list( item.levels ).map( ( raw ) => {
+			const level = record( raw );
+			return {
+				points: finite( level.points ),
+				description: text( level.description ),
+			};
+		} ),
 	};
 }
 
@@ -279,6 +311,11 @@ function parseQuestion( value: unknown ): AttemptQuestion {
 		correct: null === item.correct ? null : boolean( item.correct ),
 		answer: list( item.answer ).map( text ),
 		parts: null === item.parts ? null : list( item.parts ).map( parsePart ),
+		rubric:
+			null === item.rubric || undefined === item.rubric
+				? null
+				: list( item.rubric ).map( parseCriterion ),
+		rubric_scores: parseScores( item.rubric_scores ),
 		history: list( item.history ).map( parseEvent ),
 	};
 }
@@ -634,6 +671,56 @@ export function parseMarks(
 }
 
 /**
+ * Marks from rubric scores: the sum of the criteria's points, scaled to the question's maximum in this
+ * quiz when the rubric total differs (for example when the quiz overrides the question's marks).
+ *
+ * @param rubric Criteria of the question.
+ * @param scores Points chosen per criterion.
+ * @param max    Maximum marks of the question in the attempt.
+ * @return `null` until every criterion is scored, an error for an invalid score, or the score, the
+ *         rubric total and the marks to award.
+ */
+export function rubricMarks(
+	rubric: readonly RubricCriterion[],
+	scores: RubricScores,
+	max: number
+): { score: number; total: number; marks: number } | { error: string } | null {
+	let score = 0;
+	let total = 0;
+	for ( const criterion of rubric ) {
+		const raw = ( scores[ criterion.id ] ?? '' ).trim();
+		if ( '' === raw ) {
+			return null;
+		}
+		const parsed = parseMarks( raw, criterion.points );
+		if ( 'error' in parsed ) {
+			return {
+				error: sprintf(
+					/* translators: 1: criterion title, 2: problem. */
+					__( '%1$s: %2$s', 'ohmylms' ),
+					criterion.title,
+					parsed.error
+				),
+			};
+		}
+		score += parsed.marks;
+		total += criterion.points;
+	}
+	if ( ! rubric.length || total <= 0 ) {
+		return null;
+	}
+	const marks =
+		Math.abs( total - max ) < 0.00005
+			? score
+			: Math.round( ( score / total ) * max * 10000 ) / 10000;
+	return {
+		score: Math.round( score * 10000 ) / 10000,
+		total: Math.round( total * 10000 ) / 10000,
+		marks: Math.min( marks, max ),
+	};
+}
+
+/**
  * Start drafts from the stored marks. Questions waiting for review start empty so an ungraded answer
  * is never submitted as zero by accident.
  *
@@ -655,8 +742,93 @@ export function draftsFromQuestions( questions: AttemptQuestion[] ): Drafts {
 			total: pending ? '' : formatMarks( question.awarded ),
 			parts,
 		};
+		if ( question.rubric_scores && ! pending ) {
+			drafts[ question.question_id ]!.rubric = Object.fromEntries(
+				Object.entries( question.rubric_scores ).map(
+					( [ id, points ] ) => [ id, formatMarks( points ) ]
+				)
+			);
+		}
 	}
 	return drafts;
+}
+
+/**
+ * The rubric breakdown to send with the marks of a question: the points of every criterion, when
+ * they are all scored and the marks are their (scaled) total. Marks typed over the rubric score are
+ * sent without a breakdown.
+ *
+ * @param question Question of the attempt.
+ * @param scores   Points chosen per criterion.
+ * @param marks    Marks to send.
+ * @return Points by criterion id in rubric order, `null` for none, or an error for an invalid score.
+ */
+export function rubricBreakdown(
+	question: AttemptQuestion,
+	scores: RubricScores | undefined,
+	marks: number
+): { points: Record< string, number > } | { error: string } | null {
+	if ( ! question.rubric?.length || ! scores ) {
+		return null;
+	}
+	const result = rubricMarks( question.rubric, scores, question.max_marks );
+	if ( ! result ) {
+		return null;
+	}
+	if ( 'error' in result ) {
+		return result;
+	}
+	if ( Math.abs( result.marks - marks ) > 0.00005 ) {
+		return null;
+	}
+	return {
+		points: Object.fromEntries(
+			question.rubric.map( ( criterion ) => [
+				criterion.id,
+				Number( scores[ criterion.id ] ),
+			] )
+		),
+	};
+}
+
+/**
+ * A rubric breakdown in words, such as "Reasoning: 3, Clarity: 0.5".
+ *
+ * @param rubric Criteria of the question (for their titles).
+ * @param scores Points by criterion id.
+ * @return Text.
+ */
+export function scoresLabel(
+	rubric: readonly RubricCriterion[],
+	scores: Record< string, number >
+): string {
+	return Object.entries( scores )
+		.map( ( [ id, points ] ) =>
+			sprintf(
+				/* translators: 1: rubric criterion, 2: points. */
+				__( '%1$s: %2$s', 'ohmylms' ),
+				rubric.find( ( criterion ) => criterion.id === id )?.title ||
+					id,
+				formatMarks( points )
+			)
+		)
+		.join( ', ' );
+}
+
+function sameScores(
+	rubric: readonly RubricCriterion[],
+	next: Record< string, number >,
+	saved: Record< string, number > | null
+): boolean {
+	return (
+		!! saved &&
+		rubric.every(
+			( criterion ) =>
+				undefined !== saved[ criterion.id ] &&
+				Math.abs( saved[ criterion.id ]! - next[ criterion.id ]! ) <
+					0.00005
+		)
+	);
 }
 
 function gradePartsQuestion(
@@ -728,13 +900,32 @@ export function buildGrades(
 		const parsed = parseMarks( draft.total, question.max_marks );
 		if ( 'error' in parsed ) {
 			errors[ question.question_id ] = parsed.error;
-		} else if (
+			continue;
+		}
+		const breakdown = rubricBreakdown(
+			question,
+			draft.rubric,
+			parsed.marks
+		);
+		if ( breakdown && 'error' in breakdown ) {
+			errors[ question.question_id ] = breakdown.error;
+			continue;
+		}
+		const rubric = breakdown?.points ?? null;
+		if (
 			'in-review' === question.status ||
-			Math.abs( question.awarded - parsed.marks ) > 0.00005
+			Math.abs( question.awarded - parsed.marks ) > 0.00005 ||
+			( rubric &&
+				! sameScores(
+					question.rubric ?? [],
+					rubric,
+					question.rubric_scores
+				) )
 		) {
 			grades.push( {
 				question_id: question.question_id,
 				marks: parsed.marks,
+				...( rubric ? { rubric } : {} ),
 			} );
 		}
 	}

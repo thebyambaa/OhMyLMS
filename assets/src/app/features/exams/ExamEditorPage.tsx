@@ -434,7 +434,7 @@ export default function ExamEditorPage() {
 				) }
 			</p>
 			<div className="oml-editor-header">
-				<div className="oml-editor-header__title">
+				<div className="oml-editor-header-title">
 					<h2>
 						{ sprintf(
 							/* translators: %s: exam title. */
@@ -443,7 +443,7 @@ export default function ExamEditorPage() {
 						) }
 					</h2>
 					<span
-						className={ `oml-editor-status oml-editor-status--${ exam.status }` }
+						className={ `oml-editor-status oml-editor-status-${ exam.status }` }
 					>
 						{ statusLabel( exam.status ) }
 					</span>
@@ -456,7 +456,7 @@ export default function ExamEditorPage() {
 						) }
 					</span>
 				</div>
-				<div className="oml-editor-header__actions">
+				<div className="oml-editor-header-actions">
 					{ ( settingsDirty || itemsDirty ) && (
 						<span className="oml-editor-saved" role="status">
 							{ __( 'You have unsaved changes.', 'ohmylms' ) }

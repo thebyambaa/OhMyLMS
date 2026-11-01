@@ -18,9 +18,17 @@ import {
 	formatMarks,
 	hasGradeChanges,
 	previewTotal,
+	rubricMarks,
+	scoresLabel,
 } from './model';
+import { RubricGrading } from './RubricGrading';
 import { useAttemptDetail } from './useAttempts';
-import type { AttemptQuestion, Drafts } from './types';
+import type {
+	AttemptQuestion,
+	Drafts,
+	QuestionDraft,
+	RubricScores,
+} from './types';
 
 interface Props {
 	quizId: number;
@@ -128,28 +136,43 @@ export function AttemptReview( {
 		}
 	}
 
-	function setTotal( question: AttemptQuestion, value: string ) {
-		setDrafts( ( current ) => ( {
-			...current,
-			[ question.question_id ]: {
-				total: value,
-				parts: current[ question.question_id ]?.parts ?? {},
-			},
-		} ) );
+	function updateDraft(
+		question: AttemptQuestion,
+		patch: ( draft: QuestionDraft ) => Partial< QuestionDraft >
+	) {
+		setDrafts( ( current ) => {
+			const draft = current[ question.question_id ] ?? {
+				total: '',
+				parts: {},
+			};
+			return {
+				...current,
+				[ question.question_id ]: { ...draft, ...patch( draft ) },
+			};
+		} );
 		setMessage( null );
 	}
-	function setPart( question: AttemptQuestion, part: string, value: string ) {
-		setDrafts( ( current ) => ( {
-			...current,
-			[ question.question_id ]: {
-				total: current[ question.question_id ]?.total ?? '',
-				parts: {
-					...( current[ question.question_id ]?.parts ?? {} ),
-					[ part ]: value,
-				},
-			},
+	function setTotal( question: AttemptQuestion, value: string ) {
+		updateDraft( question, () => ( { total: value } ) );
+	}
+	function scoreRubric( question: AttemptQuestion, next: RubricScores ) {
+		const result = rubricMarks(
+			question.rubric ?? [],
+			next,
+			question.max_marks
+		);
+		updateDraft( question, ( draft ) => ( {
+			rubric: next,
+			total:
+				result && 'marks' in result
+					? formatMarks( result.marks )
+					: draft.total,
 		} ) );
-		setMessage( null );
+	}
+	function setPart( question: AttemptQuestion, part: string, value: string ) {
+		updateDraft( question, ( draft ) => ( {
+			parts: { ...draft.parts, [ part ]: value },
+		} ) );
 	}
 
 	return (
@@ -367,6 +390,24 @@ export function AttemptReview( {
 											{ errors[ question.question_id ] }
 										</p>
 									) }
+									{ ! question.parts?.length &&
+										question.rubric &&
+										question.rubric.length > 0 && (
+											<RubricGrading
+												question={ question }
+												rubric={ question.rubric }
+												scores={ draft?.rubric ?? {} }
+												marks={ draft?.total ?? '' }
+												saved={ question.rubric_scores }
+												disabled={ busy || ! canGrade }
+												onChange={ ( next ) =>
+													scoreRubric(
+														question,
+														next
+													)
+												}
+											/>
+										) }
 									{ question.history.length > 0 && (
 										<details>
 											<summary>
@@ -407,6 +448,12 @@ export function AttemptReview( {
 															) }
 															{ event.reason &&
 																` — ${ event.reason }` }
+															{ event.rubric_scores &&
+																` (${ scoresLabel(
+																	question.rubric ??
+																		[],
+																	event.rubric_scores
+																) })` }
 														</li>
 													)
 												) }

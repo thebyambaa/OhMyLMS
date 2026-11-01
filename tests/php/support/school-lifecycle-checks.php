@@ -169,19 +169,39 @@ function ohmylms_school_lifecycle_checks() {
 		);
 		$preview = Lifecycle::preview( $school, $from, $to );
 		$check( 1 === count( $preview['classes'] ) && 'active' === Service::row( 'classes', $class )['status'], 'Preview mutated the source class.' );
-		Service::create_class(
+		$check( 'promote' === $preview['classes'][0]['action'] && 1 === $preview['classes'][0]['students'] && $preview['classes'][0]['name'] === $preview['classes'][0]['target']['name'], 'The hub preview must move a class with its student under the same name.' );
+		$added = (int) Service::create_class(
 			$school,
 			array(
 				'name'             => 'Added after preview',
 				'academic_year_id' => $from,
 			)
-		);
+		)['id'];
 		$denied(
 			static function () use ( $school, $from, $to ) {
 				Lifecycle::rollover( $school, $from, $to );
 			}
 		);
-		Lifecycle::preview( $school, $from, $to );
+		$with_empty = SchoolActions::apply(
+			'rollover_preview',
+			$school,
+			array(
+				'from_year'     => $from,
+				'to_year'       => $to,
+				'include_empty' => '1',
+			)
+		)['rollover'];
+		$check( true === $with_empty['include_empty'] && 2 === $with_empty['totals']['classes_created'] && 0 === $with_empty['totals']['classes_skipped'], 'Including empty classes must create both classes.' );
+		$plain   = SchoolActions::apply(
+			'rollover_preview',
+			$school,
+			array(
+				'from_year' => $from,
+				'to_year'   => $to,
+			)
+		)['rollover'];
+		$actions = array_column( $plain['classes'], 'action', 'class_id' );
+		$check( 'promote' === $actions[ $class ] && 'skip' === $actions[ $added ] && 1 === $plain['totals']['classes_skipped'], 'The hub preview must skip the class without students.' );
 		$result = SchoolActions::apply(
 			'rollover_commit',
 			$school,
@@ -205,9 +225,11 @@ function ohmylms_school_lifecycle_checks() {
 			}
 		);
 		global $wpdb;
-		$copies = $wpdb->get_results( $wpdb->prepare( 'SELECT id FROM %i WHERE academic_year_id=%d', \OhMyLMS\Schools\Schema::table( 'classes' ), $to ), ARRAY_A );
-		$check( 2 === count( $copies ), 'Rollover copied the wrong number of classes.' );
-		$check( array() === Service::roster( $school, (int) $copies[0]['id'] ), 'Rollover copied students.' );
+		$copies = $wpdb->get_results( $wpdb->prepare( 'SELECT id,source_class_id FROM %i WHERE academic_year_id=%d', \OhMyLMS\Schools\Schema::table( 'classes' ), $to ), ARRAY_A );
+		$check( 1 === count( $copies ) && $class === (int) $copies[0]['source_class_id'], 'Rollover must create a class only for the class with active students.' );
+		$check( 'archived' === Service::row( 'classes', $added )['status'], 'The class without students was not archived.' );
+		$moved = $wpdb->get_col( $wpdb->prepare( "SELECT user_id FROM %i WHERE class_id=%d AND role='student' AND status='active'", \OhMyLMS\Schools\Schema::table( 'class_memberships' ), (int) $copies[0]['id'] ) );
+		$check( array( $fixture['users'][2] ) === array_map( 'intval', $moved ), 'Rollover did not move the active student.' );
 		$denied(
 			static function () use ( $school, $from, $to ) {
 				Lifecycle::rollover( $school, $from, $to );

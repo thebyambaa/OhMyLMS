@@ -2,7 +2,8 @@
 /**
  * Quiz question authoring routes: per-question marks, sections and random pools under
  * `ohmylms/v1/quizzes/{id}/questions` (marks, sections, pools), their stale-revision checks, permissions,
- * validation, storage, what publishing freezes, and the cleanup when a question is removed.
+ * validation, storage, what publishing freezes, the cleanup when a question is removed, and pinning an
+ * older version of a question (read through the question's version routes).
  *
  * Runs against the Local site (`800.local`) and removes everything it creates.
  *
@@ -588,6 +589,73 @@ try {
 		)
 	);
 	ok( 200 === $cleared->get_status() && array() === $cleared->get_data()['pools'] && '' === get_post_meta( $quiz, Pools::META, true ), 'pools cleared' );
+	$revision = $cleared->get_data()['revision'];
+
+	// Pinning an older version (the quiz editor's versions dialog).
+	$edited = call_api(
+		'PATCH',
+		"/questions/{$second['id']}",
+		array(
+			'base_modified' => $second['modified'],
+			'name'          => "$tag second, edited",
+			'settings'      => array_merge(
+				$second['settings'],
+				array(
+					'score' => array(
+						'enabled' => true,
+						'value'   => 3,
+					),
+				)
+			),
+		)
+	);
+	ok( 200 === $edited->get_status() && 2 === $edited->get_data()['version'], 'question edited into version 2' );
+	$versions = call_api( 'GET', "/questions/{$second['id']}/versions" );
+	ok( 200 === $versions->get_status() && array( 2, 1 ) === array_column( $versions->get_data(), 'version_no' ), 'versions listed newest first' );
+	$older = (int) $versions->get_data()[1]['id'];
+	$view  = call_api( 'GET', "/questions/{$second['id']}/versions/$older" );
+	ok( 200 === $view->get_status() && "$tag second" === $view->get_data()['title'], 'older version content readable by its editor' );
+	ok_error(
+		call_api(
+			'PUT',
+			"/quizzes/$quiz/questions/{$second['id']}/pin",
+			array(
+				'version_id' => (int) $versions->get_data()[0]['id'],
+				'revision'   => str_repeat( 'c', 16 ),
+			)
+		),
+		409,
+		'ohmylms_quiz_questions_conflict',
+		'stale revision on pin'
+	);
+	$pinned = call_api(
+		'PUT',
+		"/quizzes/$quiz/questions/{$second['id']}/pin",
+		array(
+			'version_id' => $older,
+			'revision'   => $revision,
+		)
+	);
+	ok( 200 === $pinned->get_status(), 'older version pinned: ' . wp_json_encode( $pinned->get_data() ) );
+	$slot = array_column( $pinned->get_data()['questions'], null, 'question_id' )[ $second['id'] ];
+	ok( $older === $slot['pinned_version_id'] && 1 === $slot['pinned_version_no'] && 'pinned' === $slot['delivery']['source'] && 1 === $slot['delivery']['version_no'], 'slot delivers the pinned older version' );
+	ok( 1.0 === (float) $slot['question_marks'] && 2 === $slot['version'], 'marks come from the pinned version while the question is at version 2' );
+	ok( $revision !== $pinned->get_data()['revision'], 'pinning changes the revision' );
+	$revision = $pinned->get_data()['revision'];
+	$frozen   = RevisionPublisher::publish( $quiz );
+	ok( ! is_wp_error( $frozen ), 'quiz with a pinned older version publishes' );
+	$frozen = array_column( $frozen['slots'], null, 'question_id' )[ $second['id'] ];
+	ok( $older === (int) $frozen['version_id'] && 1.0 === (float) $frozen['marks'], 'publishing freezes the pinned older version' );
+	$unpinned = call_api(
+		'PUT',
+		"/quizzes/$quiz/questions/{$second['id']}/pin",
+		array(
+			'version_id' => null,
+			'revision'   => $revision,
+		)
+	);
+	$slot     = array_column( $unpinned->get_data()['questions'], null, 'question_id' )[ $second['id'] ];
+	ok( 200 === $unpinned->get_status() && 0 === $slot['pinned_version_id'] && 'current' === $slot['delivery']['source'] && 2 === $slot['delivery']['version_no'], 'unpinned slot follows the latest version' );
 
 	echo "OK quiz-questions-authoring-integration: $checks checks\n";
 	$exit_code = 0;

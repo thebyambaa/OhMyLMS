@@ -7,8 +7,8 @@
  * (mapped from the element's column count), breakpoint custom properties, arrows, track directives,
  * the optional dots/autoplay controls, balanced markup on the archive path, that `ohmylms/carousel` is
  * registered and enqueued, and that no `ohmylms-slick` handle is registered or enqueued anywhere.
- * Options are overridden with `pre_option_*` filters; nothing is written to the database. Needs at least
- * one published course.
+ * Options are overridden with `pre_option_*` filters. The only write is a tagged published course to
+ * render, deleted again when the script ends (also after a failure).
  *
  * Usage (set OHMYLMS_COURSE_CAROUSEL_TEST=1; PHP needs mysqli, mbstring, openssl, curl):
  *   php -n -d extension_dir=<php>/ext -d extension=mysqli -d extension=mbstring -d extension=openssl \
@@ -91,15 +91,22 @@ $rows = static function () {
 };
 add_filter( 'pre_option_ohmylms_archive_page_row', $rows );
 
-$courses = get_posts(
+$course = wp_insert_post(
 	array(
-		'post_type'      => OHMYLMS_COURSE_CPT,
-		'post_status'    => 'publish',
-		'posts_per_page' => 1,
-		'fields'         => 'ids',
-	)
+		'post_type'   => OHMYLMS_COURSE_CPT,
+		'post_status' => 'publish',
+		'post_title'  => 'carousel' . strtolower( wp_generate_password( 6, false, false ) ) . ' course',
+	),
+	true
 );
-ok( ! empty( $courses ), 'the site has at least one published course to render' );
+register_shutdown_function(
+	static function () use ( $course ) {
+		if ( is_int( $course ) && $course > 0 ) {
+			wp_delete_post( $course, true );
+		}
+	}
+);
+ok( is_int( $course ) && $course > 0, 'a published course to render was created' );
 
 // Script registration: Slick is gone, the carousel module is registered.
 $GLOBALS['wp_scripts'] = new WP_Scripts();

@@ -230,17 +230,34 @@ The review screen shows the source paper beside the questions (`SourcePanel`, `C
 let the author drag a rectangle on it. The legacy `exam-import-renderer` route had no screen.
 
 **Renderer probe.** `GET /exam-imports/renderer` (and `renderer` in the source descriptor) answers
-`available`, `engine` (`poppler`), `version`, `reason`, `crops` (a renderer and Action Scheduler, so
-crops can be queued), `contract` (`poppler-crop-1`), `max_side` (2400), `timeout_seconds` (20),
-`coordinate_space` (`rotated-cropbox-normalized-top-left`) and `imagick`. It never answers an error and
-never returns paths or process output. `reason` says what is missing: `not_configured` (no
+`available`, `engine` (`poppler` or `imagick`), `version` (Poppler's, or ImageMagick's), `reason`,
+`poppler_reason`, `crops` (a renderer and Action Scheduler, so crops can be queued), `contract`
+(`poppler-crop-1` or `imagick-crop-1`), `max_side` (2400), `timeout_seconds` (20), `coordinate_space`
+(`rotated-cropbox-normalized-top-left`) and `imagick`. It never answers an error and never returns paths
+or process output; the probe runs once per request. `reason` (when nothing renders) and `poppler_reason`
+(why Poppler is not the engine, `''` when it is) say what is missing: `not_configured` (no
 `OHMYLMS_PDFTOPPM_BINARY`), `process_disabled` (`proc_open` and friends disabled), `binary_unusable` (not
 an absolute path to an executable), `storage` (`OHMYLMS_IMPORT_PRIVATE_DIR` missing, not writable or
-served) or `failed` (the program did not answer as pdftoppm). Poppler is the only renderer: `imagick`
-only reports that Imagick can read PDF, and the screen says it is not used. Without a renderer the panel
-explains what to configure and opens the PDF in the browser's own viewer (pdf.js in Firefox, PDFium in
-Chrome); crops cannot be made, as before. The legacy `GET /exam-import-renderer` keeps its shape (503
-when unavailable).
+served) or `failed` (the program did not answer as pdftoppm). Without a renderer the panel explains what
+to configure and opens the PDF in the browser's own viewer (pdf.js in Firefox, PDFium in Chrome); crops
+cannot be made, as before. The legacy `GET /exam-import-renderer` keeps its shape and reports Poppler only
+(503 when Poppler is unavailable).
+
+**Imagick fallback.** Poppler stays preferred. When it is not usable and PHP's Imagick lists PDF and reads
+a built-in one-page test PDF through Ghostscript (an ImageMagick security policy that forbids PDF fails
+this test), `PageRenderer` renders with Imagick instead, behind the same `status()`, `page()` and `crop()`:
+the CropBox (`pdf:use-cropbox`), page rotation applied by Ghostscript, flattened on white, a first read at
+72 dpi to measure the page and a second at the density that makes the longer side 2400 px, resized to the
+exact `-scale-to` size when rounding differs, PNG with its physical resolution and without timestamps (a
+repeated render gives the same bytes). Crops cut that raster with the same pixel rounding as Poppler, so
+a crop's pixels are the same under both engines. Imagick runs inside PHP, so it cannot be killed like the
+pdftoppm process: ImageMagick's time limit (20 s) bounds each read and the deadline is checked between
+steps. Cached pages and crop requests are keyed on the engine's contract, so switching engines renders
+again instead of mixing rasters. The `ohmylms_exam_import_renderers` filter orders or removes the engines
+(default `['poppler', 'imagick']`); return `['poppler']` to never run Ghostscript on uploaded PDFs. The
+panel names the engine ("Imagick (ImageMagick 7.1.0-18 and Ghostscript …), because Poppler is not set
+up"); when Imagick lists PDF but fails the test, the guidance says Ghostscript is missing or the policy
+blocks PDF.
 
 **Source descriptor.** `GET /exam-imports/jobs/{id}/source`: `page_count` (from the inventory, 0 before
 extraction), `renderer`, `page_url` (with a `{page}` placeholder), `document` and `mark_scheme` (empty
@@ -271,7 +288,28 @@ Question N** queue the crop through the existing `POST /exam-imports/jobs/{id}/f
 asset goes into that row's draft (`asset_id`, `page`, `bounds`, `approved: false`; a new figure gets the
 next free `fN` ID), the screen polls the crop list until it is rendered, and **Save changes** stores it
 through the row edit, which checks that the crop belongs to the job. A replaced crop starts again on the
-original figure (see proposals above) and needs approval again.
+original figure (see proposals above) and needs approval again. Choosing another crop in a figure's
+**Crop** list also takes that crop's page and bounds and clears the approval.
+
+**Server crop checks.** The server checks every crop, not only the client:
+
+- Queueing (`POST …/figures`, also the legacy route): bounds as above (400 `exam_crop_bounds`,
+  `data.reason` `shape`); each side at least 0.5 % of the page (`PageRenderer::MIN_SIDE`, the client's
+  `MIN_SIDE`; `reason` `too_small`); a page after the paper's counted pages (`reason` `page`, the message
+  names the page count; an uncounted paper still accepts pages up to 500).
+- Rendering: the pixel rectangle cut from the page raster must lie inside it and be at least a pixel each
+  way (`exam_render_bounds`, stored as the crop's `error`); the crop records `pixel_bounds`, `page_width`
+  and `page_height`.
+- Row edits: a figure with a crop must carry that crop's page and bounds (to the six stored decimals);
+  otherwise 400 `ohmylms_exam_import_figure_bounds` with `data.reason` `mismatch`, `data.index` and
+  `data.figure`. Ownership (403) is checked first.
+- Accept: every figure's crop again matches its page and bounds, is at least the minimum size (`too_small`)
+  and, once rendered, its `pixel_bounds` lie inside `page_width` × `page_height` (`outside`).
+
+The review screen shows the server's message; for `ohmylms_exam_import_figure_bounds` on a saved figure it
+adds **Redraw figure f1 on the page**, which opens the source panel on that figure's page with its crop
+selected. The manual **Request a crop** form refuses pages after the counted pages and crops under the
+minimum before sending.
 
 ## Error codes
 
@@ -287,7 +325,8 @@ original figure (see proposals above) and needs approval again.
 | 409 | `ohmylms_exam_conflict`, `ohmylms_exam_import_conflict` | Stale `revision` (`data.revision`). |
 | 409 | `ohmylms_exam_published`, `_questions_locked`, `_question_unapproved`; `exam_incomplete`, `exam_overlap`, `exam_approval` | Edit after publication; imported questions; unapproved shared question; publication gate. |
 | 409 | `ohmylms_exam_import_not_reviewable`, `_figures_required`, `_figures_unreviewed`, `_unreviewed`, `_not_ready`, `_figure_unavailable`; `exam_source_in_use`, `exam_state`, `exam_busy` | Review state and figure gates; job used by an exam; extraction state; lock busy. |
-| 400 / 409 | `exam_crop_bounds`; `exam_crop_source`, `exam_crop_limit` | Crop bounds not left < right and top < bottom; crop before the upload was checked; 100 crops per job. |
+| 400 / 409 | `exam_crop_bounds` (`data.reason` `shape`, `too_small`, `page`); `exam_crop_source`, `exam_crop_limit` | Crop bounds not left < right and top < bottom, a side under 0.5 % of the page, a page after the last; crop before the upload was checked; 100 crops per job. |
+| 400 | `ohmylms_exam_import_figure_bounds` (`data.reason` `mismatch`, `too_small`, `outside`; `data.index`, `data.figure`) | A figure's page or bounds differ from its crop's (row edit, accept); on accept, a crop under the minimum or outside its page raster. |
 | 404 / 409 | `ohmylms_exam_import_no_source`, `_page_not_found`; `_source_unchecked`, `_source_unavailable` | No PDF (or no mark scheme); page after the last; upload not checked yet; source missing or changed since upload. |
 | 503 | `ohmylms_exam_import_renderer_unavailable`, `_render_failed`, `_storage` | Page image without a renderer, a failed render, private storage failure. |
 | 413 | `ohmylms_exam_too_large`, `ohmylms_exam_import_too_large` | Body too large. |
@@ -304,9 +343,13 @@ original figure (see proposals above) and needs approval again.
   commit is resumed by repeating apply.
 - Source viewer: cached page images are kept until the job is deleted (up to 500 pages of at most 10 MiB
   each); an import counted as 0 pages accepts any page up to 500 and a page past the end answers 503
-  `_render_failed`. The first view of a page waits for pdftoppm (bounded to 20 s). The panel shows the
-  stored page and figures of a row, not unsaved edits of them. Imagick and pdf.js are not server
-  renderers.
+  `_render_failed`. The first view of a page waits for the renderer (bounded to 20 s). The panel shows the
+  stored page and figures of a row, not unsaved edits of them. pdf.js is not a server renderer. The
+  Imagick fallback runs Ghostscript inside the PHP worker: a hostile PDF that hangs Ghostscript itself is
+  bounded only by ImageMagick's time limit and PHP's own limits, not killed like pdftoppm; sites that do
+  not want that keep Poppler configured or remove `imagick` with the `ohmylms_exam_import_renderers`
+  filter. Crops made before this release were not re-checked; the checks apply when such a row is saved or
+  accepted again.
 - Results release: the release email is sent and editable through its stored option but is not listed
   on the Emails screen (that needs the emails contract and catalogue); the school gradebooks
   (`Schools\Gradebook`, `Student\SchoolGradebook`) read attempt totals without the release check; a
@@ -358,9 +401,10 @@ requiring re-approval; commit without proposal metadata; the sealed attestation,
 `serialize_precision`; tampered specs failing the gate; and the delivered markup (`data-figure-spec`,
 `data-figure-display="accompany"`, protected original, no script).
 
-`tests/php/exam-import-source-integration.php` (111 checks, `OHMYLMS_EXAM_SOURCE_TEST=1`; needs the
-configured Poppler, otherwise it reports itself as not run) renders synthetic landscape, rotated and
-CropBox pages and checks: route registration (the legacy probe too); the probe for guests, subscribers,
+`tests/php/exam-import-source-integration.php` (130 checks, 142 when the PHP running it has Imagick
+reading PDF; `OHMYLMS_EXAM_SOURCE_TEST=1`; needs the configured Poppler, otherwise it reports itself as
+not run) renders synthetic landscape, rotated and CropBox pages and checks: route registration (the legacy
+probe too); the probe for guests, subscribers,
 contributors and authors, its fields, no paths and no caching; the source descriptor (nonce addresses, no
 document handles or hashes, no mark scheme, rows jobs); the PDF document and mark scheme (headers,
 streamed bytes equal the source, unknown part, unchecked and changed sources); page images (401/403 for
@@ -369,11 +413,22 @@ per orientation, headers, streamed PNG, one private cache file per page, cache r
 re-rendered, pages out of range, rows and unchecked jobs, a changed source); crops drawn on a page
 (guest/other author/contributor denial, out-of-range, short, inverted and empty bounds, unknown fields,
 unchecked source, idempotent retry, the real render matching the drawn bounds, the authenticated crop
-URL); saving the crop on a row, a foreign job's crop refused, a stale save refused; cached pages
-removed with the job.
+URL); crops under the minimum size and on a page after the last refused with their `reason`; saving the
+crop on a row, a foreign job's crop refused, a stale save refused; a figure whose bounds or page differ
+from its crop refused (`mismatch`, naming row and figure) without changing the draft; the rendered pixel
+box inside the page raster; accepting a crop moved outside its page (`outside`) or shrunk under the
+minimum (`too_small`) refused, then the matching crop accepted; the Imagick fallback (only when the PHP
+running the suite has Imagick reading PDF, as Local's PHP 8.4 does): the probe (`engine` `imagick`,
+`imagick-crop-1`, `poppler_reason`), the landscape, rotated and CropBox rasters equal to Poppler's, pages
+cached under their own contract, a crop of the same bounds as a new asset cutting the same pixels with its
+physical size, and Poppler preferred again without the filter; cached pages removed with the job.
+`figure-assets-integration.php --local` (90 checks) also checks that a page after the counted pages is
+refused before rendering.
 
-Front end: `npx vitest run --configLoader runner features/exams` (72 tests: contract parsers including
-results, proposals and the source descriptor, validation, composition helpers, multipart upload,
+Front end: `npx vitest run --configLoader runner features/exams` (75 tests: contract parsers including
+results, proposals and the source descriptor (with `poppler_reason`), the Imagick fallback message, a
+crop chosen in a figure's list carrying its page and bounds, the redraw action on a refused crop, the
+manual crop form's page and size checks, validation, composition helpers, multipart upload,
 list/editor/review screens, conflicts, polling, the results panel, the figure proposal panel, crop
 geometry (drag normalisation, move/resize clamping, keyboard steps, percentage fields, rounding), renderer
 guidance for every reason, and the source panel: page sync and paging, regions per page, mouse and touch

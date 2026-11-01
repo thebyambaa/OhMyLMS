@@ -334,7 +334,8 @@ row, then the skills) prefixes cells that start with `= + - @`, tab or CR with `
 | POST | `/rollover` | The same plus `review` | 200 result |
 
 For every active class of the source year: the grade map says what its grade becomes (unlisted grades stay the
-same; an empty `to` means the class leaves). A promoted class gets a successor in the target year (name with the
+same; an empty `to` means the class leaves). A class without a grade stays without one and is promoted; it leaves
+only when the map lists the empty grade (`{ from: '', to: '' }`). A promoted class gets a successor in the target year (name with the
 grade replaced, `7A` → `8A`; `classes.source_class_id` points back, so a successor is reused, never duplicated); its
 active students (still on the school roster) join it, teachers too with `copy_teachers`; its course links are copied
 (`course_classes`, `course_class_students`) and the students' active roster enrolments move to the new class through
@@ -350,6 +351,17 @@ students_leaving, teachers_copied, enrolments_moved, enrolments_revoked, course_
 row locks; a different plan answers `409 _review_stale`, another running rollover `409 _rollover_busy`, an archived
 source year `409 _state_conflict`, unusable years `422 _invalid_year`. Applying the same review again answers the
 first result with `already_applied: true`.
+
+`Schools\Rollover` is the only rollover implementation. The hub School workspace (`Student\SchoolActions`
+`rollover_preview` / `rollover_commit`, `templates/student-hub/school-rollover.php`) uses it through
+`Lifecycle::preview()` and `Lifecycle::rollover()`: an empty grade map (names and grades unchanged, so each class
+with active students moves to the new year with them), the form's **Also create new classes for classes without
+active students** (`include_empty`) and **Teachers join the new classes too** (`copy_teachers`). The preview's
+review is kept per user for five minutes; confirming applies exactly that review (`Rollover::apply()`), and a
+changed roster or class list refuses it (shown as a 400 message; a running rollover as 409). The preview lists
+each class with its outcome and the totals; the confirmation message reports classes created, students moved and
+classes archived without a successor. The older `Service::rollover()` (which copied every class, empty rosters
+included, and moved nobody) and `Lifecycle::signature()` were removed.
 
 ### Class work
 
@@ -424,8 +436,8 @@ every call (`return` only inside a View as session); the View as banner uses `re
 ## Not in this slice
 
 Gradebook is rebuilt separately. The hub School workspace keeps its own server-rendered forms
-(`Student\SchoolActions`); its rollover still uses `Lifecycle::rollover()`, which copies classes with empty rosters
-and does not move enrolments. Adding students to an independent class stays the teacher's invitation
+(`Student\SchoolActions`); its rollover shares `Schools\Rollover` (above) but has no grade map, so promoting
+grades stays in the Account Hub rollover. Adding students to an independent class stays the teacher's invitation
 link. The CSV import does not place people in classes.
 
 ## Tests
@@ -433,10 +445,16 @@ link. The CSV import does not place people in classes.
 `tests/php/account-hub-rest-integration.php`, `tests/php/account-hub-roster-rest-integration.php`,
 `tests/php/account-hub-users-rest-integration.php` and `tests/php/account-hub-schools-lifecycle-rest-integration.php`
 (set `OHMYLMS_ACCOUNT_HUB_TEST=1`; see the file headers), `tests/php/sample-preview-unit.php` (no database) and
-`npx vitest run --configLoader runner features/account-hub`. The school workflow suite (196 checks) covers the
+`npx vitest run --configLoader runner features/account-hub`. The school workflow suite (226 checks) covers the
 permission matrix (anonymous, subscriber, teacher, school administrator, site administrator), guardians and
-acceptance, the report and CSV escaping, class work, rollover (enrolments moved and revoked, idempotent apply),
-archive/restore/delete (accounts kept, roster enrolments revoked) and the sample school, and that the retired
-routes are gone. The users test creates tagged accounts and two tagged
+acceptance, the report and CSV escaping, class work, rollover (enrolments moved and revoked, idempotent apply,
+empty classes skipped unless `include_empty`), the hub rollover through the same implementation (the old paths
+gone, names and grades kept, the class without students skipped, a class without a grade promoted unless the
+empty grade is listed, the hub plan equal to the REST plan, `include_empty` from the form, the student moved, a
+second confirmation refused), archive/restore/delete (accounts kept, roster enrolments revoked) and the sample
+school, and that the retired routes are gone. `tests/php/support/school-lifecycle-checks.php` (run by
+`school-reports-integration.php` on the disposable database; 35 checks, also run against the Local site with a
+throwaway runner) checks the hub preview and confirmation: stale previews refused, `include_empty`, the class
+without students archived without a successor and the student moved. The users test creates tagged accounts and two tagged
 roles, intercepts mail, and checks denied callers, paging, filters, minimal fields, creation rules, stale saves and
 that a user manager cannot edit administrators or richer roles nor create a type whose role exceeds their own.

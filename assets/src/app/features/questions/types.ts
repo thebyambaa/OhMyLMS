@@ -189,6 +189,20 @@ export interface QuestionVersion {
 	is_approved: boolean;
 }
 
+/** Content of one saved version (`GET /questions/{id}/versions/{version_id}`), for its editors. */
+export interface QuestionVersionContent {
+	id: number;
+	version_no: number;
+	name: string;
+	/** Statement as stored (HTML). */
+	description: string;
+	type: string;
+	settings: QuestionSettings;
+	options: { answer: string; is_correct: boolean }[];
+	/** UTC `Y-m-d H:i:s` as stored; empty when unknown. */
+	created_at: string;
+}
+
 /** A registered question type (`GET /questions/types`). */
 export interface QuestionType {
 	id: string;
@@ -238,6 +252,7 @@ export interface QuestionCreateInput {
 	skills?: SkillMap;
 	thumbnail_id?: number;
 	video_id?: number;
+	extension_settings?: ExtensionValues;
 }
 
 /** Body of `PATCH /questions/{id}`: only changed fields, plus the `modified` of the last read. */
@@ -251,6 +266,43 @@ export interface QuestionUpdateInput {
 	skills?: SkillMap;
 	thumbnail_id?: number;
 	video_id?: number;
+	/** Only the namespaces that changed; each one replaces its stored object. */
+	extension_settings?: ExtensionValues;
+}
+
+/** Values of registered question extension settings, by settings ID (the namespace). */
+export type ExtensionValues = Record< string, Record< string, unknown > >;
+
+/** One performance level of a rubric criterion. */
+export interface RubricLevel {
+	points: number;
+	description: string;
+}
+
+/** A criterion of the marking rubric of short and long text questions (`settings.rubric`). */
+export interface RubricCriterion {
+	id: string;
+	title: string;
+	description: string;
+	points: number;
+	levels: RubricLevel[];
+}
+
+/** A rubric level being edited; points stay text until saved. */
+export interface RubricLevelForm {
+	key: string;
+	points: string;
+	description: string;
+}
+
+/** A rubric criterion being edited. `key` is a stable React key. */
+export interface RubricCriterionForm {
+	key: string;
+	id: string;
+	title: string;
+	description: string;
+	points: string;
+	levels: RubricLevelForm[];
 }
 
 /** An option being edited. `key` is a stable React key; `id` is 0 for a new option. */
@@ -285,6 +337,10 @@ export interface FormState {
 	image: FormMedia;
 	video: FormMedia;
 	skills: SkillMap;
+	/** Marking rubric of short and long text questions; empty for other types. */
+	rubric: RubricCriterionForm[];
+	/** Extension settings by namespace. */
+	extension: ExtensionValues;
 }
 
 /** Field errors keyed by field name (`name`, `points`, `options`, `options.2.label`, …). */

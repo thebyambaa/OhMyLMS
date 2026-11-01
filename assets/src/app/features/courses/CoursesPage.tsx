@@ -4,7 +4,13 @@ import {
 	ListTableSelect,
 } from '../../../ui/ListTable';
 import { Button, Modal, Notice, TextControl } from '@wordpress/components';
-import { useEffect, useRef, useState } from '@wordpress/element';
+import {
+	lazy,
+	Suspense,
+	useEffect,
+	useRef,
+	useState,
+} from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useNavigate } from 'react-router-dom';
 import { statusViews } from '../../components/listViews';
@@ -25,6 +31,11 @@ import { useCourses } from './useCourses';
 import type { Course, CourseFilters, Option } from './types';
 
 const MAX_TITLE = 200;
+const CourseFromSyllabusDialog = lazy( () =>
+	import(
+		/* webpackChunkName: "admin-app-syllabus" */ '../syllabus/public'
+	).then( ( module ) => ( { default: module.CourseFromSyllabusDialog } ) )
+);
 
 function statusFilters(): Option[] {
 	return [
@@ -48,6 +59,7 @@ function priceFilters(): Option[] {
 
 type Dialog =
 	| { kind: 'create' }
+	| { kind: 'from-syllabus' }
 	| { kind: 'trash'; item: Course }
 	| { kind: 'delete'; item: Course }
 	| null;
@@ -190,6 +202,12 @@ export default function CoursesPage() {
 					} }
 				>
 					{ __( 'Add course', 'ohmylms' ) }
+				</PageTitleAction>
+				<PageTitleAction
+					disabled={ busy }
+					onClick={ () => setDialog( { kind: 'from-syllabus' } ) }
+				>
+					{ __( 'Create from syllabus', 'ohmylms' ) }
 				</PageTitleAction>
 			</PageTitleActions>
 			<p>
@@ -544,6 +562,17 @@ export default function CoursesPage() {
 						</Button>
 					</form>
 				</Modal>
+			) }
+			{ dialog?.kind === 'from-syllabus' && (
+				<Suspense
+					fallback={
+						<p role="status">
+							{ __( 'Loading syllabuses…', 'ohmylms' ) }
+						</p>
+					}
+				>
+					<CourseFromSyllabusDialog onClose={ close } />
+				</Suspense>
 			) }
 			{ dialog?.kind === 'trash' && (
 				<Modal

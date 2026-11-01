@@ -9,6 +9,7 @@ import {
 	parseQuestionSummary,
 	parseQuestionTypes,
 	parseQuestionVersion,
+	parseQuestionVersionContent,
 	parseQuizChoice,
 	parseQuizPlacement,
 	parseSkillRef,
@@ -303,6 +304,27 @@ export async function listVersions(
 			signal,
 			query: { page, per_page: VERSIONS_PER_PAGE },
 		}
+	);
+}
+
+/**
+ * Read the content of one saved version of a question (with its answer key; editors only).
+ *
+ * @param id        Question id.
+ * @param versionId Version id.
+ * @param signal    Cancels the request.
+ * @return The version's name, statement, type, settings and options.
+ */
+export async function getQuestionVersion(
+	id: number,
+	versionId: number,
+	signal?: AbortSignal
+) {
+	return parseQuestionVersionContent(
+		await get< unknown >(
+			`${ itemPath( id ) }/versions/${ positiveId( versionId ) }`,
+			{ signal }
+		)
 	);
 }
 

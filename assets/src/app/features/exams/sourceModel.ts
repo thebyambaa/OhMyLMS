@@ -16,14 +16,16 @@ export type RendererReason =
 /** `GET /exam-imports/renderer`. */
 export interface RendererStatus {
 	available: boolean;
-	/** `poppler` when available. */
+	/** `poppler`, or `imagick` when Imagick (Ghostscript) stands in for Poppler; empty when unavailable. */
 	engine: string;
 	version: string;
 	reason: RendererReason;
+	/** Why Poppler is not the engine; empty when it is. */
+	poppler_reason: RendererReason;
 	/** Crops can be queued: a renderer and Action Scheduler. */
 	crops: boolean;
 	max_side: number;
-	/** Imagick with PDF support is installed; OhMyLMS does not render with it. */
+	/** Imagick lists PDF support; it renders only when it also reads a test page. */
 	imagick: boolean;
 }
 
@@ -84,7 +86,10 @@ function address( value: unknown, optional = false ): string {
 export function parseRenderer( value: unknown ): RendererStatus {
 	const item = record( value );
 	const reason = REASONS.find( ( entry ) => entry === item.reason );
-	if ( undefined === reason ) {
+	const popplerReason = REASONS.find(
+		( entry ) => entry === ( item.poppler_reason ?? '' )
+	);
+	if ( undefined === reason || undefined === popplerReason ) {
 		throw invalidResponse();
 	}
 	return {
@@ -92,6 +97,7 @@ export function parseRenderer( value: unknown ): RendererStatus {
 		engine: text( item.engine ),
 		version: text( item.version ),
 		reason,
+		poppler_reason: popplerReason,
 		crops: flag( item.crops ),
 		max_side: whole( item.max_side ),
 		imagick: flag( item.imagick ),
@@ -151,6 +157,28 @@ export function rendererMessage( status: RendererStatus ): {
 	tone: 'success' | 'warning';
 	text: string;
 } {
+	if ( status.available && 'imagick' === status.engine ) {
+		return {
+			tone: 'success',
+			text: [
+				sprintf(
+					/* translators: 1: ImageMagick version; 2: largest side in pixels. */
+					__(
+						'Pages are rendered on this server with Imagick (ImageMagick %1$s and Ghostscript, up to %2$d pixels), because Poppler is not set up.',
+						'ohmylms'
+					),
+					status.version,
+					status.max_side
+				),
+				status.crops
+					? __( 'Draw on a page to crop a figure.', 'ohmylms' )
+					: __(
+							'The import scheduler is unavailable, so crops cannot be made.',
+							'ohmylms'
+						),
+			].join( ' ' ),
+		};
+	}
 	if ( status.available ) {
 		return {
 			tone: 'success',
@@ -206,7 +234,7 @@ export function rendererMessage( status: RendererStatus ): {
 	if ( status.imagick ) {
 		parts.push(
 			__(
-				'Imagick is installed, but OhMyLMS renders pages with Poppler only.',
+				'Imagick is installed but could not read a test PDF page, so it cannot stand in for Poppler: Ghostscript is missing or the ImageMagick security policy blocks PDF.',
 				'ohmylms'
 			)
 		);

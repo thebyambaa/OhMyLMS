@@ -50,6 +50,7 @@ const public_classes = [
 	'ohmylms-streak-settings__badge-field',
 	'ohmylms-streak-settings__footer',
 	'components-tab-panel__tabs',
+	'components-panel__body',
 	'ohmylms-import-preview__headline',
 	'components-modal__content',
 	'components-modal__frame',

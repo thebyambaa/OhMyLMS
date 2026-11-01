@@ -35,6 +35,58 @@ async function saveAndReadPayload(
 	await waitFor( () => expect( api.saveOutline ).toHaveBeenCalledOnce() );
 	return vi.mocked( api.saveOutline ).mock.calls[ 0 ]![ 1 ] as Outline;
 }
+it( 'opens on the placement another editor links to, and says when the item is not placed', () => {
+	const withAssignment: Outline = {
+		...outline,
+		program: {
+			...outline.program,
+			items: [
+				...outline.program.items,
+				{
+					id: 'activity-2',
+					type: 'assignment',
+					content_id: 31,
+					chapter_id: 9,
+					required: true,
+					name: 'Essay on rivers',
+				},
+			],
+		},
+	};
+	const first = render(
+		<MemoryRouter>
+			<OutlineWorkspace
+				initial={ withAssignment }
+				reload={ vi.fn() }
+				opening="assignment:31"
+			/>
+		</MemoryRouter>
+	);
+	expect(
+		screen.getByText(
+			'Opened on “Essay on rivers” in Geometry. Move it to another unit or detach it here, then save the outline draft.',
+			{ selector: '.components-notice__content' }
+		)
+	).toBeInTheDocument();
+	expect( document.activeElement ).toBe(
+		document.querySelector( '[data-oml-drop="activity-2"]' )
+	);
+	first.unmount();
+	render(
+		<MemoryRouter>
+			<OutlineWorkspace
+				initial={ outline }
+				reload={ vi.fn() }
+				opening="assignment:31"
+			/>
+		</MemoryRouter>
+	);
+	expect(
+		screen.getByText( /That item is not placed in this course outline/, {
+			selector: '.components-notice__content',
+		} )
+	).toBeInTheDocument();
+} );
 it( 'saves learning controls and targets while preserving placement and bank settings', async () => {
 	const user = userEvent.setup();
 	open();

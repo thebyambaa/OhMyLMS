@@ -4,8 +4,8 @@
  * lesson objectives, and drip release through the shared schedule.
  *
  * Runs against the Local site. It creates tagged lessons, a course, a chapter, questions, an image
- * attachment and temporary users, and removes them in `finally`. Objective mappings use an existing
- * teaching syllabus read-only (the site must have one with objectives); only the test lesson changes.
+ * attachment, temporary users and a teaching syllabus with three objectives for the objective mappings,
+ * and removes them in `finally`.
  *
  * Usage (set OHMYLMS_LESSON_SETTINGS_TEST=1; PHP needs mysqli, mbstring, openssl, curl):
  *   php -n -d extension_dir=<php>/ext -d extension=mysqli -d extension=mbstring -d extension=openssl \
@@ -26,6 +26,9 @@ $_SERVER['REQUEST_URI'] = '/';
 require dirname( __DIR__, 5 ) . '/wp-load.php';
 
 use OhMyLMS\Curriculum\CourseObjectives;
+use OhMyLMS\Curriculum\Items;
+use OhMyLMS\Curriculum\Syllabus;
+use OhMyLMS\Curriculum\SyllabusCourse;
 use OhMyLMS\Learning\DripSchedule;
 use OhMyLMS\Learning\LessonAuthoring;
 use OhMyLMS\Learning\VideoCompletion;
@@ -37,6 +40,8 @@ $post_ids  = array();
 $user_ids  = array();
 $files     = array();
 $questions = array();
+$items     = array();
+$terms     = array();
 $tag       = 'lstest' . strtolower( wp_generate_password( 6, false, false ) );
 
 
@@ -532,19 +537,49 @@ try {
 		'switched-off schedules are open'
 	);
 
-	// Objectives: skills and syllabus objective mappings.
+	// Objectives: skills and syllabus objective mappings, on a tagged teaching syllabus with three objectives.
 	wp_set_current_user( $admin );
-	$syllabus   = null;
-	$objectives = array();
-	foreach ( CourseObjectives::syllabuses() as $row ) {
-		$found = 'roadmap' === $row['item_type'] ? array() : CourseObjectives::objectives( $row['id'] );
-		if ( ! is_wp_error( $found ) && count( $found ) >= 3 ) {
-			$syllabus   = $row;
-			$objectives = array_values( $found );
-			break;
-		}
+	$created = Items::create(
+		array(
+			'name'        => "$tag Syllabus",
+			'is_syllabus' => true,
+		)
+	);
+	ok( ! is_wp_error( $created ), 'syllabus created: ' . wp_json_encode( $created ) );
+	$items[] = (int) $created['id'];
+	$unit    = Items::create(
+		array(
+			'name'      => "$tag Unit",
+			'parent_id' => (int) $created['id'],
+			'code'      => 'U1',
+		)
+	);
+	ok( ! is_wp_error( $unit ), 'syllabus unit created: ' . wp_json_encode( $unit ) );
+	$items[] = (int) $unit['id'];
+	$group   = Syllabus::add_group(
+		(int) $created['id'],
+		array(
+			'name'    => 'Graphs',
+			'item_id' => (int) $unit['id'],
+		)
+	);
+	ok( is_int( $group ), 'objective group created' );
+	foreach ( array( 'Read a graph', 'Plot a point', 'Find a gradient' ) as $index => $name ) {
+		$term = Syllabus::create_skill(
+			(int) $created['id'],
+			$group,
+			array(
+				'name' => "$tag $name",
+				'code' => 'G.' . ( $index + 1 ),
+			)
+		);
+		ok( ! is_wp_error( $term ), "objective $name created" );
+		$terms[] = (int) $term['term_id'];
 	}
-	ok( null !== $syllabus, 'the site has a teaching syllabus with objectives to map' );
+	$syllabus = current( wp_list_filter( CourseObjectives::syllabuses(), array( 'id' => (int) $created['id'] ) ) );
+	$found    = CourseObjectives::objectives( (int) $created['id'] );
+	ok( $syllabus && 'roadmap' !== $syllabus['item_type'] && ! is_wp_error( $found ) && 3 === count( $found ), 'the tagged syllabus is a teaching syllabus with three objectives' );
+	$objectives = array_values( $found );
 	list( $first, $second, $third ) = array_slice( $objectives, 0, 3 );
 	update_post_meta(
 		$course,
@@ -677,6 +712,25 @@ try {
 	fwrite( STDERR, $failure->getMessage() . ' (' . basename( $failure->getFile() ) . ':' . $failure->getLine() . ")\n" );
 	$exit_code = 1;
 } finally {
+	if ( isset( $admin ) ) {
+		wp_set_current_user( $admin );
+	}
+	foreach ( array_reverse( $items ) as $item ) {
+		$row = Items::get( $item );
+		if ( $row && ! is_wp_error( $row ) ) {
+			$owned = SyllabusCourse::course_id( $item );
+			if ( ! empty( $row['skill_root_id'] ) ) {
+				$terms[] = (int) $row['skill_root_id'];
+			}
+			Items::delete( $item, 'delete', true );
+			if ( $owned ) {
+				wp_delete_post( $owned, true );
+			}
+		}
+	}
+	foreach ( array_unique( $terms ) as $term ) {
+		wp_delete_term( $term, \OhMyLMS\Skills\Taxonomy::NAME );
+	}
 	wp_set_current_user( 0 );
 	if ( $questions ) {
 		foreach ( $questions as $question ) {

@@ -31,11 +31,11 @@ It never builds anything. After you rebuild the admin app, run it again to check
 | Job | Runs |
 | --- | --- |
 | **checks** | Node from `.nvmrc` and PHP 8.2; `npm ci`, `npm run build`, `npm run check:ci`, `npm test` |
-| **lint-js** | `npm ci`, `npm run lint:js` |
+| **lint-js** | `npm ci`, `npm run lint:js`, `npm run lint:css` |
 | **php** | PHP 8.2: `php -l` on every file in `includes/` and `tests/php`, then `node tools/run-php-tests.mjs unit` |
 | **phpcs** | `composer install` in `tools/coding-standards`, then `node tools/phpcs-changed.mjs <base>`: the pull request's base commit, or the previous `main` commit on a push |
 | **browser** | The plugin checked out to `wordpress/wp-content/plugins/ohmylms` with WordPress's `wp-includes` beside it (the interactivity fixture serves the Interactivity API from there), PHP 8.2 with mbstring, `npm ci`, `npx playwright install --with-deps chromium`; then `npx playwright test -c tests/<name>.config.cjs` for `interactivity`, `dropdown` and `mathlive` with `OHMYLMS_BROWSER_CHANNEL=''` (Playwright's Chromium instead of Edge). Each config starts its PHP fixture server (`tests/fixtures/<name>.php`; no WordPress, no database). Locally, a PHP without `php.ini` needs `OHMYLMS_PHP_ARGS`, for example `["-d","extension_dir=C:/php8.5.4/ext","-d","extension=mbstring"]`, and `OHMYLMS_PHP_BIN` |
-| **php-integration** | MySQL 8.0 service container on port 10005; `poppler-utils`; `tools/install-test-wordpress.sh` installs WordPress at `xyz/app/public` (the Local layout `figure-assets-integration` checks for) with wp-cli, copies the plugin to `wp-content/plugins/ohmylms` and activates it; `tools/install-test-sites.sh` installs the disposable sites (below); `wp server` on `ohmylms.test:8080`; then `node tools/run-php-tests.mjs integration` (with `OHMYLMS_TEST_CREDENTIALS` and `OHMYLMS_TEST_PDFTOPPM=/usr/bin/pdftoppm`) and `tests/js/randomized-preview.test.mjs` against that site |
+| **php-integration** | MySQL 8.0 service container on port 10005; `poppler-utils`; `npm ci` and `npm run build:sdk` (the webpack entries in `build/sdk` for `extension-host-assets-integration`); `tools/install-test-wordpress.sh` installs WordPress at `xyz/app/public` (the Local layout `figure-assets-integration` checks for) with wp-cli, copies the plugin (and `build/sdk`, which git ignores) to `wp-content/plugins/ohmylms` and activates it; `tools/install-test-sites.sh` installs the disposable sites (below); `wp server` on `ohmylms.test:8080`; then `node tools/run-php-tests.mjs integration` (with `OHMYLMS_TEST_CREDENTIALS` and `OHMYLMS_TEST_PDFTOPPM=/usr/bin/pdftoppm`) and `tests/js/randomized-preview.test.mjs` against that site |
 
 `tools/install-test-sites.sh <dir>` installs three disposable sites, each with the database its suites
 check for: `source` (`ohmylms_source_test`), `migration` (`ohmylms_gutenberg_migration_20261020`) and
@@ -94,17 +94,33 @@ npm run test:php:integration
 
 Each entry is a group of files with a `reason`. Listed files are not run, except:
 
-- `"skipIn": "ci"`: skipped only when the `CI` variable is set (GitHub Actions sets it). These pass on the
-  Local site but need content a clean install lacks.
+- `"skipIn": "ci"`: skipped only when the `CI` variable is set (GitHub Actions sets it), for a suite that
+  passes on the Local site but needs something a clean install lacks. No group uses it now.
 - `"expect": "fail"`: suites that fail at HEAD. They still run; the job fails if one of them passes, so
-  remove its entry when it is fixed.
+  remove its entry when it is fixed. No group uses it now.
 
 `--all`, or naming a listed file, runs it anyway. The runner fails when an entry names a missing file, a
 file of the wrong kind, or has no reason. Not run in CI: suites that need the sibling
-`ohmylms-custom-question`, `ohmylms-qpay` or `ohmylms-graded-reader` plugins or CreatorLMS, or content on the
-Local site, plus the non-suite helpers and the `php -S` routers (`exam-import-http`, `pdf-exam-http`). The
-disposable-site, migration and streak suites run in CI; 19 of them fail at HEAD and are listed as expected
-failures with the first failing check (31 October 2026).
+`ohmylms-custom-question` or `ohmylms-qpay` plugins or CreatorLMS, plus the non-suite helpers and the
+`php -S` routers (`exam-import-http`, `pdf-exam-http`). Every other suite runs in CI, including the
+disposable-site, migration and streak suites.
+
+Suites create what they read; none depends on content that happens to be on the Local site. The six that
+did until 2 November 2026:
+
+| Suite | What it needs and where it comes from |
+| --- | --- |
+| `course-carousel-integration` | A tagged published course, created by the suite and deleted when it exits. |
+| `extension-host-assets-integration` | Defines `OHMYLMS_SOURCE_ASSETS` for its own process (first definition wins over `wp-config.php`): source mode against `build/sdk`, then shipped mode in a child process. CI builds `build/sdk`; without it only shipped mode runs, and with `CI` set the suite fails. |
+| `gradebook-rest-integration` | Its tagged roster, purchase and self enrolments; it reads them from the migrated `ohmylms_enrolments` table (`ohmylms_enrolments_read_new`), because a new install has not run the enrolment migration. |
+| `lesson-settings-integration` | A tagged teaching syllabus with a unit, a group and three objectives, removed in `finally`. |
+| `questions-rest-integration` | Add-on types are checked with a question type registered for the run; the `graded-reader` check runs only when `ohmylms-graded-reader` is active and otherwise prints that it did not run. |
+| `skill-workspace-rest-integration` | Its fixture subject gets the built-in Mathematics profile (domains such as algebra) through an option filter for the request, whatever the site's default profile. |
+
+`assessment-integration` (disposable `source` site) runs the `authoring` phase and every phase in
+`tests/php/assessment/` except `xapi-live`, which needs a real LRS (`OHMYLMS_LRS_CREDENTIALS`); name phases
+to run only those. Its question fixtures use the typed routes (`POST quizzes/{id}/questions/new`,
+`POST|PATCH questions`, `quizzes/{id}/questions/*`).
 
 ### WordPress coding standards: `tools/phpcs-changed.mjs`
 

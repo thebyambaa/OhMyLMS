@@ -10,6 +10,7 @@ use OhMyLMS\Assessment\AttemptItems;
 use OhMyLMS\Assessment\ErrorException;
 use OhMyLMS\Assessment\GradeEvents;
 use OhMyLMS\Assessment\Grader;
+use OhMyLMS\Assessment\Rubric;
 use OhMyLMS\Assessment\Schema;
 use OhMyLMS\Assessment\Scoring;
 use OhMyLMS\Assessment\Structured;
@@ -33,8 +34,9 @@ final class Review {
 	 * @param mixed  $attempt_id Attempt identifier.
 	 * @param array  $marks Marks.
 	 * @param string $reason Reason.
+	 * @param array  $rubrics Question ID => points by rubric criterion ID, for questions graded with their rubric.
 	 */
-	public static function save( $quiz_id, $attempt_id, array $marks, $reason = '' ) {
+	public static function save( $quiz_id, $attempt_id, array $marks, $reason = '', array $rubrics = array() ) {
 		global $wpdb;
 		if ( ! GradingPolicy::can_grade( $quiz_id ) ) {
 			return new \WP_Error( 'quiz_permission', 'You cannot grade this quiz.', array( 'status' => rest_authorization_required_code() ) );
@@ -48,7 +50,7 @@ final class Review {
 		$changed  = array();
 		try {
 			$result = Transaction::run(
-				static function () use ( $wpdb, $quiz_id, $attempt_id, $marks, $reviewer, $reason, &$changed ) {
+				static function () use ( $wpdb, $quiz_id, $attempt_id, $marks, $reviewer, $reason, $rubrics, &$changed ) {
 					$attempt = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id=%d AND quiz_id=%d FOR UPDATE', $wpdb->prefix . 'ohmylms_quiz_attempts', $attempt_id, $quiz_id ), ARRAY_A );
 					if ( ! $attempt || ! in_array( $attempt['status'], array( 'in-review', 'completed' ), true ) ) {
 						throw new ErrorException( new \WP_Error( 'quiz_attempt', 'Submitted attempt unavailable.', array( 'status' => 409 ) ) );
@@ -70,6 +72,12 @@ final class Review {
 							$items[ (int) $item['question_id'] ] = $item;
 						}
 					}
+					// Rubric scores are checked against the rubric the learner was delivered.
+					$scores = array();
+					foreach ( $rubrics as $id => $points ) {
+						$snapshot      = isset( $items[ $id ], $marks[ $id ] ) ? AttemptItems::snapshot( $items[ $id ] ) : null;
+						$scores[ $id ] = ErrorException::raise( Rubric::check_scores( $snapshot ? Rubric::criteria( $snapshot->get_settings() ) : array(), $points, $marks[ $id ] ?? null, (float) ( $by_question[ $id ]['question_marks'] ?? 0 ), $id ) );
+					}
 					$total   = 0.0;
 					$pending = false;
 					foreach ( $rows as $row ) {
@@ -90,7 +98,20 @@ final class Review {
 									$marks[ $id ] = $distribution['total'];
 								}
 							}
-							$row['achive_mark']          = Scoring::manual( $marks[ $id ], $row['question_marks'], $policy );
+							$row['achive_mark'] = Scoring::manual( $marks[ $id ], $row['question_marks'], $policy );
+							if ( isset( $scores[ $id ] ) && abs( (float) $row['achive_mark'] - (float) $marks[ $id ] ) > Rubric::POINTS_TOLERANCE ) {
+								ErrorException::raise(
+									new \WP_Error(
+										'ohmylms_grade_rubric_total',
+										'This attempt awards whole marks, so a rubric score must come to whole marks.',
+										array(
+											'status'      => 422,
+											'question_id' => $id,
+											'expected'    => (float) $row['achive_mark'],
+										)
+									)
+								);
+							}
 							$row['is_manually_reviewed'] = 1;
 							$row['is_correct']           = $row['achive_mark'] > 0 && $row['achive_mark'] >= $row['question_marks'] ? 1 : 0;
 							if ( $wpdb->update( $wpdb->prefix . 'ohmylms_quiz_attempts_answers', array_intersect_key( $row, array_flip( array( 'achive_mark', 'is_manually_reviewed', 'is_correct' ) ) ), array( 'id' => $row['id'] ) ) === false ) {
@@ -145,7 +166,7 @@ final class Review {
 										'grade_event_id' => $event_id,
 									);
 								}
-							} elseif ( $item && ( $differs || 'needs-review' === $item['status'] ) ) {
+							} elseif ( $item && ( $differs || 'needs-review' === $item['status'] || ( isset( $scores[ $id ] ) && GradeEvents::rubric( GradeEvents::current( 'quiz', (int) $attempt_id, (int) $item['id'] ) ) !== $scores[ $id ] ) ) ) {
 								$max      = (float) $row['question_marks'];
 								$fraction = $max > 0 ? min( 1, (float) $row['achive_mark'] / $max ) : 0;
 								$wpdb->update(
@@ -174,6 +195,7 @@ final class Review {
 										'grader'      => 'manual',
 										'reviewer_id' => $reviewer,
 										'reason'      => $reason,
+										'rubric'      => $scores[ $id ] ?? null,
 									)
 								);
 								$changed[] = array(

@@ -187,7 +187,8 @@
 					"maxItems": 200,
 					"items": {
 						"question_id": { "type": "integer", "minimum": 1 },
-						"marks": "number >= 0, or { partId: number } for structured questions"
+						"marks": "number >= 0, or { partId: number } for structured questions",
+						"rubric": "optional { criterionId: number } (1-20) for a short/long text question graded with its rubric; marks must equal the scaled rubric score"
 					}
 				},
 				"reason": { "type": "string", "maxLength": 500 },
@@ -377,6 +378,9 @@
 		"ohmylms_grade_unknown_question",
 		"ohmylms_grade_duplicate_question",
 		"ohmylms_grade_exceeds_max",
+		"ohmylms_grade_rubric_unavailable",
+		"ohmylms_grade_rubric_invalid",
+		"ohmylms_grade_rubric_total",
 		"quiz_marks",
 		"ohmylms_question_bank_unavailable",
 		"ohmylms_quiz_questions_unknown_field",

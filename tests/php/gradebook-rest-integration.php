@@ -6,6 +6,7 @@
  *
  * Runs against a WordPress install (the Local site by default) with real tables. Fixtures are tagged
  * (tests/php/support/gradebook-fixture.php) and removed in `finally`. It never resets the database.
+ * Enrolment reads use the migrated table for this process (`ohmylms_enrolments_read_new`).
  *
  * Usage (set OHMYLMS_GRADEBOOK_TEST=1; PHP needs mysqli, mbstring, openssl, curl):
  *   php -n -d extension_dir=<php>/ext -d extension=mysqli -d extension=mbstring -d extension=openssl \
@@ -39,6 +40,9 @@ $checks  = 0;
 $started = microtime( true );
 $tag     = 'gbk' . strtolower( wp_generate_password( 6, false, false ) );
 add_filter( 'pre_wp_mail', '__return_true' );
+// Enrolment sources (roster, purchase, self) are read from the ohmylms_enrolments projection once the enrolment
+// migration has run, as on any updated site; a new install has not run it. The fixtures write both tables.
+add_filter( 'ohmylms_enrolments_read_new', '__return_true' );
 
 /**
  * Assert a condition.
@@ -668,7 +672,18 @@ try {
 	same( 'miss', call( $fx['admin'], 'GET', '/gradebook/courses/' . $perf, array( 'scope' => 'all' ) )->get_headers()['X-OhMyLMS-Cache'], 'ttl 0 disables caching' );
 	remove_filter( 'ohmylms_dashboard_cache_ttl', '__return_zero' );
 	$version = Version::current();
-	do_action( 'ohmylms_attempt_graded', 1 );
+	do_action(
+		'ohmylms_attempt_graded',
+		array(
+			'attempt_id' => 0,
+			'quiz_id'    => $fx['q1'],
+			'student_id' => $l[1],
+			'course_id'  => $course,
+			'total'      => 8,
+			'status'     => 'completed',
+			'reason'     => '',
+		)
+	);
 	ok( Version::current() !== $version, 'grading replaces the gradebook version' );
 } finally {
 	try {

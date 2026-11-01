@@ -144,7 +144,10 @@ belong directly to units. The new UI does not create those folders.
 Authors can add/rename/reorder/delete units and place, reorder, move and detach lessons,
 quizzes and assignments. Detachment removes a placement from the draft, never the shared
 resource or learner history. Practice items and skills remain in the submitted program.
-Quiz and assignment content is edited in their own editors, linked from each placement.
+Quiz and assignment content is edited in their own editors, linked from each placement. The way back
+is `#/courses/:id/outline?focus=<type>:<content id>` (the assignment editor links each of its placements
+this way): the outline opens with that activity row focused and a notice naming its unit, or saying the
+item is not placed in this outline; placement stays an outline edit, saved with the draft.
 Outline saves never send `activate`
 or call a publish endpoint. Curriculum placement changes save immediately and independently
 of the outline, as stated beside the controls.

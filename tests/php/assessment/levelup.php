@@ -21,7 +21,7 @@ foreach (['A' => 2, 'B' => 2, 'C' => 2, 'N' => 0] as $letter => $count) {
     $skills[$letter] = (int) call('POST', 'skills', ['name' => "Level skill $letter $run", 'public_practice' => true])->get_data()['id'];
     $fixture['terms'][] = [$skills[$letter], Taxonomy::NAME];
     for ($n = 1; $n <= $count; $n++) {
-        $response = call('POST', 'question', ['name' => "$letter$n $run", 'description' => "Question $letter$n $run",
+        $response = create_question(['name' => "$letter$n $run", 'description' => "Question $letter$n $run",
             'settings' => ['type' => 'single-choice', 'score' => ['enabled' => true, 'value' => 1]],
             'questions' => [['answer' => 'Right', 'is_correct' => 1, 'order_number' => 1], ['answer' => 'Wrong', 'is_correct' => 0, 'order_number' => 2]],
             'skills' => ['p1' => ['primary' => $skills[$letter]]], 'bank' => ['family_id' => "lv$letter$n-$run"]]);
@@ -32,7 +32,7 @@ foreach (['A' => 2, 'B' => 2, 'C' => 2, 'N' => 0] as $letter => $count) {
 }
 
 // ---- A course with four units: A+B, C+N, no skills, and an empty-bank skill only ----
-$course_id = remember_post(call('POST', 'courses', ['name' => "Level up course $run", 'status' => 'publish'])->get_data()['id']);
+$course_id = new_course("Level up course $run");
 $units = [];
 foreach ([['Unit one', ['A', 'B']], ['Unit two', ['C', 'N']], ['Unit three', []], ['Unit four', ['N']]] as $order => [$title, $letters]) {
     $chapter = remember_post(wp_insert_post(['post_type' => 'ohmylms-chapter', 'post_title' => "$title $run", 'post_status' => 'publish']));

@@ -427,6 +427,88 @@ try {
 	$admin_all = get_as( $fx['admin'], '/skill-map/overlay/targets', array( 'search' => $tag ) )[1];
 	ok( 20 === count( $admin_all['learners'] ) && ! in_array( 'all', array_column( $admin_all['groups'], 'key' ), true ), 'an administrator search is bounded to 20 learners and never offers "all"' );
 	ok( in_array( 'school:' . $fx['school_b'], array_column( $admin_all['groups'], 'key' ), true ), 'administrators see every school' );
+
+	// ---- The read-only map page for school staff ----
+	foreach ( array(
+		'teacher'              => $fx['teacher'],
+		'school administrator' => $fx['sa'],
+		'administrator'        => $fx['admin'],
+	) as $who => $user ) {
+		$subjects = get_as( $user, '/syllabus-comparison/skill-map/subjects' );
+		ok( 200 === $subjects[0] && in_array( $subject, array_column( $subjects[1], 'subject' ), true ), "a $who lists the map subjects" );
+		$map = get_as( $user, '/syllabus-comparison/skill-map', array( 'subject' => $subject ) );
+		ok( 200 === $map[0] && 4 === count( $map[1]['skills'] ), "a $who reads the map: " . wp_json_encode( $map[0] ) );
+	}
+	is_error( get_as( 0, '/syllabus-comparison/skill-map', array( 'subject' => $subject ) ), 401, 'ohmylms_skill_map_cannot_view', 'an anonymous map' );
+	is_error( get_as( $l[1], '/syllabus-comparison/skill-map/subjects' ), 403, 'ohmylms_skill_map_cannot_view', 'a learner listing map subjects' );
+	is_error( get_as( $l[2], '/syllabus-comparison/skill-map', array( 'subject' => $subject ) ), 403, 'ohmylms_skill_map_cannot_view', 'a learner reading the map' );
+	$own = get_as(
+		$fx['teacher'],
+		'/syllabus-comparison/skill-map',
+		array(
+			'subject'    => $subject,
+			'student_id' => $l[1],
+		)
+	);
+	ok( 200 === $own[0] && isset( $own[1]['student'] ), 'a teacher lays a learner of their class over the map' );
+	foreach ( array( $l[7], 999999999 ) as $outside ) {
+		is_error(
+			get_as(
+				$fx['teacher'],
+				'/syllabus-comparison/skill-map',
+				array(
+					'subject'    => $subject,
+					'student_id' => $outside,
+				)
+			),
+			403,
+			'ohmylms_skill_overlay_forbidden',
+			'a teacher laying learner ' . $outside . ' over the map (another class, or missing: the same answer)'
+		);
+	}
+	is_error(
+		get_as(
+			$fx['admin'],
+			'/syllabus-comparison/skill-map',
+			array(
+				'subject'    => $subject,
+				'student_id' => 999999999,
+			)
+		),
+		404,
+		'ohmylms_skill_map_student',
+		'an administrator laying a missing learner over the map'
+	);
+	wp_set_current_user( $fx['teacher'] );
+	ScopeResolver::reset();
+	$link = new WP_REST_Request( 'POST', '/ohmylms/v1/syllabus-comparison/skill-links' );
+	$link->set_body_params(
+		array(
+			'skill_id' => $s2,
+			'other_id' => $s1,
+			'type'     => 'prerequisite',
+		)
+	);
+	ok( 403 === rest_do_request( $link )->get_status(), 'a teacher cannot edit the links of the map' );
+	ok( 403 === get_as( $fx['teacher'], '/syllabus-comparison/subject-profiles' )[0], 'and cannot open the other curriculum screens' );
+	$tabs = \OhMyLMS\Admin\AdminNavigation::visible_tabs( 'content' );
+	ok( isset( $tabs['curriculum'] ) && array( 'skill-map' ) === array_keys( $tabs['curriculum']['sections'] ) && 'skill-map' === $tabs['curriculum']['default_section'], 'a teacher sees only the skill map in the Curriculum tab: ' . wp_json_encode( array_keys( $tabs ) ) );
+	ok( \OhMyLMS\Dashboard\Access::CAPABILITY === $tabs['curriculum']['capability'] && ! isset( $tabs['skills'] ) && ! isset( $tabs['courses'] ), 'through the staff capability, with no other site tab' );
+	$place = \OhMyLMS\Admin\AdminNavigation::current(
+		array(
+			'page' => 'ohmylms-content',
+			'tab'  => 'curriculum',
+		)
+	);
+	ok( 'curriculum' === $place['tab'] && 'skill-map' === $place['section'], 'the Curriculum tab opens the skill map for a teacher' );
+	ok( 'skill-map' === \OhMyLMS\Admin\AdminNavigation::current( array( 'page' => 'ohmylms-content', 'tab' => 'curriculum', 'section' => 'bundles' ) )['section'], 'other curriculum sections fall back to the skill map' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+	wp_set_current_user( $l[1] );
+	ScopeResolver::reset();
+	ok( ! isset( \OhMyLMS\Admin\AdminNavigation::visible_tabs( 'content' )['curriculum'] ), 'a learner gets no Curriculum tab' );
+	wp_set_current_user( $fx['admin'] );
+	ScopeResolver::reset();
+	$admin_tabs = \OhMyLMS\Admin\AdminNavigation::visible_tabs( 'content' );
+	ok( array( '', 'bundles', 'skill-map', 'subjects', 'taxonomies' ) === array_map( 'strval', array_keys( $admin_tabs['curriculum']['sections'] ) ) && 'manage_options' === $admin_tabs['curriculum']['capability'], 'administrators keep every curriculum section' );
 } catch ( Throwable $error ) {
 	echo $error->getMessage() . "\n" . $error->getTraceAsString() . "\n";
 	masteryfx_delete( $tag );

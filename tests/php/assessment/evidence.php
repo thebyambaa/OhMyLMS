@@ -27,8 +27,7 @@ $make = static function ($name, $bank, $quiz = 0) use ($solve, $support) {
     $data = ['name' => $name, 'settings' => ['type' => 'single-choice', 'score' => ['enabled' => true, 'value' => 1], 'hint' => 'Undo the operation'],
         'questions' => [['answer' => 'yes', 'is_correct' => 1], ['answer' => 'no']], 'skills' => ['p1' => ['primary' => $solve, 'supporting' => [$support]]], 'bank' => $bank];
     if ($quiz) { $data['quiz_id'] = $quiz; }
-    $id = remember_post(call('POST', 'question', $data)->get_data()['id']);
-    return $id;
+    return new_question($data);
 };
 $approve = static function ($id) { ok(status_of(call('POST', 'questions/' . $id . '/approve')) === 200, 'Approve failed'); };
 $q1 = $make('Quiz Q1', ['family_id' => 'fam-a'], $quiz_id); $approve($q1);

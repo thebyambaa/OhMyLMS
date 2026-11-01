@@ -140,7 +140,9 @@ describe( 'QuizQuestions', () => {
 		expect(
 			screen.getByText( /2 questions · Total marks: 5/ )
 		).toBeInTheDocument();
-		expect( onTotalChange ).toHaveBeenCalledWith( 5 );
+		await waitFor( () =>
+			expect( onTotalChange ).toHaveBeenCalledWith( 5 )
+		);
 		expect(
 			screen.getByRole( 'button', {
 				name: 'Move Pick the larger fraction up',

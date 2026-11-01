@@ -135,12 +135,12 @@ export function LessonWorkspace( {
 				) }
 			</p>
 			<div className="oml-editor-header">
-				<div className="oml-editor-header__title">
+				<div className="oml-editor-header-title">
 					<h2>
 						{ draft.title || __( 'Untitled lesson', 'ohmylms' ) }
 					</h2>
 					<span
-						className={ `oml-editor-status oml-editor-status--${ draft.status }` }
+						className={ `oml-editor-status oml-editor-status-${ draft.status }` }
 					>
 						{ draft.status }
 					</span>
@@ -150,7 +150,7 @@ export function LessonWorkspace( {
 							: __( 'Saved lesson', 'ohmylms' ) }
 					</span>
 				</div>
-				<div className="oml-editor-header__actions">
+				<div className="oml-editor-header-actions">
 					<Button
 						variant="tertiary"
 						aria-expanded={ asideOpen }

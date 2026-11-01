@@ -10,6 +10,12 @@ it.each( [
 	{ ...outline, contents: {} },
 	{ ...outline, course: { id: 12, title: 'Math', published: 'yes' } },
 	{ ...outline, contents: [ { ...outline.contents[ 0 ], groups: 'bad' } ] },
+	{
+		...outline,
+		requirements: [ { term_id: 10, required: true, target: 'expert' } ],
+	},
+	{ ...outline, requirements: [ { term_id: 10, required: 'yes' } ] },
+	{ ...outline, settings: { ...outline.settings, categories: 'Core' } },
 ] )( 'rejects invalid outlines', ( raw ) => {
 	expect( () => parseOutline( raw ) ).toThrow();
 } );

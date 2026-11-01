@@ -42,10 +42,37 @@ describe( 'source model', () => {
 			{ ...source, page_count: -1 },
 			{ ...source, renderer: { ...source.renderer, reason: 'other' } },
 			{ ...source, renderer: { ...source.renderer, crops: 'yes' } },
+			{
+				...source,
+				renderer: { ...source.renderer, poppler_reason: 'gone' },
+			},
 		] ) {
 			expect( () => parseSource( bad ) ).toThrow( /invalid exam data/ );
 		}
 		expect( () => parseRenderer( null ) ).toThrow();
+		const { poppler_reason: omitted, ...older } = source.renderer;
+		expect( omitted ).toBe( '' );
+		expect( parseRenderer( older ).poppler_reason ).toBe( '' );
+	} );
+
+	it( 'describes the Imagick fallback', () => {
+		const fallback: RendererStatus = {
+			...source.renderer,
+			engine: 'imagick',
+			version: '7.1.0-18',
+			poppler_reason: 'not_configured',
+			imagick: true,
+		};
+		expect( parseRenderer( fallback ) ).toEqual( fallback );
+		const message = rendererMessage( fallback );
+		expect( message.tone ).toBe( 'success' );
+		expect( message.text ).toContain(
+			'Imagick (ImageMagick 7.1.0-18 and Ghostscript, up to 2400 pixels)'
+		);
+		expect( message.text ).toContain( 'Draw on a page to crop a figure.' );
+		expect(
+			rendererMessage( { ...fallback, crops: false } ).text
+		).toContain( 'crops cannot be made' );
 	} );
 
 	it( 'describes an available renderer', () => {
@@ -81,6 +108,8 @@ describe( 'source model', () => {
 		expect( texts[ 3 ] ).toContain( 'OHMYLMS_IMPORT_PRIVATE_DIR' );
 		expect(
 			rendererMessage( { ...missing, imagick: true } ).text
-		).toContain( 'Imagick is installed' );
+		).toContain(
+			'Imagick is installed but could not read a test PDF page'
+		);
 	} );
 } );

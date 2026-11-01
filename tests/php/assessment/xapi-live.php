@@ -108,14 +108,14 @@ $note('Connection test: ' . $test['message']);
 // ---- 2. A realistic flow with fake users ----
 as_user($admin);
 $student = make_user('subscriber');
-$course_id = remember_post(call('POST', 'courses', ['name' => 'Smoke-test course', 'status' => 'publish'])->get_data()['id']);
+$course_id = new_course('Smoke-test course');
 $lesson_id = remember_post(wp_insert_post(['post_type' => OHMYLMS_LESSON_CPT, 'post_title' => 'Smoke-test lesson', 'post_status' => 'publish', 'post_content' => 'x']));
 [$quiz_course, $quiz_id] = course_with_quiz($admin, ['allow_attempts' => 10]);
 $make_question = static function ($name) use ($quiz_id) {
-    $created = call('POST', 'question', ['name' => $name, 'quiz_id' => $quiz_id, 'settings' => ['type' => 'single-choice', 'score' => ['enabled' => true, 'value' => 2]],
+    $created = create_question(['name' => $name, 'quiz_id' => $quiz_id, 'settings' => ['type' => 'single-choice', 'score' => ['enabled' => true, 'value' => 2]],
         'questions' => [['answer' => 'Right', 'is_correct' => 1], ['answer' => 'Wrong']], 'bank' => ['family_id' => 'live-' . wp_generate_password(6, false, false)]]);
     ok(status_of($created) === 201, 'Question create failed');
-    $id = remember_post($created->get_data()['id']);
+    $id = remember_post($created->get_data()['created_id']);
     ok(status_of(call('POST', 'questions/' . $id . '/approve')) === 200, 'Question approve failed');
     return $id;
 };

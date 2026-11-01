@@ -47,7 +47,7 @@ as_user($admin);
 $skill = (int) call('POST', 'skills', ['name' => 'Performance skill ' . $run, 'public_practice' => true])->get_data()['id'];
 $fixture['terms'][] = [$skill, Taxonomy::NAME];
 for ($n = 1; $n <= 8; $n++) {
-    $response = call('POST', 'question', ['name' => "Perf q$n $run", 'description' => "Pick $n $run",
+    $response = create_question(['name' => "Perf q$n $run", 'description' => "Pick $n $run",
         'settings' => ['type' => 'single-choice', 'hint' => '<p>One</p>', 'explanation' => '<p>Because.</p>', 'score' => ['enabled' => true, 'value' => 1]],
         'questions' => [['answer' => 'Right', 'is_correct' => 1, 'order_number' => 1], ['answer' => 'Wrong', 'is_correct' => 0, 'order_number' => 2]],
         'skills' => ['p1' => ['primary' => $skill]], 'bank' => ['family_id' => "pf$n-$run"]]);

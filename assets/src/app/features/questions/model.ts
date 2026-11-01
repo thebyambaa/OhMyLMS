@@ -1,7 +1,19 @@
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { UNSCORED_TYPES } from '../../../features/question-editor/extendedModel.mjs';
 import { questionTypePatch } from '../../../features/question-editor/questionBlocks.mjs';
+import {
+	settingsFields,
+	validateSettings,
+	type SettingsDefinition,
+} from '../../extensions/settings';
 import { ApiError } from '../../lib/api';
+import {
+	rubricErrorPath,
+	rubricFromSettings,
+	rubricSettings,
+	rubricTotal,
+	validateRubric,
+} from './rubric';
 import type {
 	BankInput,
 	BankRef,
@@ -9,6 +21,7 @@ import type {
 	BulkDeleteResult,
 	DeleteResult,
 	Difficulty,
+	ExtensionValues,
 	FormErrors,
 	FormOption,
 	FormState,
@@ -25,6 +38,7 @@ import type {
 	QuestionUpdateInput,
 	QuestionUsage,
 	QuestionVersion,
+	QuestionVersionContent,
 	QuizChoice,
 	QuizPlacement,
 	SkillMap,
@@ -696,6 +710,44 @@ export function parseQuestionVersion( value: unknown ): QuestionVersion {
 }
 
 /**
+ * A whole number the database may return as a numeric string.
+ * @param value
+ */
+function storedCount( value: unknown ): number {
+	return count( 'string' === typeof value ? Number( value ) : value );
+}
+
+/**
+ * Validate the content of one saved version (the version row: numbers may arrive as strings).
+ *
+ * @param value Parsed JSON.
+ * @return Name, statement, type, settings and options of the version.
+ */
+export function parseQuestionVersionContent(
+	value: unknown
+): QuestionVersionContent {
+	const item = record( value );
+	return {
+		id: positiveId( storedCount( item.id ) ),
+		version_no: storedCount( item.version_no ),
+		name: text( item.title ),
+		description: optionalText( item.body ?? undefined ),
+		type: text( item.type ),
+		settings: looseRecord( item.settings ),
+		options: ( Array.isArray( item.options ) ? item.options : [] ).map(
+			( raw ) => {
+				const row = record( raw );
+				return {
+					answer: 'string' === typeof row.answer ? row.answer : '',
+					is_correct: flag( row.is_correct ),
+				};
+			}
+		),
+		created_at: optionalText( item.created_at ?? undefined ),
+	};
+}
+
+/**
  * Validate one registered question type.
  *
  * @param value Parsed JSON.
@@ -1078,7 +1130,77 @@ export function toCreateInput(
 	if ( form.video.id > 0 ) {
 		input.video_id = form.video.id;
 	}
+	const extension = Object.fromEntries(
+		Object.entries( form.extension ).filter(
+			( [ , value ] ) => Object.keys( value ).length > 0
+		)
+	);
+	if ( Object.keys( extension ).length ) {
+		input.extension_settings = extension;
+	}
 	return input;
+}
+
+/**
+ * Whether a type is marked with a rubric whose points are the question's points.
+ *
+ * @param type Question type id.
+ * @param form Form state.
+ * @return True for short and long text questions with at least one criterion.
+ */
+export function usesRubric(
+	type: string,
+	form: Pick< FormState, 'rubric' >
+): boolean {
+	return (
+		( MANUAL_TEXT_TYPES as readonly string[] ).includes( type ) &&
+		form.rubric.length > 0
+	);
+}
+
+/**
+ * Form error key of the extension settings of one namespace; `.<property>` is appended for fields.
+ *
+ * @param id Settings ID.
+ * @return Error key.
+ */
+export function extensionErrorPath( id: string ): string {
+	return `extension.${ id }`;
+}
+
+/**
+ * Check the changed extension settings against their schemas, as the server will.
+ *
+ * @param definitions Settings registered for questions.
+ * @param form        Current form.
+ * @param saved       Saved form.
+ * @return Errors keyed `extension.<id>.<property>`; empty when valid.
+ */
+export function extensionErrors(
+	definitions: readonly SettingsDefinition[],
+	form: Pick< FormState, 'extension' >,
+	saved: Pick< FormState, 'extension' >
+): FormErrors {
+	const errors: FormErrors = {};
+	for ( const definition of definitions ) {
+		const value = form.extension[ definition.id ];
+		if (
+			! value ||
+			JSON.stringify( value ) ===
+				JSON.stringify( saved.extension[ definition.id ] )
+		) {
+			continue;
+		}
+		const found = validateSettings(
+			settingsFields( definition.schema ).fields,
+			value
+		);
+		for ( const [ name, message ] of Object.entries( found ) ) {
+			errors[ `${ extensionErrorPath( definition.id ) }.${ name }` ] =
+				message;
+		}
+	}
+	return errors;
 }
 
 /**
@@ -1166,7 +1288,23 @@ export function formFromQuestion( question: QuestionDetail ): FormState {
 		image: { id: question.thumbnail_id, url: question.thumbnail_url },
 		video: { id: question.video_id, url: question.video_url },
 		skills: normalizeSkills( question.skills ),
+		rubric: ( MANUAL_TEXT_TYPES as readonly string[] ).includes(
+			question.type
+		)
+			? rubricFromSettings( question.settings )
+			: [],
+		extension: extensionValues( question.extension_settings ),
 	};
+}
+
+function extensionValues( stored: Record< string, unknown > ): ExtensionValues {
+	const values: ExtensionValues = {};
+	for ( const [ id, value ] of Object.entries( stored ) ) {
+		if ( value && 'object' === typeof value && ! Array.isArray( value ) ) {
+			values[ id ] = { ...( value as Record< string, unknown > ) };
+		}
+	}
+	return values;
 }
 
 let nextKey = 0;
@@ -1473,6 +1611,7 @@ export function validateForm(
 	const points = form.points.trim();
 	if (
 		'points' === scoreMode( type ) &&
+		! usesRubric( type, form ) &&
 		( points || saved.points.trim() ) &&
 		( ! /^\d+(\.\d+)?$/.test( points ) || Number( points ) > MAX_POINTS )
 	) {
@@ -1522,6 +1661,8 @@ export function validateForm(
 		! inlineBlanks( derivedName( form, type ) ).length
 	) {
 		validateAccepted( form.options, errors, false );
+	} else if ( 'manual' === area ) {
+		validateRubric( form.rubric, errors );
 	}
 	return errors;
 }
@@ -1683,6 +1824,18 @@ export function settingsFor( form: FormState, type: string ): QuestionSettings {
 		settings.score = { ...base, enabled: true, value: 0 };
 		return settings;
 	}
+	if ( ( MANUAL_TEXT_TYPES as readonly string[] ).includes( type ) ) {
+		delete settings.rubric;
+		if ( form.rubric.length ) {
+			settings.rubric = rubricSettings( form.rubric );
+			settings.score = {
+				...base,
+				enabled: true,
+				value: rubricTotal( form.rubric ) ?? 0,
+			};
+			return settings;
+		}
+	}
 	const points = form.points.trim();
 	if ( 'points' === mode && points ) {
 		settings.score = { ...base, enabled: true, value: Number( points ) };
@@ -1722,7 +1875,8 @@ export function toInput(
 	if (
 		migrating ||
 		form.points.trim() !== saved.points.trim() ||
-		JSON.stringify( form.settings ) !== JSON.stringify( saved.settings )
+		JSON.stringify( form.settings ) !== JSON.stringify( saved.settings ) ||
+		JSON.stringify( form.rubric ) !== JSON.stringify( saved.rubric )
 	) {
 		input.settings = settingsFor( form, type );
 	}
@@ -1762,6 +1916,16 @@ export function toInput(
 		JSON.stringify( normalizeSkills( saved.skills ) )
 	) {
 		input.skills = skills;
+	}
+	const extension = Object.fromEntries(
+		Object.entries( form.extension ).filter(
+			( [ id, value ] ) =>
+				JSON.stringify( value ) !==
+				JSON.stringify( saved.extension[ id ] )
+		)
+	);
+	if ( Object.keys( extension ).length ) {
+		input.extension_settings = extension;
 	}
 	return input;
 }
@@ -1838,7 +2002,20 @@ export function serverFieldError(
 			return { path: 'settings', message };
 		case 'ohmylms_question_invalid_settings': {
 			const field = detailField( error ) ?? '';
-			return { path: SETTING_FIELDS[ field ] ?? 'settings', message };
+			return {
+				path:
+					SETTING_FIELDS[ field ] ??
+					rubricErrorPath( field ) ??
+					'settings',
+				message,
+			};
+		}
+		case 'ohmylms_question_invalid_extension_settings': {
+			const details = error.details as
+				Record< string, unknown > | undefined;
+			return 'string' === typeof details?.namespace
+				? { path: extensionErrorPath( details.namespace ), message }
+				: null;
 		}
 		case 'ohmylms_question_invalid_options':
 		case 'ohmylms_question_invalid_media': {

@@ -111,11 +111,11 @@ export function UnitEditor( {
 			tabIndex={ -1 }
 			style={ dragStyle( drag, key ) }
 		>
-			<header className="oml-unit__header">
+			<header className="oml-unit-header">
 				<Grip handlers={ handle( key ) } />
-				<span className="oml-unit__number">{ unit.number }</span>
-				<h2 className="oml-unit__title">{ unitName }</h2>
-				<span className="oml-unit__count">
+				<span className="oml-unit-number">{ unit.number }</span>
+				<h2 className="oml-unit-title">{ unitName }</h2>
+				<span className="oml-unit-count">
 					{ sprintf(
 						/* translators: %d: number of activities. */
 						_n(
@@ -127,7 +127,7 @@ export function UnitEditor( {
 						items.length
 					) }
 				</span>
-				<div className="oml-unit__tools">
+				<div className="oml-unit-tools">
 					<Button
 						size="small"
 						icon="edit"
@@ -161,8 +161,8 @@ export function UnitEditor( {
 					/>
 				</div>
 			</header>
-			<div className="oml-unit__details" hidden={ ! open }>
-				<div className="oml-unit__row">
+			<div className="oml-unit-details" hidden={ ! open }>
+				<div className="oml-unit-row">
 					<TextControl
 						label={ __( 'Unit title', 'ohmylms' ) }
 						value={ unit.title }
@@ -181,9 +181,9 @@ export function UnitEditor( {
 					onChange={ ( description ) => onChange( { description } ) }
 				/>
 			</div>
-			<ol className="oml-unit__items">
+			<ol className="oml-unit-items">
 				{ items.length === 0 && (
-					<li className="oml-unit__empty">
+					<li className="oml-unit-empty">
 						{ __( 'No activities yet. Add one below.', 'ohmylms' ) }
 					</li>
 				) }
@@ -202,10 +202,10 @@ export function UnitEditor( {
 							<span
 								className={ `dashicons dashicons-${
 									TYPE_ICONS[ item.type ] ?? 'media-default'
-								} oml-outline-item__icon` }
+								} oml-outline-item-icon` }
 								aria-hidden="true"
 							/>
-							<span className="oml-outline-item__name">
+							<span className="oml-outline-item-name">
 								{ edit ? (
 									<Link
 										to={ `${ edit }${ item.content_id }` }
@@ -222,11 +222,11 @@ export function UnitEditor( {
 								) }
 							</span>{ ' ' }
 							<span
-								className={ `oml-badge oml-outline-item__type oml-outline-item__type--${ item.type }` }
+								className={ `oml-badge oml-outline-item-type oml-outline-item-type-${ item.type }` }
 							>
 								{ TYPE_LABELS[ item.type ]?.() ?? item.type }
 							</span>
-							<span className="oml-outline-item__tools">
+							<span className="oml-outline-item-tools">
 								{ units.length > 1 && (
 									<SelectControl< string >
 										__nextHasNoMarginBottom
@@ -308,7 +308,7 @@ export function UnitEditor( {
 					);
 				} ) }
 			</ol>
-			<div className="oml-unit__add">
+			<div className="oml-unit-add">
 				<Button
 					size="small"
 					variant="tertiary"

@@ -21,8 +21,8 @@ $call = static function ($method, $path, $data = []) {
 if ($action === 'setup') {
     $state = ['tag' => $tag, 'posts' => [], 'previous_integrations' => get_option('ohmylms_integrations')];
     $create = static function ($path, $data) use ($call, &$state) { $id = (int) $call('POST', $path, $data)['id']; $state['posts'][] = $id; return $id; };
-    $state['original_course'] = $create('courses', ['name' => 'Original fractions course ' . $tag, 'status' => 'publish']);
-    $state['course'] = $create('courses', ['name' => 'Blended fractions ' . $tag, 'status' => 'publish']);
+    $state['original_course'] = $create('courses', ['title' => 'Original fractions course ' . $tag, 'status' => 'publish']);
+    $state['course'] = $create('courses', ['title' => 'Blended fractions ' . $tag, 'status' => 'publish']);
     foreach ([$state['original_course'], $state['course']] as $course) { $state['posts'][] = (int) ohmylms_get_course($course)->get_chapters()[0]['id']; }
     $state['lesson'] = $create('lessons', ['name' => 'Equivalent fractions shared lesson ' . $tag, 'type' => 'text', 'description' => '<p>Two fractions are equivalent when they describe the same amount.</p><p>For example, one half is equal to two quarters.</p>', 'status' => 'publish']);
     $wpdb->insert($wpdb->prefix . 'ohmylms_content_relationship', ['chapter_id' => ohmylms_get_course($state['original_course'])->get_chapters()[0]['id'], 'content_id' => $state['lesson'], 'content_type' => 'text', 'order_number' => 0]);

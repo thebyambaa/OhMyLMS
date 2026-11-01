@@ -28,18 +28,6 @@
 			]
 		},
 		{
-			"reason": "Pass on the Local site but need what a clean install lacks: a published course (course-carousel), source assets built into build/sdk with OHMYLMS_SOURCE_ASSETS on (extension-host-assets), enrolment sources from the Local roster (gradebook-rest), a teaching syllabus with objectives (lesson-settings), the ohmylms-graded-reader plugin, which is not in this repository (questions-rest), and shared skills placed on the site (skill-workspace-rest). Skipped only in CI.",
-			"skipIn": "ci",
-			"files": [
-				"tests/php/course-carousel-integration.php",
-				"tests/php/extension-host-assets-integration.php",
-				"tests/php/gradebook-rest-integration.php",
-				"tests/php/lesson-settings-integration.php",
-				"tests/php/questions-rest-integration.php",
-				"tests/php/skill-workspace-rest-integration.php"
-			]
-		},
-		{
 			"reason": "Not suites: prefix-migration renames database tables when given --apply; randomized-preview-readonly is the PHP half of tests/js/randomized-preview.test.mjs, which the integration job runs with OHMYLMS_READONLY_WP_ROOT.",
 			"files": [
 				"tests/prefix-migration.php",

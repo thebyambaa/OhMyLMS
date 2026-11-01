@@ -2,13 +2,15 @@
 /**
  * Frontend extension surfaces load the extension host, not the recovered SDK (includes/Extensions/SourceAssets.php).
  *
- * Checks, in the mode the site runs (source assets on 800.local), that slots, checkout fields and the signup
- * form enqueue `ohmylms-app-extensions` / `ohmylms-app-registration` with their data and fire
+ * Checks, in source mode (OHMYLMS_SOURCE_ASSETS defined true for this process; the webpack entries in
+ * build/sdk, from `npm run build:sdk`), that slots, checkout fields and the signup form enqueue
+ * `ohmylms-app-extensions` / `ohmylms-app-registration` with their data and fire
  * `ohmylms_enqueue_extension_scripts` with the host handle; that the recovered SDK (`ohmylms-extension-sdk`)
  * is no longer registered anywhere, including wp-admin; that `MathLive::configure()` does not name it;
  * and that editor links go through LegacyRoutes to the app. It then re-runs itself with
  * OHMYLMS_SOURCE_ASSETS defined false (shipped mode: published assets, no client slots or signup fields).
- * Nothing is written to the database.
+ * Without build/sdk only the shipped run happens; with CI set that is a failure. Whatever the site's
+ * wp-config.php defines is overridden for the process. Nothing is written to the database.
  *
  * Usage (set OHMYLMS_EXTENSION_HOST_TEST=1; PHP needs mysqli, mbstring, openssl, curl):
  *   php -n -d extension_dir=<php>/ext -d extension=mysqli -d extension=mbstring -d extension=openssl \
@@ -24,24 +26,25 @@ if ( 'cli' !== PHP_SAPI || '1' !== getenv( 'OHMYLMS_EXTENSION_HOST_TEST' ) ) {
 }
 
 $shipped = '1' === getenv( 'OHMYLMS_EXTENSION_HOST_SHIPPED' );
-if ( $shipped ) {
-	// The site's wp-config.php defines the constant itself; the first definition wins.
-	define( 'OHMYLMS_SOURCE_ASSETS', false );
-	set_error_handler(
-		static function ( $number, $message ) {
-			return false !== strpos( $message, 'OHMYLMS_SOURCE_ASSETS' );
-		},
-		E_WARNING
-	);
+$built   = is_file( dirname( __DIR__, 2 ) . '/build/sdk/admin-app-extensions.js' ) && is_file( dirname( __DIR__, 2 ) . '/build/sdk/admin-app-registration.js' );
+if ( ! $shipped && ! $built && getenv( 'CI' ) ) {
+	fwrite( STDERR, "FAILED: build/sdk is not built (npm run build:sdk), so the source-mode checks cannot run.\n" );
+	exit( 1 );
 }
+// The site's wp-config.php may define the constant itself; the first definition wins.
+define( 'OHMYLMS_SOURCE_ASSETS', ! $shipped && $built );
+set_error_handler(
+	static function ( $number, $message ) {
+		return false !== strpos( $message, 'OHMYLMS_SOURCE_ASSETS' );
+	},
+	E_WARNING
+);
 define( 'DISABLE_WP_CRON', true );
 $_SERVER['HTTP_HOST']   = getenv( 'OHMYLMS_TEST_HOST' ) ? getenv( 'OHMYLMS_TEST_HOST' ) : '800.local';
 $_SERVER['REQUEST_URI'] = '/';
 require dirname( __DIR__, 5 ) . '/wp-load.php';
 require_once ABSPATH . 'wp-admin/includes/screen.php';
-if ( $shipped ) {
-	restore_error_handler();
-}
+restore_error_handler();
 
 use OhMyLMS\Admin\LegacyRoutes;
 use OhMyLMS\Assessment\MathLive;
@@ -122,7 +125,7 @@ add_action(
 	}
 );
 
-ok( $shipped === ! $source, 'the shipped run did not switch OHMYLMS_SOURCE_ASSETS off' );
+ok( ( ! $shipped && $built ) === $source, 'OHMYLMS_SOURCE_ASSETS is not ' . ( $source ? 'off' : 'on' ) . ' for this run' );
 ok( 'ohmylms-app-extensions' === $host, 'the host handle is not the admin app extension handle' );
 ok( false !== has_action( 'wp_enqueue_scripts', array( SourceAssets::class, 'register_host' ) ), 'the host is not registered on the front end' );
 ok( ! method_exists( SourceAssets::class, 'register' ) && ! defined( SourceAssets::class . '::HANDLE' ), 'SourceAssets still registers the recovered SDK' );
@@ -190,6 +193,9 @@ ok( LegacyRoutes::app_url( '/quizzes/5' ) === NativeQuizEditor::form_url( 5 ), '
 ok( false === strpos( NativeQuizEditor::form_url( 5 ), '#' ), 'the quiz form link carries a hash route: ' . NativeQuizEditor::form_url( 5 ) );
 unset( $_GET['ohmylms_return'] );
 
+if ( ! $built ) {
+	echo "source mode not run: build/sdk is not built (npm run build:sdk)\n";
+}
 echo ( $source ? 'source' : 'shipped' ) . " mode: {$checks} checks passed\n";
 
 if ( $source && ! $shipped ) {

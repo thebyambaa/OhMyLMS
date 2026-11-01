@@ -38,6 +38,7 @@ describe( 'extension host', () => {
 			'registerLessonEditor',
 			'registerSlot',
 			'registerMembershipSettings',
+			'registerQuestionSettings',
 			'registerCheckoutField',
 			'registerIntegration',
 			'list',

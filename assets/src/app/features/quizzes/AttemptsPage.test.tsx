@@ -411,6 +411,7 @@ describe( 'AttemptsPage', () => {
 							reviewer_id: 2,
 							reviewer_name: 'Ada Author',
 							reason: 'Good reasoning',
+							rubric_scores: null,
 							created_at: '2026-10-30T11:00:00Z',
 						},
 					],

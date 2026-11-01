@@ -29,7 +29,7 @@ $new_skill = static function ($label) use (&$fixture, $run) {
     return (int) $created['id'];
 };
 $add = static function ($settings, $name, $skill, $family, $extra = []) use (&$fixture) {
-    $response = call('POST', 'question', array_merge(['name' => $name, 'settings' => array_merge(['score' => ['enabled' => true, 'value' => 1]], $settings),
+    $response = create_question(array_merge(['name' => $name, 'settings' => array_merge(['score' => ['enabled' => true, 'value' => 1]], $settings),
         'skills' => ['p1' => ['primary' => $skill]], 'bank' => ['family_id' => $family]], $extra));
     ok(status_of($response) === 201, "Create $name failed: " . wp_json_encode($response->get_data()));
     $id = remember_post($response->get_data()['id']);

@@ -32,36 +32,36 @@ $bank = call('POST', 'question-banks', ['name' => 'Algebra department', 'visibil
 $fixture['banks'][] = (int) $bank['id'];
 ok((int) $bank['owner_id'] === $owner, 'Bank owner wrong');
 $quiz_owner = remember_post(call('POST', 'quiz', ['name' => 'Owner quiz', 'status' => 'publish'])->get_data()['id']);
-$created = call('POST', 'question', ['quiz_id' => $quiz_owner, 'name' => 'Solve 2x=6', 'settings' => ['type' => 'single-choice', 'score' => ['enabled' => true, 'value' => 2]],
+$created = create_question(['quiz_id' => $quiz_owner, 'name' => 'Solve 2x=6', 'settings' => ['type' => 'single-choice', 'score' => ['enabled' => true, 'value' => 2]],
     'questions' => [['answer' => '3', 'is_correct' => 1], ['answer' => '12']], 'skills' => ['p1' => ['primary' => $equations['id'], 'supporting' => [$fractions['id']]]],
     'bank' => ['bank_id' => $bank['id'], 'difficulty' => 'easy', 'source' => 'Textbook 4.2', 'family_id' => 'solve-ax-b']]);
 ok(status_of($created) === 201, 'Bank question create failed: ' . wp_json_encode($created->get_data()));
-$shared = remember_post($created->get_data()['id']);
+$shared = remember_post($created->get_data()['created_id']);
 $identity = VersionPublisher::identity($shared);
 ok((int) $identity['bank_id'] === (int) $bank['id'] && $identity['difficulty'] === 'easy' && $identity['family_id'] === 'solve-ax-b', 'Bank attributes not stored');
 $frozen_skills = SkillMap::for_version($identity['current_version_id']);
 ok(count($frozen_skills) === 2 && $frozen_skills[0]['role'] === 'primary', 'Skill map not frozen into version');
 
 as_user($colleague);
-ok(status_of(call('GET', 'question-bank/' . $shared)) === 403, 'Ungranted colleague could open a bank question');
+ok(status_of(call('GET', 'questions/' . $shared)) === 403, 'Ungranted colleague could open a bank question');
 as_user($owner);
 ok(status_of(call('POST', 'question-banks/' . $bank['id'] . '/grants', ['user_id' => $colleague, 'permission' => 'use'])) === 200, 'Grant failed');
 
 as_user($colleague);
 $quiz_colleague = remember_post(call('POST', 'quiz', ['name' => 'Colleague quiz', 'status' => 'publish'])->get_data()['id']);
-$search = call('GET', 'question-bank', [], ['bank' => $bank['id'], 'skill' => $equations['id'], 'difficulty' => 'easy']);
-ok(status_of($search) === 200 && in_array($shared, array_column($search->get_data()['items'], 'id'), true), 'Bank search did not find the shared question');
-$add = call('POST', 'quiz/' . $quiz_colleague . '/questions', ['question_ids' => [$shared]]);
-ok(status_of($add) === 409, 'Unapproved shared question was placed in a quiz');
+$search = call('GET', 'questions', [], ['bank' => $bank['id'], 'skill' => $equations['id'], 'difficulty' => 'easy']);
+ok(status_of($search) === 200 && in_array($shared, array_column($search->get_data(), 'id'), true), 'Bank search did not find the shared question');
+$add = add_to_quiz($quiz_colleague, [$shared]);
+ok(status_of($add) === 409 && $add->get_data()['code'] === 'quiz_question_unapproved', 'Unapproved shared question was placed in a quiz: ' . wp_json_encode($add->get_data()));
 as_user($owner);
 $approve = call('POST', 'questions/' . $shared . '/approve');
 ok(status_of($approve) === 200 && $approve->get_data()['approved_is_current'], 'Approve failed');
 $approved_version = (int) $approve->get_data()['approved_version_id'];
 
 as_user($colleague);
-$add = call('POST', 'quiz/' . $quiz_colleague . '/questions', ['question_ids' => [$shared]]);
+$add = add_to_quiz($quiz_colleague, [$shared]);
 ok(status_of($add) === 200 && linked($quiz_colleague, $shared), 'Approved shared question could not be reused');
-ok(status_of(call('PUT', 'question/' . $shared, ['name' => 'Colleague edit'])) === 403, 'Use-only colleague edited the shared question');
+ok(status_of(edit_question($shared, ['name' => 'Colleague edit'])) === 403, 'Use-only colleague edited the shared question');
 $content = call('GET', 'quiz/' . $quiz_colleague)->get_data()['content'];
 ok(!empty($content[0]['readonly']) && $content[0]['uuid'] === $identity['uuid'], 'Quiz editor not told the question is read-only');
 // Saving the whole quiz with the unchanged shared question is fine; changing it is refused.
@@ -73,7 +73,7 @@ ok(get_the_title($shared) === 'Solve 2x=6', 'Shared question changed through ano
 
 // The owner edits; the colleague's quiz keeps the approved version until a new approval.
 as_user($owner);
-call('PUT', 'question/' . $shared, ['name' => 'Solve 2x=8', 'questions' => [['id' => option_rows($shared)[0]['id'], 'answer' => '4', 'is_correct' => 1], ['id' => option_rows($shared)[1]['id'], 'answer' => '16']]]);
+ok(status_of(edit_question($shared, ['name' => 'Solve 2x=8', 'questions' => [['id' => (int) option_rows($shared)[0]['id'], 'answer' => '4', 'is_correct' => 1], ['id' => (int) option_rows($shared)[1]['id'], 'answer' => '16']]])) === 200, 'Owner edit failed');
 $edited_version = (int) VersionPublisher::identity($shared)['current_version_id'];
 ok($edited_version !== $approved_version, 'Owner edit did not create a version');
 $owner_revision = call('POST', 'quiz/' . $quiz_owner . '/revisions')->get_data()['revision'];
@@ -84,30 +84,32 @@ ok((int) $colleague_revision['slots'][0]['version_id'] === $approved_version, 'C
 
 // Pinning: the owner pins their quiz to the approved version.
 as_user($owner);
-ok(status_of(call('PUT', 'quiz/' . $quiz_owner . '/questions/' . $shared . '/pin', ['version_id' => $approved_version])) === 200, 'Pin failed');
+$pin = call('PUT', 'quizzes/' . $quiz_owner . '/questions/' . $shared . '/pin', ['version_id' => $approved_version, 'revision' => quiz_revision($quiz_owner)]);
+ok(status_of($pin) === 200, 'Pin failed: ' . wp_json_encode($pin->get_data()));
 ok((int) call('POST', 'quiz/' . $quiz_owner . '/revisions')->get_data()['revision']['slots'][0]['version_id'] === $approved_version, 'Pinned version not used');
-call('PUT', 'quiz/' . $quiz_owner . '/questions/' . $shared . '/pin', ['version_id' => 0]);
+ok(status_of(call('PUT', 'quizzes/' . $quiz_owner . '/questions/' . $shared . '/pin', ['version_id' => null, 'revision' => quiz_revision($quiz_owner)])) === 200, 'Unpin failed');
 
 // Duplicate-to-edit inside the colleague's quiz: the copy replaces the reference; the original is untouched.
 as_user($colleague);
-$duplicate = call('POST', 'question-bank/' . $shared . '/duplicate', ['quiz_id' => $quiz_colleague]);
-ok(status_of($duplicate) === 201, 'Duplicate failed: ' . wp_json_encode($duplicate->get_data()));
-$copy = remember_post($duplicate->get_data()['id']);
+$duplicate = call('POST', 'quizzes/' . $quiz_colleague . '/questions/copy', ['question_ids' => [$shared], 'replace' => true, 'revision' => quiz_revision($quiz_colleague)]);
+ok(status_of($duplicate) === 201 && count($duplicate->get_data()['copied']) === 1, 'Duplicate failed: ' . wp_json_encode($duplicate->get_data()));
+$copy = remember_post($duplicate->get_data()['copied'][0]['id']);
 ok(linked($quiz_colleague, $copy) && !linked($quiz_colleague, $shared) && linked($quiz_owner, $shared), 'Duplicate did not replace only the colleague reference');
-ok($duplicate->get_data()['family_id'] === 'solve-ax-b' && $duplicate->get_data()['uuid'] !== $identity['uuid'], 'Duplicate lost family or reused UUID');
-ok(status_of(call('PUT', 'question/' . $copy, ['name' => 'Colleague version'])) === 200 && get_the_title($shared) === 'Solve 2x=8', 'Duplicate not independently editable');
+$copy_view = call('GET', 'questions/' . $copy)->get_data();
+ok($copy_view['bank']['family_id'] === 'solve-ax-b' && $copy_view['uuid'] !== $identity['uuid'], 'Duplicate lost family or reused UUID');
+ok(status_of(edit_question($copy, ['name' => 'Colleague version'])) === 200 && get_the_title($shared) === 'Solve 2x=8', 'Duplicate not independently editable');
 
 // Outsiders see nothing.
 as_user($outsider);
-$search = call('GET', 'question-bank', [], ['search' => 'Solve']);
-ok(!in_array($shared, array_column($search->get_data()['items'], 'id'), true), 'Bank search leaked a private bank question');
-ok(status_of(call('POST', 'quiz/' . $quiz_colleague . '/questions', ['question_ids' => [$shared]])) === 403, 'Outsider edited another quiz');
+$search = call('GET', 'questions', [], ['search' => 'Solve']);
+ok(!in_array($shared, array_column($search->get_data(), 'id'), true), 'Bank search leaked a private bank question');
+ok(status_of(add_to_quiz($quiz_colleague, [$shared])) === 403, 'Outsider edited another quiz');
 
 // A learner attempt on the colleague quiz (now the copy) and on the owner quiz each freeze their own version.
 as_user($admin);
 $wpdb->delete($wpdb->prefix . 'ohmylms_quiz_questions_relationship', ['quiz_id' => $quiz_colleague, 'question_id' => $copy]);
 \OhMyLMS\QuestionBank\DraftWriter::link($quiz_colleague, $shared);
-$course = remember_post(call('POST', 'courses', ['name' => 'Bank course', 'status' => 'publish'])->get_data()['id']);
+$course = new_course('Bank course');
 $chapter = remember_post(wp_insert_post(['post_type' => 'ohmylms-chapter', 'post_title' => 'Bank chapter', 'post_status' => 'publish']));
 $wpdb->insert($wpdb->prefix . 'ohmylms_chapter_relationship', ['course_id' => $course, 'chapter_id' => $chapter, 'order_number' => 0]);
 foreach ([$quiz_owner, $quiz_colleague] as $i => $quiz) { $wpdb->insert($wpdb->prefix . 'ohmylms_content_relationship', ['chapter_id' => $chapter, 'content_id' => $quiz, 'content_type' => 'quiz', 'order_number' => $i]); }
@@ -121,11 +123,12 @@ Submission::submit($quiz_owner, $a1, $learner, [], 'exit'); Submission::submit($
 
 // Archive keeps history; archived questions leave default search.
 as_user($owner);
-ok(status_of(call('POST', 'question-bank/' . $shared . '/archive')) === 200 && get_post_status($shared) === 'ohmylms_archived', 'Archive failed');
-ok(!in_array($shared, array_column(call('GET', 'question-bank', [], ['bank' => $bank['id']])->get_data()['items'], 'id'), true), 'Archived question still listed');
-ok(in_array($shared, array_column(call('GET', 'question-bank', [], ['bank' => $bank['id'], 'status' => 'archived'])->get_data()['items'], 'id'), true), 'Archived filter empty');
-ok(status_of(call('POST', 'question-bank/' . $shared . '/restore')) === 200 && get_post_status($shared) === 'publish', 'Restore failed');
+ok(status_of(call('POST', 'questions/' . $shared . '/archive')) === 200 && get_post_status($shared) === 'ohmylms_archived', 'Archive failed');
+ok(!in_array($shared, array_column(call('GET', 'questions', [], ['bank' => $bank['id']])->get_data(), 'id'), true), 'Archived question still listed');
+ok(in_array($shared, array_column(call('GET', 'questions', [], ['bank' => $bank['id'], 'status' => 'archived'])->get_data(), 'id'), true), 'Archived filter empty');
+ok(status_of(call('POST', 'questions/' . $shared . '/restore')) === 200 && get_post_status($shared) === 'publish', 'Restore failed');
 
-// Skill deletion is refused once mappings are frozen.
+// A skill with frozen mappings is archived, not deleted, unless forced.
 as_user($admin);
-ok(status_of(call('DELETE', 'skills/' . $equations['id'])) === 409, 'Mapped skill deleted without force');
+$removed = call('DELETE', 'skills/' . $equations['id']);
+ok(status_of($removed) === 200 && true === ($removed->get_data()['archived'] ?? false) && term_exists((int) $equations['id'], Taxonomy::NAME) && \OhMyLMS\Skills\Provenance::archived($equations['id']), 'Mapped skill deleted without force: ' . wp_json_encode($removed->get_data()));
