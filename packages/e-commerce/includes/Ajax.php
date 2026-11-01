@@ -47,7 +47,7 @@ class Ajax {
 	 * @return void Outputs JSON response via wp_send_json_success() or wp_send_json_error().
 	 */
 	public static function get_states_by_country() {
-		$country_code = isset( $_POST['country_code'] ) ? sanitize_text_field( wp_unslash( $_POST['country_code'] ) ) : '';
+		$country_code = isset( $_POST['country_code'] ) ? sanitize_text_field( wp_unslash( $_POST['country_code'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Public read-only lookup that changes no state.
 		if ( empty( $country_code ) ) {
 			wp_send_json_error( 'No country code provided.' );
 		}

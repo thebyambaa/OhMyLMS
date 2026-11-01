@@ -54,7 +54,8 @@ final class Template {
 	 * @param mixed $text Text.
 	 */
 	public static function seed_from( $text ) {
-		return (int) ( hexdec( substr( hash( 'sha256', (string) $text ), 0, 7 ) ) ?: 1 );
+		$seed = hexdec( substr( hash( 'sha256', (string) $text ), 0, 7 ) );
+		return (int) ( $seed ? $seed : 1 );
 	}
 
 	/** A fresh random instance seed. */

@@ -483,13 +483,13 @@ final class OhMyLMS {
 		add_action( 'plugins_loaded', array( $this, 'init_blocks' ) );
 
 		// === register post types ===//
-		$sectionCPT  = new OhMyLMS\PostTypes\SectionPostType();
-		$lessonCPT   = new OhMyLMS\PostTypes\LessonPostType();
-		$lessonCPT   = new OhMyLMS\PostTypes\ChapterPostType();
-		$quizCPT     = new OhMyLMS\PostTypes\QuizPostType();
-		$questionCPT = new OhMyLMS\PostTypes\QuestionPostType();
-		$assignment  = new OhMyLMS\PostTypes\AssignmentPostType();
-		$certificate = new OhMyLMS\PostTypes\CertificatePostType();
+		$section_cpt  = new OhMyLMS\PostTypes\SectionPostType();
+		$lesson_cpt   = new OhMyLMS\PostTypes\LessonPostType();
+		$chapter_cpt  = new OhMyLMS\PostTypes\ChapterPostType();
+		$quiz_cpt     = new OhMyLMS\PostTypes\QuizPostType();
+		$question_cpt = new OhMyLMS\PostTypes\QuestionPostType();
+		$assignment   = new OhMyLMS\PostTypes\AssignmentPostType();
+		$certificate  = new OhMyLMS\PostTypes\CertificatePostType();
 
 		// load the helper packages.
 		\OhMyLMS\Packages::init();

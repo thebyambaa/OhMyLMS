@@ -86,7 +86,7 @@ final class Links {
 			return Access::error( 'ohmylms_link_invalid', __( 'Choose course, skill, question bank or quiz/exam content.', 'ohmylms' ) ); }
 		if ( ! self::target_exists( $type, $object_id ) ) {
 			return Access::error( 'ohmylms_link_invalid', __( 'That content does not exist.', 'ohmylms' ), 404 ); }
-		$count = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . self::table() . ' WHERE item_id=%d', (int) $item_id ) );
+		$count = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE item_id=%d', self::table(), (int) $item_id ) );
 		if ( $count >= self::MAX_PER_ITEM ) {
 			return Access::error(
 				'ohmylms_link_limit',
@@ -96,7 +96,7 @@ final class Links {
 				),
 				409
 			); }
-		$ok = $wpdb->query( $wpdb->prepare( 'INSERT IGNORE INTO ' . self::table() . ' (item_id, object_type, object_id, created_by, created_at) VALUES (%d, %s, %d, %d, %s)', (int) $item_id, $type, (int) $object_id, get_current_user_id(), current_time( 'mysql', true ) ) );
+		$ok = $wpdb->query( $wpdb->prepare( 'INSERT IGNORE INTO %i (item_id, object_type, object_id, created_by, created_at) VALUES (%d, %s, %d, %d, %s)', self::table(), (int) $item_id, $type, (int) $object_id, get_current_user_id(), current_time( 'mysql', true ) ) );
 		if ( false === $ok ) {
 			return Access::error( 'ohmylms_link_failed', __( 'The link could not be saved.', 'ohmylms' ), 500 ); }
 		if ( 'course' === $type ) {
@@ -140,9 +140,10 @@ final class Links {
 		foreach ( $ids as $id ) {
 			if ( 'course' === $type || 'quiz' === $type ) {
 				$post          = get_post( $id );
-				$valid         = $post && $post->post_type === self::post_type( $type ) && 'trash' !== $post->post_status;
+				$valid         = $post && self::post_type( $type ) === $post->post_type && 'trash' !== $post->post_status;
+				$title         = $valid ? get_the_title( $post ) : '';
 				$labels[ $id ] = array(
-					'title'  => $valid ? ( get_the_title( $post ) ?: '#' . $id ) : '',
+					'title'  => $valid ? ( $title ? $title : '#' . $id ) : '',
 					'status' => $valid ? $post->post_status : 'missing',
 				);
 			} elseif ( 'skill' === $type ) {
@@ -173,7 +174,7 @@ final class Links {
 	public static function for_item( $item_id ) {
 		global $wpdb;
 		$grouped = array_fill_keys( self::TYPES, array() );
-		foreach ( $wpdb->get_results( $wpdb->prepare( 'SELECT object_type, object_id FROM ' . self::table() . ' WHERE item_id=%d ORDER BY id', (int) $item_id ), ARRAY_A ) as $row ) {
+		foreach ( $wpdb->get_results( $wpdb->prepare( 'SELECT object_type, object_id FROM %i WHERE item_id=%d ORDER BY id', self::table(), (int) $item_id ), ARRAY_A ) as $row ) {
 			if ( isset( $grouped[ $row['object_type'] ] ) ) {
 				$grouped[ $row['object_type'] ][] = (int) $row['object_id']; }
 		}
@@ -217,9 +218,10 @@ final class Links {
 			} else {
 				$args['s'] = sanitize_text_field( (string) $search ); }
 			foreach ( get_posts( $args ) as $post ) {
+				$title  = get_the_title( $post );
 				$rows[] = array(
 					'id'     => (int) $post->ID,
-					'title'  => get_the_title( $post ) ?: '#' . $post->ID,
+					'title'  => $title ? $title : '#' . $post->ID,
 					'status' => $post->post_status,
 				); }
 		} elseif ( 'skill' === $type ) {
@@ -243,8 +245,7 @@ final class Links {
 		} elseif ( 'bank' === $type && AssessmentSchema::ready() ) {
 			$table = AssessmentSchema::table( 'qb_banks' );
 			if ( $include ) {
-				$placeholders = implode( ',', array_fill( 0, count( $include ), '%d' ) );
-				$found        = $wpdb->get_results( $wpdb->prepare( "SELECT id, name, visibility FROM $table WHERE id IN ($placeholders) ORDER BY name", $include ), ARRAY_A );
+				$found = $wpdb->get_results( $wpdb->prepare( 'SELECT id, name, visibility FROM %i WHERE id IN (' . implode( ',', array_fill( 0, count( $include ), '%d' ) ) . ') ORDER BY name', array_merge( array( $table ), $include ) ), ARRAY_A );
 			} else {
 				$found = $wpdb->get_results( $wpdb->prepare( 'SELECT id, name, visibility FROM %i WHERE name LIKE %s ORDER BY name LIMIT 20', $table, '%' . $wpdb->esc_like( sanitize_text_field( (string) $search ) ) . '%' ), ARRAY_A );
 			}
@@ -265,7 +266,7 @@ final class Links {
 	 */
 	public static function memberships( $type, $object_id ) {
 		global $wpdb;
-		$ids = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT item_id FROM ' . self::table() . ' WHERE object_type=%s AND object_id=%d ORDER BY item_id', $type, (int) $object_id ) ) );
+		$ids = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT item_id FROM %i WHERE object_type=%s AND object_id=%d ORDER BY item_id', self::table(), $type, (int) $object_id ) ) );
 		// A skill placed in a syllabus's skill group belongs to the item that group sits under.
 		if ( 'skill' === $type ) {
 			$ids = array_values( array_unique( array_merge( $ids, Syllabus::item_ids_for_skill( $object_id ) ) ) );
@@ -289,8 +290,7 @@ final class Links {
 		$item_ids = array_values( array_filter( array_map( 'intval', $item_ids ) ) );
 		if ( ! $item_ids || ! self::valid_type( $type ) ) {
 			return array(); }
-		$placeholders = implode( ',', array_fill( 0, count( $item_ids ), '%d' ) );
-		$ids          = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT object_id FROM ' . self::table() . " WHERE object_type=%s AND item_id IN ($placeholders) ORDER BY object_id", array_merge( array( $type ), $item_ids ) ) ) );
+		$ids = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT object_id FROM %i WHERE object_type=%s AND item_id IN (' . implode( ',', array_fill( 0, count( $item_ids ), '%d' ) ) . ') ORDER BY object_id', array_merge( array( self::table(), $type ), $item_ids ) ) ) );
 		// Skills placed in the skill groups of a syllabus count as that syllabus's skills too.
 		if ( 'skill' === $type ) {
 			$ids = array_values( array_unique( array_merge( $ids, Syllabus::skill_ids( $item_ids ) ) ) );

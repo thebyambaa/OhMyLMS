@@ -52,7 +52,7 @@ $certificate_url = get_current_user_id() === (int) $student->get_id() ? $student
 			<?php if ( $student->is_course_completed( $course->get_id() ) ) : ?>
 				<span class="completed-date">
 					<?php include OHMYLMS_DIR . '/assets/images/icon/calendar-icon.php'; ?>
-					Completed <?php echo date_i18n( 'F j, Y', strtotime( $student->get_course_completed_date( $course->get_id() ) ) ); ?>
+					Completed <?php echo esc_html( date_i18n( 'F j, Y', strtotime( $student->get_course_completed_date( $course->get_id() ) ) ) ); ?>
 				</span>
 			<?php endif; ?>
 
@@ -60,7 +60,7 @@ $certificate_url = get_current_user_id() === (int) $student->get_id() ? $student
 	</div>
 
 	<div class="ohmylms-btn-area">
-		<?php if ( $student->is_course_in_progress( $course->get_id() ) || $student->maybe_enrolled( $course->get_id() ) && ! $student->is_course_completed( $course->get_id() ) ) : ?>
+		<?php if ( $student->is_course_in_progress( $course->get_id() ) || ( $student->maybe_enrolled( $course->get_id() ) && ! $student->is_course_completed( $course->get_id() ) ) ) : ?>
 			<?php if ( $student->get_course_completed_points( $course->get_id() ) > 0 ) : ?>
 				<a href="<?php echo esc_url( $student->get_course_resume_url( $course->get_id() ) ); ?>" class="ohmylms-button" aria-label="Resume course">
 					Resume Course

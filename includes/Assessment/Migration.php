@@ -61,7 +61,7 @@ final class Migration {
 		$attempts  = $wpdb->prefix . 'ohmylms_quiz_attempts';
 		$responses = $wpdb->prefix . 'ohmylms_quiz_attempts_answers';
 		$count     = static function ( $sql ) use ( $wpdb ) {
-			return (int) $wpdb->get_var( $sql );
+			return (int) $wpdb->get_var( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery -- Callers pass fixed COUNT queries over trusted table names.
 		};
 		$result    = array(
 			'questions'              => $count( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE post_type=%s AND post_status NOT IN (\'auto-draft\',\'trash\')', $p, OHMYLMS_QUESTION_CPT ) ),

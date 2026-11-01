@@ -363,7 +363,7 @@ class FormHandler {
 		$quiz_id    = absint( $_POST['ohmylms_quiz_id'] ?? 0 );
 		$student_id = get_current_user_id();
 		$attempt_id = absint( $_POST['quiz_attempt_id'] ?? 0 );
-		$answers    = wp_unslash( $_POST['attempt'][ $attempt_id ]['quiz_question'] ?? array() );
+		$answers    = wp_unslash( $_POST['attempt'][ $attempt_id ]['quiz_question'] ?? array() ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Answers are graded raw; each question type validates its own answer shape.
 		if ( ! is_array( $answers ) ) {
 			wp_die( 'Invalid answers.', '', array( 'response' => 400 ) );
 		}
@@ -389,7 +389,7 @@ class FormHandler {
 		$quiz_id    = absint( $_POST['ohmylms_quiz_id'] ?? 0 );
 		$student_id = get_current_user_id();
 		$attempt_id = absint( $_POST['quiz_attempt_id'] ?? 0 );
-		$answers    = wp_unslash( $_POST['attempt'][ $attempt_id ]['quiz_question'] ?? array() );
+		$answers    = wp_unslash( $_POST['attempt'][ $attempt_id ]['quiz_question'] ?? array() ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Answers are graded raw; each question type validates its own answer shape.
 		if ( ! is_array( $answers ) ) {
 			wp_die( 'Invalid answers.', '', array( 'response' => 400 ) );
 		}

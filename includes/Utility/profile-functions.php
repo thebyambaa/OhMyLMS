@@ -29,7 +29,7 @@ function ohmylms_lostpassword_url( $default_url = '' ) {
 	}
 
 	// Don't redirect to the ohmylms endpoint on global network admin lost passwords.
-	if ( is_multisite() && isset( $_GET['redirect_to'] ) && false !== strpos( wp_unslash( $_GET['redirect_to'] ), network_admin_url() ) ) { // WPCS: input var ok, sanitization ok, CSRF ok.
+	if ( is_multisite() && isset( $_GET['redirect_to'] ) && false !== strpos( wp_unslash( $_GET['redirect_to'] ), network_admin_url() ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.NonceVerification.Recommended -- Only compared with the network admin URL.
 		return $default_url;
 	}
 
@@ -315,16 +315,16 @@ function ohmylms_get_account_payment_methods_types() {
  *
  * @since 1.0.0
  */
-function ohmylms_get_initials( $firstName = '', $lastName = '' ) {
-	$firstInitial  = ! empty( $firstName ) ? strtoupper( $firstName[0] ) : '';
-	$secondInitial = ! empty( $lastName ) ? strtoupper( $lastName[0] ) : '';
+function ohmylms_get_initials( $firstName = '', $lastName = '' ) { // phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase -- Public parameter names kept for named-argument compatibility.
+	$first_initial  = ! empty( $firstName ) ? strtoupper( $firstName[0] ) : ''; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase -- Public parameter name.
+	$second_initial = ! empty( $lastName ) ? strtoupper( $lastName[0] ) : ''; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase -- Public parameter name.
 
 	// If both are missing, return a default placeholder, e.g., "NN" for "No Name".
-	if ( empty( $firstInitial ) && empty( $secondInitial ) ) {
+	if ( empty( $first_initial ) && empty( $second_initial ) ) {
 		return 'NN';
 	}
 
-	return $firstInitial . $secondInitial;
+	return $first_initial . $second_initial;
 }
 
 /**

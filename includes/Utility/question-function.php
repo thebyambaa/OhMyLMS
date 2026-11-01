@@ -5,7 +5,6 @@
  * @package OhMyLMS
  */
 
-
 /**
  * Get quiz object
  *
@@ -19,7 +18,9 @@ function ohmylms_get_question( $quiz_id ) {
 }
 
 /**
+ * Get the available question layouts.
  *
+ * @return array
  */
 function ohmylms_get_question_layouts() {
 	$layouts = array(

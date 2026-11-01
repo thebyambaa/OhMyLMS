@@ -176,10 +176,10 @@ if ( $engagement_visible ) {
 				<div class="profile-social-links">
 					<h5 class="profile-section-title"><?php echo esc_html__( 'Social Links', 'ohmylms' ); ?></h5>
 					<div class="social-links-list">
-						<?php foreach ( $social_links as $link ) : ?>
-							<?php if ( ! empty( $link['label'] ) && ! empty( $link['url'] ) ) : ?>
-								<a href="<?php echo esc_url( $link['url'] ); ?>" target="_blank" rel="noopener noreferrer" class="social-link">
-									<?php echo esc_html( $link['label'] ); ?>
+						<?php foreach ( $social_links as $social_link ) : ?>
+							<?php if ( ! empty( $social_link['label'] ) && ! empty( $social_link['url'] ) ) : ?>
+								<a href="<?php echo esc_url( $social_link['url'] ); ?>" target="_blank" rel="noopener noreferrer" class="social-link">
+									<?php echo esc_html( $social_link['label'] ); ?>
 								</a>
 							<?php endif; ?>
 						<?php endforeach; ?>

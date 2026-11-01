@@ -232,13 +232,13 @@ class ScormHelper {
 		$last = strtolower( $size[ strlen( $size ) - 1 ] );
 		$size = (int) $size;
 
-		switch ( $last ) {
-			case 'g':
-				$size *= 1024;
-			case 'm':
-				$size *= 1024;
-			case 'k':
-				$size *= 1024;
+		$multipliers = array(
+			'g' => 1024 * 1024 * 1024,
+			'm' => 1024 * 1024,
+			'k' => 1024,
+		);
+		if ( isset( $multipliers[ $last ] ) ) {
+			$size *= $multipliers[ $last ];
 		}
 
 		return $size;

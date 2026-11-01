@@ -59,11 +59,11 @@ $catalog = \OhMyLMS\Extensions\Catalog::current();
 		<div class="search-sort-right">
 			<?php
 			if ( 'yes' === $is_search_enabled ) {
-				echo ohmylms_get_template( 'filters/course-search.php' );
+				ohmylms_get_template( 'filters/course-search.php' );
 			}
 
 			if ( 'yes' === $is_sort_enabled ) {
-				echo ohmylms_get_template( 'filters/course-sort.php' );
+				ohmylms_get_template( 'filters/course-sort.php' );
 			}
 			?>
 		</div>

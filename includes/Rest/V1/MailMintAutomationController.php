@@ -170,6 +170,7 @@ class MailMintAutomationController extends RestController {
 			$order_by   = 'name';
 			$order_type = 'desc';
 		} else {
+			$order_by   = 'created_at';
 			$order_type = 'desc';
 		}
 

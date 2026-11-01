@@ -4,6 +4,7 @@
  *
  * @package OhMyLMS
  */
+
 defined( 'ABSPATH' ) || exit;
 if ( ! is_user_logged_in() || ! \OhMyLMS\Engagement\StreakSettings::enabled() ) {
 	return; }
@@ -56,11 +57,11 @@ if ( ! $continue ) {
 	<ol class="ohmylms-streak-week" aria-label="<?php esc_attr_e( 'This week’s learning', 'ohmylms' ); ?>">
 		<?php
 		for ( $offset = 0; $offset < 7; $offset++ ) {
-			$day    = $week->modify( "+$offset days" );
-			$date   = $day->format( 'Y-m-d' );
-			$status = $history[ $date ] ?? ( $date > $streak['today'] ? 'future' : ( $date === $streak['today'] ? 'pending' : 'missed' ) );
+			$day        = $week->modify( "+$offset days" );
+			$date       = $day->format( 'Y-m-d' );
+			$day_status = $history[ $date ] ?? ( $date > $streak['today'] ? 'future' : ( $date === $streak['today'] ? 'pending' : 'missed' ) );
 			?>
-			<li class="ohmylms-streak-day is-<?php echo esc_attr( $status ); ?>" 
+			<li class="ohmylms-streak-day is-<?php echo esc_attr( $day_status ); ?>" 
 			<?php
 			if ( $date === $streak['today'] ) {
 				echo 'aria-current="date"'; }
@@ -76,11 +77,11 @@ if ( ! $continue ) {
 						'missed'    => '—',
 						'pending'   => '○',
 						'future'    => '·',
-					)[ $status ]
+					)[ $day_status ]
 				);
 				?>
 											</span>
-				<small><?php echo esc_html( $labels[ $status ] ); ?></small>
+				<small><?php echo esc_html( $labels[ $day_status ] ); ?></small>
 			</li>
 		<?php } ?>
 	</ol>

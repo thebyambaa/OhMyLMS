@@ -63,7 +63,7 @@ final class XpSchema {
 		foreach ( $definitions as $name => $definition ) {
 			if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( self::table( $name ) ) ) ) !== self::table( $name ) ) {
 				return false; }
-			$columns = $wpdb->get_col( 'SHOW COLUMNS FROM ' . self::table( $name ) );
+			$columns = $wpdb->get_col( $wpdb->prepare( 'SHOW COLUMNS FROM %i', self::table( $name ) ) );
 			foreach ( explode( ', ', $definition ) as $part ) {
 				$column = strtok( $part, ' ' );
 				if ( ! in_array( $column, array( 'UNIQUE', 'KEY', 'PRIMARY' ), true ) && ! in_array( $column, $columns, true ) ) {

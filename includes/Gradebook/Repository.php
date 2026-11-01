@@ -43,13 +43,14 @@ final class Repository {
 	 * @param string $sql  SQL with placeholders.
 	 * @param array  $args Values.
 	 * @return array[]
+	 * @throws \RuntimeException When the query fails.
 	 */
 	private static function rows( $sql, array $args ) {
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery -- Identifiers use %i, values use placeholders.
 		$rows = $wpdb->get_results( $wpdb->prepare( $sql, $args ), ARRAY_A );
 		if ( $wpdb->last_error ) {
-			throw new \RuntimeException( 'Gradebook query failed: ' . $wpdb->last_error );
+			throw new \RuntimeException( 'Gradebook query failed: ' . $wpdb->last_error ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Logged server-side by the controller; never output.
 		}
 		return is_array( $rows ) ? $rows : array();
 	}

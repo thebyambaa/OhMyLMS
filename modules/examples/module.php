@@ -1,5 +1,10 @@
 <?php
-// Disabled unless OHMYLMS_ENABLED_MODULES contains 'examples'.
+/**
+ * Example extensions. Disabled unless OHMYLMS_ENABLED_MODULES contains 'examples'.
+ *
+ * @package OhMyLMS
+ */
+
 add_action(
 	'ohmylms_register_extensions',
 	static function () {
@@ -52,7 +57,7 @@ add_action(
 				'label'  => 'Example reading',
 				'editor' => array( 'format' => 'wordpress-content' ),
 				'render' => static function ( $lesson ) {
-					echo '<article class="ohmylms-reading">' . wpautop( wp_kses_post( $lesson->get_description() ) ) . '</article>';},
+					echo '<article class="ohmylms-reading">' . wp_kses_post( wpautop( wp_kses_post( $lesson->get_description() ) ) ) . '</article>';},
 			)
 		);
 		ohmylms_register_activity(

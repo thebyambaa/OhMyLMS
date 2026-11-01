@@ -248,7 +248,7 @@ class WPFusionAuthController extends WP_REST_Controller {
 			}
 
 			// Get CRM name.
-			$crmName = wp_fusion()->crm->name ?? 'Unknown';
+			$crm_name = wp_fusion()->crm->name ?? 'Unknown';
 
 			return new \WP_REST_Response(
 				array(
@@ -257,10 +257,10 @@ class WPFusionAuthController extends WP_REST_Controller {
 						'connected' => true,
 						'installed' => true,
 						'enabled'   => true,
-						'crm'       => $crmName,
+						'crm'       => $crm_name,
 						'message'   => sprintf( /* translators: %s: text value. */
 							__( 'Connected to %s via WP Fusion', 'ohmylms' ),
-							$crmName
+							$crm_name
 						),
 					),
 				),

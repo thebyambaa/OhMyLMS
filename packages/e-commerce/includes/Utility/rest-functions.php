@@ -5,7 +5,6 @@
  * @package OhMyLMS
  */
 
-
 use OhMyLMS\Commerce\EcommerceDateTime;
 
 /**

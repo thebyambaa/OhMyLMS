@@ -231,8 +231,8 @@ switch ( $time_unit ) {
 						<span class="submission-max-file-limit" id="submission-max-file-limit">
 							<?php
 							printf( /* translators: %s: text value. */
-								__( 'Max File size: %sMB', 'ohmylms' ),
-								$assignment->get_max_file_size_limit()
+								esc_html__( 'Max File size: %sMB', 'ohmylms' ),
+								esc_html( $assignment->get_max_file_size_limit() )
 							);
 							?>
 						</span>
@@ -269,8 +269,8 @@ switch ( $time_unit ) {
 					<span class="submission-max-file-limit-alert" style="display: none" role="alert" data-wp-style--display="state.sizeAlertDisplay">
 						<?php
 						printf( /* translators: %s: text value. */
-							__( 'File size exceeds the allowed limit of : %sMB', 'ohmylms' ),
-							$assignment->get_max_file_size_limit()
+							esc_html__( 'File size exceeds the allowed limit of : %sMB', 'ohmylms' ),
+							esc_html( $assignment->get_max_file_size_limit() )
 						);
 						?>
 					</span>

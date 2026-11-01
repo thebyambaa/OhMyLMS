@@ -91,10 +91,11 @@ final class GradeEvents {
 	 */
 	public static function current( $source_type, $source_id, $item_id ) {
 		global $wpdb;
-		return $wpdb->get_row(
+		$row = $wpdb->get_row(
 			$wpdb->prepare( 'SELECT * FROM %i WHERE source_type=%s AND source_id=%d AND item_id=%d AND superseded_by=0 ORDER BY id DESC LIMIT 1', Schema::table( 'grade_events' ), $source_type, $source_id, $item_id ),
 			ARRAY_A
-		) ?: null;
+		);
+		return $row ? $row : null;
 	}
 
 	/** Full history for an item, oldest first.
@@ -151,6 +152,7 @@ final class GradeEvents {
 	 */
 	public static function get( $id ) {
 		global $wpdb;
-		return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id=%d', Schema::table( 'grade_events' ), (int) $id ), ARRAY_A ) ?: null;
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id=%d', Schema::table( 'grade_events' ), (int) $id ), ARRAY_A );
+		return $row ? $row : null;
 	}
 }

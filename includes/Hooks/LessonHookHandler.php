@@ -73,7 +73,8 @@ class LessonHookHandler extends HookHandler {
 		// Check if the relationship already exists.
 		$exists = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT ID FROM {$wpdb->prefix}" . OHMYLMS_CONTENT_RELATIONSHIP . ' WHERE chapter_id = %d AND content_id = %d LIMIT 1',
+				'SELECT ID FROM %i WHERE chapter_id = %d AND content_id = %d LIMIT 1',
+				$table_name,
 				$chapter_id,
 				$lesson_id
 			)

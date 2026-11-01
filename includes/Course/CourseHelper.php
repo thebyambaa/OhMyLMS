@@ -78,7 +78,7 @@ class CourseHelper {
 		);
 
 		/**
-		 * log the error when debug is enabled.
+		 * Log the error when debug is enabled.
 		 * $post_id->get_error_message()
 		 */
 		if ( is_wp_error( $post_id ) ) {
@@ -370,7 +370,9 @@ class CourseHelper {
 
 		check_ajax_referer( 'ohmylms-course', 'nonce' );
 
-		if ( ! current_user_can( 'edit_post', $_POST['post_id'] ) ) {
+		$course_id = isset( $_POST['post_id'] ) ? absint( wp_unslash( $_POST['post_id'] ) ) : 0;
+
+		if ( ! current_user_can( 'edit_post', $course_id ) ) {
 			$response = array(
 				'status'  => 'error',
 				'message' => __( 'You do not have permission to edit this post.', 'ohmylms' ),
@@ -381,13 +383,17 @@ class CourseHelper {
 
 		$general_settings_items = array();
 
-		$course_id                                   = $_POST['post_id'];
-		$general_settings_items['course_duration']   = $_POST['course_duration'];
-		$general_settings_items['course_price']      = $_POST['course_price'];
-		$general_settings_items['course_sale_price'] = $_POST['course_sale_price'];
-		$general_settings_items['course_max_student_allowed'] = $_POST['course_max_student_allowed'];
-		$general_settings_items['course_max_retake_allowed']  = $_POST['course_max_retake_allowed'];
-		$general_settings_items['course_passing_grade']       = $_POST['course_passing_grade'];
+		$general_settings_fields = array(
+			'course_duration',
+			'course_price',
+			'course_sale_price',
+			'course_max_student_allowed',
+			'course_max_retake_allowed',
+			'course_passing_grade',
+		);
+		foreach ( $general_settings_fields as $general_settings_field ) {
+			$general_settings_items[ $general_settings_field ] = isset( $_POST[ $general_settings_field ] ) ? sanitize_text_field( wp_unslash( $_POST[ $general_settings_field ] ) ) : '';
+		}
 
 		$validated_response = CourseValidator::validate_course_general_settings_fields( $general_settings_items );
 

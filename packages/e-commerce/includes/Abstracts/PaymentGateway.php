@@ -127,7 +127,7 @@ abstract class PaymentGateway extends SettingsApi {
 	/**
 	 * Get settings for Payment gateway.
 	 */
-	abstract function get_settings();
+	abstract public function get_settings();
 
 
 	/**

@@ -77,7 +77,11 @@ final class AtRisk extends Widget {
 		uksort(
 			$flagged,
 			static function ( $a, $b ) use ( $flagged, $names ) {
-				return $flagged[ $b ]['weight'] <=> $flagged[ $a ]['weight'] ?: strcasecmp( $names[ $a ], $names[ $b ] ) ?: $a <=> $b;
+				$order = $flagged[ $b ]['weight'] <=> $flagged[ $a ]['weight'];
+				if ( ! $order ) {
+					$order = strcasecmp( $names[ $a ], $names[ $b ] );
+				}
+				return $order ? $order : $a <=> $b;
 			}
 		);
 		$learners = array();

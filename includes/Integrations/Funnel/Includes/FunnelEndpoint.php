@@ -125,7 +125,7 @@ class FunnelEndpoint {
 	 */
 	private function handle_funnel_action( $order_id, $step, $action ) {
 		// Verify nonce for security.
-		if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'] ?? '', 'funnel_action_' . $order_id . '_' . $step ) ) {
+		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ?? '' ) ), 'funnel_action_' . $order_id . '_' . $step ) ) {
 			wp_die( esc_html__( 'Security check failed.', 'ohmylms' ), esc_html__( 'Error', 'ohmylms' ), array( 'response' => 403 ) );
 		}
 
@@ -161,7 +161,7 @@ class FunnelEndpoint {
 
 		$current_step_data = null;
 		foreach ( $funnel_steps as $funnel_step ) {
-			if ( $funnel_step['step_id'] === 'step_' . $step ) {
+			if ( 'step_' . $step === $funnel_step['step_id'] ) {
 				$current_step_data = $funnel_step;
 				break;
 			}
@@ -176,7 +176,7 @@ class FunnelEndpoint {
 
 		// Check if purchase failed.
 		if ( is_wp_error( $purchase_result ) ) {
-			wp_die( $purchase_result->get_error_message(), esc_html__( 'Payment Error', 'ohmylms' ), array( 'response' => 400 ) );
+			wp_die( esc_html( $purchase_result->get_error_message() ), esc_html__( 'Payment Error', 'ohmylms' ), array( 'response' => 400 ) );
 		}
 
 		// Check accepted action from condition configuration.
@@ -237,7 +237,7 @@ class FunnelEndpoint {
 
 		$current_step_data = null;
 		foreach ( $funnel_steps as $funnel_step ) {
-			if ( $funnel_step['step_id'] === 'step_' . $step ) {
+			if ( 'step_' . $step === $funnel_step['step_id'] ) {
 				$current_step_data = $funnel_step;
 				break;
 			}
@@ -299,7 +299,7 @@ class FunnelEndpoint {
 				return $step;
 			}
 
-			if ( $step['step_id'] === 'step_' . $current_step_id ) {
+			if ( 'step_' . $current_step_id === $step['step_id'] ) {
 				$found_current = true;
 			}
 		}
@@ -327,7 +327,7 @@ class FunnelEndpoint {
 
 		$step_data = null;
 		foreach ( $funnel_steps as $funnel_step ) {
-			if ( $funnel_step['step_id'] === 'step_' . $step ) {
+			if ( 'step_' . $step === $funnel_step['step_id'] ) {
 				$step_data = $funnel_step;
 				break;
 			}

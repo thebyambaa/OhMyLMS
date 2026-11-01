@@ -4,6 +4,7 @@
  *
  * @package OhMyLMS
  */
+
 defined( 'ABSPATH' ) || exit;
 if ( ! is_user_logged_in() ) {
 	return; }
@@ -20,7 +21,8 @@ $in_progress_courses = array_values(
 		}
 	)
 );
-$name                = $student->get_first_name() ?: wp_get_current_user()->display_name;
+$name                = $student->get_first_name();
+$name                = $name ? $name : wp_get_current_user()->display_name;
 $streak_enabled      = \OhMyLMS\Engagement\StreakSettings::enabled();
 $badges              = ( \OhMyLMS\Engagement\Badge::maybe_enable() || $streak_enabled ) ? \OhMyLMS\Engagement\Badge::get_all_badges_of_a_user( $user_id ) : array();
 if ( ! \OhMyLMS\Engagement\Badge::maybe_enable() ) {
@@ -36,7 +38,8 @@ if ( ! \OhMyLMS\Engagement\Badge::maybe_enable() ) {
 }
 $level      = \OhMyLMS\Engagement\Level::get_current_level_of_a_user( $user_id );
 $next_level = \OhMyLMS\Engagement\Level::get_next_level_of_a_user( $user_id );
-$browse     = get_permalink( ohmylms_get_page_id( 'course' ) ) ?: home_url( '/' );
+$browse     = get_permalink( ohmylms_get_page_id( 'course' ) );
+$browse     = $browse ? $browse : home_url( '/' );
 ?>
 <?php ohmylms_get_template( 'global/ohmylms-celebration.php' ); ?>
 <section class="oml-student-dashboard" data-dashboard-theme="<?php echo esc_attr( $dashboard['theme'] ); ?>" data-theme-endpoint="<?php echo esc_url( rest_url( 'ohmylms/v1/student/dashboard-theme' ) ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>" data-save-error="<?php esc_attr_e( 'Could not save your theme. Please try again.', 'ohmylms' ); ?>" data-save-success="<?php esc_attr_e( 'Dashboard theme saved.', 'ohmylms' ); ?>">

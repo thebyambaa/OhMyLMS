@@ -184,7 +184,7 @@ class Hooks {
 		$start    = $request->get_param( 'date' );
 		$end      = $request->get_param( 'endDate' );
 		$desc     = $request->get_param( 'agenda' );
-		$timezone = $request->get_param( 'timezone' ) ?: 'UTC';
+		$timezone = $request->get_param( 'timezone' ) ? $request->get_param( 'timezone' ) : 'UTC';
 
 		$event_data = array(
 			'summary'        => $title,
@@ -339,7 +339,7 @@ class Hooks {
 		$start    = sanitize_text_field( $request->get_param( 'date' ) );
 		$end      = sanitize_text_field( $request->get_param( 'endDate' ) );
 		$desc     = sanitize_textarea_field( $request->get_param( 'agenda' ) );
-		$timezone = sanitize_text_field( $request->get_param( 'timezone' ) ?: 'UTC' );
+		$timezone = sanitize_text_field( $request->get_param( 'timezone' ) ? $request->get_param( 'timezone' ) : 'UTC' );
 
 		// Prepare event payload.
 		$event_data = array(

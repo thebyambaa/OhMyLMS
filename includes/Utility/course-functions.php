@@ -5,7 +5,6 @@
  * @package OhMyLMS
  */
 
-
 /**
  * Get course object
  *
@@ -35,17 +34,18 @@ function ohmylms_get_course_id_by_content_id( $content_id ) {
 	$table_content = $wpdb->prefix . 'ohmylms_content_relationship';
 	$table_chapter = $wpdb->prefix . 'ohmylms_chapter_relationship';
 
-	$query     = $wpdb->prepare(
-		'SELECT cr.course_id
+	$course_id = $wpdb->get_var(
+		$wpdb->prepare(
+			'SELECT cr.course_id
 		FROM %i AS c
 		JOIN %i AS cr
 		ON c.chapter_id = cr.chapter_id
 		WHERE c.content_id = %d',
-		$table_content,
-		$table_chapter,
-		$content_id
+			$table_content,
+			$table_chapter,
+			$content_id
+		)
 	);
-	$course_id = $wpdb->get_var( $query );
 
 	// A course whose published learning program places this content counts too (see Placements).
 	$course_id = \OhMyLMS\Learning\Placements::resolve( $content_id, $course_id, 0 );
@@ -109,8 +109,9 @@ function ohmylms_get_course_first_lesson_url( $course_id ) {
 	}
 
 	global $wpdb;
-	$sql       = $wpdb->prepare(
-		'SELECT content_rel.content_id
+	$lesson_id = $wpdb->get_var(
+		$wpdb->prepare(
+			'SELECT content_rel.content_id
         FROM %i AS wp_posts
         INNER JOIN %i AS chapter_rel
             ON wp_posts.ID = chapter_rel.course_id
@@ -122,13 +123,13 @@ function ohmylms_get_course_first_lesson_url( $course_id ) {
         AND lesson_post.post_status = \'publish\'
         ORDER BY content_rel.order_number ASC
         LIMIT 1',
-		$wpdb->posts,
-		$wpdb->prefix . 'ohmylms_chapter_relationship',
-		$wpdb->prefix . 'ohmylms_content_relationship',
-		$wpdb->posts,
-		$course_id
+			$wpdb->posts,
+			$wpdb->prefix . 'ohmylms_chapter_relationship',
+			$wpdb->prefix . 'ohmylms_content_relationship',
+			$wpdb->posts,
+			$course_id
+		)
 	);
-	$lesson_id = $wpdb->get_var( $sql );
 	return $lesson_id ? ohmylms_get_pretty_content_permalink( $lesson_id ) : '';
 }
 
@@ -148,8 +149,7 @@ function ohmylms_get_course_id_by_chapter_id( $chapter_id ) {
 	}
 
 	global $wpdb;
-	$sql    = $wpdb->prepare( 'SELECT course_id FROM %i WHERE chapter_id = %d LIMIT 1', $wpdb->prefix . 'ohmylms_chapter_relationship', $chapter_id );
-	$result = $wpdb->get_var( $sql );
+	$result = $wpdb->get_var( $wpdb->prepare( 'SELECT course_id FROM %i WHERE chapter_id = %d LIMIT 1', $wpdb->prefix . 'ohmylms_chapter_relationship', $chapter_id ) );
 
 	if ( $result ) {
 		$cache[ $chapter_id ] = $result;
@@ -222,10 +222,9 @@ function ohmylms_get_best_selling_course_ids( $category = null ) {
         ORDER BY COUNT(m.meta_value) DESC
     ';
 
-	$prepared_query = $wpdb->prepare( $query, 'ohmylms-course', 'publish', '_course_id' );
-
 	// Execute the query and return the results.
-	$results = $wpdb->get_col( $prepared_query ); // Fetch only course IDs.
+	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Literal SQL with placeholders; the ID list is cast with intval.
+	$results = $wpdb->get_col( $wpdb->prepare( $query, 'ohmylms-course', 'publish', '_course_id' ) ); // Fetch only course IDs.
 
 	return $results;
 }
@@ -268,10 +267,9 @@ function ohmylms_get_top_rated_course_ids( $category = null ) {
         ORDER BY CAST(pm.meta_value AS DECIMAL(10,2)) DESC
     ';
 
-	$prepared_query = $wpdb->prepare( $query, 'ohmylms-course', 'publish', '_average_rating' );
-
 	// Execute the query and return the results.
-	$results = $wpdb->get_col( $prepared_query ); // Fetch only course IDs.
+	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Literal SQL with placeholders; the ID list is cast with intval.
+	$results = $wpdb->get_col( $wpdb->prepare( $query, 'ohmylms-course', 'publish', '_average_rating' ) ); // Fetch only course IDs.
 
 	return $results;
 }
@@ -314,10 +312,9 @@ function ohmylms_get_top_reviewed_course_ids( $category = null ) {
         ORDER BY CAST(pm.meta_value AS DECIMAL(10,2)) DESC
     ';
 
-	$prepared_query = $wpdb->prepare( $query, 'ohmylms-course', 'publish', '_review_count' );
-
 	// Execute the query and return the results.
-	$results = $wpdb->get_col( $prepared_query ); // Fetch only course IDs.
+	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Literal SQL with placeholders; the ID list is cast with intval.
+	$results = $wpdb->get_col( $wpdb->prepare( $query, 'ohmylms-course', 'publish', '_review_count' ) ); // Fetch only course IDs.
 	return $results;
 }
 
@@ -354,10 +351,9 @@ function ohmylms_get_free_course_ids( $category = null ) {
 		$query .= ' AND p.ID IN (' . implode( ',', array_map( 'intval', $group ) ) . ') ';
 	}
 
-	$prepared_query = $wpdb->prepare( $query, 'ohmylms-course', 'publish', '_price_type', 'free' );
-
 	// Execute the query and return the results.
-	$results = $wpdb->get_col( $prepared_query ); // Fetch only course IDs.
+	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Literal SQL with placeholders; the ID list is cast with intval.
+	$results = $wpdb->get_col( $wpdb->prepare( $query, 'ohmylms-course', 'publish', '_price_type', 'free' ) ); // Fetch only course IDs.
 	return $results;
 }
 
@@ -394,10 +390,9 @@ function ohmylms_get_paid_course_ids( $category = null ) {
 		$query .= ' AND p.ID IN (' . implode( ',', array_map( 'intval', $group ) ) . ') ';
 	}
 
-	$prepared_query = $wpdb->prepare( $query, 'ohmylms-course', 'publish', '_price_type', 'paid' );
-
 	// Execute the query and return the results.
-	$results = $wpdb->get_col( $prepared_query ); // Fetch only course IDs.
+	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Literal SQL with placeholders; the ID list is cast with intval.
+	$results = $wpdb->get_col( $wpdb->prepare( $query, 'ohmylms-course', 'publish', '_price_type', 'paid' ) ); // Fetch only course IDs.
 	return $results;
 }
 
@@ -436,9 +431,8 @@ function ohmylms_get_recent_course_ids( $category = null ) {
 	// Order by post_date to get the most recent courses.
 	$query .= ' ORDER BY p.post_date DESC ';
 
-	$prepared_query = $wpdb->prepare( $query, 'ohmylms-course', 'publish' );
-
 	// Execute the query and return the results.
-	$results = $wpdb->get_col( $prepared_query ); // Fetch only course IDs.
+	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Literal SQL with placeholders; the ID list is cast with intval.
+	$results = $wpdb->get_col( $wpdb->prepare( $query, 'ohmylms-course', 'publish' ) ); // Fetch only course IDs.
 	return $results;
 }

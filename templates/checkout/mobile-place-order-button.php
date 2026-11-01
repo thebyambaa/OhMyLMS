@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
 	<div class="ohmylms-mobile-order-button-container">
 		<div class="mobile-order-button-price">
 			<p class="review-toggle-title">
-				<?php echo esc_html__( 'Total (01 course)' ); ?>
+				<?php echo esc_html__( 'Total (01 course)', 'ohmylms' ); ?>
 			</p>
 
 			<span class="total-price">

@@ -80,7 +80,8 @@ class SkillMappingController extends RestController {
 	 * @param WP_REST_Request $request REST request.
 	 */
 	public function save( WP_REST_Request $request ) {
-		$mapping = SkillMappings::save( (int) $request->get_param( 'specific_id' ), (int) $request->get_param( 'shared_id' ), (string) ( $request->get_param( 'relation' ) ?: 'equivalent' ), (string) $request->get_param( 'note' ) );
+		$relation = $request->get_param( 'relation' );
+		$mapping  = SkillMappings::save( (int) $request->get_param( 'specific_id' ), (int) $request->get_param( 'shared_id' ), (string) ( $relation ? $relation : 'equivalent' ), (string) $request->get_param( 'note' ) );
 		return is_wp_error( $mapping ) ? $mapping : rest_ensure_response(
 			array(
 				'mapping'        => $mapping,

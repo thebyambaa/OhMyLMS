@@ -171,9 +171,8 @@ class Achievements {
 		}
 
 		$where_sql = implode( ' AND ', $where_clauses );
-		$sql       = "SELECT COUNT(*) FROM $table_name WHERE $where_sql";
-		$query     = $wpdb->prepare( $sql, ...$params );
-		$count     = $wpdb->get_var( $query );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Fixed WHERE clauses that use placeholders.
+		$count = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE $where_sql", $table_name, ...$params ) );
 
 		return $count > 0;
 	}

@@ -439,7 +439,7 @@ class OfferButtonElement extends Element {
 		}
 
 		$this->set_attribute( '_root', 'class', 'ohmylms-offer-button ' . esc_attr( $settings['class'] ) );
-		echo '<div ' . $this->render_attributes( '_root' ) . '>';
+		echo '<div ' . $this->render_attributes( '_root' ) . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Bricks render_attributes() escapes the attributes.
 
 		printf(
 			'<a href="%s" class="%s" style="%s" data-action="%s">%s</a>',
@@ -487,7 +487,7 @@ class OfferButtonElement extends Element {
 				$action_url  = add_query_arg( 'action', $action, $base_url );
 
 				// Add nonce.
-				$nonce = $_GET['funnel_nonce'] ?? wp_create_nonce( 'funnel_action_' . $order_id . '_' . $current_step );
+				$nonce = isset( $_GET['funnel_nonce'] ) ? sanitize_text_field( wp_unslash( $_GET['funnel_nonce'] ) ) : wp_create_nonce( 'funnel_action_' . $order_id . '_' . $current_step );
 				return add_query_arg( '_wpnonce', $nonce, $action_url );
 			}
 		}

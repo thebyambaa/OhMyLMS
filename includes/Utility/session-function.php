@@ -5,7 +5,6 @@
  * @package OhMyLMS
  */
 
-
 /**
  * Get chapter object
  *

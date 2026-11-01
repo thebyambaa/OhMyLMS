@@ -425,7 +425,7 @@ class ProfileGutenbergBlock {
 			foreach ( $wrapper_attributes as $key => $value ) {
 				$wrapper_attrs_string .= ' ' . $key . '="' . esc_attr( $value ) . '"';
 			}
-			echo '<div' . $wrapper_attrs_string . '>';
+			echo '<div' . $wrapper_attrs_string . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Attribute values escaped above.
 		}
 
 		// Add proper wrapper classes for consistency with frontend.

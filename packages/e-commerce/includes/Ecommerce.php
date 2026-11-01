@@ -222,7 +222,7 @@ final class Ecommerce {
 /**
  * Ecommerce for Ecommerce.
  */
-function ecommerce() {
+function ecommerce() { // phpcs:ignore Universal.Files.SeparateFunctionsFromOO.Mixed -- Loading this class file must also define the package's public accessor.
 	return Ecommerce::instance();
 }
 

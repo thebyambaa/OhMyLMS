@@ -52,7 +52,7 @@ class OrderItemStore extends DataStore {
 		}
 
 		if ( ! $data ) {
-			throw new \Exception( __( 'Invalid order item.', 'ohmylms' ) );
+			throw new \Exception( esc_html__( 'Invalid order item.', 'ohmylms' ) );
 		}
 
 		$item->set_props(
@@ -117,7 +117,7 @@ class OrderItemStore extends DataStore {
 	 * .
 	 * @since 1.0.0
 	 */
-	function update_metadata( $item_id, $meta_key, $meta_value ) {
+	public function update_metadata( $item_id, $meta_key, $meta_value ) {
 		global $wpdb;
 		$table_name_meta = $wpdb->prefix . 'ohmylms_order_itemmeta';
 
@@ -162,7 +162,7 @@ class OrderItemStore extends DataStore {
 	 *
 	 * @since 1.0.0
 	 */
-	function get_metadata( $item_id, $meta_key, $single = true ) {
+	public function get_metadata( $item_id, $meta_key, $single = true ) {
 		global $wpdb;
 		$table_name_meta = $wpdb->prefix . 'ohmylms_order_itemmeta';
 

@@ -68,7 +68,7 @@ final class Frontend {
 			'title'    => __( 'Learning', 'ohmylms' ),
 			'priority' => 5,
 			'callback' => static function () use ( $course ) {
-						echo self::render( $course->get_id() );
+						echo self::render( $course->get_id() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- render() escapes its own markup.
 			},
 		);
 		return $tabs;
@@ -193,26 +193,27 @@ final class Frontend {
 						echo '<p>' . esc_html__( 'This activity is currently unavailable.', 'ohmylms' ) . '</p>';
 						break; }
 					if ( 'practice' === $item['type'] ) {
-						echo \OhMyLMS\Practice\Frontend::practice(
+						$practice = \OhMyLMS\Practice\Frontend::practice(
 							array(
 								'skill'  => $item['content_id'],
 								'course' => $course_id,
 							)
 						);
+						echo $practice; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The practice renderer escapes its own markup.
 					} elseif ( 'lesson' === $item['type'] ) {
 						echo '<article class="ohmylms-learning-lesson"><h2>' . esc_html( $item['name'] ) . '</h2>';
 						$lesson = ohmylms_get_lesson( $item['content_id'] );
 						$media  = $lesson->get_type() === 'video' ? $lesson->get_video_id() : ( $lesson->get_type() === 'audio' ? $lesson->get_audio_id() : 0 );
 						$url    = $media ? wp_get_attachment_url( $media ) : $lesson->get_external_url();
 						if ( $url && $lesson->get_type() === 'video' ) {
-							echo wp_video_shortcode( array( 'src' => $url ) ); }
+							echo wp_video_shortcode( array( 'src' => $url ) ); } // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core media shortcode markup.
 						if ( $url && $lesson->get_type() === 'audio' ) {
-							echo wp_audio_shortcode( array( 'src' => $url ) ); }
+							echo wp_audio_shortcode( array( 'src' => $url ) ); } // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core media shortcode markup.
 						$old_post        = $GLOBALS['post'] ?? null;
-						$GLOBALS['post'] = get_post( $item['content_id'] );
+						$GLOBALS['post'] = get_post( $item['content_id'] ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Lesson content renders as the current post; restored below.
 						setup_postdata( $GLOBALS['post'] );
-						echo apply_filters( 'the_content', get_post_field( 'post_content', $item['content_id'] ) );
-						$GLOBALS['post'] = $old_post;
+						echo apply_filters( 'the_content', get_post_field( 'post_content', $item['content_id'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core content filter output.
+						$GLOBALS['post'] = $old_post; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Restores the post replaced above.
 						if ( $old_post ) {
 							setup_postdata( $old_post ); }
 						echo '</article>';
@@ -368,7 +369,7 @@ final class Frontend {
 			exit;
 		}
 		get_header();
-		echo '<main class="ohmylms-learning-main">' . $html . '</main>';
+		echo '<main class="ohmylms-learning-main">' . $html . '</main>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- render() escapes its own markup.
 		get_footer();
 		exit;
 	}

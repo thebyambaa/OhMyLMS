@@ -5,7 +5,6 @@
  * @package OhMyLMS
  */
 
-
 /**
  * Retrieve an order by its ID.
  *
@@ -136,9 +135,7 @@ function ohmylms_ecommerce_create_refund( $args = array() ) {
 
 		do_action( 'ohmylms_order_refunded', $refund, $order );
 
-		if ( ( $remaining_refund_amount - $args['amount'] ) > 0 ) {
-
-		} else {
+		if ( ! ( ( $remaining_refund_amount - $args['amount'] ) > 0 ) ) {
 			$order->update_status( 'refunded' );
 		}
 

@@ -183,9 +183,9 @@ final class ScoreModel {
 			} else {
 				$score = max( (float) $band['from'], $score - $band['loss'] );
 			}
-			$score    = round( $score, 2 );
-			$peak     = max( $peak, $score );
-			$scored  += 1;
+			$score = round( $score, 2 );
+			$peak  = max( $peak, $score );
+			++$scored;
 			$correct += $right ? 1 : 0;
 			$recent[] = $right;
 			$recent   = array_slice( $recent, -2 );

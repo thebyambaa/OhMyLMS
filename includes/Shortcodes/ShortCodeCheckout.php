@@ -297,7 +297,7 @@ class ShortCodeCheckout {
 		$css = self::generate_custom_css( $ohmylms_checkout_attributes );
 
 		if ( ! empty( $css ) ) {
-			echo '<style type="text/css" id="ohmylms-checkout-custom-styles">' . $css . '</style>';
+			echo '<style type="text/css" id="ohmylms-checkout-custom-styles">' . $css . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CSS values escaped in generate_custom_css().
 		}
 	}
 
@@ -629,7 +629,7 @@ class ShortCodeCheckout {
 
 		// Get the order.
 		$order_id  = absint( $order_id );
-		$order_key = empty( $_GET['key'] ) ? '' : wp_unslash( $_GET['key'] ); // WPCS: input var ok, CSRF ok.
+		$order_key = empty( $_GET['key'] ) ? '' : ohmylms_clean( wp_unslash( $_GET['key'] ) ); // WPCS: input var ok, CSRF ok.
 
 		if ( $order_id > 0 ) {
 			$order = ohmylms_ecommerce_get_order( $order_id );

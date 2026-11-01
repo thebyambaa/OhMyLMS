@@ -22,15 +22,15 @@ ohmylms_enqueue_interactivity_module( 'ohmylms/ui' );
 ?>
 
 
-<div class="ohmylms-accordion-item <?php echo esc_attr( $is_active ); ?>" data-wp-interactive="ohmylms/ui" <?php echo wp_interactivity_data_wp_context( array( 'open' => (bool) $is_active ) ); ?> data-wp-class--active="context.open">
+<div class="ohmylms-accordion-item <?php echo esc_attr( $is_active ); ?>" data-wp-interactive="ohmylms/ui" <?php echo wp_interactivity_data_wp_context( array( 'open' => (bool) $is_active ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core helper escapes the attribute. ?> data-wp-class--active="context.open">
 	<div class="ohmylms-accordion-head" role="button" tabindex="0" aria-expanded="<?php echo esc_attr( $is_active ? 'true' : 'false' ); ?>" data-wp-bind--aria-expanded="context.open" data-wp-on--click="actions.toggle" data-wp-on--keydown="actions.keyToggle" aria-controls="lms-accordion-body-<?php echo esc_attr( $chapter_id ); ?>" id="lms-accordion-head-<?php echo esc_attr( $chapter_id ); ?>">
 		<?php
 		$is_lesson_completed = $chapter->maybe_all_content_is_completed( get_current_user_id() );
-		$lessonProgress      = $chapter->total_completion_rate( get_current_user_id() );
+		$lesson_progress     = $chapter->total_completion_rate( get_current_user_id() );
 		?>
 		<p class="ohmylms-accordion-title">
 			<?php echo esc_html( $chapter_title ); ?>
-			<span class="publish-date">Released on <?php echo date( 'M d, Y', strtotime( $chapter->get_date_created() ) ); ?></span>
+			<span class="publish-date">Released on <?php echo esc_html( gmdate( 'M d, Y', strtotime( $chapter->get_date_created() ) ) ); ?></span>
 		</p>
 		<div class="lesson-content-progrss">
 			<?php if ( $is_lesson_completed ) { ?>
@@ -39,8 +39,8 @@ ohmylms_enqueue_interactivity_module( 'ohmylms/ui' );
 			} else {
 				?>
 				<span class="ohmylms-circle-progressbar">
-					<?php echo ohmylms_circular_progressbar( 36, $lessonProgress, 2, '#E2E4EA', '#19AA32' ); ?>
-					<small><?php echo esc_html( $lessonProgress . '%' ); ?></small>
+					<?php echo ohmylms_circular_progressbar( 36, $lesson_progress, 2, '#E2E4EA', '#19AA32' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- ohmylms_circular_progressbar() escapes its output. ?>
+					<small><?php echo esc_html( $lesson_progress . '%' ); ?></small>
 				</span>
 				<?php
 			}

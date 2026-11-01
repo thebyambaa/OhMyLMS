@@ -102,26 +102,26 @@ if ( method_exists( $course, 'get_type' ) && 'cohort-based' === $course->get_typ
 							if ( $hours_left > 0 ) {
 								printf( /* translators: %1$d: number; %2$d: number. */
 									esc_html__( 'Enrollment Open – %1$d days %2$d hours left', 'ohmylms' ),
-									$days_left,
-									$hours_left
+									(int) $days_left,
+									(int) $hours_left
 								);
 							} else {
 								printf( /* translators: %d: number. */
 									esc_html__( 'Enrollment Open – %d days left', 'ohmylms' ),
-									$days_left
+									(int) $days_left
 								);
 							}
 						} elseif ( $hours_left > 0 ) {
 								printf( /* translators: %d: number. */
 									esc_html__( 'Enrollment Open – %d hours left', 'ohmylms' ),
-									$hours_left
+									(int) $hours_left
 								);
 						} else {
 							// Less than an hour left.
 							$minutes_left = ceil( $time_left / MINUTE_IN_SECONDS );
 							printf( /* translators: %d: number. */
 								esc_html__( 'Enrollment Open – %d minutes left', 'ohmylms' ),
-								$minutes_left
+								(int) $minutes_left
 							);
 						}
 						echo '</span>';
@@ -147,8 +147,8 @@ if ( method_exists( $course, 'get_type' ) && 'cohort-based' === $course->get_typ
 									<?php
 									$seats_left > 0 ? printf( /* translators: %1$d: number; %2$d: number. */
 										esc_html__( '%1$d/%2$d seats left', 'ohmylms' ),
-										$seats_left,
-										$capacity
+										(int) $seats_left,
+										(int) $capacity
 									) : printf( esc_html__( 'No seats left', 'ohmylms' ) );
 									?>
 								</span>

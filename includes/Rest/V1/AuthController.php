@@ -171,7 +171,7 @@ class AuthController extends RestController {
 	/**
 	 * Resolve the profile/dashboard URL, never returning a falsy value.
 	 *
-	 * ohmylms_get_dashboard_url() (ohmylms_get_page_url('profile')) can
+	 * The ohmylms_get_dashboard_url() helper (ohmylms_get_page_url('profile')) can
 	 * return false when the "profile" page option isn't set — add_query_arg()
 	 * treats a false $url as "not given" and falls back to the current
 	 * REQUEST_URI, which would redirect this callback to itself in a loop.

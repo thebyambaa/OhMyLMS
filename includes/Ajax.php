@@ -1052,7 +1052,7 @@ class Ajax {
 		check_ajax_referer( 'quiz_exit_submission', 'nonce' );
 		$quiz_id    = absint( $_POST['content_id'] ?? 0 );
 		$attempt_id = absint( $_POST['attempt_id'] ?? 0 );
-		$answers    = wp_unslash( $_POST['attempt'][ $attempt_id ]['quiz_question'] ?? array() );
+		$answers    = wp_unslash( $_POST['attempt'][ $attempt_id ]['quiz_question'] ?? array() ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Answers are graded raw; each question type validates its own answer shape.
 		if ( ! is_array( $answers ) ) {
 			wp_send_json_error( array( 'message' => 'Invalid answers' ), 400 );
 		}
@@ -1343,7 +1343,8 @@ class Ajax {
 	 * Accessible to both logged-in users (resend for self) and guests (resend by email).
 	 */
 	public static function resend_verification(): void {
-		$redirect_base = ohmylms_get_dashboard_url() ?: home_url( '/' );
+		$redirect_base = ohmylms_get_dashboard_url();
+		$redirect_base = $redirect_base ? $redirect_base : home_url( '/' );
 		$is_json       = isset( $_REQUEST['format'] ) && 'json' === $_REQUEST['format'];
 
 		$nonce = isset( $_REQUEST['nonce'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['nonce'] ) ) : '';

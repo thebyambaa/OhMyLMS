@@ -269,7 +269,7 @@ class GatewayPaypal extends PaymentGateway {
 	public function payment_fields() {
 		$description = $this->get_description();
 		if ( $description ) {
-			echo wpautop( wp_kses_post( $description ) );
+			echo wp_kses_post( wpautop( $description ) );
 		}
 	}
 
@@ -735,7 +735,8 @@ class GatewayPaypal extends PaymentGateway {
 	 */
 	public function get_url( $links, $rel ) {
 		$filtered = array_filter( $links, fn( $link ) => isset( $link['rel'] ) && $link['rel'] === $rel );
-		return ( $first = reset( $filtered ) ) ? $first['href'] : null;
+		$first    = reset( $filtered );
+		return $first ? $first['href'] : null;
 	}
 
 	/**

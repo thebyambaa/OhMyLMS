@@ -165,7 +165,7 @@ final class SyllabusSettings {
 				}
 			}
 		}
-		if ( $next !== self::get( $syllabus_id ) && ! update_post_meta( $course, self::META, $next ) ) {
+		if ( self::get( $syllabus_id ) !== $next && ! update_post_meta( $course, self::META, $next ) ) {
 			return Access::error( 'ohmylms_syllabus_settings_failed', __( 'The syllabus settings could not be saved.', 'ohmylms' ), 500 );
 		}
 		return true;

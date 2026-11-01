@@ -81,7 +81,7 @@ class PreviewController extends RestController {
 				static function () use ( $quiz_id ) {
 					$revision = RevisionPublisher::publish( $quiz_id );
 					if ( is_wp_error( $revision ) ) {
-						throw new \OhMyLMS\Assessment\ErrorException( $revision ); }
+						throw new \OhMyLMS\Assessment\ErrorException( $revision ); } // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Carries a WP_Error out of the transaction; never output.
 					return $revision;
 				}
 			);
@@ -92,7 +92,7 @@ class PreviewController extends RestController {
 		$used      = array_filter( array_map( 'intval', array_column( $revision['slots'], 'question_id' ) ) );
 		$questions = array();
 		foreach ( $revision['slots'] as $slot ) {
-			$version_id = (int) $slot['version_id'] ?: Pools::draw( $slot['pool'], $seed, $used, 0 );
+			$version_id = (int) $slot['version_id'] ? (int) $slot['version_id'] : Pools::draw( $slot['pool'], $seed, $used, 0 );
 			$snapshot   = $version_id ? VersionPublisher::snapshot( $version_id ) : null;
 			if ( ! $snapshot ) {
 				continue; }

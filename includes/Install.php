@@ -775,11 +775,8 @@ class Install {
 		$default_profile_page_id = get_option( 'ohmylms_profile_page_id' );
 
 		// Update the profile page setting to point to the new student profile page.
-		$new_student_profile_page_id = get_option( 'ohmylms_student_profile_page_id' );
-		if ( $new_student_profile_page_id ) {
-			// Keep the old profile page setting as is (for legacy shortcode)
-			// The new student profile page will be used via the new settings.
-		}
+		// Keep the old profile page setting as is (for legacy shortcode).
+		// The new student profile page (ohmylms_student_profile_page_id) is used via the new settings.
 	}
 
 	/**

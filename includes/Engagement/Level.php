@@ -212,8 +212,9 @@ class Level {
 
 		$table_name = $wpdb->prefix . 'ohmylms_user_achievement';
 
-		$query = $wpdb->prepare(
-			'
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'
             SELECT level_id FROM %i
             WHERE user_id = %d
             AND level_id IS NOT NULL
@@ -221,13 +222,12 @@ class Level {
             AND status = %s
             ORDER BY date_created DESC
             ',
-			$table_name,
-			$user_id,
-			'level',
-			'active'
+				$table_name,
+				$user_id,
+				'level',
+				'active'
+			)
 		);
-
-		$results = $wpdb->get_results( $query );
 
 		$formatted_levels = array();
 		if ( is_array( $results ) && ! empty( $results ) ) {

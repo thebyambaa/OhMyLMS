@@ -126,7 +126,7 @@ class Menu {
 			case 'ohmylms-course':
 			case 'ohmylms-order':
 			case 'ohmylms-coupon':
-				$parent_file = 'ohmylms'; // WPCS: override ok.
+				$parent_file = 'ohmylms'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Highlights the OhMyLMS admin menu.
 				break;
 		}
 	}
@@ -168,7 +168,7 @@ class Menu {
 			$ohmylms_current_tab     = empty( $_GET['tab'] ) ? 'general' : sanitize_title( wp_unslash( $_GET['tab'] ) ); // WPCS: input var okay, CSRF ok.
 			$ohmylms_current_page    = empty( $_GET['page'] ) ? 'ohmylms-settings' : sanitize_title( wp_unslash( $_GET['page'] ) ); // WPCS: input var okay, CSRF ok.
 
-			if ( ! empty( $_POST['save'] ) ) {
+			if ( ! empty( $_POST['save'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- AdminSettings::save() verifies the nonce.
 				AdminSettings::save();
 			}
 		}

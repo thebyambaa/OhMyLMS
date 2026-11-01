@@ -48,7 +48,7 @@ final class DraftWriter {
 				}
 			);
 		} catch ( DataException $error ) {
-			return new \WP_Error( $error->getErrorCode(), $error->getMessage(), array( 'status' => $error->getCode() ?: 400 ) );
+			return new \WP_Error( $error->getErrorCode(), $error->getMessage(), array( 'status' => $error->getCode() ? $error->getCode() : 400 ) );
 		} catch ( \Throwable $error ) {
 			return new \WP_Error( 'ohmylms_question_storage', __( 'The question could not be saved. Nothing was changed.', 'ohmylms' ), array( 'status' => 500 ) );
 		}
@@ -74,7 +74,7 @@ final class DraftWriter {
 				}
 			);
 		} catch ( DataException $error ) {
-			return new \WP_Error( $error->getErrorCode(), $error->getMessage(), array( 'status' => $error->getCode() ?: 400 ) );
+			return new \WP_Error( $error->getErrorCode(), $error->getMessage(), array( 'status' => $error->getCode() ? $error->getCode() : 400 ) );
 		} catch ( \Throwable $error ) {
 			return new \WP_Error( 'ohmylms_question_storage', __( 'The questions could not be saved. Nothing was changed.', 'ohmylms' ), array( 'status' => 500 ) );
 		}

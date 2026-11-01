@@ -100,7 +100,8 @@ final class Views {
 		usort(
 			$learners,
 			static function ( $a, $b ) {
-				return strnatcasecmp( $a['name'], $b['name'] ) ?: $a['id'] <=> $b['id'];
+				$order = strnatcasecmp( $a['name'], $b['name'] );
+				return $order ? $order : $a['id'] <=> $b['id'];
 			}
 		);
 		return array(
@@ -267,7 +268,8 @@ final class Views {
 			usort(
 				$people,
 				static function ( $a, $b ) {
-					return strnatcasecmp( $a['name'], $b['name'] ) ?: $a['id'] <=> $b['id'];
+					$order = strnatcasecmp( $a['name'], $b['name'] );
+					return $order ? $order : $a['id'] <=> $b['id'];
 				}
 			);
 		}

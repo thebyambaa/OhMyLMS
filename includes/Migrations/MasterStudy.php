@@ -454,12 +454,11 @@ class MasterStudy {
 			return array();
 		}
 
-		$section_ids  = array_map( 'intval', wp_list_pluck( $sections, 'id' ) );
-		$placeholders = implode( ',', array_fill( 0, count( $section_ids ), '%d' ) );
-		$materials    = $wpdb->get_results(
+		$section_ids = array_map( 'intval', wp_list_pluck( $sections, 'id' ) );
+		$materials   = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT id, post_id, post_type, section_id, `order` FROM {$materials_table} WHERE section_id IN ({$placeholders}) ORDER BY section_id ASC, `order` ASC, id ASC",
-				$section_ids
+				'SELECT id, post_id, post_type, section_id, `order` FROM %i WHERE section_id IN (' . implode( ',', array_fill( 0, count( $section_ids ), '%d' ) ) . ') ORDER BY section_id ASC, `order` ASC, id ASC',
+				array_merge( array( $materials_table ), $section_ids )
 			),
 			ARRAY_A
 		);

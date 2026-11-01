@@ -48,7 +48,8 @@ class StudentFactory {
 	 */
 	private function get_student_id( $student ) {
 		if ( false === $student ) {
-			return get_current_user_id() ?: false;
+			$current_user_id = get_current_user_id();
+			return $current_user_id ? $current_user_id : false;
 		}
 		if ( is_numeric( $student ) ) {
 			return $this->is_student_exist( $student ) ? absint( $student ) : false;

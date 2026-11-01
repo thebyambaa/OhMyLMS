@@ -21,7 +21,7 @@ class GoogleMeet {
 	 */
 	public $integration_name = 'GoogleMeet';
 
-	const Version = '1.0.0';
+	const Version = '1.0.0'; // phpcs:ignore Generic.NamingConventions.UpperCaseConstantName.ClassConstantNotUpperCase -- Public constant; renaming would break external references.
 
 	/**
 	 * Initialize Google meet.

@@ -11,10 +11,10 @@ namespace OhMyLMS\Curriculum;
  * Cleans and checks the rows of a syllabus import before anything is planned or written. A row is
  * one line of the administrator's CSV after the browser mapped its columns:
  *
- *   content, content_code   a topic or chapter (several levels may be written "Paper 1 > Number")
- *   group, group_code       a skill group (a section, a skill family)
- *   skill, skill_code       one skill (a learning objective)
- *   description             notes or examples for the skill
+ *   `content`, `content_code`   a topic or chapter (several levels may be written "Paper 1 > Number")
+ *   `group`, `group_code`       a skill group (a section, a skill family)
+ *   `skill`, `skill_code`       one skill (a learning objective)
+ *   `description`               notes or examples for the skill
  *
  * Pure PHP so the rules can be unit tested without WordPress. A row with a problem is reported with
  * its line number and the whole import then changes nothing.

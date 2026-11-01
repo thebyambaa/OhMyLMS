@@ -5,8 +5,6 @@
  * @package OhMyLMS
  */
 
-
-
 /**
  * Convert a string representation of a date/time into a Unix timestamp.
  *
@@ -24,7 +22,7 @@ function ohmylms_ecommerce_string_to_timestamp( $time_string, $from_timestamp = 
 
 	$original_timezone = date_default_timezone_get();
 
-	date_default_timezone_set( 'UTC' );
+	date_default_timezone_set( 'UTC' ); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.timezone_change_date_default_timezone_set -- strtotime() must parse in UTC; restored below.
 
 	if ( null === $from_timestamp ) {
 		$next_timestamp = strtotime( $time_string );
@@ -32,7 +30,7 @@ function ohmylms_ecommerce_string_to_timestamp( $time_string, $from_timestamp = 
 		$next_timestamp = strtotime( $time_string, $from_timestamp );
 	}
 
-	date_default_timezone_set( $original_timezone );
+	date_default_timezone_set( $original_timezone ); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.timezone_change_date_default_timezone_set -- Restores the caller's timezone.
 
 	return $next_timestamp;
 }

@@ -20,11 +20,9 @@ use OhMyLMS\Commerce\DataStores;
  */
 class OrderItem extends Data {
 	/**
-	 * Class OrderItemCourse
+	 * Order item data.
 	 *
-	 * Represents an order item for a course.
-	 *
-	 * @package OhMyLMS\Commerce\Data
+	 * @var array
 	 */
 	protected array $data = array(
 		'order_id'  => 0,

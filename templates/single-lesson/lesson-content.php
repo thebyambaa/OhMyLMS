@@ -17,14 +17,14 @@ ohmylms_enqueue_interactivity_module( 'ohmylms/ui' );
 
 <?php
 /**
- * hook: ohmylms_before_lesson_main_content.
+ * Hook: ohmylms_before_lesson_main_content.
  *
- * hooked: ohmylms_show_toast_notices (5).
+ * Hooked: ohmylms_show_toast_notices (5).
  */
 do_action( 'ohmylms_before_lesson_main_content' );
 ?>
 
-<section class="ohmylms-lesson-details" data-wp-interactive="ohmylms/ui" <?php echo wp_interactivity_data_wp_context( array( 'sidebarOpen' => false ) ); ?> data-wp-class--open-sidebar="context.sidebarOpen" data-wp-on-document--click="actions.outside" data-wp-on-document--keydown="actions.escape">
+<section class="ohmylms-lesson-details" data-wp-interactive="ohmylms/ui" <?php echo wp_interactivity_data_wp_context( array( 'sidebarOpen' => false ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core helper escapes the attribute. ?> data-wp-class--open-sidebar="context.sidebarOpen" data-wp-on-document--click="actions.outside" data-wp-on-document--keydown="actions.escape">
 	<?php ohmylms_get_template( 'global/ohmylms-celebration.php' ); ?>
 	
 	<span class="ohmylms-lesson-details-hamburger" role="button" tabindex="0" aria-label="<?php esc_attr_e( 'Open lesson navigation', 'ohmylms' ); ?>" aria-expanded="false" data-wp-bind--aria-expanded="context.sidebarOpen" data-wp-on--click="actions.openSidebar" data-wp-on--keydown="actions.sidebarKey">
@@ -66,7 +66,7 @@ do_action( 'ohmylms_before_lesson_main_content' );
 
 <?php
 /**
- * ohmylms_after_lesson_main_content hook.
+ * Hook: ohmylms_after_lesson_main_content.
  */
 do_action( 'ohmylms_after_lesson_main_content' );
 ?>

@@ -71,7 +71,8 @@ final class RevisionPublisher {
 			$version = self::slot_version( $quiz_id, (int) $link['id'] );
 			if ( is_wp_error( $version ) ) {
 				return $version; }
-			$question_settings = json_decode( $version['settings'], true ) ?: array();
+			$question_settings = json_decode( $version['settings'], true );
+			$question_settings = $question_settings ? $question_settings : array();
 			$figure_check      = \OhMyLMS\ExamImport\FigureContent::publishable( $question_settings );
 			if ( is_wp_error( $figure_check ) ) {
 				return $figure_check;
@@ -275,7 +276,8 @@ final class RevisionPublisher {
 		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id=%d', Schema::table( 'quiz_revisions' ), (int) $revision_id ), ARRAY_A );
 		if ( ! $row ) {
 			return null; }
-		$row['settings'] = json_decode( $row['settings'], true ) ?: array();
+		$settings        = json_decode( $row['settings'], true );
+		$row['settings'] = $settings ? $settings : array();
 		$row['slots']    = self::slots( (int) $row['id'] );
 		return $row;
 	}

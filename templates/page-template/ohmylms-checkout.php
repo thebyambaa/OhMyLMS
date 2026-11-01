@@ -4,6 +4,7 @@
  *
  * @package OhMyLMS
  */
+
 ?>
 
 <!DOCTYPE html>

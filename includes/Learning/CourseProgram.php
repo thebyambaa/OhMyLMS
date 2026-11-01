@@ -39,11 +39,12 @@ final class CourseProgram {
 		if ( ! $id || ! Schema::ready() ) {
 			return null; }
 		$row     = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id=%d', Schema::table( 'programs' ), $id ), ARRAY_A );
+		$decoded = $row ? json_decode( $row['program'], true ) : null;
 		$program = $row ? array(
 			'id'        => (int) $row['id'],
 			'version'   => (int) $row['version'],
 			'course_id' => (int) $row['course_id'],
-		) + ( json_decode( $row['program'], true ) ?: array() ) : null;
+		) + ( $decoded ? $decoded : array() ) : null;
 		if ( $program && ! isset( $program['units'] ) ) {
 			$program['units'] = UnitSnapshots::legacy_units( $program['course_id'] );
 		}
@@ -417,7 +418,7 @@ final class CourseProgram {
 				if ( isset( $row['type'] ) ) {
 					$row['chapter_id'] = 0; }
 			}
-			if ( isset( $row['group_id'] ) && ( ! isset( $groups[ $row['group_id'] ] ) || (int) $groups[ $row['group_id'] ]['chapter_id'] !== (int) ( $row['chapter_id'] ?? 0 ) ) ) {
+			if ( isset( $row['group_id'] ) && ( ! isset( $groups[ $row['group_id'] ] ) || (int) ( $row['chapter_id'] ?? 0 ) !== (int) $groups[ $row['group_id'] ]['chapter_id'] ) ) {
 				unset( $row['group_id'] );
 			}
 			return $row;

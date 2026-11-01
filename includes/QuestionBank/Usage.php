@@ -79,7 +79,7 @@ final class Usage {
 		$count = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE question_id=%d', $wpdb->prefix . 'ohmylms_quiz_attempts_answers', $question_id ) );
 		if ( \OhMyLMS\Assessment\Schema::ready() ) {
 			foreach ( array( 'attempt_items', 'practice_items' ) as $table ) {
-				$count += (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . \OhMyLMS\Assessment\Schema::table( $table ) . ' WHERE question_id=%d', $question_id ) );
+				$count += (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE question_id=%d', \OhMyLMS\Assessment\Schema::table( $table ), $question_id ) );
 			}
 		}
 		return (int) apply_filters( 'ohmylms_question_response_count', $count, (int) $question_id );
@@ -227,7 +227,7 @@ final class Usage {
 					if ( $responses > 0 || $frozen || apply_filters( 'ohmylms_question_has_history', false, $question_id ) ) {
 						$archived = self::archive( $question_id );
 						if ( is_wp_error( $archived ) ) {
-							throw new \RuntimeException( $archived->get_error_message() ); }
+							throw new \RuntimeException( $archived->get_error_message() ); } // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Rolls back the transaction; the catch below returns its own message.
 						return $archived;
 					}
 					$question = ohmylms_get_question( $question_id );

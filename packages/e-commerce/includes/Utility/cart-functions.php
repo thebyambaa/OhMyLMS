@@ -5,7 +5,6 @@
  * @package OhMyLMS
  */
 
-
 if ( ! function_exists( 'apply_filters' ) ) {
 	require_once ABSPATH . 'wp-includes/plugin.php';
 }
@@ -79,7 +78,7 @@ function ohmylmse_cart_totals_coupon_html( $coupon ) {
 	$discount_amount_html = '-' . ohmylms_price( $amount );
 	$coupon_html          = $discount_amount_html;
 
-	echo $coupon_html;
+	echo $coupon_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- ohmylms_price() builds markup from a float and store currency settings.
 }
 
 /**

@@ -674,15 +674,15 @@ class TriggerHandler {
 		}
 
 		// Prepare user data.
-		$email     = $user->user_email;
-		$firstName = get_user_meta( $student_id, 'first_name', true );
-		$lastName  = get_user_meta( $student_id, 'last_name', true );
-		$phone     = get_user_meta( $student_id, 'billing_phone', true );
+		$email      = $user->user_email;
+		$first_name = get_user_meta( $student_id, 'first_name', true );
+		$last_name  = get_user_meta( $student_id, 'last_name', true );
+		$phone      = get_user_meta( $student_id, 'billing_phone', true );
 
 		$contact_data = array(
 			'user_email' => $email,
-			'first_name' => $firstName ? $firstName : '',
-			'last_name'  => $lastName ? $lastName : '',
+			'first_name' => $first_name ? $first_name : '',
+			'last_name'  => $last_name ? $last_name : '',
 			'phone'      => $phone ? $phone : '',
 		);
 

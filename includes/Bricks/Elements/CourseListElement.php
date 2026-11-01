@@ -710,7 +710,7 @@ class CourseListElement extends \Bricks\Element {
 		$attrs = array_filter(
 			$attrs,
 			function ( $value ) {
-				return '' !== $value && null !== $value && $value !== array();
+				return '' !== $value && null !== $value && array() !== $value;
 			}
 		);
 

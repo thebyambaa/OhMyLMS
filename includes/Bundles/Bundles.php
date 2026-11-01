@@ -48,7 +48,11 @@ final class Bundles {
 	public static function get( $id ) {
 		global $wpdb;
 		$id = (int) $id;
-		return $id > 0 ? ( $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . self::table() . ' WHERE id=%d', $id ), ARRAY_A ) ?: null ) : null;
+		if ( $id <= 0 ) {
+			return null;
+		}
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id=%d', self::table(), $id ), ARRAY_A );
+		return $row ? $row : null;
 	}
 
 	/**
@@ -66,9 +70,11 @@ final class Bundles {
 	public static function all( $status = null ) {
 		global $wpdb;
 		if ( null !== $status && in_array( $status, self::STATUSES, true ) ) {
-			return $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . self::table() . ' WHERE status=%s ORDER BY position, id', $status ), ARRAY_A ) ?: array();
+			$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE status=%s ORDER BY position, id', self::table(), $status ), ARRAY_A );
+		} else {
+			$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i ORDER BY position, id', self::table() ), ARRAY_A );
 		}
-		return $wpdb->get_results( 'SELECT * FROM ' . self::table() . ' ORDER BY position, id', ARRAY_A ) ?: array();
+		return $rows ? $rows : array();
 	}
 
 	/**
@@ -121,7 +127,7 @@ final class Bundles {
 		$fields = self::clean( $data );
 		if ( is_wp_error( $fields ) ) {
 			return $fields; }
-		if ( (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . self::table() ) >= self::MAX_BUNDLES ) {
+		if ( (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', self::table() ) ) >= self::MAX_BUNDLES ) {
 			return Access::error(
 				'ohmylms_bundle_limit',
 				sprintf( /* translators: %d: number. */
@@ -131,7 +137,7 @@ final class Bundles {
 				409
 			); }
 		$now      = current_time( 'mysql', true );
-		$position = 1 + (int) $wpdb->get_var( 'SELECT MAX(position) FROM ' . self::table() );
+		$position = 1 + (int) $wpdb->get_var( $wpdb->prepare( 'SELECT MAX(position) FROM %i', self::table() ) );
 		$row      = $fields + array(
 			'uuid'       => wp_generate_uuid4(),
 			'status'     => 'draft',
@@ -185,6 +191,7 @@ final class Bundles {
 	 */
 	public static function members( $bundle_id ) {
 		global $wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT item_type, item_id, position FROM %i WHERE bundle_id=%d ORDER BY position, id', self::members_table(), (int) $bundle_id ), ARRAY_A );
 		return array_map(
 			static function ( $row ) {
 				return array(
@@ -192,7 +199,7 @@ final class Bundles {
 					'id'       => (int) $row['item_id'],
 					'position' => (int) $row['position'],
 				); },
-			$wpdb->get_results( $wpdb->prepare( 'SELECT item_type, item_id, position FROM ' . self::members_table() . ' WHERE bundle_id=%d ORDER BY position, id', (int) $bundle_id ), ARRAY_A ) ?: array()
+			$rows ? $rows : array()
 		);
 	}
 
@@ -314,7 +321,8 @@ final class Bundles {
 	 */
 	public static function find_by_title( $title ) {
 		global $wpdb;
-		return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . self::table() . ' WHERE title=%s ORDER BY id LIMIT 1', (string) $title ), ARRAY_A ) ?: null;
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE title=%s ORDER BY id LIMIT 1', self::table(), (string) $title ), ARRAY_A );
+		return $row ? $row : null;
 	}
 
 	/**
@@ -338,8 +346,8 @@ final class Bundles {
 			return self::missing(); }
 		if ( ! self::valid_member( 'course', $course_id ) ) {
 			return Access::error( 'ohmylms_bundle_invalid', __( 'Every member must be an existing course or curriculum item.', 'ohmylms' ) ); }
-		$count  = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . self::members_table() . ' WHERE bundle_id=%d', (int) $bundle_id ) );
-		$exists = (bool) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . self::members_table() . " WHERE bundle_id=%d AND item_type='course' AND item_id=%d", (int) $bundle_id, (int) $course_id ) );
+		$count  = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE bundle_id=%d', self::members_table(), (int) $bundle_id ) );
+		$exists = (bool) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM %i WHERE bundle_id=%d AND item_type='course' AND item_id=%d", self::members_table(), (int) $bundle_id, (int) $course_id ) );
 		if ( $exists ) {
 			return true; }
 		if ( $count >= self::MAX_MEMBERS ) {
@@ -351,8 +359,8 @@ final class Bundles {
 				),
 				409
 			); }
-		$position = 1 + (int) $wpdb->get_var( $wpdb->prepare( 'SELECT MAX(position) FROM ' . self::members_table() . ' WHERE bundle_id=%d', (int) $bundle_id ) );
-		if ( $wpdb->query( $wpdb->prepare( 'INSERT IGNORE INTO ' . self::members_table() . " (bundle_id, item_type, item_id, position, created_at) VALUES (%d, 'course', %d, %d, %s)", (int) $bundle_id, (int) $course_id, $position, current_time( 'mysql', true ) ) ) === false ) {
+		$position = 1 + (int) $wpdb->get_var( $wpdb->prepare( 'SELECT MAX(position) FROM %i WHERE bundle_id=%d', self::members_table(), (int) $bundle_id ) );
+		if ( $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO %i (bundle_id, item_type, item_id, position, created_at) VALUES (%d, 'course', %d, %d, %s)", self::members_table(), (int) $bundle_id, (int) $course_id, $position, current_time( 'mysql', true ) ) ) === false ) {
 			return Access::error( 'ohmylms_bundle_failed', __( 'The course could not be added to the bundle.', 'ohmylms' ), 500 );
 		}
 		self::touch( $bundle_id );
@@ -370,7 +378,7 @@ final class Bundles {
 		$bundle = self::get( $bundle_id );
 		if ( ! $bundle ) {
 			return self::missing(); }
-		$is_member = (bool) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . self::members_table() . " WHERE bundle_id=%d AND item_type='course' AND item_id=%d", (int) $bundle_id, (int) $course_id ) );
+		$is_member = (bool) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM %i WHERE bundle_id=%d AND item_type='course' AND item_id=%d", self::members_table(), (int) $bundle_id, (int) $course_id ) );
 		if ( ! $is_member ) {
 			return true; }
 		if ( 'published' === $bundle['status'] && count( self::members( $bundle_id ) ) <= 1 ) {

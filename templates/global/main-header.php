@@ -27,7 +27,7 @@ $my_courses_url = ohmylms_get_nav_link_url( 'courses' );
 			<div class="ohmylms-header-left">
 				<?php
 				if ( get_custom_logo() ) {
-					echo get_custom_logo();
+					echo get_custom_logo(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core logo markup, escaped by WordPress.
 				} else {
 					echo '<a href="' . esc_url( home_url() ) . '" class="custom-logo-link">' . esc_html( get_bloginfo( 'name' ) ) . '</a>';
 				}

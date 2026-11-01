@@ -280,7 +280,7 @@ class ChapterStore extends DataStore {
 		';
 
 		// Execute the query using prepared statements to prevent SQL injection.
-		$wpdb->query( $wpdb->prepare( $insert_query, $values ) );
+		$wpdb->query( $wpdb->prepare( $insert_query, $values ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- One placeholder group per row is built above.
 		$this->invalidate_chapter_cache( $chapter_id );
 
 		return true;
@@ -410,7 +410,7 @@ class ChapterStore extends DataStore {
 					$post      = get_post( $lesson_id );
 
 					// check post author.
-					if ( $post && (int) $post->post_author !== (int) get_current_user_id() ) {
+					if ( $post && (int) get_current_user_id() !== (int) $post->post_author ) {
 						continue;
 					}
 				}

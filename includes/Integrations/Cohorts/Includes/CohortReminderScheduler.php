@@ -1,9 +1,4 @@
 <?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
-
-namespace OhMyLMS\Integrations\Cohorts\Includes;
-
-use OhMyLMS\I18n\RecipientLocale;
-
 /**
  * Cohort Reminder Scheduler
  * This class handles the reminder for cohort courses
@@ -12,6 +7,10 @@ use OhMyLMS\I18n\RecipientLocale;
  * @since 1.0.0
  * @author WPFunnels Team
  */
+
+namespace OhMyLMS\Integrations\Cohorts\Includes;
+
+use OhMyLMS\I18n\RecipientLocale;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -73,23 +72,20 @@ class CohortReminderScheduler {
 		if ( empty( $cohort_course_ids ) ) {
 			return;
 		}
-		$cohort_placeholders = implode( ',', array_fill( 0, count( $cohort_course_ids ), '%d' ) );
-		$sql                 = $wpdb->prepare(
-			"
-            SELECT * FROM {$wpdb->prefix}ohmylms_cohorts
-                WHERE course_id IN ($cohort_placeholders)
-                AND start_date > %s
-                AND start_date <= %s
-            ",
-			...array_merge(
-				$cohort_course_ids,
-				array(
-					date( 'Y-m-d H:i:s', $now ),
-					date( 'Y-m-d H:i:s', $target ),
+		// $now and $target are site-local timestamps, so gmdate() formats them as site-local times.
+		$cohorts = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE course_id IN (' . implode( ',', array_fill( 0, count( $cohort_course_ids ), '%d' ) ) . ') AND start_date > %s AND start_date <= %s',
+				...array_merge(
+					array( $wpdb->prefix . 'ohmylms_cohorts' ),
+					$cohort_course_ids,
+					array(
+						gmdate( 'Y-m-d H:i:s', $now ),
+						gmdate( 'Y-m-d H:i:s', $target ),
+					)
 				)
 			)
 		);
-		$cohorts             = $wpdb->get_results( $sql );
 
 		if ( empty( $cohorts ) ) {
 			return;

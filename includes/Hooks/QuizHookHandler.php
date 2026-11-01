@@ -161,22 +161,20 @@ class QuizHookHandler extends HookHandler {
 		if ( ! empty( $question_ids ) ) {
 			// Step 4: Get all answer IDs for the above question IDs.
 			$answers_table = $wpdb->prefix . 'ohmylms_question_answers';
-			$placeholders  = implode( ',', array_fill( 0, count( $question_ids ), '%d' ) );
 			$answer_ids    = $wpdb->get_col(
 				$wpdb->prepare(
-					"SELECT id FROM {$answers_table} WHERE question_id IN ($placeholders)",
-					...$question_ids
+					'SELECT id FROM %i WHERE question_id IN (' . implode( ',', array_fill( 0, count( $question_ids ), '%d' ) ) . ')',
+					array_merge( array( $answers_table ), $question_ids )
 				)
 			);
 
 			// Step 5: Delete answer meta.
 			if ( ! empty( $answer_ids ) ) {
-				$ans_meta_table    = $wpdb->prefix . 'ohmylms_question_answermeta';
-				$meta_placeholders = implode( ',', array_fill( 0, count( $answer_ids ), '%d' ) );
+				$ans_meta_table = $wpdb->prefix . 'ohmylms_question_answermeta';
 				$wpdb->query(
 					$wpdb->prepare(
-						"DELETE FROM {$ans_meta_table} WHERE answer_id IN ($meta_placeholders)",
-						...$answer_ids
+						'DELETE FROM %i WHERE answer_id IN (' . implode( ',', array_fill( 0, count( $answer_ids ), '%d' ) ) . ')',
+						array_merge( array( $ans_meta_table ), $answer_ids )
 					)
 				);
 			}
@@ -184,8 +182,8 @@ class QuizHookHandler extends HookHandler {
 			// Step 6: Delete answers (options).
 			$wpdb->query(
 				$wpdb->prepare(
-					"DELETE FROM {$answers_table} WHERE question_id IN ($placeholders)",
-					...$question_ids
+					'DELETE FROM %i WHERE question_id IN (' . implode( ',', array_fill( 0, count( $question_ids ), '%d' ) ) . ')',
+					array_merge( array( $answers_table ), $question_ids )
 				)
 			);
 		}

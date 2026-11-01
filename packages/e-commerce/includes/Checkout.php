@@ -162,7 +162,7 @@ class Checkout {
 		$locale_parts    = explode( '_', $site_locale );
 		$default_country = isset( $locale_parts[1] ) ? $locale_parts[1] : 'US';
 
-		$country = ! empty( $_POST['country'] ) ? sanitize_text_field( wp_unslash( $_POST['country'] ) ) : $default_country;
+		$country = ! empty( $_POST['country'] ) ? sanitize_text_field( wp_unslash( $_POST['country'] ) ) : $default_country; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Only selects the state list; Ajax::checkout() verifies submissions.
 		$states  = ohmylms_get_states( $country );
 
 		$fields = array(
@@ -452,7 +452,7 @@ class Checkout {
 				}
 				if ( is_wp_error( $result ) ) {
 					$message = __( 'Failed to process order due to payment.', 'ohmylms' );
-					ohmylmse_add_notice( $result->get_error_message() ?: $message, 'error', array() );
+					ohmylmse_add_notice( $result->get_error_message() ? $result->get_error_message() : $message, 'error', array() );
 					wp_trash_post( $order_id );
 					// Clean up failed order.
 					$this->send_ajax_failure_response();
@@ -987,8 +987,9 @@ class Checkout {
 	 * @since 1.0.0
 	 */
 	public function get_posted_data() {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Ajax::checkout() verifies the checkout nonce before process_checkout() calls this.
 		$data = array(
-			'payment_method' => isset( $_POST['payment_method'] ) ? wp_unslash( $_POST['payment_method'] ) : '',
+			'payment_method' => isset( $_POST['payment_method'] ) ? ohmylms_clean( wp_unslash( $_POST['payment_method'] ) ) : '',
 			'createaccount'  => (int) (bool) $this->is_registration_enabled(),
 		);
 
@@ -1004,6 +1005,7 @@ class Checkout {
 				$data[ $field_key ] = ohmylms_clean( wp_unslash( $_POST[ $field_key ] ) );
 			}
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 		return $data;
 	}
 
@@ -1038,7 +1040,7 @@ class Checkout {
 		}
 
 		if ( $errors->has_errors() ) {
-			throw new \Exception( $errors->get_error_message() );
+			throw new \Exception( $errors->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Shown as a notice through ohmylmse_kses_notice().
 		}
 	}
 
@@ -1079,7 +1081,7 @@ class Checkout {
 			);
 
 			if ( is_wp_error( $student_id ) ) {
-				throw new \Exception( $student_id->get_error_message() );
+				throw new \Exception( $student_id->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Shown as a notice through ohmylmse_kses_notice().
 			}
 
 			wp_set_current_user( $student_id );
@@ -1247,7 +1249,7 @@ class Checkout {
 
 			return $order_id;
 		} catch ( \Exception $e ) {
-			throw new \Exception( $e->getMessage() );
+			throw new \Exception( $e->getMessage() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Shown as a notice through ohmylmse_kses_notice().
 		}
 	}
 
@@ -1344,12 +1346,26 @@ class Checkout {
 				);
 
 				// Cohort membership is kept in ohmylms_cohort_members (OhMyLMS\Cohorts), not on the enrolment row.
-				$already_enrolled = (bool) $wpdb->get_var(
-					$wpdb->prepare(
-						"SELECT COUNT(*) FROM $enrollment_table WHERE user_id=%d AND course_id=%d AND status='enrolled' AND " . ( ! empty( $posted_data['membership_id'] ) ? 'membership_id=%d' : '(membership_id IS NULL OR membership_id=0)' ),
-						! empty( $posted_data['membership_id'] ) ? array( $student_id, $course_id, (int) $posted_data['membership_id'] ) : array( $student_id, $course_id )
-					)
-				);
+				if ( ! empty( $posted_data['membership_id'] ) ) {
+					$already_enrolled = (bool) $wpdb->get_var(
+						$wpdb->prepare(
+							"SELECT COUNT(*) FROM %i WHERE user_id=%d AND course_id=%d AND status='enrolled' AND membership_id=%d",
+							$enrollment_table,
+							$student_id,
+							$course_id,
+							(int) $posted_data['membership_id']
+						)
+					);
+				} else {
+					$already_enrolled = (bool) $wpdb->get_var(
+						$wpdb->prepare(
+							"SELECT COUNT(*) FROM %i WHERE user_id=%d AND course_id=%d AND status='enrolled' AND (membership_id IS NULL OR membership_id=0)",
+							$enrollment_table,
+							$student_id,
+							$course_id
+						)
+					);
+				}
 
 				if ( $course_id && ! $already_enrolled ) {
 					$existing_where = array(
@@ -1360,16 +1376,11 @@ class Checkout {
 
 					$existing_record = $wpdb->get_var(
 						$wpdb->prepare(
-							"SELECT COUNT(*) FROM $enrollment_table WHERE " . implode(
-								' AND ',
-								array_map(
-									function ( $col ) {
-										return "$col = %d";
-									},
-									array_keys( $existing_where )
-								)
-							),
-							array_values( $existing_where )
+							'SELECT COUNT(*) FROM %i WHERE user_id = %d AND course_id = %d AND order_id = %d',
+							$enrollment_table,
+							$existing_where['user_id'],
+							$existing_where['course_id'],
+							$existing_where['order_id']
 						)
 					);
 
@@ -1582,7 +1593,7 @@ class Checkout {
 	 * This function marks the order as complete and empties the cart.
 	 *
 	 * @param \OhMyLMS\Commerce\Data\Order $order The order object.
-	 * @return void
+	 * @return array
 	 * @since 1.0.0
 	 */
 	public static function process_order_without_payment( $order ) {
@@ -1607,9 +1618,10 @@ class Checkout {
 	 * @since 1.0.0
 	 */
 	public function get_value( $input ) {
-		$value = '';
-		if ( isset( $_POST[ $input ] ) ) {
-			$value = sanitize_text_field( wp_unslash( $_POST[ $input ] ) );
+		$value  = '';
+		$posted = isset( $_POST[ $input ] ) ? sanitize_text_field( wp_unslash( $_POST[ $input ] ) ) : null; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Repopulates a form field; Ajax::checkout() verifies submissions.
+		if ( null !== $posted ) {
+			$value = $posted;
 		} elseif ( is_user_logged_in() ) {
 			$user  = wp_get_current_user();
 			$value = $user->$input;

@@ -5,8 +5,6 @@
  * @package OhMyLMS
  */
 
-
-
 /**
  * Converts a string to bool
  *
@@ -235,7 +233,7 @@ function ohmylms_string_to_timestamp( $time_string, $from_timestamp = null ) {
 
 	$original_timezone = date_default_timezone_get();
 
-	date_default_timezone_set( 'UTC' );
+	date_default_timezone_set( 'UTC' ); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.timezone_change_date_default_timezone_set -- strtotime() must parse in UTC; restored below.
 
 	if ( null === $from_timestamp ) {
 		$next_timestamp = strtotime( $time_string );
@@ -243,7 +241,7 @@ function ohmylms_string_to_timestamp( $time_string, $from_timestamp = null ) {
 		$next_timestamp = strtotime( $time_string, $from_timestamp );
 	}
 
-	date_default_timezone_set( $original_timezone );
+	date_default_timezone_set( $original_timezone ); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.timezone_change_date_default_timezone_set -- Restores the original timezone.
 
 	return $next_timestamp;
 }
@@ -346,8 +344,8 @@ function ohmylms_format_datetime( $date, $format = '' ) {
  * @throws Exception When the operation cannot be completed.
  * @since 1.0.0
  */
-function ohmylms_convert_to_utc( $localDateTimeString, $localTimezone = 'Asia/Dhaka' ) {
-	$date = new DateTime( $localDateTimeString, new DateTimeZone( $localTimezone ) );
+function ohmylms_convert_to_utc( $localDateTimeString, $localTimezone = 'Asia/Dhaka' ) { // phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase -- Public parameter names kept for named-argument compatibility.
+	$date = new DateTime( $localDateTimeString, new DateTimeZone( $localTimezone ) ); // phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase -- Public parameter names kept for named-argument compatibility.
 	$date->setTimezone( new DateTimeZone( 'UTC' ) );
 	return $date->format( 'Y-m-d\TH:i:s\Z' );
 }

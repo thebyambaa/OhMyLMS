@@ -319,7 +319,7 @@ class CommonHook extends HookHandler {
 						<?php
 						$content = ob_get_clean();
 
-						wp_die( $content, 'Access Denied', array( 'response' => 403 ) );
+						wp_die( $content, 'Access Denied', array( 'response' => 403 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Template markup buffered above; its dynamic values are escaped there.
 					}
 
 					if ( $student && $student->maybe_banned() ) {
@@ -413,7 +413,7 @@ class CommonHook extends HookHandler {
 						<?php
 						$content = ob_get_clean();
 
-						wp_die( $content, 'Access Denied', array( 'response' => 403 ) );
+						wp_die( $content, 'Access Denied', array( 'response' => 403 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Template markup buffered above; its dynamic values are escaped there.
 					}
 
 					$prerequisites = null;
@@ -514,7 +514,7 @@ class CommonHook extends HookHandler {
 							<?php
 							$content = ob_get_clean();
 
-							wp_die( $content, 'Access Denied', array( 'response' => 403 ) );
+							wp_die( $content, 'Access Denied', array( 'response' => 403 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Template markup buffered above; its dynamic values are escaped there.
 					}
 
 					// Assignment prerequisites gate submitting, not reading: the assignment page lists them
@@ -631,7 +631,7 @@ class CommonHook extends HookHandler {
 							<?php
 							$content = ob_get_clean();
 
-							wp_die( $content, 'Access Denied', array( 'response' => 403 ) );
+							wp_die( $content, 'Access Denied', array( 'response' => 403 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Template markup buffered above; its dynamic values are escaped there.
 						}
 					}
 
@@ -706,7 +706,7 @@ class CommonHook extends HookHandler {
 						</style>
 						<?php
 						$content = ob_get_clean();
-						wp_die( $content, 'Content Locked', array( 'response' => 403 ) );
+						wp_die( $content, 'Content Locked', array( 'response' => 403 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Template markup buffered above; its dynamic values are escaped there.
 					}
 				}
 			}
@@ -1206,7 +1206,7 @@ class CommonHook extends HookHandler {
 		$wp_query->queried_object       = $page;
 		$wp_query->queried_object_id    = $page_id;
 
-		$post = $page;
+		$post = $page; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Deliberately points the global post at the archive's page, matching the query context above.
 		setup_postdata( $post );
 	}
 
@@ -1219,9 +1219,8 @@ class CommonHook extends HookHandler {
 	public function update_earning( $order, $data ) {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'ohmylms_earning';
-		$query      = $wpdb->prepare( 'SELECT order_id FROM %i WHERE order_id = %d', $table_name, $order->get_id() );
 		// Execute the query and return the result.
-		$result        = $wpdb->get_row( $query, ARRAY_A );
+		$result        = $wpdb->get_row( $wpdb->prepare( 'SELECT order_id FROM %i WHERE order_id = %d', $table_name, $order->get_id() ), ARRAY_A );
 		$membership_id = null;
 		$course_id     = null;
 		$status        = $order->get_status();
@@ -1274,15 +1273,15 @@ class CommonHook extends HookHandler {
 	 * @since 1.0.0
 	 */
 	public function maybe_allowed_webhook( $is_allowed ) {
-		$queryString     = 'mailmint=1&route=webhook&topic=contact&hash=f9fcd11c-fde8-4c7f-9810-0ebb02d2740e';
-		$userQueryString = $_SERVER['QUERY_STRING'] ?? '';
+		$query_string      = 'mailmint=1&route=webhook&topic=contact&hash=f9fcd11c-fde8-4c7f-9810-0ebb02d2740e';
+		$user_query_string = isset( $_SERVER['QUERY_STRING'] ) ? wp_unslash( $_SERVER['QUERY_STRING'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Only compared for exact equality with the constant above.
 
-		if ( $queryString !== $userQueryString ) {
+		if ( $query_string !== $user_query_string ) {
 			return true;
 		}
 
-		$userAgent         = $_SERVER['HTTP_USER_AGENT'] ?? '';
-		$allowedUserAgents = array(
+		$user_agent          = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
+		$allowed_user_agents = array(
 			'Mozilla', // Covers Firefox.
 			'Chrome',  // Covers Chrome.
 			'Safari',  // Covers Safari.
@@ -1291,8 +1290,8 @@ class CommonHook extends HookHandler {
 			'WordPress',
 		);
 
-		foreach ( $allowedUserAgents as $allowedUserAgent ) {
-			if ( stripos( $userAgent, $allowedUserAgent ) !== false ) {
+		foreach ( $allowed_user_agents as $allowed_user_agent ) {
+			if ( stripos( $user_agent, $allowed_user_agent ) !== false ) {
 					return true;
 			}
 		}
@@ -1305,7 +1304,7 @@ class CommonHook extends HookHandler {
 	 *
 	 * @param mixed $data Input data.
 	 */
-	function create_contact_on_mm_from_appsero_optin( $data ) {
+	public function create_contact_on_mm_from_appsero_optin( $data ) {
 		if ( isset( $data['admin_email'], $data['first_name'], $data['last_name'] ) ) {
 			$json_body_data = wp_json_encode(
 				array(
@@ -1315,13 +1314,13 @@ class CommonHook extends HookHandler {
 				)
 			);
 
-			$webHookUrl = array(
+			$web_hook_url = array(
 				'https://staging-useraccount.kinsta.cloud/?mailmint=1&route=webhook&topic=contact&hash=b258136d-6759-4e91-bbab-0b7397af6dc7',
 			);
 
 			try {
-				if ( ! empty( $webHookUrl ) ) {
-					foreach ( $webHookUrl as $url ) {
+				if ( ! empty( $web_hook_url ) ) {
+					foreach ( $web_hook_url as $url ) {
 						wp_remote_request(
 							$url,
 							array(
@@ -1362,7 +1361,7 @@ class CommonHook extends HookHandler {
 	 * Set users last login
 	 *
 	 * @param mixed  $user_login User login.
-	 * @param object $user
+	 * @param object $user User object.
 	 * .
 	 * @return void
 	 *
@@ -1647,7 +1646,10 @@ class CommonHook extends HookHandler {
 		$token  = sanitize_text_field( wp_unslash( $_GET['ohmylms_verify_email'] ) );
 		$result = \OhMyLMS\Services\EmailVerificationService::verify_token_detailed( $token );
 
-		$dashboard_url = ohmylms_get_dashboard_url() ?: home_url( '/' );
+		$dashboard_url = ohmylms_get_dashboard_url();
+		if ( ! $dashboard_url ) {
+			$dashboard_url = home_url( '/' );
+		}
 
 		if ( 'verified' === $result['status'] ) {
 			// Auto-login the user if not already logged in.
@@ -2006,7 +2008,7 @@ class CommonHook extends HookHandler {
 										<?php
 										$content = ob_get_clean();
 
-										wp_die( $content, 'Access Denied', array( 'response' => 403 ) );
+										wp_die( $content, 'Access Denied', array( 'response' => 403 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Template markup buffered above; its dynamic values are escaped there.
 									}
 								} elseif ( $current_date < $drip_date ) {
 									// If current date is earlier than the drip feed date.
@@ -2103,7 +2105,7 @@ class CommonHook extends HookHandler {
 										<?php
 										$content = ob_get_clean();
 
-										wp_die( $content, 'Access Denied', array( 'response' => 403 ) );
+										wp_die( $content, 'Access Denied', array( 'response' => 403 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Template markup buffered above; its dynamic values are escaped there.
 								}
 							} elseif ( 'enrollment-from-x-days' === $drip_feed['type'] ) {
 								$days = ! empty( $drip_feed['enrollment_from_x_days'] ) ? $drip_feed['enrollment_from_x_days'] : 0;
@@ -2218,7 +2220,7 @@ class CommonHook extends HookHandler {
 										<?php
 										$content = ob_get_clean();
 
-										wp_die( $content, 'Access Denied', array( 'response' => 403 ) );
+										wp_die( $content, 'Access Denied', array( 'response' => 403 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Template markup buffered above; its dynamic values are escaped there.
 									}
 								}
 							} elseif ( 'course-content-sequentially' === $drip_feed['type'] ) {
@@ -2325,7 +2327,7 @@ class CommonHook extends HookHandler {
 										<?php
 										$content = ob_get_clean();
 
-										wp_die( $content, 'Access Denied', array( 'response' => 403 ) );
+										wp_die( $content, 'Access Denied', array( 'response' => 403 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Template markup buffered above; its dynamic values are escaped there.
 									}
 								}
 							}

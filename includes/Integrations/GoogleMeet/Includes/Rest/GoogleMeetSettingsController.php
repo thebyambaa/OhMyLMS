@@ -436,7 +436,7 @@ class GoogleMeetSettingsController extends WP_REST_Controller {
 		$start    = $request->get_param( 'start' );
 		$end      = $request->get_param( 'end' );
 		$desc     = $request->get_param( 'description' );
-		$timezone = $request->get_param( 'timezone' ) ?: 'UTC';
+		$timezone = $request->get_param( 'timezone' ) ? $request->get_param( 'timezone' ) : 'UTC';
 
 		$event_data = array(
 			'summary'        => $title,
@@ -521,7 +521,7 @@ class GoogleMeetSettingsController extends WP_REST_Controller {
 		) as $param => $field ) {
 			if ( $request->get_param( $param ) ) {
 				if ( in_array( $param, array( 'start', 'end' ), true ) ) {
-					$timezone       = $request->get_param( 'timezone' ) ?: 'UTC';
+					$timezone       = $request->get_param( 'timezone' ) ? $request->get_param( 'timezone' ) : 'UTC';
 					$data[ $field ] = array(
 						'dateTime' => $request->get_param( $param ),
 						'timeZone' => $timezone,

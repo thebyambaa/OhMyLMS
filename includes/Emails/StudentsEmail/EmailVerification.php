@@ -69,7 +69,7 @@ class EmailVerification {
 
 		$message = $this->get_template(
 			array(
-				'user_name'      => $user->display_name ?: $user->user_login,
+				'user_name'      => $user->display_name ? $user->display_name : $user->user_login,
 				'verify_url'     => $verify_url,
 				'site_name'      => $site_name,
 				'email_settings' => $email_settings,

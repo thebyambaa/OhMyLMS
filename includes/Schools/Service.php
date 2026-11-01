@@ -31,7 +31,7 @@ final class Service {
 	 */
 	public static function need( $value, $message ) {
 		if ( ! $value ) {
-			throw new \RuntimeException( $message, 400 ); }
+			throw new \RuntimeException( $message, 400 ); } // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Plain-text message returned as REST error data.
 	}
 	/**
 	 * Insert for Service.
@@ -98,13 +98,11 @@ final class Service {
 	 */
 	public static function membership( $table, array $key, $active = true ) {
 		global $wpdb;
-		$name    = Schema::table( $table );
-		$clauses = array();
-		$values  = array();
+		$values = array();
 		foreach ( $key as $column => $value ) {
-			$clauses[] = "$column=%s";
-			$values[]  = $value; }
-		$id   = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $name WHERE " . implode( ' AND ', $clauses ), $values ) );
+			$values[] = $column;
+			$values[] = $value; }
+		$id   = $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE ' . implode( ' AND ', array_fill( 0, count( $key ), '%i=%s' ) ), array_merge( array( Schema::table( $table ) ), $values ) ) );
 		$data = array( 'status' => $active ? 'active' : 'inactive' );
 		if ( $id ) {
 			self::update( $table, $data, array( 'id' => $id ) );
@@ -116,6 +114,7 @@ final class Service {
 	 * Transaction for Service.
 	 *
 	 * @param mixed $callback Callback to invoke.
+	 * @throws \Throwable When the callback fails; the transaction is rolled back first.
 	 */
 	public static function transaction( $callback ) {
 		global $wpdb;
@@ -134,10 +133,12 @@ final class Service {
 	 */
 	public static function schools( $page = 1 ) {
 		global $wpdb;
-		$s     = Schema::table( 'schools' );
-		$m     = Schema::table( 'school_memberships' );
-		$where = Access::platform() ? '1=1' : $wpdb->prepare( 's.status=\'active\' AND EXISTS (SELECT 1 FROM %i m WHERE m.school_id=s.id AND m.user_id=%d AND m.status=\'active\')', $m, get_current_user_id() );
-		return $wpdb->get_results( $wpdb->prepare( "SELECT s.* FROM $s s WHERE $where ORDER BY s.name LIMIT 50 OFFSET %d", ( max( 1, $page ) - 1 ) * 50 ), ARRAY_A );
+		$s = Schema::table( 'schools' );
+		$m = Schema::table( 'school_memberships' );
+		if ( Access::platform() ) {
+			return $wpdb->get_results( $wpdb->prepare( 'SELECT s.* FROM %i s WHERE 1=1 ORDER BY s.name LIMIT 50 OFFSET %d', $s, ( max( 1, $page ) - 1 ) * 50 ), ARRAY_A );
+		}
+		return $wpdb->get_results( $wpdb->prepare( "SELECT s.* FROM %i s WHERE s.status='active' AND EXISTS (SELECT 1 FROM %i m WHERE m.school_id=s.id AND m.user_id=%d AND m.status='active') ORDER BY s.name LIMIT 50 OFFSET %d", $s, $m, get_current_user_id(), ( max( 1, $page ) - 1 ) * 50 ), ARRAY_A );
 	}
 	/**
 	 * Create school for Service.
@@ -260,8 +261,10 @@ final class Service {
 		$c     = Schema::table( 'classes' );
 		$m     = Schema::table( 'class_memberships' );
 		$audit = Schema::table( 'school_audit_log' );
-		$scope = ( $school ? Access::school( $school ) : Access::platform() ) ? '' : $wpdb->prepare( ' AND EXISTS (SELECT 1 FROM %i m WHERE m.class_id=c.id AND m.user_id=%d AND m.status=\'active\')', $m, get_current_user_id() );
-		return $wpdb->get_results( $wpdb->prepare( "SELECT c.*,(SELECT MIN(a.created_at) FROM $audit a WHERE a.action='class_created' AND a.object_id=c.id) AS created_at FROM $c c WHERE c.school_id=%d $scope ORDER BY c.id DESC LIMIT 50 OFFSET %d", $school, ( max( 1, $page ) - 1 ) * 50 ), ARRAY_A );
+		if ( $school ? Access::school( $school ) : Access::platform() ) {
+			return $wpdb->get_results( $wpdb->prepare( "SELECT c.*,(SELECT MIN(a.created_at) FROM %i a WHERE a.action='class_created' AND a.object_id=c.id) AS created_at FROM %i c WHERE c.school_id=%d ORDER BY c.id DESC LIMIT 50 OFFSET %d", $audit, $c, $school, ( max( 1, $page ) - 1 ) * 50 ), ARRAY_A );
+		}
+		return $wpdb->get_results( $wpdb->prepare( "SELECT c.*,(SELECT MIN(a.created_at) FROM %i a WHERE a.action='class_created' AND a.object_id=c.id) AS created_at FROM %i c WHERE c.school_id=%d AND EXISTS (SELECT 1 FROM %i m WHERE m.class_id=c.id AND m.user_id=%d AND m.status='active') ORDER BY c.id DESC LIMIT 50 OFFSET %d", $audit, $c, $school, $m, get_current_user_id(), ( max( 1, $page ) - 1 ) * 50 ), ARRAY_A );
 	}
 	/**
 	 * Create class for Service.
@@ -329,12 +332,14 @@ final class Service {
 			$like = '%' . $wpdb->esc_like( $search ) . '%';
 			return $wpdb->get_results( $wpdb->prepare( 'SELECT m.id,m.user_id,m.role,m.status,u.display_name,u.user_login FROM %i m JOIN %i u ON u.ID=m.user_id WHERE m.class_id=%d AND m.status=\'active\' AND u.display_name LIKE %s ORDER BY u.display_name,m.id LIMIT 50 OFFSET %d', $c, $wpdb->users, $class, $like, ( max( 1, $page ) - 1 ) * 50 ), ARRAY_A );
 		}
-		$m     = Schema::table( 'school_memberships' );
-		$c     = Schema::table( 'class_memberships' );
-		$p     = Schema::table( 'school_student_profiles' );
-		$scope = $class ? $wpdb->prepare( ' AND EXISTS (SELECT 1 FROM %i cm WHERE cm.class_id=%d AND cm.user_id=m.user_id AND cm.role=m.role AND cm.status=\'active\')', $c, $class ) : '';
-		$like  = '%' . $wpdb->esc_like( $search ) . '%';
-		return $wpdb->get_results( $wpdb->prepare( "SELECT m.id,m.user_id,m.role,m.status,u.display_name,u.user_login,p.external_student_id FROM $m m JOIN {$wpdb->users} u ON u.ID=m.user_id LEFT JOIN $p p ON p.school_id=m.school_id AND p.user_id=m.user_id WHERE m.school_id=%d AND m.status='active' $scope AND (u.display_name LIKE %s OR p.external_student_id LIKE %s) ORDER BY u.display_name,m.id LIMIT 50 OFFSET %d", $school, $like, $like, ( max( 1, $page ) - 1 ) * 50 ), ARRAY_A );
+		$m    = Schema::table( 'school_memberships' );
+		$c    = Schema::table( 'class_memberships' );
+		$p    = Schema::table( 'school_student_profiles' );
+		$like = '%' . $wpdb->esc_like( $search ) . '%';
+		if ( $class ) {
+			return $wpdb->get_results( $wpdb->prepare( "SELECT m.id,m.user_id,m.role,m.status,u.display_name,u.user_login,p.external_student_id FROM %i m JOIN {$wpdb->users} u ON u.ID=m.user_id LEFT JOIN %i p ON p.school_id=m.school_id AND p.user_id=m.user_id WHERE m.school_id=%d AND m.status='active' AND EXISTS (SELECT 1 FROM %i cm WHERE cm.class_id=%d AND cm.user_id=m.user_id AND cm.role=m.role AND cm.status='active') AND (u.display_name LIKE %s OR p.external_student_id LIKE %s) ORDER BY u.display_name,m.id LIMIT 50 OFFSET %d", $m, $p, $school, $c, $class, $like, $like, ( max( 1, $page ) - 1 ) * 50 ), ARRAY_A );
+		}
+		return $wpdb->get_results( $wpdb->prepare( "SELECT m.id,m.user_id,m.role,m.status,u.display_name,u.user_login,p.external_student_id FROM %i m JOIN {$wpdb->users} u ON u.ID=m.user_id LEFT JOIN %i p ON p.school_id=m.school_id AND p.user_id=m.user_id WHERE m.school_id=%d AND m.status='active' AND (u.display_name LIKE %s OR p.external_student_id LIKE %s) ORDER BY u.display_name,m.id LIMIT 50 OFFSET %d", $m, $p, $school, $like, $like, ( max( 1, $page ) - 1 ) * 50 ), ARRAY_A );
 	}
 	/**
 	 * Class member for Service.
@@ -376,7 +381,7 @@ final class Service {
 		Access::require_access( Access::school( $school ) );
 		$record = self::row( 'school_memberships', $id );
 		self::need( $record && (int) $record['school_id'] === $school, 'Membership not found.' );
-		self::need( (int) $record['user_id'] !== get_current_user_id() || Access::platform(), 'Ask another administrator to remove your membership.' );
+		self::need( get_current_user_id() !== (int) $record['user_id'] || Access::platform(), 'Ask another administrator to remove your membership.' );
 		self::transaction(
 			function () use ( $school, $id, $record, $wpdb ) {
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Share the departure lock and recheck authority after waiting for it.
@@ -433,7 +438,7 @@ final class Service {
 			)
 		);
 		if ( is_wp_error( $id ) ) {
-			throw new \RuntimeException( $id->get_error_message(), 400 ); }
+			throw new \RuntimeException( $id->get_error_message(), 400 ); } // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Plain-text message returned as REST error data.
 		try {
 			self::transaction(
 				function () use ( $school, $id, $external ) {
@@ -747,7 +752,9 @@ final class Service {
 				$due    = ( new \DateTimeImmutable( $data['due_at'], new \DateTimeZone( $school['timezone'] ) ) )->setTimezone( new \DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' ); } catch ( \Exception $error ) {
 				throw new \RuntimeException( 'Invalid due date.', 400 ); }
 		}
-		$title = self::text( $data['title'] ?? '' ) ?: get_the_title( $content ?: $course_id );
+		$title = self::text( $data['title'] ?? '' );
+		if ( ! $title ) {
+			$title = get_the_title( $content ? $content : $course_id ); }
 		return self::transaction(
 			function () use ( $record, $class, $course_id, $content, $due, $title, $users, $data ) {
 				$id = self::insert(
@@ -807,7 +814,7 @@ final class Service {
 			$scope = $wpdb->prepare( 'a.class_id=%d', $class );
 		} else {
 			$student = $student ? $student : get_current_user_id();
-			Access::require_access( $student === get_current_user_id() || ( $school && Access::guardian( $school, $student ) ) );
+			Access::require_access( get_current_user_id() === $student || ( $school && Access::guardian( $school, $student ) ) );
 			$scope = $wpdb->prepare( 'r.student_user_id=%d', $student );
 			if ( $school ) {
 				$scope .= $wpdb->prepare( ' AND a.school_id=%d', $school ); }
@@ -815,7 +822,20 @@ final class Service {
 		if ( $filter_class ) {
 			$scope .= $wpdb->prepare( ' AND a.class_id=%d', $filter_class ); }
 		// Report only distributed school work and current memberships; never global student history.
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT a.id,a.title,a.course_id,a.content_id,a.due_at,a.created_at,a.class_id,c.name AS class_name,a.school_id,r.student_user_id,u.display_name AS student_name,r.completed_at FROM $a a JOIN $r r ON r.assignment_id=a.id JOIN $c c ON c.id=a.class_id JOIN $s s ON s.id=a.school_id AND s.status='active' JOIN {$wpdb->users} u ON u.ID=r.student_user_id JOIN $sm sm ON sm.school_id=a.school_id AND sm.user_id=r.student_user_id AND sm.role='student' AND sm.status='active' JOIN $cm cm ON cm.class_id=a.class_id AND cm.user_id=r.student_user_id AND cm.role='student' AND cm.status='active' WHERE a.status='active' AND $scope ORDER BY a.id DESC,r.student_user_id LIMIT 50 OFFSET %d", ( max( 1, $page ) - 1 ) * 50 ), ARRAY_A );
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $scope holds only fragments built with $wpdb->prepare() above.
+				"SELECT a.id,a.title,a.course_id,a.content_id,a.due_at,a.created_at,a.class_id,c.name AS class_name,a.school_id,r.student_user_id,u.display_name AS student_name,r.completed_at FROM %i a JOIN %i r ON r.assignment_id=a.id JOIN %i c ON c.id=a.class_id JOIN %i s ON s.id=a.school_id AND s.status='active' JOIN {$wpdb->users} u ON u.ID=r.student_user_id JOIN %i sm ON sm.school_id=a.school_id AND sm.user_id=r.student_user_id AND sm.role='student' AND sm.status='active' JOIN %i cm ON cm.class_id=a.class_id AND cm.user_id=r.student_user_id AND cm.role='student' AND cm.status='active' WHERE a.status='active' AND $scope ORDER BY a.id DESC,r.student_user_id LIMIT 50 OFFSET %d",
+				$a,
+				$r,
+				$c,
+				$s,
+				$sm,
+				$cm,
+				( max( 1, $page ) - 1 ) * 50
+			),
+			ARRAY_A
+		);
 		foreach ( $rows as &$row ) {
 			$row['url'] = get_permalink( $row['content_id'] ? $row['content_id'] : $row['course_id'] ); }
 		return $rows;
@@ -960,7 +980,7 @@ final class Service {
 		[$learning, $attempt] = self::submission_scope( $learning_id, $attempt_id );
 		$total                = (int) get_post_meta( $attempt['assignment_id'], '_total_points', true );
 		$score                = $data['score'] ?? null;
-		self::need( is_numeric( $score ) && (float) $score === (float) (int) $score && 0 <= $score && $score <= $total, 'Score must be a whole number between zero and the total points.' );
+		self::need( is_numeric( $score ) && (float) (int) $score === (float) $score && 0 <= $score && $score <= $total, 'Score must be a whole number between zero and the total points.' );
 		// Reuse the existing grading/completion pipeline with only the verified attempt ID.
 		$request = new \WP_REST_Request( 'POST' );
 		$request->set_url_params(
@@ -1026,7 +1046,7 @@ final class Service {
 		while ( ( $values = fgetcsv( $stream ) ) !== false ) {
 			++$line;
 			self::need( 201 >= $line, 'Import up to 200 students at a time.' );
-			if ( $values === array( null ) ) {
+			if ( array( null ) === $values ) {
 				continue; }
 			$result = array( 'line' => $line );
 			try {

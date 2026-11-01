@@ -242,7 +242,7 @@ class SkillReportController extends RestController {
 		$student = (int) $request['student'];
 		if ( ! is_user_logged_in() ) {
 			return new WP_Error( 'ohmylms_forbidden', __( 'Sign in to view skills.', 'ohmylms' ), array( 'status' => rest_authorization_required_code() ) ); }
-		if ( $student === get_current_user_id() || current_user_can( 'manage_options' ) ) {
+		if ( get_current_user_id() === $student || current_user_can( 'manage_options' ) ) {
 			return 'full'; }
 		// Guardians and teachers see a learner only through an explicit school relationship.
 		$school = (int) $request['school_id'];
@@ -409,7 +409,7 @@ class SkillReportController extends RestController {
 		if ( ! is_user_logged_in() ) {
 			return new WP_Error( 'ohmylms_forbidden', __( 'Sign in to set your exam.', 'ohmylms' ), array( 'status' => rest_authorization_required_code() ) );
 		}
-		return (int) $request['student'] === get_current_user_id() || current_user_can( 'manage_options' ) ? true : new WP_Error( 'ohmylms_forbidden', __( 'Only the learner can set their exam.', 'ohmylms' ), array( 'status' => 403 ) );
+		return get_current_user_id() === (int) $request['student'] || current_user_can( 'manage_options' ) ? true : new WP_Error( 'ohmylms_forbidden', __( 'Only the learner can set their exam.', 'ohmylms' ), array( 'status' => 403 ) );
 	}
 
 	/**
@@ -489,7 +489,7 @@ class SkillReportController extends RestController {
 		$access = $this->student_access( $request );
 		if ( is_wp_error( $access ) ) {
 			return $access; }
-		$own = (int) $request['student'] === get_current_user_id();
+		$own = get_current_user_id() === (int) $request['student'];
 		if ( 'full' !== $access || ( 'student' === $request['audience'] ) !== $own ) {
 			return new WP_Error( 'ohmylms_forbidden', __( 'You cannot ask for this note.', 'ohmylms' ), array( 'status' => 403 ) ); }
 		return true;

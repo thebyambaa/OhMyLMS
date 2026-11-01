@@ -48,7 +48,7 @@ class OhMyLMS_Gateway_Offline extends PaymentGateway {
 	public function payment_fields() {
 		$description = $this->get_description();
 		if ( $description ) {
-			echo wpautop( wp_kses_post( $description ) );
+			echo wp_kses_post( wpautop( $description ) );
 		}
 	}
 

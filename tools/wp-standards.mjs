@@ -4,7 +4,10 @@ import { spawnSync } from 'node:child_process';
 import { phpBinary } from './php-binary.mjs';
 
 try {
-	const command = process.argv[ 2 ] === 'fix' ? 'phpcbf' : 'phpcs';
+	// Usage: wp-standards.mjs [check|fix] [phpcs arguments...]
+	const fix = process.argv[ 2 ] === 'fix';
+	const named = fix || process.argv[ 2 ] === 'check';
+	const command = fix ? 'phpcbf' : 'phpcs';
 	const checker = path.resolve(
 		'tools/coding-standards/vendor/bin',
 		command
@@ -34,7 +37,7 @@ try {
 			...args,
 			checker,
 			'--standard=phpcs.xml.dist',
-			...process.argv.slice( 3 ),
+			...process.argv.slice( named ? 3 : 2 ),
 		],
 		{ stdio: 'inherit', windowsHide: true }
 	);

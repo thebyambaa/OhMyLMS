@@ -56,26 +56,18 @@ class ChapterFactory {
 		// Check if input is false and post is set.
 		if ( false === $chapter && isset( $post, $post->ID ) && OHMYLMS_CHAPTER_CPT === get_post_type( $post->ID ) ) {
 			return absint( $post->ID );
-		}
-
-		// If input is numeric, check if chapter exists.
-		elseif ( is_numeric( $chapter ) ) {
+		} elseif ( is_numeric( $chapter ) ) {
+			// If input is numeric, check if chapter exists.
 			return $this->is_chapter_exist( $chapter ) ? $chapter : false;
-		}
-
-		// If input is an instance of Chapter.
-		elseif ( $chapter instanceof Chapter ) {
+		} elseif ( $chapter instanceof Chapter ) {
+			// If input is an instance of Chapter.
 			$id = $chapter->get_id();
 			return $this->is_chapter_exist( $id ) ? $id : false;
-		}
-
-		// If input contains a valid ID property.
-		elseif ( ! empty( $chapter->ID ) ) {
+		} elseif ( ! empty( $chapter->ID ) ) {
+			// If input contains a valid ID property.
 			return $this->is_chapter_exist( $chapter->ID ) ? $chapter->ID : false;
-		}
-
-		// Otherwise, return false.
-		else {
+		} else {
+			// Otherwise, return false.
 			return false;
 		}
 	}

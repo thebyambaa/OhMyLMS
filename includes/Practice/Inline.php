@@ -35,7 +35,7 @@ final class Inline {
 			array(
 				'label'  => __( 'Question check', 'ohmylms' ),
 				'render' => static function ( $data ) {
-					echo self::render( (string) ( $data['uuid'] ?? '' ) );
+					echo self::render( (string) ( $data['uuid'] ?? '' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- render() escapes its own markup.
 				},
 			)
 		);
@@ -139,11 +139,11 @@ final class Inline {
 			if ( $preview ) {
 				?>
 				<p class="ohmylms-inline-check-preview"><?php esc_html_e( 'Preview — this version is not approved, so answers are not recorded for learners.', 'ohmylms' ); ?></p><?php } ?>
-			<p class="ohmylms-inline-check-question"><?php echo \OhMyLMS\Assessment\InlineBlanks::render( $view, array( 'id' => 0 ) ); ?></p>
+			<p class="ohmylms-inline-check-question"><?php echo \OhMyLMS\Assessment\InlineBlanks::render( $view, array( 'id' => 0 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted learner-safe renderer escapes values. ?></p>
 			<?php
 			if ( '' !== $view['description'] ) {
 				?>
-				<div class="ohmylms-inline-check-body"><?php echo apply_filters( 'the_content', $view['description'] ); ?></div><?php } ?>
+				<div class="ohmylms-inline-check-body"><?php echo apply_filters( 'the_content', $view['description'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core content filter output. ?></div><?php } ?>
 			<?php
 			if ( $view['image_src'] ) {
 				?>
@@ -265,10 +265,11 @@ final class Inline {
 		$table  = Schema::table( 'practice_sessions' );
 		$column = ! empty( $owner['student_id'] ) ? 'student_id' : 'guest_id';
 		$value  = (int) ( $owner['student_id'] ?? $owner['guest_id'] );
-		$sql    = 'guest_id' === $column
-			? "SELECT uuid FROM $table WHERE mode='inline' AND lesson_id=%d AND guest_id=%d AND student_id=0 ORDER BY id DESC LIMIT 1"
-			: "SELECT uuid FROM $table WHERE mode='inline' AND lesson_id=%d AND student_id=%d ORDER BY id DESC LIMIT 1";
-		$uuid   = $wpdb->get_var( $wpdb->prepare( $sql, (int) $lesson_id, $value ) );
+		if ( 'guest_id' === $column ) {
+			$uuid = $wpdb->get_var( $wpdb->prepare( "SELECT uuid FROM %i WHERE mode='inline' AND lesson_id=%d AND guest_id=%d AND student_id=0 ORDER BY id DESC LIMIT 1", $table, (int) $lesson_id, $value ) );
+		} else {
+			$uuid = $wpdb->get_var( $wpdb->prepare( "SELECT uuid FROM %i WHERE mode='inline' AND lesson_id=%d AND student_id=%d ORDER BY id DESC LIMIT 1", $table, (int) $lesson_id, $value ) );
+		}
 		if ( ! $uuid ) {
 			$mapping = SkillMap::for_version( $version_id );
 			$uuid    = wp_generate_uuid4();
@@ -308,11 +309,12 @@ final class Inline {
 	 * Client config for Inline.
 	 */
 	public static function client_config() {
+		$permalink = get_permalink();
 		return array(
 			'root'        => esc_url_raw( rest_url( 'ohmylms/v1/' ) ),
 			'nonce'       => is_user_logged_in() ? wp_create_nonce( 'wp_rest' ) : '',
 			'loggedIn'    => is_user_logged_in(),
-			'loginUrl'    => wp_login_url( get_permalink() ?: home_url( '/' ) ),
+			'loginUrl'    => wp_login_url( $permalink ? $permalink : home_url( '/' ) ),
 			'registerUrl' => get_option( 'users_can_register' ) ? wp_registration_url() : '',
 			'i18n'        => array(
 				'correct'     => __( 'Correct!', 'ohmylms' ),

@@ -53,7 +53,7 @@ final class Review {
 				static function () use ( $wpdb, $quiz_id, $attempt_id, $marks, $reviewer, $reason, $rubrics, &$changed ) {
 					$attempt = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id=%d AND quiz_id=%d FOR UPDATE', $wpdb->prefix . 'ohmylms_quiz_attempts', $attempt_id, $quiz_id ), ARRAY_A );
 					if ( ! $attempt || ! in_array( $attempt['status'], array( 'in-review', 'completed' ), true ) ) {
-						throw new ErrorException( new \WP_Error( 'quiz_attempt', 'Submitted attempt unavailable.', array( 'status' => 409 ) ) );
+						throw new ErrorException( new \WP_Error( 'quiz_attempt', 'Submitted attempt unavailable.', array( 'status' => 409 ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Carries a WP_Error out of the transaction; never output.
 					}
 					$rows        = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE quiz_attempt_id=%d', $wpdb->prefix . 'ohmylms_quiz_attempts_answers', $attempt_id ), ARRAY_A );
 					$by_question = array_column( $rows, null, 'question_id' );
@@ -61,7 +61,7 @@ final class Review {
 						// Structured questions may be marked per part: [part_id => marks].
 						$sum = is_array( $mark ) ? array_sum( array_map( 'floatval', array_filter( $mark, 'is_numeric' ) ) ) : $mark;
 						if ( ! isset( $by_question[ $id ] ) || ! is_numeric( $sum ) || ! is_finite( (float) $sum ) || $sum < 0 || $sum > $by_question[ $id ]['question_marks'] + 0.00005 || ( is_array( $mark ) && count( array_filter( $mark, 'is_numeric' ) ) !== count( $mark ) ) ) {
-							throw new ErrorException( new \WP_Error( 'quiz_marks', 'Invalid question or marks.', array( 'status' => 422 ) ) );
+							throw new ErrorException( new \WP_Error( 'quiz_marks', 'Invalid question or marks.', array( 'status' => 422 ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Carries a WP_Error out of the transaction; never output.
 						}
 					}
 					$context = AttemptItems::context( $attempt_id );
@@ -92,7 +92,7 @@ final class Review {
 								if ( $version && in_array( $version['type'], array( 'structured', 'passage' ), true ) ) {
 									$distribution = self::distribute_parts( $attempt_id, $item, ( AttemptItems::snapshot( $item ) ? AttemptItems::snapshot( $item )->get_settings() : array() ), $marks[ $id ], (float) $row['question_marks'], $policy );
 									if ( is_wp_error( $distribution ) ) {
-										throw new ErrorException( $distribution );
+										throw new ErrorException( $distribution ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Carries a WP_Error out of the transaction; never output.
 									}
 									$part_marks   = $distribution['parts'];
 									$marks[ $id ] = $distribution['total'];
@@ -132,7 +132,8 @@ final class Review {
 									),
 									array( 'id' => (int) $item['id'] )
 								);
-								$weights = \OhMyLMS\Assessment\Structured::weights( json_decode( VersionPublisher::version( $item['version_id'] )['settings'], true ) ?: array() );
+								$settings = json_decode( VersionPublisher::version( $item['version_id'] )['settings'], true );
+								$weights  = \OhMyLMS\Assessment\Structured::weights( $settings ? $settings : array() );
 								foreach ( $part_marks as $part_id => $awarded ) {
 									$current = self::current_part( $attempt_id, (int) $item['id'], $part_id );
 									if ( $current && abs( (float) $current['awarded'] - $awarded ) < 0.00005 && 'manual' === $current['grader'] ) {
@@ -302,7 +303,8 @@ final class Review {
 	 */
 	private static function current_part( $attempt_id, $item_id, $part_id ) {
 		global $wpdb;
-		return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE source_type=\'quiz\' AND source_id=%d AND item_id=%d AND part_id=%s AND superseded_by=0 ORDER BY id DESC LIMIT 1', Schema::table( 'grade_events' ), $attempt_id, $item_id, (string) $part_id ), ARRAY_A ) ?: null;
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE source_type=\'quiz\' AND source_id=%d AND item_id=%d AND part_id=%s AND superseded_by=0 ORDER BY id DESC LIMIT 1', Schema::table( 'grade_events' ), $attempt_id, $item_id, (string) $part_id ), ARRAY_A );
+		return $row ? $row : null;
 	}
 
 	/**

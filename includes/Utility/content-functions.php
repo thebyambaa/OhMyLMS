@@ -5,7 +5,6 @@
  * @package OhMyLMS
  */
 
-
 /**
  * Modify the permalink structure for lessons.
  *
@@ -177,8 +176,7 @@ function ohmylms_get_chapter_id_by_content_id( $content_id ) {
  */
 function ohmylms_get_content_type_id_by_content_id( $content_id ) {
 	global $wpdb;
-	$sql    = $wpdb->prepare( 'SELECT content_type FROM %i WHERE content_id = %d LIMIT 1', $wpdb->prefix . 'ohmylms_content_relationship', $content_id );
-	$result = $wpdb->get_row( $sql );
+	$result = $wpdb->get_row( $wpdb->prepare( 'SELECT content_type FROM %i WHERE content_id = %d LIMIT 1', $wpdb->prefix . 'ohmylms_content_relationship', $content_id ) );
 	return isset( $result->content_type ) ? $result->content_type : null;
 }
 

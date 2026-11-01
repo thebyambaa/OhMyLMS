@@ -407,7 +407,7 @@ class BuyNowElement extends Element {
 		}
 
 		$this->set_attribute( '_root', 'class', 'ohmylms-buy-now ' . esc_attr( $settings['class'] ) );
-		echo '<div ' . $this->render_attributes( '_root' ) . '>';
+		echo '<div ' . $this->render_attributes( '_root' ) . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Bricks render_attributes() escapes the attributes.
 		echo do_shortcode(
 			sprintf(
 				'[ohmylms_buy_now course_id="%s" btn_text="%s" class="%s" background="%s" color="%s" padding="%s" border_radius="%s" font_size="%s" text_decoration="%s" line_height="%s" width="%s" max_width="%s" min_width="%s" height="%s" display="%s" vertical_align="%s" margin="%s" box_sizing="%s"]',

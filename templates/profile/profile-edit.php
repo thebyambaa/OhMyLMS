@@ -264,14 +264,14 @@ $student_profile_photo = $profile_images['avatar'];
 							<?php
 							$links = $student->get_social_links(); // We'll need to implement this method.
 							if ( ! empty( $links ) && is_array( $links ) ) {
-								foreach ( $links as $index => $link ) {
+								foreach ( $links as $index => $social_link ) {
 									?>
 									<div class="ohmylms-dynamic-field-row ohmylms-link-row">
 										<span class="ohmylms-input-wrapper ohmylms-link-label">
-											<input type="text" name="link_labels[]" placeholder="<?php echo esc_attr( 'Label (e.g., LinkedIn, Facebook)', 'ohmylms' ); ?>" value="<?php echo esc_attr( $link['label'] ?? '' ); ?>">
+											<input type="text" name="link_labels[]" placeholder="<?php echo esc_attr( 'Label (e.g., LinkedIn, Facebook)', 'ohmylms' ); ?>" value="<?php echo esc_attr( $social_link['label'] ?? '' ); ?>">
 										</span>
 										<span class="ohmylms-input-wrapper ohmylms-link-url">
-											<input type="url" name="link_urls[]" placeholder="<?php echo esc_attr( 'https://example.com', 'ohmylms' ); ?>" value="<?php echo esc_attr( $link['url'] ?? '' ); ?>">
+											<input type="url" name="link_urls[]" placeholder="<?php echo esc_attr( 'https://example.com', 'ohmylms' ); ?>" value="<?php echo esc_attr( $social_link['url'] ?? '' ); ?>">
 										</span>
 										<button type="button" class="ohmylms-remove-field" aria-label="<?php echo esc_attr__( 'Remove link', 'ohmylms' ); ?>">×</button>
 									</div>

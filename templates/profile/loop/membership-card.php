@@ -4,32 +4,33 @@
  *
  * @package OhMyLMS
  */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
 
 use function OhMyLMS\Commerce\ecommerce;
 // Extract data from membership object.
-$subscription = isset( $memebership->subscription ) ? $memebership->subscription : null;
-$order        = isset( $memebership->order ) ? $memebership->order : null;
-$products     = $memebership->get_products();
-$course_count = count( $products );
-$is_one_time  = $memebership->get_subscription_period() === 'one_time';
-if ( ! $order ) {
+$subscription     = isset( $memebership->subscription ) ? $memebership->subscription : null;
+$membership_order = isset( $memebership->order ) ? $memebership->order : null;
+$products         = $memebership->get_products();
+$course_count     = count( $products );
+$is_one_time      = $memebership->get_subscription_period() === 'one_time';
+if ( ! $membership_order ) {
 	return;
 }
 
 $recurring_amount = 0;
 
 if ( ! $is_one_time ) {
-	$tax_amount       = \OhMyLMS_Tax_Calculator::get_instance()->calculate_tax( $order->get_tax_rate(), array( 'total' => $subscription->get_recurring_amount() ) );
+	$tax_amount       = \OhMyLMS_Tax_Calculator::get_instance()->calculate_tax( $membership_order->get_tax_rate(), array( 'total' => $subscription->get_recurring_amount() ) );
 	$recurring_amount = is_array( $tax_amount ) && isset( $tax_amount['total_with_tax'] ) ? $tax_amount['total_with_tax'] : $subscription->get_recurring_amount();
 }
 
 
 // Safely get status.
-$status         = $subscription ? $subscription->get_status() : '';
-$status_classes = 'ohmylms-membership-status ' . 'ohmylms-status-' . strtolower( $status );
+$subscription_status = $subscription ? $subscription->get_status() : '';
+$status_classes      = 'ohmylms-membership-status ohmylms-status-' . strtolower( $subscription_status );
 
 // Safely get price.
 $price_html = __( 'Not available', 'ohmylms' );
@@ -43,7 +44,7 @@ if ( $is_one_time ) {
 }
 
 // Safely get purchase date.
-$purchase_date = $order ? ohmylms_format_datetime( $order->get_date_created() ) : __( 'Not available', 'ohmylms' );
+$purchase_date = $membership_order ? ohmylms_format_datetime( $membership_order->get_date_created() ) : __( 'Not available', 'ohmylms' );
 
 if ( ! $is_one_time ) {
 
@@ -88,13 +89,13 @@ if ( ! $is_one_time ) {
 }
 
 // Safely get payment method.
-$payment_method = $order && $order->get_payment_method_title() ? $order->get_payment_method_title() : __( 'Not available', 'ohmylms' );
+$payment_method = $membership_order && $membership_order->get_payment_method_title() ? $membership_order->get_payment_method_title() : __( 'Not available', 'ohmylms' );
 $plan_dialog_id = wp_unique_id( 'ohmylms-plan-details-' );
 ?>
 <div class="ohmylms-membership-card ohmylms-dashboard-single-membership" data-wp-interactive="ohmylms/account" data-wp-context='{"planOpen":false}'>
 	<div class="ohmylms-membership-card-header">
 		<h3 class="ohmylms-membership-name"><?php echo esc_html( $memebership->get_name() ); ?></h3>
-		<span class="<?php echo esc_attr( $status_classes ); ?>"><?php echo esc_html( ucfirst( $status ) ); ?></span>
+		<span class="<?php echo esc_attr( $status_classes ); ?>"><?php echo esc_html( ucfirst( $subscription_status ) ); ?></span>
 	</div>
 	<div class="ohmylms-membership-card-body">
 		<ul class="ohmylms-membership-details">

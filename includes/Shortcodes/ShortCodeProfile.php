@@ -363,7 +363,7 @@ class ShortCodeProfile {
 				dashboardLink.addEventListener('click', function(e) {
 					e.preventDefault();
 					// Redirect to Dashboard page
-					window.location.href = '<?php echo esc_url( ohmylms_get_page_permalink( 'student_dashboard' ) ); ?>';
+					window.location.href = <?php echo wp_json_encode( esc_url_raw( ohmylms_get_page_permalink( 'student_dashboard' ) ) ); ?>;
 				});
 			}
 
@@ -373,7 +373,7 @@ class ShortCodeProfile {
 				myCoursesLink.addEventListener('click', function(e) {
 					e.preventDefault();
 					// Redirect to My Courses page
-					window.location.href = '<?php echo esc_url( ohmylms_get_page_permalink( 'student_courses' ) ); ?>';
+					window.location.href = <?php echo wp_json_encode( esc_url_raw( ohmylms_get_page_permalink( 'student_courses' ) ) ); ?>;
 				});
 			}
 

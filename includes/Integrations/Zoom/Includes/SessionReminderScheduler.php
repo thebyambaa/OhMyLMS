@@ -1,7 +1,4 @@
 <?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
-
-namespace OhMyLMS\Integrations\Zoom\Includes;
-
 /**
  * Zoom Session Reminder Handler
  *
@@ -11,6 +8,8 @@ namespace OhMyLMS\Integrations\Zoom\Includes;
  * @since 1.0.0
  * @author WPFunnels Team
  */
+
+namespace OhMyLMS\Integrations\Zoom\Includes;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

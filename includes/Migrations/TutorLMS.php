@@ -833,6 +833,7 @@ class TutorLMS {
 		// Fetch students for the given course.
 		$student_data = $wpdb->get_results(
 			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Column name sanitized with sanitize_key() above.
 				"SELECT student.{$sanitized_field_name}, student.display_name as display_name, student.user_login as username, student.user_email
 				FROM   	{$wpdb->posts} enrol
 						INNER JOIN {$wpdb->users} student

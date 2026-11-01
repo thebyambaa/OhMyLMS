@@ -4,6 +4,7 @@
  *
  * @package OhMyLMS
  */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -11,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 $base_color             = $email_settings['ohmylms_email_base_color'] ?? 'var(--ohmylms-primary-color)';
 $email_text_color       = $email_settings['ohmylms_email_body_text_color'] ?? '#1F2328';
 $cta_btn_position       = $email_settings['ohmylms_email_button_possition'] ?? 'center';
-$link                   = isset( $settings['button_link'] ) ? $settings['button_link'] : '#';
+$button_link            = isset( $settings['button_link'] ) ? $settings['button_link'] : '#';
 $additional_footer_text = $email_settings['ohmylms_email_footer_text'] ?? '';
 ?>
 
@@ -21,7 +22,7 @@ $additional_footer_text = $email_settings['ohmylms_email_footer_text'] ?? '';
 
 <?php if ( $settings['button_text'] ) : ?>
 <div style="text-align: <?php echo esc_attr( $cta_btn_position ); ?>; margin: 25px 0 0;">
-	<a href="<?php echo esc_url( $link ); ?>" style="background: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 14px 25px; font-size: 15px; font-weight: 500; line-height:1; text-transform: capitalize; text-decoration: none; border-radius: 12px; display: inline-block;">
+	<a href="<?php echo esc_url( $button_link ); ?>" style="background: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 14px 25px; font-size: 15px; font-weight: 500; line-height:1; text-transform: capitalize; text-decoration: none; border-radius: 12px; display: inline-block;">
 		<?php echo esc_html( $settings['button_text'] ); ?>
 	</a>
 </div>

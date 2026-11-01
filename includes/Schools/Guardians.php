@@ -75,7 +75,7 @@ final class Guardians {
 		global $wpdb;
 		$union = self::union( (int) $school_id, $status, (int) $class_id, $like );
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery -- Assembled from prepared parts.
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- Assembled from prepared parts.
 		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM ( $union ) x" );
 	}
 

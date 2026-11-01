@@ -5,7 +5,6 @@
  * @package OhMyLMS
  */
 
-
 use function OhMyLMS\Commerce\ecommerce;
 
 /**
@@ -15,6 +14,7 @@ use function OhMyLMS\Commerce\ecommerce;
  * @param array  $args Operation arguments.
  * @param string $template_path Template path.
  * @param string $default_path Default path.
+ * @throws \Throwable When the template throws while rendering.
  * @since 1.0.0
  */
 function ohmylms_get_template( $template_name, $args = array(), $template_path = '', $default_path = '' ) {
@@ -30,7 +30,7 @@ function ohmylms_get_template( $template_name, $args = array(), $template_path =
 	if ( $filter_template !== $template ) {
 		if ( ! file_exists( $filter_template ) ) {
 			/* translators: %s template */
-			_doing_it_wrong( __FUNCTION__, sprintf( __( '%s does not exist.', 'ohmylms' ), '<code>' . $filter_template . '</code>' ), '1.0' );
+			_doing_it_wrong( __FUNCTION__, sprintf( esc_html__( '%s does not exist.', 'ohmylms' ), '<code>' . esc_html( $filter_template ) . '</code>' ), '1.0' );
 			return;
 		}
 		$template = $filter_template;
@@ -47,7 +47,7 @@ function ohmylms_get_template( $template_name, $args = array(), $template_path =
 		if ( isset( $args['action_args'] ) ) {
 			_doing_it_wrong(
 				__FUNCTION__,
-				__( 'action_args should not be overwritten when calling ohmylms_get_template.', 'ohmylms' ),
+				esc_html__( 'action_args should not be overwritten when calling ohmylms_get_template.', 'ohmylms' ),
 				'1.0.0'
 			);
 			unset( $args['action_args'] );

@@ -45,7 +45,7 @@ class SectionHelper {
 		);
 
 		/**
-		 * log the error when debug is enabled.
+		 * Log the error when debug is enabled.
 		 * $post_id->get_error_message()
 		 */
 		if ( is_wp_error( $post_id ) ) {

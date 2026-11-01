@@ -53,11 +53,11 @@ class Ajax {
 		}
 
 		$meeting_data = array(
-			'topic'    => \sanitize_text_field( $_POST['topic'] ?? '' ),
-			'agenda'   => \sanitize_textarea_field( $_POST['agenda'] ?? '' ),
-			'date'     => \sanitize_text_field( $_POST['date'] ?? '' ),
+			'topic'    => \sanitize_text_field( \wp_unslash( $_POST['topic'] ?? '' ) ),
+			'agenda'   => \sanitize_textarea_field( \wp_unslash( $_POST['agenda'] ?? '' ) ),
+			'date'     => \sanitize_text_field( \wp_unslash( $_POST['date'] ?? '' ) ),
 			'duration' => intval( $_POST['duration'] ?? 60 ),
-			'timezone' => \sanitize_text_field( $_POST['timezone'] ?? 'UTC' ),
+			'timezone' => \sanitize_text_field( \wp_unslash( $_POST['timezone'] ?? 'UTC' ) ),
 		);
 
 		$meeting_service = new MeetingService();
@@ -84,13 +84,13 @@ class Ajax {
 			\wp_send_json_error( array( 'message' => __( 'Unauthorized', 'ohmylms' ) ), 403 );
 		}
 
-		$meeting_id   = \sanitize_text_field( $_POST['meeting_id'] ?? '' );
+		$meeting_id   = \sanitize_text_field( \wp_unslash( $_POST['meeting_id'] ?? '' ) );
 		$meeting_data = array(
-			'topic'    => \sanitize_text_field( $_POST['topic'] ?? '' ),
-			'agenda'   => \sanitize_textarea_field( $_POST['agenda'] ?? '' ),
-			'date'     => \sanitize_text_field( $_POST['date'] ?? '' ),
+			'topic'    => \sanitize_text_field( \wp_unslash( $_POST['topic'] ?? '' ) ),
+			'agenda'   => \sanitize_textarea_field( \wp_unslash( $_POST['agenda'] ?? '' ) ),
+			'date'     => \sanitize_text_field( \wp_unslash( $_POST['date'] ?? '' ) ),
 			'duration' => intval( $_POST['duration'] ?? 60 ),
-			'timezone' => \sanitize_text_field( $_POST['timezone'] ?? 'UTC' ),
+			'timezone' => \sanitize_text_field( \wp_unslash( $_POST['timezone'] ?? 'UTC' ) ),
 		);
 
 		$meeting_service = new MeetingService();
@@ -117,7 +117,7 @@ class Ajax {
 			\wp_send_json_error( array( 'message' => __( 'Unauthorized', 'ohmylms' ) ), 403 );
 		}
 
-		$meeting_id = \sanitize_text_field( $_POST['meeting_id'] ?? '' );
+		$meeting_id = \sanitize_text_field( \wp_unslash( $_POST['meeting_id'] ?? '' ) );
 
 		$meeting_service = new MeetingService();
 		$result          = $meeting_service->delete_meeting( $meeting_id );
@@ -143,7 +143,7 @@ class Ajax {
 			\wp_send_json_error( array( 'message' => __( 'Unauthorized', 'ohmylms' ) ), 403 );
 		}
 
-		$meeting_id = \sanitize_text_field( $_GET['meeting_id'] ?? '' );
+		$meeting_id = \sanitize_text_field( \wp_unslash( $_GET['meeting_id'] ?? '' ) );
 
 		$meeting_service = new MeetingService();
 		$result          = $meeting_service->get_meeting( $meeting_id );

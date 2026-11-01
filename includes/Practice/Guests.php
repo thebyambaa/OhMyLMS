@@ -88,7 +88,7 @@ final class Guests {
 				static function () use ( $wpdb, $table, $token, $user_id ) {
 					$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE token_hash=%s FOR UPDATE', $table, hash( 'sha256', $token ) ), ARRAY_A );
 					if ( ! $row ) {
-						throw new \OhMyLMS\Assessment\ErrorException( new \WP_Error( 'ohmylms_guest_invalid', __( 'Nothing to save from this device.', 'ohmylms' ), array( 'status' => 404 ) ) ); }
+						throw new \OhMyLMS\Assessment\ErrorException( new \WP_Error( 'ohmylms_guest_invalid', __( 'Nothing to save from this device.', 'ohmylms' ), array( 'status' => 404 ) ) ); } // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Carries the WP_Error returned to the caller; the message is not output here.
 					if ( (int) $row['claimed_by'] === $user_id ) {
 						return array(
 							'claimed'  => 0,
@@ -96,9 +96,9 @@ final class Guests {
 							'sessions' => 0,
 						); }
 					if ( (int) $row['claimed_by'] ) {
-						throw new \OhMyLMS\Assessment\ErrorException( new \WP_Error( 'ohmylms_guest_claimed', __( 'These results were already saved to another account.', 'ohmylms' ), array( 'status' => 409 ) ) ); }
+						throw new \OhMyLMS\Assessment\ErrorException( new \WP_Error( 'ohmylms_guest_claimed', __( 'These results were already saved to another account.', 'ohmylms' ), array( 'status' => 409 ) ) ); } // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Carries the WP_Error returned to the caller; the message is not output here.
 					if ( strtotime( $row['expires_at'] . ' UTC' ) < time() ) {
-						throw new \OhMyLMS\Assessment\ErrorException( new \WP_Error( 'ohmylms_guest_expired', __( 'These practice results have expired.', 'ohmylms' ), array( 'status' => 410 ) ) ); }
+						throw new \OhMyLMS\Assessment\ErrorException( new \WP_Error( 'ohmylms_guest_expired', __( 'These practice results have expired.', 'ohmylms' ), array( 'status' => 410 ) ) ); } // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Carries the WP_Error returned to the caller; the message is not output here.
 					if ( $wpdb->query( $wpdb->prepare( 'UPDATE %i SET claimed_by=%d, claimed_at=%s WHERE id=%d AND claimed_by=0', $table, $user_id, current_time( 'mysql', true ), (int) $row['id'] ) ) !== 1 ) {
 						throw new \RuntimeException( 'Claim race' );
 					}
@@ -110,12 +110,11 @@ final class Guests {
 							'already'  => false,
 							'sessions' => 0,
 						); }
-					$list = implode( ',', $ids );
-					$wpdb->query( $wpdb->prepare( "UPDATE $sessions SET student_id=%d, claimed_at=%s WHERE id IN ($list)", $user_id, current_time( 'mysql', true ) ) );
+					$wpdb->query( $wpdb->prepare( 'UPDATE %i SET student_id=%d, claimed_at=%s WHERE id IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', array_merge( array( $sessions, $user_id, current_time( 'mysql', true ) ), $ids ) ) );
 					$events    = Schema::table( 'grade_events' );
-					$event_ids = array_map( 'intval', $wpdb->get_col( "SELECT id FROM $events WHERE source_type IN ('practice','inline','placement') AND student_id=0 AND source_id IN ($list)" ) );
+					$event_ids = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE source_type IN (\'practice\',\'inline\',\'placement\') AND student_id=0 AND source_id IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', array_merge( array( $events ), $ids ) ) ) );
 					if ( $event_ids ) {
-						$wpdb->query( $wpdb->prepare( "UPDATE $events SET student_id=%d WHERE id IN (" . implode( ',', $event_ids ) . ')', $user_id ) );
+						$wpdb->query( $wpdb->prepare( 'UPDATE %i SET student_id=%d WHERE id IN (' . implode( ',', array_fill( 0, count( $event_ids ), '%d' ) ) . ')', array_merge( array( $events, $user_id ), $event_ids ) ) );
 						Evidence::release_waiting( $event_ids );
 					}
 					return array(
@@ -144,9 +143,8 @@ final class Guests {
 			foreach ( array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE guest_id=%d AND student_id=0', $sessions, $guest ) ) ) as $session ) {
 				$events = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE source_type IN (\'practice\',\'inline\') AND source_id=%d AND student_id=0', Schema::table( 'grade_events' ), $session ) ) );
 				if ( $events ) {
-					$list = implode( ',', $events );
-					$wpdb->query( 'DELETE FROM ' . Schema::table( 'evidence_outbox' ) . " WHERE grade_event_id IN ($list)" );
-					$wpdb->query( 'DELETE FROM ' . Schema::table( 'grade_events' ) . " WHERE id IN ($list)" );
+					$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE grade_event_id IN (' . implode( ',', array_fill( 0, count( $events ), '%d' ) ) . ')', array_merge( array( Schema::table( 'evidence_outbox' ) ), $events ) ) );
+					$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE id IN (' . implode( ',', array_fill( 0, count( $events ), '%d' ) ) . ')', array_merge( array( Schema::table( 'grade_events' ) ), $events ) ) );
 				}
 				$wpdb->delete( Schema::table( 'practice_items' ), array( 'session_id' => $session ) );
 				$wpdb->delete( $sessions, array( 'id' => $session ) );

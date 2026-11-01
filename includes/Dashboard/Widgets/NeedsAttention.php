@@ -261,7 +261,8 @@ final class NeedsAttention extends Widget {
 		usort(
 			$visible,
 			static function ( $a, $b ) {
-				return $b['urgency'] <=> $a['urgency'] ?: strcmp( $a['key'], $b['key'] );
+				$order = $b['urgency'] <=> $a['urgency'];
+				return $order ? $order : strcmp( $a['key'], $b['key'] );
 			}
 		);
 		return array(

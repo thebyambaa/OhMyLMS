@@ -2,8 +2,8 @@
 namespace OhMyLMS\Bricks\Elements;
 
 use OhMyLMS\Shortcodes\ShortCodeCheckout;
-use function OhMyLMS\Commerce\ecommerce;
 use Bricks\Element;
+use function OhMyLMS\Commerce\ecommerce;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.

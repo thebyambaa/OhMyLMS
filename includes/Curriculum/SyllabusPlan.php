@@ -484,7 +484,7 @@ final class SyllabusPlan {
 		}
 		if ( '' !== $description && $description !== $skill['description'] ) {
 			$fields['description'] = $description; }
-		if ( '' !== $category && $category !== ( $skill['category'] ?? '' ) ) {
+		if ( '' !== $category && ( $skill['category'] ?? '' ) !== $category ) {
 			$fields['category'] = $category; }
 		$this->set( 'skill', $found, $fields );
 	}

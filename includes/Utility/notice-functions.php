@@ -5,8 +5,6 @@
  * @package OhMyLMS
  */
 
-
-
 /**
  * Add and store a notice
  *

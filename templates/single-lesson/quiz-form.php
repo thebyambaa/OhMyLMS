@@ -82,7 +82,7 @@ if ( $paper_presentation || ! empty( $ohmylms_player_preview['single_question'] 
 }
 $layout_class             = '';
 $questions_per_group      = '';
-$totalGroups              = '';
+$total_groups             = '';
 $supported_question_count = 0;
 $supported_question_types = apply_filters( 'ohmylms_supported_question_types', array_keys( \OhMyLMS\Extensions\Registry::all( 'question' ) ) );
 foreach ( $questions as $index => $question ) {
@@ -119,15 +119,15 @@ if ( 'all_questions_in_one_page' === $quiz_layout ) {
 	foreach ( $questions as $question ) {
 		if ( ! in_array( $question['settings']['type'], apply_filters( 'ohmylms_supported_question_types', array_keys( \OhMyLMS\Extensions\Registry::all( 'question' ) ) ), true ) ) {
 			continue; }
-		$page = (int) ( $question['page'] ?? 0 );
-		if ( 0 === $ordinal || $ordinal - $group_start >= $questions_per_group || ( null !== $previous_page && $page !== $previous_page ) ) {
+		$question_page = (int) ( $question['page'] ?? 0 );
+		if ( 0 === $ordinal || $ordinal - $group_start >= $questions_per_group || ( null !== $previous_page && $question_page !== $previous_page ) ) {
 			$page_starts[ $ordinal ] = count( $page_starts ) + 1;
 			$group_start             = $ordinal;
 		}
-		$previous_page = $page;
+		$previous_page = $question_page;
 		++$ordinal;
 	}
-	$totalGroups = count( $page_starts ); // Calculate the total number of groups.
+	$total_groups = count( $page_starts ); // Calculate the total number of groups.
 
 } else {
 	$layout_class = 'ohmylms-one-question-per-page';
@@ -162,7 +162,7 @@ if ( $paper_student ) {
 	$paper_entries = \OhMyLMS\Quiz\PaperPresentation::entries( $paper_student );
 }
 if ( 'number_of_questions_per_page' === $quiz_layout ) {
-	$totalGroups = count( $page_starts );
+	$total_groups = count( $page_starts );
 }
 ob_start();
 
@@ -257,9 +257,9 @@ if ( $attempt_context ) {
 					?>
 					<p><?php esc_html_e( 'Some answers require manual grading.', 'ohmylms' ); ?></p><?php } ?>
 				<?php
-				foreach ( $preview_result['errors'] as $error ) {
+				foreach ( $preview_result['errors'] as $preview_error ) {
 					?>
-					<p><?php echo esc_html( $error ); ?></p><?php } ?>
+					<p><?php echo esc_html( $preview_error ); ?></p><?php } ?>
 				<?php
 				if ( ! empty( $preview_result['entries'] ) ) {
 					if ( ! empty( $preview_result['hidden'] ) ) {
@@ -288,8 +288,8 @@ if ( $attempt_context ) {
 			<?php
 				printf(
 					/* translators: %s: text value. */
-					__( 'Your quiz submission time has expired. <a href="%s">Please try again.</a>', 'ohmylms' ),
-					get_the_permalink()
+					wp_kses_post( __( 'Your quiz submission time has expired. <a href="%s">Please try again.</a>', 'ohmylms' ) ),
+					esc_url( get_the_permalink() )
 				);
 			?>
 		</div>
@@ -336,7 +336,7 @@ if ( $attempt_context ) {
 	</div> -->
 
 		<?php
-		$player_total_pages = max( 1, 'all_questions_in_one_page' === $quiz_layout ? 1 : ( 'number_of_questions_per_page' === $quiz_layout ? $totalGroups : $supported_question_count ) );
+		$player_total_pages = max( 1, 'all_questions_in_one_page' === $quiz_layout ? 1 : ( 'number_of_questions_per_page' === $quiz_layout ? $total_groups : $supported_question_count ) );
 		$player_sections    = array();
 		foreach ( $questions as $section_index => $section_question ) {
 			$player_sections[ $section_index + 1 ] = (string) ( $section_question['section'] ?? '' );
@@ -400,8 +400,8 @@ if ( $attempt_context ) {
 								echo '</div>';
 							}
 							// Start a new group div.
-							$groupNumber = $page_starts[ $count - 1 ];
-							echo "<div class='ohmylms-question-group question-group-{$groupNumber} " . ( 1 == $groupNumber ? 'active' : '' ) . "'>";
+							$group_number = $page_starts[ $count - 1 ];
+							echo "<div class='ohmylms-question-group question-group-" . (int) $group_number . ' ' . ( 1 == $group_number ? 'active' : '' ) . "'>";
 						}
 						?>
 
@@ -417,7 +417,7 @@ if ( $attempt_context ) {
 						?>
 							<div class="question-box">
 								<p class="the-question question-type-<?php echo esc_attr( $question['settings']['type'] ); ?>">
-									<?php echo \OhMyLMS\Assessment\InlineBlanks::render( $question, $attempt ); ?>
+									<?php echo \OhMyLMS\Assessment\InlineBlanks::render( $question, $attempt ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- InlineBlanks::render() escapes its output. ?>
 
 									<?php if ( ! empty( $question['settings']['required'] ) && $question['settings']['required'] ) { ?>
 										<span class="required">*</span>
@@ -427,7 +427,7 @@ if ( $attempt_context ) {
 								</p>
 
 								<?php if ( ! empty( $question['description'] ) && ( $question['settings']['type'] ?? '' ) !== 'structured' ) { ?>
-									<div class="ohmylms-question-block-content"><?php echo apply_filters( 'the_content', $question['description'] ); ?></div>
+									<div class="ohmylms-question-block-content"><?php echo apply_filters( 'the_content', $question['description'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Filtered post content (the_content). ?></div>
 								<?php } ?>
 								<?php if ( ! empty( $question_image ) ) { ?>
 									<img src="<?php echo esc_url( $question_image ); ?>" alt="question image" class="question-image">
@@ -540,17 +540,17 @@ if ( $attempt_context ) {
 							// ------start grouped questions------
 							$layout_class = 'ohmylms-grouped-questions';
 
-							if ( 1 < $totalGroups ) {
+							if ( 1 < $total_groups ) {
 								?>
-									<button type="button" class="ohmylms-button ohmylms-previous-quiz-group outline" current-group="1" previous-group="" total-group="<?php echo esc_attr( $totalGroups ); ?>" disabled >
+									<button type="button" class="ohmylms-button ohmylms-previous-quiz-group outline" current-group="1" previous-group="" total-group="<?php echo esc_attr( $total_groups ); ?>" disabled >
 									<?php echo esc_html__( 'Previous', 'ohmylms' ); ?>
 									</button>
 									<?php
 							}
 
-							if ( 1 < $totalGroups ) {
+							if ( 1 < $total_groups ) {
 								?>
-									<button type="button" class="ohmylms-button ohmylms-next-quiz-group" current-group="1" next-group="2" total-group="<?php echo esc_attr( $totalGroups ); ?>">
+									<button type="button" class="ohmylms-button ohmylms-next-quiz-group" current-group="1" next-group="2" total-group="<?php echo esc_attr( $total_groups ); ?>">
 									<?php echo esc_html__( 'Next', 'ohmylms' ); ?>
 									</button>
 
@@ -616,6 +616,7 @@ if ( $attempt_context ) {
 </section>
 <?php
 $duration = max( 0, (int) round( $timer * 60 ) );
+// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- Interactivity::quiz() adds the JSON-encoded context through WP_HTML_Tag_Processor to this template's escaped output.
 echo \OhMyLMS\Extensions\Interactivity::quiz(
 	ob_get_clean(),
 	array(
@@ -627,7 +628,7 @@ echo \OhMyLMS\Extensions\Interactivity::quiz(
 		'layout'            => $quiz_layout,
 		'page'              => 1,
 		'perPage'           => max( 1, (int) $questions_per_group ),
-		'totalPages'        => max( 1, 'all_questions_in_one_page' === $quiz_layout ? 1 : ( 'number_of_questions_per_page' === $quiz_layout ? $totalGroups : $supported_question_count ) ),
+		'totalPages'        => max( 1, 'all_questions_in_one_page' === $quiz_layout ? 1 : ( 'number_of_questions_per_page' === $quiz_layout ? $total_groups : $supported_question_count ) ),
 		'errors'            => (object) array(),
 		'answered'          => (object) array(),
 		'questionOfLabel'   => /* translators: %1$d: number; %2$d: number. */
@@ -645,4 +646,5 @@ echo \OhMyLMS\Extensions\Interactivity::quiz(
 		'expiryNonce'       => wp_create_nonce( 'quiz_exit_submission' ),
 		'submissionError'   => __( 'Submission failed. Your answers remain on this page. Please press Submit to retry.', 'ohmylms' ),
 	)
-); // phpcs:ignore WordPress.Security.EscapeOutput -- templates escape their own fields.
+);
+// phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped

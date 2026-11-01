@@ -111,7 +111,7 @@ $is_preview = \OhMyLMS\Quiz\Submission::is_preview( get_the_ID(), get_current_us
 						</div>
 
 						<div class="ohmylms-td date">
-							<?php echo date( 'M j, Y g:i a', strtotime( $attempt['start_date'] ) ); ?>
+							<?php echo esc_html( gmdate( 'M j, Y g:i a', strtotime( $attempt['start_date'] ) ) ); ?>
 						</div>
 
 						<div class="ohmylms-td question">

@@ -53,7 +53,7 @@ if ( $course && $course->get_type() === 'cohort-based' ) {
 
 // Only show add to cart button if enrollment is active.
 if ( $should_show_add_to_cart ) {
-	echo apply_filters(
+	echo apply_filters( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Link markup escaped in the sprintf() below.
 		'ohmylms_loop_add_to_cart_link', // WPCS: XSS ok.
 		sprintf(
 			'<a href="%s" data-quantity="%s" class="%s" %s>%s</a>',

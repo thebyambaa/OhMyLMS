@@ -31,15 +31,15 @@ if ( ! $course->get_enable_reviews() ) {
 		);
 
 		$comments_query = new WP_Comment_Query();
-		$comments       = $comments_query->query( $args );
+		$course_reviews = $comments_query->query( $args );
 
-		if ( ! empty( $comments ) ) :
+		if ( ! empty( $course_reviews ) ) :
 			?>
 			<?php
 			// Loop through comments and display them using the specified callback function.
-			foreach ( $comments as $comment ) {
+			foreach ( $course_reviews as $course_review ) {
 				echo '<div class="ohmylms-course-single-review">';
-					ohmylms_comments( $comment );
+					ohmylms_comments( $course_review );
 				echo '</div>';
 			}
 			?>

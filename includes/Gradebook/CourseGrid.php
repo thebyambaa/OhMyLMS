@@ -215,7 +215,8 @@ final class CourseGrid {
 		usort(
 			$rows,
 			static function ( $a, $b ) {
-				return strnatcasecmp( $a['name'], $b['name'] ) ?: $a['id'] <=> $b['id'];
+				$order = strnatcasecmp( $a['name'], $b['name'] );
+				return $order ? $order : $a['id'] <=> $b['id'];
 			}
 		);
 
@@ -465,9 +466,11 @@ final class CourseGrid {
 						return $diff;
 					}
 				} elseif ( $desc ) {
-					return strnatcasecmp( $b['name'], $a['name'] ) ?: $b['id'] <=> $a['id'];
+					$order = strnatcasecmp( $b['name'], $a['name'] );
+					return $order ? $order : $b['id'] <=> $a['id'];
 				}
-				return strnatcasecmp( $a['name'], $b['name'] ) ?: $a['id'] <=> $b['id'];
+				$order = strnatcasecmp( $a['name'], $b['name'] );
+				return $order ? $order : $a['id'] <=> $b['id'];
 			}
 		);
 		$total    = count( $rows );

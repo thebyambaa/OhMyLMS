@@ -781,13 +781,12 @@ class LearnDash {
 			}
 		}
 
-		$placeholders = implode( ',', array_fill( 0, count( $meta_keys ), '%s' ) );
-		$sql          = $wpdb->prepare(
-			"SELECT DISTINCT user_id FROM {$wpdb->usermeta} WHERE meta_key IN ($placeholders)",
-			...$meta_keys
+		$results = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT user_id FROM {$wpdb->usermeta} WHERE meta_key IN (" . implode( ',', array_fill( 0, count( $meta_keys ), '%s' ) ) . ')',
+				...$meta_keys
+			)
 		);
-
-		$results = $wpdb->get_col( $sql );
 
 		return array_map( 'intval', $results );
 	}

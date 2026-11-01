@@ -119,7 +119,7 @@ class PluginInstallerController extends RestController {
 				array(
 					'success' => true,
 					'message' => sprintf( /* translators: %s: text value. */
-						__( 'Plugin %s is already installed.' ),
+						__( 'Plugin %s is already installed.', 'ohmylms' ),
 						$plugin_slug
 					),
 				)
@@ -152,7 +152,7 @@ class PluginInstallerController extends RestController {
 			return new WP_Error(
 				'plugin_api_error',
 				sprintf( /* translators: %s: text value. */
-					__( 'Unable to fetch plugin information for %s from WordPress.org.' ),
+					__( 'Unable to fetch plugin information for %s from WordPress.org.', 'ohmylms' ),
 					$plugin_slug
 				),
 				array( 'status' => 500 )
@@ -177,7 +177,7 @@ class PluginInstallerController extends RestController {
 			array(
 				'success' => true,
 				'message' => sprintf( /* translators: %s: text value. */
-					__( 'Plugin %s installed successfully.' ),
+					__( 'Plugin %s installed successfully.', 'ohmylms' ),
 					$plugin_slug
 				),
 			)
@@ -209,7 +209,7 @@ class PluginInstallerController extends RestController {
 			return new WP_Error(
 				'plugin_not_found',
 				sprintf( /* translators: %s: text value. */
-					__( 'Plugin %s is not installed.' ),
+					__( 'Plugin %s is not installed.', 'ohmylms' ),
 					$plugin_slug
 				),
 				array( 'status' => 404 )
@@ -220,7 +220,7 @@ class PluginInstallerController extends RestController {
 			return new WP_Error(
 				'plugin_already_active',
 				sprintf( /* translators: %s: text value. */
-					__( 'Plugin %s is already active.' ),
+					__( 'Plugin %s is already active.', 'ohmylms' ),
 					$plugin_slug
 				),
 				array( 'status' => 400 )
@@ -254,7 +254,7 @@ class PluginInstallerController extends RestController {
 			array(
 				'success' => true,
 				'message' => sprintf( /* translators: %s: text value. */
-					__( 'Plugin %s activated successfully.' ),
+					__( 'Plugin %s activated successfully.', 'ohmylms' ),
 					$plugin_slug
 				),
 			)

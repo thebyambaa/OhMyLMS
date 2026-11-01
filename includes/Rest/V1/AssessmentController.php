@@ -190,7 +190,7 @@ class AssessmentController extends RestController {
 	 * @param WP_REST_Request $request REST request.
 	 */
 	public function migration_run( WP_REST_Request $request ) {
-		$state = $request['retry'] ? Migration::retry_failed() : Migration::run_all( (int) ( $request['batches'] ?: 20 ) );
+		$state = $request['retry'] ? Migration::retry_failed() : Migration::run_all( (int) ( $request['batches'] ? $request['batches'] : 20 ) );
 		return rest_ensure_response(
 			array(
 				'state'     => $state,
@@ -218,7 +218,7 @@ class AssessmentController extends RestController {
 				static function () use ( $request ) {
 					$revision = RevisionPublisher::publish( (int) $request['id'] );
 					if ( is_wp_error( $revision ) ) {
-						throw new \OhMyLMS\Assessment\ErrorException( $revision ); }
+						throw new \OhMyLMS\Assessment\ErrorException( $revision ); } // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Carries a WP_Error out of the transaction; never output.
 					return $revision;
 				}
 			);

@@ -154,7 +154,7 @@ class GoogleAuthService {
 	 */
 	public static function consume_state( $state ) {
 		self::$link_user_id = 0;
-		if ( empty( $state ) || empty( $_COOKIE['ohmylms_google_state'] ) || ! hash_equals( (string) $_COOKIE['ohmylms_google_state'], (string) $state ) ) {
+		if ( empty( $state ) || empty( $_COOKIE['ohmylms_google_state'] ) || ! hash_equals( (string) wp_unslash( $_COOKIE['ohmylms_google_state'] ), (string) $state ) ) {
 			return false;
 		}
 
@@ -327,7 +327,8 @@ class GoogleAuthService {
 
 		$first_name   = sanitize_text_field( $profile['given_name'] ?? '' );
 		$last_name    = sanitize_text_field( $profile['family_name'] ?? '' );
-		$display_name = sanitize_text_field( $profile['name'] ?? trim( $first_name . ' ' . $last_name ) ) ?: $username;
+		$display_name = sanitize_text_field( $profile['name'] ?? trim( $first_name . ' ' . $last_name ) );
+		$display_name = $display_name ? $display_name : $username;
 		$student_role = function_exists( 'ohmylms_get_assignable_student_role' ) ? ohmylms_get_assignable_student_role() : 'subscriber';
 
 		$user_id = wp_insert_user(

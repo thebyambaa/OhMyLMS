@@ -118,7 +118,8 @@ final class AnswerReview {
 			return '';
 		}
 		if ( ! is_user_logged_in() ) {
-			return '<p class="ohmylms-answer-review-login"><a href="' . esc_url( wp_login_url( get_permalink() ?: home_url( '/' ) ) ) . '">' . esc_html__( 'Log in to see your quiz results.', 'ohmylms' ) . '</a></p>';
+			$permalink = get_permalink();
+			return '<p class="ohmylms-answer-review-login"><a href="' . esc_url( wp_login_url( $permalink ? $permalink : home_url( '/' ) ) ) . '">' . esc_html__( 'Log in to see your quiz results.', 'ohmylms' ) . '</a></p>';
 		}
 		return self::for_quiz( $quiz_id );
 	}
@@ -553,8 +554,11 @@ final class AnswerReview {
 			$unit     = trim( (string) ( $part['unit'] ?? '' ) );
 			$expected = null;
 			if ( 'question' === $part['kind'] ) {
-				$expected_lines = ReviewLines::expected( $child->get_type(), $child->get_settings() ) ?: self::expected_lines( $child->get_type(), $child, self::options( $child ), $child->get_settings() );
-				$expected       = $expected_lines ? implode( '; ', $expected_lines ) : null;
+				$expected_lines = ReviewLines::expected( $child->get_type(), $child->get_settings() );
+				if ( ! $expected_lines ) {
+					$expected_lines = self::expected_lines( $child->get_type(), $child, self::options( $child ), $child->get_settings() );
+				}
+				$expected = $expected_lines ? implode( '; ', $expected_lines ) : null;
 			} elseif ( 'numerical' === $part['kind'] ) {
 				$numbers  = isset( $part['answers'] ) && is_array( $part['answers'] ) ? $part['answers'] : ( isset( $part['answer'] ) ? array( $part['answer'] ) : array() );
 				$expected = trim( implode( ' / ', array_map( 'strval', array_filter( $numbers, 'is_scalar' ) ) ) . ' ' . $unit );
@@ -602,6 +606,10 @@ final class AnswerReview {
 		} else {
 			$verdict = $awarded > 0 ? 'partial' : 'incorrect';
 		}
+		$expected = ReviewLines::expected( $type, $settings );
+		if ( ! $expected ) {
+			$expected = self::expected_lines( $type, $question, $options, $settings );
+		}
 		return array(
 			'question_id' => (int) $question->get_id(),
 			'name'        => self::prompt( $question, $type ),
@@ -610,7 +618,7 @@ final class AnswerReview {
 			'awarded'     => $awarded,
 			'max'         => $max,
 			'given'       => $present ? ( ReviewLines::given( $type, (array) $given, $settings ) ?? self::given_lines( $type, $options, (array) $given ) ) : array(),
-			'expected'    => ReviewLines::expected( $type, $settings ) ?: self::expected_lines( $type, $question, $options, $settings ),
+			'expected'    => $expected,
 			'explanation' => wp_kses_post( (string) ( $settings['explanation'] ?? '' ) ),
 		);
 	}

@@ -93,9 +93,9 @@ jobs:
         run: node tools/run-php-tests.mjs unit
 
   phpcs:
-    name: WordPress coding standards (changed lines)
+    name: WordPress coding standards (every file, plus changed lines)
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
         with:
@@ -112,7 +112,11 @@ jobs:
           working-directory: tools/coding-standards
           composer-options: --no-plugins --no-scripts
 
-      # The full `npm run lint:php` still reports legacy findings; this fails only on errors in added or changed lines.
+      # Every file has 0 errors since 2 November 2026; legacy warnings remain, so only errors fail here.
+      - name: phpcs errors in every file
+        run: node tools/wp-standards.mjs -n --report=summary --parallel=4
+
+      # Lists the warnings on new and changed lines, so the legacy warnings do not grow unnoticed.
       - name: phpcs on lines changed since the base commit
         env:
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}

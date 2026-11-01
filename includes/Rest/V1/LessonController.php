@@ -387,7 +387,7 @@ class LessonController extends RestController {
 	protected function set_lesson_cover_image( $lesson, $attachment_id ) {
 		if ( ! wp_attachment_is_image( $attachment_id ) ) {
 			// Translators: %s is replaced with error name.
-			throw new DataException( 'ohmylms_lesson_invalid_cover_image_id', sprintf( __( '#%s is an invalid image ID.', 'ohmylms' ), $attachment_id ), 400 );
+			throw new DataException( 'ohmylms_lesson_invalid_cover_image_id', sprintf( __( '#%s is an invalid image ID.', 'ohmylms' ), $attachment_id ), 400 ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Callers convert it to REST error data.
 		}
 
 		$lesson->set_cover_image_id( $attachment_id );
@@ -408,7 +408,7 @@ class LessonController extends RestController {
 
 		if ( ! wp_attachment_is_image( $attachment_id ) ) {
 			// Translators: %s is replaced with error name.
-			throw new DataException( 'ohmylms_lesson_invalid_thumbnail_id', sprintf( __( '#%s is an invalid image ID.', 'ohmylms' ), $attachment_id ), 400 );
+			throw new DataException( 'ohmylms_lesson_invalid_thumbnail_id', sprintf( __( '#%s is an invalid image ID.', 'ohmylms' ), $attachment_id ), 400 ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Callers convert it to REST error data.
 		}
 
 		$lesson->set_thumbnail_id( $attachment_id );
@@ -428,7 +428,7 @@ class LessonController extends RestController {
 	protected function set_lesson_video_id( $lesson, $attachment_id ) {
 		if ( ! wp_attachment_is( 'video', $attachment_id ) ) {
 			// Translators: %s is replaced with error name.
-			throw new DataException( 'ohmylms_lesson_invalid_video_id', sprintf( __( '#%s is an invalid image ID.', 'ohmylms' ), $attachment_id ), 400 );
+			throw new DataException( 'ohmylms_lesson_invalid_video_id', sprintf( __( '#%s is an invalid image ID.', 'ohmylms' ), $attachment_id ), 400 ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Callers convert it to REST error data.
 		}
 
 		$lesson->set_video_id( $attachment_id );
@@ -448,7 +448,7 @@ class LessonController extends RestController {
 	protected function set_lesson_audio_id( $lesson, $attachment_id ) {
 		if ( ! wp_attachment_is( 'audio', $attachment_id ) ) {
 			// Translators: %s is replaced with error name.
-			throw new DataException( 'ohmylms_lesson_invalid_audio_id', sprintf( __( '#%s is an invalid image ID.', 'ohmylms' ), $attachment_id ), 400 );
+			throw new DataException( 'ohmylms_lesson_invalid_audio_id', sprintf( __( '#%s is an invalid image ID.', 'ohmylms' ), $attachment_id ), 400 ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Callers convert it to REST error data.
 		}
 
 		$lesson->set_audio_id( $attachment_id );

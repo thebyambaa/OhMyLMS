@@ -149,7 +149,7 @@ class ShortCodeOfferButton {
 		$action_url = self::get_offer_action_url( $order_id, $current_step, $atts['action'], isset( $atts['redirect'] ) ? $atts['redirect'] : '' );
 
 		// Use the funnel nonce passed from the funnel endpoint, or create one if not available.
-		$nonce      = $_GET['funnel_nonce'] ?? wp_create_nonce( 'funnel_action_' . $order_id . '_' . $current_step );
+		$nonce      = isset( $_GET['funnel_nonce'] ) ? sanitize_text_field( wp_unslash( $_GET['funnel_nonce'] ) ) : wp_create_nonce( 'funnel_action_' . $order_id . '_' . $current_step );
 		$action_url = $order_id ? add_query_arg( '_wpnonce', $nonce, $action_url ) : '';
 		// Output the button.
 		self::render_offer_button( $action_url, $atts['text'], $button_classes, $style_attr, $atts );

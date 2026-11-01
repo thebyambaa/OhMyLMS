@@ -7,7 +7,7 @@ admin **and** the learner side. See [architecture](ARCHITECTURE.md) and [extensi
 
 Statuses below were checked against the code on 2 November 2026. Counts are files unless stated otherwise.
 
-## What remains for full modularization (in order)
+## Work done for full modularization (in order; all complete on 2 November 2026)
 
 1. **Retire or harden the legacy REST routes that outlived their screens.** Done on 31 October 2026 for
    `ohmylms/v1/question`, `/question-bank` (except the typed import), `/quiz/{id}/content|questions|pools`,
@@ -74,8 +74,9 @@ Statuses below were checked against the code on 2 November 2026. Counts are file
    Local-content suites were made self-contained (they create their own course, syllabus and fixture subject
    profile, read enrolment sources from the migrated table, check add-on question types with a fixture type,
    and the extension host suite runs against `build/sdk`, which CI now builds), so `tests/php-suites.json` has
-   no CI-only skips, and the lint job runs Stylelint too. Remaining: a clean full phpcs run (about 2,200 legacy
-   errors).
+   no CI-only skips, and the lint job runs Stylelint too. The same day every PHP file reached 0 phpcs errors
+   (2,124 cleared: 1,011 by phpcbf, the rest by hand, with narrow reasoned ignores for false positives) and the
+   phpcs job fails on any error in any file; about 2,400 legacy warnings remain and are not enforced.
 8. **Interface languages** (added 31 October 2026). English and Mongolian: learners switch in the learner
    chrome and Student Hub, visitors follow their browser, staff use their profile language, and emails are
    composed in each recipient's language with saved templates storing only changed fields
@@ -89,12 +90,12 @@ Statuses below were checked against the code on 2 November 2026. Counts are file
 | 2 | Third-party libraries | **Done** | Easy Email, Arco, MJML, CodeMirror, html2canvas (admin copy), Chart.js, Emotion, Tiptap, Lowlight and Lodash left with the legacy admin (50 npm packages, [CUTOVER](CUTOVER.md)). The email editor (`app/features/emails`) uses only WordPress components and the server preview. Dead Select2, Mail Mint image, Slick 1.8.1 (replaced by `ohmylms/carousel`) and the html2pdf 0.10.1 bundle were removed on 31 October 2026. MathLive and JSXGraph stay on purpose as runtime libraries: each is pinned, loaded only on the pages that use it and exposed through one handle (`ohmylms-mathlive`, `ohmylms-jsxgraph`). See [libraries](VENDOR-PACKAGE-MIGRATION.md) |
 | 3 | Shared application infrastructure | **Done** | `app/lib/api`, `app/lib/validation.ts`, `app/lib/media.ts`, `app/hooks` (`useOperation`, `useRequest`, `usePagedList`, `useUnsavedChangesGuard`), `app/components/MediaPicker`, `app/routing`, `app/layout`, `assets/src/ui`. Rules g and `shared-helpers` fail feature copies |
 | 4 | State and API access | **Done** | 24 features own an `api.ts` over `app/lib/api`; cross-feature access only through `public.ts`; only `app/extensions/api.ts` calls `@wordpress/api-fetch` directly. Validators and media parsing are shared. Native editor code uses `assets/src/features/rest.mjs` (no direct `wp.apiFetch`) and is strict type-checked. `curriculum` owns `/syllabus-comparison/*`, which `syllabus` calls through `curriculum/public.ts` ([STATE-API-MODULARIZATION](STATE-API-MODULARIZATION.md)) |
-| 5 | Feature independence | **Done (admin app)** | 25 feature folders, 55 route entries in `features/registry.ts`; no `createComponent(readRuntime)`; the only cross-feature imports are four from `quizzes` into `questions/public.ts` (`checkFeatureBoundaries`). Remaining: the learner tree in item 6 |
+| 5 | Feature independence | **Done** | 25 feature folders, 55 route entries in `features/registry.ts`; no `createComponent(readRuntime)`; the only cross-feature imports are four from `quizzes` into `questions/public.ts` (`checkFeatureBoundaries`). The learner tree follows the same rule through `public.mjs` (item 6, front-end rule n) |
 | 6 | Authored entry point | **Done** | `app/bootstrap` is the only admin entry (`admin-app.js`, 67 KB); recovered factories, adapters and SDK deleted |
 | 7 | Stylesheet ownership | **Done** | Legacy admin CSS (285 sources) and `tailwind.css` deleted; feature CSS ships with its chunk ([ownership](STYLESHEET-OWNERSHIP.md)). Admin spacing and radius use `--oml-space-*`/`--oml-radius-*` (rule `checkRawSpacing`); learner SCSS colours read `--oml-*` with fallbacks (stylelint `ohmylms/no-raw-svg-colour`); PHP inline colours became `oml-ui.css` classes ([design system](DESIGN-SYSTEM.md#known-gaps)). The generated compatibility `style.css`/`style-rtl.css` (about 1.09 MB with maps) were removed in 1.2.22; learner pages load only their page modules, and the old URLs are retired assets (404) |
 | 8 | Backend boundaries | **Done** | Every route in a `WP_REST_Controller` subclass; no `$wpdb` in any of the 141 REST controller files (`Rest/V1` alone had 253 lines in 28 controllers on 31 October); persistence in feature services; `controller-persistence` ratchet with no budgets; one advisory-lock helper (`Utility\Lock`, rule p) ([BACKEND-BOUNDARIES](BACKEND-BOUNDARIES.md)) |
 | 9 | Asset and dependency isolation | **Done** | Admin: one entry plus hashed lazy chunks with per-screen budgets; React and WordPress packages are externals (`checkDuplicateRuntimes`). Math (836 KB) and JSXGraph (995 KB) load only where used. Learner: script modules only; video provider APIs load lazily per provider; no jQuery on learner pages (`learner-no-jquery` browser spec) |
-| 10 | Enforcement and release checks | **Done** | Six CI jobs ([ENFORCEMENT](ENFORCEMENT.md#ci-jobs)): `check:ci` (typecheck, `typecheck:js`, app tests, architecture rules a–o incl. REST controllers, controller persistence, shared helpers, legacy routes, front-end rules, raw colours and spacing, budgets) and `npm test`; `lint:js`; PHP lint and unit suites; phpcs on changed lines; PHP integration with disposable sites; Playwright. Remaining: item 7 above |
+| 10 | Enforcement and release checks | **Done** | Six CI jobs ([ENFORCEMENT](ENFORCEMENT.md#ci-jobs)): `check:ci` (typecheck, `typecheck:js`, app tests, architecture rules a–o incl. REST controllers, controller persistence, shared helpers, legacy routes, front-end rules, raw colours and spacing, budgets) and `npm test`; `lint:js`; PHP lint and unit suites; phpcs errors in every file and on changed lines; Stylelint; PHP integration with disposable sites; Playwright |
 
 ## Feature parity
 

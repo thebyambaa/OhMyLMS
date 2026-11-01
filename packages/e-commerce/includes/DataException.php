@@ -7,18 +7,14 @@
 
 namespace OhMyLMS\Commerce;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * E-Commerce module Data Exception Class
  *
  * Extends Exception to provide additional data.
  *
  * @since   1.0.0
- */
-
-defined( 'ABSPATH' ) || exit;
-
-/**
- * Data exception class.
  */
 class DataException extends \Exception {
 

@@ -185,7 +185,7 @@ if ( 'ohmylms-session' === get_post_type() ) {
 
 	<?php
 	if ( 'quiz' == $get_type ) {
-		$currentUrl = ohmylms_get_pretty_content_permalink( $lesson_id );
+		$current_url = ohmylms_get_pretty_content_permalink( $lesson_id );
 		// Admins and authors previewing a quiz can retry without limit and never see it as completed.
 		$is_quiz_preview = \OhMyLMS\Quiz\Submission::is_preview( $lesson_id, get_current_user_id() );
 		if ( $is_quiz_preview ) {
@@ -243,9 +243,7 @@ if ( 'ohmylms-session' === get_post_type() ) {
 
 		<!-- quiz attempts notice -->
 		<?php
-		if ( $is_quiz_preview || ( $lesson->get_take_attempts() > 0 && $lesson->get_take_attempts() > $lesson->count_total_attempt( $student->get_id(), $course_id ) ) ) {
-
-		} else {
+		if ( ! ( $is_quiz_preview || ( $lesson->get_take_attempts() > 0 && $lesson->get_take_attempts() > $lesson->count_total_attempt( $student->get_id(), $course_id ) ) ) ) {
 			?>
 				<p class="ohmylms-quiz-notice">
 					<svg width="16" height="16" fill="none" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><g fill="#A1A1AA" clip-path="url(#clip0_3836_17160)"><path d="M8 16a8 8 0 118-8 8.009 8.009 0 01-8 8zM8 1.333A6.667 6.667 0 1014.667 8 6.674 6.674 0 008 1.333z"/><path d="M8 12.667A.667.667 0 017.333 12V6.667a.667.667 0 011.334 0V12a.667.667 0 01-.667.667zM8.667 4a.667.667 0 11-1.334 0 .667.667 0 011.334 0z"/></g><defs><clipPath id="clip0_3836_17160"><path fill="#fff" d="M0 0h16v16H0z" transform="matrix(1 0 0 -1 0 16)"/></clipPath></defs></svg>
@@ -253,9 +251,9 @@ if ( 'ohmylms-session' === get_post_type() ) {
 					$attempts     = $lesson->get_take_attempts();
 					$attempt_text = $attempts > 1 ? __( 'attempts', 'ohmylms' ) : __( 'attempt', 'ohmylms' );
 					printf( /* translators: %1$d: number; %2$s: text value. */
-						__( 'You have already taken %1$d %2$s.', 'ohmylms' ),
-						$attempts,
-						$attempt_text
+						esc_html__( 'You have already taken %1$d %2$s.', 'ohmylms' ),
+						(int) $attempts,
+						esc_html( $attempt_text )
 					);
 					?>
 				</p>

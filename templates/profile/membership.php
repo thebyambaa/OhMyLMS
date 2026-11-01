@@ -54,17 +54,17 @@ use function OhMyLMS\Commerce\ecommerce;
 				$enrolled_membership    = 0;
 				$showing_membership_ids = array();
 				foreach ( $student_orders->orders as $student_order ) {
-					$order = ohmylms_ecommerce_get_order( $student_order );
+					$membership_order = ohmylms_ecommerce_get_order( $student_order );
 
-					$item_count = $order->get_item_count() - $order->get_item_count_refunded();
-					$items      = $order->get_items();
+					$item_count = $membership_order->get_item_count() - $membership_order->get_item_count_refunded();
+					$items      = $membership_order->get_items();
 
 					// First, handle recurring subscriptions.
 					$post_ids = $wpdb->get_col(
 						$wpdb->prepare(
 							"SELECT post_id FROM $wpdb->postmeta WHERE meta_key = %s AND meta_value = %s",
 							'_original_order_id',
-							$order->get_id()
+							$membership_order->get_id()
 						)
 					);
 					$post_ids = ! empty( $post_ids ) ? (array) $post_ids : array();
@@ -156,11 +156,11 @@ use function OhMyLMS\Commerce\ecommerce;
 									<?php
 									if ( $is_one_time ) {
 										// For one-time payments, show the total amount with tax.
-										$items = $order->get_items();
+										$items = $membership_order->get_items();
 										foreach ( $items as $item ) {
 											if ( $item->get_course_id() == $membership_id ) {
 												$item_total     = $item->get_total();
-												$tax_amount     = \OhMyLMS_Tax_Calculator::get_instance()->calculate_tax( $order->get_tax_rate(), array( 'total' => $item_total ) );
+												$tax_amount     = \OhMyLMS_Tax_Calculator::get_instance()->calculate_tax( $membership_order->get_tax_rate(), array( 'total' => $item_total ) );
 												$total_with_tax = is_array( $tax_amount ) && isset( $tax_amount['total_with_tax'] ) ? $tax_amount['total_with_tax'] : $item_total;
 												echo wp_kses_post( ohmylms_price( $total_with_tax ) ) . '/' . esc_html__( 'One Time', 'ohmylms' );
 												break;
@@ -168,7 +168,7 @@ use function OhMyLMS\Commerce\ecommerce;
 										}
 									} else {
 										// For recurring payments, show recurring amount with period.
-										$tax_amount       = \OhMyLMS_Tax_Calculator::get_instance()->calculate_tax( $order->get_tax_rate(), array( 'total' => $subscription->get_recurring_amount() ) );
+										$tax_amount       = \OhMyLMS_Tax_Calculator::get_instance()->calculate_tax( $membership_order->get_tax_rate(), array( 'total' => $subscription->get_recurring_amount() ) );
 										$recurring_amount = is_array( $tax_amount ) && isset( $tax_amount['total_with_tax'] ) ? $tax_amount['total_with_tax'] : $subscription->get_recurring_amount();
 										echo wp_kses_post( ohmylms_price( $recurring_amount ) ) . '/' . esc_html( $subscription->get_billing_period() );
 									}
@@ -187,7 +187,7 @@ use function OhMyLMS\Commerce\ecommerce;
 												echo wp_interactivity_data_wp_context( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core helper escapes the attribute.
 													array(
 														'subscriptionId' => (int) $subscription->get_id(),
-														'orderId'        => (int) $order->get_id(),
+														'orderId'        => (int) $membership_order->get_id(),
 														'busy'           => false,
 													)
 												);
@@ -203,10 +203,10 @@ use function OhMyLMS\Commerce\ecommerce;
 										<?php else : ?>
 											<span class="ohmylms-status-label" style="text-transform: capitalize">
 												<?php
-												$status_name = esc_html( $subscription->get_status() );
+												$status_name = $subscription->get_status();
 												printf( /* translators: %s: text value. */
 													'%s',
-													$status_name
+													esc_html( $status_name )
 												);
 												?>
 											</span>
@@ -215,19 +215,19 @@ use function OhMyLMS\Commerce\ecommerce;
 
 									<div class="dashboard-table-mobile-td">
 										<div class="dashboard-table-td membership-id" data-title="ID: ">
-											#<?php echo esc_html( $order->get_id() ); ?>
+											#<?php echo esc_html( $membership_order->get_id() ); ?>
 										</div>
 
 										<div class="dashboard-table-td expiration" data-title="Expiration: ">
 											<?php
 											if ( $membership ) {
-												echo wp_kses_post( ohmylms_price( $order->get_formatted_order_total() ) );
+												echo wp_kses_post( ohmylms_price( $membership_order->get_formatted_order_total() ) );
 											}
 											?>
 										</div>
 
 										<div class="dashboard-table-td billing" data-title="Billing: ">
-											<time datetime="<?php echo esc_attr( $order->get_date_created()->date( 'c' ) ); ?>"><?php echo esc_html( ohmylms_format_datetime( $order->get_date_created() ) ); ?></time>
+											<time datetime="<?php echo esc_attr( $membership_order->get_date_created()->date( 'c' ) ); ?>"><?php echo esc_html( ohmylms_format_datetime( $membership_order->get_date_created() ) ); ?></time>
 										</div>
 									</div>
 
@@ -251,7 +251,7 @@ use function OhMyLMS\Commerce\ecommerce;
 							$is_one_time         = 'one_time' === $subscription_length;
 
 							// Only process if it's a one-time payment and order is completed.
-							if ( ! $is_one_time || ! in_array( $order->get_status(), array( 'completed', 'processing' ) ) ) {
+							if ( ! $is_one_time || ! in_array( $membership_order->get_status(), array( 'completed', 'processing' ) ) ) {
 								continue;
 							}
 
@@ -269,7 +269,7 @@ use function OhMyLMS\Commerce\ecommerce;
 									<div class="table-accordion-handler"></div>
 
 									<div class="dashboard-table-td membership-id">
-										#<?php echo esc_html( $order->get_id() ); ?>
+										#<?php echo esc_html( $membership_order->get_id() ); ?>
 									</div>
 
 									<div class="dashboard-table-td bold-td membership-plan">
@@ -284,7 +284,7 @@ use function OhMyLMS\Commerce\ecommerce;
 									<?php
 									// For one-time payments, show the total amount with tax.
 									$item_total     = $item->get_total();
-									$tax_amount     = \OhMyLMS_Tax_Calculator::get_instance()->calculate_tax( $order->get_tax_rate(), array( 'total' => $item_total ) );
+									$tax_amount     = \OhMyLMS_Tax_Calculator::get_instance()->calculate_tax( $membership_order->get_tax_rate(), array( 'total' => $item_total ) );
 									$total_with_tax = is_array( $tax_amount ) && isset( $tax_amount['total_with_tax'] ) ? $tax_amount['total_with_tax'] : $item_total;
 									echo wp_kses_post( ohmylms_price( $total_with_tax ) ) . '/' . esc_html__( 'One Time', 'ohmylms' );
 									?>
@@ -298,19 +298,19 @@ use function OhMyLMS\Commerce\ecommerce;
 
 									<div class="dashboard-table-mobile-td">
 										<div class="dashboard-table-td membership-id" data-title="ID: ">
-											#<?php echo esc_html( $order->get_id() ); ?>
+											#<?php echo esc_html( $membership_order->get_id() ); ?>
 										</div>
 
 										<div class="dashboard-table-td expiration" data-title="Expiration: ">
 										<?php
 										if ( $membership ) {
-											echo wp_kses_post( ohmylms_price( $order->get_formatted_order_total() ) );
+											echo wp_kses_post( ohmylms_price( $membership_order->get_formatted_order_total() ) );
 										}
 										?>
 										</div>
 
 										<div class="dashboard-table-td billing" data-title="Billing: ">
-											<time datetime="<?php echo esc_attr( $order->get_date_created()->date( 'c' ) ); ?>"><?php echo esc_html( ohmylms_format_datetime( $order->get_date_created() ) ); ?></time>
+											<time datetime="<?php echo esc_attr( $membership_order->get_date_created()->date( 'c' ) ); ?>"><?php echo esc_html( ohmylms_format_datetime( $membership_order->get_date_created() ) ); ?></time>
 										</div>
 									</div>
 
@@ -380,9 +380,9 @@ use function OhMyLMS\Commerce\ecommerce;
 				$membership_count = 0;
 
 				foreach ( $student_orders->orders as $student_order ) {
-					$order      = ohmylms_ecommerce_get_order( $student_order );
-					$item_count = $order->get_item_count() - $order->get_item_count_refunded();
-					$items      = $order->get_items();
+					$membership_order = ohmylms_ecommerce_get_order( $student_order );
+					$item_count       = $membership_order->get_item_count() - $membership_order->get_item_count_refunded();
+					$items            = $membership_order->get_items();
 					foreach ( $items as $item ) {
 
 						$products = array();
@@ -408,32 +408,32 @@ use function OhMyLMS\Commerce\ecommerce;
 
 										<div class="dashboard-table-td date">
 									<?php
-										$date = $order->get_date_completed() && null !== $order->get_date_completed() ? new \DateTime( $order->get_date_completed() ) : '';
+										$date = $membership_order->get_date_completed() && null !== $membership_order->get_date_completed() ? new \DateTime( $membership_order->get_date_completed() ) : '';
 										echo esc_html( $date ? $date->format( 'F d, Y' ) : '' );
 									?>
 										</div>
 
 										<div class="dashboard-table-td bold-td method">
-									<?php echo esc_html( $order->get_payment_method_title() ); ?>
+									<?php echo esc_html( $membership_order->get_payment_method_title() ); ?>
 										</div>
 
 										<div class="dashboard-table-td price">
 										<?php
-										$negative        = $order->get_total() < 0;
-										$formatted_price = ( $negative ? '-' : '' ) . sprintf( ohmylms_get_price_format(), '<span class="ohmylms-price-currency-symbol">' . get_ohmylms_currency_symbol( get_ohmylms_currency() ) . '</span>', $order->get_total() );
+										$negative        = $membership_order->get_total() < 0;
+										$formatted_price = ( $negative ? '-' : '' ) . sprintf( ohmylms_get_price_format(), '<span class="ohmylms-price-currency-symbol">' . get_ohmylms_currency_symbol( get_ohmylms_currency() ) . '</span>', $membership_order->get_total() );
 
 										echo wp_kses_post( $formatted_price );
 										?>
 										</div>
 
 										<div class="dashboard-table-td status">
-											<span class="status-tag <?php echo esc_attr( $order->get_status() ); ?>">
-											<?php echo esc_html( ohmylms_ecommerce_get_order_status_name( $order->get_status() ) ); ?>
+											<span class="status-tag <?php echo esc_attr( $membership_order->get_status() ); ?>">
+											<?php echo esc_html( ohmylms_ecommerce_get_order_status_name( $membership_order->get_status() ) ); ?>
 											</span>
 										</div>
 
 										<div class="dashboard-table-td action">
-											<a href="<?php echo esc_url( ohmylms_get_account_endpoint_url( 'invoice-details', array( 'id' => $order->get_id() ) ) ); ?>">
+											<a href="<?php echo esc_url( ohmylms_get_account_endpoint_url( 'invoice-details', array( 'id' => $membership_order->get_id() ) ) ); ?>">
 											<?php include OHMYLMS_DIR . '/assets/images/icon/eye-icon.php'; ?>
 											</a>
 										</div>
@@ -442,18 +442,18 @@ use function OhMyLMS\Commerce\ecommerce;
 											<div class="dashboard-table-td date" data-title="Date: ">
 											<?php
 											if ( $membership ) {
-												echo wp_kses_post( ohmylms_price( $order->get_formatted_order_total() ) );
+												echo wp_kses_post( ohmylms_price( $membership_order->get_formatted_order_total() ) );
 											}
 											?>
 											</div>
 
 											<div class="dashboard-table-td price" data-title="Price: ">
-												<time datetime="<?php echo esc_attr( $order->get_date_created()->date( 'c' ) ); ?>"><?php echo esc_html( ohmylms_format_datetime( $order->get_date_created() ) ); ?></time>
+												<time datetime="<?php echo esc_attr( $membership_order->get_date_created()->date( 'c' ) ); ?>"><?php echo esc_html( ohmylms_format_datetime( $membership_order->get_date_created() ) ); ?></time>
 											</div>
 
 											<div class="dashboard-table-td status" data-title="Status: ">
-												<span class="status-tag <?php echo esc_attr( $order->get_status() ); ?>">
-												<?php echo esc_html( ohmylms_ecommerce_get_order_status_name( $order->get_status() ) ); ?>
+												<span class="status-tag <?php echo esc_attr( $membership_order->get_status() ); ?>">
+												<?php echo esc_html( ohmylms_ecommerce_get_order_status_name( $membership_order->get_status() ) ); ?>
 												</span>
 											</div>
 										</div>

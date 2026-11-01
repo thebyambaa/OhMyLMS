@@ -138,7 +138,7 @@ class PaymentService {
 					if ( $details ) {
 						update_post_meta( $order_id, '_qpay_verified_payment', $details ); }
 				}
-				if ( ! $details || $invoice !== ( $details['invoice_id'] ?? '' ) ) {
+				if ( ! $details || ( $details['invoice_id'] ?? '' ) !== $invoice ) {
 					return array( 'status' => 'pending' );
 				}
 				if ( $details['minor_units'] < self::minor_units( $order->get_total() ) ) {

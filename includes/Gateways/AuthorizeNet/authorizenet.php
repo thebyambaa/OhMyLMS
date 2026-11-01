@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Authorize.Net Payment Gateway for OhMyLMS
  *

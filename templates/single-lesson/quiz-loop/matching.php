@@ -26,7 +26,7 @@ $layout = 'grid' === ( $question['settings']['match_layout'] ?? '' ) ? 'grid' : 
 ohmylms_enqueue_interactivity_module( 'ohmylms/questions' );
 ?>
 
-<div class="quiz-matching-options is-<?php echo esc_attr( $layout ); ?>" data-wp-interactive="ohmylms/questions" data-question-id="<?php echo (int) $question['id']; ?>" <?php echo wp_interactivity_data_wp_context( array( 'selectedId' => '' ) ); ?> data-wp-on--dragover="actions.dragover" data-wp-on--drop="actions.drop" id="matching-<?php echo esc_attr( $question['id'] ); ?>">
+<div class="quiz-matching-options is-<?php echo esc_attr( $layout ); ?>" data-wp-interactive="ohmylms/questions" data-question-id="<?php echo (int) $question['id']; ?>" <?php echo wp_interactivity_data_wp_context( array( 'selectedId' => '' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core helper escapes the attribute. ?> data-wp-on--dragover="actions.dragover" data-wp-on--drop="actions.drop" id="matching-<?php echo esc_attr( $question['id'] ); ?>">
 	<div class="quiz-match-items">
 		<?php foreach ( $options as $option ) { ?>
 			<div class="matching-reorder-option matching-option" role="button" tabindex="0" aria-pressed="false" data-wp-on--click="actions.select" data-wp-on--dblclick="actions.unlink" data-wp-on--keydown="actions.key" data-wp-on--dragstart="actions.dragstart" data-wp-on--dragend="actions.dragend" draggable="true" data-option-id="<?php echo esc_attr( $option['id'] ); ?>" data-question-id="<?php echo esc_attr( $option['question_id'] ); ?>">

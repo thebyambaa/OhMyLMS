@@ -23,7 +23,7 @@ class QuestionSnapshot {
 	 */
 	private $version;
 	/**
-	 * seed and numbers of a template instance.
+	 * Seed and numbers of a template instance.
 	 *
 	 * @var array|null seed and numbers of a template instance */
 	private $instance = null;
@@ -178,7 +178,7 @@ class QuestionSnapshot {
 	 * Get parts for Question snapshot.
 	 */
 	public function get_parts() {
-		return $this->version['parts'] ?: array(
+		return $this->version['parts'] ? $this->version['parts'] : array(
 			array(
 				'id'       => 'p1',
 				'fraction' => 1,

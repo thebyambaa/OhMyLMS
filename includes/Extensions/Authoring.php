@@ -37,7 +37,7 @@ final class Authoring {
 			$result = self::check( $definition, $settings );
 		}
 		if ( true !== $result ) {
-			throw new \OhMyLMS\DataException( 'ohmylms_invalid_question_settings', is_string( $result ) ? $result : __( 'Invalid question settings.', 'ohmylms' ), 400 );
+			throw new \OhMyLMS\DataException( 'ohmylms_invalid_question_settings', is_string( $result ) ? $result : __( 'Invalid question settings.', 'ohmylms' ), 400 ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Callers convert it to REST error data.
 		}
 	}
 

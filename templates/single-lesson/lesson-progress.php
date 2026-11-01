@@ -35,35 +35,35 @@ $over_all_completion_rate = $student->get_over_all_completion_rate( $course_id )
 			</div>
 
 			<div class="lesson-single-progressbar ohmylms-progressbar quiz-progress">
-				<?php $quizProgress = $student->get_quiz_completion_rate( $course_id ); ?>
+				<?php $quiz_progress = $student->get_quiz_completion_rate( $course_id ); ?>
 
 				<p class="progressbar-title">
 					<span>Quiz</span>
 					<span>
-						<?php echo esc_html( $quizProgress . '%' ); ?>
+						<?php echo esc_html( $quiz_progress . '%' ); ?>
 					</span>
 				</p>
 
 				<div class="ohmylms-circle-progressbar">
 					<?php
-						echo ohmylms_circular_progressbar( 45, $quizProgress, 6, '#EAEDF4', '#5B65F5' );
+						echo ohmylms_circular_progressbar( 45, $quiz_progress, 6, '#EAEDF4', '#5B65F5' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- ohmylms_circular_progressbar() escapes its output.
 					?>
 				</div>
 			</div>
 
 			<div class="lesson-single-progressbar ohmylms-progressbar assignment-progress">
-				<?php $quizProgress = $student->get_assignment_completion_rate( $course_id ); ?>
+				<?php $assignment_progress = $student->get_assignment_completion_rate( $course_id ); ?>
 
 				<p class="progressbar-title">
 					<span>Assignments</span>
 					<span>
-						<?php echo esc_html( $quizProgress . '%' ); ?>
+						<?php echo esc_html( $assignment_progress . '%' ); ?>
 					</span>
 				</p>
 
 				<div class="ohmylms-circle-progressbar">
 					<?php
-						echo ohmylms_circular_progressbar( 45, $quizProgress, 6, '#EAEDF4', '#FF811A' );
+						echo ohmylms_circular_progressbar( 45, $assignment_progress, 6, '#EAEDF4', '#FF811A' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- ohmylms_circular_progressbar() escapes its output.
 					?>
 				</div>
 			</div>

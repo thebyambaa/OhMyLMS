@@ -37,7 +37,7 @@ final class Follows {
 	 */
 	public static function is_following( $user_id, $bundle_id ) {
 		global $wpdb;
-		return (bool) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . self::table() . ' WHERE user_id=%d AND bundle_id=%d', (int) $user_id, (int) $bundle_id ) );
+		return (bool) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE user_id=%d AND bundle_id=%d', self::table(), (int) $user_id, (int) $bundle_id ) );
 	}
 
 	/** Following needs a published bundle; repeating the request is harmless.
@@ -51,7 +51,7 @@ final class Follows {
 		if ( ! $bundle || 'published' !== $bundle['status'] ) {
 			return Bundles::missing(); }
 		if ( ! self::is_following( $user_id, $bundle_id ) ) {
-			if ( (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . self::table() . ' WHERE user_id=%d', (int) $user_id ) ) >= self::MAX_PER_USER ) {
+			if ( (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE user_id=%d', self::table(), (int) $user_id ) ) >= self::MAX_PER_USER ) {
 				return Access::error(
 					'ohmylms_bundle_follow_limit',
 					sprintf( /* translators: %d: number. */
@@ -61,7 +61,7 @@ final class Follows {
 					409
 				);
 			}
-			$inserted = $wpdb->query( $wpdb->prepare( 'INSERT IGNORE INTO ' . self::table() . ' (bundle_id, user_id, followed_at) VALUES (%d, %d, %s)', (int) $bundle_id, (int) $user_id, current_time( 'mysql', true ) ) );
+			$inserted = $wpdb->query( $wpdb->prepare( 'INSERT IGNORE INTO %i (bundle_id, user_id, followed_at) VALUES (%d, %d, %s)', self::table(), (int) $bundle_id, (int) $user_id, current_time( 'mysql', true ) ) );
 			if ( false === $inserted ) {
 				return Access::error( 'ohmylms_bundle_failed', __( 'The bundle could not be added to your dashboard.', 'ohmylms' ), 500 ); }
 		}
@@ -92,7 +92,8 @@ final class Follows {
 	 */
 	public static function followed( $user_id ) {
 		global $wpdb;
-		return $wpdb->get_results( $wpdb->prepare( 'SELECT t.* FROM ' . self::table() . ' f JOIN ' . Bundles::table() . " t ON t.id=f.bundle_id WHERE f.user_id=%d AND t.status='published' ORDER BY f.followed_at, f.id", (int) $user_id ), ARRAY_A ) ?: array();
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT t.* FROM %i f JOIN %i t ON t.id=f.bundle_id WHERE f.user_id=%d AND t.status='published' ORDER BY f.followed_at, f.id", self::table(), Bundles::table(), (int) $user_id ), ARRAY_A );
+		return $rows ? $rows : array();
 	}
 
 	/** IDs of courses the learner is currently enrolled in.
@@ -143,7 +144,14 @@ final class Follows {
 		usort(
 			$suggestions,
 			static function ( $left, $right ) {
-				return $right['overlap'] <=> $left['overlap'] ?: (int) $left['row']['position'] <=> (int) $right['row']['position'] ?: (int) $left['row']['id'] <=> (int) $right['row']['id'];
+				$order = $right['overlap'] <=> $left['overlap'];
+				if ( 0 === $order ) {
+					$order = (int) $left['row']['position'] <=> (int) $right['row']['position'];
+				}
+				if ( 0 === $order ) {
+					$order = (int) $left['row']['id'] <=> (int) $right['row']['id'];
+				}
+				return $order;
 			}
 		);
 		return array_map(

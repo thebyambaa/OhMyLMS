@@ -21,7 +21,7 @@ class Zoom {
 	 */
 	public $integration_name = 'Zoom';
 
-	const Version = '1.0.0';
+	const Version = '1.0.0'; // phpcs:ignore Generic.NamingConventions.UpperCaseConstantName.ClassConstantNotUpperCase -- Public constant; renaming would break external references.
 
 
 	/**

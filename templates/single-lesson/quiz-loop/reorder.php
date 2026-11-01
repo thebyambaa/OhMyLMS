@@ -21,7 +21,7 @@ if ( empty( $question['frozen'] ) ) {
 ohmylms_enqueue_interactivity_module( 'ohmylms/questions' );
 ?>
 
-<div class="quiz-reorder-options" data-wp-interactive="ohmylms/questions" data-question-id="<?php echo (int) $question['id']; ?>" <?php echo wp_interactivity_data_wp_context( array( 'selectedId' => '' ) ); ?> data-wp-on--dragover="actions.dragover" data-wp-on--drop="actions.drop" id="reorder-<?php echo esc_attr( $question['id'] ); ?>">
+<div class="quiz-reorder-options" data-wp-interactive="ohmylms/questions" data-question-id="<?php echo (int) $question['id']; ?>" <?php echo wp_interactivity_data_wp_context( array( 'selectedId' => '' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core helper escapes the attribute. ?> data-wp-on--dragover="actions.dragover" data-wp-on--drop="actions.drop" id="reorder-<?php echo esc_attr( $question['id'] ); ?>">
 	<?php foreach ( $options as $position => $option ) { ?>
 		<div class="matching-reorder-option reorder-option" role="button" tabindex="0" aria-label="<?php esc_attr_e( 'Use Up and Down arrows to reorder', 'ohmylms' ); ?>" data-wp-on--keydown="actions.key" data-wp-on--dragstart="actions.dragstart" data-wp-on--dragend="actions.dragend" draggable="true" data-option-id="<?php echo esc_attr( $option['id'] ); ?>" data-question-id="<?php echo esc_attr( $option['question_id'] ); ?>">
 

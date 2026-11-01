@@ -60,6 +60,8 @@ const NOT_RUN = [
 	/^Set [A-Z0-9_]+=1\b/m,
 	/^Usage: /m,
 	/tests need the \w+ extension/i,
+	// WordPress's dead_db page exits 0; without OHMYLMS_TEST_DB_PORT on Local every suite would "pass".
+	/Error establishing a database connection/i,
 ];
 
 const args = process.argv.slice( 2 );
@@ -357,7 +359,10 @@ function runSuite( php, iniArgs, suite ) {
 			detail: `exit ${ run.status }\n${ tail( output, 25 ) }`,
 		};
 	}
-	if ( NOT_RUN.some( ( pattern ) => pattern.test( output ) ) ) {
+	if (
+		NOT_RUN.some( ( pattern ) => pattern.test( output ) ) ||
+		'' === tail( output, 1 ).trim()
+	) {
 		return {
 			passed: false,
 			seconds,

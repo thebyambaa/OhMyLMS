@@ -531,6 +531,10 @@ New Gutenberg blocks for Student Dashboard, My Courses, and Student Profile page
 - Changed: The syllabus editor shows one outline workspace; the mind map and spreadsheet layouts are removed and their old addresses open the outline.
 - Fixed: Exam import checks every figure crop on the server (minimum size, page range, crop inside the rendered page, and a figure's page and area against its crop on save and accept); the review screen offers to redraw a refused crop, and choosing a crop copies its page and bounds.
 - Fixed: A class without a grade is kept in a year rollover instead of being treated as graduating (which cancelled its students' roster enrolments).
+- Fixed: The MailMint automation list could put an unchecked sort column and search text into SQL; both are now prepared, and unknown sort values fall back to the creation date.
+- Fixed: A Stripe error while creating a customer threw a PHP TypeError instead of reporting Stripe's message.
+- Fixed: Dashboard, My Courses and Profile redirects keep `&` in their URLs (they were HTML-encoded inside JavaScript).
+- Changed: All PHP code meets the WordPress coding standards with no errors (CI enforces it). Visible effects: request values such as `redirect_to`, the checkout payment method and Google Meet fields are unslashed and sanitized; course card descriptions go through `wp_kses_post`; a few strings (Email, Country, the order total, the plugin installer messages) now use the `ohmylms` text domain.
 
 🗑 Removed (breaking for themes and add-ons that used them; see docs/EXTENSIONS.md)
 

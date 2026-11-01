@@ -80,8 +80,8 @@ final class SkillMappings {
 	public static function for_skill( $term_id ) {
 		global $wpdb;
 		$term_id = (int) $term_id;
-		$up      = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . self::table() . ' WHERE specific_term_id=%d ORDER BY id', $term_id ), ARRAY_A );
-		$down    = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . self::table() . ' WHERE shared_term_id=%d ORDER BY id', $term_id ), ARRAY_A );
+		$up      = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE specific_term_id=%d ORDER BY id', self::table(), $term_id ), ARRAY_A );
+		$down    = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE shared_term_id=%d ORDER BY id', self::table(), $term_id ), ARRAY_A );
 		$rows    = array_merge( $up, $down );
 		if ( $rows ) {
 			get_terms(
@@ -141,10 +141,9 @@ final class SkillMappings {
 		global $wpdb;
 		$term_ids = array_values( array_filter( array_map( 'intval', $term_ids ) ) );
 		if ( $term_ids ) {
-			$placeholders = implode( ',', array_fill( 0, count( $term_ids ), '%d' ) );
-			$rows         = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . self::table() . " WHERE specific_term_id IN ($placeholders) OR shared_term_id IN ($placeholders) ORDER BY id", array_merge( $term_ids, $term_ids ) ), ARRAY_A );
+			$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE specific_term_id IN (' . implode( ',', array_fill( 0, count( $term_ids ), '%d' ) ) . ') OR shared_term_id IN (' . implode( ',', array_fill( 0, count( $term_ids ), '%d' ) ) . ') ORDER BY id', array_merge( array( self::table() ), $term_ids, $term_ids ) ), ARRAY_A );
 		} else {
-			$rows = $wpdb->get_results( 'SELECT * FROM ' . self::table() . ' ORDER BY id', ARRAY_A );
+			$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i ORDER BY id', self::table() ), ARRAY_A );
 		}
 		return $rows ? $rows : array();
 	}

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * OhMyLMS admin functions
  *

@@ -79,7 +79,7 @@ class ScormAdminNotices {
 			$('.ohmylms-dismiss-scorm-notice').on('click', function() {
 				$.post(ajaxurl, {
 					action: 'ohmylms_dismiss_scorm_notice',
-					nonce: '<?php echo wp_create_nonce( 'ohmylms_scorm_notice' ); ?>'
+					nonce: '<?php echo esc_js( wp_create_nonce( 'ohmylms_scorm_notice' ) ); ?>'
 				});
 				$('.ohmylms-scorm-notice').fadeOut();
 			});

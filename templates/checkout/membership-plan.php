@@ -25,11 +25,11 @@ $membership_plans = get_posts( $args );
 
 
 if ( empty( $membership_plans ) || ! is_array( $membership_plans ) ) {
-	echo apply_filters( 'ohmylms_membership_plans_no_plans_message', __( 'No membership plans found.', 'ohmylms' ) );
+	echo wp_kses_post( apply_filters( 'ohmylms_membership_plans_no_plans_message', __( 'No membership plans found.', 'ohmylms' ) ) );
 }
 
 // Apply filter before displaying plans.
-echo apply_filters( 'ohmylms_before_display_membership_plans', '', $membership_id );
+echo wp_kses_post( apply_filters( 'ohmylms_before_display_membership_plans', '', $membership_id ) );
 
 // Change buy now button text.
 $buy_now_text = apply_filters( 'ohmylms_membership_plans_buy_button_text', __( 'Buy Now', 'ohmylms' ) );
@@ -41,8 +41,8 @@ ob_start();
 		<div class="membership-plan">
 			<h3>
 				<?php
-					$title = get_the_title( $plan_id );
-					echo esc_html( $title );
+					$plan_title = get_the_title( $plan_id );
+					echo esc_html( $plan_title );
 				?>
 			</h3>
 			<p>
@@ -113,7 +113,7 @@ ob_start();
 <?php
 
 // Apply filter after displaying plans.
-echo apply_filters( 'ohmylms_after_display_membership_plans', '', $membership_id );
+echo wp_kses_post( apply_filters( 'ohmylms_after_display_membership_plans', '', $membership_id ) );
 
-echo ob_get_clean();
+echo ob_get_clean(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Buffered output of this template, escaped above.
 ?>

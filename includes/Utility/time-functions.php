@@ -5,7 +5,6 @@
  * @package OhMyLMS
  */
 
-
 /**
  * Convert date string to timestamp
  *
@@ -54,13 +53,13 @@ function ohmylms_add_time( $number_of_periods, $period, $from_timestamp ) {
  */
 function ohmylms_strtotime( $time_string, $from_timestamp = null ) {
 	$original_timezone = date_default_timezone_get();
-	date_default_timezone_set( 'UTC' );
+	date_default_timezone_set( 'UTC' ); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.timezone_change_date_default_timezone_set -- strtotime() must parse in UTC; restored below.
 
 	if ( null === $from_timestamp ) {
 		$next_timestamp = strtotime( $time_string );
 	} else {
 		$next_timestamp = strtotime( $time_string, $from_timestamp );
 	}
-	date_default_timezone_set( $original_timezone );
+	date_default_timezone_set( $original_timezone ); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.timezone_change_date_default_timezone_set -- Restores the original timezone.
 	return $next_timestamp;
 }

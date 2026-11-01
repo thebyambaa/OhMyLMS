@@ -83,7 +83,7 @@ final class Placements {
 	 * Index for Placements.
 	 */
 	public static function index() {
-		if ( self::$index !== null ) {
+		if ( null !== self::$index ) {
 			return self::$index; }
 		$stored      = get_option( self::OPTION, null );
 		self::$index = is_array( $stored ) ? $stored : self::rebuild();
@@ -96,14 +96,16 @@ final class Placements {
 	public static function rebuild() {
 		global $wpdb;
 		if ( ! Schema::ready() ) {
-			return self::$index = array(); }
+			self::$index = array();
+			return self::$index; }
 		$rows  = $wpdb->get_results(
 			$wpdb->prepare( 'SELECT m.post_id AS course_id, p.program FROM %i m JOIN %i p ON p.id = m.meta_value JOIN %i c ON c.ID = m.post_id WHERE m.meta_key = %s AND c.post_type = %s AND c.post_status IN (\'publish\',\'private\')', $wpdb->postmeta, Schema::table( 'programs' ), $wpdb->posts, CourseProgram::CURRENT, OHMYLMS_COURSE_CPT ),
 			ARRAY_N
 		);
 		$index = self::index_from( is_array( $rows ) ? $rows : array() );
 		update_option( self::OPTION, $index, false );
-		return self::$index = $index;
+		self::$index = $index;
+		return self::$index;
 	}
 
 	/** Drop the derived index; it is rebuilt on next use. Call when a program is published or a course changes state. */

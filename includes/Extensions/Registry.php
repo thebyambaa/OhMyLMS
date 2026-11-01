@@ -61,14 +61,14 @@ final class Registry {
 			throw new \InvalidArgumentException( 'Invalid extension identifier.' );
 		}
 		if ( isset( self::$items[ $kind ][ $id ] ) ) {
-			throw new \InvalidArgumentException( 'Extension already registered: ' . $id );
+			throw new \InvalidArgumentException( 'Extension already registered: ' . $id ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Developer-facing registration error; not output here.
 		}
 		if ( empty( $definition['label'] ) ) {
 			throw new \InvalidArgumentException( 'An extension label is required.' );
 		}
 		foreach ( 'question' === $kind ? array( 'render', 'validate', 'grade' ) : array( 'render' ) as $callback ) {
 			if ( ! is_callable( $definition[ $callback ] ?? null ) ) {
-				throw new \InvalidArgumentException( 'Missing callback: ' . $callback );
+				throw new \InvalidArgumentException( 'Missing callback: ' . $callback ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Developer-facing registration error; not output here.
 			}
 		}
 		if ( 'layout' === $kind && ( ! isset( $definition['contexts'] ) || array_diff( $definition['contexts'], array( 'course', 'chapter', 'lesson', 'quiz' ) ) ) ) {

@@ -24,10 +24,12 @@ final class Gradebook {
 		if ( (int) $c['school_id'] ) {
 			$school = Service::row( 'schools', (int) $c['school_id'] );
 			Service::need( $school && 'active' === $school['status'], 'The school is archived.' ); }
-		$m     = Schema::table( 'class_memberships' );
-		$s     = Schema::table( 'school_memberships' );
-		$scope = (int) $c['school_id'] ? $wpdb->prepare( ' AND EXISTS (SELECT 1 FROM %i s WHERE s.school_id=%d AND s.user_id=m.user_id AND s.role=\'student\' AND s.status=\'active\')', $s, $c['school_id'] ) : '';
-		return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT m.user_id FROM $m m JOIN {$wpdb->users} u ON u.ID=m.user_id WHERE m.class_id=%d AND m.role='student' AND m.status='active' $scope", $class ) ) );
+		$m = Schema::table( 'class_memberships' );
+		$s = Schema::table( 'school_memberships' );
+		if ( (int) $c['school_id'] ) {
+			return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT m.user_id FROM %i m JOIN {$wpdb->users} u ON u.ID=m.user_id WHERE m.class_id=%d AND m.role='student' AND m.status='active' AND EXISTS (SELECT 1 FROM %i s WHERE s.school_id=%d AND s.user_id=m.user_id AND s.role='student' AND s.status='active')", $m, $class, $s, $c['school_id'] ) ) );
+		}
+		return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT m.user_id FROM %i m JOIN {$wpdb->users} u ON u.ID=m.user_id WHERE m.class_id=%d AND m.role='student' AND m.status='active'", $m, $class ) ) );
 	}
 	/**
 	 * Classes for Gradebook.

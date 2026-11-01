@@ -5,7 +5,6 @@
  * @package OhMyLMS
  */
 
-
 /**
  * Retrieve product terms for a given course.
  *

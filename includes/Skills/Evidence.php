@@ -99,8 +99,9 @@ final class Evidence {
 		$version = VersionPublisher::version( (int) $event['version_id'] );
 		if ( ! $version ) {
 			return 'skipped'; }
-		$parts = array();
-		foreach ( ( json_decode( $version['parts'], true ) ?: array(
+		$parts   = array();
+		$decoded = json_decode( $version['parts'], true );
+		foreach ( ( $decoded ? $decoded : array(
 			array(
 				'id'       => 'p1',
 				'fraction' => 1,
@@ -108,10 +109,13 @@ final class Evidence {
 		) ) as $part ) {
 			$parts[ (string) ( $part['id'] ?? 'p1' ) ] = max( 0, (float) ( $part['fraction'] ?? 1 ) );
 		}
-		$part_total  = array_sum( $parts ) ?: 1;
-		$is_template = \OhMyLMS\Assessment\Template::has( json_decode( (string) $version['settings'], true ) ?: array() );
+		$part_total  = array_sum( $parts );
+		$part_total  = $part_total ? $part_total : 1;
+		$settings    = json_decode( (string) $version['settings'], true );
+		$is_template = \OhMyLMS\Assessment\Template::has( $settings ? $settings : array() );
 		$context     = self::context( $event );
-		$identity    = VersionPublisher::identity( (int) $event['question_id'], false ) ?: array();
+		$identity    = VersionPublisher::identity( (int) $event['question_id'], false );
+		$identity    = $identity ? $identity : array();
 		foreach ( SkillMap::for_version( (int) $event['version_id'] ) as $mapping ) {
 			$part = (string) $mapping['part_id'];
 			// Part-level events attribute only to their own part; whole-question events are split by part weight.
@@ -226,8 +230,8 @@ final class Evidence {
 		global $wpdb;
 		if ( ! $event_ids ) {
 			return; }
-		$ids = implode( ',', array_map( 'intval', $event_ids ) );
-		$wpdb->query( 'UPDATE ' . Schema::table( 'evidence_outbox' ) . " SET status='pending' WHERE status='waiting' AND grade_event_id IN ($ids)" );
+		$ids = array_map( 'intval', $event_ids );
+		$wpdb->query( $wpdb->prepare( "UPDATE %i SET status='pending' WHERE status='waiting' AND grade_event_id IN (" . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', array_merge( array( Schema::table( 'evidence_outbox' ) ), $ids ) ) );
 	}
 
 	/**

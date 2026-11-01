@@ -8,6 +8,7 @@
  *
  * @package OhMyLMS
  */
+
 define( 'OHMYLMS_PAYPAL_VERSION', '1.0.0' );
 define( 'OHMYLMS_PAYPAL_MAIN_FILE', __FILE__ );
 define( 'OHMYLMS_PAYPAL_ABSPATH', __DIR__ . '/' );

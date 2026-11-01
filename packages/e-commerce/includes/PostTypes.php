@@ -166,6 +166,7 @@ class PostTypes {
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
+				/* translators: %s: number of orders. */
 				'label_count'               => _n_noop( 'Pending payment <span class="count">(%s)</span>', 'Pending payment <span class="count">(%s)</span>', 'ohmylms' ),
 			),
 			'ohmylms-processing' => array(
@@ -174,6 +175,7 @@ class PostTypes {
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
+				/* translators: %s: number of orders. */
 				'label_count'               => _n_noop( 'Processing payment <span class="count">(%s)</span>', 'Processing payment <span class="count">(%s)</span>', 'ohmylms' ),
 			),
 			'ohmylms-on-hold'    => array(
@@ -182,6 +184,7 @@ class PostTypes {
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
+				/* translators: %s: number of orders. */
 				'label_count'               => _n_noop( 'On Hold payment <span class="count">(%s)</span>', 'On Hold payment <span class="count">(%s)</span>', 'ohmylms' ),
 			),
 			'ohmylms-failed'     => array(
@@ -190,6 +193,7 @@ class PostTypes {
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
+				/* translators: %s: number of orders. */
 				'label_count'               => _n_noop( 'Failed payment <span class="count">(%s)</span>', 'Failed payment <span class="count">(%s)</span>', 'ohmylms' ),
 			),
 			'ohmylms-completed'  => array(
@@ -198,6 +202,7 @@ class PostTypes {
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
+				/* translators: %s: number of orders. */
 				'label_count'               => _n_noop( 'Completed payment <span class="count">(%s)</span>', 'Completed payment <span class="count">(%s)</span>', 'ohmylms' ),
 			),
 			'ohmylms-cancelled'  => array(
@@ -206,6 +211,7 @@ class PostTypes {
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
+				/* translators: %s: number of orders. */
 				'label_count'               => _n_noop( 'Cancelled payment <span class="count">(%s)</span>', 'Cancelled payment <span class="count">(%s)</span>', 'ohmylms' ),
 			),
 			'ohmylms-refunded'   => array(
@@ -214,6 +220,7 @@ class PostTypes {
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
+				/* translators: %s: number of orders. */
 				'label_count'               => _n_noop( 'Refunded payment <span class="count">(%s)</span>', 'Refunded payment <span class="count">(%s)</span>', 'ohmylms' ),
 			),
 		);

@@ -50,6 +50,8 @@ final class GradeMath {
 	 * State of a cell from what the learner did, then the manual override on top.
 	 *
 	 * @param array $input {
+	 *     What the learner did, and any manual override.
+	 *
 	 *     @type bool        $assigned Whether the learner is in the item's audience.
 	 *     @type array|null  $graded   Latest graded attempt: `score`, `max`.
 	 *     @type bool        $pending  A submission waits for grading (and none is graded).

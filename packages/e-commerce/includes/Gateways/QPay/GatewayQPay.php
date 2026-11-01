@@ -375,7 +375,7 @@ class GatewayQPay extends PaymentGateway {
 		check_ajax_referer( 'ohmylms_qpay_check_payment_nonce', 'nonce' );
 		$id    = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
 		$order = ohmylms_ecommerce_get_order( $id );
-		$token = isset( $_POST['payment_token'] ) && is_string( $_POST['payment_token'] ) ? wp_unslash( $_POST['payment_token'] ) : '';
+		$token = isset( $_POST['payment_token'] ) && is_string( $_POST['payment_token'] ) ? wp_unslash( $_POST['payment_token'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Secret compared exactly with hash_equals(); sanitizing could alter it.
 		if ( ! $this->can_read_order( $order, $token ) ) {
 			wp_send_json_error( array( 'message' => __( 'You cannot access this payment.', 'ohmylms' ) ), 403 );
 		}

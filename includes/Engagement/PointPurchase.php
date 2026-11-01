@@ -352,6 +352,7 @@ final class PointPurchase {
 	 * @param string $reason   Plain-text reason.
 	 * @param int    $actor    User who refunds (0 = system).
 	 * @return array|WP_Error Summary after the refund.
+	 * @throws \RuntimeException When a refund step fails, rolling back the transaction (caught here).
 	 */
 	public static function refund( $order_id, $reason, $actor = 0 ) {
 		global $wpdb;

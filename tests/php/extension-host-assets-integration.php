@@ -199,9 +199,10 @@ if ( ! $built ) {
 echo ( $source ? 'source' : 'shipped' ) . " mode: {$checks} checks passed\n";
 
 if ( $source && ! $shipped ) {
-	// With a php.ini the child inherits it; a shared mysqli cannot load on its own under -n (it needs mysqlnd).
-	$arguments = array( PHP_BINARY );
-	if ( false === php_ini_loaded_file() ) {
+	// The child gets the same php.ini (the runner's is a temporary -c file); a shared mysqli cannot load on its own under -n (it needs mysqlnd).
+	$ini       = php_ini_loaded_file();
+	$arguments = false === $ini ? array( PHP_BINARY ) : array( PHP_BINARY, '-c', $ini );
+	if ( false === $ini ) {
 		array_push( $arguments, '-n', '-d', 'extension_dir=' . ini_get( 'extension_dir' ) );
 		foreach ( array( 'mysqli', 'mbstring', 'openssl', 'curl' ) as $extension ) {
 			if ( extension_loaded( $extension ) ) {

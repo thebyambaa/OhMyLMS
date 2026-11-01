@@ -284,7 +284,7 @@ class OhMyLMS_Gateway_Stripe_Intents extends PaymentGateway {
 			);
 		}
 		if ( $description ) {
-			echo wpautop( wp_kses_post( $description ) );
+			echo wp_kses_post( wpautop( $description ) );
 		}
 
 		?>
@@ -381,7 +381,7 @@ class OhMyLMS_Gateway_Stripe_Intents extends PaymentGateway {
 			);
 		}
 
-		$payment_method_id = isset( $_POST['stripe_source'] ) ? sanitize_text_field( wp_unslash( $_POST['stripe_source'] ) ) : null;
+		$payment_method_id = isset( $_POST['stripe_source'] ) ? sanitize_text_field( wp_unslash( $_POST['stripe_source'] ) ) : null; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Runs inside Checkout::process_checkout(); Ajax::checkout() verifies the nonce.
 		update_post_meta( $order_id, '_stripe_payment_method_id', $payment_method_id );
 
 		if ( empty( $payment_method_id ) ) {
@@ -427,9 +427,9 @@ class OhMyLMS_Gateway_Stripe_Intents extends PaymentGateway {
 			if ( ! empty( $intent->charges ) && ! empty( $intent->charges->data[0] ) ) {
 				$charge = $intent->charges->data[0];
 				if ( isset( $charge->balance_transaction ) ) {
-					$balanceTransaction = StripeApi::request( null, 'balance_transactions/' . sanitize_text_field( $charge->balance_transaction ), 'GET' );
-					$stripe_fee         = Helper::format_balance_fee( $balanceTransaction, 'fee' );
-					$stripe_net         = Helper::format_balance_fee( $balanceTransaction, 'net' );
+					$balance_transaction = StripeApi::request( null, 'balance_transactions/' . sanitize_text_field( $charge->balance_transaction ), 'GET' );
+					$stripe_fee          = Helper::format_balance_fee( $balance_transaction, 'fee' );
+					$stripe_net          = Helper::format_balance_fee( $balance_transaction, 'net' );
 					update_post_meta( $order_id, '_stripe_fee', $stripe_fee );
 					update_post_meta( $order_id, '_stripe_net', $stripe_net );
 				}
@@ -487,12 +487,13 @@ class OhMyLMS_Gateway_Stripe_Intents extends PaymentGateway {
 	public function handle_stripe_return() {
 
 		// Check if we're on the thank you page.
-		if ( isset( $_GET['ohmylms-order-received'] ) || ( isset( $_SERVER['REQUEST_URI'] ) && strpos( $_SERVER['REQUEST_URI'], 'ohmylms-order-received' ) !== false ) ) {
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : null;
+		if ( isset( $_GET['ohmylms-order-received'] ) || ( null !== $request_uri && strpos( $request_uri, 'ohmylms-order-received' ) !== false ) ) {
 			$order_id = isset( $_GET['ohmylms-order-received'] ) ? absint( wp_unslash( $_GET['ohmylms-order-received'] ) ) : 0;
 
 			// If order ID is not in GET, try to get it from the URL.
-			if ( ! $order_id && isset( $_SERVER['REQUEST_URI'] ) ) {
-				preg_match( '/ohmylms-order-received\/(\d+)/', $_SERVER['REQUEST_URI'], $matches );
+			if ( ! $order_id && null !== $request_uri ) {
+				preg_match( '/ohmylms-order-received\/(\d+)/', $request_uri, $matches );
 				if ( ! empty( $matches[1] ) ) {
 					$order_id = absint( $matches[1] );
 				}
@@ -528,9 +529,9 @@ class OhMyLMS_Gateway_Stripe_Intents extends PaymentGateway {
 									$charge_id = $charge->id;
 
 									if ( isset( $charge->balance_transaction ) ) {
-										$balanceTransaction = StripeApi::request( null, 'balance_transactions/' . sanitize_text_field( $charge->balance_transaction ), 'GET' );
-										$stripe_fee         = Helper::format_balance_fee( $balanceTransaction, 'fee' );
-										$stripe_net         = Helper::format_balance_fee( $balanceTransaction, 'net' );
+										$balance_transaction = StripeApi::request( null, 'balance_transactions/' . sanitize_text_field( $charge->balance_transaction ), 'GET' );
+										$stripe_fee          = Helper::format_balance_fee( $balance_transaction, 'fee' );
+										$stripe_net          = Helper::format_balance_fee( $balance_transaction, 'net' );
 										update_post_meta( $order_id, '_stripe_fee', $stripe_fee );
 										update_post_meta( $order_id, '_stripe_net', $stripe_net );
 									}
@@ -625,9 +626,9 @@ class OhMyLMS_Gateway_Stripe_Intents extends PaymentGateway {
 			$charge_id = $charge->id;
 
 			if ( isset( $charge->balance_transaction ) ) {
-				$balanceTransaction = StripeApi::request( null, 'balance_transactions/' . sanitize_text_field( $charge->balance_transaction ), 'GET' );
-				$stripe_fee         = Helper::format_balance_fee( $balanceTransaction, 'fee' );
-				$stripe_net         = Helper::format_balance_fee( $balanceTransaction, 'net' );
+				$balance_transaction = StripeApi::request( null, 'balance_transactions/' . sanitize_text_field( $charge->balance_transaction ), 'GET' );
+				$stripe_fee          = Helper::format_balance_fee( $balance_transaction, 'fee' );
+				$stripe_net          = Helper::format_balance_fee( $balance_transaction, 'net' );
 				update_post_meta( $order_id, '_stripe_fee', $stripe_fee );
 				update_post_meta( $order_id, '_stripe_net', $stripe_net );
 			}
@@ -775,8 +776,8 @@ class OhMyLMS_Gateway_Stripe_Intents extends PaymentGateway {
 			}
 
 			if ( isset( $response->balance_transaction ) ) {
-				$balanceTransaction = StripeApi::request( null, 'balance_transactions/' . sanitize_text_field( $response->balance_transaction ), 'GET' );
-				$stripe_net         = Helper::format_balance_fee( $balanceTransaction, 'net' );
+				$balance_transaction = StripeApi::request( null, 'balance_transactions/' . sanitize_text_field( $response->balance_transaction ), 'GET' );
+				$stripe_net          = Helper::format_balance_fee( $balance_transaction, 'net' );
 				// Get existing values.
 				$existing_net = (float) get_post_meta( $order_id, '_stripe_net', true );
 				$stripe_net   = abs( $stripe_net );
@@ -908,7 +909,7 @@ class OhMyLMS_Gateway_Stripe_Intents extends PaymentGateway {
 	 *
 	 * @since 1.0.0
 	 */
-	function get_valid_stripe_payment_method_types( $currency = 'usd', $stripe_customer_id = null ) {
+	public function get_valid_stripe_payment_method_types( $currency = 'usd', $stripe_customer_id = null ) {
 		$currency  = strtolower( $currency );
 		$cache_key = 'ohmylms_stripe_payment_methods_' . $currency;
 

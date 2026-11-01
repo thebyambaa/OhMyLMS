@@ -93,7 +93,10 @@ class OrderHooks extends HookHandler {
 		if ( ! empty( $order_items ) ) {
 			// Delete order item meta.
 			$wpdb->query(
-				"DELETE FROM {$wpdb->prefix}ohmylms_order_itemmeta WHERE order_item_id IN (" . implode( ',', array_map( 'absint', $order_items ) ) . ')'
+				$wpdb->prepare(
+					'DELETE FROM %i WHERE order_item_id IN (' . implode( ',', array_fill( 0, count( $order_items ), '%d' ) ) . ')',
+					array_merge( array( $wpdb->prefix . 'ohmylms_order_itemmeta' ), array_map( 'absint', $order_items ) )
+				)
 			);
 
 			// Delete order items.

@@ -33,7 +33,7 @@ It never builds anything. After you rebuild the admin app, run it again to check
 | **checks** | Node from `.nvmrc` and PHP 8.2; `npm ci`, `npm run build`, `npm run check:ci`, `npm test` |
 | **lint-js** | `npm ci`, `npm run lint:js`, `npm run lint:css` |
 | **php** | PHP 8.2: `php -l` on every file in `includes/` and `tests/php`, then `node tools/run-php-tests.mjs unit` |
-| **phpcs** | `composer install` in `tools/coding-standards`, then `node tools/phpcs-changed.mjs <base>`: the pull request's base commit, or the previous `main` commit on a push |
+| **phpcs** | `composer install` in `tools/coding-standards`, then `node tools/wp-standards.mjs -n` (errors in every file) and `node tools/phpcs-changed.mjs <base>` (errors and listed warnings on lines changed since the pull request's base commit, or the previous `main` commit on a push) |
 | **browser** | The plugin checked out to `wordpress/wp-content/plugins/ohmylms` with WordPress's `wp-includes` beside it (the interactivity fixture serves the Interactivity API from there), PHP 8.2 with mbstring, `npm ci`, `npx playwright install --with-deps chromium`; then `npx playwright test -c tests/<name>.config.cjs` for `interactivity`, `dropdown` and `mathlive` with `OHMYLMS_BROWSER_CHANNEL=''` (Playwright's Chromium instead of Edge). Each config starts its PHP fixture server (`tests/fixtures/<name>.php`; no WordPress, no database). Locally, a PHP without `php.ini` needs `OHMYLMS_PHP_ARGS`, for example `["-d","extension_dir=C:/php8.5.4/ext","-d","extension=mbstring"]`, and `OHMYLMS_PHP_BIN` |
 | **php-integration** | MySQL 8.0 service container on port 10005; `poppler-utils`; `npm ci` and `npm run build:sdk` (the webpack entries in `build/sdk` for `extension-host-assets-integration`); `tools/install-test-wordpress.sh` installs WordPress at `xyz/app/public` (the Local layout `figure-assets-integration` checks for) with wp-cli, copies the plugin (and `build/sdk`, which git ignores) to `wp-content/plugins/ohmylms` and activates it; `tools/install-test-sites.sh` installs the disposable sites (below); `wp server` on `ohmylms.test:8080`; then `node tools/run-php-tests.mjs integration` (with `OHMYLMS_TEST_CREDENTIALS` and `OHMYLMS_TEST_PDFTOPPM=/usr/bin/pdftoppm`) and `tests/js/randomized-preview.test.mjs` against that site |
 
@@ -122,10 +122,12 @@ did until 2 November 2026:
 to run only those. Its question fixtures use the typed routes (`POST quizzes/{id}/questions/new`,
 `POST|PATCH questions`, `quizzes/{id}/questions/*`).
 
-### WordPress coding standards: `tools/phpcs-changed.mjs`
+### WordPress coding standards: `npm run lint:php` and `tools/phpcs-changed.mjs`
 
-`npm run lint:php` checks every file in `phpcs.xml.dist` and still reports about 2,200 errors and 2,600
-warnings in legacy code (31 October 2026), so CI does not run it. `tools/phpcs-changed.mjs` diffs the
+`npm run lint:php` checks every file in `phpcs.xml.dist`. Every file has had 0 errors since 2 November
+2026 (2,124 cleared: 1,011 by phpcbf, the rest by hand; false positives carry a narrow
+`phpcs:ignore Sniff -- reason`), and CI fails on any error with `node tools/wp-standards.mjs -n`. About
+2,400 legacy warnings remain and are not enforced. `tools/phpcs-changed.mjs` diffs the
 working tree against the merge base with the given revision, runs phpcs on the changed PHP files and
 fails on errors in added or changed lines. Warnings on those lines are printed; findings on untouched
 lines are counted but not reported. New files must be committed (or staged) to be diffed.

@@ -28,5 +28,5 @@ $pagination_links = paginate_links(
 );
 
 if ( $pagination_links ) {
-	echo '<div class="pagination">' . $pagination_links . '</div>';
+	echo '<div class="pagination">' . $pagination_links . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- paginate_links() escapes its output.
 }

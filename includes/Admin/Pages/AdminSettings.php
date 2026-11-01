@@ -167,7 +167,7 @@ class AdminSettings {
 								value="<?php echo esc_attr( $option_value ); ?>"
 								class="<?php echo esc_attr( $value['class'] ); ?>"
 								placeholder="<?php echo esc_attr( $value['placeholder'] ); ?>"
-								<?php echo implode( ' ', $custom_attributes ); // WPCS: XSS ok. ?>
+								<?php echo implode( ' ', $custom_attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Each attribute is escaped. ?>
 								/><?php echo esc_html( $value['suffix'] ); ?> <?php echo wp_kses_post( $description ); // WPCS: XSS ok. ?>
 						</td>
 					</tr>
@@ -192,7 +192,7 @@ class AdminSettings {
 								style="<?php echo esc_attr( $value['css'] ); ?>"
 								class="<?php echo esc_attr( $value['class'] ); ?>"
 								placeholder="<?php echo esc_attr( $value['placeholder'] ); ?>"
-								<?php echo implode( ' ', $custom_attributes ); // WPCS: XSS ok. ?>
+								<?php echo implode( ' ', $custom_attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Each attribute is escaped. ?>
 								><?php echo esc_textarea( $option_value ); // WPCS: XSS ok. ?></textarea>
 						</td>
 					</tr>
@@ -215,7 +215,7 @@ class AdminSettings {
 								id="<?php echo esc_attr( $value['id'] ); ?>"
 								style="<?php echo esc_attr( $value['css'] ); ?>"
 								class="<?php echo esc_attr( $value['class'] ); ?>"
-								<?php echo implode( ' ', $custom_attributes ); // WPCS: XSS ok. ?>
+								<?php echo implode( ' ', $custom_attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Each attribute is escaped. ?>
 								<?php echo 'multiselect' === $value['type'] ? 'multiple="multiple"' : ''; ?>
 								>
 								<?php
@@ -274,7 +274,7 @@ class AdminSettings {
 											?>
 											style="<?php echo esc_attr( $value['css'] ); ?>"
 											class="<?php echo esc_attr( $value['class'] ); ?>"
-											<?php echo implode( ' ', $custom_attributes ); // WPCS: XSS ok. ?>
+											<?php echo implode( ' ', $custom_attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Each attribute is escaped. ?>
 											<?php checked( $key, $option_value ); ?>
 											/> <?php echo esc_html( $val ); ?></label>
 									</li>
@@ -351,7 +351,7 @@ class AdminSettings {
 								value="1"
 								<?php disabled( $value['disabled'] ?? false ); ?>
 								<?php checked( $option_value, 'yes' ); ?>
-								<?php echo implode( ' ', $custom_attributes ); // WPCS: XSS ok. ?>
+								<?php echo implode( ' ', $custom_attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Each attribute is escaped. ?>
 							/> <?php echo wp_kses_post( $description ); // WPCS: XSS ok. ?>
 						</label> <?php echo wp_kses_post( $tooltip_html ); // WPCS: XSS ok. ?>
 					<?php
@@ -392,7 +392,7 @@ class AdminSettings {
 								<label><?php echo esc_html( $value['title'] ); ?> <?php echo wp_kses_post( $tooltip_html ); // WPCS: XSS ok. ?></label>
 							</th>
 							<td class="forminp">
-							<?php echo str_replace( ' id=', " data-placeholder='" . esc_attr__( 'Select a page&hellip;', 'ohmylms' ) . "' style='" . esc_attr( $value['css'] ) . "' class='" . esc_attr( $value['class'] ) . "' id=", wp_dropdown_pages( $args ) ); // WPCS: XSS ok. ?> <?php echo wp_kses_post( $description ); // WPCS: XSS ok. ?>
+							<?php echo str_replace( ' id=', " data-placeholder='" . esc_attr__( 'Select a page&hellip;', 'ohmylms' ) . "' style='" . esc_attr( $value['css'] ) . "' class='" . esc_attr( $value['class'] ) . "' id=", wp_dropdown_pages( $args ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core page dropdown markup with escaped attributes added. ?> <?php echo wp_kses_post( $description ); // WPCS: XSS ok. ?>
 							</td>
 						</tr>
 						<?php
@@ -584,7 +584,7 @@ class AdminSettings {
 	 */
 	public static function save_fields( $options, $data = null ) {
 		if ( is_null( $data ) ) {
-			$data = $_POST; // WPCS: input var okay, CSRF ok.
+			$data = $_POST; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- AdminSettings::save() verifies the nonce.
 		}
 		if ( empty( $data ) ) {
 			return false;

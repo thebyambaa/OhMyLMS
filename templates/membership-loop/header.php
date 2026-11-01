@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	if ( apply_filters( 'ohmylms_membership_show_page_title', true ) ) :
 		?>
 		<h2>
-			<?php echo apply_filters( 'ohmylms_membership_archive_title', __( 'Select plan that works best for you.', 'ohmylms' ) ); ?>
+			<?php echo wp_kses_post( apply_filters( 'ohmylms_membership_archive_title', __( 'Select plan that works best for you.', 'ohmylms' ) ) ); ?>
 		</h2>
 	<?php endif; ?>
 

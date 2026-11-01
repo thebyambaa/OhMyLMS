@@ -15,7 +15,7 @@
 defined( 'ABSPATH' ) || exit();
 do_action( 'ohmylms_account_header' );
 $dashboard_url = ohmylms_get_page_permalink( 'student_dashboard' );
-$status        = $order ? $order->get_status() : '';
+$order_status  = $order ? $order->get_status() : '';
 ?>
 
 <?php ohmylms_get_template( 'global/ohmylms-celebration.php' ); ?>
@@ -29,8 +29,8 @@ $status        = $order ? $order->get_status() : '';
 			$course    = $item->get_course();
 			$is_course = true;
 			if ( ! $course ) {
-				$id     = $item->get_course_id();
-				$course = ohmylms_get_membership( $id );
+				$item_course_id = $item->get_course_id();
+				$course         = ohmylms_get_membership( $item_course_id );
 				if ( ! $course ) {
 					continue;
 				}
@@ -58,7 +58,7 @@ $status        = $order ? $order->get_status() : '';
 								<div class="ohmylms-thankyou-text">
 									<?php
 									$failed_text = __( '<strong>Unfortunately, your payment could not be processed.</strong> Please try again or contact support if the issue persists.', 'ohmylms' );
-									echo apply_filters( 'ohmylms_thankyou_failed_text', $failed_text, $order );
+									echo wp_kses_post( apply_filters( 'ohmylms_thankyou_failed_text', $failed_text, $order ) );
 									?>
 								</div>
 
@@ -83,17 +83,17 @@ $status        = $order ? $order->get_status() : '';
 
 								<div class="ohmylms-thankyou-text">
 									<?php
-									if ( 'completed' !== $status ) {
+									if ( 'completed' !== $order_status ) {
 										$thankyou_text = sprintf(
 										/* translators: %s: order status. */
 											__( '<strong>Your Order is %s!</strong>', 'ohmylms' ),
-											esc_html( ucfirst( $status ) )
+											esc_html( ucfirst( $order_status ) )
 										);
 									} else {
 										$thankyou_text = sprintf(
 										/* translators: 1: order status, 2: customer email. */
 											__( '<strong>Your Order is %1$s!</strong> A confirmation mail has been sent to <br/> <span>%2$s</span>.', 'ohmylms' ),
-											esc_html( ucfirst( $status ) ),
+											esc_html( ucfirst( $order_status ) ),
 											esc_html( $order->get_email() )
 										);
 									}
@@ -108,13 +108,13 @@ $status        = $order ? $order->get_status() : '';
 									echo wp_kses_post( apply_filters( 'ohmylms_thankyou_text', $thankyou_text, $order, $is_course ) );
 									?>
 								</div>
-								<?php if ( 'completed' === $status ) : ?>
+								<?php if ( 'completed' === $order_status ) : ?>
 								<div class="ohmylms-btn-area">
 									<a href="<?php echo esc_url( $dashboard_url ); ?>" class="ohmylms-button">
 										<?php
 										printf( /* translators: %s: text value. */
-											__( 'Access To Your %s', 'ohmylms' ),
-											$item_object_name
+											esc_html__( 'Access To Your %s', 'ohmylms' ),
+											esc_html( $item_object_name )
 										);
 										?>
 									</a>
@@ -129,12 +129,12 @@ $status        = $order ? $order->get_status() : '';
 								</h2>
 
 								<p class="single-address email">
-									<strong><?php echo esc_html__( 'Email' ); ?></strong>
+									<strong><?php echo esc_html__( 'Email', 'ohmylms' ); ?></strong>
 									<?php echo esc_html( $student->get_email() ); ?>
 								</p>
 
 								<p class="single-address country">
-									<strong><?php echo esc_html__( 'Country' ); ?></strong>
+									<strong><?php echo esc_html__( 'Country', 'ohmylms' ); ?></strong>
 									<?php echo esc_html( ohmylms_get_country_name_by_code( $student->get_country() ) ); ?>
 								</p>
 							</div>

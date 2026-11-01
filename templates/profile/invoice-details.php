@@ -78,11 +78,11 @@ $order_date = $date->format( 'F d, Y' );
 			<div class="dashboard-table-body">
 				<?php
 				foreach ( $order->get_items() as $item ) :
-					$post_type  = get_post_type( $item->get_course_id() );
-					$membership = false;
-					if ( OHMYLMS_MEMBERSHIP_CPT === $post_type ) {
+					$item_post_type = get_post_type( $item->get_course_id() );
+					$membership     = false;
+					if ( OHMYLMS_MEMBERSHIP_CPT === $item_post_type ) {
 						$membership = $item->get_membership();
-					} elseif ( OHMYLMS_COURSE_CPT === $post_type ) {
+					} elseif ( OHMYLMS_COURSE_CPT === $item_post_type ) {
 						$membership = ohmylms_get_course( $item->get_course_id() );
 
 					}

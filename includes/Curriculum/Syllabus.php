@@ -16,10 +16,10 @@ defined( 'ABSPATH' ) || exit;
  * A syllabus is a curriculum item flagged `is_syllabus` (any item can be one: an exam board's
  * Mathematics 0580, a national grade 11 programme). Inside it:
  *
- *   contents      ordinary curriculum items beneath it (topics, chapters, units), nested as deep as needed
- *   skill groups  named, coded, ordered groups of skills (a section, a skill family) that sit under the
+ *   Contents      ordinary curriculum items beneath it (topics, chapters, units), nested as deep as needed
+ *   Skill groups  named, coded, ordered groups of skills (a section, a skill family) that sit under the
  *                 syllabus or under one of its content items
- *   skills        library skills (the `ohmylms_skill` taxonomy) placed in a group, in order
+ *   Skills        library skills (the `ohmylms_skill` taxonomy) placed in a group, in order
  *
  * Skills created here are ordinary library skills, so questions, lessons, practice and evidence work on
  * them as on any other. They are created under one "root" library skill per syllabus, which keeps equal
@@ -59,13 +59,6 @@ final class Syllabus {
 	private static function now() {
 		return current_time( 'mysql', true ); }
 	/**
-	 * Placeholders for Syllabus.
-	 *
-	 * @param array $ids Ids.
-	 */
-	private static function placeholders( array $ids ) {
-		return implode( ',', array_fill( 0, count( $ids ), '%d' ) ); }
-	/**
 	 * Ints for Syllabus.
 	 *
 	 * @param array $ids Ids.
@@ -89,7 +82,7 @@ final class Syllabus {
 	 */
 	public static function owner( $item_id ) {
 		global $wpdb;
-		$flagged = array_map( 'intval', $wpdb->get_col( 'SELECT id FROM ' . Items::table() . ' WHERE is_syllabus=1' ) );
+		$flagged = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE is_syllabus=1', Items::table() ) ) );
 		if ( ! $flagged ) {
 			return 0; }
 		foreach ( array_merge( array( (int) $item_id ), Tree::ancestors( Items::parents(), $item_id ) ) as $id ) {
@@ -107,7 +100,10 @@ final class Syllabus {
 	public static function group( $group_id ) {
 		global $wpdb;
 		$group_id = (int) $group_id;
-		return $group_id > 0 ? ( $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . self::groups_table() . ' WHERE id=%d', $group_id ), ARRAY_A ) ?: null ) : null;
+		if ( $group_id <= 0 ) {
+			return null; }
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id=%d', self::groups_table(), $group_id ), ARRAY_A );
+		return $row ? $row : null;
 	}
 
 	/**
@@ -133,7 +129,7 @@ final class Syllabus {
 		$item_ids = self::ints( $item_ids );
 		if ( ! $item_ids || ! Schema::ready() ) {
 			return 0; }
-		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . self::groups_table() . ' WHERE item_id IN (' . self::placeholders( $item_ids ) . ')', $item_ids ) );
+		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE item_id IN (' . implode( ',', array_fill( 0, count( $item_ids ), '%d' ) ) . ')', array_merge( array( self::groups_table() ), $item_ids ) ) );
 	}
 
 	/** Per syllabus: its skill groups and skill placements, counting everything beneath it.
@@ -152,7 +148,7 @@ final class Syllabus {
 		if ( ! $syllabuses ) {
 			return array(); }
 		$per_item = array();
-		foreach ( $wpdb->get_results( 'SELECT g.item_id, COUNT(DISTINCT g.id) AS groups_total, COUNT(p.term_id) AS skills_total FROM ' . self::groups_table() . ' g LEFT JOIN ' . self::placements_table() . ' p ON p.group_id=g.id GROUP BY g.item_id', ARRAY_A ) as $row ) {
+		foreach ( $wpdb->get_results( $wpdb->prepare( 'SELECT g.item_id, COUNT(DISTINCT g.id) AS groups_total, COUNT(p.term_id) AS skills_total FROM %i g LEFT JOIN %i p ON p.group_id=g.id GROUP BY g.item_id', self::groups_table(), self::placements_table() ), ARRAY_A ) as $row ) {
 			$per_item[ (int) $row['item_id'] ] = array( (int) $row['groups_total'], (int) $row['skills_total'] );
 		}
 		$totals = array();
@@ -206,14 +202,16 @@ final class Syllabus {
 			},
 			$order
 		);
-		$groups     = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . self::groups_table() . ' WHERE item_id IN (' . self::placeholders( $ids ) . ') ORDER BY item_id, position, id', $ids ), ARRAY_A ) ?: array();
+		$groups     = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE item_id IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ') ORDER BY item_id, position, id', array_merge( array( self::groups_table() ), $ids ) ), ARRAY_A );
+		$groups     = $groups ? $groups : array();
 		$group_ids  = array_map(
 			static function ( $group ) {
 				return (int) $group['id'];
 			},
 			$groups
 		);
-		$placements = $group_ids ? ( $wpdb->get_results( $wpdb->prepare( 'SELECT group_id, term_id FROM ' . self::placements_table() . ' WHERE group_id IN (' . self::placeholders( $group_ids ) . ') ORDER BY group_id, position, term_id', $group_ids ), ARRAY_A ) ?: array() ) : array();
+		$placements = $group_ids ? $wpdb->get_results( $wpdb->prepare( 'SELECT group_id, term_id FROM %i WHERE group_id IN (' . implode( ',', array_fill( 0, count( $group_ids ), '%d' ) ) . ') ORDER BY group_id, position, term_id', array_merge( array( self::placements_table() ), $group_ids ) ), ARRAY_A ) : array();
+		$placements = $placements ? $placements : array();
 		$term_ids   = self::ints( array_column( $placements, 'term_id' ) );
 		$terms      = array();
 		if ( $term_ids ) {
@@ -328,7 +326,7 @@ final class Syllabus {
 		$item_ids = self::ints( $item_ids );
 		if ( ! $item_ids || ! Schema::ready() ) {
 			return array(); }
-		return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT p.term_id FROM ' . self::placements_table() . ' p JOIN ' . self::groups_table() . ' g ON g.id=p.group_id WHERE g.item_id IN (' . self::placeholders( $item_ids ) . ') ORDER BY p.term_id', $item_ids ) ) );
+		return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT p.term_id FROM %i p JOIN %i g ON g.id=p.group_id WHERE g.item_id IN (' . implode( ',', array_fill( 0, count( $item_ids ), '%d' ) ) . ') ORDER BY p.term_id', array_merge( array( self::placements_table(), self::groups_table() ), $item_ids ) ) ) );
 	}
 
 	/** The curriculum items whose skill groups hold this skill (for showing where a skill belongs).
@@ -339,7 +337,7 @@ final class Syllabus {
 		global $wpdb;
 		if ( ! Schema::ready() ) {
 			return array(); }
-		return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT g.item_id FROM ' . self::placements_table() . ' p JOIN ' . self::groups_table() . ' g ON g.id=p.group_id WHERE p.term_id=%d ORDER BY g.item_id', (int) $term_id ) ) );
+		return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT g.item_id FROM %i p JOIN %i g ON g.id=p.group_id WHERE p.term_id=%d ORDER BY g.item_id', self::placements_table(), self::groups_table(), (int) $term_id ) ) );
 	}
 
 	// ---- Ordering helpers -------------------------------------------------------------------------
@@ -351,7 +349,7 @@ final class Syllabus {
 	 */
 	private static function group_ids_in( $item_id ) {
 		global $wpdb;
-		return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM ' . self::groups_table() . ' WHERE item_id=%d ORDER BY position, id', (int) $item_id ) ) );
+		return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE item_id=%d ORDER BY position, id', self::groups_table(), (int) $item_id ) ) );
 	}
 
 	/**
@@ -375,7 +373,7 @@ final class Syllabus {
 	 */
 	private static function term_ids_in( $group_id ) {
 		global $wpdb;
-		return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT term_id FROM ' . self::placements_table() . ' WHERE group_id=%d ORDER BY position, term_id', (int) $group_id ) ) );
+		return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT term_id FROM %i WHERE group_id=%d ORDER BY position, term_id', self::placements_table(), (int) $group_id ) ) );
 	}
 
 	/**
@@ -524,7 +522,8 @@ final class Syllabus {
 		$fields = self::clean_group( $data, false );
 		if ( is_wp_error( $fields ) ) {
 			return $fields; }
-		$item_id = (int) ( $data['item_id'] ?? 0 ) ?: (int) $syllabus_id;
+		$item_id = (int) ( $data['item_id'] ?? 0 );
+		$item_id = $item_id ? $item_id : (int) $syllabus_id;
 		if ( ! in_array( $item_id, Items::with_descendants( $syllabus_id ), true ) ) {
 			return Access::error( 'ohmylms_syllabus_invalid', __( 'A skill group must sit under the syllabus or one of its content items.', 'ohmylms' ) ); }
 		$position = isset( $data['position'] ) && '' !== $data['position'] && null !== $data['position'] ? (int) $data['position'] : null;
@@ -584,7 +583,7 @@ final class Syllabus {
 		$group = self::owned_group( $syllabus_id, $group_id );
 		if ( ! $group ) {
 			return self::missing_group(); }
-		$item_id = (int) $item_id ?: (int) $group['item_id'];
+			$item_id = (int) $item_id ? (int) $item_id : (int) $group['item_id'];
 		if ( ! in_array( $item_id, Items::with_descendants( $syllabus_id ), true ) ) {
 			return Access::error( 'ohmylms_syllabus_invalid', __( 'A skill group must sit under the syllabus or one of its content items.', 'ohmylms' ) ); }
 		return Items::exclusive(
@@ -843,7 +842,7 @@ final class Syllabus {
 	 */
 	private static function place_skill( $group_id, $term_id, $position = null ) {
 		global $wpdb;
-		$wpdb->query( $wpdb->prepare( 'INSERT IGNORE INTO ' . self::placements_table() . ' (group_id, term_id, position) VALUES (%d, %d, 0)', (int) $group_id, (int) $term_id ) );
+		$wpdb->query( $wpdb->prepare( 'INSERT IGNORE INTO %i (group_id, term_id, position) VALUES (%d, %d, 0)', self::placements_table(), (int) $group_id, (int) $term_id ) );
 		self::renumber_skills( $group_id, Tree::insert_at( array_values( array_diff( self::term_ids_in( $group_id ), array( (int) $term_id ) ) ), (int) $term_id, $position ) );
 	}
 
@@ -1051,7 +1050,7 @@ final class Syllabus {
 		global $wpdb;
 		if ( ! self::owned_group( $syllabus_id, $group_id ) ) {
 			return self::missing_group(); }
-		$to = (int) $to_group_id ?: (int) $group_id;
+			$to = (int) $to_group_id ? (int) $to_group_id : (int) $group_id;
 		if ( ! self::owned_group( $syllabus_id, $to ) ) {
 			return self::missing_group(); }
 		$term_id = (int) $term_id;
@@ -1079,7 +1078,7 @@ final class Syllabus {
 		$from = (int) $from;
 		$to   = (int) $to;
 		if ( $from !== $to ) {
-			if ( $wpdb->query( $wpdb->prepare( 'DELETE FROM ' . self::placements_table() . ' WHERE group_id=%d AND term_id=%d', $to, (int) $term_id ) ) === false ) {
+			if ( $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE group_id=%d AND term_id=%d', self::placements_table(), $to, (int) $term_id ) ) === false ) {
 				throw new \RuntimeException( 'Skill move failed' ); }
 			if ( $wpdb->update(
 				self::placements_table(),
@@ -1171,7 +1170,7 @@ final class Syllabus {
 				$run = self::execute( $syllabus_id, $plan['ops'], $created_terms );
 				if ( is_wp_error( $run ) ) {
 					$failure = $run->get_error_message();
-					throw new \RuntimeException( $failure ); }
+					throw new \RuntimeException( $failure ); } // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Internal message, caught by Items::exclusive() and never output.
 				return $run;
 			}
 		);
@@ -1271,7 +1270,8 @@ final class Syllabus {
 						return $written; }
 					break;
 				case 'skill_move':
-					$from = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT p.group_id FROM ' . self::placements_table() . ' p JOIN ' . self::groups_table() . ' g ON g.id=p.group_id WHERE p.term_id=%d AND g.item_id IN (' . self::placeholders( Items::with_descendants( $syllabus_id ) ) . ') LIMIT 1', array_merge( array( (int) $op['term'] ), Items::with_descendants( $syllabus_id ) ) ) );
+					$scope = Items::with_descendants( $syllabus_id );
+					$from  = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT p.group_id FROM %i p JOIN %i g ON g.id=p.group_id WHERE p.term_id=%d AND g.item_id IN (' . implode( ',', array_fill( 0, count( $scope ), '%d' ) ) . ') LIMIT 1', array_merge( array( self::placements_table(), self::groups_table(), (int) $op['term'] ), $scope ) ) );
 					if ( $from ) {
 						self::move_placement( $from, $resolve( $op['group'] ), (int) $op['term'], null ); }
 					break;
@@ -1291,13 +1291,12 @@ final class Syllabus {
 		$item_ids = self::ints( $item_ids );
 		if ( ! $item_ids ) {
 			return 0; }
-		$group_ids = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM ' . self::groups_table() . ' WHERE item_id IN (' . self::placeholders( $item_ids ) . ')', $item_ids ) ) );
+		$group_ids = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE item_id IN (' . implode( ',', array_fill( 0, count( $item_ids ), '%d' ) ) . ')', array_merge( array( self::groups_table() ), $item_ids ) ) ) );
 		if ( ! $group_ids ) {
 			return 0; }
-		$placeholders = self::placeholders( $group_ids );
-		if ( $wpdb->query( $wpdb->prepare( 'DELETE FROM ' . self::placements_table() . " WHERE group_id IN ($placeholders)", $group_ids ) ) === false ) {
+		if ( $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE group_id IN (' . implode( ',', array_fill( 0, count( $group_ids ), '%d' ) ) . ')', array_merge( array( self::placements_table() ), $group_ids ) ) ) === false ) {
 			return false; }
-		if ( $wpdb->query( $wpdb->prepare( 'DELETE FROM ' . self::groups_table() . " WHERE id IN ($placeholders)", $group_ids ) ) === false ) {
+		if ( $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE id IN (' . implode( ',', array_fill( 0, count( $group_ids ), '%d' ) ) . ')', array_merge( array( self::groups_table() ), $group_ids ) ) ) === false ) {
 			return false; }
 		return count( $group_ids );
 	}

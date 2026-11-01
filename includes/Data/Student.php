@@ -17,7 +17,6 @@ use OhMyLMS\DataStores\DataStores;
  *
  * @since 1.0.0
  */
-
 class Student extends Data {
 
 	/**
@@ -313,9 +312,8 @@ class Student extends Data {
 					}
 				}
 			}
-		}
-		// Handle old format: separate arrays for labels and URLs.
-		elseif ( is_array( $social_links ) && is_array( $urls ) ) {
+		} elseif ( is_array( $social_links ) && is_array( $urls ) ) {
+			// Handle old format: separate arrays for labels and URLs.
 			$count = min( count( $social_links ), count( $urls ) );
 
 			for ( $i = 0; $i < $count; $i++ ) {

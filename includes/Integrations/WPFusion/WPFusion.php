@@ -37,7 +37,7 @@ class WPFusion {
 	 */
 	public $integration_key = 'wpfusion';
 
-	const Version = '1.0.0';
+	const Version = '1.0.0'; // phpcs:ignore Generic.NamingConventions.UpperCaseConstantName.ClassConstantNotUpperCase -- Public constant; renaming would break external references.
 
 	/**
 	 * Initialize Wpfusion.

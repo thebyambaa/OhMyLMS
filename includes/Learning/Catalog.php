@@ -380,7 +380,7 @@ final class Catalog {
 			if ( 'practice' === $item['type'] ) {
 				continue; }
 			$post          = get_post( (int) $item['content_id'] );
-			$valid         = $post && $post->post_type === self::post_type( $item['type'] ) && 'trash' !== $post->post_status;
+			$valid         = $post && self::post_type( $item['type'] ) === $post->post_type && 'trash' !== $post->post_status;
 			$attachments[] = array(
 				'id'                => $item['id'],
 				'type'              => $item['type'],
@@ -757,8 +757,7 @@ final class Catalog {
 		if ( ! $content_ids ) {
 			return array(); }
 		$used = array();
-		$list = implode( ',', $content_ids );
-		foreach ( (array) $wpdb->get_results( "SELECT c.content_id, r.course_id FROM {$wpdb->prefix}ohmylms_content_relationship c JOIN {$wpdb->prefix}ohmylms_chapter_relationship r ON r.chapter_id=c.chapter_id WHERE c.content_id IN ($list)", ARRAY_A ) as $row ) {
+		foreach ( (array) $wpdb->get_results( $wpdb->prepare( "SELECT c.content_id, r.course_id FROM {$wpdb->prefix}ohmylms_content_relationship c JOIN {$wpdb->prefix}ohmylms_chapter_relationship r ON r.chapter_id=c.chapter_id WHERE c.content_id IN (" . implode( ',', array_fill( 0, count( $content_ids ), '%d' ) ) . ')', $content_ids ), ARRAY_A ) as $row ) {
 			$used[ (int) $row['content_id'] ][ (int) $row['course_id'] ] = (int) $row['course_id'];
 		}
 		$published = Placements::index();
