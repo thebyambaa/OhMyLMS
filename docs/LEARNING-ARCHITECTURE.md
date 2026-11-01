@@ -67,7 +67,7 @@ Full objective wording is separate from the short title. Its read fallback is ex
 
 **Current UI gap:** this checkout's typed app has no `from-syllabus` client entry. The backend capability must not be advertised as an available current creation dialog merely because the recovered editor once exposed it. Restoring a unified selection/review/create workflow remains implementation work.
 
-**Compatibility:** `SyllabusCourse` also supports a different, mirrored mode: a syllabus-owned course whose chapters/outcomes follow syllabus groups/skills. The typed syllabus commands still expose creation/synchronization. This is not independent generation and should not be the default product mental model. Existing mirrored courses are not silently converted. Synchronization errors can leave the syllabus edit saved while reporting a separate course error. A reviewed conversion preserving IDs, placements and learner history remains future work.
+**Compatibility:** `SyllabusCourse` also supports a different, mirrored mode: a syllabus-owned course whose chapters/outcomes follow syllabus groups/skills. The typed syllabus commands still expose creation/synchronization. This is not independent generation and should not be the default product mental model. Existing mirrored courses are not silently converted. Synchronization errors can leave the syllabus edit saved while reporting a separate course error. A mirrored course meets the same publication rules as any course: it needs at least one completion requirement (and a required skill outcome unless its mode is traditional), because an empty requirement set could never be completed. A reviewed conversion preserving IDs, placements and learner history remains future work.
 
 Course syllabus selection, source objective references, curriculum placement and program outcomes are separate data. `_ohmylms_course_objectives` stores source/term pairs; these references express alignment, not mastery or completion. The same skill can have more than one source context. See [objective API](COURSE-OBJECTIVES.md) and [syllabus authoring](api/syllabus-authoring.md).
 
@@ -122,7 +122,7 @@ Published programs freeze requirements and unit metadata/order, not reusable les
 
 ### Unified workspace intent and discrepancy
 
-The intended syllabus/roadmap experience is one outline/detail workspace. Old mind-map, spreadsheet and separate visual-editor views are not the current product direction and are not recommended authoring steps here. However, this checkout's `SyllabusPage.tsx` still imports and renders `MindMap` and `SpreadsheetView` behind layout navigation. This is a verified implementation discrepancy with the intended removal, not evidence that the removed-view workflow should be restored. Documentation consolidation does not remove those components or change routes.
+The syllabus/roadmap experience is one outline/detail workspace. Old mind-map, spreadsheet and separate visual-editor views are not the current product direction and are not recommended authoring steps here. `SyllabusPage.tsx` renders only the outline: the `MindMap` and `SpreadsheetView` layouts were removed on 1 November 2026, and an old `?layout=` address opens the outline. The `sheet_edit` command remains for API compatibility.
 
 ## Learner journey, progress and completion
 
@@ -150,6 +150,6 @@ Lesson content can be reused across courses; course completion remains enrollmen
 | Current author screens | [CourseEditorPage](../assets/src/app/features/course-structure/CourseEditorPage.tsx), [PublicationPanel](../assets/src/app/features/course-structure/PublicationPanel.tsx), [SyllabusPage](../assets/src/app/features/syllabus/SyllabusPage.tsx) |
 | Progress / recommendations | [CompletionPolicy](../includes/Learning/CompletionPolicy.php), [CourseOutline](../includes/Student/CourseOutline.php), [Recommendations](../includes/Skills/Recommendations.php) |
 
-Remaining product/implementation reconciliation includes restoring independent generation in the typed authoring workflow, resolving the retired syllabus layouts, and deciding how the unified save experience should use the existing activation service. Existing mirrored courses need an explicit transition rather than automatic conversion. Automatic mapping, comprehensive adaptive prerequisite sequencing and automatic examination-credit transfer are not promised by this architecture.
+Remaining product/implementation reconciliation includes restoring independent generation in the typed authoring workflow and deciding how the unified save experience should use the existing activation service. Existing mirrored courses need an explicit transition rather than automatic conversion. Automatic mapping, comprehensive adaptive prerequisite sequencing and automatic examination-credit transfer are not promised by this architecture.
 
 This reference replaces overlapping historical architecture/editor narratives. Specialized API, storage, compatibility and test contracts remain linked. Historical audit counts and old test totals are not current installation facts; their original records remain in Git history.

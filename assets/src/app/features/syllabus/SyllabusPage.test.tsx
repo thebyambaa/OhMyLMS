@@ -34,6 +34,24 @@ it( 'makes no syllabus requests without administrator capability', () => {
 	} );
 	expect( api.readSyllabus ).not.toHaveBeenCalled();
 } );
+it( 'opens old layout bookmarks in the outline workspace', () => {
+	render(
+		<MemoryRouter
+			initialEntries={ [
+				'/content-hub/curriculum/syllabus/5?layout=spreadsheet',
+			] }
+		>
+			<SyllabusWorkspace initial={ outline } />
+		</MemoryRouter>
+	);
+	expect(
+		screen.queryByRole( 'navigation', { name: 'Syllabus layouts' } )
+	).not.toBeInTheDocument();
+	expect( screen.queryByRole( 'grid' ) ).not.toBeInTheDocument();
+	expect(
+		screen.getAllByRole( 'button', { name: 'Move skill down' } ).length
+	).toBeGreaterThan( 0 );
+} );
 it( 'sends group ordering without altering skill identities', async () => {
 	const user = userEvent.setup();
 	open();

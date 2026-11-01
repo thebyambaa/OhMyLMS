@@ -495,7 +495,8 @@ final class CourseProgram {
 	}
 
 	/**
-	 * Completion readiness for Course program.
+	 * Completion readiness for Course program. A syllabus course meets the same requirement rules as any
+	 * course: with nothing required, no learner could ever complete it.
 	 *
 	 * @param array $program Program.
 	 * @param bool  $syllabus Syllabus.
@@ -516,9 +517,9 @@ final class CourseProgram {
 		);
 		if ( $syllabus && ! $program['outcomes'] ) {
 			$errors[] = __( 'Add at least one skill before publishing the syllabus.', 'ohmylms' ); }
-		if ( ! $syllabus && ! $required && ! $required_outcomes ) {
+		if ( ! $required && ! $required_outcomes ) {
 			$errors[] = __( 'Select at least one completion requirement.', 'ohmylms' ); }
-		if ( ! $syllabus && 'traditional' !== $program['mode'] && ! $required_outcomes ) {
+		if ( 'traditional' !== $program['mode'] && ! $required_outcomes ) {
 			$errors[] = __( 'Skill-based and blended courses need a required skill outcome.', 'ohmylms' ); }
 		return $errors;
 	}

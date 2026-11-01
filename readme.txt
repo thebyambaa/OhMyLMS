@@ -518,6 +518,8 @@ New Gutenberg blocks for Student Dashboard, My Courses, and Student Profile page
 - Fixed: The PayPal gateway loads and its webhook route is registered; its return handler only marks a PayPal order paid after PayPal confirms the amount.
 - Fixed: Links to lessons, quizzes and assignments in unpublished courses, the login `redirect_to` (no off-site redirects), and the Mongolian PHP strings (`Domain Path: /languages`).
 - Fixed: A syllabus course could be published while a skill it requires had too few approved questions, so no learner could complete it. Required skills of syllabus courses now pass the same question check as other courses, and the readiness panel lists them.
+- Changed: A syllabus course is published only when it has a completion requirement (and, unless it is traditional, a required skill), like any course; before, one with nothing required could be published that no learner could complete.
+- Changed: The syllabus editor shows one outline workspace; the mind map and spreadsheet layouts are removed and their old addresses open the outline.
 
 🗑 Removed (breaking for themes and add-ons that used them; see docs/EXTENSIONS.md)
 

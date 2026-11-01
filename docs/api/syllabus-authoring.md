@@ -76,9 +76,9 @@ writing. Unrelated third-party writers are not made transactional by this bounda
 An invalid apply or transport error retains the text/mapping for correction. Closing a prepared
 import requires an explicit discard. An applied import refreshes the editor from the server.
 
-## Retired layout discrepancy
+## Retired layouts
 
-The product direction is one outline/detail workspace. Mind-map and spreadsheet workflows are retired from the architecture guidance. This checkout still renders their layout controls in `SyllabusPage.tsx`; their removal has not reached this typed implementation. See [Learning Architecture](../LEARNING-ARCHITECTURE.md). The `sheet_edit` API remains documented above for compatibility; retaining it does not require exposing a spreadsheet UI.
+The syllabus editor is one outline/detail workspace, as [Learning Architecture](../LEARNING-ARCHITECTURE.md) describes. The mind-map and spreadsheet layouts were removed from `SyllabusPage.tsx` on 1 November 2026; an old `?layout=mindmap` or `?layout=spreadsheet` address opens the outline. The `sheet_edit` command remains documented above for compatibility and API callers; no app screen sends it.
 
 ## Mapping and comparison
 
@@ -104,8 +104,7 @@ stale review rejection, import apply, course draft mirroring and revision-checke
 App tests cover parsers, CSV, details failure recovery, confirmation, cancellation and stale
 mapping behavior. Current counts and live checks are recorded in the modularization roadmap.
 
-Retained layout implementation tests include `views.test.ts`, `SyllabusViews.test.tsx` and
-the `sheet_edit` checks in `tests/php/skill-workspace-rest-integration.php`; combined mappings and AI
+The retained `sheet_edit` command is checked in `tests/php/skill-workspace-rest-integration.php`; combined mappings and AI
 proposals are in the [skill workspace](skill-workspace.md). Not yet rebuilt: skill-group deletion,
 source configuration, course requirement controls, publication and extension panels. Curriculum branch deletion is in
 the typed Curriculum page and rich objectives, translations and resource counts are in the Skills

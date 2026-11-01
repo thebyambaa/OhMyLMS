@@ -15,8 +15,8 @@
 			"gzip": 1200
 		},
 		"admin-app.js": {
-			"raw": 94500,
-			"gzip": 29700
+			"raw": 94400,
+			"gzip": 29600
 		},
 		"chunks/admin-app-account-hub-class.js": {
 			"raw": 17100,
@@ -88,7 +88,7 @@
 		},
 		"chunks/admin-app-course-structure.js": {
 			"raw": 28900,
-			"gzip": 8500
+			"gzip": 8600
 		},
 		"chunks/admin-app-courses.js": {
 			"raw": 45300,
@@ -310,13 +310,9 @@
 			"raw": 29100,
 			"gzip": 8200
 		},
-		"chunks/admin-app-syllabus.css": {
-			"raw": 2800,
-			"gzip": 900
-		},
 		"chunks/admin-app-syllabus.js": {
-			"raw": 55300,
-			"gzip": 16100
+			"raw": 37100,
+			"gzip": 10600
 		},
 		"chunks/admin-app-taxonomies.js": {
 			"raw": 6000,

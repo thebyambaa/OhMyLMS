@@ -16,10 +16,12 @@ verify(SyllabusSettings::clean(['grade' => str_repeat('x', 101)]) instanceof WP_
 verify(SyllabusSettings::clean(['categories' => 'Core']) instanceof WP_Error, 'categories must be a list');
 verify(SyllabusSettings::clean(['categories' => [str_repeat('x', 61)]]) instanceof WP_Error, 'category length is validated');
 $program = ['mode' => 'skill-based', 'items' => [], 'outcomes' => [['term_id' => 1, 'required' => false]]];
-verify(CourseProgram::completion_readiness($program, true) === [], 'grade skill collections need no course completion requirement');
+verify(CourseProgram::completion_readiness($program, true) === CourseProgram::completion_readiness($program, false), 'a syllabus course without a required skill cannot be published, like any course');
 verify(count(CourseProgram::completion_readiness($program, false)) === 2, 'ordinary courses retain completion checks');
+$program['outcomes'][0]['required'] = true;
+verify(CourseProgram::completion_readiness($program, true) === [], 'a syllabus course with a required skill meets the completion checks');
 $program['outcomes'] = [];
-verify(count(CourseProgram::completion_readiness($program, true)) === 1, 'an empty syllabus cannot be published');
+verify(count(CourseProgram::completion_readiness($program, true)) === 3, 'an empty syllabus cannot be published');
 verify(Icons::clean('calculator') === 'calculator', 'supported topic and chapter icons are accepted');
 verify(Icons::clean('') === '', 'an icon can be reset to the default');
 verify(Icons::clean('invalid-icon') instanceof WP_Error && Icons::clean(['calculator']) instanceof WP_Error, 'unsupported and malformed icons are rejected');
@@ -31,4 +33,4 @@ verify(SyllabusSettings::clean(['category_styles' => ['Core' => ['icon' => 'calc
 verify(SyllabusSettings::clean(['category_styles' => ['Core' => ['icon' => 'invalid-icon', 'color' => '#aabbcc']]]) instanceof WP_Error, 'invalid category icons are refused');
 verify(SyllabusSettings::clean(['category_styles' => ['Core' => ['color' => 'red;display:none']]]) instanceof WP_Error, 'only hex icon colors are accepted');
 verify(SyllabusSettings::clean(['category_styles' => 'Core']) instanceof WP_Error, 'category style collections must be arrays');
-echo "syllabus settings unit checks passed: 19\n";
+echo "syllabus settings unit checks passed: 20\n";

@@ -57,8 +57,7 @@ export type CommandName =
 	| 'attach_skill'
 	| 'move_skill'
 	| 'detach_skill'
-	| 'sync_course'
-	| 'sheet_edit';
+	| 'sync_course';
 export type SendCommand = (
 	operation: CommandName,
 	fields: Record< string, unknown >
