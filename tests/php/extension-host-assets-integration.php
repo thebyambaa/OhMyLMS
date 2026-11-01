@@ -199,10 +199,14 @@ if ( ! $built ) {
 echo ( $source ? 'source' : 'shipped' ) . " mode: {$checks} checks passed\n";
 
 if ( $source && ! $shipped ) {
-	$arguments = array( PHP_BINARY, '-n', '-d', 'extension_dir=' . ini_get( 'extension_dir' ) );
-	foreach ( array( 'mysqli', 'mbstring', 'openssl', 'curl' ) as $extension ) {
-		if ( extension_loaded( $extension ) ) {
-			array_push( $arguments, '-d', 'extension=' . $extension );
+	// With a php.ini the child inherits it; a shared mysqli cannot load on its own under -n (it needs mysqlnd).
+	$arguments = array( PHP_BINARY );
+	if ( false === php_ini_loaded_file() ) {
+		array_push( $arguments, '-n', '-d', 'extension_dir=' . ini_get( 'extension_dir' ) );
+		foreach ( array( 'mysqli', 'mbstring', 'openssl', 'curl' ) as $extension ) {
+			if ( extension_loaded( $extension ) ) {
+				array_push( $arguments, '-d', 'extension=' . $extension );
+			}
 		}
 	}
 	array_push( $arguments, '-d', 'mysqli.default_port=' . ini_get( 'mysqli.default_port' ), __FILE__ );

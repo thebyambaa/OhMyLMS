@@ -53,7 +53,7 @@ $class = (int) $wpdb->insert_id;
 foreach ([[$student, 'student'], [$teacher, 'teacher']] as [$user, $role]) {
     $wpdb->insert(SchoolSchema::table('class_memberships'), ['class_id' => $class, 'user_id' => $user, 'role' => $role, 'status' => 'active', 'joined_at' => $now]);
 }
-$wpdb->insert($t('student_skill_state'), ['student_id' => $student, 'term_id' => $skill, 'level' => 'proficient', 'evidence_count' => 4, 'independent_correct' => 3, 'families' => 2, 'score' => 0.75, 'last_evidence_at' => $now, 'updated_at' => $now]);
+$wpdb->insert($t('student_skill_state'), ['student_id' => $student, 'term_id' => $skill, 'level' => 'proficient', 'evidence_count' => 4, 'independent_correct' => 3, 'families' => 2, 'accuracy' => 0.75, 'last_evidence_at' => $now, 'updated_at' => $now]);
 $path = 'reports/skills/students/' . $student;
 try {
     as_user($guardian);
