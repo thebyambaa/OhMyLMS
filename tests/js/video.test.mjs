@@ -724,7 +724,7 @@ function sessionFixture( options = {} ) {
 	);
 	const doc = dom.window.document;
 	const root = doc.getElementById( 'root' );
-	const log = { requests: [], events: [], jquery: [], toasts: [], beacons: [], announced: [], asked: [] };
+	const log = { requests: [], events: [], toasts: [], beacons: [], announced: [], asked: [] };
 	if ( options.lessonStore ) {
 		// What assets/interactivity/lesson/store.js does with a request: complete, then announce it.
 		doc.addEventListener( 'ohmylms:lesson-complete-request', ( event ) => {
@@ -774,7 +774,6 @@ function sessionFixture( options = {} ) {
 				new dom.window.CustomEvent( `ohmylms:${ name }`, { bubbles: true, cancelable, detail } )
 			);
 		},
-		jqueryTrigger: ( name, args, target ) => log.jquery.push( [ name, args, target === doc ] ),
 		toast: ( message, toastOptions ) => log.toasts.push( [ message, toastOptions?.type ] ),
 		announce: ( message ) => log.announced.push( message ),
 		debounce: fakeDebounce( queue ),
@@ -872,7 +871,6 @@ test( 'session: watched video → the lesson store completes the lesson, once', 
 	assert.deepEqual( log.asked, [ { lessonId: 12, source: 'video' } ], 'a document event the lesson store takes' );
 	assert.ok( ! log.requests.some( ( request ) => COMPLETE_ACTION === request.action ), 'the lesson store calls the endpoint, not the player' );
 	assert.equal( fixture.context.lessonDone, true, 'its ohmylms:lesson-completed answer is seen' );
-	assert.deepEqual( log.jquery, [ [ 'ohmylms:video:completed', [ { lessonId: 12, courseId: 3 } ], true ] ] );
 	assert.equal( doc.getElementById( 'ohmylms-completed-lesson' ).checked, false, 'the lesson store owns the checkbox' );
 	fixture.play( 16, 16 );
 	await tick();
@@ -892,7 +890,6 @@ test( 'session: watched video → the lesson store completes the lesson, once', 
 	await tick();
 	await tick();
 	assert.equal( refused.context.lessonDone, false, 'a refusal (shown by the lesson store) leaves the lesson open' );
-	assert.deepEqual( refused.log.jquery, [] );
 	refused.dom.window.close();
 } );
 
@@ -917,7 +914,6 @@ test( 'session: without the lesson store the player calls the endpoint and updat
 	assert.equal( box.hasAttribute( 'data-ohmylms-video-pending' ), false );
 	assert.equal( doc.getElementById( 'ohmylms-video-completion-hint' ), null );
 	assert.deepEqual( log.announced, [ 'Lesson completed.' ] );
-	assert.equal( log.jquery.length, 1 );
 	fallback.dom.window.close();
 
 	const done = sessionFixture( { responses: [ completedAnswer( true ) ] } );
@@ -1119,7 +1115,6 @@ function storeFixture( options = {} ) {
 		toast: () => null,
 		announce: ( message ) => log.announced.push( message ),
 		debounce: fakeDebounce( [] ),
-		jqueryTrigger: () => false,
 		prefersReducedMotion: () => Boolean( options.reducedMotion ),
 		win: dom.window,
 		doc,

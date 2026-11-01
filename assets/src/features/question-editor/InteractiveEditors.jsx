@@ -1,6 +1,6 @@
 import { PuzzlePreview } from './PuzzleEditor';
 /** @jsx createElement */
-import { RichContentControl } from '../math/RichContentControl';
+import { MathInput, RichContentControl } from '../math/public.mjs';
 import { createElement, Fragment, useState, useId } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import {
@@ -12,13 +12,12 @@ import {
 	TextareaControl,
 } from '@wordpress/components';
 import { VisualPreview } from './VisualEditors';
-import { MathInput } from '../math/MathInput';
 import {
 	dropdownAnswers,
 	dropdownSettings,
 	renameDropdownChoice,
 } from './dropdownModel.mjs';
-import { listToNumbers, numbersToList } from '../question-bank/model.mjs';
+import { listToNumbers, numbersToList } from '../question-bank/public.mjs';
 import {
 	blankIds,
 	languageTiles,
@@ -28,6 +27,10 @@ import {
 	syncSlots,
 	tilesFromText,
 } from './interactiveModel.mjs';
+
+/** @typedef {import('./editorTypes').Data} Data */
+/** @typedef {import('./editorTypes').OnPatch} OnPatch */
+
 const VISUAL_TYPES = [
 	'number-line',
 	'shade-model',
@@ -42,14 +45,15 @@ const VISUAL_TYPES = [
 /**
  * A text field that edits a parsed value without eating the characters being typed
  * (a trailing space or newline would otherwise vanish on every keystroke).
- * @param root0
- * @param root0.value
- * @param root0.format
- * @param root0.parse
- * @param root0.onChange
- * @param root0.multiline
- * @param root0.label
- * @param root0.help
+ * @template T
+ * @param {Object}               root0
+ * @param {T}                    root0.value
+ * @param {(value: T) => string} root0.format
+ * @param {(text: string) => T}  root0.parse
+ * @param {(value: T) => void}   root0.onChange
+ * @param {boolean}              [root0.multiline]
+ * @param {string}               [root0.label]
+ * @param {string}               [root0.help]
  */
 function ParsedField( {
 	value,
@@ -76,17 +80,18 @@ function ParsedField( {
 		/>
 	);
 }
-const csv = ( text ) =>
+const csv = ( /** @type {string} */ text ) =>
 	String( text )
 		.split( ',' )
 		.map( ( s ) => s.trim() );
-const joinCsv = ( list ) => ( list || [] ).join( ', ' );
+const joinCsv = ( /** @type {string[]|null|undefined} */ list ) =>
+	( list || [] ).join( ', ' );
 
 /**
  * Partial credit applies to every type that has several independent parts.
- * @param root0
- * @param root0.value
- * @param root0.onChange
+ * @param {Object}  root0
+ * @param {Data}    root0.value
+ * @param {OnPatch} root0.onChange
  */
 function PartialCredit( { value, onChange } ) {
 	return (
@@ -125,9 +130,9 @@ const formOptions = () => [
 
 /**
  * Required shape of an equivalent answer.
- * @param root0
- * @param root0.value
- * @param root0.onChange
+ * @param {Object}                 root0
+ * @param {string|undefined}       root0.value
+ * @param {(form: string) => void} root0.onChange
  */
 function FormSelect( { value, onChange } ) {
 	return (
@@ -146,9 +151,9 @@ function FormSelect( { value, onChange } ) {
 
 /**
  * A typed math expression graded by algebraic equivalence.
- * @param root0
- * @param root0.value
- * @param root0.onChange
+ * @param {Object}  root0
+ * @param {Data}    root0.value
+ * @param {OnPatch} root0.onChange
  */
 export function ExpressionEditor( { value, onChange } ) {
 	return (
@@ -174,33 +179,44 @@ export function ExpressionEditor( { value, onChange } ) {
 					} )
 				}
 			/>
-			{ ( value.alternatives || [] ).map( ( answer, index ) => (
-				<div key={ index }>
-					<MathInput
-						label={ __( 'Alternative answer', 'ohmylms' ) }
-						value={ answer }
-						onChange={ ( next ) =>
-							onChange( {
-								alternatives: value.alternatives.map(
-									( item, i ) => ( i === index ? next : item )
-								),
-							} )
-						}
-					/>
-					<Button
-						variant="tertiary"
-						onClick={ () =>
-							onChange( {
-								alternatives: value.alternatives.filter(
-									( _, i ) => i !== index
-								),
-							} )
-						}
-					>
-						{ __( 'Remove alternative', 'ohmylms' ) }
-					</Button>
-				</div>
-			) ) }
+			{ ( value.alternatives || [] ).map(
+				(
+					/** @type {string} */ answer,
+					/** @type {number} */ index
+				) => (
+					<div key={ index }>
+						<MathInput
+							label={ __( 'Alternative answer', 'ohmylms' ) }
+							value={ answer }
+							onChange={ ( next ) =>
+								onChange( {
+									alternatives: value.alternatives.map(
+										(
+											/** @type {string} */ item,
+											/** @type {number} */ i
+										) => ( i === index ? next : item )
+									),
+								} )
+							}
+						/>
+						<Button
+							variant="tertiary"
+							onClick={ () =>
+								onChange( {
+									alternatives: value.alternatives.filter(
+										(
+											/** @type {string} */ _,
+											/** @type {number} */ i
+										) => i !== index
+									),
+								} )
+							}
+						>
+							{ __( 'Remove alternative', 'ohmylms' ) }
+						</Button>
+					</div>
+				)
+			) }
 			<Button
 				variant="secondary"
 				onClick={ () =>
@@ -217,18 +233,19 @@ export function ExpressionEditor( { value, onChange } ) {
 
 /**
  * Sentence with {1}, {2} … markers; each marker becomes a dropdown.
- * @param root0
- * @param root0.value
- * @param root0.onChange
- * @param root0.mainStatement
+ * @param {Object}  root0
+ * @param {Data}    root0.value
+ * @param {OnPatch} root0.onChange
+ * @param {boolean} [root0.mainStatement]
  */
 export function DropdownBlanksEditor( {
 	value,
 	onChange,
 	mainStatement = false,
 } ) {
+	/** @type {Data[]} */
 	const slots = value.slots || [];
-	const setSlot = ( id, patch ) =>
+	const setSlot = ( /** @type {string} */ id, /** @type {Data} */ patch ) =>
 		onChange(
 			dropdownSettings(
 				value,
@@ -279,87 +296,101 @@ export function DropdownBlanksEditor( {
 						) }
 					</legend>
 					<div className="ohmylms-dropdown-choice-list">
-						{ ( slot.choices || [] ).map( ( choice, index ) => (
-							<div
-								className="ohmylms-dropdown-choice-row"
-								key={ index }
-							>
-								<input
-									type="checkbox"
-									aria-label={ sprintf(
-										/* translators: %d: choice position. */ __(
-											'Correct choice %d',
-											'ohmylms'
-										),
-										index + 1
-									) }
-									checked={ dropdownAnswers( slot ).includes(
-										choice
-									) }
-									onChange={ ( event ) => {
-										const answers = event.target.checked
-											? [
-													...dropdownAnswers( slot ),
-													choice,
-												]
-											: dropdownAnswers( slot ).filter(
-													( answer ) =>
-														answer !== choice
-												);
-										setSlot( slot.id, {
-											answers,
-											answer: answers[ 0 ] || '',
-											multiple:
-												answers.length > 1 ||
-												!! slot.multiple,
-										} );
-									} }
-								/>
-								<RichContentControl
-									compact
-									html={ false }
-									label={ sprintf(
-										/* translators: %d: choice position. */ __(
-											'Choice %d',
-											'ohmylms'
-										),
-										index + 1
-									) }
-									value={ choice }
-									onChange={ ( text ) =>
-										setSlot(
-											slot.id,
-											renameDropdownChoice(
-												slot,
-												index,
-												text
-											)
-										)
-									}
-								/>
-								<Button
-									variant="tertiary"
-									label={ __( 'Remove choice', 'ohmylms' ) }
-									onClick={ () => {
-										const answers = dropdownAnswers(
-											slot
-										).filter(
-											( answer ) => answer !== choice
-										);
-										setSlot( slot.id, {
-											choices: slot.choices.filter(
-												( item, position ) =>
-													position !== index
-											),
-											answers,
-											answer: answers[ 0 ] || '',
-										} );
-									} }
+						{ ( slot.choices || [] ).map(
+							(
+								/** @type {string} */ choice,
+								/** @type {number} */ index
+							) => (
+								<div
+									className="ohmylms-dropdown-choice-row"
+									key={ index }
 								>
-									{ __( 'Remove', 'ohmylms' ) }
-								</Button>
-							</div>
-						) ) }
+									<input
+										type="checkbox"
+										aria-label={ sprintf(
+											/* translators: %d: choice position. */ __(
+												'Correct choice %d',
+												'ohmylms'
+											),
+											index + 1
+										) }
+										checked={ dropdownAnswers(
+											slot
+										).includes( choice ) }
+										onChange={ ( event ) => {
+											const answers = event.target.checked
+												? [
+														...dropdownAnswers(
+															slot
+														),
+														choice,
+													]
+												: dropdownAnswers(
+														slot
+													).filter(
+														( answer ) =>
+															answer !== choice
+													);
+											setSlot( slot.id, {
+												answers,
+												answer: answers[ 0 ] || '',
+												multiple:
+													answers.length > 1 ||
+													!! slot.multiple,
+											} );
+										} }
+									/>
+									<RichContentControl
+										compact
+										html={ false }
+										label={ sprintf(
+											/* translators: %d: choice position. */ __(
+												'Choice %d',
+												'ohmylms'
+											),
+											index + 1
+										) }
+										value={ choice }
+										onChange={ ( text ) =>
+											setSlot(
+												slot.id,
+												renameDropdownChoice(
+													slot,
+													index,
+													text
+												)
+											)
+										}
+									/>
+									<Button
+										variant="tertiary"
+										label={ __(
+											'Remove choice',
+											'ohmylms'
+										) }
+										onClick={ () => {
+											const answers = dropdownAnswers(
+												slot
+											).filter(
+												( answer ) => answer !== choice
+											);
+											setSlot( slot.id, {
+												choices: slot.choices.filter(
+													(
+														/** @type {string} */ item,
+														/** @type {number} */ position
+													) => position !== index
+												),
+												answers,
+												answer: answers[ 0 ] || '',
+											} );
+										} }
+									>
+										{ __( 'Remove', 'ohmylms' ) }
+									</Button>
+								</div>
+							)
+						) }
 						<Button
 							variant="secondary"
 							onClick={ () =>
@@ -442,14 +473,16 @@ export function DropdownBlanksEditor( {
 /**
  * Tag input for the items that belong to one group (or to none).
  * Enter or comma turns the typed text into a new item in that group.
- * @param root0
- * @param root0.bucket
- * @param root0.index
- * @param root0.value
- * @param root0.onChange
+ * @param {Object}  root0
+ * @param {Data}    root0.bucket
+ * @param {number}  root0.index
+ * @param {Data}    root0.value
+ * @param {OnPatch} root0.onChange
  */
 function TagItemsRow( { bucket, index, value, onChange } ) {
+	/** @type {Data[]} */
 	const items = value.items || [];
+	/** @type {Record<string, string>} */
 	const key = value.key || {};
 	const mine = items.filter(
 		( item ) => ( key[ item.id ] || '' ) === bucket.id
@@ -464,13 +497,18 @@ function TagItemsRow( { bucket, index, value, onChange } ) {
 				index + 1
 			)
 		: __( 'Not in a group yet', 'ohmylms' );
-	const setTags = ( tokens ) => {
+	const setTags = ( /** @type {Array<string|{value: string}>} */ tokens ) => {
 		const texts = tokens
-			.flatMap( ( token ) => String( token.value || token ).split( ',' ) )
+			.flatMap(
+				// FormTokenField passes plain strings or token objects.
+				( /** @type {any} */ token ) =>
+					String( token.value || token ).split( ',' )
+			)
 			.map( ( part ) => part.trim() )
 			.filter( Boolean );
 		const kept = [];
 		const pool = [ ...mine ];
+		/** @type {{id: string, text: string}[]} */
 		const added = [];
 		texts.forEach( ( text ) => {
 			const at = pool.findIndex( ( item ) => item.text === text );
@@ -514,15 +552,17 @@ function TagItemsRow( { bucket, index, value, onChange } ) {
 
 /**
  * Groups and the items that belong in them.
- * @param root0
- * @param root0.value
- * @param root0.onChange
+ * @param {Object}  root0
+ * @param {Data}    root0.value
+ * @param {OnPatch} root0.onChange
  */
 export function CategorizeEditor( { value, onChange } ) {
+	/** @type {Data[]} */
 	const buckets = value.buckets || [];
+	/** @type {Data[]} */
 	const items = value.items || [];
 	const key = value.key || {};
-	const setBucket = ( id, patch ) =>
+	const setBucket = ( /** @type {string} */ id, /** @type {Data} */ patch ) =>
 		onChange( {
 			buckets: buckets.map( ( bucket ) =>
 				bucket.id === id
@@ -609,20 +649,20 @@ export function CategorizeEditor( { value, onChange } ) {
 		</div>
 	);
 }
-const rowsText = ( rows ) =>
+const rowsText = ( /** @type {string[][]|null|undefined} */ rows ) =>
 	( rows || [] ).map( ( row ) => row.join( ' | ' ) ).join( '\n' );
-const parseRows = ( text ) =>
+const parseRows = ( /** @type {string} */ text ) =>
 	String( text )
 		.split( '\n' )
 		.map( ( line ) => line.split( '|' ).map( ( cell ) => cell.trim() ) );
 
 /**
  * Blanks in a sentence or table cells, each with its own expected answer.
- * @param root0
- * @param root0.value
- * @param root0.onChange
- * @param root0.mainStatement
- * @param root0.compactActions
+ * @param {Object}  root0
+ * @param {Data}    root0.value
+ * @param {OnPatch} root0.onChange
+ * @param {boolean} [root0.mainStatement]
+ * @param {boolean} [root0.compactActions]
  */
 export function MultiBlankEditor( {
 	value,
@@ -633,7 +673,7 @@ export function MultiBlankEditor( {
 	const table = value.layout === 'table';
 	const Group = compactActions ? 'details' : 'fieldset';
 	const Heading = compactActions ? 'summary' : 'legend';
-	const apply = ( patch ) => {
+	const apply = ( /** @type {Data} */ patch ) => {
 		const next = {
 			...value,
 			...patch,
@@ -643,7 +683,7 @@ export function MultiBlankEditor( {
 			blanks: syncBlanks( next ),
 		} );
 	};
-	const setBlank = ( id, patch ) =>
+	const setBlank = ( /** @type {string} */ id, /** @type {Data} */ patch ) =>
 		onChange( {
 			blanks: {
 				...value.blanks,
@@ -913,14 +953,14 @@ export function MultiBlankEditor( {
 
 /**
  * Tiles the learner arranges into an answer.
- * @param root0
- * @param root0.value
- * @param root0.onChange
+ * @param {Object}  root0
+ * @param {Data}    root0.value
+ * @param {OnPatch} root0.onChange
  */
 export function BuildExpressionEditor( { value, onChange } ) {
 	const mode = value.tile_mode || 'math';
 	const separator = mode === 'letters' ? '' : ' ';
-	const parse = ( text ) =>
+	const parse = ( /** @type {string} */ text ) =>
 		mode === 'math' ? tilesFromText( text ) : languageTiles( text, mode );
 	return (
 		<div className="ohmylms-interactive-editor">
@@ -997,7 +1037,9 @@ export function BuildExpressionEditor( { value, onChange } ) {
 				value={ value.alternatives }
 				format={ ( list ) =>
 					( list || [] )
-						.map( ( s ) => s.join( separator ) )
+						.map( ( /** @type {string[]} */ s ) =>
+							s.join( separator )
+						)
 						.join( '\n' )
 				}
 				parse={ ( text ) =>
@@ -1039,13 +1081,15 @@ export function BuildExpressionEditor( { value, onChange } ) {
 
 /**
  * Author-side learner preview of an interactive question (answers are not graded or saved).
- * @param root0
- * @param root0.type
- * @param root0.settings
+ * @param {Object} root0
+ * @param {string} root0.type
+ * @param {Data}   [root0.settings]
  */
 export function InteractivePreview( { type, settings = {} } ) {
 	const _controlId = useId();
-	const [ picked, setPicked ] = useState( [] );
+	const [ picked, setPicked ] = useState(
+		/** @type {{text: string, index: number}[]} */ ( [] )
+	);
 	if ( [ 'crossword', 'wordsearch' ].includes( type ) ) {
 		return <PuzzlePreview type={ type } settings={ settings } />;
 	}
@@ -1064,6 +1108,10 @@ export function InteractivePreview( { type, settings = {} } ) {
 	if ( VISUAL_TYPES.includes( type ) ) {
 		return <VisualPreview type={ type } settings={ settings } />;
 	}
+	/**
+	 * @param {string|null|undefined}                     text  Text with {id} markers.
+	 * @param {(id: string) => import('react').ReactNode} field Renders the field for a marker.
+	 */
 	const parts = ( text, field ) =>
 		String( text || '' )
 			.split(
@@ -1083,7 +1131,7 @@ export function InteractivePreview( { type, settings = {} } ) {
 			<p>
 				{ parts( settings.text, ( id ) => {
 					const slot = ( settings.slots || [] ).find(
-						( s ) => s.id === id
+						( /** @type {Data} */ s ) => s.id === id
 					);
 					return slot ? (
 						<select
@@ -1101,9 +1149,14 @@ export function InteractivePreview( { type, settings = {} } ) {
 									{ __( 'Choose…', 'ohmylms' ) }
 								</option>
 							) }
-							{ ( slot.choices || [] ).map( ( choice, i ) => (
-								<option key={ i }>{ choice }</option>
-							) ) }
+							{ ( slot.choices || [] ).map(
+								(
+									/** @type {string} */ choice,
+									/** @type {number} */ i
+								) => (
+									<option key={ i }>{ choice }</option>
+								)
+							) }
 						</select>
 					) : null;
 				} ) }
@@ -1121,7 +1174,7 @@ export function InteractivePreview( { type, settings = {} } ) {
 		);
 	}
 	if ( type === 'multi-blank' ) {
-		const input = ( id ) => (
+		const input = ( /** @type {string} */ id ) => (
 			<input
 				type="text"
 				className={
@@ -1144,19 +1197,31 @@ export function InteractivePreview( { type, settings = {} } ) {
 				<table className="ohmylms-blank-table">
 					<thead>
 						<tr>
-							{ ( settings.columns || [] ).map( ( column, i ) => (
-								<th key={ i }>{ column }</th>
-							) ) }
+							{ ( settings.columns || [] ).map(
+								(
+									/** @type {string} */ column,
+									/** @type {number} */ i
+								) => (
+									<th key={ i }>{ column }</th>
+								)
+							) }
 						</tr>
 					</thead>
 					<tbody>
-						{ ( settings.rows || [] ).map( ( row, r ) => (
-							<tr key={ r }>
-								{ row.map( ( cell, c ) => (
-									<td key={ c }>{ parts( cell, input ) }</td>
-								) ) }
-							</tr>
-						) ) }
+						{ ( settings.rows || [] ).map(
+							(
+								/** @type {string[]} */ row,
+								/** @type {number} */ r
+							) => (
+								<tr key={ r }>
+									{ row.map( ( cell, c ) => (
+										<td key={ c }>
+											{ parts( cell, input ) }
+										</td>
+									) ) }
+								</tr>
+							)
+						) }
 					</tbody>
 				</table>
 			);
@@ -1166,35 +1231,41 @@ export function InteractivePreview( { type, settings = {} } ) {
 	if ( type === 'categorize' ) {
 		return (
 			<ul className="ohmylms-cat-items">
-				{ ( settings.items || [] ).map( ( item ) => (
-					<li key={ item.id }>
-						{ item.image_url && (
-							<img src={ item.image_url } alt="" />
-						) }
-						<label
-							htmlFor={ _controlId + '-field-1' + '-' + item.id }
-						>
-							{ item.text }{ ' ' }
-							<select
-								id={ _controlId + '-field-1' + '-' + item.id }
+				{ ( settings.items || [] ).map(
+					( /** @type {Data} */ item ) => (
+						<li key={ item.id }>
+							{ item.image_url && (
+								<img src={ item.image_url } alt="" />
+							) }
+							<label
+								htmlFor={
+									_controlId + '-field-1' + '-' + item.id
+								}
 							>
-								<option value="">
-									{ __( 'Choose a group…', 'ohmylms' ) }
-								</option>
-								{ ( settings.buckets || [] ).map(
-									( bucket ) => (
-										<option
-											key={ bucket.id }
-											value={ bucket.id }
-										>
-											{ bucket.label }
-										</option>
-									)
-								) }
-							</select>
-						</label>
-					</li>
-				) ) }
+								{ item.text }{ ' ' }
+								<select
+									id={
+										_controlId + '-field-1' + '-' + item.id
+									}
+								>
+									<option value="">
+										{ __( 'Choose a group…', 'ohmylms' ) }
+									</option>
+									{ ( settings.buckets || [] ).map(
+										( /** @type {Data} */ bucket ) => (
+											<option
+												key={ bucket.id }
+												value={ bucket.id }
+											>
+												{ bucket.label }
+											</option>
+										)
+									) }
+								</select>
+							</label>
+						</li>
+					)
+				) }
 			</ul>
 		);
 	}
@@ -1257,9 +1328,9 @@ export function InteractivePreview( { type, settings = {} } ) {
 
 /**
  * Accepted text answers using explicit automatic comparison rules.
- * @param root0
- * @param root0.value
- * @param root0.onChange
+ * @param {Object}  root0
+ * @param {Data}    root0.value
+ * @param {OnPatch} root0.onChange
  */
 export function TextEntryEditor( { value, onChange } ) {
 	return (

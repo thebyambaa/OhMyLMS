@@ -14,8 +14,8 @@ export const CSV_TEMPLATE = [
 /**
  * What a checked file holds: counts, the question types, and anything worth a second look.
  *
- * @param {Object} props
- * @param {Object} props.preview Dry-run response.
+ * @param {Object}                         props
+ * @param {import('./api.mjs').QuizImport} props.preview Dry-run response.
  */
 export function ImportPreview( { preview } ) {
 	const { summary, warnings } = preview;

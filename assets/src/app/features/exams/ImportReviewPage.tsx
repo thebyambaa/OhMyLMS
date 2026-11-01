@@ -7,7 +7,13 @@ import {
 	TextControl,
 	TextareaControl,
 } from '@wordpress/components';
-import { useCallback, useEffect, useState } from '@wordpress/element';
+import {
+	Suspense,
+	lazy,
+	useCallback,
+	useEffect,
+	useState,
+} from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link, useParams } from 'react-router-dom';
 import { useOperation } from '../../hooks/useOperation';
@@ -20,11 +26,23 @@ import {
 	deleteJob,
 	extractJob,
 	getJob,
+	getSource,
 	listFigures,
 	searchSkills,
 	updateRow,
 } from './api';
+import { isBounds, type Bounds } from './cropGeometry';
 import FigureProposalPanel from './FigureProposalPanel';
+import type { SourceFocus } from './SourcePanel';
+import type { SourceInfo } from './sourceModel';
+
+// The page viewer and crop tool load only when an import review shows its source.
+const SourcePanel = lazy(
+	() =>
+		import(
+			/* webpackChunkName: "admin-app-exams-source" */ './SourcePanel'
+		)
+);
 import {
 	LIMITS,
 	POLL_MS,
@@ -47,6 +65,22 @@ import type {
 } from './types';
 
 const KINDS: readonly PartKind[] = [ 'numerical', 'text', 'written' ];
+
+/** A crop queued from the source panel, for one row's draft: replacing a figure's crop or adding one. */
+interface CropDelivery {
+	seq: number;
+	row: number;
+	figure: string | null;
+	crop: FigureAsset;
+}
+
+function nextFigureId( figures: readonly ImportFigure[] ): string {
+	let number = figures.length + 1;
+	while ( figures.some( ( figure ) => figure.id === `f${ number }` ) ) {
+		number++;
+	}
+	return `f${ number }`;
+}
 
 function routeId( value: string | undefined ): number | null {
 	return value && /^[1-9]\d*$/.test( value ) ? Number( value ) : null;
@@ -124,6 +158,12 @@ interface RowEditorProps {
 	editable: boolean;
 	busy: boolean;
 	canGenerate: boolean;
+	/** The source panel shows this row. */
+	focused: boolean;
+	/** A source panel is shown beside the rows. */
+	showSource: boolean;
+	onFocusSource: ( figure: string | null ) => void;
+	delivery: CropDelivery | null;
 	onSave: ( changes: RowChanges ) => void;
 	onDecide: ( decision: 'accept' | 'reject' ) => void;
 	onRun: (
@@ -142,6 +182,10 @@ interface RowEditorProps {
  * @param root0.editable
  * @param root0.busy
  * @param root0.canGenerate
+ * @param root0.focused
+ * @param root0.showSource
+ * @param root0.onFocusSource
+ * @param root0.delivery
  * @param root0.onSave
  * @param root0.onDecide
  * @param root0.onRun
@@ -154,6 +198,10 @@ function RowEditor( {
 	editable,
 	busy,
 	canGenerate,
+	focused,
+	showSource,
+	onFocusSource,
+	delivery,
 	onSave,
 	onDecide,
 	onRun,
@@ -180,6 +228,43 @@ function RowEditor( {
 		setParts( next.parts );
 		setFigures( next.figures );
 	}, [ stored ] );
+	// A crop drawn on the source page replaces a figure's crop or adds a figure to the draft.
+	const deliverySeq = delivery?.seq;
+	useEffect( () => {
+		if ( ! delivery ) {
+			return;
+		}
+		const { figure, crop } = delivery;
+		const placed = {
+			asset_id: crop.id,
+			page: crop.page,
+			bounds: crop.bounds,
+			approved: false,
+		};
+		setFigures( ( current ) => {
+			if ( figure && current.some( ( item ) => item.id === figure ) ) {
+				return current.map( ( item ) =>
+					item.id === figure ? { ...item, ...placed } : item
+				);
+			}
+			if ( current.length >= 20 ) {
+				return current;
+			}
+			return [
+				...current,
+				{
+					id: nextFigureId( current ),
+					part_ids: [],
+					alt: '',
+					not_to_scale: false,
+					selected: 'original',
+					...placed,
+				},
+			];
+		} );
+		// Apply each delivery once.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [ deliverySeq ] );
 	const changes: RowChanges = {};
 	if ( question !== row.question ) {
 		changes.question = question;
@@ -230,7 +315,15 @@ function RowEditor( {
 		onSave( changes );
 	}
 	return (
-		<article aria-labelledby={ `oml-row-${ row.index }` }>
+		<article
+			aria-labelledby={ `oml-row-${ row.index }` }
+			className={ focused ? 'is-source-focus' : undefined }
+			onFocusCapture={ () => {
+				if ( showSource && ! focused ) {
+					onFocusSource( null );
+				}
+			} }
+		>
 			<h4 id={ `oml-row-${ row.index }` }>
 				{ sprintf(
 					/* translators: 1: question number; 2: review status; 3: marks. */
@@ -240,6 +333,21 @@ function RowEditor( {
 					String( row.marks )
 				) }
 			</h4>
+			{ showSource && (
+				<p>
+					<Button
+						variant="link"
+						aria-pressed={ focused }
+						onClick={ () => onFocusSource( null ) }
+					>
+						{ sprintf(
+							/* translators: %d: source page. */
+							__( 'Show source page %d', 'ohmylms' ),
+							row.page
+						) }
+					</Button>
+				</p>
+			) }
 			<fieldset disabled={ ! editable || busy }>
 				<TextareaControl
 					label={ __( 'Question stem', 'ohmylms' ) }
@@ -448,6 +556,23 @@ function RowEditor( {
 									setFigure( index, { ...item, approved } )
 								}
 							/>
+							{ showSource &&
+								row.figures.some(
+									( saved ) => saved.id === item.id
+								) && (
+									<Button
+										variant="secondary"
+										size="small"
+										onClick={ () =>
+											onFocusSource( item.id )
+										}
+									>
+										{ __(
+											'Adjust the crop on the page',
+											'ohmylms'
+										) }
+									</Button>
+								) }
 							{ editable &&
 								'ready' === crop?.state &&
 								row.figures.some(
@@ -583,6 +708,13 @@ export default function ImportReviewPage() {
 	} );
 	const [ deleting, setDeleting ] = useState( false );
 	const [ deleted, setDeleted ] = useState( false );
+	const [ source, setSource ] = useState< SourceInfo | null >( null );
+	const [ sourceError, setSourceError ] = useState< string | null >( null );
+	const [ focus, setFocus ] = useState< {
+		row: number;
+		figure: string | null;
+	} >( { row: 0, figure: null } );
+	const [ delivery, setDelivery ] = useState< CropDelivery | null >( null );
 
 	const adopt = useCallback( ( next: ImportJobDetail ) => {
 		setJob( next );
@@ -625,6 +757,52 @@ export default function ImportReviewPage() {
 		listFigures( id, controller.signal ).then( setCrops, () => undefined );
 		return () => controller.abort();
 	}, [ id, kind ] );
+
+	// Crops render in the background; refresh them until none is waiting.
+	const rendering = crops.some(
+		( entry ) => 'queued' === entry.state || 'rendering' === entry.state
+	);
+	useEffect( () => {
+		if ( null === id || ! rendering ) {
+			return undefined;
+		}
+		const controller = new AbortController();
+		const timer = window.setTimeout( () => {
+			listFigures( id, controller.signal ).then(
+				setCrops,
+				() => undefined
+			);
+		}, POLL_MS );
+		return () => {
+			window.clearTimeout( timer );
+			controller.abort();
+		};
+	}, [ id, rendering, crops ] );
+
+	// The source paper can be shown once its upload was checked.
+	const viewable =
+		'pdf' === kind &&
+		!! state &&
+		! [ 'queued', 'failed' ].includes( state );
+	useEffect( () => {
+		if ( null === id || ! viewable ) {
+			return undefined;
+		}
+		const controller = new AbortController();
+		getSource( id, controller.signal ).then(
+			( next ) => {
+				setSource( next );
+				setSourceError( null );
+			},
+			( problem ) => {
+				const error = normalizeApiError( problem );
+				if ( ! error.isAborted ) {
+					setSourceError( error.message );
+				}
+			}
+		);
+		return () => controller.abort();
+	}, [ id, viewable ] );
 
 	if ( null === id ) {
 		return (
@@ -709,6 +887,95 @@ export default function ImportReviewPage() {
 	const pending = current.rows.filter(
 		( row ) => 'pending' === row.status
 	).length;
+
+	const focusRow =
+		current.rows.find( ( row ) => row.index === focus.row ) ??
+		current.rows[ 0 ];
+	const focusFigure =
+		focusRow?.figures.find( ( figure ) => figure.id === focus.figure ) ??
+		null;
+	const sourceFocus: SourceFocus = {
+		key: `${ focusRow?.index ?? -1 }:${ focusFigure?.id ?? '' }`,
+		title: focusRow
+			? sprintf(
+					/* translators: %s: question number. */
+					__( 'Question %s', 'ohmylms' ),
+					focusRow.number
+				)
+			: __( 'The paper', 'ohmylms' ),
+		page: focusFigure?.page ?? focusRow?.page ?? 1,
+		figure: focusFigure?.id ?? null,
+		bounds:
+			focusFigure && isBounds( focusFigure.bounds )
+				? focusFigure.bounds
+				: null,
+	};
+	const regions = ( focusRow?.figures ?? [] )
+		.filter( ( figure ) => isBounds( figure.bounds ) )
+		.map( ( figure ) => ( {
+			id: figure.id,
+			label: figure.id,
+			page: figure.page,
+			bounds: figure.bounds,
+		} ) );
+
+	function cropFromSource(
+		page: number,
+		bounds: Bounds,
+		figure: string | null
+	) {
+		if ( ! focusRow ) {
+			return;
+		}
+		const row = focusRow.index;
+		setMessage( null );
+		setFailure( null );
+		void operation.run(
+			async ( signal ) => {
+				try {
+					return await createFigure(
+						current.id,
+						page,
+						bounds,
+						signal
+					);
+				} catch ( problem ) {
+					const error = normalizeApiError( problem );
+					if ( ! signal.aborted ) {
+						setFailure( error );
+					}
+					throw error;
+				}
+			},
+			( queued ) => {
+				setCrops( ( previous ) => [
+					...previous.filter( ( entry ) => entry.id !== queued.id ),
+					queued,
+				] );
+				setDelivery( ( previous ) => ( {
+					seq: ( previous?.seq ?? 0 ) + 1,
+					row,
+					figure,
+					crop: queued,
+				} ) );
+				setMessage(
+					figure
+						? sprintf(
+								/* translators: %s: figure ID. */
+								__(
+									'Crop requested for figure %s. Save the question to keep it, then approve the figure when the crop is ready.',
+									'ohmylms'
+								),
+								figure
+							)
+						: __(
+								'Crop requested as a new figure. Describe it and save the question, then approve it when the crop is ready.',
+								'ohmylms'
+							)
+				);
+			}
+		);
+	}
 
 	function apply() {
 		const duration = /^\d{1,4}$/.test( minutes ) ? Number( minutes ) : 0;
@@ -883,56 +1150,106 @@ export default function ImportReviewPage() {
 				</p>
 			) }
 
-			{ reviewable && (
-				<section aria-labelledby="oml-import-rows">
-					<h3 id="oml-import-rows">
-						{ __( 'Questions', 'ohmylms' ) }
-					</h3>
-					{ current.rows.map( ( row ) => (
-						<RowEditor
-							key={ row.index }
-							jobId={ current.id }
-							revision={ current.revision }
-							row={ row }
-							crops={ crops }
-							editable={ reviewable }
-							busy={ operation.busy }
-							canGenerate={ current.can_reconstruct }
-							onRun={ run }
-							onSave={ ( changes ) =>
-								run(
-									( signal ) =>
-										updateRow(
-											current.id,
-											row.index,
-											changes,
-											current.revision,
-											signal
-										),
-									__(
-										'Question saved. Accept it when it is right.',
+			{ ( reviewable || viewable ) && (
+				<div
+					className={
+						viewable
+							? 'ohmylms-import-review has-source'
+							: 'ohmylms-import-review'
+					}
+				>
+					{ reviewable && (
+						<section aria-labelledby="oml-import-rows">
+							<h3 id="oml-import-rows">
+								{ __( 'Questions', 'ohmylms' ) }
+							</h3>
+							{ current.rows.map( ( row ) => (
+								<RowEditor
+									key={ row.index }
+									jobId={ current.id }
+									revision={ current.revision }
+									row={ row }
+									crops={ crops }
+									editable={ reviewable }
+									busy={ operation.busy }
+									canGenerate={ current.can_reconstruct }
+									focused={ viewable && row === focusRow }
+									showSource={ viewable }
+									onFocusSource={ ( figure ) =>
+										setFocus( { row: row.index, figure } )
+									}
+									delivery={
+										delivery?.row === row.index
+											? delivery
+											: null
+									}
+									onRun={ run }
+									onSave={ ( changes ) =>
+										run(
+											( signal ) =>
+												updateRow(
+													current.id,
+													row.index,
+													changes,
+													current.revision,
+													signal
+												),
+											__(
+												'Question saved. Accept it when it is right.',
+												'ohmylms'
+											)
+										)
+									}
+									onDecide={ ( decision ) =>
+										run(
+											( signal ) =>
+												decideRow(
+													current.id,
+													row.index,
+													decision,
+													current.revision,
+													signal
+												),
+											'accept' === decision
+												? __(
+														'Question accepted.',
+														'ohmylms'
+													)
+												: __(
+														'Question rejected.',
+														'ohmylms'
+													)
+										)
+									}
+								/>
+							) ) }
+						</section>
+					) }
+					{ viewable && (
+						<Suspense
+							fallback={
+								<p role="status">
+									{ __(
+										'Loading the source paper…',
 										'ohmylms'
-									)
-								)
+									) }
+								</p>
 							}
-							onDecide={ ( decision ) =>
-								run(
-									( signal ) =>
-										decideRow(
-											current.id,
-											row.index,
-											decision,
-											current.revision,
-											signal
-										),
-									'accept' === decision
-										? __( 'Question accepted.', 'ohmylms' )
-										: __( 'Question rejected.', 'ohmylms' )
-								)
-							}
-						/>
-					) ) }
-				</section>
+						>
+							<SourcePanel
+								source={ source }
+								error={ sourceError }
+								focus={ sourceFocus }
+								regions={ regions }
+								canCrop={
+									reviewable && !! source?.renderer.crops
+								}
+								busy={ operation.busy }
+								onCrop={ cropFromSource }
+							/>
+						</Suspense>
+					) }
+				</div>
 			) }
 
 			{ 'pdf' === current.kind && reviewable && (

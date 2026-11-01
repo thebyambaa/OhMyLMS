@@ -22,22 +22,29 @@ import {
 /**
  * Pick existing bank questions for a quiz document. The caller inserts them as question blocks, and
  * saving the document places them by reference; the question content stays in the bank.
- * @param root0
- * @param root0.quizId      Quiz being edited; its questions are left out of the results.
- * @param root0.existingIds Questions already in the document.
- * @param root0.onClose
- * @param root0.onPick      Receives the chosen question IDs.
+ * @param {Object}                     root0               Component properties.
+ * @param {number}                     [root0.quizId]      Quiz being edited; its questions are left out of the results.
+ * @param {number[]}                   [root0.existingIds] Questions already in the document.
+ * @param {() => void}                 root0.onClose       Close the picker.
+ * @param {(ids: number[]) => unknown} root0.onPick        Receives the chosen question IDs.
+ * @return {React.ReactElement} Picker.
  */
 export function BankPicker( { quizId, existingIds, onClose, onPick } ) {
-	const [ filters, setFilters ] = useState( {
-		search: '',
-		skill: '',
-		difficulty: '',
-		status: 'approved',
-	} );
-	const [ items, setItems ] = useState( null );
-	const [ skills, setSkills ] = useState( [] );
-	const [ chosen, setChosen ] = useState( [] );
+	const [ filters, setFilters ] = useState(
+		/** @type {{search: string, skill: string, difficulty: string, status: ''|'approved'}} */ ( {
+			search: '',
+			skill: '',
+			difficulty: '',
+			status: 'approved',
+		} )
+	);
+	const [ items, setItems ] = useState(
+		/** @type {import('./api.mjs').RestData[]|null} */ ( null )
+	);
+	const [ skills, setSkills ] = useState(
+		/** @type {import('./model.mjs').Skill[]} */ ( [] )
+	);
+	const [ chosen, setChosen ] = useState( /** @type {number[]} */ ( [] ) );
 	const [ busy, setBusy ] = useState( false );
 	const [ error, setError ] = useState( '' );
 	useEffect( () => {
@@ -73,12 +80,17 @@ export function BankPicker( { quizId, existingIds, onClose, onPick } ) {
 			onClose();
 		} catch ( cause ) {
 			setError(
-				cause.message || __( 'Could not add the questions.', 'ohmylms' )
+				/** @type {{ message?: string }} */ ( cause ).message ||
+					__( 'Could not add the questions.', 'ohmylms' )
 			);
 		} finally {
 			setBusy( false );
 		}
 	}
+	/**
+	 * @param {keyof typeof filters} key Filter.
+	 * @return {(value: string) => void} Change handler.
+	 */
 	const set = ( key ) => ( value ) =>
 		setFilters( {
 			...filters,

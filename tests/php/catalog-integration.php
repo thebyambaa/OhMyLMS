@@ -345,45 +345,29 @@ try {
 	ok( 'ohmylms/catalog-more' === $area->get_attribute( 'data-wp-router-region' ) && 'actions.loadMore' === $button->get_attribute( 'data-wp-on--click' ) && '2' === $button->get_attribute( 'value' ), 'legacy load more becomes a region with the action' );
 	$_GET = array();
 
-	// ---- The legacy admin-ajax actions list the same courses --------------------------------
-	$ajax = static function ( $body ) {
+	// ---- The removed admin-ajax catalogue actions (1.2.22) are gone ---------------------------
+	foreach ( array( 'ohmylms_loadmore', 'ohmylms_search_filter' ) as $action ) {
+		ok( ! has_action( 'wp_ajax_' . $action ) && ! has_action( 'wp_ajax_nopriv_' . $action ), "$action is no longer registered" );
 		$response = wp_remote_post(
 			admin_url( 'admin-ajax.php' ),
 			array(
-				'body'    => $body,
+				'body'    => array(
+					'action'      => $action,
+					'page'        => 1,
+					'search_term' => $token,
+				),
 				'timeout' => 30,
 			)
 		);
-		ok( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ), 'admin-ajax answers: ' . ( is_wp_error( $response ) ? $response->get_error_message() : wp_remote_retrieve_response_code( $response ) ) );
-		return wp_remote_retrieve_body( $response );
-	};
-	$body = $ajax(
-		array(
-			'action'      => 'ohmylms_search_filter',
-			'nonce'       => wp_create_nonce( 'search_filter_nonce' ),
-			'page'        => 1,
-			'search_term' => $token,
-			'level_slug'  => array( 'beginner' ),
-			'sort_by'     => 'min_price',
-			'filter_type' => 'filter',
-		)
-	);
-	$html = render_list( 'course_search=' . $token . '&course_level%5B%5D=beginner&course_sort=min_price', $atts );
-	ok( array( $b, $a ) === card_ids( $body ) && card_ids( $body ) === card_ids( $html ), 'ohmylms_search_filter matches the server-rendered list: ' . wp_json_encode( card_ids( $body ) ) );
-	$body = $ajax(
-		array(
-			'action'         => 'ohmylms_loadmore',
-			'nonce'          => wp_create_nonce( 'load_more_nonce' ),
-			'page'           => 2,
-			'posts_per_page' => 2,
-			'search_term'    => $token,
-			'filter_type'    => 'filter',
-		)
-	);
-	ok( array( $a ) === card_ids( $body ), 'ohmylms_loadmore still returns page 2 as a fragment: ' . wp_json_encode( card_ids( $body ) ) );
+		ok( ! is_wp_error( $response ) && 400 === wp_remote_retrieve_response_code( $response ) && in_array( trim( wp_remote_retrieve_body( $response ) ), array( '', '0' ), true ), "admin-ajax refuses $action as an unknown action (400): " . ( is_wp_error( $response ) ? $response->get_error_message() : wp_remote_retrieve_response_code( $response ) ) );
+	}
+	$frontend = ( new \OhMyLMS\Assets\FrontendAssets() )->get_script_data( 'ohmylms-frontend' );
+	ok( ! isset( $frontend['load_more_nonce'] ) && ! isset( $frontend['search_filter_nonce'] ), 'ohmylms_frontend_params no longer carries the catalogue nonces' );
+	ok( ! method_exists( '\OhMyLMS\Extensions\Catalog', 'legacy_filters' ), 'the legacy admin-ajax field mapping is gone' );
 
 	// ---- The live archive renders the filtered list for the same URL --------------------------
-	$url      = home_url( '/course/?course_search=' . rawurlencode( $token ) . '&course_level%5B%5D=expert' );
+	$archive  = get_post_type_archive_link( OHMYLMS_COURSE_CPT );
+	$url      = $archive . '?course_search=' . rawurlencode( $token ) . '&course_level%5B%5D=expert';
 	$response = wp_remote_get( $url, array( 'timeout' => 30 ) );
 	$page     = wp_remote_retrieve_body( $response );
 	ok( 200 === wp_remote_retrieve_response_code( $response ), "archive answers 200 for $url" );
@@ -393,7 +377,7 @@ try {
 	ok( ! preg_match( '/<b>(Warning|Notice|Deprecated|Fatal error)<\/b>/', $page ), 'no PHP notices in the page' );
 	foreach ( array( 'course_level%5B%5D=expert', 'paged=2' ) as $query ) {
 		$response = wp_remote_get(
-			home_url( '/course/?' . $query ),
+			$archive . '?' . $query,
 			array(
 				'timeout'     => 30,
 				'redirection' => 0,

@@ -4,8 +4,9 @@ import { useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { useSearchParams } from 'react-router-dom';
 import { useListQuery } from '../../components/listQuery';
+import { useOperation } from '../../hooks/useOperation';
 import { setIntegrationEnabled } from './api';
-import { useIntegrations, useOperation } from './hooks';
+import { useIntegrations } from './hooks';
 import {
 	AUTH_PARAMS,
 	authNotice,
@@ -45,7 +46,7 @@ const STATES: ReadonlyArray< {
  */
 export default function IntegrationsPage() {
 	const list = useIntegrations();
-	const toggle = useOperation();
+	const toggle = useOperation( { errorShape: 'object' } );
 	const query = useListQuery( ADDRESS_DEFAULTS );
 	const filters = { search: query.values.s, category: query.values.category };
 	const status =

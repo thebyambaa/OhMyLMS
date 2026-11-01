@@ -20,7 +20,8 @@ DB_NAME="${OHMYLMS_TEST_DB_NAME:-ohmylms_ci}"
 DB_USER="${OHMYLMS_TEST_DB_USER:-root}"
 DB_PASSWORD="${OHMYLMS_TEST_DB_PASSWORD:-root}"
 case "$DB_NAME" in local | wordpress | wp) echo "Refusing to install into database '$DB_NAME'." >&2; exit 1 ;; esac
-wp() { "${WP[@]}" --path="$ROOT" "$@"; }
+# `command`: with the default WP_CLI=wp, a bare "${WP[@]}" would call this function again, forever.
+wp() { command "${WP[@]}" --path="$ROOT" "$@"; }
 
 mkdir -p "$ROOT"
 # With content: the learner templates and shortcodes render inside the default theme.
@@ -52,6 +53,8 @@ wp config set AUTOMATIC_UPDATER_DISABLED true --raw
 PRIVATE="$(cd "$ROOT/.." && pwd)/$(basename "$ROOT")-private"
 mkdir -p "$PRIVATE"
 wp config set OHMYLMS_IMPORT_PRIVATE_DIR "$PRIVATE"
+# The exam import source pages render with Poppler when it is installed (exam-import-source-integration).
+if PDFTOPPM="$(command -v pdftoppm)"; then wp config set OHMYLMS_PDFTOPPM_BINARY "$PDFTOPPM"; fi
 
 wp core is-installed 2>/dev/null || wp core install --url="http://$HOST" --title="OhMyLMS CI" --admin_user=admin \
   --admin_password=admin --admin_email=admin@example.test --skip-email
@@ -59,6 +62,13 @@ wp option update home "http://$HOST"
 wp option update siteurl "http://$HOST"
 wp rewrite structure '/%postname%/'
 wp plugin activate ohmylms
+# The structure above was flushed before the plugin registered its post types (/course/ would 404).
+wp rewrite flush
+# recipient-locale and interface-language switch to Mongolian, which needs the core language pack.
+wp language core install mn
+# Tables otherwise created on first use: CREATE TABLE inside a suite's transaction commits it, so a suite that
+# checks its rollback (exam-import, exam-results-release, figure-assets) fails on the first run against a new database.
+wp eval '\OhMyLMS\Cohorts\CohortSchema::ensure(); \OhMyLMS\Gradebook\Schema::ensure(); \OhMyLMS\Automation\RuleStore::ensure(); \OhMyLMS\Integrations\Webhooks\Includes\WebhooksMigration::ensure_schema(); \OhMyLMS\Certificates\IssuedSchema::install(); \OhMyLMS\Student\EnrolmentSchema::install();'
 # integrations-rest-integration expects the MCP integration switched on, as on the Local site.
 wp eval '$s = (array) get_option( "ohmylms_integrations", array() ); $s["mcp"] = array_merge( (array) ( $s["mcp"] ?? array() ), array( "is_enable" => 1 ) ); update_option( "ohmylms_integrations", $s );'
 wp plugin list --status=active --field=name

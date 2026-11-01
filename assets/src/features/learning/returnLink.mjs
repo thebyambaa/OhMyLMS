@@ -36,7 +36,7 @@ export function isReturnUrl( value, origin ) {
 		if ( CONTENT_PAGE === page ) {
 			return CONTENT_TABS.includes( url.searchParams.get( 'tab' ) ?? '' );
 		}
-		return PAGES.includes( page ) && ROUTES.test( url.hash );
+		return PAGES.includes( page ?? '' ) && ROUTES.test( url.hash );
 	} catch {
 		return false;
 	}

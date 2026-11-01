@@ -13,6 +13,18 @@ import { CSV_TEMPLATE, ImportPreview } from './QuizActions.jsx';
 import { SkillPicker } from './SkillPicker';
 import { request } from '../rest.mjs';
 
+/** @typedef {'questions'|'quiz'|'exam'} ImportTarget */
+/** @typedef {import('./api.mjs').QuizImport} QuizImport */
+/** @typedef {import('./quizExchange.mjs').RestFailure} RestFailure */
+/** @typedef {import('./SkillPicker.jsx').PickedSkill} PickedSkill */
+
+/**
+ * @typedef {Object} ImportReport Response of the question file import route.
+ * @property {{create?: number, update?: number, unchanged?: number, error?: number}} [counts] Row counts by outcome.
+ * @property {Array<{row: number, status: string, id?: number, errors?: string[]}>}   [rows]   Rows.
+ */
+
+/** @type {ImportTarget[]} */
 export const IMPORT_TARGETS = [ 'questions', 'quiz', 'exam' ];
 
 const targetInfo = () => ( {
@@ -36,6 +48,10 @@ const targetInfo = () => ( {
 	},
 } );
 
+/**
+ * @param {string}                  path
+ * @param {Record<string, unknown>} data
+ */
 const api = ( path, data ) =>
 	request( {
 		path: `/ohmylms/v1/${ path }`,
@@ -48,10 +64,13 @@ const api = ( path, data ) =>
  * @param {File} file The chosen file.
  */
 const kindOf = ( file ) => {
-	const extension = ( file?.name || '' ).split( '.' ).pop().toLowerCase();
+	const extension = /** @type {string} */ (
+		( file?.name || '' ).split( '.' ).pop()
+	).toLowerCase();
 	return [ 'pdf', 'csv', 'json' ].includes( extension ) ? extension : 'text';
 };
 
+/** @param {RestFailure|null} [failure] */
 const messages = ( failure ) => {
 	const lines = problemLines( failure );
 	if ( lines.length ) {
@@ -60,13 +79,14 @@ const messages = ( failure ) => {
 	return [ failure?.message || __( 'Something went wrong.', 'ohmylms' ) ];
 };
 
+/** @param {File|null} file */
 const baseName = ( file ) => ( file?.name || '' ).replace( /\.[^.]+$/, '' );
 
 /**
  * What a question file check found: counts, then the first problems.
- * @param {Object}  root0        Component properties.
- * @param {Object}  root0.report Response of the import route.
- * @param {boolean} root0.done   Whether the import has been done.
+ * @param {Object}       root0        Component properties.
+ * @param {ImportReport} root0.report Response of the import route.
+ * @param {boolean}      root0.done   Whether the import has been done.
  */
 function CheckReport( { report, done } ) {
 	const counts = report.counts || {};
@@ -119,15 +139,15 @@ function CheckReport( { report, done } ) {
  * until Import is pressed. A quiz file makes a draft quiz (`onQuiz` receives it, otherwise its
  * editor opens). With `withSkills`, chosen skills are given to every row that names none.
  *
- * @param {Object}                       root0               Component properties.
- * @param {string}                       root0.initialTarget questions, quiz or exam.
- * @param {string[]}                     root0.targets       The targets offered.
- * @param {boolean}                      root0.withSkills    Offer a skill choice.
- * @param {Object[]}                     root0.initialSkills Skills chosen when the dialog opens.
- * @param {() => void}                   root0.onClose       Close the dialog.
- * @param {(jobId: number) => void}      root0.onJob         An import job to review was made.
- * @param {(ids: number[]) => void|null} root0.onQuestions   Imported question IDs.
- * @param {(quiz: Object) => void|null}  root0.onQuiz        A quiz was made from a quiz file.
+ * @param {Object}                                       root0                 Component properties.
+ * @param {ImportTarget}                                 [root0.initialTarget] questions, quiz or exam.
+ * @param {ImportTarget[]}                               [root0.targets]       The targets offered.
+ * @param {boolean}                                      [root0.withSkills]    Offer a skill choice.
+ * @param {PickedSkill[]}                                [root0.initialSkills] Skills chosen when the dialog opens.
+ * @param {() => void}                                   root0.onClose         Close the dialog.
+ * @param {(jobId: number) => void}                      root0.onJob           An import job to review was made.
+ * @param {((ids: number[]) => void|Promise<void>)|null} [root0.onQuestions]   Imported question IDs.
+ * @param {((quiz: QuizImport) => void)|null}            [root0.onQuiz]        A quiz was made from a quiz file.
  */
 export function ImportDialog( {
 	initialTarget = 'questions',
@@ -142,8 +162,8 @@ export function ImportDialog( {
 	const [ target, setTarget ] = useState(
 		targets.includes( initialTarget ) ? initialTarget : targets[ 0 ]
 	);
-	const [ file, setFile ] = useState( null );
-	const [ scheme, setScheme ] = useState( null );
+	const [ file, setFile ] = useState( /** @type {File|null} */ ( null ) );
+	const [ scheme, setScheme ] = useState( /** @type {File|null} */ ( null ) );
 	const [ text, setText ] = useState( '' );
 	const [ name, setName ] = useState( '' );
 	const [ approve, setApprove ] = useState( false );
@@ -151,10 +171,18 @@ export function ImportDialog( {
 	const [ skills, setSkills ] = useState( initialSkills );
 	const [ picking, setPicking ] = useState( false );
 	const [ busy, setBusy ] = useState( false );
-	const [ problems, setProblems ] = useState( [] );
-	const [ report, setReport ] = useState( null );
-	const [ quizPreview, setQuizPreview ] = useState( null );
-	const [ quizResult, setQuizResult ] = useState( null );
+	const [ problems, setProblems ] = useState(
+		/** @type {string[]} */ ( [] )
+	);
+	const [ report, setReport ] = useState(
+		/** @type {ImportReport|null} */ ( null )
+	);
+	const [ quizPreview, setQuizPreview ] = useState(
+		/** @type {QuizImport|null} */ ( null )
+	);
+	const [ quizResult, setQuizResult ] = useState(
+		/** @type {QuizImport|null} */ ( null )
+	);
 	const [ finished, setFinished ] = useState( false );
 	const radioId = useId();
 	const fileId = useId();
@@ -193,12 +221,14 @@ export function ImportDialog( {
 					);
 				} else {
 					setReport(
-						await api( 'question-bank/import', {
-							text: content,
-							format,
-							dry_run: true,
-							default_skills: defaultSkills,
-						} )
+						/** @type {ImportReport} */ (
+							await api( 'question-bank/import', {
+								text: content,
+								format,
+								dry_run: true,
+								default_skills: defaultSkills,
+							} )
+						)
 					);
 				}
 			} )
@@ -211,7 +241,7 @@ export function ImportDialog( {
 		};
 	}, [ file, target, kind, format, defaultSkills ] );
 
-	const failed = report && report.counts?.error > 0;
+	const failed = report && ( report.counts?.error ?? 0 ) > 0;
 	const ready =
 		!! file &&
 		! busy &&
@@ -219,6 +249,7 @@ export function ImportDialog( {
 			( target === 'quiz' ? !! quizPreview : !! report ) ) &&
 		( ! failed || skipInvalid || target === 'quiz' );
 
+	/** @param {QuizImport} quiz */
 	const finishQuiz = ( quiz ) => {
 		if ( onQuiz ) {
 			onQuiz( quiz );
@@ -229,6 +260,7 @@ export function ImportDialog( {
 		}
 	};
 
+	/** @param {import('react').FormEvent} event */
 	const submit = async ( event ) => {
 		event.preventDefault();
 		setBusy( true );
@@ -236,17 +268,19 @@ export function ImportDialog( {
 		try {
 			if ( kind === 'pdf' ) {
 				const body = new FormData();
-				body.append( 'file', file );
+				body.append( 'file', /** @type {File} */ ( file ) );
 				body.append( 'target', target );
 				body.append( 'default_skills', defaultSkills );
 				if ( scheme ) {
 					body.append( 'mark_scheme', scheme );
 				}
-				const job = await request( {
-					path: '/ohmylms/v1/exam-imports',
-					method: 'POST',
-					body,
-				} );
+				const job = /** @type {{id: number}} */ (
+					await request( {
+						path: '/ohmylms/v1/exam-imports',
+						method: 'POST',
+						body,
+					} )
+				);
 				onJob( job.id );
 			} else if ( target === 'quiz' ) {
 				const quiz = await importQuiz( name.trim(), text );
@@ -256,24 +290,28 @@ export function ImportDialog( {
 					finishQuiz( quiz );
 				}
 			} else if ( target === 'exam' ) {
-				const job = await api( 'exam-imports/rows', {
-					text,
-					format,
-					target: 'exam',
-					name: baseName( file ),
-					skip_invalid: skipInvalid,
-					default_skills: defaultSkills,
-				} );
+				const job = /** @type {{id: number}} */ (
+					await api( 'exam-imports/rows', {
+						text,
+						format,
+						target: 'exam',
+						name: baseName( file ),
+						skip_invalid: skipInvalid,
+						default_skills: defaultSkills,
+					} )
+				);
 				onJob( job.id );
 			} else {
-				const imported = await api( 'question-bank/import', {
-					text,
-					format,
-					dry_run: false,
-					approve,
-					skip_invalid: skipInvalid,
-					default_skills: defaultSkills,
-				} );
+				const imported = /** @type {ImportReport} */ (
+					await api( 'question-bank/import', {
+						text,
+						format,
+						dry_run: false,
+						approve,
+						skip_invalid: skipInvalid,
+						default_skills: defaultSkills,
+					} )
+				);
 				setReport( imported );
 				if ( onQuestions ) {
 					await onQuestions(
@@ -281,14 +319,14 @@ export function ImportDialog( {
 							.filter(
 								( row ) => row.status !== 'error' && row.id
 							)
-							.map( ( row ) => row.id )
+							.map( ( row ) => /** @type {number} */ ( row.id ) )
 					);
 					onClose();
 				}
 				setFinished( true );
 			}
 		} catch ( failure ) {
-			setProblems( messages( failure ) );
+			setProblems( messages( /** @type {RestFailure} */ ( failure ) ) );
 		}
 		setBusy( false );
 	};
@@ -420,7 +458,11 @@ export function ImportDialog( {
 							type="file"
 							accept=".pdf,.csv,.json,.txt,application/pdf,text/csv,application/json,text/plain"
 							onChange={ ( event ) =>
-								setFile( event.target.files[ 0 ] || null )
+								setFile(
+									/** @type {FileList} */ (
+										event.target.files
+									)[ 0 ] || null
+								)
 							}
 						/>
 					</label>
@@ -469,7 +511,9 @@ export function ImportDialog( {
 									accept="application/pdf,.pdf"
 									onChange={ ( event ) =>
 										setScheme(
-											event.target.files[ 0 ] || null
+											/** @type {FileList} */ (
+												event.target.files
+											)[ 0 ] || null
 										)
 									}
 								/>

@@ -8,7 +8,6 @@ import {
 	announce,
 	debounce,
 	emit,
-	jqueryTrigger,
 	prefersReducedMotion,
 	request,
 	toast,
@@ -24,19 +23,23 @@ const ADAPTER_MODULES = {
 	wistia: () => import( 'ohmylms/video-wistia' ),
 };
 
+/** @type {ReturnType<typeof store>} */
 let video = null;
 const definitions = createVideo( {
 	getContext,
 	getElement,
 	withSyncEvent,
 	getState: () => video.state,
-	loadAdapter: ( name ) => ADAPTER_MODULES[ name ](),
+	// Extensions\Video only prints providers listed in ADAPTER_MODULES.
+	loadAdapter: ( name ) =>
+		ADAPTER_MODULES[
+			/** @type {keyof typeof ADAPTER_MODULES} */ ( name )
+		](),
 	request,
 	emit,
 	toast,
 	announce,
 	debounce,
-	jqueryTrigger,
 	prefersReducedMotion,
 } );
 

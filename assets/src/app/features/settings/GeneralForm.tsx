@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { normalizeApiError } from '../../lib/api';
 import { restoreDefaultPages } from './api';
-import { asNumber } from './fields';
+import { asFlag, asNumber, ToggleField } from './fields';
 import { FormFrame } from './FormFrame';
 import type { SettingsGroupState } from './hooks';
 import { describeFailure } from './model';
@@ -58,7 +58,7 @@ const PAGES: ReadonlyArray< {
 ];
 
 /**
- * General tab: the pages the LMS links to, and re-creating the default pages.
+ * General tab: the pages the LMS links to, re-creating the default pages, and the learner language switcher.
  *
  * @param props       Component props.
  * @param props.state State of the `general` group.
@@ -142,18 +142,45 @@ export function GeneralForm( {
 				</>
 			}
 		>
-			{ draft &&
-				PAGES.map( ( page ) => (
-					<PagePicker
-						key={ page.name }
-						label={ page.label }
-						help={ page.help }
-						value={ asNumber( draft[ page.name ] ) || 0 }
-						error={ state.errors[ page.name ] }
+			{ draft && (
+				<>
+					{ PAGES.map( ( page ) => (
+						<PagePicker
+							key={ page.name }
+							label={ page.label }
+							help={ page.help }
+							value={ asNumber( draft[ page.name ] ) || 0 }
+							error={ state.errors[ page.name ] }
+							disabled={ state.saving }
+							onChange={ ( id ) =>
+								state.setField( page.name, id )
+							}
+						/>
+					) ) }
+					<ToggleField
+						label={ __( 'Language switcher', 'ohmylms' ) }
+						help={ __(
+							'Learners choose English or Mongolian in the learner header, on their profile settings and wherever the [ohmylms_language_switcher] shortcode is placed. Until they choose, pages follow the browser language.',
+							'ohmylms'
+						) }
+						checked={ asFlag( draft.language_switcher ) }
+						error={ state.errors.language_switcher }
 						disabled={ state.saving }
-						onChange={ ( id ) => state.setField( page.name, id ) }
+						onChange={ ( value ) =>
+							state.setField( 'language_switcher', value )
+						}
 					/>
-				) ) }
+					<p className="description">
+						{ __(
+							'The OhMyLMS admin follows each staff member’s own WordPress profile language.',
+							'ohmylms'
+						) }{ ' ' }
+						<a href="profile.php#locale">
+							{ __( 'Change your language', 'ohmylms' ) }
+						</a>
+					</p>
+				</>
+			) }
 		</FormFrame>
 	);
 }

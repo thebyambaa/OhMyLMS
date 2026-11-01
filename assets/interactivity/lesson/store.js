@@ -20,8 +20,9 @@
 
 /**
  * @typedef {Object} LessonState
- * @property {{complete?: string}}                                          [nonces]   `lesson_completed_nonce`.
- * @property {{markComplete?: string, completed?: string, failed?: string}} [messages] Translated labels.
+ * @property {{complete?: string}}                                                            [nonces]   `lesson_completed_nonce`.
+ * @property {boolean}                                                                        [preview]  Learner preview (OhMyLMS\Learning\LessonPreview): nothing is sent.
+ * @property {{markComplete?: string, completed?: string, failed?: string, preview?: string}} [messages] Translated labels.
  */
 
 /**
@@ -36,9 +37,6 @@ export const COMPLETE_ACTION = 'ohmylms_lesson_completed';
 
 /** Document event other modules dispatch to complete the page's lesson. */
 export const COMPLETE_REQUEST_EVENT = 'ohmylms:lesson-complete-request';
-
-/** jQuery event of the legacy video tracker (`$( document ).trigger( 'ohmylms:video:completed' )`). */
-export const LEGACY_VIDEO_EVENT = 'ohmylms:video:completed';
 
 /** Pause before leaving the page, so the toast is seen. */
 export const NAVIGATE_DELAY = 500;
@@ -111,13 +109,13 @@ export function requestMatches( detail, context ) {
  *
  * @param {Object}                                                                              api               Runtime.
  * @param {() => LessonContext}                                                                 api.getContext    `@wordpress/interactivity` getContext.
- * @param {() => {ref: HTMLElement}}                                                            api.getElement    `@wordpress/interactivity` getElement.
+ * @param {() => {ref: HTMLElement|null}}                                                       api.getElement    `@wordpress/interactivity` getElement.
  * @param {(callback: EventHandler) => EventHandler}                                            api.withSyncEvent `@wordpress/interactivity` withSyncEvent.
  * @param {() => LessonState}                                                                   api.getState      Store state (server values).
  * @param {(options: Object) => Promise<any>}                                                   api.request       SDK `request()`.
- * @param {(message: string, options?: {type?: string}) => unknown}                             api.toast         SDK `toast()`.
+ * @param {(message: string, options?: import('../sdk.js').ToastOptions) => unknown}            api.toast         SDK `toast()`.
  * @param {(root: EventTarget, name: string, detail?: Object, cancelable?: boolean) => boolean} api.emit          SDK `emit()`.
- * @param {any}                                                                                 [api.win]         `window` (location, jQuery).
+ * @param {any}                                                                                 [api.win]         `window` (location).
  * @param {(callback: () => void, ms: number) => unknown}                                       [api.later]       `setTimeout` (tests).
  * @return {{state: Object, actions: Object, callbacks: Object}} Definitions.
  */
@@ -172,6 +170,23 @@ export function createLesson( {
 		if ( ! emit( root, 'lesson-before-complete', detail, true ) ) {
 			untick();
 			return false;
+		}
+		if ( getState()?.preview ) {
+			const nextUrl = sameOriginUrl(
+				context.nextUrl,
+				win?.location?.href || 'http://localhost/'
+			);
+			markCompleted( context );
+			toast( messages().preview || '' );
+			emit( root, 'lesson-completed', {
+				...detail,
+				nextUrl,
+				preview: true,
+			} );
+			if ( navigate && nextUrl ) {
+				later( () => win?.location?.assign( nextUrl ), NAVIGATE_DELAY );
+			}
+			return true;
 		}
 		context.busy = true;
 		const result = await request( {
@@ -260,6 +275,7 @@ export function createLesson( {
 			},
 		},
 		actions: {
+			/** @param {Event} event Checkbox `change`. */
 			complete( event ) {
 				const input = /** @type {HTMLInputElement} */ ( event.target );
 				if ( ! input?.checked ) {
@@ -279,7 +295,7 @@ export function createLesson( {
 			},
 			/** Enter or Space on the focusable label ticks the box, as a click would. */
 			checkboxKey: withSyncEvent( ( event ) => {
-				const label = getElement().ref;
+				const label = /** @type {HTMLElement} */ ( getElement().ref );
 				const key = /** @type {KeyboardEvent} */ ( event ).key;
 				if (
 					( 'Enter' !== key && ' ' !== key ) ||
@@ -297,10 +313,10 @@ export function createLesson( {
 			} ),
 		},
 		callbacks: {
-			/** Listen for complete requests (and the legacy tracker's jQuery event) while the lesson is shown. */
+			/** Listen for complete requests while the lesson is shown. */
 			listen() {
 				const context = getContext();
-				const root = getElement().ref;
+				const root = /** @type {HTMLElement} */ ( getElement().ref );
 				const doc = root.ownerDocument;
 				const onRequest = ( /** @type {Event} */ event ) =>
 					requested(
@@ -309,27 +325,11 @@ export function createLesson( {
 						/** @type {CustomEvent} */ ( event ).detail
 					);
 				doc.addEventListener( COMPLETE_REQUEST_EVENT, onRequest );
-				const $ = win?.jQuery;
-				const onLegacy = (
-					/** @type {unknown} */ _event,
-					/** @type {{lessonId?: number}} */ data
-				) =>
-					requested( context, root, {
-						lessonId: data?.lessonId,
-						source: 'video',
-						completed: true,
-					} );
-				if ( $ ) {
-					$( doc ).on( LEGACY_VIDEO_EVENT, onLegacy );
-				}
 				return () => {
 					doc.removeEventListener(
 						COMPLETE_REQUEST_EVENT,
 						onRequest
 					);
-					if ( $ ) {
-						$( doc ).off( LEGACY_VIDEO_EVENT, onLegacy );
-					}
 				};
 			},
 		},

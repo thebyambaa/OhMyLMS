@@ -1,5 +1,21 @@
+/** @typedef {import('./editorTypes').Data} Data */
+
 /** Bounded, seeded author-side generators. Published layouts never regenerate. */
 export const PUZZLE_TYPES = [ 'crossword', 'wordsearch' ];
+
+/**
+ * @typedef {Object} PuzzleEntry
+ * @property {string} [id]      Word ID.
+ * @property {string} answer    Word.
+ * @property {string} [clue]    Clue.
+ * @property {number} row       First row.
+ * @property {number} col       First column.
+ * @property {string} direction Key of DIRECTIONS.
+ */
+
+/** @typedef {{letter: string, directions: string[]}} BoardCell */
+
+/** @type {Record<string, number[]>} */
 export const DIRECTIONS = {
 	across: [ 0, 1 ],
 	down: [ 1, 0 ],
@@ -31,7 +47,7 @@ export function puzzleLetters( text ) {
 }
 
 /**
- * @param {Object} entry Positioned word.
+ * @param {PuzzleEntry} entry Positioned word.
  * @return {string[]} Cell keys.
  */
 export function puzzleCells( entry ) {
@@ -62,9 +78,10 @@ function randomSource( seed ) {
 
 /**
  *
- * @param {Array}        values Source.
+ * @template T
+ * @param {T[]}          values Source.
  * @param {() => number} random Random source.
- * @return {Array} Shuffled copy.
+ * @return {T[]} Shuffled copy.
  */
 function shuffled( values, random ) {
 	const result = [ ...values ];
@@ -76,10 +93,11 @@ function shuffled( values, random ) {
 }
 
 /**
- * @param {Object[]} entries Words.
- * @return {Map} Private occupied cells.
+ * @param {PuzzleEntry[]} entries Words.
+ * @return {Map<string, BoardCell>} Private occupied cells.
  */
 function boardFor( entries ) {
+	/** @type {Map<string, BoardCell>} */
 	const board = new Map();
 	entries.forEach( ( entry ) =>
 		puzzleCells( entry ).forEach( ( key, index ) => {
@@ -96,9 +114,9 @@ function boardFor( entries ) {
 
 /**
  *
- * @param {Object} entry Candidate.
- * @param {Map}    board Occupied cells.
- * @param {number} size  Size.
+ * @param {PuzzleEntry}            entry Candidate.
+ * @param {Map<string, BoardCell>} board Occupied cells.
+ * @param {number}                 size  Size.
  * @return {number} Crossings, or -1 when invalid.
  */
 function crossFit( entry, board, size ) {
@@ -142,10 +160,11 @@ function crossFit( entry, board, size ) {
 /**
  *
  * @param {string} type     Puzzle type.
- * @param {Object} settings Settings.
+ * @param {Data}   settings Settings.
  * @return {string[]} Author errors.
  */
 export function puzzleIssues( type, settings ) {
+	/** @type {{entries?: PuzzleEntry[], size?: number}} */
 	const { entries = [], size = 10 } = settings;
 	if (
 		! Number.isInteger( size ) ||
@@ -278,16 +297,19 @@ export function puzzleIssues( type, settings ) {
 /**
  *
  * @param {string} type     Type.
- * @param {Object} settings Word settings.
+ * @param {Data}   settings Word settings.
  * @param {number} seed     Seed.
- * @return {Object} Frozen layout patch.
+ * @return {Data} Frozen layout patch.
  */
 export function generatePuzzle( type, settings, seed = 1 ) {
 	const size = settings.size || 10;
-	const entries = ( settings.entries || [] ).map( ( entry ) => ( {
-		...entry,
-		answer: puzzleLetters( entry.answer ).join( '' ),
-	} ) );
+	/** @type {PuzzleEntry[]} */
+	const entries = ( settings.entries || [] ).map(
+		( /** @type {PuzzleEntry} */ entry ) => ( {
+			...entry,
+			answer: puzzleLetters( entry.answer ).join( '' ),
+		} )
+	);
 	const initial = puzzleIssues( type, {
 		...settings,
 		entries,
@@ -300,6 +322,7 @@ export function generatePuzzle( type, settings, seed = 1 ) {
 	}
 	const random = randomSource( seed );
 	for ( let attempt = 0; attempt < 24; attempt++ ) {
+		/** @type {PuzzleEntry[]} */
 		const placed = [];
 		const pending = shuffled( entries, random ).sort(
 			( a, b ) =>
@@ -307,7 +330,7 @@ export function generatePuzzle( type, settings, seed = 1 ) {
 				puzzleLetters( a.answer ).length
 		);
 		if ( type === 'crossword' ) {
-			const first = pending.shift();
+			const first = /** @type {PuzzleEntry} */ ( pending.shift() );
 			placed.push( {
 				...first,
 				row: Math.floor( size / 2 ),
@@ -320,9 +343,12 @@ export function generatePuzzle( type, settings, seed = 1 ) {
 				let didPlace = false;
 				for ( const entry of shuffled( pending, random ) ) {
 					const board = boardFor( placed );
+					/** @type {PuzzleEntry[]} */
 					const candidates = [];
 					for ( const [ key, cell ] of board ) {
-						const [ , r, c ] = key.match( /^r(\d+)c(\d+)$/ );
+						const [ , r, c ] = /** @type {RegExpMatchArray} */ (
+							key.match( /^r(\d+)c(\d+)$/ )
+						);
 						puzzleLetters( entry.answer ).forEach(
 							( letter, index ) => {
 								if ( cell.letter !== letter ) {
@@ -383,6 +409,7 @@ export function generatePuzzle( type, settings, seed = 1 ) {
 			);
 			for ( const entry of pending ) {
 				const board = boardFor( placed );
+				/** @type {PuzzleEntry[]} */
 				const candidates = [];
 				for ( let row = 0; row < size; row++ ) {
 					for ( let col = 0; col < size; col++ ) {
@@ -465,7 +492,7 @@ export function generatePuzzle( type, settings, seed = 1 ) {
 
 /**
  * @param {string} type Type.
- * @return {Object} Valid initial puzzle.
+ * @return {Data} Valid initial puzzle.
  */
 export function puzzleDefaults( type ) {
 	const settings = {
@@ -486,36 +513,39 @@ export function puzzleDefaults( type ) {
 /**
  *
  * @param {string} type     Type.
- * @param {Object} settings Private settings.
- * @return {Object} Public preview configuration.
+ * @param {Data}   settings Private settings.
+ * @return {Data} Public preview configuration.
  */
 export function publicPuzzle( type, settings ) {
 	const starts = [
 		...new Set(
 			settings.entries.map(
-				( entry ) => entry.row * settings.size + entry.col
+				( /** @type {PuzzleEntry} */ entry ) =>
+					entry.row * settings.size + entry.col
 			)
 		),
 	].sort( ( a, b ) => a - b );
-	const clues = settings.entries.map( ( entry ) => ( {
-		id: entry.id,
-		clue:
-			type === 'wordsearch' && ! settings.with_clues
-				? puzzleLetters( entry.answer ).join( '' )
-				: entry.clue,
-		length: puzzleLetters( entry.answer ).length,
-		...( type === 'crossword'
-			? {
-					row: entry.row,
-					col: entry.col,
-					direction: entry.direction,
-					number:
-						starts.indexOf(
-							entry.row * settings.size + entry.col
-						) + 1,
-				}
-			: {} ),
-	} ) );
+	const clues = settings.entries.map(
+		( /** @type {PuzzleEntry} */ entry ) => ( {
+			id: entry.id,
+			clue:
+				type === 'wordsearch' && ! settings.with_clues
+					? puzzleLetters( entry.answer ).join( '' )
+					: entry.clue,
+			length: puzzleLetters( entry.answer ).length,
+			...( type === 'crossword'
+				? {
+						row: entry.row,
+						col: entry.col,
+						direction: entry.direction,
+						number:
+							starts.indexOf(
+								entry.row * settings.size + entry.col
+							) + 1,
+					}
+				: {} ),
+		} )
+	);
 	return {
 		size: settings.size,
 		clues,

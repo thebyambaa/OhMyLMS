@@ -16,6 +16,8 @@ import {
 	LIST_PATH,
 	changedFields,
 	insertTag,
+	isDefaultText,
+	isTextField,
 	serverFieldError,
 	toDraft,
 	toInput,
@@ -179,7 +181,7 @@ function Editor( {
 		try {
 			const saved = await saveEmail(
 				email.id,
-				toInput( draft, changed )
+				toInput( draft, changed, email )
 			);
 			onSaved( saved );
 			setDraft( toDraft( saved ) );
@@ -248,22 +250,49 @@ function Editor( {
 		} );
 	}
 
+	const reset = ( field: DraftField, label: string ) => {
+		if ( ! isTextField( field ) || isDefaultText( draft, email, field ) ) {
+			return null;
+		}
+		const fallback = email.defaults[ field ];
+		if ( null === fallback ) {
+			return null;
+		}
+		return (
+			<Button
+				variant="link"
+				size="small"
+				onClick={ () => update( field, fallback ) }
+			>
+				{ sprintf(
+					/* translators: %s: field label, such as Subject. */
+					__( 'Reset to default: %s', 'ohmylms' ),
+					label
+				) }
+			</Button>
+		);
+	};
 	const text = (
 		field: DraftField,
 		label: string,
 		help?: string,
 		extra: { type?: 'url' } = {}
 	) => (
-		<TextControl
-			__nextHasNoMarginBottom
-			label={ label }
-			value={ draft[ field ] }
-			type={ extra.type }
-			onChange={ ( value ) => update( field, value ) }
-			onBlur={ () => setTouched( ( current ) => [ ...current, field ] ) }
-			help={ shown( field ) ?? help }
-			aria-invalid={ shown( field ) ? 'true' : undefined }
-		/>
+		<div>
+			<TextControl
+				__nextHasNoMarginBottom
+				label={ label }
+				value={ draft[ field ] }
+				type={ extra.type }
+				onChange={ ( value ) => update( field, value ) }
+				onBlur={ () =>
+					setTouched( ( current ) => [ ...current, field ] )
+				}
+				help={ shown( field ) ?? help }
+				aria-invalid={ shown( field ) ? 'true' : undefined }
+			/>
+			{ reset( field, label ) }
+		</div>
 	);
 	const area = (
 		field: DraftField,
@@ -271,17 +300,22 @@ function Editor( {
 		rows: number,
 		help?: string
 	) => (
-		<TextareaControl
-			__nextHasNoMarginBottom
-			data-field={ field }
-			label={ label }
-			value={ draft[ field ] }
-			rows={ rows }
-			onChange={ ( value ) => update( field, value ) }
-			onBlur={ () => setTouched( ( current ) => [ ...current, field ] ) }
-			help={ shown( field ) ?? help }
-			aria-invalid={ shown( field ) ? 'true' : undefined }
-		/>
+		<div>
+			<TextareaControl
+				__nextHasNoMarginBottom
+				data-field={ field }
+				label={ label }
+				value={ draft[ field ] }
+				rows={ rows }
+				onChange={ ( value ) => update( field, value ) }
+				onBlur={ () =>
+					setTouched( ( current ) => [ ...current, field ] )
+				}
+				help={ shown( field ) ?? help }
+				aria-invalid={ shown( field ) ? 'true' : undefined }
+			/>
+			{ reset( field, label ) }
+		</div>
 	);
 
 	const unknown = preview.preview?.unknown_tags ?? [];
@@ -341,6 +375,12 @@ function Editor( {
 			>
 				<fieldset disabled={ 'save' === busy }>
 					<legend>{ __( 'Message', 'ohmylms' ) }</legend>
+					<p>
+						{ __(
+							'Text you leave at its default is sent in each recipient’s language. Text you change is sent as written, to everyone.',
+							'ohmylms'
+						) }
+					</p>
 					{ text(
 						'subject',
 						__( 'Subject', 'ohmylms' ),

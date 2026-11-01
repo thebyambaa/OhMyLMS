@@ -3,13 +3,15 @@ import { __ } from '@wordpress/i18n';
 import { Button, SelectControl, TextControl } from '@wordpress/components';
 import { mathsPreset } from './mathsGenerator.mjs';
 
+/** @typedef {import('./editorTypes').Data} Data */
+
 /**
  * Topic and range wizard that writes ordinary numerical/template settings.
  *
- * @param {Object}                   props            Component properties.
- * @param {Object}                   props.value      Existing settings.
- * @param {(preset: Object) => void} props.onGenerate Apply the authored definition.
- * @return {Element} Maths generator controls.
+ * @param {Object}                                                       props            Component properties.
+ * @param {Data}                                                         props.value      Existing settings.
+ * @param {(preset: import('./mathsGenerator.mjs').MathsPreset) => void} props.onGenerate Apply the authored definition.
+ * @return {React.ReactElement} Maths generator controls.
  */
 export function MathsGenerator( { value, onGenerate } ) {
 	const saved = value.maths_generator || {};
@@ -189,7 +191,13 @@ export function MathsGenerator( { value, onGenerate } ) {
 			<Button
 				variant="secondary"
 				disabled={ ! preset }
-				onClick={ () => onGenerate( preset ) }
+				onClick={ () =>
+					onGenerate(
+						/** @type {import('./mathsGenerator.mjs').MathsPreset} */ (
+							preset
+						)
+					)
+				}
 			>
 				{ __( 'Apply generated question', 'ohmylms' ) }
 			</Button>

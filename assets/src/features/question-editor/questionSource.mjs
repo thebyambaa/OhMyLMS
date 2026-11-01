@@ -1,8 +1,16 @@
+/** @typedef {import('./editorTypes').Data} Data */
+
 /**
  * Where a question comes from, as one choice shared by the Question block and the Question Player block:
  * write it here, pick from the question bank, or draw from skills. Pure helpers; the blocks apply the result.
  */
 export const DEFAULT_DELIVERIES = [ 'quiz', 'inline', 'practice' ];
+
+/**
+ * @typedef {Object} SourceStep
+ * @property {string} action       What the block does next.
+ * @property {Data}   [attributes] Player attributes to apply.
+ */
 
 /**
  * Deliveries the open quiz's kind allows, or all of them in lessons and pages.
@@ -16,9 +24,9 @@ export function editorDeliveries() {
 /**
  * Sources offered where the block sits. The standalone bank-question editor only writes; skills need the
  * practice delivery, which an exam does not allow.
- * @param {Object}   root0            Context.
- * @param {string}   root0.postType   Post type being edited.
- * @param {string[]} root0.deliveries Deliveries the kind allows.
+ * @param {Object}   [root0]            Context.
+ * @param {string}   [root0.postType]   Post type being edited.
+ * @param {string[]} [root0.deliveries] Deliveries the kind allows.
  * @return {string[]} Any of write, bank and skills.
  */
 export function allowedSources( {
@@ -38,10 +46,10 @@ export function allowedSources( {
 /**
  * What choosing a source does from the Question block (which writes a question here).
  * In a quiz or exam, picking from the bank adds questions as slots; elsewhere it becomes a practice set.
- * @param {string} source         write, bank or skills.
- * @param {Object} root0          Context.
- * @param {string} root0.postType Post type being edited.
- * @return {Object} action: none, pick (open the bank picker) or player (replace with these attributes).
+ * @param {string} source           write, bank or skills.
+ * @param {Object} [root0]          Context.
+ * @param {string} [root0.postType] Post type being edited.
+ * @return {SourceStep} action: none, pick (open the bank picker) or player (replace with these attributes).
  */
 export function fromQuestionBlock( source, { postType = '' } = {} ) {
 	if ( source === 'bank' ) {
@@ -68,7 +76,7 @@ export function fromQuestionBlock( source, { postType = '' } = {} ) {
 /**
  * What choosing a source does from the Question Player block.
  * @param {string} source write, bank or skills.
- * @return {Object} action: question (replace with a blank Question block) or set (change the player).
+ * @return {SourceStep} action: question (replace with a blank Question block) or set (change the player).
  */
 export function fromPlayer( source ) {
 	if ( source === 'write' ) {
@@ -82,7 +90,7 @@ export function fromPlayer( source ) {
 
 /**
  * The switch position of a Question Player block.
- * @param {Object} attributes Player attributes.
+ * @param {Data} attributes Player attributes.
  * @return {string} bank or skills.
  */
 export function playerSource( attributes ) {

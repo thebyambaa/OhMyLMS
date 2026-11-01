@@ -11,21 +11,11 @@ use OhMyLMS\AI\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
-/** Provider output is an unapproved proposal, never code or published content. */
+/**
+ * Provider output is an unapproved proposal, never code or published content. The owner-only route is
+ * {@see Rest\FiguresController}.
+ */
 final class Reconstruction {
-
-	/** Register an owner-only generation operation. */
-	public static function routes() {
-		register_rest_route(
-			'ohmylms/v1',
-			'/exam-imports/(?P<id>\d+)/reconstruct',
-			array(
-				'methods'             => 'POST',
-				'permission_callback' => array( Jobs::class, 'permission' ),
-				'callback'            => array( __CLASS__, 'generate' ),
-			)
-		);
-	}
 
 	/**
 	 * Analyze the immutable crop alongside question text, with durable usage limits.

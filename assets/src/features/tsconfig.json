@@ -1,0 +1,36 @@
+{
+	// npm run typecheck:js. Native editor and block modules: JavaScript checked by TypeScript through
+	// JSDoc (allowJs + checkJs), never compiled. webpack compiles their JSX with the classic
+	// `createElement` pragma; `react-jsx` is used here only for typing, because the program also
+	// reads the app TSX files they import (ExtensionBoundary). Files that keep a
+	// `/** @jsx createElement */` pragma are checked with it. types/ declares the editor packages
+	// that are not npm dependencies, the string-named @wordpress/data stores and the page globals.
+	//
+	// Strict: every folder type-checks with strict on; untyped spots are narrow, documented
+	// `Record<string, any>` typedefs for server- and type-dependent data. See docs/ENFORCEMENT.md.
+	"compilerOptions": {
+		"target": "ES2022",
+		"lib": [ "ES2023", "DOM", "DOM.Iterable" ],
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"allowJs": true,
+		"checkJs": true,
+		"noEmit": true,
+		"jsx": "react-jsx",
+		"strict": true,
+		"skipLibCheck": true,
+		"resolveJsonModule": true,
+		"forceConsistentCasingInFileNames": true,
+		"types": [ "react" ],
+		"paths": {
+			"@wordpress/data": [ "./types/wordpress-data.d.ts" ]
+		}
+	},
+	"include": [
+		"./**/*.js",
+		"./**/*.jsx",
+		"./**/*.mjs",
+		"./**/*.d.ts",
+		"./**/*.d.mts"
+	]
+}

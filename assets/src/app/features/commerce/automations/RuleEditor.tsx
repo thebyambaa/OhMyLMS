@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { normalizeApiError } from '../../../lib/api';
 import { SearchPicker } from '../SearchPicker';
-import { useOperation } from '../useOperation';
+import { useOperation } from '../../../hooks/useOperation';
 import { createRule, searchChoices, updateRule } from './api';
 import {
 	ID_CONDITIONS,

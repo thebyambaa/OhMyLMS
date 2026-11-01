@@ -7,6 +7,7 @@
 
 namespace OhMyLMS\Curriculum;
 
+use OhMyLMS\Utility\Lock;
 use OhMyLMS\Utility\Transaction;
 
 defined( 'ABSPATH' ) || exit;
@@ -46,8 +47,7 @@ final class SyllabusSheet {
 			return $clean;
 		}
 		$lock = Items::LOCK . '-' . md5( $wpdb->prefix );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Non-cacheable domain advisory lock.
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) ) {
+		if ( ! Lock::acquire( $lock, 5 ) ) {
 			return Access::error( 'ohmylms_syllabus_busy', __( 'Another author is changing the syllabus. Try again.', 'ohmylms' ), 409 );
 		}
 		$failure = null;
@@ -121,8 +121,7 @@ final class SyllabusSheet {
 			}
 			return true;
 		} finally {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Release the domain advisory lock.
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+			Lock::release( $lock );
 		}
 	}
 

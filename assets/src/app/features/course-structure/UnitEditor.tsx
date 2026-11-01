@@ -9,6 +9,26 @@ import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
 import type { ResourceType } from './api';
 import type { Activity, Unit } from './model';
+import { unitKey } from './reorder';
+import {
+	dragStyle,
+	GRIP,
+	type DragState,
+	type useDragMove,
+} from './useDragMove';
+
+function Grip( { handlers }: { handlers: object } ) {
+	return (
+		<span
+			aria-hidden="true"
+			title={ __( 'Drag to reorder', 'ohmylms' ) }
+			style={ GRIP }
+			{ ...handlers }
+		>
+			⠿
+		</span>
+	);
+}
 
 const TYPE_LABELS: Record< string, () => string > = {
 	lesson: () => __( 'Lesson', 'ohmylms' ),
@@ -36,54 +56,74 @@ const EDIT_ROUTES: Record< string, string > = {
  * @param root0.unit
  * @param root0.units
  * @param root0.items
- * @param root0.first
- * @param root0.last
  * @param root0.onChange
- * @param root0.onMove
  * @param root0.onAdd
  * @param root0.onDelete
  * @param root0.onDetach
- * @param root0.onMoveItem
- * @param root0.onMoveToUnit
+ * @param root0.onReorder Moves a unit or activity (source) before/after a target; see `dropOn`.
+ * @param root0.drag      Current pointer drag, for row feedback.
+ * @param root0.handle    Pointer handlers for a row's grip.
  */
 export function UnitEditor( {
 	unit,
 	units,
 	items,
-	first,
-	last,
 	onChange,
-	onMove,
 	onAdd,
 	onDelete,
 	onDetach,
-	onMoveItem,
-	onMoveToUnit,
+	onReorder,
+	drag,
+	handle,
 }: {
 	unit: Unit;
 	units: Unit[];
 	items: Activity[];
-	first: boolean;
-	last: boolean;
 	onChange: ( patch: Partial< Unit > ) => void;
-	onMove: ( offset: number ) => void;
 	onAdd: ( type: ResourceType ) => void;
 	onDelete: () => void;
 	onDetach: ( item: Activity ) => void;
-	onMoveItem: ( id: string, offset: number ) => void;
-	onMoveToUnit: ( id: string, unit: number | string ) => void;
+	onReorder: (
+		source: string,
+		target: string,
+		after: boolean,
+		control: string
+	) => void;
+	drag: DragState | null;
+	handle: ReturnType< typeof useDragMove >[ 'handle' ];
 } ) {
 	const unitName = unit.title || __( 'New unit', 'ohmylms' );
 	const [ open, setOpen ] = useState( true );
+	const key = unitKey( unit.id );
+	const at = units.indexOf( unit );
+	const neighbour = ( offset: number ) =>
+		onReorder(
+			key,
+			unitKey( units[ at + offset ]!.id ),
+			offset > 0,
+			offset > 0 ? 'unit-down' : 'unit-up'
+		);
 	return (
-		<section className="oml-unit" aria-label={ unitName }>
+		<section
+			className="oml-unit"
+			aria-label={ unitName }
+			data-oml-drop={ key }
+			tabIndex={ -1 }
+			style={ dragStyle( drag, key ) }
+		>
 			<header className="oml-unit__header">
+				<Grip handlers={ handle( key ) } />
 				<span className="oml-unit__number">{ unit.number }</span>
 				<h2 className="oml-unit__title">{ unitName }</h2>
 				<span className="oml-unit__count">
 					{ sprintf(
 						/* translators: %d: number of activities. */
-						_n( '%d activity', '%d activities', items.length, 'ohmylms' ),
+						_n(
+							'%d activity',
+							'%d activities',
+							items.length,
+							'ohmylms'
+						),
 						items.length
 					) }
 				</span>
@@ -100,15 +140,17 @@ export function UnitEditor( {
 						size="small"
 						icon="arrow-up-alt2"
 						label={ __( 'Move unit up', 'ohmylms' ) }
-						disabled={ first }
-						onClick={ () => onMove( -1 ) }
+						disabled={ 0 === at }
+						data-oml-control="unit-up"
+						onClick={ () => neighbour( -1 ) }
 					/>
 					<Button
 						size="small"
 						icon="arrow-down-alt2"
 						label={ __( 'Move unit down', 'ohmylms' ) }
-						disabled={ last }
-						onClick={ () => onMove( 1 ) }
+						disabled={ at === units.length - 1 }
+						data-oml-control="unit-down"
+						onClick={ () => neighbour( 1 ) }
 					/>
 					<Button
 						size="small"
@@ -119,28 +161,26 @@ export function UnitEditor( {
 					/>
 				</div>
 			</header>
-			{ (
-				<div className="oml-unit__details" hidden={ ! open }>
-					<div className="oml-unit__row">
-						<TextControl
-							label={ __( 'Unit title', 'ohmylms' ) }
-							value={ unit.title }
-							onChange={ ( title ) => onChange( { title } ) }
-						/>
-						<TextControl
-							label={ __( 'Unit number', 'ohmylms' ) }
-							value={ unit.number }
-							onChange={ ( number ) => onChange( { number } ) }
-						/>
-					</div>
-					<TextareaControl
-						label={ __( 'Unit description', 'ohmylms' ) }
-						value={ unit.description }
-						rows={ 2 }
-						onChange={ ( description ) => onChange( { description } ) }
+			<div className="oml-unit__details" hidden={ ! open }>
+				<div className="oml-unit__row">
+					<TextControl
+						label={ __( 'Unit title', 'ohmylms' ) }
+						value={ unit.title }
+						onChange={ ( title ) => onChange( { title } ) }
+					/>
+					<TextControl
+						label={ __( 'Unit number', 'ohmylms' ) }
+						value={ unit.number }
+						onChange={ ( number ) => onChange( { number } ) }
 					/>
 				</div>
-			) }
+				<TextareaControl
+					label={ __( 'Unit description', 'ohmylms' ) }
+					value={ unit.description }
+					rows={ 2 }
+					onChange={ ( description ) => onChange( { description } ) }
+				/>
+			</div>
 			<ol className="oml-unit__items">
 				{ items.length === 0 && (
 					<li className="oml-unit__empty">
@@ -151,7 +191,14 @@ export function UnitEditor( {
 					const name = item.name || String( item.content_id );
 					const edit = EDIT_ROUTES[ item.type ];
 					return (
-						<li key={ item.id } className="oml-outline-item">
+						<li
+							key={ item.id }
+							className="oml-outline-item"
+							data-oml-drop={ item.id }
+							tabIndex={ -1 }
+							style={ dragStyle( drag, item.id ) }
+						>
+							<Grip handlers={ handle( item.id ) } />
 							<span
 								className={ `dashicons dashicons-${
 									TYPE_ICONS[ item.type ] ?? 'media-default'
@@ -160,13 +207,20 @@ export function UnitEditor( {
 							/>
 							<span className="oml-outline-item__name">
 								{ edit ? (
-									<Link to={ `${ edit }${ item.content_id }` }>
+									<Link
+										to={ `${ edit }${ item.content_id }` }
+										aria-label={ sprintf(
+											/* translators: %s: activity name. */
+											__( 'Edit %s', 'ohmylms' ),
+											name
+										) }
+									>
 										{ name }
 									</Link>
 								) : (
 									name
 								) }
-							</span>
+							</span>{ ' ' }
 							<span
 								className={ `oml-badge oml-outline-item__type oml-outline-item__type--${ item.type }` }
 							>
@@ -184,21 +238,21 @@ export function UnitEditor( {
 											name
 										) }
 										value={ String( unit.id ) }
+										data-oml-control="unit"
 										options={ units.map( ( row ) => ( {
 											value: String( row.id ),
 											label:
 												row.title ||
 												__( 'New unit', 'ohmylms' ),
 										} ) ) }
-										onChange={ ( value ) => {
-											const target = units.find(
-												( row ) =>
-													String( row.id ) === value
-											);
-											if ( target ) {
-												onMoveToUnit( item.id, target.id );
-											}
-										} }
+										onChange={ ( value ) =>
+											onReorder(
+												item.id,
+												unitKey( value ),
+												true,
+												'unit'
+											)
+										}
 									/>
 								) }
 								<Button
@@ -210,7 +264,15 @@ export function UnitEditor( {
 										name
 									) }
 									disabled={ 0 === index }
-									onClick={ () => onMoveItem( item.id, -1 ) }
+									data-oml-control="up"
+									onClick={ () =>
+										onReorder(
+											item.id,
+											items[ index - 1 ]!.id,
+											false,
+											'up'
+										)
+									}
 								/>
 								<Button
 									size="small"
@@ -221,7 +283,15 @@ export function UnitEditor( {
 										name
 									) }
 									disabled={ index === items.length - 1 }
-									onClick={ () => onMoveItem( item.id, 1 ) }
+									data-oml-control="down"
+									onClick={ () =>
+										onReorder(
+											item.id,
+											items[ index + 1 ]!.id,
+											true,
+											'down'
+										)
+									}
 								/>
 								<Button
 									size="small"
@@ -239,13 +309,31 @@ export function UnitEditor( {
 				} ) }
 			</ol>
 			<div className="oml-unit__add">
-				<Button size="small" variant="tertiary" icon="plus" aria-label={ __( 'Attach lesson to unit', 'ohmylms' ) } onClick={ () => onAdd( 'lesson' ) }>
+				<Button
+					size="small"
+					variant="tertiary"
+					icon="plus"
+					aria-label={ __( 'Attach lesson to unit', 'ohmylms' ) }
+					onClick={ () => onAdd( 'lesson' ) }
+				>
 					{ __( 'Lesson', 'ohmylms' ) }
 				</Button>
-				<Button size="small" variant="tertiary" icon="plus" aria-label={ __( 'Add quiz to unit', 'ohmylms' ) } onClick={ () => onAdd( 'quiz' ) }>
+				<Button
+					size="small"
+					variant="tertiary"
+					icon="plus"
+					aria-label={ __( 'Add quiz to unit', 'ohmylms' ) }
+					onClick={ () => onAdd( 'quiz' ) }
+				>
 					{ __( 'Quiz', 'ohmylms' ) }
 				</Button>
-				<Button size="small" variant="tertiary" icon="plus" aria-label={ __( 'Add assignment to unit', 'ohmylms' ) } onClick={ () => onAdd( 'assignment' ) }>
+				<Button
+					size="small"
+					variant="tertiary"
+					icon="plus"
+					aria-label={ __( 'Add assignment to unit', 'ohmylms' ) }
+					onClick={ () => onAdd( 'assignment' ) }
+				>
 					{ __( 'Assignment', 'ohmylms' ) }
 				</Button>
 			</div>

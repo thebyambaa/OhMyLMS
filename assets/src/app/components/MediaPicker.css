@@ -1,0 +1,39 @@
+/*
+ * Image field on the WordPress media frame. Not scoped under .ohmylms-app because it also renders in
+ * modals, which are portalled outside it. Spacing, radius and colours come from the --oml-* tokens.
+ */
+
+.ohmylms-media-picker {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-2) var(--oml-space-3);
+	margin: 0 0 var(--oml-space-4);
+}
+
+.ohmylms-media-picker-preview {
+	background: var(--oml-subtle);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
+	object-fit: cover;
+}
+
+.ohmylms-media-picker-actions {
+	align-items: center;
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-2);
+}
+
+.ohmylms-media-picker-help,
+.ohmylms-media-picker-error {
+	flex-basis: 100%;
+}
+
+.ohmylms-media-picker-help {
+	color: var(--oml-muted);
+}
+
+.ohmylms-media-picker-error {
+	color: var(--oml-danger);
+}

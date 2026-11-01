@@ -1,16 +1,14 @@
 <?php
 /**
- * Safe lesson-scoped skill practice recommendations.
+ * Safe skill practice recommendations within the skill's unit.
  *
  * @package OhMyLMS
  */
 
 defined( 'ABSPATH' ) || exit;
 $guidance_endpoint = add_query_arg(
-	array(
-		'lesson' => $guidance['lesson_id'],
-		'skill'  => $guidance['skill_id'],
-	),
+	'skill',
+	$guidance['skill_id'],
 	rest_url( 'ohmylms/v1/courses/' . $guidance['course_id'] . '/learning/practice-guidance' )
 );
 ?>
@@ -40,7 +38,7 @@ $guidance_endpoint = add_query_arg(
 			</li>
 		<?php endforeach; ?>
 	</ul>
-	<p><a href="<?php echo esc_url( $guidance['lesson_url'] ); ?>"><?php esc_html_e( 'Back to lesson progress', 'ohmylms' ); ?></a></p>
+	<p><a href="<?php echo esc_url( $guidance['lesson_url'] ); ?>"><?php esc_html_e( 'Back to unit progress', 'ohmylms' ); ?></a></p>
 	<button type="button" class="ohmylms-button" data-guidance-refresh><?php esc_html_e( 'Refresh skill progress', 'ohmylms' ); ?></button>
 	<p data-guidance-message role="status"></p>
 </section>

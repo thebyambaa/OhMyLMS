@@ -12,6 +12,7 @@ use OhMyLMS\Assessment\AttemptItems;
 use OhMyLMS\Assessment\Deadlines;
 use OhMyLMS\Assessment\Grader;
 use OhMyLMS\Assessment\Responses;
+use OhMyLMS\Quiz\AttemptReports;
 use OhMyLMS\Quiz\Submission;
 use WP_Error;
 use WP_REST_Request;
@@ -89,10 +90,9 @@ class AttemptController extends RestController {
 	 * @param WP_REST_Request $request REST request.
 	 */
 	public function owner_permission( WP_REST_Request $request ) {
-		global $wpdb;
 		if ( ! is_user_logged_in() ) {
 			return new WP_Error( 'ohmylms_login_required', __( 'Please log in.', 'ohmylms' ), array( 'status' => 401 ) ); }
-		$attempt = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}ohmylms_quiz_attempts WHERE id=%d", (int) $request['id'] ), ARRAY_A );
+		$attempt = AttemptReports::row( (int) $request['id'] );
 		if ( ! $attempt || get_current_user_id() !== (int) $attempt['student_id'] ) {
 			return new WP_Error( 'ohmylms_attempt_missing', __( 'Attempt not found.', 'ohmylms' ), array( 'status' => 404 ) );
 		}
@@ -106,23 +106,13 @@ class AttemptController extends RestController {
 	}
 
 	/**
-	 * Attempt for Attempt controller.
-	 *
-	 * @param mixed $id Id.
-	 */
-	private function attempt( $id ) {
-		global $wpdb;
-		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}ohmylms_quiz_attempts WHERE id=%d", (int) $id ), ARRAY_A );
-	}
-
-	/**
 	 * Resume for Attempt controller.
 	 *
 	 * @param WP_REST_Request $request REST request.
 	 */
 	public function resume( WP_REST_Request $request ) {
 		$attempt_id = (int) $request['id'];
-		$attempt    = $this->attempt( $attempt_id );
+		$attempt    = AttemptReports::row( $attempt_id );
 		if ( ! $attempt ) {
 			return new WP_Error( 'ohmylms_attempt_missing', __( 'Attempt not found.', 'ohmylms' ), array( 'status' => 404 ) );
 		}
@@ -156,7 +146,7 @@ class AttemptController extends RestController {
 	 */
 	public function save( WP_REST_Request $request ) {
 		$attempt_id = (int) $request['id'];
-		$attempt    = $this->attempt( $attempt_id );
+		$attempt    = AttemptReports::row( $attempt_id );
 		if ( ! $attempt ) {
 			return new WP_Error( 'ohmylms_attempt_missing', __( 'Attempt not found.', 'ohmylms' ), array( 'status' => 404 ) );
 		}

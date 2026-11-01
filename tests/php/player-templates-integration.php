@@ -100,10 +100,13 @@ remove_filter( 'pre_option_ohmylms_quiz_stage_color', $invalid_color );
 player_template_check( false !== strpos( Tokens::frontend_css(), '--ohmylms-quiz-player-answer-1:' ), 'Learner receives player tokens' );
 player_template_check( false !== strpos( Tokens::quiz_css(), '--ohmylms-quiz-answer-1:' ), 'Editor receives its own answer tokens' );
 player_template_check( in_array( 'player_template', OhMyLMS\Assessment\RevisionPublisher::FROZEN_SETTINGS, true ), 'Template choice is frozen into new revisions' );
-$controller     = new OhMyLMS\Rest\V1\SettingsController();
-$allowed_option = new ReflectionMethod( $controller, 'is_valid_option_key' );
-foreach ( array_keys( Tokens::QUIZ_COLORS ) as $option ) {
-	player_template_check( $allowed_option->invoke( $controller, $option ), 'Design API must allow each registered quiz color' );
+$design_options = array();
+foreach ( OhMyLMS\Settings\DesignSettings::GROUPS as $design_group ) {
+	$design_options = array_merge( $design_options, array_column( OhMyLMS\Settings\DesignSettings::fields( $design_group ), 'option' ) );
 }
-player_template_check( ! $allowed_option->invoke( $controller, 'blogname' ), 'Design API must retain its option boundary' );
+foreach ( array_keys( Tokens::QUIZ_COLORS ) as $option ) {
+	player_template_check( in_array( $option, $design_options, true ), 'Design API must allow each registered quiz color' );
+}
+$outside_option = OhMyLMS\Settings\DesignSettings::validate( 'quiz-design', array( 'blogname' => 'x' ) );
+player_template_check( ! in_array( 'blogname', $design_options, true ) && is_wp_error( $outside_option ) && 'ohmylms_settings_unknown_field' === $outside_option->get_error_code(), 'Design API must retain its option boundary' );
 echo esc_html( $checks . ' player template checks passed.' ) . "\n";

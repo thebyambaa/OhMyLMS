@@ -1,11 +1,15 @@
 import { syncSlots, syncBlanks } from './interactiveModel.mjs';
 import { dropdownSettings } from './dropdownModel.mjs';
 
+/** @typedef {import('./editorTypes').Data} Data */
+
+/** @param {unknown} text */
 const escape = ( text ) =>
 	String( text )
 		.replace( /&/g, '&amp;' )
 		.replace( /</g, '&lt;' )
 		.replace( />/g, '&gt;' );
+/** @param {string|null|undefined} html */
 export const promptText = ( html ) =>
 	String( html || '' )
 		.replace( /<br\s*\/?\s*>|<\/(?:p|div|li)>/gi, '\n' )
@@ -20,7 +24,7 @@ export const promptText = ( html ) =>
 
 /**
  * Statement fields retained by the existing assessment contracts.
- * @param {Object} question Question.
+ * @param {Data} question Question.
  * @return {string} Settings key, or an empty string for the standard prompt.
  */
 export function statementKey( question ) {
@@ -36,7 +40,8 @@ export function statementKey( question ) {
 
 /**
  * Preserve both fields of older questions in the single prompt editor.
- * @param question
+ * @param {Data} question
+ * @return {string} Prompt HTML.
  */
 export function questionPrompt( question ) {
 	const key = statementKey( question );
@@ -66,8 +71,9 @@ export function questionPrompt( question ) {
 
 /**
  * The database keeps an automatic identifier; the authored prompt keeps its rich text.
- * @param question
- * @param description
+ * @param {Data}   question
+ * @param {string} description
+ * @return {Data} Question patch.
  */
 export function questionPromptPatch( question, description ) {
 	const code =
@@ -115,9 +121,9 @@ export function questionPromptPatch( question, description ) {
 
 /**
  * Keep the main statement when switching between inline and table blank layouts.
- * @param {Object} question Current question.
- * @param {Object} patch    Answer setup changes.
- * @return {Object} Compatible question patch.
+ * @param {Data} question Current question.
+ * @param {Data} patch    Answer setup changes.
+ * @return {Data} Compatible question patch.
  */
 export function questionAnswerPatch( question, patch ) {
 	if (

@@ -28,10 +28,9 @@ final class QuizPlayerBlock {
 	 */
 	private static $inline_quiz = 0;
 
-	/** Register block, editor metadata endpoint and player navigation. */
+	/** Register block and player navigation. The REST endpoints are {@see Rest\QuizPlayerController}. */
 	public static function init() {
 		add_action( 'init', array( __CLASS__, 'register' ) );
-		add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
 		add_action( 'template_redirect', array( __CLASS__, 'document' ), 20 );
 		add_filter( 'wp_redirect', array( __CLASS__, 'redirect' ), 10 );
 		add_filter( 'ohmylms_quiz_interactivity_context', array( __CLASS__, 'player_context' ) );
@@ -169,57 +168,6 @@ final class QuizPlayerBlock {
 			'inlineEndpoint'  => rest_url( 'ohmylms/v1/quiz-player/quizzes/' . $quiz_id . '/attempt' ),
 			'restNonce'       => wp_create_nonce( 'wp_rest' ),
 			'submissionError' => __( 'Could not update the quiz. Your answers remain here. Please retry.', 'ohmylms' ),
-		);
-	}
-
-	/** Register a metadata-only picker, restricted to content authors. */
-	public static function register_routes() {
-		register_rest_route(
-			'ohmylms/v1',
-			'/quiz-player/quizzes/(?P<id>\d+)/attempt',
-			array(
-				'methods'             => 'POST',
-				'permission_callback' => static function () {
-					return is_user_logged_in(); },
-				'callback'            => array( __CLASS__, 'mutate' ),
-				'args'                => array(
-					'id'              => array(
-						'type'    => 'integer',
-						'minimum' => 1,
-					),
-					'operation'       => array(
-						'type'     => 'string',
-						'enum'     => array( 'start', 'submit', 'exit', 'timeout' ),
-						'required' => true,
-					),
-					'quiz_attempt_id' => array(
-						'type'    => 'integer',
-						'minimum' => 0,
-						'default' => 0,
-					),
-				),
-			)
-		);
-		register_rest_route(
-			'ohmylms/v1',
-			'/quiz-player/quizzes',
-			array(
-				'methods'             => 'GET',
-				'permission_callback' => static function () {
-					return AccessPolicy::can_author();
-				},
-				'callback'            => array( __CLASS__, 'choices' ),
-				'args'                => array(
-					'search'  => array(
-						'type'              => 'string',
-						'sanitize_callback' => 'sanitize_text_field',
-					),
-					'include' => array(
-						'type'    => 'integer',
-						'minimum' => 1,
-					),
-				),
-			)
 		);
 	}
 

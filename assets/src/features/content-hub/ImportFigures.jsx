@@ -9,6 +9,48 @@ import {
 import { __ } from '@wordpress/i18n';
 import { request } from '../rest.mjs';
 
+/**
+ * @typedef {Object} FigureSpec Declarative reconstruction.
+ * @property {Array<{id: string, label?: string}>} objects Labelled objects.
+ */
+
+/**
+ * @typedef {Object} FigurePlacement
+ * @property {string}                id             Placement ID.
+ * @property {number}                page           Source page.
+ * @property {number[]}              bounds         Normalized crop bounds.
+ * @property {string}                [asset_id]     Cropped image.
+ * @property {string[]}              [part_ids]     Parts the figure belongs to.
+ * @property {string}                alt            Accessible description.
+ * @property {boolean}               [approved]     Whether a teacher approved it.
+ * @property {'original'|'jsxgraph'} [selected]     Figure the student sees.
+ * @property {boolean}               [not_to_scale] Whether a scale warning is printed.
+ * @property {FigureSpec}            [spec]         Reconstruction.
+ */
+
+/**
+ * @typedef {Object} FigureAsset
+ * @property {string} id      Asset ID.
+ * @property {string} [url]   Protected image address.
+ * @property {string} [error] Why the crop failed.
+ * @property {string} [state] Processing state.
+ */
+
+/**
+ * @typedef {Object} FigureQuestion Review draft fields the figure controls read.
+ * @property {number}                                               page               Source page.
+ * @property {string}                                               number             Question number.
+ * @property {string}                                               [question]         Stem text.
+ * @property {FigurePlacement[]}                                    [figures]          Figure placements.
+ * @property {Array<{id: string, label?: string, prompt?: string}>} parts              Parts.
+ * @property {boolean}                                              [requires_source]  Whether a figure or table is required.
+ * @property {boolean}                                              [figures_complete] Whether the figures are confirmed complete.
+ */
+
+/**
+ * @param {string}                  path
+ * @param {Record<string, unknown>} [data]
+ */
 const api = ( path, data ) =>
 	request( {
 		path: `/ohmylms/v1/${ path }`,
@@ -18,14 +60,14 @@ const api = ( path, data ) =>
 /**
  * Correct, assign and approve original crops or declarative reconstructions.
  *
- * @param {Object}                                                         props              Component properties.
- * @param {number}                                                         props.jobId        Source job.
- * @param {Object}                                                         props.question     Current review draft.
- * @param {(field: string, value: boolean|string|number|Object[]) => void} props.onChange     Draft field update.
- * @param {Object[]}                                                       props.candidates   New detections that have not replaced teacher edits.
- * @param {string[]}                                                       props.destinations Question numbers in the import.
- * @param {(index: number, question: string) => void}                      props.onMove       Reassign a placement.
- * @return {Element} Figure review controls.
+ * @param {Object}                                                         props                Component properties.
+ * @param {number}                                                         props.jobId          Source job.
+ * @param {FigureQuestion}                                                 props.question       Current review draft.
+ * @param {(field: string, value: boolean|string|number|Object[]) => void} props.onChange       Draft field update.
+ * @param {FigurePlacement[]}                                              [props.candidates]   New detections that have not replaced teacher edits.
+ * @param {string[]}                                                       [props.destinations] Question numbers in the import.
+ * @param {((index: number, question: string) => void)|null}               [props.onMove]       Reassign a placement.
+ * @return {React.ReactElement} Figure review controls.
  */
 export function ImportFigures( {
 	jobId,
@@ -35,7 +77,9 @@ export function ImportFigures( {
 	destinations = [],
 	onMove = null,
 } ) {
-	const [ assets, setAssets ] = useState( [] );
+	const [ assets, setAssets ] = useState(
+		/** @type {FigureAsset[]} */ ( [] )
+	);
 	const [ error, setError ] = useState( '' );
 	const [ busy, setBusy ] = useState( false );
 	const [ page, setPage ] = useState( question.page );
@@ -48,7 +92,7 @@ export function ImportFigures( {
 			api( `exam-imports/${ jobId }/figures` )
 				.then( ( value ) => {
 					if ( active ) {
-						setAssets( value );
+						setAssets( /** @type {FigureAsset[]} */ ( value ) );
 					}
 				} )
 				.catch( ( failure ) => {
@@ -63,6 +107,10 @@ export function ImportFigures( {
 			clearInterval( timer );
 		};
 	}, [ jobId ] );
+	/**
+	 * @param {number}                   index
+	 * @param {Partial<FigurePlacement>} patch
+	 */
 	const update = ( index, patch ) =>
 		onChange(
 			'figures',
@@ -70,22 +118,25 @@ export function ImportFigures( {
 				at === index ? { ...figure, approved: false, ...patch } : figure
 			)
 		);
+	/** @param {() => Promise<unknown>} action */
 	const run = async ( action ) => {
 		setBusy( true );
 		setError( '' );
 		try {
 			await action();
 		} catch ( failure ) {
-			setError( failure.message );
+			setError( /** @type {{message: string}} */ ( failure ).message );
 		} finally {
 			setBusy( false );
 		}
 	};
 	const crop = async ( index = -1, full = false ) => {
-		const asset = await api( `exam-imports/${ jobId }/figures`, {
-			page: Number( page ),
-			bounds: full ? [ 0, 0, 1, 1 ] : bounds,
-		} );
+		const asset = /** @type {FigureAsset} */ (
+			await api( `exam-imports/${ jobId }/figures`, {
+				page: Number( page ),
+				bounds: full ? [ 0, 0, 1, 1 ] : bounds,
+			} )
+		);
 		setAssets( ( previous ) => [
 			...previous.filter( ( item ) => item.id !== asset.id ),
 			asset,
@@ -223,8 +274,13 @@ export function ImportFigures( {
 				{ assets.find( ( asset ) => asset.id === pageImage )?.url && (
 					<CropReference
 						url={
-							assets.find( ( asset ) => asset.id === pageImage )
-								.url
+							/** @type {string} */ (
+								/** @type {FigureAsset} */ (
+									assets.find(
+										( asset ) => asset.id === pageImage
+									)
+								).url
+							)
 						}
 						bounds={ bounds }
 						onBounds={ setBounds }
@@ -339,18 +395,21 @@ export function ImportFigures( {
 								disabled={ busy || asset?.state !== 'ready' }
 								onClick={ () =>
 									run( async () => {
-										const spec = await api(
-											`exam-imports/${ jobId }/reconstruct`,
-											{
-												asset_id: figure.asset_id,
-												question: [
-													question.question,
-													...question.parts.map(
-														( part ) =>
-															part.prompt || ''
-													),
-												].join( '\n' ),
-											}
+										const spec = /** @type {FigureSpec} */ (
+											await api(
+												`exam-imports/${ jobId }/reconstruct`,
+												{
+													asset_id: figure.asset_id,
+													question: [
+														question.question,
+														...question.parts.map(
+															( part ) =>
+																part.prompt ||
+																''
+														),
+													].join( '\n' ),
+												}
+											)
 										);
 										update( index, {
 											spec,
@@ -403,7 +462,9 @@ export function ImportFigures( {
 														spec: {
 															...figure.spec,
 															objects:
-																figure.spec.objects.map(
+																/** @type {FigureSpec} */ (
+																	figure.spec
+																).objects.map(
 																	(
 																		item,
 																		at
@@ -499,10 +560,13 @@ export function ImportFigures( {
  * @param {string}                     props.url      Protected full-page image.
  * @param {number[]}                   props.bounds   Normalized bounds.
  * @param {(bounds: number[]) => void} props.onBounds Selection callback.
- * @return {Element} Page with selection overlay.
+ * @return {React.ReactElement} Page with selection overlay.
  */
 function CropReference( { url, bounds, onBounds } ) {
-	const [ anchor, setAnchor ] = useState( null );
+	const [ anchor, setAnchor ] = useState(
+		/** @type {number[]|null} */ ( null )
+	);
+	/** @param {import('react').PointerEvent<HTMLButtonElement>} event */
 	const position = ( event ) => {
 		const rect = event.currentTarget.getBoundingClientRect();
 		return [
@@ -516,6 +580,7 @@ function CropReference( { url, bounds, onBounds } ) {
 			),
 		];
 	};
+	/** @param {import('react').PointerEvent<HTMLButtonElement>} event */
 	const select = ( event ) => {
 		if ( anchor ) {
 			const end = position( event );
@@ -563,12 +628,12 @@ function CropReference( { url, bounds, onBounds } ) {
 /**
  * Mount a disposable comparison using the same fixed renderer as the student.
  *
- * @param {Object}  props            Preview properties.
- * @param {Object}  props.spec       Validated proposal.
- * @param {string}  props.url        Protected original.
- * @param {string}  props.alt        Accessible description.
- * @param {boolean} props.notToScale Whether a scale warning is printed.
- * @return {Element} Preview.
+ * @param {Object}     props              Preview properties.
+ * @param {FigureSpec} props.spec         Validated proposal.
+ * @param {string}     props.url          Protected original.
+ * @param {string}     props.alt          Accessible description.
+ * @param {boolean}    [props.notToScale] Whether a scale warning is printed.
+ * @return {React.ReactElement} Preview.
  */
 function ReconstructionPreview( { spec, url, alt, notToScale = false } ) {
 	useEffect( () => {

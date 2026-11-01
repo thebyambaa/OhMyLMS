@@ -18,6 +18,7 @@ use OhMyLMS\Assessment\Scoring;
 use OhMyLMS\Extensions\Registry;
 use OhMyLMS\Data\Student;
 use OhMyLMS\QuestionBank\VersionPublisher;
+use OhMyLMS\Utility\Lock;
 use OhMyLMS\Utility\Transaction;
 
 /**
@@ -210,7 +211,7 @@ final class Submission {
 	private static function lock( $quiz_id, $student_id ) {
 		global $wpdb;
 		$key = 'ohmylms-quiz-' . md5( $wpdb->prefix . ':' . $quiz_id . ':' . $student_id );
-		return (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 3)', $key ) ) === '1' ? $key : false;
+		return Lock::acquire( $key, 3 ) ? $key : false;
 	}
 	/**
 	 * Unlock for Submission.
@@ -218,8 +219,7 @@ final class Submission {
 	 * @param mixed $key Lookup key.
 	 */
 	private static function unlock( $key ) {
-		global $wpdb;
-		$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $key ) );
+		Lock::release( $key );
 	}
 	/**
 	 * Start for Submission.

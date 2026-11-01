@@ -7,7 +7,6 @@ import {
 	dismissToast,
 	entriesToObject,
 	getConfig,
-	jqueryTrigger,
 	normalizeResponse,
 	plainText,
 	request,
@@ -515,21 +514,7 @@ test( 'debounce runs the last call once, and can be flushed or cancelled', ( t )
 	assert.deepEqual( calls, [ 2, 3 ] );
 } );
 
-test( 'jqueryTrigger only fires when jQuery is loaded', ( t ) => {
-	const body = {};
-	globalThis.document = { body };
-	t.after( () => {
-		delete globalThis.document;
-		delete globalThis.window;
-	} );
-	globalThis.window = {};
-	assert.equal( jqueryTrigger( 'ohmylms_toast_shown' ), false );
-	const calls = [];
-	globalThis.window = {
-		jQuery: ( target ) => ( {
-			trigger: ( name, args ) => calls.push( [ target, name, args ] ),
-		} ),
-	};
-	assert.equal( jqueryTrigger( 'course_added_to_cart', [ 1 ] ), true );
-	assert.deepEqual( calls, [ [ body, 'course_added_to_cart', [ 1 ] ] ] );
+test( 'the SDK has no jQuery event bridge', async () => {
+	const sdk = await import( '../../assets/interactivity/sdk.js' );
+	assert.equal( 'jqueryTrigger' in sdk, false );
 } );

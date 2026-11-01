@@ -12,22 +12,6 @@ final class TabPreferences {
 	private const SCOPES   = array( 'content-hub', 'memberships', 'account-hub', 'gamification', 'gamification-settings', 'settings', 'emails' );
 
 	/**
-	 * Register routes for Tab preferences.
-	 */
-	public static function register_routes() {
-		register_rest_route(
-			'ohmylms/v1',
-			'/tab-preferences/(?P<scope>[a-z-]+)',
-			array(
-				'methods'             => 'PUT',
-				'permission_callback' => static function () {
-					return current_user_can( 'manage_options' ) || current_user_can( 'manage_ohmylms' ); },
-				'callback'            => array( __CLASS__, 'save' ),
-			)
-		);
-	}
-
-	/**
 	 * Read for Tab preferences.
 	 */
 	public static function read() {

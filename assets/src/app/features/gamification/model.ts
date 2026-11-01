@@ -19,7 +19,6 @@ import {
 	type Level,
 	type LevelDraft,
 	type Limits,
-	type MediaImage,
 	type Metric,
 	type PointRule,
 	type PointRuleDraft,
@@ -28,14 +27,13 @@ import {
 	type SectionMap,
 	type TabId,
 } from './types';
+import { IMAGE_MIME_TYPES } from '../../lib/media';
+import { createValidators } from '../../lib/validation';
+
+const { record, text } = createValidators( invalidResponse );
 
 /** Image types a badge may use; the server checks the attachment again. */
-export const IMAGE_MIME_TYPES: readonly string[] = [
-	'image/jpeg',
-	'image/png',
-	'image/gif',
-	'image/webp',
-];
+export { IMAGE_MIME_TYPES };
 
 const HEX_COLOR = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 const REVISION = /^[a-f0-9]{16}$/;
@@ -71,22 +69,8 @@ export function invalidResponse(): ApiError {
 	} );
 }
 
-function record( value: unknown ): Record< string, unknown > {
-	if ( ! value || 'object' !== typeof value || Array.isArray( value ) ) {
-		throw invalidResponse();
-	}
-	return value as Record< string, unknown >;
-}
-
 function list( value: unknown ): unknown[] {
 	if ( ! Array.isArray( value ) ) {
-		throw invalidResponse();
-	}
-	return value;
-}
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
 		throw invalidResponse();
 	}
 	return value;
@@ -249,42 +233,6 @@ export function parseOptions( raw: unknown ): GamificationOptions {
 			max_badges: integer( limits.max_badges ),
 			max_criteria: integer( limits.max_criteria ),
 		},
-	};
-}
-
-/**
- * A WordPress media item restricted to the image types a badge accepts.
- *
- * @param value Decoded `wp/v2/media` item.
- * @return The image.
- */
-export function parseMedia( value: unknown ): MediaImage {
-	const item = record( value );
-	if ( ! IMAGE_MIME_TYPES.includes( text( item.mime_type ) ) ) {
-		throw invalidResponse();
-	}
-	const url = text( item.source_url );
-	let thumbnail = url;
-	const details = item.media_details;
-	const sizes =
-		details && 'object' === typeof details
-			? ( details as Record< string, unknown > ).sizes
-			: undefined;
-	if ( sizes && 'object' === typeof sizes ) {
-		const small = ( sizes as Record< string, unknown > ).thumbnail;
-		if ( small && 'object' === typeof small ) {
-			const source = ( small as Record< string, unknown > ).source_url;
-			if ( 'string' === typeof source && source ) {
-				thumbnail = source;
-			}
-		}
-	}
-	const title = item.title ? record( item.title ).rendered : '';
-	return {
-		id: integer( item.id ),
-		url,
-		thumbnail_url: thumbnail,
-		title: 'string' === typeof title ? title : '',
 	};
 }
 

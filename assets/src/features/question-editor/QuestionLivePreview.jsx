@@ -13,34 +13,36 @@ import { Button } from '@wordpress/components';
 import { questionPreviewModel } from './questionBlocks.mjs';
 import { InlineBlankPreview } from './InlineBlankPreview';
 import { InteractivePreview } from './InteractiveEditors';
+import { request } from '../rest.mjs';
+
+/** @typedef {import('./editorTypes').Data} Data */
 
 /**
  * Interactive learner appearance, built from the current unsaved question rather than a preview page.
- * @param root0
- * @param root0.question
- * @param root0.showNote
+ * @param {Object}  root0
+ * @param {Data}    root0.question
+ * @param {boolean} [root0.showNote]
  */
 export function QuestionLivePreview( { question, showNote = true } ) {
 	const source = JSON.stringify( question );
 	const randomized = Boolean( question.settings?.template );
 	const seed = useRef( Math.floor( Math.random() * 2147483647 ) );
-	const [ result, setResult ] = useState( null );
+	const [ result, setResult ] = useState( /** @type {Data|null} */ ( null ) );
 	useEffect( () => {
 		if ( ! randomized ) {
 			return;
 		}
 		let disposed = false;
-		window.wp
-			.apiFetch( {
-				path: '/ohmylms/v1/question-template/preview',
-				method: 'POST',
-				data: {
-					...JSON.parse( source ),
-					render: true,
-					seed: seed.current,
-				},
-			} )
-			.then( ( response ) => {
+		request( {
+			path: '/ohmylms/v1/question-template/preview',
+			method: 'POST',
+			data: {
+				...JSON.parse( source ),
+				render: true,
+				seed: seed.current,
+			},
+		} )
+			.then( ( /** @type {Data} */ response ) => {
 				if ( ! disposed ) {
 					setResult( { source, ...response } );
 				}
@@ -74,7 +76,7 @@ export function QuestionLivePreview( { question, showNote = true } ) {
 		<QuestionPreviewContent
 			key={ source }
 			question={
-				randomized ? { ...question, ...result.question } : question
+				randomized ? { ...question, ...result?.question } : question
 			}
 			showNote={ showNote }
 		/>
@@ -83,9 +85,9 @@ export function QuestionLivePreview( { question, showNote = true } ) {
 
 /**
  * Render a concrete question after server-side variable substitution.
- * @param root0
- * @param root0.question
- * @param root0.showNote
+ * @param {Object}  root0
+ * @param {Data}    root0.question
+ * @param {boolean} root0.showNote
  */
 function QuestionPreviewContent( { question, showNote } ) {
 	const view = questionPreviewModel( question );
@@ -93,7 +95,10 @@ function QuestionPreviewContent( { question, showNote } ) {
 		`question-preview-${ Math.random().toString( 36 ).slice( 2 ) }`
 	);
 	const [ order, setOrder ] = useState( () => [ ...view.options ].reverse() );
-	const move = ( index, direction ) =>
+	const move = (
+		/** @type {number} */ index,
+		/** @type {number} */ direction
+	) =>
 		setOrder( ( old ) => {
 			const next = [ ...old ];
 			[ next[ index ], next[ index + direction ] ] = [
@@ -102,7 +107,7 @@ function QuestionPreviewContent( { question, showNote } ) {
 			];
 			return next;
 		} );
-	const answerInput = ( label, multiline = false ) => (
+	const answerInput = ( /** @type {string} */ label, multiline = false ) => (
 		<label
 			className="ohmylms-preview-input"
 			htmlFor={ `${ group.current }-${ label }` }
@@ -307,7 +312,8 @@ function QuestionPreviewContent( { question, showNote } ) {
 							<QuestionLivePreview
 								question={ {
 									...question.settings.parts.find(
-										( item ) => item.id === part.id
+										( /** @type {Data} */ item ) =>
+											item.id === part.id
 									)?.question,
 									name: part.prompt || '',
 									description: '',

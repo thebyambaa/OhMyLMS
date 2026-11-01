@@ -60,12 +60,21 @@ export function readReview( form ) {
 }
 
 /**
+ * @typedef {Object} ReviewContext
+ * @property {number}  rating     Selected rating, 0 for none.
+ * @property {boolean} hasComment The comment is not empty.
+ * @property {boolean} attempted  A submit was refused.
+ * @property {boolean} submitting The form is being posted.
+ * @property {number}  [star]     Rating of a star.
+ */
+
+/**
  * Store definitions for `ohmylms/reviews`. Root context: `{ rating, hasComment, attempted,
  * submitting }`; each star adds `{ star }`.
  *
  * @param {Object}                                                                                api               Runtime and SDK.
- * @param {() => Object}                                                                          api.getContext    `@wordpress/interactivity` getContext.
- * @param {() => {ref: HTMLElement}}                                                              api.getElement    `@wordpress/interactivity` getElement.
+ * @param {() => ReviewContext}                                                                   api.getContext    `@wordpress/interactivity` getContext.
+ * @param {() => {ref: HTMLElement|null}}                                                         api.getElement    `@wordpress/interactivity` getElement.
  * @param {(callback: EventHandler) => EventHandler}                                              api.withSyncEvent `@wordpress/interactivity` withSyncEvent.
  * @param {(target: EventTarget, name: string, detail?: Object, cancelable?: boolean) => boolean} api.emit          SDK `emit()`.
  * @return {{state: Object, actions: Object, callbacks: Object}} Definitions.
@@ -76,8 +85,11 @@ export function createReviews( {
 	withSyncEvent,
 	emit,
 } ) {
+	/** @return {HTMLElement} Element of the running directive. */
+	const ref = () => /** @type {HTMLElement} */ ( getElement().ref );
+
 	/**
-	 * @param {Object}                            context Root context.
+	 * @param {ReviewContext}                     context Root context.
 	 * @param {{rating: number, comment: string}} review  Values.
 	 */
 	const sync = ( context, review ) => {
@@ -116,6 +128,7 @@ export function createReviews( {
 			},
 		},
 		actions: {
+			/** @param {Event} event `change` in the form. */
 			change( event ) {
 				const form = formOf( event.target );
 				if ( form ) {
@@ -124,7 +137,7 @@ export function createReviews( {
 			},
 			pick: withSyncEvent( ( event ) => {
 				event.preventDefault();
-				const star = getElement().ref;
+				const star = ref();
 				const rating = parseRating( star.dataset?.rating );
 				const select = /** @type {HTMLSelectElement|null} */ (
 					formOf( star )?.querySelector( 'select[name="rating"]' ) ??
@@ -136,6 +149,7 @@ export function createReviews( {
 				getContext().rating = rating;
 				emit( star, 'review-rated', { rating } );
 			} ),
+			/** @param {Event} event `invalid` or submit button click. */
 			validate( event ) {
 				const context = getContext();
 				const review = readReview( formOf( event.target ) );
@@ -174,7 +188,7 @@ export function createReviews( {
 		},
 		callbacks: {
 			restore() {
-				const form = getElement().ref.querySelector( 'form' );
+				const form = ref().querySelector( 'form' );
 				if ( form ) {
 					sync( getContext(), readReview( form ) );
 				}

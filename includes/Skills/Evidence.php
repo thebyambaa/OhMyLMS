@@ -11,6 +11,7 @@ use OhMyLMS\Performance\Settings;
 use OhMyLMS\Performance\Snapshot;
 use OhMyLMS\QuestionBank\SkillMap;
 use OhMyLMS\QuestionBank\VersionPublisher;
+use OhMyLMS\Utility\Lock;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -37,7 +38,7 @@ final class Evidence {
 		if ( ! Schema::ready() ) {
 			return 0; }
 		$lock = self::LOCK . '-' . md5( $wpdb->prefix );
-		if ( (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $lock ) ) !== '1' ) {
+		if ( ! Lock::acquire( $lock, 0 ) ) {
 			return 0; }
 		$done = 0;
 		try {
@@ -61,7 +62,7 @@ final class Evidence {
 				}
 			}
 		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+			Lock::release( $lock );
 		}
 		return $done;
 	}
@@ -279,5 +280,25 @@ final class Evidence {
 	 */
 	public static function summary( $student_id ) {
 		return Snapshot::skills( (int) $student_id );
+	}
+
+	/**
+	 * A learner's most recent evidence rows, newest first (at most 200).
+	 *
+	 * @param int $student_id Learner.
+	 * @return array[]
+	 */
+	public static function recent( $student_id ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh evidence for the teacher's report.
+		return $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT e.term_id, e.part_id, e.role, e.awarded, e.available, e.independent, e.first_try, e.difficulty, e.source_type, e.source_id, e.question_id, e.version_id, e.evidence_at, e.superseded
+             FROM %i e WHERE e.student_id=%d ORDER BY e.evidence_at DESC, e.id DESC LIMIT 200',
+				Schema::table( 'skill_evidence' ),
+				$student_id
+			),
+			ARRAY_A
+		);
 	}
 }

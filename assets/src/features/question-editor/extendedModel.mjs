@@ -205,7 +205,8 @@ export function extendedDefaults( type ) {
 			};
 		case 'hot-text':
 			return {
-				passage: 'Even numbers: [[t1]], [[t2]] and [[t3]]. Which are even?',
+				passage:
+					'Even numbers: [[t1]], [[t2]] and [[t3]]. Which are even?',
 				tokens: [
 					{ id: 't1', text: '2' },
 					{ id: 't2', text: '3' },

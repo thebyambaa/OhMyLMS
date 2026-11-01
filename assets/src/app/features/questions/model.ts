@@ -32,6 +32,10 @@ import type {
 	StatusFilter,
 	UserRef,
 } from './types';
+import { createValidators } from '../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
+export const { record, positiveId } = createValidators( invalidResponse );
 
 const STATUSES: readonly QuestionStatus[] = [ 'draft', 'approved', 'archived' ];
 const ANSWERS = [ 'options', 'text' ] as const;
@@ -303,26 +307,6 @@ export function invalidResponse(): ApiError {
 	} );
 }
 
-/**
- * Narrow an unknown value to a plain object or fail with an invalid response.
- *
- * @param value Parsed JSON.
- * @return The object.
- */
-export function record( value: unknown ): Record< string, unknown > {
-	if ( ! value || 'object' !== typeof value || Array.isArray( value ) ) {
-		throw invalidResponse();
-	}
-	return value as Record< string, unknown >;
-}
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
-}
-
 function boolean( value: unknown ): boolean {
 	if ( 'boolean' !== typeof value ) {
 		throw invalidResponse();
@@ -340,23 +324,6 @@ function oneOf< T extends string >( value: unknown, allowed: readonly T[] ): T {
 
 function list( value: unknown ): unknown[] {
 	if ( ! Array.isArray( value ) ) {
-		throw invalidResponse();
-	}
-	return value;
-}
-
-/**
- * Validate a positive integer identifier.
- *
- * @param value Candidate id.
- * @return The id.
- */
-export function positiveId( value: unknown ): number {
-	if (
-		'number' !== typeof value ||
-		! Number.isSafeInteger( value ) ||
-		value < 1
-	) {
 		throw invalidResponse();
 	}
 	return value;
@@ -1332,20 +1299,32 @@ export function statementText( html: string ): string {
 	let value = String( html || '' )
 		.replace( /<br\s*\/?>|<\/(?:p|div|li|h\d)>/gi, ' ' )
 		.replace( /<[^>]*>/g, '' )
-		.replace( /&(?:nbsp|lt|gt|quot|amp|#0?39);/g, ( m ) => ENTITIES[ m ] ?? m )
+		.replace(
+			/&(?:nbsp|lt|gt|quot|amp|#0?39);/g,
+			( m ) => ENTITIES[ m ] ?? m
+		)
 		.replace( /\$\$?|\\[()[\]]/g, '' );
 	// Hide {{variables}} so their braces are not read as LaTeX groups.
 	const vars: string[] = [];
-	value = value.replace( /\{\{[^{}]*\}\}/g, ( m ) => `\u0000${ vars.push( m ) - 1 }\u0000` );
+	value = value.replace(
+		/\{\{[^{}]*\}\}/g,
+		( m ) => `\u0000${ vars.push( m ) - 1 }\u0000`
+	);
 	for ( let pass = 0; pass < 3; pass++ ) {
 		value = value
 			.replace(
 				/\\[dt]?frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g,
 				( _m, a: string, b: string ) => `${ a.trim() }/${ b.trim() }`
 			)
-			.replace( /\\sqrt\s*\{([^{}]*)\}/g, ( _m, a: string ) => `√${ a.trim() }` );
+			.replace(
+				/\\sqrt\s*\{([^{}]*)\}/g,
+				( _m, a: string ) => `√${ a.trim() }`
+			);
 	}
-	value = value.replace( /\u0000(\d+)\u0000/g, ( _m, i: string ) => vars[ Number( i ) ] ?? '' );
+	value = value.replace(
+		/\u0000(\d+)\u0000/g,
+		( _m, i: string ) => vars[ Number( i ) ] ?? ''
+	);
 	return value
 		.replace( /\\(?:left|right|displaystyle|text|mathrm|mathbf)\b/g, '' )
 		.replace( /\\([a-zA-Z]+)/g, ( _m, cmd: string ) => TEX[ cmd ] ?? '' )
@@ -1394,7 +1373,10 @@ function placeholderName( name: string ): boolean {
  * The single statement of a question. Older questions kept the prompt in the name and an optional
  * body in the description; both are merged so nothing a learner saw is lost.
  *
- * @param question Name, description and settings.
+ * @param question             Name, description and settings.
+ * @param question.name
+ * @param question.description
+ * @param question.settings
  * @return Statement HTML.
  */
 export function questionStatement( question: {
@@ -1535,7 +1517,10 @@ export function validateForm(
 		validateOptions( form.options, type, errors );
 	} else if ( 'accepted' === area ) {
 		validateAccepted( form.options, errors, true );
-	} else if ( 'blanks' === area && ! inlineBlanks( derivedName( form, type ) ).length ) {
+	} else if (
+		'blanks' === area &&
+		! inlineBlanks( derivedName( form, type ) ).length
+	) {
 		validateAccepted( form.options, errors, false );
 	}
 	return errors;

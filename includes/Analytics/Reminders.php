@@ -7,6 +7,7 @@
 
 namespace OhMyLMS\Analytics;
 
+use OhMyLMS\I18n\RecipientLocale;
 use OhMyLMS\Student\Directory;
 use WP_Error;
 
@@ -218,9 +219,14 @@ class Reminders {
 			}
 
 			$name                   = wp_strip_all_tags( $user->display_name );
-			list( $subject, $body ) = self::render( $template, $name, $course, $url );
-			self::consume( $sender_id );
-			$ok = wp_mail( $user->user_email, $subject, $body );
+			list( $subject, $ok ) = RecipientLocale::run(
+				$user,
+				static function () use ( $template, $name, $course, $url, $sender_id, $user ) {
+					list( $subject, $body ) = self::render( $template, $name, $course, $url );
+					self::consume( $sender_id );
+					return array( $subject, wp_mail( $user->user_email, $subject, $body ) );
+				}
+			);
 
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Reminder log table has no API.
 			$wpdb->insert(

@@ -7,6 +7,9 @@ import type {
 	WebhookInput,
 	WebhookOptions,
 } from './types';
+import { createValidators } from '../../lib/validation';
+
+export const { record, positiveId } = createValidators( invalidResponse );
 
 export const EMPTY_WEBHOOK: WebhookInput = {
 	name: '',
@@ -18,12 +21,6 @@ export const EMPTY_WEBHOOK: WebhookInput = {
 	data_mapping: [],
 };
 
-export function record( value: unknown ): Record< string, unknown > {
-	if ( ! value || 'object' !== typeof value || Array.isArray( value ) ) {
-		throw invalidResponse();
-	}
-	return value as Record< string, unknown >;
-}
 export function invalidResponse(): ApiError {
 	return new ApiError( {
 		code: 'invalid_response',
@@ -33,16 +30,6 @@ export function invalidResponse(): ApiError {
 }
 function string( value: unknown ): string {
 	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
-}
-export function positiveId( value: unknown ): number {
-	if (
-		'number' !== typeof value ||
-		! Number.isSafeInteger( value ) ||
-		value < 1
-	) {
 		throw invalidResponse();
 	}
 	return value;

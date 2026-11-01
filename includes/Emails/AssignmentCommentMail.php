@@ -7,6 +7,8 @@
 
 namespace OhMyLMS\Emails;
 
+use OhMyLMS\I18n\RecipientLocale;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -136,12 +138,19 @@ abstract class AssignmentCommentMail {
 		if ( ! $to ) {
 			return;
 		}
-		$button = ! empty( $settings['button_link'] ) ? (string) $settings['button_link'] : $this->link( $submission );
-		$mail   = self::render( $settings, self::values( $submission, $comment ), $button );
-		$header = EmailManager::mail_headers( Emails::get_email_settings() );
-		foreach ( $to as $address ) {
-			wp_mail( $address, $mail['subject'], $mail['html'], $header );
-		}
+		$values = self::values( $submission, $comment );
+		RecipientLocale::each(
+			$to,
+			function ( $recipients ) use ( $submission, $values ) {
+				$settings = $this->settings();
+				$button   = ! empty( $settings['button_link'] ) ? (string) $settings['button_link'] : $this->link( $submission );
+				$mail     = self::render( $settings, $values, $button );
+				$header   = EmailManager::mail_headers( Emails::get_email_settings() );
+				foreach ( $recipients as $address ) {
+					wp_mail( $address, $mail['subject'], $mail['html'], $header );
+				}
+			}
+		);
 	}
 
 	/**

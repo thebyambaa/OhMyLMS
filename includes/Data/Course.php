@@ -381,12 +381,15 @@ class Course extends Data {
 	 * @param mixed $content_id Content identifier.
 	 */
 	public function get_content_link( $content_id ) {
+		$course_permalink = $this->get_content_base_permalink();
+		if ( '' === $course_permalink || ! ohmylms_content_has_slug_link( $content_id ) ) {
+			return ohmylms_content_query_link( $content_id );
+		}
 		$item_type             = get_post_type( $content_id );
 		$permalink_structure   = ohmylms_get_permalink_structure();
 		$course_base_permalink = $permalink_structure['course_base'];
 		$lesson_base_permalink = $permalink_structure['lesson_base'];
 		$quiz_base_permalink   = $permalink_structure['quiz_base'];
-		$course_permalink      = trailingslashit( $this->get_permalink() );
 		$item_slug             = get_post_field( 'post_name', $content_id );
 
 		$slugs       = array(
@@ -397,6 +400,30 @@ class Course extends Data {
 		);
 		$slug_prefix = trailingslashit( $slugs[ $item_type ] ?? '' );
 		return trailingslashit( $course_permalink . $slug_prefix . $item_slug );
+	}
+
+	/**
+	 * Pretty course URL that content links are built on, with a trailing slash.
+	 *
+	 * WordPress links draft, pending and scheduled courses (and private ones the viewer cannot read) by
+	 * query string (`?post_type=…&p=…`), which cannot take a path after it. The content rewrite rules
+	 * only read the content slug, so such a course still serves as the base by its slug, as it will
+	 * once published. Returns '' when there is no pretty link to build on: plain permalinks, no course
+	 * base, a trashed course or a course without a slug.
+	 *
+	 * @return string
+	 */
+	private function get_content_base_permalink() {
+		$course = get_post( $this->get_id() );
+		if ( ! $course || '' === (string) $course->post_name || 'trash' === $course->post_status || ! get_option( 'permalink_structure' ) ) {
+			return '';
+		}
+		if ( 'publish' !== $course->post_status ) {
+			$course              = clone $course;
+			$course->post_status = 'publish';
+		}
+		$link = (string) get_permalink( $course );
+		return ( '' === $link || false !== strpos( $link, '?' ) ) ? '' : trailingslashit( $link );
 	}
 
 
@@ -656,9 +683,15 @@ class Course extends Data {
 	}
 
 	/**
-	 * Get the chapters of the course.
+	 * Whether the current user is enrolled in the course (an `enrolled` row in `ohmylms_user_enrollment`).
 	 *
-	 * @return array The chapters of the course.
+	 * This is enrolment, not permission to view: administrators and the course author are not enrolled
+	 * by their role, so this is false for them unless they enrolled. Checkout relies on that (an
+	 * enrolled user is sent to the course instead of paying again), and so does the review form (only
+	 * learners review). Preview access for administrators and authors is granted where content is
+	 * gated: `Hooks\CommonHook::restrict_access()`, `templates/single-lesson.php` and `SequentialMode`.
+	 *
+	 * @return bool
 	 * @since 1.0.0
 	 */
 	public function has_access() {

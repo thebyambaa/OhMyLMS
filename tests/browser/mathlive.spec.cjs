@@ -56,7 +56,12 @@ test('typing randomized variables into MathLive preserves canonical tokens on re
  });
  const field = page.locator('#typed-variable math-field');
  await field.click();
- for (const key of ['{', '{', 'a', '}', '}']) await field.press(key);
+ // MathLive pairs braces as each key arrives; on a slow runner a key sent before that settles is dropped.
+ for (const key of ['{', '{', 'a', '}', '}']) {
+  const before = await field.evaluate(node => `${node.value}|${node.position}`);
+  await field.press(key);
+  await expect.poll(() => field.evaluate(node => `${node.value}|${node.position}`)).not.toBe(before);
+ }
  const saved = await page.evaluate(() => window.OhMyLMSMath.authorContent(document.querySelector('#typed-variable'), false));
  expect(saved).toContain('{{a}}');
  expect(saved).not.toContain('lbrace');

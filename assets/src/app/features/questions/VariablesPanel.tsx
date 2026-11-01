@@ -55,7 +55,10 @@ const PATHS: Record< string, string[] > = {
 	graphing: [ 'answer', 'min', 'max' ],
 };
 
-/** Checks the browser can do before asking the server (names, ranges, duplicates). */
+/**
+ * Checks the browser can do before asking the server (names, ranges, duplicates).
+ * @param t
+ */
 export function templateProblems( t: Template ): string[] {
 	const out: string[] = [];
 	const seen = new Set< string >();
@@ -65,7 +68,10 @@ export function templateProblems( t: Template ): string[] {
 			out.push(
 				sprintf(
 					/* translators: %s: variable. */
-					__( '%s: use a letter followed by letters or digits.', 'ohmylms' ),
+					__(
+						'%s: use a letter followed by letters or digits.',
+						'ohmylms'
+					),
 					label
 				)
 			);
@@ -87,7 +93,10 @@ export function templateProblems( t: Template ): string[] {
 			out.push(
 				sprintf(
 					/* translators: %s: variable. */
-					__( '%s: set a minimum no larger than the maximum.', 'ohmylms' ),
+					__(
+						'%s: set a minimum no larger than the maximum.',
+						'ohmylms'
+					),
 					label
 				)
 			);
@@ -113,7 +122,12 @@ export function templateProblems( t: Template ): string[] {
 	} );
 	t.set.forEach( ( r ) => {
 		if ( ! r.path.trim() || ! r.expr.trim() ) {
-			out.push( __( 'Each computed field needs a field and a formula.', 'ohmylms' ) );
+			out.push(
+				__(
+					'Each computed field needs a field and a formula.',
+					'ohmylms'
+				)
+			);
 		}
 	} );
 	return out;
@@ -128,13 +142,29 @@ async function computeEngineCheck( t: Template ): Promise< string[] > {
 	const { ComputeEngine } = await import( '@cortex-js/compute-engine' );
 	const ce = new ComputeEngine();
 	const names = new Set( t.variables.map( ( v ) => v.name ) );
-	const allowed = new Set( [ 'gcd', 'lcm', 'mod', 'round', 'floor', 'ceil', 'abs', 'sqrt', 'min', 'max', 'pi', 'e' ] );
+	const allowed = new Set( [
+		'gcd',
+		'lcm',
+		'mod',
+		'round',
+		'floor',
+		'ceil',
+		'abs',
+		'sqrt',
+		'min',
+		'max',
+		'pi',
+		'e',
+	] );
 	const formulas: Array< [ string, string ] > = [
 		...t.variables
 			.filter( ( v ) => 'expr' === v.type )
-			.map( ( v ): [ string, string ] => [ v.name, v.expr || "" ] ),
+			.map( ( v ): [ string, string ] => [ v.name, v.expr || '' ] ),
 		...t.set.map( ( r ): [ string, string ] => [ r.path, r.expr ] ),
-		...t.constraints.map( ( c ): [ string, string ] => [ c, c.replace( /!=|==|>=|<=/g, '=' ) ] ),
+		...t.constraints.map( ( c ): [ string, string ] => [
+			c,
+			c.replace( /!=|==|>=|<=/g, '=' ),
+		] ),
 	];
 	const out: string[] = [];
 	for ( const [ where, src ] of formulas ) {
@@ -154,7 +184,9 @@ async function computeEngineCheck( t: Template ): Promise< string[] > {
 			continue;
 		}
 		const expr = ce.parse(
-			String( src ).replace( /\*/g, '\\times ' ).replace( /([A-Za-z]+)\(/g, '\\operatorname{$1}(' )
+			String( src )
+				.replace( /\*/g, '\\times ' )
+				.replace( /([A-Za-z]+)\(/g, '\\operatorname{$1}(' )
 		);
 		if ( ! expr.isValid ) {
 			out.push(
@@ -330,18 +362,42 @@ export function VariablesPanel( {
 									value={ v.type }
 									disabled={ disabled }
 									options={ [
-										{ value: 'int', label: __( 'Whole number', 'ohmylms' ) },
-										{ value: 'decimal', label: __( 'Decimal', 'ohmylms' ) },
-										{ value: 'choice', label: __( 'Pick from list', 'ohmylms' ) },
-										{ value: 'expr', label: __( 'Calculated', 'ohmylms' ) },
+										{
+											value: 'int',
+											label: __(
+												'Whole number',
+												'ohmylms'
+											),
+										},
+										{
+											value: 'decimal',
+											label: __( 'Decimal', 'ohmylms' ),
+										},
+										{
+											value: 'choice',
+											label: __(
+												'Pick from list',
+												'ohmylms'
+											),
+										},
+										{
+											value: 'expr',
+											label: __(
+												'Calculated',
+												'ohmylms'
+											),
+										},
 									] }
 									onChange={ ( next ) =>
-										setVar( i, { type: next as Variable[ 'type' ] } )
+										setVar( i, {
+											type: next as Variable[ 'type' ],
+										} )
 									}
 								/>
 							</td>
 							<td className="oml-vars__values">
-								{ ( 'int' === v.type || 'decimal' === v.type ) && (
+								{ ( 'int' === v.type ||
+									'decimal' === v.type ) && (
 									<>
 										<TextControl
 											__nextHasNoMarginBottom
@@ -349,7 +405,9 @@ export function VariablesPanel( {
 											type="number"
 											value={ v.min ?? '' }
 											disabled={ disabled }
-											onChange={ ( x ) => setVar( i, { min: num( x ) } ) }
+											onChange={ ( x ) =>
+												setVar( i, { min: num( x ) } )
+											}
 										/>
 										<TextControl
 											__nextHasNoMarginBottom
@@ -357,7 +415,9 @@ export function VariablesPanel( {
 											type="number"
 											value={ v.max ?? '' }
 											disabled={ disabled }
-											onChange={ ( x ) => setVar( i, { max: num( x ) } ) }
+											onChange={ ( x ) =>
+												setVar( i, { max: num( x ) } )
+											}
 										/>
 										<TextControl
 											__nextHasNoMarginBottom
@@ -365,15 +425,22 @@ export function VariablesPanel( {
 											type="number"
 											value={ v.step ?? '' }
 											disabled={ disabled }
-											onChange={ ( x ) => setVar( i, { step: num( x ) } ) }
+											onChange={ ( x ) =>
+												setVar( i, { step: num( x ) } )
+											}
 										/>
 									</>
 								) }
 								{ 'choice' === v.type && (
 									<TextControl
 										__nextHasNoMarginBottom
-										label={ __( 'Values, comma separated', 'ohmylms' ) }
-										value={ ( v.values || [] ).join( ', ' ) }
+										label={ __(
+											'Values, comma separated',
+											'ohmylms'
+										) }
+										value={ ( v.values || [] ).join(
+											', '
+										) }
 										disabled={ disabled }
 										onChange={ ( x ) =>
 											setVar( i, {
@@ -392,7 +459,9 @@ export function VariablesPanel( {
 										value={ v.expr || '' }
 										placeholder="a*b"
 										disabled={ disabled }
-										onChange={ ( x ) => setVar( i, { expr: x } ) }
+										onChange={ ( x ) =>
+											setVar( i, { expr: x } )
+										}
 									/>
 								) }
 							</td>
@@ -429,7 +498,12 @@ export function VariablesPanel( {
 						save( {
 							variables: [
 								...t.variables,
-								{ name: nextName, type: 'int', min: 1, max: 10 },
+								{
+									name: nextName,
+									type: 'int',
+									min: 1,
+									max: 10,
+								},
 							],
 						} )
 					}
@@ -441,20 +515,29 @@ export function VariablesPanel( {
 				<p className="oml-editor-hint">
 					{ sprintf(
 						/* translators: %s: names. */
-						__( 'Not used yet: %s. Type {{name}} in the text or answers.', 'ohmylms' ),
+						__(
+							'Not used yet: %s. Type {{name}} in the text or answers.',
+							'ohmylms'
+						),
 						unused.join( ', ' )
 					) }
 				</p>
 			) }
 			<TextareaControl
 				label={ __( 'Conditions (one per line)', 'ohmylms' ) }
-				help={ __( 'Every draw must satisfy all, e.g. a!=b, gcd(a,b)=1, mod(a,b)=0.', 'ohmylms' ) }
+				help={ __(
+					'Every draw must satisfy all, e.g. a!=b, gcd(a,b)=1, mod(a,b)=0.',
+					'ohmylms'
+				) }
 				rows={ 2 }
 				value={ t.constraints.join( '\n' ) }
 				disabled={ disabled }
 				onChange={ ( x ) =>
 					save( {
-						constraints: x.split( '\n' ).map( ( s ) => s.trim() ).filter( Boolean ),
+						constraints: x
+							.split( '\n' )
+							.map( ( s ) => s.trim() )
+							.filter( Boolean ),
 					} )
 				}
 			/>
@@ -483,7 +566,11 @@ export function VariablesPanel( {
 							isDestructive
 							label={ __( 'Remove rule', 'ohmylms' ) }
 							disabled={ disabled }
-							onClick={ () => save( { set: t.set.filter( ( _, j ) => j !== i ) } ) }
+							onClick={ () =>
+								save( {
+									set: t.set.filter( ( _, j ) => j !== i ),
+								} )
+							}
 						/>
 					</div>
 				) ) }
@@ -498,7 +585,13 @@ export function VariablesPanel( {
 					disabled={ disabled }
 					onClick={ () =>
 						save( {
-							set: [ ...t.set, { path: PATHS[ type ]?.[ 0 ] || 'answer', expr: '' } ],
+							set: [
+								...t.set,
+								{
+									path: PATHS[ type ]?.[ 0 ] || 'answer',
+									expr: '',
+								},
+							],
 						} )
 					}
 				>
@@ -533,10 +626,16 @@ export function VariablesPanel( {
 				</Button>
 			</div>
 			{ ceIssues && (
-				<Notice status={ ceIssues.length ? 'warning' : 'success' } isDismissible={ false }>
+				<Notice
+					status={ ceIssues.length ? 'warning' : 'success' }
+					isDismissible={ false }
+				>
 					{ ceIssues.length
 						? ceIssues.join( ' · ' )
-						: __( 'Compute Engine: all formulas parse.', 'ohmylms' ) }
+						: __(
+								'Compute Engine: all formulas parse.',
+								'ohmylms'
+							) }
 				</Notice>
 			) }
 			{ result && ! result.valid && (
@@ -559,13 +658,18 @@ export function VariablesPanel( {
 								<td>
 									<code>
 										{ Object.entries( s.params || {} )
-											.map( ( [ k, v ] ) => `${ k }=${ String( v ) }` )
+											.map(
+												( [ k, v ] ) =>
+													`${ k }=${ String( v ) }`
+											)
 											.join( ' ' ) }
 									</code>
 								</td>
 								<td>{ plain( s.body ) || s.title }</td>
 								<td>
-									{ s.ok ? s.expected : ( s.errors || [] ).join( '; ' ) }
+									{ s.ok
+										? s.expected
+										: ( s.errors || [] ).join( '; ' ) }
 								</td>
 							</tr>
 						) ) }

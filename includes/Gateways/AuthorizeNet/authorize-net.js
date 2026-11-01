@@ -311,12 +311,12 @@ jQuery(document).ready(function ($) {
             background: #fff;
         }
         #authorize-net-payment-form .input-error {
-            border-color: #dc2626 !important;
-            background: #fef2f2 !important;
+            border-color: var(--oml-danger, #dc2626) !important;
+            background: var(--oml-danger-soft, #fef2f2) !important;
         }
         #authorize-net-payment-errors {
             margin: 10px 0 0 0;
-            color: #dc2626;
+            color: var(--oml-danger, #dc2626);
             font-size: 15px;
             min-height: 20px;
         }

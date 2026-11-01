@@ -524,7 +524,7 @@ test( 'the plan dialog opens, traps focus and closes on Escape or the backdrop',
 	const inner = { inner: true };
 	const modal = { querySelector: () => inner };
 	env.context = { planOpen: false };
-	assert.equal( account.state.planDisplay, false );
+	assert.equal( account.state.planDisplay, 'none' );
 	assert.equal( account.callbacks.planFocus(), undefined );
 
 	env.element = { trigger: true };
@@ -554,6 +554,49 @@ test( 'the plan dialog opens, traps focus and closes on Escape or the backdrop',
 	env.context.planOpen = true;
 	account.actions.closePlan( event( {} ) );
 	assert.equal( env.context.planOpen, false );
+} );
+
+test( 'Escape on the page closes an open plan dialog without the focus trap', () => {
+	const { account, env } = fixture();
+	env.context = { planOpen: true };
+	const other = event( {} );
+	other.key = 'Enter';
+	account.actions.planKey( other );
+	assert.equal( env.context.planOpen, true );
+	const escape = event( {} );
+	escape.key = 'Escape';
+	account.actions.planKey( escape );
+	assert.equal( env.context.planOpen, false );
+	assert.equal( escape.defaultPrevented, true );
+	const again = event( {} );
+	again.key = 'Escape';
+	account.actions.planKey( again );
+	assert.equal( again.defaultPrevented, false, 'a closed dialog leaves Escape alone' );
+} );
+
+test( 'a plan dialog opened by its #link before hydration is taken over and the hash dropped', () => {
+	const { account, env } = fixture();
+	const replaced = [];
+	const previous = globalThis.window;
+	globalThis.window = {
+		location: { hash: '#ohmylms-plan-details-1', pathname: '/profile/', search: '?tab=membership' },
+		history: { state: null, replaceState: ( ...args ) => replaced.push( args ) },
+	};
+	try {
+		env.context = { planOpen: false };
+		env.element = { id: 'ohmylms-plan-details-1', querySelector: () => null };
+		assert.equal( account.callbacks.planFocus(), undefined );
+		assert.equal( env.context.planOpen, true );
+		assert.deepEqual( replaced, [ [ null, '', '/profile/?tab=membership' ] ] );
+		assert.equal( account.state.planDisplay, 'block' );
+
+		globalThis.window.location.hash = '';
+		env.context.planOpen = false;
+		assert.equal( account.callbacks.planFocus(), undefined, 'closing is not undone' );
+		assert.equal( env.context.planOpen, false );
+	} finally {
+		globalThis.window = previous;
+	}
 } );
 
 test( 'printing marks the invoice and the page until afterprint', () => {

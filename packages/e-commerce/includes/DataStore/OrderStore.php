@@ -356,6 +356,49 @@ class OrderStore extends DataStore {
 		);
 	}
 
+	/**
+	 * Order IDs matching a search text (student name, email or order number).
+	 *
+	 * @param string $term      Search text.
+	 * @param string $post_type Order post type.
+	 * @return int[] At most 1000 IDs.
+	 */
+	public function search_ids( $term, $post_type ) {
+		global $wpdb;
+
+		$like = '%' . $wpdb->esc_like( $term ) . '%';
+		$id   = ctype_digit( $term ) ? (int) $term : 0;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Prepared; joins the three meta rows once instead of a meta_query per field.
+		$ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT p.ID FROM {$wpdb->posts} p
+				LEFT JOIN {$wpdb->postmeta} f ON f.post_id = p.ID AND f.meta_key = '_first_name'
+				LEFT JOIN {$wpdb->postmeta} l ON l.post_id = p.ID AND l.meta_key = '_last_name'
+				LEFT JOIN {$wpdb->postmeta} e ON e.post_id = p.ID AND e.meta_key = '_email'
+				WHERE p.post_type = %s AND ( CONCAT_WS( ' ', f.meta_value, l.meta_value ) LIKE %s OR e.meta_value LIKE %s OR p.ID = %d )
+				LIMIT 1000",
+				$post_type,
+				$like,
+				$like,
+				$id
+			)
+		);
+		return array_map( 'intval', $ids );
+	}
+
+	/**
+	 * Number of orders per post status, including the trash.
+	 *
+	 * @param string $post_type Order post type.
+	 * @return array[] Rows of `post_status` and `total`.
+	 */
+	public function post_status_counts( $post_type ) {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Prepared aggregate; WP_Query cannot group.
+		return (array) $wpdb->get_results( $wpdb->prepare( "SELECT post_status, COUNT(*) AS total FROM {$wpdb->posts} WHERE post_type = %s GROUP BY post_status", $post_type ), ARRAY_A );
+	}
+
 
 	/**
 	 * Compile order response and set caches as needed for order ids.

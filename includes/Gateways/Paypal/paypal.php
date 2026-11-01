@@ -24,7 +24,10 @@ define( 'OHMYLMS_PAYPAL_ABSPATH', __DIR__ . '/' );
 add_filter(
 	'ohmylms_payment_gateways',
 	function ( $gateways ) {
-		$gateways[] = GatewayPaypal::class;
+		// The core gateway list already names PayPal; a second entry would build it twice.
+		if ( ! in_array( \OhMyLMS\Gateways\Paypal\GatewayPaypal::class, $gateways, true ) ) {
+			$gateways[] = \OhMyLMS\Gateways\Paypal\GatewayPaypal::class;
+		}
 		return $gateways;
 	}
 );

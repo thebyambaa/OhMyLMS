@@ -14,6 +14,7 @@ use OhMyLMS\Dashboard\Access;
 use OhMyLMS\Dashboard\MasteryRepository;
 use OhMyLMS\Dashboard\Scope;
 use OhMyLMS\Dashboard\ScopeResolver;
+use OhMyLMS\Utility\Lock;
 use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
@@ -233,8 +234,8 @@ final class ReviewSetsService {
 		}
 		$key  = self::key( $class_id, $skill_id );
 		$lock = 'ohmylms-review-set-' . md5( $wpdb->prefix . $key );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Advisory lock against a double submit.
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $lock, self::LOCK_WAIT ) ) ) {
+		// Advisory lock against a double submit.
+		if ( ! Lock::acquire( $lock, self::LOCK_WAIT ) ) {
 			return new WP_Error( 'ohmylms_dashboard_review_set_busy', __( 'This review set is being created. Try again in a moment.', 'ohmylms' ), array( 'status' => 409 ) );
 		}
 		try {
@@ -325,8 +326,7 @@ final class ReviewSetsService {
 				) + array( 'questions' => (int) $created['questions'] ),
 			);
 		} finally {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Releases the advisory lock.
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+			Lock::release( $lock );
 		}
 	}
 }

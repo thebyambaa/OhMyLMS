@@ -22,7 +22,7 @@ import {
 	statusLabel,
 } from './model';
 import { OrderNotes } from './OrderNotes';
-import { useOperation } from './useOperation';
+import { useOperation } from '../../hooks/useOperation';
 import type { OrderDetail, OrderStatus } from './types';
 
 function Row( { label, value }: { label: string; value: string } ) {

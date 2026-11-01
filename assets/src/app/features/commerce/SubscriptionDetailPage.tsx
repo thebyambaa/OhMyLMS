@@ -21,7 +21,7 @@ import {
 	availableActions,
 	subscriptionStatusLabel,
 } from './subscriptionModel';
-import { useOperation } from './useOperation';
+import { useOperation } from '../../hooks/useOperation';
 import type { SubscriptionAction, SubscriptionDetail } from './types';
 
 function Row( { label, value }: { label: string; value: string } ) {

@@ -74,6 +74,7 @@ final class Interactivity {
 			'assignment'    => 'assignment',
 			'protection'    => 'protection',
 			'video'         => 'video',
+			'language'      => 'language',
 		) as $id => $file ) {
 			$path         = 'assets/interactivity/' . $file . '.js';
 			$dependencies = apply_filters(

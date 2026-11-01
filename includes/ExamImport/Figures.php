@@ -17,10 +17,9 @@ final class Figures {
 	const HOOK       = 'ohmylms_render_exam_figure';
 	const MAX_ASSETS = 100;
 
-	/** Register isolated persistence, worker, author API and protected streaming. */
+	/** Register isolated persistence, worker and protected streaming. The author API is {@see Rest\FiguresController}. */
 	public static function init() {
 		add_action( 'init', array( __CLASS__, 'register' ) );
-		add_action( 'rest_api_init', array( __CLASS__, 'routes' ) );
 		add_action( self::HOOK, array( __CLASS__, 'process' ) );
 		add_action( 'template_redirect', array( __CLASS__, 'document' ), 5 );
 	}
@@ -36,36 +35,6 @@ final class Figures {
 				'rewrite'      => false,
 				'query_var'    => false,
 				'supports'     => array(),
-			)
-		);
-	}
-
-	/** Register nonce-authenticated author operations through core REST auth. */
-	public static function routes() {
-		Reconstruction::routes();
-		register_rest_route(
-			'ohmylms/v1',
-			'/exam-imports/(?P<id>\d+)/figures',
-			array(
-				array(
-					'methods'             => 'GET',
-					'permission_callback' => array( Jobs::class, 'permission' ),
-					'callback'            => array( __CLASS__, 'listing' ),
-				),
-				array(
-					'methods'             => 'POST',
-					'permission_callback' => array( Jobs::class, 'permission' ),
-					'callback'            => array( __CLASS__, 'create' ),
-				),
-			)
-		);
-		register_rest_route(
-			'ohmylms/v1',
-			'/exam-import-renderer',
-			array(
-				'methods'             => 'GET',
-				'permission_callback' => array( Jobs::class, 'permission' ),
-				'callback'            => array( PageRenderer::class, 'capability' ),
 			)
 		);
 	}

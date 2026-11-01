@@ -1,4 +1,3 @@
-/** @jsx createElement */
 import {
 	createElement,
 	useCallback,
@@ -18,8 +17,9 @@ import {
 } from '@wordpress/components';
 import {
 	QUESTION_BLOCK_TYPES,
+	questionPrompt,
 	questionTypePatch,
-} from '../question-editor/questionBlocks.mjs';
+} from '../question-editor/public.mjs';
 import { nativeQuestionTypes } from './nativeAuthoring.mjs';
 import { NativeQuestionDetails } from './NativeQuestionDetails';
 import { __ } from '@wordpress/i18n';
@@ -40,24 +40,22 @@ import {
 	saveQuestionAttributes,
 	approveQuestion,
 	duplicateQuestion,
-} from '../question-bank/api.mjs';
+} from '../question-bank/public.mjs';
 import {
 	MultipleChoiceFields,
 	registerMultipleChoiceBlock,
 } from '../question-editor/MultipleChoiceBlock';
-import { questionPrompt } from '../question-editor/questionPrompt.mjs';
-import { PaperQuestion } from '../paper/PaperQuestion';
-import { usePaperQuestion } from '../paper/PaperCanvas';
+import { PaperQuestion, usePaperQuestion } from '../paper/public.mjs';
 import { QuestionBlockPreview } from './QuestionBlockPreview';
 
 /**
  * Question fields stay on the canvas, except on the printable paper, where the sheet shows the
  * printed question and the fields move to the block sidebar.
  *
- * @param {Object}  props          Properties.
- * @param {boolean} props.paper    Whether paper view is on.
- * @param {Element} props.children Question fields.
- * @return {Element} Fields in place or in the sidebar.
+ * @param {Object}          props          Properties.
+ * @param {boolean}         props.paper    Whether paper view is on.
+ * @param {React.ReactNode} props.children Question fields.
+ * @return {React.ReactNode} Fields in place or in the sidebar.
  */
 function QuestionFieldsSlot( { paper, children } ) {
 	if ( ! paper ) {
@@ -72,14 +70,28 @@ function QuestionFieldsSlot( { paper, children } ) {
 	);
 }
 
+/** @typedef {import('./choiceAutosave.mjs').ChoiceDraft} ChoiceDraft */
+/** @typedef {import('./questionHistory.mjs').QuestionHistory} QuestionHistory */
+/** @typedef {Awaited<ReturnType<typeof loadBankQuestion>>} BankQuestion */
+
+/**
+ * Attributes of a question placement.
+ *
+ * @typedef {Object} LessonChoiceAttributes
+ * @property {number} questionId          Bank question ID, 0 until the draft is first saved.
+ * @property {string} uuid                Question UUID.
+ * @property {string} delivery            `inline`, `quiz` or `bank`.
+ * @property {number} [authoringRevision] Counts private writes so the next document save carries them.
+ */
+
 /**
  * A lesson placement stores references only; private authoring data uses the bank API.
- * @param root0
- * @param root0.attributes
- * @param root0.setAttributes
- * @param root0.clientId
- * @param root0.context
- * @param root0.isSelected
+ * @param {Object}                                                root0               Block edit properties.
+ * @param {LessonChoiceAttributes}                                root0.attributes    Block attributes.
+ * @param {(attributes: Partial<LessonChoiceAttributes>) => void} root0.setAttributes Attribute setter.
+ * @param {string}                                                root0.clientId      Block client ID.
+ * @param {{ postType?: string, postId?: number }}                [root0.context]     Block context.
+ * @param {boolean}                                               [root0.isSelected]  Whether the block is selected.
  */
 function LessonChoiceEdit( {
 	attributes,
@@ -94,8 +106,12 @@ function LessonChoiceEdit( {
 		( getStore ) => getStore( 'core/editor' ).isSavingPost(),
 		[]
 	);
-	const [ question, setQuestion ] = useState( null );
-	const [ detail, setDetail ] = useState( null );
+	const [ question, setQuestion ] = useState(
+		/** @type {ChoiceDraft|null} */ ( null )
+	);
+	const [ detail, setDetail ] = useState(
+		/** @type {BankQuestion|null} */ ( null )
+	);
 	const [ dirty, setDirty ] = useState(
 		! attributes.questionId || ! attributes.uuid
 	);
@@ -105,7 +121,9 @@ function LessonChoiceEdit( {
 	const [ shared, setShared ] = useState( false );
 	const loadedId = useRef( 0 );
 	const revision = useRef( 0 );
-	const history = useRef( { past: [], future: [] } );
+	const history = useRef(
+		/** @type {QuestionHistory} */ ( { past: [], future: [] } )
+	);
 	const latestQuestion = useRef( question );
 	latestQuestion.current = question;
 	const { insertBlock, removeBlock } = useDispatch( 'core/block-editor' );
@@ -186,23 +204,25 @@ function LessonChoiceEdit( {
 						setAttributes( { uuid: data.uuid } );
 					}
 					setDirty( ! data.settings?.type );
-					setQuestion( {
-						...( ! data.settings?.type
-							? questionTypePatch(
-									{ settings: {} },
-									'single-choice'
-								)
-							: {} ),
-						id: data.id,
-						name: data.settings?.type ? data.name : '',
-						description: data.description,
-						...( data.settings?.type
-							? {
-									settings: data.settings,
-									questions: data.options || [],
-								}
-							: {} ),
-					} );
+					setQuestion(
+						/** @type {ChoiceDraft} */ ( {
+							...( ! data.settings?.type
+								? questionTypePatch(
+										{ settings: {} },
+										'single-choice'
+									)
+								: {} ),
+							id: data.id,
+							name: data.settings?.type ? data.name : '',
+							description: data.description,
+							...( data.settings?.type
+								? {
+										settings: data.settings,
+										questions: data.options || [],
+									}
+								: {} ),
+						} )
+					);
 				}
 			} )
 			.catch( ( failure ) => {
@@ -234,6 +254,8 @@ function LessonChoiceEdit( {
 	}, [ coreSaving, attributes.questionId ] );
 	const save = useCallback(
 		async ( approve = false ) => {
+			// Saves start from a loaded draft: autosave, Retry and Approve need one.
+			const draft = /** @type {ChoiceDraft} */ ( question );
 			const submittedRevision = revision.current;
 			setBusy( true );
 			setError( '' );
@@ -262,10 +284,10 @@ function LessonChoiceEdit( {
 									: {} ),
 							}
 						: {} ),
-					name: question.name,
-					description: question.description,
-					settings: question.settings,
-					questions: question.questions.map(
+					name: draft.name,
+					description: draft.description,
+					settings: draft.settings,
+					questions: draft.questions.map(
 						( { clientKey, ...option } ) => option
 					),
 					...( base ? { base_modified: base.modified } : {} ),
@@ -282,13 +304,9 @@ function LessonChoiceEdit( {
 				setAttributes( { questionId: id } );
 				const fresh = await loadBankQuestion( id );
 				setDetail( fresh );
-				const current = latestQuestion.current || question;
+				const current = latestQuestion.current || draft;
 				const unchanged = revision.current === submittedRevision;
-				const reconciled = reconcileChoiceSave(
-					question,
-					current,
-					fresh
-				);
+				const reconciled = reconcileChoiceSave( draft, current, fresh );
 				const next = unchanged
 					? { ...reconciled, settings: fresh.settings }
 					: reconciled;
@@ -306,7 +324,9 @@ function LessonChoiceEdit( {
 					setDetail( await loadBankQuestion( id ) );
 				}
 			} catch ( failure ) {
-				setError( failure.message );
+				setError(
+					/** @type {{ message: string }} */ ( failure ).message
+				);
 			} finally {
 				setBusy( false );
 			}
@@ -345,10 +365,13 @@ function LessonChoiceEdit( {
 					delivery: quiz ? 'quiz' : 'inline',
 				} ),
 				editor.getBlockIndex( clientId ) + 1,
-				editor.getBlockRootClientId( clientId )
+				// The root of an existing block is a client ID, or '' at the top level.
+				/** @type {string} */ (
+					editor.getBlockRootClientId( clientId )
+				)
 			);
 		} catch ( failure ) {
-			setError( failure.message );
+			setError( /** @type {{ message: string }} */ ( failure ).message );
 		}
 	}
 	if ( ! question && shared ) {
@@ -395,6 +418,7 @@ function LessonChoiceEdit( {
 				)
 			: [ 'single-choice', 'multiple-choice' ]
 	).includes( question.settings?.type );
+	/** @type {string} */
 	let incompleteMessage = __(
 		'Complete the question and options, and select a correct answer.',
 		'ohmylms'
@@ -541,6 +565,7 @@ function LessonChoiceEdit( {
 		);
 	}
 
+	/** @param {'past'|'future'} direction Undo or redo. */
 	const restoreEdit = ( direction ) => {
 		const next = stepQuestionHistory(
 			history.current,
@@ -636,7 +661,9 @@ function LessonChoiceEdit( {
 					id={ attributes.questionId }
 					revision={ attributes.authoringRevision }
 					quizId={
-						context.postType === 'ohmylms-quiz' ? context.postId : 0
+						context.postType === 'ohmylms-quiz'
+							? /** @type {number} */ ( context.postId )
+							: 0
 					}
 					busy={ busy || dirty }
 					onRefresh={ ( fresh, restored = false ) => {
@@ -668,8 +695,8 @@ registerMultipleChoiceBlock( LessonChoiceEdit );
 
 /**
  * Keep established question formats movable in native quiz documents.
- * @param {Object} props Block properties.
- * @return {Element} Existing question reference.
+ * @param {Parameters<typeof LessonChoiceEdit>[0]} props Block properties.
+ * @return {React.ReactElement} Existing question reference.
  */
 function QuizQuestionReferenceEdit( props ) {
 	const blockProps = useBlockProps();

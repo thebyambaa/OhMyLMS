@@ -1,5 +1,7 @@
 # Curriculum and Course Bundles
 
+For the authoritative product model and current authoring boundaries, see [Learning Architecture](LEARNING-ARCHITECTURE.md). This guide retains feature and compatibility details; recovered-editor screen descriptions are historical.
+
 Administrators describe the structures their content belongs to (exam boards, national curricula, tests, grades, subjects, syllabuses), place courses, skills, question banks and exams in them, and group selected courses and syllabuses into **Course Bundles** that learners add to their own dashboard. Examples in the UI and tests are illustrative names, not verified syllabus definitions; nothing is pre-seeded.
 
 Admin pages: the **Curriculum** and **Course Bundles** tabs of **OhMyLMS → Content Hub** (`#/content-hub/curriculum` and `#/content-hub/bundles`; see [CONTENT-HUB.md](CONTENT-HUB.md)). They are SDK pages, so `#/extensions/curriculum` and `#/extensions/bundles` still open the same tabs. Learner section: the student dashboard (`[ohmylms_dashboard]`) or `[ohmylms_bundles]` on any page.

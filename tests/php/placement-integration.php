@@ -145,38 +145,38 @@ try {
     $bundles_outline = []; foreach (api('GET', 'bundles/outline')->get_data()['bundles'] as $row) { $bundles_outline[$row['id']] = $row; }
     ok($bundles_outline[$b_pub]['status'] === 'published' && $bundles_outline[$b_draft]['status'] === 'draft', 'Bundle outline shows drafts too, with their status');
 
-    // ---- Course list filter in the admin ------------------------------------------------------
-    $list = static function (array $query) { return ids_of(api('GET', 'courses', [], $query + ['per_page' => 100])); };
-    $in_science = $list(['curriculum_id' => $science]);
+    // ---- Narrowing a course query by item and bundle (GET /courses has no such filter: docs/api/courses.md) ----
+    $list = static function (array $items, array $bundles = []) { return Placement::narrow_query(['post_type' => OHMYLMS_COURSE_CPT], $items, $bundles)['post__in']; };
+    $in_science = $list([$science]);
     ok(in_array($c_physics, $in_science, true) && in_array($c_chemistry, $in_science, true) && !in_array($c_arts, $in_science, true) && !in_array($c_plain, $in_science, true), 'Filtering by a curriculum item must include everything beneath it');
-    ok(same(array_intersect($list(['category_id' => $science]), [$c_physics, $c_chemistry, $c_arts, $c_plain]), array_intersect($in_science, [$c_physics, $c_chemistry, $c_arts, $c_plain])), 'The old category_id parameter means a curriculum item');
-    $in_bundle = $list(['bundle_id' => $b_pub]);
-    ok(in_array($c_physics, $in_bundle, true) && in_array($c_arts, $in_bundle, true) && !in_array($c_chemistry, $in_bundle, true) && same(array_intersect($list(['tag_id' => $b_pub]), [$c_physics, $c_arts, $c_chemistry]), [$c_physics, $c_arts]), 'Filtering by a course bundle (and the old tag_id parameter)');
-    ok(in_array($c_arts, $list(['bundle_id' => $b_items]), true) && !in_array($c_physics, $list(['bundle_id' => $b_items]), true), 'A bundle with a curriculum member contains the courses under it');
-    $both = $list(['curriculum_id' => $science, 'bundle_id' => $b_pub]);
+    $in_bundle = $list([], [$b_pub]);
+    ok(in_array($c_physics, $in_bundle, true) && in_array($c_arts, $in_bundle, true) && !in_array($c_chemistry, $in_bundle, true), 'Filtering by a course bundle');
+    ok(in_array($c_arts, $list([], [$b_items]), true) && !in_array($c_physics, $list([], [$b_items]), true), 'A bundle with a curriculum member contains the courses under it');
+    $both = $list([$science], [$b_pub]);
     ok(in_array($c_physics, $both, true) && !in_array($c_arts, $both, true) && !in_array($c_chemistry, $both, true), 'Both filters must match');
-    $none = $list(['curriculum_id' => 999999]);
+    $none = $list([999999]);
     ok(!array_intersect($none, [$c_physics, $c_chemistry, $c_arts, $c_plain, $c_draft]), 'A filter that matches nothing must not show everything');
-    $empty_item = $list(['curriculum_id' => $unused]);
+    $empty_item = $list([$unused]);
     ok(!array_intersect($empty_item, [$c_physics, $c_chemistry, $c_arts, $c_plain]), 'An item with no courses lists none');
 
-    // ---- Course payload keeps the keys the admin app reads ------------------------------------
-    $course_data = api('GET', "courses/$c_physics")->get_data();
-    ok($course_data['categories'] === [['id' => $physics, 'name' => 'Physics ' . $tag, 'slug' => "c$physics"]] && array_column($course_data['tags'], 'id') === [$b_pub] && $course_data['tags'][0]['slug'] === "b$b_pub", 'Course categories and tags now carry curriculum items and bundles');
-    ok($course_data['curriculum'][0]['path'] === ['Science ' . $tag] && array_column($course_data['learning_bundles'], 'title') === ['Data career ' . $tag], 'Course payload has curriculum and course bundles');
+    // ---- A course's placement is read through /organization (the course payload no longer carries it: docs/api/courses.md) ----
+    $course_data = api('GET', "courses/$c_physics/organization")->get_data();
+    ok(array_map(static function ($row) { return [$row['id'], $row['name'], $row['slug']]; }, $course_data['curriculum']) === [[$physics, 'Physics ' . $tag, "c$physics"]] && array_column($course_data['bundles'], 'id') === [$b_pub] && $course_data['bundles'][0]['slug'] === "b$b_pub", 'A course carries curriculum items and bundles');
+    ok($course_data['curriculum'][0]['path'] === ['Science ' . $tag] && array_column($course_data['bundles'], 'title') === ['Data career ' . $tag], 'Course placement has curriculum paths and course bundle titles');
     $legacy_term = wp_insert_term('Legacy category ' . $tag, 'course_category'); $legacy_terms[] = [(int) $legacy_term['term_id'], 'course_category'];
     $legacy_tag = wp_insert_term('Legacy tag ' . $tag, 'course_tag'); $legacy_terms[] = [(int) $legacy_tag['term_id'], 'course_tag'];
     $c_legacy = course('Legacy course ' . $tag);
     wp_set_object_terms($c_legacy, [(int) $legacy_term['term_id']], 'course_category'); wp_set_object_terms($c_legacy, [(int) $legacy_tag['term_id']], 'course_tag');
-    $legacy_payload = api('GET', "courses/$c_legacy")->get_data();
-    ok($legacy_payload['categories'] === [] && $legacy_payload['tags'] === [], 'Old terms must not appear as the new curriculum or bundles');
+    $legacy_payload = api('GET', "courses/$c_legacy/organization")->get_data();
+    ok($legacy_payload['curriculum'] === [] && $legacy_payload['bundles'] === [], 'Old terms must not appear as the new curriculum or bundles');
 
     // ---- Old endpoints: readable in the new shape, never writable --------------------------------
-    $categories = api('GET', 'categories');
-    $row = null; foreach ($categories->get_data() as $candidate) { if ($candidate['term_id'] === $physics) { $row = $candidate; } }
-    ok($categories->get_status() === 200 && $row && $row['id'] === $physics && $row['name'] === 'Physics ' . $tag && $row['slug'] === "c$physics" && $row['parent'] === $science && array_column($row['courses'], 'id') === [$c_physics, $c_draft], '/categories lists curriculum items shaped like terms');
-    $tags = api('GET', 'tags', [], ['search' => 'Data career']);
-    ok($tags->get_status() === 200 && array_column($tags->get_data(), 'term_id') === [$b_pub] && $tags->get_data()[0]['slug'] === "b$b_pub", '/tags lists course bundles shaped like terms, and can search');
+    $categories = api('GET', 'categories', [], ['search' => 'Physics ' . $tag]);
+    $row = null; foreach ($categories->get_data() as $candidate) { if ($candidate['id'] === $physics) { $row = $candidate; } }
+    $detail = api('GET', "categories/$physics", [], ['context' => 'edit'])->get_data();
+    ok($categories->get_status() === 200 && $row && $row['name'] === 'Physics ' . $tag && $row['slug'] === "c$physics" && $row['parent'] === $science && same(array_column($detail['courses'] ?? [], 'id'), [$c_physics, $c_draft]), '/categories lists curriculum items shaped like terms');
+    $tags = api('GET', 'tags', [], ['search' => 'Data career ' . $tag]);
+    ok($tags->get_status() === 200 && array_column($tags->get_data(), 'id') === [$b_pub] && $tags->get_data()[0]['slug'] === "b$b_pub", '/tags lists course bundles shaped like terms, and can search');
     foreach ([['POST', 'categories'], ['PUT', "categories/$science"], ['DELETE', "categories/$science"], ['DELETE', 'categories/bulk'], ['POST', 'tags'], ['PUT', "tags/$b_pub"], ['DELETE', "tags/$b_pub"], ['DELETE', 'tags/bulk']] as [$method, $path]) {
         $response = api($method, $path, ['name' => 'x', 'ids' => [1]]);
         ok($response->get_status() === 410 && in_array(code($response), ['ohmylms_categories_replaced', 'ohmylms_tags_replaced'], true), "$method $path should be gone (got " . $response->get_status() . ')');
@@ -184,7 +184,7 @@ try {
     ok(Items::get($science) && Bundles::get($b_pub), 'A refused delete removed something');
     $assign = api('POST', "courses/$c_plain/terms", ['taxonomy' => 'course_category', 'terms' => [(int) $legacy_term['term_id']]]);
     ok($assign->get_status() === 410 && code($assign) === 'ohmylms_taxonomy_replaced' && wp_get_object_terms($c_plain, 'course_category') === [], 'Assigning category terms to a course must be refused');
-    $update = api('POST', "courses/$c_plain", ['name' => 'Plain course ' . $tag, 'categories' => [['id' => (int) $legacy_term['term_id']]], 'tags' => [['id' => (int) $legacy_tag['term_id']]]]);
+    $update = api('POST', "courses/$c_plain", ['title' => 'Plain course ' . $tag, 'categories' => [['id' => (int) $legacy_term['term_id']]], 'tags' => [['id' => (int) $legacy_tag['term_id']]]]);
     ok(wp_get_object_terms($c_plain, 'course_category') === [] && wp_get_object_terms($c_plain, 'course_tag') === [], 'Saving a course with categories or tags must not write terms');
 
     // ---- Placement helpers ---------------------------------------------------------------------
@@ -228,9 +228,9 @@ try {
     // ---- Public filter templates --------------------------------------------------------------
     update_option('ohmylms_archive_page_filters', ['category', 'tag']);
     $html = render('filters/filters.php', ['atts' => ['show_filter' => 'yes']]);
-    ok(strpos($html, 'data-slug="c' . $physics . '"') !== false && strpos($html, '— Physics ' . $tag) !== false && strpos($html, 'data-slug="b' . $b_pub . '"') !== false && strpos($html, 'Data career ' . $tag) !== false, 'Filters list curriculum items and bundles with their slugs');
+    ok(strpos($html, 'data-slug="c' . $physics . '"') !== false && strpos($html, '— Physics ' . $tag) !== false && strpos($html, 'data-slug="b' . $b_pub . '"') === false && strpos($html, 'Data career ' . $tag) === false, 'Filters list curriculum items with their slugs and not the retired course bundles');
     ok(strpos($html, 'Unused ' . $tag) === false && strpos($html, 'Only a draft ' . $tag) === false && strpos($html, 'Hidden path ' . $tag) === false && strpos($html, 'Legacy category ' . $tag) === false && strpos($html, 'Legacy tag ' . $tag) === false, 'Filters never list empty items, draft bundles or the old terms');
-    ok(strpos($html, 'Curriculum') !== false && strpos($html, 'Course bundle') !== false && strpos($html, '>Category<') === false, 'Filter headings use the new names');
+    ok(strpos($html, 'Curriculum') !== false && strpos($html, 'Course bundle') === false && strpos($html, '>Category<') === false, 'Filter headings use the new names');
     $tabs = render('filters/category-type-button.php', ['is_enable_category' => 'yes']);
     ok(strpos($tabs, 'data-slug="c' . $arts . '"') !== false && strpos($tabs, 'data-slug="all"') !== false && strpos($tabs, 'Unused ' . $tag) === false && strpos($tabs, 'Legacy category') === false, 'Curriculum tabs');
     ok(render('filters/category-type-button.php', ['is_enable_category' => 'no']) === '', 'Tabs stay off when disabled');
@@ -248,36 +248,25 @@ try {
     // ---- Membership plans ---------------------------------------------------------------------
     $ids = static function ($rows) { return array_map('intval', array_column($rows, 'id')); };
     ok(same($ids(CourseSelection::resolve([], [], [], [], [$science], [])), [$c_physics, $c_chemistry]), 'A plan with a curriculum item includes everything beneath it (published only)');
-    ok(same($ids(CourseSelection::resolve([], [], [], [], [], [$b_pub])), [$c_physics, $c_arts]) && same($ids(CourseSelection::resolve([], [], [], [], [], [$b_items])), [$c_arts]), 'A plan with a bundle includes its courses and the courses under its curriculum members');
-    ok(same($ids(CourseSelection::resolve([], [], [], [$c_physics], [$science], [$b_pub])), [$c_chemistry, $c_arts]), 'Exclusions override curriculum and bundle rules');
+    ok(CourseSelection::resolve([], [], [], [], [], [$b_pub]) === [] && CourseSelection::resolve([], [], [], [], [], [$b_items]) === [], 'Retired course bundle rules are accepted but grant no courses');
+    ok(same($ids(CourseSelection::resolve([], [], [], [$c_physics], [$science], [$b_pub])), [$c_chemistry]), 'Exclusions override curriculum rules');
     ok(same($ids(CourseSelection::resolve([['id' => $c_plain]], [(int) $legacy_term['term_id']], [(int) $legacy_tag['term_id']], [], [$arts], [])), [$c_plain, $c_legacy, $c_arts]), 'Old category and tag rules still resolve, together with the new ones');
     ok(has_action('ohmylms_curriculum_changed', [CourseSelection::class, 'queue']) !== false && has_action('ohmylms_curriculum_items_deleted', [CourseSelection::class, 'queue']) !== false, 'Plans resync when placement changes');
-    $created = api('POST', 'membership', ['name' => 'Placement plan ' . $tag, 'status' => 'draft', 'regular_price' => '10', 'course_curriculum' => [$science], 'course_bundles' => [$b_pub]]);
+    // The memberships API (docs/api/memberships.md) takes curriculum_item_ids; bundle and legacy rules are no longer part of it.
+    $created = api('POST', 'memberships', ['name' => 'Placement plan ' . $tag, 'status' => 'draft', 'regular_price' => '10', 'curriculum_item_ids' => [$science]]);
     ok($created->get_status() === 201, 'Plan create failed: ' . wp_json_encode($created->get_data()));
     $plan_id = (int) $created->get_data()['id']; $plans[] = $plan_id;
     $plan = $created->get_data();
-    ok($plan['course_curriculum'] === [$science] && $plan['course_bundles'] === [$b_pub] && $plan['legacy_rules'] === ['categories' => [], 'tags' => []], 'The plan stores curriculum and bundle rules');
-    foreach ([['course_curriculum' => [999999]], ['course_bundles' => [999999]], ['course_curriculum' => 'x'], ['course_bundles' => [-1]]] as $bad) {
-        $response = api('PUT', "membership/$plan_id", $bad);
-        ok($response->get_status() === 400, 'Invalid plan rule accepted: ' . wp_json_encode($bad));
+    ok($plan['curriculum_item_ids'] === [$science] && !array_key_exists('course_bundles', $plan) && !array_key_exists('legacy_rules', $plan), 'The plan stores curriculum rules and no retired bundle or legacy rules');
+    foreach ([['curriculum_item_ids' => [999999]], ['curriculum_item_ids' => 'x'], ['curriculum_item_ids' => [-1]]] as $bad) {
+        $response = api('PUT', "memberships/$plan_id", $bad);
+        ok(in_array($response->get_status(), [400, 422], true) && ohmylms_get_membership($plan_id)->get_course_curriculum('edit') == [$science], 'Invalid plan rule accepted: ' . wp_json_encode($bad));
     }
     $stored = ohmylms_get_membership($plan_id);
     $stored->set_course_categories([(int) $legacy_term['term_id']]); $stored->set_course_tags([(int) $legacy_tag['term_id']]); $stored->save();
-    $reopened = api('GET', "membership/$plan_id")->get_data();
-    ok($reopened['legacy_rules']['categories'] === [['id' => (int) $legacy_term['term_id'], 'name' => 'Legacy category ' . $tag]] && $reopened['legacy_rules']['tags'] === [['id' => (int) $legacy_tag['term_id'], 'name' => 'Legacy tag ' . $tag]], 'Old rules are listed by name');
-    $other_term = wp_insert_term('Another legacy ' . $tag, 'course_category'); $legacy_terms[] = [(int) $other_term['term_id'], 'course_category'];
-    $extend = api('PUT', "membership/$plan_id", ['course_categories' => [(int) $legacy_term['term_id'], (int) $other_term['term_id']]]);
-    ok($extend->get_status() === 400 && code($extend) === 'membership_legacy_rules', 'Old rules can only be removed, never added to');
-    ok(ohmylms_get_membership($plan_id)->get_course_categories('edit') === [(int) $legacy_term['term_id']], 'A refused request changed the plan');
-    $keep = api('PUT', "membership/$plan_id", ['course_categories' => [(int) $legacy_term['term_id']], 'course_curriculum' => [$science, $arts]]);
-    ok($keep->get_status() === 200 && $keep->get_data()['course_curriculum'] === [$science, $arts] && $keep->get_data()['legacy_rules']['categories'][0]['id'] === (int) $legacy_term['term_id'], 'Keeping an old rule while editing the new ones');
-    $remove = api('PUT', "membership/$plan_id", ['course_categories' => [], 'course_tags' => []]);
-    ok($remove->get_status() === 200 && $remove->get_data()['legacy_rules'] === ['categories' => [], 'tags' => []], 'Old rules can be removed');
-    $preview = api('POST', 'membership/course-preview', ['course_curriculum' => [$science], 'course_bundles' => [$b_pub], 'excluded_courses' => [$c_chemistry]]);
-    $preview_rows = []; foreach ($preview->get_data()['courses'] as $row) { $preview_rows[$row['id']] = $row['reasons']; }
-    ok($preview->get_status() === 200 && same(array_keys($preview_rows), [$c_physics, $c_arts]) && in_array('Physics ' . $tag, $preview_rows[$c_physics], true) && in_array('Data career ' . $tag, $preview_rows[$c_arts], true), 'The preview says which item or bundle included each course: ' . wp_json_encode($preview->get_data()));
-    $with_legacy = api('POST', 'membership/course-preview', ['course_categories' => [(int) $legacy_term['term_id']]]);
-    ok(in_array($c_legacy, array_column($with_legacy->get_data()['courses'], 'id'), true), 'The preview counts old rules, so it matches what members get');
+    $keep = api('PUT', "memberships/$plan_id", ['curriculum_item_ids' => [$science, $arts]]);
+    $kept = ohmylms_get_membership($plan_id);
+    ok($keep->get_status() === 200 && $keep->get_data()['curriculum_item_ids'] === [$science, $arts] && array_map('intval', (array) $kept->get_course_categories('edit')) === [(int) $legacy_term['term_id']] && array_map('intval', (array) $kept->get_course_tags('edit')) === [(int) $legacy_tag['term_id']], 'Editing a plan leaves its stored legacy rules alone, so members keep that access');
 
     // ---- Duplicating, exporting and importing a course ------------------------------------------
     wp_set_current_user($admin);

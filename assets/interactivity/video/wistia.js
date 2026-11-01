@@ -23,6 +23,7 @@ export function wistiaVideo( win, id, load = loadScript, wait = 15000 ) {
 		win._wq = win._wq || [];
 		win._wq.push( {
 			id,
+			/** @param {unknown} video Wistia handle. */
 			onReady( video ) {
 				clearTimeout( timer );
 				resolve( video );
@@ -55,20 +56,22 @@ export async function createAdapter( {
 	video.bind( 'play', () => events.emit( 'play', now() ) );
 	video.bind( 'pause', () => events.emit( 'pause', now() ) );
 	video.bind( 'end', () => events.emit( 'ended', now() ) );
-	video.bind( 'timechange', ( seconds ) =>
+	video.bind( 'timechange', ( /** @type {unknown} */ seconds ) =>
 		events.emit( 'time', Number( seconds ) || 0 )
 	);
-	video.bind( 'seek', ( current ) =>
+	video.bind( 'seek', ( /** @type {unknown} */ current ) =>
 		events.emit( 'seeked', Number( current ) || 0 )
 	);
-	video.bind( 'playbackratechange', ( rate ) =>
+	video.bind( 'playbackratechange', ( /** @type {unknown} */ rate ) =>
 		events.emit( 'rate', Number( rate ) || 1 )
 	);
-	video.bind( 'volumechange', ( volume, muted ) =>
-		events.emit( 'volume', {
-			volume: clampVolume( volume ),
-			muted: Boolean( muted ),
-		} )
+	video.bind(
+		'volumechange',
+		( /** @type {unknown} */ volume, /** @type {unknown} */ muted ) =>
+			events.emit( 'volume', {
+				volume: clampVolume( volume ),
+				muted: Boolean( muted ),
+			} )
 	);
 
 	/** @type {import('./adapter.js').Adapter} */

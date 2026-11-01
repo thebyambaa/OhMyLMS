@@ -2,8 +2,6 @@
 
 namespace OhMyLMS\Commerce;
 
-use GatewayPaypal;
-
 /**
  * Plugin ajax implementation.
  */

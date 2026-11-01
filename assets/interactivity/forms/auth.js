@@ -11,6 +11,22 @@
 /** @typedef {(event: Event) => void} EventHandler */
 
 /**
+ * @typedef {Object} AuthContext Context of a login or sign-up form.
+ * @property {string}  [authForm]   `login` or `signup`.
+ * @property {boolean} [authHidden] Hidden by the server until a link switches the view.
+ * @property {boolean} [busy]       A request is running.
+ * @property {string}  [error]      Error shown in the form.
+ * @property {boolean} [consent]    The sign-up terms box is checked.
+ */
+
+/**
+ * @typedef {Object} AuthState Store state.
+ * @property {string}                 [authView]       Form shown after a link switched the view.
+ * @property {string}                 [pendingMessage] Email verification notice after a sign-up.
+ * @property {Object<string, string>} [messages]       Translated messages.
+ */
+
+/**
  * @typedef {Object} AuthOutcome
  * @property {'redirect'|'pending'|'error'} type    What to do.
  * @property {string}                       [url]   Same-origin URL for `redirect`.
@@ -141,20 +157,20 @@ export function authDisplay( context, state ) {
 /**
  * Store definitions for login and sign-up, merged into `ohmylms/forms` by forms.js.
  *
- * @param {Object}                                                                                api               Runtime and SDK.
- * @param {() => Object}                                                                          api.getContext    `@wordpress/interactivity` getContext.
- * @param {() => {ref: HTMLElement}}                                                              api.getElement    `@wordpress/interactivity` getElement.
- * @param {(callback: EventHandler) => EventHandler}                                              api.withSyncEvent `@wordpress/interactivity` withSyncEvent.
- * @param {() => Object}                                                                          api.getState      Store state (`authView`, `pendingMessage`, `messages`).
- * @param {(options: Object) => Promise<{ok: boolean, data?: unknown, message?: string}>}         api.request       SDK `request()`.
- * @param {(form: HTMLFormElement, options?: {as?: string}) => Object}                            api.serializeForm SDK `serializeForm()`.
- * @param {(message: string, options?: Object) => unknown}                                        api.toast         SDK `toast()`.
- * @param {(target: EventTarget, name: string, detail?: Object, cancelable?: boolean) => boolean} api.emit          SDK `emit()`.
- * @param {(value: unknown) => string}                                                            api.plainText     SDK `plainText()`.
- * @param {(url: string) => void}                                                                 [api.navigate]    Page navigation (tests).
- * @param {() => string}                                                                          [api.here]        Current URL (tests).
- * @param {Document}                                                                              [api.doc]         Document (tests).
- * @param {(callback: () => void) => void}                                                        [api.later]       Deferred focus (tests).
+ * @param {Object}                                                                                                    api               Runtime and SDK.
+ * @param {() => AuthContext}                                                                                         api.getContext    `@wordpress/interactivity` getContext.
+ * @param {() => {ref: HTMLElement|null}}                                                                             api.getElement    `@wordpress/interactivity` getElement.
+ * @param {(callback: EventHandler) => EventHandler}                                                                  api.withSyncEvent `@wordpress/interactivity` withSyncEvent.
+ * @param {() => AuthState}                                                                                           api.getState      Store state (`authView`, `pendingMessage`, `messages`).
+ * @param {(options: import('../sdk.js').RequestOptions) => Promise<{ok: boolean, data?: unknown, message?: string}>} api.request       SDK `request()`.
+ * @param {(form: HTMLFormElement, options?: {as?: 'formdata'|'params'|'object'}) => unknown}                         api.serializeForm SDK `serializeForm()`.
+ * @param {(message: string, options?: import('../sdk.js').ToastOptions) => unknown}                                  api.toast         SDK `toast()`.
+ * @param {(target: EventTarget, name: string, detail?: Object, cancelable?: boolean) => boolean}                     api.emit          SDK `emit()`.
+ * @param {(value: unknown) => string}                                                                                api.plainText     SDK `plainText()`.
+ * @param {(url: string) => void}                                                                                     [api.navigate]    Page navigation (tests).
+ * @param {() => string}                                                                                              [api.here]        Current URL (tests).
+ * @param {Document}                                                                                                  [api.doc]         Document (tests).
+ * @param {(callback: () => void) => void}                                                                            [api.later]       Deferred focus (tests).
  * @return {{state: Object, actions: Object, callbacks: Object}} Definitions.
  */
 export function createAuth( {
@@ -173,12 +189,14 @@ export function createAuth( {
 	later = ( callback ) => setTimeout( callback, 50 ),
 } ) {
 	const messages = () => getState().messages || {};
+	/** @return {HTMLElement} Element of the running directive. */
+	const ref = () => /** @type {HTMLElement} */ ( getElement().ref );
 
 	/**
 	 * Show an error in the form's `aria-live` region, or as a toast for a form without one
 	 * (theme override copied before L5).
 	 *
-	 * @param {Object}          context Form context.
+	 * @param {AuthContext}     context Form context.
 	 * @param {HTMLFormElement} form    Form.
 	 * @param {string}          message Message.
 	 */
@@ -214,14 +232,14 @@ export function createAuth( {
 	};
 
 	/**
-	 * @param {Object}          context Form context.
+	 * @param {AuthContext}     context Form context.
 	 * @param {HTMLFormElement} form    Form.
 	 * @param {AuthKind}        kind    Form kind.
 	 */
 	const send = async ( context, form, kind ) => {
 		const result = await request( {
 			action: AUTH_ACTIONS[ kind ],
-			data: serializeForm( form ),
+			data: /** @type {FormData} */ ( serializeForm( form ) ),
 		} );
 		const outcome = authOutcome( result, here(), messages() );
 		if ( 'redirect' === outcome.type ) {
@@ -279,16 +297,14 @@ export function createAuth( {
 		actions: {
 			showSignup: withSyncEvent( ( event ) => {
 				event.preventDefault();
-				show( 'signup', getElement().ref );
+				show( 'signup', ref() );
 			} ),
 			showLogin: withSyncEvent( ( event ) => {
 				event.preventDefault();
-				show( 'login', getElement().ref );
+				show( 'login', ref() );
 			} ),
 			submit: withSyncEvent( ( event ) => {
-				const form = /** @type {HTMLFormElement} */ (
-					getElement().ref
-				);
+				const form = /** @type {HTMLFormElement} */ ( ref() );
 				const kind = formKind( form );
 				// The opt-in React sign-up fields (source assets) submit the form themselves.
 				if (
@@ -305,7 +321,9 @@ export function createAuth( {
 				}
 				const error = validateAuth(
 					kind,
-					serializeForm( form, { as: 'object' } ),
+					/** @type {Object<string, unknown>} */ (
+						serializeForm( form, { as: 'object' } )
+					),
 					messages()
 				);
 				if ( error ) {

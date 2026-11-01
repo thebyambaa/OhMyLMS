@@ -1,79 +1,79 @@
 /* Shared editor shell: header + main + settings sidebar. Uses existing --oml-* tokens only. */
-.ohmylms-app .oml-editor-breadcrumb { margin: 0 0 var(--oml-space-2, 8px); }
+.ohmylms-app .oml-editor-breadcrumb { margin: 0 0 var(--oml-space-2); }
 .ohmylms-app .oml-editor-breadcrumb a::before { content: "\2190\00a0"; }
-.ohmylms-app .oml-editor-tabs { display: flex; gap: var(--oml-space-1, 4px); border-bottom: 1px solid var(--oml-border, #c3c4c7); margin: 0 0 var(--oml-space-4, 16px); }
-.ohmylms-app .oml-editor-tab { padding: 8px 14px; text-decoration: none; color: var(--oml-text, #1d2327); border-bottom: 2px solid transparent; margin-bottom: -1px; font-weight: 500; }
-.ohmylms-app .oml-editor-tab:hover { color: var(--oml-primary, #2271b1); }
-.ohmylms-app .oml-editor-tab.is-active { border-bottom-color: var(--oml-primary, #2271b1); color: var(--oml-primary, #2271b1); }
-.ohmylms-app .oml-editor-header { position: sticky; top: 32px; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: var(--oml-space-3, 12px); flex-wrap: wrap; padding: var(--oml-space-3, 12px) var(--oml-space-4, 16px); margin: 0 0 var(--oml-space-4, 16px); background: var(--oml-surface, #fff); border: 1px solid var(--oml-border, #c3c4c7); border-radius: var(--oml-radius-card, 4px); box-shadow: var(--oml-shadow-sm, 0 1px 2px rgba(0,0,0,.05)); }
-.ohmylms-app .oml-editor-header__title { display: flex; align-items: center; gap: var(--oml-space-2, 8px); flex-wrap: wrap; min-width: 0; }
-.ohmylms-app .oml-editor-header__title h2 { margin: 0; font-size: var(--oml-font-size-lg, 18px); color: var(--oml-heading, #1d2327); }
-.ohmylms-app .oml-editor-header__actions { display: flex; align-items: center; gap: var(--oml-space-2, 8px); }
-.ohmylms-app .oml-editor-status { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: var(--oml-font-size-xs, 12px); background: var(--oml-subtle, #f0f0f1); color: var(--oml-text, #1d2327); }
-.ohmylms-app .oml-editor-status--publish { background: var(--oml-success-soft, #edfaef); color: var(--oml-success, #00a32a); }
-.ohmylms-app .oml-editor-status--draft, .ohmylms-app .oml-editor-status--pending { background: var(--oml-warning-soft, #fcf9e8); color: var(--oml-text); }
-.ohmylms-app .oml-editor-saved { font-size: var(--oml-font-size-xs, 12px); color: var(--oml-muted, #646970); }
-.ohmylms-app .oml-editor-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: var(--oml-space-4, 16px); align-items: start; }
+.ohmylms-app .oml-editor-tabs { display: flex; gap: var(--oml-space-1); border-bottom: 1px solid var(--oml-border); margin: 0 0 var(--oml-space-4); }
+.ohmylms-app .oml-editor-tab { padding: var(--oml-space-2) var(--oml-space-3); text-decoration: none; color: var(--oml-text); border-bottom: 2px solid transparent; margin-bottom: -1px; font-weight: 500; }
+.ohmylms-app .oml-editor-tab:hover { color: var(--oml-primary); }
+.ohmylms-app .oml-editor-tab.is-active { border-bottom-color: var(--oml-primary); color: var(--oml-primary); }
+.ohmylms-app .oml-editor-header { position: sticky; top: 32px; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: var(--oml-space-3); flex-wrap: wrap; padding: var(--oml-space-3) var(--oml-space-4); margin: 0 0 var(--oml-space-4); background: var(--oml-surface); border: 1px solid var(--oml-border); border-radius: var(--oml-radius-card); box-shadow: var(--oml-shadow-sm); }
+.ohmylms-app .oml-editor-header__title { display: flex; align-items: center; gap: var(--oml-space-2); flex-wrap: wrap; min-width: 0; }
+.ohmylms-app .oml-editor-header__title h2 { margin: 0; font-size: var(--oml-font-size-lg); color: var(--oml-heading); }
+.ohmylms-app .oml-editor-header__actions { display: flex; align-items: center; gap: var(--oml-space-2); }
+.ohmylms-app .oml-editor-status { display: inline-block; padding: 2px var(--oml-space-2); border-radius: var(--oml-radius-pill, 999px); font-size: var(--oml-font-size-xs); background: var(--oml-subtle); color: var(--oml-text); }
+.ohmylms-app .oml-editor-status--publish { background: var(--oml-success-soft); color: var(--oml-success); }
+.ohmylms-app .oml-editor-status--draft, .ohmylms-app .oml-editor-status--pending { background: var(--oml-warning-soft); color: var(--oml-text); }
+.ohmylms-app .oml-editor-saved { font-size: var(--oml-font-size-xs); color: var(--oml-muted); }
+.ohmylms-app .oml-editor-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: var(--oml-space-4); align-items: start; }
 @media (max-width: 1100px) { .ohmylms-app .oml-editor-grid { grid-template-columns: 1fr; } }
-.ohmylms-app .oml-editor-aside { position: sticky; top: 112px; display: flex; flex-direction: column; gap: var(--oml-space-3, 12px); }
-.ohmylms-app .oml-editor-aside > .components-panel__body { background: var(--oml-surface, #fff); border: 1px solid var(--oml-border, #c3c4c7); border-radius: var(--oml-radius-card, 4px); }
-.ohmylms-app .oml-editor-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: var(--oml-space-4, 16px); align-items: start; }
-.ohmylms-app .oml-editor fieldset:not(.oml-outline-units), .ohmylms-app .oml-editor-form fieldset { background: var(--oml-surface, #fff); border: 1px solid var(--oml-border, #c3c4c7); border-radius: var(--oml-radius-card, 4px); padding: var(--oml-space-4, 16px); margin: 0 0 var(--oml-space-4, 16px); min-width: 0; }
-.ohmylms-app .oml-editor fieldset > legend { float: left; width: 100%; padding: 0 0 var(--oml-space-3, 12px); margin: 0 0 var(--oml-space-3, 12px); border-bottom: 1px solid var(--oml-border, #c3c4c7); font-weight: 600; font-size: 14px; color: var(--oml-heading, #1d2327); }
+.ohmylms-app .oml-editor-aside { position: sticky; top: 112px; display: flex; flex-direction: column; gap: var(--oml-space-3); }
+.ohmylms-app .oml-editor-aside > .components-panel__body { background: var(--oml-surface); border: 1px solid var(--oml-border); border-radius: var(--oml-radius-card); }
+.ohmylms-app .oml-editor-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: var(--oml-space-4); align-items: start; }
+.ohmylms-app .oml-editor fieldset:not(.oml-outline-units), .ohmylms-app .oml-editor-form fieldset { background: var(--oml-surface); border: 1px solid var(--oml-border); border-radius: var(--oml-radius-card); padding: var(--oml-space-4); margin: 0 0 var(--oml-space-4); min-width: 0; }
+.ohmylms-app .oml-editor fieldset > legend { float: left; width: 100%; padding: 0 0 var(--oml-space-3); margin: 0 0 var(--oml-space-3); border-bottom: 1px solid var(--oml-border); font-weight: 600; font-size: 14px; color: var(--oml-heading); }
 .ohmylms-app .oml-editor fieldset > legend + * { clear: both; }
-.ohmylms-app .oml-editor .components-base-control { margin-bottom: var(--oml-space-3, 12px); }
+.ohmylms-app .oml-editor .components-base-control { margin-bottom: var(--oml-space-3); }
 .ohmylms-app .oml-editor-main .components-base-control input, .ohmylms-app .oml-editor-main textarea { width: 100%; }
-.ohmylms-app .oml-editor-more { border-top: 1px dashed var(--oml-border, #c3c4c7); padding-top: var(--oml-space-3, 12px); }
-.ohmylms-app .oml-editor-more > summary { cursor: pointer; font-weight: 500; color: var(--oml-link, #2271b1); margin-bottom: var(--oml-space-3, 12px); }
-.ohmylms-app .oml-editor-hint { margin: 0 0 var(--oml-space-3, 12px); color: var(--oml-muted, #646970); }
+.ohmylms-app .oml-editor-more { border-top: 1px dashed var(--oml-border); padding-top: var(--oml-space-3); }
+.ohmylms-app .oml-editor-more > summary { cursor: pointer; font-weight: 500; color: var(--oml-link); margin-bottom: var(--oml-space-3); }
+.ohmylms-app .oml-editor-hint { margin: 0 0 var(--oml-space-3); color: var(--oml-muted); }
 .ohmylms-app .oml-editor-links { margin: 0; }
 /* Curriculum */
 .ohmylms-app .oml-outline-units { border: 0; padding: 0; margin: 0; }
-.ohmylms-app .oml-unit { background: var(--oml-surface, #fff); border: 1px solid var(--oml-border, #c3c4c7); border-radius: var(--oml-radius-card, 4px); margin: 0 0 var(--oml-space-3, 12px); }
-.ohmylms-app .oml-unit__header { display: flex; align-items: center; gap: var(--oml-space-2, 8px); padding: 10px var(--oml-space-3, 12px); background: var(--oml-subtle, #f6f7f7); border-bottom: 1px solid var(--oml-border, #c3c4c7); border-radius: var(--oml-radius-card, 4px) var(--oml-radius-card, 4px) 0 0; }
-.ohmylms-app .oml-unit__number:not(:empty) { font-weight: 600; color: var(--oml-muted, #646970); }
+.ohmylms-app .oml-unit { background: var(--oml-surface); border: 1px solid var(--oml-border); border-radius: var(--oml-radius-card); margin: 0 0 var(--oml-space-3); }
+.ohmylms-app .oml-unit__header { display: flex; align-items: center; gap: var(--oml-space-2); padding: var(--oml-space-2) var(--oml-space-3); background: var(--oml-subtle); border-bottom: 1px solid var(--oml-border); border-radius: var(--oml-radius-card) var(--oml-radius-card) 0 0; }
+.ohmylms-app .oml-unit__number:not(:empty) { font-weight: 600; color: var(--oml-muted); }
 .ohmylms-app .oml-unit__title { margin: 0; font-size: 14px; flex: 1; min-width: 0; }
-.ohmylms-app .oml-unit__count { font-size: 12px; color: var(--oml-muted, #646970); }
+.ohmylms-app .oml-unit__count { font-size: 12px; color: var(--oml-muted); }
 .ohmylms-app .oml-unit__tools, .ohmylms-app .oml-outline-item__tools { display: flex; align-items: center; gap: 2px; }
-.ohmylms-app .oml-unit__details { padding: var(--oml-space-3, 12px); border-bottom: 1px solid var(--oml-border, #c3c4c7); background: var(--oml-surface, #fff); }
-.ohmylms-app .oml-unit__row { display: grid; grid-template-columns: 1fr 140px; gap: var(--oml-space-3, 12px); }
+.ohmylms-app .oml-unit__details { padding: var(--oml-space-3); border-bottom: 1px solid var(--oml-border); background: var(--oml-surface); }
+.ohmylms-app .oml-unit__row { display: grid; grid-template-columns: 1fr 140px; gap: var(--oml-space-3); }
 .ohmylms-app .oml-unit__items { list-style: none; margin: 0; padding: 0; }
-.ohmylms-app .oml-unit__empty { padding: 12px; color: var(--oml-muted, #646970); font-style: italic; margin: 0; }
-.ohmylms-app .oml-outline-item { display: flex; align-items: center; gap: var(--oml-space-2, 8px); padding: 6px var(--oml-space-3, 12px); margin: 0; border-bottom: 1px solid var(--oml-subtle, #f0f0f1); }
-.ohmylms-app .oml-outline-item:hover { background: var(--oml-subtle, #f6f7f7); }
-.ohmylms-app .oml-outline-item__icon { color: var(--oml-muted, #646970); }
+.ohmylms-app .oml-unit__empty { padding: var(--oml-space-3); color: var(--oml-muted); font-style: italic; margin: 0; }
+.ohmylms-app .oml-outline-item { display: flex; align-items: center; gap: var(--oml-space-2); padding: var(--oml-space-1) var(--oml-space-3); margin: 0; border-bottom: 1px solid var(--oml-subtle); }
+.ohmylms-app .oml-outline-item:hover { background: var(--oml-subtle); }
+.ohmylms-app .oml-outline-item__icon { color: var(--oml-muted); }
 .ohmylms-app .oml-outline-item__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ohmylms-app .oml-outline-item__type { font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--oml-subtle, #f0f0f1); color: var(--oml-text, #1d2327); }
-.ohmylms-app .oml-outline-item__type--quiz { background: var(--oml-info-soft, #e5f5fa); }
-.ohmylms-app .oml-outline-item__tools .components-base-control { margin: 0 4px 0 0; }
+.ohmylms-app .oml-outline-item__type { font-size: 11px; padding: 1px var(--oml-space-2); border-radius: var(--oml-radius-pill, 999px); background: var(--oml-subtle); color: var(--oml-text); }
+.ohmylms-app .oml-outline-item__type--quiz { background: var(--oml-info-soft); }
+.ohmylms-app .oml-outline-item__tools .components-base-control { margin: 0 var(--oml-space-1) 0 0; }
 .ohmylms-app .oml-outline-item__tools select { max-width: 160px; }
-.ohmylms-app .oml-unit__add { display: flex; gap: var(--oml-space-1, 4px); padding: 6px var(--oml-space-2, 8px); }
+.ohmylms-app .oml-unit__add { display: flex; gap: var(--oml-space-1); padding: var(--oml-space-1) var(--oml-space-2); }
 .ohmylms-app .oml-outline-add-unit { width: 100%; justify-content: center; border-style: dashed; }
 /* Question workspace */
 .ohmylms-app .oml-editor-grid.is-aside-closed { grid-template-columns: minmax(0, 1fr); }
-.ohmylms-app .oml-editor-aside > section, .ohmylms-app .oml-editor-aside > .oml-preview { background: var(--oml-surface, #fff); border: 1px solid var(--oml-border, #c3c4c7); border-radius: var(--oml-radius-card, 4px); padding: var(--oml-space-3, 12px); }
-.ohmylms-app .oml-editor-aside h3 { margin: 0 0 var(--oml-space-2, 8px); font-size: 13px; text-transform: uppercase; letter-spacing: .02em; color: var(--oml-muted, #646970); }
+.ohmylms-app .oml-editor-aside > section, .ohmylms-app .oml-editor-aside > .oml-preview { background: var(--oml-surface); border: 1px solid var(--oml-border); border-radius: var(--oml-radius-card); padding: var(--oml-space-3); }
+.ohmylms-app .oml-editor-aside h3 { margin: 0 0 var(--oml-space-2); font-size: 13px; text-transform: uppercase; letter-spacing: .02em; color: var(--oml-muted); }
 .ohmylms-app .oml-editor-aside { max-height: calc(100vh - 140px); overflow: auto; }
-.ohmylms-app .oml-editor-form > .components-button[type="submit"] { margin-top: var(--oml-space-2, 8px); }
+.ohmylms-app .oml-editor-form > .components-button[type="submit"] { margin-top: var(--oml-space-2); }
 /* Variables panel */
-.ohmylms-app .oml-vars__table { margin: 0 0 var(--oml-space-2, 8px); }
+.ohmylms-app .oml-vars__table { margin: 0 0 var(--oml-space-2); }
 .ohmylms-app .oml-vars__table td { vertical-align: top; }
 .ohmylms-app .oml-vars__table td:first-child { width: 90px; }
 .ohmylms-app .oml-vars__table td:nth-child(2) { width: 150px; }
 .ohmylms-app .oml-vars__table td:last-child { width: 36px; }
-.ohmylms-app .oml-vars__values { display: flex; gap: var(--oml-space-2, 8px); flex-wrap: wrap; }
+.ohmylms-app .oml-vars__values { display: flex; gap: var(--oml-space-2); flex-wrap: wrap; }
 .ohmylms-app .oml-vars__values .components-base-control { margin: 0; flex: 1 1 80px; }
 .ohmylms-app .oml-vars .components-base-control input { width: 100%; }
-.ohmylms-app .oml-vars__set { border: 1px dashed var(--oml-border, #c3c4c7) !important; padding: var(--oml-space-3, 12px) !important; }
-.ohmylms-app .oml-vars__rule { display: grid; grid-template-columns: 160px 1fr 36px; gap: var(--oml-space-2, 8px); align-items: end; margin-bottom: var(--oml-space-2, 8px); }
+.ohmylms-app .oml-vars__set { border: 1px dashed var(--oml-border) !important; padding: var(--oml-space-3) !important; }
+.ohmylms-app .oml-vars__rule { display: grid; grid-template-columns: 160px 1fr 36px; gap: var(--oml-space-2); align-items: end; margin-bottom: var(--oml-space-2); }
 .ohmylms-app .oml-vars__rule .components-base-control { margin: 0; }
-.ohmylms-app .oml-vars__actions { display: flex; gap: var(--oml-space-2, 8px); margin: var(--oml-space-2, 8px) 0; }
-.ohmylms-app .oml-vars__samples tr.is-error td { color: var(--oml-danger, #d63638); }
+.ohmylms-app .oml-vars__actions { display: flex; gap: var(--oml-space-2); margin: var(--oml-space-2) 0; }
+.ohmylms-app .oml-vars__samples tr.is-error td { color: var(--oml-danger); }
 .ohmylms-app .oml-vars__samples code { white-space: nowrap; }
 
 /* Hot text editor option list: same token palette as the learner view. */
-.oml-hot-text-options { --oml-option-color: var(--oml-primary); margin: var(--oml-space-3, 12px) 0; padding-left: var(--oml-space-4, 16px); }
-.oml-hot-text-options li { display: flex; gap: var(--oml-space-3, 12px); align-items: center; border-left: 4px solid var(--oml-option-color); padding-left: var(--oml-space-2, 8px); margin-bottom: var(--oml-space-1, 4px); }
+.oml-hot-text-options { --oml-option-color: var(--oml-primary); margin: var(--oml-space-3) 0; padding-left: var(--oml-space-4); }
+.oml-hot-text-options li { display: flex; gap: var(--oml-space-3); align-items: center; border-left: 4px solid var(--oml-option-color); padding-left: var(--oml-space-2); margin-bottom: var(--oml-space-1); }
 .oml-hot-text-options .oml-ht-color-1 { --oml-option-color: var(--oml-success); }
 .oml-hot-text-options .oml-ht-color-2 { --oml-option-color: var(--oml-danger); }
 .oml-hot-text-options .oml-ht-color-3 { --oml-option-color: var(--oml-info); }
@@ -81,5 +81,5 @@
 .oml-hot-text-options .oml-ht-color-5 { --oml-option-color: var(--oml-heading); }
 
 /* Course editor top bar: breadcrumb left, View course / Preview right (Outline and Publish tabs). */
-.ohmylms-app .oml-editor-topbar { display: flex; align-items: center; justify-content: space-between; gap: var(--oml-space-3, 12px); }
+.ohmylms-app .oml-editor-topbar { display: flex; align-items: center; justify-content: space-between; gap: var(--oml-space-3); }
 .ohmylms-app .oml-editor-topbar .oml-editor-breadcrumb { margin: 0; }

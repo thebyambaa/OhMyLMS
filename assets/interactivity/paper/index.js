@@ -12,7 +12,8 @@ const paper = store(
 		getContext,
 		getElement,
 		withSyncEvent,
-		state: () => paper.state,
+		state: /** @return {import('./view.js').PaperState} State. */ () =>
+			paper.state,
 		storage: window.sessionStorage,
 		// A native dialog blocks until answered, which is what a final submit needs.
 		// eslint-disable-next-line no-alert

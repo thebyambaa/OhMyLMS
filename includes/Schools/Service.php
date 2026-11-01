@@ -1,6 +1,8 @@
 <?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 namespace OhMyLMS\Schools;
 
+use OhMyLMS\I18n\RecipientLocale;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -505,7 +507,17 @@ final class Service {
 		$url   = \OhMyLMS\Student\Hub::invitation_url( $token, $role );
 		// Return the link to the authorized staff member. Mail is sent only on an explicit UI action.
 		if ( ! empty( $data['send_email'] ) && 'activation' !== $role ) {
-			$sent = wp_mail( $email, __( 'Your OhMyLMS invitation', 'ohmylms' ), sprintf( __( 'Open this invitation within 48 hours: %s', 'ohmylms' ), $url ) );
+			$sent = RecipientLocale::run(
+				$email,
+				static function () use ( $email, $url ) {
+					return wp_mail(
+						$email,
+						__( 'Your OhMyLMS invitation', 'ohmylms' ),
+						/* translators: %s: invitation link. */
+						sprintf( __( 'Open this invitation within 48 hours: %s', 'ohmylms' ), $url )
+					);
+				}
+			);
 		}
 		self::audit( $school, 'invitation_created', $id );
 		return array(

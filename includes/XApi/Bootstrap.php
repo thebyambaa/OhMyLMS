@@ -20,7 +20,7 @@ final class Bootstrap {
 	 */
 	public static function init() {
 		Integration::init();
-		add_action( 'rest_api_init', array( SettingsController::class, 'register_routes' ) );
+		add_action( 'rest_api_init', array( self::class, 'register_routes' ) );
 		add_action( 'init', array( Schema::class, 'install' ), 6 );
 		add_filter( 'cron_schedules', array( Processor::class, 'schedules' ) ); // phpcs:ignore WordPress.WP.CronInterval.ChangeDetected -- a one-minute interval is required for timely delivery.
 		add_action( 'init', array( Processor::class, 'schedule' ), 31 );
@@ -31,5 +31,12 @@ final class Bootstrap {
 			AdminPage::init();
 		}
 		do_action( 'ohmylms_xapi_loaded' );
+	}
+
+	/**
+	 * Register the Settings tab routes ({@see SettingsController}).
+	 */
+	public static function register_routes() {
+		( new SettingsController() )->register_routes();
 	}
 }

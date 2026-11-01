@@ -1,6 +1,9 @@
 import { get } from '../../lib/api';
 import { getCollection } from '../../lib/api/collection';
 import { count, invalidResponse, positiveId, record } from './model';
+import { createValidators } from '../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
 
 /** Page size of every report table. The server allows at most 50. */
 export const REPORT_PER_PAGE = 10;
@@ -69,12 +72,6 @@ export interface SkillRow {
 	last_evidence_at: string | null;
 }
 
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
-}
 function nullableText( value: unknown ): string | null {
 	return null === value ? null : text( value );
 }

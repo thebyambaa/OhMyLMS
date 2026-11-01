@@ -13,7 +13,7 @@ import { Pagination } from '../../components/Pagination';
 import { enroll, setBlocked, unenroll } from './api';
 import { enrollmentStatus, formatDate, validateEnrollment } from './model';
 import { reportPath } from './report';
-import { useOperation } from './useOperation';
+import { useOperation } from '../../hooks/useOperation';
 import { useCourseOptions, useEnrollments, useStudent } from './useStudents';
 import type { Enrollment, ProgressFilter } from './types';
 

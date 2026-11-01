@@ -2,7 +2,8 @@
 
 Typed screens in `admin.php?page=ohmylms-app` that replace legacy Content Hub curriculum screens.
 Each screen's extension route is its legacy route. All routes are under `ohmylms/v1` and require
-the curriculum administrator permission (`Curriculum\Access::admin`), enforced on the server.
+the curriculum administrator permission (`Curriculum\Access::admin`), enforced on the server,
+except the skill map overlay routes, which also serve scoped staff (see "Learner overlays").
 
 | Screen | App route / extension route | Feature |
 | --- | --- | --- |
@@ -34,9 +35,59 @@ courses, skills, banks, exams, a syllabus's course and the skills inside groups 
 - `GET /syllabus-comparison/skill-map`: required `subject` (1–190 characters); optional
   `syllabus_id` and `student_id` (non-negative integers; `''` means none, as legacy clients send).
 
-The screen shows a domain × starting-level table, syllabus coverage, unplaced skills, link checks
-and a selected skill's prerequisites and dependents. It does not show learner overlays or the
-pairwise comparison tab; those stay in the legacy map and the syllabus editor's comparison dialog.
+The screen shows a domain × starting-level table, syllabus coverage, unplaced skills, link checks,
+a selected skill's prerequisites and dependents, and the learner overlay below. The pairwise
+comparison tab stays in the syllabus editor's comparison dialog. The map's own `student_id`
+argument (pooled `Performance\Guidance` levels, administrators only) is kept for the MCP
+`get_skill_map` tool; the screen uses the overlay routes instead.
+
+## Learner overlays on the skill map
+
+The legacy map had a "Show a learner" search (any user, through `/wp/v2/users`) that coloured each
+skill by that learner's level, added a legend and showed strength per domain; it needed a site
+administrator. The rebuilt overlay also takes a class or school, follows the dashboard scopes, and
+uses the five levels of the dashboard mastery heatmap (`Dashboard\Widgets\MasteryLevels` over
+`student_skill_state`: Mastered from 95 %, Proficient from 80 %, Familiar from 50 %, Attempted
+below that with evidence, Not started without; the `ohmylms_dashboard_mastery_thresholds` filter
+applies).
+
+Both routes are registered by `Rest\V1\SkillMapOverlayController`; the rules live in
+`Dashboard\SkillMapOverlay` and the reads in `Dashboard\MasteryRepository` (`learner_percentages`,
+`level_figures`). Permission: curriculum administrators (`Curriculum\Access::can_manage`, the
+`ohmylms_can_manage_curriculum` filter) or users with dashboard access (`ohmylms_view_dashboard`:
+site administrators, school administrators and teachers with a scope); others get 401/403
+`ohmylms_skill_overlay_cannot_view`. Site and curriculum administrators see every learner; school
+administrators and teachers only the learners of their scopes (`Dashboard\ScopeResolver`). Answers
+carry `Cache-Control: private, no-store`.
+
+| Route | Contract |
+| --- | --- |
+| `GET /skill-map/overlay` | Required `subject` (1–190) and `target`: `learner:<id>`, `class:<id>` or `school:<id>` (anything else, `all` included, is 400 `rest_invalid_param`). Returns `subject`, `target` (`key`, `type`, `id`, `label`, `school` for a class, `learners`, `counted`), `skills` (only skills with evidence: `id`, `percent`, `level`, `assessed`, `distribution` = learners per level), `counts` (skills of the map per level, highest first), `total`, `levels` (the heatmap legend: `id`, `label`, `min`), `links` and `limits.learners` (1000). |
+| `GET /skill-map/overlay/targets` | Optional `search` (≤ 100). Returns `groups` (the user's school and class scopes, never `all`, matching the search case-insensitively: `key`, `type`, `label`, `school`), `groups_total`, `learners` (only when the search has at least `min_search` = 2 characters: `id` and display `name`, at most `limit` = 20, by name; staff only find learners of their scopes). |
+
+- **Learner**: `percent` is the learner's rounded score, `level` its heatmap level and `distribution`
+  holds one learner. A staff member asking for a learner outside their scopes, or for an ID that does
+  not exist, gets the same 403 `ohmylms_skill_overlay_forbidden`; administrators get 404
+  `ohmylms_skill_overlay_not_found` for a missing user.
+- **Class or school**: resolved like the dashboard `scope` argument (403
+  `ohmylms_dashboard_forbidden_scope` outside the user's scopes; 404 `ohmylms_dashboard_scope_not_found`
+  for administrators). `percent` is the average of the counted learners with learners without
+  evidence as 0, exactly as a heatmap cell; at most 1000 learners are counted (`counted` < `learners`).
+- **Links** (app routes, or null when the user cannot open them): `transcript`
+  (`/content-hub/gradebook/student?scope=…&learner=…`, in `all` for site administrators or the first
+  scope holding the learner, for users who may open the Gradebook), `report`
+  (`/students/<id>/report`, site administrators) and, for groups, `gradebook`
+  (`/content-hub/gradebook/mastery?scope=…`).
+- No e-mail addresses or logins are returned; administrators' learner search also matches e-mail.
+
+The screen: a "Show learner mastery" toggle (nothing is requested until it is on), a search for
+classes, schools and learners, then each skill shows a patterned swatch (solid, stripes, dots,
+hatching, dashed outline, as on the heatmap) and its level and percentage in text; each domain
+shows how many of its skills are Proficient or above; the legend counts skills per level; the
+selected skill gives the learner's level or the group's learners per level; links open the
+transcript, student report or gradebook mastery. The chosen target is in the address
+(`&overlay=learner:12`). The screen itself still needs the curriculum administrator, as the map
+route does; the overlay routes already serve scoped staff.
 
 ## Subject profiles
 
@@ -115,6 +166,16 @@ denial, skill map validation and legacy empty IDs, profile schema rejections wit
 stale save/default, removal, bundle schema rejections, member validation, stale update/publish/
 delete, published-bundle emptying and editor denial. Fixtures are tagged and removed in `finally`;
 the subject profile option is restored. `features/curriculum/*.test.tsx` cover the screens.
+
+`OHMYLMS_SKILL_OVERLAY_TEST=1` runs `tests/php/skill-map-overlay-integration.php` (92 checks) on
+the Local site: route registration and argument rejection, anonymous/learner refusal, learner and
+class/school payloads (levels, rounding, rows without evidence, averages, distributions, counts,
+legend, links), administrators, a curriculum administrator without scopes, school administrators
+and teachers kept to their scopes (out-of-scope and missing learners answer alike), the target
+search (scoped, names only, bounded) and no e-mails. Fixtures reuse
+`tests/php/support/mastery-fixture.php` and are removed in `finally`.
+`features/curriculum/skill-map-overlay.test.ts` and `SkillMapPage.test.tsx` cover the parser and
+the overlay on the screen.
 
 `OHMYLMS_CURRICULUM_COMPARE_TEST=1` runs `tests/php/curriculum-compare-rest-integration.php`:
 route registration, editor/subscriber/anonymous refusal, schema rejections, group save and stale

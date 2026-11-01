@@ -1,4 +1,7 @@
 import { invalidResponse, record } from '../model';
+import { createValidators } from '../../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
 
 export type CheckStatus = 'ok' | 'warning' | 'error';
 
@@ -23,13 +26,6 @@ export interface SiteHealth {
 }
 
 const STATUSES: readonly CheckStatus[] = [ 'ok', 'warning', 'error' ];
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
-}
 
 function optional( value: unknown ): string | null {
 	return null === value || undefined === value ? null : text( value );

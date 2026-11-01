@@ -18,6 +18,7 @@ import { createAuth } from './forms/auth.js';
  * Learner form helpers, login and sign-up. Markup is decorated by OhMyLMS\Extensions\Chrome::forms()
  * and OhMyLMS\Extensions\AuthForms::decorate().
  */
+/** @type {ReturnType<typeof store>} */
 let forms = null;
 const fields = createForms( { getContext, getElement, withSyncEvent } );
 const auth = createAuth( {

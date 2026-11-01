@@ -186,5 +186,15 @@ do_action( 'ohmylms_before_edit_account_form' );
 
 		<?php do_action( 'ohmylms_edit_account_form_end' ); ?>
 	</form>
+
+	<?php $language_switcher = ohmylms_get_language_switcher( array( 'label' => __( 'Interface language', 'ohmylms' ) ) ); ?>
+	<?php if ( '' !== $language_switcher ) : ?>
+		<div class="ohmylms-student-account account-language">
+			<h6 class="account-title">
+				<?php echo esc_html__( 'Language', 'ohmylms' ); ?>
+			</h6>
+			<?php echo $language_switcher; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped by OhMyLMS\I18n\Switcher::render(). ?>
+		</div>
+	<?php endif; ?>
 </div>
 

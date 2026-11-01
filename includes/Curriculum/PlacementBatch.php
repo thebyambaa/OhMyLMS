@@ -8,6 +8,7 @@
 namespace OhMyLMS\Curriculum;
 
 use OhMyLMS\Skills\Taxonomy;
+use OhMyLMS\Utility\Lock;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -139,28 +140,32 @@ final class PlacementBatch {
 			}
 			$checked[ $id ] = array( $placement, (string) ( $item['expected_revision'] ?? '' ) );
 		}
-		$lock = SkillMappings::LOCK . '-' . md5( $wpdb->prefix );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Non-cacheable advisory lock shared with shared-skill saves.
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) ) {
-			return Access::error( 'ohmylms_mapping_busy', __( 'Another mapping change is being saved. Try again.', 'ohmylms' ), 409 );
-		}
-		try {
-			$stale = array();
-			foreach ( $checked as $id => $entry ) {
-				$current = Comparison::shared_skill( $id );
-				if ( ! $current || ! hash_equals( $current['revision'], $entry[1] ) ) {
-					$stale[] = $id;
+		// The advisory lock is shared with shared-skill saves.
+		$stored = Lock::with(
+			SkillMappings::LOCK . '-' . md5( $wpdb->prefix ),
+			5,
+			static function () use ( $checked ) {
+				$stale = array();
+				foreach ( $checked as $id => $entry ) {
+					$current = Comparison::shared_skill( $id );
+					if ( ! $current || ! hash_equals( $current['revision'], $entry[1] ) ) {
+						$stale[] = $id;
+					}
 				}
+				if ( $stale ) {
+					return Access::error( 'ohmylms_shared_stale', __( 'Some skills changed after you loaded them. Reload them before saving.', 'ohmylms' ), 409, array( 'skill_ids' => $stale ) );
+				}
+				foreach ( $checked as $id => $entry ) {
+					Comparison::store_placement( $id, $entry[0] );
+				}
+				return true;
+			},
+			static function () {
+				return Access::error( 'ohmylms_mapping_busy', __( 'Another mapping change is being saved. Try again.', 'ohmylms' ), 409 );
 			}
-			if ( $stale ) {
-				return Access::error( 'ohmylms_shared_stale', __( 'Some skills changed after you loaded them. Reload them before saving.', 'ohmylms' ), 409, array( 'skill_ids' => $stale ) );
-			}
-			foreach ( $checked as $id => $entry ) {
-				Comparison::store_placement( $id, $entry[0] );
-			}
-		} finally {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Release the advisory lock.
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+		);
+		if ( is_wp_error( $stored ) ) {
+			return $stored;
 		}
 		return array(
 			'items' => array_map(

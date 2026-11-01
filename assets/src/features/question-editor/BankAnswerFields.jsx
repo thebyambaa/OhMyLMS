@@ -26,22 +26,26 @@ import {
 } from './VisualEditors';
 import { QuestionMediaUpload as MediaUpload } from './QuestionMediaUpload';
 import { moveOption } from './model.mjs';
-import { RichContentControl } from '../math/RichContentControl';
+import { RichContentControl } from '../math/public.mjs';
 import { ExtensionBoundary } from '../../app/extensions/ExtensionBoundary';
+
+/** @typedef {import('./editorTypes').Data} Data */
+/** @typedef {import('./editorTypes').OnPatch} OnPatch */
+/** @typedef {import('./editorTypes').EditorComponent} EditorComponent */
 
 /**
  * Private answer controls used by the question block; they save through the assessment writer.
- * @param root0
- * @param root0.type
- * @param root0.options
- * @param root0.settings
- * @param root0.onChange
- * @param root0.prompt
- * @param root0.mainStatement
- * @param root0.collapseAnswerToolbar
- * @param root0.compactActions
- * @param root0.showAnswerToolbar
- * @param root0.question
+ * @param {Object}  root0
+ * @param {string}  root0.type
+ * @param {Data[]}  [root0.options]
+ * @param {Data}    root0.settings
+ * @param {OnPatch} root0.onChange
+ * @param {string}  [root0.prompt]
+ * @param {boolean} [root0.mainStatement]
+ * @param {boolean} [root0.collapseAnswerToolbar]
+ * @param {boolean} [root0.compactActions]
+ * @param {boolean} [root0.showAnswerToolbar]
+ * @param {Data}    [root0.question]
  */
 export function BankAnswerFields( {
 	type,
@@ -55,7 +59,7 @@ export function BankAnswerFields( {
 	compactActions = false,
 	question,
 } ) {
-	const dragged = useRef( null );
+	const dragged = useRef( /** @type {number|null} */ ( null ) );
 	const custom =
 		typeof window !== 'undefined' &&
 		window.ohmylms?.extensions?.get?.( 'question-editor', type );
@@ -69,7 +73,7 @@ export function BankAnswerFields( {
 						questions: options,
 					},
 					value: settings,
-					onChange: ( patch ) =>
+					onChange: ( /** @type {Data} */ patch ) =>
 						onChange( {
 							settings: { ...settings, ...patch, type },
 						} ),
@@ -83,7 +87,7 @@ export function BankAnswerFields( {
 				type={ type }
 				mainStatement={ mainStatement }
 				value={ settings }
-				onChange={ ( patch ) =>
+				onChange={ ( /** @type {Data} */ patch ) =>
 					onChange( {
 						settings: {
 							...settings,
@@ -134,7 +138,7 @@ export function BankAnswerFields( {
 			</div>
 		);
 	}
-	const interactive = {
+	const interactive = /** @type {Record<string, EditorComponent>} */ ( {
 		crossword: CrosswordEditor,
 		wordsearch: WordsearchEditor,
 		'dropdown-blanks': DropdownBlanksEditor,
@@ -151,13 +155,13 @@ export function BankAnswerFields( {
 		'fill-level': FillLevelEditor,
 		'build-chart': BuildChartEditor,
 		'grid-build': GridBuildEditor,
-	}[ type ];
+	} )[ type ];
 	if ( interactive ) {
 		return createElement( interactive, {
 			mainStatement,
 			compactActions,
 			value: settings,
-			onChange: ( patch ) =>
+			onChange: ( /** @type {Data} */ patch ) =>
 				onChange( {
 					settings: {
 						...settings,
@@ -206,8 +210,10 @@ export function BankAnswerFields( {
 									settings.parts ||
 									[]
 								).reduce(
-									( sum, part ) =>
-										sum + Number( part.marks || 0 ),
+									(
+										/** @type {number} */ sum,
+										/** @type {Data} */ part
+									) => sum + Number( part.marks || 0 ),
 									0
 								),
 							},
@@ -246,7 +252,10 @@ export function BankAnswerFields( {
 			[ 'single-choice', 'multiple-choice', 'true-false' ].includes(
 				type
 			) );
-	const patchOption = ( index, patch ) =>
+	const patchOption = (
+		/** @type {number} */ index,
+		/** @type {Data} */ patch
+	) =>
 		onChange( {
 			questions: options.map( ( option, position ) =>
 				position === index
@@ -257,7 +266,10 @@ export function BankAnswerFields( {
 					: option
 			),
 		} );
-	const reorder = ( index, direction ) => {
+	const reorder = (
+		/** @type {number} */ index,
+		/** @type {number} */ direction
+	) => {
 		const next = [ ...options ];
 		[ next[ index ], next[ index + direction ] ] = [
 			next[ index + direction ],
@@ -290,7 +302,7 @@ export function BankAnswerFields( {
 			) }
 			<p className="ohmylms-answer-guidance">
 				{
-					{
+					/** @type {Record<string, string>} */ ( {
 						matching: __(
 							'Enter each item and its matching answer. Add a pair for every match learners should make.',
 							'ohmylms'
@@ -311,7 +323,7 @@ export function BankAnswerFields( {
 							'Select the circle beside the correct answer.',
 							'ohmylms'
 						),
-					}[ type ]
+					} )[ type ]
 				}
 			</p>
 			{ options.map( ( option, index ) => (
@@ -435,7 +447,6 @@ export function BankAnswerFields( {
 					{ type !== 'true-false' && (
 						<MediaUpload
 							allowedTypes={ [ 'image' ] }
-							value={ option.thumbnail_id }
 							onSelect={ ( image ) =>
 								patchOption( index, {
 									thumbnail_id: image.id,
@@ -525,7 +536,9 @@ export function BankAnswerFields( {
 							icon="menu"
 							label={ __( 'Reorder answer', 'ohmylms' ) }
 							draggable
-							onDragStart={ ( event ) => {
+							onDragStart={ (
+								/** @type {import('react').DragEvent} */ event
+							) => {
 								dragged.current = index;
 								event.dataTransfer.setData(
 									'text/plain',
@@ -535,7 +548,9 @@ export function BankAnswerFields( {
 							onDragEnd={ () => {
 								dragged.current = null;
 							} }
-							onKeyDown={ ( event ) => {
+							onKeyDown={ (
+								/** @type {import('react').KeyboardEvent} */ event
+							) => {
 								if (
 									! event.altKey ||
 									! [ 'ArrowUp', 'ArrowDown' ].includes(
@@ -609,10 +624,12 @@ export function BankAnswerFields( {
 						} )
 					}
 				>
-					{ {
-						matching: __( 'Add pair', 'ohmylms' ),
-						reorder: __( 'Add item', 'ohmylms' ),
-					}[ type ] || __( 'Add answer', 'ohmylms' ) }
+					{
+						/** @type {Record<string, string>} */ ( {
+							matching: __( 'Add pair', 'ohmylms' ),
+							reorder: __( 'Add item', 'ohmylms' ),
+						} )[ type ] || __( 'Add answer', 'ohmylms' )
+					}
 				</Button>
 			) }
 		</div>

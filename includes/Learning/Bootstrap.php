@@ -67,6 +67,7 @@ final class Bootstrap {
 		add_action( 'shutdown', array( __CLASS__, 'flush' ), 30 );
 		add_action( 'ohmylms_process_evidence', array( __CLASS__, 'flush' ), 30 );
 		Frontend::init();
+		LessonPreview::init();
 	}
 
 	/**

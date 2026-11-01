@@ -108,9 +108,9 @@ export function dots( count, perView, index, label ) {
 /**
  * Whether autoplay may advance now: enabled, not paused by the toggle, hover or focus, motion allowed,
  * the page visible and something to scroll.
- * @param {Object}  context      Carousel context.
- * @param {boolean} reduceMotion `prefers-reduced-motion: reduce` matches.
- * @param {boolean} hidden       document.hidden.
+ * @param {{autoplay?: unknown, playing?: unknown, hovered?: unknown, focused?: unknown, count: number, perView: number}} context      Carousel context.
+ * @param {boolean}                                                                                                       reduceMotion `prefers-reduced-motion: reduce` matches.
+ * @param {boolean}                                                                                                       hidden       document.hidden.
  */
 export function canAdvance( context, reduceMotion, hidden = false ) {
 	return Boolean(

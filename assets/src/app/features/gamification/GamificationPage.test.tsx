@@ -2,6 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { ApiError } from '../../lib/api';
+import { attachment, mockMediaFrame } from '../../test/mediaFrame';
 import * as api from './api';
 import {
 	bronze,
@@ -33,8 +34,11 @@ vi.mock( './api', () => ( {
 	createBadge: vi.fn(),
 	updateBadge: vi.fn(),
 	deleteBadge: vi.fn(),
-	listMedia: vi.fn(),
 } ) );
+
+let media: ReturnType< typeof mockMediaFrame >;
+
+afterEach( () => media.restore() );
 
 const sections = {
 	points,
@@ -46,13 +50,13 @@ const sections = {
 
 beforeEach( () => {
 	vi.clearAllMocks();
+	media = mockMediaFrame();
 	vi.mocked( api.getSection ).mockImplementation( ( async (
 		section: SectionId
 	) => JSON.parse( JSON.stringify( sections[ section ] ) ) ) as never );
 	vi.mocked( api.getOptions ).mockResolvedValue( options );
 	vi.mocked( api.listLevels ).mockResolvedValue( page( [ bronze, silver ] ) );
 	vi.mocked( api.listBadges ).mockResolvedValue( page( [ starter ] ) );
-	vi.mocked( api.listMedia ).mockResolvedValue( page( [ image ] ) );
 } );
 
 function renderPage( tab?: string ) {
@@ -446,12 +450,12 @@ describe( 'GamificationPage', () => {
 			await user.click(
 				within( dialog ).getByRole( 'button', { name: 'Choose image' } )
 			);
-			const picker = await screen.findByRole( 'dialog', {
-				name: 'Choose a badge image',
-			} );
-			await user.click(
-				await within( picker ).findByRole( 'button', {
-					name: /Use image Trophy/,
+			expect( media.last().options.title ).toBe( 'Choose a badge image' );
+			media.last().choose(
+				attachment( {
+					id: image.id,
+					url: image.url,
+					sizes: { thumbnail: { url: image.thumbnail_url } },
 				} )
 			);
 			expect(

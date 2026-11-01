@@ -7,20 +7,20 @@
 			"gzip": 2400
 		},
 		"admin-app-registration.js": {
-			"raw": 6700,
-			"gzip": 2500
+			"raw": 7100,
+			"gzip": 2600
 		},
 		"admin-app.css": {
-			"raw": 3000,
-			"gzip": 1200
+			"raw": 13400,
+			"gzip": 3200
 		},
 		"admin-app.js": {
-			"raw": 93500,
-			"gzip": 29300
+			"raw": 94400,
+			"gzip": 29600
 		},
 		"chunks/admin-app-account-hub-class.js": {
-			"raw": 17000,
-			"gzip": 5200
+			"raw": 17100,
+			"gzip": 5300
 		},
 		"chunks/admin-app-account-hub-guardians.js": {
 			"raw": 8600,
@@ -43,72 +43,76 @@
 			"gzip": 5600
 		},
 		"chunks/admin-app-account-hub-school.js": {
-			"raw": 18700,
-			"gzip": 5600
+			"raw": 18800,
+			"gzip": 5700
 		},
 		"chunks/admin-app-account-hub-users.js": {
-			"raw": 11700,
-			"gzip": 3700
+			"raw": 11600,
+			"gzip": 3800
 		},
 		"chunks/admin-app-account-hub.js": {
 			"raw": 35200,
-			"gzip": 10100
+			"gzip": 10200
 		},
 		"chunks/admin-app-assignments.js": {
 			"raw": 37900,
 			"gzip": 9700
 		},
 		"chunks/admin-app-automations.js": {
-			"raw": 26100,
-			"gzip": 7800
+			"raw": 25700,
+			"gzip": 7700
 		},
 		"chunks/admin-app-bundles.js": {
-			"raw": 14700,
-			"gzip": 4700
+			"raw": 15000,
+			"gzip": 4900
 		},
 		"chunks/admin-app-certificates.js": {
-			"raw": 52800,
-			"gzip": 14200
+			"raw": 50900,
+			"gzip": 14100
 		},
 		"chunks/admin-app-cohorts.js": {
-			"raw": 23300,
-			"gzip": 7100
+			"raw": 22800,
+			"gzip": 7000
 		},
 		"chunks/admin-app-commerce.js": {
-			"raw": 60100,
-			"gzip": 14200
+			"raw": 59500,
+			"gzip": 14100
 		},
 		"chunks/admin-app-content-hub-overview.js": {
 			"raw": 6500,
 			"gzip": 2400
 		},
 		"chunks/admin-app-content-hub.js": {
-			"raw": 19100,
-			"gzip": 5600
+			"raw": 19300,
+			"gzip": 5700
 		},
 		"chunks/admin-app-course-structure.js": {
-			"raw": 25600,
-			"gzip": 7100
+			"raw": 32300,
+			"gzip": 8600
 		},
 		"chunks/admin-app-courses.js": {
-			"raw": 47000,
-			"gzip": 12900
+			"raw": 45300,
+			"gzip": 12700
 		},
 		"chunks/admin-app-curriculum-compare.js": {
-			"raw": 26800,
+			"raw": 26900,
 			"gzip": 7600
 		},
+		"chunks/admin-app-curriculum-map.css": {
+			"raw": 5300,
+			"gzip": 1400
+		},
 		"chunks/admin-app-curriculum-map.js": {
-			"raw": 8100,
-			"gzip": 3100
+			"raw": 19100,
+			"gzip": 6100
 		},
 		"chunks/admin-app-curriculum-subjects.js": {
-			"raw": 12700,
-			"gzip": 4400
+			"raw": 13000,
+			"gzip": 4500
 		},
 		"chunks/admin-app-curriculum.js": {
-			"raw": 12400,
-			"gzip": 4100
+			"raw": 12600,
+			"gzip": 4300
 		},
 		"chunks/admin-app-dashboard-activity.css": {
 			"raw": 800,
@@ -116,7 +120,7 @@
 		},
 		"chunks/admin-app-dashboard-activity.js": {
 			"raw": 2100,
-			"gzip": 1100
+			"gzip": 1200
 		},
 		"chunks/admin-app-dashboard-at-risk.css": {
 			"raw": 2100,
@@ -132,7 +136,7 @@
 		},
 		"chunks/admin-app-dashboard-course-health.js": {
 			"raw": 6800,
-			"gzip": 2400
+			"gzip": 2500
 		},
 		"chunks/admin-app-dashboard-insights.css": {
 			"raw": 1000,
@@ -143,19 +147,19 @@
 			"gzip": 1300
 		},
 		"chunks/admin-app-dashboard-mastery.css": {
-			"raw": 5700,
+			"raw": 5900,
 			"gzip": 1500
 		},
 		"chunks/admin-app-dashboard-mastery.js": {
 			"raw": 13200,
-			"gzip": 4400
+			"gzip": 4500
 		},
 		"chunks/admin-app-dashboard-overview.js": {
 			"raw": 3200,
 			"gzip": 1200
 		},
 		"chunks/admin-app-dashboard-review-sets.css": {
-			"raw": 5800,
+			"raw": 5900,
 			"gzip": 1500
 		},
 		"chunks/admin-app-dashboard-review-sets.js": {
@@ -175,84 +179,92 @@
 			"gzip": 1200
 		},
 		"chunks/admin-app-dashboard.js": {
-			"raw": 58000,
-			"gzip": 16500
+			"raw": 57500,
+			"gzip": 16300
 		},
 		"chunks/admin-app-emails.js": {
-			"raw": 25900,
-			"gzip": 8100
+			"raw": 27400,
+			"gzip": 8500
+		},
+		"chunks/admin-app-exams-source.css": {
+			"raw": 3200,
+			"gzip": 1100
+		},
+		"chunks/admin-app-exams-source.js": {
+			"raw": 7700,
+			"gzip": 2900
 		},
 		"chunks/admin-app-exams.js": {
-			"raw": 76200,
-			"gzip": 20500
+			"raw": 84200,
+			"gzip": 23400
 		},
 		"chunks/admin-app-extension-page.js": {
 			"raw": 600,
 			"gzip": 400
 		},
 		"chunks/admin-app-gamification.js": {
-			"raw": 58700,
-			"gzip": 15600
+			"raw": 56600,
+			"gzip": 15200
 		},
 		"chunks/admin-app-gradebook-mastery.css": {
-			"raw": 8900,
-			"gzip": 1900
+			"raw": 9200,
+			"gzip": 2000
 		},
 		"chunks/admin-app-gradebook-mastery.js": {
 			"raw": 7900,
 			"gzip": 3000
 		},
 		"chunks/admin-app-gradebook-rollup.css": {
-			"raw": 8900,
-			"gzip": 1900
+			"raw": 9200,
+			"gzip": 2000
 		},
 		"chunks/admin-app-gradebook-rollup.js": {
 			"raw": 4200,
 			"gzip": 1600
 		},
 		"chunks/admin-app-gradebook-roster.css": {
-			"raw": 8900,
-			"gzip": 1900
+			"raw": 9200,
+			"gzip": 2000
 		},
 		"chunks/admin-app-gradebook-roster.js": {
 			"raw": 14900,
 			"gzip": 5100
 		},
 		"chunks/admin-app-gradebook-student.css": {
-			"raw": 8900,
-			"gzip": 1900
+			"raw": 9200,
+			"gzip": 2000
 		},
 		"chunks/admin-app-gradebook-student.js": {
 			"raw": 13300,
 			"gzip": 4200
 		},
 		"chunks/admin-app-gradebook.css": {
-			"raw": 8900,
-			"gzip": 1900
+			"raw": 9200,
+			"gzip": 2000
 		},
 		"chunks/admin-app-gradebook.js": {
 			"raw": 29300,
 			"gzip": 8500
 		},
 		"chunks/admin-app-integrations.js": {
-			"raw": 15900,
-			"gzip": 5400
+			"raw": 16100,
+			"gzip": 5500
 		},
 		"chunks/admin-app-lessons.css": {
 			"raw": 700,
 			"gzip": 400
 		},
 		"chunks/admin-app-lessons.js": {
-			"raw": 47900,
-			"gzip": 13200
+			"raw": 49500,
+			"gzip": 13600
 		},
 		"chunks/admin-app-memberships.js": {
-			"raw": 33000,
-			"gzip": 9500
+			"raw": 35200,
+			"gzip": 10400
 		},
 		"chunks/admin-app-point-price.js": {
-			"raw": 4300,
-			"gzip": 2000
+			"raw": 3100,
+			"gzip": 1600
 		},
 		"chunks/admin-app-question-editors.js": {
 			"raw": 101000,
@@ -263,27 +275,27 @@
 			"gzip": 300
 		},
 		"chunks/admin-app-questions.js": {
-			"raw": 60400,
-			"gzip": 16400
+			"raw": 71100,
+			"gzip": 19300
 		},
 		"chunks/admin-app-quiz-reports.js": {
-			"raw": 9700,
-			"gzip": 3500
+			"raw": 9200,
+			"gzip": 3300
 		},
 		"chunks/admin-app-quizzes.js": {
-			"raw": 69700,
-			"gzip": 18000
+			"raw": 68400,
+			"gzip": 17700
 		},
 		"chunks/admin-app-sessions.js": {
-			"raw": 19200,
-			"gzip": 6400
+			"raw": 19300,
+			"gzip": 6500
 		},
 		"chunks/admin-app-settings-checkout.js": {
 			"raw": 8400,
 			"gzip": 3000
 		},
 		"chunks/admin-app-settings.js": {
-			"raw": 106500,
+			"raw": 105800,
 			"gzip": 29900
 		},
 		"chunks/admin-app-setup.js": {
@@ -291,31 +303,31 @@
 			"gzip": 9600
 		},
 		"chunks/admin-app-skill-workspace.js": {
-			"raw": 66500,
-			"gzip": 16700
+			"raw": 66600,
+			"gzip": 16800
 		},
 		"chunks/admin-app-students.js": {
-			"raw": 29400,
-			"gzip": 8300
-		},
-		"chunks/admin-app-syllabus.css": {
-			"raw": 2800,
-			"gzip": 900
+			"raw": 29100,
+			"gzip": 8200
 		},
 		"chunks/admin-app-syllabus.js": {
-			"raw": 54900,
-			"gzip": 15900
+			"raw": 37100,
+			"gzip": 10600
 		},
 		"chunks/admin-app-taxonomies.js": {
-			"raw": 6500,
-			"gzip": 2700
+			"raw": 6000,
+			"gzip": 2500
+		},
+		"chunks/admin-app-ui.css": {
+			"raw": 1100,
+			"gzip": 500
 		},
 		"chunks/admin-app-ui.js": {
-			"raw": 16200,
-			"gzip": 5500
+			"raw": 19200,
+			"gzip": 6600
 		},
 		"chunks/admin-app-webhooks.js": {
-			"raw": 17100,
+			"raw": 17000,
 			"gzip": 5600
 		}
 	}

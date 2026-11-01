@@ -1,6 +1,5 @@
 import { get, post } from '../../lib/api';
-import { getCollection, type Collection } from '../../lib/api/collection';
-import { asArray, asNumber, asRecord, asString, isRecord } from './model';
+import { asArray, asNumber, asRecord, asString } from './model';
 
 const PATH = '/ohmylms/v1/hub-icons';
 
@@ -12,12 +11,6 @@ export interface HubIconSlot {
 	/** Attachment id; 0 uses the built-in icon. */
 	id: number;
 	url: string;
-}
-
-export interface ImageOption {
-	id: number;
-	title: string;
-	thumbnail: string;
 }
 
 export type HubIconsDraft = Record< string, { id: number; url: string } >;
@@ -74,47 +67,4 @@ export function hubIconsDirty(
 	draft: HubIconsDraft
 ): boolean {
 	return slots.some( ( slot ) => draft[ slot.key ]?.id !== slot.id );
-}
-
-function parseImage( raw: unknown ): ImageOption {
-	const row = asRecord( raw );
-	const url = asString( row.source_url );
-	const sizes =
-		isRecord( row.media_details ) && isRecord( row.media_details.sizes )
-			? row.media_details.sizes
-			: {};
-	const small = isRecord( sizes.thumbnail ) ? sizes.thumbnail : {};
-	const rendered = isRecord( row.title )
-		? asString( row.title.rendered )
-		: '';
-	return {
-		id: asNumber( row.id ),
-		// `title.rendered` is HTML; keep its text only.
-		title:
-			new DOMParser().parseFromString( rendered, 'text/html' ).body
-				.textContent ?? '',
-		thumbnail:
-			'string' === typeof small.source_url && small.source_url
-				? small.source_url
-				: url,
-	};
-}
-
-export function listImages(
-	search: string,
-	page: number,
-	signal?: AbortSignal
-): Promise< Collection< ImageOption > > {
-	return getCollection( '/wp/v2/media', parseImage, {
-		signal,
-		query: {
-			search,
-			page,
-			per_page: 12,
-			media_type: 'image',
-			orderby: 'date',
-			order: 'desc',
-			_fields: 'id,source_url,title,media_details',
-		},
-	} );
 }

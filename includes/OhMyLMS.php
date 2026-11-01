@@ -292,7 +292,7 @@ final class OhMyLMS {
 	 *
 	 * @var string
 	 */
-	const VERSION = '1.2.21';
+	const VERSION = '1.2.22';
 
 	/**
 	 * Plugin slug.

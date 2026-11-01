@@ -13,7 +13,6 @@ import {
 	noticeModifiers,
 	requiredFields,
 	stateField,
-	triggerLegacy,
 } from './commerce-logic.mjs';
 
 /*
@@ -28,46 +27,76 @@ import {
 window.PaymentGatewayHandlers = window.PaymentGatewayHandlers || {};
 if ( 'function' !== typeof window.registerPaymentGatewayHandler ) {
 	window.registerPaymentGatewayHandler = ( id, handler ) => {
-		window.PaymentGatewayHandlers[ id ] = handler;
+		/** @type {Record<string, unknown>} */ (
+			window.PaymentGatewayHandlers
+		)[ id ] = handler;
 	};
 }
 
 /**
  * Register a gateway handler: optional `select(form)`, `prepare(form)` (resolve extra POST fields,
  * throw to abort with a message), `handle(response, form)` (resolve a replacement response, or
- * `false` when handled), and the legacy `open(response, $form)` / `resume($form)` hooks.
+ * `false` when handled), `open(response, form)` (a pending payment) and `resume(form)` (return true to
+ * take over a new submission). Every hook receives the checkout `<form>` element.
  *
- * @param {string} id      Gateway id.
- * @param {Object} handler Handler.
+ * @param {string}         id      Gateway id.
+ * @param {GatewayHandler} handler Handler.
  */
 export function registerGateway( id, handler ) {
-	window.registerPaymentGatewayHandler( id, handler );
+	/** @type {NonNullable<Window['registerPaymentGatewayHandler']>} */ (
+		window.registerPaymentGatewayHandler
+	)( id, handler );
 }
 
-const gatewayHandler = ( id ) => window.PaymentGatewayHandlers[ id ];
-const legacyForm = ( form ) =>
-	'function' === typeof window.jQuery ? window.jQuery( form ) : form;
+/**
+ * `handle()` receives the gateway's own `ohmylms_checkout` JSON, so its shape is the gateway's.
+ *
+ * @typedef {Object} GatewayHandler
+ * @property {(form: HTMLFormElement|null) => void}              [select]  The gateway was chosen.
+ * @property {(form: HTMLFormElement) => Promise<Object>|Object} [prepare] Extra POST fields.
+ * @property {(response: ?, form: HTMLFormElement) => ?}         [handle]  Replacement response, or false.
+ * @property {(response: Object, form: HTMLFormElement) => void} [open]    The order is pending payment.
+ * @property {(form: HTMLFormElement) => boolean}                [resume]  True when the gateway takes over the submission.
+ */
+
+/**
+ * @param {string} id Gateway id.
+ * @return {GatewayHandler|undefined} Registered handler.
+ */
+const gatewayHandler = ( id ) =>
+	/** @type {GatewayHandler|undefined} */ (
+		/** @type {Record<string, unknown>} */ (
+			window.PaymentGatewayHandlers
+		)[ id ]
+	);
 const checkoutForm = () =>
-	document.querySelector(
-		'form#ohmylms-checkout-form, form.ohmylms-checkout-form'
+	/** @type {HTMLFormElement|null} */ (
+		document.querySelector(
+			'form#ohmylms-checkout-form, form.ohmylms-checkout-form'
+		)
 	);
 
 // Server state (Commerce::checkout_state()): ajaxUrl, restRoot, restNonce, nonces, requiredFields,
 // serverRequired, taxEnabled, country, gateway, busy, loginOpen, messages.
 const { state } = store( 'ohmylms/checkout', {
 	state: {
+		/** @return {string} CSS display. */
 		get loaderDisplay() {
 			return state.busy ? 'inline-block' : '';
 		},
+		/** @return {boolean} The country can have a VAT number. */
 		get vatVisible() {
 			return isEuCountry( state.country );
 		},
+		/** @return {string} CSS display. */
 		get vatDisplay() {
 			return state.vatVisible ? '' : 'none';
 		},
+		/** @return {boolean} The context's gateway is selected. */
 		get isGatewaySelected() {
 			return getContext().gateway === state.gateway;
 		},
+		/** @return {string} CSS display. */
 		get paymentBoxDisplay() {
 			return state.isGatewaySelected ? 'block' : '';
 		},
@@ -93,23 +122,32 @@ const { state } = store( 'ohmylms/checkout', {
 			const coupon = target?.closest( '.ohmylms-remove-coupon' );
 			if ( login ) {
 				event.preventDefault();
-				toggleLogin( getElement().ref );
+				toggleLogin( /** @type {HTMLElement} */ ( getElement().ref ) );
 			} else if ( coupon ) {
 				event.preventDefault();
 				removeCoupon( coupon.dataset.coupon || '' );
 			}
 		} ),
+		/** @param {Event} event Change on a checkout field. */
 		change( event ) {
-			const field = event.target;
+			const field =
+				/** @type {HTMLInputElement|HTMLSelectElement|null} */ (
+					event.target
+				);
 			if ( ! field?.name || field.form !== checkoutForm() ) {
 				return;
 			}
-			if ( 'payment_method' === field.name && field.checked ) {
+			if (
+				'payment_method' === field.name &&
+				/** @type {HTMLInputElement} */ ( field ).checked
+			) {
 				selectGateway( field.value || gatewayFromInputId( field.id ) );
 			} else if ( 'country' === field.name ) {
 				state.country = field.value;
 				if ( ! state.vatVisible ) {
-					const vat = field.form?.elements.namedItem( 'vat_number' );
+					const vat = /** @type {HTMLInputElement|null} */ (
+						field.form?.elements.namedItem( 'vat_number' )
+					);
 					if ( vat ) {
 						vat.value = '';
 					}
@@ -123,36 +161,39 @@ const { state } = store( 'ohmylms/checkout', {
 				recalculate();
 			}
 		},
+		/** @param {Event} event Input in a checkout field. */
 		input( event ) {
-			const field = event.target;
+			const field = /** @type {HTMLInputElement|null} */ ( event.target );
 			if (
 				field?.matches?.( '.ohmylms-checkout-coupon .apply-coupon' )
 			) {
-				field
-					.closest( '.ohmylms-checkout-coupon' )
-					.classList.toggle(
-						'active',
-						'' !== couponCode( field.value )
-					);
+				/** @type {Element} */ (
+					field.closest( '.ohmylms-checkout-coupon' )
+				).classList.toggle(
+					'active',
+					'' !== couponCode( field.value )
+				);
 			}
 			fold( field, true );
 		},
+		/** @param {FocusEvent} event Focus entering a field. */
 		focusin( event ) {
-			fold( event.target, true );
+			fold( /** @type {Element|null} */ ( event.target ), true );
 		},
+		/** @param {FocusEvent} event Focus leaving a field. */
 		focusout( event ) {
-			fold( event.target, false );
+			fold( /** @type {Element|null} */ ( event.target ), false );
 		},
 		copyOrderId: withSyncEvent( ( event ) => {
 			event.preventDefault();
-			copyOrderId( getElement().ref );
+			copyOrderId( /** @type {HTMLElement} */ ( getElement().ref ) );
 		} ),
 	},
 	callbacks: {
 		init() {
 			const form = checkoutForm();
-			const checked = form?.querySelector(
-				'input[name="payment_method"]:checked'
+			const checked = /** @type {HTMLInputElement|null} */ (
+				form?.querySelector( 'input[name="payment_method"]:checked' )
 			);
 			if ( checked ) {
 				state.gateway = checked.value;
@@ -177,8 +218,8 @@ const { state } = store( 'ohmylms/checkout', {
 
 /**
  * Floating labels: a row is folded while focused or filled.
- * @param field
- * @param active
+ * @param {Element|null} field  Event target.
+ * @param {boolean}      active Focused.
  */
 function fold( field, active ) {
 	if ( ! field?.matches?.( '.ohmylms-input-text' ) ) {
@@ -188,24 +229,36 @@ function fold( field, active ) {
 	if ( row ) {
 		row.classList.toggle(
 			'ohmylms-folded',
-			active || '' !== String( field.value ).trim()
+			active ||
+				'' !==
+					String(
+						/** @type {HTMLInputElement} */ ( field ).value
+					).trim()
 		);
 	}
 }
 
+/**
+ * @param {string}  key      Field key (`<key>_field` row id).
+ * @param {boolean} required Required.
+ */
 function setRequired( key, required ) {
 	const row = document.getElementById( `${ key }_field` );
-	const input = row?.querySelector( 'input, select' );
-	if ( ! input ) {
+	const input = /** @type {HTMLInputElement|HTMLSelectElement|null} */ (
+		row?.querySelector( 'input, select' )
+	);
+	if ( ! row || ! input ) {
 		return;
 	}
 	const label = row.querySelector( 'label' );
 	input.required = required;
 	row.classList.toggle( 'validate-required', required );
 	label?.querySelectorAll( '.optional' ).forEach( ( optional ) => {
-		optional.hidden = required;
+		/** @type {HTMLElement} */ ( optional ).hidden = required;
 	} );
-	let marker = label?.querySelector( 'abbr.required' );
+	let marker = /** @type {HTMLElement|null} */ (
+		label?.querySelector( 'abbr.required' )
+	);
 	if ( required && label && ! marker ) {
 		marker = document.createElement( 'abbr' );
 		marker.className = 'required';
@@ -217,6 +270,7 @@ function setRequired( key, required ) {
 	}
 }
 
+/** @param {string} id Gateway id. */
 function selectGateway( id ) {
 	const previous = state.gateway;
 	state.gateway = id;
@@ -224,17 +278,18 @@ function selectGateway( id ) {
 		return;
 	}
 	const form = checkoutForm();
-	triggerLegacy( window, 'payment_method_selected' );
 	if ( form ) {
 		emit( form, 'checkout-gateway-changed', { gateway: id, previous } );
 	}
 	gatewayHandler( id )?.select?.( form );
 }
 
+/** @param {HTMLElement} root Checkout root. */
 function toggleLogin( root ) {
-	const login =
+	const login = /** @type {HTMLElement|null} */ (
 		root.querySelector( '.ohmylms-form-login' ) ||
-		document.querySelector( '.ohmylms-form-login' );
+			document.querySelector( '.ohmylms-form-login' )
+	);
 	root.closest( '.ohmylms' )
 		?.querySelectorAll( '.ohmylms-notices-wrapper' )
 		.forEach( ( region ) => region.replaceChildren() );
@@ -264,6 +319,10 @@ function clearNotices() {
 		.forEach( ( region ) => region.replaceChildren() );
 }
 
+/**
+ * @param {string} text Plain-text error.
+ * @return {HTMLElement} Notice markup.
+ */
 function errorMarkup( text ) {
 	const wrapper = document.createElement( 'div' );
 	wrapper.className = 'ohmylms-error-notices';
@@ -295,7 +354,10 @@ export function showNotice( notice ) {
 	} else {
 		box.append(
 			errorMarkup(
-				( notice && notice.message ) || state.messages?.error || ''
+				( notice &&
+					/** @type {{message: string}} */ ( notice ).message ) ||
+					state.messages?.error ||
+					''
 			)
 		);
 	}
@@ -317,6 +379,11 @@ export function showNotice( notice ) {
 
 /* Order submission through the existing `ohmylms_checkout` AJAX action (gateways rely on wp_doing_ajax()). */
 
+/**
+ * @param {HTMLFormElement} form    Checkout form.
+ * @param {Object}          [extra] Gateway fields.
+ * @return {Promise<?>} Parsed answer.
+ */
 function postCheckout( form, extra ) {
 	const data = new FormData( form );
 	for ( const [ key, value ] of Object.entries( extra || {} ) ) {
@@ -326,6 +393,7 @@ function postCheckout( form, extra ) {
 	return ajaxPost( state.ajaxUrl, data );
 }
 
+/** @param {HTMLFormElement} form Checkout form. */
 async function placeOrder( form ) {
 	if ( state.busy ) {
 		return;
@@ -336,7 +404,7 @@ async function placeOrder( form ) {
 		return;
 	}
 	const handler = gatewayHandler( gateway );
-	if ( handler?.resume?.( legacyForm( form ) ) ) {
+	if ( handler?.resume?.( form ) ) {
 		return;
 	}
 	state.busy = true;
@@ -351,21 +419,29 @@ async function placeOrder( form ) {
 			}
 		}
 		finish( form, response, handler, gateway );
-	} catch ( error ) {
+	} catch ( caught ) {
+		// Gateways throw an Error, or a string of trusted notice HTML.
+		const error = /** @type {string|Error} */ ( caught );
 		state.busy = false;
 		showNotice( error );
 		emit( form, 'checkout-error', {
 			gateway,
-			message: error?.message || '',
+			message: /** @type {{message?: string}} */ ( error )?.message || '',
 		} );
 	}
 }
 
+/**
+ * @param {HTMLFormElement}                                 form     Checkout form.
+ * @param {import('./commerce-logic.mjs').CheckoutResponse} response Checkout answer.
+ * @param {GatewayHandler|undefined}                        handler  Selected gateway's handler.
+ * @param {string}                                          gateway  Gateway id.
+ */
 function finish( form, response, handler, gateway ) {
 	const outcome = checkoutOutcome( response );
 	if ( 'pending' === outcome.type ) {
 		state.busy = false;
-		handler?.open?.( response, legacyForm( form ) );
+		handler?.open?.( response, form );
 		emit( form, 'checkout-pending', { gateway } );
 		return;
 	}
@@ -381,6 +457,10 @@ function finish( form, response, handler, gateway ) {
 
 /* Order review fragments (coupons and tax) are rendered by the server. */
 
+/**
+ * @param {Object<string, string>|null|undefined} fragments Selector to trusted server HTML.
+ * @param {string}                                reason    Why the totals changed.
+ */
 function applyFragments( fragments, reason ) {
 	for ( const [ selector, html ] of Object.entries( fragments || {} ) ) {
 		document.querySelectorAll( selector ).forEach( ( element ) => {
@@ -405,8 +485,13 @@ function applyFragments( fragments, reason ) {
 	}
 }
 
+/** @param {HTMLFormElement} form Coupon form. */
 async function applyCoupon( form ) {
-	const code = couponCode( form.elements.namedItem( 'coupon_code' )?.value );
+	const code = couponCode(
+		/** @type {HTMLInputElement|null} */ (
+			form.elements.namedItem( 'coupon_code' )
+		)?.value
+	);
 	if ( ! code || form.classList.contains( 'processing' ) ) {
 		return;
 	}
@@ -435,6 +520,7 @@ async function applyCoupon( form ) {
 	}
 }
 
+/** @param {string} code Coupon code. */
 async function removeCoupon( code ) {
 	try {
 		const response = await ajaxPost( state.ajaxUrl, {
@@ -456,7 +542,13 @@ async function recalculate() {
 	if ( ! state.taxEnabled || ! form ) {
 		return;
 	}
-	const value = ( name ) => form.elements.namedItem( name )?.value || '';
+	/**
+	 * @param {string} name Field name.
+	 * @return {string} Its value.
+	 */
+	const value = ( name ) =>
+		/** @type {HTMLInputElement|null} */ ( form.elements.namedItem( name ) )
+			?.value || '';
 	const ticket = ++taxRequest;
 	try {
 		const response = await ajaxPost( state.ajaxUrl, {
@@ -475,11 +567,13 @@ async function recalculate() {
 }
 
 let statesRequest = 0;
+/** @param {string} country Country code. */
 async function loadStates( country ) {
 	if ( ! country ) {
 		return;
 	}
 	const ticket = ++statesRequest;
+	/** @type {Array<{code: string, title: string}>} */
 	let states = [];
 	try {
 		states = await apiFetch(
@@ -496,15 +590,18 @@ async function loadStates( country ) {
 	}
 }
 
+/** @param {ReturnType<typeof stateField>} model Control to show. */
 function renderStateField( model ) {
 	const current = document.getElementById( 'state' );
 	const row = document.getElementById( 'state_field' );
 	if ( ! current || ! row ) {
 		return;
 	}
-	const marker = row.querySelector( '.required' );
+	const marker = /** @type {HTMLElement|null} */ (
+		row.querySelector( '.required' )
+	);
 	if ( 'select' === model.type ) {
-		let select = current;
+		let select = /** @type {HTMLSelectElement} */ ( current );
 		if ( 'SELECT' !== current.tagName ) {
 			select = document.createElement( 'select' );
 			select.id = 'state';
@@ -537,6 +634,7 @@ function renderStateField( model ) {
 
 /* Thank-you page: copy the order number. */
 
+/** @param {HTMLElement} button Copy button. */
 async function copyOrderId( button ) {
 	const cell = button.closest( 'td' ) || button.parentElement;
 	const text = (
@@ -554,7 +652,9 @@ async function copyOrderId( button ) {
 		document.execCommand( 'copy' );
 		scratch.remove();
 	}
-	const alert = cell?.querySelector( '.thankyou-copy-alert' );
+	const alert = /** @type {HTMLElement|null|undefined} */ (
+		cell?.querySelector( '.thankyou-copy-alert' )
+	);
 	if ( alert ) {
 		alert.style.display = 'inline-block';
 		setTimeout( () => {

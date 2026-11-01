@@ -5,7 +5,7 @@ import {
 	withSyncEvent,
 } from '@wordpress/interactivity';
 import { apiFetch, emit } from 'ohmylms/interactivity';
-import { cartRequest, cartOutcome, triggerLegacy } from './commerce-logic.mjs';
+import { cartRequest, cartOutcome } from './commerce-logic.mjs';
 
 /**
  * Buy, enroll, buy-with-points and membership buttons. PHP decorates every button it renders and
@@ -14,16 +14,27 @@ import { cartRequest, cartOutcome, triggerLegacy } from './commerce-logic.mjs';
 const { state } = store( 'ohmylms/cart', {
 	actions: {
 		add: withSyncEvent( ( event ) => {
-			start( event, getElement().ref, getContext() );
+			start(
+				event,
+				/** @type {HTMLElement} */ ( getElement().ref ),
+				getContext()
+			);
 		} ),
 	},
 } );
 
-const legacyButton = ( button ) =>
-	'function' === typeof window.jQuery ? window.jQuery( button ) : button;
+/**
+ * @typedef {import('./commerce-logic.mjs').CartContext & {loading?: boolean, added?: boolean, purchased?: boolean}} CartButtonContext
+ */
 
+/** @typedef {{courseId: number, membershipId: number, purchaseBy: string}} CartDetail */
+
+/**
+ * @param {HTMLElement} button Cart button.
+ * @param {string}      text   Message; empty hides it.
+ */
 function say( button, text ) {
-	let message = button.nextElementSibling;
+	let message = /** @type {HTMLElement|null} */ ( button.nextElementSibling );
 	if ( ! message || ! message.classList.contains( 'ohmylms-cart-message' ) ) {
 		if ( ! text ) {
 			return;
@@ -37,6 +48,11 @@ function say( button, text ) {
 	message.hidden = ! text;
 }
 
+/**
+ * @param {MouseEvent}        event   Click.
+ * @param {HTMLElement}       button  Cart button.
+ * @param {CartButtonContext} context Button context.
+ */
 function start( event, button, context ) {
 	if (
 		event.button > 0 ||
@@ -65,13 +81,15 @@ function start( event, button, context ) {
 	if ( ! emit( button, 'cart-before-add', detail, true ) ) {
 		return;
 	}
-	triggerLegacy( window, 'course_adding_to_cart', [
-		legacyButton( button ),
-		body,
-	] );
 	add( button, context, body, detail );
 }
 
+/**
+ * @param {HTMLElement}                             button  Cart button.
+ * @param {CartButtonContext}                       context Button context.
+ * @param {import('./commerce-logic.mjs').CartBody} body    REST body.
+ * @param {CartDetail}                              detail  Event detail.
+ */
 async function add( button, context, body, detail ) {
 	context.loading = true;
 	context.added = false;
@@ -86,17 +104,14 @@ async function add( button, context, body, detail ) {
 		} );
 	} catch ( error ) {
 		context.loading = false;
-		const message = error.message || state.messages?.error;
+		const message =
+			/** @type {Error} */ ( error ).message || state.messages?.error;
 		emit( button, 'cart-error', { ...detail, message } );
 		say( button, message );
 		return;
 	}
 	context.loading = false;
 	context.added = true;
-	triggerLegacy( window, 'course_added_to_cart', [
-		response,
-		legacyButton( button ),
-	] );
 	const outcome = cartOutcome( response );
 	if ( 'redirect' === outcome.type ) {
 		emit( button, 'cart-added', { ...detail, redirectUrl: outcome.url } );
@@ -117,15 +132,20 @@ document.addEventListener( 'click', ( event ) => {
 	if ( event.defaultPrevented || ! ( event.target instanceof Element ) ) {
 		return;
 	}
-	const button = event.target.closest(
-		'[data-wp-interactive="ohmylms/cart"]'
+	const button = /** @type {HTMLElement|null} */ (
+		event.target.closest( '[data-wp-interactive="ohmylms/cart"]' )
 	);
 	if ( button ) {
 		fallback( event, button );
 	}
 } );
 
+/**
+ * @param {MouseEvent}  event  Click.
+ * @param {HTMLElement} button Unhydrated cart button.
+ */
 function fallback( event, button ) {
+	/** @type {CartButtonContext} */
 	let flags;
 	try {
 		flags = JSON.parse( button.dataset.wpContext || '{}' );
@@ -135,7 +155,8 @@ function fallback( event, button ) {
 	flags.loading = button.classList.contains( 'loading' );
 	const context = new Proxy( flags, {
 		set( target, key, value ) {
-			target[ key ] = value;
+			/** @type {Record<string|symbol, unknown>} */ ( target )[ key ] =
+				value;
 			if ( 'loading' === key || 'added' === key ) {
 				button.classList.toggle( key, Boolean( value ) );
 			}

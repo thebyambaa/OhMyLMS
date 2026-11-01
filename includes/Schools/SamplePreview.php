@@ -12,6 +12,8 @@
 
 namespace OhMyLMS\Schools;
 
+use OhMyLMS\Utility\Lock;
+
 defined( 'ABSPATH' ) || exit;
 
 /** Explicit, administrator-only sample data for exploring schools and previewing each role. */
@@ -334,6 +336,31 @@ final class SamplePreview {
 			'school_id' => ! empty( $done['school'] ) ? (int) $ledger['school_id'] : 0,
 			'classes'   => $classes,
 			'people'    => $people,
+		);
+	}
+
+	/**
+	 * Create (or complete) the sample school under a named lock, so two clicks cannot create two sets.
+	 * `$read` runs under the same lock after the create. Exceptions propagate after the lock is released.
+	 *
+	 * @param callable $read Builds the answer once the sample school exists.
+	 * @return array|false `complete_before` (whether it was already complete) and `state` (what `$read`
+	 *                     returned); false while another request holds the lock.
+	 */
+	public static function create_once( callable $read ) {
+		// Two clicks must not create two sets.
+		return Lock::with(
+			'ohmylms_sample_school',
+			10,
+			static function () use ( $read ) {
+				$before = self::status()['complete'];
+				self::create();
+				return array(
+					'complete_before' => $before,
+					'state'           => $read(),
+				);
+			},
+			false
 		);
 	}
 

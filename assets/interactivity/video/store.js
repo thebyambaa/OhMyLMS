@@ -23,7 +23,11 @@ import {
 } from './progress.js';
 import { createSession } from './session.js';
 
-/** Adapter module (`ohmylms/video-<name>`) of each provider. */
+/**
+ * Adapter module (`ohmylms/video-<name>`) of each provider.
+ *
+ * @type {Readonly<Object<string, string>>}
+ */
 export const ADAPTERS = Object.freeze( {
 	html5: 'html5',
 	youtube: 'youtube',
@@ -40,9 +44,48 @@ const SEEK_THROTTLE_MS = 150;
 /** @typedef {(event: Event) => void} EventHandler */
 
 /**
+ * @typedef {Object} VideoContext Player context (reactive), printed by Video::context().
+ * @property {string}  provider      Provider (`html5`, `youtube`, `vimeo`, `bunny`, `wistia`, …).
+ * @property {string}  videoId       Provider video ID or URL.
+ * @property {string}  hash          Provider hash (private Vimeo videos).
+ * @property {boolean} custom        Custom controls.
+ * @property {number}  lessonId      Lesson, 0 outside a lesson.
+ * @property {number}  courseId      Course.
+ * @property {boolean} track         Progress is reported.
+ * @property {number}  resume        Saved position in seconds.
+ * @property {boolean} videoDone     The server counts the video as watched.
+ * @property {boolean} lessonDone    The lesson is completed.
+ * @property {number}  percent       Watched share.
+ * @property {number}  threshold     Watched share that completes the video.
+ * @property {boolean} autoplay      Autoplay (muted).
+ * @property {boolean} loop          Loop.
+ * @property {boolean} muted         Muted.
+ * @property {string}  title         Accessible title.
+ * @property {boolean} mounted       The adapter is ready.
+ * @property {boolean} playing       Playing.
+ * @property {boolean} started       Played once.
+ * @property {number}  time          Position in seconds.
+ * @property {number}  duration      Duration in seconds, 0 when unknown.
+ * @property {number}  volume        Volume 0 to 1.
+ * @property {number}  rate          Speed.
+ * @property {boolean} rates         The speed menu is offered.
+ * @property {boolean} captions      Captions are available.
+ * @property {boolean} captionsOn    Captions are shown.
+ * @property {boolean} volumeControl The volume slider is offered.
+ * @property {boolean} speedOpen     The speed menu is open.
+ * @property {boolean} fullscreen    Full screen.
+ * @property {boolean} idle          Controls auto-hidden.
+ * @property {boolean} seeking       The seek slider is dragged.
+ * @property {boolean} volumeDrag    The volume slider is dragged.
+ * @property {string}  error         Error message.
+ * @property {string}  indicator     Seek/volume indicator text.
+ * @property {number}  [speedRate]   Speed of a speed menu item.
+ */
+
+/**
  * @typedef {Object} Player
  * @property {HTMLElement}                           root           Island root.
- * @property {Object}                                context        Root context (reactive).
+ * @property {VideoContext}                          context        Root context (reactive).
  * @property {import('./adapter.js').Adapter|null}   adapter        Adapter once ready.
  * @property {ReturnType<typeof createSession>|null} session        Progress session.
  * @property {boolean}                               wantPlay       Play was pressed before the adapter was ready.
@@ -69,26 +112,25 @@ export function errorMessage( messages, error ) {
 /**
  * Store definitions for `ohmylms/video`.
  *
- * @param {Object}                                                                                                   api                      Runtime.
- * @param {() => ?}                                                                                                  api.getContext           `@wordpress/interactivity` getContext.
- * @param {() => {ref: HTMLElement}}                                                                                 api.getElement           `@wordpress/interactivity` getElement.
- * @param {(callback: EventHandler) => EventHandler}                                                                 api.withSyncEvent        `@wordpress/interactivity` withSyncEvent.
- * @param {() => import('./session.js').VideoConfig & Object}                                                        api.getState             Store state.
- * @param {(name: string) => Promise<{createAdapter: (options: Object) => Promise<import('./adapter.js').Adapter>}>} api.loadAdapter          Import an adapter module.
- * @param {import('./session.js').RequestFn}                                                                         api.request              SDK `request()`.
- * @param {(root: EventTarget, name: string, detail?: Object, cancelable?: boolean) => boolean}                      api.emit                 SDK `emit()`.
- * @param {(message: string, options?: Object) => unknown}                                                           api.toast                SDK `toast()`.
- * @param {(message: string, politeness?: string) => void}                                                           api.announce             SDK `announce()`.
- * @param {import('./session.js').DebounceFn}                                                                        api.debounce             SDK `debounce()`.
- * @param {(name: string, args?: Array<unknown>, target?: EventTarget) => boolean}                                   api.jqueryTrigger        SDK `jqueryTrigger()`.
- * @param {() => boolean}                                                                                            api.prefersReducedMotion SDK `prefersReducedMotion()`.
- * @param {import('./adapter.js').ProviderWindow}                                                                    [api.win]                Window.
- * @param {Document}                                                                                                 [api.doc]                Document.
- * @param {() => number}                                                                                             [api.now]                Clock.
- * @param {(callback: () => void, ms: number) => unknown}                                                            [api.later]              `setTimeout`.
- * @param {(timer: unknown) => void}                                                                                 [api.cancel]             `clearTimeout`.
- * @param {(url: string, fields: Object) => string}                                                                  [api.beacon]             Final save transport (tests).
- * @return {{state: Object, actions: Object, callbacks: Object}} Definitions; `find( element )` (not
+ * @param {Object}                                                                                               api                      Runtime.
+ * @param {() => ?}                                                                                              api.getContext           `@wordpress/interactivity` getContext.
+ * @param {() => {ref: HTMLElement|null}}                                                                        api.getElement           `@wordpress/interactivity` getElement.
+ * @param {(callback: EventHandler) => EventHandler}                                                             api.withSyncEvent        `@wordpress/interactivity` withSyncEvent.
+ * @param {() => import('./session.js').VideoConfig & {volumePercent?: number}}                                  api.getState             Store state.
+ * @param {(name: string) => Promise<{createAdapter(options: Object): Promise<import('./adapter.js').Adapter>}>} api.loadAdapter          Import an adapter module (each reads the options it needs).
+ * @param {import('./session.js').RequestFn}                                                                     api.request              SDK `request()`.
+ * @param {(root: EventTarget, name: string, detail?: Object, cancelable?: boolean) => boolean}                  api.emit                 SDK `emit()`.
+ * @param {(message: string, options?: Object) => unknown}                                                       api.toast                SDK `toast()`.
+ * @param {(message: string, politeness?: 'polite'|'assertive') => void}                                         api.announce             SDK `announce()`.
+ * @param {import('./session.js').DebounceFn}                                                                    api.debounce             SDK `debounce()`.
+ * @param {() => boolean}                                                                                        api.prefersReducedMotion SDK `prefersReducedMotion()`.
+ * @param {import('./adapter.js').ProviderWindow}                                                                [api.win]                Window.
+ * @param {Document}                                                                                             [api.doc]                Document.
+ * @param {() => number}                                                                                         [api.now]                Clock.
+ * @param {(callback: () => void, ms: number) => unknown}                                                        [api.later]              `setTimeout`.
+ * @param {(timer: unknown) => void}                                                                             [api.cancel]             `clearTimeout`.
+ * @param {(url: string, fields: Object<string, string|number>) => string}                                       [api.beacon]             Final save transport (tests).
+ * @return {{state: Object, actions: Object, callbacks: Object, find: (element: Element) => Player|null}} Definitions; `find( element )` (not
  *         enumerable, so the runtime does not see it) returns the player of an element.
  */
 export function createVideo( {
@@ -102,7 +144,6 @@ export function createVideo( {
 	toast,
 	announce,
 	debounce,
-	jqueryTrigger,
 	prefersReducedMotion,
 	win = globalThis.window,
 	doc = globalThis.document,
@@ -114,7 +155,12 @@ export function createVideo( {
 	/** @type {WeakMap<Element, Player>} */
 	const players = new WeakMap();
 	const messages = () => getState().messages || {};
+	/** @param {Element|null|undefined} element Element. */
 	const rootOf = ( element ) => element?.closest?.( ROOT ) || null;
+	/**
+	 * @param {Element|null|undefined} element Element.
+	 * @return {Player|null} Player of the element.
+	 */
 	const find = ( element ) => {
 		const root = rootOf( element );
 		return root ? players.get( root ) || null : null;
@@ -122,9 +168,14 @@ export function createVideo( {
 	/** @return {Player|null} Player of the element whose directive runs. */
 	const current = () => find( getElement()?.ref );
 
+	/** @param {Player} player Player. */
 	const duration = ( player ) =>
 		player.adapter?.duration() || Number( player.context.duration ) || 0;
 
+	/**
+	 * @param {Player} player Player.
+	 * @param {string} text   Indicator text.
+	 */
 	const showIndicator = ( player, text ) => {
 		player.context.indicator = text;
 		cancel( player.indicatorTimer );
@@ -133,6 +184,7 @@ export function createVideo( {
 		}, INDICATOR_MS );
 	};
 
+	/** @param {Player} player Player. */
 	const controlsFocused = ( player ) => {
 		const active = doc?.activeElement;
 		return Boolean(
@@ -142,6 +194,7 @@ export function createVideo( {
 		);
 	};
 
+	/** @param {Player} player Player. */
 	const wake = ( player ) => {
 		player.context.idle = false;
 		cancel( player.idleTimer );
@@ -154,6 +207,7 @@ export function createVideo( {
 		}
 	};
 
+	/** @param {Player} player Player. */
 	const play = ( player ) => {
 		if ( ! player.adapter ) {
 			player.wantPlay = true;
@@ -163,6 +217,7 @@ export function createVideo( {
 		player.adapter.play();
 	};
 
+	/** @param {Player} player Player. */
 	const toggle = ( player ) => {
 		if ( player.context.playing ) {
 			player.adapter?.pause();
@@ -171,6 +226,10 @@ export function createVideo( {
 		}
 	};
 
+	/**
+	 * @param {Player} player  Player.
+	 * @param {number} seconds Position.
+	 */
 	const seekTo = ( player, seconds ) => {
 		if ( ! player.adapter ) {
 			return;
@@ -185,6 +244,10 @@ export function createVideo( {
 		}
 	};
 
+	/**
+	 * @param {Player} player Player.
+	 * @param {number} volume Volume.
+	 */
 	const setVolume = ( player, volume ) => {
 		const level = Math.max( 0, Math.min( 1, volume ) );
 		if ( level > 0 ) {
@@ -195,6 +258,7 @@ export function createVideo( {
 		player.context.muted = 0 === level;
 	};
 
+	/** @param {Player} player Player. */
 	const toggleMute = ( player ) => {
 		const { context } = player;
 		if ( context.muted || 0 === context.volume ) {
@@ -211,6 +275,7 @@ export function createVideo( {
 		}
 	};
 
+	/** @param {Player} player Player. */
 	const toggleCaptions = ( player ) => {
 		if ( ! player.context.captions ) {
 			return;
@@ -220,6 +285,7 @@ export function createVideo( {
 		player.adapter?.setCaptions( on );
 	};
 
+	/** @param {Player} player Player. */
 	const toggleFullscreen = ( player ) => {
 		const { root } = player;
 		const active =
@@ -244,12 +310,17 @@ export function createVideo( {
 		media?.webkitEnterFullscreen?.();
 	};
 
+	/** @param {Player} player Player. */
 	const speedItems = ( player ) => [
 		...player.root.querySelectorAll(
 			'.ohmylms-speed-menu [role="menuitemradio"]'
 		),
 	];
 
+	/**
+	 * @param {Player} player  Player.
+	 * @param {number} [index] Item, -1 for the checked one.
+	 */
 	const focusSpeedItem = ( player, index = -1 ) => {
 		const items = speedItems( player );
 		const checked = items.findIndex(
@@ -260,6 +331,10 @@ export function createVideo( {
 		)?.focus();
 	};
 
+	/**
+	 * @param {Player}  player        Player.
+	 * @param {boolean} [focusButton] Focus the speed button.
+	 */
 	const closeSpeed = ( player, focusButton = false ) => {
 		player.context.speedOpen = false;
 		if ( focusButton ) {
@@ -269,20 +344,26 @@ export function createVideo( {
 		}
 	};
 
+	/**
+	 * @param {Player}                           player Player.
+	 * @param {{action: string, value?: number}} action Shortcut (`shortcut()`).
+	 */
 	const run = ( player, action ) => {
 		const { context } = player;
 		const text = messages();
+		// Every action that reads `value` carries one.
+		const value = /** @type {number} */ ( action.value );
 		switch ( action.action ) {
 			case 'toggle':
 				toggle( player );
 				break;
 			case 'seekBy': {
-				seekTo( player, context.time + action.value );
-				const seconds = Math.abs( action.value );
+				seekTo( player, context.time + value );
+				const seconds = Math.abs( value );
 				showIndicator(
 					player,
 					String(
-						action.value > 0
+						value > 0
 							? text.forward || '%d s >>'
 							: text.back || '<< %d s'
 					).replace( '%d', String( seconds ) )
@@ -290,15 +371,15 @@ export function createVideo( {
 				break;
 			}
 			case 'seekTo':
-				seekTo( player, action.value );
+				seekTo( player, value );
 				break;
 			case 'seekPercent':
-				seekTo( player, ( duration( player ) * action.value ) / 100 );
+				seekTo( player, ( duration( player ) * value ) / 100 );
 				break;
 			case 'volumeBy':
 				setVolume(
 					player,
-					( context.muted ? 0 : context.volume ) + action.value
+					( context.muted ? 0 : context.volume ) + value
 				);
 				showIndicator(
 					player,
@@ -323,7 +404,11 @@ export function createVideo( {
 	 * @param {Player} player Player.
 	 */
 	const bind = ( player ) => {
-		const { adapter, context } = player;
+		const { context } = player;
+		// Called once `player.adapter` is set.
+		const adapter = /** @type {import('./adapter.js').Adapter} */ (
+			player.adapter
+		);
 		adapter.on( 'play', () => {
 			context.playing = true;
 			context.started = true;
@@ -422,7 +507,6 @@ export function createVideo( {
 				config: getState(),
 				request,
 				emit,
-				jqueryTrigger,
 				toast,
 				announce,
 				debounce,
@@ -792,6 +876,7 @@ export function createVideo( {
 				player.context.rate = rate;
 				closeSpeed( player, true );
 			},
+			/** @param {Event} event Document click. */
 			outside( event ) {
 				const player = current();
 				const control = player?.root.querySelector(
@@ -881,7 +966,9 @@ export function createVideo( {
 		},
 	};
 	Object.defineProperty( definitions, 'find', { value: find } );
-	return definitions;
+	return /** @type {typeof definitions & {find: typeof find}} */ (
+		definitions
+	);
 }
 
 /**
@@ -910,6 +997,7 @@ export function installShims( win, find ) {
 		pause() {
 			this.adapter?.pause();
 		}
+		/** @param {unknown} seconds Position. */
 		seekTo( seconds ) {
 			const player = find( this.element );
 			if ( player?.session ) {
@@ -918,9 +1006,11 @@ export function installShims( win, find ) {
 				this.adapter?.seek( Number( seconds ) || 0 );
 			}
 		}
+		/** @param {unknown} volume Volume. */
 		setVolume( volume ) {
 			this.adapter?.setVolume( Number( volume ) || 0 );
 		}
+		/** @param {unknown} rate Speed. */
 		setPlaybackRate( rate ) {
 			this.adapter?.setRate( Number( rate ) || 1 );
 		}

@@ -7,6 +7,7 @@ import {
 import { announce, emit, request, toast } from 'ohmylms/interactivity';
 import { createAssignment } from './assignment/store.js';
 
+/** @type {ReturnType<typeof store>} */
 let assignment = null;
 const definitions = createAssignment( {
 	getContext,

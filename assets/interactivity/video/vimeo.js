@@ -8,6 +8,37 @@ import { clampVolume, createEmitter, loadScript, positive } from './adapter.js';
 
 export const API_URL = 'https://player.vimeo.com/api/player.js';
 
+/** @typedef {{language: string, kind: string, mode?: string}} VimeoTrack Text track. */
+
+/**
+ * @typedef {Object} VimeoEventData Player SDK event payload (fields depend on the event).
+ * @property {number} [seconds]      Position.
+ * @property {number} [duration]     Duration.
+ * @property {number} [playbackRate] Speed.
+ * @property {number} [volume]       Volume.
+ * @property {string} [language]     Caption language, empty when off.
+ * @property {string} [message]      Error message.
+ */
+
+/**
+ * @typedef {Object} VimeoPlayer The Player SDK methods used here.
+ * @property {() => Promise<void>}                                               ready            Ready.
+ * @property {() => Promise<number>}                                             getDuration      Duration.
+ * @property {() => Promise<boolean>}                                            getPaused        Paused.
+ * @property {() => Promise<VimeoTrack[]>}                                       getTextTracks    Text tracks.
+ * @property {(name: string, callback: (data?: VimeoEventData) => void) => void} on               Subscribe.
+ * @property {() => Promise<unknown>}                                            play             Play.
+ * @property {() => Promise<unknown>}                                            pause            Pause.
+ * @property {(seconds: number) => Promise<unknown>}                             setCurrentTime   Seek.
+ * @property {(rate: number) => Promise<unknown>}                                setPlaybackRate  Speed.
+ * @property {(volume: number) => Promise<unknown>}                              setVolume        Volume.
+ * @property {(muted: boolean) => Promise<unknown>}                              [setMuted]       Mute (newer SDKs).
+ * @property {() => Promise<number>}                                             getVolume        Volume.
+ * @property {(language: string, kind: string) => Promise<unknown>}              enableTextTrack  Show a track.
+ * @property {() => Promise<unknown>}                                            disableTextTrack Hide captions.
+ * @property {() => Promise<unknown>}                                            [destroy]        Destroy.
+ */
+
 /**
  * Load the Player SDK once.
  *
@@ -26,11 +57,11 @@ export async function loadVimeo( win, load = loadScript ) {
 /**
  * Options of a player created by the custom controls.
  *
- * @param {{id: string, hash?: string}} source        Parsed source.
- * @param {Object}                      config        `loop`, `muted`, `custom`.
- * @param                               config.loop
- * @param                               config.muted
- * @param                               config.custom
+ * @param {{id: string, hash?: string}} source          Parsed source.
+ * @param {Object}                      [config]        `loop`, `muted`, `custom`.
+ * @param {boolean}                     [config.loop]   Loop playback.
+ * @param {boolean}                     [config.muted]  Start muted.
+ * @param {boolean}                     [config.custom] Plugin controls instead of Vimeo's.
  * @return {Object} Player options.
  */
 export function playerOptions(
@@ -88,7 +119,7 @@ export function pickTrack( tracks, lang = '' ) {
  * @param {HTMLElement}                           [options.mount]  Where the custom player creates the iframe.
  * @param {HTMLIFrameElement}                     [options.iframe] Server-rendered iframe.
  * @param {{id: string, hash?: string}}           options.source   Parsed source.
- * @param {Object}                                [options.config] `loop`, `muted`, `custom`, `title`.
+ * @param {import('./adapter.js').PlayerConfig}   [options.config] `loop`, `muted`, `custom`, `title`.
  * @param {import('./adapter.js').ProviderWindow} [options.win]    Window.
  * @param {import('./adapter.js').ScriptLoader}   [options.load]   Script loader (tests).
  * @return {Promise<import('./adapter.js').Adapter>} Adapter.
@@ -109,13 +140,17 @@ export async function createAdapter( {
 	let duration = 0;
 	let paused = true;
 	let rate = 1;
+	/** @type {VimeoTrack[]} */
 	let tracks = [];
 
+	/** @type {HTMLElement|undefined} */
 	let host = iframe;
 	if ( ! host ) {
 		host = doc.createElement( 'div' );
-		mount.replaceChildren( host );
+		// Without an iframe the store passes the mount point.
+		/** @type {HTMLElement} */ ( mount ).replaceChildren( host );
 	}
+	/** @type {VimeoPlayer} */
 	const player = iframe
 		? new Vimeo.Player( iframe )
 		: new Vimeo.Player(

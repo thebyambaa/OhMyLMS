@@ -7,9 +7,9 @@
 
 namespace OhMyLMS\XApi;
 
-defined( 'ABSPATH' ) || exit;
+use OhMyLMS\Utility\Lock;
 
-// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The only queries here are GET_LOCK and RELEASE_LOCK, which have no cacheable result.
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Drains the outbox: builds each statement, sends batches, and records the outcome.
@@ -46,7 +46,7 @@ final class Processor {
 			return 0;
 		}
 		$lock = self::LOCK . '-' . md5( $wpdb->prefix );
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $lock ) ) ) {
+		if ( ! Lock::acquire( $lock, 0 ) ) {
 			return 0;
 		}
 		$sent     = 0;
@@ -79,7 +79,7 @@ final class Processor {
 				}
 			}
 		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+			Lock::release( $lock );
 		}
 		if ( $sent > 0 ) {
 			self::health( array( 'last_success' => time() ) );

@@ -194,12 +194,7 @@ export interface GamificationOptions {
 	limits: Limits;
 }
 
-export interface MediaImage {
-	id: number;
-	url: string;
-	thumbnail_url: string;
-	title: string;
-}
+export type { MediaImage } from '../../lib/media';
 
 /** Field name to message, from client validation or the server. */
 export type FieldErrors = Record< string, string >;

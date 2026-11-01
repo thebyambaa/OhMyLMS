@@ -12,11 +12,14 @@ import type {
 	FormErrors,
 	FormState,
 	Level,
-	MediaImage,
 	Option,
 	PriceType,
 	WritableStatus,
 } from './types';
+import { createValidators } from '../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
+export const { record, positiveId } = createValidators( invalidResponse );
 
 export const STATUSES: readonly CourseStatus[] = [
 	'draft',
@@ -74,26 +77,6 @@ export function invalidResponse(): ApiError {
 	} );
 }
 
-/**
- * Narrow an unknown value to a plain object or fail with an invalid response.
- *
- * @param value Parsed JSON.
- * @return The object.
- */
-export function record( value: unknown ): Record< string, unknown > {
-	if ( ! value || 'object' !== typeof value || Array.isArray( value ) ) {
-		throw invalidResponse();
-	}
-	return value as Record< string, unknown >;
-}
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
-}
-
 function nullableText( value: unknown ): string | null {
 	return null === value ? null : text( value );
 }
@@ -115,23 +98,6 @@ function oneOf< T extends string >( value: unknown, allowed: readonly T[] ): T {
 
 function list( value: unknown ): unknown[] {
 	if ( ! Array.isArray( value ) ) {
-		throw invalidResponse();
-	}
-	return value;
-}
-
-/**
- * Validate a positive integer identifier.
- *
- * @param value Candidate id.
- * @return The id.
- */
-export function positiveId( value: unknown ): number {
-	if (
-		'number' !== typeof value ||
-		! Number.isSafeInteger( value ) ||
-		value < 1
-	) {
 		throw invalidResponse();
 	}
 	return value;
@@ -233,7 +199,8 @@ export function parseCourse( value: unknown ): Course {
 		slug: text( item.slug ),
 		status: oneOf( item.status, STATUSES ),
 		permalink: text( item.permalink ),
-		preview_url: undefined === item.preview_url ? '' : text( item.preview_url ),
+		preview_url:
+			undefined === item.preview_url ? '' : text( item.preview_url ),
 		author_id: count( item.author_id ),
 		author_name: text( item.author_name ),
 		level: oneOf( item.level, LEVELS ),
@@ -328,29 +295,6 @@ export function parseOptions( value: unknown ): CourseOptions {
 			upload_files: boolean( abilities.upload_files ),
 			builder_url: text( abilities.builder_url ),
 		},
-	};
-}
-
-/**
- * Validate an item of the core media endpoint.
- *
- * @param value Parsed JSON.
- * @return The image.
- */
-export function parseMedia( value: unknown ): MediaImage {
-	const item = record( value );
-	const details = item.media_details
-		? record( item.media_details )
-		: ( {} as Record< string, unknown > );
-	const sizes = details.sizes ? record( details.sizes ) : {};
-	const thumb = sizes.thumbnail ? record( sizes.thumbnail ) : null;
-	const url = text( item.source_url );
-	const title = item.title ? record( item.title ) : {};
-	return {
-		id: positiveId( item.id ),
-		url,
-		thumbnail_url: thumb ? text( thumb.source_url ) : url,
-		title: 'string' === typeof title.rendered ? title.rendered : '',
 	};
 }
 

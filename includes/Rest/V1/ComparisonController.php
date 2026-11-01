@@ -1212,47 +1212,13 @@ class ComparisonController extends RestController {
 	 * @return mixed
 	 */
 	public function remove_mapping_group( WP_REST_Request $request ) {
-		global $wpdb;
 		$uuid  = $request['uuid'];
 		$pairs = $request['pairs'];
 		if ( ! is_string( $uuid ) || ! preg_match( '/^[a-f0-9-]{36}$/D', $uuid ) || ! is_array( $pairs ) || count( $pairs ) > 200 ) {
 			return Access::error( 'ohmylms_mapping_group_invalid', __( 'Choose a combined group with current pair revisions.', 'ohmylms' ) );
 		}
-		$lock = SkillMappings::LOCK . '-' . md5( $wpdb->prefix );
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) ) {
-			return Access::error( 'ohmylms_mapping_busy', __( 'Another mapping change is being saved. Try again.', 'ohmylms' ), 409 );
-		}
-		try {
-			$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE group_uuid=%s', SkillMappings::table(), $uuid ), ARRAY_A );
-			if ( ! $rows || count( $rows ) !== count( $pairs ) ) {
-				return Access::error( 'ohmylms_mapping_stale', __( 'This group changed. Reload it before removing it.', 'ohmylms' ), 409 );
-			}
-			foreach ( $rows as $row ) {
-				$matches = array_values(
-					array_filter(
-						$pairs,
-						static function ( $pair ) use ( $row ) {
-							return is_array( $pair ) && ( $pair['specific_id'] ?? null ) === (int) $row['specific_term_id'] && ( $pair['expected_revision'] ?? null ) === SkillMappings::revision( $row );
-						}
-					)
-				);
-				if ( 1 !== count( $matches ) ) {
-					return Access::error( 'ohmylms_mapping_stale', __( 'This group changed. Reload it before removing it.', 'ohmylms' ), 409 );
-				}
-			}
-			\OhMyLMS\Utility\Transaction::run(
-				static function () use ( $wpdb, $uuid ) {
-					if ( false === $wpdb->delete( SkillMappings::table(), array( 'group_uuid' => $uuid ) ) || false === $wpdb->delete( \OhMyLMS\Curriculum\Schema::table( 'skill_mapping_groups' ), array( 'uuid' => $uuid ) ) ) {
-						throw new \RuntimeException( 'Combined coverage could not be removed.' );
-					}
-				}
-			);
-			return rest_ensure_response( array( 'removed' => true ) );
-		} catch ( \Throwable $error ) {
-			return Access::error( 'ohmylms_mapping_failed', __( 'Combined coverage could not be removed. Nothing was changed.', 'ohmylms' ), 500 );
-		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
-		}
+		$removed = SkillMappings::remove_group( $uuid, $pairs );
+		return is_wp_error( $removed ) ? $removed : rest_ensure_response( array( 'removed' => true ) );
 	}
 
 	/**
@@ -1262,31 +1228,8 @@ class ComparisonController extends RestController {
 	 * @return mixed
 	 */
 	public function remove_mapping( WP_REST_Request $request ) {
-		global $wpdb;
-		$lock = SkillMappings::LOCK . '-' . md5( $wpdb->prefix );
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) ) {
-			return Access::error( 'ohmylms_mapping_busy', __( 'Another mapping change is being saved. Try again.', 'ohmylms' ), 409 );
-		}
-		try {
-			$mappings = SkillMappings::for_skill( absint( $request['specific_id'] ) );
-			foreach ( $mappings['maps_to'] as $mapping ) {
-				$shared_id        = absint( $request['shared_id'] );
-				$expected         = (string) $request['expected_revision'];
-				$current_revision = SkillMappings::revision( $mapping );
-				if ( $shared_id === (int) $mapping['shared_id'] && $expected === $current_revision ) {
-					if ( ! empty( $mapping['group_uuid'] ) ) {
-						return Access::error( 'ohmylms_mapping_group_invalid', __( 'Remove combined coverage as a group.', 'ohmylms' ), 409 );
-					}
-					if ( ! SkillMappings::remove( $mapping['specific_id'], $mapping['shared_id'] ) ) {
-						return Access::error( 'ohmylms_mapping_failed', __( 'The mapping could not be removed.', 'ohmylms' ), 500 );
-					}
-					return rest_ensure_response( array( 'removed' => true ) );
-				}
-			}
-			return Access::error( 'ohmylms_mapping_stale', __( 'This mapping changed. Reload before removing it.', 'ohmylms' ), 409 );
-		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
-		}
+		$removed = SkillMappings::remove_current( absint( $request['specific_id'] ), absint( $request['shared_id'] ), (string) $request['expected_revision'] );
+		return is_wp_error( $removed ) ? $removed : rest_ensure_response( array( 'removed' => true ) );
 	}
 
 	/**

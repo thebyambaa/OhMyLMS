@@ -4,7 +4,7 @@ import { __ } from '@wordpress/i18n';
 import { addNote } from './api';
 import { useNotes } from './hooks';
 import { NOTE_MAX_LENGTH, formatDate, validateNote } from './model';
-import { useOperation } from './useOperation';
+import { useOperation } from '../../hooks/useOperation';
 
 /**
  * Plain text notes of one order, with a form to add one.

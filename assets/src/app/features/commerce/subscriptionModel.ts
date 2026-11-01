@@ -17,6 +17,9 @@ import type {
 	SubscriptionStatus,
 	SubscriptionSummary,
 } from './types';
+import { createValidators } from '../../lib/validation';
+
+const { record, text } = createValidators( invalidResponse );
 
 export const SUBSCRIPTION_STATUSES: readonly SubscriptionStatus[] = [
 	'pending',
@@ -193,18 +196,6 @@ export function amountLabel( item: SubscriptionSummary ): string {
 	return every ? `${ amount } · ${ every }` : amount;
 }
 
-function record( value: unknown ): Record< string, unknown > {
-	if ( ! value || 'object' !== typeof value || Array.isArray( value ) ) {
-		throw invalidResponse();
-	}
-	return value as Record< string, unknown >;
-}
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
-}
 function nullableText( value: unknown ): string | null {
 	return null === value ? null : text( value );
 }

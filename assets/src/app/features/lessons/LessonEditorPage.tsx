@@ -17,6 +17,7 @@ import { readLesson, saveLesson, publishLesson } from './api';
 import type { Lesson } from './model';
 import LessonBlocks from './LessonBlocks';
 import InlineQuestions from './InlineQuestions';
+import { LearnerPreviewButton } from './LearnerPreviewButton';
 import LessonObjectives from './LessonObjectives';
 import VideoSettings from './VideoSettings';
 import {
@@ -135,8 +136,12 @@ export function LessonWorkspace( {
 			</p>
 			<div className="oml-editor-header">
 				<div className="oml-editor-header__title">
-					<h2>{ draft.title || __( 'Untitled lesson', 'ohmylms' ) }</h2>
-					<span className={ `oml-editor-status oml-editor-status--${ draft.status }` }>
+					<h2>
+						{ draft.title || __( 'Untitled lesson', 'ohmylms' ) }
+					</h2>
+					<span
+						className={ `oml-editor-status oml-editor-status--${ draft.status }` }
+					>
 						{ draft.status }
 					</span>
 					<span className="oml-editor-saved" role="status">
@@ -197,6 +202,10 @@ export function LessonWorkspace( {
 							{ __( 'Review lesson publication', 'ohmylms' ) }
 						</Button>
 					) }
+					<LearnerPreviewButton
+						lessonId={ draft.id }
+						dirty={ dirty }
+					/>
 				</div>
 			</div>
 			<p className="oml-editor-hint">
@@ -235,258 +244,302 @@ export function LessonWorkspace( {
 				className={ `oml-editor oml-editor-grid${ asideOpen ? '' : ' is-aside-closed' }` }
 			>
 				<div className="oml-editor-main">
-			<fieldset disabled={ ! editable || operation.busy }>
-				<legend>{ __( 'Lesson details', 'ohmylms' ) }</legend>
-				{ custom && extension ? (
-					<LessonExtensionEditor
-						lesson={ draft }
-						onChange={ change }
-					/>
-				) : (
-					<TextControl
-						label={ __( 'Lesson title', 'ohmylms' ) }
-						value={ draft.title }
-						maxLength={ 190 }
-						onChange={ ( title ) => change( { title } ) }
-					/>
-				) }
-				{ custom && ! extension && (
-					<TextareaControl
-						label={ __( 'Lesson source', 'ohmylms' ) }
-						value={ draft.content }
-						rows={ 10 }
-						onChange={ ( content ) => change( { content } ) }
-					/>
-				) }
-				{ ! custom && (
-					<>
-						<h2>{ __( 'Lesson content', 'ohmylms' ) }</h2>
-						<Button onClick={ () => setSource( ! source ) }>
-							{ source
-								? __( 'Use visual block editor', 'ohmylms' )
-								: __( 'Edit block source', 'ohmylms' ) }
-						</Button>
-						<p>
-							{ __(
-								'Existing custom blocks are retained. Use the full WordPress editor for advanced and extension-specific block controls.',
-								'ohmylms'
-							) }
-						</p>
-						{ source ? (
+					<fieldset disabled={ ! editable || operation.busy }>
+						<legend>{ __( 'Lesson details', 'ohmylms' ) }</legend>
+						{ custom && extension ? (
+							<LessonExtensionEditor
+								lesson={ draft }
+								onChange={ change }
+							/>
+						) : (
+							<TextControl
+								label={ __( 'Lesson title', 'ohmylms' ) }
+								value={ draft.title }
+								maxLength={ 190 }
+								onChange={ ( title ) => change( { title } ) }
+							/>
+						) }
+						{ custom && ! extension && (
 							<TextareaControl
-								label={ __(
-									'Block content source',
-									'ohmylms'
-								) }
+								label={ __( 'Lesson source', 'ohmylms' ) }
 								value={ draft.content }
-								rows={ 14 }
-								onChange={ ( content ) =>
-									change( { content } )
-								}
-							/>
-						) : null }
-						{ ! source && operation.busy && (
-							<p role="status">
-								{ __( 'Saving lesson…', 'ohmylms' ) }
-							</p>
-						) }
-						{ ! source && ! operation.busy && editable && (
-							<LessonBlocks
-								key={ canvasVersion }
-								initial={ draft.content }
-								disabled={ false }
+								rows={ 10 }
 								onChange={ ( content ) =>
 									change( { content } )
 								}
 							/>
 						) }
-						<InlineQuestions
-							content={ draft.content }
-							saved={ draft.inline_questions }
-							disabled={ ! editable || operation.busy }
-							onChange={ ( content ) => {
-								change( { content } );
-								setCanvasVersion( ( value ) => value + 1 );
-							} }
-						/>
-					</>
-				) }
-			</fieldset>
+						{ ! custom && (
+							<>
+								<h2>{ __( 'Lesson content', 'ohmylms' ) }</h2>
+								<Button onClick={ () => setSource( ! source ) }>
+									{ source
+										? __(
+												'Use visual block editor',
+												'ohmylms'
+											)
+										: __( 'Edit block source', 'ohmylms' ) }
+								</Button>
+								<p>
+									{ __(
+										'Existing custom blocks are retained. Use the full WordPress editor for advanced and extension-specific block controls.',
+										'ohmylms'
+									) }
+								</p>
+								{ source ? (
+									<TextareaControl
+										label={ __(
+											'Block content source',
+											'ohmylms'
+										) }
+										value={ draft.content }
+										rows={ 14 }
+										onChange={ ( content ) =>
+											change( { content } )
+										}
+									/>
+								) : null }
+								{ ! source && operation.busy && (
+									<p role="status">
+										{ __( 'Saving lesson…', 'ohmylms' ) }
+									</p>
+								) }
+								{ ! source && ! operation.busy && editable && (
+									<LessonBlocks
+										key={ canvasVersion }
+										initial={ draft.content }
+										disabled={ false }
+										onChange={ ( content ) =>
+											change( { content } )
+										}
+									/>
+								) }
+								<InlineQuestions
+									content={ draft.content }
+									saved={ draft.inline_questions }
+									disabled={ ! editable || operation.busy }
+									onChange={ ( content ) => {
+										change( { content } );
+										setCanvasVersion(
+											( value ) => value + 1
+										);
+									} }
+								/>
+							</>
+						) }
+					</fieldset>
 				</div>
 				{ asideOpen && (
-				<aside
-					className="oml-editor-aside"
-					aria-label={ __( 'Lesson settings', 'ohmylms' ) }
-				>
-			<fieldset disabled={ ! editable || operation.busy }>
-				<legend>{ __( 'Settings', 'ohmylms' ) }</legend>
-				{ ! custom && (
-					<SelectControl< string >
-						label={ __( 'Lesson format', 'ohmylms' ) }
-						value={ draft.type }
-						options={ [
-							{
-								value: 'text',
-								label: __( 'Reading', 'ohmylms' ),
-							},
-							{ value: 'video', label: __( 'Video', 'ohmylms' ) },
-							{ value: 'audio', label: __( 'Audio', 'ohmylms' ) },
-						] }
-						onChange={ ( type ) => change( { type } ) }
-					/>
-				) }
-				{ ( draft.type === 'video' || draft.type === 'audio' ) && (
-					<TextControl
-						label={ __( 'External media URL', 'ohmylms' ) }
-						value={ draft.external_url }
-						type="url"
-						onChange={ ( value ) =>
-							change( {
-								external_url: value,
-								...( value
-									? {
-											video_id: 0,
-											audio_id: 0,
-											media_urls: {
-												...draft.media_urls,
-												video_id: '',
-												audio_id: '',
-											},
+					<aside
+						className="oml-editor-aside"
+						aria-label={ __( 'Lesson settings', 'ohmylms' ) }
+					>
+						<fieldset disabled={ ! editable || operation.busy }>
+							<legend>{ __( 'Settings', 'ohmylms' ) }</legend>
+							{ ! custom && (
+								<SelectControl< string >
+									label={ __( 'Lesson format', 'ohmylms' ) }
+									value={ draft.type }
+									options={ [
+										{
+											value: 'text',
+											label: __( 'Reading', 'ohmylms' ),
+										},
+										{
+											value: 'video',
+											label: __( 'Video', 'ohmylms' ),
+										},
+										{
+											value: 'audio',
+											label: __( 'Audio', 'ohmylms' ),
+										},
+									] }
+									onChange={ ( type ) => change( { type } ) }
+								/>
+							) }
+							{ ( draft.type === 'video' ||
+								draft.type === 'audio' ) && (
+								<TextControl
+									label={ __(
+										'External media URL',
+										'ohmylms'
+									) }
+									value={ draft.external_url }
+									type="url"
+									onChange={ ( value ) =>
+										change( {
+											external_url: value,
+											...( value
+												? {
+														video_id: 0,
+														audio_id: 0,
+														media_urls: {
+															...draft.media_urls,
+															video_id: '',
+															audio_id: '',
+														},
+													}
+												: {} ),
+										} )
+									}
+									help={ __(
+										'Use HTTP or HTTPS, or choose an uploaded file under Lesson media. Entering a URL replaces an uploaded video or audio file.',
+										'ohmylms'
+									) }
+								/>
+							) }
+							<MediaSettings
+								lesson={ draft }
+								onChange={ change }
+							/>
+							{ 'video' === draft.type && (
+								<VideoSettings
+									video={ draft.video }
+									onChange={ ( patch ) =>
+										change( {
+											video: { ...draft.video, ...patch },
+										} )
+									}
+								/>
+							) }
+							<CheckboxControl
+								label={ __(
+									'Allow lesson preview without enrollment',
+									'ohmylms'
+								) }
+								checked={ draft.preview_enable }
+								onChange={ ( value ) =>
+									change( { preview_enable: value } )
+								}
+							/>
+							<CheckboxControl
+								label={ __(
+									'Enable lesson comments',
+									'ohmylms'
+								) }
+								checked={ draft.enable_comments }
+								onChange={ ( value ) =>
+									change( { enable_comments: value } )
+								}
+							/>
+							<DripSettings
+								drip={ draft.drip }
+								onChange={ ( drip ) => change( { drip } ) }
+							/>
+							<PrerequisiteSettings
+								lesson={ draft }
+								onChange={ ( prerequisites ) =>
+									change( { prerequisites } )
+								}
+							/>
+						</fieldset>
+						<fieldset disabled={ ! editable || operation.busy }>
+							<legend>
+								{ __( 'Download resources', 'ohmylms' ) }
+							</legend>
+							{ draft.resources.map( ( resource, index ) => (
+								<fieldset key={ index }>
+									<legend>
+										{ __( 'Resource link', 'ohmylms' ) }{ ' ' }
+										{ index + 1 }
+									</legend>
+									<TextControl
+										label={ __(
+											'Resource name',
+											'ohmylms'
+										) }
+										value={ resource.name }
+										maxLength={ 200 }
+										onChange={ ( name ) =>
+											change( {
+												resources: draft.resources.map(
+													( row, rowIndex ) =>
+														rowIndex === index
+															? { ...row, name }
+															: row
+												),
+											} )
 										}
-									: {} ),
-							} )
-						}
-						help={ __(
-							'Use HTTP or HTTPS, or choose an uploaded file under Lesson media. Entering a URL replaces an uploaded video or audio file.',
-							'ohmylms'
+									/>
+									<TextControl
+										label={ __(
+											'Resource URL',
+											'ohmylms'
+										) }
+										value={ resource.url }
+										type="url"
+										onChange={ ( url ) =>
+											change( {
+												resources: draft.resources.map(
+													( row, rowIndex ) =>
+														rowIndex === index
+															? { ...row, url }
+															: row
+												),
+											} )
+										}
+									/>
+									<TextControl
+										label={ __(
+											'Resource size label',
+											'ohmylms'
+										) }
+										value={ resource.size }
+										maxLength={ 50 }
+										onChange={ ( size ) =>
+											change( {
+												resources: draft.resources.map(
+													( row, rowIndex ) =>
+														rowIndex === index
+															? { ...row, size }
+															: row
+												),
+											} )
+										}
+									/>
+									<Button
+										isDestructive
+										onClick={ () =>
+											change( {
+												resources:
+													draft.resources.filter(
+														( _, rowIndex ) =>
+															rowIndex !== index
+													),
+											} )
+										}
+									>
+										{ __(
+											'Remove resource link',
+											'ohmylms'
+										) }
+									</Button>
+								</fieldset>
+							) ) }
+							<p>
+								{ __(
+									'Removing a link does not delete its file.',
+									'ohmylms'
+								) }
+							</p>
+							<Button
+								disabled={ draft.resources.length >= 50 }
+								onClick={ () =>
+									change( {
+										resources: [
+											...draft.resources,
+											{ name: '', url: '', size: '' },
+										],
+									} )
+								}
+							>
+								{ __( 'Add resource link', 'ohmylms' ) }
+							</Button>
+						</fieldset>
+						{ editable && (
+							<LessonObjectives lessonId={ draft.id } />
 						) }
-					/>
-				) }
-				<MediaSettings lesson={ draft } onChange={ change } />
-				{ 'video' === draft.type && (
-					<VideoSettings
-						video={ draft.video }
-						onChange={ ( patch ) =>
-							change( { video: { ...draft.video, ...patch } } )
-						}
-					/>
-				) }
-				<CheckboxControl
-					label={ __(
-						'Allow lesson preview without enrollment',
-						'ohmylms'
-					) }
-					checked={ draft.preview_enable }
-					onChange={ ( value ) =>
-						change( { preview_enable: value } )
-					}
-				/>
-				<CheckboxControl
-					label={ __( 'Enable lesson comments', 'ohmylms' ) }
-					checked={ draft.enable_comments }
-					onChange={ ( value ) =>
-						change( { enable_comments: value } )
-					}
-				/>
-				<DripSettings
-					drip={ draft.drip }
-					onChange={ ( drip ) => change( { drip } ) }
-				/>
-				<PrerequisiteSettings
-					lesson={ draft }
-					onChange={ ( prerequisites ) =>
-						change( { prerequisites } )
-					}
-				/>
-			</fieldset>
-			<fieldset disabled={ ! editable || operation.busy }>
-				<legend>{ __( 'Download resources', 'ohmylms' ) }</legend>
-				{ draft.resources.map( ( resource, index ) => (
-					<fieldset key={ index }>
-						<legend>
-							{ __( 'Resource link', 'ohmylms' ) } { index + 1 }
-						</legend>
-						<TextControl
-							label={ __( 'Resource name', 'ohmylms' ) }
-							value={ resource.name }
-							maxLength={ 200 }
-							onChange={ ( name ) =>
-								change( {
-									resources: draft.resources.map(
-										( row, rowIndex ) =>
-											rowIndex === index
-												? { ...row, name }
-												: row
-									),
-								} )
-							}
-						/>
-						<TextControl
-							label={ __( 'Resource URL', 'ohmylms' ) }
-							value={ resource.url }
-							type="url"
-							onChange={ ( url ) =>
-								change( {
-									resources: draft.resources.map(
-										( row, rowIndex ) =>
-											rowIndex === index
-												? { ...row, url }
-												: row
-									),
-								} )
-							}
-						/>
-						<TextControl
-							label={ __( 'Resource size label', 'ohmylms' ) }
-							value={ resource.size }
-							maxLength={ 50 }
-							onChange={ ( size ) =>
-								change( {
-									resources: draft.resources.map(
-										( row, rowIndex ) =>
-											rowIndex === index
-												? { ...row, size }
-												: row
-									),
-								} )
-							}
-						/>
-						<Button
-							isDestructive
-							onClick={ () =>
-								change( {
-									resources: draft.resources.filter(
-										( _, rowIndex ) => rowIndex !== index
-									),
-								} )
-							}
-						>
-							{ __( 'Remove resource link', 'ohmylms' ) }
-						</Button>
-					</fieldset>
-				) ) }
-				<p>
-					{ __(
-						'Removing a link does not delete its file.',
-						'ohmylms'
-					) }
-				</p>
-				<Button
-					disabled={ draft.resources.length >= 50 }
-					onClick={ () =>
-						change( {
-							resources: [
-								...draft.resources,
-								{ name: '', url: '', size: '' },
-							],
-						} )
-					}
-				>
-					{ __( 'Add resource link', 'ohmylms' ) }
-				</Button>
-			</fieldset>
-			{ editable && <LessonObjectives lessonId={ draft.id } /> }
-				</aside>
+					</aside>
 				) }
 			</div>
 			{ confirmReload && (

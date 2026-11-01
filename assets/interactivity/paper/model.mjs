@@ -6,7 +6,7 @@
 /**
  * Flagged question IDs from storage. Anything unreadable flags nothing.
  *
- * @param {string|null} raw Stored JSON list of question IDs.
+ * @param {string|null|undefined} raw Stored JSON list of question IDs.
  * @return {Object<string, true>} Flags by question ID.
  */
 export function parseFlags( raw ) {
@@ -19,6 +19,7 @@ export function parseFlags( raw ) {
 	if ( ! Array.isArray( list ) ) {
 		return {};
 	}
+	/** @type {Object<string, true>} */
 	const flags = {};
 	for ( const value of list ) {
 		const id = Number( value );
@@ -84,9 +85,9 @@ export const format = ( template, value ) =>
 /**
  * The warning threshold the timer has just passed, in seconds.
  *
- * @param {number|null} previous   Seconds left at the last tick, null before the first.
- * @param {number}      remaining  Seconds left now.
- * @param {number[]}    thresholds Warning points in seconds.
+ * @param {number|null|undefined} previous   Seconds left at the last tick, null before the first.
+ * @param {number}                remaining  Seconds left now.
+ * @param {number[]}              thresholds Warning points in seconds.
  * @return {number} The threshold crossed, or 0.
  */
 export function timeWarning( previous, remaining, thresholds = [ 300, 60 ] ) {
@@ -103,8 +104,8 @@ export function timeWarning( previous, remaining, thresholds = [ 300, 60 ] ) {
 /**
  * Spoken text of a timer warning.
  *
- * @param {number} seconds Threshold in seconds.
- * @param {Object} strings Translated strings: minutesLeft (%d) and oneMinuteLeft.
+ * @param {number}                                         seconds Threshold in seconds.
+ * @param {{minutesLeft: string, oneMinuteLeft: string}} strings Translated strings: minutesLeft (%d) and oneMinuteLeft.
  * @return {string} Text.
  */
 export function warningText( seconds, strings ) {
@@ -165,7 +166,7 @@ export function stepIndex( count, index, key ) {
  * @param {Object}  status          Item state.
  * @param {boolean} status.answered Whether the question has an answer.
  * @param {boolean} status.flagged  Whether it is flagged.
- * @param {Object}  strings         Translated words: answeredText, blankText, flagText.
+ * @param {{answeredText: string, blankText: string, flagText: string}} strings Translated words: answeredText, blankText, flagText.
  * @return {string} Status after the question number.
  */
 export function itemStatus( { answered, flagged }, strings ) {
@@ -187,11 +188,11 @@ export const hasMath = ( text ) =>
 /**
  * Resolve once a check passes, or false after the timeout.
  *
- * @param {() => unknown} check             Condition.
- * @param {Object}        options           Options.
- * @param {number}        options.timeout   Longest wait in milliseconds.
- * @param {number}        options.interval  Polling interval in milliseconds.
- * @param {Function}      options.setTimer  Timer function, for tests.
+ * @param {() => unknown} check               Condition.
+ * @param {Object}        [options]           Options.
+ * @param {number}        [options.timeout]   Longest wait in milliseconds.
+ * @param {number}        [options.interval]  Polling interval in milliseconds.
+ * @param {Function}      [options.setTimer]  Timer function, for tests.
  * @return {Promise<boolean>} Whether the check passed.
  */
 export function waitFor(

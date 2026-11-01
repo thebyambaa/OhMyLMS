@@ -8,7 +8,9 @@
 namespace OhMyLMS\Automation;
 
 use OhMyLMS\Cohorts\Cohorts;
+use OhMyLMS\I18n\RecipientLocale;
 use OhMyLMS\Student\Enrollments;
+use OhMyLMS\Utility\Lock;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -492,9 +494,14 @@ final class RuleRunner {
 	 * @return bool
 	 */
 	private static function mail( $to, $subject, $body, array $context ) {
-		$subject = wp_strip_all_tags( self::merge( $subject, $context ) );
-		$body    = wp_strip_all_tags( self::merge( $body, $context ) );
-		return (bool) wp_mail( $to, $subject, $body, array( 'Content-Type: text/plain; charset=UTF-8' ) );
+		return (bool) RecipientLocale::run(
+			$to,
+			static function () use ( $to, $subject, $body, $context ) {
+				$subject = wp_strip_all_tags( self::merge( $subject, $context ) );
+				$body    = wp_strip_all_tags( self::merge( $body, $context ) );
+				return wp_mail( $to, $subject, $body, array( 'Content-Type: text/plain; charset=UTF-8' ) );
+			}
+		);
 	}
 
 	/**
@@ -557,28 +564,33 @@ final class RuleRunner {
 		$table = $wpdb->prefix . 'ohmylms_user_membership';
 		$lock  = 'ohmylms-plan-grant-' . md5( $wpdb->prefix . ':' . $user_id );
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery
-		if ( 1 !== (int) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) ) {
-			return new \WP_Error( 'ohmylms_automation_failed', __( 'The learner is busy. Try again.', 'ohmylms' ) );
-		}
-		try {
-			if ( $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE user_id = %d AND membership_id = %d AND status IN ('enrolled','pending')", $table, $user_id, $plan_id ) ) ) {
-				return new \WP_Error( 'ohmylms_automation_skipped', __( 'The learner already holds the plan.', 'ohmylms' ) );
+		$inserted = Lock::with(
+			$lock,
+			5,
+			static function () use ( $wpdb, $table, $user_id, $plan_id ) {
+				if ( $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE user_id = %d AND membership_id = %d AND status IN ('enrolled','pending')", $table, $user_id, $plan_id ) ) ) {
+					return new \WP_Error( 'ohmylms_automation_skipped', __( 'The learner already holds the plan.', 'ohmylms' ) );
+				}
+				return $wpdb->insert(
+					$table,
+					array(
+						'user_id'       => $user_id,
+						'membership_id' => $plan_id,
+						'status'        => 'enrolled',
+						'progress'      => 'running',
+						'start_date'    => current_time( 'mysql' ),
+					),
+					array( '%d', '%d', '%s', '%s', '%s' )
+				);
+			},
+			static function () {
+				return new \WP_Error( 'ohmylms_automation_failed', __( 'The learner is busy. Try again.', 'ohmylms' ) );
 			}
-			$inserted = $wpdb->insert(
-				$table,
-				array(
-					'user_id'       => $user_id,
-					'membership_id' => $plan_id,
-					'status'        => 'enrolled',
-					'progress'      => 'running',
-					'start_date'    => current_time( 'mysql' ),
-				),
-				array( '%d', '%d', '%s', '%s', '%s' )
-			);
-		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
-		}
+		);
 		// phpcs:enable
+		if ( is_wp_error( $inserted ) ) {
+			return $inserted;
+		}
 		if ( ! $inserted ) {
 			return new \WP_Error( 'ohmylms_automation_failed', __( 'The plan could not be given.', 'ohmylms' ) );
 		}

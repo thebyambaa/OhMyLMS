@@ -6,6 +6,7 @@
  */
 namespace OhMyLMS\Learning;
 
+use OhMyLMS\Utility\Lock;
 use OhMyLMS\Utility\Transaction;
 
 defined( 'ABSPATH' ) || exit;
@@ -52,19 +53,19 @@ final class LessonAuthoring {
 	 * @return mixed
 	 */
 	public static function locked( $lesson_id, callable $work ) {
-		global $wpdb;
-		$key = 'ohmylms_lesson_' . (int) $lesson_id;
-		if ( ! $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 3)', $key ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh named lock, not cacheable data.
-			return Catalog::error( __( 'Another author is saving this lesson. Try again.', 'ohmylms' ), 409 );
-		}
-		try {
-			if ( $lesson_id > 0 ) {
-				clean_post_cache( $lesson_id );
+		return Lock::with(
+			'ohmylms_lesson_' . (int) $lesson_id,
+			3,
+			static function () use ( $lesson_id, $work ) {
+				if ( $lesson_id > 0 ) {
+					clean_post_cache( $lesson_id );
+				}
+				return $work();
+			},
+			static function () {
+				return Catalog::error( __( 'Another author is saving this lesson. Try again.', 'ohmylms' ), 409 );
 			}
-			return $work();
-		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $key ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Release the named authoring lock.
-		}
+		);
 	}
 
 	/**

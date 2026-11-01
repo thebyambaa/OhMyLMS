@@ -10,7 +10,7 @@ import {
 	listOrders,
 } from './api';
 import { EMPTY_COUPON_QUERY, EMPTY_ORDER_QUERY } from './model';
-import { useRequest } from './useRequest';
+import { useRequest } from '../../hooks/useRequest';
 import type { CouponQuery, OrderQuery } from './types';
 
 /** Address names of order filters that differ from the query's. */
@@ -55,10 +55,11 @@ export function useStepBack(
 export function useOrders() {
 	const address = useAddressQuery( EMPTY_ORDER_QUERY, ORDER_NAMES );
 	const { query } = address;
-	const request = useRequest(
-		( signal ) => listOrders( query, signal ),
-		JSON.stringify( query )
-	);
+	const request = useRequest( ( signal ) => listOrders( query, signal ), {
+		key: JSON.stringify( query ),
+		keepData: true,
+		errorShape: 'object',
+	} );
 	useStepBack( request.error, query.page, 'ohmylms_order_invalid_page', () =>
 		address.setPage( Math.max( 1, query.page - 1 ), { replace: true } )
 	);
@@ -85,7 +86,11 @@ export function useOrders() {
  * @param refreshKey Change to reload the counts.
  */
 export function useStatusCounts( refreshKey: string ) {
-	return useRequest( ( signal ) => getStatusCounts( signal ), refreshKey );
+	return useRequest( ( signal ) => getStatusCounts( signal ), {
+		key: refreshKey,
+		keepData: true,
+		errorShape: 'object',
+	} );
 }
 
 /**
@@ -94,7 +99,11 @@ export function useStatusCounts( refreshKey: string ) {
  * @param id Order ID.
  */
 export function useOrder( id: number ) {
-	return useRequest( ( signal ) => getOrder( id, signal ), String( id ) );
+	return useRequest( ( signal ) => getOrder( id, signal ), {
+		key: String( id ),
+		keepData: true,
+		errorShape: 'object',
+	} );
 }
 
 /**
@@ -103,17 +112,22 @@ export function useOrder( id: number ) {
  * @param id Order ID.
  */
 export function useNotes( id: number ) {
-	return useRequest( ( signal ) => listNotes( id, signal ), String( id ) );
+	return useRequest( ( signal ) => listNotes( id, signal ), {
+		key: String( id ),
+		keepData: true,
+		errorShape: 'object',
+	} );
 }
 
 /** State of the coupon list, kept in the address. */
 export function useCoupons() {
 	const address = useAddressQuery( EMPTY_COUPON_QUERY, { search: 's' } );
 	const { query } = address;
-	const request = useRequest(
-		( signal ) => listCoupons( query, signal ),
-		JSON.stringify( query )
-	);
+	const request = useRequest( ( signal ) => listCoupons( query, signal ), {
+		key: JSON.stringify( query ),
+		keepData: true,
+		errorShape: 'object',
+	} );
 	useStepBack( request.error, query.page, 'ohmylms_coupon_invalid_page', () =>
 		address.setPage( Math.max( 1, query.page - 1 ), { replace: true } )
 	);
@@ -135,5 +149,9 @@ export function useCoupons() {
  * @param search Title search.
  */
 export function useCourseOptions( search: string ) {
-	return useRequest( ( signal ) => listCourses( search, signal ), search );
+	return useRequest( ( signal ) => listCourses( search, signal ), {
+		key: search,
+		keepData: true,
+		errorShape: 'object',
+	} );
 }

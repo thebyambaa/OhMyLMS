@@ -12,7 +12,6 @@ import {
 	nextBlockId,
 	parseCertificate,
 	parseCourseChoice,
-	parseMedia,
 	parseOptions,
 	parsePreview,
 	serverFieldError,
@@ -54,7 +53,7 @@ describe( 'certificate response boundary', () => {
 		expect( () => parseCertificate( null ) ).toThrow();
 		expect( () => parseCertificate( [] ) ).toThrow();
 	} );
-	it( 'validates options, previews, courses and media', () => {
+	it( 'validates options, previews and courses', () => {
 		expect( parseOptions( options ) ).toEqual( options );
 		expect( () => parseOptions( { ...options, sizes: [] } ) ).toThrow();
 		expect( () => parseOptions( { ...options, statuses: [] } ) ).toThrow();
@@ -70,26 +69,6 @@ describe( 'certificate response boundary', () => {
 		expect(
 			parseCourseChoice( { id: 3, title: 'Algebra', status: 'draft' } )
 		).toEqual( { id: 3, title: 'Algebra', status: 'draft' } );
-		const media = {
-			id: 9,
-			source_url: 'https://example.test/a.png',
-			mime_type: 'image/png',
-			title: { rendered: 'Logo' },
-			media_details: {
-				sizes: {
-					thumbnail: { source_url: 'https://example.test/a-150.png' },
-				},
-			},
-		};
-		expect( parseMedia( media ).thumbnail_url ).toBe(
-			'https://example.test/a-150.png'
-		);
-		expect(
-			parseMedia( { ...media, media_details: undefined } ).thumbnail_url
-		).toBe( 'https://example.test/a.png' );
-		expect( () =>
-			parseMedia( { ...media, mime_type: 'image/svg+xml' } )
-		).toThrow();
 	} );
 } );
 

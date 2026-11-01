@@ -541,410 +541,470 @@ export default function ExamEditorPage() {
 				className={ `oml-editor oml-editor-grid${ asideOpen ? '' : ' is-aside-closed' }` }
 			>
 				<div className="oml-editor-main">
-			<section aria-labelledby="oml-exam-compose">
-				<h3 id="oml-exam-compose">
-					{ __( 'Questions and sections', 'ohmylms' ) }
-				</h3>
-				<p>
-					{ sprintf(
-						/* translators: %s: total marks. */
-						__( 'Total: %s marks', 'ohmylms' ),
-						String( marks )
-					) }
-				</p>
-				{ editable && ! composable && (
-					<p>
-						{ __(
-							'The questions of an imported exam come from its reviewed paper. You can add and arrange sections.',
-							'ohmylms'
-						) }
-					</p>
-				) }
-				{ items.length ? (
-					<ol aria-label={ __( 'Composition', 'ohmylms' ) }>
-						{ items.map( ( item, index ) => (
-							<li
-								key={
-									'section' === item.kind
-										? `s-${ index }`
-										: `q-${ item.question_id }`
-								}
-							>
-								{ 'section' === item.kind ? (
-									<>
-										<TextControl
-											label={ __(
-												'Section title',
-												'ohmylms'
-											) }
-											value={ item.title }
-											maxLength={ LIMITS.title }
-											disabled={
-												! editable || operation.busy
-											}
-											onChange={ ( title ) =>
-												setItem( index, {
-													...item,
-													title,
-												} )
-											}
-										/>
-										<CheckboxControl
-											label={ __(
-												'Start on a new page',
-												'ohmylms'
-											) }
-											checked={ item.new_page }
-											disabled={
-												! editable || operation.busy
-											}
-											onChange={ ( newPage ) =>
-												setItem( index, {
-													...item,
-													new_page: newPage,
-												} )
-											}
-										/>
-									</>
-								) : (
-									<span>
-										{ sprintf(
-											/* translators: 1: question name; 2: marks. */
-											__(
-												'%1$s — %2$s marks',
-												'ohmylms'
-											),
-											item.name,
-											String( item.marks )
-										) }
-										{ ! item.approved &&
-											` (${ __( 'not approved yet', 'ohmylms' ) })` }
-									</span>
+					<section aria-labelledby="oml-exam-compose">
+						<h3 id="oml-exam-compose">
+							{ __( 'Questions and sections', 'ohmylms' ) }
+						</h3>
+						<p>
+							{ sprintf(
+								/* translators: %s: total marks. */
+								__( 'Total: %s marks', 'ohmylms' ),
+								String( marks )
+							) }
+						</p>
+						{ editable && ! composable && (
+							<p>
+								{ __(
+									'The questions of an imported exam come from its reviewed paper. You can add and arrange sections.',
+									'ohmylms'
 								) }
-								{ editable &&
-									( composable ||
-										'section' === item.kind ) && (
-										<>
-											{ ' ' }
-											<Button
-												variant="tertiary"
-												size="small"
-												disabled={
-													0 === index ||
-													operation.busy
-												}
-												onClick={ () =>
-													setItems(
-														moveItem(
-															items,
-															index,
-															-1
-														)
-													)
-												}
-												aria-label={ __(
-													'Move up',
-													'ohmylms'
+							</p>
+						) }
+						{ items.length ? (
+							<ol aria-label={ __( 'Composition', 'ohmylms' ) }>
+								{ items.map( ( item, index ) => (
+									<li
+										key={
+											'section' === item.kind
+												? `s-${ index }`
+												: `q-${ item.question_id }`
+										}
+									>
+										{ 'section' === item.kind ? (
+											<>
+												<TextControl
+													label={ __(
+														'Section title',
+														'ohmylms'
+													) }
+													value={ item.title }
+													maxLength={ LIMITS.title }
+													disabled={
+														! editable ||
+														operation.busy
+													}
+													onChange={ ( title ) =>
+														setItem( index, {
+															...item,
+															title,
+														} )
+													}
+												/>
+												<CheckboxControl
+													label={ __(
+														'Start on a new page',
+														'ohmylms'
+													) }
+													checked={ item.new_page }
+													disabled={
+														! editable ||
+														operation.busy
+													}
+													onChange={ ( newPage ) =>
+														setItem( index, {
+															...item,
+															new_page: newPage,
+														} )
+													}
+												/>
+											</>
+										) : (
+											<span>
+												{ sprintf(
+													/* translators: 1: question name; 2: marks. */
+													__(
+														'%1$s — %2$s marks',
+														'ohmylms'
+													),
+													item.name,
+													String( item.marks )
 												) }
-											>
-												↑
-											</Button>
-											<Button
-												variant="tertiary"
-												size="small"
-												disabled={
-													items.length - 1 ===
-														index || operation.busy
-												}
-												onClick={ () =>
-													setItems(
-														moveItem(
-															items,
-															index,
-															1
-														)
-													)
-												}
-												aria-label={ __(
-													'Move down',
+												{ ! item.approved &&
+													` (${ __( 'not approved yet', 'ohmylms' ) })` }
+											</span>
+										) }
+										{ editable &&
+											( composable ||
+												'section' === item.kind ) && (
+												<>
+													{ ' ' }
+													<Button
+														variant="tertiary"
+														size="small"
+														disabled={
+															0 === index ||
+															operation.busy
+														}
+														onClick={ () =>
+															setItems(
+																moveItem(
+																	items,
+																	index,
+																	-1
+																)
+															)
+														}
+														aria-label={ __(
+															'Move up',
+															'ohmylms'
+														) }
+													>
+														↑
+													</Button>
+													<Button
+														variant="tertiary"
+														size="small"
+														disabled={
+															items.length - 1 ===
+																index ||
+															operation.busy
+														}
+														onClick={ () =>
+															setItems(
+																moveItem(
+																	items,
+																	index,
+																	1
+																)
+															)
+														}
+														aria-label={ __(
+															'Move down',
+															'ohmylms'
+														) }
+													>
+														↓
+													</Button>
+													<Button
+														variant="link"
+														isDestructive
+														disabled={
+															operation.busy
+														}
+														onClick={ () =>
+															setItems(
+																items.filter(
+																	( _, at ) =>
+																		at !==
+																		index
+																)
+															)
+														}
+													>
+														{ __(
+															'Remove',
+															'ohmylms'
+														) }
+													</Button>
+												</>
+											) }
+									</li>
+								) ) }
+							</ol>
+						) : (
+							<p>{ __( 'No questions yet.', 'ohmylms' ) }</p>
+						) }
+						{ editable && (
+							<p>
+								<Button
+									variant="secondary"
+									disabled={ operation.busy }
+									onClick={ () =>
+										setItems( [
+											...items,
+											{
+												kind: 'section',
+												title: __(
+													'New section',
 													'ohmylms'
-												) }
-											>
-												↓
-											</Button>
-											<Button
-												variant="link"
-												isDestructive
-												disabled={ operation.busy }
-												onClick={ () =>
-													setItems(
-														items.filter(
-															( _, at ) =>
-																at !== index
-														)
-													)
-												}
-											>
-												{ __( 'Remove', 'ohmylms' ) }
-											</Button>
-										</>
+												),
+												new_page: false,
+											},
+										] )
+									}
+								>
+									{ __( 'Add section', 'ohmylms' ) }
+								</Button>{ ' ' }
+								{ composable && (
+									<Button
+										variant="secondary"
+										disabled={ operation.busy }
+										onClick={ () => setPicking( true ) }
+									>
+										{ __( 'Add questions', 'ohmylms' ) }
+									</Button>
+								) }{ ' ' }
+								<Button
+									variant="primary"
+									disabled={ operation.busy || ! itemsDirty }
+									isBusy={ operation.busy }
+									onClick={ saveItems }
+								>
+									{ __(
+										'Save questions and sections',
+										'ohmylms'
 									) }
-							</li>
-						) ) }
-					</ol>
-				) : (
-					<p>{ __( 'No questions yet.', 'ohmylms' ) }</p>
-				) }
-				{ editable && (
-					<p>
-						<Button
-							variant="secondary"
-							disabled={ operation.busy }
-							onClick={ () =>
-								setItems( [
-									...items,
-									{
-										kind: 'section',
-										title: __( 'New section', 'ohmylms' ),
-										new_page: false,
-									},
-								] )
-							}
-						>
-							{ __( 'Add section', 'ohmylms' ) }
-						</Button>{ ' ' }
-						{ composable && (
-							<Button
-								variant="secondary"
-								disabled={ operation.busy }
-								onClick={ () => setPicking( true ) }
-							>
-								{ __( 'Add questions', 'ohmylms' ) }
-							</Button>
-						) }{ ' ' }
-						<Button
-							variant="primary"
-							disabled={ operation.busy || ! itemsDirty }
-							isBusy={ operation.busy }
-							onClick={ saveItems }
-						>
-							{ __( 'Save questions and sections', 'ohmylms' ) }
-						</Button>
-					</p>
-				) }
-			</section>
-			<ResultsPanel
-				examId={ exam.id }
-				canRelease={ exam.permissions.can_release }
-			/>
+								</Button>
+							</p>
+						) }
+					</section>
+					<ResultsPanel
+						examId={ exam.id }
+						canRelease={ exam.permissions.can_release }
+					/>
 				</div>
 				{ asideOpen && (
 					<aside
 						className="oml-editor-aside"
 						aria-label={ __( 'Exam settings', 'ohmylms' ) }
 					>
-			{ editable && (
-				<section aria-labelledby="oml-exam-publish">
-					<h3 id="oml-exam-publish">
-						{ __( 'Publish', 'ohmylms' ) }
-					</h3>
-					{ exam.problems.length > 0 && (
-						<ul>
-							{ exam.problems.map( ( problem ) => (
-								<li key={ problem }>{ problem }</li>
-							) ) }
-						</ul>
-					) }
-					{ exam.permissions.can_publish && (
-						<Button
-							variant="primary"
-							disabled={
-								operation.busy ||
-								settingsDirty ||
-								itemsDirty ||
-								exam.problems.length > 0
-							}
-							onClick={ () => setPublishing( true ) }
+						{ editable && (
+							<section aria-labelledby="oml-exam-publish">
+								<h3 id="oml-exam-publish">
+									{ __( 'Publish', 'ohmylms' ) }
+								</h3>
+								{ exam.problems.length > 0 && (
+									<ul>
+										{ exam.problems.map( ( problem ) => (
+											<li key={ problem }>{ problem }</li>
+										) ) }
+									</ul>
+								) }
+								{ exam.permissions.can_publish && (
+									<Button
+										variant="primary"
+										disabled={
+											operation.busy ||
+											settingsDirty ||
+											itemsDirty ||
+											exam.problems.length > 0
+										}
+										onClick={ () => setPublishing( true ) }
+									>
+										{ __( 'Publish exam', 'ohmylms' ) }
+									</Button>
+								) }
+							</section>
+						) }
+						<form
+							className="oml-editor-form"
+							aria-label={ __( 'Exam settings', 'ohmylms' ) }
+							noValidate
+							onSubmit={ ( event ) => {
+								event.preventDefault();
+								saveSettings();
+							} }
 						>
-							{ __( 'Publish exam', 'ohmylms' ) }
-						</Button>
-					) }
-				</section>
-			) }
-			<form
-				className="oml-editor-form"
-				aria-label={ __( 'Exam settings', 'ohmylms' ) }
-				noValidate
-				onSubmit={ ( event ) => {
-					event.preventDefault();
-					saveSettings();
-				} }
-			>
-				<fieldset disabled={ operation.busy || ! editable }>
-					<legend>{ __( 'Details', 'ohmylms' ) }</legend>
-					<TextControl
-						label={ __( 'Title', 'ohmylms' ) }
-						value={ form.title }
-						maxLength={ LIMITS.title }
-						aria-invalid={ errors.title ? true : undefined }
-						onChange={ ( next ) => update( 'title', next ) }
-					/>
-					{ errors.title && <p role="alert">{ errors.title }</p> }
-					<TextareaControl
-						label={ __( 'Instructions for learners', 'ohmylms' ) }
-						value={ form.instructions }
-						rows={ 4 }
-						onChange={ ( next ) => update( 'instructions', next ) }
-					/>
-					{ HEADER_FIELDS.map( ( field ) => (
-						<TextControl
-							key={ field }
-							label={ headerLabel( field ) }
-							value={ form.header[ field ] }
-							maxLength={ LIMITS.header }
-							onChange={ ( next ) =>
-								update( 'header', {
-									...form.header,
-									[ field ]: next,
-								} )
-							}
-						/>
-					) ) }
-				</fieldset>
-				<fieldset disabled={ operation.busy || ! editable }>
-					<legend>{ __( 'Timing', 'ohmylms' ) }</legend>
-					<TextControl
-						label={ __( 'Duration (minutes)', 'ohmylms' ) }
-						value={ form.duration_minutes }
-						inputMode="numeric"
-						aria-invalid={
-							errors.duration_minutes ? true : undefined
-						}
-						onChange={ ( next ) =>
-							update( 'duration_minutes', next )
-						}
-					/>
-					{ errors.duration_minutes && (
-						<p role="alert">{ errors.duration_minutes }</p>
-					) }
-					<TextControl
-						type="datetime-local"
-						label={ __( 'Opens (UTC)', 'ohmylms' ) }
-						value={ form.available_from }
-						onChange={ ( next ) =>
-							update( 'available_from', next )
-						}
-					/>
-					<TextControl
-						type="datetime-local"
-						label={ __( 'Closes (UTC)', 'ohmylms' ) }
-						value={ form.available_until }
-						onChange={ ( next ) =>
-							update( 'available_until', next )
-						}
-					/>
-					{ errors.timing && <p role="alert">{ errors.timing }</p> }
-					<TextControl
-						label={ __( 'Grace period (seconds)', 'ohmylms' ) }
-						value={ form.grace_seconds }
-						inputMode="numeric"
-						onChange={ ( next ) => update( 'grace_seconds', next ) }
-					/>
-					{ errors.grace_seconds && (
-						<p role="alert">{ errors.grace_seconds }</p>
-					) }
-				</fieldset>
-				<fieldset disabled={ operation.busy || ! editable }>
-					<legend>{ __( 'Printable paper', 'ohmylms' ) }</legend>
-					<SelectControl
-						label={ __( 'Paper size', 'ohmylms' ) }
-						value={ form.paper.size }
-						options={ [
-							{ value: 'a4', label: 'A4' },
-							{
-								value: 'letter',
-								label: __( 'Letter', 'ohmylms' ),
-							},
-						] }
-						onChange={ ( next ) =>
-							setPaper(
-								'size',
-								'letter' === next ? 'letter' : 'a4'
-							)
-						}
-					/>
-					<SelectControl
-						label={ __( 'Font', 'ohmylms' ) }
-						value={ form.paper.font }
-						options={ [
-							{
-								value: 'sans',
-								label: __( 'Sans serif', 'ohmylms' ),
-							},
-							{ value: 'serif', label: __( 'Serif', 'ohmylms' ) },
-						] }
-						onChange={ ( next ) =>
-							setPaper(
-								'font',
-								'serif' === next ? 'serif' : 'sans'
-							)
-						}
-					/>
-					<SelectControl
-						label={ __( 'Question numbers', 'ohmylms' ) }
-						value={ form.paper.numbering }
-						options={ [
-							{ value: 'number', label: '1, 2, 3' },
-							{ value: 'q', label: 'Q1, Q2, Q3' },
-						] }
-						onChange={ ( next ) =>
-							setPaper(
-								'numbering',
-								'q' === next ? 'q' : 'number'
-							)
-						}
-					/>
-					<SelectControl
-						label={ __( 'Versions', 'ohmylms' ) }
-						value={ String( form.paper.versions ) }
-						options={ [ 1, 2, 3, 4 ].map( ( value ) => ( {
-							value: String( value ),
-							label: String( value ),
-						} ) ) }
-						onChange={ ( next ) =>
-							setPaper(
-								'versions',
-								Math.min(
-									4,
-									Math.max( 1, Number( next ) || 1 )
-								)
-							)
-						}
-					/>
-					<CheckboxControl
-						label={ __( 'Show marks', 'ohmylms' ) }
-						checked={ form.paper.show_marks }
-						onChange={ ( next ) => setPaper( 'show_marks', next ) }
-					/>
-					<CheckboxControl
-						label={ __( 'Page numbers', 'ohmylms' ) }
-						checked={ form.paper.page_numbers }
-						onChange={ ( next ) =>
-							setPaper( 'page_numbers', next )
-						}
-					/>
-				</fieldset>
-				{ editable && (
-					<Button
-						type="submit"
-						variant="primary"
-						disabled={ operation.busy || ! settingsDirty }
-						isBusy={ operation.busy }
-					>
-						{ __( 'Save settings', 'ohmylms' ) }
-					</Button>
-				) }
-			</form>
+							<fieldset disabled={ operation.busy || ! editable }>
+								<legend>{ __( 'Details', 'ohmylms' ) }</legend>
+								<TextControl
+									label={ __( 'Title', 'ohmylms' ) }
+									value={ form.title }
+									maxLength={ LIMITS.title }
+									aria-invalid={
+										errors.title ? true : undefined
+									}
+									onChange={ ( next ) =>
+										update( 'title', next )
+									}
+								/>
+								{ errors.title && (
+									<p role="alert">{ errors.title }</p>
+								) }
+								<TextareaControl
+									label={ __(
+										'Instructions for learners',
+										'ohmylms'
+									) }
+									value={ form.instructions }
+									rows={ 4 }
+									onChange={ ( next ) =>
+										update( 'instructions', next )
+									}
+								/>
+								{ HEADER_FIELDS.map( ( field ) => (
+									<TextControl
+										key={ field }
+										label={ headerLabel( field ) }
+										value={ form.header[ field ] }
+										maxLength={ LIMITS.header }
+										onChange={ ( next ) =>
+											update( 'header', {
+												...form.header,
+												[ field ]: next,
+											} )
+										}
+									/>
+								) ) }
+							</fieldset>
+							<fieldset disabled={ operation.busy || ! editable }>
+								<legend>{ __( 'Timing', 'ohmylms' ) }</legend>
+								<TextControl
+									label={ __(
+										'Duration (minutes)',
+										'ohmylms'
+									) }
+									value={ form.duration_minutes }
+									inputMode="numeric"
+									aria-invalid={
+										errors.duration_minutes
+											? true
+											: undefined
+									}
+									onChange={ ( next ) =>
+										update( 'duration_minutes', next )
+									}
+								/>
+								{ errors.duration_minutes && (
+									<p role="alert">
+										{ errors.duration_minutes }
+									</p>
+								) }
+								<TextControl
+									type="datetime-local"
+									label={ __( 'Opens (UTC)', 'ohmylms' ) }
+									value={ form.available_from }
+									onChange={ ( next ) =>
+										update( 'available_from', next )
+									}
+								/>
+								<TextControl
+									type="datetime-local"
+									label={ __( 'Closes (UTC)', 'ohmylms' ) }
+									value={ form.available_until }
+									onChange={ ( next ) =>
+										update( 'available_until', next )
+									}
+								/>
+								{ errors.timing && (
+									<p role="alert">{ errors.timing }</p>
+								) }
+								<TextControl
+									label={ __(
+										'Grace period (seconds)',
+										'ohmylms'
+									) }
+									value={ form.grace_seconds }
+									inputMode="numeric"
+									onChange={ ( next ) =>
+										update( 'grace_seconds', next )
+									}
+								/>
+								{ errors.grace_seconds && (
+									<p role="alert">{ errors.grace_seconds }</p>
+								) }
+							</fieldset>
+							<fieldset disabled={ operation.busy || ! editable }>
+								<legend>
+									{ __( 'Printable paper', 'ohmylms' ) }
+								</legend>
+								<SelectControl
+									label={ __( 'Paper size', 'ohmylms' ) }
+									value={ form.paper.size }
+									options={ [
+										{ value: 'a4', label: 'A4' },
+										{
+											value: 'letter',
+											label: __( 'Letter', 'ohmylms' ),
+										},
+									] }
+									onChange={ ( next ) =>
+										setPaper(
+											'size',
+											'letter' === next ? 'letter' : 'a4'
+										)
+									}
+								/>
+								<SelectControl
+									label={ __( 'Font', 'ohmylms' ) }
+									value={ form.paper.font }
+									options={ [
+										{
+											value: 'sans',
+											label: __(
+												'Sans serif',
+												'ohmylms'
+											),
+										},
+										{
+											value: 'serif',
+											label: __( 'Serif', 'ohmylms' ),
+										},
+									] }
+									onChange={ ( next ) =>
+										setPaper(
+											'font',
+											'serif' === next ? 'serif' : 'sans'
+										)
+									}
+								/>
+								<SelectControl
+									label={ __(
+										'Question numbers',
+										'ohmylms'
+									) }
+									value={ form.paper.numbering }
+									options={ [
+										{ value: 'number', label: '1, 2, 3' },
+										{ value: 'q', label: 'Q1, Q2, Q3' },
+									] }
+									onChange={ ( next ) =>
+										setPaper(
+											'numbering',
+											'q' === next ? 'q' : 'number'
+										)
+									}
+								/>
+								<SelectControl
+									label={ __( 'Versions', 'ohmylms' ) }
+									value={ String( form.paper.versions ) }
+									options={ [ 1, 2, 3, 4 ].map(
+										( value ) => ( {
+											value: String( value ),
+											label: String( value ),
+										} )
+									) }
+									onChange={ ( next ) =>
+										setPaper(
+											'versions',
+											Math.min(
+												4,
+												Math.max(
+													1,
+													Number( next ) || 1
+												)
+											)
+										)
+									}
+								/>
+								<CheckboxControl
+									label={ __( 'Show marks', 'ohmylms' ) }
+									checked={ form.paper.show_marks }
+									onChange={ ( next ) =>
+										setPaper( 'show_marks', next )
+									}
+								/>
+								<CheckboxControl
+									label={ __( 'Page numbers', 'ohmylms' ) }
+									checked={ form.paper.page_numbers }
+									onChange={ ( next ) =>
+										setPaper( 'page_numbers', next )
+									}
+								/>
+							</fieldset>
+							{ editable && (
+								<Button
+									type="submit"
+									variant="primary"
+									disabled={
+										operation.busy || ! settingsDirty
+									}
+									isBusy={ operation.busy }
+								>
+									{ __( 'Save settings', 'ohmylms' ) }
+								</Button>
+							) }
+						</form>
 					</aside>
 				) }
 			</div>

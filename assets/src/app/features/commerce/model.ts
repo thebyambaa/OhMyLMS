@@ -20,6 +20,10 @@ import type {
 	RelatedOrder,
 	StatusCounts,
 } from './types';
+import { createValidators } from '../../lib/validation';
+
+const { record, text } = createValidators( invalidResponse );
+export const { positiveId } = createValidators( invalidResponse );
 
 export { COURSE_OPTION_LIMIT } from '../students/public';
 
@@ -127,18 +131,6 @@ export function invalidResponse(): ApiError {
 	} );
 }
 
-function record( value: unknown ): Record< string, unknown > {
-	if ( ! value || 'object' !== typeof value || Array.isArray( value ) ) {
-		throw invalidResponse();
-	}
-	return value as Record< string, unknown >;
-}
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
-}
 function nullableText( value: unknown ): string | null {
 	return null === value ? null : text( value );
 }
@@ -160,13 +152,6 @@ export function count( value: unknown ): number {
 }
 function nullableCount( value: unknown ): number | null {
 	return null === value ? null : count( value );
-}
-export function positiveId( value: unknown ): number {
-	const id = count( value );
-	if ( id < 1 ) {
-		throw invalidResponse();
-	}
-	return id;
 }
 function money( value: unknown ): string {
 	const amount = text( value );

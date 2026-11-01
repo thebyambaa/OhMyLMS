@@ -1,14 +1,15 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiError } from '../../lib/api';
+import * as curriculum from '../curriculum/public';
 import * as api from './api';
 import { MappingDialog } from './MappingDialog';
 
-vi.mock( './api', () => ( {
-	readMappings: vi.fn(),
-	sharedSkills: vi.fn(),
-	saveMapping: vi.fn(),
-	removeMapping: vi.fn(),
+vi.mock( './api', () => ( { readMappings: vi.fn() } ) );
+vi.mock( '../curriculum/public', () => ( {
+	searchSharedSkills: vi.fn(),
+	saveSkillMapping: vi.fn(),
+	removeSkillMapping: vi.fn(),
 } ) );
 beforeEach( () => {
 	vi.resetAllMocks();
@@ -22,7 +23,7 @@ beforeEach( () => {
 			combined: false,
 		},
 	] );
-	vi.mocked( api.sharedSkills ).mockResolvedValue( {
+	vi.mocked( curriculum.searchSharedSkills ).mockResolvedValue( {
 		total: 1,
 		items: [ { id: 20, name: 'Shared number sense' } ],
 	} );
@@ -53,18 +54,38 @@ it( 'requires confirmation and submits the read revision, not an unconditional o
 	await user.click(
 		screen.getByRole( 'button', { name: 'Review mapping change' } )
 	);
-	expect( api.saveMapping ).not.toHaveBeenCalled();
+	expect( curriculum.saveSkillMapping ).not.toHaveBeenCalled();
 	await user.click(
 		screen.getByRole( 'button', { name: 'Confirm mapping change' } )
 	);
-	await waitFor( () => expect( api.saveMapping ).toHaveBeenCalledOnce() );
-	expect( api.saveMapping ).toHaveBeenCalledWith(
+	await waitFor( () =>
+		expect( curriculum.saveSkillMapping ).toHaveBeenCalledOnce()
+	);
+	expect( curriculum.saveSkillMapping ).toHaveBeenCalledWith(
 		10,
 		20,
 		'equivalent',
 		'Old note',
 		'read-revision',
 		expect.any( AbortSignal )
+	);
+} );
+it( 'removes a mapping at the revision it was read at', async () => {
+	const user = userEvent.setup();
+	open();
+	await user.click(
+		await screen.findByRole( 'button', { name: 'Remove mapping' } )
+	);
+	await user.click(
+		screen.getByRole( 'button', { name: 'Confirm mapping change' } )
+	);
+	await waitFor( () =>
+		expect( curriculum.removeSkillMapping ).toHaveBeenCalledWith(
+			10,
+			20,
+			'read-revision',
+			expect.any( AbortSignal )
+		)
 	);
 } );
 it( 'keeps notes after a stale-write failure and allows explicit reload', async () => {
@@ -74,7 +95,7 @@ it( 'keeps notes after a stale-write failure and allows explicit reload', async 
 		await screen.findByRole( 'button', { name: 'Edit mapping' } )
 	);
 	await user.type( screen.getByLabelText( 'Mapping note' ), ' revised' );
-	vi.mocked( api.saveMapping ).mockRejectedValue(
+	vi.mocked( curriculum.saveSkillMapping ).mockRejectedValue(
 		new ApiError( {
 			code: 'stale',
 			status: 409,
@@ -91,7 +112,7 @@ it( 'keeps notes after a stale-write failure and allows explicit reload', async 
 	expect( screen.getByLabelText( 'Mapping note' ) ).toHaveValue(
 		'Old note revised'
 	);
-	expect( api.saveMapping ).toHaveBeenCalledOnce();
+	expect( curriculum.saveSkillMapping ).toHaveBeenCalledOnce();
 	await user.click(
 		screen.getByRole( 'button', { name: 'Reload mappings' } )
 	);

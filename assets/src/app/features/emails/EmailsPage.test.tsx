@@ -279,6 +279,49 @@ describe( 'email editor', () => {
 		).toHaveAttribute( 'aria-disabled', 'true' );
 	} );
 
+	it( 'resets a customized field to its default and saves the reset as null', async () => {
+		const user = userEvent.setup();
+		vi.mocked( api.saveEmail ).mockResolvedValue( {
+			...quizGraded,
+			subject: quizGraded.defaults.subject,
+			customized: { ...quizGraded.customized, subject: false },
+		} );
+		await openEditor();
+		expect(
+			screen.queryByRole( 'button', {
+				name: 'Reset to default: Heading',
+			} )
+		).not.toBeInTheDocument();
+		await user.click(
+			screen.getByRole( 'button', { name: 'Reset to default: Subject' } )
+		);
+		expect( screen.getByLabelText( 'Subject' ) ).toHaveValue(
+			quizGraded.defaults.subject
+		);
+		expect(
+			screen.queryByRole( 'button', {
+				name: 'Reset to default: Subject',
+			} )
+		).not.toBeInTheDocument();
+		await user.type( screen.getByLabelText( 'Heading' ), '!' );
+		expect(
+			screen.getByRole( 'button', { name: 'Reset to default: Heading' } )
+		).toBeInTheDocument();
+		await user.click(
+			screen.getByRole( 'button', { name: 'Save changes' } )
+		);
+		await waitFor( () =>
+			expect( api.saveEmail ).toHaveBeenCalledWith(
+				'student_quiz_graded',
+				{ subject: null, heading: `${ quizGraded.heading }!` }
+			)
+		);
+		expect( await notice( 'Email saved.' ) ).toBeInTheDocument();
+		expect( screen.getByLabelText( 'Subject' ) ).toHaveValue(
+			quizGraded.defaults.subject
+		);
+	} );
+
 	it( 'shows inline errors, moves focus to the first one and sends nothing', async () => {
 		const user = userEvent.setup();
 		await openEditor();

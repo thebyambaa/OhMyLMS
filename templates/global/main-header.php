@@ -55,6 +55,11 @@ $my_courses_url = ohmylms_get_nav_link_url( 'courses' );
 <!--					</a>-->
 <!--				</div>-->
 
+				<?php
+				// Language switcher (English / Монгол); empty when turned off in Settings › General.
+				echo ohmylms_get_language_switcher( array( 'variant' => 'compact' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped by OhMyLMS\I18n\Switcher::render().
+				?>
+
 				<?php $student_profile_photo = $student->get_profile_image(); ?>
 				<div class="ohmylms-user"
 					data-wp-interactive="ohmylms/ui"

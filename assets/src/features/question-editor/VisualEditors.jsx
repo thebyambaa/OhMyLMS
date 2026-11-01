@@ -14,12 +14,15 @@ import {
 } from './interactiveModel.mjs';
 import { numberOrFormula } from './formulaInput.mjs';
 
+/** @typedef {import('./editorTypes').Data} Data */
+/** @typedef {import('./editorTypes').OnPatch} OnPatch */
+
 /**
  * Min, max, step and the correct value on a scale: number line and jug.
- * @param root0
- * @param root0.value
- * @param root0.onChange
- * @param root0.jug
+ * @param {Object}  root0
+ * @param {Data}    root0.value
+ * @param {OnPatch} root0.onChange
+ * @param {boolean} [root0.jug]
  */
 function ScaleEditor( { value, onChange, jug } ) {
 	return (
@@ -121,14 +124,16 @@ function ScaleEditor( { value, onChange, jug } ) {
 		</div>
 	);
 }
+/** @param {{value: Data, onChange: OnPatch}} props */
 export const NumberLineEditor = ( props ) => <ScaleEditor { ...props } />;
+/** @param {{value: Data, onChange: OnPatch}} props */
 export const FillLevelEditor = ( props ) => <ScaleEditor { ...props } jug />;
 
 /**
  * Equal parts of a bar, grid or circle and how many must be shaded.
- * @param root0
- * @param root0.value
- * @param root0.onChange
+ * @param {Object}  root0
+ * @param {Data}    root0.value
+ * @param {OnPatch} root0.onChange
  */
 export function ShadeModelEditor( { value, onChange } ) {
 	return (
@@ -208,9 +213,9 @@ export function ShadeModelEditor( { value, onChange } ) {
 
 /**
  * Number to build and the place values on offer.
- * @param root0
- * @param root0.value
- * @param root0.onChange
+ * @param {Object}  root0
+ * @param {Data}    root0.value
+ * @param {OnPatch} root0.onChange
  */
 export function CountBlocksEditor( { value, onChange } ) {
 	const places = value.places || [];
@@ -283,9 +288,9 @@ export function CountBlocksEditor( { value, onChange } ) {
 
 /**
  * Target time and how exact the learner must be.
- * @param root0
- * @param root0.value
- * @param root0.onChange
+ * @param {Object}  root0
+ * @param {Data}    root0.value
+ * @param {OnPatch} root0.onChange
  */
 export function SetClockEditor( { value, onChange } ) {
 	return (
@@ -338,20 +343,22 @@ export function SetClockEditor( { value, onChange } ) {
 				<SelectControl
 					label={ __( 'Hand moves in steps of', 'ohmylms' ) }
 					value={ String( value.snap || 1 ) }
-					options={ [
-						{
-							value: '1',
-							label: __( '1 minute', 'ohmylms' ),
-						},
-						{
-							value: '5',
-							label: __( '5 minutes', 'ohmylms' ),
-						},
-						{
-							value: '15',
-							label: __( '15 minutes', 'ohmylms' ),
-						},
-					] }
+					options={
+						/** @type {{value: string, label: string}[]} */ ( [
+							{
+								value: '1',
+								label: __( '1 minute', 'ohmylms' ),
+							},
+							{
+								value: '5',
+								label: __( '5 minutes', 'ohmylms' ),
+							},
+							{
+								value: '15',
+								label: __( '15 minutes', 'ohmylms' ),
+							},
+						] )
+					}
 					onChange={ ( snap ) =>
 						onChange( {
 							snap: Number( snap ),
@@ -377,9 +384,9 @@ export function SetClockEditor( { value, onChange } ) {
 
 /**
  * Bills and coins on offer and the amount to make.
- * @param root0
- * @param root0.value
- * @param root0.onChange
+ * @param {Object}  root0
+ * @param {Data}    root0.value
+ * @param {OnPatch} root0.onChange
  */
 export function MakeAmountEditor( { value, onChange } ) {
 	return (
@@ -425,13 +432,17 @@ export function MakeAmountEditor( { value, onChange } ) {
 
 /**
  * Bars, their labels and the heights the learner has to draw.
- * @param root0
- * @param root0.value
- * @param root0.onChange
+ * @param {Object}  root0
+ * @param {Data}    root0.value
+ * @param {OnPatch} root0.onChange
  */
 export function BuildChartEditor( { value, onChange } ) {
+	/** @type {Data[]} */
 	const categories = value.categories || [];
-	const setCategory = ( id, patch ) =>
+	const setCategory = (
+		/** @type {string} */ id,
+		/** @type {Data} */ patch
+	) =>
 		onChange( {
 			categories: categories.map( ( category ) =>
 				category.id === id
@@ -551,13 +562,13 @@ export function BuildChartEditor( { value, onChange } ) {
 
 /**
  * Grid size and the conditions the chosen squares must meet.
- * @param root0
- * @param root0.value
- * @param root0.onChange
+ * @param {Object}  root0
+ * @param {Data}    root0.value
+ * @param {OnPatch} root0.onChange
  */
 export function GridBuildEditor( { value, onChange } ) {
 	const constraints = value.constraints || {};
-	const set = ( patch ) =>
+	const set = ( /** @type {Data} */ patch ) =>
 		onChange( {
 			constraints: Object.fromEntries(
 				Object.entries( {
@@ -673,12 +684,12 @@ export function GridBuildEditor( { value, onChange } ) {
 /**
  * The learner's widget built from the unsaved settings, using the same script learners get.
  * Falls back to a note when the player scripts are not on the page.
- * @param root0
- * @param root0.type
- * @param root0.settings
+ * @param {Object} root0
+ * @param {string} root0.type
+ * @param {Data}   [root0.settings]
  */
 export function VisualPreview( { type, settings = {} } ) {
-	const holder = useRef( null );
+	const holder = useRef( /** @type {HTMLDivElement|null} */ ( null ) );
 	const signature = JSON.stringify( [ type, settings ] );
 	useEffect( () => {
 		const player = window.OhMyLMSInteractive;
@@ -700,7 +711,7 @@ export function VisualPreview( { type, settings = {} } ) {
 		);
 		if ( type === 'build-chart' && settings.show_table ) {
 			config.table = ( settings.categories || [] ).map(
-				( category ) => ( {
+				( /** @type {Data} */ category ) => ( {
 					label: category.label,
 					// A {{variable}} has no value yet, so the preview shows a bar of zero.
 					value:

@@ -147,25 +147,21 @@ class AccountHubSampleSchoolController extends AccountHubController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function create_sample( $request ) {
-		global $wpdb;
-		$lock = 'ohmylms_sample_school';
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Two clicks must not create two sets.
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 10)', $lock ) ) ) {
-			return $this->error( 'sample_busy', __( 'The sample school is being created. Try again in a moment.', 'ohmylms' ), 409 );
-		}
 		try {
-			$before = SamplePreview::status()['complete'];
-			SamplePreview::create();
-			$state = $this->state();
+			$created = SamplePreview::create_once(
+				function () {
+					return $this->state();
+				}
+			);
 		} catch ( \Throwable $failure ) {
 			$message = $failure instanceof \RuntimeException && 400 === (int) $failure->getCode() ? $failure->getMessage() : '';
 			return '' !== $message ? $this->error( 'sample_conflict', $message, 409 ) : $this->service_error( $failure );
-		} finally {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Release the lock.
-			$wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+		}
+		if ( false === $created ) {
+			return $this->error( 'sample_busy', __( 'The sample school is being created. Try again in a moment.', 'ohmylms' ), 409 );
 		}
 
-		return $this->no_store( $state, $before ? 200 : 201 );
+		return $this->no_store( $created['state'], $created['complete_before'] ? 200 : 201 );
 	}
 
 	/**

@@ -4,7 +4,7 @@
  * @return {string} Localized label.
  */
 function label( fallback ) {
-	const labels = globalThis.wp?.i18n;
+	const labels = /** @type {{ wp?: Window['wp'] }} */ ( globalThis ).wp?.i18n;
 	if ( fallback === 'Cancel' ) {
 		return labels?.__( 'Cancel', 'ohmylms' ) || fallback;
 	}
@@ -29,8 +29,15 @@ export function showRequestError( ...details ) {
 	if ( typeof document === 'undefined' ) {
 		return;
 	}
-	const error = details.find(
-		( value ) => typeof value?.message === 'string'
+	const error = /** @type {{ message: string }|undefined} */ (
+		details.find(
+			( value ) =>
+				typeof (
+					/** @type {{ message?: unknown }|null|undefined} */ (
+						value
+					)?.message
+				) === 'string'
+		)
 	);
 	const message =
 		error?.message ||
@@ -60,7 +67,9 @@ export function showRequestError( ...details ) {
  */
 export function confirmAction( message ) {
 	return new Promise( ( resolve ) => {
-		const previous = document.activeElement;
+		const previous = /** @type {HTMLElement|null} */ (
+			document.activeElement
+		);
 		const dialog = document.createElement( 'dialog' );
 		dialog.className = 'ohmylms-action-confirmation';
 		const text = document.createElement( 'p' );

@@ -70,6 +70,8 @@ namespace {
     };
     require __DIR__ . '/../../includes/Schools/Access.php';
     require __DIR__ . '/../../includes/Schools/ViewAs.php';
+    class WP_REST_Controller {}
+    require __DIR__ . '/../../includes/Schools/Rest/ViewAsController.php';
     function __($text, $domain = null) { return $text; }
     function apply_filters($hook, $value, ...$args) { return $value; }
     require __DIR__ . '/../../includes/Gradebook/Access.php';
@@ -81,7 +83,7 @@ namespace {
     function check($value, $message) { if (!$value) { throw new \RuntimeException($message); } }
     function denied($call, $message) { try { $call(); } catch (\RuntimeException $e) { check(in_array($e->getCode(), [400, 403]), $message); return; } throw new \RuntimeException($message); }
     $request = new class { public $nonce = 'valid'; public function get_header($key) { return $this->nonce; } };
-    ViewAs::register();
+    (new \OhMyLMS\Schools\Rest\ViewAsController())->register_routes();
     check($routes['/school/view-as/start']['permission_callback']($request) === true, 'Admin start rejected');
     $request->nonce = 'invalid'; check($routes['/school/view-as/start']['permission_callback']($request) instanceof WP_Error, 'Missing nonce accepted'); $request->nonce = 'valid';
     check(array_column(ViewAs::candidates('student', 10), 'id') === [2], 'Class students scope wrong');

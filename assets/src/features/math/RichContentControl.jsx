@@ -22,18 +22,19 @@ const equationLabels = () => ( {
 
 /**
  * Small rich-text field that preserves existing HTML without a block editor.
- * @param root0
- * @param root0.value
- * @param root0.onChange
- * @param root0.readOnly
- * @param root0.html
- * @param root0.compact
- * @param root0.help
- * @param root0.placeholder
- * @param root0.onDoubleClick
- * @param root0.label
- * @param root0.collapseToolbar
- * @param root0.showToolbar
+ * @param {Object}                                            root0                   Field properties.
+ * @param {string}                                            [root0.value]           Stored content.
+ * @param {(value: string) => void}                           root0.onChange          Save content.
+ * @param {boolean}                                           [root0.readOnly]        Show the content without editing.
+ * @param {boolean}                                           [root0.html]            Whether the content is HTML.
+ * @param {boolean}                                           [root0.compact]         Compact layout.
+ * @param {import('react').ReactNode}                         [root0.help]            Help text.
+ * @param {string}                                            [root0.placeholder]     Empty-field hint.
+ * @param {import('react').MouseEventHandler<HTMLDivElement>} [root0.onDoubleClick]   Double-click handler.
+ * @param {string}                                            [root0.label]           Accessible label.
+ * @param {boolean}                                           [root0.collapseToolbar] Collapse the tools into a menu.
+ * @param {boolean}                                           [root0.showToolbar]     Show the formatting tools.
+ * @return {React.ReactElement} Field.
  */
 export function RichContentControl( {
 	value,
@@ -48,19 +49,23 @@ export function RichContentControl( {
 	onDoubleClick,
 	placeholder = __( 'Type here …', 'ohmylms' ),
 } ) {
-	const field = useRef( null );
-	const textSelection = useRef( null );
+	const field = useRef( /** @type {HTMLDivElement|null} */ ( null ) );
+	const textSelection = useRef( /** @type {Range|null} */ ( null ) );
 	useEffect( () => {
 		const ownerDocument = field.current?.ownerDocument || document;
 		const remember = () => {
-			const selection = ownerDocument.defaultView.getSelection();
+			const selection = /** @type {Window} */ (
+				ownerDocument.defaultView
+			).getSelection();
 			if ( ! selection?.rangeCount || ! field.current ) {
 				return;
 			}
 			const range = selection.getRangeAt( 0 );
 			const node = range.commonAncestorContainer;
-			const element =
-				node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement;
+			// Read only for nodes inside the field, which always have an element.
+			const element = /** @type {Element} */ (
+				node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement
+			);
 			if (
 				field.current.contains( node ) &&
 				! element.closest( '[data-ohmylms-equation]' )
@@ -87,7 +92,7 @@ export function RichContentControl( {
 			.catch( () => {} );
 	};
 	const serialize = useCallback(
-		( node ) => {
+		( /** @type {HTMLElement} */ node ) => {
 			if ( window.OhMyLMSMath ) {
 				return window.OhMyLMSMath.authorContent( node, html );
 			}
@@ -142,59 +147,89 @@ export function RichContentControl( {
 	if ( readOnly ) {
 		return html ? <RawHTML>{ value || '' }</RawHTML> : <p>{ value }</p>;
 	}
+	/** @param {string} command Document editing command. */
 	const format = ( command ) => {
-		field.current.focus();
-		field.current.ownerDocument.execCommand( command, false );
-		onChange( serialize( field.current ) );
+		const node = /** @type {HTMLDivElement} */ ( field.current );
+		node.focus();
+		node.ownerDocument.execCommand( command, false );
+		onChange( serialize( node ) );
 	};
 	const toolbar = showToolbar && (
 		<div role="toolbar" aria-label={ __( 'Text formatting', 'ohmylms' ) }>
-			{ ( html
-				? [
-						[ 'bold', 'Bold', 'editor-bold' ],
-						[ 'italic', 'Italic', 'editor-italic' ],
-						[ 'underline', 'Underline', 'editor-underline' ],
-						[ 'insertUnorderedList', 'Bullet list', 'editor-ul' ],
-						[ 'superscript', 'Superscript', 'editor-superscript' ],
-						[ 'subscript', 'Subscript', 'editor-subscript' ],
-					]
-				: []
-			).map( ( [ command, formatLabel, icon ] ) => (
-				<Button
-					key={ command }
-					icon={
-						[ 'superscript', 'subscript' ].includes( command )
-							? undefined
-							: icon
-					}
-					label={ formatLabel }
-					onMouseDown={ ( event ) => event.preventDefault() }
-					onClick={ () => format( command ) }
-				>
-					{ 'superscript' === command && (
-						<span>
-							x<sup>2</sup>
-						</span>
-					) }
-					{ 'subscript' === command && (
-						<span>
-							x<sub>2</sub>
-						</span>
-					) }
-				</Button>
-			) ) }
+			{
+				/** @type {[string, string, import('@wordpress/components').IconType][]} */ (
+					html
+						? [
+								[ 'bold', 'Bold', 'editor-bold' ],
+								[ 'italic', 'Italic', 'editor-italic' ],
+								[
+									'underline',
+									'Underline',
+									'editor-underline',
+								],
+								[
+									'insertUnorderedList',
+									'Bullet list',
+									'editor-ul',
+								],
+								[
+									'superscript',
+									'Superscript',
+									'editor-superscript',
+								],
+								[
+									'subscript',
+									'Subscript',
+									'editor-subscript',
+								],
+							]
+						: []
+				).map( ( [ command, formatLabel, icon ] ) => (
+					<Button
+						key={ command }
+						icon={
+							[ 'superscript', 'subscript' ].includes( command )
+								? undefined
+								: icon
+						}
+						label={ formatLabel }
+						onMouseDown={ (
+							/** @type {import('react').MouseEvent} */ event
+						) => event.preventDefault() }
+						onClick={ () => format( command ) }
+					>
+						{ 'superscript' === command && (
+							<span>
+								x<sup>2</sup>
+							</span>
+						) }
+						{ 'subscript' === command && (
+							<span>
+								x<sub>2</sub>
+							</span>
+						) }
+					</Button>
+				) )
+			}
 			{ html && (
 				<QuestionMediaUpload
 					allowedTypes={ [ 'image' ] }
-					onSelect={ ( image ) => {
+					onSelect={ ( attachment ) => {
+						const image =
+							/** @type {{ url?: string, alt?: string }} */ (
+								attachment
+							);
 						if ( ! /^https?:\/\//i.test( image.url || '' ) ) {
 							return;
 						}
 						const node = document.createElement( 'img' );
-						node.src = image.url;
+						node.src = /** @type {string} */ ( image.url );
 						node.alt = image.alt || '';
-						field.current.appendChild( node );
-						onChange( serialize( field.current ) );
+						const editor = /** @type {HTMLDivElement} */ (
+							field.current
+						);
+						editor.appendChild( node );
+						onChange( serialize( editor ) );
 					} }
 					render={ ( { open } ) => (
 						<Button
@@ -251,7 +286,9 @@ export function RichContentControl( {
 					event.stopPropagation();
 					if ( ! html ) {
 						event.preventDefault();
-						field.current.ownerDocument.execCommand(
+						/** @type {HTMLDivElement} */ (
+							field.current
+						).ownerDocument.execCommand(
 							'insertText',
 							false,
 							event.clipboardData.getData( 'text/plain' )

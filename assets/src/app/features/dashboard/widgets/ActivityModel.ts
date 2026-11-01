@@ -1,5 +1,8 @@
 import { __ } from '@wordpress/i18n';
 import { invalidResponse, record } from '../model';
+import { createValidators } from '../../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
 
 export interface ActivityEvent {
 	/** Unique per event, such as `quiz_passed:12`. */
@@ -15,13 +18,6 @@ export interface ActivityEvent {
 export interface Activity {
 	readonly events: readonly ActivityEvent[];
 	readonly limit: number;
-}
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
 }
 
 function parseEvent( value: unknown ): ActivityEvent {

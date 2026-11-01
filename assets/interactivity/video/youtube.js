@@ -19,7 +19,11 @@ export const STATE = Object.freeze( {
 	CUED: 5,
 } );
 
-/** IFrame API error codes and the message key of the store for each. */
+/**
+ * IFrame API error codes and the message key of the store for each.
+ *
+ * @type {Readonly<Object<number, string>>}
+ */
 export const ERRORS = Object.freeze( {
 	2: 'videoInvalid',
 	5: 'loadError',
@@ -27,6 +31,8 @@ export const ERRORS = Object.freeze( {
 	101: 'embedBlocked',
 	150: 'embedBlocked',
 } );
+
+/** @typedef {{data: number}} PlayerEvent IFrame API event. */
 
 /** @type {WeakMap<object, Promise<?>>} */
 const loading = new WeakMap();
@@ -42,8 +48,9 @@ export function loadYouTube( win, load = loadScript ) {
 	if ( win.YT && 'function' === typeof win.YT.Player ) {
 		return Promise.resolve( win.YT );
 	}
-	if ( loading.has( win ) ) {
-		return loading.get( win );
+	const pending = loading.get( win );
+	if ( pending ) {
+		return pending;
 	}
 	const ready = new Promise( ( resolve, reject ) => {
 		const previous = win.onYouTubeIframeAPIReady;
@@ -131,7 +138,7 @@ export function withJsApi( src, origin ) {
  * @param {HTMLElement}                           [options.mount]  Where the custom player creates the iframe.
  * @param {HTMLIFrameElement}                     [options.iframe] Server-rendered iframe to attach to.
  * @param {{id: string}}                          options.source   Parsed source.
- * @param {Object}                                [options.config] `loop`, `muted`, `custom`, `title`.
+ * @param {import('./adapter.js').PlayerConfig}   [options.config] `loop`, `muted`, `custom`, `title`.
  * @param {import('./adapter.js').ProviderWindow} [options.win]    Window.
  * @param {import('./adapter.js').ScriptLoader}   [options.load]   Script loader (tests).
  * @return {Promise<import('./adapter.js').Adapter>} Adapter.
@@ -149,10 +156,12 @@ export async function createAdapter( {
 	const origin = win.location?.origin || '';
 	const custom = Boolean( config.custom ) && ! iframe;
 	const events = createEmitter();
+	/** @type {number} */
 	let state = STATE.UNSTARTED;
 	let time = 0;
 	let duration = 0;
-	let timer = null;
+	/** @type {number|undefined} */
+	let timer;
 	let captionsOn = false;
 	let ready = false;
 
@@ -168,9 +177,10 @@ export async function createAdapter( {
 			events.emit( 'time', time );
 		}
 	};
+	/** @param {boolean} on Poll the position while playing. */
 	const watch = ( on ) => {
 		clearInterval( timer );
-		timer = on ? setInterval( poll, 250 ) : null;
+		timer = on ? setInterval( poll, 250 ) : undefined;
 	};
 
 	let target;
@@ -182,7 +192,8 @@ export async function createAdapter( {
 		target = iframe;
 	} else {
 		target = doc.createElement( 'div' );
-		mount.replaceChildren( target );
+		// Without an iframe the store passes the mount point.
+		/** @type {HTMLElement} */ ( mount ).replaceChildren( target );
 	}
 
 	/** @type {?} */
@@ -268,6 +279,7 @@ export async function createAdapter( {
 					events.emit( 'duration', duration );
 				}
 			},
+			/** @param {PlayerEvent} event State change. */
 			onStateChange( event ) {
 				state = event.data;
 				poll();
@@ -292,9 +304,11 @@ export async function createAdapter( {
 					events.emit( 'ended', time );
 				}
 			},
+			/** @param {PlayerEvent} event Speed change. */
 			onPlaybackRateChange( event ) {
 				events.emit( 'rate', Number( event.data ) || 1 );
 			},
+			/** @param {PlayerEvent} event Error code. */
 			onError( event ) {
 				const error = {
 					code: event.data,

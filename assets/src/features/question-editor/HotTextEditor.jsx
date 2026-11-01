@@ -16,15 +16,17 @@ import {
 /**
  * Passage-based hot text editor: select words, phrases, sentences or
  * paragraphs in the passage and make them options.
- * @param {Object}   props
- * @param {Object}   props.value    Settings.
- * @param {Function} props.onChange Patch callback.
+ * @param {Object}                                       props
+ * @param {import('./hotTextModel.mjs').HotTextSettings} props.value    Settings.
+ * @param {Function}                                     props.onChange Patch callback.
  */
 export function HotTextEditor( { value, onChange } ) {
+	/** @type {import('react').MutableRefObject<HTMLDivElement|null>} */
 	const wrap = useRef( null );
 	const settings = hotTextNormalize( value );
 	const authoring = hotTextToAuthoring( settings );
-	const update = ( text ) => onChange( hotTextFromAuthoring( text, settings ) );
+	const update = ( /** @type {string} */ text ) =>
+		onChange( hotTextFromAuthoring( text, settings ) );
 	const textarea = () => wrap.current?.querySelector( 'textarea' );
 	const addSelection = () => {
 		const area = textarea();
@@ -44,9 +46,12 @@ export function HotTextEditor( { value, onChange } ) {
 				authoring.slice( end )
 		);
 	};
-	const removeOption = ( id ) => {
+	const removeOption = ( /** @type {string} */ id ) => {
 		const token = settings.tokens.find( ( t ) => t.id === id );
-		const passage = settings.passage.replace( '[[' + id + ']]', token ? token.text : '' );
+		const passage = settings.passage.replace(
+			'[[' + id + ']]',
+			token ? token.text : ''
+		);
 		onChange( {
 			passage,
 			tokens: settings.tokens.filter( ( t ) => t.id !== id ),
@@ -54,9 +59,16 @@ export function HotTextEditor( { value, onChange } ) {
 			scoring: settings.scoring,
 		} );
 	};
-	const ordered = [ ...settings.passage.matchAll( /\[\[([A-Za-z0-9_-]+)\]\]/g ) ]
+	const ordered = [
+		...settings.passage.matchAll( /\[\[([A-Za-z0-9_-]+)\]\]/g ),
+	]
 		.map( ( m ) => settings.tokens.find( ( t ) => t.id === m[ 1 ] ) )
-		.filter( Boolean );
+		.filter(
+			/**
+			 * @param  t
+			 * @return {t is import('./hotTextModel.mjs').HotTextToken} Whether the token exists.
+			 */ ( t ) => Boolean( t )
+		);
 	return (
 		<div className="oml-hot-text-editor">
 			<div ref={ wrap }>
@@ -76,7 +88,10 @@ export function HotTextEditor( { value, onChange } ) {
 			</Button>
 			<ol className="oml-hot-text-options">
 				{ ordered.map( ( token, index ) => (
-					<li key={ token.id } className={ 'oml-ht-color-' + ( index % 6 ) }>
+					<li
+						key={ token.id }
+						className={ 'oml-ht-color-' + ( index % 6 ) }
+					>
 						<CheckboxControl
 							label={ sprintf(
 								/* translators: 1: option number, 2: option text. */
@@ -90,7 +105,9 @@ export function HotTextEditor( { value, onChange } ) {
 									...settings,
 									correct: checked
 										? [ ...settings.correct, token.id ]
-										: settings.correct.filter( ( id ) => id !== token.id ),
+										: settings.correct.filter(
+												( id ) => id !== token.id
+											),
 								} )
 							}
 						/>
@@ -117,11 +134,14 @@ export function HotTextEditor( { value, onChange } ) {
 				label={ __( 'All-or-nothing scoring', 'ohmylms' ) }
 				help={
 					settings.scoring === 'all'
-						? __( 'Full marks only for exactly the correct options.', 'ohmylms' )
+						? __(
+								'Full marks only for exactly the correct options.',
+								'ohmylms'
+							)
 						: __(
 								'Partial credit: (correct picks − wrong picks) ÷ correct options, never below 0.',
 								'ohmylms'
-						  )
+							)
 				}
 				checked={ settings.scoring === 'all' }
 				onChange={ ( on ) =>

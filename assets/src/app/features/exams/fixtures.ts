@@ -1,3 +1,4 @@
+import type { SourceInfo } from './sourceModel';
 import type {
 	ExamDetail,
 	FigureSpec,
@@ -204,4 +205,24 @@ export const job: ImportJobDetail = {
 			marks: 2,
 		},
 	],
+};
+
+/** `GET /exam-imports/jobs/7/source` on a server with Poppler. */
+export const source: SourceInfo = {
+	page_count: 6,
+	renderer: {
+		available: true,
+		engine: 'poppler',
+		version: '24.08.0',
+		reason: '',
+		crops: true,
+		max_side: 2400,
+		imagick: false,
+	},
+	page_url:
+		'https://example.test/wp-json/ohmylms/v1/exam-imports/jobs/7/pages/{page}?_wpnonce=abc',
+	document:
+		'https://example.test/wp-json/ohmylms/v1/exam-imports/jobs/7/document?_wpnonce=abc',
+	mark_scheme:
+		'https://example.test/wp-json/ohmylms/v1/exam-imports/jobs/7/document?part=mark_scheme&_wpnonce=abc',
 };

@@ -432,6 +432,18 @@ final class Enrollments {
 	}
 
 	/**
+	 * The first legacy enrolment row of a student in a course, every column, or null.
+	 *
+	 * @param int $user_id   Student ID.
+	 * @param int $course_id Course ID.
+	 * @return array|null
+	 */
+	public static function legacy_row( $user_id, $course_id ) {
+		global $wpdb;
+		return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE user_id = %d AND course_id = %d', self::table(), $user_id, $course_id ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh enrolment row.
+	}
+
+	/**
 	 * Legacy status of the first enrolment row of a student in a course (write-side check), or null.
 	 *
 	 * @param int $user_id   Student ID.

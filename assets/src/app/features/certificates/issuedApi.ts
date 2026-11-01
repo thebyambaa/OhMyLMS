@@ -8,6 +8,9 @@ import {
 	positiveId,
 	record,
 } from './model';
+import { createValidators } from '../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
 
 const BASE = '/ohmylms/v1/issued-certificates';
 
@@ -51,13 +54,6 @@ export interface IssuedQuery {
 	source: string;
 	orderby: string;
 	order: string;
-}
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
 }
 
 function count( value: unknown ): number {

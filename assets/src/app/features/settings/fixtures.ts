@@ -19,6 +19,7 @@ export const general: GroupValues< 'general' > = {
 	terms_page_id: 0,
 	privacy_policy_page_id: 0,
 	profile_page_id: 0,
+	language_switcher: true,
 };
 
 export const branding: GroupValues< 'branding' > = {

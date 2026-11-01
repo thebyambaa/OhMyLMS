@@ -30,19 +30,44 @@ export const EU_COUNTRIES = Object.freeze( [
 	'SE',
 ] );
 
+/**
+ * @param {unknown} country Country code.
+ * @return {boolean} Whether it is an EU member state.
+ */
 export function isEuCountry( country ) {
 	return EU_COUNTRIES.includes( String( country || '' ).toUpperCase() );
 }
 
+/**
+ * @param {unknown} value Number or numeric string.
+ * @return {number} Positive integer, or 0.
+ */
 const positive = ( value ) => {
-	const number = Number.parseInt( value, 10 );
+	const number = Number.parseInt( /** @type {string} */ ( value ), 10 );
 	return Number.isFinite( number ) && number > 0 ? number : 0;
 };
 
 /**
+ * @typedef {Object} CartContext
+ * @property {unknown} [courseId]     Course to add.
+ * @property {unknown} [membershipId] Membership to add.
+ * @property {unknown} [quantity]     Quantity.
+ * @property {unknown} [purchaseBy]   `point` to pay with points.
+ */
+
+/**
+ * @typedef {Object} CartBody
+ * @property {number} [membership_id] Membership.
+ * @property {number} [course_id]     Course.
+ * @property {number} [quantity]      Quantity (always set by `cartRequest()`).
+ * @property {string} [purchase_by]   `point`.
+ */
+
+/**
  * REST body for one cart button, or null when the button names nothing to buy.
  *
- * @param {Object} context Button context rendered by PHP.
+ * @param {CartContext|null|undefined} context Button context rendered by PHP.
+ * @return {CartBody|null} Body.
  */
 export function cartRequest( context ) {
 	const courseId = positive( context?.courseId );
@@ -50,6 +75,7 @@ export function cartRequest( context ) {
 	if ( ! courseId && ! membershipId ) {
 		return null;
 	}
+	/** @type {CartBody} */
 	const body = membershipId
 		? { membership_id: membershipId }
 		: { course_id: courseId };
@@ -61,9 +87,18 @@ export function cartRequest( context ) {
 }
 
 /**
+ * @typedef {Object} CartResponse
+ * @property {unknown}             [status]       `success` when added.
+ * @property {unknown}             [redirect_url] Where to go next.
+ * @property {unknown}             [message]      Error message.
+ * @property {{message?: unknown}} [data]         WordPress error data.
+ */
+
+/**
  * What a cart answer means for the button: follow a redirect or show a message.
  *
- * @param {Object} response Cart endpoint body.
+ * @param {CartResponse|null|undefined} response Cart endpoint body.
+ * @return {{type: 'redirect', url: string}|{type: 'error', message: string}} Outcome.
  */
 export function cartOutcome( response ) {
 	if ( response?.status === 'success' && response.redirect_url ) {
@@ -75,7 +110,12 @@ export function cartOutcome( response ) {
 	};
 }
 
-/** `payment_method_<id>` radio id to gateway id. */
+/**
+ * `payment_method_<id>` radio id to gateway id.
+ *
+ * @param {unknown} id Radio id.
+ * @return {string} Gateway id.
+ */
 export function gatewayFromInputId( id ) {
 	return String( id || '' ).replace( /^payment_method_/, '' );
 }
@@ -90,6 +130,7 @@ export function gatewayFromInputId( id ) {
  * @return {Object<string,boolean>} Field key to required.
  */
 export function requiredFields( map, gateway, serverRequired = [] ) {
+	/** @type {Object<string,boolean>} */
 	const fields = {};
 	const wanted = new Set( ( map && map[ gateway ] ) || [] );
 	for ( const list of Object.values( map || {} ) ) {
@@ -102,9 +143,26 @@ export function requiredFields( map, gateway, serverRequired = [] ) {
 }
 
 /**
+ * @typedef {Object} CheckoutResponse
+ * @property {unknown} [payment_status] `pending` while a gateway finishes the payment.
+ * @property {unknown} [success]        `wp_send_json_*` flag.
+ * @property {unknown} [result]         Legacy `success` flag.
+ * @property {unknown} [redirect]       Where to go next.
+ * @property {unknown} [redirect_url]   Where to go next (legacy).
+ * @property {unknown} [message]        Notice markup.
+ * @property {unknown} [messages]       Notice markup (legacy).
+ * @property {unknown} [reload]         Reload the page after the notice.
+ */
+
+/**
+ * @typedef {{type: 'pending'}|{type: 'redirect', url: string}|{type: 'error', message: string, reload?: boolean}} CheckoutOutcome
+ */
+
+/**
  * Normalise an `ohmylms_checkout` answer: pending gateway payment, redirect, or error notice.
  *
- * @param {Object} response Checkout AJAX body.
+ * @param {CheckoutResponse|null|undefined} response Checkout AJAX body.
+ * @return {CheckoutOutcome} Outcome.
  */
 export function checkoutOutcome( response ) {
 	if ( ! response || 'object' !== typeof response ) {
@@ -137,7 +195,12 @@ export function noticeModifiers( count ) {
 	};
 }
 
-/** Trimmed coupon code; empty means there is nothing to send. */
+/**
+ * Trimmed coupon code; empty means there is nothing to send.
+ *
+ * @param {unknown} value Field value.
+ * @return {string} Code.
+ */
 export function couponCode( value ) {
 	return String( value || '' ).trim();
 }
@@ -163,8 +226,9 @@ export function stateField( states ) {
 /**
  * Add query parameters to an absolute URL.
  *
- * @param {string} url    Base URL.
- * @param {Object} params Parameters.
+ * @param {string}                  url    Base URL.
+ * @param {Object<string, unknown>} params Parameters.
+ * @return {string} URL.
  */
 export function withQuery( url, params ) {
 	const target = new URL( url, 'http://localhost' );
@@ -179,10 +243,23 @@ export function withQuery( url, params ) {
 }
 
 /**
+ * @typedef {Object} StripeIntent
+ * @property {string} [status]        PaymentIntent status.
+ * @property {string} [id]            PaymentIntent id.
+ * @property {string} [client_secret] Client secret.
+ * @property {{redirect_to_url?: {url?: string}}|null} [next_action] Required customer action.
+ */
+
+/**
+ * @typedef {{type: 'redirect', url: string}|{type: 'message', code: string}|{type: 'error', code: string}} StripeOutcome
+ */
+
+/**
  * What to do with a confirmed Stripe PaymentIntent.
  *
- * @param {Object} intent    Stripe PaymentIntent.
- * @param {string} returnUrl Order thank-you URL.
+ * @param {StripeIntent|null|undefined} intent    Stripe PaymentIntent.
+ * @param {string}                      returnUrl Order thank-you URL.
+ * @return {StripeOutcome} Outcome.
  */
 export function stripeIntentOutcome( intent, returnUrl ) {
 	const status = intent?.status;
@@ -191,8 +268,8 @@ export function stripeIntentOutcome( intent, returnUrl ) {
 			? {
 					type: 'redirect',
 					url: withQuery( returnUrl, {
-						payment_intent: intent.id,
-						payment_intent_client_secret: intent.client_secret,
+						payment_intent: intent?.id,
+						payment_intent_client_secret: intent?.client_secret,
 					} ),
 			  }
 			: { type: 'error', code: 'missing_return_url' };
@@ -202,7 +279,7 @@ export function stripeIntentOutcome( intent, returnUrl ) {
 	}
 	if (
 		'requires_action' === status &&
-		intent.next_action?.redirect_to_url?.url
+		intent?.next_action?.redirect_to_url?.url
 	) {
 		return {
 			type: 'redirect',
@@ -213,20 +290,4 @@ export function stripeIntentOutcome( intent, returnUrl ) {
 		type: 'error',
 		code: status ? 'payment_failed' : 'no_intent',
 	};
-}
-
-/**
- * Fire a legacy jQuery body event when jQuery is on the page (gateway add-ons still listen).
- *
- * @param {Window} win  Window.
- * @param {string} name Event name.
- * @param {Array}  args Extra handler arguments.
- */
-export function triggerLegacy( win, name, args = [] ) {
-	const jQuery = win && win.jQuery;
-	if ( 'function' !== typeof jQuery || ! win.document ) {
-		return false;
-	}
-	jQuery( win.document.body ).trigger( name, args );
-	return true;
 }

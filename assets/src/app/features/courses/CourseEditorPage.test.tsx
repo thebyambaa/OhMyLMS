@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { BootstrapProvider } from '../../bootstrap/BootstrapContext';
 import { ApiError } from '../../lib/api';
+import { attachment, mockMediaFrame } from '../../test/mediaFrame';
 import * as api from './api';
 import { detail, options } from './fixtures';
 import CourseEditorPage from './CourseEditorPage';
@@ -11,10 +12,13 @@ vi.mock( './api', () => ( {
 	getCourse: vi.fn(),
 	getOptions: vi.fn(),
 	updateCourse: vi.fn(),
-	listMedia: vi.fn(),
 	getCourseCertificate: vi.fn(),
 	saveCourseCertificate: vi.fn(),
 } ) );
+
+let media: ReturnType< typeof mockMediaFrame >;
+
+afterEach( () => media.restore() );
 vi.mock( '../course-structure/public', () => ( {
 	CourseOutline: ( { id }: { id: number } ) => (
 		<p>Outline of course { id }</p>
@@ -90,6 +94,7 @@ async function save( user: ReturnType< typeof userEvent.setup > ) {
 
 beforeEach( () => {
 	vi.resetAllMocks();
+	media = mockMediaFrame();
 	vi.mocked( api.getCourse ).mockResolvedValue( detail );
 	vi.mocked( api.getOptions ).mockResolvedValue( options );
 	vi.mocked( api.getCourseCertificate ).mockResolvedValue( {
@@ -99,18 +104,6 @@ beforeEach( () => {
 			{ id: 3, title: 'Completion', status: 'publish' },
 			{ id: 4, title: 'Merit', status: 'draft' },
 		],
-	} );
-	vi.mocked( api.listMedia ).mockResolvedValue( {
-		items: [
-			{
-				id: 40,
-				url: 'https://example.test/a.png',
-				thumbnail_url: 'https://example.test/a-150.png',
-				title: 'Cover A',
-			},
-		],
-		total: 1,
-		totalPages: 1,
 	} );
 	vi.mocked( api.updateCourse ).mockImplementation( async ( id, input ) => ( {
 		...detail,
@@ -443,23 +436,19 @@ describe( 'CourseEditorPage details', () => {
 	} );
 
 	describe( 'thumbnail', () => {
-		it( 'picks an image through the media picker with the keyboard', async () => {
+		it( 'picks an image through the media frame with the keyboard', async () => {
 			const user = userEvent.setup();
 			renderEditor();
 			await loaded();
-			await user.click(
-				screen.getByRole( 'button', { name: 'Change thumbnail' } )
-			);
-			const dialog = await screen.findByRole( 'dialog', {
-				name: 'Choose a thumbnail',
+			const change = screen.getByRole( 'button', {
+				name: 'Change thumbnail',
 			} );
-			const pick = await within( dialog ).findByRole( 'button', {
-				name: 'Use image Cover A',
-			} );
-			pick.focus();
+			change.focus();
 			await user.keyboard( '{Enter}' );
-			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+			expect( media.last().options.title ).toBe( 'Choose a thumbnail' );
+			media.last().choose( attachment() );
 			expect( screen.getByText( 'Image #40' ) ).toBeInTheDocument();
+			await waitFor( () => expect( change ).toHaveFocus() );
 			await save( user );
 			await waitFor( () =>
 				expect( api.updateCourse ).toHaveBeenCalled()
@@ -490,21 +479,20 @@ describe( 'CourseEditorPage details', () => {
 				expect.anything()
 			);
 		} );
-		it( 'shows a media error and can be cancelled', async () => {
-			vi.mocked( api.listMedia ).mockRejectedValue(
-				rejection( 500, 'rest_error', 'Media failed.' )
-			);
+		it( 'rejects a malformed thumbnail size with the course error', async () => {
 			const user = userEvent.setup();
 			renderEditor();
 			await loaded();
 			await user.click(
 				screen.getByRole( 'button', { name: 'Change thumbnail' } )
 			);
-			expect(
-				await screen.findByText( 'Media failed.', notice )
-			).toBeInTheDocument();
-			await user.keyboard( '{Escape}' );
-			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+			media
+				.last()
+				.choose( attachment( { sizes: { thumbnail: { url: 5 } } } ) );
+			expect( screen.getByRole( 'alert' ) ).toHaveTextContent(
+				'The server returned invalid course data.'
+			);
+			expect( screen.queryByText( 'Image #40' ) ).not.toBeInTheDocument();
 		} );
 		it( 'explains when the user cannot use the media library', async () => {
 			vi.mocked( api.getOptions ).mockResolvedValue( {

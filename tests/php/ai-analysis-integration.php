@@ -273,7 +273,8 @@ try {
 	$learner = wp_create_user( 'ai-analysis-' . $tag, wp_generate_password(), 'ai-analysis-' . $tag . '@example.org' ); $users[] = $learner;
 	wp_set_current_user( $learner );
 	foreach ( array( array( 'GET', 'ai/runs' ), array( 'POST', 'ai/runs' ), array( 'GET', 'ai/suggestions' ), array( 'POST', 'ai/suggestions/review' ), array( 'GET', 'skill-placement' ), array( 'GET', 'skill-links/1' ), array( 'POST', 'skill-links' ), array( 'POST', 'skill-links/remove' ) ) as $route ) {
-		ok( in_array( call_api( $route[0], $route[1], array( 'ids' => array( 1 ), 'action' => 'accept' ) )->get_status(), array( 401, 403 ), true ), 'a learner reached ' . $route[1] );
+		// Valid arguments, so the request reaches the permission check (WordPress validates arguments first).
+		ok( in_array( call_api( $route[0], $route[1], array( 'ids' => array( 1 ), 'action' => 'accept', 'kind' => 'placement' ) )->get_status(), array( 401, 403 ), true ), 'a learner reached ' . $route[1] );
 	}
 	wp_set_current_user( $admin );
 	echo $checks . " AI analysis integration checks passed.\n";

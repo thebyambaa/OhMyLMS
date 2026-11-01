@@ -1,0 +1,28 @@
+{
+	// npm run typecheck:js. Learner script modules: JavaScript checked by TypeScript through JSDoc
+	// (allowJs + checkJs), never compiled. `paths` mirrors the import map that
+	// OhMyLMS\Extensions\Interactivity and Video register; WordPress' own modules are typed in
+	// wordpress-interactivity.d.ts and the page globals in globals.d.ts.
+	//
+	// Strict: every module type-checks with strict on. See docs/ENFORCEMENT.md.
+	"compilerOptions": {
+		"target": "ES2022",
+		"lib": [ "ES2022", "DOM", "DOM.Iterable" ],
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"allowJs": true,
+		"checkJs": true,
+		"noEmit": true,
+		"strict": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"types": [],
+		"paths": {
+			"ohmylms/interactivity": [ "./sdk.js" ],
+			"ohmylms/checkout": [ "./checkout.js" ],
+			"ohmylms/questions": [ "./questions.js" ],
+			"ohmylms/video-*": [ "./video/*.js" ]
+		}
+	},
+	"include": [ "./**/*.js", "./**/*.mjs", "./**/*.d.ts" ]
+}

@@ -509,6 +509,35 @@ final class SettingsService {
 	}
 
 	/**
+	 * Delete every OhMyLMS transient and site transient (cache only; settings and content are untouched).
+	 *
+	 * @return int Option rows deleted (a transient and its timeout are two rows).
+	 */
+	public static function clear_transients() {
+		global $wpdb;
+
+		$patterns = array(
+			$wpdb->esc_like( '_transient_ohmylms_' ) . '%',
+			$wpdb->esc_like( '_transient_timeout_ohmylms_' ) . '%',
+			$wpdb->esc_like( '_site_transient_ohmylms_' ) . '%',
+			$wpdb->esc_like( '_site_transient_timeout_ohmylms_' ) . '%',
+		);
+		$deleted  = (int) $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Transient cleanup has no API for prefixes.
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s",
+				$patterns[0],
+				$patterns[1],
+				$patterns[2],
+				$patterns[3]
+			)
+		);
+		wp_cache_delete( 'alloptions', 'options' );
+		wp_cache_delete( 'notoptions', 'options' );
+
+		return $deleted;
+	}
+
+	/**
 	 * Country code => name.
 	 *
 	 * @return array<string, string>

@@ -9,6 +9,8 @@ namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
 use OhMyLMS\Commerce\SubscriptionManager;
+use OhMyLMS\Membership\Subscriptions;
+use OhMyLMS\Utility\Lock;
 use WP_Error;
 use WP_Post;
 use WP_Query;
@@ -348,7 +350,7 @@ class SubscriptionsController extends RestController {
 
 		$action = (string) $request['action'];
 		$lock   = 'subscription-' . $post->ID;
-		if ( ! $this->acquire_lock( $lock ) ) {
+		if ( ! Lock::acquire_option( $lock, self::LOCK_TTL ) ) {
 			return new WP_Error( 'ohmylms_subscription_busy', __( 'Another change to this subscription is running. Try again in a moment.', 'ohmylms' ), array( 'status' => 409 ) );
 		}
 
@@ -409,7 +411,7 @@ class SubscriptionsController extends RestController {
 			 */
 			do_action( 'ohmylms_rest_subscription_action', $post->ID, $action, $status );
 		} finally {
-			$this->release_lock( $lock );
+			Lock::release_option( $lock );
 		}
 
 		clean_post_cache( $post->ID );
@@ -429,36 +431,6 @@ class SubscriptionsController extends RestController {
 	}
 
 	/**
-	 * Take a short, atomic lock (add_option() inserts on the unique option_name).
-	 *
-	 * @param string $name Lock name.
-	 * @return bool True when the lock was taken.
-	 */
-	private function acquire_lock( $name ) {
-		$key = 'ohmylms_lock_' . sanitize_key( $name );
-		if ( add_option( $key, time(), '', 'no' ) ) {
-			return true;
-		}
-		$taken = (int) get_option( $key );
-		if ( $taken && ( time() - $taken ) > self::LOCK_TTL ) {
-			update_option( $key, time(), 'no' );
-			return true;
-		}
-
-		return false;
-	}
-
-	/**
-	 * Release a lock taken with acquire_lock().
-	 *
-	 * @param string $name Lock name.
-	 * @return void
-	 */
-	private function release_lock( $name ) {
-		delete_option( 'ohmylms_lock_' . sanitize_key( $name ) );
-	}
-
-	/**
 	 * Subscription IDs matching a search text: subscription or order number, customer name or
 	 * email, or plan name.
 	 *
@@ -466,33 +438,7 @@ class SubscriptionsController extends RestController {
 	 * @return int[] At most 1000 IDs.
 	 */
 	private function search_ids( $term ) {
-		global $wpdb;
-
-		$like   = '%' . $wpdb->esc_like( $term ) . '%';
-		$number = ctype_digit( $term ) ? ' OR p.ID = %d OR o.meta_value = %s' : '';
-		$params = array( $wpdb->posts, $wpdb->postmeta, $wpdb->users, $wpdb->postmeta, $wpdb->posts, $wpdb->postmeta, self::POST_TYPE, $like, $like, $like );
-		if ( $number ) {
-			$params[] = (int) $term;
-			$params[] = $term;
-		}
-
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery -- Prepared; $number is one of two fixed fragments whose placeholders are added to $params.
-		$ids = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT p.ID FROM %i p
-				LEFT JOIN %i s ON s.post_id = p.ID AND s.meta_key = '_student_id'
-				LEFT JOIN %i u ON u.ID = s.meta_value
-				LEFT JOIN %i m ON m.post_id = p.ID AND m.meta_key = '_membership_id'
-				LEFT JOIN %i plan ON plan.ID = m.meta_value
-				LEFT JOIN %i o ON o.post_id = p.ID AND o.meta_key = '_original_order_id'
-				WHERE p.post_type = %s AND ( u.display_name LIKE %s OR u.user_email LIKE %s OR plan.post_title LIKE %s{$number} )
-				LIMIT 1000",
-				$params
-			)
-		);
-		// phpcs:enable
-
-		return array_values( array_unique( array_map( 'intval', (array) $ids ) ) );
+		return Subscriptions::search_ids( $term );
 	}
 
 	/**
@@ -618,10 +564,7 @@ class SubscriptionsController extends RestController {
 	 * @return array[]
 	 */
 	private function related_orders( WP_Post $post ) {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Prepared and bounded.
-		$renewals = $wpdb->get_col( $wpdb->prepare( "SELECT p.ID FROM %i p INNER JOIN %i m ON m.post_id = p.ID AND m.meta_key = '_subscription_renewal_id' WHERE m.meta_value = %s AND p.post_type = %s ORDER BY p.post_date DESC, p.ID DESC LIMIT %d", $wpdb->posts, $wpdb->postmeta, (string) $post->ID, 'ohmylms-order', self::MAX_RELATED ) );
+		$renewals = Subscriptions::renewal_order_ids( $post->ID, self::MAX_RELATED );
 		$ids      = array();
 		foreach ( (array) $renewals as $renewal ) {
 			$ids[ (int) $renewal ] = 'renewal';

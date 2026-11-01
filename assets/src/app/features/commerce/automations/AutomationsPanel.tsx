@@ -8,8 +8,8 @@ import {
 	PageTitleAction,
 	PageTitleActions,
 } from '../../../layout/PageTitleActions';
-import { useOperation } from '../useOperation';
-import { useRequest } from '../useRequest';
+import { useOperation } from '../../../hooks/useOperation';
+import { useRequest } from '../../../hooks/useRequest';
 import {
 	deleteRule,
 	getRule,
@@ -42,7 +42,11 @@ function plainDate( value: string | null ): string {
  */
 export default function AutomationsPanel() {
 	const list = useListQuery( DEFAULTS );
-	const options = useRequest( getRuleOptions, 'options' );
+	const options = useRequest( getRuleOptions, {
+		key: 'options',
+		keepData: true,
+		errorShape: 'object',
+	} );
 	const ruleParam = list.values.rule;
 
 	if ( options.error && ! options.data ) {
@@ -87,7 +91,7 @@ function EditRule( {
 	const rule = useRequest(
 		( signal ) =>
 			id > 0 ? getRule( id, signal ) : Promise.resolve( null ),
-		param
+		{ key: param, keepData: true, errorShape: 'object' }
 	);
 	if ( ! ( Number.isInteger( id ) && id >= 0 ) ) {
 		return (
@@ -131,10 +135,11 @@ function RuleList( { options }: { options: RuleOptions } ) {
 		search: list.values.s,
 		status: status ?? 'any',
 	};
-	const request = useRequest(
-		( signal ) => listRules( query, signal ),
-		list.key
-	);
+	const request = useRequest( ( signal ) => listRules( query, signal ), {
+		key: list.key,
+		keepData: true,
+		errorShape: 'object',
+	} );
 	const [ term, setTerm ] = useState( list.values.s );
 	useEffect( () => setTerm( list.values.s ), [ list.values.s ] );
 	const operation = useOperation();
@@ -389,7 +394,7 @@ function RunLog( { options }: { options: RuleOptions } ) {
 	const result = list.values.result;
 	const request = useRequest(
 		( signal ) => listLog( list.page, result, 0, signal ),
-		list.key
+		{ key: list.key, keepData: true, errorShape: 'object' }
 	);
 	const data = request.data;
 	return (

@@ -4,7 +4,6 @@ import type { Collection } from '../../lib/api/collection';
 import { listCoupons, listOrders } from './api';
 import { coupon, order } from './fixtures';
 import { useCoupons, useOrders } from './hooks';
-import { useOperation } from './useOperation';
 import type { Coupon, OrderSummary } from './types';
 
 vi.mock( './api', () => ( {
@@ -141,63 +140,5 @@ describe( 'useCoupons', () => {
 				vi.mocked( listCoupons ).mock.calls.length
 			).toBeGreaterThan( calls )
 		);
-	} );
-} );
-
-describe( 'useOperation', () => {
-	it( 'runs one write at a time', async () => {
-		const view = renderHook( useOperation );
-		let release!: () => void;
-		const work = vi.fn(
-			() =>
-				new Promise< void >( ( resolve ) => {
-					release = resolve;
-				} )
-		);
-		let first!: Promise< boolean >;
-		act( () => {
-			first = view.result.current.run( work );
-		} );
-		let second = true;
-		await act( async () => {
-			second = await view.result.current.run( work );
-		} );
-		expect( second ).toBe( false );
-		expect( work ).toHaveBeenCalledTimes( 1 );
-		expect( view.result.current.busy ).toBe( true );
-		await act( async () => {
-			release();
-			await first;
-		} );
-		expect( view.result.current.busy ).toBe( false );
-	} );
-
-	it( 'reports failures and cancels on unmount', async () => {
-		const view = renderHook( useOperation );
-		await act( async () => {
-			const done = await view.result.current.run( () =>
-				Promise.reject(
-					new ApiError( {
-						status: 409,
-						code: 'x',
-						message: 'Conflict happened.',
-					} )
-				)
-			);
-			expect( done ).toBe( false );
-		} );
-		expect( view.result.current.error ).toBe( 'Conflict happened.' );
-
-		let signal!: AbortSignal;
-		act( () => {
-			void view.result.current.run(
-				( received ) =>
-					new Promise< void >( () => {
-						signal = received;
-					} )
-			);
-		} );
-		view.unmount();
-		expect( signal.aborted ).toBe( true );
 	} );
 } );

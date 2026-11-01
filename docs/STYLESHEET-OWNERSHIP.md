@@ -13,7 +13,7 @@ The table below records the 29 October 2026 snapshot on `main`; see the 30 Octob
 | Learner `checkout` / `thankyou` / `account` / `membership` | `frontend/*.css` | 36,512 / 12,995 / 84,565 / 8,352 | `assets/src/frontend/scss/{checkout,thankyou,dashboard,membership}` | |
 | Learner RTL | `frontend/rtl.css` | 1,209 | `assets/src/frontend/scss/rtl` | Only when `is_rtl()` |
 | Learner, other features | `student-hub.css` 49,070, `quiz-player-templates.css` 43,298, `practice.css` 23,752, `paper.css` 21,618, `student-dashboard.css` 17,373, and about 30 smaller files | | Each feature's PHP class enqueues its own | Referenced from `includes/` or `templates/` |
-| Public compatibility URLs | `assets/css/style.css`, `style-rtl.css` | 476,556 / 1,215 | Generated from the same SCSS by `tools/build-frontend-styles.mjs` | Not a second colour source and not enqueued by the plugin. Kept so old URLs still work. Recolour the authored SCSS and regenerate; do not hand-edit these files |
+| Retired compatibility URLs | `assets/css/style.css`, `style-rtl.css` | was 476,556 / 1,215 | deleted in 1.2.22 (see [below](#compatibility-bundle-removed-1222)) | Not enqueued by the plugin; listed in `retiredAssets` |
 | Admin shell | `admin-design-system.css` 17,002 (plus inline variables from `DesignSystem.php`), `global.css` 596 (all wp-admin, LMS menu) | | `Design/DesignSystem.php`, `Assets/AdminAssets.php` | |
 | Admin app (`page=ohmylms-app`) | `assets/dist/admin/admin-app*.css` and its feature chunks | | `assets/src/app/styles`, feature CSS in `assets/src/app` | Built by Webpack; see [ARCHITECTURE.md](ARCHITECTURE.md) |
 | Retired legacy admin (`page=ohmylms`) | `assets/dist/css/admin/oml-{main,rtl}-*.css`, `assets/css/oml-ui-*.css`, `admin-ui.css`, `tailwind.css`, the `admin-styles.js` loader | was 1,430,902 + 77,274 + 4,968 + 22,069 | deleted 31 October 2026 (see below) | |
@@ -46,7 +46,7 @@ Earlier in step 7 (commit `5d4cbc26` and predecessors), measured from git: front
 
 ## Public selectors kept
 
-All `.ohmylms-*` frontend classes used by `templates/`, Elementor, Bricks and add-ons, including `.ohmylms-button`, `.ohmylms-form-group`, `.ohmylms-progressbar*` and the `.ohmylms-page` scope, stay in the shared component styles and page modules. The old `style.css` and `style-rtl.css` URLs still work. No class was deleted in this step.
+All `.ohmylms-*` frontend classes used by `templates/`, Elementor, Bricks and add-ons, including `.ohmylms-button`, `.ohmylms-form-group`, `.ohmylms-progressbar*` and the `.ohmylms-page` scope, stay in the shared component styles and page modules. The old `style.css` and `style-rtl.css` URLs worked until 1.2.22, which deleted them. No class was deleted in this step.
 
 ## Cleanup verified 30 October 2026
 
@@ -99,7 +99,27 @@ The shipped outputs (`assets/dist/css/admin`, `assets/dist/css/chunks`, `assets/
 
 ## Learner colours
 
-Authored learner colours live in `assets/src/frontend/scss` and use `--oml-*` (previous hex only as a `var()` fallback). `assets/css/style.css` and `style-rtl.css` are the generated compatibility bundle from that SCSS, written by `tools/build-frontend-styles.mjs` into `assets/css` with the page modules. They are not a second source. The October snapshot's 476,556 bytes was the size of that generated file, not a separate palette; after the icon masks were regenerated it is 483,294 bytes. Exceptions that stay literal are listed in `tools/learner-colour-allowlist.json` (star artwork, select chevrons, one notice glyph, two-paint icons). The video player keeps its fixed media palette. Exam-print colours are in `paper.css`, not this SCSS.
+Authored learner colours live in `assets/src/frontend/scss` and use `--oml-*` (previous hex only as a `var()` fallback). `tools/build-frontend-styles.mjs` compiles that SCSS into the page modules in `assets/css/frontend` only; the generated compatibility bundle `assets/css/style.css` / `style-rtl.css` (483,294 bytes at its last regeneration; the October snapshot's 476,556 was that same generated file, not a separate palette) was removed in 1.2.22. Exceptions that stay literal are listed in `tools/learner-colour-allowlist.json` (star artwork, select chevrons, one notice glyph, two-paint icons). The video player keeps its fixed media palette. Exam-print colours are in `paper.css`, not this SCSS.
+
+## Compatibility bundle removed (1.2.22)
+
+The plugin never enqueued the compatibility bundle; it existed so old theme or add-on URLs kept working. It is gone:
+
+| Removed | Bytes |
+| --- | ---: |
+| `assets/css/style.css` + `style.css.map` | 483,294 + 607,248 |
+| `assets/css/style-rtl.css` + `style-rtl.css.map` | 1,130 + 1,713 |
+
+- `tools/build-frontend-styles.mjs` no longer compiles them; it writes only `assets/css/frontend/*.css`, `modules.json`
+  and `modules.php` (`modules.json` never listed them). `tests/js/frontend-styles.test.mjs` checks that they are not
+  emitted and not on disk.
+- Both are in `retiredAssets` of `assets/src/manifest.json`, like the retired `assets/dist/frontend/*.js`: the build
+  and `sync-admin-assets.mjs` delete any stale copy and its `.map`, and URLs are not rewritten, so an old request gets
+  a 404 (on the local nginx site, WordPress's 404 page, exactly as for `assets/dist/frontend/ohmylms.js`). `sync-admin-assets.mjs` no longer copies them and `build-assets.mjs` lost its skip list.
+- `stylelint.config.mjs` no longer lists them; `tests/fixtures/quiz-inline.php` links `frontend/core.css` and
+  `lesson.css` instead.
+- Themes that linked `style.css` should depend on the `ohmylms-frontend` style handle (it pulls the page modules of
+  the current request) or add groups with `ohmylms_frontend_style_groups`; RTL is the `rtl` group.
 
 ## Remaining optimization boundaries
 

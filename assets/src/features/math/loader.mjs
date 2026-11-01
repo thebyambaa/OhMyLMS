@@ -1,14 +1,18 @@
+/** @type {Promise<NonNullable<Window['OhMyLMSMath']>>|undefined} */
 let pending;
 
 /** @return {boolean} Whether the site enabled the rollout. */
 export const mathEnabled = () =>
 	typeof window !== 'undefined' && !! window.ohmylmsMath?.enabled;
 
-/** @return {Promise<Object>} Locally packaged runtime, loaded only on demand. */
+/** @return {Promise<NonNullable<Window['OhMyLMSMath']>>} Locally packaged runtime, loaded only on demand. */
 export function loadMath() {
 	if ( ! mathEnabled() ) {
 		return Promise.reject( new Error( 'Math input is disabled.' ) );
 	}
+	const config = /** @type {NonNullable<Window['ohmylmsMath']>} */ (
+		window.ohmylmsMath
+	);
 	if ( window.OhMyLMSMath ) {
 		return Promise.resolve( window.OhMyLMSMath );
 	}
@@ -16,13 +20,13 @@ export function loadMath() {
 		if ( ! document.querySelector( '[data-ohmylms-math-style]' ) ) {
 			const style = document.createElement( 'link' );
 			style.rel = 'stylesheet';
-			style.href = window.ohmylmsMath.style;
+			style.href = config.style;
 			style.dataset.ohmylmsMathStyle = '1';
 			document.head.append( style );
 		}
 		pending = new Promise( ( resolve, reject ) => {
-			const existing = document.querySelector(
-				'script[src="' + window.ohmylmsMath.runtime + '"]'
+			const existing = /** @type {HTMLScriptElement|null} */ (
+				document.querySelector( 'script[src="' + config.runtime + '"]' )
 			);
 			const script = existing || document.createElement( 'script' );
 			script.addEventListener(
@@ -49,7 +53,7 @@ export function loadMath() {
 				{ once: true }
 			);
 			if ( ! existing ) {
-				script.src = window.ohmylmsMath.runtime;
+				script.src = config.runtime;
 				document.head.append( script );
 			}
 		} );

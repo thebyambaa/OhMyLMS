@@ -107,20 +107,19 @@ export function markLessonDone( doc ) {
 /**
  * Tracking session of one player.
  *
- * @param {Object}                                                                              api                 Dependencies.
- * @param {import('./adapter.js').Adapter}                                                      api.adapter         Adapter (ready).
- * @param {Object}                                                                              api.context         Player context (reactive): `lessonId`, `courseId`, `track`, `resume`, `videoDone`, `lessonDone`, `percent`, `threshold`.
- * @param {EventTarget}                                                                         api.root            Player root (events bubble from it).
- * @param {VideoConfig}                                                                         api.config          Store state.
- * @param {RequestFn}                                                                           api.request         SDK `request()`.
- * @param {(root: EventTarget, name: string, detail?: Object, cancelable?: boolean) => boolean} api.emit            SDK `emit()`.
- * @param {(name: string, args?: Array, target?: EventTarget) => boolean}                       [api.jqueryTrigger] SDK `jqueryTrigger()`.
- * @param {(message: string, options?: Object) => unknown}                                      [api.toast]         SDK `toast()`.
- * @param {(message: string, politeness?: string) => void}                                      [api.announce]      SDK `announce()`.
- * @param {DebounceFn}                                                                          api.debounce        SDK `debounce()`.
- * @param {() => number}                                                                        [api.now]           Clock in ms.
- * @param {(url: string, fields: Object) => string}                                             [api.beacon]        Final save transport.
- * @param {Document}                                                                            [api.doc]           Document (fallback completion UI, jQuery event target).
+ * @param {Object}                                                                              api            Dependencies.
+ * @param {import('./adapter.js').Adapter}                                                      api.adapter    Adapter (ready).
+ * @param {import('./store.js').VideoContext}                                                   api.context    Player context (reactive): `lessonId`, `courseId`, `track`, `resume`, `videoDone`, `lessonDone`, `percent`, `threshold`.
+ * @param {EventTarget}                                                                         api.root       Player root (events bubble from it).
+ * @param {VideoConfig}                                                                         api.config     Store state.
+ * @param {RequestFn}                                                                           api.request    SDK `request()`.
+ * @param {(root: EventTarget, name: string, detail?: Object, cancelable?: boolean) => boolean} api.emit       SDK `emit()`.
+ * @param {(message: string, options?: Object) => unknown}                                      [api.toast]    SDK `toast()`.
+ * @param {(message: string, politeness?: 'polite'|'assertive') => void}                        [api.announce] SDK `announce()`.
+ * @param {DebounceFn}                                                                          api.debounce   SDK `debounce()`.
+ * @param {() => number}                                                                        [api.now]      Clock in ms.
+ * @param {(url: string, fields: Object<string, string|number>) => string}                      [api.beacon]   Final save transport.
+ * @param {Document}                                                                            [api.doc]      Document (fallback completion UI).
  * @return {{tracking: boolean, seek: (seconds: number) => void, save: () => Promise<void>, flush: () => string, completeOnLoad: () => Promise<void>, destroy: () => void}} Session.
  */
 export function createSession( {
@@ -130,7 +129,6 @@ export function createSession( {
 	config,
 	request,
 	emit,
-	jqueryTrigger = () => false,
 	toast = () => null,
 	announce = () => {},
 	debounce,
@@ -154,6 +152,7 @@ export function createSession( {
 	let inflight = null;
 	let again = false;
 	let completion = Boolean( context.videoDone );
+	/** @type {Array<() => void>} */
 	const unsubscribe = [];
 
 	const fields = () =>
@@ -179,12 +178,6 @@ export function createSession( {
 			return;
 		}
 		context.lessonDone = true;
-		// Add-ons of the jQuery tracker listened to this once the lesson was completed by the video.
-		jqueryTrigger(
-			'ohmylms:video:completed',
-			[ { lessonId: lessonId(), courseId: courseId() } ],
-			doc
-		);
 		if ( ! lessonStore() ) {
 			markLessonDone( doc );
 			announce( messages.lessonCompleted || '', 'polite' );
@@ -283,7 +276,9 @@ export function createSession( {
 		inflight = ( async () => {
 			const result = await request( {
 				action: SAVE_ACTION,
-				nonce: config.nonces.progress,
+				// `tracking` requires the progress nonce.
+				nonce: /** @type {{progress: string}} */ ( config.nonces )
+					.progress,
 				ajaxUrl: config.ajaxUrl,
 				data,
 			} );
@@ -313,6 +308,10 @@ export function createSession( {
 
 	const saveSoon = debounce( save, 1000 );
 
+	/**
+	 * @param {unknown} value Position carried by the event.
+	 * @return {number} That position, else the adapter's.
+	 */
 	const at = ( value ) =>
 		Number.isFinite( Number( value ) ) ? Number( value ) : adapter.time();
 
@@ -391,7 +390,8 @@ export function createSession( {
 			clock.saved( now(), log.watched(), adapter.time() );
 			return beacon( config.ajaxUrl, {
 				action: SAVE_ACTION,
-				nonce: config.nonces.progress,
+				nonce: /** @type {{progress: string}} */ ( config.nonces )
+					.progress,
 				...data,
 			} );
 		},

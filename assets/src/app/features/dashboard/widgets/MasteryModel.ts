@@ -1,5 +1,8 @@
 import { __, sprintf } from '@wordpress/i18n';
 import { invalidResponse, record } from '../model';
+import { createValidators } from '../../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
 
 /** The five level names, highest first (`Performance\Levels`). */
 export const MASTERY_LEVELS = [
@@ -82,13 +85,6 @@ export interface MasteryLearners {
 	readonly assessed: number;
 	readonly learners: readonly MasteryLearner[];
 	readonly limit: number;
-}
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
 }
 
 function whole( value: unknown ): number {

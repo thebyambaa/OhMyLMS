@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from '@wordpress/element';
 import { useListState } from '../../components/listQuery';
 import { getStudent, listCourses, listEnrollments, listStudents } from './api';
 import { EMPTY_ENROLLMENT_QUERY, EMPTY_QUERY, getSortChoices } from './model';
-import { useRequest } from './useRequest';
+import { useRequest } from '../../hooks/useRequest';
 import type { EnrollmentQuery, ProgressFilter, StudentQuery } from './types';
 
 const LIST_DEFAULTS = {
@@ -36,10 +36,11 @@ export function useStudents() {
 			order: sort.order,
 		};
 	}, [ list.page, list.filters ] );
-	const request = useRequest(
-		( signal ) => listStudents( query, signal ),
-		JSON.stringify( query )
-	);
+	const request = useRequest( ( signal ) => listStudents( query, signal ), {
+		key: JSON.stringify( query ),
+		keepData: true,
+		errorShape: 'object',
+	} );
 	const { error } = request;
 	useEffect( () => {
 		if (
@@ -78,7 +79,11 @@ export function useStudents() {
  * @param id Student ID.
  */
 export function useStudent( id: number ) {
-	return useRequest( ( signal ) => getStudent( id, signal ), String( id ) );
+	return useRequest( ( signal ) => getStudent( id, signal ), {
+		key: String( id ),
+		keepData: true,
+		errorShape: 'object',
+	} );
 }
 
 /**
@@ -92,7 +97,11 @@ export function useEnrollments( studentId: number ) {
 	);
 	const request = useRequest(
 		( signal ) => listEnrollments( studentId, query, signal ),
-		`${ studentId }:${ JSON.stringify( query ) }`
+		{
+			key: `${ studentId }:${ JSON.stringify( query ) }`,
+			keepData: true,
+			errorShape: 'object',
+		}
 	);
 	const { error } = request;
 	useEffect( () => {
@@ -125,5 +134,9 @@ export function useEnrollments( studentId: number ) {
  * @param search Title search; empty for the first courses by title.
  */
 export function useCourseOptions( search: string ) {
-	return useRequest( ( signal ) => listCourses( search, signal ), search );
+	return useRequest( ( signal ) => listCourses( search, signal ), {
+		key: search,
+		keepData: true,
+		errorShape: 'object',
+	} );
 }

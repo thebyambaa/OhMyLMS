@@ -27,7 +27,9 @@ $current_id = get_the_ID();
 $student    = new \OhMyLMS\Data\Student( get_current_user_id() );
 $course_id  = ohmylms_get_course_by_content_id( $lesson_id );
 $get_type   = 'ohmylms-session' === get_post_type() ? 'session' : $lesson->get_type();
-$is_checked = $student->maybe_completed( $lesson_id ) ? 'checked' : '';
+// A learner preview shows the lesson as a new learner's: enrolled, nothing completed.
+$is_lesson_preview = \OhMyLMS\Learning\LessonPreview::active( $lesson_id );
+$is_checked        = ! $is_lesson_preview && $student->maybe_completed( $lesson_id ) ? 'checked' : '';
 if ( 'ohmylms-session' === get_post_type() ) {
 	$meeting_start_date     = get_post_meta( $lesson_id, '_start_date', true );
 	$timezone               = get_post_meta( $lesson_id, '_timezone', true );
@@ -267,7 +269,7 @@ if ( 'ohmylms-session' === get_post_type() ) {
 			<input type="hidden" id="ohmylms-lesson-id" value="<?php echo esc_attr( get_the_ID() ); ?>">
 			<input type="hidden" id="ohmylms-student-id" value="<?php echo esc_attr( get_current_user_id() ); ?>">
 			
-			<?php if ( $student->maybe_enrolled( $course_id ) ) : ?> 
+			<?php if ( $student->maybe_enrolled( $course_id ) || $is_lesson_preview ) : ?> 
 				<?php if ( 'session' === $get_type ) : ?>
 					<?php if ( $show_button_on_session ) : ?>
 						<label for="ohmylms-completed-lesson" class="ohmylms-checkbox" tabindex="0" data-wp-on--keydown="actions.checkboxKey">
@@ -284,7 +286,7 @@ if ( 'ohmylms-session' === get_post_type() ) {
 				<?php else : ?>
 					<?php
 					$video_rule    = \OhMyLMS\Learning\VideoCompletion::rule( $lesson_id );
-					$video_pending = ! $is_checked && ! \OhMyLMS\Learning\VideoCompletion::satisfied( get_current_user_id(), $lesson_id );
+					$video_pending = ! $is_checked && ( $is_lesson_preview ? \OhMyLMS\Learning\LessonPreview::video_pending( $lesson_id ) : ! \OhMyLMS\Learning\VideoCompletion::satisfied( get_current_user_id(), $lesson_id ) );
 					?>
 					<?php if ( $video_pending ) : ?>
 						<p class="ohmylms-video-completion-hint" id="ohmylms-video-completion-hint" data-ohmylms-watch-percent="<?php echo esc_attr( $video_rule['percent'] ); ?>" data-wp-bind--hidden="!context.videoPending">

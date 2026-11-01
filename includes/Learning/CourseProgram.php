@@ -6,6 +6,7 @@ use OhMyLMS\Skills\Mastery;
 use OhMyLMS\Practice\Selector;
 use OhMyLMS\QuestionBank\AccessPolicy;
 use OhMyLMS\QuestionBank\Banks;
+use OhMyLMS\Utility\Lock;
 use OhMyLMS\Utility\Transaction;
 
 defined( 'ABSPATH' ) || exit;
@@ -494,7 +495,8 @@ final class CourseProgram {
 	}
 
 	/**
-	 * Completion readiness for Course program.
+	 * Completion readiness for Course program. A syllabus course meets the same requirement rules as any
+	 * course: with nothing required, no learner could ever complete it.
 	 *
 	 * @param array $program Program.
 	 * @param bool  $syllabus Syllabus.
@@ -515,9 +517,9 @@ final class CourseProgram {
 		);
 		if ( $syllabus && ! $program['outcomes'] ) {
 			$errors[] = __( 'Add at least one skill before publishing the syllabus.', 'ohmylms' ); }
-		if ( ! $syllabus && ! $required && ! $required_outcomes ) {
+		if ( ! $required && ! $required_outcomes ) {
 			$errors[] = __( 'Select at least one completion requirement.', 'ohmylms' ); }
-		if ( ! $syllabus && 'traditional' !== $program['mode'] && ! $required_outcomes ) {
+		if ( 'traditional' !== $program['mode'] && ! $required_outcomes ) {
 			$errors[] = __( 'Skill-based and blended courses need a required skill outcome.', 'ohmylms' ); }
 		return $errors;
 	}
@@ -532,7 +534,7 @@ final class CourseProgram {
 		$syllabus          = 0 < $course_id && \OhMyLMS\Curriculum\SyllabusCourse::owner( $course_id ) > 0;
 		$errors            = array_merge( self::completion_readiness( $program, $syllabus ), self::review_readiness( $program ) );
 		$rules             = Mastery::rules();
-		$required_outcomes = $syllabus ? array() : array_filter(
+		$required_outcomes = array_filter(
 			$program['outcomes'],
 			static function ( $outcome ) {
 				return ! empty( $outcome['required'] );
@@ -615,7 +617,14 @@ final class CourseProgram {
 			}
 		}
 		$practice_skills = array();
-		foreach ( $syllabus ? array() : $program['outcomes'] as $outcome ) {
+		// A syllabus course can hold every skill of its syllabus; only the ones it requires are checked.
+		$outcomes = $syllabus ? array_filter(
+			$program['outcomes'],
+			static function ( $outcome ) {
+				return ! empty( $outcome['required'] );
+			}
+		) : $program['outcomes'];
+		foreach ( $outcomes as $outcome ) {
 			$pool              = self::pool( $program, $outcome['term_id'] );
 			$families          = array_unique(
 				array_map(
@@ -703,7 +712,7 @@ final class CourseProgram {
 			update_post_meta( $course_id, self::DRAFT, $program );
 			return self::editor( $course_id ) + array( 'readiness' => $errors ); }
 		$key = 'ohmylms_program_' . (int) $course_id;
-		if ( ! $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 3)', $key ) ) ) {
+		if ( ! Lock::acquire( $key, 3 ) ) {
 			return self::error( __( 'Another author is publishing this course. Try again.', 'ohmylms' ), 409 ); }
 		try {
 			wp_cache_delete( $course_id, 'post_meta' );
@@ -765,6 +774,6 @@ final class CourseProgram {
 			wp_cache_delete( $course_id, 'post_meta' );
 			return self::error( __( 'Could not publish the learning program. Try again.', 'ohmylms' ), 500 );
 		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $key ) ); }
+			Lock::release( $key ); }
 	}
 }

@@ -1,7 +1,23 @@
 /** OhMyLMS frontend extension API v1. Values are presentation state, never grading authority. */
 export const apiVersion = 1;
+
+/** @typedef {(root: Element) => unknown} AnswerValidator */
+/**
+ * @typedef {(root: Element, detail: Object) => (() => void)|null|undefined|void} QuestionMount
+ */
+
+/** @type {Map<string, AnswerValidator>} */
 const validators = new Map();
+/** @type {Map<string, QuestionMount>} */
 const questionMounts = new Map();
+
+/**
+ * @template T
+ * @param {Map<string, T>} registry Registry.
+ * @param {string}         type     Question type slug.
+ * @param {T}              callback Callback.
+ * @return {() => void} Unregister.
+ */
 function register( registry, type, callback ) {
 	if (
 		! /^[a-z][a-z0-9_-]*$/.test( type ) ||
@@ -21,16 +37,36 @@ function register( registry, type, callback ) {
 		}
 	};
 }
+/**
+ * @param {string}          type     Question type slug.
+ * @param {AnswerValidator} callback Truthy when the question in `root` is answered.
+ * @return {() => void} Unregister.
+ */
 export const registerAnswerValidator = ( type, callback ) =>
 	register( validators, type, callback );
+/**
+ * @param {string}        type     Question type slug.
+ * @param {QuestionMount} callback Renderer; may return a cleanup function.
+ * @return {() => void} Unregister.
+ */
 export const registerQuestionMount = ( type, callback ) =>
 	register( questionMounts, type, callback );
+/**
+ * @param {Element}               root Question root.
+ * @param {string|null|undefined} type Question type slug.
+ * @return {boolean} The learner gave an answer.
+ */
 export function isAnswered( root, type ) {
-	if ( validators.has( type ) ) {
-		return Boolean( validators.get( type )( root ) );
+	const validator = type ? validators.get( type ) : undefined;
+	if ( validator ) {
+		return Boolean( validator( root ) );
 	}
 	if (
-		[ 'single-choice', 'multiple-choice', 'true-false' ].includes( type )
+		/** @type {Array<string|null|undefined>} */ ( [
+			'single-choice',
+			'multiple-choice',
+			'true-false',
+		] ).includes( type )
 	) {
 		return Boolean( root.querySelector( 'input:checked' ) );
 	}
@@ -38,15 +74,21 @@ export function isAnswered( root, type ) {
 		return Boolean( root.querySelector( 'input[name]' ) );
 	}
 	if ( type === 'matching' ) {
-		const fields = [ ...root.querySelectorAll( '.matching-answer-input' ) ];
+		const fields = [
+			.../** @type {Iterable<HTMLInputElement>} */ (
+				root.querySelectorAll( '.matching-answer-input' )
+			),
+		];
 		return (
 			fields.length > 0 &&
 			fields.every( ( field ) => field.value.trim() !== '' )
 		);
 	}
 	const fields = [
-		...root.querySelectorAll(
-			'input:not([type=hidden]):not([type=radio]):not([type=checkbox]),textarea,select'
+		.../** @type {Iterable<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>} */ (
+			root.querySelectorAll(
+				'input:not([type=hidden]):not([type=radio]):not([type=checkbox]),textarea,select'
+			)
 		),
 	];
 	return (
@@ -54,6 +96,15 @@ export function isAnswered( root, type ) {
 		fields.every( ( field ) => field.value.trim() !== '' )
 	);
 }
+/**
+ * Dispatch a bubbling `ohmylms:<name>` event; `detail` gets `apiVersion`.
+ *
+ * @param {EventTarget} root         Target.
+ * @param {string}      name         Event name without the `ohmylms:` prefix.
+ * @param {Object}      [detail]     Detail.
+ * @param {boolean}     [cancelable] Cancelable.
+ * @return {boolean} False when a listener called `preventDefault()`.
+ */
 export function emit( root, name, detail = {}, cancelable = false ) {
 	return root.dispatchEvent(
 		new CustomEvent( `ohmylms:${ name }`, {
@@ -69,12 +120,13 @@ export function emit( root, name, detail = {}, cancelable = false ) {
 
 /**
  * Return a renderer's cleanup function, or null when no mount adapter is registered.
- * @param root
- * @param type
- * @param detail
+ * @param {Element}               root   Question root.
+ * @param {string|null|undefined} type   Question type slug.
+ * @param {Object}                detail Mount detail.
+ * @return {(() => void)|null} Cleanup.
  */
 export function mountQuestion( root, type, detail ) {
-	const callback = questionMounts.get( type );
+	const callback = type ? questionMounts.get( type ) : undefined;
 	if ( ! callback ) {
 		return null;
 	}
@@ -147,6 +199,7 @@ let config = null;
  */
 export function getConfig() {
 	if ( ! config ) {
+		/** @type {{restRoot?: unknown, restNonce?: unknown, ajaxUrl?: unknown, messages?: Partial<SdkMessages>}} */
 		let data = {};
 		try {
 			const node =
@@ -191,15 +244,31 @@ export function setConfig( partial ) {
 // ---------------------------------------------------------------------------------------------
 // Encoding
 
+/**
+ * @param {unknown} value Value.
+ * @return {value is Blob} Whether it is a Blob or File.
+ */
 const isBlob = ( value ) =>
 	typeof Blob !== 'undefined' && value instanceof Blob;
 
+/** @typedef {(name: string, value: unknown) => void} FieldSink */
+
+/**
+ * @param {Object}    data   Fields.
+ * @param {string}    prefix Name prefix ('' at the top level).
+ * @param {FieldSink} add    Receives each scalar field.
+ */
 function eachField( data, prefix, add ) {
 	for ( const [ key, value ] of Object.entries( data ) ) {
 		addField( prefix ? `${ prefix }[${ key }]` : key, value, add );
 	}
 }
 
+/**
+ * @param {string}    name  Field name.
+ * @param {unknown}   value Value.
+ * @param {FieldSink} add   Receives each scalar field.
+ */
 function addField( name, value, add ) {
 	if ( value === undefined ) {
 		return;
@@ -225,6 +294,10 @@ function addField( name, value, add ) {
 	add( name, value === null ? '' : value );
 }
 
+/**
+ * @param {unknown} value Value.
+ * @return {boolean} Whether it is or contains a Blob.
+ */
 const hasBlob = ( value ) =>
 	isBlob( value ) ||
 	( value !== null &&
@@ -235,8 +308,8 @@ const hasBlob = ( value ) =>
  * PHP-style query parameters: arrays become `name[]`, objects `name[key]`; `undefined` is
  * skipped and `null` sent as an empty string.
  *
- * @param {Object|URLSearchParams|FormData|null} data   Fields.
- * @param {URLSearchParams}                      [into] Parameters to append to.
+ * @param {Object|URLSearchParams|FormData|null|undefined} data   Fields.
+ * @param {URLSearchParams}                                [into] Parameters to append to.
  * @return {URLSearchParams} Parameters.
  */
 export function toSearchParams( data, into = new URLSearchParams() ) {
@@ -273,10 +346,18 @@ export function toFormData( data ) {
 	return form;
 }
 
+/**
+ * @param {unknown} value Value.
+ * @return {value is FormData} Whether it is FormData.
+ */
 function isFormData( value ) {
 	return typeof FormData !== 'undefined' && value instanceof FormData;
 }
 
+/**
+ * @param {unknown} value Value.
+ * @return {value is HTMLFormElement} Whether it is a form element.
+ */
 function isFormElement( value ) {
 	return (
 		typeof HTMLFormElement !== 'undefined' &&
@@ -291,14 +372,21 @@ function isFormElement( value ) {
  * @return {Object<string, unknown>} Object.
  */
 export function entriesToObject( entries ) {
+	/** @type {Object<string, unknown>} */
 	const result = {};
 	for ( const [ rawName, value ] of entries ) {
 		const list = rawName.endsWith( '[]' );
 		const name = list ? rawName.slice( 0, -2 ) : rawName;
 		if ( list ) {
-			result[ name ] = [ ...( result[ name ] || [] ), value ];
+			result[ name ] = [
+				.../** @type {unknown[]} */ ( result[ name ] || [] ),
+				value,
+			];
 		} else if ( name in result ) {
-			result[ name ] = [].concat( result[ name ], value );
+			result[ name ] = /** @type {unknown[]} */ ( [] ).concat(
+				result[ name ],
+				value
+			);
 		} else {
 			result[ name ] = value;
 		}
@@ -378,42 +466,61 @@ export function serializeForm(
  * @property {'rest'|'ajax'|'url'} transport Which endpoint answered.
  */
 
+/** @typedef {'network'|'aborted'|'timeout'} RequestFailureKind */
+
 const NO_BODY = [ 'GET', 'HEAD' ];
 
+/** @typedef {{message?: unknown, messages?: unknown, code?: unknown}} ErrorPayload */
+
+/**
+ * @param {unknown} value Value.
+ * @return {string} Strings and numbers as text, '' otherwise.
+ */
 const textOf = ( value ) =>
 	typeof value === 'string' || typeof value === 'number'
 		? String( value )
 		: '';
 
+/**
+ * @param {unknown} payload Response payload.
+ * @return {string} Its message.
+ */
 function messageOf( payload ) {
 	if ( Array.isArray( payload ) ) {
 		return messageOf( payload[ 0 ] );
 	}
 	if ( payload && typeof payload === 'object' ) {
-		return textOf( payload.message ) || textOf( payload.messages );
+		const fields = /** @type {ErrorPayload} */ ( payload );
+		return textOf( fields.message ) || textOf( fields.messages );
 	}
 	return typeof payload === 'string' ? payload : '';
 }
 
+/**
+ * @param {unknown} payload Response payload.
+ * @return {string} Its error code.
+ */
 function codeOf( payload ) {
 	if ( Array.isArray( payload ) ) {
 		return codeOf( payload[ 0 ] );
 	}
-	return payload && typeof payload === 'object' ? textOf( payload.code ) : '';
+	return payload && typeof payload === 'object'
+		? textOf( /** @type {ErrorPayload} */ ( payload ).code )
+		: '';
 }
 
 /**
  * Turn one HTTP exchange into a `RequestResult`. Pure, so every response shape the plugin
  * uses is covered by tests/js/sdk.test.mjs.
  *
- * @param {Object}      reply           Exchange.
- * @param {string}      reply.transport `rest`, `ajax` or `url`.
- * @param {number}      [reply.status]  HTTP status.
- * @param {unknown}     [reply.body]    Parsed body (string when `invalid` or `parse` is `text`).
- * @param {boolean}     [reply.invalid] The body was not JSON.
- * @param {string}      [reply.failure] `network`, `aborted` or `timeout` when there was no response.
- * @param {string}      [reply.parse]   `json` or `text`.
- * @param {SdkMessages} [messages]      Fallback messages.
+ * @param {Object}              reply           Exchange.
+ * @param {'rest'|'ajax'|'url'} reply.transport `rest`, `ajax` or `url`.
+ * @param {number}              [reply.status]  HTTP status.
+ * @param {?}                   [reply.body]    Parsed body (string when `invalid` or `parse` is `text`).
+ * @param {boolean}             [reply.invalid] The body was not JSON.
+ * @param {RequestFailureKind}  [reply.failure] `network`, `aborted` or `timeout` when there was no response.
+ * @param {string}              [reply.parse]   `json` or `text`.
+ * @param {SdkMessages}         [messages]      Fallback messages.
  * @return {RequestResult} Result.
  */
 export function normalizeResponse( reply, messages = getConfig().messages ) {
@@ -421,6 +528,11 @@ export function normalizeResponse( reply, messages = getConfig().messages ) {
 	const status = reply.status || 0;
 	const httpOk = status >= 200 && status < 300;
 	const body = reply.body === undefined ? null : reply.body;
+	/**
+	 * @param {unknown} data      Payload.
+	 * @param {string}  [message] Message.
+	 * @return {RequestResult} Success.
+	 */
 	const done = ( data, message = '' ) => ( {
 		ok: true,
 		status,
@@ -430,6 +542,13 @@ export function normalizeResponse( reply, messages = getConfig().messages ) {
 		raw: body,
 		transport,
 	} );
+	/**
+	 * @param {string}  code          Error code.
+	 * @param {string}  message       Message.
+	 * @param {unknown} [data]        Payload.
+	 * @param {number}  [errorStatus] Error status.
+	 * @return {RequestResult} Failure.
+	 */
 	const fail = ( code, message, data = null, errorStatus = status ) => ( {
 		ok: false,
 		status,
@@ -498,6 +617,11 @@ export function normalizeResponse( reply, messages = getConfig().messages ) {
 	return done( body, messageOf( body ) );
 }
 
+/**
+ * @param {string}                                         url   Address.
+ * @param {Object|URLSearchParams|FormData|null|undefined} query Query arguments.
+ * @return {string} Address with the query appended.
+ */
 function withQuery( url, query ) {
 	if ( ! query ) {
 		return url;
@@ -509,6 +633,11 @@ function withQuery( url, query ) {
 	return url + ( url.includes( '?' ) ? '&' : '?' ) + params;
 }
 
+/**
+ * @param {string} path REST route or absolute URL.
+ * @param {string} root REST root.
+ * @return {string} URL.
+ */
 function restUrl( path, root ) {
 	if ( /^https?:/i.test( path ) ) {
 		return path;
@@ -519,13 +648,19 @@ function restUrl( path, root ) {
 	);
 }
 
+/**
+ * @param {AbortSignal|undefined} signal  Caller's signal.
+ * @param {number}                timeout Milliseconds, 0 for none.
+ * @return {{signal: AbortSignal|undefined, done: () => void}} Combined signal and cleanup.
+ */
 function linkSignals( signal, timeout ) {
 	if ( ! timeout && ! signal ) {
 		return { signal: undefined, done: () => {} };
 	}
 	const controller = new AbortController();
-	const abort = () => controller.abort( signal.reason );
-	let timer = null;
+	const abort = () => controller.abort( signal?.reason );
+	/** @type {ReturnType<typeof setTimeout>|undefined} */
+	let timer;
 	if ( signal ) {
 		if ( signal.aborted ) {
 			controller.abort( signal.reason );
@@ -549,6 +684,27 @@ function linkSignals( signal, timeout ) {
 	};
 }
 
+/** @typedef {NonNullable<Parameters<typeof fetch>[1]>} FetchOptions */
+
+/**
+ * @typedef {Object} Exchange
+ * @property {'rest'|'ajax'|'url'} transport Endpoint kind.
+ * @property {number}              status    HTTP status, 0 without a response.
+ * @property {?}                   [body]    Parsed body (text for `parse: 'text'` and invalid JSON).
+ * @property {string}              [parse]   `json` or `text`.
+ * @property {boolean}             [invalid] The body was not JSON.
+ * @property {RequestFailureKind}  [failure] `network`, `aborted` or `timeout`.
+ * @property {unknown}             [error]   The fetch error.
+ */
+
+/**
+ * @param {'rest'|'ajax'|'url'} transport Endpoint kind.
+ * @param {string}              url       Address.
+ * @param {FetchOptions}        init      Fetch options.
+ * @param {string}              parse     `json` or `text`.
+ * @param {AbortSignal}         [signal]  Abort signal.
+ * @return {Promise<Exchange>} The exchange, never rejected.
+ */
 async function exchange( transport, url, init, parse, signal ) {
 	let response;
 	let text;
@@ -556,6 +712,7 @@ async function exchange( transport, url, init, parse, signal ) {
 		response = await fetch( url, { ...init, signal } );
 		text = await response.text();
 	} catch ( error ) {
+		/** @type {RequestFailureKind} */
 		let failure = 'network';
 		if ( signal?.aborted ) {
 			failure =
@@ -574,8 +731,16 @@ async function exchange( transport, url, init, parse, signal ) {
 	}
 }
 
+/**
+ * @param {RequestOptions} options Options.
+ * @param {string}         method  HTTP method.
+ * @param {string}         nonce   `X-WP-Nonce`, '' for none.
+ * @return {{init: FetchOptions, query: RequestOptions['data']}} Fetch options and GET query.
+ */
 function restInit( options, method, nonce ) {
+	/** @type {Object<string, string>} */
 	const headers = { Accept: 'application/json', ...options.headers };
+	/** @type {FetchOptions} */
 	const init = { method, credentials: 'same-origin', headers };
 	if ( nonce ) {
 		headers[ 'X-WP-Nonce' ] = nonce;
@@ -596,7 +761,13 @@ function restInit( options, method, nonce ) {
 	return { init, query: undefined };
 }
 
+/**
+ * @param {RequestOptions} options Options.
+ * @param {string}         method  HTTP method.
+ * @return {{init: FetchOptions & {headers: Object<string, string>}, query: RequestOptions['data'][]}} Fetch options and GET queries.
+ */
 function ajaxInit( options, method ) {
+	/** @type {FetchOptions & {headers: Object<string, string>}} */
 	const init = {
 		method,
 		credentials: 'same-origin',
@@ -606,6 +777,7 @@ function ajaxInit( options, method ) {
 	if ( isFormElement( data ) ) {
 		data = new FormData( data );
 	}
+	/** @type {Object<string, string>} */
 	const fields = {};
 	if ( options.action ) {
 		fields.action = options.action;
@@ -632,6 +804,11 @@ function ajaxInit( options, method ) {
 	return { init, query: [] };
 }
 
+/**
+ * @param {string}                ajaxUrl admin-ajax URL.
+ * @param {AbortSignal|undefined} signal  Abort signal.
+ * @return {Promise<string>} The new nonce, '' when it could not be renewed.
+ */
 async function refreshRestNonce( ajaxUrl, signal ) {
 	const reply = await exchange(
 		'ajax',
@@ -690,6 +867,14 @@ export async function request( options ) {
 	}
 }
 
+/**
+ * @param {RequestOptions}        opts      Options; `path` is set.
+ * @param {SdkConfig}             settings  Configuration.
+ * @param {'json'|'text'}         parse     Body parsing.
+ * @param {AbortSignal|undefined} signal    Abort signal.
+ * @param {boolean}               [retried] The nonce was already renewed.
+ * @return {Promise<RequestResult>} Result.
+ */
 async function rest( opts, settings, parse, signal, retried = false ) {
 	const method = String(
 		opts.method || ( opts.data === undefined ? 'GET' : 'POST' )
@@ -697,7 +882,10 @@ async function rest( opts, settings, parse, signal, retried = false ) {
 	const nonce =
 		false === opts.nonce ? '' : opts.nonce || settings.restNonce || '';
 	const { init, query } = restInit( opts, method, nonce );
-	let url = restUrl( opts.path, opts.restRoot || settings.restRoot );
+	let url = restUrl(
+		/** @type {string} */ ( opts.path ),
+		opts.restRoot || settings.restRoot
+	);
 	url = withQuery( withQuery( url, query ), opts.query );
 	const result = normalizeResponse(
 		await exchange( 'rest', url, init, parse, signal ),
@@ -720,16 +908,24 @@ async function rest( opts, settings, parse, signal, retried = false ) {
 	return result;
 }
 
+/**
+ * @param {RequestOptions}        opts     Options; `action` or `url` is set.
+ * @param {SdkConfig}             settings Configuration.
+ * @param {'json'|'text'}         parse    Body parsing.
+ * @param {AbortSignal|undefined} signal   Abort signal.
+ * @return {Promise<RequestResult>} Result.
+ */
 async function ajax( opts, settings, parse, signal ) {
 	const transport = opts.action ? 'ajax' : 'url';
-	const url = opts.action
-		? opts.url || opts.ajaxUrl || settings.ajaxUrl
-		: opts.url;
+	const url = /** @type {string} */ (
+		opts.action ? opts.url || opts.ajaxUrl || settings.ajaxUrl : opts.url
+	);
 	const method = String(
 		opts.method ||
 			( 'url' === transport && opts.data === undefined ? 'GET' : 'POST' )
 	).toUpperCase();
 	let target = url;
+	/** @type {FetchOptions & {headers: Object<string, string>}} */
 	let init;
 	if ( 'url' === transport ) {
 		init = {
@@ -766,10 +962,18 @@ async function ajax( opts, settings, parse, signal ) {
 	);
 }
 
+/**
+ * @typedef {Error & {code?: string, status?: number, data?: unknown}} RequestFailure
+ */
+
+/**
+ * @param {RequestResult} result Aborted or timed-out result.
+ * @return {RequestFailure} `AbortError` carrying the result's code.
+ */
 function abortError( result ) {
-	const error = new Error( result.message );
+	const error = /** @type {RequestFailure} */ ( new Error( result.message ) );
 	error.name = 'AbortError';
-	error.code = result.error.code;
+	error.code = /** @type {RequestError} */ ( result.error ).code;
 	return error;
 }
 
@@ -785,7 +989,7 @@ function abortError( result ) {
  * @param {string}      [options.root]   REST root URL ending in `/` (default: server config).
  * @param {string}      [options.nonce]  `wp_rest` nonce (default: server config).
  * @param {AbortSignal} [options.signal] Abort signal.
- * @return {Promise<unknown>} Parsed body.
+ * @return {Promise<?>} Parsed body, as the legacy callers read it.
  */
 export async function apiFetch(
 	path,
@@ -802,11 +1006,12 @@ export async function apiFetch(
 	if ( result.ok ) {
 		return result.raw;
 	}
-	if ( [ 'aborted', 'timeout' ].includes( result.error.code ) ) {
+	const failure = /** @type {RequestError} */ ( result.error );
+	if ( [ 'aborted', 'timeout' ].includes( failure.code ) ) {
 		throw abortError( result );
 	}
-	const error = new Error( result.message );
-	error.code = result.error.code;
+	const error = /** @type {RequestFailure} */ ( new Error( result.message ) );
+	error.code = failure.code;
 	error.status = result.status;
 	error.data = result.raw;
 	throw error;
@@ -819,16 +1024,20 @@ export async function apiFetch(
  *
  * @param {string}                          url  `admin-ajax.php` URL.
  * @param {FormData|URLSearchParams|Object} data Fields, including `action`.
- * @return {Promise<unknown>} Parsed body.
+ * @return {Promise<?>} Parsed body, as the legacy callers read it.
  */
 export async function ajaxPost( url, data ) {
 	const body =
 		isFormData( data ) || data instanceof URLSearchParams
 			? data
-			: new URLSearchParams( data );
+			: new URLSearchParams(
+					/** @type {Record<string, string>} */ ( data )
+				);
 	const result = await request( { url, method: 'POST', data: body } );
 	if ( result.error && 'invalid_json' === result.error.code ) {
-		const error = new Error( result.message );
+		const error = /** @type {RequestFailure} */ (
+			new Error( result.message )
+		);
 		error.status = result.status;
 		throw error;
 	}
@@ -858,6 +1067,11 @@ export async function ajaxPost( url, data ) {
  * @property {number}    duration Milliseconds, 0 for sticky.
  */
 
+/**
+ * @typedef {ToastOptions & {message?: unknown, id?: unknown}} ToastInput
+ */
+
+/** @type {Object<string, ToastType>} */
 const TOAST_TYPES = {
 	success: 'success',
 	info: 'success',
@@ -866,6 +1080,7 @@ const TOAST_TYPES = {
 	error: 'danger',
 };
 
+/** @type {Object<string, string>} */
 const ENTITIES = {
 	amp: '&',
 	lt: '<',
@@ -924,6 +1139,7 @@ export function plainText( value ) {
  * @return {ToastItem|null} Toast.
  */
 export function toastItem( message, options = {}, id = '' ) {
+	/** @type {ToastInput} */
 	const input =
 		message && typeof message === 'object'
 			? message
@@ -932,7 +1148,7 @@ export function toastItem( message, options = {}, id = '' ) {
 	if ( ! text ) {
 		return null;
 	}
-	const type = TOAST_TYPES[ input.type ] || 'success';
+	const type = TOAST_TYPES[ String( input.type ) ] || 'success';
 	let duration = Number( input.duration );
 	if (
 		input.duration === undefined ||
@@ -946,6 +1162,7 @@ export function toastItem( message, options = {}, id = '' ) {
 }
 
 let toastCount = 0;
+/** @type {ToastItem[]} */
 const pendingToasts = [];
 
 /**
@@ -1077,11 +1294,14 @@ export function focusable( container ) {
 	if ( ! container ) {
 		return [];
 	}
-	return [ ...container.querySelectorAll( FOCUSABLE ) ].filter(
-		( element ) =>
-			! element.closest( '[inert],[hidden]' ) &&
-			element.getAttribute( 'tabindex' ) !== '-1' &&
-			( ! element.getClientRects || element.getClientRects().length > 0 )
+	return /** @type {HTMLElement[]} */ (
+		[ ...container.querySelectorAll( FOCUSABLE ) ].filter(
+			( element ) =>
+				! element.closest( '[inert],[hidden]' ) &&
+				element.getAttribute( 'tabindex' ) !== '-1' &&
+				( ! element.getClientRects ||
+					element.getClientRects().length > 0 )
+		)
 	);
 }
 
@@ -1124,7 +1344,8 @@ export function trapFocus(
 	container,
 	{ initialFocus, returnFocus = true, onEscape } = {}
 ) {
-	const previous = document.activeElement;
+	const previous = /** @type {HTMLElement|null} */ ( document.activeElement );
+	/** @param {KeyboardEvent} event Keydown. */
 	const onKeydown = ( event ) => {
 		if ( 'Escape' === event.key && onEscape ) {
 			event.preventDefault();
@@ -1137,7 +1358,9 @@ export function trapFocus(
 		const items = focusable( container );
 		const next = trapIndex(
 			items.length,
-			items.indexOf( document.activeElement ),
+			items.indexOf(
+				/** @type {HTMLElement} */ ( document.activeElement )
+			),
 			event.shiftKey
 		);
 		if ( items.length < 1 ) {
@@ -1147,8 +1370,11 @@ export function trapFocus(
 			items[ next ].focus();
 		}
 	};
+	/** @param {FocusEvent} event Focusin. */
 	const onFocusin = ( event ) => {
-		if ( ! container.contains( event.target ) ) {
+		if (
+			! container.contains( /** @type {Node|null} */ ( event.target ) )
+		) {
 			( focusable( container )[ 0 ] || container ).focus();
 		}
 	};
@@ -1156,7 +1382,9 @@ export function trapFocus(
 	document.addEventListener( 'focusin', onFocusin );
 	const first =
 		typeof initialFocus === 'string'
-			? container.querySelector( initialFocus )
+			? /** @type {HTMLElement|null} */ (
+					container.querySelector( initialFocus )
+				)
 			: initialFocus || focusable( container )[ 0 ];
 	if ( ! first && ! container.hasAttribute( 'tabindex' ) ) {
 		container.setAttribute( 'tabindex', '-1' );
@@ -1174,20 +1402,25 @@ export function trapFocus(
 let dialogCount = 0;
 
 /**
+ * @typedef {Object} ConfirmOptions
+ * @property {string}             message        Question.
+ * @property {string}             [title]        Heading.
+ * @property {string}             [confirmLabel] Confirm button.
+ * @property {string}             [cancelLabel]  Cancel button.
+ * @property {'default'|'danger'} [tone]         `danger` focuses Cancel first.
+ */
+
+/**
  * Accessible confirmation on a native modal `<dialog>` (focus trapped by the browser, Escape and
  * backdrop click cancel, focus returns to the opener). Resolves false without a document.
  *
- * @param {string|Object}      options                Message, or options.
- * @param {string}             options.message        Question.
- * @param {string}             [options.title]        Heading.
- * @param {string}             [options.confirmLabel] Confirm button.
- * @param {string}             [options.cancelLabel]  Cancel button.
- * @param {'default'|'danger'} [options.tone]         `danger` focuses Cancel first.
+ * @param {string|ConfirmOptions} options Message, or options.
  * @return {Promise<boolean>} True when confirmed.
  */
 export function confirmDialog( options ) {
-	const opts =
-		typeof options === 'string' ? { message: options } : options || {};
+	const opts = /** @type {ConfirmOptions} */ (
+		typeof options === 'string' ? { message: options } : options || {}
+	);
 	const messages = getConfig().messages;
 	if ( ! hasDocument() ) {
 		return Promise.resolve( false );
@@ -1218,6 +1451,12 @@ export function confirmDialog( options ) {
 	}
 	const actions = document.createElement( 'div' );
 	actions.className = 'ohmylms-dialog-actions';
+	/**
+	 * @param {string} value     Return value.
+	 * @param {string} label     Text.
+	 * @param {string} className Classes.
+	 * @return {HTMLButtonElement} Button.
+	 */
 	const button = ( value, label, className ) => {
 		const element = document.createElement( 'button' );
 		element.type = 'submit';
@@ -1239,7 +1478,7 @@ export function confirmDialog( options ) {
 	);
 	form.append( actions );
 	dialog.append( form );
-	const opener = document.activeElement;
+	const opener = /** @type {HTMLElement|null} */ ( document.activeElement );
 	document.body.append( dialog );
 	return new Promise( ( resolve ) => {
 		dialog.addEventListener(
@@ -1276,16 +1515,19 @@ export function confirmDialog( options ) {
  * @return {F & {cancel: function(): void, flush: function(): void}} Debounced callback.
  */
 export function debounce( callback, wait ) {
-	let timer = null;
+	/** @type {ReturnType<typeof setTimeout>|undefined} */
+	let timer;
+	/** @type {unknown[]|null} */
 	let pending = null;
 	const run = () => {
-		timer = null;
+		timer = undefined;
 		const args = pending;
 		pending = null;
 		if ( args ) {
 			callback( ...args );
 		}
 	};
+	/** @param {...unknown} args Arguments for `callback`. */
 	const debounced = ( ...args ) => {
 		pending = args;
 		clearTimeout( timer );
@@ -1293,29 +1535,14 @@ export function debounce( callback, wait ) {
 	};
 	debounced.cancel = () => {
 		clearTimeout( timer );
-		timer = null;
+		timer = undefined;
 		pending = null;
 	};
 	debounced.flush = () => {
 		clearTimeout( timer );
 		run();
 	};
-	return debounced;
-}
-
-/**
- * Fire a jQuery event when jQuery is on the page, for add-ons that still listen with `.on()`.
- *
- * @param {string}           name     Event name.
- * @param {Array}            [args]   Extra handler arguments.
- * @param {EventTarget|null} [target] Target (default `document.body`).
- * @return {boolean} Whether jQuery was there to trigger it.
- */
-export function jqueryTrigger( name, args = [], target = null ) {
-	const jQuery = typeof window !== 'undefined' ? window.jQuery : undefined;
-	if ( typeof jQuery !== 'function' || ! hasDocument() ) {
-		return false;
-	}
-	jQuery( target || document.body ).trigger( name, args );
-	return true;
+	return /** @type {F & {cancel: function(): void, flush: function(): void}} */ (
+		/** @type {unknown} */ ( debounced )
+	);
 }

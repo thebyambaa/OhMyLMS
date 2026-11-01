@@ -13,7 +13,8 @@ defined( 'ABSPATH' ) || exit;
  * An audio or video response is uploaded to the uploads folder and only its URL is kept in the answer.
  *
  * Files get an unguessable name inside uploads/ohmylms-responses/, so a recording is not
- * listed in the media library and cannot be found without its link.
+ * listed in the media library and cannot be found without its link. The upload route is
+ * {@see Rest\ResponseMediaController}.
  */
 final class ResponseMedia {
 	const MAX_AUDIO  = 8388608;
@@ -24,26 +25,6 @@ final class ResponseMedia {
 		'audio' => array( 'webm', 'ogg', 'oga', 'mp3', 'm4a', 'mp4', 'wav' ),
 		'video' => array( 'webm', 'ogg', 'ogv', 'mp4' ),
 	);
-
-	/** Register the upload route. */
-	public static function init() {
-		add_action( 'rest_api_init', array( __CLASS__, 'routes' ) );
-	}
-
-	/** Route: POST /ohmylms/v1/response-media (multipart: file, kind). */
-	public static function routes() {
-		register_rest_route(
-			'ohmylms/v1',
-			'/response-media',
-			array(
-				'methods'             => 'POST',
-				'callback'            => array( __CLASS__, 'upload' ),
-				'permission_callback' => static function () {
-					return is_user_logged_in();
-				},
-			)
-		);
-	}
 
 	/**
 	 * Script data for the response widgets.

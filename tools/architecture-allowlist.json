@@ -16,5 +16,12 @@
 			"value": "999px",
 			"reason": "Enrollment-source chips are pills. 999px stays fully round on every radius preset; --oml-radius-button is 2px on the WordPress preset, and there is no separate pill token."
 		}
+	],
+	"restControllers": [],
+	"legacyRouteUrls": [
+		{
+			"file": "includes/Learning/NativeLessonEditor.php",
+			"reason": "return_url() resolves ohmylms_return and assessment profiles' return_route, which are legacy route names by design; it keeps LegacyRoutes::url() until those inputs store app paths."
+		}
 	]
 }

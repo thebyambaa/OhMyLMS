@@ -8,6 +8,7 @@
 namespace OhMyLMS\Commerce\Rest\V1;
 
 use OhMyLMS\Commerce\Abstracts\RestController;
+use OhMyLMS\Commerce\DataStores;
 use WP_Error;
 use WP_Post;
 use WP_Query;
@@ -252,35 +253,6 @@ class OrdersController extends RestController {
 	}
 
 	/**
-	 * Order IDs matching a search text (student name, email or order number).
-	 *
-	 * @param string $term Search text.
-	 * @return int[] At most 1000 IDs.
-	 */
-	private function search_ids( $term ) {
-		global $wpdb;
-
-		$like = '%' . $wpdb->esc_like( $term ) . '%';
-		$id   = ctype_digit( $term ) ? (int) $term : 0;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Prepared; joins the three meta rows once instead of a meta_query per field.
-		$ids = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT p.ID FROM {$wpdb->posts} p
-				LEFT JOIN {$wpdb->postmeta} f ON f.post_id = p.ID AND f.meta_key = '_first_name'
-				LEFT JOIN {$wpdb->postmeta} l ON l.post_id = p.ID AND l.meta_key = '_last_name'
-				LEFT JOIN {$wpdb->postmeta} e ON e.post_id = p.ID AND e.meta_key = '_email'
-				WHERE p.post_type = %s AND ( CONCAT_WS( ' ', f.meta_value, l.meta_value ) LIKE %s OR e.meta_value LIKE %s OR p.ID = %d )
-				LIMIT 1000",
-				self::POST_TYPE,
-				$like,
-				$like,
-				$id
-			)
-		);
-		return array_map( 'intval', $ids );
-	}
-
-	/**
 	 * Get orders.
 	 *
 	 * @param WP_REST_Request $request Request.
@@ -364,7 +336,7 @@ class OrdersController extends RestController {
 		}
 
 		if ( '' !== (string) $request['search'] ) {
-			$ids              = $this->search_ids( (string) $request['search'] );
+			$ids              = DataStores::load( 'order' )->search_ids( (string) $request['search'], self::POST_TYPE );
 			$args['post__in'] = $ids ? $ids : array( 0 );
 		}
 
@@ -413,12 +385,9 @@ class OrdersController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function get_status_counts() {
-		global $wpdb;
-
 		$counts = array_fill_keys( self::STATUSES, 0 );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Prepared aggregate; WP_Query cannot group.
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT post_status, COUNT(*) AS total FROM {$wpdb->posts} WHERE post_type = %s GROUP BY post_status", self::POST_TYPE ), ARRAY_A );
-		foreach ( (array) $rows as $row ) {
+		$rows   = DataStores::load( 'order' )->post_status_counts( self::POST_TYPE );
+		foreach ( $rows as $row ) {
 			$status = preg_replace( '/^ohmylms-/', '', $row['post_status'] );
 			if ( isset( $counts[ $status ] ) ) {
 				$counts[ $status ] = (int) $row['total'];

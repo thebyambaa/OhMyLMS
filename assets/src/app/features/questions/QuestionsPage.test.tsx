@@ -351,7 +351,9 @@ describe( 'QuestionsPage', () => {
 					type
 				);
 				await user.type(
-					within( dialog ).getByRole( 'textbox', { name: 'Question' } ),
+					within( dialog ).getByRole( 'textbox', {
+						name: 'Question',
+					} ),
 					' New question & more'
 				);
 				await user.click(

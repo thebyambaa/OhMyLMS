@@ -21,7 +21,7 @@ import {
 	rangeFromSearch,
 	rangeToSearch,
 } from './model';
-import { useRequest } from './useRequest';
+import { useRequest } from '../../hooks/useRequest';
 import type { ApiError } from '../../lib/api';
 import type {
 	CourseOrderBy,
@@ -68,10 +68,11 @@ export function useRange() {
  * @param range Selected range.
  */
 export function useDashboard( range: RangeSelection ) {
-	return useRequest(
-		( signal ) => getDashboard( range, signal ),
-		JSON.stringify( range )
-	);
+	return useRequest( ( signal ) => getDashboard( range, signal ), {
+		key: JSON.stringify( range ),
+		keepData: true,
+		errorShape: 'object',
+	} );
 }
 
 /**
@@ -80,10 +81,11 @@ export function useDashboard( range: RangeSelection ) {
  * @param range Selected range.
  */
 export function useEarnings( range: RangeSelection ) {
-	return useRequest(
-		( signal ) => getEarnings( range, signal ),
-		JSON.stringify( range )
-	);
+	return useRequest( ( signal ) => getEarnings( range, signal ), {
+		key: JSON.stringify( range ),
+		keepData: true,
+		errorShape: 'object',
+	} );
 }
 
 /**
@@ -126,7 +128,11 @@ export function useTransactions( range: RangeSelection ) {
 	);
 	const request = useRequest(
 		( signal ) => listTransactions( range, query, signal ),
-		JSON.stringify( [ range, query ] )
+		{
+			key: JSON.stringify( [ range, query ] ),
+			keepData: true,
+			errorShape: 'object',
+		}
 	);
 	const setPage = useCallback(
 		( page: number ) => setQuery( ( current ) => ( { ...current, page } ) ),
@@ -169,7 +175,11 @@ export function useCourseReport( range: RangeSelection ) {
 	const [ query, setQuery ] = useState< CourseQuery >( EMPTY_COURSE_QUERY );
 	const request = useRequest(
 		( signal ) => listCourseReport( range, query, signal ),
-		JSON.stringify( [ range, query ] )
+		{
+			key: JSON.stringify( [ range, query ] ),
+			keepData: true,
+			errorShape: 'object',
+		}
 	);
 	const setPage = useCallback(
 		( page: number ) => setQuery( ( current ) => ( { ...current, page } ) ),
@@ -204,10 +214,11 @@ export function useCourseReport( range: RangeSelection ) {
  * @param range Selected range.
  */
 export function useSingleCourseReport( id: number, range: RangeSelection ) {
-	return useRequest(
-		( signal ) => getCourseReport( id, range, signal ),
-		JSON.stringify( [ id, range ] )
-	);
+	return useRequest( ( signal ) => getCourseReport( id, range, signal ), {
+		key: JSON.stringify( [ id, range ] ),
+		keepData: true,
+		errorShape: 'object',
+	} );
 }
 
 /**
@@ -219,7 +230,11 @@ export function useCourseStudents( id: number ) {
 	const [ query, setQuery ] = useState< StudentQuery >( EMPTY_STUDENT_QUERY );
 	const request = useRequest(
 		( signal ) => listCourseStudents( id, query, signal ),
-		JSON.stringify( [ id, query ] )
+		{
+			key: JSON.stringify( [ id, query ] ),
+			keepData: true,
+			errorShape: 'object',
+		}
 	);
 	const setPage = useCallback(
 		( page: number ) => setQuery( ( current ) => ( { ...current, page } ) ),

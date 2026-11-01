@@ -191,13 +191,13 @@ const codeOf = ( result ) =>
  *
  * @param {Object}                                                                              api               Runtime.
  * @param {() => any}                                                                           api.getContext    `@wordpress/interactivity` getContext.
- * @param {() => {ref: HTMLElement}}                                                            api.getElement    `@wordpress/interactivity` getElement.
+ * @param {() => {ref: HTMLElement|null}}                                                       api.getElement    `@wordpress/interactivity` getElement.
  * @param {(callback: EventHandler) => EventHandler}                                            api.withSyncEvent `@wordpress/interactivity` withSyncEvent.
  * @param {() => AssignmentState}                                                               api.getState      Store state.
  * @param {(options: Object) => Promise<any>}                                                   api.request       SDK `request()`.
- * @param {(message: string, options?: {type?: string}) => unknown}                             api.toast         SDK `toast()`.
+ * @param {(message: string, options?: import('../sdk.js').ToastOptions) => unknown}            api.toast         SDK `toast()`.
  * @param {(root: EventTarget, name: string, detail?: Object, cancelable?: boolean) => boolean} api.emit          SDK `emit()`.
- * @param {(message: string, politeness?: string) => void}                                      api.announce      SDK `announce()`.
+ * @param {(message: string, politeness?: 'polite'|'assertive') => void}                        api.announce      SDK `announce()`.
  * @param {any}                                                                                 [api.win]         `window` (location).
  * @param {any}                                                                                 [api.doc]         `document`.
  * @param {(form: HTMLFormElement) => FormData}                                                 [api.formData]    Form fields (tests).
@@ -506,7 +506,7 @@ export function createAssignment( {
 		},
 		actions: {
 			start() {
-				start( getElement().ref );
+				start( /** @type {HTMLElement} */ ( getElement().ref ) );
 			},
 			submit: withSyncEvent( ( event ) => {
 				event.preventDefault();
@@ -515,6 +515,7 @@ export function createAssignment( {
 					'submit'
 				);
 			} ),
+			/** @param {Event} event File input `change`. */
 			pick( event ) {
 				const input = /** @type {HTMLInputElement} */ ( event.target );
 				const file = input.files?.[ 0 ] || null;
@@ -555,7 +556,7 @@ export function createAssignment( {
 			} ),
 			/** Enter or Space on the focusable drop zone opens the file dialog. */
 			pickKey: withSyncEvent( ( event ) => {
-				const label = getElement().ref;
+				const label = /** @type {HTMLElement} */ ( getElement().ref );
 				const key = /** @type {KeyboardEvent} */ ( event ).key;
 				if (
 					( 'Enter' !== key && ' ' !== key ) ||

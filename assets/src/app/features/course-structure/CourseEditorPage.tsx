@@ -1,4 +1,10 @@
-import { Button, Modal, Notice, PanelBody } from '@wordpress/components';
+import {
+	Button,
+	Modal,
+	Notice,
+	PanelBody,
+	VisuallyHidden,
+} from '@wordpress/components';
 import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
@@ -10,15 +16,14 @@ import { ResourcePicker } from './ResourcePicker';
 import { UnitEditor } from './UnitEditor';
 import { LearningSettings } from './LearningSettings';
 import {
-	move,
-	moveActivity,
-	moveToUnit,
 	removeNewUnit,
 	savePayload,
 	type Outline,
 	type Activity,
 	type Unit,
 } from './model';
+import { describeMove, dropOn, placeActivity, unitKey } from './reorder';
+import { useDragMove } from './useDragMove';
 import { useRequest } from '../../hooks/useRequest';
 import { newId } from '../../lib/uuid';
 
@@ -104,8 +109,30 @@ export function OutlineWorkspace( {
 		unit: number | string;
 		type: ResourceType;
 	} | null >( null );
+	const [ said, say ] = useState( '' );
+	const [ stale, setStale ] = useState( false );
+	const [ focus, setFocus ] = useState< [ string, string ] | null >( null );
+	const root = useRef< HTMLElement >( null );
 	const operation = useRef< AbortController | null >( null );
 	useEffect( () => () => operation.current?.abort(), [] );
+	useEffect( () => {
+		if ( ! focus ) {
+			return;
+		}
+		// Rows stay focusable while the fieldset is disabled; the control returns once the save ends.
+		const row = root.current?.querySelector< HTMLElement >(
+			`[data-oml-drop=${ JSON.stringify( focus[ 0 ] ) }]`
+		);
+		const control = busy
+			? null
+			: row?.querySelector< HTMLElement >(
+					`[data-oml-control="${ focus[ 1 ] }"]:not(:disabled)`
+				);
+		( control ?? row )?.focus();
+		if ( ! busy ) {
+			setFocus( null );
+		}
+	}, [ focus, busy ] );
 	const dirty = snapshot( draft ) !== saved;
 	const guard = useUnsavedChangesGuard( dirty );
 	function change( next: Outline ) {
@@ -119,7 +146,8 @@ export function OutlineWorkspace( {
 	}
 	async function write(
 		work: ( signal: AbortSignal ) => Promise< Outline >,
-		notice: string
+		notice: string,
+		undo?: ( problem: ApiError ) => void
 	) {
 		if ( operation.current ) {
 			return;
@@ -128,6 +156,7 @@ export function OutlineWorkspace( {
 		operation.current = controller;
 		setBusy( true );
 		setError( '' );
+		setStale( false );
 		setMessage( '' );
 		try {
 			const result = await work( controller.signal );
@@ -136,7 +165,9 @@ export function OutlineWorkspace( {
 			}
 		} catch ( failure ) {
 			if ( ! controller.signal.aborted ) {
-				setError( failureMessage( normalizeApiError( failure ) ) );
+				const problem = normalizeApiError( failure );
+				setError( failureMessage( problem ) );
+				undo?.( problem );
 			}
 		} finally {
 			if ( ! controller.signal.aborted ) {
@@ -145,6 +176,59 @@ export function OutlineWorkspace( {
 			}
 		}
 	}
+	const askReload = () => ( dirty ? setReloadConfirm( true ) : reload() );
+	/**
+	 * Move a unit or activity (drag, move buttons or unit select), announce it and keep focus on it. On
+	 * a saved outline the move is saved at once and undone if that fails; otherwise it joins the draft.
+	 * @param source  Unit key or activity ID.
+	 * @param target  Unit key or activity ID it is dropped on.
+	 * @param after   Placed after the target.
+	 * @param control Control to focus again in the moved row.
+	 */
+	function reorder(
+		source: string,
+		target: string,
+		after: boolean,
+		control = ''
+	) {
+		const next = dropOn( draft, source, target, after );
+		if ( next === draft ) {
+			return;
+		}
+		say( describeMove( next, source ) );
+		setFocus( [ source, control ] );
+		if ( dirty ) {
+			change( next );
+			return;
+		}
+		setDraft( next );
+		void write(
+			( signal ) => saveOutline( next, savePayload( next ), signal ),
+			__(
+				'Outline order saved to the draft. Learner publication is unchanged.',
+				'ohmylms'
+			),
+			( problem ) => {
+				setDraft( draft );
+				say( '' );
+				setStale(
+					409 === problem.status &&
+						! REFUSALS.includes( problem.code )
+				);
+				setError(
+					sprintf(
+						/* translators: %s: reason. */
+						__(
+							'The move was not saved and has been undone. %s',
+							'ohmylms'
+						),
+						problem.message
+					)
+				);
+			}
+		);
+	}
+	const { drag, handle } = useDragMove( reorder, busy );
 	function save() {
 		let payload: ReturnType< typeof savePayload >;
 		try {
@@ -206,10 +290,11 @@ export function OutlineWorkspace( {
 			...draft,
 			program: {
 				...draft.program,
-				items: moveToUnit(
+				items: placeActivity(
 					[ ...draft.program.items, item ],
 					item.id,
-					unit
+					unit,
+					Infinity
 				),
 			},
 		} );
@@ -220,9 +305,11 @@ export function OutlineWorkspace( {
 	);
 	return (
 		<section
+			ref={ root }
 			className="oml-outline"
 			aria-label={ __( 'Outline editor', 'ohmylms' ) }
 		>
+			<VisuallyHidden role="status">{ said }</VisuallyHidden>
 			<div className="oml-editor-header">
 				<div className="oml-editor-header__title">
 					<h2>{ __( 'Curriculum', 'ohmylms' ) }</h2>
@@ -244,9 +331,7 @@ export function OutlineWorkspace( {
 					<Button
 						variant="tertiary"
 						disabled={ busy }
-						onClick={ () =>
-							dirty ? setReloadConfirm( true ) : reload()
-						}
+						onClick={ askReload }
 					>
 						{ __( 'Reload saved outline', 'ohmylms' ) }
 					</Button>
@@ -260,8 +345,25 @@ export function OutlineWorkspace( {
 					</Button>
 				</div>
 			</div>
+
 			{ error && (
-				<Notice status="error" isDismissible={ false }>
+				<Notice
+					status="error"
+					isDismissible={ false }
+					actions={
+						stale
+							? [
+									{
+										label: __(
+											'Reload saved outline',
+											'ohmylms'
+										),
+										onClick: askReload,
+									},
+								]
+							: []
+					}
+				>
 					{ error }
 				</Notice>
 			) }
@@ -271,174 +373,152 @@ export function OutlineWorkspace( {
 				</Notice>
 			) }
 			<div className="oml-editor-grid">
-			<div className="oml-editor-main">
-			<p className="oml-editor-hint">
-				{ __(
-					'Edit the draft units and activity placements. Saving here does not publish to learners.',
-					'ohmylms'
-				) }
-			</p>
-			<fieldset className="oml-outline-units" disabled={ busy }>
-				<legend className="screen-reader-text">{ __( 'Units and activities', 'ohmylms' ) }</legend>
-				{ draft.units.map( ( unit, index ) => (
-					<UnitEditor
-						key={ unit.id }
-						unit={ unit }
-						units={ draft.units }
-						items={ draft.program.items.filter(
-							( item ) => item.chapter_id === unit.id
+				<div className="oml-editor-main">
+					<p className="oml-editor-hint">
+						{ __(
+							'Edit the draft units and activity placements. Saving here does not publish to learners.',
+							'ohmylms'
 						) }
-						first={ index === 0 }
-						last={ index === draft.units.length - 1 }
-						onChange={ ( patch ) =>
-							change( {
-								...draft,
-								units: draft.units.map( ( row ) =>
-									row.id === unit.id
-										? { ...row, ...patch }
-										: row
-								),
-							} )
-						}
-						onMove={ ( offset ) =>
-							change( {
-								...draft,
-								units: move( draft.units, index, offset ),
-							} )
-						}
-						onAdd={ ( type ) =>
-							setPicker( { unit: unit.id, type } )
-						}
-						onDelete={ () => setDeleting( unit ) }
-						onDetach={ setDetach }
-						onMoveItem={ ( id, offset ) =>
-							change( {
-								...draft,
-								program: {
-									...draft.program,
-									items: moveActivity(
-										draft.program.items,
-										id,
-										offset
-									),
-								},
-							} )
-						}
-						onMoveToUnit={ ( id, target ) =>
-							change( {
-								...draft,
-								program: {
-									...draft.program,
-									items: moveToUnit(
-										draft.program.items,
-										id,
-										target
-									),
-								},
-							} )
-						}
-					/>
-				) ) }
-
-				<Button
-					className="oml-outline-add-unit"
-					variant="secondary"
-					icon="plus"
-					onClick={ () =>
-						change( {
-							...draft,
-							units: [
-								...draft.units,
-								{
-									id: newId(),
-									title: __( 'New unit', 'ohmylms' ),
-									number: '',
-									description: '',
-								},
-							],
-						} )
-					}
-				>
-					{ __( 'Add unit', 'ohmylms' ) }
-				</Button>
-			</fieldset>
-			{ unplaced.length > 0 && (
-				<section>
-					<h3>
-						{ __( 'Unplaced activities (preserved)', 'ohmylms' ) }
-					</h3>
-					<ul>
-						{ unplaced.map( ( item ) => (
-							<li key={ item.id }>
-								{ item.name || String( item.content_id ) }{ ' ' }
-								{ draft.units.length > 0 && (
-									<Button
-										variant="link"
-										disabled={ busy }
-										onClick={ () =>
-											change( {
-												...draft,
-												program: {
-													...draft.program,
-													items: moveToUnit(
-														draft.program.items,
-														item.id,
-														draft.units[ 0 ]!.id
-													),
-												},
-											} )
-										}
-									>
-										{ sprintf(
-											/* translators: %s: unit title. */
-											__( 'Place in %s', 'ohmylms' ),
-											draft.units[ 0 ]!.title
-										) }
-									</Button>
+					</p>
+					<fieldset className="oml-outline-units" disabled={ busy }>
+						<legend className="screen-reader-text">
+							{ __( 'Units and activities', 'ohmylms' ) }
+						</legend>
+						{ draft.units.map( ( unit ) => (
+							<UnitEditor
+								key={ unit.id }
+								unit={ unit }
+								units={ draft.units }
+								items={ draft.program.items.filter(
+									( item ) => item.chapter_id === unit.id
 								) }
-							</li>
+								onChange={ ( patch ) =>
+									change( {
+										...draft,
+										units: draft.units.map( ( row ) =>
+											row.id === unit.id
+												? { ...row, ...patch }
+												: row
+										),
+									} )
+								}
+								drag={ drag }
+								handle={ handle }
+								onReorder={ reorder }
+								onAdd={ ( type ) =>
+									setPicker( { unit: unit.id, type } )
+								}
+								onDelete={ () => setDeleting( unit ) }
+								onDetach={ setDetach }
+							/>
 						) ) }
-					</ul>
-				</section>
-			) }
-			</div>
-			<aside className="oml-editor-aside">
-				<PanelBody
-					title={ __( 'Learning settings', 'ohmylms' ) }
-					initialOpen
-				>
-					<LearningSettings
-						draft={ draft }
-						change={ change }
-						disabled={ busy }
-					/>
-				</PanelBody>
-				<PanelBody
-					title={ __( 'Placement', 'ohmylms' ) }
-					initialOpen={ false }
-				>
-					<CoursePlacement course={ draft.course_id } />
-				</PanelBody>
-				<PanelBody title={ __( 'Shortcuts', 'ohmylms' ) }>
-					<ul className="oml-editor-links">
-						<li>
-							<Link to={ `/courses/${ draft.course_id }/settings` }>
-								{ __( 'Course settings', 'ohmylms' ) }
-							</Link>
-						</li>
-						<li>
-							<Link to={ `/courses/${ draft.course_id }/publish` }>
-								{ __( 'Preview and publish', 'ohmylms' ) }
-							</Link>
-						</li>
-						<li>
-							<Link to="/content-hub/curriculum">
-								{ __( 'Curriculum', 'ohmylms' ) }
-							</Link>
-						</li>
-					</ul>
-				</PanelBody>
-			</aside>
+
+						<Button
+							className="oml-outline-add-unit"
+							variant="secondary"
+							icon="plus"
+							onClick={ () =>
+								change( {
+									...draft,
+									units: [
+										...draft.units,
+										{
+											id: newId(),
+											title: __( 'New unit', 'ohmylms' ),
+											number: '',
+											description: '',
+										},
+									],
+								} )
+							}
+						>
+							{ __( 'Add unit', 'ohmylms' ) }
+						</Button>
+					</fieldset>
+					{ unplaced.length > 0 && (
+						<section>
+							<h3>
+								{ __(
+									'Unplaced activities (preserved)',
+									'ohmylms'
+								) }
+							</h3>
+							<ul>
+								{ unplaced.map( ( item ) => (
+									<li key={ item.id }>
+										{ item.name ||
+											String( item.content_id ) }{ ' ' }
+										{ draft.units.length > 0 && (
+											<Button
+												variant="link"
+												disabled={ busy }
+												onClick={ () =>
+													reorder(
+														item.id,
+														unitKey(
+															draft.units[ 0 ]!.id
+														),
+														true
+													)
+												}
+											>
+												{ sprintf(
+													/* translators: %s: unit title. */
+													__(
+														'Place in %s',
+														'ohmylms'
+													),
+													draft.units[ 0 ]!.title
+												) }
+											</Button>
+										) }
+									</li>
+								) ) }
+							</ul>
+						</section>
+					) }
+				</div>
+				<aside className="oml-editor-aside">
+					<PanelBody
+						title={ __( 'Learning settings', 'ohmylms' ) }
+						initialOpen
+					>
+						<LearningSettings
+							draft={ draft }
+							change={ change }
+							disabled={ busy }
+						/>
+					</PanelBody>
+					<PanelBody
+						title={ __( 'Placement', 'ohmylms' ) }
+						initialOpen={ false }
+					>
+						<CoursePlacement course={ draft.course_id } />
+					</PanelBody>
+					<PanelBody title={ __( 'Shortcuts', 'ohmylms' ) }>
+						<ul className="oml-editor-links">
+							<li>
+								<Link
+									to={ `/courses/${ draft.course_id }/settings` }
+								>
+									{ __( 'Course settings', 'ohmylms' ) }
+								</Link>
+							</li>
+							<li>
+								<Link
+									to={ `/courses/${ draft.course_id }/publish` }
+								>
+									{ __( 'Preview and publish', 'ohmylms' ) }
+								</Link>
+							</li>
+							<li>
+								<Link to="/content-hub/curriculum">
+									{ __( 'Curriculum', 'ohmylms' ) }
+								</Link>
+							</li>
+						</ul>
+					</PanelBody>
+				</aside>
 			</div>
 			{ picker && (
 				<ResourcePicker

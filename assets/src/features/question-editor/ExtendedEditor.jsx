@@ -1,6 +1,6 @@
 import { MatchTableGridEditor } from './MatchTableGridEditor';
 import { HotTextEditor } from './HotTextEditor';
-import { RichContentControl } from '../math/RichContentControl';
+import { RichContentControl } from '../math/public.mjs';
 import { createElement, useState } from '@wordpress/element';
 import {
 	Button,
@@ -15,9 +15,13 @@ import { questionTypePatch } from './questionBlocks.mjs';
 import { QuestionMediaUpload } from './QuestionMediaUpload';
 import { DiagramPopup } from './DiagramPopup';
 import { CHOICE_GAME_TYPES, videoSource } from './extendedModel.mjs';
+
+/** @typedef {import('./editorTypes').Data} Data */
+/** @typedef {import('./editorTypes').OnPatch} OnPatch */
+
 /**
  * Explain what a pasted video link will do.
- * @param link The saved video link.
+ * @param {string} link The saved video link.
  */
 function videoHelp( link ) {
 	const { provider } = videoSource( link );
@@ -61,11 +65,11 @@ function videoHelp( link ) {
 }
 /**
  * Authoring controls for additional response formats.
- * @param root0
- * @param root0.type
- * @param root0.value
- * @param root0.onChange
- * @param root0.mainStatement
+ * @param {Object}  root0
+ * @param {string}  root0.type
+ * @param {Data}    root0.value
+ * @param {OnPatch} root0.onChange
+ * @param {boolean} [root0.mainStatement]
  */
 export function ExtendedEditor( {
 	type,
@@ -75,20 +79,35 @@ export function ExtendedEditor( {
 } ) {
 	const [ selected, setSelected ] = useState( 0 );
 	const [ popup, setPopup ] = useState( false );
-	const set = ( patch ) => onChange( patch );
+	const set = ( /** @type {Data} */ patch ) => onChange( patch );
+	/**
+	 * @param {string} key Settings list.
+	 * @return {Data[]} Rows.
+	 */
 	const rows = ( key ) => value[ key ] || [];
-	const update = ( key, index, patch ) =>
+	const update = (
+		/** @type {string} */ key,
+		/** @type {number} */ index,
+		/** @type {Data} */ patch
+	) =>
 		set( {
 			[ key ]: rows( key ).map( ( row, i ) =>
 				i === index ? { ...row, ...patch } : row
 			),
 		} );
 	const diagramKey = type === 'labeling' ? 'targets' : 'zones';
-	const place = ( event, index = selected ) => {
-		const bounds = event.currentTarget
-			.closest( '.ohmylms-author-diagram' )
-			.getBoundingClientRect();
-		const percentage = ( position, start, size ) =>
+	const place = (
+		/** @type {import('react').MouseEvent<HTMLElement>} */ event,
+		index = selected
+	) => {
+		const bounds = /** @type {Element} */ (
+			event.currentTarget.closest( '.ohmylms-author-diagram' )
+		).getBoundingClientRect();
+		const percentage = (
+			/** @type {number} */ position,
+			/** @type {number} */ start,
+			/** @type {number} */ size
+		) =>
 			Math.round(
 				Math.max(
 					0,
@@ -106,7 +125,11 @@ export function ExtendedEditor( {
 					: percentage( event.clientY, bounds.top, bounds.height ),
 		} );
 	};
-	const number = ( key, label, min = 0 ) =>
+	const number = (
+		/** @type {string} */ key,
+		/** @type {string} */ label,
+		min = 0
+	) =>
 		createElement( TextControl, {
 			label,
 			type: 'number',
@@ -130,14 +153,13 @@ export function ExtendedEditor( {
 						compact
 						html={ false }
 						label={ __( 'Reading passage', 'ohmylms' ) }
-						rows={ 6 }
 						value={ value.passage || '' }
 						onChange={ ( passage ) => set( { passage } ) }
 					/>
 				) }
 				<StructuredEditor
 					value={ value }
-					onChange={ ( patch ) =>
+					onChange={ ( /** @type {Data} */ patch ) =>
 						set( {
 							...patch,
 							score: {
@@ -147,8 +169,10 @@ export function ExtendedEditor( {
 									value.parts ||
 									[]
 								).reduce(
-									( sum, part ) =>
-										sum + Number( part.marks || 0 ),
+									(
+										/** @type {number} */ sum,
+										/** @type {Data} */ part
+									) => sum + Number( part.marks || 0 ),
 									0
 								),
 							},
@@ -172,7 +196,7 @@ export function ExtendedEditor( {
 			<div className="ohmylms-interactive-editor">
 				<p>
 					{
-						{
+						/** @type {Record<string, string>} */ ( {
 							slide: __(
 								'Learners read the question text and continue. A slide has no answer and no marks.',
 								'ohmylms'
@@ -197,7 +221,7 @@ export function ExtendedEditor( {
 								'Learners write a response for teacher review.',
 								'ohmylms'
 							),
-						}[ type ]
+						} )[ type ]
 					}
 				</p>
 				{ [ 'audio-response', 'video-response' ].includes( type ) &&
@@ -211,6 +235,7 @@ export function ExtendedEditor( {
 						[ 'camera', __( 'Allow camera recording', 'ohmylms' ) ],
 						[ 'screen', __( 'Allow screen recording', 'ohmylms' ) ],
 					].map( ( [ source, label ] ) => {
+						/** @type {string[]} */
 						const sources = value.sources || [ 'camera', 'screen' ];
 						return (
 							<CheckboxControl
@@ -346,10 +371,10 @@ export function ExtendedEditor( {
 							) }
 							<SelectControl
 								label={ __( 'Marker to move', 'ohmylms' ) }
-								value={ selected }
+								value={ String( selected ) }
 								options={ rows( diagramKey ).map(
 									( row, index ) => ( {
-										value: index,
+										value: String( index ),
 										label:
 											row.answer || String( index + 1 ),
 									} )

@@ -189,9 +189,11 @@ try {
 	$list = $response->get_data();
 	ok( 15 === count( $list ) && '15' === $response->get_headers()['X-WP-Total'] && '1' === $response->get_headers()['X-WP-TotalPages'], 'list has 15 emails and pagination headers' );
 	foreach ( $list as $item ) {
-		foreach ( array( 'id', 'title', 'description', 'recipient_type', 'enabled', 'subject', 'heading', 'additional_content', 'button_text', 'button_link', 'footer_text', 'course_suggestion_text', 'recipient_email', 'tags' ) as $key ) {
+		foreach ( array( 'id', 'title', 'description', 'recipient_type', 'enabled', 'subject', 'heading', 'additional_content', 'button_text', 'button_link', 'footer_text', 'course_suggestion_text', 'recipient_email', 'tags', 'defaults', 'customized' ) as $key ) {
 			ok( array_key_exists( $key, $item ), "list item {$item['id']} has $key" );
 		}
+		ok( EmailManager::TEXT_FIELDS === array_keys( $item['defaults'] ) && EmailManager::TEXT_FIELDS === array_keys( $item['customized'] ), "list item {$item['id']} has a default and a flag per text field" );
+		ok( ! in_array( true, $item['customized'], true ) && $item['subject'] === $item['defaults']['subject'] && $item['course_suggestion_text'] === $item['defaults']['course_suggestion_text'], "list item {$item['id']} shows its defaults when nothing is stored" );
 		ok( is_bool( $item['enabled'] ) && is_array( $item['recipient_email'] ) && ! empty( $item['subject'] ) && ! empty( $item['tags'] ), "list item {$item['id']} types" );
 		ok( 'site_name' === $item['tags'][ count( $item['tags'] ) - 3 ]['tag'], "list item {$item['id']} lists the common tags" );
 	}
@@ -273,7 +275,8 @@ try {
 	ok( false === $updated['enabled'] && 'Result for {student_name} Bcc: attacker@example.com bold' === $updated['subject'], 'subject is one clean line: ' . $updated['subject'] );
 	ok( $before['heading'] === $updated['heading'] && $before['additional_content'] === $updated['additional_content'] && $before['footer_text'] === $updated['footer_text'], 'a partial update leaves other fields alone' );
 	$stored = get_option( Emails::OPTION_PREFIX . 'student_quiz_graded' );
-	ok( false === $stored['enable'] && $updated['subject'] === $stored['subject'] && isset( $stored['additional_content'] ), 'stored in the option the sending class reads, with its own keys' );
+	ok( array( 'enable' => false, 'subject' => $updated['subject'] ) === $stored, 'only the changed values are stored, in the option the sending class reads: ' . wp_json_encode( $stored ) );
+	ok( true === $updated['customized']['subject'] && false === $updated['customized']['heading'] && $before['subject'] === $updated['defaults']['subject'], 'the subject is reported customized, with its default alongside' );
 	ok( array( array( 'student_quiz_graded', $updated['subject'] ) ) === $fired, 'ohmylms_email_updated fired once' );
 	ok( Emails::is_enabled( Emails::get_template_settings( 'student_quiz_graded', array( 'enable' => true ) ) ) === false, 'disabled email is reported disabled to the sending class' );
 
@@ -281,6 +284,54 @@ try {
 		ok( 200 === call_api( $method, '/student_quiz_graded', array( 'heading' => "Heading $method" ) )->get_status(), "update via $method" );
 	}
 	ok( 'Heading POST' === call_api( 'GET', '/student_quiz_graded' )->get_data()['heading'], 'update persisted' );
+
+	// Defaults are never stored: sending a default, null or an empty required field leaves it translatable.
+	$quiz_defaults = $before['defaults'];
+	$response      = call_api(
+		'PUT',
+		'/student_quiz_graded',
+		array(
+			'heading'            => $quiz_defaults['heading'],
+			'additional_content' => $quiz_defaults['additional_content'],
+			'button_text'        => $quiz_defaults['button_text'] . '  ',
+			'footer_text'        => $quiz_defaults['footer_text'],
+		)
+	);
+	$stored        = get_option( Emails::OPTION_PREFIX . 'student_quiz_graded' );
+	ok( 200 === $response->get_status() && array( 'enable', 'subject' ) === array_keys( $stored ), 'texts equal to their default are not stored: ' . wp_json_encode( array_keys( $stored ) ) );
+	ok( $quiz_defaults['heading'] === $response->get_data()['heading'] && false === $response->get_data()['customized']['heading'], 'the default heading is shown and not customized' );
+	$response = call_api( 'PUT', '/student_quiz_graded', array( 'subject' => null ) );
+	ok( 200 === $response->get_status() && $quiz_defaults['subject'] === $response->get_data()['subject'] && false === $response->get_data()['customized']['subject'], 'null resets the subject: ' . wp_json_encode( $response->get_data()['subject'] ) );
+	ok( array( 'enable' => false ) === get_option( Emails::OPTION_PREFIX . 'student_quiz_graded' ), 'a reset removes the stored text and keeps the toggle' );
+	ok( 200 === call_api( 'PUT', '/student_quiz_graded', array( 'heading' => 'Custom heading' ) )->get_status(), 'custom heading saved' );
+	$response = call_api(
+		'PUT',
+		'/student_quiz_graded',
+		array(
+			'heading'            => '',
+			'additional_content' => '  ',
+		)
+	);
+	ok( 200 === $response->get_status() && $quiz_defaults['heading'] === $response->get_data()['heading'] && $quiz_defaults['additional_content'] === $response->get_data()['additional_content'], 'an empty heading or message means the default' );
+	ok( array( 'enable' => false ) === get_option( Emails::OPTION_PREFIX . 'student_quiz_graded' ), 'empty required fields are not stored' );
+	$response = call_api( 'PUT', '/student_quiz_graded', array( 'button_text' => '' ) );
+	ok( 200 === $response->get_status() && '' === $response->get_data()['button_text'] && true === $response->get_data()['customized']['button_text'], 'an empty button text is a customization (it hides the button)' );
+	ok( 200 === call_api( 'PUT', '/student_quiz_graded', array( 'button_text' => null ) )->get_status() && array( 'enable' => false ) === get_option( Emails::OPTION_PREFIX . 'student_quiz_graded' ), 'null resets the button text' );
+	$preview = call_api(
+		'POST',
+		'/student_quiz_graded/preview',
+		array(
+			'subject' => null,
+			'heading' => '',
+		)
+	)->get_data();
+	ok( Emails::render_tags( $quiz_defaults['subject'], array( 'quiz_name' => $s_quiz ) ) === $preview['subject'], 'a preview renders a reset field with its default: ' . $preview['subject'] );
+	// A full option left by an earlier save: the fields equal to this language's default are dropped on the next save.
+	update_option( Emails::OPTION_PREFIX . 'student_quiz_graded', array_merge( ( new \OhMyLMS\Emails\StudentsEmail\QuizGraded() )->default_settings(), array( 'subject' => 'Kept {quiz_name}' ) ) );
+	ok( true === call_api( 'GET', '/student_quiz_graded' )->get_data()['customized']['subject'] && false === call_api( 'GET', '/student_quiz_graded' )->get_data()['customized']['heading'], 'a stored default is not reported customized' );
+	call_api( 'PUT', '/student_quiz_graded', array( 'enabled' => false ) );
+	ok( array( 'enable', 'subject', 'recipient_email' ) === array_keys( get_option( Emails::OPTION_PREFIX . 'student_quiz_graded' ) ), 'saving prunes stored defaults: ' . wp_json_encode( array_keys( get_option( Emails::OPTION_PREFIX . 'student_quiz_graded' ) ) ) );
+	ok( 200 === call_api( 'PUT', '/student_quiz_graded', array( 'heading' => 'Heading POST' ) )->get_status(), 'heading restored for the next checks' );
 
 	// HTML is sanitized with the allow-list.
 	$dirty    = '<p onclick="steal()" style="color:#333">Hi <strong>{student_name}</strong></p><script>alert(1)</script><iframe src="https://evil.example"></iframe><a href="javascript:alert(1)">bad</a><a href="https://example.com/x" target="_blank">ok</a><img src="https://example.com/a.png" onerror="x()" alt="a"><form action="/x"><input name="y"></form><table><tr><td style="padding:4px">cell</td></tr></table>';
@@ -303,7 +354,7 @@ try {
 		'unknown brace tag'        => array( array( 'subject' => 'Hello {nope}' ), 422, 'ohmylms_email_unknown_tags' ),
 		'unknown bracket tag'      => array( array( 'footer_text' => '<p>[secret_value]</p>' ), 422, 'ohmylms_email_unknown_tags' ),
 		'tag from another email'   => array( array( 'heading' => 'About {assignment_name}' ), 422, 'ohmylms_email_unknown_tags' ),
-		'empty subject'            => array( array( 'subject' => '' ), 400, 'rest_invalid_param' ),
+		'subject is not text'      => array( array( 'subject' => array( 'x' ) ), 400, 'rest_invalid_param' ),
 		'subject of only markup'   => array( array( 'subject' => '<b></b>' ), 422, 'ohmylms_email_invalid_field' ),
 		'subject too long'         => array( array( 'subject' => str_repeat( 'a', 256 ) ), 422, 'ohmylms_email_invalid_field' ),
 		'heading too long'         => array( array( 'heading' => str_repeat( 'a', 201 ) ), 422, 'ohmylms_email_invalid_field' ),

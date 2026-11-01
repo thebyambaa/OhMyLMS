@@ -17,6 +17,9 @@ import type {
 	XpDraft,
 	XpSettings,
 } from './types';
+import { createValidators } from '../../lib/validation';
+
+const { record, text } = createValidators( invalidResponse );
 
 /** Limits enforced by the server schema of each group (docs/api/gamification.md). */
 export const ENGAGEMENT_LIMITS = {
@@ -25,24 +28,8 @@ export const ENGAGEMENT_LIMITS = {
 	scoreBands: 4,
 } as const;
 
-/* ------------------------------------------------------------------ parsing */
-
-function record( value: unknown ): Record< string, unknown > {
-	if ( ! value || 'object' !== typeof value || Array.isArray( value ) ) {
-		throw invalidResponse();
-	}
-	return value as Record< string, unknown >;
-}
-
 function list( value: unknown ): unknown[] {
 	if ( ! Array.isArray( value ) ) {
-		throw invalidResponse();
-	}
-	return value;
-}
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
 		throw invalidResponse();
 	}
 	return value;

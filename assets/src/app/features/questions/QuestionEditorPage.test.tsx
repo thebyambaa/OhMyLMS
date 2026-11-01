@@ -569,7 +569,7 @@ describe( 'QuestionEditorPage', () => {
 		);
 		const user = userEvent.setup();
 		renderEditor();
-		const name = await loaded();
+		await loaded();
 		expect(
 			screen.getByText( '2 blanks found: cat, mat' )
 		).toBeInTheDocument();
@@ -634,7 +634,11 @@ describe( 'QuestionEditorPage', () => {
 		loadQuestion( {
 			...question,
 			type: 'long-text',
-			settings: { type: 'long-text', question_code: 'Q-TEST', score: { enabled: true, value: 3 } },
+			settings: {
+				type: 'long-text',
+				question_code: 'Q-TEST',
+				score: { enabled: true, value: 3 },
+			},
 			options: [],
 		} );
 		renderEditor();
@@ -829,7 +833,11 @@ describe( 'QuestionEditorPage', () => {
 		loadQuestion( {
 			...question,
 			type: 'slide',
-			settings: { type: 'slide', question_code: 'Q-TEST', score: { enabled: true, value: 0 } },
+			settings: {
+				type: 'slide',
+				question_code: 'Q-TEST',
+				score: { enabled: true, value: 0 },
+			},
 			options: [],
 		} );
 		const { unmount } = renderEditor( undefined, registry );
@@ -845,7 +853,11 @@ describe( 'QuestionEditorPage', () => {
 		loadQuestion( {
 			...question,
 			type: 'passage',
-			settings: { type: 'passage', question_code: 'Q-TEST', score: { enabled: true, value: 3 } },
+			settings: {
+				type: 'passage',
+				question_code: 'Q-TEST',
+				score: { enabled: true, value: 3 },
+			},
 			options: [],
 		} );
 		renderEditor( undefined, registry );

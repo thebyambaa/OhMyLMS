@@ -17,10 +17,9 @@ final class Jobs {
 	const HOOK  = 'ohmylms_validate_exam_import';
 	const GROUP = 'ohmylms-exam-import';
 
-	/** Register only private storage and authenticated authoring routes. */
+	/** Register only private storage. The authoring routes are {@see Rest\JobsController}. */
 	public static function init() {
 		add_action( 'init', array( __CLASS__, 'register' ) );
-		add_action( 'rest_api_init', array( __CLASS__, 'routes' ) );
 		add_action( self::HOOK, array( __CLASS__, 'process' ) );
 		add_action( 'before_delete_post', array( __CLASS__, 'cleanup' ) );
 		Workflow::init();
@@ -40,43 +39,6 @@ final class Jobs {
 				'supports'     => array(),
 			)
 		);
-	}
-
-	/** Register upload, status, retry and removal endpoints. */
-	public static function routes() {
-		register_rest_route(
-			'ohmylms/v1',
-			'/exam-imports',
-			array(
-				'methods'             => 'POST',
-				'permission_callback' => array( __CLASS__, 'permission' ),
-				'callback'            => array( __CLASS__, 'create' ),
-			)
-		);
-		register_rest_route(
-			'ohmylms/v1',
-			'/exam-imports',
-			array(
-				'methods'             => 'GET',
-				'permission_callback' => array( __CLASS__, 'permission' ),
-				'callback'            => array( __CLASS__, 'listing' ),
-			)
-		);
-		foreach ( array(
-			'GET'    => 'status',
-			'POST'   => 'retry',
-			'DELETE' => 'delete',
-		) as $method => $callback ) {
-			register_rest_route(
-				'ohmylms/v1',
-				'/exam-imports/(?P<id>\d+)',
-				array(
-					'methods'             => $method,
-					'permission_callback' => array( __CLASS__, 'permission' ),
-					'callback'            => array( __CLASS__, $callback ),
-				)
-			);
-		}
 	}
 
 	/**
@@ -258,15 +220,14 @@ final class Jobs {
 	 */
 	public static function locked( $id, callable $work ) {
 		global $wpdb;
-		$key = 'oml_import_' . md5( $wpdb->prefix . ':' . (int) $id );
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $key ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Connection-scoped worker serialization, not cacheable.
-			return new \WP_Error( 'exam_busy', __( 'The import is busy. Retry shortly.', 'ohmylms' ), array( 'status' => 409 ) );
-		}
-		try {
-			return $work();
-		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $key ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Release the connection-scoped lock.
-		}
+		return \OhMyLMS\Utility\Lock::with(
+			'oml_import_' . md5( $wpdb->prefix . ':' . (int) $id ),
+			0,
+			$work,
+			static function () {
+				return new \WP_Error( 'exam_busy', __( 'The import is busy. Retry shortly.', 'ohmylms' ), array( 'status' => 409 ) );
+			}
+		);
 	}
 
 	/**
@@ -359,6 +320,7 @@ final class Jobs {
 		}
 		$job = get_post_meta( $id, self::META, true );
 		if ( is_array( $job ) && isset( $job['document']['id'] ) ) {
+			SourcePages::forget( $job );
 			Documents::remove( $job['document']['id'] );
 		}
 		if ( ! empty( $job['mark_scheme']['id'] ) ) {

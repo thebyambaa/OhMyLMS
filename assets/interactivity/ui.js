@@ -16,6 +16,7 @@ import {
 } from 'ohmylms/interactivity';
 import { createChrome, installChrome } from './ui/chrome.js';
 
+/** @type {ReturnType<typeof store>} */
 let ui = null;
 const chrome = createChrome( {
 	getContext,
@@ -48,9 +49,13 @@ ui = store( 'ohmylms/ui', {
 			event.stopPropagation();
 			const context = getContext();
 			context.open = ! context.open;
-			emit( getElement().ref, 'disclosure-changed', {
-				open: context.open,
-			} );
+			emit(
+				/** @type {HTMLElement} */ ( getElement().ref ),
+				'disclosure-changed',
+				{
+					open: context.open,
+				}
+			);
 		} ),
 		keyToggle: withSyncEvent( ( event ) => {
 			if ( event.key !== 'Enter' && event.key !== ' ' ) {
@@ -60,9 +65,13 @@ ui = store( 'ohmylms/ui', {
 			event.stopPropagation();
 			const context = getContext();
 			context.open = ! context.open;
-			emit( getElement().ref, 'disclosure-changed', {
-				open: context.open,
-			} );
+			emit(
+				/** @type {HTMLElement} */ ( getElement().ref ),
+				'disclosure-changed',
+				{
+					open: context.open,
+				}
+			);
 		} ),
 		openSidebar: withSyncEvent( ( event ) => {
 			event.preventDefault();
@@ -81,15 +90,19 @@ ui = store( 'ohmylms/ui', {
 				getContext().sidebarOpen = true;
 			}
 		} ),
+		/** @param {MouseEvent} event Document click. */
 		outside( event ) {
 			if (
-				! event.target.closest(
-					'.ohmylms-lesson-sidebar,.ohmylms-lesson-details-hamburger'
+				! (
+					/** @type {Element} */ ( event.target ).closest(
+						'.ohmylms-lesson-sidebar,.ohmylms-lesson-details-hamburger'
+					)
 				)
 			) {
 				getContext().sidebarOpen = false;
 			}
 		},
+		/** @param {KeyboardEvent} event Document keydown. */
 		escape( event ) {
 			if ( event.key === 'Escape' ) {
 				getContext().sidebarOpen = false;

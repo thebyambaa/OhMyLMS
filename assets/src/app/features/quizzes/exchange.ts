@@ -1,6 +1,9 @@
 import { __, sprintf } from '@wordpress/i18n';
 import { ApiError, get, post } from '../../lib/api';
 import { positiveId } from './model';
+import { createValidators } from '../../lib/validation';
+
+const { record } = createValidators( invalid );
 
 /** Largest quiz file, in bytes. */
 export const MAX_QUIZ_FILE_BYTES = 10485760;
@@ -51,12 +54,6 @@ function invalid(): never {
 			'ohmylms'
 		),
 	} );
-}
-
-function record( value: unknown ): Record< string, unknown > {
-	return value && 'object' === typeof value && ! Array.isArray( value )
-		? ( value as Record< string, unknown > )
-		: invalid();
 }
 
 function count( value: unknown ): number {

@@ -110,13 +110,7 @@ export interface CourseChoice {
 	status: string;
 }
 
-/** An image from the media library. */
-export interface MediaImage {
-	id: number;
-	url: string;
-	thumbnail_url: string;
-	title: string;
-}
+export type { MediaImage } from '../../lib/media';
 
 /** A text block while it is being edited: numbers stay strings so partial typing is not lost. */
 export interface BlockForm {

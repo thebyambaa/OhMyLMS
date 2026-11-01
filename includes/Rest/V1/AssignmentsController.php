@@ -9,6 +9,7 @@ namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
 use OhMyLMS\Assignment\Delivery;
+use OhMyLMS\Assignment\Submissions;
 use OhMyLMS\Data\Assignment;
 use OhMyLMS\Learning\CourseStructure;
 use OhMyLMS\Learning\Placements;
@@ -589,17 +590,7 @@ class AssignmentsController extends RestController {
 	 * @return int[]
 	 */
 	private function assignment_ids_in_course( $course_id ) {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$ids = $wpdb->get_col(
-			$wpdb->prepare(
-				'SELECT DISTINCT content.content_id FROM %i content INNER JOIN %i chapter ON chapter.chapter_id = content.chapter_id WHERE chapter.course_id = %d LIMIT 5000',
-				$wpdb->prefix . 'ohmylms_content_relationship',
-				$wpdb->prefix . 'ohmylms_chapter_relationship',
-				$course_id
-			)
-		);
+		$ids = CourseStructure::content_ids( $course_id );
 		foreach ( Placements::index() as $content_id => $courses ) {
 			if ( in_array( (int) $course_id, array_map( 'intval', (array) $courses ), true ) ) {
 				$ids[] = $content_id;
@@ -616,8 +607,6 @@ class AssignmentsController extends RestController {
 	 * @return array{submissions:array<int,array{total:int,pending:int}>,courses:array<int,int>}
 	 */
 	private function page_stats( array $ids ) {
-		global $wpdb;
-
 		$stats = array(
 			'submissions' => array(),
 			'courses'     => array(),
@@ -626,18 +615,8 @@ class AssignmentsController extends RestController {
 		if ( ! $ids ) {
 			return $stats;
 		}
-		$holders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT assignment_id, COUNT(*) AS total, SUM(status = 'submitted') AS pending FROM %i WHERE assignment_id IN ({$holders}) GROUP BY assignment_id", array_merge( array( $this->attempts_table() ), $ids ) ) );
-		foreach ( (array) $rows as $row ) {
-			$stats['submissions'][ (int) $row->assignment_id ] = array(
-				'total'   => (int) $row->total,
-				'pending' => (int) $row->pending,
-			);
-		}
-		// phpcs:enable
-		$stats['courses'] = CourseStructure::first_courses( $ids );
+		$stats['submissions'] = Submissions::counts_by_assignment( $ids );
+		$stats['courses']     = CourseStructure::first_courses( $ids );
 		foreach ( $ids as $id ) {
 			if ( empty( $stats['courses'][ $id ] ) ) {
 				$placed                   = Placements::courses_for( $id );
@@ -818,7 +797,7 @@ class AssignmentsController extends RestController {
 		if ( is_wp_error( $post ) ) {
 			return $post;
 		}
-		$submissions = $this->submission_total( $post->ID );
+		$submissions = Submissions::count_for_assignment( $post->ID );
 		if ( $submissions > 0 ) {
 			return new WP_Error(
 				'ohmylms_assignment_has_submissions',
@@ -970,25 +949,14 @@ class AssignmentsController extends RestController {
 	 * @return array[]
 	 */
 	private function placements( $id ) {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				'SELECT content.chapter_id, chapter.course_id FROM %i content INNER JOIN %i chapter ON chapter.chapter_id = content.chapter_id WHERE content.content_id = %d ORDER BY content.ID ASC LIMIT 50',
-				$wpdb->prefix . 'ohmylms_content_relationship',
-				$wpdb->prefix . 'ohmylms_chapter_relationship',
-				$id
-			)
-		);
 		$result = array();
 		$seen   = array();
-		foreach ( (array) $rows as $row ) {
-			$course = get_post( (int) $row->course_id );
+		foreach ( CourseStructure::chapter_placements( $id ) as $row ) {
+			$course = get_post( $row['course_id'] );
 			if ( ! $course || OHMYLMS_COURSE_CPT !== $course->post_type ) {
 				continue;
 			}
-			$chapter  = get_post( (int) $row->chapter_id );
+			$chapter  = get_post( $row['chapter_id'] );
 			$result[] = array(
 				'course_id'     => (int) $course->ID,
 				'course_title'  => html_entity_decode( get_the_title( $course ), ENT_QUOTES, 'UTF-8' ),
@@ -1124,30 +1092,6 @@ class AssignmentsController extends RestController {
 	// Submissions.
 
 	/**
-	 * Learner submission table.
-	 *
-	 * @return string
-	 */
-	private function attempts_table() {
-		global $wpdb;
-
-		return $wpdb->prefix . 'ohmylms_assignment_attempts';
-	}
-
-	/**
-	 * Number of submissions of an assignment.
-	 *
-	 * @param int $id Assignment ID.
-	 * @return int
-	 */
-	private function submission_total( $id ) {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE assignment_id = %d', $this->attempts_table(), $id ) );
-	}
-
-	/**
 	 * Load one submission of an assignment, or null when it belongs to another assignment or does not exist.
 	 *
 	 * @param int $assignment_id Assignment ID.
@@ -1155,20 +1099,7 @@ class AssignmentsController extends RestController {
 	 * @return object|null
 	 */
 	private function submission_row( $assignment_id, $submission_id ) {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$row = $wpdb->get_row(
-			$wpdb->prepare(
-				'SELECT a.*, u.display_name FROM %i a LEFT JOIN %i u ON u.ID = a.user_id WHERE a.id = %d AND a.assignment_id = %d',
-				$this->attempts_table(),
-				$wpdb->users,
-				$submission_id,
-				$assignment_id
-			)
-		);
-
-		return $row ? $row : null;
+		return Submissions::find( $assignment_id, $submission_id );
 	}
 
 	/**
@@ -1187,45 +1118,24 @@ class AssignmentsController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_submissions( $request ) {
-		global $wpdb;
-
 		$post = $this->get_assignment_post( $request['id'] );
 		if ( is_wp_error( $post ) ) {
 			return $post;
 		}
 		$page     = max( 1, (int) $request['page'] );
 		$per_page = min( 100, max( 1, (int) $request['per_page'] ) );
-		$where    = 'WHERE a.assignment_id = %d';
-		$params   = array( $post->ID );
-		if ( 'submitted' === $request['status'] ) {
-			$where .= " AND a.status = 'submitted'";
-		} elseif ( 'graded' === $request['status'] ) {
-			$where .= " AND a.status <> 'submitted'";
-		}
-		if ( ! empty( $request['course'] ) ) {
-			$where   .= ' AND a.course_id = %d';
-			$params[] = (int) $request['course'];
-		}
-
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery
-		$total = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i a {$where}", array_merge( array( $this->attempts_table() ), $params ) ) );
-		$pages = (int) ceil( $total / $per_page );
+		$status   = (string) $request['status'];
+		$course   = empty( $request['course'] ) ? 0 : (int) $request['course'];
+		$total    = Submissions::count_for_list( $post->ID, $status, $course );
+		$pages    = (int) ceil( $total / $per_page );
 		if ( $page > $pages && $total > 0 ) {
 			return $this->invalid_page();
 		}
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT a.id, a.user_id, a.course_id, a.assignment_id, a.status, a.score, a.files, a.start_date, a.end_date, u.display_name
-				FROM %i a LEFT JOIN %i u ON u.ID = a.user_id {$where}
-				ORDER BY a.id DESC LIMIT %d OFFSET %d",
-				array_merge( array( $this->attempts_table(), $wpdb->users ), $params, array( $per_page, ( $page - 1 ) * $per_page ) )
-			)
-		);
-		// phpcs:enable
+		$rows = Submissions::page_for_assignment( $post->ID, $status, $course, $page, $per_page );
 
 		$settings = $this->read_settings( $post->ID );
 		$data     = array();
-		foreach ( (array) $rows as $row ) {
+		foreach ( $rows as $row ) {
 			$data[] = $this->prepare_submission( $row, $settings, false );
 		}
 

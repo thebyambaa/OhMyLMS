@@ -11,6 +11,7 @@
 namespace OhMyLMS\Extensions;
 
 use OhMyLMS\Assignment\Delivery;
+use OhMyLMS\Learning\LessonPreview;
 use OhMyLMS\Learning\VideoCompletion;
 
 defined( 'ABSPATH' ) || exit;
@@ -148,13 +149,14 @@ final class Lesson {
 	public static function navigation_context( $id ) {
 		$id        = (int) $id;
 		$user      = get_current_user_id();
-		$completed = $user > 0 && Delivery::completed( $user, $id ) && ! \OhMyLMS\Quiz\Submission::is_preview( $id, $user );
+		$preview   = LessonPreview::active( $id );
+		$completed = ! $preview && $user > 0 && Delivery::completed( $user, $id ) && ! \OhMyLMS\Quiz\Submission::is_preview( $id, $user );
 		return array(
 			'lessonId'     => $id,
 			'completed'    => $completed,
 			'busy'         => false,
-			'videoPending' => ! $completed && OHMYLMS_LESSON_CPT === get_post_type( $id ) && ! VideoCompletion::satisfied( $user, $id ),
-			'nextUrl'      => esc_url_raw( (string) ohmylms_get_next_content_permalink( $id ) ),
+			'videoPending' => ! $completed && OHMYLMS_LESSON_CPT === get_post_type( $id ) && ( $preview ? LessonPreview::video_pending( $id ) : ! VideoCompletion::satisfied( $user, $id ) ),
+			'nextUrl'      => $preview ? LessonPreview::next_url( $id ) : esc_url_raw( (string) ohmylms_get_next_content_permalink( $id ) ),
 		);
 	}
 
@@ -165,14 +167,17 @@ final class Lesson {
 		Interactivity::enqueue( self::LESSON );
 		Chrome::enqueue_ui();
 		if ( Interactivity::once( 'lesson-state' ) ) {
+			$preview = LessonPreview::active();
 			wp_interactivity_state(
 				self::LESSON,
 				array(
-					'nonces'   => array( 'complete' => wp_create_nonce( 'lesson_completed_nonce' ) ),
+					'nonces'   => $preview ? array() : array( 'complete' => wp_create_nonce( 'lesson_completed_nonce' ) ),
+					'preview'  => $preview,
 					'messages' => array(
 						'markComplete' => __( 'Mark as Complete', 'ohmylms' ),
 						'completed'    => __( 'Completed', 'ohmylms' ),
 						'failed'       => __( 'Lesson completion failed.', 'ohmylms' ),
+						'preview'      => __( 'Preview — nothing is recorded.', 'ohmylms' ),
 					),
 				)
 			);

@@ -1,6 +1,9 @@
 import { post } from '../../../lib/api';
 import { invalidResponse, record } from '../model';
 import type { PeriodDays } from '../shell/model';
+import { createValidators } from '../../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
 
 export type RiskLevel = 'high' | 'watch';
 export type RiskRule = 'inactive' | 'mastery' | 'overdue';
@@ -56,13 +59,6 @@ export interface NudgeResult {
 
 const LEVELS: readonly RiskLevel[] = [ 'high', 'watch' ];
 const RULES: readonly RiskRule[] = [ 'inactive', 'mastery', 'overdue' ];
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
-}
 
 function count( value: unknown ): number {
 	if (

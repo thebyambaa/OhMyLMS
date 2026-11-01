@@ -231,22 +231,7 @@ class CategoryController extends RestController {
 	 * @return array<int,int> Counts keyed by ID.
 	 */
 	protected function count_courses( array $ids ) {
-		global $wpdb;
-
-		$ids = array_values( array_filter( array_map( 'intval', $ids ) ) );
-		if ( ! $ids ) {
-			return array();
-		}
-
-		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery -- Placeholders are generated from the id count.
-		$found = $wpdb->get_results( $wpdb->prepare( "SELECT item_id, COUNT(DISTINCT object_id) AS total FROM %i WHERE object_type = 'course' AND item_id IN ($placeholders) GROUP BY item_id", array_merge( array( Links::table() ), $ids ) ), ARRAY_A );
-
-		$counts = array_fill_keys( $ids, 0 );
-		foreach ( is_array( $found ) ? $found : array() as $row ) {
-			$counts[ (int) $row['item_id'] ] = (int) $row['total'];
-		}
-		return $counts;
+		return Links::course_counts( $ids );
 	}
 
 	/**

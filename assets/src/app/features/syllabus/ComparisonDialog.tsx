@@ -3,7 +3,7 @@ import { useCallback, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { useRequest } from '../../hooks/useRequest';
 import { readTree } from '../curriculum';
-import { compare } from './api';
+import { compareSyllabuses } from '../curriculum/public';
 
 export function ComparisonDialog( {
 	id,
@@ -75,7 +75,7 @@ export function ComparisonDialog( {
 }
 function ComparisonResult( { a, b }: { a: number; b: number } ) {
 	const load = useCallback(
-		( signal: AbortSignal ) => compare( a, b, signal ),
+		( signal: AbortSignal ) => compareSyllabuses( a, b, signal ),
 		[ a, b ]
 	);
 	const request = useRequest( load );

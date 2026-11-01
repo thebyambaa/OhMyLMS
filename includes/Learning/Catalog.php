@@ -10,6 +10,7 @@ namespace OhMyLMS\Learning;
 
 use OhMyLMS\Curriculum\UnitNumber;
 use OhMyLMS\Skills\Taxonomy;
+use OhMyLMS\Utility\Lock;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -573,19 +574,20 @@ final class Catalog {
 	 * @return mixed|\WP_Error
 	 */
 	public static function with_revision( $course_id, $revision, callable $change ) {
-		global $wpdb;
-		$key = 'ohmylms_program_' . (int) $course_id;
-		if ( ! $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 3)', $key ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- A named lock, not table data.
-			return self::error( __( 'Another author is saving this course. Try again.', 'ohmylms' ), 409, 'ohmylms_program_busy' ); }
-		try {
-			wp_cache_delete( (int) $course_id, 'post_meta' );
-			CourseStructure::flush( $course_id );
-			if ( ! is_string( $revision ) || ! hash_equals( self::revision( $course_id ), $revision ) ) {
-				return self::error( __( 'The course structure changed since you read it. Read it again and reapply your change.', 'ohmylms' ), 409, 'ohmylms_program_stale' ); }
-			return $change();
-		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $key ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- A named lock, not table data.
-		}
+		return Lock::with(
+			'ohmylms_program_' . (int) $course_id,
+			3,
+			static function () use ( $course_id, $revision, $change ) {
+				wp_cache_delete( (int) $course_id, 'post_meta' );
+				CourseStructure::flush( $course_id );
+				if ( ! is_string( $revision ) || ! hash_equals( self::revision( $course_id ), $revision ) ) {
+					return self::error( __( 'The course structure changed since you read it. Read it again and reapply your change.', 'ohmylms' ), 409, 'ohmylms_program_stale' ); }
+				return $change();
+			},
+			static function () {
+				return self::error( __( 'Another author is saving this course. Try again.', 'ohmylms' ), 409, 'ohmylms_program_busy' );
+			}
+		);
 	}
 
 	/**

@@ -10,6 +10,7 @@ namespace OhMyLMS\Dashboard\Widgets;
 use OhMyLMS\Dashboard\Scope;
 use RuntimeException;
 use WP_Error;
+use WP_REST_Controller;
 use WP_REST_Request;
 use WP_REST_Server;
 
@@ -19,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
  * `POST /ohmylms/v1/dashboard/widgets/review-sets/assign` with `scope`, `class_id` and `skill_id`
  * ({@see ReviewSetsService::assign()}): 201 with the new draft, 200 with the one that already exists.
  */
-final class ReviewSetsController {
+final class ReviewSetsController extends WP_REST_Controller {
 
 	/**
 	 * Register the route.

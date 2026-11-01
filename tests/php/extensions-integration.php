@@ -49,17 +49,17 @@ try {
     \OhMyLMS\Extensions\CheckoutFields::save($order,['ohmylms_extension_example-reference'=>'Reference 12','price'=>0]);
     verify_extension($order->meta===['_ohmylms_extension_fields'=>['example-reference'=>'Reference 12']],'Checkout saved unregistered data');
     foreach ([
-        ['courses',['name'=>'Isolated course','status'=>'draft']],
+        ['courses',['title'=>'Isolated course','status'=>'draft']],
         ['lessons',['name'=>'Isolated reading','type'=>'example-reading','description'=>'Reading body','status'=>'draft']],
         ['quiz',['name'=>'Isolated quiz','status'=>'draft']],
-        ['question',['name'=>'Expected number','settings'=>['type'=>'example-number','expected'=>42,'score'=>['value'=>1]]]],
+        ['questions',['name'=>'Expected number','settings'=>['type'=>'example-number','expected'=>42,'score'=>['value'=>1]]]],
     ] as [$route,$body]) {
         $response=extension_request('POST',$route,$body);
         verify_extension($response->get_status()===201,"$route create failed: ".wp_json_encode($response->get_data()));
         $content_id=$response->get_data()['id'];$ids[]=$content_id;$content_ids[$route]=$content_id;
         $response=extension_request('GET',$route.'/'.$content_id);
         verify_extension($response->get_status()===200,"$route reopen failed");
-        if ($route==='question') {
+        if ($route==='questions') {
             verify_extension($response->get_data()['settings']['expected']===42,'Custom authoring settings lost');
             $question=ohmylms_get_question($content_id);
             verify_extension(call_user_func($type['grade'],['42'],$question)['correct'],'Saved custom question grading failed');
@@ -72,15 +72,16 @@ try {
             verify_extension(strpos($html,'Reading body')!==false,'Custom lesson render failed');
         }
     }
-    $response=extension_request('POST','question',['name'=>'Invalid custom question','settings'=>['type'=>'example-number','expected'=>['bad'],'score'=>['value'=>1]]]);
+    $response=extension_request('POST','questions',['name'=>'Invalid custom question','settings'=>['type'=>'example-number','expected'=>['bad'],'score'=>['value'=>1]]]);
     verify_extension($response->get_status()===400,'Custom authoring schema not enforced');
     $chapter=wp_insert_post(['post_type'=>'ohmylms-chapter','post_title'=>'Isolated chapter','post_status'=>'publish']);$ids[]=$chapter;
     $wpdb->insert($wpdb->prefix.'ohmylms_chapter_relationship',['course_id'=>$content_ids['courses'],'chapter_id'=>$chapter,'order_number'=>0]);
     $wpdb->insert($wpdb->prefix.'ohmylms_content_relationship',['chapter_id'=>$chapter,'content_id'=>$content_ids['quiz'],'content_type'=>'quiz','order_number'=>0]);
-    $wpdb->insert($wpdb->prefix.'ohmylms_quiz_questions_relationship',['quiz_id'=>$content_ids['quiz'],'question_id'=>$content_ids['question'],'order_number'=>0]);
+    $wpdb->insert($wpdb->prefix.'ohmylms_quiz_questions_relationship',['quiz_id'=>$content_ids['quiz'],'question_id'=>$content_ids['questions'],'order_number'=>0]);
     $response=extension_request('PUT','quiz/'.$content_ids['quiz'],['settings'=>['allow_attempts'=>5,'time_limit'=>['value'=>1,'type'=>'minutes'],'passing_grade'=>['enabled'=>true,'value'=>1]]]);
     verify_extension($response->get_status()===200,'Quiz settings update failed');
-    extension_request('PUT','question/'.$content_ids['question'],['settings'=>['type'=>'example-number','expected'=>42,'required'=>true,'score'=>['enabled'=>true,'value'=>1]]]);
+    $response=extension_request('PATCH','questions/'.$content_ids['questions'],['base_modified'=>extension_request('GET','questions/'.$content_ids['questions'])->get_data()['modified'],'settings'=>['type'=>'example-number','expected'=>42,'required'=>true,'score'=>['enabled'=>true,'value'=>1]]]);
+    verify_extension($response->get_status()===200,'Question settings update failed: '.wp_json_encode($response->get_data()));
     $student_id=wp_create_user('ohmylms-fixture-'.wp_generate_password(10,false),wp_generate_password(32));
     verify_extension(!is_wp_error($student_id),'Student fixture failed');
     wp_set_current_user($student_id);
@@ -95,9 +96,9 @@ try {
     verify_extension(is_wp_error($result)&&$result->get_error_code()==='quiz_timer','Early timeout accepted');
     $result=\OhMyLMS\Quiz\Submission::submit($content_ids['quiz'],$attempt,$student_id,[999999=>['42']]);
     verify_extension(is_wp_error($result)&&$result->get_error_code()==='quiz_question','Foreign quiz question accepted');
-    $result=\OhMyLMS\Quiz\Submission::submit($content_ids['quiz'],$attempt,$student_id,[$content_ids['question']=>['42']]);
+    $result=\OhMyLMS\Quiz\Submission::submit($content_ids['quiz'],$attempt,$student_id,[$content_ids['questions']=>['42']]);
     verify_extension(!is_wp_error($result)&&(float)$result['total']===1.0&&$result['status']==='completed','Custom answer submission failed');
-    verify_extension(is_wp_error(\OhMyLMS\Quiz\Submission::submit($content_ids['quiz'],$attempt,$student_id,[$content_ids['question']=>['42']])),'Duplicate submission accepted');
+    verify_extension(is_wp_error(\OhMyLMS\Quiz\Submission::submit($content_ids['quiz'],$attempt,$student_id,[$content_ids['questions']=>['42']])),'Duplicate submission accepted');
     verify_extension((int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}ohmylms_user_progress WHERE enrollment_id=%d AND content_id=%d",$enrollment_id,$content_ids['quiz']))===1,'Quiz completion did not update progress');
     $timeout_attempt=\OhMyLMS\Quiz\Submission::start($content_ids['quiz'],$student_id);
     verify_extension(!is_wp_error($timeout_attempt),'Second attempt failed');

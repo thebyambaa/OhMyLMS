@@ -13,18 +13,14 @@ import type {
 	Transcript,
 	Weights,
 } from './types';
+import { createValidators } from '../../lib/validation';
+
+const { record } = createValidators( invalid );
 
 const BASE = '/ohmylms/v1/gradebook';
 
 function invalid(): Error {
 	return new Error( 'The gradebook sent an unexpected response.' );
-}
-
-function record( value: unknown ): Record< string, unknown > {
-	if ( ! value || 'object' !== typeof value || Array.isArray( value ) ) {
-		throw invalid();
-	}
-	return value as Record< string, unknown >;
 }
 
 /**

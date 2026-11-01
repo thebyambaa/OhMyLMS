@@ -14,18 +14,50 @@ import {
 const QUIZ = 'ohmylms/quiz';
 
 /**
+ * `@wordpress/interactivity` withSyncEvent, for handlers of any event or of keyboard events.
+ *
+ * @typedef {((callback: (event: Event) => void) => (event: Event) => void) & ((callback: (event: KeyboardEvent) => void) => (event: KeyboardEvent) => void)} SyncEvent
+ */
+
+/**
+ * @typedef {Object} PaperState Store state; the strings come from PaperPresentation.
+ * @property {Object<string, true>} flags         Flags by question ID.
+ * @property {boolean}              navOpen       The navigator is open.
+ * @property {string}               announcement  Live region text.
+ * @property {string}               storageKey    Storage key of the flags.
+ * @property {string}               flaggedText   "Question %s flagged for review."
+ * @property {string}               unflaggedText "Question %s no longer flagged."
+ * @property {string}               confirmFlags  Confirmation with `%d` flagged questions.
+ * @property {string}               minutesLeft   "%d minutes left."
+ * @property {string}               oneMinuteLeft "One minute left."
+ * @property {string}               answeredText  Status word.
+ * @property {string}               blankText     Status word.
+ * @property {string}               flagText      Status word.
+ * @property {boolean}              isAnswered    The item's question has an answer.
+ * @property {boolean}              isFlagged     The item's question is flagged.
+ */
+
+/**
+ * @typedef {Object} PaperContext Context of the navigator (`storageKey`) or of one of its items.
+ * @property {string} storageKey     Storage key of the flags (navigator).
+ * @property {number} questionId     Question (item).
+ * @property {number} questionNumber Question number (item).
+ * @property {string} label          Question label (item).
+ */
+
+/**
  * The learner's Paper View (`ohmylms/paper`): the question navigator, flags for review, timer
  * warnings and the flagged-questions check before submitting. Answers, autosave, the timer and
  * submission stay with the quiz player (`ohmylms/quiz`) and its REST endpoints; this store reads
  * the player's context and never sends answers itself.
  *
- * @param {Object}                                       runtime               Interactivity runtime.
- * @param {(namespace?: string) => Object}               runtime.getContext    getContext().
- * @param {() => {ref: Element}}                         runtime.getElement    getElement().
- * @param {(callback: (event: Event) => void) => Object} runtime.withSyncEvent withSyncEvent().
- * @param {() => Object}                                 runtime.state         Returns the registered store state.
- * @param {Storage}                                      runtime.storage       Storage for flags (sessionStorage).
- * @param {(message: string) => boolean}                 runtime.confirm       Blocking confirmation.
+ * @param {Object}                                                                                                          runtime               Interactivity runtime.
+ * @param {((namespace: 'ohmylms/quiz') => import('../quiz-player/state.js').QuizContext|undefined) & (() => PaperContext)} runtime.getContext    getContext().
+ * @param {() => {ref: HTMLElement|null}}                                                                                   runtime.getElement    getElement().
+ * @param {SyncEvent}                                                                                                       runtime.withSyncEvent withSyncEvent().
+ * @param {() => PaperState}                                                                                                runtime.state         Returns the registered store state.
+ * @param {Storage}                                                                                                         runtime.storage       Storage for flags (sessionStorage).
+ * @param {(message: string) => boolean}                                                                                    runtime.confirm       Blocking confirmation.
  * @return {Object} Store definition.
  */
 export function createPaperView( {
@@ -36,9 +68,11 @@ export function createPaperView( {
 	storage,
 	confirm,
 } ) {
+	/** @type {WeakMap<Element, number>} */
 	const times = new WeakMap();
-	const quizRoot = () =>
-		getElement().ref.closest( `[data-wp-interactive="${ QUIZ }"]` );
+	/** @return {HTMLElement} Element of the running directive. */
+	const ref = () => /** @type {HTMLElement} */ ( getElement().ref );
+	const quizRoot = () => ref().closest( `[data-wp-interactive="${ QUIZ }"]` );
 	const save = () => {
 		const state = current();
 		try {
@@ -86,24 +120,35 @@ export function createPaperView( {
 				state.navOpen = ! state.navOpen;
 			} ),
 			// Escape closes the list; arrow keys, Home and End move between its questions.
-			navKey: withSyncEvent( ( event ) => {
-				const nav = getElement().ref;
+			navKey: withSyncEvent( ( /** @type {KeyboardEvent} */ event ) => {
+				const nav = ref();
 				const state = current();
 				if ( event.key === 'Escape' && state.navOpen ) {
 					event.preventDefault();
 					state.navOpen = false;
-					nav.querySelector( '.ohmylms-paper-nav-toggle' )?.focus();
+					/** @type {HTMLElement|null} */ (
+						nav.querySelector( '.ohmylms-paper-nav-toggle' )
+					)?.focus();
 					return;
 				}
-				const items = [
+				const items = /** @type {HTMLElement[]} */ ( [
 					...nav.querySelectorAll( '.ohmylms-paper-nav-item' ),
-				];
+				] );
 				const next = stepIndex(
 					items.length,
-					items.indexOf( nav.ownerDocument.activeElement ),
+					items.indexOf(
+						/** @type {HTMLElement} */ (
+							nav.ownerDocument.activeElement
+						)
+					),
 					event.key
 				);
-				if ( next >= 0 && items.includes( event.target ) ) {
+				if (
+					next >= 0 &&
+					items.includes(
+						/** @type {HTMLElement} */ ( event.target )
+					)
+				) {
 					event.preventDefault();
 					items[ next ].focus();
 				}
@@ -112,10 +157,12 @@ export function createPaperView( {
 			jump: withSyncEvent( ( event ) => {
 				event.preventDefault();
 				const { questionId } = getContext();
-				const box = quizRoot()?.querySelector(
-					`.ohmylms-quiz-box[data-question-id="${ Number(
-						questionId
-					) }"]`
+				const box = /** @type {HTMLElement|null|undefined} */ (
+					quizRoot()?.querySelector(
+						`.ohmylms-quiz-box[data-question-id="${ Number(
+							questionId
+						) }"]`
+					)
 				);
 				if ( ! box ) {
 					return;
@@ -163,6 +210,7 @@ export function createPaperView( {
 					return undefined;
 				}
 				// Runs inside the player's submit handler; cancelling it keeps the paper open.
+				/** @param {Event & Partial<CustomEvent>} event `ohmylms:quiz-before-submit`. */
 				const beforeSubmit = ( event ) => {
 					if ( event.detail?.exit ) {
 						return;
@@ -198,7 +246,7 @@ export function createPaperView( {
 				if ( ! quiz?.timed ) {
 					return;
 				}
-				const element = getElement().ref;
+				const element = ref();
 				const remaining = Number( quiz.remaining );
 				const crossed = timeWarning(
 					times.has( element ) ? times.get( element ) : null,

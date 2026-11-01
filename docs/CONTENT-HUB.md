@@ -1,5 +1,7 @@
 # Content Hub
 
+For the authoritative product model and current authoring boundaries, see [Learning Architecture](LEARNING-ARCHITECTURE.md). This guide retains feature and compatibility details; recovered-editor screen descriptions are historical.
+
 One place to build learning content: **OhMyLMS → Content Hub** (`#/content-hub`) replaces the separate Courses, Assessments, Skills, Curriculum and Course Bundles submenus. Skills are a core part of OhMyLMS, not an add-on.
 
 A **grade, exam or subject** (for example Grade 2 Math, MATH0580 or Digital SAT) is an ordinary course and is listed in the **Courses** tab. It can have chapters, skills inside those chapters, and lessons, quizzes and assessments attached to a chapter or to chosen skills. There is no fixed chapter-then-lesson order: a skill-based course is finished when its required skills reach their targets. A course built from a syllabus is edited in the syllabus editor (see [SYLLABUS.md](SYLLABUS.md)); every other course is opened in its editor from the Courses tab.

@@ -308,6 +308,44 @@ final class Repository {
 	}
 
 	/**
+	 * Courses the gradebook picker offers among some ids: not trashed or auto-drafts, by title, at most 500.
+	 * A failed query reads as no courses.
+	 *
+	 * @param int[] $ids Course ids of the scope.
+	 * @return array[] Rows: id, title.
+	 */
+	public static function picker_courses( array $ids ) {
+		global $wpdb;
+		$args = array( $wpdb->posts, OHMYLMS_COURSE_CPT );
+		$in   = Scope::in_condition( 'ID', $ids, $args );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery -- Fragment uses placeholders and $args holds one value per placeholder; bounded.
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT ID AS id, post_title AS title FROM %i WHERE post_type = %s AND post_status NOT IN ( 'trash', 'auto-draft' ) AND $in ORDER BY post_title, ID LIMIT 500", $args ), ARRAY_A );
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
+	 * Learners among some ids whose display name contains the search, by name, at most 20. A failed query
+	 * reads as no learners.
+	 *
+	 * @param int[]  $ids    Learner ids of the scope.
+	 * @param string $search Name contains; '' for any.
+	 * @return array[] Rows: id, name.
+	 */
+	public static function search_learners( array $ids, $search ) {
+		global $wpdb;
+		$args  = array( $wpdb->users );
+		$in    = Scope::in_condition( 'ID', $ids, $args );
+		$where = '';
+		if ( '' !== $search ) {
+			$where  = ' AND display_name LIKE %s';
+			$args[] = '%' . $wpdb->esc_like( $search ) . '%';
+		}
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- Fragments use placeholders; at most 20 rows.
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT ID AS id, display_name AS name FROM %i WHERE $in$where ORDER BY display_name, ID LIMIT 20", $args ), ARRAY_A );
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
 	 * Display names.
 	 *
 	 * @param int[] $ids User ids.

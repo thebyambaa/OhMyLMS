@@ -7,9 +7,9 @@
 
 namespace OhMyLMS\Rest\V1;
 
-use OhMyLMS\Schools\Access;
+use OhMyLMS\Schools\Directory;
 use OhMyLMS\Schools\Lifecycle;
-use OhMyLMS\Schools\Schema;
+use OhMyLMS\Schools\RosterImport;
 use OhMyLMS\Schools\Service;
 use WP_Error;
 use WP_REST_Request;
@@ -47,7 +47,7 @@ class AccountHubRosterController extends AccountHubController {
 	/**
 	 * Columns the CSV import understands.
 	 */
-	const CSV_COLUMNS = array( 'role', 'name', 'email', 'external_student_id' );
+	const CSV_COLUMNS = RosterImport::COLUMNS;
 
 	/**
 	 * Register the routes.
@@ -272,49 +272,6 @@ class AccountHubRosterController extends AccountHubController {
 		return $school;
 	}
 
-	/**
-	 * Id of an open invitation for an email and role in a school, or 0.
-	 *
-	 * @param int    $school School id.
-	 * @param string $email  Email.
-	 * @param string $role   Role.
-	 * @return int
-	 */
-	private function pending_invitation( $school, $email, $role ) {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Current invitation state.
-		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE school_id=%d AND role=%s AND email=%s AND consumed_at IS NULL AND revoked_at IS NULL AND expires_at>%s ORDER BY id DESC LIMIT 1', Schema::table( 'school_invitations' ), $school, $role, $email, Service::now() ) );
-	}
-
-	/**
-	 * Whether the account with this email already has the role in the school.
-	 *
-	 * @param int    $school School id.
-	 * @param string $email  Email.
-	 * @param string $role   Role.
-	 * @return bool
-	 */
-	private function member_by_email( $school, $email, $role ) {
-		$user = get_user_by( 'email', $email );
-
-		return $user && Access::school( $school, array( $role ), (int) $user->ID );
-	}
-
-	/**
-	 * User id of a school student ID, or 0.
-	 *
-	 * @param int    $school   School id.
-	 * @param string $external School student ID.
-	 * @return int
-	 */
-	private function student_by_external_id( $school, $external ) {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Current roster state; the column is unique per school.
-		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT user_id FROM %i WHERE school_id=%d AND external_student_id=%s', Schema::table( 'school_student_profiles' ), $school, $external ) );
-	}
-
 	/*
 	 * Invitations.
 	 */
@@ -326,26 +283,21 @@ class AccountHubRosterController extends AccountHubController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_invitations( $request ) {
-		global $wpdb;
 		$school = $this->school_or_error( $request['id'] );
 		if ( is_wp_error( $school ) ) {
 			return $school;
 		}
-		$from = $wpdb->prepare( 'FROM %i i LEFT JOIN %i c ON c.id=i.class_id LEFT JOIN %i u ON u.ID=i.student_user_id WHERE i.school_id=%d AND i.email LIKE %s', Schema::table( 'school_invitations' ), Schema::table( 'classes' ), $wpdb->users, $school['id'], $this->like( $request ) );
-		if ( 'pending' === $request['status'] ) {
-			$from .= $wpdb->prepare( ' AND i.consumed_at IS NULL AND i.revoked_at IS NULL AND i.expires_at>%s', Service::now() );
-		}
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- $from is prepared above.
-		$total  = (int) $wpdb->get_var( "SELECT COUNT(*) $from" );
-		$paging = $this->paging( $request, $total );
+		$like    = $this->like( $request );
+		$pending = 'pending' === $request['status'];
+		$total   = Directory::count_invitations( (int) $school['id'], $like, $pending );
+		$paging  = $this->paging( $request, $total );
 		if ( is_wp_error( $paging ) ) {
 			return $paging;
 		}
 		list( $page, $per_page, $pages ) = $paging;
-		$rows                            = $wpdb->get_results( $wpdb->prepare( "SELECT i.id,i.role,i.email,i.class_id,c.name AS class_name,i.student_user_id,u.display_name AS student_name,i.expires_at,i.consumed_at,i.revoked_at,i.created_at $from ORDER BY i.id DESC LIMIT %d OFFSET %d", $per_page, ( $page - 1 ) * $per_page ), ARRAY_A );
-		// phpcs:enable
+		$rows                            = Directory::invitations( (int) $school['id'], $like, $pending, $per_page, ( $page - 1 ) * $per_page );
 
-		return $this->no_store( $this->collection( array_map( array( $this, 'prepare_invitation' ), (array) $rows ), $total, $pages ) );
+		return $this->no_store( $this->collection( array_map( array( $this, 'prepare_invitation' ), $rows ), $total, $pages ) );
 	}
 
 	/**
@@ -403,10 +355,10 @@ class AccountHubRosterController extends AccountHubController {
 				return $this->error( 'invalid_class', __( 'Choose an active class of this school, for teacher and student invitations only.', 'ohmylms' ), 422 );
 			}
 		}
-		if ( $this->member_by_email( (int) $school['id'], $email, $role ) ) {
+		if ( RosterImport::on_roster( (int) $school['id'], $email, $role ) ) {
 			return $this->error( 'already_member', __( 'This person is already on the roster in that role.', 'ohmylms' ), 409 );
 		}
-		$pending = $this->pending_invitation( (int) $school['id'], $email, $role );
+		$pending = Directory::pending_invitation( (int) $school['id'], $email, $role );
 		if ( $pending ) {
 			return $this->error( 'invitation_pending', __( 'An invitation for this email and role is already waiting. Revoke it to create a new one.', 'ohmylms' ), 409, array( 'invitation' => $pending ) );
 		}
@@ -479,43 +431,20 @@ class AccountHubRosterController extends AccountHubController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_managed_students( $request ) {
-		global $wpdb;
 		$school = $this->school_or_error( $request['id'] );
 		if ( is_wp_error( $school ) ) {
 			return $school;
 		}
-		$like = $this->like( $request );
-		$from = $wpdb->prepare(
-			"FROM %i p JOIN %i u ON u.ID=p.user_id JOIN %i um ON um.user_id=u.ID AND um.meta_key='_ohmylms_managed_school' AND um.meta_value=%s JOIN %i m ON m.school_id=p.school_id AND m.user_id=p.user_id AND m.role='student' AND m.status='active' WHERE p.school_id=%d AND (u.display_name LIKE %s OR p.external_student_id LIKE %s)",
-			Schema::table( 'school_student_profiles' ),
-			$wpdb->users,
-			$wpdb->usermeta,
-			(string) (int) $school['id'],
-			Schema::table( 'school_memberships' ),
-			$school['id'],
-			$like,
-			$like
-		);
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- $from is prepared above.
-		$total  = (int) $wpdb->get_var( "SELECT COUNT(*) $from" );
+		$like   = $this->like( $request );
+		$total  = Directory::count_managed_students( (int) $school['id'], $like );
 		$paging = $this->paging( $request, $total );
 		if ( is_wp_error( $paging ) ) {
 			return $paging;
 		}
 		list( $page, $per_page, $pages ) = $paging;
-		$rows                            = (array) $wpdb->get_results( $wpdb->prepare( "SELECT u.ID AS id,u.display_name,u.user_login,p.external_student_id,m.joined_at $from ORDER BY u.display_name, u.ID LIMIT %d OFFSET %d", $per_page, ( $page - 1 ) * $per_page ), ARRAY_A );
-		$ids                             = array_map( 'intval', wp_list_pluck( $rows, 'id' ) );
-		$setup                           = array();
-		if ( $ids ) {
-			$in = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- One %d per id; the sniff cannot count a generated placeholder list.
-			$links = $wpdb->get_results( $wpdb->prepare( "SELECT student_user_id,MAX(expires_at) AS expires_at FROM %i WHERE school_id=%d AND role='activation' AND consumed_at IS NULL AND revoked_at IS NULL AND expires_at>%s AND student_user_id IN ($in) GROUP BY student_user_id", array_merge( array( Schema::table( 'school_invitations' ), $school['id'], Service::now() ), $ids ) ), ARRAY_A );
-			foreach ( (array) $links as $link ) {
-				$setup[ (int) $link['student_user_id'] ] = (string) $link['expires_at'];
-			}
-		}
-		// phpcs:enable
-		$data = array();
+		$rows                            = Directory::managed_students( (int) $school['id'], $like, $per_page, ( $page - 1 ) * $per_page );
+		$setup                           = Directory::setup_link_expiries( (int) $school['id'], array_map( 'intval', wp_list_pluck( $rows, 'id' ) ) );
+		$data                            = array();
 		foreach ( $rows as $row ) {
 			$data[] = $this->prepare_managed_student( $row, $setup[ (int) $row['id'] ] ?? '' );
 		}
@@ -557,7 +486,7 @@ class AccountHubRosterController extends AccountHubController {
 		if ( '' === $name || '' === $external ) {
 			return $this->error( 'invalid_student', __( 'Enter the student\'s name and school student ID.', 'ohmylms' ), 422 );
 		}
-		if ( $this->student_by_external_id( (int) $school['id'], $external ) ) {
+		if ( Directory::student_by_external_id( (int) $school['id'], $external ) ) {
 			return $this->error( 'duplicate_student_id', __( 'This school student ID is already on the roster.', 'ohmylms' ), 409 );
 		}
 		try {
@@ -687,100 +616,14 @@ class AccountHubRosterController extends AccountHubController {
 	}
 
 	/**
-	 * Plan every row against the current roster without writing.
-	 *
-	 * Actions: `create_student` (no email: a managed account), `invite` (an invitation to the email),
-	 * `existing` (already on the roster), `pending` (an open invitation exists) and `error`.
-	 *
-	 * @param int   $school School id.
-	 * @param array $parsed Result of parse_csv().
-	 * @return array{rows:array,counts:array,ignored:string[]}
-	 */
-	private function plan( $school, array $parsed ) {
-		$ignored = array_values( array_diff( $parsed['header'], self::CSV_COLUMNS ) );
-		$seen    = array();
-		$rows    = array();
-		foreach ( $parsed['rows'] as $row ) {
-			$cells    = $row['cells'];
-			$role     = '' === ( $cells['role'] ?? '' ) ? 'student' : strtolower( $cells['role'] );
-			$name     = Service::text( $cells['name'] ?? '', 190 );
-			$email    = trim( $cells['email'] ?? '' );
-			$external = Service::text( $cells['external_student_id'] ?? '', 100 );
-			$error    = '';
-			if ( $row['extra'] ) {
-				$error = __( 'This row has more cells than the header.', 'ohmylms' );
-			} elseif ( ! in_array( $role, array( 'student', 'teacher' ), true ) ) {
-				$error = __( 'Role must be student or teacher.', 'ohmylms' );
-			} elseif ( '' === $name ) {
-				$error = __( 'Enter a name.', 'ohmylms' );
-			} elseif ( '' !== $email && ! is_email( $email ) ) {
-				$error = __( 'The email address is not valid.', 'ohmylms' );
-			} elseif ( 'teacher' === $role && '' === $email ) {
-				$error = __( 'Teachers need an email address for their invitation.', 'ohmylms' );
-			} elseif ( 'student' === $role && '' === $email && '' === $external ) {
-				$error = __( 'A student without email needs a school student ID.', 'ohmylms' );
-			}
-			// Rows with email become invitations (the school student ID is not used); rows without become managed accounts.
-			$external = '' === $email ? $external : '';
-			$key      = '' === $email ? 'id:' . mb_strtolower( $external ) : 'email:' . strtolower( $email ) . ':' . $role;
-			if ( '' === $error && isset( $seen[ $key ] ) ) {
-				/* translators: %d: earlier line number. */
-				$error = sprintf( __( 'Repeats line %d of this file.', 'ohmylms' ), $seen[ $key ] );
-			}
-			if ( '' === $error ) {
-				$seen[ $key ] = $row['line'];
-			}
-			if ( '' !== $error ) {
-				$action = 'error';
-			} elseif ( '' === $email ) {
-				$action = $this->student_by_external_id( $school, $external ) ? 'existing' : 'create_student';
-			} elseif ( $this->member_by_email( $school, $email, $role ) ) {
-				$action = 'existing';
-			} else {
-				$action = $this->pending_invitation( $school, $email, $role ) ? 'pending' : 'invite';
-			}
-			$rows[] = array(
-				'line'                => $row['line'],
-				'role'                => $role,
-				'name'                => $name,
-				'email'               => $email,
-				'external_student_id' => $external,
-				'action'              => $action,
-				'error'               => '' === $error ? null : $error,
-			);
-		}
-		$counts = array_fill_keys( array( 'create_student', 'invite', 'existing', 'pending', 'error' ), 0 );
-		foreach ( $rows as $row ) {
-			++$counts[ $row['action'] ];
-		}
-
-		return array(
-			'rows'    => $rows,
-			'counts'  => $counts,
-			'ignored' => $ignored,
-		);
-	}
-
-	/**
-	 * Review token binding the caller, school, file and every planned action.
-	 *
-	 * @param int   $school School id.
-	 * @param array $plan   Plan.
-	 * @return string
-	 */
-	private function review_token( $school, array $plan ) {
-		return hash_hmac( 'sha256', wp_json_encode( array( get_current_user_id(), (int) $school, $plan['rows'] ) ), wp_salt( 'nonce' ) );
-	}
-
-	/**
-	 * Review (dry run) or apply a roster CSV. Applying needs the review token of an unchanged plan;
-	 * applying the same file again creates nothing (existing IDs, members and open invitations are skipped).
+	 * Review (dry run) or apply a roster CSV through `Schools\RosterImport`. Applying needs the review token
+	 * of an unchanged plan; applying the same file again creates nothing (existing IDs, members and open
+	 * invitations are skipped).
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function import_roster( $request ) {
-		global $wpdb;
 		$school = $this->active_school_or_error( $request['id'] );
 		if ( is_wp_error( $school ) ) {
 			return $school;
@@ -792,66 +635,16 @@ class AccountHubRosterController extends AccountHubController {
 		}
 		$dry_run = false !== $request['dry_run'];
 		if ( $dry_run ) {
-			$plan = $this->plan( $school_id, $parsed );
+			$plan = RosterImport::plan( $school_id, $parsed );
 
-			return $this->no_store( rest_ensure_response( $this->import_report( $plan, true, $this->review_token( $school_id, $plan ) ) ) );
+			return $this->no_store( rest_ensure_response( $this->import_report( $plan, true, RosterImport::review_token( $school_id, $plan ) ) ) );
 		}
 		if ( ! is_string( $request['review'] ) || '' === $request['review'] ) {
 			return $this->error( 'review_required', __( 'Review this file before importing it.', 'ohmylms' ), 400 );
 		}
-		$lock = 'ohmylms_roster_import_' . md5( $wpdb->prefix . $school_id );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Serialize imports into one school.
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 10)', $lock ) ) ) {
-			return $this->error( 'import_busy', __( 'Another import into this school is running. Try again shortly.', 'ohmylms' ), 409 );
-		}
-		try {
-			$plan = $this->plan( $school_id, $parsed );
-			if ( ! hash_equals( $this->review_token( $school_id, $plan ), (string) $request['review'] ) ) {
-				return $this->error( 'review_stale', __( 'The roster or the file changed since the review. Review it again before importing.', 'ohmylms' ), 409 );
-			}
-			foreach ( $plan['rows'] as &$row ) {
-				try {
-					if ( 'create_student' === $row['action'] ) {
-						$created         = Service::create_student(
-							$school_id,
-							array(
-								'name'                => $row['name'],
-								'external_student_id' => $row['external_student_id'],
-							)
-						);
-						$row['action']   = 'created';
-						$row['user_id']  = (int) $created['id'];
-						$row['username'] = (string) $created['username'];
-					} elseif ( 'invite' === $row['action'] ) {
-						$invite        = Service::invite(
-							$school_id,
-							array(
-								'role'       => $row['role'],
-								'email'      => $row['email'],
-								'send_email' => (bool) $request['send_email'],
-							)
-						);
-						$row['action'] = 'invited';
-						$row['url']    = (string) $invite['url'];
-					}
-				} catch ( \Throwable $failure ) {
-					$row['action'] = 'error';
-					$row['error']  = 409 === (int) $failure->getCode() ? __( 'Already on the roster; nothing was changed.', 'ohmylms' ) : __( 'This row could not be saved. Nothing was changed for it.', 'ohmylms' );
-				}
-			}
-			unset( $row );
-			try {
-				Service::audit( $school_id, 'roster_imported' );
-			} catch ( \Throwable $failure ) {
-				unset( $failure );
-			}
-		} finally {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Release the import lock.
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
-		}
-		$plan['counts'] = array_fill_keys( array( 'created', 'invited', 'existing', 'pending', 'error' ), 0 );
-		foreach ( $plan['rows'] as $row ) {
-			++$plan['counts'][ $row['action'] ];
+		$plan = RosterImport::apply( $school_id, $parsed, $request['review'], (bool) $request['send_email'] );
+		if ( is_wp_error( $plan ) ) {
+			return $plan;
 		}
 
 		return $this->no_store( rest_ensure_response( $this->import_report( $plan, false, null ) ) );

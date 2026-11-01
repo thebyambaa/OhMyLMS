@@ -1,6 +1,6 @@
-# Course syllabus objectives
+# Course syllabus objective references
 
-An ordinary course's Content editor includes **Syllabus Objectives** below the course information. Authors browse existing syllabuses by name, code, edition, grade and subject, filter objectives by topic or search their full wording, and add selected targets. Selections survive filtering and switching syllabuses. Already-added references are disabled. The table shows live objective wording, source context, existing course content connections and removal controls. These changes save independently of the course Save button.
+See [Learning Architecture](LEARNING-ARCHITECTURE.md) for alignment versus outcomes and the current author workflow. This document retains the source-reference API contract; the recovered editor panel is not the current typed UI.
 
 The source records are existing curriculum syllabus items and skill terms. `_ohmylms_course_objectives` stores only `{syllabus_id, term_id}` pairs, up to 200 per course. The pair identifies a mapping because a skill may be placed in several syllabuses. Nothing is copied and no learning program, mastery rule, official objective or learner evidence is changed. Syllabus-owned courses retain their existing workspace and mirroring behavior; this panel is for ordinary courses referencing syllabus objectives.
 

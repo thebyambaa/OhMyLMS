@@ -8,13 +8,15 @@ import {
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link, useParams } from 'react-router-dom';
+import { MediaPicker } from '../../components/MediaPicker';
 import { normalizeApiError } from '../../lib/api';
+import { IMAGE_MIME_TYPES } from '../../lib/media';
 import { previewCertificate, updateCertificate } from './api';
 import { BlockEditor } from './BlockEditor';
 import { CourseSelector } from './CourseSelector';
-import { MediaPicker } from './MediaPicker';
 import {
 	formFromCertificate,
+	invalidResponse,
 	isDirty,
 	isValid,
 	moveBlock,
@@ -25,15 +27,7 @@ import {
 } from './model';
 import { useCertificateEditor } from './useCertificateEditor';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
-import type {
-	BlockForm,
-	FormErrors,
-	FormState,
-	MediaImage,
-	Preview,
-} from './types';
-
-type PickerTarget = 'background' | 'signature';
+import type { BlockForm, FormErrors, FormState, Preview } from './types';
 
 function routeId( value: string | undefined ): number | null {
 	return value && /^[1-9]\d*$/.test( value ) ? Number( value ) : null;
@@ -53,7 +47,6 @@ export default function CertificateEditorPage() {
 	const [ busy, setBusy ] = useState( false );
 	const [ message, setMessage ] = useState< string | null >( null );
 	const [ failure, setFailure ] = useState< string | null >( null );
-	const [ picker, setPicker ] = useState< PickerTarget | null >( null );
 	const [ preview, setPreview ] = useState< Preview | null >( null );
 	const [ previewBusy, setPreviewBusy ] = useState( false );
 	const [ previewError, setPreviewError ] = useState< string | null >( null );
@@ -217,31 +210,6 @@ export default function CertificateEditorPage() {
 		);
 		setMessage( null );
 	};
-	const selectImage = ( image: MediaImage ) => {
-		if ( 'background' === picker ) {
-			setForm( ( current ) =>
-				current
-					? {
-							...current,
-							background_id: image.id,
-							background_url: image.url,
-						}
-					: current
-			);
-		} else if ( 'signature' === picker ) {
-			setForm( ( current ) =>
-				current
-					? {
-							...current,
-							signature_image_id: image.id,
-							signature_url: image.url,
-						}
-					: current
-			);
-		}
-		setPicker( null );
-	};
-
 	async function save() {
 		if ( ! form || ! options || operation.current ) {
 			return;
@@ -418,58 +386,85 @@ export default function CertificateEditorPage() {
 
 				<fieldset disabled={ busy }>
 					<legend>{ __( 'Images', 'ohmylms' ) }</legend>
-					<p>
-						{ form.background_id
-							? sprintf(
-									/* translators: %d: image id. */
-									__( 'Background image: #%d', 'ohmylms' ),
-									form.background_id
-								)
-							: __( 'No background image.', 'ohmylms' ) }{ ' ' }
-						<Button
-							variant="secondary"
-							onClick={ () => setPicker( 'background' ) }
-						>
-							{ __( 'Choose background image', 'ohmylms' ) }
-						</Button>{ ' ' }
-						{ form.background_id > 0 && (
-							<Button
-								variant="tertiary"
-								onClick={ () => {
-									update( 'background_id', 0 );
-									update( 'background_url', '' );
-								} }
-							>
-								{ __( 'Remove background image', 'ohmylms' ) }
-							</Button>
+					<MediaPicker
+						label={ __( 'Choose background image', 'ohmylms' ) }
+						chooseText={ __(
+							'Choose background image',
+							'ohmylms'
 						) }
-					</p>
-					<p>
-						{ form.signature_image_id
-							? sprintf(
-									/* translators: %d: image id. */
-									__( 'Signature image: #%d', 'ohmylms' ),
-									form.signature_image_id
-								)
-							: __( 'No signature image.', 'ohmylms' ) }{ ' ' }
-						<Button
-							variant="secondary"
-							onClick={ () => setPicker( 'signature' ) }
-						>
-							{ __( 'Choose signature image', 'ohmylms' ) }
-						</Button>{ ' ' }
-						{ form.signature_image_id > 0 && (
-							<Button
-								variant="tertiary"
-								onClick={ () => {
-									update( 'signature_image_id', 0 );
-									update( 'signature_url', '' );
-								} }
-							>
-								{ __( 'Remove signature image', 'ohmylms' ) }
-							</Button>
+						removeText={ __(
+							'Remove background image',
+							'ohmylms'
 						) }
-					</p>
+						description={
+							form.background_id
+								? sprintf(
+										/* translators: %d: image id. */
+										__(
+											'Background image: #%d',
+											'ohmylms'
+										),
+										form.background_id
+									)
+								: __( 'No background image.', 'ohmylms' )
+						}
+						value={ {
+							id: form.background_id,
+							url: form.background_url,
+						} }
+						accept={ IMAGE_MIME_TYPES }
+						invalid={ invalidResponse }
+						onChange={ ( image ) =>
+							setForm( ( current ) =>
+								current
+									? {
+											...current,
+											background_id: image.id,
+											background_url: image.url,
+										}
+									: current
+							)
+						}
+						onRemove={ () => {
+							update( 'background_id', 0 );
+							update( 'background_url', '' );
+						} }
+					/>
+					<MediaPicker
+						label={ __( 'Choose signature image', 'ohmylms' ) }
+						chooseText={ __( 'Choose signature image', 'ohmylms' ) }
+						removeText={ __( 'Remove signature image', 'ohmylms' ) }
+						description={
+							form.signature_image_id
+								? sprintf(
+										/* translators: %d: image id. */
+										__( 'Signature image: #%d', 'ohmylms' ),
+										form.signature_image_id
+									)
+								: __( 'No signature image.', 'ohmylms' )
+						}
+						value={ {
+							id: form.signature_image_id,
+							url: form.signature_url,
+						} }
+						accept={ IMAGE_MIME_TYPES }
+						invalid={ invalidResponse }
+						onChange={ ( image ) =>
+							setForm( ( current ) =>
+								current
+									? {
+											...current,
+											signature_image_id: image.id,
+											signature_url: image.url,
+										}
+									: current
+							)
+						}
+						onRemove={ () => {
+							update( 'signature_image_id', 0 );
+							update( 'signature_url', '' );
+						} }
+					/>
 					<TextControl
 						label={ __( 'Signature left (% of page)', 'ohmylms' ) }
 						type="number"
@@ -631,17 +626,6 @@ export default function CertificateEditorPage() {
 				/>
 			) }
 
-			{ picker && (
-				<MediaPicker
-					title={
-						'background' === picker
-							? __( 'Choose background image', 'ohmylms' )
-							: __( 'Choose signature image', 'ohmylms' )
-					}
-					onSelect={ selectImage }
-					onClose={ () => setPicker( null ) }
-				/>
-			) }
 			{ guard.pendingPath && (
 				<Modal
 					title={ __( 'Discard unsaved changes?', 'ohmylms' ) }

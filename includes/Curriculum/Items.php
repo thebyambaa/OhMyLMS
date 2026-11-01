@@ -9,6 +9,7 @@
  */
 namespace OhMyLMS\Curriculum;
 
+use OhMyLMS\Utility\Lock;
 use OhMyLMS\Utility\Transaction;
 
 defined( 'ABSPATH' ) || exit;
@@ -87,6 +88,19 @@ final class Items {
 	public static function all() {
 		global $wpdb;
 		return $wpdb->get_results( 'SELECT * FROM ' . self::table() . ' ORDER BY parent_id, position, id', ARRAY_A ) ?: array();
+	}
+
+	/**
+	 * Items whose name or code contains a search, by name (at most 20).
+	 *
+	 * @param string $search Search text.
+	 * @return array[]
+	 */
+	public static function search( $search ) {
+		global $wpdb;
+		$like = '%' . $wpdb->esc_like( $search ) . '%';
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE name LIKE %s OR code LIKE %s ORDER BY name LIMIT 20', self::table(), $like, $like ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Bounded search of the plugin's curriculum table; results change with every edit.
+		return is_array( $rows ) ? $rows : array();
 	}
 
 	/** Ordered child IDs of a parent.
@@ -203,19 +217,22 @@ final class Items {
 	 */
 	public static function exclusive( callable $work ) {
 		global $wpdb;
-		$lock = self::LOCK . '-' . md5( $wpdb->prefix );
-		if ( (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) !== '1' ) {
-			return Access::error( 'ohmylms_curriculum_busy', __( 'Another change is being saved. Try again in a moment.', 'ohmylms' ), 409 );
-		}
-		try {
-			return Transaction::run( $work );
-		} catch ( \Throwable $error ) {
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				error_log( 'OhMyLMS curriculum write failed: ' . $error->getMessage() ); }
-			return Access::error( 'ohmylms_curriculum_failed', __( 'The change could not be saved. Nothing was changed.', 'ohmylms' ), 500 );
-		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
-		}
+		return Lock::with(
+			self::LOCK . '-' . md5( $wpdb->prefix ),
+			5,
+			static function () use ( $work ) {
+				try {
+					return Transaction::run( $work );
+				} catch ( \Throwable $error ) {
+					if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+						error_log( 'OhMyLMS curriculum write failed: ' . $error->getMessage() ); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Only with WP_DEBUG.
+					return Access::error( 'ohmylms_curriculum_failed', __( 'The change could not be saved. Nothing was changed.', 'ohmylms' ), 500 );
+				}
+			},
+			static function () {
+				return Access::error( 'ohmylms_curriculum_busy', __( 'Another change is being saved. Try again in a moment.', 'ohmylms' ), 409 );
+			}
+		);
 	}
 
 	/** Write dense 0..n-1 positions for a sibling group, touching only rows that changed.

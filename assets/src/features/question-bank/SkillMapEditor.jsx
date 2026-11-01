@@ -10,11 +10,21 @@ import {
 
 /**
  * Format a skill choice.
- * @param {Object} skill Skill with its tree depth.
+ * @param {import('./model.mjs').FlatSkill} skill Skill with its tree depth.
  * @return {string} Indented skill label.
  */
 const skillLabel = ( skill ) =>
 	`${ '— '.repeat( skill.depth ) }${ skill.code ? `${ skill.code } · ` : '' }${ skill.name }`;
+/**
+ * Primary and supporting skills of each question part.
+ * @param {Object}                                          root0            Component properties.
+ * @param {import('./model.mjs').Skill[]}                   root0.skills     Skills to choose from.
+ * @param {import('./model.mjs').SkillMap|null}             [root0.value]    Skill map.
+ * @param {string[]}                                        [root0.parts]    Question parts.
+ * @param {boolean}                                         [root0.disabled] Read-only state.
+ * @param {(value: import('./model.mjs').SkillMap) => void} root0.onChange   Save the skill map.
+ * @return {React.ReactElement} Editor.
+ */
 export function SkillMapEditor( {
 	skills,
 	value,

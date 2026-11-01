@@ -7,6 +7,7 @@
 namespace OhMyLMS\Assessment;
 
 use OhMyLMS\QuestionBank\VersionPublisher;
+use OhMyLMS\Utility\Lock;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -93,7 +94,7 @@ final class Migration {
 		if ( ! Schema::ready() ) {
 			return self::state(); }
 		$lock = 'ohmylms-assessment-migration-' . md5( $wpdb->prefix );
-		if ( (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $lock ) ) !== '1' ) {
+		if ( ! Lock::acquire( $lock, 0 ) ) {
 			return self::state(); }
 		try {
 			$state = self::state();
@@ -128,7 +129,7 @@ final class Migration {
 			update_option( self::OPTION, $state, false );
 			return $state;
 		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+			Lock::release( $lock );
 		}
 	}
 

@@ -33,6 +33,42 @@ add_filter( 'post_type_link', 'ohmylms_content_link', 10, 2 );
 
 
 /**
+ * Whether a lesson, quiz or assignment can be linked through its course by slug.
+ *
+ * Drafts, pending and scheduled posts may have no slug yet and only open as previews, so they are
+ * linked by ID instead, the way WordPress links unpublished posts.
+ *
+ * @param WP_Post|int $content Content post or ID.
+ * @return bool
+ */
+function ohmylms_content_has_slug_link( $content ) {
+	$content = get_post( $content );
+	return $content && '' !== (string) $content->post_name && ! in_array( $content->post_status, array( 'draft', 'pending', 'auto-draft', 'future' ), true );
+}
+
+
+/**
+ * Link to a lesson, quiz or assignment by post type and ID.
+ *
+ * Used when the course part of the pretty link is unavailable (the course has no slug, or plain
+ * permalinks) or the content itself is unpublished. The rewrite rules and WordPress resolve it for
+ * any status, and it opens drafts as previews for editors when `preview=true` is added.
+ *
+ * @param int $content_id Content ID.
+ * @return string
+ */
+function ohmylms_content_query_link( $content_id ) {
+	return add_query_arg(
+		array(
+			'post_type' => get_post_type( $content_id ),
+			'p'         => (int) $content_id,
+		),
+		home_url( '/' )
+	);
+}
+
+
+/**
  * Get pretty permalink for ohmylms-lesson, ohmylms-quiz, or ohmylms-assignment, even if parent course is draft.
  *
  * @param int $content_id The ID of the lesson, quiz, or assignment.
@@ -63,6 +99,10 @@ function ohmylms_get_pretty_content_permalink( $content_id ) {
 
 	$content_slug = $post->post_name;
 
+	if ( ! ohmylms_content_has_slug_link( $post ) ) {
+		return ohmylms_content_query_link( $content_id );
+	}
+
 	// If permalinks are set to Plain, return a custom query URL.
 	if ( ! get_option( 'permalink_structure' ) ) {
 		if ( 'ohmylms-lesson' === $post_type ) {
@@ -82,6 +122,9 @@ function ohmylms_get_pretty_content_permalink( $content_id ) {
 
 	$course_slug  = $course->post_name;
 	$content_slug = $post->post_name;
+	if ( '' === (string) $course_slug ) {
+		return ohmylms_content_query_link( $content_id );
+	}
 
 	if ( 'ohmylms-lesson' === $post_type ) {
 		$url = home_url( "/$course_base/$course_slug/$lesson_base/$content_slug/" );

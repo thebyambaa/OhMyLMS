@@ -3,6 +3,7 @@ import { createElement } from '@wordpress/element';
 import { Button } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
+/** @return {Record<string, string>} Source labels. */
 const labels = () => ( {
 	write: __( 'Write here', 'ohmylms' ),
 	bank: __( 'Pick from bank', 'ohmylms' ),
@@ -13,12 +14,12 @@ const labels = () => ( {
  * The one choice of where a question comes from, shown by both the Question block and the Question Player
  * block so they read as a single block.
  *
- * @param {Object}                   root0               Component properties.
- * @param {string}                   root0.source        write, bank or skills.
- * @param {string[]}                 root0.allowed       Sources offered here.
- * @param {(source: string) => void} root0.onChange      Called with the chosen source.
- * @param {boolean}                  root0.allowReselect Call onChange for the active source too.
- * @return {Element|null} Switch, or nothing when there is only one source.
+ * @param {Object}                   root0                 Component properties.
+ * @param {string}                   root0.source          write, bank or skills.
+ * @param {string[]}                 root0.allowed         Sources offered here.
+ * @param {(source: string) => void} root0.onChange        Called with the chosen source.
+ * @param {boolean}                  [root0.allowReselect] Call onChange for the active source too.
+ * @return {React.ReactElement|null} Switch, or nothing when there is only one source.
  */
 export function QuestionSourceSwitch( {
 	source,

@@ -1878,10 +1878,6 @@
 	color: var(--hub-text);
 }
 
-.ohmylms-student-hub .oml-hub-lesson-group h3 {
-	margin-top: 16px;
-}
-
 .ohmylms-student-hub .oml-hub-subject summary::-webkit-details-marker {
 	display: none;
 }

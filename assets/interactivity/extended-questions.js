@@ -6,13 +6,84 @@
 		return;
 	}
 	const { el, setAnswer } = api.util;
-	const diagramModule = new URL(
-		'./diagram-labels.mjs',
-		document.currentScript.src
+	const moduleScript = /** @type {HTMLScriptElement} */ (
+		document.currentScript
 	);
-	diagramModule.search = new URL( document.currentScript.src ).search;
+	const diagramModule = new URL( './diagram-labels.mjs', moduleScript.src );
+	diagramModule.search = new URL( moduleScript.src ).search;
 	const { __, sprintf } = window.wp.i18n;
 	let instanceId = 0;
+
+	/** @typedef {{id: string, text: string}} ChoiceOption */
+	/** @typedef {{id: string, text: string, back?: string}} DeckCard */
+	/** @typedef {{id: string, x: number|string, y: number|string}} DiagramTarget */
+	/** @typedef {{id: string, at: number|string, prompt: string}} VideoCheckpoint */
+
+	/**
+	 * Public widget settings. Each type reads only its own fields; `choices` holds answer options,
+	 * except for `labeling`, where it is the list of label strings.
+	 *
+	 * @typedef {Object} ExtendedConfig
+	 * @property {DeckCard[]}                                                          [cards]       Deck and wheel cards.
+	 * @property {number|string}                                                       [seconds]     Timed games.
+	 * @property {ChoiceOption[]|string[]}                                             [choices]     Answer options, or labels.
+	 * @property {number|string}                                                       [min]         Graph axis minimum.
+	 * @property {number|string}                                                       [max]         Graph axis maximum.
+	 * @property {string}                                                              [mode]        Graph `line` mode.
+	 * @property {number|string}                                                       [max_seconds] Recording limit.
+	 * @property {string[]}                                                            [sources]     Video recording sources.
+	 * @property {ChoiceOption[]}                                                      [tokens]      Hot-text tokens.
+	 * @property {number|string}                                                       [max_misses]  Hangman.
+	 * @property {string}                                                              [shape]       Hangman word shape.
+	 * @property {string}                                                              [passage]     Passage text.
+	 * @property {Array<{id: string, label?: string, prompt?: string, kind?: string}>} [parts]       Passage parts.
+	 * @property {boolean}                                                             [multiple]    Match grid: several columns per row.
+	 * @property {Array<{id: string, label: string}>}                                  [columns]     Match grid columns.
+	 * @property {Array<{id: string, label: string}>}                                  [rows]        Match grid rows.
+	 * @property {string}                                                              [image_url]   Diagram image.
+	 * @property {DiagramTarget[]}                                                     [targets]     Labeling pins.
+	 * @property {string}                                                              [video_url]   Interactive video link.
+	 * @property {VideoCheckpoint[]}                                                   [checkpoints] Interactive video checkpoints.
+	 */
+
+	/*
+	 * The parts of JSXGraph and the YouTube IFrame API used here; both load at runtime and their
+	 * types are not dependencies.
+	 */
+
+	/**
+	 * @typedef {Object} JxgElement
+	 * @property {string}                                       elType Element kind.
+	 * @property {() => number}                                 X      X coordinate.
+	 * @property {() => number}                                 Y      Y coordinate.
+	 * @property {(event: string, handler: () => void) => void} on     Listen.
+	 */
+
+	/**
+	 * @typedef {Object} JxgBoard
+	 * @property {(type: string, parents: unknown[], attributes: Object) => JxgElement} create                  Add an element.
+	 * @property {(event: string, handler: (event: Event) => void) => void}             on                      Listen.
+	 * @property {(event: Event) => JxgElement[]}                                       getAllObjectsUnderMouse Elements under the pointer.
+	 * @property {(event: Event) => number[]}                                           getUsrCoordsOfMouse     Pointer position in user units.
+	 * @property {(element: JxgElement) => void}                                        removeObject            Remove an element.
+	 * @property {() => void}                                                           fullUpdate              Redraw.
+	 * @property {JxgElement[]}                                                         objectsList             Elements.
+	 */
+
+	/**
+	 * @typedef {Object} YouTubePlayer
+	 * @property {(seconds: number, allowSeekAhead: boolean) => void} seekTo           Seek.
+	 * @property {() => void}                                         pauseVideo       Pause.
+	 * @property {() => number}                                       getCurrentTime   Position in seconds.
+	 * @property {() => number}                                       [getPlayerState] Player state.
+	 */
+
+	/**
+	 * @typedef {Object} YouTubeApi
+	 * @property {new ( holder: HTMLElement, options: Object ) => YouTubePlayer} Player      Player.
+	 * @property {{PLAYING: number}}                                             PlayerState States.
+	 */
+
 	const types = [
 		'passage',
 		'graphing',
@@ -39,11 +110,22 @@
 		'whack-a-mole',
 		'flying-fruit',
 	];
+	/**
+	 * @param {string}                      text   Label.
+	 * @param {(event: MouseEvent) => void} action Click handler.
+	 * @return {HTMLButtonElement} Button.
+	 */
 	const button = ( text, action ) => {
 		const node = el( 'button', { type: 'button', text } );
 		node.addEventListener( 'click', action );
 		return node;
 	};
+	/**
+	 * @param {HTMLElement} root        Question root.
+	 * @param {string}      key         Answer key.
+	 * @param {string}      label       Accessible label.
+	 * @param {boolean}     [multiline] Textarea instead of a text input.
+	 */
 	function field( root, key, label, multiline = false ) {
 		const wrapper = el( 'label', { class: 'ohmylms-extended-field' }, [
 			el( 'span', { text: label } ),
@@ -62,9 +144,9 @@
 	/**
 	 * Ungraded card activities. Every card is public content, so nothing here
 	 * hides an answer key; the answer only records that the learner took part.
-	 * @param root
-	 * @param type
-	 * @param config
+	 * @param {HTMLElement}    root   Question root.
+	 * @param {string}         type   Deck type.
+	 * @param {ExtendedConfig} config Settings.
 	 */
 	function deck( root, type, config ) {
 		const cards = config.cards || [];
@@ -75,6 +157,7 @@
 			role: 'status',
 			'aria-live': 'polite',
 		} );
+		/** @param {DeckCard} card Card the learner saw. */
 		const mark = ( card ) => {
 			seen.add( card.id );
 			setAnswer( root, 'seen', String( seen.size ) );
@@ -208,9 +291,9 @@
 	/**
 	 * Timed answer-pick games. The learner only chooses an answer; the server
 	 * holds the key and does the grading, as for the gameshow quiz.
-	 * @param root
-	 * @param type
-	 * @param config
+	 * @param {HTMLElement}    root   Question root.
+	 * @param {string}         type   Game type.
+	 * @param {ExtendedConfig} config Settings.
 	 */
 	function pick( root, type, config ) {
 		const total = Math.max( 5, Number( config.seconds ) || 20 );
@@ -228,6 +311,7 @@
 		const bar = el( 'div', { class: 'ohmylms-gameshow-bar' }, [
 			el( 'span' ),
 		] );
+		/** @type {Object<string, string>} */
 		const hints = {
 			'timed-true-false': __(
 				'Choose True or False before the time runs out.',
@@ -243,7 +327,10 @@
 			),
 		};
 		const pickField = el( 'div', { class: 'ohmylms-pick-field' } );
-		const buttons = ( config.choices || [] ).map( ( choice, index ) => {
+		/** @type {HTMLButtonElement[]} */
+		const buttons = /** @type {ChoiceOption[]} */ (
+			config.choices || []
+		).map( ( choice, index ) => {
 			const target = el( 'button', {
 				type: 'button',
 				class: 'ohmylms-pick-target',
@@ -315,9 +402,9 @@
 	 * to place points; points can be dragged and snap to quarter units. Line mode
 	 * keeps two points and draws the line through them. The answer is the same JSON
 	 * list of { x, y } points the server has always graded.
-	 * @param root
-	 * @param config
-	 * @param instance
+	 * @param {HTMLElement}    root     Question root.
+	 * @param {ExtendedConfig} config   Settings.
+	 * @param {number}         instance Widget number on the page.
 	 */
 	function graph( root, config, instance ) {
 		const min = Number( config.min ?? -5 );
@@ -347,9 +434,19 @@
 			'aria-live': 'polite',
 			text: __( 'No points placed yet.', 'ohmylms' ),
 		} );
+		/** @type {JxgElement[]} */
 		const points = [];
+		/** @type {JxgBoard|null} */
 		let board = null;
+		/**
+		 * @param {number} value Coordinate.
+		 * @return {number} Rounded to a quarter unit.
+		 */
 		const snap = ( value ) => Math.round( value * 4 ) / 4;
+		/**
+		 * @param {number} value Coordinate.
+		 * @return {boolean} Inside the axes.
+		 */
 		const inRange = ( value ) => value >= min && value <= max;
 		const write = () => {
 			const list = points.map( ( point ) => ( {
@@ -369,6 +466,10 @@
 						.join( '  ' )
 				: __( 'No points placed yet.', 'ohmylms' );
 		};
+		/**
+		 * @param {number} x X in user units.
+		 * @param {number} y Y in user units.
+		 */
 		const place = ( x, y ) => {
 			if (
 				! board ||
@@ -407,48 +508,57 @@
 			if ( board || ! window.JXG ) {
 				return;
 			}
-			board = window.JXG.JSXGraph.initBoard( box, {
-				document: box.ownerDocument,
-				boundingbox: [ min, max, max, min ],
-				axis: true,
-				grid: true,
-				showCopyright: false,
-				showNavigation: false,
-				pan: { enabled: false },
-				zoom: { enabled: false },
-			} );
+			board = /** @type {JxgBoard} */ (
+				window.JXG.JSXGraph.initBoard( box, {
+					document: box.ownerDocument,
+					boundingbox: [ min, max, max, min ],
+					axis: true,
+					grid: true,
+					showCopyright: false,
+					showNavigation: false,
+					pan: { enabled: false },
+					zoom: { enabled: false },
+				} )
+			);
 			board.on( 'down', ( event ) => {
+				const current = /** @type {JxgBoard} */ ( board );
 				if (
-					board
+					current
 						.getAllObjectsUnderMouse( event )
 						.some( ( object ) => object.elType === 'point' )
 				) {
 					return;
 				}
-				const coords = board.getUsrCoordsOfMouse( event );
+				const coords = current.getUsrCoordsOfMouse( event );
 				place( coords[ 0 ], coords[ 1 ] );
 			} );
 		};
 		const undo = button( __( 'Undo last point', 'ohmylms' ), () => {
 			const last = points.pop();
 			if ( last && board ) {
-				board.removeObject( last );
-				board.fullUpdate();
+				const current = board;
+				current.removeObject( last );
+				current.fullUpdate();
 				if ( line && points.length < 2 ) {
-					board.objectsList
+					current.objectsList
 						.filter( ( object ) => object.elType === 'line' )
-						.forEach( ( object ) => board.removeObject( object ) );
+						.forEach( ( object ) =>
+							current.removeObject( object )
+						);
 				}
 				write();
 			}
 		} );
 		const clear = button( __( 'Clear', 'ohmylms' ), () => {
+			const current = /** @type {JxgBoard} */ ( board );
 			while ( points.length ) {
-				board.removeObject( points.pop() );
+				current.removeObject(
+					/** @type {JxgElement} */ ( points.pop() )
+				);
 			}
-			board.objectsList
+			current.objectsList
 				.filter( ( object ) => object.elType === 'line' )
-				.forEach( ( object ) => board.removeObject( object ) );
+				.forEach( ( object ) => current.removeObject( object ) );
 			write();
 		} );
 		// Typed coordinates are the keyboard and screen reader route.
@@ -495,6 +605,11 @@
 			start();
 		}
 	}
+	/**
+	 * @param {HTMLElement}    root    Question root.
+	 * @param {ExtendedConfig} config  Settings.
+	 * @param {boolean}        drawing Free drawing instead of a coordinate graph.
+	 */
 	function plot( root, config, drawing ) {
 		const canvas = el( 'canvas', {
 			width: 640,
@@ -508,8 +623,13 @@
 		const min = Number( config.min ?? -5 ),
 			max = Number( config.max ?? 5 ),
 			span = max - min;
-		let points = [],
-			painting = false;
+		/** @type {Array<{x: number, y: number, start?: boolean}>} */
+		let points = [];
+		let painting = false;
+		/**
+		 * @param {{x: number, y: number}} point Point in graph units.
+		 * @return {{x: number, y: number}} Canvas position.
+		 */
 		const pixel = ( point ) => ( {
 			x: ( ( point.x - min ) / span ) * 640,
 			y: ( ( max - point.y ) / span ) * 400,
@@ -593,6 +713,10 @@
 			);
 			paint();
 		};
+		/**
+		 * @param {PointerEvent} event   Pointer position.
+		 * @param {boolean}      [start] Starts a new stroke.
+		 */
 		function add( event, start = false ) {
 			const bounds = canvas.getBoundingClientRect();
 			const x = Math.max(
@@ -620,19 +744,29 @@
 			}
 			write();
 		}
-		canvas.addEventListener( 'pointerdown', ( event ) => {
-			canvas.setPointerCapture( event.pointerId );
-			painting = true;
-			if ( ! drawing && config.mode === 'line' && points.length === 2 ) {
-				points = [];
+		canvas.addEventListener(
+			'pointerdown',
+			( /** @type {PointerEvent} */ event ) => {
+				canvas.setPointerCapture( event.pointerId );
+				painting = true;
+				if (
+					! drawing &&
+					config.mode === 'line' &&
+					points.length === 2
+				) {
+					points = [];
+				}
+				add( event, true );
 			}
-			add( event, true );
-		} );
-		canvas.addEventListener( 'pointermove', ( event ) => {
-			if ( drawing && painting ) {
-				add( event );
+		);
+		canvas.addEventListener(
+			'pointermove',
+			( /** @type {PointerEvent} */ event ) => {
+				if ( drawing && painting ) {
+					add( event );
+				}
 			}
-		} );
+		);
 		canvas.addEventListener( 'pointerup', () => {
 			painting = false;
 		} );
@@ -690,9 +824,10 @@
 		);
 		paint();
 		root.addEventListener( 'change', ( event ) => {
-			if ( event.target.getAttribute( 'data-answer-key' ) === 'points' ) {
+			const target = /** @type {HTMLInputElement} */ ( event.target );
+			if ( target.getAttribute( 'data-answer-key' ) === 'points' ) {
 				try {
-					points = JSON.parse( event.target.value || '[]' );
+					points = JSON.parse( target.value || '[]' );
 					paint();
 				} catch {
 					points = [];
@@ -700,6 +835,11 @@
 			}
 		} );
 	}
+	/**
+	 * @param {HTMLElement}    root   Question root.
+	 * @param {string}         type   `audio-response` or `video-response`.
+	 * @param {ExtendedConfig} config Settings.
+	 */
 	function media( root, type, config ) {
 		const video = type === 'video-response';
 		const player = el( video ? 'video' : 'audio', {
@@ -728,6 +868,10 @@
 				4 * 1024 * 1024
 		);
 		const megabytes = Math.max( 1, Math.floor( limit / 1048576 ) );
+		/**
+		 * @param {Blob}   blob   Recording or picked file.
+		 * @param {string} [name] File name.
+		 */
 		function accept( blob, name ) {
 			if ( blob.size > limit ) {
 				status.textContent = sprintf(
@@ -748,9 +892,12 @@
 				return;
 			}
 			const mime = ( blob.type || '' ).split( ';' )[ 0 ];
-			const extension =
-				( name || '' ).split( '.' ).pop().toLowerCase() ||
-				mime.split( '/' ).pop();
+			// split() always returns at least one part, so pop() is a string.
+			const extension = /** @type {string} */ (
+				/** @type {string} */ (
+					( name || '' ).split( '.' ).pop()
+				).toLowerCase() || mime.split( '/' ).pop()
+			);
 			const body = new FormData();
 			body.append(
 				'file',
@@ -810,12 +957,22 @@
 		} );
 		root.appendChild( upload );
 
+		/** @type {HTMLButtonElement[]} */
 		const buttons = [];
 		const stopButton = button( __( 'Stop recording', 'ohmylms' ), () =>
 			stop()
 		);
 		stopButton.disabled = true;
-		let recorder, stream, timer, ticker, audioContext;
+		/** @type {MediaRecorder|undefined} */
+		let recorder;
+		/** @type {MediaStream|undefined} */
+		let stream;
+		/** @type {ReturnType<typeof setTimeout>|undefined} */
+		let timer;
+		/** @type {ReturnType<typeof setInterval>|undefined} */
+		let ticker;
+		/** @type {AudioContext|null|undefined} */
+		let audioContext;
 		const finish = () => {
 			stream?.getTracks().forEach( ( track ) => track.stop() );
 			audioContext?.close();
@@ -832,13 +989,18 @@
 				finish();
 			}
 		}
+		/**
+		 * @param {string[]} list MIME types, preferred first.
+		 * @return {string|undefined} The first one the browser can record.
+		 */
 		const supported = ( list ) =>
 			list.find( ( mime ) =>
 				window.MediaRecorder?.isTypeSupported?.( mime )
 			);
 		/**
 		 * Camera and microphone, or the screen with the microphone mixed into its sound.
-		 * @param source Either camera or screen.
+		 * @param {string} source Either camera or screen.
+		 * @return {Promise<MediaStream>} Stream to record.
 		 */
 		async function capture( source ) {
 			if ( source !== 'screen' ) {
@@ -854,6 +1016,7 @@
 				video: true,
 				audio: true,
 			} );
+			/** @type {MediaStream|null} */
 			let microphone = null;
 			try {
 				microphone = await navigator.mediaDevices.getUserMedia( {
@@ -862,15 +1025,17 @@
 			} catch {
 				microphone = null;
 			}
-			const withSound = [ screen, microphone ].filter(
-				( item ) => item && item.getAudioTracks().length
+			const withSound = /** @type {MediaStream[]} */ (
+				[ screen, microphone ].filter(
+					( item ) => item && item.getAudioTracks().length
+				)
 			);
 			const tracks = [ ...screen.getVideoTracks() ];
 			if ( withSound.length && window.AudioContext ) {
 				audioContext = new window.AudioContext();
 				const mix = audioContext.createMediaStreamDestination();
 				withSound.forEach( ( item ) =>
-					audioContext
+					/** @type {AudioContext} */ ( audioContext )
 						.createMediaStreamSource(
 							new MediaStream( item.getAudioTracks() )
 						)
@@ -890,6 +1055,7 @@
 			screen.getVideoTracks()[ 0 ]?.addEventListener( 'ended', stop );
 			return combined;
 		}
+		/** @param {string} source `camera` or `screen`. */
 		async function record( source ) {
 			try {
 				if (
@@ -928,6 +1094,7 @@
 					...( video ? { videoBitsPerSecond: 1500000 } : {} ),
 					audioBitsPerSecond: 96000,
 				} );
+				/** @type {Blob[]} */
 				const chunks = [];
 				recorder.addEventListener( 'dataavailable', ( event ) => {
 					if ( event.data.size ) {
@@ -935,7 +1102,9 @@
 					}
 				} );
 				recorder.addEventListener( 'stop', () => {
-					const blobType = recorder.mimeType.split( ';' )[ 0 ];
+					const blobType = /** @type {MediaRecorder} */ (
+						recorder
+					).mimeType.split( ';' )[ 0 ];
 					finish();
 					player.srcObject = null;
 					accept( new Blob( chunks, { type: blobType } ) );
@@ -968,7 +1137,8 @@
 				timer = setTimeout( stop, seconds * 1000 );
 			} catch ( error ) {
 				status.textContent =
-					error?.message === 'screen'
+					/** @type {Error|undefined} */ ( error )?.message ===
+					'screen'
 						? __(
 								'Screen recording is not supported in this browser. Use a camera recording or upload a file.',
 								'ohmylms'
@@ -984,6 +1154,7 @@
 			video && Array.isArray( config.sources ) && config.sources.length
 				? config.sources
 				: [ 'camera', 'screen' ];
+		/** @type {Object<string, string>} */
 		const labels = video
 			? {
 					camera: __( 'Record camera', 'ohmylms' ),
@@ -1011,7 +1182,7 @@
 	 * How to play an interactive video link. Mirrors videoSource in
 	 * assets/src/features/question-editor/extendedModel.mjs; only YouTube, Google Drive
 	 * and OneDrive addresses are ever placed in an iframe.
-	 * @param input Saved link.
+	 * @param {unknown} input Saved link.
 	 */
 	function videoSource( input ) {
 		const none = { provider: 'invalid', embed: '', id: '' };
@@ -1028,6 +1199,7 @@
 		}
 		const host = url.hostname.toLowerCase().replace( /^www\./, '' );
 		const parts = url.pathname.split( '/' ).filter( Boolean );
+		/** @param {string|null|undefined} id Video id. */
 		const youtube = ( id ) =>
 			/^[\w-]{11}$/.test( id || '' )
 				? { provider: 'youtube', embed: '', id }
@@ -1087,8 +1259,13 @@
 		}
 		return { provider: 'file', embed: url.href, id: '' };
 	}
+	/** @type {Promise<YouTubeApi>|null} */
 	let youtubeApi = null;
-	/** Load the YouTube player API once. */
+	/**
+	 * Load the YouTube player API once.
+	 *
+	 * @return {Promise<YouTubeApi>} The `YT` namespace.
+	 */
 	function loadYouTube() {
 		if ( window.YT?.Player ) {
 			return Promise.resolve( window.YT );
@@ -1107,6 +1284,11 @@
 		}
 		return youtubeApi;
 	}
+	/**
+	 * @param {HTMLElement}    root   Question root.
+	 * @param {string}         type   Question type.
+	 * @param {ExtendedConfig} config Public settings.
+	 */
 	function build( root, type, config ) {
 		const instance = ++instanceId;
 		root.classList.add( 'ohmylms-extended-question' );
@@ -1163,13 +1345,14 @@
 				root.appendChild( cloud );
 				input.addEventListener( 'input', () => {
 					cloud.textContent = '';
+					/** @type {Map<string, number>} */
 					const counts = new Map();
 					input.value
 						.trim()
 						.split( /\s+/ )
 						.filter( Boolean )
 						.slice( 0, 100 )
-						.forEach( ( word ) =>
+						.forEach( ( /** @type {string} */ word ) =>
 							counts.set( word, ( counts.get( word ) || 0 ) + 1 )
 						);
 					counts.forEach( ( count, word ) =>
@@ -1189,12 +1372,16 @@
 		}
 		if ( type === 'hot-text' ) {
 			const tokens = config.tokens || [];
-			const byId = new Map( tokens.map( ( token ) => [ token.id, token ] ) );
+			const byId = new Map(
+				tokens.map( ( token ) => [ token.id, token ] )
+			);
 			// Legacy questions have no passage: read their tokens as one.
 			const passage =
 				typeof config.passage === 'string' && config.passage.trim()
 					? config.passage
-					: tokens.map( ( token ) => '[[' + token.id + ']]' ).join( ' ' );
+					: tokens
+							.map( ( token ) => '[[' + token.id + ']]' )
+							.join( ' ' );
 			const order = [ ...passage.matchAll( /\[\[([A-Za-z0-9_-]+)\]\]/g ) ]
 				.map( ( match ) => match[ 1 ] )
 				.filter( ( id ) => byId.has( id ) );
@@ -1210,18 +1397,25 @@
 			const body = el( 'div', {
 				class: 'ohmylms-hot-text',
 				role: 'group',
-				'aria-label': __( 'Passage with selectable options', 'ohmylms' ),
+				'aria-label': __(
+					'Passage with selectable options',
+					'ohmylms'
+				),
 			} );
 			let last = 0;
-			const addText = ( text ) => {
+			const addText = ( /** @type {string} */ text ) => {
 				text.split( /\n{2,}/ ).forEach( ( chunk, index ) => {
 					if ( index > 0 ) {
-						body.appendChild( el( 'span', { class: 'ohmylms-hot-text__break' } ) );
+						body.appendChild(
+							el( 'span', { class: 'ohmylms-hot-text__break' } )
+						);
 					}
 					body.appendChild( document.createTextNode( chunk ) );
 				} );
 			};
-			for ( const match of passage.matchAll( /\[\[([A-Za-z0-9_-]+)\]\]/g ) ) {
+			for ( const match of passage.matchAll(
+				/\[\[([A-Za-z0-9_-]+)\]\]/g
+			) ) {
 				addText( passage.slice( last, match.index ) );
 				last = match.index + match[ 0 ].length;
 				const token = byId.get( match[ 1 ] );
@@ -1231,12 +1425,14 @@
 				}
 				const position = order.indexOf( token.id ) + 1;
 				const item = button( '', () => {
-					const selected = item.getAttribute( 'aria-pressed' ) !== 'true';
+					const selected =
+						item.getAttribute( 'aria-pressed' ) !== 'true';
 					item.setAttribute( 'aria-pressed', String( selected ) );
 					setAnswer( root, token.id, selected ? '1' : '' );
 				} );
 				item.className +=
-					' ohmylms-hot-text__option ohmylms-ht-color-' + ( ( position - 1 ) % 6 );
+					' ohmylms-hot-text__option ohmylms-ht-color-' +
+					( ( position - 1 ) % 6 );
 				item.appendChild(
 					el( 'span', {
 						class: 'ohmylms-hot-text__num',
@@ -1356,7 +1552,10 @@
 				el( 'span' ),
 			] );
 			root.append( clock, bar );
-			const cards = ( config.choices || [] ).map( ( choice, index ) => {
+			/** @type {HTMLButtonElement[]} */
+			const cards = /** @type {ChoiceOption[]} */ (
+				config.choices || []
+			).map( ( choice, index ) => {
 				const card = el( 'button', {
 					type: 'button',
 					class: 'ohmylms-gameshow-choice',
@@ -1426,6 +1625,7 @@
 		}
 		if ( type === 'hangman' ) {
 			const max = Math.max( 1, Number( config.max_misses ) || 6 );
+			/** @type {string[]} */
 			const guessed = [];
 			root.classList.add( 'ohmylms-activity' );
 			const shape = el( 'p', {
@@ -1450,7 +1650,9 @@
 				role: 'group',
 				'aria-label': __( 'Letters', 'ohmylms' ),
 			} );
+			/** @type {Map<string, HTMLButtonElement>} */
 			const keys = new Map();
+			/** @param {string} letter Lower-case letter. */
 			const guess = ( letter ) => {
 				if ( guessed.includes( letter ) ) {
 					return;
@@ -1475,6 +1677,7 @@
 					'абвгдеёжзийклмноөпрстуүфхцчшщъыьэюя',
 				],
 			];
+			/** @param {string} letters Alphabet to show. */
 			const fill = ( letters ) => {
 				keyboard.textContent = '';
 				keys.clear();
@@ -1494,11 +1697,12 @@
 			const tabs = el( 'div', { class: 'ohmylms-hangman-tabs' } );
 			alphabets.forEach( ( [ label, letters ], index ) => {
 				const tab = button( label, () => {
-					tabs.querySelectorAll( 'button' ).forEach( ( other ) =>
-						other.setAttribute(
-							'aria-pressed',
-							String( other === tab )
-						)
+					tabs.querySelectorAll( 'button' ).forEach(
+						( /** @type {HTMLButtonElement} */ other ) =>
+							other.setAttribute(
+								'aria-pressed',
+								String( other === tab )
+							)
 					);
 					fill( letters );
 				} );
@@ -1510,25 +1714,32 @@
 			return;
 		}
 		if ( type === 'poll' ) {
-			( config.choices || [] ).forEach( ( choice ) => {
-				const label = el( 'label', {
-						class: 'ohmylms-preview-choice',
-					} ),
-					input = el( 'input', {
-						type: 'radio',
-						name: 'ohmylms-poll-' + instance,
+			/** @type {ChoiceOption[]} */ ( config.choices || [] ).forEach(
+				( choice ) => {
+					const label = el( 'label', {
+							class: 'ohmylms-preview-choice',
+						} ),
+						input = el( 'input', {
+							type: 'radio',
+							name: 'ohmylms-poll-' + instance,
+						} );
+					input.addEventListener( 'change', () => {
+						root.querySelectorAll( 'input[type="radio"]' ).forEach(
+							( option ) => {
+								/** @type {HTMLInputElement} */ (
+									option
+								).checked = option === input;
+							}
+						);
+						setAnswer( root, 'choice', choice.id );
 					} );
-				input.addEventListener( 'change', () => {
-					root.querySelectorAll( 'input[type="radio"]' ).forEach(
-						( option ) => {
-							option.checked = option === input;
-						}
+					label.append(
+						input,
+						document.createTextNode( choice.text )
 					);
-					setAnswer( root, 'choice', choice.id );
-				} );
-				label.append( input, document.createTextNode( choice.text ) );
-				root.appendChild( label );
-			} );
+					root.appendChild( label );
+				}
+			);
 			return;
 		}
 		if ( type === 'passage' ) {
@@ -1654,6 +1865,7 @@
 				image.style.width = Math.round( width * scale ) + 'px';
 				image.style.height = Math.round( height * scale ) + 'px';
 			};
+			/** @param {KeyboardEvent} event Keydown while full screen. */
 			const onKey = ( event ) => {
 				if ( event.key === 'Escape' ) {
 					setFull( false );
@@ -1674,6 +1886,7 @@
 					}
 				}
 			};
+			/** @param {boolean} on Show the full-screen view. */
 			function setFull( on ) {
 				box.classList.toggle( 'ohmylms-diagram-full', on );
 				document.body.classList.toggle( 'ohmylms-diagram-open', on );
@@ -1701,19 +1914,23 @@
 			if ( type === 'labeling' ) {
 				( config.targets || [] ).forEach( ( target ) => {
 					let input = Array.from(
-						root.querySelectorAll( 'input[data-answer-key]' )
+						/** @type {Iterable<HTMLInputElement>} */ (
+							root.querySelectorAll( 'input[data-answer-key]' )
+						)
 					).find(
 						( answerField ) =>
 							answerField.dataset.answerKey === target.id
 					);
 					if ( ! input ) {
-						input = el( 'input', {
-							type: 'hidden',
-							'data-answer-key': target.id,
-							name: root.dataset.namePrefix
-								? `${ root.dataset.namePrefix }[${ target.id }]`
-								: null,
-						} );
+						input = /** @type {HTMLInputElement} */ (
+							el( 'input', {
+								type: 'hidden',
+								'data-answer-key': target.id,
+								name: root.dataset.namePrefix
+									? `${ root.dataset.namePrefix }[${ target.id }]`
+									: null,
+							} )
+						);
 						root.appendChild( input );
 					}
 
@@ -1763,7 +1980,16 @@
 					text: '●',
 				} );
 				const inputs = {};
+				/**
+				 * @param {number}  x           Left, in percent.
+				 * @param {number}  y           Top, in percent.
+				 * @param {boolean} [fromInput] Typed into the fields (leave them as typed).
+				 */
 				const place = ( x, y, fromInput ) => {
+					/**
+					 * @param {number} value Percent.
+					 * @return {number} Clamped to 0–100, one decimal.
+					 */
 					const round = ( value ) =>
 						Math.round(
 							Math.max( 0, Math.min( 100, value ) ) * 10
@@ -1780,14 +2006,18 @@
 						inputs.y.value = y;
 					}
 				};
-				image.addEventListener( 'click', ( event ) => {
-					const bounds = image.getBoundingClientRect();
-					place(
-						( ( event.clientX - bounds.left ) / bounds.width ) *
-							100,
-						( ( event.clientY - bounds.top ) / bounds.height ) * 100
-					);
-				} );
+				image.addEventListener(
+					'click',
+					( /** @type {MouseEvent} */ event ) => {
+						const bounds = image.getBoundingClientRect();
+						place(
+							( ( event.clientX - bounds.left ) / bounds.width ) *
+								100,
+							( ( event.clientY - bounds.top ) / bounds.height ) *
+								100
+						);
+					}
+				);
 				const x = field(
 						root,
 						'x',
@@ -1817,18 +2047,24 @@
 		if ( type === 'interactive-video' ) {
 			const source = videoSource( config.video_url );
 			const frame = el( 'div', { class: 'ohmylms-video-frame' } );
+			/** @type {HTMLVideoElement|null} */
 			let player = null;
+			/** @type {(seconds: number) => void} */
 			let seekTo = () => {};
+			/** @type {(seconds: number, pause: () => void) => void} */
 			let onTime = () => {};
 			if ( source.provider === 'file' ) {
-				player = el( 'video', { controls: '', src: source.embed } );
+				player = /** @type {HTMLVideoElement} */ (
+					el( 'video', { controls: '', src: source.embed } )
+				);
 				root.appendChild( player );
+				const video = player;
 				seekTo = ( seconds ) => {
-					player.currentTime = seconds;
-					player.pause();
+					video.currentTime = seconds;
+					video.pause();
 				};
 				player.addEventListener( 'timeupdate', () =>
-					onTime( player.currentTime, () => player.pause() )
+					onTime( video.currentTime, () => video.pause() )
 				);
 			} else if ( source.provider === 'youtube' ) {
 				root.appendChild( frame );
@@ -1882,6 +2118,7 @@
 			const timed =
 				source.provider === 'file' || source.provider === 'youtube';
 			const reached = new Set();
+			/** @type {Array<{checkpoint: VideoCheckpoint, panel: HTMLElement, input: HTMLInputElement}>} */
 			const checkpoints = [];
 			( config.checkpoints || [] ).forEach( ( checkpoint ) => {
 				const panel = el(
@@ -1929,6 +2166,10 @@
 	}
 	types.forEach( ( type ) =>
 		api.register( type, {
+			/**
+			 * @param {HTMLElement}    root   Question root.
+			 * @param {ExtendedConfig} config Public settings.
+			 */
 			build: ( root, config ) => build( root, type, config ),
 		} )
 	);

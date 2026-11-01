@@ -438,6 +438,8 @@
     "assets/dist/frontend/add-to-cart.js",
     "assets/dist/frontend/checkout.js",
     "assets/dist/frontend/stripe.js",
-    "assets/dist/frontend/tax-calculation.js"
+    "assets/dist/frontend/tax-calculation.js",
+    "assets/css/style.css",
+    "assets/css/style-rtl.css"
   ]
 }

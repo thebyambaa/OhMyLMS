@@ -10,7 +10,7 @@ import type { PeriodDays, WidgetContext } from './shell/model';
 import { PeriodSwitcher } from './shell/PeriodSwitcher';
 import { ScopePicker } from './shell/ScopePicker';
 import { WidgetCard } from './shell/WidgetCard';
-import { useRequest } from './useRequest';
+import { useRequest } from '../../hooks/useRequest';
 import { dashboardWidgets } from './widgets';
 import type { WidgetRegistry } from './widgets/registry';
 import './dashboard.css';
@@ -29,7 +29,11 @@ export function DashboardShell( {
 	registry?: WidgetRegistry;
 } ) {
 	const [ params, setParams ] = useSearchParams();
-	const scopes = useRequest( ( signal ) => getScopes( signal ), 'scopes' );
+	const scopes = useRequest( ( signal ) => getScopes( signal ), {
+		key: 'scopes',
+		keepData: true,
+		errorShape: 'object',
+	} );
 	const period = parsePeriod( params.get( 'period' ) );
 	const scope = scopes.data
 		? chooseScope( scopes.data, params.get( 'scope' ) )

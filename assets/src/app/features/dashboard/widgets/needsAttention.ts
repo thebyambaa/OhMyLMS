@@ -1,4 +1,7 @@
 import { invalidResponse, record } from '../model';
+import { createValidators } from '../../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
 
 export type AttentionTone = 'error' | 'warning' | 'info';
 
@@ -23,13 +26,6 @@ export interface NeedsAttention {
 }
 
 const TONES: readonly AttentionTone[] = [ 'error', 'warning', 'info' ];
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
-}
 
 function integer( value: unknown ): number {
 	if ( 'number' !== typeof value || ! Number.isSafeInteger( value ) ) {

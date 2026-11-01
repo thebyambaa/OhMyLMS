@@ -45,16 +45,7 @@ for ( const asset of manifest.assets ) {
 	const destination = path.join( outputRoot, asset.output );
 	fs.mkdirSync( path.dirname( destination ), { recursive: true } );
 	if ( ! asset.output.endsWith( '.js' ) ) {
-		if (
-			! [ 'assets/css/style.css', 'assets/css/style-rtl.css' ].includes(
-				asset.output
-			)
-		) {
-			fs.copyFileSync(
-				path.join( sourceRoot, asset.source ),
-				destination
-			);
-		}
+		fs.copyFileSync( path.join( sourceRoot, asset.source ), destination );
 	} else {
 		const label = 'ohmylms-source:///' + asset.source;
 		const code = fs.readFileSync(

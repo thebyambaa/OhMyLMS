@@ -9,13 +9,15 @@ import {
 } from '@wordpress/components';
 import { Suspense, useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
+import { MediaPicker } from '../../components/MediaPicker';
 import { normalizeApiError } from '../../lib/api';
+import { IMAGE_MIME_TYPES } from '../../lib/media';
 import { PointPricePanel } from '../commerce/public';
 import { updateCourse } from './api';
 import { CourseViewLink } from './CourseViewLink';
-import { MediaPicker } from './MediaPicker';
 import {
 	formFromCourse,
+	invalidResponse,
 	isDirty,
 	isValid,
 	LEVELS,
@@ -122,7 +124,6 @@ export function CourseForm( {
 	const [ busy, setBusy ] = useState( false );
 	const [ message, setMessage ] = useState< string | null >( null );
 	const [ failure, setFailure ] = useState< string | null >( null );
-	const [ picking, setPicking ] = useState( false );
 	const [ reveal, setReveal ] = useState( false );
 	const summary = useRef< HTMLDivElement >( null );
 	const operation = useRef< AbortController | null >( null );
@@ -336,7 +337,12 @@ export function CourseForm( {
 				} }
 			>
 				{ /* Lets Enter in a field submit; the visible Save is in the header. */ }
-				<button type="submit" hidden aria-hidden="true" tabIndex={ -1 } />
+				<button
+					type="submit"
+					hidden
+					aria-hidden="true"
+					tabIndex={ -1 }
+				/>
 				{ details && (
 					<div className="oml-editor-grid">
 						<fieldset
@@ -398,203 +404,222 @@ export function CourseForm( {
 										'ohmylms'
 									) }
 								</summary>
-							<TextareaControl
-								label={ __(
-									'What students will learn',
-									'ohmylms'
-								) }
-								value={ form.learning_outcomes }
-								rows={ 3 }
-								aria-invalid={ invalid( 'learning_outcomes' ) }
-								aria-describedby={ described(
-									'learning_outcomes'
-								) }
-								onChange={ ( next ) =>
-									update( 'learning_outcomes', next )
-								}
-							/>
-							<FieldError
-								id="oml-course-learning_outcomes-error"
-								message={ errors.learning_outcomes }
-							/>
-							<TextareaControl
-								label={ __(
-									'Who the course is for',
-									'ohmylms'
-								) }
-								value={ form.target_audience }
-								rows={ 3 }
-								aria-invalid={ invalid( 'target_audience' ) }
-								aria-describedby={ described(
-									'target_audience'
-								) }
-								onChange={ ( next ) =>
-									update( 'target_audience', next )
-								}
-							/>
-							<FieldError
-								id="oml-course-target_audience-error"
-								message={ errors.target_audience }
-							/>
-							<TextareaControl
-								label={ __( 'Requirements', 'ohmylms' ) }
-								value={ form.requirements }
-								rows={ 3 }
-								aria-invalid={ invalid( 'requirements' ) }
-								aria-describedby={ described( 'requirements' ) }
-								onChange={ ( next ) =>
-									update( 'requirements', next )
-								}
-							/>
-							<FieldError
-								id="oml-course-requirements-error"
-								message={ errors.requirements }
-							/>
+								<TextareaControl
+									label={ __(
+										'What students will learn',
+										'ohmylms'
+									) }
+									value={ form.learning_outcomes }
+									rows={ 3 }
+									aria-invalid={ invalid(
+										'learning_outcomes'
+									) }
+									aria-describedby={ described(
+										'learning_outcomes'
+									) }
+									onChange={ ( next ) =>
+										update( 'learning_outcomes', next )
+									}
+								/>
+								<FieldError
+									id="oml-course-learning_outcomes-error"
+									message={ errors.learning_outcomes }
+								/>
+								<TextareaControl
+									label={ __(
+										'Who the course is for',
+										'ohmylms'
+									) }
+									value={ form.target_audience }
+									rows={ 3 }
+									aria-invalid={ invalid(
+										'target_audience'
+									) }
+									aria-describedby={ described(
+										'target_audience'
+									) }
+									onChange={ ( next ) =>
+										update( 'target_audience', next )
+									}
+								/>
+								<FieldError
+									id="oml-course-target_audience-error"
+									message={ errors.target_audience }
+								/>
+								<TextareaControl
+									label={ __( 'Requirements', 'ohmylms' ) }
+									value={ form.requirements }
+									rows={ 3 }
+									aria-invalid={ invalid( 'requirements' ) }
+									aria-describedby={ described(
+										'requirements'
+									) }
+									onChange={ ( next ) =>
+										update( 'requirements', next )
+									}
+								/>
+								<FieldError
+									id="oml-course-requirements-error"
+									message={ errors.requirements }
+								/>
 							</details>
 						</fieldset>
 						<div className="oml-editor-aside">
-						<fieldset disabled={ busy || trashed }>
-							<legend>{ __( 'Publishing', 'ohmylms' ) }</legend>
-							<TextControl
-								label={ __( 'Slug', 'ohmylms' ) }
-								value={ form.slug }
-								help={ __(
-									'The address of the course page. It is made unique automatically.',
-									'ohmylms'
-								) }
-								aria-invalid={ invalid( 'slug' ) }
-								aria-describedby={ described( 'slug' ) }
-								onChange={ ( next ) => update( 'slug', next ) }
-							/>
-							<FieldError
-								id="oml-course-slug-error"
-								message={ errors.slug }
-							/>
-							<SelectControl
-								label={ __( 'Status', 'ohmylms' ) }
-								value={ form.status }
-								options={ statusOptions }
-								help={
-									options.abilities.publish
-										? undefined
-										: __(
-												'You can save drafts and submit courses for review. A reviewer publishes them.',
-												'ohmylms'
+							<fieldset disabled={ busy || trashed }>
+								<legend>
+									{ __( 'Publishing', 'ohmylms' ) }
+								</legend>
+								<TextControl
+									label={ __( 'Slug', 'ohmylms' ) }
+									value={ form.slug }
+									help={ __(
+										'The address of the course page. It is made unique automatically.',
+										'ohmylms'
+									) }
+									aria-invalid={ invalid( 'slug' ) }
+									aria-describedby={ described( 'slug' ) }
+									onChange={ ( next ) =>
+										update( 'slug', next )
+									}
+								/>
+								<FieldError
+									id="oml-course-slug-error"
+									message={ errors.slug }
+								/>
+								<SelectControl
+									label={ __( 'Status', 'ohmylms' ) }
+									value={ form.status }
+									options={ statusOptions }
+									help={
+										options.abilities.publish
+											? undefined
+											: __(
+													'You can save drafts and submit courses for review. A reviewer publishes them.',
+													'ohmylms'
+												)
+									}
+									onChange={ ( next ) =>
+										update(
+											'status',
+											pick< WritableStatus >(
+												next,
+												WRITABLE,
+												'draft'
 											)
-								}
-								onChange={ ( next ) =>
-									update(
-										'status',
-										pick< WritableStatus >(
-											next,
-											WRITABLE,
-											'draft'
 										)
-									)
-								}
-							/>
-							{ 'future' === form.status && (
-								<>
-									<TextControl
-										label={ __( 'Publish on', 'ohmylms' ) }
-										type="datetime-local"
-										value={ form.scheduled_at }
-										help={ __(
-											'Site time. The course is published automatically.',
-											'ohmylms'
-										) }
-										aria-invalid={ invalid(
-											'scheduled_at'
-										) }
-										aria-describedby={ described(
-											'scheduled_at'
-										) }
-										onChange={ ( next ) =>
-											update( 'scheduled_at', next )
-										}
-									/>
-									<FieldError
-										id="oml-course-scheduled_at-error"
-										message={ errors.scheduled_at }
-									/>
-								</>
-							) }
-							<SelectControl
-								label={ __( 'Level', 'ohmylms' ) }
-								value={ form.level }
-								options={ options.levels }
-								onChange={ ( next ) =>
-									update(
-										'level',
-										pick< Level >(
-											next,
-											LEVELS,
-											'beginner'
-										)
-									)
-								}
-							/>
-						</fieldset>
-
-						<fieldset disabled={ busy || trashed }>
-							<legend>{ __( 'Thumbnail', 'ohmylms' ) }</legend>
-							{ form.thumbnail ? (
-								<p>
-									{ form.thumbnail.url && (
-										<img
-											src={ form.thumbnail.url }
-											alt=""
-											width={ 96 }
-											height={ 96 }
+									}
+								/>
+								{ 'future' === form.status && (
+									<>
+										<TextControl
+											label={ __(
+												'Publish on',
+												'ohmylms'
+											) }
+											type="datetime-local"
+											value={ form.scheduled_at }
+											help={ __(
+												'Site time. The course is published automatically.',
+												'ohmylms'
+											) }
+											aria-invalid={ invalid(
+												'scheduled_at'
+											) }
+											aria-describedby={ described(
+												'scheduled_at'
+											) }
+											onChange={ ( next ) =>
+												update( 'scheduled_at', next )
+											}
 										/>
-									) }{ ' ' }
-									{ sprintf(
-										/* translators: %d: image ID. */
-										__( 'Image #%d', 'ohmylms' ),
-										form.thumbnail.id
-									) }
-								</p>
-							) : (
-								<p>
-									{ __(
-										'No thumbnail selected.',
+										<FieldError
+											id="oml-course-scheduled_at-error"
+											message={ errors.scheduled_at }
+										/>
+									</>
+								) }
+								<SelectControl
+									label={ __( 'Level', 'ohmylms' ) }
+									value={ form.level }
+									options={ options.levels }
+									onChange={ ( next ) =>
+										update(
+											'level',
+											pick< Level >(
+												next,
+												LEVELS,
+												'beginner'
+											)
+										)
+									}
+								/>
+							</fieldset>
+
+							<fieldset disabled={ busy || trashed }>
+								<legend>
+									{ __( 'Thumbnail', 'ohmylms' ) }
+								</legend>
+								<MediaPicker
+									label={ __(
+										'Choose a thumbnail',
 										'ohmylms'
 									) }
-								</p>
-							) }
-							<FieldError
-								id="oml-course-thumbnail_id-error"
-								message={ errors.thumbnail_id }
-							/>
-							{ options.abilities.upload_files ? (
-								<Button
-									variant="secondary"
-									onClick={ () => setPicking( true ) }
-								>
-									{ form.thumbnail
-										? __( 'Change thumbnail', 'ohmylms' )
-										: __( 'Choose thumbnail', 'ohmylms' ) }
-								</Button>
-							) : (
-								<p>
-									{ __(
-										'You do not have permission to pick images from the media library.',
+									chooseText={ __(
+										'Choose thumbnail',
 										'ohmylms'
 									) }
-								</p>
-							) }{ ' ' }
-							{ form.thumbnail && (
-								<Button
-									variant="tertiary"
-									isDestructive
-									onClick={ () =>
+									changeText={ __(
+										'Change thumbnail',
+										'ohmylms'
+									) }
+									removeText={ __(
+										'Remove thumbnail',
+										'ohmylms'
+									) }
+									destructiveRemove
+									description={
+										form.thumbnail
+											? sprintf(
+													/* translators: %d: image ID. */
+													__(
+														'Image #%d',
+														'ohmylms'
+													),
+													form.thumbnail.id
+												)
+											: __(
+													'No thumbnail selected.',
+													'ohmylms'
+												)
+									}
+									previewSize={ 96 }
+									value={ form.thumbnail }
+									unavailable={
+										options.abilities.upload_files
+											? undefined
+											: __(
+													'You do not have permission to pick images from the media library.',
+													'ohmylms'
+												)
+									}
+									accept={ IMAGE_MIME_TYPES }
+									fallback="missing"
+									invalid={ invalidResponse }
+									onChange={ ( image ) =>
+										update( 'thumbnail', {
+											id: image.id,
+											url: image.thumbnail_url,
+										} )
+									}
+									onRemove={ () =>
 										update( 'thumbnail', null )
 									}
-								>
-									{ __( 'Remove thumbnail', 'ohmylms' ) }
-								</Button>
-							) }
-						</fieldset>
+								/>
+								<FieldError
+									id="oml-course-thumbnail_id-error"
+									message={ errors.thumbnail_id }
+								/>
+							</fieldset>
 						</div>
 					</div>
 				) }
@@ -907,20 +932,6 @@ export function CourseForm( {
 					</div>
 				) }
 			</form>
-
-			{ picking && (
-				<MediaPicker
-					title={ __( 'Choose a thumbnail', 'ohmylms' ) }
-					onClose={ () => setPicking( false ) }
-					onSelect={ ( image ) => {
-						update( 'thumbnail', {
-							id: image.id,
-							url: image.thumbnail_url,
-						} );
-						setPicking( false );
-					} }
-				/>
-			) }
 
 			{ guard.pendingPath && (
 				<Modal

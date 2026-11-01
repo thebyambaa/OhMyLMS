@@ -22,6 +22,7 @@ use OhMyLMS\Gradebook\Views;
 use OhMyLMS\Gradebook\Weights;
 use OhMyLMS\Rest\V1\SettingsController;
 use WP_Error;
+use WP_REST_Controller;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -32,7 +33,7 @@ defined( 'ABSPATH' ) || exit;
  * Contract: docs/api/gradebook.md. Every read and write resolves `scope` with the dashboard rules and
  * answers `Cache-Control: private, no-store`; reads say `X-OhMyLMS-Cache: hit|miss`.
  */
-final class GradebookController {
+final class GradebookController extends WP_REST_Controller {
 
 	/**
 	 * Namespace.
@@ -374,13 +375,8 @@ final class GradebookController {
 		}
 		return $this->respond(
 			function () use ( $scope ) {
-				global $wpdb;
 				$user_id = get_current_user_id();
-				$ids     = $scope->course_ids();
-				$args    = array( $wpdb->posts, OHMYLMS_COURSE_CPT );
-				$in      = Scope::in_condition( 'ID', $ids, $args );
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- Fragment uses placeholders; bounded.
-				$courses = $wpdb->get_results( $wpdb->prepare( "SELECT ID AS id, post_title AS title FROM %i WHERE post_type = %s AND post_status NOT IN ( 'trash', 'auto-draft' ) AND $in ORDER BY post_title, ID LIMIT 500", $args ), ARRAY_A );
+				$courses = Repository::picker_courses( $scope->course_ids() );
 				$classes = array();
 				if ( $scope->is_all() ) {
 					$classes = Directory::classes( null, true );
@@ -404,7 +400,7 @@ final class GradebookController {
 								'title' => (string) $row['title'],
 							);
 						},
-						is_array( $courses ) ? $courses : array()
+						$courses
 					),
 					'classes'    => array_map(
 						static function ( $row ) {
@@ -495,17 +491,7 @@ final class GradebookController {
 		}
 		return $this->respond(
 			static function () use ( $scope, $request ) {
-				global $wpdb;
-				$search = trim( (string) $request['search'] );
-				$args   = array( $wpdb->users );
-				$in     = Scope::in_condition( 'ID', $scope->learner_ids(), $args );
-				$where  = '';
-				if ( '' !== $search ) {
-					$where  = ' AND display_name LIKE %s';
-					$args[] = '%' . $wpdb->esc_like( $search ) . '%';
-				}
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- Fragments use placeholders; at most 20 rows.
-				$rows = $wpdb->get_results( $wpdb->prepare( "SELECT ID AS id, display_name AS name FROM %i WHERE $in$where ORDER BY display_name, ID LIMIT 20", $args ), ARRAY_A );
+				$rows = Repository::search_learners( $scope->learner_ids(), trim( (string) $request['search'] ) );
 				return array(
 					'learners' => array_map(
 						static function ( $row ) {
@@ -514,7 +500,7 @@ final class GradebookController {
 								'name' => (string) $row['name'],
 							);
 						},
-						is_array( $rows ) ? $rows : array()
+						$rows
 					),
 				);
 			},

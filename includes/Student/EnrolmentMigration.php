@@ -7,6 +7,7 @@
 
 namespace OhMyLMS\Student;
 
+use OhMyLMS\Utility\Lock;
 use OhMyLMS\Utility\Transaction;
 
 defined( 'ABSPATH' ) || exit;
@@ -264,16 +265,14 @@ final class EnrolmentMigration {
 			return $state;
 		}
 		$lock = 'ohmylms_enrolments_' . md5( $wpdb->prefix );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Advisory lock.
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $lock ) ) ) {
+		if ( ! Lock::acquire( $lock, 0 ) ) {
 			return $state;
 		}
 		try {
 			$state = self::step( $state, max( 1, (int) ( $size ? $size : self::BATCH ) ) );
 			self::save( $state );
 		} finally {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Advisory lock.
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+			Lock::release( $lock );
 		}
 		if ( in_array( $state['status'], array( 'running', 'stale' ), true ) ) {
 			self::schedule( self::UP_HOOK, $state['error'] ? 60 : 1 );

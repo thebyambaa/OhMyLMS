@@ -21,13 +21,14 @@ final class Library {
 	const TYPE = 'ohmylms-exam';
 	const META = '_ohmylms_exam';
 
-	/** Register the exam type, authoring API and separate player. */
+	/**
+	 * Register the exam type and separate player. The authoring API is {@see Rest\LibraryController}
+	 * and {@see Rest\ComposerController}.
+	 */
 	public static function init() {
 		add_action( 'init', array( __CLASS__, 'register' ) );
-		add_action( 'rest_api_init', array( __CLASS__, 'routes' ) );
 		Profile::init();
 		Player::init();
-		Composer::init();
 		Results::init();
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'styles' ) );
 	}
@@ -52,35 +53,6 @@ final class Library {
 				'supports'     => array( 'title', 'author' ),
 			)
 		);
-	}
-
-	/** Register creation, listing, publication and release separately. */
-	public static function routes() {
-		foreach ( array(
-			'GET'  => 'listing',
-			'POST' => 'create',
-		) as $method => $callback ) {
-			register_rest_route(
-				'ohmylms/v1',
-				'/exams',
-				array(
-					'methods'             => $method,
-					'permission_callback' => array( __CLASS__, 'permission' ),
-					'callback'            => array( __CLASS__, $callback ),
-				)
-			);
-		}
-		foreach ( array( 'publish', 'release' ) as $operation ) {
-			register_rest_route(
-				'ohmylms/v1',
-				'/exams/(?P<id>\d+)/' . $operation,
-				array(
-					'methods'             => 'POST',
-					'permission_callback' => array( __CLASS__, 'permission' ),
-					'callback'            => array( __CLASS__, $operation ),
-				)
-			);
-		}
 	}
 
 	/**

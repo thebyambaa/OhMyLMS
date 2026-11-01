@@ -1,11 +1,6 @@
-# Create an independent course from a syllabus
+# Independent course generation contract
 
-Use **Create course from syllabus** in a syllabus workspace, or choose **From a syllabus** when creating a course.
-
-1. Enter the course title and choose topics or individual skills (1–200 skills).
-2. Review the generated units, lessons and skill links.
-3. Choose **Create draft course** to open the independent course editor.
-4. Write and publish the generated block lessons, add practice or quizzes, save the outline draft, preview and publish when ready.
+See [Learning Architecture](LEARNING-ARCHITECTURE.md) for product intent and author workflow. This service is implemented; the current typed app does not expose the recovered editor's creation dialog. The following describes the backend contract, not current UI instructions.
 
 Each syllabus folder containing selected skills becomes a unit. Its skill groups become draft block lesson posts, with course-local skill links. Nested folders retain their syllabus traversal order as separate units. Groups directly under the syllabus use a unit named after that syllabus. Empty/unselected folders and groups are omitted. Existing skill IDs become optional program outcomes with generated unit IDs; lesson placements reference those outcomes through `skill_ids`. The course also stores references to the source syllabus objectives. Generated lessons have empty bodies for the author to fill; no questions or practice activities are invented.
 

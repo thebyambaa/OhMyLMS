@@ -232,6 +232,31 @@ final class SkillMap {
 	}
 
 	/**
+	 * IDs of the shared skills on a subject's map (at most MAX_SKILLS), for overlays laid over it.
+	 *
+	 * @param string $subject Subject.
+	 * @return int[]
+	 */
+	public static function skill_ids( $subject ) {
+		$subject = sanitize_text_field( (string) $subject );
+		if ( '' === $subject ) {
+			return array();
+		}
+		$ids = get_terms(
+			array(
+				'taxonomy'   => Taxonomy::NAME,
+				'hide_empty' => false,
+				'meta_key'   => Comparison::SUBJECT_META, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Shared skills are designated by this key.
+				'meta_value' => $subject, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- One subject's library.
+				'number'     => self::MAX_SKILLS,
+				'orderby'    => 'name',
+				'fields'     => 'ids',
+			)
+		);
+		return is_array( $ids ) ? array_map( 'intval', $ids ) : array();
+	}
+
+	/**
 	 * Shared skills of a subject, keyed by ID.
 	 *
 	 * @param string $subject Subject.

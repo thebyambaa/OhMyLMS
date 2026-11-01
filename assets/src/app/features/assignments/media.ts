@@ -47,7 +47,7 @@ export function mediaLibraryAvailable(): boolean {
 	return null !== factory();
 }
 
-function text( value: unknown ): string {
+function textOrEmpty( value: unknown ): string {
 	return 'string' === typeof value ? value : '';
 }
 
@@ -87,9 +87,11 @@ export function chooseFiles(
 				)
 				.map( ( file ) => ( {
 					id: Number( file.id ),
-					url: text( file.url ),
-					name: text( file.title ) || text( file.filename ),
-					size: text( file.filesizeHumanReadable ),
+					url: textOrEmpty( file.url ),
+					name:
+						textOrEmpty( file.title ) ||
+						textOrEmpty( file.filename ),
+					size: textOrEmpty( file.filesizeHumanReadable ),
 				} ) );
 			resolve( chosen );
 		} );

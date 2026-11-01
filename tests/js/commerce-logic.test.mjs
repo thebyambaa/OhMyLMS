@@ -11,9 +11,9 @@ import {
 	requiredFields,
 	stateField,
 	stripeIntentOutcome,
-	triggerLegacy,
 	withQuery,
 } from '../../assets/interactivity/commerce-logic.mjs';
+import * as commerceLogic from '../../assets/interactivity/commerce-logic.mjs';
 
 test( 'cart buttons send only what the server needs', () => {
 	assert.deepEqual( cartRequest( { courseId: 12, quantity: '2' } ), {
@@ -201,16 +201,6 @@ test( 'query helper keeps relative URLs relative', () => {
 	);
 } );
 
-test( 'legacy jQuery events fire only when jQuery is present', () => {
-	const calls = [];
-	const body = {};
-	const win = {
-		document: { body },
-		jQuery: ( target ) => ( {
-			trigger: ( name, args ) => calls.push( [ target, name, args ] ),
-		} ),
-	};
-	assert.equal( triggerLegacy( win, 'course_added_to_cart', [ 1 ] ), true );
-	assert.deepEqual( calls, [ [ body, 'course_added_to_cart', [ 1 ] ] ] );
-	assert.equal( triggerLegacy( { document: { body } }, 'x' ), false );
+test( 'the legacy jQuery body events are gone', () => {
+	assert.equal( 'triggerLegacy' in commerceLogic, false );
 } );

@@ -28,7 +28,7 @@ export function NewExamDialog( { onClose } ) {
 			window.location.assign( examEditorHref( exam ) );
 		} catch ( failure ) {
 			setError(
-				failure.message ||
+				/** @type {{message?: string}} */ ( failure ).message ||
 					__( 'The exam could not be created.', 'ohmylms' )
 			);
 			setBusy( false );
@@ -37,7 +37,7 @@ export function NewExamDialog( { onClose } ) {
 	return (
 		<Modal
 			title={ __( 'New exam', 'ohmylms' ) }
-			onRequestClose={ busy ? undefined : onClose }
+			onRequestClose={ busy ? () => {} : onClose }
 		>
 			<p>
 				{ __(

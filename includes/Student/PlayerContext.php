@@ -129,7 +129,7 @@ final class PlayerContext {
 			return false;
 		}
 		$course_id = (int) ohmylms_get_course_by_content_id( get_the_ID(), get_current_user_id() );
-		$outline   = CourseOutline::get( $course_id, get_current_user_id() );
+		$outline   = \OhMyLMS\Learning\LessonPreview::outline( CourseOutline::get( $course_id, get_current_user_id() ) );
 		if ( is_wp_error( $outline ) || $outline['locked'] ) {
 			return false;
 		}

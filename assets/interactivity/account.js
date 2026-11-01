@@ -13,6 +13,7 @@ import {
 } from 'ohmylms/interactivity';
 import { createAccount } from './account/store.js';
 
+/** @type {ReturnType<typeof store>} */
 let account = null;
 const definitions = createAccount( {
 	getContext,

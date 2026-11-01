@@ -2,7 +2,7 @@ import { useAddressQuery } from '../../components/listQuery';
 import { useStepBack } from './hooks';
 import { getSubscription, listSubscriptions } from './subscriptionApi';
 import { EMPTY_SUBSCRIPTION_QUERY } from './subscriptionModel';
-import { useRequest } from './useRequest';
+import { useRequest } from '../../hooks/useRequest';
 import type { SubscriptionQuery } from './types';
 
 /**
@@ -16,7 +16,7 @@ export function useSubscriptions() {
 	const { query } = address;
 	const request = useRequest(
 		( signal ) => listSubscriptions( query, signal ),
-		JSON.stringify( query )
+		{ key: JSON.stringify( query ), keepData: true, errorShape: 'object' }
 	);
 	useStepBack(
 		request.error,
@@ -50,8 +50,9 @@ export function useSubscriptions() {
  * @param id Subscription ID.
  */
 export function useSubscription( id: number ) {
-	return useRequest(
-		( signal ) => getSubscription( id, signal ),
-		String( id )
-	);
+	return useRequest( ( signal ) => getSubscription( id, signal ), {
+		key: String( id ),
+		keepData: true,
+		errorShape: 'object',
+	} );
 }

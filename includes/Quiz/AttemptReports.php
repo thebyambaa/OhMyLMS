@@ -13,8 +13,8 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Read-only aggregates of `ohmylms_quiz_attempts` and `ohmylms_quiz_attempts_answers` behind the quiz
- * reports, the Content Hub overview and the student report (see docs/api/quiz-reports.md and
- * docs/api/students.md).
+ * reports, the Content Hub overview, the student report and the attempt list and grading routes of
+ * `ohmylms/v1/quizzes` (see docs/api/quiz-reports.md, docs/api/students.md and docs/api/quizzes.md).
  *
  * Callers decide who may see what: a `$quiz_ids` scope of null means every quiz, an array limits the
  * rows to those quizzes ({@see GradingPolicy::gradable_quiz_ids()}). Every list is paged in SQL.
@@ -298,6 +298,152 @@ final class AttemptReports {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh report read.
 		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT id, quiz_id, course_id, status, total, start_date, end_date FROM %i WHERE student_id = %d ORDER BY start_date DESC, id DESC LIMIT %d OFFSET %d', self::table(), (int) $student_id, (int) $per_page, ( (int) $page - 1 ) * (int) $per_page ), ARRAY_A );
 		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
+	 * Attempt totals and attempts awaiting grading, per quiz, with one query.
+	 *
+	 * @param int[] $quiz_ids Quiz IDs.
+	 * @return array<int,array{total:int,pending:int}> Quizzes without attempts are absent.
+	 */
+	public static function counts_by_quiz( array $quiz_ids ) {
+		global $wpdb;
+		$ids = array_values( array_filter( array_map( 'absint', $quiz_ids ) ) );
+		if ( ! $ids ) {
+			return array();
+		}
+		$holders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery -- Placeholders are generated from the id count.
+		$rows   = $wpdb->get_results( $wpdb->prepare( "SELECT quiz_id, COUNT(*) AS total, SUM(status = 'in-review') AS pending FROM %i WHERE quiz_id IN ({$holders}) GROUP BY quiz_id", array_merge( array( self::table() ), $ids ) ) );
+		$counts = array();
+		foreach ( (array) $rows as $row ) {
+			$counts[ (int) $row->quiz_id ] = array(
+				'total'   => (int) $row->total,
+				'pending' => (int) $row->pending,
+			);
+		}
+		return $counts;
+	}
+
+	/**
+	 * Number of attempts of one quiz.
+	 *
+	 * @param int $quiz_id Quiz ID.
+	 * @return int
+	 */
+	public static function count_for_quiz( $quiz_id ) {
+		global $wpdb;
+		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE quiz_id = %d', self::table(), $quiz_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh count.
+	}
+
+	/**
+	 * WHERE clause and arguments of a quiz's attempt list.
+	 *
+	 * @param int   $quiz_id Quiz ID.
+	 * @param array $filters `status` (a status or `all`), `student_id` (0 for every student) and `search`
+	 *                       (matched against the student's name and email).
+	 * @return array{0:string,1:array}
+	 */
+	private static function attempts_where( $quiz_id, array $filters ) {
+		global $wpdb;
+		$where = array( 'a.quiz_id = %d' );
+		$args  = array( (int) $quiz_id );
+		if ( 'all' !== $filters['status'] ) {
+			$where[] = 'a.status = %s';
+			$args[]  = (string) $filters['status'];
+		}
+		if ( ! empty( $filters['student_id'] ) ) {
+			$where[] = 'a.student_id = %d';
+			$args[]  = (int) $filters['student_id'];
+		}
+		if ( '' !== (string) $filters['search'] ) {
+			$like    = '%' . $wpdb->esc_like( (string) $filters['search'] ) . '%';
+			$where[] = '( u.display_name LIKE %s OR u.user_email LIKE %s )';
+			$args[]  = $like;
+			$args[]  = $like;
+		}
+		return array( implode( ' AND ', $where ), $args );
+	}
+
+	/**
+	 * Number of a quiz's attempts matching filters.
+	 *
+	 * @param int   $quiz_id Quiz ID.
+	 * @param array $filters See attempts_where().
+	 * @return int
+	 */
+	public static function count_attempts( $quiz_id, array $filters ) {
+		global $wpdb;
+		list( $clause, $args ) = self::attempts_where( $quiz_id, $filters );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery -- The clause is built from fixed fragments.
+		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i a LEFT JOIN %i u ON u.ID = a.student_id WHERE {$clause}", array_merge( array( self::table(), $wpdb->users ), $args ) ) );
+	}
+
+	/**
+	 * One page of a quiz's attempts with the student's name and email.
+	 *
+	 * @param int    $quiz_id  Quiz ID.
+	 * @param array  $filters  See attempts_where().
+	 * @param string $orderby  `started_at`, `score` or `student`.
+	 * @param string $order    `ASC` or `DESC`.
+	 * @param int    $page     Page, from 1.
+	 * @param int    $per_page Page size.
+	 * @return array[] Attempt rows plus display_name and user_email.
+	 */
+	public static function attempts( $quiz_id, array $filters, $orderby, $order, $page, $per_page ) {
+		global $wpdb;
+		$columns               = array(
+			'started_at' => 'a.start_date',
+			'score'      => 'a.total',
+			'student'    => 'u.display_name',
+		);
+		$order                 = 'ASC' === $order ? 'ASC' : 'DESC';
+		$sort                  = $columns[ $orderby ] . ' ' . $order . ', a.id ' . $order;
+		list( $clause, $args ) = self::attempts_where( $quiz_id, $filters );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery -- The clause and sort come from fixed fragments.
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT a.*, u.display_name, u.user_email FROM %i a LEFT JOIN %i u ON u.ID = a.student_id WHERE {$clause} ORDER BY {$sort} LIMIT %d OFFSET %d", array_merge( array( self::table(), $wpdb->users ), $args, array( (int) $per_page, ( (int) $page - 1 ) * (int) $per_page ) ) ), ARRAY_A );
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
+	 * One attempt row, or null.
+	 *
+	 * @param int $attempt_id Attempt ID.
+	 * @return array|null
+	 */
+	public static function row( $attempt_id ) {
+		global $wpdb;
+		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}ohmylms_quiz_attempts WHERE id=%d", (int) $attempt_id ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh row; autosave and grading write it.
+	}
+
+	/**
+	 * One attempt of a quiz with the student's name and email, or null.
+	 *
+	 * @param int $quiz_id    Quiz ID.
+	 * @param int $attempt_id Attempt ID.
+	 * @return array|null
+	 */
+	public static function find( $quiz_id, $attempt_id ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh row; grading writes it.
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT a.*, u.display_name, u.user_email FROM %i a LEFT JOIN %i u ON u.ID = a.student_id WHERE a.id = %d AND a.quiz_id = %d', self::table(), $wpdb->users, $attempt_id, $quiz_id ), ARRAY_A );
+		return $row ? $row : null;
+	}
+
+	/**
+	 * Frozen maximum marks of each question of one attempt.
+	 *
+	 * @param int $attempt_id Attempt ID.
+	 * @return array<int,float> Question ID => marks.
+	 */
+	public static function question_marks( $attempt_id ) {
+		global $wpdb;
+		$max = array();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh read for grading.
+		foreach ( (array) $wpdb->get_results( $wpdb->prepare( 'SELECT question_id, question_marks FROM %i WHERE quiz_attempt_id = %d', self::answers_table(), $attempt_id ), ARRAY_A ) as $answer ) {
+			$max[ (int) $answer['question_id'] ] = (float) $answer['question_marks'];
+		}
+		return $max;
 	}
 
 	/**

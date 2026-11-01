@@ -1,6 +1,6 @@
 <?php
 /**
- * Available activity links within one published lesson or ungrouped unit.
+ * Available activity links within one published unit.
  *
  * @package OhMyLMS
  */

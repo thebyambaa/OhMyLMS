@@ -1,6 +1,9 @@
 import { PUZZLE_TYPES, puzzleDefaults, puzzleIssues } from './puzzleModel.mjs';
 /** Pure helpers for the interactive question types (dropdown sentence, sorting, multi-blank, tiles). */
 import { dropdownAnswers } from './dropdownModel.mjs';
+
+/** @typedef {import('./editorTypes').Data} Data */
+
 export const INTERACTIVE_TYPES = [
 	...PUZZLE_TYPES,
 	'text-entry',
@@ -21,14 +24,17 @@ export const INTERACTIVE_TYPES = [
 
 /** Answer shapes the expression engine can require. */
 export const ANSWER_FORMS = [ 'any', 'expanded', 'factored', 'simplified' ];
-export const isInteractiveType = ( type ) => INTERACTIVE_TYPES.includes( type );
+export const isInteractiveType = ( /** @type {string} */ type ) =>
+	INTERACTIVE_TYPES.includes( type );
 const MARKER = /\{([a-z0-9_-]{1,20})\}/gi;
 
 /**
  * Marker IDs such as {1} or {a} in order of first appearance.
- * @param text
+ * @param {string|null|undefined} text
+ * @return {string[]} Marker IDs.
  */
 export function markerIds( text ) {
+	/** @type {string[]} */
 	const found = [];
 	for ( const match of String( text || '' )
 		.replace(
@@ -47,7 +53,8 @@ export function markerIds( text ) {
 /**
  * Settings a freshly chosen interactive type starts with; they already pass server validation
  * where possible so authors edit a working example.
- * @param type
+ * @param {string} type
+ * @return {Data} Settings.
  */
 export function interactiveDefaults( type ) {
 	if ( PUZZLE_TYPES.includes( type ) ) {
@@ -211,8 +218,9 @@ export function interactiveDefaults( type ) {
 
 /**
  * Keep one dropdown per marker in the sentence; new markers get an empty dropdown.
- * @param text
- * @param slots
+ * @param {string|null|undefined} text
+ * @param {Data[]}                [slots]
+ * @return {Data[]} Dropdowns.
  */
 export function syncSlots( text, slots = [] ) {
 	return markerIds( text ).map(
@@ -227,7 +235,8 @@ export function syncSlots( text, slots = [] ) {
 
 /**
  * Blank IDs of a multi-blank question: from the table cells or the inline sentence.
- * @param settings
+ * @param {Data} settings
+ * @return {string[]} Blank IDs.
  */
 export function blankIds( settings ) {
 	if ( settings.layout === 'table' ) {
@@ -238,9 +247,11 @@ export function blankIds( settings ) {
 
 /**
  * Keep a spec per blank; specs for deleted markers are dropped.
- * @param settings
+ * @param {Data} settings
+ * @return {Data} Blank specs by ID.
  */
 export function syncBlanks( settings ) {
+	/** @type {Data} */
 	const blanks = {};
 	for ( const id of blankIds( settings ) ) {
 		blanks[ id ] = settings.blanks?.[ id ] || {
@@ -253,8 +264,9 @@ export function syncBlanks( settings ) {
 
 /**
  * Next unused ID like b3 or i4.
- * @param list
- * @param prefix
+ * @param {Data[]} list
+ * @param {string} prefix
+ * @return {string} ID.
  */
 export function nextId( list, prefix ) {
 	const used = new Set( list.map( ( entry ) => entry.id ) );
@@ -267,10 +279,12 @@ export function nextId( list, prefix ) {
 
 /**
  * Remove a group; items that belonged to it become unassigned.
- * @param settings
- * @param bucketId
+ * @param {Data}   settings
+ * @param {string} bucketId
+ * @return {Data} Settings patch.
  */
 export function removeBucket( settings, bucketId ) {
+	/** @type {Record<string, string>} */
 	const key = {
 		...settings.key,
 	};
@@ -281,7 +295,7 @@ export function removeBucket( settings, bucketId ) {
 	}
 	return {
 		buckets: settings.buckets.filter(
-			( bucket ) => bucket.id !== bucketId
+			( /** @type {{id: string}} */ bucket ) => bucket.id !== bucketId
 		),
 		key,
 	};
@@ -289,23 +303,28 @@ export function removeBucket( settings, bucketId ) {
 
 /**
  * Remove an item together with its group assignment.
- * @param settings
- * @param itemId
+ * @param {Data}   settings
+ * @param {string} itemId
+ * @return {Data} Settings patch.
  */
 export function removeItem( settings, itemId ) {
+	/** @type {Record<string, string>} */
 	const key = {
 		...settings.key,
 	};
 	delete key[ itemId ];
 	return {
-		items: settings.items.filter( ( item ) => item.id !== itemId ),
+		items: settings.items.filter(
+			( /** @type {{id: string}} */ item ) => item.id !== itemId
+		),
 		key,
 	};
 }
 
 /**
  * Tiles typed as space-separated text ("3 x + 4") become a tile list.
- * @param text
+ * @param {string|null|undefined} text
+ * @return {string[]} Tiles.
  */
 export function tilesFromText( text ) {
 	return String( text || '' )
@@ -315,7 +334,8 @@ export function tilesFromText( text ) {
 
 /**
  * Alternative orders, one per line.
- * @param text
+ * @param {string|null|undefined} text
+ * @return {string[][]} Sequences.
  */
 export function sequencesFromText( text ) {
 	return String( text || '' )
@@ -327,8 +347,9 @@ export function sequencesFromText( text ) {
 /**
  * Problems an author should fix before learners see the question.
  * Mirrors the server validation closely enough to warn early; the server stays authoritative.
- * @param type
- * @param settings
+ * @param {string} type
+ * @param {Data}   [settings]
+ * @return {string[]} Issue codes.
  */
 export function interactiveIssues( type, settings = {} ) {
 	if ( PUZZLE_TYPES.includes( type ) ) {
@@ -354,12 +375,15 @@ export function interactiveIssues( type, settings = {} ) {
 		issues.push( 'accepted' );
 	}
 	if ( type === 'dropdown-blanks' ) {
+		/** @type {Data[]} */
 		const slots = settings.slots || [];
 		if ( ! markerIds( settings.text ).length || ! slots.length ) {
 			issues.push( 'sentence' );
 		}
 		for ( const slot of slots ) {
-			const choices = ( slot.choices || [] ).map( ( c ) => c.trim() );
+			const choices = ( slot.choices || [] ).map(
+				( /** @type {string} */ c ) => c.trim()
+			);
 			if (
 				choices.length < 2 ||
 				choices.includes( '' ) ||
@@ -380,7 +404,9 @@ export function interactiveIssues( type, settings = {} ) {
 		}
 	}
 	if ( type === 'categorize' ) {
+		/** @type {Data[]} */
 		const buckets = settings.buckets || [];
+		/** @type {Data[]} */
 		const items = settings.items || [];
 		if (
 			buckets.length < 2 ||
@@ -426,7 +452,9 @@ export function interactiveIssues( type, settings = {} ) {
 							Number.isFinite( Number( value ) )
 					);
 				}
-				return ( spec.accepted || [] ).some( ( a ) => a.trim() );
+				return ( spec.accepted || [] ).some(
+					( /** @type {string} */ a ) => a.trim()
+				);
 			} )();
 			if ( ! answered ) {
 				issues.push( 'answers' );
@@ -445,11 +473,12 @@ export function interactiveIssues( type, settings = {} ) {
 	issues.push( ...visualIssues( type, settings ) );
 	return issues;
 }
-const finite = ( value ) =>
+const finite = ( /** @type {unknown} */ value ) =>
 	value !== undefined &&
 	value !== null &&
 	value !== '' &&
 	Number.isFinite( Number( value ) );
+/** @type {Record<string, number>} */
 export const PLACE_VALUES = {
 	thousands: 1000,
 	hundreds: 100,
@@ -459,7 +488,8 @@ export const PLACE_VALUES = {
 
 /**
  * Whole numbers from "1000, 500 ,100" (invalid and repeated entries dropped).
- * @param text
+ * @param {string|null|undefined} text
+ * @return {number[]} Amounts.
  */
 export function parseAmounts( text ) {
 	const seen = new Set();
@@ -477,7 +507,8 @@ export function parseAmounts( text ) {
 
 /**
  * Add a bar; the new bar gets a unique ID and a zero value.
- * @param settings
+ * @param {Data} settings
+ * @return {Data} Settings patch.
  */
 export function addCategory( settings ) {
 	const categories = settings.categories || [];
@@ -499,8 +530,9 @@ export function addCategory( settings ) {
 
 /**
  * Remove a bar together with its value.
- * @param settings
- * @param id
+ * @param {Data}   settings
+ * @param {string} id
+ * @return {Data} Settings patch.
  */
 export function removeCategory( settings, id ) {
 	const values = {
@@ -509,7 +541,7 @@ export function removeCategory( settings, id ) {
 	delete values[ id ];
 	return {
 		categories: ( settings.categories || [] ).filter(
-			( category ) => category.id !== id
+			( /** @type {{id: string}} */ category ) => category.id !== id
 		),
 		values,
 	};
@@ -517,8 +549,9 @@ export function removeCategory( settings, id ) {
 
 /**
  * Problems with the visual types, mirroring the server checks closely enough to warn early.
- * @param type
- * @param s
+ * @param {string} type
+ * @param {Data}   s
+ * @return {string[]} Issue codes.
  */
 export function visualIssues( type, s ) {
 	const issues = [];
@@ -544,7 +577,10 @@ export function visualIssues( type, s ) {
 		}
 	}
 	if ( type === 'count-blocks' ) {
-		const places = ( s.places || [] ).filter( ( p ) => PLACE_VALUES[ p ] );
+		/** @type {string[]} */
+		const places = ( s.places || [] ).filter(
+			( /** @type {string} */ p ) => PLACE_VALUES[ p ]
+		);
 		if ( ! places.length ) {
 			issues.push( 'places' );
 		} else if (
@@ -571,6 +607,7 @@ export function visualIssues( type, s ) {
 		}
 	}
 	if ( type === 'build-chart' ) {
+		/** @type {Data[]} */
 		const categories = s.categories || [];
 		if (
 			! categories.length ||
@@ -608,7 +645,7 @@ export function visualIssues( type, s ) {
  * Tokenize language tiles without splitting combining marks or repeated letters.
  * @param {string} text Authored answer.
  * @param {string} mode Tile mode.
- * @return {Array} Tiles in answer order.
+ * @return {string[]} Tiles in answer order.
  */
 export function languageTiles( text, mode = 'words' ) {
 	const value = String( text || '' ).normalize( 'NFC' );

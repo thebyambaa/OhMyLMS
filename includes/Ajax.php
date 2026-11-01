@@ -47,8 +47,6 @@ class Ajax {
 			'signup',
 			'checkout',
 			'purchase_membership',
-			'loadmore',
-			'search_filter',
 			'apply_coupon',
 			'remove_coupon',
 			'calculate_tax',
@@ -552,120 +550,6 @@ class Ajax {
 			);
 		}
 	}
-
-
-	/**
-	 * Handle the load more action via AJAX.
-	 *
-	 * @since 1.0.0
-	 */
-	public static function loadmore() {
-		check_ajax_referer( 'load_more_nonce', 'nonce' );
-
-		if ( isset( $_POST['page'] ) ) {
-			$paged = isset( $_POST['page'] ) ? absint( $_POST['page'] ) : 1;
-
-			if ( isset( $_POST['posts_per_page'] ) ) {
-				$posts_per_page = absint( $_POST['posts_per_page'] );
-			} else {
-				$posts_per_page = get_option( 'ohmylms_courses_per_page', 10 );
-			}
-			$args = array(
-				'post_type'      => OHMYLMS_COURSE_CPT,
-				'paged'          => $paged,
-				'posts_per_page' => $posts_per_page,
-				'post_status'    => 'publish',
-			);
-
-			// Legacy fragment API: the catalogue now uses GET URLs (Extensions\Catalog); the same query builder keeps both in step.
-			if ( ! empty( $_POST['filter_type'] ) ) {
-				$args = \OhMyLMS\Extensions\Catalog::query_args( $args, \OhMyLMS\Extensions\Catalog::legacy_filters( wp_unslash( $_POST ) ) );
-			}
-
-			$query = new \WP_Query( $args );
-
-			if ( $query->have_posts() ) :
-				while ( $query->have_posts() ) :
-					$query->the_post();
-					ohmylms_get_template( 'content-course' ); // Load the post template.
-				endwhile;
-			endif;
-
-			wp_reset_postdata();
-		}
-
-		die(); // Always die after handling the request.
-	}
-
-	/**
-	 * Search filter for Ajax.
-	 */
-	public static function search_filter() {
-		check_ajax_referer( 'search_filter_nonce', 'nonce' );
-
-		if ( ! isset( $_POST['page'] ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'ohmylms' ) ) );
-			return;
-		}
-
-		$paged       = intval( $_POST['page'] );
-		$filter_type = isset( $_POST['filter_type'] ) ? sanitize_text_field( wp_unslash( $_POST['filter_type'] ) ) : '';
-		$filters     = \OhMyLMS\Extensions\Catalog::legacy_filters( wp_unslash( $_POST ) );
-
-		// Legacy fragment API: the catalogue now uses GET URLs (Extensions\Catalog); the same query builder keeps both in step.
-		$args = \OhMyLMS\Extensions\Catalog::query_args(
-			array(
-				'post_type'      => OHMYLMS_COURSE_CPT,
-				'paged'          => $paged,
-				'posts_per_page' => get_option( 'ohmylms_courses_per_page', 10 ),
-				'post_status'    => 'publish',
-			),
-			$filters
-		);
-
-		// Handle different filter types.
-		if ( 'category' === $filter_type ) {
-			$GLOBALS['category'] = isset( $filters['curriculum'][0] ) ? $filters['curriculum'][0] : null;
-
-			$query         = new \WP_Query( $args );
-			$courses_count = $query->found_posts;
-
-			if ( $query->have_posts() ) {
-				ohmylms_get_template_part( 'content', 'course-carousel' );
-			}
-			wp_reset_postdata();
-		} else {
-			// Normal filtering.
-			$query                    = new \WP_Query( $args );
-			$courses_count            = $query->found_posts;
-			$GLOBALS['courses_count'] = $courses_count;
-
-			if ( $query->have_posts() ) {
-				while ( $query->have_posts() ) :
-					$query->the_post();
-					ohmylms_get_template( 'content-course' );
-				endwhile;
-			} else {
-				// Show empty state.
-				echo '<div class="no-courses-found">';
-				echo '</div>';
-			}
-			wp_reset_postdata();
-		}
-
-		die();
-	}
-
-
-	/**
-	 * Filter for Ajax.
-	 *
-	 * @param mixed $slug Slug.
-	 */
-	private function filter( $slug ) {
-	}
-
-
 
 	/**
 	 * Upload an image via AJAX.
@@ -1290,6 +1174,15 @@ class Ajax {
 
 		if ( ! $lesson_id ) {
 			wp_send_json_error( array( 'message' => __( 'Missing lesson ID.', 'ohmylms' ) ) );
+		}
+		if ( \OhMyLMS\Learning\LessonPreview::previewing( $user_id, $lesson_id ) ) {
+			wp_send_json_error(
+				array(
+					'code'    => 'ohmylms_lesson_preview',
+					'message' => __( 'Preview — nothing is recorded.', 'ohmylms' ),
+				),
+				409
+			);
 		}
 
 		// SECURITY: Derive course_id from lesson_id server-side to prevent manipulation

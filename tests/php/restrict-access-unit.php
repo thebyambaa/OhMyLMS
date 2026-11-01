@@ -18,6 +18,9 @@ namespace OhMyLMS\Services {
 namespace OhMyLMS\Quiz {
     final class Submission { public static function clear_preview_record($quiz_id, $user_id) { $GLOBALS['cleared'][] = [$quiz_id, $user_id]; } }
 }
+namespace OhMyLMS\Learning {
+    final class LessonPreview { public static function active($id = 0) { return ! empty( $GLOBALS['lesson_preview'] ); } }
+}
 namespace OhMyLMS\Data {
     final class Student {
         public function __construct(private $id) {}
@@ -70,6 +73,10 @@ namespace {
         check(visit(GUEST, $type) === 'wp_die:403', "Guest can open $type");
     }
     check(visit(STUDENT, 'post') === 'allowed', 'Unrestricted post types must not be gated');
+    // A verified learner preview (LessonPreview::start() checked the editor and applies the gates itself) skips this gate.
+    $GLOBALS['lesson_preview'] = true;
+    check(visit(STUDENT, 'ohmylms-lesson') === 'allowed', 'A started learner preview was gated twice');
+    $GLOBALS['lesson_preview'] = false;
 
     // Opening a quiz while signed in lets the quiz clear stale preview records first; nothing else does.
     $cleared = []; visit(ADMIN, 'ohmylms-quiz');

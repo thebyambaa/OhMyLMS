@@ -1,5 +1,8 @@
 import { invalidResponse, record } from '../model';
 import type { Currency } from '../types';
+import { createValidators } from '../../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
 
 export type PulseMetricId =
 	'revenue' | 'active_learners' | 'completions' | 'renewals_at_risk';
@@ -30,13 +33,6 @@ const IDS: readonly PulseMetricId[] = [
 
 function amount( value: unknown ): number {
 	if ( 'number' !== typeof value || ! Number.isFinite( value ) ) {
-		throw invalidResponse();
-	}
-	return value;
-}
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
 		throw invalidResponse();
 	}
 	return value;

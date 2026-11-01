@@ -3,6 +3,7 @@
 namespace OhMyLMS\Emails\StudentsEmail;
 
 use OhMyLMS\Emails\Emails;
+use OhMyLMS\I18n\RecipientLocale;
 
 /**
  * Plugin quiz graded implementation.
@@ -82,6 +83,24 @@ class QuizGraded {
 			return;
 		}
 
+		RecipientLocale::run(
+			$student,
+			function () use ( $quiz_id, $student, $course, $score ) {
+				$this->send( $quiz_id, $student, $course, $score );
+			}
+		);
+	}
+
+	/**
+	 * Compose and send the email, in the learner's language.
+	 *
+	 * @param mixed    $quiz_id Quiz identifier.
+	 * @param \WP_User $student Learner.
+	 * @param object   $course  Course.
+	 * @param mixed    $score   Score.
+	 */
+	private function send( $quiz_id, $student, $course, $score ) {
+		$settings   = Emails::get_template_settings( 'student_quiz_graded', $this->default_settings() );
 		$quiz       = get_post( $quiz_id );
 		$quiz_title = $quiz ? $quiz->post_title : '';
 

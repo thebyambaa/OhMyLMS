@@ -17,6 +17,7 @@ import {
 	positiveId,
 	record,
 } from './model';
+import { parseSource } from './sourceModel';
 import type {
 	ApplyInput,
 	CompositionInput,
@@ -624,6 +625,20 @@ export async function createFigure(
 			{ page, bounds },
 			{ signal }
 		)
+	);
+}
+
+/**
+ * What the side-by-side viewer of a PDF import can show: the renderer, page count and the
+ * authenticated page image and PDF addresses.
+ *
+ * @param id     Job ID.
+ * @param signal Cancels the request.
+ * @return The source descriptor.
+ */
+export async function getSource( id: number, signal?: AbortSignal ) {
+	return parseSource(
+		await get< unknown >( `${ jobPath( id ) }/source`, { signal } )
 	);
 }
 

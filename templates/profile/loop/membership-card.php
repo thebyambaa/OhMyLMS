@@ -126,7 +126,7 @@ $plan_dialog_id = wp_unique_id( 'ohmylms-plan-details-' );
 		<a href="#<?php echo esc_attr( $plan_dialog_id ); ?>" class="ohmylms-button view-plan" role="button" aria-haspopup="dialog" aria-controls="<?php echo esc_attr( $plan_dialog_id ); ?>" aria-expanded="false" data-wp-on--click="actions.openPlan" data-wp-bind--aria-expanded="context.planOpen"><?php echo esc_html__( 'View Plan', 'ohmylms' ); ?></a>
 	</div>
 
-	<div class="ohmylms-membership-modal" id="<?php echo esc_attr( $plan_dialog_id ); ?>" aria-hidden="true" data-wp-style--display="state.planDisplay" data-wp-bind--aria-hidden="!context.planOpen" data-wp-on--click="actions.planBackdrop" data-wp-watch="callbacks.planFocus">
+	<div class="ohmylms-membership-modal" id="<?php echo esc_attr( $plan_dialog_id ); ?>" aria-hidden="true" data-wp-style--display="state.planDisplay" data-wp-bind--aria-hidden="!context.planOpen" data-wp-on--click="actions.planBackdrop" data-wp-on-document--keydown="actions.planKey" data-wp-watch="callbacks.planFocus">
 		<div class="ohmylms-membership-modal-wrapper">
 			<div class="ohmylms-membership-modal-inner" role="dialog" aria-modal="true" tabindex="-1" aria-labelledby="<?php echo esc_attr( $plan_dialog_id . '-title' ); ?>">
 				<h4 class="membership-modal-title" id="<?php echo esc_attr( $plan_dialog_id . '-title' ); ?>">

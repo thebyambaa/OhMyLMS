@@ -2,6 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { ApiError } from '../../lib/api';
+import { attachment, mockMediaFrame } from '../../test/mediaFrame';
 import * as ai from './aiTutor';
 import * as design from './designSystem';
 import * as gateways from './gateways';
@@ -62,7 +63,6 @@ vi.mock( './hubIcons', async ( original ) => ( {
 	...( await original< typeof import( './hubIcons' ) >() ),
 	getHubIcons: vi.fn(),
 	saveHubIcons: vi.fn(),
-	listImages: vi.fn(),
 } ) );
 
 const stripe = gateways.parseGateway( stripeRaw );
@@ -367,17 +367,8 @@ describe( 'Design system tab', () => {
 describe( 'Hub icons tab', () => {
 	it( 'picks an image and falls back to the built-in icon', async () => {
 		const user = userEvent.setup();
-		vi.mocked( hub.listImages ).mockResolvedValue( {
-			items: [
-				{
-					id: 31,
-					title: 'Book',
-					thumbnail: 'https://site.test/book.png',
-				},
-			],
-			total: 1,
-			totalPages: 1,
-		} );
+		const media = mockMediaFrame();
+		onTestFinished( media.restore );
 		renderTab( 'hub-icons' );
 		const form = await screen.findByRole( 'form', { name: 'Hub icons' } );
 		await user.click(
@@ -385,8 +376,17 @@ describe( 'Hub icons tab', () => {
 				name: 'Choose an image for Lesson',
 			} )
 		);
-		await user.click(
-			await screen.findByRole( 'button', { name: 'Use image Book' } )
+		expect( media.last().options ).toMatchObject( {
+			title: 'Image for Lesson',
+			library: { type: 'image' },
+		} );
+		media.last().choose(
+			attachment( {
+				id: 31,
+				url: 'https://site.test/book-full.png',
+				mime: 'image/svg+xml',
+				sizes: { thumbnail: { url: 'https://site.test/book.png' } },
+			} )
 		);
 		await user.click(
 			within( form ).getByRole( 'button', {

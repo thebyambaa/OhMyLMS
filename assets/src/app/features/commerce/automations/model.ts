@@ -1,5 +1,8 @@
 import { __, sprintf } from '@wordpress/i18n';
 import { ApiError } from '../../../lib/api';
+import { createValidators } from '../../../lib/validation';
+
+const { record, text } = createValidators( invalidRuleResponse );
 
 export const RULE_PER_PAGE = 20;
 export const RULE_NAME_MAX = 190;
@@ -115,18 +118,6 @@ export function invalidRuleResponse(): ApiError {
 	} );
 }
 
-function record( value: unknown ): Record< string, unknown > {
-	if ( ! value || 'object' !== typeof value || Array.isArray( value ) ) {
-		throw invalidRuleResponse();
-	}
-	return value as Record< string, unknown >;
-}
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidRuleResponse();
-	}
-	return value;
-}
 function int( value: unknown ): number {
 	if ( 'number' !== typeof value || ! Number.isSafeInteger( value ) ) {
 		throw invalidRuleResponse();

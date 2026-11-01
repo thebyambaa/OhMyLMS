@@ -7,7 +7,6 @@ import {
 	getCourse,
 	getOptions,
 	listCourses,
-	listMedia,
 	restoreCourse,
 	trashCourse,
 	updateCourse,
@@ -173,22 +172,6 @@ describe( 'typed courses API', () => {
 			code: 'invalid_response',
 		} );
 		expect( get ).not.toHaveBeenCalled();
-	} );
-	it( 'lists only web images from the core media route', async () => {
-		await listMedia( 'logo', 2 );
-		expect( getCollection ).toHaveBeenLastCalledWith(
-			'/wp/v2/media',
-			expect.any( Function ),
-			expect.objectContaining( {
-				query: expect.objectContaining( {
-					search: 'logo',
-					page: 2,
-					per_page: 12,
-					media_type: 'image',
-					mime_type: 'image/jpeg,image/png,image/gif,image/webp',
-				} ),
-			} )
-		);
 	} );
 	it( 'calls only routes the contract describes', () => {
 		const paths = contract.routes.map( ( route ) => route.path );

@@ -7,10 +7,9 @@ import {
 	toleranceOrFormula,
 } from './formulaInput.mjs';
 import { QUESTION_BLOCK_TYPES, questionTypePatch } from './questionBlocks.mjs';
-/** @jsx createElement */
 import { createElement, useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
-import { RichContentControl } from '../math/RichContentControl';
+import { RichContentControl } from '../math/public.mjs';
 import {
 	Button,
 	CheckboxControl,
@@ -23,15 +22,19 @@ import {
 	numbersToList,
 	removePart,
 	updatePart,
-} from '../question-bank/model.mjs';
+} from '../question-bank/public.mjs';
+
+/** @typedef {import('./editorTypes').Data} Data */
+/** @typedef {import('./editorTypes').OnPatch} OnPatch */
+/** @typedef {import('./editorTypes').EditorComponent} EditorComponent */
 
 /**
  * Other accepted answers: numbers and {{formulas}}, comma separated. The typed text is kept as
  * typed; only complete numbers and formulas are stored.
- * @param root0
- * @param root0.value
- * @param root0.onChange
- * @param root0.names
+ * @param {Object}   root0
+ * @param {Data}     root0.value
+ * @param {OnPatch}  root0.onChange
+ * @param {string[]} root0.names
  */
 function AcceptedAnswers( { value, onChange, names } ) {
 	const stored = numbersToList( value.answers );
@@ -45,7 +48,7 @@ function AcceptedAnswers( { value, onChange, names } ) {
 			setText( stored );
 		}
 	}, [ stored ] ); // eslint-disable-line react-hooks/exhaustive-deps
-	const update = ( next ) => {
+	const update = ( /** @type {string} */ next ) => {
 		setText( next );
 		onChange( { answers: listToNumbersOrFormulas( next ) } );
 	};
@@ -75,10 +78,10 @@ function AcceptedAnswers( { value, onChange, names } ) {
 
 /**
  * Numerical question settings: expected value(s), tolerance and unit.
- * @param root0
- * @param root0.value
- * @param root0.onChange
- * @param root0.onGenerate
+ * @param {Object}                                                       root0
+ * @param {Data}                                                         root0.value
+ * @param {OnPatch}                                                      root0.onChange
+ * @param {(preset: import('./mathsGenerator.mjs').MathsPreset) => void} [root0.onGenerate]
  */
 export function NumericalEditor( { value, onChange, onGenerate } ) {
 	const names = variableNames( value );
@@ -197,18 +200,19 @@ export function NumericalEditor( { value, onChange, onGenerate } ) {
 
 /**
  * Structured question parts: shared stem (question text) plus separately scored parts.
- * @param root0
- * @param root0.value
- * @param root0.onChange
- * @param root0.renderQuestion
+ * @param {Object}          root0
+ * @param {Data}            root0.value
+ * @param {OnPatch}         root0.onChange
+ * @param {EditorComponent} [root0.renderQuestion]
  */
 export function StructuredEditor( {
 	value,
 	onChange,
 	renderQuestion: PartQuestion,
 } ) {
+	/** @type {Data[]} */
 	const parts = value.parts || [];
-	const set = ( index, fields ) =>
+	const set = ( /** @type {number} */ index, /** @type {Data} */ fields ) =>
 		onChange( {
 			parts: updatePart( parts, index, fields ),
 		} );
@@ -391,7 +395,7 @@ export function StructuredEditor( {
 							options={ part.question?.questions || [] }
 							prompt={ part.prompt || '' }
 							mainStatement
-							onChange={ ( patch ) =>
+							onChange={ ( /** @type {Data} */ patch ) =>
 								set( index, {
 									question: { ...part.question, ...patch },
 								} )
@@ -456,9 +460,9 @@ export function StructuredEditor( {
 
 /**
  * Practice feedback fields shared by all question types.
- * @param root0
- * @param root0.question
- * @param root0.onChange
+ * @param {Object}              root0
+ * @param {Data|null|undefined} root0.question
+ * @param {OnPatch}             root0.onChange
  */
 export function PracticeFeedbackFields( { question, onChange } ) {
 	if ( ! question || ! question.settings?.type ) {

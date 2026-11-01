@@ -7,13 +7,14 @@ import {
 	SelectControl,
 	TextControl,
 } from '@wordpress/components';
-import {
-	NativeSaveGuard,
-	markNativeQuizDirty,
-} from '../learning/NativeSaveGuard';
+import { NativeSaveGuard, markNativeQuizDirty } from '../learning/public.mjs';
 import { loadPools, savePools } from './api.mjs';
-import { listSkills } from '../question-bank/api.mjs';
-import { flattenTree, skillTree } from '../question-bank/model.mjs';
+import {
+	flattenTree,
+	listSkills,
+	skillTree,
+} from '../question-bank/public.mjs';
+/** @type {import('./api.mjs').Pool} */
 const EMPTY = {
 	title: '',
 	term_id: 0,
@@ -23,19 +24,27 @@ const EMPTY = {
 	include_secure: true,
 };
 
+/** @typedef {import('./api.mjs').Pool} Pool */
+/** @typedef {NonNullable<Parameters<typeof skillTree>[0]>} Skills */
+/** @typedef {{status: 'success'|'error', text: string}} Message */
+
 /**
  * Random question pools: each attempt draws `count` approved questions for a skill.
  * The server validates pools together and refuses shortages with an explanation.
- * @param root0
- * @param root0.quizId
- * @param root0.native
+ * @param {Object}  root0          Component props.
+ * @param {number}  root0.quizId   Quiz ID.
+ * @param {boolean} [root0.native] Rendered in the native quiz editor.
  */
 export function PoolsEditor( { quizId, native = false } ) {
-	const [ savedState, setSavedState ] = useState( null );
+	const [ savedState, setSavedState ] = useState(
+		/** @type {string|null} */ ( null )
+	);
 	const [ revision, setRevision ] = useState( '' );
-	const [ pools, setPools ] = useState( null );
-	const [ skills, setSkills ] = useState( [] );
-	const [ message, setMessage ] = useState( null );
+	const [ pools, setPools ] = useState( /** @type {Pool[]|null} */ ( null ) );
+	const [ skills, setSkills ] = useState( /** @type {Skills} */ ( [] ) );
+	const [ message, setMessage ] = useState(
+		/** @type {Message|null} */ ( null )
+	);
 	const [ saving, setSaving ] = useState( false );
 	useEffect( () => {
 		let active = true;
@@ -47,7 +56,9 @@ export function PoolsEditor( { quizId, native = false } ) {
 				setPools( loaded.pools );
 				setSavedState( JSON.stringify( loaded.pools ) );
 				setRevision( loaded.revision );
-				setSkills( catalogue.skills || [] );
+				setSkills(
+					/** @type {{skills?: Skills}} */ ( catalogue ).skills || []
+				);
 			} )
 			.catch(
 				( cause ) =>
@@ -64,6 +75,10 @@ export function PoolsEditor( { quizId, native = false } ) {
 	if ( ! pools ) {
 		return null;
 	}
+	/**
+	 * @param {number}        index  Pool index.
+	 * @param {Partial<Pool>} fields Changed fields.
+	 */
 	const update = ( index, fields ) =>
 		setPools(
 			pools.map( ( pool, position ) =>
@@ -81,9 +96,16 @@ export function PoolsEditor( { quizId, native = false } ) {
 		try {
 			let saved;
 			try {
-				saved = await savePools( quizId, pools, revision );
+				saved = await savePools(
+					quizId,
+					/** @type {Pool[]} */ ( pools ),
+					revision
+				);
 			} catch ( cause ) {
-				if ( cause?.code !== 'ohmylms_quiz_questions_conflict' ) {
+				if (
+					/** @type {{code?: string}|null|undefined} */ ( cause )
+						?.code !== 'ohmylms_quiz_questions_conflict'
+				) {
 					throw cause;
 				}
 				// Question placement also changes the revision (every native save does); only a
@@ -97,7 +119,11 @@ export function PoolsEditor( { quizId, native = false } ) {
 						)
 					);
 				}
-				saved = await savePools( quizId, pools, fresh.revision );
+				saved = await savePools(
+					quizId,
+					/** @type {Pool[]} */ ( pools ),
+					fresh.revision
+				);
 			}
 			setPools( saved.pools );
 			setRevision( saved.revision );
@@ -115,7 +141,9 @@ export function PoolsEditor( { quizId, native = false } ) {
 		} catch ( cause ) {
 			setMessage( {
 				status: 'error',
-				text: cause.message || __( 'Could not save pools.', 'ohmylms' ),
+				text:
+					/** @type {{message?: string}} */ ( cause ).message ||
+					__( 'Could not save pools.', 'ohmylms' ),
 			} );
 		} finally {
 			setSaving( false );

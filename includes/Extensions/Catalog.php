@@ -170,31 +170,6 @@ final class Catalog {
 	}
 
 	/**
-	 * Map the legacy admin-ajax fields (`search_term`, `category_slug[]`, `tag_slug[]`,
-	 * `level_slug[]`, `price_slug[]`, `sort_by`) to filters.
-	 *
-	 * @param array $post Unslashed POST data.
-	 * @return array See empty_filters().
-	 */
-	public static function legacy_filters( array $post ) {
-		$map    = array(
-			'search_term'   => self::PARAMS['search'],
-			'category_slug' => self::PARAMS['curriculum'],
-			'tag_slug'      => self::PARAMS['bundle'],
-			'level_slug'    => self::PARAMS['level'],
-			'price_slug'    => self::PARAMS['price'],
-			'sort_by'       => self::PARAMS['sort'],
-		);
-		$source = array();
-		foreach ( $map as $legacy => $name ) {
-			if ( isset( $post[ $legacy ] ) ) {
-				$source[ $name ] = $post[ $legacy ];
-			}
-		}
-		return self::filters( $source );
-	}
-
-	/**
 	 * Whether a list value can match anything.
 	 *
 	 * @param string $key   Filter key.

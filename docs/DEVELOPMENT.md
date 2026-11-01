@@ -96,17 +96,27 @@ brand colors or fonts.
 
 Extension admin pages (`registerAdminPage`) render in the new app at `#/extensions/<id>`, inside the app layout.
 
+## Course access and content links
+
+`Course::has_access()` (and `Student::maybe_enrolled()`) answer "is the current user enrolled", not "may they
+view it". Administrators and the course author get `false` unless they enrolled: checkout sends enrolled users
+to the course instead of charging them again, the price box is hidden only from the enrolled, and only
+learners get the review form. Previewing is granted where content is gated, to `manage_options` users and the
+post author: `Hooks\CommonHook::restrict_access()`, `templates/single-lesson.php` and `SequentialMode`. Tests
+that need an enrolled administrator must enrol one.
+
+Lesson, quiz and assignment links are `/<course_base>/<course-slug>/<lessons|quizzes|assignments>/<slug>/`
+(`Course::get_content_link()`, `ohmylms_get_pretty_content_permalink()`). The rewrite rules only read the
+content slug, so a draft, pending or private course with a slug still serves as the base. Without a usable base
+(no course slug, trashed course, plain permalinks) and for unpublished content, the link is
+`?post_type=<type>&p=<id>`, which also takes the editor's `preview=true`. `tests/php/content-permalinks-integration.php`
+fetches each case as an administrator.
+
 ## Known issues
 
-- Lessons and assignments in an unpublished course get broken permalinks: the content slug is appended to
-  the course's draft link (`/?post_type=ohmylms-course&p=446/assignments/untitled-2/`). Learners cannot reach
-  those courses, so only previews are affected.
-- Flattening lesson groups into their unit (`b0e21ca5`) left practice guidance without a "continue" link once
-  a skill is met, and group lesson pages (`LessonJourney::find`, `hub_lesson` links) are unreachable. The
-  real-site specs `learner-journey.spec.cjs` and `practice-guidance.spec.cjs` still open those pages, and
-  `subjects.config.cjs` points at a missing `subjects.spec.cjs`.
-- The Authorize.Net script still sets its own red on `#authorize-net-payment-errors`; without the script the
-  box uses `--oml-danger`.
+- `GatewayAuthorizenet` is a global class that neither PSR-4 nor the classmap covers, so the gateway registry
+  never builds it and `authorize-net.js` is never enqueued (PayPal had the same problem; it is now
+  `OhMyLMS\Gateways\Paypal\GatewayPaypal`). Review its return and webhook paths before loading it.
 - No real Stripe or QPay payment has been run against the Interactivity checkout; 800.local has no gateway
   enabled.
 
@@ -133,14 +143,121 @@ The original requirements for inline quiz performance data, skills, attempt hist
 
 ## Translations
 
-Mongolian (`mn`) is the only bundled translation. Files in `languages/`: `ohmylms.pot` (template), `ohmylms-mn.po` (source of truth, machine translation that needs a native review), `ohmylms-mn.mo` and `ohmylms-mn-ohmylms.json` (Jed catalog for the registered `ohmylms` admin script handle). Spanish, Dutch and Bengali were removed. After changing strings, refresh the POT with WP-CLI `wp i18n make-pot` (merge PHP and changed authored JavaScript into the existing catalog; do not drop unchanged entries), then:
+Mongolian (`mn`) is the only bundled translation. Files in `languages/`: `ohmylms.pot` (template), `ohmylms-mn.po` (source of truth, machine translation that needs a native review), `ohmylms-mn.mo`, one Jed catalog per script handle `ohmylms-mn-<handle>.json` (the first file `wp_set_script_translations( <handle>, 'ohmylms', <plugin>/languages )` looks for; `ohmylms-admin-app` includes every webpack chunk its runtime loads) and `ohmylms-mn-ohmylms.json` (every JavaScript string, the fallback for plugin scripts without a handle file). Spanish, Dutch and Bengali were removed. After a build (chunk names are hashed, so the POT must reference the current bundles), regenerate the template, merge and compile:
 
 ```sh
+wp i18n make-pot . languages/ohmylms.pot --slug=ohmylms --domain=ohmylms --include="ohmylms.php,includes,assets,templates,packages" --exclude="node_modules,vendor,tests,build" --skip-audit
 python -m pip install polib==1.2.0
-python tools/compile-translations.py --locale mn --merge-pot
+python tools/merge-translations.py merge --locale mn
+python tools/merge-translations.py compile --locale mn --wp "wp"
+python tools/merge-translations.py stats --locale mn --untranslated 30
 ```
 
-`tools/compile-translations.py` appends missing entries to the `.po` without rewriting existing translations and compiles the `.mo` and the Jed JSON; recompiling an unchanged catalog is byte-identical. Do not edit generated `.mo` or `.json` files by hand.
+Without a global `wp`, use Local's WP-CLI with the system PHP, e.g. `--wp "C:\php8.5.4\php.exe -n -d extension_dir=C:\php8.5.4\ext -d extension=mbstring -d memory_limit=2G -d error_reporting=24575 %LOCALAPPDATA%\Programs\local\resources\extraResources\bin\wp-cli\wp-cli.phar"`; `make-pot` also needs `-d extension=curl -d extension=openssl` (it fetches the block.json schema). `merge` has msgmerge semantics: unchanged strings keep their translation, a changed string gets the closest old translation (similarity ≥ 0.6) marked `fuzzy` with the old `#| msgid`, strings no longer in the POT become `#~` obsolete entries, and nothing is machine translated; `--extra other-mn.po` fills entries the main file leaves empty or fuzzy. `compile` builds the `.mo` and JSON from finished entries only (WP-CLI would ship fuzzy ones); add new script handles to `SCRIPT_HANDLES` in the script. Merging and compiling an unchanged catalog is byte-identical. Do not edit generated `.mo` or `.json` files by hand; `tools/compile-translations.py` is superseded.
+
+WordPress 7 registers a plugin's language folder from its `Domain Path` header (the plugin root without one), so `ohmylms.php` declares `Domain Path: /languages`; without it the first `__()` at `init` caches the root folder and PHP strings stay English.
+
+AI drafts (31 October 2026). Every untranslated or fuzzy string was drafted with `tools/translation-drafts.py`: `export` writes JSON chunks and a glossary of reviewed short strings, `import` writes drafts back and rejects any whose `{tokens}`, HTML tags or (for php-format/javascript-format strings) printf placeholders differ from the source. Drafts for strings shown on the admin menu, dashboard, learner pages and checkout (1,160) are live; the other 10,982 stay `fuzzy`, so English shows until a native speaker clears the flag. Terms to check first: subscription "давтамжит захиалга" vs order "захиалга" (strings with both, or with "тогтмол төлбөр", are flagged with a translator comment); skill domain "хүрээ" (strings with "салбар" are flagged); unit and chapter are both "Бүлэг"; measurement unit "Нэгж"; question pool "Сан" or "асуултын багц" vs bundle "багц" and question bank "Асуултын сан"; syllabus "хичээлийн хөтөлбөр" vs curriculum "Хөтөлбөр"; placement test "түвшин тогтоох шалгалт". URL slugs, brand names and provider console labels are kept in English.
+
+## Interface languages
+
+The interface is available in English and Mongolian (`mn`, the code of `languages/ohmylms-mn.*` and of the
+WordPress core pack), and each user picks.
+
+- **Staff (wp-admin)** follow their WordPress profile language (Users › Profile › Language), as WordPress does.
+  That covers PHP strings, the React app and every plugin script that depends on `wp-i18n`:
+  `InterfaceLanguage::translate_scripts()` calls `wp_set_script_translations()` for those that have no text
+  domain yet, so WordPress loads `ohmylms-<locale>-<handle>.json`. When a handle has no file,
+  `InterfaceLanguage::script_catalog()` hands WordPress the all-strings `ohmylms-<locale>-ohmylms.json`, once
+  per page. admin-ajax and REST calls whose referrer is a wp-admin screen keep WordPress' rule. Settings ›
+  General links to the profile setting; there is no separate admin switcher.
+- **Learners (front end, and admin-ajax/REST calls from learner pages)**: `OhMyLMS\I18n\InterfaceLanguage`
+  filters `determine_locale`. The first of these that names an interface locale wins:
+  1. the signed-in user's `locale` user meta (the profile field, so admin and learner pages agree);
+  2. the `ohmylms_locale` cookie;
+  3. `Accept-Language`, by quality: `mn`, `mn-MN` and any `mn-*` give `mn`, `en*` gives `en_US`, `*` and
+     unknown languages fall through (`OhMyLMS\I18n\AcceptLanguage`);
+  4. `en_US`.
+
+  A signed-in user without a saved locale follows the cookie and then the browser until they choose. The
+  filter does not run in wp-admin, cron, WP-CLI or installs, inside `switch_to_locale()`, or on
+  wp-login.php when WordPress' own `wp_lang` picker is used. `<html lang>` follows, because
+  `language_attributes()` reads `determine_locale()`.
+- **More languages**: filter `ohmylms_interface_locales` (WordPress locale => name in that language). Each
+  locale needs `ohmylms-<locale>.mo`, and the core pack for WordPress' own strings (dates, "Log in",
+  comment forms): `wp language core install <locale>`. The plugin bundles no core packs. 800.local has
+  `mn` installed; WordPress' latest Mongolian core pack is the 6.5 one, so core strings added since then
+  stay English.
+
+**Switcher.** `OhMyLMS\I18n\Switcher::render( $args )`, the theme helper `ohmylms_get_language_switcher( $args )`
+and the shortcode `[ohmylms_language_switcher label="…" variant="inline|compact"]` print a GET form whose
+buttons are `name="ohmylms_locale" value="<locale>"`, each with `aria-pressed` and `lang`, inside a labelled
+group (the `compact` variant keeps the label for screen readers only). It is in `global/main-header.php`,
+`profile/settings.php` and the Student Hub (menu footer, Settings › Account, sign-in screen); theme copies of
+those templates made before this change do not show it. Settings › General › "Language switcher"
+(`ohmylms_language_switcher`, default on) hides every switcher; the resolution, the cookie, `?ohmylms_locale=`
+and the REST route keep working, so a theme can render its own. Styles: `assets/css/language-switcher.css`
+(tokens only).
+
+- With JavaScript, `ohmylms/language` posts the choice and reloads the page; if the request fails it loads the
+  form's GET URL ([INTERACTIVITY](INTERACTIVITY.md#language-switcher)).
+- Without JavaScript, `?ohmylms_locale=<locale>` on any front-end URL is applied on `template_redirect`, then a
+  `303` (with `nocache_headers()`) goes back to the same URL without `ohmylms_locale` and
+  `ohmylms_locale_nonce`. Visitors need no nonce; only their cookie changes. A signed-in user's profile
+  changes only with the form's `ohmylms_locale_nonce` (action `ohmylms_switch_locale`). Unknown locales
+  change nothing.
+- REST (`OhMyLMS\I18n\Rest\LocaleController`, added through `ohmylms_rest_v1_controllers`):
+  `GET ohmylms/v1/learner/locale` returns `{ locale, source, locales: [ { locale, tag, name } ] }`, with
+  `source` one of `user`, `cookie`, `browser`, `default`. `POST` with `locale` (one of the interface locales,
+  otherwise `400 rest_invalid_param`) saves it to the user meta when signed in and always sets the cookie,
+  answering with `Cache-Control: no-store`. Signed-in callers send the `wp_rest` nonce (`403
+  ohmylms_locale_invalid_nonce` without it; application passwords need none). Action:
+  `ohmylms_interface_locale_changed( $locale, $user_id )`.
+- Cookie: `ohmylms_locale`, one year, path `/`, `SameSite=Lax`, `HttpOnly`, `Secure` on HTTPS.
+
+**Caching.** Logged-out pages now differ by the cookie and the browser language. Every front-end HTML response
+sends `Vary: Accept-Language, Cookie` (`wp_headers`, merged with existing tokens). A page cache or CDN that
+ignores `Vary` must key logged-out pages on the `ohmylms_locale` cookie and on whether `Accept-Language`
+prefers `mn`, or must not cache them; otherwise visitors get the other language. Many CDNs skip caching
+responses with `Vary: Cookie`, which is the safe default. The switch redirect and the POST answer are never
+cached.
+
+**Emails.** Every email is written in its recipient's language, whatever the language of the request or cron
+run that sends it. A user's language is their `locale` user meta (the profile field the switcher also
+writes); without one, for an address that belongs to no user, or for a language WordPress has no core pack
+for, the site locale (`get_locale()`); never the cookie or browser of the current request.
+`OhMyLMS\I18n\RecipientLocale::run( $recipient, $compose )` (user ID, `WP_User` or address) switches with
+`WP_Locale_Switcher` (which reloads every loaded text domain, `ohmylms` included, and `$wp_locale`), runs
+`$compose( $locale )` and restores the previous locale in a `finally`; calls nest. `RecipientLocale::each(
+$recipients, $compose )` composes once per language: with one language `$compose` gets `$recipients`
+unchanged, otherwise the recipients of each language. The whole composition runs inside: settings with
+their translated defaults, subject, template, merge tags and `wp_mail()`. Several recipients (custom
+recipients, guardian copies) get one email per language. `RecipientLocale::in_locale( $locale, $compose )`
+runs in a given locale (used to render defaults in one language). Wrapped: every class in
+`includes/Emails` (`AssignmentCommentMail` for both comment emails; the test send of
+`EmailManager::send_test()` follows the administrator's profile), `Exams\ResultsEmail`,
+`Automation\RuleRunner`, `Analytics\Reminders`, `Engagement\Point::send_email()`, school invitations, the
+Zoom, Google Meet and cohort reminders (their subjects and bodies are `ohmylms` strings, one per line, with
+the English text unchanged), and the account email of the e-commerce checkout.
+
+Saved email settings hold only what an administrator changed. `EmailManager::save()` drops every text field
+(subject, heading, message, button, link, footer, course suggestion) equal to its default as rendered in the
+saving request's language, and `null` (or an empty subject, heading or message) resets a field; `enable` and
+recipients are stored as before. A missing field is the class default, which comes from `__()` and is
+therefore rendered in each recipient's language; a customized field is sent as typed, to everyone. The REST
+item reports `defaults` and `customized` per field, and the editor offers "Reset to default" per field
+([emails API](api/emails.md#stored-values-and-defaults)). Earlier saves stored every field; the 1.2.22 update
+`ohmylms_update_1222_forget_email_defaults()` (`EmailManager::forget_defaults()` for every email and every
+interface locale) removes stored values equal to the English or Mongolian default and is idempotent. It runs
+from `Install::update()` once the plugin version is 1.2.22; to run it sooner: `wp eval
+'ohmylms_update_1222_forget_email_defaults();'`.
+
+Test: `OHMYLMS_RECIPIENT_LOCALE_TEST=1 php tests/php/recipient-locale-integration.php` (also covers a
+Mongolian administrator saving only a subject, the reset, the clean-up and the three reminders).
+
+Tests: `node --test tests/js/language.test.mjs` and `OHMYLMS_INTERFACE_LANGUAGE_TEST=1 php
+tests/php/interface-language-integration.php`, which share the `Accept-Language` cases in
+`tests/fixtures/accept-language.json`.
 
 ## Interactive items
 

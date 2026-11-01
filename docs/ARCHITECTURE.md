@@ -156,13 +156,39 @@ Lesson editors and membership settings are registered and listed but are not yet
 the rebuilt lesson-type and membership extension-settings screens. Checkout fields and frontend slots
 render through the host (see above).
 
+## Native editors and learner modules
+
+Two JavaScript trees sit outside the typed app. Both are plain JavaScript typed with JSDoc and checked
+by `npm run typecheck:js` ([ENFORCEMENT.md](ENFORCEMENT.md#type-checking-the-native-and-learner-javascript)).
+
+- `assets/src/features` holds the native lesson, quiz and question editors and the blocks
+  (`native-lesson-editor`, `math-runtime` and the block entries of `webpack.config.cjs`; JSX with the
+  classic `createElement` pragma, `@wordpress/*` as script externals). Its top-level folders
+  (`learning`, `paper`, `question-editor`, `question-bank`, `content-hub`, `assessment`, `curriculum`,
+  `math`, `navigation`, `students`) use each other only through the other folder's `public.mjs`, which
+  re-exports what other folders use (`check:architecture` rule n). Root modules such as `rest.mjs` are
+  shared. `question-editor/public.mjs` exposes only the question type models, which Node tests load. Its
+  `MultipleChoiceBlock`, `QuestionLivePreview` and `QuestionMediaUpload` components are imported
+  directly, as is the side-effect import of `paper/paperBlocks.jsx`; the reasons are in
+  `tools/architecture-rules/frontend-allowlist.json`. webpack binds imports through a `public.mjs` to
+  the defining module, so the entry files do not change what a bundle contains. REST calls go through the
+  shared `rest.mjs` ([STATE-API-MODULARIZATION.md](STATE-API-MODULARIZATION.md)).
+- `assets/interactivity` holds the learner script modules, loaded through the WordPress import map.
+  They import WordPress' `@wordpress/interactivity` and the OhMyLMS SDK by its import-map name
+  `ohmylms/interactivity` (`sdk.js`, which imports nothing), never by path. They use the DOM and
+  `emit()` for add-on events; the five legacy jQuery bridges are allow-listed (rule m).
+- Neither tree has import cycles (rule l). The editors reach the app only for the extension host
+  (`app/extensions/registry.mjs`, `api.ts`, `ExtensionBoundary.tsx`) and the shared `assets/src/ui`
+  components; the two trees share `features/math/loader.mjs` and `interactivity/puzzles.mjs`.
+
 ## Rebuild policy and checks
 
 Stored data does not require migration wrappers. Change PHP, TypeScript, validation and tests together
 when redesigning a shape. Preserve documented hooks and extension points, authentication, capability
 checks, server grading and extension privacy. Ask before destructive actions outside the repository.
 
-Run `npm run typecheck`, `npm run test:app`, `npm run lint:js`, and the relevant PHP and browser checks.
+Run `npm run typecheck`, `npm run typecheck:js`, `npm run test:app`, `npm run lint:js`,
+`npm run check:architecture`, and the relevant PHP and browser checks.
 `npm run build:sdk` builds the authored entry and lazy features using WordPress React externals.
 `tools/sync-admin-app.mjs` publishes the entry, maps, licenses and named `chunks/admin-app-*` feature
 assets; the normal full-build synchronizer calls it too. Feature chunks have content hashes so a

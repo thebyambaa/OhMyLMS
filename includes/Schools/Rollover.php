@@ -7,6 +7,7 @@
 
 namespace OhMyLMS\Schools;
 
+use OhMyLMS\Utility\Lock;
 use OhMyLMS\Utility\Transaction;
 
 defined( 'ABSPATH' ) || exit;
@@ -266,8 +267,8 @@ final class Rollover {
 		global $wpdb;
 		$school_id = (int) $school_id;
 		$lock      = 'ohmylms_rollover_' . $school_id;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Serialize rollovers of one school.
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 10)', $lock ) ) ) {
+		// Serialize rollovers of one school.
+		if ( ! Lock::acquire( $lock, 10 ) ) {
 			throw new \RuntimeException( 'Another rollover of this school is running. Try again in a moment.', 423 );
 		}
 		try {
@@ -300,8 +301,7 @@ final class Rollover {
 
 			return array_merge( $result, array( 'already_applied' => false ) );
 		} finally {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Release the per-school lock.
-			$wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+			Lock::release( $lock );
 		}
 	}
 

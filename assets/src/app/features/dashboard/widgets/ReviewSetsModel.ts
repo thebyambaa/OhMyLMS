@@ -1,4 +1,7 @@
 import { invalidResponse, record } from '../model';
+import { createValidators } from '../../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
 
 export interface ReviewSet {
 	readonly id: number;
@@ -51,13 +54,6 @@ export interface ReviewSets {
 export interface AssignResult {
 	readonly created: boolean;
 	readonly reviewSet: ReviewSet;
-}
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
 }
 
 function whole( value: unknown ): number {

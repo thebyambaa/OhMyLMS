@@ -44,7 +44,7 @@ final class FrontendStyles {
 				}
 			}
 		}
-		/** Integrations can request their layout groups without loading the full compatibility bundle. */
+		/** Integrations can request the page groups their layouts need. */
 		$groups = apply_filters( 'ohmylms_frontend_style_groups', $groups );
 		if ( is_rtl() ) {
 			$groups[] = 'rtl';

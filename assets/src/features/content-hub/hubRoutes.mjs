@@ -54,7 +54,10 @@ export const HUB_ALIASES = {
 	'/assessments/assignments': 'assignments',
 };
 
-/** Hub-provided page for each tab that is not one of the application's own screens. */
+/**
+ * Hub-provided page for each tab that is not one of the application's own screens.
+ * @type {Record<string, string>}
+ */
 const TAB_PAGES = {
 	lessons: 'LessonsPage',
 	exams: 'ExamsPage',
@@ -85,14 +88,14 @@ export const SYLLABUS_ROUTE = '/content-hub/curriculum/syllabus/:id';
 
 /**
  * Where a course is opened: its own editor, which the Courses tab lists.
- * @param courseId
+ * @param {number|string} courseId
  */
 export const courseEditPath = ( courseId ) =>
 	`/course-edit/${ Number( courseId ) }`;
 
 /**
  * Where an address of the retired Catalog tab leads: the course's editor, or the Courses tab.
- * @param hash
+ * @param {unknown} hash
  */
 export function legacyCatalogTarget( hash ) {
 	const match = /#\/content-hub\/catalog\/(\d+)/.exec( String( hash || '' ) );
@@ -101,7 +104,7 @@ export function legacyCatalogTarget( hash ) {
 
 /**
  * Query parameters of the current hash route, e.g. `#/content-hub/skills?add=1`.
- * @param hash
+ * @param {unknown} hash
  */
 export function hashQuery( hash ) {
 	const text = String( hash || '' );
@@ -116,10 +119,12 @@ export function hashQuery( hash ) {
  * The old Assessments addresses reuse the screens of the tabs they open, and the hub's own address shows
  * the first tab. `redirect(resolve)` makes the screen that sends the retired Catalog addresses on to
  * `resolve(hash)`.
- * @param routes
- * @param pages
- * @param screen
- * @param redirect
+ * @template C, E
+ * @param {Array<{path: string, element?: C}>}         routes
+ * @param {Record<string, C>}                          pages
+ * @param {(Component: C|undefined, tab: string) => E} screen
+ * @param {(resolve: (hash: unknown) => string) => E}  [redirect]
+ * @return {Array<{path: string, element: E}>} Routes.
  */
 export function contentHubRoutes( routes, pages, screen, redirect ) {
 	const appRoute = Object.fromEntries(
@@ -129,6 +134,7 @@ export function contentHubRoutes( routes, pages, screen, redirect ) {
 		] )
 	);
 	const hub = [];
+	/** @type {Record<string, E>} */
 	const screens = {};
 	for ( const tab of HUB_TABS ) {
 		const Component = appRoute[ tab.id ]

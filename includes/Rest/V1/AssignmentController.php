@@ -103,9 +103,7 @@ class AssignmentController {
 
 		$completion_rate = $student->get_over_all_completion_rate( $course_id );
 		if ( (int) ( $completion_rate ) === 100 && (int) ( $previous_completion_rate ) !== 100 && ! \OhMyLMS\Learning\CourseProgram::managed( $student_id, $course_id ) ) {
-			global $wpdb;
-			$table_name  = $wpdb->prefix . 'ohmylms_user_enrollment';
-			$enroll_data = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE user_id = %d AND course_id = %d', $table_name, $student_id, $course_id ), ARRAY_A );
+			$enroll_data = \OhMyLMS\Student\Enrollments::legacy_row( $student_id, $course_id );
 			if ( isset( $enroll_data['order_id'] ) ) {
 				do_action( 'ohmylms_course_completed', $student_id, $course_id, $enroll_data['order_id'] );
 			}

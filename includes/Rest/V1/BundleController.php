@@ -308,16 +308,12 @@ class BundleController extends RestController {
 	 * @param WP_REST_Request $request REST request.
 	 */
 	public function targets( WP_REST_Request $request ) {
-		global $wpdb;
 		$type   = (string) $request->get_param( 'type' );
 		$search = sanitize_text_field( (string) $request->get_param( 'search' ) );
 		if ( 'course' === $type ) {
 			return rest_ensure_response( Links::targets( 'course', $search ) ); }
 		if ( 'curriculum' !== $type ) {
 			return Access::error( 'ohmylms_bundle_invalid', __( 'Choose courses or curriculum items.', 'ohmylms' ) ); }
-		$like = '%' . $wpdb->esc_like( $search ) . '%';
-		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE name LIKE %s OR code LIKE %s ORDER BY name LIMIT 20', Items::table(), $like, $like ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Bounded search of the plugin's curriculum table; results change with every edit.
-		$rows = is_array( $rows ) ? $rows : array();
 		return rest_ensure_response(
 			array_map(
 				static function ( $row ) {
@@ -330,7 +326,7 @@ class BundleController extends RestController {
 						'path'      => Items::path_names( (int) $row['id'], false ),
 					);
 				},
-				$rows
+				Items::search( $search )
 			)
 		);
 	}

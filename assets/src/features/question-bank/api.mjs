@@ -3,11 +3,27 @@ import { queryString as query, request } from '../rest.mjs';
 const QUESTIONS = '/ohmylms/v1/questions';
 
 /**
+ * JSON of the question, version, bank and skill routes. Its fields depend on the question type and
+ * are read by the editors as sent, so they stay untyped.
+ * @typedef {Record<string, any>} RestData
+ */
+/**
+ * @typedef {Object} OptionPayload
+ * @property {string}                                 answer          Answer text.
+ * @property {boolean}                                is_correct      Whether it is correct.
+ * @property {number}                                 order_number    Position.
+ * @property {number}                                 [id]            Saved option ID.
+ * @property {number}                                 [image_id]      Image attachment ID.
+ * @property {string}                                 [image_url]     Image URL.
+ * @property {{ label?: string, image_url?: string }} [matching_data] Matching pair.
+ */
+
+/**
  * A typed question response with the flat fields the native editors read: bank attributes at the
  * top level, `skill_map`, `can_edit`, `can_approve`, and `thumbnail_id` on each option.
  *
- * @param {Object} view Summary or editor view from `ohmylms/v1/questions`.
- * @return {Object} The view with the flat fields added.
+ * @param {RestData} view Summary or editor view from `ohmylms/v1/questions`.
+ * @return {RestData} The view with the flat fields added.
  */
 export const bankView = ( view ) =>
 	view && typeof view === 'object'
@@ -32,11 +48,12 @@ export const bankView = ( view ) =>
  * Answer options in the shape `ohmylms/v1/questions` accepts. Editor-only keys are dropped, and
  * unsaved options (`temp`) lose their client-side ID.
  *
- * @param {Object[]} options Options as the editors hold them.
- * @return {Object[]} Options for a write.
+ * @param {RestData[]} [options] Options as the editors hold them.
+ * @return {OptionPayload[]} Options for a write.
  */
 export const optionsPayload = ( options = [] ) =>
 	options.map( ( option, index ) => {
+		/** @type {OptionPayload} */
 		const row = {
 			answer: String( option.answer ?? '' ),
 			is_correct:
@@ -73,10 +90,11 @@ export const optionsPayload = ( options = [] ) =>
  * A question write body: `questions` becomes `options`; fields the typed route does not accept
  * (`status`, `quiz_id`, `id`) are left out.
  *
- * @param {Object} data Fields as the editors build them.
- * @return {Object} Body for `POST|PATCH /questions`.
+ * @param {RestData} data Fields as the editors build them.
+ * @return {Record<string, unknown>} Body for `POST|PATCH /questions`.
  */
 export const questionPayload = ( data ) => {
+	/** @type {Record<string, unknown>} */
 	const body = {};
 	for ( const key of [
 		'name',
@@ -102,10 +120,10 @@ export const questionPayload = ( data ) => {
 /**
  * Visible bank questions (summaries without answer keys).
  *
- * @param {Object}                               params Filters: search, type, difficulty, status ('' for every usable
+ * @param {Record<string, unknown>}              params Filters: search, type, difficulty, status ('' for every usable
  *                                                      question), bank, skill, secure, exclude_quiz, page, per_page.
  * @param {(options: Object) => Promise<Object>} fetch  Transport.
- * @return {Promise<{items: Object[]}>} Rows.
+ * @return {Promise<{items: RestData[]}>} Rows.
  */
 export const searchBank = ( params, fetch = request ) =>
 	Promise.resolve(
@@ -123,14 +141,36 @@ export const searchBank = ( params, fetch = request ) =>
 		items: Array.isArray( rows ) ? rows.map( bankView ) : [],
 	} ) );
 
+/**
+ * @param {number|string}                        id    Question ID.
+ * @param {(options: Object) => Promise<Object>} fetch Transport.
+ * @return {Promise<RestData>} Editor view.
+ */
 export const loadBankQuestion = ( id, fetch = request ) =>
 	Promise.resolve( fetch( { path: `${ QUESTIONS }/${ id }` } ) ).then(
 		bankView
 	);
+/**
+ * @param {number|string}                        id    Question ID.
+ * @param {(options: Object) => Promise<Object>} fetch Transport.
+ * @return {Promise<RestData>} Version history.
+ */
 export const loadVersions = ( id, fetch = request ) =>
 	fetch( { path: `${ QUESTIONS }/${ id }/versions?per_page=100` } );
+/**
+ * @param {number|string}                        id        Question ID.
+ * @param {number|string}                        versionId Version ID.
+ * @param {(options: Object) => Promise<Object>} fetch     Transport.
+ * @return {Promise<RestData>} Version snapshot.
+ */
 export const loadVersion = ( id, versionId, fetch = request ) =>
 	fetch( { path: `${ QUESTIONS }/${ id }/versions/${ versionId }` } );
+/**
+ * @param {number|string}                        id          Question ID.
+ * @param {number|string|null|undefined}         [versionId] Version to approve; the current one when empty.
+ * @param {(options: Object) => Promise<Object>} fetch       Transport.
+ * @return {Promise<RestData>} Editor view.
+ */
 export const approveQuestion = ( id, versionId, fetch = request ) =>
 	Promise.resolve(
 		fetch( {
@@ -139,6 +179,11 @@ export const approveQuestion = ( id, versionId, fetch = request ) =>
 			data: versionId ? { version_id: Number( versionId ) } : {},
 		} )
 	).then( bankView );
+/**
+ * @param {number|string}                        id    Question ID.
+ * @param {(options: Object) => Promise<Object>} fetch Transport.
+ * @return {Promise<RestData>} Editor view of the copy.
+ */
 export const duplicateQuestion = ( id, fetch = request ) =>
 	Promise.resolve(
 		fetch( { path: `${ QUESTIONS }/${ id }/duplicate`, method: 'POST' } )
@@ -147,9 +192,9 @@ export const duplicateQuestion = ( id, fetch = request ) =>
  * Partial update; `data.base_modified` is the `modified` of the last read.
  *
  * @param {number}                               id    Question ID.
- * @param {Object}                               data  Fields to change.
+ * @param {RestData}                             data  Fields to change.
  * @param {(options: Object) => Promise<Object>} fetch Transport.
- * @return {Promise<Object>} Editor view.
+ * @return {Promise<RestData>} Editor view.
  */
 export const saveQuestionAttributes = ( id, data, fetch = request ) =>
 	Promise.resolve(
@@ -160,6 +205,10 @@ export const saveQuestionAttributes = ( id, data, fetch = request ) =>
 		} )
 	).then( bankView );
 
+/**
+ * @param {(options: Object) => Promise<Object>} fetch Transport.
+ * @return {Promise<RestData>} Question banks.
+ */
 export const listBanks = ( fetch = request ) =>
 	fetch( { path: '/ohmylms/v1/question-banks' } );
 
@@ -170,7 +219,7 @@ export const listBanks = ( fetch = request ) =>
  * @param {number}                               questionId Question ID.
  * @param {number}                               versionId  Version ID, or 0 to unpin.
  * @param {(options: Object) => Promise<Object>} fetch      Transport.
- * @return {Promise<Object>} The quiz's questions.
+ * @return {Promise<RestData>} The quiz's questions.
  */
 export const pinQuestion = async (
 	quizId,
@@ -186,21 +235,32 @@ export const pinQuestion = async (
 		method: 'PUT',
 		data: {
 			version_id: versionId ? Number( versionId ) : null,
-			revision: current?.revision,
+			revision: /** @type {{ revision?: number }|null} */ ( current )
+				?.revision,
 		},
 	} );
 };
 
+/**
+ * @param {string}                               [search] Name filter.
+ * @param {(options: Object) => Promise<Object>} fetch    Transport.
+ * @return {Promise<RestData>} Skills (`skills`).
+ */
 export const listSkills = ( search = '', fetch = request ) =>
 	fetch( { path: `/ohmylms/v1/skills${ query( { search } ) }` } );
+/**
+ * @param {Record<string, unknown>}              data  New skill fields.
+ * @param {(options: Object) => Promise<Object>} fetch Transport.
+ * @return {Promise<RestData>} Created skill.
+ */
 export const createSkill = ( data, fetch = request ) =>
 	fetch( { path: '/ohmylms/v1/skills', method: 'POST', data } );
 /**
  * Create a question directly in the bank (not placed in any quiz).
  *
- * @param {Object}                               payload Fields as the editors build them.
+ * @param {RestData}                             payload Fields as the editors build them.
  * @param {(options: Object) => Promise<Object>} fetch   Transport.
- * @return {Promise<Object>} Editor view of the new question.
+ * @return {Promise<RestData>} Editor view of the new question.
  */
 export const createBankQuestion = ( payload, fetch = request ) =>
 	Promise.resolve(

@@ -1,19 +1,22 @@
 import { useEffect, useRef } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
+/** @typedef {import('./editorTypes').Data} Data */
+
 /**
  * Open the WordPress media library without requiring a Gutenberg editor provider.
- * @param root0
- * @param root0.allowedTypes
- * @param root0.onSelect
- * @param root0.render
+ * @param {Object}                                           root0                Component properties.
+ * @param {string[]}                                         [root0.allowedTypes] Media types the library offers.
+ * @param {(attachment: Data) => void}                       root0.onSelect       Receives the chosen attachment.
+ * @param {(props: { open: () => void }) => React.ReactNode} root0.render         Renders the opening control.
  */
 export function QuestionMediaUpload( {
 	allowedTypes = [ 'image' ],
 	onSelect,
 	render,
 } ) {
-	const frame = useRef( null );
+	// wp.media frames are untyped Backbone views from a classic script.
+	const frame = useRef( /** @type {any} */ ( null ) );
 	const select = useRef( onSelect );
 	select.current = onSelect;
 	useEffect(

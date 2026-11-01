@@ -2,7 +2,7 @@
 import { createElement, useId, useRef } from '@wordpress/element';
 import { Button, SelectControl, ToggleControl } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
-import { RichContentControl } from '../math/RichContentControl';
+import { RichContentControl } from '../math/public.mjs';
 import {
 	addGridItem,
 	gridSelectionMode,
@@ -11,16 +11,29 @@ import {
 	renameGridItem,
 } from './matchGridModel.mjs';
 
+/** @typedef {import('./editorTypes').Data} Data */
+/** @typedef {import('./editorTypes').OnPatch} OnPatch */
+
+/**
+ * @typedef {Object} GridSettings
+ * @property {import('./matchGridModel.mjs').GridItem[]} [rows]     Rows.
+ * @property {import('./matchGridModel.mjs').GridItem[]} [columns]  Columns.
+ * @property {boolean}                                   [multiple] Several columns per row.
+ * @property {Data}                                      [key]      Column ID(s) per row ID.
+ */
+
 /**
  * Compact row and column lists with a separate private answer key.
  *
- * @param {Object}                  root0          Component properties.
- * @param {Object}                  root0.value    Grid settings.
- * @param {(patch: Object) => void} root0.onChange Settings writer.
- * @return {Element} Grid editor.
+ * @param {Object}       root0          Component properties.
+ * @param {GridSettings} root0.value    Grid settings.
+ * @param {OnPatch}      root0.onChange Settings writer.
+ * @return {React.ReactElement} Grid editor.
  */
 export function MatchTableGridEditor( { value, onChange } ) {
-	const dragged = useRef( null );
+	const dragged = useRef(
+		/** @type {{list: string, id: string}|null} */ ( null )
+	);
 	const controlId = useId();
 	const complete = ( value.rows || [] ).filter( ( row ) =>
 		value.multiple ? value.key?.[ row.id ]?.length : value.key?.[ row.id ]
@@ -28,169 +41,186 @@ export function MatchTableGridEditor( { value, onChange } ) {
 	return (
 		<div className="ohmylms-grid-editor">
 			<div className="ohmylms-grid-lists">
-				{ [ 'rows', 'columns' ].map( ( list ) => (
-					<section
-						className="ohmylms-grid-list"
-						key={ list }
-						aria-label={
-							list === 'rows'
-								? __( 'Rows', 'ohmylms' )
-								: __( 'Columns', 'ohmylms' )
-						}
-					>
-						<h4>
-							{ list === 'rows'
-								? __( 'Rows', 'ohmylms' )
-								: __( 'Columns', 'ohmylms' ) }
-						</h4>
-						{ ( value[ list ] || [] ).map( ( item, index ) => {
-							const label =
-								list === 'rows'
-									? sprintf(
-											/* translators: %d: row position. */ __(
-												'Row %d',
-												'ohmylms'
-											),
-											index + 1
-										)
-									: sprintf(
-											/* translators: %d: column position. */ __(
-												'Column %d',
-												'ohmylms'
-											),
-											index + 1
-										);
-							return (
-								<div
-									className="ohmylms-grid-item"
-									key={ item.id }
-									onDragOver={ ( event ) =>
-										event.preventDefault()
-									}
-									onDrop={ ( event ) => {
-										event.preventDefault();
-										if ( dragged.current?.list === list ) {
-											onChange(
-												moveGridItem(
-													value,
-													list,
-													dragged.current.id,
-													index
-												)
-											);
-										}
-										dragged.current = null;
-									} }
-								>
-									<Button
-										className="ohmylms-grid-drag"
-										icon="menu"
-										label={ sprintf(
-											/* translators: %s: row or column label. */ __(
-												'Reorder %s (Alt+Up/Down)',
-												'ohmylms'
-											),
-											label
-										) }
-										draggable
-										onDragStart={ () => {
-											dragged.current = {
-												list,
-												id: item.id,
-											};
-										} }
-										onDragEnd={ () => {
-											dragged.current = null;
-										} }
-										onKeyDown={ ( event ) => {
-											if (
-												event.altKey &&
-												[
-													'ArrowUp',
-													'ArrowDown',
-												].includes( event.key )
-											) {
-												event.preventDefault();
-												onChange(
-													moveGridItem(
-														value,
-														list,
-														item.id,
-														index +
-															( event.key ===
-															'ArrowUp'
-																? -1
-																: 1 )
+				{
+					/** @type {const} */ ( [ 'rows', 'columns' ] ).map(
+						( list ) => (
+							<section
+								className="ohmylms-grid-list"
+								key={ list }
+								aria-label={
+									list === 'rows'
+										? __( 'Rows', 'ohmylms' )
+										: __( 'Columns', 'ohmylms' )
+								}
+							>
+								<h4>
+									{ list === 'rows'
+										? __( 'Rows', 'ohmylms' )
+										: __( 'Columns', 'ohmylms' ) }
+								</h4>
+								{ ( value[ list ] || [] ).map(
+									( item, index ) => {
+										const label =
+											list === 'rows'
+												? sprintf(
+														/* translators: %d: row position. */ __(
+															'Row %d',
+															'ohmylms'
+														),
+														index + 1
 													)
-												);
-											}
-										} }
-									/>
-									<span
-										className={
-											list === 'columns'
-												? 'ohmylms-grid-column-marker'
-												: 'ohmylms-grid-row-number'
-										}
-										aria-hidden="true"
-									>
-										{ list === 'rows'
-											? `${ index + 1 }.`
-											: '' }
-									</span>
-									<RichContentControl
-										compact
-										html={ false }
-										label={ label }
-										placeholder={ label }
-										value={ item.label }
-										onChange={ ( text ) =>
-											onChange(
-												renameGridItem(
-													value,
-													list,
-													item.id,
-													text
-												)
-											)
-										}
-									/>
-									<Button
-										icon="no-alt"
-										label={ sprintf(
-											/* translators: %s: row or column label. */ __(
-												'Remove %s',
-												'ohmylms'
-											),
-											label
-										) }
-										disabled={ value[ list ].length <= 1 }
-										onClick={ () =>
-											onChange(
-												removeGridItem(
-													value,
-													list,
-													item.id
-												)
-											)
-										}
-									/>
-								</div>
-							);
-						} ) }
-						<Button
-							className="ohmylms-grid-add"
-							variant="tertiary"
-							onClick={ () =>
-								onChange( addGridItem( value, list ) )
-							}
-						>
-							{ list === 'rows'
-								? __( 'Add row', 'ohmylms' )
-								: __( 'Add column', 'ohmylms' ) }
-						</Button>
-					</section>
-				) ) }
+												: sprintf(
+														/* translators: %d: column position. */ __(
+															'Column %d',
+															'ohmylms'
+														),
+														index + 1
+													);
+										return (
+											<div
+												className="ohmylms-grid-item"
+												key={ item.id }
+												onDragOver={ ( event ) =>
+													event.preventDefault()
+												}
+												onDrop={ ( event ) => {
+													event.preventDefault();
+													if (
+														dragged.current
+															?.list === list
+													) {
+														onChange(
+															moveGridItem(
+																value,
+																list,
+																dragged.current
+																	.id,
+																index
+															)
+														);
+													}
+													dragged.current = null;
+												} }
+											>
+												<Button
+													className="ohmylms-grid-drag"
+													icon="menu"
+													label={ sprintf(
+														/* translators: %s: row or column label. */ __(
+															'Reorder %s (Alt+Up/Down)',
+															'ohmylms'
+														),
+														label
+													) }
+													draggable
+													onDragStart={ () => {
+														dragged.current = {
+															list,
+															id: item.id,
+														};
+													} }
+													onDragEnd={ () => {
+														dragged.current = null;
+													} }
+													onKeyDown={ (
+														/** @type {import('react').KeyboardEvent} */ event
+													) => {
+														if (
+															event.altKey &&
+															[
+																'ArrowUp',
+																'ArrowDown',
+															].includes(
+																event.key
+															)
+														) {
+															event.preventDefault();
+															onChange(
+																moveGridItem(
+																	value,
+																	list,
+																	item.id,
+																	index +
+																		( event.key ===
+																		'ArrowUp'
+																			? -1
+																			: 1 )
+																)
+															);
+														}
+													} }
+												/>
+												<span
+													className={
+														list === 'columns'
+															? 'ohmylms-grid-column-marker'
+															: 'ohmylms-grid-row-number'
+													}
+													aria-hidden="true"
+												>
+													{ list === 'rows'
+														? `${ index + 1 }.`
+														: '' }
+												</span>
+												<RichContentControl
+													compact
+													html={ false }
+													label={ label }
+													placeholder={ label }
+													value={ item.label }
+													onChange={ ( text ) =>
+														onChange(
+															renameGridItem(
+																value,
+																list,
+																item.id,
+																text
+															)
+														)
+													}
+												/>
+												<Button
+													icon="no-alt"
+													label={ sprintf(
+														/* translators: %s: row or column label. */ __(
+															'Remove %s',
+															'ohmylms'
+														),
+														label
+													) }
+													disabled={
+														( value[ list ] || [] )
+															.length <= 1
+													}
+													onClick={ () =>
+														onChange(
+															removeGridItem(
+																value,
+																list,
+																item.id
+															)
+														)
+													}
+												/>
+											</div>
+										);
+									}
+								) }
+								<Button
+									className="ohmylms-grid-add"
+									variant="tertiary"
+									onClick={ () =>
+										onChange( addGridItem( value, list ) )
+									}
+								>
+									{ list === 'rows'
+										? __( 'Add row', 'ohmylms' )
+										: __( 'Add column', 'ohmylms' ) }
+								</Button>
+							</section>
+						)
+					)
+				}
 			</div>
 			<details className="ohmylms-grid-key">
 				<summary>
@@ -252,7 +282,9 @@ export function MatchTableGridEditor( { value, onChange } ) {
 																	column.id,
 																]
 															: previous.filter(
-																	( id ) =>
+																	(
+																		/** @type {string} */ id
+																	) =>
 																		id !==
 																		column.id
 																),

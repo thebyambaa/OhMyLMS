@@ -47,6 +47,7 @@ export function message( method, value, listener ) {
  * @return {{event: string, value?: ?, listener?: string}|null} Message.
  */
 export function parseMessage( data ) {
+	/** @type {?} */
 	let parsed = data;
 	if ( 'string' === typeof data ) {
 		try {
@@ -93,11 +94,17 @@ export function createAdapter( {
 	let counter = 0;
 	/** @type {Map<string, (value: ?) => void>} */
 	const answers = new Map();
+	/**
+	 * @param {string}  method     Method.
+	 * @param {unknown} [value]    Value.
+	 * @param {string}  [listener] Listener id for answers.
+	 */
 	const send = ( method, value, listener ) =>
 		iframe.contentWindow?.postMessage(
 			message( method, value, listener ),
 			origin
 		);
+	/** @param {string} method Getter. */
 	const ask = ( method ) =>
 		new Promise( ( resolve ) => {
 			const id = `ohmylms-${ ++counter }`;
@@ -107,7 +114,7 @@ export function createAdapter( {
 
 	return new Promise( ( resolve, reject ) => {
 		let ready = false;
-		let pings = null;
+		let pings = 0;
 		const started = Date.now();
 		/** @type {import('./adapter.js').Adapter} */
 		const adapter = {
@@ -176,7 +183,9 @@ export function createAdapter( {
 				return;
 			}
 			if ( data.listener && answers.has( data.listener ) ) {
-				answers.get( data.listener )( data.value );
+				/** @type {(value: ?) => void} */ (
+					answers.get( data.listener )
+				)( data.value );
 				answers.delete( data.listener );
 			}
 			becomeReady();

@@ -244,7 +244,7 @@ function call_ajax( $method, $who, array $post ) {
  * @param string $cookie Cookie header.
  * @param array  $fields POST fields (a CURLFile uploads), null for GET.
  * @param array  $header Extra headers.
- * @return array{status:int, body:string}
+ * @return array{status:int, body:string, error:string}
  */
 function http( $url, $cookie, $fields = null, array $header = array() ) {
 	$curl = curl_init( $url );
@@ -266,6 +266,7 @@ function http( $url, $cookie, $fields = null, array $header = array() ) {
 	return array(
 		'status' => $status,
 		'body'   => $body,
+		'error'  => curl_error( $curl ),
 	);
 }
 
@@ -804,9 +805,9 @@ try {
 	$fields['ohmylms-submission-file'] = new CURLFile( $upload, 'text/plain', "$tag-essay-3.txt" );
 	$late                              = json_decode( http( admin_url( 'admin-ajax.php' ), $cookie, $fields )['body'], true );
 	ok( false === ( $late['success'] ?? null ) && 'ohmylms_assignment_time_expired' === $late['data']['code'] && 2 === count( attempts( $assignment, $learner ) ), 'after the time the upload is refused over HTTP too: ' . wp_json_encode( $late ) );
-	$rest_live = http( rest_url( "ohmylms/v1/assignments/$assignment/learner-state" ), $cookie, null, array( 'X-WP-Nonce: ' . $sdk['restNonce'] ) );
-	$rest_live = json_decode( $rest_live['body'], true );
-	ok( 'time_expired' === ( $rest_live['reason'] ?? '' ), 'the learner-state route answers the expiry over HTTP: ' . wp_json_encode( $rest_live ) );
+	$rest_raw  = http( rest_url( "ohmylms/v1/assignments/$assignment/learner-state" ), $cookie, null, array( 'X-WP-Nonce: ' . $sdk['restNonce'] ) );
+	$rest_live = json_decode( $rest_raw['body'], true );
+	ok( 'time_expired' === ( $rest_live['reason'] ?? '' ), 'the learner-state route answers the expiry over HTTP: ' . $rest_raw['status'] . ' ' . $rest_raw['error'] . ' ' . substr( $rest_raw['body'], 0, 300 ) );
 
 	// Sequential mode: E follows the dripped C.
 	update_post_meta( $course_id, '_sequential_mode', 'yes' );

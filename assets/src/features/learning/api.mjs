@@ -2,6 +2,7 @@
 import { request } from '../rest.mjs';
 
 /** @typedef {( options: import('@wordpress/api-fetch').APIFetchOptions ) => Promise<Object>} Fetch */
+/** @typedef {{ label: string, value: number|string }} ContentOption A chapter content item for the prerequisite picker. */
 
 /**
  * Save the learner instructions of an exam.
@@ -40,7 +41,7 @@ export const publishExam = ( examId, confirm, fetch = request ) =>
  * @param {number} chapterId Chapter ID.
  * @param {string} term      Search text.
  * @param {Fetch}  [fetch]   Request implementation.
- * @return {Promise<Object>} Matches, as a list or `{ data }`.
+ * @return {Promise<ContentOption[]|{data?: ContentOption[]}>} Matches, as a list or `{ data }`.
  */
 export const searchChapterContents = ( chapterId, term, fetch = request ) =>
 	fetch( {
@@ -48,17 +49,34 @@ export const searchChapterContents = ( chapterId, term, fetch = request ) =>
 	} );
 
 /**
+ * Signed, short-lived "Preview as learner" links of a saved lesson (OhMyLMS\Rest\V1\LessonPreviewController).
+ *
+ * @param {number} lessonId Lesson ID.
+ * @param {Fetch}  [fetch]  Request implementation.
+ * @return {Promise<{id: number, url: string, bypass_url: string, expires: number, status: string}>} Links.
+ */
+export const createLearnerPreview = ( lessonId, fetch = request ) =>
+	/** @type {Promise<{id: number, url: string, bypass_url: string, expires: number, status: string}>} */ (
+		fetch( {
+			path: `/ohmylms/v1/lessons/${ lessonId }/learner-preview`,
+			method: 'POST',
+		} )
+	);
+
+/**
  * Render an unsaved question as the learner sees it.
  *
  * @param {Object}      data    Question, document settings and seed.
  * @param {AbortSignal} signal  Cancels the request.
  * @param {Fetch}       [fetch] Request implementation.
- * @return {Promise<Object>} `{ url }` of the preview document.
+ * @return {Promise<{url: string}>} `{ url }` of the preview document.
  */
 export const previewQuestion = ( data, signal, fetch = request ) =>
-	fetch( {
-		path: '/ohmylms/v1/question-preview',
-		method: 'POST',
-		signal,
-		data,
-	} );
+	/** @type {Promise<{url: string}>} */ (
+		fetch( {
+			path: '/ohmylms/v1/question-preview',
+			method: 'POST',
+			signal,
+			data,
+		} )
+	);

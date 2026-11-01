@@ -28,7 +28,6 @@ vi.mock( './api', () => ( {
 	createBadge: vi.fn(),
 	updateBadge: vi.fn(),
 	deleteBadge: vi.fn(),
-	listMedia: vi.fn(),
 } ) );
 vi.mock( './engagementApi', () => ( {
 	getEngagement: vi.fn(),

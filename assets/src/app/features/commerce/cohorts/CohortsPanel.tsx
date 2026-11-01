@@ -8,8 +8,8 @@ import {
 	PageTitleAction,
 	PageTitleActions,
 } from '../../../layout/PageTitleActions';
-import { useOperation } from '../useOperation';
-import { useRequest } from '../useRequest';
+import { useOperation } from '../../../hooks/useOperation';
+import { useRequest } from '../../../hooks/useRequest';
 import { deleteCohort, listCohorts, type CohortQuery } from './api';
 import { CohortForm } from './CohortForm';
 import { CohortMembers } from './CohortMembers';
@@ -38,10 +38,11 @@ export default function CohortsPanel() {
 		search: list.values.s,
 		status: status ?? 'any',
 	};
-	const request = useRequest(
-		( signal ) => listCohorts( query, signal ),
-		list.key
-	);
+	const request = useRequest( ( signal ) => listCohorts( query, signal ), {
+		key: list.key,
+		keepData: true,
+		errorShape: 'object',
+	} );
 	const [ term, setTerm ] = useState( list.values.s );
 	useEffect( () => setTerm( list.values.s ), [ list.values.s ] );
 	const [ dialog, setDialog ] = useState< Dialog >( null );

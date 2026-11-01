@@ -96,6 +96,9 @@ Defaults apply while an option does not exist. All fields are readable and writa
 `privacy_policy_page_id`, `profile_page_id`. Rule: the course archive, checkout and thank you pages
 must differ (422).
 
+`language_switcher` boolean, default `true` (option `ohmylms_language_switcher`, `yes`/`no`): show the learner
+language switcher ([Interface languages](../DEVELOPMENT.md#interface-languages)).
+
 ### branding
 
 | Field | Type | Default |

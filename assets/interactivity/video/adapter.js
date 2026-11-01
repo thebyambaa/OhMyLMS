@@ -35,6 +35,14 @@
 
 /** @typedef {(value?: ?) => void} Listener Adapter event listener (the value depends on the event). */
 
+/**
+ * @typedef {Object} PlayerConfig Player settings of `createAdapter()`.
+ * @property {boolean} [loop]   Loop playback.
+ * @property {boolean} [muted]  Start muted.
+ * @property {boolean} [custom] Plugin controls instead of the provider's.
+ * @property {string}  [title]  Accessible title of the provider iframe.
+ */
+
 /** @typedef {(src: string, doc?: Document) => Promise<void>} ScriptLoader Loads a third-party script once. */
 
 /**
@@ -51,10 +59,12 @@ export function createEmitter() {
 	const listeners = new Map();
 	return {
 		on( name, callback ) {
-			if ( ! listeners.has( name ) ) {
-				listeners.set( name, new Set() );
+			let set = listeners.get( name );
+			if ( ! set ) {
+				set = new Set();
+				listeners.set( name, set );
 			}
-			listeners.get( name ).add( callback );
+			set.add( callback );
 			return () => listeners.get( name )?.delete( callback );
 		},
 		emit( name, value ) {
@@ -84,11 +94,15 @@ const scripts = new Map();
  * @return {Promise<void>} Loaded.
  */
 export function loadScript( src, doc = globalThis.document ) {
-	if ( scripts.has( src ) ) {
-		return scripts.get( src );
+	const loaded = scripts.get( src );
+	if ( loaded ) {
+		return loaded;
 	}
+	/** @type {Promise<void>} */
 	const loading = new Promise( ( resolve, reject ) => {
-		const existing = doc.querySelector( `script[src="${ src }"]` );
+		const existing = /** @type {HTMLScriptElement|null} */ (
+			doc.querySelector( `script[src="${ src }"]` )
+		);
 		const script = existing || doc.createElement( 'script' );
 		script.addEventListener( 'load', () => resolve(), { once: true } );
 		script.addEventListener(
@@ -112,7 +126,7 @@ export function loadScript( src, doc = globalThis.document ) {
 /**
  * Clamp a volume to 0..1.
  *
- * @param {number} volume Volume.
+ * @param {unknown} volume Volume.
  * @return {number} Clamped volume.
  */
 export const clampVolume = ( volume ) =>
