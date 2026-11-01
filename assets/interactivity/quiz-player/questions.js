@@ -11,7 +11,7 @@ import {
 	mountQuestion,
 } from 'ohmylms/interactivity';
 import { createQuestionControls } from './questionControls.js';
-import { gridRowsAnswered } from './gridAnswers.mjs';
+import { gridRowsAnswered } from './gridAnswers.js';
 import { attachMatchingLines } from './matchingLines.js';
 const controllers = new WeakMap();
 store( 'ohmylms/questions', {

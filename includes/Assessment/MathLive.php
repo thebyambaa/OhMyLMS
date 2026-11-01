@@ -18,6 +18,8 @@ final class MathLive {
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'configure' ), 12 );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'configure' ), 12 );
 		add_filter( 'ohmylms_template_html', array( __CLASS__, 'content' ) );
+		// Lesson bodies are printed through the_content, not a plugin template.
+		add_filter( 'the_content', array( __CLASS__, 'lesson_content' ), 20 );
 	}
 
 	/**
@@ -89,6 +91,19 @@ final class MathLive {
 	public static function content( $html ) {
 		if ( false !== strpos( $html, '[[ohmylms-math:latex:' ) || preg_match( '/\$\S|\\\\[\[(]/', $html ) ) {
 			self::enqueue();
+		}
+		return $html;
+	}
+
+	/**
+	 * Load the readonly renderer when a learner lesson body contains math.
+	 *
+	 * @param string $html Lesson content.
+	 * @return string Unchanged content.
+	 */
+	public static function lesson_content( $html ) {
+		if ( ! is_admin() && 'ohmylms-lesson' === get_post_type() ) {
+			self::content( (string) $html );
 		}
 		return $html;
 	}

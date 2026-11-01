@@ -167,6 +167,10 @@ function mountInput( input ) {
  * Render equation text without interpreting author HTML or changing stored source.
  * @param {Element} root Content region.
  */
+/** Learner regions where conventional LaTeX delimiters such as \( \) and $ $ are typeset. */
+const DELIMITED_REGIONS =
+	'[data-ohmylms-latex],.ohmylms-structured-question,.ohmylms-exam-player,.ohmylms-default-quiz-preview,.ohmylms-quiz,.ohmylms-quiz-result,.ohmylms-quiz-preview-result,.ohmylms-lesson-content,.ohmylms-lesson-content-body,.ohmylms-learning-lesson';
+
 function renderContent( root ) {
 	const walker = document.createTreeWalker( root, NodeFilter.SHOW_TEXT );
 	const nodes = [];
@@ -180,7 +184,7 @@ function renderContent( root ) {
 				node.textContent,
 				Boolean(
 					node.parentElement.closest(
-						'[data-ohmylms-latex],.ohmylms-structured-question,.ohmylms-exam-player,.ohmylms-default-quiz-preview'
+						DELIMITED_REGIONS
 					)
 				)
 			).length
@@ -195,7 +199,7 @@ function renderContent( root ) {
 			node.textContent,
 			Boolean(
 				node.parentElement.closest(
-					'[data-ohmylms-latex],.ohmylms-structured-question,.ohmylms-exam-player,.ohmylms-default-quiz-preview'
+					DELIMITED_REGIONS
 				)
 			)
 		) ) {

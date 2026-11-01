@@ -1,6 +1,6 @@
 import { isAnswered, mountQuestion } from 'ohmylms/interactivity';
 import 'ohmylms/questions';
-import { loadMath, mathEnabled } from '../src/features/math/loader.mjs';
+import { loadMath, mathEnabled } from './math-api.js';
 
 const { __, sprintf } = window.wp.i18n;
 
