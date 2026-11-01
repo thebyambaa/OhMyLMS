@@ -82,37 +82,31 @@ $teacher_search = is_string( $teacher_search ) ? sanitize_text_field( $teacher_s
 		<?php
 		if ( 1 < $teacher_page ) :
 			?>
-			<a class="oml-hub-pill" href="
 			<?php
-			echo esc_url(
-				add_query_arg(
-					array(
-						'hub_class'    => $teacher_class,
-						'hub_q'        => $teacher_search,
-						'current_page' => $teacher_page - 1,
-					),
-					TeacherWorkspace::url( 'roster' )
-				)
+			$ohmylms_href = add_query_arg(
+				array(
+					'hub_class'    => $teacher_class,
+					'hub_q'        => $teacher_search,
+					'current_page' => $teacher_page - 1,
+				),
+				TeacherWorkspace::url( 'roster' )
 			);
 			?>
-			"><?php esc_html_e( 'Previous', 'ohmylms' ); ?></a><?php endif; ?>
+			<a class="oml-hub-pill" href="<?php echo esc_url( $ohmylms_href ); ?>"><?php esc_html_e( 'Previous', 'ohmylms' ); ?></a><?php endif; ?>
 		<?php
 		if ( $teacher_more_students ) :
 			?>
-			<a class="oml-hub-pill" href="
 			<?php
-			echo esc_url(
-				add_query_arg(
-					array(
-						'hub_class'    => $teacher_class,
-						'hub_q'        => $teacher_search,
-						'current_page' => $teacher_page + 1,
-					),
-					TeacherWorkspace::url( 'roster' )
-				)
+			$ohmylms_href = add_query_arg(
+				array(
+					'hub_class'    => $teacher_class,
+					'hub_q'        => $teacher_search,
+					'current_page' => $teacher_page + 1,
+				),
+				TeacherWorkspace::url( 'roster' )
 			);
 			?>
-			"><?php esc_html_e( 'Next', 'ohmylms' ); ?></a><?php endif; ?>
+			<a class="oml-hub-pill" href="<?php echo esc_url( $ohmylms_href ); ?>"><?php esc_html_e( 'Next', 'ohmylms' ); ?></a><?php endif; ?>
 	</nav>
 	<?php if ( $teacher_active && (int) $teacher_current['school_id'] ) : ?>
 		<details class="oml-hub-class-add" <?php echo 'add' === get_query_var( 'hub_view' ) ? 'open' : ''; ?>><summary><?php esc_html_e( 'Add a school student', 'ohmylms' ); ?></summary>
@@ -140,37 +134,31 @@ $teacher_search = is_string( $teacher_search ) ? sanitize_text_field( $teacher_s
 				<?php
 				if ( 1 < $teacher_candidate_page ) :
 					?>
-					<a class="oml-hub-pill" href="
 					<?php
-					echo esc_url(
-						add_query_arg(
-							array(
-								'hub_class'          => $teacher_class,
-								'hub_q'              => $teacher_search,
-								'hub_candidate_page' => $teacher_candidate_page - 1,
-							),
-							TeacherWorkspace::url( 'roster', 'add' )
-						)
+					$ohmylms_href = add_query_arg(
+						array(
+							'hub_class'          => $teacher_class,
+							'hub_q'              => $teacher_search,
+							'hub_candidate_page' => $teacher_candidate_page - 1,
+						),
+						TeacherWorkspace::url( 'roster', 'add' )
 					);
 					?>
-					"><?php esc_html_e( 'Previous eligible students', 'ohmylms' ); ?></a><?php endif; ?>
+					<a class="oml-hub-pill" href="<?php echo esc_url( $ohmylms_href ); ?>"><?php esc_html_e( 'Previous eligible students', 'ohmylms' ); ?></a><?php endif; ?>
 				<?php
 				if ( 20 < count( $teacher_candidates ) ) :
 					?>
-					<a class="oml-hub-pill" href="
 					<?php
-					echo esc_url(
-						add_query_arg(
-							array(
-								'hub_class'          => $teacher_class,
-								'hub_q'              => $teacher_search,
-								'hub_candidate_page' => $teacher_candidate_page + 1,
-							),
-							TeacherWorkspace::url( 'roster', 'add' )
-						)
+					$ohmylms_href = add_query_arg(
+						array(
+							'hub_class'          => $teacher_class,
+							'hub_q'              => $teacher_search,
+							'hub_candidate_page' => $teacher_candidate_page + 1,
+						),
+						TeacherWorkspace::url( 'roster', 'add' )
 					);
 					?>
-					"><?php esc_html_e( 'Next eligible students', 'ohmylms' ); ?></a><?php endif; ?>
+					<a class="oml-hub-pill" href="<?php echo esc_url( $ohmylms_href ); ?>"><?php esc_html_e( 'Next eligible students', 'ohmylms' ); ?></a><?php endif; ?>
 			</nav>
 		</details>
 	<?php elseif ( $teacher_active ) : ?>

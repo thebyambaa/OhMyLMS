@@ -34,19 +34,16 @@ if ( ! empty( $paper_presentation ) ) {
 						}
 						?>
 						<li>
-							<button type="button" class="ohmylms-paper-nav-item" data-wp-context="
 							<?php
-							echo esc_attr(
-								wp_json_encode(
-									array(
-										'questionId'     => $paper_entry['id'],
-										'questionNumber' => $paper_entry['number'],
-										'label'          => $paper_entry['label'],
-									)
+							$ohmylms_data_wp_context = wp_json_encode(
+								array(
+									'questionId'     => $paper_entry['id'],
+									'questionNumber' => $paper_entry['number'],
+									'label'          => $paper_entry['label'],
 								)
 							);
 							?>
-																									" data-wp-on--click="actions.jump" data-wp-class--is-answered="state.isAnswered" data-wp-class--is-flagged="state.isFlagged">
+							<button type="button" class="ohmylms-paper-nav-item" data-wp-context="<?php echo esc_attr( $ohmylms_data_wp_context ); ?>" data-wp-on--click="actions.jump" data-wp-class--is-answered="state.isAnswered" data-wp-class--is-flagged="state.isFlagged">
 								<?php echo esc_html( $paper_entry['label'] ); ?>
 								<span class="screen-reader-text" data-wp-text="state.itemStatus"></span>
 							</button>

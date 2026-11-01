@@ -104,19 +104,16 @@ if ( $now >= $start_time && $now <= $end_time ) {
 						<?php esc_html_e( 'This meeting has ended', 'ohmylms' ); ?>
 					</p>
 				<?php endif; ?>
-				<a href="
 				<?php
-				echo esc_url(
-					add_query_arg(
-						array(
-							'action'     => 'ohmylms_googlemeet_add_to_calendar',
-							'meeting_id' => $meeting_id,
-						),
-						admin_url( 'admin-ajax.php' )
-					)
+				$ohmylms_href = add_query_arg(
+					array(
+						'action'     => 'ohmylms_googlemeet_add_to_calendar',
+						'meeting_id' => $meeting_id,
+					),
+					admin_url( 'admin-ajax.php' )
 				);
 				?>
-				"
+				<a href="<?php echo esc_url( $ohmylms_href ); ?>"
 					class="button googlemeet-calendar-button"
 					target="_blank"
 					rel="noopener noreferrer">

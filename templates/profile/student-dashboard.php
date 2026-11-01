@@ -97,16 +97,14 @@ $browse     = $browse ? $browse : home_url( '/' );
 							)
 						);
 						?>
-						</p><progress max="100" value="<?php echo esc_attr( $percent ); ?>" aria-label="
+						</p>
 						<?php
-						echo esc_attr(
-							sprintf( /* translators: %s: text value. */
-								__( '%s course progress', 'ohmylms' ),
-								$learning_course->get_name()
-							)
+						$ohmylms_aria_label = sprintf( /* translators: %s: text value. */
+							__( '%s course progress', 'ohmylms' ),
+							$learning_course->get_name()
 						);
 						?>
-						"></progress><a class="oml-dashboard-button" href="<?php echo esc_url( $student->get_course_resume_url( $learning_course->get_id() ) ); ?>"><?php echo esc_html( $percent > 0 ? __( 'Continue', 'ohmylms' ) : __( 'Start learning', 'ohmylms' ) ); ?></a></div></article><?php } ?></div>
+						<progress max="100" value="<?php echo esc_attr( $percent ); ?>" aria-label="<?php echo esc_attr( $ohmylms_aria_label ); ?>"></progress><a class="oml-dashboard-button" href="<?php echo esc_url( $student->get_course_resume_url( $learning_course->get_id() ) ); ?>"><?php echo esc_html( $percent > 0 ? __( 'Continue', 'ohmylms' ) : __( 'Start learning', 'ohmylms' ) ); ?></a></div></article><?php } ?></div>
 					<?php
 					if ( $courses ) {
 						?>

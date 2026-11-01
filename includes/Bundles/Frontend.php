@@ -131,16 +131,13 @@ final class Frontend {
 									?>
 									</p><?php } ?>
 							</div>
-							<button type="button" class="ohmylms-button" data-bundle-follow="<?php echo esc_attr( (int) $row['id'] ); ?>" aria-label="
 							<?php
-							echo esc_attr(
-								sprintf( /* translators: %s: text value. */
-									__( 'Add %s to my dashboard', 'ohmylms' ),
-									$row['title']
-								)
+							$ohmylms_aria_label = sprintf( /* translators: %s: text value. */
+								__( 'Add %s to my dashboard', 'ohmylms' ),
+								$row['title']
 							);
 							?>
-							"><?php esc_html_e( 'Add to my dashboard', 'ohmylms' ); ?></button>
+							<button type="button" class="ohmylms-button" data-bundle-follow="<?php echo esc_attr( (int) $row['id'] ); ?>" aria-label="<?php echo esc_attr( $ohmylms_aria_label ); ?>"><?php esc_html_e( 'Add to my dashboard', 'ohmylms' ); ?></button>
 						</li>
 					<?php } ?>
 				</ul>
@@ -191,18 +188,15 @@ final class Frontend {
 		?>
 		<div class="ohmylms-bundle-measure">
 			<span class="ohmylms-bundle-measure-label"><?php echo esc_html( $label ); ?></span>
-			<progress max="<?php echo esc_attr( (int) $total ); ?>" value="<?php echo esc_attr( (int) $met ); ?>" aria-label="
 			<?php
-			echo esc_attr(
-				sprintf( /* translators: %1$s: text value; %2$d: number; %3$d: number. */
-					__( '%1$s: %2$d of %3$d', 'ohmylms' ),
-					$label,
-					$met,
-					$total
-				)
+			$ohmylms_aria_label = sprintf( /* translators: %1$s: text value; %2$d: number; %3$d: number. */
+				__( '%1$s: %2$d of %3$d', 'ohmylms' ),
+				$label,
+				$met,
+				$total
 			);
 			?>
-			"></progress>
+			<progress max="<?php echo esc_attr( (int) $total ); ?>" value="<?php echo esc_attr( (int) $met ); ?>" aria-label="<?php echo esc_attr( $ohmylms_aria_label ); ?>"></progress>
 			<span>
 			<?php
 			echo esc_html(
@@ -296,16 +290,13 @@ final class Frontend {
 		<article class="ohmylms-bundle" aria-labelledby="<?php echo esc_attr( $heading ); ?>" data-bundle="<?php echo esc_attr( (int) $bundle['id'] ); ?>">
 			<header class="ohmylms-bundle-header">
 				<h3 id="<?php echo esc_attr( $heading ); ?>"><?php echo esc_html( $bundle['title'] ); ?></h3>
-				<button type="button" class="ohmylms-button ohmylms-button-secondary" data-bundle-unfollow="<?php echo esc_attr( (int) $bundle['id'] ); ?>" aria-label="
 				<?php
-				echo esc_attr(
-					sprintf( /* translators: %s: text value. */
-						__( 'Remove %s from my dashboard', 'ohmylms' ),
-						$bundle['title']
-					)
+				$ohmylms_aria_label = sprintf( /* translators: %s: text value. */
+					__( 'Remove %s from my dashboard', 'ohmylms' ),
+					$bundle['title']
 				);
 				?>
-				"><?php esc_html_e( 'Remove from dashboard', 'ohmylms' ); ?></button>
+				<button type="button" class="ohmylms-button ohmylms-button-secondary" data-bundle-unfollow="<?php echo esc_attr( (int) $bundle['id'] ); ?>" aria-label="<?php echo esc_attr( $ohmylms_aria_label ); ?>"><?php esc_html_e( 'Remove from dashboard', 'ohmylms' ); ?></button>
 			</header>
 			<?php
 			if ( '' !== $bundle['description'] ) {

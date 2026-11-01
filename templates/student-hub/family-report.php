@@ -91,34 +91,28 @@ $home_labels = array(
 	<?php endif; ?>
 	<nav class="oml-hub-subnav" aria-label="<?php esc_attr_e( 'Home-learning activity pages', 'ohmylms' ); ?>">
 		<?php if ( $home_report['page'] > 1 ) : ?>
-			<a class="oml-hub-pill" href="
 			<?php
-			echo esc_url(
-				add_query_arg(
-					array(
-						'hub_period'   => $home_report['days'],
-						'current_page' => $home_report['page'] - 1,
-					),
-					$home_base
-				)
+			$ohmylms_href = add_query_arg(
+				array(
+					'hub_period'   => $home_report['days'],
+					'current_page' => $home_report['page'] - 1,
+				),
+				$home_base
 			);
 			?>
-											"><?php esc_html_e( 'Previous', 'ohmylms' ); ?></a>
+			<a class="oml-hub-pill" href="<?php echo esc_url( $ohmylms_href ); ?>"><?php esc_html_e( 'Previous', 'ohmylms' ); ?></a>
 		<?php endif; ?>
 		<?php if ( $home_report['page'] < $home_report['pages'] ) : ?>
-			<a class="oml-hub-pill" href="
 			<?php
-			echo esc_url(
-				add_query_arg(
-					array(
-						'hub_period'   => $home_report['days'],
-						'current_page' => $home_report['page'] + 1,
-					),
-					$home_base
-				)
+			$ohmylms_href = add_query_arg(
+				array(
+					'hub_period'   => $home_report['days'],
+					'current_page' => $home_report['page'] + 1,
+				),
+				$home_base
 			);
 			?>
-											"><?php esc_html_e( 'Next', 'ohmylms' ); ?></a>
+			<a class="oml-hub-pill" href="<?php echo esc_url( $ohmylms_href ); ?>"><?php esc_html_e( 'Next', 'ohmylms' ); ?></a>
 		<?php endif; ?>
 	</nav>
 </section>

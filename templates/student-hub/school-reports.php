@@ -55,19 +55,16 @@ try {
 		<nav class="oml-hub-subnav" aria-label="<?php esc_attr_e( 'Class reports', 'ohmylms' ); ?>">
 			<a class="oml-hub-pill" href="<?php echo esc_url( SchoolWorkspace::url( $section, '', $school_id ) ); ?>"><?php esc_html_e( 'All classes', 'ohmylms' ); ?></a>
 			<a class="oml-hub-pill" href="<?php echo esc_url( add_query_arg( 'hub_class', $report_class_id, SchoolWorkspace::url( 'school-reports', '', $school_id ) ) ); ?>"><?php esc_html_e( 'Assigned work', 'ohmylms' ); ?></a>
-			<a class="oml-hub-pill" href="
 			<?php
-			echo esc_url(
-				add_query_arg(
-					array(
-						'hub_class' => $report_class_id,
-						'hub_type'  => 'skills',
-					),
-					SchoolWorkspace::url( 'school-reports', '', $school_id )
-				)
+			$ohmylms_href = add_query_arg(
+				array(
+					'hub_class' => $report_class_id,
+					'hub_type'  => 'skills',
+				),
+				SchoolWorkspace::url( 'school-reports', '', $school_id )
 			);
 			?>
-											"><?php esc_html_e( 'Skills', 'ohmylms' ); ?></a>
+			<a class="oml-hub-pill" href="<?php echo esc_url( $ohmylms_href ); ?>"><?php esc_html_e( 'Skills', 'ohmylms' ); ?></a>
 			<a class="oml-hub-pill" href="<?php echo esc_url( add_query_arg( 'hub_class', $report_class_id, SchoolWorkspace::url( 'school-gradebook', '', $school_id ) ) ); ?>"><?php esc_html_e( 'Gradebook', 'ohmylms' ); ?></a>
 		</nav>
 		<?php if ( $report_grading ) : ?>

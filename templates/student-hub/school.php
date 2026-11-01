@@ -201,34 +201,28 @@ $school_page = max( 1, absint( get_query_var( 'current_page', 1 ) ) );
 			<?php endif; ?>
 			<nav class="oml-hub-subnav" aria-label="<?php esc_attr_e( 'People pages', 'ohmylms' ); ?>">
 				<?php if ( $school_page > 1 ) : ?>
-					<a class="oml-hub-pill" href="
 					<?php
-					echo esc_url(
-						add_query_arg(
-							array(
-								'current_page' => $school_page - 1,
-								'hub_q'        => $school_search,
-							),
-							SchoolWorkspace::url( 'school-people', '', $school_id )
-						)
+					$ohmylms_href = add_query_arg(
+						array(
+							'current_page' => $school_page - 1,
+							'hub_q'        => $school_search,
+						),
+						SchoolWorkspace::url( 'school-people', '', $school_id )
 					);
 					?>
-													"><?php esc_html_e( 'Previous', 'ohmylms' ); ?></a>
+					<a class="oml-hub-pill" href="<?php echo esc_url( $ohmylms_href ); ?>"><?php esc_html_e( 'Previous', 'ohmylms' ); ?></a>
 				<?php endif; ?>
 				<?php if ( count( $school_roster ) >= 50 ) : ?>
-					<a class="oml-hub-pill" href="
 					<?php
-					echo esc_url(
-						add_query_arg(
-							array(
-								'current_page' => $school_page + 1,
-								'hub_q'        => $school_search,
-							),
-							SchoolWorkspace::url( 'school-people', '', $school_id )
-						)
+					$ohmylms_href = add_query_arg(
+						array(
+							'current_page' => $school_page + 1,
+							'hub_q'        => $school_search,
+						),
+						SchoolWorkspace::url( 'school-people', '', $school_id )
 					);
 					?>
-													"><?php esc_html_e( 'Next', 'ohmylms' ); ?></a>
+					<a class="oml-hub-pill" href="<?php echo esc_url( $ohmylms_href ); ?>"><?php esc_html_e( 'Next', 'ohmylms' ); ?></a>
 				<?php endif; ?>
 			</nav>
 			<?php if ( $school_flash && ! empty( $school_flash['import_rows'] ) ) : ?>

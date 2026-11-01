@@ -106,35 +106,29 @@ $teacher_titles  = array(
 				<?php
 				if ( 1 < $teacher_page ) :
 					?>
-				<a class="oml-hub-pill" href="
 					<?php
-					echo esc_url(
-						add_query_arg(
-							array(
-								'hub_class'    => $teacher_class,
-								'current_page' => $teacher_page - 1,
-							),
-							TeacherWorkspace::url( $section )
-						)
+					$ohmylms_href = add_query_arg(
+						array(
+							'hub_class'    => $teacher_class,
+							'current_page' => $teacher_page - 1,
+						),
+						TeacherWorkspace::url( $section )
 					);
 					?>
-				"><?php esc_html_e( 'Previous', 'ohmylms' ); ?></a><?php endif; ?>
+				<a class="oml-hub-pill" href="<?php echo esc_url( $ohmylms_href ); ?>"><?php esc_html_e( 'Previous', 'ohmylms' ); ?></a><?php endif; ?>
 				<?php
 				if ( 50 === count( $teacher_work ) ) :
 					?>
-				<a class="oml-hub-pill" href="
 					<?php
-					echo esc_url(
-						add_query_arg(
-							array(
-								'hub_class'    => $teacher_class,
-								'current_page' => $teacher_page + 1,
-							),
-							TeacherWorkspace::url( $section )
-						)
+					$ohmylms_href = add_query_arg(
+						array(
+							'hub_class'    => $teacher_class,
+							'current_page' => $teacher_page + 1,
+						),
+						TeacherWorkspace::url( $section )
 					);
 					?>
-				"><?php esc_html_e( 'Next', 'ohmylms' ); ?></a><?php endif; ?>
+				<a class="oml-hub-pill" href="<?php echo esc_url( $ohmylms_href ); ?>"><?php esc_html_e( 'Next', 'ohmylms' ); ?></a><?php endif; ?>
 		</nav>
 		<?php endif; ?>
 		<?php endif; ?>
