@@ -1,6 +1,6 @@
 # Skill sources, provenance and review
 
-Phase 3 of the [skill-agnostic plan](SKILL-AGNOSTIC-PLAN.md). Skills can come from anywhere: a person, a syllabus, an import, AI analysis of a syllabus, or AI reading a course's own content. Every skill now records where it came from. Anything a source proposes waits for review, and a skill that something still uses is never deleted.
+Phase 3 of the [skill-agnostic plan](LEARNING-ARCHITECTURE.md). Skills can come from anywhere: a person, a syllabus, an import, AI analysis of a syllabus, or AI reading a course's own content. Every skill now records where it came from. Anything a source proposes waits for review, and a skill that something still uses is never deleted.
 
 ## Provenance
 

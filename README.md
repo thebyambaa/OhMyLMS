@@ -1,5 +1,7 @@
 # OhMyLMS
 
+Start with [OhMyLMS Learning Architecture](docs/LEARNING-ARCHITECTURE.md) for product intent, curriculum, courses, shared skills, authoring and learner completion.
+
 WordPress LMS with editable React feature modules, a reproducible source build and a Khan-style learner hub (`[ohmylms_student_hub]`) for learners, teachers, parents and school staff. Mongolian is the only bundled translation. This repository is the plugin; `CONTINUE-LEARNER-HUB.md` is the shared work ledger and `AGENTS.md` holds the rules every contributor and assistant follows.
 
 ## Start here

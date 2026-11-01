@@ -1,6 +1,6 @@
 # Course structure contract
 
-This implements steps 1 and 2 of the course/curriculum architecture audit. The dashboard now also provides the [unified independent-course outline editor](UNIFIED-COURSE-OUTLINE.md). There is no bulk data migration or change to assessment/question contracts.
+Technical contract supporting [Learning Architecture](LEARNING-ARCHITECTURE.md) and the [typed course editor](api/course-authoring.md). No assessment/question contract is changed.
 
 ## Read and save
 

@@ -1,5 +1,7 @@
 # OhMyLMS documentation
 
+Start with [OhMyLMS Learning Architecture](LEARNING-ARCHITECTURE.md) for product intent, curriculum, courses, shared skills, authoring and learner completion.
+
 This folder is the source of truth for how the plugin is built, extended and verified. The plugin root [README.md](../README.md) is the short entry point; this page lists every maintained document.
 
 **Last reviewed:** 31 October 2026 (aligned with the recovered-admin cutover and learner Interactivity batches L1–L7).

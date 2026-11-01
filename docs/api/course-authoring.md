@@ -1,5 +1,7 @@
 # Curriculum and course structure authoring
 
+Product intent, entity relationships and current-versus-retained behavior: [Learning Architecture](../LEARNING-ARCHITECTURE.md).
+
 The authored preview offers `#/content-hub/curriculum` and one course editor at
 `#/courses` (list) and `#/courses/:id/:tab?` with the tabs Details (metadata and
 thumbnail), Outline (units and activity placements), Settings (pricing, access,
@@ -174,7 +176,7 @@ learning mode/mastery controls, readiness preview and confirmed publication. Rou
 outline saves remain draft-only.
 
 Remaining: full syllabus workspace parity, deleting curriculum branches, auto-scroll while
-dragging a long outline, lesson groups in the outline UI, and assessment
+dragging a long outline, assessment
 authoring inside the course editor. Course placement currently
 uses the existing replace-list contract; it has no new optimistic concurrency token. The shared
 navigation guard covers link clicks and page unload; it does not block browser hash-history

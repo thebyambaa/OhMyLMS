@@ -1,5 +1,7 @@
 # Authored syllabus editor
 
+Product intent, entity relationships and current-versus-retained behavior: [Learning Architecture](../LEARNING-ARCHITECTURE.md).
+
 The typed preview opens at `admin.php?page=ohmylms-app#/content-hub/curriculum/syllabus/:id`.
 Curriculum syllabus rows link to it. It owns skill-group fields and order, new/library skill
 assignment, skill fields and placement order/moves, CSV review/apply, course creation/sync,
@@ -74,32 +76,9 @@ writing. Unrelated third-party writers are not made transactional by this bounda
 An invalid apply or transport error retains the text/mapping for correction. Closing a prepared
 import requires an explicit discard. An applied import refreshes the editor from the server.
 
-## Layouts: outline, mind map and spreadsheet
+## Retired layout discrepancy
 
-`?layout=outline|mindmap|spreadsheet` on the editor address (`…&view=syllabus&id=ID&layout=…`)
-switches the layout; the outline is the default.
-
-- **Mind map** (read-only, `MindMap.tsx` over `mind-map.ts`): the syllabus, its content items, skill
-  groups and skills as a left-to-right SVG tree in saved order (groups before child items), drawn with
-  plain SVG and CSS. Branches start collapsed below the first level; a card toggles its branch, and
-  Expand all / Collapse all / Find (names and codes, opening matching branches) act on both views. The
-  SVG has `role="img"` with a counted summary; the **text version** below it is the same tree as a
-  nested list with expand/collapse buttons (`aria-expanded`) and links from each skill to its combined
-  mappings. Nothing writes.
-- **Spreadsheet** (`SpreadsheetView.tsx` over `sheet.ts`): one row per placed skill (plus empty groups
-  and units) with Folder, Unit, Unit code, Skill group, Group code, Skill code and Skill. The grid
-  (`role="grid"`) uses a roving focus: arrow keys, Home and End move; Enter or F2 (or a double click)
-  edits; Enter keeps the cell and moves down; Escape cancels. Units, groups and skills keep their
-  identity, so an edited group shows on every row of the group. Empty names, over-long codes and two
-  skills with one code are flagged before saving. **Save** sends `sheet_edit`; under the curriculum
-  lock `Curriculum\SyllabusSheet` compares each cell's `previous` with the stored value, and any
-  difference answers 409 `ohmylms_syllabus_sheet_stale` with `data.conflicts` and writes nothing.
-  Otherwise the existing domain writes (`Items::update`, `Syllabus::update_group`, `update_skill`) run
-  in one transaction, so a refusal part-way rolls back; skill codes stay unique and two skills may swap
-  codes. The conflicting cells are marked and "Reload syllabus and keep my edits" rebases the edits.
-  **Paste rows** reads tab-separated Unit path, Group, Skill code and Skill (merged-cell fill-down,
-  optional header) and goes through the reviewed import: a dry run first, then apply with its
-  `review_revision`. The syllabus itself is renamed in the curriculum, not here.
+The product direction is one outline/detail workspace. Mind-map and spreadsheet workflows are retired from the architecture guidance. This checkout still renders their layout controls in `SyllabusPage.tsx`; their removal has not reached this typed implementation. See [Learning Architecture](../LEARNING-ARCHITECTURE.md). The `sheet_edit` API remains documented above for compatibility; retaining it does not require exposing a spreadsheet UI.
 
 ## Mapping and comparison
 
@@ -125,7 +104,7 @@ stale review rejection, import apply, course draft mirroring and revision-checke
 App tests cover parsers, CSV, details failure recovery, confirmation, cancellation and stale
 mapping behavior. Current counts and live checks are recorded in the modularization roadmap.
 
-The mind map and spreadsheet layouts are covered by `views.test.ts`, `SyllabusViews.test.tsx` and
+Retained layout implementation tests include `views.test.ts`, `SyllabusViews.test.tsx` and
 the `sheet_edit` checks in `tests/php/skill-workspace-rest-integration.php`; combined mappings and AI
 proposals are in the [skill workspace](skill-workspace.md). Not yet rebuilt: skill-group deletion,
 source configuration, course requirement controls, publication and extension panels. Curriculum branch deletion is in
