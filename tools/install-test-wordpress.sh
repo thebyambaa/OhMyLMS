@@ -53,6 +53,8 @@ wp config set AUTOMATIC_UPDATER_DISABLED true --raw
 PRIVATE="$(cd "$ROOT/.." && pwd)/$(basename "$ROOT")-private"
 mkdir -p "$PRIVATE"
 wp config set OHMYLMS_IMPORT_PRIVATE_DIR "$PRIVATE"
+# The exam import source pages render with Poppler when it is installed (exam-import-source-integration).
+if PDFTOPPM="$(command -v pdftoppm)"; then wp config set OHMYLMS_PDFTOPPM_BINARY "$PDFTOPPM"; fi
 
 wp core is-installed 2>/dev/null || wp core install --url="http://$HOST" --title="OhMyLMS CI" --admin_user=admin \
   --admin_password=admin --admin_email=admin@example.test --skip-email
